@@ -38,6 +38,9 @@ Will Cahoon's model via data/swing_plus.json).
   SKILLS     the /mlbstats/ boards joined by mlbam (_skill_index): HEM+,
              REM+/RIV+/SEM+, leverage (skills.lev) and the Defense board's
              DEM+ with published defensive runs (skills.def).
+  HOF        the /hof/ shelf's row (career bWAR, WAR7, JAWS, WAA+, WAR ink)
+             for its Cooperstown Watch and Not Yet Eligible bands, B-Ref id
+             to MLBAM through the war_daily ids (_hof_index).
 
 Artifacts: data/mlb_player_detail.json (the whole set, read by the Trade
 Machine and the Python consumers) and data/mlb_player_detail/<key>.json, one
@@ -364,6 +367,71 @@ def _fwar_reference_map() -> dict[int, dict[int, dict[str, float]]]:
             if val is None:
                 continue
             out.setdefault(mid, {}).setdefault(season, {})[side] = float(val)
+    return out
+
+
+#: The two /hof/ bands a player page can carry: active players with ten or more
+#: seasons, and players inside the five-year wait. The Eligible band is retired
+#: players, who have no /projections/ page.
+HOF_BANDS = ("watch", "not_yet_eligible")
+#: The shelf fields the line prints, copied verbatim (no rounding, no
+#: re-derivation), so the page and /hof/ cannot disagree about one player.
+HOF_FIELDS = ("war", "war7", "jaws", "waa_pos", "ink", "first", "last", "seasons")
+HOF_BASIS_LABEL = "B-Ref bWAR"
+
+
+def _hof_index() -> dict[int, dict]:
+    """{mlbam: hof line}: the /hof/ shelf's own row for every player on its
+    Cooperstown Watch and Not Yet Eligible bands (wiring W05, task Q9_25).
+
+    THE SHELF'S NUMBERS, NOT OURS. Every value is the hof_board.json row for the
+    same B-Ref id, copied verbatim, so the line and /hof/ always agree. The
+    basis is Baseball-Reference bWAR, the shelf's pinned frame, and the block
+    says so in `basis`; a shelf on any other basis prints no line at all,
+    because a label we cannot name is a label we would get wrong.
+
+    THE JOIN. The shelf keys rows by B-Ref id; the cards key by MLBAM id. The
+    bridge is hof_data.crosswalk_bbref_mlbam(), read off the same war_daily
+    parquets the shelf is built from, one to one (no name matching). A row the
+    bridge cannot reach prints nothing.
+
+    NO POSITION STANDARD. The shelf's six position groups have no 3B group and
+    put Albert Pujols and Miguel Cabrera in OF, so the line carries the
+    player's own numbers only. The band is a shelf band, not a forecast: the
+    /hof/ predictor stays dark.
+
+    Empty (logged) when the shelf or the bridge is unreadable: the card renders
+    without the line."""
+    try:
+        hb = json.loads((DATA_DIR / "hof_board.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("mlb player detail: hof_board.json unavailable - no Hall of Fame line")
+        return {}
+    basis = str((hb.get("basis") or {}).get("war") or "")
+    if "Baseball-Reference bWAR" not in basis:
+        log.warning("mlb player detail: hof shelf basis %r is not bWAR - no Hall of "
+                    "Fame line until the label follows it", basis[:60])
+        return {}
+    try:
+        import hof_data
+        xw = hof_data.crosswalk_bbref_mlbam()          # {str(mlbam): bbref id}
+    except Exception as e:                             # noqa: BLE001
+        log.warning("mlb player detail: no bbref-mlbam bridge (%s) - no Hall of Fame line", e)
+        return {}
+    by_bbref: dict[str, int] = {}
+    for mid, bid in xw.items():
+        try:
+            by_bbref[str(bid)] = int(mid)
+        except (TypeError, ValueError):
+            continue
+    out: dict[int, dict] = {}
+    for band in HOF_BANDS:
+        for r in hb.get(band) or []:
+            mid = by_bbref.get(str(r.get("id")))
+            if mid is None:
+                continue
+            out[mid] = {"id": r.get("id"), "band": band, "basis": HOF_BASIS_LABEL,
+                        **{k: r.get(k) for k in HOF_FIELDS}}
     return out
 
 
@@ -723,6 +791,7 @@ def build_payload() -> dict:
     fa_ids = _ident_mlbams(all_keys)
     war_by, war_bwar_by = _war_maps()
     war_fwar_by = _fwar_reference_map()
+    hof_by = _hof_index()
     year = date.today().year
     players: dict[str, dict] = {}
 
@@ -840,7 +909,10 @@ def build_payload() -> dict:
                              bool(p["isPit"]), bool(p.get("twoWay")))
         if block:
             p["skills"] = block
-        p["career"] = _career_rows(int(mlbam), p["isPit"], war_by, war_bwar_by,
+        hof = hof_by.get(int(mlbam))
+        if hof:
+            p["hof"] = hof
+        p["career"] =_career_rows(int(mlbam), p["isPit"], war_by, war_bwar_by,
                                    war_fwar_by)
         n_car += 1 if p["career"] else 0
         sc = _statcast_block(int(mlbam), p["isPit"], year)
@@ -896,7 +968,8 @@ def build_payload() -> dict:
                                 if (p.get("skills") or {}).get("lev")),
                      "def": sum(1 for p in players.values()
                                 if (p.get("skills") or {}).get("def")),
-                     "scout": sum(1 for p in players.values() if p.get("scout"))},
+                     "scout": sum(1 for p in players.values() if p.get("scout")),
+                     "hof": sum(1 for p in players.values() if p.get("hof"))},
         "notes": [
             "career: MLB season lines (StatsAPI) + per-season WAR on war_source provider ewar_v2, the displayed WAR (eWAR v2: FIP-repriced pitching within role; batting side equal to bWAR until the SDR defense drop); war_bwar = the bWAR input where it differs at 1dp, absent means equal; war_fwar = FanGraphs' published WAR (MLB StatsAPI sabermetrics feed), a reference beside the displayed eWAR v2; absent means no published value",
             "statcast: Savant leaderboard percentiles within the season's pool (contact board 25+ batted balls; expected-stats board unfloored); pitcher contact metrics invert (suppression = good); hitter Luck = xwOBA minus wOBA",
@@ -907,6 +980,7 @@ def build_payload() -> dict:
             "skills.def: DEM+ (100 + 10z), FanGraphs' published fielding and framing runs, the Defense board's own positional ladder (posRuns, the term in defRuns) and FanGraphs' published positional beside it (posRunsFg), from defense_leaderboards.json, fielders only",
             "scout: latest published report blurb (capped) + consensus tool grades, ex-PROSPX players only",
             "origin.fvSpark: consensus-FV arc [[date, fv], ...] for ex-PROSPX players",
+            "hof: the /hof/ shelf's own row (career WAR, WAR7, JAWS, WAA+ as waa_pos, WAR ink, first and last season, seasons) for players on its Cooperstown Watch and Not Yet Eligible bands, copied verbatim and joined B-Ref id to MLBAM through the war_daily ids; basis B-Ref bWAR, the shelf's; the player's own numbers only, no position standard; the band is a shelf band, not a forecast",
             "fa fields attach for current class members; verdict/dealPlus from the gate-validated market model",
         ],
         "players": players,
