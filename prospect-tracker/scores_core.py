@@ -1782,6 +1782,119 @@ def build_date_file(date: str, cards: list[dict], game_files: dict | None, *, ge
 
 
 # --------------------------------------------------------------------------- #
+# 8b. The October bracket (SCORES_4b; plan 1.6). Series state and results
+# only, from /api/v1/schedule/postseason/series: no probability of any kind
+# (Part 8 8.D row 8) and nothing the page would have to compute.
+# --------------------------------------------------------------------------- #
+#: Postseason game types in bracket order, with the round names the page prints.
+BRACKET_ROUNDS = (("F", "Wild Card Series"), ("D", "Division Series"),
+                  ("L", "Championship Series"), ("W", "World Series"))
+_MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August",
+           "September", "October", "November", "December")
+_PAIR_RE = re.compile(r"^([A-Z]{2,3})/([A-Z]{2,3})$")
+
+
+def placeholder_name(name) -> str:
+    """MLB's name for a slot not yet decided: "HOU/CWS" reads "Winner of HOU
+    and CWS" (MLB's own letters, never resolved to a club); any other name
+    ("NL Lower Seed") prints as MLB gives it."""
+    s = (normalize_text(name) or "").strip()
+    m = _PAIR_RE.match(s)
+    if m:
+        return f"Winner of {m.group(1)} and {m.group(2)}"
+    return s or "To be decided"
+
+
+def _month_day(d: str) -> str:
+    try:
+        return f"{_MONTHS[int(d[5:7]) - 1]} {int(d[8:10])}"
+    except (ValueError, IndexError):
+        return d
+
+
+def _bracket_series(s: dict) -> dict | None:
+    meta = s.get("series") or {}
+    games = sorted((g for g in s.get("games") or [] if isinstance(g, dict) and g.get("gamePk")),
+                   key=lambda g: (_int(g.get("seriesGameNumber"), 99), g.get("officialDate") or "", _int(g.get("gamePk"))))
+    if not games:
+        return None
+    best_of = max(_int(g.get("gamesInSeries"), 0) for g in games) or len(games)
+    need = best_of // 2 + 1
+    teams0 = games[0].get("teams") or {}
+    clubs = []
+    for side in ("home", "away"):                     # game 1's home club (the higher seed) first
+        team = ((teams0.get(side) or {}).get("team") or {})
+        tid = _int(team.get("id"), 0) or None
+        code = club_code(tid)
+        clubs.append({"team_id": tid, "code": code,
+                      "name": normalize_text(team.get("name")) if code else placeholder_name(team.get("name")),
+                      "wins": 0})
+    by_id = {c["team_id"]: c for c in clubs}
+    rows = []
+    for g in games:
+        st, _reason = game_state(g.get("status"))
+        t = g.get("teams") or {}
+        a, h = t.get("away") or {}, t.get("home") or {}
+        aid, hid = _int((a.get("team") or {}).get("id"), 0) or None, _int((h.get("team") or {}).get("id"), 0) or None
+        win = None
+        if st == "final":
+            win = aid if a.get("isWinner") else hid if h.get("isWinner") else None
+            if win in by_id:
+                by_id[win]["wins"] += 1
+        rows.append({"pk": _int(g.get("gamePk")), "n": _int(g.get("seriesGameNumber"), 0) or None,
+                     "date": g.get("officialDate"), "state": st,
+                     "away_id": aid, "home_id": hid,
+                     "away_r": a.get("score") if st in ("final", "live", "delayed") else None,
+                     "home_r": h.get("score") if st in ("final", "live", "delayed") else None,
+                     "winner_id": win, "if_necessary": str(g.get("ifNecessary") or "N") == "Y"})
+    lead = max(clubs, key=lambda c: c["wins"])
+    trail = min(clubs, key=lambda c: c["wins"])
+    over = lead["wins"] >= need and lead["code"] is not None
+    if over:
+        # MLB deletes an unneeded game, or leaves it listed; either way it is not shown
+        rows = [r for r in rows if not (r["if_necessary"] and r["state"] != "final")]
+    who = lead["code"] or lead["name"]
+    if over:
+        text = f"{who} wins {lead['wins']}-{trail['wins']}"
+    elif lead["wins"] == trail["wins"] and lead["wins"] > 0:
+        text = f"Series tied {lead['wins']}-{trail['wins']}"
+    elif lead["wins"] > trail["wins"]:
+        text = f"{who} leads {lead['wins']}-{trail['wins']}"
+    else:
+        text = f"Game 1: {_month_day(rows[0]['date'] or '')}" if rows and rows[0]["date"] else None
+    label = normalize_text(games[0].get("seriesDescription")) or ""
+    lg = label[:2] if label[:2] in ("AL", "NL") else None
+    return {"id": str(meta.get("id") or ""), "type": meta.get("gameType") or games[0].get("gameType"),
+            "lg": lg, "best_of": best_of, "over": over,
+            "winner_id": lead["team_id"] if over else None, "text": text, "clubs": clubs, "games": rows}
+
+
+def build_bracket(payload, *, season) -> dict | None:
+    """The season index's `bracket` block from one postseason-series payload:
+    `{season, first, last, done, rounds [{type, name, series [...]}]}`, rounds
+    in BRACKET_ROUNDS order, AL before NL inside a round. A club MLB has not
+    decided (a team id outside CLUB_BY_ID) carries `code` null and MLB's
+    placeholder as its name, so the page never links it. Wins come from
+    `isWinner` on final games only. None when the payload lists no series."""
+    order = {t: i for i, (t, _n) in enumerate(BRACKET_ROUNDS)}
+    names = dict(BRACKET_ROUNDS)
+    built = [b for b in (_bracket_series(s) for s in (payload or {}).get("series") or [] if isinstance(s, dict))
+             if b is not None and b["type"] in order]
+    if not built:
+        return None
+    lg_order = {"AL": 0, "NL": 1, None: 2}
+    rounds = []
+    for t, _n in BRACKET_ROUNDS:
+        ss = sorted((b for b in built if b["type"] == t), key=lambda b: (lg_order.get(b["lg"], 2), b["id"]))
+        if ss:
+            rounds.append({"type": t, "name": names[t], "series": ss})
+    dates = sorted(r["date"] for b in built for r in b["games"] if r.get("date"))
+    done = any(b["type"] == "W" for b in built) and all(b["over"] for b in built)
+    return {"season": _int(season), "first": dates[0] if dates else None, "last": dates[-1] if dates else None,
+            "done": done, "rounds": rounds}
+
+
+# --------------------------------------------------------------------------- #
 # 8. The validator (plan 8.5), with a registry so a second payload family can
 # add its own file kinds (STANDINGS_1_CORE_RULES).
 # --------------------------------------------------------------------------- #
@@ -2247,4 +2360,5 @@ __all__ = [
     "validate_files", "series_over", "check_shrink", "debut_ids",
     "VIDEO_BRANCH", "SPORTSBOOK_TAGS", "parse_duration", "pick_file", "trim_content", "clip_object",
     "event_label", "join_clips", "attach_clips", "diamond_gating_on", "embed_reconfirmed",
+    "BRACKET_ROUNDS", "placeholder_name", "build_bracket",
 ]

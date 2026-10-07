@@ -134,6 +134,7 @@ a.sc-chip:hover { background: var(--bg-tertiary); }
 .scores-app .sc-rail h2 { font-size: 14px; margin: 0 0 6px; }
 .scores-app .sc-railplays { margin: 0; padding-left: 18px; }
 .scores-app .sc-railplays li { margin: 0 0 8px; }
+.scores-app .sc-rail + .sc-rail { margin-top: 12px; }
 .scores-app .sc-about-link { margin: 16px 0; font-size: 13px; }
 
 /* ---- the game view */
@@ -237,3 +238,29 @@ a.sc-chip:hover { background: var(--bg-tertiary); }
 .scores-app .sc-vnew { margin: 4px 0 8px; }
 .scores-app .sc-vlink { display: inline-flex; align-items: center; min-height: 24px; }
 .scores-app .sc-vnone { margin: 4px 0 0; font-size: 12.5px; }
+
+/* ---- the October bracket (SCORES_4b), drawn by the lazy assets/scores-bracket.js.
+   Not scoped to .scores-app, so /standings/ mounts it unchanged. Rounds sit in
+   columns where they fit and stack on a phone and in the rail. Series state in
+   words; no colour carries it. */
+.scb-rounds { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; align-items: start; }
+.scb-round { min-width: 0; }
+.scb-round h3 { font-size: 13px; margin: 0 0 6px; }
+.scb-series { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.scb-s { border: 1px solid var(--border-light); background: var(--bg-secondary); padding: 8px 10px; font-size: 12.5px; line-height: 1.4; min-width: 0; }
+.scb-lab { margin: 0 0 2px; font-size: 11.5px; color: var(--text-secondary); }
+.scb-clubs { list-style: none; margin: 0; padding: 0; }
+.scb-c { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.scb-c strong { display: contents; }
+.scb-club { display: inline-block; min-height: 24px; line-height: 24px; font-weight: 700; overflow-wrap: anywhere; }
+span.scb-club { font-weight: 400; color: var(--text-secondary); line-height: 1.35; padding: 3px 0; }
+.scb-w { font-variant-numeric: tabular-nums; }
+.scb-text { margin: 4px 0 0; font-weight: 700; }
+.scb-games { list-style: none; margin: 6px 0 0; padding: 0; font-size: 12px; color: var(--text-secondary); }
+.scb-games a { display: inline-block; min-height: 24px; line-height: 24px; }
+.scb-src, .scb-none { font-size: 12px; color: var(--text-secondary); margin: 10px 0 0; }
+.scb-compact .scb-rounds { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.scb-compact .scb-round h3 { font-size: 12.5px; margin: 4px 0 2px; }
+.scb-compact .scb-s { border: 0; background: none; padding: 0; }
+.scb-compact .scb-text { font-weight: 400; }
+.scb .sr-only { position: absolute !important; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -63,9 +63,9 @@ class FakeAPI:
     request takes (it advances the fake clock, never the real one); a request
     whose cost passes its deadline raises TimeoutError, as urllib does."""
 
-    def __init__(self, clock: FakeClock, schedule, *, wp=None, box=None, feed=None, people=None, cost=0.1,
-                 content=None):
-        self.clock, self.schedule = clock, schedule
+    def __init__(self, clock: FakeClock, schedule, *, wp=None, box=None, feed=None, people=None, series=None,
+                 cost=0.1, content=None):
+        self.clock, self.schedule, self.series = clock, schedule, series
         self.wp, self.box, self.feed = dict(wp or {}), dict(box or {}), dict(feed or {})
         self.content = dict(content or {})          # SCORES_4a: /game/{pk}/content
         self.people = people if people is not None else {"people": []}
@@ -81,6 +81,13 @@ class FakeAPI:
             raise TimeoutError(f"fake timeout after {timeout}")
         self.clock.t += cost
         m = re.search(r"/game/(\d+)/(winProbability|boxscore|feed/live|content)", url)
+        if job.BRACKET_PATH in url:
+            st = self.status.get(("series", None))
+            if st:
+                return st[0], st[1], b""
+            if self.series is None:
+                return 404, {}, b""
+            return 200, {}, json.dumps(self.series).encode("utf-8")
         if "/api/v1/schedule" in url:
             st = self.status.get(("schedule", None))
             if st:
@@ -110,8 +117,10 @@ class FakeAPI:
             return [u for u in out if "/boxscore" in u]
         if kind == "feed":
             return [u for u in out if "/feed/live" in u]
+        if kind == "series":
+            return [u for u in out if job.BRACKET_PATH in u]
         if kind == "schedule":
-            return [u for u in out if "/schedule" in u]
+            return [u for u in out if "/schedule" in u and job.BRACKET_PATH not in u]
         if kind == "content":
             return [u for u in out if u.endswith("/content")]
         return out
@@ -908,3 +917,78 @@ def test_the_owner_answers_and_cadence_literals():
     assert job.SCHEDULE_HYDRATE == "team,linescore,probablePitcher,decisions,seriesStatus,lineups,flags,weather,broadcasts(all)"
     assert job.GAME_TYPES == "R,F,D,L,W,A"
     assert (job.DOWN_AFTER_S, job.POLL_LIVE_S, job.POLL_IDLE_S) == (1800, 45, 300)
+
+# --------------------------------------------------------------------------- #
+# The October bracket (SCORES_4b): one call per idle cycle, first postseason
+# date to the last, written into the season index
+# --------------------------------------------------------------------------- #
+def test_bracket_due_runs_from_the_first_postseason_date_to_the_last():
+    d = datetime(2026, 9, 30, tzinfo=UTC).date()
+    reg = [{"gameType": "R", "officialDate": "2026-09-27"}]
+    assert job.bracket_due({}, reg, d) is None                              # regular season only
+    assert job.bracket_due({}, [{"gameType": "F", "officialDate": "2026-10-01"}], d) is None   # not yet started
+    assert job.bracket_due({}, [{"gameType": "F", "officialDate": "2026-09-29"}], d) == 2026
+    block = {"first": "2026-09-29", "last": "2026-10-31", "done": False}
+    st = {"bracket": {"2026": block}}
+    for day, want in (("2026-10-05", 2026), ("2026-10-31", 2026), ("2026-11-01", 2026), ("2026-11-02", None),
+                      ("2026-09-28", None)):
+        assert job.bracket_due(st, reg, datetime.fromisoformat(day).date()) == want, day
+    st["bracket"]["2026"]["done"] = True
+    assert job.bracket_due(st, [{"gameType": "W", "officialDate": "2026-10-31"}],
+                           datetime(2026, 11, 1).date()) is None              # the final state is on file
+
+
+def _upcoming():
+    """A scheduled game three days out, so the slate is not the offseason."""
+    g = _game(849848, "S")
+    g.update(officialDate="2026-10-10", gameDate="2026-10-10T20:00:00Z")
+    return g
+
+
+def _idle_bracket_run(env, clock, series, *, now):
+    api = FakeAPI(clock, schedule_of(_game(849845, "F"), _upcoming()), series=series, **base_payloads())
+    return api, run_once(env, api, clock, now=now)
+
+
+def test_an_idle_cycle_reads_the_bracket_once_and_the_season_index_carries_it(env):
+    clock = FakeClock()
+    seed_state(env, week_date="2026-10-07")
+    now = datetime(2026, 10, 7, 9, 0, tzinfo=UTC)           # before 10:00 UTC: idle, not week
+    api, res = _idle_bracket_run(env, clock, load("postseason_series_2026.json"), now=now)
+    assert res["exit"] == 0 and res["action"] == "idle", res
+    assert api.urls("series") == ["https://statsapi.mlb.com/api/v1/schedule/postseason/series?sportId=1&season=2026"]
+    doc = json.loads((env["out"] / "index-2026.json").read_text(encoding="utf-8"))
+    assert doc["bracket"] == sc.build_bracket(load("postseason_series_2026.json"), season=2026)
+    assert sc.validate_payload("season_index", doc, name="index-2026.json")["ok"]
+    assert job.verify_revs(job.Writer(env["out"])) == []
+
+
+def test_a_live_cycle_never_reads_the_bracket(env):
+    clock = FakeClock()
+    api = FakeAPI(clock, schedule_of(*base_games()), series=load("postseason_series_2026.json"), **base_payloads())
+    seed_state(env, week_date="2026-09-30")
+    assert run_once(env, api, clock)["action"] == "idle"
+    n = len(api.urls("series"))
+    assert n == 1                                            # 849845 (gameType F) is dated before today
+    assert run_once(env, api, clock, now=NOW + timedelta(seconds=120))["action"] == "live"
+    assert len(api.urls("series")) == n
+
+
+def test_a_failed_bracket_read_keeps_the_last_block_and_a_new_one_replaces_it(env):
+    clock = FakeClock()
+    seed_state(env, week_date="2026-10-07")
+    t0 = datetime(2026, 10, 7, 9, 0, tzinfo=UTC)
+    _idle_bracket_run(env, clock, load("postseason_series_2026.json"), now=t0)
+    first = json.loads((env["out"] / "index-2026.json").read_text(encoding="utf-8"))["bracket"]
+    api = FakeAPI(clock, schedule_of(_game(849845, "F"), _upcoming()), series=None, **base_payloads())
+    api.status[("series", None)] = (500, {})
+    t1 = t0 + timedelta(seconds=job.IDLE_INTERVAL_S)
+    res = run_once(env, api, clock, now=t1)
+    assert res["exit"] == 0 and res["action"] == "idle" and len(api.urls("series")) == 1, res
+    assert json.loads((env["out"] / "index-2026.json").read_text(encoding="utf-8"))["bracket"] == first
+    t2 = t1 + timedelta(seconds=job.IDLE_INTERVAL_S)
+    _idle_bracket_run(env, clock, load("postseason_series_2026-10-07.json"), now=t2)
+    now_doc = json.loads((env["out"] / "index-2026.json").read_text(encoding="utf-8"))
+    assert now_doc["bracket"] != first
+    assert now_doc["bracket"]["rounds"][0]["series"][0]["text"] == "CHW wins 2-0"
+    assert job.verify_revs(job.Writer(env["out"])) == []

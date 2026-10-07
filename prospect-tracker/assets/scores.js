@@ -8,16 +8,10 @@
    /data/scores/: it joins, sorts and formats what the job wrote and compares
    times for the stale rule; it computes no number of its own.
 
-   FETCH RULES (plan 2.3): the polled file every job.poll_live_s while a game
-   on the viewed date is live and the tab is visible, else job.poll_idle_s,
-   none while hidden, backing off on errors; the index when index_rev moves;
-   date, season and game files only when their rev moves, as <file>?v=<rev>;
-   every request with cache: "no-cache"; the player links and the video chunk
-   (assets/scores-video.js) only once a game view opens.
-
-   LABELLING (plan 4): every model number sits in a data-model-id element whose
-   chip reads the registry block's sentence ("MLB, provisional"); a number with
-   no row there is not drawn. Tokens only, no team colours. */
+   FETCH RULES: plan 2.3 (no-cache; a file only when its rev moves). The
+   player links and the video chunk load in the game view; the bracket
+   chunk on #bracket=<season> or in October in the rail at 1400 px.
+   LABELLING: plan 4 (data-model-id with the registry sentence). */
 (function () {
   "use strict";
 
@@ -25,7 +19,7 @@
   var POLL_LIVE_S = 45, POLL_IDLE_S = 300, BACKOFF = [45, 90, 180, 300];
   var ANNOUNCE_GAP_MS = 15000;
   var MAX_CHART_POINTS = 130;
-  // The AL's fifteen MLBAM team ids, for the AL / NL filter (a join on the id).
+  // The AL's MLBAM team ids (the AL / NL filter joins on the id).
   var AL_IDS = [108, 110, 111, 114, 116, 117, 118, 133, 136, 139, 140, 141, 142, 145, 147];
   var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August",
     "September", "October", "November", "December"];
@@ -62,7 +56,7 @@
     return ((h % 12) || 12) + ":" + (m < 10 ? "0" : "") + m + (h < 12 ? " AM" : " PM");
   }
   function monthDay(t) { var d = new Date(t); return MONTHS[d.getMonth()] + " " + d.getDate(); }
-  // A YYYY-MM-DD string read as a calendar date (UTC noon, so no zone moves it).
+  // YYYY-MM-DD at UTC noon, so no zone moves it.
   function dayOf(ds) { return new Date(ds + "T12:00:00Z"); }
   function longDate(ds) {
     var d = dayOf(ds);
@@ -98,8 +92,7 @@
     var m = Math.floor(sec / 60), s = sec % 60;
     return m + ":" + (s < 10 ? "0" : "") + s;
   }
-  // A rate the job rounded (one or two decimals), printed with its digits;
-  // a P/AB or P/IP with no denominator (0 AB, 0 outs) prints a dash.
+  // Rates as the job rounded them; a P/AB or P/IP over 0 AB or 0 outs is a dash.
   function f1(x) { return isNum(x) ? x.toFixed(1) : "-"; }
   function f2(x) { return isNum(x) ? x.toFixed(2) : ""; }
   function comma(n) { return isNum(n) ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ""; }
@@ -132,8 +125,8 @@
     var w = (L.window || {})[date];
     return !!(w && w.live > 0);
   }
-  // scoresStaleState: plan 2.4, order S4, S3, S2, S0, S1 (S1 default);
-  // serverNowMs is the latest response's Date header, else the client clock.
+  // Plan 2.4: rows S4, S3, S2, S0, S1 in order (S1 the default); server time
+  // from the Date header, else the client clock.
   function scoresStaleState(L, serverNowMs, viewedDate) {
     if (!validLatest(L)) return { code: "S4", sentence: STALE.S4, live: false };
     var now = isNum(serverNowMs) ? serverNowMs : Date.now();
@@ -172,6 +165,8 @@
       r.view = "game"; r.game = +q.game;
       if (/^(summary|preview|box|plays|lineups|info)$/.test(q.tab || "")) r.tab = q.tab;
       if (/^\d{1,4}$/.test(q.play || "")) r.play = +q.play;
+    } else if (/^\d{4}$/.test(q.bracket || "")) {
+      r.view = "bracket"; r.season = +q.bracket;
     } else if ("about" in q) {
       r.view = "about";
     }
@@ -190,7 +185,7 @@
   }
 
   // ---------------------------------------------------------------- loader
-  // One loader per page; fetchFn(url, opts) resolves to a Response.
+  // One loader per page; every request carries cache: "no-cache".
   function makeLoader(fetchFn, clientNow) {
     clientNow = clientNow || function () { return Date.now(); };
     var S = { latest: null, index: null, indexRev: null, seasons: {}, dates: {}, games: {},
@@ -478,8 +473,7 @@
   }
 
   // ------------------------------------------------------------ the chart
-  // One 2 px line of the home club's MLB win probability over plate
-  // appearances, drawn at the container's pixel width (plan 1.5).
+  // MLB's home win probability per plate appearance, at the frame's width (plan 1.5).
   function chartModel(g) {
     var ser = (g.wp && g.wp.series) || [], step = 1;
     if (ser.length > MAX_CHART_POINTS) step = Math.ceil(ser.length / MAX_CHART_POINTS);
@@ -868,11 +862,29 @@
       else schedule();
     });
 
+    function bk(el, y, o) {
+      app.bk = app.bk || new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        s.src = root.getAttribute("data-bracket-src"); s.onload = function () { ok(window.EephusScoresBracket); }; s.onerror = no;
+        document.head.appendChild(s);
+      });
+      return Promise.all([app.bk, L.season(y)]).then(function (a) { return a[0].mount(el, a[1] && a[1].bracket, o); });
+    }
+
     // ---- rendering
     function refresh(nav) {
       var r = app.route, Lt = L.state.latest;
       app.stale = scoresStaleState(Lt, L.serverNow(), r.date || Lt.today);
       if (r.view === "about") { renderAbout(); return null; }
+      if (r.view === "bracket") {
+        if (nav || !root.querySelector(".sc-bk")) {
+          root.innerHTML = '<p class="sc-back"><a href="#">Back to scores</a></p><h2 tabindex="-1">' + r.season +
+            ' postseason</h2><div class="sc-stamp" role="status" aria-live="off"></div><div class="sc-bk"></div>';
+          root.querySelector("h2").focus();
+        }
+        stamp();
+        return bk(root.querySelector(".sc-bk"), r.season);
+      }
       var d = r.date || (r.view === "game" && app.gameDate) || Lt.today;
       if (d !== app.date) { app.date = d; app.dateDoc = null; app.shown = {}; nav = true; }
       return L.date(d).then(function (doc) {
@@ -907,6 +919,7 @@
       var min = seasons.length ? seasons[0] + "-01-01" : "", max = win[win.length - 1];
       return '<nav class="sc-strip" aria-label="Dates"><a class="sc-arrow" href="' + dayHash(app.route, { date: addDays(d, -1) }) + '" aria-label="Previous day">&lsaquo;</a>' +
         '<ul class="sc-days">' + chips + '</ul><a class="sc-arrow" href="' + dayHash(app.route, { date: addDays(d, 1) }) + '" aria-label="Next day">&rsaquo;</a>' +
+        (d.slice(5, 7) === "10" ? '<a class="sc-day" href="#bracket=' + d.slice(0, 4) + '">Bracket</a>' : "") +
         '<label class="sc-pickdate"><span class="sr-only">Choose a date</span><input type="date" class="sc-dateinput" value="' + esc(d) + '"' +
         (min ? ' min="' + min + '"' : "") + (max ? ' max="' + esc(max) + '"' : "") + "></label></nav>";
     }
@@ -1006,7 +1019,12 @@
       } else if (!anyVisible) {
         empty.innerHTML = St && St.html ? St.html("empty", "No games match these filters.") : "<p>No games match these filters.</p>";
       } else empty.innerHTML = "";
-      root.querySelector(".sc-railslot").innerHTML = railHTML(doc);
+      var rs = root.querySelector(".sc-railslot"), y = d.slice(0, 4);
+      rs.innerHTML = (d.slice(5, 7) === "10" && matchMedia("(min-width: 1400px)").matches ? '<aside class="sc-rail" aria-label="Bracket"><h2><a href="#bracket=' +
+        y + '">Bracket</a></h2><div class="sc-bk"></div></aside>' : "") + railHTML(doc);
+      var bx = rs.querySelector(".sc-bk");
+      var rm = function (k) { k || bx.parentNode.remove(); };
+      if (bx) bk(bx, +y, { compact: 1 }).then(rm, function () { rm(); });
       if (nav && app.focusPk != null) {
         var back = grid.querySelector('article[data-pk="' + app.focusPk + '"] .sc-stretch');
         if (back) { back.focus(); if (app.scrollY != null) window.scrollTo(0, app.scrollY); }

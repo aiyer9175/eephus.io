@@ -145,6 +145,7 @@ _SCORES_CSS_VER = _asset_ver("assets/scores.css")
 # The lazy video chunk (SCORES_4a): scores.js loads it on the first game-view
 # open from the mount root's data-vv stamp, never as a tag in the shell.
 _SCORES_VIDEO_VER = _asset_ver("assets/scores-video.js")
+_SCORES_BRACKET_VER = _asset_ver("assets/scores-bracket.js")   # the lazy bracket chunk (SCORES_4b)
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
 _AWARDS_VER = _asset_ver("assets/awards.js")
@@ -5565,11 +5566,14 @@ def build_scores() -> str:
     eephus-teampick.js and assets/scores.js, deferred. The shell types no
     number; every number on the page is read by assets/scores.js from the
     job's files. No EEPHUS_DATA_VERS: the job rewrites its files between
-    builds (_data_vers_script refuses scores names)."""
+    builds (_data_vers_script refuses scores names). The mount root carries
+    the stamped path of the lazy bracket chunk (SCORES_4b), which scores.js
+    loads only on #bracket=<season> or for the October rail at 1400 px."""
     body = (
         '<div class="fa-app scores-app">'
         + _scores_module_head("scores")
-        + f'<div id="scores-app-root" data-vv="{_SCORES_VIDEO_VER}"></div>'
+        + f'<div id="scores-app-root" data-vv="{_SCORES_VIDEO_VER}"'
+        f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"></div>'
         '</div>'
         f'<link rel="stylesheet" href="/assets/scores.css?v={_SCORES_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
