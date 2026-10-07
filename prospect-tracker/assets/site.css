@@ -1934,6 +1934,11 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 .mlbstats-tab:hover { color: var(--text-primary); }
 .mlbstats-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-gold); }
+/* The Awards / HoF module strip (AWARDS_7): two page links under the h1 of /awards/
+   and /hof/, not tabs; the current page carries .active and aria-current. */
+.hof-modstrip a.mlbstats-sectionbtn { color: var(--text-secondary); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px; }
+.hof-modstrip a.mlbstats-sectionbtn:hover, .hof-modstrip a.mlbstats-sectionbtn.active { color: var(--text-primary); }
 /* Season selector pills (yearly history board) - a compact row above the table. */
 .mlbstats-seasons { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 10px; }
 /* Designed as a lozenge, shipped as a rectangle: the global

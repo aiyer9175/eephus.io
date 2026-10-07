@@ -41,6 +41,7 @@ import markdown as md
 # Two build-time companions, both stdlib-only at import so they cost the same
 # as a constant here: the public artifact catalog rendered on /sources/#api, and
 # the eFV movement alerts feed written at the end of main().
+import awards_core
 import data_catalog
 import efv_alerts
 # The registry loader/validator behind /models/. Imported for load(), STALE_DAYS
@@ -142,6 +143,9 @@ _TEAM_CSS_VER = _asset_ver("assets/team.css")
 _SCORES_VER = _asset_ver("assets/scores.js")
 _SCORES_CSS_VER = _asset_ver("assets/scores.css")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
+# /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
+_AWARDS_VER = _asset_ver("assets/awards.js")
+_AWARDS_CSS_VER = _asset_ver("assets/awards.css")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
 # surface still tells the truth with JavaScript off.
@@ -503,6 +507,9 @@ ICON_FOR = _merge_icon_maps(
     {k: k for k in ("models", "parks", "news", "history", "watchlist", "scores")},
     _PX_SECTION_ICON,
     _WIRE_ICON,
+    # The Awards symbols (AWARDS_7): the podium on the module strip and the award
+    # cards, the ballot card on the My Ballot tab.
+    {k: k for k in ("aw-podium", "aw-ballot")},
 )
 
 
@@ -5654,7 +5661,7 @@ def build_franchise() -> str:
                 url=f"{SITE_ORIGIN}/franchise/", image=module_share_image("franchise"))
 
 
-def build_hof() -> str:
+def build_hof(live: bool | None = None) -> str:
     """The /hof/ Hall of Fame module.
 
     Static shell + assets/hof.js, which fetches data/hof_board.json
@@ -5679,20 +5686,18 @@ def build_hof() -> str:
     three bands do not partition the ten-plus-season population exactly.
 
     In NAV_ITEMS under MLB Modules since the 2026-09-06 nav fix (it shipped
-    unreachable before that); the three static nav copies carry it too."""
+    unreachable before that); the three static nav copies carry it too.
+
+    The head comes from _hof_module_head("hof") (AWARDS_7). With
+    awards_core.AWARDS_LIVE False this page is byte-identical to the shell
+    before the Awards section except its asset stamps; with it True the h1
+    reads "Awards / HoF", the Awards | Hall of Fame strip sits under it, and
+    the four section buttons move to the underline tab row, keeping their
+    ARIA. `live` overrides the flag for the render checks only."""
+    on = _awards_live(live)
     body = (
         '<div class="fa-app mlbstats-app hof-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
-        f'<h1>{_masthead_icon("hof")}Hall of Fame {_stage_chip("hof")}</h1></div>'
-        f'<span class="section-sub">Career WAR, {_gl("war7", "WAR7")} and {_gl("jaws", "JAWS")} for '
-        'every ten-season player (Baseball-Reference daily WAR), with the ballot record. '
-        'Bands: eligible, active, five-year wait. No Hall line or snub list (Bake-off says why).</span></div>'
-        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Hall of Fame sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-hofsection="board" role="tab" aria-selected="true">Leaderboards</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-hofsection="franchises" role="tab" aria-selected="false">Franchises</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-hofsection="blocked" role="tab" aria-selected="false">Bake-off &amp; What Is Not Published</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-hofsection="method" role="tab" aria-selected="false">Method &amp; Sample</button>'
-        '</div>'
+        + _hof_module_head("hof", on) + _hof_section_row(on) +
         '<div id="hof-section" class="mlbstats-section">'
         f'<div id="hof-app-root"{_csv_optin("hall-of-fame")}></div>'
         '</div>'
@@ -5705,6 +5710,115 @@ def build_hof() -> str:
                 "Career WAR, WAR7 and JAWS for every ten-season player (Baseball-Reference "
                 "daily WAR), with the ballot record. No Hall line or snub list.",
                 url=f"{SITE_ORIGIN}/hof/", image=module_share_image("hof"))
+
+
+# --------------------------------------------------------------------------- #
+# Awards / HoF: the shared module head and /awards/ (AWARDS_7; AWARDS_PLAN 3 'The
+# rename' and 5.1 'URL, shell, tabs, hash'). ONE masthead site serves two pages,
+# /awards/ and /hof/ (Q11_06_MODULE_MASTHEADS counts it once). While
+# awards_core.AWARDS_LIVE is False the head renders the Hall of Fame h1 exactly as
+# before and no strip, main() writes no awards/index.html, and /awards/ renders
+# only into the preview folder below for the render checks. AWARDS_11 flips it.
+# --------------------------------------------------------------------------- #
+AWARDS_PREVIEW_SITE = ROOT / ".cache" / "awards" / "preview" / "site"
+_AWARDS_SUB = ("The eephus selection for each BBWAA award, chosen by a published rule over the "
+               "site's own numbers, with superlatives from the same numbers and a ballot of your own. "
+               "Not a forecast of the writers' vote.")
+_AWARDS_DESCRIPTION = ("MVP, Cy Young, Rookie and Manager of the Year: the eephus selection by a "
+                       "published rule over eWAR and the site's metrics, season races, superlatives, "
+                       "and a ballot you can fill in, save and share. Not a forecast of the vote.")
+# The /hof/ section row: one list, two styles (boxed buttons while the flag is False,
+# the underline tab row once it is True), the same ARIA either way.
+_HOF_SECTIONS = (("board", "Leaderboards"), ("franchises", "Franchises"),
+                 ("blocked", "Bake-off &amp; What Is Not Published"), ("method", "Method &amp; Sample"))
+
+
+def _awards_live(live: bool | None = None) -> bool:
+    """The module flag, read at call time so a test can set it."""
+    return bool(awards_core.AWARDS_LIVE if live is None else live)
+
+
+def _hof_sub() -> str:
+    return (f'Career WAR, {_gl("war7", "WAR7")} and {_gl("jaws", "JAWS")} for '
+            'every ten-season player (Baseball-Reference daily WAR), with the ballot record. '
+            'Bands: eligible, active, five-year wait. No Hall line or snub list (Bake-off says why).')
+
+
+def _hof_module_head(active: str, live: bool | None = None) -> str:
+    """The masthead of both Awards / HoF pages: icon, h1, stage chip, the page's
+    sub line and (flag True) the link strip with aria-current on `active`
+    ("awards" or "hof"). The strip items are links, not tabs: each loads a page."""
+    sub = _AWARDS_SUB if active == "awards" else _hof_sub()
+    if not _awards_live(live):
+        return ('<div class="section-head section-head--byline"><div class="section-head-titles">'
+                f'<h1>{_masthead_icon("hof")}Hall of Fame {_stage_chip("hof")}</h1></div>'
+                f'<span class="section-sub">{sub}</span></div>')
+    name = html.escape(awards_core.MODULE_LABEL)
+    links = []
+    for key, label, href, icon in (("awards", "Awards", "/awards/", "aw-podium"),
+                                   ("hof", "Hall of Fame", "/hof/", "hof")):
+        cur = key == active
+        links.append(f'<a class="mlbstats-sectionbtn{" active" if cur else ""}" href="{href}"'
+                     + (' aria-current="page"' if cur else "")
+                     + f'>{_ico(icon, 12)}{label}</a>')
+    return ('<div class="section-head section-head--byline"><div class="section-head-titles">'
+            f'<h1>{_masthead_icon("hof")}{name} {_stage_chip("hof")}</h1></div>'
+            f'<span class="section-sub">{sub}</span></div>'
+            f'<nav class="mlbstats-sectionnav hof-modstrip" aria-label="{name}">' + "".join(links) + "</nav>")
+
+
+def _hof_section_row(live: bool) -> str:
+    box, btn = ("mlbstats-tabs", "mlbstats-tab") if live else ("mlbstats-sectionnav", "mlbstats-sectionbtn")
+    out = [f'<div class="{box}" role="tablist" aria-label="Hall of Fame sections">']
+    for i, (key, label) in enumerate(_HOF_SECTIONS):
+        on = i == 0
+        out.append(f'<button type="button" class="{btn}{" active" if on else ""}" data-hofsection="{key}" '
+                   f'role="tab" aria-selected="{"true" if on else "false"}">{label}</button>')
+    out.append("</div>")
+    return "".join(out)
+
+
+def build_awards(live: bool | None = None) -> str:
+    """The /awards/ page of Awards / HoF: the shared head, then one mount that
+    assets/awards.js fills from data/awards.json (Selections; Superlatives, My
+    Ballot, Rule and vote and Method land with AWARDS_8 and AWARDS_9). The value
+    ruler and the state component ride the shared head block. Not written to the
+    published tree while awards_core.AWARDS_LIVE is False (write_awards_page)."""
+    body = (
+        '<div class="fa-app mlbstats-app aw-app">'
+        + _hof_module_head("awards", live) +
+        f'<div id="awards-app-root" class="aw-root"{_csv_optin("awards")}></div>'
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/awards.css?v={_AWARDS_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/awards.js?v={_AWARDS_VER}" defer></script>'
+    )
+    return page("MLB Awards - eephus.io", "hof", body, _AWARDS_DESCRIPTION,
+                url=f"{SITE_ORIGIN}/awards/", image=module_share_image("hof"))
+
+
+def write_awards_preview(site: Path | None = None) -> Path:
+    """Render /awards/ (head and strip as the flag-on build draws them) into the
+    preview folder, never the published tree."""
+    out = (site or AWARDS_PREVIEW_SITE) / "awards" / "index.html"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(build_awards(live=True), encoding="utf-8")
+    return out
+
+
+def write_awards_page() -> str:
+    """main()'s one awards step: awards/index.html when the flag is True, else the
+    preview copy only. Returns the path written."""
+    if _awards_live():
+        _write("awards/index.html", build_awards())
+        return "awards/index.html"
+    out = write_awards_preview()
+    try:
+        rel = out.relative_to(ROOT).as_posix()
+    except ValueError:
+        rel = out.as_posix()
+    print(f"  held awards/index.html (AWARDS_LIVE False); preview {rel}")
+    return rel
 
 
 # --------------------------------------------------------------------------- #
@@ -7538,6 +7652,7 @@ def main() -> None:
     _write("diamond/index.html", build_diamond())
     _write("parks/index.html", build_parks())
     _write("hof/index.html", build_hof())
+    write_awards_page()
     _write("management/index.html", build_management())
     _write("franchise/index.html", build_franchise())
     _write("franchises/index.html", build_franchises_redirect())

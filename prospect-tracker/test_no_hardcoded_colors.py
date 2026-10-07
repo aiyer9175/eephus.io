@@ -125,3 +125,15 @@ def test_pixel_viz_and_key_rules_use_tokens_only():
 
 def test_px_viz_rules_live_outside_the_prospx_style(style_block):
     assert not _PX_VIZ_SEL.search(style_block)
+
+
+# ---------------------------------------------------------------------------
+# I15 (AWARDS_PLAN 6, AWARDS_7): the /awards/ stylesheet and client type no
+# colour; every paint is a site.css token, so both themes resolve them.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("rel", ["assets/awards.css", "assets/awards.js"])
+def test_awards_assets_type_no_colour(rel):
+    text = (Path(__file__).parent / rel).read_text(encoding="utf-8")
+    assert not re.findall(r"#[0-9a-fA-F]{3,8}\b", text)
+    assert not re.search(r"\brgba?\(|\bhsla?\(|gradient\(", text)
