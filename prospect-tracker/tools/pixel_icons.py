@@ -287,6 +287,22 @@ ICONS = [
         "##.++##++.##",
         "##...##...##",
         "############"]),
+    # Scores / Standings (SCORES_3; the masthead icon now, the nav leaf with
+    # SCORES_5b): a scoreboard on two posts, two club rows of a name block and
+    # a score block, the scores in the one accent group.
+    ("scores", "Scores / Standings", "nav", [
+        "############",
+        "##........##",
+        "##.###.++.##",
+        "##.###.++.##",
+        "##........##",
+        "##.###.++.##",
+        "##.###.++.##",
+        "##........##",
+        "############",
+        "...##..##...",
+        "...##..##...",
+        "..########.."]),
     ("team", "Masthead", "nav", [
         "############",
         "############",

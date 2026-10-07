@@ -299,6 +299,12 @@
      gold (that is data, not chrome). */
   --accent-lilac: #6E56CF;
   --logo-dot: var(--accent-lilac);
+  /* Chart series tokens (Part 8 8.E; the first lander adds them, Q8_12 reuses
+     them): --viz-1 is a chart's primary line, --viz-2 its second series.
+     --viz-1 measures 6.15:1 on light --bg-secondary, above the 3:1 floor for
+     graphics. */
+  --viz-1: #1D4ED8;
+  --viz-2: #C9A227;
 }
 
 /* ── Site-wide corner sharpening (retro / newspaper / baseball-card) ───────────
@@ -426,6 +432,9 @@
      gold stays gold - that is data, not chrome. */
   --accent-lilac: #9B8CFF;
   --logo-dot: var(--accent-lilac);
+  /* chart series, dark: --viz-1 measures 4.21:1 on dark --bg-secondary */
+  --viz-1: #3B7FCC;
+  --viz-2: #B08526;
   --iridescent: linear-gradient(90deg,#00D9FF 0%,#B47CFF 30%,#FF4FD8 55%,#FFD700 78%,#4FFF9E 100%);
   /* Pixel brand tokens, dark ramp (BR-02). The seams skip the ramp's gold. */
   --ramp-1: #00D9FF;

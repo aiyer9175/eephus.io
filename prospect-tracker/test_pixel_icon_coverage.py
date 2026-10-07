@@ -166,7 +166,7 @@ MASTHEADS = {
     "fantasy": B.build_fantasy, "betting": B.build_betting, "diamond": B.build_diamond,
     "parks": B.build_parks, "management": B.build_management, "ledger": B.build_ledger,
     "franchise": B.build_franchise, "hof": B.build_hof, "models": B.build_models,
-    "glossary": B.build_glossary, "team": B.build_team,
+    "glossary": B.build_glossary, "team": B.build_team, "scores": B.build_scores,
 }
 
 

@@ -128,6 +128,22 @@ def test_helper_refuses_betting_names_loudly():
             build_site._data_vers_script((name,))
 
 
+def test_helper_refuses_scores_names_loudly():
+    """The scores job (tools/scores_job.py) rewrites every /data/scores/ file
+    between builds, so a build-time stamp would pin a stale scoreboard under
+    the /data/ max-age: the helper refuses scores names as it refuses betting
+    names (SCORES_3, plan 2.3)."""
+    for name in ("scores/latest.json", "scores/index.json", "scores/2026-09-30.json", "scores_anything.json"):
+        with pytest.raises(ValueError):
+            build_site._data_vers_script((name,))
+
+
+def test_scores_shell_emits_no_stamp_map():
+    assert "EEPHUS_DATA_VERS" not in build_site.build_scores()
+    for fn, names in SHIPPED_LISTS.items():
+        assert not any(n.startswith("scores") for n in names), (fn, names)
+
+
 def test_no_shipped_list_carries_a_betting_name():
     for fn, names in SHIPPED_LISTS.items():
         assert not any(n.startswith("betting") for n in names), (fn, names)

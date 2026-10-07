@@ -665,6 +665,28 @@ def test_box_rows_carry_wpa_and_pli(gf849845):
     assert gf849845["card"]["flags"] == {"no_hitter": False, "perfect_game": False, "debut": False, "extra_innings": False, "shortened": False}
 
 
+def test_box_rows_carry_pitch_rates_that_reconcile(gf849845, g849845):
+    """Owner ask 2026-10-07: pitches per plate appearance for batters, per
+    inning for pitchers. A club's batters saw exactly the pitches the other
+    club's pitchers threw (MLB's pitch events against its boxscore counts)."""
+    box = gf849845["box"]
+    for bat_side, pit_side in (("home", "away"), ("away", "home")):
+        seen = sum(r["pit"] for r in box[bat_side]["batting"])
+        thrown = sum(r["pc"] for r in box[pit_side]["pitching"])
+        assert seen == thrown, (bat_side, seen, thrown)
+    harper = next(r for r in box["away"]["batting"] if r["name"] == "Bryce Harper")
+    assert harper["pit"] == 20 and harper["p_pa"] == 5.0
+    sale = next(r for r in box["home"]["pitching"] if r["name"] == "Chris Sale")
+    assert sale["pc"] == 95 and sale["outs"] == 19 and sale["p_ip"] == 15.0
+    hicklen = next(r for r in box["home"]["batting"] if r["name"] == "Brewer Hicklen")
+    assert hicklen["p_pa"] is None  # no plate appearance: no rate
+    # a read without pitch events prints no count rather than a short one
+    bare = [dict(e, playEvents=None) for e in g849845["wp"]]
+    assert sc.pitches_seen(bare) is None
+    assert all(r["pit"] is None and r["p_pa"] is None
+               for r in sc.box_rows(g849845["box"], bare)["home"]["batting"])
+
+
 def test_debuts_from_the_feed(g849845, lg):
     feed = copy.deepcopy(g849845["feed"])
     feed["gameData"]["players"]["ID663586"]["mlbDebutDate"] = "2026-09-29"
