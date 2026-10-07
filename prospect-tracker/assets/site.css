@@ -2542,6 +2542,12 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 /* QMLA17: a header that does not sort (Pos, Also on) does not promise a click. */
 .mlbx .mlbstats-table th[data-col]:not([tabindex]) { cursor: default; }
+/* The board pager (assets/mlbstats.js mountPagers): status first, then Prev,
+   Next and the page size, under the table's own scroll box. */
+.mlbx .mlbx-pager { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 8px 0 4px;
+  font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
+.mlbx .mlbx-pager-n { font-variant-numeric: tabular-nums; margin-right: auto; }
+.mlbx .mlbx-pager button.chip[disabled] { opacity: .45; cursor: default; }
 /* The per-season line behind a total. It WRAPS and each item can shrink to
    nothing, so the child cell's min-content width never pushes the table wider
    than its own columns - which is the one way an expander could break the fit

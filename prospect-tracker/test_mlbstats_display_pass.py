@@ -12,6 +12,7 @@ Playwright, Chromium or the Overall board is missing.
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -131,5 +132,82 @@ def test_the_caret_takes_a_44px_tap_under_a_finger(browser, server):
                   r.height - parseFloat(cs.top) - parseFloat(cs.bottom)];
         }""")
         assert eff[0] >= 44 and eff[1] >= 44, eff
+    finally:
+        ctx.close()
+
+
+# ---------------------------------------------------------------- QMLP05 and paging
+def _war_rows(n: int) -> str:
+    """The views harness eWAR sample, grown to n distinct qualified hitters."""
+    doc = json.loads(views.WAR_SAMPLE)
+    base = doc["players"][1]
+    doc["players"] = [dict(base, mlbam=900000 + i, name="Player %03d" % i, war=round(9.0 - i * 0.05, 2))
+                      for i in range(n)]
+    return json.dumps(doc)
+
+
+def _rows(html: str) -> list[str]:
+    body = views._table(html).split("<tbody")[1]
+    return [m.group(1) for m in re.finditer(r"<tr([^>]*)>", body)]
+
+
+def test_a_long_board_pages_at_100_with_every_row_still_in_the_table():
+    html = views._render_war(sample=_war_rows(130))
+    rows = _rows(html)
+    assert len(rows) == 130
+    hidden = [i for i, r in enumerate(rows) if " hidden" in r]
+    assert hidden == list(range(100, 130)), hidden
+    assert 'data-mlbpage="war" data-mlbpage-total="130"' in html
+    assert all('data-mlbi="%d"' % i in r for i, r in enumerate(rows))
+
+
+def test_a_short_board_does_not_page():
+    html = views._render_war(sample=_war_rows(50))
+    assert "data-mlbpage" not in html and " hidden" not in "".join(_rows(html))
+
+
+def test_overall_renders_its_table_at_most_twice_on_load(browser, server):
+    """QMLP05: the board rendered four times on load (its payload, the window
+    list, the per-season substrate, the links map). The window list and the
+    links map now patch in place."""
+    ctx = _context(browser, 1280, 900)
+    try:
+        page = ctx.new_page()
+        _open(page, server)
+        page.wait_for_timeout(2500)
+        assert page.evaluate("window.__ins") <= 2, page.evaluate("window.__ins")
+    finally:
+        ctx.close()
+
+
+def test_the_pager_turns_pages_and_csv_keeps_every_row(browser, server):
+    ctx = _context(browser, 1280, 900)
+    try:
+        page = ctx.new_page()
+        _open(page, server)
+        total = page.evaluate("Number(document.querySelector('%stable[data-mlbpage]')"
+                              ".getAttribute('data-mlbpage-total'))" % R)
+        assert total > 100
+        shown = ("[...document.querySelectorAll('%stbody tr')]"
+                 ".filter(r => !r.hidden && !r.classList.contains('mlbx-seasonrow')).length" % R)
+        assert page.evaluate(shown) == 100
+        status = page.locator(R + ".mlbx-pager-n")
+        assert status.get_attribute("role") == "status"
+        assert status.text_content() == "Rows 1 to 100 of %d" % total
+        page.click(R + "[data-mlbpage-step='1']")
+        assert status.text_content() == "Rows 101 to 200 of %d" % total
+        assert page.evaluate("document.querySelector('%stbody').style.counterReset" % R) == "mlbx-rank 100"
+        page.click(R + ".mlbx-caret >> nth=150")
+        page.wait_for_timeout(200)
+        assert status.text_content() == "Rows 101 to 200 of %d" % total, "a season line keeps its page"
+        with page.expect_download() as dl:
+            page.click(R + ".eph-csv-btn")
+        lines = Path(dl.value.path()).read_text(encoding="utf-8-sig").strip().splitlines()
+        assert len(lines) - 1 == total
+        assert page.evaluate(shown) == 100, "the page is hidden again after the scrape"
+        page.click(R + "th[data-col='pa']")
+        assert status.text_content() == "Rows 1 to 100 of %d" % total, "a sort opens on page 1"
+        page.select_option(R + "[data-mlbpage-size]", "0")
+        assert page.evaluate(shown) == total
     finally:
         ctx.close()
