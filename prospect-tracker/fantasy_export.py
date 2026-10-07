@@ -1000,6 +1000,29 @@ def _detail_by_mlbam() -> dict:
     return out
 
 
+def _injury_chip(pl: dict) -> dict:
+    """The injury chip fields for one timeseries player (wiring W02, 2026-10-07).
+
+    Copied, never derived: `il` is the PROSPX card's own il_status (type and
+    placement date) when the player is on the IL right now, and `tj` is
+    health_profile's Tommy John surgery date when is_post_tj is set (date None
+    when only the flag is known). The client counts days and months from these
+    dates, the same arithmetic PROSPX's Injured list runs. Empty dict for a
+    healthy player, so the keys ride only on the rows that need them.
+
+    DISPLAY ONLY: no score, sort or tier reads these keys. The dynasty blend
+    weights are stated conventions (do-not-reopen item 14), and the chip must
+    not become a sixth term."""
+    out: dict = {}
+    il = pl.get("il_status") or {}
+    if il.get("is_on_il"):
+        out["il"] = {"type": il.get("type"), "since": il.get("since")}
+    hp = pl.get("health_profile") or {}
+    if hp.get("is_post_tj"):
+        out["tj"] = {"date": hp.get("tj_surgery_date")}
+    return out
+
+
 def _callup_watch(ts: dict | None = None) -> list:
     """Best-effort: fantasy-relevant prospects near the majors, from PROSPX forward
     signals (timeseries.json, a generated artifact). Empty when unavailable. Accepts
@@ -1022,7 +1045,8 @@ def _callup_watch(ts: dict | None = None) -> list:
             out.append({"mlbam": pl.get("mlbam_id"), "name": pl.get("player_name"),
                         "org": pl.get("org"), "pos": pl.get("position"), "eta": eta_year,
                         "fv": pl.get("consensus_fv") or pl.get("fv_close"),
-                        "fvE": round(efv, 1) if efv is not None else None})
+                        "fvE": round(efv, 1) if efv is not None else None,
+                        **_injury_chip(pl)})
     out.sort(key=lambda x: -(x.get("fvE") if x.get("fvE") is not None else (x.get("fv") or 0)))
     return out[:60]
 
@@ -1123,6 +1147,8 @@ def _dynasty_prospects(ts: dict | None, season: int, xfv: dict | None = None,
             "surplus": round(xr.get("surplus_mm") or 0.0),
             "band": [xr.get("band_p10_mm"), xr.get("band_p90_mm")],
             "score": round(score, 1),
+            # Display-only injury chip, added AFTER the score is fixed.
+            **_injury_chip(pl),
         })
     rows.sort(key=lambda r: -(r["score"] if r.get("score") is not None else -1e9))
     rows = rows[:n]

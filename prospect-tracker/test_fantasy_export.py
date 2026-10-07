@@ -255,6 +255,115 @@ def test_dynasty_respects_top_n_cap():
     assert [r["mlbam"] for r in rows] == [20, 19, 18, 17, 16], rows
 
 
+# ---- the injury chip on Dynasty and Call-up Watch (wiring W02, 2026-10-07) --
+# PROSPX carries il_status (type, since) and health_profile.is_post_tj on every
+# timeseries player. Both prospect lists copy them onto the row as `il` and
+# `tj`, read off the SAME timeseries dict build_sections loads once, and the
+# dynasty blend never reads them.
+def _injury_ts():
+    rows = [
+        dict(_mk_ts_row("hurt", "Hurt Arm", 1, pos="SP", eta_year=2026),
+             il_status={"player_key": "hurt", "is_on_il": 1, "since": "2026-07-25",
+                        "type": "60-day", "description": "transferred to the 60-day"},
+             health_profile={"is_post_tj": True, "tj_surgery_date": "2025-08-01",
+                             "il_stints_12mo": 2, "il_days_12mo": 140}),
+        dict(_mk_ts_row("tjonly", "Tj Only", 2, pos="SP", eta_year=2027),
+             il_status={},
+             health_profile={"is_post_tj": True, "tj_surgery_date": None}),
+        dict(_mk_ts_row("well", "Well Bat", 3, eta_year=2027),
+             il_status={},
+             health_profile={"is_post_tj": False, "tj_surgery_date": None}),
+        # A closed stint the table no longer flags reads as healthy.
+        dict(_mk_ts_row("cleared", "Cleared Bat", 4, eta_year=2026),
+             il_status={"is_on_il": 0, "since": "2026-04-01", "type": "7-day"}),
+    ]
+    xfv = {"by_player": {k: _mk_xfv_row(50.0 + i, star=0.1 * i, bust=0.05 * i,
+                                        surplus=10.0 * i)
+                         for i, k in enumerate(["hurt", "tjonly", "well", "cleared"])}}
+    return {"players": rows}, xfv
+
+
+def _expected_chip(pl):
+    il = pl.get("il_status") or {}
+    hp = pl.get("health_profile") or {}
+    out = {}
+    if il.get("is_on_il"):
+        out["il"] = {"type": il["type"], "since": il["since"]}
+    if hp.get("is_post_tj"):
+        out["tj"] = {"date": hp.get("tj_surgery_date")}
+    return out
+
+
+def _sections_off(ts, xfv, monkeypatch):
+    monkeypatch.setattr(fe, "_load_json", lambda name: {"xfv.json": xfv}.get(name))
+    fe._efv_by_key.cache_clear()
+    try:
+        return fe._dynasty_prospects(ts, 2026, xfv=xfv), fe._callup_watch(ts)
+    finally:
+        fe._efv_by_key.cache_clear()
+
+
+def test_injury_chip_equals_the_prospx_card_il_status(monkeypatch):
+    ts, xfv = _injury_ts()
+    dyn, cw = _sections_off(ts, xfv, monkeypatch)
+    by_mid = {p["mlbam_id"]: p for p in ts["players"]}
+    assert len(dyn) == 4 and len(cw) == 4, (dyn, cw)
+    for rows in (dyn, cw):
+        for r in rows:
+            got = {k: r[k] for k in ("il", "tj") if k in r}
+            assert got == _expected_chip(by_mid[r["mlbam"]]), r
+    hurt = next(r for r in dyn if r["mlbam"] == 1)
+    assert hurt["il"] == {"type": "60-day", "since": "2026-07-25"}
+    assert hurt["tj"] == {"date": "2025-08-01"}
+    # A healthy row and a cleared stint carry no chip keys at all.
+    assert not ({"il", "tj"} & set(next(r for r in dyn if r["mlbam"] == 3)))
+    assert "il" not in next(r for r in cw if r["mlbam"] == 4)
+
+
+def test_injury_chip_stays_out_of_the_dynasty_score(monkeypatch):
+    """The dynasty score, rank and tier are byte-identical with and without the
+    injury fields on the timeseries rows: the chip is not a sixth blend term."""
+    ts, xfv = _injury_ts()
+    with_chip, cw_with = _sections_off(ts, xfv, monkeypatch)
+    bare = {"players": [{k: v for k, v in p.items()
+                         if k not in ("il_status", "health_profile")}
+                        for p in ts["players"]]}
+    without, cw_without = _sections_off(bare, xfv, monkeypatch)
+
+    def strip(rows):
+        return [{k: v for k, v in r.items() if k not in ("il", "tj")} for r in rows]
+    assert json.dumps(strip(with_chip)) == json.dumps(without)
+    assert json.dumps(strip(cw_with)) == json.dumps(cw_without)
+    assert any("il" in r for r in with_chip) and not any("il" in r for r in without)
+
+
+def test_injury_chip_matches_prospx_on_the_built_timeseries(timeseries_doc):
+    """The same invariant on the real build: every chip on both lists equals
+    the il_status and health_profile of a timeseries player with that mlbam,
+    and the dynasty scores equal a build with the injury fields removed."""
+    xfv = fe._load_json("xfv.json")
+    if not isinstance(xfv, dict):
+        pytest.skip("data/xfv.json not built")
+    season = date.today().year
+    dyn = fe._dynasty_prospects(timeseries_doc, season, xfv=xfv)
+    fe._efv_by_key.cache_clear()
+    cw = fe._callup_watch(timeseries_doc)
+    assert dyn, "the built timeseries must yield a dynasty board"
+    by_mid: dict = {}
+    for p in timeseries_doc.get("players") or []:
+        if p.get("mlbam_id"):
+            by_mid.setdefault(p["mlbam_id"], []).append(_expected_chip(p))
+    for r in dyn + cw:
+        got = {k: r[k] for k in ("il", "tj") if k in r}
+        assert got in by_mid[r["mlbam"]], r
+    bare = {"players": [{k: v for k, v in p.items()
+                         if k not in ("il_status", "health_profile")}
+                        for p in timeseries_doc.get("players") or []]}
+    without = fe._dynasty_prospects(bare, season, xfv=xfv)
+    assert [(r["mlbam"], r["score"], r["rank"], r["tier"]) for r in dyn] == \
+        [(r["mlbam"], r["score"], r["rank"], r["tier"]) for r in without]
+
+
 def test_buy_sell_entries_carry_side_for_two_way_players():
     """Regression, 2026-07-31. Every section list is bare mlbam ids, which is fine
     for the single-sided sections (a renderer of ROS Hitters knows it wants "hit").

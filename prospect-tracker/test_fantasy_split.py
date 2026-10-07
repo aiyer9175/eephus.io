@@ -2048,6 +2048,68 @@ def test_dynasty_callup_watch_prefers_efv():
     assert ">54<" in html, html[:800]     # eFV 54.4 to nearest, not the 53 ceiling of 52.5
 
 
+def _injury_payload():
+    """DYN_PAYLOAD with the W02 injury chip fields on one Dynasty row and the
+    Call-up Watch row: an IL stint placed 40 days ago and a Tommy John date
+    on the first of the month 14 months back."""
+    import datetime as _dt
+    today = _dt.date.today()
+    since = (today - _dt.timedelta(days=40)).isoformat()
+    y, m = divmod(today.year * 12 + today.month - 1 - 14, 12)
+    tj = _dt.date(y, m + 1, 1).isoformat()
+    doc = json.loads(DYN_PAYLOAD)
+    doc["sections"]["dynasty"][1].update(
+        {"il": {"type": "60-day", "since": since}, "tj": {"date": tj}})
+    doc["sections"]["callup_watch"][0].update({"il": {"type": "7-day", "since": since}})
+    return doc
+
+
+def _dyn_ctx_doc(doc):
+    c = MiniRacer()
+    c.eval(APP_PRELUDE % json.dumps(doc))
+    c.eval((ASSETS / "dynasty.js").read_text(encoding="utf-8"))
+    return c
+
+
+def _near(found, want):
+    return found and abs(int(found.group(1)) - want) <= 1
+
+
+def test_dynasty_injury_chip_renders_type_days_and_tj_months():
+    c = _dyn_ctx_doc(_injury_payload())
+    html = c.eval('__go("#section=board")')
+    row = re.search(r"Middle Kid.*?</div></div>", html, re.DOTALL)
+    assert row, html[:1200]
+    il = re.search(r'dyn-inj-il"[^>]*>60-day IL &middot; (\d+)d<', row.group(0))
+    assert _near(il, 40), row.group(0)
+    tj = re.search(r'dyn-inj-tj"[^>]*>Post-TJ &middot; (\d+) mo<', row.group(0))
+    assert _near(tj, 14), row.group(0)
+    # The rows without the fields carry no chip.
+    assert html.count("dyn-inj-il") == 1 and html.count("dyn-inj-tj") == 1
+    calls = c.eval('__go("#section=callups")')
+    il = re.search(r'dyn-inj-il"[^>]*>7-day IL &middot; (\d+)d<', calls)
+    assert _near(il, 40), calls[:1200]
+    # The table's CSV reads the bare name, not the chip text.
+    assert 'class="dyn-nm" data-export-text="Almost Up"' in calls, calls[:1200]
+
+
+def test_dynasty_injury_chip_moves_no_rank_or_grade():
+    """The board renders the same rank order, eFV and tape numbers with the
+    chip fields present as without them, under every lens."""
+    plain = _dyn_ctx_doc(json.loads(DYN_PAYLOAD))
+    chips = _dyn_ctx_doc(_injury_payload())
+    def strip(h):
+        h = re.sub(r'<span class="dyn-inj dyn-inj-(?:il|tj)"[^>]*>[^<]*</span>', "", h)
+        h = re.sub(r' data-export-text="[^"]*"', "", h)
+        return h.replace('<span class="dyn-inj-row"></span>', "")
+    for h in ("#section=board", "#section=board&lens=contend",
+              "#section=board&lens=rebuild", "#section=callups"):
+        a = plain.eval('__go(%s)' % json.dumps(h))
+        b = chips.eval('__go(%s)' % json.dumps(h))
+        assert "dyn-inj" in b and "dyn-inj" not in strip(b), h
+        assert strip(a) == strip(b), h
+
+
 def test_dynasty_empty_payload_is_a_note_not_a_blank():
     c = MiniRacer()
     c.eval(APP_PRELUDE % json.dumps({"season": 2026, "sections": {}}))
