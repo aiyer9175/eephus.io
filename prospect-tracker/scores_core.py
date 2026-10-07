@@ -1234,6 +1234,356 @@ def build_card(game: dict, *, generated_at: str, wp=None, derived: dict | None =
 
 
 # --------------------------------------------------------------------------- #
+# 8b. Clips (SCORES_4a_VIDEO; plan 6.0 to 6.7 and 8.4)
+# --------------------------------------------------------------------------- #
+#: The owner's answer SC-VIDEO (a): MLB's own embed player in a frame from
+#: streamable.com/m/<slug>; the clip object stores `embed` and no media file.
+VIDEO_BRANCH = "a"
+#: Distribution tags in a clip's taxonomy that name a licensed sportsbook feed
+#: (plan 6.0); a later book tag is added here by commit.
+SPORTSBOOK_TAGS = ("fan-duel", "bet-mgm")
+#: Taxonomy values that mark an ABS challenge reel. A play clip matched by its
+#: `guid` is an exact join and keeps a replay `challenge` tag (849845's hit by
+#: pitch carries one); an `abs` reel never matches a play, and no reel tagged
+#: `abs` or `challenge` becomes a game video or a pitcher star's reel.
+ABS_PLAY_TAGS = ("abs",)
+ABS_REEL_TAGS = ("abs", "challenge")
+#: The poster cuts the clip object keeps (plan 6.2), and the template fallback.
+POSTER_WIDTHS = {"w480": (480, 270), "w960": (960, 540)}
+#: Never stored (plan 8.4): renditions the page must not reach.
+FORBIDDEN_MEDIA = ("highbit", "trickplay", "portrait", "http_cloud_wired")
+#: A plate appearance's earlier events (plan 6.1) by `eventType` prefix or
+#: `type`, with the label the Plays tab prints ("Pickoff attempt, top 3").
+EVENT_LABELS = (
+    ("pickoff_attempt", "Pickoff attempt"), ("pickoff_error", "Pickoff error"),
+    ("pickoff_caught_stealing", "Caught stealing"), ("pickoff", "Pickoff"),
+    ("stepoff", "Step-off"), ("pitcher_step_off", "Step-off"),
+    ("stolen_base", "Stolen base"), ("caught_stealing", "Caught stealing"),
+    ("wild_pitch", "Wild pitch"), ("passed_ball", "Passed ball"), ("balk", "Balk"),
+    ("defensive_indiff", "Defensive indifference"), ("pitch", "Pitch"),
+)
+#: A clip is pending ("No MLB clip for this play yet") this long after a final.
+CLIP_PENDING_S = 24 * 3600
+_SLUG_RE = re.compile(r"^[a-z0-9-]+$")
+
+
+def _taxonomy(item: dict) -> set:
+    return {str(k.get("value") or "").lower() for k in item.get("keywordsAll") or []
+            if isinstance(k, dict) and k.get("type") == "taxonomy"}
+
+
+def _keyword_values(item: dict, kind: str) -> list[str]:
+    return [str(k.get("value")) for k in item.get("keywordsAll") or []
+            if isinstance(k, dict) and k.get("type") == kind and k.get("value") is not None]
+
+
+def parse_duration(s) -> int | None:
+    """"00:00:29" (HH:MM:SS on every sampled item) as whole seconds, 1 to 3,600;
+    None otherwise."""
+    m = re.match(r"^(\d{1,2}):(\d{2}):(\d{2})$", str(s or ""))
+    if not m:
+        return None
+    sec = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
+    return sec if 1 <= sec <= 3600 else None
+
+
+def _host(url) -> str | None:
+    m = re.match(r"^https://([^/\s]+)/", str(url or ""))
+    return m.group(1).lower() if m else None
+
+
+def pick_file(item: dict, name: str) -> str | None:
+    """The `playbacks` entry named `name` (`mp4Avc`, `hlsCloud`) whose URL
+    contains the item's `mediaPlaybackId`, else the first one (plan 6.2: on
+    849845 an item's own asset is listed third on one multi-asset item)."""
+    cands = [str(p.get("url") or "") for p in item.get("playbacks") or []
+             if isinstance(p, dict) and p.get("name") == name and p.get("url")]
+    mid = str(item.get("mediaPlaybackId") or "")
+    for u in cands:
+        if mid and mid in u:
+            return u
+    return cands[0] if cands else None
+
+
+def _posters(item: dict, notes: dict) -> dict | None:
+    img = item.get("image") or {}
+    out = {}
+    for key, (w, h) in POSTER_WIDTHS.items():
+        url = None
+        for c in img.get("cuts") or []:
+            if isinstance(c, dict) and _int(c.get("width"), 0) == w and _int(c.get("height"), 0) == h:
+                url = c.get("src")
+                break
+        if not url and img.get("templateUrl"):
+            url = str(img["templateUrl"]).replace("{formatInstructions}", f"w_{w},h_{h},f_jpg,c_fill,g_auto")
+        if url and url_ok(url, "poster"):
+            out[key] = url
+        elif url:
+            notes.setdefault("new_media_host", []).append(_host(url) or "?")
+    return out or None
+
+
+def trim_content(content) -> dict:
+    """What the job keeps in its work file from a `/game/{pk}/content` read:
+    the video items with only the keys the join and the clip object use (no
+    headline, blurb, description, title or kicker; no rendition but `mp4Avc`
+    and `hlsCloud`). Each fetch replaces the game's set."""
+    items = (((content or {}).get("highlights") or {}).get("highlights") or {}).get("items") or []
+    out = []
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        img = it.get("image") or {}
+        cuts = [{"width": c.get("width"), "height": c.get("height"), "src": c.get("src")}
+                for c in img.get("cuts") or [] if isinstance(c, dict)
+                and (_int(c.get("width"), 0), _int(c.get("height"), 0)) in POSTER_WIDTHS.values()]
+        out.append({
+            "type": it.get("type"), "state": it.get("state"), "date": it.get("date"), "slug": it.get("slug"),
+            "guid": it.get("guid"), "mediaPlaybackId": it.get("mediaPlaybackId"), "duration": it.get("duration"),
+            "cclocationVtt": it.get("cclocationVtt") or None,
+            "keywordsAll": [{"type": k.get("type"), "value": k.get("value")} for k in it.get("keywordsAll") or []
+                            if isinstance(k, dict) and k.get("type") in ("taxonomy", "player_id", "game_pk")],
+            "image": {"templateUrl": img.get("templateUrl"), "cuts": cuts},
+            "playbacks": [{"name": p.get("name"), "url": p.get("url")} for p in it.get("playbacks") or []
+                          if isinstance(p, dict) and p.get("name") in ("mp4Avc", "hlsCloud")],
+        })
+    return {"items": out}
+
+
+def _items_of(content) -> list[dict]:
+    if isinstance(content, dict) and isinstance(content.get("items"), list):
+        items = content["items"]
+    else:
+        items = trim_content(content)["items"]
+    return [it for it in items if isinstance(it, dict) and it.get("type") == "video" and it.get("state") == "A"]
+
+
+def clip_object(item: dict, *, kind: str, match: str, branch: str = VIDEO_BRANCH, seen_at=None,
+                play_id=None, event=None, notes: dict | None = None) -> dict | None:
+    """The clip object of plan 8.4, or None when the item has no id or no
+    usable slug (no page to fall back to). Branch (a): `embed` is MLB's player
+    at streamable.com/m/<slug>, set only when the item's own video file (the
+    6.2 pick of `mp4Avc`, else `hlsCloud`) sits on an allowlisted video host,
+    which is what that player plays; an unknown host leaves the clip at its
+    MLB.com `page` (F1) and records `new_media_host`. No `hls`, `mp4` or `vtt`
+    under (a). Nothing of MLB's prose is copied."""
+    notes = notes if notes is not None else {}
+    cid, slug = item.get("mediaPlaybackId"), str(item.get("slug") or "")
+    if not cid or not _SLUG_RE.match(slug):
+        notes["dropped"] = notes.get("dropped", 0) + 1
+        return None
+    page = f"https://www.mlb.com/video/{slug}"
+    if not url_ok(page, "page"):
+        notes["dropped"] = notes.get("dropped", 0) + 1
+        return None
+    tax = _taxonomy(item)
+    clip = {"id": str(cid), "kind": kind, "match": match, "play_id": play_id, "event": event,
+            "feeds_sportsbook": bool(tax & set(SPORTSBOOK_TAGS)),
+            "poster": _posters(item, notes), "dur_s": parse_duration(item.get("duration")),
+            "posted_at": item.get("date"), "seen_at": seen_at, "page": page}
+    files = [u for u in (pick_file(item, "mp4Avc"), pick_file(item, "hlsCloud")) if u]
+    if branch == "a":
+        clip["embed"] = None
+        if files:
+            bad = [_host(u) or "?" for u in files if not url_ok(u, "mp4" if u.endswith(".mp4") else "hls")]
+            if bad:
+                notes.setdefault("new_media_host", []).extend(bad)
+            else:
+                emb = f"https://{FRAME_HOST}/m/{slug}"
+                clip["embed"] = emb if url_ok(emb, "embed") else None
+        if clip["embed"] is None:
+            notes["f1"] = notes.get("f1", 0) + 1
+    if not clip["poster"]:
+        clip["poster"] = None
+    return clip
+
+
+def _event_kind(ev: dict) -> str:
+    """The type of a plate appearance's event, from `details.eventType`, else
+    `type`, else the short call label MLB gives a pickoff attempt or a
+    step-off (mapped to a constant, never copied)."""
+    det = ev.get("details") or {}
+    et = str(det.get("eventType") or "").lower()
+    if et:
+        return et
+    t = str(ev.get("type") or "").lower()
+    if t == "pickoff":
+        return "pickoff_attempt"
+    if t:
+        return t
+    label = str(det.get("description") or "").lower()
+    if label.startswith("pickoff attempt"):
+        return "pickoff_attempt"
+    if "step off" in label:
+        return "stepoff"
+    return "pitch" if ev.get("isPitch") else "play"
+
+
+def event_label(kind: str, half: str, inning: int) -> str:
+    """"Pickoff attempt, top 3" for an earlier event's clip (plan 6.1)."""
+    word = "Play"
+    for pre, lab in EVENT_LABELS:
+        if kind.startswith(pre):
+            word = lab
+            break
+    return f"{word}, {half} {int(inning)}"
+
+
+def _tie_key(item: dict):
+    """Several candidates for one event: captions first, then taxonomy
+    in-game-highlight, then the earliest date, then slug (plan 6.1)."""
+    return (0 if item.get("cclocationVtt") else 1, 0 if "in-game-highlight" in _taxonomy(item) else 1,
+            str(item.get("date") or ""), str(item.get("slug") or ""))
+
+
+def join_clips(content, wp, *, pk=None, branch: str = VIDEO_BRANCH, seen_at=None) -> dict:
+    """The join of plan 6.1 over a content read and the game's winProbability
+    elements. Returns `{clips {id: clip}, result {ab: id}, events {ab: [{event,
+    label, clip}]}, recap, condensed, reels {player id: id}, log}`.
+
+    A play clip is an item whose `guid` equals a `playId` of a completed plate
+    appearance. When it is the plate appearance's final event (its last
+    `playEvents[]` entry carrying a `playId`) it is the RESULT clip; a clip of
+    an earlier event (a pickoff attempt, a step-off, a stolen base) is stored
+    with that event's type and label and never captions the result. Game
+    videos: taxonomy game-recap and condensed-game. Pitcher reels: taxonomy
+    highlight-reel-pitching, no guid, exactly one player_id, this game_pk.
+    Never an ABS reel, an interview or a data-visualisation item, never a
+    headline, player or inning guess."""
+    items = _items_of(content)
+    notes: dict = {}
+    by_play: dict = {}
+    for p in complete_elements(wp):
+        ids = [e.get("playId") for e in p.get("playEvents") or [] if isinstance(e, dict) and e.get("playId")]
+        final = ids[-1] if ids else None
+        for e in p.get("playEvents") or []:
+            if isinstance(e, dict) and e.get("playId"):
+                by_play[str(e["playId"])] = {"ab": _ab(p), "final": e["playId"] == final, "kind": _event_kind(e),
+                                             "half": _half(p), "inning": _inning(p)}
+    cands: dict = {}
+    for it in items:
+        g = it.get("guid")
+        if g and str(g) in by_play and not (_taxonomy(it) & set(ABS_PLAY_TAGS)):
+            cands.setdefault(str(g), []).append(it)
+    out = {"clips": {}, "result": {}, "events": {}, "recap": None, "condensed": None, "reels": {}}
+
+    def add(it, **kw):
+        c = clip_object(it, branch=branch, seen_at=seen_at, notes=notes, **kw)
+        if c is not None:
+            out["clips"][c["id"]] = c
+            return c["id"]
+        return None
+
+    for pid in sorted(cands, key=lambda x: (by_play[x]["ab"], x)):
+        it = sorted(cands[pid], key=_tie_key)[0]
+        info = by_play[pid]
+        ev = "result" if info["final"] else info["kind"]
+        cid = add(it, kind="play", match="play", play_id=pid, event=ev)
+        if cid is None:
+            continue
+        if info["final"]:
+            out["result"][info["ab"]] = cid
+        else:
+            out["events"].setdefault(info["ab"], []).append(
+                {"event": ev, "label": event_label(ev, info["half"], info["inning"]), "clip": cid})
+    for kind, tag in (("recap", "game-recap"), ("condensed", "condensed-game")):
+        pool = [it for it in items if tag in _taxonomy(it) and not (_taxonomy(it) & set(ABS_REEL_TAGS))]
+        if pool:
+            out[kind] = add(sorted(pool, key=_tie_key)[0], kind=kind, match="game")
+    for it in sorted(items, key=_tie_key):
+        tax = _taxonomy(it)
+        pids = _keyword_values(it, "player_id")
+        gpk = _keyword_values(it, "game_pk")
+        if ("highlight-reel-pitching" in tax and not it.get("guid") and len(pids) == 1
+                and not (tax & set(ABS_REEL_TAGS)) and pk is not None and str(pk) in gpk):
+            out["reels"].setdefault(int(pids[0]), it)
+    hosts = sorted(set(notes.get("new_media_host") or []))
+    out["log"] = {"items": len(items), "matched": len(out["result"]), "event_clips": sum(len(v) for v in out["events"].values()),
+                  "with_captions": sum(1 for pid in cands if sorted(cands[pid], key=_tie_key)[0].get("cclocationVtt")),
+                  "dropped": int(notes.get("dropped") or 0), "f1": int(notes.get("f1") or 0),
+                  "new_media_host": hosts}
+    return out
+
+
+def attach_clips(gf: dict, joined: dict, wp, boxscore: dict | None, *, pending: bool,
+                 branch: str = VIDEO_BRANCH, seen_at=None) -> dict:
+    """Write a join into a built game file (in place, and returned): every
+    plays row's result `clip` and `event_clips`; Biggest plays' result clips
+    and `clip_state` (`pending` while a clip may still post, else `none`; null
+    with a clip); a star's clip (a hitter's highest-credit plate appearance's
+    result clip; a pitcher's one-player pitching reel of this game, else his
+    highest-credit plate appearance's result clip); the card's `top_play.clip_s`
+    and `videos`; and `clips`, holding only the clip objects referenced."""
+    res = joined.get("result") or {}
+    used: set = set()
+    for row in gf.get("plays") or []:
+        row["clip"] = res.get(row["ab"])
+        row["event_clips"] = [dict(e) for e in (joined.get("events") or {}).get(row["ab"], [])]
+        if row["clip"]:
+            used.add(row["clip"])
+        used.update(e["clip"] for e in row["event_clips"])
+    for b in gf.get("plays_big") or []:
+        b["clip"] = res.get(b["ab"])
+        b["clip_state"] = None if b["clip"] else ("pending" if pending else "none")
+    codes = {}
+    card = gf.get("card") or {}
+    for side in ("away", "home"):
+        codes[(card.get(side) or {}).get("code")] = side
+    acc = player_wpa(wp) if gf.get("stars") else {}
+    pitchers = set()
+    for side in ("away", "home"):
+        for r in (((gf.get("box") or {}).get(side) or {}).get("pitching") or []):
+            pitchers.add((r.get("id"), side))
+    for s in gf.get("stars") or []:
+        side = codes.get(s.get("team"))
+        a = acc.get((s["id"], side)) or {}
+        best = res.get(a.get("best_ab")) if a.get("best_ab") is not None else None
+        clip = None
+        if (s["id"], side) in pitchers:
+            reel = (joined.get("reels") or {}).get(int(s["id"]))
+            if reel is not None:
+                c = clip_object(reel, kind="reel", match="player", branch=branch, seen_at=seen_at)
+                if c is not None:
+                    joined["clips"][c["id"]] = c
+                    clip = c["id"]
+        s["clip"] = clip or best
+        if s["clip"]:
+            used.add(s["clip"])
+    for b in gf.get("plays_big") or []:
+        if b["clip"]:
+            used.add(b["clip"])
+    clips = joined.get("clips") or {}
+    vids = {"recap_s": None, "condensed_s": None}
+    for kind in ("recap", "condensed"):
+        cid = joined.get(kind)
+        if cid and cid in clips:
+            used.add(cid)
+            vids[f"{kind}_s"] = clips[cid].get("dur_s")
+    gf["clips"] = {cid: clips[cid] for cid in sorted(used) if cid in clips}
+    if card.get("state") == "final":
+        card["videos"] = vids
+        tp = card.get("top_play")
+        if tp is not None:
+            cid = res.get(tp.get("ab"))
+            tp["clip_s"] = clips[cid].get("dur_s") if cid in clips else None
+    return gf
+
+
+def diamond_gating_on(config_text: str | None) -> bool:
+    """True when assets/diamond-config.js's window.EEPHUS_DIAMOND object reads
+    `gating: true` (comments ignored)."""
+    text = re.sub(r"//[^\n]*", "", str(config_text or ""))
+    m = re.search(r"\bgating\s*:\s*(true|false)\b", text)
+    return bool(m and m.group(1) == "true")
+
+
+def embed_reconfirmed() -> bool:
+    """SCORES_EMBED_RECONFIRMED holds an ISO date (the owner's re-confirmation
+    of embedding before the Diamond gate opens, SC-PAID (a))."""
+    return bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(SCORES_EMBED_RECONFIRMED or "")))
+
+
+# --------------------------------------------------------------------------- #
 # 8. The game file (plan 8.3)
 # --------------------------------------------------------------------------- #
 def _info_block(feed: dict | None) -> dict | None:
@@ -1309,12 +1659,19 @@ def _lineups(game: dict, boxscore: dict | None) -> dict:
 
 
 def build_game_file(game: dict, wp, boxscore: dict | None, lg: dict, *, generated_at: str,
-                    feed: dict | None = None, people: dict | None = None) -> dict:
+                    feed: dict | None = None, people: dict | None = None, content=None,
+                    clips_pending: bool | None = None, seen_at=None, clip_log: dict | None = None) -> dict:
     """The game file (plan 8.3) from a schedule game, its winProbability
     payload, its boxscore (needed for stars and the box), the league
     constants `{lg_ra9, rpw}` and, at Final, the feed trimmed to `gameData`
     and `liveData.boxscore.officials`. The card inside it carries the game
-    file's `rev`; the caller writes the date-file card from `card`."""
+    file's `rev`; the caller writes the date-file card from `card`.
+
+    `content` (SCORES_4a) is the game's content read, raw or as
+    `trim_content` keeps it; with it the clips of plan 6.1 are joined and
+    attached (`attach_clips`). `clips_pending` says whether a missing clip may
+    still post (default: no content read yet, or the game is not final); `seen_at` is the content
+    fetch time; `clip_log`, when given, receives the join's counts."""
     state, _reason = game_state(game.get("status"))
     teams = game.get("teams") or {}
     codes = {side: club_code(((teams.get(side) or {}).get("team") or {}).get("id")) for side in ("away", "home")}
@@ -1374,6 +1731,23 @@ def build_game_file(game: dict, wp, boxscore: dict | None, lg: dict, *, generate
         "links": {"gameday": f"https://www.mlb.com/gameday/{card['pk']}"},
         "clips": {},
     }
+    # with no read yet a clip may still post; after a final read the default
+    # is "none" unless the caller (the job's 24 hour rule) says otherwise
+    if clips_pending is None:
+        pending = content is None or state != "final"
+    else:
+        pending = bool(clips_pending)
+    for b in gf["plays_big"]:
+        b["clip_state"] = "pending" if pending else "none"
+    if content is not None:
+        joined = join_clips(content, wp, pk=card["pk"], seen_at=seen_at)
+        attach_clips(gf, joined, wp, boxscore, seen_at=seen_at, pending=pending)
+        if clip_log is not None:
+            clip_log.update(joined["log"])
+            big = gf.get("plays_big") or []
+            clip_log["f3_big"] = sum(1 for b in big if not b.get("clip"))
+            clip_log["big_matched"] = sum(1 for b in big if b.get("clip"))
+            clip_log["big_of"] = len(big)
     rev = rev_of(gf)
     gf["rev"] = rev
     gf["card"]["rev"] = rev
@@ -1864,4 +2238,6 @@ __all__ = [
     "build_date_file", "FILE_KINDS", "register_file_kind", "kind_of_name", "forbidden_key",
     "find_forbidden_keys", "find_dashes", "find_urls", "url_ok", "URL_ROLES", "validate_payload",
     "validate_files", "series_over", "check_shrink", "debut_ids",
+    "VIDEO_BRANCH", "SPORTSBOOK_TAGS", "parse_duration", "pick_file", "trim_content", "clip_object",
+    "event_label", "join_clips", "attach_clips", "diamond_gating_on", "embed_reconfirmed",
 ]

@@ -195,6 +195,14 @@ between the sentinels.
   individual, non-commercial, non-bulk use of the Materials is permitted").
   Owner answer SC-TERMS (a), 2026-09-30: the scores job as planned, republishing
   from our own files with that line and MLB's credit on every payload.
+- MLB's highlight video on the Scores page (SCORES_4a, behind
+  `scores_core.SCORES_LIVE`): owner answer SC-VIDEO (a), 2026-09-30, MLB's own
+  embed player, a frame from streamable.com/m/<slug>, the embed URL MLB's clip
+  pages name (checked on five clips of two finals on 2026-10-07). The job
+  stores per clip that URL, two poster URLs on img.mlbstatic.com and the
+  MLB.com page; no video, caption or poster byte is stored or proxied. MLB's
+  player runs its own ads (a pre-roll played in the 2026-10-07 hand check).
+  Kill switch: EMBED_OFF or EEPHUS_SCORES_EMBED=0 (deploy/WEBMASTER.md 10).
 - Baseball Savant CSV pulls are disk-cached (`feed_cache.py`); caches can go
   stale silently between forced refreshes, and minors Statcast coverage only
   starts 2023. Use --force to bypass the cache.

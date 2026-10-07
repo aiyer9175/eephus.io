@@ -199,3 +199,41 @@ a.sc-chip:hover { background: var(--bg-tertiary); }
 .scores-app .sc-dl dt { color: var(--text-secondary); }
 .scores-app .sc-dl dd { margin: 0; }
 .scores-app .sc-about { max-width: 78ch; font-size: 13.5px; line-height: 1.55; }
+
+/* ---- video (SCORES_4a): poster buttons, MLB's frame, the links; the player
+   code is the lazy chunk scores-video.js. Tokens only. */
+.scores-app .sc-v:empty { display: none; }
+.scores-app .sc-v { margin-top: 6px; }
+.scores-app .sc-bigs > li > div, .scores-app .sc-stars > li > div { flex: 1 1 auto; min-width: 0; }
+.scores-app .sc-clip {
+  position: relative; display: block; width: 100%; max-width: 480px; padding: 0; overflow: hidden; cursor: pointer;
+  font: inherit; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px;
+}
+.scores-app .sc-clip img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+.scores-app .sc-disc {
+  position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%;
+  background: var(--bg-secondary); box-shadow: 0 0 0 2px var(--border);
+}
+.scores-app .sc-disc::after {
+  content: ""; position: absolute; left: 19px; top: 14px; border-style: solid; border-width: 10px 0 10px 16px;
+  border-color: transparent transparent transparent var(--text-primary);
+}
+.scores-app .sc-dur {
+  position: absolute; right: 6px; bottom: 6px; padding: 1px 6px; border-radius: 4px; font-size: 12px;
+  background: var(--bg-secondary); color: var(--text-primary);
+}
+.scores-app .sc-clip-sm {
+  display: inline-flex; align-items: center; gap: 8px; width: auto; max-width: 100%; min-height: 44px;
+  padding: 4px 12px 4px 6px; font-size: 13px; vertical-align: middle; background: var(--bg-secondary);
+}
+.scores-app .sc-clip-sm .sc-disc { position: relative; left: auto; top: auto; flex: 0 0 auto; width: 28px; height: 28px; margin: 0; }
+.scores-app .sc-clip-sm .sc-disc::after { left: 11px; top: 8px; border-width: 6px 0 6px 10px; }
+.scores-app .sc-clip:hover { border-color: var(--text-primary); }
+.scores-app .sc-vcredit { margin: 4px 0 0; font-size: 12px; color: var(--text-secondary); }
+.scores-app .sc-vfig { margin: 0; width: 100%; max-width: 640px; }
+.scores-app .sc-vframe { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--bg-tertiary); }
+.scores-app .sc-vframe iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.scores-app .sc-vclose { margin-top: 6px; }
+.scores-app .sc-vnew { margin: 4px 0 8px; }
+.scores-app .sc-vlink { display: inline-flex; align-items: center; min-height: 24px; }
+.scores-app .sc-vnone { margin: 4px 0 0; font-size: 12.5px; }
