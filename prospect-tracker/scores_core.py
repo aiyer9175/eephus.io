@@ -1048,10 +1048,14 @@ def box_rows(boxscore: dict, payload, debuts: set | None = None) -> dict:
     prose and are not copied. A position player who pitched is marked.
 
     Pitch rates (owner ask 2026-10-07, one decimal, half up): a batter's
-    `pit` (pitches seen, from MLB's pitch events) and `p_pa` (pitches per
-    plate appearance, over the boxscore's plate appearances); a pitcher's
-    `p_ip` (pitches per inning, the boxscore's pitch count over outs / 3).
-    Each is None when its count or denominator is missing or zero."""
+    `pit` (pitches seen) and `p_ab` (P/AB, pitches seen over the boxscore's
+    `atBats`, the owner's stat as named, so a walk or a sacrifice adds pitches
+    and no at-bat); a pitcher's `p_ip` (P/IP, the boxscore's `numberOfPitches`
+    over outs / 3). Pitches seen read the batting line's `numberOfPitches`
+    when MLB carries it there; the boxscore's batting lines carry none (every
+    saved read, 2026-10-07), so the count falls back to MLB's pitch events
+    (pitches_seen). Each rate is None when its count is missing or its
+    denominator is zero (0 AB, 0 outs); the page prints a dash."""
     acc = player_wpa(payload)
     seen = pitches_seen(payload)
     debuts = debuts or set()
@@ -1076,9 +1080,11 @@ def box_rows(boxscore: dict, payload, debuts: set | None = None) -> dict:
                     row[short] = _int(bat.get(full), 0)
                 row["wpa"] = wins_to_thousandths(r["wpa_bat"]) if r else None
                 row["pli"] = round(sum(r["li_bat"]) / len(r["li_bat"]), 2) if (r and r["li_bat"]) else None
-                row["pit"] = seen.get((pid, side), 0) if seen is not None else None
-                row["p_pa"] = (_per(row["pit"], _int(bat.get("plateAppearances"), 0))
-                               if row["pit"] is not None else None)
+                if bat.get("numberOfPitches") is not None:
+                    row["pit"] = _int(bat.get("numberOfPitches"), 0)
+                else:
+                    row["pit"] = seen.get((pid, side), 0) if seen is not None else None
+                row["p_ab"] = _per(row["pit"], row["ab"]) if row["pit"] is not None else None
                 row["debut"] = pid in debuts
                 batting.append(row)
             if pit and (_int(pit.get("outs"), 0) > 0 or _int(pit.get("battersFaced"), 0) > 0 or pid in pitch_order):
@@ -1089,7 +1095,8 @@ def box_rows(boxscore: dict, payload, debuts: set | None = None) -> dict:
                 row["dec"] = _dec(pit)
                 row["wpa"] = wins_to_thousandths(r["wpa_pit"]) if r else None
                 row["pli"] = round(sum(r["li_pit"]) / len(r["li_pit"]), 2) if (r and r["li_pit"]) else None
-                row["p_ip"] = _per(row["pc"] * 3, row["outs"]) if row["pc"] > 0 else None
+                row["p_ip"] = (_per(row["pc"] * 3, row["outs"])
+                               if pit.get("numberOfPitches") is not None else None)
                 row["position_player"] = pos not in ("P", "TWP", "SP", "RP", "")
                 row["debut"] = pid in debuts
                 pitching.append(row)

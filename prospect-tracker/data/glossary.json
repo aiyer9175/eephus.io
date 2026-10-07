@@ -6648,6 +6648,52 @@
    "origin": "Industry metric; average Leverage Index faced (Tom Tango, The Book), computed here from the MLB StatsAPI winProbability feed."
   },
   {
+   "id": "pitches_per_ab",
+   "term": "P/AB (pitches per at-bat)",
+   "category": "hitter-stat",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "P/AB",
+    "pitches per at-bat",
+    "pitches per at bat"
+   ],
+   "priority": 99,
+   "definition": "Pitches a batter saw in one game divided by his at-bats, in the Scores / Standings box score. A plate appearance that ends without an at-bat (a walk, a hit by pitch, a sacrifice, catcher's interference) adds its pitches to the top of the rate and nothing to the bottom.",
+   "methodology": "The denominator is at-bats by choice, not plate appearances, so a game with walks reads higher here than the same pitches per plate appearance would. Pitches seen are MLB's pitch events in each completed plate appearance, credited to the batter at its end, because MLB's box score batting line carries no pitch count; at-bats are the box score's. A batter with no at-bat (a pinch runner, or a game of walks only) shows a dash. One decimal, half up. Descriptive: one game's count, not a skill rate.",
+   "formula": "P/AB = pitches seen / AB\na dash when AB = 0",
+   "example": "A batter who saw 19 pitches in 3 at-bats and a walk reads 6.3 P/AB (19 / 3); the same 19 pitches over his 4 plate appearances are 4.8 a trip.",
+   "seeAlso": [
+    "pitches_per_ip"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
+  },
+  {
+   "id": "pitches_per_ip",
+   "term": "P/IP (pitches per inning pitched)",
+   "category": "pitcher-stat",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "P/IP",
+    "pitches per inning",
+    "pitches per inning pitched"
+   ],
+   "priority": 99,
+   "definition": "Pitches a pitcher threw in one game divided by his innings pitched, in the Scores / Standings box score. Innings are outs recorded divided by 3, so 6.1 innings is 19 outs, or 6.33 innings.",
+   "methodology": "Pitches are the box score's pitch count (MLB's numberOfPitches, the PC in the PC-ST column); innings are outs / 3, so a partial inning counts its thirds exactly. A pitcher who recorded no out shows a dash. One decimal, half up. Descriptive: one game's count, not a skill rate.",
+   "formula": "P/IP = pitches / (outs / 3) = 3 x pitches / outs\na dash when outs = 0",
+   "example": "95 pitches over 19 outs (6.1 IP) reads 15.0 P/IP (95 x 3 / 19).",
+   "seeAlso": [
+    "pitches_per_ab"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
+  },
+  {
    "id": "clutch",
    "term": "Clutch (timing above a context-neutral base)",
    "category": "industry-stat",

@@ -100,8 +100,9 @@
     var m = Math.floor(sec / 60), s = sec % 60;
     return m + ":" + (s < 10 ? "0" : "") + s;
   }
-  // A rate the job rounded (one or two decimals), printed with its digits.
-  function f1(x) { return isNum(x) ? x.toFixed(1) : ""; }
+  // A rate the job rounded (one or two decimals), printed with its digits;
+  // a P/AB or P/IP with no denominator (0 AB, 0 outs) prints a dash.
+  function f1(x) { return isNum(x) ? x.toFixed(1) : "-"; }
   function f2(x) { return isNum(x) ? x.toFixed(2) : ""; }
   function comma(n) { return isNum(n) ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ""; }
   function outsText(n) { return n + (n === 1 ? " out" : " outs"); }
@@ -673,7 +674,7 @@
       var bat = (b.batting || []).map(function (r) {
         return '<tr><th scope="row" class="sc-name">' + player(r.id, r.name) + (r.debut ? ' <span class="sc-chip">MLB debut</span>' : "") +
           ' <span class="sc-dim">' + esc(r.pos || "") + "</span></th><td>" + r.ab + "</td><td>" + r.r + "</td><td>" + r.h + "</td><td>" + r.rbi +
-          "</td><td>" + r.bb + "</td><td>" + r.k + "</td><td>" + f1(r.p_pa) + "</td><td>" + esc(signed3(r.wpa)) + "</td><td>" + f2(r.pli) + "</td></tr>";
+          "</td><td>" + r.bb + "</td><td>" + r.k + "</td><td>" + f1(r.p_ab) + "</td><td>" + esc(signed3(r.wpa)) + "</td><td>" + f2(r.pli) + "</td></tr>";
       }).join("");
       var pit = (b.pitching || []).map(function (r) {
         var d = r.dec || {}, mk = [];
@@ -686,9 +687,9 @@
       }).join("");
       o += "<h3>" + esc(code) + "</h3>" + labelled(ix, "scores_mlb_wp",
         '<div class="sc-scroll"><table class="sc-tbl sc-box"><caption class="sr-only">' + esc(code) + ' batting</caption><thead><tr><th scope="col" class="sc-name">Batting</th>' +
-        '<th scope="col">AB</th><th scope="col">R</th><th scope="col">H</th><th scope="col">RBI</th><th scope="col">BB</th><th scope="col">K</th><th scope="col"><abbr title="Pitches per plate appearance">P/PA</abbr></th><th scope="col">WPA</th><th scope="col">pLI</th></tr></thead><tbody>' + bat + "</tbody></table></div>" +
+        '<th scope="col">AB</th><th scope="col">R</th><th scope="col">H</th><th scope="col">RBI</th><th scope="col">BB</th><th scope="col">K</th><th scope="col"><span class="g-term" data-gl="pitches_per_ab">P/AB</span></th><th scope="col">WPA</th><th scope="col">pLI</th></tr></thead><tbody>' + bat + "</tbody></table></div>" +
         '<div class="sc-scroll"><table class="sc-tbl sc-box"><caption class="sr-only">' + esc(code) + ' pitching</caption><thead><tr><th scope="col" class="sc-name">Pitching</th>' +
-        '<th scope="col">IP</th><th scope="col">H</th><th scope="col">R</th><th scope="col">ER</th><th scope="col">BB</th><th scope="col">K</th><th scope="col">HR</th><th scope="col">PC-ST</th><th scope="col"><abbr title="Pitches per inning pitched">P/IP</abbr></th><th scope="col">WPA</th><th scope="col">pLI</th></tr></thead><tbody>' + pit + "</tbody></table></div>",
+        '<th scope="col">IP</th><th scope="col">H</th><th scope="col">R</th><th scope="col">ER</th><th scope="col">BB</th><th scope="col">K</th><th scope="col">HR</th><th scope="col">PC-ST</th><th scope="col"><span class="g-term" data-gl="pitches_per_ip">P/IP</span></th><th scope="col">WPA</th><th scope="col">pLI</th></tr></thead><tbody>' + pit + "</tbody></table></div>",
         "div", "sc-block-num") + ((b.notes || []).length ? '<p class="sc-dim">' + esc(b.notes.join(" ")) + "</p>" : "");
     });
     return o;
