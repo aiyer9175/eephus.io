@@ -198,6 +198,27 @@ def test_brand_token_defined_in_both_decks(css_text, token):
     assert pattern.search(dark.group(1)), f"{token} missing from the site.css dark deck"
 
 
+# Chart series tokens (final pass Part 8, 8.E: P8.2 owns them, Scores and
+# F-SCORE reuse them): --viz-1 is a chart's first series, --viz-2 its second,
+# in both decks with the values the LTS lane validated on each deck's card
+# surface (light on #FAF5E6, dark on #1A1A1E).
+VIZ_TOKENS = {"--viz-1": ("#1D4ED8", "#3B7FCC"), "--viz-2": ("#C9A227", "#B08526")}
+
+
+@pytest.mark.parametrize("token", sorted(VIZ_TOKENS))
+def test_viz_token_defined_in_both_decks_with_the_validated_values(css_text, token):
+    light = re.search(r"^:root \{$(.*?)^\}", css_text, re.M | re.S)
+    dark = re.search(r'^\[data-theme="dark"\] \{$(.*?)^\}', css_text, re.M | re.S)
+    assert light and dark
+    want_light, want_dark = VIZ_TOKENS[token]
+    got_light = re.findall(rf"^\s*{re.escape(token)}\s*:\s*(#[0-9A-Fa-f]{{6}})\s*;", light.group(1), re.M)
+    got_dark = re.findall(rf"^\s*{re.escape(token)}\s*:\s*(#[0-9A-Fa-f]{{6}})\s*;", dark.group(1), re.M)
+    assert [v.upper() for v in got_light] == [want_light], (token, got_light)
+    assert [v.upper() for v in got_dark] == [want_dark], (token, got_dark)
+    # one definition per deck: no second dark selector redefines it
+    assert len(re.findall(rf"{re.escape(token)}\s*:", css_text)) == 2, token
+
+
 def test_no_undefined_border_color_token():
     # The token is --border; --border-color was never defined anywhere and left
     # the /projections/ compare button AND the PROSPX Trade Machine cards

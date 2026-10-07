@@ -122,6 +122,27 @@ def test_prospx_inline_tokens_clear_aa_on_its_own_surfaces():
     assert not _failures(themes, have), _failures(themes, have)
 
 
+def test_chart_series_tokens_hold_their_validated_values_and_contrast():
+    """--viz-1 and --viz-2 are graphics tokens, never text (a chart's labels
+    wear --text-secondary or --text-tertiary). Both themes carry the values the
+    LTS lane validated on the card surface. The first series clears the 3:1
+    floor for graphics in both themes; the light gold second series measures
+    2.22:1 on paper, a WARN the end labels and the numbers table relieve, so it
+    is pinned by value and held only above 2:1."""
+    themes = _themes(ROOT / "assets" / "site.css", ":root {", '[data-theme="dark"] {')
+    want = {"light": {"--viz-1": "#1D4ED8", "--viz-2": "#C9A227", "--bg-secondary": "#FAF5E6"},
+            "dark": {"--viz-1": "#3B7FCC", "--viz-2": "#B08526", "--bg-secondary": "#1A1A1E"}}
+    for theme, tok in want.items():
+        for k, v in tok.items():
+            assert themes[theme][k] == v, (theme, k, themes[theme].get(k))
+        assert _ratio(tok["--viz-1"], tok["--bg-secondary"]) >= 3.0, theme
+        assert _ratio(tok["--viz-2"], tok["--bg-secondary"]) >= 2.0, theme
+    assert round(_ratio("#1D4ED8", "#FAF5E6"), 2) == 6.15
+    assert round(_ratio("#3B7FCC", "#1A1A1E"), 2) == 4.21
+    assert round(_ratio("#C9A227", "#FAF5E6"), 2) == 2.22
+    assert "--viz-1" not in TEXT_TOKENS and "--viz-2" not in TEXT_TOKENS
+
+
 def test_canvas_fallbacks_match_the_tokens():
     """The share-card painters fall back to literal copies of --text-tertiary
     when the computed token is empty; a stale copy paints the old colour."""
