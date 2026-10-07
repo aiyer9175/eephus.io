@@ -286,6 +286,191 @@
     return '<svg class="eephus-chart" viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + esc(o.aria || "scatter") + '">' + refs + dots + ax + "</svg>";
   }
 
+  // ---- over-time line chart and spark (Part 8 8.E: P8.2 owns them) ----------
+  // Promoted from assets/fa_dpw.js and kept to its idiom: inline SVG, var()
+  // tokens only, a value label at each line's end (in --text-secondary, never
+  // the series colour), first and last x ticks, and an invisible hit circle with
+  // a <title> on every point so each mark hovers without a tooltip engine.
+  // Series colours are --viz-1 then --viz-2 (site.css, both themes).
+  //
+  // _niceStep(raw): the smallest 1, 2 or 5 times a power of ten at or above raw.
+  function _niceStep(raw) {
+    if (!(raw > 0) || !isFinite(raw)) return 1;
+    var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+    var m = [1, 2, 5, 10];
+    for (var i = 0; i < m.length; i++) if (m[i] * mag >= raw * (1 - 1e-9)) return m[i] * mag;
+    return 10 * mag;
+  }
+  // niceTicks(lo, hi, {target, floor, pad}): round 1-2-5 ticks and the domain
+  // snapped to them, so every gridline lands on a printed round value.
+  function niceTicks(lo, hi, o) {
+    o = o || {};
+    var target = o.target || 4, pad = o.pad == null ? 0.05 : o.pad;
+    var span = (hi - lo) || Math.abs(hi) * 0.1 || 1;
+    var a = lo - span * pad, b = hi + span * pad;
+    if (o.floor != null && a < o.floor && lo >= o.floor) a = o.floor;
+    var step = _niceStep((b - a) / target);
+    var dec = Math.max(0, -Math.floor(Math.log(step) / Math.LN10 + 1e-9));
+    var t0 = Math.floor(a / step + 1e-9), t1 = Math.ceil(b / step - 1e-9);
+    if (t1 <= t0) t1 = t0 + 1;
+    var ticks = [];
+    for (var k = t0; k <= t1; k++) ticks.push(Number((k * step).toFixed(dec)));
+    return { lo: ticks[0], hi: ticks[ticks.length - 1], step: step, ticks: ticks };
+  }
+  function _num(v) { return v != null && v !== "" && isFinite(v); }
+  // Label width estimate for a 9-unit SVG label (0.6em a character), used to
+  // keep a periodic x tick from crowding the first or last one.
+  function _labW(s) { return String(s).length * 5.4; }
+
+  // lineChart(series, opts) -> SVG string (plus its numbers table unless
+  // opts.table === false), "" when fewer than two points can be drawn.
+  //   series  [{label, color, pts: [{y, v, partial, hint}], dash, dy}]
+  //           y is the x key (a season, a winter, a game number); partial
+  //           draws the point hollow (2020, the live season): shape carries
+  //           it, not colour. dy nudges the end label.
+  //   opts    xs      ordered x keys (default: every y in the series, sorted)
+  //           width   viewBox width: pass the cell's real pixel width so a
+  //                   9-unit label draws near 9 px (default 620); height 210
+  //           fmt     value formatter (ticks, end labels, titles, table)
+  //           tickFmt y-axis label formatter (default fmt)
+  //           xfmt    x-key formatter (default String)
+  //           every   also print x ticks whose numeric key is a multiple of it
+  //           floor   lowest value the y domain may open below the data (0 for
+  //                   a quantity that cannot go negative)
+  //           pl, pr  left and right pads; tip(s, p) the hover text
+  //           aria    the accessible name (default: the labels and the span)
+  //           table   false when the page already prints every charted number
+  //                   in its own table; caption names the table's fold
+  // Past 30 points a series marks only its last point; every point keeps its
+  // hit circle. No trend line, fit or forecast point is ever drawn.
+  function lineChart(series, opts) {
+    var o = opts || {};
+    var fmt = o.fmt || _fmtN, tickFmt = o.tickFmt || fmt;
+    var xfmt = o.xfmt || function (y) { return String(y); };
+    var W = o.width || o.w || 620, H = o.height || o.h || 210;
+    var PT = 16, PB = 22, PL = o.pl == null ? 46 : o.pl, PR = o.pr == null ? 52 : o.pr;
+    var list = (series || []).map(function (s) {
+      return { s: s, pts: (s.pts || []).filter(function (p) { return p && _num(p.v); }) };
+    }).filter(function (e) { return e.pts.length; });
+    var xs = (o.xs || []).map(String);
+    if (!xs.length) {
+      var seen = {};
+      list.forEach(function (e) { e.pts.forEach(function (p) { seen[String(p.y)] = 1; }); });
+      xs = Object.keys(seen).sort(function (a, b) { return (+a - +b) || (a < b ? -1 : a > b ? 1 : 0); });
+    }
+    var all = [];
+    list.forEach(function (e) {
+      e.pts = e.pts.filter(function (p) { return xs.indexOf(String(p.y)) >= 0; })
+        .sort(function (a, b) { return xs.indexOf(String(a.y)) - xs.indexOf(String(b.y)); });
+      e.pts.forEach(function (p) { all.push(Number(p.v)); });
+    });
+    if (all.length < 2) return "";
+    var nt = niceTicks(Math.min.apply(null, all), Math.max.apply(null, all),
+      { target: o.ticks || 4, floor: o.floor });
+    var lo = nt.lo, hi = nt.hi;
+    var x = function (y) { return PL + xs.indexOf(String(y)) * (W - PL - PR) / Math.max(1, xs.length - 1); };
+    var yy = function (v) { return PT + (hi - v) * (H - PT - PB) / ((hi - lo) || 1); };
+    // Recessive gridlines and a value axis on the round ticks.
+    var grid = nt.ticks.map(function (v) {
+      var gy = yy(v).toFixed(1);
+      return '<line x1="' + PL + '" y1="' + gy + '" x2="' + (W - PR) + '" y2="' + gy
+        + '" stroke="var(--border-light)" stroke-width="1"/><text x="' + (PL - 6) + '" y="' + (yy(v) + 3).toFixed(1)
+        + '" text-anchor="end" font-size="9" fill="var(--text-tertiary)">' + esc(tickFmt(v)) + "</text>";
+    }).join("");
+    // End labels: two that would overlap are pushed apart, never recoloured.
+    var ends = list.map(function (e) { return { e: e, y: yy(Number(e.pts[e.pts.length - 1].v)) + (e.s.dy || 0) }; });
+    if (ends.length === 2 && Math.abs(ends[0].y - ends[1].y) < 11) {
+      var up = ends[0].y <= ends[1].y ? ends[0] : ends[1], dn = up === ends[0] ? ends[1] : ends[0];
+      var mid = (up.y + dn.y) / 2;
+      up.y = mid - 5.5; dn.y = mid + 5.5;
+    }
+    var body = "";
+    list.forEach(function (e, ei) {
+      var s = e.s, pts = e.pts, dense = pts.length > 30;
+      body += '<polyline points="' + pts.map(function (p) { return x(p.y).toFixed(1) + "," + yy(Number(p.v)).toFixed(1); }).join(" ")
+        + '" fill="none" stroke="' + s.color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"'
+        + (s.dash ? ' stroke-dasharray="' + s.dash + '"' : "") + "/>";
+      pts.forEach(function (p, pi) {
+        var cx = x(p.y).toFixed(1), cy = yy(Number(p.v)).toFixed(1);
+        if (!dense || pi === pts.length - 1) {
+          body += p.partial
+            ? '<circle cx="' + cx + '" cy="' + cy + '" r="3.2" fill="var(--bg-secondary)" stroke="' + s.color + '" stroke-width="1.6"/>'
+            : '<circle cx="' + cx + '" cy="' + cy + '" r="3.2" fill="' + s.color + '"/>';
+        }
+        var tip = o.tip ? o.tip(s, p) : (s.label + " " + xfmt(p.y) + ": " + fmt(Number(p.v)) + (p.hint ? " " + p.hint : ""));
+        body += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (dense ? 6 : 10) + '" fill="transparent"><title>' + esc(tip) + "</title></circle>";
+      });
+      body += '<text x="' + (W - PR + 5) + '" y="' + (ends[ei].y + 3).toFixed(1)
+        + '" font-size="10" font-weight="700" fill="var(--text-secondary)">' + esc(fmt(Number(pts[pts.length - 1].v))) + "</text>";
+    });
+    // x ticks: first and last always; a periodic one only where its label
+    // clears both of theirs (the prototype once printed "20252026").
+    var xl = W - PR, xf = PL, firstL = xfmt(xs[0]), lastL = xfmt(xs[xs.length - 1]);
+    var xt = '<text x="' + xf + '" y="' + (H - 5) + '" font-size="9" fill="var(--text-tertiary)">' + esc(firstL) + "</text>";
+    if (xs.length > 1) {
+      if (o.every) {
+        xs.forEach(function (y, i) {
+          if (i === 0 || i === xs.length - 1 || !isFinite(+y) || (+y) % o.every !== 0) return;
+          var cx = x(y), half = _labW(xfmt(y)) / 2;
+          if (cx - half < xf + _labW(firstL) + 6 || cx + half > xl - _labW(lastL) - 6) return;
+          xt += '<text x="' + cx.toFixed(1) + '" y="' + (H - 5) + '" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">' + esc(xfmt(y)) + "</text>";
+        });
+      }
+      xt += '<text x="' + xl + '" y="' + (H - 5) + '" text-anchor="end" font-size="9" fill="var(--text-tertiary)">' + esc(lastL) + "</text>";
+    }
+    var aria = o.aria || (list.map(function (e) { return e.s.label; }).join(" and ") + ", " + firstL + " to " + lastL);
+    var svg = '<svg class="eephus-chart eephus-line" viewBox="0 0 ' + W + " " + H
+      + '" style="display:block;width:100%;height:auto;" role="img" aria-label="' + esc(aria) + '">'
+      + grid + body + xt + "</svg>";
+    if (o.table === false) return svg;
+    // The numbers twin: every charted value in a real table, newest first.
+    var rows = xs.slice().reverse().map(function (y) {
+      return "<tr><td>" + esc(xfmt(y)) + "</td>" + list.map(function (e) {
+        var p = e.pts.filter(function (q) { return String(q.y) === String(y); })[0];
+        return '<td style="text-align:right">' + (p ? esc(fmt(Number(p.v))) + (p.partial ? " (partial)" : "") : DASH) + "</td>";
+      }).join("") + "</tr>";
+    }).join("");
+    return svg + '<details class="eephus-chart-table"><summary>' + esc(o.caption || "Numbers") + "</summary>"
+      + '<div style="overflow-x:auto"><table><thead><tr><th scope="col">' + esc(o.xName || "Season") + "</th>"
+      + list.map(function (e) { return '<th scope="col" style="text-align:right">' + esc(e.s.label) + "</th>"; }).join("")
+      + "</tr></thead><tbody>" + rows + "</tbody></table></div></details>";
+  }
+
+  // spark(pts, opts) -> one small-multiple SVG ("" under two points): a single
+  // line in one hue on an optional SHARED scale (opts.lo, opts.hi) so a grid of
+  // panels compares across cells. opts: xs (x keys, so a gap stays a gap),
+  // width 190, height 54, color (default --viz-1), stroke, tip(p) for the hit
+  // circle titles, last (mark the last point, hollow when partial), aria, style.
+  function spark(pts, opts) {
+    var o = opts || {};
+    var ps = (pts || []).filter(function (p) { return p && _num(p.v); });
+    if (ps.length < 2) return "";
+    var W = o.width || 190, H = o.height || 54, PT = 6, PB = 6, PL = 3, PR = 3;
+    if (o.last) { PL = 5; PR = 5; }
+    var vs = ps.map(function (p) { return Number(p.v); });
+    var lo = o.lo != null ? o.lo : Math.min.apply(null, vs), hi = o.hi != null ? o.hi : Math.max.apply(null, vs);
+    var xs = o.xs ? o.xs.map(String) : null;
+    var idx = function (p, i) { return xs ? xs.indexOf(String(p.y)) : i; };
+    var n = xs ? xs.length : ps.length;
+    var x = function (p, i) { return PL + idx(p, i) * (W - PL - PR) / Math.max(1, n - 1); };
+    var y = function (v) { return PT + (hi - v) * (H - PT - PB) / ((hi - lo) || 1); };
+    var color = o.color || "var(--viz-1)";
+    var line = ps.map(function (p, i) { return x(p, i).toFixed(1) + "," + y(Number(p.v)).toFixed(1); }).join(" ");
+    var dots = o.tip ? ps.map(function (p, i) {
+      return '<circle cx="' + x(p, i).toFixed(1) + '" cy="' + y(Number(p.v)).toFixed(1) + '" r="6" fill="transparent"><title>' + esc(o.tip(p)) + "</title></circle>";
+    }).join("") : "";
+    var lastMark = "";
+    if (o.last) {
+      var lp = ps[ps.length - 1], lx = x(lp, ps.length - 1).toFixed(1), ly = y(Number(lp.v)).toFixed(1);
+      lastMark = lp.partial
+        ? '<circle cx="' + lx + '" cy="' + ly + '" r="2.6" fill="var(--bg-secondary)" stroke="' + color + '" stroke-width="1.4"/>'
+        : '<circle cx="' + lx + '" cy="' + ly + '" r="2.6" fill="' + color + '"/>';
+    }
+    return '<svg class="eephus-chart eephus-spark" viewBox="0 0 ' + W + " " + H + '" style="' + esc(o.style || "display:block;width:100%;height:auto;")
+      + '" role="img" aria-label="' + esc(o.aria || "trend") + '"><polyline points="' + line + '" fill="none" stroke="' + color
+      + '" stroke-width="' + (o.stroke || 1.8) + '" stroke-linejoin="round" stroke-linecap="round"/>' + lastMark + dots + "</svg>";
+  }
+
   // The module registry for the strip: id -> {label, glyph, href(row)}.
   // Module accents mirror the homepage sidebar glyph identity.
   const MODULES = [
@@ -721,5 +906,5 @@
     return (mm < 0 ? "-" : "") + "$" + Math.abs(mm).toFixed(d) + "M";
   }
 
-  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, teamLogoURL, club, clubs, clubHref, clubLinkHTML, histogram, scatter, fvCeil, money, dash, DASH };
+  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, teamLogoURL, club, clubs, clubHref, clubLinkHTML, histogram, scatter, lineChart, spark, niceTicks, fvCeil, money, dash, DASH };
 })();
