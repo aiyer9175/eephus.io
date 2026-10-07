@@ -1452,6 +1452,10 @@ a:focus-visible > .eephus-wordmark-px .wm-bh { animation: wm-drop-h 240ms step-e
 .fv-pill { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 800; flex: none; padding: 3px 9px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .fv-pill.holo { border: 2px solid transparent; background: linear-gradient(var(--bg-secondary),var(--bg-secondary)) padding-box, var(--iridescent) border-box; }
 .fv-pill.gold { border-color: var(--accent-gold); color: var(--text-gold); }
+/* No source grade yet (QHOC04): the dashed pill PROSPX uses for the production
+   grade. On the eFV floor (QHOC07) the pill says "floor", not a bare 20. */
+.fv-pill.fv-prod { border-style: dashed; }
+.fv-pill.fv-floor { font-size: 11px; font-weight: 700; color: var(--text-secondary); }
 /* Home-module trailing chips (Top Prospects/Recent Graduates FV, Farm grade,
    Recent Trades FV) get a uniform fixed width + centered value via border-box
    so every grid column ends in a clean, vertically-aligned chip column. */

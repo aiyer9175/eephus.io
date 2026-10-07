@@ -107,6 +107,12 @@ def test_every_head_preloads_both_webfont_faces():
                     'as="font" type="font/woff2" crossorigin>') in head
     t = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
     assert B._ensure_font_preload(t) == t, "the hand-page insertion is idempotent"
+    import subprocess
+    pages = subprocess.run(["git", "ls-files", "*.html"], cwd=ROOT, capture_output=True, text=True).stdout.split()
+    for rel in pages:
+        txt = (ROOT / rel).read_text(encoding="utf-8")
+        if '<link rel="stylesheet" href="/assets/site.css' in txt and not rel.startswith(("data/", "test_fixtures/")):
+            assert 'pixelmplus12-regular.woff2" as="font"' in txt.split("</head>", 1)[0], rel
 
 
 # ---- QHOA06 / QHOA07 / QHOA11 / QHOA12 / QHOA13: homepage markup ------------
@@ -187,3 +193,72 @@ def test_theme_toggles_carry_aria_pressed():
     assert 'b.setAttribute("aria-pressed",d)' in B.THEME_INIT
     assert 'document.addEventListener("DOMContentLoaded",eephusThemeSync)' in B.THEME_INIT
     assert "eephusThemeSync();}</script>" in B.THEME_INIT
+
+
+# ---- QHOC03: the Model Accountability card counts every registry row --------
+
+def test_the_model_card_lists_every_verdict_and_counts_registry_rows():
+    import build_site as B
+    strip = B._cross_module_strip()
+    i = strip.index("registry rows by verdict")
+    card = strip[strip.rindex('<div class="xmod-card">', 0, i):]
+    card = card[:card.index('<div class="xmod-card">', 10)] if card.count('<div class="xmod-card">') > 1 else card
+    n = int(re.search(r"(\d+) registry rows by verdict", card).group(1))
+    vals = [int(v) for v in re.findall(r'<span class="xmod-val">(\d+)</span>', card)]
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))["models"]
+    assert n == len(reg) == sum(vals), (n, len(reg), vals)
+    assert "Provisional" in card and "models with a predictive claim" not in strip
+
+
+# ---- QHOC04 / QHOC07: the pill says what its number is ----------------------
+
+def test_unsourced_grades_wear_the_dashed_production_pill_and_the_floor_says_floor(monkeypatch):
+    import build_site as B
+    monkeypatch.setitem(B._EFV_GRADES, "zz_prod", 28.6)
+    monkeypatch.setitem(B._EFV_GRADES, "zz_v2", 41.2)
+    monkeypatch.setitem(B._EFV_GRADES, "zz_floor", 20.0)
+    monkeypatch.setitem(B._EFV_GRADES, "zz_graded", 52.4)
+    monkeypatch.setattr(B, "_EFV_PROD_KEYS", {"zz_prod"})
+    prod = B._fv_pill({"player_key": "zz_prod", "source_graded": False})
+    assert 'class="fv-pill fv-prod" title="Production grade 29:' in prod and ">29</span>" in prod
+    assert "production grade </span>" in prod
+    v2 = B._fv_pill({"player_key": "zz_v2", "source_graded": False})
+    assert "fv-prod" in v2 and 'title="eFV 41: no source has graded him yet' in v2
+    floor = B._fv_pill({"player_key": "zz_floor", "source_graded": False})
+    assert 'class="fv-pill fv-floor" title="eFV floor: no projection">floor</span>' in floor
+    graded = B._fv_pill({"player_key": "zz_graded", "source_graded": True})
+    assert 'class="fv-pill">52</span>' in graded and "fv-prod" not in graded
+
+
+# ---- QHOC05: "Breakout" only for a player the flag marks --------------------
+
+def test_hot_sample_tooltip_says_breakout_only_for_a_flagged_player():
+    import build_site as B
+    bucket = {"hot": [{"player_key": "zz_hot", "why": "Breakout", "line": "2.55 ERA"}]}
+    for flag, word in ((False, "Hot sample"), (True, "Breakout")):
+        p = {"player_key": "zz_hot", "player_name": "Z", "breakout_flag": flag}
+        assert f'title="{word} - current-season sample"' in B._spotlight_html([p], bucket)
+
+
+# ---- QHOC06: the /history/ intro reads its spans off the ledgers ------------
+
+def test_history_intro_years_and_wag_gate_are_read_not_typed():
+    import build_site as B
+    tx = {"10-02": [("2015-10-02", "SGN", "a", "")], "10-03": [("2012-10-03", "TR", "b", "")]}
+    il = {"10-02": [("2017-10-02", "b", "10-Day")]}
+    assert B._hist_spans(tx, il) == " Transactions from 2012, IL placements from 2017."
+    assert B._hist_spans({}, {}) == ""
+    assert B._wag_gate_clause() == " once the player is past 200 PA or 80 IP"
+    assert "Transactions from 2019" not in (ROOT / "history" / "index.html").read_text(encoding="utf-8")
+
+
+# ---- QHOC11: one name per destination ---------------------------------------
+
+def test_footer_rail_and_cards_use_one_name_per_destination():
+    import build_site as B
+    foot = B._footer()
+    for href in ("/team/", "/history/", "/models/", "/glossary/", "/news/"):
+        assert f'<a href="{href}">{B.PAGE_LABELS[href]}</a>' in foot, href
+    assert B.PAGE_LABELS["/team/"] == dict((h, lab) for _k, lab, h in B.nav_leaves())["/team/"]
+    assert ">About<" not in foot and ">This Day<" not in foot
+    assert "Model Ledger" not in B._cross_module_strip()

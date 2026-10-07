@@ -746,21 +746,32 @@ BUG_FORM_URL = ""
 # this one constant; the URL stays /news/.
 NEWS_LABEL = "MLB News"
 
+# ONE NAME PER DESTINATION (QHOC11). The footer said About for the page the
+# nav calls Masthead and This Day for Today in Prospect History, and the home
+# card said Model Ledger (easily read as the Club Ledger) for Model
+# Accountability. Nav leaves keep their NAV_ITEMS label; the three pages with
+# no nav row are named here, and every surface that links them reads this map.
+PAGE_LABELS = {h: lab for _k, lab, h in nav_leaves()}
+PAGE_LABELS.update({"/history/": "Today in Prospect History",
+                    "/models/": "Model Accountability",
+                    "/news/": NEWS_LABEL})
+
+
 def _footer() -> str:
     """The shared page footer: identity line left, useful links right.
     Every editorial surface and the homepage emit the same block."""
     year = date.today().year
     links = (
-        f'<a href="/team/">About</a>'
+        f'<a href="/team/">{PAGE_LABELS["/team/"]}</a>'
         f'<a href="/news/">{NEWS_LABEL}</a>'
         # /history/ (Today in Prospect History) is a full generated surface but
         # carried NO nav entry anywhere - its only inbound link was the homepage
         # module's "See all" kicker, so it was unreachable from every other page.
-        f'<a href="/history/">This Day</a>'
+        f'<a href="/history/">{PAGE_LABELS["/history/"]}</a>'
         f'<a href="/parks/">Park Factors</a>'
         # The model ledger carries no nav row (the nav has three hand-maintained
         # static copies), so the footer is its primary address on every page.
-        f'<a href="/models/">Model Accountability</a>'
+        f'<a href="/models/">{PAGE_LABELS["/models/"]}</a>'
         f'<a href="/sources/">Data Sources</a>'
         # The artifact catalog (what we publish, on what cadence, how stable)
         # is the second half of /sources/. It gets its own footer link because
@@ -1407,6 +1418,12 @@ ORG_NAMES = {
 # 20-80 consensus scale; the grade surplus is priced on) - prefer it here so the
 # homepage Top Prospects grade matches the PROSPX board and /projections/, with
 # the realized grade, then the raw grade, as legacy fallbacks.
+# Players whose served grade is the provisional map's production read (the
+# xfv grade_basis provisional_capped or xfv_ungraded), filled by
+# _load_xfv_grades. PROSPX calls that number the production grade (QHOC04).
+_EFV_PROD_KEYS: set = set()
+
+
 def _load_xfv_grades() -> dict:
     try:
         doc = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
@@ -1439,6 +1456,8 @@ def _load_xfv_grades() -> dict:
             g = rec.get("xfv_grade_quantile")
         if isinstance(g, (int, float)):
             out[key] = float(g)
+            if rec.get("xfv_ungraded") or rec.get("grade_basis") == "provisional_capped":
+                _EFV_PROD_KEYS.add(key)
     return out
 _EFV_GRADES = _load_xfv_grades()
 
@@ -1699,9 +1718,29 @@ def _sr(text: str) -> str:
 
 
 def _fv_pill(p: dict) -> str:
+    """The grade pill on editorial rows. Two eFV states are labelled, as on the
+    PROSPX card: a grade on the eFV floor reads "floor" (QHOC07), and a player no
+    source has graded wears a dashed pill whose title names the number, the
+    production grade where the provisional map produced it (QHOC04)."""
     label = _fv_label(p)
-    unit = "eFV" if _EFV_GRADES.get(p.get("player_key")) is not None else "FV"
-    return f'{_sr(unit)}<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
+    key = p.get("player_key")
+    if _EFV_GRADES.get(key) is None:
+        return f'{_sr("FV")}<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
+    m = re.match(r"-?\d+", label.strip())
+    if m and int(m.group()) <= _EFV_FLOOR:
+        return (f'{_sr("eFV")}<span class="fv-pill fv-floor" '
+                'title="eFV floor: no projection">floor</span>')
+    if p.get("source_graded") is False:
+        if key in _EFV_PROD_KEYS:
+            word = "production grade"
+            tip = (f"Production grade {label}: today's map value from his translated MiLB "
+                   "stats. No source has graded him, so he has no board rank.")
+        else:
+            word = "eFV"
+            tip = f"eFV {label}: no source has graded him yet, so he has no board rank."
+        return (f'{_sr(word)}<span class="{_fv_tier_class(label)} fv-prod" '
+                f'title="{html.escape(tip)}">{html.escape(label)}</span>')
+    return f'{_sr("eFV")}<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
 
 def _meta(*parts) -> str:
     return html.escape(" · ".join(str(x) for x in parts if x))
@@ -2760,6 +2799,10 @@ def _spotlight_html(players: list, spotlights: dict | None = None) -> str:
             if not p or not line:
                 continue
             why = (e or {}).get("why") or "Hot sample"
+            # spotlights.py tags every hot-bucket entry "Breakout"; the word is
+            # only true of a player whose breakout_flag is set (QHOC05).
+            if why == "Breakout" and not p.get("breakout_flag"):
+                why = "Hot sample"
             slots.append((
                 "Spotlight - Hot Sample", p,
                 # .row-delta is flex:none + min-width:46px + text-align:right,
@@ -3062,7 +3105,7 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
     )
     return (
         '<section class="home-module otd-module">'
-        '<div class="kicker"><h2>Today in Prospect History</h2>'
+        f'<div class="kicker"><h2>{PAGE_LABELS["/history/"]}</h2>'
         '<a class="see-all" href="/history/">See all →</a></div>'
         + "".join(rows) + trades_block +
         '</section>'
@@ -3192,11 +3235,32 @@ _HIST_FILTER_JS = """<script>
 })();
 </script>"""
 
+def _hist_spans(tx_all: dict, il_all: dict) -> str:
+    """' Transactions from 2010, IL placements from 2017.' off the ledgers
+    themselves (QHOC06: the copy said 2019 over rows from 2015)."""
+    tx = min((t[0][:4] for rows in tx_all.values() for t in rows), default=None)
+    il = min((t[0][:4] for rows in il_all.values() for t in rows), default=None)
+    parts = ([f"Transactions from {tx}"] if tx else []) + ([f"IL placements from {il}"] if il else [])
+    return (" " + ", ".join(parts) + ".") if parts else ""
+
+
+def _wag_gate_clause() -> str:
+    """' once the player is past 200 PA or 80 IP', read from the WAG model's own
+    meaningful_exposure (value_framework_config.yaml), the gate _wag_badge honours."""
+    try:
+        y = (ROOT / "value_framework_config.yaml").read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    m = re.search(r"meaningful_exposure:\s*\{hitter_pa:\s*(\d+),\s*pitcher_ip:\s*(\d+)\}", y)
+    return f" once the player is past {m.group(1)} PA or {m.group(2)} IP" if m else ""
+
+
 def build_this_day(data: dict | None = None) -> str:
     """/history/ - Today in Prospect History as a full page: every debut
     anniversary and prospect trade landing on today's exact calendar date
     (past seasons only), plus the prospects.db transaction ledger (signings /
-    free agency, 2019+) and IL placements (2017+) for the same MM-DD.
+    free agency) and IL placements for the same MM-DD; the intro prints the
+    first year each ledger holds, read from prospects.db at build time.
 
     Big eFV moves are DELIBERATELY not a section: data/xfv_history.json dates
     grade changes at model snapshot re-runs (over half of all |delta| >= 3
@@ -3335,8 +3399,8 @@ def build_this_day(data: dict | None = None) -> str:
         '<div class="news-app hist-app">'
         f'<div class="section-head"><h1>{_masthead_icon("history")}Today in Prospect History - {html.escape(mon_d)}</h1>'
         '<span class="section-sub">debut anniversaries, trades, signings &amp; IL moves on this calendar date</span></div>'
-        '<p class="news-intro">Exact calendar-date matches from past seasons. Transactions from 2019, '
-        f'IL placements from 2017. Debut rows carry {_gl("wag", "WAG")}.</p>'
+        f'<p class="news-intro">Exact calendar-date matches from past seasons.{_hist_spans(tx_all, il_all)} '
+        f'Debut rows carry {_gl("wag", "WAG")}{_wag_gate_clause()}.</p>'
         '<div class="filter-bar" id="hist-filter-bar" role="group" aria-labelledby="hist-filter-label">'
         f'<span class="filter-label" id="hist-filter-label">Filter</span>{chips}</div>'
         '<div class="visually-hidden" id="hist-filter-status" role="status" aria-live="polite"></div>'
@@ -3756,11 +3820,15 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{tally.get(key, 0)}</span></a>'
             for key, lab, sub in (
                 ("validated", "Validated", "beat their stated baseline"),
-                ("deprecated", "Deprecated", "measured, failed, retired"),
-                ("unvalidated", "Unvalidated", "serving, not yet gated")))
+                ("provisional", "Provisional", "partly measured"),
+                ("unvalidated", "Unvalidated", "serving, not yet gated"),
+                ("deprecated", "Deprecated", "measured, failed, retired")))
         if tally:
-            cards.append((f'{_ico("models", 16)}Model Ledger', '/models/',
-                          f'{sum(tally.values())} models with a predictive claim',
+            # QHOC03: the head counts registry rows, every verdict listed under
+            # it (provisional was missing, and some rows are datasets or
+            # pre-registered tests rather than models).
+            cards.append((f'{_ico("models", 16)}{PAGE_LABELS["/models/"]}', '/models/',
+                          f'{sum(tally.values())} registry rows by verdict',
                           rows))
     except (OSError, ValueError, KeyError, TypeError):
         pass
