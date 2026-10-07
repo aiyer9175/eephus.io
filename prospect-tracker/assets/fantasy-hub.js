@@ -285,8 +285,16 @@
     // the panel fill and the active one in the tab's own on-accent ink.
     ".fantasy-modbtn.active .fh-modsub{color:inherit}",
     ".fantasy-mod[hidden]{display:none}",
+    // How this works: the method folded under a lede or a result line
+    // (display pass 2026-10-07). Theme tokens only; square, like the boards.
+    ".fh-how{margin:4px 0 8px;font-size:12.5px;color:var(--text-secondary)}",
+    ".fh-how>summary{cursor:pointer;font:600 11px/1.6 var(--font-retro,monospace);",
+    "text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary)}",
+    ".fh-how>summary:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:2px}",
+    ".fh-how p{margin:6px 0 2px;line-height:1.5;max-width:90ch}",
     ".fantasy-modsub{display:block;font-size:12.5px;color:var(--text-secondary);margin:10px 0 2px}",
     ".fh-error{border:1px solid var(--accent-red);padding:12px;color:var(--text-primary);background:var(--bg-secondary)}",
+    "@media (max-width:640px){.fh-how>summary{padding:12px 0}}",
     "@media (max-width:560px){.fantasy-modbtn{flex:1 1 auto;padding:10px 8px;text-align:center}",
     ".fantasy-modbtn .fh-modsub{display:none}}"
   ].join("");

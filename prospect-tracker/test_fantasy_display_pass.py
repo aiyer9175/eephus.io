@@ -19,6 +19,7 @@ One pin per finding the pass fixed:
   QREC12  a season-over DFS payload prints no old-slate banner or chip.
   QREP15  no board downloads player_links at boot (the card asks on open), and
           the off-season Redraft landing opens on the first tab with rows.
+  COPY    one-line module ledes, the method folded into How this works.
 
 The source guards always run; the rendered half needs playwright.
 """
@@ -162,6 +163,39 @@ def test_offseason_landing_is_the_first_tab_with_rows():
     src = _src("redraft.js")
     assert '[["streamers", "daily_streamers"], ["two_start", "two_start"], ["ros_sp", "ros_sp"]' in src
     assert 'isNextSeason() && !hashParam(hostHash(), "section", SECTIONS.join("|"))' in src
+
+
+# ---- copy trim ----------------------------------------------------------------
+# Each sub-module opens on a one-line lede; its method folds into a closed
+# "How this works" block. The keeper, Fantasy Rank and Buy/Sell method notes
+# fold the same way, with the result line and the pinned disclosures in view.
+def test_module_ledes_are_one_line_and_the_method_folds():
+    import build_site
+    html = build_site.build_fantasy()
+    for mod in ("redraft", "dynasty", "dfs"):
+        panel = html.split('id="fantasy-mod-' + mod + '"')[1]
+        head = panel.split('fantasy-modsub">')[1]
+        lede, rest = head.split('<details class="fh-how">', 1)
+        assert lede.endswith("</span>"), (mod, lede[-80:])   # the fold follows the lede
+        words = re.sub(r"<[^>]+>", "", lede).split()
+        assert 3 <= len(words) <= 12, (mod, words)
+        assert rest.startswith("<summary>How this works</summary><p>"), mod
+    # the glossary hooks the old ledes carried are still on the page
+    for slug in ("xfv", "rem_plus", "sem_plus", "hem_plus"):
+        assert 'data-gl="' + slug + '"' in html, slug
+
+
+def test_section_methods_fold_and_disclosures_stay_in_view():
+    dyn, rd, dfs = _src("dynasty.js"), _src("redraft.js"), _src("dfs.js")
+    assert dyn.count('<details class="fh-how"><summary>How this works</summary><p>') == 3
+    assert rd.count('<details class="fh-how"><summary>How this works</summary><p>') == 1
+    # the keeper result line stays outside the fold
+    assert 'keeper costs pick <b>" + costPick() + "</b> of that draft.</div>' in dyn
+    # the buy/sell posture stays in view
+    assert ('<div class="rd-note">A screen on expected-stat gaps, in wOBA points. \' +\n'
+            '      "Whether a gap closes or persists is unmeasured.</div>"') in rd
+    assert "The Fantasy Rank re-ranks in the format you pick." not in dyn
+    assert 'season_over: { head: "The season is over", bad: false, tail: "" }' in dfs
 
 
 # ---- rendered ---------------------------------------------------------------

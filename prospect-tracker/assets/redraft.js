@@ -761,12 +761,14 @@
     // gap regresses rather than persists, so the note states the gap direction
     // and stops. No luck causality in the headers.
     return filterBar(null) +
-      '<div class="rd-note">Screen on expected-stat gaps in wOBA points: hitters ' + gl("xwOBA", "xwoba") +
-      " minus " + gl("wOBA", "woba") + ", pitchers " + gl("wOBA", "woba") + " minus " +
-      gl("xwOBA", "xwoba") + " allowed. One column per side. Positive: results behind " +
-      "the expected stats; negative: ahead. Whether a gap closes or persists is unmeasured. " +
-      "mech trend: a 5+ point move in per-season " + gl("Swing+", "swing_plus") +
-      ", context only, not in the ranking.</div>" +
+      '<div class="rd-note">A screen on expected-stat gaps, in wOBA points. ' +
+      "Whether a gap closes or persists is unmeasured.</div>" +
+      '<details class="fh-how"><summary>How this works</summary><p>' +
+      "Hitters: " + gl("xwOBA", "xwoba") + " minus " + gl("wOBA", "woba") + ". Pitchers: " +
+      gl("wOBA", "woba") + " minus " + gl("xwOBA", "xwoba") + " allowed. One column per side. " +
+      "Positive: results behind the expected stats; negative: ahead. mech trend: a 5+ point move " +
+      "in per-season " + gl("Swing+", "swing_plus") + ", context only, not in the ranking." +
+      "</p></details>" +
       '<div class="rd-cols">' + col(sec.buy_low, "Buy-Low (behind x-stats)", "rd-pos", "buy-low") +
       col(sec.sell_high, "Sell-High (ahead of x-stats)", "rd-neg", "sell-high") + "</div>";
   }

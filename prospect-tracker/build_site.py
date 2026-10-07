@@ -4840,7 +4840,7 @@ def build_pal() -> str:
 
 def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
                    tabs: list[tuple[str, str]], csv_name: str,
-                   active: bool) -> str:
+                   active: bool, how: str = "") -> str:
     """One sub-module panel inside the combined /fantasy/ shell.
 
     THE IDS ARE THE MODULE'S OWN, ALWAYS. Every client resolves its mount
@@ -4853,7 +4853,11 @@ def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
 
     `bar` is the module's control slot above its section nav. It is a SLOT, not
     a fixture: the client empties it on the tabs its control cannot move, and a
-    `:empty` rule takes the emptied slot out of layout."""
+    `:empty` rule takes the emptied slot out of layout.
+
+    `blurb` is the one-line lede; `how` is the method, folded into a closed
+    "How this works" block under it (display pass 2026-10-07), so the board
+    sits higher and the method stays one click away."""
     btns = "".join(
         f'<button type="button" class="mlbstats-sectionbtn{" active" if i == 0 else ""}" '
         f'data-{mod}section="{key}" role="tab" '
@@ -4863,6 +4867,8 @@ def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
         f'<div class="fantasy-mod" id="fantasy-mod-{mod}" data-fantasypanel="{mod}" '
         f'role="tabpanel" aria-label="{nav_label}"{"" if active else " hidden"}>'
         f'<span class="section-sub fantasy-modsub">{blurb}</span>'
+        + (f'<details class="fh-how"><summary>How this works</summary><p>{how}</p></details>'
+           if how else '') +
         f'{bar}'
         f'<div class="mlbstats-sectionnav" role="tablist" aria-label="{nav_label} sections">{btns}</div>'
         f'<div id="{mod}-section" class="mlbstats-section">'
@@ -4904,10 +4910,7 @@ def build_fantasy() -> str:
     """
     redraft = _fantasy_panel(
         "redraft",
-        "Rest-of-season ranks and daily streamers in your scoring format (Ottoneu FanGraphs "
-        "Points default, SABR Points, Old School 5x5, Ottoneu 4x4). Projections from the MLB "
-        f"Projections engine; matchup context from {_gl('rem_plus', 'REM+')}, "
-        f"{_gl('sem_plus', 'SEM+')}, {_gl('hem_plus', 'HEM+')}, Offense+ and Bullpen+.",
+        "Ranks and streamers in your league's scoring format.",
         # redraft.js fills this from data/fantasy.json scoring_catalog, and only
         # on the three tabs S.system can actually move.
         '<div id="redraft-scoring" class="fantasy-scoring-bar" aria-label="League scoring format"></div>',
@@ -4915,14 +4918,14 @@ def build_fantasy() -> str:
         [("streamers", "Daily Streamers"), ("two_start", "Two-Start SP"),
          ("ros_sp", "ROS SP"), ("ros_rp", "ROS RP"), ("ros_hitter", "ROS Hitters"),
          ("buysell", "Buy / Sell"), ("closers", "Closer Grid")],
-        "redraft-board", True)
+        "redraft-board", True,
+        how="Formats: Ottoneu FanGraphs Points (the default), SABR Points, Old School 5x5 and "
+            "Ottoneu 4x4. Lines come from the MLB Projections engine; matchup context from "
+            f"{_gl('rem_plus', 'REM+')}, {_gl('sem_plus', 'SEM+')}, {_gl('hem_plus', 'HEM+')}, "
+            "Offense+ and Bullpen+.")
     dynasty = _fantasy_panel(
         "dynasty",
-        f"Dynasty and keeper value: prospects ranked on {_gl('xfv', 'eFV')}, blended with the "
-        "star (Elite) bucket share, bust risk, ETA and surplus. The board ranks prospects only. Call-up Watch flags who "
-        "is next. Fantasy Rank ranks MLB players and prospects on projected fantasy value in your "
-        "format, not on WAR. The keeper calculator compares a rank with the pick a keeper costs, "
-        "in a prospects-only draft or, on its All players pool, a draft of both.",
+        f"Prospects on {_gl('xfv', 'eFV')}, for dynasty and keeper leagues.",
         # dynasty.js fills this with the LENS control (board order / contending
         # / rebuilding) on the Dynasty Board, which is graded and has no
         # scoring formats, and with the FORMAT control on the Fantasy Rank and
@@ -4933,19 +4936,24 @@ def build_fantasy() -> str:
         "Dynasty",
         [("dynasty", "Dynasty Board"), ("callups", "Call-up Watch"),
          ("keeper", "Keeper Calculator"), ("fantasy_rank", "Fantasy Rank")],
-        "dynasty-board", False)
+        "dynasty-board", False,
+        how="The Dynasty Board ranks prospects only: eFV first, blended with the star (Elite) "
+            "bucket share, bust risk, ETA and surplus. Call-up Watch lists who is next. Fantasy "
+            "Rank ranks MLB players and prospects on projected fantasy value in your format, not "
+            "on WAR. The keeper calculator compares a rank with the pick a keeper costs, in a "
+            "prospects-only draft or, on its All players pool, a draft of both.")
     dfs = _fantasy_panel(
         "dfs",
-        "Today's slate: the Redraft engine re-scored per game for the probable pitcher, park and "
-        "bullpen. Paste or import your DFS salaries and the optimizer builds against them. No "
-        "salary feed is scraped.",
+        "Today's slate, re-scored per game. No salary feed is scraped.",
         # No slot: the contest-format selector renders inline at the top of the
         # DFS section, which is where it was before the merge.
         "",
         "DFS",
         [("slate", "Today's Slate"), ("value", "Value Plays"),
          ("optimizer", "Lineup Optimizer"), ("stacks", "Stacks")],
-        "dfs-slate", False)
+        "dfs-slate", False,
+        how="The Redraft engine re-scored per game for the probable pitcher, park and bullpen. "
+            "Paste or import your DFS salaries and the optimizer builds against them.")
     modbar = (
         '<div class="fantasy-modbar" role="tablist" aria-label="Fantasy modules">'
         f'<button type="button" class="fantasy-modbtn active" data-fantasymodule="redraft" '

@@ -622,8 +622,8 @@
   var EMPTY_KINDS = {
     no_games_scheduled: { head: "No games today", bad: false,
       tail: "Nothing is broken. The page rebuilds daily." },
-    season_over: { head: "The season is over", bad: false,
-      tail: "The board returns with the schedule." },
+    // No tail: the payload's own sentence already says when slates return.
+    season_over: { head: "The season is over", bad: false, tail: "" },
     schedule_unavailable: { head: "We could not verify today's slate", bad: true,
       tail: "Pipeline outage: the schedule feed did not answer, so nothing is published " +
             "for today." },

@@ -621,8 +621,7 @@
       return '<button type="button" class="dyn-lensbtn' + (on ? " active" : "") + '" data-dynfmt="' +
         id + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(fmtLabel(id)) + "</button>";
     }).join("");
-    return '<div class="dyn-lensbar"><span class="dyn-lens-lbl">Format</span>' + btns +
-      '<span class="dyn-lens-note">The Fantasy Rank re-ranks in the format you pick.</span></div>';
+    return '<div class="dyn-lensbar"><span class="dyn-lens-lbl">Format</span>' + btns + "</div>";
   }
   function frCols() {
     var seasons = (S.rank && S.rank.seasons) || [];
@@ -706,13 +705,14 @@
         "Nothing is broken.</div>";
     }
     var R = S.rank;
-    var intro = '<div class="dyn-note">' + (R.basis || []).map(esc).join(" ") +
-      " A /fantasy/ rank on projected fantasy value only: it reads no WAR and does not reorder " +
-      "/projections/. " + esc(fmtLabel(S.fmt)) + ": " +
+    var intro = '<div class="dyn-note">' + esc(fmtLabel(S.fmt)) + ": " +
       ((R.n_ranked && R.n_ranked[S.fmt] != null) ? R.n_ranked[S.fmt] : all.length) +
       " players clear replacement over the horizon; listed are the top " + esc(R.serve_top_n || 400) +
-      " in any format and every Dynasty Board prospect.</div>" +
-      '<div class="dyn-note">' + backtestNote(R.backtest) + "</div>";
+      " in any format and every Dynasty Board prospect. " + backtestNote(R.backtest) + "</div>" +
+      '<details class="fh-how"><summary>How this works</summary><p>' +
+      (R.basis || []).map(esc).join(" ") +
+      " A /fantasy/ rank on projected fantasy value only: it reads no WAR and does not reorder " +
+      "/projections/.</p></details>";
     var rows = all.filter(function (d) {
       if (S.kind && d.kind !== S.kind) return false;
       if (S.q && normQ(d.name).indexOf(normQ(S.q)) < 0) return false;
@@ -761,16 +761,24 @@
         : "This verdict answers a prospects-only draft, ranked on the Dynasty Board.") +
       "</span></div>";
   }
+  // The keeper result line under the form: the one number the calculator
+  // exists for. The method sits in How this works (display pass 2026-10-07).
+  function keeperCost(k) {
+    return '<div class="dyn-note">With ' + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
+      " keeper costs pick <b>" + costPick() + "</b> of that draft.</div>";
+  }
   function renderKeeperAll(k, form) {
-    var explain =
-      '<div class="dyn-note">Pick spent against Fantasy Rank in a draft that holds MLB players and ' +
-      "prospects, in " + esc(fmtLabel(S.fmt)) + ". No dynasty dollar curve is fit, so no dollar value is " +
-      "shown. With " + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
-      " keeper costs pick <b>" + costPick() + "</b> of that draft. Settings stay in this browser.</div>";
+    var explain = form + keeperCost(k) +
+      '<details class="fh-how"><summary>How this works</summary><p>' +
+      "Pick spent against Fantasy Rank in a draft that holds MLB players and prospects, in " +
+      esc(fmtLabel(S.fmt)) + ". No dynasty dollar curve is fit, so no dollar value is shown. " +
+      "Edge = pick spent minus Fantasy Rank; positive means keep in a draft of MLB players and " +
+      "prospects. Keep by: earliest round where edge is 0 or more. Settings stay in this browser." +
+      "</p></details>";
     if (!S.rank) {
       loadRank();
       if (!S.rank) {
-        return poolBar() + explain + form + (S.rankErr
+        return poolBar() + explain + (S.rankErr
           ? pxState("failed", "<strong>The Fantasy Rank failed to load.</strong> " + esc(S.rankErr), "dyn-error")
           : pxState("loading", "Loading the Fantasy Rank."));
       }
@@ -780,13 +788,13 @@
                eta: d.eta, rank: d.rk[S.fmt], value: d.v ? d.v[S.fmt] : null };
     });
     if (!list.length) {
-      return poolBar() + explain + form + '<div class="dyn-note">No Fantasy Rank rows in this build. ' +
+      return poolBar() + explain + '<div class="dyn-note">No Fantasy Rank rows in this build. ' +
         "The pick math above still updates.</div>";
     }
     if (S.q) {
       list = list.filter(function (d) { return normQ(d.name).indexOf(normQ(S.q)) >= 0; });
       if (!list.length) {
-        return poolBar() + explain + form + filterBar(null, false) +
+        return poolBar() + explain + filterBar(null, false) +
           '<div class="dyn-note">No player matches the name filter.</div>';
       }
     }
@@ -804,9 +812,7 @@
         (v.keep ? "keep" : "let go") + " (" + (v.edge >= 0 ? "+" : "") + esc(v.edge) + ")</td>" +
         "</tr>";
     }).join("");
-    return poolBar() + explain + form + filterBar(null, false) +
-      '<div class="dyn-note">Edge = pick spent minus Fantasy Rank; positive means keep in a draft of ' +
-      "MLB players and prospects. Keep by: earliest round where edge is 0 or more.</div>" +
+    return poolBar() + explain + filterBar(null, false) +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th><th class="dyn-nm">Player</th><th>Pos</th>' +
       "<th>Type</th><th>Value</th>" +
@@ -831,23 +837,24 @@
     // pick 54 overall", which read as the main draft, where a prospect goes far
     // later than his prospect rank; no combined MLB-plus-prospect rank is served
     // here, so the page states the basis instead of implying the other one.
-    var explain = poolBar() +
-      '<div class="dyn-note">Pick spent against board rank in a prospects-only draft (a farm or minors ' +
-      "draft). The board ranks prospects only, so in a draft that also holds MLB players a prospect goes " +
-      "later than his board rank; the All players pool above answers that draft on the Fantasy Rank. " +
-      "No dynasty dollar curve is fit, so no " +
-      "dollar value is shown. With " + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
-      " keeper costs pick <b>" + costPick() + "</b> of that draft. The window only marks whether the ETA " +
-      "lands inside it; the verdict does not read it. Settings stay in this browser.</div>";
+    var explain = poolBar() + form + keeperCost(k) +
+      '<details class="fh-how"><summary>How this works</summary><p>' +
+      "Pick spent against board rank in a prospects-only draft (a farm or minors draft). The board " +
+      "ranks prospects only, so in a draft that also holds MLB players a prospect goes later than his " +
+      "board rank; the All players pool above answers that draft on the Fantasy Rank. No dynasty " +
+      "dollar curve is fit, so no dollar value is shown. The window only marks whether the ETA lands " +
+      "inside it; the verdict does not read it. Edge = pick spent minus board rank; positive means " +
+      "keep in a prospects-only draft. Keep by: earliest round where edge is 0 or more. Settings stay " +
+      "in this browser.</p></details>";
     if (!list.length) {
-      return explain + form + '<div class="dyn-note">No board rows yet. The pick math above still updates.</div>';
+      return explain + '<div class="dyn-note">No board rows yet. The pick math above still updates.</div>';
     }
     // Name search narrows BEFORE the 150-row cap, so a keeper deep on the
     // board is findable rather than cut off by the cap.
     if (S.q) {
       list = list.filter(function (d) { return normQ(d.name).indexOf(normQ(S.q)) >= 0; });
       if (!list.length) {
-        return explain + form + filterBar(null, false) +
+        return explain + filterBar(null, false) +
           '<div class="dyn-note">No prospect matches the name filter.</div>';
       }
     }
@@ -873,9 +880,7 @@
         (v.keep ? "keep" : "let go") + " (" + (v.edge >= 0 ? "+" : "") + esc(v.edge) + ")</td>" +
         "</tr>";
     }).join("");
-    return explain + form + filterBar(null, false) +
-      '<div class="dyn-note">Edge = pick spent minus board rank; positive means keep in a prospects-only ' +
-      "draft. Keep by: earliest round where edge is 0 or more.</div>" +
+    return explain + filterBar(null, false) +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th><th class="dyn-nm">Prospect</th><th>Pos</th>' +
       "<th>" + glossLbl({ label: "eFV", term: "xfv" }) + "</th>" +
