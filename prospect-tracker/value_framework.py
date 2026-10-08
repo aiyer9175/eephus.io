@@ -987,6 +987,23 @@ def position_multiplier(position: str | None) -> float:
 # =============================================================================
 # FV -> 6-year AVERAGE annual WAR anchor (FanGraphs primer; NOT peak)
 # =============================================================================
+# Whether the recalibrated realized anchor is SERVED. Set from the verdict in
+# docs/PROSPECT_ANCHOR_GATE.md, never from the size of the correction, and a flip
+# is the owner's call even on a PASS of the lever's out-of-fold check.
+# False: fv_to_6yr_avg_war reads empirical_anchors.anchors, reproducing today's
+# payload byte for byte. True: it reads empirical_anchors_v2.anchors, whichever
+# form (table, or the scaled table of the one-parameter twin, section 11.3) that
+# key records. ONE read site. war_anchor_scale is never the vehicle.
+# Flipping it moves every priced prospect number (section 13.1) and no grade, no
+# rank, no veteran projection, no betting number and no arbitration award.
+# With it, in ONE commit: bump calibration.version, refit and re-stamp the dollar
+# map, repoint --emit-snapshots at fv_to_6yr_avg_war() over the knot set so the
+# glossary's table is the served anchor (12.2), re-emit data/value_framework.{json,js},
+# re-capture prospx_current.yaml, move the pins, and re-run every export that
+# stamps calibration_version().
+SERVE_PROSPECT_ANCHOR_V2 = False     # env override EEPHUS_PROSPECT_ANCHOR_V2, read at call time
+
+
 def fv_to_6yr_avg_war(fv: float | None) -> float | None:
     """Monotone (piecewise-linear) interpolation of the config anchor mapping FV
     to the six-year AVERAGE annual WAR. Clamps outside the anchor range."""
@@ -1001,7 +1018,18 @@ def fv_to_6yr_avg_war(fv: float | None) -> float | None:
     # Prefer the EMPIRICAL anchors re-derived from resolved cohorts (continuous
     # calibration, written to the fit file by --fit); fall back to the config seed.
     cal = _config().get("anchor_calibration", {})
-    fitted_anchors = (_fitted().get("empirical_anchors") or {}).get("anchors") if cal.get("use_empirical") else None
+    fitted_anchors = None
+    if cal.get("use_empirical"):
+        fitted = _fitted()
+        # SERVE_PROSPECT_ANCHOR_V2: the ONE read site (docs/PROSPECT_ANCHOR_GATE.md
+        # 12.1), read at call time. While the key is absent the flag moves nothing.
+        env = os.environ.get("EEPHUS_PROSPECT_ANCHOR_V2")
+        v2_on = (SERVE_PROSPECT_ANCHOR_V2 if env is None
+                 else env.strip().lower() in ("1", "true", "on", "yes"))
+        if v2_on:
+            fitted_anchors = (fitted.get("empirical_anchors_v2") or {}).get("anchors")
+        if not fitted_anchors:
+            fitted_anchors = (fitted.get("empirical_anchors") or {}).get("anchors")
     anchor = fitted_anchors or _config()["fv_to_6yr_avg_war"]
     pts = sorted((float(k), float(v)) for k, v in anchor.items())
     if f <= pts[0][0]:

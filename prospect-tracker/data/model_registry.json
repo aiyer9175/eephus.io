@@ -6073,6 +6073,20 @@
    "notes": "Registered 2026-10-07 by Q8_10 (plan Part 3.A gap: served on the team sub-tabs with no row). Descriptive: a weighted mean of served per-player values, no forward claim and no eval of its own. Basis: club today (bullpen_export.TEAM_BASIS current_roster): a traded player's whole season counts for the club that holds him now. 100 is the average qualified player of the parent board, not the average club; the league's own weighted mean sits near but not at 100. Team run totals beside it (team_fld_runs, team_frm_runs) are sums, not part of the index.",
    "last_checked": "2026-10-07",
    "stale": false
+  },
+  {
+   "model_id": "prospect_anchor",
+   "summary": "Registered, not computed: one look on the fWAR label asks whether the served realized anchor matches resolved prospects by FV cell; not before 2026-11-20. Nothing served moves.",
+   "surface": "No surface: the served realized anchor value_framework.fv_to_6yr_avg_war is unchanged; the lab tools/prospect_anchor_gate.py writes data/prospect_anchor_gate.json at the look",
+   "predicts": "Nothing forward: whether fv_to_6yr_avg_war, the bust-inclusive first-six-season mean the framework assigns per FV, matches what resolved prospects of each FV cell delivered on the fWAR label",
+   "champion": "the served empirical_anchors table in data/value_framework_fitted.json (step J refit 2026-10-03, cohort window 2014-2020, n_cohort 3463)",
+   "baseline": "separately gated by docs/PROSPECT_ANCHOR_GATE.md: a two-sided equivalence read per cell against the anchor's own half-grade margin m_C; registered, the look is pending, not before 2026-11-20 (the later of 2026-11-20 and step Z 2026-10-03 plus 14 days)",
+   "metric": "Registered, not computed: per cell D_C = label / 6 minus anchor(fv), percentile bootstrap B 2000 seed 20260923, two-sided 90 percent, floor n 40, Holm at 0.10 over two families (H holdout, S veto); verdicts CONFIRMED, MISCALIBRATED, UNDECIDED; the look is pending",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "Registered 2026-10-08 (PROSPECT_ANCHOR_PRODUCERS) pointing at docs/PROSPECT_ANCHOR_GATE.md (pre-registered 2026-09-23). The lab tools/prospect_anchor_gate.py, its test test_prospect_anchor_gate.py and the flag SERVE_PROSPECT_ANCHOR_V2 (default False, one read site inside fv_to_6yr_avg_war) are built and tested on fixtures only; nothing was read on real rows and no statistic by consensus-FV cell exists. The look runs once, not before 2026-11-20 and after the fWAR label epoch's step Z entry (2026-10-03) plus 14 days, on the fwar label at RESOLVED_THROUGH 2026, and writes data/prospect_anchor_gate.json, whose verdict this row then carries with the frame and the fitted-file hash scored. The registry enum has no word registered, so the row reads unvalidated (a predictive claim with no measurement yet) until the look. prospect_surplus is untouched; it moves only under one outcome and only by the owner's flip.",
+   "last_checked": "2026-10-08",
+   "stale": false
   }
  ],
  "problems": []
