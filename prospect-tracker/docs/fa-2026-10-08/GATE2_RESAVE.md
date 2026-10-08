@@ -113,4 +113,34 @@ on the board moves through the edges.
 
 ## 7. Results
 
-Appended by the re-save commit.
+Re-saved 2026-10-08 (`python fa_backtest.py --gate2`, artifact generated_at
+2026-10-08T23:11:22Z, war_provider fwar, discount rate 0.07). All three hard gates pass.
+
+| metric | model MAE | comps MAE | n | 2026-08-19 table (bWAR label of its day) |
+|---|---|---|---|---|
+| guarantee ($M) | 9.8524 | 10.7358 | 1,199 | 9.6902 / 11.1205 |
+| AAV ($M) | 3.1199 | 3.1879 | 1,199 | 2.9089 / 3.2491 |
+| years | 0.4370 | 0.4921 | 1,199 | 0.4329 / 0.4871 |
+| megadeals ($M, tracked) | 81.61 | 97.24 | 50 | 79.81 / 95.27 |
+
+Guarantee bias by predicted tier ($M): lt10 -1.73, 10to20 -6.96, 20to50 -12.05,
+ge50 +4.78 (2026-08-19: -2.18, -7.50, -12.88, -23.46). No tier exceeds the +10 $M cap.
+
+Verdict edges (section 4 recipe, n 1,300, winters 2017 to 2026, 0 rows dropped):
+
+| group | n | p33 | p67 | edges | served before | split under new edges | split under old edges | corpus flips |
+|---|---|---|---|---|---|---|---|---|
+| pooled | 1300 | 76.027 | 180.473 | 76 / 180 | 89 / 198 | 429 / 440 / 431 | 493 / 424 / 383 | 112 |
+| SP | 297 | 96.775 | 214.467 | 97 / 214 | 86 / 182 | 99 / 98 / 100 | 89 / 91 / 117 | 27 |
+| RP | 450 | 45.163 | 101.070 | 45 / 101 | 65 / 146 | 147 / 152 / 151 | 218 / 136 / 96 | 126 |
+| C | 102 | 139.690 | 240.434 | 140 / 240 | 101 / 243 | 34 / 34 / 34 | 20 / 49 / 33 | 15 |
+| POS | 451 | 109.106 | 245.750 | 109 / 246 | 103 / 237 | 149 / 153 / 149 | 135 / 161 / 155 | 20 |
+
+Splits are overpay / market / value. Served 2027 board (232 priced rows):
+106 / 119 / 7 before, 86 / 140 / 6 after; 37 rows change verdict. The 2028 board moves
+52 / 121 / 10 to 45 / 121 / 17 (26 rows) and the 2029 board 46 / 68 / 21 to 41 / 74 / 20
+(34 rows). No dollar figure moved. The reliever edges move furthest; this record measures
+that and does not attribute it.
+
+The automatic re-export ran from cached pages and rewrote fa_class.json, fa_meta.json,
+fa_class_2028.json and fa_class_2029.json; fa_archive.json was unchanged.

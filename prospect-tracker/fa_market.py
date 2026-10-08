@@ -2534,8 +2534,18 @@ class MarketModel:
 # do not move until VERDICT_GROUP_EDGES is re-cut on the same basis (owed,
 # flagged in the gate doc - own terciles measured there run SP 89/180,
 # RP 67/144, C 120/279, POS 116/256).
-VERDICT_VALUE_MIN = 198     # Deal+ >= 198 -> "value"   (corpus top tercile)
-VERDICT_OVERPAY_MAX = 89    # Deal+ <  89  -> "overpay" (corpus bottom tercile)
+#
+# RE-CUT 2026-10-08 (owner answer M14-2, docs/fa-2026-10-08/GATE2_RESAVE.md,
+# recipe fa_backtest.verdict_edge_corpus / derive_verdict_edges). The fWAR
+# label epoch (2026-10-03) and the pricing work since 2026-08-19 moved the
+# basis under every Deal+ again. On the current corpus (n=1,300, winters
+# 2017-2026, basis A, shipped i/20 grid) the pooled terciles read p33 76.03 / p67 180.47, so 89/198 -> 76/180; the old
+# edges split it 493/424/383 and the new ones 429/440/431 (112 pooled rows
+# flip). Every re-persist re-derives the edges into
+# fa_gate2_eval.json verdict_edges.derived; the full record of this cut is
+# verdict_edges.recut_2026_10_08.
+VERDICT_VALUE_MIN = 180     # Deal+ >= 180 -> "value"   (corpus top tercile)
+VERDICT_OVERPAY_MAX = 76    # Deal+ <  76  -> "overpay" (corpus bottom tercile)
 
 # ============================================================================
 # E6 (2026-07-30): per-position-group verdict bands. OWNER DECISION, DEFAULT OFF
@@ -2585,8 +2595,13 @@ VERDICT_OVERPAY_MAX = 89    # Deal+ <  89  -> "overpay" (corpus bottom tercile)
 VERDICT_BAND_MODE = "group"         # "pooled" | "group" (shipped 2026-07-30, owner)
 # Terciles of Deal+ at the ACTUAL price, per _pos_group, on the 1,300-signing
 # forward-chained corpus. Regenerate whenever the pricing basis moves.
-VERDICT_GROUP_EDGES = {"SP": (86, 182), "RP": (65, 146),
-                       "C": (101, 243), "POS": (103, 237)}
+# RE-CUT 2026-10-08 (owner answer M14-2): the 2026-07-30 cut SP 86/182,
+# RP 65/146, C 101/243, POS 103/237 moved to the derived terciles below
+# (fa_gate2_eval.json verdict_edges.recut_2026_10_08; corpus flips SP 27 of 297,
+# RP 126 of 450, C 15 of 102, POS 20 of 451). The reliever edges move
+# furthest; this cut measures that and does not attribute it.
+VERDICT_GROUP_EDGES = {"SP": (97, 214), "RP": (45, 101),
+                       "C": (140, 240), "POS": (109, 246)}
 
 
 def deal_verdict(deal_plus: float | None, position: str | None = None) -> str | None:

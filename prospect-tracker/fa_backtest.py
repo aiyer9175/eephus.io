@@ -207,7 +207,10 @@ def _fit_band_scale(panel: list[dict]) -> dict:
     return out
 
 
-def run_projection_gate(persist: bool = True) -> dict:
+def run_projection_gate(persist: bool = True, reexport: bool = True) -> dict:
+    """Gate 1. ``persist=True`` writes the artifact and then, with ``reexport``
+    (the default, owner answer M14-1), re-runs the FA export so the served
+    sidecars follow the gate at once (reexport_fa_sidecars)."""
     cfg = fp._pcfg()
     corpus = fp.build_corpus()
     league = corpus["league"]
@@ -438,7 +441,87 @@ def run_projection_gate(persist: bool = True) -> dict:
         summary["generated_at"] = _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         (Path(__file__).parent / "data" / "fa_gate1_eval.json").write_text(
             json.dumps(summary, indent=1), encoding="utf-8")
+        if reexport and reexport_on_persist():
+            reexport_fa_sidecars("Gate 1 persisted")
     return summary
+
+
+# ============================================================================
+# M14-1: a saved gate re-runs the FA export (owner answer, 2026-09-25)
+# ============================================================================
+# fa_meta.json carries a COPY of both gate artifacts (the /fa/ Model view renders
+# it) and the class bands read band_scale at export time, so a persisted gate
+# used to sit unserved until someone ran fa_export by hand; the Model view served
+# a superseded Gate 1 for days that way (census M04-02). A persisted gate now
+# re-runs the export itself. Page reads go through scrapers.cache_only(): a cached
+# Spotrac, Savant or StatsAPI page is read whatever its age and a missing one is
+# not fetched, so the re-export costs no new page request. Every rewrite is
+# logged with its size and a short content hash, before and after.
+# Never called on persist=False: a lab that reads a gate without saving it (the
+# GATE2_COLLECT labs, the FA destination lab) cannot trigger a served write.
+
+def reexport_on_persist() -> bool:
+    """False only where FA_GATE_REEXPORT is "0": the test harness sets it
+    (conftest.py), so a test that persists a gate can never rewrite the served
+    sidecars as a side effect."""
+    import os
+    return os.environ.get("FA_GATE_REEXPORT", "1") != "0"
+
+
+def _sidecar_stamps(data_dir, names) -> dict:
+    import hashlib
+    out = {}
+    for name in names:
+        try:
+            b = (data_dir / name).read_bytes()
+        except OSError:
+            out[name] = None
+            continue
+        out[name] = (len(b), hashlib.sha256(b).hexdigest()[:12])
+    return out
+
+
+def reexport_fa_sidecars(reason: str, *, export=None, data_dir=None,
+                         names=None) -> dict:
+    """Re-run the FA export from cached pages and log what it rewrote.
+
+    Returns {"reason", "rewritten": {name: [before, after]}, "unchanged": [...],
+    "error": str | None}, each stamp [bytes, sha256 prefix] or None for an
+    absent file. A failed export is logged and reported, never raised: the
+    gate artifact is already on disk and the nightly export catches up."""
+    from pathlib import Path
+    import scrapers
+    if export is None or data_dir is None or names is None:
+        import fa_export
+        export = export or fa_export.export_all
+        data_dir = data_dir or fa_export.DATA_DIR
+        names = names or (["fa_class.json", "fa_archive.json", "fa_meta.json"]
+                          + [f"fa_class_{y}.json" for y in fa_export.FUTURE_CLASS_YEARS])
+    data_dir = Path(data_dir)
+    before = _sidecar_stamps(data_dir, names)
+    out = {"reason": reason, "rewritten": {}, "unchanged": [], "error": None}
+    log.info("fa re-export (%s): rewriting the served FA sidecars from cached "
+             "pages only", reason)
+    try:
+        with scrapers.cache_only():
+            export()
+    except Exception as e:                                # noqa: BLE001
+        log.exception("fa re-export (%s) failed; the served sidecars still "
+                      "carry the previous gate until the nightly export", reason)
+        out["error"] = f"{type(e).__name__}: {e}"
+    after = _sidecar_stamps(data_dir, names)
+    for name in names:
+        b, a = before.get(name), after.get(name)
+        if a == b:
+            out["unchanged"].append(name)
+            continue
+        out["rewritten"][name] = [list(b) if b else None, list(a) if a else None]
+        log.info("fa re-export: rewrote data/%s  %s -> %s", name,
+                 f"{b[0]:,} B {b[1]}" if b else "absent",
+                 f"{a[0]:,} B {a[1]}" if a else "absent")
+    if out["unchanged"]:
+        log.info("fa re-export: unchanged %s", ", ".join(out["unchanged"]))
+    return out
 
 
 def main() -> None:
@@ -463,12 +546,10 @@ def main() -> None:
         print(f"  gates: {s['gates']}")
         print(f"  PASS: {s['pass']}")
     if args.gate1 or args.gate2:
-        # fa_meta.json carries a COPY of both gate artifacts (the /fa/ Model
-        # view renders it) and the class bands read band_scale at export time,
-        # so a persisted gate is not served until the sidecars are rebuilt.
-        # test_fa_meta_gate_parity.py fails until they are.
-        print("\n  NEXT: python fa_export.py, so fa_meta.json and the class "
-              "bands follow this gate")
+        # M14-1: each persisted gate above already re-ran the FA export from
+        # cached pages (reexport_fa_sidecars logs every file it rewrote).
+        print("\n  The FA sidecars were re-exported from cached pages after "
+              "each saved gate; see the log for the files rewritten.")
 
 
 
@@ -522,11 +603,198 @@ def gate2_notes(discount_rate: float) -> list[str]:
     ]
 
 
+# ============================================================================
+# Verdict edge re-derivation (owner answer M14-2; docs/fa-2026-10-08/GATE2_RESAVE.md
+# section 4). The edges are corpus terciles of Deal+ by construction, so they go
+# stale whenever the pricing basis moves. This is the one recipe that cuts them:
+# basis A (expected rational value over the ACTUAL NPV guarantee), forward-chained
+# train-only $/WAR, the ex-ante destale rate, term capped at 10, per _pos_group,
+# p33 / p67 linearly interpolated and rounded half up. run_market_gate(persist=True)
+# runs it on every persist and records it beside the served constants.
+# ============================================================================
+
+VERDICT_EDGE_PROTOCOL = "docs/fa-2026-10-08/GATE2_RESAVE.md"
+VERDICT_EDGE_MIN_TRAIN = 100        # a winter is cut only with this many prior rows
+VERDICT_EDGE_MAX_TERM = 10
+VERDICT_EDGE_PCTS = (33, 67)
+VERDICT_EDGE_GROUPS = ("SP", "RP", "C", "POS")
+
+
+def verdict_edge_corpus(enriched: list[dict]) -> tuple[list[dict], int]:
+    """(rows, dropped): one {winter, group, deal_plus} per corpus signing with a
+    WAR path, Deal+ on basis A, each winter priced by a model trained on the
+    winters strictly before it. `dropped` counts rows whose value raised."""
+    import fa_market as fm
+    rows: list[dict] = []
+    dropped = 0
+    for W in sorted({s["class_year"] for s in enriched}):
+        train = [s for s in enriched if s["class_year"] < W]
+        test = [s for s in enriched if s["class_year"] == W]
+        if len(train) < VERDICT_EDGE_MIN_TRAIN or not test:
+            continue
+        series = fm.dollars_per_war_by_winter(train)
+        model = fm.MarketModel(train, series)
+        model.supply_by_year[W] = fm._supply(test, W)
+        dpw = fm.winter_dpw(series, W)
+        infl = fm._destale_rate(series, W)
+        for s in test:
+            path = s.get("_war_path") or {}
+            if not path.get("war_by_year"):
+                continue
+            pred = model.predict(s)
+            yrs = min(int(pred["proj_years"]), VERDICT_EDGE_MAX_TERM)
+            try:
+                val = fm.expected_rational_value_usd(path, yrs, W, dpw, infl=infl)
+            except Exception:                         # noqa: BLE001
+                dropped += 1
+                continue
+            rows.append({"winter": W, "group": fm._pos_group(s.get("position")),
+                         "deal_plus": 100.0 * val / max(fm._npv_of(s), 1)})
+    return rows, dropped
+
+
+def _pct_linear(sorted_vals: list[float], p: float) -> float:
+    """The p-th percentile, linear between order statistics at p/100 * (n - 1)."""
+    pos = (p / 100.0) * (len(sorted_vals) - 1)
+    lo = int(math.floor(pos))
+    hi = min(lo + 1, len(sorted_vals) - 1)
+    return sorted_vals[lo] + (sorted_vals[hi] - sorted_vals[lo]) * (pos - lo)
+
+
+def _round_half_up(x: float) -> int:
+    return int(math.floor(x + 0.5))
+
+
+def _band(d: float, edges) -> str:
+    lo, hi = edges
+    return "value" if d >= hi else "overpay" if d < lo else "market"
+
+
+def _band_counts(vals, edges) -> dict:
+    c = {"overpay": 0, "market": 0, "value": 0}
+    for d in vals:
+        c[_band(d, edges)] += 1
+    return c
+
+
+def derive_verdict_edges(rows: list[dict], served: dict | None = None) -> dict:
+    """Per-group and pooled terciles of corpus Deal+, with the counts under the
+    derived edges and, given `served` ({"pooled" | group: (lo, hi)}), under the
+    edges that were served before and the rows whose verdict flips."""
+    by = {"pooled": [r["deal_plus"] for r in rows]}
+    for g in VERDICT_EDGE_GROUPS:
+        by[g] = [r["deal_plus"] for r in rows if r["group"] == g]
+    out = {}
+    for k, vals in by.items():
+        if not vals:
+            continue
+        sv = sorted(vals)
+        p33, p67 = (_pct_linear(sv, p) for p in VERDICT_EDGE_PCTS)
+        edges = [_round_half_up(p33), _round_half_up(p67)]
+        cell = {"n": len(vals), "p33": round(p33, 3), "p67": round(p67, 3),
+                "edges": edges, "counts": _band_counts(vals, edges)}
+        old = (served or {}).get(k)
+        if old:
+            cell["served_edges"] = list(old)
+            cell["served_counts"] = _band_counts(vals, old)
+            cell["flips"] = sum(1 for d in vals if _band(d, old) != _band(d, edges))
+        out[k] = cell
+    return out
+
+
+def _served_board_counts(edges_by_group: dict, path=None) -> dict | None:
+    """Verdict counts on the served class board (data/fa_class.json) re-banded
+    on `edges_by_group` from each row's served Deal+ and position group."""
+    import json as _json
+    from pathlib import Path as _Path
+    import fa_market as fm
+    p = _Path(path) if path else _Path(__file__).parent / "data" / "fa_class.json"
+    try:
+        members = _json.loads(p.read_text(encoding="utf-8")).get("members") or []
+    except (OSError, ValueError):
+        return None
+    c = {"overpay": 0, "market": 0, "value": 0}
+    for m in members:
+        if m.get("dealPlus") is None:
+            continue
+        g = fm._pos_group(m.get("pos"))
+        c[_band(float(m["dealPlus"]), edges_by_group[g])] += 1
+    return c
+
+
+def _served_edges(ve: dict | None) -> dict:
+    """{"pooled" | group: (lo, hi)} from a verdict_edges block, falling back to
+    the fa_market constants for anything the block does not carry."""
+    import fa_market as fm
+    out = {"pooled": (fm.VERDICT_OVERPAY_MAX, fm.VERDICT_VALUE_MIN),
+           **{g: tuple(v) for g, v in fm.VERDICT_GROUP_EDGES.items()}}
+    ve = ve or {}
+    pooled = ve.get("pooled") or {}
+    if pooled.get("overpay_max") is not None and pooled.get("value_min") is not None:
+        out["pooled"] = (int(pooled["overpay_max"]), int(pooled["value_min"]))
+    for g, v in (ve.get("group") or {}).items():
+        out[g] = tuple(v)
+    return out
+
+
+def verdict_edges_block(enriched: list[dict], prev_block: dict | None,
+                        war_provider: str | None, today: str) -> dict:
+    """The artifact's verdict_edges block for one persist: the served constants,
+    the fresh derivation (`derived`), every earlier dated re-cut record carried
+    forward, and a new `recut_<date>` record when the derived edges differ from
+    the edges served before this persist."""
+    import fa_market as fm
+    rows, dropped = verdict_edge_corpus(enriched)
+    served_before = _served_edges(prev_block)
+    cells = derive_verdict_edges(rows, served_before)
+    derived_groups = {g: cells[g]["edges"] for g in VERDICT_EDGE_GROUPS if g in cells}
+    derived = {
+        "date": today,
+        "protocol": VERDICT_EDGE_PROTOCOL,
+        "basis": ("deal_plus = 100 * expected rational value / ACTUAL NPV guarantee; "
+                  "forward-chained train-only $/WAR per winter, ex-ante destale rate, "
+                  f"predicted term capped at {VERDICT_EDGE_MAX_TERM}"),
+        "quantile": "linear between order statistics at p/100 * (n - 1), p 33 and 67, rounded half up",
+        "war_provider": war_provider,
+        "winters": sorted({r["winter"] for r in rows}),
+        "n": len(rows),
+        "dropped": dropped,
+        "pooled": cells.get("pooled"),
+        "group": {g: cells[g] for g in VERDICT_EDGE_GROUPS if g in cells},
+        "served_board": {
+            "served_before": _served_board_counts(
+                {g: served_before[g] for g in VERDICT_EDGE_GROUPS}),
+            "derived": _served_board_counts(derived_groups),
+        },
+    }
+    block = {
+        "band_mode": fm.VERDICT_BAND_MODE,
+        "pooled": {"overpay_max": fm.VERDICT_OVERPAY_MAX,
+                   "value_min": fm.VERDICT_VALUE_MIN},
+        "group": {g: list(v) for g, v in fm.VERDICT_GROUP_EDGES.items()},
+        "protocol": VERDICT_EDGE_PROTOCOL,
+        "derived": derived,
+    }
+    for k, v in (prev_block or {}).items():
+        if k.startswith("recut_"):
+            block[k] = v
+    moved = (tuple(cells["pooled"]["edges"]) != tuple(served_before["pooled"])
+             or any(tuple(derived_groups[g]) != tuple(served_before[g])
+                    for g in derived_groups))
+    if moved:
+        block["recut_" + today.replace("-", "_")] = derived
+    return block
+
+
 def run_market_gate(persist: bool = True, challenger: bool = False,
-                    persist_dpw: bool = False) -> dict:
+                    persist_dpw: bool = False, reexport: bool = True) -> dict:
     """Gate 2. ``challenger=True`` additionally scores the WS-2f LightGBM
     challenger (fa_market_ml.MarketModelML) on the same folds — identical
     train/test rows, identical comps baseline, identical NPV targets.
+
+    ``persist=True`` also re-derives the verdict edges (verdict_edges_block)
+    and, with ``reexport`` (the default, owner answer M14-1), re-runs the FA
+    export afterwards so the served sidecars follow the gate at once.
 
     ``persist_dpw=False`` writes the EVAL ARTIFACT ONLY and leaves
     data/fa_dpw_series.json alone. That coupling is this module's single biggest
@@ -718,6 +986,14 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
         summary["generated_at"] = _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         try:
             _prev = _json.loads(_out.read_text(encoding="utf-8"))
+        except (FileNotFoundError, _json.JSONDecodeError):
+            _prev = {}
+        # M14-2: the edges are re-derived on this persist's own corpus and
+        # recorded beside the served constants (verdict_edges_block).
+        summary["verdict_edges"] = verdict_edges_block(
+            enriched, _prev.get("verdict_edges"), summary["war_provider"],
+            summary["generated_at"][:10])
+        try:
             for _k, _v in _prev.items():
                 if _k not in summary and (_k == "verdict_edges"
                                           or _k.endswith("_gate")
@@ -735,6 +1011,8 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
         # whichever of the two callers wrote it last.
         from fa_export import CLASS_YEAR as _CLASS_YEAR
         fm.write_dpw_series(_CLASS_YEAR)
+    if persist and reexport and reexport_on_persist():
+        reexport_fa_sidecars("Gate 2 persisted")
     return summary
 
 

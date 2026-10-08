@@ -270,12 +270,15 @@ def test_verdict_edges_were_re_derived_with_the_pricing_change(monkeypatch):
     # fa_gate2_eval.json verdict_edges.recut_2026_08_19. Served verdicts did
     # NOT move: band_mode is 'group' and VERDICT_GROUP_EDGES awaits its own
     # owner-checkpointed re-cut on the same basis.
-    assert fm.VERDICT_OVERPAY_MAX == 89
-    assert fm.VERDICT_VALUE_MIN == 198
-    assert fm.deal_verdict(88) == "overpay"
-    assert fm.deal_verdict(89) == "market"
-    assert fm.deal_verdict(197) == "market"
-    assert fm.deal_verdict(198) == "value"
+    # RE-CUT 2026-10-08 (owner answer M14-2): p33 76.03 / p67 180.47 on the
+    # current corpus, so 89/198 -> 76/180, with the group edges re-cut in the
+    # same change (fa_gate2_eval.json verdict_edges.recut_2026_10_08).
+    assert fm.VERDICT_OVERPAY_MAX == 76
+    assert fm.VERDICT_VALUE_MIN == 180
+    assert fm.deal_verdict(75) == "overpay"
+    assert fm.deal_verdict(76) == "market"
+    assert fm.deal_verdict(179) == "market"
+    assert fm.deal_verdict(180) == "value"
     assert fm.deal_verdict(None) is None
 
 

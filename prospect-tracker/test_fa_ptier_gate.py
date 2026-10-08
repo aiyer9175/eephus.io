@@ -34,8 +34,11 @@ These tests pin the fence:
     artifact carries generated_at. run_market_gate(persist=True) stamps
     generated_at and carries verdict_edges, *_gate and ptier_* blocks
     forward (a97e5359, 2026-08-19); since 2026-09-25 it also stamps
-    war_provider. A plain re-persist therefore keeps the OLD edges: re-cutting
-    them is its own step.
+    war_provider. Since 2026-10-08 (owner answer M14-2,
+    docs/fa-2026-10-08/GATE2_RESAVE.md) every persist also re-derives the
+    edges into verdict_edges.derived, and the served constants must equal that
+    derivation: a re-persist that moves it goes red here, because moving the
+    served constants again moves published verdicts (an owner call).
 
 If a future re-gate ships shift_ptier or re-cuts any edge, it must update
 these assertions IN THE SAME CHANGE as the new passing gate doc.
@@ -127,20 +130,44 @@ def test_verdict_edges_consistent():
         "fa_gate2_eval.json lost the verdict_edges block; a re-persist owes "
         "it (docs/fa-2026-08-19/PTIER_LEVEL_GATE.md section 4b)")
     assert ve["band_mode"] == fm.VERDICT_BAND_MODE == "group"
-    assert ve["pooled"]["overpay_max"] == fm.VERDICT_OVERPAY_MAX == 89
-    assert ve["pooled"]["value_min"] == fm.VERDICT_VALUE_MIN == 198
+    assert ve["pooled"]["overpay_max"] == fm.VERDICT_OVERPAY_MAX
+    assert ve["pooled"]["value_min"] == fm.VERDICT_VALUE_MIN
     assert {k: tuple(v) for k, v in ve["group"].items()} \
         == fm.VERDICT_GROUP_EDGES
-    recut = ve["recut_2026_08_19"]
-    assert recut["new_edges"] == [fm.VERDICT_OVERPAY_MAX, fm.VERDICT_VALUE_MIN]
-    n = recut["n"]
-    assert n == sum(recut["new_counts"].values())
-    # The re-cut restores the 33/33/33 design on its own corpus.
-    for band, cnt in recut["new_counts"].items():
-        assert abs(cnt - n / 3.0) <= 0.02 * n, (
-            f"re-cut band {band} holds {cnt} of {n}; the pooled edges no "
-            "longer cut terciles on the corpus they were fit on")
-    assert recut["verdict_flips"] >= 0
+    # The 2026-08-19 pooled re-cut stays on the record as history.
+    old = ve["recut_2026_08_19"]
+    assert old["new_edges"] == [89, 198]
+    assert old["n"] == sum(old["new_counts"].values())
+    assert old["verdict_flips"] >= 0
+
+
+def test_verdict_edges_are_the_derivation_the_artifact_carries():
+    """M14-2 (2026-10-08): the served edges are the terciles the gate's own
+    recipe derives on the persisted corpus, per group and pooled."""
+    ve = _gate2()["verdict_edges"]
+    d = ve["derived"]
+    assert ve["protocol"] == d["protocol"] == "docs/fa-2026-10-08/GATE2_RESAVE.md"
+    assert (HERE / ve["protocol"]).exists()
+    assert d["war_provider"] == _gate2()["war_provider"]
+    assert d["pooled"]["edges"] == [fm.VERDICT_OVERPAY_MAX, fm.VERDICT_VALUE_MIN], (
+        "the persisted derivation moved the pooled edges; moving the served "
+        "constants again is an owner call (docs/fa-2026-10-08/GATE2_RESAVE.md s4)")
+    for g, edges in fm.VERDICT_GROUP_EDGES.items():
+        cell = d["group"][g]
+        assert tuple(cell["edges"]) == tuple(edges), (
+            f"{g}: derived {cell['edges']} vs served {edges}; an owner call")
+        # Each cut is a tercile split of its own corpus, within 2 points.
+        n = cell["n"]
+        assert n == sum(cell["counts"].values())
+        for band, cnt in cell["counts"].items():
+            assert abs(cnt - n / 3.0) <= 0.02 * n + 1, (g, band, cnt, n)
+    assert d["n"] == d["pooled"]["n"] == sum(d["group"][g]["n"] for g in d["group"])
+    # The dated record of the 2026-10-08 cut, against the edges it replaced.
+    rc = ve["recut_2026_10_08"]
+    assert rc["group"]["SP"]["served_edges"] == [86, 182]
+    assert rc["pooled"]["served_edges"] == [89, 198]
+    assert all(rc["group"][g]["edges"] == list(e)
+               for g, e in fm.VERDICT_GROUP_EDGES.items())
 
 
 def test_gate_doc_no_pending():

@@ -45,6 +45,12 @@ _os.environ["EEPHUS_SCORES_STORE"] = str(_SCORES_TEST_ROOT / "store")
 _os.environ["EEPHUS_SCORES_OUT"] = str(_SCORES_TEST_ROOT / "out")
 _atexit.register(_shutil.rmtree, str(_SCORES_TEST_ROOT), True)
 
+# A persisted FA gate re-runs the FA export (fa_backtest.reexport_fa_sidecars,
+# owner answer M14-1), which writes the served data/fa_* sidecars. No test may
+# reach that second output path through a gate run: the harness turns it off,
+# and test_fa_gate_reexport.py drives the re-export against a temp directory.
+_os.environ["FA_GATE_REEXPORT"] = "0"
+
 # ---------------------------------------------------------------------------
 # Session-shared parses of the large data/ JSON artifacts.
 #

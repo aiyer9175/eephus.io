@@ -96,8 +96,12 @@ def test_gate2_inputs_are_byte_identical_on_and_off(gate2_inputs, tmp_path):
 # The modules that may read dollars_per_war_inflation or call _destale_rate.
 # A unified branch that started reading either would move Gate 2 with no model
 # change (registration section 16); this list fails first.
+# fa_backtest.py joined on 2026-10-08 (owner answer M14-2): its verdict edge
+# recipe prices the corpus Deal+ numerator with the same ex-ante destale rate
+# fa_export prices the served Deal+ with; it moves the derived edges, never a
+# Gate 2 table number.
 ALLOWED_READERS = {
-    "_destale_rate(": {"fa_market.py", "fa_export.py"},
+    "_destale_rate(": {"fa_market.py", "fa_export.py", "fa_backtest.py"},
     "dollars_per_war_inflation": {"backtest.py", "fa_class.py", "fa_export.py", "fa_market.py",
                                   "proj_export.py", "valuation_sets.py", "value_framework.py"},
 }
