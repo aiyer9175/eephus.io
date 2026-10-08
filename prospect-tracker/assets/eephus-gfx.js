@@ -47,7 +47,10 @@
 //               note? } (sourcecomp),
 //     draw?:  async function (env) -> canvas (kind:"draw"; the caller paints a
 //             fixed-geometry object, a Masthead card, at env.scale backing
-//             pixels with env.palette and env.px, the pixel icon painter) }
+//             pixels with env.palette and env.px, the pixel icon painter),
+//     cards?: [{key, label}] (kind:"draw"; two or more show a Card control and
+//             the pick reaches draw as env.card), card? (the first pick),
+//     filenameFor?: function (card) -> the file name without ".png" }
 //   EEPHUS_GFX.chipHTML(id, label?)   a ready "Generate GFX" chip button
 (function () {
   "use strict";
@@ -69,7 +72,8 @@
   var COLOR_KEYS = { pos: "green", neg: "red", accent: "accent", muted: "sub" };
 
   var _spec = null;
-  var _opts = { format: "wide", theme: "auto", accent: null, count: 25 };
+  // card: the picked entry of spec.cards (kind "draw" only; the Card control)
+  var _opts = { format: "wide", theme: "auto", accent: null, count: 25, card: null };
   var _origTheme = null;
   var _canvas = null;
   var _busy = false;
@@ -886,7 +890,7 @@
     if (_spec.kind === "awards") return renderAwards(_spec, fmt, accentToken());
     if (_spec.kind === "draw" && typeof _spec.draw === "function") {
       // The caller owns the geometry (a Masthead card is 300 x 420 at 2x).
-      return await _spec.draw({ scale: SCALE, palette: palette(accentToken()), px: X });
+      return await _spec.draw({ scale: SCALE, palette: palette(accentToken()), px: X, card: _opts.card });
     }
     return renderBoard(_spec, fmt);
   }
@@ -909,6 +913,7 @@
         '<div class="egfx-head"><span class="egfx-title">Generate graphic</span>' +
           '<button class="egfx-x" type="button" aria-label="Close">&times;</button></div>' +
         '<div class="egfx-controls">' +
+          '<label class="egfx-ctrl egfx-ctrl-card">Card<select id="egfx-card" class="egfx-select"></select></label>' +
           '<label class="egfx-ctrl egfx-ctrl-format">Format<select id="egfx-format" class="egfx-select">' + fmtOpts + "</select></label>" +
           '<label class="egfx-ctrl">Theme<select id="egfx-theme" class="egfx-select">' +
             '<option value="auto">Auto (site)</option><option value="dark">Dark</option><option value="light">Light</option></select></label>' +
@@ -925,6 +930,7 @@
     document.body.appendChild(ov);
     ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
     ov.querySelector(".egfx-x").onclick = close;
+    ov.querySelector("#egfx-card").onchange = function (e) { _opts.card = e.target.value; refresh(); };
     ov.querySelector("#egfx-format").onchange = function (e) { _opts.format = e.target.value; refresh(); };
     ov.querySelector("#egfx-theme").onchange = function (e) { _opts.theme = e.target.value; applyTheme(); refresh(); };
     ov.querySelector("#egfx-count").onchange = function (e) {
@@ -967,6 +973,13 @@
       _spec.kind === "draw";
     ov.querySelector(".egfx-ctrl-format").style.display = noBoard ? "none" : "";
     ov.querySelector(".egfx-ctrl-count").style.display = (noBoard || _spec.kind === "awards") ? "none" : "";
+    var cards = (_spec.kind === "draw" && _spec.cards) || [];
+    ov.querySelector(".egfx-ctrl-card").style.display = cards.length > 1 ? "" : "none";
+    var ksel = ov.querySelector("#egfx-card");
+    ksel.innerHTML = cards.map(function (k) {
+      return '<option value="' + esc(k.key) + '">' + esc(k.label) + "</option>";
+    }).join("");
+    if (_opts.card != null) ksel.value = _opts.card;
     ov.querySelector("#egfx-format").value = _opts.format;
     ov.querySelector("#egfx-theme").value = _opts.theme;
     var counts = (_spec.board && _spec.board.counts) || [10, 25, 50];
@@ -1019,6 +1032,7 @@
   async function exportNow(action) {
     if (!_canvas || !window.EEPHUS_HUB) return;
     var base = (_spec.filenameBase || "eephus-graphic");
+    if (typeof _spec.filenameFor === "function") base = _spec.filenameFor(_opts.card) || base;
     var fname = base + (_spec.kind === "board" ? "-" + _opts.format : "") + ".png";
     var res = await window.EEPHUS_HUB.exportCanvas(_canvas, {
       action: action, filename: fname, shareTitle: _spec.title || "eephus.io",
@@ -1053,6 +1067,7 @@
     // to the Twitter card); unknown names fall back to wide as before.
     _opts.format = (spec.format && FORMATS[spec.format]) ? spec.format : "wide";
     _opts.accent = null;            // default to the module's own accent
+    _opts.card = spec.card || (spec.cards && spec.cards[0] ? spec.cards[0].key : null);
     var _cs = (spec.board && spec.board.counts) || [10, 25, 50];
     var _dc = (spec.board && spec.board.defaultCount);
     _opts.count = (_cs.indexOf(_dc) >= 0) ? _dc : (_cs.length ? _cs[0] : 25);
@@ -1082,6 +1097,8 @@
 
   window.EEPHUS_GFX = { open: open, close: close, chipHTML: chipHTML, FORMATS: FORMATS,
     ACCENTS: ACCENTS, tok: tok, palette: palette, forceTheme: forceTheme, SCALE: SCALE,
+    // the shared pieces a kind "draw" painter reuses (the Scores cards, SCORES_7c)
+    fitTxt: fitTxt, loadImg: loadImg, initialsOf: initialsOf, brandHead: brandHead,
     drawAwards: function (spec, format) {
       return renderAwards(spec, FORMATS[format] || FORMATS.twitter, spec.accentToken || "--accent-lilac");
     } };
