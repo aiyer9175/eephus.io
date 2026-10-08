@@ -2870,6 +2870,120 @@ precedents are 5g (sign), 5h-A and 5f (the twin bar), 5c-C (the within-club twin
 n-1 divisor), 5c-A and plan 4.1 (the total guard), 7e-D (the named exceptions and the
 last day) and 5c-A (the exclusion before an earlier run).
 
+#### The dated note (filed 2026-10-08, before any number on `lineup_strength` or `star_out`; 5c-C chains to it)
+
+This is the note the section above requires, filed before any fit, paired score, twin or
+leg 1 on either B4 column. The full pin is `docs/betting-b4-look/note_2026-10-08.json`
+(the store's per-file SHA-256 list, the anchored window's 305 `game_pk` values, both
+columns' counts and the step 0 receipts); the lines below are what it holds.
+
+**The slip, disclosed.** The look did not run on 2026-10-05. The owner's E5 waiver
+(EPOCH-Q1, `DECISIONS_FOR_OWNER.md` 'ANSWERED 2026-09-30 (AskUserQuestion), Part 8 batch 1
+(the fWAR label epoch)', filed as the 2026-10-02 amendment in
+`docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md` part 3) moved both B4 looks after the fWAR
+label epoch's step Z, which part 9 records on 2026-10-03. The look code was built on
+2026-10-07 at `b9bf49c8`; 2026-10-07 is a registered look date (5d's earliest look, the RE
+family's first read day), so the note and the look wait for 2026-10-08, inside the span
+that ends 2026-10-31.
+
+**The harness.** `tools/b4_availability_look.py` at `b9bf49c8`, unchanged at HEAD
+(`git diff b9bf49c8 HEAD` on it is empty). Its 39 fixture tests passed again on 2026-10-08,
+including the reporting path fed rows with None values. Step 0 ran on 2026-10-08 and
+passed:
+- the c = 0 identity check: the seam's `p_home` equals `game_probabilities(...)["p_home"]`
+  to 5 places on all 290 window games of the two columns, 0 mismatches, 0 skipped;
+- the vintage parity: b0 4.345387, b1 -0.037205, b2 -0.096479, b3 0.594771, b4 0.149360,
+  `diff_shrink` 1.28, home adjustment -0.0443, tie rate 0.4921, split date 2026-08-01 and
+  n_fit 305, each equal to the `vintage` block of `data/betting_model_eval.json` at
+  `6e82acd5`;
+- the forward parity (leg 1's contaminated incumbent): split 2026-08-03, n 747, b0 to b4,
+  `diff_shrink` 0.82, home adjustment 0.1999 and tie rate 0.4895, each equal to the
+  artifact on disk (`generated_at` 2026-10-02T16:15:12Z);
+- the `_paired_delta` fixture check: the helper at the pinned commit uses the n divisor
+  (fixture sd 0.029814 against 0.032660), so it differs and the inline n-1 form runs, as
+  both sections write it.
+
+**The incumbent.** The vintage-mode pricer at `6e82acd5`, loaded from git into the look
+process (blobs `b0528749` for `betting_model.py`, `2a6cf96d` for
+`leaderboard_vintages.py`), never HEAD's pricer and never `build_context`'s fit. No 5c
+B3/B4 look was recorded on or before 2026-10-04 (5c-A closed without look code at
+`239ef253`), so the second branch binds. `MODEL_VERSION` is `betting_runs_v2` at
+`6e82acd5` and at `b9bf49c8`, and every serve flag reads the same at both:
+`SERVE_ATH_PARK` True, `SERVE_RUNLINE_TIE_SPLIT` True, `SERVE_RUN_DISPERSION` False,
+`SERVE_PROB_CALIBRATION` False, `SERVE_RIDGE_FIT` False, `SERVE_TOTAL_LEVEL` False,
+`SERVE_TOTAL_DISPERSION` False, `SERVE_TOTAL_CALIBRATION` False. `SERVE_LINEUP_STRENGTH`
+and `SERVE_STAR_OUT` exist at neither commit. Both arms take `_lab_runline_split` of the
+anchored fit window.
+
+**The anchored window.** 305 vintage-gradable games dated before 2026-08-01;
+`_vintage_cut_index`'s cut at the run is 2026-08-01, the same date. The `game_pk` set's
+SHA-256 is `3dba75d5d921ef931428bc40068769cff9ad7ea7b7796d9f36f157d3f1cfd719`; the set
+itself is in the JSON.
+
+**The store.** Host NOAH-PC, `prospect-tracker/.cache/leaderboard_vintages/`, 59 files,
+SHA-256 over the sorted (file name, file SHA-256) pairs
+`f8d6ea177705fd202c319d9875a32cf3aa8ebc39673cfb7f2bb89dd3967c1b6c`. Every vintage that
+prices a window game is live and its file mtime equals its `captured_at` (lag 0.0 h), and
+no file was copied in from the box. One fact is
+disclosed: `2026-10-08.json` was written at 13:34:08 local on the note day, during the
+counts read, by a process outside this lane that reaches the main tree's `.cache` through
+a worktree junction. It is a live record, it prices no window game, and the hash covers it.
+
+**5c-B, `lineup_strength`: the step 1 counts (read 2026-10-07 and again 2026-10-08,
+identical).**
+- Present nights 2026-09-07 to 2026-10-04: 21 of 28 (floor 14). Missing: 2026-09-08,
+  09-11, 09-12, 09-15, 09-20, 09-22 and 09-25.
+- F 2026-09-08, L 2026-09-27, **M 2026-09-17**. Dated-value fit side 120 games (floor 100),
+  graded 83 (floor 50). Step 1 passes on counts.
+- Window buckets: dated value 203, stamp missing 61 (the 2026-09-19, 09-21 and 09-23
+  vintages); not a present night, post-retrain, X9, pre-change membership and stated null
+  0 each. Outside the window: pre-change membership 246, predates the column 572, no
+  vintage 1,347. The six sum to the cache's 2,429 games.
+- Inside dated value: filter flag unrecorded 80, stamp late 79, stamped from git 74 (the
+  2026-09-07 vintage from `7cd5f572`, 2026-09-24 from `1b20dc2a`, 2026-09-26 from
+  `3f449c5c`; each board reads `applied` true with no skipped club).
+- `parks_short_window`: fit side 40 with, 80 without; graded 83 with, 0 without.
+- Vintage age: 73 of 203 dated-value games on a vintage 2 or more days old; game-weighted
+  mean age 1.433 days.
+- Construction audit to the harness commit: `git log -L` on `_proj_year1_woba_map`,
+  `lineup_strength_from_orders` and `build_lineup_strength` and `git log -S` on
+  `LINEUP_MIN_JOINED_SLOTS` return `3eda89d7` only; `bullpen_export._active_mlbam_ids`
+  last changed at `7cd5f572`. The `hem_plus.py` commits after `77174943` (`48f4c806`,
+  `d4a76a62`, `24c56eca` on 2026-10-01 and `4eb8bc2d` on 2026-10-07) postdate every vintage
+  that prices a window game, since the regular season ended 2026-09-27, so none can bucket
+  one. The post-retrain event is step M (`a4bd70e8`, 2026-10-03T22:15Z), after the same
+  vintages.
+
+**5c-C, `star_out`: the step 1 counts (read 2026-10-07 and again 2026-10-08, identical).**
+- Present nights 2026-09-05 to 2026-10-02: 21 of 28 (floor 14), missing the same seven
+  dates.
+- F 2026-09-06, L 2026-09-19, **M 2026-09-12**. Dated-value fit side **76 games, under
+  the 100 floor**; graded 109 (floor 50).
+- Window buckets: dated value 185, stamp missing 49 (the build stamp was never built, so
+  every vintage from 2026-09-19 lacks it), post-retrain 56 (vintages captured after
+  `809902c6`, 2026-09-23T16:54Z, which keys the corpus label by side, a construction-class
+  change on the label path; step D `8232729f` follows on 2026-10-03), X9 0 (`d11ed73f`,
+  2026-09-25, the vet team rule, falls after the post-retrain event), stated null 0.
+  Outside the window: basis unconfirmed 15, pre-change ranking basis 205, predates the
+  column 572, no vintage 1,347.
+- Inside dated value: basis unrecorded 185 of 185. `parks_short_window`: fit side 0 with,
+  76 without; graded 79 with, 30 without. Dated-value games on vintages before and after
+  `419811bb`'s nightly cadence: 106 and 79.
+- Vintage age: 60 of 185 on a vintage 2 or more days old; game-weighted mean 1.405 days.
+- Step 1 fails on the fit floor. Under verdict row 1 nothing is fitted, scored or twinned
+  for this column and leg 1 does not run; the look run records that.
+- Step A's pins for leg 1 are on disk and match part 9:
+  `_pre_epoch_fwar_2026-10/mlb_projections.json` SHA-256
+  `1e9383f3cbcd61e16737d5f8269053f038056f4ce0ce79527bd27cfd6fb33c86`, corpus `war_provider`
+  `ewar_v2`, champion fit key `9f2638f2`.
+- Not reported, because the store does not carry it: the champion fit key per night. Each
+  record stores the count only.
+
+**What runs next, in this order, on 2026-10-08.** The 5c-B look, then the 5c-C look, each
+once, each teed to a file before anything else runs, from the harness at `b9bf49c8`
+against this note. A run whose store, anchored window, M or counts differ from this note
+refuses before any number.
+
 ### 5c-C. The B4 availability gate: `star_out`, look 2026-10-05 (drafted 2026-09-11, revised 2026-09-16)
 
 **Standing.** This is the gate section rule 1 requires for `star_out`. It was drafted on

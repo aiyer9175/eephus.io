@@ -1,0 +1,1555 @@
+{
+ "kind": "the dated note of 5c-B (5c-C chains to it), filed before any number on either column",
+ "note_date": "2026-10-08",
+ "harness_commit": "b9bf49c8",
+ "harness_path": "prospect-tracker/tools/b4_availability_look.py",
+ "harness_flags_at_commit": {
+  "MODEL_VERSION": "betting_runs_v2",
+  "SERVE_ATH_PARK": true,
+  "SERVE_RUNLINE_TIE_SPLIT": true,
+  "SERVE_RUN_DISPERSION": false,
+  "SERVE_PROB_CALIBRATION": false,
+  "SERVE_RIDGE_FIT": false,
+  "SERVE_TOTAL_LEVEL": false,
+  "SERVE_TOTAL_DISPERSION": false,
+  "SERVE_TOTAL_CALIBRATION": false,
+  "SERVE_LINEUP_STRENGTH": "absent",
+  "SERVE_STAR_OUT": "absent"
+ },
+ "checks_2026_10_08": {
+  "run_date": "2026-10-08",
+  "run_at": "2026-10-08T17:34:17+00:00",
+  "incumbent_commit": "6e82acd5",
+  "incumbent_blobs": {
+   "betting_model": "b0528749be76cf576a49d8c915280fd782c4df30",
+   "leaderboard_vintages": "2a6cf96d44b039c356605b84e27c3fccbdafb56f"
+  },
+  "model_version": "betting_runs_v2",
+  "serve_flags": {
+   "SERVE_ATH_PARK": true,
+   "SERVE_RUNLINE_TIE_SPLIT": true,
+   "SERVE_RUN_DISPERSION": false,
+   "SERVE_PROB_CALIBRATION": false,
+   "SERVE_TOTAL_LEVEL": false,
+   "SERVE_TOTAL_DISPERSION": false,
+   "SERVE_TOTAL_CALIBRATION": false,
+   "SERVE_RIDGE_FIT": false,
+   "SERVE_LINEUP_STRENGTH": null,
+   "SERVE_STAR_OUT": null
+  },
+  "n_window_games": 290,
+  "identity": {
+   "pass": true,
+   "n_checked": 290,
+   "n_mismatch": 0,
+   "n_skipped": 0,
+   "first_mismatch": null
+  },
+  "vintage_parity": {
+   "pass": true,
+   "items": [
+    {
+     "item": "b0",
+     "solved": 4.345387,
+     "artifact": 4.345387,
+     "equal": true
+    },
+    {
+     "item": "b1",
+     "solved": -0.037205,
+     "artifact": -0.037205,
+     "equal": true
+    },
+    {
+     "item": "b2",
+     "solved": -0.096479,
+     "artifact": -0.096479,
+     "equal": true
+    },
+    {
+     "item": "b3",
+     "solved": 0.594771,
+     "artifact": 0.594771,
+     "equal": true
+    },
+    {
+     "item": "b4",
+     "solved": 0.14936,
+     "artifact": 0.14936,
+     "equal": true
+    },
+    {
+     "item": "diff_shrink",
+     "solved": 1.28,
+     "artifact": 1.28,
+     "equal": true
+    },
+    {
+     "item": "home_field_runs_adj",
+     "solved": -0.0443,
+     "artifact": -0.0443,
+     "equal": true
+    },
+    {
+     "item": "extra_inning_home_rate",
+     "solved": 0.4921,
+     "artifact": 0.4921,
+     "equal": true
+    },
+    {
+     "item": "split_date",
+     "solved": "2026-08-01",
+     "artifact": "2026-08-01",
+     "equal": true
+    },
+    {
+     "item": "n_fit",
+     "solved": 305,
+     "artifact": 305,
+     "equal": true
+    }
+   ]
+  },
+  "forward_parity": {
+   "pass": true,
+   "items": [
+    {
+     "item": "b0",
+     "solved": 4.457411,
+     "artifact": 4.457411,
+     "equal": true
+    },
+    {
+     "item": "b1",
+     "solved": 0.252623,
+     "artifact": 0.252623,
+     "equal": true
+    },
+    {
+     "item": "b2",
+     "solved": -0.30825,
+     "artifact": -0.30825,
+     "equal": true
+    },
+    {
+     "item": "b3",
+     "solved": 4.439361,
+     "artifact": 4.439361,
+     "equal": true
+    },
+    {
+     "item": "b4",
+     "solved": 0.010074,
+     "artifact": 0.010074,
+     "equal": true
+    },
+    {
+     "item": "diff_shrink",
+     "solved": 0.82,
+     "artifact": 0.82,
+     "equal": true
+    },
+    {
+     "item": "home_field_runs_adj",
+     "solved": 0.1999,
+     "artifact": 0.1999,
+     "equal": true
+    },
+    {
+     "item": "extra_inning_home_rate",
+     "solved": 0.4895,
+     "artifact": 0.4895,
+     "equal": true
+    },
+    {
+     "item": "split_date",
+     "solved": "2026-08-03",
+     "artifact": "2026-08-03",
+     "equal": true
+    },
+    {
+     "item": "n",
+     "solved": 747,
+     "artifact": 747,
+     "equal": true
+    }
+   ]
+  },
+  "forward_artifact_generated_at": "2026-10-02T16:15:12+00:00",
+  "forward_split_at_run": "2026-08-03",
+  "paired_delta_fixture": {
+   "helper": {
+    "n": 6,
+    "delta": 0.023333,
+    "sd": 0.029814,
+    "t": 1.917,
+    "lb95": 0.003311
+   },
+   "inline": {
+    "mean": 0.023333333333333327,
+    "sd": 0.03265986323710904,
+    "t": 1.7499999999999998,
+    "lb95": 0.001399999999999995
+   },
+   "agree": {
+    "delta": true,
+    "sd": false,
+    "t": false,
+    "lb95": false
+   },
+   "helper_agrees": false,
+   "note": "the helper differs (n divisor); the inline n-1 form ran"
+  },
+  "cut_index_at_run": "2026-08-01",
+  "split_governs": "2026-08-01",
+  "runline_split": [
+   0.0,
+   0.5
+  ],
+  "runline_construction": "lab split of the anchored fit window",
+  "incumbent_params": {
+   "coeffs": {
+    "b0": 4.345387129359368,
+    "b1": -0.037205338068223355,
+    "b2": -0.0964785277760497,
+    "b3": 0.5947710191055482,
+    "b4": 0.14936005730776422
+   },
+   "diff_shrink": 1.28,
+   "home_adj": -0.0443,
+   "tie_home": 0.49206349206349204,
+   "n_fit": 305
+  }
+ },
+ "counts_2026_10_08": "counts only: no outcome and no column value was read",
+ "run_date": "2026-10-08",
+ "run_at": "2026-10-08T17:34:29+00:00",
+ "incumbent_commit": "6e82acd5",
+ "incumbent_blobs": {
+  "betting_model": "b0528749be76cf576a49d8c915280fd782c4df30",
+  "leaderboard_vintages": "2a6cf96d44b039c356605b84e27c3fccbdafb56f"
+ },
+ "model_version": "betting_runs_v2",
+ "serve_flags": {
+  "SERVE_ATH_PARK": true,
+  "SERVE_RUNLINE_TIE_SPLIT": true,
+  "SERVE_RUN_DISPERSION": false,
+  "SERVE_PROB_CALIBRATION": false,
+  "SERVE_TOTAL_LEVEL": false,
+  "SERVE_TOTAL_DISPERSION": false,
+  "SERVE_TOTAL_CALIBRATION": false,
+  "SERVE_RIDGE_FIT": false,
+  "SERVE_LINEUP_STRENGTH": null,
+  "SERVE_STAR_OUT": null
+ },
+ "store": {
+  "host": "NOAH-PC",
+  "path": "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker\\.cache\\leaderboard_vintages",
+  "sha256": "f8d6ea177705fd202c319d9875a32cf3aa8ebc39673cfb7f2bb89dd3967c1b6c",
+  "n_files": 59,
+  "files": {
+   "2026-07-05.json": "d1ba1230bbefbddf0e117ad92234b9fa8c07a50bf9d8bf61cd8e00cda6fe3f65",
+   "2026-07-07.json": "1f4694db7baac1b65e2c1875b8e1f4c5e6bf8ef797b58a2fbe4f6dd2a65c3d30",
+   "2026-07-14.json": "b09075da7e16d9917fe7b0e4b76c185ccbe3bd38a16cccedb9bffe065118ea98",
+   "2026-07-15.json": "dd31cd16640dbcd4fd6aa6cfaa12004768a4ffcd941f6a8c78052a621eefabd1",
+   "2026-07-16.json": "ea4a053ca08f10de0ec2c183ddb6e24dc5e435750aa1197b3fb647f240bd389b",
+   "2026-07-29.json": "a5e3830858e5aa34edc456202a76fbe5671647b22db392284a4058d1af92effc",
+   "2026-07-30.json": "ccd70b32d98cef752393b9ef8ee2f296b3481ba469446b0c215e25214accb81c",
+   "2026-07-31.json": "5c91ae11d6a77c80c6f01e0fc6f8dfeb2e439618a12bf90f5d4098a089e0a865",
+   "2026-08-01.json": "153d5ea33f74603851c03a97fcc7da0520a9e93064774fed4b8691d54c90761f",
+   "2026-08-04.json": "10383f9fa087b7f27db9f084d1b080e0806210ab25bad40faf2494bd20f31cd5",
+   "2026-08-05.json": "c2e00a4576d7d32ce326f0e99284ec847f926ccd4c3412300853c0cb722b55f5",
+   "2026-08-06.json": "124af63368aa20cce3fb617dbdc15837201a77cce3d7764a898a7819157de725",
+   "2026-08-07.json": "acd10f7be5d309ff601ecdfd91e2b61a543e92ebfeb9ea9543b6b524fb6b03c4",
+   "2026-08-08.json": "9a2c515310be95c4ed629b2564a9abef02bd6635fd8fc35880838bd20f0f5d41",
+   "2026-08-09.json": "1ee0e07dfce51e9187df172f310f258ca961d9107d8fe35fb6cd4fe49c498408",
+   "2026-08-10.json": "4976b851c7b8491f324b2e1d2a95f36e453e1503f38ca71379030dc8a89109ab",
+   "2026-08-11.json": "1b25fce3dfd3d29c8d04029049d37af8b7a476ae18b2ca7d29dba45cb5221317",
+   "2026-08-12.json": "497e21103a441b07d768bc3c86a8faea999a6a844832de01940d77c81c8c03da",
+   "2026-08-13.json": "997e26764c3189150f7e57dc29fb9e3cc4be7f1b55e1622177422d0df8c47481",
+   "2026-08-14.json": "fe18f16bc92275a53371d492efdddb138be5ad56a7e1363807d8da5d7119d16f",
+   "2026-08-16.json": "47999a5054d50d8f033d464122fc53a9d00fbf325f0e8f247cd371b959ac536b",
+   "2026-08-18.json": "ee89b931dbce04ebbbcd620820ac9c9178149ff256df52818014760a464b7d46",
+   "2026-08-19.json": "19576a5ad130cc96e1b7ffbc573b4bb5403dcb257e4c541d259dc895a1fe21f0",
+   "2026-08-20.json": "cc04890f1c0cf2149f9ad77b79e911dd722f61b6e4669c937db310dbf2e449c9",
+   "2026-08-21.json": "e2b219a7740f02ded0bff9349148bf9737a85851c3b2b66e37615445169237bc",
+   "2026-08-23.json": "c0c2cbb1ab9f684fa57d00b7ebbc895d0d2d14003e6bc2ddaf43704623e22897",
+   "2026-08-24.json": "456d3f795fd4b7a0159cc4fce251e1d2e463ae3a1cb9e2423c330b6efc197b3b",
+   "2026-08-27.json": "677b94a97079c9da1c7f713a485d4300f6c35dfefa56c49987a3dbee5ac806eb",
+   "2026-08-30.json": "8ea99dba69b1b2cf3c48755932e188c42514c9e5f12ebabb93dd86c49f32ff11",
+   "2026-08-31.json": "156b939e0681612c02e2fb73dff769f38a76242b424f37895ccee1de1c42aa5e",
+   "2026-09-03.json": "ebe328e6beb2875d74f2c0376b25b1caf554cc889f4e41bceb1831544a16e5bc",
+   "2026-09-04.json": "77e64f5219d1ab8ef38588ddac187c3f0813f43fdd6d8f22a577039707b0d835",
+   "2026-09-05.json": "4a6841590e89cd137043610cae9a97b7f652ca8840c09130a484c19ba3f3be95",
+   "2026-09-06.json": "165d48e01a97f04e8d8ed7ffb9b0d329a0065c13af26d1e6f627d7edd900c096",
+   "2026-09-07.json": "06a720521302eb108e6ac8b34af01ec2bb19bf61058f6e40ae830112625abdbb",
+   "2026-09-09.json": "8eedd43f753704ede999f0302b161f251b9cb92843f1295d25fad2a125fc428f",
+   "2026-09-10.json": "9ee3d06aaa4a388a00347f5238d5be0090315d819014bc88d0a4b8416cfac9a0",
+   "2026-09-13.json": "a7a185a839d9c2f94f0edba95e4cc87a502241b9c36dd36a784041052d788f4e",
+   "2026-09-14.json": "1691626d09721a82a69638fe860071311d18571971e6b46a621d697c6a43e10f",
+   "2026-09-16.json": "0fe0f95503ca46bfc98101d6c7a8d45e83d16f76bbae963d9593fe2ec36d5da4",
+   "2026-09-17.json": "9bf90a2c1c66932c904820c386e25720128f11f3f705987d59f6ac9eda291fd8",
+   "2026-09-18.json": "de87143cf9e30d8370baa14e444ac1878479bfadeb6de09f206e2a07e3cc56f9",
+   "2026-09-19.json": "c2c00951358f9a549588c4b1bd0a1fb644be36ffcea4d263bee2f0d601e7cada",
+   "2026-09-21.json": "e85f8b27df8063d5073137f5c48eb0e319dbe05c0471ae417309382d83f8c753",
+   "2026-09-23.json": "89236e87ddc1d3079d8bb90272a6bfa25985d614dce69ec73f68e680257c5d47",
+   "2026-09-24.json": "618f3ec518e1b709c622e9a17aa25155bcf3b7fdaaeb951adeb0bce1afc26388",
+   "2026-09-26.json": "f17a77a49e930066e2fe65059736179a468457a0d974d912bd5c322c4bab32cc",
+   "2026-09-27.json": "e4eb2f1dec31bbf54812f13ddba1aab3ef315be0b344ff0a9b891eaf1d347183",
+   "2026-09-28.json": "5ce64f506ea0f65f55708ef3027900c044994a229f1beec734a4d6d98117ebca",
+   "2026-09-29.json": "b331e8374c908f8a41eecdca4e3bd9f7c7c831251e20a3d9ec2e8d10ece36f21",
+   "2026-09-30.json": "1bf51d82de9e889e87e5fcc291107cd7d187d07bd52738538484864d0c78a130",
+   "2026-10-01.json": "9129e09e5d754f09932204a37a33213184fd01fcc10eee9870e0eb3d32dc5511",
+   "2026-10-02.json": "1995023f9bd7e4dacc936df2e884816f2796397a34aa288405aae750fbcb23d7",
+   "2026-10-03.json": "29783b1a445efb7d967a5d3c591ca4c8a05debbc1d30499a239ce8ee01b55c54",
+   "2026-10-04.json": "681d217e458a0c8e5e5858e2ba9025d786afc13dfa1d59bac7b52a1b6e238d3c",
+   "2026-10-05.json": "1170f475580dd41a7871a9e099e268675b90cd145897cf6d563fd7bc2167dfc4",
+   "2026-10-06.json": "dea679df824abf029568ca53e7a2d8db9b452b92e21324d554b9a5ce1f4d8ccd",
+   "2026-10-07.json": "c65f2023e651c9ba548f18e7be3cb0a0fff84aa633ed02fc402011e6eb282b92",
+   "2026-10-08.json": "7c36e14d96ab94b60dedbd02b75d5499368a4fd574213ae296a049d771decc42"
+  }
+ },
+ "anchored_window": {
+  "split_governs": "2026-08-01",
+  "cut_index_at_run": "2026-08-01",
+  "n_games": 305,
+  "game_pks": [
+   822702,
+   822703,
+   822704,
+   822705,
+   822706,
+   822707,
+   822708,
+   822709,
+   822710,
+   822711,
+   822712,
+   822713,
+   822782,
+   822784,
+   822785,
+   822786,
+   822787,
+   822788,
+   822789,
+   822790,
+   822868,
+   822869,
+   822870,
+   822871,
+   822872,
+   822873,
+   822874,
+   822875,
+   822876,
+   822877,
+   822878,
+   822880,
+   822881,
+   822945,
+   822946,
+   822947,
+   822948,
+   822949,
+   822950,
+   822951,
+   822952,
+   822953,
+   822954,
+   822955,
+   822956,
+   822957,
+   822958,
+   823022,
+   823023,
+   823025,
+   823026,
+   823027,
+   823028,
+   823029,
+   823030,
+   823031,
+   823032,
+   823033,
+   823034,
+   823035,
+   823036,
+   823042,
+   823062,
+   823110,
+   823111,
+   823112,
+   823113,
+   823114,
+   823115,
+   823116,
+   823192,
+   823193,
+   823194,
+   823195,
+   823196,
+   823197,
+   823198,
+   823199,
+   823200,
+   823201,
+   823202,
+   823203,
+   823205,
+   823271,
+   823272,
+   823273,
+   823274,
+   823275,
+   823276,
+   823277,
+   823278,
+   823279,
+   823280,
+   823282,
+   823350,
+   823351,
+   823352,
+   823353,
+   823354,
+   823355,
+   823356,
+   823357,
+   823358,
+   823359,
+   823360,
+   823361,
+   823433,
+   823434,
+   823435,
+   823436,
+   823437,
+   823438,
+   823439,
+   823440,
+   823441,
+   823518,
+   823519,
+   823521,
+   823522,
+   823523,
+   823524,
+   823593,
+   823595,
+   823596,
+   823597,
+   823598,
+   823599,
+   823600,
+   823601,
+   823602,
+   823603,
+   823604,
+   823605,
+   823606,
+   823607,
+   823674,
+   823676,
+   823677,
+   823678,
+   823679,
+   823680,
+   823681,
+   823682,
+   823683,
+   823684,
+   823685,
+   823687,
+   823755,
+   823758,
+   823759,
+   823760,
+   823761,
+   823762,
+   823763,
+   823764,
+   823766,
+   823837,
+   823838,
+   823839,
+   823840,
+   823841,
+   823842,
+   823843,
+   823844,
+   823845,
+   823846,
+   823847,
+   823848,
+   823921,
+   823922,
+   823923,
+   823924,
+   823925,
+   823926,
+   823927,
+   823928,
+   823929,
+   823930,
+   823999,
+   824001,
+   824002,
+   824003,
+   824004,
+   824005,
+   824006,
+   824007,
+   824008,
+   824009,
+   824083,
+   824085,
+   824086,
+   824087,
+   824088,
+   824089,
+   824090,
+   824164,
+   824165,
+   824166,
+   824167,
+   824168,
+   824169,
+   824170,
+   824242,
+   824243,
+   824244,
+   824245,
+   824246,
+   824247,
+   824248,
+   824249,
+   824250,
+   824251,
+   824252,
+   824253,
+   824254,
+   824325,
+   824327,
+   824328,
+   824329,
+   824330,
+   824331,
+   824332,
+   824406,
+   824407,
+   824408,
+   824409,
+   824410,
+   824411,
+   824412,
+   824414,
+   824486,
+   824487,
+   824488,
+   824489,
+   824490,
+   824491,
+   824492,
+   824493,
+   824494,
+   824495,
+   824496,
+   824567,
+   824568,
+   824569,
+   824570,
+   824571,
+   824572,
+   824573,
+   824574,
+   824575,
+   824576,
+   824577,
+   824578,
+   824579,
+   824650,
+   824651,
+   824652,
+   824653,
+   824654,
+   824655,
+   824657,
+   824730,
+   824732,
+   824733,
+   824734,
+   824735,
+   824736,
+   824737,
+   824738,
+   824739,
+   824766,
+   824809,
+   824810,
+   824811,
+   824812,
+   824813,
+   824814,
+   824815,
+   824816,
+   824817,
+   824820,
+   824892,
+   824893,
+   824894,
+   824895,
+   824896,
+   824897,
+   824898,
+   824899,
+   824900,
+   824901,
+   824973,
+   824974,
+   824975,
+   824976,
+   824977,
+   824978,
+   824979,
+   824981,
+   825055,
+   825056,
+   825057,
+   825058,
+   825059,
+   825060
+  ],
+  "game_pks_sha256": "3dba75d5d921ef931428bc40068769cff9ad7ea7b7796d9f36f157d3f1cfd719"
+ },
+ "board_stamps": {
+  "2026-09-07": [
+   {
+    "commit": "7cd5f572",
+    "committed_at": "2026-09-07T12:04:02-04:00",
+    "applied": true,
+    "n_dropped_from_constructions": 232,
+    "skipped": [],
+    "unreadable_mlbam_kept": null
+   }
+  ],
+  "2026-09-24": [
+   {
+    "commit": "1b20dc2a",
+    "committed_at": "2026-09-24T22:08:55-04:00",
+    "applied": true,
+    "n_dropped_from_constructions": 239,
+    "skipped": [],
+    "unreadable_mlbam_kept": null
+   }
+  ],
+  "2026-09-25": [
+   {
+    "commit": "3f449c5c",
+    "committed_at": "2026-09-25T11:38:09-04:00",
+    "applied": true,
+    "n_dropped_from_constructions": 239,
+    "skipped": [],
+    "unreadable_mlbam_kept": null
+   }
+  ],
+  "2026-10-01": [
+   {
+    "commit": "24c56eca",
+    "committed_at": "2026-10-01T17:19:05-04:00",
+    "applied": true,
+    "n_dropped_from_constructions": 147,
+    "skipped": [],
+    "unreadable_mlbam_kept": null
+   },
+   {
+    "commit": "cbd95517",
+    "committed_at": "2026-10-01T06:13:47-04:00",
+    "applied": true,
+    "n_dropped_from_constructions": 165,
+    "skipped": [],
+    "unreadable_mlbam_kept": null
+   },
+   {
+    "commit": "d4a76a62",
+    "committed_at": "2026-10-01T02:20:23-04:00",
+    "applied": true,
+    "n_dropped_from_constructions": 165,
+    "skipped": [],
+    "unreadable_mlbam_kept": null
+   }
+  ],
+  "2026-10-02": [
+   {
+    "commit": "eeabe190",
+    "committed_at": "2026-10-02T15:25:16-04:00",
+    "applied": true,
+    "n_dropped_from_constructions": 147,
+    "skipped": [],
+    "unreadable_mlbam_kept": null
+   }
+  ],
+  "2026-10-03": [
+   {
+    "commit": "94ec6875",
+    "committed_at": "2026-10-03T20:02:13-04:00",
+    "applied": true,
+    "n_dropped_from_constructions": 162,
+    "skipped": [],
+    "unreadable_mlbam_kept": null
+   }
+  ]
+ },
+ "games": {
+  "n": 2429,
+  "first": "2026-03-25",
+  "last": "2026-09-27"
+ },
+ "columns": {
+  "lineup_strength": {
+   "column": "lineup_strength",
+   "section": "5c-B",
+   "clock": {
+    "start": "2026-09-07",
+    "floor": "2026-10-05",
+    "nights": {
+     "first": "2026-09-07",
+     "last": "2026-10-04",
+     "n_nights": 28,
+     "present": [
+      "2026-09-07",
+      "2026-09-09",
+      "2026-09-10",
+      "2026-09-13",
+      "2026-09-14",
+      "2026-09-16",
+      "2026-09-17",
+      "2026-09-18",
+      "2026-09-19",
+      "2026-09-21",
+      "2026-09-23",
+      "2026-09-24",
+      "2026-09-26",
+      "2026-09-27",
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04"
+     ],
+     "missing": [
+      "2026-09-08",
+      "2026-09-11",
+      "2026-09-12",
+      "2026-09-15",
+      "2026-09-20",
+      "2026-09-22",
+      "2026-09-25"
+     ],
+     "missing_why": {
+      "2026-09-08": "no file",
+      "2026-09-11": "no file",
+      "2026-09-12": "no file",
+      "2026-09-15": "no file",
+      "2026-09-20": "no file",
+      "2026-09-22": "no file",
+      "2026-09-25": "no file"
+     },
+     "n_present": 21,
+     "floor": 14,
+     "floor_met": true
+    }
+   },
+   "n_games": 2429,
+   "by_bucket": {
+    "dated_value": 203,
+    "no_vintage": 1347,
+    "pre_change_membership": 246,
+    "predates_column": 572,
+    "stamp_missing": 61
+   },
+   "window_by_vintage": {
+    "2026-09-07": {
+     "dated_value": 30,
+     "dated_value:filter_flag_unrecorded": 30,
+     "dated_value:stamped_from_git": 30
+    },
+    "2026-09-09": {
+     "dated_value": 5,
+     "dated_value:filter_flag_unrecorded": 5
+    },
+    "2026-09-10": {
+     "dated_value": 45,
+     "dated_value:filter_flag_unrecorded": 45
+    },
+    "2026-09-13": {
+     "dated_value": 10,
+     "dated_value:stamp_late": 10
+    },
+    "2026-09-14": {
+     "dated_value": 30,
+     "dated_value:stamp_late": 30
+    },
+    "2026-09-16": {
+     "dated_value": 9,
+     "dated_value:stamp_late": 9
+    },
+    "2026-09-17": {
+     "dated_value": 15,
+     "dated_value:stamp_late": 15
+    },
+    "2026-09-18": {
+     "dated_value": 15,
+     "dated_value:stamp_late": 15
+    },
+    "2026-09-19": {
+     "stamp_missing": 18
+    },
+    "2026-09-21": {
+     "stamp_missing": 31
+    },
+    "2026-09-23": {
+     "stamp_missing": 12
+    },
+    "2026-09-24": {
+     "dated_value": 30,
+     "dated_value:stamped_from_git": 30
+    },
+    "2026-09-26": {
+     "dated_value": 14,
+     "dated_value:stamped_from_git": 14
+    }
+   },
+   "split": {
+    "F": "2026-09-08",
+    "L": "2026-09-27",
+    "M": "2026-09-17"
+   },
+   "n_fit": 120,
+   "n_graded": 83,
+   "fit_by_date": {
+    "2026-09-08": 15,
+    "2026-09-09": 15,
+    "2026-09-10": 5,
+    "2026-09-11": 15,
+    "2026-09-12": 15,
+    "2026-09-13": 15,
+    "2026-09-14": 10,
+    "2026-09-15": 15,
+    "2026-09-16": 15
+   },
+   "graded_by_date": {
+    "2026-09-17": 9,
+    "2026-09-18": 15,
+    "2026-09-19": 15,
+    "2026-09-25": 17,
+    "2026-09-26": 13,
+    "2026-09-27": 14
+   },
+   "parks_short_window": {
+    "fit_with": 40,
+    "fit_without": 80,
+    "graded_with": 83,
+    "graded_without": 0
+   },
+   "dated_value_sub": {
+    "filter_flag_unrecorded": 80,
+    "stamp_late": 79,
+    "stamped_from_git": 74
+   },
+   "pre_change_sub": {},
+   "vintage_age": {
+    "n_dated_value": 203,
+    "n_age_2_plus": 73,
+    "game_weighted_mean_age": 1.433
+   },
+   "vintages": {
+    "2026-09-07": {
+     "schema": 3,
+     "vintage_date": "2026-09-07",
+     "captured_at": "2026-09-07T17:04:38+00:00",
+     "covers_through": "2026-09-07",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-07",
+     "parks_short_window": false,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": [
+      {
+       "commit": "7cd5f572",
+       "committed_at": "2026-09-07T12:04:02-04:00",
+       "applied": true,
+       "n_dropped_from_constructions": 232,
+       "skipped": [],
+       "unreadable_mlbam_kept": null
+      }
+     ]
+    },
+    "2026-09-09": {
+     "schema": 4,
+     "vintage_date": "2026-09-09",
+     "captured_at": "2026-09-09T19:16:44+00:00",
+     "covers_through": "2026-09-09",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-09",
+     "parks_short_window": false,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-10": {
+     "schema": 4,
+     "vintage_date": "2026-09-10",
+     "captured_at": "2026-09-10T19:34:37+00:00",
+     "covers_through": "2026-09-10",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-10",
+     "parks_short_window": false,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-13": {
+     "schema": 5,
+     "vintage_date": "2026-09-13",
+     "captured_at": "2026-09-13T20:23:45+00:00",
+     "covers_through": "2026-09-13",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-13",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-14": {
+     "schema": 5,
+     "vintage_date": "2026-09-14",
+     "captured_at": "2026-09-14T17:30:11+00:00",
+     "covers_through": "2026-09-14",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-14",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-16": {
+     "schema": 5,
+     "vintage_date": "2026-09-16",
+     "captured_at": "2026-09-16T15:16:50+00:00",
+     "covers_through": "2026-09-16",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-16",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-17": {
+     "schema": 5,
+     "vintage_date": "2026-09-17",
+     "captured_at": "2026-09-17T20:18:24+00:00",
+     "covers_through": "2026-09-17",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-17",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-18": {
+     "schema": 5,
+     "vintage_date": "2026-09-18",
+     "captured_at": "2026-09-18T13:34:05+00:00",
+     "covers_through": "2026-09-18",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-18",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-19": {
+     "schema": 5,
+     "vintage_date": "2026-09-19",
+     "captured_at": "2026-09-19T16:45:02+00:00",
+     "covers_through": "2026-09-19",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-19",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-21": {
+     "schema": 5,
+     "vintage_date": "2026-09-21",
+     "captured_at": "2026-09-21T19:29:00+00:00",
+     "covers_through": "2026-09-21",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-21",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-23": {
+     "schema": 5,
+     "vintage_date": "2026-09-23",
+     "captured_at": "2026-09-23T18:40:21+00:00",
+     "covers_through": "2026-09-23",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-23",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-24": {
+     "schema": 5,
+     "vintage_date": "2026-09-24",
+     "captured_at": "2026-09-24T19:45:03+00:00",
+     "covers_through": "2026-09-24",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-24",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": [
+      {
+       "commit": "1b20dc2a",
+       "committed_at": "2026-09-24T22:08:55-04:00",
+       "applied": true,
+       "n_dropped_from_constructions": 239,
+       "skipped": [],
+       "unreadable_mlbam_kept": null
+      }
+     ]
+    },
+    "2026-09-26": {
+     "schema": 5,
+     "vintage_date": "2026-09-26",
+     "captured_at": "2026-09-26T16:18:43+00:00",
+     "covers_through": "2026-09-26",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-25",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": [
+      {
+       "commit": "3f449c5c",
+       "committed_at": "2026-09-25T11:38:09-04:00",
+       "applied": true,
+       "n_dropped_from_constructions": 239,
+       "skipped": [],
+       "unreadable_mlbam_kept": null
+      }
+     ]
+    }
+   },
+   "bases": [
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-07) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-09) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-10) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-13) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-14) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-16) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-17) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-18) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-19) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-21) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-23) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-24) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats",
+    "mean projected year-1 wOBA (mlb_projections.json vets[].woba[0], generated 2026-09-25) over the day's captured order slots, vl and vr side means averaged; a side joins only at >= 7 of 9 bats"
+   ],
+   "floors": {
+    "nights": true,
+    "fit": true,
+    "graded": true
+   },
+   "step1_counts_pass": true
+  },
+  "star_out": {
+   "column": "star_out",
+   "section": "5c-C",
+   "clock": {
+    "start": "2026-09-05",
+    "floor": "2026-10-03",
+    "nights": {
+     "first": "2026-09-05",
+     "last": "2026-10-02",
+     "n_nights": 28,
+     "present": [
+      "2026-09-05",
+      "2026-09-06",
+      "2026-09-07",
+      "2026-09-09",
+      "2026-09-10",
+      "2026-09-13",
+      "2026-09-14",
+      "2026-09-16",
+      "2026-09-17",
+      "2026-09-18",
+      "2026-09-19",
+      "2026-09-21",
+      "2026-09-23",
+      "2026-09-24",
+      "2026-09-26",
+      "2026-09-27",
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02"
+     ],
+     "missing": [
+      "2026-09-08",
+      "2026-09-11",
+      "2026-09-12",
+      "2026-09-15",
+      "2026-09-20",
+      "2026-09-22",
+      "2026-09-25"
+     ],
+     "missing_why": {
+      "2026-09-08": "no file",
+      "2026-09-11": "no file",
+      "2026-09-12": "no file",
+      "2026-09-15": "no file",
+      "2026-09-20": "no file",
+      "2026-09-22": "no file",
+      "2026-09-25": "no file"
+     },
+     "n_present": 21,
+     "floor": 14,
+     "floor_met": true
+    }
+   },
+   "n_games": 2429,
+   "by_bucket": {
+    "basis_unconfirmed": 15,
+    "dated_value": 185,
+    "no_vintage": 1347,
+    "post_retrain": 56,
+    "pre_change_ranking_basis": 205,
+    "predates_column": 572,
+    "stamp_missing": 49
+   },
+   "window_by_vintage": {
+    "2026-09-05": {
+     "dated_value": 15,
+     "dated_value:basis_unrecorded": 15
+    },
+    "2026-09-06": {
+     "dated_value": 11,
+     "dated_value:basis_unrecorded": 11
+    },
+    "2026-09-07": {
+     "dated_value": 30,
+     "dated_value:basis_unrecorded": 30
+    },
+    "2026-09-09": {
+     "dated_value": 5,
+     "dated_value:basis_unrecorded": 5
+    },
+    "2026-09-10": {
+     "dated_value": 45,
+     "dated_value:basis_unrecorded": 45
+    },
+    "2026-09-13": {
+     "dated_value": 10,
+     "dated_value:basis_unrecorded": 10
+    },
+    "2026-09-14": {
+     "dated_value": 30,
+     "dated_value:basis_unrecorded": 30
+    },
+    "2026-09-16": {
+     "dated_value": 9,
+     "dated_value:basis_unrecorded": 9
+    },
+    "2026-09-17": {
+     "dated_value": 15,
+     "dated_value:basis_unrecorded": 15
+    },
+    "2026-09-18": {
+     "dated_value": 15,
+     "dated_value:basis_unrecorded": 15
+    },
+    "2026-09-19": {
+     "stamp_missing": 18
+    },
+    "2026-09-21": {
+     "stamp_missing": 31
+    },
+    "2026-09-23": {
+     "post_retrain": 12
+    },
+    "2026-09-24": {
+     "post_retrain": 30
+    },
+    "2026-09-26": {
+     "post_retrain": 14
+    }
+   },
+   "split": {
+    "F": "2026-09-06",
+    "L": "2026-09-19",
+    "M": "2026-09-12"
+   },
+   "n_fit": 76,
+   "n_graded": 109,
+   "fit_by_date": {
+    "2026-09-06": 15,
+    "2026-09-07": 11,
+    "2026-09-08": 15,
+    "2026-09-09": 15,
+    "2026-09-10": 5,
+    "2026-09-11": 15
+   },
+   "graded_by_date": {
+    "2026-09-12": 15,
+    "2026-09-13": 15,
+    "2026-09-14": 10,
+    "2026-09-15": 15,
+    "2026-09-16": 15,
+    "2026-09-17": 9,
+    "2026-09-18": 15,
+    "2026-09-19": 15
+   },
+   "parks_short_window": {
+    "fit_with": 0,
+    "fit_without": 76,
+    "graded_with": 79,
+    "graded_without": 30
+   },
+   "dated_value_sub": {
+    "basis_unrecorded": 185
+   },
+   "pre_change_sub": {},
+   "vintage_age": {
+    "n_dated_value": 185,
+    "n_age_2_plus": 60,
+    "game_weighted_mean_age": 1.405
+   },
+   "vintages": {
+    "2026-09-05": {
+     "schema": 3,
+     "vintage_date": "2026-09-05",
+     "captured_at": "2026-09-05T17:18:50+00:00",
+     "covers_through": "2026-09-05",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-05",
+     "parks_short_window": false,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-06": {
+     "schema": 3,
+     "vintage_date": "2026-09-06",
+     "captured_at": "2026-09-06T19:25:16+00:00",
+     "covers_through": "2026-09-06",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-05",
+     "parks_short_window": false,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-07": {
+     "schema": 3,
+     "vintage_date": "2026-09-07",
+     "captured_at": "2026-09-07T17:04:38+00:00",
+     "covers_through": "2026-09-07",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-07",
+     "parks_short_window": false,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-09": {
+     "schema": 4,
+     "vintage_date": "2026-09-09",
+     "captured_at": "2026-09-09T19:16:44+00:00",
+     "covers_through": "2026-09-09",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-09",
+     "parks_short_window": false,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-10": {
+     "schema": 4,
+     "vintage_date": "2026-09-10",
+     "captured_at": "2026-09-10T19:34:37+00:00",
+     "covers_through": "2026-09-10",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-10",
+     "parks_short_window": false,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-13": {
+     "schema": 5,
+     "vintage_date": "2026-09-13",
+     "captured_at": "2026-09-13T20:23:45+00:00",
+     "covers_through": "2026-09-13",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-13",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-14": {
+     "schema": 5,
+     "vintage_date": "2026-09-14",
+     "captured_at": "2026-09-14T17:30:11+00:00",
+     "covers_through": "2026-09-14",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-14",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-16": {
+     "schema": 5,
+     "vintage_date": "2026-09-16",
+     "captured_at": "2026-09-16T15:16:50+00:00",
+     "covers_through": "2026-09-16",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-16",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-17": {
+     "schema": 5,
+     "vintage_date": "2026-09-17",
+     "captured_at": "2026-09-17T20:18:24+00:00",
+     "covers_through": "2026-09-17",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-17",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-18": {
+     "schema": 5,
+     "vintage_date": "2026-09-18",
+     "captured_at": "2026-09-18T13:34:05+00:00",
+     "covers_through": "2026-09-18",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-18",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-19": {
+     "schema": 5,
+     "vintage_date": "2026-09-19",
+     "captured_at": "2026-09-19T16:45:02+00:00",
+     "covers_through": "2026-09-19",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-19",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-21": {
+     "schema": 5,
+     "vintage_date": "2026-09-21",
+     "captured_at": "2026-09-21T19:29:00+00:00",
+     "covers_through": "2026-09-21",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-21",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-23": {
+     "schema": 5,
+     "vintage_date": "2026-09-23",
+     "captured_at": "2026-09-23T18:40:21+00:00",
+     "covers_through": "2026-09-23",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-23",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [
+      "809902c6"
+     ],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-24": {
+     "schema": 5,
+     "vintage_date": "2026-09-24",
+     "captured_at": "2026-09-24T19:45:03+00:00",
+     "covers_through": "2026-09-24",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-24",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [
+      "809902c6"
+     ],
+     "x9": [],
+     "record_stamp": false,
+     "git_stamp": []
+    },
+    "2026-09-26": {
+     "schema": 5,
+     "vintage_date": "2026-09-26",
+     "captured_at": "2026-09-26T16:18:43+00:00",
+     "covers_through": "2026-09-26",
+     "provenance": "live",
+     "hitter_as_of": "2026-09-25",
+     "parks_short_window": true,
+     "basis_n": 30,
+     "file_mtime_minus_capture_h": 0.0,
+     "present": true,
+     "post_retrain": [
+      "809902c6"
+     ],
+     "x9": [
+      "d11ed73f"
+     ],
+     "record_stamp": false,
+     "git_stamp": []
+    }
+   },
+   "bases": [
+    "of each club's top-5 projected players (mlb_projections.json vets[].warY1Champ), how many carry a StatsAPI 40-man IL status code (D*) in the cached roster files (30 orgs with a fresh roster cache, 0 stale (> 48h), 0 missing/unreadable); 0 means all stars available"
+   ],
+   "floors": {
+    "nights": true,
+    "fit": false,
+    "graded": true
+   },
+   "cadence_419811bb": {
+    "dated_value_before": 106,
+    "dated_value_after": 79
+   },
+   "step1_counts_pass": false
+  }
+ }
+}
