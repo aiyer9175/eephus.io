@@ -96,6 +96,15 @@ PAGES = [
     ("bullpen last 3", "bullpen", "section=bullpen&ryears=2024-2026", None),
     ("defense last 3", "defense", "section=defense&dyears=2024-2026", None),
     ("leverage last 3", "leverage", "section=leverage&lyears=2024-2026", None),
+    # The League tab (final-pass plan Part 8 P8.2, LT-08) is built dark behind
+    # league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE: these states are measured once
+    # the served shell carries the tab and the season panels are on disk, and
+    # skipped, never failed, before that. Rows are statistics, so there is one
+    # view; the filtered state carries the "vs all" column, the widest it gets.
+    ("league averages", "league", "section=league", None),
+    ("league filtered", "league", "section=league&gpos=C,SS&ghand=L&gqual=floor", None),
+    ("league pitchers", "league", "section=league&gside=pit&grole=SP,RP", None),
+    ("league teams", "league", "section=league&gside=team", None),
 ]
 # The five sections that carry a methodology fold and a Team note, which is what
 # the vertical-budget case below measures. Overall carries neither (spec 4.7
@@ -155,6 +164,13 @@ _STICKY = r"""
 
 def _boards_built() -> bool:
     return all((ROOT / "data" / f).exists() for f in BOARD_FILES)
+
+
+def _league_built() -> bool:
+    """The served shell carries the League tab and its panels are on disk."""
+    shell = (ROOT / "mlbstats" / "index.html").read_text(encoding="utf-8")
+    return ('data-mlbsection="league"' in shell
+            and any((ROOT / "data").glob("mlb_league_panel_*.json")))
 
 
 @pytest.fixture(scope="module")
@@ -238,6 +254,13 @@ def test_every_board_and_view_fits_and_the_page_never_scrolls_sideways(browser, 
     try:
         for label, sec, hash_, qual in PAGES:
             if sec == "war" and not (ROOT / "data" / WAR_FILE).exists():
+                continue
+            if sec == "league":
+                if not _league_built():
+                    continue
+                _open(page, server, sec, hash_)
+                _check(page.evaluate(_MEASURE, sec), w, "%dpx %s" % (w, label), problems)
+                measured += 1
                 continue
             if "years=" in hash_ and not all((ROOT / "data" / f).exists() for f in WINDOW_FILES):
                 continue
@@ -701,7 +724,65 @@ def test_the_served_shell_opts_every_section_into_csv_with_short_nav_labels():
     # Owner decision 2026-09-17: Overall is first and is the landing section, in
     # the SERVED shell as well as the builder. A shell that still marks Bullpen
     # active paints the wrong tab over the board the script opens.
-    assert list(labels) == ["war", "hitters", "starters", "bullpen", "defense", "leverage"], list(labels)
+    # The League tab joins after Leverage only in a live build (and Teams,
+    # task Q8_13b, before it); a dark shell is the six sections exactly.
+    assert list(labels)[:6] == ["war", "hitters", "starters", "bullpen", "defense", "leverage"], list(labels)
+    assert list(labels)[6:] in ([], ["league"], ["teams", "league"]), list(labels)
     assert 'class="mlbstats-sectionbtn active" data-mlbsection="war"' in shell, "rerun build_site.py"
     assert '<div id="mlbstats-section-war" class="mlbstats-section" role="tabpanel" aria-label="Overall">' \
         in shell, "rerun build_site.py"
+
+
+# ---------------------------------------------------------------- the League charts
+# The over-time line, its small multiples and the players scatter are drawn at
+# the cell's real width (lane design 1.7 item 2): every label prints at 8px or
+# taller, at every width, and no chart pushes the page sideways. Skipped, never
+# failed, while the tab is dark.
+LEAGUE_CHART_PAGES = [
+    ("league over time", "section=league&gview=time&gcmp=pos_C", "svg.eephus-line"),
+    ("league over time pitchers", "section=league&gview=time&gside=pit&gcmp=role_RP", "svg.eephus-line"),
+    ("league players chart", "section=league&gpos=C", ".mlbstats-table"),
+]
+_CHART_TEXT = r"""
+() => {
+  const root = document.getElementById('mlbstats-section-league');
+  const d = root.querySelector('details[data-gfold="players"]');
+  if (d) d.open = true;
+  const svgs = Array.from(root.querySelectorAll('svg')).filter(s => s.getClientRects().length
+    && s.getAttribute('aria-hidden') !== 'true');
+  const hs = [];
+  svgs.forEach(s => s.querySelectorAll('text').forEach(t => { const h = t.getBoundingClientRect().height; if (h) hs.push(h); }));
+  return {n_svg: svgs.length, min_h: hs.length ? Math.min.apply(null, hs) : null,
+          aria: svgs.every(s => s.getAttribute('role') === 'img' && !!s.getAttribute('aria-label')),
+          page_overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth};
+}
+"""
+
+
+@pytest.mark.parametrize("size", SIZES, ids=["%dx%d" % s for s in SIZES])
+def test_the_league_charts_fit_and_print_readable_labels(browser, server, size):
+    if not _league_built():
+        pytest.skip("the League tab is dark in this build")
+    w, h = size
+    ctx = _context(browser, w, h)
+    page = ctx.new_page()
+    problems = []
+    try:
+        for label, hash_, sel in LEAGUE_CHART_PAGES:
+            page.goto("about:blank")
+            page.goto(server + "mlbstats/#" + hash_, wait_until="load", timeout=60_000)
+            page.wait_for_selector("#mlbstats-section-league " + sel, timeout=30_000)
+            page.wait_for_timeout(300)
+            m = page.evaluate(_CHART_TEXT)
+            where = "%dpx %s" % (w, label)
+            if m["page_overflow"] > 0:
+                problems.append("%s: the page scrolls sideways by %dpx" % (where, m["page_overflow"]))
+            if not m["n_svg"]:
+                problems.append("%s: no chart drawn" % where)
+            elif m["min_h"] is not None and m["min_h"] < 8:
+                problems.append("%s: a chart label prints %.1fpx tall" % (where, m["min_h"]))
+            if not m["aria"]:
+                problems.append("%s: a chart without role=img and an aria-label" % where)
+    finally:
+        ctx.close()
+    assert not problems, "\n".join(problems)

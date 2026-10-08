@@ -222,6 +222,7 @@ CLAIM_SURFACES = (
     "build_site.py",
     "sources/index.html",
     "assets/mlbstats.js",
+    "assets/mlbstats-league.js",
 )
 
 # ---------------------------------------------------------------------------
@@ -1663,3 +1664,22 @@ def test_next_to_be_graded_copy_types_no_figure():
         assert not re.search(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", code), name
         for n in ("0.826", "0.615", "6.21", "4.54", "6,066", "5,631"):
             assert n not in code, (name, n)
+
+
+def test_league_tab_coverage_and_fold_copy_type_no_figure():
+    """Q8_13a (final-pass plan Part 8 P8.2, LT-08). The League tab's coverage
+    sentence and its fold copy print counts, floors, dates and games per club,
+    and every one of them is read from the season panel: the functions that
+    write them carry no digit at all, so a typed count, floor or season cannot
+    hide in them. The one numeral allowed is the + scale's own anchor, which is
+    a definition (the page header states it too), not a measurement."""
+    src = _read_text("assets/mlbstats-league.js").replace("\r\n", "\n")
+    for name in ("coverageHTML", "foldHTML", "seasonNote", "indexNote"):
+        m = re.search(r"^  function %s\([^)]*\) \{.*?\n  \}\n" % name, src, re.S | re.M)
+        assert m, name
+        code = "\n".join(ln for ln in m.group(0).split("\n") if not ln.lstrip().startswith("//"))
+        code = code.replace("100 is the average qualified player of that board", "")
+        assert not re.search(r"\d", code), (name, re.findall(r".{0,30}\d.{0,10}", code)[:5])
+    # the floors, the coverage counts and the reasons come from these payload keys
+    for key in ("qualify", "coverage", "n_hand", "n_index", "games_per_team", "left_out", "deferred"):
+        assert key in src, key
