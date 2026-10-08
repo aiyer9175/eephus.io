@@ -1,7 +1,7 @@
 """Guards for the two accountability surfaces built on data/model_registry.json.
 
 Part 1, Model Report Cards v0. The card blocks put proof numbers on the
-Models & Proofs view, so the load-bearing risk is a card number drifting from
+/models/ ledger (the Library's Models & Proofs view until LIBRARY_7), so the load-bearing risk is a card number drifting from
 its eval artifact. These tests are the anti-drift fence: every card names the
 artifact path of each number it prints (card.derived_from) and equals that
 path's value exactly, the card schema must validate, and the number must
@@ -211,23 +211,15 @@ def test_a_validated_derived_card_shows_a_resolved_win():
 
 
 def _card_js():
-    """assets/glossary.js::_cardHeadline, run in a real JS engine. The function
-    is pure (card in, markup out) and needs only escapeHtml beside it."""
-    import pytest
-    MiniRacer = pytest.importorskip("py_mini_racer").MiniRacer
-    js = (HERE / "assets" / "glossary.js").read_text(encoding="utf-8").replace("\r\n", "\n")
-    i = js.index("function _cardHeadline(card) {")
-    j = js.index("\n}\n", i) + 2
-    ctx = MiniRacer()
-    ctx.eval('function escapeHtml(s) { return String(s == null ? "" : s)'
-             '.replace(/&/g, "&amp;").replace(/</g, "&lt;")'
-             '.replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }')
-    ctx.eval(js[i:j])
-    return ctx
+    """The card renderer. Since LIBRARY_7 it is build_site._acct_card_html,
+    server-rendered on /models/ (a port of the Library's _cardHeadline, which
+    these tests used to run in a JS engine). Pure: card in, markup out."""
+    import build_site
+    return build_site._acct_card_html
 
 
 def _render(ctx, card) -> str:
-    return ctx.eval(f"_cardHeadline({json.dumps(card)})")
+    return ctx(json.loads(json.dumps(card)))
 
 
 STAR = "★"
@@ -923,3 +915,67 @@ def test_the_hub_ships_and_is_crawlable():
         "models/ is not in deploy/publish_paths.txt and would 404 in production")
     assert "/models/</loc>" in build_site.build_sitemap([])
     assert 'href="/models/"' in build_site._footer()
+
+
+# --------------------------------------------------------------------------- #
+# LIBRARY_7: the one ledger (owner answer LB-Q2, 2026-10-08). /models/ carries
+# the three things only the Library's Models & Proofs view had: the family
+# grouping, the report-card bars and a History link per row.
+# --------------------------------------------------------------------------- #
+def test_models_page_renders_a_report_card_on_every_carded_row():
+    import html as _html
+    import build_site
+    page = _models_page()
+    rows = re.findall(r'<details class="acct-row"[^>]*>(.*?)</details>', page, re.S)
+    by_id = {re.search(r"<code>([^<]+)</code>", r).group(1): r for r in rows}
+    carded = [m for m in mr.load()["models"] if m.get("card")]
+    assert carded, "no carded rows in the registry"
+    for m in carded:
+        want = build_site._acct_card_html(m["card"])
+        assert want and want in by_id[m["model_id"]], m["model_id"]
+    assert page.count('<div class="acct-card">') == len(carded)
+    stars = sum(_html.unescape(build_site._acct_card_html(m["card"])).count(STAR)
+                for m in carded)
+    assert page.count(STAR) == stars
+
+
+def test_models_page_links_every_row_to_its_history():
+    page = _models_page()
+    ids = [m["model_id"] for m in mr.load()["models"]]
+    for mid in ids:
+        assert f'href="/models/updates/#model={mid}"' in page, mid
+    built = HERE / "models" / "updates" / "index.html"
+    if built.is_file():
+        served = built.read_text(encoding="utf-8")
+        missing = [mid for mid in ids if f'id="model={mid}"' not in served]
+        assert not missing, f"History anchors with no row on /models/updates/: {missing}"
+
+
+def test_models_page_groups_by_family_from_the_route_table():
+    import build_site
+    import model_updates
+    page = _models_page()
+    models = mr.load()["models"]
+    want: dict = {}
+    for m in models:
+        f = model_updates.family(m)
+        want[f] = want.get(f, 0) + 1
+    got = re.findall(r'<div class="acct-fam" id="family-([a-z0-9-]+)" data-acct-fam="\1" hidden>'
+                     r'<div class="acct-grouphead"><span class="acct-grouptitle">([^<]+)</span>'
+                     r'<span class="acct-groupn">(\d+)</span>', page)
+    assert {t: int(n) for _s, t, n in got} == want
+    assert [t for _s, t, _n in got] == [f for f in model_updates.FAMILIES if f in want]
+    for slug, title, _n in got:
+        assert slug == build_site._acct_family_slug(title)
+    # every row names its family group, and the group-by control is beside the filters
+    rows = re.findall(r'<details class="acct-row"[^>]*>', page)
+    assert len(rows) == len(models)
+    assert all(' data-fam="' in r for r in rows)
+    assert ('data-acct-groupby="verdict"' in page and 'data-acct-groupby="family"' in page)
+    assert page.index('data-acct-groupby="family"') < page.index('data-acct-filter="all"')
+
+
+def test_the_ledger_links_itself_not_the_retired_library_view():
+    page = _models_page()
+    assert "#view=models" not in page
+    assert 'href="#ledger"' in page and 'id="ledger"' in page

@@ -34,7 +34,10 @@ GLJS = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
 LEGACY_VIEWS = {"terms": "terms", "guide": "guide", "methodology": "methodology",
                 "source-comparison": "source-comparison",
                 "source-accuracy": "source-accuracy", "source-updates": "source-updates",
-                "models": "models", "library": "index"}
+                "library": "index"}
+# #view= values whose leaf left the Library for a page of its own (LIBRARY_7,
+# owner answer LB-Q2): glossary.js FORWARDS sends them there.
+FORWARDED = {"models": "/models/"}
 
 
 def _js_registry() -> list[dict]:
@@ -89,7 +92,7 @@ def test_the_shelves_hold_the_planned_leaves():
     assert by == {
         "reference": ["terms", "guide", "formulas"],
         "methods": ["methodology"],
-        "evidence": ["source-comparison", "source-accuracy", "calibration", "models",
+        "evidence": ["source-comparison", "source-accuracy", "calibration",
                      "models-ledger", "model-updates"],
         "sources": ["source-updates", "data-sources", "index"],
     }
@@ -155,8 +158,9 @@ def test_the_strip_carries_one_state_attribute_per_chip():
     # since LIBRARY_4 filled it, Calibration since LIBRARY_5 did)
     assert re.search(r'<button class="chip" type="button" data-gl-shelf="reference" data-glossary-view="formulas">', strip)
     assert re.search(r'<button class="chip" type="button" data-gl-shelf="evidence" data-glossary-view="calibration">', strip)
-    for v in ("models",):
-        assert re.search(rf'data-gl-unlisted hidden data-gl-shelf="[a-z]+" data-glossary-view="{v}"', strip), v
+    # the retired Models & Proofs view has no chip and no container (LIBRARY_7)
+    assert 'data-glossary-view="models"' not in strip
+    assert 'id="models-body"' not in B.build_glossary()
     # only the active shelf's leaf row shows
     assert re.findall(r'data-gl-leaves="([a-z]+)">', strip) == ["reference"]
     # an outbound leaf keeps the Data Sources arrow and never toggles a view
@@ -268,3 +272,32 @@ def test_a_shelf_chip_opens_its_first_leaf(browser):
                     "sources": ("source-updates", "#view=source-updates"),
                     "methods": ("methodology", "#view=methodology"),
                     "reference": ("terms", "")}
+
+
+def test_the_forward_table_names_each_retired_view_once():
+    m = re.search(r"const FORWARDS = \{([^}]*)\};", GLJS)
+    assert m, "no FORWARDS table in assets/glossary.js"
+    got = dict(re.findall(r'([a-z-]+): "([^"]+)"', m.group(1)))
+    assert got == FORWARDED
+    ids = {v["id"] for v in B.GLOSSARY_VIEWS}
+    assert not set(FORWARDED) & ids, "a forwarded value is still a view"
+
+
+@pytest.mark.parametrize("hash_,want", [
+    ("#view=models", "/models/"),
+    ("#view=models&verdict=deprecated", "/models/#verdict=deprecated"),
+    ("#view=models&family=Betting", "/models/#family=betting"),
+])
+def test_a_forwarded_view_lands_on_its_page(browser, hash_, want):
+    errors: list[str] = []
+    with serve_site() as base:
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.on("pageerror", lambda e: errors.append(e.message))
+        try:
+            page.goto(base + "glossary/index.html" + hash_, wait_until="load", timeout=15_000)
+            page.wait_for_selector(".acct-app .acct-row", state="attached", timeout=15_000)
+            path = page.evaluate("location.pathname + location.hash")
+        finally:
+            page.close()
+    assert not errors, errors
+    assert path == want

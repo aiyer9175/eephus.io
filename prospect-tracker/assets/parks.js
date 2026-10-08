@@ -672,7 +672,7 @@
       + "</ul>";
     h += '<div class="pk-warn"><strong>Display only.</strong> No model reads these factors. '
       + "Park-neutralizing MiLB lines did not improve eFV, and the lane is a registered fail: "
-      + '<code>xfv_park_line</code> in <a href="/glossary/#view=models">Models &amp; Proofs</a>, '
+      + '<code>xfv_park_line</code> in <a href="/models/">the model ledger</a>, '
       + 'eval at <a href="/data/xfv_park_line_eval.json">data/xfv_park_line_eval.json</a>. '
       + "The artifact's clamps (run " + esc(f3((clamps.run_pf || [])[0])) + " to "
       + esc(f3((clamps.run_pf || [])[1])) + ", home run " + esc(f3((clamps.hr_pf || [])[0]))

@@ -7266,16 +7266,19 @@ def write_awards_page() -> str:
 # themselves, because a hand-written verdict on an accountability page is the
 # one lie the page exists to prevent.
 #
-# The glossary already carries a Models & Proofs view over the same registry
-# (assets/glossary.js, /glossary/#view=models) and this page does NOT replace
-# it. That view is a browsable card per model with the full accountability
-# note. This one answers the three questions that view cannot, because they
-# need the filesystem at build time rather than the registry alone:
+# This page is the one model ledger (LIBRARY_7, owner answer LB-Q2,
+# 2026-10-08). The Library's old in-page copy of the registry forwards here;
+# its two features this page lacked moved in: the family grouping (a group-by
+# control, families from model_updates.family, the route table) and the
+# report-card bars (_acct_card_html, server-rendered from each row's card).
+# Each row also links its score history on /models/updates/. It answers three
+# questions the registry alone cannot, because they need the filesystem at
+# build time:
 #   1. does the proof link actually resolve on the deployed site
 #   2. what does the artifact say about itself, in its own words
 #   3. how old is the measurement, by the artifact's own stamp
 # The long `notes` field (322KB across the registry, one row alone is 16KB) is
-# deliberately NOT duplicated here; the page links the glossary card for it.
+# deliberately NOT duplicated here; the page links the registry file for it.
 _ACCT_VERDICTS = (
     ("validated", "Validated",
      "A forward-chained out-of-sample backtest is committed and the champion "
@@ -7448,10 +7451,80 @@ _ACCT_FLAG_LABELS = (
 )
 
 
+def _acct_js_num(v) -> str:
+    """A card value printed the way the retired Library view printed it
+    (JavaScript String(v)): an integral float has no ".0" and a small float is
+    written out rather than in exponent form."""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return str(v)
+    if isinstance(v, float):
+        if v != v or v in (float("inf"), float("-inf")):
+            return str(v)
+        if v.is_integer() and abs(v) < 1e21:
+            return str(int(v))
+        s = repr(v)
+        if "e" in s and 1e-6 <= abs(v) < 1e21:
+            from decimal import Decimal
+            s = format(Decimal(s), "f")
+        return s
+    return str(v)
+
+
+def _acct_card_html(card) -> str:
+    """The report-card bars for one registry row (ported from the Library's
+    _cardHeadline, LIBRARY_7). Paired model and baseline bars per headline
+    metric, each pair scaled to its larger value. The model bar carries a star
+    only when it strictly beats the baseline AND the artifact did not mark the
+    leg unresolvable (a derived card carries `resolvable` and the artifact's
+    own `verdict`; audit L18-01). A tie is not a win. An unresolved leg says
+    so in words beside the bars, so a missing star is never the only signal."""
+    if not isinstance(card, dict):
+        return ""
+    heads = card.get("headline")
+    if not isinstance(heads, list) or not heads:
+        return ""
+    rows = []
+    for h in heads:
+        champ, base = h.get("champion"), h.get("baseline")
+        lower = h.get("better") == "lower"
+        wins = (champ < base if lower else champ > base) and h.get("resolvable") is not False
+        scale = max(abs(champ), abs(base)) or 1
+
+        def bar(val, is_champ):
+            pct = max(2.0, min(100.0, abs(val) / scale * 100))
+            lab = ("model" + (" ★" if wins else "")) if is_champ else "baseline"
+            fill = "acct-card-fill acct-card-fill--champ" if is_champ else "acct-card-fill"
+            return (f'<div class="acct-card-bar"><span class="acct-card-barlab">{lab}</span>'
+                    f'<span class="acct-card-track"><span class="{fill}" style="width:{pct:.1f}%">'
+                    f'</span></span><span class="acct-card-val">{html.escape(_acct_js_num(val))}'
+                    '</span></div>')
+
+        direction = "lower is better" if lower else "higher is better"
+        verdict = h.get("verdict")
+        said = (f"; {html.escape(verdict)}" if isinstance(verdict, str) and verdict
+                else ("; not a resolved win" if h.get("resolvable") is False else ""))
+        bl = h.get("baseline_label") if isinstance(h.get("baseline_label"), str) else ""
+        label = str(h.get("label") or "")
+        vs = f", vs {html.escape(bl)}" if bl and bl.lower() not in label.lower() else ""
+        rows.append(f'<div class="acct-card-metric"><div class="acct-card-lab">'
+                    f'{html.escape(label)}{vs} <span class="acct-card-dir">({direction}{said})'
+                    f'</span></div>{bar(champ, True)}{bar(base, False)}</div>')
+    foot = " · ".join(x for x in (
+        f"n = {html.escape(str(card['n']))}" if card.get("n") else "",
+        html.escape(str(card.get("window") or ""))) if x)
+    return (f'<div class="acct-card">{"".join(rows)}'
+            + (f'<div class="acct-card-foot">{foot}</div>' if foot else "") + "</div>")
+
+
+def _acct_family_slug(fam: str) -> str:
+    """The #family= anchor for one family name ("PROSPX and eFV" -> prospx-and-efv)."""
+    return re.sub(r"[^a-z0-9]+", "-", (fam or "").lower()).strip("-") or "other"
+
+
 def _acct_row(m: dict, f: dict) -> str:
     """One registry row, server-rendered. The row's `summary` leads the open
-    row; `notes` (the lab log) is left to the glossary card on purpose (see
-    the section header comment)."""
+    row; `notes` (the lab log) stays in the registry file on purpose (see the
+    section header comment)."""
     if f.get("url"):
         proof = (f'<a href="{html.escape(f["url"])}"><code>{html.escape(f["path"])}</code></a>'
                  + (f' · produced {html.escape(_fmt_iso_date(f["date"]))}' if f.get("date") else ""))
@@ -7461,22 +7534,33 @@ def _acct_row(m: dict, f: dict) -> str:
     else:
         proof = f'<span class="acct-nolink">{html.escape(f["why"])}</span>'
     flags = _acct_row_flags(f)
-    # `champion` and the long `notes` field are the glossary card's job, and
-    # duplicating them here would have made this page a second copy of that view
-    # rather than the thing it adds. What stays is the minimum a verdict needs to
-    # be auditable: the claim, the bar it had to clear, how it was measured, the
-    # receipt, and whatever the receipt says about itself.
+    # The long `notes` field and `champion` stay in the registry file. What
+    # renders is the minimum a verdict needs to be auditable: the claim, the bar
+    # it had to clear, how it was measured, the report card, the receipt,
+    # whatever the receipt says about itself, and the row's score history.
+    # The card is wrapped like the Library view wrapped it: one bad card must
+    # never strand the ledger, so a throw degrades to the text fields.
+    try:
+        card = _acct_card_html(m.get("card")) if m.get("card") else ""
+    except Exception:                       # noqa: BLE001 - degrade, never fatal
+        card = ""
+    mid = m.get("model_id") or ""
     body = (
-        _acct_kv("Summary", m.get("summary") or "")
+        _acct_kv("Report card", card, raw=True)
+        + _acct_kv("Summary", m.get("summary") or "")
         + _acct_kv("Predicts", m.get("predicts") or "")
         + _acct_kv("Baseline it must beat", m.get("baseline") or "")
         + _acct_kv("How it is measured", m.get("metric") or "")
         + _acct_kv("Proof", proof, raw=True)
         + _acct_kv("The artifact's own words", m.get("__artifact_verdict") or "")
+        + (_acct_kv("History", f'<a href="/models/updates/#model={html.escape(mid)}">'
+                    f'{PAGE_LABELS["/models/updates/"]}</a>', raw=True) if mid else "")
     )
     flag_attr = f' data-acct-flags="{html.escape(" ".join(flags))}"' if flags else ""
+    fam_attr = (f' data-fam="{html.escape(_acct_family_slug(m["__family"]))}"'
+                if m.get("__family") else "")
     return (
-        f'<details class="acct-row"{flag_attr}>'
+        f'<details class="acct-row"{flag_attr}{fam_attr}>'
         f'<summary class="acct-sum">'
         f'<code>{html.escape(m.get("model_id") or "")}</code>'
         f'{_acct_chip(m.get("verdict") or "")}'
@@ -7501,6 +7585,7 @@ def build_models() -> str:
     test_collegesavant_nav_in_sync pins, and those copies belong to other
     lanes. Discovery rides the footer link, the homepage Across-eephus.io strip
     and sitemap.xml, which is exactly the /parks/ pattern."""
+    import model_updates                    # the family route table (LIBRARY_11)
     reg = model_registry.load()
     models = list(reg.get("models") or [])
     facts = {}
@@ -7509,6 +7594,7 @@ def build_models() -> str:
         if rel not in facts:
             facts[rel] = _acct_artifact_facts(rel)
         m["__artifact_verdict"] = facts[rel].get("verdict") or ""
+        m["__family"] = model_updates.family(m)
 
     counts = {}
     for m in models:
@@ -7631,6 +7717,30 @@ def build_models() -> str:
         f'data-acct-filter="{k}">{html.escape(lab)} <span class="acct-count">{n}</span></button>'
         for k, lab, n in filters)
 
+    # The family grouping (LIBRARY_7, from the retired Library view). The rows
+    # render once, in their verdict groups; the family groups are rendered
+    # empty with their counts and the client moves the rows into them when the
+    # reader picks Family. With JavaScript off the verdict grouping stands.
+    fam_n = {}
+    for m in models:
+        fam_n[m["__family"]] = fam_n.get(m["__family"], 0) + 1
+    fam_order = [f for f in model_updates.FAMILIES if f in fam_n] + sorted(
+        f for f in fam_n if f not in model_updates.FAMILIES)
+    fam_groups = "".join(
+        f'<div class="acct-fam" id="family-{_acct_family_slug(f)}" '
+        f'data-acct-fam="{_acct_family_slug(f)}" hidden>'
+        f'<div class="acct-grouphead"><span class="acct-grouptitle">{html.escape(f)}</span>'
+        f'<span class="acct-groupn">{fam_n[f]}</span></div></div>'
+        for f in fam_order)
+    groupby = (
+        '<div class="filter-bar acct-groupby" role="group" aria-label="Group the ledger by">'
+        '<span class="acct-gblab">Group by</span>'
+        '<button class="chip active" type="button" data-acct-groupby="verdict" '
+        'aria-pressed="true">Verdict</button>'
+        '<button class="chip" type="button" data-acct-groupby="family" '
+        f'aria-pressed="false">Family <span class="acct-count">{len(fam_order)}</span></button>'
+        '</div>')
+
     body = (
         # Linked ahead of the markup so the tiles paint as a grid (QREP05).
         f'<link rel="stylesheet" href="/assets/accountability.css?v={_ACCT_HUB_CSS_VER}">'
@@ -7643,8 +7753,10 @@ def build_models() -> str:
         '<div class="acct-intro">'
         f'<p>Registry vintage: <strong>{html.escape(_fmt_iso_date(reg.get("checked_at")))}</strong>. '
         f'Version <code>{html.escape(str(reg.get("version") or ""))}</code>. Source: '
-        '<a href="/data/model_registry.json"><code>data/model_registry.json</code></a>; each row\'s '
-        f'full note is on the <a href="/glossary/#view=models">{GLOSSARY_DISPLAY_NAME} ledger</a>.</p>'
+        '<a href="/data/model_registry.json"><code>data/model_registry.json</code></a>, which also '
+        'holds each row\'s full lab note. <a href="#ledger">The ledger</a> groups the rows by '
+        'verdict or by model family; an open row shows its report card, the model against its '
+        'baseline.</p>'
         "<p>Each model's score history and edge over its benchmark: <a href=\"/models/updates/\">"
         f'{PAGE_LABELS["/models/updates/"]}</a>.</p>'
         '</div>'
@@ -7661,10 +7773,11 @@ def build_models() -> str:
         + ('<div class="card acct-note"><h3>Registry notes</h3>'
            f'<ul class="acct-list">{reg_notes}</ul></div>' if reg_notes else "")
         + problems_html
-        + '<div class="section-head"><h2>The ledger</h2>'
+        + '<div class="section-head" id="ledger"><h2>The ledger</h2>'
           '<span class="section-sub">open a row for claim, baseline and receipt</span></div>'
+        + groupby
         + f'<div class="filter-bar acct-filters">{chips}</div>'
-        + f'<div id="acct-rows">{"".join(groups)}</div>'
+        + f'<div id="acct-rows">{"".join(groups)}{fam_groups}</div>'
         + orphan_html
         + '</div>'
         f'<script src="/assets/accountability.js?v={_ACCT_HUB_VER}" defer></script>'
@@ -8293,9 +8406,8 @@ GLOSSARY_VIEWS = (
     {"id": "source-comparison", "shelf": "evidence", "label": "Source Comparison", "body": "source-comparison-body"},
     {"id": "source-accuracy", "shelf": "evidence", "label": "Source Accuracy", "body": "source-accuracy-body"},
     {"id": "calibration", "shelf": "evidence", "label": "Calibration", "body": "calibration-body"},
-    # The in-page registry view stays a normal view (and keeps its URL) until
-    # LIBRARY_7 forwards it; the strip lists the /models/ ledger instead.
-    {"id": "models", "shelf": "evidence", "label": "Models & Proofs", "body": "models-body", "listed": False},
+    # The old in-page registry view (view value "models") forwards to /models/
+    # (LIBRARY_7, glossary.js FORWARDS); the strip lists the ledger here.
     {"id": "models-ledger", "shelf": "evidence", "label": "Models", "href": "/models/"},
     {"id": "model-updates", "shelf": "evidence", "label": "Model Updates", "href": "/models/updates/"},
     {"id": "source-updates", "shelf": "sources", "label": "Source Updates", "body": "source-updates-body"},
@@ -9294,7 +9406,7 @@ PAGE_INDEX_PURPOSE = {
                   if _events_live() else
                   "debut anniversaries, prospect trades, signings and IL moves that landed on today's calendar date"),
     "/parks/": "run environments for every affiliated park; the Methodology tab (/parks/#method) documents the estimator",
-    "/models/": "the model ledger: every model that makes a predictive claim, its verdict and the eval artifact behind it",
+    "/models/": "the model ledger: every model that makes a predictive claim, its verdict, its report card and the eval artifact behind it, grouped by verdict or by family",
     "/models/updates/": "one row per model update: the scored statistic before and after, and the edge over the benchmark",
     "/sources/": "every upstream the site reads, what it is used for, and the public data catalog",
     "/report/": "how to report a bug and what to put in the message",
@@ -9380,7 +9492,7 @@ def build_library_redirect() -> str:
     """/library/ (owner ask 2026-10-02): the glossary module reads "Library",
     so its new name resolves. The page lives at /glossary/ for link stability;
     this stub is noindex, names /glossary/ as canonical, and carries the hash
-    across (/library/#view=models opens /glossary/#view=models). It stays in
+    across (/library/#view=terms opens /glossary/#view=terms). It stays in
     deploy/publish_paths.txt: a redirect that does not ship is a 404."""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">

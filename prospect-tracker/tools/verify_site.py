@@ -41,7 +41,7 @@ ROUTES = [
     ("/pal/",                          "tbody tr, .pal-tier"),
     ("/glossary/",                     ".gl-app, .g-term, tbody tr"),
     ("/glossary/#view=methodology",    ".meth-table, .meth-chart"),
-    ("/glossary/#view=models",         "tbody tr, .gl-model-row"),
+    ("/models/#group=family",          ".acct-fam .acct-row, .acct-card"),
     ("/glossary/#view=source-accuracy", ".sacc-wrap .meth-find-card, .sacc-table"),
     ("/mlbstats/",                     "tbody tr, .mlb-card"),
     ("/diamond/",                      ".diamond-card, .card"),

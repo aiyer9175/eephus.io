@@ -15,8 +15,8 @@
 // PDF export) ·
 // Evidence (Source Comparison: the empirical source-vs-source backtest;
 // Source Accuracy: the who-grades-which-cohort measurement; Calibration: the
-// live calibration monitor and what an eFV grade is worth;
-// Models & Proofs: the model registry ledger; links to /models/) · Sources
+// live calibration monitor and what an eFV grade is worth; links to the
+// /models/ ledger and /models/updates/) · Sources
 // (Source Updates: the dates each outlet published a list; Page Index: every
 // standalone page; a link to /sources/). The authoritative list is VIEWS
 // below, mirrored by build_site.GLOSSARY_VIEWS.
@@ -28,23 +28,13 @@
   "use strict";
 
   const _S = { view: "terms", cat: "all", q: "", term: null,
-               backtest: null, btLoading: false, cards: false,
+               backtest: null, btLoading: false,
                // Terms view (LIBRARY_4): provenance and module filters, the
                // A-Z initial, the selected entry and the rows opened in place.
                prov: "all", mod: null, letter: null, sel: null, open: new Set(), secCounts: null };
-  // Report Cards v0: inline champion-vs-baseline proof charts on the Models &
-  // Proofs cards. Dark by default pre-launch; opt in with #cards=1 for owner
-  // preview. Flip _CARDS_DEFAULT to true at launch.
-  const _CARDS_DEFAULT = true;   // surfaced: proof charts on by default (#cards=0 to hide)
   let GL = {};         // legacy-shaped map: slug -> {name, short, long, ...}
-  // Models & Proofs view state. Declared up top (module scope, before boot
-  // runs) so the lazy fetch guard is always initialized, mirroring the
-  // _S.registry/_S.backtest lazy-load pattern the other views use.
-  let _MODELS = null;          // cached model_registry.json payload (or {__error:true})
-  let _MODELS_LOADING = false; // in-flight guard against a double fetch
-  let _MODELS_FILTER = "all";  // active verdict filter for the Models & Proofs list
   // Source Accuracy view state. Declared HERE, at module scope above every
-  // renderer, for the same reason _MODELS is: a `let` read from a hoisted
+  // renderer: a `let` read from a hoisted
   // function that runs before the declaration is a temporal-dead-zone throw,
   // and a throw inside a fetch promise strands the view on "Loading" while
   // the smoke test stays green (the _RATER_META lesson, 2026-06-10).
@@ -94,7 +84,6 @@
     { id: "source-comparison", shelf: "evidence", label: "Source Comparison", body: "source-comparison-body", render: renderSourceComparison, aliases: [] },
     { id: "source-accuracy", shelf: "evidence", label: "Source Accuracy", body: "source-accuracy-body", render: renderSourceAccuracy, aliases: [] },
     { id: "calibration", shelf: "evidence", label: "Calibration", body: "calibration-body", render: renderCalibration, aliases: [] },
-    { id: "models", shelf: "evidence", label: "Models & Proofs", body: "models-body", render: renderModels, aliases: [], unlisted: true },
     { id: "models-ledger", shelf: "evidence", label: "Models", href: "/models/", aliases: [] },
     { id: "model-updates", shelf: "evidence", label: "Model Updates", href: "/models/updates/", aliases: [] },
     { id: "source-updates", shelf: "sources", label: "Source Updates", body: "source-updates-body", render: renderSourceUpdates, aliases: [] },
@@ -110,6 +99,10 @@
     for (const a of v.aliases) VIEW_OF[a] = v.id;
   }
   function _viewDef() { return VIEW_BY_ID[_S.view] || VIEW_BY_ID.terms; }
+  // The alias table for leaves that left the Library for a page of their own
+  // (LIBRARY_7, owner answer LB-Q2): an old #view= address forwards there,
+  // carrying a family or verdict anchor when the hash held one.
+  const FORWARDS = { models: "/models/" };
 
   function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -126,8 +119,18 @@
                                      GL[k] ? { enumerable: true, configurable: true, value: GL[k] } : undefined });
 
   // ---- URL state: #g=<slug>&view=&cat=&q= -----------------------------------
+  // Returns true when the address forwards off the Library (the page is leaving).
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
+    const fwd = FORWARDS[p.get("view")];
+    if (fwd) {
+      const fam = (p.get("family") || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      const ver = (p.get("verdict") || "").toLowerCase();
+      const anchor = fam ? "#family=" + fam
+        : (/^(validated|provisional|unvalidated|deprecated)$/.test(ver) ? "#verdict=" + ver : "");
+      location.replace(fwd + anchor);
+      return true;
+    }
     if (p.has("view")) {
       const v = VIEW_OF[p.get("view")];
       if (v) _S.view = v;
@@ -143,7 +146,6 @@
     const bare = location.hash.slice(1);
     const ch = p.get("ch") || (_methChapters().some(c => c.id === bare) ? bare : null);
     if (ch) { _S.view = "methodology"; _S.methCh = ch; }
-    _S.cards = p.has("cards") ? p.get("cards") !== "0" : _CARDS_DEFAULT;
     _S.term = p.get("g") || null;
     if (_S.term) _S.view = "terms";
   }
@@ -1200,7 +1202,7 @@
   }
 
   function boot() {
-    syncFromURL();
+    if (syncFromURL()) return;
     document.querySelectorAll("[data-glossary-view]").forEach(b => {
       b.onclick = () => { _S.view = b.dataset.glossaryView; syncToURL(); render(); };
     });
@@ -1222,7 +1224,7 @@
         if (e.key === "Escape") { inp.value = ""; _S.q = ""; syncToURL(); render(); }
       });
     }
-    window.addEventListener("hashchange", () => { syncFromURL(); render(); });
+    window.addEventListener("hashchange", () => { if (!syncFromURL()) render(); });
     // Crossing the two-pane breakpoint redraws the Terms view in the other layout.
     const mq = window.matchMedia && window.matchMedia("(min-width: 900px)");
     if (mq && mq.addEventListener) mq.addEventListener("change", () => {
@@ -3683,7 +3685,7 @@ function _methModelUpgrades() {
     <h2 class="meth-h">What recently changed under the hood</h2>
     <p class="meth-note">Every upgrade ships through a pre-registered gate. The numbers below are read live from the committed eval artifacts, and the lanes that failed their gates are listed right next to the ones that passed.</p>
     <div class="meth-tables">${_methUpgradeXlineHTML()}${_methUpgradeP1HTML()}${_methDenoisedControlHTML()}</div>
-    <p class="meth-note"><strong>What did not ship:</strong> the same 2026-07-23 program ran four more gated lanes - playing-time IL risk for projections, MiLB park neutralization, per-pitch-type stuff into PAL conversions, and college stuff into the college-to-pro translation - and none cleared its gate. Nothing from those lanes touches a served number. Every failure is ledgered with its committed eval artifact in <a href="#view=models">Models &amp; Proofs</a>; that ledger is the point.</p>
+    <p class="meth-note"><strong>What did not ship:</strong> the same 2026-07-23 program ran four more gated lanes - playing-time IL risk for projections, MiLB park neutralization, per-pitch-type stuff into PAL conversions, and college stuff into the college-to-pro translation - and none cleared its gate. Nothing from those lanes touches a served number. Every failure is ledgered with its committed eval artifact in <a href="/models/">the model ledger</a>; that ledger is the point.</p>
   </div>`;
 }
 
@@ -5813,238 +5815,6 @@ function renderSourceAccuracy() {
   });
   const rb = document.getElementById("gl-sacc-retry");
   if (rb) rb.onclick = () => { _SACC = null; _SACC_LOADING = false; renderSourceAccuracy(); };
-}
-
-// ---- Models & Proofs view --------------------------------------------------
-// The platform's accountability ledger as a browsable, family-grouped,
-// verdict-filterable view. Same registry the Methodology table renders
-// verbatim (data/model_registry.json), reorganized so a reader can audit one
-// family or one verdict at a time. Lazy-loaded once into _MODELS, mirroring
-// the Source Comparison fetch / guard / failure pattern.
-const _MODEL_FAMILY_ORDER = ["PROSPX / eFV", "MLB Projections", "Free Agency",
-  "MLB Stats", "Draft", "Trade Machine", "Other", "Internal / model-dev"];
-const _MODEL_VERDICT_ORDER = ["validated", "provisional", "unvalidated", "deprecated"];
-// Tokens kept fully uppercased when a model_id is humanized into a label. The
-// list the owner keeps uppercase (REM, RIV, SEM, FV, WAR, WAG, PAL, FA, DPW,
-// QO, SC, RPS, KRP, DS) plus a few domain acronyms that appear in ids. The
-// bare "<=4 chars" shortcut was dropped on purpose: it shouts common words
-// (PICK, TAX, SLOT, TEAM, WIN, FIT), which reads badly in user-facing copy.
-const _MODEL_ACRONYMS = new Set(["REM", "RIV", "SEM", "FV", "WAR", "WAG", "PAL",
-  "FA", "DPW", "QO", "SC", "RPS", "KRP", "DS", "MLB", "ETA", "IFA", "NPB", "KBO",
-  "CPBL", "AAA", "AA", "ERA", "OPS", "AUC"]);
-const _MODEL_MIXEDCASE = { efv: "eFV", xfv: "eFV", gmli: "gmLI" };
-const _MODEL_STOPWORDS = new Set(["to", "vs", "of", "and", "the", "per", "by", "a"]);
-
-function _modelLabel(id) {
-  const toks = String(id == null ? "" : id).split("_");
-  return toks.map((tok, i) => {
-    if (!tok) return tok;
-    const low = tok.toLowerCase();
-    if (_MODEL_MIXEDCASE[low]) return _MODEL_MIXEDCASE[low];
-    if (_MODEL_ACRONYMS.has(tok.toUpperCase())) return tok.toUpperCase();
-    if (i > 0 && _MODEL_STOPWORDS.has(low)) return low;
-    return tok.charAt(0).toUpperCase() + tok.slice(1);
-  }).join(" ");
-}
-
-// Family from the surface (+ id as a fallback signal). Internal / model-dev is
-// tested FIRST so the many "rendered nowhere" dev artifacts land there rather
-// than being pulled into a product family by an incidental mention of eFV or
-// Projections in their description.
-function _modelFamily(m) {
-  const s = ((m.surface || "") + " " + (m.model_id || "")).toLowerCase();
-  const any = arr => arr.some(n => s.indexOf(n) !== -1);
-  if (any(["model-dev", "rendered nowhere", "loss ledger", "not wired", "n/a", "internal"])) return "Internal / model-dev";
-  if (any(["mlbstats", "bullpen", "starter"])) return "MLB Stats";
-  if (any(["trademachine", "trade machine"])) return "Trade Machine";
-  if (any(["free agency", "/fa/"])) return "Free Agency";
-  if (any(["/projections/", "projections"])) return "MLB Projections";
-  if (any(["draft"])) return "Draft";
-  if (any(["prospx", "efv", "xfv"])) return "PROSPX / eFV";
-  return "Other";
-}
-
-function _modelRow(label, val) {
-  return val
-    ? `<div class="gl-model-row"><span class="gl-model-rowlabel">${label}</span><span class="gl-model-rowval">${escapeHtml(val)}</span></div>`
-    : "";
-}
-
-// The proof line: a link to the committed eval artifact where one exists; the
-// audit-hit-list note for an unvalidated claim with no eval; the consensus /
-// source models also point at the Source Comparison head-to-head. Eval-less
-// internal rows get no Proof line at all.
-// WHAT ACTUALLY SHIPS. Both deploy paths publish data/ at DEPTH ONE only (the
-// nightly rsync takes /data/*.json; the CI workflow runs find data -maxdepth 1),
-// so an eval artifact living under docs/ or tools/, or in a data/ subdirectory,
-// is NOT on the deployed site and a link to it is a live 404. Four registry rows
-// point at such paths today. A receipts page that links a missing receipt is
-// worse than one that says where the receipt is, so those are NAMED, not linked.
-function _artifactIsPublished(path) {
-  if (!path) return false;
-  const parts = String(path).split("/");
-  return parts.length === 2 && parts[0] === "data";
-}
-function _artifactHTML(path) {
-  const p = escapeHtml(String(path));
-  return _artifactIsPublished(path)
-    ? `<a href="/${p}" target="_blank" rel="noopener">${p}</a>`
-    : `<code>${p}</code> <span class="gl-model-note">(committed to the repo, not published)</span>`;
-}
-
-function _modelProofHTML(m) {
-  const bits = [];
-  if (m.eval_artifact) {
-    bits.push(_artifactHTML(m.eval_artifact));
-  } else if (m.verdict === "unvalidated") {
-    bits.push("No committed eval yet (this is the audit's hit list).");
-  }
-  if (m.model_id === "consensus_fv" || m.model_id === "source_track_record") {
-    bits.push("See the Source Comparison view for the head-to-head proof.");
-  }
-  if (!bits.length) return "";
-  return `<div class="gl-model-row"><span class="gl-model-rowlabel">Proof</span><span class="gl-model-rowval">${bits.join(" ")}</span></div>`;
-}
-
-// Report Card v0: paired champion-vs-baseline bars for each headline metric.
-// Bars are normalized to the larger of the two values so the win is visible;
-// the model bar gets a star only when it beats the baseline strictly AND the
-// headline's artifact has not marked the gap unresolvable. A derived card
-// (model_registry.derive_card) carries the artifact's own `resolvable` flag
-// and `verdict` string; a lead inside the floor the backtest can resolve is
-// not a win, and a tie is not a win either (audit L18-01: consensus_fv starred
-// a Spearman lead its own artifact called not resolvable). Literal cards
-// carry no flag and keep the plain comparison. One try/catch-wrapped card
-// must never strand the ledger, so the caller degrades to the text card on a
-// throw.
-function _cardHeadline(card) {
-  if (!card || !Array.isArray(card.headline) || !card.headline.length) return "";
-  const rows = card.headline.map(h => {
-    const champWins = (h.better === "lower" ? h.champion < h.baseline : h.champion > h.baseline)
-      && h.resolvable !== false;
-    const scale = Math.max(Math.abs(h.champion), Math.abs(h.baseline)) || 1;
-    const bar = (val, isChamp) => {
-      const pct = Math.max(2, Math.min(100, Math.abs(val) / scale * 100));
-      return `<div class="gl-card-barrow">
-        <span class="gl-card-barlab">${isChamp ? "model" : "baseline"}${isChamp && champWins ? " ★" : ""}</span>
-        <span class="gl-card-track"><span class="gl-card-fill${isChamp ? " gl-card-fill--champ" : ""}" style="width:${pct.toFixed(1)}%"></span></span>
-        <span class="gl-card-barval">${escapeHtml(String(val))}</span></div>`;
-    };
-    const dir = h.better === "lower" ? "lower is better" : "higher is better";
-    // The artifact's verdict, verbatim, when the card is derived: the reader
-    // sees "not resolvable at this power" beside a bar pair rather than
-    // having to infer it from a missing star.
-    // A leg the artifact marks unresolved with no verdict string of its own
-    // still says so in words, so a missing star is never the only signal.
-    const said = typeof h.verdict === "string" && h.verdict ? `; ${escapeHtml(h.verdict)}`
-      : (h.resolvable === false ? "; not a resolved win" : "");
-    // The baseline bar is named: a card with two legs (the naive stat and the
-    // parent it refines) otherwise shows two unlabelled baseline bars. A label
-    // that already names it ("blend vs best single input") is not repeated.
-    const bl = typeof h.baseline_label === "string" ? h.baseline_label : "";
-    const vs = bl && !String(h.label || "").toLowerCase().includes(bl.toLowerCase())
-      ? `, vs ${escapeHtml(bl)}` : "";
-    return `<div class="gl-card-metric">
-      <div class="gl-card-metriclab">${escapeHtml(h.label)}${vs} <span class="gl-card-dir">(${dir}${said})</span></div>
-      ${bar(h.champion, true)}${bar(h.baseline, false)}</div>`;
-  }).join("");
-  const foot = [card.n ? `n = ${escapeHtml(String(card.n))}` : "", escapeHtml(card.window || "")]
-    .filter(Boolean).join(" · ");
-  return `<div class="gl-card-proof">${rows}${foot ? `<div class="gl-card-foot">${foot}</div>` : ""}</div>`;
-}
-
-function _modelCard(m) {
-  const v = m.verdict || "";
-  const badge = `<span class="gl-verdict gl-verdict--${escapeHtml(v)}">${escapeHtml(v)}</span>`;
-  let cardHtml = "";
-  if (_S.cards && m.card) {
-    try { cardHtml = _cardHeadline(m.card); } catch (err) { cardHtml = ""; }
-  }
-  return `<details class="gl-model-card">
-    <summary class="gl-model-head">
-      <span class="gl-model-name">${escapeHtml(_modelLabel(m.model_id))}</span>
-      ${badge}
-      <span class="gl-model-surface">${escapeHtml(m.surface || "")}</span>
-    </summary>
-    <div class="gl-model-body">
-      ${cardHtml}
-      ${_modelRow("Predicts", m.predicts)}
-      ${_modelRow("Champion", m.champion)}
-      ${_modelRow("Baseline it must beat", m.baseline)}
-      ${_modelRow("How it is measured", m.metric)}
-      ${_modelRow("Accountability", m.notes)}
-      ${_modelProofHTML(m)}
-    </div>
-  </details>`;
-}
-
-function _modelsShell(inner) {
-  return `<div class="source-comp-wrap">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Models &amp; Proofs · the accountability ledger</div>
-    ${inner}
-  </div>`;
-}
-
-function renderModels() {
-  const el = document.getElementById("models-body");
-  if (!el) return;
-  if (!_MODELS && !_MODELS_LOADING) {
-    _MODELS_LOADING = true;
-    fetch("/data/model_registry.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => { _MODELS = j || { __error: true }; _MODELS_LOADING = false;
-        if (_S.view === "models") renderModels(); })
-      // A failed fetch (or a throw in the re-render) must surface the retry
-      // state, never strand the loading placeholder.
-      .catch(() => { _MODELS = { __error: true }; _MODELS_LOADING = false;
-        if (_S.view === "models") renderModels(); });
-  }
-  const reg = _MODELS;
-  if (!reg) {
-    el.innerHTML = _modelsShell(`<div class="state-message">Loading the model registry...</div>`);
-    return;
-  }
-  if (reg.__error || !Array.isArray(reg.models) || !reg.models.length) {
-    el.innerHTML = _modelsShell(`<div class="state-message">The model registry could not be loaded.<div style="margin-top:12px;"><button class="chip" type="button" id="gl-models-retry">Retry</button></div></div>`);
-    const rb = document.getElementById("gl-models-retry");
-    if (rb) rb.onclick = () => { _MODELS = null; _MODELS_LOADING = false; renderModels(); };
-    return;
-  }
-
-  const models = reg.models;
-  const counts = {};
-  models.forEach(m => { counts[m.verdict] = (counts[m.verdict] || 0) + 1; });
-  const filters = [["all", "All", models.length]].concat(
-    _MODEL_VERDICT_ORDER.map(v => [v, v.charAt(0).toUpperCase() + v.slice(1), counts[v] || 0]));
-  const chips = filters.map(([key, lbl, n]) =>
-    `<button class="chip${_MODELS_FILTER === key ? " active" : ""}" type="button" data-gl-mfilter="${escapeHtml(key)}">${escapeHtml(lbl)} <span class="gl-count">${n}</span></button>`).join("");
-
-  const shown = _MODELS_FILTER === "all" ? models : models.filter(m => m.verdict === _MODELS_FILTER);
-  const byFam = new Map();
-  shown.forEach(m => {
-    const f = _modelFamily(m);
-    if (!byFam.has(f)) byFam.set(f, []);
-    byFam.get(f).push(m);
-  });
-  const famOrder = _MODEL_FAMILY_ORDER.concat([...byFam.keys()].filter(f => _MODEL_FAMILY_ORDER.indexOf(f) === -1));
-  const groupsHTML = famOrder.filter(f => byFam.has(f)).map(f =>
-    `<div class="gl-model-group">
-      <div class="gl-model-grouphead">${escapeHtml(f)} <span class="gl-count">${byFam.get(f).length}</span></div>
-      ${byFam.get(f).map(_modelCard).join("")}
-    </div>`).join("");
-
-  const summary = `${models.length} models: ${counts.validated || 0} validated, ${counts.provisional || 0} provisional, ${counts.unvalidated || 0} unvalidated, ${counts.deprecated || 0} deprecated${reg.checked_at ? ` &middot; last checked ${escapeHtml(reg.checked_at)}` : ""}.`;
-
-  el.innerHTML = _modelsShell(`
-    <h2 class="meth-h">Every model that makes a predictive claim</h2>
-    <p class="meth-note">This is the platform's accountability ledger. Every model that makes a predictive claim is listed here with an honest verdict, misses included. <strong>Validated</strong> means a forward-chained out-of-sample backtest exists and the champion beats its stated baseline. <strong>Provisional</strong> means measured but partial. <strong>Unvalidated</strong> means a claim with no measurement yet. <strong>Deprecated</strong> means it failed its gate and was retired.</p>
-    <p class="gl-model-summary">${summary}</p>
-    <div class="filter-bar gl-model-filters">${chips}</div>
-    ${shown.length ? groupsHTML : `<div class="state-message">No models with that verdict.</div>`}`);
-
-  el.querySelectorAll("[data-gl-mfilter]").forEach(b => b.onclick = () => {
-    _MODELS_FILTER = b.dataset.glMfilter; renderModels();
-  });
 }
 
 // ---- Library view ----------------------------------------------------------
