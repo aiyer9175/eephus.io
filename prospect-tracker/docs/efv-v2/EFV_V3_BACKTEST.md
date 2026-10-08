@@ -149,3 +149,88 @@ to +0.016 above V2, every interval against consensus spanning zero. The lift ove
 the hitter weight factor (DIAG item 2, the quarter weights); the pitcher steps add +0.003
 on lv_dev pitchers and nothing on vm_dev. A tie with consensus, selected on these frames:
 only section 5 can say more.
+
+## 5. The confirmation read (appended by the confirmation run, 2026-10-08)
+
+Run: `python -u tools/efv_v3_backtest.py --confirm --gate-sha e7931ce4e13110eebb53555bff455ff13ca7c502
+--b-refit 200` from commit e7931ce4 (artifact `data/_labs/efv_v3/efv_v3_confirm.json`, generated
+2026-10-08T21:38:56Z, 2,583.9 s; label `fwar@2026-10-02-0341299c20ec`; the committed configuration
+of `data/efv_v3_spec.json`, sha256 88d46b4b...; guards: list vintages 2020 and 2021 and the 2025
+debut cohort read once on the gate sha, `reserved_vm_pins()` empty, nothing grouped by consensus-FV
+level). ONE read. E_cond B 2000 (seed 20260906); E_refit B 200 of 200 usable draws (seed 20260907).
+
+Frames as built. R-LV: V 2020 hit 596 rows (train 2,372 at list vintages 2011 to 2019), pit 572
+(2,313); V 2021 hit 599 (2,761 at 2011 to 2020), pit 583 (2,730); n 2,349 scored (hit 1,195 / pit
+1,154; 1,473 players; 136 reserved_vm rows kept at W3 = 0 under s5 B9b, every one with a debut after
+V + 3; one identity_conflict row left out). The gate's s2.2 counts (821 / 478 and 906 / 462) were
+the label-pool census's estimate, never built; these are the frame builder's rows. R-VM: the 2025
+cohort under the vm2 rule, hit 72 scored of 82 pinned (10 without both sources in the window), pit
+75 of 95 (20), n 147 against the gate's counted 149; outcome career WAR over 2025 and 2026. V2's
+own folds admitted: R-LV hit 2020 contact and is_college (timing milb_absent, nov_add), hit 2021
+obp_rel, contact, is_college (nov_add), pit 2020 nothing (consensus order), pit 2021 k_rel; R-VM hit
+tool_hit (level_rank), pit nothing. v3's folds: the hitter heads at a quarter weight (0.2272 /
+0.0506), the pitcher skill head on the scouting command grade in both R-LV folds (k_rel withheld)
+and nothing on R-VM (consensus order on both sides' pitchers).
+
+### 5.1 R-LV, list vintages 2020 and 2021 (n 2,349)
+
+Within (side, vintage) Spearman: v3 0.1419, V2 0.1511, consensus 0.1494, Pipeline 0.1988 (own rows
+1,727), FanGraphs 0.1469 (2,242). Pooled after the map 0.1332 / 0.1431 / 0.1384; contributor AUC
+0.7272 / 0.7431 / 0.7279; MAE of the priced grade 0.8897 / 0.8983 / 0.8812.
+
+| comparison, within | delta | E_cond CI95 | E_refit CI95 (mde95) | hitters | pitchers |
+|---|---|---|---|---|---|
+| v3 minus V2 | -0.0092 | -0.0306 to +0.0110 | -0.0312 to +0.0128 (0.0181) | -0.0006 (E_refit -0.0269 to +0.0246) | -0.0181 (-0.0622 to +0.0103) |
+| v3 minus consensus | -0.0076 | -0.0229 to +0.0069 | -0.0347 to +0.0057 (0.0175) | +0.0051 (-0.0093 to +0.0163) | -0.0207 (-0.0679 to +0.0047) |
+| v3 minus Pipeline | -0.0336 | -0.0640 to -0.0029 | -0.0825 to -0.0013 (0.0305) | -0.0247 | -0.0442 |
+| v3 minus FanGraphs | +0.0007 | -0.0248 to +0.0248 | -0.0312 to +0.0261 (0.0243) | -0.0040 | +0.0056 |
+| V2 minus consensus | +0.0016 | -0.0201 to +0.0226 | -0.0222 to +0.0168 (0.0164) | +0.0057 | -0.0026 |
+
+Pooled, v3 minus V2 -0.0099 (E_refit -0.0405 to +0.0093), v3 minus consensus -0.0052 (-0.0376 to
++0.0062). AUC, v3 minus V2 -0.0159 (-0.0277 to +0.0093), v3 minus consensus -0.0007 (-0.0232 to
++0.0075; hitters +0.0127, E_cond +0.0039 to +0.0221, E_refit -0.0025 to +0.0195). MAE, v3 minus V2
+-0.0086 (lower error), v3 minus consensus +0.0085 (E_refit -0.0018 to +0.0247). Per fold, v3 minus
+V2: hit 2020 +0.0009, hit 2021 -0.0020, pit 2020 -0.0060, pit 2021 -0.0300. Position-group cells,
+v3 minus consensus within: C +0.0276 (n 117, -0.0118 to +0.0707), IF +0.0060 (n 575), OF +0.0046
+(n 481), pitchers -0.0207 (n 1,154).
+
+### 5.2 R-VM, the 2025 debut cohort (n 147)
+
+Within: v3 0.3555, V2 0.3739, consensus 0.3333, Pipeline 0.3142, FanGraphs 0.3568. Pooled 0.3529 /
+0.3689 / 0.3248; AUC 0.7880 / 0.8226 / 0.7695; MAE 2.1504 / 2.1180 / 2.1775.
+
+| comparison, within | delta | E_cond CI95 | E_refit CI95 (mde95) | hitters (n 72) | pitchers (n 75) |
+|---|---|---|---|---|---|
+| v3 minus V2 | -0.0184 | -0.0685 to +0.0302 | -0.0725 to +0.0687 (0.0642) | -0.0375 (-0.1410 to +0.1347) | 0 (consensus order) |
+| v3 minus consensus | +0.0222 | -0.0020 to +0.0477 | -0.0156 to +0.0555 (0.0321) | +0.0454 (-0.0344 to +0.1111) | 0 |
+| v3 minus Pipeline | +0.0413 | -0.0269 to +0.1107 | -0.0524 to +0.0980 (0.0665) | +0.0500 | +0.0330 |
+| v3 minus FanGraphs | -0.0013 | -0.0744 to +0.0680 | -0.0949 to +0.0598 (0.0684) | +0.0105 | -0.0127 |
+| V2 minus consensus | +0.0406 | -0.0259 to +0.1101 | -0.0830 to +0.1251 (0.0926) | +0.0829 | 0 |
+
+Pooled, v3 minus consensus +0.0281 (E_cond +0.0072 to +0.0505; E_refit -0.0138 to +0.0528). AUC,
+v3 minus consensus +0.0185 (E_cond +0.0024 to +0.0392; E_refit -0.0101 to +0.0470); v3 minus V2
+-0.0347. The gate's own look-1 floor at n 149 is mde95 0.0707 with a delta of 0.1378 needed to
+clear the O'Brien-Fleming boundary (s2.2); nothing here is near it. Cells: IF (n 35) v3 0.3850,
+V2 0.4963, consensus 0.3345; OF (n 26) 0.1279 / 0.2202 / 0.0429; C under 20 rows; pitchers the
+consensus order.
+
+### 5.3 The reading (decision EW2-7)
+
+- Ship rule: eFV v3 is shippable only if its within Spearman beats served eFV (V2) on both
+  reserved frames. It does on neither: -0.0092 on R-LV and -0.0184 on R-VM, both inside their
+  E_refit intervals. eFV v3 is NOT shippable under EW2-7; `EFV_V3_ON` stays False.
+- Against consensus: a tie on R-LV (-0.0076, E_refit -0.0347 to +0.0057; hitters +0.0051,
+  pitchers -0.0207) and an unresolved +0.0222 on R-VM (E_refit -0.0156 to +0.0555, n 147). The
+  copy cannot say eFV v3 beats consensus (no CI95 lower bound against consensus is above 0).
+- What carried and what did not: the development lift over V2 (+0.0155 lv_dev, +0.0116 vm_dev)
+  did not survive the reserved frames. The quarter weights on the hitter heads read -0.0006 against
+  V2 on R-LV hitters and -0.0375 on the 72 R-VM hitters; the pitcher steps (command grade in, K
+  rate out) read -0.0181 on R-LV pitchers, -0.0300 on the V 2021 fold, where V2's K rate was
+  admitted. The selection fitted the development frames' noise, as section 2's own noise-floor
+  note warned a +0.002 bar could.
+- The served eFV (V2), read beside v3 as the comparator: +0.0016 against consensus on R-LV and
+  +0.0406 on R-VM, both unresolved. V2's own reserved numbers are in the artifact
+  (`efv_v2_vs_prospx_consensus`); they are not written as a look row for the served model, so
+  the served claim ("ties consensus") does not move here.
+- Pipeline leads every eFV on R-LV within (v3 -0.0336, E_refit CI95 below zero), as it led on
+  lv_dev; the consensus-method item (DS-Q4) stands.

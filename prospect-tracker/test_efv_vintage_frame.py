@@ -196,7 +196,12 @@ def test_reserved_constants():
 @pytest.mark.parametrize("V", sorted(F.RESERVED_LV))
 def test_reserved_guard_raises(V):
     head = _head_sha()
-    for sha in (None, "", "0" * 40, "deadbeef", head):
+    doc = ROOT / F.GATE_DOC
+    # HEAD opens the guard only once the committed gate reads REGISTERED (2026-10-08,
+    # decision EW2-6); before that it is one more sha that must not.
+    registered = doc.exists() and F.gate_doc_registered(doc.read_text(encoding="utf-8"))
+    shas = (None, "", "0" * 40, "deadbeef") + (() if registered else (head,))
+    for sha in shas:
         with pytest.raises(F.ReservedFrameError):
             F.guard_score_request(V, gate_sha=sha)
         with pytest.raises(F.ReservedFrameError):
