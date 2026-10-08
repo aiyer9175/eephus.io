@@ -269,6 +269,16 @@ WAVE2_DEV: dict[str, tuple[str, ...]] = {
     "efv_w2_anchor": ("an1_rel", "an1_pl", "an2_pos"),
 }
 
+#: WAVE 2 (EFV3_W2, owner EW2-6 2026-10-08): each family keeps its arms in its own
+#: module as ARMS (this file's candidate shape, column source "module") and reads
+#: them through that module's development read; wave 1 above is unchanged.
+WAVE2_ARM_MODULES: tuple[str, ...] = ("efv_w2_milb",)
+
+
+def wave2_candidates() -> tuple[dict, ...]:
+    """Every registered wave-2 arm, in module order."""
+    return tuple(a for m in WAVE2_ARM_MODULES for a in __import__(m).ARMS)
+
 
 class ColumnUnavailable(RuntimeError):
     """A candidate's column cannot be built on this tree (its builder has not landed)."""
