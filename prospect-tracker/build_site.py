@@ -939,7 +939,7 @@ EEPHUS_VERSION = "β v1.0"
 PIXEL_BRAND = False
 FAVICON_LINKS = _FAVICON_LINKS_PIXEL if PIXEL_BRAND else _FAVICON_LINKS_LEGACY
 BETA_BADGE = (
-    f'<span class="eephus-beta" title="eephus.io is in beta - version 1.0">'
+    f'<span class="eephus-beta" title="Beta, v1.0">'
     f'{html.escape(EEPHUS_VERSION)}</span>'
 )
 
@@ -2387,10 +2387,10 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
             add(e.get("date"), "minor_deal" if milb else "fa_sign", "✎", f'{nm} signs · {e.get("to", "?")} {terms}',
                 key, e.get("to"), name=nm, val=terms, weight=95)
         elif t == "option_declined":
-            add(e.get("date"), "opt_declined", "✎", f'{nm} declines option - enters FA class',
+            add(e.get("date"), "opt_declined", "✎", f'{nm} · option declined · enters FA class',
                 key, club, name=nm, val=_WIRE_VAL_OPT_DECLINED, weight=85)
         elif t == "option_exercised":
-            add(e.get("date"), "opt_exercised", "✎", f'{nm} option exercised - off the FA board',
+            add(e.get("date"), "opt_exercised", "✎", f'{nm} · option exercised · off FA board',
                 key, club, name=nm, val=_WIRE_VAL_OPT_EXERCISED, weight=85)
         elif t == "qo_offered":
             add(e.get("date"), "qo", "✎", f'{nm} receives qualifying offer',
@@ -2433,7 +2433,7 @@ def _feed_day_header(dt: str, gfx: bool = False) -> str:
     if gfx and len(dt) >= 10:
         md = f"{int(dt[5:7])}/{int(dt[8:10])}"
         btn = (f'<button class="chip egfx-chip egfx-day-chip" type="button" data-gfx-date="{dt}" '
-               f'title="Generate a shareable graphic of every news item from {dt}">'
+               f'title="Share graphic: {dt}">'
                f'<span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>GFX {md}</button>')
     return (f'<div class="feed-day"><span class="feed-day-date">{ts}</span>'
             f'{btn}'
@@ -3952,8 +3952,7 @@ def build_this_day(data: dict | None = None) -> str:
     body = (
         '<div class="news-app hist-app">'
         f'<div class="section-head"><h1>{_masthead_icon("history")}{label} - {html.escape(mon_d)}</h1>'
-        '<span class="section-sub">debut anniversaries, trades, signings &amp; IL moves on this calendar date</span></div>'
-        '<p class="news-intro">Past seasons on this exact date.</p>'
+        '<span class="section-sub">this date in past seasons</span></div>'
         '<details class="news-how"><summary>How this works</summary><ul>'
         f'<li>{_hist_spans(tx_all, il_all).strip() or "Ledgers read from prospects.db."}</li>'
         f'{mlb_li}'
@@ -3967,10 +3966,9 @@ def build_this_day(data: dict | None = None) -> str:
         '</div>'
         + _HIST_FILTER_JS
     )
-    desc = ("This calendar date in past seasons: MLB debut anniversaries, MLB trades and "
-            "major-league signings, and prospect signings and IL moves." if live else
-            "Prospect history for this calendar date: MLB debut anniversaries, prospect trades, "
-            "signings and IL moves from past seasons.")
+    desc = ("This date in past seasons: MLB debuts, trades and signings; prospect "
+            "signings and IL moves." if live else
+            "This date in past seasons: debuts, trades, signings, IL moves.")
     return page(f"{label} - eephus.io", "", body, desc,
                 url=f"{SITE_ORIGIN}/history/")
 
@@ -4465,9 +4463,9 @@ def _xmod_cards() -> dict:
     # closed. No try/except: a broken config already fails the /diamond/ build
     # in this same run, and a quiet missing card would just hide that earlier.
     free_line = ("member pass" if _diamond_cfg()["gating"]
-                 else "free during the founding preview")
+                 else "free in preview")
     cards["diamond"] = (f'{_ico("diamond", 16)}Diamond', '/diamond/',
-                  'the paid tier: fantasy and betting',
+                  'fantasy and betting · paid at launch',
                   '<a class="xmod-row" href="/fantasy/"><span class="xmod-name">Fantasy</span><span class="xmod-val">redraft · dynasty · DFS →</span></a>'
                   '<a class="xmod-row" href="/betting/"><span class="xmod-name">Sports Betting</span><span class="xmod-val">model vs the book price →</span></a>'
                   f'<a class="xmod-row" href="/diamond/"><span class="xmod-name">Diamond Pass</span><span class="xmod-val">{free_line} →</span></a>')
@@ -4977,7 +4975,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     masthead = (
         '<div class="masthead">'
         f'{eephus_logo_lockup()}'
-        '<div class="dateline"><span>Sabermetric Analysis</span>'
+        '<div class="dateline">'
         f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div></div>'
     )
     # The scoreboard strip (SCORES_7d) follows the masthead in the head block;
@@ -5019,7 +5017,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
             f'<h2>{html.escape(latest["title"])}</h2>'
             f'<div class="byline">{_byline(latest, link_handle=False)}</div>'
             f'<p class="excerpt">{html.escape(latest.get("summary", ""))}</p>'
-            f'<a class="read" href="/articles/{latest["slug"]}/">Read the full story →</a></div>'
+            f'<a class="read" href="/articles/{latest["slug"]}/">Read →</a></div>'
             '</article>'
         )
         sec = articles[1:4]
@@ -8481,8 +8479,8 @@ def build_team() -> str:
         f'<script src="/assets/team.js?v={_TEAM_VER}" defer></script>'
     )
     return page("Masthead - eephus.io", "team", body,
-                "The people who build, run and write eephus.io: the developers and the writers "
-                "and analysts, with every module and system credited to the person who built it.",
+                "The developers, writers and analysts of eephus.io, every module and system "
+                "credited to its builder.",
                 url=f"{SITE_ORIGIN}/team/")
 
 
@@ -8832,16 +8830,15 @@ def build_bug_report() -> str:
                     for k, v in include)
     body = (
         '<div class="section-head"><h1>Report a bug</h1>'
-        '<span class="section-sub">tell us what broke and where</span></div>'
+        '<span class="section-sub">page, section, what you saw</span></div>'
         '<div class="card report-plain">'
         '<p>Email <a href="' + FEEDBACK_MAILTO + '">arkndjl@gmail.com</a> with:</p>'
         f'<ul style="margin:8px 0;padding-left:20px;line-height:1.6;">{items}</ul>'
-        '<p>One bug per message keeps each one easy to track.</p>'
+        '<p>One bug per message.</p>'
         '</div>'
     )
     return page("Report a bug - eephus.io", "", body,
-                "Report a bug on eephus.io - tell us what happened and which section "
-                "it is in.",
+                "Report a bug: the page, the section and what happened.",
                 url=f"{SITE_ORIGIN}/report/")
 
 
@@ -8893,7 +8890,7 @@ def build_404() -> str:
                    for k, l, h in nav_leaves() if k != "home")
     body = (
         '<div class="section-head"><h1>404: page not found</h1>'
-        '<span class="section-sub">it does not exist, or it moved</span></div>'
+        '<span class="section-sub">no page at this address</span></div>'
         f'<div class="px-404">{_PX_404_ART}</div>'
         '<div class="gl-intro">'
         f'<nav class="px-404-rail" aria-label="Modules"><a href="/">Home</a>{rail}</nav>'

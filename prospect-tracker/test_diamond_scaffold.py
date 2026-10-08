@@ -769,7 +769,7 @@ def test_homepage_strip_carries_the_static_diamond_card():
     # PX-06: the card title leads with the i-diamond pixel icon, not the old glyph.
     assert '#i-diamond"' in strip and "</svg>Diamond</span>" in strip
     assert 'href="/diamond/"' in strip
-    assert "free during the founding preview" in strip
+    assert "free in preview" in strip
     assert 'href="/fantasy/"' in strip and 'href="/betting/"' in strip
 
 

@@ -169,7 +169,7 @@ def test_the_404_draws_the_foul_ball_and_keeps_its_copy():
     out = build_site.build_404()
     assert f'<div class="px-404">{build_site._PX_404_ART}</div>' in out
     assert "<h1>404: page not found</h1>" in out
-    assert '<span class="section-sub">it does not exist, or it moved</span>' in out
+    assert '<span class="section-sub">no page at this address</span>' in out
     assert "<p>Player search: <strong>Ctrl+K</strong> (⌘K on Mac).</p>" in out
     art = build_site._PX_404_ART
     assert 'aria-hidden="true"' in art and 'shape-rendering="crispEdges"' in art
