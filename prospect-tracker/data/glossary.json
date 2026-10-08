@@ -304,7 +304,7 @@
    ],
    "priority": 1,
    "definition": "Farm development index: 100 = the league-mean farm, 10 points = one standard deviation across the 30 orgs. Feeds the Development branch of the farm grade and the farm tiebreaker.",
-   "methodology": "Each farm's development credit over a trailing window (1y through 8y; 7y is the principal window). Every grade step a prospect takes while he is in the org is credited at its value on a fixed FV-to-expected-career-WAR table (FV_EXPECTED_WAR), not in raw grade points, so a 60 to 70 step earns 13.0 and a 40 to 50 step 2.5. The grade at each list date is the eFV retrospective series (the current model re-scoring the list as it stood) where one exists, consensus FV otherwise. A window's growth is the mean of the last three points of the org's cumulative credit minus the mean of the three points at or before the window start. Acquisitions are nullified (the first read in an org, or a trade-in, plants a baseline with no credit) and graduations do not subtract, so it measures development of prospects already in the system. The blended trajectory_score weights the principal 7y window 60%, 3y 30% and 1y 10%.",
+   "methodology": "Each farm's development credit over a trailing window (1y through 8y; 7y is the principal window). Every grade step a prospect takes while he is in the org is credited at its value on a fixed FV-to-expected-career-WAR table (FV_EXPECTED_WAR), not in raw grade points, so a 60 to 70 step earns 13.0 and a 40 to 50 step 2.5. The grade at each list date is the eFV retrospective series (the current model re-scoring the list as it stood) where one exists, consensus FV otherwise. A window's growth is the mean of the last three points of the org's cumulative credit minus the mean of the three points at or before the window start. Acquisitions are nullified (the first read in an org, or a trade-in, plants a baseline with no credit) and graduations do not subtract, so it measures development of prospects already in the system. The club on each date comes from the player's org tenures (dated trades, waiver claims, Rule 5 moves, releases and signings; development_share), and a step between two lists that spans a club change is split by days between the clubs. The blended trajectory_score weights the principal 7y window 60%, 3y 30% and 1y 10%.",
    "formula": "step credit = W(new grade) - W(prior grade), W = FV_EXPECTED_WAR, linearly interpolated\ngrowth[window] = mean(last 3 points of cumulative credit) - mean(3 points at or before as_of - window)\nDvM+ = 100 + 10 · (org growth - league mean growth) / league stdev\ntrajectory_score = 0.60·7y + 0.30·3y + 0.10·1y",
    "example": "An org at 7yDvM+ 130 earned development credit (grade steps valued in expected WAR) three standard deviations above the average farm over seven years, acquisitions excluded.",
    "seeAlso": [
@@ -358,7 +358,7 @@
    ],
    "priority": 7,
    "definition": "Org tool-development composite, weighted by what each position needs. 100 = league-mean pace. Its per-tool legs run near +10 = 1σ; the composite's own spread is far narrower (see the example).",
-   "methodology": "Position-weighted blend of the org's per-tool DvM+ (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). Each per-tool DvM+ starts from every active prospect's change in that consensus tool grade, first to last reading inside a 7-year lookback, converted through the FV-to-expected-WAR table and multiplied by his level weight (DSL 0.50 up to AA 1.20); the org mean is shrunk toward the league mean by n/(n+2), scored 100 + 10z against the league spread and stretched 1.35 around 100. Each tool is weighted by its importance to the position bucket: catchers' Field and Arm, outfielders' Speed, starters' Fastball and Command.\n\nComputed per bucket (C / INF / OF / SP / RP) from the bucket's own per-tool DvM+ (org-wide value when a cell is sparse), then blended across buckets by how many prospects the org develops in each.\n\nFanGraphs physical grades are excluded (static values with no multi-snapshot history). Attribution is current org: a traded prospect brings his whole in-window delta. The composite itself is display only, but the per-bucket per-tool values it is built from are the Tool leg of each position bucket's development blend, which feeds the Development leaves of farm_score.",
+   "methodology": "Position-weighted blend of the org's per-tool DvM+ (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). Each per-tool DvM+ starts from every active prospect's tool growth inside a 7-year lookback, read on same-source pairs (one outlet's list to its next list) and credited to each club that held him for the part that happened there. The growth is converted through the FV-to-expected-WAR table and multiplied by his level weight (DSL 0.50 up to AA 1.20); the org mean is shrunk toward the league mean by n/(n+2), scored 100 + 10z against the league spread and stretched 1.35 around 100. Each tool is weighted by its importance to the position bucket: catchers' Field and Arm, outfielders' Speed, starters' Fastball and Command.\n\nComputed per bucket (C / INF / OF / SP / RP) from the bucket's own per-tool DvM+ (org-wide value when a cell is sparse), then blended across buckets by how many prospects the org develops in each.\n\nFanGraphs physical grades are excluded (static values with no multi-snapshot history). Attribution is by tenure (development_share): a traded prospect's growth before the trade stays with the club that developed it, and his new club is credited only with the growth since he arrived; a pair of lists that spans the trade is split by days. The composite itself is display only, but the per-bucket per-tool values it is built from are the Tool leg of each position bucket's development blend, which feeds the Development leaves of farm_score.",
    "formula": "ToolDvM+ = Σ_bucket (n_bucket · ToolDvM+_bucket) / Σ_bucket n_bucket\nToolDvM+_bucket = Σ_tool (w_tool · DvM+_tool) / Σ_tool w_tool\nwhere w_tool is the tool's position-importance weight for that bucket",
    "example": "An org that develops Field and Arm in its catchers and Fastball and Command in its starters outscores an equal-on-average org whose gains came in low-importance tools. The composite averages legs that only partly agree, so across the 30 orgs its standard deviation is about 3 points: a 106 sits about two standard deviations above the mean, not 0.6.",
    "seeAlso": [
@@ -4116,8 +4116,8 @@
    ],
    "priority": 60,
    "definition": "Career WAR an org's graduates produced per $1M of signing bonuses. The main capital-efficiency leaf of the Value branch.",
-   "methodology": "Total career WAR of an org's graduates ÷ total signing bonuses (draft + IFA), in $M. Did the money turn into MLB production? Lagging (WAR accrues after the debut), so it needs ≥3 graduates with both bonus and career WAR on file. Anchored across the 30 orgs into the Value branch.",
-   "formula": "WAR per $M = Σ career_WAR(grads) / (Σ signing_bonus_USD / 1,000,000)",
+   "methodology": "Career WAR credited to an org from the graduates it signed (each graduate's WAR times the org's development share) ÷ total signing bonuses (draft + IFA), in $M. Did the money turn into MLB production? Lagging (WAR accrues after the debut), so it needs ≥3 graduates with both bonus and career WAR on file. Anchored across the 30 orgs into the Value branch.",
+   "formula": "WAR per $M = Σ share(org, g) × career_WAR(g) over the graduates g the org signed / (Σ signing_bonus_USD / 1,000,000)",
    "seeAlso": [
     "farm_grade_financial",
     "fin_contract_surplus",
@@ -4142,7 +4142,7 @@
    ],
    "priority": 61,
    "definition": "Per-year dollar surplus on an org's graduates: current AAV minus the signing bonus amortized over a fixed six years.",
-   "methodology": "For each graduate with Spotrac contract data and a signing bonus on file: surplus per year = current AAV − (signing bonus ÷ 6). The divisor is a fixed 6 in this leaf: it is a bonus amortization, not the valuation set's 7-season valuation window and not the club control window the MLB Projections board prices. Averaged across qualifying graduates and z-anchored into the Value branch.",
+   "methodology": "For each graduate with Spotrac contract data and a signing bonus on file: surplus per year = current AAV − (signing bonus ÷ 6). The divisor is a fixed 6 in this leaf: it is a bonus amortization, not the valuation set's 7-season valuation window and not the club control window the MLB Projections board prices. Averaged across qualifying graduates, each weighted by the club's development share (a graduate counts at the clubs that developed him, not the club he plays for now), and z-anchored into the Value branch.",
    "formula": "per-year surplus = current_AAV − (signing_bonus / 6)",
    "seeAlso": [
     "farm_grade_financial",
@@ -9915,6 +9915,37 @@
    ],
    "shelf": "ark",
    "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "development_share",
+   "term": "Development share",
+   "category": "farm",
+   "section": "Prospects",
+   "module": [
+    "prospx",
+    "ledger"
+   ],
+   "aliases": [
+    "dev_share",
+    "dev_credit",
+    "developing club",
+    "development attribution"
+   ],
+   "priority": 60,
+   "definition": "The share of a graduate's development that each club gets credit for. The club that signed him is credited with his value at signing (the expected WAR of his first listed grade) and every club that held him with the grade growth that happened while he was there; the shares sum to one. The farm grade's graduate leaves, the Club Ledger graduates block and the PROSPX farm page credit graduates by this share, not to the club he plays for now.",
+   "methodology": "His history is cut into org tenures from his dated transactions (signings, trades, waiver claims, Rule 5 moves and returns open a tenure with the receiving club; a release or an election of free agency opens an unaffiliated stretch that credits nobody), ending at his MLB debut. Growth counts only on same-source pairs (one outlet's list to its next list on him), valued on the FV-to-expected-WAR table DvM+ uses, and a pair that spans a club change is split by days. A tenure's growth is the mean over the outlets that saw it; a tenure that lowered his grade earns zero, never a negative share. It is accounting, not a causal estimate: it says where the measured grade growth happened, not what a club added.",
+   "formula": "credit(c) = V0 [c = signing club] + Σ max(g(k), 0) over club c's tenures k\nshare(c) = credit(c) / Σ credit\nV0 = W(first listed grade), g(k) = mean over outlets of Σ split pair steps W(b) - W(a), W = FV_EXPECTED_WAR",
+   "example": "Tarik Skubal: drafted and developed by Detroit (2018 to his 2020 debut), traded to the Dodgers in 2026. Detroit's share is 1.00; the Dodgers are his current club, not a developing club.",
+   "seeAlso": [
+    "dvm_plus",
+    "tools_dvm_plus",
+    "fin_war_per_m",
+    "fin_contract_surplus",
+    "wag",
+    "debuted_value"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io (dev_attribution.py)."
   }
  ]
 }

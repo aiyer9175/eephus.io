@@ -1298,7 +1298,10 @@ def test_the_graduate_row_carries_two_engines_labelled_and_no_sum(d, shards, tv)
         assert len(rows) == club["farm"]["n_graduates"], c
         dv_sum = round(sum(r[dv_i] or 0 for r in rows), 1)
         tv_sum = round(sum(r[tvv_i] or 0 for r in rows), 1)
-        leaves = set(_leaves(club["farm"]))
+        # the prospect-row reconciliation sums are not graduate figures; VAL_4's
+        # developed-graduate rows put HOU's trade-board sum at 306.4, equal to its
+        # prospect rows_gross_mm by coincidence, so that block is left out here
+        leaves = set(_leaves({k: v for k, v in club["farm"].items() if k != "reconciliation"}))
         for bad in (dv_sum, tv_sum, round(dv_sum + tv_sum, 1)):
             if bad:
                 assert bad not in leaves, (c, bad, "an engine total reached the board")

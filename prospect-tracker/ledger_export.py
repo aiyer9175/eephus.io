@@ -237,7 +237,7 @@ COLUMNS = {
     "farm.graduates": ["key", "name", "pos", "debut_date", "acq_method", "acq_year", "bonus_usd",
                        "dv_trade_value_mm", "dv_realized_mm", "control_thru", "control_why",
                        "tv_trade_value_mm", "tv_surplus_source", "service_phase", "career_war",
-                       "wag_label", "in_vets"],
+                       "wag_label", "in_vets", "dev_share", "now_with"],
     "farm.picks": ["pick_overall", "round_label", "player_name", "slot_usd", "bonus_usd", "signed",
                    "over_slot_usd", "prospect_key"],
     "farm.picks_summary": ["n_picks", "n_signed", "n_on_tracker", "n_graduated", "n_not_tracked",
@@ -1349,13 +1349,19 @@ def build_all() -> tuple:
                          if r.get("draft_year") is not None and r.get("pick_overall") is not None}
     acq_table = storage.load_acquisitions()
     trajectory_active = _trade_trajectory_active()
+    # VAL_4 (owner answer FP2-4): a club lists the graduates it DEVELOPED, each with
+    # its development share (dev_credit.shares on the debuts_lite row), not the
+    # graduates it holds now; now_with is the club he is with today. A row without
+    # an attribution falls back to its current club at share 1.
     grads_by_club: dict = defaultdict(list)
     grads_orgs_in = set()
     for g in debuts_lite:
         grads_orgs_in.add(g.get("org"))
-        gc = _canon(g.get("org"))
-        if gc in clubs:
-            grads_by_club[gc].append(g)
+        shares = (g.get("dev_credit") or {}).get("shares") or [[g.get("org"), 1.0]]
+        for o, w in shares:
+            gc = _canon(o)
+            if gc in clubs and w:
+                grads_by_club[gc].append((g, w))
     grads_dropped = sorted(o for o in grads_orgs_in if _canon(o) not in clubs)
     # league-wide pick maps for the picks summary: a pick counts as on the prospect
     # tracker or graduated wherever the player is now, not only on the drafting club.
@@ -1975,7 +1981,7 @@ def build_all() -> tuple:
         farm["n_prospects"] = len(prospect_rows)
         # graduates: debuts_lite rows for the club, two engines per row, never summed
         grad_rows = []
-        for g in sorted(grads_by_club.get(c) or [], key=lambda x: (x.get("debut_date") or "", x.get("player_key") or ""), reverse=True):
+        for g, dev_w in sorted(grads_by_club.get(c) or [], key=lambda x: (x[0].get("debut_date") or "", x[0].get("player_key") or ""), reverse=True):
             key = g.get("player_key")
             acq = g.get("acquisition") or acq_table.get(key) or {}
             dv = g.get("debuted_value") or {}
@@ -1999,7 +2005,8 @@ def build_all() -> tuple:
                 tv_deb.get("trade_value_mm"), tv_deb.get("surplus_source"),
                 (g.get("roster_status") or {}).get("service_phase"),
                 (g.get("career_war") or {}).get("career_war"),
-                (dv.get("wag") or {}).get("boom_label"), bool(vr)])
+                (dv.get("wag") or {}).get("boom_label"), bool(vr),
+                round(float(dev_w), 4), _canon(g.get("org"))])
         farm["n_graduates"] = len(grad_rows)
         # draft picks by year: joined on (draft_year, pick_overall), never on name
         picks: dict = {}
@@ -2529,6 +2536,11 @@ def build_all() -> tuple:
         "trade_cost_dark": (
             "What a trade cost is the value given up, in FV and surplus, not dollars; no cost basis "
             "exists for the trade channel and none is invented. The Trade Machine prices the exchange."),
+        "grad_dev_credit": (
+            "Graduates are listed by the club that developed them, not the club they play for now: "
+            "Share is this club's development share (the value at signing to the signing club, the "
+            "grade growth during each club's tenure to that club), and Now with is his current club. "
+            "Accounting, not a causal estimate."),
         "grad_two_engines": (
             "Two engines price a graduate: debuted_player_value (PROSPX debuted rows) and the trade "
             "board's posterior. Each prints under its own name; they are never averaged or summed."),
@@ -2718,11 +2730,15 @@ def build_all() -> tuple:
         "farm.graduates": (
             "[key, name, pos, debut_date, acq_method, acq_year, bonus_usd, dv_trade_value_mm, "
             "dv_realized_mm, control_thru, control_why, tv_trade_value_mm, tv_surplus_source, "
-            "service_phase, career_war, wag_label, in_vets]; dv_* from debuts_lite debuted_value "
-            "(debuted_player_value), tv_* from the trade board; two engines on one row, each labelled, "
-            "never summed; control_thru/control_why are the current control window from the trade "
-            "board's debuted row, else the /projections/ vet row, else null (never the at-debut "
-            "window); in_vets says whether /projections/ carries the player"),
+            "service_phase, career_war, wag_label, in_vets, dev_share, now_with]. The dv_* columns come from "
+            "debuts_lite debuted_value (debuted_player_value) and the tv_* columns from the trade board: two "
+            "engines on one row, each labelled, never summed. The control_thru/control_why pair is the current "
+            "control window from the trade board's debuted row, else the /projections/ vet row, else null "
+            "(never the at-debut window). The in_vets flag says whether /projections/ carries the player. "
+            "The dev_share column is the club's development share of the graduate (dev_attribution: "
+            "acquisition value to the signing club, each club's grade growth while it held him), so a club "
+            "lists every graduate it developed, including one now elsewhere. The now_with column is the "
+            "club he is with today, null outside the 30."),
         "farm.picks": (
             "year -> [[pick_overall, round_label, player_name, slot_usd, bonus_usd, signed, over_slot_usd, "
             "prospect_key]]; over_slot_usd is bonus minus slot only when both are non-zero (the "

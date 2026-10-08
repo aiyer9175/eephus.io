@@ -1001,7 +1001,54 @@ def pitch_stuff_panel(con, players: list[dict], debuts: list[dict],
 # Panel 5 — tool development (grade drift per prospect-year in org)
 # ============================================================================
 
-def tool_dev_panel(con) -> dict:
+def dev_calendars(con, players: list[dict], debuts: list[dict]) -> dict[str, list]:
+    """VAL_4: player_key -> org tenures from dev_attribution, the calendar the farm
+    grade credits development on. Graduates read the tenures baked on their debuts
+    row (storage stamps dev_credit); everyone else with a grade history is
+    attributed here from the dated transactions. {} when the module cannot run, in
+    which case toolDev keeps the org on each snapshot row."""
+    try:
+        import dev_attribution as _da
+    except ImportError:
+        return {}
+    cal: dict[str, list] = {}
+    for d in debuts or []:
+        ts = (d.get("dev_credit") or {}).get("tenures")
+        if d.get("player_key") and ts:
+            cal[d["player_key"]] = [_da.Tenure(o, s, e) for o, s, e in ts]
+    infos = []
+    seen = set(cal)
+    for p in players or []:
+        k = p.get("player_key")
+        if k and k not in seen:
+            seen.add(k)
+            infos.append(_da.PlayerInfo(k, p.get("org"),
+                                        "active" if p.get("status") == "active" else "inactive"))
+    try:
+        for (k,) in con.execute("SELECT DISTINCT player_key FROM snapshots "
+                                "WHERE tools_json IS NOT NULL AND status = 'active'"):
+            if k and k not in seen:
+                seen.add(k)
+                infos.append(_da.PlayerInfo(k, None, "inactive"))
+        att = _da.build(infos, con=con)
+    except Exception as exc:                                # noqa: BLE001 - degrade, never abort
+        log.warning("org_tendencies: dev attribution unavailable (%s); toolDev reads snapshot orgs", exc)
+        return cal
+    for k, pa in att.players.items():
+        if pa.tenures:
+            cal[k] = pa.tenures
+    return cal
+
+
+def tool_dev_panel(con, calendars: dict | None = None) -> dict:
+    """Per-tool grade drift per prospect-year in org, from same-source pairs at
+    least MIN_PAIR_DAYS apart. VAL_4: with a calendar the club comes from the
+    player's org tenures, and a pair that spans a club change is split by days
+    (delta, years and pair count alike) instead of being dropped; an
+    unaffiliated stretch credits nobody. Without one, the org on the snapshot
+    row, and only pairs inside one org, as before."""
+    from dev_attribution import split_pair as _split
+    calendars = calendars or {}
     rows = con.execute("""
         SELECT player_key, source, snapshot_date, org, tools_json
         FROM snapshots
@@ -1019,20 +1066,27 @@ def tool_dev_panel(con) -> dict:
             prev = None
             continue
         cur = (key, src, d, org, tools)
-        if prev and prev[0] == key and prev[1] == src and prev[3] == org:
+        cal = calendars.get(key)
+        if prev and prev[0] == key and prev[1] == src and (cal or prev[3] == org):
             try:
-                dt = (date.fromisoformat(d) - date.fromisoformat(prev[2])).days
+                dt = (date.fromisoformat(d[:10]) - date.fromisoformat(prev[2][:10])).days
             except ValueError:
                 dt = 0
             if dt >= MIN_PAIR_DAYS:
                 yrs = dt / 365.25
+                parts = ([(cal[i].org, f) for i, f in _split(prev[2][:10], d[:10], cal)]
+                         if cal else [(org, 1.0)])
                 for k, v1 in tools.items():
                     v0 = prev[4].get(k)
-                    if v0 is not None:
-                        slot = acc[org][k]
-                        slot["d"] += v1 - v0
-                        slot["yr"] += yrs
-                        slot["n"] += 1
+                    if v0 is None:
+                        continue
+                    for o, f in parts:
+                        if not o:
+                            continue
+                        slot = acc[o][k]
+                        slot["d"] += (v1 - v0) * f
+                        slot["yr"] += yrs * f
+                        slot["n"] += f
         prev = cur
     per_org: dict[str, dict[str, float]] = {}
     league_rates: dict[str, list] = defaultdict(list)
@@ -1373,26 +1427,37 @@ def health_panel(con, by_org: dict[str, list[dict]]) -> dict:
 # Panel 9 — graduation track record
 # ============================================================================
 
+def _whole(v: float):
+    """A graduate-equivalent count: an int when whole, else 2 decimals."""
+    v = round(float(v), 2)
+    return int(v) if v.is_integer() else v
+
+
 def graduation_panel(con, debuts: list[dict]) -> dict:
     """How well the pipeline produces MLB players: graduates/year, mean
     graduate career WAR, and draft-to-MLB hit rate (signed picks 2021+ whose
     promoted_key reached the bigs / signed picks 2021+). Recent draft classes
     have little runway, so absolute hit rates are low — the z is the signal."""
-    grads_year: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    # VAL_4: a graduate counts at each club that developed him by its development
+    # share (debuts row dev_credit.shares); the current club only when the row
+    # carries no attribution. Counts are graduate-equivalents, means share-weighted.
+    grads_year: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
     war_by_org: dict[str, list] = defaultdict(list)
     debut_keys: set[str] = set()
     for d in debuts:
         if d.get("player_key"):
             debut_keys.add(d["player_key"])
-        org = d.get("org")
-        if not org:
-            continue
+        shares = (d.get("dev_credit") or {}).get("shares") or (
+            [[d.get("org"), 1.0]] if d.get("org") else [])
         yr = (d.get("debut_date") or "")[:4]
-        if yr.isdigit():
-            grads_year[org][yr] += 1
         cw = d.get("career_war")
-        if isinstance(cw, dict) and cw.get("career_war") is not None:
-            war_by_org[org].append(float(cw["career_war"]))
+        for org, w in shares:
+            if not org or not w:
+                continue
+            if yr.isdigit():
+                grads_year[org][yr] += w
+            if isinstance(cw, dict) and cw.get("career_war") is not None:
+                war_by_org[org].append((float(cw["career_war"]), w))
     signed: dict[str, int] = defaultdict(int)
     hit: dict[str, int] = defaultdict(int)
     try:
@@ -1411,12 +1476,13 @@ def graduation_panel(con, debuts: list[dict]) -> dict:
     for org in set(grads_year) | set(war_by_org) | set(signed):
         years = grads_year.get(org, {})
         wars = war_by_org.get(org, [])
+        n_war = sum(w for _, w in wars)
         ns = signed.get(org, 0)
         raw[org] = {
             "gradsPerYear": round(sum(years.values()) / len(years), 1) if years else None,
-            "totalGrads": sum(years.values()),
-            "meanGradWar": round(statistics.mean(wars), 2) if wars else None,
-            "nWar": len(wars),
+            "totalGrads": _whole(sum(years.values())),
+            "meanGradWar": round(sum(v * w for v, w in wars) / n_war, 2) if n_war > 0 else None,
+            "nWar": _whole(n_war),
             "nSignedDraft": ns,
             "nGradsFromDraft": hit.get(org, 0),
             "draftHitRate": round(hit.get(org, 0) / ns, 3) if ns else None,
@@ -1615,7 +1681,7 @@ def build_payload() -> dict:
             "slot": _filter_mlb30(slot, mlb30),
             "arsenal": _filter_mlb30(arsenal_panel(con, players, debuts, mlbam_org), mlb30),
             "pitchStuff": _filter_mlb30(pitch_stuff_panel(con, players, debuts, mlbam_org), mlb30),
-            "toolDev": _filter_mlb30(tool_dev_panel(con), mlb30),
+            "toolDev": _filter_mlb30(tool_dev_panel(con, dev_calendars(con, players, debuts)), mlb30),
             "ifa": _filter_mlb30(ifa_panel(), mlb30),
             "trades": _filter_mlb30(trades_panel(con, mlb30), mlb30),
             "health": health_panel(con, by_org),
@@ -1625,7 +1691,8 @@ def build_payload() -> dict:
                 "every value is league-relative: z = (org minus league mean) / league sd across the 30 orgs; labels fire at |z| >= 0.5, except the promotion badge, which needs a tested difference (BH q < 0.10, CI95 clear of the league)",
                 "arsenal BLENDS the MLB arsenals of an org's graduates with the Savant-minors arsenals of its current AAA arms (each arm counted once); the table is the average arm's pitch mix vs league. about half of AAA arms can't be org-attributed, so the AAA arm count is partial, disclosed per org",
                 "pitchStuff: per-pitch velo + arm-side movement (AAA Gameday pfx) vs league; velo blends AAA + MLB",
-                "toolDev measures grade drift per prospect-year inside the org from SAME-SOURCE snapshot pairs (>=60d apart); cross-source noise never counts as development",
+                "toolDev measures grade drift per prospect-year inside the org from SAME-SOURCE snapshot pairs (>=60d apart); cross-source noise never counts as development; the club on each date comes from the player's org tenures (dated transactions), and a pair that spans a club change is split by days between the clubs",
+                "graduation counts each graduate at the clubs that developed him, by development share (graduate-equivalents), not at the club he plays for now",
                 "SC+ drift covers the platform's metric-snapshot window only (2026-05 onward), an early read, labeled as such",
                 "trade quality/depth grades acquired prospects from board snapshots within 120 days of the trade; ungraded moves count toward volume only",
                 "graduation draft-hit-rate denominator is signed picks 2021+ (little MLB runway for recent classes; read the z, not the absolute)",

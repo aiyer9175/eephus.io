@@ -10699,7 +10699,7 @@
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
 <script src="/assets/eephus-export.js?v=552e2152" defer></script>
-<script src="/assets/eephus-csv.js?v=4a00e52b" defer></script>
+<script src="/assets/eephus-csv.js?v=796b4f3f" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
      git-ignored and absent on the public/dev tree, so its <script> 404s harmlessly
@@ -10721,7 +10721,7 @@
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
      prospect FV on detail views so the field escalates with the rarity tier. -->
-<script src="/assets/eephus-bg.js?v=9dd26b43" defer></script>
+<script src="/assets/eephus-bg.js?v=426ba8b6" defer></script>
 
 <!-- v32.0 - FV/WAR/$ conversion framework, loaded synchronously so all
      downstream code can call dollarsPerWar() / surplusValueMM() / etc
@@ -41604,7 +41604,7 @@ function makeFarmReportCard(org) {
     : `Insufficient IFA-spend data (needs ≥2 contributing grads with signed_year + bonus on file).`;
   const finWarLeaf = t.fin_war_per_m || {};
   const finWarTooltip = finWarLeaf.value != null
-    ? `Overall career WAR per $M of signing bonus across ALL debuted method-types (draft + IFA + other bonuses). ${finWarLeaf.grad_count ?? 0} grads with bonus on file. Complements the per-method efficiency leaves by capturing aggregate $-deployment across the full pipeline.`
+    ? `Career WAR credited to this club from the graduates it signed (each graduate's WAR times the club's development share) per $M of the signing bonuses it paid, across ALL debuted method-types (draft + IFA + other bonuses). ${finWarLeaf.grad_count ?? 0} grads with bonus on file. Complements the per-method efficiency leaves by capturing aggregate $-deployment across the full pipeline.`
     : `Insufficient bonus data (needs ≥$1M total bonus across grads).`;
   const finContractTooltip = (t.fin_contract_surplus || {}).mean_usd_per_yr != null
     ? `Mean per-year cost-controlled surplus across qualifying graduates. ${(t.fin_contract_surplus || {}).grad_count ?? 0} grads with AAV + bonus on file. Captures the realized $-value of CBA cost-control years (pre-FA) - orthogonal to spend efficiency since it measures dollars saved post-debut rather than $ spent at acquisition.`
@@ -41652,7 +41652,7 @@ function makeFarmReportCard(org) {
     : `Insufficient settled grads to compute bust rate.`;
   const talentTransTooltip = talentTransLeaf.wag_mean != null
     ? (_wagOne
-      ? `Mean WAG over the org's graduates that show one (past the 200 PA / 80 IP gate), against the eFV grade at debut. ${talentTransLeaf.grad_count ?? 0} grads.`
+      ? `Mean WAG over the graduates this club developed that show one (past the 200 PA / 80 IP gate), against the eFV grade at debut, each weighted by the club's development share. ${talentTransLeaf.grad_count ?? 0} grads.`
       : `Mean WAR-above-graduation (WAG) across all grads - how each grad's actual MLB output compared to their FV-implied baseline. Sign indicates over/under-performance vs FV. ${talentTransLeaf.grad_count ?? 0} grads.`)
     : `Insufficient grads with WAG on file (needs ≥3).`;
   const topGradsTooltip = topGrads.top3_war_per_yr != null
@@ -42356,7 +42356,7 @@ function makeFarmToolDevCard(org) {
     composite >= 100 ? "is-pos" :
     composite >= 90 ? "is-neg" : "is-weak";
   return `<div class="detail-title">Tool development
-    <span class="detail-title-sub">per-tool DvM+ across actives · 100 = league mean dev pace · +10 = 1σ · attribution to current org</span></div>
+    <span class="detail-title-sub">per-tool DvM+ across actives · 100 = league mean dev pace · +10 = 1σ · growth credited to the club that held the prospect when it happened</span></div>
     <div class="tooldev-card">
       <div class="tooldev-headline ${compositeTone}">
         <span class="td-headline-label g-term" data-term="tools_dvm_plus" style="cursor:help;">ToolDvM+</span>
@@ -53553,8 +53553,18 @@ function makeFarmPositionalNeed(orgCode) {
 // with their WAG (WAR above/below the FV-implied expectation) so the reader
 // sees how the system's graduates actually panned out. Complements the
 // Development tab's in-org growth/tool-dev views (which stop at graduation).
+// VAL_4 (owner answer FP2-4): the club's development share of a graduate, from
+// dev_credit.shares on the debuts row (value at signing to the signing club, the
+// grade growth of each club's tenure to that club). A row without an attribution
+// credits its current club in full, the old rule.
+function gradDevShare(g, orgCode) {
+  const sh = g && g.dev_credit && g.dev_credit.shares;
+  if (!Array.isArray(sh) || !sh.length) return g && g.org === orgCode ? 1 : 0;
+  const hit = sh.find(s => s && s[0] === orgCode);
+  return hit ? Number(hit[1]) || 0 : 0;
+}
 function makeFarmGraduates(orgCode) {
-  const grads = (DATA.debuts || []).filter(g => g.org === orgCode && g.debut_date);
+  const grads = (DATA.debuts || []).filter(g => g.debut_date && gradDevShare(g, orgCode) > 0);
   if (!grads.length) return "";
   grads.sort((a, b) => a.debut_date < b.debut_date ? 1 : a.debut_date > b.debut_date ? -1 : 0);
   const rows = grads.slice(0, 8).map(g => {
@@ -53563,15 +53573,19 @@ function makeFarmGraduates(orgCode) {
       : `<span style="color:${wag >= 0.5 ? "var(--up)" : wag <= -0.5 ? "var(--down)" : "var(--text-secondary)"};font-variant-numeric:tabular-nums;">${wag > 0 ? "+" : ""}${wag.toFixed(1)}</span>`;
     const fv = g.fv_close != null ? `<span class="fv-badge ${fvClass(String(fvCeil(g.fv_close)))} size-sm">${fvCeil(g.fv_close)}</span>` : '<span class="split-sub">-</span>';
     const click = g.player_key ? ` onclick="goToPlayer('${escapeHtml(g.player_key)}');" style="cursor:pointer;"` : "";
+    const share = gradDevShare(g, orgCode);
+    const nowWith = g.org && g.org !== orgCode ? escapeHtml(g.org) : '<span class="split-sub">here</span>';
     return `<tr${click}>
       <td class="split-rowlabel" style="color:${g.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};">${escapeHtml(g.player_name || g.player_key || "?")}</td>
       <td style="text-align:right;color:var(--text-tertiary);font-size:11px;">${escapeHtml(g.debut_date)}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${Math.round(share * 100)}%</td>
+      <td style="text-align:center;font-size:11px;">${nowWith}</td>
       <td style="text-align:center;">${fv}</td>
       <td style="text-align:right;">${wagTxt}</td>
     </tr>`;
   }).join("");
-  return `<div class="detail-title">Recent graduates <span class="detail-title-sub">reached MLB with ${escapeHtml(orgCode)} · WAG = WAR above/below the FV-implied expectation (graduation outcome)</span></div>
-    <div style="overflow-x:auto;"><table class="split-table"><thead><tr><th>Player</th><th>Debut</th><th style="text-align:center;">FV</th><th>WAG</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="detail-title">Recent graduates <span class="detail-title-sub">developed by ${escapeHtml(orgCode)} · Share = this club's development share (value at signing to the signing club, grade growth to the club that held him) · WAG = WAR above/below the FV-implied expectation (graduation outcome)</span></div>
+    <div style="overflow-x:auto;"><table class="split-table"><thead><tr><th>Player</th><th>Debut</th><th title="This club's development share of the graduate">Share</th><th title="The club he is with now">Now with</th><th style="text-align:center;">FV</th><th>WAG</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 function renderFarmDetail(orgCode) {
   _ensureOrgTendencies();   // warm the sidecar for the GFX identity strip

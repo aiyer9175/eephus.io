@@ -1269,17 +1269,21 @@
     var F = d.farm, sh = shardOf(d.club), L = "farm.graduates";
     var rows = (sh && sh.farm && sh.farm.graduates) || null;
     var leaf = (F.leaves || {}).fin_contract_surplus || {};
-    var out = banner() + '<p class="ledger-note">' + esc(F.n_graduates) + " graduates on the debuted rows. " + esc(copy("grad_two_engines")) + " " + esc(copy("grad_no_registry")) + "</p>";
+    var out = banner() + '<p class="ledger-note">' + esc(F.n_graduates) + " graduates developed here. " + esc(copy("grad_dev_credit")) + " " + esc(copy("grad_two_engines")) + " " + esc(copy("grad_no_registry")) + "</p>";
     out += '<p class="ledger-count">' + gl("Grad-Contract Surplus", "fin_contract_surplus") + " org mean " + esc(money(leaf.value)) + " per year (n " + esc(leaf.n) + ")</p>" +
       dark("Grad-Contract Surplus per graduate", copy("grad_contract_dark"));
     if (!rows) return out + shardLine(d.club, copy("grad_preview_note"));
     out += shardLine(d.club, copy("grad_preview_note"));
-    var head = "<tr><th>Player</th><th>" + gl("Debut", "mlb_debut") + "</th><th>" + gl("Debuted value", "debuted_value") + '</th><th class="lc-col-hide">' + gl("Trade board", "trade_machine") + '</th><th class="lc-col-hide">Acquired</th><th class="lc-col-hide">' + gl("Bonus", "signing_bonus") +
+    var head = "<tr><th>Player</th><th>" + gl("Debut", "mlb_debut") + "</th><th class=\"lc-col-hide\">" + gl("Share", "development_share") + '</th><th class="lc-col-hide">Now with</th><th>' + gl("Debuted value", "debuted_value") + '</th><th class="lc-col-hide">' + gl("Trade board", "trade_machine") + '</th><th class="lc-col-hide">Acquired</th><th class="lc-col-hide">' + gl("Bonus", "signing_bonus") +
       '</th><th class="lc-col-hide">Realized<span class="ledger-th-tag">realized</span></th><th class="lc-col-hide">' + gl("Control", "club_control_window") + '</th><th class="lc-col-hide">Career WAR</th><th class="lc-col-hide">' + gl("WAG", "wag") + '</th><th class="lc-xp"></th></tr>';
     var body = rows.map(function (r) {
       var key = cv("farm.graduates", r, "key"), k = "G:" + key, open = !!state.open[k], inv = cv("farm.graduates", r, "in_vets");
       var href = inv ? "/projections/#player=" + esc(key) : "/prospx/#player=" + esc(key);
+      // VAL_4: the club's development share and the club he is with now
+      var share = cv("farm.graduates", r, "dev_share"), nowWith = cv("farm.graduates", r, "now_with");
       var row = '<tr><td><a href="' + href + '">' + esc(cv("farm.graduates", r, "name")) + '</a> <span class="ledger-src">' + esc(cv("farm.graduates", r, "pos")) + "</span></td><td>" + esc(cv("farm.graduates", r, "debut_date") || "") + "</td>" +
+        '<td class="lc-col-hide">' + esc(isNum(share) ? Math.round(Number(share) * 100) + "%" : "") + "</td>" +
+        '<td class="lc-col-hide">' + esc(nowWith || "") + "</td>" +
         "<td>" + esc(moneyMM(cv("farm.graduates", r, "dv_trade_value_mm"))) + ' <span class="ledger-src">PROSPX debuted_player_value</span></td>' +
         '<td class="lc-col-hide">' + esc(moneyMM(cv("farm.graduates", r, "tv_trade_value_mm"))) + (cv("farm.graduates", r, "tv_surplus_source") ? ' <span class="ledger-src">' + esc(cv("farm.graduates", r, "tv_surplus_source")) + "</span>" : "") + "</td>" +
         '<td class="lc-col-hide">' + esc((cv("farm.graduates", r, "acq_method") || "") + " " + (cv("farm.graduates", r, "acq_year") || "")) + "</td>" +
@@ -1288,7 +1292,7 @@
         '<td class="lc-col-hide">' + esc(isNum(cv("farm.graduates", r, "control_thru")) ? "thru " + cv("farm.graduates", r, "control_thru") : "") + (cv("farm.graduates", r, "control_why") ? ' <span class="ledger-src">' + esc(cv("farm.graduates", r, "control_why")) + "</span>" : "") + " " + esc(cv("farm.graduates", r, "service_phase") || "") + "</td>" +
         '<td class="lc-col-hide">' + esc(num(cv("farm.graduates", r, "career_war"), 1)) + "</td>" +
         '<td class="lc-col-hide">' + esc(cv("farm.graduates", r, "wag_label") || "") + "</td>" + xpBtn(k, cv("farm.graduates", r, "name")) + "</tr>";
-      if (open) row += xpRow(k, 11, '<dl class="ledger-dl">' + rowDl(L, r) + dd("Engines", esc(copy("grad_two_engines"))) + "</dl>");
+      if (open) row += xpRow(k, 13, '<dl class="ledger-dl">' + rowDl(L, r) + dd("Engines", esc(copy("grad_two_engines"))) + "</dl>");
       return row;
     }).join("");
     out += '<div class="ledger-scroll"><table class="ledger-table ledger-graduates"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>" +

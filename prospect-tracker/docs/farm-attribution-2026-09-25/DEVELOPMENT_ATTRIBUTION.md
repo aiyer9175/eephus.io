@@ -128,7 +128,9 @@ club that developed him rather than the club he plays for now.
 
 - **Development and production leaves** (WAG and its hitter and pitcher splits, career WAR and WAR
   per year by side and position bucket, boom and bust rates, graduate contract surplus, top-3
-  graduates, Conviction stars, HoF track, graduation pace): every developing club, by share.
+  graduates, Conviction stars, HoF track): every developing club, by share. Graduation pace and
+  the graduation pipeline count a debut at the club that held him on his debut date, read off
+  the calendar (the DvM+ event stream), not by share.
 - **Acquisition-channel leaves** (draft and IFA WAG splits, IFA and draft WAR per year, draft pick
   value against slot, draft round and IFA bonus tiers, sleeper hit rates, acquisition-deviation star
   rates, draft-pool efficiency, IFA ROI): the signing club only, by its share. These grade the
