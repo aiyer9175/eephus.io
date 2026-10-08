@@ -174,7 +174,7 @@ SITES = [
     ("arbitration.js", "failed", '"The history data failed to load."'),
     ("betting.js", "failed", '<button type="button" id="bt-retry" class="bt-btn">retry</button>'),
     ("dfs.js", "failed", 'class="dfs-btn">Retry</button>'),
-    ("eephus-ui.js", "failed", '"Could not load the discussion."'),
+    ("eephus-ui.js", "failed", '"Discussion did not load. " + FORUM_RETRY'),
 ]
 
 

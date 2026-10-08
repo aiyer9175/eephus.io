@@ -1008,7 +1008,7 @@
       img.className = "egfx-canvas";
       prev.appendChild(img);
     } catch (e) {
-      prev.innerHTML = '<div class="egfx-err">Could not render this graphic.</div>';
+      prev.innerHTML = '<div class="egfx-err">Graphic did not render.</div>';
     } finally {
       prev.classList.remove("is-busy");
       _busy = false;
@@ -1076,7 +1076,7 @@
 
   function chipHTML(id, label) {
     return '<button class="chip egfx-chip" id="' + esc(id) + '" type="button" ' +
-      'title="Generate a shareable graphic (theme-aware, multiple formats)">' +
+      'title="Share graphic of this view">' +
       '<span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>' + esc(label || "Generate GFX") + "</button>";
   }
 

@@ -235,7 +235,7 @@
   function gateLinks(md) {
     if (!LIVE() || isStaff()) return true;
     if (myKarma() >= KARMA_LINK) return true;
-    if (/\]\(\s*https?:\/\//i.test(md) || /https?:\/\//i.test(md)) { toast("New accounts can't post links until " + KARMA_LINK + " karma - keeps spam out.", "err"); return false; }
+    if (/\]\(\s*https?:\/\//i.test(md) || /https?:\/\//i.test(md)) { toast("Links need " + KARMA_LINK + " karma (spam gate).", "err"); return false; }
     return true;
   }
   function gateDownvote() {
@@ -471,8 +471,7 @@
     var seg = '<div class="eph-seg"><button data-seg="signin"' + (mode !== "signup" ? ' class="is-active"' : "") + ">Sign in</button>" +
       '<button data-seg="signup"' + (mode === "signup" ? ' class="is-active"' : "") + ">Create account</button></div>";
     var preview = live ? "" :
-      '<div class="eph-formmsg info">Accounts go live when the Supabase backend is configured. ' +
-      'Continue in <strong>preview mode</strong> to explore profiles, flair, and the forum locally - nothing leaves this browser.</div>';
+      '<div class="eph-formmsg info"><strong>Preview mode</strong>: profiles, flair and the forum run in this browser only.</div>';
     var signin =
       '<form data-form="signin">' +
         '<div class="eph-field"><label>Email</label><input class="eph-input" type="email" name="email" autocomplete="email"' + req + "></div>" +
@@ -552,7 +551,7 @@
     on(body, "click", '[data-act="reset"]', function (e) {
       e.preventDefault();
       var f = qs('[data-form="signin"]', body); var email = f.email.value.trim();
-      if (!LIVE()) return toast("Preview mode - password reset is a live-only flow.");
+      if (!LIVE()) return toast("Preview mode: password reset needs a live account.");
       if (!email) return setMsg(f, "Enter your email, then tap reset.", "err");
       A.resetPassword(email).then(function (r) { setMsg(f, r.error ? friendlyAuthError(r.error) : "Password-reset email sent.", r.error ? "err" : "ok"); });
     });
@@ -561,7 +560,7 @@
       var v = document.createElement("div");
       v.innerHTML = '<div class="eph-verify"><div class="eph-vmark">📬</div><h3>Confirm your email</h3>' +
         '<p>We sent a confirmation link to <span class="em">' + esc(email) + "</span>.</p>" +
-        "<p>Click it to verify, then you'll land back here signed in and ready to set your favorites.</p></div>" +
+        "<p>Open the link to verify; you return here signed in.</p></div>" +
         '<button class="eph-btn ghost block" data-act="resend" style="margin-top:8px;">Resend confirmation</button>';
       var m = qs(".eph-modal-body"); m.innerHTML = ""; m.appendChild(v);
       qs('[data-act="resend"]', v).addEventListener("click", function () { A.resendVerification(email).then(function () { toast("Confirmation re-sent.", "ok"); }); });
@@ -571,14 +570,14 @@
   function friendlyAuthError(err) {
     var m = (err && err.message) || String(err || "Something went wrong.");
     if (/Invalid login/i.test(m)) return "Email or password is incorrect.";
-    if (/already registered|already exists/i.test(m)) return "That email already has an account - try signing in.";
-    if (/not confirmed/i.test(m)) return "Confirm your email first - check your inbox.";
+    if (/already registered|already exists/i.test(m)) return "That email has an account; sign in.";
+    if (/not confirmed/i.test(m)) return "Confirm your email first.";
     return m;
   }
   function previewSignIn(username) {
     username = (username || "preview_fan").replace(/[^A-Za-z0-9_]/g, "").slice(0, 20) || "preview_fan";
     PV.setProfile({ id: "preview", username: username, role: "member", karma: 0, badges: ["beta_tester"], favorites: [], _preview: true });
-    closeModal(); toast("Preview mode - exploring as @" + username, "ok");
+    closeModal(); toast("Signed in as @" + username + " (preview).", "ok");
     refreshNav();
     if (!PV.profile().favorites || !PV.profile().favorites.length) openOnboarding();
     remountForumIfPresent();
@@ -604,7 +603,7 @@
       return '<div class="eph-team" data-team="' + escAttr(t) + '" title="' + escAttr(t) + '">' + (logo ? '<img src="' + escAttr(logo) + '" alt="' + escAttr(t) + '">' : esc(t)) + "</div>";
     }).join("");
     body.innerHTML =
-      '<p class="eph-altline" style="margin:0 0 14px;text-align:left;color:var(--text-secondary);">Two quick picks - they become your flair next to your name.</p>' +
+      '<p class="eph-altline" style="margin:0 0 14px;text-align:left;color:var(--text-secondary);">Two picks: they become the flair next to your name.</p>' +
       '<div class="eph-ob-step"><div class="eph-ob-q">① Your #1 team</div><div class="eph-team-grid">' + teamGrid + "</div></div>" +
       '<div class="eph-ob-step"><div class="eph-ob-q">② Your #1 prospect</div><div class="eph-ac-wrap">' +
         '<input class="eph-input" data-prospect-search placeholder="Search prospects…" autocomplete="off">' +
@@ -756,7 +755,7 @@
     });
     on(body, "click", '[data-act="delete"]', function () {
       if (!confirm("Delete your account? This removes your profile and favorites. Your comments remain as [deleted].")) return;
-      if (LIVE()) toast("Account deletion runs server-side - wire the Edge Function before enabling.", "err");
+      if (LIVE()) toast("Account deletion is not live on this deploy.", "err");
       else { PV.clearProfile(); closeModal(); refreshNav(); remountForumIfPresent(); toast("Preview account cleared."); }
     });
   }
@@ -774,12 +773,12 @@
   }
   function openNotifications() {
     var body = document.createElement("div");
-    body.innerHTML = '<div class="eph-formmsg info">Loading…</div>';
+    body.innerHTML = '<div class="eph-formmsg info">Loading notifications.</div>';
     openModal("Notifications", body);
     var src = (LIVE() && A.listNotifications) ? A.listNotifications(30) : Promise.resolve(previewNotifications());
     Promise.resolve(src).then(function (list) {
       list = list || [];
-      if (!list.length) { body.innerHTML = '<div class="eph-formmsg info">No notifications yet. Replies, @mentions, and FV-change alerts for prospects you watch land here.</div>'; return; }
+      if (!list.length) { body.innerHTML = '<div class="eph-formmsg info">No notifications. Replies, @mentions and FV-change alerts on watched prospects land here.</div>'; return; }
       body.innerHTML = '<div class="eph-notif-list">' + list.map(notifRowHTML).join("") + "</div>" +
         '<p class="eph-altline" style="text-align:left;">FV-change alerts fire monthly when grades update; replies &amp; mentions are near-real-time.</p>';
       if (LIVE() && A.markNotificationsRead) A.markNotificationsRead();
@@ -817,13 +816,13 @@
       '<div class="eph-field"><label>Ban / suspend</label><div style="display:flex;gap:6px;">' +
         '<input class="eph-input" data-m="ban-user" placeholder="username"><input class="eph-input" data-m="ban-days" placeholder="days (blank = perma)" style="max-width:160px;">' +
         '<button class="eph-btn sm" data-act="ban" style="color:var(--accent-red);border-color:var(--accent-red);">Ban</button></div></div>' +
-      '<div class="eph-mod-sec">Open reports</div><div data-reports><div class="eph-formmsg info">Loading…</div></div>';
+      '<div class="eph-mod-sec">Open reports</div><div data-reports><div class="eph-formmsg info">Loading reports.</div></div>';
     openModal("Moderation", body, { wide: true });
     function loadReports() {
       var src = (LIVE() && A.listReports) ? A.listReports() : Promise.resolve(previewReports());
       Promise.resolve(src).then(function (reports) {
         var el = qs("[data-reports]", body); reports = reports || [];
-        if (!reports.length) { el.innerHTML = '<div class="eph-formmsg ok">Queue clear - no open reports.</div>'; return; }
+        if (!reports.length) { el.innerHTML = '<div class="eph-formmsg ok">No open reports.</div>'; return; }
         el.innerHTML = reports.map(function (r) {
           var c = r.comment || r.comments || {};
           return '<div class="eph-report" data-rid="' + escAttr(r.id) + '" data-cid="' + escAttr(r.comment_id || c.id || "") + '">' +
@@ -929,20 +928,29 @@
   function threadTitle() {
     var e = _forumState.entity;
     var nm = (e && (e.player_name || e.name)) || _forumState.key || "Discussion";
-    return nm + (_forumState.scope === "farm" ? " - farm system" : "");
+    return nm + (_forumState.scope === "farm" ? " farm system" : "");
   }
 
+  // The shell's forum states through the state component (assets/eephus-state.js,
+  // plan 5.7 PX-11, SITEPASS C21); the plain info line where a page lacks it.
+  var FORUM_RETRY = '<button type="button" class="eph-btn sm ghost" data-act="forum-retry">Retry</button>';
+  function stateHTML(kind, msg) {
+    var S = window.EephusState;
+    return S ? S.html(kind, esc(msg)) : '<div class="eph-formmsg info">' + esc(msg) + "</div>";
+  }
   function loadAndRenderComments() {
     var inner = qs("#eph-forum [data-forum-inner]");
     if (!inner) return;
-    inner.innerHTML = '<div class="eph-formmsg info">Loading discussion…</div>';
+    inner.innerHTML = stateHTML("loading", "Loading discussion.");
     getComments().then(function (res) { renderForum(res.comments || [], res.thread); })
       .catch(function () {
         // The failed board (assets/eephus-state.js, plan 5.7 PX-12) when the
         // page carries the state component; the old red line where it does not.
         var S = window.EephusState;
-        inner.innerHTML = S ? S.html("failed", "Could not load the discussion.")
-          : '<div class="eph-formmsg err" role="alert">Could not load the discussion.</div>';
+        inner.innerHTML = S ? S.html("failed", "Discussion did not load. " + FORUM_RETRY)
+          : '<div class="eph-formmsg err" role="alert">Discussion did not load. ' + FORUM_RETRY + '</div>';
+        var rb = qs('[data-act="forum-retry"]', inner);
+        if (rb) rb.addEventListener("click", loadAndRenderComments);
       });
   }
 
@@ -972,7 +980,7 @@
       }).join("") + "</div>";
 
     var compose = isSignedIn() ? composeHTML() :
-      '<div class="eph-signedout"><p>Join the discussion - sign in to comment, vote, and track this prospect.</p>' +
+      '<div class="eph-signedout"><p>Sign in to comment, vote and track this prospect.</p>' +
       '<button class="eph-btn sm" data-act="signin">Sign in</button></div>';
 
     var tops = sortComments(list);
@@ -981,7 +989,7 @@
       var replies = (byParent[c.id] || []).sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
       return commentHTML(c, ctx, false) + replies.map(function (r) { return commentHTML(r, ctx, true); }).join("");
     }).join("");
-    if (!tops.length) body = '<div class="eph-formmsg info">No comments yet - start the conversation.</div>';
+    if (!tops.length) body = stateHTML("empty", "No comments on this thread.");
 
     inner.innerHTML = sortBar + compose + '<div class="eph-comments">' + body + "</div>";
     wireForum(inner, ctx);
@@ -1095,7 +1103,7 @@
     on(inner, "click", '[data-act="report"]', function (e, btn) {
       var cid = btn.closest(".eph-comment").getAttribute("data-cid");
       if (!isSignedIn()) return openAuthModal("signin");
-      var reason = prompt("Report this comment - reason:");
+      var reason = prompt("Reason for the report:");
       if (!reason) return;
       if (LIVE()) A.report(cid, reason).then(function () { toast("Reported to moderators.", "ok"); });
       else toast("Reported (preview).", "ok");
@@ -1231,7 +1239,7 @@
   function openProfile(username) {
     if (!username) return;
     var body = document.createElement("div");
-    body.innerHTML = '<div class="eph-formmsg info">Loading…</div>';
+    body.innerHTML = '<div class="eph-formmsg info">Loading profile.</div>';
     openModal("@" + username, body);
     var meProf = currentProfile();
     var profP = (LIVE() && A.profileByUsername) ? A.profileByUsername(username)
@@ -1247,7 +1255,7 @@
             '<div style="font-family:var(--font-retro-mono);font-size:12px;color:var(--text-tertiary);margin-top:6px;">' + (prof.karma || 0) + ' karma · <span data-followers> - </span> followers</div></div>' +
           followBtn +
         "</div>" +
-        '<div class="eph-mod-sec">Recent activity</div><div data-activity><div class="eph-formmsg info">Loading…</div></div>';
+        '<div class="eph-mod-sec">Recent activity</div><div data-activity><div class="eph-formmsg info">Loading activity.</div></div>';
       // follower count
       if (LIVE() && A.followCounts && prof.id) A.followCounts(prof.id).then(function (cc) { var el = qs("[data-followers]", body); if (el) el.textContent = cc.followers; });
       else { var el = qs("[data-followers]", body); if (el) el.textContent = (pvFollows().indexOf(prof.username) >= 0 ? 1 : 0); }
@@ -1287,12 +1295,12 @@
   // Activity feed (followed users + watchlisted prospects).
   function openFeed() {
     var body = document.createElement("div");
-    body.innerHTML = '<div class="eph-formmsg info">Loading your feed…</div>';
+    body.innerHTML = '<div class="eph-formmsg info">Loading feed.</div>';
     openModal("Your feed", body);
     var src = (LIVE() && A.activityFeed) ? A.activityFeed(20) : Promise.resolve(previewFeed());
     Promise.resolve(src).then(function (rows) {
       rows = rows || [];
-      if (!rows.length) { body.innerHTML = '<div class="eph-formmsg info">Follow some users (tap any username) and watchlist prospects - their activity shows up here.</div>'; return; }
+      if (!rows.length) { body.innerHTML = '<div class="eph-formmsg info">Follow users or watchlist prospects to fill this feed.</div>'; return; }
       body.innerHTML = '<div class="eph-mod-sec">From people you follow + prospects you watch</div>' +
         '<div class="eph-thread-list">' + rows.map(function (r) {
           var pr = r.profiles || {};
@@ -1363,7 +1371,7 @@
     var body = document.createElement("div");
     body.innerHTML =
       '<div class="eph-formmsg info">You have <strong>' + n + "</strong> tracked item" + (n === 1 ? "" : "s") + " saved on this device that aren't on your account watchlist yet.</div>" +
-      '<p class="eph-altline" style="text-align:left;color:var(--text-secondary);">Merge them into your eephus.io watchlist so they sync across devices and feed FV-change alerts?</p>' +
+      '<p class="eph-altline" style="text-align:left;color:var(--text-secondary);">Merge into your account watchlist (syncs across devices, feeds FV-change alerts).</p>' +
       '<button class="eph-btn block" data-act="merge">Merge ' + n + " into my account</button>" +
       '<button class="eph-btn ghost block" data-act="keep" style="margin-top:8px;">No, just use my account watchlist</button>';
     openModal("Sync your watchlist", body);
@@ -1425,13 +1433,13 @@
       el.innerHTML = '<div class="eph-forumlist-bar"><div class="eph-sort">' +
         '<button data-order="active"' + (order !== "hot" ? ' class="is-active"' : "") + ">Active</button>" +
         '<button data-order="hot"' + (order === "hot" ? ' class="is-active"' : "") + ">Hot</button></div>" +
-        (LIVE() ? "" : '<span class="eph-demo-flag">preview</span>') + '</div><div class="eph-thread-list"><div class="eph-formmsg info">Loading discussions…</div></div>';
+        (LIVE() ? "" : '<span class="eph-demo-flag">preview</span>') + '</div><div class="eph-thread-list">' + stateHTML("loading", "Loading threads.") + "</div>";
       loadThreads(order).then(function (threads) {
         var list = qs(".eph-thread-list", el); if (!list) return;
         list.innerHTML = threads.length ? threads.map(threadRowHTML).join("")
-          : '<div class="eph-formmsg info">' + (LIVE()
-              ? "No discussions yet - start one from any prospect or farm page."
-              : "Discussion opens at launch. Every prospect, farm, and article page will have its own thread.") + '</div>';
+          : (LIVE()
+              ? stateHTML("empty", "No threads yet. Start one from a prospect or farm page.")
+              : stateHTML("unmeasured", "Threads open at launch: one per prospect, farm and article page."));
       });
     }
     on(el, "click", "[data-order]", function (e, b) { order = b.getAttribute("data-order"); draw(); });
