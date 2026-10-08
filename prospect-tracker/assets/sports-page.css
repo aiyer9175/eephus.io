@@ -57,6 +57,45 @@
 .sp-logo { width: 20px; height: 20px; object-fit: contain; image-rendering: pixelated; vertical-align: -5px; margin-right: 5px;
   filter: drop-shadow(0 0 .6px var(--text-dim)); }   /* the glow keeps a navy mark legible on the dark page */
 
+/* ---- the scoreboard strip (SCORES_7d; owner SC7-6, SC7-7): one agate row of
+   games under the homepage masthead, drawn by assets/home-scores.js. A section
+   tag on the halftone at the start links /scores/; each game is a ruled column
+   (a kicker, then two club lines with their runs). Hidden until the script has
+   rows to draw, so it holds no space while the files are missing. The row
+   scrolls sideways with snap points when the games outrun the width. */
+.sp-strip { display: flex; align-items: stretch; min-width: 0; margin: 8px 0 2px;
+  border-top: 3px double var(--text-primary); border-bottom: 1px solid var(--text-primary); }
+.sp-strip[hidden] { display: none; }
+.sp-strip .sp-strip-tag { flex: none; display: flex; align-items: center; padding: 0 10px; border-right: 1px solid var(--text-primary);
+  font: 700 12px/1 var(--font-retro-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--text-primary);
+  text-decoration: none; background-image: radial-gradient(var(--paper-dot) 1px, transparent 1.3px); background-size: 4px 4px; }
+.sp-strip .sp-strip-tag:hover { text-decoration: underline; }
+.sp-strip-track { flex: 1 1 auto; min-width: 0; display: flex; margin: 0; padding: 0; list-style: none;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.sp-strip-g { flex: 1 0 auto; min-width: 132px; scroll-snap-align: start; box-shadow: inset 1px 0 0 var(--border); }
+.sp-strip-g:first-child { box-shadow: none; }
+.sp-strip-g > a { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1px 10px;
+  min-height: 44px; padding: 5px 10px 6px; color: var(--text-primary); text-decoration: none;
+  font: 11.5px/1.3 var(--font-retro-mono); font-variant-numeric: tabular-nums; }
+.sp-strip-g > a:hover { background: var(--bg-secondary); }
+.sp-strip-g > a:hover .sp-strip-tm { text-decoration: underline; }
+.sp-strip-k { justify-self: start; margin-bottom: 2px; text-transform: uppercase; white-space: nowrap; }
+.sp-strip-sit { margin-bottom: 2px; font-size: 10.5px; color: var(--text-secondary); text-transform: uppercase; white-space: nowrap; text-align: right; }
+.sp-strip-tm { display: flex; align-items: center; white-space: nowrap; font-weight: 700; }
+.sp-strip-tm .sp-logo { vertical-align: middle; }
+.sp-strip-r { text-align: right; font-weight: 700; }
+.sp-strip-r.is-rec { font-weight: 400; color: var(--text-secondary); }
+.sp-strip-tm.is-l, .sp-strip-r.is-l { font-weight: 400; color: var(--text-secondary); }
+.sp-strip-day { flex: none; display: flex; flex-direction: column; justify-content: center; padding: 0 8px;
+  box-shadow: inset 2px 0 0 var(--text-primary); font: 700 10px/1.35 var(--font-retro-mono); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-secondary); scroll-snap-align: start; }
+.sp-strip-day:first-child { box-shadow: none; }
+@media (max-width: 600px) {
+  .sp-strip .sp-strip-tag { padding: 0 8px; letter-spacing: .1em; }
+  .sp-strip-g { flex-grow: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .sp-strip-track { scroll-behavior: auto; } }
+
 /* ---- the October bracket (SCORES_4b), drawn by the lazy assets/scores-bracket.js.
    Not scoped to .scores-app, so /standings/ mounts it unchanged. Rounds sit in
    columns where they fit and stack on a phone and in the rail. Series state in

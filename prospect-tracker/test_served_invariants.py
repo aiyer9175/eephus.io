@@ -843,3 +843,27 @@ def test_mutation_a_recentred_total_on_the_wrong_mean_is_caught(monkeypatch):
     _apply(monkeypatch, "betting.json", m)
     with pytest.raises(AssertionError, match="total_price_mean"):
         _self.test_a_recentred_total_is_priced_on_the_mean_it_names()
+
+
+# --------------------------------------------------------------------------
+# The homepage scoreboard strip (SCORES_7d)
+# --------------------------------------------------------------------------
+
+def test_the_homepage_carries_the_scoreboard_mount_and_its_stamped_script():
+    """The served homepage holds the strip's hidden mount (the 'Scores' tag
+    linking /scores/ and the track the script fills) and loads the strip
+    script deferred with a content stamp, while the scores module is live."""
+    import re
+    import scores_core
+    page = ROOT / "index.html"
+    if not page.exists():
+        pytest.skip("index.html has not been built")
+    if not scores_core.SCORES_LIVE:
+        pytest.skip("SCORES_LIVE is False: the homepage carries no strip")
+    html = page.read_text(encoding="utf-8")
+    mount = re.search(r'<section class="sp-strip" id="home-scoreboard"[^>]*\bhidden\b[^>]*>(.*?)</section>', html, re.S)
+    assert mount, "the homepage has no hidden scoreboard mount"
+    assert '<a class="sp-strip-tag" href="/scores/">Scores</a>' in mount.group(1)
+    assert '<ul class="sp-strip-track"></ul>' in mount.group(1)
+    assert re.search(r'<script src="/assets/home-scores\.js\?v=[0-9a-f]{8}" defer></script>', html), (
+        "the strip script is missing, unstamped or not deferred")
