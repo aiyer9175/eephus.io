@@ -161,9 +161,11 @@ def test_header_names_only_sources_present(page):
         present = {pt.get("source") for p in cls.get("prospects") or []
                    for pt in p.get("points") or [] if pt.get("source")}
         _open(page, year)
+        # The class note is a closed <details> under the cards (site pass
+        # REDESIGN_prospx); textContent reads its body too.
         head = page.evaluate(
-            "() => (document.querySelector('.draft-grid').previousElementSibling || {}).textContent || ''")
-        assert "sources:" in head, head[:300]
+            "() => (document.querySelector('.draft-class-note') || {}).textContent || ''")
+        assert "Sources:" in head, head[:300]
         for src, lbl in labels.items():
             assert (lbl in head) == (src in present), f"{year}: header {lbl!r} vs sources {present}"
 
@@ -236,7 +238,7 @@ _POOL_SCAN = r"""
              scope: ex.ba_rank_is_global === false ? (ex.ba_scope || null) : null,
              type: rec ? (rec.player_type || '') : '' };
   });
-  const head = (document.querySelector('.draft-grid').previousElementSibling || {}).textContent || '';
+  const head = (document.querySelector('.draft-class-note') || {}).textContent || '';
   return { cards, head };
 }
 """
