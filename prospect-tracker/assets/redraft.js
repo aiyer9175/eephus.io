@@ -196,6 +196,35 @@
       (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
   }
   function num(v, d) { return (v == null || isNaN(v)) ? "-" : Number(v).toFixed(d == null ? 1 : d); }
+  // THE SEASON STATE (site pass SP-D5, REDESIGN_fantasy 2026-10-08). Outside the
+  // regular season window.EephusSeason (eephus-config.js, written nightly) names
+  // the next Opening Day. Null in season, and null with no state on the page,
+  // so a test page or an older boot file keeps the in-season page.
+  function offSeason() {
+    var E = typeof window !== "undefined" && window.EephusSeason;
+    var s = (E && E.get) ? E.get() : null;
+    if (!s || s.phase === "regular") return null;
+    var open = /^\d{4}-\d{2}-\d{2}$/.test(String(s.next_opening_day || "")) ? s.next_opening_day : null;
+    return { opening: open, next: open ? open.slice(0, 4) : (s.season ? String(s.season + 1) : "") };
+  }
+  // "2027-03-25" -> "March 25, 2027", parsed by parts (a bare ISO string
+  // through new Date() is UTC and can shift a day).
+  function longDate(iso) {
+    var p = String(iso || "").split("-");
+    var m = ["January", "February", "March", "April", "May", "June", "July", "August",
+             "September", "October", "November", "December"][+p[1] - 1];
+    return m ? m + " " + (+p[2]) + ", " + p[0] : "";
+  }
+  // The two day-by-day tabs have nothing to list off season. The hub hides
+  // their tabs; an old link to either still lands here, on this card.
+  var OFF_SECTIONS = { streamers: "Daily Streamers", two_start: "Two-Start SP" };
+  function offSeasonCard(sec) {
+    var off = offSeason() || {};
+    return pxState("unmeasured", "<strong>" + esc(OFF_SECTIONS[sec]) + " return with the " +
+      esc(off.next || "next") + " schedule.</strong>" +
+      (off.opening ? " Opening Day is " + esc(longDate(off.opening)) + "." : ""),
+      { cls: "rd-offseason", role: "status" });
+  }
   // EVERY NAME OPENS THE IN-PAGE CARD, not the merged MLB page. The card is
   // assembled out of the payload already in this browser, so it works for every
   // row on the board rather than only the ones player_links can resolve, and it
@@ -938,8 +967,9 @@
   function renderSection() {
     var sec = (S.data && S.data.sections) || {}, r = root();
     if (!r) return;
-    var html;
-    switch (S.section) {
+    var html, off = !!(offSeason() && OFF_SECTIONS[S.section]);
+    if (off) html = offSeasonCard(S.section);
+    else switch (S.section) {
       case "two_start": html = tableTwoStart(sec.two_start); break;
       case "ros_sp": html = boardPitcher(sec.ros_sp, false); break;
       case "ros_rp": html = boardPitcher(sec.ros_rp, true); break;
@@ -948,7 +978,7 @@
       case "closers": html = renderClosers(); break;
       default: html = tableStreamers(sec.daily_streamers);
     }
-    if (GFX_SECTIONS[S.section] && window.EEPHUS_GFX && EEPHUS_GFX.chipHTML) {
+    if (!off && GFX_SECTIONS[S.section] && window.EEPHUS_GFX && EEPHUS_GFX.chipHTML) {
       html = '<div class="rd-tools">' + EEPHUS_GFX.chipHTML("rd-gfx", "Generate GFX") + "</div>" + html;
     }
     r.innerHTML = html;
@@ -1257,10 +1287,12 @@
     var sec = d.sections || {};
     var order = [["streamers", "daily_streamers"], ["two_start", "two_start"], ["ros_sp", "ros_sp"],
                  ["ros_rp", "ros_rp"], ["ros_hitter", "ros_hitter"]];
+    var off = offSeason();
     for (var i = 0; i < order.length; i++) {
+      if (off && OFF_SECTIONS[order[i][0]]) continue;
       if ((sec[order[i][1]] || []).length) return order[i][0];
     }
-    return "streamers";
+    return off ? "ros_sp" : "streamers";
   }
   function onData(d) {
     if (!d || !d.players) { notReady(); return; }
@@ -1299,6 +1331,11 @@
     // tab in order that has rows instead of on an empty-state line. A link that
     // names a section still gets that section.
     if (isNextSeason() && !hashParam(hostHash(), "section", SECTIONS.join("|"))) {
+      S.section = landingSection(d);
+    }
+    // Off season (the site's season state) the landing also skips the two
+    // hidden tabs, whatever mode the corpus is in.
+    if (offSeason() && OFF_SECTIONS[S.section] && !hashParam(hostHash(), "section", SECTIONS.join("|"))) {
       S.section = landingSection(d);
     }
     // Deep-link restore between the defaults and the first paint, so a restored

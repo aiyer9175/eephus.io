@@ -158,6 +158,37 @@
       (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
   }
   function num(v, d) { return (v == null || isNaN(v)) ? "-" : Number(v).toFixed(d == null ? 1 : d); }
+  // THE SEASON STATE (site pass SP-D5, REDESIGN_fantasy 2026-10-08). Outside the
+  // regular season window.EephusSeason (eephus-config.js, written nightly) names
+  // the next Opening Day. Null in season, and null with no state on the page,
+  // so a test page or an older boot file keeps the in-season page.
+  function offSeason() {
+    var E = typeof window !== "undefined" && window.EephusSeason;
+    var s = (E && E.get) ? E.get() : null;
+    if (!s || s.phase === "regular") return null;
+    var open = /^\d{4}-\d{2}-\d{2}$/.test(String(s.next_opening_day || "")) ? s.next_opening_day : null;
+    return { opening: open, next: open ? open.slice(0, 4) : (s.season ? String(s.season + 1) : "") };
+  }
+  // "2027-03-25" -> "March 25, 2027", parsed by parts (a bare ISO string
+  // through new Date() is UTC and can shift a day).
+  function longDate(iso) {
+    var p = String(iso || "").split("-");
+    var m = ["January", "February", "March", "April", "May", "June", "July", "August",
+             "September", "October", "November", "December"][+p[1] - 1];
+    return m ? m + " " + (+p[2]) + ", " + p[0] : "";
+  }
+  // Off season there is no slate, so one card stands in for all four tabs and
+  // the slate is never fetched. The hub hides the tabs; #m=dfs and every old
+  // DFS link land here.
+  function offSeasonCard() {
+    var off = offSeason() || {};
+    return pxState("unmeasured", "<strong>No DFS slates until Opening Day.</strong> " +
+      (off.opening ? "The " + esc(off.next) + " season opens " + esc(longDate(off.opening)) + ". " : "") +
+      "Today's Slate, Value Plays, the Lineup Optimizer and Stacks return with the first games. " +
+      '<a class="dfs-name-link" href="#m=redraft">Redraft</a> carries the ' +
+      esc(off.next || "next") + " draft prep boards.",
+      { cls: "dfs-offseason", role: "status" });
+  }
   function money(v) { return (v == null || isNaN(v)) ? "-" : ("$" + Math.round(v).toLocaleString()); }
   function hrefFor(mlbam) {
     var e = LINKS && LINKS.byMlbam && LINKS.byMlbam[String(mlbam)];
@@ -1800,6 +1831,7 @@
   // load shows the loading kind rather than an empty root.
   function boot() {
     var r = root();
+    if (offSeason()) { if (r) r.innerHTML = offSeasonCard(); return; }
     if (r) r.innerHTML = pxState("loading", "Loading the DFS slate.");
     load(DATA_URL).then(onData).catch(function (e) { errorState(String(e && e.message || e)); });
   }
