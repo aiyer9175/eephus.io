@@ -184,6 +184,10 @@ _AWARDS_BALLOT_CSS_VER = _asset_ver("assets/awards-ballot.css")
 # surface still tells the truth with JavaScript off.
 _ACCT_HUB_VER = _asset_ver("assets/accountability.js")
 _ACCT_HUB_CSS_VER = _asset_ver("assets/accountability.css")
+# /models/updates/ - Model Updates (LIBRARY_12): the same filter-only client
+# shape; the page is complete server-side.
+_MU_VER = _asset_ver("assets/model_updates.js")
+_MU_CSS_VER = _asset_ver("assets/model_updates.css")
 # Diamond section (2026-08-05): one config script, five module apps, and the
 # Diamond Pass client. The five module apps are owned by their own lanes. A
 # file that is not on disk yet hashes to "1" here rather than raising, so the
@@ -843,6 +847,7 @@ NEWS_LABEL = "MLB News"
 PAGE_LABELS = {h: lab for _k, lab, h in nav_leaves()}
 PAGE_LABELS.update({"/history/": "Today in Prospect History",
                     "/models/": "Model Accountability",
+                    "/models/updates/": "Model Updates",
                     "/news/": NEWS_LABEL})
 
 
@@ -861,6 +866,7 @@ def _footer() -> str:
         # The model ledger carries no nav row (the nav has three hand-maintained
         # static copies), so the footer is its primary address on every page.
         f'<a href="/models/">{PAGE_LABELS["/models/"]}</a>'
+        f'<a href="/models/updates/">{PAGE_LABELS["/models/updates/"]}</a>'
         f'<a href="/sources/">Data Sources</a>'
         # The artifact catalog (what we publish, on what cadence, how stable)
         # is the second half of /sources/. It gets its own footer link because
@@ -6755,6 +6761,8 @@ def build_models() -> str:
         f'Version <code>{html.escape(str(reg.get("version") or ""))}</code>. Source: '
         '<a href="/data/model_registry.json"><code>data/model_registry.json</code></a>; each row\'s '
         f'full note is on the <a href="/glossary/#view=models">{GLOSSARY_DISPLAY_NAME} ledger</a>.</p>'
+        "<p>Each model's score history and edge over its benchmark: <a href=\"/models/updates/\">"
+        f'{PAGE_LABELS["/models/updates/"]}</a>.</p>'
         '</div>'
         f'<div class="acct-tiles">{tiles}</div>'
         '<div class="section-head"><h2>Freshness</h2>'
@@ -6781,6 +6789,597 @@ def build_models() -> str:
                 "The eephus.io model ledger: every model with a predictive claim, its verdict, "
                 "its baseline, and the eval artifact behind it, failed models included.",
                 url=f"{SITE_ORIGIN}/models/")
+
+
+# --------------------------------------------------------------------------- #
+# /models/updates/ - Model Updates (LIBRARY_12; owner ask 2026-10-02; plan
+# LIBRARY_PLAN.md section 4.5, lane LANE_UPDATES.md sections 7 and 8).
+#
+# A pure reader of data/model_updates.json (model_updates.py writes it). Every
+# number and every edge text is copied from that file: this builder computes
+# no statistic and prints no verdict word of its own; the edge words come from
+# model_updates.edge() through the file. The only arithmetic is layout: the
+# lamp ladder's scale (one lamp = a fifth of the largest |edge| or |bound| in
+# a leg's history) and the artifact age against the build clock, which
+# assets/model_updates.js re-derives against the reader's clock.
+#
+# Server-rendered end to end on the /models/ precedent: with JavaScript off the
+# stands table, every fold, the default timetable and the drawers (shown by a
+# noscript rule) are all on the page. The client filters rows that are already
+# in the DOM and opens drawers; it fetches nothing. Not in NAV_ITEMS: discovery
+# rides the footer, the /models/ hub line, the Library's Evidence leaf and
+# sitemap.xml.
+# --------------------------------------------------------------------------- #
+_MU_SCORED_STATES = ("lead", "tie", "trails", "unresolved", "no_contest")
+# The folds for served models without a measured edge, in page order.
+_MU_FOLDS = (
+    ("no_benchmark", "No benchmark registered"),
+    ("no_eval", "No eval artifact"),
+    ("unwired", "Benchmark named; headline not wired yet"),
+    ("card_error", "Card does not derive from its artifact"),
+)
+# Change-kind chips: (chip key, label, producer kinds). A kind outside these
+# (artifact change, frame change, backfill, removed, note) shows under All.
+_MU_KIND_CHIPS = (
+    ("model", "model change", ("model_change",)),
+    ("correction", "correction", ("scoring_correction", "data_correction")),
+    ("verdict", "verdict", ("verdict",)),
+    ("rescored", "rescored", ("rescored",)),
+    ("first", "first scored", ("first_scored",)),
+    ("registered", "registered", ("registered",)),
+)
+_MU_KIND_OF = {k: key for key, _l, kinds in _MU_KIND_CHIPS for k in kinds}
+# The toggles, off by default: (layer, label). Development reads also show the
+# update rows of the development models, which have no served page.
+_MU_TOGGLES = (
+    ("development", "development reads"),
+    ("typed", "typed history"),
+    ("registration", "registrations"),
+)
+_MU_LAYER_TAG = {"development": "development read", "typed": "typed history",
+                 "registration": "registration", "note": "note"}
+# eFV's frames by name, for the pinned row's benchmark cell and the ladder's
+# column order (vm1 columns, a gap, then vm2; plan 4.5, lane 8).
+_MU_EFV_IDS = ("efv_v1", "efv_v2")
+_MU_EFV_FRAME_ORDER = {"vm": 0, "vm2": 1}
+_MU_EFV_FRAME_LABEL = {"vm": "vintage-matched frame (vm1)",
+                       "vm2": "vintage-matched timing-pinned frame (vm2)"}
+_MU_LADDER_COLS = (24, 12)          # drawer, row cell (lane 8: 1280 and 390)
+_MU_STAND_COLS = 8                  # Model .. Last update, plus the ladder
+
+
+def _mu_isnum(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def _mu_fmt(v, d) -> str:
+    """A copied number at the leg's own digits (the card's, else as copied)."""
+    if not _mu_isnum(v):
+        return "-"
+    return f"{v:.{d}f}" if isinstance(d, int) else f"{v:g}"
+
+
+def _mu_n(v) -> str:
+    return f"{v:,}" if _mu_isnum(v) else "-"
+
+
+def _mu_interval(x: dict, d) -> str:
+    """The interval cell for one leg or edge: the 95% interval on the gap,
+    else the one-sided t, else the artifact's detection floor, else the words
+    'no interval on record' (copy rule)."""
+    d = d if isinstance(d, int) else 4
+    ci = x.get("ci95")
+    if isinstance(ci, (list, tuple)) and len(ci) == 2 and all(_mu_isnum(c) for c in ci):
+        return f"{ci[0]:+.{d}f} to {ci[1]:+.{d}f}"
+    if _mu_isnum(x.get("t")):
+        return f"t {x['t']:.3f}"
+    if _mu_isnum(x.get("mde95")):
+        return f"floor {x['mde95']:.{d}f}"
+    return "no interval on record"
+
+
+def _mu_age(day: str | None) -> str:
+    """'2026-10-02 6d' as a <time> the client re-ages against the reader's clock."""
+    if not day:
+        return "-"
+    try:
+        age = (date.today() - date.fromisoformat(day[:10])).days
+    except ValueError:
+        return html.escape(day)
+    days = f' <small class="mu-age">{age}d</small>' if age >= 0 else ""
+    return f'<time datetime="{html.escape(day[:10])}">{html.escape(day)}</time>{days}'
+
+
+def _mu_plural(n: int, word: str) -> str:
+    return f"{n} {word}" + ("" if n == 1 else "s")
+
+
+def _mu_leg_cols(events: list, leg: dict, frame_order: dict | None = None) -> list:
+    """One leg's edge history, oldest first: one column per scored event whose
+    legs carry this leg (same stat, same benchmark), None for the gap a frame
+    change draws. Development and typed rows never draw."""
+    key = (leg.get("stat"), leg.get("benchmark_label"))
+    rows = []
+    for i, ev in enumerate(events):
+        if ev.get("layer") not in ("headline", "secondary"):
+            continue
+        lg = next((x for x in ev.get("legs") or []
+                   if (x.get("stat"), x.get("benchmark_label")) == key), None)
+        if lg is None or not _mu_isnum(lg.get("delta")):
+            continue
+        st = ev.get("statistic") or {}
+        fr = st.get("frame")
+        rank = (frame_order or {}).get(fr, 0)
+        rows.append((rank, ev.get("sort_date") or "", i, fr, ev, lg, st))
+    rows.sort(key=lambda r: r[:3])
+    cols, prev = [], None
+    for _r, _d, _i, fr, ev, lg, st in rows:
+        if cols and fr and prev and fr != prev:
+            cols.append(None)
+        prev = fr or prev
+        cols.append({"delta": lg["delta"], "ci": lg.get("ci95"),
+                     "state": lg.get("edge_state") or "tie",
+                     "date": ev.get("date") or "",
+                     "changed": st.get("before") is not None and not st.get("same_rows")})
+    return cols
+
+
+def _mu_ladder(cols: list, *, name: str, leg: dict, max_cols: int, lamp_px: int = 6) -> tuple:
+    """(svg, scale text) for one leg: the edge lamp ladder of lane section 8.
+    11 lamp rows, the middle one the tie line; the interval as lit lamps, the
+    point lamp coloured by the edge state the rule printed (green and red only
+    for lead and trails); a 1 px tick over a column whose rows changed; an
+    empty column where the frame changed. role=img; the timetable is its text
+    equivalent."""
+    cols = list(cols)
+    kept, n_real = [], 0
+    for c in reversed(cols):
+        if c is not None:
+            if n_real == max_cols:
+                break
+            n_real += 1
+        kept.append(c)
+    cols = list(reversed(kept))
+    while cols and cols[0] is None:
+        cols.pop(0)
+    real = [c for c in cols if c is not None]
+    if not real:
+        return "", ""
+    d = leg.get("digits") if isinstance(leg.get("digits"), int) else 4
+    big = 0.0
+    for c in real:
+        big = max(big, abs(c["delta"]))
+        if isinstance(c["ci"], (list, tuple)) and len(c["ci"]) == 2:
+            big = max(big, abs(c["ci"][0]), abs(c["ci"][1]))
+    scale = big / 5 if big > 0 else 1.0
+
+    def row_of(v):
+        return 5 - max(-5, min(5, int(round(v / scale))))
+
+    # The drawer draws 6 px lamps on an 8 px pitch (lane 8); the row cell the
+    # same grid at half size, 3 px on 4, so a row stays one text block tall.
+    L = lamp_px
+    P = L + max(1, L // 3)
+    top = 2 if L < 6 else 4
+
+    def lamp(x, r):
+        return f"M{x} {top + r * P}h{L}v{L}h-{L}z"
+
+    w = len(cols) * P - (P - L)
+    h = top + 11 * P - (P - L)
+    board, zero, lit = [], [], []
+    step = min(120, 1200 // max(1, len(real)))
+    k = 0
+    for j, c in enumerate(cols):
+        if c is None:
+            continue
+        x = j * P
+        board.append("".join(lamp(x, r) for r in range(11) if r != 5))
+        zero.append(lamp(x, 5))
+        p = row_of(c["delta"])
+        inner = []
+        ci = c["ci"]
+        if isinstance(ci, (list, tuple)) and len(ci) == 2:
+            top, bot = row_of(ci[1]), row_of(ci[0])
+            d_ci = "".join(lamp(x, r) for r in range(top, bot + 1) if r != p)
+            if d_ci:
+                inner.append(f'<path class="li" d="{d_ci}"/>')
+        st = c["state"] if c["state"] in ("lead", "trails", "tie", "unresolved") else "tie"
+        if st == "unresolved":
+            inner.append(f'<rect class="lp-unresolved" x="{x + 0.5}" y="{top + p * P + 0.5}" '
+                         f'width="{L - 1}" height="{L - 1}"/>')
+        else:
+            inner.append(f'<path class="lp-{st}" d="{lamp(x, p)}"/>')
+        if c["changed"]:
+            inner.append(f'<path class="tk" d="M{x} 0h{L}v1h-{L}z"/>')
+        lit.append(f'<g class="c" style="animation-delay:{k * step}ms">{"".join(inner)}</g>')
+        k += 1
+    counts = {s: sum(1 for c in real if c["state"] == s) for s in ("lead", "tie", "trails", "unresolved")}
+    stat = leg.get("stat") or ""
+    label = (f"{name} {stat}: latest {leg.get('edge_text') or ''}; "
+             f"{_mu_plural(counts['lead'], 'lead')}, {_mu_plural(counts['tie'], 'tie')}, "
+             f"{_mu_plural(counts['trails'], 'trail')}"
+             + (f", {counts['unresolved']} with no interval" if counts["unresolved"] else "")
+             + f" over {_mu_plural(len(real), 'update')} since {real[0]['date']}")
+    svg = (f'<svg class="px-lamp mu-lad" role="img" aria-label="{html.escape(label)}" width="{w}" '
+           f'height="{h}" viewBox="0 0 {w} {h}" shape-rendering="crispEdges">'
+           f'<path class="lo" d="{"".join(board)}"/><path class="lz" d="{"".join(zero)}"/>'
+           f'{"".join(lit)}</svg>')
+    return svg, f"1 lamp = {scale:.{d}f} {stat.split(' vs ')[0]}"
+
+
+def _mu_ladder_key() -> str:
+    return ('<div class="px-lamp-key mu-key"><span>point = edge, bar = 95% interval, '
+            'middle row = tie line, tick = rows changed</span>'
+            '<span><i class="px-lk mu-lk-lead"></i>lead</span>'
+            '<span><i class="px-lk mu-lk-tie"></i>tie</span>'
+            '<span><i class="px-lk mu-lk-trails"></i>trails</span>'
+            '<span><i class="px-lk mu-lk-unresolved"></i>no interval on record</span></div>')
+
+
+def _mu_source(src: dict, legs: list) -> str:
+    """The artifact path (a link when it ships at data/ depth one, else named,
+    the /models/ rule), the key the number came from, and the commit."""
+    path = (src or {}).get("path") or ""
+    url, _why = _acct_artifact_url(path) if path else (None, "")
+    out = []
+    if path:
+        p = html.escape(path)
+        out.append(f'<a href="{html.escape(url)}">{p}</a>' if url else f"<code>{p}</code>")
+    key = (src or {}).get("run_id")
+    if not key and legs and isinstance(legs[0].get("keys"), dict):
+        key = legs[0]["keys"].get("model")
+    if key:
+        out.append(f'<span class="mu-key-path">{html.escape(str(key))}</span>')
+    commit = (src or {}).get("commit") or (src or {}).get("model_commit")
+    if commit:
+        out.append(f'<span class="mu-commit">commit {html.escape(str(commit))}</span>')
+    return " ".join(out) or "-"
+
+
+def _mu_statistic(st: dict | None, d) -> str:
+    """Before to after, labelled 'same rows' with the change, or 'rows changed'
+    with no change figure (plan 4.6: an improvement prints only on the same
+    rows)."""
+    if not st or not st.get("stat"):
+        return "-"
+    d = d if isinstance(d, int) else 4
+    name = html.escape(st["stat"])
+    after = _mu_fmt(st.get("after"), d)
+    if st.get("before") is None:
+        return f"{name} {after}"
+    body = f"{name} {_mu_fmt(st['before'], d)} to {after}"
+    if st.get("same_rows"):
+        imp = st.get("improvement")
+        return body + (f" ({imp:+.{d}f}, same rows)" if _mu_isnum(imp) else " (same rows)")
+    nb, n = st.get("n_before"), st.get("n")
+    if _mu_isnum(nb) and _mu_isnum(n) and nb != n:
+        return body + f" (rows changed {_mu_n(nb)} to {_mu_n(n)})"
+    return body + " (rows changed)"
+
+
+def _mu_legs_html(legs: list, field) -> str:
+    """One <div class="mu-leg"> per leg so the legs of a row stay paired by
+    index across its cells."""
+    return "".join(f'<div class="mu-leg" data-leg="{i}">{field(lg)}</div>'
+                   for i, lg in enumerate(legs))
+
+
+def _mu_bench_label(lg: dict, efv: bool) -> str:
+    b = lg.get("benchmark_label") or "-"
+    if efv and lg.get("role") == "headline":
+        fr = ((lg.get("source") or {}).get("run_id") or "").split("|")
+        frame = fr[1] if len(fr) > 2 else ""
+        if frame in _MU_EFV_FRAME_LABEL:
+            b = f"{b}, {_MU_EFV_FRAME_LABEL[frame]}"
+    return b
+
+
+def _mu_drawer(m: dict, evs: list, ladders: list, colspan: int) -> str:
+    """The per-model drawer: the leg ladders with their scale, the key, and the
+    model's dated history newest first (every layer, labelled)."""
+    parts = []
+    if ladders:
+        parts.append('<div class="mu-ladders">' + "".join(
+            f'<figure class="mu-lfig"><figcaption>{html.escape(cap)}</figcaption>{svg}'
+            f'<span class="mu-scale">{html.escape(sc)}</span></figure>'
+            for cap, svg, sc in ladders) + "</div>" + _mu_ladder_key())
+    hist = []
+    ordered = sorted(enumerate(evs), key=lambda ie: (ie[1].get("sort_date") or "", ie[0]), reverse=True)
+    for _i, ev in ordered:
+        tag = _MU_LAYER_TAG.get(ev.get("layer")) if ev.get("layer") != "registration" else None
+        ed = ev.get("edge") or {}
+        hist.append(
+            f'<li><time>{html.escape(ev.get("date") or "")}</time> '
+            f'{html.escape(ev.get("change") or "")}'
+            + (f' <span class="mu-tag">{html.escape(tag)}</span>' if tag else "")
+            + (f'<span class="mu-hedge">{html.escape(ed.get("text") or "")}</span>'
+               if ed.get("state") not in ("none", "note", None) else "")
+            + "</li>")
+    parts.append(f'<ol class="mu-hist" aria-label="{html.escape(m["label"])} history">'
+                 + "".join(hist) + "</ol>" if hist else
+                 '<p class="mu-none">No dated update on record.</p>')
+    mid = html.escape(m["model_id"])
+    return (f'<tr class="mu-drawer" id="mu-d-{mid}" data-model="{mid}" hidden>'
+            f'<td colspan="{colspan}">{"".join(parts)}</td></tr>')
+
+
+def _mu_latest_first(ms: list) -> list:
+    """Latest update first (a model with none last), then by name; stable."""
+    out = sorted(ms, key=lambda m: m.get("label") or "")
+    return sorted(out, key=lambda m: m.get("last_update") or "", reverse=True)
+
+
+def _mu_open(m: dict) -> str:
+    mid = html.escape(m["model_id"])
+    return (f'<button class="mu-open" type="button" aria-expanded="false" aria-controls="mu-d-{mid}">'
+            f'{html.escape(m["label"])}</button><code class="mu-id">{mid}</code>')
+
+
+def _mu_events_of(m: dict, events: list) -> list:
+    mid = m["model_id"]
+    if mid == "efv_v2":
+        return [e for e in events if e.get("model_id") in _MU_EFV_IDS]
+    return [e for e in events
+            if e.get("model_id") == mid or mid in (e.get("registry_ids") or [])]
+
+
+def _mu_stand_row(m: dict, evs: list) -> tuple:
+    """(row, sub-row, drawer) for one scored model. eFV prints its two headline
+    legs and folds its four industry legs under 'against each source' (LB-Q1:
+    two legs side by side, no summed figure)."""
+    efv = m["model_id"] == "efv_v2"
+    legs = list(m.get("today") or [])
+    shown = [lg for lg in legs if lg.get("role") == "headline"] if efv else legs
+    folded = [lg for lg in legs if lg.get("role") != "headline"] if efv else []
+    order = _MU_EFV_FRAME_ORDER if efv else None
+    ladders, cell_svg = [], ""
+    for i, lg in enumerate(legs):
+        cols = _mu_leg_cols(evs, lg, order)
+        svg, sc = _mu_ladder(cols, name=m["label"], leg=lg, max_cols=_MU_LADDER_COLS[0])
+        if svg:
+            stat = lg.get("stat") or "-"
+            cap = stat if " vs " in stat else f'{stat} vs {lg.get("benchmark_label") or "-"}'
+            ladders.append((cap, svg, sc))
+        if i == 0 and cols:
+            cell_svg, _s = _mu_ladder(cols, name=m["label"], leg=lg, max_cols=_MU_LADDER_COLS[1],
+                                      lamp_px=3)
+    mid = html.escape(m["model_id"])
+    # One table row per leg; the Model, Last update and History cells span
+    # the model's legs, so the model reads as one row and a leg's cells stay
+    # on one line however its benchmark wraps.
+    span = f' rowspan="{len(shown)}"' if len(shown) > 1 else ""
+
+    def leg_cells(lg):
+        return (f'<td class="mu-c-stat">{html.escape(lg.get("stat") or "-")}</td>'
+                f'<td class="mu-c-bench">{html.escape(_mu_bench_label(lg, efv))}</td>'
+                f'<td class="mu-c-edge">{html.escape(lg.get("edge_text") or "-")}</td>'
+                f'<td class="num mu-c-n">{_mu_n(lg.get("n"))}</td>'
+                f'<td class="num mu-c-int">{html.escape(_mu_interval(lg, lg.get("digits")))}</td>')
+    row = (
+        f'<tr class="mu-stand" id="model={mid}" data-model="{mid}"'
+        f'{" data-pinned" if efv else ""}>'
+        f'<th scope="row" class="mu-mname"{span}>{_mu_open(m)}</th>'
+        + leg_cells(shown[0])
+        + f'<td class="mu-c-last"{span}>{_mu_age(m.get("last_update"))}</td>'
+        f'<td class="mu-c-lad"{span}>{cell_svg}</td></tr>'
+        + "".join(f'<tr class="mu-legrow" data-model="{mid}"{" data-pinned" if efv else ""}>'
+                  f'{leg_cells(lg)}</tr>' for lg in shown[1:]))
+    sub = ""
+    if folded:
+        lrows = "".join(
+            f'<tr><th scope="row">{html.escape(lg.get("benchmark_label") or "-")}</th>'
+            f'<td>{html.escape(lg.get("stat") or "-")}</td>'
+            f'<td class="mu-c-edge">{html.escape(lg.get("edge_text") or "-")}</td>'
+            f'<td class="num">{_mu_n(lg.get("n"))}</td>'
+            f'<td class="num">{html.escape(_mu_interval(lg, lg.get("digits")))}</td></tr>'
+            for lg in folded)
+        sub = (f'<tr class="mu-sub" data-model="{mid}"><td colspan="{_MU_STAND_COLS}">'
+               f'<details class="mu-src"><summary>against each source ({len(folded)} legs)</summary>'
+               '<table class="mu-legs"><caption class="visually-hidden">'
+               f'{html.escape(m["label"])} against each source</caption><thead><tr>'
+               '<th scope="col">Source</th><th scope="col">Scored on</th><th scope="col">Edge</th>'
+               '<th scope="col" class="num">n</th><th scope="col" class="num">Interval</th></tr></thead>'
+               f'<tbody>{lrows}</tbody></table></details></td></tr>')
+    return row, sub, _mu_drawer(m, evs, ladders, _MU_STAND_COLS)
+
+
+def _mu_fold_table(title: str, models: list, events: list, n_cols: int = 5) -> str:
+    rows = []
+    for m in models:
+        mid = html.escape(m["model_id"])
+        rows.append(
+            f'<tr class="mu-stand" id="model={mid}" data-model="{mid}">'
+            f'<th scope="row" class="mu-mname">{_mu_open(m)}</th>'
+            f'<td>{html.escape(m.get("family") or "-")}</td>'
+            f'<td>{html.escape(m.get("verdict") or "-")}</td>'
+            f'<td class="mu-c-edge">{html.escape((m.get("edge") or {}).get("text") or "-")}</td>'
+            f'<td class="mu-c-last">{_mu_age(m.get("last_update"))}</td></tr>'
+            + _mu_drawer(m, _mu_events_of(m, events), [], n_cols))
+    return (f'<details class="mu-fold"><summary>{html.escape(title)} '
+            f'<span class="mu-count">{len(models)}</span></summary>'
+            f'<div class="mu-scroll"><table class="mu-table mu-foldt"><caption class="visually-hidden">'
+            f'{html.escape(title)}</caption><thead><tr><th scope="col">Model</th>'
+            '<th scope="col">Family</th><th scope="col">Verdict</th><th scope="col">Edge</th>'
+            f'<th scope="col">Last update</th></tr></thead><tbody>{"".join(rows)}</tbody></table>'
+            '</div></details>')
+
+
+def _mu_event_row(ev: dict, linkable: set) -> str:
+    """One timetable row. Lean markup on purpose (481 rows today): the column
+    styles key off the cell position, the filters off four data attributes,
+    and the search off the Model cell's own text."""
+    legs = [lg for lg in ev.get("legs") or [] if lg.get("role") == "headline"]
+    st = ev.get("statistic")
+    d = next((lg.get("digits") for lg in legs if isinstance(lg.get("digits"), int)), None)
+    layer = ev.get("layer") or ""
+    mid = ev.get("model_id")
+    name = ev.get("label") or ev.get("family") or "-"
+    if mid in linkable:
+        who = f'<a href="#model={html.escape(mid)}">{html.escape(name)}</a>'
+    elif mid in _MU_EFV_IDS:
+        who = f'<a href="#model=efv_v2">{html.escape(name)}</a>'
+    else:
+        who = html.escape(name)
+    tag = _MU_LAYER_TAG.get(layer) if layer != "registration" else None
+    change = html.escape(ev.get("change") or "") + (
+        f' <span class="mu-tag">{html.escape(tag)}</span>' if tag else "")
+    bench = ev.get("benchmark") or {}
+    parts = [bench.get("label") or ""]
+    if _mu_isnum(bench.get("value")):
+        parts.append(_mu_fmt(bench.get("value"), d))
+    bench_txt = " ".join(x for x in parts if x) or "-"
+    if legs and all(_mu_isnum(lg.get("delta")) for lg in legs):
+        edge_c = _mu_legs_html(legs, lambda lg: html.escape(lg.get("edge_text") or "-"))
+        int_c = _mu_legs_html(legs, lambda lg: html.escape(_mu_interval(lg, lg.get("digits"))))
+    else:
+        edge_c = html.escape((ev.get("edge") or {}).get("text") or "-")
+        int_c = "-"
+    attrs = (f' data-f="{html.escape(ev.get("family") or "")}"'
+             f' data-k="{html.escape(_MU_KIND_OF.get(ev.get("kind"), ev.get("kind") or ""))}"'
+             + (f' data-l="{html.escape(layer)}"' if layer != "headline" else "")
+             + ("" if ev.get("served") else ' data-s="0"')
+             + ("" if ev.get("default_view") else " hidden"))
+    return (
+        f'<tr{attrs}><td><time datetime="{html.escape((ev.get("sort_date") or "")[:10])}">'
+        f'{html.escape(ev.get("date") or "")}</time></td>'
+        f'<th scope="row">{who}</th><td>{change}</td><td>{_mu_statistic(st, d)}</td>'
+        f'<td>{html.escape(bench_txt)}</td><td>{edge_c}</td>'
+        f'<td>{_mu_n((st or {}).get("n"))}</td><td>{int_c}</td>'
+        f'<td>{_mu_source(ev.get("source") or {}, legs)}</td></tr>')
+
+
+def build_model_updates() -> str:
+    """/models/updates/ - Model Updates: where each served model stands
+    against its benchmark, and the dated timetable of every model update."""
+    import model_updates as MU
+    doc = MU.load() or {}
+    models = list(doc.get("models") or [])
+    events = list(doc.get("events") or [])
+    fam_rank = {f: i for i, f in enumerate(doc.get("families") or [])}
+    served = [m for m in models if m.get("served")]
+    scored = [m for m in served if m.get("state") in _MU_SCORED_STATES and m.get("today")]
+    scored_ids = {m["model_id"] for m in scored}
+    # Scored first: family order, eFV pinned at the top, latest update first
+    # within a family.
+    scored = _mu_latest_first(scored)
+    scored.sort(key=lambda m: (fam_rank.get(m.get("family"), 99), m["model_id"] != "efv_v2"))
+    linkable = {m["model_id"] for m in models}
+
+    body_rows, fam = [], None
+    for m in scored:
+        if m.get("family") != fam:
+            if fam is not None:
+                body_rows.append("</tbody>")
+            fam = m.get("family")
+            body_rows.append(f'<tbody><tr class="mu-famrow"><th scope="rowgroup" colspan="{_MU_STAND_COLS}">'
+                             f'{html.escape(fam or "-")}</th></tr>')
+        row, sub, drawer = _mu_stand_row(m, _mu_events_of(m, events))
+        body_rows.append(row + sub + drawer)
+    if fam is not None:
+        body_rows.append("</tbody>")
+    stands = (
+        '<div class="mu-scroll"><table class="mu-table mu-stands">'
+        '<caption class="visually-hidden">Where each scored model stands against its benchmark</caption>'
+        '<thead><tr><th scope="col">Model</th><th scope="col">Scored on</th><th scope="col">Benchmark</th>'
+        '<th scope="col">Edge</th><th scope="col" class="num">n</th><th scope="col" class="num">Interval</th>'
+        '<th scope="col">Last update</th><th scope="col">History</th></tr></thead>'
+        + "".join(body_rows) + "</table></div>")
+
+    latest_first = _mu_latest_first
+    folds = []
+    for state, title in _MU_FOLDS:
+        ms = [m for m in served if m["model_id"] not in scored_ids and m.get("state") == state]
+        if ms:
+            folds.append(_mu_fold_table(title, latest_first(ms), events))
+    other = [m for m in served if m["model_id"] not in scored_ids
+             and m.get("state") not in {s for s, _t in _MU_FOLDS}]
+    if other:
+        folds.append(_mu_fold_table("Other states", latest_first(other), events))
+    dev = [m for m in models if not m.get("served")]
+    dev_fold = _mu_fold_table("Development models, not served", latest_first(dev), events) if dev else ""
+
+    # The timetable: newest first, append order breaking ties the newest way.
+    order = sorted(range(len(events)),
+                   key=lambda i: (events[i].get("sort_date") or "", i), reverse=True)
+    ev_rows = "".join(_mu_event_row(events[i], linkable) for i in order)
+    n_default = sum(1 for e in events if e.get("default_view"))
+    fams = sorted({e.get("family") for e in events if e.get("family")},
+                  key=lambda f: (fam_rank.get(f, 99), f))
+    chip = ('<button class="chip{on}" type="button" aria-pressed="{p}" {attr}="{key}">'
+            '{label}</button>')
+    fam_chips = chip.format(on=" active", p="true", attr="data-mu-fam", key="all",
+                            label="All families") + "".join(
+        chip.format(on="", p="false", attr="data-mu-fam", key=html.escape(f), label=html.escape(f))
+        for f in fams)
+    kind_chips = chip.format(on=" active", p="true", attr="data-mu-kind", key="all",
+                             label="All changes") + "".join(
+        chip.format(on="", p="false", attr="data-mu-kind", key=k, label=html.escape(lab))
+        for k, lab, _ks in _MU_KIND_CHIPS)
+    tog_n = {lay: sum(1 for e in events if not e.get("default_view")
+                      and (e.get("layer") == lay or (lay == "development" and not e.get("served")
+                                                     and e.get("layer") in ("headline", "secondary"))))
+             for lay, _l in _MU_TOGGLES}
+    toggles = "".join(
+        f'<button class="chip mu-tog" type="button" aria-pressed="false" data-mu-layer="{lay}">'
+        f'{html.escape(lab)} <span class="mu-count">{tog_n[lay]}</span></button>'
+        for lay, lab in _MU_TOGGLES)
+
+    sources = doc.get("sources") or []
+    own = {MU.REGISTRY_REL, MU.PROGRESS_REL, MU.TYPED_REL}
+    n_art = sum(1 for s in sources if s.get("path") not in own)
+    gen_day = (doc.get("generated_at") or "")[:10]
+    stamp = (f"Updated {gen_day} from the model registry, the eFV progress ledger and "
+             f"{_mu_plural(n_art, 'eval artifact')}.")
+    sc_href = "/glossary/#view=source-comparison"
+    body = (
+        f'<link rel="stylesheet" href="/assets/model_updates.css?v={_MU_CSS_VER}">'
+        '<noscript><style>.mu-app .mu-drawer[hidden]{display:table-row}'
+        '.mu-app .mu-filter-btn,.mu-app .mu-bar{display:none}</style></noscript>'
+        f'<div class="fa-app mu-app" data-mu-total="{len(events)}">'
+        '<div class="section-head section-head--byline"><div class="section-head-titles">'
+        f'<h1>{_masthead_icon("models")}Model Updates</h1></div>'
+        '<span class="section-sub">Every model update on record, with the statistic it is scored on '
+        'and where it stands against its benchmark.</span>'
+        f'<span class="mu-stamp">{html.escape(stamp)}</span></div>'
+        '<section class="mu-sec" aria-labelledby="mu-h-stands">'
+        '<div class="section-head"><h2 id="mu-h-stands">Where each model stands</h2>'
+        f'<span class="section-sub">{len(served)} served models, {len(scored)} scored</span></div>'
+        '<p class="mu-intro">One row per served model, the scored ones first. A lead prints only when '
+        'the interval clears zero, a one-sided paired t reaches 1.645, or, with neither on record, '
+        "the gap clears the artifact's detection floor; a covered interval prints tie.</p>"
+        f"{stands}{''.join(folds)}{dev_fold}</section>"
+        '<section class="mu-sec" aria-labelledby="mu-h-time">'
+        '<div class="section-head"><h2 id="mu-h-time">Timetable</h2>'
+        f'<span class="section-sub">{n_default} updates in the default view, {len(events)} on record</span></div>'
+        '<p class="mu-intro">Newest first. An improvement prints only when the rows are the same; '
+        'a change in rows is labelled.</p>'
+        '<button class="chip mu-filter-btn" type="button" aria-expanded="false" '
+        'aria-controls="mu-bar">Filter</button>'
+        '<div class="mu-bar" id="mu-bar">'
+        f'<div class="filter-bar" role="group" aria-label="Family">{fam_chips}</div>'
+        f'<div class="filter-bar" role="group" aria-label="Change">{kind_chips}</div>'
+        f'<div class="filter-bar" role="group" aria-label="Show">{toggles}'
+        '<input class="mu-search" id="mu-q" type="search" placeholder="Search model names" '
+        'aria-label="Search model names" autocomplete="off"></div></div>'
+        f'<p class="mu-status" id="mu-status" aria-live="polite">Showing {n_default} of {len(events)} updates.</p>'
+        '<div id="mu-empty"></div>'
+        '<div class="mu-scroll"><table class="mu-table mu-time">'
+        '<caption class="visually-hidden">Timetable of model updates, newest first</caption>'
+        '<thead><tr><th scope="col">Date</th><th scope="col">Model</th><th scope="col">What changed</th>'
+        '<th scope="col">Statistic</th><th scope="col">Benchmark</th><th scope="col">Edge</th>'
+        '<th scope="col" class="num">n</th><th scope="col" class="num">Interval</th>'
+        f'<th scope="col">Source</th></tr></thead><tbody id="mu-rows">{ev_rows}</tbody></table></div>'
+        '</section>'
+        f'<p class="mu-foot">The eFV story in full: <a href="{sc_href}">Source Comparison</a>. '
+        f'Each model\'s full row and its verdict: <a href="/models/">{PAGE_LABELS["/models/"]}</a>.</p>'
+        '</div>'
+        f'<script src="/assets/model_updates.js?v={_MU_VER}" defer></script>'
+    )
+    return page("Model Updates - eephus.io", "models", body,
+                "Every eephus.io model update on record: the statistic each model is scored on, "
+                "before and after, and its edge over the benchmark it is trying to beat.",
+                url=f"{SITE_ORIGIN}/models/updates/")
 
 # The Library's shelves and leaves (LIBRARY_3, plan section 3.1), in strip
 # order. This is the Python half of ONE view registry: VIEWS in
@@ -7724,6 +8323,7 @@ def sitemap_pages() -> list[tuple]:
         ("/hof/", "weekly", "0.6"),
         ("/management/", "weekly", "0.6"),
         ("/models/", "daily", "0.6"),
+        ("/models/updates/", "daily", "0.6"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
         ("/glossary/", "weekly", "0.7"),
@@ -8575,6 +9175,7 @@ def main() -> None:
     else:
         write_scores_page()
     _write("models/index.html", build_models())
+    _write("models/updates/index.html", build_model_updates())
     _write("glossary/index.html", build_glossary())
     _write("library/index.html", build_library_redirect())
     _write("team/index.html", build_team())
