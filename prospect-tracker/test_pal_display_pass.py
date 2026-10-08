@@ -67,3 +67,88 @@ def test_sub_view_strips_are_tabs_that_name_their_panel():
 def test_the_row_fit_term_keeps_its_hook_and_leaves_the_tab_order():
     fit = PAL_JS[PAL_JS.index("function fitCell"):PAL_JS.index("function dirClass")]
     assert 'data-gl="' in fit and 'tabindex="-1"' in fit
+
+
+# ---- QREP10 -----------------------------------------------------------------
+DATA = ROOT / "data"
+
+
+def _load(name):
+    p = DATA / name
+    if not p.exists():
+        pytest.skip(f"data/{name} not built in this tree")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def test_the_page_core_and_tab_files_reassemble_the_artifact():
+    import pal_export as P
+    full = _load("pal.json")
+    core = _load("pal_core.json")
+    assert not set(core) & P.CORE_EXCLUDE, "a row block rode into the boot core"
+    built = dict(core)
+    for name, fname, keys in P.PAGE_SIDECARS:
+        side = _load(fname)
+        assert side.get("generated_at") == full.get("generated_at"), name
+        for k in keys:
+            built[k] = side[k]
+    full.pop("prospect_watch_all", None)
+    assert built == full
+
+
+def test_the_artifact_is_compact_and_the_boot_core_is_small():
+    for name in ("pal.json", "pal_core.json"):
+        if not (DATA / name).exists():
+            pytest.skip(f"data/{name} not built in this tree")
+    assert b'{"generated_at":' == (DATA / "pal.json").read_bytes()[:16], "pal.json is pretty-printed again"
+    assert (DATA / "pal_core.json").stat().st_size < 20_000
+
+
+def test_the_page_names_every_tab_file_the_exporter_writes():
+    import pal_export as P
+    urls = set(re.findall(r'"/data/(pal_[a-z0-9_]+)\.json"', PAL_JS))
+    want = {"pal_core"} | {f[:-5] for _, f, _k in P.PAGE_SIDECARS}
+    assert want <= urls, want - urls
+
+
+def _record_fetches(hash_):
+    """Render with a fetch stub that answers each split file with only its own
+    keys and records every URL asked for."""
+    from py_mini_racer import MiniRacer
+    import test_pal_smoke as S
+    import pal_export as P
+    sample = json.loads(S.SAMPLE)
+    files = {"/data/pal_core.json": {k: v for k, v in sample.items() if k not in P.CORE_EXCLUDE},
+             "/data/pal.json": sample}
+    for name, fname, keys in P.PAGE_SIDECARS:
+        files["/data/" + fname] = {k: sample.get(k, []) for k in keys}
+    stub = ("var __urls=[]; var __files=" + json.dumps(files) + ";"
+            "var fetch=function(u){__urls.push(u); var j=__files[u];"
+            "return FT({ok:true,json:function(){return FT(j===undefined?{}:j);}});};")
+    ctx = MiniRacer()
+    ctx.eval(S._prelude(hash_) + stub + S.JS)
+    return json.loads(ctx.eval("JSON.stringify(__urls)")), ctx.eval("__html['pal-app-root'] || ''")
+
+
+def test_the_default_tab_boots_on_the_core_and_its_own_rows():
+    pytest.importorskip("py_mini_racer")
+    urls, html = _record_fetches("")
+    data = [u for u in urls if u.startswith("/data/pal")]
+    assert data == ["/data/pal_core.json", "/data/pal_sp2rp.json"], data
+    assert "Power Starter" in html
+
+
+def test_a_card_tab_reads_only_its_own_rows():
+    pytest.importorskip("py_mini_racer")
+    urls, html = _record_fetches("#prospects")
+    data = [u for u in urls if u.startswith("/data/pal")]
+    assert data == ["/data/pal_core.json", "/data/pal_prospect_watch.json"], data
+    assert "Thin Starter Prospect" in html
+
+
+# ---- QREC14 -----------------------------------------------------------------
+def test_the_disclaimer_says_backtest_code_not_harness():
+    import pal_export as P
+    text = P._disclaimer({}, None)
+    assert "the same repaired backtest code" in text and "harness" not in text
+    served = (_load("pal.json").get("backtest") or {}).get("disclaimer") or ""
+    assert "harness" not in served and "repaired backtest code" in served

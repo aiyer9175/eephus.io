@@ -28,7 +28,27 @@
 (function () {
   "use strict";
 
-  var DATA_URL = "/data/pal.json";
+  // PAYLOAD FILES (QREP10, 2026-10-08). The core carries every rule, verdict
+  // and backtest block and no rows; each pitcher tab's rows ride their own
+  // file, fetched the first time the tab opens. The whole artifact is read
+  // only when a split file cannot be had (a deploy that predates the split).
+  var CORE_URL = "/data/pal_core.json";
+  var FULL_URL = "/data/pal.json";
+  var BLOCK_URL = {
+    rp2sp: "/data/pal_rp2sp.json",
+    sp2rp: "/data/pal_sp2rp.json",
+    history: "/data/pal_history.json",
+    pitchadd: "/data/pal_pitch_add.json",
+    platoon: "/data/pal_reverse_platoon.json",
+    prospects: "/data/pal_prospect_watch.json"
+  };
+  // the payload keys each section reads off its row file
+  var BLOCK_KEYS = {
+    rp2sp: ["rp2sp"], sp2rp: ["sp2rp"], history: ["history", "pitch_mix_changes"],
+    pitchadd: ["pitch_add"], platoon: ["reverse_platoon"], prospects: ["prospect_watch"]
+  };
+  var BLOCK_LOADING = {};
+  var BLOCK_ERROR = {};
   var DATA = null;
   var LOAD_ERROR = false;    // fetch failed / non-OK (distinct from "not exported yet")
   var LOADING = false;       // the payload is in flight: the lamp loader, not the computing note
@@ -1587,6 +1607,19 @@
       if (retry) retry.addEventListener("click", function () { load(); });
       return;
     }
+    if (!hasBlock(section)) {
+      ensureBlock(section);
+      if (hasBlock(section)) return;   // answered at once: that render already painted
+      root.innerHTML = BLOCK_ERROR[section]
+        ? pxState("failed", "This tab's rows failed to load. "
+          + '<button type="button" class="chip" id="pal-block-retry">Retry</button>', "pal-load-error")
+        : pxState("loading", esc("Loading…"));
+      var bretry = document.getElementById("pal-block-retry");
+      if (bretry) bretry.addEventListener("click", function () {
+        BLOCK_ERROR[section] = false; render();
+      });
+      return;
+    }
     root.innerHTML = (section === "sp2rp") ? renderSP2RP() : (section === "history") ? renderHistory()
       : (section === "pitchadd") ? renderPitchAdd() : (section === "platoon") ? renderPlatoon()
       : (section === "prospects") ? renderProspects() : renderRP2SP();
@@ -1712,14 +1745,39 @@
   // sets LOAD_ERROR so render() paints the error state (with a Retry button)
   // instead of a blank/"computing" page. While the fetch is in flight render()
   // paints the lamp loader, so the first paint is the loading kind.
+  function fetchJSON(url) {
+    return fetch(url, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+  }
   function load() {
     LOAD_ERROR = false;
     LOADING = true;
     render();
-    fetch(DATA_URL, { cache: "no-cache" })
-      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    fetchJSON(CORE_URL)
+      .catch(function () { return fetchJSON(FULL_URL); })
       .then(function (j) { LOADING = false; DATA = j; render(); })
       .catch(function () { LOADING = false; DATA = null; LOAD_ERROR = true; render(); });
+  }
+  // true when every key the section reads is on hand (the whole artifact, or
+  // the core plus this section's row file)
+  function hasBlock(s) {
+    var ks = BLOCK_KEYS[s];
+    if (!ks) return true;
+    if (!DATA) return false;
+    for (var i = 0; i < ks.length; i++) if (!Array.isArray(DATA[ks[i]])) return false;
+    return true;
+  }
+  function ensureBlock(s) {
+    if (!DATA || hasBlock(s) || BLOCK_LOADING[s] || BLOCK_ERROR[s]) return;
+    BLOCK_LOADING[s] = true;
+    fetchJSON(BLOCK_URL[s])
+      .catch(function () { return fetchJSON(FULL_URL); })
+      .then(function (j) {
+        BLOCK_LOADING[s] = false;
+        BLOCK_KEYS[s].forEach(function (k) { DATA[k] = (j && Array.isArray(j[k])) ? j[k] : []; });
+        render();
+      })
+      .catch(function () { BLOCK_LOADING[s] = false; BLOCK_ERROR[s] = true; render(); });
   }
 
   function init() {
