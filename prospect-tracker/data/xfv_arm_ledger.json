@@ -1,20 +1,21 @@
 {
- "generated_at": "2026-10-08T17:41:39+00:00",
+ "generated_at": "2026-10-08T18:09:09+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
- "n_arms": 392,
+ "n_arms": 398,
  "by_lane": {
   "Z1 driver re-test (fWAR label)": 312,
   "free _vec keys (D-1)": 26,
   "V2 assembly admission (list vintages)": 20,
   "tools_json _extras arms (D-2)": 13,
   "admission rule (DS-06)": 12,
+  "screening lab wave 1": 6,
   "pre-registered pairs": 5,
   "handedness sidecar": 2,
   "stolen-base rate": 1,
   "wRC+ add arm": 1
  },
  "by_verdict": {
-  "NULL": 312,
+  "NULL": 318,
   "NO_STORED_VERDICT": 48,
   "REFUSED": 24,
   "ADMITTED": 8
@@ -1346,6 +1347,188 @@
    "admitted": false,
    "head": "timing",
    "reason": "sign flipped between training vintages"
+  },
+  {
+   "lane": "screening lab wave 1",
+   "artifact": "xfv_screen_wave1.json",
+   "arm": "SCREEN-W1:both.coverage.milb_floor_2005",
+   "verdict": "NULL",
+   "delta_rho": 0.00358,
+   "side": null,
+   "floor_rho": 0.0042,
+   "cleared_own_floor": false,
+   "generated_at": "2026-10-08T18:01:30Z",
+   "per_vintage_signs": null,
+   "head": null
+  },
+  {
+   "lane": "screening lab wave 1",
+   "artifact": "xfv_screen_wave1.json",
+   "arm": "SCREEN-W1:hit.timing.pick_overall_time_hit",
+   "verdict": "NULL",
+   "delta_rho": 0.0,
+   "side": "hit",
+   "floor_rho": 0.0009,
+   "cleared_own_floor": false,
+   "generated_at": "2026-10-08T18:01:30Z",
+   "per_vintage_signs": {
+    "2017": {
+     "2012": -1,
+     "2013": -1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1
+    },
+    "2018": {
+     "2012": -1,
+     "2013": -1,
+     "2014": -1,
+     "2015": 1,
+     "2016": 1,
+     "2017": -1
+    },
+    "2019": {
+     "2012": -1,
+     "2013": -1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": 1
+    }
+   },
+   "head": "timing"
+  },
+  {
+   "lane": "screening lab wave 1",
+   "artifact": "xfv_screen_wave1.json",
+   "arm": "SCREEN-W1:hit.timing.txt_time_hit",
+   "verdict": "NULL",
+   "delta_rho": -0.00308,
+   "side": "hit",
+   "floor_rho": 0.0009,
+   "cleared_own_floor": false,
+   "generated_at": "2026-10-08T18:01:30Z",
+   "per_vintage_signs": {
+    "2017": {
+     "2014": 1,
+     "2015": 1,
+     "2016": 1
+    },
+    "2018": {
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1
+    },
+    "2019": {
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": 1
+    }
+   },
+   "head": "timing"
+  },
+  {
+   "lane": "screening lab wave 1",
+   "artifact": "xfv_screen_wave1.json",
+   "arm": "SCREEN-W1:pit.skill.txt_skill_pit",
+   "verdict": "NULL",
+   "delta_rho": 0.0,
+   "side": "pit",
+   "floor_rho": 0.0075,
+   "cleared_own_floor": false,
+   "generated_at": "2026-10-08T18:01:30Z",
+   "per_vintage_signs": {
+    "2017": {
+     "2015": -1,
+     "2016": -1
+    },
+    "2018": {
+     "2015": -1,
+     "2016": -1,
+     "2017": 1
+    },
+    "2019": {
+     "2015": 1,
+     "2016": -1,
+     "2017": 1,
+     "2018": 1
+    }
+   },
+   "head": "skill"
+  },
+  {
+   "lane": "screening lab wave 1",
+   "artifact": "xfv_screen_wave1.json",
+   "arm": "SCREEN-W1:pit.timing.pick_overall_time_pit",
+   "verdict": "NULL",
+   "delta_rho": 0.0,
+   "side": "pit",
+   "floor_rho": 0.0003,
+   "cleared_own_floor": false,
+   "generated_at": "2026-10-08T18:01:30Z",
+   "per_vintage_signs": {
+    "2017": {
+     "2012": 1,
+     "2013": -1,
+     "2014": 1,
+     "2015": -1,
+     "2016": 1
+    },
+    "2018": {
+     "2012": -1,
+     "2013": -1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": -1
+    },
+    "2019": {
+     "2012": -1,
+     "2013": -1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": -1,
+     "2018": 1
+    }
+   },
+   "head": "timing"
+  },
+  {
+   "lane": "screening lab wave 1",
+   "artifact": "xfv_screen_wave1.json",
+   "arm": "SCREEN-W1:pit.timing.txt_time_pit",
+   "verdict": "NULL",
+   "delta_rho": -0.0001,
+   "side": "pit",
+   "floor_rho": 0.0003,
+   "cleared_own_floor": false,
+   "generated_at": "2026-10-08T18:01:30Z",
+   "per_vintage_signs": {
+    "2017": {
+     "2014": 1,
+     "2015": 1,
+     "2016": 1
+    },
+    "2018": {
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1
+    },
+    "2019": {
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": 1
+    }
+   },
+   "head": "timing"
   },
   {
    "lane": "Z1 driver re-test (fWAR label)",
@@ -5371,19 +5554,13 @@
  "n_probes": 49,
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
- "sources_pending": [
-  {
-   "artifact": "xfv_screen_wave1.json",
-   "why": "registered; producer has not run",
-   "lane": "screening lab wave 1"
-  }
- ],
- "expected_spurious_passes_at_nominal_5pct": 19.6,
- "n_scoreable_against_a_floor": 351,
+ "sources_pending": [],
+ "expected_spurious_passes_at_nominal_5pct": 19.9,
+ "n_scoreable_against_a_floor": 357,
  "n_cleared_own_floor": 0,
  "cleared_own_floor": [],
  "cleared_is_the_weakest_bar": "`cleared_own_floor` compares the point delta to the lane's recorded rho floor and nothing else. It is not a verdict: a verdict needs the Holm correction across that lane's family, and for anything gated after 2026-09-06 the co-primary contributor-AUC leg as well. It is published because the count of arms that reached even this bar is the honest way to describe the program's yield.",
- "reading": "392 arms have been adjudicated across 9 lanes, 351 of them scoreable against a recorded floor, and 0 reached that floor on the point estimate. At a nominal 5% per arm, pure noise alone would be expected to produce about 19.6 passes across 392 arms. Fewer arms cleared than noise alone would produce, which says the per-lane floors are, if anything, conservative, and that the program's run of nulls is a real result rather than a reporting artifact. Every lane's own Holm correction is correct and controls the error rate WITHIN that lane; nothing has ever controlled it across lanes, because until now nothing counted them. Read any survivor against this denominator.",
+ "reading": "398 arms have been adjudicated across 10 lanes, 357 of them scoreable against a recorded floor, and 0 reached that floor on the point estimate. At a nominal 5% per arm, pure noise alone would be expected to produce about 19.9 passes across 398 arms. Fewer arms cleared than noise alone would produce, which says the per-lane floors are, if anything, conservative, and that the program's run of nulls is a real result rather than a reporting artifact. Every lane's own Holm correction is correct and controls the error rate WITHIN that lane; nothing has ever controlled it across lanes, because until now nothing counted them. Read any survivor against this denominator.",
  "this_is_not_a_correction": "no program-wide Holm is applied and none should be. The arms were gated on different frames, pools and label definitions, so a retrospective joint family would imply a structure that never existed. The count makes the denominator visible; the reserved 2025 fold is what actually buys confirmation.",
  "reserved_fold": {
   "cohort": "2025 base year",

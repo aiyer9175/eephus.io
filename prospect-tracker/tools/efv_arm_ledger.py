@@ -72,8 +72,9 @@ SOURCES: tuple[tuple[str, str, str], ...] = (
 #: Sources registered before their producer's registered run. Absent, they are listed
 #: under `sources_pending` (a lane that has not run yet), not `sources_missing` (a lane
 #: the count cannot see); present, they are read like any other. The producer's
-#: registered run removes the name here in its own commit.
-PENDING: frozenset[str] = frozenset({"xfv_screen_wave1.json"})
+#: registered run removes the name here in its own commit (xfv_screen_wave1.json left
+#: with EFV3_B7's registered run, 2026-10-08).
+PENDING: frozenset[str] = frozenset()
 
 #: Development probes that are NOT feature arms: validity reads (a label-balance
 #: screen, a leak regression). Counted and listed apart, like sweeps, and never summed

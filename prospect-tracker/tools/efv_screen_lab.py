@@ -100,9 +100,10 @@ not re-run; pick_overall runs only under its re-test name; seasons_at_level is n
 arm (owner DS-Q2); no lambda, no correction family, no vm_dev screening.
 
 OUTPUT. --out PATH (default data/xfv_screen_wave1.json): registration_echo, label,
-guards, floors, arms[], holm, probes[]. When --out is under data/ the arm ledger and
-the progress ledger are regenerated (tools/efv_arm_ledger.py, efv_progress.update);
-when it is outside data/ nothing else is written. --floors-only runs steps 1 and 2
+guards, floors, arms[], holm, probes[]. When --out is under data/ the arm ledger is
+regenerated (tools/efv_arm_ledger.py) and the lab's own rows join the progress ledger
+(efv_progress.update_screening: the screening rows alone, never a served row, which
+the nightly's update() owns); when it is outside data/ nothing else is written. --floors-only runs steps 1 and 2
 (frame, floors) with no candidate.
 
 Run:  python tools/efv_screen_lab.py --check
@@ -1536,6 +1537,14 @@ def write_doc(doc: dict, out: Path) -> None:
     tmp.replace(out)
 
 
+def verdict_line(tag: str, verdict: str | None) -> str:
+    """One console line per arm. An arm that was never measured carries no verdict
+    (None); it prints as such instead of failing the echo after the artifact is
+    written (the registered run of 2026-10-08 hit that: the artifact was complete,
+    the echo raised on the withheld arm)."""
+    return f"  {(verdict or 'no verdict (not measured)'):32s} {tag}"
+
+
 def real_frame(*, folds=FOLDS) -> tuple[Frame, dict]:
     """The lv_dev Frame on the tree's data: frames with sidecars (efv_v2_assemble),
     labels, the registration's weights, the absence admission per side."""
@@ -1588,12 +1597,12 @@ def main(argv=None) -> int:
     print(f"wrote {out} ({doc['n_measured']} of {doc['n_arms']} arms measured, "
           f"{doc['elapsed_s']} s)")
     for tag, v in doc["verdicts"].items():
-        print(f"  {v:32s} {tag}")
+        print(verdict_line(tag, v))
     if under and not a.no_ledger and not a.floors_only:
         import efv_arm_ledger
         import efv_progress
         efv_arm_ledger.main([])
-        print(efv_progress.summary_line(efv_progress.update(trigger="efv_change")))
+        print(efv_progress.summary_line(efv_progress.update_screening(trigger="efv_change")))
     return 0
 
 

@@ -442,8 +442,11 @@ def test_the_arm_ledger_reads_the_arm_with_its_own_floor(frame, floors, tmp_path
     import efv_arm_ledger as AL
     monkeypatch.setattr(AL, "DATA", tmp_path)
     led = AL.collect()
-    assert any(p["artifact"] == "xfv_screen_wave1.json" for p in led["sources_pending"])
-    assert not any(m["artifact"] == "xfv_screen_wave1.json" for m in led["sources_missing"])
+    # the registered run (EFV3_B7, 2026-10-08) took the artifact off the PENDING set:
+    # absent, it is now a source the count cannot see, never a lane that has not run
+    assert "xfv_screen_wave1.json" not in AL.PENDING
+    assert not any(p["artifact"] == "xfv_screen_wave1.json" for p in led["sources_pending"])
+    assert any(m["artifact"] == "xfv_screen_wave1.json" for m in led["sources_missing"])
     doc = _artifact(frame, floors)
     (tmp_path / "xfv_screen_wave1.json").write_text(json.dumps(doc), encoding="utf-8")
     led = AL.collect()
@@ -589,3 +592,126 @@ def test_the_coverage_arm_pairs_its_own_two_frames(frame, floors):
     assert all(f["delta"] == 0.0 for f in same["fold_deltas"].values())
     LAB.apply_verdicts([arm, same], m=7, exploratory=True)
     assert arm["verdict"] == same["verdict"] == LAB.EXPLORATORY_VERDICT
+
+
+# ---------------------------------------------------------------------------
+# 7. the registered run (EFV3_B7): the console echo, the lab's own progress rows,
+#    and the committed artifact's contract (label, floors first, the family, the
+#    admitted set behind the flag)
+# ---------------------------------------------------------------------------
+
+REGISTERED = ROOT / "data" / "xfv_screen_wave1.json"
+
+
+def _registered() -> dict:
+    if not REGISTERED.exists():
+        pytest.skip("data/xfv_screen_wave1.json not written (the registered run)")
+    return json.loads(REGISTERED.read_text(encoding="utf-8"))
+
+
+def test_the_echo_prints_an_unmeasured_arm_instead_of_raising():
+    line = LAB.verdict_line("SCREEN-W1:hit.skill.x", None)
+    assert line.strip().startswith("no verdict (not measured)") and line.endswith("SCREEN-W1:hit.skill.x")
+    assert LAB.verdict_line("t", "NULL").strip().startswith("NULL")
+
+
+def test_update_screening_appends_the_labs_rows_alone(frame, floors, tmp_path):
+    doc = _artifact(frame, floors)
+    (tmp_path / P.SCREEN_NAME).write_text(json.dumps(doc), encoding="utf-8")
+    res = P.update_screening(data_dir=tmp_path, trigger="efv_change")
+    assert res["status"] == "ok" and len(res["appended"]) == 1
+    out = json.loads((tmp_path / "efv_progress.json").read_text(encoding="utf-8"))
+    rows = out["rows"]
+    assert len(rows) == 1 and rows[0]["model_id"].startswith(P.SCREEN_MODEL_PREFIX)
+    assert rows[0]["screening"]["exploratory"] is False and rows[0]["frame"] == "lv_dev"
+    # a second call appends nothing (same content); an exploratory artifact lands no row
+    again = P.update_screening(data_dir=tmp_path, trigger="efv_change")
+    assert again["appended"] == [] and again["n_rows"] == 1
+    (tmp_path / P.SCREEN_NAME).write_text(json.dumps(_artifact(frame, floors, exploratory=True)),
+                                          encoding="utf-8")
+    assert P.update_screening(data_dir=tmp_path).get("appended") == []
+
+
+def test_the_registered_artifact_reads_the_frozen_label_and_forms_its_verdicts():
+    doc = _registered()
+    text = REGISTERED.read_text(encoding="utf-8")
+    lab = doc["label"]
+    assert lab["provider"] == "fwar" and str(lab["id"]).startswith("fwar@")
+    assert "ewar" not in str(lab["id"]) and lab["id"] == f"fwar@{lab['id'][5:]}"
+    assert doc["exploratory"] is False and doc["role"] == "development"
+    assert doc["adjudicates"] is False and doc["selects"] is False
+    # the reserved ninth string is named in the echo as vocabulary and carried by no arm
+    assert LAB.EXPLORATORY_VERDICT not in set(doc["verdicts"].values())
+    assert all(a["verdict"] != LAB.EXPLORATORY_VERDICT for a in doc["arms"])
+    # floors before any arm, in the file as written
+    assert doc["floors_derived_before_arms"] is True
+    assert text.index('"floors"') < text.index('"arms"')
+    assert doc["floors"]["mode"] == LAB.FLOOR_MODE_DEFAULT and "floors_other" in doc
+    # the family is the registered wave: m equals the arm count equals the frozen list
+    echo = doc["registration_echo"]
+    assert echo["frozen_commit"] == LAB.FROZEN_COMMIT
+    assert [a["name"] for a in doc["arms"]] == [c["name"] for c in LAB.CANDIDATES]
+    assert doc["holm"]["m"] == echo["family_size"] == doc["n_arms"] == len(doc["arms"]) == 7
+    assert doc["holm"]["formed_after_every_arm"] is True
+    assert set(doc["holm"]["rows"]) == {a["tag"] for a in doc["arms"]}
+    for a in doc["arms"]:
+        if a["measured"]:
+            assert a["verdict"] in LAB.VERDICTS, a["name"]
+            assert a["screening"]["exploratory"] is False
+            assert a["within"]["floor"] is not None and a["within"]["p_perm"] is not None
+        else:
+            assert a["verdict"] is None and a["unavailable"]
+    # the guards and the base it was read against (P5)
+    g = doc["guards"]
+    assert g["reserved_vm_pins"] == [] and g["lv_folds"] == [2017, 2018, 2019]
+    assert g["vm_dev_screened"] is False and g["closed_arms_rerun"] is False
+    assert doc["assembly_sha256"] == LAB._sha(ROOT / "data" / "efv_v2_assembly.json")
+    assert doc["weights"] == H.load_weights()
+
+
+def test_an_admitted_arm_enters_the_model_only_behind_the_flag():
+    import hashlib
+    doc = _registered()
+    assert H.V2_SCREEN_CANDIDATES_ON is False
+    admitted = [a for a in doc["arms"] if a["verdict"] == "PASS"]
+    for a in admitted:
+        # the twin of an admitted column reads a null: inside its floor
+        assert a["twin"]["inside_floor"] is True, a["name"]
+        keys = H.V2_SCREEN_ADMITTED[a["head"]][a["side"]]
+        assert any(k == f"{H.V2_SCREEN_PREFIX}{a['name']}" for k in keys), a["name"]
+        # the s4.2 amendment names the arm, the head and this artifact's sha256
+        gate = (ROOT / F.GATE_DOC).read_text(encoding="utf-8")
+        s42 = gate.split("### 4.2", 1)[1].split("### 4.3", 1)[0]
+        sha = hashlib.sha256(REGISTERED.read_bytes()).hexdigest()
+        assert a["name"] in s42 and a["head"] in s42 and sha in s42, a["name"]
+    # and nothing is in the admitted set that the run did not admit
+    for head, sides in H.V2_SCREEN_ADMITTED.items():
+        for side, keys in sides.items():
+            for k in keys:
+                assert any(a["verdict"] == "PASS" and a["head"] == head and a["side"] == side
+                           and k == f"{H.V2_SCREEN_PREFIX}{a['name']}" for a in doc["arms"]), k
+    for side in F.SIDES:
+        assert H.screen_admitted("skill", side) == () and H.screen_admitted("timing", side) == ()
+
+
+def test_the_registered_arms_are_on_both_ledgers():
+    doc = _registered()
+    led = json.loads((ROOT / "data" / "xfv_arm_ledger.json").read_text(encoding="utf-8"))
+    mine = {r["arm"]: r for r in led["arms"] if r["artifact"] == "xfv_screen_wave1.json"}
+    measured = {a["tag"]: a for a in doc["arms"] if a["measured"]}
+    assert set(mine) == set(measured) and len(mine) == doc["n_measured"]
+    for tag, r in mine.items():
+        assert r["verdict"] == measured[tag]["verdict"]
+        assert r["delta_rho"] == measured[tag]["within"]["delta"]
+        assert r["floor_rho"] == measured[tag]["floor_rho"]
+    assert not any(p["artifact"] == "xfv_screen_wave1.json" for p in led.get("sources_pending", []))
+    assert not any(m["artifact"] == "xfv_screen_wave1.json" for m in led.get("sources_missing", []))
+    prog = json.loads((ROOT / "data" / "efv_progress.json").read_text(encoding="utf-8"))
+    rows = [r for r in prog["rows"] if str(r["model_id"]).startswith("efv_v2_screen:wave1:")]
+    assert {r["model_id"] for r in rows} == {a["model_id"] for a in measured.values()}
+    for r in rows:
+        assert r["role"] == "development" and r["resolvable"] is None
+        assert r["screening"]["exploratory"] is False
+        assert r["model_version"]["label"] == doc["label"]["id"]
+        assert r["verdict"] == measured[[a["tag"] for a in measured.values()
+                                         if a["model_id"] == r["model_id"]][0]]["verdict"]

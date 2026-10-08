@@ -991,6 +991,34 @@ def update_pricing(data_dir=None, trigger: str = "efv_change", *, out_path=None,
     return res
 
 
+def update_screening(data_dir=None, trigger: str = "efv_change", *, out_path=None,
+                     ledger_path=None, now: datetime | None = None) -> dict:
+    """The screening lab's rows alone (EFV3_B7, tools/efv_screen_lab.py): one development
+    row per measured, non-exploratory arm of the registered artifact, appended when it
+    changed, leaving every other frame's candidates (the served rows among them) to the
+    nightly update(), which builds the same rows. The lab moves no served number, so its
+    registered run appends none."""
+    data_dir, out, led = _paths(data_dir, out_path, ledger_path)
+    now_dt = now or datetime.now(timezone.utc)
+    now_iso = _now_iso(now_dt)
+    path = data_dir / SCREEN_NAME
+    doc = _load_json(path)
+    cands: list[dict] = []
+    for d in screen_arm_docs(doc):
+        cands += build_dev_rows(
+            d, sources=[{"path": _rel(path), "generated_at": doc.get("generated_at"),
+                         "sha256": _sha256(path)}],
+            date=now_dt.date().isoformat(), trigger=trigger, now_iso=now_iso,
+            frames=("lv_dev",), raters=SCREEN_RATERS, deltas=SCREEN_DELTAS,
+            statistic_fields=True)
+    if not cands:
+        return {"appended": [], "status": f"no development rows in {SCREEN_NAME}"}
+    res = commit_rows(cands, data_dir=data_dir, out_path=out, ledger_path=led,
+                      sb=_load_json(data_dir / SB_NAME), now_iso=now_iso)
+    res["status"] = "ok"
+    return res
+
+
 def summary_line(res: dict) -> str:
     """One line for a heartbeat."""
     if res.get("status") != "ok":

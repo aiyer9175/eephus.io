@@ -258,7 +258,13 @@ def test_retest_names_the_closed_arm_in_the_ledger():
     closed = [a for a in arms if a["arm"].startswith(PK.RETEST_OF)]
     assert {a["side"] for a in closed} == {"hit", "pit"}
     assert all(a["cleared_own_floor"] is False for a in closed)
-    assert all("pick_overall_time" not in a["arm"] for a in arms)
+    # the registered run (EFV3_B7, 2026-10-08) put the named re-test on the ledger under
+    # its own name, one arm per side, beside the closed arm and never in its place
+    retest = [a for a in arms if "pick_overall_time" in a["arm"]]
+    assert {a["side"] for a in retest} == {"hit", "pit"} and len(retest) == 2
+    assert all(a["artifact"] == "xfv_screen_wave1.json" for a in retest)
+    assert all(a["verdict"] in ("NULL", "NULL_AUC_ONLY", "NULL_HOLM", "VETO_ON_AUC")
+               and a["cleared_own_floor"] is False for a in retest)
 
 
 # ---------------------------------------------------------------------------
