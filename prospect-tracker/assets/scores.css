@@ -29,6 +29,8 @@
    the day masthead and beside the game head's Follow buttons. SCORES_7b's pixel styles live in
    assets/scores-pixel.css; the bracket art draws inside the bracket chunk's own block. */
 .scores-app [data-hook]:empty { display: none; }
+.scores-app .sp-mast [data-hook="gfx"] { margin: 6px 0 0; }   /* SCORES_7c: the day chip under the dateline, */
+.scores-app .sc-gfx:disabled { opacity: .5; cursor: default; }   /* asleep until the date has a final */
 
 /* buttons: 44 px at phone width (strip chips, tabs, filters) */
 .scores-app .sc-btn {

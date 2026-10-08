@@ -176,6 +176,7 @@ _SCORES_ABOUT_VER = _asset_ver("assets/scores-about.js")   # the lazy About chun
 _SCORES_PREGAME_VER = _asset_ver("assets/scores-pregame.js")   # the pregame context (SCORES_6), eager
 _SCORES_PIXEL_VER = _asset_ver("assets/scores-pixel.js")   # the pixel art (SCORES_7b), eager
 _SCORES_PIXEL_CSS_VER = _asset_ver("assets/scores-pixel.css")
+_SCORES_GFX_VER = _asset_ver("assets/scores-gfx.js")   # the lazy share cards (SCORES_7c)
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
 _AWARDS_VER = _asset_ver("assets/awards.js")
@@ -6716,13 +6717,17 @@ def build_scores() -> str:
     module css, and moves the About view to the lazy assets/scores-about.js,
     named by the mount root's data-about-src. SCORES_7b links the pixel art,
     assets/scores-pixel.css after the module css and the eager
-    assets/scores-pixel.js before scores.js."""
+    assets/scores-pixel.js before scores.js. SCORES_7c names two more lazy
+    chunks on the mount root, the share cards (data-sgfx-src) and the shared
+    GFX modal they open (data-gfx-js), loaded on the first Generate GFX press."""
     body = (
         '<div class="fa-app scores-app">'
         + _scores_module_head("scores")
         + f'<div id="scores-app-root" data-vv="{_SCORES_VIDEO_VER}"'
         f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"'
-        f' data-about-src="/assets/scores-about.js?v={_SCORES_ABOUT_VER}"></div>'
+        f' data-about-src="/assets/scores-about.js?v={_SCORES_ABOUT_VER}"'
+        f' data-sgfx-src="/assets/scores-gfx.js?v={_SCORES_GFX_VER}"'
+        f' data-gfx-js="/assets/eephus-gfx.js?v={_GFX_VER}"></div>'
         # SCORES_6: the site's betting note, printed once wherever the pregame
         # model number renders (plan 9); inert until scores-pregame.js copies it
         f'<template id="scores-betnote">{BETTING_DISCLAIMER}</template>'

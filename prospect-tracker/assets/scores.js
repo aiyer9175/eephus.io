@@ -662,6 +662,10 @@
     }).join("");
     return labelled(ix, "scores_mlb_wp", o, "div", "sc-block-num");
   }
+  // SC7-3: the Generate GFX chip; the cards are a lazy chunk (the root's data-sgfx-src).
+  function gchip(k) {
+    return '<button type="button" class="sc-btn sc-gfx" data-gfx="' + k + '"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>';
+  }
   function vslot(m, k) { return '<div class="sc-v" data-m="' + m + '" data-k="' + k + '"></div>'; }
   function lineupsTab(g) {
     var c = g.card, L = g.lineups || {};
@@ -946,6 +950,10 @@
         app.shown = {};
       }
       stamp();
+      // the chip stands on any date with games and wakes at the first final, so a poll never moves a card
+      var gh = root.querySelector(".sp-mast [data-hook=gfx]"), gn = (doc && doc.games) || [];
+      if (gh && gn.length && !gh.firstChild) gh.innerHTML = gchip("day");
+      if (gh && gh.firstChild) gh.firstChild.disabled = !gn.some(function (c) { return c.state === "final"; });
       var grid = root.querySelector(".sc-grid"), empty = root.querySelector(".sc-empty"), late = root.querySelector(".sc-late");
       var games = (doc && doc.games) || [];
       var known = Object.keys(app.shown).length > 0;
@@ -1054,7 +1062,7 @@
         '<p class="sc-dim">' + esc((c.venue && c.venue.name ? c.venue.name + ", " : "") + startTime(c)) + "</p>" +
         teamsTable(c, 1) + (c.state === "live" && c.sit || c.state === "final" && c.end ? '<div class="sc-sit" data-hook="diamond">' +
         (c.state === "live" ? px(c.sit, "live") : px(c.end, "end") + '<span class="sc-dim">Last play</span>') + "</div>" : "") +
-        '<div class="sc-follows">' + follow + '<div data-hook="gfx"></div></div></header>' +
+        '<div class="sc-follows">' + follow + '<div data-hook="gfx">' + (g && c.state === "final" ? gchip("game") : "") + '</div></div></header>' +
         '<div class="sc-tabs" role="tablist" aria-label="Game sections">' + tabs.map(function (t) {
           return '<button type="button" role="tab" class="sc-tab" id="sc-tab-' + t[0] + '" aria-controls="sc-panel" data-tab="' + t[0] + '" aria-selected="' + (t[0] === tab) + '" tabindex="' + (t[0] === tab ? "0" : "-1") + '">' + t[1] + "</button>";
         }).join("") + '</div><div class="sc-panel" id="sc-panel" role="tabpanel" aria-labelledby="sc-tab-' + tab + '">';
@@ -1113,6 +1121,12 @@
         t.setAttribute("aria-pressed", String(i < 0)); t.textContent = (i < 0 ? "Following " : "Follow ") + code;
       } else if (t.matches(".sc-tab")) {
         location.hash = "#game=" + r.game + "&tab=" + t.getAttribute("data-tab");
+      } else if (t.matches(".sc-gfx")) {
+        var gk = t.getAttribute("data-gfx");
+        app.gx = app.gx || load(root.getAttribute("data-sgfx-src"), "EephusScoresGfx");
+        Promise.all([app.gx, L.date(app.date)]).then(function (a) {
+          a[0].open(root, { mode: gk, date: app.date, day: a[1], game: gk === "game" ? app.game : null });
+        }, function () { app.gx = null; });
       } else if (t.matches(".sc-stretch") || t.matches(".sc-up")) {
         app.focusPk = +t.closest("article").getAttribute("data-pk"); app.scrollY = window.scrollY;
       }
