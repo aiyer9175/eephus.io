@@ -486,7 +486,16 @@ def build_history(recs, panel_rows, ledger, dpw, projections=None) -> dict:
         if not rec or not r.get("salary"):
             continue
         act = _k(r["salary"])
-        pred = _k(rec.get("served"))
+        # NOMINAL DOLLARS, like Actual and MLBTR (owner answer M11-4). The
+        # fold scores in deflated dollars; each prediction is re-inflated by
+        # its own fold's deflator level for that season, salary / actual,
+        # the same factor that deflated the actual it is compared with.
+        # Printing the deflated figure put every 2024-2026 Ours on a 2022
+        # dollar basis beside a nominal Actual, and vs Market inherited it.
+        served = rec.get("served")
+        if served and rec.get("actual") and rec.get("salary"):
+            served = served * float(rec["salary"]) / float(rec["actual"])
+        pred = _k(served)
         swz = _k(swartz.get((int(r["mlbam"]), int(r["season"]))))
         war = r.get("war") or 0.0
         d = dpw.get(str(r["season"])) or dpw.get(r["season"])
@@ -506,6 +515,9 @@ def build_history(recs, panel_rows, ledger, dpw, projections=None) -> dict:
             "rows": "[season, mlbam, name, team, arb_year, actual_usd, "
                     "ours_usd, swartz_usd, ou_mkt_usd, ou_war_usd, war, flags, "
                     "link]",
+            "ours": ("this model's forward-chained prediction in NOMINAL "
+                     "dollars, re-inflated by the deflator its own fold "
+                     "fitted on earlier seasons"),
             "link": ("the name's link token, as the board's h: p:<key> opens "
                      "/projections/#player=<key>, x:<slug> opens "
                      "/prospx/#player=<slug>, null links nothing"),

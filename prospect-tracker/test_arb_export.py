@@ -457,6 +457,23 @@ def test_the_platform_frame_lags_production_and_keeps_the_deflator_input():
         M.attach_frame(rows, panel, "season")
 
 
+def test_history_ours_is_nominal_on_its_own_folds_deflator():
+    """Owner answer M11-4: Ours prints in nominal dollars, each fold's
+    prediction re-inflated by that fold's own deflator level (salary /
+    actual), so it sits on the same basis as Actual and MLBTR."""
+    recs = [{"mlbam": 5, "season": 2025, "served": 1_500_000.0,
+             "actual": 2_000_000.0, "salary": 2_400_000.0}]
+    rows = [{"mlbam": 5, "season": 2025, "salary": 2_400_000.0, "arb_year": 2,
+             "name": "R", "team": "AAA", "war": 1.0,
+             "arb_year_source": "mlbtr_service"}]
+    h = X.build_history(recs, rows, None, {}, projections=[])
+    row = h["rows"][0]
+    assert row[5] == 2_400_000                 # actual, nominal
+    assert row[6] == 1_800_000                 # 1.5M x 2.4M / 2.0M
+    assert row[8] == 600_000                   # vs Market on one basis
+    assert "NOMINAL" in h["field_key"]["ours"]
+
+
 def test_a_first_trip_with_no_salary_on_file_raises_off_the_league_minimum(monkeypatch):
     import arb_dataset as A
     panel = [{"mlbam": 9, "season": 2026, "war": 2.0, "name": "Q", "team": "BBB",

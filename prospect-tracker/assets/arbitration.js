@@ -595,6 +595,8 @@
       "the model expected more, not an underpaid player.</p>";
     var how =
       '<details class="arb-how"><summary>How this works</summary><ul>' +
+      "<li>Every dollar column is nominal. Ours is the model's out-of-sample prediction, re-inflated by " +
+      "the deflator its own fold fitted on earlier seasons.</li>" +
       "<li>vs Market = actual &minus; ours. It sums to about zero by construction.</li>" +
       "<li>vs Value = actual &minus; WAR &times; $/WAR for that season, WAR on the fWAR basis (the " +
       "arbitration model&rsquo;s spine). Arbitration pays below the open market, so it does not sum to zero.</li>" +
