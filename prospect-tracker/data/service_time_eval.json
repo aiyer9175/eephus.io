@@ -1,0 +1,265 @@
+{
+ "model_id": "service_time",
+ "generated_at": "2026-10-08",
+ "produced_by": "python service_time.py --eval --write",
+ "comparator": "MLB Trade Rumors published service time (arbitration projection posts and trackers, data/_labs/arb_ledger.json), service through the end of season class_year - 1",
+ "tolerance": {
+  "registered": "written in service_time.py before the first read",
+  "applied_to": "holdout classes 2025, 2026",
+  "mae_days_max": 20.0,
+  "rounded_year_agreement_min": 0.9,
+  "why_rounded_year": "value_framework.debuted_player_value reads int(round(service years)) as consumed control years"
+ },
+ "passed": true,
+ "verdict": "provisional",
+ "holdout": {
+  "n": 563,
+  "mae_days": 10.21,
+  "median_abs_err_days": 2,
+  "bias_days": -0.53,
+  "exact_agreement": 0.286,
+  "within_5_days": 0.6892,
+  "within_10_days": 0.7886,
+  "within_20_days": 0.881,
+  "same_whole_years": 0.9236,
+  "rounded_year_agreement": 0.9378,
+  "over_172_days_off": 3
+ },
+ "development": {
+  "n": 827,
+  "mae_days": 7.38,
+  "median_abs_err_days": 2,
+  "bias_days": -1.33,
+  "exact_agreement": 0.2757,
+  "within_5_days": 0.7545,
+  "within_10_days": 0.8501,
+  "within_20_days": 0.9141,
+  "same_whole_years": 0.9528,
+  "rounded_year_agreement": 0.9637,
+  "over_172_days_off": 2
+ },
+ "all": {
+  "n": 1390,
+  "mae_days": 8.53,
+  "median_abs_err_days": 2.0,
+  "bias_days": -1.01,
+  "exact_agreement": 0.2799,
+  "within_5_days": 0.7281,
+  "within_10_days": 0.8252,
+  "within_20_days": 0.9007,
+  "same_whole_years": 0.941,
+  "rounded_year_agreement": 0.9532,
+  "over_172_days_off": 5
+ },
+ "by_class": {
+  "2022": {
+   "n": 230,
+   "mae_days": 5.82,
+   "median_abs_err_days": 1.0,
+   "bias_days": -2.78,
+   "exact_agreement": 0.2826,
+   "within_5_days": 0.8348,
+   "within_10_days": 0.913,
+   "within_20_days": 0.9391,
+   "same_whole_years": 0.9609,
+   "rounded_year_agreement": 0.9652,
+   "over_172_days_off": 1
+  },
+  "2023": {
+   "n": 302,
+   "mae_days": 7.05,
+   "median_abs_err_days": 1.0,
+   "bias_days": -1.13,
+   "exact_agreement": 0.298,
+   "within_5_days": 0.755,
+   "within_10_days": 0.851,
+   "within_20_days": 0.9305,
+   "same_whole_years": 0.9536,
+   "rounded_year_agreement": 0.9669,
+   "over_172_days_off": 1
+  },
+  "2024": {
+   "n": 295,
+   "mae_days": 8.94,
+   "median_abs_err_days": 2,
+   "bias_days": -0.41,
+   "exact_agreement": 0.2475,
+   "within_5_days": 0.6915,
+   "within_10_days": 0.8,
+   "within_20_days": 0.878,
+   "same_whole_years": 0.9458,
+   "rounded_year_agreement": 0.9593,
+   "over_172_days_off": 0
+  },
+  "2025": {
+   "n": 274,
+   "mae_days": 9.94,
+   "median_abs_err_days": 2.0,
+   "bias_days": 0.79,
+   "exact_agreement": 0.2774,
+   "within_5_days": 0.6788,
+   "within_10_days": 0.8029,
+   "within_20_days": 0.8832,
+   "same_whole_years": 0.9234,
+   "rounded_year_agreement": 0.9453,
+   "over_172_days_off": 2
+  },
+  "2026": {
+   "n": 289,
+   "mae_days": 10.46,
+   "median_abs_err_days": 2,
+   "bias_days": -1.79,
+   "exact_agreement": 0.2941,
+   "within_5_days": 0.699,
+   "within_10_days": 0.7751,
+   "within_20_days": 0.8789,
+   "same_whole_years": 0.9239,
+   "rounded_year_agreement": 0.9308,
+   "over_172_days_off": 1
+  }
+ },
+ "census": {
+  "entries": 2032,
+  "unresolved_id": 9,
+  "player_class_rows": 1391,
+  "conflicting_dropped": 1,
+  "scored": 1390,
+  "no_transactions_on_disk": 0,
+  "window_censored_scored": 0
+ },
+ "feed": {
+  "first": "2008-01-01",
+  "last_transaction": "2026-07-24"
+ },
+ "calendar_source": {
+  "typed": "MLB regular-season schedules (domestic Opening Day, last regular-season day)",
+  "corpus": ".cache/mgmt_game_dates.json where a full season is on disk"
+ },
+ "largest_misses": [
+  {
+   "mlbam": 669127,
+   "class_year": 2026,
+   "error_days": -452
+  },
+  {
+   "mlbam": 664192,
+   "class_year": 2025,
+   "error_days": -179
+  },
+  {
+   "mlbam": 664068,
+   "class_year": 2025,
+   "error_days": 177
+  },
+  {
+   "mlbam": 663855,
+   "class_year": 2022,
+   "error_days": -172
+  },
+  {
+   "mlbam": 663855,
+   "class_year": 2023,
+   "error_days": -172
+  },
+  {
+   "mlbam": 542208,
+   "class_year": 2024,
+   "error_days": 170
+  },
+  {
+   "mlbam": 665833,
+   "class_year": 2026,
+   "error_days": 170
+  },
+  {
+   "mlbam": 642350,
+   "class_year": 2025,
+   "error_days": 159
+  },
+  {
+   "mlbam": 543238,
+   "class_year": 2023,
+   "error_days": 155
+  },
+  {
+   "mlbam": 501659,
+   "class_year": 2023,
+   "error_days": -144
+  },
+  {
+   "mlbam": 623205,
+   "class_year": 2024,
+   "error_days": 131
+  },
+  {
+   "mlbam": 656541,
+   "class_year": 2024,
+   "error_days": -130
+  },
+  {
+   "mlbam": 665795,
+   "class_year": 2025,
+   "error_days": 130
+  },
+  {
+   "mlbam": 665795,
+   "class_year": 2026,
+   "error_days": 130
+  },
+  {
+   "mlbam": 656541,
+   "class_year": 2025,
+   "error_days": -129
+  },
+  {
+   "mlbam": 664728,
+   "class_year": 2025,
+   "error_days": 129
+  },
+  {
+   "mlbam": 664728,
+   "class_year": 2026,
+   "error_days": 129
+  },
+  {
+   "mlbam": 623433,
+   "class_year": 2023,
+   "error_days": -113
+  },
+  {
+   "mlbam": 623433,
+   "class_year": 2024,
+   "error_days": -113
+  },
+  {
+   "mlbam": 623433,
+   "class_year": 2022,
+   "error_days": -112
+  },
+  {
+   "mlbam": 672284,
+   "class_year": 2025,
+   "error_days": -92
+  },
+  {
+   "mlbam": 623168,
+   "class_year": 2026,
+   "error_days": 88
+  },
+  {
+   "mlbam": 656222,
+   "class_year": 2024,
+   "error_days": -79
+  },
+  {
+   "mlbam": 607455,
+   "class_year": 2025,
+   "error_days": 75
+  },
+  {
+   "mlbam": 607455,
+   "class_year": 2026,
+   "error_days": 75
+  }
+ ]
+}

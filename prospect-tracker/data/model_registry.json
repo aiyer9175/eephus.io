@@ -6087,6 +6087,22 @@
    "notes": "Registered 2026-10-08 (PROSPECT_ANCHOR_PRODUCERS) pointing at docs/PROSPECT_ANCHOR_GATE.md (pre-registered 2026-09-23). The lab tools/prospect_anchor_gate.py, its test test_prospect_anchor_gate.py and the flag SERVE_PROSPECT_ANCHOR_V2 (default False, one read site inside fv_to_6yr_avg_war) are built and tested on fixtures only; nothing was read on real rows and no statistic by consensus-FV cell exists. The look runs once, not before 2026-11-20 and after the fWAR label epoch's step Z entry (2026-10-03) plus 14 days, on the fwar label at RESOLVED_THROUGH 2026, and writes data/prospect_anchor_gate.json, whose verdict this row then carries with the frame and the fitted-file hash scored. The registry enum has no word registered, so the row reads unvalidated (a predictive claim with no measurement yet) until the look. prospect_surplus is untouched; it moves only under one outcome and only by the owner's flip.",
    "last_checked": "2026-10-08",
    "stale": false
+  },
+  {
+   "model_id": "service_time",
+   "summary": "Provisional: service days counted from MLB transactions miss published service time by 10.21 days on average over 563 holdout player-seasons; 93.8% agree on rounded years.",
+   "surface": "roster_status.service_years_decimal on the PROSPX debuted rows; prices debuted_player_value's remaining control (Club Ledger graduates, PROSPX)",
+   "predicts": "MLB service time (days, 172 = one year) at a date, from the transaction history with the CBA day count",
+   "champion": "service_time.py state machine over the StatsAPI transaction feed merged with the per-player store",
+   "baseline": "none served before: service_years_decimal was never written, so every graduate priced at service 0",
+   "metric": "MAE in days and rounded-year agreement against MLB Trade Rumors published service time, holdout classes 2025-2026; tolerance MAE <= 20 days and agreement >= 0.90, registered before the first read",
+   "eval_artifact": "data/service_time_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "shipped_partial_measurement",
+   "notes": "2026-10-08 (M10_SERVICE_TIME_ENGINE): holdout (classes 2025-2026, service through the 2024 and 2025 seasons) n 563, MAE 10.21 days, median 2, bias -0.53, within 10 days 0.7886, same whole years 0.9236, rounded-year agreement 0.9378: PASSED the registered tolerance. Development classes 2022-2024 (used to check the state machine: the generic-position free-agent duplicate and the 2020 proration were set on them) n 827, MAE 7.38. Partial because the comparator covers arbitration-eligible players only (2 to 6 years); counts outside that band, and seasons after the feed's last transaction, are unmeasured. Known misses: 2020 high-risk opt-outs credited by agreement, and players on a 40-man before the 2008 feed start (flagged window_censored).",
+   "last_checked": "2026-10-08",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []
