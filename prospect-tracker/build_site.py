@@ -6290,9 +6290,8 @@ def build_fantasy() -> str:
         f'<script src="/assets/fantasy-hub.js?v={_FANTASY_HUB_VER}" defer></script>'
     )
     return page("Fantasy - eephus.io", "fantasy", body,
-                "Fantasy baseball from eephus.io: redraft ranks in your league format, an eFV-graded "
-                "dynasty and keeper board, and a DFS slate with per-game projections and a lineup "
-                "optimizer.",
+                "Fantasy baseball: redraft ranks in your scoring format, an eFV dynasty and keeper "
+                "board, DFS per-game projections and a lineup optimizer.",
                 url=f"{SITE_ORIGIN}/fantasy/", image=module_share_image("fantasy"))
 
 
@@ -6498,9 +6497,9 @@ def build_betting() -> str:
         f'<script src="/assets/betting.js?v={_BETTING_VER}" defer></script>'
     )
     return page("Sports Betting - eephus.io", "betting", body,
-                "MLB betting model from eephus.io: game win probabilities against de-vigged book "
-                "prices, every bet on the slate in one sortable board, a flat-stake public record, "
-                "betting calculators, and a personal bet tracker. 21+, informational only.",
+                "MLB betting model: win probabilities against de-vigged prices, a sortable slate "
+                "board, a flat-stake public record, calculators and a bet tracker. 21+, "
+                "informational only.",
                 url=f"{SITE_ORIGIN}/betting/", image=module_share_image("betting"))
 
 
@@ -6583,7 +6582,7 @@ def build_diamond() -> str:
          "Every model artifact is public static JSON with a documented catalog (contents, "
          "cadence, stability). Every board has a Download CSV control."),
         ("eFV movement alerts", "partial", "/data/efv_alerts.json",
-         "Published every rebuild: the biggest genuine eFV moves with their drivers. No "
+         "Published every rebuild: the biggest de-noised eFV moves with their drivers. No "
          "delivery yet: following players needs the account layer, which is off."),
         ("The DFS lineup optimizer", "live", "/fantasy/#m=dfs&section=optimizer",
          "Salary-cap solver over our per-game projections, run on salaries you bring."),
@@ -6613,8 +6612,8 @@ def build_diamond() -> str:
          f"projections, free agency model, {GLOSSARY_DISPLAY_NAME} and articles stay public.")
         if gated else
         ("Is any of this gated right now?",
-         "No. Every Diamond page is public and free while we build it: no paywall, no card form, no "
-         "trial. Any change is announced before it happens."))
+         "No. Every Diamond page is free during the preview: no paywall, no card form. Any change "
+         "is announced before it happens."))
     faq = [
         gate_faq,
         ("Will the price go up?",
@@ -6655,12 +6654,12 @@ def build_diamond() -> str:
             '</div>'
         )
         sub = 'Paid tier for fantasy and betting.'
-        desc = (f"Diamond is the eephus.io paid tier: fantasy and sports betting tools for ${price} "
-                "a month. The rest of the site stays free, including the public data artifacts.")
+        desc = (f"Diamond: the eephus.io paid tier for fantasy and betting, ${price} a month. "
+                "The rest of the site stays free, public data artifacts included.")
     else:
         banner = (
             '<div class="card diamond-banner" role="note">'
-            '<h3>Founding preview: everything is free while we build</h3>'
+            '<h3>Preview: every page free until launch</h3>'
             '<p>Diamond is not switched on. Every page here is open to everyone; preview users become '
             'founding members.</p>'
             '</div>'
@@ -6677,9 +6676,8 @@ def build_diamond() -> str:
             '</div>'
         )
         sub = 'Paid tier for fantasy and betting.'
-        desc = (f"Diamond is the eephus.io paid tier: fantasy and sports betting tools for ${price} "
-                "a month when it launches. The rest of the site stays free, including the public "
-                "data artifacts. Nothing is gated today.")
+        desc = (f"Diamond: the eephus.io paid tier for fantasy and betting, ${price} a month at "
+                "launch. The rest of the site stays free. Nothing is gated today.")
     # The section-sub counts follow the lists, not a literal: the last rewrite
     # left "four modules" over a two-module grid for a day.
     words = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
@@ -6712,8 +6710,8 @@ def build_diamond() -> str:
         # receipts, so it sits on them instead of between the banner and the
         # price, where it was read before anything it describes.
         '<div class="gl-intro">'
-        '<p>eephus.io publishes its own report card: the prospect model\'s out-of-sample record '
-        'against the public consensus, failed experiments included.</p>'
+        '<p>The prospect model\'s out-of-sample record against consensus is public, failures '
+        'included (Model Accountability).</p>'
         '</div>'
         f'{_diamond_ledger_card()}'
         '<div id="diamond-receipts" class="diamond-receipts">'

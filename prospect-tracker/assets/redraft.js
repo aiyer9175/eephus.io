@@ -1275,13 +1275,13 @@
   // ---- boot / load states ---------------------------------------------------
   function errorState(msg) {
     var r = root();
-    if (r) r.innerHTML = pxState("failed", "<strong>Data failed to load.</strong> " +
-      esc(msg || "") + ' <button type="button" id="rd-retry" class="rd-scorebtn">Retry</button>', "rd-error");
+    if (r) r.innerHTML = pxState("failed", "<strong>Redraft board did not load.</strong> " +
+      esc(msg || "") + (msg ? "." : "") + ' The nightly build may be writing it. <button type="button" id="rd-retry" class="rd-scorebtn">Retry</button>', "rd-error");
     var rb = el("rd-retry"); if (rb) rb.addEventListener("click", boot);
   }
   function notReady() {
     var r = root();
-    if (r) r.innerHTML = '<div class="rd-note">Rest-of-season projections are not built yet (nightly build).</div>';
+    if (r) r.innerHTML = '<div class="rd-note">Redraft board not built yet on this deploy; the nightly build writes it.</div>';
   }
   function landingSection(d) {
     var sec = d.sections || {};

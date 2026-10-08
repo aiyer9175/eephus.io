@@ -2317,7 +2317,7 @@ def test_dfs_client_flags_a_past_slate_that_carries_no_stamp():
     assert "This is the 2020-04-01 slate, not today's." in html, html[:400]
     # The exporter's own claim must NOT be borrowed here: nobody decided to keep
     # this board, the build simply never replaced it.
-    assert "We kept the last board" not in html
+    assert "Showing the last verified board" not in html
     assert "old slate" in c.eval("__html['dfs-banner'] || ''")
 
 
@@ -2341,7 +2341,7 @@ def test_dfs_client_still_prefers_the_exporters_own_reason():
     c = _dfs_boot(json.dumps(payload))
     html = c.eval('__go("#section=slate")')
     assert "the schedule feed did not answer" in html
-    assert "We kept the last board" in html
+    assert "Showing the last verified board (2020-04-01)" in html
     assert "Checked 2020-04-02T00:00:00Z" in html
 
 

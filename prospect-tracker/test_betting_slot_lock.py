@@ -870,7 +870,7 @@ def test_a_failed_lock_write_is_not_a_publication(tmp_path, monkeypatch):
     sm = meta["slots"]["pick_of_the_day"]
     assert sm["locked"] is False
     assert sm["published_at"] is None
-    assert "not published" in sm["lock_note"]
+    assert "unpublished" in sm["lock_note"]
     assert not list(tmp_path.glob("*.json"))
 
 

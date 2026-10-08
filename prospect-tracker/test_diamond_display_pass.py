@@ -34,6 +34,6 @@ def test_the_diamond_page_says_not_for_sale_once_above_the_price():
     assert "Nothing is for sale today" not in out
     assert "not switched on" in out.lower()
     i_banner = out.index("diamond-banner")
-    i_card = out.index("publishes its own report card")
+    i_card = out.index("record against consensus is public")
     assert out.index("The receipts") < i_card, "the report-card line belongs on the receipts"
     assert i_banner < i_card

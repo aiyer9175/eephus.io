@@ -751,7 +751,7 @@
       loadNext();
       if (!S.next) {
         return inlineLens + (S.nextErr
-          ? pxState("failed", "<strong>The Next to be graded list failed to load.</strong> " + esc(S.nextErr), "dyn-error")
+          ? pxState("failed", "<strong>The Next to be graded list did not load.</strong> " + esc(S.nextErr), "dyn-error")
           : pxState("loading", "Loading the Next to be graded list."));
       }
     }
@@ -901,7 +901,7 @@
       loadRank();
       if (!S.rank) {
         return S.rankErr
-          ? pxState("failed", "<strong>The Fantasy Rank failed to load.</strong> " + esc(S.rankErr), "dyn-error")
+          ? pxState("failed", "<strong>The Fantasy Rank did not load.</strong> " + esc(S.rankErr), "dyn-error")
           : pxState("loading", "Loading the Fantasy Rank.");
       }
     }
@@ -985,7 +985,7 @@
       loadRank();
       if (!S.rank) {
         return poolBar() + explain + (S.rankErr
-          ? pxState("failed", "<strong>The Fantasy Rank failed to load.</strong> " + esc(S.rankErr), "dyn-error")
+          ? pxState("failed", "<strong>The Fantasy Rank did not load.</strong> " + esc(S.rankErr), "dyn-error")
           : pxState("loading", "Loading the Fantasy Rank."));
       }
     }
@@ -1431,14 +1431,14 @@
   // ---- boot -----------------------------------------------------------------
   function errorState(msg) {
     var r = root();
-    if (r) r.innerHTML = pxState("failed", "<strong>Data failed to load.</strong> " +
-      esc(msg || "") + ' <button type="button" id="dyn-retry" class="dyn-btn">Retry</button>', "dyn-error");
+    if (r) r.innerHTML = pxState("failed", "<strong>Dynasty board did not load.</strong> " +
+      esc(msg || "") + (msg ? "." : "") + ' The nightly build may be writing it. <button type="button" id="dyn-retry" class="dyn-btn">Retry</button>', "dyn-error");
     var rb = el("dyn-retry");
     if (rb) rb.addEventListener("click", boot);
   }
   function notReady() {
     var r = root();
-    if (r) r.innerHTML = '<div class="dyn-note">The dynasty payload is not built yet (nightly build).</div>';
+    if (r) r.innerHTML = '<div class="dyn-note">Dynasty board not built yet on this deploy; the nightly build writes it.</div>';
   }
   function onData(d) {
     if (!d || !d.sections) { notReady(); return; }

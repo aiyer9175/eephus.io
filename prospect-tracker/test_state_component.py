@@ -162,7 +162,7 @@ SITES = [
     ("pal.js", "failed", '<button type="button" class="chip" id="pf-retry">Retry</button>'),
     ("pal.js", "failed", '<button type="button" class="chip" id="pal-retry">Retry</button>'),
     ("dynasty.js", "failed", '<button type="button" id="dyn-retry" class="dyn-btn">Retry</button>'),
-    ("dynasty.js", "failed", '"<strong>The Fantasy Rank failed to load.</strong> "'),
+    ("dynasty.js", "failed", '"<strong>The Fantasy Rank did not load.</strong> "'),
     ("redraft.js", "failed", '<button type="button" id="rd-retry" class="rd-scorebtn">Retry</button>'),
     ("ledger.js", "failed", 'esc(copy("shard_failed"))'),
     ("ledger.js", "failed", "esc(LOAD_ERROR)"),

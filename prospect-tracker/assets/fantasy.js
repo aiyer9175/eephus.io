@@ -239,7 +239,7 @@
   // number the export has always carried and the table never showed.
   var DYN_COLS = [
     { key: "rank", label: "#", where: "head", track: "38px", kind: "rank", asc: true,
-      title: "Served dynasty rank from the eFV display blend. The diamond always shows the SERVED rank, never the position under an ad-hoc sort, so re-sorting the board cannot renumber the served order.",
+      title: "Served dynasty rank from the eFV display blend. The diamond shows the served rank; re-sorting does not renumber it.",
       get: function (d) { return d.rank; } },
     { key: "name", label: "Prospect", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
       title: "Sort by name", get: function (d) { return d.name; },
@@ -248,7 +248,7 @@
           '</span><span class="mlb-sub">' + esc(d.pos || "") + (d.org ? " &middot; " + esc(d.org) : "") + "</span></div>";
       } },
     { key: "efv", label: "eFV", term: "xfv", where: "head", track: "72px", strong: true,
-      title: "The eFV board grade - the same number the PROSPX board and Call-up Watch serve for this prospect - rounded to NEAREST (eFV and plus-stats round to nearest; consensus FV grades display as ceiling). The dynasty rank blends it with star odds, bust odds, ETA and surplus.",
+      title: "eFV board grade, same as PROSPX and Call-up Watch, rounded to nearest (consensus FV grades display as ceiling). The dynasty rank blends it with star odds, bust odds, ETA and surplus.",
       get: function (d) { return d.efv; }, fmt: f0 },
     { key: "eta", label: "ETA", where: "head", track: "72px", asc: true,
       get: function (d) { return d.eta; }, cell: function (d) { return esc(d.eta || "-"); } },
@@ -423,7 +423,7 @@
       byDay[d].push(st);
     });
     days.sort();
-    if (!days.length) return '<div class="fantasy-note">Probables are not posted for the streamer window yet - check back once lineups firm up.</div>';
+    if (!days.length) return '<div class="fantasy-note">No probables posted for this window. Off-season: streamers return with 2027 probables.</div>';
     // A deep-linked #day= that is not in the served window (yesterday's link,
     // opened this morning) is not an error state: it snaps to the first slate,
     // exactly as an empty S.streamerDay does. That is why readHash does not
@@ -449,7 +449,7 @@
   // STAYS A TABLE: 79 rows, and the Matchups column is a free-text leg list that
   // would fight a fixed-height card box.
   function tableTwoStart(list) {
-    if (!list || !list.length) return '<div class="fantasy-note">No two-start pitchers detected or projectable in the current window yet - check back once probables post for the scoring week.</div>';
+    if (!list || !list.length) return '<div class="fantasy-note">No two-start pitchers in this window. Off-season: returns with 2027 probables.</div>';
     var rows = list.slice(0, 60).map(function (t, i) {
       var legs = (t.legs || []).map(function (l) {
         var leg = "@" + esc(l.opp_org) + " (" + num(l.exp_fgp, 0) + ")";
@@ -529,13 +529,13 @@
   }
   function renderDynasty() {
     var list = (S.data.sections || {}).dynasty || [];
-    if (!list.length) return '<div class="fantasy-note">Dynasty prospect rankings populate from the eFV model on the nightly build.</div>';
-    return '<div class="fantasy-note">Dynasty prospect value from our flagship eFV model - ranked by a blend that keeps the eFV grade primary, then rewards star upside (star-outcome odds), penalizes floor risk (bust odds), and factors ETA proximity and projected surplus. Outlook is each prospect\'s 10th-to-90th percentile career-value band. This is a display ranking over served eFV numbers, not a separate model.</div>' +
+    if (!list.length) return '<div class="fantasy-note">Dynasty board not built yet on this deploy; the nightly build writes it.</div>';
+    return '<div class="fantasy-note">Dynasty value: a blend led by eFV grade, adding star-outcome odds, ETA proximity and projected surplus, subtracting bust odds. Outlook is each prospect\'s 10th-to-90th percentile career-value band. This is a display ranking over served eFV numbers, not a separate model.</div>' +
       renderCards(list, DYN_COLS, SORT.dynasty, {
         rankOf: function (d) { return d.rank; },
         stripeOf: dynStripe,
         hrefOf: function (d) { return hrefFor(d.mlbam); },
-        empty: "Dynasty prospect rankings populate from the eFV model on the nightly build."
+        empty: "Dynasty board not built yet on this deploy; the nightly build writes it."
       });
   }
 
@@ -810,7 +810,7 @@
   }
   function notReady() {
     var root = el("fantasy-app-root");
-    if (root) root.innerHTML = '<div class="fantasy-note">Fantasy projections are being computed - check back after the next nightly build.</div>';
+    if (root) root.innerHTML = '<div class="fantasy-note">Not built yet on this deploy; the nightly build writes it.</div>';
   }
   function onData(d) {
     if (!d || !d.players) { notReady(); return; }

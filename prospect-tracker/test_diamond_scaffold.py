@@ -400,7 +400,7 @@ def test_diamond_page_never_uses_the_internal_subsidy_framing():
 def test_diamond_page_states_the_price_and_that_nothing_is_gated_yet():
     out = build_site.build_diamond()
     assert "$15" in out and "$9.99" in out
-    assert "Founding preview" in out
+    assert "Preview: every page free until launch" in out
     low = out.lower()
     assert "not switched on" in low
     assert "stays free" in low
@@ -466,7 +466,7 @@ def test_diamond_page_prices_are_the_configs_prices():
     out = build_site.build_diamond()
     assert f"${price} a month" in out
     assert f"${founding}" in out
-    assert f"tools for ${price}" in out, "meta description lost the config price"
+    assert f"betting, ${price} a month" in out, "meta description lost the config price"
 
 
 def test_build_diamond_source_carries_no_price_literal():
@@ -484,8 +484,8 @@ def test_gated_variant_renders_member_framing_when_the_flag_flips():
     cfg = {"gating": True, "price_usd_month": 15.0, "founding_rate_usd": 9.99}
     with mock.patch.object(build_site, "_diamond_cfg", return_value=cfg):
         out = build_site.build_diamond()
-    assert "free while we build" not in out
-    assert "Founding preview" not in out
+    assert "free until launch" not in out
+    assert "Preview: every page free" not in out
     assert "Diamond is live" in out
     assert "$15 a month" in out and "$9.99" in out
     low = out.lower()

@@ -600,9 +600,9 @@ def test_a_price_band_tie_breaks_toward_a_standard_price():
 
 
 def test_an_empty_longshot_slot_names_the_floor_it_could_not_clear():
-    """The honest empty state. A second, lower floor invented so this slot
-    always has something in it is the single most dishonest number this module
-    could publish (docs/diamond-betting.md section 7)."""
+    """The empty state. No second, lower floor is set so this slot always
+    has something in it: that would manufacture a pick (docs/diamond-betting.md
+    section 7)."""
     bets = _slot_board()
     bets[0]["moneyline"][0]["edge"] = 0.01        # the only long price fails
     slots, _, meta = be.provisional_picks(bets, odds_priceable=True)
@@ -1303,7 +1303,7 @@ def test_render_legal_block_survives_a_failed_load():
     legal = c.eval("__html['betting-legal'] || ''")
     assert "21+" in legal and "1-800-GAMBLER" in legal
     root = c.eval("__html['betting-app-root'] || ''")
-    assert "failed to load" in root
+    assert "did not load" in root
 
 
 def test_render_pick_section_says_there_is_no_pick(ok_ctx):
@@ -1771,7 +1771,7 @@ def test_pick_carries_the_dispersion_line_in_the_caveat_slot(live_ctx):
     text = _visible_text(html)
     assert "Margin model" in text
     assert "indeterminate" in text
-    assert "NOT served" in text
+    assert "not served" in text
 
 
 def test_client_renders_the_provisional_badge_and_styles_it(live_ctx):
