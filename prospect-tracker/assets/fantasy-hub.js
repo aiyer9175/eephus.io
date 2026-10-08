@@ -240,8 +240,51 @@
     corpus: function () { return HOST.json(CORPUS_URL); }
   };
 
+  // ---- the season -----------------------------------------------------------
+  // THE SEASON STATE (site pass SP-D5, REDESIGN_fantasy 2026-10-08). Outside the
+  // regular season window.EephusSeason (eephus-config.js, written nightly) names
+  // the next Opening Day. Null in season, and null with no state on the page,
+  // so a test page or an older boot file keeps the in-season page.
+  function offSeason() {
+    var E = typeof window !== "undefined" && window.EephusSeason;
+    var s = (E && E.get) ? E.get() : null;
+    if (!s || s.phase === "regular") return null;
+    var open = /^\d{4}-\d{2}-\d{2}$/.test(String(s.next_opening_day || "")) ? s.next_opening_day : null;
+    return { opening: open, next: open ? open.slice(0, 4) : (s.season ? String(s.season + 1) : "") };
+  }
+  // Off season the shell says what each module is for now: Redraft is next
+  // season's draft prep, Daily Streamers and Two-Start SP leave its nav (their
+  // links still resolve, to a state card), and DFS loses its nav because one
+  // state card stands in for all four of its tabs. Dynasty is unchanged. In
+  // season nothing here runs and the page is exactly as built.
+  var OFF_HIDE = { redraft: ["streamers", "two_start"] };
+  function modSub(mod, text) {
+    var b = BTN[mod], s = b && b.querySelector ? b.querySelector(".fh-modsub") : null;
+    if (s) s.textContent = text;
+  }
+  function applySeason() {
+    var off = offSeason();
+    if (!off) return;
+    modSub("redraft", off.next ? off.next + " draft prep" : "Draft prep");
+    modSub("dfs", "Off until Opening Day");
+    Object.keys(OFF_HIDE).forEach(function (mod) {
+      OFF_HIDE[mod].forEach(function (key) {
+        var t = document.querySelector("[data-" + mod + 'section="' + key + '"]');
+        if (t) t.setAttribute("hidden", "hidden");
+      });
+    });
+    var nav = PANEL.dfs && PANEL.dfs.querySelector ? PANEL.dfs.querySelector(".mlbstats-sectionnav") : null;
+    if (nav) nav.setAttribute("hidden", "hidden");
+  }
+
   // ---- boot -----------------------------------------------------------------
+  // At DOMContentLoaded, not when this deferred file runs: the season state
+  // (eephus-config.js) and its reader (eephus-ui.js) are deferred scripts that
+  // come AFTER this one in the page, and DOMContentLoaded waits for all of them.
+  var INITED = false;
   function init() {
+    if (INITED) return;
+    INITED = true;
     var bar = document.querySelectorAll("[data-fantasymodule]");
     if (!bar || !bar.length) return;          // not the combined page
     for (var i = 0; i < bar.length; i++) {
@@ -256,14 +299,18 @@
       }(id, bar[i]));
     }
     if (!MODS.length) return;
+    applySeason();
     window.addEventListener("hashchange", onHashChange);
     var r = route(raw());
     activate(r.mod, r.sub);
   }
 
   window.EEPHUS_FANTASY_HOST = HOST;
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
+  if (document.readyState === "complete") init();
+  else {
+    document.addEventListener("DOMContentLoaded", init);
+    window.addEventListener("load", init);     // a late injection after DOMContentLoaded
+  }
 
   // ---- module-bar styles (theme tokens only) --------------------------------
   // The bar is the one piece of furniture this file owns. It reads as a level
@@ -285,6 +332,9 @@
     // the panel fill and the active one in the tab's own on-accent ink.
     ".fantasy-modbtn.active .fh-modsub{color:inherit}",
     ".fantasy-mod[hidden]{display:none}",
+    // The off-season nav (applySeason): the site rule gives these a display,
+    // which outranks the hidden attribute without this.
+    ".fantasy-mod .mlbstats-sectionnav[hidden],.fantasy-mod .mlbstats-sectionbtn[hidden]{display:none}",
     // How this works: the method folded under a lede or a result line
     // (display pass 2026-10-07). Theme tokens only; square, like the boards.
     ".fh-how{margin:4px 0 8px;font-size:12.5px;color:var(--text-secondary)}",
