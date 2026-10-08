@@ -126,6 +126,8 @@ def test_all_four_views_render(server, browser):
             " && el.innerHTML.indexOf('sacc-tabs') !== -1"
             " && (el.innerHTML.indexOf('meth-find-card') !== -1"
             " || el.innerHTML.indexOf('could not be loaded') !== -1)"),
+        # Calibration (LIBRARY_5) is ready once both artifacts have answered.
+        "calibration": " && el.innerHTML.indexOf('Loading the calibration') === -1",
     }
     page = _browser_page(browser, page_errors)
     try:
@@ -135,7 +137,8 @@ def test_all_four_views_render(server, browser):
                               ("methodology", "methodology-body"),
                               ("models", "models-body"),
                               ("source-comparison", "source-comparison-body"),
-                              ("source-accuracy", "source-accuracy-body")]:
+                              ("source-accuracy", "source-accuracy-body"),
+                              ("calibration", "calibration-body")]:
             _open_view(page, view)
             try:
                 page.wait_for_function(

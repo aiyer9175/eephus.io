@@ -6854,7 +6854,7 @@ GLOSSARY_VIEWS = (
     {"id": "methodology", "shelf": "methods", "label": "Methodology", "body": "methodology-body"},
     {"id": "source-comparison", "shelf": "evidence", "label": "Source Comparison", "body": "source-comparison-body"},
     {"id": "source-accuracy", "shelf": "evidence", "label": "Source Accuracy", "body": "source-accuracy-body"},
-    {"id": "calibration", "shelf": "evidence", "label": "Calibration", "body": "calibration-body", "listed": False},
+    {"id": "calibration", "shelf": "evidence", "label": "Calibration", "body": "calibration-body"},
     # The in-page registry view stays a normal view (and keeps its URL) until
     # LIBRARY_7 forwards it; the strip lists the /models/ ledger instead.
     {"id": "models", "shelf": "evidence", "label": "Models & Proofs", "body": "models-body", "listed": False},

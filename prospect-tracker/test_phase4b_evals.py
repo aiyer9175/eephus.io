@@ -332,6 +332,9 @@ def test_wilson_interval_sane():
 def test_glossary_renders_model_registry():
     src = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
     assert "model_registry.json" in src
-    assert "_methRegistryHTML" in src
+    # LIBRARY_5 retired the Methodology copy of the registry table; the
+    # registry renders on /models/ and in the Models & Proofs view.
+    assert "_methRegistryHTML" not in src
+    assert "function renderModels()" in src
     # unvalidated rows render too — that's the accountability point
     assert "unvalidated" in src

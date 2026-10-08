@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-07T15:25:47Z",
+ "generated_at": "2026-10-08T17:49:25Z",
  "rule": "append-only; an event is added when a model's registry state, its card legs, an eFV progress ledger row or a dated note changes; every number is copied from the artifact key named in the event; the edge is printed by edge() v1; events sit in append order, each run's batch ordered by date",
  "edge_rule_version": 1,
  "result_form": "Result ({stat}): {body}",
@@ -8,7 +8,7 @@
  "sources": [
   {
    "path": "data/model_registry.json",
-   "sha256": "f36fbe272efc2e1ff35fabd00d0a101dbb67b6e88a6b89188aac3386e4fbe995"
+   "sha256": "711e4e21fd819c337d415937c592c7510fec0c8a4c025eb9321f9cbcf45a76ad"
   },
   {
    "path": "data/efv_progress.json",
@@ -17,7 +17,7 @@
   },
   {
    "path": "data/model_updates_typed.json",
-   "sha256": "5befbf71421380418d20a0c1efe5c8330308d791976c63add92483fe887b2429"
+   "sha256": "18cfc1c7020811ec0013f1019a382f1aaf76b9b75ed112d0995e4bb546f5272b"
   },
   {
    "path": "data/arbitration_eval.json",
@@ -66,7 +66,7 @@
   },
   {
    "path": "data/xhem_served_regate_eval.json",
-   "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959",
+   "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9",
    "generated_at": "2026-09-18"
   },
   {
@@ -244,8 +244,8 @@
  },
  "note_problems": [],
  "counts": {
-  "events": 481,
-  "default_view": 90,
+  "events": 507,
+  "default_view": 108,
   "by_kind": {
    "artifact_change": 26,
    "backfill": 4,
@@ -253,7 +253,8 @@
    "first_scored": 21,
    "frame_change": 1,
    "model_change": 11,
-   "registered": 334,
+   "note": 18,
+   "registered": 342,
    "removed": 1,
    "rescored": 44,
    "scoring_correction": 2,
@@ -262,27 +263,28 @@
   "by_layer": {
    "development": 7,
    "headline": 92,
-   "registration": 361,
+   "note": 18,
+   "registration": 369,
    "typed": 21
   },
   "verdict_changes": 33,
-  "registry_models": 333,
-  "served_models": 236,
+  "registry_models": 341,
+  "served_models": 244,
   "scored_models": 22,
   "scored_legs": 42,
   "model_states": {
    "lead": 13,
-   "no_benchmark": 64,
+   "no_benchmark": 71,
    "no_contest": 1,
    "no_eval": 21,
    "tie": 4,
    "trails": 1,
    "unresolved": 3,
-   "unwired": 226
+   "unwired": 227
   },
   "registry_verdicts": {
    "deprecated": 88,
-   "provisional": 147,
+   "provisional": 155,
    "unvalidated": 44,
    "validated": 54
   },
@@ -293,16 +295,16 @@
    "CollegeSavant": 7,
    "Development": 97,
    "Draft": 8,
-   "Fantasy": 7,
+   "Fantasy": 9,
    "Franchise": 3,
    "Free Agency": 14,
    "Hall of Fame": 6,
    "MLB Projections": 7,
-   "MLB Stats": 20,
+   "MLB Stats": 25,
    "Management": 9,
-   "Other": 6,
+   "Other": 9,
    "PROSPX and eFV": 107,
-   "Sources and Consensus": 13,
+   "Sources and Consensus": 11,
    "Trade Machine": 5,
    "eWAR": 6
   }
@@ -329,7 +331,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -355,7 +357,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -381,7 +383,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 98,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -407,7 +409,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 73,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -433,7 +435,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -542,7 +544,7 @@
    "last_update": "2026-10-03",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -568,7 +570,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -594,7 +596,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -620,7 +622,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -672,7 +674,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 73,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -698,7 +700,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -724,7 +726,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -750,7 +752,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -776,7 +778,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -863,7 +865,7 @@
    "last_update": "2026-10-07",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -889,7 +891,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -915,7 +917,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -941,7 +943,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -967,7 +969,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1019,7 +1021,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1045,7 +1047,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 4,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1097,7 +1099,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1149,7 +1151,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1175,7 +1177,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1201,7 +1203,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1254,9 +1256,9 @@
    ],
    "registered": "2026-06-10",
    "last_update": "2026-10-03",
-   "events": 13,
+   "events": 16,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1282,7 +1284,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1308,7 +1310,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1334,7 +1336,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1360,7 +1362,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1438,7 +1440,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1491,7 +1493,7 @@
    "last_update": "2026-10-03",
    "events": 6,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1647,7 +1649,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 71,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1673,7 +1675,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1699,7 +1701,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1725,7 +1727,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1751,7 +1753,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1777,7 +1779,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1803,7 +1805,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 97,
+    "artifact_age_days": 98,
     "age_is_evidence": true,
     "stale": true
    }
@@ -1894,9 +1896,9 @@
    ],
    "registered": "2026-06-10",
    "last_update": "2026-10-07",
-   "events": 9,
+   "events": 10,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1922,7 +1924,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 65,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2015,7 +2017,7 @@
    "last_update": "2026-09-30",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2041,7 +2043,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2134,7 +2136,7 @@
    "last_update": "2026-10-07",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 35,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2160,7 +2162,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2186,7 +2188,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2238,7 +2240,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2292,7 +2294,7 @@
    "last_update": "2026-08-19",
    "events": 4,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 49,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2318,7 +2320,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 84,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2344,7 +2346,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2370,7 +2372,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 84,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2396,7 +2398,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 49,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2450,7 +2452,7 @@
    "last_update": "2026-09-24",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 13,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2476,7 +2478,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2502,7 +2504,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2528,7 +2530,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 49,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2554,7 +2556,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 65,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2580,7 +2582,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 49,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2606,7 +2608,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2656,9 +2658,9 @@
    ],
    "registered": "2026-06-10",
    "last_update": "2026-08-19",
-   "events": 5,
+   "events": 7,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2684,7 +2686,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2710,7 +2712,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2736,7 +2738,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2762,7 +2764,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2840,7 +2842,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2893,7 +2895,7 @@
      },
      "source": {
       "path": "data/xhem_served_regate_eval.json",
-      "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959"
+      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
      }
     }
    ],
@@ -2901,7 +2903,7 @@
    "last_update": "2026-09-18",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2924,10 +2926,10 @@
    },
    "today": [],
    "registered": "2026-07-04",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-07-01",
+   "events": 2,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2953,7 +2955,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3088,7 +3090,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3151,7 +3153,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3248,7 +3250,7 @@
    "last_update": "2026-09-11",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3274,7 +3276,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3300,7 +3302,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 25,
+    "artifact_age_days": 26,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3352,7 +3354,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3378,7 +3380,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3430,7 +3432,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3508,7 +3510,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 47,
+    "artifact_age_days": 48,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3534,7 +3536,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 97,
+    "artifact_age_days": 98,
     "age_is_evidence": true,
     "stale": true
    }
@@ -3613,7 +3615,7 @@
    "last_update": "2026-08-19",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3639,7 +3641,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 49,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3665,7 +3667,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3691,7 +3693,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3717,7 +3719,7 @@
    "last_update": "2026-07-15",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3743,7 +3745,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3769,7 +3771,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3795,7 +3797,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3847,7 +3849,7 @@
    "last_update": "2026-07-15",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3899,7 +3901,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3951,7 +3953,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4003,7 +4005,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4029,7 +4031,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4055,7 +4057,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4104,10 +4106,10 @@
    },
    "today": [],
    "registered": "2026-06-10",
-   "last_update": "2026-06-11",
-   "events": 2,
+   "last_update": "2026-07-31",
+   "events": 5,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4133,7 +4135,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4141,7 +4143,7 @@
   {
    "model_id": "provisional_first_grade",
    "label": "Provisional First Grade",
-   "family": "Sources and Consensus",
+   "family": "Fantasy",
    "served": true,
    "verdict": "provisional",
    "provisional_kind": "shipped_partial_measurement",
@@ -4159,7 +4161,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4167,7 +4169,7 @@
   {
    "model_id": "provisional_v2",
    "label": "Provisional V2",
-   "family": "Sources and Consensus",
+   "family": "Fantasy",
    "served": true,
    "verdict": "provisional",
    "provisional_kind": "shipped_partial_measurement",
@@ -4185,7 +4187,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4211,7 +4213,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4237,7 +4239,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4263,7 +4265,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4388,7 +4390,7 @@
    "last_update": "2026-07-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 100,
     "age_is_evidence": true,
     "stale": true
    }
@@ -4414,7 +4416,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4440,7 +4442,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4466,7 +4468,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4492,7 +4494,7 @@
    "last_update": "2026-09-18",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4570,7 +4572,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4596,7 +4598,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 97,
+    "artifact_age_days": 98,
     "age_is_evidence": true,
     "stale": true
    }
@@ -4695,7 +4697,7 @@
    "last_update": "2026-07-15",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4721,7 +4723,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 38,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4747,7 +4749,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4773,7 +4775,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4854,9 +4856,9 @@
    ],
    "registered": "2026-06-10",
    "last_update": "2026-10-03",
-   "events": 12,
+   "events": 14,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4991,7 +4993,7 @@
    "last_update": "2026-10-02",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5017,7 +5019,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5043,7 +5045,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5069,7 +5071,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5121,7 +5123,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5173,7 +5175,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5225,7 +5227,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5355,7 +5357,7 @@
    "last_update": "2026-10-03",
    "events": 4,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5381,7 +5383,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5433,7 +5435,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5459,7 +5461,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 95,
+    "artifact_age_days": 96,
     "age_is_evidence": true,
     "stale": true
    }
@@ -5485,7 +5487,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5511,7 +5513,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5537,7 +5539,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 65,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5667,7 +5669,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5693,7 +5695,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 85,
+    "artifact_age_days": 86,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5719,7 +5721,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 92,
+    "artifact_age_days": 93,
     "age_is_evidence": true,
     "stale": true
    }
@@ -5745,7 +5747,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5771,7 +5773,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 63,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5823,7 +5825,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5849,7 +5851,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5875,7 +5877,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5901,7 +5903,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5927,7 +5929,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 97,
+    "artifact_age_days": 98,
     "age_is_evidence": true,
     "stale": true
    }
@@ -5953,7 +5955,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5979,7 +5981,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 94,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6005,7 +6007,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6031,7 +6033,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6057,7 +6059,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6083,7 +6085,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6109,7 +6111,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6135,7 +6137,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6161,7 +6163,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6187,7 +6189,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 73,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6213,7 +6215,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 97,
+    "artifact_age_days": 98,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6239,7 +6241,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 97,
+    "artifact_age_days": 98,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6265,7 +6267,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6291,7 +6293,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6317,7 +6319,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6341,9 +6343,9 @@
    "today": [],
    "registered": "2026-06-22",
    "last_update": "2026-09-25",
-   "events": 13,
+   "events": 14,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6369,7 +6371,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 81,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6395,7 +6397,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6421,7 +6423,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 98,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6447,7 +6449,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6473,7 +6475,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6499,7 +6501,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6525,7 +6527,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6551,7 +6553,7 @@
    "last_update": "2026-07-14",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 85,
+    "artifact_age_days": 86,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6577,7 +6579,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 92,
+    "artifact_age_days": 93,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6603,7 +6605,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6629,7 +6631,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6655,7 +6657,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 94,
+    "artifact_age_days": 95,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6681,7 +6683,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6707,7 +6709,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 65,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6733,7 +6735,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6759,7 +6761,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6785,7 +6787,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6811,7 +6813,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6837,7 +6839,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6863,7 +6865,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6889,7 +6891,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6915,7 +6917,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6941,7 +6943,7 @@
    "last_update": "2026-07-30",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6967,7 +6969,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6993,7 +6995,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 92,
+    "artifact_age_days": 93,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7019,7 +7021,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 65,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7045,7 +7047,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7071,7 +7073,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7097,7 +7099,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7121,9 +7123,9 @@
    "today": [],
    "registered": "2026-06-22",
    "last_update": "2026-09-25",
-   "events": 13,
+   "events": 14,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7149,7 +7151,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7175,7 +7177,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7201,7 +7203,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7227,7 +7229,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7253,7 +7255,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7279,7 +7281,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 69,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7305,7 +7307,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7331,7 +7333,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7357,7 +7359,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7383,7 +7385,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7409,7 +7411,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7435,7 +7437,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7461,7 +7463,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7487,7 +7489,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7513,7 +7515,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 63,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7539,7 +7541,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7565,7 +7567,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 53,
+    "artifact_age_days": 54,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7591,7 +7593,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 53,
+    "artifact_age_days": 54,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7617,7 +7619,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7643,7 +7645,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7669,7 +7671,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 85,
+    "artifact_age_days": 86,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7695,7 +7697,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7721,7 +7723,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7747,7 +7749,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7773,7 +7775,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7799,7 +7801,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7825,7 +7827,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7851,7 +7853,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7877,7 +7879,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7903,7 +7905,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7929,7 +7931,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 4,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7955,7 +7957,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7981,7 +7983,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8007,7 +8009,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8033,7 +8035,7 @@
    "last_update": "2026-09-25",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8059,7 +8061,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8085,7 +8087,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8111,7 +8113,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 84,
+    "artifact_age_days": 85,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8164,7 +8166,7 @@
      },
      "source": {
       "path": "data/xhem_served_regate_eval.json",
-      "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959"
+      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
      }
     }
    ],
@@ -8172,7 +8174,7 @@
    "last_update": "2026-09-18",
    "events": 4,
    "freshness": {
-    "artifact_age_days": 19,
+    "artifact_age_days": 20,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8250,7 +8252,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 57,
+    "artifact_age_days": 58,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8276,7 +8278,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8302,7 +8304,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8328,7 +8330,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8351,10 +8353,10 @@
    },
    "today": [],
    "registered": "2026-08-13",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-09-25",
+   "events": 2,
    "freshness": {
-    "artifact_age_days": 54,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8380,7 +8382,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 54,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8406,7 +8408,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 54,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8432,7 +8434,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 54,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8458,7 +8460,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 54,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8614,7 +8616,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 7,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8640,7 +8642,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 50,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8666,7 +8668,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 50,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8692,7 +8694,7 @@
    "last_update": "2026-08-19",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 49,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8874,7 +8876,7 @@
    "last_update": "2026-10-02",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8952,7 +8954,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 48,
+    "artifact_age_days": 49,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9001,10 +9003,10 @@
    },
    "today": [],
    "registered": "2026-09-04",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-09-04",
+   "events": 2,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9027,10 +9029,10 @@
    },
    "today": [],
    "registered": "2026-10-03",
-   "last_update": null,
-   "events": 1,
+   "last_update": "2026-10-03",
+   "events": 2,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9056,7 +9058,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9082,7 +9084,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9108,7 +9110,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9134,7 +9136,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9160,7 +9162,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9186,7 +9188,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9212,7 +9214,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9238,7 +9240,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9264,7 +9266,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 31,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9290,7 +9292,7 @@
    "last_update": "2026-09-06",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 30,
+    "artifact_age_days": 31,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9316,7 +9318,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9342,7 +9344,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9368,7 +9370,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9394,7 +9396,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 31,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9420,9 +9422,87 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
+   }
+  },
+  {
+   "model_id": "scores_mlb_wp",
+   "label": "Scores MLB Wp",
+   "family": "Other",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/win_expectancy.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 27,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "scores_stars_rule",
+   "label": "Scores Stars Rule",
+   "family": "Other",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "scores_biggest_plays_rule",
+   "label": "Scores Biggest Plays Rule",
+   "family": "Other",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
    }
   },
   {
@@ -9446,7 +9526,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9472,7 +9552,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 31,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9498,7 +9578,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 31,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9524,7 +9604,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 25,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9550,7 +9630,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 30,
+    "artifact_age_days": 31,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9576,7 +9656,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 30,
+    "artifact_age_days": 31,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9602,7 +9682,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9628,7 +9708,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9654,7 +9734,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9680,7 +9760,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 12,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9706,7 +9786,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 12,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9732,7 +9812,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9758,7 +9838,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 3,
+    "artifact_age_days": 4,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9784,7 +9864,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 25,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9836,7 +9916,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 31,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9862,7 +9942,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 30,
+    "artifact_age_days": 31,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9888,7 +9968,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9914,7 +9994,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10018,7 +10098,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 12,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10241,9 +10321,9 @@
    ],
    "registered": "2026-09-25",
    "last_update": "2026-10-02",
-   "events": 9,
+   "events": 10,
    "freshness": {
-    "artifact_age_days": 12,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10295,7 +10375,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10318,6 +10398,136 @@
    },
    "today": [],
    "registered": "2026-10-07",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "offense_plus",
+   "label": "Offense+",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "inherits_parent_gate",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "rotation_plus",
+   "label": "Rotation+",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "inherits_parent_gate",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "bullpen_plus",
+   "label": "Bullpen+",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "inherits_parent_gate",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "leverage_deploy_plus",
+   "label": "Leverage Deploy+",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "inherits_parent_gate",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "team_dem_plus",
+   "label": "Team DEM+",
+   "family": "MLB Stats",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "inherits_parent_gate",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
    "last_update": null,
    "events": 1,
    "freshness": {
@@ -33568,7 +33778,7 @@
    },
    "content_hash": "371384814a4e668a06f97e9e0e5cf5fd521b6d3d71b9fd9062e3f5efe6866ded",
    "event_id": "2026-10-01|provisional_first_grade|registered|37138481",
-   "family": "Sources and Consensus",
+   "family": "Fantasy",
    "label": "Provisional First Grade",
    "served": true,
    "default_view": false
@@ -34035,7 +34245,7 @@
    },
    "content_hash": "6c7900d157265c90dfc0637d03021de3d3773e109510e19362a28c2c094a38bc",
    "event_id": "2026-10-02|provisional_v2|registered|6c7900d1",
-   "family": "Sources and Consensus",
+   "family": "Fantasy",
    "label": "Provisional V2",
    "served": true,
    "default_view": false
@@ -36609,6 +36819,848 @@
    "event_id": "2026-10-07|club_fa_spend_profile|registered|9e634671",
    "family": "Franchise",
    "label": "Club FA Spend Profile",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-04",
+   "sort_date": "2026-04-01",
+   "model_id": "consensus_fv",
+   "registry_ids": [
+    "consensus_fv"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Consensus FV: equal-weight mean confirmed over weighted schemes at that window; Bayesian shrinkage + forward-fill formalized.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "5780af31",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "59b09d30b3f3070489f1b381f95008b72c106622e0ee23ef840904e40bed562b",
+   "event_id": "2026-04|consensus_fv|note|59b09d30",
+   "family": "PROSPX and eFV",
+   "label": "Consensus FV",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-05",
+   "sort_date": "2026-05-01",
+   "model_id": "farm_grades",
+   "registry_ids": [
+    "farm_grades"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the top weight.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "5780af31",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "c428b69355301dc2ca7a188c781ff485705f68b22ce1ad1359ee1dc0b862d766",
+   "event_id": "2026-05|farm_grades|note|c428b693",
+   "family": "PROSPX and eFV",
+   "label": "Farm Grades",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-05",
+   "sort_date": "2026-05-01",
+   "model_id": "source_track_record",
+   "registry_ids": [
+    "source_track_record"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Source-vs-source backtest published (resolved cohorts only) as the Source Comparison area.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "5780af31",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "92f6080aa4d134ec8e72233014cedc1b349729faeba4dc2a66d8e805bb99501e",
+   "event_id": "2026-05|source_track_record|note|92f6080a",
+   "family": "Sources and Consensus",
+   "label": "Source Track Record",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-06",
+   "sort_date": "2026-06-01",
+   "model_id": "source_track_record",
+   "registry_ids": [
+    "source_track_record"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Historical backfill: ingested FanGraphs 2017-2020 boards (new-format CSVs) + MLB Pipeline 2017-2020 Top-100 lists, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021-2023 to 2017-2023, and the common scored set grew with it. On the larger, further-resolved sample the blend's edge over its best single input is two-legged: the AUC leg, separating future contributors, resolves, while the ordering gap (Spearman) sits inside the noise floor the backtest can resolve. The live legs, floors, and common-set size render in Source Comparison.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "e2395a16",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "7505f8dabc2db1bfb4eeac574d504cd3a32c84476655f8c9fb010c73989cb450",
+   "event_id": "2026-06|source_track_record|note|7505f8da",
+   "family": "Sources and Consensus",
+   "label": "Source Track Record",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-06",
+   "sort_date": "2026-06-01",
+   "model_id": "prospect_surplus",
+   "registry_ids": [
+    "prospect_surplus"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat multi-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "5780af31",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "ee34e2d12af82c54fd81804872e4b01e6c4d5d8852fde4a73399fd15e2280d0f",
+   "event_id": "2026-06|prospect_surplus|note|ee34e2d1",
+   "family": "PROSPX and eFV",
+   "label": "Prospect Surplus",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-06",
+   "sort_date": "2026-06-01",
+   "model_id": null,
+   "registry_ids": [],
+   "kind": "note",
+   "layer": "note",
+   "change": "The page split into three views (today Terms, Methodology and Source Comparison); taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "8404a258",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "note_family": "Other",
+   "content_hash": "e2906ddd14e8b5adb9047c52b51bf9f09aa6127c45202c741b9e00369033f94c",
+   "event_id": "2026-06|None|note|e2906ddd",
+   "family": "Other",
+   "label": null,
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-06",
+   "sort_date": "2026-06-01",
+   "model_id": "farm_grades",
+   "registry_ids": [
+    "farm_grades"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Farm grade tree v40: value-tracking reweight. The org letter is now primarily driven by aggregate risk-adjusted controlled surplus (the Value branch, the top weight); Development drops from the top weight to a secondary controllable-skill signal, below MLB Production, with Acquisition Strategy the smallest weight. This stops the grade from reading as a per-prospect tool-development index decoupled from aggregate farm value.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "230273de",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "332762dd1fca523b6d10b343670877470ffe58befbb2cfe2e5ae9bd4f06ef0bd",
+   "event_id": "2026-06|farm_grades|note|332762dd",
+   "family": "PROSPX and eFV",
+   "label": "Farm Grades",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-06",
+   "sort_date": "2026-06-01",
+   "model_id": "consensus_fv",
+   "registry_ids": [
+    "consensus_fv"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Consensus FV moved to ACCURACY-WEIGHTED source blending after a vintage-disciplined A/B measured it above equal weight on both Spearman and AUC (weights shrunk toward equal, clamped, frozen per vintage; sources without resolved history stay at equal weight). Reverted 2026-07-25: the hardened re-measurement could not resolve the gain.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "037f4ba4",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "2c0b93d35beac6747d761503629d0ad66ba4b8ce99d128e408b90ac931c0b638",
+   "event_id": "2026-06|consensus_fv|note|2c0b93d3",
+   "family": "PROSPX and eFV",
+   "label": "Consensus FV",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-07",
+   "sort_date": "2026-07-01",
+   "model_id": "grade_normalization",
+   "registry_ids": [
+    "grade_normalization"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Cross-source scale normalization: each source's grades are quantile-mapped onto the FanGraphs scale over the players both grade before blending, so a hot or cold outlet is de-biased by the shape of its whole distribution. Per-source grades on the card are unchanged; only the consensus scale is.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "ad8b1041",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "2386a4ba96080fab71f838e5ba5b0cc1246ef07b21f3805e1088010563864ca8",
+   "event_id": "2026-07|grade_normalization|note|2386a4ba",
+   "family": "Sources and Consensus",
+   "label": "Grade Normalization",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-07-25",
+   "sort_date": "2026-07-25",
+   "model_id": "consensus_fv",
+   "registry_ids": [
+    "consensus_fv"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Consensus source weighting REVERTED to equal. The June accuracy weights (Pipeline 1.06 / FanGraphs 0.94) failed a hardened forward-chained re-measurement: dρ -0.0012 against a minimum detectable effect of 0.0068, so the weighted blend's gain was inside the noise floor and unearned. Every source votes 1.0 again; the revert is committed in data/source_weights.json.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/source_weights.json",
+    "key": "note",
+    "commit": "ad8b1041",
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "1fba071679a887ed1b39046bc4a643ee789e0929b5d9766a17f71c9efbc9de0b",
+   "event_id": "2026-07-25|consensus_fv|note|1fba0716",
+   "family": "PROSPX and eFV",
+   "label": "Consensus FV",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-07-29/30",
+   "sort_date": "2026-07-29",
+   "model_id": "prospect_surplus",
+   "registry_ids": [
+    "prospect_surplus"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Valuation recalibration: sub-45 anchors repaired, the board-scale re-expression turned off, and clemens_2026 (the published FanGraphs / Ben Clemens 2026 framework, checksummed anchors, fa_implied disabled) made the default production valuation set.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "ad8b1041",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "1e9899f5d4828559e7c84bd03fc58e1b09c2559ef5b342f8fe3b625edd53f0b4",
+   "event_id": "2026-07-29/30|prospect_surplus|note|1e9899f5",
+   "family": "PROSPX and eFV",
+   "label": "Prospect Surplus",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-07-30",
+   "sort_date": "2026-07-30",
+   "model_id": "efv_v1",
+   "registry_ids": [
+    "xfv_hitter",
+    "xfv_pitcher"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "The eFV headline grade's outcome-implied FV mapping re-keyed to the recalibrated empirical FV→WAR anchors, so the grade and the dollars read off the same curve.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "ad8b1041",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "374fe0a022f56e14090ac610da6a8c35238ed1b499193e094c9de8e97ecedf8a",
+   "event_id": "2026-07-30|efv_v1|note|374fe0a0",
+   "family": "PROSPX and eFV",
+   "label": "eFV v1",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-07-31",
+   "sort_date": "2026-07-31",
+   "model_id": "prospect_surplus",
+   "registry_ids": [
+    "prospect_surplus"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "Surplus moved to an EXPECTED-VALUE objective (calibration isotonic-real-v6-evframe): the correction map is now a count-weighted isotonic (PAVA) fit on resolved-cohort bin means, targeting the conditional mean instead of the median. The zero-dollar floor on bottom-tier prospects is gone; the board total moved up while the ordering did not. The map deliberately loses the old median-objective MAE gate and that loss is committed, not hidden.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "ad8b1041",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "eb7125ef91d7a9a74a3fc6eb56194402333f4944846c6ebaab425ccf0ac1bc70",
+   "event_id": "2026-07-31|prospect_surplus|note|eb7125ef",
+   "family": "PROSPX and eFV",
+   "label": "Prospect Surplus",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-09-04",
+   "sort_date": "2026-09-04",
+   "model_id": "xfv_ewar_label_epoch",
+   "registry_ids": [
+    "xfv_ewar_label_epoch"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "The eWAR label epoch: site-wide WAR and every model labelled, anchored or priced in WAR (the eFV label, the FV outcome anchors, WAG, surplus, arbitration, farm grades, the projections) moved from bWAR to eWAR v2 together, by owner basis decision. Measured on identical rows, the swap did not improve eFV: hitters equivalent (+0.00006), pitchers undecided (-0.01823). Receipt: registry row xfv_ewar_label_epoch; gate docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md part 9.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/xfv_ewar_label_epoch_eval.json",
+    "key": "clause_d_tost.hit.point_difference; clause_d_tost.pit.point_difference",
+    "commit": "5fd1ecff",
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "7b23deea8bba20370fc049e3ff8aba632d0cbee9f8e6df16678b3e7c0c3268e8",
+   "event_id": "2026-09-04|xfv_ewar_label_epoch|note|7b23deea",
+   "family": "eWAR",
+   "label": "eFV eWAR Label Epoch",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-09-25",
+   "sort_date": "2026-09-25",
+   "model_id": "efv_v2",
+   "registry_ids": [
+    "efv_v2"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "eFV V2 serves the board (owner decision DS-02): consensus percentile plus admitted skill and timing drivers within each side and list year, labelled as tying the consensus until a reserved read says otherwise. Receipt: registry row efv_v2 (provisional); gate docs/efv-v2/EFV_V2_GATE.md.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "5fd1ecff",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "9607f4f45f4f0f7c2a1f266c6779715c4690378dfd9104bcc532679be7fda2c3",
+   "event_id": "2026-09-25|efv_v2|note|9607f4f4",
+   "family": "PROSPX and eFV",
+   "label": "eFV V2",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-09-25",
+   "sort_date": "2026-09-25",
+   "model_id": "xfv_headtohead_frame",
+   "registry_ids": [
+    "xfv_headtohead_frame"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "The head-to-head headline moved to the timing-pinned vintage-matched frame vm2, where eFV's consensus input is the raters' own preseason read (owner answer FP3-1); vm1 stays in the ledger as superseded history. eFV against each source is now one Holm-corrected family (FP3-3), and a cell carries a verdict only when it survives the correction. Receipt: registry row xfv_headtohead_frame; data/source_backtest.json (accuracy.head_to_head_verdict, accuracy.head_to_head_vs_sources); data/efv_progress.json.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/source_backtest.json",
+    "key": "accuracy.head_to_head_verdict",
+    "commit": "5fd1ecff",
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "92f48bbfba266af3ee1d0af99eb120077e33bb2664e29318744afdffb222063b",
+   "event_id": "2026-09-25|xfv_headtohead_frame|note|92f48bbf",
+   "family": "PROSPX and eFV",
+   "label": "eFV Headtohead Frame",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-09-30",
+   "sort_date": "2026-09-30",
+   "model_id": "eta",
+   "registry_ids": [
+    "eta"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "The org promotion multipliers left the served ETA: in the keep-or-remove gate (list vintage 2024) the two arms gave the same debut year on all 503 scored rows, so the multipliers had not earned a place and the served call passes no org tendency. Receipt: block org_timing_gate_2026_09_25 of data/eta_eval.json; registry row eta; gate docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md section 7.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/eta_eval.json",
+    "key": "org_timing_gate_2026_09_25.n_debuted",
+    "commit": "5fd1ecff",
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "6bf8c0b09f6180ab78d8eaf960ea4e5532f1b662d98b40558c07579b09255f8a",
+   "event_id": "2026-09-30|eta|note|6bf8c0b0",
+   "family": "PROSPX and eFV",
+   "label": "ETA",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-03",
+   "sort_date": "2026-10-03",
+   "model_id": "xfv_fwar_label_epoch",
+   "registry_ids": [
+    "xfv_fwar_label_epoch"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "The fWAR label epoch: the TRAINING label behind eFV, the FV-to-WAR anchors, the projections, the draft slot curve, star odds, WAG and the arbitration model moved from eWAR v2 to published fWAR, frozen per season (FanGraphs' WAR adopted wholesale: its replacement split, its league pool and positional ladder, Statcast fielding with framing inside it). The DISPLAYED WAR stays eWAR v2. The move buys one currency across the label, the FanGraphs FV-to-WAR tables and the $/WAR kernel; it is a change of definition by owner decision, and no accuracy gain is claimed from it.",
+   "origin": "methodology changelog",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "93741726",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "0cbb6daf19a2a31ce05e9c3a7fde3918cd994b0fc66ad4b151488a0cbc6753cc",
+   "event_id": "2026-10-03|xfv_fwar_label_epoch|note|0cbb6daf",
+   "family": "PROSPX and eFV",
+   "label": "eFV Fwar Label Epoch",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "scores_mlb_wp",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "7dc79b24"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/win_expectancy.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "f6e872f31ddfebd86a8b806c0293ef5c455c5f5c93cceba7f648d4df6cf7e867",
+   "event_id": "2026-10-08|scores_mlb_wp|registered|f6e872f3",
+   "family": "Other",
+   "label": "Scores MLB Wp",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "scores_stars_rule",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "7dc79b24"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "a28569ee7b08a0e64b2c8f3573d7f50062aaa6c96d7a7298678c06284d747947",
+   "event_id": "2026-10-08|scores_stars_rule|registered|a28569ee",
+   "family": "Other",
+   "label": "Scores Stars Rule",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "scores_biggest_plays_rule",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "7dc79b24"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "f1e8875d048bc115a80bfa1fbb7b6160d9f3363c2f9cd3e2a9a95e24cc96f734",
+   "event_id": "2026-10-08|scores_biggest_plays_rule|registered|f1e8875d",
+   "family": "Other",
+   "label": "Scores Biggest Plays Rule",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "offense_plus",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "7dc79b24"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "70f164954ee74caf7bb683c519b72c94d2e995babd23f8ae9a9997d30fbb85a7",
+   "event_id": "2026-10-08|offense_plus|registered|70f16495",
+   "family": "MLB Stats",
+   "label": "Offense+",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "rotation_plus",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "7dc79b24"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "516524377e471461939632a452c0067d3369b152b8ea97f3da040b605aa88b4f",
+   "event_id": "2026-10-08|rotation_plus|registered|51652437",
+   "family": "MLB Stats",
+   "label": "Rotation+",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "bullpen_plus",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "7dc79b24"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "9943af297b35990b1067158019d77973f1040c55abd9d4da367890f40f0be7f5",
+   "event_id": "2026-10-08|bullpen_plus|registered|9943af29",
+   "family": "MLB Stats",
+   "label": "Bullpen+",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "leverage_deploy_plus",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "7dc79b24"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "46b21b3a7cf2d0f398b8f98eaad9ebafa02ec907bcefee1499b09c0c01e47fcd",
+   "event_id": "2026-10-08|leverage_deploy_plus|registered|46b21b3a",
+   "family": "MLB Stats",
+   "label": "Leverage Deploy+",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "team_dem_plus",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "7dc79b24"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "bc68a27aecc6c31f3486d327a80cb91b67ccd47bf45868bfc3061404124f8872",
+   "event_id": "2026-10-08|team_dem_plus|registered|bc68a27a",
+   "family": "MLB Stats",
+   "label": "Team DEM+",
    "served": true,
    "default_view": false
   }

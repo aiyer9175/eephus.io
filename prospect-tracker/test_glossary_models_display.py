@@ -53,7 +53,6 @@ def test_foundation_and_deprecated_chips_read_at_full_ink():
         body = _rule(sel)
         assert "opacity" not in body, sel
         assert "color: var(--text-secondary)" in body, sel
-    assert "var(--text-cyan)" in _rule(".gl-app .meth-changelog .mc-date")
 
 
 def test_sample_chip_text_uses_text_tokens():
@@ -115,25 +114,25 @@ def test_ledger_copy_reads_in_site_words():
 
 # ---- QREC16 -------------------------------------------------------------
 def test_changelog_dates_the_four_changes_with_receipts():
-    log = GLJS[GLJS.index('<ul class="meth-changelog">'):]
-    log = log[:log.index("</ul>")]
-    items = re.findall(r'<li><span class="mc-date">([^<]+)</span>(.*?)</li>', log)
+    # LIBRARY_5 moved the Methodology changelog into the Model Updates note
+    # rows (data/model_updates_typed.json -> data/model_updates.json); the four
+    # QREC16 lines keep their dates, models and receipts there.
+    notes = json.loads((ROOT / "data" / "model_updates.json").read_text(encoding="utf-8"))["events"]
     by_date = {}
-    for d, txt in items:
-        by_date.setdefault(d, []).append(txt)
+    for e in notes:
+        if e.get("layer") == "note":
+            by_date.setdefault(e["date"], []).append(e)
     want = {
-        "2026-09-30": ("eta_eval.json", "registry row <code>eta</code>"),
-        "2026-09-04": ("registry row <code>xfv_ewar_label_epoch</code>", "EWAR_LABEL_EPOCH_GATE.md"),
+        "2026-09-30": ("eta", ("eta_eval.json", "registry row eta")),
+        "2026-09-04": ("xfv_ewar_label_epoch", ("registry row xfv_ewar_label_epoch", "EWAR_LABEL_EPOCH_GATE.md")),
     }
-    for d, needles in want.items():
-        assert d in by_date, d
-        assert all(any(n in t for t in by_date[d]) for n in needles), d
-    sep25 = " ".join(by_date.get("2026-09-25", []))
-    for n in ("registry row <code>efv_v2</code>", "DS-02", "FP3-1", "FP3-3",
-              "registry row <code>xfv_headtohead_frame</code>"):
+    for d, (mid, needles) in want.items():
+        rows = [e for e in by_date.get(d, []) if e.get("model_id") == mid]
+        assert rows, d
+        assert all(n in rows[0]["change"] for n in needles), d
+    sep25 = " ".join(e["change"] for e in by_date.get("2026-09-25", []))
+    for n in ("registry row efv_v2", "DS-02", "FP3-1", "FP3-3", "registry row xfv_headtohead_frame"):
         assert n in sep25, n
-    dates = [d for d, _t in items]
-    assert dates.index("2026-09-30") < dates.index("2026-09-25") < dates.index("2026-09-04") < dates.index("2026-07-31")
 
 
 # ---- rendered: QREC06 and QREA18 on the served page ------------------------

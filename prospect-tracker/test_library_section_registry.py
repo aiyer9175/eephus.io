@@ -152,9 +152,10 @@ def test_the_strip_carries_one_state_attribute_per_chip():
         shown = len(re.findall(r'<button (?![^>]*\bhidden\b)[^>]*data-glossary-view=', row)) + row.count("<a ")
         assert int(n) == shown, sid
     # unlisted leaves ship hidden until they are current (Formulas is listed
-    # since LIBRARY_4 filled it)
+    # since LIBRARY_4 filled it, Calibration since LIBRARY_5 did)
     assert re.search(r'<button class="chip" type="button" data-gl-shelf="reference" data-glossary-view="formulas">', strip)
-    for v in ("calibration", "models"):
+    assert re.search(r'<button class="chip" type="button" data-gl-shelf="evidence" data-glossary-view="calibration">', strip)
+    for v in ("models",):
         assert re.search(rf'data-gl-unlisted hidden data-gl-shelf="[a-z]+" data-glossary-view="{v}"', strip), v
     # only the active shelf's leaf row shows
     assert re.findall(r'data-gl-leaves="([a-z]+)">', strip) == ["reference"]
@@ -171,7 +172,7 @@ def test_an_outbound_leaf_whose_page_is_not_built_stays_out(monkeypatch, tmp_pat
     assert 'href="/sources/"' in strip
     assert 'href="/models/"' not in strip and 'href="/models/updates/"' not in strip
     assert re.search(r'data-gl-shelf-chip="evidence"><span class="gl-shelf-name">Evidence</span>'
-                     r'<span class="gl-shelf-n">2</span>', strip)
+                     r'<span class="gl-shelf-n">3</span>', strip)
     monkeypatch.undo()
     # the Model Updates leaf appears once its page is built (LIBRARY_12)
     built = (ROOT / "models" / "updates" / "index.html").is_file()

@@ -14,5 +14,177 @@
   ],
   "source": "{path, key} of the artifact a figure came from, or {commit}"
  },
- "notes": []
+ "notes": [
+  {
+   "date": "2026-10-03",
+   "model_id": "xfv_fwar_label_epoch",
+   "text": "The fWAR label epoch: the TRAINING label behind eFV, the FV-to-WAR anchors, the projections, the draft slot curve, star odds, WAG and the arbitration model moved from eWAR v2 to published fWAR, frozen per season (FanGraphs' WAR adopted wholesale: its replacement split, its league pool and positional ladder, Statcast fielding with framing inside it). The DISPLAYED WAR stays eWAR v2. The move buys one currency across the label, the FanGraphs FV-to-WAR tables and the $/WAR kernel; it is a change of definition by owner decision, and no accuracy gain is claimed from it.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "93741726"
+   }
+  },
+  {
+   "date": "2026-09-30",
+   "model_id": "eta",
+   "text": "The org promotion multipliers left the served ETA: in the keep-or-remove gate (list vintage 2024) the two arms gave the same debut year on all 503 scored rows, so the multipliers had not earned a place and the served call passes no org tendency. Receipt: block org_timing_gate_2026_09_25 of data/eta_eval.json; registry row eta; gate docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md section 7.",
+   "origin": "methodology changelog",
+   "source": {
+    "path": "data/eta_eval.json",
+    "key": "org_timing_gate_2026_09_25.n_debuted",
+    "commit": "5fd1ecff"
+   }
+  },
+  {
+   "date": "2026-09-25",
+   "model_id": "efv_v2",
+   "text": "eFV V2 serves the board (owner decision DS-02): consensus percentile plus admitted skill and timing drivers within each side and list year, labelled as tying the consensus until a reserved read says otherwise. Receipt: registry row efv_v2 (provisional); gate docs/efv-v2/EFV_V2_GATE.md.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "5fd1ecff"
+   }
+  },
+  {
+   "date": "2026-09-25",
+   "model_id": "xfv_headtohead_frame",
+   "text": "The head-to-head headline moved to the timing-pinned vintage-matched frame vm2, where eFV's consensus input is the raters' own preseason read (owner answer FP3-1); vm1 stays in the ledger as superseded history. eFV against each source is now one Holm-corrected family (FP3-3), and a cell carries a verdict only when it survives the correction. Receipt: registry row xfv_headtohead_frame; data/source_backtest.json (accuracy.head_to_head_verdict, accuracy.head_to_head_vs_sources); data/efv_progress.json.",
+   "origin": "methodology changelog",
+   "source": {
+    "path": "data/source_backtest.json",
+    "key": "accuracy.head_to_head_verdict",
+    "commit": "5fd1ecff"
+   }
+  },
+  {
+   "date": "2026-09-04",
+   "model_id": "xfv_ewar_label_epoch",
+   "text": "The eWAR label epoch: site-wide WAR and every model labelled, anchored or priced in WAR (the eFV label, the FV outcome anchors, WAG, surplus, arbitration, farm grades, the projections) moved from bWAR to eWAR v2 together, by owner basis decision. Measured on identical rows, the swap did not improve eFV: hitters equivalent (+0.00006), pitchers undecided (-0.01823). Receipt: registry row xfv_ewar_label_epoch; gate docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md part 9.",
+   "origin": "methodology changelog",
+   "source": {
+    "path": "data/xfv_ewar_label_epoch_eval.json",
+    "key": "clause_d_tost.hit.point_difference; clause_d_tost.pit.point_difference",
+    "commit": "5fd1ecff"
+   }
+  },
+  {
+   "date": "2026-07-31",
+   "model_id": "prospect_surplus",
+   "text": "Surplus moved to an EXPECTED-VALUE objective (calibration isotonic-real-v6-evframe): the correction map is now a count-weighted isotonic (PAVA) fit on resolved-cohort bin means, targeting the conditional mean instead of the median. The zero-dollar floor on bottom-tier prospects is gone; the board total moved up while the ordering did not. The map deliberately loses the old median-objective MAE gate and that loss is committed, not hidden.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "ad8b1041"
+   }
+  },
+  {
+   "date": "2026-07-30",
+   "model_id": "efv_v1",
+   "text": "The eFV headline grade's outcome-implied FV mapping re-keyed to the recalibrated empirical FV→WAR anchors, so the grade and the dollars read off the same curve.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "ad8b1041"
+   }
+  },
+  {
+   "date": "2026-07-29/30",
+   "model_id": "prospect_surplus",
+   "text": "Valuation recalibration: sub-45 anchors repaired, the board-scale re-expression turned off, and clemens_2026 (the published FanGraphs / Ben Clemens 2026 framework, checksummed anchors, fa_implied disabled) made the default production valuation set.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "ad8b1041"
+   }
+  },
+  {
+   "date": "2026-07-25",
+   "model_id": "consensus_fv",
+   "text": "Consensus source weighting REVERTED to equal. The June accuracy weights (Pipeline 1.06 / FanGraphs 0.94) failed a hardened forward-chained re-measurement: dρ -0.0012 against a minimum detectable effect of 0.0068, so the weighted blend's gain was inside the noise floor and unearned. Every source votes 1.0 again; the revert is committed in data/source_weights.json.",
+   "origin": "methodology changelog",
+   "source": {
+    "path": "data/source_weights.json",
+    "key": "note",
+    "commit": "ad8b1041"
+   }
+  },
+  {
+   "date": "2026-07",
+   "model_id": "grade_normalization",
+   "text": "Cross-source scale normalization: each source's grades are quantile-mapped onto the FanGraphs scale over the players both grade before blending, so a hot or cold outlet is de-biased by the shape of its whole distribution. Per-source grades on the card are unchanged; only the consensus scale is.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "ad8b1041"
+   }
+  },
+  {
+   "date": "2026-06",
+   "model_id": "source_track_record",
+   "text": "Historical backfill: ingested FanGraphs 2017-2020 boards (new-format CSVs) + MLB Pipeline 2017-2020 Top-100 lists, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021-2023 to 2017-2023, and the common scored set grew with it. On the larger, further-resolved sample the blend's edge over its best single input is two-legged: the AUC leg, separating future contributors, resolves, while the ordering gap (Spearman) sits inside the noise floor the backtest can resolve. The live legs, floors, and common-set size render in Source Comparison.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "e2395a16"
+   }
+  },
+  {
+   "date": "2026-06",
+   "model_id": "prospect_surplus",
+   "text": "Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat multi-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "5780af31"
+   }
+  },
+  {
+   "date": "2026-06",
+   "model_id": null,
+   "family": "Other",
+   "text": "The page split into three views (today Terms, Methodology and Source Comparison); taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "8404a258"
+   }
+  },
+  {
+   "date": "2026-06",
+   "model_id": "farm_grades",
+   "text": "Farm grade tree v40: value-tracking reweight. The org letter is now primarily driven by aggregate risk-adjusted controlled surplus (the Value branch, the top weight); Development drops from the top weight to a secondary controllable-skill signal, below MLB Production, with Acquisition Strategy the smallest weight. This stops the grade from reading as a per-prospect tool-development index decoupled from aggregate farm value.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "230273de"
+   }
+  },
+  {
+   "date": "2026-05",
+   "model_id": "farm_grades",
+   "text": "Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the top weight.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "5780af31"
+   }
+  },
+  {
+   "date": "2026-06",
+   "model_id": "consensus_fv",
+   "text": "Consensus FV moved to ACCURACY-WEIGHTED source blending after a vintage-disciplined A/B measured it above equal weight on both Spearman and AUC (weights shrunk toward equal, clamped, frozen per vintage; sources without resolved history stay at equal weight). Reverted 2026-07-25: the hardened re-measurement could not resolve the gain.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "037f4ba4"
+   }
+  },
+  {
+   "date": "2026-05",
+   "model_id": "source_track_record",
+   "text": "Source-vs-source backtest published (resolved cohorts only) as the Source Comparison area.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "5780af31"
+   }
+  },
+  {
+   "date": "2026-04",
+   "model_id": "consensus_fv",
+   "text": "Consensus FV: equal-weight mean confirmed over weighted schemes at that window; Bayesian shrinkage + forward-fill formalized.",
+   "origin": "methodology changelog",
+   "source": {
+    "commit": "5780af31"
+   }
+  }
+ ]
 }
