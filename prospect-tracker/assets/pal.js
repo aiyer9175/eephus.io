@@ -28,7 +28,27 @@
 (function () {
   "use strict";
 
-  var DATA_URL = "/data/pal.json";
+  // PAYLOAD FILES (QREP10, 2026-10-08). The core carries every rule, verdict
+  // and backtest block and no rows; each pitcher tab's rows ride their own
+  // file, fetched the first time the tab opens. The whole artifact is read
+  // only when a split file cannot be had (a deploy that predates the split).
+  var CORE_URL = "/data/pal_core.json";
+  var FULL_URL = "/data/pal.json";
+  var BLOCK_URL = {
+    rp2sp: "/data/pal_rp2sp.json",
+    sp2rp: "/data/pal_sp2rp.json",
+    history: "/data/pal_history.json",
+    pitchadd: "/data/pal_pitch_add.json",
+    platoon: "/data/pal_reverse_platoon.json",
+    prospects: "/data/pal_prospect_watch.json"
+  };
+  // the payload keys each section reads off its row file
+  var BLOCK_KEYS = {
+    rp2sp: ["rp2sp"], sp2rp: ["sp2rp"], history: ["history", "pitch_mix_changes"],
+    pitchadd: ["pitch_add"], platoon: ["reverse_platoon"], prospects: ["prospect_watch"]
+  };
+  var BLOCK_LOADING = {};
+  var BLOCK_ERROR = {};
   var DATA = null;
   var LOAD_ERROR = false;    // fetch failed / non-OK (distinct from "not exported yet")
   var LOADING = false;       // the payload is in flight: the lamp loader, not the computing note
@@ -116,6 +136,96 @@
     return href ? '<a class="mlbstats-name-link" href="' + href + '" title="Open the MLB player card">' + nm + "</a>" : nm;
   }
 
+  // ---- organization filter and sort (owner ask 2026-09-25) ------------------
+  // One org filter for every player list on the page, through the shared team
+  // picker (a native select marked data-team-picker whose values are the hub's
+  // canonical club codes, with an All option). It holds across tabs and rides
+  // the hash as &org=XXX. Rows carry their club in whatever code family the
+  // source spelled (AZ or ARI, KC or KCR, OAK or ATH); EEPHUS_HUB.club folds
+  // them to one code, so the filter and the Org sort agree with the picker.
+  var orgFilter = "";
+  var cardOrder = "rank";   // rank | org, the order of the card views
+  function orgCode(t) {
+    if (t == null || t === "") return "";
+    try {
+      var c = (window.EEPHUS_HUB && EEPHUS_HUB.club) ? EEPHUS_HUB.club(t) : null;
+      if (c && c.code) return c.code;
+    } catch (e) { /* hub optional */ }
+    return String(t).toUpperCase();
+  }
+  function byOrg(rows, field) {
+    if (!orgFilter) return rows;
+    return rows.filter(function (r) { return orgCode(r[field]) === orgFilter; });
+  }
+  // Missing clubs sink in either direction; ties keep the order they came in.
+  function sortByOrg(rows, field, asc) {
+    var out = rows.slice();
+    out.sort(function (a, b) {
+      var x = orgCode(a[field]), y = orgCode(b[field]);
+      if (!x && !y) return 0;
+      if (!x) return 1;
+      if (!y) return -1;
+      var c = x < y ? -1 : x > y ? 1 : 0;
+      return asc ? c : -c;
+    });
+    return out;
+  }
+  function orgCodes(rows, field) {
+    var list = [];
+    try {
+      if (window.EEPHUS_HUB && EEPHUS_HUB.clubs) list = EEPHUS_HUB.clubs().map(function (c) { return c.code; });
+    } catch (e) { list = []; }
+    if (!list.length) {   // no hub (a test harness): the codes the rows carry
+      var seen = {};
+      rows.forEach(function (r) {
+        var c = orgCode(r[field]);
+        if (c && !seen[c]) { seen[c] = 1; list.push(c); }
+      });
+    }
+    return list.slice().sort();
+  }
+  // The one control bar a list gets: the org filter, the count it leaves, the
+  // card order where the list is cards, and any chip the section adds.
+  function orgBar(all, field, noun, cards, extra) {
+    var opts = '<option value="">All orgs</option>' + orgCodes(all, field).map(function (c) {
+      return '<option value="' + esc(c) + '"' + (c === orgFilter ? " selected" : "") + ">" + esc(c) + "</option>";
+    }).join("");
+    var n = byOrg(all, field).length;
+    return '<div class="mlbstats-bar pal-ctlbar">'
+      + '<label class="mlbstats-ctl">org <select id="pal-org" data-team-picker aria-label="Filter by organization">'
+      + opts + "</select></label>"
+      + (cards
+        ? '<label class="mlbstats-ctl">order <select id="pal-order" aria-label="Card order">'
+          + '<option value="rank"' + (cardOrder === "rank" ? " selected" : "") + ">ranked</option>"
+          + '<option value="org"' + (cardOrder === "org" ? " selected" : "") + ">org A to Z</option></select></label>"
+        : "")
+      + '<span class="proj-dim pal-count">' + (orgFilter ? esc(n) + " of " + esc(all.length) : esc(all.length))
+      + " " + esc(noun) + "</span>" + (extra || "") + "</div>";
+  }
+  function orgEmpty() { return empty("No " + orgFilter + " rows in this view."); }
+  // The Org cell: the club's logo and code, linked to its club page (the farm
+  // system page for a prospect).
+  function orgCell(team, ctx) {
+    try {
+      if (window.EEPHUS_HUB && EEPHUS_HUB.clubLinkHTML) {
+        return EEPHUS_HUB.clubLinkHTML(team, { logo: true, stop: true, ctx: ctx });
+      }
+    } catch (e) { /* hub optional */ }
+    return esc(team || "-");
+  }
+  // A card's club: the code, linked, beside the name the card leads with.
+  function orgTag(team, ctx) {
+    var link = "";
+    try {
+      if (window.EEPHUS_HUB && EEPHUS_HUB.clubLinkHTML) link = EEPHUS_HUB.clubLinkHTML(team, { ctx: ctx });
+    } catch (e) { link = ""; }
+    return '<span class="proj-dim"> ' + (link || esc(team || "")) + "</span>";
+  }
+  function cardRows(rows, field) {
+    var out = byOrg(rows, field);
+    return cardOrder === "org" ? sortByOrg(out, field, true) : out;
+  }
+
   // ---- collapsible chart panels (shared pattern with /mlbstats/) ------------
   // Charts default COLLAPSED; the header is the toggle and the open/closed state
   // persists in localStorage.
@@ -200,8 +310,11 @@
     if (n >= 42) return "pal-mid";
     return "pal-lo";
   }
+  // tabindex -1 keeps the glossary hook (hover, aria-describedby) on every
+  // cell but takes it out of the Tab order: the column header carries the
+  // same term once, and a stop per row put 285 extra stops on RP->SP (QREA15).
   function fitCell(v, term) {
-    return '<span class="pal-fit ' + fitClass(v) + '" data-gl="' + esc(term) + '">' + f1(v) + "</span>";
+    return '<span class="pal-fit ' + fitClass(v) + '" data-gl="' + esc(term) + '" tabindex="-1">' + f1(v) + "</span>";
   }
   // Color the conversion-direction chip by direction. RP->SP is the value-additive
   // move (a starter is worth more than a reliever) so it gets the prominent color;
@@ -373,10 +486,10 @@
         // and the NAME pins beside it. Do not drop it.
         if (c.kind === "rank") { body += '<td class="mlbstats-col-rank">' + (i + 1) + "</td>"; return; }
         if (c.kind === "name") {
-          body += '<td class="mlbstats-name pal-expand">' + logo(r.team) + nameLink(r.name, r.mlbam)
-            + '<span class="proj-dim"> ' + esc(r.team || "") + "</span>" + flagChips(r.flags) + "</td>";
+          body += '<td class="mlbstats-name pal-expand">' + nameLink(r.name, r.mlbam) + flagChips(r.flags) + "</td>";
           return;
         }
+        if (c.kind === "org") { body += '<td class="pal-org-cell">' + orgCell(r.team) + "</td>"; return; }
         body += "<td>" + c.cell(r) + "</td>";
       });
       body += "</tr>";
@@ -389,6 +502,7 @@
   var RP_COLS = [
     { key: "rank", label: "#", kind: "rank" },
     { key: "name", label: "Reliever", kind: "name", sortable: false },
+    { key: "org", label: "Org", kind: "org", asc: true },
     { key: "fit", label: "RP→SP FIT", term: "rp_sp_fit", desc: true, cell: function (r) { return fitCell(r.fit, "rp_sp_fit") + tierBadge(r, "rp2sp"); } },
     { key: "n_pitches", label: "Arsenal", term: "arsenal_depth", cell: function (r) { return fInt(r.n_pitches) + '<span class="proj-dim"> pitch</span>'; } },
     { key: "fb_pct", label: "FB%", cell: function (r) { return fPct(fbPct(r)); }, get: function (r) { return fbPct(r); } },
@@ -400,6 +514,7 @@
   var SP_COLS = [
     { key: "rank", label: "#", kind: "rank" },
     { key: "name", label: "Starter", kind: "name", sortable: false },
+    { key: "org", label: "Org", kind: "org", asc: true },
     { key: "fit", label: "SP→RP FIT", term: "sp_rp_fit", desc: true, cell: function (r) { return fitCell(r.fit, "sp_rp_fit") + tierBadge(r, "sp2rp"); } },
     { key: "starter_era", label: "SP ERA", cell: function (r) { return f2(r.starter_era); }, asc: true },
     { key: "relief_upside", label: "Relief upside", cell: function (r) { return f1(r.relief_upside); } },
@@ -419,6 +534,7 @@
   // are non-sortable; sortRows is numeric-only.
   var HISTORY_COLS = [
     { key: "name", label: "Pitcher", kind: "name" },
+    { key: "org", label: "Org", kind: "org", asc: true },
     { key: "direction", label: "Conversion", sortable: false },
     { key: "year", label: "Year", desc: true },
     { key: "pre_ip", label: "Before", sortable: false },
@@ -429,6 +545,18 @@
     { key: "pre_fit", label: "pre-FIT" },
     { key: "success", label: "Result", get: function (h) { return h.success === true ? 1 : h.success === false ? 0 : null; } },
   ];
+  // Reverse-Platoon Radar columns: Org and the three OPS reads sort; the rest
+  // are labels. The default order is the payload's (most reverse first).
+  var PLATOON_COLS = [
+    { key: "name", label: "Pitcher", kind: "name" },
+    { key: "org", label: "Org", kind: "org", asc: true },
+    { key: "p_throws", label: "Throws", sortable: false },
+    { key: "role", label: "Role", sortable: false },
+    { key: "own_ops", label: "vs own hand" },
+    { key: "opp_ops", label: "vs opp hand", asc: true },
+    { key: "split", label: "Split" },
+    { key: "read", label: "Read", sortable: false },
+  ];
   function veloCell(r) {
     if (r.fb_velo == null) return "-";
     var d = (r.proj_velo != null) ? (r.proj_velo - r.fb_velo) : null;
@@ -437,6 +565,7 @@
   }
   function sortRows(rows, cols) {
     var col = null; cols.forEach(function (c) { if (c.key === sortKey) col = c; });
+    if (col && col.kind === "org") return sortByOrg(rows, col.field || "team", sortAsc);
     var out = rows.slice();
     out.sort(function (a, b) {
       var va = col && col.get ? col.get(a) : a[sortKey];
@@ -462,7 +591,15 @@
   // structural screen, SP->RP is validated). Module accent = cyan (the RP->SP
   // primary direction + the "hi" FIT tier - the pal identity color).
   function gfxChip(id) {
-    return window.EEPHUS_GFX ? " &middot; " + EEPHUS_GFX.chipHTML(id, "Generate GFX") : "";
+    return window.EEPHUS_GFX ? EEPHUS_GFX.chipHTML(id, "Generate GFX") : "";
+  }
+  // HOW THIS WORKS (display pass 2026-10-08). The gate sentence, its caveat,
+  // the tier cuts and the coverage counts are read once and checked rarely, so
+  // they sit in one collapsed fold under a one-line lede; the table leads. They
+  // are moved, never dropped: every disclosure a test pins is still in the page.
+  function howBlock(html) {
+    return html ? '<details class="fa-valmap pal-how"><summary>How this works</summary>'
+      + '<div class="fa-valmap-wrap mlbstats-note">' + html + "</div></details>" : "";
   }
   // Plain-text (canvas-safe) velocity cell: current FB velo -> role-projected
   // velo. veloCell() emits HTML spans, so the board needs its own text-only
@@ -481,7 +618,7 @@
     return f1(r.fb_velo) + (r.proj_velo != null ? " → " + f1(r.proj_velo) : "");
   }
   function rp2spBoardSpec() {
-    var rows = sortRows((DATA && DATA.rp2sp) || [], RP_COLS);
+    var rows = byOrg(sortRows((DATA && DATA.rp2sp) || [], RP_COLS), "team");
     var brows = rows.map(function (r, i) {
       return { cells: [
         { t: i + 1 },
@@ -498,7 +635,7 @@
       kind: "board", module: "Alchemy Lab", accentToken: "--accent-cyan",
       title: "Alchemy Lab · RP→SP Candidates",
       subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
-        + rows.length + " relievers who profile as starters",
+        + (orgFilter ? orgFilter + " · " : "") + rows.length + " relievers who profile as starters",
       url: "eephus.io/pal", filenameBase: "pal-rp2sp-candidates",
       // Caption reads the payload verdict (see verdictPhrase): a shareable
       // graphic that carries a frozen validity claim is the same defect as a
@@ -541,7 +678,7 @@
     };
   }
   function sp2rpBoardSpec() {
-    var rows = sortRows((DATA && DATA.sp2rp) || [], SP_COLS);
+    var rows = byOrg(sortRows((DATA && DATA.sp2rp) || [], SP_COLS), "team");
     // TIER ships on this board too. rp2sp has carried one since it was built, so
     // without it the two shareable graphics disagreed about what a PAL board is.
     var brows = rows.map(function (r, i) {
@@ -560,7 +697,7 @@
       kind: "board", module: "Alchemy Lab", accentToken: "--accent-cyan",
       title: "Alchemy Lab · SP→RP Candidates",
       subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
-        + rows.length + " starters whose stuff would play up in relief",
+        + (orgFilter ? orgFilter + " · " : "") + rows.length + " starters whose stuff would play up in relief",
       url: "eephus.io/pal", filenameBase: "pal-sp2rp-candidates",
       caption: "candidate screen, not a forecast · SP→RP: " + verdictPhrase("SP->RP"),
       board: { defaultCount: 25, counts: [10, 25, 50],
@@ -591,19 +728,24 @@
     var rows = (DATA && DATA.rp2sp) || [];
     if (!rows.length) return empty("No RP→SP candidates yet.");
     var note = '<div class="mlbstats-note">' + gloss("RP→SP FIT", "rp_sp_fit")
-      + ": arsenal depth first, then command, platoon-neutrality and contact quality. "
-      + esc(verdictSentence("RP->SP")) + " A candidate screen, not a forecast. Click a row for components."
-      + gfxChip("pal-rp2sp-gfx") + "</div>" + tierLegend("rp2sp");
-    return rp2spViz() + note + candTable(sortRows(rows, RP_COLS), RP_COLS);
+      + " ranks arsenal depth first, then command, platoon-neutrality and contact quality."
+      + " A candidate screen, not a forecast.</div>";
+    var how = howBlock(esc(verdictSentence("RP->SP")) + tierLegend("rp2sp"));
+    var shown = byOrg(sortRows(rows, RP_COLS), "team");
+    return note + how + rp2spViz() + orgBar(rows, "team", "relievers", false, gfxChip("pal-rp2sp-gfx"))
+      + (shown.length ? candTable(shown, RP_COLS) : orgEmpty());
   }
   function renderSP2RP() {
     var rows = (DATA && DATA.sp2rp) || [];
     if (!rows.length) return empty("No SP→RP candidates yet.");
     var note = '<div class="mlbstats-note">' + gloss("SP→RP FIT", "sp_rp_fit")
-      + ": relief upside scaled by conversion need, so a starter succeeding in the rotation scores low. "
-      + "SP ERA is the need signal; proj REM+ is display-only. " + esc(verdictSentence("SP->RP"))
-      + " A candidate screen, not a forecast." + gfxChip("pal-sp2rp-gfx") + "</div>" + tierLegend("sp2rp");
-    return sp2rpViz() + note + candTable(sortRows(rows, SP_COLS), SP_COLS);
+      + ": relief upside scaled by conversion need, so a starter succeeding in the rotation scores low."
+      + " A candidate screen, not a forecast.</div>";
+    var how = howBlock("SP ERA is the need signal; proj REM+ is display-only. "
+      + esc(verdictSentence("SP->RP")) + tierLegend("sp2rp"));
+    var shown = byOrg(sortRows(rows, SP_COLS), "team");
+    return note + how + sp2rpViz() + orgBar(rows, "team", "starters", false, gfxChip("pal-sp2rp-gfx"))
+      + (shown.length ? candTable(shown, SP_COLS) : orgEmpty());
   }
 
   function roleLine(x) {
@@ -802,30 +944,49 @@
           ? '<span class="pal-sc-stat">no converter sample yet</span>'
           : '<span class="pal-sc-stat">converter median FIT: <b>' + esc(b.converter_median_fit_pool_pctile)
             + esc(ordSuffix(Math.round(Number(b.converter_median_fit_pool_pctile)))) + "</b> pct of the field</span>")
-      + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
       + "</div>";
   }
+  // A sub-view strip: real tabs (role, selected state, the panel they control),
+  // so the tablist is not an empty one around two plain buttons (QREA15).
+  function viewTab(attr, key, label, on) {
+    return '<button type="button" class="mlbstats-tab' + (on ? " active" : "") + '" ' + attr + '="' + key
+      + '" role="tab" aria-selected="' + (on ? "true" : "false") + '" aria-controls="pal-view">'
+      + esc(label) + "</button>";
+  }
+  function viewPanel(label, html) {
+    return '<div id="pal-view" role="tabpanel" aria-label="' + esc(label) + '">' + html + "</div>";
+  }
   function historyToggle() {
-    return '<div class="mlbstats-tabs" role="tablist">'
-      + '<button type="button" class="mlbstats-tab' + (historyView === "table" ? " active" : "") + '" data-histview="table">Conversions</button>'
-      + '<button type="button" class="mlbstats-tab' + (historyView === "mix" ? " active" : "") + '" data-histview="mix">Pitch-mix changes</button>'
+    return '<div class="mlbstats-tabs" role="tablist" aria-label="Conversion History views">'
+      + viewTab("data-histview", "table", "Conversions", historyView === "table")
+      + viewTab("data-histview", "mix", "Pitch-mix changes", historyView === "mix")
       + "</div>";
+  }
+  // Header row for a table built from a column list: sortable columns carry
+  // data-col, scope, tabindex and aria-sort; the rest are plain labels.
+  function headRow(cols) {
+    return "<thead><tr>" + cols.map(function (c) {
+      var cls = "mlbstats-col-" + c.key + (c.key === sortKey ? " is-sorted" : "");
+      if (c.kind === "name" || c.sortable === false) return '<th class="' + cls + '">' + c.label + "</th>";
+      return '<th class="' + cls + '" data-col="' + c.key + '" scope="col" tabindex="0" aria-sort="'
+        + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none") + '">' + c.label + "</th>";
+    }).join("") + "</tr></thead>";
   }
   function renderHistory() {
     var rows = (DATA && DATA.history) || [];
     if (!rows.length) return empty("No conversion history yet.");
-    if (historyView === "mix") return scorecard() + historyToggle() + renderMix();
+    // the backtest's terms, under the card both views share
+    var how = howBlock("Before and After: the pre-role and post-role seasons. Arsenal shift: pitches "
+      + "added (+) or dropped (-). " + esc(btBlock().disclaimer || ""));
+    if (historyView === "mix") return scorecard() + how + historyToggle() + viewPanel("Pitch-mix changes", renderMix());
     // Sortable, recency-first by default (year desc -> 2026 conversions lead).
     // Click any numeric column header to re-sort.
-    rows = sortRows(rows, HISTORY_COLS);
-    var head = "<thead><tr>" + HISTORY_COLS.map(function (c) {
-      if (c.kind === "name" || c.sortable === false) return "<th>" + c.label + "</th>";
-      return '<th data-col="' + c.key + '"' + (c.key === sortKey ? ' class="is-sorted"' : "")
-        + ' scope="col" tabindex="0" aria-sort="' + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none")
-        + '">' + c.label + "</th>";
-    }).join("") + "</tr></thead>";
+    var all = rows;
+    rows = byOrg(sortRows(rows, HISTORY_COLS), "team");
+    var head = headRow(HISTORY_COLS);
     var body = "<tbody>" + rows.map(function (h) {
-      return "<tr><td class=\"mlbstats-name\">" + logo(h.team) + nameLink(h.name, h.mlbam) + "</td>"
+      return "<tr><td class=\"mlbstats-name\">" + nameLink(h.name, h.mlbam) + "</td>"
+        + '<td class="pal-org-cell">' + orgCell(h.team) + "</td>"
         + '<td><span class="pal-dir' + dirClass(h.direction) + '">' + esc((h.direction || "").replace("->", "→")) + "</span></td>"
         + "<td>" + esc(h.year) + "</td>"
         + "<td>" + roleLine(h.pre) + "</td><td>" + roleLine(h.post) + "</td>"
@@ -836,15 +997,16 @@
         + "<td>" + successCell(h) + "</td></tr>";
     }).join("") + "</tbody>";
     var note = '<div class="mlbstats-note">Every detected ' + gloss("SP↔RP switch", "pal_conversion")
-      + " since 2018. WAR before &rarr; after: realized pitcher WAR"
-      + (warSeriesShort() ? " on " + esc(warSeriesShort()) : "") + ", pre-role and post-role seasons. "
-      + "Arsenal shift: pitches added (+) or dropped (-).</div>";
-    return scorecard() + historyToggle() + note
-      + '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>";
+      + " since 2018, with realized pitcher WAR" + (warSeriesShort() ? " on " + esc(warSeriesShort()) : "")
+      + " before and after.</div>";
+    return scorecard() + how + historyToggle() + viewPanel("Conversions", note + orgBar(all, "team", "conversions")
+      + (rows.length ? '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>"
+        : orgEmpty()));
   }
   function renderMix() {
-    var rows = (DATA && DATA.pitch_mix_changes) || [];
-    if (!rows.length) return empty("No pitch-mix change data.");
+    var all = (DATA && DATA.pitch_mix_changes) || [];
+    if (!all.length) return empty("No pitch-mix change data.");
+    var rows = cardRows(all, "team");
     function usageBars(mix) {
       return (mix || []).map(function (p) {
         return '<div class="pal-ars-row"><span class="pal-ars-pitch">' + esc(p.pitch) + "</span>"
@@ -852,18 +1014,21 @@
       }).join("");
     }
     var cards = rows.map(function (m) {
-      return '<div class="pal-mix-card"><h4><span>' + logo(m.team) + nameLink(m.name, m.mlbam) + '</span><span class="pal-dir' + dirClass(m.direction) + '">'
+      return '<div class="pal-mix-card"><h4><span>' + logo(m.team) + nameLink(m.name, m.mlbam) + orgTag(m.team)
+        + '</span><span class="pal-dir' + dirClass(m.direction) + '">'
         + esc((m.direction || "").replace("->", "→")) + " " + esc(m.year) + "</span></h4>"
         + '<div class="pal-mix-cols"><div><h4>Before</h4>' + usageBars(m.before) + "</div>"
         + '<div><h4>After</h4>' + usageBars(m.after) + "</div></div></div>";
     }).join("");
     return '<div class="mlbstats-note">Pitch usage before and after the switch.</div>'
-      + '<div class="pal-mix-grid">' + cards + "</div>";
+      + orgBar(all, "team", "conversions", true)
+      + (rows.length ? '<div class="pal-mix-grid">' + cards + "</div>" : orgEmpty());
   }
 
   function renderPitchAdd() {
-    var rows = (DATA && DATA.pitch_add) || [];
-    if (!rows.length) return empty("No pitch-add recommendations yet.");
+    var all = (DATA && DATA.pitch_add) || [];
+    if (!all.length) return empty("No pitch-add recommendations yet.");
+    var rows = cardRows(all, "team");
     var note = '<div class="mlbstats-note">Pitch to add: the arsenal hole (no breaking ball, no offspeed, or a '
       + "thin third pitch) crossed with the platoon weakness. Sorted by " + gloss("RP→SP FIT", "rp_sp_fit") + ".</div>";
     var cards = rows.map(function (r) {
@@ -871,14 +1036,15 @@
       var arsenal = (r.arsenal || []).slice().sort(function (a, b) { return (b.usage || 0) - (a.usage || 0); })
         .map(function (p) { return esc(p.pitch) + " " + fPct(p.usage); }).join(" &middot; ");
       var pri = rec.priority === "high" ? " pal-flag--warn" : " pal-flag--good";
-      return '<div class="pal-mix-card"><h4><span>' + logo(r.team) + nameLink(r.name, r.mlbam) + '<span class="proj-dim"> ' + esc(r.team)
-        + '</span></span><span class="pal-fit ' + fitClass(r.fit) + '">' + f1(r.fit) + "</span></h4>"
+      return '<div class="pal-mix-card"><h4><span>' + logo(r.team) + nameLink(r.name, r.mlbam) + orgTag(r.team)
+        + '</span><span class="pal-fit ' + fitClass(r.fit) + '">' + f1(r.fit) + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:4px 0">Current: ' + (arsenal || "-") + "</div>"
         + '<div style="margin:7px 0"><span class="pal-flag' + pri + '">ADD ' + esc(rec.add) + "</span>"
         + (rec.target ? ' <span class="proj-dim">vs ' + esc(rec.target) + "</span>" : "") + "</div>"
         + '<div style="font-size:11px;color:var(--text-secondary);line-height:1.4">' + esc(rec.reason) + "</div></div>";
     }).join("");
-    return note + '<div class="pal-mix-grid">' + cards + "</div>";
+    return note + orgBar(all, "team", "relievers", true)
+      + (rows.length ? '<div class="pal-mix-grid">' + cards + "</div>" : orgEmpty());
   }
 
   function renderPlatoon() {
@@ -888,11 +1054,12 @@
       return (r.reverse || r.extreme) && (r.min_tbf == null || r.min_tbf >= 100);
     });
     if (!view.length) return empty("No notable platoon splits yet.");
+    var all = view;
+    view = byOrg(sortRows(view, PLATOON_COLS), "team");
     var note = '<div class="mlbstats-note">' + gloss("Reverse split", "reverse_platoon")
-      + ": tougher on opposite-handed hitters, a plus for RP&rarr;SP. " + gloss("Extreme split", "platoon_split")
-      + ": a conversion blocker. OPS-against by batter hand, 100+ TBF per hand. Descriptive, not a backtested model.</div>";
-    var head = "<thead><tr><th>Pitcher</th><th>Throws</th><th>Role</th><th>vs own hand</th><th>vs opp hand</th>"
-      + "<th>Split</th><th>Read</th></tr></thead>";
+      + ": tougher on opposite-handed hitters, a plus for RP&rarr;SP; " + gloss("extreme split", "platoon_split")
+      + ": a conversion blocker. OPS-against by batter hand, 100+ TBF a hand; descriptive, not backtested.</div>";
+    var head = headRow(PLATOON_COLS);
     var body = "<tbody>" + view.map(function (r) {
       // BOTH FLAGS, WHEN BOTH ARE SET. `reverse` is a DIRECTION (own-side OPS
       // higher by more than .030) and `extreme` is a MAGNITUDE (|split| >= .150),
@@ -904,17 +1071,21 @@
         ? '<span class="pal-hit">reverse</span>, but <span class="pal-miss">extreme</span>'
         : r.reverse ? '<span class="pal-hit">reverse (neutral+)</span>'
         : '<span class="pal-miss">extreme split</span>';
-      return '<tr><td class="mlbstats-name">' + logo(r.team) + nameLink(r.name, r.mlbam) + "</td>"
+      return '<tr><td class="mlbstats-name">' + nameLink(r.name, r.mlbam) + "</td>"
+        + '<td class="pal-org-cell">' + orgCell(r.team) + "</td>"
         + "<td>" + esc(r.p_throws) + "HP</td><td>" + esc(r.role) + "</td>"
         + "<td>" + f3(r.own_ops) + "</td><td>" + f3(r.opp_ops) + "</td>"
         + "<td>" + f3(r.split) + "</td><td>" + read + "</td></tr>";
     }).join("") + "</tbody>";
-    return note + '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>";
+    return note + orgBar(all, "team", "pitchers")
+      + (view.length ? '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>"
+        : orgEmpty());
   }
 
   function renderProspects() {
-    var rows = (DATA && DATA.prospect_watch) || [];
-    if (!rows.length) return empty("No prospect role-mismatches yet.");
+    var all = (DATA && DATA.prospect_watch) || [];
+    if (!all.length) return empty("No prospect role-mismatches yet.");
+    var rows = cardRows(all, "org");
     // The bound is STATED, never silent: every number below comes from the payload's
     // own prospect_watch_rule, so the copy cannot claim a threshold the export is not
     // applying. Degrades to the old wording on a payload built before the rule shipped.
@@ -963,8 +1134,9 @@
       }
     }
     var note = '<div class="mlbstats-note">Scouted role vs ' + gloss("starter shape", "starter_shape")
-      + " (" + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 grades; no minors pitch "
-      + "tracking, so tool grades, not stuff). " + esc(DATA.n_prospects || "") + " prospect pitchers scanned"
+      + " (" + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 tool grades; no minors pitch "
+      + "tracking). Descriptive shape screen, not a backtested model.</div>";
+    var how = howBlock(esc(DATA.n_prospects || "") + " prospect pitchers scanned"
       // COVERAGE, STATED. A mismatch needs a stated role for the shape to
       // disagree with, and a position of RHP, LHP or P states handedness and no
       // role. Those rows can never appear here, correctly, and the bare
@@ -975,8 +1147,7 @@
             + (rule.n_role_unstated_above_fv
                ? " (" + esc(rule.n_role_unstated_above_fv) + " of those clear the FV floor)" : "")
             + ".")
-         : ".") + bound
-      + " Descriptive shape screen, not a backtested model.</div>";
+         : ".") + bound);
     function toolBars(tools) {
       tools = tools || {};
       return ["fb", "sl", "cb", "ch", "ct", "cmd"].filter(function (k) { return tools[k] != null; }).map(function (k) {
@@ -1011,8 +1182,12 @@
         : p.role === "RP" ? "Scouted a reliever, but has the arsenal to start."
         : "Scouted " + esc(p.position || "a pitcher") + ", and the arsenal shape leans "
           + esc(p.lean || "the other way") + ".";
-      return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + esc(p.name)
-        + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
+      // the name opens the prospect's PROSPX card; the club opens its farm page
+      var nm = p.player_key
+        ? '<a class="mlbstats-name-link" href="/prospx/#player=' + encodeURIComponent(p.player_key)
+          + '" title="Open the PROSPX card">' + esc(p.name) + "</a>"
+        : esc(p.name);
+      return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + nm + orgTag(p.org, "farm") + "</span>"
         + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position)
         + " &middot; " + gradeText(p)
@@ -1021,7 +1196,8 @@
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
         + toolBars(p.tools) + "</div>";
     }).join("");
-    return note + '<div class="pal-mix-grid">' + cards + "</div>";
+    return note + how + orgBar(all, "org", "prospects", true)
+      + (rows.length ? '<div class="pal-mix-grid">' + cards + "</div>" : orgEmpty());
   }
 
   // ---- Position Fit: which hitters are worth more runs somewhere else -------
@@ -1168,6 +1344,7 @@
   var POSFIT_COLS = [
     { key: "rank", label: "#", kind: "rank" },
     { key: "name", label: "Hitter", kind: "name", sortable: false },
+    { key: "org", label: "Org", kind: "org", asc: true },
     { key: "pos", label: "Now", cell: function (r) { return esc(r.pos || "-"); } },
     { key: "pa", label: "PA", cell: function (r) { return fInt(r.pa); } },
     { key: "move", label: "Best fit", sortable: false, cell: pfMoveCell },
@@ -1181,6 +1358,7 @@
   function pfSortedRows(rows) {
     var col = null;
     POSFIT_COLS.forEach(function (c) { if (c.key === sortKey) col = c; });
+    if (col && col.kind === "org") return sortByOrg(rows, "team", sortAsc);
     var key = (col && !col.kind) ? col.key : "gain";
     var out = rows.slice();
     out.sort(function (a, b) {
@@ -1214,9 +1392,9 @@
         // .mlbstats-col-rank: see the note in candTable - it is what lets the
         // frozen column pin the player name instead of the rank digit.
         if (c.kind === "rank") { body += '<td class="mlbstats-col-rank">' + (i + 1) + "</td>"; return; }
+        if (c.kind === "org") { body += '<td class="pal-org-cell">' + orgCell(r.team) + "</td>"; return; }
         if (c.kind === "name") {
-          body += '<td class="mlbstats-name pal-expand">' + logo(r.team) + nameLink(r.name, r.mlbam)
-            + '<span class="proj-dim"> ' + esc(r.team || "") + "</span>"
+          body += '<td class="mlbstats-name pal-expand">' + nameLink(r.name, r.mlbam)
             + (r.misplaced ? ' <span class="pal-flag pal-flag--good">MISPLACED</span>' : "")
             + (r.demoted ? ' <span class="pal-flag pal-flag--warn">MOVE DOWN</span>' : "") + "</td>";
           return;
@@ -1246,11 +1424,19 @@
     if (!s || s.length !== 2 || num(s[0]) == null || num(s[1]) == null) return "";
     var span = Number(s[1]) - Number(s[0]) + 1;
     if (span > 8) return "";
-    // TYPED FIGURES, flagged: the held-out comparison below is not in the
-    // payload, so it cannot follow a refit. The exporter should ship it.
-    return " Window: rungs drift by more than their sampling intervals, so the short span was chosen "
-      + "on held-out error; it beat the 2012-onward pool by 0.10 runs per 650 PA (bootstrap 0.08 to "
-      + "0.11, all three held-out seasons), at the cost of wider intervals.";
+    // READ, NOT TYPED (QREC13): the held-out comparison rides in the payload
+    // (ladder.windowEval, from the recency gate's eval artifact) and is cited
+    // by name. Without it the note states the reason and no figure.
+    var W = L.windowEval || null;
+    var head = " Window: rungs drift by more than their sampling intervals, so the short span was chosen "
+      + "on held-out error";
+    if (!W || W.dmae == null) return head + ", at the cost of wider intervals.";
+    var ci = W.ci95 || [];
+    return head + "; it beat the " + (W.poolFrom ? esc(W.poolFrom) + "-onward " : "longer ")
+      + "pool by " + f2(W.dmae) + " runs per 650 PA (95% CI " + f2(ci[0]) + " to " + f2(ci[1])
+      + ", better in " + esc(W.nSeasonsBetter) + " of " + esc(W.nSeasons) + " held-out seasons; "
+      + esc(W.artifact || "") + (W.generatedAt ? ", " + esc(W.generatedAt) : "")
+      + "), at the cost of wider intervals.";
   }
   // The two Difference columns, explained where they are read. This is a
   // basis mismatch, not a scoring dispute, and the page used to print only the
@@ -1406,11 +1592,12 @@
         return ladderRow(p, false, '<span class="proj-dim"> not in the sum</span>');
       }).join("");
     var note = '<div class="mlbstats-note">' + gloss("Positional ladder", "positional_ladder")
-      + ", inverted from Baseball-Reference: least squares of positional runs per 650 PA on innings shares, "
-      + "no intercept; " + fThou(L.nPlayerSeasons) + " player-seasons, " + esc((L.seasons || [])[0])
-      + " to " + esc((L.seasons || [])[1]) + ", " + fInt(L.minPa) + "+ PA. R&sup2; " + (L.r2 == null ? "-" : f1(L.r2 * 100) + "%")
-      + ", residual SD " + f2(L.residSd) + " runs. A rung is what BRef prices the position at, not an independent "
-      + "measure of difficulty." + pfFolkloreNote(L) + pfWindowNote(L) + "</div>";
+      + ", inverted from Baseball-Reference: " + fThou(L.nPlayerSeasons) + " player-seasons, "
+      + esc((L.seasons || [])[0]) + " to " + esc((L.seasons || [])[1]) + ", " + fInt(L.minPa) + "+ PA; R&sup2; "
+      + (L.r2 == null ? "-" : f1(L.r2 * 100) + "%") + ", residual SD " + f2(L.residSd) + " runs. A rung is "
+      + "what BRef prices the position at, not an independent measure of difficulty.</div>"
+      + howBlock("Least squares of positional runs per 650 PA on innings shares, no intercept."
+        + pfFolkloreNote(L) + pfWindowNote(L));
     // WHICH SUM IS ZERO, stated on the page rather than left to be
     // rediscovered. Only rendered when the artifact carries the identification
     // block (added 2026-07-31); older artifacts get the table with no claim
@@ -1453,8 +1640,21 @@
       + "<tbody>" + rows + "</tbody></table></div>" + sums + pfMethod();
   }
 
-  // Honest accounting. Two DIFFERENT questions were measured and they got two
-  // different answers; both are printed, and the failing one is not softened.
+  // The OAA comparator, READ off the paired difference (model minus raw OAA)
+  // and its interval rather than typed (QREC13): an interval wholly below
+  // zero is "better than the model", wholly above is "worse", across zero
+  // is "not separable from the model".
+  function oaaVsModel(D) {
+    var mm = ((D && D.modelMinus) || {}).raw_oaa || {};
+    var c = mm.ci95 || [];
+    if (mm.mean == null || num(c[0]) == null || num(c[1]) == null) return ".";
+    var word = c[1] < 0 ? "better than the model" : c[0] > 0 ? "worse than the model"
+      : "not separable from the model";
+    return ", " + word + " (model minus OAA " + pfSigned(mm.mean, 2) + ", 95% CI "
+      + pfSigned(c[0], 2) + " to " + pfSigned(c[1], 2) + ").";
+  }
+  // Two DIFFERENT questions were measured and they got two different
+  // answers; both are printed, and the failing one is not softened.
   function pfMethod() {
     var A = (PF && PF.accuracy) || {}, D = (PF && PF.demotionNull) || {};
     var mae = A.mae || {}, adv = (A.advantage || {}).carry_over || {}, auc = D.auc || {};
@@ -1472,7 +1672,7 @@
       + '<div class="mlbstats-note" style="margin:4px 0">' + fThou(D.nScored) + " player-seasons ("
       + fPct(D.baseRate) + " moved down the next year): AUC " + f2(auc.model) + " (coin flip 0.50; "
       + "permutation band on AUC minus 0.5: " + f2(D.permNull95) + "). Raw single-season OAA alone: "
-      + f2(auc.raw_oaa) + ", better than the model. The list is a valuation, not a prediction.</div></div>";
+      + f2(auc.raw_oaa) + oaaVsModel(D) + " The list is a valuation, not a prediction.</div></div>";
     var up = D.promotionSide || {};
     var nuance = (up.auc_model_up != null)
       ? '<div class="pal-mix-card"><h4><span>Moves up</span></h4>'
@@ -1498,15 +1698,13 @@
     if (!PF) return pxState("loading", esc("Loading the position-fit model…"));
     var all = PF.rows || [];
     if (!all.length) return empty("No qualified hitters in the position-fit model yet.");
-    var tabs = [["misplaced", "Misplaced hitters"], ["down", "Move down the spectrum"],
-                ["board", "Every qualified hitter"], ["ladder", "The positional ladder"]]
-      .map(function (t) {
-        return '<button type="button" class="mlbstats-tab' + (posfitView === t[0] ? " active" : "")
-          + '" data-pfview="' + t[0] + '" role="tab" aria-selected="' + (posfitView === t[0]) + '">'
-          + esc(t[1]) + "</button>";
-      }).join("");
+    var views = [["misplaced", "Misplaced hitters"], ["down", "Move down the spectrum"],
+                 ["board", "Every qualified hitter"], ["ladder", "The positional ladder"]];
+    var tabs = views.map(function (t) { return viewTab("data-pfview", t[0], t[1], posfitView === t[0]); }).join("");
+    var curLabel = "";
+    views.forEach(function (t) { if (t[0] === posfitView) curLabel = t[1]; });
     var nav = '<div class="mlbstats-tabs" role="tablist" aria-label="Position Fit views">' + tabs + "</div>";
-    if (posfitView === "ladder") return nav + pfLadder();
+    if (posfitView === "ladder") return nav + viewPanel(curLabel, pfLadder());
 
     var rows = posfitView === "misplaced" ? all.filter(function (r) { return r.misplaced; })
       : posfitView === "down" ? all.filter(function (r) { return r.demoted; })
@@ -1521,12 +1719,16 @@
         + fInt(PF.nFlaggedDemotion) + " qualified. Part of every corner-outfield-to-first-base gain is a league-wide "
         + "constant; the expanded row splits it out."
       : "Every qualified hitter (" + fInt(fr.headline_min_pa) + "+ PA, " + fInt(fr.headline_min_innings)
-        + "+ defensive innings), by gain at his best position. Click a row for the breakdown.";
+        + "+ defensive innings), by gain at his best position.";
     var note = '<div class="mlbstats-note">' + gloss("Position fit", "position_fit") + ". " + esc(lead)
-      + " Runs per 650 PA, " + esc(PF.season || "") + " season. Value identity: " + esc(PF.valueIdentity || "")
-      + ". A valuation, not a prediction: who gets moved measured null (see The positional ladder).</div>";
-    if (!rows.length) return nav + note + empty("No hitters clear the flag in this view.");
-    return nav + note + pfTable(pfSortedRows(rows));
+      + " Runs per 650 PA, " + esc(PF.season || "") + " season; a valuation, not a prediction: who gets moved "
+      + "measured null (see The positional ladder).</div>"
+      + howBlock(PF.valueIdentity ? "Value identity: " + esc(PF.valueIdentity) + ". The bat is the same at "
+        + "every position, so fielding and the positional adjustment decide the move." : "");
+    if (!rows.length) return nav + viewPanel(curLabel, note + empty("No hitters clear the flag in this view."));
+    var shown = byOrg(pfSortedRows(rows), "team");
+    return nav + viewPanel(curLabel, note + orgBar(rows, "team", "hitters")
+      + (shown.length ? pfTable(shown) : orgEmpty()));
   }
 
   function loadPosFit() {
@@ -1552,9 +1754,7 @@
       // artifact that is not refit nightly, so its age is the reader's to see.
       if (pfBanner) pfBanner.innerHTML = PF
         ? '<div class="mlbstats-note">Season ' + esc(PF.season || "") + " &middot; " + esc(PF.model || "")
-          + (PF.generated_at ? ", built " + esc(String(PF.generated_at).slice(0, 10)) : "")
-          + " &middot; valuation, not prediction: move SIZE validated out of sample; who gets moved "
-          + "down measured null.</div>"
+          + (PF.generated_at ? ", built " + esc(String(PF.generated_at).slice(0, 10)) : "") + "</div>"
         : "";
       bindTable(root);
       wireGlossary(root);
@@ -1576,16 +1776,30 @@
       if (retry) retry.addEventListener("click", function () { load(); });
       return;
     }
+    if (!hasBlock(section)) {
+      ensureBlock(section);
+      if (hasBlock(section)) return;   // answered at once: that render already painted
+      root.innerHTML = BLOCK_ERROR[section]
+        ? pxState("failed", "This tab's rows failed to load. "
+          + '<button type="button" class="chip" id="pal-block-retry">Retry</button>', "pal-load-error")
+        : pxState("loading", esc("Loading…"));
+      var bretry = document.getElementById("pal-block-retry");
+      if (bretry) bretry.addEventListener("click", function () {
+        BLOCK_ERROR[section] = false; render();
+      });
+      return;
+    }
     root.innerHTML = (section === "sp2rp") ? renderSP2RP() : (section === "history") ? renderHistory()
       : (section === "pitchadd") ? renderPitchAdd() : (section === "platoon") ? renderPlatoon()
       : (section === "prospects") ? renderProspects() : renderRP2SP();
     var banner = document.getElementById("pal-banner");
     if (banner) banner.innerHTML = DATA.season
-      ? '<div class="mlbstats-note">Season ' + esc(DATA.season) + ' &middot; candidate screen, not a projection'
-        // Per-direction and DERIVED: the banner used to name the winner and the
-        // loser in literal text, which survived a change of WAR series.
-        + ' &middot; SP&rarr;RP: ' + esc(verdictPhrase("SP->RP"))
-        + ' &middot; RP&rarr;SP: ' + esc(verdictPhrase("RP->SP")) + ' '
+      ? '<div class="mlbstats-note">Season ' + esc(DATA.season)
+        // The build date is the reader's to see (census M07-25). The two
+        // per-direction verdicts are not repeated here: the masthead derives
+        // them from the same gate block, and the boards' folds carry them long.
+        + (DATA.generated_at ? " &middot; built " + esc(String(DATA.generated_at).slice(0, 10)) : "")
+        + " &middot; candidate screen, not a projection "
         + esc((DATA.verdict && DATA.verdict !== "validated") ? "[" + DATA.verdict + "]" : "") + "</div>" : "";
     bindTable(root);
     wireGlossary(root);
@@ -1618,7 +1832,7 @@
       function sortBy() {
         var key = th.getAttribute("data-col");
         var cols = (section === "sp2rp") ? SP_COLS : (section === "history") ? HISTORY_COLS
-          : (section === "posfit") ? POSFIT_COLS : RP_COLS;
+          : (section === "posfit") ? POSFIT_COLS : (section === "platoon") ? PLATOON_COLS : RP_COLS;
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
         if (!col || col.kind === "rank" || col.kind === "name" || col.sortable === false) return;
         if (sortKey === key) sortAsc = !sortAsc;
@@ -1639,6 +1853,18 @@
         sortBy();
       });
     });
+    var orgSel = root.querySelector("#pal-org");
+    if (orgSel) orgSel.addEventListener("change", function () {
+      orgFilter = orgSel.value || "";
+      openRow = null;
+      writeHash();
+      render();
+    });
+    var ordSel = root.querySelector("#pal-order");
+    if (ordSel) ordSel.addEventListener("change", function () {
+      cardOrder = ordSel.value === "org" ? "org" : "rank";
+      render();
+    });
     root.querySelectorAll("[data-histview]").forEach(function (b) {
       b.addEventListener("click", function () { historyView = b.getAttribute("data-histview"); render(); });
     });
@@ -1646,7 +1872,7 @@
       b.addEventListener("click", function () {
         posfitView = b.getAttribute("data-pfview");
         openRow = null;
-        try { history.replaceState(null, "", "#posfit=" + posfitView); } catch (e) { /* hash optional */ }
+        writeHash();
         render();
       });
     });
@@ -1683,36 +1909,71 @@
     document.querySelectorAll("[data-palsection]").forEach(function (b) {
       b.addEventListener("click", function () {
         setSection(b.getAttribute("data-palsection"));
-        try { history.replaceState(null, "", "#" + section); } catch (e) { }
+        writeHash();
         render();
       });
     });
   }
 
+  // The hash: the section (or posfit=<view>), then &org=<code> when a club
+  // is picked. The section regexes below are what test_page_index reads.
+  function writeHash() {
+    var base = (section === "posfit") ? "posfit=" + posfitView : section;
+    try { history.replaceState(null, "", "#" + base + (orgFilter ? "&org=" + orgFilter : "")); } catch (e) { /* hash optional */ }
+  }
   function readHash() {
     var h = location.hash || "";
     var m = /^#(rp2sp|sp2rp|posfit|history|pitchadd|platoon|prospects)/.exec(h);
     if (m) setSection(m[1]);
     var v = /^#posfit=(misplaced|down|board|ladder)/.exec(h);
     if (v) { setSection("posfit"); posfitView = v[1]; }
+    var o = /[#&]org=([A-Za-z]{2,4})(?:&|$)/.exec(h);
+    if (o) orgFilter = orgCode(o[1]);
   }
 
   // Loader with a visible failure mode: a non-OK response or a network error
   // sets LOAD_ERROR so render() paints the error state (with a Retry button)
   // instead of a blank/"computing" page. While the fetch is in flight render()
   // paints the lamp loader, so the first paint is the loading kind.
+  function fetchJSON(url) {
+    return fetch(url, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+  }
   function load() {
     LOAD_ERROR = false;
     LOADING = true;
     render();
-    fetch(DATA_URL, { cache: "no-cache" })
-      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    fetchJSON(CORE_URL)
+      .catch(function () { return fetchJSON(FULL_URL); })
       .then(function (j) { LOADING = false; DATA = j; render(); })
       .catch(function () { LOADING = false; DATA = null; LOAD_ERROR = true; render(); });
+  }
+  // true when every key the section reads is on hand (the whole artifact, or
+  // the core plus this section's row file)
+  function hasBlock(s) {
+    var ks = BLOCK_KEYS[s];
+    if (!ks) return true;
+    if (!DATA) return false;
+    for (var i = 0; i < ks.length; i++) if (!Array.isArray(DATA[ks[i]])) return false;
+    return true;
+  }
+  function ensureBlock(s) {
+    if (!DATA || hasBlock(s) || BLOCK_LOADING[s] || BLOCK_ERROR[s]) return;
+    BLOCK_LOADING[s] = true;
+    fetchJSON(BLOCK_URL[s])
+      .catch(function () { return fetchJSON(FULL_URL); })
+      .then(function (j) {
+        BLOCK_LOADING[s] = false;
+        BLOCK_KEYS[s].forEach(function (k) { DATA[k] = (j && Array.isArray(j[k])) ? j[k] : []; });
+        render();
+      })
+      .catch(function () { BLOCK_LOADING[s] = false; BLOCK_ERROR[s] = true; render(); });
   }
 
   function init() {
     bindSectionNav();
+    // a typed or back/forward hash (#history&org=LAD) re-reads the state
+    window.addEventListener("hashchange", function () { openRow = null; orgFilter = ""; readHash(); render(); });
     // Sync the server-rendered nav to the default section BEFORE readHash, or a
     // no-hash load paints SP->RP content under an active RP->SP button.
     setSection(section);

@@ -103,6 +103,25 @@ def _efv_floor_keys() -> frozenset:
 OUT_PATH = DATA_DIR / "pal.json"
 EVAL_PATH = DATA_DIR / "pal_eval.json"
 
+# PAGE SIDECARS (QREP10, 2026-10-08). data/pal.json stays the whole artifact
+# (PROSPX reads prospect_watch_all from it, the labs and tests read its blocks),
+# now written compact. The /pal/ page reads a small core (every rule, verdict
+# and backtest block, no rows) at boot and one row file per tab on first open,
+# so the default SP to RP tab no longer downloads the other five tabs' rows.
+# Each sidecar is written beside out_path, so a harness that redirects
+# out_path redirects them too. (name, output file, payload keys it carries)
+PAGE_SIDECARS = (
+    ("rp2sp", "pal_rp2sp.json", ("rp2sp",)),                                  # output
+    ("sp2rp", "pal_sp2rp.json", ("sp2rp",)),                                  # output
+    ("history", "pal_history.json", ("history", "pitch_mix_changes")),        # output
+    ("pitch_add", "pal_pitch_add.json", ("pitch_add",)),                      # output
+    ("reverse_platoon", "pal_reverse_platoon.json", ("reverse_platoon",)),    # output
+    ("prospect_watch", "pal_prospect_watch.json", ("prospect_watch",)),       # output
+)
+#: keys the core leaves out: the row blocks above plus the unbounded watch set,
+#: which only PROSPX reads (from pal.json)
+CORE_EXCLUDE = frozenset(k for _, _f, ks in PAGE_SIDECARS for k in ks) | {"prospect_watch_all"}
+
 HISTORY_YEARS = [2018, 2019, 2021, 2022, 2023, 2024, 2025, 2026]  # 2020 kept out of pairs
 CAND_MIN_IP = 20.0
 STATSAPI = "https://statsapi.mlb.com/api/v1"
@@ -1149,12 +1168,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                             "held rho above is a legacy reporting field (two different 0-100 scales)"),
         "relief_k_bump_measured": relief_k_bump,
         "converter_median_fit_pool_pctile": conv_rp_pct,
-        "disclaimer": ("A screen, not a success-probability model. The conversion sample is small and "
-                       "selection-biased (only pitchers teams chose to convert), so the weights are frozen "
-                       "priors from the literature. The gated evaluation (per-direction rho vs same-event "
-                       "baselines, bootstrap CI) lives in tools/pal_backtest_lab.py -> data/pal_eval.json; "
-                       "the rhos here are the live stamp of the same repaired harness. Held labels read "
-                       "closed >=20 IP follow-up seasons only. " + _basis_sentence(war_basis, gate)),
+        "disclaimer": _disclaimer(war_basis, gate),
     }
 
     # pitch-add lab: RP->SP candidates with a recommended weapon to add
@@ -1199,16 +1213,60 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         f"{len(platoon_rows)} platoon rows; "
         f"backtest rho={backtest['spearman_prefit_vs_held']} (n={backtest['n_labeled']})")
     if write:
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = out_path.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(payload, indent=1), encoding="utf-8")
-        tmp.replace(out_path)
-        try:
-            shown = out_path.relative_to(Path(__file__).parent)
-        except ValueError:
-            shown = out_path.name
-        log(f"  pal: wrote {shown}")
+        write_payload(payload, out_path, log)
     return len(rp2sp) + len(sp2rp)
+
+
+def _disclaimer(war_basis: dict, gate: Optional[dict]) -> str:
+    """The backtest disclaimer the History scorecard prints. Built here so a
+    copy-only restamp (restamp_copy) rebuilds it from the payload's own blocks."""
+    return ("A screen, not a success-probability model. The conversion sample is small and "
+            "selection-biased (only pitchers teams chose to convert), so the weights are frozen "
+            "priors from the literature. The gated evaluation (per-direction rho vs same-event "
+            "baselines, bootstrap CI) is data/pal_eval.json; the rhos here are the live stamp of "
+            "the same repaired backtest code. Held labels read "
+            "closed >=20 IP follow-up seasons only. " + _basis_sentence(war_basis, gate))
+
+
+def sidecar_paths(out_path: Path) -> dict:
+    """{name: path} for the page core and each tab's row file, beside out_path."""
+    d = out_path.parent
+    out = {"core": d / "pal_core.json"}
+    out.update({name: d / fname for name, fname, _ in PAGE_SIDECARS})
+    return out
+
+
+def write_payload(payload: dict, out_path: Path = OUT_PATH, log=print) -> None:
+    """Write the whole artifact (compact) plus the page core and the per-tab
+    sidecars. Every file goes through a temp file and an atomic replace."""
+    paths = sidecar_paths(out_path)
+    stamp = {"generated_at": payload.get("generated_at"), "season": payload.get("season")}
+    files = [(out_path, payload),
+             (paths["core"], {k: v for k, v in payload.items() if k not in CORE_EXCLUDE})]
+    for name, _fname, keys in PAGE_SIDECARS:
+        files.append((paths[name], {**stamp, **{k: payload.get(k) or [] for k in keys}}))
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    for path, obj in files:
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(obj, separators=(",", ":")), encoding="utf-8")
+        tmp.replace(path)
+        try:
+            shown = path.relative_to(Path(__file__).parent)
+        except ValueError:
+            shown = path.name
+        log(f"  pal: wrote {shown}")
+
+
+def restamp_copy(out_path: Path = OUT_PATH, log=print) -> None:
+    """COPY-ONLY rewrite of the served payload: read it back, rebuild the
+    exporter's own prose from the payload's own blocks (the disclaimer), and
+    write it through write_payload. No row, rho or rule is recomputed, so a
+    wording change ships without a data refresh moving served numbers."""
+    payload = json.loads(out_path.read_text(encoding="utf-8"))
+    bt = payload.get("backtest")
+    if isinstance(bt, dict) and "disclaimer" in bt:
+        bt["disclaimer"] = _disclaimer(bt.get("war_basis") or {}, bt.get("gate"))
+    write_payload(payload, out_path, log)
 
 
 def _cand_row(arm: PalArm, fit: dict, kind: str) -> dict:
@@ -1264,4 +1322,7 @@ def _verdict() -> str:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    export(int(sys.argv[1]) if len(sys.argv) > 1 else None)
+    if "--restamp-copy" in sys.argv[1:]:
+        restamp_copy()
+    else:
+        export(int(sys.argv[1]) if len(sys.argv) > 1 else None)

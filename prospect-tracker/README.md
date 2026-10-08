@@ -32,7 +32,7 @@ linked from those pages or redirect. Full inventory with payloads: `SITE_MAP.md`
 | `/fa/` | Free Agency (MLB Modules) | `build_site.build_fa()` + `assets/fa.js` |
 | `/projections/` | Projections (MLB Modules) | `build_site.build_projections()` + `assets/eephus-teampick.js`, `assets/projections.js` |
 | `/mlbstats/` | MLB Stats (MLB Modules) | `build_site.build_mlbstats()` + `assets/eephus-teampick.js`, `assets/mlbstats.js` |
-| `/pal/` | Alchemy Lab (MLB Modules) | `build_site.build_pal()` + `assets/pal.js` |
+| `/pal/` | Alchemy Lab (MLB Modules) | `build_site.build_pal()` + `assets/eephus-teampick.js`, `assets/pal.js` |
 | `/trademachine/` | Trade Machine (MLB Modules) | `build_site.build_trademachine()` + `assets/eephus-teampick.js`, `assets/trademachine.js` |
 | `/arbitration/` | Arbitration (MLB Modules) | `build_site.build_arbitration()` + `assets/arbitration.js`, `assets/eephus-teampick.js` |
 | `/ledger/` | Club Ledger (MLB Modules) | `build_site.build_ledger()` + `assets/eephus-teampick.js`, `assets/ledger.js` |

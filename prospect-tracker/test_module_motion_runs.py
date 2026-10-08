@@ -49,7 +49,7 @@ HELD = [
     ("management", "management/", "#mgmt-app-root", ["**/data/management_board.json*"]),
     ("betting", "betting/", "#betting-app-root",
      ["**/data/betting.json*", "**/data/betting_preview.json*"]),
-    ("pal", "pal/", "#pal-app-root", ["**/data/pal.json*"]),
+    ("pal", "pal/", "#pal-app-root", ["**/data/pal_core.json*", "**/data/pal.json*"]),
     ("fantasy", "fantasy/", "#redraft-app-root", ["**/data/fantasy.json*"]),
     ("trademachine", "trademachine/", "#tradeboard-content", ["**/data/trade_values.json*"]),
     ("mlbstats_war", "mlbstats/#section=war", "#mlbstats-war-root", ["**/data/war_leaderboards.json*"]),

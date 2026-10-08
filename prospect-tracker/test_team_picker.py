@@ -61,6 +61,8 @@ WIRED = [
     ("prospx/index.html", 'id="sim-team-select"'),
     ("collegesavant/app.js", "data-team-filter"),
     ("collegesavant/pitcher_app.js", "data-team-filter"),
+    # the Alchemy Lab's org filter, one select over every player list (2026-10-08)
+    ("assets/pal.js", 'id="pal-org"'),
 ]
 # The six MLB Stats team selects are built by one helper, teamSelect(id, ...),
 # and the management club select by sel(id, opts, label, attrs).
@@ -127,7 +129,7 @@ def test_the_not_wired_chip_row_is_still_a_chip_row():
 
 def test_every_page_that_marks_a_select_loads_the_picker_after_the_hub():
     for page in ("arbitration", "ledger", "franchise", "management", "mlbstats", "projections",
-                 "trademachine", "fantasy"):
+                 "trademachine", "fantasy", "pal"):
         html = _src(page + "/index.html")
         hub = html.find("/assets/eephus-hub.js?v=")
         pick = html.find("/assets/eephus-teampick.js?v=")
@@ -192,6 +194,7 @@ PAGES = [
     ("arbitration", "arbitration/", "#arb-team", None),
     ("fantasy dynasty", "fantasy/#m=dynasty", "#dyn-f-org", None),
     ("prospx charts", "prospx/#tab=charts", "#chart-filter-org", None),
+    ("pal", "pal/", "#pal-org", None),
 ]
 
 _STATE = r"""

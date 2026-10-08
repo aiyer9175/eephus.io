@@ -5237,6 +5237,8 @@ def build_pal() -> str:
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        # the org filter on every list is a select[data-team-picker]
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/pal.js?v={_PAL_VER}" defer></script>'
     )
@@ -8561,6 +8563,30 @@ def _team_by_mlbam() -> dict:
     return out
 
 
+def _ladder_window_eval() -> dict | None:
+    """The recency gate's result, slimmed for the Position Fit ladder note:
+    the primary challenger's held-out MAE gain over the 2012-onward pool, its
+    bootstrap interval and how many held-out seasons it won. None when the
+    artifact is absent, and the page then prints no figure at all."""
+    ev = _cached_data_json("positional_ladder_recency_eval.json")
+    res = ((ev or {}).get("results") or {}).get("challenger_w") or {}
+    if res.get("dmae_mean") is None:
+        return None
+    per = (ev.get("per_season") or {})
+    seasons = sorted(per)
+    first = [((per[s].get("train_seasons_champion") or [None])[0]) for s in seasons]
+    return {
+        "artifact": "data/positional_ladder_recency_eval.json",
+        "generatedAt": ev.get("generated_at"),
+        "dmae": res.get("dmae_mean"),
+        "ci95": res.get("ci95"),
+        "bootstrap": (ev.get("protocol") or {}).get("bootstrap"),
+        "poolFrom": first[0] if first and len(set(first)) == 1 else None,
+        "nSeasons": len(seasons),
+        "nSeasonsBetter": sum(1 for s in seasons if (per[s].get("dmae_w") or 0) > 0),
+    }
+
+
 def build_positional_fit_payload() -> dict | None:
     """Slim, display-only view of data/positional_fit.json for the Alchemy Lab
     Position Fit section.
@@ -8825,6 +8851,10 @@ def build_positional_fit_payload() -> dict | None:
             # Absent from artifacts generated before 2026-07-31; the consumer
             # renders the explanation only when it is present.
             "identification": ladder.get("identification"),
+            # The held-out comparison behind the short window (QREC13). The page
+            # typed it ("beat the 2012-onward pool by 0.10 runs ...") and could
+            # not follow a re-run; it now reads and cites the eval artifact.
+            "windowEval": _ladder_window_eval(),
         },
         "accuracy": {
             "nConversions": conv.get("n_conversions"),
