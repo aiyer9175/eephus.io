@@ -949,7 +949,7 @@ def join_window_3yr(rows: list[dict], *, board: str, block: str, metric: str,
     for w in wrows:
         if w.get("mlbam") is not None and w.get(metric) is not None:
             by_id[str(w["mlbam"])] = w
-    n = 0
+    n = n_floor = 0
     for r in rows:
         p = by_id.get(str(r.get("mlbam") or ""))
         if not p:
@@ -957,9 +957,22 @@ def join_window_3yr(rows: list[dict], *, board: str, block: str, metric: str,
         r[key] = p.get(metric)
         r[f"{key}_pct"] = p.get(f"{metric}_pct")
         r[f"{key}_tag"] = p.get(f"{metric}_tag")
+        # A window row published UNDER the window's floor (the defense board,
+        # owner answer M17WIN-1) carries the flag and its window denominator,
+        # so the cell can say provisional and print the innings.
+        if p.get("below_floor") is True:
+            r[f"{key}_below_floor"] = True
+            r[f"{key}_denom"] = p.get(f"{metric}_denom")
+            n_floor += 1
         n += 1
     live = str(seasons[-1]) if seasons else None
     pool = ((doc.get("pool_stats") or {}).get(board) or {}).get(metric) or {}
+    floor_rule = (doc.get("qualified_rule_window") or {}).get(board) or {}
+    if floor_rule.get("published"):
+        meta["below_floor"] = {"n_stamped": n_floor,
+                               "floor": floor_rule.get("min_inn"),
+                               "rule": floor_rule.get("published"),
+                               "since": floor_rule.get("published_since")}
     meta.update({
         "available": True, "n_stamped": n,
         "generated_at": doc.get("generated_at"),
@@ -978,7 +991,9 @@ def join_window_3yr(rows: list[dict], *, board: str, block: str, metric: str,
                  f"{doc.get('generated_at')}), the same value the Last 3 view "
                  f"prints. The percentile is inside the window's pool; no value "
                  f"ruler is carried onto it. {who.capitalize()} the window does "
-                 f"not publish have no value."),
+                 f"not publish have no value."
+                 + (f" The window publishes {floor_rule.get('published')}."
+                    if floor_rule.get("published") else "")),
     })
     return meta
 
@@ -1008,17 +1023,20 @@ def restamp_window_3yr(*, data_dir: Optional[Path] = None, log=print) -> dict:
             out[fname] = f"skipped ({type(e).__name__})"
             continue
         key = f"{metric}_3yr"
-        keys = (key, f"{key}_pct", f"{key}_tag")
+        keys = (key, f"{key}_pct", f"{key}_tag", f"{key}_below_floor",
+                f"{key}_denom")
         # Join onto id-only copies, then write back IN PLACE: a matched row
         # keeps its keys where the exporter put them (so the served diff is the
-        # values that moved), and an unmatched row loses all three.
+        # values that moved), and a key the join did not stamp is dropped (an
+        # unmatched row loses all of them; a row back over the floor loses the
+        # flag and its denominator).
         fresh = [{"mlbam": r.get("mlbam")} for r in rows]
         meta = join_window_3yr(fresh, board=wboard, block=wblock, metric=metric,
                                season=doc.get("season"), who=who,
                                path=wpath)
         for r, f in zip(rows, fresh):
             for k in keys:
-                if key in f:
+                if k in f:
                     r[k] = f.get(k)
                 else:
                     r.pop(k, None)

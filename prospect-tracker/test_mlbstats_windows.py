@@ -346,7 +346,7 @@ def test_every_window_column_is_declared():
     spec = idx["columns"]
     ident = {"mlbam", "name", "team", "pos", "age", "yrs", "clubs", "qualified",
              "last_season", "denoms", "war_n", "pli_n", "gmli_n",
-             "gmli_entries", "gmli_tag"}
+             "gmli_entries", "gmli_tag", "below_floor"}
     for key, doc in windows.items():
         for board, blocks in (doc.get("boards") or {}).items():
             s = spec[board]
@@ -1011,3 +1011,161 @@ def test_the_rem_plus_pool_rule_is_stated_once():
     per = ((idx.get("reproduction") or {}).get("per_season") or {}).get("rem_plus") or {}
     if per.get("available"):
         assert per["n_equal"] == per["n"], per
+
+# --------------------------------------------------------------------------- #
+# M17WIN-1 (owner answer 2026-10-01): the Defense window publishes DEM+ for
+# every fielder with window innings, flags the rows under the innings floor as
+# provisional, and ranks its percentile over every published row
+# --------------------------------------------------------------------------- #
+def _dfn(inn: float, raw: float) -> dict:
+    return {"name": "F", "team": "BOS", "pos": "SS", "dem": round(raw),
+            "dem_raw": raw, "inn": inn}
+
+
+def test_a_fielder_under_the_floor_is_published_and_flagged_provisional():
+    """A fielder with 150 window innings used to be dropped from the board and
+    so left blank on the Current DEM+ 3yr column. He is published now, with
+    `qualified` false, `below_floor` true and his innings on the row."""
+    panels = {2025: {"dfn": {1: _dfn(900.0, 104.4), 2: _dfn(100.0, 98.0)}},
+              2026: {"dfn": {1: _dfn(300.0, 95.6), 2: _dfn(50.0, 102.0)}}}
+    board, pools = lab._defense_board(panels, [2025, 2026], {},
+                                      {"min_inn": 400}, {"dem_plus": (2, 1000.0)})
+    rows = {r["mlbam"]: r for r in board["fielders"]}
+    assert set(rows) == {1, 2}
+    assert rows[1]["qualified"] is True and rows[1]["below_floor"] is False
+    assert rows[2]["qualified"] is False and rows[2]["below_floor"] is True
+    assert rows[2]["inn"] == 150.0 and rows[2]["dem_plus_denom"] == 150.0
+    assert rows[2]["dem_plus_raw"] == round((98.0 * 100 + 102.0 * 50) / 150.0, 2)
+    assert rows[2]["dem_plus_tag"] == "provisional"
+    st = pools["dem_plus"]
+    assert st["n"] == 2 and st["n_below_floor"] == 1 and st["floor_inn"] == 400
+    assert st["pct_pool"] == lab.DEFENSE_PCT_POOL
+
+
+def test_the_floor_is_the_dem_plus_qualify_floor_and_the_rule_is_stated():
+    """The flag is set at the one-season board's qualified floor, read from
+    dem_plus rather than typed, and the window states the publish rule and the
+    date of the owner answer beside it."""
+    import dem_plus
+    rule = lab._qualified_rule()["defense"]
+    assert rule["min_inn"] == int(dem_plus.QUALIFY_MIN_INN) == 400
+    assert "every fielder with window innings" in rule["published"]
+    assert "provisional" in rule["published"]
+    assert rule["published_since"] == lab.DEFENSE_PUBLISH_ALL_SINCE == "2026-10-01"
+    panels = {2026: {"dfn": {1: _dfn(399.9, 101.0), 2: _dfn(400.0, 99.0)}}}
+    board, _ = lab._defense_board(panels, [2026], {}, {"min_inn": 400},
+                                  {"dem_plus": (2, 1000.0)})
+    flags = {r["mlbam"]: r["below_floor"] for r in board["fielders"]}
+    assert flags == {1: True, 2: False}
+
+
+def test_the_percentile_is_ranked_over_every_published_row():
+    """The pool the percentile is ranked in is every published row, the
+    fielders under the floor included, so adding one moves the percentile of
+    the rows above and below it."""
+    panels = {2026: {"dfn": {1: _dfn(900.0, 110.0), 2: _dfn(900.0, 100.0),
+                             3: _dfn(900.0, 90.0), 4: _dfn(60.0, 105.0)}}}
+    board, pools = lab._defense_board(panels, [2026], {}, {"min_inn": 400},
+                                      {"dem_plus": (2, 1000.0)})
+    pct = {r["mlbam"]: r["dem_plus_pct"] for r in board["fielders"]}
+    want = lab._pct_map({1: 110.0, 2: 100.0, 3: 90.0, 4: 105.0})
+    assert pct == want
+    assert pct[2] != lab._pct_map({1: 110.0, 2: 100.0, 3: 90.0})[2]
+    assert pools["dem_plus"]["n"] == 4
+
+
+def test_the_served_defense_window_publishes_every_fielder_with_innings():
+    """On the served windows: every defense row has innings, the flag agrees
+    with the floor on every row, the pool counts every published row and the
+    percentile reproduces from the published values."""
+    idx, windows = _served_windows()
+    for key, doc in windows.items():
+        rule = doc["qualified_rule_window"]["defense"]
+        if not rule.get("published"):
+            pytest.skip(f"{key} was built before M17WIN-1")
+        rows = doc["boards"]["defense"]["fielders"]
+        floor = rule["min_inn"]
+        assert all((r["inn"] or 0) > 0 for r in rows), key
+        under = [r for r in rows if r["inn"] < floor]
+        assert under, f"{key} publishes no fielder under the floor"
+        for r in rows:
+            assert r["below_floor"] is (r["inn"] < floor), (key, r["mlbam"])
+            assert r["qualified"] is (not r["below_floor"]), (key, r["mlbam"])
+        st = doc["pool_stats"]["defense"]["dem_plus"]
+        valued = {r["mlbam"]: r["dem_plus_raw"] for r in rows
+                  if r.get("dem_plus") is not None}
+        assert st["n"] == len(valued)
+        assert st["n_below_floor"] == sum(1 for r in under if r.get("dem_plus") is not None)
+        assert "below_floor" in st["pct_pool"]
+        exact = {r["mlbam"]: r["dem_plus_pct"] for r in rows if r.get("dem_plus") is not None}
+        # dem_plus_raw is rounded to 2 places on the row, so a tie the lab broke
+        # on the unrounded value can differ by a point here; nothing more.
+        got = lab._pct_map(valued)
+        assert max(abs(got[m] - exact[m]) for m in exact) <= 1, key
+
+
+def test_the_current_dem_column_flags_a_value_from_under_the_floor():
+    """The Current Defense board's DEM+ 3yr cell carries the flag and the
+    window innings for exactly the rows the window published under its floor,
+    and the multiyear block states the rule."""
+    board = _load(DATA / "defense_leaderboards.json")
+    win = _load(DATA / "mlbstats_window_l3.json")
+    if not (win.get("qualified_rule_window") or {}).get("defense", {}).get("published"):
+        pytest.skip("the served window was built before M17WIN-1")
+    wrows = {int(r["mlbam"]): r for r in win["boards"]["defense"]["fielders"]}
+    n = 0
+    for r in board["fielders"]:
+        w = wrows.get(int(r["mlbam"])) if r.get("mlbam") is not None else None
+        if w is not None and w.get("below_floor"):
+            n += 1
+            assert r.get("dem_plus_3yr_below_floor") is True, r["mlbam"]
+            assert r.get("dem_plus_3yr_denom") == w["dem_plus_denom"], r["mlbam"]
+            assert r.get("dem_plus_3yr") == w["dem_plus"], r["mlbam"]
+        else:
+            assert "dem_plus_3yr_below_floor" not in r, r["mlbam"]
+            assert "dem_plus_3yr_denom" not in r, r["mlbam"]
+    bf = board["multiyear"]["below_floor"]
+    assert bf["n_stamped"] == n and n > 0 and bf["floor"] == 400
+    assert bf["since"] == "2026-10-01"
+
+
+def test_the_join_and_the_restamp_carry_the_floor_flag(tmp_path):
+    """join_window_3yr stamps `_below_floor` and `_denom` only for a window row
+    published under the floor; the restamp drops both from a row that is back
+    over it, and every other key stands."""
+    import bullpen_export as be
+    basis = be.served_war_basis()
+    doc = {"generated_at": "2026-10-08", **basis,
+           "window": {"key": "l3", "seasons": [2024, 2025, 2026]},
+           "panel_built_at": {"2026": "2026-10-08"},
+           "qualified_rule_window": {"defense": {
+               "min_inn": 400, "published": "every fielder with window innings",
+               "published_since": "2026-10-01"}},
+           "pool_stats": {"defense": {"dem_plus": {"n": 2, "mean": 100.0, "sd": 8.0}}},
+           "boards": {"defense": {"fielders": [
+               {"mlbam": 1, "dem_plus": 112, "dem_plus_pct": 90, "dem_plus_tag": "established",
+                "dem_plus_denom": 2100.0, "below_floor": False},
+               {"mlbam": 2, "dem_plus": 101, "dem_plus_pct": 55, "dem_plus_tag": "provisional",
+                "dem_plus_denom": 352.0, "below_floor": True}]}}}
+    (tmp_path / "mlbstats_window_l3.json").write_text(json.dumps(doc), encoding="utf-8")
+    rows = [{"mlbam": 1}, {"mlbam": 2}]
+    meta = be.join_window_3yr(rows, board="defense", block="fielders",
+                              metric="dem_plus", season=2026,
+                              path=tmp_path / "mlbstats_window_l3.json")
+    assert meta["n_stamped"] == 2 and meta["below_floor"]["n_stamped"] == 1
+    assert "dem_plus_3yr_below_floor" not in rows[0]
+    assert rows[1]["dem_plus_3yr_below_floor"] is True
+    assert rows[1]["dem_plus_3yr_denom"] == 352.0 and rows[1]["dem_plus_3yr"] == 101
+    board = {"season": 2026, "fielders": [
+        {"mlbam": 1, "dem_plus": 120, "dem_plus_3yr": 110, "dem_plus_3yr_below_floor": True,
+         "dem_plus_3yr_denom": 300.0},
+        {"mlbam": 2, "dem_plus": 99}]}
+    (tmp_path / "defense_leaderboards.json").write_text(json.dumps(board), encoding="utf-8")
+    out = be.restamp_window_3yr(data_dir=tmp_path, log=lambda *a, **k: None)
+    assert out["defense_leaderboards.json"] == 2
+    got = json.loads((tmp_path / "defense_leaderboards.json").read_text(encoding="utf-8"))
+    a, b = got["fielders"]
+    assert a["dem_plus_3yr"] == 112 and "dem_plus_3yr_below_floor" not in a
+    assert "dem_plus_3yr_denom" not in a and a["dem_plus"] == 120
+    assert b["dem_plus_3yr"] == 101 and b["dem_plus_3yr_below_floor"] is True
+    assert b["dem_plus_3yr_denom"] == 352.0 and b["dem_plus"] == 99
