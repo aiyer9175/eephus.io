@@ -1,0 +1,11 @@
+{
+ "schema": 1,
+ "entries": [
+  {
+   "season": 2026,
+   "path": "data/_labs/awards/frozen_2026.json",
+   "sha256": "fc51d2e9b7638cc558ceedd1e1be96dbfcb8c64958fd5a454f3354475f79255d",
+   "frozen_at": "2026-10-08T18:27:30+00:00"
+  }
+ ]
+}
