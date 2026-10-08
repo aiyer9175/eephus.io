@@ -133,7 +133,10 @@ def test_local_asset_stamps_match_current_content(page):
     stale = []
     for url in _local_asset_refs(html):
         path, got, _frag = _split_ref(url)
-        rel = path.lstrip("/")
+        # A relative ref (CollegeSavant's app.js, styles.css and vendored
+        # payloads) resolves beside the page; restamp_hand_authored_pages
+        # stamps those too (QREP02).
+        rel = path.lstrip("/") if path.startswith("/") else str(Path(page).parent / path).replace("\\", "/")
         if not (ROOT / rel).exists():
             continue  # nothing on disk to hash
         want = build_site._asset_ver(rel)
@@ -153,6 +156,51 @@ def test_local_asset_stamps_match_current_content(page):
 # old URL pattern `(?:\?v=[^"]*)?` ran to the closing quote, so a restamp of
 # "/assets/eephus-icons.svg?v=old#i-ledger" would have written "?v=<hash>" and
 # dropped "#i-ledger", and every icon on a hand page would have gone blank.
+
+# --------------------------------------------------------------------------- #
+# QREP02 (surface-quality audit 2026-10-02): a /data/ payload a hand page
+# loads must carry its current content stamp. A <script src="/data/..."> tag is
+# stamped by the restamp (prospx's value_framework.js); the CollegeSavant
+# pages inject their sidecars at runtime and read the stamps, and the glossary
+# data stamp, from one inline tag the restamp rewrites. Without it the two
+# sidecars and glossary.json went out bare and a browser kept a week-old copy.
+
+_DATA_SCRIPT = re.compile(r'<script\b[^>]*\bsrc="(/data/[^"]+)"', re.I)
+_CS_VER_TAG = re.compile(
+    r'<script>window\.EEPHUS_GL_DATA_VER="([0-9a-f]{8})";window\.CS_PAYLOAD_VER=(\{[^}]*\});</script>')
+
+
+@pytest.mark.parametrize("page", HAND_AUTHORED_PAGES)
+def test_data_script_tags_on_hand_pages_are_stamped(page):
+    import build_site
+
+    html = (ROOT / page).read_text(encoding="utf-8")
+    bad = []
+    for url in _DATA_SCRIPT.findall(html):
+        path, stamp, _frag = _split_ref(url)
+        if (ROOT / path.lstrip("/")).exists() and stamp != build_site._asset_ver(path.lstrip("/")):
+            bad.append(f"{url} (content hash {build_site._asset_ver(path.lstrip('/'))})")
+    assert not bad, f"{page}: unstamped or stale /data/ script tags:\n  " + "\n  ".join(bad)
+
+
+@pytest.mark.parametrize("page", ["collegesavant/index.html", "collegesavant/pitcher_index.html"])
+def test_collegesavant_payload_stamps_are_current(page):
+    import json
+
+    import build_site
+
+    html = (ROOT / page).read_text(encoding="utf-8")
+    m = _CS_VER_TAG.search(html)
+    assert m, f"{page}: no inline EEPHUS_GL_DATA_VER / CS_PAYLOAD_VER tag"
+    assert m.group(1) == build_site._asset_ver("data/glossary.json")
+    vers = json.loads(m.group(2))
+    assert set(vers) == set(build_site.CS_PAYLOADS)
+    for name, stamp in vers.items():
+        if (ROOT / "data" / f"{name}.js").exists():
+            assert stamp == build_site._asset_ver(f"data/{name}.js"), (page, name, stamp)
+    # The tag runs before the app scripts that read it.
+    assert html.index(m.group(0)) < html.index('<script src="data.js')
+
 
 def test_restamp_keeps_the_use_fragment():
     import build_site

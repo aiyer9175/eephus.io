@@ -28,7 +28,7 @@
     <script>(function(){try{var t=localStorage.getItem("prospect-tracker.theme");if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>
     <link rel="stylesheet" href="/assets/site.css?v=4ed835b9" />
     <link rel="stylesheet" href="/assets/eephus-account.css?v=b08f8afa" />
-    <link rel="stylesheet" href="styles.css?v=9123eb5d" />
+    <link rel="stylesheet" href="styles.css?v=32b1ea2f" />
   </head>
   <body>
     <!-- Site-wide nav - mirrors build_site.py NAV_ITEMS (keep in sync) -->
@@ -99,18 +99,18 @@
     <!-- Data + app, deferred: the page paints before the payloads parse.
          pitcher_data.js is NOT loaded here - the global search lazy-injects
          it on first use (global_search.js ensureFullIndex). Batted-ball
-         clouds are split per year: only the current season (hitter_bip_2025)
-         ships at boot; the 11.6MB hitter_bip_2024.js is lazy-injected by
-         app.js ensureHitterBip when a 2024 profile or year toggle opens. -->
-    <script src="data.js?v=20260717" defer></script>
-    <script src="hitter_year_data.js?v=20260717" defer></script>
-    <script src="hitter_bip_2025.js?v=20260717" defer></script>
-    <script src="team_names.js?v=20261002b" defer></script>
-    <script src="/data/collegesavant_translation.js" defer></script>
-    <script src="/data/collegesavant_draft_prospects.js" defer></script>
-    <script src="global_search.js?v=20260709" defer></script>
+         clouds (hitter_bip_<year>.js) are lazy-injected by app.js
+         ensureHitterBip when a profile opens, and the projection sidecars
+         under /data/ by ensurePayload on the views that read them (QREP01),
+         each stamped from the CS_PAYLOAD_VER map below, which
+         build_site.restamp_hand_authored_pages rewrites (QREP02). -->
+    <script>window.EEPHUS_GL_DATA_VER="fadb4e3f";window.CS_PAYLOAD_VER={"collegesavant_translation":"55874983","collegesavant_draft_prospects":"8d48483e"};</script>
+    <script src="data.js?v=d03ef6a2" defer></script>
+    <script src="hitter_year_data.js?v=66d48b8b" defer></script>
+    <script src="team_names.js?v=3731eb70" defer></script>
+    <script src="global_search.js?v=cf43d4ae" defer></script>
     <script src="table_sort.js?v=55a1daf6" defer></script>
-    <script src="app.js?v=869417b0" defer></script>
+    <script src="app.js?v=f3eb6783" defer></script>
     <script src="/assets/eephus-config.js?v=7c802691" defer></script>
     <script src="/assets/eephus-account.js?v=22deb404" defer></script>
     <script src="/assets/eephus-nav.js?v=f4200190" defer></script>

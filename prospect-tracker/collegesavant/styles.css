@@ -68,7 +68,9 @@
   padding: 2px 8px; border: 1px solid var(--line); background: var(--chip);
   color: var(--ink); vertical-align: middle;
 }
-.cs-plus-pill.is-pos { color: var(--green); border-color: var(--green); }
+/* QREA12: the positive pill's text is the site's text-green, the same hue at a
+   readable depth (accent green read 4.32:1 on the chip); the border keeps it. */
+.cs-plus-pill.is-pos { color: var(--text-green, #1A6B32); border-color: var(--green); }
 .cs-plus-pill.is-neg { color: var(--red); border-color: var(--red); }
 .profile-meta {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
@@ -134,7 +136,11 @@ td.tt-team { text-align: left; }
 .tt-logo { width: 20px; height: 20px; object-fit: contain; flex: none; }
 .tt-n { color: var(--muted); font-size: 10px; margin-left: 4px; }
 .tt-col.is-sorted { background: var(--chip); }
-.tt-pos { color: var(--green); font-weight: 700; }
+.tt-pos { color: var(--text-green, #1A6B32); font-weight: 700; }
+/* QREA12: a translation leg the backtest flags reads in the secondary ink,
+   not at reduced opacity (which put it at 3.81:1 on the light paper). */
+[data-muted] { color: var(--text-secondary, #4A5468); }
+.tt-table td[data-muted] { color: var(--text-secondary, #4A5468); }
 .tt-neg { color: var(--red); }
 .lb-th { cursor: pointer; user-select: none; }
 .lb-th:hover { background: var(--chip); }
@@ -184,15 +190,23 @@ td.tt-team { text-align: left; }
 .hp-seg.is-active { background: var(--ink); color: var(--paper); }
 .hp-seg:not(.is-active):hover { background: var(--paper-2); color: var(--ink); }
 
-/* Home section hub - entry cards to each CollegeSavant view. */
-.hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 10px 0; }
-.hub-card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 14px 19px; border: 1px solid var(--line); background: var(--paper-2); text-decoration: none; color: var(--ink); box-shadow: var(--shadow-card, none); transition: box-shadow .12s, transform .12s; }
-.hub-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--blue); }
-.hub-card:nth-child(even)::before { background: var(--gold); }
-.hub-card:hover { box-shadow: var(--shadow-card-hover, none); transform: translateY(-1px); }
-.hub-card strong { font-size: 15px; }
-.hub-note { font-size: 12px; color: var(--muted); line-height: 1.45; flex: 1; }
-.hub-go { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--blue); font-weight: 700; }
+/* Display pass 2026-10-08: the app body gets the site's 16 px side gutter
+   (it ran from x 0), a panel-title link reads as a header link, and the
+   method sits folded in a "How this works" block under the tables. */
+.app-shell { padding: 12px 16px 32px; }
+.panel-title a { color: inherit; font-size: 10px; text-decoration: underline; }
+.cs-view-head { margin-top: 2px; }
+.cs-how { margin: 14px 0 0; border: 1px solid var(--line); background: var(--paper-2); }
+.cs-how > summary {
+  cursor: pointer; padding: 9px 12px; font-family: var(--font-retro-mono, inherit);
+  font-size: 11px; font-weight: 900; text-transform: uppercase; color: var(--ink);
+}
+.cs-how > .proj-method, .cs-how > .trans-note { margin: 0; padding: 0 12px 12px 30px; }
+.cs-how > .trans-note { padding-left: 12px; }
+/* QREA13: a player name in a board row is a 44 px target on a phone. */
+@media (max-width: 720px) {
+  .tt-table a.proj-name { display: inline-flex; align-items: center; min-height: 44px; }
+}
 
 html {
   min-height: 100%;
