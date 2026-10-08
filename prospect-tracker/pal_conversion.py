@@ -817,17 +817,56 @@ def _best_xrv_type(fam: str, league_xrv: dict):
     return best
 
 
+# Reader copy for the four pitch-add branches, one helper each, so the export
+# and the copy-only restamp (revoice_rec) write the same sentence. Each reason
+# keeps its branch's lead sentence; revoice_rec keys on it.
+def _br_reason(low: str) -> str:
+    return (f"No reliable breaking ball. A {low} is the whiff pitch a starter needs the "
+            "second and third time through the order.")
+
+
+def _off_reason(low: str, weak_hand, big_split: bool) -> str:
+    tail = (f" and neutralize {weak_hand}" if big_split else "")
+    return (f"No offspeed pitch. A {low} would give him a third look{tail}; offspeed is the "
+            "standard answer to opposite-handed hitters through the order.")
+
+
+THIRD_PITCH_ADD = "A third pitch"
+THIRD_PITCH_REASON = ("Only two pitches used 10 percent or more. Has the pitch types; the third "
+                      "is used too rarely for a third time through the order.")
+
+
+def _platoon_reason(weak_hand, want: str) -> str:
+    return (f"Deep arsenal, but a large platoon split leaves him exposed to {weak_hand}. "
+            f"A {want.lower()} would flatten the split a starter has to survive.")
+
+
+def revoice_rec(rec):
+    """Copy only: rewrite a served pitch-add object's text to the current
+    wording, from its own add/target fields and the branch its lead sentence
+    names. No key, rule or number changes; an unknown lead is left as is."""
+    if not isinstance(rec, dict):
+        return rec
+    r, add = str(rec.get("reason") or ""), str(rec.get("add") or "")
+    if r.startswith("No reliable breaking ball."):
+        rec["reason"] = _br_reason(add.lower())
+    elif r.startswith("No offspeed pitch."):
+        rec["reason"] = _off_reason(add.lower(), rec.get("target"), " and neutralize " in r)
+    elif r.startswith("Only two pitches used 10 percent or more."):
+        rec["add"], rec["reason"] = THIRD_PITCH_ADD, THIRD_PITCH_REASON
+    elif r.startswith("Deep arsenal, but a large platoon split"):
+        rec["reason"] = _platoon_reason(rec.get("target"), add)
+    return rec
+
+
 def _hole_rec(fam: str, pitch_name: str, weak_hand, big_split: bool) -> dict:
     """The family-hole recommendation object (same shape as the fixed rules)."""
     low = pitch_name.lower()
     if fam == "BR":
         return {"add": pitch_name, "target": weak_hand,
-                "reason": f"No reliable breaking ball. A {low} is the swing-and-miss weapon he needs to "
-                          "turn a lineup over a second and third time.", "priority": "high"}
-    tail = (f" and neutralize {weak_hand}" if big_split else "")
+                "reason": _br_reason(low), "priority": "high"}
     return {"add": pitch_name, "target": weak_hand,
-            "reason": f"No offspeed pitch. A {low} would give him a third look{tail} - the classic "
-                      "weapon against opposite-handed hitters over multiple times through.",
+            "reason": _off_reason(low, weak_hand, big_split),
             "priority": "high" if big_split else "medium"}
 
 
@@ -875,19 +914,14 @@ def recommend_pitch(arm: PalArm, league_xrv: Optional[dict] = None) -> Optional[
         # no trusted league mean for any hole -> fall through to the rule order
     if "BR" not in fams:
         return {"add": "Slider", "target": weak_hand,
-                "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to "
-                          "turn a lineup over a second and third time.", "priority": "high"}
+                "reason": _br_reason("slider"), "priority": "high"}
     if "OFF" not in fams:
-        tail = (f" and neutralize {weak_hand}" if big_split else "")
         return {"add": "Changeup", "target": weak_hand,
-                "reason": f"No offspeed pitch. A changeup would give him a third look{tail} - the classic "
-                          "weapon against opposite-handed hitters over multiple times through.",
+                "reason": _off_reason("changeup", weak_hand, big_split),
                 "priority": "high" if big_split else "medium"}
     if npi < 3:
-        return {"add": "A genuine third pitch", "target": None,
-                "reason": "Only two pitches used 10 percent or more. He has the pitch types but needs to "
-                          "trust a third often enough to keep hitters honest across a full lineup.",
-                "priority": "medium"}
+        return {"add": THIRD_PITCH_ADD, "target": None,
+                "reason": THIRD_PITCH_REASON, "priority": "medium"}
     if big_split:
         # DO NOT TELL HIM TO ADD A PITCH HE ALREADY THROWS. Every branch above
         # this one fires on a family HOLE, so what it names is necessarily
@@ -908,7 +942,5 @@ def recommend_pitch(arm: PalArm, league_xrv: Optional[dict] = None) -> Optional[
         for want, code in (PLATOON_ADD_CANDIDATES.get(weak_hand) or ()):
             if code not in have:
                 return {"add": want, "target": weak_hand,
-                        "reason": f"Deep arsenal, but a large platoon split leaves him exposed to {weak_hand}. "
-                                  f"A {want.lower()} would flatten the split a starter has to survive.",
-                        "priority": "medium"}
+                        "reason": _platoon_reason(weak_hand, want), "priority": "medium"}
     return None

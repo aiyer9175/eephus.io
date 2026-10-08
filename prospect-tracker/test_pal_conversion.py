@@ -238,3 +238,43 @@ def test_relief_rem_plus_projection_is_display_number():
     pool = rem_plus.build_pool(pool_arms)
     proj = pc.project_relief_rem_plus(MILLER, pool)
     assert proj is None or (60 <= proj <= 200)
+
+# ---- COPY_8 (2026-10-08): the pitch-add reasons in the owner's voice --------
+# The copy-only restamp (pal_export --restamp-copy) re-words served objects
+# through pc.revoice_rec; it must land on exactly what a fresh export writes,
+# and leave a fresh object untouched.
+RETIRED = [
+    ({"add": "Slider", "target": "LHB", "priority": "high",
+      "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to "
+                "turn a lineup over a second and third time."}, pc._br_reason("slider")),
+    ({"add": "Changeup", "target": "RHB", "priority": "high",
+      "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB "
+                "- the classic weapon against opposite-handed hitters over multiple times "
+                "through."}, pc._off_reason("changeup", "RHB", True)),
+    ({"add": "Splitter", "target": "LHB", "priority": "medium",
+      "reason": "No offspeed pitch. A splitter would give him a third look - the classic "
+                "weapon against opposite-handed hitters over multiple times through."},
+     pc._off_reason("splitter", "LHB", False)),
+    ({"add": "A genuine third pitch", "target": None, "priority": "medium",
+      "reason": "Only two pitches used 10 percent or more. He has the pitch types but needs "
+                "to trust a third often enough to keep hitters honest across a full lineup."},
+     pc.THIRD_PITCH_REASON),
+]
+
+
+def test_revoice_maps_each_retired_reason_to_the_fresh_wording():
+    for old, want in RETIRED:
+        got = pc.revoice_rec(dict(old))
+        assert got["reason"] == want, got
+        assert got["target"] == old["target"] and got["priority"] == old["priority"]
+    assert pc.revoice_rec(dict(RETIRED[3][0]))["add"] == pc.THIRD_PITCH_ADD
+
+
+def test_revoice_leaves_a_fresh_recommendation_unchanged():
+    fbonly = _arm(9, [("FF", 0.80, 0.10, 0.34, 0.42), ("CH", 0.20, 0.12, 0.33, 0.40)], bb=0.08)
+    two = _arm(10, [("FF", 0.60, 0.10, 0.34, 0.42), ("SL", 0.33, 0.12, 0.33, 0.40),
+                    ("CH", 0.07, 0.12, 0.33, 0.40)], bb=0.08)
+    for arm in (HICKS, fbonly, two):
+        rec = pc.recommend_pitch(arm)
+        assert rec is not None
+        assert pc.revoice_rec(dict(rec)) == rec, rec

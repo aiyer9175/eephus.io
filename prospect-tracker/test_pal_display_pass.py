@@ -232,7 +232,7 @@ def test_every_player_list_renders_the_org_filter_and_honours_the_hash():
         ctx = MiniRacer()
         ctx.eval(S._prelude(hash_ + "&org=ZZZ") + S.JS)
         html = ctx.eval("__html['pal-app-root'] || ''")
-        assert name not in html and "No ZZZ rows in this view." in html, hash_
+        assert name not in html and "No ZZZ rows match these filters." in html, hash_
 
 
 def test_the_org_column_sorts_on_the_canonical_code():
