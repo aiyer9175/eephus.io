@@ -1,0 +1,911 @@
+{
+ "schema": 1,
+ "produced_by": "tools/award_winners_ingest.py",
+ "fetched_at": "2026-10-08T18:25:46+00:00",
+ "source": {
+  "id": "awards_statsapi",
+  "name": "MLB StatsAPI award recipients",
+  "endpoint": "https://statsapi.mlb.com/api/v1/awards/{award_id}/recipients",
+  "registry": "data/sources/registry.yaml awards_statsapi"
+ },
+ "copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+ "award_ids": [
+  "ALMVP",
+  "NLMVP",
+  "ALCY",
+  "NLCY",
+  "ALROY",
+  "NLROY",
+  "ALMOY",
+  "NLMOY"
+ ],
+ "fetch_log": [
+  {
+   "fetched_at": "2026-10-08T18:25:46+00:00",
+   "seasons": [
+    2011,
+    2025
+   ],
+   "calls": 8
+  }
+ ],
+ "seasons": {
+  "2011": {
+   "ALMVP": {
+    "person_id": 434378,
+    "name": "Justin Verlander",
+    "team_id": 116,
+    "team_code": "DET",
+    "date": "2011-11-21"
+   },
+   "NLMVP": {
+    "person_id": 460075,
+    "name": "Ryan Braun",
+    "team_id": 158,
+    "team_code": "MIL",
+    "date": "2011-11-22"
+   },
+   "ALCY": {
+    "person_id": 434378,
+    "name": "Justin Verlander",
+    "team_id": 116,
+    "team_code": "DET",
+    "date": "2011-11-15",
+    "votes": 196
+   },
+   "NLCY": {
+    "person_id": 477132,
+    "name": "Clayton Kershaw",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2011-11-17",
+    "votes": 207
+   },
+   "ALROY": {
+    "person_id": 476451,
+    "name": "Jeremy Hellickson",
+    "team_id": 139,
+    "team_code": "TBR",
+    "date": "2011-11-14"
+   },
+   "NLROY": {
+    "person_id": 518886,
+    "name": "Craig Kimbrel",
+    "team_id": 144,
+    "team_code": "ATL",
+    "date": "2011-11-14"
+   },
+   "ALMOY": {
+    "person_id": 427309,
+    "name": "Joe Maddon",
+    "team_id": 139,
+    "team_code": "TBR",
+    "date": "2011-11-16"
+   },
+   "NLMOY": {
+    "person_id": 114752,
+    "name": "Kirk Gibson",
+    "team_id": 109,
+    "team_code": "ARI",
+    "date": "2011-11-16"
+   }
+  },
+  "2012": {
+   "ALMVP": {
+    "person_id": 408234,
+    "name": "Miguel Cabrera",
+    "team_id": 116,
+    "team_code": "DET",
+    "date": "2012-11-15"
+   },
+   "NLMVP": {
+    "person_id": 457763,
+    "name": "Buster Posey",
+    "team_id": 137,
+    "team_code": "SFG",
+    "date": "2012-11-15"
+   },
+   "ALCY": {
+    "person_id": 456034,
+    "name": "David Price",
+    "team_id": 139,
+    "team_code": "TBR",
+    "date": "2012-11-14",
+    "votes": 153
+   },
+   "NLCY": {
+    "person_id": 285079,
+    "name": "R.A. Dickey",
+    "team_id": 121,
+    "team_code": "NYM",
+    "date": "2012-11-14",
+    "votes": 209
+   },
+   "ALROY": {
+    "person_id": 545361,
+    "name": "Mike Trout",
+    "team_id": 108,
+    "team_code": "LAA",
+    "date": "2012-11-12"
+   },
+   "NLROY": {
+    "person_id": 547180,
+    "name": "Bryce Harper",
+    "team_id": 120,
+    "team_code": "WSN",
+    "date": "2012-11-12"
+   },
+   "ALMOY": {
+    "person_id": 118942,
+    "name": "Bob Melvin",
+    "team_id": 133,
+    "team_code": "ATH",
+    "date": "2012-11-13"
+   },
+   "NLMOY": {
+    "person_id": 116576,
+    "name": "Davey Johnson",
+    "team_id": 120,
+    "team_code": "WSN",
+    "date": "2012-11-13"
+   }
+  },
+  "2013": {
+   "ALMVP": {
+    "person_id": 408234,
+    "name": "Miguel Cabrera",
+    "team_id": 116,
+    "team_code": "DET",
+    "date": "2013-11-14"
+   },
+   "NLMVP": {
+    "person_id": 457705,
+    "name": "Andrew McCutchen",
+    "team_id": 134,
+    "team_code": "PIT",
+    "date": "2013-11-14"
+   },
+   "ALCY": {
+    "person_id": 453286,
+    "name": "Max Scherzer",
+    "team_id": 116,
+    "team_code": "DET",
+    "date": "2013-11-13",
+    "votes": 203
+   },
+   "NLCY": {
+    "person_id": 477132,
+    "name": "Clayton Kershaw",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2013-11-13",
+    "votes": 207
+   },
+   "ALROY": {
+    "person_id": 571976,
+    "name": "Wil Myers",
+    "team_id": 139,
+    "team_code": "TBR",
+    "date": "2013-11-11"
+   },
+   "NLROY": {
+    "person_id": 605228,
+    "name": "José Fernández",
+    "team_id": 146,
+    "team_code": "MIA",
+    "date": "2013-11-11"
+   },
+   "ALMOY": {
+    "person_id": 114378,
+    "name": "Terry Francona",
+    "team_id": 114,
+    "team_code": "CLE",
+    "date": "2013-11-12"
+   },
+   "NLMOY": {
+    "person_id": 116346,
+    "name": "Clint Hurdle",
+    "team_id": 134,
+    "team_code": "PIT",
+    "date": "2013-11-12"
+   }
+  },
+  "2014": {
+   "ALMVP": {
+    "person_id": 545361,
+    "name": "Mike Trout",
+    "team_id": 108,
+    "team_code": "LAA",
+    "date": "2014-11-13"
+   },
+   "NLMVP": {
+    "person_id": 477132,
+    "name": "Clayton Kershaw",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2014-11-13"
+   },
+   "ALCY": {
+    "person_id": 446372,
+    "name": "Corey Kluber",
+    "team_id": 114,
+    "team_code": "CLE",
+    "date": "2014-11-12"
+   },
+   "NLCY": {
+    "person_id": 477132,
+    "name": "Clayton Kershaw",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2014-11-12"
+   },
+   "ALROY": {
+    "person_id": 547989,
+    "name": "José Abreu",
+    "team_id": 145,
+    "team_code": "CHW",
+    "date": "2014-11-10"
+   },
+   "NLROY": {
+    "person_id": 594798,
+    "name": "Jacob deGrom",
+    "team_id": 121,
+    "team_code": "NYM",
+    "date": "2014-11-10"
+   },
+   "ALMOY": {
+    "person_id": 427469,
+    "name": "Buck Showalter",
+    "team_id": 110,
+    "team_code": "BAL",
+    "date": "2014-11-11"
+   },
+   "NLMOY": {
+    "person_id": 124326,
+    "name": "Matt Williams",
+    "team_id": 120,
+    "team_code": "WSN",
+    "date": "2014-11-11"
+   }
+  },
+  "2015": {
+   "ALMVP": {
+    "person_id": 518626,
+    "name": "Josh Donaldson",
+    "team_id": 141,
+    "team_code": "TOR",
+    "date": "2015-11-19"
+   },
+   "NLMVP": {
+    "person_id": 547180,
+    "name": "Bryce Harper",
+    "team_id": 120,
+    "team_code": "WSN",
+    "date": "2015-11-19"
+   },
+   "ALCY": {
+    "person_id": 572971,
+    "name": "Dallas Keuchel",
+    "team_id": 117,
+    "team_code": "HOU",
+    "date": "2015-11-18"
+   },
+   "NLCY": {
+    "person_id": 453562,
+    "name": "Jake Arrieta",
+    "team_id": 112,
+    "team_code": "CHC",
+    "date": "2015-11-18"
+   },
+   "ALROY": {
+    "person_id": 621043,
+    "name": "Carlos Correa",
+    "team_id": 117,
+    "team_code": "HOU",
+    "date": "2015-11-16"
+   },
+   "NLROY": {
+    "person_id": 592178,
+    "name": "Kris Bryant",
+    "team_id": 112,
+    "team_code": "CHC",
+    "date": "2015-11-16"
+   },
+   "ALMOY": {
+    "person_id": 110529,
+    "name": "Jeff Banister",
+    "team_id": 140,
+    "team_code": "TEX",
+    "date": "2015-11-17"
+   },
+   "NLMOY": {
+    "person_id": 427309,
+    "name": "Joe Maddon",
+    "team_id": 112,
+    "team_code": "CHC",
+    "date": "2015-11-17"
+   }
+  },
+  "2016": {
+   "ALMVP": {
+    "person_id": 545361,
+    "name": "Mike Trout",
+    "team_id": 108,
+    "team_code": "LAA",
+    "date": "2016-11-17"
+   },
+   "NLMVP": {
+    "person_id": 592178,
+    "name": "Kris Bryant",
+    "team_id": 112,
+    "team_code": "CHC",
+    "date": "2016-11-17"
+   },
+   "ALCY": {
+    "person_id": 519144,
+    "name": "Rick Porcello",
+    "team_id": 111,
+    "team_code": "BOS",
+    "date": "2016-11-16"
+   },
+   "NLCY": {
+    "person_id": 453286,
+    "name": "Max Scherzer",
+    "team_id": 120,
+    "team_code": "WSN",
+    "date": "2016-11-16"
+   },
+   "ALROY": {
+    "person_id": 605242,
+    "name": "Michael Fulmer",
+    "team_id": 116,
+    "team_code": "DET",
+    "date": "2016-11-14"
+   },
+   "NLROY": {
+    "person_id": 608369,
+    "name": "Corey Seager",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2016-11-14"
+   },
+   "ALMOY": {
+    "person_id": 114378,
+    "name": "Terry Francona",
+    "team_id": 114,
+    "team_code": "CLE",
+    "date": "2016-11-15"
+   },
+   "NLMOY": {
+    "person_id": 150353,
+    "name": "Dave Roberts",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2016-11-15"
+   }
+  },
+  "2017": {
+   "ALMVP": {
+    "person_id": 514888,
+    "name": "Jose Altuve",
+    "team_id": 117,
+    "team_code": "HOU",
+    "date": "2017-11-16"
+   },
+   "NLMVP": {
+    "person_id": 519317,
+    "name": "Giancarlo Stanton",
+    "team_id": 146,
+    "team_code": "MIA",
+    "date": "2017-11-16"
+   },
+   "ALCY": {
+    "person_id": 446372,
+    "name": "Corey Kluber",
+    "team_id": 114,
+    "team_code": "CLE",
+    "date": "2017-11-15"
+   },
+   "NLCY": {
+    "person_id": 453286,
+    "name": "Max Scherzer",
+    "team_id": 120,
+    "team_code": "WSN",
+    "date": "2017-11-15"
+   },
+   "ALROY": {
+    "person_id": 592450,
+    "name": "Aaron Judge",
+    "team_id": 147,
+    "team_code": "NYY",
+    "date": "2017-11-13"
+   },
+   "NLROY": {
+    "person_id": 641355,
+    "name": "Cody Bellinger",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2017-11-13"
+   },
+   "ALMOY": {
+    "person_id": 119236,
+    "name": "Paul Molitor",
+    "team_id": 142,
+    "team_code": "MIN",
+    "date": "2017-11-14"
+   },
+   "NLMOY": {
+    "person_id": 117950,
+    "name": "Torey Lovullo",
+    "team_id": 109,
+    "team_code": "ARI",
+    "date": "2017-11-14"
+   }
+  },
+  "2018": {
+   "ALMVP": {
+    "person_id": 605141,
+    "name": "Mookie Betts",
+    "team_id": 111,
+    "team_code": "BOS",
+    "date": "2018-11-15"
+   },
+   "NLMVP": {
+    "person_id": 592885,
+    "name": "Christian Yelich",
+    "team_id": 158,
+    "team_code": "MIL",
+    "date": "2018-11-15"
+   },
+   "ALCY": {
+    "person_id": 605483,
+    "name": "Blake Snell",
+    "team_id": 139,
+    "team_code": "TBR",
+    "date": "2018-11-14"
+   },
+   "NLCY": {
+    "person_id": 594798,
+    "name": "Jacob deGrom",
+    "team_id": 121,
+    "team_code": "NYM",
+    "date": "2018-11-14"
+   },
+   "ALROY": {
+    "person_id": 660271,
+    "name": "Shohei Ohtani",
+    "team_id": 108,
+    "team_code": "LAA",
+    "date": "2018-11-12"
+   },
+   "NLROY": {
+    "person_id": 660670,
+    "name": "Ronald Acuña Jr.",
+    "team_id": 144,
+    "team_code": "ATL",
+    "date": "2018-11-12"
+   },
+   "ALMOY": {
+    "person_id": 118942,
+    "name": "Bob Melvin",
+    "team_id": 133,
+    "team_code": "ATH",
+    "date": "2018-11-13"
+   },
+   "NLMOY": {
+    "person_id": 492535,
+    "name": "Brian Snitker",
+    "team_id": 144,
+    "team_code": "ATL",
+    "date": "2018-11-13"
+   }
+  },
+  "2019": {
+   "ALMVP": {
+    "person_id": 545361,
+    "name": "Mike Trout",
+    "team_id": 108,
+    "team_code": "LAA",
+    "date": "2019-11-14"
+   },
+   "NLMVP": {
+    "person_id": 641355,
+    "name": "Cody Bellinger",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2019-11-14"
+   },
+   "ALCY": {
+    "person_id": 434378,
+    "name": "Justin Verlander",
+    "team_id": 117,
+    "team_code": "HOU",
+    "date": "2019-11-13"
+   },
+   "NLCY": {
+    "person_id": 594798,
+    "name": "Jacob deGrom",
+    "team_id": 121,
+    "team_code": "NYM",
+    "date": "2019-11-13"
+   },
+   "ALROY": {
+    "person_id": 670541,
+    "name": "Yordan Alvarez",
+    "team_id": 117,
+    "team_code": "HOU",
+    "date": "2019-11-11"
+   },
+   "NLROY": {
+    "person_id": 624413,
+    "name": "Pete Alonso",
+    "team_id": 121,
+    "team_code": "NYM",
+    "date": "2019-11-11"
+   },
+   "ALMOY": {
+    "person_id": 408306,
+    "name": "Rocco Baldelli",
+    "team_id": 142,
+    "team_code": "MIN",
+    "date": "2019-11-12"
+   },
+   "NLMOY": {
+    "person_id": 492917,
+    "name": "Mike Shildt",
+    "team_id": 138,
+    "team_code": "STL",
+    "date": "2019-11-12"
+   }
+  },
+  "2020": {
+   "ALMVP": {
+    "person_id": 547989,
+    "name": "José Abreu",
+    "team_id": 145,
+    "team_code": "CHW",
+    "date": "2020-11-12"
+   },
+   "NLMVP": {
+    "person_id": 518692,
+    "name": "Freddie Freeman",
+    "team_id": 144,
+    "team_code": "ATL",
+    "date": "2020-11-12"
+   },
+   "ALCY": {
+    "person_id": 669456,
+    "name": "Shane Bieber",
+    "team_id": 114,
+    "team_code": "CLE",
+    "date": "2020-11-11"
+   },
+   "NLCY": {
+    "person_id": 545333,
+    "name": "Trevor Bauer",
+    "team_id": 113,
+    "team_code": "CIN",
+    "date": "2020-11-11"
+   },
+   "ALROY": {
+    "person_id": 641786,
+    "name": "Kyle Lewis",
+    "team_id": 136,
+    "team_code": "SEA",
+    "date": "2020-11-09"
+   },
+   "NLROY": {
+    "person_id": 642207,
+    "name": "Devin Williams",
+    "team_id": 158,
+    "team_code": "MIL",
+    "date": "2020-11-09"
+   },
+   "ALMOY": {
+    "person_id": 408211,
+    "name": "Kevin Cash",
+    "team_id": 139,
+    "team_code": "TBR",
+    "date": "2020-11-10"
+   },
+   "NLMOY": {
+    "person_id": 118443,
+    "name": "Don Mattingly",
+    "team_id": 146,
+    "team_code": "MIA",
+    "date": "2020-11-10",
+    "votes": 124
+   }
+  },
+  "2021": {
+   "ALMVP": {
+    "person_id": 660271,
+    "name": "Shohei Ohtani",
+    "team_id": 108,
+    "team_code": "LAA",
+    "date": "2021-11-18"
+   },
+   "NLMVP": {
+    "person_id": 547180,
+    "name": "Bryce Harper",
+    "team_id": 143,
+    "team_code": "PHI",
+    "date": "2021-11-18"
+   },
+   "ALCY": {
+    "person_id": 592662,
+    "name": "Robbie Ray",
+    "team_id": 141,
+    "team_code": "TOR",
+    "date": "2021-11-17"
+   },
+   "NLCY": {
+    "person_id": 669203,
+    "name": "Corbin Burnes",
+    "team_id": 158,
+    "team_code": "MIL",
+    "date": "2021-11-17"
+   },
+   "ALROY": {
+    "person_id": 668227,
+    "name": "Randy Arozarena",
+    "team_id": 139,
+    "team_code": "TBR",
+    "date": "2021-11-15"
+   },
+   "NLROY": {
+    "person_id": 663697,
+    "name": "Jonathan India",
+    "team_id": 113,
+    "team_code": "CIN",
+    "date": "2021-11-15"
+   },
+   "ALMOY": {
+    "person_id": 408211,
+    "name": "Kevin Cash",
+    "team_id": 139,
+    "team_code": "TBR",
+    "date": "2021-11-16"
+   },
+   "NLMOY": {
+    "person_id": 137002,
+    "name": "Gabe Kapler",
+    "team_id": 137,
+    "team_code": "SFG",
+    "date": "2021-11-16"
+   }
+  },
+  "2022": {
+   "ALMVP": {
+    "person_id": 592450,
+    "name": "Aaron Judge",
+    "team_id": 147,
+    "team_code": "NYY",
+    "date": "2022-11-17"
+   },
+   "NLMVP": {
+    "person_id": 502671,
+    "name": "Paul Goldschmidt",
+    "team_id": 138,
+    "team_code": "STL",
+    "date": "2022-11-17"
+   },
+   "ALCY": {
+    "person_id": 434378,
+    "name": "Justin Verlander",
+    "team_id": 117,
+    "team_code": "HOU",
+    "date": "2022-11-16"
+   },
+   "NLCY": {
+    "person_id": 645261,
+    "name": "Sandy Alcantara",
+    "team_id": 146,
+    "team_code": "MIA",
+    "date": "2022-11-16"
+   },
+   "ALROY": {
+    "person_id": 677594,
+    "name": "Julio Rodríguez",
+    "team_id": 136,
+    "team_code": "SEA",
+    "date": "2022-11-14"
+   },
+   "NLROY": {
+    "person_id": 671739,
+    "name": "Michael Harris II",
+    "team_id": 144,
+    "team_code": "ATL",
+    "date": "2022-11-14"
+   },
+   "ALMOY": {
+    "person_id": 114378,
+    "name": "Terry Francona",
+    "team_id": 114,
+    "team_code": "CLE",
+    "date": "2022-11-15"
+   },
+   "NLMOY": {
+    "person_id": 427469,
+    "name": "Buck Showalter",
+    "team_id": 121,
+    "team_code": "NYM",
+    "date": "2022-11-15"
+   }
+  },
+  "2023": {
+   "ALMVP": {
+    "person_id": 660271,
+    "name": "Shohei Ohtani",
+    "team_id": 108,
+    "team_code": "LAA",
+    "date": "2023-11-16"
+   },
+   "NLMVP": {
+    "person_id": 660670,
+    "name": "Ronald Acuña Jr.",
+    "team_id": 144,
+    "team_code": "ATL",
+    "date": "2023-11-16"
+   },
+   "ALCY": {
+    "person_id": 543037,
+    "name": "Gerrit Cole",
+    "team_id": 147,
+    "team_code": "NYY",
+    "date": "2023-11-15"
+   },
+   "NLCY": {
+    "person_id": 605483,
+    "name": "Blake Snell",
+    "team_id": 135,
+    "team_code": "SDP",
+    "date": "2023-11-15"
+   },
+   "ALROY": {
+    "person_id": 683002,
+    "name": "Gunnar Henderson",
+    "team_id": 110,
+    "team_code": "BAL",
+    "date": "2023-11-13"
+   },
+   "NLROY": {
+    "person_id": 682998,
+    "name": "Corbin Carroll",
+    "team_id": 109,
+    "team_code": "ARI",
+    "date": "2023-11-13"
+   },
+   "ALMOY": {
+    "person_id": 492493,
+    "name": "Brandon Hyde",
+    "team_id": 110,
+    "team_code": "BAL",
+    "date": "2023-11-14"
+   },
+   "NLMOY": {
+    "person_id": 435401,
+    "name": "Skip Schumaker",
+    "team_id": 146,
+    "team_code": "MIA",
+    "date": "2023-11-14"
+   }
+  },
+  "2024": {
+   "ALMVP": {
+    "person_id": 592450,
+    "name": "Aaron Judge",
+    "team_id": 147,
+    "team_code": "NYY",
+    "date": "2024-11-21"
+   },
+   "NLMVP": {
+    "person_id": 660271,
+    "name": "Shohei Ohtani",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2024-11-21"
+   },
+   "ALCY": {
+    "person_id": 669373,
+    "name": "Tarik Skubal",
+    "team_id": 116,
+    "team_code": "DET",
+    "date": "2024-11-20"
+   },
+   "NLCY": {
+    "person_id": 519242,
+    "name": "Chris Sale",
+    "team_id": 144,
+    "team_code": "ATL",
+    "date": "2024-11-20"
+   },
+   "ALROY": {
+    "person_id": 661563,
+    "name": "Luis Gil",
+    "team_id": 147,
+    "team_code": "NYY",
+    "date": "2024-11-18"
+   },
+   "NLROY": {
+    "person_id": 694973,
+    "name": "Paul Skenes",
+    "team_id": 134,
+    "team_code": "PIT",
+    "date": "2024-11-18"
+   },
+   "ALMOY": {
+    "person_id": 519390,
+    "name": "Stephen Vogt",
+    "team_id": 114,
+    "team_code": "CLE",
+    "date": "2024-11-19"
+   },
+   "NLMOY": {
+    "person_id": 580268,
+    "name": "Pat Murphy",
+    "team_id": 158,
+    "team_code": "MIL",
+    "date": "2024-11-19"
+   }
+  },
+  "2025": {
+   "ALMVP": {
+    "person_id": 592450,
+    "name": "Aaron Judge",
+    "team_id": 147,
+    "team_code": "NYY",
+    "date": "2025-11-13"
+   },
+   "NLMVP": {
+    "person_id": 660271,
+    "name": "Shohei Ohtani",
+    "team_id": 119,
+    "team_code": "LAD",
+    "date": "2025-11-13"
+   },
+   "ALCY": {
+    "person_id": 669373,
+    "name": "Tarik Skubal",
+    "team_id": 116,
+    "team_code": "DET",
+    "date": "2025-11-12"
+   },
+   "NLCY": {
+    "person_id": 694973,
+    "name": "Paul Skenes",
+    "team_id": 134,
+    "team_code": "PIT",
+    "date": "2025-11-12"
+   },
+   "ALROY": {
+    "person_id": 701762,
+    "name": "Nick Kurtz",
+    "team_id": 133,
+    "team_code": "ATH",
+    "date": "2025-11-10"
+   },
+   "NLROY": {
+    "person_id": 686948,
+    "name": "Drake Baldwin",
+    "team_id": 144,
+    "team_code": "ATL",
+    "date": "2025-11-10"
+   },
+   "ALMOY": {
+    "person_id": 519390,
+    "name": "Stephen Vogt",
+    "team_id": 114,
+    "team_code": "CLE",
+    "date": "2025-11-11"
+   },
+   "NLMOY": {
+    "person_id": 580268,
+    "name": "Pat Murphy",
+    "team_id": 158,
+    "team_code": "MIL",
+    "date": "2025-11-11"
+   }
+  }
+ }
+}
