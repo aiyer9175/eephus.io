@@ -26,6 +26,8 @@ import json
 import re
 from pathlib import Path
 
+import pitch_rates
+
 ROOT = Path(__file__).resolve().parent
 
 PATTERNS = [
@@ -38,6 +40,13 @@ PATTERNS = [
 
 # Slugs a page builds at runtime, which no literal scan can see.
 DYNAMIC_SLUGS = {"provisional_pick"}
+
+# The /mlbstats/ pitch-rate columns and chips (Q8_04, owner asks 17 and 20)
+# render only once the exporters run with pitch_rates.SERVE_PITCH_RATES on, and
+# their glossary entries land in that flip commit (Q8_06; plan Part 8, 8.D row
+# 15). While the flag is off these four may be missing; once it is on, they
+# must resolve like every other slug.
+DARK_PITCH_SLUGS = {"p_ip", "p_bf", "p_pa", "par"}
 
 
 def _sources():
@@ -76,7 +85,8 @@ def test_every_referenced_glossary_slug_resolves():
                 refs.setdefault(m.group(1), set()).add(f.relative_to(ROOT).as_posix())
     for slug in DYNAMIC_SLUGS:
         refs.setdefault(slug, set()).add("(runtime)")
-    missing = {s: sorted(v) for s, v in refs.items() if s.lower() not in keys}
+    dark = set() if pitch_rates.SERVE_PITCH_RATES else DARK_PITCH_SLUGS
+    missing = {s: sorted(v) for s, v in refs.items() if s.lower() not in keys and s not in dark}
     assert not missing, f"glossary slugs with no entry: {missing}"
 
 

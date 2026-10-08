@@ -588,6 +588,80 @@
   // REM+ talent number by design).
   // RIV+ is a realized record. The 2026-09-18 re-gate (docs/HEM_RIV_REGATE_GATE.md)
   // forbids any forward reading of it, and says the column copy has to say so.
+  // ---- pitch rates (owner asks 17 and 20, 2026-09-30) ----------------------
+  // P/IP, P/BF, P/PA and PAR ride the three boards behind the exporters'
+  // pitch_rates.SERVE_PITCH_RATES flag: the keys exist only when it is on.
+  // Every column built on them carries `pr`, and a `pr` column whose key no
+  // row carries is not rendered at all (prCols), not even as a blank column,
+  // so with the flag off every board is the board it was. PAR is the plain
+  // ratio of owner answer PM-Q1: 100 x the player's rate / the league rate for
+  // his role and season, nearest point, uncoloured (no isRem, no tier class),
+  // with the gap in pitches in the cell's tooltip.
+  var PAR_TITLE_PIT = "P/IP against the league average for his role this season: 100 = average,"
+    + " 110 = 10 percent more pitches. Hover for the gap in pitches.";
+  var P_BF_TITLE = "Pitches per batter faced in this role. The steadier half of P/IP:"
+    + " P/IP = P/BF x batters per inning.";
+  var TEAM_PAR_TITLE = "Team PAR: 100 x the club's rate / the average of the 30 clubs.";
+  function prCols(cols, rows) {
+    var need = cols.filter(function (c) { return c.pr; });
+    if (!need.length) return cols;
+    var has = {}, n = 0;
+    for (var i = 0; i < (rows || []).length && n < need.length; i++) {
+      var r = rows[i];
+      if (!r) continue;
+      need.forEach(function (c) {
+        if (!has[c.key] && Object.prototype.hasOwnProperty.call(r, c.key)) { has[c.key] = 1; n++; }
+      });
+    }
+    return n === need.length ? cols : cols.filter(function (c) { return !c.pr || has[c.key]; });
+  }
+  // The PAR cell: the index, and the payload's par_delta (rate minus the
+  // league rate) as a sentence in its tooltip.
+  function parCell(unit, digits, basis) {
+    return function (r) {
+      var v = num(r.par);
+      if (v == null) return EM_DASH;
+      var d = num(r.par_delta), t = "";
+      if (d != null) {
+        var m = Math.abs(d).toFixed(digits), avg = "the league average" + (basis ? " " + basis : "");
+        t = Number(m) === 0 ? "Level with " + avg
+          : m + (d > 0 ? " more" : " fewer") + " pitches " + unit + " than " + avg;
+      }
+      return t ? '<span title="' + esc(t) + '">' + fInt(v) + "</span>" : fInt(v);
+    };
+  }
+  // The board whose live rows decide whether the Pitches view is offered, and
+  // the key that says so.
+  var PR_PROBE = { rel: "p_ip", sp: "p_ip", hit: "p_pa" };
+  function prLive(board) {
+    var k = PR_PROBE[board];
+    if (!k) return true;
+    var rows = board === "rel" ? (DATA && DATA.relievers)
+      : board === "sp" ? (starterData && starterData.starters) : (hitterData && hitterData.hitters);
+    rows = rows || [];
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i] && Object.prototype.hasOwnProperty.call(rows[i], k)) return true;
+    }
+    return false;
+  }
+  function pitchChip(rate, par, label, digits, title) {
+    if (num(rate) == null) return "";
+    return '<span class="proj-dim mlbstats-pchip" data-gl="par" style="white-space:nowrap;margin-left:auto"'
+      + ' title="' + esc(title) + '">' + esc(label) + " " + num(rate).toFixed(digits)
+      + (num(par) != null ? " &middot; PAR " + fInt(par) : "") + "</span>";
+  }
+  // A chart card's head. One carrying a pitch chip may wrap, so on a crowded
+  // card the chip takes its own line instead of squeezing the club's index;
+  // a head without one is the head it always was.
+  function depthHead(chip) {
+    return '<div class="bp-depth-card"><div class="bp-depth-head"' + (chip ? ' style="flex-wrap:wrap"' : "") + ">";
+  }
+  // A slot name whose dim tail carries a P/IP: on a four-column grid the
+  // tail can be cut by the ellipsis, so the title repeats it whole.
+  function slotTitle(name, tail) {
+    return name ? ' title="' + esc(name + (tail ? " " + tail : "")) + '"' : "";
+  }
+
   var RIV_TITLE = "Realized value this season: 70% WPA and 30% shutdowns minus meltdowns, 100 + 10z"
     + " over the reliever pool. A record of what happened, not a forecast: this season's REM+ predicts"
     + " next season's RIV+ better than this season's RIV+ does. Not shown to track free-agent pay"
@@ -648,6 +722,12 @@
       } },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "g", label: "G", fmt: fInt, num: true },
+    { key: "p_ip", label: "P/IP", term: "p_ip", fmt: f1, num: true, pr: true,
+      title: "Pitches per inning in his relief outings (innings counted as outs / 3). A record, not a rating." },
+    { key: "par", label: "PAR", term: "par", num: true, pr: true, title: PAR_TITLE_PIT,
+      get: function (r) { return r.par; }, cell: parCell("an inning", 1, "in relief") },
+    { key: "p_bf", label: "P/BF", term: "p_bf", fmt: f2, num: true, pr: true, title: P_BF_TITLE },
+    { key: "pit_per_g", label: "P/G", fmt: f1, num: true, pr: true, title: "Pitches per relief appearance." },
     { key: "saves", label: "SV", fmt: fInt, num: true, title: "Saves. Context; does not move REM+." },
     { key: "holds", label: "HLD", fmt: fInt, num: true, title: "Holds. Context; does not move REM+." },
     { key: "k_pct", label: "K%", term: "k_pct", fmt: fPct, num: true },
@@ -742,7 +822,7 @@
   // rates standardised on the live pool stay out.
   var REL_HISTORY_KEYS = { name: 1, rem_plus: 1, riv_plus: 1, ip: 1, g: 1, k_pct: 1,
     bb_pct: 1, k_bb_pct: 1, fip: 1, swstr_pct: 1, era: 1, gmli: 1, wpa: 1, sd_md: 1, saves: 1, holds: 1,
-    war: 1 };
+    war: 1, p_ip: 1, par: 1, p_bf: 1, pit_per_g: 1 };
   var REL_HISTORY_COLS = historyTitle(REL_COLS.filter(function (c) { return REL_HISTORY_KEYS[c.key]; }),
     "war", "Pitching eWAR for the season shown.");
 
@@ -769,6 +849,9 @@
     { key: "team_wpa", label: "WPA", term: "wpa", fmt: fSigned, num: true },
     { key: "sd_md", label: "SD-MD", term: "shutdowns_meltdowns", fmt: fInt, num: true,
       get: function (t) { var sd = num(t.sd), md = num(t.md); return (sd == null && md == null) ? null : (sd || 0) - (md || 0); } },
+    { key: "pen_p_ip", label: "P/IP", term: "p_ip", fmt: f1, num: true, pr: true,
+      title: "Pitches per inning in relief by this pen's arms, pooled. Same club basis as the Team column." },
+    { key: "pen_par", label: "PAR", term: "par", fmt: fInt, num: true, pr: true, title: TEAM_PAR_TITLE },
   ];
 
   // ---- state ----------------------------------------------------------------
@@ -839,6 +922,10 @@
       { id: "discipline", label: "Discipline", phone: ["rem_plus", "swstr_pct", "chase_pct", "fb_velo"],
         keys: ["rem_plus", "|", "k_pct", "swstr_pct", "whiff_pct", "|", "chase_pct", "z_contact_pct",
                "f_strike_pct", "|", "fb_velo", "|", "ip"] },
+      // The Pitches views (owner ask 17) are offered only once the board's rows
+      // carry the pitch-rate keys (`pr`, prLive).
+      { id: "pitches", label: "Pitches", pr: true, phone: ["p_ip", "par", "pit_per_g", "ip"],
+        keys: ["rem_plus", "|", "p_ip", "par", "p_bf", "|", "pit_per_g", "g", "|", "k_pct", "bb_pct", "|", "ip"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     sp: [
@@ -854,6 +941,9 @@
       { id: "discipline", label: "Discipline", phone: ["sem_plus", "swstr_pct", "chase_pct", "fb_velo"],
         keys: ["sem_plus", "|", "k_pct", "swstr_pct", "whiff_pct", "|", "chase_pct", "z_contact_pct",
                "f_strike_pct", "|", "fb_velo", "|", "ip"] },
+      { id: "pitches", label: "Pitches", pr: true, phone: ["p_ip", "par", "pit_per_gs", "ip"],
+        keys: ["sem_plus", "|", "p_ip", "par", "p_bf", "|", "pit_per_gs", "sp_ip_per_gs", "ip_per_gs", "|",
+               "k_pct", "bb_pct", "|", "ip"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     hit: [
@@ -871,6 +961,9 @@
       { id: "discipline", label: "Discipline", phone: ["hem_plus", "chase_pct", "whiff_pct", "sweet_spot_pct"],
         keys: ["hem_plus", "|", "bb_pct", "k_pct", "|", "chase_pct", "whiff_pct", "z_contact_pct", "|",
                "sweet_spot_pct", "pull_pct", "|", "pa"] },
+      { id: "pitches", label: "Pitches", pr: true, phone: ["p_pa", "par", "pit", "pa"],
+        keys: ["hem_plus", "|", "p_pa", "par", "pit", "|", "bb_pct", "k_pct", "|", "chase_pct", "whiff_pct", "|",
+               "pa"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     def: [
@@ -946,7 +1039,8 @@
   function activeView(board) {
     var vs = COL_VIEWS[board];
     if (!vs) return null;
-    return viewById(board, COL_VIEW[board] || "standard") || vs[0];
+    var v = viewById(board, COL_VIEW[board] || "standard");
+    return (v && (!v.pr || prLive(board))) ? v : vs[0];
   }
   // A pinned sort column sits last, after the view's own columns, with a group
   // rule, so an old link sorted on K% still shows K%. One exception, a house
@@ -1003,7 +1097,7 @@
     var cur = activeView(board).id;
     return '<div class="mlbstats-seasons mlbstats-roles mlbstats-views" role="group" aria-label="Columns">'
       + '<span class="mlbstats-roles-lbl">Columns</span>'
-      + vs.map(function (v) {
+      + vs.filter(function (v) { return !v.pr || prLive(board); }).map(function (v) {
           var on = v.id === cur;
           return '<button type="button" class="mlbstats-season' + (on ? " active" : "") + '" data-colview="'
             + esc(board) + ":" + esc(v.id) + '" aria-pressed="' + on + '"'
@@ -1115,11 +1209,11 @@
   }
   function sectionCols(sec) {
     if (sec === "war") return warCols();
-    if (sec === "starters") return STARTER_COLS;
-    if (sec === "hitters") return HITTER_COLS;
+    if (sec === "starters") return prCols(STARTER_COLS, (starterData && starterData.starters) || []);
+    if (sec === "hitters") return prCols(HITTER_COLS, (hitterData && hitterData.hitters) || []);
     if (sec === "leverage") return levCols();
     if (sec === "defense") return DEFENSE_COLS;
-    return REL_COLS;
+    return prCols(REL_COLS, (DATA && DATA.relievers) || []);
   }
   function sectionSort(sec) {
     if (sec === "war") return warSort;
@@ -2326,6 +2420,7 @@
   // expander caret) and `child(row, nCols)` emits one extra row under it (the
   // per-season line). Both are optional and every other board passes neither.
   function renderTable(rows, cols, sort, meta, board, opts) {
+    cols = prCols(cols, rows);
     var plan = viewPlan(cols, sort, board);
     var allv = !!(board && COL_VIEWS[board] && COL_VIEWS[board].length > 1 && !activeView(board).keys);
     var head = "<thead><tr>";
@@ -2710,19 +2805,30 @@
     var teams = (DATA && DATA.teams) || [];
     if (!teams.length) return '<div class="mlbstats-empty">No bullpen charts to show yet.</div>';
     var sorted = teams.slice().sort(function (a, b) { return (num(b.bullpen_plus) || 0) - (num(a.bullpen_plus) || 0); });
+    // A depth slot carries no pitch count of its own; its P/IP is the board
+    // row's, joined by key (absent while the pitch rates are dark).
+    var pipByKey = {};
+    ((DATA && DATA.relievers) || []).forEach(function (r) {
+      if (r && r.key != null && num(r.p_ip) != null) pipByKey[r.key] = r.p_ip;
+    });
     var cards = sorted.map(function (t) {
       var slots = teamDepth(t).map(function (r) {
+        var pip = num(r.p_ip) != null ? r.p_ip : pipByKey[r.key];
+        var tail = num(pip) != null ? (r.gmli != null ? "gmLI " + f2(r.gmli) + " " : "") + f1(pip) + " P/IP" : "";
         return '<div class="bp-slot">'
           + '<span class="bp-slot-role">' + esc(r.role || EM_DASH) + "</span>"
-          + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || EM_DASH)
-          + (r.gmli != null ? '<span class="proj-dim"> gmLI ' + f2(r.gmli) + "</span>" : "") + "</span>"
+          + '<span class="bp-slot-name"' + slotTitle(r.name, tail) + ">" + esc(r.name || EM_DASH)
+          + (r.gmli != null ? '<span class="proj-dim"> gmLI ' + f2(r.gmli) + "</span>" : "")
+          + (num(pip) != null ? '<span class="proj-dim"> ' + f1(pip) + " P/IP</span>" : "") + "</span>"
           + '<span class="bp-slot-rem ' + EephusTiers.clsInk(r.rem_plus, "run") + '">' + fInt(r.rem_plus) + "</span>"
           + "</div>";
       }).join("");
-      return '<div class="bp-depth-card"><div class="bp-depth-head">'
+      var chip = pitchChip(t.pen_p_ip, t.pen_par, "P/IP", 1, "This pen's pitches per inning in relief, pooled. "
+        + TEAM_PAR_TITLE);
+      return depthHead(chip)
         + '<span class="bp-depth-team">' + clubA(t.team, logo(t.team) + esc(t.team)) + "</span>"
         + '<span class="rem-plus ' + EephusTiers.cls(t.bullpen_plus, "z") + '" data-gl="bullpen_plus">Bullpen+ ' + fInt(t.bullpen_plus) + "</span>"
-        + "</div>" + slots + "</div>";
+        + chip + "</div>" + slots + "</div>";
     }).join("");
     return '<div class="mlbstats-note">Each pen by role, then gmLI; number = '
       + gloss("REM+", "rem_plus") + ".</div>" + '<div class="bp-depth-grid">' + cards + "</div>";
@@ -3349,6 +3455,14 @@
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "gs", label: "GS", fmt: fInt, num: true },
     { key: "ip_per_gs", label: "IP/GS", fmt: f1, num: true, title: "Average start length (innings per game started)" },
+    { key: "p_ip", label: "P/IP", term: "p_ip", fmt: f1, num: true, pr: true,
+      title: "Pitches per inning in his starts (innings counted as outs / 3). A record, not a rating." },
+    { key: "par", label: "PAR", term: "par", num: true, pr: true, title: PAR_TITLE_PIT,
+      get: function (r) { return r.par; }, cell: parCell("an inning", 1, "in starts") },
+    { key: "p_bf", label: "P/BF", term: "p_bf", fmt: f2, num: true, pr: true, title: P_BF_TITLE },
+    { key: "pit_per_gs", label: "P/GS", fmt: f1, num: true, pr: true, title: "Pitches per start." },
+    { key: "sp_ip_per_gs", label: "IP/GS (starts)", fmt: f1, num: true, pr: true,
+      title: "Innings per start counting only innings in his starts. IP/GS divides all his innings, relief included, by starts." },
     { key: "k_pct", label: "K%", term: "k_pct", fmt: fPct, num: true },
     { key: "bb_pct", label: "BB%", term: "bb_pct", fmt: fPct, num: true, asc: true },
     { key: "k_bb_pct", label: "K-BB%", term: "k_bb_pct", fmt: fPct, num: true },
@@ -3402,6 +3516,11 @@
       cell: function (t) { return fInt(t.n_above_avg) + (t.n_starters != null ? '<span class="proj-dim"> / ' + fInt(t.n_starters) + "</span>" : ""); } },
     { key: "starter_ip", label: "Starter IP", fmt: f1, num: true },
     { key: "total_gs", label: "GS", fmt: fInt, num: true },
+    { key: "rot_p_ip", label: "P/IP", term: "p_ip", fmt: f1, num: true, pr: true,
+      title: "Pitches per inning in the starts of this rotation's arms, pooled. Same club basis as the Team column." },
+    { key: "rot_par", label: "PAR", term: "par", fmt: fInt, num: true, pr: true, title: TEAM_PAR_TITLE },
+    { key: "rot_pit_per_gs", label: "P/GS", fmt: f1, num: true, pr: true,
+      title: "Pitches per start by this rotation's arms, pooled." },
   ];
 
   // SEM+ explainer - reuses the shared explainer() markup so it styles like the
@@ -3598,7 +3717,25 @@
       ? chart("scatter", xpts, { height: 250, xLabel: "SEM+ (results) →",
           yLabel: "↑ xSEM+ (deserved)", xRef: 100, yRef: 100, diag: true, aria: "earned vs deserved" })
       : "";
-    if (!hist && !sc && !xsc) return "";
+    // Pitch efficiency against length, both from his starts only: PAR (starts)
+    // against IP/GS (starts). One series, uncoloured: PAR has no good or bad
+    // end. Drawn only off the live board, never for 2024 or 2025, the seasons
+    // the starter-workload stage-1 lab scores on this same relation. A season
+    // picker may reach them only after that lab's result block exists in
+    // docs/diamond-betting.md, and only by a commit that says so.
+    var season = num(starterData && starterData.season);
+    var ppts = (season === 2024 || season === 2025) ? [] : qual.filter(function (r) {
+      return num(r.par) != null && num(r.sp_ip_per_gs) != null;
+    }).map(function (r) {
+      return { x: num(r.par), y: num(r.sp_ip_per_gs),
+               label: r.name + "  PAR " + fInt(r.par) + "  IP/GS (starts) " + f1(r.sp_ip_per_gs),
+               color: "var(--text-secondary)" };
+    });
+    var psc = ppts.length >= 12
+      ? chart("scatter", ppts, { height: 250, xLabel: "PAR (starts) →", yLabel: "↑ IP/GS (starts)",
+          xRef: 100, aria: "pitches per inning against start length" })
+      : "";
+    if (!hist && !sc && !xsc && !psc) return "";
     var body = '<div class="mlbstats-viz">'
       + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("SEM+", "sem_plus")
       + ' distribution <span class="proj-dim">(qualified; cyan = 120+)</span></div>' + hist + "</div>"
@@ -3606,8 +3743,12 @@
         + ' <span class="proj-dim">(bright = SEM+ 115+)</span></div>' + sc + "</div>" : "")
       + (xsc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">SEM+ vs ' + gloss("xSEM+", "xsem_plus")
         + ' <span class="proj-dim">(below the diagonal = FIP results ahead of contact quality)</span></div>' + xsc + "</div>" : "")
+      + (psc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("PAR", "par")
+        + ' vs IP/GS, starts only <span class="proj-dim">(' + esc(season) + "; right = more pitches an inning)</span></div>"
+        + psc + "</div>" : "")
       + "</div>";
-    return collapsible("starters-viz", 'Charts <span class="proj-dim">(SEM+ distribution, vs IP/GS, vs xSEM+)</span>', body);
+    return collapsible("starters-viz", 'Charts <span class="proj-dim">(SEM+ distribution, vs IP/GS, vs xSEM+'
+      + (psc ? ", PAR vs IP/GS" : "") + ")</span>", body);
   }
 
   function rotationLadders() {
@@ -3626,17 +3767,22 @@
     var cards = sorted.map(function (t) {
       var rot = (byTeam[t.team] || []).slice(0, 5);
       var slots = rot.map(function (r, i) {
+        var tail = num(r.p_ip) != null
+          ? (r.ip_per_gs != null ? f1(r.ip_per_gs) + " IP/GS " : "") + f1(r.p_ip) + " P/IP" : "";
         return '<div class="bp-slot">'
           + '<span class="bp-slot-role">SP' + (i + 1) + "</span>"
-          + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || EM_DASH)
-          + (r.ip_per_gs != null ? '<span class="proj-dim"> ' + f1(r.ip_per_gs) + " IP/GS</span>" : "") + "</span>"
+          + '<span class="bp-slot-name"' + slotTitle(r.name, tail) + ">" + esc(r.name || EM_DASH)
+          + (r.ip_per_gs != null ? '<span class="proj-dim"> ' + f1(r.ip_per_gs) + " IP/GS</span>" : "")
+          + (num(r.p_ip) != null ? '<span class="proj-dim"> ' + f1(r.p_ip) + " P/IP</span>" : "") + "</span>"
           + '<span class="bp-slot-rem ' + EephusTiers.clsInk(r.sem_plus, "run") + '">' + fInt(r.sem_plus) + "</span>"
           + "</div>";
       }).join("");
-      return '<div class="bp-depth-card"><div class="bp-depth-head">'
+      var chip = pitchChip(t.rot_p_ip, t.rot_par, "P/IP", 1, "This rotation's pitches per inning in its starts, pooled. "
+        + TEAM_PAR_TITLE);
+      return depthHead(chip)
         + '<span class="bp-depth-team">' + clubA(t.team, logo(t.team) + esc(t.team)) + "</span>"
         + '<span class="rem-plus ' + EephusTiers.cls(t.rotation_plus, "z") + '" data-gl="rotation_plus">Rotation+ ' + fInt(t.rotation_plus) + "</span>"
-        + "</div>" + slots + "</div>";
+        + chip + "</div>" + slots + "</div>";
     }).join("");
     return '<div class="mlbstats-note">Top five starters by IP; number = ' + gloss("SEM+", "sem_plus") + ".</div>"
       + '<div class="bp-depth-grid">' + cards + "</div>";
@@ -3888,6 +4034,12 @@
         return s;
       } },
     { key: "pa", label: "PA", fmt: fInt, num: true },
+    { key: "p_pa", label: "P/PA", term: "p_pa", fmt: f2, num: true, pr: true,
+      title: "Pitches seen per plate appearance." },
+    { key: "par", label: "PAR", term: "par", num: true, pr: true,
+      title: "P/PA against the league average this season: 100 = average, 110 = 10 percent more pitches seen.",
+      get: function (r) { return r.par; }, cell: parCell("a plate appearance", 2, "") },
+    { key: "pit", label: "Pit", fmt: fInt, num: true, pr: true, title: "Pitches seen." },
     { key: "hr", label: "HR", fmt: fInt, num: true },
     { key: "sb", label: "SB", fmt: fInt, num: true },
     { key: "avg", label: "AVG", term: "avg", fmt: f3, num: true, title: "Batting average (context)" },
@@ -3948,6 +4100,9 @@
       get: function (t) { return num(t.n_above_avg); },
       cell: function (t) { return fInt(t.n_above_avg) + (t.n_hitters != null ? '<span class="proj-dim"> / ' + fInt(t.n_hitters) + "</span>" : ""); } },
     { key: "team_pa", label: "PA", fmt: fInt, num: true },
+    { key: "lineup_p_pa", label: "P/PA", term: "p_pa", fmt: f2, num: true, pr: true,
+      title: "Pitches seen per plate appearance by this club's hitters, pooled; pitchers' bats left out. Same club basis as the Team column." },
+    { key: "lineup_par", label: "PAR", term: "par", fmt: fInt, num: true, pr: true, title: TEAM_PAR_TITLE },
   ];
 
   function hemExplainer() {
@@ -4302,9 +4457,35 @@
     return '<span class="proj-dim" data-gl="hem_plus_vs_hand" title="PA-weighted vs-hand HEM+ of the nine">'
       + one("L", vl) + " &middot; " + one("R", vr) + "</span>";
   }
+  // The displayed nine's pitches seen per plate appearance: pitches over PA
+  // pooled across the nine on the card, each slot joined to its board row
+  // (hitterData.hitters) by key. A slot whose row has no pitch count or no
+  // positive PA is skipped, never counted as zero (the orderHandMean rule).
+  // PAR compares it with the unweighted mean of the clubs' lineup P/PA, the
+  // anchor Team PAR uses. Display only: nothing here reaches betting.
+  function ninePitchRate(order, rowByKey, anchor) {
+    var pit = 0, pa = 0, n = 0;
+    (order || []).forEach(function (s) {
+      var r = s && rowByKey[s.key];
+      if (!r) return;
+      var p = num(r.pit), a = num(r.pa);
+      if (p == null || a == null || !isFinite(p) || !isFinite(a) || a <= 0) return;
+      pit += p; pa += a; n++;
+    });
+    if (!(pa > 0)) return null;
+    var rate = pit / pa;
+    return { rate: rate, n: n, par: anchor ? Math.round(100 * rate / anchor) : null };
+  }
   function lineupLadders() {
     var teams = (hitterData && hitterData.teams) || [];
     if (!teams.length) return "";
+    var pRows = {};
+    ((hitterData && hitterData.hitters) || []).forEach(function (r) {
+      if (r && r.key != null && num(r.pit) != null) pRows[r.key] = r;
+    });
+    var pAnchor = null, pN = 0, pSum = 0;
+    teams.forEach(function (t) { var v = num(t.lineup_p_pa); if (v != null && v > 0) { pSum += v; pN++; } });
+    if (pN) pAnchor = pSum / pN;
     // platoon_applied=false on every club: one lineup, no toggle, no hand
     // column (the _ORDER_KEY_CONTRACT "flag" rule). Absent = an older payload.
     var splitOn = teams.some(function (t) { return t.platoon_applied !== false; });
@@ -4333,6 +4514,8 @@
       } else {
         slots = (t.lineup || []).slice(0, 9).map(function (h, i) { return _slotRow(h, i + 1, null, null); }).join("");
       }
+      var shown = (order && order.length) ? order : (t.lineup || []).slice(0, 9);
+      var nine = pAnchor ? ninePitchRate(shown, pRows, pAnchor) : null;
       var head = hand
         ? '<div class="bp-slot"' + LC_GRID + '><span class="bp-slot-role">#</span><span class="bp-slot-name proj-dim">Hitter</span>'
           + '<span class="bp-slot-rem proj-dim">' + gloss(handLabel(), "hem_plus_vs_hand") + "</span></div>"
@@ -4346,10 +4529,13 @@
       var outHtml = out.length
         ? '<div class="bp-bench-head" title="Regulars not on the active roster">Out</div>' + out.map(_outRow).join("")
         : "";
-      return '<div class="bp-depth-card"><div class="bp-depth-head">'
+      var chip = nine ? pitchChip(nine.rate, nine.par, "P/PA", 2, "Pitches seen per plate appearance by the "
+        + nine.n + " of this nine with a pitch count, pooled. PAR: 100 x that rate / the average of the "
+        + pN + " club lineups.") : "";
+      return depthHead(chip)
         + '<span class="bp-depth-team">' + clubA(t.team, logo(t.team) + esc(t.team)) + "</span>"
         + '<span class="rem-plus ' + EephusTiers.cls(t.offense_plus, "ratio") + '" data-gl="offense_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
-        + handMeans(t)
+        + handMeans(t) + chip
         + "</div>" + head + slots + benchHtml + outHtml + "</div>";
     }).join("");
     var lc = (hitterData && hitterData.lineup_cards) || {};

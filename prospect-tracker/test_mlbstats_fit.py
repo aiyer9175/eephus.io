@@ -705,3 +705,94 @@ def test_the_served_shell_opts_every_section_into_csv_with_short_nav_labels():
     assert 'class="mlbstats-sectionbtn active" data-mlbsection="war"' in shell, "rerun build_site.py"
     assert '<div id="mlbstats-section-war" class="mlbstats-section" role="tabpanel" aria-label="Overall">' \
         in shell, "rerun build_site.py"
+
+
+# ---------------------------------------------------------------- the Pitches views (Q8_04)
+# The pitch-rate columns ship dark (pitch_rates.SERVE_PITCH_RATES off), so the
+# served boards carry no key and the Columns strip offers no Pitches view: the
+# measurement above cannot reach it. This case serves the same page with the
+# three boards stamped the way the exporters stamp them with the flag on
+# (pitch_rates_boards over the cached season context, no request), and holds the
+# Pitches views to the budget rule: each fits its box from 768px, its phone
+# subset fits at 390, the team tables with their club units fit, and the page
+# never scrolls sideways. Skipped, never failed, on a machine without the
+# pitch-rate cache.
+_PITCH_PAGES = [
+    ("relievers pitches", "bullpen", "section=bullpen&rcols=pitches", "mlbstats-qual", "rel:pitches"),
+    ("starters pitches", "starters", "section=starters&scols=pitches", "mlbstats-starter-qual", "sp:pitches"),
+    ("hitters pitches", "hitters", "section=hitters&hcols=pitches", "mlbstats-hitter-qual", "hit:pitches"),
+    ("team bullpens", "bullpen", "section=bullpen&view=teams", None, None),
+    ("team rotations", "starters", "section=starters&sview=teams", None, None),
+    ("team lineups", "hitters", "section=hitters&hview=teams", None, None),
+]
+
+
+def _stamped_boards():
+    """{file name: payload bytes} for the three live boards with the flag-on
+    keys, built from the served payloads; None when the cache cannot serve."""
+    import json
+    import pitch_rates_boards as prb
+    try:
+        docs = {f: json.loads((ROOT / "data" / f).read_text(encoding="utf-8")) for f in BOARD_FILES[:3]}
+        ctx = prb.season_context(int(docs["starter_leaderboards.json"]["season"]), fetch=False)
+    except Exception:       # noqa: BLE001 - no cache on this machine
+        return None
+    if ctx["league"].get("pitching_status") != "usable" or ctx["league"].get("tracking") != "usable":
+        return None
+    sp, rp, hit = (docs["starter_leaderboards.json"], docs["bullpen_leaderboards.json"],
+                   docs["hitter_leaderboards.json"])
+    prb.stamp_pitcher_rows(sp["starters"], ctx, "sp")
+    prb.stamp_pitcher_teams(sp["teams"], sp["starters"], ctx, "sp")
+    prb.stamp_pitcher_rows(rp["relievers"], ctx, "rp")
+    prb.stamp_pitcher_teams(rp["teams"], rp["relievers"], ctx, "rp")
+    np_by_id, pos_by_id = {}, {}
+    for mid, line in ctx["lines"].items():
+        h = line.get("hit") or {}
+        np_by_id[int(mid)] = h.get("np")
+        pos_by_id[int(mid)] = h.get("pos")
+    prb.stamp_hitter_rows(hit["hitters"], np_by_id, ctx)
+    prb.stamp_hitter_teams(hit["teams"], hit["hitters"], np_by_id, pos_by_id, ctx)
+    if not any(r.get("p_ip") is not None for r in sp["starters"]):
+        return None
+    return {f: json.dumps(d).encode("utf-8") for f, d in docs.items()}
+
+
+@pytest.fixture(scope="module")
+def stamped_boards():
+    out = _stamped_boards()
+    if out is None:
+        pytest.skip("the pitch-rate cache is not on this machine")
+    return out
+
+
+@pytest.mark.parametrize("size", SIZES, ids=["%dx%d" % s for s in SIZES])
+def test_the_pitches_views_fit_from_768_and_their_phone_subsets_at_390(browser, server, stamped_boards, size):
+    w, h = size
+    ctx = _context(browser, w, h)
+    def serve(body):
+        return lambda route: route.fulfill(status=200, body=body, content_type="application/json")
+    for name, body in stamped_boards.items():
+        ctx.route(re.compile(r"^http://127\.0\.0\.1:\d+/data/%s(\?.*)?$" % re.escape(name)), serve(body))
+    page = ctx.new_page()
+    problems, measured = [], 0
+    try:
+        for label, sec, hash_, qual, view in _PITCH_PAGES:
+            _open(page, server, sec, hash_)
+            if view:
+                pressed = page.evaluate(_ACTIVE_VIEW, sec)["view"]
+                if pressed != view:
+                    problems.append("%dpx %s: opened %r" % (w, label, pressed))
+                    continue
+            where = "%dpx %s" % (w, label)
+            m = page.evaluate(_MEASURE, sec)
+            _check(m, w, where, problems, view)
+            measured += 1
+            if qual and m:
+                page.evaluate("(id) => document.getElementById(id).click()", qual)
+                _check(page.evaluate(_MEASURE, sec), w, where + " qualified off", problems, view)
+                page.evaluate("(id) => document.getElementById(id).click()", qual)
+                measured += 1
+    finally:
+        ctx.close()
+    assert measured == 9, measured
+    assert not problems, "\n".join(problems)
