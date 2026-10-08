@@ -130,6 +130,21 @@ SCREEN_DELTAS = (("vs_efv_v2_base", "candidate_vs_efv_v2_base"),
 #: one-sided permutation p and its Holm-adjusted p). Copied on a screening row only, when
 #: the leg carries them, so no other development row's content or hash moves (EFV3_B8).
 SCREEN_LEG_FIELDS = ("lb95", "floor", "p_perm", "holm_p")
+#: The model-class screen (tools/efv_v2_model_class_screen.py, EFV3_C03,
+#: docs/efv-v2/MODEL_CLASS_SCREEN.md): one development row per arm and frame, model_id
+#: efv_v2_mc_<arm> (efv_v2_candidates.ARM_IDS), resolvable null. The artifact carries
+#: `arms` keyed by arm, each with `frames` in the DS-16 shape (lv_dev and vm_dev);
+#: model_class_arm_docs splits it into one document per arm. An exploratory artifact
+#: lands no row.
+MC_SCREEN_NAME = "efv_v2_model_class_screen.json"
+MC_SCREEN_MODEL_PREFIX = "efv_v2_mc_"
+MC_SCREEN_RATERS = (("efv", "efv_v2_mc"), ("efv_v2_base", "efv_v2"),
+                    ("prospx_consensus", "prospx_consensus"),
+                    ("mlb_pipeline", "mlb_pipeline"), ("fangraphs", "fangraphs"))
+MC_SCREEN_DELTAS = (("vs_efv_v2_base", "arm_vs_efv_v2"),
+                    ("vs_prospx_consensus", "arm_vs_prospx_consensus"),
+                    ("vs_mlb_pipeline", "arm_vs_mlb_pipeline"),
+                    ("vs_fangraphs", "arm_vs_fangraphs"))
 #: Every development artifact the ledger copies from: (file, its frames, rater map,
 #: delta map, sub-document key or None). Each frame must be registered in FRAMES with
 #: role "development".
@@ -137,7 +152,8 @@ DEV_ARTIFACTS = ((DEV_NAME, DEV_FRAMES, DEV_RATERS, DEV_DELTAS, None),
                  (OVERLAY_NAME, ("vm_oos_dev",), _SAME_RATERS, _SAME_DELTAS, None),
                  (PBUST_NAME, ("vm_oos_dev", "lv_dev"), _SAME_RATERS, _SAME_DELTAS, None),
                  (DEV_NAME, DEV_FRAMES, V2_RATERS, V2_DELTAS, DS16_SUBKEY),
-                 (SCREEN_NAME, ("lv_dev",), SCREEN_RATERS, SCREEN_DELTAS, None))
+                 (SCREEN_NAME, ("lv_dev",), SCREEN_RATERS, SCREEN_DELTAS, None),
+                 (MC_SCREEN_NAME, DEV_FRAMES, MC_SCREEN_RATERS, MC_SCREEN_DELTAS, None))
 #: EFV3_D3: the scoreboard matrix (tools/efv_matrix.py), FRAME x CELL x COMPARATOR x
 #: STATISTIC. The headline row points at its vm2 block; the DS-16 development row
 #: (the one read the matrix's lv_dev block repeats, tools/efv_v2_dev_read.v2_lv_dev)
@@ -692,6 +708,35 @@ def screen_arm_docs(doc: dict | None) -> list[dict]:
     return out
 
 
+def model_class_arm_docs(doc: dict | None) -> list[dict]:
+    """One development document per arm of the model-class screen artifact (its `arms`,
+    keyed by arm), in the shape build_dev_rows reads: role development, the arm's
+    model_id (efv_v2_mc_<arm>), the artifact's label and code, the arm's frame blocks
+    under their own frame ids. An exploratory artifact lands nothing. Copies only."""
+    if not doc or doc.get("role") != "development" or doc.get("exploratory"):
+        return []
+    arms = doc.get("arms")
+    if not isinstance(arms, dict):
+        return []
+    out = []
+    for _arm, a in arms.items():
+        if not isinstance(a, dict) or not isinstance(a.get("frames"), dict):
+            continue
+        mid = str(a.get("model_id") or "")
+        if not mid.startswith(MC_SCREEN_MODEL_PREFIX):
+            continue
+        out.append({"role": "development", "model_id": mid,
+                    "generated_at": doc.get("generated_at"),
+                    "label": doc.get("label") or {}, "code": doc.get("code") or {},
+                    "frames": {fid: f for fid, f in a["frames"].items()
+                               if isinstance(f, dict)}})
+    return out
+
+
+#: Artifacts whose document splits into one document per arm before the rows build.
+_ARM_SPLITTERS = {SCREEN_NAME: screen_arm_docs, MC_SCREEN_NAME: model_class_arm_docs}
+
+
 def build_pricing_rows(doc: dict | None, *, sources: list[dict], date: str, trigger: str,
                        now_iso: str) -> list[dict]:
     """EFV3_C05: one development row per frame of the MC-5 pricing artifact, model_id
@@ -952,15 +997,15 @@ def update(data_dir=None, trigger: str = "nightly", *, out_path=None,
             dev = dev.get(sub) if isinstance(dev.get(sub), dict) else None
         if not dev:
             continue
-        screening = name == SCREEN_NAME
-        for d in (screen_arm_docs(dev) if screening else [dev]):
+        split = _ARM_SPLITTERS.get(name)
+        for d in (split(dev) if split else [dev]):
             cands += build_dev_rows(
                 d, sources=[{"path": _rel(dev_path),
                              "generated_at": dev.get("generated_at"),
                              "sha256": _sha256(dev_path)}],
                 date=now_dt.date().isoformat(), trigger=trigger, now_iso=now_iso,
                 frames=fids, raters=rmap, deltas=dmap,
-                statistic_fields=bool(sub) or screening,
+                statistic_fields=bool(sub) or split is not None,
                 matrix=mx if sub == DS16_SUBKEY else None, matrix_sha256=mx_sha)
     cands += _pricing_candidates(data_dir, date=now_dt.date().isoformat(),
                                  trigger=trigger, now_iso=now_iso)

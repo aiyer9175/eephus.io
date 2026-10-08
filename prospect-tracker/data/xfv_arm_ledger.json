@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-08T18:09:09+00:00",
+ "generated_at": "2026-10-08T18:53:35+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
  "n_arms": 398,
  "by_lane": {
@@ -5501,6 +5501,126 @@
    ]
   },
   {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:lv_dev.mc1_vs_v2",
+   "verdict": "NULL",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 2862; within delta vs V2 -0.00697, vs consensus -0.0186; NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 3_noninferiority failed, 4_twin failed, 5_auc_veto failed, 6_holm failed",
+   "ci95": [
+    -0.0129,
+    -0.0011
+   ]
+  },
+  {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:lv_dev.mc2_vs_v2",
+   "verdict": "NULL",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 2862; within delta vs V2 0.01407, vs consensus 0.00244; NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 3_noninferiority failed, 4_twin failed, 6_holm failed",
+   "ci95": [
+    -0.0003,
+    0.0282
+   ]
+  },
+  {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:lv_dev.mc3_vs_v2",
+   "verdict": "NULL",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 2862; within delta vs V2 -0.00041, vs consensus -0.01204; NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 3_noninferiority failed, 4_twin failed, 6_holm failed",
+   "ci95": [
+    -0.0129,
+    0.012
+   ]
+  },
+  {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:lv_dev.mc4a_vs_v2",
+   "verdict": "ADOPTABLE",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 2862; within delta vs V2 -7e-05, vs consensus -0.0117; ADOPTABLE on non-inferiority alone (lane C E3-Q3 = A, no margin claim, behind V2_SIGN_CONSTRAINED = False); NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 4_twin failed, 6_holm failed",
+   "ci95": [
+    -0.0002,
+    0.0
+   ]
+  },
+  {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:lv_dev.mc4b_vs_v2",
+   "verdict": "NULL",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 2862; within delta vs V2 0.00067, vs consensus -0.01096; NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 3_noninferiority failed, 4_twin failed, 6_holm failed",
+   "ci95": [
+    -0.0053,
+    0.0065
+   ]
+  },
+  {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:vm_dev.mc1_vs_v2",
+   "verdict": "NULL",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 830; within delta vs V2 -0.00268, vs consensus -0.01274; NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 3_noninferiority failed, 4_twin failed, 5_auc_veto failed, 6_holm failed",
+   "ci95": [
+    -0.0077,
+    0.0023
+   ]
+  },
+  {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:vm_dev.mc2_vs_v2",
+   "verdict": "NULL",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 830; within delta vs V2 -0.01875, vs consensus -0.02882; NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 3_noninferiority failed, 4_twin failed, 6_holm failed",
+   "ci95": [
+    -0.043,
+    0.0053
+   ]
+  },
+  {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:vm_dev.mc3_vs_v2",
+   "verdict": "NULL",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 830; within delta vs V2 0.0005, vs consensus -0.00956; NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 3_noninferiority failed, 4_twin failed, 6_holm failed",
+   "ci95": [
+    -0.0248,
+    0.0243
+   ]
+  },
+  {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:vm_dev.mc4a_vs_v2",
+   "verdict": "ADOPTABLE",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 830; within delta vs V2 0.0, vs consensus -0.01006; ADOPTABLE on non-inferiority alone (lane C E3-Q3 = A, no margin claim, behind V2_SIGN_CONSTRAINED = False); NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 4_twin failed, 6_holm failed",
+   "ci95": [
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "lane": "model-class screen (EFV3_C03)",
+   "artifact": "efv_v2_model_class_screen.json",
+   "probe": "MC-SCREEN:vm_dev.mc4b_vs_v2",
+   "verdict": "NULL",
+   "generated_at": "2026-10-08T18:30:31Z",
+   "reason": "n 830; within delta vs V2 -0.0073, vs consensus -0.01737; NOT ADMITTED: 1_within_delta_vs_v2 failed, 2_fold_signs failed, 3_noninferiority failed, 4_twin failed, 6_holm failed",
+   "ci95": [
+    -0.0175,
+    0.0027
+   ]
+  },
+  {
    "lane": "bust pool id balance (EFV3 G7)",
    "artifact": "efv_bust_pool_receipt.json",
    "probe": "G7:balance.bust_id_resolved",
@@ -5551,7 +5671,7 @@
    "generated_at": "2026-10-07T16:43:10+00:00"
   }
  ],
- "n_probes": 49,
+ "n_probes": 59,
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
  "sources_pending": [],
