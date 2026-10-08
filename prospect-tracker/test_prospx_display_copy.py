@@ -147,3 +147,14 @@ def test_sitepass_charts_lead_with_an_efv_axis():
     keys = re.findall(r'\{ key: "(\w+)"', axes)
     assert keys[:3] == ["age", "efv", "fv"]  # default Y is axes[1]: eFV
     assert 'label: "Consensus FV"' in axes
+
+
+def test_display_trim_method_copy_sits_in_collapsed_how_blocks():
+    # Above-the-fold prose on the eight tab views fell from 550 to 285 words (1280,
+    # light); the method paragraphs moved into collapsed 'How this works' blocks.
+    assert PAGE.count('<details class="px-how"><summary>How this works</summary>') >= 2
+    assert "Pick a prospect group, then any two stats" not in PAGE
+    assert "Journeymen past" not in PAGE
+    assert "Each card shows its league + country flag" not in PAGE
+    fn = _fn("renderSpotlightTrackRecord", 4000)
+    assert '<details><summary class="str-head">' in fn and "</details>" in fn

@@ -4002,6 +4002,10 @@
       overflow-wrap: anywhere;
     }
     .spotlight-track-record:empty { display: none; }
+    .spotlight-track-record > details > summary { cursor: pointer; }
+    .px-how { margin: 0 0 10px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .px-how > summary { cursor: pointer; font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.04em; }
+    .px-how > p { margin: 6px 0 0; }
     .spotlight-track-record .str-head { font-weight: 600; color: var(--text-primary); }
     .spotlight-track-record .str-v { font-weight: 600; }
     .spotlight-track-record .str-v.is-clears { color: var(--up, var(--neon-cyan)); }
@@ -10416,11 +10420,9 @@
       <span class="newsprint-eyebrow-label">Build-Your-Own Scatterplot</span>
       <span class="newsprint-eyebrow-meta">pick a prospect group &amp; any two axes · trendline, R² &amp; color encoding</span>
     </div>
-    <p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px;line-height:1.5;">
-      Pick a prospect group, then any two stats for the X / Y axes. Toggle the
-      least-squares trendline + R² to gauge how tightly the two move together.
-      Click any dot to open that player. Hover for exact values.
-    </p>
+    <details class="px-how"><summary>How this works</summary>
+      <p>Pick a group and two axes; the least-squares trendline and R² show how tightly they move together. A dot opens that player.</p>
+    </details>
     <!-- v36 - Controls grouped into the WHO / WHAT / HOW clusters shared with
          the MiLB prospect filter bar: WHAT chooses the group, axes & color
          encoding; WHO narrows the plotted population; HOW controls
@@ -18425,11 +18427,17 @@ function renderSpotlightTrackRecord(bucket) {
   }).filter(Boolean);
   if (!parts.length) { el.innerHTML = ""; return; }
   const kr = (t.kill_rule || {}).verdict_recommendation;
-  el.innerHTML = `<div class="str-head">Track record${(j.v2 || {}).registered ? ", re-scored " + escapeHtml(j.v2.registered) : ""}</div>`
+  const vsum = ["h30", "h60"].map(hk => {
+    const h = t.horizons[hk];
+    if (!h || h.hit_rate == null || h.control_rate == null || !Array.isArray(h.gap_ci)) return "";
+    const v = vword[h.verdict] ? h.verdict : "inside";
+    return `${hk.slice(1)}d <span class="str-v is-${v}">${vword[v]}</span>`;
+  }).filter(Boolean).join(" · ");
+  el.innerHTML = `<details><summary class="str-head">Track record${(j.v2 || {}).registered ? ", re-scored " + escapeHtml(j.v2.registered) : ""}${vsum ? ": " + vsum : ""}</summary>`
     + parts.join("")
     + `<div class="str-note">Matched controls: unflagged board players drawn at random from the same FV band, level and age band on the emit night; intervals clustered by player; ${Number(t.matured_monthly_cohorts) || 0} monthly cohorts.`
     + (kr === "deprecated" ? ` The registered kill rule recommends deprecating this bucket; the owner kept it on 2026-10-01 and it is read again at 5 matured monthly cohorts${(Number(t.matured_monthly_cohorts) || 0) >= 5 ? " (due now)" : ""}.` : "")
-    + ` <a href="/glossary/#g=spotlights">Receipt</a></div>`;
+    + ` <a href="/glossary/#g=spotlights">Receipt</a></div></details>`;
 }
 
 function renderSpotlights() {
@@ -18502,11 +18510,10 @@ function renderSpotlights() {
   // raw movement output. Surfaces above the rows. Clickable into the
   // glossary entry for the full formula.
   const ageCapNote = `<div style="font-size:11px;color:var(--text-tertiary);margin:4px 0 10px;line-height:1.5;">
-    Filtered to age-eligible prospects per level - 
+    Age-eligible only:
     <span class="g-term" data-term="spotlight_age_cap" style="cursor:help;color:var(--neon-cyan);">hitters &lt; +2y</span>,
     <span class="g-term" data-term="spotlight_age_cap" style="cursor:help;color:var(--neon-cyan);">pitchers &lt; +3y</span>
-    above the level-prospect baseline (AAA=24, MLB=26). Journeymen past
-    their prospect window are dropped from every bucket.
+    above the level baseline (AAA 24, MLB 26).
   </div>`;
 
   // v18 - Spotlight header titles align with the active-list header:
@@ -21681,7 +21688,7 @@ function _tmRenderControls() {
   }
 
   el.innerHTML = `${modeToggle}${body}
-    <p class="tm-note">Board reconstructed from each prospect's point-in-time history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} - ${_tmFmtDate(latest)}), ranked and graded by the point-in-time eFV (the model grade re-scored at that snapshot), with consensus FV where no eFV history exists. A prospect appears on every board dated <em>before</em> their MLB debut at their grade/rank then, and leaves on their debut date - debut date is the practical proxy for rookie-eligibility exhaustion. Hindsight outcomes (WAR / WAR-per-season / WAG) are realized results known only now, distinct from the as-of grade.</p>`;
+    <details class="px-how"><summary>How this works</summary><p class="tm-note">Board reconstructed from each prospect's point-in-time history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} - ${_tmFmtDate(latest)}), ranked and graded by the point-in-time eFV (the model grade re-scored at that snapshot), with consensus FV where no eFV history exists. A prospect appears on every board dated <em>before</em> their MLB debut at their grade/rank then, and leaves on their debut date - debut date is the practical proxy for rookie-eligibility exhaustion. Hindsight outcomes (WAR / WAR-per-season / WAG) are realized results known only now, distinct from the as-of grade.</p></details>`;
 
   el.querySelectorAll("[data-tm-mode]").forEach(b => b.onclick = () => {
     state.tmMode = b.dataset.tmMode; _tmRenderControls(); _tmRenderBody(); syncToURL();
@@ -27217,8 +27224,7 @@ function _renderOverseasRankings(host, leagues) {
        border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);
        display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <span><strong style="color:var(--text-primary);">${escapeHtml(leagueList)} -
-    ${countFragment} prospects</strong>, sorted by consensus FV.
-    Each card shows its league + country flag inline next to the team.</span>
+    ${countFragment} prospects</strong> · sorted by consensus FV</span>
     ${groupToggle}
   </div>`;
 
