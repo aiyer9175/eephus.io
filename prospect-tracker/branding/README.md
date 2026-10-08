@@ -143,7 +143,10 @@ serif the PROSPX page shows today, so it no longer depends on a blackletter font
 the reader may not have. This is the PROSPX mark, reserved for PROSPX-specific
 things (the PROSPX app masthead, its Twitter avatar/banner). It is NOT the
 eephus.io site mark: the favicon, the PWA icons, and the default share card all
-use the clean ball above.
+use the clean ball above. The masthead serves it under `PIXEL_BRAND` as the
+token-only DOM fragment `assets/brand/prospx-mark.svg` (face `--bg-secondary`,
+rim and letters `--text-primary`, both themes), with the PROSPX title at 36 px
+on the grid and the banded 3 px rule (PB-05).
 
 **Clear space and minimums.** Keep at least the height of the ball as clear
 space around any lockup. Minimum sizes: full wordmark no smaller than 20px cap

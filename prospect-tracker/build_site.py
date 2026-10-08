@@ -1090,12 +1090,36 @@ def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
     (``uid`` "mast" is the hero; any other is the s 2 nav and sidebar mark)."""
     return pixel_wordmark(uid, tag)
 
+@functools.lru_cache(maxsize=None)
+def _pixel_prospx_mark_fragment() -> str:
+    """The committed PROSPX mark fragment assets/brand/prospx-mark.svg, byte for
+    byte (tools/pixel_brand.py writes it; nothing here edits it)."""
+    return (ROOT / "assets" / "brand" / "prospx-mark.svg").read_bytes().decode("utf-8").strip()
+
+
+def pixel_prospx_mark(px: int = 44, cls: str = "", attrs: str = "") -> str:
+    """PB-05: the PROSPX mark, the 22 x 22 pixel drawing at a whole scale (2x,
+    the served 44 px, and up: no P/X below 40 px). ``cls`` joins the fragment's
+    classes and ``attrs`` lands in its opening tag."""
+    if px < 40 or px % 22:
+        raise ValueError(f"the PROSPX mark is drawn at whole multiples of 22 px from 44 px, not {px}")
+    svg = _pixel_prospx_mark_fragment().replace('width="44" height="44"', f'width="{px}" height="{px}"', 1)
+    if cls:
+        svg = svg.replace('class="wm-px px-mark"', f'class="{cls} wm-px px-mark"', 1)
+    if attrs:
+        svg = svg.replace(' aria-hidden="true"', f' {attrs} aria-hidden="true"', 1)
+    return svg
+
+
 def prospx_ball_logo(uid: str, px: int = 16) -> str:
     """The PROSPX baseball badge - a self-contained copy of the app
     masthead's .h1-logo SVG (cream ball, gradient seams, P/X monogram) for
     sidebar/nav lockups. Fills ride the theme tokens via inline style; the
     seam gradient keeps the masthead's literal stops (SVG gradients can't
-    read CSS var()). ``uid`` keeps gradient ids unique per placement."""
+    read CSS var()). ``uid`` keeps gradient ids unique per placement.
+    Under PIXEL_BRAND (PB-05) it is the pixel mark, 40 px and up only."""
+    if PIXEL_BRAND:
+        return pixel_prospx_mark(px, cls="px-ball")
     gid = f"px-seam-{uid}"
     return (
         f'<svg class="px-ball" width="{px}" height="{px}" viewBox="0 0 44 44" aria-hidden="true">'
@@ -9769,11 +9793,49 @@ def pixel_brand_hand_og(text: str, rel: str) -> str:
     return _HAND_OG_IMAGE_RE.sub(lambda m: m.group(1) + url + m.group(2), text)
 
 
+# PB-05: the PROSPX masthead. The CSS run from the v30 badge comment through the
+# monogram rules (or the block an earlier PIXEL_BRAND build wrote), and the
+# badge SVG with the comment above it, so the sync is idempotent.
+_PROSPX_MARK_CSS_RE = re.compile(
+    r"    /\* v30 - Baseball badge logo for the site title\..*?\.h1-logo \.mono-x \{ font-size: 23px; \}\n"
+    r"|    /\* pixel-prospx-mark:begin.*?/\* pixel-prospx-mark:end \*/\n", re.S)
+_PROSPX_MARK_SVG_RE = re.compile(
+    r'<!-- (?:v30 - Baseball badge logo\.|PB-05: the PROSPX mark).*?-->\n([ \t]*)'
+    r'(<svg class="h1-logo[^"]*"[^>]*>).*?</svg>', re.S)
+_PROSPX_MARK_CSS = (
+    "    /* pixel-prospx-mark:begin (PB-05, owner ask 2; build_site.pixel_brand_hand_prospx\n"
+    "       writes this block under PIXEL_BRAND). The mark is the 22 x 22 pixel drawing\n"
+    "       at 2x (assets/brand/prospx-mark.svg from tools/pixel_brand.py): the rim,\n"
+    "       stitches and P/X take --text-primary and the seams the ramp through the\n"
+    "       .wm-px rules in site.css, the face --bg-secondary; no font, no soft shadow.\n"
+    "       The title sits on the 12 px grid (36 px, 3 px per font pixel; 24 px under\n"
+    "       900 px) with no tracking, over a 1 u rule in the eight ramp bands. */\n"
+    "    .h1-logo { flex: 0 0 auto; width: 44px; height: 44px; }\n"
+    "    h1 .h1-title { font-size: 36px; letter-spacing: 0; }\n"
+    "    h1 .h1-title .h1-rule { width: 72px; height: 3px; background: var(--iridescent-steps); border-radius: 0; }\n"
+    "    @media (max-width: 900px) { h1 .h1-title { font-size: 24px; } }\n"
+    "    /* pixel-prospx-mark:end */\n")
+
+
+def pixel_brand_hand_prospx(text: str) -> str:
+    """PB-05: the PROSPX masthead's vector badge becomes the pixel mark (its
+    style, title and click-to-board handler kept), the monogram font stack goes,
+    and the title and its rule move onto the grid. Nothing else on the page moves."""
+    def _svg(m: "re.Match[str]") -> str:
+        keep = " ".join(re.findall(r'\b(?:style|title|onclick)="[^"]*"', m.group(2)))
+        return ("<!-- PB-05: the PROSPX mark, the 22 x 22 pixel drawing at 2x "
+                "(assets/brand/prospx-mark.svg); the h1's aria-label names it. -->\n"
+                + m.group(1) + pixel_prospx_mark(44, cls="h1-logo", attrs=keep))
+    text = _PROSPX_MARK_CSS_RE.sub(lambda m: _PROSPX_MARK_CSS, text, count=1)
+    return _PROSPX_MARK_SVG_RE.sub(_svg, text, count=1)
+
+
 def restamp_hand_authored_pages() -> None:
     """Stamp every /assets/ stylesheet, script and <use> ref in the
     hand-authored pages with the asset's current content hash (_restamp_html),
     and sync the nav lockup to the pixel lockup _nav() serves. With PIXEL_BRAND
-    on, the og:image and twitter:image are synced to the page's module card too."""
+    on, the og:image and twitter:image are synced to the page's module card too,
+    and the PROSPX masthead to the pixel mark (PB-05)."""
     for rel in HAND_AUTHORED_PAGES:
         path = ROOT / rel
         if not path.exists():
@@ -9783,6 +9845,8 @@ def restamp_hand_authored_pages() -> None:
         stamped = _ensure_font_preload(pixel_brand_hand_nav(_restamp_html(original)))
         if PIXEL_BRAND:
             stamped = pixel_brand_hand_og(stamped, rel)
+            if rel == "prospx/index.html":
+                stamped = pixel_brand_hand_prospx(stamped)
         if stamped != original:
             path.write_text(stamped, encoding="utf-8")
             print(f"  restamped {rel}")

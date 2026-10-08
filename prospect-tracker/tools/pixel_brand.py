@@ -623,6 +623,28 @@ def lockup_svg(comp, uid="wm", play=False, glint=False):
             f'aria-hidden="true" focusable="false" style="{style}">{defs}{"".join(parts)}</svg>')
 
 
+# PB-05: the PROSPX mark's cell keys as DOM classes. Rim, stitches and the P/X
+# take .wm-k (--text-primary) and the seams .wm-a/b/d/e (the seam tokens), all
+# from site.css's pixel-wordmark rules; the face is --bg-secondary (the served
+# inversion), set on its path so the fragment needs no rule beyond site.css.
+PXMARK_CLASS = {"k": "wm-k", "m": "wm-k", "s": "wm-k", "C": "px-face",
+                "a": "wm-a", "b": "wm-b", "d": "wm-d", "e": "wm-e"}
+
+
+def pxmark_svg(scale=SRC.PX_MIN_SCALE):
+    """The PROSPX mark as a DOM fragment (assets/brand/prospx-mark.svg): token
+    classes only, integer coordinates, aria-hidden, 2x (44 px) and up only."""
+    assert scale >= SRC.PX_MIN_SCALE, "no P/X below 40 px"
+    rows = pxmark()
+    n = len(rows)
+    cells = {(x, y): (PXMARK_CLASS[ch], None) for y, r in enumerate(rows) for x, ch in enumerate(r) if ch != "."}
+    face = ' style="fill:var(--bg-secondary)"'
+    body = "".join(f'<path class="{c}"{face if c == "px-face" else ""} d="{d}"/>'
+                   for c, d in _paths(cells, lambda k: k))
+    return (f'<svg class="wm-px px-mark" width="{n * scale}" height="{n * scale}" viewBox="0 0 {n} {n}" '
+            f'aria-hidden="true" focusable="false">{body}</svg>\n')
+
+
 def standalone_svg(rows_or_comp, theme, label, scale=1):
     """A portable mark: raw hex is allowed in exported art (branding/README.md,
     Color), and the letters are paths, so it renders as the real mark anywhere."""
@@ -1001,6 +1023,8 @@ def build(out: Path, style: str = SRC.STYLE, seams: str = SRC.SEAMS):
         put_text(f"assets/brand/wordmark-s{s}.svg", lockup_svg(compose(s, style, seams), f"wms{s}", play=play, glint=play))
     put_text("assets/brand/tokens.css", tokens_css())
     put_text("assets/brand/wordmark.css", wordmark_css())
+    # PB-05: the PROSPX masthead mark, served only through build_site.PIXEL_BRAND.
+    put_text("assets/brand/prospx-mark.svg", pxmark_svg())
 
     # Sheets and exported art (branding/pixel/).
     P = "branding/pixel/"
