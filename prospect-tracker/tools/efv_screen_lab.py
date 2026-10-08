@@ -242,6 +242,24 @@ CANDIDATES: tuple[dict, ...] = (
               "(EFV3_B4)")},
 )
 
+#: WAVE 2 (owner EW2-6, 2026-10-08): each lane's module carries its own ARMS (this
+#: lab's candidate shape) and reads them in development mode itself, writing
+#: data/_labs/efv_w2/<module>.json. Never part of wave 1's family or verdicts.
+W2_MODULES: tuple[str, ...] = ("efv_w2_scout",)
+
+
+def w2_candidates(modules=W2_MODULES, kinds=("column",)) -> tuple[dict, ...]:
+    """The wave 2 arms of `modules` whose kind this lab can run (kinds=None: every
+    arm, a set arm included). An absent module adds none."""
+    out = []
+    for name in modules:
+        try:
+            arms = getattr(__import__(name), "ARMS", ())
+        except ImportError:
+            continue
+        out += [a for a in arms if kinds is None or a.get("kind") in kinds]
+    return tuple(out)
+
 
 class ColumnUnavailable(RuntimeError):
     """A candidate's column cannot be built on this tree (its builder has not landed)."""
