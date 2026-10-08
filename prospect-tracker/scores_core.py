@@ -1204,7 +1204,7 @@ def build_card(game: dict, *, generated_at: str, wp=None, derived: dict | None =
                       if str(b.get("type") or "").upper() == "TV" and (b.get("callSign") or b.get("name"))}),
         "away": away, "home": home,
         "line": _line(game),
-        "sit": None, "wp": None, "of_record": None, "star": None, "top_play": None, "videos": None,
+        "sit": None, "end": None, "wp": None, "of_record": None, "star": None, "top_play": None, "videos": None,
         "flags": {"no_hitter": False, "perfect_game": False, "debut": False,
                   "extra_innings": False, "shortened": False},
         "weather": None, "makeup": game.get("rescheduleDate"), "resume": game.get("resumeDate"),
@@ -1230,6 +1230,11 @@ def build_card(game: dict, *, generated_at: str, wp=None, derived: dict | None =
         plays = complete_elements(wp)
         if plays:
             last_text = play_text(plays[-1], names)
+            if state == "final":
+                # SCORES_7b: the state the last play left (the final card's pixel diamond)
+                last = plays[-1]
+                card["end"] = {"inning": _inning(last), "half": _half(last),
+                               "outs": _int((last.get("count") or {}).get("outs"), 0), "bases": _bases_after(last)}
     if state in ("live", "delayed"):
         card["sit"] = _sit(game, last_text, derived.get("pitcher_pitches"))
     if state == "final":

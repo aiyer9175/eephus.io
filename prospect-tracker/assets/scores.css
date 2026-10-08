@@ -24,9 +24,10 @@
 .scores-app .sc-dim { color: var(--text-secondary); }
 .scores-app #scores-app-root:has(> .px-state.is-loading) { min-height: 60vh; }
 /* HOOKS for the pixel art and the GFX (SCORES_7b, SCORES_7c), one container each, hidden while empty:
-   data-hook="linescore" wraps every line score (card and game head), "diamond" the live card's bases,
-   "wp-sprite" sits over the Win Prob chart, "bracket-art" over the bracket view, "gfx" in the day
-   masthead and beside the game head's Follow buttons. */
+   data-hook="linescore" wraps every line score (card and game head), "diamond" the pixel diamond
+   (live card, final card head, game head), "wp-sprite" the legend over the Win Prob chart, "gfx" in
+   the day masthead and beside the game head's Follow buttons. SCORES_7b's pixel styles live in
+   assets/scores-pixel.css; the bracket art draws inside the bracket chunk's own block. */
 .scores-app [data-hook]:empty { display: none; }
 
 /* buttons: 44 px at phone width (strip chips, tabs, filters) */
@@ -117,8 +118,6 @@
 .scores-app .sc-agl { font: 11.5px/1.35 var(--font-retro-mono); }
 .scores-app .sc-last { color: var(--text-secondary); }
 .scores-app .sc-sit { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
-.scores-app .sc-bases .sc-base { fill: none; stroke: var(--text-secondary); stroke-width: 1.2; }
-.scores-app .sc-bases .sc-base.is-on { fill: var(--text-primary); stroke: var(--text-primary); }
 .scores-app .sc-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .scores-app .sc-chip {
   display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border: 1px solid var(--border);
@@ -185,7 +184,6 @@ a.sc-chip:hover { background: var(--bg-tertiary); }
 .scores-app .sc-gl.is-mid { stroke: var(--text-secondary); stroke-dasharray: 3 3; }
 .scores-app .sc-wp-line { fill: none; stroke: var(--viz-1); stroke-width: 2; stroke-linejoin: round; }
 .scores-app .sc-ax { fill: var(--text-secondary); font-size: 11px; font-family: var(--font-retro); }
-.scores-app .sc-mark circle { fill: var(--viz-1); stroke: var(--bg-secondary); stroke-width: 2; }
 .scores-app .sc-mark text { fill: var(--bg-secondary); font-size: 11px; font-weight: 700; font-family: var(--font-retro); }
 .scores-app .sc-end { fill: var(--viz-1); }
 .scores-app .sc-cross { stroke: var(--text-primary); stroke-width: 1; }

@@ -198,6 +198,29 @@ def test_state_rule_on_the_schedule_fixture():
     assert tie["away"]["r"] == tie["home"]["r"] == 3
 
 
+def test_a_final_card_carries_the_state_its_last_play_left(g849845, gf849845):
+    # SCORES_7b: the final card's pixel diamond reads `end`, the last completed play's inning, half,
+    # outs and runners after it; no other state carries one
+    last = gf849845["plays"][-1]
+    end = gf849845["card"]["end"]
+    assert end == {"inning": last["inning"], "half": last["half"], "outs": last["outs"], "bases": last["bases"]}
+    assert end == {"inning": 9, "half": "top", "outs": 3, "bases": [False, False, False]}
+    # a walk-off single with runners left on: the runners after the play print, and outs stay as MLB counted them
+    wp = copy.deepcopy(g849845["wp"])
+    el = [p for p in wp if (p.get("about") or {}).get("isComplete")][-1]
+    el["count"]["outs"] = 1
+    el["matchup"].update({"postOnFirst": {"id": 1}, "postOnSecond": None, "postOnThird": {"id": 2}})
+    card = sc.build_card(g849845["game"], generated_at=GEN, wp=wp)
+    assert card["end"] == {"inning": 9, "half": "top", "outs": 1, "bases": [True, False, True]}
+    assert sc.build_card(g849845["game"], generated_at=GEN)["end"] is None   # no wp payload, no last play
+    sched = load("schedule_states.json")
+    for d in sched["dates"]:
+        for g in d["games"]:
+            c = sc.build_card(g, generated_at=GEN, wp=g849845["wp"] if g["status"]["codedGameState"] == "I" else None)
+            if c["state"] != "final":
+                assert c["end"] is None, c["pk"]
+
+
 # --------------------------------------------------------------------------- #
 # 2. Win probability series
 # --------------------------------------------------------------------------- #

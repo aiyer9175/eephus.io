@@ -84,3 +84,30 @@ span.scb-club { font-weight: 400; color: var(--text-secondary); line-height: 1.3
 .scb-compact .scb-s { border: 0; background: none; padding: 0; }
 .scb-compact .scb-text { font-weight: 400; }
 .scb .sr-only { position: absolute !important; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- the bracket art (SCORES_7b, owner SC7-2): a pixel tree over the full view's rounds, drawn by the
+   chunk with --n columns; each box and line carries its column --k and its top --y. 2 px square lines,
+   pixel chips, series-win pips (lit = won), a pixel trophy over the World Series. Tokens only. */
+.scb-art { max-width: 760px; margin: 0 0 16px; }
+.scba-heads { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); margin-bottom: 6px; border-bottom: 2px solid var(--text-primary); }
+.scba-heads span { padding: 0 12px 3px 0; font: 700 10.5px/1.25 var(--font-retro-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
+.scba-tree { position: relative; }
+.scba-box, .scba-h1, .scba-h2, .scba-v, .scba-cup { position: absolute; top: var(--y); }
+.scba-box {
+  left: calc(var(--k) * 100% / var(--n)); width: calc(100% / var(--n) - 12px); height: 48px; box-sizing: border-box;
+  padding: 3px 4px; background: var(--bg-secondary); border: 1px solid var(--border); border-top: 2px solid var(--text-primary);
+}
+.scba-c { display: flex; align-items: center; height: 20px; gap: 3px; font: 11px/20px var(--font-retro-mono); white-space: nowrap; overflow: hidden; }
+.scba-c .sp-logo { width: 16px; height: 16px; margin: 0; vertical-align: middle; flex: 0 0 auto; }
+.scba-code { font-weight: 400; margin-right: auto; }
+.scba-c.is-won .scba-code { font-weight: 700; }
+.scba-c.is-out .scba-code { color: var(--text-dim); }
+.scba-pip { flex: 0 0 auto; width: 4px; height: 4px; border: 1px solid var(--text-dim); }
+.scba-pip.is-on { background: var(--text-gold); border-color: var(--text-gold); }
+.scba-h1, .scba-h2, .scba-v { background: var(--text-primary); }
+.scba-h1 { left: calc(var(--k) * 100% / var(--n) - 12px); width: 6px; height: 2px; margin-top: -1px; }
+.scba-h2 { left: calc(var(--k) * 100% / var(--n) - 6px); width: 6px; height: 2px; margin-top: -1px; }
+.scba-v { left: calc(var(--k) * 100% / var(--n) - 7px); width: 2px; height: var(--h); }
+.scba-cup { left: calc(var(--k) * 100% / var(--n) + (100% / var(--n) - 12px) / 2 - 13px); }
+.scba-gold { fill: var(--text-gold); }
+.scba-shine { fill: var(--bg-secondary); }

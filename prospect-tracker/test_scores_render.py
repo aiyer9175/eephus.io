@@ -66,7 +66,9 @@ SCORES_PREGAME_JS_RAW = 12 * KB          # SCORES_6, eager: counted in the cold 
 SCORES_CSS_RAW = 20 * KB
 SPORTS_PAGE_CSS_RAW = 10 * KB            # SCORES_7a: the shared sports-page classes and the bracket styles
 SCORES_ABOUT_JS_RAW = 6 * KB             # SCORES_7a: the lazy About chunk
-SHELL_RAW = 16 * KB
+SCORES_PIXEL_JS_RAW = 12 * KB            # SCORES_7b: the pixel art, eager: counted in the cold first paint
+SCORES_PIXEL_CSS_RAW = 6 * KB            # SCORES_7b: its styles, eager
+SHELL_RAW = 17 * KB                      # SCORES_7b: 16 -> 17 KB for the two pixel-art tags (the shell was 39 bytes under 16)
 COLD_FIRST_PAINT_GZIP = 70 * KB
 #: The card floors of assets/scores.css at 390 px (plan 1.3), measured from
 #: the fixtures below with their longest strings.
@@ -424,12 +426,13 @@ def test_shell_is_a_pure_reader_on_the_ledger_pattern():
     assert "EEPHUS_DATA_VERS" not in html
     for asset, ver in (("scores.css", build_site._SCORES_CSS_VER), ("scores.js", build_site._SCORES_VER),
                        ("sports-page.css", build_site._SPORTS_PAGE_CSS_VER),
+                       ("scores-pixel.css", build_site._SCORES_PIXEL_CSS_VER), ("scores-pixel.js", build_site._SCORES_PIXEL_VER),
                        ("eephus-hub.js", build_site._HUB_VER), ("eephus-teampick.js", build_site._TEAMPICK_VER)):
         assert f"/assets/{asset}?v={ver}" in html, asset
     assert "scores-video.js" not in html
     # SCORES_6: the Diamond config, then its helper, then the pregame chunk, then scores.js
     order = [html.index(f"/assets/{a}?v=") for a in ("diamond-config.js", "eephus-diamond.js", "scores-pregame.js",
-                                                    "scores.js")]
+                                                    "scores-pixel.js", "scores.js")]
     assert order == sorted(order), order
     assert f"/assets/scores-pregame.js?v={build_site._SCORES_PREGAME_VER}" in html
     assert html.count(build_site.BETTING_DISCLAIMER) == 1
@@ -466,6 +469,9 @@ def test_budgets_and_the_cold_first_paint():
     js, css = _lf(ROOT / "assets" / "scores.js"), _lf(ROOT / "assets" / "scores.css")
     pre_js = _lf(ROOT / "assets" / "scores-pregame.js")
     sp_css = _lf(ROOT / "assets" / "sports-page.css")
+    px_js, px_css = _lf(ROOT / "assets" / "scores-pixel.js"), _lf(ROOT / "assets" / "scores-pixel.css")
+    assert len(px_js) <= SCORES_PIXEL_JS_RAW, len(px_js)
+    assert len(px_css) <= SCORES_PIXEL_CSS_RAW, len(px_css)
     assert len(sp_css) <= SPORTS_PAGE_CSS_RAW, len(sp_css)
     assert len(_lf(ROOT / "assets" / "scores-about.js")) <= SCORES_ABOUT_JS_RAW
     shell = build_site.build_scores().encode("utf-8")
@@ -476,7 +482,7 @@ def test_budgets_and_the_cold_first_paint():
     assert len(shell) <= SHELL_RAW, len(shell)
     p = pregame_payloads()
     first = shell + js + css + sc.dumps(p["latest.json"]).encode() + sc.dumps(p[f"{TODAY}.json"]).encode()
-    owned = sum(len(gzip.compress(b, 9)) for b in (shell, js, pre_js, css, sp_css, sc.dumps(p["latest.json"]).encode(),
+    owned = sum(len(gzip.compress(b, 9)) for b in (shell, js, pre_js, css, sp_css, px_js, px_css, sc.dumps(p["latest.json"]).encode(),
                                                     sc.dumps(p[f"{TODAY}.json"]).encode()))
     assert owned <= COLD_FIRST_PAINT_GZIP, owned
     assert len(first) > 0
@@ -1000,3 +1006,158 @@ def test_the_pregame_card_stays_inside_its_floor_at_390(pregame_site, pw):
         c = rows[900010]
         assert c["slot"] == "prer" and c["floor"] == SLOT_MIN["prer"] and c["natural"] <= c["floor"] + 0.5, c
         assert not c["clipped"], c
+
+
+# --------------------------------------------------------------------------- #
+# SCORES_7b: the pixel art (owner SC7-2)
+# --------------------------------------------------------------------------- #
+#: Every sprite is drawn on whole cells: its CSS size is its viewBox times a whole number, crispEdges on.
+_SPRITES = """() => Array.from(document.querySelectorAll(
+    '#scores-app-root svg.px-sprite, #scores-app-root svg.px-key, #scores-app-root svg.scba-cup')).map(s => {
+  const vb = s.viewBox.baseVal, r = s.getBoundingClientRect();
+  return {cls: s.getAttribute('class'), kx: r.width / vb.width, ky: r.height / vb.height,
+          crisp: s.getAttribute('shape-rendering') === 'crispEdges', label: s.getAttribute('aria-label')};
+})"""
+
+
+def _whole(sprites):
+    assert sprites, "no sprite drawn"
+    for sp in sprites:
+        assert sp["crisp"] and sp["kx"] == sp["ky"] and sp["kx"] == int(sp["kx"]) and sp["kx"] >= 1, sp
+
+
+_FILLS = """() => { const s = document.querySelector('.sc-endpx svg');
+  const tok = n => { const d = document.createElement('i'); d.style.color = 'var(' + n + ')'; document.body.appendChild(d);
+    const v = getComputedStyle(d).color; d.remove(); return v; };
+  return {on: getComputedStyle(s.querySelector('.px-on')).fill, gold: tok('--text-gold'),
+          ink: getComputedStyle(s.querySelector('.px-ink')).fill, primary: tok('--text-primary')}; }"""
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+def test_the_pixel_diamond_on_live_and_final_cards(site, pw, theme):
+    with serve_site(site) as base, scores_page(base, pw, theme=theme, hash_=f"#date={TODAY}") as page:
+        _wait_cards(page, 5)
+        live = page.locator('article[data-pk="849846"] [data-hook="diamond"] svg')
+        assert live.get_attribute("role") == "img"
+        assert live.get_attribute("aria-label") == "Runners on first and third, 0 outs, 0 balls, 1 strike"
+        # the count still prints in words beside the lamps
+        assert "Count 0-1" in page.locator('article[data-pk="849846"] .sc-sit').text_content()
+        _whole(page.evaluate(_SPRITES))
+        page.evaluate("location.hash = '#date=2026-09-29'")
+        page.wait_for_selector('article[data-pk="849845"] .sc-endpx svg')
+        end = page.locator('article[data-pk="849845"] .sc-endpx svg')
+        assert end.get_attribute("aria-label") == "Last play, top of the 9th: 3 outs, bases empty"
+        # the final's sprite sits in the head row, which stays one 24 px line
+        assert page.locator('article[data-pk="849845"] .sc-head').bounding_box()["height"] <= 25
+        _whole(page.evaluate(_SPRITES))
+        # tokens only: lit cells take --text-gold, letters --text-primary
+        fills = page.evaluate(_FILLS)
+        assert fills["on"] == fills["gold"] and fills["ink"] == fills["primary"], fills
+        _no_errors(page)
+
+
+_PLATES = """() => { const t = document.querySelector('.sc-line-wide table'), td = t.querySelector('tbody td.sc-inn'),
+  r = t.querySelector('tbody td.sc-r');
+  return {model: getComputedStyle(t).borderCollapse, bg: getComputedStyle(td).backgroundColor,
+          rbg: getComputedStyle(r).backgroundColor}; }"""
+
+
+def test_the_game_head_scoreboard_and_its_screen_reader_text(site, pw):
+    with serve_site(site) as base, scores_page(base, pw, hash_="#date=2026-09-29&game=849845") as page:
+        page.wait_for_selector(".sc-line-wide")
+        cap = page.locator(".sc-line-wide caption").text_content()
+        assert cap == "Line score: runs by inning, then runs, hits and errors"
+        # a manual scoreboard: separate plates on the panel colour, the R plates inverted
+        st = page.evaluate(_PLATES)
+        assert st["model"] == "separate" and st["bg"] != st["rbg"], st
+        # nine innings and R H E fit a phone once the club name steps aside
+        assert page.evaluate("(() => { const f = document.querySelector('.sc-line-wide');"
+                             " return f.scrollWidth <= f.clientWidth; })()")
+        head = page.locator('.sc-ghead [data-hook="diamond"] svg')
+        assert head.get_attribute("aria-label") == "Last play, top of the 9th: 3 outs, bases empty"
+        _whole(page.evaluate(_SPRITES))
+        _no_errors(page)
+
+
+@pytest.mark.parametrize("width", (390, 1280))
+def test_the_stepped_win_probability_line_and_the_biggest_swing(site, pw, width):
+    import re
+    with serve_site(site) as base, scores_page(base, pw, width=width, hash_="#game=849845&tab=wp") as page:
+        page.wait_for_selector(".sc-wp-frame svg")
+        d = page.locator(".sc-wp-line").get_attribute("d")
+        # a step line on whole pixels: across, then up or down, never a slope
+        assert re.fullmatch(r"(M-?[0-9]+ -?[0-9]+|H-?[0-9]+|V-?[0-9]+)+", d), d[:120]
+        assert page.locator(".sc-wp-svg").get_attribute("shape-rendering") == "crispEdges"
+        assert page.locator(".sc-mark").count() == 5 and page.locator(".sc-mark.is-top").count() == 1
+        lab = page.locator(".sc-swing text").text_content()
+        assert re.fullmatch(r"Biggest swing: [A-Z]{2,3} [+-][0-9]+", lab), lab
+        # the label plate stays inside the chart
+        box, frame = page.locator(".sc-swing .sc-plate").bounding_box(), page.locator(".sc-wp-svg").bounding_box()
+        assert box["x"] >= frame["x"] and box["x"] + box["width"] <= frame["x"] + frame["width"] + 0.5
+        assert page.locator('[data-hook="wp-sprite"] .sc-wp-key').count() == 1
+        _whole(page.evaluate(_SPRITES))
+        assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+        _no_errors(page)
+
+
+def test_the_live_end_marker_blinks_only_without_reduced_motion(site, pw):
+    with serve_site(site) as base:
+        for motion, want in (("no-preference", "px-blink"), ("reduce", "none")):
+            browser = pw.chromium.launch()
+            try:
+                ctx = browser.new_context(viewport={"width": 1280, "height": 900}, reduced_motion=motion)
+                page = ctx.new_page()
+                page.route("**/*", lambda r: r.continue_() if r.request.url.startswith(base[:-1]) else r.abort())
+                page.goto(base + "scores/#game=849846&tab=wp", wait_until="load")
+                page.wait_for_selector(".sc-wp-frame svg .sc-end")
+                assert page.evaluate("getComputedStyle(document.querySelector('.sc-end')).animationName") == want
+            finally:
+                browser.close()
+
+
+_BOXES = "Array.from(document.querySelectorAll('.scba-box')).map(b => b.getBoundingClientRect().toJSON())"
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+@pytest.mark.parametrize("width", (390, 1280))
+def test_the_bracket_art_draws_the_tree_with_chips_pips_and_the_trophy(october_site, pw, width, theme):
+    with serve_site(october_site) as base, scores_page(base, pw, width=width, theme=theme, hash_="#bracket=2026") as page:
+        page.wait_for_selector(".sc-bk .scb-art", timeout=15000)
+        assert page.locator(".sc-bk .scb-art").get_attribute("aria-hidden") == "true"
+        assert page.locator(".scb-art .scba-box").count() == 11 and page.locator(".scb-art .scba-cup").count() == 1
+        # pips: two wins take a best-of-3, so a Wild Card box has four (two per club)
+        assert page.locator(".scb-art .scba-box").first.locator(".scba-pip").count() == 4
+        # every box sits inside the view and no two boxes overlap
+        boxes = page.evaluate(_BOXES)
+        for i, a in enumerate(boxes):
+            assert a["x"] >= 0 and a["x"] + a["width"] <= width
+            for b in boxes[i + 1:]:
+                assert (a["x"] + a["width"] <= b["x"] or b["x"] + b["width"] <= a["x"] or
+                        a["y"] + a["height"] <= b["y"] or b["y"] + b["height"] <= a["y"]), (a, b)
+        # the World Series box sits between the two league series that feed it, the trophy over it
+        ws, cup = boxes[-1], page.locator(".scba-cup").bounding_box()
+        assert boxes[8]["y"] < ws["y"] < boxes[9]["y"] and cup["y"] + cup["height"] <= ws["y"] + 0.5
+        _whole(page.evaluate(_SPRITES))
+        assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+        _no_errors(page)
+
+
+def test_the_bracket_art_without_a_hub_and_when_the_rounds_make_no_tree(pw):
+    src = (ROOT / "assets" / "scores-bracket.js").read_text(encoding="utf-8")
+    browser = pw.chromium.launch()
+    try:
+        page = browser.new_page()
+        page.set_content("<!doctype html><div id=m></div><div id=n></div><div id=c></div>")
+        page.add_script_tag(content=src)
+        b = _bracket()
+        page.evaluate("b => window.EephusScoresBracket.mount(document.getElementById('m'), b)", b)
+        assert page.locator("#m .scba-box").count() == 11 and page.locator("#m img").count() == 0
+        # three Wild Card series cannot feed four Division Series: the art stays out, the rounds stay in
+        bad = copy.deepcopy(b)
+        bad["rounds"][0]["series"] = bad["rounds"][0]["series"][:3]
+        page.evaluate("b => window.EephusScoresBracket.mount(document.getElementById('n'), b)", bad)
+        assert page.locator("#n .scb-art").count() == 0 and page.locator("#n .scb-s").count() == 10
+        page.evaluate("b => window.EephusScoresBracket.mount(document.getElementById('c'), b, {compact: 1})", b)
+        assert page.locator("#c .scb-art").count() == 0
+    finally:
+        browser.close()
