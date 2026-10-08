@@ -462,7 +462,13 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                 # published as a calibrated interval - see the eval artifact.
                 k = max(0, (step or 1) - 1)
                 spread = 0.22 + 0.08 * k
-                steps.append([int(y), _k(pred), _k(pred * (1 - spread)),
+                # The low end never sits below the league minimum, the same
+                # rule as the point (owner answer M12-4): a band that admits
+                # an award no club may pay is not a range of awards.
+                lo = pred * (1 - spread)
+                if floor and lo < floor:
+                    lo = float(floor)
+                steps.append([int(y), _k(pred), _k(lo),
                               _k(pred * (1 + spread)), tok])
                 total += _k(pred) or 0
                 prior = pred

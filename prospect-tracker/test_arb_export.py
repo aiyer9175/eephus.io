@@ -489,6 +489,16 @@ def test_a_first_trip_with_no_salary_on_file_raises_off_the_league_minimum(monke
     assert seen[0]["prior_salary"] == 780000.0
     # and no award is served below the league minimum
     assert out["rows"][0]["l"][0][1] == 780000
+    # nor is the low end of its band (owner answer M12-4)
+    assert out["rows"][0]["l"][0][2] == 780000
+
+
+def test_no_served_band_reaches_below_the_league_minimum():
+    b = _doc("arbitration.json")
+    lm = min(s[1] for r in b["rows"] for s in r["l"] if s[4] == "PRE-ARB" and s[1])
+    low = [(r["n"], s) for r in b["rows"] for s in r["l"]
+           if s[2] is not None and s[2] < lm]
+    assert not low, low[:5]
 
 
 def _arb1_rungs(board):

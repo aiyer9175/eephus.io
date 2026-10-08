@@ -1124,8 +1124,10 @@ floors an arbitration rung that follows a contracted season at 80% of the
 signed salary (CBA Article VI) and the board did not, so the two printed
 different figures for the same season: 17 rows on the 2026-09-24 census.
 `arb_export.build_board` now runs the same walk
-(`_apply_max_cut_after_contract`), reading the signed seasons off the served
-path's `contract` cells: a contracted season opens the carry, a rung below
+(`_apply_max_cut_after_contract`), reading the signed seasons from the
+Spotrac contract tables it already reads status tokens from
+(`arb_dataset.spotrac_salary_by_mlbam`; on all 880 board players they equal
+the path's 2027-2031 contract seasons): a contracted season opens the carry, a rung below
 0.80 x prior is raised to it and becomes the next rung's prior, a PRE-ARB
 rung closes the carry. Later rungs are NOT re-predicted off a floored
 figure, exactly as on the path. A floored row carries flag bit 64.
