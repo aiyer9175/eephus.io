@@ -518,7 +518,7 @@ def test_the_provisional_label_reads_its_count_from_the_artifact():
     about how much evidence exists the moment the next vintage lands."""
     evald = {"vintage": {"n_graded": 211, "min_graded_games_for_min_edge": 600}}
     txt = be.provisional_record_label(evald, min_edge=0.06, provisional=True)
-    assert "211 of the 600 games the honest backtest needs are graded" in txt
+    assert "211 of the 600 games the vintage backtest needs are graded" in txt
     # "selection", not "pick": Model Watch language (owner decision 2026-08-16)
     # de-picked every prose surface while the gates are closed.
     assert txt.startswith("Provisional. This selection clears a 6.0% floor that was "

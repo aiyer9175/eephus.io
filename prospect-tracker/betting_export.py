@@ -1590,11 +1590,8 @@ def settle_record(*, rows: list[dict] | None = None, games: list[dict] | None = 
             "available": False,
             "n_rows": len(rows), "n_settled": 0,
             "n_open": len(rows), "n_ungradeable": 0,
-            "blocked_reason": (f"betting_settle is not importable ({exc}); the record "
-                               "cannot be settled without it and this module will not "
-                               "reimplement _settle_one, because two implementations of "
-                               "'did the runline cover' is how two surfaces come to "
-                               "disagree about one bet"),
+            "blocked_reason": ("Settlement module missing; the record is not settled "
+                               "this run."),
             "unsettled_reasons": {"betting_settle missing": len(rows)},
             "picks": [],
         }
@@ -2173,16 +2170,16 @@ def provisional_record_label(evald: dict | None, *, min_edge: float,
     prog = honest_backtest_progress(evald)
     n, need = prog["n_graded"], prog["n_needed"]
     if n is None or need is None:
-        got = ("the eval artifact does not report how many games the honest backtest "
+        got = ("the eval artifact does not report how many games the vintage backtest "
                "has graded")
     elif n < need:
-        got = f"{n} of the {need} games the honest backtest needs are graded"
+        got = f"{n} of the {need} games the vintage backtest needs are graded"
     else:
         # PAST THE SAMPLE BAR (RBE03, 2026-10-02). "777 of the 600" read as a
         # shortfall that does not exist. Once the count clears its bar the
         # sentence says so and names the gate that still keeps the model
         # unvalidated, read off the same artifact's gate list.
-        got = f"{n} graded, past the {need} games the honest backtest needs"
+        got = f"{n} graded, past the {need} games the vintage backtest needs"
         closed = [str(g.get("id")) for g in
                   ((evald or {}).get("min_edge_gate") or {}).get("gates") or []
                   if isinstance(g, dict) and g.get("id") and g.get("open") is False]
@@ -2293,9 +2290,8 @@ def record_publish_blockers(*, payload: dict | None = None,
                  f"slates in the last {health.get('window_days')} days have one"),
         "reason": (f"a close snapshot exists, so this {noun} can be CLV-graded"
                    if snap else
-                   f"no close snapshot for this slate, so the {noun} could never be "
-                   f"CLV-graded and the only honest read on an {verdict_state} model's "
-                   "decisions would be missing. " + str(health.get("diagnosis") or "")),
+                   f"No closing snapshot for this slate: the {noun} cannot be CLV-graded. "
+                   + str(health.get("diagnosis") or "")),
         })
 
     mismatch = bool(status.get("odds_slate_mismatch"))
@@ -6902,9 +6898,8 @@ def apply_slot_lock(slots: dict, meta: dict, *, slate_date: str | None,
             # attempted, so a slate with no lock file on disk reported itself
             # as published: the one fact this store exists to hold, asserted
             # off a file that does not exist.
-            pending_note = ("this row was selected but its lock could not be "
-                            "written, so it is not published and a later build "
-                            "may select a different one")
+            pending_note = ("Lock write failed; row unpublished. A later build "
+                            "may select another")
             for slot, sm2 in pending_meta.items():
                 if isinstance(sm2, dict):
                     sm2["locked"] = False
@@ -7116,10 +7111,10 @@ def _carry_previous_board(payload: dict, reason: str, *, log_fn=None) -> dict:
     # The sentence a reader must not be able to miss. It leads with the fact
     # (these are old prices), gives the age, and refuses the reading that makes
     # a stale board dangerous: that an edge on it is an edge now.
-    notice = (f"STALE BOARD: these are the {payload['slate_date']} slate's prices, "
-              f"{age_txt}, and they are NOT live. This build priced no games, so the "
-              f"last board that could be built stands in for tonight's. No price or "
-              f"edge on it is current.")
+    notice = (f"Stale board: these are the {payload['slate_date']} slate's prices, "
+              f"{age_txt}, and they are not live. 0 games priced this build; showing "
+              f"the last priced board ({payload['slate_date']}). No price or edge on it "
+              f"is current.")
     payload["status"]["stale_board"] = True
     payload["status"]["stale_board_notice"] = notice
     payload["status"]["stale_board_slate_date"] = payload["slate_date"]
@@ -7132,7 +7127,7 @@ def _carry_previous_board(payload: dict, reason: str, *, log_fn=None) -> dict:
     payload["status"]["stale_board_odds_captured_at"] = prev_status.get("odds_captured_at")
     payload["status"]["stale_board_reason"] = (
         f"this build priced 0 games ({reason}), so the board below is the last one that "
-        f"could be built, for the {payload['slate_date']} slate. It is NOT tonight's "
+        f"could be built, for the {payload['slate_date']} slate. It is not tonight's "
         f"board and no price on it is live.")
     # Mutated IN PLACE: build() holds this same list object and hands it to the
     # preview slice, so the free tier and the full payload cannot disagree about
@@ -7512,8 +7507,8 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         "record": record_summary(record),
         "record_url": "/data/betting_record.json",
         "record_policy": ("Append only. Rows are never edited or deleted; a correction is "
-                          "a new row. betting_export.write_record refuses any other write "
-                          "and test_betting.py pins it."),
+                          "a new row. The exporter refuses any other write and a test "
+                          "pins it."),
         # THE HEADER SENTENCE, identical to the one on every provisional row.
         "record_label": record_label,
         "record_storage": record_storage(),

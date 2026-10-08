@@ -6411,9 +6411,9 @@ def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None 
         # fact that disqualifies it from setting anything.
         "sweep_by_tag": tag_table,
         "cross_market_tripwire": tripwire,
-        "policy": ("min_edge stays null until all three gates are open. A threshold "
-                   "invented to make a pick appear is the single most dishonest number "
-                   "this module could publish."),
+        "policy": ("min_edge stays null until all three gates are open. No edge threshold "
+                   "is set to manufacture a pick; a threshold ships only after it "
+                   "clears its gate."),
     }
 
 

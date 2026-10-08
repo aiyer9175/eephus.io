@@ -536,7 +536,7 @@
     if (d.stale_slate) {
       return { date: d.slate_date,
                reason: d.stale_reason ||
-                 "Today's build could not be verified, so it was not published.",
+                 "Today's build failed verification; not published.",
                kept: true, checked: d.stale_checked_at || null };
     }
     if (d.slate_date && String(d.slate_date) < todayLocal()) {
@@ -554,7 +554,7 @@
     return '<div class="dfs-stale" role="alert">' +
       "<strong>This is the " + when + " slate, not today's.</strong>" +
       "<span>" + esc(st.reason) + "</span>" +
-      "<span>" + (st.kept ? "We kept the last board we could verify. " : "") +
+      "<span>" + (st.kept ? "Showing the last verified board" + (st.date ? " (" + when + ")" : "") + ". " : "") +
       "Projections below are for " + when + "; salaries imported for another date " +
       "are dropped.</span>" +
       (st.checked
@@ -655,7 +655,7 @@
       tail: "Nothing is broken. The page rebuilds daily." },
     // No tail: the payload's own sentence already says when slates return.
     season_over: { head: "The season is over", bad: false, tail: "" },
-    schedule_unavailable: { head: "We could not verify today's slate", bad: true,
+    schedule_unavailable: { head: "Today's slate failed verification", bad: true,
       tail: "Pipeline outage: the schedule feed did not answer, so nothing is published " +
             "for today." },
     no_corpus: { head: "The projection corpus is missing", bad: true,
@@ -1477,8 +1477,8 @@
       // The payload never arrived. The tabs are still wired, so the reader gets
       // a control that responds instead of four buttons that do nothing, and
       // the same honest message under every one of them.
-      html = pxState("failed", "<strong>Slate failed to load.</strong> " +
-        esc(S.error) + ". The daily build may be mid-run. Every tab, the optimizer included, " +
+      html = pxState("failed", "<strong>DFS slate did not load.</strong> " +
+        esc(S.error) + ". Retry; the daily build may be writing it. Every tab, the optimizer included, " +
         'needs the slate. <button type="button" id="dfs-retry" ' +
         'class="dfs-btn">Retry</button>', "dfs-error");
     } else if (d.empty_reason) {
@@ -1809,7 +1809,7 @@
         // split, so the label says players, not players priced.
         (S.data.n_games || 0) + " games · " + (S.data.n_players || 0) +
         ' players · <a class="dfs-name-link" href="/diamond/">Diamond preview</a>' +
-        ", free while we build" +
+        ", every page free until launch" +
         // Same predicate as the banner, so the header chip and the banner can
         // never disagree about whether the board is today's.
         (staleInfo() ? ' · <span class="dfs-stale-chip">old slate</span>' : "") +

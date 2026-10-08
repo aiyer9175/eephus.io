@@ -85,7 +85,7 @@ def test_the_served_record_label_never_reads_n_of_the_m_past_the_bar(served):
 def test_the_label_below_the_bar_is_unchanged():
     evald = {"vintage": {"n_graded": 211, "min_graded_games_for_min_edge": 600}}
     txt = be.provisional_record_label(evald, min_edge=0.06, provisional=True)
-    assert "211 of the 600 games the honest backtest needs are graded" in txt
+    assert "211 of the 600 games the vintage backtest needs are graded" in txt
 
 
 def test_the_label_past_the_bar_names_every_closed_gate():
@@ -95,7 +95,7 @@ def test_the_label_past_the_bar_names_every_closed_gate():
     evald = {"vintage": {"n_graded": 777, "min_graded_games_for_min_edge": 600},
              "min_edge_gate": {"gates": gates}}
     txt = be.provisional_record_label(evald, min_edge=0.06, provisional=True)
-    assert ("777 graded, past the 600 games the honest backtest needs, but the "
+    assert ("777 graded, past the 600 games the vintage backtest needs, but the "
             "out_of_sample_skill and graded_price_history gates are closed") in txt
     assert "777 of the 600" not in txt
     assert txt.startswith("Provisional.") and txt.endswith("Recorded before the result.")

@@ -1297,7 +1297,7 @@
     }
     return note("Margin model: the " + gl("dispersion correction", "run_dispersion") +
       " (alpha " + num(dr.alpha, 5) + ") returned <strong>" + verdict +
-      "</strong> at its pre-registered gate and is NOT served. This price is the " +
+      "</strong> at its pre-registered gate and is not served. This price is the " +
       "Poisson difference, which underweights the tails. Grid on the Validation tab.");
   }
 
@@ -2431,7 +2431,7 @@
         rows.push('<div class="bt-kv">' + kv("Status", esc(d2.status || "-")) +
           kv("Alpha", num(d2.alpha, 5)) +
           kv("Served", d2.served ? "yes" : "no") + "</div>");
-        rows.push(note("From data/betting_learning.json: the single split only, NOT the " +
+        rows.push(note("From data/betting_learning.json: the single split only, not the " +
           "split-quantile sweep the verdict is taken from."));
       }
       return '<div class="bt-panel">' + rows.join("") + "</div>";
@@ -2951,7 +2951,7 @@
     if (sk.beats_baseline_95) {
       return head + "clears the one-sided 95% bar of 1.645.";
     }
-    return head + "does NOT clear the one-sided 95% bar of 1.645 (needs about " +
+    return head + "does not clear the one-sided 95% bar of 1.645 (needs about " +
       (sk.n_for_95 == null ? "more" : sk.n_for_95) + " games; the split has " +
       (fwd.n == null ? "fewer" : fwd.n) + ").";
   }
@@ -4400,8 +4400,8 @@
       default: html = renderPick();
     }
     if (S.error && S.section !== "calculators" && S.section !== "mybets") {
-      html = pxState("failed", "<strong>The betting payload failed to load.</strong> " +
-        esc(S.error) + ". The nightly build may be mid-run. " +
+      html = pxState("failed", "<strong>Betting board did not load.</strong> " +
+        esc(S.error) + ". Retry; the nightly build may be writing it. " +
         '<button type="button" id="bt-retry" class="bt-btn">retry</button>', "bt-error") + html;
     }
     // ONE CONTROL BAR (2026-10-07). The share chip rides the two board
@@ -4550,7 +4550,7 @@
     // Then the lamp loader, in the section root below the legal block, until
     // the payload settles and paintAll() replaces it.
     var lr = el("betting-app-root");
-    if (lr) lr.innerHTML = pxState("loading", esc("Loading the betting board..."));
+    if (lr) lr.innerHTML = pxState("loading", esc("Loading the betting board."));
     var url = dataUrl();
     LOADED_URL = url;
     fetch(url, { cache: "no-cache" }).then(function (r) {
