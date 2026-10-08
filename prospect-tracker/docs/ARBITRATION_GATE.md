@@ -880,3 +880,126 @@ for the plain-key award. From 2026-10-04 the join (`proj_export._join_contract`,
 AAV, and never lets it move a plain key; the salary path prices those seasons
 from the tokens through the arbitration board, as before. Served surplus did
 not move (no row by more than $1M; none at all on the worktree regen).
+
+## 13. GATE K - a known-season arbitration arm against Swartz (pre-registered 2026-10-08)
+
+Registered by owner answer 2026-09-25 (batch 5, census X05-03) BEFORE any
+feature for it is built, any award is fetched or any row is fit. Nothing above
+this section is edited, and GATE A, B, C, C2 and D are not re-opened by it.
+
+**Why.** On identical rows the MLB Trade Rumors / Matt Swartz projection beats
+our served estimator 2.66x on MdAPE (0.0811 against 0.2156, n = 261;
+`data/arbitration_eval.json` `a6_swartz`, generated 2026-08-09; by step:
+arb 1 n 135, 0.218 against 0.085; arb 2 n 76, 0.204 against 0.082; arb 3 n 50,
+0.211 against 0.076). The artifact's own statement names the mechanism: Swartz
+prices the platform season's counting stats and honours, which section 4 bans
+from our champion because nothing projects them forward. Once the platform
+season is over they are KNOWN. This gate asks whether an arm that reads them
+closes the gap. It is a separate arm, not a change to the champion.
+
+### 13a. What is claimed, and what is not
+
+- Claimed only on a pass: on settled arbitration seasons, after the platform
+  season is complete, the known-season arm prices the award more accurately
+  than our incumbent (K1) and than the published Swartz figure (K2).
+- NOT claimed under any verdict: anything about an UNPLAYED season. The forward
+  board (`/arbitration/` ladder, the salary path, every surplus) keeps the
+  section 4 champion and `CHAMPION_KEYS`; section 4's ban on counting stats in
+  the champion stands. This arm never feeds `salary_path.py`.
+
+### 13b. Inputs, a frozen tuple
+
+`KNOWN_SEASON_KEYS` is a frozen tuple in `arb_model.py`, committed with the
+producer and pinned by its test before the first fit:
+
+1. Every key of `CHAMPION_KEYS`, with every production input read from the
+   PLATFORM season (the season before the award season S) or earlier. No
+   feature of a season-S row may read a season >= S (census M08-05); the test
+   asserts it row by row.
+2. Platform-season counting stats, the ones arbitration panels weigh: hitters
+   HR, RBI, R, SB, H; pitchers W, SV, HLD, SO, IP; plus career-to-date HR and
+   SV through the platform season. The four `CEILING_KEYS` additions (hr, sb,
+   sv, hld) are a subset. Source: the season tables the panel already reads.
+3. Platform-season honours: All-Star selection; BBWAA MVP, Cy Young and Rookie
+   of the Year (top-10 finish indicator and vote share); Gold Glove; Silver
+   Slugger. Source: a new season-stamped cache of the StatsAPI
+   `people/<id>?hydrate=awards` feed (probed 200 by the census on
+   2026-09-24). The award join rate is published with the result.
+
+Fit: the GATE A two-stage form (`fit_stage1`, `fit_stage2`) with
+`keys=KNOWN_SEASON_KEYS`, the same ridge, floor transform and smearing. No
+penalty, key or transform is tuned after a score is read.
+
+### 13c. The frame
+
+- **Rows: the same 261 (player, class year) pairs as the `a6_swartz`
+  comparison.** The block stores no row list, so the build's first act is to
+  reconstruct the pairs with the A6 join as committed in a35ee272, write the
+  sorted (mlbam, season) list and its sha256 into the eval artifact, and
+  assert n = 261 BEFORE any feature is joined. If the reconstruction gives a
+  different n, the delta and its cause are published and the reconstructed
+  set is the frame; it is never re-chosen after a score is read.
+- **Composition, measured 2026-10-08 and disclosed:** `data/arb_history.json`
+  carries a Swartz figure on 287 settled rows, 236 of them class 2023 (18 in
+  2024, 16 in 2025, 17 in 2026). The 261-row frame is therefore mostly one
+  winter; see K3.
+- **A second frame, reported beside it, never the headline:** if the Swartz
+  loader repair (census M08-04) has landed when this gate is scored, the
+  repaired pool is scored the same way and published side by side.
+- **Protocol:** forward-chained by class year exactly as `forward_chain`
+  (train on class years before the test year, deflator fit on train years
+  only, every arm refit per fold). Seed 20261008, B = 1000, paired bootstrap
+  clustered on PLAYER, refitting every fitted arm on every draw.
+
+### 13d. Metric
+
+MdAPE on deflated dollars. Every arm, Swartz included, is put on the SAME
+scale: the actual award and each prediction are divided by the test fold's
+deflator for that season. Because a common factor cancels in an absolute
+percentage error, Swartz's error is equivalently his nominal figure against
+the nominal award.
+
+Recorded rather than fixed here: the A6 code (`tools/arb_gate_a.py`
+`_swartz_head_to_head`) compares Swartz's NOMINAL figure with the DEFLATED
+actual; its comment says the figure is scaled and the code does not scale it.
+The 2.66x is therefore re-stated under this gate's scale on the frozen frame,
+beside the published figure, and the restated number is the one K2 is scored
+against. MSE in deflated dollars is reported alongside, as section 4 does.
+
+### 13e. Clauses and the pass rule
+
+| clause | claim | criterion | fails if |
+|---|---|---|---|
+| K1 | the arm beats our incumbent | on the frozen frame, identical rows: incumbent MdAPE minus arm MdAPE exceeds the one-sided MDE95 (1.645 sd) of that paired gap. The incumbent is the SERVED estimator as served when K is scored (after any registered GATE A amendment), named in the artifact | the gain sits inside its floor |
+| K2 | the arm beats Swartz | arm MdAPE below Swartz MdAPE (restated, 13d) AND the paired player-clustered 95% interval on (Swartz minus arm) has a lower bound above 0. Raw published Swartz is the headline; recalibrated Swartz (section 4 A6 affine, train years only) is reported as the stronger secondary | either condition is missed |
+| K3 | the K2 direction is not one winter | the sign of (Swartz minus arm) is reported per class year with n >= 15. If one class year holds >= 75% of the frame, a K2 pass is labelled ONE WINTER and no copy may say the arm beats Swartz without that label (section 4 pre-commits single-season Swartz comparisons as NULL) | reported, never a pass by itself |
+| K4 | the gain is the new inputs, not structure | refit with the counting-stat and honours block permuted across players within (season x arb-step) cells, as A3: the real block must beat the permuted twin on the K1 gap | the permuted twin matches it |
+| K5 | equal information | the twin without honours announced after the Swartz publication date (Gold Glove, Silver Slugger, BBWAA awards; All-Star stays) is scored on K2. A K2 pass without a K5 pass may only be described as beating Swartz WITH information published after his projection | reported, never a pass by itself |
+
+**Verdicts.** K1, K2 and K4 pass: PASS. K1 and K4 pass, K2 fails: IMPROVES,
+with the share of the gap closed, (incumbent minus arm) / (incumbent minus
+Swartz), published; nothing may say the arm matches or beats Swartz. K1 or K4
+fails: NULL. What a PASS may serve (a post-season known-season figure on the
+History tab) is the owner's call after the result; nothing is served by this
+registration.
+
+### 13f. Artifacts, and one look
+
+Producer `tools/arb_known_season.py`, artifact `data/arb_known_season_eval.json`
+(a separate path, as section 4 requires of a model reading banned keys), test
+`test_arb_known_season.py` pinning the criteria above verbatim and the frame
+hash, registry row `arb_award_known_season`. Scored ONCE. A re-score after a
+read is a new dated registration, not an edit of this one.
+
+### 13g. Order, and the status on 2026-10-08
+
+Build and score only AFTER GATE C2 (section 11) is scored, the census M08-06
+default, which also places it after the GATE A platform-season amendment and
+the Swartz loader repair that precede C2 in the owner's 2026-09-25 sequence.
+"Scored" means `data/arbitration_eval.json` carries a `gate_c2` block with its
+clause verdicts.
+
+On 2026-10-08 it does not: the artifact (generated 2026-08-09) has no
+`gate_c2` block, and section 11h records that no C2 number had been read on
+2026-09-24. **The build of this gate WAITS ON GATE C2.** Nothing in 13b to 13f
+has been built, fetched or fit.
