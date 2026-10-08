@@ -201,9 +201,9 @@
          in 100 inline styles. Backed by the palette above so the
          entire theme is still steerable from this :root block. */
       --accent-tj:        var(--neon-violet); /* Tommy John recovery */
-      --accent-il:        var(--neon-amber);  /* on the IL */
-      --accent-graduated: var(--neon-violet); /* MLB grad pill        */
-      --accent-traded:    var(--neon-violet); /* trade flow arrow     */
+      --accent-il:        var(--wire-inj);    /* on the IL (Injuries family, HOME_8) */
+      --accent-graduated: var(--wire-pro);    /* MLB grad pill (Prospects family)    */
+      --accent-traded:    var(--wire-trd);    /* trade flow arrow (Trades family)    */
       /* Translucent companions for badge backgrounds + soft borders. */
       --accent-tj-soft:        rgba(107, 79, 168, 0.15);
       --accent-tj-border:      rgba(107, 79, 168, 0.50);
@@ -1559,6 +1559,8 @@
       border-style: solid;
       flex-shrink: 0;
     }
+    /* The family pictogram leads each ribbon chip (HOME_8, LANE_HOME 2.3). */
+    .news-ticker-strip .chip > .wire-ico { display: inline-flex; vertical-align: -2px; margin-right: 5px; }
 
     /* === Splits (player detail "Stats / Statcast" tab) =========== */
     .split-chips { display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 8px; }
@@ -2474,9 +2476,9 @@
       font-size: 10px;
       padding: 1px 6px;
       border-radius: 2px;
-      background: var(--accent-il-soft);
+      background: color-mix(in srgb, var(--accent-il) 12%, transparent);
       color: var(--accent-il);
-      border: 1px solid var(--accent-il-border);
+      border: 1px solid color-mix(in srgb, var(--accent-il) 45%, transparent);
       margin-left: 6px;
       letter-spacing: 0.04em;
       text-transform: uppercase;
@@ -16756,6 +16758,23 @@ function marqueeifyTicker(root) {
   apply();
 }
 
+// The ribbon's and the Transactions section's event kinds as type codes of the
+// MLB News registry (build_site._WIRE_TYPES, mirrored as EEPHUS_HUB.wireType).
+const RIBBON_WIRE_CODE = {
+  promotion: "promo", demotion: "demo", debuted: "debut", trade: "trade", il: "il_place",
+  waivers: "claim", release: "release", dfa: "dfa", rule_5: "rule5",
+};
+// A type code's family, pictogram and hidden family prefix, read from the hub
+// registry (never a local copy); null when the code or the hub is missing, and
+// the caller then draws the neutral chip with no pictogram.
+function pxWireType(code) {
+  const H = window.EEPHUS_HUB;
+  const t = code && H && H.wireType ? H.wireType[code] : null;
+  if (!t) return null;
+  const f = (H.wireFamily && H.wireFamily[t.fam]) || {};
+  return { code, fam: t.fam, ico: t.ico, sr: f.sr || "" };
+}
+
 function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
   const root = document.getElementById(rootId);
   if (!root) return;
@@ -16779,7 +16798,7 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
       for (const t of (p.trades || [])) {
         const ts = new Date(t.trade_date + "T00:00:00").getTime();
         if (!isNaN(ts) && ts >= cutoff) {
-          events.push({ ts, kind: "trade", p, label: `traded ${escapeHtml(t.from_org || "?")} → ${escapeHtml(t.to_org || "?")}` });
+          events.push({ ts, kind: "trade", p, label: `traded ${escapeHtml(t.from_org || "?")} to ${escapeHtml(t.to_org || "?")}` });
         }
       }
       // Level changes (promotions / demotions) + roster moves. Stored on
@@ -16788,9 +16807,9 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
         const ts = new Date((tx.date || "") + "T00:00:00").getTime();
         if (isNaN(ts) || ts < cutoff) continue;
         if (tx.kind === "promotion" || tx.kind === "demotion") {
-          const arrow = tx.kind === "promotion" ? "↑ promoted" : "↓ demoted";
+          const verb = tx.kind === "promotion" ? "promoted" : "demoted";
           const tail = tx.to_level ? ` to ${escapeHtml(tx.to_level)}` : "";
-          events.push({ ts, kind: tx.kind, p, label: `${arrow}${tail}` });
+          events.push({ ts, kind: tx.kind, p, label: `${verb}${tail}` });
         } else if (["waivers", "release", "dfa", "rule_5"].includes(tx.kind)) {
           events.push({ ts, kind: tx.kind, p, label: escapeHtml(tx.kind.toUpperCase().replace("_", " ")) });
         }
@@ -16800,20 +16819,18 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
       if (il && il.is_on_il && il.since) {
         const ts = new Date(il.since + "T00:00:00").getTime();
         if (!isNaN(ts) && ts >= cutoff) {
-          events.push({ ts, kind: "il", p, label: `→ ${escapeHtml(il.type || "IL")} (${escapeHtml(il.description || "no detail")})` });
+          events.push({ ts, kind: "il", p, label: `${escapeHtml(il.type || "IL")} (${escapeHtml(il.description || "no detail")})` });
         }
       }
     }
     // Debut events - kept for both pools. For active players this is a
     // no-op (they have no debut_date); for debuted players it's the
     // one event that DOES belong in the prospect news feed.
-    // v30.8 - Star prefix + level-tag for visual punch; debuts are the
-    // most-significant "prospect graduates" event on the feed and
-    // deserve to stand out from routine transactions.
+    // The ev-debut pictogram, drawn in the chip, marks a debut (HOME_8).
     if (p.debut_date) {
       const ts = new Date(p.debut_date + "T00:00:00").getTime();
       if (!isNaN(ts) && ts >= cutoff) {
-        events.push({ ts, kind: "debuted", p, label: "★ MLB DEBUT" });
+        events.push({ ts, kind: "debuted", p, label: "MLB DEBUT" });
       }
     }
   }
@@ -16829,30 +16846,20 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
   }
   // Newest first.
   filteredEvents.sort((a, b) => b.ts - a.ts);
-  const colorMap = {
-    trade: "var(--accent-traded)",
-    promotion: "var(--up)",
-    demotion: "var(--down)",
-    il: "var(--accent-il)",
-    graduated: "var(--accent-graduated)",
-    // v30.8 - Debut events use the same graduate accent color (they
-    // ARE graduate events, just keyed differently in the events list).
-    // Without this the "★ MLB DEBUT" chips were rendering with the
-    // muted text-secondary fallback.
-    debuted: "var(--accent-graduated)",
-    waivers: "var(--text-secondary)",
-    release: "var(--down)",
-    dfa: "var(--down)",
-    rule_5: "var(--neon-cyan)",
-  };
+  // Each event kind is a type code of the MLB News registry; its family colour
+  // (assets/site.css [data-fam] sets --wire-c) and its pictogram come from
+  // pxWireType, so the ribbon speaks the homepage's family system.
   const chips = filteredEvents.slice(0, 40).map(ev => {
-    const c = colorMap[ev.kind] || "var(--text-secondary)";
+    const w = pxWireType(RIBBON_WIRE_CODE[ev.kind]);
+    const c = w ? "var(--wire-c)" : "var(--text-secondary)";
+    const famAttr = w ? ` data-fam="${w.fam}" data-type="${w.code}"` : "";
+    const lead = w ? `<span class="wire-ico">${pxIcoHTML(w.ico, 12)}</span><span class="visually-hidden">${escapeHtml(w.sr)} </span>` : "";
     const dateStr = new Date(ev.ts).toISOString().split("T")[0];
     // eFV badge inline so a glance carries quality context too (consensus fallback).
     const fvChip = efvCompactBadge(ev.p, { size: "size-xs", style: "margin-right:5px;", fallback: ev.p.fv_close });
-    return `<button class="chip" data-key="${escapeHtml(ev.p.player_key)}" type="button"
+    return `<button class="chip" data-key="${escapeHtml(ev.p.player_key)}"${famAttr} type="button"
                     style="border-color:${c};color:${c};white-space:nowrap;">
-      ${fvChip}<span style="font-weight:700;">${escapeHtml(ev.p.player_name)}</span>
+      ${lead}${fvChip}<span style="font-weight:700;">${escapeHtml(ev.p.player_name)}</span>
       <span style="color:var(--text-tertiary);margin-left:5px;">${ev.label}</span>
       <span style="color:var(--text-tertiary);margin-left:5px;font-size:9px;">${dateStr}</span>
     </button>`;
@@ -18737,25 +18744,27 @@ function latestAcquisition(p) {
 
 // Pretty label + chip color for each acquisition method. Method keys
 // match the global `#acq-filter` <select> values.
+// HOME_8: each method is a type code of the MLB News registry (wire), which
+// gives the pill its family colour and pictogram through pxWireType.
 const ACQ_LABELS = {
-  trade:             { label: "Trade",                       color: "var(--accent-traded)" },
-  waiver:            { label: "Waiver claim",                color: "var(--neon-amber)" },
-  rule_5:            { label: "Rule 5",                      color: "var(--neon-cyan)" },
-  contract_purchase: { label: "Contract purchase",           color: "var(--text-secondary)" },
-  international_fa:  { label: "Signed from international FA",color: "var(--neon-violet)" },
-  draft:             { label: "Drafted and signed",          color: "var(--up)" },
-  free_agent:        { label: "Free-agent signing",          color: "var(--neon-cyan)" },
+  trade:             { label: "Trade",                       wire: "trade" },
+  waiver:            { label: "Waiver claim",                wire: "claim" },
+  rule_5:            { label: "Rule 5",                      wire: "rule5" },
+  contract_purchase: { label: "Contract purchase",           wire: "callup" },
+  international_fa:  { label: "Signed from international FA",wire: "intl_sign" },
+  draft:             { label: "Drafted and signed",          wire: "draft_sign" },
+  free_agent:        { label: "Free-agent signing",          wire: "minor_deal" },
   // v31.7 - MLB debut as a transaction kind. Debuted players exit
   // the active prospect pool, so this entry shows up exactly once
   // per prospect (no post-debut tx noise). Treated as the canonical
   // "graduation" transaction on the Transactions tab.
-  debut:             { label: "MLB debut",                   color: "var(--up)" },
+  debut:             { label: "MLB debut",                   wire: "debut" },
   // Minor-league level moves surfaced as first-class transactions. Each
   // active prospect contributes their MOST RECENT level change (see
   // getFilteredAcquired) so the feed shows current movement without
   // flooding with every historical rung.
-  promotion:         { label: "Promotion",                   color: "var(--up)" },
-  demotion:          { label: "Demotion",                    color: "var(--down)" },
+  promotion:         { label: "Promotion",                   wire: "promo" },
+  demotion:          { label: "Demotion",                    wire: "demo" },
 };
 
 function getFilteredAcquired() {
@@ -22986,7 +22995,8 @@ function renderRecentlyTraded() {
     // renders with a fallback FV display.
     const pts = (p && p.points) || [];
     const latest = pts.length ? pts[pts.length - 1] : {};
-    const meta = ACQ_LABELS[acq.method] || { label: acq.method, color: "var(--text-secondary)" };
+    const meta = ACQ_LABELS[acq.method] || { label: acq.method, wire: null };
+    const _w = pxWireType(meta.wire);
     // The "method · context" cell shows the acquisition method as a
     // colored pill, plus a short context line (from→to for trades,
     // round/pick for drafts, signing details for IFA, etc.).
@@ -23005,7 +23015,7 @@ function renderRecentlyTraded() {
       // image fails. Keeps the "BOS → WSN" text affordance for scanning.
       const _fromLogo = _fromOrg !== "?" ? teamLogoHTML(_fromOrg, "sm", _fromOrg) : "";
       const _toLogo   = _toOrg   !== "?" ? teamLogoHTML(_toOrg,   "sm", _toOrg)   : "";
-      const headLine = `<span style="color:var(--text-tertiary);display:inline-flex;align-items:center;gap:4px;">${_fromLogo}${escapeHtml(_fromOrg)}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);display:inline-flex;align-items:center;gap:4px;">${_toLogo}${escapeHtml(_toOrg)}</span>`;
+      const headLine = `<span style="color:var(--text-tertiary);display:inline-flex;align-items:center;gap:4px;">${_fromLogo}${escapeHtml(_fromOrg)}</span> <span style="color:var(--accent-traded);">→</span> <span style="color:var(--text-primary);display:inline-flex;align-items:center;gap:4px;">${_toLogo}${escapeHtml(_toOrg)}</span>`;
       const desc = (acq.description || "").trim();
       // The narrative from the MLB API reads "{TeamA} traded X to {TeamB}
       // for Y." - but the from→to is already encoded in the head line
@@ -23052,19 +23062,25 @@ function renderRecentlyTraded() {
     } else if (acq.method === "rule_5" && acq.from_org) {
       contextLine = `<span style="color:var(--text-tertiary);">Rule 5 from ${escapeHtml(acq.from_org)}</span>`;
     } else if (acq.method === "promotion" || acq.method === "demotion") {
+      // The level move's pictogram (ev-promo or ev-demo) in the Prospects
+      // family colour carries the direction (HOME_8; no unicode arrow).
       const up = acq.method === "promotion";
-      const arrow = up ? "↑" : "↓";
-      const tone = up ? "var(--up)" : "var(--down)";
+      const _lw = pxWireType(up ? "promo" : "demo");
+      const mark = _lw
+        ? `<span data-fam="${_lw.fam}" style="display:inline-flex;"><span class="wire-ico">${pxIcoHTML(_lw.ico, 12)}</span></span>`
+        : "";
       contextLine = `<span style="display:inline-flex;align-items:center;gap:5px;">`
         + `<span style="color:var(--text-tertiary);">${escapeHtml(acq.from_level || "?")}</span>`
-        + `<span style="color:${tone};font-weight:700;">${arrow}</span>`
+        + `${mark}<span class="visually-hidden">${up ? "promoted to" : "demoted to"}</span>`
         + `<span style="color:var(--text-primary);font-weight:600;">${escapeHtml(acq.to_level || "?")}</span>`
         + (acq.to_team ? `<span style="color:var(--text-tertiary);font-size:10px;">· ${escapeHtml(acq.to_team)}</span>` : "")
         + `</span>`;
     } else {
       contextLine = `<span style="color:var(--text-tertiary);">${escapeHtml(acq.description || " - ")}</span>`;
     }
-    const methodPill = `<span class="debut-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(meta.label)}</span>`;
+    const methodPill = _w
+      ? `<span class="debut-pill" data-fam="${_w.fam}" data-type="${_w.code}" style="display:inline-flex;align-items:center;gap:4px;background:var(--bg-tertiary);color:var(--wire-c);border:1px solid var(--border);"><span class="wire-ico">${pxIcoHTML(_w.ico, 12)}</span><span class="visually-hidden">${escapeHtml(_w.sr)} </span>${escapeHtml(meta.label)}</span>`
+      : `<span class="debut-pill" style="background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border);">${escapeHtml(meta.label)}</span>`;
     // Group framing: open a .trade-group tray before the first row of a
     // multi-prospect trade; close it after that trade's audit (below).
     const _gk = acq.method === "trade" ? _descTradeKey(acq) : null;
