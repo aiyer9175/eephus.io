@@ -101,10 +101,45 @@
     if (!org || !ESPN_SLUGS[org]) return "";
     return `<img class="fa-logo" src="${esc(teamLogoSrc(org))}" alt="${esc(org)}" loading="lazy" onerror="this.remove()">`;
   }
-  // A club code that prints as text links to the club's Franchises page.
+  // A club mention links to the club's Franchises page (owner ask 9) through
+  // the hub's one club resolver (EEPHUS_HUB.club + clubHref), never a raw
+  // payload code. `inner` is the markup printed before (the mark, the code).
+  // opts.mark makes a mark that sits beside its own linked code a mouse twin
+  // (out of the tab order, hidden from a screen reader). A code the hub does
+  // not know keeps its markup, in a span marked data-club-nolink="unresolved"
+  // when it carries a mark, never a guessed link.
+  function clubA(org, inner, opts) {
+    const o = opts || {};
+    const H = typeof window !== "undefined" && window.EEPHUS_HUB;
+    if (!inner || !H || !H.club || !H.clubHref) return inner;
+    const c = org ? H.club(org) : null;
+    if (!c) return org ? `<span data-club-nolink="unresolved">${inner}</span>` : inner;
+    return `<a class="club-link${o.cls ? " " + o.cls : ""}${o.mark ? " club-link--mark" : ""}" href="${esc(H.clubHref(c.code))}" data-club="${c.code}"`
+      + ` title="${esc(c.name + ": franchise overview")}"`
+      + (o.mark ? ` tabindex="-1" aria-hidden="true"` : "") + `>${inner}</a>`;
+  }
+  // A code that prints as text, linked.
   function clubLink(org) {
-    if (!org || !ESPN_SLUGS[org]) return esc(org || "");
-    return `<a class="fa-club-link" href="/franchise/#team=${encodeURIComponent(org)}">${esc(org)}</a>`;
+    if (!org) return "";
+    return clubA(org, esc(org), { cls: "fa-club-link" });
+  }
+  // The mark and its code as one link; the mark is decorative beside the code.
+  function clubTag(org) {
+    if (!org) return "";
+    return clubA(org, logoMark(org) + esc(org), { cls: "fa-club-link" });
+  }
+  function logoMark(org) {
+    if (!org || !ESPN_SLUGS[org]) return "";
+    return `<img class="fa-logo" src="${esc(teamLogoSrc(org))}" alt="" loading="lazy" onerror="this.remove()">`;
+  }
+  // A mark standing alone (no code beside it): the link's name is the club's
+  // full name, and a mark that fails to load leaves the code behind.
+  function clubMark(org) {
+    const H = typeof window !== "undefined" && window.EEPHUS_HUB;
+    const c = org && H && H.club ? H.club(org) : null;
+    if (!c || !ESPN_SLUGS[org]) return clubA(org, teamLogo(org));
+    return clubA(org, `<img class="fa-logo" src="${esc(teamLogoSrc(org))}" alt="${esc(c.name)}" loading="lazy"`
+      + ` onerror="this.replaceWith('${c.code}')">`);
   }
 
   // Deal verdict chip - the plain-English read of Deal+ (band edges are the
@@ -1062,7 +1097,7 @@
     // Sub line: identity that has no column, then the facts whose columns fold
     // at narrow widths (CSS reveals them only then, each behind its own dot).
     const sub = `<span class="fa-pl-sub"><span class="fa-sub-id">${esc(m.pos || "")}`
-      + `${m.from ? ` &middot; ${teamLogo(m.from)}${esc(m.from)}` : ""}${handOf(m) ? " &middot; " + handShort(m) : ""}</span>`
+      + `${m.from ? ` &middot; ${clubTag(m.from)}` : ""}${handOf(m) ? " &middot; " + handShort(m) : ""}</span>`
       + `<span class="fa-sub-age" title="Age in the free-agent season"><span class="fa-sr-sm">age </span>${m.age != null ? m.age.toFixed(1) : "?"}</span>`
       + `<span class="fa-sub-st ${st.cls}" title="${esc(st.tip)}">${st.sub}</span></span>`;
     const dp = m.dealPlus != null
@@ -1424,7 +1459,7 @@
     const misses = scored.slice()
       .sort((a, b) => Math.abs(actGuar(b) - b.projGuar) - Math.abs(actGuar(a) - a.projGuar))
       .slice(0, 6)
-      .map(m => `<div class="fa-rail-row">${teamLogo(m.signedTo)}
+      .map(m => `<div class="fa-rail-row">${clubMark(m.signedTo)}
         <a class="fa-player-link" href="#${faHash()}player=${encodeURIComponent(m.key || "")}">${esc(m.name)}</a>
         <span class="fa-rail-num" title="Actual guarantee minus predicted (NPV basis)">${formatMetric((actGuar(m) - m.projGuar) / 1e6, "surplusM")}</span></div>`).join("");
     return `<aside class="fa-board-rail">
@@ -1444,7 +1479,7 @@
       .map(o => ({ o, v: mean5(byOrg[o]), n: (byOrg[o] || []).length }))
       .filter(r => r.v != null)
       .sort((a, b) => b.v - a.v).slice(0, 6)
-      .map(r => `<div class="fa-rail-row">${teamLogo(r.o)}
+      .map(r => `<div class="fa-rail-row">${clubMark(r.o)}
         <a href="#${faHash()}view=fits&team=${encodeURIComponent(r.o)}" class="fa-player-link"${r.o === team ? ' aria-current="true"' : ""}>${esc(r.o)}</a>
         <span class="fa-rail-num" title="${r.n} scored fits">${r.v.toFixed(2)}</span></div>`).join("");
     const t = (meta && meta.teams && meta.teams[team]) || {};
@@ -1468,10 +1503,10 @@
     const sign = (arr, get, dir) => arr.filter(s => get(s) != null)
       .sort((a, b) => dir * (get(a) - get(b))).slice(0, 6);
     const warRows = sign(w.signings || [], s => s.warTd, -1).map(s =>
-      `<div class="fa-rail-row">${teamLogo(s.to)}<span>${esc(s.name)}</span>
+      `<div class="fa-rail-row">${clubMark(s.to)}<span>${esc(s.name)}</span>
         <span class="fa-rail-num" title="Realized ${realizedWar()} over the contract's elapsed seasons">${formatMetric(s.warTd, "war")}</span></div>`).join("");
     const surRows = sign(w.signings || [], s => s.surplusTd, -1).map(s =>
-      `<div class="fa-rail-row">${teamLogo(s.to)}<span>${esc(s.name)}</span>
+      `<div class="fa-rail-row">${clubMark(s.to)}<span>${esc(s.name)}</span>
         <span class="fa-rail-num ${s.surplusTd >= 0 ? "fa-pos" : "fa-neg"}">${formatMetric(s.surplusTd / 1e6, "surplusM")}</span></div>`).join("");
     // The most recent winter has no realized seasons yet (the shipped archive
     // carries zero warTd for it), and an empty aside would still take its 230px
@@ -1488,7 +1523,7 @@
   // overpays, class supply by position group, the $/WAR trend.
   function boardRail(cls) {
     const proj = cls.members.filter(m => m.projGuar != null);
-    const railRow = m => `<div class="fa-rail-row">${teamLogo(m.from)}
+    const railRow = m => `<div class="fa-rail-row">${clubMark(m.from)}
       <a class="fa-player-link" href="#${faHash()}player=${encodeURIComponent(m.key || "")}">${esc(m.name)}</a>
       <span class="fa-rail-num">${surplusSpan(m.surplus)}</span></div>`;
     const values = proj.filter(m => m.verdict === "value")
@@ -1581,7 +1616,7 @@
         return `<tr>
           <td>${m.signedDate || EM_DASH}</td>
           <td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span>${m.qoAccepted ? ' <span title="Accepted the qualifying offer">QO accepted</span>' : ""}</td>
-          <td>${teamLogo(m.from)}${clubLink(m.from)} &rarr; ${teamLogo(m.signedTo)}${clubLink(m.signedTo)}</td>
+          <td>${clubTag(m.from)} &rarr; ${clubTag(m.signedTo)}</td>
           <td>${actual}</td>
           <td title="Pre-winter prediction, frozen">${pred}</td>
           <td title="Actual guarantee minus predicted (positive = market paid above model)">${dGuar}</td>
@@ -1711,12 +1746,12 @@
         style: "display:block;width:100%;max-width:340px;height:auto;margin:2px 0 0;",
         xFirst: String(cls.class_year), xLast: String(cls.class_year + wpPath.length - 1),
         aria: `Projected WAR (fWAR basis) by season, ${cls.class_year} through ${cls.class_year + wpPath.length - 1}` });
-    const comps = (m.comps || []).map(c => `<tr><td>${esc(c.name)}</td><td>${c.yr}</td><td>${teamLogo(c.to)}${esc(c.to || "")}</td><td>${c.years ?? "?"}y / ${c.guar ? money(c.guar) : "?"}</td></tr>`).join("");
+    const comps = (m.comps || []).map(c => `<tr><td>${esc(c.name)}</td><td>${c.yr}</td><td>${c.to ? clubTag(c.to) : ""}</td><td>${c.years ?? "?"}y / ${c.guar ? money(c.guar) : "?"}</td></tr>`).join("");
     const fits = (m.fits || []).map(f =>
-      `<span class="chip" title="need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " - blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""} &middot; ${f.fit}</span>`).join(" ");
+      `<span class="chip" title="need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " - blocked by " + esc(blockedText(f.blockedBy)) : ""}">${clubTag(f.org)}${f.blockedBy ? "*" : ""} &middot; ${f.fit}</span>`).join(" ");
     const signedBlock = m.status === "signed" ? `
       <h3>Signed</h3>
-      <p>${teamLogo(m.from)}${esc(m.from || "")} &rarr; <strong>${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</strong> &middot;
+      <p>${clubTag(m.from)} &rarr; <strong>${clubTag(m.signedTo)}</strong> &middot;
       ${m.signedMilb ? "MiLB deal" : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)} (${money(m.signedAav)} AAV)`}
       ${m.signedDate ? `<span class="fa-sub"> &middot; first seen ${m.signedDate}</span>` : ""}
       ${(m.projGuar != null && m.signedGuar != null && !m.signedMilb) ? `<br>vs predicted ${m.projYears}y / ${money(m.projGuar)} &middot; miss ${formatMetric(((m.signedGuarNpv ?? m.signedGuar) - m.projGuar) / 1e6, "surplusM")} &middot; Deal+ at the actual price ${Math.round(100 * m.rational / (m.signedGuarNpv ?? m.signedGuar))}` : ""}</p>` : "";
@@ -1791,7 +1826,7 @@
       <div class="mlbp-hero" id="fa-player-hero">
         <span id="fa-hero-photo"></span>
         <div class="mlbp-hero-main">
-          <div class="mlbp-name">${teamLogo(m.from)}<h2>${esc(m.name)}</h2></div>
+          <div class="mlbp-name">${clubA(m.from, teamLogo(m.from), { mark: true })}<h2>${esc(m.name)}</h2></div>
           <div class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? "age " + Math.floor(m.age) : "?"} &middot; ${clubLink(m.from)}${handLabel(m) ? " &middot; " + esc(handLabel(m)) : ""} &middot; ${statusChip(m)}</div>
           <div style="margin-top:8px;"><button class="chip egfx-chip" id="fa-player-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
         </div>
@@ -1986,7 +2021,7 @@
       <thead><tr><th>Player</th><th><span data-gl="fit_components">Fit</span></th><th title="WAR gap over the incumbent at the position">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV (habitual taxpayers keep a floor)">Afford</th><th title="Park factor fit (smallest weight)">Park</th><th title="Biggest deal ever vs this price, last-3-winter outlay, $100M-deal count">Behavior</th><th title="PX = near-ETA PROSPX prospect, MLB = contracted incumbent">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
       <tbody>${body || `<tr><td colspan="10">No scored fits for ${state.team} in this class.</td></tr>`}</tbody></table>`;
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Team</span>${chips}</div>
-      <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${teamLogo(state.team)}${clubLink(state.team)} fits</span>
+      <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${clubTag(state.team)} fits</span>
       <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w ${t.baseSrc === "mlb_projections" ? "(projected)" : "(contracted core)"} &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}${fitsGfx}</span></div>
       ${railLayout(fitsMain, fitsRail(byOrg, meta, state.team))}`;
     rows.querySelectorAll("[data-fa-team]").forEach(b => b.onclick = () => {
@@ -2024,7 +2059,7 @@
     const w = winters.find(x => x.year === state.winter);
     const body = w.signings.map(s => `<tr${s.milb ? ' class="fa-dim"' : ""}>
         <td><strong>${esc(s.name)}</strong> <span class="fa-sub">${esc(s.pos || "")}</span>${s.qo ? ' <span title="Received a qualifying offer">QO</span>' : ""}</td>
-        <td>${clubLink(s.from)} &rarr; ${teamLogo(s.to)}${clubLink(s.to)}</td>
+        <td>${clubLink(s.from)} &rarr; ${clubTag(s.to)}</td>
         <td>${s.years ?? EM_DASH}</td>
         <td>${s.milb ? "MiLB deal" : money(s.guar)}</td>
         <td>${money(s.aav)}</td>

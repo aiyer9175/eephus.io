@@ -176,6 +176,33 @@
   function teamLogo(team) {
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team) : "";
   }
+  // A club mention links to its club (owner ask 9) through the hub's one club
+  // resolver (EEPHUS_HUB.club + clubHref), never a raw payload code: a
+  // prospect's club opens its farm system page (ctx "farm"), an MLB player's
+  // club its Franchises page. clubA wraps the markup printed before; `mark`
+  // makes the logo beside a name the mouse twin of the code link printed under
+  // it (out of the tab order, hidden from a screen reader). clubMark is a logo
+  // standing alone: its name is the club's full name, and a logo that fails to
+  // load leaves the code behind. A code the hub does not know keeps its markup
+  // in a span marked data-club-nolink="unresolved", never a guessed link.
+  function clubA(team, inner, ctx, mark) {
+    var H = window.EEPHUS_HUB, c = null;
+    if (!inner || !H || !H.club || !H.clubHref) return inner;
+    try { c = team ? H.club(team) : null; } catch (e) { c = null; }
+    if (!c) return team ? '<span data-club-nolink="unresolved">' + inner + "</span>" : inner;
+    var farm = ctx === "farm";
+    return '<a class="club-link' + (mark ? " club-link--mark" : "") + '" href="' + esc(H.clubHref(c.code, farm ? "farm" : "franchise")) + '" data-club="' + c.code +
+      '" title="' + esc(c.name + (farm ? ": farm system" : ": franchise overview")) + '"' +
+      (mark ? ' tabindex="-1" aria-hidden="true"' : "") + ">" + inner + "</a>";
+  }
+  function clubMark(team, ctx) {
+    var H = window.EEPHUS_HUB, c = null;
+    try { c = team && H && H.club ? H.club(team) : null; } catch (e) { c = null; }
+    if (!c || !H.teamLogoURL) return clubA(team, teamLogo(team), ctx);
+    return clubA(c.code, '<img class="eephus-teamlogo" src="' + esc(H.teamLogoURL(c.code)) + '" alt="' + esc(c.name) +
+      '" loading="lazy" onerror="this.outerHTML=\'&lt;span&gt;' + c.code + '&lt;/span&gt;\'">', ctx);
+  }
+  function ctxOf(kind) { return kind === "prospect" ? "farm" : "franchise"; }
   function sections() { return (S.data && S.data.sections) || {}; }
 
   // ---- the injury chip (wiring W02, 2026-10-07) ------------------------------
@@ -341,9 +368,9 @@
     { key: "name", label: "Prospect", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
       title: "Sort by name", get: function (d) { return d.name; },
       cell: function (d) {
-        return '<div class="dyn-id ff-id"><span class="mlb-name">' + teamLogo(d.org) + " " + nameLink(d.mlbam, d.name) +
-          '</span><span class="mlb-sub">' + esc(d.pos || "") + (d.org ? " &middot; " + esc(d.org) : "") +
-          injuryChips(d) + "</span></div>";
+        return '<div class="dyn-id ff-id"><span class="mlb-name">' + clubA(d.org, teamLogo(d.org), "farm", true) + " " +
+          nameLink(d.mlbam, d.name) + '</span><span class="mlb-sub">' + esc(d.pos || "") +
+          (d.org ? " &middot; " + clubA(d.org, esc(d.org), "farm") : "") + injuryChips(d) + "</span></div>";
       } },
     { key: "efv", label: "eFV", term: "xfv", where: "head", track: "72px", strong: true,
       title: "eFV board grade, same as PROSPX, rounded to nearest.",
@@ -488,7 +515,7 @@
       }).join("");
       return '<div class="mlb-card ff-card dyn-card" style="--org-color:' +
         (opts.stripeOf ? opts.stripeOf(row, rk) : "var(--border)") + ";grid-template-columns:" + tracks + '"' +
-        (href ? ' tabindex="0" role="button" data-dynhref="' + esc(href) + '"' : "") + ">" +
+        (href ? ' data-dynhref="' + esc(href) + '"' : "") + ">" +
         hcols.map(function (c) { return cardCell(c, row, rk); }).join("") +
         '<div class="mlb-tape"><div class="mlb-tape-inner">' + chips + "</div></div></div>";
     }).join("");
@@ -625,7 +652,7 @@
       var chips = injuryChips(c);
       return '<tr><td class="dyn-nm"' + (chips ? ' data-export-text="' + esc(c.name) + '"' : "") + ">" +
         nameLink(c.mlbam, c.name) +
-        (chips ? '<span class="dyn-inj-row">' + chips + "</span>" : "") + "</td><td>" + esc(c.org) +
+        (chips ? '<span class="dyn-inj-row">' + chips + "</span>" : "") + "</td><td>" + clubA(c.org, esc(c.org), "farm") +
         "</td><td>" + esc(c.pos) + "</td><td>" + esc(c.eta) + '</td><td class="dyn-sc">' + grade + "</td></tr>";
     }).join("");
     return filterBar(null, false) +
@@ -698,9 +725,9 @@
     { key: "name", label: "Prospect", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
       title: "Sort by name", get: function (d) { return d.name; },
       cell: function (d) {
-        return '<div class="dyn-id ff-id"><span class="mlb-name">' + teamLogo(d.org) + ' <a class="dyn-name-link" href="' +
-          esc(prospxHref(d.key)) + '">' + esc(d.name) + '</a></span><span class="mlb-sub">' + esc(d.pos || "") +
-          (d.org ? " &middot; " + esc(d.org) : "") + "</span></div>";
+        return '<div class="dyn-id ff-id"><span class="mlb-name">' + clubA(d.org, teamLogo(d.org), "farm", true) +
+          ' <a class="dyn-name-link" href="' + esc(prospxHref(d.key)) + '">' + esc(d.name) + '</a></span><span class="mlb-sub">' +
+          esc(d.pos || "") + (d.org ? " &middot; " + clubA(d.org, esc(d.org), "farm") : "") + "</span></div>";
       } },
     { key: "p12", label: function () { var e = nextEnd(); return e ? "By " + isoMonth(e) : "Chance"; },
       where: "head", track: "96px", strong: true,
@@ -838,9 +865,9 @@
       { key: "name", label: "Player", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
         title: "Sort by name", get: function (d) { return d.name; },
         cell: function (d) {
-          return '<div class="dyn-id ff-id"><span class="mlb-name">' + teamLogo(d.team) + " " +
+          return '<div class="dyn-id ff-id"><span class="mlb-name">' + clubA(d.team, teamLogo(d.team), ctxOf(d.kind), true) + " " +
             nameLink(d.mlbam, d.name) + '</span><span class="mlb-sub">' + esc(d.pos || "") +
-            (d.team ? " &middot; " + esc(d.team) : "") + "</span></div>";
+            (d.team ? " &middot; " + clubA(d.team, esc(d.team), ctxOf(d.kind)) : "") + "</span></div>";
         } },
       { key: "value", label: "Value", where: "head", track: "84px", strong: true,
         title: "Discounted value above replacement over the horizon, in the chosen format.",
@@ -1009,7 +1036,7 @@
       var v = keeperVerdict(d);
       return "<tr>" +
         '<td class="mlbstats-col-rank">' + esc(d.rank) + "</td>" +
-        '<td class="dyn-nm">' + teamLogo(d.org) + " " + nameLink(d.mlbam, d.name) + "</td>" +
+        '<td class="dyn-nm">' + clubMark(d.org, ctxOf(d.kind)) + " " + nameLink(d.mlbam, d.name) + "</td>" +
         "<td>" + esc(d.pos || "") + "</td>" +
         "<td>" + (d.kind === "prospect" ? "Prospect" : "MLB") + "</td>" +
         "<td>" + fmtVal(d.value) + "</td>" +
@@ -1075,7 +1102,7 @@
         // shared class on the header AND the cell is the module-side fix that
         // rule asks for, and it pins the rank narrow with the NAME beside it.
         '<td class="mlbstats-col-rank">' + esc(d.rank) + "</td>" +
-        '<td class="dyn-nm">' + teamLogo(d.org) + " " + nameLink(d.mlbam, d.name) + "</td>" +
+        '<td class="dyn-nm">' + clubMark(d.org, "farm") + " " + nameLink(d.mlbam, d.name) + "</td>" +
         "<td>" + esc(d.pos || "") + "</td>" +
         "<td>" + f0(d.efv) + "</td>" +
         "<td>" + esc(d.eta || "-") +
@@ -1215,10 +1242,11 @@
         fire(true);
       });
     });
-    // Whole-card activation. The guard must EXCLUDE THE CARD ITSELF: the card
-    // carries role="button" and closest() starts at the element it is called
-    // on, so a naive closest("a,button,[role=button]") matches the card and
-    // returns before the handler can open anything.
+    // Whole-card activation, a mouse convenience: the card is not a button
+    // (it holds the player link and the club links, and no link may sit inside
+    // a button), so the name link is the keyboard path. A click on a link or a
+    // control inside the card is left to it; the guard still compares the hit
+    // to the card itself, as it did when the card carried role="button".
     r.querySelectorAll("[data-dynhref]").forEach(function (c) {
       function onCard(e) {
         var t = e.target.closest("a,button,[role=button]");

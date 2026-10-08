@@ -64,6 +64,23 @@
   function teamLogo(team) {
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team) : "";
   }
+  // A club mention links to the club's Franchises page (owner ask 9) through
+  // the hub's one club resolver (EEPHUS_HUB.club + clubHref), never a raw
+  // payload code. clubA wraps the markup printed before; `mark` makes the logo
+  // beside the name the mouse twin of the code link printed under it (out of
+  // the tab order, hidden from a screen reader). A code the hub does not know
+  // keeps its markup in a span marked data-club-nolink="unresolved", never a
+  // guessed link.
+  function clubA(team, inner, mark) {
+    var H = window.EEPHUS_HUB, c = null;
+    if (!inner || !H || !H.club || !H.clubHref) return inner;
+    try { c = team ? H.club(team) : null; } catch (e) { c = null; }
+    if (!c) return team ? '<span data-club-nolink="unresolved">' + inner + "</span>" : inner;
+    return '<a class="club-link' + (mark ? " club-link--mark" : "") + '" href="' + esc(H.clubHref(c.code)) + '" data-club="' + c.code +
+      '" title="' + esc(c.name + ": franchise overview") + '"' +
+      (mark ? ' tabindex="-1" aria-hidden="true"' : "") + ">" + inner + "</a>";
+  }
+  function clubCode(team) { return team ? clubA(team, esc(team)) : ""; }
   // Glossary spans. Every slug below is checked against data/glossary.json
   // before it is used: a [data-gl] carrying a slug the artifact does not have
   // renders a term that looks interactive and defines nothing.
@@ -258,8 +275,8 @@
     var off = recs.some(function (r) { return r && r.roster_status === "off_roster"; });
     var basis = ((payload() || {}).roster_status || {}).basis || "Off the active roster at build time.";
     return '<div class="fc-head">' +
-      '<h2 id="fc-title" class="fc-name">' + teamLogo(p.team) + " " + esc(p.name || "Player") + "</h2>" +
-      '<div class="fc-sub">' + esc(p.team || "") + (p.pos ? " &middot; " + esc(p.pos) : "") +
+      '<h2 id="fc-title" class="fc-name">' + clubA(p.team, teamLogo(p.team), true) + " " + esc(p.name || "Player") + "</h2>" +
+      '<div class="fc-sub">' + clubCode(p.team) + (p.pos ? " &middot; " + esc(p.pos) : "") +
       (recs.length > 1 ? ' <span class="fc-elig fc-twoway">two-way</span>' : "") +
       (off ? ' <span class="fc-elig fc-off" title="' + esc(basis) + '">off roster</span>' : "") +
       " " + chips + "</div>" +
@@ -352,7 +369,7 @@
       '<div class="fc-rows">' + list.map(function (s) {
         return '<div class="fc-row"><span>' + esc(dayLabel(s.date)) + "</span>" +
           "<span>" + (s.home === true ? "vs " : (s.home === false ? "@ " : "")) +
-          esc(s.opp || "") + (s.venue ? " &middot; " + esc(s.venue) : "") +
+          clubCode(s.opp) + (s.venue ? " &middot; " + esc(s.venue) : "") +
           (s.projected ? ' <span class="fc-dim">(projected)</span>' : "") + "</span>" +
           "<span>" + num(s.pts, 1) + " pts</span></div>";
       }).join("") + "</div>" +
@@ -365,7 +382,7 @@
     // Role ORDER, never a likelihood (closer gate RED 2026-08-16).
     var role = r.idx === 0 ? "closer slot" : (r.idx === 1 ? "next in line" : "bullpen depth");
     return '<div class="fc-sec"><div class="fc-sec-h">' + gl("Bullpen role", "reliever_roles") + "</div>" +
-      '<div class="fc-chips">' + chip(esc(r.team), role, r.idx === 0 ? "fc-good" : "") +
+      '<div class="fc-chips">' + chip(clubCode(r.team), role, r.idx === 0 ? "fc-good" : "") +
       chip("Depth chart", "#" + (r.idx + 1) + " of " + r.n) + "</div>" +
       '<div class="fc-fine">Order by a gmLI-led score with saves and REM+, over the reliever ' +
       "board's qualified arms. Not a saves projection.</div></div>";
@@ -437,11 +454,11 @@
         (g.opp_off != null ? ". Opponent Offense+ " + g.opp_off : ". Opponent offense unmeasured") +
         (g.opp_bp != null ? ", Bullpen+ " + g.opp_bp : "") + ".";
       return '<span class="fc-chip fc-n7' + cls + '" title="' + esc(title) + '"><b>' +
-        esc(dayLabel(g.d)) + "</b>" + esc((g.home ? "vs " : "@ ") + (g.opp || "?")) +
+        esc(dayLabel(g.d)) + "</b>" + esc(g.home ? "vs " : "@ ") + (g.opp ? clubCode(g.opp) : "?") +
         (g.opp_off != null ? '<span class="fc-n7-off">Off+ ' + esc(g.opp_off) + "</span>" : "") +
         "</span>";
     }).join("");
-    return '<div class="fc-sec"><div class="fc-sec-h">' + esc(team) + ", next 7 days</div>" +
+    return '<div class="fc-sec"><div class="fc-sec-h">' + clubCode(team) + ", next 7 days</div>" +
       '<div class="fc-chips">' + chips + "</div>" +
       '<div class="fc-fine">Border by opponent ' + gl("Offense+", "offense_plus") +
       ": 105 or higher red, 95 or lower green, unmeasured neutral.</div></div>";

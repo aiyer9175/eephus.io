@@ -357,8 +357,10 @@ def test_no_page_scroll_at_390_and_clubs_link_to_franchises(server):
     with _page(server, w=390, h=844, touch=True) as (pg, errors):
         sw = pg.evaluate("[document.documentElement.scrollWidth, window.innerWidth]")
         assert sw[0] <= sw[1], sw
+        # The club link comes from the hub's resolver (owner ask 9, Q9_07): an
+        # MLB row's club opens Franchises, a prospect row's its farm system.
         href = pg.get_attribute(".tm-board-table a.tm-org-cell >> nth=0", "href")
-        assert re.fullmatch(r"/franchise/#team=[A-Z]{2,3}", href), href
+        assert re.fullmatch(r"/(franchise/#team=|prospx/#farm-org=)[A-Z]{3}", href), href
         assert not errors, errors
 
 
