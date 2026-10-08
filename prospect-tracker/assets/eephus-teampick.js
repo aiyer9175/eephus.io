@@ -109,10 +109,13 @@
              fallback: c ? code : ((logo || school) ? initials(text) : ""), hay: hay, disabled: !!o.disabled };
   }
 
+  // The mark sits inside the picker's own button or option, where no link may
+  // go, so it is marked data-club-nolink="self" (owner ask 9: the club links
+  // render test reads every MLB logo as a link or a named exception).
   function markHTML(m) {
     if (m.logo) {
       return '<img class="teampick-logo" src="' + esc(m.logo) + '" alt="" loading="lazy" decoding="async"'
-        + ' data-fb="' + esc(m.fallback) + '">';
+        + ' data-fb="' + esc(m.fallback) + '" data-club-nolink="self">';
     }
     if (m.club || m.school) return '<span class="teampick-chip">' + esc(m.fallback) + "</span>";
     return '<span class="teampick-glyph" aria-hidden="true">' + DIAMOND + "</span>";

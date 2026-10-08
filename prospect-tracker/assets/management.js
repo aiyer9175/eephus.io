@@ -57,6 +57,19 @@
     if (H && H.clubHref) return H.clubHref(code);
     return code ? "/franchise/#team=" + encodeURIComponent(code) : "";
   }
+  // The club heading's code opens the club's Franchises page (owner ask 9),
+  // href from the hub's one club resolver; a code it does not know prints as
+  // text in a span marked data-club-nolink="unresolved" (plain text when the
+  // hub is not on the page).
+  function clubLink(code) {
+    var H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+    if (!H || !H.club) return esc(code);
+    var c = H.club(code);
+    var href = c && H.clubHref ? H.clubHref(c.code) : "";
+    if (!href) return code ? '<span data-club-nolink="unresolved">' + esc(code) + "</span>" : "";
+    return '<a class="club-link" href="' + esc(href) + '" data-club="' + esc(c.code) + '" title="' +
+      esc(c.name + ": franchise overview") + '">' + esc(code) + "</a>";
+  }
   // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
   // loading, empty, unmeasured or failed, around a message this file escapes.
   // The bare box is the fallback for a test harness that loads this file alone.
@@ -1018,7 +1031,7 @@
       return '<span class="mgmt-fam">' + esc(famLabel(f)) + " <b class=\"" + signCls(v) + '">' +
         (v == null ? " - " : signed(v, 2)) + "</b></span>";
     }).join("");
-    out += '<div class="mgmt-club-head"><h2>' + esc(row.club) + " " + esc(row.season) +
+    out += '<div class="mgmt-club-head"><h2>' + clubLink(row.club) + " " + esc(row.season) +
       (row.partial ? ' <span class="mgmt-flag">partial</span>' : "") + "</h2>" +
       '<div class="mgmt-club-meta">' + esc(row.agent) + "; " + esc(row.games) + " games; " + esc(row.n_all) +
       " ledger rows; mean " + gl("LI at decision", "li_at_decision") + " " + num(row.mean_li, 2) +

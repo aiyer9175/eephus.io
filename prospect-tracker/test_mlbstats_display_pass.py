@@ -223,8 +223,10 @@ def test_the_team_board_links_each_club_to_its_franchise_page():
     ctx = MiniRacer()
     ctx.eval(js + views.JS)
     html = ctx.eval("__html['mlbstats-war-root'] || ''")
-    assert ('<a class="mlbstats-name-link" href="/franchise/#team=CHC" title="Club CHC: franchise overview">'
-            'CHC</a>') in html
+    # owner ask 9 (Q9_06): the club link carries the shared club-link class and
+    # the canonical code; the mark and the printed code sit inside it.
+    assert ('<a class="club-link mlbstats-name-link" href="/franchise/#team=CHC" data-club="CHC" '
+            'title="Club CHC: franchise overview">CHC</a>') in html
 
 
 def test_the_masthead_lede_is_one_short_line_and_keeps_every_hook():

@@ -245,17 +245,21 @@
      Degrades to the plain code when the hub is absent or the club is unknown,
      and the <img> carries its own onerror removal. The mark is decorative
      (alt="") because the code follows it as text (QCLA16), and a club the
-     hub knows links to its /franchise/ page. */
+     hub knows links to its /franchise/ page through the hub's one club
+     resolver (EEPHUS_HUB.clubHref, owner ask 9). A code the hub does not know
+     keeps its text in a span marked data-club-nolink="unresolved". */
   function club(code, noLogo) {
     var t = String(code == null ? "" : code).trim();
     if (!t) return DASH;
     var hub = window.EEPHUS_HUB;
     var logo = (!noLogo && hub && typeof hub.teamLogo === "function") ? hub.teamLogo(t, null, { decorative: true }) : "";
     var c = (hub && typeof hub.club === "function") ? hub.club(t) : null;
-    if (c && c.code) {
-      return '<a class="arb-club" href="/franchise/#team=' + encodeURIComponent(c.code) + '">' + logo + esc(t) + "</a>";
+    var href = (c && c.code && typeof hub.clubHref === "function") ? hub.clubHref(c.code) : "";
+    if (href) {
+      return '<a class="arb-club club-link" href="' + esc(href) + '" data-club="' + esc(c.code) + '" title="' +
+        esc(c.name + ": franchise overview") + '">' + logo + esc(t) + "</a>";
     }
-    return '<span class="arb-club">' + logo + esc(t) + "</span>";
+    return '<span class="arb-club"' + (hub && hub.club ? ' data-club-nolink="unresolved"' : "") + ">" + logo + esc(t) + "</span>";
   }
 
   /* A name's link: the exporter resolves it ("p:" a /projections/ key, "x:"

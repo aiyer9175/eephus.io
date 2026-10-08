@@ -112,8 +112,10 @@
   function fSigned(v) { var n = num(v); if (n == null) return EM_DASH; return (n > 0 ? "+" : "") + n.toFixed(1); }
   // Signed whole numbers: Savant serves blocking runs and blocks above average as integers.
   function fSignedInt(v) { var n = num(v); if (n == null) return EM_DASH; return (n > 0 ? "+" : "") + Math.round(n); }
+  // Every mark sits inside a club link beside its printed code (or in the
+  // aria-hidden mark link of a player row), so it is decorative (alt="").
   function logo(team) {
-    try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; }
+    try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team, null, { decorative: true }) : ""; }
     catch (e) { return ""; }
   }
   // The hub charts draw on a viewBox (640 units wide unless told) that the SVG
@@ -2064,7 +2066,7 @@
           if (s.ip != null) side.push(f1(s.ip) + " IP");
           if (s.g != null) side.push(fInt(s.g) + " G");
           return '<span class="mlbx-season"><b>' + s.season + '</b> <span class="proj-dim">'
-            + esc(s.team || EM_DASH) + "</span> <b>" + f1(s.war) + '</b> <span class="proj-dim">'
+            + (s.team ? clubA(s.team, esc(s.team)) : EM_DASH) + "</span> <b>" + f1(s.war) + '</b> <span class="proj-dim">'
             + esc(side.join(" · ")) + "</span></span>";
         }).join("");
         return '<tr class="mlbx-seasonrow" data-export-skip><td colspan="' + n
@@ -2376,7 +2378,7 @@
           body += nameCell(r, opts && opts.nameExtra ? opts.nameExtra(r) : "");
           return;
         }
-        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + teamLink(r.team) + "</td>"; return; }
+        if (c.kind === "team") { body += '<td class="mlbstats-name">' + teamLink(r.team) + "</td>"; return; }
         if (c.cell) { body += td + c.cell(r) + "</td>"; return; }
         var v = getVal(c, r);
         // An absent value reads as the site-wide null marker rather than a
@@ -2401,15 +2403,30 @@
       + '<caption class="visually-hidden">' + esc(TABLE_LABEL[board] || "MLB Stats leaderboard") + "</caption>"
       + head + body + "</table>";
   }
-  // A team board's club cell opens that club's Franchises page (display pass:
-  // every club name links where a page exists). A code that is not one of the
-  // thirty prints as text, never a guessed link.
-  function teamLink(team) {
+  // A club mention opens that club's Franchises page (owner ask 9). The href
+  // comes from the hub's one club resolver (EEPHUS_HUB.clubHref), so the
+  // StatsAPI code this page prints (CWS, KC, SD) lands on its own club (CHW,
+  // KCR, SDP). `inner` is the markup the surface printed before (the mark and
+  // the code), so the text and the mark stay as they were. A code that is not
+  // one of the thirty keeps that markup in a span marked
+  // data-club-nolink="unresolved", never a guessed link (without the hub on
+  // the page the markup prints as it did). opts.cls adds classes;
+  // opts.mark makes the redundant mark beside a row's own code link: a mouse
+  // target only (tabindex -1, aria-hidden), so the keyboard reaches the player
+  // link before the club link and a screen reader hears the club once.
+  function clubA(team, inner, opts) {
+    var o = opts || {};
     var H = (typeof window !== "undefined") && window.EEPHUS_HUB;
     var c = null, href = "";
-    try { c = H && H.club ? H.club(team) : null; href = c && H.clubHref ? H.clubHref(c.code) : ""; } catch (e) { href = ""; }
-    return href ? '<a class="mlbstats-name-link" href="' + esc(href) + '" title="' + esc(c.name + ": franchise overview")
-      + '">' + esc(team) + "</a>" : esc(team || EM_DASH);
+    if (!H || !H.club) return inner;
+    try { c = H.club(team); href = c && H.clubHref ? H.clubHref(c.code) : ""; } catch (e) { href = ""; }
+    if (!href) return team ? '<span data-club-nolink="unresolved">' + inner + "</span>" : inner;
+    return '<a class="club-link' + (o.cls ? " " + o.cls : "") + '" href="' + esc(href) + '" data-club="' + esc(c.code)
+      + '" title="' + esc(c.name + ": franchise overview") + '"'
+      + (o.mark ? ' tabindex="-1" aria-hidden="true"' : "") + ">" + inner + "</a>";
+  }
+  function teamLink(team) {
+    return team ? clubA(team, logo(team) + esc(team), { cls: "mlbstats-name-link" }) : EM_DASH;
   }
   // The accessible name of each board's table, a hidden caption (QMLA17): a
   // screen reader's table list read "table, table" with nothing to tell the
@@ -2474,7 +2491,7 @@
     var more = (r.clubs && r.clubs.length > 1)
       ? '<span class="proj-dim" title="' + esc("Clubs of production: " + r.clubs.join(", "))
         + '">+' + (r.clubs.length - 1) + "</span>" : "";
-    var team = r.team ? '<span class="proj-dim"> ' + esc(r.team) + "</span>" + more : "";
+    var team = r.team ? '<span class="proj-dim"> ' + clubA(r.team, esc(r.team)) + "</span>" + more : "";
     var prov = (r.qualified === false) ? '<span class="bp-prov" title="Below the qualifying sample; provisional">prov</span>' : "";
     // A fold row whose substrate carries no name prints the player's MLBAM id
     // rather than a null marker: an id is a handle (the search box matches it,
@@ -2498,7 +2515,8 @@
         + (full ? esc(full) + " - " : "") + 'open the MLB player card">' + nm + "</a>"
       : pendingName(named ? r.mlbam : null, nm);
     return '<td class="mlbstats-name"' + (full ? ' title="' + esc(full) + '"' : "") + ">"
-      + (extra || "") + logo(r.team) + name + team + role + prov + "</td>";
+      + (extra || "") + (r.team ? clubA(r.team, logo(r.team), { cls: "club-link--mark", mark: true }) : "")
+      + name + team + role + prov + "</td>";
   }
 
   function sortRows(rows, cols, sort) {
@@ -2702,7 +2720,7 @@
           + "</div>";
       }).join("");
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
-        + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
+        + '<span class="bp-depth-team">' + clubA(t.team, logo(t.team) + esc(t.team)) + "</span>"
         + '<span class="rem-plus ' + EephusTiers.cls(t.bullpen_plus, "z") + '" data-gl="bullpen_plus">Bullpen+ ' + fInt(t.bullpen_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");
@@ -3616,7 +3634,7 @@
           + "</div>";
       }).join("");
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
-        + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
+        + '<span class="bp-depth-team">' + clubA(t.team, logo(t.team) + esc(t.team)) + "</span>"
         + '<span class="rem-plus ' + EephusTiers.cls(t.rotation_plus, "z") + '" data-gl="rotation_plus">Rotation+ ' + fInt(t.rotation_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");
@@ -4329,7 +4347,7 @@
         ? '<div class="bp-bench-head" title="Regulars not on the active roster">Out</div>' + out.map(_outRow).join("")
         : "";
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
-        + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
+        + '<span class="bp-depth-team">' + clubA(t.team, logo(t.team) + esc(t.team)) + "</span>"
         + '<span class="rem-plus ' + EephusTiers.cls(t.offense_plus, "ratio") + '" data-gl="offense_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
         + handMeans(t)
         + "</div>" + head + slots + benchHtml + outHtml + "</div>";
@@ -5235,7 +5253,7 @@
             + "</div>";
         }).join("");
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
-        + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
+        + '<span class="bp-depth-team">' + clubA(t.team, logo(t.team) + esc(t.team)) + "</span>"
         + '<span class="rem-plus ' + EephusTiers.cls(t.team_dem_plus, "z") + '" data-gl="team_dem_plus">Team DEM+ ' + fInt(t.team_dem_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");
