@@ -323,7 +323,7 @@
   var filtersOpen = false;
   function filtCount(team, min, chips, qualOff) {
     return (team ? 1 : 0) + (min != null ? 1 : 0) + ((chips && chips.length) || 0)
-      + (qualOff ? 1 : 0);
+      + (qualOff ? 1 : 0) + (gradSel ? 1 : 0);
   }
   function filtBtn(n) {
     return '<button type="button" class="chip mlbx-filtbtn" aria-expanded="' + filtersOpen + '">Filters'
@@ -1525,6 +1525,7 @@
   }
   function winMatch(sec, r, idxKey) {
     if (sectionQual(sec) && r.qualified === false) return false;
+    if (!passesGrad(r)) return false;
     var tm = sectionTeam(sec);
     if (tm && rowClubs(r).indexOf(tm) < 0) return false;
     if (winEstablished && idxKey && r[idxKey + "_tag"] === "provisional") return false;
@@ -2450,6 +2451,77 @@
     var hit = LINKS.byMlbam[String(r.mlbam)];
     return (hit && hit.key) ? ("/projections/#player=" + encodeURIComponent(hit.key)) : null;
   }
+  // ---- PROSPX graduates (wiring W06) -----------------------------------------
+  // The player-links map flags every MLB card whose player came up through
+  // the PROSPX board (grad) with his debut season (debutYr). The chip names a
+  // graduate on a player board and opens his prospect card; the filter
+  // narrows every player board to the graduates, or to one debut season of
+  // them. Neither prints a number of its own, and no board groups a
+  // graduate's line by a grade (docs/PROSPECT_ANCHOR_GATE.md): no grade of
+  // any kind is read on this page. One filter for every section, like the
+  // team filter, and it rides #grad= in the URL. A rookie-eligible filter
+  // waits for service days on the map.
+  var gradSel = "";                    // "" all | "any" every graduate | "2026" one debut season
+  var GRAD_HASH_RE = /(?:^#|[#&])grad=(any|[0-9]{4})\b/;
+  function gradRow(mlbam) {
+    if (!LINKS || !LINKS.byMlbam || mlbam == null) return null;
+    var hit = LINKS.byMlbam[String(mlbam)];
+    return (hit && hit.grad) ? hit : null;
+  }
+  function passesGrad(r) {
+    if (!gradSel) return true;
+    var g = gradRow(r && r.mlbam);
+    return !!g && (gradSel === "any" || String(g.debutYr) === gradSel);
+  }
+  function gradSeasons() {
+    var seen = {}, out = [];
+    var by = (LINKS && LINKS.byMlbam) || {};
+    Object.keys(by).forEach(function (k) {
+      var y = (by[k] && by[k].grad) ? by[k].debutYr : null;
+      if (y != null && !seen[y]) { seen[y] = 1; out.push(Number(y)); }
+    });
+    // A deep-linked season keeps its option before the map lands.
+    if (/^[0-9]{4}$/.test(gradSel) && !seen[gradSel]) out.push(Number(gradSel));
+    return out.sort(function (a, b) { return b - a; });
+  }
+  function gradOptions() {
+    var opts = [["", "All players"], ["any", "PROSPX graduates"]].concat(gradSeasons().map(function (y) {
+      return [String(y), "Graduates, " + y + " debut"];
+    }));
+    return opts.map(function (o) {
+      return '<option value="' + o[0] + '"' + (o[0] === gradSel ? " selected" : "") + ">" + esc(o[1]) + "</option>";
+    }).join("");
+  }
+  function gradSelect(sec) {
+    return '<label class="mlbstats-ctl" title="' + esc("Players who came up through the PROSPX board,"
+        + " by MLB debut season. It narrows the rows and adds no number.") + '">PROSPX <select id="mlbstats-grad-'
+      + sec + '" data-grad-picker aria-label="Filter to PROSPX graduates by debut season">'
+      + gradOptions() + "</select></label>";
+  }
+  function gradChip(mlbam) {
+    var g = gradRow(mlbam);
+    if (!g) return "";
+    if (!g.prospx) return ' <span class="bp-role mlbx-grad" title="PROSPX graduate">PROSPX</span>';
+    return ' <a class="bp-role mlbx-grad" href="/prospx/#player=' + encodeURIComponent(g.prospx)
+      + '" title="PROSPX graduate: open his prospect card">PROSPX</a>';
+  }
+  function renderSectionInPlace(sec, focusId) {
+    if (sec === "starters") renderStartersInPlace(focusId);
+    else if (sec === "hitters") renderHittersInPlace(focusId);
+    else if (sec === "leverage") renderLeverageInPlace(focusId);
+    else if (sec === "defense") renderDefenseInPlace(focusId);
+    else if (sec === "war") renderWar(focusId);
+    else renderInPlace(focusId);
+  }
+  try { document.addEventListener("change", function (e) {
+    var el = e.target;
+    if (!el || !el.hasAttribute || !el.hasAttribute("data-grad-picker")) return;
+    gradSel = el.value || "";
+    if (gradSel && !LINKS) loadLinks();
+    writeHash();
+    renderSectionInPlace(section, el.id);
+  }); } catch (e) { /* no document events */ }
+
   // Before the map lands, a plain name carries its MLBAM so the map's arrival
   // can turn it into the link in place. That arrival used to re-render the
   // whole active board (QMLP05: 1.7 s of main thread on a slow phone).
@@ -2460,9 +2532,14 @@
   function upgradeLinks(el) {
     try {
       (el || document).querySelectorAll("span.mlbstats-name-txt[data-mlbam]").forEach(function (s) {
-        var href = playerHref({ mlbam: s.getAttribute("data-mlbam") });
+        var mid = s.getAttribute("data-mlbam");
+        var href = playerHref({ mlbam: mid });
         s.removeAttribute("data-mlbam");
-        if (!href) return;
+        // The graduate chip goes on a board row's name cell only, the place
+        // nameCell puts it when the map is already in hand.
+        var chip = (s.parentNode && s.parentNode.matches && s.parentNode.matches("td.mlbstats-name"))
+          ? gradChip(mid) : "";
+        if (!href) { if (chip) s.insertAdjacentHTML("afterend", chip); return; }
         var a = document.createElement("a");
         a.className = "mlbstats-name-link";
         a.setAttribute("href", href);
@@ -2470,6 +2547,7 @@
         if (td) a.setAttribute("title", (full ? full + " - " : "") + "open the MLB player card");
         while (s.firstChild) a.appendChild(s.firstChild);
         s.parentNode.replaceChild(a, s);
+        if (chip) a.insertAdjacentHTML("afterend", chip);
       });
     } catch (e) { /* links optional */ }
   }
@@ -2516,7 +2594,7 @@
       : pendingName(named ? r.mlbam : null, nm);
     return '<td class="mlbstats-name"' + (full ? ' title="' + esc(full) + '"' : "") + ">"
       + (extra || "") + (r.team ? clubA(r.team, logo(r.team), { cls: "club-link--mark", mark: true }) : "")
-      + name + team + role + prov + "</td>";
+      + name + gradChip(r.mlbam) + team + role + prov + "</td>";
   }
 
   function sortRows(rows, cols, sort) {
@@ -2566,6 +2644,7 @@
     if (relTeam && r.team !== relTeam) return false;
     if (relRoles.length && relRoles.indexOf(r.role) < 0) return false;
     if (!passesMin(r.ip, relMinIp)) return false;
+    if (!passesGrad(r)) return false;
     var q = query.trim().toLowerCase();
     if (!q) return true;
     return (String(r.name || "").toLowerCase().indexOf(q) >= 0
@@ -2938,6 +3017,7 @@
       + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-qual"' + (qualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-team", winSelectRows("bullpen", pool), relTeam, "bullpen")
+      + gradSelect("bullpen")
       + minSelect("mlbstats-minip", minLabel("bullpen", "min IP"), relMinIp,
           "Minimum innings. Stacks with qualified only.")
       + gfxChip("mlbstats-rel-gfx")
@@ -3163,6 +3243,8 @@
     if (tm) {
       relTeam = starterTeam = hitterTeam = leverageTeam = defenseTeam = warTeam = tm[1];
     }
+    var gr = GRAD_HASH_RE.exec(h);
+    if (gr) gradSel = gr[1];
     // Season pills. readHash runs from init(), after every one of these vars
     // and column arrays has been assigned, so the forward references are safe.
     readWindow(h, "bullpen", "rseason", "ryears");
@@ -3239,6 +3321,7 @@
     // rather than a club the reader left behind on another one.
     var tm = activeTeam();
     if (tm) parts.push("team=" + tm);
+    if (gradSel) parts.push("grad=" + gradSel);
     try { history.replaceState(null, "", "#" + parts.join("&")); } catch (e) { /* hash optional */ }
   }
 
@@ -3462,6 +3545,7 @@
     if (starterQualifiedOnly && r.qualified === false) return false;
     if (starterTeam && r.team !== starterTeam) return false;
     if (!passesMin(r.ip, starterMinIp)) return false;
+    if (!passesGrad(r)) return false;
     var q = starterQuery.trim().toLowerCase();
     if (!q) return true;
     return (String(r.name || "").toLowerCase().indexOf(q) >= 0
@@ -3498,6 +3582,7 @@
       + '<input type="checkbox" id="mlbstats-starter-qual"' + (starterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-starter-team", winSelectRows("starters", starterSourceRows()),
           starterTeam, "starters")
+      + gradSelect("starters")
       + minSelect("mlbstats-starter-minip", minLabel("starters", "min IP"), starterMinIp,
           "Minimum innings. Stacks with qualified only.")
       + gfxChip("mlbstats-starter-gfx")
@@ -4002,6 +4087,7 @@
     if (hitterQualifiedOnly && r.qualified === false) return false;
     if (hitterTeam && r.team !== hitterTeam) return false;
     if (!passesMin(r.pa, hitterMinPa)) return false;
+    if (!passesGrad(r)) return false;
     var q = hitterQuery.trim().toLowerCase();
     if (!q) return true;
     return (String(r.name || "").toLowerCase().indexOf(q) >= 0
@@ -4030,6 +4116,7 @@
       + '<input type="checkbox" id="mlbstats-hitter-qual"' + (hitterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-hitter-team", winSelectRows("hitters", hitterSourceRows()),
           hitterTeam, "hitters")
+      + gradSelect("hitters")
       + minSelect("mlbstats-hitter-minpa", minLabel("hitters", "min PA"), hitterMinPa,
           "Minimum plate appearances. Stacks with qualified only.")
       + gfxChip("mlbstats-hitter-gfx")
@@ -4594,6 +4681,7 @@
     return rows.filter(function (r) {
       if (leverageQualifiedOnly && r.qualified === false) return false;
       if (leverageTeam && r.team !== leverageTeam) return false;
+      if (!passesGrad(r)) return false;
       if (!q) return true;
       return (String(r.name || "").toLowerCase().indexOf(q) >= 0
         || String(r.team || "").toLowerCase().indexOf(q) >= 0);
@@ -4695,6 +4783,7 @@
       + '<input type="checkbox" id="mlbstats-leverage-qual"' + (leverageQualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-leverage-team", winSelectRows("leverage", leverageSourceRows()),
           leverageTeam, "leverage")
+      + gradSelect("leverage")
       + gfxChip("mlbstats-leverage-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-leverage-q" placeholder="Search player or team" value="' + esc(leverageQuery) + '">'
       + "</div>";
@@ -5065,6 +5154,7 @@
     if (defenseTeam && r.team !== defenseTeam) return false;
     if (defensePos.length && defensePos.indexOf(r.pos) < 0) return false;
     if (!passesMin(r.inn, defenseMinInn)) return false;
+    if (!passesGrad(r)) return false;
     var q = defenseQuery.trim().toLowerCase();
     if (!q) return true;
     return (String(r.name || "").toLowerCase().indexOf(q) >= 0
@@ -5122,6 +5212,7 @@
       + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-defense-qual"' + (defenseQualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-defense-team", winSelectRows("defense", pool), defenseTeam, "defense")
+      + gradSelect("defense")
       + minSelect("mlbstats-defense-mininn", minLabel("defense", "min Inn"), defenseMinInn,
           "Minimum defensive innings. Stacks with qualified only.")
       + gfxChip("mlbstats-defense-gfx")
@@ -5868,6 +5959,7 @@
     if (warQualifiedOnly && r.qualified === false) return false;
     if (warTeam && r.team !== warTeam) return false;
     if (warRoles.length && warRoles.indexOf(r.role) < 0) return false;
+    if (!passesGrad(r)) return false;
     var q = warQuery.trim().toLowerCase();
     return !q || String(r.name || "").toLowerCase().indexOf(q) >= 0 || String(r.team || "").toLowerCase().indexOf(q) >= 0;
   }
@@ -5936,6 +6028,7 @@
       + '<label class="mlbstats-ctl"' + warQualTitle() + '>'
       + '<input type="checkbox" id="mlbstats-war-qual"' + (warQualifiedOnly ? " checked" : "") + "> qualified only</label>"
       + teamSelect("mlbstats-war-team", winSelectRows("war", warRows()), warTeam, "war")
+      + gradSelect("war")
       + gfxChip("mlbstats-war-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-war-q" placeholder="Search player or team" value="' + esc(warQuery) + '">'
       + "</div>"
@@ -6218,6 +6311,7 @@
     // active tab and this call are the only two places the landing board is
     // named.
     showSection(section);
+    if (gradSel) loadLinks();
     // The player-links map loads after the first board paints (linksSoon), or
     // after four seconds if no board ever does.
     try { setTimeout(loadLinks, 4000); } catch (e) { /* no timers */ }
@@ -6245,8 +6339,9 @@
     EEPHUS_HUB.links().then(function (L) {
       LINKS = L || null;
       upgradeLinks(document.querySelector(".mlbx"));
+      document.querySelectorAll("[data-grad-picker]").forEach(function (sel) { sel.innerHTML = gradOptions(); });
       var host = document.getElementById("mlbstats-section-" + section);
-      if (!WIN[section] && !(host && host.querySelector(".mlbx-noname"))) return;
+      if (!gradSel && !WIN[section] && !(host && host.querySelector(".mlbx-noname"))) return;
       if (section === "starters") { if (starterInit) renderStarters(); }
       else if (section === "hitters") { if (typeof hitterInit !== "undefined" && hitterInit) renderHitters(); }
       else if (section === "leverage") { if (typeof leverageInit !== "undefined" && leverageInit) renderLeverage(); }

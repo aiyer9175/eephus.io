@@ -57,6 +57,7 @@ import csv
 import io
 import json
 import logging
+import re
 import statistics
 import time
 import urllib.request
@@ -480,7 +481,8 @@ def _fv_spark(points: list, cap: int = 40) -> list | None:
 def _debut_origins() -> dict[int, dict]:
     """{mlbam: prospect origin} from debuts.json - the PROSPX identity, the FV
     arc endpoints + full consensus-FV spark, and the consensus tool grades for
-    ex-prospects (the scouting slice + hero sparkline sources)."""
+    ex-prospects (the scouting slice + hero sparkline sources), plus the
+    graduate bridge: the eFV at debut (xfv.json) and the club he debuted with."""
     out: dict[int, dict] = {}
     try:
         for d in json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8")):
@@ -493,9 +495,84 @@ def _debut_origins() -> dict[int, dict]:
                     "debut": d.get("debut_date"),
                     "fvSpark": _fv_spark(d.get("points")),
                     "tools": {k: v for k, v in tools.items() if v is not None} if tools else None,
+                    "devOrg": _graduate_org(d),
                 }
     except (OSError, ValueError):
         log.warning("mlb player export: debuts.json unavailable - no origins")
+    efv = _efv_at_debut()
+    for org in out.values():
+        org["efvDebut"] = efv.get(org.get("prospx"))
+    return out
+
+
+# ---- the PROSPX graduate bridge (wiring W06) --------------------------------
+# A graduate's MLB card says what PROSPX said before he arrived: the eFV he
+# carried into the majors, the club he debuted with and his final tracked-park
+# Statcast hitter line. Each is one player's own number, already served on
+# PROSPX; nothing here groups players by a grade (docs/PROSPECT_ANCHOR_GATE.md).
+_CLUB_RE = re.compile(r"^[A-Z]{2,3}$")
+
+
+def _graduate_org(d: dict) -> str | None:
+    """The club he debuted with, by the homepage On This Day rule
+    (build_site._debut_org: the debut-season MLB stat row, never the current
+    org). None when that resolves to no club code (the old placeholder rows
+    carry "Office of the Commissioner")."""
+    try:
+        from build_site import _debut_org
+        org = _debut_org(d)
+    except Exception:                    # noqa: BLE001 - the org is optional
+        return None
+    return org if isinstance(org, str) and _CLUB_RE.match(org) else None
+
+
+def _efv_at_debut() -> dict[str, float]:
+    """{player_key: xfv_grade_at_debut} from data/xfv.json: the eFV grade the
+    player carried into the majors (efv_score.run_backgrade writes it; the WAG
+    baseline pins to the same field). Never the served grade, which the rookie
+    window may have moved past the debut."""
+    try:
+        doc = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("mlb player export: xfv.json unavailable - no eFV at debut")
+        return {}
+    out: dict[str, float] = {}
+    for key, row in ((doc or {}).get("by_player") or {}).items():
+        v = (row or {}).get("xfv_grade_at_debut")
+        if isinstance(v, (int, float)):
+            out[key] = float(v)
+    return out
+
+
+def _aaa_hitter_lines() -> dict[int, dict]:
+    """{mlbam: final tracked-park Statcast hitter line} from
+    data/statcast_aaa_hitters.json, the PROSPX hitter card's sidecar: the
+    player's latest season with 100+ PA in a tracked park (every AAA park and
+    the Single-A Florida State League), its level(s), and the date its games
+    run through (source_through) or the date a same-season CSV was fetched
+    (source_fetched), so a partial season never reads as the full one. The
+    luck gap is left out: a card number takes no forecast word."""
+    try:
+        doc = json.loads((DATA_DIR / "statcast_aaa_hitters.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("mlb player export: statcast_aaa_hitters.json unavailable - no AAA lines")
+        return {}
+    through = (doc or {}).get("source_through") or {}
+    fetched = (doc or {}).get("source_fetched") or {}
+    out: dict[int, dict] = {}
+    for mid, r in ((doc or {}).get("by_mlbam") or {}).items():
+        season = (r or {}).get("season")
+        if not str(mid).isdigit() or season is None:
+            continue
+        line = {"season": season, "levels": r.get("levels") or None, "pa": r.get("pa"),
+                "xwoba": r.get("xwoba"), "ev": r.get("ev"),
+                "hardHit": r.get("hardhit_percent"), "whiff": r.get("whiff")}
+        thru, got = through.get(str(season)), fetched.get(str(season))
+        if thru and str(thru)[:4] == str(season):
+            line["thru"] = thru
+        elif got and str(got)[:4] == str(season):
+            line["asOf"] = got
+        out[int(mid)] = {k: v for k, v in line.items() if v is not None}
     return out
 
 
@@ -780,6 +857,7 @@ def build_payload() -> dict:
     except (OSError, ValueError):
         pass
     origins = _debut_origins()
+    aaa_hit = _aaa_hitter_lines()
     scout_reports = {}
     try:
         scout_reports = json.loads((DATA_DIR / "scout_reports.json").read_text(encoding="utf-8"))
@@ -889,8 +967,14 @@ def build_payload() -> dict:
             # ex-PROSPX prospect: arc + hub link (hero). Only the render-facing
             # arc fields ride in origin; tool grades go into the scout slice.
             p["origin"] = {k: org[k] for k in ("prospx", "fvOpen", "fvClose",
-                                               "debut", "fvSpark")
+                                               "debut", "fvSpark", "efvDebut",
+                                               "devOrg")
                            if org.get(k) is not None}
+            # The graduate bridge's hitter line, the batter twin of the
+            # aStuff+ tile pitchers get: hitters and two-way players only.
+            hl = aaa_hit.get(int(mlbam))
+            if hl and (not p["isPit"] or p.get("twoWay")):
+                p["origin"]["aaaHit"] = hl
             # Scouting slice (ex-PROSPX only): latest report blurb + tool grades.
             rep = _scout_report_slice(org["prospx"], scout_reports)
             tools = org.get("tools")
@@ -969,7 +1053,11 @@ def build_payload() -> dict:
                      "def": sum(1 for p in players.values()
                                 if (p.get("skills") or {}).get("def")),
                      "scout": sum(1 for p in players.values() if p.get("scout")),
-                     "hof": sum(1 for p in players.values() if p.get("hof"))},
+                     "hof": sum(1 for p in players.values() if p.get("hof")),
+                     "origin_efv": sum(1 for p in players.values()
+                                       if (p.get("origin") or {}).get("efvDebut") is not None),
+                     "origin_aaa_hit": sum(1 for p in players.values()
+                                           if (p.get("origin") or {}).get("aaaHit"))},
         "notes": [
             "career: MLB season lines (StatsAPI) + per-season WAR on war_source provider ewar_v2, the displayed WAR (eWAR v2: FIP-repriced pitching within role; batting side equal to bWAR until the SDR defense drop); war_bwar = the bWAR input where it differs at 1dp, absent means equal; war_fwar = FanGraphs' published WAR (MLB StatsAPI sabermetrics feed), a reference beside the displayed eWAR v2; absent means no published value",
             "statcast: Savant leaderboard percentiles within the season's pool (contact board 25+ batted balls; expected-stats board unfloored); pitcher contact metrics invert (suppression = good); hitter Luck = xwOBA minus wOBA",
@@ -980,6 +1068,7 @@ def build_payload() -> dict:
             "skills.def: DEM+ (100 + 10z), FanGraphs' published fielding and framing runs, the Defense board's own positional ladder (posRuns, the term in defRuns) and FanGraphs' published positional beside it (posRunsFg), from defense_leaderboards.json, fielders only",
             "scout: latest published report blurb (capped) + consensus tool grades, ex-PROSPX players only",
             "origin.fvSpark: consensus-FV arc [[date, fv], ...] for ex-PROSPX players",
+            "origin.efvDebut: xfv.json xfv_grade_at_debut, the eFV the player carried into the majors (the card prints it to the nearest point); origin.devOrg: the club he debuted with (build_site._debut_org); origin.aaaHit: his final tracked-park Statcast hitter line from statcast_aaa_hitters.json (hitters and two-way only; thru or asOf dates a partial season); one player's own numbers, never grouped by grade",
             "hof: the /hof/ shelf's own row (career WAR, WAR7, JAWS, WAA+ as waa_pos, WAR ink, first and last season, seasons) for players on its Cooperstown Watch and Not Yet Eligible bands, copied verbatim and joined B-Ref id to MLBAM through the war_daily ids; basis B-Ref bWAR, the shelf's; the player's own numbers only, no position standard; the band is a shelf band, not a forecast",
             "fa fields attach for current class members; verdict/dealPlus from the gate-validated market model",
         ],
@@ -1061,6 +1150,16 @@ def _export_links(payload: dict) -> None:
                "proj": True,
                "prospx": (p.get("origin") or {}).get("prospx"),
                "name": p.get("name"), "team": p.get("team"), "pos": p.get("pos")}
+        # The graduate bridge (wiring W06): a PROSPX graduate carries the flag
+        # and his debut season, which the /mlbstats/ chip and debut-season
+        # filter read. Absent on every other row, so the map grows only by
+        # the graduates.
+        org = p.get("origin") or {}
+        if org.get("prospx"):
+            row["grad"] = True
+            yr = str(org.get("debut") or "")[:4]
+            if yr.isdigit():
+                row["debutYr"] = int(yr)
         by_key[key] = row
         if p.get("mlbam"):
             by_mlbam[str(p["mlbam"])] = row
