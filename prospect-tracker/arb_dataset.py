@@ -307,6 +307,31 @@ def spotrac_status_by_mlbam() -> dict[int, dict[int, str]]:
     return out
 
 
+def spotrac_salary_by_mlbam() -> dict[int, dict[int, int]]:
+    """{mlbam: {season: usd}} for the seasons a signed Spotrac contract prices
+    (positive money cells on the contract tables only), joined through the
+    same data/player_links.json map as spotrac_status_by_mlbam, the first
+    contract row per player winning as there. The /arbitration/ board reads
+    it to apply the CBA maximum cut after a contracted season
+    (docs/ARBITRATION_GATE.md section 15)."""
+    import spotrac
+    try:
+        d = json.loads((ROOT / "data" / "player_links.json").read_text("utf-8"))
+        links = {k: (v or {}).get("mlbam") for k, v in (d.get("byKey") or {}).items()}
+    except (OSError, ValueError) as exc:
+        _log.warning("arb_dataset: player_links unreadable: %s", exc)
+        return {}
+    out: dict[int, dict[int, int]] = {}
+    for _code, slug in spotrac._SPOTRAC_TEAM_SLUGS.items():
+        for row in spotrac.scrape_spotrac_team_contracts(slug):
+            sal = {int(y): int(v) for y, v in (row.get("salary_by_year") or {}).items()
+                   if v and v > 0}
+            mlbam = links.get(row.get("player_key"))
+            if mlbam and sal:
+                out.setdefault(int(mlbam), sal)
+    return out
+
+
 def spotrac_contract_span_by_mlbam() -> dict[int, tuple[int, int]]:
     """{mlbam: (first_priced_year, signed_through)} for the extension test.
 

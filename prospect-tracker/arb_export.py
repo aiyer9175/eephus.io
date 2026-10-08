@@ -53,7 +53,7 @@ F_ORDER_FIX = 32      # a Spotrac status ran against service order and was repai
 F_CBA_FLOOR = 64      # an arbitration rung floored at 80% of a signed salary before it
 
 #: CBA Article VI: an arbitration award may not cut the prior salary by more
-#: than 20 percent. salary_path.MAX_CUT is the same rule on the served path.
+#: than 20 percent. The projections path applies the same constant.
 MAX_CUT = 0.80
 
 CBA_EXPIRES = "2026-12-01"
@@ -112,37 +112,30 @@ def _projected_war() -> dict[int, list[float]]:
 
 
 def _signed_salaries() -> dict[int, dict[int, int]]:
-    """{mlbam: {season: usd}} for every season a signed contract prices, read
-    off the served salary path's `contract` cells in data/mlb_projections.json.
+    """{mlbam: {season: usd}} for every season a signed Spotrac contract
+    prices: arb_dataset.spotrac_salary_by_mlbam, the same team pages and the
+    same id map the board's status tokens come from.
 
     The board's own chain raises off the panel's salary, which knows nothing
     of a contract the club has already signed for the next season, so the
-    path floored those rungs and the board did not (owner answer M11-2). The
-    contract cells are what the path itself prices from, so reading them is
-    what makes the two agree; they come from Spotrac through proj_export and
-    never from this board (a season a contract prices is rule 1 there), so
-    the one-cycle read cannot feed the board back into itself."""
-    p = ROOT / "data" / "mlb_projections.json"
+    projections path floored those rungs and the board did not (owner answer
+    M11-2). Measured 2026-10-08: on all 880 board players these seasons equal
+    the contract seasons the projections payload prices for 2027-2031. The
+    board still reads nothing that path writes."""
+    import arb_dataset as A
     try:
-        doc = json.loads(p.read_text("utf-8"))
-    except (OSError, ValueError):
+        return A.spotrac_salary_by_mlbam()
+    except Exception as exc:                      # pragma: no cover - defensive
+        _log.warning("arb_export: signed salaries unavailable: %s", exc)
         return {}
-    out: dict[int, dict[int, int]] = {}
-    for v in doc.get("vets") or []:
-        m = v.get("mlbam")
-        cells = {int(c[0]): int(c[1]) for c in (v.get("salPath") or [])
-                 if len(c) > 5 and c[5] == "contract" and c[1]}
-        if m and cells:
-            out[int(m)] = cells
-    return out
 
 
 def _apply_max_cut_after_contract(steps: list, signed: dict, season: int) -> int:
     """Floor arbitration rungs at 80% of a signed salary the season before,
     in place; returns the number of rungs floored.
 
-    The same walk as salary_path.salary_path's Article VI block, so the board
-    and the path print the same figure: a contracted season sets the prior
+    The same walk as the projections path's Article VI block, so the board
+    and that path print the same figure: a contracted season sets the prior
     and opens the carry, an ARB rung below 0.80 x prior is raised to it and
     the floored figure is the next rung's prior, a PRE-ARB rung closes the
     carry. Later rungs are NOT re-predicted off the floored figure; they are
