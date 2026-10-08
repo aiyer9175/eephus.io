@@ -316,8 +316,11 @@ def test_progress_screening_block_renders(server, browser, n_screen):
     if not led.exists():
         pytest.skip("data/efv_progress.json not built")
     doc = json.loads(led.read_text(encoding="utf-8"))
+    # every row the page files under the screening block (glossary.js _progIsScreen:
+    # the efv_v2_screen: prefix or a screening object, the wave 2 lanes' rows too)
     doc["rows"] = [r for r in doc["rows"]
-                   if not str(r.get("model_id") or "").startswith("efv_v2_screen:")]
+                   if not str(r.get("model_id") or "").startswith("efv_v2_screen:")
+                   and not isinstance(r.get("screening"), dict)]
     base_charted = [r for r in doc["rows"]
                     if r.get("role") not in ("tilted", "secondary", "superseded")
                     and r.get("frame") in ("vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")
