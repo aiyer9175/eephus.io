@@ -152,3 +152,27 @@ def test_the_board_partition_has_no_gap_and_no_overlap():
     section = {r["player_key"] for r in actives if storage.row_in_prov_section(r)}
     assert not ranked & section
     assert ranked | section == {r["player_key"] for r in actives}
+
+
+# --------------------------------------------------------------------------- #
+# Owner ask 5 (Q9_10, 2026-10-08): what each side of the partition PRINTS. A flagship-
+# owned row eFV abstains on prints its consensus grade labelled (C mark, rounded up); a
+# provisional row prints its eFV and never a consensus number; an orphan with neither
+# prints no number at all. gradeBlock is the one resolver every display reads.
+# --------------------------------------------------------------------------- #
+def test_each_side_of_the_partition_prints_its_own_labelled_grade():
+    from test_efv_display_helpers import make_js_ctx
+    import json
+    js = make_js_ctx()
+
+    def gb(row):
+        return json.loads(js.eval("JSON.stringify(gradeBlock(%s))" % row))
+
+    owned = gb('{player_key: "o", fv_close: 38.33}')
+    assert owned["basis"] == "consensus" and owned["label"] == "39"     # rounded UP
+    assert owned["consTip"] == "Consensus FV (no eFV for this player)"
+    prov = gb('{player_key: "p", _xfv_entry: {xfv_grade: 31.6, xfv_ungraded: true}, '
+              '_x: {xfv_grade: 31.6, xfv_ungraded: true}}')
+    assert prov["basis"] == "efv" and prov["label"] == "32" and prov["provisional"]
+    orphan = gb('{player_key: "x"}')
+    assert orphan["basis"] == "none" and orphan["label"] is None

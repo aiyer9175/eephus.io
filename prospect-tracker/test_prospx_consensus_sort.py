@@ -271,3 +271,55 @@ def test_default_order_puts_the_section_after_every_graded_row(booted_page):
     assert heads == 1
     page.evaluate("() => { state.pages.actives = 1; render(); }")
     assert not errs, "JS errors:\n  " + "\n  ".join(errs)
+
+
+# ---------------------------------------------------------------------------
+# 6. Owner ask 5 / Q-E1 (Q9_10, 2026-10-08): what the Consensus order PRINTS
+# ---------------------------------------------------------------------------
+# Flag off (storage.EFV_DISPLAY_SWAPS False, today): the toggle still swaps the lead, and
+# every consensus badge it prints now wears the C mark and a dashed border. Flag on: the
+# toggle orders the board only; the order above is unchanged, the printed grade is eFV and
+# the consensus grade rides beside it in a labelled chip.
+
+_MEASURE_PRINT = """() => {
+  const rows = [...document.querySelectorAll('#rows .player-row')];
+  const f = getFilteredActives();
+  let rise = 0;
+  for (let i = 1; i < f.length; i++) {
+    if (consensusSortTier(f[i]) === 0 && consensusSortTier(f[i - 1]) === 0
+        && Number(f[i].fv_close) > Number(f[i - 1].fv_close)) rise++;
+  }
+  const lead = rows.map(r => r.querySelector('.fv-badge'));
+  const x0 = getEfv(f[0]);
+  return {sort: state.sort, primary: _gradePrimary(), rows: rows.length, rise,
+          consBadges: document.querySelectorAll('#rows .fv-badge[data-grade-basis="consensus"]').length,
+          chips: document.querySelectorAll('#rows .fv-cons-chip').length,
+          firstLead: lead[0] ? lead[0].firstChild.textContent.trim() : null,
+          firstEfv: x0 ? efvGradeDisplay(x0) : null};
+}"""
+
+
+def test_consensus_order_prints_labelled_grades(booted_page):
+    page, errs = booted_page
+    page.evaluate("() => { DATA.flags = {efv_display_swaps: false}; }")
+    page.click("[data-grade-toggle='fv']")
+    page.wait_for_timeout(1500)
+    off = page.evaluate(_MEASURE_PRINT)
+    assert off["primary"] == "fv" and off["rise"] == 0
+    assert off["consBadges"] == off["rows"] > 0, (
+        "with the flag off a consensus badge on the Consensus lead is printed without its C mark")
+    assert off["chips"] == 0
+
+    page.evaluate("() => { DATA.flags = {efv_display_swaps: true}; render(); }")
+    page.wait_for_timeout(1500)
+    on = page.evaluate(_MEASURE_PRINT)
+    page.evaluate("() => { DATA.flags = {efv_display_swaps: false}; }")
+    page.click("[data-grade-toggle='xfv']")
+    page.select_option("#sort-select", "xfv")
+    page.wait_for_timeout(1000)
+    assert on["sort"] == "fv" and on["primary"] == "xfv"
+    assert on["rise"] == 0, "the flag changed the consensus ORDER; it may change only the print"
+    assert on["consBadges"] == 0, "flag on, a graded row still prints a consensus lead badge"
+    assert on["chips"] > 0, "flag on, the Consensus order shows no labelled consensus chip"
+    assert on["firstLead"] == str(on["firstEfv"]), "flag on, the first row does not print its eFV"
+    assert not errs, "JS errors:\n  " + "\n  ".join(errs)
