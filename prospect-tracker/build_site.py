@@ -7293,6 +7293,12 @@ _ACCT_VERDICTS = (
      "Measured, failed its gate, retired or demoted. Kept on the ledger."),
 )
 
+# The ledger's default order (REDESIGN_glossary_models): the rows that have not
+# earned a validated verdict lead, so a reader meets the open claims before the
+# settled ones. The tiles keep the _ACCT_VERDICTS order; the ledger groups and
+# the verdict chips above them follow this one. test_model_report_cards pins it.
+_ACCT_LEDGER_ORDER = ("provisional", "unvalidated", "deprecated", "validated")
+
 # Parse ceiling for reading an artifact's own stamp, mirroring
 # model_registry._MAX_STAMP_PARSE_BYTES. A file over this reads as undated
 # rather than costing the build a multi-megabyte parse.
@@ -7664,6 +7670,20 @@ def build_models() -> str:
             f"{len(orphans)} eval artifacts in /data/ have no registry row; listed at "
             "the foot of this page.")
 
+    # The collapsed Freshness and Gaps blocks carry their counts in the summary
+    # line, so a reader who never opens them still sees how many there are.
+    # Every number here is one the open block already prints.
+    fresh_line = (f"{len(stale)} stale past {model_registry.STALE_DAYS} days, "
+                  f"{len(undated)} undated, of {len(art_facts)} artifact files")
+    gaps_parts = []
+    if no_eval:
+        gaps_parts.append(f"{len(no_eval)} rows with no eval artifact")
+    if unlinkable:
+        gaps_parts.append(f"{len(unlinkable)} artifacts not published")
+    if orphans:
+        gaps_parts.append(f"{len(orphans)} unregistered evals")
+    gaps_line = ", ".join(gaps_parts)
+
     orphan_html = ""
     if orphans:
         rows = "".join(
@@ -7685,7 +7705,9 @@ def build_models() -> str:
     # make impossible.
     off_enum = sorted({m.get("verdict") for m in models}
                       - {k for k, _l, _d in _ACCT_VERDICTS})
-    plan = list(_ACCT_VERDICTS) + [
+    by_key = {k: (k, lab, d) for k, lab, d in _ACCT_VERDICTS}
+    ledger_verdicts = [by_key[k] for k in _ACCT_LEDGER_ORDER]
+    plan = ledger_verdicts + [
         (v, str(v) if v else "(no verdict)",
          "Not one of the four registry verdicts; shown, not dropped.")
         for v in off_enum]
@@ -7709,7 +7731,7 @@ def build_models() -> str:
         for fl in _acct_row_flags(facts[(m.get("eval_artifact") or "").strip()]):
             flag_counts[fl] = flag_counts.get(fl, 0) + 1
     filters = ([("all", "All", n_models)]
-               + [(k, lab, counts.get(k, 0)) for k, lab, _d in _ACCT_VERDICTS]
+               + [(k, lab, counts.get(k, 0)) for k, lab, _d in ledger_verdicts]
                + [(k, lab, flag_counts[k]) for k, lab in _ACCT_FLAG_LABELS
                   if flag_counts.get(k)])
     chips = "".join(
@@ -7761,22 +7783,26 @@ def build_models() -> str:
         f'{PAGE_LABELS["/models/updates/"]}</a>.</p>'
         '</div>'
         f'<div class="acct-tiles">{tiles}</div>'
-        '<div class="section-head"><h2>Freshness</h2>'
-        '<span class="section-sub">by each artifact\'s own stamp</span></div>'
-        '<div class="card acct-note"><ul class="acct-list">'
+        '<details class="acct-fold" data-acct-fold="freshness"><summary>'
+        '<h2>Freshness</h2>'
+        f'<span class="acct-foldn">{html.escape(fresh_line)}</span></summary>'
+        '<div class="card acct-note"><p class="acct-foldsub">By each artifact\'s own stamp.</p>'
+        '<ul class="acct-list">'
         + "".join(f"<li>{html.escape(b)}</li>" for b in fresh_bits)
-        + '</ul></div>'
-        + ('<div class="section-head"><h2>Gaps</h2></div>'
+        + '</ul></div></details>'
+        + ('<details class="acct-fold" data-acct-fold="gaps"><summary><h2>Gaps</h2>'
+           f'<span class="acct-foldn">{html.escape(gaps_line)}</span></summary>'
            '<div class="card acct-note"><ul class="acct-list">'
            + "".join(f"<li>{html.escape(g)}</li>" for g in gaps)
-           + '</ul></div>' if gaps else "")
+           + '</ul></div></details>' if gaps else "")
         + ('<div class="card acct-note"><h3>Registry notes</h3>'
            f'<ul class="acct-list">{reg_notes}</ul></div>' if reg_notes else "")
         + problems_html
         + '<div class="section-head" id="ledger"><h2>The ledger</h2>'
           '<span class="section-sub">open a row for claim, baseline and receipt</span></div>'
         + groupby
-        + f'<div class="filter-bar acct-filters">{chips}</div>'
+        + '<div class="filter-bar acct-filters" role="group" aria-label="Filter the ledger">'
+          f'<span class="acct-gblab">Show</span>{chips}</div>'
         + f'<div id="acct-rows">{"".join(groups)}{fam_groups}</div>'
         + orphan_html
         + '</div>'

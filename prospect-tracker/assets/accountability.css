@@ -85,3 +85,16 @@
 .acct-app .acct-card-val{font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);text-align:right;overflow-wrap:anywhere}
 .acct-app .acct-card-foot{font:9px/1.4 var(--font-retro-mono);color:var(--text-tertiary);margin-top:6px}
 @media (max-width:640px){.acct-app .acct-body{grid-template-columns:minmax(0,1fr);gap:2px}.acct-app .acct-body dd{margin-bottom:8px}.acct-app .acct-sum>i{flex-basis:100%}}
+/* Freshness and Gaps fold away (REDESIGN_glossary_models); the summary line
+   carries their counts, so the ledger sits one screen higher. */
+.acct-app .acct-fold{border-top:3px double var(--border);margin:0 0 4px}
+.acct-app .acct-fold:last-of-type{border-bottom:3px double var(--border);margin-bottom:22px}
+.acct-app .acct-fold>summary{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;min-height:44px;box-sizing:border-box;padding:12px 2px 10px;cursor:pointer;list-style:none}
+.acct-app .acct-fold>summary::-webkit-details-marker{display:none}
+.acct-app .acct-fold>summary::before{content:"\25B8";font-size:11px;color:var(--text-tertiary);width:10px}
+.acct-app .acct-fold[open]>summary::before{content:"\25BE"}
+.acct-app .acct-fold>summary:hover{background:var(--bg-hover)}
+.acct-app .acct-fold>summary h2{display:inline;font-family:var(--font-retro-mono);font-size:1.05rem;margin:0;letter-spacing:.04em}
+.acct-app .acct-foldn{font:700 11px/1.4 var(--font-retro-mono);color:var(--text-tertiary)}
+.acct-app .acct-foldsub{font-size:12px;font-style:italic;color:var(--text-tertiary);margin:0 0 6px}
+.acct-app .acct-fold>.acct-note{margin:0 0 14px}
