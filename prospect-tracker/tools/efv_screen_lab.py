@@ -261,6 +261,15 @@ def w2_candidates(modules=W2_MODULES, kinds=("column",)) -> tuple[dict, ...]:
     return tuple(out)
 
 
+#: WAVE 2 development arms (owner EW2-6, 2026-10-08), registered by name: each lane's own
+#: module builds its arms and runs its own development read on lv_dev and vm_dev (no
+#: reserved frame), writing data/_labs/efv_w2/<module>.json; `--wave2-dev <module>` runs
+#: it. Wave 1 (CANDIDATES) and its frozen run are untouched.
+WAVE2_DEV: dict[str, tuple[str, ...]] = {
+    "efv_w2_anchor": ("an1_rel", "an1_pl", "an2_pos"),
+}
+
+
 class ColumnUnavailable(RuntimeError):
     """A candidate's column cannot be built on this tree (its builder has not landed)."""
 
@@ -1595,7 +1604,12 @@ def main(argv=None) -> int:
                     help="under data/: write the artifact but regenerate no ledger")
     ap.add_argument("--floor-mode", choices=FLOOR_MODES, default=FLOOR_MODE_DEFAULT,
                     help="how the noise columns reach the refit (module docstring)")
+    ap.add_argument("--wave2-dev", default="", choices=("",) + tuple(WAVE2_DEV),
+                    help="run a registered wave 2 module's development read (WAVE2_DEV)")
     a = ap.parse_args(argv)
+    if a.wave2_dev:
+        import importlib
+        return int(importlib.import_module(a.wave2_dev).main([]) or 0)
     out = Path(a.out)
     under = _is_under_data(out)
     exploratory = bool(a.exploratory) or not under

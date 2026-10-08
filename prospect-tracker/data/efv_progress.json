@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-08T19:55:41Z",
+ "generated_at": "2026-10-08T20:01:28Z",
  "headline_frame": "vm2",
  "frames": {
   "vm": {
@@ -16711,6 +16711,891 @@
     }
    },
    "content_hash": "64dbfaf6475ce2778f4e75a7574fd6b48431692a56c7bb9fd041862ab49730a2"
+  },
+  {
+   "run_id": "2026-10-08T19:50:22Z|lv_dev|9fcee75b",
+   "date": "2026-10-08",
+   "trigger": "efv_change",
+   "model_id": "efv_w2_anchor:an1_rel",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "f071da2d",
+    "label": "fwar@2026-10-02-0341299c20ec",
+    "resolved_through": 2026,
+    "provider": "fwar"
+   },
+   "frame": "lv_dev",
+   "frame_version": null,
+   "role": "development",
+   "tilted": false,
+   "window": null,
+   "n": 2862,
+   "n_by_side": {
+    "hit": 1465,
+    "pit": 1397
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.1817,
+     "auc": 0.7552,
+     "n": 2862
+    },
+    "efv_v2_base": {
+     "spearman": 0.1676,
+     "auc": 0.7352,
+     "n": 2862
+    },
+    "prospx_consensus": {
+     "spearman": 0.1792,
+     "auc": 0.7468,
+     "n": 2862
+    },
+    "mlb_pipeline": {
+     "spearman": 0.2034,
+     "auc": 0.747,
+     "n": 2574
+    },
+    "fangraphs": {
+     "spearman": 0.1714,
+     "auc": 0.7053,
+     "n": 2370
+    }
+   },
+   "deltas": {
+    "vs_efv_v2_base": {
+     "spearman": {
+      "delta": 0.01407,
+      "ci95": [
+       -0.0003,
+       0.0282
+      ],
+      "mde95": 0.0119,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_efv_v2.spearman"
+     },
+     "auc": {
+      "delta": 0.01999,
+      "ci95": [
+       0.0076,
+       0.0318
+      ],
+      "mde95": 0.0102,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 above zero",
+      "key": "frames.lv_dev.deltas.arm_vs_efv_v2.auc"
+     }
+    },
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.00244,
+      "ci95": [
+       -0.0192,
+       0.0234
+      ],
+      "mde95": 0.0175,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_prospx_consensus.spearman"
+     },
+     "auc": {
+      "delta": 0.00834,
+      "ci95": [
+       -0.0081,
+       0.0256
+      ],
+      "mde95": 0.0137,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.01522,
+      "ci95": [
+       -0.0438,
+       0.0132
+      ],
+      "mde95": 0.0234,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.01318,
+      "ci95": [
+       -0.0081,
+       0.0334
+      ],
+      "mde95": 0.017,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.01518,
+      "ci95": [
+       -0.0152,
+       0.0443
+      ],
+      "mde95": 0.0246,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.04004,
+      "ci95": [
+       0.018,
+       0.0624
+      ],
+      "mde95": 0.019,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 above zero",
+      "key": "frames.lv_dev.deltas.arm_vs_fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "DEVELOPMENT ONLY: within vs V2 0.0141 (CI95 [-0.0003, 0.0282]), vs consensus 0.0024 (CI95 [-0.0192, 0.0234]); adjudicates nothing",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/_labs/efv_w2/efv_w2_anchor.json",
+     "generated_at": "2026-10-08T19:50:22Z",
+     "sha256": "85a07bb84cbf047db969e066a3e08217cce5cf63f68850242e6689f3b363064c"
+    }
+   ],
+   "note": "wave 2 anchor arm an1_rel (AN-1: reliability-weighted consensus anchor (source within Spearman on vintages at most V - 3, k 150 shrink, clamp 0.6 to 1.5); the MC-2 rule); development read on a spent frame, not a claim",
+   "last_verified_at": "2026-10-08T20:01:28Z",
+   "content_hash": "9fcee75b22bfd9c78773004071d4a63777e0d7cbc3350702f8dc4ffc14020f25"
+  },
+  {
+   "run_id": "2026-10-08T19:50:22Z|vm_dev|cf705b24",
+   "date": "2026-10-08",
+   "trigger": "efv_change",
+   "model_id": "efv_w2_anchor:an1_rel",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "f071da2d",
+    "label": "fwar@2026-10-02-0341299c20ec",
+    "resolved_through": 2026,
+    "provider": "fwar"
+   },
+   "frame": "vm_dev",
+   "frame_version": null,
+   "role": "development",
+   "tilted": false,
+   "window": null,
+   "n": 830,
+   "n_by_side": {
+    "hit": 406,
+    "pit": 424
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3526,
+     "auc": 0.7343,
+     "n": 830
+    },
+    "efv_v2_base": {
+     "spearman": 0.3713,
+     "auc": 0.7388,
+     "n": 830
+    },
+    "prospx_consensus": {
+     "spearman": 0.3814,
+     "auc": 0.743,
+     "n": 830
+    },
+    "mlb_pipeline": {
+     "spearman": 0.3816,
+     "auc": 0.759,
+     "n": 830
+    },
+    "fangraphs": {
+     "spearman": 0.3363,
+     "auc": 0.7168,
+     "n": 830
+    }
+   },
+   "deltas": {
+    "vs_efv_v2_base": {
+     "spearman": {
+      "delta": -0.01875,
+      "ci95": [
+       -0.043,
+       0.0053
+      ],
+      "mde95": 0.0199,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_efv_v2.spearman"
+     },
+     "auc": {
+      "delta": -0.00445,
+      "ci95": [
+       -0.0163,
+       0.0072
+      ],
+      "mde95": 0.0097,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_efv_v2.auc"
+     }
+    },
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.02882,
+      "ci95": [
+       -0.0618,
+       0.0043
+      ],
+      "mde95": 0.028,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_prospx_consensus.spearman"
+     },
+     "auc": {
+      "delta": -0.00863,
+      "ci95": [
+       -0.027,
+       0.0092
+      ],
+      "mde95": 0.0151,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.02904,
+      "ci95": [
+       -0.0662,
+       0.0087
+      ],
+      "mde95": 0.0316,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": -0.02468,
+      "ci95": [
+       -0.0442,
+       -0.0058
+      ],
+      "mde95": 0.0162,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 below zero",
+      "key": "frames.vm_dev.deltas.arm_vs_mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.01624,
+      "ci95": [
+       -0.0269,
+       0.0573
+      ],
+      "mde95": 0.0361,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.01757,
+      "ci95": [
+       -0.0058,
+       0.0401
+      ],
+      "mde95": 0.0191,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "DEVELOPMENT ONLY: within vs V2 -0.0187 (CI95 [-0.043, 0.0053]), vs consensus -0.0288 (CI95 [-0.0618, 0.0043]); adjudicates nothing",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/_labs/efv_w2/efv_w2_anchor.json",
+     "generated_at": "2026-10-08T19:50:22Z",
+     "sha256": "85a07bb84cbf047db969e066a3e08217cce5cf63f68850242e6689f3b363064c"
+    }
+   ],
+   "note": "wave 2 anchor arm an1_rel (AN-1: reliability-weighted consensus anchor (source within Spearman on vintages at most V - 3, k 150 shrink, clamp 0.6 to 1.5); the MC-2 rule); development read on a spent frame, not a claim",
+   "last_verified_at": "2026-10-08T20:01:28Z",
+   "content_hash": "cf705b24d6634148adbd47d9b07276c32a2fa2141849a0af8f1cd64c0e9a0f96"
+  },
+  {
+   "run_id": "2026-10-08T19:50:22Z|vm_dev|709322d9",
+   "date": "2026-10-08",
+   "trigger": "efv_change",
+   "model_id": "efv_w2_anchor:an1_pl",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "f071da2d",
+    "label": "fwar@2026-10-02-0341299c20ec",
+    "resolved_through": 2026,
+    "provider": "fwar"
+   },
+   "frame": "vm_dev",
+   "frame_version": null,
+   "role": "development",
+   "tilted": false,
+   "window": null,
+   "n": 830,
+   "n_by_side": {
+    "hit": 406,
+    "pit": 424
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3604,
+     "auc": 0.736,
+     "n": 830
+    },
+    "efv_v2_base": {
+     "spearman": 0.3713,
+     "auc": 0.7388,
+     "n": 830
+    },
+    "prospx_consensus": {
+     "spearman": 0.3814,
+     "auc": 0.743,
+     "n": 830
+    },
+    "mlb_pipeline": {
+     "spearman": 0.3816,
+     "auc": 0.759,
+     "n": 830
+    },
+    "fangraphs": {
+     "spearman": 0.3363,
+     "auc": 0.7168,
+     "n": 830
+    }
+   },
+   "deltas": {
+    "vs_efv_v2_base": {
+     "spearman": {
+      "delta": -0.01093,
+      "ci95": [
+       -0.0345,
+       0.0131
+      ],
+      "mde95": 0.02,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_efv_v2.spearman"
+     },
+     "auc": {
+      "delta": -0.00274,
+      "ci95": [
+       -0.0145,
+       0.0089
+      ],
+      "mde95": 0.0099,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_efv_v2.auc"
+     }
+    },
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.021,
+      "ci95": [
+       -0.054,
+       0.0118
+      ],
+      "mde95": 0.0277,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_prospx_consensus.spearman"
+     },
+     "auc": {
+      "delta": -0.00692,
+      "ci95": [
+       -0.0253,
+       0.0109
+      ],
+      "mde95": 0.015,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.02122,
+      "ci95": [
+       -0.056,
+       0.0116
+      ],
+      "mde95": 0.0286,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": -0.02297,
+      "ci95": [
+       -0.0413,
+       -0.0051
+      ],
+      "mde95": 0.0152,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 below zero",
+      "key": "frames.vm_dev.deltas.arm_vs_mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.02406,
+      "ci95": [
+       -0.0237,
+       0.0677
+      ],
+      "mde95": 0.0387,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.01928,
+      "ci95": [
+       -0.005,
+       0.0427
+      ],
+      "mde95": 0.0197,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "DEVELOPMENT ONLY: within vs V2 -0.0109 (CI95 [-0.0345, 0.0131]), vs consensus -0.021 (CI95 [-0.054, 0.0118]); adjudicates nothing",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/_labs/efv_w2/efv_w2_anchor.json",
+     "generated_at": "2026-10-08T19:50:22Z",
+     "sha256": "85a07bb84cbf047db969e066a3e08217cce5cf63f68850242e6689f3b363064c"
+    }
+   ],
+   "note": "wave 2 anchor arm an1_pl (AN-1 simple variant: fixed weights mlb_pipeline 2.0, fangraphs 1.0); development read on a spent frame, not a claim",
+   "last_verified_at": "2026-10-08T20:01:28Z",
+   "content_hash": "709322d9e7dfee324dcf119fcd1a2803cebee1f3fa54593612199585a461004b"
+  },
+  {
+   "run_id": "2026-10-08T19:50:22Z|lv_dev|9a41baf5",
+   "date": "2026-10-08",
+   "trigger": "efv_change",
+   "model_id": "efv_w2_anchor:an2_pos",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "f071da2d",
+    "label": "fwar@2026-10-02-0341299c20ec",
+    "resolved_through": 2026,
+    "provider": "fwar"
+   },
+   "frame": "lv_dev",
+   "frame_version": null,
+   "role": "development",
+   "tilted": false,
+   "window": null,
+   "n": 2862,
+   "n_by_side": {
+    "hit": 1465,
+    "pit": 1397
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.1817,
+     "auc": 0.7552,
+     "n": 2862
+    },
+    "efv_v2_base": {
+     "spearman": 0.1676,
+     "auc": 0.7352,
+     "n": 2862
+    },
+    "prospx_consensus": {
+     "spearman": 0.1792,
+     "auc": 0.7468,
+     "n": 2862
+    },
+    "mlb_pipeline": {
+     "spearman": 0.2034,
+     "auc": 0.747,
+     "n": 2574
+    },
+    "fangraphs": {
+     "spearman": 0.1714,
+     "auc": 0.7053,
+     "n": 2370
+    }
+   },
+   "deltas": {
+    "vs_efv_v2_base": {
+     "spearman": {
+      "delta": 0.01407,
+      "ci95": [
+       -0.0003,
+       0.0282
+      ],
+      "mde95": 0.0119,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_efv_v2.spearman"
+     },
+     "auc": {
+      "delta": 0.01999,
+      "ci95": [
+       0.0076,
+       0.0318
+      ],
+      "mde95": 0.0102,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 above zero",
+      "key": "frames.lv_dev.deltas.arm_vs_efv_v2.auc"
+     }
+    },
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.00244,
+      "ci95": [
+       -0.0192,
+       0.0234
+      ],
+      "mde95": 0.0175,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_prospx_consensus.spearman"
+     },
+     "auc": {
+      "delta": 0.00834,
+      "ci95": [
+       -0.0081,
+       0.0256
+      ],
+      "mde95": 0.0137,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.01522,
+      "ci95": [
+       -0.0438,
+       0.0132
+      ],
+      "mde95": 0.0234,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.01318,
+      "ci95": [
+       -0.0081,
+       0.0334
+      ],
+      "mde95": 0.017,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.01518,
+      "ci95": [
+       -0.0152,
+       0.0443
+      ],
+      "mde95": 0.0246,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.lv_dev.deltas.arm_vs_fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.04004,
+      "ci95": [
+       0.018,
+       0.0624
+      ],
+      "mde95": 0.019,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 above zero",
+      "key": "frames.lv_dev.deltas.arm_vs_fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "DEVELOPMENT ONLY: within vs V2 0.0141 (CI95 [-0.0003, 0.0282]), vs consensus 0.0024 (CI95 [-0.0192, 0.0234]); adjudicates nothing",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/_labs/efv_w2/efv_w2_anchor.json",
+     "generated_at": "2026-10-08T19:50:22Z",
+     "sha256": "85a07bb84cbf047db969e066a3e08217cce5cf63f68850242e6689f3b363064c"
+    }
+   ],
+   "note": "wave 2 anchor arm an2_pos (AN-2: weights per source x position group on vintages at most V - 3, shrunk toward the AN-1 weights with 150 pseudo rows); development read on a spent frame, not a claim",
+   "last_verified_at": "2026-10-08T20:01:28Z",
+   "content_hash": "9a41baf51db02a2645c4eb0ccb3007f127ffe66b9cc03f8880091a081051e5d5"
+  },
+  {
+   "run_id": "2026-10-08T19:50:22Z|vm_dev|69db268b",
+   "date": "2026-10-08",
+   "trigger": "efv_change",
+   "model_id": "efv_w2_anchor:an2_pos",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "f071da2d",
+    "label": "fwar@2026-10-02-0341299c20ec",
+    "resolved_through": 2026,
+    "provider": "fwar"
+   },
+   "frame": "vm_dev",
+   "frame_version": null,
+   "role": "development",
+   "tilted": false,
+   "window": null,
+   "n": 830,
+   "n_by_side": {
+    "hit": 406,
+    "pit": 424
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3468,
+     "auc": 0.7324,
+     "n": 830
+    },
+    "efv_v2_base": {
+     "spearman": 0.3713,
+     "auc": 0.7388,
+     "n": 830
+    },
+    "prospx_consensus": {
+     "spearman": 0.3814,
+     "auc": 0.743,
+     "n": 830
+    },
+    "mlb_pipeline": {
+     "spearman": 0.3816,
+     "auc": 0.759,
+     "n": 830
+    },
+    "fangraphs": {
+     "spearman": 0.3363,
+     "auc": 0.7168,
+     "n": 830
+    }
+   },
+   "deltas": {
+    "vs_efv_v2_base": {
+     "spearman": {
+      "delta": -0.02453,
+      "ci95": [
+       -0.0492,
+       -0.001
+      ],
+      "mde95": 0.0202,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 below zero",
+      "key": "frames.vm_dev.deltas.arm_vs_efv_v2.spearman"
+     },
+     "auc": {
+      "delta": -0.00636,
+      "ci95": [
+       -0.0182,
+       0.0054
+      ],
+      "mde95": 0.0098,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_efv_v2.auc"
+     }
+    },
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0346,
+      "ci95": [
+       -0.0678,
+       -0.0011
+      ],
+      "mde95": 0.028,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 below zero",
+      "key": "frames.vm_dev.deltas.arm_vs_prospx_consensus.spearman"
+     },
+     "auc": {
+      "delta": -0.01054,
+      "ci95": [
+       -0.0291,
+       0.0075
+      ],
+      "mde95": 0.0152,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.03483,
+      "ci95": [
+       -0.0723,
+       0.0026
+      ],
+      "mde95": 0.0316,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": -0.02659,
+      "ci95": [
+       -0.0466,
+       -0.0074
+      ],
+      "mde95": 0.0165,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 below zero",
+      "key": "frames.vm_dev.deltas.arm_vs_mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.01045,
+      "ci95": [
+       -0.0339,
+       0.0518
+      ],
+      "mde95": 0.0363,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.01566,
+      "ci95": [
+       -0.008,
+       0.0388
+      ],
+      "mde95": 0.0194,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_dev.deltas.arm_vs_fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "DEVELOPMENT ONLY: within vs V2 -0.0245 (CI95 [-0.0492, -0.001]), vs consensus -0.0346 (CI95 [-0.0678, -0.0011]); adjudicates nothing",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/_labs/efv_w2/efv_w2_anchor.json",
+     "generated_at": "2026-10-08T19:50:22Z",
+     "sha256": "85a07bb84cbf047db969e066a3e08217cce5cf63f68850242e6689f3b363064c"
+    }
+   ],
+   "note": "wave 2 anchor arm an2_pos (AN-2: weights per source x position group on vintages at most V - 3, shrunk toward the AN-1 weights with 150 pseudo rows); development read on a spent frame, not a claim",
+   "last_verified_at": "2026-10-08T20:01:28Z",
+   "content_hash": "69db268b3a25b11dde9c314b992056d9c3db17bf2970cbc726f4db759a2eec41"
   }
  ],
  "backfill": {
