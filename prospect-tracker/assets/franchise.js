@@ -254,7 +254,7 @@
     var sel = '<label>Club <select id="fr-club" class="eephus-select" data-team-picker aria-label="Club">' +
       codes().map(function (c) { var k = clubOf(c); return opt(c, c + (k && k.name ? " " + k.name : ""), state.team); }).join("") + "</select></label>";
     return '<div class="fr-mast">' +
-      '<img class="fr-mast-logo" src="' + esc(d.logo) + '" alt="" loading="lazy">' +
+      '<img class="fr-mast-logo" src="' + esc(d.logo) + '" alt="" loading="lazy" data-club-nolink="self">' +
       '<div><div class="fr-mast-name">' + esc(d.name) + '</div><div class="fr-mast-meta">' + esc(d.division || "") +
       (rec ? " &middot; " + esc(rec) + rd : "") + (isNum(s.division_rank) ? " &middot; " + gl("division rank", "season_record") + " " + esc(s.division_rank) : "") + "</div></div>" +
       '<div class="fr-mast-controls">' + sel + gfx + "</div></div>";

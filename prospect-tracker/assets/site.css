@@ -2321,6 +2321,14 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .club-link-logo { width: 17px; height: 17px; object-fit: contain; vertical-align: -4px; margin-right: 4px; }
 .club-link--logo-only { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; }
 .club-link--logo-only .club-link-logo { margin-right: 0; }
+/* Every club link reaches a 24 x 24 px hit area without moving the text it
+   wraps: a transparent box centred on the link, at least the link's own size. */
+.club-link { position: relative; }
+.club-link::after { content: ""; position: absolute; left: 50%; top: 50%; width: 24px; height: 24px;
+  min-width: 100%; min-height: 100%; transform: translate(-50%, -50%); }
+/* a player row's mark link is the mouse twin of the row's code link: it keeps
+   the mark's own size, so it never covers the row's caret button */
+.club-link--mark::after { content: none; }
 .pal-mix-card h4 .eephus-teamlogo { width: 15px; height: 15px; }
 /* inline SVG charts (histograms + scatters) shared across the MLB modules */
 .mlbstats-viz { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0 16px; }
@@ -2416,6 +2424,8 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 /* Clickable leaderboard names -> the merged /projections/ MLB player card. */
 .mlbstats-name-link { color: var(--text-primary); text-decoration: none; border-bottom: 1px dotted var(--border); }
 .mlbstats-name-link:hover { border-bottom-color: var(--text-tertiary); color: var(--neon-cyan); }
+/* the player link stays above a neighbouring club link's widened hit area */
+.mlbstats-name > .mlbstats-name-link:not(.club-link) { position: relative; z-index: 1; }
 .mlbstats-table tbody tr:hover { background: var(--bg-tertiary); }
 /* PROVISIONAL ROWS: de-emphasised by COLOR, never by element opacity on the
    cell. This was `opacity: .82` on the td, and it defeated the frozen identity
@@ -2576,8 +2586,10 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .mlbx .mlbstats-table td.mlbstats-name { max-width: 128px; white-space: normal; line-height: 1.2;
     padding-top: 4px; padding-bottom: 4px; }
   .mlbx .mlbstats-table tbody td.mlbstats-name::before { float: left; min-width: 1.9em; margin-right: 4px; font-size: 9px; line-height: 1.6; }
-  .mlbx .mlbstats-table td.mlbstats-name > .eephus-teamlogo { display: none; }
-  .mlbx .mlbstats-table td.mlbstats-name > :is(.mlbstats-name-link, .mlbstats-name-txt) {
+  .mlbx .mlbstats-table td.mlbstats-name > .eephus-teamlogo,
+  .mlbx .mlbstats-table td.mlbstats-name > .club-link--mark,
+  .mlbx .mlbstats-table td.mlbstats-name > :is(.club-link, [data-club-nolink]) > .eephus-teamlogo { display: none; }
+  .mlbx .mlbstats-table td.mlbstats-name > :is(.mlbstats-name-link, .mlbstats-name-txt):not(.club-link) {
     display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .mlbx .mlbstats-table td.mlbstats-name > .bp-role { font-size: 8px; padding: 0 3px; }
   .mlbx .mlbstats-toolrow { display: block; }
@@ -2596,8 +2608,10 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .mlbx .mlbstats-table td.mlbstats-name { max-width: 176px; white-space: normal; line-height: 1.2;
     padding-top: 4px; padding-bottom: 4px; }
   .mlbx .mlbstats-table tbody td.mlbstats-name::before { float: left; min-width: 2em; margin-right: 5px; line-height: 1.5; }
-  .mlbx .mlbstats-table td.mlbstats-name > .eephus-teamlogo { display: none; }
-  .mlbx .mlbstats-table td.mlbstats-name > :is(.mlbstats-name-link, .mlbstats-name-txt) {
+  .mlbx .mlbstats-table td.mlbstats-name > .eephus-teamlogo,
+  .mlbx .mlbstats-table td.mlbstats-name > .club-link--mark,
+  .mlbx .mlbstats-table td.mlbstats-name > :is(.club-link, [data-club-nolink]) > .eephus-teamlogo { display: none; }
+  .mlbx .mlbstats-table td.mlbstats-name > :is(.mlbstats-name-link, .mlbstats-name-txt):not(.club-link) {
     display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 /* ---- the years control ------------------------------------------------------

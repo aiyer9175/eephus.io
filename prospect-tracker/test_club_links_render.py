@@ -16,12 +16,16 @@ Two kinds of check, per route, at 1280 and 390 px:
 
   SWEPT routes only (a surface task adds its route to SWEPT when it lands):
   every MLB logo image and every [data-club] sits inside a.club-link[href] or
-  carries data-club-nolink with an allowed reason.
+  carries data-club-nolink with an allowed reason, and one sampled link lands
+  on a Franchises page naming that club.
 
-Off-loopback requests are aborted; the page must raise no console error.
+Off-loopback requests are aborted, except the ESPN logo images, which are
+answered with a local 1 px image so a logo stays in the page to be checked
+(an aborted logo removes itself). The page must raise no console error.
 """
 from __future__ import annotations
 
+import base64
 import re
 
 import pytest
@@ -39,9 +43,39 @@ ROUTES = [
     "management/",
     "projections/",
 ]
+# Q9_06 (MLB modules, part A): MLB Stats player boards, the five team views
+# and the four depth charts; Sports Betting; Club Ledger; Arbitration; the
+# In-Game Management club view.
+MLB_A = [
+    "mlbstats/",
+    "mlbstats/#section=hitters",
+    "mlbstats/#section=starters",
+    "mlbstats/#section=bullpen",
+    "mlbstats/#section=leverage",
+    "mlbstats/#section=hitters&hview=teams",
+    "mlbstats/#section=starters&sview=teams",
+    "mlbstats/#section=bullpen&view=teams",
+    "mlbstats/#section=war&wview=teams",
+    "mlbstats/#section=defense&dview=teams",
+    "mlbstats/#section=hitters&hview=charts",
+    "mlbstats/#section=starters&sview=charts",
+    "mlbstats/#section=bullpen&view=depth",
+    "mlbstats/#section=defense&dview=charts",
+    "betting/#section=teams",
+    "betting/#section=futures",
+    "betting/#section=props",
+    "ledger/",
+    "ledger/#section=club&team=CHW",
+    "arbitration/",
+    "arbitration/#teams",
+    "management/#section=clubs&team=CHW",
+]
+ROUTES += MLB_A
 # Routes whose club mentions have been converted (the SWEPT checks run on each).
-# Empty until the first surface task lands; each task appends its own routes.
-SWEPT: list[str] = []
+# Each surface task appends its own routes.
+SWEPT: list[str] = ["franchise/#team=CHW"] + MLB_A
+# A 1 px PNG served for every ESPN logo request.
+_PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
 
 _READ = """() => {
   const bad = 'a, button, [role=button], summary, label, select';
@@ -52,7 +86,10 @@ _READ = """() => {
   const loose = [...document.querySelectorAll('img[src*="teamlogos/mlb"], [data-club]')]
     .filter(e => !e.closest('a.club-link[href]') && !e.closest('[data-club-nolink]'))
     .map(e => e.outerHTML.slice(0, 160));
-  return {links, nolink, loose};
+  const first = document.querySelector('a.club-link[href]');
+  const sample = first ? {href: first.getAttribute('href'), club: first.getAttribute('data-club'),
+                          name: (first.getAttribute('title') || '').split(':')[0]} : null;
+  return {links, nolink, loose, sample};
 }"""
 
 
@@ -72,14 +109,26 @@ def base():
         yield url
 
 
-def _read(browser, base, route, width):
+def _offsite(r):
+    if "teamlogos/mlb" in r.request.url:
+        r.fulfill(status=200, content_type="image/png", body=_PNG)
+    else:
+        r.abort()
+
+
+def _open(browser, base, route, width):
     pg = browser.new_page(viewport={"width": width, "height": 900})
     errors = []
     pg.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     pg.on("pageerror", lambda e: errors.append(str(e)))
-    pg.route(re.compile(r"^https?://(?!127\.0\.0\.1)"), lambda r: r.abort())
+    pg.route(re.compile(r"^https?://(?!127\.0\.0\.1)"), _offsite)
     pg.goto(base + route)
     pg.wait_for_load_state("networkidle")
+    return pg, errors
+
+
+def _read(browser, base, route, width):
+    pg, errors = _open(browser, base, route, width)
     out = pg.evaluate(_READ)
     pg.close()
     # aborted off-loopback requests surface as net::ERR_FAILED console lines
@@ -105,3 +154,35 @@ def test_every_club_link_is_well_formed(browser, base, route, width):
     assert not r["errors"], (route, r["errors"][:3])
     if route in SWEPT:
         assert not r["loose"], (route, r["loose"][:5])
+
+
+def _landing_name(browser, base, href):
+    pg, _ = _open(browser, base, href.lstrip("/"), 1280)
+    pg.wait_for_selector(".fr-mast-name", timeout=15000)
+    name = pg.inner_text(".fr-mast-name").strip()
+    pg.close()
+    return name
+
+
+@pytest.mark.parametrize("route", SWEPT)
+def test_a_sampled_club_link_lands_on_its_club(browser, base, route):
+    r = _read(browser, base, route, 1280)
+    if r["sample"] is None:
+        pytest.skip(f"{route}: no club link on the served data today")
+    href = r["sample"]["href"]
+    assert href.startswith("/franchise/#team="), (route, href)
+    assert _landing_name(browser, base, href) == r["sample"]["name"], (route, r["sample"])
+
+
+def test_lineup_charts_white_sox_lands_on_the_white_sox(browser, base):
+    """The owner's example: Lineup Charts print the StatsAPI code CWS; the link
+    resolves to CHW and opens the Chicago White Sox page, not Arizona."""
+    pg, _ = _open(browser, base, "mlbstats/#section=hitters&hview=charts", 1280)
+    got = pg.evaluate("""() => [...document.querySelectorAll('.bp-depth-team a.club-link')]
+      .filter(a => a.textContent.trim() === 'CWS')
+      .map(a => [a.getAttribute('href'), a.getAttribute('data-club')])""")
+    pg.close()
+    if not got:
+        pytest.skip("no CWS lineup card on the served data")
+    assert got == [["/franchise/#team=CHW", "CHW"]], got
+    assert _landing_name(browser, base, got[0][0]) == "Chicago White Sox"

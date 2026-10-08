@@ -236,9 +236,27 @@
     var n = Number(v);
     return (n > 0 ? "+" : "") + n.toFixed(d == null ? 1 : d);
   }
+  // The mark always sits beside its printed code inside the club link, so it
+  // is decorative (alt=""): a screen reader hears the code once.
   function teamLogo(org) {
-    return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && org) ? EEPHUS_HUB.teamLogo(org) : "";
+    return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && org) ? EEPHUS_HUB.teamLogo(org, null, { decorative: true }) : "";
   }
+  // A club mention opens that club's Franchises page (owner ask 9): a link
+  // only, carrying no figure, so no Franchise number reaches a priced cell.
+  // The href comes from the hub's one club resolver (EEPHUS_HUB.clubHref);
+  // `inner` is the markup printed before (the mark, the code). A code that is
+  // not one of the thirty keeps it in a span marked
+  // data-club-nolink="unresolved", never a guessed link; without the hub on
+  // the page the markup prints as it did.
+  function clubA(org, inner) {
+    var H = window.EEPHUS_HUB, c = null, href = "";
+    if (!H || !H.club) return inner;
+    try { c = H && H.club ? H.club(org) : null; href = c && H.clubHref ? H.clubHref(c.code) : ""; } catch (e) { href = ""; }
+    if (!href) return org ? '<span data-club-nolink="unresolved">' + inner + "</span>" : inner;
+    return '<a class="club-link" href="' + esc(href) + '" data-club="' + esc(c.code) + '" title="' +
+      esc(c.name + ": franchise overview") + '">' + inner + "</a>";
+  }
+  function clubText(org) { return org ? clubA(org, esc(org)) : ""; }
   function hrefFor(mlbam) {
     var e = LINKS && LINKS.byMlbam && LINKS.byMlbam[String(mlbam)];
     return (e && e.key) ? ("/projections/#player=" + e.key) : null;
@@ -1574,7 +1592,7 @@
 
   function dugoutClub(org, ctx) {
     var c = (ctx.clubs || {})[org];
-    var head = '<div class="bt-dugout-org">' + teamLogo(org) + " " + esc(org) + "</div>";
+    var head = '<div class="bt-dugout-org">' + clubA(org, teamLogo(org) + " " + esc(org)) + "</div>";
     if (!c || c.row_note || !c.style) {
       return '<div class="bt-dugout-club">' + head +
         '<p class="bt-dim">' + esc((c && c.row_note) || ctx.season_note || "") + "</p>" +
@@ -2572,7 +2590,7 @@
   function brPanel(ov) {
     var b = ov.b, cols = b.columns || {}, rec = b.record || {};
     var rows = b.clubs.map(function (c) {
-      return "<tr>" + '<td class="bt-l">' + esc(c.team) + "</td>" +
+      return "<tr>" + '<td class="bt-l">' + clubText(c.team) + "</td>" +
         "<td>" + esc(c.seed) + "</td>" +
         '<td class="bt-l bt-br-now">' + esc(c.series_now_text || "") + "</td>" +
         "<td>" + brPct(c.p_round_now) + "</td>" +
@@ -2626,7 +2644,7 @@
       function p3(v) { return (v === null || v === undefined) ? "" : (v * 100).toFixed(1) + "%"; }
       var mc = c.mcWs || {};
       return "<tr>" +
-        '<td class="bt-l">' + esc(c.team) + "</td>" +
+        '<td class="bt-l">' + clubText(c.team) + "</td>" +
         "<td>" + esc(c.record || "") + "</td>" +
         "<td>" + (c.projWins === null ? "" : c.projWins.toFixed(1)) + "</td>" +
         "<td>" + esc(c.winTotalP10) + " to " + esc(c.winTotalP90) + "</td>" +
@@ -2889,6 +2907,12 @@
 
   function chip(label, value) {
     return '<span class="bt-numchip"><span class="bt-numchip-l">' + esc(label) +
+      '</span><span class="bt-numchip-v">' + esc(value) + "</span></span>";
+  }
+  // The same chip with a club code for its label: the code links to the
+  // club's Franchises page, the value is the one chip() prints.
+  function clubChip(org, value) {
+    return '<span class="bt-numchip"><span class="bt-numchip-l">' + clubText(org) +
       '</span><span class="bt-numchip-v">' + esc(value) + "</span></span>";
   }
 
@@ -3527,14 +3551,14 @@
     // read one sentence.
     badge += postseasonTag(b);
     var hd = '<div class="bt-game-hd">' +
-      '<div class="bt-game-teams">' + teamLogo(b.away.org) + " " + esc(b.away.org) +
-      ' <span class="bt-at">at</span> ' + teamLogo(b.home.org) + " " + esc(b.home.org) +
+      '<div class="bt-game-teams">' + clubA(b.away.org, teamLogo(b.away.org) + " " + esc(b.away.org)) +
+      ' <span class="bt-at">at</span> ' + clubA(b.home.org, teamLogo(b.home.org) + " " + esc(b.home.org)) +
       badge + "</div>" +
       '<div class="bt-game-sub">' + esc(b.venue || "") +
       (b.start ? " &middot; " + esc(String(b.start).slice(11, 16)) + " UTC" : "") + "</div></div>";
 
     var probs = '<div class="bt-game-probs">' +
-      chip(esc(b.away.org), pct(m.p_away)) + chip(esc(b.home.org), pct(m.p_home)) +
+      clubChip(b.away.org, pct(m.p_away)) + clubChip(b.home.org, pct(m.p_home)) +
       chip("Fair total", num(m.fair_total, 2)) +
       chip("Park", num(m.park_index, 2)) + "</div>";
 
@@ -3606,11 +3630,11 @@
   function spLine(sideObj, prev) {
     var pp = sideObj.probable || null;
     if (!pp || !pp.mlbam) {
-      return '<div class="bt-sp"><span class="bt-sp-org">' + esc(sideObj.org) +
+      return '<div class="bt-sp"><span class="bt-sp-org">' + clubText(sideObj.org) +
         '</span><span class="bt-sp-name bt-dim">probable not announced</span>' +
         '<span class="bt-sp-num">rotation average</span></div>';
     }
-    return '<div class="bt-sp"><span class="bt-sp-org">' + esc(sideObj.org) + "</span>" +
+    return '<div class="bt-sp"><span class="bt-sp-org">' + clubText(sideObj.org) + "</span>" +
       '<span class="bt-sp-name">' + nameLink(pp.mlbam, pp.name) + "</span>" +
       '<span class="bt-sp-num">' + gl("SEM+", "sem_plus") + " " +
       num((prev || {}).starter_plus, 0) + " &middot; " + gl("pen", "bullpen_plus") + " " +
@@ -3779,8 +3803,8 @@
       (pf.pitchers || []).map(function (p) {
         var k = propOf(p, "Strikeouts"), er = propOf(p, "Earned runs"), h = propOf(p, "Hits allowed");
         return '<tr><td class="bt-l">' + nameLink(p.mlbam, p.name) +
-          ' <span class="bt-dim">' + esc(p.org || "") + "</span></td>" +
-          "<td>" + esc(p.opp || "") + "</td><td>" + num(p.expected_ip, 1) + "</td>" +
+          ' <span class="bt-dim">' + clubText(p.org) + "</span></td>" +
+          "<td>" + clubText(p.opp) + "</td><td>" + num(p.expected_ip, 1) + "</td>" +
           "<td>" + num(k.fair_line, 2) + "</td>" +
           "<td>" + (k.over_line != null ? "o" + k.over_line + " " + pct(k.p_over) : "-") + "</td>" +
           "<td>" + num(er.fair_line, 2) + "</td><td>" + num(h.fair_line, 2) + "</td></tr>";
@@ -3792,7 +3816,7 @@
       (pf.hitters || []).map(function (p) {
         var tb = propOf(p, "Total bases"), hh = propOf(p, "1+ hits"), hr = propOf(p, "1+ home runs");
         return '<tr><td class="bt-l">' + nameLink(p.mlbam, p.name) +
-          ' <span class="bt-dim">' + esc(p.org || "") + "</span></td>" +
+          ' <span class="bt-dim">' + clubText(p.org) + "</span></td>" +
           "<td>" + (p.slot || "-") + "</td><td>" + num(p.expected_pa, 2) + "</td>" +
           "<td>" + num(tb.fair_line, 2) + "</td><td>" + pct(tb.p_over) + "</td>" +
           "<td>" + pct(hh.p_over) + "</td><td>" + pct(hr.p_over) + "</td></tr>";
@@ -4675,6 +4699,8 @@
     ".bt-game{border:1px solid var(--border,#333);background:var(--bg-secondary);padding:10px 12px;margin:10px 0}",
     ".bt-game-hd{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}",
     ".bt-game-teams{font:700 14px/1.2 var(--font-retro,monospace);color:var(--text-primary);display:flex;align-items:center;gap:6px}",
+    // a club link keeps the mark and the code on the head's own flex line
+    ".bt-game-teams .club-link,.bt-dugout-org .club-link{display:inline-flex;align-items:center;gap:6px}",
     ".bt-at{color:var(--text-tertiary);font-weight:400}",
     ".bt-game-sub{font-size:11.5px;color:var(--text-tertiary)}",
     ".bt-game-probs{margin:8px 0 4px}",

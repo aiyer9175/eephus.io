@@ -1333,11 +1333,22 @@
   function block(id, eyebrow, title, span, inner) {
     return '<section class="ledger-block ledger-span-' + span + '" id="ledger-block-' + id + '" tabindex="-1"><div class="ledger-eyebrow">' + esc(eyebrow) + "</div><h2>" + title + "</h2>" + inner + "</section>";
   }
+  // The club view's heading opens the club's Franchises page (owner ask 9):
+  // the text is the code and name it printed before, the href comes from the
+  // hub's one club resolver (EEPHUS_HUB.clubHref). The League table's code
+  // keeps its in-page link to this view.
+  function clubHeading(d) {
+    var text = esc(d.club) + (d.name ? " " + esc(d.name) : "");
+    var H = window.EEPHUS_HUB, c = null, href = "";
+    try { c = H && H.club ? H.club(d.club) : null; href = c && H.clubHref ? H.clubHref(c.code) : ""; } catch (e) { href = ""; }
+    if (!href) return text;
+    return '<a class="club-link" href="' + esc(href) + '" data-club="' + esc(c.code) + '" title="' + esc(c.name + ": franchise overview") + '">' + text + "</a>";
+  }
   function renderClub() {
     ensureTeam();
     var d = clubOf(state.team);
     if (!d) return '<p class="ledger-note">' + esc(copy("load_error")) + "</p>";
-    var out = renderControls(d) + renderBlockIndex() + "<h2>" + esc(d.club) + (d.name ? " " + esc(d.name) : "") + "</h2>" + banner() + '<div class="ledger-grid">';
+    var out = renderControls(d) + renderBlockIndex() + "<h2>" + clubHeading(d) + "</h2>" + banner() + '<div class="ledger-grid">';
     out += block("payroll", "C1", "Payroll now", 12, renderPayroll(d));
     out += block("commitments", "C4", gl("Commitments timeline", "contract_dollars_on_file"), 7, renderCommitments(d));
     out += block("cbt", "C3", gl("CBT position and tax", "cbt_payroll"), 5, renderCbt(d));
