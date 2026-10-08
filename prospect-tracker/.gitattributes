@@ -18,3 +18,7 @@ branding/animated/*.svg -text
 # The Z1 driver re-test arm list is pinned by sha256 in its registration and checked by
 # the retest mode's --sha; never let git convert its bytes.
 docs/efv-*/z1_arm_list.json -text
+
+# The Awards freeze record is write-once and pinned by sha256 in data/_labs/awards/freeze_log.json;
+# awards_export.py refuses a record whose bytes differ, so never let git convert them.
+data/_labs/awards/frozen_*.json -text
