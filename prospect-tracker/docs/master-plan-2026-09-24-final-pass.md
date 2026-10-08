@@ -3700,3 +3700,6166 @@ in `DECISIONS_FOR_OWNER.md` by the task that relies on it.
 7. The questions in `OWNER_QUESTIONS.json` answered or their defaults recorded.
 8. The Part 8 bundle copied to `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part8/` and the
    memory note for the pass updated with the commits and the owed looks.
+
+## Part 8 annexes: the lane plans of the 2026-09-30 asks
+
+Each annex below is its lane plan's text verbatim, with the plan's own headings demoted two levels; the three lines above each plan give its verify status, the queue ids it produced and where its owner answers are recorded.
+
+### 8.J The MLB Scores module
+
+- Status: CLEAN 2026-09-30 at verify round 3 (`part8/scores/VERIFY_round3.md`); source `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part8/scores/SCORES_PLAN.md`.
+- Queue (dq/queue.json, prefix SCORES_): SCORES_1_CORE_RULES, SCORES_2_JOB_AND_DEPLOY, SCORES_3_PAGE_CHART, SCORES_4a_VIDEO, SCORES_4b_BRACKET, SCORES_5a_LIVE_FLIP, SCORES_5b_LAUNCH_NAV_HEALTH, SCORES_6_PREGAME_CONTEXT; the prefix also holds SCORES_3b_BOX_PITCH_RATES (owner ask 2026-10-07) and SCORES_7a to SCORES_7d (owner ask SC7, 2026-10-08), which later asks added, not this plan.
+- Answers: `C:/Users/noah/baseball-projects/_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, sections 'ANSWERED 2026-09-30 (chat), MLB Scores module', 'MLB Scores batch 1', 'the range extension review, the /fa/ tail rule, MLB Scores batch 2 (part)', 'MLB Scores batch 2 (rest) and batch 3 (part)', 'MLB Scores SC-MODEL and Part 8 batch 5 (pixel branding, part)' and 'the Scores timing and Part 8 batch 9 (rest) and 10 (part)'.
+
+### MLB Scores (`/scores/`): the synthesized plan
+
+Synthesis of the three Scores design lanes, written 2026-09-30 in the evening for the orchestrator
+and the queue writers, and revised the same night after two adversarial reviews
+(`REVIEWS_round1.json`, 40 issues; `FIX_LOG.md` maps each one to the change below) and the
+orchestrator's decisions A to J. Read-only: neither pass edited the repo or ran pytest, an exporter
+or a tool; the synthesis made no network call, and the fix pass made two read-only requests for the
+video-embed check of 6.0. Where this plan and a lane differ, this plan wins; section 13 lists every
+resolution and why.
+
+| Tag | Lane file (under `<part8>/scores/`) | Written (EDT) | Role |
+|---|---|---|---|
+| DS | `data_sources.md` | 14:21 | endpoint census, caches, terms |
+| MD | `module_design.md`, revision 2 | 17:54 | page, rules, copy, video after S8-1 |
+| PO | `pipeline_ops.md`, revision 2 | 18:02 | job, publish path, build, tests, queue draft |
+
+Also read: Part 8's rules and overlaps (`<part8>/PART8_ADDENDUM.md` 8.A 'Rules this part adds to
+Part 0.2', 8.B 'The clock: the fWAR epoch calendar', 8.C, 8.D and 8.E; the same text sits in
+`<part8>/_addendum_parts/`, and the master plan document holds Parts 0 to 7 only until the
+orchestrator appends Part 8, so every queue spec names `PART8_ADDENDUM.md` as the fallback), the queue specs
+Q8_12, Q9_05 and Q10_09 in `<part8>/QUEUE_TASKS.json`, `<part8>/intensity_index.md` 4.1,
+`DECISIONS_FOR_OWNER.md:587-591`, and the saved samples (two read-only tabulations in
+`<part8>/scores/synth_work/`, output `clip_facts_out.json`). `<part8>` is
+`C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/part8/`,
+which the orchestrator copies to `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part8/`
+(8.C action 1); the queue specs read the durable copy and fall back to the scratchpad.
+
+**Repo state.** The lanes cite HEAD `64bf1bb3`. At the round-3 fix HEAD is `ad0c98b7` (2026-09-30
+20:45, the starter-workload registration test). Of the files this plan cites, `run_monthly.py` moved
+at `410cccce` (one 26-line insertion after line 1324, so cited lines past 1324 are +26) and
+`ledger_export.py` (lines past 712); between `410cccce` and `6c614289` only `build_site.py` (4 lines
+edited in place, `36b93e16`, no line shift in a cited region) and `conftest.py` (3 lines added)
+moved; between `6c614289` and `ad0c98b7` the only cited file that moved is `docs/diamond-betting.md`
+(338 lines added: 8 after line 3926, 8 after 6815 and 322 after 6865, the new section 5m), so its
+three citations below carry `@ad0c98b7` line numbers and their heading. Every other citation is a
+`64bf1bb3` line; builders re-resolve citations by symbol or heading.
+
+**Owner ask, 2026-09-30**, verbatim except one adjective, elided because `tools/copy_lint.py:44`
+bans it: "Can we also add an MLB Scores module that shows matchups from today, future dates, etc,
+and expand upon this so that we can make it the most [adjective] MLB scores source in the public
+space? Stuff like win probability, biggest plays (with links to MLB.com highlight, which we should
+be able to pull), automatic 'Stars of the Game' for finished games, etc". No page copy describes the
+module with that adjective; the page says what it has.
+
+**Owner decision S8-1, 2026-09-30**, verbatim: "embed the video we arent a commercial site, real
+sports app uses MLB.com embedded highlights and they're commercialized". The recorder's gloss after
+it at `DECISIONS_FOR_OWNER.md:591` ("from the StatsAPI game-content playback URLs; the MLB.com page
+link is the fallback only when a play has no clip") is not the owner's wording: S8-1 decides that
+video is embedded, and owner question SC-VIDEO decides how (section 6.0).
+
+---
+
+#### 0. The plan in brief
+
+1. **One page, one writer, behind one flag.** `/scores/` is a static shell (`build_site.build_scores()`),
+   `assets/scores.js`, `assets/scores.css` and two lazy chunks (video, bracket), and a pure reader of
+   `/data/scores/`. One intraday job, `tools/scores_job.py` over a pure `scores_core.py`, in the lineup
+   job's shape (cron `*/2` under UTC; the job decides), writes every scores file. Everything ships
+   behind `scores_core.SCORES_LIVE`, default False (Part 8 8.A class 2): while it is False the job
+   writes only `.cache/scores/preview/` and nothing public changes. There is no `run_monthly` export
+   step; the nightly only files a health row after launch.
+2. **The posture is the owner's (SC-TERMS).** MLB's terms allow "individual, non-commercial, non-bulk
+   use"; the data-sources lane recommended no job and browser-direct live data for that reason. The
+   plan is built for the recommended answer (the job, with MLB's copyright line and credit on every
+   payload) and names what each other answer re-cuts.
+3. **What it shows.** Every MLB game (types R, F, D, L, W, A) by `officialDate`: past 2026 dates
+   (depth per SC-HISTORY, kept per SC-KEEP), today and seven days ahead; live cards with MLB's win
+   probability; a game view with MLB's win probability chart, the five biggest plays, Stars of the
+   Game, a box score with WPA and pLI, every plate appearance, posted lineups and game info; an
+   October bracket; and MLB's clips embedded per S8-1 by the mechanism SC-VIDEO picks.
+4. **Fresh by rule.** Live games refresh every 2 to 3 minutes (under SC-TERMS (c) every 6 minutes,
+   about a third of the live calls: the 280 s gate on 2-minute ticks), idle days every 30 minutes
+   (60), the week's schedule once a day after 10:00 UTC. The page polls a small
+   `latest.json` every 45 s while a game is live and states its freshness in one of five exact
+   states; old live state is never shown as current.
+5. **Publish path (SC-LIVE).** On the box the job writes `/opt/eephus/scores/`, which one nginx
+   location serves at `/data/scores/` with `no-cache`. The nightly, its rsync and its compression
+   step do not change. Locally the job writes `.cache/scores/out/` (or `$EEPHUS_SCORES_OUT`), never
+   anything under `data/`, and holds itself while the fWAR epoch runs.
+6. **Win probability is MLB's.** Cards, chart, swings and WPA read MLB's per-plate-appearance value
+   (`winProbability`), labelled "MLB, provisional", with its accuracy quoted from the site's own check
+   in `data/win_expectancy.json` (feed Brier 0.157516 over 1,448,965 regular-season plays). It starts
+   every game at 50 percent, so it is not a pregame forecast; inside a game it moves with the
+   situation and, by the site's own check (`win_expectancy.py:21-24`), also carries some team
+   strength. No house line is drawn: both lanes' fallback to `win_expectancy_state` is withdrawn,
+   because that model serves nothing yet.
+7. **Stars of the Game (`stars_v1`) and Biggest plays (`bp_v1`)** are descriptive, published,
+   versioned rules computed once in the job, with "why" sentences built from fields. SC-STARS picks
+   the stars rule. The first star comes from the winning club and can score below the second; the
+   page then prints the rule beside the stars.
+8. **Video, embedded (S8-1).** A clip joins a plate appearance's result only when its `guid` equals
+   the playId of the plate appearance's final event (16 of 16, 9 of 9 and 3 of 3 on three games);
+   clips of earlier events (a pickoff) carry their own label. SC-VIDEO picks the player: MLB's own
+   embed player (recommended; MLB.com names `https://streamable.com/m/<slug>` as each clip's embed URL,
+   checked on 2026-09-30), our player over MLB's files, or links only. No media or frame request
+   before a click; "Video: MLB" under every player; a kill switch the webmaster can throw within one
+   cron tick.
+9. **Betting numbers only as served** (SC-MODEL, answer required): pregame, copied verbatim by
+   `game_pk` through a key-path allowlist from the served board, printed by the board's own rule
+   (one decimal, both sides) with its registry status. The board prices regular-season games only,
+   so nothing renders before Opening Day 2027. Never an edge, price, pick, slot or record.
+10. **Landing: Part 8 8.A, no exception.** Every scores task carries `not_before` 2026-10-11 and the
+    served-change guard; nothing lands between 2026-10-04 and step Z. The SCORES_LIVE flip is one
+    commit after step Z carrying the flag, the page, the publish path, the registry rows and the
+    glossary entries. Realistic first public date (5.3), under the ordering exception the
+    orchestrator granted (SCORES_1_CORE_RULES to SCORES_5b_LAUNCH_NAV_HEALTH immediately after
+    PX_C_states_ballpark in the dynamic queue, before PX_D_visualizations and the DISPLAY tasks;
+    SCORES_6_PREGAME_CONTEXT after Q9_05_CLUB_RESOLVER): step Z about 10-11 to 10-13, Z1_RUN the next
+    day, queue 7's post-Z tasks about three days, VAL_5 and PX_A to PX_C about two days, the scores
+    tasks about two days, then the owner's push and beta sync and the box nightly's pull. That is
+    about 10-22 to 10-26 if step Z lands by 10-13 and the owner pushes within a day; only then is the
+    page up in time for the World Series (10-23 to 10-31). Otherwise it goes public after the World
+    Series (about 11-16 to 11-18 if step Z slips to about 11-05), an archive until Opening Day 2027,
+    the next live use. Never the LCS.
+11. **Fences.** Scores code imports no pricer, no dark module and not the lineup job; never reads
+    `.cache/lineup_captures`, `.cache/odds`, `.cache/betting`, `.cache/weather_forecasts` or
+    `.cache/leaderboard_vintages`; never calls the house feed getters for a non-final game; never
+    writes a shared cache, a tracked file, anything under `data/`, the webroot or `prospects.db`;
+    never touches the nightly's lock.
+12. **Eight queue tasks** (`QUEUE_TASKS_scores.json`, each with `kind` EV, `preamble` P8, `model`
+    opus, `not_before`, `requires`): SCORES_1_CORE_RULES, SCORES_2_JOB_AND_DEPLOY,
+    SCORES_3_PAGE_CHART, SCORES_4a_VIDEO, SCORES_4b_BRACKET, SCORES_5a_LIVE_FLIP,
+    SCORES_5b_LAUNCH_NAV_HEALTH, SCORES_6_PREGAME_CONTEXT.
+13. **Eleven owner questions** (`OWNER_QUESTIONS_scores.json`) in batches of four by urgency: SC-TERMS,
+    SC-VIDEO, SC-JOB, SC-LIVE; then SC-STARS, SC-HISTORY, SC-KEEP, SC-PAID; then SC-CARDVID, SC-NAV,
+    SC-MODEL. They replace the lanes' 22 questions (mapping in 15.1).
+14. **Registering the job is an owner act** on both machines (the webmaster on the box, after step Z
+    and the flip). No task registers a scheduled task, edits a crontab or pushes; section 17 lists
+    the owner's push and beta-sync steps.
+
+---
+
+#### 1. What the module shows
+
+##### 1.1 Routes (hash grammar; every value validated)
+
+| Route | Shows |
+|---|---|
+| `/scores/` | the job's `latest.today`: the `officialDate` of a live game, else of a game final in the last 3 h, else of the next Preview game, else the last date with games |
+| `#date=YYYY-MM-DD` | one date; filters `&f=live\|upcoming\|final`, `&lg=AL\|NL`, `&mine=1` |
+| `#game=<pk>` | the game view; `&tab=summary\|box\|plays\|lineups\|info`; `&play=<ab>` focuses that row and its video button (never plays it) |
+| `#bracket=<season>` | the postseason bracket (October) |
+| `#about` | "About these numbers" |
+
+Back and forward restore the list's scroll position; opening a game moves focus to its heading;
+closing returns focus to the card link. PO's tablist (Today, Schedule, Game, Method) maps onto these
+routes: Today is the default date, Schedule the date strip, Game `#game`, Method `#about`. A `#team=`
+route is later work.
+
+##### 1.2 Day view
+
+Masthead (title, stage chip, one-line sub); a sticky date strip (arrows, day chips with game counts
+and the round in October, "Today" marked, a native date input bounded by `index.json`, a "Bracket"
+chip in October); filters (All, Live, Upcoming, Final with counts; AL, NL; My teams kept in
+`localStorage`, every access in try/catch); the stamp line with the freshness sentence; the card
+grid in first-pitch order, never re-sorted during polls (a late game appends at the end only after
+the viewer presses its notice). At 1440 px a 280 px rail lists "Biggest plays today" (the job's five
+largest swings across the date, live ones marked "so far"), led by the bracket in October. Stars are
+never ranked across games. No poster and no player on the day view unless SC-CARDVID says otherwise.
+Player names on cards print as plain text: `data/player_links.json` (1.88 MB raw, 379 KB gzip) loads
+only once a game view opens. Breakpoints: one column below 768, two from 768, three from 1200, the
+rail from 1400; no horizontal page scroll.
+
+##### 1.3 Cards by state (a min-height per state, so a poll never moves the cards below)
+
+Each state has a `min-height` measured in SCORES_3 from its prototype with the longest fixture
+strings at 390 px; content may grow past it (a long why sentence wraps). Live and final share one
+reserved slot (the larger of the two measured heights), so the live-to-final change moves nothing
+below. The rule a render test pins: a poll within a state never changes a card's height, nothing
+re-sorts, and nothing is inserted above a card the viewer can see. (The review measured that fixed
+heights of 132, 152 and 164 px could not hold the final card's content, `module_design.md:455-485`.)
+
+| State | Shows |
+|---|---|
+| scheduled, pregame | time in the viewer's zone, venue, series line; both clubs linked by team id with W-L; probables (name, and hand, W-L and ERA once 8.7's call is verified); TV when listed; "Lineups posted" or "Lineups not posted yet" within 60 minutes; MLB's weather once posted; SCORES_6's pregame context |
+| delayed | "Delayed start: rain" or "Delayed: rain, top 6" |
+| live | "Top 7, 1 out", base diamond, count, score with R, H, E (the line score from 768 px), batter against pitcher with pitch count, last play text, "MLB win probability: ATL 62%" with its "MLB, provisional" label; no-hitter watch |
+| final | "Final", "Final, 10 innings", "Final, 7 innings: rain"; line score; W, L, S; the first star with his why (and "First star: top player on the winning team." when he scores below the second star); the top play with a "Video 0:29" chip when it has a result clip; a recap chip; debut and no-hitter chips |
+| postponed, suspended, cancelled | status and reason; makeup or resume date when MLB lists one |
+
+Each card is an `<article>` whose matchup heading is the primary link, stretched over the card;
+club links and the Video chip sit above it (`position: relative; z-index: 1`), so no link nests in
+another (links lane A.3). State is never shown by colour alone; the winner is bold with an sr-only
+"winner". No team colours; tokens only.
+
+##### 1.4 Game view
+
+Header: both clubs (linked), score, state line, series line, venue and time, and the line score,
+which scrolls inside its own frame past nine innings. Tabs:
+
+- **Summary** (live and final): the win probability chart (1.5); Biggest plays, five rows ("so far"
+  while live), each with its clip or fallback; Stars of the Game (final only) with their clips and
+  the link "A rule, not an award"; Video (the recap poster and a "Condensed game" button, final);
+  Scoring (every scoring play, field-built text, score after, swing).
+- **Preview** (before first pitch): probables, posted lineups or "Lineups not posted yet", series,
+  park and MLB's weather, SCORES_6's context.
+- **Box score**: batting and pitching per club with WPA and pLI; pitch counts and strikes; position
+  players who pitched marked; debut marks; tables scroll inside their frame with a sticky name
+  column at 390.
+- **Plays**: every plate appearance by half-inning (a fold per half), field-built text, outs and
+  bases after, score, MLB win probability after, swing, LI, a "Play video 0:29" button on every
+  plate appearance whose result has a clip, a second button labelled by its own event ("Pickoff
+  attempt video 0:14") for a clip of an earlier event in the same plate appearance, ABS and replay
+  reviews on the pitch they touched.
+- **Lineups**: the posted cards in batting order with position; substitutions after first pitch.
+- **Game info** (final): umpires by position, weather and wind at first pitch, first pitch, time of
+  game, attendance, venue with roof, surface, dimensions and elevation, ABS challenges ("PHI 1 won,
+  0 lost. ATL 1 won, 1 lost."), replay reviews, mound visits. Umpires never render before the final
+  (`docs/diamond-betting.md@ad0c98b7 3935-3958`, '### 5d-F. The home plate umpire is NOT SERVABLE,
+  and this records why': officials are empty before the game and a registered family exists).
+
+##### 1.5 The win probability chart (MD 4.4.1 without the fallback)
+
+One 2 px line of the home club's MLB win probability over plate appearances in `--viz-1`; y from 0
+to 100 with club labels at the ends ("ATL 100%" top, "PHI 100%" bottom) and a 50% hairline; the
+inning number at each top half's first plate appearance; numbered markers (radius 9, a 2 px
+`--bg-secondary` ring) on the five biggest plays, matching the list; an end dot with a direct label
+while live; hairline gridlines at 0, 25, 50, 75 and 100 in `--border`. A missing MLB value is a gap
+in the line, never a model estimate. Never on this chart: a house line, the betting model, the
+market, a band, a trend line or a forecast. A crosshair snaps to the nearest plate appearance on
+pointer events (mouse, pen and touch; a tap pins it, a second tap or Escape clears it) and with arrow
+keys; one tooltip (inning, play text via `textContent`, win probability before
+and after, swing); `role="img"` with an aria-label built from fields; a `<details>` table twin;
+drawn at the container's pixel width (358 x 180 plus a 24 px axis band at 390, about 760 x 240 at
+1280); at most 130 points. MD measured `--viz-1` at 6.15:1 on light `--bg-secondary` and 4.21:1 on
+dark, above the 3:1 graphics floor.
+
+##### 1.6 Future dates, the postseason, the offseason
+
+- Future dates to D+7: time, venue, series, probables ("Probable not announced"), "If necessary".
+  Past D+7: "This page lists games up to seven days ahead."
+- Postseason: series state from MLB's `seriesStatus`; the bracket from
+  `/api/v1/schedule/postseason/series` (rounds as columns; MLB's placeholders such as "HOU/CWS"
+  printed as "Winner of HOU and CWS", unlinked with `data-club-nolink="unresolved"`); no probability
+  of any kind (8.D row 8: Scores owns the live bracket and series state with no odds); no link to the
+  Futures tab while it reads as of the end of the regular season.
+- Offseason: the last date with games stays the default; "Next scheduled game: <date>" comes from
+  one fields-trimmed schedule call per offseason cycle. Spring training (S) and exhibitions (E) are
+  not listed.
+
+##### 1.7 Not attempted, and why
+
+Pitch-by-pitch animation and per-pitch Statcast tables (the game view links to Gameday on MLB.com);
+video for plays MLB lists no clip for; interviews, data-visualisation reels and ABS challenge reels
+(not plays, or no play id; an ABS reel's one player tag can be the batter); MLB's recap article (the
+recap video is embedded instead; `body` is never reproduced); sportsbook odds or book links (the
+site takes no affiliate money, `build_site.py:586-595`); push notifications (a static site cannot
+push); MLB's `captivatingIndex` and `dramaIndex` (opaque scores the page would have to explain);
+history before 2026 unless SC-HISTORY (d); the news wire (no lane designed a join); an excitement
+sort (later).
+
+---
+
+#### 2. How it stays fresh
+
+##### 2.1 The job (PO 1, with this plan's changes)
+
+Every cycle is stamped at its cron tick, `floor(start / 120) * 120`, taken BEFORE the 0 to 20 s start
+jitter, and the gaps below compare ticks, so two consecutive `*/2` starts with jitter (as little as
+100 s apart in wall time) still count as 120 s. The cadences in brackets apply under SC-TERMS (c).
+Under (c) the live gate stays 280 s: on ticks 120 s apart the first tick at least 280 s after the last
+live cycle is the one 360 s after it, so live cycles run every 6 minutes, about a third of the live
+calls (the idle gate's 3,600 s is a whole number of ticks, so idle cycles run every 60 minutes).
+
+| Cycle | When | Calls |
+|---|---|---|
+| live | any game Live (Warmup, In Progress, delays, challenges), or Preview within 20 minutes of first pitch, or Final within the last 20 minutes; at least 90 s of ticks since the last live cycle (280 s) | 1 schedule; `winProbability?fields=` per game whose state hash (inning, half, outs, balls, strikes, both scores, occupied bases, status code) changed, never twice within 90 s; `boxscore` per live game every 600 s and once at Final; the feed once at Final (game info, debut ids, ABS, reviews); `content` per 6.6 |
+| idle | no live game; at least 1,800 s since the last cycle (3,600 s) | 1 schedule (today and tomorrow: probables, postponements, posted lineups); 1 people call when a probable in the window changed (8.7); in October 1 bracket call (SCORES_4b) |
+| week | the first invocation at or after 10:00 UTC on a UTC date | 1 schedule D-1 to D+7; finalize yesterday (winProbability, boxscore, feed and content once more; stars recomputed, then frozen); rebuild up to five missing or incomplete earlier dates, never before `HISTORY_FLOOR` (SC-HISTORY); 1 people call for the window's probables (8.7); prune per SC-KEEP |
+| offseason | no game within 7 days; every 21,600 s | 1 schedule plus the next-game-date call |
+| due work, any tick | pending rollover work, a pending finalize, a Final +60 or +180 minute refresh (content and stars), a rebuild, or a change in the effective embed switch (6.7) | the pending calls, inside the limiter; this reason makes any cycle type act |
+| backoff | the job-level `backoff_until` is in the future | none; exits 0 |
+| overlap | the lock is held | none; stamps the heartbeat and a run-log line, exits 0 |
+| epoch hold | `../_pre_epoch_fwar_2026-10/` exists and part 9 of `FWAR_LABEL_EPOCH_GATE.md` has no step Z entry (when unsure, hold) | none; stamps the heartbeat, exits 0 with decision `epoch_hold` |
+
+- Schedule hydrates: `team,linescore,probablePitcher,decisions,seriesStatus,lineups,flags,weather,broadcasts(all)`
+  (DS 1.2 verified each); game types `R,F,D,L,W,A`; the UTC span yesterday to tomorrow; files keyed
+  by `officialDate` (a 02:10Z west-coast first pitch belongs to the previous date,
+  `tools/betting_lineup_job.py:69-77`).
+- `winProbability?fields=`: PO 1.3's list plus `runners,movement,start,end,details,runner,rbi,isOut,postOnFirst,postOnSecond,postOnThird`
+  for play text, bases and outs; the review fetched this list for 849845 (126,030 B raw, 16,519 B
+  gzip, `postOn*` present; `samples/rev_feas_wp_849845_extfields.json`), and SCORES_2 re-checks it
+  with one GET before a builder relies on it.
+- **Network (replaces PO 1.4's use of `feed_cache.SESSION`).** A job-local session (urllib, or a
+  `requests.Session` with retries off): `feed_cache.SESSION` retries 429 and 5xx four times and sleeps
+  any `Retry-After` inside the call (`feed_cache.py:62-72`), so one request could run about 80 s or
+  minutes past the "no new request after 75 s" check. Each request gets a deadline of min(15 s, the
+  invocation's remaining budget); 0.5 s between requests; at most 60 requests and 90 s per
+  invocation, no new request after 75 s; unfinished work rolls over, oldest-updated game first. A
+  429 or 503, and any `Retry-After`, go up to the job's `backoff_until` (120 s x 2^(n-1), capped at
+  1,800 s) and end the invocation. User-Agent `eephus.io scores job (+https://eephus.io/scores/)`.
+  Peak on a 15-game day: about 25 requests a cycle, 750 an hour, 12 MB an hour (about a third under
+  SC-TERMS (c), whose live cycles run every 6 minutes). Viewers poll our files, so viewer count
+  never multiplies calls to MLB. The job's
+  only fetch host is `statsapi.mlb.com`; it never requests a media URL or an embed page.
+- **Failure scope.** A per-game failure sets that game's `stale_since` and a per-game backoff
+  (same doubling, per game) and is counted apart in the run log (`game_fetch_failed`); the job-level
+  backoff applies only when the schedule call fails or most of a cycle's calls return 429 or 5xx.
+  One game's broken endpoint never throttles the other live games.
+- **Lock.** An OS advisory lock on `.cache/scores/job.lock` that the OS releases when the process
+  exits (`fcntl.flock` on POSIX, `msvcrt.locking` on Windows), or a PID-and-age lock that breaks after
+  180 s; on the box the crontab line adds `flock -n /tmp/eephus-scores.lock`. A Windows task killed at
+  its 3-minute limit therefore never leaves a lock that turns every later run into `overlap`.
+- Exit codes: 0 on success and every legitimate no-op (`overlap`, `backoff`, `epoch_hold`, per-game
+  failures and per-file refusals, which the run log counts); 2 on a job-level `fetch_failed`, a
+  refused `latest.json` or `index.json`, `publish_failed`, or `bad_out` (an `OUT` inside the app
+  tree's `data/`); 1 on a crash. `--why` (the gate's opinion, writes nothing), `--selfcheck` (exit 1
+  with "NEVER RUN on this machine" until the scheduler has reached the job), `--dry-run`, `--date D`,
+  `--backfill A:B`.
+- `--backfill` refuses 06:00 to 11:00 UTC, any date before `HISTORY_FLOOR`, and any run while a game
+  is live; releases the lock every 50 requests so live cycles interleave; opens a cached
+  `.cache/win_prob/<pk>.json` (a bare list with no status) only when its last element is complete and
+  its last result score equals the final score in that date's schedule (two local 2026 files end in
+  an incomplete element, cached mid-game), and `.cache/game_feeds/<pk>.json` only when its own status
+  is final; never through the house getters; otherwise it fetches through its own session into
+  `.cache/scores/work/`.
+- **`HISTORY_FLOOR`** (the earliest date the week cycle rebuilds or `--backfill` accepts) is set by
+  the SC-HISTORY answer: 2026-03-25 under (a) or (b); the job's first run under (c); 2018-03-29, the
+  2018 season's first date, under (d). Under (d) 2020 is included as its shortened season: its
+  regular season ran 2020-07-23 to 2020-09-27, then its postseason, so the schedule returns no games
+  for the 2020 dates before July, and every 2020 game is fetched in full (no 2020 file is cached
+  anywhere). Before any 2018 to 2025 date is written, the situation-before rule of 8.3 is keyed by
+  season: no automatic runner in 2018 and 2019, and an extra half-inning is one past the scheduled
+  innings (seven in the 2020 and 2021 seven-inning doubleheaders).
+
+##### 2.2 Files
+
+| Path | Writer | Reaches readers by | Kept |
+|---|---|---|---|
+| `.cache/scores/{slate,state,sig}.json`, `work/<pk>.json`, `heartbeat.json`, `runlog-<UTC date>.jsonl`, `job.lock` | job | never | run logs 14 days; work files two seasons |
+| `OUT/latest.json` (the only polled file), `OUT/index.json`, `OUT/index-<season>.json` | job | box: nginx `location ^~ /data/scores/` aliased to `/opt/eephus/scores/`, `no-cache`, `gzip_static off`, `gzip on`; locally a temp site copy served by `python -m http.server` | overwritten |
+| `OUT/<officialDate>.json` | job | same | per SC-KEEP (recommended: every season) |
+| `OUT/games/<pk>.json` | job | same | per SC-KEEP (recommended: two seasons) |
+| `logs/scores-job.log` | cron redirect or `--log-file` (3 x 5 MB rotating) | never | weekly logrotate on the box |
+
+`OUT` follows the flag. While `scores_core.SCORES_LIVE` is False, `OUT` is `.cache/scores/preview/`
+whatever the environment says. Once it is True, `OUT` is `$EEPHUS_SCORES_OUT` (the box crontab sets
+`/opt/eephus/scores`), else `.cache/scores/out/`. The job refuses any `OUT` that resolves inside the
+app tree's `data/` (exit 2, `bad_out`), so no scores file can ever sit in a directory the nightly's
+`git checkout -- .` touches or that step A's stability check watches, and no `.gitignore` line is
+needed. Writes: bytes to a temp file in the destination directory, `os.fchmod(fd, 0o644)` on POSIX,
+`os.replace`, five 50 ms retries on a Windows `PermissionError` (then leave the temp file and log
+`replace_busy`); directories 0755; order games, date, season index, index, latest, so the polled file
+never names a revision that is not on disk. Never `feed_cache.atomic_write_json` (its
+`tempfile.mkstemp` file is 0600, `feed_cache.py:137-138`, and would reach nginx unreadable when nginx
+runs as another user).
+
+**Refusals are scoped to their file.** The validator of 8.5 runs before every replace. A refused date
+or game file keeps its last good copy, stamps `stale_since` on the games it covers (in the next date
+file the job does write, or in `latest.json`'s window entry when the date file itself was refused),
+bumps a per-file counter in `.cache/scores/state.json` and `job.refusals_24h`, and logs the rule; it
+never changes `job.state`. `job.state` reads `degraded` only when the schedule call failed or
+`latest.json` or `index.json` itself was refused; a failed schedule call rewrites only
+`latest.json`. A failed per-game fetch carries the game's last block forward with `stale_since`. On
+the box nothing in the nightly, its precompress, the CI break-glass rsync or `deploy/data_exclude.txt`
+changes; `deploy/publish_paths.txt` gains only the page directory `scores`, in the SCORES_LIVE flip
+(PO 1.8, 1.9).
+
+##### 2.3 The page's fetch rules
+
+`latest.json` with `cache: "no-cache"` every `job.poll_live_s` (45) while a game on the viewed date
+is live and the tab is visible, every `job.poll_idle_s` (300) otherwise, none while hidden; on
+becoming visible, fetch if the last fetch is older than the live interval; doubling backoff on
+errors (45, 90, 180, 300 s); a "Pause live updates" toggle remembered in `localStorage`.
+`index.json` once per page load and again whenever `latest.json`'s `index_rev` changes (so a thrown
+kill switch reaches open pages within one poll); `index-<season>.json` for the season in view. A date
+or game file only when its `rev` in `latest.json` changed, requested as `<file>?v=<rev>` with
+`no-cache`. `data/player_links.json` (through `EEPHUS_HUB.links()`) only once a game view opens,
+never on the day view. The video and bracket chunks load lazily (6.3, SCORES_4b). No other fetch,
+and no request to MLB's APIs from the browser under SC-TERMS (a) or (c); the only third-party
+requests are lazy posters and, after a click, MLB's player or media. Scores names get no
+`EEPHUS_DATA_VERS` stamp (`_data_vers_script` refuses them as it refuses betting names,
+`build_site.py:181-201`, because the files change between builds).
+
+##### 2.4 Stale states (a pure exported `scoresStaleState(latest, serverNowMs, viewedDate)`)
+
+`serverNowMs` is the `Date` header of the `latest.json` response (a wrong client clock cannot fake
+freshness), else the client clock. The job publishes `job.next_by` for EVERY cycle type as the tick
+of the next acting cycle it expects plus 360 s of grace: the next live tick (the first tick at least
+90 s on, which is 120 s on; under SC-TERMS (c) the first at least 280 s on, which is 360 s on: every
+6 minutes, about a third of the live calls) while a game is live or within 20 minutes of first
+pitch; the last idle tick plus 1,800 s (3,600 s) when
+idle, capped at the next switch to live cycles; the next 10:00 UTC week tick when that comes first;
+the last offseason tick plus 21,600 s in the offseason. It also publishes `job.last_ok_at`,
+`job.state` and `job.down_after_s` (1,800), so the page never hard-codes the job's cadence. The page
+evaluates the rows in the order S4, S3, S2, S0, S1; S1 is the default.
+
+| Code | Condition | What the page does | Sentence |
+|---|---|---|---|
+| S4 | `latest.json` is missing, errors or fails its schema | an empty state (through `EephusState` once PX-11 has landed); polling only on backoff | "Scores are not available right now." |
+| S3 | now - `generated_at` > 36 h | a banner above the strip | "Scores were last updated September 28. They may be out of date." |
+| S2 | now - `last_ok_at` > `down_after_s` and a game on the date was live at `last_ok_at` | hides count, bases, matchup and live win probability for those games and shows "Last update: Top 7, PHI 3, ATL 2"; finals and schedules still show | "Live scores are not updating. Showing the last update, from 5:21 PM." |
+| S0 | now <= `next_by` and `job.state` is `ok` or `idle` | normal | "Updated 5:29 PM" |
+| S1 | every other case (the default row: past `next_by`, or `degraded` or `backoff`, with no S2 or S3) | keeps the last state; live cards read "Live, as of 5:21 PM" | "Live updates paused. Scores as of 5:21 PM." when a game on the viewed date is live; else "Updates paused. Scores as of 5:21 PM." |
+
+A game with its own `stale_since` shows "as of" on its card under S0 too. The sentence renders in
+the stamp line with `role="status"`.
+
+##### 2.5 Single writer, health and the epoch
+
+- The job owns `.cache/scores/**`, `OUT/**` and `logs/scores-job.log`. It reads the SERVED
+  `data/betting.json`, `data/model_registry.json`, `data/win_expectancy.json`,
+  `data/league_constants.json` and `data/xfv.json` (SCORES_6) from `$EEPHUS_WEBROOT/data/` when that
+  is set (the box), else the app tree's `data/`, because the app tree can hold files a red nightly
+  gate never published (`deploy/nightly-build.sh:166-174`, `:207`). It re-reads the served registry
+  on every acting cycle, so `index.json` picks up rows as they land. When a read fails or parses
+  empty (`win_expectancy.json` is written non-atomically, finding F5; `league_constants.load()`
+  returns `{}` on a parse error), it uses the last good accuracy, constants and registry blocks kept
+  in `.cache/scores/state.json`. It writes nothing else: not `data/ingest_health.json`, not a shared
+  cache, not a tracked file, nothing under `data/`, not the webroot, not `prospects.db`.
+- It takes only its own lock (2.1), never `/tmp/eephus-nightly.lock` (holding it makes the nightly
+  print "skipping" and exit, `deploy/nightly-build.sh:67-71`). It runs at most 90 s, holds no database
+  handle and imports nothing heavy on a no-op path.
+- After launch (SCORES_5b) the nightly files `_record_ingest("scores_job", ok, n, message)` from the
+  heartbeat, read-only, in a step after 9e of `run_daily`, with `scores_job` in `SCHEDULED_EXPORTS`
+  so a stopped job prints `!!! INGEST RED: scores_job`, and ONLY on a machine meant to run the job
+  (`EEPHUS_SCORES_HOST=1` in the environment, set in the box's `/etc/eephus.env` by the webmaster, or
+  `.cache/scores/heartbeat.json` present); elsewhere it files nothing, so a machine without the job
+  never carries a standing red row. PO 1.11's four states stand with two amendments: a refusal counts
+  only when the same file stays refused 6 hours or more, and per-game failures count apart from
+  job-level `fetch_failed`.
+- **The epoch.** Locally the job writes only `.cache/scores/`, so it falls under the captures rule
+  ("the scheduled captures write `.cache/` only and may continue", 8.B) and step A's "data/ stable
+  twice 300 s apart" needs nothing from the owner; it also holds itself (2.1, `epoch_hold`) from
+  step A to step Z. The box job is installed only after step Z (section 17). The one sentence for the
+  orchestrator to copy into 8.B's step-A preconditions: "If the scores job is registered on this
+  machine, it writes only `.cache/scores/` and holds itself (exit 0, decision `epoch_hold`) while
+  `../_pre_epoch_fwar_2026-10/` exists and part 9 has no step Z entry; confirm with
+  `python tools/scores_job.py --why` printing `epoch_hold` before the first stability read."
+
+---
+
+#### 3. What is distinct
+
+| # | Feature | What public scoreboards lack | Governance |
+|---|---|---|---|
+| D1 | MLB's win probability with its measured accuracy | the page quotes MLB's feed Brier from the site's own check | `scores_mlb_wp` |
+| D2 | Stars of the Game as a published rule, with a why sentence and the star's clip | deterministic, versioned, edge cases stated | `scores_stars_rule`, descriptive |
+| D3 | Biggest plays with MLB's clip of that play, playing in the page | clip chosen by the play id of the plate appearance's final event; a stated fallback per row | `scores_biggest_plays_rule`, descriptive |
+| D4 | Every clipped plate appearance in the log plays in place; clips of earlier events carry their own label | | display of MLB's media |
+| D5 | ABS challenge ledger per game | who challenged which pitch, won or lost | descriptive |
+| D6 | Box score with WPA and pLI; play log with win probability after every plate appearance | | `scores_mlb_wp` |
+| D7 | Franchise links on every club; MLB debut marks; eFV on posted lineup rows before first pitch (SCORES_6) | prospect context | links lane; `efv_v2` as served |
+| D8 | The house model beside the game, pregame, as served (SCORES_6, from 2027) | its registry verdict and the board's state printed beside it | `betting_game_prob` |
+| D9 | Honest freshness and quiet live updates | five stated states; no reorder or jank | 2.4, section 12 |
+| D10 | Weather, park and series context; a bracket with no invented odds | | display |
+
+The comparison behind this table (MD 1.1) is public product knowledge, not re-fetched; page copy
+never names a competitor.
+
+---
+
+#### 4. Every number: what it is and what it is not
+
+| Number | Source | It is | It is not | Registry and status |
+|---|---|---|---|---|
+| Score, R, H, E, line score, count, outs, bases, pitch counts, box stats, W, L, S, series state, attendance, time of game, weather, umpires | MLB StatsAPI | MLB's game record | a site computation | none (facts); credited to MLB |
+| MLB win probability on cards, chart and play log | `homeTeamWinProbability`, stored per mille | MLB's in-game estimate after each completed plate appearance: it starts every game at 50 percent, moves with the situation and, by the site's own check, also carries some team strength (`win_expectancy.py:21-24`, the artifact's `calibration.feed_note`) | a pregame forecast or the site's model; it can trail the score by one play (DS 1.5) | `scores_mlb_wp`, provisional; eval artifact `data/win_expectancy.json` (`calibration.feed_brier` 0.157516 against the house model's 0.157678) |
+| Swing per play, WPA and pLI per player, LI | MLB's added value and `leverageIndex`, attributed by `mlb_leverage`'s convention | realized win probability moved | skill or a forecast; base running inside a plate appearance and fielding are credited to no one (130 of 4,422 sampled pairs, 2.94 percent, do not chain) | `scores_mlb_wp` surface |
+| Stars of the Game score, basis and why | `stars_v1` over the above, box runs and `league_constants` | one game's ranking by a published rule | an award, a vote, MLB's pick or a skill measure; never ranked across games or seasons; a second or third star may come from the losing club | `scores_stars_rule`, provisional, measurement_only |
+| Runs prevented ("2.5 runs better than the league rate over his innings") | outs, runs charged, `lg_ra9`, `rpw` | the rule's workhorse term | a pitching grade | same row |
+| Biggest plays rank and swing | `bp_v1` | the five largest MLB swings, from the batting club's view | a skill or leverage-adjusted ranking | `scores_biggest_plays_rule`, provisional, measurement_only |
+| Clip coverage ("Clips matched today: 11 of 20 biggest plays") | the job's join counts | a count | a promise of coverage | none |
+| MLB feed Brier in About | `data/win_expectancy.json` keys (the served copy), read at write time, never typed | the site's measurement over regular-season plays of 2018, 2019 and 2021 to 2026 | a postseason measurement (no postseason in the fit) | `scores_mlb_wp` |
+| Betting model win probability (SCORES_6, SC-MODEL) | served `data/betting.json` `model.p_home` and `model.p_away` by `game_pk`, through the key-path allowlist of 9 | the Sports Betting board's number, verbatim, pregame, printed by the board's rule (one decimal, both sides: "ATL 53.0%", "PHI 47.0%", `assets/betting.js:223`, `:3151`) | a pick, an edge, validated, priced for the postseason, or shown after first pitch | `betting_game_prob`, provisional; board state "unvalidated" |
+| De-vigged market probability (only under SC-MODEL (c)) | served board, with its capture time | the board's price-derived number | the model's, current, or an edge | none of ours; its capture time always beside it |
+| SEM+ beside a probable (SCORES_6) | served `data/starter_leaderboards.json` | the /mlbstats/ value as served, nearest | a projection of this start | `sem_plus`, validated |
+| eFV on posted lineup rows (SCORES_6) | `xfv_grade` copied by the job from the served `data/xfv.json` (9.3 MB raw, too heavy for a phone; read only when its mtime changes) into the Preview-only `pre` block, model id `efv_v2` | the PROSPX grade as served, rounded nearest, printed exactly as PROSPX prints it | consensus FV or a game prediction | `efv_v2`, provisional |
+| Club hook median (SCORES_6) | served `data/management_board.json` | a descriptive median of the club's starts | a per-pitcher hook rate; never beside a result (the 5l close-variant rule, `docs/diamond-betting.md@ad0c98b7 6865-6870`, the "Disqualification" paragraph under '### The clock, and the sentence that binds it' in '## 5l. Club policy rates from the dugout') | management rows, provisional |
+| Park runs index (SCORES_6) | `data/fa_meta.json` `park_factors[club].runs` (Savant, 3 seasons) | display only | a model input or the by-hand split (5i-B) | none (third party) |
+| Intensity chip | only after Q10_09's flip, copied verbatim | the intensity lane's descriptive chip | shown on a started game | `betting_intensity_index`, when it exists |
+| Not built | expected pitches, bracket odds, a house win-probability line, an excitement sort | | | |
+
+**The labelling rule** (MD 11.2, tightened after review): every model number sits in an element
+carrying `data-model-id`, whose id is in `index.json`'s registry block, with visible text naming the
+source and the verdict together, read from that block: "MLB, provisional" for `scores_mlb_wp`;
+"Eephus model, unvalidated, provisional" for `betting_game_prob` (the board's own chip,
+`assets/betting.js:984`); eFV exactly as PROSPX prints it, the way every other section shows its
+verdict chip (`assets/franchise.js:27-28`). Every percentage on a card sits inside a labelled source
+element. `test_scores_labelling.py` pins both.
+
+---
+
+#### 5. The landing rule, applied
+
+##### 5.1 The rule: Part 8 8.A, with no exception asked
+
+The first draft set its own landing rule and used it to lift Part 8's window for scores; both reviews
+showed that contradicts 8.A, which reserves the gap from 2026-10-04 to step A for docs and
+registrations and requires every new served page, payload or file to ship behind a module flag that
+defaults off. This plan now conforms:
+
+- **Class 2, one flag.** `/scores/` is a new page and a new payload, so everything ships behind
+  `scores_core.SCORES_LIVE`, default False. While it is False the job writes only
+  `.cache/scores/preview/` (2.2), `build_site` writes no `scores/index.html` into the published tree
+  (a helper renders the shell into `.cache/scores/preview/site/` for render tests), and no
+  `deploy/publish_paths.txt` line, nginx location, glossary entry, registry row or registry surface
+  changes.
+- **The flip is one commit** (SCORES_5a_LIVE_FLIP, after step Z): `SCORES_LIVE = True`, the page,
+  `scores` in `deploy/publish_paths.txt`, the three registry rows with `MODEL_REGISTRY.md`
+  regenerated, the four glossary entries and the /sources/ row, naming every key, file and row count
+  it adds (8.A; 8.D rows 14 and 15). Registry rows and glossary entries never land before the
+  surface that serves them.
+- **Model numbers** appear only as their home surface serves them, verbatim, with their registry
+  status, in SCORES_6 after the flip.
+
+##### 5.2 Classification
+
+- **Descriptive (class 2 behind `SCORES_LIVE`):** the job and its files, the scoreboard, the game
+  view, MLB's win probability (a third-party number shown as MLB serves it, with a registry row),
+  `stars_v1`, `bp_v1`, box, plays, lineups, game info, the embedded video, the bracket and series
+  state.
+- **Model numbers as served, with SCORES_6, once their home surface serves them:**
+  `betting_game_prob` (pregame; inert until the 2027 regular season), `sem_plus`, `efv_v2`, the
+  management hook median, and the intensity chip (only after its own flip).
+- **Not landing:** house win-expectancy points from `win_expectancy_state` (its registry surface is
+  "NOTHING SERVED YET", `MODEL_REGISTRY.md:316`; showing it here would be its first serving, so both
+  lanes' fallback is withdrawn and a missing MLB value stays a gap); expected pitches (the workload
+  section's serve flag, 8.E); any bracket probability (8.D row 8); any edge or price.
+- **One uniform guard:** every model number copied into a scores payload is removed when the game
+  leaves Preview, so no pregame model number ever sits beside a live or final score.
+
+##### 5.3 Against the Part 8 clock (8.A to 8.C)
+
+- Every scores task carries `not_before` 2026-10-11 (the earliest proposed step Z, as every post-Z
+  Part 8 task does) and a served-change guard: if part 9 has no step Z entry, it STOPs with
+  `BLOCKER: date` before any write. Nothing scores-related lands between 2026-10-04 and step Z, or
+  between step A and step Z; one writer at a time; never while `run_monthly` or pytest runs.
+- The local job, if the owner registers it, writes only `.cache/scores/` and holds itself during the
+  epoch (2.5). The box install comes after step Z and after the flip has reached the box (section 17).
+- Order in the dynamic queue (`requires`): SCORES_1, then SCORES_2, then SCORES_3 (after PX_A, PX_B
+  and PX_C, so the icon and state branches resolve), then SCORES_4a and SCORES_4b, then SCORES_5a (the
+  flip), then SCORES_5b (nav, sitemap, health, after the box confirmation of section 17) and SCORES_6
+  (after Q9_05_CLUB_RESOLVER, as 8.E's cross-plan order puts "the Scores P5 context step").
+- **The ordering exception (granted by the orchestrator in round 3).** 8.A's default order puts
+  Part 8 tasks after queue 7's post-Z tasks, queue 3 and queue 6. The orchestrator instead places
+  SCORES_1_CORE_RULES to SCORES_5b_LAUNCH_NAV_HEALTH in the dynamic queue immediately after
+  PX_C_states_ballpark (before PX_D_visualizations and the DISPLAY tasks), and
+  SCORES_6_PREGAME_CONTEXT after Q9_05_CLUB_RESOLVER. Without this exception the dates below do not
+  hold.
+- **Realistic first public date.** The page goes public at the first nightly after the owner pushes
+  and syncs the flip commit, with the box job installed. Under the exception, counting what precedes
+  the scores tasks:
+  - step Z about 10-11 to 10-13 (the plan of record); Z1_RUN the next day (8.B: no writer that
+    day); queue 7's post-Z tasks about three days; VAL_5_projected_dpw_path and PX_A_foundation to
+    PX_C_states_ballpark about two days; SCORES_1 to SCORES_5a about two days; then the owner's push
+    and beta sync, the box nightly's pull and the webmaster's install (section 17);
+  - so public about 10-22 to 10-26 if step Z lands by 10-13 and the owner pushes within a day. Only
+    then is the page up in time for the World Series (10-23 to 10-31), and then perhaps not for its
+    first games;
+  - otherwise after the World Series: about 11-16 to 11-18 if step Z slips to about 11-05 (the
+    fallback if E5 is held), and the page is then an archive until Opening Day 2027, the next live
+    use.
+  The first draft's promise of a page live for the LCS (10-11 to 10-20) is withdrawn.
+
+---
+
+#### 6. Video (S8-1; the mechanism branches on SC-VIDEO)
+
+##### 6.0 The mechanism, and the check behind the question
+
+S8-1 decides that video is embedded; it does not say how. The owner cited "real sports app[s]" that
+use "MLB.com embedded highlights". The first draft built the most exposed form (the site's own player
+hotlinking MLB's raw MP4 and HLS files, which the data-sources lane called "re-hosting MLBAM video in
+the site's frame", `data_sources.md:540-543`) without checking whether MLB publishes an embed player.
+
+**The check (2026-09-30, two read-only requests, files in `scores/fix_work/`).**
+- The StatsAPI content payload carries no embed or oEmbed field for a clip. Its only iframe is inside
+  MLB's recap article body: a game-level "story player" frame,
+  `https://www.mlb.com/stories/game/<pk>` (on 849845, 824055 and 775296), with a sandbox list.
+- Request 1, the MLB.com clip page of the Riley home run on 849845
+  (`https://www.mlb.com/video/jhoan-duran-in-play-run-s-to-austin-riley-kkhhvg-x2885`, HTTP 200,
+  `embedcheck_video_page.html`): its schema.org `VideoObject` has
+  `"embedUrl":"https://streamable.com/m/jhoan-duran-in-play-run-s-to-austin-riley-kkhhvg-x2885"`, its
+  `twitter:player` meta names the same URL (560 x 315), its share configuration builds an "Embed
+  Code" with `"src":"https://streamable.com/{path}/{slug}"` and path `m` (`mlbfilmroom` for reels),
+  and its help text reads "Videos can be embedded and shared directly from MLB.com". Its `og:video`
+  is the same 4000K `mp4Avc` file the content payload lists.
+- Request 2, that embed URL (HTTP 200, `embedcheck_streamable.html`): no `X-Frame-Options` and no
+  `frame-ancestors` header; the page is MLB's clip ("extractor": "MLB", shortcode `mlb_<slug>`), a
+  `<video>` playing the same `mlb-cuts-diamond.mlb.com` 4000K file with an `img.mlbstatic.com`
+  poster, and a player script with an ad path (`play(noads, ...)`).
+
+So MLB's own embed player exists for a clip, at `https://streamable.com/m/<slug>`, derived from the
+clip's `slug` (the same slug as its MLB.com page). The derivation is seen on one clip; SCORES_4a
+verifies it on five clips of two current finals before relying on it, and STOPs if any differs.
+
+**The distribution tags.** The clips' own taxonomy lists the feeds MLB licenses them to, and two are
+sportsbooks: `fan-duel` on 26 of 40 items of 849845 (16 of 16 play clips), `fan-duel` and `bet-mgm`
+on 12 each of 37 items of 824055, `fan-duel` on 38 of 62 items of 775296
+(`synth_work/clip_facts_out.json`). The "real sports apps" of S8-1's premise include licensed
+sportsbooks; the site's disclaimer says it takes no affiliate money (`build_site.py:586-595`) and
+its fence bans book names on the page. Every clip object carries `feeds_sportsbook` (true when its
+taxonomy holds a `SPORTSBOOK_TAGS` entry) so a later rule can route those clips to their F1 link
+without a schema change.
+
+**SC-VIDEO (batch 1).** (a) MLB's own embed player (recommended: it carries MLB's attribution and
+ads, the pattern the owner cited, and the site builds no player and stores no media); (b) the site's
+own player over MLB's files (the first draft's form, with a hand check of one sportsbook-tagged clip
+and a STOP); (c) link only. SCORES_4a is answer-required: it STOPs until SC-VIDEO is recorded.
+
+| Piece | (a) MLB's embed player | (b) our player, MLB's files | (c) link only |
+|---|---|---|---|
+| clip object media fields | `embed` only | `hls`, `mp4`, `vtt` (6.2) | none |
+| before a click | poster button (6.3 step 1) | poster button | an F1 link, no poster |
+| on a click | an iframe of `embed` (6.3a) | a `<video>` (6.3b) | opens MLB.com |
+| captions | MLB's player's own | 6.4 | MLB.com's |
+| hosts the page may contact after a click | `streamable.com` and whatever MLB's player loads | the two video hosts and the caption hosts | none |
+| hand check before landing | one embed plays; any pre-roll or sportsbook mark is reported, not acted on | one fan-duel-tagged clip; a sportsbook mark STOPs | none |
+
+##### 6.1 Source and join (every branch)
+
+`/api/v1/game/{pk}/content`, `highlights.highlights.items[]`, items with `type` "video" and `state`
+"A" only (every item of the five sampled payloads). A clip attaches to a plate appearance's RESULT
+only when its `guid` equals the `playId` of the plate appearance's final event (its last
+`playEvents[]` entry carrying a `playId`); in every sample the play clip matched exactly that: 16 of
+16 (849845), 9 of 9 (824055), 3 of 3 live (849846, PO), and no `guid` failed to match. Pickoffs,
+step-offs and stolen bases carry `playId`s of their own (on 849845 at plate appearances 3, 20, 31 and
+64; plate appearance 31's pickoff attempt sits in a flyout), so a clip matching an earlier event of
+the plate appearance is stored with that event's type and labelled by it ("Pickoff attempt video,
+top 3") and never captions the result. Biggest plays and star rows use result clips only; the Plays
+tab shows the others as a second, labelled button. Several candidates for one event: captions first,
+then taxonomy `in-game-highlight`, then the earliest `date`, then `slug`. Game videos: taxonomy
+`game-recap` and `condensed-game`, one each. Pitcher reels (taxonomy `highlight-reel-pitching`,
+exactly one `player_id`, this `game_pk`) only for a pitcher star. Never matched: ABS reels (taxonomy
+`abs` or `challenge`), interviews, data-visualisation items, or anything by headline, player or
+inning.
+
+##### 6.2 Files and the allowlist (branch (b); posters in (a) and (b); measured on five content payloads, `synth_work/clip_facts_out.json`)
+
+- `hls`: the `hlsCloud` entry whose URL contains the item's `mediaPlaybackId`, else the first.
+  `mp4`: the same rule over `mp4Avc` (1280x720, 59 fps, 4000K, about 0.53 MB a second). On 849845
+  four items list two or three assets and the item's own asset is listed third on one of them, so
+  "take the first" alone picks the wrong clip.
+- Never `highBit` (16000K), `trickplay`, `portrait_*` or the `HTTP_CLOUD_WIRED*` duplicates.
+- Posters: the 16:9 cuts at 480x270 and 960x540 (present on every sampled item); else `templateUrl`
+  with `{formatInstructions}` set to `w_480,h_270,f_jpg,c_fill,g_auto` (and 960x540).
+- Hosts by role: video on `mlb-cuts-diamond.mlb.com` and `bdata-producedclips.mlb.com` (every
+  sampled play clip, recap, condensed game and pitcher reel); captions on `mlb-cuts-diamond.mlb.com`
+  and `diamond.mlb.com` (one caption file of 849845); posters on `img.mlbstatic.com` under
+  `/mlb-images/image/upload/`, the CDN the site already loads headshots from
+  (`build_site.py:276-323`); under (a) the frame host `streamable.com`, path `/m/<slug>` only, slug
+  `[a-z0-9-]+`. `darkroom-clips.mlb.com` carried only data-visualisation items and is not allowed.
+- Every URL: `https:`, no query string (none of the sampled URLs has one), no whitespace, quotes or
+  angle brackets, at most 300 characters (the longest seen is 126). A failing file is dropped; a
+  clip left with no file keeps only its MLB.com `page` (F1) and the run log records
+  `new_media_host`; the allowlist grows only by commit.
+
+##### 6.3 The player (client behaviour, exact; in the lazy chunk `assets/scores-video.js`)
+
+Common to (a) and (b):
+
+1. Before a click: `<button type="button" class="sc-clip">` holding
+   `<img loading="lazy" decoding="async" width="480" height="270" alt="">` (`srcset` w480 480w,
+   w960 960w, with `sizes`), a play disc and a duration badge on tokens (a solid `--bg-secondary`
+   disc, a `--text-primary` triangle, a `--border` ring), and an accessible name built from fields
+   ("Play video, 29 seconds: Riley home run, bottom 8th"). "Video: MLB" under it. No `<video>`, no
+   iframe, no preconnect, no request to a video or frame host.
+2. Live polls never detach or re-render an open player: rows are keyed by `(pk, ab)`, and a new
+   order shows "Biggest plays changed. Show the new list" instead of reordering.
+3. `index.json.rules.video.embed` false renders every clip as its F1 link and no player can be
+   created.
+4. The chunk loads on the first game-view open (budget 20 KB raw), stamped through `_asset_ver`.
+   Posters appear only in the game view unless SC-CARDVID says otherwise, at most six per game.
+
+**6.3a, branch (a).** On activation (click, Enter or Space) the button is replaced in place by a
+`<figure>` holding an `<iframe>` (src the clip's `embed`, `title` "MLB video: " plus the field-built
+play text, a 16:9 box at the container's width, `allow="fullscreen; picture-in-picture"`,
+`allowfullscreen`, `referrerpolicy="strict-origin-when-cross-origin"`), "Video: MLB" and a "Close
+video" button. The frame takes the sandbox list MLB's own recap articles give their story-player
+frame (`allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms
+allow-modals allow-pointer-lock allow-top-navigation-by-user-activation`) if the hand check shows the
+player plays with it, else none, recorded in the commit. No autoplay parameter is added, so the
+viewer presses play inside MLB's player. Opening another clip removes the open frame (a cross-origin
+player cannot be paused from outside). "Close video" or Escape removes the frame, restores the
+button and returns focus to it.
+
+**6.3b, branch (b).** On activation the button is replaced by a `<figure>` holding
+`<video controls playsinline controlslist="nodownload" poster="...">` (never `autoplay`, `muted`,
+`loop` or `crossorigin`), a `<figcaption>` with the play text and "Video: MLB", and a "Close video"
+button. The source is chosen once: HLS whenever the clip offers it and
+`video.canPlayType("application/vnd.apple.mpegurl")` answers "maybe" or "probably", else `mp4`.
+Every MP4 button shows the file's size ("about 15 MB", duration times 0.5 MB), not only under
+Save-Data, because desktop Firefox and some Android Chrome builds answer "" for HLS and get the
+4000K file. `video.play()` runs inside the handler; a rejected promise leaves the native controls.
+Focus moves to the video. A document-level `play` listener pauses every other scores video. "Close
+video" or Escape pauses, removes the source, calls `load()` (the download stops), restores the
+button and returns focus to it. A media `error`, or no playable source, replaces the figure with F2.
+No library and no HLS script.
+
+##### 6.4 Captions (branch (b))
+
+- MP4 path: on the click, `fetch(vtt, {mode: "cors", credentials: "omit"})` into a `text/vtt` Blob
+  and `<track kind="captions" srclang="en" label="English (MLB)">` from its object URL. A
+  same-origin blob needs no `crossorigin` on the video, so playback never depends on the media host's
+  CORS. MLB's caption host answered `Access-Control-Allow-Origin: *` (PO call 8).
+- HLS path: no added track; MLB's master playlist carries an English SUBTITLES group (PO call 9).
+- Captions are off by default; the viewer's last choice is remembered in `localStorage` (try/catch).
+  A clip without `vtt` says "No captions offered for this clip." Caption text is never copied into a
+  payload or inserted into the page's DOM; the browser's WebVTT renderer draws it.
+- Measured: captions on 15 of 16 play clips of 849845, 5 of 9 of 824055, 2 of 3 live on 849846
+  (PO's read), none of 21 on the 2024 World Series game 775296.
+- Under (a) MLB's player carries its own captions; the site adds none.
+
+##### 6.5 The fallback ladder (S8-1: the MLB.com link only where there is no playable clip)
+
+| Step | When | What renders |
+|---|---|---|
+| E | a clip with `embed` (a), or `hls` or `mp4` (b) | the player; credit "Video: MLB" and no MLB.com link |
+| F1 | a matched clip with no allowed file or embed, or branch (c), or the switch off | "Watch on MLB.com" to `https://www.mlb.com/video/<slug>` (HEAD 200 verified by DS), new tab, `rel="noopener noreferrer"`, sr-only "opens MLB.com" |
+| F2 | the player errors (branch (b); a frame cannot report an error) | "The video did not load. Watch on MLB.com" |
+| F3 | no clip for the play | "No MLB clip for this play yet" while live or within 24 h of the final, then "No MLB clip for this play", plus "Gameday on MLB.com" to `https://www.mlb.com/gameday/<pk>` (301 to the game's page, then 200, PO call 10) |
+
+Star rows show a compact "Play video 0:29" button and no fallback link.
+
+##### 6.6 Content refresh (a requirement on the job)
+
+- Live: fetch `content` when a top-five play has no result clip, its plate appearance ended at least
+  90 s ago, and the game's last content fetch is at least 240 s old; otherwise every 600 s. Live
+  clips were posted 2.2 to 11.5 minutes after the play in two lanes' reads.
+- Final: at Final, +60 and +180 minutes (due reasons on any tick, 2.1) and in the next week cycle;
+  then frozen.
+- Each fetch replaces the game's clip set: a clip whose URLs changed is replaced (clips move from
+  `bdata-producedclips` to FORGE paths and captions arrive after first listing, PO 2.4), and an item
+  MLB no longer lists leaves the payload (its row falls to F3). Over 3 h 35 min, 39 of 39 URL sets
+  stayed identical once settled (MD).
+- `/content` ignores `fields=` (both lanes measured), so every call costs the full payload: 8.7 to
+  9.4 KB gzip early in a game, 35 to 52 KB at a final.
+- The run log records per game: clips matched, clips with captions, rows at F1 and F3, and any
+  `new_media_host`. `latest.json` publishes "clips matched: n of m biggest plays" per date for the
+  About fold.
+
+##### 6.7 Kill switch and tripwire
+
+**The switch.** `SCORES_EMBED_VIDEO = True` in `scores_core.py` is only the default. On every run
+the job also reads an override from outside the repo: `EEPHUS_SCORES_EMBED=0` on the crontab line,
+or the empty flag file `EMBED_OFF` in the scores directory (`/opt/eephus/scores/EMBED_OFF` on the
+box, where nginx would serve it as an empty file; `.cache/scores/EMBED_OFF` locally). The effective
+value is published as `index.json.rules.video.embed`; a change is a due reason (2.1), so the next
+tick rewrites `index.json`, and open pages re-read it through `latest.json`'s `index_rev`.
+`deploy/WEBMASTER.md` documents both; a test pins both. The real latency of each path:
+
+| Path | Who | Reaches viewers |
+|---|---|---|
+| `touch /opt/eephus/scores/EMBED_OFF` (or the env on the cron line) | the webmaster, on the box | the next cron tick, at most about 2 minutes, plus one page poll (45 s live, 300 s idle) |
+| a committed `SCORES_EMBED_VIDEO = False` | a writer, then the owner's push and beta sync, then the 03:10 ET nightly pull | about a day, needing two people |
+| a hand edit of the tracked constant on the box | nobody | never: the nightly's `git checkout -- .` reverts it (`deploy/nightly-build.sh:112-117`) |
+
+**The tripwire (SC-PAID (a)).** A test fails in dev and CI when `assets/diamond-config.js` reads
+`gating: true` while `SCORES_EMBED_VIDEO` is True and `scores_core.SCORES_EMBED_RECONFIRMED` holds no
+ISO date, with "S8-1 was decided for a non-commercial site; re-confirm embedding before the Diamond
+gate opens". Under `EEPHUS_DEPLOY_RUN=1` it calls `pytest.skip("OWNER ACTION PENDING: ...")`
+instead, the precedent of `test_phase4b_evals.py:258-280`, because the box nightly refuses to publish
+on any failed test (`deploy/nightly-build.sh:203-207`) and a hard failure there would halt every
+module's publish. The runtime fail-safe does the work on the box: the job publishes `embed: false`
+whenever the served `assets/diamond-config.js` reads `gating: true` and `SCORES_EMBED_RECONFIRMED` is
+empty. Diamond already lists a price with its gate off (`assets/diamond-config.js:30-34`);
+`DATA_SOURCES.md:194-198` already records an owner review item before any paid Diamond tier, and
+the embed joins it. `scores.js` joins the Diamond `CLIENTS` list only in SCORES_6, with the model
+panel (SC-PAID (a) says so).
+
+##### 6.8 What a builder on this machine cannot verify
+
+Render tests route every `*.mlb.com`, `img.mlbstatic.com` and `streamable.com` request to fixture
+bytes and assert the DOM contract (no media or frame request before a click, the source rule, the
+caption rule, the fallbacks). Playwright's bundled Chromium lacks H.264, so "a second play pauses the
+first" is proven with synthetic `play` events and a pause spy, or a WebM fixture served at the MP4
+URL. One hand check per branch runs in the installed Chrome or Edge (Playwright's `channel`): under
+(a) one embed plays from a local page; under (b) one current MP4 plays end to end with captions, and
+one fan-duel-tagged clip is watched for a sportsbook mark (a mark STOPs SCORES_4a with an owner
+question). The HLS path (Safari, iOS) and phones (iOS Safari, Android Chrome) are owner device checks
+after the flip, reported without changing anything (section 17).
+
+##### 6.9 Credit and hosting
+
+"Video: MLB" under every poster and player; the About fold says "Highlight video is MLB's and plays
+from MLB's servers; eephus.io stores none of it." (under (a): "plays in MLB's own player"); the
+/sources/ MLB Stats API row (`build_site.py:6139-6142`) gains "live scores, win probability, box
+scores and highlight video played from MLB's servers" in the flip commit. No video, poster or
+caption byte is stored, proxied or re-hosted. No Content-Security-Policy exists today
+(`deploy/README.md:180-182` holds the only `add_header` lines); a guard test requires any future one
+to allow the branch's hosts (`frame-src streamable.com` under (a); `media-src` for the two video
+hosts under (b); `img-src img.mlbstatic.com`). The scores JSON stays out of the public data catalog.
+The attribution test (`test_sources_attribution.py:38-41`) gains `scores_*.py` and
+`tools/scores_job.py` and an alias `mlbstatic.com` to `mlb.com`. SCORES_4a adds one curated
+`DATA_SOURCES.md` line for MLB's highlight video (the branch and its date), as SCORES_2 adds one for
+the StatsAPI terms posture.
+
+---
+
+#### 7. The rules
+
+##### 7.1 `stars_v1` (MD 5.1)
+
+- Eligible: the game is final (8.2's rule), the scores differ, and MLB's added value is present on at
+  least 95 percent of plays; otherwise `stars: []` with a `stars_reason`.
+- Credit per play `a = homeTeamWinProbabilityAdded / 100`; the batter gets `c = a` when home bats,
+  else `-a`; the pitcher of record at the end of the plate appearance gets `-c`
+  (`mlb_leverage.py:148-154`, `:157-187`, `:232-260`), keyed (player, club).
+- A pitcher with `outs >= 15` and pitching WPA `>= 0` is credited
+  `max(WPA, (outs / 3 * lg_ra9 / 9 - runs) / rpw)` with runs as charged, and `basis` records which
+  (`lg_ra9` 4.5492 and `rpw` 9.8237 for 2026 through `league_constants.constants(season)`,
+  `league_constants.py:349-350`, `:373`). Every other pitcher's credit is his WPA.
+- Score = batting WPA + pitching credit; candidates score above 0.
+- Order: score rounded to 0.001 descending, then average LI of his plate appearances descending,
+  then his largest single-play credit descending, then his first plate appearance ascending, then
+  MLBAM id ascending. Input order never matters.
+- Picks (SC-STARS): the first star is the top candidate from the winning club; the second and third
+  are the next two by the order above from either club; fewer when fewer qualify. The display order is
+  star 1, 2, 3 and it is NOT a score ranking: star 1 can score below star 2. On the 200-game probe
+  that happens in 28 sets (14 percent; 824592: Hudson 0.195 first from the winning club, Montero
+  0.395 second from the losing club), and 61 of 599 sampled 2026 finals (10.2 percent) have a losing
+  player above the winning club's best (review 2's count on pure WPA). The game file then carries
+  `first_star_note: true`, and the page prints "First star: top player on the winning team." beside
+  the stars. Validator rule 3 (8.5) checks exactly this rule.
+- Timing: computed at Final, recomputed at +60, +180 minutes and in the next week cycle (stat
+  corrections), then frozen; a suspended game gets stars on the date it finishes.
+- Frozen literals, pinned to this text by a test: `MIN_OUTS = 15`, `MIN_COVERAGE = 0.95`,
+  `FIRST_STAR_WINNER = True`, rounding to 0.001, the order above. From the first public serve, any
+  change is `stars_v2`, dated, with a same-day note; before it, an owner answer is a plain edit.
+- Measured (MD 5.2, 200 cached 2026 games, 47 with a margin of 6 or more; `samples/stars_rule_probe.py`
+  `pick()`): against the baseline the probe measured, pure WPA WITH the first star from the winning
+  club (not "from either team"), `stars_v1` changes 21 star sets (10 blowouts), only promoting starters and long relievers; a
+  runs floor for every pitcher changes 49 and promotes mop-up relievers; switching to runs once the
+  winner passes 95 percent changes 82 and promotes garbage-time hitters. The WPA guard keeps a
+  reliever whose inherited runners scored from being rescued (Fuentes on 849845: WPA -0.199, 0 runs).
+
+##### 7.2 `bp_v1` (MD 6.1)
+
+Candidates: completed plate appearances with an MLB value and `|a| >= 0.03`. Order: `|a|`
+descending, then LI descending, then `atBatIndex` ascending. Five in the game view ("so far" while
+live), the top one on a final card, five across the date in the day rail; withheld with a reason
+under 95 percent coverage; never fed by a missing value. Each row reads from the batting club's view
+(the situation before, the batting club's win probability before and after, the signed swing), so a
+double play reads "PHI 16% to 1% (-14)". All 200 sampled games fill five rows at the 3-point floor
+(median top swing 0.191).
+
+##### 7.3 Worked example: NL Wild Card Game 1, PHI 3 at ATL 5 (849845; both lanes re-verified)
+
+- Stars: Austin Riley ATL +0.513 (basis WPA; "1-for-3, HR, 3 RBI. Go-ahead home run in the 8th, ATL
+  29% to 93%."), J.T. Realmuto PHI +0.303, Ozzie Albies ATL +0.273. Next: Luzardo PHI +0.176 (15
+  outs; WPA above his runs term of 0.155), Sale ATL +0.123 (19 outs; runs term 0.020). MLB's
+  `topPerformers` named Sale, Luzardo and Albies and left out the go-ahead home run.
+- Biggest plays: Riley home run, bottom 8th, ATL 29% to 93% (+64, LI 4.97, clip); Realmuto triple,
+  top 7th, PHI 31% to 68% (+37, LI 3.69, clip); Albies triple, bottom 6th, ATL 58% to 79% (+22,
+  clip); De La Cruz double play, top 9th (-14, no clip); Crawford flyout, top 7th (-13, no clip).
+- Identity: ATL players' WPA sum 0.500 = final 1.000 minus pregame 0.500; all players sum 0.000;
+  unattributed 0.000.
+
+##### 7.4 Text built from fields
+
+- Why sentences: MD 5.4's templates (hitter; starter or long man by basis; reliever; two-way), built
+  from the boxscore's numeric fields, never MLB's `summary` string. `IP` is `outs // 3` "." `outs %
+  3`; the qualifier ("Walk-off", "Go-ahead", "Game-tying" or none) comes from the score before and
+  after; percentages are rounded half up (`build_site._round_half_up`, `build_site.py:1188-1199`). A
+  test parses each sentence back against its template and checks every number against the row.
+- Play text: `play_text(play)` maps `eventType` (a tested table of about 70 StatsAPI types) to a
+  short phrase and adds RBI and the runners who scored ("Riley home run, 3 RBI. Harris and Albies
+  scored."). MLB's `description`, `headline`, `blurb`, `title`, `kicker` and `summary` are never
+  stored. `scores_core.py` and `tools/scores_job.py` join `TARGETS` in `tools/strip_emdashes.py`
+  (`:37-133`).
+
+---
+
+#### 8. The data contract (schema 1)
+
+##### 8.1 Files and budgets (test-time pins on fixture payloads; runtime ceilings)
+
+A budget is a test-time pin on fixture payloads. At run time a file above its budget is written and
+logged as `over_budget` (file, bytes, budget) in the run log; only a file above its hard ceiling
+(four times the budget) is refused, so a 15-inning game with 30 clips or a heavy postseason date never
+turns legitimate data into a permanent refusal. `index.json` is split per season so it cannot grow
+past its budget as seasons accumulate.
+
+| File | Budget (raw) | Ceiling | Keys |
+|---|---|---|---|
+| `latest.json` | 16 KB | 64 KB | `schema`, `generated_at`, `job {action, state, next_by, last_ok_at, down_after_s, poll_live_s, poll_idle_s, errors_24h, refusals_24h}` (`action` names the cycle's gate result; the first draft called it `decision`, a key 8.6 forbids), `index_rev`, `today`, `next_game_date`, `window {<date>: {rev, n, live, final, pre, off, clips_matched, clips_of, stale_since}}` for D-1 to D+7, `live [{pk, date}]` |
+| `index.json` | 16 KB | 64 KB | `schema`, `generated_at`, `seasons [{season, rev, n_dates}]`, `registry [{model_id, verdict, sentence}]` (from the served registry, re-read every acting cycle), `accuracy.mlb_wp {feed_brier, base_rate_brier, n_plays, seasons, pregame_values, artifact_generated_at}` (every key but `pregame_values` from the served `data/win_expectancy.json`; `pregame_values` is the job's own: `{<value>: <count>}` of `wp.pregame_home` (8.3) over the current season's game files, recomputed when a game file is written, never from `data/win_expectancy.json`, which has no pregame field; an empty map prints no 50 percent sentence), `rules {stars, plays, video {embed, branch, video_hosts, caption_hosts, poster_host, frame_host}}` with their literals, `copyright` (StatsAPI's line verbatim, URL included; this key of `index.json` is the one rule 4 exempts) |
+| `index-<season>.json` | 40 KB | 160 KB | `schema`, `season`, `dates [{d, n, types, rev, flags}]`, `bracket` (October, SCORES_4b) |
+| `<officialDate>.json` | 150 KB | 600 KB | `schema`, `date`, `generated_at`, `day_top_plays` (up to 5: `pk, ab, text, bat_team, before, after, swing, live`), `games[]` of cards (8.2) |
+| `games/<pk>.json` | 80 KB | 320 KB | 8.3 (849845, 70 plate appearances and 18 clips, builds to about 45 KB) |
+| one clip object | 1.2 KB | 4.8 KB | 8.4 (measured at most 908 B, PO) |
+| `scores/index.html` shell | 16 KB | test only | no number typed in the shell |
+| `assets/scores.js` | 70 KB raw, 20 KB gzip | test only | no player, no bracket |
+| `assets/scores-video.js` (SCORES_4a, lazy) | 20 KB raw | test only | the player of 6.3 |
+| `assets/scores-bracket.js` (SCORES_4b, lazy) | 12 KB raw | test only | the bracket |
+| `assets/scores.css` | 20 KB | test only | every scores style lives here, never in `site.css` (except the two shared tokens of SCORES_3) |
+| cold first paint, day view at 390: scores-owned bytes | 70 KB gzip | test only | the shell, `scores.js`, `scores.css`, `latest.json` and one date file; the shared runtime every page loads (about 197 KB gzip measured at HEAD by review 2, plus the eager `data/glossary.json`) is excluded because a scores task cannot shrink it; no `player_links.json`, poster, player or bracket |
+| media or frame bytes before a click | 0 | render test | |
+
+All win-probability quantities (`wp_home`, `before`, `after`, `swing`, star `score`) are integers
+in thousandths: MLB's one-decimal percentages survive exactly, and there is no float noise. LI keeps
+two decimals.
+
+##### 8.2 The card (date file, one per game)
+
+`pk`, `rev` (hash of the game file), `type`, `state` (`scheduled`, `pregame`, `delayed`, `live`,
+`final`, `postponed`, `suspended`, `cancelled`), `reason`, `start` (UTC), `tbd`, `dh {kind, n}`,
+`venue {id, name}`, `series {text, n, of, if_necessary}`, `tv []`, `away` and `home`
+`{team_id, code, name, short, wl {w, l}, r, h, e, probable {id, name, hand, w, l, era} | null, lineup_posted}`,
+`line [[away, home | null], ...]` (an unplayed half is null: "x" on a final, blank while live),
+`sit` (live only:
+`{inning, half, outs, balls, strikes, bases [b1, b2, b3], batter {id, name}, pitcher {id, name, pitches}, last_text}`),
+`wp {home, ab}` (live and final), `of_record {w, l, sv}` (final; `{id, name}` each, `sv` null when
+none), `star {id, name, team, why}` (final), `top_play {ab, text, bat_team, before, after, swing, clip_s}`
+(final; `clip_s` the clip's duration or null), `videos {recap_s, condensed_s}` (final),
+`flags {no_hitter, perfect_game, debut, extra_innings, shortened}`, `weather {condition, temp, wind}`
+(pregame once posted), `makeup`, `resume`, `updated_at`, `stale_since`, and `pre` (SCORES_6, Preview
+only, removed when the game leaves Preview: the allowlisted board fields of 9, and `efv {<mlbam>: grade}`
+for posted-lineup players, copied from the served `data/xfv.json` `xfv_grade`, rounded nearest,
+model id `efv_v2`).
+
+- **The state rule** (DS 1.2's trap): final when `codedGameState` is F or O or `detailedState`
+  starts with "Completed Early"; postponed (D), cancelled (C) and "Suspended" are never final, although
+  MLB marks postponed and cancelled games `abstractGameState` Final; Warmup is `abstractGameState`
+  Live before any pitch and renders as pregame until the first pitch.
+- Club `code` comes from the MLBAM team id through a 30-entry literal pinned to
+  `trades.canonical_org_from_id` (`trades.py:357-372`) and to the 30 codes of
+  `data/franchise_board.json`; placeholders such as id 5528 ("HOU/CWS") give `code: null`. Never
+  `trades.canonical_org`, never MLB's abbreviation (`#team=CWS` opens Arizona today, links lane A.0).
+- Date files carry clip durations only; every media and embed URL lives in a game file's clip objects.
+- MLB-supplied strings (names, broadcasts, venue, reasons) have U+2013 and U+2014 replaced by a
+  hyphen-minus before validation, so rule 10 never refuses MLB's own punctuation.
+
+##### 8.3 The game file
+
+`schema`, `pk`, `rev`, `generated_at`, `card`,
+`wp {pregame_home, series [[ab, inning, half, wp_home, swing]], coverage {mlb, of}, unattributed_home}`,
+`plays [{ab, inning, half, text, outs, bases, away, home, wp, swing, li, clip, event_clips [{event, label, clip}], reviews}]`
+(`clip` is the result clip only, 6.1),
+`plays_big` (up to 5:
+`{rank, ab, inning, half, situation {outs, bases, lead}, text, bat_team, before, after, swing, li, clip, clip_state}`,
+`clip_state` `pending` or `none`), `stars` (up to 3:
+`{rank, id, name, team, score, basis, why, clip}`), `first_star_note` (true when star 1 scores below
+star 2), `stars_reason`, `scoring [ab, ...]`,
+`box {away, home: {batting [...], pitching [...], notes [...]}}` (WPA and pLI columns),
+`lineups {away [...], home [...]}`,
+`info {umpires, weather, wind, first_pitch, duration_min, attendance, venue {name, roof, surface, dims, elevation_ft}, abs {<code>: {won, lost, remaining}}, reviews, mound_visits}`
+(from the feed at Final), `debuts [ids]`, `links {gameday}`, `clips {<id>: clip}` (SCORES_4a).
+The situation before a plate appearance is the previous one's post state (`count.outs`,
+`matchup.postOnFirst/Second/Third`), reset at each half-inning, with the automatic runner on second
+at the start of a regular-season extra half-inning and empty bases in a postseason one.
+
+##### 8.4 The clip object (the only place a media URL may appear)
+
+| Key | Content |
+|---|---|
+| `id` | `mediaPlaybackId` (the table key; present on every item of the five sampled payloads) |
+| `kind`, `match` | `play`, `recap`, `condensed`, `reel`; `play` (by `guid`), `game`, `player` |
+| `play_id`, `event` | the matched `playId` (play clips only; must be one of the plate appearance's `playId`s) and that event's type (`result` when it is the final event, else e.g. `pickoff_attempt`) |
+| `embed` | branch (a) only: `https://streamable.com/m/<slug>` |
+| `hls`, `mp4`, `vtt` | branch (b) only, chosen per 6.2; `vtt` null when MLB lists none |
+| `feeds_sportsbook` | true when the item's taxonomy holds a `SPORTSBOOK_TAGS` entry (`fan-duel`, `bet-mgm`, and any later book tag added by commit) |
+| `poster` | `{w480, w960}` |
+| `dur_s` | from `duration` "00:00:29" (HH:MM:SS on every sampled item); integer 1 to 3,600 |
+| `posted_at`, `seen_at` | the item's `date`; the job's fetch time |
+| `page` | `https://www.mlb.com/video/<slug>`, slug `[a-z0-9-]+` |
+
+Never stored: `headline`, `blurb`, `description`, `title`, `kicker`, `keywordsAll`, `highBit`,
+`trickplay`, `portrait_*`, `HTTP_CLOUD_WIRED*`.
+
+##### 8.5 The validator (before every replace; PO 1.7 merged with MD 3.2 and 12)
+
+1. schema number; the file name equals `date`; every `pk` an int; `state` in the enum; team ids ints;
+2. every win-probability value an integer in 0 to 1,000 or null; a final's last value 0 or 1,000
+   matching the winner; series `ab` strictly increasing; innings sum to runs (a pregame point other
+   than 500 is logged, not refused: every sampled game reads 500, but a change is MLB's to make);
+3. `stars` only on final games, at most 3, distinct, every score positive; star 1 is the winning
+   club's top candidate; stars 2 and 3 are non-increasing between themselves by the tie order;
+   star 1 has no ordering constraint against stars 2 and 3; `first_star_note` is true exactly when
+   star 1 scores below star 2; `plays_big` at most 5, sorted by the rule (the first draft required
+   all three scores non-increasing, which refuses 28 of 200 sampled `stars_v1` sets, 824592 among
+   them);
+4. media and embed URLs only inside clip objects (and the one `links.gameday`; `index.json`'s
+   `copyright` key, StatsAPI's line verbatim with MLB's terms URL, is exempt; `index-<season>.json`
+   carries no `copyright` key and gets no exemption), each on its role's allowlist; every
+   `clip` reference resolves in the game file's `clips`; date files hold no media URL;
+5. `json.dumps(..., allow_nan=False)` succeeds;
+6. the ceilings of 8.1 (above a budget but under its ceiling: written and logged `over_budget`);
+7. `generated_at` is not older than the file on disk (a slow invocation never overwrites a newer
+   one);
+8. the shrink guard: a date's game count drops only when the schedule marks the missing games as
+   moved (postponed, rescheduled, suspended), or when a missing game was last seen with
+   `ifNecessary` "Y" and its series is over (`seriesStatus.isOver` on the clinching game, or the
+   series' wins reach the round's requirement); MLB deletes an unneeded "if necessary" game from
+   `/schedule` rather than marking it (review 2 read 2025-09-30 to 10-02: CIN at LAD Game 3 is simply
+   absent after the 2-0 sweep, `samples/rev_feas_schedule_2025_wc.json`), and the card then drops
+   (an already-shown future date prints "Not needed" for one cycle); a before and after fixture pair
+   pins it in SCORES_1 and SCORES_2;
+9. the forbidden keys of 8.6 at every depth;
+10. no em or en dash in any string, checked after MLB-supplied strings are normalised (8.2);
+11. after the run, every `rev` in `latest.json` and `index.json` equals the hash of the bytes on
+    disk.
+
+The builder sanitizes a bad clip first (media fields dropped, `page` kept, counted in
+`clips_dropped`), so a rule 4 failure is a builder defect and refuses the file. A refusal is scoped
+to its file (2.2): the last good copy stays, its games carry `stale_since`, and `job.state` changes
+only when `latest.json` or `index.json` itself is refused.
+
+##### 8.6 Forbidden keys (at any depth, every scores payload)
+
+`edge`, `ev`, `ev_per_unit`, `kelly*`, `pick*`, `slot*`, `record*`, `odds`, `price*`, `decimal`,
+`book*`, `implied_prob`, `fair_odds`, `clv`, `stake*`, `units`, any key containing `dv` or
+`decision` (the management gate's rule, `betting_dugout.py:16-17`, `:81`, so W, L and S ship as
+`of_record` and a club's record as `wl`, and the job block's gate result ships as `action`),
+`market*` unless SC-MODEL (c) is chosen (then only `pre.market_fair_prob` and `pre.market_captured_at`),
+and MLB's prose keys `headline`, `blurb`, `description`, `title`, `kicker`, `summary`. What the job
+may READ from the board is a separate, tested key-path allowlist (9).
+
+##### 8.7 Fields named but not verified (one GET each before a builder relies on them)
+
+- Probables' pitch hand and season W-L and ERA:
+  `/api/v1/people?personIds=<ids>&hydrate=stats(group=[pitching],type=[season])` in the week and
+  idle cycles; if the shape differs, cards show the name only.
+- `winProbability` with the extended `fields=` list of 2.1.
+- `postOnFirst`, `postOnSecond`, `postOnThird` on the play objects.
+- Not used in v1: `feed/live/diffPatch`, `timestamps`, `contextMetrics`, the Baseball Savant pitch
+  video page, `https://www.mlb.com/news/<slug>`.
+
+---
+
+#### 9. Fences
+
+- **Betting (SCORES_6; SC-MODEL is answer-required).** The job reads the served board through a
+  key-path ALLOWLIST, pinned by a test that fails on any other path: per `game_pk`, `model.p_home`,
+  `model.p_away` and the board's listed starters; once per file `generated_at`, `slate_date`,
+  `model.version`, `status.model`, `status.model_registry_verdict`, `status.model_verdict_sentence`
+  (`betting_export.py:7147-7149`) and `status.stale_board` (`:6877-6881`); under SC-MODEL (c) only,
+  also `team_bets[].moneyline[].market_fair_prob` per side, `status.odds_captured_at`, `odds_kind`
+  and `status.odds_slate.matched` (`:7141`, `:7183`). SCORES_6 resolves each path against the served
+  board at HEAD before relying on it. (The first draft's "Never read: moneyline" string fence
+  contradicted the (c) build, which must read one moneyline field; the allowlist replaces it.)
+  Values are byte-equal to the board's (test) and printed by the board's own rule, one decimal for
+  both sides ("ATL 53.0%", "PHI 47.0%"; `pct()` at `assets/betting.js:223`, both sides at `:3151`),
+  pinned by a test against that formatter, because a changed printed digit counts as a served change
+  (Part 8 8.A). Shown only when the game is Preview, `stale_board` is false, the board's `slate_date`
+  equals the game's date, both listed starters equal the live schedule's (null equals null only), and
+  the page's Diamond check allows it: `scores.js` joins `CLIENTS` in
+  `test_diamond_gating_contract.py:55-60` in SCORES_6 (not earlier: that test requires
+  `EephusDiamond` and `onEntitlement` in every client, `:123-131`), with the `eephus-diamond.js` and
+  `diamond-config.js` tags in the shell. While Diamond's `gating` is false the full board is public;
+  when it reads true the job reads `data/betting_preview.json` (`betting_export.py:126`,
+  `:7395-7401`). Never on the page: an edge, EV, Kelly figure, value badge, pick, slot, record row,
+  CLV, book name or odds price, nor the words edge, value, EV, Kelly, pick, lean or bet (whole words,
+  any case) outside two named exemptions: the `BETTING_DISCLAIMER` block (`build_site.py:586-595`)
+  and the one element holding the board's verdict sentence verbatim, checked byte-equal to the
+  board (`status.model_verdict_sentence` reads "no minimum edge is measured"). The stale-price rule
+  is met by showing no edge at all. Model Watch framing (`docs/diamond-betting.md@ad0c98b7
+  7389-7414`, '## 7a. The two published slots: Model Watch (owner decision 2026-08-16)' through
+  '### The language scope ruling, recorded here because it looks inconsistent').
+- **Imports.** An AST test: no scores module imports a pricer (`betting_model`, `betting_export`,
+  `betting_ingest`, `betting_credits`, `betting_shadow`, `betting_settle`, `betting_learning`,
+  `betting_usage`, `betting_weather`, `betting_props_dark`, `leaderboard_vintages`) or
+  `tools/betting_lineup_job.py`; no pricer module (the `test_betting_mgmt_fence.py:36-41` list plus
+  `tools/betting_*.py`) imports a scores module. The job's name sits outside `tools/betting_*.py`.
+- **Stores never read** (string test): `.cache/lineup_captures/` (5j dark evidence), `.cache/odds/`,
+  `.cache/betting/` (including `completed_games.json`), `.cache/weather_forecasts/` (5h dark; MLB's
+  own weather covers the display), `.cache/leaderboard_vintages/`. Posted lineups come from the job's
+  own schedule call (`hydrate=lineups`).
+- **Shared caches.** The job never calls `feed_cache.get_game_feed` or
+  `mlb_leverage.get_win_probability` (both serve a cached file for a recent game without checking it
+  is final, `feed_cache.py:163-175`, `mlb_leverage.py:67-74`) and never writes `.cache/game_feeds`
+  or `.cache/win_prob` (the corpus build walks `.cache/win_prob` with no game-type filter,
+  `tools/build_pbp_corpus.py:903-926`, so a postseason file there would enter the regular-season
+  corpus); nor `.cache/win_prob_post/`, which Part 8 gives to Q10_06_INTENSITY_FETCHES's postseason
+  feeds and only the intensity lab reads (8.E, the postseason results row).
+- **Pregame-only context** (SCORES_6): every copied model number, eFV and the hook median render
+  before first pitch only; umpires after the final only; expected pitches not at all in this plan.
+  eFV comes from the served `data/xfv.json` (`xfv_grade`), read by the job only when its mtime
+  changes and copied for posted-lineup players into the Preview-only `pre` block; the page never
+  fetches `xfv.json` (9.3 MB raw, 568 KB gzip).
+- **Tests are hermetic**: fixtures, a fake fetch, temp dirs, fixed clocks. `EEPHUS_SCORES_OUT` and
+  `EEPHUS_SCORES_STORE` point at a session temp dir from `conftest.py` before any test imports the
+  job, and a test asserts every resolved path sits inside it under pytest; another asserts the job
+  refuses an `OUT` inside the app tree's `data/` (2.2).
+
+---
+
+#### 10. Copy (drafted; no em or en dash, no copy_lint ban word, no forecast words)
+
+Every line below passes the page's betting-word rule (9): none uses edge, value, EV, Kelly, pick,
+lean or bet as a whole word. The first draft's "Pick a date", "has no value", "picked by a published
+rule" and "No pick and no edge on this page." are reworded; the verdict sentence, which contains
+"edge", renders only in its exempt element.
+
+- Title `MLB Scores - eephus.io` (`build_site.py:4678` form). H1 `MLB Scores` plus
+  `_stage_chip("scores")`; `MODULE_STAGE["scores"] = ("β", "Beta. Scores, win probability and video
+  come from MLB; Stars of the Game is a published rule")`.
+- Sub: "MLB games by date: the score, MLB's win probability, the plays that moved it with MLB's
+  video, box scores, and three stars chosen by a published rule."
+- Meta description: "MLB scores by date with live win probability from MLB, the biggest plays with
+  MLB's video, box scores, lineups and Stars of the Game, chosen by a published rule."
+- Day view: "Yesterday", "Today", "Tomorrow"; "4 games"; "Choose a date"; "Bracket"; "No MLB games
+  on Monday, July 13." (with the All-Star break named when it applies); "This page lists games up to
+  seven days ahead."; "Next scheduled game: March 25."; filters "All", "Live", "Upcoming", "Final",
+  "AL", "NL", "My teams".
+- Cards and detail: MD 7.3 as drafted ("Probable not announced", "Lineups posted", "Lineups not
+  posted yet", "Delayed start: rain", "Top 7, 1 out", "Count 2-1" with sr "2 balls, 1 strike", "MLB
+  win probability: ATL 62%" with its label "MLB, provisional", "Final, 7 innings: rain", "W Lee, L
+  Duran, S Iglesias", "Postponed: rain. Makeup September 30.", "Suspended in the 6th: rain. Resumes
+  October 1.", "Cancelled: rain.", "NL Wild Card Series, Game 2 of 3, ATL leads 1-0", "If necessary",
+  "Not needed", "Elimination game for PHI", "No-hitter through 7", "MLB debut"); detail headings
+  "Win probability" with "MLB's model, after each plate appearance" ("so far" while live), "Biggest
+  plays" with "The five plate appearances that moved win probability most", "Stars of the Game" with
+  the link "A rule, not an award", "Video", "Scoring", "Before first pitch".
+- Stars: "First star: top player on the winning team." beside the stars whenever the first star
+  scores below the second (`first_star_note`). Reasons: "Stars post when the game is final." / "No
+  stars: MLB's win probability feed is incomplete for this game." / "No stars for a tie."
+- Video strings: 6.3 and 6.5 as quoted; "Recap 3:00", "Condensed game 18:33", "Close video",
+  "English (MLB)", "No captions offered for this clip.", "about 15 MB" (branch (b), on every MP4
+  button), "Pickoff attempt video 0:14" (an earlier event's clip), "Biggest plays changed. Show the
+  new list".
+- Stale and announcer strings: 2.4 ("Updates paused. Scores as of 5:21 PM." when nothing on the date
+  is live); "ATL scores. PHI 3, ATL 5, bottom 8th." / "Final: PHI 3, ATL 5." / "Game started: PHI
+  at ATL." One polite live region scoped to the open game and followed clubs, at most one message
+  every 15 s; video events never announce.
+- Stars disclosure (built from `rules.stars`, under SC-STARS (a)): "Stars of the Game is a rule, not
+  an award. Each player is ranked by win probability added, from MLB's live model: hitters by their
+  plate appearances, pitchers by the batters they faced. A pitcher who records 15 or more outs
+  without losing win probability is credited instead with his runs prevented against the league
+  rate (4.55 runs per nine, 9.82 runs per win in 2026) when that is larger, so a starter's work in a
+  lopsided game still counts. The first star comes from the winning team, so he can rank below the
+  second star. Ties go to the player whose plate appearances carried more leverage. Fielding, and
+  base running inside a plate appearance, are not credited to anyone."
+- About (every number read from `index.json`, never typed): "Win probability is MLB's live model,
+  read from its public feed after every plate appearance. [Only when every served pregame value in
+  `accuracy.mlb_wp.pregame_values` reads 500:] It starts every game at 50 percent, so it is not a
+  pregame forecast. Inside a game it moves with the situation and, by this site's own check, also
+  carries some team strength; it can trail the score by one play. In this site's own check over
+  1,448,965 regular-season plays from 2018 to 2026 (2020 not included; no postseason game is in the
+  check), it scored a Brier of 0.1575, against 0.2498 for a constant base rate (lower is better).
+  Where MLB's feed has no number for a plate appearance, the line has a gap." Then the stars
+  disclosure, "The five plate appearances that moved MLB's win probability most; a clip plays when
+  MLB has posted one for that play.", the coverage line ("Clips matched today: 11 of 20 biggest
+  plays."), and "Scores, box scores and play data come from MLB's public StatsAPI feed. Highlight
+  video is MLB's and plays from MLB's servers; eephus.io stores none of it. Copyright 2026 MLB
+  Advanced Media, L.P." (under SC-VIDEO (a): "plays in MLB's own player").
+- Pregame panel (SCORES_6, SC-MODEL (a)): "Eephus model" with "ATL 53.0%" and "PHI 47.0%" (the
+  board's rule, 9) and the label "Eephus model, unvalidated, provisional" (the board's chip
+  "unvalidated model", `assets/betting.js:984`, and the registry verdict); the verdict sentence in its
+  own exempt element as the details line; "Shown as the Sports Betting board serves it; this page
+  prices nothing." with the link "Sports Betting board" (`/betting/#section=teams`);
+  `BETTING_DISCLAIMER` once. Absent states: "The betting board priced a different listed starter."
+  / "The model does not price postseason games." / nothing at all when the board is stale.
+
+---
+
+#### 11. Registry and glossary (land in the SCORES_LIVE flip, SCORES_5a; 8.A, 8.D rows 14 and 15)
+
+The first draft landed these with the page code in SCORES_3, before any box job could serve the
+surfaces they name; "a registry row naming a surface that does not serve it yet is a false
+statement". They now land in the flip commit, the first commit that serves `/scores/`, through an
+idempotent script that keeps each file's line endings (P8 house rules). Rows in
+`data/model_registry.json`, then `MODEL_REGISTRY.md` regenerated (PO 5.4's drafted JSON, with these
+surfaces):
+
+- `scores_mlb_wp`: surface "/scores/ live cards, the win probability chart, swings in Biggest plays
+  and the play log, and per-player WPA and pLI in the box score"; predicts P(home team wins) after
+  each plate appearance, MLB's live model read from StatsAPI `winProbability`, displayed verbatim,
+  never refitted; champion MLB's `homeTeamWinProbability` (external), no fallback; baseline the
+  home-win base rate and `win_expectancy_state` on the same plays; metric Brier on the regular-season
+  play corpus (`calibration.feed_brier` beside `calibration.brier` and `brier_base_rate_only`); eval
+  artifact `data/win_expectancy.json`; verdict provisional; notes: a source number, not ours; it
+  starts every game at 50 percent, so it is not a pregame forecast; inside a game it moves with the
+  situation and, by the site's own check, also carries some team strength (the artifact's
+  `calibration.feed_note`); measured on regular seasons only.
+- `scores_stars_rule`: surface "/scores/ Stars of the Game on final games"; predicts nothing (a
+  DESCRIPTIVE ranking rule, `stars_v1`); baseline "n/a - descriptive by design, a rule and not a
+  model (leverage_board precedent)"; eval artifact null; verdict provisional; `provisional_kind`
+  measurement_only; notes: realized value, not skill; never ranked across games or seasons; the
+  first star comes from the winning club and can score below the second.
+- `scores_biggest_plays_rule`: surface "/scores/ game cards, the game view and the day rail";
+  descriptive (`bp_v1`); same fields as above; notes: MLB values only; withheld under 95 percent
+  coverage.
+- The word "descriptive" in `baseline` or `metric` satisfies
+  `test_model_registry.py:128-168` for a provisional row without an artifact.
+- SCORES_6 amends `betting_game_prob.surface` with "; /scores/ pregame cards and game view from the
+  2027 regular season, copied verbatim by game_pk from the served board, pregame only" (only if
+  SC-MODEL is not (d)), in the same commit that lands the panel's first rendering; the qualifier
+  "from the 2027 regular season" is required, because the board prices regular-season games only
+  and the panel serves nothing before then, so the row never names a surface that does not serve it
+  yet.
+  `win_expectancy_state` is not amended (nothing new is served).
+
+Glossary (`data/glossary.json`; all four ids are free at HEAD; `seeAlso` to `wpa`, `leverage_index`,
+`pli`, `win_expectancy`, `realized_mwpa`, which exist):
+
+| id | term | definition |
+|---|---|---|
+| `mlb_win_probability` | MLB win probability | "MLB's own live estimate of each team's chance to win after every plate appearance, from its public feed. It starts every game at 50 percent, so it is not a pregame forecast; inside a game it moves with the situation and, by this site's own check, also carries some team strength. The site measures it and does not fit it." |
+| `stars_of_the_game` | Stars of the Game | "Three players chosen by a published rule, not by a vote: win probability added from MLB's live model, with a workhorse pitcher credited for runs prevented when that is larger, and the first star from the winning team." |
+| `biggest_plays` | Biggest plays | "The five plate appearances that moved win probability most in a game, each with MLB's video of that play when MLB has posted one." |
+| `abs_challenge` | ABS challenge | "A challenge of a ball or strike call, reviewed by the automated ball-strike system. Each club has a limited number; a successful challenge is kept." |
+
+---
+
+#### 12. Tests
+
+| File | Task | Asserts |
+|---|---|---|
+| `test_scores_core.py` | 1 | the worked example (stars, swings, identity within 0.002, all players sum 0); WPA parity with `mlb_leverage._game_pitcher_dict` and `_fold_game_batters` on final fixtures or complete elements only (the folds do not filter on `isComplete`); shuffle invariance; the 15-out term only with non-negative WPA (a Fuentes-shaped fixture stays negative); literals pinned to the plan; why sentences parsed back; `play_text` over every `eventType` in the table; the state rule including cancelled and postponed; the club literal equal to `trades.canonical_org_from_id` for all 30 ids and to the franchise board's codes, placeholders null; the validator refusing each rule, accepting the 824592 star set and a loser-outscores-winner set (and `first_star_note` set on both), refusing increasing stars 2 and 3; the if-necessary before and after pair; an MLB string with U+2013 normalised, not refused; an `index.json` whose `copyright` key carries StatsAPI's copyright line with its terms URL (`http://gdx.mlb.com/components/copyright.txt`) passes the validator, and the same URL under any other key of `index.json` or in `index-<season>.json` is refused; a file over budget but under its ceiling logged, not refused; importing `scores_core` pulls in no pandas, numpy or requests |
+| `test_scores_job.py` | 2 | `decide()` for live, idle, week, offseason, due work, backoff, overlap and epoch hold on fixture slates (a 02:10Z west-coast game, a doubleheader, a postponement, a TBD time, the UTC date roll); ticks with jitter 100 s apart still run consecutive live cycles; a finalize larger than one invocation rolls over and is due on the next tick; `next_by` for every cycle type; one `run()` with a fake fetch and temp dirs: the five file kinds, the request budget, one WP fetch per changed game, write order and `rev` equality, mode 0644 on POSIX, heartbeat and run-log lines; a fake adapter that sleeps proves the per-request deadline and the 90 s bound; a fake 429 with `Retry-After` sets `backoff_until`; a per-game 500 sets that game's `stale_since` and per-game backoff and leaves the others and `job.state` alone; a per-file refusal keeps `job.state` ok; a killed holder leaves no lock that blocks the next run; an overlap stamps the heartbeat; the if-necessary pair on disk; `--backfill` refusals, `HISTORY_FLOOR`, and a cached `win_prob` file accepted only when its last element is complete and its score equals the schedule's final; `SCORES_LIVE` False writes only under `.cache/scores/preview/`; an `OUT` under `data/` exits 2; the served reads from `$EEPHUS_WEBROOT/data/` and the `state.json` carry-forward when a read fails; the job never opens `/tmp/eephus-nightly.lock` |
+| `test_scores_fence.py` | 2 (4a and 6 extend) | the import and string fences of section 9; the only fetch host is `statsapi.mlb.com` and the fake fetch records no media or embed host; every write path under `.cache/scores`, `OUT` or `logs` and never under `data/`; neither deploy consumer names `/data/scores`; the house getters never called for a non-final game; never a write to `.cache/win_prob`, `.cache/win_prob_post` or `.cache/game_feeds` |
+| `test_scores_export_contract.py` | 1 and 2 (4b extends) | schema of the five file kinds (fixture-built, plus the live artifacts when present, skipping loudly when absent); every rule of 8.5; the bracket block |
+| `test_scores_client.py` | 3 | in V8 (the engine `test_data_cache_stamps.py` drives): `scoresStaleState` S0 to S4 with a fixed clock in the evaluation order of 2.4, the default row, "Updates paused" without "Live" when nothing is live, the `Date` header overriding a skewed client clock, the exact sentences, S2 hiding live-only fields; every scores fetch with `cache: "no-cache"`; `index.json` re-fetched on an `index_rev` change |
+| `test_scores_render.py` | 3 | Playwright through `conftest.serve_site` on fixture payloads in a temp dir: 390, 1280 and 1440, light and dark; no horizontal page scroll; each state renders its fields; the 390 px height measure (every card state at or above its min-height with the longest fixture strings, nothing clipped, a live-to-final swap moving no card below, a poll within a state changing no height); 12+ innings scroll inside the line score; the chart's `role="img"`, aria-label, table twin and pointer crosshair (tap pins); no link inside another interactive element; targets at least 24 px (44 px for strip chips, tabs, filters and video buttons at 390); no `player_links.json` request on the day view; the polite live region; no console errors; with `SCORES_LIVE` False the build writes no `scores/index.html` |
+| `test_scores_labelling.py` | 3 (6 extends) | every `[data-model-id]` shows source and verdict together from the registry block ("MLB, provisional"); no percentage on a card outside a labelled element; no model or market number on a live or final card; the betting words absent (whole words) outside exactly two exemptions, the disclaimer block and the verdict-sentence element, the latter byte-equal to the board |
+| `test_scores_clips.py` | 4a | on the 849845, 824055 and 849846 fixtures: 16, 9 and 3 result matches; on 775296: 62 items parse; every match's `play_id` is one of its plate appearance's `playId`s; a clip matching an earlier event (a pickoff fixture) is stored with its own event and never on the result row; no guid-less item matches a play; branch (a): `embed` equals `https://streamable.com/m/<slug>`, no `mp4`, `hls` or `vtt`; branch (b): the multi-asset items pick the file containing `mediaPlaybackId`, no forbidden rendition, the caption tie-break; `feeds_sportsbook` set from the taxonomy; an unknown host gives F1 and `new_media_host`; an ABS reel never becomes a star clip; a later fixture that moves a clip to FORGE and adds captions replaces the object and changes the `rev`; a removed item leaves the payload; the kill switch through the constant, `EEPHUS_SCORES_EMBED=0` and the `EMBED_OFF` file; the runtime fail-safe on a served `gating: true`; the SC-PAID tripwire failing in dev and skipping with "OWNER ACTION PENDING" under `EEPHUS_DEPLOY_RUN=1` |
+| `test_scores_video_render.py` | 4a (4b adds the bracket case) | with every media, poster and frame request routed to fixture bytes and logged: no `<video>`, no iframe and zero media or frame requests before a click; posters lazy; branch (a): one iframe with the allowlisted `src`, `title` and `allow` after a click, a second clip removes the first frame, Escape removes it and returns focus; branch (b): no `autoplay`, `muted`, `loop` or `crossorigin` anywhere, one `<video controls playsinline>` after a click with the source by the `canPlayType` rule, the size on every MP4 button, a second play pausing the first proven with synthetic `play` events and a pause spy (or a WebM fixture at the MP4 URL), Escape removing the source, a fixture VTT with `Access-Control-Allow-Origin` yielding a `blob:` track and one without yielding none, a 404 MP4 giving F2; `embed: false` renders links only; an open player survives a reordering poll; "Video: MLB" inside every figure; the bracket prints no probability |
+| `test_scores_health.py` | 5b | `run_monthly.py` names `scores_job` in `SCHEDULED_EXPORTS`, reads the heartbeat and never imports the job (the `test_betting_lineup_job.py:536-548` idiom); the four states as amended in 2.5 on fixture heartbeats; no row filed without `EEPHUS_SCORES_HOST=1` or a heartbeat |
+| existing, extended | 3 to 6 | `test_data_cache_stamps.py` (3: the helper refuses `scores` names; the shell emits no `EEPHUS_DATA_VERS`); `test_publish_manifest.py`, `test_model_registry.py`, `test_glossary_slugs_resolve.py`, `test_sources_attribution.py`, `test_generated_docs_in_sync.py` (5a); `test_collegesavant_nav_in_sync.py`, the sitemap tests and the pixel tests T2 `test_pixel_icon_coverage.py` and T3 `test_pixel_icon_sizes.py` (3 and 5b, whichever branch); `test_diamond_gating_contract.py` (`scores.js` in `CLIENTS`, 6 only); a CSP guard (4a) |
+| must stay green | all | `test_mlb_leverage.py`, `test_pbp_corpus.py`, `test_win_expectancy.py`, `test_betting_mgmt_fence.py`, `test_betting_lineup_job.py`, `test_asset_versioning.py`, `test_phase4b_evals.py` |
+
+---
+
+#### 13. Conflicts resolved
+
+| # | Lanes | Conflict | Resolution | Why |
+|---|---|---|---|---|
+| 1 | DS vs MD, PO | Writer: DS recommends a nightly bake plus browser-direct live data and no job (DS 5), because a job "makes the site a bulk republisher of MLBAM data at minute cadence" under MLB's terms ("Only individual, non-commercial, non-bulk use ...", DS 3.1); MD and PO adopt one intraday job | Asked as SC-TERMS in batch 1 with the terms line and DS's reason quoted; recommended (a), one job (PO 1), with (b) browser-direct and (c) a slower job | the page stays a pure reader, stars and plays are computed once, viewer count never multiplies calls to MLB; the risk is stated in the question, and the posture is the owner's, not the plan's |
+| 2 | PO rev 1, PO rev 2, MD rev 1, DS | Publish path: copy into the webroot with rsync protect filters; own directory behind nginx; MD rev 1's two tiers and `/live/scores/`; browser-direct | Own directory at `/data/scores/` behind one nginx location (SC-LIVE (a)); browser-direct moved to SC-TERMS (b) | no nightly, rsync or precompress edit; MD rev 2 already withdrew its two tiers |
+| 3 | DS 3.2, MD rev 1 (per PO F12) vs S8-1 | Link-only highlights, thumbnails only on an owner yes | Embed (S8-1); the mechanism is SC-VIDEO: MLB's own embed player (recommended, verified on one clip), our player over MLB's files, or links only (6.0) | owner decision; the round-1 review showed the first draft took the most exposed form without checking for MLB's player |
+| 4 | PO 4.4 vs MD 3.1, 8 | Poll every 30 s vs 45 s while live | 45 s live, 300 s idle, published as `job.poll_live_s` and `job.poll_idle_s` | the writer's live cycle is 100 to 120 s, so 30 s buys little; the page never hard-codes it |
+| 5 | MD 10 vs PO 4.4 | Stale states S0 to S4 on `next_by` vs S0 to S5 (S1 "fresh", S5 "absent") on `paused_after_s` and `down_after_s` | S0 to S4 with MD's sentences and the job's published thresholds; PO's "absent" folds into S4 | one table, no cadence in the page |
+| 6 | MD 11.1 vs PO 5.4 | Crossed registry ids: MD rev 2 uses `scores_live_win_probability`, `scores_stars_of_game`, `scores_biggest_plays` as "the sibling's"; PO rev 2 uses `scores_mlb_wp`, `scores_stars_rule`, `scores_biggest_plays_rule` as "MD's" | PO rev 2's three ids | its rows are drafted in full; `_rule` says descriptive |
+| 7 | MD 7.9 vs PO 5.4 | Crossed glossary ids (`live_win_probability`, `biggest_play` vs `mlb_win_probability`, `biggest_plays`) | `mlb_win_probability`, `stars_of_the_game`, `biggest_plays`, `abs_challenge` | all free at HEAD; names what the number is |
+| 8 | MD rev 1 vs PO | Health row `scores_live_job` vs `scores_job`; `EEPHUS_SCORES_ROOT` vs `EEPHUS_SCORES_OUT` and `_STORE`; `EMBED_VIDEO` vs `SCORES_EMBED_VIDEO` | `scores_job`, `EEPHUS_SCORES_OUT`, `EEPHUS_SCORES_STORE`, `SCORES_EMBED_VIDEO` | PO's drafted code and crontab use them |
+| 9 | MD 2.4 vs PO 1.7 | Served writes through `feed_cache.atomic_write_json` vs the job's own bytes writer | Own writer with `fchmod 0644` | `mkstemp` creates 0600 files (`feed_cache.py:137-138`, confirmed at `410cccce`) |
+| 10 | PO 4.5 vs MD 6.5 | Captions: `crossOrigin="anonymous"` on the video with `<track src=vtt>` vs a CORS fetch into a blob track; MD's `cc_mode "copy"` and question C2 | Blob track on the MP4 path; no added track on the HLS path (the manifest carries subtitles); no copy mode; C2 dropped | playback never depends on media CORS; PO measured `Access-Control-Allow-Origin: *` on the caption host, which answers C2's premise; no MLB words are stored |
+| 11 | PO 2.4 vs MD 6.3 | Asset choice: "the first `mp4Avc`" vs "the entry whose URL contains `mediaPlaybackId`, else the first" | MD's rule | measured: on 849845 the item's own asset is third on one of four multi-asset items |
+| 12 | MD 6.3 vs PO 2.4 | Allowlist: an explicit list including `darkroom-clips` vs any `*.mlb.com` host | Explicit lists by role; `diamond.mlb.com` added for captions; `darkroom-clips` out | measured: play clips, recaps, condensed games and reels sit on two video hosts; `darkroom-clips` carried only data-viz items; one caption file sat on `diamond.mlb.com` |
+| 13 | MD 3.2 vs PO 2.4 | Posters 480 and 960 vs 640 and 320 | 480 and 960 with `srcset` | both exist on every item; the pair covers a 358 px player at 2x and a 240 px thumbnail at 2x |
+| 14 | PO 2.4 vs MD 3.2 | The clip object stores MLB's headline as `title` vs never stores it | Never; accessible names are built from fields | no MLB prose reproduced (MD STOP 10) |
+| 15 | PO 2.4, 4.5 vs MD 6.5 | "Video: MLB" plus "Open on MLB.com" under every player vs "Video: MLB" only | "Video: MLB" only; MLB.com links appear in F1, F2 and F3 | S8-1 as recorded: the MLB.com page link is the fallback only |
+| 16 | MD 6.6 vs PO 2.4 | No-clip fallback: Baseball Savant's pitch video page when verified, else Gameday vs Gameday | Gameday on MLB.com | S8-1 names an MLB.com page; Gameday is verified (301 then 200); the Savant pattern is not |
+| 17 | PO 1.2 vs MD 6.7 | Content fetch every 300 s per live game vs demand-driven (a top-five play without a clip, 90 s after it, 4 minutes between fetches, else every 10 minutes) | MD's trigger inside PO's limiter (6.6) | fewer full-payload calls (`fields=` is ignored) and a clip within about 4 minutes of a big play |
+| 18 | MD 3.2 vs PO 1.6 | Clip objects in date files (MD's date `clips` table covers only some referenced ids, contradicting its own contract test; PO puts clip objects in date files) | Date files carry durations only (`clip_s`, `recap_s`, `condensed_s`); media and embed URLs only in game files | the day view never plays video by default (SC-CARDVID (a)); smaller polled payloads; one resolution rule |
+| 19 | PO 4.5 vs MD 4.2, A4 | Posters on the day view vs none | None, asked as SC-CARDVID | PO defers the look to the page lane; a 15-game day would load 15 or more MLB images on first paint |
+| 20 | PO 2.3 vs MD 5.4 | Star line: MLB's box `summary` string ("1-3 \| HR, HBP, 3 RBI") vs a template from fields | Templates from the boxscore's numeric fields | a test can parse every number back; MLB's string format never reaches the page |
+| 21 | PO rev 1 and its verify block vs MD 7.5 | Play text: MLB's description verbatim vs field-built | Field-built (default taken without asking, MD B3 (a)) | no MLB prose; copy_lint governs every word |
+| 22 | PO 1.6, 2.2 (and PO rev 1) vs MD 4.3, B4 | Three top plays in each card's date-file block (PO rev 2), three while live (PO rev 1) vs one on the card and five "so far" (MD) | One on the final card; five in the game view, "so far" while live; five across the date in the rail (job-computed) | the card's min-height (1.3); a live list that does not change length at the final |
+| 23 | PO 2.2 vs MD 6.1 | The swing credited to the club that gained vs read from the batting club's view | The batting club's view, signed; ranking by magnitude | the row names the batter's play; the chart markers match |
+| 24 | MD 4.2 vs PO 5.4 | A "Stars of the day" rail ranking star scores across games vs the stars row's "never ranked across games" | No cross-game star ranking; the rail keeps biggest plays only | a cross-game star table would read as a skill board |
+| 25 | MD 16, PO 2.1 vs the landing rule | Both lanes adopt dashed house fallback points from `win_expectancy_state` (and MD C4 (b) a house-line toggle) | Withdrawn; MLB values only; gaps stay gaps | the landing rule allows model numbers only as served, and that model's registry surface reads "NOTHING SERVED YET" |
+| 26 | MD 12 vs PO 1.7 | Win probability as integers 0 to 1,000 vs floats 0 to 1 | Integers in thousandths for every win-probability quantity | exact for MLB's one-decimal percentages; no float noise in the contract test |
+| 27 | PO task A, B vs MD 11.5, A1 | The betting model block in the first tasks vs phase D after step Z | SCORES_6, any time after its preconditions; inert until the 2027 regular season | "displayed as served" lands under the rule; the board prices no postseason game anyway |
+| 28 | MD A3 vs PO PO-2 | Model and de-vigged market side by side in the game view vs the model only on pregame cards | One question, SC-MODEL; recommended: the model only, cards and game view | the Odds API display terms are an open owner item (`DATA_SOURCES.md:190-193`); a market beside a model is one subtraction from an edge against a price that may have moved |
+| 29 | PO 5.4, MD 11.1 vs Part 8 8.D row 15 | Registry rows and glossary entries in the first task vs in the commit that serves them | The SCORES_LIVE flip, SCORES_5a (the first draft said SCORES_3, which serves nothing while the flag is off); the `betting_game_prob` amendment in SCORES_6, qualified "from the 2027 regular season" and landed with the panel's first rendering | a registry row naming a surface that does not serve it yet is a false statement |
+| 30 | PO task A vs this plan | The health step and `SCHEDULED_EXPORTS` entry with the job | SCORES_5b, once the curl check of section 17 passes, and filed only on a machine meant to run the job | no standing red row before the job exists or where it never runs; `run_monthly.py` stays untouched through the busy window |
+| 31 | PO 1.3 vs MD 4.4 | The job never fetches the feed vs Game info needs feed-only fields (`absChallenges`, `review`, `moundVisits`, officials, `venue.fieldInfo`, `mlbDebutDate`) | The feed once at Final and once in the finalize cycle; `boxscore` while live | PO already allowed a Final read for debuts; about 111 KB gzip per final game |
+| 32 | MD 3.3 vs PO 1.7 | Forbidden `record*` and `price` vs `record_*` | `record*` and `price*`; the club's record ships as `wl` | the looser pattern would let a bare `record` key through; the club W-L needs a name outside it |
+| 33 | PO 1.3 vs MD 4.3 | The schedule hydrates lack `weather` and `broadcasts(all)`, which MD's cards show | Both added | DS verified both; a few KB gzip per call |
+| 34 | MD 3.2 vs PO 1.6 | Rules and the embed switch in `latest.json` vs `index.json` | `index.json`, re-read by open pages when `latest.json`'s `index_rev` changes | `latest.json` stays the small polled file; a thrown switch still reaches open pages within one poll |
+| 35 | MD 4.4.1, 4.7 vs Part 8 8.E and Q8_12 | Scores styles only in `scores.css` vs "whichever lands first adds `--viz-1` and `--viz-2`" | SCORES_3 adds the two tokens to `site.css` with the exact values only if absent, then restamps; it never adds `EEPHUS_HUB.lineChart` or `spark`; the WP chart draws in `scores.js` | the tokens are shared; the helpers' design belongs to Q8_12 |
+| 36 | PO 4.1 vs MD 4.1 | A tablist (Today, Schedule, Game, Method) vs a date strip, game tabs and `#about` | MD's structure; PO's shell spec follows it | the page lane owns the look; the mapping is in 1.1 |
+| 37 | MD 9 vs PO 4.6 | Budgets: shell 16 vs 12 KB, css 20 vs 16 KB, `latest.json` 32 vs 16 KB, date file 200 vs 150 KB | Shell 16, css 20, `latest.json` 16, `index.json` 16 plus `index-<season>.json` 40, date 150, game 80 KB, as test-time pins with runtime ceilings four times larger; `scores.js` 70 KB with the player and bracket as lazy chunks; cold first paint as scores-owned bytes, 70 KB gzip | PO measured the payload shapes; review 2 showed the shared runtime alone is about 197 KB gzip and a runtime budget refusal would be permanent |
+| 38 | MD 7.2 | "The schedule for {date} is not posted yet" past the window | "This page lists games up to seven days ahead." | MLB posts the season; the limit is ours |
+| 39 | DS 2.3 vs MD, PO; the orchestrator's reuse list | DS offers `completed_games.json`, `data/fantasy.json` and the lineup slate as zero-fetch sources; the reuse list names the lineup captures, odds cache, weather captures, parks module, news wire, the win-expectancy table and `trades.canonical_org` | None is read: the betting fence stays one string rule; `fantasy.json` is regular season only and nightly; the lineup and weather captures are dark evidence; the odds cache holds frozen prices; `/parks/` is the MiLB park module; the news wire has no designed join; the win-expectancy table is withdrawn (25); clubs resolve by team id through `canonical_org_from_id`, never `canonical_org` | every field those sources hold is one schedule call away, or has a rule against it |
+| 40 | MD 6.8 item 5, PO task C STOP | Play five clips on iOS Safari, Android Chrome, desktop Chrome and Firefox; STOP unless a clip plays in Chromium (MP4) and WebKit (HLS) | Render tests assert the contract with routed fixtures and synthetic play events; one hand check per SC-VIDEO branch in installed Chrome or Edge; HLS and phones become owner device checks after the flip | an agent here cannot drive phones, Playwright's bundled Chromium lacks H.264, and WebKit on Windows is no HLS reference, so those STOPs would fire falsely |
+| 41 | MD A1 vs the landing rule | Launch A to C now vs after step Z | After step Z, behind `SCORES_LIVE` (5.1); the realistic dates are in 5.3 and SC-JOB | Part 8 8.A binds; no exception is asked |
+| 42 | MD 2.4, C1 vs PO 1.10 | The history backfill through `feed_cache.get_game_feed` (finals) vs reading cached files | `--backfill` opens cached files directly (a `win_prob` file only when its last element is complete and its score equals the schedule's final; a feed only when its own status is final); everything else through its own session and store | a getter call on a missing file writes a shared cache; a bare `win_prob` list carries no status |
+| 43 | MD 4.3 vs PO 1.3 | A debut chip on live cards vs the feed read only at Final | Debut marks on final cards and in the box from the Final feed; a live debut chip is later work | no extra per-game call while live |
+| 44 | MD 4.3 | Probables' "hand, W-L, ERA" with no named source | One `people` call per week and idle cycle, verified first (8.7) | the schedule hydrate gives id and name only (DS 1.2) |
+| 45 | PO 0.2, F12 and cross-references | PO rev 2 describes and cites MD revision 1 (see 14) | Superseded by this plan | the two revisions were written at the same time |
+
+**Round-1 review.** The two adversarial reviews (`REVIEWS_round1.json`, 40 issues) and the
+orchestrator's decisions A to J changed rows 1, 2, 3, 18, 22, 29, 30, 34, 37, 40, 41 and 42 above;
+`FIX_LOG.md` lists every issue, where it was fixed, and the one correction to a decision's premise
+(the lineup job runs every 15 minutes, not at the scores job's cadence).
+
+---
+
+#### 14. Stale cross-references and corrections
+
+- PO rev 2 cites MD sections that exist only in MD revision 1: "MD 3.6" (card and detail keys; this
+  plan restates them in 8.2 and 8.3), "MD 3.7" (player links), "MD 3.8" (the Diamond check), "MD
+  7.8" (glossary; now MD 7.9), "MD's A4" (two tiers; now "Video on the day view"), "MD's B4" (the
+  Savant fallback; now "Biggest plays while live"), "MD's P2" and "P5" (phases; MD rev 2 uses A to
+  E). PO's 0.2 table rows for writers, cadence, public path, file names, highlights, no-clip
+  fallback, stale rule, registry and health row describe MD revision 1.
+- PO finding F12 ("MD predates S8-1" in nine places) is stale: MD rev 2 applied S8-1 everywhere it
+  lists, and the one write-path remark it adds survives only as 2.4's `atomic_write_json` row
+  (conflict 9).
+- MD 16 describes PO revision 1 (pure-WPA stars, MLB's descriptions, three live plays, a later-PA
+  tie-break, a link-only validator rule); PO rev 2 adopted `stars_v1` and `bp_v1`.
+- Part 8's addendum refers to "the Scores module ... build P0 to P7", "the Scores P5 context step"
+  and "the Scores live tier" (8.E and its cross-plan order): these are MD revision 1's names; they
+  map to section 19.
+- MD's first-pass citations were already corrected in MD rev 2 (the final-pass sequencing rule at
+  `docs/master-plan-2026-09-24-final-pass.md:277-286`; the verdict sentence at
+  `betting_export.py:7149`, the chip at `assets/betting.js:984`).
+- Revision 1 samples PO names as gone are gone; the samples this plan's tests use are listed in
+  SCORES_1_CORE_RULES and SCORES_4a_VIDEO.
+- Round 1 corrected this plan's own claims: the win-probability copy ("knows the game state, not the
+  teams") contradicted the site's measurement (`win_expectancy.py:21-24`); the first draft's
+  "nothing public changes" while the box install followed SCORES_2 contradicted itself; the video
+  join attached any matching clip to the result row; the job block's `decision` key broke 8.6.
+
+---
+
+#### 15. Owner questions and defaults
+
+##### 15.1 Eleven questions replace the lanes' 22
+
+| Lane question | Here |
+|---|---|
+| DS 1 (terms posture), DS 5 (an intraday job or browser-direct) | SC-TERMS (batch 1), with the terms line and DS's recommendation quoted |
+| S8-1's mechanism (raised by review 1 issue 5) | SC-VIDEO (batch 1), with the embed check of 6.0 and the distribution tags |
+| MD A1 (launch timing), PO-1 (register the job) | SC-JOB, with the realistic dates of 5.3 |
+| PO-3 (publish path) | SC-LIVE |
+| MD B1, B2 (first star, pitching term), DS 4 (topPerformers or a house rule) | SC-STARS, restated against the measured baseline |
+| MD C1 (history depth) | SC-HISTORY (sets `HISTORY_FLOOR`; both size estimates) |
+| how long files are kept (a default in the first draft; review 1 issue 4) | SC-KEEP |
+| PO-4 (S8-1's premise when Diamond sells) | SC-PAID |
+| MD A4 (video on the day view) | SC-CARDVID |
+| MD A2 (nav) | SC-NAV (nav places have been owner decisions: Franchise first, Ledger after Arbitration) |
+| MD A3, PO-2 (market beside the model), DS 3 (which "win probability") | SC-MODEL, answer-required; DS 3 is settled by design (MLB's live number, labelled; the model pregame only) |
+| MD B3 (play text), B4 (plays while live), C3 (announcements) | defaults below |
+| MD C2 (caption copy) | dropped: measured (conflict 10) |
+| MD C4 (excitement sort, house line) | the sort is later work; the house line is withdrawn (conflict 25) |
+| DS 2 (highlights) | answered by S8-1; the mechanism is SC-VIDEO |
+| DS 6 (page copy) | a rule: the page says what it has |
+
+Batches of four, by urgency (each question says what it decides and by when):
+
+| Batch | Questions | Needed by |
+|---|---|---|
+| 1 | SC-TERMS, SC-VIDEO, SC-JOB, SC-LIVE | 2026-10-11 (before SCORES_1 runs; SC-VIDEO before SCORES_4a, which STOPs without it) |
+| 2 | SC-STARS, SC-HISTORY, SC-KEEP, SC-PAID | 2026-10-11 (before SCORES_1, SCORES_2 and SCORES_4a) |
+| 3 | SC-CARDVID, SC-NAV, SC-MODEL | SCORES_4a, SCORES_5b and SCORES_6 (SC-MODEL is answer-required) |
+
+SCORES_1 to SCORES_4b may take SC-TERMS's default (a), since nothing serves while the flag is off, but SCORES_5a_LIVE_FLIP is answer-required on SC-TERMS: the flip is the first time the site republishes MLB game data, so a default never makes that call. If SC-TERMS is (b), SCORES_1 STOPs before any code and the orchestrator re-cuts SCORES_1 to SCORES_5b
+for a page-side core. If SC-LIVE is (b) or (c), SCORES_2 STOPs and SCORES_2 and SCORES_5a are
+re-cut. If SC-JOB is (c) or (d), SCORES_5a STOPs (no public writer exists). The core, page, video and
+bracket tasks otherwise stand.
+
+##### 15.2 Defaults taken without asking (reversible)
+
+Every queue spec tells its writer to name each default it applied in the commit message and in
+REMAINING.md, and to record any owner-question default in `DECISIONS_FOR_OWNER.md`.
+
+Play text built from fields (MLB's descriptions never stored); five biggest plays, "so far" while
+live, one on the final card; game types R, F, D, L, W and A; future dates to D+7; scores files out
+of the public data catalog; under SC-VIDEO (b): HLS whenever offered and native, else the 4000K MP4
+with its size shown, never `highBit`, captions offered, off by default, the last choice remembered;
+posters 480 and 960 in the game view only; one clip at a time; recap and condensed game embed like
+play clips; pitcher reels only for pitcher stars; ABS reels, interviews and data-viz never shown; no
+MLB.com link under a playable clip; the no-clip link is Gameday on MLB.com; no cross-game star
+ranking; screen-reader announcements for the open game and followed clubs only; no excitement sort
+in v1; player links only for ids in `data/player_links.json`, loaded in the game view; poll 45 s
+live and 300 s idle; `SCORES_EMBED_VIDEO` on, with the runtime override; the local job writes
+`.cache/scores/out/` (or `$EEPHUS_SCORES_OUT`). Retention is no longer a default (SC-KEEP).
+
+---
+
+#### 16. The queue (`QUEUE_TASKS_scores.json`)
+
+Every task carries `kind` EV, `preamble` P8 (so `qctl` prepends `P8_COMMON.txt`), `model` opus,
+`not_before` 2026-10-11 and the `requires` below, for the dynamic single-writer queue
+(`dq/queue.json`), beside the Part 8 tasks. Every spec keeps its STOP list, carries the
+served-change guard, names `PART8_ADDENDUM.md` as the fallback for the Part 8 rules, and tells the
+writer to name each default it applied; every task that reads live data (SCORES_2, SCORES_4a,
+SCORES_4b, SCORES_5b) carries the crash protocol: stdout and stderr teed to the output directory
+before the first live request, STOP on an exception, no rerun.
+
+| Order | Id | Builds | Requires | Owner answers | Effort |
+|---|---|---|---|---|---|
+| 1 | `SCORES_1_CORE_RULES` | `scores_core.py`: state rule, WP series, WPA fold, `bp_v1`, `stars_v1`, why templates, `play_text`, clubs, payload builders, the validator (rule 3, the if-necessary drop, ceilings, dash normalising); fixtures (824592, loser-outscores-winner, the if-necessary pair, the extended `fields=` file); tests | none | SC-TERMS (STOP on (b)), SC-STARS (default `stars_v1`) | M |
+| 2 | `SCORES_2_JOB_AND_DEPLOY` | `tools/scores_job.py` with `SCORES_LIVE` off, the epoch hold, cadence by tick, job-local session, deadlines, lock, scoped failures and refusals, `next_by`, the season index, `--backfill` with `HISTORY_FLOOR`; conftest redirect; `deploy/scores-crontab.example`, `deploy/scores-task.ps1`, `deploy/README.md`, `deploy/WEBMASTER.md`; the StatsAPI line in `DATA_SOURCES.md` | SCORES_1_CORE_RULES | SC-TERMS, SC-JOB, SC-LIVE, SC-HISTORY, SC-KEEP | M |
+| 3 | `SCORES_3_PAGE_CHART` | the page behind the flag, cards with measured min-heights, game view, chart, stale states, copy, About; the icon and state branches; `--viz-1`/`--viz-2` if absent | SCORES_2_JOB_AND_DEPLOY, PX_A_foundation, PX_B_navigation, PX_C_states_ballpark | none | L |
+| 4 | `SCORES_4a_VIDEO` | content fetch and the final-event clip join in the job; the player of the SC-VIDEO branch in a lazy chunk; fallbacks; the kill switch with its runtime override; the SC-PAID tripwire and fail-safe; the embed line in `DATA_SOURCES.md` | SCORES_3_PAGE_CHART | SC-VIDEO (required), SC-CARDVID, SC-PAID | M |
+| 5 | `SCORES_4b_BRACKET` | the October bracket in the job and a lazy chunk | SCORES_3_PAGE_CHART | none | S |
+| 6 | `SCORES_5a_LIVE_FLIP` | the one flip commit: `SCORES_LIVE = True`, the page, `publish_paths`, three registry rows, four glossary entries, the /sources/ row | SCORES_3_PAGE_CHART, SCORES_4a_VIDEO, SCORES_4b_BRACKET | SC-TERMS (required: the flip is the first republication of MLB data), SC-JOB (STOP on (c) or (d)) | S |
+| 7 | `SCORES_5b_LAUNCH_NAV_HEALTH` | after the curl confirmation of section 17: nav (SC-NAV, icon branch), sitemap, the host-only health row | SCORES_5a_LIVE_FLIP, PX_A_foundation, PX_B_navigation | SC-NAV | S |
+| 8 | `SCORES_6_PREGAME_CONTEXT` | the model panel (allowlist, the board's format, `CLIENTS`), SEM+, eFV from `xfv.json`, hook median, DFS link, park index; intensity only after Q10_09's flip | SCORES_5a_LIVE_FLIP, Q9_05_CLUB_RESOLVER | SC-MODEL (required) | M |
+
+SCORES_4 was split in two because the video branch and the bracket are independent lazy chunks and
+the video task now carries an answer-required branch; SCORES_5 was split because Part 8 8.A makes the
+flip one commit that must reach the box before the launch's curl confirmation can pass. A Fable 5.1
+review of the stars rule (SCORES_1) and of the player path (SCORES_4a) is worth its cost.
+
+---
+
+#### 17. Owner and webmaster actions
+
+1. Answer batch 1 and batch 2 by 2026-10-11 (SCORES_1 is the first scores task the queue can
+   dispatch); batch 3 before SCORES_4a, SCORES_5b and SCORES_6.
+2. After SCORES_2 lands (after step Z): the owner pushes and syncs beta ("Sync beta to main", as
+   `deploy/WEBMASTER.md` section 1 describes); the next box nightly pulls it (the nightly is held from
+   step A until step C lands on the box, 8.B, so this happens only after the epoch). The flag is
+   off, so nothing public changes.
+3. After SCORES_3 and again after SCORES_4a and SCORES_4b: push and sync beta again (each is code
+   behind the off flag; batching them into one push is fine).
+4. After SCORES_5a (the flip) lands: push and sync beta. Then the webmaster, in order, on the box:
+   confirm the checkout holds `tools/scores_job.py` and `scores_core.SCORES_LIVE = True`
+   (`git -C /opt/eephus/repo log -1 --oneline` after the nightly pull); `mkdir -p /opt/eephus/scores`;
+   `namei -l /opt/eephus/scores` (nginx can traverse and read); add the `location ^~ /data/scores/`
+   block above `location /data/`; `sudo nginx -t && sudo systemctl reload nginx`; add
+   `EEPHUS_SCORES_HOST=1` to `/etc/eephus.env`; install `deploy/scores-crontab.example` (its
+   `EEPHUS=/opt/eephus/repo/prospect-tracker` is the box checkout, `deploy/nightly-build.sh:32-33`,
+   and its line sets `EEPHUS_SCORES_OUT=/opt/eephus/scores`; pasted into one crontab with the betting
+   example, its block must come after the betting lines, whose `EEPHUS` is wrong, finding F3); after
+   one cycle run `$PY tools/scores_job.py --selfcheck`; add a weekly logrotate stanza; keep
+   Cloudflare on "Respect Existing Headers" with no cache rule on `/data/`.
+5. **The confirmation** (SCORES_5b runs it and accepts nothing else; the webmaster may run it
+   first): `curl -sI -A "Mozilla/5.0" https://eephus.io/data/scores/latest.json` returns 200 with
+   `cache-control: no-cache`; `curl -sI https://eephus.io/scores/` returns 200; the fetched
+   `latest.json` shows `job.state` ok or idle and `job.next_by` in the future.
+6. After SCORES_5b and SCORES_6 land: push and sync beta (nav, sitemap and health row; the pregame
+   context).
+7. Under SC-JOB (a) or (c), the owner on this machine, from `prospect-tracker\` (any time after
+   SCORES_2): `powershell -ExecutionPolicy Bypass -File deploy\scores-task.ps1 -Register`, then
+   `python tools\scores_job.py --selfcheck`; `-Unregister` to remove. No pause is needed around the
+   epoch: the job writes only `.cache/scores/` and holds itself.
+8. Under SC-HISTORY (a), the webmaster runs the backfill on the box between 11:00 UTC and first
+   pitch, or on an off day: `$PY tools/scores_job.py --backfill 2026-03-25:<yesterday>` (under (d),
+   from 2018-03-29, the `HISTORY_FLOOR` of 2.1, in season-sized chunks).
+9. **The kill switch**, if a takedown request or the owner asks: `touch /opt/eephus/scores/EMBED_OFF`
+   on the box (or `EEPHUS_SCORES_EMBED=0` on the cron line); it takes effect at the next cron tick
+   (6.7). Remove the file to restore.
+10. Device checks after the flip: on an iPhone (Safari) and an Android phone (Chrome), open a final
+    game and play two clips; on desktop Firefox play one; report any pre-roll, sponsor slate or
+    sportsbook graphic. Under SC-VIDEO (b) a sportsbook mark already STOPped SCORES_4a before
+    landing; a mark found later on a phone goes to the owner as a question, and the kill switch is
+    the immediate remedy.
+11. Before any paid Diamond tier: re-confirm S8-1 (SC-PAID) by recording a date in
+    `scores_core.SCORES_EMBED_RECONFIRMED`; until then the job publishes embedding off by itself.
+
+---
+
+#### 18. Findings handed to other lanes (from the scores lanes; nothing changed here)
+
+- **Deploy:** nothing publishes between nightlies, so the draft War Room poller writes a tracked
+  stub the public never sees and the 03:10 checkout reverts (PO F1; the scores route is the fix
+  pattern); the CI break-glass rsync deletes every webroot file it did not stage, including
+  `data/build_info.json` (F2); `deploy/betting-crontab.example:51` names the wrong checkout (F3);
+  `gzip_static` serves a stale twin of any webroot file rewritten between nightlies (F4); the
+  nightly publishes `/prospx/index.html` through `mkstemp` with mode 0600 (F10;
+  `tools/strip_prospx_comments.py:303-307`).
+- **Management and leverage:** `win_expectancy.py:693-695` writes its artifact non-atomically (F5);
+  the house getters cache a live game as if final for up to 24 h, and the corpus build walks
+  `.cache/win_prob` with no game-type filter (F8, DS 2.4). F8's postseason half is already handed to
+  Q10_06_INTENSITY_FETCHES in the Part 8 fix round: its roughly 270 postseason winProbability feeds
+  go to `.cache/win_prob_post/`, never `.cache/win_prob/`, and only the intensity lab reads them
+  (8.E, the postseason results row), so the corpus, `data/win_expectancy.json` and this page's About
+  stay regular-season. The MLB feed cache fills only as a side effect of other walks, disk pressure
+  deletes `win_prob` and `game_feeds` first, and the corpus is 44 games behind for 2026 (2,385 of
+  2,429) (DS 2.4).
+- **Registry:** the `win_expectancy_state` row opens with pre-2026-09-10 numbers and corrects them
+  only at its tail (F6).
+- **Betting:** the public betting preview carries 3 of the board's games (F7).
+- **Pixel and branding (for the orchestrator):** PX_B_navigation's PX-07 (32 px masthead icons at
+  every module h1) and Part 8's Q11_06_MODULE_MASTHEADS (which enumerates 16 masthead sites) should
+  include `/scores/` when `scores/index.html` exists at HEAD; SCORES_3 and SCORES_5b add the scores
+  icon themselves when the icon system exists, so nothing breaks if the amendment is not made.
+- **Epoch (for 8.B's step-A preconditions):** the sentence at the end of 2.5.
+
+---
+
+#### 19. Mapping to Part 8's references
+
+| Part 8 says (8.E, cross-plan order) | This plan |
+|---|---|
+| "an MLB Scores module ... build P0 to P7" | SCORES_1_CORE_RULES to SCORES_6_PREGAME_CONTEXT (eight tasks) |
+| "the Scores live tier keeps its own intraday job" | the one job, SCORES_2_JOB_AND_DEPLOY |
+| "the Scores P5 context step (after P8.3's resolver in q9; its intensity chip waits for Q10_09 and its own flag)" | SCORES_6_PREGAME_CONTEXT (after Q9_05_CLUB_RESOLVER; intensity only after Q10_09's flip) |
+| "Scores owns the live scoreboard, the bracket and series state with no odds" | 1.6, SCORES_4b_BRACKET |
+| Club links: a stopgap through `EEPHUS_HUB.club(x).code` until L1 lands | SCORES_3 uses the stopgap if Q9_05 has not landed; SCORES_6 switches |
+| The eFV-only display rule (P8.4) | SCORES_6 prints eFV exactly as PROSPX prints it, nearest, never consensus, from the served `xfv.json` |
+| Chart tokens and helpers (P8.2 owns `--viz-1`, `--viz-2`, `lineChart`, `spark`) | SCORES_3 adds the two tokens only if absent, exact values; no helper |
+| Expected pitches and innings (P8.1) | not in this plan |
+| The landing rule and flags (8.A) | 5.1: class 2 behind `SCORES_LIVE`, one flip commit after step Z |
+
+### 8.K eWAR v3: the eBR outcome parts and the skill parts
+
+- Status: CLEAN 2026-10-01 at the unification's verify round 3 (`part8/ebr/VERIFY_unify_round3.md`), after the eBR plan's own round 3 CLEAN (`part8/ebr/VERIFY_round3.md`); source `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part8/ebr/PLAN.md`.
+- Queue (dq/queue.json, prefixes EBR_ and EWV3_): EBR_1_REGISTRATION, EBR_2A_CORE_DARK, EBR_Q4B_HISTORY_BACKFILL, EBR_2_BUILD_DARK, EBR_LOOK, EBR_2F_FLIP, EBR_3_EWAR_V3, EBR_3B_BREF_FRAME_PROVIDER (skipped, EBR-Q0 = (a)), EBR_Q6B_MILB_CARDS, EWV3_SKILL_BUILD_CORE, EWV3_SKILL_BUILD_LAB, EWV3_SKILL_LOOK, EWV3_SKILL_HOLDOUT, EWV3_VALUATION_GATE_REGISTRATION (added by the SWAR-Q4 answer).
+- Answers: `C:/Users/noah/baseball-projects/_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, sections 'eBR batch 1', 'sWAR batch 1 (the owner departed from every recommendation: one house series)', 'eWAR v3 batch 1 (after the unification)' and 'eWAR v3 batch 2'.
+
+### eWAR v3 plan: one house WAR on FanGraphs' frame, with eBR and the skill parts
+
+Synthesis of the eBR program (2026-09-30, fix rounds 1 to 3) and of ask A's skill design (2026-09-30,
+fix rounds 1 and 2), unified on 2026-10-01 after the owner's answers to EBR-Q0 to EBR-Q3 and SWAR-Q0 to SWAR-Q3
+made them ONE series. Owner asks, verbatim:
+
+- **Baserunning:** "Can we build our own baserunning metric for WAR (our own version of BsR, call it
+  eBR (eephus baserunning), and use it for eWAR?"
+- **Ask A:** "Can we also look to potentially use our own metrics in eWAR further (some cummulative
+  version of HEM+ for hitting, SEM+ for starters, REM+ for relievers, DEM+/will's defensive
+  metrics/our in-house calculated positional adjustments for position players, etc?"
+
+**Files beside this one** (`C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/part8/ebr/`,
+durable copy after 8.C action 1: `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part8/ebr/`):
+
+| File | What it is |
+|---|---|
+| `REGISTRATION_DRAFT.md` | the text EBR_1 commits as `docs/ebr-2026-09-30/EBR_GATE.md`, titled 'eWAR v3 gate: eBR and the skill parts': the base, the six candidate parts with their clauses, eBR's definition, identity gates and bug bands, the outcome look, the skill parts' definitions, the skill look and its holdout, what each result licenses, claims, disclosure, Results EMPTY |
+| `QUEUE_TASKS.json` | the twelve eWAR v3 writer tasks in dispatch order (`id`, `kind`, `preamble`, `model`, `not_before`, `requires`, `spec`), built by `_unify/_build_queue_tasks_unified.py` |
+| `QUEUE_EDITS.json` | the edits that turn the live queue into that task set (`delete`, `update`, `add`), applied by the orchestrator with `dq/qctl.py` |
+| `OWNER_QUESTIONS.json` | the seven questions still open, in two batches of four and three, recommended option first |
+| `UNIFY_LOG.md` | what moved where in the unification: one row per orchestrator ruling (U1 to U6) and per task |
+| `FIX_LOG.md` | the eBR fix rounds 1 to 3 (history) |
+
+**Inputs.** The eBR lanes `ewar_internals.md` (read at `64bf1bb3`), `ebr_metric.md` (`be53132d`) and
+`integration.md` (`be53132d`); the skill lane `part8/xwar.md` (`64bf1bb3`) and its plan of record
+`part8/XWAR_FSCORE_PLAN.md` after fix round 2 (its skill half now points here); the Baserunning lane
+`part8/baserunning.md`; `part8/PART8_ADDENDUM.md` (8.B the clock, 8.C the queue, 8.E which plan owns
+what); the epoch specs `dq/specs/epoch/EPOCH_RUN.md` (step D + U, ruling EPOCH-Q4-IMPL),
+`EPOCH_FWAR_REFERENCE_COLUMN.md` and `NOV15_REGATES.md`; `docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md`
+clauses (k) and (l) and parts 6 and 8 at HEAD; and `_audit_2026-09-09/DECISIONS_FOR_OWNER.md` through
+the 2026-10-01 answers to SWAR-Q0 to SWAR-Q3. HEAD at the unification is `26b446d9`.
+
+**Discipline.** Nothing in the repo was edited, no pytest, exporter, lab or look ran, and no number
+here is new: each one is quoted from a lane, a committed artifact or a registry row, and is a count, a
+league table, a public-versus-public comparison, a power estimate on public series or arithmetic on a
+committed constant. No eBR value, skill delta, ladder delta or eWAR v3 value exists for any player.
+
+**Precedence.** Where this file and a lane document differ, this file governs (section 8 lists every
+difference). Where this file and `REGISTRATION_DRAFT.md` differ on a definition, a test, a clock or an
+admission table, the draft governs. The skill lane `xwar.md` describes a separate skill series; the
+owner's answers of 2026-10-01 superseded that framing, and its formulas and clauses stand only as the
+draft carries them.
+
+---
+
+#### 1. The answer to the owner
+
+**One house WAR.** Your 2026-10-01 answers make both asks one series: **eWAR v3**, FanGraphs'
+published WAR per season with our own parts swapped in where each part earns it. It is a column
+labelled "eWAR v3", never plain "eWAR", beside the WAR the site shows (eWAR v2, your EPOCH-Q4 answer),
+and it trains and prices nothing. It exists whatever the tests say: each part enters only on a clear
+win under its own pre-registered clause, a part that does not win leaves FanGraphs' own number in
+place, and if no part wins the column equals FanGraphs' WAR and its label says so.
+
+**The six candidate parts.**
+
+| # | Part | What it replaces in FanGraphs' WAR | Kind | Label on the site |
+|---|---|---|---|---|
+| 1 | eBR steals and extra bases | BsR | outcome | "eBR steals and extra bases" |
+| 2 | eBR double plays | nothing since 2016 (an added part) | outcome | "eBR double plays" |
+| 3 | our positional ladder | FanGraphs' positional adjustment | convention, forward-tested | "position (our ladder)" |
+| 4 | batting at HEM+'s shrunk event rates, or at xHEM+'s Savant xwOBA (two arms) | batting runs | shrunk skill | "eWAR skill: batting" |
+| 5 | pitching at SEM+'s and REM+'s shrunk K, BB, HBP and HR rates | pitching runs | shrunk skill | "eWAR skill: pitching" |
+| 6 | fielding at DEM+'s shrunk fielding runs | fielding runs | shrunk skill | "eWAR skill: fielding" |
+
+Plus BEM+, a 100-scale baserunning index tested in the same look as eBR and never a part of eWAR v3.
+
+**Can we build eBR? Yes, for MLB 2018, 2019 and 2021 to 2026, from play-by-play already on disk
+(19,437 games).** Every field a baserunning value needs is on every play: the runner's id and the
+reason he moved on every entry, the batted ball's trajectory on every ball in play, its location on
+99.6 to 99.7 percent and its coordinates on 94 to 100 percent, and the fielders. Keyed on MLB's
+movement reason, the record reproduces official stolen bases and caught stealing for every player in
+every completed season, and double plays for 97.4 to 100 percent of players. 2011 to 2017 and 2020
+are one fetch away (about 5 hours); that is your call (EBR-Q4).
+
+**What eBR is.** Runs above average on the bases in one season, in three parts one to one with
+FanGraphs' names: SB runs (wSB's counterpart), XB runs (BsR minus wSB, which since 2016 is Statcast's
+extra-base runs) and DP runs (no counterpart in FanGraphs' served BsR since 2016). Values come from a
+run-expectancy table per season, shrunk toward a frozen pooled table; each part sums to zero across
+the league every season; park and arm are measured beside the number, not in it. eBR is descriptive.
+
+**What a skill part is.** "A cumulative version of HEM+" cannot be summed from the index (HEM+ is a
+ratio with a display gain, SEM+ and REM+ are inverted FIP ratios, DEM+ is a z-score). What
+accumulates is the shrunk counts beneath each index, so each skill part is a runs delta computed
+through FanGraphs' own formulas (the skill arm minus the actual arm), re-centred to zero every season.
+Will's defensive data is not in the repository, so the fielding part shrinks FanGraphs' fielding runs
+by DEM+'s constants; if his data ever arrives it is a measurement, a new outcome part.
+
+**How each part is checked, and why two kinds of test.** The outcome parts (1, 2) record what
+happened, and baserunning has no next-season target independent of a construct, so they keep the eBR
+test: does eBR repeat from one season to the next more than FanGraphs' BsR on the same runners (Leg
+E), with a double-play contrast against Baseball-Reference's double-play runs, a team-runs guard, a
+permuted control and a guard on runners who changed clubs. The skill parts (4, 5, 6) are shrunk
+estimates, which are forecasts by construction; shrinking raises season-to-season persistence by
+itself, so persistence would reward the shrink and test nothing. They keep the skill test: does fWAR
+with the part swapped in rank the next season's published fWAR better than fWAR itself does, per
+part, against a uniformly shrunk fWAR and a permuted twin, with pitchers also required to hold up
+across eras. Our ladder (3) is a convention and takes the forward test too, with a disclosed lean:
+the next season's fWAR carries FanGraphs' own ladder.
+
+**The honest prior is a tie almost everywhere.** eBR's steals and extra bases most likely tie BsR
+(they count the same events); its double plays most likely tie Baseball-Reference's. HEM+ ties raw
+wOBA, DEM+ ties its raw rate, REM+'s edge over FIP does not survive the clustered convention, and
+SEM+ is the one index that clearly beats its parent. xHEM+ (Savant xwOBA) beats actual wOBA on
+next-season wOBA for hitters with 200 or more PA, so the xHEM+ batting arm is the likeliest skill
+winner, with starters' pitching next. Our ladder most likely loses its forward test. So the likely
+eWAR v3 is fWAR with zero to two parts swapped in.
+
+**When.** The registration (docs only) lands from 2026-10-04 in the gap before the epoch's step A,
+or first after step Z. The eBR core and the skill builds land after step Z. The outcome look runs on
+or after 2026-11-17; the skill look on or after 2026-11-17 and only after the 2026-11-16 HEM+ versus
+xwOBA re-gate's result exists (your SWAR-Q3 answer; the queue task HEM_XWOBA_REGATE_RUN runs it, and
+the skill look requires it); never on the same day unless you say so
+(EWV3-Q3). eBR ships first as its own stat (the Baserunning section and a player-card section). eWAR
+v3 is assembled after both looks and the skill holdout.
+
+**What it can and cannot claim.** It can say what each part is, that eWAR v3 is FanGraphs' WAR with
+named parts swapped in, and, per part, the one sentence its test licenses. It cannot say, under any
+outcome: that eBR or any part is more accurate than BsR, FanGraphs or Baseball-Reference; that eWAR
+v3 is more accurate than fWAR or eWAR v2; that any part improves eFV, the projections or any priced
+number (the epoch's clause (l)); anything causal about speed.
+
+---
+
+#### 2. What eWAR does with baserunning today, and what that rules out
+
+- **eWAR v2 has no baserunning model.** Its baserunning and double plays are Baseball-Reference's
+  `runs_br` and `runs_dp`, carried unchanged inside bWAR (`ewar.py@64bf1bb3:78-87`, `:829-832`,
+  `:914-922`). Position-player eWAR equals bWAR: 0 of 21,454 batting blocks differ in the committed
+  artifact. The stored `rr`/`rd` fields have no served reader; their one live use is the eval's offense
+  null control.
+- **The only house baserunning code** is in the unserved eWAR v3 replica (`fwar_frame.py`): wSB is
+  built and reproduces the feed; the rest is consumed as "baseRunning minus wSb" under the label "UBR +
+  wGDP", which is literally true only through 2015.
+- **The fWAR epoch** (registered, not started): step A snapshots `data/ewar.json` as E0's evidence;
+  note 2 requires eWAR v2 to stay reconstructible from `career_war` plus `data/ewar.json`; part 6 bars
+  "any W1.3 departure of the eWAR v3 replica" from riding; clause (k) puts those departures at Z4,
+  display only, label-eligible at the 2027 epoch (`docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md`
+  `:190-197`, `:479-480`, `:623-624`, `:680`, `:703`). Step B (`build_ewar.py`) is skipped, but gate
+  part 7 row B's "eWAR v2 retires to a frozen comparison provider" is NOT taken: under the owner's
+  EPOCH-Q4 answer and ruling EPOCH-Q4-IMPL (R1a), step D + U flips `DEFAULT_PROVIDER` and the
+  fingerprint's `label=` term to fWAR for the TRAINING label only, every display reader reads
+  `provider="ewar_v2"` explicitly, `bullpen_export.served_war_basis` keeps returning `ewar_v2`, the
+  `ewar` registry row is not demoted, eWAR v2's nightly (`run_monthly.py` d8b and 3-pre) keeps
+  running, and FanGraphs' WAR becomes a reference column after step Z (EPOCH_FWAR_REFERENCE_COLUMN)
+  (`dq/specs/epoch/EPOCH_RUN.md`, pre-start rulings and step D + U).
+- **Consequences.** A change to eWAR v2 before step A silently redefines E0 and forces a full basis
+  cascade about a week before the fWAR cascade; between A and Z nothing may move; after Z eWAR v2 is
+  the displayed WAR AND E0, so changing it in place would move every displayed WAR and break note 2.
+  So eBR and the skill parts go into a NEW provider, `ewar_v3`, after the step Z entry, and
+  `data/ewar.json`, `ewar.py`, `tools/build_ewar.py` and the provider `ewar_v2` are never touched.
+- **The skill side today.** eWAR v2's only house departure is its FIP pitching swap on the
+  Baseball-Reference frame; no shrunk skill read (HEM+, SEM+, REM+, DEM+) and no house positional
+  ladder enters any served WAR. The EM+ indexes serve as their own boards, and DEM+'s registry row
+  calls its verdict "inadmissible for any eWAR fielding weight", so candidate part 6 is gated only
+  by its own clause here.
+
+---
+
+#### 3. The parts
+
+##### 3.1 eBR (candidate parts 1 and 2)
+
+The registration draft's part 2 is the definition; this is the shape.
+
+- **Source:** a runner record built from `.cache/win_prob` payloads into `.cache/pbp_runners/`
+  (never into the corpus), one row per runner entry, with the state at every `playIndex` inside a plate
+  appearance. Games come only from MLB's regular-season schedule list, because a payload carries no
+  game type. `pbp_runners` joins `tools/prune_cache.EXCLUDED`.
+- **Run basis:** per-season RE24 on a fit set (innings 1 to 8 and the top of the 9th, complete
+  half-innings, no automatic runner), shrunk toward a pool frozen with the version, with the shrink
+  constant fixed by the method of moments (measured at K = 1,714 plays). Monotone tables, sha256
+  stamped. Not win expectancy (WAR is runs and context neutral) and not linear weights (steal value
+  depends on the base-out state: the break-even for stealing second runs from 0.66 to 0.75 by state
+  where FanGraphs' flat weights imply 0.669 everywhere).
+- **Five parts** (eSB, ePK, eXB advances, eXB outs on the bases, eGDP), shown as SB, XB and DP runs.
+  Left out and counted: wild pitches, passed balls and balks (the battery's), defensive indifference,
+  advances on errors (the fielder's), forced runners on ground balls, no-choice chances.
+- **Per season, then summed;** completed seasons freeze on November 1 with a digest; a new version is
+  a new frozen series and a new registration.
+- **Minor leagues:** the same record is copied for 2023 to 2026 from `.cache/game_feeds` before the
+  monthly run starts deleting those feeds on 2027-07-22. A level-relative eBR is designed
+  (`ebr_metric.md` 8.2) and built only on EBR-Q6 (b). It is never an eFV input in this program, and
+  never summarised by FV grade.
+
+##### 3.2 The skill and position parts (candidate parts 3 to 6)
+
+The registration draft's part 9.4 is the definition, carried from `xwar.md` section 2 with the base
+replaced by the frozen per-season fWAR vintage (the former skill plan's row X1 and R1: never the
+replica's own total; no eBR term inside a skill delta). The shape:
+
+- **Batting, two arms (candidate part 4; SWAR-Q3 (c)).** The HEM+ arm shrinks each hitter's uBB, HBP,
+  1B, 2B, 3B and HR rates toward the pool with HEM+'s own constants (120, 240, 290, 1000, 1600, 170),
+  prices skill and actual wOBA on the season's solved weights, and takes the wRAA difference. The
+  xHEM+ arm uses Savant xwOBA, re-levelled by the served xHEM+ column's own normalizer, for
+  hitter-seasons with a Savant value and 200 or more PA (the subset the xHEM+ gate speaks for), and
+  the HEM+ arm's value elsewhere. Pitcher-batters are not shrunk.
+- **Pitching (candidate part 5).** K, BB, HBP and HR per batter faced shrunk with REM+'s and SEM+'s
+  constants (70, 170, 170, 400) toward the start-share blend of the SEM+ and REM+ pool means, so a
+  starter shrinks on SEM+'s pool and a reliever on REM+'s; the FIP difference runs through the
+  replica's feed-only pitcher chain twice (actual and shrunk), re-pinned so pitchers' deltas sum to
+  zero. Leverage stays the frame's (the published gmLI in both arms, L-A); the unlevered version
+  (L-B) is a disclosure. Position players who pitch carry no delta. The home-run term is its own
+  arm (orchestrator ruling X8 of the former skill plan): it is decided first in the skill look by
+  the transport clause that closed R2e.2's single global HR-shrink k for eWAR on 2026-09-09, and on a
+  failure it reverts to fWAR's home-run term.
+- **Fielding (candidate part 6).** FanGraphs' fielding plus framing runs from `saber_feed`, shrunk by
+  DEM+'s innings constants (C 417 to 1B 3116): the delta is -(1 - rel) x (Fld + Frm). 2016 on. This
+  is the 2026-09-09 plan's W1.3 arm 6 by construction.
+- **Position (candidate part 3; SWAR-Q0 (b)).** Our ladder refit per season on the six-season window
+  ending at that season (`positional_fit.fit_ladder`), with the ladder's own DH exposure, against
+  FanGraphs' published positional runs. The served-ladder variant is a sensitivity only.
+- **Every delta** is computed through the same function on both arms so the park term, the framing
+  charge, IFFB, replacement and the league pool cancel; every constant is taken by reference from
+  the EM+ modules; every delta is re-centred to zero per season and side. Eight invariants become
+  `test_swar.py` (the draft's part 9.4). Files and ids stay `swar` (`swar.py`, `tools/build_swar.py`,
+  `tools/swar_lab.py`), by SWAR-Q2 (c); the displayed label of parts 4 to 6 is "eWAR skill".
+- **Seasons.** 2016 to the last complete season; the live season nightly once eWAR v3 serves.
+
+---
+
+#### 4. The validation
+
+##### 4.1 The outcome look (candidate parts 1 and 2, and BEM+)
+
+| Layer | What | Decides |
+|---|---|---|
+| I1 to I9 | official SB and CS exact (league and every player), GIDP within 0.5 percent and exact for 97 percent of players, complete seasons, parts sum to zero, monotone RE24, parts sum to eBR, 99 percent coverage, byte-identical rebuilds, isolation from fitted consumers; one re-fetch allowed for an official scoring change | whether a season serves |
+| Bug bands | agreement with BsR, wSB, Savant XB, B-Ref br + dp and dp, sprint speed, at PA 300+ and 502+ | nothing; a miss means "find the bug" |
+| Leg E | mean over the six pairs of the year-to-year Spearman of (SB + XB runs) per PA, against BsR per PA from the frozen fWAR vintage; d = eBR minus BsR; player-clustered bootstrap (2,000, seed 20260807), d plus or minus 1.645 sd; floors printed first; `EFV_GATE_STANDARD.md` part 8 dispositions at 0.02 | the steal and extra-base part's admission (with EBR-Q1) and the copy sentence |
+| Guards | Leg T (offense with eBR swapped in tracks team runs within 0.005 of BsR's; its r values stay in the gate doc's part 12 and the preview, never in a served file), a permuted twin that must come back RESOLVED_LOSS (else VOID), and on SHIP a positive d on the four pairs no sealed file can form (frame U) AND on the runners who changed clubs (the one check that can see a repeating park or team bias) | every admission |
+| DP leg | E-DP: eGDP per PA against Baseball-Reference `runs_dp` per PA, Leg E's statistic, bootstrap and part 8 dispositions at 0.02, with its own twin and SHIP guards; DP-1 (eGDP repeats, lower bound above 0) is a plumbing floor, expected to pass since public DP series repeat at 0.43 to 0.58; DP-2 (team runs keep their fit) a guard; the feed's `wGdp` reported beside | the double-play part's admission (with EBR-Q2 for scope and EBR-Q1's rule for the bar) |
+| Reliability | split-half per part and season | a NOISE flag that forbids trait words |
+| Reported only | the balanced forecast, the 2 x 2 cross-forecasts, next season's B-Ref and Savant values, the club-changers subset's per-pair figures, per-part persistence, the park and arm arms | nothing |
+| BEM+ (on EBR-Q3 (a)) | the Baserunning plan's gate X-B1 in the same run | whether BEM+ serves |
+
+**Power, stated before the look.** On the public analogue of the frame, BsR repeats at 0.6488 and
+Baseball-Reference's `runs_br` at 0.4794; the difference has a bootstrap sd of 0.0223 (half-width
+0.0367). So RULED OUT is not expected to be reachable, SHIP needs d above about +0.057, and
+RESOLVED_LOSS falls below about -0.057. A second play-by-play construct like Baseball-Reference's would
+be RESOLVED_LOSS. These are projections from a pair whose same-season r is 0.77; a candidate more
+correlated with BsR has a smaller sd of d, so the floors the look prints first decide. The E-DP
+contrast's power was not measured; eGDP and `runs_dp` count the same events, so a tie is its prior.
+
+**Why persistence decides alone.** eWAR v2's gate 2 (`ewar.py:1387-1445`) runs persistence AND a
+forecast leg, and calls the forecast the one that matters. Baserunning has no outcome independent of
+a construct: the only next-season targets are the rival series, and predicting next season's BsR
+favours BsR's own construct (`runs_br` predicts it at 0.5297 against BsR's own 0.6488;
+`integration.md` 1.8). So each series' own persistence decides, and the club-changers guard covers
+its blind spot, a bias that repeats.
+
+**What each outcome licenses.**
+
+| EBR-Q1 answer (recorded: (a)) | Steal and extra-base part enters eWAR v3 when |
+|---|---|
+| (a) only if it repeats clearly more, recommended | SHIP, Leg T, the twin RESOLVED_LOSS, d positive on frame U and on the club changers |
+| (b) unless it repeats clearly less | not RESOLVED_LOSS, Leg T, the twin RESOLVED_LOSS |
+| (c) once its data checks pass | I1 to I9 |
+| (d) never | never |
+
+The double-play part enters on EBR-Q2 (a) when the E-DP disposition meets the same row (d_DP in place
+of d), DP-1 and DP-2 pass and the E-DP twin is RESOLVED_LOSS.
+
+| Leg E disposition | The one comparative sentence copy may carry |
+|---|---|
+| SHIP | "repeats more from one season to the next than FanGraphs' BsR on the same runners" |
+| RULED OUT | "repeats about as much ..." (not expected to be reachable at this power) |
+| UNDECIDED | none |
+| RESOLVED_LOSS | "repeats less ..." |
+
+Registry: `pbp_runner_moves`, `ebr` and `team_ebr` are `provisional` / `measurement_only` whatever the
+look says (descriptive rows; the `fwar_replica` and `pbp_corpus_base_state` precedents; Part 8's 8.A
+rule), with the dispositions in their notes; of eBR's rows only `bem_plus` can read `validated` (the
+`swar_*` rows of the skill parts follow the draft's part 6.4: `validated` for an admitted part). Rows land in the flip
+commit, never before. The served `data/ebr_eval.json` carries the dispositions, guard flags, floors
+and identity receipts, never Leg T's or DP-2's r against team runs, which stay in the gate doc's part
+12 and `.cache/ebr/preview/` (Part 8's 8.A); EBR_2F's `test_ebr_served_eval.py` asserts it.
+
+##### 4.2 The skill look (candidate parts 3 to 6)
+
+| Item | Registered value (draft part 9.5) |
+|---|---|
+| Question, per part | does fWAR(Y) with the part's re-centred delta swapped in rank published fWAR(Y+1) better than fWAR(Y) does? |
+| Frame | predictor seasons 2021 to 2024, 2020 excluded on both sides; hitters 200 PA and pitchers 50 IP in both seasons; target published fWAR(Y+1) per PA or IP from the frozen vintage |
+| Cells and Holm families | one family per part: position {H-rate, H-cum}; batting {HEM+ H-rate, HEM+ H-cum, xHEM+ H-rate, xHEM+ H-cum}; pitching {P-rate, P-cum}; fielding {H-rate, H-cum}; no correction across parts |
+| Statistic | Spearman gap against B0 = fWAR(Y); convention v2 primary, v1 must agree in sign; B 2,000, seed the registration date |
+| Controls | B1 (uniformly shrunk fWAR, one k per side fitted on 2016 to 2018 before the look); the twin (the part's delta permuted within season, side and exposure decile); era transport for pitching (positive in 2016 to 2018 and 2021 to 2024); MDE95 beside every gap; the HR-arm clause first |
+| Dispositions (orchestrator ruling X1 of the former skill plan) | "Each cell takes the first disposition that holds in the order WIN, SMALL WIN, LOSS, EQUIVALENT, UNRESOLVED, so exactly one applies." WIN = Holm rejects, lo95 > 0 and the point gap at least +0.02; WIN (components) when also lo95 > 0 against B1 (not for the ladder), the twin fails and, for pitching, transport holds; SMALL WIN (Holm and lo95 > 0, point under +0.02) counts as EQUIVALENT; LOSS = hi95 < 0; EQUIVALENT = the 90 percent interval inside plus or minus 0.02; the EFV_GATE_STANDARD part 8 SHIP flag printed beside each WIN with no weight |
+| Admission | the part's rate cell WIN (components) with its total cell not LOSS (EWV3-Q1 default); for batting, each arm on its own cells, and both qualifying goes to EWV3-Q2's rule (HEM+ unless xHEM+ beats it with lo95 above 0) |
+| Copy | per part, WIN (components): "ranked the next season's fWAR better than fWAR itself did, and better than a uniformly shrunk fWAR"; WIN (regression only): the first clause; SMALL WIN and EQUIVALENT: "about as well as"; LOSS: "less well than"; UNRESOLVED: none |
+| Descriptive legs | delta sizes, agreement, team-wins legs (only inside the look and only in part 12.2: the eBR plan's Leg T rule, the former skill plan's X25), self-persistence, exposure-band bias, starter and reliever subsets, the L-B disclosure, split-half calibration, the coverage census |
+| Holdout | the 2025 to 2026 pairs, once, a later day than the look, after the November re-gates record DEM+'s holdout; reported beside, never merged, changes no admission |
+| Record | the TRACKED `docs/ebr-2026-09-30/swar_eval.json`, committed with part 12.2 (the former skill plan's X4 and X27, `HEM_RIV_REGATE_GATE.md` R1-12); the holdout appends; EBR_3's flip copies it to `data/swar_eval.json` |
+
+**Read to write this** (the former skill plan's ruling X3; draft part 10). The component priors were
+read on identical or overlapping pairs (DEM+ on exactly the hitter frame), so the skill look is not a
+blind read on them: DEM+ 1,255 pairs, gap +0.0067 (-0.0039 to +0.0172); SEM+ 592 pairs, +0.0342
+(+0.0177 to +0.0508) on next-season RA9; REM+ 878 pairs, lo95 +0.0013 under v1 and -0.0043 under v2;
+HEM+ 3,372 pairs, a tie (lo95 -0.0096); xHEM+ 1,871 pairs, 0.4619 against 0.4108; HEM+ against xwOBA
+0.4084 against 0.4456 (a prior, not a gate). The twin and B1 carry the blind weight.
+
+**Registered expectations.** HEM+ arm EQUIVALENT, SMALL WIN or UNRESOLVED; xHEM+ arm positive; pitching
+positive and larger on starter-heavy pairs; fielding EQUIVALENT or UNRESOLVED; position LOSS or
+UNRESOLVED (its target carries FanGraphs' own ladder); every gap against B1 smaller than against B0;
+every twin fails; skill parts below fWAR on same-season team wins; short samples flattered.
+
+##### 4.3 Why the two kinds of part carry different tests
+
+- **Outcome parts are records.** eBR's parts count what happened on the bases in one season. A
+  record has no construct-free next-season target: the only next-season baserunning numbers are the
+  rival series, and forecasting next season's BsR favours BsR's own construct (`runs_br` predicts it
+  at 0.5297 against BsR's own 0.6488). So each series' own persistence on the same runners decides,
+  and the club-changers guard covers the one bias persistence cannot see.
+- **Skill parts are forecasts.** A shrunk rate is an estimate of next season by construction, and its
+  only honest claim is forward. Persistence would mislead: shrinking pulls every player toward the
+  pool mean and raises year-to-year agreement by itself (`xwar.md` 4.2 item 5). The forward ranking
+  of next season's published fWAR is an outcome both arms are scored on alike (the R3b lesson: the
+  target stays fWAR(Y+1), never the part's own next-season value).
+- **The ladder is a convention.** It is neither an event record nor a shrink, and it has no
+  construct-free target. The owner's ruling puts it on the forward test; that test leans toward
+  FanGraphs' ladder because the target carries it, which the registration discloses as the reason
+  its honest prior is a LOSS or UNRESOLVED.
+
+---
+
+#### 5. eWAR v3: the assembly
+
+eWAR v2 stays the displayed WAR (EPOCH-Q4). eWAR v3 is a column beside it, built after both looks
+and the skill holdout by EBR_3_EWAR_V3, the ASSEMBLER of every admitted part. Registration parts 9.1,
+9.2, 9.4 and 9.7 are the text.
+
+- **EBR-Q0 is answered (a):** eWAR v3 on FanGraphs' frame. The Baseball-Reference-frame provider
+  (`ewar_v2_ebr`, draft part 9.3) is not requested, its task EBR_3B_BREF_FRAME_PROVIDER is skipped,
+  and no task requires it.
+- **Construction** (draft 9.7). For every hitting-group row of the frozen fWAR vintage: g = the sum of
+  the admitted parts' departures (eBR steals and extra bases against wSB and BsR minus wSB; eBR double
+  plays against 0 from 2016; the ladder against FanGraphs' positional; the chosen batting arm; the
+  fielding shrink), d = g minus a per-PA share of the season's total g, eWAR v3 = fWAR + d / RPW. For
+  every pitcher: eWAR v3 = fWAR + the pitching part's re-pinned delta if admitted. For 2011 to 2015
+  (only if EBR-Q4 (b) backfills them) the eBR counterparts are UBR and wGDP. Seasons and parts not
+  covered or not admitted carry fWAR unchanged, marked `fg`. Identities, tested: departures sum to
+  zero each season and side, so the totals equal fWAR's; eWAR v3 minus fWAR equals the named admitted
+  departures alone.
+- **Exists whatever the looks say.** When nothing is admitted, eWAR v3 equals fWAR on every row, its
+  meta says so, and the column reads "eWAR v3 (equals FanGraphs WAR: no part admitted)". A VOID look
+  admits nothing from its own parts and blocks nothing else.
+- **Provider** `ewar_v3`: servable, never the default, its own artifact `data/ewar_v3.json` and eval
+  `data/ewar_v3_eval.json`, refused by `war_source` on the `arb_spine` door. The five places that read
+  "not bwar" as "the eWAR v2 artifact" (`war_source.py@be53132d:549-551` and `:603-605`,
+  `storage.py@be53132d:5386-5390`, `bullpen_export.py@be53132d:1417-1422`,
+  `arb_dataset.py@be53132d:153-155`) are the epoch's D + U to settle under ruling EPOCH-Q4-IMPL: the
+  fingerprint's `label=` term reads `fwar@<vintage id>`, `served_war_basis` keeps returning
+  `ewar_v2`, the two frame-dispatch sites route `ewar_v2` and `fwar` explicitly, and the arbitration
+  spine reads its provider through `provider=`. EBR_3 CHECKS all five and stops if any is not so; it
+  edits only `war_source`'s two dispatch sites and its refusal, never `arb_dataset.py`, `storage.py`'s
+  fingerprint, `bullpen_export.served_war_basis` or any `fa_*` or `proj_*` code.
+- **What moves when it serves** (EBR-Q5 and SWAR-Q4, both with defaults): a column "eWAR v3" on MLB
+  Stats' Overall board (the pinned column budget of `test_mlbstats_fit.py` holds) and a reference
+  field on the player card's season lines, rendered like the FanGraphs WAR reference that
+  EPOCH_FWAR_REFERENCE_COLUMN adds, with each admitted part named there (eBR parts by name, "position
+  (our ladder)", and "eWAR skill: batting", "pitching" or "fielding"). Glossary entries "eWAR v3" and
+  "eWAR skill"; registry rows `ewar_v3`, `swar_bat`, `swar_pit`, `swar_fld` and `swar_pos`; renders
+  at 390, 768, 1024, 1280 and 1440 in both themes. **What never moves:** the displayed WAR (eWAR v2)
+  on every board and card, the Baseball-Reference and FanGraphs references, `served_war_basis`, the
+  Overall team block and therefore Franchise, F-SCORE, the Teams tab, trade values, projections, FA,
+  arbitration, eFV, betting, the board fingerprint, `data/ewar.json`, and the `ewar` glossary entry
+  and registry row. The flip asserts these byte-identical with its flag on and off.
+- **Scale.** Not measured (no part's value exists). References: Baseball-Reference's `runs_br +
+  runs_dp` differs from BsR by an sd of 1.5 to 1.9 runs a regular's season; the reliability arithmetic
+  of `xwar.md` 2.8 (a full-season first baseman keeps 29 percent of his fielding runs; a 20-inning
+  reliever's home-run rate is 82 percent pool mean). EBR_3 publishes the real figures per part and
+  splits eWAR v3 minus eWAR v2 into its frame part (fWAR minus eWAR v2) and its parts.
+- **Cadence.** Daily step 9e-pre0f (after 9e-pre0e, eBR, and before 9e-pre0c, the Overall board)
+  rebuilds the live season's skill deltas and then eWAR v3, after eWAR v2's own nightly; monthly step
+  6b4m2. Completed seasons freeze on November 1 with digests; the box keeps a carried copy because it
+  restores committed data each night. No separate skill step exists.
+- **Name.** `ewar_v3` is the plan-of-record name of the fWAR-frame series (the 2026-09-09 and
+  2026-09-11 plans, `fwar_frame.py`); the SDR merge that once used the words (`ewar_merged`) never
+  landed and re-registers as a fielding departure on this series if its data ever arrives.
+- **Labels.** Never a training label in this program. Only a Leg E SHIP with its guards (candidate part
+  1) is a Z4 passer eligible for the 2027 label epoch's own registration; the other parts never are
+  under this registration.
+
+---
+
+#### 6. The clock
+
+Dates follow `PART8_ADDENDUM.md` 8.B and the owner's EPOCH-Q1 answer (step A about 10-07, step Z
+about 10-12).
+
+| When | eWAR v3 work |
+|---|---|
+| now to Sat 2026-10-03 | ask batch 1 of the remaining questions (EWV3-Q1 to EWV3-Q3, EBR-Q4); nothing of this plan writes the repo |
+| Sun 10-04 to step A (gap: docs and registrations only) | EBR_1 (docs only), the eight answers it needs being recorded |
+| step A to the step Z entry | nothing of this plan writes the repo |
+| after the step Z entry (queue `not_before` 2026-10-11; `requires` EPOCH_RUN) | EBR_1 if not landed; EBR_2A eBR core, dark; EBR_Q4B only on EBR-Q4 (b); EWV3_SKILL_BUILD_CORE and EWV3_SKILL_BUILD_LAB after Z1_RUN and queue 6's DISPLAY tasks |
+| Sun 11-01 | 2026 freezes (eWAR v2's nightly, which keeps running, and eBR's record) |
+| Mon 11-16 | NOV15_REGATES: DEM+'s holdout and the HEM+ re-baseline registration; the HEM+ versus xwOBA re-gate's run follows in its own session (HEM_XWOBA_REGATE_RUN, not before 11-16, requires NOV15_REGATES) |
+| on or after Tue 11-17 | EBR_LOOK (the outcome look) and EWV3_SKILL_LOOK (the skill look, only after HEM_XWOBA_REGATE_RUN has committed the HEM+ versus xwOBA re-gate's result), each on its own day unless EWV3-Q3 (b); never on 11-20, 12-01 or the Z1 day |
+| a later day than the skill look | EWV3_SKILL_HOLDOUT |
+| after p8_metrics (8.E order; Q8_15 in `requires`) | EBR_2 Baserunning section build, dark |
+| after the outcome look and EBR_2 | EBR_2F flip: the Baserunning section, the card section, `data/ebr*.json`, eBR's registry rows |
+| after both looks, the holdout, EPOCH_FWAR_REFERENCE_COLUMN, EBR-Q5 and SWAR-Q4 (or their defaults) | EBR_3: eWAR v3 assembled and flipped, whatever was admitted |
+| before 2027-07-01 | the minor-league runner record exists (built by EBR_2A; deletions start 2027-07-22) |
+| 2027 season close | the next label epoch; only a Leg E SHIP passer is eligible, through its own registration |
+| after the 2027 regular season | the next unseen frames (the 2026-2027 pair) for any re-test |
+
+The registered frames do not expire: a look that slips past Opening Day 2027 still runs on its frame.
+
+---
+
+#### 7. The queue (`QUEUE_TASKS.json`, applied through `QUEUE_EDITS.json`)
+
+Every task is kind `EV`, preamble `P8`, model `opus`. No task lists a task that might be skipped in
+`requires` (`dq/qctl.py` counts only `done`); EBR_Q4B and EBR_Q6B are conditional and nothing
+requires them.
+
+| # | Id | not_before | requires | What it does | Served change |
+|---|---|---|---|---|---|
+| 1 | EBR_1_REGISTRATION ('eWAR v3 gate: eBR and the skill parts') | 2026-10-04 | none (its spec STOPs 'BLOCKER: answer <id>' on any of EBR-Q0 to EBR-Q3 and SWAR-Q0 to SWAR-Q3 not recorded) | commits `EBR_GATE.md` and its pin test alone; the seven open questions take recorded defaults | none |
+| 2 | EBR_2A_CORE_DARK | 2026-10-11 | EPOCH_RUN, EBR_1_REGISTRATION | runner record (MLB backfill, MiLB retention copy), `savant_running.py`, `ebr.py`, `tools/build_ebr.py` (previews only), `tools/ebr_gate.py` (refusing), tests | none |
+| 3 | EBR_Q4B_HISTORY_BACKFILL | 2026-10-11 | EPOCH_RUN, EBR_2A_CORE_DARK | only on EBR-Q4 (b): fetch 2011 to 2017 and 2020 into `.cache/win_prob_hist/`, extend the record | none |
+| 4 | EWV3_SKILL_BUILD_CORE | 2026-10-11 | EBR_1_REGISTRATION, EPOCH_RUN, EPOCH_E3, EPOCH_D9_FREEZE, Z1_RUN | `swar.py` (the four deltas, both batting arms, both home-run variants), `tools/build_swar.py` (preview only), the replica's `count_map` hook, `test_swar.py`, `test_swar_unserved.py` | none |
+| 5 | EWV3_SKILL_BUILD_LAB | 2026-10-11 | EWV3_SKILL_BUILD_CORE | `tools/swar_lab.py` (per-part Holm families, dispositions, admission), `test_swar_lab_dispositions.py`, B1's constants and fit log | none |
+| 6 | EBR_LOOK | 2026-11-17 | EPOCH_RUN, EBR_1_REGISTRATION, EBR_2A_CORE_DARK | the outcome look under the crash protocol; part 12.1 committed alone | none |
+| 7 | EWV3_SKILL_LOOK | 2026-11-17 | EWV3_SKILL_BUILD_LAB, Z1_RUN, EPOCH_RUN, NOV15_REGATES, HEM_XWOBA_REGATE_RUN | the skill look under the crash protocol, only after the HEM+ versus xwOBA re-gate's result exists (backstop STOP 'BLOCKER: task HEM_XWOBA_REGATE_RUN' if that task is done but no result is committed); part 12.2 and the tracked record committed alone | none |
+| 8 | EWV3_SKILL_HOLDOUT | 2026-11-18 | EWV3_SKILL_LOOK, NOV15_REGATES | the 2025 to 2026 holdout, once, a later day than the look; part 12.3 (a one-line not-run entry if the skill look is VOID, so the assembler is never held) | none |
+| 9 | EBR_2_BUILD_DARK | 2026-10-11 | EPOCH_RUN, EBR_2A_CORE_DARK, M17_MLBSTATS_WINDOWS_3YR_SWSTR, M24_SORTBAR_A11Y, M26_TIER_CUTS_MLBSTATS_VIEWS, M27_HEM_PARENT_TRADE_CBT, DISPLAY_mlbstats, DISPLAY_projections, Q8_15_LEAGUE_TEAMS_DRAWER_FLIP | the Baserunning section and the card section, dark; run_monthly steps 9e-pre0e and 6b4m | none |
+| 10 | EBR_2F_FLIP | 2026-11-17 | EPOCH_RUN, EBR_LOOK, EBR_2_BUILD_DARK | one class-2 flip commit: flags, `data/ebr*.json` (the eval without runs r), eBR's rows, glossary | new tab, card section, files |
+| 11 | EBR_3_EWAR_V3 | 2026-11-18 | EPOCH_RUN, EBR_LOOK, EWV3_SKILL_BUILD_CORE, EWV3_SKILL_BUILD_LAB, EWV3_SKILL_LOOK, EWV3_SKILL_HOLDOUT, EPOCH_FWAR_REFERENCE_COLUMN, DISPLAY_projections, DISPLAY_mlbstats | the assembler: eWAR v3 from every admitted part (or equal to fWAR), behind `EWAR_V3_LIVE`, then a class-2 flip with the Overall column, the card reference, the glossary entries "eWAR v3" and "eWAR skill", the registry rows and `data/swar_eval.json`; EBR_2F's commit is a precondition, not a `requires`, so an eBR held on the owner's EBR-VOID answer cannot block it | Overall column; card reference |
+| 12 | EBR_Q6B_MILB_CARDS | 2026-11-17 | EPOCH_RUN, EBR_2F_FLIP, DISPLAY_prospx, Q9_15_EFV_DISPLAY_FLIP | only on EBR-Q6 (b): level-relative eBR on PROSPX cards | prospect card rows |
+
+**Changes against the live queue** (`QUEUE_EDITS.json`): delete SWAR_REGISTRATION, SWAR_BUILD_CORE,
+SWAR_BUILD_LAB, SWAR_LOOK, SWAR_HOLDOUT and SWAR_INTEGRATION; update the eight kept eBR ids (every spec
+re-cut; EBR_2F_FLIP, EBR_3_EWAR_V3 and EBR_Q6B_MILB_CARDS also take later `not_before` dates so none is
+earlier than a task it requires, and EBR_3's `requires` changes); add EWV3_SKILL_BUILD_CORE,
+EWV3_SKILL_BUILD_LAB, EWV3_SKILL_LOOK and EWV3_SKILL_HOLDOUT after DISPLAY_collegesavant (the slot the
+skill build held). EBR_3B_BREF_FRAME_PROVIDER stays skipped; no task requires it. `qctl.py` has no
+delete command: the orchestrator removes the six ids from `queue.json` under the queue lock, or marks
+them skipped with a note; no task requires any of them after the update.
+
+**Positions.** EBR_1 stays on the gap list; EBR_2A in 8.C's "After step Z" items; the skill build and
+lab after queue 6's DISPLAY tasks; EBR_LOOK and EWV3_SKILL_LOOK anywhere (their `not_before` and
+preconditions hold them); EBR_2 after p8_metrics; EBR_2F, EBR_3 and EBR_Q6B after it. Every
+multi-commit task carries a resume rule; the looks forbid any second scoring run.
+
+**Ids cited elsewhere.** 8.E cites EBR_1_REGISTRATION, EBR_2_BUILD_DARK and EBR_3_EWAR_V3 (kept) and
+SWAR_REGISTRATION, SWAR_BUILD_AND_LOOK and SWAR_INTEGRATION (retired: section 10 carries the dated
+amendment for 8.E). The F-SCORE plan's tasks (FS_*) are untouched; their calendar rule ("not the eBR
+look day and not any other registered look's date") already covers the skill look's day.
+
+---
+
+#### 8. Lane conflicts, resolved
+
+| # | Question | Positions | Resolution | Why |
+|---|---|---|---|---|
+| C1 | Where eBR lives in eWAR | internals: owner choice between a new series on eWAR v2's Baseball-Reference frame and eWAR v3 on the fWAR frame; metric (rerun): eWAR v3, its earlier "eWAR v2.1" withdrawn; integration: eWAR v3 | ANSWERED (a) on 2026-10-01 (eWAR v3 on the fWAR frame; EBR_3B skipped); asked as EBR-Q0: (a) eWAR v3 on the fWAR frame, a column, never plain "eWAR", recommended; (b) `ewar_v2_ebr` on v2's frame, a column, never `data/ewar.json`; (c) both | the owner's EPOCH-Q4 answer ("Keep eWAR v2 shown", 2026-09-30 20:52) keeps eWAR v2 the displayed WAR, so "use it for eWAR" now points at a live displayed series and the 2026-09-09 answer alone no longer settles it; the first draft's maintenance argument against a Baseball-Reference-frame copy lapsed, since v2's nightly (B-Ref frames, FIP corpus) runs anyway under ruling EPOCH-Q4-IMPL; (a) is recommended because it is the only option with a registered improvement gate today and the only label path (Z4); v2 is E0 and must stay reconstructible, so (b) is a copy, never an in-place change |
+| C2 | The name | internals: a name that is neither meaning of "eWAR v3"; integration: `ewar_v3` | `ewar_v3`, the collision recorded in the registration | the plans of record, `fwar_frame.py` and `xwar.md` use it; `ewar_merged` never landed |
+| C3 | Census rule | integration (from `baserunning.md` 4.5): SB exact on 97 percent of runners, CS 90, GIDP 97; metric: exact | exact SB and CS (I1, I2), GIDP 97 percent, one re-fetch for a scoring change | keyed on the movement reason the record is exact in every completed season; the 90 percent CS share was an artifact of the event-type key |
+| C4 | Steal key | prototype: `eventType`; metric: `movementReason` | `movementReason` | 17 to 41 false caught stealings a season on the event type |
+| C5 | Run basis | prototype: per season, refuse any cell under 500; metric: per season shrunk toward a frozen pool; integration's test: "equals the house recipe" | shrunk; `ebr.py` re-implements the recipe per season on the fit set, and the test pins that re-implementation (equal to `win_expectancy.run_expectancy` on a pooled fixture that clears its refusal) and the shrink separately | the 500-play refusal (`win_expectancy.py:275-286`) fires in every season |
+| C6 | Advancement scope and expectation | prototype: five classes, class-by-outs means, blocked and error chances dropped; metric: four class families with batted-ball context and backoff, blocked chances kept, error outcomes truncated | the metric's | "our own version of BsR" covers ground-ball advances and outs on the bases; BsR's own non-steal part since 2016 already conditions on the batted ball |
+| C7 | Wild pitches and passed balls | integration (reading the 14:28 metric draft): a W class might enter XB; metric (rerun): excluded | excluded from eBR and eWAR; a minor-league sub-total only | the battery's, not the runner's |
+| C8 | Double-play pricing | prototype: one pooled cost a season; metric: by state | by state | the cost runs from 0.30 to 1.54 runs by state; one cost misprices a loaded, one-out double play by about 2.5 times |
+| C9 | The admission statistic | integration: Leg E, self-persistence, mean of per-pair Spearman, part 8 dispositions at 0.02, 1.645 sd; metric: a balanced forecast decides admission, persistence decides copy, two-sided 95 percent, stacked pairs, plus a frame-U guard and a team-runs leg | ONE deciding statistic, Leg E, with the metric's team-runs leg, the frame-U guard and the club-changers guard (promoted from reported, fix round 1) as guards and its balanced forecast reported, never deciding; mean over pairs; 1.645 sd | eWAR v2's gate 2 runs persistence plus a forecast leg (`ewar.py:1387-1445`); here persistence decides alone because baserunning's only next-season targets are rival constructs, and forecasting BsR favours BsR (integration.md 1.8); the club-changers guard covers persistence's blind spot, a repeating park or team bias; its power was measured on exactly this frame, part 8 is the owner-registered margin, and the 2026-09-09 plan's W1.3 arms read a "player-clustered 95 percent lower bound"; one statistic removes the two-leg multiplicity and the copy-versus-admission split |
+| C10 | Bootstrap | metric: player-clustered and season-stratified; integration: player-clustered | player-clustered for Leg E and the DP leg; BEM+ keeps DEM+'s convention inside its own gate | a player spans several pairs, so season strata and player clusters cannot both hold |
+| C11 | Default admission rule | integration: admitted unless RESOLVED_LOSS (relaxed); metric: only on SHIP (strict) | strict recommended; relaxed and by-decision offered as explicit overrides (EBR-Q1) | it is your 2026-09-09 rule for exactly this case and matches your 2026-09-24 "must beat" standard; eBR serves as a stat under every answer; the question states the cost (a tie is likely) |
+| C12 | The DP leg | integration: persistence against B-Ref `runs_dp`, part 8 dispositions (E-DP); metric: persistence lower bound above 0 plus the team-runs leg | (fix round 1, ruling EB2) integration's E-DP decides under the EBR-Q1 rule; the metric's lower-bound test is kept as DP-1, a plumbing floor that admits nothing; the team-runs leg is DP-2, a guard; `wGdp` reported beside | DP-1 was expected to pass (public DP series repeat at 0.43 to 0.58), so it could not decide anything; E-DP is a real contrast against the nearest published series, and it is the incumbent on the Baseball-Reference frame (EBR-Q0 (b)); whether eWAR counts double plays at all is the owner's call (EBR-Q2), a recorded relaxation of the 2026-09-09 rule |
+| C13 | Eval and rows | metric: `data/baserunning_eval.json` and a `pbp_runner_moves` row; integration: `data/ebr_eval.json`, no runner row; `baserunning.md`: `data/baserunning_eval.json` | `data/ebr_eval.json` plus a `pbp_runner_moves` row; every row lands in the flip commit | the house names an eval `<model_id>_eval.json`; the record is a reconstruction scored against official counts, as `pbp_corpus_base_state` is |
+| C14 | Registry verdict | metric: "validated (descriptive)"; integration: provisional unless validated | `provisional` / `measurement_only` always; dispositions in the notes; of eBR's rows only `bem_plus` can be `validated` (the `swar_*` rows follow the draft's 6.4: `validated` for an admitted part) | descriptive rows, the `fwar_replica` precedent, Part 8's 8.A rule |
+| C15 | "About as stable" copy | metric: on a lower bound inside [-0.02, 0]; integration: part 8 | only on RULED OUT (both bounds inside 0.02), not expected to be reachable here | a lower bound alone cannot support "about as much"; the upper side could be large |
+| C16 | Plus index | metric: no eBR+, BEM+ the one index if gated; `baserunning.md`: BEM+ gated (BR-Q2); integration: its registration must precede the look | one question (EBR-Q3), recommended BEM+ registered in the gate doc and read in the same look | the look reads every pair a later BEM+ would need, so it is now or 2027-28 |
+| C17 | The look's date | metric: on or after 11-16; integration: not 11-16, not before 11-15 if BEM+ rides | on or after 11-17, with the excluded days | 2026 freezes 11-01; BEM+'s holdout needs 11-15 or later; 11-16 holds the November re-gates |
+| C18 | Task shape | integration: the look and the flip inside EBR_2, which waits for p8_metrics | EBR_2A core soon after Z, EBR_LOOK by date, EBR_2 after p8_metrics, EBR_2F after both | the look needs only the core |
+| C19 | Minor leagues | metric: keep the data whatever the answer; integration Q3 (c): let the feeds age out | the data is kept (EBR_2A); EBR-Q6 asks only about display | the loss is irreversible and the copy takes minutes |
+| C20 | Counterparts before 2016 | integration: DP against 0 and XB against BsR minus wSB in every season | per season: before 2016 XB against UBR and DP against wGDP | FanGraphs' pre-2016 BsR already contains both; matters only on EBR-Q4 (b) |
+| C21 | Team-runs leg against the Baserunning STOP list and Part 8's 8.A | `baserunning.md` 7.4 and 8.A forbid relating a baserunning column to runs | Leg T is computed only inside the registered look, never by an exporter or on a page; its r values (and DP-2's) live only in the gate doc's part 12 and `.cache/ebr/preview/`; the served `data/ebr_eval.json` carries pass or fail only, asserted by `test_ebr_served_eval.py` (fix round 1) | a registered gate clause is not a served correlation, and `data/` ships to the webroot (PART8_ADDENDUM 8.D row 14) |
+| C22 | Overlap with EPOCH-Q4 (O5) | integration's Q1 (keep the site's own WAR) overlaps O5 | (fix round 1) O5 is ANSWERED: "Keep eWAR v2 shown"; there is no frozen eWAR v2 comparison slot; EBR-Q0 asks the frame, EBR-Q5 asks only where the new series shows as a column (Overall board, plus a card reference like FanGraphs' WAR) | the owner answered EPOCH-Q4 at 20:52 on 2026-09-30, after the first draft; ruling EPOCH-Q4-IMPL keeps every display door on `ewar_v2` |
+| C23 | Daily step placement of 9e-pre0e | `baserunning.md` 4.2 and 5: 9e-pre0e after 9e-pre0c (the Overall board) and after the vintage snapshot; `integration.md` 4.1: 9e-pre0e after 9e-pre0b and before 9e-pre0c, then 9e-pre0f, then 9e-pre0c | integration's: 9e-pre0b, 9e-pre0e (eBR), 9e-pre0f (eWAR v3, which since the unification also rebuilds the skill deltas), then 9e-pre0c and Q8_11's 9e-pre0d | both placements sit after the vintage snapshot (`run_monthly.py:2974-2998`), so the Baserunning lane's rule holds either way; this order lets the Overall board read the same night's eWAR v3 and the League tab the same night's baserunning block; no name collides (Q8_11 holds 9e-pre0d and reserves e and f for this plan, Q9_22a holds 9e-pre0g) |
+| C24 | The queue `not_before` of EBR_LOOK | first draft: 2026-11-17; ruling EB10: every eBR task but EBR_1 at 2026-10-11 | 2026-11-17 (fix round 3, the orchestrator's date change; the other post-Z tasks keep 2026-10-11); the spec's precondition 1 still stops any run on an excluded day | its spec and `tools/ebr_gate.py` both refuse a date before 2026-11-17, so an earlier `not_before` could only dispatch a task that ends in 'BLOCKER: date 2026-11-17' |
+| C25 | Where the skill parts live | the former skill plan: a separate skill line on the frozen fWAR vintage (its row X1), the ladder asked as SWAR-Q0, skill inside eWAR v3 offered as SWAR-Q1's second option | inside eWAR v3 as candidate parts 3 to 6, each with its own clause, in ONE registration (`EBR_GATE.md`); no separate series, no standalone registration, look or integration task | the owner's SWAR-Q0 (b) and SWAR-Q1 (b) of 2026-10-01; ruling U1 |
+| C26 | The skill test's unit | former skill plan: four cells (H-rate, P-rate, H-cum, P-cum) for the whole skill line in one Holm family | per candidate part, its own cells and Holm family (k = 2, 4, 2, 2), no correction across parts | ruling U1 ("each part admitted only on a clear win under its own clause"); the BEM+ precedent (each reads only its own clauses) |
+| C27 | B0', the base plus the ladder | former skill plan row X3: B0' = fWAR + S4 isolated the ladder from the components | dropped: each part is scored alone against B0 = fWAR, so the ladder's attribution is its own part's gap | per-part testing makes B0' equal to B0 for every skill part |
+| C28 | The bar for a skill or position part | former skill plan row X26 (ruling X1): WIN (components) and WIN (regression only) are both WIN, and the line served whatever the look said | admission on the rate cell's WIN (components) with the total cell not LOSS; asked as EWV3-Q1 with that default, WIN (regression only) admitting only under its second option | a clear win of OUR part means also beating a uniformly shrunk fWAR and the permuted twin; a regression-only win says any shrink of fWAR would do as well |
+| C29 | Both batting arms qualifying | SWAR-Q3 (c) answered "both, as two arms" with no rule for a double pass | asked as EWV3-Q2; default HEM+ unless the xHEM+ arm beats it with lo95 above 0, a tie-break contrast outside the Holm family | one batting part can enter; the owner's named metric is the default and xHEM+ enters on a direct win |
+| C30 | One session or two for the looks | ruling U2: each look one run, never on another registered look day, sharing a session only if the document says so | asked as EWV3-Q3; default two days in two sessions; under its second option one session, the outcome look first, the day counted once | one registered look a day is the house rule; a shared session is the owner's to allow |
+| C31 | What "the re-gate record exists" means | NOV15_REGATES writes the HEM+ re-baseline registration and leaves its run to "a later session (a new dispatch)" | the skill look waits for the RESULT (the re-baseline's results and registry rows committed together, R1-12); it requires NOV15_REGATES and HEM_XWOBA_REGATE_RUN (the re-gate's one run, queued 2026-10-01) and checks the result by precondition as a backstop | SWAR-Q3 (c) makes the batting read wait for the re-gate itself |
+| C32 | The assembler's `requires` | ruling U3: both looks, EPOCH_FWAR_REFERENCE_COLUMN and the skill builds; the old EBR_3 also required EBR_2F_FLIP | adds EWV3_SKILL_HOLDOUT (the served eval carries the holdout block) and moves EBR_2F_FLIP to a precondition | EBR_2F can be held by the owner's EBR-VOID answer, and a held task never satisfies `requires`; the holdout always reaches done (a VOID skill look gets a one-line not-run entry) |
+| C33 | The ladder's forward test | ruling U1 puts the ladder on the skill look's forward test | kept, with its lean disclosed: fWAR(Y+1) carries FanGraphs' own positional adjustment, which fWAR(Y) shares; registered expectation LOSS or UNRESOLVED | the integration lane's 1.8 argument (forecasting a rival series favours its construct) applies to the ladder; a binding ruling is disclosed, not overridden |
+| C34 | eWAR v3 when nothing is admitted | eBR plan: built only if a part is admitted; EBR_3 stopped 'nothing admitted' and was skipped | always built; with nothing admitted it equals fWAR and its label says so | ruling U1 and the owner's SWAR-Q1 (b) ("exists whatever eBR's look says") |
+| C35 | Registry rows for the skill parts | former skill plan: `swar_hit` and `swar_pit` | `swar_bat`, `swar_pit`, `swar_fld` and `swar_pos`, one per candidate part, beside `ewar_v3` | the verdict enum is per row and admission is per part |
+| C36 | Surfaces | former skill plan: a Skill view on the Overall board and a card line (its SWAR-Q4) | one column "eWAR v3" and the card reference (EBR-Q5), with the admitted parts named on the card (SWAR-Q4, re-asked as "Part detail") | one series, one column; the pinned column budget holds |
+| C37 | Daily steps | former skill plan row X23: a separate skill step `9e-pre0h` and monthly `6b4m3` | none: `9e-pre0f` rebuilds the skill deltas and then eWAR v3; `6b4m2` monthly | one assembler, one step; 8.E's `9e-pre0f` assignment stands |
+| C38 | The record's path | former skill plan: `docs/swar-<date>/swar_eval.json` beside its own gate document | `docs/ebr-2026-09-30/swar_eval.json` beside `EBR_GATE.md` | one registration directory; files and ids stay `swar` (SWAR-Q2 (c)) |
+| C39 | The former skill plan's rows | its rows X1, X4 to X8, X20, X24, X25 and X27 to X29 | carried into the draft where they bind a skill part (the base, the tracked record, preview-only output, copy words, the internal id, the holdout date, quoting artifacts, the team-wins legs, the HR arm, Read to write this); X2, X3, X19, X22, X23 and X32 are resolved by C25 to C37 | the technical content stands; only the series framing changed |
+
+---
+
+#### 9. Owner questions (`OWNER_QUESTIONS.json`)
+
+**Answered 2026-10-01** (`DECISIONS_FOR_OWNER.md`, the two headings of that date; EBR_1 STOPs
+if any of these eight is not recorded, and none takes a default):
+
+| Id | Answer |
+|---|---|
+| EBR-Q0 | (a) eWAR v3 on FanGraphs' frame, a column, never labelled plain eWAR |
+| EBR-Q1 | (a) eBR's steals and extra bases enter only if they repeat clearly more (club changers included) |
+| EBR-Q2 | (a) double plays as their own part under the EBR-Q1 rule |
+| EBR-Q3 | (a) BEM+ registered and tested in the same look |
+| SWAR-Q0 | (b) our positional ladder is also a named part of eWAR v3, with its own admission clause |
+| SWAR-Q1 | (b) HEM+, SEM+, REM+ and DEM+ go inside eWAR v3: one house WAR, part outcome and part shrunk skill, each part admitted only on a clear win; no separate skill series |
+| SWAR-Q2 | (c) the shrunk-skill parts carry the label and glossary term "eWAR skill" (files and ids stay `swar`) |
+| SWAR-Q3 | (c) HEM+ and xHEM+ as two arms in one corrected family; the batting read waits for the 2026-11-16 re-gate |
+
+**Still open,** each with a default EBR_1 records if it is unanswered:
+
+| Batch | Id | Header | Recommended (the recorded default) | Needed by |
+|---|---|---|---|---|
+| 1 | EWV3-Q1 | Skill bar | WIN with its components (beats fWAR by the margin, beats a uniformly shrunk fWAR, the twin fails) | before EBR_1 commits (from 2026-10-04); later only by amendment before the skill look |
+| 1 | EWV3-Q2 | Bat arms | HEM+ unless xHEM+ clearly beats it | the same |
+| 1 | EWV3-Q3 | Look days | two days, two sessions | the same; later only by amendment before the first look |
+| 1 | EBR-Q4 | Old seasons | use what is on disk | before EBR_2A (about 2026-10-12) |
+| 2 | EBR-Q5 | Column spot | an Overall board column plus a card reference | before EBR_3 (not before 2026-11-18) |
+| 2 | EBR-Q6 | MiLB eBR | keep the data, no display yet | before EBR_Q6B (after EBR_2F_FLIP, not before 2026-11-17); EBR_2 does not read it |
+| 2 | SWAR-Q4 | Part detail | each admitted part named on the card | before EBR_3 (not before 2026-11-18) |
+
+**Where they came from.** EWV3-Q1 to EWV3-Q3 are new, forced by the unification: the bar a skill part
+must clear to be admitted (the former skill plan served its line whatever the look said, so it never
+needed one), the rule for two batting arms that both qualify (SWAR-Q3 (c) opened it), and whether the
+two looks may share a session (ruling U2). EBR-Q4 to EBR-Q6 are the eBR plan's batch 2, unchanged
+except that EBR-Q5 now names eWAR v3. SWAR-Q4 is the former skill plan's batch 3, re-asked for one
+series: the Skill view it offered is gone (there is one column), and what remains is how much of the
+part breakdown a reader sees.
+
+**Not asked, and why.** BR-Q1 (answered by the ask). The eBR metric lane's M1 to M3 and the skill
+lane's defaults (leverage L-A, seasons from 2016, the EM+ constants, the per-season ladder window, the
+swingman blend, the nopp and pitcher-batter rules, the replica's feed-only pitcher arm, rate cells
+deciding, B1 fitted on 2016 to 2018, the home-run arm, the holdout's day): design defaults recorded in
+the gate document's part 1, changeable only by a new registration. Part 8's SG-Q4 and W-OQ3 are
+separate decisions.
+
+---
+
+#### 10. Findings handed to other owners
+
+| Finding | Evidence | Goes to |
+|---|---|---|
+| /management/'s steal census is 12.5 percent short: 26,555 attempts served against 30,353 in `runners[]` on the same 19,393 games, while `reconciles: true` checks only priced plus excluded against the corpus count | `ebr_metric.md` F2; `baserunning.md` 1.3 and 7.3 | the In-Game Management owner: re-read attempts from `.cache/pbp_runners/` once EBR_2A lands; a served change after step Z with its own blast radius |
+| The replica's "UBR + wGDP" input is BsR minus wSB from 2016 on (544 to 726 rows a season break the old identity); the 2026-09-09 plan's frame line describes 2011 to 2015 only | `fwar_frame.py@be53132d:26`, `tools/fwar_replica_eval.py@be53132d:456`, `:1006`; `docs/master-plan-2026-09-09-fangraphs-ewar-betting.md:123` | the epoch's step X or a replica task; EBR_1 records the fact in the gate doc without touching code |
+| Five readers treat "not bwar" as "the eWAR v2 artifact" | section 5 | the epoch's D + U under ruling EPOCH-Q4-IMPL; EBR_3 checks all five and stops if any is not so |
+| The D + U row says bump `BOARD_RANK_BASIS_EPOCH` "from 2026-09-04"; the code reads "2026-09-25" | `storage.py@be53132d:5034` | the epoch program; already carried by `EPOCH_RUN.md` step D + U |
+| `data/ewar.json` still carries the pre-`101cbf16` `consumers` string; `ewar.py:81-82` calls replacement level "untouched" while `:132-139` rescale it | `ewar_internals.md` 10 | a docs pass; harmless |
+| The corpus's 2026 partition holds 2,385 of 2,429 games; postseason payloads must never enter `.cache/win_prob` | `ebr_metric.md` F3, F9; 8.E | the Management corpus owner and B6_MGMT_NIGHTLY; Q10_06 writes to `.cache/win_prob_post/` |
+| **The HEM+ versus xwOBA re-gate's run is its own queue task** (done 2026-10-01). NOV15_REGATES item 5 writes the HEM+ re-baseline registration and ends there ("Then run it in a later session (a new dispatch)"); the skill look waits for that run's result (SWAR-Q3 (c)) | `dq/specs/epoch/NOV15_REGATES.md` steps, item 5; `dq/queue.json` | the orchestrator queued `HEM_XWOBA_REGATE_RUN` (the re-gate's one run, not before 2026-11-16, requires NOV15_REGATES, never on another registered look day) and EWV3_SKILL_LOOK `requires` it; the skill look keeps a backstop STOP 'BLOCKER: task HEM_XWOBA_REGATE_RUN' if that task is done but no result is committed; the orchestrator re-syncs EWV3_SKILL_LOOK's live spec from `QUEUE_TASKS.json` |
+| **8.E needs a dated amendment** (the plan document's Part 8, carried by the orchestrator): (1) the opening paragraph's "a skill WAR from the EM+ family and F-SCORE (`<part8>/xwar.md`, tasks `SWAR_REGISTRATION`, `SWAR_BUILD_AND_LOOK`, `SWAR_INTEGRATION`; ..." becomes "the eWAR v3 skill parts (the owner's answers SWAR-Q0 to SWAR-Q3 of 2026-10-01 put HEM+, xHEM+, SEM+, REM+, DEM+ and our positional ladder inside eWAR v3 as candidate parts; `<part8>/ebr/PLAN.md`, tasks EBR_1_REGISTRATION, EWV3_SKILL_BUILD_CORE, EWV3_SKILL_BUILD_LAB, EWV3_SKILL_LOOK, EWV3_SKILL_HOLDOUT and EBR_3_EWAR_V3) and F-SCORE (`<part8>/fscore.md`, ..."; (2) the Teams-tab row drops the skill line from "Plans that touch it" and its last sentence becomes "eWAR v3 and its parts never enter the Teams tab or F-SCORE (`xwar.md` 3.5; the eWAR v3 plan)"; (3) the "eWAR v3 and the WAR columns" row's plans become "eBR and the skill parts, P8.2", its owner "the eWAR v3 plan (`<part8>/ebr/PLAN.md`) owns eWAR v3 and every candidate part", and its rule "P8.2's WAR columns follow `war_seasons.war_provider` and O5; eWAR v3 appears on Part 8 surfaces only through EBR_3_EWAR_V3"; (4) the Pitch-metrics row's "eWAR v3 9e-pre0f and 6b4m2" stands (it now also rebuilds the skill deltas) | `PART8_ADDENDUM.md` 8.E (at 'a skill WAR from the EM+ family', the Teams-tab row at 'never enters the Teams tab or F-SCORE', and the row 'eWAR v3 and the WAR columns') | the orchestrator, as a dated amendment of `docs/master-plan-2026-09-24-final-pass.md` Part 8, 8.E |
+| The F-SCORE plan's skill half is now a pointer here; its F-SCORE half is unchanged except citations; `QUEUE_TASKS_xwar_fscore.json` and `OWNER_QUESTIONS_xwar_fscore.json` hold the F-SCORE items only; the insert files `G2_SWAR_REGISTRATION.json`, `G3_SWAR_BUILD_LOOK.json` and `G6_SWAR_INTEGRATION.json` are retired to `xwar_fscore_inserts/_retired_2026-10-01/` | `UNIFY_LOG.md` | the orchestrator (nothing to run: the live queue already holds the FS tasks) |
+| EBR_1_REGISTRATION carries the live-queue note "held for the eWAR v3 unification re-cut"; the update in `QUEUE_EDITS.json` releases it | `dq/queue.json` | the orchestrator: clear the note with `qctl set EBR_1_REGISTRATION --note ...` when applying the update |
+
+---
+
+#### 11. Risks and what would change the plan
+
+- **A tie is the likely result** for both outcome parts and for most skill parts. Under the recorded
+  rules a tie admits nothing; eWAR v3 still serves, equal to fWAR where nothing is admitted, and eBR
+  still ships as its own stat. That is the honest consequence, not a failure of the build.
+- **The HEM+ versus xwOBA re-gate's run crashes or stops** (HEM_XWOBA_REGATE_RUN, section 10). The skill
+  look requires that task and STOPs on 'BLOCKER: task HEM_XWOBA_REGATE_RUN' when no result is committed,
+  so it waits until the owner decides; the frame does not expire, but eWAR v3 waits too.
+- **The ladder's forward test leans to the incumbent** (C33). A LOSS there may be the construct, not
+  the ladder; the record says so and the copy carries only the licensed sentence.
+- **The frozen fWAR vintage lacks a needed field** (wSb, ubr, wGdp, plateAppearances, numTeams for
+  the outcome look; pitchers' gmLI and innings for the skill parts). The orchestrator handed EPOCH_E3
+  the outcome fields; each look STOPs on a missing field rather than read a non-frozen source.
+- **An identity miss on a completed season** gets one re-fetch; a miss that survives blocks that
+  season and the outcome look until the owner decides.
+- **The win_prob cache pruned before the backfill** turns 7 minutes into days of refetch; EBR_2A runs
+  the backfill first and `pbp_runners` is excluded from pruning.
+- **D + U or step X incomplete.** EBR_3 checks the label term, `served_war_basis`, the five readers
+  and the word "eWAR" on fWAR-basis numbers, and stops rather than move a display door.
+- **Queue length after Z.** If EBR_2A or the skill build has not landed by mid-November its look
+  slides; the frames do not expire.
+- **The fallback epoch** (step A about 11-01, step Z about 11-05) moves the builds after about 11-05;
+  the looks' dates are unchanged.
+- **The sealed prototype files** could be joined across seasons by a later reader; the seals are in
+  the gate doc and the frame-U guard protects a SHIP.
+- **A crash in a look** admits nothing from that look and needs an owner answer; the other look and
+  the assembler are not held (a VOID skill look gets a one-line holdout entry; a held eBR is a
+  precondition of EBR_3, never a `requires`).
+- **Out of scope here:** any betting use, any eFV driver from eBR or a skill part, any valuation use
+  (SWAR-Q4's third option needs its own registered valuation read), and any change to /management/.
+
+### 8.L F-SCORE
+
+- Status: CLEAN 2026-10-01 at verify round 2 (`part8/VERIFY_xwar_fscore_round2.md`); its 2026-10-01 unification amendment is checked CLEAN in `part8/ebr/VERIFY_unify_round3.md` item 1; source `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part8/XWAR_FSCORE_PLAN.md`.
+- Queue (dq/queue.json, prefix FS_): FS_1_DIVISION_CHAMPION, FS_1B_POSTSEASON_CACHE, FS_2A_EXPORT_DARK, FS_2B_SURFACES_DARK, FS_2C_INDEX_REPLACEMENT (added by the FS-Q4 answer), FS_2F_FLIP, FS_3_OPERATIONS_LIVE; the plan's sWAR tasks were re-cut into the EBR_ and EWV3_ ids of 8.K.
+- Answers: `C:/Users/noah/baseball-projects/_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, sections 'the deploy and F-SCORE batch 2 (part)' (FS-Q1 to FS-Q3) and 'F-SCORE FS-Q4 and Part 8 batch 8 (part)'; the sWAR answers are under 8.K.
+
+### F-SCORE, and where ask A went: the plan for the owner's asks A and B of 2026-09-30
+
+**Amended 2026-10-01 (the eWAR v3 unification).** The owner's answers to SWAR-Q0 to SWAR-Q3 of 2026-10-01 (`DECISIONS_FOR_OWNER.md`, the heading of that date that records them) put HEM+, xHEM+, SEM+, REM+, DEM+ and our positional ladder INSIDE eWAR v3 as candidate parts, each admitted only on a clear win under its own clause, with no separate skill series. Ask A's design, registration, tasks and remaining questions now live in the eWAR v3 plan (`ebr/PLAN.md`, `ebr/REGISTRATION_DRAFT.md`, `ebr/UNIFY_LOG.md`). This file keeps the F-SCORE half whole; its ask A sections (1, 4, 6, 7, 8, 9, 10, 11 and 13) are pointers, and its section 3 rows that bound the skill line say where each went. The F-SCORE text is unchanged except where it cited the former skill line by name.
+
+Synthesis of two read-only design lanes, 2026-09-30 (evening), with fix round 1 applied on 2026-10-01 (two
+adversarial reviews, 7 major and 20 minor issues, and the orchestrator's rulings X1 to X22; every change is a row of
+`FIX_LOG_xwar_fscore.md`). Owner asks, verbatim:
+
+- **A:** "Can we also look to potentially use our own metrics in eWAR further (some cummulative version of HEM+ for hitting, SEM+ for starters, REM+ for relievers, DEM+/will's defensive metrics/our in-house calculated positional adjustments for position players, etc?"
+- **B:** "Can we also add a franchise score metric (F-SCORE) on team franchise pages / the Franchise module / the Team Stats module in MLB Stats? Franchise score should basically take in information about each franchise, with a specific focus on games won in the regular season / championships won / divisional titles won / deep playoff runs / strength of team, run differential, farm system strength, player development, in-game management, etc. - basically round up EVERYTHING from across the site that pertains to franchise evaluation, weight it properly, and use this metric to score franchises on a 7-year trailing window"
+
+**Files.** `<part8>` is `C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/part8/`; its durable copy after Part 8's 8.C action 1 is `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part8/`.
+
+| File | What it is |
+|---|---|
+| `XWAR_FSCORE_PLAN.md` | this plan |
+| `QUEUE_TASKS_xwar_fscore.json` | the six F-SCORE writer tasks in dispatch order (`id`, `kind` EV, `preamble` P8, `model` opus, `not_before`, `requires`, `spec`), specs unchanged; the six skill tasks it held moved to the eWAR v3 plan's `ebr/QUEUE_TASKS.json` and `ebr/QUEUE_EDITS.json` on 2026-10-01 |
+| `xwar_fscore_inserts/G1_FS_1.json`, `G4_FSCORE.json` and `G5_FS_3.json` | the F-SCORE tasks split into the files `qctl add` inserted (section 9); `G2_SWAR_REGISTRATION.json`, `G3_SWAR_BUILD_LOOK.json` and `G6_SWAR_INTEGRATION.json` are retired to `xwar_fscore_inserts/_retired_2026-10-01/` |
+| `OWNER_QUESTIONS_xwar_fscore.json` | the four F-SCORE questions (batch 2), recommended option first, each with `batch` and `needed_by`; SWAR-Q0 to SWAR-Q3 were answered on 2026-10-01 and SWAR-Q4 moved to the eWAR v3 plan's questions |
+| `FIX_LOG_xwar_fscore.md` | fix round 1: one row per review issue and per orchestrator ruling |
+| `xwar.md`, `fscore.md`, `fs_work/` | the two lane designs and the F-SCORE evidence (probes, prototype, tables); `fscore.md`'s served copy carries the fix-round amendments |
+| `_build_xwar_fscore_json.py`, `_check_xwar_fscore.py` | the generator of the JSON files and their checker, as of fix round 2 (historical: rerunning the generator would restore the retired skill tasks, so it is not rerun; the eWAR v3 plan's `ebr/_unify/` holds the current builder and checker) |
+
+**Inputs.** The lanes `xwar.md` (14:23) and `fscore.md` (14:26), both read at `64bf1bb3`. Read beside them: Part 8 of `docs/master-plan-2026-09-24-final-pass.md` (committed at `cbc4fa3e`: 8.A rules, 8.B clock, 8.C queue, 8.D conflicts, 8.E which plan owns what), `P8_COMMON.txt`, the eBR plan (`ebr/PLAN.md`, `ebr/QUEUE_TASKS.json`, after its own fix rounds), the dynamic queue (`dq/queue.json`, 202 tasks at 12:18 on 2026-10-01, and `dq/qctl.py`), the epoch tasks (`dq/epoch_tasks.json`), queue 7b (`writerq7b_tasks.json`), and `DECISIONS_FOR_OWNER.md` through "Part 8 batch 4 (Staff Gems)".
+
+**State pin (re-pinned in fix round 1).** HEAD is `3649ac5b` (2026-10-01 10:47).
+- Since `cbc4fa3e`, of the files the lanes cite: `franchise_export.py`, `assets/franchise.js` and `test_franchise_export.py` changed in four commits each (among them `22b42e1e`, the HoF franchise rule, and `547cdd08`, the Futures label); `hem_plus.py` changed twice; `rem_plus.py`, `scrapers.py`, `run_monthly.py`, `build_site.py` and `storage.py` changed. `ewar.py`, `war_source.py`, `test_war_source.py`, `sem_plus.py`, `dem_plus.py`, `fwar_frame.py`, `tools/fwar_replica_eval.py` and `fa_sources.py` are unchanged since `64bf1bb3`. Every spec cites `@64bf1bb3` with an anchor, and P8_COMMON's rule (the anchor wins at HEAD) covers the moved lines.
+- `643bdbda` regenerated `data/franchise_board.json` (generated 2026-10-01T01:31:03Z), and `85f368f1`, `22b42e1e` and `547cdd08` regenerated it again (HEAD's board: generated 2026-10-01T13:34:49Z). Every one serves seven `division_champ` true tiles for six divisions (ATL, CLE, HOU, LAD, MIL, TBR and PHI). **The PHI defect stands.**
+- `cbd95517` (M17) took the daily step label `9e-pre0d` at HEAD for the live-season window panel, the label Q8_11's spec also claims (section 12).
+- The queue: `B4_IDENTITY_SPLIT` is done, `PX_A_foundation` (queue 3) is dispatched, and the eBR tasks are inserted (EBR_1_REGISTRATION at position 69, EBR_2A to EBR_Q6B at 119 to 141).
+
+**Discipline.** Nothing in the repository was edited, and no test, exporter, lab, fetch or look ran. This synthesis and its fix round made read-only checks only: git log, show and diff; the HEAD board; the standings caches 2000 to 2026 and the ten postseason probes (re-scanned with the reviewers' `_rv_feas/` scripts); the committed EM+ eval artifacts, registry rows and management gate; `dq/queue.json` and `qctl.py`. It computed nothing beyond the arithmetic and the counts marked as such.
+
+**Precedence.** Where this plan and a lane differ, this plan governs (section 3 lists each difference). Part 8's rules (8.A and P8_COMMON) govern this plan, the eWAR v3 plan (`ebr/PLAN.md`) governs eWAR v3 and every part ask A asked for, and the orchestrator's rulings of fix round 1 govern where a review fix and a ruling differ.
+
+---
+
+#### 1. The answers to the owner
+
+##### Ask A: our own metrics in a WAR
+
+**Answered by the eWAR v3 plan.** On 2026-10-01 you answered SWAR-Q0 (b), SWAR-Q1 (b), SWAR-Q2 (c) and SWAR-Q3 (c): HEM+ (and xHEM+ as a second batting arm), SEM+, REM+, DEM+ and our positional ladder go inside eWAR v3, the one house WAR on FanGraphs' frame, each as a candidate part admitted only on a clear win under its own clause; the shrunk-skill parts carry the label 'eWAR skill' (files and ids stay `swar`); there is no separate skill series. The design (the formulas, the HR-arm clause, the dispositions with the SMALL WIN rule, the 'Read to write this' disclosure, the tracked record) is carried into the eWAR v3 plan (`ebr/PLAN.md`, `ebr/REGISTRATION_DRAFT.md`, `ebr/UNIFY_LOG.md`), which governs it from here.
+
+##### Ask B: F-SCORE
+
+**Yes, from data already on disk plus one small fetch:** 27 public StatsAPI calls cover every postseason from 2000 to 2026.
+
+- **What it scores.** Four pillars, covering 2020 to 2026 plus today. Each is standardised across the 30 clubs, weighted, and re-standardised to 100 + 10z, with letters by rank.
+  - **RESULTS** (half the score by default): regular-season wins above .500, division titles and postseason rounds, all counted in wins. Under the recommended ladder a title is worth 40 wins.
+  - **STRENGTH:** run differential, the roster today and the 2027 outlook.
+  - **PIPELINE:** the farm today and 7yDvM+ (player development).
+  - **OPERATIONS:** wins bought per payroll dollar. Dark until the payroll-history reader lands.
+- **"Everything from across the site."** The lane's census (`fscore.md` section 1) checked 26 sources:
+  - Seven components are scored.
+  - In-game management is shown beside the score but not scored, because the one decision family the site has gated, the running game, did not repeat between halves of a club's own season (per-agent decision value). No other family has been gated.
+  - The rest stay out, each for a stated reason. Among them: Hall of Fame plaques, attendance, park factors, futures odds, org tendencies, free-agent and trade outcomes, arbitration residuals, club bWAR, Cost+ (a projection) and the EM+ team roll-ups (already carried by run differential and the roster).
+- **"Weight it properly."** With no forecast claim there is no outcome to fit the weights to, so the weights are a published choice. On the prototype (illustrative, inputs of mixed vintage) the three offered schemes rank the clubs almost alike (Spearman 0.989 and 0.991). You choose the scheme (FS-Q1) and how recent seasons are weighted (FS-Q2).
+- **Championships and pennants become served facts.** The Franchise page banned them because postseason results were not on disk; your ask lifts that ban for results. The bans on decision-quality grades and manager-skill claims stay.
+- **Where it shows:**
+  - a card and a section on each club page;
+  - a board mode beside the Franchise Index;
+  - HISTORY postseason marks, each with an accessible name and a text legend on phones;
+  - one F-SCORE column on the MLB Stats Teams tab, refreshed the same night as F-SCORE itself.
+- **It is descriptive.** Nothing in it forecasts wins, a berth or a title.
+- **Found on the way, and urgent.** The 2026 standings feed marks the Phillies (88-74, second, 6.0 games back) as NL East champion beside the Braves. The Franchise board committed at HEAD `3649ac5b` serves "division champion" on Philadelphia's 2026 tile. The fix takes about one writer-hour and should land in the landing window, which closes 2026-10-03 23:59.
+- **When.** Everything else lands after step Z.
+
+---
+
+#### 2. What changed since the lanes ran
+
+| Change | Effect here |
+|---|---|
+| Part 8 was committed (`cbc4fa3e`). Its 8.E names these plans and assigns the shared pieces: Teams tab, standings fix, postseason ingest, chart tokens, club links, payroll reader, eWAR v3 | adopted as written (rows X15 to X19) |
+| EPOCH-Q4 answered: eWAR v2 stays the shown WAR, with fWAR as a reference column; the training label is fWAR either way | F-SCORE's roster label is read from the data, never typed (X14); the skill parts' copy rules (X6) moved to the eWAR v3 plan |
+| OUTLOOK answered (a), as of signings | F-SCORE's outlook leg reads the served headline and moves nightly with signings once Q9_03 flips (F10) |
+| COSTPLUS-1 and FP6-1 answered | no effect: Cost+ and HoF plaques are not F-SCORE inputs |
+| The PHI flag is served now: every board since `832d5a50` carries PHI `division_champ: true`; at HEAD `3649ac5b` the board (generated 2026-10-01T13:34:49Z) still does | FS_1 is inserted now (X11) |
+| VAL_1, VAL_2, VAL_3 and the ETA flip landed, and the Franchise Index moved (LAD 123.5 to 124.4, BOS 119.3 to 118.2, MIL 119.0 to 119.4) | the F-SCORE prototype is stale; FS_2A recomputes everything (F11) |
+| The eBR plan builds eWAR v3 only if an eBR part is admitted (superseded on 2026-10-01: eWAR v3 now always builds, and the skill parts are candidate parts of it) | the eWAR v3 plan (`ebr/PLAN.md`) governs ask A from 2026-10-01 |
+| The xwar lane's 14:20 working-tree note | resolved: the three test files are in VAL_1's `410cccce`, so 8.C action (2) was dropped |
+| `qctl.py` counts only `done` toward `requires`; `skipped` never satisfies one | no task here requires a task that might be skipped (X19) |
+| Fix round 1: HEAD moved to `3649ac5b`, `B4_IDENTITY_SPLIT` is done, the eBR tasks are in the queue, `cbd95517` took `9e-pre0d` | FS_1's slot is now `--before PX_B_navigation`; labels are taken by commit order (X23); section 12 hands the label collision to the orchestrator |
+| 2026-10-01: SWAR-Q0 to SWAR-Q3 answered (one house series) | ask A moved into the eWAR v3 plan; this file's skill sections became pointers (amendment above) |
+
+---
+
+#### 3. Conflicts resolved
+
+| # | Where | Lane position | Resolution | Why |
+|---|---|---|---|---|
+| X1 | The skill line's base | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C25 and C39; the registration draft part 9.4) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X2 | Where our ladder (S4) lives | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C25 (answered SWAR-Q0 (b): a named candidate part of eWAR v3); the registration draft part 0) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X3 | B0' (the base alone) | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C27; the registration draft part 9.5) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X4 | When the skill line's eval record lands | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C38; the registration draft part 9.5) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X5 | The skill build's output | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C39; the registration draft part 9.5) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X6 | The word "eWAR" in skill copy | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C39 (labels 'eWAR v3' and 'eWAR skill', never plain 'eWAR'); the registration draft part 9.1) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X7 | "regressed" in copy | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C39; the registration draft part 8) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X8 | When the name must be fixed | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C39 (ids stay `swar`, SWAR-Q2 (c)); the registration draft part 1) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X9 | F-SCORE's flag | fscore 4.9: descriptive, so no flag | `fscore_export.FSCORE_LIVE = False`. While it is off, the exporter writes `.cache/fscore/preview/fscore.json` and `franchise_export` embeds nothing. One flip commit | Part 8 class 2 binds every new served payload, page or column |
+| X10 | FS-1's cache module and backfill | fscore 4.9, 5: safe in the gap before step A | after step Z only | 8.A: the gap takes docs and registrations only, and its writer belongs to the epoch preconditions |
+| X11 | The division-champion fix's slot | fscore 5: queue-7 window or after Z. 8.E: the F-SCORE plan schedules it | insert it now, next in the landing window (`--before PX_B_navigation`; `B4_IDENTITY_SPLIT`, the old anchor, is done). If it cannot commit by 2026-10-03 23:59, the orchestrator re-arms it for the first slot after Z1_RUN, still before Q8_10 (section 9) | the false string is served at HEAD and the fix takes about one writer-hour. Missing the window keeps it served through the blackout: about ten days on the plan of record, about five weeks on the fallback epoch |
+| X12 | The division-champion rule | fscore 1.3 and 8.E: the unique `divisionRank` 1 club | a completed season: the unique `divisionRank` 1 club in each division. The live season: that club only once its `clinchIndicator` is y or z. Never the feed's `divisionChamp`. Every disagreement is listed (five rows 2000 to 2026, section 5) | rank 1 alone would name every division leader a champion from April onward. The rule still satisfies the precondition that Q8_10, Q8_13b and Q8_15 check |
+| X13 | Lifting the pennant and title ban | fscore 4.3: in the build commit | `FORBIDDEN_KEYS` and the two copy strings key on FSCORE_LIVE: the ban holds while F-SCORE is dark and lifts in the flip commit. `decision_quality`, `manager_skill`, `revenue` and `valuation` stay forbidden. FS_2A, FS_2B and FS_2F carry the runner override sentence of X33 | the NEVER list stays true on every served day |
+| X14 | The label on F-SCORE's roster leg | fscore 3.6: "team eWAR on the current roster" | read from the same served source the Franchise ROSTER branch reads (the provider stamp of `war_leaderboards.json`), never typed | EPOCH-Q4 and step D decide which WAR that is |
+| X15 | The payroll reader | fscore 1.5: FAA-2 | FAA-2 is the master queue's `Q9_16_LEDGER_FA_SPEND_PROFILE` (the cache-only reader in `fa_sources.py`). F-SCORE ships OPERATIONS dark on the declared vector, and FS_3 turns it live after Q9_16, once the box holds the same Spotrac pages. No second reader | 8.E, the payroll-history reader row |
+| X16 | `postseason.py` | 8.E: FS-1 owns it, and IX-H2 (`Q10_06`) builds it to `fscore.md` 4.1 if FS-1 has not landed | FS_1B builds it. If Q10_06 ran first, FS_1B checks that module against 4.1 and the X30 rules and adds only the backfill, the tracked copy and the daily step | built once |
+| X17 | The Teams-tab column | 8.E: whichever of Q8_10/Q8_13b and FS-2 lands second adds it | FS_2A (positioned after Q8_15, with Q8_10 and Q8_11 in `requires`) adds the join and FS_2B the column; if Q8_10 still lands later, FS_2F adds the join before the flip. The join is ONE F-SCORE column (score, letter, rank), never a division-titles field, a pillar or a Franchise column view | 8.E and Q8_13b's "no division-title field" test (ruling X13); a join keyed on `data/fscore.json` alone would never fire while F-SCORE is dark |
+| X18 | A skill WAR on the Teams tab | xwar Q4 offered a club skill WAR on Team Stats. 8.E: the skill line never enters the Teams tab or F-SCORE | 8.E stands (amended 2026-10-01: eWAR v3 and its parts never enter the Teams tab or F-SCORE) | a committed plan rule |
+| X19 | The skill integration and EBR_3 | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C32 and C34 (one assembler, EBR_3_EWAR_V3); the registration draft part 9.7) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X20 | The holdout's date | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C39; the registration draft part 7.4) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X21 | F-SCORE's registry verdict | fscore 2.13: `unvalidated` (the `franchise_index` precedent) | `provisional`, `provisional_kind` `measurement_only`, `eval_artifact` null, with baseline and metric saying "descriptive" | Part 8 8.A ("Descriptive means descriptive"), which `test_model_registry.py` enforces; the eBR plan follows it |
+| X22 | How many owner questions | xwar 4, fscore 8 | 9 asked in three batches (4, 4, 1); since 2026-10-01 only FS-Q1 to FS-Q4 (batch 2) remain here, SWAR-Q0 to SWAR-Q3 being answered and SWAR-Q4 moved to the eWAR v3 plan. F-SCORE's 2020 rule, home card, dark-OPERATIONS ship and forward claim are recorded as defaults | the two 2020 alternatives rank clubs like the default (prototype rho 0.998 and 0.999); the home grid is full; 8.E already fixes the dark ship; a forward read has no power before 2029 |
+| X23 | Pipeline step ids | fscore: `d8p`, `6b7f`; xwar: unnamed | every new label is taken by commit order (8.D row 3) from run_monthly at HEAD AND every pending spec in the dynamic queue, and a structure test pins the one chosen: `d8p` and `6b7f` are expected free; the Teams payload step after 6b7f expects `6b7g`; the skill parts need no step of their own since 2026-10-01 (the eWAR v3 assembler's `9e-pre0f` rebuilds them) | Q9_22a holds `9e-pre0g`, eBR holds `9e-pre0e`, `9e-pre0f`, `6b4m` and `6b4m2`, Q8_11 holds `6b4l`; the boards must read the same night's eWAR v3 (ruling X12) |
+| X24 | SEM+'s headline numbers | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C39; the registration draft part 10) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X25 | The skill line's team-wins legs | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C39; the registration draft part 9.5) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X26 | The skill dispositions | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C28 (the admission bar, EWV3-Q1); the registration draft part 9.5) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X27 | The skill eval record and the house rule | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C38; the registration draft part 9.5) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X28 | The pitching home-run term | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C39; the registration draft part 9.5) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X29 | Component priors already read | (see the eWAR v3 plan) | moved to the eWAR v3 plan on 2026-10-01 (`ebr/PLAN.md` section 8, row C39; the registration draft part 10) | the owner's 2026-10-01 answers made the skill line part of eWAR v3 |
+| X30 | Postseason identities | fscore 1.2, 2.12: round-1 clubs equal the standings' `clinched` count; `Final` games; a bye wherever a division-series club had no first round | round-1 participants come from the postseason schedule; a game is final when `codedGameState` is F or O (the `scores_core` rule); byes only in seasons with a first-round series; 2000 to 2025 committed as a tracked, unpublished copy under `data/_labs/postseason/` | ruling X11: 2012 has 10 round-1 clubs and 8 clinched rows, so FS_1B would have stopped; seven postponed probe games carry abstract state "Final"; the box rebuilds `data/` from its own checkout |
+| X31 | The Teams copy's freshness | fscore 3.4: the Teams export copies `fscore.json` | `team_stats_export` moves to a step right after 6b7f, never skipped as chained, pinned by a structure test | ruling X13: at Q8_11's slot the Teams copy would always be a night old |
+| X32 | Task size and position | one skill build and one FS_2 of two to three writer slots each, placed ahead of queues 3 and 6 | FS_2A_EXPORT_DARK and FS_2B_SURFACES_DARK, one slot each (the skill split, now EWV3_SKILL_BUILD_CORE and EWV3_SKILL_BUILD_LAB after queue 6's DISPLAY tasks with the skill look not before 2026-11-17, lives in the eWAR v3 plan) | ruling X14 and review 2; 8.A runs Part 8 after queues 3 and 6, and the look loses nothing by waiting |
+| X33 | The runner's NEVER list | `dq/dq_runner.js` RULES_EV forbids pennants on Franchise | FS_2A, FS_2B and FS_2F carry: "The runner rule that forbids pennants on Franchise is overridden for pennants, titles and postseason rounds as served FACTS by the owner's F-SCORE ask of 2026-09-30 (the bans on decision-quality grades and manager-skill claims stay)." | ruling X17 |
+| X34 | FS_1's class | the first draft labelled FS_1 class 1 with one new accountability key | class 2 (a new served payload key), landing in the window under that label beside the class-1 correction; the key exists only to disclose the correction | ruling X5 overrides review 1's fix (move the key to FS_2) |
+
+---
+
+#### 4. Ask A as it will be registered
+
+Moved on 2026-10-01. The skill and position parts are registered with eBR in ONE document, `docs/ebr-2026-09-30/EBR_GATE.md` ('eWAR v3 gate: eBR and the skill parts', task EBR_1_REGISTRATION), whose draft is `ebr/REGISTRATION_DRAFT.md`: part 0 (the candidate parts and why the outcome and skill parts carry different tests), part 9.4 (the formulas of this section's former R1 to R15, on the frozen fWAR vintage), part 9.5 (the skill look: frame, per-part Holm families, ruling X1's dispositions and precedence sentence, the SMALL WIN rule, B1, the twin, transport, the HR-arm clause of ruling X8, MDE95), part 9.6 (admission and copy), part 9.7 (the assembled series) and part 10 ('Read to write this', ruling X3, and the census of R12). The eWAR v3 plan's section 8 maps every former R and X row.
+
+---
+
+#### 5. F-SCORE as it will be built
+
+The design is `fscore.md` sections 2 to 4: pillars, window, standardisation, payload schema 1, surfaces, glossary drafts and tests, with the fix-round amendments marked at its head.
+
+**Default weights (scheme A).** The pillar weights are RESULTS 0.50, STRENGTH 0.25, PIPELINE 0.20 and OPERATIONS 0.05. Within the pillars:
+
+- STRENGTH: run differential 0.50, roster today 0.30, 2027 outlook 0.20.
+- PIPELINE: farm composite 0.60, 7yDvM+ 0.40.
+
+The ladder is 8 wins for each postseason step and 8 for a division title. The window is 2020 to 2026 with a three-season half-life, and 2020 counts as played. About three quarters of the score is the seven seasons and one quarter is today.
+
+**Amendments:**
+
+- **F1.** `FSCORE_LIVE = False`, with a preview path and one flip commit (X9).
+- **F2.** `franchise_export.division_champions` carries the one rule (X12). `postseason.division_champions(season)` calls it.
+- **F3.** The pennant and title ban is keyed on the flag (X13), and the runner override sentence rides FS_2A, FS_2B and FS_2F (X33).
+- **F4.** The roster leg's label is read from its served source (X14).
+- **F5.** OPERATIONS is dark on the declared vector (0.53 / 0.26 / 0.21 under A) until Q9_16's reader exists and the box holds its pages; FS_3 then turns it live (X15).
+- **F6.** Registry row `franchise_score`: provisional, measurement_only (X21).
+- **F7. Recorded defaults and the management switch:**
+  - 2020 as played;
+  - no home card in v1;
+  - no forward registration;
+  - management shown beside the score and never scored now (FS-Q3 picks only whether F-SCORE links it, through the constant `FSCORE_DUGOUT_LINK`). The admission rule is written into the module now: a decision family that passes its own frozen split-half gate enters OPERATIONS at 0.05 of the index, taken from RESULTS.
+- **F8. Copy** (`fscore.md` 3.7 as amended):
+  - The roster label is derived, not typed.
+  - No forecast word: will, predicts, due, on pace, expected to.
+  - No correlation, fit or trend between F-SCORE and wins is computed or printed (8.A). The `postseason_ladder` entry states the ladder as a published choice with no fitted scale; the spread match that informed it stays in this plan and the module docstring (ruling X9).
+  - The management sentence names what the gate measured: the running game, per-agent decision value (ruling X10).
+  - The honesty sentence and the not-claimed list ship in the payload.
+- **F9.** The Teams join is one F-SCORE column, refreshed after F-SCORE every night (X17, X31). eWAR v3 and its skill parts never enter F-SCORE (X18).
+- **F10.** The outlook leg reads the served headline frame, which after Q9_03's flip is "as of signings" (the OUTLOOK answer), so F-SCORE moves nightly through the winter.
+- **F11. The prototype (ruling X7).** The prototype is never served and never quoted in site copy, glossary, registry text or a commit message. This plan, the owner questions and FS_2F's reproduction check may cite it, labelled prototype. FS_2F's check reproduces the chosen scheme's top three and bottom club from `fs_work/fs_proto2_out.json`, or explains any difference by a named input vintage.
+- **F12. Postseason rules (X30).** Round-1 participants from the schedule, final games by `codedGameState`, byes only with a first round, the tracked unpublished copy for 2000 to 2025.
+
+**Division-champion fix (FS_1).** `franchise_export._standings` copies the feed's flag (`franchise_export.py@64bf1bb3:311` (in `_standings()`)), the board serves it (`:622` (in `build()`)), and `assets/franchise.js@64bf1bb3:451` (in `secSeason()`) prints " division champion". The cache read at 12:36 shows:
+
+- PHI: `divisionRank` 2, clinchIndicator w, 6.0 games back, `divisionChamp` true.
+- ATL: `divisionRank` 1, clinchIndicator y.
+
+The rule's disagreements with the feed over every cached season 2000 to 2026, each with its rule (the payload lists all five; only the 2026 one is served today):
+
+| Season | Club | Feed flag | Rule | Why |
+|---|---|---|---|---|
+| 2008 | BOS | true | false | rank 2, `w` (a wild card); TBR is rank 1 |
+| 2008 | MIL | true | false | rank 2, `w`; the feed flags CHC and MIL, CHC is rank 1 |
+| 2009 | COL | true | false | rank 2, `w`; LAD is rank 1 |
+| 2012 | SFG | false | true | rank 1, `y`; a completed season's rank 1 is its champion |
+| 2026 | PHI | true | false | rank 2, `w`; ATL is rank 1 with `y` |
+
+The rule finds exactly one champion per division in every season. After the fix, PHI's tile reads "clinched" (its berth) instead of "division champion". No number, letter, rank or score moves. The commit is class 2 by 8.A (the new `accountability.standings_flag_disagreements` key) and lands in the window under that label (X34).
+
+---
+
+#### 6. Deliverables
+
+| Task | Delivers |
+|---|---|
+| FS_1_DIVISION_CHAMPION | `franchise_export.division_champions` and the corrected `_standings`; `accountability.standings_flag_disagreements` (five rows); fixtures in `test_franchise_export.py`; the regenerated `data/franchise_board.json` when its leaf diff is clean |
+| (ask A) | moved to the eWAR v3 plan on 2026-10-01: EBR_1_REGISTRATION registers the skill parts with eBR; EWV3_SKILL_BUILD_CORE, EWV3_SKILL_BUILD_LAB, EWV3_SKILL_LOOK and EWV3_SKILL_HOLDOUT build and test them; EBR_3_EWAR_V3 assembles eWAR v3 (`ebr/PLAN.md` section 7) |
+| FS_1B_POSTSEASON_CACHE | `postseason.py`; `test_postseason_cache.py`; `tools/backfill_postseason.py`; run_daily step `d8p`; `postseason_cache` in SCHEDULED_EXPORTS; `.cache/statsapi_postseason_{2000..2026}.json`; the tracked, unpublished `data/_labs/postseason/statsapi_postseason_{2000..2025}.json`; one `deploy/WEBMASTER.md` line |
+| FS_2A_EXPORT_DARK | `fscore_export.py`; run_daily step `6b7f` and the Teams payload step after it; `fscore_export` in SCHEDULED_EXPORTS; the flagged Franchise embed; the Teams join (one column); `test_fscore_export.py`, `test_fscore_isolation.py` and amendments to `test_franchise_export.py` and `test_team_stats_export.py`; drafts (not committed) of the registry row, glossary entries and catalog row |
+| FS_2B_SURFACES_DARK | the Franchise card, section, board mode, Index column, accessible HISTORY marks and sparkline; the Teams tab's F-SCORE column; amendments to `test_franchise_render.py` and `test_mlbstats_league_page.py` |
+| FS_2F_FLIP | `FSCORE_LIVE = True`; `data/fscore.json`; the regenerated `data/franchise_board.json` and Teams payload; registry row `franchise_score`; glossary `franchise_score` and `postseason_ladder` (plus `payroll_efficiency` if OPERATIONS is live); the catalog row; the rewritten Franchise copy; generated docs |
+| FS_3_OPERATIONS_LIVE | OPERATIONS live on the Q9_16 reader; the `payroll_efficiency` glossary entry; the regenerated `fscore.json` and board, with the blast radius |
+
+---
+
+#### 7. Landing rule per item
+
+| Item | Task | Class | May land | Never | Flag | Served change |
+|---|---|---|---|---|---|---|
+| PHI division-champion correction | FS_1_DIVISION_CHAMPION | 2 (a new served payload key, ruling X5) beside a class-1 correction | now until 2026-10-03 23:59, else after step Z | 2026-10-04 to step Z | none (SERVED-CHANGE GUARD) | PHI's 2026 tile loses "division champion"; one new accountability key (five rows) |
+| ask A's skill parts | the eWAR v3 plan's tasks | see `ebr/PLAN.md` sections 6 and 7 | | | | |
+| Postseason ingest | FS_1B_POSTSEASON_CACHE | 1 | after Z | the gap and A to Z | none | none (`.cache/`, an unpublished tracked copy under `data/_labs/`, one ingest heartbeat row) |
+| F-SCORE exporter and join | FS_2A_EXPORT_DARK | 2, dark | after Z | before Z | `fscore_export.FSCORE_LIVE` = False | none; the board and the Teams payload are byte-identical with the flag off |
+| F-SCORE surfaces | FS_2B_SURFACES_DARK | 2, dark | after Z | before Z | FSCORE_LIVE = False | none |
+| F-SCORE flip | FS_2F_FLIP | 2, flip | after Z, once the FS answers or their recorded defaults exist | before Z | FSCORE_LIVE = True | new `data/fscore.json`; card, section, board mode, Index column, HISTORY marks; pennants and titles served as results; the Teams F-SCORE column; Franchise copy rewritten |
+| OPERATIONS live | FS_3_OPERATIONS_LIVE | 3 | after Z and Q9_16, with the box holding the pages | before Z | its constant flips in the same commit | every F-SCORE score, rank and letter may move |
+
+**Served numbers in the forbidden window (2026-10-04 to step Z).** Only FS_1 touches a served file before step Z. If it reaches 2026-10-04 with no step Z entry, it commits nothing. Every other task checks for the step Z entry first and builds behind its flag. The only exception is FS_3, which runs after Z by construction.
+
+---
+
+#### 8. Honesty status of every number
+
+Statuses used:
+
+- **artifact:** quoted from a committed file at the commit named.
+- **checked:** re-read by this synthesis or its fix round at `cbc4fa3e` or `3649ac5b`.
+- **code constant:** a value in committed code.
+- **arithmetic:** computed from committed constants.
+- **cache measure:** counted by a lane or the fix round from local caches or public probes. These files are gitignored, can be reproduced, and are descriptive.
+- **prototype:** a scratchpad prototype run on inputs of mixed vintage. Illustrative, never served; quoted in this plan and the owner questions only, labelled (F11).
+- **expectation:** written down before any number exists.
+
+##### Ask A
+
+Moved on 2026-10-01: the honesty status of every number behind the skill parts (the EM+ evals, the xHEM+ prior, the ladder, the shrink constants, the reliability arithmetic, the replica status, R2e.2) is carried by the eWAR v3 plan (`ebr/PLAN.md` section 4.2) and the registration draft's part 10.
+
+##### F-SCORE (ask B)
+
+| Number | Source | Status | In site copy? |
+|---|---|---|---|
+| PHI 88-74, rank 2, w, 6.0 games back, `divisionChamp` true; ATL 94-68, rank 1, y | `.cache/statsapi_standings_2026.json` (12:36; records updated 2026-09-28) | cache measure, checked | only the corrected fact |
+| PHI `division_champ` true in the committed board (seven true tiles for six divisions) | `data/franchise_board.json` at `3649ac5b` (generated 2026-10-01T13:34:49Z) | artifact, checked | this is the defect |
+| Five feed-flag disagreements 2000 to 2026 (2008 BOS, 2008 MIL, 2009 COL, 2012 SFG, 2026 PHI) | standings caches 2000 to 2026, `_rv_feas/standings_scan.py` | cache measure, checked | the payload's accountability rows |
+| Round-1 participants from the schedule 8, 10, 16 and 12 by format; 2012 has 10 against 8 clinched rows; seven postponed probe games carry abstract state "Final" | probes and standings caches, `_rv_feas/ladder_check.py` | cache measure, checked | as facts only |
+| Series counts and sizes; champions 2019 WSN to 2025 LAD; the 2026 byes | ten public probes in `fs_work/` | cache measure (refetchable) | only after FS_1B, from the cache |
+| Spread of wins above .500, 2022-2025 (14.44, 12.90, 12.28, 11.50); October-part spread (12.96 to 13.44); 9.47 wins per round; 63.9 per title; C's 13.53 to 15.17; part correlations 0.62 to 0.76 | `fs_tables.py` on caches and probes | cache measure, used to pick a published ladder (a spread match, not a value estimate) | no: this plan and the module docstring only; the glossary states a published choice (ruling X9) |
+| Roster continuity 66.9 to 6.2 percent by lag; half-life about 1.8 | `fs_continuity.py` on `war_daily` stints | cache measure; the half-life of 3 is a judgment it informs | the recency method sentence |
+| Recency weights 0.257 to 0.064; half-life 2 gives about 0.32 and 0.04 | `fscore.md` 2.7; this plan | arithmetic | yes |
+| LAD payroll $207.0M, $124.9M, $261.3M (2019 to 2021) | cached Spotrac pages | cache measure | no |
+| Replacement level 0.2944 (47.7 wins per 162) | `franchise_export.py@64bf1bb3:500-503`; `team_outlook_eval.json` | artifact | method text |
+| OPERATIONS raw z of 4.17, 3.86 and 3.50 | prototype | prototype (the reason for the rank transform) | no |
+| Prototype scores (LAD 127.7 A+ to COL 78.1 F), pillar scores, counts, pillar correlations, r 0.86 and Spearman 0.83 with the Index, raw sd 0.865, mean 100.0 and sd 10.01, sensitivity rho 0.978 to 1.000 and its movers | `fs_proto2.py` on the HEAD board of 2026-09-25, working-tree copies taken about 13:50 during the owner's monthly, Spotrac pages and probes | prototype, already stale (the Index has moved since, section 2) | never; FS_2A recomputes everything; this plan, the owner questions and FS_2F's check cite it, labelled |
+| Management gate: r 0.1085, band -0.1501 to 0.1272, season 78.7 percent, club 2.1 percent, 240 club-seasons; the running game only, per-agent decision value | `data/management_board.json` `gate` | artifact, checked | yes (the DUGOUT sentence, naming the running game) |
+| Franchise Index LAD 123.5 and the others at the lanes' base | the board at `64bf1bb3` | artifact, stale at HEAD | no |
+| 7yDvM+ LAD 121 | working-tree `org_summary` copy | cache measure | no |
+| Farm weights ACQ 0.08, DEV 0.09, VALUE 0.65, PROD 0.18 | `storage.py@64bf1bb3:4869-4872` | code constant | method text |
+| DvM+ makes up about 11 points of farm_score | `dvm_difficulty.md` A.2 | another lane's measure | no |
+| Payload 16,478 bytes raw, 4,437 gzipped; board 1,056,294 of 1,500,000 bytes | prototype; the `64bf1bb3` board | prototype; artifact (re-measured in FS_2A) | no |
+| Spearman SE about 0.19 for 30 clubs and 0.11 for 90; 570 club-seasons | 1 / sqrt(n - 3); 19 seasons x 30 | arithmetic | no |
+
+**What each may claim.** The eWAR v3 skill parts: the eWAR v3 plan. F-SCORE: "Descriptive: a weighted summary of what the club did in the last seven seasons and where it stands today. The weights and the postseason ladder are a published choice, not an estimate, and nothing here forecasts wins, a playoff berth or a title. One leg, 2027 wins, is a provisional projection."
+
+---
+
+#### 9. The queue
+
+Every task is kind `EV`, preamble `P8`, model `opus` (ruling X21). Every task that runs an exporter, a lab, a fetch or a look carries the calendar exclusions; the look and the holdout carry the crash protocol.
+
+| # | Id | From | not_before | requires | Insert file and position in `dq/queue.json` | Served change |
+|---|---|---|---|---|---|---|
+| 1 | FS_1_DIVISION_CHAMPION | FS-1 commit 1 | none | none | G1, `--before PX_B_navigation` (next in the window, before Q8_10 as 8.E requires) | PHI tile (window or after Z) |
+| 2 to 6 | (retired) | ask A | | | the five skill tasks moved to the eWAR v3 plan on 2026-10-01 (`ebr/QUEUE_EDITS.json` deletes them from the live queue and adds EWV3_SKILL_BUILD_CORE, EWV3_SKILL_BUILD_LAB, EWV3_SKILL_LOOK and EWV3_SKILL_HOLDOUT) | |
+| 7 | FS_1B_POSTSEASON_CACHE | FS-1 commits 2 and 3 | 2026-10-11 | FS_1_DIVISION_CHAMPION, EPOCH_RUN | G4, `--after EBR_2_BUILD_DARK` (after Q8_15 and the Baserunning task, 8.E order) | none |
+| 8 | FS_2A_EXPORT_DARK | FS-2, exporter | 2026-10-11 | FS_1B_POSTSEASON_CACHE, M13_LEDGER_FRANCHISE_FIGURES, B6_HOF_FRANCHISE_RULE, Q8_10_TEAM_STATS_EXPORT, Q8_11_PLAYER_GAMES_TRENDS_EXPORT, EPOCH_RUN | G4, right after 7 | none |
+| 9 | FS_2B_SURFACES_DARK | FS-2, surfaces | 2026-10-11 | FS_2A_EXPORT_DARK, DISPLAY_franchise, Q8_13b_TEAMS_TAB | G4, right after 8 | none |
+| 10 | FS_2F_FLIP | FS-2, flip | 2026-10-11 | FS_2B_SURFACES_DARK, FS_2A_EXPORT_DARK | G4, right after 9 | class 2 flip |
+| 11 | FS_3_OPERATIONS_LIVE | new | 2026-10-11 | FS_2F_FLIP, Q9_16_LEDGER_FA_SPEND_PROFILE, EPOCH_RUN | G5, `--after Q9_16_LEDGER_FA_SPEND_PROFILE` | class 3 |
+| 12 | (retired) | ask A | | | moved to the eWAR v3 plan: EBR_3_EWAR_V3 assembles and serves eWAR v3 | |
+
+Every `requires` id of the F-SCORE tasks exists in `dq/queue.json` (the Part 8, epoch, queue-7b and DISPLAY ids are all inserted there) or in an earlier insert file, so `qctl add` needed no `--allow-unknown`. No `requires` names a conditional task that might be skipped.
+
+**Insert commands, in this order** (from `C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/dq/`, with `I=../part8/xwar_fscore_inserts`):
+
+1. `python qctl.py add --file $I/G1_FS_1.json --before PX_B_navigation`
+2. (retired 2026-10-01: `G2_SWAR_REGISTRATION.json`; its task is deleted by the eWAR v3 plan's `QUEUE_EDITS.json`)
+3. (retired 2026-10-01: `G3_SWAR_BUILD_LOOK.json`; its four tasks are replaced by the eWAR v3 plan's EWV3_SKILL_* tasks)
+4. `python qctl.py add --file $I/G4_FSCORE.json --after EBR_2_BUILD_DARK`
+5. `python qctl.py add --file $I/G5_FS_3.json --after Q9_16_LEDGER_FA_SPEND_PROFILE`
+6. (retired 2026-10-01: `G6_SWAR_INTEGRATION.json`; EBR_3_EWAR_V3 does the integration)
+
+**If FS_1 STOPs on the clock** (it reached 2026-10-04 with no step Z entry), the gatekeeper has marked it done, so the orchestrator re-arms it first (ruling X18): `python qctl.py set FS_1_DIVISION_CHAMPION --status pending --not-before <step Z date> --requires Z1_RUN`, then `python qctl.py move FS_1_DIVISION_CHAMPION --after Z1_RUN` (`move` accepts only a pending task). It still sits before Q8_10.
+
+**Orchestrator actions, in order:**
+
+1. **Now:** run insert command 1. Then, per 8.C action 3, add FS_1 to the three Teams tasks, keeping their current lists:
+   - `qctl set Q8_10_TEAM_STATS_EXPORT --requires Q8_08_LEAGUE_TEAM_INGEST,Q8_09_LEAGUE_AVERAGES_EXPORT,FS_1_DIVISION_CHAMPION`
+   - `qctl set Q8_13b_TEAMS_TAB --requires Q8_10_TEAM_STATS_EXPORT,Q8_13a_LEAGUE_TAB,FS_1_DIVISION_CHAMPION`
+   - `qctl set Q8_15_LEAGUE_TEAMS_DRAWER_FLIP --requires Q8_07_MLBSTATS_RATES_MODULE,Q8_08_LEAGUE_TEAM_INGEST,Q8_09_LEAGUE_AVERAGES_EXPORT,Q8_10_TEAM_STATS_EXPORT,Q8_11_PLAYER_GAMES_TRENDS_EXPORT,Q8_12_CHART_HELPERS_AND_TOKENS,Q8_13a_LEAGUE_TAB,Q8_13b_TEAMS_TAB,Q8_14_PLAYER_DRAWER,FS_1_DIVISION_CHAMPION`
+2. **Ask the question batches:** batch 1 was answered on 2026-10-01 (SWAR-Q0 to SWAR-Q3, which moved ask A into the eWAR v3 plan); batch 2 (F-SCORE) before step Z, so FS_2A builds the answers and the flip needs no constants change; batch 3 (SWAR-Q4) moved to the eWAR v3 plan's questions.
+3. **SWAR-Q0 was answered "Also a named part of eWAR v3"** on 2026-10-01; the eWAR v3 plan carries the ladder as candidate part 3 of the registration EBR_1 commits.
+4. **Insert commands 4 and 5** were run; 2, 3 and 6 are retired (the eWAR v3 plan's `QUEUE_EDITS.json` replaces what they inserted).
+5. **Copy** this plan, both JSON files, the insert folder and the FIX_LOG into the durable bundle with the rest of `<part8>` (8.C action 1).
+6. **Record each default** in `DECISIONS_FOR_OWNER.md` as tasks report them.
+7. **Re-arm on BLOCKER lines** as 8.C describes. A FS_2F 'BLOCKER: task FS_2R_ANSWER_REBUILD' asks the orchestrator to write and queue that task before FS_2F (an FS-Q4 answer other than "Serve both"). Nothing here waits on EBR_3_EWAR_V3.
+8. **After the 2026 World Series,** if FS_2F has not already done it, queue a one-commit task that adds the trimmed 2026 file to `data/_labs/postseason/`.
+
+**Ids cited elsewhere:**
+
+- `SWAR_REGISTRATION`, `SWAR_BUILD_CORE`, `SWAR_BUILD_LAB`, `SWAR_LOOK`, `SWAR_HOLDOUT` and `SWAR_INTEGRATION` are retired (2026-10-01); 8.E's citations of them are amended by the orchestrator (the eWAR v3 plan, section 10).
+- FS-1 `fscore_data` becomes FS_1_DIVISION_CHAMPION (commit 1, the id that 8.C says to add to Q8_10, Q8_13b and Q8_15) and FS_1B_POSTSEASON_CACHE.
+- FS-2 `fscore_index_surfaces` becomes FS_2A_EXPORT_DARK, FS_2B_SURFACES_DARK and FS_2F_FLIP (the first draft's FS_2_INDEX_BUILD_DARK is retired).
+- FS_3_OPERATIONS_LIVE is new.
+
+---
+
+#### 10. Owner questions and recorded defaults
+
+| Batch | Id | Header | Recommended | Needed by |
+|---|---|---|---|---|
+| 1 | SWAR-Q0 to SWAR-Q3 | Ladder home, Skill WAR, Skill name, Hitting leg | answered 2026-10-01: (b), (b), (c), (c) | moved ask A into the eWAR v3 plan |
+| 2 | FS-Q1 | F-SCORE mix | results-heavy (50/25/20/5, 8 wins a step) | before FS_2A_EXPORT_DARK dispatches; at the latest FS_2F_FLIP |
+| 2 | FS-Q2 | FS recency | half-life of 3 seasons | the same |
+| 2 | FS-Q3 | Management | shown beside it, not scored | the same |
+| 2 | FS-Q4 | Index vs FS | serve both | the same; another answer after FS_2A queues a rebuild task |
+| 3 | SWAR-Q4 | Part detail | moved to the eWAR v3 plan's questions (re-asked for one series) | before EBR_3_EWAR_V3 (not before 2026-11-18) |
+
+**Where they came from:**
+
+- SWAR-Q0 to SWAR-Q4 were this plan's ask A questions; their answers and the re-asked SWAR-Q4 are in the eWAR v3 plan (section 9).
+- FS-Q1, FS-Q2, FS-Q3 and FS-Q4 are `fscore.md` Q1, Q2, Q4 and Q5. FS-Q3 drops the first draft's "Scored now" (it would have lifted two standing rules on a quantity the gate measured as noise, ruling X10) and offers "Left out of F-SCORE" instead; its text names the running game.
+
+**Recorded as defaults, not asked:**
+
+- **F-SCORE:**
+  - 2020 counted as played (`fscore.md` Q3).
+  - No home card in v1 (Q6).
+  - OPERATIONS dark until Q9_16's reader exists (Q7, which 8.E already states).
+  - No forward registration (Q8).
+
+  FS_2A records each default.
+- **Ask A's defaults** (leverage L-A, seasons from 2016, the EM+ constants, the per-season ladder window, the swingman blend, the nopp and pitcher-batter rules, the replica's feed-only arm, rate cells, B1 on 2016-2018, the HR arm, the holdout): recorded in the eWAR v3 registration's part 1.
+
+**Not asked again:**
+
+- EPOCH-Q4 (O5, answered).
+- EBR-Q0 to EBR-Q6 (the eBR plan's).
+- LTS-1 to LTS-4 (the Teams tab's).
+- Decision 18.
+- The Franchise Index weights (owner decision 2026-09-23, D3 and D6).
+
+---
+
+#### 11. What moves these numbers without their own commits
+
+| Moves F-SCORE | Through |
+|---|---|
+| each October night | the live postseason (RESULTS, in progress) |
+| Q9_03's OUTLOOK flip and every winter signing | the outlook leg (0.05 of the index) |
+| VAL_4, the DvM+ difficulty arm (Q10_16), any eFV refit | PIPELINE, through farm_score and DvM+ |
+| the epoch's display steps, if `war_leaderboards.json` changes basis | the roster leg |
+| FS_3 | OPERATIONS |
+
+These do not move F-SCORE: Cost+ (M13-4, COSTPLUS-1), HoF (B6), and Management (shown only). Each commit in the table above should name F-SCORE in its blast radius. The Teams column moves with F-SCORE on the same night (X31).
+
+The eWAR v3 skill parts' cadence and construction rules are the eWAR v3 plan's (section 5).
+
+---
+
+#### 12. Findings handed to other owners
+
+| Finding | Evidence | Goes to |
+|---|---|---|
+| The futures ledger cannot resolve without postseason results | `proj_export.py@64bf1bb3:3033-3037` | the projections lane (M12-20 owns the futures scorer). After FS_1B it may read `postseason.load`; F-SCORE never scores the ledger |
+| A prior-year Spotrac page carries a 30-day TTL, so any call to `scrape_spotrac_payroll(Y)` for a past year downloads it again | `scrapers.py@64bf1bb3:1124`, `:1166-1172`, `:1195` | every Spotrac caller; Q9_16's reader is already cache-only. Its pages must also reach the box (FS_3 precondition 4) |
+| The Franchise page's existing `spark()` carries `role="img"` but no `aria-label` and no data table | `assets/franchise.js@64bf1bb3:396-409` (at `role="img"`) | DISPLAY_franchise (queue 6). FS_2B fixes only the new F-SCORE sparkline |
+| `cbd95517` (M17, 2026-10-01) took the daily label `9e-pre0d` for the live-season window panel, while Q8_11's spec still claims `9e-pre0d` for league averages and the Teams payload | `run_monthly.py` at `3649ac5b` (at '9e-pre0d. Live-season window panel'); Q8_11's spec, commit 4 | the orchestrator: amend Q8_11 to take the next free label by commit order; the eWAR v3 assembler (EBR_3_EWAR_V3) reads labels at HEAD and in the queue |
+| The first draft's SEM+ hand-off is withdrawn: the registry notes already carry the restamp from 702 to 592 pairs | registry `sem_plus` notes at `3649ac5b` | no one |
+
+---
+
+#### 13. Risks
+
+- **FS_1 misses the window.** Philadelphia keeps a false "division champion" through the blackout: about ten days on the plan of record, about five weeks on the fallback epoch.
+- **Step Z slips.** Every post-Z task slides, while the look and holdout's 2026-11-17 floor stays.
+- **Ask A's risks** (a tied skill look, the HR arm's transport, the re-gate wait, the ladder's lean) are the eWAR v3 plan's (section 11).
+- **Q9_16 lands late, or its pages are not on the box.** OPERATIONS stays dark longer. On the prototype, the dark vector ranks clubs like the live one at rho 0.994.
+- **Q8_10 lands after FS_2A.** FS_2F adds the join before the flip.
+- **An FS-Q4 answer other than "Serve both".** FS_2F STOPs for a rebuild task; F-SCORE ships later.
+- **The prototype's numbers drift.** Nothing on the site quotes them.
+
+### 8.M League Trends
+
+- Status: verify round 3 (`part8/VERIFY_league_trends_round3.md`, 2026-10-01) ended with two minor items (N12, N13) that the orchestrator closed (the decisions file reads 'fix round 2; two minor items closed by the orchestrator'); no round 4 verify file exists; source `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part8/LEAGUE_TRENDS_PLAN.md`.
+- Queue (dq/queue.json, prefix TR_): TR_1_FRAMES_DARK, TR_2A_DETECT_DARK, TR_2B_CALIBRATE_DARK, TR_P1_PERSISTENCE_REGISTRATION, TR_P2_PERSISTENCE_LOOK, TR_3_EXPORT_PIPELINE_DARK, TR_4_PAGE_DARK, TR_5_FLIP.
+- Answers: `C:/Users/noah/baseball-projects/_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, section 'League Trends batch 1' (TR-Q1 to TR-Q3).
+
+### League Trends on /mlbstats/: the plan for the owner's ask of 2026-09-30
+
+Owner, verbatim: "maybe also add a 'League Trends' section to the MLB Stats page that tracks specific
+developing trends for both teams and individual players?"
+
+Synthesis of the read-only lane `league_trends.md` (2026-10-01 13:17) with fix round 1 applied on 2026-10-01: one
+adversarial check (`REVIEWS_league_trends_round1.json`, 5 major and 8 minor issues) and the orchestrator's rulings
+T1 to T15; then fix round 2 on 2026-10-01: the verifier's `VERIFY_league_trends_round2.md` (C1, C3 and the new items
+N1 to N11) and the orchestrator's rulings R1 to R11. Every change is a row of `FIX_LOG_league_trends.md` (round 2
+in its 'Round 2' section).
+
+**Files.** `<part8>` is `C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/part8/`;
+its durable copy is the Part 8 bundle `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part8/` (the orchestrator
+copied `league_trends.md` and `trends_work/` there on 2026-10-01; this plan, its fix log, its tasks and its questions
+are copied there before the tasks are queued, section 11 item 1).
+
+| File | What it is |
+|---|---|
+| `LEAGUE_TRENDS_PLAN.md` | this plan; where it and the lane differ, this plan governs (section 2 lists every difference) |
+| `QUEUE_TASKS_league_trends.json` | the eight writer tasks in dispatch order (`id`, `kind` EV, `preamble` P8, `model` opus, `not_before`, `requires`, `spec`) |
+| `OWNER_QUESTIONS_league_trends.json` | TR-Q1 to TR-Q3, one batch, recommended option first, each with `batch` and `needed_by` |
+| `FIX_LOG_league_trends.md` | one row per check issue and per ruling, and the output of the checks |
+| `HANDOFF_NOTES_league_trends.json` | round 2 (ruling R3): the exact ORCHESTRATOR NOTE text for each other task this plan hands something to, keyed by task id (section 11) |
+| `league_trends.md`, `trends_work/` | the lane design and its probes; read for method and evidence, never for a bar, a family list or a payload key this plan changed |
+| `trends_work/lt2/p16_policy.py`, `p16b_holdout.py`, `p16c_totals.py`, `p16d_dispersion.py` and their `out/p16*.json` and `.log` | the committed re-derivation of the family list under the stated policy (rulings T1 and T2) and, in round 2, the overdispersion of the held-out count and the quasi-Poisson bound (ruling R7; `out/p16d_dispersion.log`, `out/p16c_totals_r2.log`): arithmetic on the lane's saved per-season tables, no cache or game read |
+| `_build_league_trends_json.py`, `_check_league_trends.py` | the generator of the two JSON files and their checker |
+
+**Inputs.** The lane, read at `64bf1bb3` (base) and `3649ac5b`. Read beside it: Part 8 of
+`docs/master-plan-2026-09-24-final-pass.md` (8.A rules, 8.B clock, 8.D conflicts, 8.E ownership; `PART8_ADDENDUM.md`),
+`P8_COMMON.txt`, the P8.2 section and its tasks Q8_07 to Q8_15 (`QUEUE_TASKS.json` and the live `dq/queue.json`, 233
+tasks at 14:00 on 2026-10-01 and 239 when the checks ran; the anchor `Q9_27_COMPARABLE_REAL_TRADES` is unchanged), and the checker's probes in `lt_review/probes/` (v6 swing pool, v7 league pitch
+environment).
+
+**State pin.** HEAD is `1bd29cf4` (2026-10-01 afternoon), five commits after `3649ac5b`, none touching a file this plan
+cites by line. At HEAD: `run_monthly.py` step 9e-pre0d is M17-1's live-season window panel (at
+'9e-pre0d. Live-season window panel', line 3081); `bannerHTML` sits at `assets/mlbstats.js` line 2465 (at
+'function bannerHTML', 2370 at `64bf1bb3`); neither `pitch_rates.py`, `league_averages.py` nor `mlbstats_games.py`
+exists yet, and `sp_ip_per_gs` appears only in the plan text (Q8_03 adds it); `.cache/war_daily/bat.parquet` is on
+disk and run_daily reads war_daily every night (at '9e-pre0c. Refresh eWAR Leaderboard'); `deploy/nightly-build.sh`
+prunes `.cache/win_prob` under disk pressure through `tools/prune_cache.py` (at 'Disk preflight', 120-day keep).
+In the queue, `SCORES_4b_BRACKET` (the live playoff bracket on the Scores page) and `B6_MGMT_NIGHTLY` are pending;
+`M17_MLBSTATS_WINDOWS_3YR_SWSTR`, `M26_TIER_CUTS_MLBSTATS_VIEWS` and `PX_C_states_ballpark` (EephusState) are done.
+
+**Discipline.** Nothing in the repository was edited, and no test, exporter, lab, fetch or look ran. This fix round
+read git, a few HEAD files and the queue, and ran three arithmetic scripts on the lane's saved tables under
+`trends_work/lt2/out/` (section 3.3). No game, cache, betting file or network was read. Round 2 added one more
+arithmetic script on the same saved tables (`p16d_dispersion.py`) and three read-only looks, disclosed here: the file
+names of `.cache/swing_pitches/` (`<batter>_<season>.csv`, 489 files for each of 2024, 2025 and 2026; no file was
+opened); the key structure of one `.cache/win_prob/<pk>.json` payload; and the `runners[].details.eventType` values
+of the last 30 payloads by file name (stolen-base and caught-stealing types are present, so the sidecar can count
+attempts per game, section 4.4). No value of a trait, no score and no stolen-base rate was computed; `swing_plus_ingest.py`
+(its cache layout, `FIRST_TRACKING_SEASON` 2024 and the 6-day live-season TTL), `tools/prune_cache.py` (swing_pitches
+is on its list), `editorial_eval.py`'s header and `docs/diamond-betting.md` section 5m were read as code and text.
+
+**Precedence.** Part 8's rules (8.A, P8_COMMON) govern this plan; the orchestrator's rulings T1 to T15 govern where a
+check fix and a ruling differ; this plan governs the lane.
+
+---
+
+#### 1. What ships
+
+1. **A Trends tab on /mlbstats/** (`section=trends`, after P8.2's Teams and League tabs), with three sub-views:
+   Players (default), Teams and League. Lazy: nothing on the landing; the tab's script and payload load on first open.
+2. **Players**: a list of changes in a player's own measured trait that clear a calibrated bar, with the expected
+   number of chance entries printed beside it. At the recommended policy (TR-Q1 (a)) and swing pool (TR-Q3 (a)):
+   nine statistical families, all kept by the held-out rule under its quasi-Poisson bound (section 3.2, ruling R7),
+   about 9.3 listed changes a day in season with about 0.33 a day expected from game-to-game noise (2023-2025
+   pooled, swings 2024-2025; swing figures estimated for the production pool), plus three rule-based events (a
+   pitcher moving into or out of the rotation, a new pitch, a hitter in or out of the lineup).
+3. **What clears is mechanics, not results.** Fastball velocity (SP, RP), reliever induced vertical break and
+   horizontal break, pitch mix, reliever entry leverage, and hitter bat speed, swing length and attack angle. No results measure (wOBA, K%, BB%,
+   whiff, chase, exit velocity, hard-hit) separates real change from chance (section 3.9); a card shows a 30-day OBP
+   or K-BB% as context only, and the copy says why.
+4. **Teams**: per club, the run-differential strip over the last 10 and 30 games with a chance band computed from
+   2021-2025 club margins (section 4.3), the club's share of the player list, rotation and lineup events, and bullpen
+   workload counts. Descriptive; nothing flags a club.
+5. **League**: season-over-season cards. Strikeout rate, walk rate, home runs per PA, pitches per PA and starter
+   innings per start (starts only, `sp_ip_per_gs`) READ P8.2's series (the last two for completed seasons only,
+   section 4.4 and 7); stolen-base attempts per club game, four-seam velocity, sweeper share and splitter share are
+   this section's own family, computed from the physics sidecar for 2018, 2019 and 2021 on (the pitch shares "as
+   labelled in MLB's feed"), and carried inside `league_trends.json` with no `series_ref` (ruling R4).
+6. **Honest by construction**: descriptive copy with no forecast word; one `measurement_only` registry row whose
+   eval artifact is the false-trend calibration; the false rate on the page is computed nightly as the published
+   per-test placebo tail times that day's tests, never typed.
+7. **Optional, by owner answer only (TR-Q2)**: a registered one-look persistence read, velocity families excluded.
+8. **Landing**: class 2, built dark behind `league_trends_export.MLBSTATS_TRENDS_LIVE = False` (outputs under
+   `.cache/league_trends/preview/`), flipped in one commit after the fWAR epoch's step Z entry and after
+   `Q8_15_LEAGUE_TEAMS_DRAWER_FLIP`.
+
+---
+
+#### 2. What changed from the lane (this plan governs)
+
+| # | Lane | Now | Ruling or issue |
+|---|---|---|---|
+| D1 | Swing bars chosen on the Swing+ cache pool (80 to 110 tests a day) while production tests every tracked hitter | bars re-chosen for a pool the size production serves (about 304 tests a day, the corpus proxy); the per-test tail of every family is published and the exporter computes `false_per_day = tail(bar) x tests_today`; the swing pool is TR-Q3 | T1; check major 1 |
+| D2 | strict policy stated without a count floor; the saved code held a different rule; SP IVB, SP spin and RP spin listed on 1 to 15 flags | policy stated in full (section 3.2) with 20 or more pooled flags and a worst-season check only over seasons with 5 or more flags; the list re-derived by `p16_policy.py`; SP IVB, SP spin and RP spin leave the strict list; a held-out rule on counts (round 1 left RP HB off on a plain Poisson bound; round 2's quasi-Poisson bound leaves nothing off on the lane's tables, section 3.2) | T2, R7; check major 2, N6 |
+| D3 | "No probe read any game AFTER a window" | false as written; section 3.5 lists every whole-season input; production and the build's calibration use only games on or before D, and the shrink fit for season S only seasons before S | T3, R2; check major 3, C3 |
+| D4 | pitch-environment rows added to P8.2's `STAT_DEFS`, cards carrying `series_ref` | the family lives inside `league_trends.json`; no `STAT_DEFS` change; no `series_ref` on those three cards | T4; check major 4 |
+| D5 | club identity through `mgmt_teams.build_map` (reads the corpus) | a payload club vote (`trend_frames.club_by_game`) over the sidecar's half-inning batters with `mgmt_teams.player_team_weights`; the first check covers the frame AND club identity with the corpus absent | T5; check major 5 |
+| D6 | one task, flip as its commit (7) | five build tasks, a flip task requiring the build, Q8_15 and the step Z entry, and two persistence tasks gated on TR-Q2 | T6, T14; check minor 6 (a) |
+| D7 | shrinkage fitted against a single-family null for mix (pi0 0 every season) | mix fitted against the placebo's own max-of-three null, else no shrunk value is printed; fit seasons pinned in the eval artifact | T7; check minor 7 |
+| D8 | chance band from `data/betting_model_context.json` and 5k's constant | band computed from 2021-2025 club margins in the frame, stored in the eval artifact; the betting context file is never read | T8; check minor 8 |
+| D9 | step label "next free letter" | next free `9e-pre0<letter>` (and `6b4<letter>`) at commit time that no pending queue spec names, pinned by title | T9; check minor 9 |
+| D10 | context line a rolling wOBA with the probe's weights; League card `ip_per_gs` | context line 30-day OBP (hitters) and K-BB% per batter faced (pitchers); the wOBA swap is a later one-line change once X02-08 and M06-18 resolve; League card reads `sp_ip_per_gs` | T10; check minor 10 |
+| D11 | `assets/mlbstats-trends.js`; LT-Q1, LT-Q2; payload `covers_through`, `games.in_frame` | `assets/mlbstats-league-trends.js`; TR-Q1 to TR-Q3; payload `as_of` (equal to `covers_through`) and `coverage {games, expected}` so `bannerHTML` renders it unchanged | T11; check minor 11 |
+| D12 | persistence read covers velocity families | velocity families excluded from any persistence look until G4-02 is registered or dropped; controls matched on baseline game SD | T12; check minor 12 |
+| D13 | five factual slips | corrected (section 3, 4.2, 5.5) | T13; check minor 13 |
+| D14 | `LT-Q2` labelled default (a) while the unanswered action was (b) | recommendation and default stated apart: TR-Q1 (a), TR-Q2 (b) and TR-Q3 (b) are the recorded defaults taken when unanswered; TR-Q2's recommendation stays (a), and a default never registers anything | check minor 6 (c) |
+| D15 | test gaps | the eval test reads the preview path while the flag is off; `generated_at` stamped; `bat_speed` and `horizontal_break` join the glossary list; a cross-group relabel fixture (FC labelled SL with cutter physics) | check minor 6 (d) to (f) |
+| D16 | one STOP on re-measure (0.02 a day or 5 points) | the build re-chooses bars by the committed policy; a family whose live-season placebo count exceeds the quasi-Poisson 99th percentile is left off and reported; no STOP on noise | check major 2; R7 |
+| D17 | swing values from the Swing+ cache in the probes, with no named production source | under TR-Q3 (b) the swing source for every season is `.cache/swing_pitches/` (read-only, with a receipts check and a STOP naming missing seasons); under (a) the day files | R1; C1 |
+| D18 | `pitch_game_frame` in P8.2's `mlbstats_games.py` (round 1) | `trend_frames.pitch_game_frame`, owned by League Trends, built from the sidecar and the swing source; P8.2's module is never edited | R6; N4 |
+| D19 | stolen-base attempts card with a `series_ref` into P8.2's series, which has no such key | computed here from the sidecar's per-game stolen-base and caught-stealing counts, no `series_ref` | R4; N2 |
+| D20 | pitches per PA and starter innings per start shown for the live season | completed seasons only, citing section 5m's Disqualification paragraph; the STOP clause names them and the banned strings | R5; N3 |
+| D21 | handoffs 2 to 4 as plan text only | exact ORCHESTRATOR NOTE text per task in `HANDOFF_NOTES_league_trends.json`; `B6_MGMT_NIGHTLY` an alternative path for TR_1's first check, not a requires | R3; N1 |
+
+---
+
+#### 3. The calibration
+
+##### 3.1 The definition (lane 2.1, with the corrections)
+
+For player p, family F and date D (the last game date the frame covers):
+
+- **Window W**: his last k games (a starter's last 3 starts; a reliever's last 6 outings, or last 8 for mix and entry
+  leverage) or his games in the last 30 days (swing mechanics).
+- **Baseline B**: his earlier games of the same season, before W (prior-season mode, 3.8, before the floor is met).
+- **Game value**: a per-game mean (the primary fastball's mean velocity in that game; a game's family shares; a
+  game's mean bat speed on competitive swings). Starters: a start counts with at least 15 primary fastballs and its
+  variance is `s_b^2 + s_w^2 / n` (probe P13: this lifted starter velocity in its weakest season from 72.5 to 80
+  percent real, and pooled from 90 to 92 percent).
+- **Drift**: the mean window-minus-baseline change over every eligible player of the same role on the same date,
+  subtracted, for every family EXCEPT entry leverage, which was calibrated without drift removal
+  (`p7_calibrate.py:718`, `drift=False`) and keeps `drift=False` in `trend_detect.FAMILIES`.
+- **Statistic**: `z = (mean(W) - mean(B) - drift) / (sigma * sqrt(1/n_W + 1/n_B))`; the bar applies to `z / phi`,
+  phi the placebo SD of z.
+- **As of D, always** (ruling T3): sigma is the pooled within-player game-to-game SD over the season's games on or
+  before D; the competitive-swing cut is the hitter's 10th percentile of bat speed over his swings on or before D
+  (his previous season's cut until he has 100 swings); role and primary fastball are taken from games on or before
+  D (the primary fastball from the baseline); the placebo permutes each player's games on or before D only. The
+  shrink fit for season S uses only completed seasons before S, never S itself or a later season: in the lab, 2021
+  and 2022 for 2023, 2021 to 2023 for 2024 and 2021 to 2024 for 2025 for the pitcher families, and 2024 for 2025
+  for the swing families, whose first season 2024 has no earlier season and is scored with the floor on the raw
+  change (which can only add flags, real and placebo alike); in production in season Y, the pinned seasons in
+  shrink.seasons, all before Y; so no bar carries information from after the evaluation date D. Production and
+  the build's calibration share one code path in `trend_detect.py`.
+- **Shrinkage** (3.6), **floors** (lane 2.1: velocity and bat speed 1.0 mph, IVB and HB 1.5 in, mix 8 points, swing
+  length 0.2 ft, attack angle 2 degrees, entry leverage a factor of 1.5, applied to the shrunk change), **episodes**
+  (a run of consecutive daily flags is one episode; "first flagged" is its first date).
+
+##### 3.2 The policy, stated in full (ruling T2)
+
+Per family, on the pooled calibration seasons (2023-2025 for pitcher families; 2024-2025 for swing families, the
+seasons bat tracking covers), with counts taken as flags a day times evaluation dates (weekly Sundays from the
+third Sunday of May; 18 to 20 a season), the bar is the SMALLEST bar on the grid (2.5, 3.0, 3.25, ... 6.0) at which:
+
+| Rule | strict (default, TR-Q1 (a)) | looser (TR-Q1 (b)) |
+|---|---|---|
+| expected false trends a day (per-test placebo tail x tests a day), pooled | 0.05 or fewer | 0.10 or fewer |
+| share of flags above the placebo, pooled | 0.90 or more | 0.85 or more |
+| pooled flag count (flagged player-dates) | 20 or more | 20 or more |
+| share real in each season with 5 or more flags (seasons under 5 are not judged; the table names how many were) | 0.75 or more | 0.75 or more |
+
+A family with no bar meeting every rule is left off. The count floor chosen is 20 flags rather than 0.10 a day:
+at 56 to 60 dates, 0.10 a day is about 6 flags, which would admit SP spin (15 flags) and RP spin (12) and leave the
+held-out check with almost no power. Then the **held-out rule** (round 2, ruling R7): at the chosen bar, the live
+season's placebo exceedances summed over the R = 20 shuffles are compared with a quasi-Poisson 99th percentile,
+`phi x Poisson.ppf(0.99, lam / phi)` with `lam = tail x tests x dates x R`; a family above it is left off the
+served list and reported (no bar is raised on held-out data). **Overdispersion, stated**: the R shuffles permute
+the SAME players' games, so the summed count is overdispersed: its mean given a season's players moves from season
+to season, and all R shuffles share that move. `phi` is the quasi-Poisson dispersion measured between the
+calibration seasons: `X2 / df` pooled over the strict families, `X2 = sum over seasons s of (O_s - E_s)^2 / E_s`
+on each season's summed placebo count (`O_s`) against the pooled tail's expectation (`E_s`), floored at 1. The lane
+saved its placebo counts averaged over the shuffles, not per shuffle, so the empirical per-shuffle 99th percentile
+cannot be read from its tables; it would also miss the season-to-season part, because a shuffle holds the season's
+players fixed. That is why the quasi-Poisson bound, which the lane's tables do measure, is the rule. On the lane's
+tables `phi` is 3.13 (X2 46.9 on 15 df; `p16d_dispersion.py`), and no family is left off: RP HB 23.9 against
+28.1, bat speed at the Swing+ pool 28.1 against 34.4. Round 1's plain Poisson bound (20 and 26) took `phi` as 1,
+tripped on noise, and is withdrawn. The cost is power: at `phi` near 3 the rule leaves off only a family whose
+live placebo count runs about 2.0 to 3.8 times its expectation (the quasi-Poisson bound at phi 3.13 over the families' expected counts) or more. The build measures `phi` from its own
+as-of-D counts, records it with X2 and df in the eval artifact (`policy.held_out`), applies both rules in
+committed code, and records the per-shuffle counts for the record only; this plan's table is the provisional
+result on the lane's saved tables.
+
+##### 3.3 The family list, re-derived (`p16_policy.py 20`, `p16b_holdout.py`, `p16d_dispersion.py`, `p16c_totals.py quasi`)
+
+Strict policy, swing families at the production pool (TR-Q3 (a); flags scaled by tests, the stated assumption the
+build re-measures):
+
+| Family (window vs earlier games) | Tests a day | Bar | Flags a day | False a day | Pooled flags | Real (worst; seasons judged) | Tail per test | 2026, used by the held-out rule: flags / false a day; placebo count vs quasi-Poisson 99th (round 1's Poisson 99th) |
+|---|---|---|---|---|---|---|---|---|
+| SP fastball velocity, last 3 starts | 122 | 4.5 | 0.37 | 0.031 | 22 | 92% (80%; 3) | 2.55e-4 | 0.11 / 0.026; 9.9 vs 28.1 (20), kept (2 flags, not judged) |
+| RP fastball velocity, last 6 | 204 | 4.5 | 1.25 | 0.047 | 75 | 96% (94%; 3) | 2.29e-4 | 1.58 / 0.026; 9.9 vs 37.5 (27), kept |
+| RP induced vertical break, last 6 | 204 | 5.0 | 0.52 | 0.042 | 31 | 92% (81%; 3) | 2.05e-4 | 0.68 / 0.039; 14.8 vs 34.4 (25), kept |
+| RP horizontal break, last 6 | 204 | 4.5 | 0.70 | 0.031 | 42 | 96% (92%; 3) | 1.52e-4 | 0.89 / 0.063; 23.9 vs 28.1 (20), kept (round 1 left it off) |
+| Pitch-family mix, SP last 3 / RP last 8, hand-matched, max of three | 327 | 6.0 | 1.53 | 0.038 | 92 | 98% (97%; 3) | 1.17e-4 | 0.58 / 0.016; 6.1 vs 31.3 (24), kept |
+| RP entry leverage (log LI of the first batter), last 8, no drift | 201 | 4.0 | 0.75 | 0.033 | 45 | 96% (94%; 3) | 1.66e-4 | 0.74 / 0.037; 14.1 vs 28.1 (21), kept |
+| Hitter bat speed, 30 days, competitive swings | 304 (est.) | 4.25 | 1.27 | 0.040 | 51 (est.) | 97% (92%; 2) | 1.30e-4 | 1.34 / 0.019 (est.); 3.0 vs 18.8 (13), kept |
+| Hitter swing length, 30 days | 304 (est.) | 4.25 | 1.80 | 0.020 | 72 (est.) | 99% (96%; 2) | 0.67e-4 | 1.09 / 0.007 (est.); 1.1 vs 12.5 (8), kept |
+| Hitter attack angle, 30 days | 304 (est.) | 4.25 | 1.09 | 0.044 | 44 (est.) | 96% (96%; 2) | 1.44e-4 | 1.57 / 0.007 (est.); 1.1 vs 18.8 (14), kept |
+
+The placebo counts of the swing rows are taken at the 2026 pool the lane tested (129.9 tests a day), as round 1
+did; the flags and false a day of those rows are scaled to the production pool and marked (est.).
+
+| List | Families | Flags a day | False a day | Real | 2026, used by the held-out rule |
+|---|---|---|---|---|---|
+| **strict, swings at the production pool (recommended); the held-out rule leaves nothing off** | **9** | **9.27** | **0.325** | **96.5%** | **8.57 a day, 0.239 false (97.2%)** |
+| strict, swings at the Swing+ pool (TR-Q3 (b): bars 3.75, 3.75, 4.0); the held-out rule leaves nothing off | 9 | 7.57 | 0.316 | 95.8% | 8.59 a day, 0.344 false (96.0%) |
+| strict, pitcher families only (TR-Q3 (c)) | 6 | 5.12 | 0.222 | 95.7% | not run apart |
+| looser, production pool (adds RP spin at 4.75 and RP extension at 4.5; held-out rule not run) | 11 | 15.88 | 0.871 | 94.5% | not run |
+| looser, Swing+ pool | 11 | 13.92 | 0.924 | 93.4% | not run |
+| for the record, round 1's plain Poisson rule (withdrawn): production pool without RP HB | 8 | 8.57 | 0.294 | 96.6% | 7.68 a day, 0.176 false (97.7%) |
+| for the record, round 1's plain Poisson rule (withdrawn): Swing+ pool without RP HB and bat speed | 7 | 5.82 | 0.254 | 95.6% | 6.38 a day, 0.207 false (96.8%) |
+
+**Left the strict list against the lane:** SP induced vertical break (about 5 pooled flags at 5.5, under 20 at every
+passing bar), SP spin (15 flags at 5.5) and RP spin (12 at 6.0). RP horizontal break, left off in round 1 by the
+plain Poisson bound, is kept under the quasi-Poisson bound (3.2). **2026 per-family misses on the lane's own bars**
+(the check asked for them): RP HB 0.063 false a day and bat speed 0.074 (at 3.75 on the 2026 pool of 129.9 tests a
+day) exceed 0.05, and both stay on the list because the held-out rule, once overdispersion is allowed for, cannot
+tell those counts from season-to-season noise; the fold prints each family's live false rate, so a reader sees
+them. SP velocity's 2026 share real is 76 percent on 2.1 flags.
+Every number above is a probe number with whole-season inputs (3.5); the build re-measures as of D.
+
+##### 3.4 The swing pool (ruling T1)
+
+The lane calibrated swing families on hitters in the Swing+ Savant cache (195 in 2024, 281 in 2025), 86 to 113 tests
+a Sunday by the checker's corpus proxy, against 300 to 307 for every tracked hitter
+(`lt_review/probes/v6_swing_pool.py`). A placebo tail is per test, so the false count scales with tests: the bars
+here are chosen with `tail x 304`, and the exporter always prints `tail(bar) x tests_today` for the pool it actually
+tested. Production can only test a pool that the calibration measured, so TR-Q3 asks which:
+
+- (a, recommended) a one-time Savant backfill of the 2024, 2025 and 2026 bat-tracking day files (about 560 dated
+  requests at a 1.5 s throttle, fail-soft, under `.cache/league_trends/savant_days/`, never `.cache/swing_pitches/`),
+  then the calibration runs on every tracked hitter and the nightly day file keeps production on the same pool;
+- (b, the recorded default if unanswered) only hitters in the Swing+ pool are tested (the pool measured), at bars
+  3.75, 3.75 and 4.0; the fold says the swing list covers that pool. **The swing source under (b) is
+  `.cache/swing_pitches/`** (ruling R1), the per-swing Savant cache `swing_plus_ingest.py` writes
+  (`<batter>_<season>.csv`, 2024 on; closed seasons immutable, the live season refetched on a 6-day TTL), read and
+  never written, for every season: the 2024 and 2025 calibration, the 2026 season the held-out rule uses, the live
+  season in production and, in 2027, the prior-season baseline (3.8). No day file is fetched under (b), so no
+  backfill is needed. The swing families are detected at `D_swing`, the cache's latest game date for the live
+  season (at most D), carried as `families[].as_of`; the exporter leaves the swing families off (never refuses)
+  when `D_swing` is more than 7 days before D in season, and the fold says so. **Receipts check**: the box may prune
+  the cache (`tools/prune_cache.py` lists `swing_pitches`), so every reader counts, per season it needs, the hitter
+  files with at least one tracked swing and the tracked swings. A season is missing when it has no such file, or
+  when a completed season counts fewer hitters or swings than its receipt (the first calibration requires at least
+  the lane's 195 hitters for 2024 and 281 for 2025 and records its counts as `pool.receipts` in the eval artifact;
+  later reads compare with those). A build task that finds a missing season STOPs with 'BLOCKER: other
+  swing_pitches seasons <the missing seasons>'; the nightly exporter leaves the swing families off and names the
+  missing seasons in its `record_ingest` row;
+- (c) no swing families in v1.
+
+Under (a) the swing source for every season is the day files under `.cache/league_trends/savant_days/` (the
+backfill, then one file a night), with the same receipts check against the backfill's own counts.
+
+##### 3.5 What the probes read (ruling T3; replaces the lane's "What no probe did")
+
+The probes' REAL tests used windows and baselines that end at D. Six inputs were whole-season, so the provisional
+bars carry information from games after D:
+
+1. **The placebo permutation**: each player's values were shuffled across his whole season before windows were cut
+   (`shuffle_rows` on the full-season frame, `p7_calibrate.py:565`); the mix and new-pitch placebos permuted
+   whole-season dates (`:637-649`, `:666-677`). A game after D could land in a placebo window or baseline at D.
+2. **Sigma**: pooled from deviations around each player's whole-season mean (`p7_calibrate.py:595-602`, `:714-717`;
+   `p11_hitters.py:82-85`; `p13_sp_physics.py:72-76`).
+3. **The competitive-swing cut**: each hitter's whole-season 10th percentile of bat speed (`p11_hitters.py:43`).
+4. **Role (SP or RP) and the primary fastball**: whole-season labels.
+5. **The two-group shrinkage fits**: each season's tests at every date of that season.
+6. **Club identity**: `mgmt_teams.build_map(validate=False)` votes with war_daily whole-season PA shares by club.
+
+Also read, and disclosed: 2026 through 2026-09-24 as a held-out check, now used by the pre-stated held-out rule
+(3.2); the lane's inventory reads near the betting lane (the row keys and coverage of
+`.cache/betting/completed_games.json`, no runs value printed or kept; the published dispersion constants of
+`data/betting_model_context.json`, which this plan no longer uses, D8). No probe read a game after a window on the
+real side, a later value of a trait as an outcome, a price, a vintage, a lineup capture or a grade. In the build's
+calibration and in production, items 1 to 4 use only games on or before D (3.1). For item 5: The shrink fit for
+season S uses only completed seasons before S, never S itself or a later season: in the lab, 2021 and 2022 for
+2023, 2021 to 2023 for 2024 and 2021 to 2024 for 2025 for the pitcher families, and 2024 for 2025 for the swing
+families, whose first season 2024 has no earlier season and is scored with the floor on the raw change (which can
+only add flags, real and placebo alike); in production in season Y, the pinned seasons in shrink.seasons, all
+before Y; so no bar carries information from after the evaluation date D. Item 6, club identity, enters no bar: it
+labels cards and Teams rows only, and the build takes it from the payload vote (5.1), never `build_map`. The bars
+are re-measured that way before any registration commits (section 8).
+
+##### 3.6 Shrinkage (ruling T7)
+
+The card prints the raw change and a change "shrunk toward no change for game-to-game noise", the posterior mean
+under a two-group prior fitted per family (a point mass at no change with weight pi0 and a normal spread tau):
+`shrunk = (1 - lfdr) * d * tau^2 / (tau^2 + se^2)`. The fold names the method. Production's fit seasons are pinned
+in the eval artifact (`shrink.seasons`, 2023-2025 for pitchers, 2024-2025 for swings, all before 2026); the lab's
+fit for each calibration season uses only the seasons before it (3.1, ruling R2), and `shrink.lab_seasons` records
+them. A normal slab pulls large real
+changes hard: for starters the factor is about 0.6 (Dylan Cease on 2026-09-20: raw 2.67 mph, shrunk 1.63, z -6.2,
+3 starts against 26). **Mix**: the lane's fit gave pi0 = 0 in every season because the max-of-three selected change
+was compared with a single-family null; the build fits mix against the placebo's own distribution of the selected
+change (the null includes the selection), and if pi0 is still 0 or tau is not identified on that null, no shrunk
+value is printed for mix (the card prints the raw shares and z only).
+
+Drafted sentence (every number a payload field): "Fastball velocity down 2.7 mph over his last 3 starts against
+his 26 earlier starts; shrunk toward no change for start-to-start noise, 1.6 mph." The contract test regenerates
+every sentence from its fields.
+
+##### 3.7 The three rules (lane 2.6, kept, with one fixture change)
+
+Rotation switch (PAL's segment constants imported from `pal_gamelogs`), new pitch (a group at 8 percent and 15
+pitches after 1 percent or less of a 300-pitch baseline, physically distinct by 2 mph or 3 in from every baseline
+group), playing time (the availability-guarded rule of P15; the first form failed its placebo and is not used). The
+relabel fixture is CROSS-group: a cutter (FC) relabelled a slider (SL) with cutter physics must not fire; the lane's
+SL-to-ST fixture is one group and could not catch it.
+
+##### 3.8 Prior-season mode
+
+Lane 2.8 unchanged in method (bar 6.0; mix and new pitch excluded), but swing families enter this mode only if the
+build's calibration of 2025 against 2024 meets the strict policy on the pool chosen under TR-Q3; under TR-Q3 (b)
+the 2027 prior-season baseline exists only for pool hitters and is read from their 2026 files in
+`.cache/swing_pitches/` with the receipts check of 3.4 (under (a), from the 2026 day files).
+
+##### 3.9 Families measured and left off
+
+Lane 2.3's second table stands (SP horizontal break, SP extension, pitcher K, BB, whiff and chase, hitter chase,
+whiff, K, BB, exit velocity, hard-hit and 30-day wOBA), with one correction: the real SD of z for results runs 1.02
+to 1.24 (hitter chase over 30 days reached 1.24 in 2023, hitter whiff over 60 days 1.20) against a placebo of 1.01
+to 1.09; for physical traits 1.16 to 1.64 against 0.93 to 1.01.
+
+---
+
+#### 4. Surfaces
+
+##### 4.1 Placement, routing and hash keys
+
+A `Trends` tab after P8.2's Teams and League tabs; `build_site.build_mlbstats` adds the button and panel only when
+`MLBSTATS_TRENDS_LIVE`. Sub-views Players, Teams, League. Hash keys take the `m` prefix (8.D row 1 reserves r, s, h,
+l, d, w, g, t, b): `mview`, `mtype`, `mpos`, `mstr`, `mdir`, `msort`; the club filter is the shared `team=` key;
+`trends` joins the one `section=` regex in `readHash`. The script is `assets/mlbstats-league-trends.js`, injected by
+`showSection` on first open (P8.2's `mlbstats_trends_export.py` and `data/mlbstats_trends.json` are the drawer's and
+keep their names).
+
+##### 4.2 Players view
+
+Lane 4.2, with these changes: the **context line** is the season HEM+, SEM+ or REM+ and the 30-day **OBP** (hitters)
+or **K-BB% per batter faced** (pitchers) against the earlier games, labelled context ("Shown as context: in 2023 to
+2025 no results measure separated real changes from chance well enough to be listed"); the swap to wOBA through the
+boards' wOBA function with its weights named is a one-line change once X02-08 and M06-18 resolve. The **sparkline**
+draws the last 20 game values (the window's points filled) and the baseline mean as a flat line, never the whole
+season, at the cell's real pixel width through `EEPHUS_HUB.spark` and `--viz-1`. The fold reads: "Each change is
+measured against the player's own earlier games this season and net of the league-wide change over the same dates.
+A change is listed when it clears a bar set so that, in 2023 to 2025 for pitchers and 2024 to 2025 for swings, about
+1 listed change in 30 came from game-to-game noise alone; today's list expects about N from noise. Descriptive: this
+is what changed, not what comes next." (N and the share are payload fields.) Links: player page, the drawer deep
+link, the Franchise page through P8.3's resolver (stopgap `EEPHUS_HUB.club(x).code`), the Alchemy Lab section where
+the pitcher is a PAL candidate. No green or red for a direction.
+
+##### 4.3 Teams view
+
+Per club: RS/G, RA/G and RD/G over the last 10 and 30 club games against its earlier games; the **chance band**
+`band_k = sigma_m * sqrt(1/k + 1/n_before)`, sigma_m the pooled within-club-season SD of the per-game run margin over
+2021-2025 completed seasons from the frame's final scores, stored in `league_trends_eval.json` (`rd_band.sigma_m`,
+`rd_band.seasons`), never from a betting file; the club's player cards as chips; rotation and lineup events; bullpen
+relief outs and pitches over 3 and 7 days ranked across clubs. No colour on runs or workload. Nothing in Teams is
+computed before `docs/diamond-betting.md` records the 5c-A look or its 2026-10-06 closure and the 5d and 5k reads
+or their closures (built against fixtures until then).
+
+##### 4.4 League view
+
+Season-over-season cards with the "notable" rule of lane 2.9 (twice the SD of 2001-2025 year-to-year changes, 2020
+and 2021 excluded; a run of three same-direction seasons; a series high or low). Cards that READ P8.2's
+`mlb_league_series.json` (with `series_ref`): strikeout rate, walk rate, home runs per PA, pitches per PA, and
+starter innings per start under the starts-only key `sp_ip_per_gs` (P8.1's definition, Q8_03; P8.2's Teams payload
+uses the same name for the club `sp` split); if the series carries no `sp_ip_per_gs` when the build runs, that card
+is omitted and the ORCHESTRATOR NOTE to Q8_09 stands (section 11), never `ip_per_gs`.
+
+**Pitches per PA and starter innings per start: completed seasons only** (ruling R5). Section 5m of
+`docs/diamond-betting.md` registers starter workload (pitches and outs per start) and, in its Disqualification
+paragraph, names its close variants ("budget alone; ppo alone; other window lengths; season-to-date forms; ... a
+club-level version"), and its builder paragraph bans the strings `sp_n365`, `sp_budget`, `sp_ppo`, `sp_xouts` and
+`bat_ppa_l30` at the repo root and under tools/. These two cards cite that section in their footnote and stay
+clear of it: one league-wide value per COMPLETED season, read from P8.2's series, never a live-season
+(season-to-date) point, never a club or player form, never a window against earlier games, never related to a game
+result, a price or a ledger row; their notable rule runs on completed seasons only, as runs per game does. No
+League Trends module names any of the five strings, and every spec's STOP clause names them.
+
+Cards this section owns (no `series_ref`, no `STAT_DEFS` change; ruling R4 for the first): **stolen-base attempts
+per club game**, `(SB + CS) / (2 x games)` from the sidecar's per-game counts of `runners[].details.eventType`
+(`stolen_base_*`, and `caught_stealing_*` and `pickoff_caught_stealing_*` as caught stealing, one count per runner
+event), never re-pooled from P8.2's series (8.E); four-seam velocity, sweeper (ST) share and splitter (FS) share "as
+labelled in MLB's feed". All four run 2018, 2019 and 2021 onward (2026 to 09-24 from the corpus: 93.14 to 94.78
+mph, ST 0.84 to 8.21 percent, FS 1.48 to 3.26 percent with its peak in 2025, reproduced by the checker's v7 probe;
+the attempts series is first computed by TR_2B). Their notable rule uses the seasons the sidecar covers
+(year-to-year changes from 2021 to 2022 on, 2019 to 2021 excluded) and says "since 2018". Completed seasons are
+frozen in the eval artifact (`league_env`), the live season is computed from the sidecar. Runs per game for
+complete seasons only.
+
+##### 4.5 Banner, states, themes, budgets
+
+The payload carries `as_of` (equal to `covers_through`, the last game date in the frame) and `coverage {games,
+expected}`, so `bannerHTML` (`assets/mlbstats.js` at 'function bannerHTML') renders, unchanged: "Season 2026 ·
+through 2026-09-24 · 2385 / 2430 games of play-by-play · descriptive". Stale in season (as_of more than 2 days before
+the boards' last game date): a note "Not updated since <as_of>: later games are not in yet", cards kept; off season:
+"The 2026 regular season ended Sep 27. These are the changes over its final weeks."; before Opening Day the
+prior-season sentence. Loading and failure through `EephusState` (PX-11 landed). Tokens only, both themes. Budgets:
+nothing on the landing; first open `mlbstats-league-trends.js` under 25 KB raw and `league_trends.json` under 60 KB
+raw / 15 KB gzip (in season about 40 cards with 20-point sparklines, 30 club rows, 9 league cards; measured on a
+fixture in the build).
+
+---
+
+#### 5. Data and pipeline
+
+##### 5.1 Modules
+
+| Module | Does | Reads | Writes |
+|---|---|---|---|
+| `tools/build_pitch_physics.py` (new) | the payload-direct pitch sidecar: one row per pitch (game_pk, at_bat_index, pitch_number, half, inning, batter, pitcher, pitch_type, start_speed, ivb, hb, spin, ext, zone, call code, launch_speed, launch_angle, first-play start time) plus one row per game (final home and away score, and the stolen bases and caught stealing from `runners[].details.eventType`, section 4.4); incremental by game_pk, completed seasons frozen | `.cache/win_prob/<pk>.json` | `.cache/pbp_physics/<Y>/`, manifest with `covers_through` (latest first-play date, America/New_York) |
+| `trend_frames.py` (new, League Trends' own) | `club_by_game(season)`: the half-inning batter vote over the sidecar with `mgmt_teams.player_team_weights()` (war_daily), refusing below `mgmt_teams.MIN_RESOLVED_SHARE`; never `build_map` (it reads the corpus and, validated, the betting results cache). `pitch_game_frame(season)` (ruling R6; League Trends owns it, never P8.2): per pitcher-game and batter-game aggregates from the sidecar and the swing source of 3.4 (the day files under TR-Q3 (a), `.cache/swing_pitches/` under (b), with the receipts check), club per game from `club_by_game`; it may import P8.2's `mlbstats_games.player_game_frame` for game lines and never edits P8.2's module | the sidecar, the swing source, `.cache/war_daily/bat.parquet` | memo under `.cache/league_trends/` |
+| `savant_days.py` (new; TR-Q3 (a) only) | one `statcast_search` request per new game date for bat-tracked swings, refusing rows of another date, after a one-time 2024-2026 backfill | Savant (the `swing_plus_ingest.SEARCH` skeleton with date bounds) | `.cache/league_trends/savant_days/<date>.csv`; never `.cache/swing_pitches/` |
+| `trend_detect.py` (new, pure) | `FAMILIES` (key, label, unit, window, floors, bar, size floor, drift flag, roles), `detect(frame, D, family)` as of D, `shrink`, `placebo`, the three rules, prior-season mode | frames passed in | nothing |
+| `tools/league_trends_calibrate.py` (new lab) | the as-of-D re-measure on 2023-2025 (swings 2024-2025) with R = 20, the policy and held-out rules in code (the quasi-Poisson `phi`), per-test tails and counts, shrink fits on the seasons before each scored season (3.1), the mix null, `rd_band`, `league_env` (with the stolen-base attempts series), `pool.receipts` | frames | `.cache/league_trends/preview/league_trends_eval.json` while dark; `data/` only in the flip; runs only where every calibration season's frame is complete, else writes nothing |
+| `league_trends_export.py` (new) | `MLBSTATS_TRENDS_LIVE = False`; detect at as_of; cards; `false_per_day = tail(bar) x tests_today` per family and summed; refuses (keeps last good) on a stale frame, a missing eval artifact, a bar in code that differs from the artifact, or club identity below the floor | frames, the eval artifact, P8.2's series and boards (names, positions, season indexes), `data/pal.json` (membership) | `.cache/league_trends/preview/league_trends.json` while dark |
+
+##### 5.2 Payload `league_trends.json` (changes against lane 5.2)
+
+Top level: `schema`, `generated_at`, `season`, `mode`, `as_of`, `covers_through` (equal), `coverage {games,
+expected}`, `verdict` "descriptive", `method {fold, false_per_day, eval}`. `families[]` gains `tail_per_test`,
+`tests_today`, `pool` ("all tracked" or "Swing+ pool" for swings), `pooled_flags` and, for the swing families, `as_of` (`D_swing`, 3.4). Player cards keep lane 5.2's
+fields with `spark {v: last 20 values, w, base}` and `shrunk` null for mix when 3.6 says so; `context` holds
+`obp_30d` or `k_bb_30d` and the season index. `teams[].rd` carries `band_l10` and `band_l30` from `rd_band`.
+`league[]` cards carry `series_ref` only for P8.2's statistics (completed seasons only for pitches per PA and starter
+innings per start); the stolen-base attempts card and the three pitch-environment cards carry their own `values` by
+season. No key for a grade, a hand split, a price or an outcome.
+
+##### 5.3 The eval artifact `league_trends_eval.json`
+
+`generated_at`; `policy` (both policies with every threshold, the count floor 20, the season floor 5, the held-out
+rule as `policy.held_out {phi, x2, df, bound: "quasi-Poisson 99th"}`); per family and season: tests a date, dates, flags and false a day, flag and false COUNTS, per-test
+tail at every bar on the grid, phi, real SD of z, chosen bar per policy, held-out verdict; `shrink {seasons, lab_seasons,
+pi0, tau per family}` and the mix null; `pool` for swings, with `pool.source` and `pool.receipts {season: {hitters,
+swings, max_game_date}}` (3.4); `rd_band {sigma_m, seasons}`; `league_env` (completed seasons
+of the three pitch-environment statistics and of stolen-base attempts per club game); `live_check` (the monthly block, below).
+
+##### 5.4 Refresh
+
+- **Daily, "the League Trends step"**: after P8.2's frames step (the step Q8_11 adds, found by its title), after the
+  vintage snapshot, after 9e-pre0c and after the Baserunning and eWAR v3 steps where landed: (a) the physics sidecar,
+  incremental; (b) the Savant day file per new game date (TR-Q3 (a) only; 1.5 s throttle, fail-soft, a
+  `record_ingest` row; under (b) nothing is fetched and the exporter reads `.cache/swing_pitches/` with the receipts
+  check of 3.4); (c) `league_trends_export.export()`. Chained skip and a heartbeat row. Its label is the next
+  free `9e-pre0<letter>` at commit time that no pending spec in the dynamic queue names, pinned by its title in the
+  structure test (ruling T9).
+- **Monthly**: the lab's `live_check` refresh only (this season's tests, flags and placebo tail per family, and the
+  held-out quasi-Poisson verdict), after 6b4k and the other Part 8 monthly steps, next free `6b4<letter>` pinned by title.
+  It never changes a bar: a family that fails `live_check` is left off the served list until the next season's
+  re-calibration, and the fold says so. Bars change only in a reviewed commit after a season completes.
+- **Not an epoch artifact**: no WAR column, nothing on the frozen rebuild list.
+
+##### 5.5 The deploy box
+
+The box has the payloads (the leverage walk) and war_daily, not the corpus. Everything this section computes reads
+the sidecar, war_daily, the swing source and P8.2's frame, so it builds there if P8.2's frame has a payload-direct
+live-season path (the ORCHESTRATOR NOTE to Q8_11, section 11) or, as an alternative path that is not a requires,
+B6_MGMT_NIGHTLY gives the box a live-season corpus. Under TR-Q3 (b) the box's `.cache/swing_pitches/` may be pruned;
+the receipts check (3.4) then leaves the swing families off and names the missing seasons. `deploy/nightly-build.sh` prunes `.cache/win_prob` under disk
+pressure (`tools/prune_cache.py`, 120-day keep); that is harmless here because the leverage walk refetches and the
+sidecar flattens each game the night it lands, so a pruned payload is already in the sidecar; the sidecar is not
+on the prune list. Completed-season constants (`rd_band`, `league_env`, tails) ride the committed eval artifact.
+
+---
+
+#### 6. Registry row and glossary
+
+One row `league_trends`: verdict `provisional`, `provisional_kind` `measurement_only`, `eval_artifact`
+`data/league_trends_eval.json` (stamped `generated_at`, `test_model_registry.py` at
+'test_no_new_undated_eval_artifact'; if `model_registry.validate()` refuses an artifact on a measurement_only row, the
+flip sets it null and names the file in `notes`), `predicts` "nothing forward. DESCRIPTIVE: lists a change in a
+player's own measured trait when a recent window differs from his earlier games by more than the family's
+calibrated bar", `baseline` "descriptive: a placebo of the same player's games shuffled in time, as of each date",
+`metric` "descriptive: placebo false trends per day (per-test tail times tests) and the share of flags above the
+placebo, per family, 2023-2025 (swings 2024-2025), with the live season as a check"; notes name the Teams and League
+views as display of counts, P8.2's rows and the section's own pitch-environment family, and say: "Velocity families
+are excluded from any persistence read until the betting candidate G4-02 (velocity form) is registered or dropped."
+Glossary entries added in the flip where absent at HEAD: `league_trends`, `trend_bar`, `shrunk_change`,
+`competitive_swing`, `induced_vertical_break`, `horizontal_break`, `bat_speed`, `swing_length`, `attack_angle`.
+
+---
+
+#### 7. Honesty and the gated columns
+
+Lane 2.10's table binds (5c-A, 5c-B, 5c-C, 5d, 5e, 5f, 5j, 5k, 5l, 5m, `velo_decline`, PROSPECT_ANCHOR and R-VM,
+the window lab and HEM+ split), with the G4-02 row strengthened by T12 (section 8) and the 5m row made exact by
+ruling R5: its "Here" column reads "no pitch-count, innings-per-start or pitches-per-PA TREND (a window against
+earlier games) at the player or club level, and no live-season (season-to-date) value on the League view's pitches
+per PA or starter innings per start card; those two cards show one league-wide value per completed season from
+P8.2's series and cite 5m's Disqualification paragraph (section 4.4); strings never used". Every spec's STOP clause
+names the two cards' exemption and the five strings 5m bans. Copy: no forecast word
+(luck, due, regress, trending, will, clutch as a skill, sleeper), no "breakout", "hot" or "cold", no arrows, no green
+or red for a direction, no em-dash, none of `tools/copy_lint.py`'s banned words. The module never names `mg_pen_`,
+`mg_hook_`, `sp_n365`, `sp_budget`, `sp_ppo`, `sp_xouts` or `bat_ppa_l30`, and never reads `.cache/betting/`,
+`.cache/leaderboard_vintages/`, `.cache/lineup_captures/`, `.cache/odds/`, `.cache/weather_forecasts/`,
+`.cache/game_feeds/` or `data/betting_model_context.json`. Rotation-switch and velocity cards display realized
+2026 post-switch velocity changes; that is a disclosure for the PAL re-gate (section 11).
+
+---
+
+#### 8. The persistence read (TR-Q2; ruling T12)
+
+Only on the owner's answer TR-Q2 (a); unanswered, TR_P1 records the default (b) as taken, nothing is registered and
+the fold says "whether these changes last is not measured here"; a later (a) re-arms TR_P1 while no persistence
+number exists. Design (lane 3, `editorial_eval.py` template), amended:
+
+- **Families**: the statistical families on the served list at their frozen bars EXCEPT the velocity families (SP
+  and RP), which are excluded until the betting candidate G4-02 "velocity form" (N6, the 5c protocol, whose rule 1
+  bars any number computed on a candidate before its section exists) is registered or dropped; the registration
+  text says so, and adding them later needs a new dated registration. Also excluded for good: every club and league
+  series, entry leverage, rotation and lineup rules, anything pitch-count or innings-based.
+- **Frame**: completed seasons 2021-2025, weekly dates to 30 days before each season's last game; episodes, not dates.
+- **Hit**: over the 30 days after the flag date, the trait net of league drift still differs from the flag-date
+  baseline in the flagged direction by at least half the flagged raw change.
+- **Control**: 5 unflagged eligible players of the same family, role, date AND baseline game-SD tercile (so noisier
+  players get no head start), seeded per flag.
+- **Verdict**: hit rate against control, the gap's 95 percent interval with players resampled whole (2,000 reps),
+  Holm across families at 0.05 one-sided; PASS when the gap clears Holm and the hit rate is 0.5 or more;
+  INDETERMINATE under 40 episodes.
+- **Disclosure**: section 3.5 verbatim, plus the bars re-measured as of D by TR_2B before the registration commits.
+- **Clock and crash protocol**: one look, outside step A to step Z, never on 2026-10-23, 11-06, 11-13, 11-20, the
+  eFV reserved-read day or any registered look's date; a dry run of the whole reporting path on fixtures with nulls
+  first; stdout and stderr teed to the output directory before anything else; an exception after scoring began is
+  INDETERMINATE, not rerun, with OWNER_QUESTION.md.
+- **The 2027 kill rule** (lane section 3 'Honesty', from `editorial_eval.py`'s KILL RULE): from 2027 the matured
+  monthly cohorts of a passing family are re-scored with the same hit, control and metric, and a family whose gap
+  fails to clear its control in 2 matured monthly cohorts withdraws its line in one commit that the registry row
+  records.
+- **The honesty guard** (lane section 3, from `editorial_eval.py`'s HONESTY GUARD): the artifact
+  `data/league_trends_persistence_eval.json` is written only once the look has scored; until then nothing is written
+  and no `league_trends_persistence` row exists, because an empty artifact would let the row pass as measured.
+- **Consequence**: a passing family's cards may print one line only after a separate one-commit flip (queued by the
+  orchestrator on a PASS, not in this plan's tasks), with the row `league_trends_persistence`.
+
+---
+
+#### 9. The queue
+
+Insert the group after `Q9_27_COMPARABLE_REAL_TRADES` (the end of p8_wiring, before p8_research), the place plan 8.E
+gives League Trends. Every task: `kind` EV, `preamble` P8, `model` opus, `not_before` 2026-10-11 (after step Z;
+`EPOCH_RUN` in `requires`, and each spec checks the dated step Z entry in part 9 itself).
+
+| # | id | What | requires |
+|---|---|---|---|
+| 1 | `TR_1_FRAMES_DARK` | first checks (frame AND club identity with the corpus absent; `B6_MGMT_NIGHTLY`'s nightly corpus accepted as the alternative path for the frame half, never a requires); the physics sidecar with per-game stolen-base counts, `trend_frames.club_by_game`, `savant_days.py` and the backfill under TR-Q3 (a) only, tests | `Q8_11_PLAYER_GAMES_TRENDS_EXPORT`, `EPOCH_RUN` |
+| 2 | `TR_2A_DETECT_DARK` | `trend_frames.pitch_game_frame` (League Trends' own, the swing source per TR-Q3 with its receipts check), `trend_detect.py` (as of D, drift flags, shrink with the mix null, rules, prior-season mode), `test_trend_detect.py` | `TR_1_FRAMES_DARK`, `Q8_11_PLAYER_GAMES_TRENDS_EXPORT`, `EPOCH_RUN` |
+| 3 | `TR_2B_CALIBRATE_DARK` | the lab: as-of-D re-measure, policy and held-out (quasi-Poisson) rules in code, tails, counts, shrink fits on earlier seasons only, `rd_band` (after the 5c-A, 5d and 5k records), `league_env` with stolen-base attempts, swing receipts; preview eval artifact; `test_league_trends_eval.py` | `TR_2A_DETECT_DARK`, `EPOCH_RUN` |
+| 4 | `TR_P1_PERSISTENCE_REGISTRATION` | docs only, on TR-Q2 (a): the gate doc committed alone, velocity excluded | `TR_2B_CALIBRATE_DARK`, `EPOCH_RUN` |
+| 5 | `TR_P2_PERSISTENCE_LOOK` | the one look, crash protocol | `TR_P1_PERSISTENCE_REGISTRATION`, `EPOCH_RUN` |
+| 6 | `TR_3_EXPORT_PIPELINE_DARK` | exporter, contract and isolation tests, daily and monthly steps by title, catalog rows | `TR_2B_CALIBRATE_DARK`, `Q8_09_LEAGUE_AVERAGES_EXPORT`, `Q8_11_PLAYER_GAMES_TRENDS_EXPORT`, `EPOCH_RUN` |
+| 7 | `TR_4_PAGE_DARK` | the tab, script, filters, cards, banners, page tests and renders; then the Q8_15 check (ruling T6) | `TR_3_EXPORT_PIPELINE_DARK`, `Q8_12_CHART_HELPERS_AND_TOKENS`, `Q8_13a_LEAGUE_TAB`, `Q8_13b_TEAMS_TAB`, `Q8_14_PLAYER_DRAWER`, `DISPLAY_mlbstats`, `M17_MLBSTATS_WINDOWS_3YR_SWSTR`, `M26_TIER_CUTS_MLBSTATS_VIEWS`, `EPOCH_RUN` |
+| 8 | `TR_5_FLIP` | ONE flip commit: flag, data files, registry row, glossary | `TR_4_PAGE_DARK`, `TR_3_EXPORT_PIPELINE_DARK`, `TR_2B_CALIBRATE_DARK`, `Q8_15_LEAGUE_TEAMS_DRAWER_FLIP`, `EPOCH_RUN` |
+
+TR_4's end rule (ruling T6): when its dark commits are done and Q8_15 is not committed, it writes REMAINING.md
+saying the dark work is complete, ending 'BLOCKER: task Q8_15_LEAGUE_TEAMS_DRAWER_FLIP'; on re-arm it verifies its
+commits at HEAD and ends without redoing them. TR_5 also STOPs with 'BLOCKER: date 2026-11-01' if the 5c-A, 5d or 5k
+record or closure is still missing (the 5k read window closes 2026-10-31). Effort: TR_1 M, TR_2A M, TR_2B M (plus
+the as-of-D placebo compute), TR_3 M, TR_4 L, TR_5 S, TR_P1 S, TR_P2 S; about 5 writer-days. Not a requires:
+`B6_MGMT_NIGHTLY` (pending) is an alternative path for TR_1's first check only; the main path is the payload-direct
+frame asked of Q8_11 in its ORCHESTRATOR NOTE (section 11).
+
+---
+
+#### 10. Owner questions and recorded defaults
+
+One batch (`OWNER_QUESTIONS_league_trends.json`): **TR-Q1** how strict the bar is (strict recommended), **TR-Q2**
+whether to register the persistence read (register recommended, velocity excluded), **TR-Q3** which hitters the
+swing families test (the backfill recommended; forced by ruling T1). When a build task runs with a question
+unanswered: TR-Q1 (a) and TR-Q3 (b) are taken and recorded in `DECISIONS_FOR_OWNER.md`; TR-Q2's default (b) is taken
+only by TR_P1, which then registers nothing (the recommendation stays (a); a registration is the owner's commitment). Stated defaults, not asked: no IL reason on any card until an MLB-wide IL
+feed exists in its own cache; runs per game on League for complete seasons only; the context line uses OBP and
+K-BB% until X02-08 and M06-18 resolve.
+
+---
+
+#### 11. Handoffs
+
+Ruling R3: a handoff reaches its reader only as an ORCHESTRATOR NOTE appended to the reader's own task spec, so the
+exact text of each note is in `HANDOFF_NOTES_league_trends.json`, keyed by task id; the orchestrator appends each
+note verbatim when it inserts this group.
+
+1. **Orchestrator** (this plan): copy `LEAGUE_TRENDS_PLAN.md`, `FIX_LOG_league_trends.md`,
+   `OWNER_QUESTIONS_league_trends.json`, `QUEUE_TASKS_league_trends.json`, `HANDOFF_NOTES_league_trends.json` and
+   `trends_work/lt2/p16*` into the Part 8 bundle before inserting the tasks; append the notes of items 2 to 6; ask
+   TR-Q1 to TR-Q3 in one AskUserQuestion batch. `Q9_22a_MLB_EVENTS_BUILDER` still hard-codes `9e-pre0g`; the
+   title-pinning note applied to Q8_11 belongs on it too.
+2. **`Q8_11_PLAYER_GAMES_TRENDS_EXPORT`** (note): `player_game_frame` gets a payload-direct live-season path with an
+   equality test against the corpus path and an empty-corpus-root test, or TR_1 stops on its first check (unless
+   `B6_MGMT_NIGHTLY` has given the box a nightly corpus, the alternative path, not a requires). League Trends owns
+   `pitch_game_frame` in `trend_frames.py` and never edits `mlbstats_games.py` (ruling R6).
+3. **`Q8_09_LEAGUE_AVERAGES_EXPORT`** (note): add the starts-only `sp_ip_per_gs` to `STAT_DEFS` and the series beside
+   `ip_per_gs` (absent, the card is omitted); no attempts key is asked, because League Trends computes stolen-base
+   attempts itself (ruling R4).
+4. **`Q8_15_LEAGUE_TEAMS_DRAWER_FLIP`** (note): the flip message states whether `data/mlb_league_series.json`
+   carries `sp_ip_per_gs`; no League Trends key enters that file, which TR_5 diffs byte-identical.
+5. **`M22_PAL_SPRP_REGATE_PREREG`** (note; not before 2026-10-02): once flipped, League Trends displays realized 2026
+   post-switch velocity changes for rotation-switch and velocity cards (the quantity PAL's `role_velo_delta`
+   projects); the re-gate frame should disclose that those numbers were on the site.
+6. **The G4-02 holder** (note keyed `G4-02_HOLDER`): no queued task holds G4-02 'velocity form'
+   (`docs/master-plan-2026-09-11-war-epoch-drivers-betting.md` at 'G4-02'; the N6 family in `docs/diamond-betting.md`
+   5m) on 2026-10-01 (`dq/queue.json`, 241 tasks, none names it); the orchestrator appends the note to the task that
+   registers or drops G4-02 when one is queued, and keeps it in the Part 8 bundle until then. Its content: League
+   Trends computes velocity changes for display only, relates no velocity number to a later value, runs or prices,
+   and excludes velocity from the persistence read until G4-02 is registered or dropped; record which.
+7. **The live bracket** asked on 2026-10-01 is `SCORES_4b_BRACKET` (Scores plan); nothing here touches it. Per the
+   round-2 verifier: it is pending with not_before 2026-10-11 and requires `SCORES_3_PAGE_CHART` (also 10-11), so on
+   the current dates it cannot land before the LCS round, and the orchestrator should tell the user so.
+
+---
+
+#### 12. Risks
+
+- The as-of-D re-measure moves bars, most for SP velocity (22 flags) and the swing families (estimated pool); the
+  policy code decides, and the commit message prints old and new bars.
+- Under TR-Q3 (a) the backfill depends on Savant answering 560 dated requests; a 403 or a shape change stops the
+  backfill and the task records TR-Q3 (b) only with the owner's word.
+- The held-out rule can remove a family mid-season (`live_check`); the fold says so rather than hiding it.
+- P8.2's frame without a payload-direct path (and without B6_MGMT_NIGHTLY) blocks TR_1 on the box; the dev-machine
+  build still works but cannot ship.
+- Under TR-Q3 (b) the swing list rests on `.cache/swing_pitches/`, which the box may prune and which refreshes the
+  live season on a 6-day TTL; the receipts check and the 7-day rule leave the swing families off rather than serve
+  them stale or thin.
+- The quasi-Poisson held-out rule has little power at phi near 3: RP HB and, under (b), bat speed stay listed
+  although their 2026 false rates (0.063 and 0.074 a day) exceeded 0.05; the fold prints each family's live false
+  rate, and `live_check` re-measures monthly.
+
+### 8.N The eFV 2026-season plan
+
+- Status: round 5, verify round 5 (`efv2026/VERIFY_round5.md`, 2026-10-01); its one remaining item (Q-1, the order of SG_7's leading sentence, a queue-spec item) is applied in the live SG_7 spec ('FIRST, before any answer check'); no round 6 verify file exists; source `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/efv2026/PLAN.md`.
+- Queue (dq/queue.json, prefix SG_): SG_A_ETA_S8_ADDENDUM, SG_0_SURROGATE_GATE_DRAFT, SG_1_SEASON_FREEZE_AND_PINS, SG_1B_AAA_PITCH_PINS, SG_2_SURROGATE_GUARD, SG_3_SURROGATE_BUILDER_CODE, SG_4_FREEZE_LV2026_RATERS, SG_4B_FREEZE_LV2026_RATERS_POST_Z, SG_5_LEDGER_FRAMES, SG_6_HITTER_LEAN_C6_READ, SG_7_SURROGATE_GATE_REGISTERED, SG_8_TRANSFER_READ_S3, SG_9_LV2026_S4_READ, SG_10_LABEL_RELEASE_PATH.
+- Answers: `C:/Users/noah/baseball-projects/_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, section 'the eFV 2026-season plan (efv2026), batch 1' (efv2026 OQ1 to OQ6).
+
+### PLAN: the 2026 MiLB season and the eFV drivers
+
+Lane `efv2026`, 2026-09-30, revised the same day after two adversarial reviews
+(`REVIEWS.json`: `review:leakage`, `review:validity`; every issue is dispositioned in s10) and
+revised again on 2026-10-01 (round 3: the reviews' still-open items and their new issues; s10
+"Round 3") and a fourth time the same day (round 4: the nine items of the round-3
+verification, s10 "Round 4"). Built from the three read-only reports in this folder: `inventory.md` (what the
+repo holds for 2026 and whether the served eFV reads it), `governance.md` (what every
+registered rule allows, and when) and `surrogates.md` (design options for surrogate outcomes,
+with the power arithmetic). Repo `BaseballR/prospect-tracker`, branch
+`efv-conviction-2026-08-08`. The lane's base is `64bf1bb3` (2026-09-25); HEAD at the round-3
+revision is `26b446d9` (2026-10-01, 62 commits later). Every `file:line` below holds at BOTH
+commits for the files that are byte-identical between them (`git diff --quiet 64bf1bb3 HEAD`):
+`efv_vintage_frame.py`, `efv_labels.py`, `efv_v2_model.py`, `efv_dataset.py`,
+`milb_history.py`, `trades.py`, `war_source.py`, `eta_backtest.py`, `efv_drivers.py`,
+`efv_identity.py`, `.gitattributes`, `data/efv_v2_assembly.json`, `EFV_V2_GATE.md`,
+`PROGRAM.md`, `FWAR_LABEL_EPOCH_GATE.md`. Changed since the base: `run_monthly.py` (step 6b2b
+moved from `:5686-5688` to `:5825-5832`); `data/xfv.json` (1987b1b2, then 87b3b999 restored
+its 0f0dd2f4 content; the receipt cited here is the 64bf1bb3 one, lane copy
+`snap/xfv_HEAD.json`); `data/eta_eval.json` and `ETA_FG_BLEND_GATE.md` (the look record,
+be53132d); `tools/eta_fg_blend_gate.py` (6ca2e8f4). Owner decisions are cited from
+`_audit_2026-09-09/DECISIONS_FOR_OWNER.md` (at the projects root, outside git) as
+`DECISIONS:line`; `FWAR:` is `docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md`, `GATE:` is
+`docs/efv-v2/EFV_V2_GATE.md`, `DSV2:` is `docs/efv-v2/DRIVER_SYSTEM_V2.md`, `PROG:` is
+`docs/efv-v2/PROGRAM.md`, `ANCHOR:` is `docs/PROSPECT_ANCHOR_GATE.md`, `ETA:` is
+`docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md`, `STATUS:` is `docs/efv-v2/STATUS.md`.
+
+Nothing in this lane was computed on a reserved frame (R-LV list vintages 2020 and 2021;
+R-VM debut cohorts 2025 and later), nothing is cut by consensus-FV cell, and no association,
+tabulation or model fit between any 2026 outcome and any score, label, feature or stratum
+exists anywhere in it, except the tabulations by vintage, side and identity route that kill
+rule 3(i) admits by name and the next sentences describe. The lane DID
+write per-row 2026 outcome flags and outcome counts for V 2022-2026 frame rows with no grade
+joined (`facts2026.py`, `frame_rows_2022_2026.json`, `facts_table.md`) and, on 2026-09-30 from
+the per-row file, two further tabulations with no score joined: the coverage count of 2026
+lines on the record id among lv_2026 rows that carry no person id (123 / 121) and the overlap
+of lv_2026 player keys with the 2022-2025 frames. All of it is sealed and disclosed in s5 draft
+s8.9 and s9 and admitted by name under kill rule 3. No em-dashes.
+
+Owner, 2026-09-25: "The 2026 MiLB season has ended - can we now use stats from the 2026 MiLB
+season as a resolved season to further improve eFV drivers?"
+
+---
+
+#### 0. The honest answer
+
+1. **The 2026 MiLB lines are already inside every served eFV grade, and have been all
+   season.** The live matrix reads the current season (`efv_dataset.py:1685-1691`,
+   `CURRENT_SEASON = 2026` at `:316`). The lines are final: the 2026-09-27 cache matches a
+   2026-09-30 refetch row for row, PA for PA, at every affiliated level (`inventory.md` s0.1;
+   `refetch_compare.json`). Re-ingesting them changes nothing. Inside the served V2 order the
+   2026 season carries exactly one thing, hitter `level_rank` in the timing head at weight
+   0.0123 (`data/xfv.json` meta receipt at HEAD; GATE s4.3); pitchers take the consensus
+   order (owner DS-Q2, DECISIONS:274). The provisional grades (2,689 actives) and v1's chips
+   read the full 2026 line, and those are display legs, not the claim.
+2. **"Resolved season" in this code means an MLB WAR label season**
+   (`efv_dataset.py:274`, `RESOLVED_THROUGH = 2025`). The advance to 2026 is arm F2 of the
+   fWAR label epoch, bundled with the fWAR label by owner decision O2, and lands at epoch
+   step F (FWAR:51-54, :493, :707; DECISIONS:199). The epoch has not started: step A's
+   destination `../_pre_epoch_fwar_2026-10/` does not exist, the D9 freeze fetch is about
+   2026-10-05 (DECISIONS:212), step M may not run before 2026-10-05 (FWAR:566-569), and E2,
+   E3, E7 and O7 are open (`governance.md` s2). F2 adds MLB seasons to labels. It does not
+   make any 2026 MiLB stat a label.
+3. **A 2026 MiLB outcome can become a driver label only through a registration committed
+   before any association between it and a score exists, and the record says surrogacy
+   fails, not power.** Under full surrogacy the V 2026 frame would be WELL powered: a
+   surrogate-scale lead of floor size (0.019 to 0.024 Spearman, E_cond scaled by sqrt(n)
+   from the lv_dev floor, on the 1,207-row frame) would map to 0.003 to 0.010 on the
+   long-run scale through delta_Y = delta_S x rho(S, Y), which is finer than the R-LV floor
+   (0.017 to 0.021, E_refit-scaled) and exactly the size of V2's expected effect. Power is
+   not the obstacle. Surrogacy is: 57 to 92 percent of consensus's own long-run validity runs
+   outside the level and arrival rungs (bypass share, `surrogates.md` s4.3), and for AA2
+   full surrogacy is impossible outright because consensus predicts L6 better than AA2 does
+   (0.363 / 0.329 against 0.187 / 0.150, `DATA_LABELS.md:117-118`). So no surrogate-scale
+   lead translates into a long-run statement; if a composite passed the faithfulness bar
+   (T1, rho at least 0.50) the multiplier would be at least 0.5, and that is the only case in
+   which a surrogate lead would mean anything. Level and arrival outcomes track six-season
+   value weakly (AA2 rho 0.187 hit / 0.150 pit; R3 0.305 / 0.404; W3 0.787 / 0.821; E2 on
+   V 2011-2016). No training row decided before 2026-10-01 may carry a 2026 line
+   (`efv_dataset.py:952-970`; `efv_vintage_frame.py:12-21`), so the first labelled rows that
+   can carry one are the V 2027 list rows (R3 at RT 2030, W3 at RT 2032) and the 2027 debut
+   cohort (RT 2028). Nothing surrogate-based can change a served weight before the 2027 label
+   epoch.
+4. **Size, against the program's own ceilings, and against the industry.** Ties are modal
+   (DSV2 s4.4). The headline frame has n 803 and mde95 0.0303 (vm2, E_refit; PROG s2.5). V2
+   minus consensus is -0.0005 within on lv_dev (n 2,862, mde95 0.0155 E_cond) and -0.0057
+   within, -0.0058 pooled, on vm2 (STATUS:33-34, :65; the served pooled headline reads
+   -0.0055, commit 12bf26eb). The expected V2 effect on R-LV is +0.003 to +0.010 against a
+   floor of 0.017 to 0.021, and on R-VM look 1 about 0 against a required 0.116 (DSV2 s4.4;
+   PROG:163-164). The binding ceiling is not consensus: on lv_dev MLB Pipeline leads V2 by
+   0.0277 within (CI95 -0.0558 to +0.0014, n 2,574) and leads consensus by about 0.029
+   (0.1914 against 0.1624), while V2 leads FanGraphs by 0.0249 within (STATUS:42-44).
+   **Nothing in this lane closes the roughly 0.028 Pipeline gap on list vintages, and the
+   expected effect of the 2026 MiLB season on the served board in 2026 is zero under every
+   option except OQ4 B or C, which move the 2026 rates by the norm choice alone, with no new
+   data** (v1 grades, the 2,689 provisional grades and the chips, when that change lands by
+   2026-10-03 or after step Z; the V2 order does not move under any option). What the
+   season buys is option value: a frozen prospective-in-data frame whose one registered
+   long-run primary pays at RT 2031, a permanent registered answer to whether MiLB
+   surrogates can ever be an eFV lever, the physical-data chain from 2027 (the one idea with
+   room above +0.01, DSV2 s3 idea 8), Arm R's cleaner bust label inside the epoch, and the
+   hygiene that keeps every later read clean.
+
+The memory note that lists "surrogate labels on recent cohorts" beside RESOLVED_THROUGH 2026
+as the real levers (`efv-must-beat-consensus-2026-09-24`) overstates the first; the
+correction to carry is `surrogates.md` s5.3 with s0.3 above in place of its power sentence.
+
+---
+
+#### 1. NOW (2026-09-30 until epoch step A)
+
+Allowed today: reads of counts and coverage, pins, retention, code that computes nothing on
+a frame, registrations, and docs. The one owed look that belonged to another program, the ETA
+FanGraphs-blend look, is RECORDED (be53132d, 2026-09-30 19:22). Not allowed: any association,
+tabulation or model fit between a 2026 outcome and any score, label, feature or stratum
+before the surrogate registration exists (kill rule 3, draft s7); any served change from this work (the landing window closes 2026-10-03 23:59 and
+reopens after epoch step Z, DECISIONS:273, :375; PROG:285-286; final-pass plan Part 8, 8.A);
+any repo write between epoch step A and step Z; in the gap from 10-04 to step A, docs and
+registrations only (`docs/master-plan-2026-09-24-final-pass.md:1944`, `:2034`, `:2252`), so
+every task that writes code or tracked data lands by 10-03 or after step Z.
+
+| # | item | expected effect, honestly | when |
+|---|---|---|---|
+| N1 | **Served rows already read the final 2026 lines** (`efv_dataset.py:1685-1691`; `efv_v2_serve.py:46-47`). Nothing to build. | None new. The V2 order holds hitter `level_rank` for 961 of 1,053 V2-graded hitters at w_time 0.0123, which weights the timing head at about 2 percent of the skill head (a = 0.0205, GATE s4.3); pitchers none. Re-ingest: zero (identical refetch). | done |
+| N2 | **The 2027-01-01 norm flip.** `league_norms` blends the current season's norms with the prior season at w = n_cur / (n_cur + n_prior) (`milb_history.py:293-306`), which at season end sits at 0.48 to 0.52, not at the pure norm the code comment promises (`norm_blend_2026.json`); 2026 was a much higher-offense year at A through AA (median OPS +0.07, ERA +0.9). On New Year's Day every 2026 rel-rate moves with no new data, and the same step recurs every year. | Moves v1 grades, the 2,689 provisional grades and the chips by an unmeasured amount; the V2 order does not move (obp_rel and contact are not admitted; `level_rank` uses no norm). A data refresh, not a model change, but it must be disclosed and the pure-2026 norms pinned now so registered reads reproduce (task SG_1; owner question OQ4, which now carries the 12-20 fallback and the season-share fix as option B). | disclose now; flips 2027-01-01 |
+| N3 | **Freeze, pins, retention, completion** (task SG_1): a TRACKED immutable copy of the ten 2026 season files (2.3 MB) under `data/milb_season_frozen/2026/`, sha256-pinned there, not in the gitignored 20-hour-TTL cache (`.gitignore:4`; `milb_history.py:42`, `:106-107`); canonical content hashes for the transfer seasons; the August and September transaction feed (repo cache ends 07-24) with `protection_coverage` before and after; the end-of-season `signal_snapshots/2026` (EV-03); the manifest's false "complete" on the June Savant minors and the 08-03 physics file. The 62 early AAA pitch files are NOT hand-refetched: the monthly's step 6b2b (`run_monthly.py:5825-5832` at HEAD 26b446d9, `:5686-5688` at 64bf1bb3; `stuff_plus_aaa.refresh`, 14-day TTL) refreshes them itself until 2027-01-01, so they are pinned after that date (task SG_1B). Tracked data files are not docs, so SG_1 lands by 2026-10-03 or after epoch step Z, never in the gap. | Zero on accuracy in 2026. Option value for the physical-data chain (first W3 read 2027 FSL era, 2029 AAA era; DSV2:228-229) and for any registered 2026 read after the TTL end. | after the monthly finishes; by 10-03 or after step Z; before 2027-01-01 |
+| N4 | **The ETA FanGraphs-blend look is RECORDED** (be53132d, 2026-09-30 19:22; the first run at 17:59 crashed after printing every clause and is disclosed in ETA s8; the rerun after the one-line repair 6ca2e8f4 finished 19:18). `data/eta_eval.json` at HEAD carries `fg_blend_gate_2026_09_25` (look 2026-09-30, frame "list vintage 2024", outcome cutoff 2026-09-27, n 1,394 rows) with `live_shadow_2026` (4,486 frozen rows, one per player key, listing dates 2026-01-01 to 2026-09-30, fields CH40, A, B, fg_eta_year, level, on40, listing_date). What is NOT yet written anywhere in the tree: this lane's pre-look counts of that look's own outcome. `facts2026.json` was written 2026-09-30 13:01, before the first run, and counted V 2024 frame players who debuted in 2026 (63 hit / 72 pit) and in 2025-26 (136 / 153) with no score joined (`facts_table.md`); 212 / 207 of the V 2024 frame's players also sit on lv_2026. Task SG_A is now a DOCS-ONLY addendum to ETA s8 (the "Added 2026-09-30" pattern that section already uses twice) carrying those lines; the round-2 SG_A, which would have run the look and would have STOPped forever on the existing block, is withdrawn. Q1 of the surrogate gate reads "recorded at be53132d; the lane's pre-look counts disclosed by the s8 addendum and in s8.11". | None on eFV. The ETA raters frozen for lv_2026 (CH40, arm A, arm B) were scored by that look against 2026 debut events of V 2024 rows, so their arrival components on lv_2026 are NOT prospective with respect to it; they ride as descriptive raters only, and only from shadow rows listed before the frame row's own window end (draft s2.2: 3,083 of the 4,486 shadow rows are listed after 2026-05-01 and carry in-season inputs). | SG_A before 2026-10-04 or in the gap before step A (docs only) |
+| N5 | **Register `docs/efv-v2/SURROGATE_2026_GATE.md` as a DRAFT, alone** (section 5; task SG_0). The draft commits alone; its test follows in the next commit. Before it commits, SG_0 step (0) copies the four sealed lane files, sha-verified, to a durable path outside git (draft s8.9). | Zero on any number. It is what makes a later surrogate read count at all (5c rule 1: a number computed before its section exists is disqualified, `docs/diamond-betting.md:1072-1075`). | now (docs: may land in the gap) |
+| N6 | **Freeze the V 2026 preseason list as a frame that is prospective in data, not in design** (task SG_4): every rater's point-in-time score on the 590 hitter and 617 pitcher rows of `build_frame(side, 2026)` (counts from the 2026-09-30 12:45 universe snapshot; SG_4 re-takes them and, on a mismatch the identity split explains within 10 rows per side, freezes the matched rows and names the rest; it STOPs only beyond that bound, draft s8.13), no outcome column, BEFORE epoch step C (step C rebases `career_war` and step D+U flips `war_source.DEFAULT_PROVIDER` from `ewar_v2`, FWAR:704-705; `efv_labels` reads that provider, `efv_labels.py:10-11`; a freeze between D and F would fit the fold object on fWAR labels under an eWAR name), or from the step A snapshot after step Z. V2 was specified in September 2026 by people who watched the season (draft s8.5); V 2027, frozen at 2027-05-01, is the first vintage prospective in design as well. | Zero today. One long-run primary: W3 at RT 2031 (one-sided 0.05, m = 1; mde95 about 0.019 to 0.024 pooled at n 1,207, E_cond by sqrt(n); it needs a lead 2 to 7 times V2's expected +0.003 to +0.010). R3 at RT 2029 is a tilted arrival read (role `tilted`, no alpha). Both long-run reads need every in-window debut cohort's release (looks 2 and 3, plus the OQ6 release of the 2028 and 2029 cohorts) and a label path that releases rows on a look record (SG_10, an amendment before RT 2029). A one-season surrogate read exists only under OQ2 = B, only if T passes, and never before R-VM look 2's record (OQ3 = A); its primary runs on the id-resolved rows (about 453 / 454; floor 0.022 to 0.028 pooled, 0.039 per side). | by 2026-10-03 (after SG_0; a gap task the epoch never waits on), else after step Z from the step A snapshot (SG_4B) |
+| N7 | **Guard and builder code** (tasks SG_2, SG_3, SG_5): a surrogate guard built as a PURE predicate beside the existing one (`efv_vintage_frame.py` stays byte-identical), which refuses R-LV before any sha check, refuses before REGISTERED, and ENFORCES the frame schedule by purpose (V 2011-2019 for the transfer read; V 2022 only after R-VM look 1's record; V 2023, 2024 and 2025 never; lv_2026 for the surrogate read only after look 2's record and only under OQ2 = B; lv_2026 for the long-run reads only after looks 1 to 3 and the OQ6 release), and REFUSES a read, never drops rows, while any in-window 2025-or-later debutant lacks its owning look's record (B9b rule 2); the outcome builder on the frozen files, which derives the V-1 rung and age-for-level from the pinned store for every vintage (pin 2010) because V 2011-2014 rows carry no MiLB block; ledger frames with role `tilted` (and `secondary` for the W3 2031 read). Code and tracked data are not docs: all three land by 2026-10-03 or after step Z. | Zero. Hygiene against the leaks this repo has hit (B3, B4, placeholder dates, latest-as-of joins), and against a read the plan says never happens being allowed by the guard and stopped only by a STOP line in a task spec. | by 10-03 or after Z |
+| N8 | **The fresh hitter-lean test** (2025 FanGraphs list vs 2025-26 MiLB ISO; an OPEN owner choice, DECISIONS:306, "default: yes, low priority"). 354 of the 590 lv_2026 hitters sit on the V 2025 frame (the FanGraphs-2025-list proxy), so run before REGISTERED it associates the exact S3 production outcome (2026 iso_rel on pure norms) with a rater on most of lv_2026 and spends S4's production component. It is now owner question OQ5 (task SG_6, conditional). | Descriptive only, logged as probes, not a driver and not a ledger row. Under OQ5 = A it waits: under OQ2 = A for the surrogate gate's REGISTERED commit, and even then it excludes and counts every lv_2026 player; under OQ2 = B for S4, the lane's close, or R-VM look 2's record, whichever comes first (so it cannot mean never). Under B it runs after SG_A, SG_1 and the epoch's step Z entry and excludes and counts every lv_2026 player. Every mode calls `blocked_day()` first and carries the one-look crash protocol (task SG_6). | per OQ5 |
+| N9 | **Do not**: score the served board against 2026 outcomes (it contains them); refit V2 at RT 2026 and then read the V 2026 frame; associate or tabulate any V 2024 or 2026 outcome against any score, label, feature or stratum before REGISTERED; code a missing 2026 line as a release or bust without its sub-code; use AP+ as feature or target; re-run the spent 3-year-WAR debuted-frame arm; tabulate anything by consensus-FV cell; let a surrogate move `w_skill`, `w_time` or an admission decision; call a surrogate-frame win progress toward beating consensus; build or count R-LV frames for overlap; load `frame_rows_2022_2026.json` (the sealed per-row dump, draft s8.9) at all, by any process, for any purpose (it was loaded twice by this lane, the second time on 2026-10-01, draft s8.9; SG_0 compares sha256 values only); join an ETA shadow row listed at or after a frame row's window end; read a sport-1 stat column (the MLB code is an event, draft s3). | | standing |
+
+---
+
+#### 2. AT THE fWAR EPOCH (steps A to Z; not before the D9 freeze about 2026-10-05)
+
+The epoch is the one place a 2026 season legitimately enters a label this year, and it enters
+as MLB seasons (F2) and as affiliated presence in the bust rule (Arm R), never as a MiLB stat.
+
+| # | item | expected effect, honestly | when |
+|---|---|---|---|
+| E1 | **F2: `RESOLVED_THROUGH` 2025 to 2026** with `tools/build_star_odds_artifacts._RESOLVED_THROUGH` (`:38`), by O2 (FWAR:51-54, :493). The 2021 debut cohort reaches six observed seasons (92 hitter / 102 pitcher list-frame debuts, PROG:250-253); the 2022, 2023, 2024 cohorts gain a season; the 2025 cohort (243 tracked, 110 / 133) enters `DEBUT_YEARS` as training rows only, scored by nothing (`reserved_vm_pins()`, `efv_vintage_frame.py:150-160`; `efv_v2_model.py:427-436`); R3 at V 2023 and W2 at V 2022 become resolvable (`efv_labels.py:15-20`). | On the served V2 order: none until Z1 or the 2027 registration. On the headline: a label change, measured and never claimed as accuracy (FWAR clause (l)). On the V2 vs consensus delta: unpredictable in sign; the closest analog on record, oracle labels against the KM censoring label on hitters (0.312 vs 0.334), moved nothing (`docs/SURROGATE_LABEL_PROGRAM.md:122-137`). Honest range: -0.005 to +0.005 on lv-type frames, inside noise. | step F, after O7 and E7 |
+| E2 | **Arm R (F3)**: the never-MLB resolution reads "no affiliated line in either of the two latest seasons on disk" (FWAR:674), which at an October build means 2025 and 2026; 203 hitter and 192 pitcher rows sit at a resolved 0.0 while still playing (FWAR part 6). | The one 2026 MiLB "outcome" in a label this year. Ships only if its own clauses pass on its own arm; O6 answered "Fix the label AND split the display" (DECISIONS:213), so if it is meant to ship by decision an amendment is due before step F (FWAR:163-166). Effect on any delta: unknown in sign, bounded by the 395 rows. | step F |
+| E3 | **R-LV W3 for V 2021 becomes resolvable** (`efv_labels.py:15-17`; GATE:55-60). | Resolvable is not readable: read once, after EFV_V2_GATE is REGISTERED, not before 2026-12-01 (s3). | step F resolves; s3 reads |
+| E4 | **Housekeeping the epoch owes before step F**: the shadow clocks (`tools/efv_peak_war_lab.py:58` mirror; `LAST_FULL_SEASON = 2025` in `eta_backtest.py:95`, `prospect_path.py:71`, `surplus_backtest_real.py:106`, `tools/fit_draft_slot_curve.py:60`, `tools/ifa_pedigree_lab.py:158`); the EV-12 receipt sentence "matrix holds zero 2025 debuted rows" (PROG:146-148) becomes false at step F; the 2025 cohort is claimed four ways and the V1 C1-C4 read at step Q cannot reach it (`governance.md` s6 item 1). | No number moves; owner calls before steps F and Q. | before step F |
+| E5 | **Z1, the driver re-test**, committed alone after the label freeze and before any new-label floor (FWAR:606-612; PROG:348 places it after step Z; the registered gate governs). One read per arm (O8, DECISIONS:218). | Registered honest prior: zero survivors (FWAR:626-628). A Z1 null re-closes the feature frontier permanently. Z1's arm list is mechanically derived, so a surrogate label is not a Z1 arm. | after the freeze |
+| E6 | **What the epoch cannot carry**: no feature arm and no correction family (clause (h), FWAR:402-411); part 6 is frozen (FWAR:664-666), so no surrogate label rides it; no served landing inside it (DS-Q1). | The surrogate lane touches nothing in the tree during the epoch; SG_5 (a served-page generator) lands by 2026-10-03 or after step Z, never inside; the transfer read S3 waits for step Z, the P1 freeze receipt and R-VM look 1's record. The V 2026 rater freeze (N6) must be taken before step C (SG_4), or reproduced from the step A snapshot after step Z (SG_4B; EPOCH_RUN records at step A which applies and does not wait), because step C rebases `career_war` and step D+U flips the label provider (FWAR:704-705) before the F2 matrices at RT 2026 read 2026 events (R3 at V 2023, Arm R) at step F. | standing |
+| E7 | **The frozen 2026 fWAR** enters the vintage-matched outcome at step C (`source_backtest.py:531-551`, `:4300-4301`) and the F-LV labels through EV-04. | The headline's outcome changes content, not frame: a label change under clause (l). | steps C, F |
+
+---
+
+#### 3. AFTER THE RESERVED LOOKS (not before 2026-12-01; R-VM look 2 about 2027-10)
+
+| # | item | expected effect, honestly | when |
+|---|---|---|---|
+| A1 | **R-LV look (V 2020 and 2021) and R-VM look 1 (2025 cohort at RT 2026)**, the only reads that can adjudicate V2 (GATE s2.2; PROG:326-329). | Expected V2 effect +0.003 to +0.010 on R-LV against a floor of about 0.017 to 0.021 (E_refit-scaled); P(resolvable win) under 10 percent. R-VM look 1: n about 210, mde95 0.0596, delta needed 0.116 under O'Brien-Fleming, expected effect about 0 (DSV2 s4.4; PROG:163-164). Modal record: "eFV v2 ties consensus on label build X". | later of 2026-12-01 and the anchor look (ANCHOR:970) |
+| A2 | **Transfer read S3 of the surrogate gate** on spent cohorts (F-LV dev V 2011-2019, its L6 subset V 2011-2016; comparability on V 2022 with R3 on debut events through 2025). V 2022 holds 73 / 76 rows of 2025-or-later debutants; those with a 2025 debut inside the window belong to R-VM look 1, and the guard REFUSES the V 2022 read (it never drops rows) until that look's record exists (GATE:239-241), so S3 runs after that record. V 2023 is read by nothing in this gate (the round-2 "V 2023 joins T3 after S4" was a second T3 read with no decision rule; dropped). | T1 asks rho(S_idx, L6) with a one-sided 95 percent lower bound at least 0.50 on both sides, leave-one-vintage-out. Level and arrival rungs (0.15 to 0.40 on record) fail with certainty; the innovation-based composite has no faithfulness read on record and its honest prior is a fail, which closes level and arrival surrogates as VALUE proxies for eFV permanently. T2 to T4 decide separately whether the S-only timing label g_S may be a 2027 timing-head auxiliary; T3's conservative CI rule makes STOP its modal outcome. Precision: half-width about 0.054 in rho near 0.5 per side when all six vintages score (`surrogates.md` s4.3c); about 0.06 under the registered fallback (V 2015-2016 only, draft s2.1). | after epoch step Z, the P1 freeze and R-VM look 1's record; off 2026-10-23, 11-06, 11-13 and 11-20, the eFV reserved-read day, and any session that runs another gate's look |
+| A3 | **The one read of the frozen V 2026 frame (S4)**, only under OQ2 = B, only if S_idx passes T1 and T3 on both sides, and never before R-VM look 2's record (OQ3 = A; B9b rule 2). | A statement about the surrogate, read against its tilt: a V2 lead is EXPECTED BY CONSTRUCTION (arrival components via CLIMB toward V2's timing head, whose own inputs are age and level; production components toward stat readers; on R3, consensus plus age plus level beat consensus by +0.047, I2 idea 3), so only a LOSS is informative, and the 2022 CBA Prospect Promotion Incentive weakens even that for the MLB code. Its primary is its own surrogate-scale family (m = 1) on the id-resolved rows (about 453 / 454); the head-falsification family (e_time on residualized, club-demeaned CLIMB, e_skill on residualized PERF, per side; Holm m = 4) has a pre-committed consequence and its expected signs under no carry-over failure are written in draft s7. It can never claim that eFV beats consensus or the industry, rides only as a ledger row with role `tilted`, never on the chart. Effect on the headline: zero. | after A2 passes; after Q1; after R-VM look 2's record (about 2027-10) |
+| A4 | **R-VM look 2 (2026 cohort) at RT 2027** releases the rows of 2026 debutants (GATE:239-241). | The first clean surrogate frame on V 2022 and V 2026 exists only then. | about 2027-10 |
+| A5 | **Consensus repair** informed by 2026 MiLB, as its own consensus-method item (DS-Q4, DECISIONS:276; DSV2:276-278). | The comparator does not move before then. Dev evidence for a repaired anchor was +0.005 at best on R-LV and metric-fragile (DSV2 s3 idea 9). | after A1 |
+| A6 | **The 2027 registration**: the S-only timing label g_S (stage B, `surrogates.md` s3.2) enters at most as an auxiliary label for the TIMING head of a candidate there, never the frozen V2 list (PROG:396) and never a skill slope (DSV2 principle 4; OQ1 = A). The first labelled rows carrying 2026 lines are the V 2027 list rows (R3 at RT 2030, W3 at RT 2032) and the 2027 debut cohort (RT 2028). Physical data enters through its surrogate chain from 2027 (DSV2:228-229). | Auxiliary use adds efficiency, not information: -0.005 to +0.005, not resolvable, and bounded by the timing head's weight (a = 0.0205 hit, 0.107 pit). Physical data is the only item with room above +0.01, first readable 2027. | 2027 label epoch |
+| A7 | **Long-run reads of the frozen V 2026 frame**: W3 at RT 2031 is the single long-run primary (one-sided 0.05, m = 1); R3 at RT 2029 is tilted and descriptive. Both are LABEL reads of R-VM-coded debutants (W3 at RT 2031 is WAR over dy..dy+2 for debuts 2026 to 2029, `efv_labels.py:15-17`), which `efv_labels` cannot serve today: it marks every in-window 2025-or-later debut `reserved_vm` with W3 None (`:228-246`) and has no release keyed to a look record. SG_10 adds that release path by dated amendment with its own test before RT 2029. Each read runs WHOLE only after every in-window cohort's owning look has its record (2026 cohort: look 2; 2027: look 3) and after the 2028 and 2029 cohorts, which no R-VM look owns (PROG:142, :355; GATE:61-62), are released per OQ6 (A: at look 3's record, by a one-sentence amendment to GATE s5 B9b committed before SG_7; B: never before a named successor registration). A second long-run endpoint, if one is ever added by amendment, takes Bonferroni at 0.025 each, registered now. | The one place this season's list can ever certify a long-run lead; mde95 about 0.019 to 0.024 pooled at n 1,207 (E_cond by sqrt(n)), so it needs a lead 2 to 7 times V2's expected effect. | 2029 (tilted), 2031 (primary); both deferred whole until every release exists |
+
+---
+
+#### 4. Expected effect, one table
+
+Every number is copied from a committed document or is sqrt(n) arithmetic labelled as such;
+none was computed in this lane. Floors carry their estimator: E_cond (scores fixed, players
+resampled) or E_refit (the gate's registered claim instrument, which ran about twice E_cond
+on vm2). Ranges are signed where the sign is unknown.
+
+| item | frame, rows | expected delta, eFV vs consensus | vs MLB Pipeline | vs FanGraphs | floor (mde95, estimator) | resolvable in 2026? | first date |
+|---|---|---|---|---|---|---|---|
+| served V2 today (headline) | vm2, n 803 | -0.0057 within, -0.0058 pooled (STATUS:65); served pooled headline -0.0055 (commit 12bf26eb) | -0.0005 within (CI95 -0.0356 to +0.0333) | +0.0415 within (CI95 +0.0039 to +0.0778) | 0.0303 pooled (E_refit, PROG s2.5); 0.0146 within (E_cond) | no; ties modal | now |
+| served V2 today (list vintage) | lv_dev, n 2,862 | -0.0005 within (STATUS:33) | -0.0277 within (CI95 -0.0558 to +0.0014; n 2,574); Pipeline leads consensus by about 0.029 | +0.0249 within (CI95 -0.0063 to +0.0552; n 2,370) | 0.0155 (E_cond) | no | now |
+| re-ingest final 2026 lines | served rows | 0 (identical cache) | 0 | 0 | n/a | n/a | done |
+| 2027-01-01 norm flip | v1, provisional, chips | unmeasured; V2 order 0 | unmeasured | unmeasured | n/a | data refresh, not a claim | 2027-01-01 |
+| F2 label advance | matrices, F-LV labels | -0.005 to +0.005 (analog moved nothing) | same | same | 0.0155 lv (E_cond) | no | epoch step F |
+| Arm R | 395 never-rows | unknown in sign, its own clauses | its own arm | its own arm | its own arm | inside the epoch only | epoch step F |
+| R-LV look | V 2020 + 2021, about 2,667 rows | +0.003 to +0.010 | not the primary; reported | reported | 0.017 to 0.021 (E_refit-scaled) | P(win) under 10 percent | not before 2026-12-01 |
+| R-VM look 1 | 2025 cohort, n about 210 | about 0 | reported | reported | 0.0596; needs 0.116 (E_refit-scaled) | about 0 | not before 2026-12-01 |
+| surrogate transfer T1 | lv_L6, 781 / 804 players when the draft's V-1 rung derivation passes its test (V 2011-2014 rows carry no `efv_dataset` MiLB block); V 2015-2016 only under the registered fallback | rho(S_idx, L6) needs >= 0.50; rungs read 0.15 to 0.40 | n/a | n/a | half-width 0.054 in rho (six vintages); about 0.06 (fallback) | level and arrival fail with certainty; composite unknown, prior fail | after step Z and R-VM look 1 |
+| V 2026 one-season read (S4, OQ2 = B only) | lv_2026 id-resolved rows, about 453 / 454 of 1,207 (ABSENT_IDENTITY out of the primary, draft s8.10) | surrogate-scale only; a V2 lead expected by construction; only a loss informative | reported beside, descriptive | reported beside, descriptive | 0.022 to 0.028 pooled at n about 907; 0.039 per side at n 453 / 454 (E_cond by sqrt(n)); measured old-cohort analog written before the read | never a claim | after R-VM look 2, only if T1 and T3 pass |
+| g_S (the S-only timing label) as a 2027 timing auxiliary | 2027 registration | -0.005 to +0.005, bounded by a = 0.0205 hit / 0.107 pit | frame's | frame's | frame's | no | 2027 epoch |
+| physical-data chain | FSL-era V 2022 at RT 2027; AAA-era V 2024 at RT 2029 | unknown, the only item with room above +0.01 | frame's | frame's | frame's | no | 2027 / 2029 |
+| V 2026 W3 at RT 2031 (primary) | lv_2026, n 1,207 (every row carries a W3; a label read, not a surrogate read) | needs about 0.02 long-run, 2 to 7 times V2's expected effect | reported beside | reported beside | 0.019 to 0.024 (E_cond by sqrt(n)) | no | RT 2031, after looks 2 and 3 and the OQ6 release |
+| V 2026 R3 at RT 2029 (tilted) | lv_2026 | tilted toward V2; descriptive | reported | reported | n/a | never a claim | RT 2029, after looks 2 and 3 and the OQ6 release |
+
+Nothing in this table closes the Pipeline gap on list vintages: V2's optimistic reserved
+effect (+0.010) plus the best surrogate route (+0.005) would leave V2 about 0.013 behind
+Pipeline on lv-type frames.
+
+---
+
+#### 5. REGISTRATION_DRAFT
+
+Target `docs/efv-v2/SURROGATE_2026_GATE.md`. Committed ALONE, as a DRAFT first, before any
+association, tabulation or model fit between a 2026 surrogate outcome and any score, label,
+feature or stratum is computed on any list-vintage row (kill rule 3 admits the lane's s8.9
+counts by name). Items marked PENDING are filled at the REGISTERED commit; the results
+section stays empty. The text between the BEGIN and END markers is the file.
+
+BEGIN FILE docs/efv-v2/SURROGATE_2026_GATE.md
+
+```markdown
+# Surrogate outcomes of the 2026 MiLB season: SURROGATE_2026_GATE
+
+Registration status: DRAFT
+
+Owner answer at draft commit (efv2026 OQ1): (written by the committing task, SG_0, as one of
+the four texts PLAN.md s6 gives for A, B, C and unrecorded; this document commits under
+every answer)
+
+THIS IS A DRAFT. It is committed so its text is dated before any association, tabulation or
+model fit between a surrogate outcome of the 2026 MiLB season and any rater score, label,
+feature or stratum is computed on any list-vintage row (kill rule 3, s7, admits the counts of
+s8.9 by name), not as the registration. A draft cannot open a guard:
+`efv_vintage_frame.gate_doc_registered` accepts a gate text only when it carries a status
+line reading exactly REGISTERED, alone on its line, and no other status line; the surrogate
+guard (`efv_surrogate_guard`, task SG_2) applies that test to THIS file at a named commit
+through a pure predicate that never touches the R-LV guard. The final commit changes that
+one status line, fills every item marked PENDING, and is committed ALONE with section 12
+empty.
+
+Drafted 2026-09-30 on branch `efv-conviction-2026-08-08` from the lane `efv2026`
+(`inventory.md`, `governance.md`, `surrogates.md`, `PLAN.md`, `REVIEWS.json`), revised
+2026-10-01 (round 3) before any commit; the lane's base is 64bf1bb3 and the round-3 HEAD is
+26b446d9 (PLAN.md header names which cited files are byte-identical between them). Owner
+answers OQ1 to OQ6 (PLAN.md s7) are PENDING and, once given, bind this document. No
+em-dashes. No statistic in this document, its code or its planned artifacts is cut by
+consensus-FV cell (`docs/PROSPECT_ANCHOR_GATE.md`).
+
+---
+
+## 0. What this gate registers, and what it does not
+
+It registers a frozen frame, one transfer read and, conditionally, one surrogate read:
+
+- **The frozen V 2026 frame** (s2.2), whose ONE long-run primary is W3 at RT 2031 (s6.3),
+  with R3 at RT 2029 as a tilted arrival read (no alpha).
+- **T, the transfer read** (s6.1), on OLD, SPENT, NON-RESERVED cohorts only: T1 asks whether
+  an innovation-based composite of 2026-type MiLB outcomes is faithful to six-season value;
+  T2 to T4 ask whether the S-only timing label g_S is channel-consistent, comparable across
+  the 2021 ladder break and harmless as a TIMING-head auxiliary.
+- **S4, the one read of lv_2026 against the composite** (s6.2), which exists only under
+  owner answer OQ2 = B, runs only if T1 and T3 pass, never before R-VM look 2's record
+  (OQ3 = A), and is read against its own tilt.
+
+It does not register a claim frame for the Source Comparison headline. Nothing here moves a
+served driver, a served weight or an admission decision. A T2 to T4 pass admits g_S only
+as an auxiliary label for the timing head of a candidate in the 2027 label-epoch
+registration; the flip is the owner's call there. Arrival outcomes never train
+a skill slope (`DRIVER_SYSTEM_V2.md` principle 4). The copy stays "ties consensus" until a
+reserved read of `EFV_V2_GATE.md` says otherwise (owner DS-Q1; `EFV_V2_GATE.md` s8).
+
+**Honest prior, recorded so this gate cannot be read as promising anything.** Level and
+arrival rungs read rho 0.187 / 0.150 (AA2) and 0.305 / 0.404 (R3) against L6 on
+V 2011-2016 (`_finalpass_2026-09-24/efv2/E2_data_labels/DATA_LABELS.md:109-125`); T1 needs
+0.50, and the innovation-based composite removes the pre-V rung that carries most of what
+those rungs know, so its faithfulness is expected BELOW the absolute rungs'. Under full
+surrogacy lv_2026 would be well powered (a floor-size surrogate lead maps to 0.003 to 0.010
+long-run, finer than the R-LV floor); full surrogacy fails on the record (bypass share 57
+to 92 percent; impossible for AA2, since consensus predicts L6 better than AA2 does), so no
+surrogate-scale lead translates. If T1 passed, the multiplier would be at least 0.5. The
+modal outcome of T1 is a fail; of T3, a STOP under its conservative CI rule; of T4,
+"not shown harmful, unpowered". If S4 ever runs, a V2 lead is EXPECTED BY CONSTRUCTION and
+uninformative; only a loss is informative. On T2(b), which tests signs on the TIMING target:
+`level_rank` is expected to PASS (its slope on R3 given consensus is positive in 7 of 7
+vintages, mean |t| 9.886, admitted) and `age_rel_level` is expected to FAIL, because its own
+sign on R3 is unstable (-1 in 2018-2021, +1 in 2022-2024, mean |t| 2.34, not admitted), so
+no split-wise sign agreement can hold for it. Since ANY (b) failure fails T for the
+auxiliary route (s5 T2), this prior implies that T2 fails and the auxiliary route closes,
+whatever T3 and T4 show. The round-2 prior cited the SKILL-target sign
+(`level_rank` negative in 5 of 7 vintages), which T2 does not test (`data/xfv.json` meta
+receipt `served_model.receipt.hit.timing.admission` at 64bf1bb3, lane copy
+`snap/xfv_HEAD.json`; `data/xfv.json` changed since, s8.13).
+
+---
+
+## 1. Preconditions (all must hold before the status line changes)
+
+| id | precondition | state at this draft |
+|---|---|---|
+| Q1 | The ETA FanGraphs-blend look is recorded: `data/eta_eval.json` carries block `fg_blend_gate_2026_09_25` (`docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md` s6), recorded at be53132d (2026-09-30 19:22); and this lane's pre-look counts of that look's own outcome (V 2024 frame players who debuted in 2026, 63 / 72, and in 2025-26, 136 / 153, counted 2026-09-30 13:01 with no score joined) and the lv_2026 overlap (212 / 207) are disclosed in a dated addendum under ETA s8 (task SG_A; its commit sha PENDING here) and in s8.11 | record MET (be53132d); addendum UNMET (SG_A) |
+| Q2 | The ten 2026 season files are frozen as a TRACKED copy `data/milb_season_frozen/2026/` equal row for row to the 2026-09-30 refetch, sha256-pinned in `data/efv_surrogate_pins_2026.json` with each level's last scheduled regular-season date; the 2026 sport-1 files reduced to their person-id sets (`mlb_event_ids_{hitting,pitching}.json`, no stat column) and pinned; the transfer seasons (2010 to 2019, 2021 to 2025; sport 1 as ids only) pinned by canonical content hash; pure-2026 level norms derived from the frozen copy in `data/milb_norms_2026_pure.json`; `.gitattributes` `-text` lines for every file this gate writes (s11) | UNMET (task SG_1) |
+| Q3 | fWAR label freeze receipt with per-side coverage (`FWAR_LABEL_EPOCH_GATE.md` P1) and the F-LV floors (EV-05, `data/efv_lv_floor.json`) | UNMET (freeze about 2026-10-05) |
+| Q4 | The surrogate guard exists and is tested: refuses R-LV for every sha before any sha check; refuses every read before this file is REGISTERED; enforces the frame schedule by purpose (s2.3); REFUSES, never drops, while any in-window 2025-or-later debutant lacks its owning look's record (s8.1); refuses any 2026 outcome before Q1's record; this gate's code never calls `guard_score_request`; `efv_vintage_frame.py` at git blob c9d5a29d4dfda710792b854b61983625e9c1367e (64bf1bb3 and 26b446d9); the identity path imports no debut or MLB column (AST test) | UNMET (task SG_2) |
+| Q5 | The V 2026 rater freeze `data/efv_surrogate_frame_2026.json` exists, taken after Q1's record and BEFORE epoch step C (so before step F) when it landed in that window, with `war_source.DEFAULT_PROVIDER == "ewar_v2"` (`war_source.py:136`) and `efv_dataset.RESOLVED_THROUGH == 2025` asserted; else the step A snapshot (`../_pre_epoch_fwar_2026-10/`) stands in and the freeze is taken from it after step Z (task SG_4B), the epoch's step A record saying which; recording the provider and the `career_war` basis it read; sha-pinned; re-freeze refused; the scored V2 object named exactly as s2.2; the zero-information twin's scores and the per-row head indices e_time and e_skill frozen beside it (s4); row and identity counts re-taken (s8.13) | UNMET (task SG_4 before step C, else SG_4B after step Z; NOT NEEDED, and this gate never registers, under OQ1 = C or OQ2 = C) |
+| Q6 | Owner answers OQ1 to OQ6 (PLAN.md s7) | UNMET |
+| Q7 | The look runner (`tools/efv_surrogate_look.py`) refuses without this file's REGISTERED commit sha, pins inputs at start and end with the nightly idle, refuses a spent look, refuses on 2026-10-23, 11-06, 11-13 and 11-20, on the eFV reserved-read day (the day the R-LV and R-VM look session runs: the date in `data/efv_v2_gate.json` once it exists, or the date STATUS.md records beforehand) and in any session that runs another gate's look (PROGRAM.md:353; final-pass plan Part 8, `:2035`), and writes the bootstrap SDs of every cell BEFORE it prints any point delta; its reporting path is tested on fixtures carrying None and NaN in every printed cell, and every look runs under the one-look crash protocol (tee first; on an exception after scoring began, STOP without rerunning, the look spent if marked, an owner question written; tasks SG_8, SG_9) | UNMET |
+| Q8 | R-VM look 1's record exists (`data/efv_v2_gate.json`) before S3, because T3's V 2022 rows include 2025 debutants inside the window and the guard refuses the read without it (s8.1) | UNMET (not before 2026-12-01) |
+| Q9 | Input pins (s11) re-taken at registration; the fold scheme, the first scored vintage and the n each clause is read on written into s5, including whether the V-1 rung derivation of s3 passed its reproduction test or the registered fallback of s2.1 applies | PENDING |
+| Q10 | Under OQ6 = A, the dated one-sentence amendment to `EFV_V2_GATE.md` s5 B9b (R-VM look 3's record releases, for the label reads of registered long-run frames only, the in-window debut cohorts no R-VM look owns) is committed by that document's own rules before this status line changes; under OQ6 = B nothing is owed here and both long-run reads stay deferred whole | UNMET (per OQ6) |
+
+---
+
+## 2. Frames
+
+### 2.1 Transfer frames (spent; non-reserved; read only by T)
+
+- **lv_dev_all.** F-LV (`efv_vintage_frame.build_frame`) on list vintages 2011 to 2019
+  (`DEV_VINTAGES`): 5,962 rows, 2,720 players (1,363 hit / 1,357 pit; lane count
+  `surr_work/surr_player_counts.json`). Label W3 and R3 on the frozen fWAR label (Q3). Rows
+  at V 2011 to 2014 (786 hit / 719 pit, 1,505 of the 3,100 lv_L6 rows) carry NO MiLB block
+  from `efv_dataset` (the season loop stops at 2014, `efv_dataset.py:971`; `:1057-1058`
+  return None; `efv_v2_model.py:565-566` marks them `milb_unavailable`), so `level_rank`
+  (V-1) and `age_rel_level` do not exist on them there. This gate does NOT read those two
+  features from the frame for any vintage. It derives the V-1 rung and age-for-level itself
+  (`rung_pre`, `age_pre`, s3) for EVERY frame vintage from the pinned season store on the
+  outcome-blind id (seasons 2010 to 2025; the cache holds every sport and group from 2005,
+  so 2010 is pinned for V 2011), with a test that reproduces `efv_dataset`'s primary-level
+  rule (`:976-1013`: the highest rung at the 50 PA / 60 BF floor, else the most-exposed rung)
+  on every V 2015-2019 row where the frame carries a `level_rank`. If that test fails on any
+  row, the registered FALLBACK applies and is written into s5 at registration (Q9): T1 on
+  V 2015-2016 only with a player-grouped 5-fold scheme (seed 20260930) and an inner
+  player-grouped 5-fold for the penalty; T2's non-MiLB splits reduced to 2015-16 and
+  2017-19; T3's old era V 2015-2019; T4's evaluation vintage V 2019 only (training up to
+  V 2015). The fallback halves T1's player count and widens its half-width to about 0.06.
+- **lv_L6.** Its subset V 2011 to 2016: 3,100 rows, 1,585 players (781 hitters, 804
+  pitchers). Label L6, the six-season target percentile within (side, V). Late debuters whose
+  L6 is censored at RT 2025 are KEPT at `efv_labels` `l6_censored_target` with weight
+  `l6_weight` (the v1 training convention) WHEN THEY CARRY ONE, which `efv_labels` gives only
+  to debuts in `DEBUT_YEARS` = 2011 to 2024 (`efv_dataset.py:315`,
+  `range(2011, RESOLVED_THROUGH)`; `efv_labels.py:247-250`). Three groups carry NO L6 and
+  leave T1: rows with status `reserved_vm` (a 2025-or-later debut: `efv_labels.py:228`,
+  `:245-246`, which fire before the `DEBUT_YEARS` branch, so the F2 advance to RT 2026
+  changes nothing here), `censored_never` rows (`efv_labels.py:161`, excluded from fit and
+  score by the label module's own rule) and `identity_conflict` rows (`:219-220`). They are
+  the latest arrivers and the still-active non-arrivers, so their exit is a SELECTION THAT
+  TRUNCATES ARRIVAL: it is disclosed with counts per side and vintage on the T1 printout, and
+  the rho on resolved (uncensored) rows alone is printed beside the primary. This gate never
+  computes an L6 for a 2025-or-later debutant, not even after look 1 releases the debut
+  event (T5 asserts it; B9b rule 2 and T5 forbid the MLB stat an L6 would need).
+- **comparability.** V 2022 (652 hit / 615 pit rows) with R3 at RT 2025 on debut EVENTS
+  through 2025 only; it reads S(2022) and R3 and nothing else. Its 73 / 76 rows of 2025-or-
+  later debutants: a 2026 debut is outside the window (R3 = 0, a fact fixed by the end of
+  2025, kept per B9b rule 1); a 2025 debut is inside the window and belongs to R-VM look 1,
+  and the guard REFUSES the V 2022 read while look 1's record is absent (B9b rule 2,
+  `EFV_V2_GATE.md:239-241`; s8.1), so T3 runs after Q8 and never with rows dropped. V 2023
+  (630 / 643 rows; 105 / 120 R-VM-owned, 45 / 61 of them 2026 debuts inside the window) is
+  read by NOTHING in this gate: its R3 at RT 2026 reads 2026 debut events that belong to
+  R-VM look 2, and the round-2 "V 2023 joins T3 after S4" was a second T3 read with no
+  decision rule (T3 has already gated S4 by then), a forking path, so it is dropped.
+- Surrogate outcomes on these frames are season V outcomes of their own year (the S(V)
+  analog of S(2026)), built from the pinned season store on the outcome-blind id.
+  Seasons before 2021 keep short-season A (sportId 15) as its own rung between CPX and A,
+  and EVERY component and norm that reads sportId 11 before 2021 drops the Mexican League
+  first, by league name (`league == "MEX"`: 349 of the 1,627 hitter rows in the 2016 file,
+  336 of 1,665 in 2019; `milb_history.league_norms` has no league filter, `:239-283`, so a
+  MEX line would otherwise read as AAA in S1, S2, S3's norms and S4).
+
+### 2.2 The prospective frame (fresh; long-run reads by s6.3; one surrogate read by s6.2 only under OQ2 = B)
+
+- **lv_2026.** `build_frame(side, 2026)`: 590 hitter and 617 pitcher rows, one per player
+  (counts from the universe snapshot of 2026-09-30 12:45; the identity split 1987b1b2 of
+  2026-10-01 may move them by a handful of rows, s8.13, and SG_4 or SG_4B re-takes them). Window
+  2026-01-01 to 2026-05-01, cut at an April debut; MiLB inputs through 2025; the
+  outcome-blind person id (`efv_identity`, through 2025) exists for 453 and 454 rows; the
+  record id stays on the row for audit only (`efv_vintage_frame.py:8-29`, `:217-223`,
+  `:246-256`). Rows without a person id (137 / 163, 23.2 / 26.4 percent) take the
+  ABSENT_IDENTITY code, are never dropped from the frame, and are EXCLUDED from the S_idx
+  primary until a pre-V identity route exists (s3, s8.10). The 2026 coverage count on those
+  rows that the round-2 draft printed here is a tabulation of a 2026 outcome by identity
+  route; it lives in s8.9 with its provenance and is admitted under kill rule 3(i).
+- **Raters, frozen at Q5 and never extended.** Each named exactly:
+  - **V2 list-vintage fold V = 2026, eWAR v2 label, RT 2025, DS-08 draft weights
+    (`data/efv_v2_assembly.json`), heads refit per `EFV_V2_GATE.md` s4.5 on labelled F-LV
+    vintages 2011-2019 with the 6 lv_2026 players on 2017-2019 frames left out.** This is
+    NOT the served V2 (the vm fit: hitter skill `tool_hit` only, pitchers consensus-only per
+    the `data/xfv.json` receipt) and NOT the registered candidate P5 (weights re-derived once
+    on the frozen fWAR label); the fWAR re-derivation is not applied to it. No lv_2026 read
+    is therefore a result about the served or the registered eFV; it is a result about this
+    named object. Its own sha and fold receipt are written into the freeze file.
+  - eFV v1 forward-chained at decision years up to 2025.
+  - In-window PROSPX consensus, MLB Pipeline and FanGraphs.
+  - For arrival components only, descriptive, NOT prospective with respect to the ETA look
+    (which scored the same forms against 2026 debut events of V 2024 rows, 212 / 207 of
+    whose players sit here; recorded at be53132d, admitted under kill rule 3(ii)): the ETA
+    shadow's CH40, arm A and arm B predictions and FanGraphs `eta_year` from the
+    `fg_blend_gate_2026_09_25.live_shadow_2026` block (4,486 rows, one per player key,
+    built "with inputs as of each listing date" and storing `level`, `on40`, `fg_eta_year`
+    and `listing_date`; ETA s5). Its listing dates run 2026-01-01 to 2026-09-30 (by month:
+    Jan 338, Feb 1,065, May 19, Jun 107, Jul 204, Aug 403, Sep 2,350; 1,403 rows before
+    2026-05-01), so a row listed from May on carries an in-season 2026 level, 40-man status
+    and FanGraphs ETA. A shadow row is JOINED only when its `listing_date` is before the
+    frame row's own window end (`efv_vintage_frame.window_bounds`: before 2026-05-01 and
+    before any April debut); otherwise the four ETA raters are None on that row and the row
+    is counted. SG_4's tests and T5 assert it.
+  - The served board is not point-in-time (v1 grades carry in-season 2026 stats; the served
+    ETA is the FanGraphs-blend arm B on current inputs since 6c614289, with the org
+    multipliers removed at c3916597), so only these reconstructed objects qualify.
+- **Overlap, reported as counts only:** 754 of the 1,207 players also sit on a 2022-2025
+  frame (V 2022: 52 / 53; V 2023: 117 / 121; V 2024: 212 / 207; V 2025: 354 / 367; key
+  intersections of the lane's per-row file, s8.9); 6 on a 2017-2019 frame
+  (`surr_work/surr_player_counts.json`); 79 / 94 rows are 2026 debutants (R-VM cohort 2026).
+
+### 2.3 Reserved and excluded
+
+- **R-LV** (V 2020, 2021; `efv_vintage_frame.RESERVED_LV`): never built by this gate, for
+  any purpose, including overlap counts. The surrogate guard refuses R-LV for EVERY sha
+  before it looks at any sha, and this gate's code never calls `guard_score_request`. (Once
+  `EFV_V2_GATE.md` is REGISTERED, `gate_sha_committed` accepts any 40-hex ancestor of HEAD
+  whose tree carries that file marked REGISTERED, `efv_vintage_frame.py:119-132`, so this
+  gate's own REGISTERED commit sha would open `guard_score_request` if something handed it
+  over; nothing here does, R-LV's single look belongs to its own runner, and SG_2 tests
+  both fixture trees.)
+- **Two kinds of read, kept apart.** SURROGATE reads (S3, S4) take season-V MiLB outcomes
+  and, for a 2025-or-later debutant, the debut EVENT only, never an MLB stat. LONG-RUN LABEL
+  reads (R3 at RT 2029 and W3 at RT 2031 on lv_2026, s6.3) read the debut event and MLB WAR
+  through `efv_labels`, which today withholds every in-window 2025-or-later debut
+  (`reserved_vm`, W3 None, `efv_labels.py:228-246`) and has no release keyed to a look
+  record; SG_10 adds that release path by dated amendment before RT 2029. Both kinds
+  REFUSE, never drop, while a row's owning look lacks its record (s8.1).
+- **R-VM** (debut cohorts 2025 and later, `EFV_V2_GATE.md:61`), policy per B9b rule 2 and
+  s8.1: a row whose 2025-or-later debut falls inside its frame's window leaves every read of
+  this gate until the R-VM look that owns its cohort has its record; the guard refuses the
+  read (`ReservedFrameError` with the count per cohort) while any such row lacks it. R-VM
+  looks exist for the 2025, 2026 and 2027 cohorts only (RT 2026, 2027, 2028; PROG:142,
+  :163, :355 "final boundary"; GATE:61-62), so the 2028 and 2029 cohorts, which R3 at RT
+  2029 and W3 at RT 2031 contain, have no owning look. Their release is owner question OQ6
+  (A: at look 3's record, by the GATE amendment of Q10; B: a named successor registration,
+  both long-run reads deferred whole and possibly never). This gate reads
+  `EFV_V2_GATE.md:61` ("the 2025 debut cohort and later") as the reservation and PROG:142
+  as the look schedule; OQ6 settles the gap between them for this gate's reads only.
+- **The schedule the guard enforces** (`guard_surrogate_read(V, *, gate_sha, look_records,
+  purpose)`, SG_2; a STOP line in a task spec is no longer the only thing between a read and
+  a frame the plan says it never touches): purpose `transfer` opens V 2011-2019 at
+  REGISTERED and V 2022 only with look 1's record, and refuses V 2023, 2024 and 2025 always
+  (their arrival outcomes belong to the ETA gate and to R-VM) and V 2026 always; purpose
+  `lv2026_surrogate` opens V 2026 only with look 2's record and only when this file's
+  header records OQ2 = B; purpose `lv2026_long_run` opens V 2026 only with the records of
+  looks 1, 2 and 3 and the OQ6 release; everything else refuses. `look_records` is read
+  only from `data/efv_v2_gate.json` (absent today); nothing else may claim a record. After
+  a release the row returns with the debut EVENT as the top code and no MLB stat in the
+  surrogate reads, and with its label in the long-run reads. What this gate reads on each
+  frame: V 2022, S(2022) and R3 (RT 2025) after look 1; V 2023, V 2024 and V 2025, nothing
+  at all; lv_2026, no outcome before look 2.
+- **No FV-cell stratum anywhere.** Descriptive strata only: side, age, last level, draft or
+  IFA, bonus band, parent club, source disagreement.
+
+---
+
+## 3. The outcomes (fixed here; season V of each frame, regular season only)
+
+Rungs are `efv_dataset._LEVEL_RANK` (DSL 0, CPX 1, A 2, A+ 3, AA 4, AAA 5; `:317`), MLB 6,
+never AP+'s `ap_level_rank`; seasons before 2021 keep short-season A (sportId 15) as its own
+rung between CPX and A. Exposure floor 50 PA / 60 BF, else the most-exposed level
+(`efv_dataset.py:976-1013`). MLB is the debut EVENT only: the builder reads sport-1 season
+files through one function, `mlb_event_ids(season, group)`, which returns the set of person
+ids with a regular-season sport-1 line in that season and nothing else; no sport-1 stat
+column is ever read (T5), and for 2026 the id sets are the frozen `mlb_event_ids_*.json` of
+Q2. A season with no affiliated or MLB line on the pre-V id codes ABSENT_KNOWN (a TJ record
+in `data/tj_surgery.json`, person-keyed), ABSENT_IDENTITY (no pre-V id) or ABSENT_UNKNOWN;
+ABSENT is never coded as the worst outcome without its sub-code. No store holds MiLB
+postseason games, and none is read. Level-relative rates use PURE season norms from the
+pinned files (Q2), never the current-year blend of `milb_history.league_norms` (`:285-306`),
+and every norm and component that reads sportId 11 before 2021 drops `league == "MEX"`
+rows first (s2.1).
+
+**The V-1 state this gate derives itself (never read from the frame's MiLB block).** For
+every frame row: `rung_pre` = the primary rung of season V-1 on the outcome-blind id from
+the pinned store (the `efv_dataset` rule above); a first-year pro with no V-1 line takes his
+entry rung from his first in-store season at or before V-1 (the `_pace_from_entry` lineage,
+`efv_dataset.py:899-930`); a row with no in-store line at all is ABSENT-pre and takes the
+within-(side, V) median rung with a flag that is NOT an S_idx input and is counted. `age_pre`
+= age at season V-1 minus the median age of exposure-floor qualifiers at (season V-1,
+rung_pre) in the pinned store, a within-store construct. A test reproduces `efv_dataset`'s
+`level_rank` on every V 2015-2019 row where the frame carries one; the fallback of s2.1
+applies if it fails.
+
+| id | outcome | definition | in S_idx? |
+|---|---|---|---|
+| S1 | LEVEL_END | highest rung with exposure at the floor in season V, else the most-exposed rung; the MLB top code from `mlb_event_ids`; ABSENT codes | no (absolute rung; descriptive) |
+| S2 | CLIMB | LEVEL_END(V) minus rung_pre, then RESIDUALIZED on rung_pre and age_pre with maps fixed on lv_L6 id-resolved rows (CLIMB is capped at 6 minus rung_pre, so an AAA row can climb at most 1 and raw CLIMB falls with the rung, the ceiling `DATA_LABELS.md:122-123` notes for AA2; e_time rises with the rung, so on raw CLIMB the ceiling alone would push e_time toward a LOSS by construction), then club-demeaned: minus a shrunken parent-club intercept fitted on lv_L6 by a function that takes the fitted club table as an argument; the club is the as-of org of s4, with unknown-org rows on the pooled intercept. eFV-native; AP+ is never read | yes (the innovation) |
+| S3 | PERF | season-V rates at the primary rung against pure level norms, exposure-shrunk: hitters obp_rel, contact (minus k_rel), iso_rel; pitchers k_rel minus bb_rel; residualized on age_pre AND on rung_pre with maps fixed on lv_L6; the hitter scalar that e_skill (s7) and the S_idx ridge read is the equal-weight mean of the three columns after standardization within (side, V) on lv_L6; undefined for ABSENT and MLB-event rows, which take the within-(side, V) id-resolved mean (0 after standardization) with NO missing indicator (the ABSENT code and the MLB top code already enter through S5 and S2) | yes (residualized) |
+| S4 | PT | PA (BF) over affiliated levels in season V over THAT season's own per-level full-season exposure among affiliated-league qualifiers (MEX excluded by league name before 2021), capped at 1, residualized on rung_pre and age_pre; pitchers also GS share; ABSENT gives 0 with its sub-code | yes (residualized) |
+| S5 | STATUS | ACTIVE, ABSENT_KNOWN, ABSENT_IDENTITY, ABSENT_UNKNOWN. "Released" is not identifiable from one season (the BUST2 two-season rule) and is not coded | one ABSENT code among id-resolved rows; sub-codes descriptive |
+| S_idx | the composite (T1's object; S4's primary) | per side, E[L6 percentile within (side, V) given S2, S3, S4 and the one ABSENT code], a ridge fitted on lv_L6 id-resolved rows, leave-one-vintage-out over V 2011-2016 for the faithfulness read (each fold's penalty by inner leave-one-vintage-out CV on its five training vintages, grid {1, 3, 10, 30, 100, 300, 1000}); the full six-vintage fit is the index applied to lv_2026. Under the s2.1 fallback: V 2015-2016 only, player-grouped 5-fold (seed 20260930) with an inner player-grouped 5-fold for the penalty, and the n written into s5 at registration. It contains NO rater input and NO pre-V state: no FV, tool grade, pick, bonus, age, protection status, absolute rung, rung_pre, age_pre or ABSENT_IDENTITY (rung_pre and age_pre enter only through the residualization of S2 to S4) | is the composite |
+| g_S | the S-only timing label (T2 to T4's object). The round-2 draft called it g_time and gave it `level_rank`(V-1) and `age_rel_level` as inputs, which made T2(b) pass by construction for exactly the two drivers it tests | per side, E[R3 given S2, S3, S4, ABSENT], a penalized logistic fitted on lv_dev_all vintages with resolved R3, forward-chained, with NO pre-V input (rung_pre and age_pre enter only through the residualization of its inputs); the stage-B map of `surrogates.md` s3.2 for the TIMING head only. Its increment over E[R3 given rung_pre, age_pre] (a partial rho) is printed descriptively | separate object |
+
+Set aside, not outcomes of this gate: November 40-man adds (already a V2 timing input,
+DS-09); next-year consensus revision (agreement, not value); AFL and Futures Game
+selection; "released" from one season.
+
+---
+
+## 4. The statistic and its intervals
+
+- **Primary:** size-weighted within-(side, vintage) Spearman (`efv_v2_stat`, groups of at
+  least 20 rows), each rater's OWN score against the outcome; on lv_2026 there is one
+  vintage, so it is within side. Delta = within(rater) minus within(PROSPX consensus) on
+  identical rows. V2 minus MLB Pipeline and V2 minus FanGraphs are reported beside it with
+  the same machinery, descriptive.
+- **Secondary:** pooled Spearman after the identical output map (`efv_v2_model.output_map`,
+  as `EFV_V2_GATE.md` s3.3), reported beside the primary, never the claim alone.
+- **Intervals:** paired bootstrap, B 2000, seed 20260930; resampled by player (the
+  `source_backtest` resampler) and, as the binding sensitivity, by parent club at the
+  listing date (about 40 rows per club). **The as-of org**, registered here because F-LV
+  rows carry no org field (`efv_vintage_frame.py` has no `org` key) and
+  `trades.canonical_org` (`trades.py:375`) only normalizes a team name: the `org` on the
+  row's latest in-window board point (`points[].org`, the field
+  `identity_audit.load_snapshot_orgs` reads, with the placeholder "Office of the
+  Commissioner" treated as unknown), normalized by `canonical_org`; otherwise the last club
+  in the MLB transaction feed dated before V-01-01 on the outcome-blind id; otherwise
+  `org_unknown`, counted (the `eta_backtest.build_cohort` `org_unknown_at_V` pattern) and
+  pooled into ONE pooled intercept for the S2 club term and one pseudo-club for the
+  clustered bootstrap. No org dated at or after the row's window end is read (asserted), so
+  a 2026 trade never enters lv_2026 and no 2026 org lands on a V 2011-2016 row. The claim
+  on any cell is the one-sided 95 percent lower bound, printed beside the point; mde95 =
+  1.645 x SD of the drawn deltas. Draft-time floors are sqrt(n) arithmetic (s9). Measured
+  floors are NOT a precondition of the status line: the runner writes every cell's
+  bootstrap SD before it prints any point delta (Q7), and the old-cohort analog floor for S4
+  (the SD of rater-minus-consensus deltas against S_idx on lv_dev V 2017-2019, taken at S3)
+  is filed as a dated amendment before S4.
+- **Controls on every cell:** a zero-information V2 twin (driver columns permuted within
+  vintage, permutation seed 20260931, its scores FROZEN at Q5 beside the V2 object so no
+  refit of a 2026 object is needed in 2029 or 2031) and a 500-draw permutation null. The
+  per-row head indices e_time and e_skill of the V2 fold object (its timing-head and
+  skill-head scores, s7) are frozen at Q5 as well.
+
+---
+
+## 5. Clauses (frozen at this commit)
+
+| clause | test | pass rule | governs |
+|---|---|---|---|
+| T1 faithfulness | rho(S_idx, L6 percentile) on lv_L6, per side, leave-one-vintage-out out-of-sample over V 2011-2016 (n 781 / 804 players when the s3 derivation of rung_pre and age_pre passes its reproduction test; under the s2.1 fallback V 2015-2016 only, player-grouped 5-fold, n written into this cell at registration); rows with status reserved_vm, censored_never or identity_conflict carry no L6 and leave with counts per side and vintage (s2.1, a selection that truncates arrival, disclosed); the rho on resolved (uncensored) rows alone printed beside; W3 on lv_dev_all secondary | one-sided 95 percent lower bound at least 0.50 on L6, on BOTH sides | S4 only. A fail closes level and arrival surrogates as value proxies for eFV permanently (kill rule 7) |
+| T2 channel | on g_S against Y = R3 for every timing-head candidate (`efv_v2_model.V2_TIMING_KEYS`, `V2_ABSENCE_KEY`, on_40man, nov_add): (a) partial rho(g_S, R3 given u_c) with lower bound above 0; (b) the sign of each driver's slope given u_c on g_S equals its sign on R3, pooled and in each split where the driver exists (MiLB drivers: 2015-16 and 2017-19; others: 2011-13, 2014-16, 2017-19; under the s2.1 fallback 2015-16 and 2017-19 for every driver). `V2_ABSENCE_KEY` (`milb_absent`, `efv_v2_model.py:659`) is a MiLB driver here: `efv_v2_model.v2_row` sets it to 1.0 on every row with no MiLB block (`:721-733`), so it is the CONSTANT 1.0 on every V 2011-2014 row and carries no variation there. Handling, registered now: for every MiLB driver, `V2_ABSENCE_KEY` included, (a), (b) and (c) are scored ONLY on V 2015-2019 rows, so its pooled (b) is the V 2015-2019 pool and its splits are 2015-16 and 2017-19; its slope is never estimated on, and its (b) is never failed by, the V 2011-2014 rows, which stay in g_S's own fit and in the non-MiLB drivers' reads. A driver constant within a scored split is a registration error: the runner checks every driver's variance per scored split BEFORE it reads any outcome and STOPs there (no look is spent), and the handling of that driver goes to a dated amendment written from the variance check alone; (c) the ratio of the driver's UNSTANDARDIZED slope given u_c on g_S (a probability, calibrated on its training vintages) to its slope on R3 (0/1, a linear-probability fit), both on the probability scale, lies in [0.5, 2.0]: the band is centred at 1 for a channel-consistent driver, because R3 minus g_S is then uncorrelated with the driver given u_c (the round-2 band on standardized slopes of within-(side, V) percentiles was centred near 1/rho(g, R3), about 1.8 to 2.2 with a binary R3, and would have failed a valid g); (d) the bypass share 1 - rho(u_c, g_S) rho(g_S, Y) / rho(u_c, Y) is printed per side. The skill-head version (g_skill against W3) is printed descriptively only; S_idx and g_S never enter a skill head. Prior (s0): `level_rank` expected to pass (b), `age_rel_level` expected to fail (b) | (a), (b) and (c) hold for every driver. ANY (b) or (c) failure fails T for the auxiliary route and bars that driver from any head that reads g_S in 2027 | the 2027 timing auxiliary |
+| T3 comparability | rho(g_S, R3) on V 2011-2019 (fallback: V 2015-2019) against V 2022 (R3 at RT 2025, after Q8; one row per player, sides pooled); no later vintage is added (V 2023 is not read, s2.1) | PASS iff the CI95 of the Fisher-z difference lies entirely inside (-0.10, +0.10); anything else is a STOP: S4 never runs, the auxiliary route closes, and the lane may return only as a new registration disclosing this read. No re-basing after the read. S -> L6 comparability is ASSUMED and untestable until about RT 2031 | S4 and the auxiliary |
+| T4 do no harm | the S-only regime emulated: for each evaluation vintage V in 2017-2019 (fallback: V 2019 only), R3 is masked on training vintages V-3 to V-1 (unresolved at RT V-1) and imputed by g_S fitted on vintages up to V-4 (2011-2013 for V 2017, 2011-2014 for V 2018, 2011-2015 for V 2019; usable because s3 derives rung_pre and age_pre on those vintages); the timing head trained on resolved plus imputed rows against the incumbent (resolved rows only, `lv_training_rows`); within statistic, E_cond; plus a permuted-S twin | HARM iff the one-sided 95 percent upper bound of (augmented minus incumbent) is below 0 or the point is below -0.005; otherwise "not shown harmful, unpowered" (mde95 0.0155 on lv_dev is three times the effects in play, so T4 can fail but cannot certify). The real S beats its twin iff the one-sided 95 percent lower bound of (real minus twin) is above 0; otherwise g_S is regularisation only and is not admitted | the 2027 timing auxiliary |
+| T5 hygiene | test-enforced, asserted in the runner before any score | no V 2020 or 2021 row built; in a SURROGATE read (S3, S4) no MLB stat of any row and no debut event of a 2025-or-later debutant before the owning look's record; in a LONG-RUN read (R3 at RT 2029, W3 at RT 2031) no label of a 2025-or-later debutant except through the release path of s6.3 with its record present; no L6 ever computed for a 2025-or-later debutant; no read before Q1's record; the identity module imports no debut or MLB column; ABSENT sub-codes present; ABSENT_IDENTITY out of the primary with its count; exposure floors applied; the frozen 2026 copy's sha256 equals the pin; sport-1 files read only through `mlb_event_ids` (no stat column); MEX rows dropped wherever sportId 11 before 2021 is read; no ETA shadow row joined with a listing date at or after the frame row's window end; no org dated at or after the window end; no FV-cell grouping (the `test_efv_vintage_frame.py` scan extended); AP+ never imported; `efv_vintage_frame.py` at git blob c9d5a29d4dfda710792b854b61983625e9c1367e (`git rev-parse HEAD:./efv_vintage_frame.py`; never a working-tree sha256, which drifts with CRLF, s11) | every read |
+| T6 multiplicity and transfer | surrogate-scale family: Holm m = 1 (S_idx); head-falsification family at S4: Holm m = 4 (e_time on residualized, club-demeaned CLIMB; e_skill on residualized PERF, the hitter scalar of s3; per side), one-sided in the direction of a LOSS, the e_time cell also printed within (side, rung_pre) strata as its sensitivity; long-run family: W3 at RT 2031 alone (m = 1), Bonferroni 0.025 each if a second endpoint is ever added by amendment; player- and club-clustered bootstrap, B 2000; the surrogate threshold effect (STE, Burzykowski and Buyse 2006) of the rater-level line, estimated on a registered family of large deliberate perturbations (plus or minus 0.03 and beyond), DESCRIPTIVE ONLY | no surrogate-scale result, whatever its size against the STE, permits any statement about long-run direction or value (s0.3, s6.2, H_S); the STE is printed as a description of the rater-level line and permits nothing | every read |
+
+---
+
+## 6. The reads
+
+### 6.1 S3, the transfer read (T1 to T6)
+
+Once. After epoch step Z, the P1 freeze receipt (Q3) and R-VM look 1's record (Q8); not on
+2026-10-23, 11-06, 11-13 or 11-20, not on the eFV reserved-read day, and never in a session
+that runs another gate's look (Q7); nightly idle, one process. Output
+`data/efv_surrogate_gate.json` key `transfer`, with verbatim runner output copied into s12.
+Reads old spent cohorts and V 2022 only (purpose `transfer`); computes no 2026 outcome of any
+row; the guard refuses it, rather than dropping rows, while any V 2022 row with a 2025 debut
+inside the window lacks look 1's record. If S_idx fails T1 on either side, level and arrival
+surrogates are closed as value proxies for eFV permanently (kill rule 7) and S4 never runs.
+If T3 is a STOP, S4 never runs and the auxiliary route closes. The old-cohort analog floor
+for S4 is measured here and filed as a dated amendment (s4).
+
+### 6.2 S4, the one read of lv_2026 (only under OQ2 = B)
+
+Once, only if S3 passed T1 and T3 on both sides, only after Q1 (the ETA record), and not
+before R-VM look 2 has its record (about 2027-10; OQ3 = A, B9b rule 2); purpose
+`lv2026_surrogate`, which the guard opens only with that record and only when this file's
+header records OQ2 = B. Outcomes S1..S5 and S_idx computed from the frozen 2026 files for
+every lv_2026 row; every rater of s2.2 scored by s4 (the ETA raters only on rows whose
+shadow row qualifies, s2.2); ABSENT_IDENTITY rows excluded from the primary with their count
+and a worst-code / best-code bounds sensitivity; a sensitivity on the residual of S_idx after
+regressing on rung_pre, age_pre and parent club; the e_time cell also within (side, rung_pre)
+strata; the number of formerly withheld R-VM rows now carrying an event-only top code
+reported. Output key `lv_2026`; one row appended to `data/efv_progress.json` for frame
+`lv_2026_surrogate` with role `tilted`, the expected direction printed on the row (never
+charted, never the headline; task SG_5). What it may say: "scored point-in-time with models
+that never saw a 2026 outcome, the V2 fold object of s2.2 [led / tied / trailed] consensus at
+anticipating S_idx by X (95 percent lower bound); a lead was expected by construction".
+What it may not say: anything about long-run value or direction, about beating consensus or
+the industry, about the served or registered eFV, or about the Source Comparison headline.
+Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
+
+### 6.3 Long-run reads of the frozen frame (label reads; each deferred whole until every release exists)
+
+- **W3 at RT 2031, the single long-run primary.** On `data/efv_surrogate_frame_2026.json`,
+  the raters, the twin and the head indices as frozen; W3 from `efv_labels` on the label
+  series then in force (a label change under FWAR clause (l), disclosed, never claimed as
+  accuracy). One-sided alpha 0.05, m = 1; the claim is the 95 percent lower bound; controls
+  as `EFV_V2_GATE.md` s8. **H_W3, registered now:** within-side W3 Spearman of the s2.2 V2
+  fold object minus PROSPX consensus on identical rows, one-sided 0.05, m = 1; V2 minus
+  Pipeline and V2 minus FanGraphs reported beside, descriptive. W3 at RT 2031 is WAR over
+  dy..dy+2 for debuts 2026 to 2029 (`efv_labels.py:15-17`), so it consists of MLB stats of
+  R-VM-coded debutants, and it is read ONLY through a label path that releases a
+  `reserved_vm` row on its cohort's look record: SG_10, a dated amendment to
+  `efv_labels.labels_for` (a `release_records` argument that a row's cohort record must
+  appear in, with its own test), filed before RT 2029, absent today (`efv_labels.py:236-238`,
+  `:245-246`); released labels are read only by the registered runner with purpose
+  `lv2026_long_run`, never by a served path (`efv_v2_model._check_years` stays). Release
+  rule: every row is KEPT (B9b rule 1: dropping selects on the outcome); the WHOLE read is
+  deferred until the 2026 cohort (look 2), the 2027 cohort (look 3) and the 2028 and 2029
+  cohorts (OQ6: A, look 3's record under the Q10 amendment; B, a named successor
+  registration, so the read may never run) all have their release; the deferral is disclosed
+  with the count per cohort, and no row is read early. `withhold_reserved_vm` REFUSES inside
+  this read; it never drops.
+- **R3 at RT 2029, a tilted arrival read.** Role `tilted`, no alpha, descriptive: R3 is the
+  timing head's own target and the label on which consensus plus age plus level beat
+  consensus by +0.047 (I2 idea 3), so a V2 lead there is tilt, not value. R3 at RT 2029
+  covers debuts 2026 to 2029 (`efv_labels.py:20`, `:229-231`) and takes the SAME whole-read
+  deferral and release path as W3; `withhold_reserved_vm` refuses, never drops (a drop would
+  be the selection B9b rule 1 names).
+- No O'Brien-Fleming spending across horizons: the three reads are three families (s5 T6),
+  not one comparison accruing information.
+
+---
+
+## 7. Hypotheses and decision rules
+
+- **H_T1:** S_idx is faithful (T1). If it fails, level and arrival surrogates are closed as
+  value proxies for eFV; the pins, the snapshot and the frozen frame stay.
+- **H_T2-4:** g_S is channel-consistent, comparable and not shown harmful (T2 to T4). If it
+  holds, g_S is admitted as an auxiliary label for the TIMING head only, as a candidate in
+  the 2027 registration; if any of T2 to T4 fails, the auxiliary route closes.
+- **H_S (only under OQ2 = B, only if H_T1 holds and T3 passed):** on lv_2026 the V2 fold
+  object is not worse than PROSPX consensus at anticipating S_idx. Interpretation fixed
+  here: a V2 lead is expected by construction and says nothing about value; the informative
+  reads are the head-falsification family (s5 T6): a resolved e_time LOSS against consensus
+  on residualized, club-demeaned CLIMB falsifies the timing head's carry-over to the
+  post-2021 ladder; a resolved e_skill LOSS on residualized PERF (the hitter scalar of s3)
+  falsifies the skill head's; the Prospect Promotion Incentive (2022 CBA) weakens the MLB
+  top code as evidence either way. **Expected signs under NO carry-over failure, written
+  before the family is frozen:** e_time (V2's timing-head index minus consensus, within
+  side, on residualized CLIMB) about 0 to +0.02, because the residualization removes the
+  rung and age content the timing head reads, leaving its reading of the V-1 state, expected
+  weakly positive; e_skill (the skill-head index minus consensus on residualized PERF) about
+  0 to +0.03, because the skill head reads stat readers that track production. A LOSS is a
+  one-sided 95 percent upper bound of the delta below 0; on raw CLIMB the AAA ceiling alone
+  would have produced one by construction (s3 S2), which is why CLIMB is residualized.
+  Pre-committed consequence: a head with a resolved loss may not enter the 2027 registration
+  unchanged; it is re-specified there with the change disclosed.
+- **H_W3:** registered in s6.3 (the single long-run primary).
+- **Holm:** m = 1 for S_idx; m = 4 for the head family; m = 1 for W3 at RT 2031.
+- **What ships:** nothing. Neither pass nor fail changes `w_skill`, `w_time`, any admission
+  decision, the served grade or the copy.
+- **Kill rules.** (1) Frozen list: nothing added after commit. (2) One read per frame per
+  look; no friendlier frame, estimator, seed or norm. (3) Early association: any
+  association, tabulation or model fit between a 2026 season outcome of an lv_2026 row and
+  any rater score (an s2.2 rater's or any other), a label, a model feature or a stratum (any
+  descriptive cut of the rows, such as parent club, bonus band, draft or IFA route, last
+  level, age band or source disagreement), computed by or for eFV before this file is
+  REGISTERED, turns lv_2026 into development permanently and voids s6.2 and s6.3 as claims.
+  Admitted BY NAME, and nothing else: (i) this lane's s8.9 counters, which are counts of
+  2026 outcomes within (vintage, side) and within identity route (person id present or
+  absent; record id present or absent), including the 123 / 121 conditional count and the
+  overlap key intersections, with no score, label or model feature joined; vintage, side and
+  identity route are the only strata admitted, and only for those counts; (ii) the ETA FanGraphs-blend
+  look recorded at be53132d, which scored CH40, arm A and arm B against debut years through
+  2026-09-27 of V 2024 rows, 212 / 207 of whose players sit on lv_2026, with the
+  consequence s2.2 and s8.11 state (those raters' arrival components here are descriptive
+  only; the V2, v1, consensus, Pipeline and FanGraphs raters were not scored by it). (4)
+  Twin at or above V2: no result. (5) Stale or unpinned inputs void the run. (6) Any
+  FV-cell stratum voids the run. (7) T1 fail closes level and arrival surrogates as value
+  proxies for eFV permanently; they remain the ETA program's outcomes. (8) Identity: any
+  post-V or MLB column in the identity path voids the read (bug B4). (9) T3 STOP: no
+  re-basing, no second specification; a new registration only. (10) R-VM: any READ OF THIS
+  GATE (an S3, S4, R3 or W3 read, s6) that scores a withheld row before its owning look's
+  record turns lv_2026 into development permanently; the per-row flags of s8.9 are not a
+  read of this gate and are admitted under rule 3(i).
+
+---
+
+## 8. Disclosures
+
+1. **R-VM debut events on lv_2026 (OQ3, default A: wait).** 2026 debuts of frame players
+   (79 / 94 rows) are 2026-cohort members. Under B9b rule 2 (`EFV_V2_GATE.md:239-241`) their
+   rows leave every read of this gate until R-VM look 2's record; no one-season read runs
+   before that, and the guard refuses a read that would need them rather than dropping them.
+   After the record, the surrogate read takes their debut EVENT as the top code and no MLB
+   stat; the long-run reads take their labels through the release path (s6.3). The label
+   module is NO backstop: `efv_labels.py:230-231` FILLS R3 = 1.0 for an in-window reserved
+   debut once V + 3 <= RT; status becomes `reserved_vm` only in the W3/W2 loop (`:236-238`)
+   and the L6 branch (`:245-246`), so every R3 consumer depends on the guard (the round-2
+   sentence "only sets status" misdescribed the code). No scored frame to date contains a
+   2025-or-later debut event. If the owner chooses OQ3 = B instead, that is a dated
+   amendment to `EFV_V2_GATE.md` B9b rule 2 and to `PROGRAM.md` s2.4's R-VM definition,
+   committed BEFORE this draft, not a disclosure. Rows of 2025 and 2026 debutants on V 2022
+   and 2023 frames follow s2.3.
+2. **Partly spent outcomes.** The 2026-09-25 owner-asked lanes read forward MiLB ISO and
+   promotion speed on the 2022-2023 lists with no reserved vintage (DECISIONS:298-306), so
+   V 2022-2023 promotion outcomes are partly spent; T3 discloses it. The fresh hitter-lean
+   test (2025 FanGraphs list vs 2025-26 ISO) is owner question OQ5: 354 of the 590 lv_2026
+   hitters sit on the V 2025 frame, so run before REGISTERED it would associate S3's exact
+   production outcome with a rater on most of lv_2026 and spend S4's production component;
+   it excludes and counts every lv_2026 player in every mode except OQ5 = A with OQ2 = B
+   after S4 or the lane's close (so under OQ2 = A, never included, even after REGISTERED),
+   and s9 records it.
+3. **F-WATCH.** `tools/xfv_promo_watch.py` froze a pitcher cohort in July with a 2028
+   debut outcome; a 2026 debut read is a partial look at that frozen cohort, and it is
+   disclosed as such.
+4. **The AA2 read on record** used record ids (bug B4, an outcome proxy) and a subset
+   (n 876 / 727); T re-measures it on outcome-blind ids.
+5. **Design exposure.** V2 was specified in September 2026 by people who watched the 2026
+   season; lv_2026 is prospective in data, not in design. V 2027, frozen at 2027-05-01, is
+   the first fully prospective vintage.
+6. **The statistic** is the one `EFV_V2_GATE.md` s3.4 discloses as chosen after two spent
+   reads that showed it favours eFV. The same disclosure applies here.
+7. **Norms.** The served 2026 rel-rates read against a half-2025 norm until 2027-01-01;
+   every read of this gate uses the pinned pure-2026 norms, so it does not reproduce the
+   served values and does not try to.
+8. **Postseason.** No store holds MiLB postseason games; outcomes are regular season by
+   construction.
+9. **This lane's own outcome flags and tabulations (counts only, sealed; admitted under
+   kill rule 3(i)).** Before this draft, the lane's `facts2026.py` (sha256
+   bfd644dcca2f9b102248af6048277f8cf676a14870ce233e593a43bba82b6447) wrote, on 2026-09-30
+   at 13:01 (before the ETA look's first run at 17:59), `frame_rows_2022_2026.json` (sha256
+   07f763170a0734699177edfdeba8118092b3753af868ec8ce3077eb0d0f8e028; 6,312 rows, one per
+   (player, V) on V 2022-2026 frames, keyed by player_key, person id and record id, with
+   boolean 2026 flags p_line, r_line, gl, prom_milb, il, rel, fortyman, debut26 and NO grade,
+   score, label or feature) and `facts2026.json` (sha256
+   fe6c264dd249bcd7081a19e49d6c4a5782014f161d1b14563fca73bc07ff76ac) with the counts
+   tabulated in `facts_table.md` (sha256
+   b1307246a9e08a5c3e118a5ca81d033f28f98c09a79ebfe7ca2a1610d7f63003, 13:06), reproduced in
+   full below. Two further tabulations were computed FROM THE PER-ROW FILE on 2026-09-30
+   during the round-2 revision (PLAN.md written 14:19) and were in view when ABSENT_IDENTITY
+   was taken out of the S_idx primary (s3, s8.10): (a) among lv_2026 rows with no
+   outcome-blind person id (137 hit / 163 pit), the number whose RECORD id carries a 2026
+   MiLB line, 123 / 121 (filter V = 2026, pid absent, r_line true; recomputed identically on
+   2026-10-01 by the lane's round-3 revision, the second and last load of the per-row file,
+   whose provenance the SEAL paragraph below states), a coverage count by identity route that is also a tabulation of a 2026
+   outcome on rows where V2's timing candidate `milb_absent` (`efv_v2_model.py:659`, `:731`)
+   reads 1.0, which is why it is named here and not in s2.2; (b) the overlap of lv_2026
+   player keys with the V 2022-2025 frames by vintage (52 / 53, 117 / 121, 212 / 207,
+   354 / 367; 754 players in all), key intersections with no flag joined. No association
+   with any score was computed. LOADS ON RECORD: the per-row file was loaded twice, both
+   times by this lane and both read-only: on 2026-09-30 (round 2) for (a) and (b), and on
+   2026-10-01 by the round-3 revision, which recomputed (a) and (b) with the same filters and
+   got the same numbers. Both counts read only the per-row file's own fields (V, side,
+   person id, record id, r_line, player key), and no grade, score, label or feature was
+   joined to any of its rows at either load. Both revisions also read the `meta` receipt of
+   the lane's `snap/xfv_HEAD.json` (the 64bf1bb3 `data/xfv.json`, cited in s0), a file that
+   also carries the per-player grades (`by_player`, 9,509 keys); the record does not show
+   whether that file and the per-row file were ever open in one process, so this document
+   does not claim that either session held no grade file, and it records the round-3
+   recompute as a second load of the per-row file, disclosed here. SEAL, from this revision
+   on: NO further read of the four files is permitted, by any process, for any purpose,
+   including a re-check of these counts; SG_0 step (0) copies them as bytes and compares
+   sha256 values, which reads no content; they are never copied into the tree. Their origin is the session folder
+   `scratchpad/efv2026/` (a Temp folder that can disappear with the session); SG_0 step (0)
+   copies them, sha-verified, to the durable path outside git
+   `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/efv2026/sealed/` before this draft
+   commits, and that path is the seal of record.
+
+   The counts, `facts_table.md` verbatim (F-LV rows; "count only" marks a debut or MLB count;
+   "a / b" is person id / record id unless the row says otherwise):
+
+   | fact (count of F-LV rows) | 2022 hit | 2022 pit | 2023 hit | 2023 pit | 2024 hit | 2024 pit | 2025 hit | 2025 pit | 2026 hit | 2026 pit |
+   |---|---|---|---|---|---|---|---|---|---|---|
+   | **Frame and identity** | | | | | | | | | | |
+   | rows (every row carries a consensus grade) | 652 | 615 | 630 | 643 | 645 | 612 | 655 | 653 | 590 | 617 |
+   | record now in timeseries / debuts / inactive | 104 / 317 / 231 | 80 / 337 / 198 | 227 / 255 / 148 | 177 / 320 / 146 | 419 / 215 / 11 | 336 / 258 / 18 | 497 / 155 / 3 | 463 / 185 / 5 | 500 / 79 / 11 | 491 / 94 / 32 |
+   | outcome-blind person id (efv_identity, through V-1) | 548 | 528 | 520 | 523 | 517 | 501 | 502 | 511 | 453 | 454 |
+   | record mlbam_id present | 614 | 564 | 614 | 616 | 640 | 603 | 651 | 650 | 578 | 577 |
+   | debuted before 2026-01-01 (count only) | 286 | 298 | 210 | 259 | 152 | 186 | 80 | 96 | 0 | 0 |
+   | debut 2025 or 2026, R-VM-owned (count only) | 73 | 76 | 105 | 120 | 136 | 153 | 155 | 185 | 79 | 94 |
+   | MLB debut in 2026 (count only) | 31 | 39 | 45 | 61 | 63 | 72 | 75 | 89 | 79 | 94 |
+   | **2026 season lines (final RS), person id / record id** | | | | | | | | | | |
+   | any 2026 MiLB line | 282 / 352 | 288 / 345 | 358 / 439 | 344 / 439 | 433 / 550 | 400 / 493 | 458 / 606 | 441 / 566 | 437 / 567 | 410 / 533 |
+   | 2026 exposure at or above the eFV floor (50 PA / 60 BF) | 237 / 301 | 222 / 266 | 322 / 399 | 273 / 362 | 404 / 514 | 351 / 436 | 433 / 576 | 404 / 521 | 426 / 549 | 387 / 496 |
+   | 2026 exposure 300+ PA / BF (person id) | 121 | 43 | 179 | 65 | 252 | 103 | 306 | 147 | 318 | 182 |
+   | 2+ MiLB levels in 2026 | 102 / 133 | 110 / 136 | 148 / 190 | 132 / 180 | 196 / 252 | 185 / 234 | 225 / 297 | 220 / 286 | 237 / 281 | 224 / 298 |
+   | reached AA or higher in 2026 (person id) | 269 | 273 | 315 | 313 | 337 | 340 | 314 | 337 | 239 | 291 |
+   | reached AAA in 2026 (person id) | 221 | 237 | 234 | 260 | 239 | 258 | 191 | 228 | 121 | 175 |
+   | any 2026 MLB line (count only) | 207 / 229 | 187 / 217 | 184 / 209 | 197 / 232 | 161 / 181 | 180 / 202 | 120 / 140 | 142 / 163 | 62 / 78 | 78 / 89 |
+   | **Dated level path** | | | | | | | | | | |
+   | 2026 game logs cached with 1+ MiLB game (start and end level, dates) | 352 | 341 | 440 | 437 | 550 | 492 | 606 | 565 | 563 | 530 |
+   | first-game level differs from last-game level | 92 | 100 | 135 | 131 | 185 | 184 | 239 | 229 | 237 | 253 |
+   | record level_changes: promotion within MiLB in 2026 | 141 | 116 | 215 | 165 | 300 | 229 | 388 | 294 | 369 | 341 |
+   | record level_changes: demotion in 2026 | 121 | 134 | 151 | 184 | 170 | 202 | 142 | 199 | 92 | 159 |
+   | record level_changes: promotion to MLB in 2026 (count only) | 27 | 25 | 18 | 20 | 16 | 14 | 5 | 7 | 3 | 2 |
+   | **Level-relative performance (display fields)** | | | | | | | | | | |
+   | record career_stats: a 2026 MiLB row | 313 | 295 | 411 | 399 | 530 | 474 | 594 | 558 | 567 | 532 |
+   | headline statline 2026 MiLB with level_plus_pct | 252 | 224 | 343 | 312 | 456 | 392 | 526 | 477 | 514 | 474 |
+   | current_season_statlines 2026 MiLB row with ops_plus_level or era_minus_level | 313 | 293 | 411 | 397 | 530 | 473 | 594 | 557 | 567 | 531 |
+   | **Injured list** | | | | | | | | | | |
+   | record injury_history: stint starting in 2026 | 205 | 225 | 221 | 262 | 262 | 303 | 269 | 314 | 223 | 272 |
+   | ... of which 30+ IL days across 2026 stints | 95 | 108 | 113 | 134 | 131 | 160 | 134 | 153 | 106 | 138 |
+   | DB il_history: 2026 stint (append-only since 2026-06-06) | 71 | 106 | 101 | 146 | 154 | 185 | 174 | 212 | 161 | 212 |
+   | league feed IL placement, person id: full season / repo cache | 169 / 137 | 197 / 171 | 173 / 142 | 215 / 193 | 208 / 167 | 239 / 209 | 205 / 162 | 243 / 210 | 186 / 139 | 212 / 176 |
+   | **Release, retirement, 40-man** | | | | | | | | | | |
+   | DB player_transactions: released in 2026 (record) | 88 | 79 | 77 | 86 | 60 | 57 | 16 | 38 | 4 | 11 |
+   | league feed released, person id: full / repo | 75 / 49 | 75 / 55 | 66 / 46 | 80 / 56 | 52 / 37 | 46 / 34 | 13 / 10 | 31 / 23 | 3 / 1 | 10 / 5 |
+   | retired in 2026: DB (record) / feed full (person) | 1 / 1 | 3 / 3 | 3 / 3 | 4 / 4 | 3 / 3 | 1 / 1 | 2 / 2 | 3 / 3 | 0 / 0 | 4 / 4 |
+   | contract selected or purchased in 2026 (40-man add): DB (record) | 37 | 39 | 34 | 41 | 48 | 42 | 47 | 46 | 46 | 43 |
+   | same, league feed person id: full / repo | 35 / 21 | 33 / 24 | 28 / 17 | 31 / 25 | 42 / 25 | 33 / 26 | 40 / 25 | 39 / 25 | 41 / 28 | 36 / 22 |
+   | on the 40-man now (roster_status 2026-09-27; includes MLB players) | 315 | 351 | 256 | 326 | 217 | 260 | 156 | 197 | 83 | 109 |
+10. **Identity.** ABSENT_IDENTITY is a pre-V attribute (no affiliated line through V-1 on
+    the outcome-blind resolver), 4 to 9 percent on V 2011-2016 and 23.2 / 26.4 percent on
+    lv_2026, mostly recent signees; an old-cohort coefficient on it would price a different
+    population, and V2 imputes no-block rows at the train mean while consensus grades them
+    by scouting (the I2 fake-win pattern, `IDEAS.md:27-34`). So it is never an S_idx code,
+    its rows are out of the primary, and a pre-V identity route for recent signees (an id
+    carried by an acquisition record or list snapshot dated before V-01-01, balance-checked
+    like `data/efv_identity_balance.json`) is registered as the only way to bring them in,
+    by amendment before S4. ABSENT_KNOWN keys to the person-keyed TJ file only; IL history
+    is record-keyed (B4) and sparse historically, so it is descriptive.
+11. **The ETA look overlap.** The ETA gate's look, recorded at be53132d (2026-09-30 19:22;
+    first run 17:59, crashed after every clause printed; rerun after 6ca2e8f4), scored CH40,
+    arm A and arm B against 2026 debut events of V 2024 rows; 212 / 207 of those players sit
+    on lv_2026, so the ETA raters' arrival components here are not prospective with respect
+    to that look and ride as descriptive raters only, admitted under kill rule 3(ii). This
+    lane counted V 2024 debuts BEFORE the look (2026: 63 / 72; 2025-26: 136 / 153;
+    `facts2026.json`, 2026-09-30 13:01), with no score joined; ETA s8 carried no disclosure of
+    those counts at HEAD 26b446d9, and task SG_A appends it as a dated addendum (commit sha
+    PENDING, filled at registration).
+12. **The norm flip inside the epoch.** If `FWAR_LABEL_EPOCH_GATE.md` part 9 carries no
+    step Z entry by 2026-12-20, the 2027-01-01 flip moves every served 2026 rel-rate inside
+    the epoch window (v1, provisional, chips; not the V2 order); OQ4 A carries the owner's
+    choice for that case, recorded in `STATUS.md`.
+13. **Re-baseline.** The row, identity and overlap counts printed here were taken on the
+    universe snapshot of 2026-09-30 12:45 (built 2026-09-27). Commit 1987b1b2 (2026-10-01
+    00:25) split three merged debuted identities (jose_rodriguez, michael_massey,
+    carlos_rodriguez) onto seven humans' keys (ids 679563, 800412, 836624, 695602, 677578)
+    and stopped `consensus.build_timeseries` merging same-name rows; 87b3b999 then restored
+    `data/xfv.json` to its pre-split content, so the receipt cited in s0 is the 64bf1bb3
+    one. The counts may move by a handful of rows: SG_4 (or SG_4B, from the step A
+    snapshot after step Z) re-takes them with `build_frame`
+    (read-only, never beside the monthly) and, on a mismatch of at most 10 rows and 10
+    person ids per side that the split's own keys explain, records the difference, names
+    the rows the split touched, and freezes the matched rows (the touched rows excluded and
+    counted, a selection on an identity repair, not on an outcome); a larger or unexplained
+    mismatch STOPs before the freeze file is written. The registration carries the re-taken
+    and matched counts (Q9).
+
+---
+
+## 9. Forking paths (the denominator every number here is read against)
+
+- Inherited from `EFV_V2_GATE.md` s6: 275 logged probes (about 347 frame-level reads), the
+  39 closed v1 arms, one R-LV exposure (B9a), 80 arms and 40 validity probes on the build,
+  DS-16 (2 frames), the 2026-09-25 owner-asked lanes (21 outcome probes).
+- The 2026-07-24 surrogate-label program (`docs/SURROGATE_LABEL_PROGRAM.md`;
+  `data/xfv_surrogate_eval.json`, `_pit.json`): three arms per side (A_KM_baseline,
+  B_surrogate, C_oracle), 6 arms, plus one same-day pitcher follow-up prototype, all NO-SHIP.
+  WAR-based rather than MiLB-based, but surrogate-vs-label faithfulness reads on the same
+  training population; the oracle-vs-KM analog cited in PLAN s2 E1 comes from them.
+- This lane: 0 associations with any score, label or feature; outcome counts on V 2022-2026
+  frame rows and per-row outcome flags with no grade joined, sealed; two TABULATIONS of 2026
+  outcomes by identity route computed from the per-row file on 2026-09-30 (the 123 / 121
+  conditional count and the overlap key intersections, s8.9), admitted under kill rule 3(i).
+- The ETA FanGraphs-blend look (be53132d): one look, two arms, on V 2024 debut events through
+  2026-09-27; 212 / 207 of its players sit on lv_2026 (s8.11), admitted under kill rule
+  3(ii).
+- The one MiLB surrogate faithfulness read on record: AA2 (E2), spent.
+- Draft-time floors (sqrt(n) from the measured lv_dev floor 0.0155 E_cond at n 2,862, 1,753
+  players): lv_2026 W3 pooled 0.0187 to 0.0239 at n 1,207, per side 0.0341 / 0.0334; the S4
+  primary on id-resolved rows (about 907; 453 / 454 per side) 0.022 to 0.028 pooled and 0.039
+  per side; T1 half-width 0.054 in rho near 0.5 per side on 781 / 804 players (all six
+  vintages scored leave-one-out), about 0.06 under the s2.1 fallback; T3 difference SE about
+  0.035 in z, so its CI rule passes only when the point difference is below about 0.03.
+  Replaced by measured floors by dated amendment after S3 (s4).
+
+---
+
+## 10. Sequence
+
+| step | when | reads an outcome? |
+|---|---|---|
+| the sealed lane files copied to the durable path (SG_0 step 0) | before this draft commits | no |
+| this DRAFT commits alone; its test in the next commit | now (docs; may land in the 10-04 to step A gap) | no |
+| Q1 the ETA look record (its own gate) | RECORDED, be53132d (2026-09-30) | ETA's, not eFV's |
+| Q1 the ETA s8 addendum with this lane's pre-look counts (SG_A) | docs only; before 10-04 or in the gap | no |
+| Q2 frozen copy, pins, event-id sets, pure norms, snapshot, `-text` lines (SG_1) | by 2026-10-03 or after epoch step Z; before 2027-01-01 | no |
+| Q4 guard, builder (SG_2, SG_3) | by 2026-10-03 or after step Z | no |
+| ledger frames (SG_5) | by 2026-10-03 or after epoch step Z | no |
+| Q5 the V 2026 rater freeze (SG_4, else SG_4B) | after Q1's record and SG_0; before epoch step C, and so before step F, when SG_4 landed; else the step A snapshot stands in and SG_4B freezes from it after step Z | no |
+| Q10 the GATE B9b amendment for the cohorts no look owns (OQ6 = A) | before the REGISTERED commit | no |
+| REGISTERED commit, alone, s12 empty | after Q3 and Q6 to Q10 | no |
+| S3 transfer read | after epoch step Z, P1 and R-VM look 1's record; off the blocked days and the reserved-read day; never beside another gate's look | old cohorts and V 2022 only |
+| S4 lv_2026 read (OQ2 = B only) | only if T1 and T3 pass; after Q1; after R-VM look 2's record | yes, once |
+| SG_10 the `efv_labels` release path (dated amendment with its test) | after OQ6; before RT 2029 | no |
+| R3 read (tilted) | RT 2029; whole, only after looks 2 and 3 and the OQ6 release | yes, once |
+| W3 read (primary) | RT 2031; whole, only after looks 2 and 3 and the OQ6 release | yes, once |
+
+---
+
+## 11. Pins (PENDING; taken at Q2 and Q5, re-taken at registration)
+
+- `data/milb_season_frozen/2026/{hitting,pitching}_{11,12,13,14,16}.json` (tracked copies of
+  the cache files, 2.3 MB in all): sha256 PENDING; rows hitting / pitching AAA 927 / 1,268,
+  AA 830 / 1,044, A+ 837 / 1,090, A 979 / 1,328, Rookie 1,602 / 2,062; PA = BF per level
+  171,799; 156,270; 151,429; 151,705; 163,736; the cache fetched 2026-09-27 15:50 local and
+  identical to the 2026-09-30 refetch. Last scheduled regular-season dates (StatsAPI
+  `seasons`, fetched 2026-09-30): AAA 09-20, AA 09-13, A+ and A 09-06, ACL and FCL 07-23,
+  DSL 08-18. The gitignored cache is never read by this gate FOR SEASON 2026; other seasons
+  are read from it with fetch=False after the canonical hash check below.
+- `data/milb_season_frozen/2026/mlb_event_ids_{hitting,pitching}.json`: the sorted set of
+  person ids with a regular-season sport-1 line in 2026, per group, sha256 PENDING. No
+  sport-1 stat is copied into the tree (the 2026 sport-1 files hold MLB lines of the R-VM
+  2026 cohort); the source cache files are pinned in the pins file by a canonical hash over
+  their id column only, and the builder's MLB top code reads only these sets (s3).
+- Transfer seasons 2010 to 2019 and 2021 to 2025 (2010 for rung_pre of V 2011), sportIds
+  11-16 (15 where present) and sport 1 as ids only: canonical content hash (rows sorted by
+  person id, sport, league; the field projection the builder reads: id, level or sport,
+  league, pa, bf, ab, h, 2b, 3b, hr, bb, so, hbp, sf, ip, g, gs, age, avg, obp, slg, ops,
+  era; `league_norms` reads obp, slg, avg, ops and era at `milb_history.py:258-275`, so they
+  are in the hash) PENDING; the builder verifies before use and reads with fetch=False.
+- `data/milb_norms_2026_pure.json`: sha256 PENDING (derived from the frozen copy).
+- `data/efv_surrogate_frame_2026.json`: sha256 PENDING; row counts 590 / 617 as re-taken
+  (s8.13); the V2 fold object's own sha and fold receipt, the twin's scores and the head
+  indices inside it; the provider and `career_war` basis it read.
+- **Line endings.** `core.autocrlf` is true on the Windows tree, so a sha256 of a tracked
+  TEXT file differs between the Windows working tree (CRLF) and the git blob or the Linux
+  box: `efv_vintage_frame.py` reads e7ce2bf6c2595d50ff2636d488881333a1c9a5295a351ff64d3636b75e7c4a5d
+  in the tree and fc69897f88bb67ff2d8affbbed6193c6e67fcd298df18061b93e3ce25a315aba as the
+  blob. Source files are therefore pinned by git BLOB id (`git rev-parse <commit>:./<path>`,
+  or `git diff --quiet 64bf1bb3 -- <path>`): `efv_vintage_frame.py`
+  c9d5a29d4dfda710792b854b61983625e9c1367e (identical at 64bf1bb3 and 26b446d9),
+  `efv_v2_model.py` 41360330eca6bafa29c129889e7bd5d159d33f6b, `data/efv_v2_assembly.json`
+  91b04fa861ec64e9c1978d4fad727fbc00a45fd9; `efv_surrogate.py` (new: no file of that name
+  exists at 64bf1bb3 or 26b446d9, `git ls-files`) and `efv_surrogate_guard.py` by blob id at
+  first commit. Every data file this gate writes gets a `-text` line in `.gitattributes`,
+  after the `data/provisional_freeze/** -text` rule at `:7-9`: `data/milb_season_frozen/**`,
+  `data/efv_surrogate_*.json`, `data/milb_norms_2026_pure.json`, so its sha256 is the same
+  on every machine (the frozen season copies are single-line JSON, `milb_history.py:185`,
+  and are unaffected either way).
+- V2 at the draft: `efv_v2_model.py` sha256
+  f83c94316b701cd59eeea4914cf5f910bbd0f558b891f788dbbee50d348a4d0e (identical in tree and
+  blob); `data/efv_v2_assembly.json` 422fc5439253ad13d867320b00b634a178e62a8b291025326056377d6d4436ec
+  is the sha256 of the CRLF WORKING-TREE file, the value `EFV_V2_GATE.md:215` pins (its blob
+  content hashes to 145cc8dec640c6803780654477f563f39cb64afea4012f40dea95ba089b71507): the
+  weights the fold object of s2.2 uses, not a claim that it is the served or registered V2.
+
+---
+
+## 12. Results
+
+(Empty. Filled only by the look runner after the status line reads REGISTERED.)
+```
+
+END FILE docs/efv-v2/SURROGATE_2026_GATE.md
+
+---
+
+#### 6. Writer-queue tasks
+
+Style and rules of the writer queues: one writer at a time in the repo tree; never beside
+the monthly pipeline or a pytest session; every task self-contained; a STOP is a report of
+the exact refusal, never a workaround. None of these computes an association, tabulation or
+model fit between a 2026 outcome and any score, label, feature or stratum before the
+surrogate gate is REGISTERED. Each is one queue entry `{id, spec}` (`QUEUE_TASKS.json`); the
+paragraphs below are the specs, marked LANDS NOW or LANDS AFTER THE EPOCH.
+
+**Order.** DOCS, which may land in the 10-04 to step A gap: SG_A (the ETA s8 addendum),
+SG_0 (the draft, with its seal step). CODE AND TRACKED DATA, by 2026-10-03 or after step Z,
+never in the gap or inside the epoch: SG_1, SG_2, SG_3, SG_5, SG_4 (after SG_0; before
+epoch step C, a gap task that runs when its inputs and the owner answers exist). AFTER THE
+EPOCH: SG_4B (the freeze from the step A snapshot when SG_4 did not land; NOT NEEDED when it
+did), SG_1B (after 2027-01-01), SG_7 (the REGISTERED commit, after Q10), SG_8 (S3), SG_9
+(S4, conditional), SG_6 (conditional on OQ5), SG_10 (the label release path, after OQ6 and
+before RT 2029).
+
+**Terminal outcomes.** Besides done and STOP, a task here may end DEFERRED (an owner answer
+it needs is unrecorded at dispatch, or its window closed; it writes nothing; the
+orchestrator re-arms it once the answer is recorded, and it holds no other task) or NOT
+NEEDED (the owner's answers remove its work, or another task already did it; it writes
+nothing). The cascade: when SG_4 or SG_4B ends 'NOT NEEDED: no freeze (efv2026 OQ1 = C)' or
+'NOT NEEDED: no freeze (efv2026 OQ2 = C)', SG_7, SG_8, SG_9 and SG_6 end NOT NEEDED with that
+same reason (the draft's Q5, the freeze file, is a precondition of the REGISTERED commit, so
+no freeze means no registration and no read of this gate). SG_4B's other NOT NEEDED, 'frozen
+by SG_4', is not cascaded: it means the freeze file exists.
+
+**EPOCH_RUN note (for the orchestrator to copy into EPOCH_RUN.md; EPOCH_RUN does NOT require
+SG_4 and never waits on an efv2026 owner question).** At step A, before anything is moved,
+record whether `data/efv_surrogate_frame_2026.json` exists at HEAD. Present: cite its sha256
+and the commit that added it. Absent, or SG_4 ended DEFERRED or NOT NEEDED: record 'lv_2026
+raters not frozen before step F; SG_4B re-runs after step Z on the step A snapshot path
+(`../_pre_epoch_fwar_2026-10/`)', and proceed. The step A snapshot must keep what SG_4B needs
+to reproduce the RT 2025 objects on the eWAR v2 provider (`career_war` before the step C
+rebase and `war_source.DEFAULT_PROVIDER` before the step D+U flip). The rule that the freeze
+precedes step F now reads: it precedes step C, and so step F, when SG_4 landed; otherwise
+the step A snapshot stands in and SG_4B freezes from it after step Z.
+Every date-bearing task also honours the Part 8 calendar (`master-plan-2026-09-24-final-pass.md:2034-2035`):
+no exporter, lab, registered-frame fetch or look on 2026-10-23, 11-06, 11-13, 11-20, the
+eFV reserved-read day or any other registered look's date.
+
+**`SG_A_ETA_S8_ADDENDUM`** (LANDS NOW; DOCS ONLY; before 2026-10-04 or in the gap before step
+A, which takes docs and registrations only; never between step A and step Z; under EVERY
+efv2026 OQ1 answer, and with OQ1 still unrecorded: it never STOPs on OQ1). The look
+itself is RECORDED at be53132d (2026-09-30 19:22; `data/eta_eval.json` carries
+`fg_blend_gate_2026_09_25` and `org_timing_gate_2026_09_25`; ETA s8 holds the verbatim
+output of the second run and the disclosure of the first). The round-2 SG_A, which would
+have run the look, is withdrawn: `tools/eta_fg_blend_gate.py` refuses a second scored look
+(ETA s6), and its STOP on an existing block would have left Q1 unmeetable forever. What is
+owed is this lane's disclosure of counts it took before the look. Append to
+`docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md` section 8, after its last paragraph and in the
+pattern of its two "Added 2026-09-30" paragraphs, one dated paragraph: "Added <date>.
+Disclosure from the read-only lane efv2026 (2026-09-30), which counted, with no score joined
+and before this look's first run (its counts file `facts2026.json` was written 2026-09-30
+13:01), V 2024 frame players who debuted in 2026 (63 hitters / 72 pitchers) and in 2025-26
+(136 / 153); 212 / 207 of the V 2024 frame's players also sit on the V 2026 list frame, whose
+raters the frozen 2026 shadow of section 5 joins under `docs/efv-v2/SURROGATE_2026_GATE.md`
+s2.2 (shadow rows listed before a frame row's window end only). Nothing recorded above
+changes." What each efv2026 OQ1 answer changes in it: the paragraph ends with one more
+sentence and nothing else moves. Under A: "The efv2026 owner answer OQ1 reads A at this
+addendum." Under B: "The efv2026 owner answer OQ1 reads B (minimal registration: the frozen
+frame and its long-run reads only) at this addendum." Under C: "The efv2026 owner answer OQ1
+reads C at this addendum: no shadow row is frozen, and the gate document stays a DRAFT that
+never registers." Unrecorded: "The efv2026 owner answer OQ1 is pending at this addendum; the
+freeze it names is taken only under OQ1 A or B." The disclosure is owed under every answer,
+because the counts were taken before the look whatever the owner decides, and
+`SURROGATE_2026_GATE.md` s2.2 exists under every answer (SG_0 commits the draft under every
+answer). Commit the document ALONE (`python tools/copy_lint.py --check` clean; no em-dash);
+no artifact, no registry row, no code; record the commit sha for the surrogate gate's Q1 and
+s8.11. STOP if the block `fg_blend_gate_2026_09_25` is absent from `data/eta_eval.json` at
+HEAD (then the look is not recorded and this task does not apply); STOP if section 8 already
+carries the paragraph; STOP if `../_pre_epoch_fwar_2026-10/` exists and FWAR part 9 has no
+step Z entry (the epoch is running).
+
+**`SG_0_SURROGATE_GATE_DRAFT`** (LANDS NOW; DOCS, may land in the gap; under EVERY efv2026
+OQ1 answer, and with OQ1 still unrecorded: it never STOPs on OQ1, so SG_1's chain cannot
+STOP on OQ1). What each OQ1 answer changes in it: only the one line the draft carries after
+its status line, `Owner answer at draft commit (efv2026 OQ1): ...`, which this task fills
+with exactly one of these texts. A: "A (own gate; every section below applies)." B: "B
+(minimal registration): only the frozen frame of s2.2 and its long-run reads of s6.3
+apply; s2.1, s3's composite and g_S, s6.1, s6.2 and the transfer clauses of s5 are void
+and are struck by name at the REGISTERED commit." C: "C (nothing): this document never
+registers; it stays a DRAFT so its text is dated, and no freeze, guard, builder or read
+follows from it." Unrecorded: "pending; the answer, once recorded, is written into the
+header at the REGISTERED commit, and under C that commit never happens." Every other line
+is committed verbatim under every answer. Step (0), outside
+git, before anything else: copy the four sealed lane files `facts2026.py`,
+`frame_rows_2022_2026.json`, `facts2026.json` and `facts_table.md` from
+`C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/efv2026/`
+to `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/efv2026/sealed/` (create the
+folder; the projects root holds the other lane bundles), verify each copy's sha256 against
+the four values in the draft's s8.9, and STOP if any differs or any source file is missing
+(a session Temp folder can vanish; report it rather than re-create the file). Copy and hash
+only: never open, parse or print the content of any of the four files, and the copies are
+never loaded by any process afterwards (draft s8.9 SEAL). Then commit
+`docs/efv-v2/SURROGATE_2026_GATE.md` from PLAN.md section 5 verbatim (between the BEGIN and
+END markers), status line `Registration status: DRAFT`, ALONE in its commit: the document
+and nothing else (`python tools/copy_lint.py --check` clean; no em-dash). In a SECOND commit
+add one test beside `test_efv_v2_gate.py` (for example `test_surrogate_2026_gate.py`)
+asserting that `efv_vintage_frame.gate_doc_registered` reads this file as False while it is
+a DRAFT, that the file carries exactly one status line, that its section 12 is empty, and
+that it names no FV-cell stratum (reuse the `test_efv_v2_gate.py` patterns); a test file is
+code, so the second commit lands by 10-03 or after step Z while the first may land in the
+gap. Fill nothing marked PENDING. Do NOT edit `EFV_V2_GATE.md`: under OQ3 = A no disclosure
+goes there (the OQ6 = A amendment is SG_7's precondition Q10, a separate owner-approved
+commit); OQ3 is read only when OQ1 is A or unrecorded (under OQ1 B or C there is no S4
+and OQ3 is moot); if the owner has chosen OQ3 = B, STOP and report that two dated amendments
+(`EFV_V2_GATE.md` B9b rule 2 and `PROGRAM.md` s2.4) must be committed by their own rules
+BEFORE this draft, which is a separate owner-approved task. No number, no probe, no
+artifact under `data/`. STOP if `EFV_V2_GATE.md` already reads REGISTERED; STOP if any file
+under `data/` or `.cache/` would change; STOP if a 2026 surrogate outcome artifact already
+exists in the tree (grep for `efv_surrogate_gate.json` and `efv_surrogate_frame_2026.json`
+first); STOP between epoch step A and step Z.
+
+**`SG_1_SEASON_FREEZE_AND_PINS`** (LANDS by 2026-10-03 or AFTER epoch step Z, never in the
+gap, which takes docs only; after the monthly finishes; before 2027-01-01). Freeze and pin
+the 2026 MiLB inputs; read no outcome. What each efv2026 OQ1 answer changes in it: nothing.
+Under A, B, C and with OQ1 unrecorded it runs the same steps (under C the pins and the
+snapshot are all that is kept), and its requires chain (SG_0, SG_A) never STOPs on OQ1. (0) Add to `prospect-tracker/.gitattributes`, after
+the `data/provisional_freeze/** -text` rule (`:7-9`), the lines `data/milb_season_frozen/**
+-text`, `data/efv_surrogate_*.json -text` and `data/milb_norms_2026_pure.json -text`, so the
+sha256 pins below do not drift between the CRLF Windows tree and the box (`core.autocrlf`
+is true here; the pins are taken on the committed bytes). (1) Confirm each level's last
+scheduled regular-season date from StatsAPI `seasons` (AAA 09-20, AA 09-13, A+ and A 09-06,
+ACL and FCL 07-23, DSL 08-18; the lane's `scratchpad/efv2026/statsapi_seasons_2026.json`).
+(2) Copy `.cache/milb_stats/{hitting,pitching}_{11,12,13,14,16}_2026.json` byte for byte to
+TRACKED `data/milb_season_frozen/2026/{hitting,pitching}_{11,12,13,14,16}.json` (2.3 MB in
+all) after checking each file's row count and PA or BF total against the lane's
+`refetch_compare.json` (AAA 927 / 1,268 rows, 171,799 PA; AA 830 / 1,044, 156,270; A+ 837 /
+1,090, 151,429; A 979 / 1,328, 151,705; Rookie 1,602 / 2,062, 163,736; identical to the
+2026-09-30 refetch). From `.cache/milb_stats/{hitting,pitching}_1_2026.json` write ONLY the
+sorted set of person ids with a regular-season line to
+`data/milb_season_frozen/2026/mlb_event_ids_{hitting,pitching}.json` (the debut EVENT; no
+stat column of the R-VM 2026 cohort enters the tree), and put a canonical hash over the
+source files' id column in the pins file. Write `data/efv_surrogate_pins_2026.json`
+(tracked): sha256, row count, exposure total and the cache file's mtime for each frozen
+file, the event-id files' sha256 and counts, plus the season dates. (3) For the transfer
+seasons 2010-2019 and 2021-2025 (2010 because the builder derives the V-1 rung of V 2011
+from it), sportIds 11-16 (15 where the file is non-empty) and sport 1 as ids only, record a
+canonical content hash in the same pins file: rows sorted by (person id, sport, league), the
+field projection the builder reads (id, level or sport, league, pa, bf, ab, h, 2b, 3b, hr,
+bb, so, hbp, sf, ip, g, gs, age, avg, obp, slg, ops, era; every field `league_norms` reads,
+`milb_history.py:258-275`, is in it), never the raw bytes; a test recomputes the hashes from
+the cache with `fetch=False` and fails on drift, and a second test re-hashes the frozen 2026
+copy. (4) Complete `.cache/mlb_transactions/tx_2026_{07,08,09}.json.gz`
+from the lane's `scratchpad/efv2026/refetch/` copies (the repo cache ends 2026-07-24;
+`efv_drivers` DS-09 reads this feed on outcome-blind ids, `efv_drivers.py:407-502`), record
+each added file's sha256 and fetch date in the pins file, and print
+`efv_drivers.protection_coverage` on the V 2022-2026 frames before and after to show that
+no V at or before 2026 row changes (V 2027 rows will read the new months; say so in the
+commit message). (5) Run `tools/snapshot_modern_signals.py` for the end-of-season 2026
+snapshot (EV-03) and make the manifest read PARTIAL for `savant_minors` (as of 06-23) and
+`aaa_pitch_physics` (as of 08-03), with a test that a later season never overwrites an
+earlier file. (6) Write `data/milb_norms_2026_pure.json` (tracked) from the FROZEN copy:
+pure 2026 level norms per side and level with the same qualifier and median as
+`milb_history.league_norms` and NO current-year blend (`milb_history.py:285-306` blends at
+w = n_cur / (n_cur + n_prior) while the calendar reads 2026), with the blend weights the
+served path uses today recorded beside them (the lane's `norm_blend_2026.json`: 0.48 to
+0.52). (7) Add a dated disclosure to `docs/efv-v2/STATUS.md`: the served 2026 rel-rates read
+against a half-2025 norm until 2027-01-01 and will move then with no new data (v1 grades,
+the provisional grades and the chips; not the V2 order); this is a data refresh, not model
+progress, and the ledger records it as such when it happens; plus the OQ4 answer once given.
+Do NOT refetch the 62 early `.cache/aaa_pitches/*_2026.csv` files: the monthly's step 6b2b
+(`run_monthly.py:5825-5832` at HEAD 26b446d9; `:5686-5688` at 64bf1bb3) refreshes them on
+its 14-day TTL until 2027-01-01, and a hand write into `.cache/` during the epoch is a pin
+that drifts; SG_1B pins them after 2027-01-01. STOP if the monthly pipeline is running
+(single writer; it rewrites `.cache/` and `data/`); STOP if any 2026 file's row count or
+exposure differs from `refetch_compare.json`; STOP before any fetch other than the
+transactions feed named in (4); STOP if the snapshot would overwrite an earlier season's
+file; STOP if the date is after 2026-10-03 and FWAR part 9 carries no step Z entry (tracked
+data files are not docs and cannot land in the gap).
+
+**`SG_2_SURROGATE_GUARD`** (LANDS by 2026-10-03 or AFTER step Z; code is not docs). Build
+the guard before any builder exists, without touching the R-LV guard. (1)
+`efv_vintage_frame.py` is NOT edited: a test asserts its git blob id equals
+c9d5a29d4dfda710792b854b61983625e9c1367e (`git rev-parse HEAD:./efv_vintage_frame.py`; never
+a working-tree sha256, which reads e7ce2bf6... on this CRLF tree and fc69897f... as the
+blob), and `gate_sha_committed` and `guard_score_request` keep their signatures and
+behaviour bit for bit. (2) New `efv_surrogate_guard.py`: `SURROGATE_GATE_DOC =
+"docs/efv-v2/SURROGATE_2026_GATE.md"`; a PURE predicate `gate_sha_committed_for(gate_sha,
+gate_doc)` built from `efv_vintage_frame._SHA_RE`, `_git_ok`, `_git_show` and
+`gate_doc_registered` (a 40-hex sha, an ancestor of HEAD, whose tree carries `gate_doc`
+marked REGISTERED); `gate_header_records(gate_sha, key)` reads one owner answer (for
+example OQ2) from the REGISTERED document's header at that sha; `look_records()` returns
+the set of recorded look ids read ONLY from `data/efv_v2_gate.json` (absent today; nothing
+else may claim a record); `guard_surrogate_read(vintage, *, gate_sha, look_records,
+purpose)` with purpose in {"transfer", "lv2026_surrogate", "lv2026_long_run"}: raises
+`ReservedFrameError` for any V in `RESERVED_LV` BEFORE any sha check, for every purpose and
+every sha; raises for every other V unless `gate_sha_committed_for(gate_sha,
+SURROGATE_GATE_DOC)`; then enforces the schedule of the gate's s2.3: `transfer` opens V
+2011-2019, opens V 2022 only when `look_records` holds R-VM look 1, and refuses V 2023, 2024,
+2025 and 2026 always; `lv2026_surrogate` opens V 2026 only when `look_records` holds look 2
+AND the gate header records OQ2 = B, and refuses every other V; `lv2026_long_run` opens V
+2026 only when `look_records` holds looks 1, 2 and 3 and the OQ6 release record, and refuses
+every other V; `eta_look_recorded()` reads `data/eta_eval.json` for block
+`fg_blend_gate_2026_09_25`, and every function that would compute a 2026 outcome refuses
+while it is absent; `withhold_reserved_vm(rows, *, look_records, purpose)` implements B9b
+rule 2 by REFUSING, never dropping: if any row whose player debuted in 2025 or later with
+the debut inside its frame's window lacks the record of the R-VM look that owns its cohort
+(or, for the 2028 and 2029 cohorts, the OQ6 release record), it raises `ReservedFrameError`
+naming the count per cohort; otherwise it returns the rows with status
+`reserved_vm_event_only` (surrogate purposes: the debut EVENT and no MLB stat; long-run
+purpose: marked released for the SG_10 label path) and the released counts per cohort;
+`blocked_day()` refuses on 2026-10-23, 2026-11-06, 2026-11-13 and 2026-11-20, on the eFV
+reserved-read day (the date in `data/efv_v2_gate.json` once it exists, or the date
+`STATUS.md` records beforehand), and when a session marker of another gate's look is
+present. (3) Tests: a DRAFT surrogate gate never opens the surrogate guard; fixture ONE, a
+temporary repository whose tree carries `SURROGATE_2026_GATE.md` REGISTERED next to
+`EFV_V2_GATE.md` as a DRAFT (the `test_only_a_registered_commit_opens_the_guard` pattern),
+opens `guard_surrogate_read(2019, purpose="transfer")` and never opens
+`guard_score_request(2020)` or `(2021)`, which still raise; fixture TWO, both documents
+REGISTERED, asserts that `guard_surrogate_read(2020)` and `(2021)` still raise for every
+purpose even though `gate_sha_committed` now accepts that sha (the sentence "its REGISTERED
+sha never opens guard_score_request" is false once EFV_V2_GATE registers, and this gate's
+code never calls it); one test per refusal in the schedule (V 2024 and V 2025 always; V 2022
+without look 1; V 2026 without look 2; V 2026 without OQ2 = B; V 2026 long-run without look 3
+or the OQ6 release); the DS-03 AST pattern that `efv_surrogate*.py` import no debut or MLB
+column into the identity path and never call `guard_score_request`; the FV-cell scan of
+`test_efv_vintage_frame.py` extended to the new module; `reserved_vm_pins()` still empty;
+`withhold_reserved_vm` on synthetic rows raises without a record and keeps event-only with
+one. STOP if any existing guard test changes meaning; STOP if the change would let
+`EFV_V2_GATE.md`'s guard accept any file other than `GATE_DOC`; STOP if a 2026 outcome is
+computed by any test; STOP if the date is after 2026-10-03 and FWAR part 9 carries no step Z
+entry.
+
+**`SG_3_SURROGATE_BUILDER_CODE`** (LANDS by 2026-10-03 or AFTER step Z; code only, no run
+on any frame with a 2026 season). `efv_surrogate.py` is NEW (no file of that name exists at
+64bf1bb3 or 26b446d9; the 2026-07-24 module of that name was deleted,
+`docs/SURROGATE_LABEL_PROGRAM.md:113-115`), so its blob id is pinned at first commit. For a
+(side, V) frame from `efv_vintage_frame.build_frame` it computes the outcomes of
+`SURROGATE_2026_GATE.md` s3 for season V from the PINNED season store on the outcome-blind
+person id. FIRST the V-1 state, derived from the store for EVERY vintage and never read from
+the frame's MiLB block (V 2011-2014 rows have none, `efv_dataset.py:971`, `:1057-1058`):
+`rung_pre` by `efv_dataset`'s primary-level rule (`:976-1013`) on season V-1, the entry rung
+from the first in-store season at or before V-1 for a first-year pro (`_pace_from_entry`
+lineage, `:899-930`), ABSENT-pre with a flag otherwise; `age_pre` = age at V-1 minus the
+median age of exposure-floor qualifiers at (V-1, rung_pre) in the store; with a test that
+reproduces the frame's `level_rank` on every V 2015-2019 row that carries one, and the
+gate's s2.1 fallback recorded if it fails. THEN: S1 LEVEL_END (rungs `efv_dataset._LEVEL_RANK`
+plus MLB 6, sportId 15 its own rung before 2021, floor 50 PA / 60 BF else the most-exposed
+level, the MLB top code ONLY from `mlb_event_ids(season, group)`, a function that returns
+the set of person ids with a sport-1 line and reads no stat column, with the 2026 sets from
+the frozen `mlb_event_ids_*.json`; ABSENT_KNOWN from `data/tj_surgery.json` /
+ABSENT_IDENTITY / ABSENT_UNKNOWN); S2 CLIMB as LEVEL_END minus rung_pre, residualized on
+rung_pre and age_pre by maps passed in as arguments, then minus a shrunken parent-club
+intercept fitted on V 2011-2016 rows by a function that takes the fitted club table as an
+argument, the club being the as-of org of the gate's s4 (the `org` on the latest in-window
+board point normalized by `trades.canonical_org`, else the last transaction-feed club before
+V-01-01 on the outcome-blind id, else `org_unknown` on the pooled intercept; an assertion
+that no org dated at or after the window end is read); S3 PERF (norms from
+`data/milb_norms_2026_pure.json` for 2026 and per-season pure norms computed from the pinned
+store for earlier seasons, never the blended `_resolved_norms`), residualized likewise, the
+hitter scalar as the equal-weight mean of the three standardized columns, missing PERF
+(ABSENT and MLB-event rows) at the id-resolved mean with no indicator; S4 PT normalized by
+that season's own per-level affiliated-qualifier exposure, residualized likewise; S5 STATUS;
+the Mexican League dropped by league name (`league == "MEX"`) from EVERY component and norm
+that reads sportId 11 before 2021 (S1, S2, S3's norms, S4), with a test on the 2016 and 2019
+files (349 of 1,627 and 336 of 1,665 hitter rows are MEX); the S_idx fitter (ridge on S2,
+S3, S4 and one ABSENT code among id-resolved rows, no rater input, no pre-V state,
+leave-one-vintage-out over V 2011-2016 with inner leave-one-vintage-out for the penalty
+from the V2 grid; the player-grouped 5-fold variant for the fallback); and the g_S fitter
+(penalized logistic on S2, S3, S4 and ABSENT only, NO pre-V input, forward-chained; the
+round-2 g_time with `level_rank` and `age_rel_level` as inputs is not built). For 2026 the
+store is `data/milb_season_frozen/2026/`; for other seasons (2010 to 2025) the cache with
+`fetch=False` after the canonical hash check. Rules: (1) every public function calls
+`efv_surrogate_guard.guard_surrogate_read` first with its purpose and `eta_look_recorded()`
+before any season 2026 read, and `withhold_reserved_vm` before any row leaves it; (2) the
+module imports neither `efv_labels`, `source_backtest`, `advancement_pace_export` nor any
+rater column, and never calls `guard_score_request`; label rows are joined by the caller
+(the look runner) as `efv_v2_model.lv_training_rows` does; (3) unit tests exercise the
+PRIVATE pure functions on synthetic rows (the public entry points refuse until REGISTERED,
+which is the intended behaviour and is itself tested), plus one league-wide shape test on
+the 2015 to 2019 season files that computes S1 and S2 for every player in the file without
+any frame row, asserts counts per rung and never computes an association with any score or
+label; (4) no artifact under `data/` is written by the module or its tests. STOP if any test
+or example computes a correlation between an outcome and a rater score or a label; STOP if
+the builder is run on any V of 2020 or later; STOP if `data/efv_surrogate_pins_2026.json`
+(SG_1) does not exist; STOP if the date is after 2026-10-03 and FWAR part 9 carries no step
+Z entry.
+
+**`SG_5_LEDGER_FRAMES`** (LANDS by 2026-10-03 if the queue reaches it, else AFTER epoch step
+Z; never in the gap or inside the epoch: `efv_progress.py` drives a served page and is code,
+not docs). Register three frames in
+`efv_progress.FRAMES`: `lv_2026_surrogate` (role `tilted`, `tilted` True, `tilt_toward`
+"efv on arrival via the timing head; stat readers on production", label "List vintage 2026,
+one-season surrogate", note "surrogate outcome, tilted by construction, a V2 lead expected
+by construction, never a claim"), `lv_2026_r3` (role `tilted`, `tilt_toward` "efv", label
+"List vintage 2026, R3 at RT 2029", note "the timing head's own target; tilted, descriptive")
+and `lv_2026_w3` (role `secondary`, `tilted` False, label "List vintage 2026, W3 at RT 2031",
+note "the frozen frame's registered long-run primary; never the headline"). The chart already
+excludes roles tilted, secondary and superseded (`efv_progress.py:640-641`) and the headline
+never reads them. Tests in `test_efv_progress.py`: the three frames are absent from
+`CHART_FRAMES`, cannot become the headline, and no existing row changes; render the glossary
+Source Comparison at 1280 and 390 in both themes and confirm nothing moved (no row exists
+yet). STOP if the change touches `head_to_head_verdict`, any headline key or any existing
+ledger row; STOP if the page diff is non-empty; STOP if the time is after 2026-10-03 23:59
+(the landing window's close; from 10-04 the gap takes docs only) and FWAR part 9 carries no
+step Z entry.
+
+**`SG_4_FREEZE_LV2026_RATERS`** (LANDS by 2026-10-03, after SG_0 and BEFORE epoch step C;
+tracked data, so never in the gap; a GAP task: it runs when its inputs and the owner answers
+exist, and EPOCH_RUN does not require it and never waits on it. When it lands, the freeze
+precedes step C and so step F; when it does not, the step A snapshot stands in and SG_4B
+freezes from it after step Z). Owner answers, read first, before anything else: if efv2026
+OQ1 or OQ2 is unrecorded at dispatch, write nothing and end 'DEFERRED: SG_4 waits for
+efv2026 OQ1, OQ2' (the orchestrator re-arms it once both are recorded; never a STOP, and it
+holds nothing); if OQ1 = C, end 'NOT NEEDED: no freeze (efv2026 OQ1 = C)'; if OQ2 = C, end
+'NOT NEEDED: no freeze (efv2026 OQ2 = C)' (the cascade of s6 then ends SG_7, SG_8, SG_9 and
+SG_6 NOT NEEDED with the same reason); under OQ1 A or B with OQ2 A or B it proceeds. What
+each OQ1 answer changes in it: A and B freeze the same file; C ends it NOT NEEDED. If
+`data/efv_surrogate_frame_2026.json` already exists, end 'NOT NEEDED: frozen' and write
+nothing. Preconditions: the ETA look record exists at HEAD (be53132d; the block
+`fg_blend_gate_2026_09_25` in `data/eta_eval.json`); `efv_dataset.RESOLVED_THROUGH == 2025`;
+`war_source.DEFAULT_PROVIDER == "ewar_v2"` (`war_source.py:136`; step D+U flips it, FWAR:705)
+and `../_pre_epoch_fwar_2026-10/` does not exist (step A has not started, so steps C and D+U
+have not run). This task never freezes from the step A snapshot; that is SG_4B's job after
+step Z. Freeze the V 2026 rater scores into
+`data/efv_surrogate_frame_2026.json` (tracked): rows = `build_frame(side, 2026)` for both
+sides, each with the person id, the record id (audit only), the in-window PROSPX consensus,
+MLB Pipeline and FanGraphs grades, eFV v1 forward-chained at decision years up to 2025, and
+the V2 object named EXACTLY as the gate's s2.2 names it: "V2 list-vintage fold V = 2026, eWAR
+v2 label, RT 2025, DS-08 draft weights (`data/efv_v2_assembly.json`), heads refit per
+EFV_V2_GATE.md s4.5 on labelled F-LV vintages 2011-2019 with the 6 lv_2026 players on
+2017-2019 frames left out; not the served vm fit, not the registered P5 object; the fWAR
+re-derivation not applied", with its own sha256 and fold receipt (admitted drivers,
+penalties, n_train, the 6 excluded players as a count) stored in the file; the object's
+per-row head indices e_time (timing head) and e_skill (skill head); the zero-information twin
+(driver columns permuted within vintage, seed 20260931) scored on the same rows; the provider
+and the `career_war` basis the labels read; plus the ETA shadow's CH40, arm A and arm B
+predictions and FanGraphs `eta_year` from the `fg_blend_gate_2026_09_25.live_shadow_2026`
+block, joined ONLY when the shadow row's `listing_date` is before the frame row's window end
+(`efv_vintage_frame.window_bounds`: before 2026-05-01 and before any April debut; the shadow
+is built with inputs as of each listing date, and 3,083 of its 4,486 rows are listed after
+2026-05-01), None otherwise with the count, marked "descriptive; not prospective with respect
+to the ETA look". NO outcome column of any kind; rows of 2026 debutants are frozen like any
+other (a freeze reads no outcome). Rules: (1) refuse a re-freeze once the file exists (the
+F-WATCH pattern, `tools/xfv_promo_watch.py`); (2) the file records the sha256 of every input,
+the git HEAD, `RESOLVED_THROUGH` and `DEFAULT_PROVIDER`; (3) tests: no input dated after the
+row's window end (the frame's own test, extended to the shadow join and the org), no 2026
+season line in any feature, no label module imported, no ETA row with a listing date at or
+after the window end; (4) the row counts (590 / 617) and person-id counts (453 / 454) of
+the gate's s2.2 were taken on the 2026-09-30 12:45 snapshot, before the identity split
+1987b1b2: re-take them with `build_frame` (read-only) BEFORE writing anything. If all four
+equal s2.2, freeze every row. If any differs, this CONTINUATION RULE applies (a count
+mismatch alone is not a STOP, because the split is expected to move the counts by a handful
+of rows, draft s8.13, and a freeze on the matched rows beats no freeze before step C): (a) record in the freeze file under
+key `recount` the snapshot counts, the re-taken counts and the signed difference per side
+for rows and for person ids; (b) name the rows: list, by player key and record id, every
+re-taken row that carries an identity 1987b1b2 touched (the keys `jose_rodriguez`,
+`michael_massey`, `carlos_rodriguez` and the keys they were split onto, ids 679563, 800412,
+836624, 695602 and 677578, read from `git show --stat 1987b1b2` and its diff, never from the
+sealed per-row dump) and mark them `recount_split`; (c) if on EACH side the absolute
+difference is at most 10 rows and at most 10 person ids AND does not exceed the number of
+rows marked `recount_split` on that side (the split explains it), proceed with the freeze on
+the MATCHED rows, meaning every re-taken row not marked `recount_split`; the marked rows are
+listed in the file by key and record id with no rater score, excluded from every read of
+this gate and counted (a selection on an identity repair, not on an outcome, disclosed in
+s8.13), and the registration carries the re-taken and matched counts (Q9); (d) otherwise (a
+difference above 10 on a side, or one the marked rows do not explain) STOP before writing
+the freeze file, with both sets of counts and the unexplained difference, ending with
+'BLOCKER: SG_4 recount' (nothing else waits on it: EPOCH_RUN records the absent freeze at
+step A and proceeds, and SG_4B meets the same rule after step Z). (5) Date rule: if the time
+is after 2026-10-03 23:59, or `../_pre_epoch_fwar_2026-10/` exists (step A has started),
+write nothing and end with 'DEFERRED: SG_4 window closed; SG_4B freezes after step Z from
+the step A snapshot' instead of a STOP; the re-queue entry is SG_4B_FREEZE_LV2026_RATERS_POST_Z
+(not before 2026-10-11, requires EPOCH_RUN and SG_1), so the lost pre-step-C window holds
+nothing. STOP if the ETA block is missing; STOP if `RESOLVED_THROUGH` is not 2025 or
+`DEFAULT_PROVIDER` is not `ewar_v2` while the date rule (5) has not fired (the tree has moved
+without an epoch; report it); STOP if the monthly is writing `data/`; STOP if any V 2026
+outcome would be computed or stored.
+
+**`SG_4B_FREEZE_LV2026_RATERS_POST_Z`** (LANDS AFTER epoch step Z; tracked data, so never in
+the gap or inside the epoch; the re-queue entry of SG_4's rule (5); not before 2026-10-11;
+requires EPOCH_RUN and SG_1 in the queue; SG_7 requires it, which is how SG_7 reads "SG_4 OR
+SG_4B"). In this order, before anything else: (i) if `data/efv_surrogate_frame_2026.json`
+exists at HEAD, write nothing and end 'NOT NEEDED: frozen by SG_4 (sha256 <of the file>)'
+(this NOT NEEDED is never cascaded); (ii) if efv2026 OQ1 = C, end 'NOT NEEDED: no freeze
+(efv2026 OQ1 = C)', and if OQ2 = C, end 'NOT NEEDED: no freeze (efv2026 OQ2 = C)' (the s6
+cascade applies); (iii) if OQ1 or OQ2 is unrecorded, write nothing and end 'DEFERRED: SG_4B
+waits for efv2026 OQ1, OQ2' (the orchestrator re-arms it once both are recorded; never a
+STOP); (iv) if FWAR part 9 carries no step Z entry, write nothing and end 'DEFERRED: SG_4B
+waits for the step Z entry' (re-armed by the orchestrator at that entry). Otherwise freeze
+from the step A snapshot path `../_pre_epoch_fwar_2026-10/`, per SG_4's rule (5): reproduce
+the RT 2025 objects on the eWAR v2 provider from that snapshot (the `career_war` basis
+before the step C rebase and `war_source.DEFAULT_PROVIDER == "ewar_v2"` as it stood before
+the step D+U flip, read from the snapshot and never from the post-Z tree, with
+`RESOLVED_THROUGH == 2025` as the snapshot holds it), then write
+`data/efv_surrogate_frame_2026.json` with exactly SG_4's content, rules (1) to (4) and tests:
+the same rows, the same named V2 fold object with its own sha256 and fold receipt, the head
+indices, the twin (seed 20260931), the ETA shadow joined only before each frame row's window
+end, the recount rule (4) with its own ending 'BLOCKER: SG_4B recount', and NO outcome
+column. The file records, beside SG_4's fields, `frozen_by: SG_4B`, the snapshot path and
+the sha256 of every snapshot input it read, the HEAD at the freeze and the step Z entry it
+followed. EPOCH_RUN's step A record (s6 EPOCH_RUN note) names this task. STOP if the step A
+snapshot is missing or lacks an input the reproduction needs (then the frame cannot be
+frozen prospectively; report it, never rebuild from the post-Z tree); STOP if the ETA block
+is missing; STOP if the monthly is writing `data/`; STOP if any V 2026 outcome would be
+computed or stored.
+
+**`SG_1B_AAA_PITCH_PINS`** (LANDS AFTER 2027-01-01). Once `stuff_plus_aaa.fetch_pitcher_season`
+treats 2026 as immutable (`stuff_plus_aaa.py:117-123`, `season < date.today().year`), record
+the sha256 of every `.cache/aaa_pitches/*_2026.csv` in `data/efv_surrogate_pins_2026.json`
+with the count of files whose mtime predates 2026-09-20 (the AAA regular-season end), so the
+physical-data chain (DSV2 idea 8) knows which pitchers' 2026 files are partial. No fetch.
+STOP if any file's mtime is in 2027 (a refetch happened past the immutability date; report
+it); STOP if the monthly is running.
+
+**`SG_7_SURROGATE_GATE_REGISTERED`** (LANDS AFTER THE EPOCH: after Q3 and Q6 to Q10). First:
+when SG_4 or SG_4B ended 'NOT NEEDED: no freeze (efv2026 OQ1 = C)' or '(efv2026 OQ2 = C)',
+end NOT NEEDED with that same reason and write nothing (the s6 cascade; Q5 can never be met).
+The freeze precondition reads "SG_4 OR SG_4B": the queue requires SG_4B, which ends NOT
+NEEDED at once when SG_4's freeze file exists, so STOP, naming the missing file, unless
+`data/efv_surrogate_frame_2026.json` exists at HEAD (written by SG_4 before step C or by
+SG_4B after step Z; cite which, from its `frozen_by` field or its commit). Change
+the one status line of `docs/efv-v2/SURROGATE_2026_GATE.md` to `Registration status:
+REGISTERED`, fill every PENDING item (pins re-taken by blob id for source files and sha256
+for `-text` data files; the SG_A addendum's commit sha in Q1 and s8.11; the fold scheme,
+first scored vintage and n per clause in s5, including whether the s3 derivation test
+passed or the s2.1 fallback applies; the re-taken row counts of s8.13; the owner answers
+OQ1 to OQ6 in the header, which `gate_header_records` reads), leave s12 empty, and commit
+the document ALONE. STOP if any precondition Q1 to Q10 is unmet (under OQ6 = A, Q10 is the
+GATE B9b amendment, which must already be committed by that document's own rules); STOP if
+`EFV_V2_GATE.md` is still a DRAFT and the owner has not said the surrogate gate may register
+first; STOP if any number appears in s12.
+
+**`SG_8_TRANSFER_READ_S3`** (LANDS AFTER THE EPOCH: after step Z, the P1 freeze receipt and
+R-VM look 1's record; not on 2026-10-23, 11-06, 11-13 or 11-20, not on the eFV reserved-read
+day, never in a session that runs another gate's look; nightly idle; one process). When
+SG_7 ended NOT NEEDED (the s6 cascade, efv2026 OQ1 = C or OQ2 = C), end NOT NEEDED with the
+same reason and do nothing; under OQ1 = B there is no transfer read: end 'NOT NEEDED: OQ1 =
+B'. Build
+`tools/efv_surrogate_look.py` (Q7) and run S3 once with purpose `transfer`: T1 on lv_L6
+(leave-one-vintage-out, or the registered fallback scheme if the s3 derivation test failed,
+with the no-L6 exits counted per side and vintage), T2 on g_S for the timing-head candidates
+with the registered splits and the probability-scale [0.5, 2.0] band (every MiLB driver,
+`V2_ABSENCE_KEY` included, scored on V 2015-2019 rows only; the per-split variance check
+before any outcome is read), T3 on V 2011-2019
+(fallback 2015-2019) against V 2022 under the CI rule, T4 in the S-only regime with the
+permuted twin, T5 asserted first, T6's SDs written before any point; the old-cohort analog
+floor for S4 measured and filed as a dated amendment; verbatim output into s12; key
+`transfer` in `data/efv_surrogate_gate.json`. The runner refuses without the REGISTERED
+commit sha, refuses a spent look, and REFUSES (never drops) through `withhold_reserved_vm`
+while any V 2022 row with a 2025 debut inside the window lacks look 1's record, printing
+the counts per cohort. One-look crash protocol: before the read, dry run the runner's
+reporting path (every printing and JSON-writing function) on fixtures that carry None and
+NaN in every printed cell, as tests, with no frame row; start `python -u
+tools/efv_surrogate_look.py <S3 args> 2>&1 | tee <output dir>/s3_look.txt` before anything
+else; on any exception after scoring began, STOP without rerunning (kill rule 2: one read
+per frame per look; no friendlier frame, estimator, seed or norm; no smoke number cited),
+record the look as spent if the runner marked it so, write OWNER_QUESTION.md with the
+traceback and every clause already printed, and end with 'BLOCKER: answer SG8-CRASH'. STOP
+on any T5 assertion; STOP if `data/efv_v2_gate.json` carries no R-VM look 1 record; STOP if
+`blocked_day()` refuses; STOP if the gate is not REGISTERED.
+
+**`SG_9_LV2026_S4_READ`** (LANDS AFTER THE EPOCH; CONDITIONAL: only under OQ2 = B, only if
+S3 passed T1 and T3 on both sides, only after R-VM look 2's record, about 2027-10 or later).
+When SG_8 or SG_7 ended NOT NEEDED (the s6 cascade, efv2026 OQ1 = C or OQ2 = C, or SG_8's
+OQ1 = B), end NOT NEEDED with the same reason and do nothing. Run the one lv_2026 read per gate s6.2 with purpose `lv2026_surrogate` (the guard opens it
+only with look 2's record and OQ2 = B in the REGISTERED header): outcomes from the frozen
+2026 copy (the MLB top code from the frozen event-id sets), the raters, twin and head
+indices from the freeze file, ABSENT_IDENTITY rows out of the primary with bounds (primary
+n about 453 / 454), the residual sensitivity on rung_pre, age_pre and club, the
+head-falsification family with Holm m = 4 and the e_time cell also within (side, rung_pre)
+strata, the expected signs of s7 printed beside the results; `withhold_reserved_vm` refuses
+(never drops) while any 2026 debutant row lacks look 2's record; key `lv_2026`; one `tilted`
+ledger row. One-look crash protocol: call `blocked_day()` first; dry run the runner's
+reporting path on fixtures that carry None and NaN in every printed cell, as tests, with no
+frame row; start `python -u tools/efv_surrogate_look.py <S4 args> 2>&1 | tee <output
+dir>/s4_look.txt` before anything else; on any exception after scoring began, STOP without
+rerunning (kill rule 2; no smoke number cited), record the look as spent if the runner
+marked it so, write OWNER_QUESTION.md with the traceback and every clause already printed,
+and end with 'BLOCKER: answer SG9-CRASH'. STOP if any precondition fails; STOP if the ledger row would land inside a label
+epoch; STOP if any FV-cell stratum would be produced; STOP if `blocked_day()` refuses.
+
+**`SG_6_HITTER_LEAN_C6_READ`** (CONDITIONAL on OQ5; read-only lane). The pre-declared fresh
+hitter-lean test: the 2025 FanGraphs list against 2025-26 MiLB ISO. Under OQ5 = C report
+'NOT NEEDED: OQ5 = C' and do nothing; when SG_4 or SG_4B ended 'NOT NEEDED: no freeze
+(efv2026 OQ1 = C)' or '(efv2026 OQ2 = C)', end NOT NEEDED with that same reason in every OQ5
+mode (the s6 cascade; under OQ5 = A there is then no REGISTERED commit to wait for). Under
+OQ5 = A it runs: under OQ2 = A, after the
+surrogate gate's REGISTERED commit (SG_7; there is no S4 under OQ2 = A, so "after S4" would
+never fire) and STILL with EVERY lv_2026 player excluded from its rows and counted (L2's
+exclude-and-count rule: under OQ2 = A no registered read ever spends lv_2026's 2026
+production outcome, so a descriptive probe may not spend it either; the W3 primary's frame
+stays untouched by any 2026 outcome against any rater); under OQ2 = B, after S4 has run, or
+after the surrogate lane has closed (T1 fail or T3 STOP recorded), or at R-VM look 2's
+record if S4 has not run by then, whichever comes first, in which last case it excludes and
+counts every lv_2026 player as under B. lv_2026 players enter its rows in ONE case only:
+OQ5 = A with OQ2 = B, after S4 has run or the lane has closed. Running it before REGISTERED
+on rows that include lv_2026 players would trip kill rule 3 and void the W3 primary. Under
+OQ5 = B it runs after SG_A and SG_1 AND not before FWAR part 9 carries the epoch's step Z
+entry (the floor every other read in this plan carries; the epoch owns the tree from step A
+to step Z, and `blocked_day()` exists only once SG_2 has landed), with EVERY lv_2026 player excluded and counted (354 of 590
+lv_2026 hitters sit on the V 2025 frame, so the remaining rows are disclosed as a selected
+subset). In EVERY mode its first action, before reading any row, is
+`efv_surrogate_guard.blocked_day()` (SG_2): STOP if SG_2 has not landed (the function does
+not exist yet; this task never substitutes its own date list) and STOP if it refuses.
+One-look crash protocol (the probe is read once on the rows it touches, so kill rule 2
+binds it): before the read, dry run the reporting path (every printing and file-writing
+function the probe uses) on fixtures that carry None and NaN in every printed cell, as
+tests, with no frame row; start `python -u <probe> 2>&1 | tee <lane dir>/sg6_read.txt`
+before anything else; on any exception after scoring began, STOP without rerunning (no
+friendlier frame, estimator, seed or norm; no smoke number cited), record the read as spent
+in PROBES.jsonl, write OWNER_QUESTION.md with the traceback and every line already printed,
+and end with 'BLOCKER: answer SG6-CRASH'. Before the first number, write the lane's row policy into its PROBES.jsonl:
+rows of 2025 and 2026 debutants inside their frame's window leave the probe and are counted
+(B9b rule 2's "leaves every read", applied to a descriptive probe that is NOT a read of the
+surrogate gate, whose own reads refuse rather than drop) until the owning R-VM look's record
+exists; no MLB stat is read; the debut is not an outcome of this test; identity on the outcome-blind resolver, with rows lacking one coded
+ABSENT_IDENTITY and counted, not scored; norms from `data/milb_norms_2026_pure.json`; no
+FV-cell stratum (strata: side, age, last level, route, bonus band). Never beside the monthly,
+one process; logs every read as a probe; it is descriptive, not a driver and not a ledger
+row, and its report says so in its first line; `SURROGATE_2026_GATE.md` s9 records it as a
+spent read of the production component on the rows it touched. STOP if the policy cannot
+be met for a needed row set; STOP if any statistic would be cut by consensus-FV cell; STOP if
+it would need a 2020 or 2021 list row; STOP if it would read any lv_2026 row in any mode
+other than OQ5 = A with OQ2 = B after S4 or the lane's close (under OQ2 = A, never, before
+or after REGISTERED); STOP if, under OQ5 = B, FWAR part 9 carries no step Z entry; STOP if
+`blocked_day()` is missing or refuses.
+
+**`SG_10_LABEL_RELEASE_PATH`** (LANDS AFTER THE EPOCH: after the owner answers OQ6 and the
+Q10 amendment exists under OQ6 = A; BEFORE RT 2029; code, so never in a gap or an epoch).
+`efv_labels.labels_for` marks every in-window debut at or after `R_VM_FIRST_DEBUT_YEAR`
+`reserved_vm` with W3 None (`efv_labels.py:228`, `:236-238`, `:245-246`) and has no release
+keyed to a look record, so the registered long-run reads of `SURROGATE_2026_GATE.md` s6.3
+(R3 at RT 2029, W3 at RT 2031) cannot run on it. Add, as a DATED AMENDMENT to that gate's
+s6.3 (its own rules: the amendment names what changes and is committed before the first
+read that uses it) and to `efv_labels.py`: a keyword argument `release_records=None`; when
+it carries the record id of the R-VM look that owns a reserved row's cohort (looks 1, 2, 3
+for the 2025, 2026 and 2027 cohorts) or the OQ6 release record (look 3's record under
+OQ6 = A, for the 2028 and 2029 cohorts), the row's W3, W2 and R3 are computed as for any
+other row and its status reads `released_vm`; otherwise behaviour is byte-identical to today
+(the default None never releases anything). L6 is NEVER computed for a released row. Only
+`tools/efv_surrogate_look.py` with purpose `lv2026_long_run` may pass `release_records`;
+`efv_v2_model._check_years` and every served path are untouched (test), and the DS-03 AST
+test asserts no other caller passes the argument. Tests: a synthetic reserved row stays
+`reserved_vm` with no record and reads `released_vm` with its record; a 2025 debutant never
+gets an L6; the existing label tests pass unchanged. STOP if OQ6 is unanswered; STOP if
+`EFV_V2_GATE.md` is not REGISTERED; STOP if the change would alter any label of a
+non-reserved row (the label build before and after must be byte-identical).
+
+---
+
+#### 7. Owner questions (recommended option first; real choices only)
+
+**OQ1. What may the surrogate lane ever do?**
+- **A (recommended).** Its own gate, `docs/efv-v2/SURROGATE_2026_GATE.md`, no ship weight.
+  The transfer read T runs once on old spent cohorts after R-VM look 1. A T1 pass says MiLB
+  surrogates can stand in for value; a T2 to T4 pass admits g_S, the S-only timing label, as
+  an auxiliary label for the TIMING head only, of a candidate in the 2027 registration;
+  arrival outcomes
+  never train a skill slope; no surrogate-trained arm joins the 2026 reserved reads. Honest
+  prior: T1 fails and T3 stops, which gives a permanent registered close of the question the
+  program keeps re-asking. Cost: four writer tasks (SG_0, SG_2, SG_3, SG_7), the docs-only
+  ETA addendum SG_A, the label-release amendment SG_10 before RT 2029, and one lab run
+  (SG_8) after 2026-12-01. Expected effect on the served board in 2026: zero under every
+  option here; only OQ4 B or C would move served 2026 rates, by the norm choice alone, with
+  no new data.
+- B. Minimal registration: freeze the V 2026 frame and register only its W3 read at RT 2031
+  (and R3 at RT 2029 as descriptive); no transfer read, no S_idx, no 2027 auxiliary. Cost:
+  SG_0 (the same draft with its OQ1 = B line, which voids the transfer and S4 sections until
+  SG_7 strikes them by name), SG_4 or SG_4B, SG_5. The surrogate question stays open.
+- C. Nothing: no freeze, no registration, pins and snapshot only (SG_1). The draft still
+  commits as a dated DRAFT with its OQ1 = C line and never registers; SG_4 and SG_4B end NOT
+  NEEDED, and so do SG_7, SG_8, SG_9 and SG_6 (the s6 cascade). The 2029 and 2031 reads never
+  count under 5c rule 1.
+
+(Folding the work into `EFV_V2_GATE.md` as a labelled secondary is not offered: surrogate
+rows of V 2024-2026 cannot enter any fold of this year's reserved reads, so it would only
+double the Holm family.)
+
+**OQ2. Freeze the 2026 preseason list, and for which reads?** (Under OQ1 = C this is moot.)
+- **A (recommended).** Freeze after the ETA look record and before epoch step C (or from
+  the step A snapshot after step Z); horizons: W3 at RT 2031 as the single long-run primary
+  and R3 at RT 2029 as a tilted descriptive read; NO one-season surrogate read ever. Real
+  cost: one tracked file now (with the twin and head indices frozen beside the V2 object, so
+  nothing is refit later); an alpha obligation to 2031; the whole-read deferral until looks 2
+  and 3 and the OQ6 release of the 2028-2029 cohorts; the SG_10 label-release amendment
+  before RT 2029; and the frame is prospective in data, not in design.
+- B. As A plus the one-season read S4, only if T1 and T3 pass, only after R-VM look 2's
+  record (about 2027-10), tilted, with the head-falsification family and its pre-committed
+  consequence (a resolved loss bars that head from the 2027 registration unchanged). Adds
+  SG_9 and the S_idx primary; a V2 lead there is expected by construction and only a loss
+  is informative.
+- C. No freeze. V 2027, frozen at 2027-05-01, is the first vintage prospective in design as
+  well as data, and it comes anyway. Since the freeze (draft Q5) is a precondition of the
+  REGISTERED commit, C also ends the gate: SG_4 and SG_4B end NOT NEEDED, and so do SG_7,
+  the transfer read SG_8, SG_9 and the hitter-lean test SG_6 (the s6 cascade).
+
+**OQ3. The 2026 debuts of 2026-cohort (R-VM) members inside the frozen frame.** (Bites only
+under OQ2 = B. Under A the long-run reads wait for every owning look AND the OQ6 release of
+the 2028-2029 cohorts, which no look owns; the round-2 claim that "under A the long-run
+reads come after every owning look" was false for those cohorts, which is why OQ6 exists.)
+- **A (recommended).** Wait: no one-season read of the frame before R-VM look 2's record
+  (about 2027-10), as B9b rule 2 already requires (`EFV_V2_GATE.md:239-241`); after it the
+  debut is the top level code and no MLB stat is read.
+- B. Read the debut event as the top code before look 2. This is a dated amendment to
+  `EFV_V2_GATE.md` B9b rule 2 and to `PROGRAM.md` s2.4's R-VM definition, committed by their
+  own rules BEFORE the surrogate draft; it weakens the "R-VM is clean" receipt EV-12
+  re-verifies (PROG:146-148).
+
+**OQ4. The served 2026 level norms are half 2025 until New Year's Day, then flip.**
+- **A (recommended).** Leave the served blend alone; pin pure-2026 norms now for every
+  registered read; disclose in STATUS.md and the ledger that v1 grades, the 2,689 provisional
+  grades and the chips will move on 2027-01-01 with no new data (the V2 order does not). No
+  served change, no landing-rule question. Fallback, decided now: if FWAR part 9 carries no
+  step Z entry by 2026-12-20, the owner decides before 12-31 between (i) a dated amendment
+  under FWAR part 3 disclosing that the flip lands inside the epoch window and that clause
+  (f) and (i) attribution reads the mixture, and (ii) holding the blend behind a default-on
+  flag until step Z (a code change); the choice is recorded in STATUS.md.
+- B. Weight the blend by the share of the season completed instead of by qualified counts,
+  so w reaches 1 at season end and the New-Year step disappears every year (the code comment
+  at `milb_history.py:291-293` promises convergence the formula never delivers). A
+  served-number change: lands by 2026-10-03 or after step Z, else behind a default-off flag;
+  blast radius every 2026 rel-rate on v1, the provisional grades and the chips.
+- C. Switch the served norms to pure 2026 now. Same landing rule and blast radius as B;
+  fixes 2026 only.
+- D. Hold the half blend through the winter so nothing moves until the 2027 season (a code
+  change with the same landing rule as B).
+
+**OQ5. The fresh hitter-lean test (2025 FanGraphs list vs 2025-26 MiLB ISO; DECISIONS:306,
+"default: yes, low priority").**
+- **A (recommended).** Defer it: under OQ2 = A, until the surrogate gate is REGISTERED
+  (there is no S4 under A, so a trigger worded "after S4" would never fire), and then with
+  every lv_2026 player excluded and counted, never included; under OQ2 = B,
+  until the frozen frame's one-season read S4, or the surrogate lane's close (T1 fail or T3
+  STOP recorded), or R-VM look 2's record if S4 has not run by then (in which case every
+  lv_2026 player is excluded and counted, as under B), whichever comes first. It cannot
+  mean never. 354 of the 590 lv_2026 hitters sit on the 2025 list; run before REGISTERED it
+  would associate S3's exact production outcome with a rater on most of the frozen frame
+  and trip kill rule 3.
+- B. Run it soon (after SG_A, SG_1 and the fWAR epoch's step Z entry, never inside the
+  epoch, and only once SG_2's `blocked_day()` exists) with every lv_2026 player excluded and
+  counted, as a spent read of the production component on the rows it touches; descriptive,
+  logged as probes, not a driver.
+- C. Drop it.
+
+(Under OQ1 = C or OQ2 = C the surrogate gate never registers, and the s6 cascade ends SG_6
+NOT NEEDED under every OQ5 option: A's "cannot mean never" holds only while the gate exists.)
+
+**OQ6. The 2028 and 2029 debut cohorts inside the frozen frame's long-run reads.** R-VM
+looks exist for the 2025, 2026 and 2027 cohorts only (PROGRAM.md:142, :355 "final
+boundary"; EFV_V2_GATE.md:61-62 reserves "the 2025 debut cohort and later" with looks at RT
+2026, 2027 and 2028), so lv_2026 players who debut in 2028 or 2029 sit inside W3 at RT 2031
+and R3 at RT 2029 with no owning look, and B9b rule 2 as written never releases them. Both
+reads are registered as WHOLE reads (no row dropped), so without a release rule the single
+long-run primary is deferred indefinitely.
+- **A (recommended).** Release them at R-VM look 3's record (RT 2028, about 2028-10, the
+  registered final boundary), for the LABEL reads of registered long-run frames only, by a
+  one-sentence dated amendment to EFV_V2_GATE.md s5 B9b committed by that document's own
+  rules before SG_7 (precondition Q10). Both reads then run whole on schedule (R3 at RT 2029,
+  W3 at RT 2031). Cost: one amendment; it releases nothing to any served path and nothing
+  before 2028-10.
+- B. Keep them reserved until a named successor registration owns them; both long-run reads
+  are deferred whole until then and may never run. Cost: this gate's single long-run primary
+  becomes conditional on a registration that does not exist.
+
+---
+
+#### 8. Calendar
+
+| date | event | this plan |
+|---|---|---|
+| 2026-09-27 (past) | MLB regular season ended; ETA outcome cutoff | |
+| 2026-09-28 (past) | ETA look owed | |
+| 2026-09-30 (past) | monthly pipeline wrote `data/` from 12:29 (step log ended 13:38); the ETA look recorded at be53132d (19:22) after a crashed first run (17:59); the final-pass plan's Part 8 committed (cbc4fa3e, 21:01); the served ETA flipped to arm B (6c614289) and lost the org multipliers (c3916597) | the lane's counts were taken 13:01, before the look |
+| 2026-10-01 | 2026 becomes a completed MiLB season for any as-of decision (`efv_dataset.py:960-968`); identity split 1987b1b2 (00:25) and the xfv.json restore 87b3b999 (13:04) | B2 boundary; round-3 revision of this plan |
+| by Sat 2026-10-03 23:59 | landing window for non-epoch served changes closes (Part 8, 8.A) | SG_1, SG_2, SG_3, SG_4, SG_5 if reached (code and tracked data cannot land in the gap); OQ4 B, C or D would use it |
+| Sun 10-04 to step A | the gap: docs and registrations only | SG_A (ETA s8 addendum), SG_0 (the draft) |
+| about 2026-10-05 | D9 frozen fWAR fetch; step M floor; 5c-B and 5c-C looks | step A becomes possible |
+| Wed 10-07 or Thu 10-08 (proposed) | epoch step A, then C (career_war rebase), D+U (provider flip), ..., F (F2) ... Z; nothing else writes the repo until step Z | SG_4 before step C, else SG_4B from the step A snapshot after Z; step A records which, and the epoch never waits on SG_4 |
+| about 10-11 to 10-13 (proposed) | step Z entry in FWAR part 9; landing window reopens | SG_1 to SG_3 and SG_5 if not landed by 10-03; SG_4B (not before 10-11) when SG_4 did not land |
+| 2026-10-23, 11-06, 11-13, 11-20 | PROJ ARM A look; PROJ B0-GATE and FanGraphs early team lists; PROJ ARM B look; PROSPECT_ANCHOR look (the later of 11-20 and step Z + 14 days) | no eFV lab, look or registered-frame fetch on these days (`blocked_day()`) |
+| 2026-11 (target) | EV-12: `EFV_V2_GATE.md` REGISTERED, alone | SURROGATE_2026_GATE may go REGISTERED after Q3 to Q10 (SG_7); the OQ6 = A amendment (Q10) before it |
+| not before 2026-12-01 | the eFV reserved-read day: R-LV look; R-VM look 1, one gate per session | no surrogate task that day or in that session; S3 (SG_8) after look 1's record |
+| 2026-12-20 | OQ4 fallback trigger if no step Z entry | owner decides before 12-31 |
+| 2027-01-01 | norm blend flips; current-season TTL ends (`milb_history.py:106-107`) | SG_1 done before this; SG_1B after |
+| 2027-04-15, 2027-10-15 | provisional freeze windows | |
+| about 2027-10 | R-VM look 2 (2026 cohort); next label epoch; V 2022 W3 resolves | 2026-debutant rows released; S4 (SG_9) only under OQ2 = B; OQ5 A's last fallback date under OQ2 = B |
+| about 2028-10 | R-VM look 3 (2027 cohort; the final boundary); Z1 passers' 2025-fold confirmation; ETA shadow scored | under OQ6 = A the 2028 and 2029 cohorts are released to this gate's label reads at this record |
+| before RT 2029 | SG_10: the `efv_labels` release path, dated amendment with its test | after OQ6 |
+| RT 2029 | lv_2026 R3 read, tilted; whole, after looks 2 and 3 and the OQ6 release | registered here |
+| RT 2031 | lv_2026 W3 read, the primary; whole, after looks 2 and 3 and the OQ6 release | registered here |
+
+---
+
+#### 9. Sources
+
+`inventory.md` (s0 to s5), `governance.md` (s0 to s7), `surrogates.md` (s0 to s8),
+`REVIEWS.json`, the round-3 items (the two reviews' still-open and new issues, in s10), all
+in `scratchpad/efv2026/`; the lane's count files `facts2026.py`, `facts2026.json`,
+`facts_table.md`, `frame_rows_2022_2026.json` (sealed, s5 draft s8.9),
+`surr_work/surr_frame_counts.json`, `surr_work/surr_player_counts.json`. Repo documents at
+`64bf1bb3`, re-checked at `26b446d9` (the header says which are byte-identical):
+`docs/efv-v2/EFV_V2_GATE.md`, `docs/efv-v2/PROGRAM.md`, `docs/efv-v2/DRIVER_SYSTEM_V2.md`,
+`docs/efv-v2/STATUS.md`, `docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md`,
+`docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md` (at 26b446d9, with the look record),
+`docs/master-plan-2026-09-24-final-pass.md` Part 8 (cbc4fa3e), `docs/PROSPECT_ANCHOR_GATE.md`,
+`docs/SURROGATE_LABEL_PROGRAM.md`, `docs/diamond-betting.md`; code `efv_vintage_frame.py`,
+`efv_dataset.py`, `efv_labels.py`, `efv_v2_model.py`, `efv_v2_serve.py`, `efv_progress.py`,
+`efv_drivers.py`, `efv_identity.py`, `milb_history.py`, `stuff_plus_aaa.py`, `trades.py`,
+`war_source.py`, `eta_backtest.py`, `tools/eta_fg_blend_gate.py`, `run_monthly.py` (both
+HEADs), `.gitattributes`, `test_efv_v2_gate.py`, `test_efv_vintage_frame.py`; the 64bf1bb3
+`data/xfv.json` receipt (`snap/xfv_HEAD.json`); the HEAD `data/eta_eval.json`
+(`snap/eta_eval_HEAD.json`, keys, counts and listing dates only); commits be53132d,
+6ca2e8f4, 6c614289, c3916597, cbc4fa3e, 1987b1b2, 87b3b999. Outside git, at the projects
+root:
+`_audit_2026-09-09/DECISIONS_FOR_OWNER.md`,
+`_finalpass_2026-09-24/efv2/E2_data_labels/DATA_LABELS.md`,
+`_finalpass_2026-09-24/efv3/I2_new_information/IDEAS.md`. Writer-queue style from
+`scratchpad/writerq5_tasks.json` and `writerq7_tasks.json`.
+
+---
+
+#### 10. Review resolution
+
+Each issue of `REVIEWS.json`, in the reviews' order, with what was done. "L" is
+`review:leakage`, "V" is `review:validity`.
+
+| id | severity | issue (short) | disposition |
+|---|---|---|---|
+| L1 | major | the old OQ3 = A scores raters against 2026 R-VM membership before look 2, against B9b rule 2 | ACCEPTED as proposed. The conflict is real: `EFV_V2_GATE.md:239-241` reads "the row leaves every read until the R-VM look that owns it has run", and `efv_labels.py:228-246` shows the R3 fill on reserved rows only sets status, so it is not a scored precedent. Default flipped to "wait for look 2" (the old C, now OQ3 A) in draft s2.3, s6.2, s8.1, s10; the old A restated as OQ3 B, two dated amendments committed before SG_0; `withhold_reserved_vm` implements B9b rule 2 (drop with a count) until the owning look's record, event-only after it; the same policy stated for T3's V 2022 rows (after look 1, Q8) and V 2023 (after look 2). |
+| L2 | major | kill rule 3 already tripped by the lane's per-row dump; SG_6 trips it worse | ACCEPTED as proposed. Kill rule 3 reworded to the association boundary; the dump disclosed with sha256 and the exact marginals (draft s8.9, s9) and sealed rather than deleted (a deleted file cannot be audited; the seal forbids any load beside a grade and kill rule 3 names it); SG_6 became owner question OQ5 with "after S4 or exclude and count" as the two run modes and s9 recording it as a spent read of the production component. |
+| L3 | major | `gate_doc=` on `guard_score_request` would let the surrogate sha open R-LV | ACCEPTED as proposed. `efv_vintage_frame.py` is not edited (sha asserted); the pure predicate `gate_sha_committed_for(sha, gate_doc)` lives in `efv_surrogate_guard.py`; `guard_surrogate_read` raises for `RESERVED_LV` before any sha check; a fixture-commit test proves the surrogate REGISTERED sha never opens `guard_score_request(2020)` or `(2021)`. |
+| L4 | minor | measured floors before REGISTERED are circular with a guard that refuses everything | ACCEPTED modified: option (a). Draft-time floors stay sqrt(n) arithmetic; the runner writes SDs before any point (Q7); the old-cohort analog floor for S4 is measured at S3 and filed as a dated amendment before S4; tests exercise private pure functions on synthetic rows and a league-wide shape test without frame rows, so no dev pass in the guard is needed (no hole). |
+| L5 | minor | pins on gitignored 20-hour-TTL caches drift; sportId 15 files missing | ACCEPTED modified. The ten 2026 files become a TRACKED byte copy under `data/milb_season_frozen/2026/` (2.3 MB, measured), pinned there; transfer seasons (2.4 to 2.7 MB each, 36.7 MB in all, too heavy to track) are pinned by a canonical content hash over the builder's field projection and read with `fetch=False`; sportId 15 files included where non-empty; pure norms derived from the frozen copy. |
+| L6 | minor | SG_1 (2) hand-writes `.cache/` during the epoch; (3) changes a DS-09 input with no receipt | ACCEPTED as proposed. (2) dropped and moved to SG_1B after 2027-01-01 (`run_monthly.py:5686-5688` step 6b2b refreshes the files itself); (3) kept with per-file sha and fetch date and `efv_drivers.protection_coverage` (`efv_drivers.py:502`) printed before and after. |
+| L7 | minor | the norm flip may land inside the epoch if step Z slips past 12-31 | ACCEPTED as proposed. OQ4 A carries the 12-20 fallback (amendment under FWAR part 3, or a default-on hold flag until Z), recorded in STATUS.md; draft s8.12. |
+| L8 | minor | the frozen "V2 at the draft weights" is a new fold object, not P5 and not the served fit | ACCEPTED as proposed. Named exactly in draft s2.2, s6.2, s11 and SG_4; own sha and fold receipt in the freeze file; the fWAR re-derivation not applied; every lv_2026 result is about that object only. |
+| L9 | minor | SG_0 not alone; SG_5 has no landing date | ACCEPTED as proposed. The draft commits alone and the test in a second commit; SG_5 by 2026-10-04 if reached, else after step Z, with its STOP-if-diff guard (round 4: by 2026-10-03 23:59, the landing window's close). |
+| L10 | minor | T1 partly in-sample; censored L6 rows truncate arrival; ABSENT_IDENTITY scored as an outcome | ACCEPTED as proposed. T1 is leave-one-vintage-out out-of-sample; censored rows kept at `l6_censored_target` with `l6_weight`, resolved-only rho printed beside; ABSENT_IDENTITY out of the primary with a bounds sensitivity and per-frame counts (also V5). |
+| L11 | minor | the 2026-07-24 surrogate arms missing from the denominator; module name assumed free | ACCEPTED as proposed. Draft s9 lists the 6 arms plus the pitcher prototype; `git ls-files` at HEAD shows only the two eval artifacts and the doc, so `efv_surrogate.py` is new and pinned at first commit (SG_3, s11). |
+| V1 | blocker | lv_2026's prospective status already broken under kill rule 3; SG_6 and SG_A overlap; N4 false | ACCEPTED as proposed. Kill rule 3 reworded to the association boundary before SG_0; facts2026.py, facts2026.json, facts_table.md and frame_rows_2022_2026.json disclosed with sha256 and the marginals seen (draft s8.9); the per-row file sealed; SG_6 moved behind OQ5; the SG_A overlap disclosed as counts (212 / 207) and the ETA-rater arrival components marked not prospective (draft s2.2, s8.11); N4 restated as an association claim with the pre-look counts (63 / 72, 136 / 153) recorded in ETA s8 by SG_A. |
+| V2 | major | long-run reads oversold and mis-specified (R3 as long-run; copied O'Brien-Fleming z; no W3 label path for 2028-29 debutants; "fully prospective"; the scored object) | ACCEPTED as proposed. W3 at RT 2031 is the single long-run primary at the full one-sided 0.05 (m = 1; Bonferroni 0.025 each registered now for any added endpoint); R3 at RT 2029 reclassified tilted with no alpha; S4 gets its own surrogate-scale family; the O'Brien-Fleming spending removed; the deferral rule for 2028-2029 debutants registered (kept, never dropped, the whole read deferred to their cohort's look); N6 and OQ2 reworded "prospective in data, not in design"; the scored object named. |
+| V3 | major | S_idx circular with `level_rank`; the S4 interpretation wrong; confounders | ACCEPTED as proposed. S_idx rebuilt on innovations: CLIMB relative to the frame's own V-1 rung, club-demeaned with a shrunken club intercept fitted on old cohorts; PERF and PT residualized on age-for-level and the V-1 rung; no absolute rung, no pre-V state; a residual sensitivity registered for S4; the prior rewritten ("a V2 lead is expected by construction; only a loss is informative; PPI weakens even that"); head tests on e_time and e_skill as a Holm m = 4 family with a pre-committed consequence; the expected direction printed on the ledger row. Verified on the HEAD receipt: hitter-skill `level_rank` negative in 5 of 7 vintages, timing positive in 7 of 7. |
+| V4 | major | T2(b) cannot run on 2011-14 (no MiLB block); ambiguous pass rule; blind to inflation | ACCEPTED as proposed. `efv_dataset.py:971` confirms the loop stops at 2014. T2 now runs on g_time against R3 (the timing target) with splits where each driver exists (MiLB drivers 2015-16 and 2017-19), any (b) or (c) failure fails the auxiliary route and bars the driver, a [0.5, 2.0] standardized-slope band added, and the prior records `level_rank` and `age_rel_level` as expected failures. The skill-head version is descriptive because S_idx never enters a skill head. |
+| V5 | major | ABSENT_IDENTITY is a pre-V attribute; era break; ABSENT_KNOWN record-keyed | ACCEPTED as proposed. Never an S_idx code; rows out of the primary with a worst-code / best-code bounds sensitivity and counts; a pre-V identity route registered as the only way in (by amendment before S4); ABSENT_KNOWN keyed to the person-keyed TJ file only, IL history descriptive; one ABSENT code among id-resolved rows in S_idx (draft s3, s8.10). |
+| V6 | major | the effect-size argument inverted | ACCEPTED as proposed. s0.3, the s4 rows and the honest prior rewritten: under full surrogacy the frame would be well powered; surrogacy fails on the record (bypass 57 to 92 percent; impossible for AA2 since rho(consensus, L6) 0.363 / 0.329 exceeds rho(AA2, L6) 0.187 / 0.150, `DATA_LABELS.md:117-118`); if T1 passed the multiplier would be at least 0.5; the 0.003 to 0.010 figure is now labelled as the arithmetic under full surrogacy, not a limit. |
+| V7 | major | T4 tests regularisation, not the S-only regime; margin 0.02 tolerates harm; no twin criterion; no head restriction | ACCEPTED as proposed. T4 emulates the S-only regime (R3 masked on V-3 to V-1, imputed by g_time fitted up to V-4, against the incumbent resolved-rows-only head); HARM iff the upper bound is below 0 or the point below -0.005, otherwise "not shown harmful, unpowered" (it can fail but cannot certify); the twin criterion is a one-sided lower bound above 0; any admitted object is the timing head's only. |
+| V8 | major | T3's re-basing clause is a forking path; S -> L6 comparability untestable; s2.3 contradicts s2.1 | ACCEPTED as proposed. T3 failure or inconclusive is a STOP (kill rule 9: no re-basing, no second specification, a new registration only); S -> L6 comparability stated as assumed and untestable until about RT 2031; the tolerance is a CI rule (CI95 of the z difference inside plus or minus 0.10, which passes only when the point is below about 0.03); s2.3 rewritten to list exactly what is read on V 2022 and V 2023 and how 2025 and 2026 debut events are handled. |
+| V9 | major | every ceiling is against consensus only; the Pipeline gap is the binding one | ACCEPTED as proposed. s4 carries Pipeline and FanGraphs columns from STATUS:42-44 and :70-72; s0.4 says nothing here closes the roughly 0.028 Pipeline gap on list vintages; draft s4 reports V2 minus Pipeline and minus FanGraphs beside V2 minus consensus, descriptive. |
+| V10 | major | owner options not real choices; the hitter-lean choice missing; the norm fix missing | ACCEPTED as proposed. OQ1 B (fold into EFV_V2_GATE) dropped with the reason; OQ1 now A (full gate), B (minimal registration for the frozen frame's W3 read), C (nothing); SQ4 folded into OQ1 A's head restriction; OQ2 restated with its real cost and the recommendation moved to "long horizons only", with S4 as option B; OQ3 B (AAA-or-higher) dropped and A restated as an amendment; Q6 renumbered to OQ1 to OQ5; OQ5 added for the hitter-lean test with its 354-of-590 overlap; OQ4 gained the season-share weighting (its option B) after confirming the formula w = n_cur / (n_cur + n_prior) at `milb_history.py:293-306` never reaches the pure norm. |
+| V11 | minor | PT divided by a pre-2020 norm across the ladder break (Mexican League under sportId 11) | ACCEPTED as proposed. PT normalized by each season's own per-level affiliated-qualifier exposure with the Mexican League excluded by league name before 2021 (draft s3). |
+| V12 | minor | the fold scheme leaves V 2011 alone in the first fold; T1's n overstated | ACCEPTED as proposed. Leave-one-vintage-out over V 2011-2016 with inner leave-one-vintage-out for the penalty, all six vintages scored (n 781 / 804 players as quoted), the full six-vintage fit as the lv_2026 index; written into s3, s5 and s9, and Q9 asks for the scheme and n per clause at registration. |
+| V13 | minor | presentation errors in the effect sizes | ACCEPTED as proposed. Signed ranges (-0.005 to +0.005) for F2 and the auxiliary; the +0.0085 F-VM bound dropped; "2 to 7 times"; "consensus plus age plus level" (IDEAS.md:15-18, :143); vm2 within -0.0057 and pooled -0.0058 (STATUS:65) beside the served pooled -0.0055; every floor labelled E_cond or E_refit. |
+
+Nothing was REJECTED. Two calls were made explicitly beyond the reviews' text: the per-row
+dump is sealed rather than deleted (auditability), and the transfer read S3 is scheduled
+after R-VM look 1's record rather than run early with V 2022's 2025-debutant rows dropped,
+because dropping is the selection B9b rule 1 names and the read is not urgent.
+
+##### Round 3 (2026-10-01; HEAD 26b446d9; every fact below re-verified read-only at that HEAD)
+
+The two reviews re-read the round-2 draft and returned still-open items and new issues.
+"L" and "V" are the two reviews; "L-n" and "V-n" are their new issues in order. Nothing in
+the repo was written; every change is in this folder (PLAN.md, OWNER_QUESTIONS.json,
+QUEUE_TASKS.json).
+
+| item | severity | what was found (verified) | disposition |
+|---|---|---|---|
+| L2 / V1 (still open) | blocker | (a) The 123 / 121 figure in round-2 s2.2 is not in any sha-pinned lane file; it was computed from the sealed per-row dump during the round-2 revision (recomputed identically on 2026-10-01: V = 2026, pid absent, r_line true; so was the per-vintage overlap, key intersections). As worded, round-2 kill rule 3 ("any association, tabulation or model fit ... model feature or stratum") voided lv_2026 on the day the draft committed. (b) The ETA look at be53132d (2026-09-30 19:22, after the plan was written at 14:19) scored CH40, arm A and arm B against V 2024 debut years, 212 / 207 of whose players sit on lv_2026. | CLOSED. Kill rule 3 reworded to "any association or model fit between a 2026 season outcome of an lv_2026 row and the score of an s2.2 rater, a label or a model feature, computed by or for eFV before REGISTERED", with an explicit admitted set by name: (i) the lane's s8.9 counters, defined as counts within (vintage, side) and within identity route, including the 123 / 121 count and the overlap intersections; (ii) the ETA look at be53132d with its consequence. The 123 / 121 count moved from s2.2 to s8.9 with file, filter and date, and the note that ABSENT_IDENTITY's exclusion was designed with it in view; the full `facts_table.md` is reproduced in s8.9; s9 records two tabulations instead of "0 associations"; kill rule 10 defines "read" as a read of this gate (s6). |
+| L10 part 2 (still open) | blocker | `DEBUT_YEARS = range(2011, RESOLVED_THROUGH)` (`efv_dataset.py:315`) ends at 2024; `efv_labels.py:228` and `:245-246` give a 2025-or-later debut status reserved_vm with L6 None before the DEBUT_YEARS branch at `:247`; `censored_never` (`:161`) and `identity_conflict` (`:219-220`) rows also carry no L6. The round-2 "never excluded" was false and invited an L6 on a 2025 debutant. | CLOSED. s2.1 and T1 state the three no-L6 groups, their exit from T1 with counts per side and vintage, disclosed as a selection that truncates arrival; this gate never computes an L6 for a 2025-or-later debutant (T5 asserts it; SG_10 asserts it on released rows). |
+| L-1 / V2 (long-run reads) | blocker | W3 at RT 2031 is WAR over dy..dy+2 for debuts 2026-2029 (`efv_labels.py:15-17`), MLB stats of R-VM-coded debutants, which round-2 T5 and s2.3 barred; `efv_labels` withholds every in-window reserved debut with no release keyed to a look (`:236-238`); R-VM looks own the 2025-2027 cohorts only (PROG:142, :163, :355; GATE:61-62), so the 2028 and 2029 cohorts had no release and the primary was deferred indefinitely; R3 at RT 2029 had no deferral and would have dropped rows. | CLOSED, with one owner call. s2.3, s6.3 and T5 separate surrogate reads (debut event only) from long-run label reads (through a release path keyed to look records: SG_10, a dated `efv_labels` amendment with its test before RT 2029); both long-run reads are whole reads deferred until looks 2 and 3 and the release of the 2028-2029 cohorts; `withhold_reserved_vm` refuses, never drops; H_W3 registered in s6.3. The 2028-2029 cohorts are OQ6 (A: release at look 3's record by a GATE B9b amendment, precondition Q10; B: a successor registration, reads possibly never), which also settles GATE:61 against PROG:142 for this gate's reads. OQ3's false parenthetical corrected. |
+| L-2 / V1(b) (Q1 and SG_A) | blocker | Q1 required the lane's pre-look counts "written into ETA s8"; SG_A STOPped on an existing block, so Q1 could never be met and SG_7 never registered. HEAD is 62 commits past the plan's base. | CLOSED. SG_A is now a docs-only s8 addendum (SG_A_ETA_S8_ADDENDUM) in the "Added 2026-09-30" pattern, committed alone, before 10-04 or in the gap; Q1 reads "recorded at be53132d; counts disclosed by the addendum (sha PENDING) and s8.11"; N4, s8.11, s10, the calendar and SG_4's precondition updated. The plan re-based on 26b446d9: the header lists the byte-identical files, `run_monthly.py` 6b2b at `:5825-5832`, `data/xfv.json` (1987b1b2, 87b3b999), `data/eta_eval.json` and the ETA gate doc (be53132d), `tools/eta_fg_blend_gate.py` (6ca2e8f4). |
+| L-3 (guard schedule) | major | The round-2 guard opened every non-R-LV vintage at REGISTERED; the frame schedule lived only in STOP lines. `efv_labels.py:230-231` FILLS R3 = 1.0 for in-window reserved debuts (status is set only at `:236-238` and `:245-246`), so round-2 s8.1 "only sets status" misdescribed the code. | CLOSED. `guard_surrogate_read(V, *, gate_sha, look_records, purpose)` enforces the schedule (s2.3): V 2023, 2024, 2025 refused always; V 2022 needs look 1; V 2026 surrogate needs look 2 and OQ2 = B in the header; V 2026 long-run needs looks 1-3 and the OQ6 release; one test per refusal; `withhold_reserved_vm` raises instead of dropping; s8.1 corrected ("filled, not withheld"). |
+| L-4 (ETA listing dates) | major | The shadow (4,486 rows) is built "with inputs as of each listing date" (ETA s5) and stores level, on40, fg_eta_year; listing dates by month Jan 338, Feb 1,065, May 19, Jun 107, Jul 204, Aug 403, Sep 2,350, so 3,083 rows carry in-season 2026 inputs. | CLOSED. s2.2, SG_4 and T5: a shadow row is joined only when its listing_date is before the frame row's own window end (before 2026-05-01 and before any April debut); otherwise the ETA raters are None and the row is counted. |
+| L-5 (gate_sha sentence) | minor | `gate_sha_committed` (`efv_vintage_frame.py:119-132`) accepts any ancestor whose tree carries EFV_V2_GATE.md REGISTERED, so once that gate registers the surrogate gate's own REGISTERED sha would open `guard_score_request`; the round-2 sentence was false. | CLOSED. Reworded in s2.3 ("refuses R-LV for every sha; this gate's code never calls guard_score_request"); SG_2 builds fixture ONE (EFV_V2_GATE DRAFT beside the REGISTERED surrogate gate) and fixture TWO (both REGISTERED; `guard_surrogate_read(2020)` and `(2021)` still raise); the AST test asserts no call to `guard_score_request`. |
+| L-6 (CRLF pins) | minor | `core.autocrlf` true; `efv_vintage_frame.py` sha256 e7ce2bf6... in the tree, fc69897f... as the blob; the assembly pin 422fc543... (GATE:215) is the CRLF working-tree hash (blob 145cc8de...); `.gitattributes:7-9` already pins the provisional freeze with `-text`. | CLOSED. s11 and T5 pin source files by git blob id (efv_vintage_frame.py c9d5a29d..., efv_v2_model.py 41360330..., assembly 91b04fa8...); SG_1 step (0) adds `-text` lines for `data/milb_season_frozen/**`, `data/efv_surrogate_*.json`, `data/milb_norms_2026_pure.json`; s11 notes the assembly pin is the CRLF working-tree hash. |
+| L-7 (S1 and S2 inputs) | minor | No pin covered the sport-1 files, whose 2026 copy holds MLB lines of the R-VM 2026 cohort; the hashed field list omitted obp, slg, avg, ops, era (`milb_history.py:258-275`); s11's "cache never read" contradicted SG_3; `canonical_org` (`trades.py:375`) only normalizes a name and F-LV rows carry no org. | CLOSED. SG_1 writes the 2026 sport-1 files as person-id sets only (`mlb_event_ids_*.json`) and the builder reads sport-1 files only through `mlb_event_ids` (T5); the field list includes every `league_norms` field; s11 limits the sentence to season 2026; s4 names the as-of org (latest in-window point's `org`, else the transaction feed before V-01-01, else `org_unknown` on a pooled intercept) and asserts no org dated at or after the window end. |
+| L-8 (Part 8 calendar) | minor | Part 8 (cbc4fa3e) blocks 10-23, 11-06, 11-13, 11-20 and the eFV reserved-read day (`:2035`), forbids repo writes between step A and Z (`:2252`), limits the gap to docs and registrations (`:1944`), and proposes step A 10-07 or 10-08 (`:2086`). | CLOSED. Q7, `blocked_day()`, SG_8 and SG_9 carry all the dates plus "never in a session that runs another gate's look" (PROG:353); SG_1 to SG_5 land by 10-03 or after step Z; SG_4 before step C or from the step A snapshot; the calendar rewritten. |
+| L-9 (seal path, OQ5 trigger) | minor | The sealed files sit in a session Temp folder; under OQ2 = A OQ5 A's "after S4" never fires; SG_6 before REGISTERED on lv_2026 rows would trip kill rule 3. | CLOSED in the plan, NOT EXECUTED: SG_0 step (0) copies the four files, sha-verified, to `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/efv2026/sealed/` and s8.9 cites that path (this lane may write only under its scratchpad, so the copy is the writer's first step, not done here). OQ5 A, SG_6 and OWNER_QUESTIONS.json reworded: under OQ2 = A after REGISTERED; under OQ2 = B after S4, the lane's close, or look 2's record, whichever first. |
+| V2(c) (scored object, H_W3) | blocker | s6.3 named neither the scored object nor the primary contrast. | CLOSED. H_W3 registered in s6.3: within-side W3 Spearman of the s2.2 V2 fold object minus PROSPX consensus, identical rows, one-sided 0.05, m = 1; Pipeline and FanGraphs beside. |
+| V3 (still open) | blocker | T6 let lv_2026 "speak about the long-run DIRECTION" past the STE, contradicting s0.3, s6.2 and H_S; CLIMB was only club-demeaned, and its AAA ceiling (`DATA_LABELS.md:122-123`) with e_time rising in the rung (timing admission +1 in 7 of 7, mean t 9.886, receipt at 64bf1bb3) pushed e_time toward a LOSS by construction; the age confounder was unadjusted. | CLOSED. The STE clause struck (descriptive only, permits nothing); CLIMB residualized on rung_pre and age_pre with maps fixed on lv_L6, the e_time cell also within (side, rung_pre) strata; each head test's expected sign under no carry-over failure written in s7 (e_time 0 to +0.02, e_skill 0 to +0.03; a loss is an upper bound below 0). |
+| V4 (still open) | blocker | T2's object g_time took `level_rank` and `age_rel_level` as inputs, so (a) and (b) passed by construction for the two drivers it exists to test; the standardized band [0.5, 2.0] was centred near 1/rho(g, R3), about 2 with a binary R3, so a valid g would fail (c); the prior cited the skill-target sign. Receipt at 64bf1bb3: timing `level_rank` +1 in 7 of 7 (admitted); `age_rel_level` -1 in 2018-2021, +1 in 2022-2024 (not admitted, mean t 2.34). | CLOSED, MODIFIED: T2 to T4 run on the S-only label g_S = E[R3 given S2, S3, S4, ABSENT] with no pre-V input (g_time is not built); (c) compares unstandardized slopes on the probability scale with the band centred at 1; the prior rewritten (`level_rank` expected to pass, `age_rel_level` expected to fail because its own R3 sign is unstable); g_S's increment over E[R3 given rung_pre, age_pre] printed descriptively. The round-2 V4 row reads "accepted as proposed" and is superseded by this row. |
+| V12 / V-1 (V 2011-2014 rows) | blocker | `efv_dataset.py:971` loops `range(first_season, 2013, -1)`, so V 2011-2014 rows (786 hit / 719 pit, 1,505 of the 3,100 lv_L6 rows, `surr_frame_counts.json`) have no MiLB block; the round-2 S2 to S4, S_idx and g_time depended on the frame's V-1 rung, and T2's non-MiLB splits, T3's old era and T4's training windows read those vintages. The cache holds every sport and group from 2005 (sport 11, 14, 16 files of 2010-2013 are 110-420 KB). | CLOSED. s3 defines rung_pre and age_pre, derived by this gate from the pinned store for EVERY vintage (pin 2010), with a test that reproduces the frame's `level_rank` on V 2015-2019 rows; a registered fallback (T1 on V 2015-2016 with player-grouped 5-fold, T2 splits 2015-16 and 2017-19, T3 old era 2015-2019, T4 evaluation V 2019 only, half-width about 0.06) applies if that test fails and is written into s5 at registration (Q9). T4's training windows are now stated per evaluation vintage. |
+| V-2 (provider at the freeze) | major | Step C rebases `career_war` and step D+U flips `DEFAULT_PROVIDER` (FWAR:704-705) before step F; `efv_labels` reads `war_source.DEFAULT_PROVIDER` (`efv_labels.py:10-11`; `war_source.py:136` reads `ewar_v2`). | CLOSED. Q5, N6, E6, OQ2 A and SG_4 read "before epoch step C"; SG_4 asserts the provider and the absence of the step A destination (or reproduces from the snapshot) and records the provider and the `career_war` basis in the freeze file. |
+| V-3 (twin and head indices) | minor | SG_4 froze only final scores; the twin and e_time / e_skill would have been refit from 2026 objects in 2029 and 2031; the hitter PERF scalar and the missing-PERF rule were unregistered. | CLOSED. s4 and SG_4 freeze the twin (seed 20260931) and the per-row head indices beside the V2 object; s3 registers the hitter scalar (equal-weight mean of the three standardized columns) and the missing-PERF rule (id-resolved mean, no indicator). |
+| V-4 (Mexican League) | minor | Pre-2021 sportId 11 files carry MEX rows (2016: 349 of 1,627; 2019: 336 of 1,665, verified on the cache; field `league`), and `league_norms` has no league filter. | CLOSED. s2.1, s3 and SG_3 drop `league == "MEX"` from every component and norm that reads sportId 11 before 2021, with a test on the 2016 and 2019 files. |
+| V-5 (re-baseline) | minor | 1987b1b2 (2026-10-01 00:25) split three identities onto seven keys and stopped `consensus.build_timeseries` merging same-name rows; 87b3b999 restored `data/xfv.json`; the served ETA lost its org multipliers at c3916597; 6b2b moved. | CLOSED in the plan: s8.13 discloses it; SG_4 re-takes the counts with `build_frame` and STOPs on a mismatch rather than failing a test (superseded in round 4 by SG_4's continuation rule (4), s10 Round 4 item 9); the s2.2 aside and the citations updated. NOT re-taken here: the monthly was rewriting `data/` (315 modified data files in `git status`) and the lane's universe snapshot predates the split, so a fresh count would have needed a new snapshot beside a writing pipeline. |
+| V-6 (S4 floor, OQ5, task count) | minor | The S4 primary excludes ABSENT_IDENTITY rows (about 453 / 454 remain); OQ5 A could mean never; OQ1 A said five writer tasks against s7's four. | CLOSED. S4 floors rescaled to the primary's n (0.022 to 0.028 pooled, 0.039 per side) in s4, s9 and the PLAN s4 table (the W3 read keeps n 1,207, every row carries a W3); OQ5 A given its dated fallback; OQ1 A recounts (four writer tasks plus SG_A, SG_10 and one lab run). |
+| V-7 (second T3 read) | minor | "After S4, V 2023 joins T3" was a second T3 read with no decision rule. | CLOSED. Dropped: V 2023 is read by nothing in this gate (s2.1, s2.3, s6.2, T3); the guard refuses V 2023 always. |
+| V-8 (org source) | minor | F-LV rows carry no org field; `canonical_org` only normalizes a name; the unknown-org rule was unregistered. | CLOSED. s4 registers the as-of org source, the `org_unknown` count and the pooled intercept; SG_3 asserts no org dated at or after the window end. |
+
+**Not closed, with why.** (1) The physical copy of the four sealed files to the durable
+path: this lane may write only under its scratchpad, so it is SG_0 step (0) for the writer
+that commits the draft, sha-verified against s8.9. (2) The ETA s8 addendum itself (SG_A):
+a repo write, specified word for word, not performed. (3) The GATE B9b amendment for the
+2028-2029 cohorts (Q10) and the `efv_labels` release path (SG_10): owner call OQ6 first,
+then repo writes by their own rules. (4) Re-taking the frame counts after the identity
+split: deferred to SG_4 (s8.13), because the monthly was rewriting `data/` and the lane's
+snapshot predates 1987b1b2. (5) The lane's own per-row dump is sealed from round 4 on, but
+it was NOT unloaded after round 2 declared the seal: on 2026-10-01 the round-3 revision of
+this lane loaded `frame_rows_2022_2026.json` and recomputed the 123 / 121 count (V = 2026,
+pid absent, r_line true) and the per-vintage overlap key intersections, identical to the
+2026-09-30 values. No grade was joined to it; the same revision read the `meta` receipt of
+`snap/xfv_HEAD.json`, a file that also carries per-player grades, and the record does not
+show whether the two were ever open in one process, so the plan claims no more than that
+(draft s8.9, LOADS ON RECORD). No further read of the dump is permitted, by any process; the
+SG_0 copy compares sha256 values only. The two tabulations are disclosed rather than undone,
+since a count cannot be un-seen, and kill rule 3 admits them by name.
+
+##### Round 4 (2026-10-01; the nine items of `VERIFY_round3.md`, with the orchestrator's rulings)
+
+Read-only on the repository, as before; every change is in this folder (PLAN.md,
+OWNER_QUESTIONS.json, QUEUE_TASKS.json, `make_efv2026_tasks.py`, the new
+`regen_queue_tasks.py`) and in `scratchpad/dq/efv2026_tasks.json`. The round-3 files are kept
+beside them as `*.round3.bak.*`. Every round-3 fix stands. No eFV frame was built or read and
+no statistic was computed. Disclosure: this round's process listed the top-level keys of
+`snap/xfv_HEAD.json` (`meta`, and `by_player` with 9,509 entries; no value printed) to state
+the s8.9 provenance exactly; it never opened any of the four sealed files.
+
+| # | item | disposition (where) |
+|---|---|---|
+| 1 | Kill rule 3 omitted "stratum" | FIXED. Draft s7 kill rule 3 now reads "any association, tabulation or model fit between a 2026 season outcome of an lv_2026 row and any rater score (an s2.2 rater's or any other), a label, a model feature or a stratum (any descriptive cut of the rows ...)", and states that vintage, side and identity route are the only strata admitted, and only for the s8.9 counts. The same boundary is carried into the PLAN header (with "except the tabulations ... kill rule 3(i) admits by name", the verifier's promise (a) note), s1's "Not allowed", N9, the s5 preamble, the draft's DRAFT paragraph and the s6 preamble. |
+| 2 | s10 "stays sealed and unloaded" contradicted the 2026-10-01 recompute | FIXED. Draft s8.9 gains LOADS ON RECORD: two loads of the per-row file, both by this lane and read-only (2026-09-30 round 2; 2026-10-01 round-3 revision, which recomputed the 123 / 121 count and the overlap intersections with the same filters and got the same numbers); both counts read only the file's own fields and no grade was joined; both revisions also read the `meta` receipt of `snap/xfv_HEAD.json`, which also carries per-player grades, and the record does not show whether the two files were ever open in one process, so the plan does not claim that the session held no grade file. SEAL from round 4 on: no further read of the four files by any process, for any purpose. s10 "Not closed" (5), N9 and SG_0 step (0) ("copy and hash only") say the same. |
+| 3 | SG_6 under OQ2 = A included lv_2026 players after REGISTERED | FIXED. SG_6, N8, PLAN OQ5 A, OWNER_QUESTIONS OQ5 A and draft s8.2: under OQ2 = A the probe runs after REGISTERED and STILL excludes and counts every lv_2026 player, never includes them; lv_2026 players enter its rows in one case only (OQ5 = A with OQ2 = B, after S4 or the lane's close); SG_6's STOP line matches. |
+| 4 | s0.4 and OQ1 said "zero under every option" | FIXED. s0.4: "zero under every option except OQ4 B or C, which move the 2026 rates by the norm choice alone, with no new data" (v1, provisional grades and chips; the V2 order never moves). PLAN OQ1 A and OWNER_QUESTIONS OQ1 carry the same exception. |
+| 5 | T2 did not place `V2_ABSENCE_KEY` | FIXED. Draft s5 T2(b): `V2_ABSENCE_KEY` (`milb_absent`) is a MiLB driver, constant 1.0 on every V 2011-2014 row (`efv_v2_model.v2_row`, `:721-733`); for every MiLB driver (a), (b) and (c) are scored only on V 2015-2019 rows (pooled = the V 2015-2019 pool; splits 2015-16 and 2017-19), so (b) cannot fail mechanically; a driver constant within a scored split STOPs the runner at a variance check before any outcome is read. SG_8 carries it. Draft s0 adds the verifier's consequence: the registered prior (`age_rel_level` fails (b)) implies that T2 fails and the auxiliary route closes. |
+| 6 | SG_8, SG_9 and SG_6 had no one-look crash protocol | FIXED. Each spec now carries it in PLAN s6: a dry run of the reporting path on fixtures with None and NaN in every printed cell (no frame row); unbuffered output tee'd to a file, started first; on any exception after scoring began, STOP without rerunning, the look recorded as spent if marked, OWNER_QUESTION.md with the traceback and every printed clause, and 'BLOCKER: answer SG8-CRASH' / 'SG9-CRASH' / 'SG6-CRASH'. Draft Q7 names the protocol for the runner. |
+| 7 | SG_6 under OQ5 = B had no step Z floor and could precede `blocked_day()` | FIXED. SG_6, N8, PLAN OQ5 B and OWNER_QUESTIONS OQ5 B: not before FWAR part 9 carries the step Z entry; in every mode the first action is `efv_surrogate_guard.blocked_day()`, with a STOP if SG_2 has not landed or the function refuses. |
+| 8 | SG_5's STOP read 2026-10-04 | FIXED. SG_5: "STOP if the time is after 2026-10-03 23:59 (the landing window's close ...)". The round-2 L9 row carries the round-4 date beside its old text. |
+| 9 | SG_4's count-mismatch STOP had no continuation before step C | FIXED. SG_4 rule (4): re-take the counts before writing; equal, freeze every row; different, record `recount` (both counts and the signed difference per side), name every row on an identity 1987b1b2 touched (read from the commit, never from the sealed dump) as `recount_split`, and if each side's difference is at most 10 rows and 10 person ids and the marked rows explain it, freeze the MATCHED rows with the marked rows excluded and counted; otherwise STOP before writing, with 'BLOCKER: SG_4 recount'. New rule (5): after 2026-10-03 23:59 with no step Z entry, write nothing and end 'DEFERRED ... re-queue it' instead of a STOP, so the lost pre-step-C window cannot hold EPOCH_RUN. N6, s8.13 and the SG_4 header updated. |
+
+Queue: QUEUE_TASKS.json is regenerated from s6 by `regen_queue_tasks.py` (one entry per
+paragraph, lines joined by single spaces; SG_10's stray trailing " ---" is gone), and
+`scratchpad/dq/efv2026_tasks.json` from it by `make_efv2026_tasks.py` with the verifier's
+not_before and requires table unchanged. The leading sentences of SG_8, SG_9 and SG_6 now
+point to the crash protocol in the spec instead of restating it; SG_4's and SG_6's leading
+sentences name the continuation rule and the step Z floor.
+
+##### Round 5 (2026-10-01; the three queue items of `VERIFY_round4.md`, with the orchestrator's ruling)
+
+Read-only on the repository, as before; every change is in this folder (PLAN.md,
+OWNER_QUESTIONS.json, QUEUE_TASKS.json, `make_efv2026_tasks.py`) and in
+`scratchpad/dq/efv2026_tasks.json`. The round-4 files are kept beside them as
+`*.round4.bak.*`. Every round-3 and round-4 fix stands. No eFV frame, reserved frame, grade,
+R-LV or R-VM object was opened, none of the four sealed lane files was opened, and no
+statistic was computed.
+
+| # | item | disposition (where) |
+|---|---|---|
+| Ruling | EPOCH_RUN must not gain SG_4 as a requires | APPLIED. The proposed edge is withdrawn: EPOCH_RUN never waits on an efv2026 owner question. SG_4 is a gap task that runs when its inputs and answers exist. The s6 "EPOCH_RUN note" (for the orchestrator to copy into EPOCH_RUN.md) has step A record whether `data/efv_surrogate_frame_2026.json` exists (present: its sha256; absent, DEFERRED or NOT NEEDED: 'lv_2026 raters not frozen before step F; SG_4B re-runs after step Z on the step A snapshot path') and proceed, and asks the step A snapshot to keep the pre-step-C `career_war` basis and the pre-flip provider. The rule that the freeze precedes step F now reads "precedes step C, and so step F, when SG_4 landed; else the step A snapshot stands in and SG_4B freezes from it after step Z" in s6 (order, note, SG_4 header), draft Q5 and draft s10 Q5, plus N6, E6 and the s8 calendar. The validator no longer adds the edge; it asserts that EPOCH_RUN requires no SG_ task. |
+| Q-1 | SG_4 had no terminal non-STOP outcome on an unrecorded or negative owner answer | FIXED. SG_4 reads OQ1 and OQ2 first: unrecorded at dispatch ends 'DEFERRED: SG_4 waits for efv2026 OQ1, OQ2' (re-armed by the orchestrator once recorded; never a STOP, holds nothing); OQ1 = C or OQ2 = C ends 'NOT NEEDED: no freeze (efv2026 OQ1 = C)' or '(OQ2 = C)'. The cascade is written in s6 "Terminal outcomes" and in the SG_7, SG_8, SG_9 and SG_6 specs: those four end NOT NEEDED with the same reason. Only the "no freeze" NOT NEEDED cascades; SG_4B's 'frozen by SG_4' does not. Consequence, stated in PLAN OQ1 C, OQ2 C, OQ5 and OWNER_QUESTIONS.json: under OQ2 = C the gate never registers (draft Q5 is a precondition of REGISTERED), so the transfer read and the hitter-lean test end with it, and OQ5 A's "cannot mean never" holds only while the gate exists. SG_6's old 'SKIPPED: OQ5 = C' and SG_8's and SG_9's 'SKIPPED' now read NOT NEEDED, so the queue has one name for that outcome. The leading sentences of SG_2, SG_3, SG_5 and SG_10 also end NOT NEEDED, not 'BLOCKER: record OQ1', when the recorded answers remove their work (SG_2 and SG_5 under OQ1 = C; SG_3 under OQ1 B or C; SG_5 and SG_10 under OQ2 = C). That lets SG_7, which requires SG_2 and SG_3, dispatch and run the cascade instead of sitting behind a STOP. |
+| Q-2 | SG_1's "runs under every OQ1 answer" was false through SG_0 and SG_A | FIXED. SG_A and SG_0 never STOP on OQ1. SG_A appends one sentence recording the OQ1 answer (A, B, C or pending; under C, "no shadow row is frozen, and the gate document stays a DRAFT that never registers"). SG_0 commits the draft verbatim under every answer and fills one new draft line, `Owner answer at draft commit (efv2026 OQ1): ...`, with the spec's text for A, B, C or unrecorded. B voids s2.1, the composite and g_S, s6.1, s6.2 and the transfer clauses until SG_7 strikes them by name. C means the document never registers. The OQ1 B "short draft", which had no text (round 3), is now this line. SG_1 states that OQ1 changes nothing in it. Each of SG_A, SG_0, SG_1 and SG_4 says what each OQ1 answer changes. Remaining, disclosed: SG_0 still STOPs when OQ3 = B is recorded (the two amendments must precede the draft) and when OQ3 is unrecorded while OQ1 is A or unrecorded, so SG_1's chain can still wait on OQ3, though never on OQ1. Neither STOP can hold the epoch, which requires nothing here. |
+| Q-3 | rule (5)'s "re-queue it" had no queue entry | FIXED. New task `SG_4B_FREEZE_LV2026_RATERS_POST_Z` (not_before 2026-10-11; requires EPOCH_RUN and SG_1). It checks four things in order: the freeze file exists (NOT NEEDED, 'frozen by SG_4', not cascaded); OQ1 or OQ2 = C (NOT NEEDED, cascaded); an answer unrecorded (DEFERRED); no step Z entry (DEFERRED). Otherwise it freezes from `../_pre_epoch_fwar_2026-10/` per rule (5), with SG_4's content, rules (1) to (4), its own 'BLOCKER: SG_4B recount', `frozen_by: SG_4B` and the snapshot input hashes. SG_4 itself no longer freezes after step Z: rule (5) now ends DEFERRED once 10-03 23:59 passes or step A has started. SG_7 requires SG_4B in place of SG_4 and reads "SG_4 OR SG_4B" in its own text: it STOPs, naming the file, unless `data/efv_surrogate_frame_2026.json` exists at HEAD. The queue now holds 14 tasks. |
+
+Queue: QUEUE_TASKS.json was regenerated from s6 by `regen_queue_tasks.py`, giving 14
+paragraphs, and `scratchpad/dq/efv2026_tasks.json` from it by `make_efv2026_tasks.py`. In the
+not_before and requires table, SG_4B is new and SG_7's SG_4 is replaced by SG_4B. The
+validation was re-run with the EPOCH_RUN edge check inverted (no SG_ task in EPOCH_RUN's
+requires), SG_4B's date checked against EPOCH_RUN's, and SG_7's requires checked to hold
+SG_4B and not SG_4.
+
+### 8.O Scores / Standings: the MLB Standings section
+
+- Status: CLEAN 2026-10-02 at verify round 7 (`standings/VERIFY_round7.md`); source `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/standings/STANDINGS_PLAN.md`; its Validation section (rounds 2 to 7 dispositions) is included.
+- Queue (dq/queue.json, prefix STANDINGS_): STANDINGS_0_PLAN_RECORD, STANDINGS_0B_SCHEDULED_GAMES_TEST, STANDINGS_1_CORE_RULES, STANDINGS_2_JOB_AND_BACKFILL, STANDINGS_3_OURS_JOIN, STANDINGS_4_PAGE_TABLES, STANDINGS_5_CHARTS, STANDINGS_6_SEASON_SELECTOR, STANDINGS_7_FLIP, STANDINGS_8_LAUNCH_LINKS_HEALTH, STANDINGS_9_NIGHTLY_STANDINGS_HEALTH; the rename notes ride on eight SCORES_ specs (SCORES_1_CORE_RULES, SCORES_2_JOB_AND_DEPLOY, SCORES_3_PAGE_CHART, SCORES_4a_VIDEO, SCORES_4b_BRACKET, SCORES_5a_LIVE_FLIP, SCORES_5b_LAUNCH_NAV_HEALTH, SCORES_6_PREGAME_CONTEXT).
+- Answers: `C:/Users/noah/baseball-projects/_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, section 'ANSWERED 2026-10-02 (standing instruction), Scores / Standings: the MLB Standings section' (ST-Q1 to ST-Q4).
+
+### Scores / Standings: the MLB Standings section (the synthesized plan)
+
+Written 2026-10-02 by the unifier for the orchestrator and the queue writers. Read-only on the repository
+(`C:/Users/noah/baseball-projects/BaseballR/prospect-tracker`, HEAD `875e02a9` at writing); no test,
+exporter, fetch or pipeline ran in this pass. The two lanes beside this file are the sources, and this
+plan wins where they differ (section 8 lists every resolution):
+
+| Tag | File (under `SP/standings/`) | Role |
+|---|---|---|
+| LD | `LANE_DATA.md` (probe evidence in `ld_work/`: `probe.py`, `probe_log.json`, `p1_2026-09-20.json`, `p2_2015-06-15_fields.json`, `p3_2026-03-25.json`) | endpoint, fields, invariants, files, budget, our columns |
+| LP | `LANE_PRODUCT.md` | page, tables, charts, theme, copy, accessibility |
+| SP8 | `SP/part8/scores/SCORES_PLAN.md` and the SCORES_* specs in `SP/dq/queue.json` | the Scores module this section joins |
+
+`SP` is `C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad`.
+The durable copy of this plan is `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/standings/STANDINGS_PLAN.md`
+(the orchestrator, or task STANDINGS_0_PLAN_RECORD, copies `SP/standings/` there); every queue spec reads
+the durable copy first and falls back to the scratchpad. Repo paths are relative to `prospect-tracker/`.
+Line numbers are at `875e02a9`; resolve each by the symbol or heading beside it. Round 2 (2026-10-02) applied the
+twelve fixes of `SP/standings/VERIFY_round1.md` and re-read the facts it needed at `fc1405e7`; the dispositions
+are listed under "Validation" at the end. Round 3 (2026-10-02) applied the three fixes and the four
+non-blocking notes of `SP/standings/VERIFY_round2.md` (PROJ rounding, a served seed, league records copied
+from the feed) and re-read the facts it needed at `222dd663`; its dispositions follow round 2's. Round 4
+(2026-10-02) applied the three items of `SP/standings/VERIFY_round3.md` (the PROJ join's basis, the import
+fence at runtime, the odds history out of the race file) and re-read the facts it needed at `22916f05`; its
+dispositions follow round 3's. No em or en dash appears in this file.
+
+Owner, 2026-10-02, verbatim: "Can we rename the planned "MLB Scores" module to "Scores/Standings" and
+create a new MLB Standings section, complete with sortable standings, charts, etc.? Think about how we
+could make the best MLB Standings display possible with our theme and execute on it"
+
+---
+
+#### 1. The ask and the answer in one paragraph
+
+The planned MLB Scores module becomes **Scores / Standings** (one nav leaf in the SC-NAV slot, one
+masthead, one job), and it gains a second page, **`/standings/`**, that shares the module's masthead and a
+"Scores | Standings" link strip with `/scores/`. The standings are MLB's, read from StatsAPI's
+`/api/v1/standings` endpoint by the Scores job itself (one call per game date covers both leagues; the
+`date` parameter is honoured through the end of that day, LD 2.1) and written beside the scores files
+under the job's `OUT/standings/`, with MLB's copyright line on every file; nothing lands under `data/`.
+The page is five sortable table views (Division, Wild Card, League, MLB, Playoffs) on one table component
+with chip-toggled column groups (Record, Splits, Runs, Odds, Schedule), a frozen club column and a 352 px
+Record group that fits a 390 px phone with no scroll, scorebook ink marks for clinch and elimination beside
+MLB's own letters, ten lamps for the last ten games and the WIRE ticker's pictograms for streaks. What only
+this site can add sits in a labelled group: the site's own season and bracket simulator chances ("Eephus
+model, implied, no market", with each registry verdict), the simulator's projected finish read from
+`data/futures.json` (never from the stale Team Outlook overlay, section 2), and links into Franchise,
+Team Outlook and the club's last and next game on `/scores/`. Six charts (division race, wild-card race,
+odds over time as step lines from the daily frozen records, runs scored and allowed with .500 and 90-win
+isolines, record against expected record, and the SCORES_4b bracket mounted unchanged) draw identity by
+label and weight, never by team colour, and never forecast. Everything ships behind `STANDINGS_LIVE`
+(default False, True only once `SCORES_LIVE` is), after step Z, in nine tasks that follow the Scores chain.
+The 2026 regular season ended 2026-09-27, so 2026 launches as a one-time backfill (184 standings calls for the
+by-date snapshots and one schedule call for the race), and the refresh after each final first matters on Opening Day
+2027.
+
+---
+
+#### 2. Findings at HEAD (cited)
+
+Measured by the lanes on 2026-10-02 and spot-checked by the unifier where marked (U).
+
+| # | Finding | Evidence |
+|---|---|---|
+| F1 | The Scores job is not built: `scores_core.py` and `tools/scores_job.py` are absent (U); no SCORES_* spec calls `/standings` | `ls` at `875e02a9`; LD 1.3; SP8 2.1 |
+| F2 | The only standings read today is `fa_fit_backtest.standings_wins` / `standings_now` (`fa_fit_backtest.py:73-74` `_STANDINGS_URL`, :111, :159), no `date`, cached `.cache/statsapi_standings_{season}.json` for 2000 to 2026 (27 files, 80 to 81 KB each). Readers (round 2, grep for `standings_now`, `standings_wins`, `statsapi_standings` at `fc1405e7`): `proj_export._attach_current_season`, `proj_current.py`, `proj_backtest.py`, `franchise_export._standings` (:362), `bracket_sim.load_standings`, `ewar.py`; three tools, `tools/build_ewar.py`, `tools/fwar_replica_eval.py`, `tools/repair_team_outlook_overlay.py`; eight tests, `test_bracket_sim.py`, `test_bracket_sim_render.py`, `test_franchise_export.py`, `test_franchise_spine.py`, `test_fwar_frame.py`, `test_org_identity.py`, `test_proj_current.py` (`test_standings_now_parse` asserts `wcGb == 2.5` at :175), `test_smoke_futures_settled_season.py` | LD 1.1; VERIFY_round1 row 4 |
+| F3 | No ingest_health row covers any standings read; a failed read degrades Team Outlook, Futures, Franchise and F-SCORE silently (`standings_now` returns `{}`) | `data/ingest_health.json` 2026-10-02T01:01:14Z; LD 1.1 |
+| F4 | `standings?leagueId=103,104&season=Y&date=D&standingsTypes=regularSeason` honours `date` through the end of D: p1 (2026-09-20) matches the completed finals through 09-20 inclusive for 30 of 30 clubs; one call is 9.0 KB gzip, 81 KB raw; `lastUpdated` is not the as-of | LD 2.1, probe p1 and p3 |
+| F5 | `fields=` matches names at any depth; a trimmed list must keep `type`, `division`, `league`, `pct` (saves about 58 percent raw) | LD 2.1 point 4, probe p2 |
+| F6 | Feed fields that mislead: `eliminationNumber` equals `eliminationNumberDivision` in 870 of 870 rows; `clinched` is false on clinched clubs in 2012; `divisionChamp` is set on PHI (a wild card) in 2026; tiebreak losers are left neither clinched nor eliminated (2020 SFG, 2024 ARI, 2025 HOU and NYM); a "+" on `wildCardGamesBack` means ahead | LD 2.2, T7, T8 |
+| F7 | `fa_fit_backtest.standings_now` reads "+9.5" WCGB as behind (`_sn_float(tr.get("wildCardGamesBack"))` into `wcGb`, :209) (U); unserved today | LD 2.2; grep at HEAD |
+| F8 | MLB's `xWinLoss` is Pythagorean at exponent 1.83 over W+L games: 840 of 840 rows reproduce (exponent 2 reproduces 262, Pythagenpat 606) | LD 2.2, T9 |
+| F9 | Arithmetic holds 2000 to 2026: W + L + T = GP in 810 of 810; GB from the leader and WCGB from the last qualifying wild card hold every season except 2020, whose 30 GB values are measured from second place | LD 4, T1, T5, T6 |
+| F10 | `.cache/betting/completed_games.json` summed per club equals the final 2026 standings in W, L, RS and RA for 30 of 30 clubs, so the 2026 race needs no standings call; but the Scores fence forbids the job reading `.cache/betting` (SP8 0 item 11, conflict 39), so the job derives the race from one season schedule call and its own date files (section 8, C3) | LD 2.6 |
+| F11 | Two served projection files disagree (U): `data/mlb_projections.json` (generated 2026-10-01) has NYY `curWins` 94, `curLosses` 68, `gamesPlayed` 161, `remGames` 1, CHW `divisionPct` 0.251; `data/futures.json` (2026-10-02T01:28:32Z) has NYY record "93-68", projWins 93, CHW divisionPct 0.0. Fix `cc2451af` says mlb_projections.json was not rewritten; `_current_blend` sets `curLosses = 162 - curWins` by construction | LD 4 T10; python read at HEAD |
+| F12 | `test_served_invariants.test_every_club_plays_a_whole_season` asserts `gamesPlayed + remGames == 162` (U, `test_served_invariants.py:101-113`); NYY and BAL played 161 (one rainout never made up), so a correct rebuild with `remGames` 0 turns it red | LD 4 T10; read at HEAD |
+| F13 | The playoff-odds history starts 2026-09-06, not 10-01: `data/futures_ledger.json` (mirror of `.cache/futures/ledger.json`, gitignored) has 19 daily entries to 2026-10-01 with gaps on 09-08, 09-12, 09-15, 09-20, 09-22, 09-28, 09-29; last write of a day wins; not hash-chained; machine-local. `data/bracket_sim_record.json` is chain-hashed with 1 entry (2026-10-01) | LD 3 |
+| F14 | Registry surfaces (U): `playoff_odds_sim` "/projections/ team outlook and the Futures tab on /betting/..." (provisional; omits Franchise already); `postseason_bracket_sim` "the Pennant and World Series columns ... on /betting/, and the Pennant tile of the Franchise ODDS section, during the postseason only" (unvalidated); `team_win_projections` provisional. A standings odds column needs a surface amendment in the commit that serves it | `data/model_registry.json` read at HEAD |
+| F15 | `franchise_export.division_champions(records, live)` (:379 at `22916f05`, :335 at `875e02a9`; FS_1 `26b446d9`) is the one division-champion rule: live False, the unique `divisionRank`-1 club of each division; live True, that club only once its `clinchIndicator` is `y` or `z`; zero or two rank-1 clubs give None. IMPORTING `franchise_export` loads only the standard library, but CALLING `division_champions` does not stay there (round 4): its body runs `from trades import canonical_org_from_id` (:389), and `trades` imports `requests` (`trades.py:51`), `scrapers` (which imports `bs4`, `scrapers.py:78`) and `stats`; `franchise_export.division_champions([], live=False)` in a fresh interpreter adds `requests` and `bs4` to `sys.modules` (pandas and numpy stay out). `_standings` imports `trades` the same way. So `standings_core` imports neither `trades` nor `franchise_export`: it applies the same rule itself (`standings_core.division_champions`, 4.6 item 4), and `test_standings_core.py` alone imports both to pin the club literal to `trades.canonical_org_from_id` and the champion rule to `franchise_export.division_champions` | read at `22916f05`; a fresh-interpreter call; VERIFY_round1 row 7; VERIFY_round3 item 2 |
+| F16 | Part 8 8.E 'Overlaps with the later plans', row "Standings and division titles": readers take standings through `franchise_export._standings`, never the feed's `divisionChamp`, and never a second parser | `SP/part8/PART8_ADDENDUM.md` 8.E |
+| F17 | Part 8 8.D 'Conflicts between lanes, resolved' row 8: the Scores module owns the live bracket and series state with no odds | `PART8_ADDENDUM.md:454` |
+| F18 | Scores forbidden keys (SP8 8.6) rule out `record*`, `odds`, `price*`, `implied_prob`, `market*`, any key containing `decision`; validator rule 4 (SP8 8.5) exempts only `index.json`'s `copyright` key from the no-URL rule | SP8 8.5, 8.6 |
+| F19 | Glossary ids free at HEAD (U): `games_back`, `wild_card_games_back`, `magic_number`, `elimination_number`, `clinch_marks`, `streak`, `last_ten`, `run_differential`, `rd_per_game`, `one_run_record`, `extra_inning_record`, `record_vs_winning`, `remaining_sos`, `season_sim_odds`, `projected_record`, `expected_record_chart`, `standings_page`, `xwl`, `w_minus_xw`; round 2 also free at `fc1405e7`: `win_pct`, `runs_scored`, `runs_allowed`, `home_away_record`, `division_record`, `league_record`, `interleague_record`, `vs_hand_record`, `games_left`, `postseason_seed`, `division_race_chart`, `wild_card_race_chart`, `odds_over_time_chart`; present: `pythag_pct`, `season_record`, `postseason_bracket_sim` (391 entries) | python read of `data/glossary.json` |
+| F20 | Pixel system at HEAD (U): `tools/pixel_icons.py`, `assets/eephus-icons.svg` with `i-ev-up` and `i-ev-down`; `EephusState` defined in `assets/eephus-state.js`; `EephusTiers.pctColor` in `assets/eephus-tiers.js:251`; `--viz-1` and `--viz-2` are NOT yet in `assets/site.css` | grep at HEAD |
+| F21 | Owner answers on record (U): SC-TERMS (a) job, SC-VIDEO (a), SC-JOB (a), SC-LIVE (a), SC-STARS (a), SC-HISTORY (a) backfill 2026 only, SC-KEEP dates every season and games two, SC-PAID tripwire, SC-CARDVID chip, SC-NAV after Franchise, SC-MODEL model only; DEPLOY-3 (2026-10-01): every deploy, beta, box, cron or webmaster step goes to `docs/DEPLOY_PENDING.md` (absent at HEAD) and is not executed | `DECISIONS_FOR_OWNER.md:729-740, 1040` |
+| F22 | The epoch clock: `../_pre_epoch_fwar_2026-10/` does not exist yet (U); the landing window closes 2026-10-03 23:59; from 2026-10-04 to the step Z entry only docs and registrations land; step Z is expected about 2026-10-08 to 10-10; every served task here carries `not_before` 2026-10-11 | `SP/dq/preambles/_ALL.txt`, `P8.txt` |
+| F23 | `data/cba_rules.json` has no tiebreak rule; StatsAPI carries no head-to-head table or rule text; MLB's applied order shows only in `divisionRank`, `wildCardRank`, the marks and the elimination numbers | LD 2.2 |
+| F24 | Remaining SOS (`team_outlook[].current.sos`) is the mean, over a club's remaining games, of each opponent's talent rating: the model's 2027 projected win total over 162, clamped to .20 to .80 (`proj_export._talent_prior_pct`), not the opponents' records; `sosRank` 1 is the hardest. It is NOT null after the season at HEAD: the stale overlay still gives NYY sos 0.5642 (rank 1) and BAL 0.5031, because the balanced fallback counts 162 minus games played (1 for each). So the standings copy sets its own window (4.7) and never inherits one | `proj_export.py:2526, 2680-2711`; VERIFY_round1 row 15 |
+| F25 | Seeds (round 3): no served file the page reads carries a seed today, but MLB's ranks give it. In every division of all 27 cached seasons (162 of 162) exactly one club has `divisionRank` 1 and it is the one with `wildCardRank` null, which is `franchise_export.division_champions(records, live=False)`'s rule; in 2020 the division runners-up also have `wildCardRank` null. The field "division leaders by `leagueRank`, then `wildCardRank` 1 to `wc_spots`" (2020: rank-1 clubs by `leagueRank`, then the other `wildCardRank`-null clubs by `leagueRank`, then `wildCardRank` 1 and 2) equals the set of marked clubs in 27 of 27 final files, and on 2026 it gives `data/bracket_sim.json` `clubs[].seed` for 12 of 12 (AL TBR 1, CLE 2, HOU 3, NYY 4, BOS 5, CHW 6; NL MIL 1, LAD 2, ATL 3, SDP 4, CHC 5, PHI 6) and on 2020 MLB's seeds (AL TBR, OAK, MIN, CLE, NYY, HOU, CHW, TOR; NL LAD, ATL, CHC, SDP, STL, MIA, CIN, MIL). In season the probes p1 and p3 have one `wildCardRank`-null club per division | python read of `.cache/statsapi_standings_{2000..2026}.json`, `data/bracket_sim.json` and `ld_work/p1`, `p3` at `222dd663` |
+| F26 | League records (round 3): `records.leagueRecords[]` holds two entries per club (own league and the other), and in 810 of 810 rows 2000 to 2026 the own-league entry equals the sum of the club's three `divisionRecords` and own plus other equals W-L (ties excluded); p1 and p3 carry them too | python read at `222dd663` |
+| F27 | Projected wins are fractional in season (round 3): `data/futures_ledger.json` LAD `projWins` 97.4 at "85-57"; each ledger entry's `clubs` is a list keyed by `team` with `record`, `projWins`, `divisionPct`, `playoffPct`, `byePct`, `pennantPct`, `wsPct`. The Franchise tile prints `proj_wins` to one decimal (`assets/franchise.js:699`, `n1`), not as an integer | python read; grep at `222dd663` |
+
+---
+
+#### 3. The rename
+
+**The name.** "Scores / Standings" (the owner's words with the house spacing around the slash; ST-Q4
+offers the unspaced form, which is one constant, `MODULE_NAME` in `build_site.py` beside `MODULE_STAGE`).
+The module key stays `scores`; ids never rename.
+
+| Where | Today's plan says | Becomes | Lands in |
+|---|---|---|---|
+| `NAV_ITEMS` entry (SC-NAV slot, second in MLB Modules after Franchise) | `('scores', 'MLB Scores', '/scores/')` (SCORES_5b) | `('scores', 'Scores / Standings', '/scores/')`, one leaf; `/standings/` passes `active="scores"` so the leaf lights on both pages | SCORES_5b (note) |
+| Three hand-kept nav copies (`prospx/index.html`, `collegesavant/index.html`, `collegesavant/pitcher_index.html`, `test_collegesavant_nav_in_sync.py`) | "MLB Scores" | "Scores / Standings" in the same commit | SCORES_5b (note) |
+| Masthead h1 on `/scores/` | "MLB Scores" plus `_stage_chip("scores")` (SP8 10) | "Scores / Standings" plus the chip, rendered by one helper `_scores_module_head(active)` that both pages call | SCORES_3 (note) |
+| Link strip under the h1 | none | `<nav class="mlbstats-sectionnav" aria-label="Scores / Standings">` with two links, "Scores" and "Standings", `aria-current="page"` on the current one; while `STANDINGS_LIVE` is False the strip is not rendered | helper in SCORES_3; the Standings link appears with STANDINGS_7 |
+| Page titles | `MLB Scores - eephus.io` | unchanged for `/scores/`; `/standings/` is `MLB Standings - eephus.io` (a title names the page and is what a search result shows) | SCORES_3 unchanged; STANDINGS_4 |
+| `MODULE_STAGE["scores"]` | "Beta. Scores, win probability and video come from MLB; Stars of the Game is a published rule" (SCORES_3) | unchanged until standings serve; STANDINGS_7 sets "Beta. Scores, standings, win probability and video come from MLB; Stars of the Game is a published rule; odds are the site's simulators, implied, no market" | STANDINGS_7 |
+| Health row | id `scores_job` | id unchanged; wherever a label is printed, "Scores / Standings job"; a `standings` scope added to its message | SCORES_5b (label), STANDINGS_8 (scope) |
+| Icon label | the `scores` entry SCORES_3 (or SCORES_5b, its else branch) adds to `ICONS` in `tools/pixel_icons.py` (`(key, label, group, rows)`; the label is drawn on the icon sheet at :784 and written to `assets/eephus-icons.json`) | `('scores', 'Scores / Standings', 'nav', rows)`; the symbol id `i-scores` and `ICON_FOR["scores"]` unchanged | SCORES_3 (note), SCORES_5b (note) |
+| Glossary module name | module key `scores` | key unchanged; where a module key maps to a display name (resolve by grep in `assets/glossary.js` and `build_site.py`; if no map exists, nothing to rename) the name is "Scores / Standings" | SCORES_5a (note) |
+| Sitemap | `('/scores/', 'hourly', '0.8')` (SCORES_5b) | plus `('/standings/', 'daily', '0.8')` | STANDINGS_8 |
+| `deploy/publish_paths.txt` | `scores` (SCORES_5a) | plus `standings` | STANDINGS_7 |
+| Module masthead lists (Q11_06_MODULE_MASTHEADS enumerates h1 sites; PX-07 icons) | 16 sites | both pages render through `_scores_module_head`, one site, icon `ICON_FOR["scores"]` | STANDINGS_4 records it; Q11_06 picks it up |
+| Strings that stay | the owner-ask label and quotes inside every SCORES_* spec ("OWNER ASK 2026-09-30 (MLB Scores module)", "an MLB Scores module", "MLB scores source"); the DECISIONS_FOR_OWNER.md section headings every spec cites ('MLB Scores batch 1', 'the range extension review, the /fa/ tail rule, MLB Scores batch 2 (part)'); the Scores plan reference (`scores/SCORES_PLAN.md`, the "MLB Scores" plan) the eight specs carry (each of the eight holds five "MLB Scores" matches of these kinds; SCORES_5b holds a sixth, the nav label, which its note renames); "Scores, box scores and play data come from MLB's public StatsAPI feed"; the UA `eephus.io scores job (+https://eephus.io/scores/)`; registry ids `scores_*`; `SCORES_LIVE`; `.cache/scores/`; `/data/scores/` | unchanged: they quote the owner, name a record's heading or a file, or name the job, the page or the game data, not the module. SCORES_4a_VIDEO's five such strings are all of these kinds; it gets a one-line note saying so | SCORES_4a (note) |
+| `SCORES_PLAN.md` title and section 10's h1 line | "MLB Scores" | superseded by this table; the plan file itself is not edited (it is the record of 2026-09-30) | |
+
+**The URL decision: `/standings/` is its own generated page sharing the module's head (LP 5.2;
+ST-Q1, recommended, designed as taken).** Its own title, meta description and canonical URL serve the
+"MLB standings" query and make a shared link open the standings; its own JS and cold-paint budget leave
+`/scores/`'s pinned 70 KB gzip cold paint and 70 KB `scores.js` untouched; it reads `latest.json` once per
+load and on visibility, never the 45 s live poll (standings move on finals). The SC-NAV answer's
+constraints are all met: (1) one nav entry in the slot directly after Franchise (a second "Standings" leaf
+would break it, so it is not built); (2) the three hand-kept copies change in the same commit as
+`NAV_ITEMS`; (3) the icon is `ICON_FOR["scores"]` on both pages (T2 and T3 pixel tests stay green). The
+strip items are links, not `role="tab"` buttons, because they load a page.
+
+---
+
+#### 4. The data model and the job
+
+##### 4.1 What the job fetches, and when (an addition to SCORES_2's job, built in STANDINGS_2)
+
+- **Call**: `GET https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=Y&date=D&standingsTypes=regularSeason`
+  through the job's own session and limiter (SP8 2.1: 0.5 s spacing, at most 60 requests and 90 s per
+  invocation, no new request after 75 s, the doubling `backoff_until`). Never without `date` (the as-of
+  would be unknowable). No `hydrate`. The full response is stored in `.cache/scores/work/standings/<Y>/<D>.json`
+  (never served); the served files carry only the renamed fields of 4.6.
+- **Due reasons** (in `decide()`, inside the limiter): (a) a regular-season game turned final (codedGameState
+  F or O, gameType R) since the last standings call: one call with `date` = that game's officialDate, at
+  most one per live cycle and at least 300 s after the previous standings call; (b) the day's last R final
+  plus 60 minutes; (c) the week cycle's finalize: `date` = yesterday, which freezes `standings/<Y>/<yesterday>.json`;
+  (d) `--backfill-standings A:B`, one call per game date, never before `HISTORY_FLOOR` (2026-03-25 under
+  SC-HISTORY (a)). Postseason and offseason: no call (regular-season standings are frozen).
+- **Lag guard**: a response is accepted only when its league W sum equals the decided R finals through D in
+  the job's own date files (T2); otherwise the last snapshot stays, `stale_since` is set in `latest.json`'s
+  standings block, and the call is retried on the next cycle.
+- **Expected load from 2027**: about 8 to 16 standings calls a game day (finals cluster), about 150 KB wire a
+  day, inside the job's existing budget.
+- **The race and the per-club sequences** (cumulative W, L, RS, RA by date, last ten results in order,
+  streak by date, last and next game, head-to-head counts) come from one regular-season schedule call per
+  season (below), and, for the live season, are then extended from the job's own date files
+  (`OUT/<officialDate>.json` cards: `start`, `dh {kind, n}`, `state`, scores, team ids) as finals land.
+  Doubleheader order is kept by game number and start time. The race therefore never waits on the scores
+  backfill of every 2026 game.
+- **Every season's race** (2026 always; 2015 to 2025 under ST-Q3, recommended): one schedule call per season,
+  `/api/v1/schedule?sportId=1&season=Y&gameType=R&fields=dates,date,games,gamePk,officialDate,status,codedGameState,teams,away,home,team,id,score,doubleHeader,gameNumber`
+  (one live GET verifies the shape first, the SP8 8.7 rule), by `--backfill-race 2026` (1 call) and
+  `--backfill-race 2015:2025` (11 calls), each reduced at once to the per-date series and stored only in
+  `OUT/standings/<Y>-race.json` (the raw response in `.cache/scores/work/standings/`); no game card or
+  date file is written for any season before `HISTORY_FLOOR`, so SC-HISTORY (a) stands.
+
+##### 4.2 Files, sizes, tracking (under the job's `OUT`; nothing under `data/`)
+
+| File | Content | Measured or built (LD 2.5) | Budget / ceiling (SP8 8.1 rule: over budget logs, over ceiling refuses) |
+|---|---|---|---|
+| `OUT/standings/<Y>.json` | `schema, season, as_of, fetched_at, generated_at, final, opening_day, copyright, format {wc_spots, byes, scheduled, notes}, tiebreak, rows[30]` (with the served derivations of 4.6 item 11), `ours {...}, registry [...], accountability {feed_disagreements[]}` | 20,561 B raw, 3,469 B gzip before round 2's six derived row keys (about +3 KB raw) | 40 KB / 160 KB |
+| `OUT/standings/<Y>-race.json` | `schema, season, dates[], clubs {<code>: [[W, L, RS, RA], ...]}`, `wc_gap {<code>: [signed games from the last wild-card spot, or null, ...]}` (4.6 item 8), `events [{d, code, mark}]` (sparse); no odds history (round 4: it moved to `<Y>-phist.json`) | 87,766 B raw, 28,820 B gzip for 2026 before `wc_gap`; `wc_gap` adds about 28 KB raw (30 clubs x 184 game dates): about 115 KB in all, a full season's size | 160 KB / 640 KB (raised in round 2 for `wc_gap`) |
+| `OUT/standings/<Y>-phist.json` (round 4) | the odds history of 4.7, PACKED BY COLUMN: `schema, season, generated_at, copyright, switch_as_of, closed, regular {source, missing[], fields [p_div, p_post, p_bye, p_pennant, p_ws], as_of[], clubs {<code>: [[5 values] or null, one per as_of]}}, post {fields [p_pennant, p_ws], as_of[], sha256[], clubs {<code>: [[2 values] or null, ...]}}`; the two blocks never share a date (round 5: `regular` strictly before `switch_as_of` = `post.as_of[0]`, `post` from it; 4.7 "The two odds blocks"; round 6: `regular` also starts on or after the later of `opening_day` and the job's `frame_from[Y]`, 4.7 "The frame bound"); `closed` true once the season's last postseason game is final, after which the file is never rewritten; fetched by the page only on C3's first open | round 3's row shape (a list of `{as_of, clubs [{team, 5 values}]}`) measured 50,277 B compact for the 20 ledger entries of 2026 (2,513 B an entry; 57,536 B with default separators), so the 2026 race file would have been about 166 KB (over its 160 KB budget on the first write) and a full season of about 220 daily entries about 690 KB (over the 640 KB ceiling, refused). Packed: 15,992 B for the same 20 entries (about 800 B an entry), 417 B for the one postseason entry; a synthetic season of 240 regular entries with every value five characters wide plus 35 postseason entries measures 245,511 B (the size test; 245,553 B with round 5's `switch_as_of` and `closed` keys). Round 5, under the 4.7 bound at `4c9a5de7`: the 2026 regular block holds 18 of the ledger's 20 entries (2026-09-06 to 2026-09-30), 14,705 B; post holds the 2026-10-01 entry, 447 B; the file about 15.4 KB. WHY 240 BOUNDS A REAL FILE (round 5): the blocks are disjoint, both hold only dates from `opening_day` to the season's last postseason game, and each source keeps one entry per date (`proj_export.py:3396`, `bracket_sim.py:30`), so together they hold at most one entry per date of that span: 229 dates in 2025 (2025-03-18 to 2025-11-01) and 221 in 2026 (2026-03-25 to the scheduled 2026-10-31), from `regularSeasonStartDate` and `postSeasonEndDate` in `.cache/fantasy_schedule/season_2025.json` and `season_2026.json`; a regular entry outweighs a post entry, so the heaviest split is all regular, at most 229 entries, under 240. A 366-entry all-regular file (a whole calendar year) measures 356,965 B, under the ceiling, so a bound slip logs and never refuses | 256 KB / 1 MB |
+| `OUT/standings/<Y>/<D>.json` | the frozen snapshot as of D (the row shape, no `ours`) for the As of control | about 21 KB raw, 3.5 KB gzip; 184 a season = 3.8 MB raw | 40 KB / 160 KB |
+| `latest.json` | gains `standings {season, as_of, rev, race_rev, phist_rev, stale_since}` | +220 B | within 16 KB |
+| `index.json` | gains `standings_seasons [{season, rev, race_rev, phist_rev, phist_from, n_dates, by_date, final}]` (`phist_from` = the phist file's first `as_of` over both blocks: `regular.as_of[0]` when `regular` is non-empty, else `switch_as_of`, round 7; so the tables print "The daily odds record starts ..." without fetching it; both null for a season with no phist file) | +1.8 KB for 12 seasons | within 16 KB |
+| `.cache/scores/standings/state.json`, `.cache/scores/work/standings/<Y>/<D>.json` | job state and raw responses; round 6: the state also holds `frame_from {"<Y>": date}` (4.7 "The frame bound"), recovered from the seed or the phist file when lost | 34 to 81 KB each | never served, rebuildable |
+
+Write order extends SP8 2.2: games, date, standings snapshot, standings season file, race file, phist file,
+season index, index, latest. Same temp-file, 0644, `os.replace` writer; same validator before every replace.
+Every standings file is serialised compact, `json.dumps(obj, separators=(",", ":"), ensure_ascii=False)`
+with no indent (round 4: every size in this table is compact; a test re-serialises each written file and
+asserts byte equality).
+Kept per SC-KEEP "dates every season" (date-level and small). Whole 2015 to 2026 set if every by-date
+season were backfilled: about 46 MB raw (8 MB gzip); under ST-Q3 (a) only 2026 has by-date files (3.8 MB).
+
+**Tracked: one exception.** A trimmed copy of the 26 completed seasons' final standings,
+`data/_labs/standings/statsapi_standings_{2000..2025}.json` (the fields of 4.6 only, about 34 KB a season,
+about 0.9 MB), so the box builds every past season's table with zero calls (the FS_1B precedent for
+`data/_labs/postseason/`; `data/_labs/` is tracked and never published). It is written once by
+STANDINGS_1 from the local caches and never by the job. 2026 is not in it (the job owns the live season).
+
+##### 4.3 Backfill and call budget
+
+| Reach | Calls | Wire | When |
+|---|---|---|---|
+| 2026 final table | 1 (`date` = 2026-09-27) | 9 KB | STANDINGS_2's local run |
+| 2026 by-date snapshots (Opening Day to 09-27; 187 calendar days, 3 without games) | 184 | 1.7 MB | `--backfill-standings 2026-03-25:2026-09-27`, in four chunks (the 60-request cap; the backfill releases the lock every 50 requests and refuses 06:00 to 11:00 UTC) |
+| 2026 race, L10, streaks, last and next game | 1 schedule call | under 1 MB | `--backfill-race 2026`; in season, extended from the job's date files |
+| 2015 to 2025 races | 11 schedule calls | a few MB | ST-Q3 (a); `--backfill-race 2015:2025` |
+| 2000 to 2025 final tables | 0 | 0 | the tracked `data/_labs/standings/` copy |
+| 2015 to 2025 by-date snapshots | about 1,900 | about 17 MB (8 MB with `fields=`) | only under ST-Q3 (b); not built otherwise |
+| From Opening Day 2027 | 8 to 16 a game day | about 150 KB a day | the due reasons of 4.1 |
+
+Locally (DEPLOY-3), STANDINGS_2 runs the 2026 backfill once into the preview OUT; on the box the same
+commands are appended to `docs/DEPLOY_PENDING.md` and never run by a task.
+
+##### 4.4 The publish manifest
+
+- Data: no line. On the box the nginx `location ^~ /data/scores/` of SC-LIVE (a) already serves
+  `/data/scores/standings/`; `deploy/publish_paths.txt` never names a scores data path (SP8 2.2).
+- Page: one `standings` line in `deploy/publish_paths.txt`, in STANDINGS_7 (the flip commit); the sitemap
+  entry in STANDINGS_8. While `STANDINGS_LIVE` is False, `build_site` writes no `standings/index.html` into
+  the published tree.
+
+##### 4.5 Freshness and health
+
+- **Stamps.** Every standings file carries `as_of` (the `date` sent), `fetched_at` (the job's clock) and,
+  per `ours` source, its `generated_at`. The page prints "Standings through September 27" from `as_of`
+  and the odds group's own "as of" from its source stamp; never MLB's `lastUpdated`.
+- **Stale states.** The page evaluates SP8 2.4's `scoresStaleState` rows on `latest.json` for its stamp
+  line; S3 (36 h) applies to the standings stamp only while regular-season games are being played; a
+  final table in the offseason or the postseason is never stale.
+- **ingest_health, two rows.** (1) With SCORES_5b's `scores_job` row, a `standings` scope in its message
+  (STANDINGS_8): red when, during the regular season, the newest `as_of` is more than one day behind the
+  latest R final's officialDate, or T2 fails on the served file; filed only where the job is meant to run
+  (the SP8 2.5 rule). (2) Separately, a `statsapi_standings` row for the nightly's own read
+  (`fa_fit_backtest.standings_now` through `proj_export._attach_current_season`), in `SCHEDULED_EXPORTS`,
+  because Team Outlook, Futures, Franchise and F-SCORE all degrade silently on it (STANDINGS_9).
+- **Two readers, two clocks.** The nightly's cache (24 h TTL, no `date`) and the job's snapshots can
+  disagree for hours in season; the page labels each block with its own stamp.
+
+##### 4.6 The core module: `standings_core.py` (STANDINGS_1)
+
+A pure module, standard library only AT RUNTIME, not only at import (round 4, F15): it imports the standard
+library and `scores_core` and nothing else; never `trades` (`requests`, `scrapers` and `bs4`, `stats`) and
+never `franchise_export`, whose `division_champions` imports `trades` inside its body. The fence test runs a
+fresh interpreter that imports `standings_core`, runs `parse_standings` on the p1 and 2026 final fixtures,
+builds a season file, runs the validator and `build_race`, then asserts `requests`, `bs4`, `pandas`, `numpy`,
+`trades`, `scrapers`, `stats` and `franchise_export` are all absent from `sys.modules`. Every path is passed in.
+It holds eleven items:
+
+1. `STANDINGS_LIVE = False` and `STANDINGS_CHARTS = False`, with a test that `STANDINGS_LIVE` can be True
+   only when `scores_core.SCORES_LIVE` is True and `STANDINGS_CHARTS` only when `STANDINGS_LIVE` is.
+2. `parse_standings(payload, as_of)`: one row per club, keyed by MLBAM `team.id` through the SCORES_1
+   club literal (pinned to `trades.canonical_org_from_id` by a test that imports `trades`, never by
+   `standings_core` itself, and to franchise_board's 30 codes); never MLB's
+   abbreviation, never `trades.canonical_org`. Renamed keys (forbidden keys, F18): `code, team_id, lg,
+   div, w, l, t, gp, pct, rs, ra, rd, gb, gb_feed, wcgb, wcgb_feed, lgb, mlbgb, ranks {div, lg, mlb, wc},
+   mark, e, magic, elim_div, elim_wc, streak, l10, split {home, away, one_run, extra, winners, vs_l, vs_r,
+   day, night}, vs_div, vs_lg, intr, x_wl, x_exp`, plus the derived `rdg, rs_g, ra_g, w_xw, left, l10_seq,
+   seed, qualified, qualified_text` of item 11. Splits as `[w, l]` pairs. `vs_div` is the club's own entry
+   of `records.divisionRecords`; `vs_lg` and `intr` are COPIED from `records.leagueRecords` (the entry whose
+   `league.id` is the club's own league, and the other entry), never summed (round 3, F26); T20 pins that the
+   copy equals the sum of the three division records and that LG plus INTR equals W-L. `wcgb` keeps the sign: the feed's
+   "+9.5" (ahead of the cutoff) is stored as `wcgb` 9.5 with `wc_ahead` true and printed "+9.5"; "4.5"
+   (behind) is `wcgb` 4.5 with `wc_ahead` false; "-" is 0.0 for the club holding the last spot and null
+   for a division leader (`wildCardRank` null). A missing `clinchIndicator` key is no mark (p3).
+3. Computed, not copied, where the feed is wrong (served beside the feed value, disagreements listed in
+   `accountability.feed_disagreements`, the FS_1 pattern): `gb` from the division's best W minus L (T5;
+   2020's feed GB is measured from second place); `wcgb` from the last qualifying wild card by the season's
+   format (T6); `e` (T8); the leader's magic number when the feed reads "-" and the division is not
+   clinched (T7: the runner-up's division elimination number).
+4. **The marks rule** (data, not client logic): `mark` is MLB's `clinchIndicator` (`x`, `y`, `z`, `w`)
+   only; `e` is true when the club has no mark and either MLB's `wildCardEliminationNumber` reads "E" or the
+   season is complete (the T8 partition: marked plus e equals 30). A division "E" alone is never `e` (the
+   2026-09-20 Blue Jays read division E with wild card 3). The division champion comes from
+   `standings_core.division_champions(records, live)`, which applies FS_1's rule itself through the SCORES_1
+   club literal (round 4, F15: live False the unique `divisionRank`-1 club; live True that club once its
+   `clinchIndicator` is `y` or `z`; zero or two rank-1 clubs give None), never `divisionChamp` (F15, F16).
+   `test_standings_core.py` pins it equal to `franchise_export.division_champions(records, live)` for every
+   season 2000 to 2025 (live False, on the tracked copy) and on p1, p3 and the 2026 final fixture (live True
+   and False), the club literal's pattern; a parity test pins every completed season's W, L, RS, RA and
+   division rank to `franchise_export._standings` for 2000 to 2025 (one rule, one reader of record, F16).
+5. **Expected record**: `x_wl` copied from `records.expectedRecords[type=xWinLoss]`, `x_exp` = 1.83 only
+   while T9 reproduces every fixture row; if a fixture fails, `x_exp` is null and the page drops the
+   exponent sentence (LP decision 8).
+6. **Season format table** `FORMAT[Y]`: wild-card spots per league (1 for 1995 to 2011, 2 for 2012 to 2019
+   and 2021, 3 from 2022), 2020's field (top two per division plus two per league), byes (top two division
+   winners from 2022), games scheduled (162; 60 in 2020), and the one-line notes ("2020: a 60-game season;
+   eight clubs per league reached the postseason."). Served in each season file's `format`; the client
+   types none of it.
+7. **Tiebreak text**: `tiebreak_text(season)` keyed by SEASON (2020 broke ties by rule, with no extra
+   game, so an era split at 2022 would misstate it), three literals, tested with a 2020 fixture and served
+   in each season file's `tiebreak`: from 2022, "Ties for a postseason spot are broken by rule, not by an
+   extra game, head-to-head record first. The order on this page is MLB's own."; 2020, "Ties for a
+   postseason spot were broken by rule, not by an extra game. The order on this page is MLB's own."; 2000
+   to 2019 and 2021, "Ties for a postseason spot were settled by an extra game, counted in the standings.
+   The order on this page is MLB's own." Plus, for every tie at a cut line, the head-to-head
+   W-L counted from the season's finals (the race backfill's game list, extended in season from the job's
+   date files; omitted where no game list exists). No further rule step is typed: no field carries it
+   (F23).
+8. `build_race(games, season, snapshots)`: per-date cumulative `[W, L, RS, RA]` per club from a list of
+   final regular-season games (date, team ids, scores, doubleheader number; a suspended game counted on the
+   date it became final), the last ten results in order, plus per-date `events` (first date a mark
+   appears) from the by-date snapshots where they exist, and `wc_gap`: per club per date the signed games
+   from the club holding the last wild-card spot (+ ahead, - behind), null for a club that qualifies
+   outside the wild card that date (division leaders; in 2020 the top two of each division), with the
+   leaders taken from that date's snapshot `divisionRank` where one exists and otherwise every club tied
+   for a lead counted as a leader. `race_matches_snapshots(race, snapshots)` returns every (date, club,
+   field) where the race differs from a by-date snapshot (T13). `head_to_head(games, a, b)` counts the
+   W-L between two clubs.
+9. Builders for the four file kinds of 4.2 (season, race, phist, snapshot; one compact writer, round 4) and a validator extending SCORES_1's (rules 1, 5, 6, 7, 9, 10,
+   11 as written; rule 4 amended: a top-level `copyright` key in `standings/*.json` holding StatsAPI's line
+   verbatim is exempt, nothing else; plus T1 to T20 of section 6 per file).
+10. The trimmed tracked copy writer for `data/_labs/standings/` (run once by STANDINGS_1).
+11. **Served derivations** (round 2; the page computes none of them, 5.5 names the one derivation it may
+    make): per row `rdg`, `rs_g` and `ra_g` = each of `rd`, `rs` and `ra` divided by `gp`, rounded to 2
+    decimals, null when `gp` is 0; `w_xw` = `w`
+    minus the wins of `x_wl`, signed; `left` = the club's regular-season games in the season's game list
+    (the race schedule, extended in season by the job's date files) that are not final under the Scores
+    state rule (SCORES_PLAN: final is `codedGameState` F or O or "Completed Early") and are neither
+    postponed (D) nor cancelled (C), and 0 for every club in a final season file, never `format.scheduled`
+    minus `gp` (which prints 1 for NYY and BAL after their 161-game 2026); `l10_seq` = the last ten results
+    oldest first as "W" and "L" letters (null where no game list exists); and per file `opening_day` = the
+    race's first date (2026-03-25 for 2026), so no date is ever typed in copy, and `k90` = (72/90)^(1/`x_exp`)
+    to three decimals (null when `x_exp` is null) for C4's 90-win line. **Seeds (round 3, F25)**: per row
+    `seed` (an integer from 1 within the league, null outside the field), `qualified` (`division`,
+    `division_second` in 2020 only, `wild_card`, or null) and `qualified_text` (from the literal
+    `standings_core.QUALIFIED_TEXT`, never typed in the page), derived from `FORMAT[Y]` and MLB's ranks:
+    the division qualifiers are the clubs with `divisionRank` 1 (in a final file exactly
+    `division_champions(records, live=False)`'s club, which is the `wildCardRank`-null club of the division
+    in 162 of 162 cached divisions), seeded 1 to 3 by `leagueRank`; then (2020 only) the other
+    `wildCardRank`-null clubs, the division runners-up, seeded 4 to 6 by `leagueRank`; then the clubs with
+    `wildCardRank` 1 to `format.wc_spots` in that order. In season the same rule gives the field as of
+    `as_of`. A repeated rank at a cut is ordered by the feed's `teamRecords` order and listed in
+    `accountability.feed_disagreements`. `QUALIFIED_TEXT`: final file `division` "Division winner",
+    `division_second` "Division second place", `wild_card` "Wild card"; in season "Leads the division",
+    "Second in the division", "Holds a wild card spot". In `ours` (4.7) two derived values: `proj_w_int` =
+    `proj_w` rounded half up (`math.floor(proj_w + 0.5)`; never Python's `round`, which rounds 92.5 to 92,
+    and never in the page), and `proj_l` = `w + l + left - proj_w_int`, so the printed PROJ always sums to
+    `w + l + left` (round 3: with `proj_l = w + l + left - proj_w` a projection of 92.5 printed 93-70 in a
+    162-game season). `proj_w` stays byte-equal to its source for the tooltip. Both are served only where the
+    projection's basis agrees with the row (round 4, 4.7 "The projection's basis"): `standings_core.proj_basis`
+    compares futures.json's club `record` with the row's `w` and `l`; on a mismatch both are null. It also
+    serves the parsed basis as two integers, `proj_basis_w` and `proj_basis_l` (round 5; null when the record
+    is absent or unreadable). The validator checks each (T10, T15, T19).
+
+Key names never collide with SP8 8.6: no `record*`, `odds`, `price*`, `implied_prob`, `market*`, `decision`.
+`futures.json`'s `record` and `impliedAmerican*` are never copied (the American numbers are prices).
+
+##### 4.7 Our columns: copied, never recomputed (STANDINGS_3)
+
+The job reads the SERVED files (`$EEPHUS_WEBROOT/data/` when set, else the app tree's `data/`, SP8 2.5),
+re-reads a file when its mtime changes, copies values byte-equal into each season file's `ours` block with
+the source's `generated_at` and the registry verdict read from the served `data/model_registry.json`. The
+page never fetches `mlb_projections.json` (1.30 MB) or `franchise_board.json` (1.12 MB).
+
+| `ours` key | Source | Registry row (verdict) | Rule |
+|---|---|---|---|
+| `p_div`, `p_post`, `p_bye`, `p_pennant`, `p_ws` | `data/futures.json` `clubs[]` (a list; the join key is `team`, the site code) `.{divisionPct, playoffPct, byePct, pennantPct, wsPct}` (the same numbers Franchise serves at `sections.odds`) | `playoff_odds_sim` (provisional) | regular season |
+| `p_pennant`, `p_ws` in October | `data/bracket_sim.json` `clubs[].{pennant_pct, ws_pct}`, `label` "implied, no market", `method_version` | `postseason_bracket_sim` (unvalidated) | from the first postseason game to the last; replaces the regular-season pair, with its own verdict |
+| `proj_w`, `proj_p10`, `proj_p90` | `data/futures.json` `clubs[].{projWins, winTotalP10, winTotalP90}` | `playoff_odds_sim` | read futures.json only, never Team Outlook's `current` (F11); at season end projected equals actual |
+| `proj_w_int`, `proj_l` (derived, not copied) | `proj_w_int` = `proj_w` rounded half up; `proj_l` = `w + l + left - proj_w_int`, both computed by `standings_core` (4.6 item 11) | `playoff_odds_sim` | the page prints `proj_w_int`-`proj_l`, two integers summing to `w + l + left` (round 3: `proj_w` is fractional in season, F27, so subtracting the float and rounding both halves could print 163 games); never `format.scheduled - proj_w`: that prints NYY 93-69 and BAL 79-83 against their final 93-68 and 79-82 (futures.json, `regular_season_end` 2026-09-27); this gives 93-68 and 79-82 (T10) |
+| `sos`, `sos_rank` | `data/mlb_projections.json` `team_outlook[].current.{sos, sosRank}` | rides `playoff_odds_sim` | only inside the SOS WINDOW: the season file's `as_of` from `opening_day` to futures.json's top-level `regular_season_end` inclusive, and the club's `left` above 0; null otherwise, the postseason included (F24: HEAD's overlay still holds NYY 0.5642 and BAL 0.5031 after the season); labelled "as the season simulator rates opponents" |
+| `proj_basis_ok` (per club), `proj_made_at` (round 4); `proj_basis_w`, `proj_basis_l` (per club, round 5) | `proj_basis_ok` = futures.json's club `record` ("W-L", read for the comparison only, never copied) equals the row's `w`-`l`; `proj_basis_w`, `proj_basis_l` = that record parsed into two integers (null when absent or unreadable; no `record*` key); `proj_made_at` = futures.json `generated_at` (UTC), copied | `playoff_odds_sim` | see "The projection's basis" below |
+| `p_hist.regular` | `data/futures_ledger.json` top-level `entries[]`: each entry's `as_of` and its `clubs`, a LIST keyed by `team` whose items carry `divisionPct`, `playoffPct`, `byePct`, `pennantPct`, `wsPct` (renamed `p_div`, `p_post`, `p_bye`, `p_pennant`, `p_ws`; the item's `record` and `projWins` are not copied, F27) | `playoff_odds_sim` | copied with `source` "futures ledger on this machine" and the list of missing dates (F13), written as the `regular` block of `<Y>-phist.json`, packed by column (4.2, round 4; no longer in the race file); only entries whose `season` is Y and whose `as_of` is on or after `opening_day` and before `switch_as_of` (round 5, "The two odds blocks" below), and on or after the job's `frame_from[Y]` (round 6, "The frame bound" below; the skipped dates listed in `missing`) |
+| `p_hist.post` | `data/bracket_sim_record.json` top-level `entries[]`: each entry's `as_of`, its hash `sha256` (not `entry_sha256`, which is a `bracket_sim.json` key) and `outputs.clubs`, a DICT keyed by club code whose values carry `pennant_pct` and `ws_pct` | `postseason_bracket_sim` | from 2026-10-01, written as the `post` block of `<Y>-phist.json`, packed by column (4.2, round 4); only entries whose `season` is Y and whose `as_of` is on or before the season's last postseason game; its first `as_of` is the file's `switch_as_of` (round 5) |
+| `registry [{model_id, verdict, last_checked, label}]` | `model_id`, `verdict`, `last_checked` (may be null) copied from the row of the served `data/model_registry.json`; `label` from the literal `standings_core.MODEL_LABEL` ("Eephus season simulator", "Eephus bracket simulator") | both rows | no `sentence` key: no registry field holds one; the page builds the caption from `label` and `verdict` (5.4, 5.5 C3) |
+
+**The projection's basis (round 4, VERIFY_round3 item 1).** `data/futures.json` is rebuilt once a night;
+the season file refreshes after every final. At join time `standings_core.proj_basis` parses futures.json's
+club `record` and compares it with the row's `w` and `l` (read for the comparison, never copied: a `record*`
+key is forbidden). Where they agree, `proj_basis_ok` is true, `proj_w_int` and `proj_l` are served and the
+validator applies T10's bound law `w <= proj_w_int <= w + left` (a failure there is a real defect and refuses
+the file). Where they differ, or the record is absent or unreadable, `proj_basis_ok` is false, `proj_w_int`
+and `proj_l` are null, the page prints PROJ "-" with the tooltip "Projection built on a W-L of " plus
+`proj_basis_w`-`proj_basis_l` plus "; this row is " plus `w`-`l` plus "." (round 5; where `proj_basis_w` is
+null: "The projection on file names no W-L; this row is " plus `w`-`l` plus "."), with no date and no claim
+about which came first, the bound law is not applied to that row,
+and a basis mismatch NEVER refuses the file; `proj_w`, the band and the odds stay copied under their own
+stamp. Measured: the 2026-09-27 ledger entry (that morning's futures) against the final standings disagrees
+for 28 of 30 clubs (every club that played on 09-27; NYY "93-68" and BAL "79-82" agree and print 93-68 and
+79-82). Without the rule, 10 of the 28 break the bound law after their last final: CLE "85-76" with
+`projWins` 85.6 finished 85-77, so PROJ would print 86-76; KCR "68-93" with 68.4 finished 69-93, so 68 falls
+below `w` 69; also TBR, BOS, ATL, TEX, ARI, DET, NYM and ATH. The validator would have refused the file on the
+season's last night and left the page stale.
+
+Why the copy claims no time order (round 5, VERIFY_round4 item 1): futures.json's club `record` comes from
+the nightly's 24 h standings cache, not from the build time, so a mismatch does not mean the projection was
+made before the club's latest result. On 4 of 19 consecutive ledger transitions all 30 records were carried
+over unchanged after a full slate (2026-09-06 to 09-07 after 15 games, 09-13 to 09-14 after 15, 09-17 to
+09-18 after 9, 09-25 to 09-26 after 17). LAD's 09-07 entry reads "85-57" while LAD was 86-57 after its 09-06
+game (`.cache/betting/completed_games.json`), so round 4's tooltip would have placed a September 7
+projection before a September 6 game; round 5 prints "Projection built on a W-L of 85-57; this row is
+86-57." (T10's lag fixture). The row can also lag futures while the job is stale
+(`stale_since`). No copy promises when the two agree again. `proj_made_at` is a UTC timestamp: the blank
+tooltip never prints it, and wherever the page prints a source stamp as a date (the ODDS header's and the
+agreeing PROJ tooltip's "as of", 5.4 and 5.11) it formats it in America/New_York and says "(Eastern)":
+HEAD's `2026-10-02T05:31:18+00:00` is October 2 in Eastern time and October 1 in Pacific time, so a
+zoneless date would differ by viewer.
+
+**The season guard (round 5).** The job copies futures.json into `ours` only when its top-level `season`
+equals Y; otherwise the ODDS group and PROJ are absent for that run (the unmeasured state). futures.json's
+`season` is `FIRST_SEASON - 1`, a constant (`proj_export.py:73` and `:3458`), while the ledger's `season`
+is the calendar year of the build (`append_futures_ledger` is called with no season, `proj_export.py:3378`
+and `:3465`), and `FIRST_SEASON` moves only by a hand edit with no set date
+(`docs/master-plan-2026-09-24-final-pass.md:655`), so the two can disagree from January 1 until the manual
+rollover. In that gap futures.json still serves the finished 2026 frame while the live season Y is 2027, and
+without the guard ODDS and PROJ would print 2026's numbers on 2027's rows. At HEAD futures.json's `season` is
+2026, equal to Y, so the guard changes nothing there; the 2026-09-27 measurement belongs to "The projection's
+basis" above, not to this guard (round 6, VERIFY_round5 item 1).
+
+**The two odds blocks (round 5, VERIFY_round4 item 2).** `standings_core.phist_blocks(ledger, record, season,
+opening_day, last_post_date, frame_from)` builds both blocks so that no `as_of` appears in both:
+
+- `post` holds the record entries whose `season` equals Y and whose `as_of` is on or before the date of the
+  season's last postseason game (all of them while it is unplayed); `switch_as_of` = `post.as_of[0]`, null
+  while `post` is empty.
+- `regular` holds the ledger entries whose `season` equals Y, whose `as_of` is on or after the later of the
+  season file's `opening_day` and the job's `frame_from[Y]` (round 6, "The frame bound" below; none while
+  `frame_from[Y]` is unset), and whose `as_of` comes before `switch_as_of` (every such entry while it is null).
+- THE WRITER STOPS after the season's last postseason game, the World Series game that gives a club its
+  fourth win, read from the job's own date files (state final, `gameType` W): that run writes the phist file
+  one last time with `closed` true, and no later run rewrites a closed file.
+
+Why: the ledger keeps one entry a day past `regular_season_end` (2026-09-30, 10-01 and 10-02 are on disk at
+`4c9a5de7`) and into the offseason; the record starts 2026-10-01; on 10-01 both blocks held Pennant and WS
+for the same 12 clubs and disagreed on 12 of 12 (BOS 0.198 against 0.0, ATL 0.055 against 0.11483), so C3
+would have needed a page-side choice that is not the one named derivation, and the regular block would have
+kept growing after the World Series. The `opening_day` bound keeps out ledger entries such as January 2027's,
+which would carry season 2027 with 2026's settled odds (the season guard above); it does not keep out the
+entries dated after Opening Day while the rollover is still undone, which is why "The frame bound" below
+exists. At HEAD the 2026 regular
+block holds 18 of the ledger's 20 entries (2026-09-06 to 2026-09-30, seven missing dates) and `post` holds the
+one 2026-10-01 entry; C3 plots both as served with the "Postseason" hairline at `switch_as_of`. T11 asserts
+the disjointness; the size bound is in 4.2's phist row.
+
+**The frame bound (round 6, VERIFY_round5 item 2).** The rollover of `FIRST_SEASON` is a hand edit with no set
+date (`docs/master-plan-2026-09-24-final-pass.md:655`), and the ledger stamps every entry with the calendar
+year (`proj_export.py:3378`, `:3465`). If Opening Day 2027 comes before `FIRST_SEASON` moves to 2028, every
+nightly build still runs the 2026 frame (futures.json `season` 2026) while its ledger entry says season 2027
+and is dated on or after `opening_day`. The season guard correctly leaves `ours` absent, but without this
+bound `regular` would copy those entries and C3 would plot 2026's settled odds as 2027's race. The fix is on
+the job side; the exporter is not changed (stamping the ledger with the frame season would also fix it, but it
+changes a betting record's field and belongs to that module).
+
+- The job records `frame_from {"<Y>": "YYYY-MM-DD"}` in `.cache/scores/standings/state.json`: the local
+  calendar date (`datetime.date.today()` on the machine that runs the job, the clock
+  `append_futures_ledger` stamps `as_of` with, `proj_export.py:3377`) of the first run that read a
+  futures.json whose top-level `season` equals Y. It is set once and never moved.
+- `regular` holds only entries dated on or after the later of `opening_day` and `frame_from[Y]`, and none
+  while `frame_from[Y]` is unset. Every season-Y ledger entry dated on or after `opening_day` that the bound
+  skips is listed in `regular.missing`. While both blocks are empty the job writes no `<Y>-phist.json`, so
+  `index.json`'s `phist_rev` and `phist_from` stay null (4.2's state for a season with no phist file).
+- When `regular` is empty and `post` is not (round 7: the rollover still undone at the postseason, or done after
+  `switch_as_of`; `bracket_sim.py:1184` stamps the record's season from the calendar), the file is written,
+  `phist_from` is `switch_as_of`, and C3 draws the post block alone with its hairline.
+- Why "on or after" that date is safe: `write_futures` appends the ledger before it writes futures.json
+  (`proj_export.py:3465`), and a rebuild on a date already present replaces that date's entry, last write
+  wins (`proj_export.py:3396`). So once a season-Y futures.json is readable, the ledger's entry for that date
+  came from a season-Y frame.
+- Where the state has no `frame_from[Y]`: first `standings_core.FRAME_FROM_SEED = {2026: "2026-09-06"}`.
+  `FIRST_SEASON` has read 2027 since `427a6484` (2026-06-10), before the ledger's first entry (2026-09-06), so
+  every season-2026 entry on disk came from the 2026 frame; no later season is seeded. Then, so `state.json`
+  stays rebuildable, the existing `<Y>-phist.json`'s `regular.as_of[0]` when that block is non-empty (the same
+  block results: no season-Y ledger entry falls between the bound in force and that date). Otherwise it stays
+  unset until the first such read.
+
+At HEAD the seed skips nothing: the 2026 regular block keeps its 18 entries and seven missing dates, and no
+served number moves. T11 carries the fixture: a season-2027 ledger entry dated after Opening Day 2027, read
+while futures.json's `season` is 2026, is never copied.
+
+**Availability window.** The ODDS group exists only for the current season from Opening Day to the last
+postseason game. For a completed season (2026 after the World Series, and every past season) the group is
+absent and the odds race chart is the record. T12's probability laws run on the copied block.
+
+---
+
+#### 5. The page
+
+##### 5.0 The design target, justified
+
+| Reference (from public product knowledge, never scraped; page copy names no competitor) | Strong at | Short on a phone, or missing | Ours |
+|---|---|---|---|
+| MLB.com standings | MLB's letters, splits, expected W-L | one wide block that scrolls away from the club name; no reader sort; no picture of the season; expected record without its formula | frozen club cell; sortable everything; races; the exponent printed |
+| FanGraphs playoff odds | odds by round, odds over time | team colours as the only series identity (repeating hues, poor in dark mode), hover-only detail, no public record or status | identity by label and weight, two highlighted clubs at most; tap to pin; a dated daily record with the registry verdict beside every odds number |
+| Baseball-Reference standings | every split, any past date, every season | desktop tables shrunk; a column named "Luck" | a 352 px Record group; "Wins minus expected wins", never "luck" |
+
+What only this site adds (LP 1.4): MLB's standings and the site's simulator chances in one table with their
+verdict at the group; the corrected division champion (F15); links to Franchise, Team Outlook and the
+club's games on `/scores/`; followed clubs ("My teams", shared with `/scores/`); CSV export of exactly what
+is on screen; and the pixel idiom of 5.9.
+
+##### 5.1 URL, shell and flags
+
+- `build_site.build_standings()` on the `build_franchise` shell pattern (`build_site.py:5250-5306`): the
+  shared `_scores_module_head("standings")` (masthead icon `_masthead_icon("scores")`, h1 "Scores /
+  Standings", `_stage_chip("scores")`, the sub line, the link strip), one mount root
+  `#standings-app-root` with `_csv_optin("standings")`, then `/assets/standings.css`, `eephus-hub.js`,
+  `eephus-teampick.js`, `eephus-state.js`, `eephus-tiers.js` and `/assets/standings.js` deferred, each
+  stamped through `_asset_ver` (new `_STANDINGS_VER`, `_STANDINGS_CSS_VER`); the app wraps in
+  `.fa-app mlbstats-app st-app`. No number typed in the shell; no `EEPHUS_DATA_VERS` (the job's files
+  change between builds; `_data_vers_script` refuses `standings` names as it refuses `scores`).
+- Budgets (test-time pins): shell 16 KB; `assets/standings.js` 45 KB raw, 14 KB gzip; `assets/standings.css`
+  14 KB (every standings style lives there, never in `site.css`); lazy `assets/standings-charts.js` 14 KB
+  raw; cold first paint at 390 (shell, js, css, `latest.json`, `index.json`, one season file) 50 KB gzip,
+  the shared runtime excluded.
+- Fetch rules: `latest.json` and `index.json` once per load and on becoming visible (no interval poll),
+  `standings/<Y>.json?v=<rev>` for the season in view, `standings/<Y>/<D>.json` only when As of is set,
+  `standings/<Y>-race.json?v=<race_rev>` only on the first chart open, `standings/<Y>-phist.json?v=<phist_rev>`
+  only on C3's first open (round 4; the tables never fetch it); every fetch `cache: "no-cache"`.
+- `STANDINGS_LIVE` (default False) gates the page and the strip link; `STANDINGS_CHARTS` (default False)
+  gates the Charts view and the Race disclosures, so the tables can flip without waiting on Q8_12.
+
+##### 5.2 Views and tables
+
+One table component, five table views and a Charts view (LP 2.1). Hash grammar, every value validated
+against the payload, unknown values dropped: `view` (`division`, `wildcard`, `league`, `mlb`, `playoffs`,
+`charts`), `season`, `cols` (`splits`, `runs`, `odds`, `sched`; Record is always on), `sort`
+(`<key>.<asc|desc>`), `chart` (`race`, `wc`, `odds`, `runs`, `xwl`), `div` (`ALE` to `NLW`), `team` (a
+site code: row highlighted, scrolled into view, detail row opened), `date` (As of, only where a by-date
+file exists). Back and forward restore view and scroll.
+
+| View | Tables | MLB's order | Notes |
+|---|---|---|---|
+| Division (default outside the postseason) | six, AL East to NL West, a league heading between | `divisionRank` | GB; MAGIC for the leader and ELIM for the rest in Schedule; a "Race" disclosure under each table (Charts flag) |
+| Wild Card | per league: "Division leaders" (the rows whose served `qualified` is `division`), in 2020 only "Division second place" (`division_second`), then "Wild card" (every other row) | the served `seed`, then `wildCardRank` for the unseeded | WCGB replaces GB; SEED column printing the served `seed` ("-" when null; the page derives no seed, 4.6 item 11); the cut is a 1 px dashed `--text-tertiary` rule under the last wild-card seed plus a visually hidden "Last wild card spot" in that row's club cell (no separator row in `<tbody>`); a `<details>` "How ties are broken" with `TIEBREAK_TEXT` and any head-to-head at the line (4.6 item 7) |
+| League | AL and NL, 15 rows each | `leagueRank` | league GB |
+| MLB | 30 rows | `sportRank` | MLB GB |
+| Playoffs (default from the first postseason game to the day after the last World Series game) | seeds per league (the served `seed`, club, W-L, and how qualified as the served `qualified_text`; only rows with a non-null `seed`), then SCORES_4b's `assets/scores-bracket.js` mounted unchanged, then the final Division tables | the served `seed` | the bracket prints no probability and links no Futures tab (F17); Pennant and WS chances stay in the seeds table's ODDS group, outside the bracket |
+| Charts | 5.5 | | behind `STANDINGS_CHARTS` |
+
+The six division tables share one `<colgroup>` and `table-layout: fixed`, so every column lines up down
+the page. In Division and Wild Card one sort applies to every table of the view. Past seasons print the
+cut where that season's `format` puts it.
+
+**Row detail** (the phone's answer to wide tables): a 24 px chevron button in the frozen club cell (44 px
+hit area at coarse pointers, `aria-expanded`, `aria-controls`) opens one full-width row: every split as
+W-L pairs in a two-column definition list; the ten lamps with "7-3"; last game ("Final: PHI 3, ATL 5,
+Sep 27", linked to `/scores/#game=<pk>`) and next game; magic and elimination sentences (5.11); the ODDS
+values with their labels; links "Franchise" (`EEPHUS_HUB.clubHref` once Q9_05 lands, else the stopgap
+`EEPHUS_HUB.club(x).code`), "Team Outlook" (`/projections/#view=teams`), "Scores", and "F-SCORE" once
+`data/fscore.json` serves. One detail row open at a time.
+
+##### 5.3 Columns (MLB's; full names in `<abbr title>` and the glossary)
+
+| Group | Columns | Source (renamed keys of 4.6) |
+|---|---|---|
+| Record (always on) | W, L, PCT, GB (WCGB in Wild Card; league or MLB GB in those views), L10, STRK, RD | `w`, `l`, `pct`, `gb` / `wcgb` / `lgb` / `mlbgb`, `l10`, `streak`, `rd` |
+| Splits | HOME, AWAY, DIV, LG, INTR, 1-RUN, XTRA, >.500, vs L, vs R | `split.*`, `vs_div` (own division's entry of `divisionRecords`), `vs_lg` and `intr` (copied from `records.leagueRecords`, own league and other league; T20 pins them to the division-record sum and to W-L) |
+| Runs | RS, RA, RD/G, xW-L, W - xW | `rs`, `ra`, `rdg` (served, 4.6 item 11), `x_wl`, `w_xw` (served, signed) |
+| Schedule | LAST, NEXT, LEFT, MAGIC, ELIM | the job's date files (last final, next scheduled game), `left` (served: games left on MLB's schedule, 0 after the regular season), `magic`, `elim_div` (Division view) or `elim_wc` (Wild Card view) |
+
+Ties (T) print only for seasons that had one (12 club-seasons 2000 to 2016, F9), as "W-L-T" in the
+detail row; PCT excludes ties.
+
+##### 5.4 Our columns (the ODDS group)
+
+| Column | Key | Format |
+|---|---|---|
+| PROJ "Projected final record" | `ours.proj_w_int`, `ours.proj_l` (printed); `ours.proj_w` (tooltip) | `proj_w_int`-`proj_l`, two served integers (4.7) printed as they are, with no rounding in the page; the tooltip prints `proj_w` to one decimal as the Franchise tile prints projected wins (`assets/franchise.js:699`, F27); a final season prints the actual W-L once the projection's basis agrees; where `proj_basis_ok` is false (round 4, 4.7) PROJ prints "-" and the tooltip reads "Projection built on a W-L of " plus `proj_basis_w`-`proj_basis_l` plus "; this row is " plus `w`-`l` plus "." (round 5: no date and no claim about which came first; with `proj_basis_w` null, "The projection on file names no W-L; this row is " plus `w`-`l` plus ".") |
+| DIV% | `ours.p_div` | one decimal, no "%" sign (the header carries it), the same rounding as the Franchise tile's `pct(v, 1)` (`assets/franchise.js:62`, which also appends "%"); "<0.1" when it rounds to 0.0 and the club is not `e`; ">99.9" when it rounds to 100.0 and the club is not clinched |
+| POST% | `ours.p_post` | as above |
+| PEN% | `ours.p_pennant` | as above; in October from `postseason_bracket_sim` |
+| WS% | `ours.p_ws` | as above; in October from `postseason_bracket_sim` |
+| SOS | `ours.sos` | three decimals, inside the SOS window of 4.7 only (null, printed "-", in the postseason) |
+
+Group header: "ODDS · Eephus model · implied, no market", the status chip text read from the season file's
+registry block's `verdict` ("provisional"; in October Pennant and WS "unvalidated"), and "as of October 2 (Eastern)" from the
+source stamp, formatted in America/New_York (round 5, 4.7; HEAD's futures stamp `2026-10-02T05:31:18+00:00`); the chip links to `/models/#playoff_odds_sim` (or `#postseason_bracket_sim`). Every odds cell
+sits in an element with `data-model-id` (the Scores labelling rule, SP8 4). A `e` club's odds cells print
+the null glyph "-" in `--text-dim`. The group is available only in the window of 4.7.
+
+##### 5.5 Charts (STANDINGS_5; behind `STANDINGS_CHARTS`)
+
+All on Q8_12's helpers (`EEPHUS_HUB.lineChart`, `spark`, and the existing `EEPHUS_HUB.scatter`), extended
+only by generic options (reference polylines with labels, square markers, chosen direct labels, an inverted
+y axis); inline SVG with `var()` tokens only; no canvas, no new library. Lazy chunk
+`assets/standings-charts.js`. Every chart is a `<figure>` with a `<figcaption>` (title, one-line reading,
+source line), `role="img"` on the SVG with an `aria-label` built from fields, a `<details>` "Numbers" table
+rendered on first open, a crosshair on pointer, touch and keyboard (Left and Right one date, Home and End,
+Up and Down cycle the highlighted club, Escape clears), tap to pin, drawn at the container's pixel width.
+Never drawn: a trend line, a fit, a forecast point past the last date, team colours, a band.
+
+**Served, not computed (round 2).** Every plotted value is read from a payload except ONE named
+derivation the page may make: C1's y value, W minus L of one race tuple (a subtraction inside one served
+tuple; the race file stays under its budget without a second per-date series). Everything else is served:
+C2 plots `wc_gap`, C4 plots `rs_g` and `ra_g`, C5 plots `w`, the wins of `x_wl` and `w_xw`, C3 plots
+the odds history of `<Y>-phist.json` as copied (round 4). The page's allowed operations are therefore a join, a sort, formatting (rounding,
+signs, "W-L" joins, a served date formatted), the stale comparison and C1's subtraction; STANDINGS_4 and
+STANDINGS_5 STOP on anything else.
+
+**Highlight rule.** At most two clubs carry colour, `--viz-1` and `--viz-2` (2.5 px); the defaults are the
+first and second followed clubs in view, else the view's first and second clubs; every other club is a 1 px
+`--text-tertiary` line; every line ends in a direct label ("TBR +34"), nudged to at least 11 px apart with
+a 1 px leader; a chip row of clubs (44 px at 390) moves a club into `--viz-1`, a second into `--viz-2`, a
+third replaces the older. Colour follows the club, never its rank.
+
+| Chart | Data | Form |
+|---|---|---|
+| C1 Division race | race file: W - L by date per club (the one named page derivation) | small multiples, one shared y domain (1-2-5 ticks symmetric about 0) and shared x; the 0 line as a `--border` hairline labelled ".500"; phone one division at a time (`#div=`), 358 x 220; desktop 3 x 2 at about 392 x 200 |
+| C2 Wild-card race | race file `wc_gap` (served, 4.6 item 8): games ahead (+) or behind (-) the club holding the last wild-card spot that date, clubs qualifying outside the wild card that date excluded; on the last date it equals the season file's signed `wcgb` (T15) | y = 0 dashed, labelled "Last wild card spot"; clubs within 10 games on the last date (at most eight), "Show all clubs" adds the rest; default window the last 60 days, "Whole season" toggle; the table twin says "Past dates: ties at the line are not broken" |
+| C3 Odds over time | `<Y>-phist.json` `regular` (from 2026-09-06) and `post` (from 2026-10-01), fetched on C3's first open (round 4) | STEP lines held flat between entries, a square marker on each recorded date (so the seven missing September days read as holds), a vertical hairline labelled "Postseason" at the phist file's served `switch_as_of` (round 5: `regular` ends before it and `post` starts on it, so no date carries two values and the page never chooses; none drawn while it is null; 2026: 18 regular markers 09-06 to 09-30, then 1 post marker on 10-01); market chips Division, Playoffs, Pennant, World Series; figcaption built from the registry block's `label` and `verdict`: "Implied, no market. Eephus season simulator, provisional." then "Eephus bracket simulator, unvalidated."; before the first entry the unmeasured state "The daily odds record starts " plus the index's `phist_from` formatted (round 7: the file's first `as_of` over both blocks, `switch_as_of` when `regular` is empty, never `regular.as_of[0]` read directly; September 6, 2026 today; never typed); with `regular` empty C3 draws the post block alone with its hairline; the source line names the ledger and "on this machine" |
+| C4 Runs scored and allowed | `rs_g` and `ra_g` (served) | x RS/G, y RA/G inverted (fewer allowed at the top); isolines RA = RS (".500") and the 90-win pace line RA = k x RS with the served `k90` = (72/90)^(1/x_exp) = 0.885 at 1.83 (4.6 item 11; a straight line through the origin under the stated exponent; if `x_exp` is null, `k90` is null and the line is not drawn, the caption saying so); 8 px squares, AL filled, NL hollow; labels for the highlighted clubs and the three best and three worst by RD; phone 358 x 300 |
+| C5 Record against expected record | `w`, the wins of `x_wl` and `w_xw` (served) | a dumbbell per club sorted by W - xW: filled square at W, hollow at xW, 1 px connector, the signed difference in text ink; never coloured, never "luck" (LT-08's rule) |
+| C6 Postseason bracket | SCORES_4b's chunk and the season index's `bracket` block | mounted unchanged in the Playoffs view; no probability |
+
+Optional later (not built): a 56 x 14 games-above-.500 `spark` column at 1024 px and up.
+
+##### 5.6 Season selector and As of
+
+- Native `<select>` "Season", newest first, listing `index.json`'s `standings_seasons`: 2026 and 2000 to
+  2025 (ST-Q3 (a)). Past seasons show final standings in every table view from the tracked copy; their
+  races show for 2015 to 2025 (the race backfill) and the unmeasured state before 2015 ("Game-by-game
+  results for 2009 are not on file."); ODDS is absent (4.7).
+- "As of" (`#date=`): a native date input bounded by the season's by-date files (2026 only under ST-Q3
+  (a)); it re-renders every table as of that date, hides ODDS (no frozen record for most dates), and the
+  stamp reads "Standings as of June 1, 2026".
+- 2020 prints its one-line format note under the controls; seasons before 2022 print the wild-card cut by
+  their rule.
+
+##### 5.7 States (the four kinds through `EephusState.render`, `assets/eephus-state.js`)
+
+| Kind | Where | Message |
+|---|---|---|
+| loading | the page mount while the season file loads (one lamp loader per page, not per table); a chart mount while the chunk or race file loads | "Loading standings." / "Loading the race." |
+| empty | My teams on with no followed club in view | "No followed clubs in this view. Follow a club from its row's details." |
+| unmeasured | ODDS outside its window; a race with no game list; the odds race before its first entry; races before Opening Day | "The daily odds record starts " plus the season index's `phist_from` (the phist file's first `as_of`, round 4; "September 6, 2026" today) / "Game-by-game results for 2009 are not on file." / "The race starts on Opening Day, " plus the season file's `opening_day` ("March 25" for 2026; probe p3 shows clubs 147 and 137 with one game each on 2026-03-25). No date in these sentences is typed: each is built from the field named (round 2; LP 2.8 and 2.9 typed "March 26", which was wrong; the chart aria-labels of 2.8 are built from `opening_day` too) |
+| failed | the season file errors or fails its schema (`role="alert"`, Retry inside the message) | "Standings could not load." with "Retry" |
+
+Stale banner (S3, in season only): "Standings were last updated September 28. They may be out of date."
+A stale file never hides the tables. Stamp line (`role="status"`): "Standings through September 27.
+Updated 11:42 PM."; offseason: "Final standings, 2026 regular season."
+
+##### 5.8 Phone (390) and desktop (1280)
+
+**390** (358 px content, `.eephus-wrap` padding): masthead on one line wrapping at the slash; the strip
+under it (44 px targets); controls in three rows (view chips as a horizontally scrolling strip with scroll
+snap; group chips single-select plus "My teams"; season and As of), no row taller than 44 px. Each table in
+its own `.table-scroll-x`; the club cell `position: sticky; left: 0; z-index: 1`, opaque
+`var(--bg-secondary)`, `box-shadow: 1px 0 0 var(--border-light)`, max-width 100 px (the
+`.gl-app .sacc-table` precedent); an 8 px `aria-hidden` scroll shadow on the frame's right edge while more
+columns sit off screen. Club cell: 12 px mark slot, the code in `--font-retro-mono` 12 px 700 linking to
+Franchise, MLB's letter as a 10 px superscript `<abbr>`, the chevron; no logo. Record group widths: club
+100, W 28, L 28, PCT 40, GB 36, L10 36, STRK 40, RD 44 = 352 px inside 358, no scroll. Rows 40 px under
+`(pointer: coarse)`, 30 px otherwise; numbers right-aligned, tabular. Charts at the container width with
+24 x 24 hit targets.
+
+**1280** (1232 px content, the `.fa-app` wrap): controls in one row; tables full width and stacked; 16 px
+logos (`EEPHUS_HUB.teamLogo`, lazy) and the short name at 1024 and up; default groups Record + Runs + ODDS
+in season (about 22 columns, 1,180 px, no frame scroll), Record + Runs otherwise; L10 lamps from 768 up;
+the Charts grid of LP 2.3; no rail. The sticky rule stays on at every width (harmless when nothing
+scrolls).
+
+##### 5.9 Theme and the pixel idiom
+
+- Every colour is a `site.css` token (LP 2.4 table); no hex in `standings.css` or `standings.js`
+  (`test_no_hardcoded_colors.py`); `--bg-hover` never on a sticky cell (translucent); row hover paints
+  `--bg-tertiary` on every cell. `--viz-1` and `--viz-2` (light `#1D4ED8`, `#C9A227`; dark `#3B7FCC`,
+  `#B08526`) are added once by whichever of Q8_12, SCORES_3 or STANDINGS_5 lands first, exactly these
+  values (8.E chart tokens row).
+- **Scorebook ink marks**: two new 12 px symbols through `tools/pixel_icons.py`, ids `i-st-clinch` (the
+  inked at-bat box) and `i-st-elim` (the inning-ending slash), keys `st-clinch` and `st-elim` in
+  `ICON_FOR`, drawn on the 12 x 12 core of a 16 x 16 symbol by the PixelMplus12 stroke rule (LP 2.5's
+  grids), `fill="currentColor"`, `shape-rendering="crispEdges"`; clinch in `--text-primary`, elimination in
+  `--text-tertiary`, never red or green; `aria-hidden`, beside MLB's letter or "e" in an `<abbr>` and a
+  visually hidden phrase ("clinched the division"). A fixed 12 px slot in every row keeps codes aligned.
+- **Ten lamps for L10**: ten 4 x 8 px cells, 1 px apart (49 px), oldest left; a win lit
+  (`--text-primary`), a loss unlit (1 px `--border` outline); ink only; `aria-hidden` beside "7-3".
+- **Streaks in the ticker's language**: `i-ev-up` in `--up` or `i-ev-down` in `--down`, then "W4" in text
+  ink (text never wears the status colour), visually hidden "won 4 in a row". No flame or heat glyph.
+- **Live games**: the existing 7 px ticker blip before "Live: top 7, 3-2" in the LAST cell and the detail
+  row. Existing motion only.
+- **Value ruler on RD/G**: a new `rdg` family in `assets/eephus-tiers.js` (the only file allowed cuts):
+  `{ cuts: [1.00, 0.60, 0.35, 0.15, 0.00], dir: "hi", neg: true, round: r2 }`, measured on 750
+  club-seasons 2000 to 2025 without 2020 (elite 7.6, great 13.2, good 14.8, above 9.3, avg 6.0, poor 49.1
+  percent); the writer re-measures and records the provenance block in the file header; no colour before
+  20 games played (text ink, tooltip "Colour starts at 20 games"). RD, RS, RA and W - xW never coloured.
+- **Odds cells**: `EephusTiers.pctColor(p * 100)` as text colour; "<0.1" and "-" in `--text-dim`. PROJ and
+  SOS uncoloured.
+- **Reduce Motion**: every animation runs whatever the preference (owner policy 2026-10-01,
+  REDUCED_MOTION_RUNS `00c726b7`); this page adds no animation and no `@keyframes` (a test pins it); sort,
+  view switches, crosshairs and detail rows change instantly.
+
+##### 5.10 Accessibility and sort
+
+- Each table: `<caption>` from fields ("American League East, 2026, through September 27"); a first header
+  row of `<th scope="colgroup" colspan>` group headers; `<th scope="col" aria-sort>` holding a native
+  `<button type="button" class="st-sort">` whose text is the abbreviation in `<abbr title>`; club cells are
+  `<th scope="row">`. `aria-sort` only on `<th>` (M24_SORTBAR_A11Y), exactly one non-`none` per table.
+- First press sorts best-first: descending for W, PCT, RS, RD, RD/G, xW-L, W - xW, odds, STRK (win streaks
+  above loss streaks), the splits by PCT; ascending for L, GB, WCGB, RA, MAGIC, ELIM, SOS; a second press
+  reverses. Stable tiebreak: the value, then MLB's rank for the view, then the club code. Nulls last both
+  ways. The sorted header shows "▲" or "▼" in a fixed-width slot and a 2 px `--accent-gold` bottom rule.
+- One `role="status"` `aria-live="polite"` line announces "Sorted by run differential per game, highest
+  first." / "Standings order restored."; a "Standings order" button appears only while a sort is active;
+  focus stays on the pressed button after the redraw (the M24 restore rule).
+- Focus-visible: 2 px `--accent-cyan` outline, offset -2 px inside header cells. Followed rows: a 2 px
+  `--accent-lilac` inset rule on the club cell plus visually hidden "followed". Targets 44 px at 390 for
+  chips and the strip, 24 x 24 for table buttons and chart marks.
+
+##### 5.11 Copy and credit
+
+Rules: no em or en dash; nothing in `tools/copy_lint.py`'s BAN; none of the Scores betting words (edge,
+value, EV, Kelly, pick, lean, bet, whole words); no verdict words (luck, lucky, unlucky, contender,
+pretender, fraud, overachieving, underachieving, collapse, choke, surging, hot, cold, slump, for real,
+regress, due, lock, safe, dead); no FV or grade; every number read from a payload.
+
+- Title `MLB Standings - eephus.io`. Sub: "MLB standings by division, wild card, league and the majors,
+  with MLB's records and splits, run differential, an expected record, and the site's simulator chances
+  labelled as such." Meta description: "MLB standings by division, wild card and league: records, splits,
+  run differential and expected record from MLB, races over the season, and the site's simulator chances,
+  implied with no market."
+- Labels and headers: LP 4.1 verbatim (views, groups, every header's abbreviation and title).
+- Legend line under the controls (16 px marks): "x clinched a playoff spot · y clinched the division · z
+  clinched the league's best record · w clinched a wild card spot · e eliminated", then "Letters are MLB's;
+  e is set when MLB's wild card elimination number reaches E, or when the season is over."
+- Expected record tooltip: "MLB's expected record from runs scored and allowed: Pythagorean, exponent
+  1.83." (the exponent sentence only while `x_exp` is set).
+- Magic and elimination sentences built from fields: "Magic number 3: any combination of 3 Rays wins and
+  Yankees losses clinches the division." / "Elimination number 2: any combination of 2 Orioles losses and
+  Rays wins ends their division chances."
+- PROJ tooltip: "Projected final record from the season simulator, as of " plus the source stamp formatted
+  as a date in America/New_York plus " (Eastern)" ("October 2 (Eastern)" from HEAD's
+  `2026-10-02T05:31:18+00:00`; round 5), then "Projected wins: " plus `proj_w` to one decimal (the record rounds the wins
+  half up and gives the losses as the games left over). SOS: "Average talent rating of the opponents left to play, as a win rate from the
+  season simulator's roster ratings, not their records. Rank 1 is the hardest." (round 2: the number is
+  the simulator's talent rating, F24, never the opponents' actual winning percentage).
+- **The MLB credit line**: every standings payload carries StatsAPI's `copyright` string verbatim (two
+  spaces after "L.P.", LD 2.2); the app footer prints from the payload: "Standings, records and splits
+  come from MLB's public StatsAPI feed." plus the copyright string with the terms URL as a link. The ODDS
+  group's source line: "Odds: the site's season and bracket simulators, implied, no market." Every chart
+  names its file in its source line.
+
+##### 5.12 Glossary (land in the commit that serves them)
+
+Every new served number and every column header and chart resolves to a glossary id (round 2; a test in
+STANDINGS_7 pins it). New ids, module `scores`, all checked free at `fc1405e7` (F19).
+
+**In STANDINGS_7 (26 table entries).** The sixteen of LP 4.3 with its drafted definitions, except three
+texts this plan replaces (four with round 4's `projected_record`): `clinch_marks` amended to the 4.6 item 4 rule; and
+
+- `magic_number`: "The combination of a leader's wins and a chaser's losses that clinches. MLB's figure
+  from its standings feed; where the feed prints none for a leader that has not clinched, the site serves
+  the runner-up's elimination number, which is the same count."
+- `remaining_sos`: "The average talent rating of the opponents a club has left to play, each rated as a
+  win rate from the season simulator's roster ratings (the site's projected win total over 162 games), not
+  by their record. Rank 1 is the hardest schedule left. Shown only while the club has games left in the
+  regular season." (defines the SOS rank too)
+- `projected_record` (round 4), text replaced in round 5: "The season simulator's projected final record:
+  its projected wins rounded half up, and the games left over as losses, with games played banked. Blank
+  when the projection on file was built on a different W-L than this row; the tooltip names both."
+
+The sixteen: `standings_page`, `games_back`, `wild_card_games_back`, `magic_number`, `elimination_number`,
+`clinch_marks`, `streak`, `last_ten`, `run_differential`, `rd_per_game`, `one_run_record`,
+`extra_inning_record`, `record_vs_winning`, `remaining_sos`, `season_sim_odds`, `projected_record`. Plus
+ten for the columns that had none:
+
+| id | Header | Definition |
+|---|---|---|
+| `win_pct` | PCT | "Wins divided by wins plus losses, to three decimals; ties are not counted." |
+| `runs_scored` | RS | "Runs the club has scored this season, from MLB's feed. The runs chart plots them per game." |
+| `runs_allowed` | RA | "Runs the club has allowed this season, from MLB's feed. The runs chart plots them per game." |
+| `home_away_record` | HOME, AWAY | "Record in games at the club's home park and in games on the road." |
+| `division_record` | DIV | "Record against the other clubs of the club's own division." |
+| `league_record` | LG | "Record against every club in the club's own league, its division included." |
+| `interleague_record` | INTR | "Record against clubs of the other league." |
+| `vs_hand_record` | vs L, vs R | "Record in games started by a left-handed or a right-handed opposing pitcher, as MLB's feed counts them." |
+| `games_left` | LEFT | "Regular-season games still on MLB's schedule for the club. A postponed game counts once it is rescheduled; it reads 0 once the regular season is over." |
+| `postseason_seed` | SEED | "The club's postseason seed in its league, in MLB's order: division winners first, then the wild cards (in 2020, division winners, then division runners-up, then the wild cards). During the season it is the seed the club would hold if the season ended on the stamped date; blank for a club outside the field." |
+
+**With the charts flip (4 entries):** `expected_record_chart` (LP 4.3), and
+
+| id | Chart | Definition |
+|---|---|---|
+| `division_race_chart` | C1 Division race | "Each club's wins minus losses after every date of the season, one panel per division." |
+| `wild_card_race_chart` | C2 Wild-card race | "Each club's games ahead of or behind the club holding the last wild card spot on every date; division leaders of that date are left out." |
+| `odds_over_time_chart` | C3 Odds over time | "The site's simulator chances on every day they were recorded, held flat between records. Implied, with no market." |
+
+C4 links `runs_scored`, `runs_allowed` and `run_differential`; C5 links `expected_record_chart`, `xwl` and
+`w_minus_xw`. Served derivations map as: `rdg` to `rd_per_game`, `w_xw` to `w_minus_xw`, `left` to
+`games_left`, `proj_w_int` and `proj_l` to `projected_record`, `rs_g` and `ra_g` to `runs_scored` and
+`runs_allowed`, `l10_seq` to `last_ten`, `sos_rank` to `remaining_sos`, `seed`, `qualified` and
+`qualified_text` to `postseason_seed`, `vs_lg` to `league_record` and `intr` to `interleague_record`. `xwl` and `w_minus_xw` belong to League Trends
+LT-08: whichever of Q8_15 and STANDINGS_7 lands first creates them, the other links. Reused:
+`pythag_pct`, `season_record`, `postseason_bracket_sim`. `seeAlso` wires `magic_number` and
+`elimination_number` both ways, `rd_per_game` to `run_differential` and `xwl`. Through an idempotent script
+that keeps the file's line endings.
+
+---
+
+#### 6. Invariants and tests
+
+Laws measured on the 27 cached seasons and the probe (LD 4); each is enforced in the validator at write
+time and by fixture tests.
+
+| # | Law | Test |
+|---|---|---|
+| T1 | W + L + T = GP (T from `leagueRecord.ties`) | per row, every file |
+| T2 | league conservation: sum W = sum L = decided R finals through `as_of` (2026 final 2,429; 09-20 2,339); season totals 2,425 to 2,431 and 898 in 2020 are allowed; 2,430 applies only to projected seasons | per file; the job's lag guard |
+| T3 | PCT = W / (W + L) to three decimals, ties excluded | per row within 0.0006 |
+| T4 | RD = RS - RA | per row |
+| T5 | GB = ((W_lead - W) + (L - L_lead)) / 2 from the best W - L of the division; the served value is computed; the feed's 2020 values go to `accountability.feed_disagreements` | per row; a 2020 fixture |
+| T6 | WCGB from the last qualifying wild card by `format.wc_spots`; "+x" means ahead | per league; the parser keeps the sign |
+| T7 | magic and elimination numbers within G + 1 - W_ref - L or one less; `eliminationNumber` = `eliminationNumberDivision`; the leader's magic falls back to the runner-up's division number when the feed reads "-" and the division is not clinched (09-20 Rays) | band test; p1 fixture |
+| T8 | marks from `clinchIndicator` only; `e` per 4.6 item 4; no club both marked and `e`; a `y`/`z` club has every rival at division "E"; a completed season partitions 30 = marked + `e` (holds after the rule in 2012, 2020, 2024, 2025) | per file; 2012, 2020, 2024, 2026 fixtures; 2026: TBR, MIL z; CLE, HOU, ATL, LAD y; NYY, BOS, CHW, PHI, CHC, SDP w; the rest e; PHI never division champion |
+| T9 | xW = round((W + L) x RS^1.83 / (RS^1.83 + RA^1.83)) | per row; `x_exp` null when any row fails |
+| T10 | projected finish ON THE PRINTED INTEGERS (round 3): `proj_w_int` = floor(`proj_w` + 0.5); `proj_w_int` + `proj_l` = `w` + `l` + `left` (never `format.scheduled`, round 2); `w` <= `proj_w_int` <= `w` + `left`; `proj_w` byte-equal to futures.json's `projWins`; a final season file has `left` 0 and `proj_w_int`-`proj_l` equal to the actual W-L (NYY 93-68, BAL 79-82 after 161 games, not 93-69 and 79-83); `ours` reads futures.json only; THE BASIS (round 4): the integers and the bound law apply only where `proj_basis_ok` is true (futures.json's club `record` equals the row's W-L); elsewhere `proj_w_int` and `proj_l` are null and a mismatch never refuses the file; round 5: `proj_basis_w` and `proj_basis_l` are integers parsed from that record (null when it is absent or unreadable), and `proj_basis_ok` is true exactly when they equal `w` and `l` | a 161-game fixture; a .5 fixture (w 85, l 65, left 12, `projWins` 92.5 gives `proj_w_int` 93, `proj_l` 69, PROJ "93-69", 162 games, never "93-70"; `projWins` 91.5 gives 92-70; `projWins` 92.4 gives 92-70); the render read-back of every PROJ cell; a test that no standings code path opens `mlb_projections.json` for PROJ; the basis fixture (round 4): the 2026-09-27 ledger entry as that morning's futures.json joined to the post-final 2026 rows is accepted, 28 clubs null (CLE, KCR, TBR, BOS, ATL, TEX, ARI, DET, NYM, ATH among them), NYY and BAL 93-68 and 79-82; an agreeing row that breaks the bound is refused; the lag fixture (round 5): the 2026-09-07 ledger entry (LAD "85-57", `projWins` 96.7) joined to LAD 86-57 is accepted with `proj_basis_ok` false, `proj_basis_w` 85, `proj_basis_l` 57, and the render prints "-" with the tooltip "Projection built on a W-L of 85-57; this row is 86-57." |
+| T11 | every served value reconciles to its source: W to RA equal the saved response; every `ours` value byte-equal to its source at the stamped `generated_at`; every packed value of `<Y>-phist.json` byte-equal to its ledger or record entry and `phist_from` equal to `regular.as_of[0]` (round 4), or to `switch_as_of` when `regular` is empty (round 7); THE TWO BLOCKS (round 5): no `as_of` appears in both `regular` and `post`; `switch_as_of` equals `post.as_of[0]` (null when `post` is empty); every `regular` `as_of` is on or after `opening_day` and before `switch_as_of`, from entries of season Y; every `post` `as_of` is of season Y and on or before the last postseason game; a `closed` file is never rewritten; the copyright line verbatim | the validator; fixture tests: HEAD's 20 ledger entries and one record entry give 18 regular (2026-09-06 to 09-30), 1 post, `switch_as_of` 2026-10-01; an empty record gives 20 regular and a null switch; a 2027-01-15 entry of season 2027 and an entry before `opening_day` are never copied; THE FRAME BOUND (round 6): a season-2027 ledger entry dated after Opening Day 2027 (2027-03-26 in the fixture), read while futures.json's `season` is 2026, is never copied, and once a run on 2027-04-02 reads a season-2027 futures.json only entries from 2027-04-02 are copied, the earlier dates listed in `regular.missing`; THE POST-ONLY FILE (round 7): under a futures.json that never reads 2027 and a record with season-2027 entries of 2027-10-05 and 10-06, the file is written with `regular` empty, its `missing` listing 2027-03-26, 04-01 and 04-02, and `phist_from` equal to `switch_as_of` 2027-10-05; the seed keeps HEAD's 18 entries; a closed file is left byte-identical by a later run |
+| T12 | probabilities in [0, 1]; p_post >= p_div; p_post >= p_bye; p_pennant <= p_post; p_ws <= p_pennant (reuse `test_served_invariants` laws :71, :86, :118 on the copied block) | per file |
+| T13 | the race equals EVERY by-date snapshot of its season in W, L, RS, RA for every club at that date (184 dates in 2026; `race_matches_snapshots` returns no mismatch), not only the last date, and its last date equals the season file; the 2026 race equals the summed finals (checked once by the STANDINGS_2 writer against `.cache/betting/completed_games.json` and recorded in the commit message, never read by the job or a test, F10) | per file |
+| T14 | no forbidden key (SP8 8.6) at any depth; no URL outside the exempt `copyright` key; no em or en dash after MLB strings are normalised | the validator |
+| T15 | served derivations (4.6 item 11, round 2): `rdg`, `rs_g` and `ra_g` = each of `rd`, `rs` and `ra` divided by `gp`, rounded to 2 decimals (null at `gp` 0); `w_xw` = `w` minus the wins of `x_wl`; `left` per item 11 and 0 for every club in a final file; `l10_seq` has at most ten letters and its count of W equals the wins of `l10`; the race's `wc_gap` on its last date equals the season file's signed `wcgb` (+ when `wc_ahead`, - otherwise, null for a division leader); `k90` = round((72/90)^(1/`x_exp`), 3) or null; `opening_day` = the race's `dates[0]` | the validator; fixture tests; the render tests read each printed cell back against these keys |
+| T16 | `head_to_head(games, a, b)`: a doubleheader split counts two games, a suspended game counts once, clubs that never met give 0-0, and the counts of a and b mirror each other | unit test on the synthetic game list |
+| T17 | the tiebreak text is keyed by season: 2020 the by-rule 2020 literal (no extra game), 2000 to 2019 and 2021 the extra-game literal, 2022 on the by-rule literal | a 2020 fixture plus 2021, 2022 and 2026 cases |
+| T18 | the SOS window: `sos` and `sos_rank` null outside `opening_day` to futures.json `regular_season_end` or when `left` is 0, the postseason included | an October fixture holding HEAD's NYY 0.5642 gives null for all 30 |
+| T19 | seeds (round 3, F25): per league the non-null `seed` values are exactly 1 to N, N = 3 + `format.wc_spots` (8 in 2020), with `qualified` and `qualified_text` set exactly where `seed` is; seeds 1 to 3 are the `divisionRank`-1 clubs by `leagueRank`; on a final file the seeded set equals the marked set (27 of 27 cached seasons) and the `division` clubs equal `division_champions(records, live=False)`; on the 2026 final fixture `seed` equals `data/bracket_sim.json` `clubs[].seed` for 12 of 12 (a trimmed fixture copy: team, league, seed); on the 2020 fixture it equals MLB's 2020 seeds (F25); when STANDINGS_3's job copies `bracket_sim.json` for the same season, the validator refuses a season file whose seeds differ from it | the validator; fixtures 2026, 2020, 2016, 2012, 2024, p1 and p3; the render read-back of every SEED cell and of the Playoffs seeds table (and, once SCORES_4b's bracket block serves its seeding, a render test that the mounted bracket's seeds equal `seed`) |
+| T20 | league records (round 3, F26): `vs_lg` and `intr` are copied from `records.leagueRecords` (own league, other league); `vs_lg` equals the sum of the club's three `divisionRecords`; `vs_lg` plus `intr` equals [`w`, `l`] (810 of 810 cached rows) | the validator; every fixture; the render read-back of every LG and INTR cell |
+
+**Test files.**
+
+| File | Task | Asserts |
+|---|---|---|
+| `test_standings_core.py` | 1 | T1 to T9, T11, T12, T14 to T17, T19 and T20 on fixtures trimmed (each under 200 KB) from `.cache/statsapi_standings_{2026,2020,2016,2012,2024}.json` and probe p1 and p3 (copied from `SP/standings/ld_work/` into `test_fixtures/standings/`); the marks rule; the `franchise_export` parity for 2000 to 2025 (on the tracked copy); the club literal; the format table; the tiebreak literals; flag coupling; import fence AT RUNTIME (round 4: a fresh interpreter imports `standings_core`, runs `parse_standings`, the builders, the validator and `build_race` on fixtures, and `requests`, `bs4`, `pandas`, `numpy`, `trades`, `scrapers`, `stats` and `franchise_export` stay out of `sys.modules`; the club literal test imports `trades` itself); the champion pin (`standings_core.division_champions` equal to `franchise_export.division_champions` 2000 to 2025 plus p1, p3 and the 2026 final fixture; the test imports `franchise_export`); the compact writer; the phist size test (240 synthetic regular entries plus 35 postseason entries under 256 KB; round 5: 240 bounds a real file because the disjoint blocks hold at most one entry per date from `opening_day` to the last postseason game, 229 in 2025 and 221 in 2026; plus a 366-entry all-regular file under the 1 MB ceiling) and a full race file under 160 KB; forbidden keys; the rule 4 amendment (copyright exempt in `standings/*.json` only); `race_matches_snapshots` on a synthetic list with one snapshot a game off on a middle date |
+| `test_standings_job.py` | 2, 3 | `decide()` due reasons (a) to (d) on fixture slates; the lag guard; the race from a fixture season schedule extended by fixture date files (doubleheader order); write order and `rev` equality; `--backfill-standings` and `--backfill-race` refusals and `HISTORY_FLOOR`; preview OUT while the flags are off; no read of `.cache/betting`; `ours` byte-equal copies from fixture served files, futures only for PROJ, T10 on a 161-game fixture, on the .5 fixture (printed integers) and on the basis fixture (round 4: 09-27 morning futures plus post-final rows, accepted, 28 nulls), the lag fixture (round 5: the 09-07 entry against LAD 86-57, `proj_basis_w` 85 and `proj_basis_l` 57), the season guard, T18, T19's refusal when the copied `bracket_sim.json` seeds differ, the October switch, the availability window, the phist file packed from a fixture ledger and a record shaped as HEAD's (`entries[].sha256`, `outputs.clubs` a dict) with `phist_from` equal to its first `as_of`, the two blocks disjoint with `switch_as_of` (round 5, T11), the frame bound (round 6, T11: `frame_from` set once, the 2026 seed, the phist-file recovery, no copy of a season-2027 entry while futures.json reads 2026), the post-only file (round 7, T11: `regular` empty, `phist_from` equal to `switch_as_of`), the closed file never rewritten, the registry block plus `MODEL_LABEL`; the validator refusing a snapshot that differs from the race at its date (T13) |
+| `test_standings_render.py` | 4, 5, 6 | Playwright on fixture payloads in a temp site: 390, 768, 1024, 1280, 1440, light and dark; no page overflow; the 352 px Record group without frame scroll at 390; equal column x positions across the six division tables; sticky opaque club cell; states; keyboard sort and `aria-sort`; ties and nulls; marks and colour classes; no `@keyframes`; no `luck` in the DOM; charts' `role="img"`, aria-label, table twin equal to plotted numbers, end labels 11 px apart, tap and Escape; RECONCILIATION to the payload, not only self-consistency: every RD/G, W - xW, LEFT, PROJ (`proj_w_int`-`proj_l`, or "-" with the basis tooltip naming both W-L where `proj_basis_ok` is false, round 5; every printed stamp date in America/New_York with "(Eastern)" under two browser zones), SEED, how-qualified, LG and INTR cell equals its served key, the lit-lamp count equals `l10`'s wins, C1 equals W minus L of each race tuple, C2 equals `wc_gap` and on the last date the season file's signed `wcgb`, C4 equals `rs_g` and `ra_g`, C5 equals `w`, `x_wl` and `w_xw`; no typed date in `standings.js` |
+| `test_standings_labelling.py` | 4 | every odds cell inside a `data-model-id` element whose visible text names source and verdict from the registry block; no percentage outside the ODDS group; no probability inside the bracket mount |
+| existing, extended | 4 to 9 | `test_data_cache_stamps.py` (refuses `standings` names), `test_pixel_icon_coverage.py` and `test_pixel_icon_sizes.py` (the two marks), `test_no_hardcoded_colors.py`, `test_asset_versioning.py`, `test_publish_manifest.py`, `test_model_registry.py`, `test_glossary_slugs_resolve.py`, `test_generated_docs_in_sync.py`, `test_sources_attribution.py` (7), `test_no_orphan_pages.py` and `test_sitemap_diamond_sync.py` (8), `test_served_invariants.py` (0B) |
+| must stay green | all | every `test_scores_*.py`, `test_franchise_export.py`, `test_proj_export.py`, `test_collegesavant_nav_in_sync.py`; for STANDINGS_9 also `test_proj_current.py` unchanged (`test_standings_now_parse` asserts `wcGb == 2.5` at :175 for the feed's "2.5", a club behind, which the sign fix leaves at 2.5), `test_bracket_sim.py`, `test_smoke_futures_settled_season.py` |
+
+---
+
+#### 7. Tasks in order with dates and requires
+
+Every served task carries `not_before` 2026-10-11, the P8 preamble and the served-change guard, follows the
+Scores chain under the orchestrator's ordering exception (SCORES_1 to SCORES_5b after PX_C, SP8 5.3), and
+runs on an Opus 5.5 writer. Realistic dates: step Z about 10-08 to 10-10 (F22), the Scores chain after it;
+STANDINGS_1 to STANDINGS_4 locally about 10-15 to 10-24, the flip after SCORES_5a. A task that fetches or
+runs an exporter never runs on a registered look day; every served spec's guard carries the full list
+(2026-10-20, 10-21, 10-23, 10-28, 10-31, 11-02, 11-06, 11-13, 11-16, 11-17, 11-18, 11-20, 11-24, 11-25,
+12-01, 12-02, 12-03, 12-08, 12-10, plus any date in `docs/*GATE*.md`, grepped before the first fetch), and
+STANDINGS_2 checks the date before every chunk of its 197 live calls (10-20, 10-21 and 10-23 fall in its window). Under DEPLOY-3 nothing
+reaches the public site until the owner reopens deploy; the first live refresh-after-final is Opening Day
+2027.
+
+| Order | Id | Builds | Requires | not_before |
+|---|---|---|---|---|
+| 0 | `STANDINGS_0_PLAN_RECORD` | copy `SP/standings/` to the durable bundle; record the rename and ST-Q1 to ST-Q4 in `DECISIONS_FOR_OWNER.md`; no repo commit | none | null |
+| 0B | `STANDINGS_0B_SCHEDULED_GAMES_TEST` | amend `test_every_club_plays_a_whole_season` to games scheduled (F12), test only; lands only before 2026-10-04 or after step Z | none | null |
+| 1 | `STANDINGS_1_CORE_RULES` | `standings_core.py` (4.6), the tracked `data/_labs/standings/` copy, fixtures, `test_standings_core.py`, the validator's rule 4 amendment | SCORES_1_CORE_RULES, FS_1_DIVISION_CHAMPION | 2026-10-11 |
+| 2 | `STANDINGS_2_JOB_AND_BACKFILL` | the standings call, due reasons, lag guard, files, `--backfill-standings`, `--backfill-race`, the race from season schedules and date files; one local backfill into the preview OUT (about 197 calls); DEPLOY_PENDING lines | SCORES_2_JOB_AND_DEPLOY, STANDINGS_1_CORE_RULES | 2026-10-11 |
+| 3 | `STANDINGS_3_OURS_JOIN` | the `ours` block with the projection's basis, and `<Y>-phist.json` (4.2, 4.7) | STANDINGS_2_JOB_AND_BACKFILL | 2026-10-11 |
+| 4 | `STANDINGS_4_PAGE_TABLES` | `/standings/` behind the flag: shell, shared head, views, column groups, sort, marks icons, lamps, states, stamp, copy, labelling, Playoffs view with the bracket mounted | SCORES_3_PAGE_CHART, SCORES_4b_BRACKET, STANDINGS_3_OURS_JOIN, PX_A_foundation, PX_B_navigation, PX_C_states_ballpark | 2026-10-11 |
+| 5 | `STANDINGS_5_CHARTS` | the six charts behind `STANDINGS_CHARTS`; flips it in its last commit only if `STANDINGS_LIVE` is already True | STANDINGS_4_PAGE_TABLES, Q8_12_CHART_HELPERS_AND_TOKENS | 2026-10-11 |
+| 6 | `STANDINGS_6_SEASON_SELECTOR` | season select, past seasons from the tracked copy and the race backfill, As of, format notes | STANDINGS_4_PAGE_TABLES | 2026-10-11 |
+| 7 | `STANDINGS_7_FLIP` | the one flip commit: `STANDINGS_LIVE = True` (and `STANDINGS_CHARTS` if STANDINGS_5 landed), the page, `standings` in `publish_paths`, the strip link, `MODULE_STAGE` text, registry surface amendments for `playoff_odds_sim` and `postseason_bracket_sim`, glossary entries, `_ROUTE_NOTES`, the /sources/ row | SCORES_5a_LIVE_FLIP, STANDINGS_4_PAGE_TABLES, STANDINGS_6_SEASON_SELECTOR | 2026-10-11 |
+| 8 | `STANDINGS_8_LAUNCH_LINKS_HEALTH` | sitemap entry, Franchise SEASON tile links to `/standings/#team=CODE`, the `standings` scope on the `scores_job` health row | STANDINGS_7_FLIP, SCORES_5b_LAUNCH_NAV_HEALTH, DISPLAY_franchise | 2026-10-11 |
+| 9 | `STANDINGS_9_NIGHTLY_STANDINGS_HEALTH` | a `statsapi_standings` ingest row for the nightly's own read; the WCGB sign fix in `standings_now` (signed games back, "+9.5" read as -9.5), which differs ON PURPOSE from `standings_core`'s `wcgb` 9.5 with `wc_ahead` (a number for numeric readers there, MLB's printed form here; one docstring sentence beside each names the other; not unified); the F2 reader list checked for `wcGb` reads | none | 2026-10-11 |
+
+**Notes appended to the Scores specs** (`QUEUE_EDITS.json`, each an ORCHESTRATOR NOTE dated 2026-10-02):
+
+- SCORES_1_CORE_RULES: write the validator and the club literal so a second payload family registers its
+  own file kinds (STANDINGS_1 adds `standings/*.json` and the copyright exemption); build no standings
+  code.
+- SCORES_2_JOB_AND_DEPLOY: reserve `OUT/standings/` and the `standings` and `standings_seasons` keys
+  (written by STANDINGS_2); keep `dh {kind, n}` and `start` on every card (the race orders doubleheaders by
+  them); fetch no standings here; the limiter is shared.
+- SCORES_3_PAGE_CHART: the h1 reads "Scores / Standings" through `_scores_module_head(active)`, the strip
+  rendered only when `standings_core.STANDINGS_LIVE` exists and is True; title, MODULE_STAGE and budgets
+  unchanged. If it adds the `scores` symbol to `ICONS` in `tools/pixel_icons.py`, the entry's label is
+  "Scores / Standings".
+- SCORES_4a_VIDEO: nothing changes for the rename; its five "MLB Scores" strings are the owner-ask label and
+  quotes and the DECISIONS section headings, which stay (section 3, "Strings that stay").
+- SCORES_4b_BRACKET: the chunk exports a mount function taking an element and the season index's bracket
+  block, with no route or page assumption, so `/standings/` mounts it unchanged.
+- SCORES_5a_LIVE_FLIP: the glossary module display name (if a map exists; found by grepping how an
+  existing module key, for example `management`, maps to its display name) is "Scores / Standings"; the
+  flip adds nothing for standings.
+- SCORES_5b_LAUNCH_NAV_HEALTH: the NAV_ITEMS label and the three hand-kept copies read "Scores /
+  Standings"; the printed health label "Scores / Standings job"; the `/standings/` sitemap entry and
+  standings health scope are STANDINGS_8's; if the `scores` icon lands here, its `ICONS` label is
+  "Scores / Standings".
+- SCORES_6_PREGAME_CONTEXT: no board number reaches `/standings/`; `standings.js` never joins `CLIENTS`.
+
+---
+
+#### 8. Conflicts resolved
+
+| # | Between | Conflict | Resolution | Why |
+|---|---|---|---|---|
+| C1 | Owner's typed "Scores/Standings" vs LP's "Scores / Standings" | spacing | spaced, as one constant; ST-Q4 offers the typed form | a wrap point in the phone drawer; same width as "In-Game Management" |
+| C2 | SC-NAV (one entry after Franchise) vs a Standings page | a second leaf | one leaf to `/scores/`, `active="scores"` on both, a link strip | (1) to (3) of section 3 |
+| C3 | LD 2.6 (race from `.cache/betting/completed_games.json`, zero calls) vs SP8 fence 11 and conflict 39 (the job never reads `.cache/betting`) | read source | the job derives the race from one regular-season schedule call per season, extended in season from its own date files; the betting file is a one-time writer check only | one fence string rule; one call instead of a dependency on the 2,429-game scores backfill; the schedule keeps doubleheader order, which `completed_games` loses |
+| C4 | LD (one parser in the job) vs Part 8 8.E (standings only through `franchise_export._standings`, never a second parser) | parsing | `standings_core` parses dated responses (which `_standings` cannot read), applies `division_champions()`'s rule itself (round 4: calling it loads `trades`, F15) with a test pinning the two equal, and a parity test pins completed seasons to `_standings` | one rule of record and a pinned equality instead of a fork |
+| C5 | LP (ODDS from `franchise_board.json` `sections.odds`) vs LD (from `futures.json`) | source | `futures.json` and `bracket_sim.json`, the files Franchise itself copies | primary source, smaller, registry-named |
+| C6 | Team Outlook `current` (F11) vs `futures.json` | projected finish | futures only; T10 test; the stale overlay and the `curLosses = 162 - curWins` construction handed to the projections owner (10) | the overlay prints a phantom game |
+| C7 | 8.D row 8 (no odds in the bracket) vs Pennant and WS in October | placement | odds only in the seeds table's labelled group, outside the bracket; the bracket chunk unchanged with its no-percent test; registry surface amendment for `postseason_bracket_sim` in STANDINGS_7 | the row forbids probabilities in the bracket, and the bracket simulator already serves on two surfaces with a registry row |
+| C8 | SP8 rule 4 (only `index.json` may carry the copyright URL) vs the brief (copyright on every standings payload) | validator | amend rule 4 for a top-level `copyright` key in `standings/*.json`, verbatim only | each standings file is fetched on its own |
+| C9 | SP8 8.6 forbidden keys vs StatsAPI and futures names | keys | renamed at parse and copy time (4.6); `p_hist` and the `<Y>-phist.json` file, not `odds_*` (round 4 named the file `-phist`, not `-odds`, so its name never resembles the fenced `.cache/odds` path or the forbidden `odds` key); futures.json's `record` is read for the basis comparison and never written | the validator refuses them at any depth |
+| C10 | SC-HISTORY (a) (2026 only) vs past-season races | depth | final tables 2000 to 2025 from a tracked copy (zero calls) and races 2015 to 2025 from 11 season schedule calls (2026 from 1), no game cards or date files written for past seasons; per-date past snapshots only under ST-Q3 (b) | SC-HISTORY governs the scores files; a race is a derived series |
+| C11 | Q8_12 (owns `lineChart`, `spark`, viz tokens) vs a standings launch that should not wait on it | sequencing | charts behind `STANDINGS_CHARTS`; the tables flip without them; STANDINGS_5 requires Q8_12 and never adds a helper | Q8_12 waits on PX_E and DISPLAY_fa |
+| C12 | SCORES_5b's live curl confirmation vs DEPLOY-3 (no box install) | launch | STANDINGS_8 requires SCORES_5b and inherits its state; nothing here runs a live check of eephus.io; box steps go to `docs/DEPLOY_PENDING.md` | the orchestrator owns SCORES_5b's re-cut under DEPLOY-3 |
+| C13 | DISPLAY pass (`DISPLAY_franchise`) and FS_2B vs repointing the Franchise SEASON tile links | file overlap | STANDINGS_8 requires DISPLAY_franchise; it changes three href targets only and keeps whatever FS_2B marks exist | one writer per file; no number moves |
+| C14 | DISPLAY pass rules (no decoration near priced numbers, a third less prose) vs the ODDS group | design | the group carries only its label, chip and stamp; method prose sits in the glossary and a collapsed "How this works"; no ornament beside odds cells | the pass's DO-NOT list |
+| C15 | LT-08 (owns `xwl`, `w_minus_xw`) vs STANDINGS_7 | glossary | whichever lands first creates them with LT-08's text; the other links | one entry each |
+| C16 | LP decision 8 (exponent printed only if reproduced) vs LD (1.83 reproduces 840 of 840) | copy | print "exponent 1.83" while T9 holds on every fixture; else drop the sentence and fall back | measured |
+| C17 | The epoch clock vs everything served | dates | `not_before` 2026-10-11 and the guard on every served task; 0 and 0B are docs or test only, and 0B lands only before 10-04 or after Z | 8.A, `_ALL.txt` |
+| C18 | F-SCORE (FS_1B postseason cache, `data/_labs/postseason/`) vs the Playoffs view's past seasons | postseason results | the standings page shows no past postseason results in v1; past Octobers come from FS_1B through Franchise | one postseason ingest (8.E) |
+| C19 | LP 2.8, 2.9 and 4.3 drafts vs the verified facts (round 2) | copy | "March 26" becomes a sentence built from `opening_day` (2026-03-25, probe p3); `remaining_sos` and the SOS tooltip say talent rating, not winning percentage (F24); `magic_number` names the computed fallback (T7) | the plan wins over its lanes; every date and figure in copy is read from a field |
+| C20 | `fa_fit_backtest.standings_now` `wcGb` (signed games back after STANDINGS_9) vs `standings_core` `wcgb` with `wc_ahead` | sign convention | kept different on purpose and documented beside each; `test_proj_current.py:175` stays green | one is a number for the nightly's numeric readers, the other carries MLB's printed "+9.5" |
+
+---
+
+#### 9. Owner questions (at most 4; recommendation first; designed as taken)
+
+Under the owner's standing instruction of 2026-10-01 each is recorded as its recommended option unless the
+owner overrides in chat. Full text in `OWNER_QUESTIONS.json`.
+
+| Id | Decides | Recommended (designed as taken) | Needed by |
+|---|---|---|---|
+| ST-Q1 | where the standings live | `/standings/` page sharing the module head; one nav leaf | 2026-10-11 |
+| ST-Q2 | whether the site's simulator chances appear on the standings tables | a labelled ODDS group outside the bracket, current season only | 2026-10-11 |
+| ST-Q3 | past-season depth | final tables 2000 to 2025 (tracked copy, zero calls) plus races 2015 to 2025 (11 calls); no per-date past snapshots | 2026-10-11 |
+| ST-Q4 | the name's form | "Scores / Standings" (spaced) | 2026-10-11 |
+
+---
+
+#### 10. What this does NOT do
+
+- No second nav leaf, no tab inside `/scores/`, no live poll on `/standings/`.
+- No standings call without `date`, no call in the postseason or offseason, no browser request to MLB.
+- No file under `data/` except the tracked, unpublished `data/_labs/standings/` copy; no read of
+  `.cache/betting`, `.cache/odds`, `.cache/lineup_captures`; no write to any shared cache.
+- No recomputed odds, no new model, no registry row (only two surface amendments), no betting-board
+  number, no price, no American odds, no market.
+- No probability inside the bracket; no past postseason results (FS_1B owns them).
+- No "luck" label, no colour on W - xW, RD, RS or RA, no team colours, no fit, trend or forecast line.
+- No tiebreak rule text beyond what 4.6 item 7 states; no head-to-head without a game list.
+- No per-date snapshots for past seasons unless ST-Q3 (b).
+- No fix to Team Outlook's `current` overlay or `_current_blend` (F11): handed to the projections owner;
+  STANDINGS_0B amends only the test that a correct rebuild would break.
+- No deploy, beta sync, box install, cron or webmaster step executed (DEPLOY-3).
+- No edit to `SCORES_PLAN.md`; the notes of 7 amend the queue specs only.
+
+#### Validation
+
+Run 2026-10-02 (round 2) with `python SP/standings/_validate.py` (parses the three JSON files and this plan; checks keys, id forms, kinds, `not_before` (null or 2026-10-11 and later), `requires` against `SP/dq/queue.json` plus the new ids, cycles over the union graph, the edits' target ids and dated header, the questions' shape, the ten section headings, em and en dashes, and `tools/copy_lint.py`'s BAN list), then `python SP/standings/_check_round2.py` (one check per VERIFY_round1 fix, read from the generated specs and this plan). Generator: `SP/standings/_gen_queue.py`; round 1's files are kept in `SP/standings/verify_work/r1_backup/`. Round 3 (2026-10-02) reran `_validate.py` and added `python SP/standings/_check_round3.py` (one check per VERIFY_round2 item, which also reruns `_check_round2.py`); both outputs are at the end of "Round 3 dispositions". Round 4 (2026-10-02) reran `_validate.py` and added `python SP/standings/_check_round4.py` (one check per VERIFY_round3 item, which also reruns `_check_round3.py` and through it `_check_round2.py`); both outputs are at the end of "Round 4 dispositions".
+
+##### Round 2 dispositions
+
+Each fix of `SP/standings/VERIFY_round1.md` (FIX AGAIN), as applied:
+
+1. **Import fence: FIXED.** F15 and 4.6 now say `standings_core` imports `scores_core` and `franchise_export` only and never `trades` (`trades.py:51` imports `requests`); the club literal is pinned to `trades.canonical_org_from_id` inside `test_standings_core.py` only, and the fence test imports `standings_core` in a fresh interpreter. STANDINGS_1's spec says the same.
+2. **Phantom game in PROJ and LEFT: FIXED, with one correction to the verifier's formula.** `left` is served by core from the season's game list (games not final under the Scores state rule, postponed and cancelled excluded, 0 in a final file; 4.6 item 11). The verifier's `gp + left - (proj_w - w)` evaluates to 161 for NYY (161 + 0 - 0), so the plan serves `proj_l = w + l + left - proj_w` (equal to `l + left - (proj_w - w)`), which gives NYY 93-68 and BAL 79-82 (futures.json at HEAD: records 93-68 and 79-82, projWins 93 and 79). T10 is restated as `proj_w + proj_l = w + l + left` with a 161-game fixture in STANDINGS_1 (left) and STANDINGS_3 (PROJ).
+3. **SOS in October: FIXED.** F24 corrected (non-null at HEAD: NYY 0.5642, BAL 0.5031, from the balanced fallback's 162 minus games played); the window is `opening_day` to futures.json `regular_season_end` inclusive and `left` above 0, null otherwise including the postseason (4.7, T18, STANDINGS_3 test on an October fixture).
+4. **Source keys: FIXED.** `p_hist.post` reads `entries[]`, each entry's `sha256` and `outputs.clubs` as a dict keyed by club code (re-read at `fc1405e7`); futures.json's join key `team` named. The registry block is `{model_id, verdict, last_checked, label}`: three fields copied from the registry row, `label` from the literal `standings_core.MODEL_LABEL`; `sentence` dropped.
+5. **Page-side arithmetic: FIXED by serving.** Core serves `rdg`, `rs_g`, `ra_g`, `w_xw`, `left`, `l10_seq`, `opening_day`, `k90` (C4's 90-win slope; the line is not drawn when `x_exp` is null, replacing the Pythagenpat fallback curve the page would have had to compute), `ours.proj_l` and the race file's `wc_gap` (race budget raised to 160 KB / 640 KB for it). The one named page derivation is C1's W minus L of one race tuple (5.5); STANDINGS_4 and STANDINGS_5 STOP on anything else. Tests added: T13 at every by-date snapshot (`race_matches_snapshots`, the validator, and 184 of 184 dates in STANDINGS_2's local run); C2 on the last date equal to the signed `wcgb` (T15, STANDINGS_1 and STANDINGS_5); lamp wins equal to `l10` (T15, STANDINGS_1 and STANDINGS_4); `head_to_head` unit test (T16).
+6. **TIEBREAK_TEXT for 2020: FIXED.** `tiebreak_text(season)` with three literals (from 2022 by rule; 2020 by rule, no extra game; 2000 to 2019 and 2021 an extra game), served in each season file's `tiebreak`, pinned by a 2020 fixture (T17).
+7. **Look-day guard: FIXED.** Every served spec carries the full list (2026-10-20, 10-21, 10-23, 10-28, 10-31, 11-02, 11-06, 11-13, 11-16, 11-17, 11-18, 11-20, 11-24, 11-25, 12-01, 12-02, 12-03, 12-08, 12-10) plus a grep of `docs/*GATE*.md` before the first fetch; a chunked backfill checks the date before every chunk (section 7, STANDINGS_2).
+8. **Glossary gaps: FIXED.** Ten new table ids (`win_pct`, `runs_scored`, `runs_allowed`, `home_away_record`, `division_record`, `league_record`, `interleague_record`, `vs_hand_record`, `games_left`, `postseason_seed`), three chart ids (`division_race_chart`, `wild_card_race_chart`, `odds_over_time_chart`), the SOS rank defined inside `remaining_sos`, every served derivation mapped to an id (5.12); all checked free at `fc1405e7`. `remaining_sos` and the SOS tooltip now say talent rating; `magic_number` names the computed fallback. STANDINGS_7 lands 26 to 32 entries and tests that every header and chart resolves.
+9. **Opening Day: FIXED.** No date is typed: "The race starts on Opening Day, " plus `opening_day` (2026-03-25, the race's first date), and the odds-record sentence from `p_hist.regular`'s first `as_of` (5.7, 5.5 C3, STANDINGS_4 test that `standings.js` holds no typed date). LP 2.8 and 2.9 superseded (C19).
+10. **Rename completeness: FIXED.** SCORES_4a_VIDEO gets a one-line note; plan 3's "Strings that stay" names the ask label and quotes, both DECISIONS section headings and the Scores plan reference (round 2 found no literal "MLB Scores plan (SCORES_PLAN.md)" string; each spec holds five "MLB Scores" matches of the kinds named, SCORES_5b a sixth, its nav label); a new "Icon label" row and the SCORES_3 and SCORES_5b notes set the `ICONS` label to "Scores / Standings".
+11. **F2 readers and STANDINGS_9: FIXED.** F2 lists `proj_current.py`, `proj_backtest.py`, the three tools and the eight tests; STANDINGS_9 keeps `test_proj_current.py` green unchanged (its :175 case is "2.5", a club behind, which stays 2.5) and states that `standings_now`'s signed -9.5 differs on purpose from `standings_core`'s 9.5 with `wc_ahead`, documented beside each and not unified (C20).
+12. **Wording: FIXED.** 5.4 says "the same rounding as the Franchise tile's `pct(v, 1)`" and notes that it appends "%"; STANDINGS_0 now says "say so in your return (this task makes no commit)".
+
+Not faulted and kept: every other row of sections 1 to 10, the owner questions (unchanged), the dates and requires.
+
+```
+parsed: 11 tasks, 8 edits, 4 questions; queue.json has 368 ids
+STANDINGS_PLAN.md: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_TASKS.json: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_EDITS.json: em/en dashes 0, copy_lint BAN hits 0
+OWNER_QUESTIONS.json: em/en dashes 0, copy_lint BAN hits 0
+  STANDINGS_0_PLAN_RECORD: kind P8, not_before None, requires [], spec 2581 chars
+  STANDINGS_0B_SCHEDULED_GAMES_TEST: kind EV, not_before None, requires [], spec 4417 chars
+  STANDINGS_1_CORE_RULES: kind EV, not_before 2026-10-11, requires ['SCORES_1_CORE_RULES', 'FS_1_DIVISION_CHAMPION'], spec 15282 chars
+  STANDINGS_2_JOB_AND_BACKFILL: kind EV, not_before 2026-10-11, requires ['SCORES_2_JOB_AND_DEPLOY', 'STANDINGS_1_CORE_RULES'], spec 12589 chars
+  STANDINGS_3_OURS_JOIN: kind EV, not_before 2026-10-11, requires ['STANDINGS_2_JOB_AND_BACKFILL'], spec 11364 chars
+  STANDINGS_4_PAGE_TABLES: kind P8, not_before 2026-10-11, requires ['SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'STANDINGS_3_OURS_JOIN', 'PX_A_foundation', 'PX_B_navigation', 'PX_C_states_ballpark'], spec 13674 chars
+  STANDINGS_5_CHARTS: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES', 'Q8_12_CHART_HELPERS_AND_TOKENS'], spec 11502 chars
+  STANDINGS_6_SEASON_SELECTOR: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES'], spec 9188 chars
+  STANDINGS_7_FLIP: kind P8, not_before 2026-10-11, requires ['SCORES_5a_LIVE_FLIP', 'STANDINGS_4_PAGE_TABLES', 'STANDINGS_6_SEASON_SELECTOR'], spec 11784 chars
+  STANDINGS_8_LAUNCH_LINKS_HEALTH: kind P8, not_before 2026-10-11, requires ['STANDINGS_7_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'DISPLAY_franchise'], spec 9582 chars
+  STANDINGS_9_NIGHTLY_STANDINGS_HEALTH: kind EV, not_before 2026-10-11, requires [], spec 9610 chars
+cycles: none
+edits: ['SCORES_1_CORE_RULES', 'SCORES_2_JOB_AND_DEPLOY', 'SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'SCORES_5a_LIVE_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'SCORES_4a_VIDEO', 'SCORES_6_PREGAME_CONTEXT']
+  ST-Q1 [Page URL] by 2026-10-11: /standings/ page, shared head (Recommended)
+  ST-Q2 [Odds group] by 2026-10-11: Labelled group, off the bracket (Recommended)
+  ST-Q3 [Past depth] by 2026-10-11: Tables 2000 on, races 2015 on (Recommended)
+  ST-Q4 [Name form] by 2026-10-11: Scores / Standings (Recommended)
+plan sections 1-10 present: True
+RESULT: OK
+```
+
+```
+PASS 1 fence: no spec allows importing trades
+PASS 2 PROJ/LEFT: proj_l and left served, 161-game fixture
+PASS 3 SOS window to regular_season_end
+PASS 4 source keys sha256, clubs dict, no sentence
+PASS 5 served derivations and reconciliation tests
+PASS 6 tiebreak keyed by season, 2020 fixture
+PASS 7 full look-day list in every served spec
+PASS 8 glossary: 26 table ids, 4 chart ids, two texts fixed
+PASS 9 no typed Opening Day
+PASS 10 rename: 4a note, ICONS label in 3 and 5b notes
+PASS 11 F2 readers; proj_current :175 kept green
+PASS 12 wording: same rounding; STANDINGS_0 no commit message
+RESULT: OK
+```
+
+##### Round 3 dispositions
+
+Each item of `SP/standings/VERIFY_round2.md` (its "Fixes" list under FIX AGAIN, plus the four "Not blocking" notes, folded in because round 3 touched the same text), as applied through `_gen_queue.py` and this plan; round 2's generated files and generator are kept in `SP/standings/verify_work/r2_backup/`. Facts re-read at `222dd663` (F25 to F27). Checked by `python SP/standings/_check_round3.py` (one check per item, plus a rerun of `_check_round2.py`).
+
+| # | Item | Disposition | Where |
+|---|---|---|---|
+| 1 | PROJ rounding | APPLIED. Core serves `ours.proj_w_int` = `proj_w` rounded half up (`math.floor(proj_w + 0.5)`, never Python's `round`, never in the page) and `proj_l` = `w + l + left - proj_w_int`; `proj_w` stays byte-equal for the tooltip (one decimal, as the Franchise tile prints projected wins, F27). T10 now runs on the printed integers with a .5 fixture (w 85, l 65, left 12, `projWins` 92.5 prints 93-69, never 93-70; 91.5 and 92.4 print 92-70) and the bound `w <= proj_w_int <= w + left`; the render read-back checks every PROJ cell. 5.4 corrected: the Franchise tile prints one decimal, not an integer | 4.6 item 11, 4.7, 5.4, 5.11, 5.12 map, T10, F27; STANDINGS_3, STANDINGS_4, STANDINGS_7 surface text |
+| 2 | SEED source | APPLIED WITH CHANGE. Core serves `seed`, `qualified` and `qualified_text` per row (4.6 item 11, not a twelfth item, so the item count every spec cites holds) from `FORMAT[Y]` and MLB's ranks, as the verifier asked; changed in two places after measuring: the division qualifiers are the `divisionRank`-1 clubs (in a final file exactly `division_champions(records, live=False)`, identical to the `wildCardRank`-null club in 162 of 162 cached divisions), because in 2020 `wildCardRank` is also null for the runners-up, who are their own group (`division_second`, seeds 4 to 6); and `qualified_text` comes from the literal `QUALIFIED_TEXT` with in-season wording. The law (T19) holds on the data: the seeded set equals the marked set in 27 of 27 final files, 2026 equals `bracket_sim.json` `clubs[].seed` 12 of 12, 2020 equals MLB's seeds; the job's validator refuses a season file whose seeds differ from `bracket_sim.json` for the same season (STANDINGS_3); the render read-back covers SEED, the seeds table and, once SCORES_4b serves seeding, the mounted bracket. The page derives none (STANDINGS_4 STOP names it). `postseason_seed`'s glossary text gains the 2020 order and the in-season meaning | F25, 4.6 items 2 and 11, 5.2, 5.12, T19, section 6 test files; STANDINGS_1, 2, 3, 4, 6 |
+| 3 | vs_lg and intr | APPLIED (the verifier's first option). `vs_lg` and `intr` are copied from `records.leagueRecords` (own league, other league), never summed; T20 names the reconciliation: the copy equals the sum of the three division records and LG plus INTR equals W-L, which holds in 810 of 810 cached rows (F26); render read-back of LG and INTR | F26, 4.6 item 2, 5.3, 5.12 map, T20; STANDINGS_1, STANDINGS_4 |
+| N1 | `round(rd, rs or ra / gp, 2)` reads as one call | APPLIED: "each of rd, rs and ra divided by gp, rounded to 2 decimals" | 4.6 item 11, T15; STANDINGS_1 |
+| N2 | `wc_gap` sized on 187 dates | APPLIED: 30 clubs x 184 game dates (about 28 KB raw unchanged; the budget stands) | 4.2 |
+| N3 | SCORES_5a note's grep | APPLIED: grep how an existing module key (for example `management`) maps to its display name | QUEUE_EDITS SCORES_5a; section 7 notes |
+| N4 | `p_hist.regular` ledger fields loose | APPLIED: `entries[]`, each `as_of` and `clubs`, a list keyed by `team` with `divisionPct`, `playoffPct`, `byePct`, `pennantPct`, `wsPct`; `record` and `projWins` never copied | 4.7; STANDINGS_3 |
+
+Not faulted and kept: everything else in sections 1 to 10, the owner questions (unchanged), every date and `requires`, and round 2's dispositions above.
+
+Round 3 outputs (2026-10-02):
+
+```
+parsed: 11 tasks, 8 edits, 4 questions; queue.json has 368 ids
+STANDINGS_PLAN.md: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_TASKS.json: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_EDITS.json: em/en dashes 0, copy_lint BAN hits 0
+OWNER_QUESTIONS.json: em/en dashes 0, copy_lint BAN hits 0
+  STANDINGS_0_PLAN_RECORD: kind P8, not_before None, requires [], spec 2581 chars
+  STANDINGS_0B_SCHEDULED_GAMES_TEST: kind EV, not_before None, requires [], spec 4417 chars
+  STANDINGS_1_CORE_RULES: kind EV, not_before 2026-10-11, requires ['SCORES_1_CORE_RULES', 'FS_1_DIVISION_CHAMPION'], spec 17749 chars
+  STANDINGS_2_JOB_AND_BACKFILL: kind EV, not_before 2026-10-11, requires ['SCORES_2_JOB_AND_DEPLOY', 'STANDINGS_1_CORE_RULES'], spec 12688 chars
+  STANDINGS_3_OURS_JOIN: kind EV, not_before 2026-10-11, requires ['STANDINGS_2_JOB_AND_BACKFILL'], spec 12743 chars
+  STANDINGS_4_PAGE_TABLES: kind P8, not_before 2026-10-11, requires ['SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'STANDINGS_3_OURS_JOIN', 'PX_A_foundation', 'PX_B_navigation', 'PX_C_states_ballpark'], spec 14824 chars
+  STANDINGS_5_CHARTS: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES', 'Q8_12_CHART_HELPERS_AND_TOKENS'], spec 11502 chars
+  STANDINGS_6_SEASON_SELECTOR: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES'], spec 9433 chars
+  STANDINGS_7_FLIP: kind P8, not_before 2026-10-11, requires ['SCORES_5a_LIVE_FLIP', 'STANDINGS_4_PAGE_TABLES', 'STANDINGS_6_SEASON_SELECTOR'], spec 11817 chars
+  STANDINGS_8_LAUNCH_LINKS_HEALTH: kind P8, not_before 2026-10-11, requires ['STANDINGS_7_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'DISPLAY_franchise'], spec 9582 chars
+  STANDINGS_9_NIGHTLY_STANDINGS_HEALTH: kind EV, not_before 2026-10-11, requires [], spec 9610 chars
+cycles: none
+edits: ['SCORES_1_CORE_RULES', 'SCORES_2_JOB_AND_DEPLOY', 'SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'SCORES_5a_LIVE_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'SCORES_4a_VIDEO', 'SCORES_6_PREGAME_CONTEXT']
+  ST-Q1 [Page URL] by 2026-10-11: /standings/ page, shared head (Recommended)
+  ST-Q2 [Odds group] by 2026-10-11: Labelled group, off the bracket (Recommended)
+  ST-Q3 [Past depth] by 2026-10-11: Tables 2000 on, races 2015 on (Recommended)
+  ST-Q4 [Name form] by 2026-10-11: Scores / Standings (Recommended)
+plan sections 1-10 present: True
+RESULT: OK
+```
+
+```
+PASS 1 PROJ: proj_w_int half up served, proj_l from it, proj_w kept for the tooltip, T10 on printed integers with a .5 fixture
+PASS 2 SEED: core serves seed, qualified, qualified_text; law vs bracket_sim; page derives none; render read-back
+PASS 3 vs_lg and intr copied from leagueRecords, T20 law named
+PASS N1 rounding wording: each of rd, rs and ra divided by gp
+PASS N2 wc_gap sized on 184 game dates
+PASS N3 SCORES_5a note: grep how an existing module key maps to a display name
+PASS N4 p_hist.regular ledger fields named
+PASS R3 dispositions recorded under Validation
+PASS R2 the twelve round 2 checks still pass
+RESULT: OK
+```
+
+##### Round 4 dispositions
+
+Each item of `SP/standings/VERIFY_round3.md` (FIX AGAIN), as applied through `_gen_queue.py` and this plan; round 3's generated files, generator and plan are kept in `SP/standings/verify_work/r3_backup/`. Facts re-read at `22916f05` (the ledger's 2026-09-27 entry against `.cache/statsapi_standings_2026.json`; `franchise_export.py` and `trades.py`; a fresh-interpreter call of `division_champions`; the ledger and the bracket record packed both ways). Checked by `python SP/standings/_check_round4.py`.
+
+| # | Item | Disposition | Where |
+|---|---|---|---|
+| 1 | PROJ join timing | APPLIED WITH CHANGE. At join time `standings_core.proj_basis` compares futures.json's club `record` with the row's W-L (read for the comparison, never copied; a `record*` key stays forbidden). Where they agree, `proj_w_int` and `proj_l` are served and the bound law `w <= proj_w_int <= w + left` applies; where they differ (or the record is missing), both are null, `proj_basis_ok` is false, the block carries `proj_made_at` (futures.json `generated_at`, copied), the page prints PROJ "-" with the tooltip "Projection made " plus that date plus ", before this club's latest result.", and a mismatch never refuses the file. Changed in three places after measuring: the mismatch set on the season's last night is 28 of 30 clubs (every club that played on 09-27), not only the 10 that break the law, so the fixture expects 28 nulls with NYY and BAL printing 93-68 and 79-82; an agreeing row that still breaks the bound is refused (a real defect, so the law keeps its teeth); `proj_w`, the band and the odds stay copied under their own stamp, and the tooltip on a mismatch names the date, never a number. `projected_record`'s glossary text now names the blank | 4.6 item 11, 4.7 (new rows and "The projection's basis"), 5.4, 5.12, T10, test files; STANDINGS_3, STANDINGS_4, STANDINGS_7 |
+| 2 | Import fence at runtime | APPLIED. `standings_core` applies the `divisionRank`-1 rule itself (`standings_core.division_champions(records, live)`, FS_1's live and final branches) and imports neither `franchise_export` nor `trades`; `test_standings_core.py` alone imports both and pins the rule equal to `franchise_export.division_champions` for 2000 to 2025 (live False, tracked copy) and on p1, p3 and the 2026 final fixture (live True and False), the club literal's pattern. F15 corrected: importing `franchise_export` loads only the standard library, calling `division_champions` loads `trades`, hence `requests`, `scrapers` (`bs4`) and `stats` (measured: `requests` and `bs4` appear, pandas and numpy do not). The fence test runs a fresh interpreter that imports the core, runs `parse_standings` on p1 and the 2026 final fixture, builds a season file, runs the validator and `build_race`, then asserts `requests`, `bs4`, `pandas`, `numpy` and also `trades`, `scrapers`, `stats` and `franchise_export` are absent, plus a grep that the module holds no such import | F15, 4.6 intro and item 4, test files, C4; STANDINGS_1 |
+| 3 | Race file budget omits `p_hist` | APPLIED WITH CHANGE (both of the verifier's options, and a different file name). The odds history leaves the race file for its own `OUT/standings/<Y>-phist.json`, packed by column (one `as_of` list, per club arrays of five values; the postseason block with its `sha256` list), fetched by the page only on C3's first open; `index.json` serves `phist_from` so the tables' "The daily odds record starts" sentence never fetches it, and the validator pins `phist_from` to `regular.as_of[0]`. Named `-phist`, not `-odds`, so the name never resembles the fenced `.cache/odds` path or the forbidden `odds` key. 4.2 now counts it: the row shape was 50,277 B for 2026's 20 entries (2,513 B each), packed it is 15,992 B (about 800 B each); the race file falls to about 115 KB with `wc_gap`. Budget 256 KB, ceiling 1 MB. Every standings file is written with `separators=(",", ":")` and no indent (a test re-serialises each written file). The size test uses 240 synthetic regular entries (more than the about 220 of Opening Day to the end of October) with every value at its widest five characters, plus 35 postseason entries: 245,511 B, under the budget | 4.2 (race, phist, latest, index rows; write order; the compact writer), 4.6 item 9, 4.7, 5.1, 5.5, 5.7, T11, test files, section 7, C9; STANDINGS_1, 2, 3, 4, 5 |
+
+Not faulted and kept: everything else in sections 1 to 10, the owner questions (unchanged), every date and `requires`, and the round 2 and round 3 dispositions above.
+
+Round 4 outputs (2026-10-02):
+
+```
+parsed: 11 tasks, 8 edits, 4 questions; queue.json has 368 ids
+STANDINGS_PLAN.md: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_TASKS.json: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_EDITS.json: em/en dashes 0, copy_lint BAN hits 0
+OWNER_QUESTIONS.json: em/en dashes 0, copy_lint BAN hits 0
+  STANDINGS_0_PLAN_RECORD: kind P8, not_before None, requires [], spec 2581 chars
+  STANDINGS_0B_SCHEDULED_GAMES_TEST: kind EV, not_before None, requires [], spec 4417 chars
+  STANDINGS_1_CORE_RULES: kind EV, not_before 2026-10-11, requires ['SCORES_1_CORE_RULES', 'FS_1_DIVISION_CHAMPION'], spec 20228 chars
+  STANDINGS_2_JOB_AND_BACKFILL: kind EV, not_before 2026-10-11, requires ['SCORES_2_JOB_AND_DEPLOY', 'STANDINGS_1_CORE_RULES'], spec 13175 chars
+  STANDINGS_3_OURS_JOIN: kind EV, not_before 2026-10-11, requires ['STANDINGS_2_JOB_AND_BACKFILL'], spec 16618 chars
+  STANDINGS_4_PAGE_TABLES: kind P8, not_before 2026-10-11, requires ['SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'STANDINGS_3_OURS_JOIN', 'PX_A_foundation', 'PX_B_navigation', 'PX_C_states_ballpark'], spec 15462 chars
+  STANDINGS_5_CHARTS: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES', 'Q8_12_CHART_HELPERS_AND_TOKENS'], spec 11988 chars
+  STANDINGS_6_SEASON_SELECTOR: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES'], spec 9433 chars
+  STANDINGS_7_FLIP: kind P8, not_before 2026-10-11, requires ['SCORES_5a_LIVE_FLIP', 'STANDINGS_4_PAGE_TABLES', 'STANDINGS_6_SEASON_SELECTOR'], spec 11972 chars
+  STANDINGS_8_LAUNCH_LINKS_HEALTH: kind P8, not_before 2026-10-11, requires ['STANDINGS_7_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'DISPLAY_franchise'], spec 9582 chars
+  STANDINGS_9_NIGHTLY_STANDINGS_HEALTH: kind EV, not_before 2026-10-11, requires [], spec 9610 chars
+cycles: none
+edits: ['SCORES_1_CORE_RULES', 'SCORES_2_JOB_AND_DEPLOY', 'SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'SCORES_5a_LIVE_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'SCORES_4a_VIDEO', 'SCORES_6_PREGAME_CONTEXT']
+  ST-Q1 [Page URL] by 2026-10-11: /standings/ page, shared head (Recommended)
+  ST-Q2 [Odds group] by 2026-10-11: Labelled group, off the bracket (Recommended)
+  ST-Q3 [Past depth] by 2026-10-11: Tables 2000 on, races 2015 on (Recommended)
+  ST-Q4 [Name form] by 2026-10-11: Scores / Standings (Recommended)
+plan sections 1-10 present: True
+RESULT: OK
+```
+
+```
+PASS 1 PROJ basis: futures record compared at join (read, never copied), PROJ null with proj_made_at on a mismatch, bound law only where it agrees, a mismatch never refuses, 09-27 fixture
+PASS 2 Fence at runtime: core applies the divisionRank-1 rule itself, pinned to franchise_export.division_champions 2000 to 2025 plus p1/p3, F15 corrected, fence test runs parse and validator then checks requests/bs4/pandas/numpy
+PASS 3 Race budget: p_hist counted, moved to a lazily loaded packed <Y>-phist.json with its own budget and ceiling, compact separators pinned, 240-entry synthetic size test
+PASS R4 dispositions recorded under Validation
+     (measured here: packed synthetic phist 245,511 B; round 3 row shape for 220 entries 552,860 B)
+PASS R3 the round 3 checks (and through them round 2's) still pass
+RESULT: OK
+```
+
+##### Round 5 dispositions
+
+Each item of `SP/standings/VERIFY_round4.md` (FIX AGAIN), as applied through `_gen_queue.py` and this plan; round 4's generated files, generator and plan are kept in `SP/standings/verify_work/r4_backup/`. Facts re-read at `4c9a5de7` (read only): `data/futures_ledger.json` (20 entries, 2026-09-06 to 2026-10-02), `data/bracket_sim_record.json` (one entry, 2026-10-01), `data/futures.json` (`generated_at` 2026-10-02T05:31:18+00:00, `season` 2026), `.cache/betting/completed_games.json`, `.cache/fantasy_schedule/season_{2025,2026}.json`, `proj_export.py:73, :3378, :3396, :3458, :3465` and `bracket_sim.py:30`. Checked by `python SP/standings/_check_round5.py`, which reruns `_check_round4.py` (and through it rounds 3 and 2) with two round 4 assertions swapped for their round 5 successors (`'Projection made '` becomes `'Projection built on a W-L of '`, `with the dated tooltip` becomes `with the basis tooltip`); `_check_round4.py` itself is unchanged.
+
+| # | Item | Disposition | Where |
+|---|---|---|---|
+| 1 | The PROJ blank's copy states a time order the data does not give | APPLIED. `standings_core.proj_basis` also serves the parsed basis as two integers, `proj_basis_w` and `proj_basis_l` (null when the record is absent or unreadable; no `record*` key). The tooltip reads "Projection built on a W-L of " plus `proj_basis_w`-`proj_basis_l` plus "; this row is " plus `w`-`l` plus ".", with no date and no claim about which came first (and "The projection on file names no W-L; this row is ..." when the basis is null). The glossary text for `projected_record` now reads "Blank when the projection on file was built on a different W-L than this row; the tooltip names both." The sentence "The next nightly rebuild restores the basis." is dropped, and no copy promises when the two agree again. The blank tooltip prints no date. The two places that still print the futures stamp (the ODDS header's and the agreeing PROJ tooltip's "as of") format it in America/New_York and add "(Eastern)", because HEAD's stamp is October 2 in Eastern time and October 1 in Pacific time. The render test checks a 03:30 UTC stamp under two browser zones. T10 gains the lag fixture: the 2026-09-07 ledger entry (LAD "85-57", `projWins` 96.7) against LAD 86-57 (re-measured from `completed_games.json`) is accepted with `proj_basis_w` 85 and `proj_basis_l` 57 and prints "-" with "Projection built on a W-L of 85-57; this row is 86-57." The verifier's carried-over count was re-measured: 4 of 19 transitions carried all 30 records over a slate (09-06, 09-13, 09-17, 09-25). Also added, the season guard: `ours` copies futures.json only when its `season` equals Y, because futures.json's `season` is the constant `FIRST_SEASON - 1` while the ledger's is the calendar year of the build | 4.6 item 11, 4.7 (the `proj_basis_*` row, "The projection's basis", "Why the copy claims no time order", "The season guard"), 5.4 (PROJ row, ODDS header), 5.11, 5.12, T10, test files; STANDINGS_3, STANDINGS_4, STANDINGS_7 |
+| 2 | The phist file's two blocks overlap and disagree | APPLIED, with one bound added. `standings_core.phist_blocks` builds two blocks. `post` holds the record entries of season Y up to the season's last postseason game. `switch_as_of` = `post.as_of[0]`, null while `post` is empty, and is served in the file. `regular` holds the ledger entries of season Y dated before `switch_as_of` (all of them until a post entry exists). The writer stops after the World Series game that gives a club its fourth win: that run writes the file with `closed` true, and no later run rewrites it. T11 and the validator assert that no `as_of` is in both blocks, that `switch_as_of` equals `post.as_of[0]`, and that every regular `as_of` falls before it. C3 draws the "Postseason" hairline at the served `switch_as_of` and never chooses between two values. At HEAD the 2026 regular block holds 18 of the ledger's 20 entries (2026-09-06 to 2026-09-30) and `post` holds the 2026-10-01 entry; the old rule's overlap was exactly that date. The added bound: `regular` also starts on or after `opening_day`. The ledger stamps each entry with the calendar year of its build (`proj_export.py:3378` and `:3465`), so January 2027 entries would carry season 2027 with 2026's settled odds. The 240-entry size test is re-justified. The two blocks are disjoint, both are bounded by `opening_day` and the last postseason game, and each source keeps one entry per date. So a season's file holds at most one entry per date of that span: 229 in 2025 and 221 in 2026, measured from `regularSeasonStartDate` to `postSeasonEndDate`. A regular entry outweighs a post entry, so the heaviest case is 229 regular entries, under 240. The test also pins a 366-entry year at 356,965 B, under the 1 MB ceiling | 4.2 (phist row), 4.7 (`p_hist` rows, "The two odds blocks"), 5.5 C3, T11, test files; STANDINGS_1, STANDINGS_3, STANDINGS_5 |
+
+Not faulted and kept: everything else in sections 1 to 10, the owner questions (unchanged), every date and `requires`, the edits (unchanged), and the round 2 to round 4 dispositions above.
+
+Round 5 outputs (2026-10-02):
+
+```
+parsed: 11 tasks, 8 edits, 4 questions; queue.json has 368 ids
+STANDINGS_PLAN.md: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_TASKS.json: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_EDITS.json: em/en dashes 0, copy_lint BAN hits 0
+OWNER_QUESTIONS.json: em/en dashes 0, copy_lint BAN hits 0
+  STANDINGS_0_PLAN_RECORD: kind P8, not_before None, requires [], spec 2581 chars
+  STANDINGS_0B_SCHEDULED_GAMES_TEST: kind EV, not_before None, requires [], spec 4417 chars
+  STANDINGS_1_CORE_RULES: kind EV, not_before 2026-10-11, requires ['SCORES_1_CORE_RULES', 'FS_1_DIVISION_CHAMPION'], spec 21254 chars
+  STANDINGS_2_JOB_AND_BACKFILL: kind EV, not_before 2026-10-11, requires ['SCORES_2_JOB_AND_DEPLOY', 'STANDINGS_1_CORE_RULES'], spec 13175 chars
+  STANDINGS_3_OURS_JOIN: kind EV, not_before 2026-10-11, requires ['STANDINGS_2_JOB_AND_BACKFILL'], spec 21660 chars
+  STANDINGS_4_PAGE_TABLES: kind P8, not_before 2026-10-11, requires ['SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'STANDINGS_3_OURS_JOIN', 'PX_A_foundation', 'PX_B_navigation', 'PX_C_states_ballpark'], spec 16407 chars
+  STANDINGS_5_CHARTS: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES', 'Q8_12_CHART_HELPERS_AND_TOKENS'], spec 12418 chars
+  STANDINGS_6_SEASON_SELECTOR: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES'], spec 9433 chars
+  STANDINGS_7_FLIP: kind P8, not_before 2026-10-11, requires ['SCORES_5a_LIVE_FLIP', 'STANDINGS_4_PAGE_TABLES', 'STANDINGS_6_SEASON_SELECTOR'], spec 12032 chars
+  STANDINGS_8_LAUNCH_LINKS_HEALTH: kind P8, not_before 2026-10-11, requires ['STANDINGS_7_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'DISPLAY_franchise'], spec 9582 chars
+  STANDINGS_9_NIGHTLY_STANDINGS_HEALTH: kind EV, not_before 2026-10-11, requires [], spec 9610 chars
+cycles: none
+edits: ['SCORES_1_CORE_RULES', 'SCORES_2_JOB_AND_DEPLOY', 'SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'SCORES_5a_LIVE_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'SCORES_4a_VIDEO', 'SCORES_6_PREGAME_CONTEXT']
+  ST-Q1 [Page URL] by 2026-10-11: /standings/ page, shared head (Recommended)
+  ST-Q2 [Odds group] by 2026-10-11: Labelled group, off the bracket (Recommended)
+  ST-Q3 [Past depth] by 2026-10-11: Tables 2000 on, races 2015 on (Recommended)
+  ST-Q4 [Name form] by 2026-10-11: Scores / Standings (Recommended)
+plan sections 1-10 present: True
+RESULT: OK
+```
+
+```
+PASS 1 Blank PROJ copy: basis served as proj_basis_w/proj_basis_l (no record key), tooltip names both W-L with no order claim, 'restores' sentence gone, glossary text replaced, stamps formatted in America/New_York '(Eastern)', LAD 09-07 lag fixture in T10
+PASS 2 Odds blocks: regular only season-Y entries from opening_day and before switch_as_of = post.as_of[0], post only to the last postseason game, writer stops (closed), T11 asserts no as_of in both, 240 re-justified on the measured 229 and 221 date spans
+PASS R5 dispositions recorded under Validation
+     (measured here: LAD 09-07 entry 85-57 vs 86-57; 4 of 19 transitions carried all 30 records over a slate; futures stamp 2026-10-02T05:31:18+00:00 is 2026-10-02 Eastern, 2026-10-01 Pacific; regular 18 (2026-09-06 to 2026-09-30), post ['2026-10-01'], switch 2026-10-01, round 4 overlap ['2026-10-01']; spans {2025: 229, 2026: 221}; synthetic 240+35 245,553 B, 229+0 223,664 B, 366+0 356,965 B)
+PASS R4 the round 4 checks (and through them rounds 3 and 2) still pass, with 2 superseded assertions swapped (each matched once: True)
+RESULT: OK
+```
+
+##### Round 6 dispositions
+
+Each item of `SP/standings/VERIFY_round5.md` (FIX AGAIN), as applied through `_gen_queue.py` and this plan; round 5's generated files, generator and plan are kept in `SP/standings/verify_work/r6_backup/`. Facts re-read at `4c9a5de7` (read only): `proj_export.py:73, :3377, :3378, :3396, :3458, :3465`, `docs/master-plan-2026-09-24-final-pass.md:655`, `data/futures.json` (`season` 2026), `data/futures_ledger.json` (20 entries, all season 2026, the first 2026-09-06), `data/bracket_sim_record.json`, and `git log -S "FIRST_SEASON = 2027" -- proj_export.py` (one commit, `427a6484` of 2026-06-10). Checked by `python SP/standings/_check_round6.py`, which reruns `_check_round5.py` (and through it rounds 4, 3 and 2) with one round 5 assertion swapped for its round 6 successor (the `phist_blocks` signature `"opening_day, last_post_date)"` becomes `"opening_day, last_post_date, frame_from)"`); `_check_round5.py` itself is unchanged.
+
+| # | Item | Disposition | Where |
+|---|---|---|---|
+| 1 | STANDINGS_3's spec attaches round 4's bound-law measurement to the season guard | APPLIED. In the generator the sentence "Measured: the 2026-09-27 ledger entry ... on the season's last night." is back inside THE PROJECTION'S BASIS, after "A BASIS MISMATCH NEVER REFUSES THE FILE" and before WHY NO TIME ORDER IS CLAIMED, where plan 4.7 places it; it appears once in the spec. THE SEASON GUARD now gives its own reason, as 4.7 does: futures.json's `season` is the constant `FIRST_SEASON - 1` (`proj_export.py:73`, `:3458`), while the ledger's is the calendar year of the build (`:3378`, `:3465`), and the rollover is a hand edit with no set date (`docs/master-plan-2026-09-24-final-pass.md:655`). So from January 1 until the manual rollover futures.json still serves the finished 2026 frame while Y is 2027, and the guard keeps 2026's numbers off 2027's rows. The guard sentence also says it changes nothing at HEAD (`season` 2026 equals Y) and that the 09-27 measurement belongs to THE PROJECTION'S BASIS. Plan 4.7 "The season guard" gets the same reason, and "can disagree each winter" becomes "can disagree from January 1 until the manual rollover" | STANDINGS_3 (THE PROJECTION'S BASIS, THE SEASON GUARD); 4.7 "The season guard" |
+| 2 | The `regular` block's season filter fails across the manual `FIRST_SEASON` rollover | APPLIED, on the job side; the exporter is not changed. The job records `frame_from[Y]` in `.cache/scores/standings/state.json`. It is the local calendar date (the clock `append_futures_ledger` stamps `as_of` with, `proj_export.py:3377`) of the first run that read a futures.json whose `season` equals Y, set once and never moved. `standings_core.phist_blocks` gains `frame_from`. `regular` holds only entries dated on or after the later of `opening_day` and `frame_from[Y]`, and none while it is unset. The skipped dates are listed in `regular.missing`, and no phist file is written while both blocks are empty, so `phist_from` stays null. "On or after" is safe because `write_futures` appends the ledger before it writes futures.json (`:3465`) and a same-date rebuild replaces that date's entry (`:3396`). Two fallbacks keep HEAD unchanged and the state rebuildable. The first is `FRAME_FROM_SEED = {2026: "2026-09-06"}`: `FIRST_SEASON` has read 2027 since `427a6484` (2026-06-10), before the ledger's first entry, and no later season is seeded. The second is the existing phist file's `regular.as_of[0]`, which yields the same block. T11 and STANDINGS_3 gain the fixture: season-2027 entries dated 2027-03-26 (Opening Day), 04-01 and 04-02, read while futures.json's `season` is 2026, are never copied (round 5's rule would have copied all three). A 04-02 run that reads a season-2027 futures.json copies only 04-02 and lists 03-26 and 04-01 in `missing`. The seed keeps HEAD's 18 entries (2026-09-06 to 09-30), and recovery from the phist file rewrites the same block. No served number moves | 4.2 (phist row, state row), 4.7 (`p_hist.regular` row, "The season guard", "The two odds blocks", new "The frame bound"), T11, `test_standings_job.py` row; STANDINGS_3 (sources, THE TWO BLOCKS, THE FRAME BOUND, tests) |
+
+Not faulted and kept: everything else in sections 1 to 10, the owner questions and edits (byte-identical to round 5), every date and `requires`, the other ten task specs (byte-identical to round 5), and the round 2 to round 5 dispositions above.
+
+Round 6 outputs (2026-10-02):
+
+```
+parsed: 11 tasks, 8 edits, 4 questions; queue.json has 368 ids
+STANDINGS_PLAN.md: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_TASKS.json: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_EDITS.json: em/en dashes 0, copy_lint BAN hits 0
+OWNER_QUESTIONS.json: em/en dashes 0, copy_lint BAN hits 0
+  STANDINGS_0_PLAN_RECORD: kind P8, not_before None, requires [], spec 2581 chars
+  STANDINGS_0B_SCHEDULED_GAMES_TEST: kind EV, not_before None, requires [], spec 4417 chars
+  STANDINGS_1_CORE_RULES: kind EV, not_before 2026-10-11, requires ['SCORES_1_CORE_RULES', 'FS_1_DIVISION_CHAMPION'], spec 21254 chars
+  STANDINGS_2_JOB_AND_BACKFILL: kind EV, not_before 2026-10-11, requires ['SCORES_2_JOB_AND_DEPLOY', 'STANDINGS_1_CORE_RULES'], spec 13175 chars
+  STANDINGS_3_OURS_JOIN: kind EV, not_before 2026-10-11, requires ['STANDINGS_2_JOB_AND_BACKFILL'], spec 25604 chars
+  STANDINGS_4_PAGE_TABLES: kind P8, not_before 2026-10-11, requires ['SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'STANDINGS_3_OURS_JOIN', 'PX_A_foundation', 'PX_B_navigation', 'PX_C_states_ballpark'], spec 16407 chars
+  STANDINGS_5_CHARTS: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES', 'Q8_12_CHART_HELPERS_AND_TOKENS'], spec 12418 chars
+  STANDINGS_6_SEASON_SELECTOR: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES'], spec 9433 chars
+  STANDINGS_7_FLIP: kind P8, not_before 2026-10-11, requires ['SCORES_5a_LIVE_FLIP', 'STANDINGS_4_PAGE_TABLES', 'STANDINGS_6_SEASON_SELECTOR'], spec 12032 chars
+  STANDINGS_8_LAUNCH_LINKS_HEALTH: kind P8, not_before 2026-10-11, requires ['STANDINGS_7_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'DISPLAY_franchise'], spec 9582 chars
+  STANDINGS_9_NIGHTLY_STANDINGS_HEALTH: kind EV, not_before 2026-10-11, requires [], spec 9610 chars
+cycles: none
+edits: ['SCORES_1_CORE_RULES', 'SCORES_2_JOB_AND_DEPLOY', 'SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'SCORES_5a_LIVE_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'SCORES_4a_VIDEO', 'SCORES_6_PREGAME_CONTEXT']
+  ST-Q1 [Page URL] by 2026-10-11: /standings/ page, shared head (Recommended)
+  ST-Q2 [Odds group] by 2026-10-11: Labelled group, off the bracket (Recommended)
+  ST-Q3 [Past depth] by 2026-10-11: Tables 2000 on, races 2015 on (Recommended)
+  ST-Q4 [Name form] by 2026-10-11: Scores / Standings (Recommended)
+plan sections 1-10 present: True
+RESULT: OK
+```
+
+```
+PASS 1 The 09-27 bound-law measurement sits once, inside THE PROJECTION'S BASIS before WHY NO TIME ORDER IS CLAIMED; THE SEASON GUARD states its own reason (constant FIRST_SEASON - 1 against the calendar-year ledger, the manual rollover) and that it changes nothing at HEAD; 'each winter' reworded
+PASS 2 Frame bound: frame_from[Y] recorded once by the job, regular from the later of opening_day and frame_from (none while unset, skipped dates in missing), 2026 seed and phist-file recovery, T11 fixture of a post-Opening Day 2027 entry read under a 2026 futures.json never copied, no exporter change
+PASS R6 dispositions recorded under Validation
+     (measured here: HEAD regular 18 (2026-09-06 to 2026-09-30) under seed frame_from 2026-09-06; 2027 rollover fixture: round 5's rule would copy ['2027-03-26', '2027-04-01', '2027-04-02'], round 6 copies nothing before the 2027 futures read and then ['2027-04-02'] with ['2027-03-26', '2027-04-01'] skipped; recovery from the phist file gives frame_from 2027-04-02; FIRST_SEASON = 2027 since 427a6484 2026-06-10)
+PASS R5 the round 5 checks (and through them rounds 4, 3 and 2) still pass, with 1 superseded assertion swapped (matched once: True)
+RESULT: OK
+```
+
+##### Round 7 dispositions
+
+Each item of `SP/standings/VERIFY_round6.md` (FIX AGAIN), as applied through `_gen_queue.py` and this plan; round 6's generated files, generator, validator and plan are kept in `SP/standings/verify_work/r7_backup/`. Facts re-read at `81e875d6` (read only): `bracket_sim.py:1184` (`season = int(as_of[:4])`), `data/futures_ledger.json` and `data/bracket_sim_record.json`. Checked by `python SP/standings/_check_round7.py`, which reruns `_check_round6.py` (and through it rounds 5, 4, 3 and 2) with no assertion swapped. Nothing else was added: no new guard, key or law.
+
+| # | Item | Disposition | Where |
+|---|---|---|---|
+| 1 | The frame bound allows a phist file with `regular` empty and `post` not, and nothing defines `phist_from` or C3's start sentence for it | APPLIED. `phist_from` is the file's first `as_of` over both blocks: `regular.as_of[0]` when `regular` is non-empty, else `switch_as_of`. The validator pins exactly that (T11). STANDINGS_4's "The daily odds record starts" sentence and STANDINGS_5's C3 sentence read `phist_from`, never `regular.as_of[0]` directly. With `regular` empty C3 draws the post block alone with its hairline. T11 and STANDINGS_3 gain the post-only fixture: season 2027, a futures.json that never reads 2027, and a record with season-2027 entries of 2027-10-05 and 10-06. The file is written with `regular` empty, `missing` listing 2027-03-26, 04-01 and 04-02, and `phist_from` equal to `switch_as_of` 2027-10-05. STANDINGS_5's render test draws that file: 2 post markers, the hairline at 2027-10-05, the sentence naming October 5, 2027. At HEAD `phist_from` stays 2026-09-06; no served number moves | 4.2 (`index.json` row), 4.7 "The frame bound" (one bullet), 5.5 C3 row, T11, `test_standings_job.py` row; STANDINGS_2 (7), STANDINGS_3 (phist file, tests), STANDINGS_4 (start sentence), STANDINGS_5 (C3 sentence and drawing, tests) |
+| 2 | Round 6 dropped a space in STANDINGS_3's spec | APPLIED. The generator reads "WHY NO TIME ORDER IS CLAIMED (round 5): futures.json's" again, as round 5's file did | STANDINGS_3 |
+
+Not faulted and kept: everything else in sections 1 to 10, the owner questions and edits (byte-identical to round 6), every date and `requires`, the other seven task specs (byte-identical to round 6), and the round 2 to round 6 dispositions above.
+
+Round 7 outputs (2026-10-02):
+
+```
+parsed: 11 tasks, 8 edits, 4 questions; queue.json has 368 ids
+STANDINGS_PLAN.md: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_TASKS.json: em/en dashes 0, copy_lint BAN hits 0
+QUEUE_EDITS.json: em/en dashes 0, copy_lint BAN hits 0
+OWNER_QUESTIONS.json: em/en dashes 0, copy_lint BAN hits 0
+  STANDINGS_0_PLAN_RECORD: kind P8, not_before None, requires [], spec 2581 chars
+  STANDINGS_0B_SCHEDULED_GAMES_TEST: kind EV, not_before None, requires [], spec 4417 chars
+  STANDINGS_1_CORE_RULES: kind EV, not_before 2026-10-11, requires ['SCORES_1_CORE_RULES', 'FS_1_DIVISION_CHAMPION'], spec 21254 chars
+  STANDINGS_2_JOB_AND_BACKFILL: kind EV, not_before 2026-10-11, requires ['SCORES_2_JOB_AND_DEPLOY', 'STANDINGS_1_CORE_RULES'], spec 13257 chars
+  STANDINGS_3_OURS_JOIN: kind EV, not_before 2026-10-11, requires ['STANDINGS_2_JOB_AND_BACKFILL'], spec 26345 chars
+  STANDINGS_4_PAGE_TABLES: kind P8, not_before 2026-10-11, requires ['SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'STANDINGS_3_OURS_JOIN', 'PX_A_foundation', 'PX_B_navigation', 'PX_C_states_ballpark'], spec 16541 chars
+  STANDINGS_5_CHARTS: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES', 'Q8_12_CHART_HELPERS_AND_TOKENS'], spec 12860 chars
+  STANDINGS_6_SEASON_SELECTOR: kind P8, not_before 2026-10-11, requires ['STANDINGS_4_PAGE_TABLES'], spec 9433 chars
+  STANDINGS_7_FLIP: kind P8, not_before 2026-10-11, requires ['SCORES_5a_LIVE_FLIP', 'STANDINGS_4_PAGE_TABLES', 'STANDINGS_6_SEASON_SELECTOR'], spec 12032 chars
+  STANDINGS_8_LAUNCH_LINKS_HEALTH: kind P8, not_before 2026-10-11, requires ['STANDINGS_7_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'DISPLAY_franchise'], spec 9582 chars
+  STANDINGS_9_NIGHTLY_STANDINGS_HEALTH: kind EV, not_before 2026-10-11, requires [], spec 9610 chars
+cycles: none
+edits: ['SCORES_1_CORE_RULES', 'SCORES_2_JOB_AND_DEPLOY', 'SCORES_3_PAGE_CHART', 'SCORES_4b_BRACKET', 'SCORES_5a_LIVE_FLIP', 'SCORES_5b_LAUNCH_NAV_HEALTH', 'SCORES_4a_VIDEO', 'SCORES_6_PREGAME_CONTEXT']
+  ST-Q1 [Page URL] by 2026-10-11: /standings/ page, shared head (Recommended)
+  ST-Q2 [Odds group] by 2026-10-11: Labelled group, off the bracket (Recommended)
+  ST-Q3 [Past depth] by 2026-10-11: Tables 2000 on, races 2015 on (Recommended)
+  ST-Q4 [Name form] by 2026-10-11: Scores / Standings (Recommended)
+plan sections 1-10 present: True
+RESULT: OK
+```
+
+```
+PASS 1 phist_from is the phist file's first as_of over both blocks (regular.as_of[0], else switch_as_of): defined in STANDINGS_2 (7) and plan 4.2, pinned by the validator in STANDINGS_3 and T11, read by STANDINGS_4's and STANDINGS_5's start sentences, C3 draws a post-only file alone with its hairline, T11 post-only fixture
+PASS 2 STANDINGS_3 reads 'WHY NO TIME ORDER IS CLAIMED (round 5): futures.json's' again
+PASS D the regenerated JSON differs from round 6 only in the specs of STANDINGS_2_JOB_AND_BACKFILL, STANDINGS_3_OURS_JOIN, STANDINGS_4_PAGE_TABLES, STANDINGS_5_CHARTS
+PASS R7 dispositions recorded under Validation
+     (measured here: HEAD phist_from 2026-09-06 (regular 18, switch 2026-10-01); post-only 2027 fixture: written True, regular [], missing ['2027-03-26', '2027-04-01', '2027-04-02'], post ['2027-10-05', '2027-10-06'], switch_as_of 2027-10-05, phist_from 2027-10-05; changed task ids ['STANDINGS_2_JOB_AND_BACKFILL', 'STANDINGS_3_OURS_JOIN', 'STANDINGS_4_PAGE_TABLES', 'STANDINGS_5_CHARTS'])
+PASS R6 the round 6 checks (and through them rounds 5, 4, 3 and 2) still pass, with no assertion swapped
+RESULT: OK
+```
