@@ -1279,11 +1279,19 @@
     if (!s || s.length !== 2 || num(s[0]) == null || num(s[1]) == null) return "";
     var span = Number(s[1]) - Number(s[0]) + 1;
     if (span > 8) return "";
-    // TYPED FIGURES, flagged: the held-out comparison below is not in the
-    // payload, so it cannot follow a refit. The exporter should ship it.
-    return " Window: rungs drift by more than their sampling intervals, so the short span was chosen "
-      + "on held-out error; it beat the 2012-onward pool by 0.10 runs per 650 PA (bootstrap 0.08 to "
-      + "0.11, all three held-out seasons), at the cost of wider intervals.";
+    // READ, NOT TYPED (QREC13): the held-out comparison rides in the payload
+    // (ladder.windowEval, from the recency gate's eval artifact) and is cited
+    // by name. Without it the note states the reason and no figure.
+    var W = L.windowEval || null;
+    var head = " Window: rungs drift by more than their sampling intervals, so the short span was chosen "
+      + "on held-out error";
+    if (!W || W.dmae == null) return head + ", at the cost of wider intervals.";
+    var ci = W.ci95 || [];
+    return head + "; it beat the " + (W.poolFrom ? esc(W.poolFrom) + "-onward " : "longer ")
+      + "pool by " + f2(W.dmae) + " runs per 650 PA (95% CI " + f2(ci[0]) + " to " + f2(ci[1])
+      + ", better in " + esc(W.nSeasonsBetter) + " of " + esc(W.nSeasons) + " held-out seasons; "
+      + esc(W.artifact || "") + (W.generatedAt ? ", " + esc(W.generatedAt) : "")
+      + "), at the cost of wider intervals.";
   }
   // The two Difference columns, explained where they are read. This is a
   // basis mismatch, not a scoring dispute, and the page used to print only the
@@ -1486,8 +1494,21 @@
       + "<tbody>" + rows + "</tbody></table></div>" + sums + pfMethod();
   }
 
-  // Honest accounting. Two DIFFERENT questions were measured and they got two
-  // different answers; both are printed, and the failing one is not softened.
+  // The OAA comparator, READ off the paired difference (model minus raw OAA)
+  // and its interval rather than typed (QREC13): an interval wholly below
+  // zero is "better than the model", wholly above is "worse", across zero
+  // is "not separable from the model".
+  function oaaVsModel(D) {
+    var mm = ((D && D.modelMinus) || {}).raw_oaa || {};
+    var c = mm.ci95 || [];
+    if (mm.mean == null || num(c[0]) == null || num(c[1]) == null) return ".";
+    var word = c[1] < 0 ? "better than the model" : c[0] > 0 ? "worse than the model"
+      : "not separable from the model";
+    return ", " + word + " (model minus OAA " + pfSigned(mm.mean, 2) + ", 95% CI "
+      + pfSigned(c[0], 2) + " to " + pfSigned(c[1], 2) + ").";
+  }
+  // Two DIFFERENT questions were measured and they got two different
+  // answers; both are printed, and the failing one is not softened.
   function pfMethod() {
     var A = (PF && PF.accuracy) || {}, D = (PF && PF.demotionNull) || {};
     var mae = A.mae || {}, adv = (A.advantage || {}).carry_over || {}, auc = D.auc || {};
@@ -1505,7 +1526,7 @@
       + '<div class="mlbstats-note" style="margin:4px 0">' + fThou(D.nScored) + " player-seasons ("
       + fPct(D.baseRate) + " moved down the next year): AUC " + f2(auc.model) + " (coin flip 0.50; "
       + "permutation band on AUC minus 0.5: " + f2(D.permNull95) + "). Raw single-season OAA alone: "
-      + f2(auc.raw_oaa) + ", better than the model. The list is a valuation, not a prediction.</div></div>";
+      + f2(auc.raw_oaa) + oaaVsModel(D) + " The list is a valuation, not a prediction.</div></div>";
     var up = D.promotionSide || {};
     var nuance = (up.auc_model_up != null)
       ? '<div class="pal-mix-card"><h4><span>Moves up</span></h4>'

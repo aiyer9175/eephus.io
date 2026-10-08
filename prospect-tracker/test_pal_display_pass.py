@@ -152,3 +152,53 @@ def test_the_disclaimer_says_backtest_code_not_harness():
     assert "the same repaired backtest code" in text and "harness" not in text
     served = (_load("pal.json").get("backtest") or {}).get("disclaimer") or ""
     assert "harness" not in served and "repaired backtest code" in served
+
+
+# ---- QREC13 -----------------------------------------------------------------
+def _render_ladder(pf: dict) -> str:
+    """Render #posfit=ladder against a positional-fit payload (the smoke
+    harness answers every fetch with the one payload it is given)."""
+    pytest.importorskip("py_mini_racer")
+    import test_pal_smoke as S
+    from py_mini_racer import MiniRacer
+    ctx = MiniRacer()
+    ctx.eval(S._prelude("#posfit=ladder").replace(f"var SAMPLE={S.SAMPLE};", "var SAMPLE=" + json.dumps(pf) + ";") + S.JS)
+    return ctx.eval("__html['pal-app-root'] || ''")
+
+
+def test_the_window_note_reads_and_cites_the_recency_eval():
+    pf = _load("positional_fit_ui.json")
+    ev = _load("positional_ladder_recency_eval.json")
+    W = pf["ladder"].get("windowEval")
+    assert W, "the ladder block lost windowEval"
+    res = ev["results"]["challenger_w"]
+    assert W["dmae"] == res["dmae_mean"] and W["ci95"] == res["ci95"]
+    assert W["nSeasons"] == len(ev["per_season"])
+    assert W["nSeasonsBetter"] == sum(1 for v in ev["per_season"].values() if v["dmae_w"] > 0)
+    html = _render_ladder(pf)
+    want = "pool by %.2f runs per 650 PA (95%% CI %.2f to %.2f" % (W["dmae"], W["ci95"][0], W["ci95"][1])
+    assert want in html, want
+    assert "data/positional_ladder_recency_eval.json" in html
+    note = PAL_JS[PAL_JS.index("function pfWindowNote"):PAL_JS.index("function pfFolkloreNote")]
+    assert "0.10 runs" not in note and "0.08 to" not in note, "the window figures are typed again"
+
+
+def test_without_the_eval_the_window_note_prints_no_figure():
+    pf = _load("positional_fit_ui.json")
+    pf = json.loads(json.dumps(pf))
+    pf["ladder"].pop("windowEval", None)
+    html = _render_ladder(pf)
+    assert "chosen on held-out error, at the cost of wider intervals" in html
+    assert "runs per 650 PA (95% CI" not in html.split("Window:")[1].split("</div>")[0]
+
+
+@pytest.mark.parametrize("ci,word", [((-0.1826, -0.0936), "better than the model"),
+                                     ((-0.05, 0.04), "not separable from the model"),
+                                     ((0.02, 0.09), "worse than the model")])
+def test_the_oaa_comparator_is_read_off_its_interval(ci, word):
+    pf = json.loads(json.dumps(_load("positional_fit_ui.json")))
+    pf["demotionNull"]["modelMinus"]["raw_oaa"] = {"mean": round((ci[0] + ci[1]) / 2, 4), "ci95": list(ci)}
+    html = _render_ladder(pf)
+    assert word in html, word
+    others = {"better than the model", "not separable from the model", "worse than the model"} - {word}
+    assert not any(o in html for o in others)
