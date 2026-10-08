@@ -136,6 +136,96 @@
     return href ? '<a class="mlbstats-name-link" href="' + href + '" title="Open the MLB player card">' + nm + "</a>" : nm;
   }
 
+  // ---- organization filter and sort (owner ask 2026-09-25) ------------------
+  // One org filter for every player list on the page, through the shared team
+  // picker (a native select marked data-team-picker whose values are the hub's
+  // canonical club codes, with an All option). It holds across tabs and rides
+  // the hash as &org=XXX. Rows carry their club in whatever code family the
+  // source spelled (AZ or ARI, KC or KCR, OAK or ATH); EEPHUS_HUB.club folds
+  // them to one code, so the filter and the Org sort agree with the picker.
+  var orgFilter = "";
+  var cardOrder = "rank";   // rank | org, the order of the card views
+  function orgCode(t) {
+    if (t == null || t === "") return "";
+    try {
+      var c = (window.EEPHUS_HUB && EEPHUS_HUB.club) ? EEPHUS_HUB.club(t) : null;
+      if (c && c.code) return c.code;
+    } catch (e) { /* hub optional */ }
+    return String(t).toUpperCase();
+  }
+  function byOrg(rows, field) {
+    if (!orgFilter) return rows;
+    return rows.filter(function (r) { return orgCode(r[field]) === orgFilter; });
+  }
+  // Missing clubs sink in either direction; ties keep the order they came in.
+  function sortByOrg(rows, field, asc) {
+    var out = rows.slice();
+    out.sort(function (a, b) {
+      var x = orgCode(a[field]), y = orgCode(b[field]);
+      if (!x && !y) return 0;
+      if (!x) return 1;
+      if (!y) return -1;
+      var c = x < y ? -1 : x > y ? 1 : 0;
+      return asc ? c : -c;
+    });
+    return out;
+  }
+  function orgCodes(rows, field) {
+    var list = [];
+    try {
+      if (window.EEPHUS_HUB && EEPHUS_HUB.clubs) list = EEPHUS_HUB.clubs().map(function (c) { return c.code; });
+    } catch (e) { list = []; }
+    if (!list.length) {   // no hub (a test harness): the codes the rows carry
+      var seen = {};
+      rows.forEach(function (r) {
+        var c = orgCode(r[field]);
+        if (c && !seen[c]) { seen[c] = 1; list.push(c); }
+      });
+    }
+    return list.slice().sort();
+  }
+  // The one control bar a list gets: the org filter, the count it leaves, the
+  // card order where the list is cards, and any chip the section adds.
+  function orgBar(all, field, noun, cards, extra) {
+    var opts = '<option value="">All orgs</option>' + orgCodes(all, field).map(function (c) {
+      return '<option value="' + esc(c) + '"' + (c === orgFilter ? " selected" : "") + ">" + esc(c) + "</option>";
+    }).join("");
+    var n = byOrg(all, field).length;
+    return '<div class="mlbstats-bar pal-ctlbar">'
+      + '<label class="mlbstats-ctl">org <select id="pal-org" data-team-picker aria-label="Filter by organization">'
+      + opts + "</select></label>"
+      + (cards
+        ? '<label class="mlbstats-ctl">order <select id="pal-order" aria-label="Card order">'
+          + '<option value="rank"' + (cardOrder === "rank" ? " selected" : "") + ">ranked</option>"
+          + '<option value="org"' + (cardOrder === "org" ? " selected" : "") + ">org A to Z</option></select></label>"
+        : "")
+      + '<span class="proj-dim pal-count">' + (orgFilter ? esc(n) + " of " + esc(all.length) : esc(all.length))
+      + " " + esc(noun) + "</span>" + (extra || "") + "</div>";
+  }
+  function orgEmpty() { return empty("No " + orgFilter + " rows in this view."); }
+  // The Org cell: the club's logo and code, linked to its club page (the farm
+  // system page for a prospect).
+  function orgCell(team, ctx) {
+    try {
+      if (window.EEPHUS_HUB && EEPHUS_HUB.clubLinkHTML) {
+        return EEPHUS_HUB.clubLinkHTML(team, { logo: true, stop: true, ctx: ctx });
+      }
+    } catch (e) { /* hub optional */ }
+    return esc(team || "-");
+  }
+  // A card's club: the code, linked, beside the name the card leads with.
+  function orgTag(team, ctx) {
+    var link = "";
+    try {
+      if (window.EEPHUS_HUB && EEPHUS_HUB.clubLinkHTML) link = EEPHUS_HUB.clubLinkHTML(team, { ctx: ctx });
+    } catch (e) { link = ""; }
+    return '<span class="proj-dim"> ' + (link || esc(team || "")) + "</span>";
+  }
+  function cardRows(rows, field) {
+    var out = byOrg(rows, field);
+    return cardOrder === "org" ? sortByOrg(out, field, true) : out;
+  }
+
   // ---- collapsible chart panels (shared pattern with /mlbstats/) ------------
   // Charts default COLLAPSED; the header is the toggle and the open/closed state
   // persists in localStorage.
@@ -396,10 +486,10 @@
         // and the NAME pins beside it. Do not drop it.
         if (c.kind === "rank") { body += '<td class="mlbstats-col-rank">' + (i + 1) + "</td>"; return; }
         if (c.kind === "name") {
-          body += '<td class="mlbstats-name pal-expand">' + logo(r.team) + nameLink(r.name, r.mlbam)
-            + '<span class="proj-dim"> ' + esc(r.team || "") + "</span>" + flagChips(r.flags) + "</td>";
+          body += '<td class="mlbstats-name pal-expand">' + nameLink(r.name, r.mlbam) + flagChips(r.flags) + "</td>";
           return;
         }
+        if (c.kind === "org") { body += '<td class="pal-org-cell">' + orgCell(r.team) + "</td>"; return; }
         body += "<td>" + c.cell(r) + "</td>";
       });
       body += "</tr>";
@@ -412,6 +502,7 @@
   var RP_COLS = [
     { key: "rank", label: "#", kind: "rank" },
     { key: "name", label: "Reliever", kind: "name", sortable: false },
+    { key: "org", label: "Org", kind: "org", asc: true },
     { key: "fit", label: "RP→SP FIT", term: "rp_sp_fit", desc: true, cell: function (r) { return fitCell(r.fit, "rp_sp_fit") + tierBadge(r, "rp2sp"); } },
     { key: "n_pitches", label: "Arsenal", term: "arsenal_depth", cell: function (r) { return fInt(r.n_pitches) + '<span class="proj-dim"> pitch</span>'; } },
     { key: "fb_pct", label: "FB%", cell: function (r) { return fPct(fbPct(r)); }, get: function (r) { return fbPct(r); } },
@@ -423,6 +514,7 @@
   var SP_COLS = [
     { key: "rank", label: "#", kind: "rank" },
     { key: "name", label: "Starter", kind: "name", sortable: false },
+    { key: "org", label: "Org", kind: "org", asc: true },
     { key: "fit", label: "SP→RP FIT", term: "sp_rp_fit", desc: true, cell: function (r) { return fitCell(r.fit, "sp_rp_fit") + tierBadge(r, "sp2rp"); } },
     { key: "starter_era", label: "SP ERA", cell: function (r) { return f2(r.starter_era); }, asc: true },
     { key: "relief_upside", label: "Relief upside", cell: function (r) { return f1(r.relief_upside); } },
@@ -442,6 +534,7 @@
   // are non-sortable; sortRows is numeric-only.
   var HISTORY_COLS = [
     { key: "name", label: "Pitcher", kind: "name" },
+    { key: "org", label: "Org", kind: "org", asc: true },
     { key: "direction", label: "Conversion", sortable: false },
     { key: "year", label: "Year", desc: true },
     { key: "pre_ip", label: "Before", sortable: false },
@@ -452,6 +545,18 @@
     { key: "pre_fit", label: "pre-FIT" },
     { key: "success", label: "Result", get: function (h) { return h.success === true ? 1 : h.success === false ? 0 : null; } },
   ];
+  // Reverse-Platoon Radar columns: Org and the three OPS reads sort; the rest
+  // are labels. The default order is the payload's (most reverse first).
+  var PLATOON_COLS = [
+    { key: "name", label: "Pitcher", kind: "name" },
+    { key: "org", label: "Org", kind: "org", asc: true },
+    { key: "p_throws", label: "Throws", sortable: false },
+    { key: "role", label: "Role", sortable: false },
+    { key: "own_ops", label: "vs own hand" },
+    { key: "opp_ops", label: "vs opp hand", asc: true },
+    { key: "split", label: "Split" },
+    { key: "read", label: "Read", sortable: false },
+  ];
   function veloCell(r) {
     if (r.fb_velo == null) return "-";
     var d = (r.proj_velo != null) ? (r.proj_velo - r.fb_velo) : null;
@@ -460,6 +565,7 @@
   }
   function sortRows(rows, cols) {
     var col = null; cols.forEach(function (c) { if (c.key === sortKey) col = c; });
+    if (col && col.kind === "org") return sortByOrg(rows, col.field || "team", sortAsc);
     var out = rows.slice();
     out.sort(function (a, b) {
       var va = col && col.get ? col.get(a) : a[sortKey];
@@ -504,7 +610,7 @@
     return f1(r.fb_velo) + (r.proj_velo != null ? " → " + f1(r.proj_velo) : "");
   }
   function rp2spBoardSpec() {
-    var rows = sortRows((DATA && DATA.rp2sp) || [], RP_COLS);
+    var rows = byOrg(sortRows((DATA && DATA.rp2sp) || [], RP_COLS), "team");
     var brows = rows.map(function (r, i) {
       return { cells: [
         { t: i + 1 },
@@ -521,7 +627,7 @@
       kind: "board", module: "Alchemy Lab", accentToken: "--accent-cyan",
       title: "Alchemy Lab · RP→SP Candidates",
       subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
-        + rows.length + " relievers who profile as starters",
+        + (orgFilter ? orgFilter + " · " : "") + rows.length + " relievers who profile as starters",
       url: "eephus.io/pal", filenameBase: "pal-rp2sp-candidates",
       // Caption reads the payload verdict (see verdictPhrase): a shareable
       // graphic that carries a frozen validity claim is the same defect as a
@@ -564,7 +670,7 @@
     };
   }
   function sp2rpBoardSpec() {
-    var rows = sortRows((DATA && DATA.sp2rp) || [], SP_COLS);
+    var rows = byOrg(sortRows((DATA && DATA.sp2rp) || [], SP_COLS), "team");
     // TIER ships on this board too. rp2sp has carried one since it was built, so
     // without it the two shareable graphics disagreed about what a PAL board is.
     var brows = rows.map(function (r, i) {
@@ -583,7 +689,7 @@
       kind: "board", module: "Alchemy Lab", accentToken: "--accent-cyan",
       title: "Alchemy Lab · SP→RP Candidates",
       subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
-        + rows.length + " starters whose stuff would play up in relief",
+        + (orgFilter ? orgFilter + " · " : "") + rows.length + " starters whose stuff would play up in relief",
       url: "eephus.io/pal", filenameBase: "pal-sp2rp-candidates",
       caption: "candidate screen, not a forecast · SP→RP: " + verdictPhrase("SP->RP"),
       board: { defaultCount: 25, counts: [10, 25, 50],
@@ -617,7 +723,9 @@
       + ": arsenal depth first, then command, platoon-neutrality and contact quality. "
       + esc(verdictSentence("RP->SP")) + " A candidate screen, not a forecast. Click a row for components."
       + gfxChip("pal-rp2sp-gfx") + "</div>" + tierLegend("rp2sp");
-    return rp2spViz() + note + candTable(sortRows(rows, RP_COLS), RP_COLS);
+    var shown = byOrg(sortRows(rows, RP_COLS), "team");
+    return rp2spViz() + note + orgBar(rows, "team", "relievers")
+      + (shown.length ? candTable(shown, RP_COLS) : orgEmpty());
   }
   function renderSP2RP() {
     var rows = (DATA && DATA.sp2rp) || [];
@@ -626,7 +734,9 @@
       + ": relief upside scaled by conversion need, so a starter succeeding in the rotation scores low. "
       + "SP ERA is the need signal; proj REM+ is display-only. " + esc(verdictSentence("SP->RP"))
       + " A candidate screen, not a forecast." + gfxChip("pal-sp2rp-gfx") + "</div>" + tierLegend("sp2rp");
-    return sp2rpViz() + note + candTable(sortRows(rows, SP_COLS), SP_COLS);
+    var shown = byOrg(sortRows(rows, SP_COLS), "team");
+    return sp2rpViz() + note + orgBar(rows, "team", "starters")
+      + (shown.length ? candTable(shown, SP_COLS) : orgEmpty());
   }
 
   function roleLine(x) {
@@ -844,21 +954,28 @@
       + viewTab("data-histview", "mix", "Pitch-mix changes", historyView === "mix")
       + "</div>";
   }
+  // Header row for a table built from a column list: sortable columns carry
+  // data-col, scope, tabindex and aria-sort; the rest are plain labels.
+  function headRow(cols) {
+    return "<thead><tr>" + cols.map(function (c) {
+      var cls = "mlbstats-col-" + c.key + (c.key === sortKey ? " is-sorted" : "");
+      if (c.kind === "name" || c.sortable === false) return '<th class="' + cls + '">' + c.label + "</th>";
+      return '<th class="' + cls + '" data-col="' + c.key + '" scope="col" tabindex="0" aria-sort="'
+        + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none") + '">' + c.label + "</th>";
+    }).join("") + "</tr></thead>";
+  }
   function renderHistory() {
     var rows = (DATA && DATA.history) || [];
     if (!rows.length) return empty("No conversion history yet.");
     if (historyView === "mix") return scorecard() + historyToggle() + viewPanel("Pitch-mix changes", renderMix());
     // Sortable, recency-first by default (year desc -> 2026 conversions lead).
     // Click any numeric column header to re-sort.
-    rows = sortRows(rows, HISTORY_COLS);
-    var head = "<thead><tr>" + HISTORY_COLS.map(function (c) {
-      if (c.kind === "name" || c.sortable === false) return "<th>" + c.label + "</th>";
-      return '<th data-col="' + c.key + '"' + (c.key === sortKey ? ' class="is-sorted"' : "")
-        + ' scope="col" tabindex="0" aria-sort="' + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none")
-        + '">' + c.label + "</th>";
-    }).join("") + "</tr></thead>";
+    var all = rows;
+    rows = byOrg(sortRows(rows, HISTORY_COLS), "team");
+    var head = headRow(HISTORY_COLS);
     var body = "<tbody>" + rows.map(function (h) {
-      return "<tr><td class=\"mlbstats-name\">" + logo(h.team) + nameLink(h.name, h.mlbam) + "</td>"
+      return "<tr><td class=\"mlbstats-name\">" + nameLink(h.name, h.mlbam) + "</td>"
+        + '<td class="pal-org-cell">' + orgCell(h.team) + "</td>"
         + '<td><span class="pal-dir' + dirClass(h.direction) + '">' + esc((h.direction || "").replace("->", "→")) + "</span></td>"
         + "<td>" + esc(h.year) + "</td>"
         + "<td>" + roleLine(h.pre) + "</td><td>" + roleLine(h.post) + "</td>"
@@ -872,12 +989,14 @@
       + " since 2018. WAR before &rarr; after: realized pitcher WAR"
       + (warSeriesShort() ? " on " + esc(warSeriesShort()) : "") + ", pre-role and post-role seasons. "
       + "Arsenal shift: pitches added (+) or dropped (-).</div>";
-    return scorecard() + historyToggle() + viewPanel("Conversions", note
-      + '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>");
+    return scorecard() + historyToggle() + viewPanel("Conversions", note + orgBar(all, "team", "conversions")
+      + (rows.length ? '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>"
+        : orgEmpty()));
   }
   function renderMix() {
-    var rows = (DATA && DATA.pitch_mix_changes) || [];
-    if (!rows.length) return empty("No pitch-mix change data.");
+    var all = (DATA && DATA.pitch_mix_changes) || [];
+    if (!all.length) return empty("No pitch-mix change data.");
+    var rows = cardRows(all, "team");
     function usageBars(mix) {
       return (mix || []).map(function (p) {
         return '<div class="pal-ars-row"><span class="pal-ars-pitch">' + esc(p.pitch) + "</span>"
@@ -885,18 +1004,21 @@
       }).join("");
     }
     var cards = rows.map(function (m) {
-      return '<div class="pal-mix-card"><h4><span>' + logo(m.team) + nameLink(m.name, m.mlbam) + '</span><span class="pal-dir' + dirClass(m.direction) + '">'
+      return '<div class="pal-mix-card"><h4><span>' + logo(m.team) + nameLink(m.name, m.mlbam) + orgTag(m.team)
+        + '</span><span class="pal-dir' + dirClass(m.direction) + '">'
         + esc((m.direction || "").replace("->", "→")) + " " + esc(m.year) + "</span></h4>"
         + '<div class="pal-mix-cols"><div><h4>Before</h4>' + usageBars(m.before) + "</div>"
         + '<div><h4>After</h4>' + usageBars(m.after) + "</div></div></div>";
     }).join("");
     return '<div class="mlbstats-note">Pitch usage before and after the switch.</div>'
-      + '<div class="pal-mix-grid">' + cards + "</div>";
+      + orgBar(all, "team", "conversions", true)
+      + (rows.length ? '<div class="pal-mix-grid">' + cards + "</div>" : orgEmpty());
   }
 
   function renderPitchAdd() {
-    var rows = (DATA && DATA.pitch_add) || [];
-    if (!rows.length) return empty("No pitch-add recommendations yet.");
+    var all = (DATA && DATA.pitch_add) || [];
+    if (!all.length) return empty("No pitch-add recommendations yet.");
+    var rows = cardRows(all, "team");
     var note = '<div class="mlbstats-note">Pitch to add: the arsenal hole (no breaking ball, no offspeed, or a '
       + "thin third pitch) crossed with the platoon weakness. Sorted by " + gloss("RP→SP FIT", "rp_sp_fit") + ".</div>";
     var cards = rows.map(function (r) {
@@ -904,14 +1026,15 @@
       var arsenal = (r.arsenal || []).slice().sort(function (a, b) { return (b.usage || 0) - (a.usage || 0); })
         .map(function (p) { return esc(p.pitch) + " " + fPct(p.usage); }).join(" &middot; ");
       var pri = rec.priority === "high" ? " pal-flag--warn" : " pal-flag--good";
-      return '<div class="pal-mix-card"><h4><span>' + logo(r.team) + nameLink(r.name, r.mlbam) + '<span class="proj-dim"> ' + esc(r.team)
-        + '</span></span><span class="pal-fit ' + fitClass(r.fit) + '">' + f1(r.fit) + "</span></h4>"
+      return '<div class="pal-mix-card"><h4><span>' + logo(r.team) + nameLink(r.name, r.mlbam) + orgTag(r.team)
+        + '</span><span class="pal-fit ' + fitClass(r.fit) + '">' + f1(r.fit) + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:4px 0">Current: ' + (arsenal || "-") + "</div>"
         + '<div style="margin:7px 0"><span class="pal-flag' + pri + '">ADD ' + esc(rec.add) + "</span>"
         + (rec.target ? ' <span class="proj-dim">vs ' + esc(rec.target) + "</span>" : "") + "</div>"
         + '<div style="font-size:11px;color:var(--text-secondary);line-height:1.4">' + esc(rec.reason) + "</div></div>";
     }).join("");
-    return note + '<div class="pal-mix-grid">' + cards + "</div>";
+    return note + orgBar(all, "team", "relievers", true)
+      + (rows.length ? '<div class="pal-mix-grid">' + cards + "</div>" : orgEmpty());
   }
 
   function renderPlatoon() {
@@ -921,11 +1044,12 @@
       return (r.reverse || r.extreme) && (r.min_tbf == null || r.min_tbf >= 100);
     });
     if (!view.length) return empty("No notable platoon splits yet.");
+    var all = view;
+    view = byOrg(sortRows(view, PLATOON_COLS), "team");
     var note = '<div class="mlbstats-note">' + gloss("Reverse split", "reverse_platoon")
       + ": tougher on opposite-handed hitters, a plus for RP&rarr;SP. " + gloss("Extreme split", "platoon_split")
       + ": a conversion blocker. OPS-against by batter hand, 100+ TBF per hand. Descriptive, not a backtested model.</div>";
-    var head = "<thead><tr><th>Pitcher</th><th>Throws</th><th>Role</th><th>vs own hand</th><th>vs opp hand</th>"
-      + "<th>Split</th><th>Read</th></tr></thead>";
+    var head = headRow(PLATOON_COLS);
     var body = "<tbody>" + view.map(function (r) {
       // BOTH FLAGS, WHEN BOTH ARE SET. `reverse` is a DIRECTION (own-side OPS
       // higher by more than .030) and `extreme` is a MAGNITUDE (|split| >= .150),
@@ -937,17 +1061,21 @@
         ? '<span class="pal-hit">reverse</span>, but <span class="pal-miss">extreme</span>'
         : r.reverse ? '<span class="pal-hit">reverse (neutral+)</span>'
         : '<span class="pal-miss">extreme split</span>';
-      return '<tr><td class="mlbstats-name">' + logo(r.team) + nameLink(r.name, r.mlbam) + "</td>"
+      return '<tr><td class="mlbstats-name">' + nameLink(r.name, r.mlbam) + "</td>"
+        + '<td class="pal-org-cell">' + orgCell(r.team) + "</td>"
         + "<td>" + esc(r.p_throws) + "HP</td><td>" + esc(r.role) + "</td>"
         + "<td>" + f3(r.own_ops) + "</td><td>" + f3(r.opp_ops) + "</td>"
         + "<td>" + f3(r.split) + "</td><td>" + read + "</td></tr>";
     }).join("") + "</tbody>";
-    return note + '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>";
+    return note + orgBar(all, "team", "pitchers")
+      + (view.length ? '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>"
+        : orgEmpty());
   }
 
   function renderProspects() {
-    var rows = (DATA && DATA.prospect_watch) || [];
-    if (!rows.length) return empty("No prospect role-mismatches yet.");
+    var all = (DATA && DATA.prospect_watch) || [];
+    if (!all.length) return empty("No prospect role-mismatches yet.");
+    var rows = cardRows(all, "org");
     // The bound is STATED, never silent: every number below comes from the payload's
     // own prospect_watch_rule, so the copy cannot claim a threshold the export is not
     // applying. Degrades to the old wording on a payload built before the rule shipped.
@@ -1044,8 +1172,12 @@
         : p.role === "RP" ? "Scouted a reliever, but has the arsenal to start."
         : "Scouted " + esc(p.position || "a pitcher") + ", and the arsenal shape leans "
           + esc(p.lean || "the other way") + ".";
-      return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + esc(p.name)
-        + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
+      // the name opens the prospect's PROSPX card; the club opens its farm page
+      var nm = p.player_key
+        ? '<a class="mlbstats-name-link" href="/prospx/#player=' + encodeURIComponent(p.player_key)
+          + '" title="Open the PROSPX card">' + esc(p.name) + "</a>"
+        : esc(p.name);
+      return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + nm + orgTag(p.org, "farm") + "</span>"
         + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position)
         + " &middot; " + gradeText(p)
@@ -1054,7 +1186,8 @@
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
         + toolBars(p.tools) + "</div>";
     }).join("");
-    return note + '<div class="pal-mix-grid">' + cards + "</div>";
+    return note + orgBar(all, "org", "prospects", true)
+      + (rows.length ? '<div class="pal-mix-grid">' + cards + "</div>" : orgEmpty());
   }
 
   // ---- Position Fit: which hitters are worth more runs somewhere else -------
@@ -1201,6 +1334,7 @@
   var POSFIT_COLS = [
     { key: "rank", label: "#", kind: "rank" },
     { key: "name", label: "Hitter", kind: "name", sortable: false },
+    { key: "org", label: "Org", kind: "org", asc: true },
     { key: "pos", label: "Now", cell: function (r) { return esc(r.pos || "-"); } },
     { key: "pa", label: "PA", cell: function (r) { return fInt(r.pa); } },
     { key: "move", label: "Best fit", sortable: false, cell: pfMoveCell },
@@ -1214,6 +1348,7 @@
   function pfSortedRows(rows) {
     var col = null;
     POSFIT_COLS.forEach(function (c) { if (c.key === sortKey) col = c; });
+    if (col && col.kind === "org") return sortByOrg(rows, "team", sortAsc);
     var key = (col && !col.kind) ? col.key : "gain";
     var out = rows.slice();
     out.sort(function (a, b) {
@@ -1247,9 +1382,9 @@
         // .mlbstats-col-rank: see the note in candTable - it is what lets the
         // frozen column pin the player name instead of the rank digit.
         if (c.kind === "rank") { body += '<td class="mlbstats-col-rank">' + (i + 1) + "</td>"; return; }
+        if (c.kind === "org") { body += '<td class="pal-org-cell">' + orgCell(r.team) + "</td>"; return; }
         if (c.kind === "name") {
-          body += '<td class="mlbstats-name pal-expand">' + logo(r.team) + nameLink(r.name, r.mlbam)
-            + '<span class="proj-dim"> ' + esc(r.team || "") + "</span>"
+          body += '<td class="mlbstats-name pal-expand">' + nameLink(r.name, r.mlbam)
             + (r.misplaced ? ' <span class="pal-flag pal-flag--good">MISPLACED</span>' : "")
             + (r.demoted ? ' <span class="pal-flag pal-flag--warn">MOVE DOWN</span>' : "") + "</td>";
           return;
@@ -1578,7 +1713,9 @@
       + " Runs per 650 PA, " + esc(PF.season || "") + " season. Value identity: " + esc(PF.valueIdentity || "")
       + ". A valuation, not a prediction: who gets moved measured null (see The positional ladder).</div>";
     if (!rows.length) return nav + viewPanel(curLabel, note + empty("No hitters clear the flag in this view."));
-    return nav + viewPanel(curLabel, note + pfTable(pfSortedRows(rows)));
+    var shown = byOrg(pfSortedRows(rows), "team");
+    return nav + viewPanel(curLabel, note + orgBar(rows, "team", "hitters")
+      + (shown.length ? pfTable(shown) : orgEmpty()));
   }
 
   function loadPosFit() {
@@ -1683,7 +1820,7 @@
       function sortBy() {
         var key = th.getAttribute("data-col");
         var cols = (section === "sp2rp") ? SP_COLS : (section === "history") ? HISTORY_COLS
-          : (section === "posfit") ? POSFIT_COLS : RP_COLS;
+          : (section === "posfit") ? POSFIT_COLS : (section === "platoon") ? PLATOON_COLS : RP_COLS;
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
         if (!col || col.kind === "rank" || col.kind === "name" || col.sortable === false) return;
         if (sortKey === key) sortAsc = !sortAsc;
@@ -1704,6 +1841,18 @@
         sortBy();
       });
     });
+    var orgSel = root.querySelector("#pal-org");
+    if (orgSel) orgSel.addEventListener("change", function () {
+      orgFilter = orgSel.value || "";
+      openRow = null;
+      writeHash();
+      render();
+    });
+    var ordSel = root.querySelector("#pal-order");
+    if (ordSel) ordSel.addEventListener("change", function () {
+      cardOrder = ordSel.value === "org" ? "org" : "rank";
+      render();
+    });
     root.querySelectorAll("[data-histview]").forEach(function (b) {
       b.addEventListener("click", function () { historyView = b.getAttribute("data-histview"); render(); });
     });
@@ -1711,7 +1860,7 @@
       b.addEventListener("click", function () {
         posfitView = b.getAttribute("data-pfview");
         openRow = null;
-        try { history.replaceState(null, "", "#posfit=" + posfitView); } catch (e) { /* hash optional */ }
+        writeHash();
         render();
       });
     });
@@ -1748,18 +1897,26 @@
     document.querySelectorAll("[data-palsection]").forEach(function (b) {
       b.addEventListener("click", function () {
         setSection(b.getAttribute("data-palsection"));
-        try { history.replaceState(null, "", "#" + section); } catch (e) { }
+        writeHash();
         render();
       });
     });
   }
 
+  // The hash: the section (or posfit=<view>), then &org=<code> when a club
+  // is picked. The section regexes below are what test_page_index reads.
+  function writeHash() {
+    var base = (section === "posfit") ? "posfit=" + posfitView : section;
+    try { history.replaceState(null, "", "#" + base + (orgFilter ? "&org=" + orgFilter : "")); } catch (e) { /* hash optional */ }
+  }
   function readHash() {
     var h = location.hash || "";
     var m = /^#(rp2sp|sp2rp|posfit|history|pitchadd|platoon|prospects)/.exec(h);
     if (m) setSection(m[1]);
     var v = /^#posfit=(misplaced|down|board|ladder)/.exec(h);
     if (v) { setSection("posfit"); posfitView = v[1]; }
+    var o = /[#&]org=([A-Za-z]{2,4})(?:&|$)/.exec(h);
+    if (o) orgFilter = orgCode(o[1]);
   }
 
   // Loader with a visible failure mode: a non-OK response or a network error
@@ -1803,6 +1960,8 @@
 
   function init() {
     bindSectionNav();
+    // a typed or back/forward hash (#history&org=LAD) re-reads the state
+    window.addEventListener("hashchange", function () { openRow = null; orgFilter = ""; readHash(); render(); });
     // Sync the server-rendered nav to the default section BEFORE readHash, or a
     // no-hash load paints SP->RP content under an active RP->SP button.
     setSection(section);

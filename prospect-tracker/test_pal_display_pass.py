@@ -202,3 +202,124 @@ def test_the_oaa_comparator_is_read_off_its_interval(ci, word):
     assert word in html, word
     others = {"better than the model", "not separable from the model", "worse than the model"} - {word}
     assert not any(o in html for o in others)
+
+
+# ---- ORG FILTER (owner ask 2026-09-25) --------------------------------------
+# Every Alchemy Lab list that names players carries the one org filter (the
+# shared team picker over the hub's canonical club codes) and an Org column or
+# card tag; the filter rides the hash as &org=XXX.
+_ALIAS = {"AZ": "ARI", "CWS": "CHW", "KC": "KCR", "SD": "SDP", "SF": "SFG", "TB": "TBR",
+          "WSH": "WSN", "OAK": "ATH", "FLA": "MIA"}
+
+
+def _canon(t):
+    t = (t or "").upper()
+    return _ALIAS.get(t, t)
+
+
+def test_every_player_list_renders_the_org_filter_and_honours_the_hash():
+    pytest.importorskip("py_mini_racer")
+    import test_pal_smoke as S
+    from py_mini_racer import MiniRacer
+    for hash_, name in (("#sp2rp", "Power Starter"), ("#rp2sp", "Deep Reliever"),
+                        ("#history", "Converted Guy"), ("#pitchadd", "Deep Reliever"),
+                        ("#platoon", "Reverse Guy"), ("#prospects", "Thin Starter Prospect")):
+        ctx = MiniRacer()
+        ctx.eval(S._prelude(hash_) + S.JS)
+        html = ctx.eval("__html['pal-app-root'] || ''")
+        assert 'id="pal-org" data-team-picker' in html, hash_
+        assert name in html, hash_
+        ctx = MiniRacer()
+        ctx.eval(S._prelude(hash_ + "&org=ZZZ") + S.JS)
+        html = ctx.eval("__html['pal-app-root'] || ''")
+        assert name not in html and "No ZZZ rows in this view." in html, hash_
+
+
+def test_the_org_column_sorts_on_the_canonical_code():
+    for cols in ("RP_COLS", "SP_COLS", "HISTORY_COLS", "PLATOON_COLS", "POSFIT_COLS"):
+        block = PAL_JS[PAL_JS.index("var " + cols + " = ["):]
+        block = block[:block.index("];")]
+        assert '{ key: "org", label: "Org", kind: "org", asc: true }' in block, cols
+    assert 'if (col && col.kind === "org") return sortByOrg(' in PAL_JS
+
+
+@pytest.fixture(scope="module")
+def site():
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    from conftest import serve_site
+    with serve_site() as base, sync_playwright() as p:
+        try:
+            b = p.chromium.launch()
+        except Exception as e:  # noqa: BLE001
+            pytest.skip("chromium unavailable: %s" % e)
+        yield base, b
+        b.close()
+
+
+_COUNT = r"""
+(kind) => {
+  const root = document.querySelector('#pal-app-root');
+  const rows = kind === 'cards' ? root.querySelectorAll('.pal-mix-grid .pal-mix-card')
+    : root.querySelectorAll('.mlbstats-table tbody tr:not(.pal-why-tr)');
+  return { n: rows.length, orgs: Array.from(rows).map(r => {
+    const a = r.querySelector('a.club-link'); return a ? a.getAttribute('data-club') : null; }) };
+}
+"""
+
+
+def _views():
+    pal = _load("pal.json")
+    pf = _load("positional_fit_ui.json")
+    plat = [r for r in pal["reverse_platoon"] if (r.get("reverse") or r.get("extreme"))
+            and (r.get("min_tbf") is None or r["min_tbf"] >= 100)]
+    return {
+        "sp2rp": (pal["sp2rp"], "team", "table"),
+        "rp2sp": (pal["rp2sp"], "team", "table"),
+        "history": (pal["history"], "team", "table"),
+        "pitchadd": (pal["pitch_add"], "team", "cards"),
+        "platoon": (plat, "team", "table"),
+        "prospects": (pal["prospect_watch"], "org", "cards"),
+        "posfit=board": (pf["rows"], "team", "table"),
+    }
+
+
+@pytest.mark.parametrize("org", ["LAD", "ARI", "ATH"])
+def test_the_org_filter_narrows_each_list_exactly(site, org):
+    base, b = site
+    page = b.new_page(viewport={"width": 1280, "height": 900})
+    page.route(re.compile(r"^https://a\.espncdn\.com/.*"), lambda route: route.abort())
+    try:
+        for view, (rows, field, kind) in _views().items():
+            want = sum(1 for r in rows if _canon(r.get(field)) == org)
+            page.goto("about:blank")
+            page.goto(base + "pal/#" + view + "&org=" + org, wait_until="networkidle", timeout=60_000)
+            page.wait_for_timeout(300)
+            got = page.evaluate(_COUNT, kind)
+            assert got["n"] == want, (view, org, want, got["n"])
+            assert all(o == org for o in got["orgs"]), (view, org, got["orgs"])
+    finally:
+        page.close()
+
+
+def test_picking_an_org_in_the_select_filters_and_writes_the_hash(site):
+    base, b = site
+    page = b.new_page(viewport={"width": 1280, "height": 900})
+    page.route(re.compile(r"^https://a\.espncdn\.com/.*"), lambda route: route.abort())
+    try:
+        page.goto(base + "pal/#history", wait_until="networkidle", timeout=60_000)
+        page.wait_for_timeout(300)
+        rows = _load("pal.json")["history"]
+        assert page.evaluate(_COUNT, "table")["n"] == len(rows)
+        page.evaluate("""() => { const s = document.querySelector('#pal-org'); s.value = 'LAD';
+            s.dispatchEvent(new Event('change', {bubbles: true})); }""")
+        page.wait_for_timeout(300)
+        assert page.evaluate(_COUNT, "table")["n"] == sum(1 for r in rows if _canon(r["team"]) == "LAD")
+        assert page.evaluate("() => location.hash") == "#history&org=LAD"
+        page.evaluate("""() => { const s = document.querySelector('#pal-org'); s.value = '';
+            s.dispatchEvent(new Event('change', {bubbles: true})); }""")
+        page.wait_for_timeout(300)
+        assert page.evaluate(_COUNT, "table")["n"] == len(rows)
+        assert page.evaluate("() => location.hash") == "#history"
+    finally:
+        page.close()

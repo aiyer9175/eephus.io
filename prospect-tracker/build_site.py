@@ -5232,6 +5232,8 @@ def build_pal() -> str:
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        # the org filter on every list is a select[data-team-picker]
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/pal.js?v={_PAL_VER}" defer></script>'
     )
