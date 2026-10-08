@@ -64,8 +64,8 @@ def test_fetch_failure_renders_error_state():
     ctx = MiniRacer()
     ctx.eval(PRELUDE + JS)
     html = ctx.eval("__html['fa-rows'] || ''")
-    assert "Data failed to load" in html
-    assert "nightly build is mid-run" in html
+    assert "Free-agent board did not load" in html
+    assert "nightly build may be writing it" in html
     assert "fa-retry" in html                # the retry affordance exists
     assert 'role="alert"' in html
 

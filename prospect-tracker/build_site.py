@@ -4653,8 +4653,8 @@ def build_fa() -> str:
     )
     return page("Free Agency - eephus.io", "fa", body,
                 f"The {_fa_span} MLB free-agent class: projected contracts with floor, mean and "
-                "ceiling bands, rational value vs predicted price, deal verdicts, team fits, and "
-                f"{_fa_winters} archived winters with a realized-surplus ledger.",
+                "ceiling bands, value vs predicted price, team fits, and "
+                f"{_fa_winters} archived winters of realized surplus.",
                 url=f"{SITE_ORIGIN}/fa/", image=module_share_image("fa"))
 
 
@@ -4912,15 +4912,15 @@ def _arb_model_panel() -> str:
     # (conventions.pool); this list names the limit and does not retype them.
     gaps = (
         "<ul>"
-        "<li>It prices the SYSTEM, not the hearing: no filed figures, so a panel "
+        "<li>It prices the system, not the hearing: no filed figures, so a panel "
         "case is scored on its award alone.</li>"
         "<li>Steps before 2022 are reconstructed from substitute service-time "
-        "sources: reported, NOT scored.</li>"
+        "sources: reported, not scored.</li>"
         "<li>2020 is never a label year (salaries paid at 60/162, reported on "
         "inconsistent bases).</li>"
         "<li>The CBA expires 2026-12-01. Seasons from 2027 assume the arbitration "
         "structure survives; no interval here covers that.</li>"
-        "<li>Non-tendered players are absent, so summed projections OVERSTATE what "
+        "<li>Non-tendered players are absent, so summed projections overstate what "
         "a club owes.</li>"
         "</ul>")
 
@@ -4980,8 +4980,7 @@ def _arb_model_panel() -> str:
             '<span class="arb-vd arb-vd--null">NOT SCORED</span> GATE C2, the '
             'club-control-window salary path</summary><dl>'
             '<dt>served mode</dt><dd>%s</dd>'
-            '<dt>status</dt><dd>Registered 2026-09-16 (docs/ARBITRATION_GATE.md '
-            'section 11). None of its clauses has been scored, so the surplus '
+            '<dt>status</dt><dd>Registered 2026-09-16. None of its clauses has been scored, so the surplus '
             'the path prices on /projections/, /trademachine/ and the player '
             'card has no receipt yet.</dd></dl></details>'
             % html.escape(sp_mode))

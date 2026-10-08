@@ -409,18 +409,18 @@
     var root = el("arb-app-root");
     if (!root) return;
     if (boardErr) {
-      root.innerHTML = pxState("failed", "Data failed to load. The nightly build may be mid-run." +
+      root.innerHTML = pxState("failed", "Arbitration board did not load. Retry; the nightly build may be writing it." +
         ' <button type="button" class="chip" id="arb-retry">Retry</button>');
       var b = el("arb-retry");
       if (b) b.onclick = function () { boardErr = false; load(); };
       return;
     }
     if (!board) {
-      root.innerHTML = pxState("loading", "Loading the arbitration board");
+      root.innerHTML = pxState("loading", "Loading the arbitration board.");
       return;
     }
     if (!board.rows || !board.rows.length) {
-      root.innerHTML = pxState("unmeasured", "The arbitration board is not built yet. Check back shortly.");
+      root.innerHTML = pxState("unmeasured", "Arbitration board not built yet on this deploy; the nightly build writes it.");
       return;
     }
     var teams = {};
@@ -552,7 +552,7 @@
     box.innerHTML = rows.length
       ? '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead>' +
         head + "</thead><tbody>" + body + "</tbody></table></div>" + more
-      : '<div class="mlbstats-empty">No player matches these filters. ' +
+      : '<div class="mlbstats-empty">No players match these filters. ' +
         '<button type="button" class="chip" id="arb-clear">Clear filters</button></div>';
   }
 
@@ -569,16 +569,16 @@
     var root = el("arb-panel-history");
     if (!root) return;
     if (histErr) {
-      root.innerHTML = pxState("failed", "The history data failed to load.");
+      root.innerHTML = pxState("failed", "Arbitration history did not load.");
       return;
     }
     if (!hist) {
-      root.innerHTML = pxState("loading", "Loading arbitration history");
+      root.innerHTML = pxState("loading", "Loading arbitration history.");
       return;
     }
     var rows = hist.rows || [];
     if (!rows.length) {
-      root.innerHTML = '<div class="mlbstats-empty">The history is being computed.</div>';
+      root.innerHTML = '<div class="mlbstats-empty">Arbitration history not built yet on this deploy; the nightly build writes it.</div>';
       return;
     }
     // COPY PASS 2026-10-03: the two-paragraph note became one lede line that
@@ -685,7 +685,7 @@
     var root = el("arb-panel-teams");
     if (!root) return;
     if (!board || !board.rows) {
-      root.innerHTML = pxState("loading", "Loading");
+      root.innerHTML = pxState("loading", "Loading Team View.");
       return;
     }
     var by = {};

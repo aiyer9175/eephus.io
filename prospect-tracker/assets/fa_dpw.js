@@ -205,7 +205,7 @@
       ? pser0 : null;
     const xs = Object.keys(head).sort();
     if (!xs.length) {
-      root.innerHTML = `<div class="state-message">The $/WAR series is not exported yet.
+      root.innerHTML = `<div class="state-message">$/WAR series not built yet on this deploy; the nightly build writes it.
         <a href="#view=board">Back to the board</a>.</div>`;
       return;
     }
@@ -268,7 +268,7 @@
         <span data-gl="deferral_npv">deferral-adjusted</span> guarantees over the discounted
         WAR its signings were projected to deliver.</p>
       <details class="dpw-how"><summary>How this works</summary>
-        <p class="dpw-note">One written series, rewritten nightly; the class board, /projections/,
+        <p class="dpw-note">One $/WAR series, rewritten nightly before pricing; the class board, /projections/,
           prospect surplus, the Archive and the Club Ledger read it. Method
           ${esc((DATA && DATA.method) || "fa_signings_implied_v1")}, model
           ${esc((DATA && DATA.model_version) || "?")}; thin winters are dropped from the implied series.</p>
@@ -375,13 +375,13 @@
     if (rows) rows.style.display = "none";
     el.hidden = false;
     if (!DATA) {
-      el.innerHTML = pxState("loading", "Loading the $/WAR series&hellip;");
+      el.innerHTML = pxState("loading", "Loading the $/WAR series.");
       await ensureData();
       if (!isActive()) return;
     }
     if (!DATA) {
       el.innerHTML = pxState("failed", `The $/WAR series
-        failed to load. <a href="#view=board">Back to the board</a>.`);
+        did not load. <a href="#view=board">Back to the board</a>.`);
       return;
     }
     render(el);

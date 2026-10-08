@@ -342,7 +342,7 @@
     });
     // QMLP04: tall views hold one viewport while they load (site.css .fa-hold).
     rows.classList.toggle("fa-hold", !state.player && state.view !== "tracker");
-    rows.innerHTML = pxState("loading", "Loading free-agency data&hellip;");
+    rows.innerHTML = pxState("loading", "Loading the free-agent board.");
     const clsName = state.classYear ? `fa_class_${state.classYear}` : "fa_class";
     // QMLP12: only the Archive view reads fa_archive (its table, rail and GFX
     // caption), so every other view paints without waiting on its 326 KB and
@@ -354,11 +354,10 @@
       await Promise.all(want);
     } catch (e) {
       if (state.classYear) {
-        rows.innerHTML = `<div class="state-message">The ${state.classYear - 1}-${String(state.classYear).slice(2)} class is not exported yet. <a href="#" onclick="location.hash='';return false;">Back to the current class</a>.</div>`;
+        rows.innerHTML = `<div class="state-message">The ${state.classYear - 1}-${String(state.classYear).slice(2)} class is not on this deploy. <a href="#" onclick="location.hash='';return false;">Back to the current class</a>.</div>`;
         return;
       }
-      rows.innerHTML = pxState("failed", `Data failed to load. If it
-        persists, the nightly build is mid-run.
+      rows.innerHTML = pxState("failed", `Free-agent board did not load. Retry; the nightly build may be writing it.
         <button class="chip" id="fa-retry" type="button">Retry</button>`);
       const retry = document.getElementById("fa-retry");
       if (retry) retry.onclick = () => render();   // load() re-fetches: failures are not cached
@@ -366,7 +365,7 @@
     }
     const cls = D[clsName], meta = D.fa_meta;
     if (!cls || !cls.members) {
-      rows.innerHTML = `<div class="state-message">Free-agency data not exported yet.</div>`;
+      rows.innerHTML = `<div class="state-message">Free-agent board not built yet on this deploy; the nightly build writes it.</div>`;
       return;
     }
     _faPhotoLegacy = !cls.members.some(m => m.mlbam);
@@ -1687,7 +1686,7 @@
       ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="10th and 90th percentile of the contract's value across simulated careers, where a player's seasons move together but not in lockstep, minus the predicted price">Surplus range, P10 &rarr; P90: ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)}; mean ${surplusSpan(m.surplus)}</p>` : ""}`;
     const seasonPanel = `
       ${yearRows ? `<h3>Season-by-season projection</h3>
-      <p class="fa-note">Mean is the <span data-gl="fa_projection_engine">Marcel champion</span> path this page prices on. /projections/ shows the proj_lgbm_v1 path for the same seasons, which can differ: ML paths failed the <span data-gl="fa_gates">Gate 2</span> market test, so contracts stay priced on the champion.${m.warSource === "mlb_projections" ? " Past the projection's fifth season this path continues along the champion aging curve /projections/ chains a contract past its fifth season on, from this page's own value for that season, so where the two pages' fifth seasons differ, the later seasons differ in the same proportion." : ""}</p>
+      <p class="fa-note">Mean is the <span data-gl="fa_projection_engine">Marcel champion</span> path this page prices on. /projections/ shows the ML engine's path for the same seasons, which can differ: ML paths failed the <span data-gl="fa_gates">Gate 2</span> market test, so contracts stay priced on the champion.${m.warSource === "mlb_projections" ? " Seasons 6+: the champion aging curve, continued from this page's season-5 value (the same function /projections/ uses)." : ""}</p>
       <table class="detail-table fa-year-table">
       <thead><tr><th>Season</th><th>Age</th><th><span data-gl="proj_buckets" title="This season's own 10th percentile, floored at 0 WAR. The column is not a path: no career sits at its P10 every season">Season P10</span></th><th>Mean</th><th><span data-gl="proj_buckets" title="This season's own 90th percentile, read the same way">Season P90</span></th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
       <tbody>${yearRows}</tbody></table>` : ""}
@@ -1950,7 +1949,7 @@
   function renderArchive(rows) {
     const arc = D.fa_archive;
     if (!arc || !arc.winters || !arc.winters.length) {
-      rows.innerHTML = `<div class="state-message">Archive not exported yet.</div>`;
+      rows.innerHTML = `<div class="state-message">Archive not built yet on this deploy; the nightly build writes it.</div>`;
       return;
     }
     const winters = arc.winters.slice().sort((a, b) => b.year - a.year);
@@ -1989,7 +1988,7 @@
 
   function renderModel(rows, meta) {
     if (!meta || (!meta.gate1 && !meta.gate2)) {
-      rows.innerHTML = `<div class="state-message">Model evaluation artifacts not exported yet.</div>`;
+      rows.innerHTML = `<div class="state-message">Model evaluation not built yet on this deploy; the nightly build writes it.</div>`;
       return;
     }
     const g1 = meta.gate1, g2 = meta.gate2;

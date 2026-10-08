@@ -1290,7 +1290,7 @@ function _renderTBRows() {
   _tbLastRows = rows;   // full filtered+sorted set for the Generate GFX board spec
 
   if (!rows.length) {
-    wrap.innerHTML = '<div class="empty-state">No players match.</div>';
+    wrap.innerHTML = '<div class="empty-state">No players match these filters.</div>';
     return;
   }
 
@@ -1798,7 +1798,7 @@ function _tbShowGroup(playerKey) {
     // The lamp loader holds the board's place until trade values arrive; the
     // first board render replaces it.
     const lw = document.getElementById("tradeboard-content");
-    if (lw && window.EephusState) lw.innerHTML = window.EephusState.html("loading", "Loading the trade-value board...");
+    if (lw && window.EephusState) lw.innerHTML = window.EephusState.html("loading", "Loading the trade-value board.");
     // The section headings carry glossary terms; eephus-gl wires only the
     // masthead on its own.
     document.querySelectorAll("#proj-view-trademachine .newsprint-eyebrow").forEach(_tmWireGl);
@@ -1832,7 +1832,7 @@ function _tbShowGroup(playerKey) {
       })
       .catch(() => {
         const w = document.getElementById("tradeboard-content");
-        if (w) w.innerHTML = '<div class="empty-state">This view is temporarily unavailable. Check back shortly.</div>';
+        if (w) w.innerHTML = '<div class="empty-state">Trade-value board not built yet on this deploy; the nightly build writes it.</div>';
       });
   }
 

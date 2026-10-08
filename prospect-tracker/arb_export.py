@@ -494,11 +494,11 @@ def build_history(recs, panel_rows, ledger, dpw) -> dict:
             "link": ("the name's link token, as the board's h: p:<key> opens "
                      "/projections/#player=<key>, x:<slug> opens "
                      "/prospx/#player=<slug>, null links nothing"),
-            "ou_mkt": ("actual minus OUR model: what the arbitration system paid "
-                       "relative to comparable players. Sums to roughly zero by "
+            "ou_mkt": ("vs market: actual minus this model; what arbitration paid "
+                       "against comparables. Sums to roughly zero by "
                        "construction."),
             "ou_war": ("actual minus WAR (fWAR basis) priced at that season's dollars per "
-                       "win. Does NOT sum to zero, because arbitration "
+                       "win. Does not sum to zero, because arbitration "
                        "systematically pays below the open market."),
             "never_combine": ("The two residuals measure different things and are "
                               "never averaged or summed."),
