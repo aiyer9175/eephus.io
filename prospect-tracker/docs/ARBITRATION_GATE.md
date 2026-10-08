@@ -1092,3 +1092,23 @@ edited.
 The champion, the frame, the folds, the seed, the verdict rule and the C3'
 bound. This restores the comparison section 4 already describes (identical
 rows, the same scale) on the data the ledger already holds.
+
+### 14e. Result (scored 2026-10-08, after 14a to 14d were committed)
+
+`tools/arb_gate_a.py --a6-only --write --B 1200 --frame platform`, the
+platform-frame served estimator, Swartz on the actual's scale in both pools.
+Read from `data/arbitration_eval.json`.
+
+| pool | n | by class year (2023 / 2024 / 2025 / 2026) | ours MdAPE | Swartz MdAPE | ratio | paired gap, 95% interval | verdict |
+|---|---|---|---|---|---|---|---|
+| repaired (`a6_swartz`, headline) | 808 | 222 / 209 / 185 / 192 | 0.1780 | 0.0769 | 2.31x | -0.1011 (-0.1216 to -0.0879) | NULL |
+| frozen (`a6_swartz_frozen_pool`) | 262 | 222 / 15 / 14 / 11 | 0.1734 | 0.0815 | 2.13x | -0.0918 (-0.1278 to -0.0647) | NULL |
+
+The repaired join read 1,393 projection entries and joined 1,270, with 0
+collisions, 7 entries carrying no id and 116 whose player has no scored
+row. By step on the repaired pool: arb-1 0.1846 against 0.0923 (n 419),
+arb-2 0.1956 against 0.0725 (n 235), arb-3 0.1636 against 0.0588 (n 154).
+Swartz is more accurate at every step on both pools; the units repair moved
+the frozen pool's Swartz figure only past the fourth decimal, because 222 of
+its 262 rows sit in the first fold. The History's MLBTR column fills 859 of
+863 rows (was 287).

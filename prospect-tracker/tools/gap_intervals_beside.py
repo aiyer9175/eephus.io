@@ -98,9 +98,14 @@ def _arb():
     import arb_gate_a as G
     import arb_mde_lab as L
     stored = _stored("arbitration_eval.json")
-    rows, metrics = L.load_pool()
+    # The stored block's own frame and pool (docs/ARBITRATION_GATE.md
+    # sections 13 and 14), so the rerun is the producer's run.
+    rows, metrics = L.load_pool(stored.get("frame", "award"))
     seasons = sorted({r["season"] for r in rows})
-    fresh = {"a6_swartz": G._swartz_head_to_head(rows, metrics, seasons, stored["B"])}
+    a6 = stored.get("a6_swartz") or {}
+    fresh = {"a6_swartz": G._swartz_head_to_head(
+        rows, metrics, seasons, stored["B"], pool=a6.get("pool", "frozen"),
+        units=a6.get("units", "frozen"))}
     return ("arbitration_eval.json", fresh, ["a6_swartz.gap_ci_vs_swartz"],
             ["a6_swartz"])
 

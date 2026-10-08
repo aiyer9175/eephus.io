@@ -82,41 +82,58 @@
   }
  },
  "a6_swartz": {
-  "n": 262,
-  "ours_mdape": 0.17335174900345562,
-  "swartz_mdape": 0.08152414709791758,
-  "ratio_ours_over_swartz": 2.1263853125043446,
+  "n": 808,
+  "ours_mdape": 0.17802471230057543,
+  "swartz_mdape": 0.07692307692307693,
+  "ratio_ours_over_swartz": 2.3143212599074805,
   "by_step": {
    "1": {
-    "n": 135,
-    "ours_mdape": 0.15619288463122027,
-    "swartz_mdape": 0.0851063829787234
+    "n": 419,
+    "ours_mdape": 0.18458013135579163,
+    "swartz_mdape": 0.09227871939736335
    },
    "2": {
-    "n": 76,
-    "ours_mdape": 0.2038447807452015,
-    "swartz_mdape": 0.0822072072072072
+    "n": 235,
+    "ours_mdape": 0.19562031911429495,
+    "swartz_mdape": 0.072463768115942
    },
    "3": {
-    "n": 51,
-    "ours_mdape": 0.21594464973661456,
-    "swartz_mdape": 0.07692307692307693
+    "n": 154,
+    "ours_mdape": 0.16362998498224054,
+    "swartz_mdape": 0.05882352941176472
    }
+  },
+  "by_season_n": {
+   "2023": 222,
+   "2024": 209,
+   "2025": 185,
+   "2026": 192
+  },
+  "pool": "repaired",
+  "units": "repaired",
+  "join_census": {
+   "pool": "repaired",
+   "entries": 1393,
+   "joined": 1270,
+   "no_id": 7,
+   "bbref_not_in_rows": 116,
+   "collisions": 0,
+   "collision_keys": []
   },
   "verdict": "NULL",
   "claim": "our SERVED estimator against the PUBLISHED pre-settlement Swartz projection, on settled figures, identical rows",
   "statement": "This model does not beat the MLB Trade Rumors / Matt Swartz projection. Measured on identical rows, Swartz is materially more accurate at every arbitration step. Reported as a NULL. The mechanism is not mysterious: Swartz prices the counting stats arbitration panels actually reward - home runs, RBI, saves, wins - and this champion deliberately excludes them because nothing in this pipeline projects them forward, which is what lets the same model serve a backtest and a forecast. Swartz is the better estimate of a KNOWN season; it is not available for an unplayed one.",
   "gap_ci_vs_swartz": {
    "mdape": {
-    "point": -0.0918,
-    "lo95": -0.1277,
-    "hi95": -0.0656
+    "point": -0.1011,
+    "lo95": -0.1216,
+    "hi95": -0.0879
    },
    "B": 1200,
    "seed": 20260808,
    "cluster": "player (mlbam): a player's seasons are drawn together",
-   "clusters": 246,
-   "n": 262,
+   "clusters": 483,
+   "n": 808,
    "orientation": "improvement: benchmark minus model for a lower-is-better statistic, model minus benchmark otherwise; positive means the model is better",
    "method": "paired percentile bootstrap: whole clusters drawn with replacement, both arms scored on every draw, predictions held fixed (no refit)"
   }
@@ -125,9 +142,9 @@
  "loss_ledger": [
   {
    "claim": "our SERVED estimator against the PUBLISHED pre-settlement Swartz projection, on settled figures, identical rows",
-   "n": 262,
-   "ours_mdape": 0.17335174900345562,
-   "swartz_mdape": 0.08152414709791758,
+   "n": 808,
+   "ours_mdape": 0.17802471230057543,
+   "swartz_mdape": 0.07692307692307693,
    "verdict": "NULL",
    "statement": "This model does not beat the MLB Trade Rumors / Matt Swartz projection. Measured on identical rows, Swartz is materially more accurate at every arbitration step. Reported as a NULL. The mechanism is not mysterious: Swartz prices the counting stats arbitration panels actually reward - home runs, RBI, saves, wins - and this champion deliberately excludes them because nothing in this pipeline projects them forward, which is what lets the same model serve a backtest and a forecast. Swartz is the better estimate of a KNOWN season; it is not available for an unplayed one."
   }
@@ -469,5 +486,63 @@
    }
   ],
   "role": "same-day award-frame twin (section 13c): separates the frame's effect from pool drift since 2026-08-09; adjudicates nothing"
+ },
+ "a6_swartz_frozen_pool": {
+  "n": 262,
+  "ours_mdape": 0.17335174900345562,
+  "swartz_mdape": 0.08152414709791758,
+  "ratio_ours_over_swartz": 2.1263853125043446,
+  "by_step": {
+   "1": {
+    "n": 135,
+    "ours_mdape": 0.15619288463122027,
+    "swartz_mdape": 0.0851063829787234
+   },
+   "2": {
+    "n": 76,
+    "ours_mdape": 0.2038447807452015,
+    "swartz_mdape": 0.0822072072072072
+   },
+   "3": {
+    "n": 51,
+    "ours_mdape": 0.21594464973661456,
+    "swartz_mdape": 0.07692316568046484
+   }
+  },
+  "by_season_n": {
+   "2023": 222,
+   "2024": 15,
+   "2025": 14,
+   "2026": 11
+  },
+  "pool": "frozen",
+  "units": "repaired",
+  "join_census": {
+   "pool": "frozen",
+   "entries": 666,
+   "joined": 666,
+   "no_id": 0,
+   "bbref_not_in_rows": 0,
+   "collisions": 0,
+   "collision_keys": []
+  },
+  "verdict": "NULL",
+  "claim": "our SERVED estimator against the PUBLISHED pre-settlement Swartz projection, on settled figures, identical rows",
+  "statement": "This model does not beat the MLB Trade Rumors / Matt Swartz projection. Measured on identical rows, Swartz is materially more accurate at every arbitration step. Reported as a NULL. The mechanism is not mysterious: Swartz prices the counting stats arbitration panels actually reward - home runs, RBI, saves, wins - and this champion deliberately excludes them because nothing in this pipeline projects them forward, which is what lets the same model serve a backtest and a forecast. Swartz is the better estimate of a KNOWN season; it is not available for an unplayed one.",
+  "gap_ci_vs_swartz": {
+   "mdape": {
+    "point": -0.0918,
+    "lo95": -0.1278,
+    "hi95": -0.0647
+   },
+   "B": 1200,
+   "seed": 20260808,
+   "cluster": "player (mlbam): a player's seasons are drawn together",
+   "clusters": 246,
+   "n": 262,
+   "orientation": "improvement: benchmark minus model for a lower-is-better statistic, model minus benchmark otherwise; positive means the model is better",
+   "method": "paired percentile bootstrap: whole clusters drawn with replacement, both arms scored on every draw, predictions held fixed (no refit)"
+  },
+  "role": "the 2026-08-09 loader's row set, scored beside the repaired headline pool (docs/ARBITRATION_GATE.md section 14c)"
  }
 }

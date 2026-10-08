@@ -5742,11 +5742,16 @@ def _arb_model_panel() -> str:
              "under 1.00: a NULL against a step multiplier"),
             "green" if a2.get("verdict") == "PASS" else "orange"))
     if a6.get("n"):
+        # Both A6 pools, side by side (docs/ARBITRATION_GATE.md section 14):
+        # the repaired join is the headline, the 2026-08-09 join beside it.
+        fz = ev.get("a6_swartz_frozen_pool") or {}
         tiles.append(tile(
             "%.1fx" % (a6.get("ratio_ours_over_swartz") or 0),
             "Swartz is more accurate",
-            "on %d settled seasons with an MLBTR projection"
-            % a6["n"], "red"))
+            "on %d settled seasons with an MLBTR projection%s"
+            % (a6["n"], ("; %.1fx on the %d in the original pool"
+                         % (fz.get("ratio_ours_over_swartz") or 0, fz["n"])
+                         if fz.get("n") else "")), "red"))
     tiles.append(tile(
         pool.get("rows", "-"), "scored player-seasons",
         "%s players over %s forward-chained folds"

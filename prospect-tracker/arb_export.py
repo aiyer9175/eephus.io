@@ -464,26 +464,20 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
     }
 
 
-def build_history(recs, panel_rows, ledger, dpw) -> dict:
-    """Per-season actual vs ours vs the MLBTR/Swartz projection."""
+def build_history(recs, panel_rows, ledger, dpw, projections=None) -> dict:
+    """Per-season actual vs ours vs the MLBTR/Swartz projection.
+
+    The MLBTR column reads the REPAIRED pool (docs/ARBITRATION_GATE.md
+    section 14): every projection entry, joined on its MLBAM id or the
+    panel's Baseball Reference id. Through load_ledger the arbitration
+    tracker post overwrote the projection for nearly every settled 2024-2026
+    player, and the column was filled on 18, 16 and 17 rows for those years
+    against 236 for 2023. `ledger` is no longer read; `projections` lets a
+    test pass entries in."""
+    import arb_dataset as A
     by = {(r["mlbam"], r["season"]): r for r in recs}
-    # bbref -> mlbam, from the panel. The ledger keys most entries by Baseball
-    # Reference id (that is what the MLBTR hrefs carry) and only the
-    # name-resolved pre-2023 rows carry an mlbam, so joining on mlbam alone
-    # matched 23 of about 1,400 available projections and made the Swartz
-    # comparison look far thinner than it is.
-    bref2mlbam = {}
-    for r in panel_rows:
-        if r.get("bbref"):
-            bref2mlbam[str(r["bbref"])] = int(r["mlbam"])
-    swartz = {}
-    for key, per_year in (ledger or {}).items():
-        for cy, ent in per_year.items():
-            if ent.get("kind") != "projection" or not ent.get("projected_usd"):
-                continue
-            m = ent.get("mlbam") or bref2mlbam.get(str(ent.get("bbref_id") or key))
-            if m:
-                swartz[(int(m), int(cy))] = ent["projected_usd"]
+    swartz, _census = A.swartz_by_mlbam(panel_rows, pool="repaired",
+                                        projections=projections)
 
     links = _link_targets()
     out = []
@@ -590,7 +584,7 @@ def export(*, write: bool = True, log=print, frame: str | None = None) -> dict:
     banded = Mod.fit_banded_multipliers(fr, defl)
     board = build_board(rows, eval_doc, metrics, dpw, season=2027,
                         s1=s1, s2=s2, defl=defl, banded=banded, frame=frame)
-    history = build_history(recs, sc, A.load_ledger(), dpw)
+    history = build_history(recs, sc, None, dpw)
     if write:
         _write(BOARD_PATH, board, BOARD_CAP_BYTES, log)
         _write(HISTORY_PATH, history, HISTORY_CAP_BYTES, log)

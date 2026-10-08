@@ -501,6 +501,11 @@ def forward_chain(rows, metrics_by, *, seasons, keys=CHAMPION_KEYS,
                 "mlbam": r["mlbam"], "name": r["name"], "season": test_y,
                 "arb_year": step,
                 "actual": actual,
+                # The nominal salary beside its deflated `actual`, so a
+                # nominal figure (the History's Ours, a published Swartz
+                # projection) can be put on either scale with this fold's own
+                # deflator level, salary / actual.
+                "salary": float(r["salary"]),
                 "champion": predict(r, metrics_by, defl, s1, s2),
                 "b0": baseline_b0(r, defl),
             }

@@ -384,6 +384,76 @@ def load_ledger() -> dict[int, dict[int, dict]]:
     return out
 
 
+def load_swartz_projections() -> list[dict]:
+    """Every MLBTR PROJECTION entry (Matt Swartz's pre-settlement figure) with
+    a published dollar figure, from data/_labs/arb_ledger.json.
+
+    docs/ARBITRATION_GATE.md section 14. load_ledger keeps ONE entry per
+    (key, class year), so the arbitration TRACKER post overwrote the
+    projection for nearly every settled 2024-2026 player. This loader reads
+    the projection kind only and never lets a tracker entry shadow it.
+    load_ledger itself is unchanged: the panel's published-service-time votes
+    read it, and changing it would move the scored pool."""
+    path = ROOT / "data" / "_labs" / "arb_ledger.json"
+    try:
+        doc = json.loads(path.read_text("utf-8"))
+    except (OSError, ValueError) as exc:
+        _log.warning("arb_dataset: arb_ledger unreadable: %s", exc)
+        return []
+    return [e for e in doc.get("entries") or []
+            if e.get("kind") == "projection" and e.get("projected_usd")]
+
+
+def swartz_by_mlbam(panel_rows: list[dict], *, pool: str = "repaired",
+                    ledger=None, projections=None) -> tuple[dict, dict]:
+    """({(mlbam, class_year): projected_usd}, census) for the A6 / C3' pools.
+
+    pool "frozen" is the 2026-08-09 join exactly: load_ledger's surviving
+    projection entries, MLBAM id first, else the panel's Baseball Reference
+    id map, later entries winning. pool "repaired" reads
+    load_swartz_projections() with the same id join; an (mlbam, class year)
+    two entries reach with different figures is a COLLISION, counted and
+    left out, and an entry with no resolvable id is counted and left out
+    (section 14b)."""
+    bref = {str(r["bbref"]): int(r["mlbam"]) for r in panel_rows if r.get("bbref")}
+    out: dict[tuple, float] = {}
+    census = {"pool": pool, "entries": 0, "joined": 0, "no_id": 0,
+              "bbref_not_in_rows": 0, "collisions": 0, "collision_keys": []}
+    if pool == "frozen":
+        for key, per_year in (ledger if ledger is not None else load_ledger()).items():
+            for cy, ent in per_year.items():
+                if ent.get("kind") != "projection" or not ent.get("projected_usd"):
+                    continue
+                m = ent.get("mlbam") or bref.get(str(ent.get("bbref_id") or key))
+                if m:
+                    out[(int(m), int(cy))] = float(ent["projected_usd"])
+        census["entries"] = census["joined"] = len(out)
+        return out, census
+    if pool != "repaired":
+        raise ValueError("unknown Swartz pool %r" % (pool,))
+    seen: dict[tuple, set] = {}
+    for e in (projections if projections is not None else load_swartz_projections()):
+        census["entries"] += 1
+        m = e.get("mlbam")
+        if not m and e.get("bbref_id"):
+            m = bref.get(str(e["bbref_id"]))
+            if not m:
+                census["bbref_not_in_rows"] += 1
+                continue
+        if not m:
+            census["no_id"] += 1
+            continue
+        seen.setdefault((int(m), int(e["class_year"])), set()).add(float(e["projected_usd"]))
+    for k, vals in seen.items():
+        if len(vals) > 1:
+            census["collisions"] += 1
+            census["collision_keys"].append([k[0], k[1], sorted(vals)])
+            continue
+        out[k] = next(iter(vals))
+    census["joined"] = len(out)
+    return out, census
+
+
 # --------------------------------------------------------------------------- #
 # Contamination
 # --------------------------------------------------------------------------- #
