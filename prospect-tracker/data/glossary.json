@@ -8753,7 +8753,7 @@
    ],
    "priority": 46,
    "definition": "The PROSPX pricing of a graduate after his debut: a trade value in millions, the value realized so far (realized_mm) and the remaining club-control years, served on the debuted rows of the prospect tracker and repeated on the Club Ledger graduates block.",
-   "methodology": "Two engines price a graduate and the ledger prints both under their own names: debuted_player_value (the PROSPX debuted rows) and the trade board's posterior (bayes_trade_value, surplus_source named per row). They are never averaged or summed. debuted_player_value carries no registry row of its own; its parent prospect_surplus is validated, so the debuted column reads as a served number without its own eval. The realized figure is value delivered, not skill: the counterfactual is not observed.",
+   "methodology": "Two engines price a graduate and the ledger prints both under their own names: debuted_player_value (the PROSPX debuted rows) and the trade board's posterior (bayes_trade_value, surplus_source named per row). They are never averaged or summed. debuted_player_value carries no registry row of its own; its parent prospect_surplus is validated, so the debuted column reads as a served number without its own eval. The realized figure is value delivered, not skill: the counterfactual is not observed. The remaining club-control years are the seven-season valuation window less the player's MLB service time, counted from the transaction history with the CBA day count (registry row service_time, provisional); a graduate with no control year left carries no remaining value.",
    "example": "",
    "formula": "",
    "seeAlso": [

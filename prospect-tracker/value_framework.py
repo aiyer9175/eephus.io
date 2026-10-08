@@ -3210,6 +3210,11 @@ def debuted_player_value(
 
     realized_usd = _realized_consumed_usd(consumed_seasons)
     trade_value_mm = round(apply_calibration(remaining_mean_usd / 1e6, f, is_pitcher), 1)
+    if n_consumed >= control_years:
+        # No control year left: the remaining value is $0 by definition. The isotonic
+        # calibration's bottom knot would otherwise serve its $1.0M floor (M10, once
+        # service time reached the engine and 363 graduates priced at 0 years left).
+        trade_value_mm = 0.0
     total_value_mm = round(realized_usd / 1e6 + trade_value_mm, 1)
     return {
         "trade_value_mm": trade_value_mm,      # REMAINING control years only (consumed = sunk)

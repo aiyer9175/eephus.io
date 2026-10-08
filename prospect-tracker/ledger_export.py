@@ -1983,8 +1983,9 @@ def build_all() -> tuple:
             tv_deb = tvr if tvr.get("status") == "debuted" else {}
             # current control: the trade board's control_thru (as surplus.rows_debuted
             # prints it), else the projections vet row's ctrlThru; blank when neither
-            # carries the player. debuted_value.remaining_control_years is the at-debut
-            # window the engine priced (7 on every row) and is not served here.
+            # carries the player. debuted_value.remaining_control_years is the valuation
+            # window less service time (service_time.py) that the engine priced
+            # dv_trade_value_mm on; it is not served here.
             vr = graduate_vet(g, vets_by_key, vets_by_mlbam) or {}
             if tv_deb.get("control_thru") is not None:
                 ctrl_thru, ctrl_why = tv_deb.get("control_thru"), tv_deb.get("control_why")
