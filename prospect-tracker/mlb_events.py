@@ -74,8 +74,10 @@ DATA = ROOT / "data"
 TX_DIR = ROOT / ".cache" / "mlb_transactions"
 DRAFT_DIR = ROOT / ".cache" / "draft_history"
 
-#: THE flag. False: write only under PREVIEW_DIR. Flipped by Q9_22c in one commit.
-MLB_EVENTS_LIVE = False
+#: THE flag. False: write only under PREVIEW_DIR. Flipped by Q9_22c in one
+#: commit (2026-10-08, after the fWAR label epoch's step Z entry): the builder
+#: fills data/mlb_events/ and the pages serve the MLB rows.
+MLB_EVENTS_LIVE = True
 PREVIEW_DIR = ROOT / ".cache" / "mlb_events" / "preview"
 SERVED_DIR = DATA / "mlb_events"
 
@@ -430,10 +432,12 @@ def _scan_cache(tx_dir: Path, mlb_ids, draft, window_last: date):
     return rows, il_events, counts
 
 
-def _stints(il_events: dict) -> tuple[dict, dict, dict]:
+def _stints(il_events: dict, cap: date | None = None) -> tuple[dict, dict, dict]:
     """tools/pt_risk_lab.build_stints on the same event list: {pid: {year:
     [days, stints]}}, per-year placement counts, and each placement's (days, close
-    date or None)."""
+    date or None). `cap` (the feed's last day) stops an open stint there, so a
+    count made inside a season never includes days not yet played; None keeps the
+    il_table.json rule exactly (a stint with no closer runs to its window's end)."""
     il = defaultdict(lambda: defaultdict(lambda: [0, 0]))
     per_year = Counter()
     by_place = {}
@@ -443,6 +447,8 @@ def _stints(il_events: dict) -> tuple[dict, dict, dict]:
             if kind != "P":
                 continue
             w_lo, w_hi = _season_window(dt.year)
+            if cap is not None:
+                w_hi = min(w_hi, cap + timedelta(days=1))
             close = w_hi
             closer = None
             for dt2, _k2 in evs[i + 1:]:
@@ -499,6 +505,86 @@ def _arb_rows(arb):
 
 def _sort_key(r: dict):
     return (r.get("date") or f"{r.get('season', 0)}-00-00", r["type"], str(r.get("tx") or ""))
+
+
+#: How many seasons the /fa/ "IL days, last three seasons" column sums.
+IL_RECENT_SEASONS = 3
+
+
+def il_recent_seasons(as_of: date, n: int = IL_RECENT_SEASONS) -> list[int]:
+    """The last `n` seasons that have started by `as_of` (a season starts on
+    its IL window's first day, Apr 1; 2020 on Jul 23), oldest first."""
+    last = as_of.year if as_of >= _season_window(as_of.year)[0] else as_of.year - 1
+    return list(range(last - n + 1, last + 1))
+
+
+def il_recent(il_events: dict, as_of: date, window_last: date | None) -> dict:
+    """{"seasons": [y-2, y-1, y], "days": {mlbam: [d, d, d]}}: in-season IL days
+    per season by the il_table.json rule, with an open stint stopped at the
+    feed's last day (never a day not yet played). Players with no IL day in the
+    three seasons are left out: every MLB-club IL move is in the cache, so a
+    player missing here had none."""
+    seasons = il_recent_seasons(as_of)
+    cap = min(window_last, as_of) if window_last is not None else as_of
+    table, _per_year, _by = _stints({p: list(e) for p, e in il_events.items()}, cap=cap)
+    days = {}
+    for pid, yrs in table.items():
+        row = [int((yrs.get(y) or [0, 0])[0]) for y in seasons]
+        if any(row):
+            days[str(pid)] = row
+    return {"seasons": seasons, "rule": "in-season days inside Apr 1 to Oct 1 "
+            "(2020: Jul 23 to Sep 28), ended by the next IL move; an open stint "
+            "stops at the feed's last day", "days": dict(sorted(days.items(), key=lambda kv: int(kv[0])))}
+
+
+#: The /history/ MLB rows: trades and major-league free-agent signings.
+ON_THIS_DAY_TYPES = ("trade", "fa_sign")
+
+
+def on_this_day(month: int, day: int, *, before_year: int, tx_dir: Path = TX_DIR,
+                mlb_ids=None, types=ON_THIS_DAY_TYPES) -> list[dict]:
+    """MLB-club rows of `types` dated `month`-`day` in seasons before
+    `before_year`, read from the month files of the cache only (one file per
+    season). Same vocabulary and dedupe as build(): a repeated (transaction id,
+    person) is dropped and one row is kept per (person, date, type). Newest
+    first. Each row: date, type, mlbam, name, from, to, desc (verbatim), tx."""
+    tx_dir = Path(tx_dir)
+    mlb_ids = frozenset(mlb_ids) if mlb_ids is not None else mlb_team_ids(tx_dir)
+    want = set(types)
+    out, seen_pair, seen_key = [], set(), set()
+    for y, m in cache_months(tx_dir):
+        if m != month or y >= before_year or (y, m) < TX_FIRST:
+            continue
+        try:
+            with gzip.open(tx_path(y, m, tx_dir), "rt", encoding="utf-8") as fh:
+                doc = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        for t in doc.get("transactions") or []:
+            d = str(t.get("date") or t.get("effectiveDate") or "")[:10]
+            if len(d) < 10 or int(d[5:7]) != month or int(d[8:10]) != day:
+                continue
+            typ = classify(t, mlb_ids, None)
+            if typ not in want:
+                continue
+            person = t.get("person") or {}
+            pid = person.get("id")
+            if not pid:
+                continue
+            tid = t.get("id")
+            if tid is not None:
+                if (tid, pid) in seen_pair:
+                    continue
+                seen_pair.add((tid, pid))
+            k = (int(pid), d, typ)
+            if k in seen_key:
+                continue
+            seen_key.add(k)
+            out.append({"date": d, "type": typ, "mlbam": int(pid), "name": person.get("fullName"),
+                        "from": _club(t, "fromTeam"), "to": _club(t, "toTeam"),
+                        "desc": str(t.get("description") or ""), "tx": tid})
+    out.sort(key=lambda r: (r["date"], str(r["tx"] or "")), reverse=True)
+    return out
 
 
 def build(*, tx_dir: Path = TX_DIR, as_of: date | None = None, players=None,
@@ -598,6 +684,12 @@ def build(*, tx_dir: Path = TX_DIR, as_of: date | None = None, players=None,
         rr = {"mlbam": pid, "name": names.get(pid), "date": r["date"], "type": r["type"],
               "clubs": [c for c in (r.get("from"), r.get("to")) if c is not None],
               "desc": r.get("desc"), "tx": r.get("tx")}
+        if (players.get(pid) or {}).get("key"):
+            rr["key"] = players[pid]["key"]
+        if r.get("from") is not None:
+            rr["from"] = r["from"]
+        if r.get("to") is not None:
+            rr["to"] = r["to"]
         if r["type"] == "trade":
             rr["deal"] = r.get("deal")
         if r.get("il"):
@@ -624,6 +716,7 @@ def build(*, tx_dir: Path = TX_DIR, as_of: date | None = None, players=None,
         "n_rows_all": len(keyed),
         "by_type": dict(sorted(by_type.items())),
         "il_placements_by_season": {str(y): per_year[y] for y in sorted(per_year)},
+        "il_recent": il_recent(il_events, as_of, window_last),
         "counts": dict(sorted(counts.items())),
         "il_days_rule": ("days of each placement inside its season's Apr 1 to Oct 1 "
                          "window (2020: Jul 23 to Sep 28), closed by the player's next "
@@ -708,12 +801,15 @@ def main(argv=None) -> int:
     ap.add_argument("--refresh", action="store_true",
                     help="refresh the open months of the cache before building")
     ap.add_argument("--as-of", default=None, help="build date (YYYY-MM-DD)")
+    ap.add_argument("--tx-dir", default=None,
+                    help="read (and with --refresh, fill) this copy of the transaction cache")
     a = ap.parse_args(argv)
     as_of = date.fromisoformat(a.as_of) if a.as_of else date.today()
+    tx_dir = Path(a.tx_dir) if a.tx_dir else TX_DIR
     if a.refresh:
-        print(nightly(as_of=as_of)["message"])
+        print(nightly(as_of=as_of, tx_dir=tx_dir)["message"])
         return 0
-    res = build(as_of=as_of)
+    res = build(as_of=as_of, tx_dir=tx_dir)
     print(write(res))
     return 0
 

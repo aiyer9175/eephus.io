@@ -5185,6 +5185,11 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .fa-app .fa-board-table .fc-wt   { width: 50px; }
 .fa-app .fa-board-table .fc-age  { width: 40px; }
 .fa-app .fa-board-table .fc-st   { width: 116px; }
+/* IL days, last three seasons (Q9_22c): drawn only while the MLB events feed
+   is live, and the first column to fold (742 + 44 + the 280 Player floor), so
+   every tier below keeps its own threshold; the row details carry it there. */
+.fa-app .fa-board-table .fc-il   { width: 44px; }
+@container faboard (max-width: 1065px) { .fa-app .fa-board-table .fc-il { display: none; } }
 /* Board tools. The sort picker is ALWAYS visible, at every width: downside WAR,
    star odds and prior AAV have no column at any tier, so a picker behind a
    container gate would leave them reachable only by hand-typing #sort=. It gets

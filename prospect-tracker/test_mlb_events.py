@@ -63,9 +63,10 @@ def _build(tx_dir, as_of, players=None, **kw):
 # the flag and the dark path
 # --------------------------------------------------------------------------
 
-def test_the_flag_is_off_and_defined_once():
-    assert M.MLB_EVENTS_LIVE is False
-    assert M.output_dir() == M.PREVIEW_DIR
+def test_the_flag_is_on_and_defined_once():
+    """Flipped by Q9_22c (2026-10-08, after the fWAR epoch's step Z entry)."""
+    assert M.MLB_EVENTS_LIVE is True
+    assert M.output_dir() == M.SERVED_DIR
     hits = []
     for p in ROOT.glob("*.py"):
         if p.name.startswith("test_"):
@@ -77,6 +78,7 @@ def test_the_flag_is_off_and_defined_once():
 
 
 def test_nothing_is_written_under_data_while_the_flag_is_off(tmp_path, monkeypatch):
+    monkeypatch.setattr(M, "MLB_EVENTS_LIVE", False)
     data = tmp_path / "data"
     data.mkdir()
     monkeypatch.setattr(M, "DATA", data)
@@ -101,7 +103,6 @@ def test_nothing_is_written_under_data_while_the_flag_is_off(tmp_path, monkeypat
     with pytest.raises(RuntimeError):
         M.write(M.build(tx_dir=tx, as_of=date(2026, 10, 3), players={}, links={},
                         fa_events=[], arb=[], draft={}), data / "mlb_events")
-    assert not (ROOT / "data" / "mlb_events").exists()
 
 
 # --------------------------------------------------------------------------

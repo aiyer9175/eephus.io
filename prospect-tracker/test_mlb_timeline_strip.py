@@ -252,7 +252,8 @@ def test_type_table_covers_the_builder_and_the_sprite():
 def test_the_shell_attribute_follows_the_one_flag(monkeypatch):
     import build_site as B
     import mlb_events
-    assert mlb_events.MLB_EVENTS_LIVE is False, "a build commit never sets the flag"
+    assert mlb_events.MLB_EVENTS_LIVE is True, "the Q9_22c flip set the flag"
+    monkeypatch.setattr(mlb_events, "MLB_EVENTS_LIVE", False)
     assert "data-mlb-events" not in B.build_projections()
     monkeypatch.setattr(mlb_events, "MLB_EVENTS_LIVE", True)
     assert re.search(r'<div id="proj-rows"[^>]* data-mlb-events="live"', B.build_projections())

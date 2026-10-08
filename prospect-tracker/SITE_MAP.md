@@ -66,11 +66,11 @@ payloads are real page traffic and are attributed to every page loading it).
 |---|---|---|---|---|
 | `/` | `build_site.build_home()` | server-rendered | - | Home: brand hero + module cards + wire/ticker |
 | `/news/` | `build_site.build_news()` | server-rendered | `player_links.json` | News feed page (de-noised event wire) |
-| `/history/` | `build_site.build_this_day()` | server-rendered | - | Today in Prospect History: debuts, trades, signings and IL moves on today's MM-DD |
+| `/history/` | `build_site.build_this_day()` | server-rendered | - | On This Day: debuts, MLB and prospect trades, signings and IL moves on today's MM-DD |
 | `/articles/` | `build_site.build_articles_index()` | server-rendered | - | article card grid, newest first |
 | `/articles/<slug>/` | `build_site.build_article_page()` | server-rendered | - | one page per content/articles/*.md |
 | `/forums/` | `build_site.build_forums_index()` | server-rendered | - | account/forum shell; Supabase-backed, inert without assets/eephus-config.js |
-| `/fa/` | `build_site.build_fa()` | `assets/fa.js` | `fa_archive.json`, `fa_class.json`, `fa_meta.json`, `glossary.json`, `mlb_current_lines.json`, `player_links.json` | Free Agency module shell |
+| `/fa/` | `build_site.build_fa()` | `assets/fa.js` | `fa_archive.json`, `fa_class.json`, `fa_meta.json`, `glossary.json`, `index.json`, `mlb_current_lines.json`, `player_links.json` | Free Agency module shell |
 | `/projections/` | `build_site.build_projections()` | `assets/eephus-teampick.js`, `assets/projections.js` | `bullpen_leaderboards.json`, `mlb_player_detail.json`, `mlb_position_games.json`, `mlb_projections.json`, `model_registry.json`, `photo_ctx.json`, `player_links.json`, `proj_horizon_eval.json`, `prospect_path_eval.json`, `starter_leaderboards.json`, `swing_delta.json`, `team_outlook_eval.json` | MLB Projections (+ #player= pages, Team Outlook) |
 | `/mlbstats/` | `build_site.build_mlbstats()` | `assets/eephus-teampick.js`, `assets/mlbstats.js` | `bullpen_history.json`, `bullpen_leaderboards.json`, `defense_history.json`, `defense_leaderboards.json`, `hitter_history.json`, `hitter_leaderboards.json`, `leverage_consistency_eval.json`, `leverage_history.json`, `leverage_leaderboards.json`, `mlbstats_windows.json`, `player_links.json`, `starter_history.json`, `starter_leaderboards.json`, `war_leaderboards.json`, `war_seasons.json` | MLB Stats: Bullpen Leaderboards / REM+ |
 | `/pal/` | `build_site.build_pal()` | `assets/eephus-teampick.js`, `assets/pal.js` | `pal.json`, `pal_core.json`, `pal_eval.json`, `pal_history.json`, `pal_pitch_add.json`, `pal_prospect_watch.json`, `pal_reverse_platoon.json`, `pal_rp2sp.json`, `pal_sp2rp.json`, `player_links.json`, `positional_fit_ui.json` | Alchemy Lab |
