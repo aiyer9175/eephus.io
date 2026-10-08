@@ -167,6 +167,7 @@ _TEAM_CSS_VER = _asset_ver("assets/team.css")
 _SCORES_VER = _asset_ver("assets/scores.js")
 _SCORES_CSS_VER = _asset_ver("assets/scores.css")
 _SPORTS_PAGE_CSS_VER = _asset_ver("assets/sports-page.css")   # the shared sports-page classes (SCORES_7a)
+_HOME_SCORES_VER = _asset_ver("assets/home-scores.js")   # the homepage scoreboard strip (SCORES_7d)
 # The lazy video chunk (SCORES_4a): scores.js loads it on the first game-view
 # open from the mount root's data-vv stamp, never as a tag in the shell.
 _SCORES_VIDEO_VER = _asset_ver("assets/scores-video.js")
@@ -4664,6 +4665,26 @@ def _home_article_age(a: dict, today: date) -> int | None:
         return None
 
 
+def _home_scoreboard() -> str:
+    """The homepage scoreboard strip (SCORES_7d; owner SC7-6, SC7-7), under the
+    masthead: live games, then today's games still to start, then the latest
+    finals, each linking its /scores/ game page. The shell is a hidden mount
+    (the 'Scores' tag and an empty track) that assets/home-scores.js fills
+    from /data/scores/ at runtime and reveals only once it has rows, so a
+    missing file or a stale season holds no space. The hub runtime that draws
+    the pixel club marks is named by data-hub and loaded by the strip only
+    when it will show. Present only while scores_core.SCORES_LIVE is True
+    (the /scores/ page it links exists)."""
+    import scores_core
+    if not scores_core.SCORES_LIVE:
+        return ""
+    return (f'<link rel="stylesheet" href="/assets/sports-page.css?v={_SPORTS_PAGE_CSS_VER}">'
+            f'<section class="sp-strip" id="home-scoreboard" aria-label="Scores" hidden'
+            f' data-hub="/assets/eephus-hub.js?v={_HUB_VER}">'
+            '<a class="sp-strip-tag" href="/scores/">Scores</a><ul class="sp-strip-track"></ul></section>'
+            f'<script src="/assets/home-scores.js?v={_HOME_SCORES_VER}" defer></script>')
+
+
 def build_home(articles: list[dict], data: dict | None = None) -> str:
     """Homepage (HOME_4, LANE_HOME 3): the shared site header, the MLB News
     rail on the left, and in the main column a slim masthead, then the MLB
@@ -4732,6 +4753,8 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '<div class="dateline"><span>Sabermetric Analysis</span>'
         f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div></div>'
     )
+    # The scoreboard strip (SCORES_7d) follows the masthead in the head block;
+    # assets/home-scores.js fills it at runtime (_home_scoreboard).
     jump = ('<nav class="home-jump" aria-label="Homepage bands">'
             + "".join(f'<a href="#{_HOME_BANDS[b][0]}">{html.escape(_HOME_BANDS[b][2])}</a>'
                       for b in HOME_BAND_ORDER)
@@ -4924,7 +4947,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '</main>'
     )
     inner = (f'{ticker}{_nav("home")}<div class="home-shell">'
-             f'<div class="home-head">{masthead}</div>{jump}{rail}{main}</div>')
+             f'<div class="home-head">{masthead}{_home_scoreboard()}</div>{jump}{rail}{main}</div>')
     return page_home("eephus.io - sabermetrics", inner,
                      "Prospect board graded by eFV, plus MLB free agency, projections, leaderboards, "
                      "fantasy and betting models.")
