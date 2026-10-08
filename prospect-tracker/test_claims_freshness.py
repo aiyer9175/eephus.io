@@ -658,10 +658,12 @@ def test_sources_copy_names_every_excerpted_report_source():
     prospect_names = B._name_series(B.SCOUT_REPORT_SOURCES)
     draft_names = B._name_series(B.DRAFT_REPORT_SOURCES)
     page = B.build_sources()
+    assert prospect_names in page, f"/sources/ does not name {prospect_names}"
+    assert draft_names in page, f"/sources/ does not name {draft_names}"
+    # LIBRARY_5 retired the Methodology view's attribution note; the view
+    # points at /sources/, which carries the attribution.
     glossary_js = _read_text("assets/glossary.js")
-    for surface, text in (("/sources/", page), ("assets/glossary.js", glossary_js)):
-        assert prospect_names in text, f"{surface} does not name {prospect_names}"
-        assert draft_names in text, f"{surface} does not name {draft_names}"
+    assert '<a href="/sources/">Data Sources</a>' in glossary_js
 
 
 def test_single_a_equivalent_example_matches_live_factor():

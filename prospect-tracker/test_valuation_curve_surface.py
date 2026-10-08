@@ -9,9 +9,10 @@ efv_export._valuation_curve writes data/xfv_valuation_curve.json on every eFV
 regen (wired best-effort into regen_all): per FV tier and role, the value
 engine's own surplus / expected WAR / star odds under the production valuation
 set, side by side with the published FanGraphs 2026 anchor table and the live
-board's medians. The glossary Methodology view surfaces it as the "What an eFV
-grade is worth" card (assets/glossary.js renderMethodology ->
-_methValuationCurveHTML). Mirrors test_reliability_surface.py: these pins keep
+board's medians. The Library's Evidence > Calibration leaf surfaces it as the
+"What an eFV grade is worth" card (assets/glossary.js renderCalibration ->
+_methValuationCurveHTML; it left the Methodology view in LIBRARY_5). Mirrors
+test_reliability_surface.py: these pins keep
 the producer, the consumer, and the deploy wiring from silently drifting apart:
 
   * the artifact must SHIP (not be added to deploy/data_exclude.txt), or the
@@ -59,6 +60,25 @@ def test_glossary_methodology_fetches_the_valuation_curve_artifact():
         "the valuation-curve surface was removed")
     assert "_methValuationCurveHTML" in js, (
         "assets/glossary.js is missing the _methValuationCurveHTML renderer")
+
+
+def test_the_valuation_curve_renders_on_the_calibration_leaf():
+    """LIBRARY_5: the curve is a measurement, so it renders on the Calibration
+    leaf and its fetch re-renders that leaf; Methodology neither fetches nor
+    renders it."""
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8").replace("\r\n", "\n")
+
+    def body(name):
+        start = js.index(f"function {name}(")
+        return js[start:js.index("\nfunction ", start + 1)]
+
+    cal = body("renderCalibration")
+    assert "_loadValuationCurve()" in cal and "_methValuationCurveHTML()" in cal
+    loader = body("_loadValuationCurve")
+    assert f"/data/{VALUATION_CURVE_ARTIFACT}" in loader
+    assert 'if (_S.view === "calibration") renderCalibration();' in loader
+    meth = body("renderMethodology")
+    assert "_methValuationCurveHTML" not in meth and VALUATION_CURVE_ARTIFACT not in meth
 
 
 def test_glossary_valuation_curve_renders_defensively():

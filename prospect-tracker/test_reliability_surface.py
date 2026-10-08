@@ -7,9 +7,10 @@
 
 efv_reliability.build writes data/xfv_reliability.json nightly (the shipped
 5-bucket outcome distribution re-scored forward-chained out-of-fold, plus a
-bust-bucket ECE drift tripwire). The glossary Methodology view surfaces it as
-the "Live calibration monitor" card (assets/glossary.js renderMethodology ->
-_methReliabilityHTML). These pins keep the producer, the consumer, and the
+bust-bucket ECE drift tripwire). The Library's Evidence > Calibration leaf
+surfaces it as the "Live calibration monitor" card (assets/glossary.js
+renderCalibration -> _methReliabilityHTML; it left the Methodology view in
+LIBRARY_5). These pins keep the producer, the consumer, and the
 deploy wiring from silently drifting apart:
 
   * the artifact must SHIP (not be added to deploy/data_exclude.txt), or the
@@ -57,6 +58,36 @@ def test_glossary_methodology_fetches_the_reliability_artifact():
         "Live calibration monitor surface was removed")
     assert "_methReliabilityHTML" in js, (
         "assets/glossary.js is missing the _methReliabilityHTML renderer")
+
+
+def _fn_body(js: str, name: str) -> str:
+    start = js.index(f"function {name}(")
+    return js[start:js.index("\nfunction ", start + 1)]
+
+
+def test_the_monitor_renders_on_the_calibration_leaf():
+    """LIBRARY_5: the monitor is a measurement, not method, so it renders on
+    the Calibration leaf (#view=calibration) and nowhere in Methodology; the
+    reliability loader re-renders that leaf on arrival."""
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8").replace("\r\n", "\n")
+    assert 'id: "calibration", shelf: "evidence", label: "Calibration", body: "calibration-body", render: renderCalibration' in js
+    cal = _fn_body(js, "renderCalibration")
+    assert "_loadReliability()" in cal and "_methReliabilityHTML()" in cal
+    meth = _fn_body(js, "renderMethodology")
+    assert "_methReliabilityHTML" not in meth and "_loadReliability" not in meth
+    loader = _fn_body(js, "_loadReliability")
+    assert 'if (_S.view === "calibration") renderCalibration();' in loader
+
+
+def test_the_tripwire_draws_one_lamp_row_from_the_artifact():
+    """The tripwire is one lamp row: lit lamps are the bust-bucket ECE over
+    the threshold in tenths, both read from the artifact's tripwire block."""
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8").replace("\r\n", "\n")
+    lamp = _fn_body(js, "_relTripLamp")
+    assert "Number(tw.bust_ece)" in lamp and "Number(tw.threshold)" in lamp
+    assert "Math.round((ece / thr) * 10)" in lamp
+    assert 'class="px-lamp"' in lamp
+    assert "${_relTripLamp(tw)}" in _fn_body(js, "_methReliabilityHTML")
 
 
 def test_glossary_reliability_renders_defensively():

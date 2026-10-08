@@ -3283,15 +3283,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .gl-app .meth-cmp td { border-bottom: 1px solid var(--border-light); padding: 7px 9px; vertical-align: top;
       color: var(--text-secondary); line-height: 1.45; }
 .gl-app .meth-cmp td:first-child { font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
-.gl-app .meth-refs { max-width: 860px; margin: 4px 0 12px; padding-left: 18px; }
-.gl-app .meth-refs li { font-family: var(--font-serif); font-size: 13px; line-height: 1.55;
-      color: var(--text-secondary); margin-bottom: 5px; }
-.gl-app .meth-changelog { list-style: none; padding: 0; margin: 4px 0 12px; max-width: 860px; }
-.gl-app .meth-changelog li { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
-      color: var(--text-secondary); padding: 6px 0 6px 0; border-bottom: 1px dotted var(--border-light);
-      display: grid; grid-template-columns: 64px 1fr; gap: 12px; }
-.gl-app .meth-changelog .mc-date { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
-      color: var(--text-cyan); letter-spacing: 0.02em; }
 .gl-app .meth-eg-card { border: 1px solid var(--border); border-left: 3px solid var(--neon-amber);
       background: var(--bg-secondary); padding: 11px 14px; margin: 8px 0 14px; max-width: 860px; }
 .gl-app .meth-eg-title { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
@@ -3311,6 +3302,48 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
         margin-bottom: 14px; font-family: var(--font-mono); border-bottom: 2px solid #000; padding-bottom: 8px; }
     }
 .gl-app #methodology-print-head { display: none; }
+/* Methods chapters (LIBRARY_5). The Methodology view reads as seven
+   chapters, each an h2 with its id. At 900 px and wider a sticky rail lists
+   them with a pixel lamp (the px-lamp tokens) lit on the current chapter;
+   narrower,
+   a sticky chapter select takes the rail's place. The chapter column holds a
+   72ch reading width. No ancestor of the rail may carry overflow, or it
+   becomes the rail's containing block (the .fa-app #fa-rows note). */
+.gl-app .meth-rail { display: none; }
+.gl-app .meth-chapters { max-width: 72ch; min-width: 0; }
+.gl-app .meth-chsel { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px;
+      margin: 0 0 6px; padding: 6px 0; background: var(--bg-primary); border-bottom: 1px solid var(--border-light); }
+.gl-app .meth-chsel-k { font: 700 11px var(--font-retro-mono); letter-spacing: 0.06em; color: var(--text-tertiary); }
+.gl-app .meth-chsel select { flex: 1 1 auto; min-width: 0; min-height: 44px; font: 13px var(--font-sans);
+      color: var(--text-primary); background: var(--bg-secondary); border: 1px solid var(--border); padding: 0 8px; }
+.gl-app .meth-chapter-h { font-family: var(--font-sans); font-size: 22px; font-weight: 800; line-height: 1.2;
+      color: var(--text-primary); margin: 40px 0 0; padding-top: 12px; border-top: 3px solid var(--border);
+      scroll-margin-top: 64px; }
+.gl-app .meth-chapter:first-child .meth-chapter-h { margin-top: 8px; }
+/* The last chapter is at least a viewport tall, so every chapter heading can
+   reach the top of the screen and light its lamp. */
+.gl-app .meth-chapter:last-child { min-height: calc(100vh - 24px); }
+.gl-app .meth-chapter .meth-h { margin-top: 18px; }
+.gl-app .meth-rail ol { list-style: none; margin: 0; padding: 8px; border: 1px solid var(--border);
+      background: var(--bg-secondary); }
+.gl-app .meth-rail a { display: flex; align-items: center; gap: 8px; padding: 6px 4px; text-decoration: none;
+      font: 12px/1.35 var(--font-retro-mono); color: var(--text-secondary); }
+.gl-app .meth-rail a:hover { color: var(--text-primary); }
+.gl-app .meth-rail a[aria-current] { color: var(--text-primary); font-weight: 700; }
+.gl-app .meth-rail-lamp { flex: none; }
+.gl-app .meth-trip-lamp { margin-top: 8px; }
+@media (min-width: 900px) {
+  .gl-app .meth-chaptered { display: grid; grid-template-columns: 200px minmax(0, 72ch); gap: 28px; align-items: start; }
+  .gl-app .meth-rail { display: block; position: sticky; top: 8px; }
+  .gl-app .meth-chsel { display: none; }
+  .gl-app .meth-chapter-h { scroll-margin-top: 12px; }
+}
+@media print {
+  body.printing-meth .meth-rail, body.printing-meth .meth-chsel { display: none !important; }
+  body.printing-meth .meth-chapter:last-child { min-height: 0; }
+  body.printing-meth .meth-chaptered { display: block !important; }
+  body.printing-meth .meth-chapters { max-width: none; }
+}
 .gl-app .meth-h { font-family: var(--font-sans); font-size: 17px; font-weight: 800;
       letter-spacing: 0.01em; color: var(--text-primary); margin: 24px 0 8px;
       padding-bottom: 5px; border-bottom: 2px solid var(--border); }
@@ -3506,15 +3539,14 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
    repo, so the one table on the site whose whole job is to say which models are
    validated rendered as a browser-default table - inside a
    repeat(auto-fit, minmax(330px,1fr)) grid, with no way to reach the columns
-   past the right edge on a phone. It now carries .meth-table, which is styled,
-   plus the overrides below and its own scroller.
+   past the right edge on a phone. (LIBRARY_5 retired that table: the registry
+   renders on /models/ only; its rules went with it.)
 
    The scroller is on a wrapper that contains NOTHING BUT THE TABLE, and that is
    not incidental: overflow on an ancestor makes it the containing block for
    every position:sticky descendant. That is exactly how #fa-rows silently
    killed the FA board rail (measured and written up at the .fa-app #fa-rows
    rule). A one-table wrapper cannot contain a rail. */
-.gl-app .meth-registry-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 /* Two rules the registry pass turned up next to it, both the same defect and
    both the reason /glossary/#view=methodology scrolled the PAGE sideways at
    375px rather than scrolling a table inside its own box:
@@ -3528,29 +3560,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
    Both wrappers hold tables only, never a rail. */
 .gl-app .table-scroll-x { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .gl-app .meth-tables { grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr)); }
-/* .meth-table is built for narrow numeric columns, so it right-aligns every
-   cell. The registry is prose and identifiers - model ids, champion and
-   baseline names, artifact paths - and reads left. */
-.gl-app .meth-registry-table { min-width: 660px; }
-.gl-app .meth-registry-table th,
-.gl-app .meth-registry-table td { text-align: left; vertical-align: top; }
-/* The verdict is one word and reads as one; the artifact path is a filename
-   that must be recognisable at a glance, so it gets a floor wide enough to hold
-   most of one and `anywhere` rather than break-all - break-all splits every
-   path mid-token even when there is room not to. */
-.gl-app .meth-registry-table th:nth-child(4),
-.gl-app .meth-registry-table td:nth-child(4) { white-space: nowrap; }
-.gl-app .meth-registry-table th:last-child,
-.gl-app .meth-registry-table td:last-child { min-width: 172px; }
-.gl-app .meth-registry-table td a {
-  font-family: var(--font-retro-mono); color: var(--neon-cyan); overflow-wrap: anywhere;
-}
-/* The notes row spans the table and is the one cell that must wrap. */
-.gl-app .meth-registry-notes td { padding: 2px 6px 8px; }
-.gl-app .meth-registry-notes summary {
-  font-family: var(--font-sans); font-size: 11px; color: var(--text-tertiary); cursor: pointer;
-}
-.gl-app .meth-registry-notes .meth-note { margin-top: 6px; white-space: normal; max-width: 72ch; }
 
 /* ── SOURCE ACCURACY (/glossary/#view=source-accuracy, C-A4 2026-08-10) ──
    The cohort-accuracy measurement's own sub-view. Hand-authored and placed

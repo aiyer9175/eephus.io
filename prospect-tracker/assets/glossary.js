@@ -10,10 +10,12 @@
 // filter, A-Z, the index beside the selected entry, with artifact-derived
 // receipt blocks on model entries via _receiptSpecs; How to Read: annotated
 // anatomy guide; Formulas: every formula by shelf) · Methods
-// (Methodology: derivations + the industry-comparison section at
-// #industry-comparison + interactive teaching widgets + PDF export) ·
+// (Methodology: seven chapters with a chapter rail, the industry-comparison
+// chapter at #industry-comparison, the interactive teaching widgets and the
+// PDF export) ·
 // Evidence (Source Comparison: the empirical source-vs-source backtest;
-// Source Accuracy: the who-grades-which-cohort measurement; Calibration;
+// Source Accuracy: the who-grades-which-cohort measurement; Calibration: the
+// live calibration monitor and what an eFV grade is worth;
 // Models & Proofs: the model registry ledger; links to /models/) · Sources
 // (Source Updates: the dates each outlet published a list; Page Index: every
 // standalone page; a link to /sources/). The authoritative list is VIEWS
@@ -91,7 +93,7 @@
     { id: "methodology", shelf: "methods", label: "Methodology", body: "methodology-body", render: renderMethodology, aliases: [] },
     { id: "source-comparison", shelf: "evidence", label: "Source Comparison", body: "source-comparison-body", render: renderSourceComparison, aliases: [] },
     { id: "source-accuracy", shelf: "evidence", label: "Source Accuracy", body: "source-accuracy-body", render: renderSourceAccuracy, aliases: [] },
-    { id: "calibration", shelf: "evidence", label: "Calibration", body: "calibration-body", render: () => _renderPendingLeaf("calibration"), aliases: [], unlisted: true },
+    { id: "calibration", shelf: "evidence", label: "Calibration", body: "calibration-body", render: renderCalibration, aliases: [] },
     { id: "models", shelf: "evidence", label: "Models & Proofs", body: "models-body", render: renderModels, aliases: [], unlisted: true },
     { id: "models-ledger", shelf: "evidence", label: "Models", href: "/models/", aliases: [] },
     { id: "model-updates", shelf: "evidence", label: "Model Updates", href: "/models/updates/", aliases: [] },
@@ -136,6 +138,11 @@
     if (p.has("prov")) _S.prov = p.get("prov") || "all";
     if (p.has("mod")) _S.mod = p.get("mod") || null;
     if (p.has("q")) _S.q = p.get("q");
+    // A Methods chapter: #view=methodology&ch=<chapter id>, or the bare
+    // chapter id (#industry-comparison) the section has always carried.
+    const bare = location.hash.slice(1);
+    const ch = p.get("ch") || (_methChapters().some(c => c.id === bare) ? bare : null);
+    if (ch) { _S.view = "methodology"; _S.methCh = ch; }
     _S.cards = p.has("cards") ? p.get("cards") !== "0" : _CARDS_DEFAULT;
     _S.term = p.get("g") || null;
     if (_S.term) _S.view = "terms";
@@ -1185,18 +1192,6 @@
     def.render();
   }
 
-  // A registered leaf whose content another task fills (Calibration): it
-  // opens from its URL and says where that material sits today.
-  function _renderPendingLeaf(id) {
-    const el = document.getElementById(VIEW_BY_ID[id].body);
-    if (!el) return;
-    const where = 'The calibration tables sit in <a href="#view=methodology">Methodology</a> for now.';
-    const msg = `${escapeHtml(VIEW_BY_ID[id].label)} is not built yet. ${where}`;
-    const S = window.EephusState;
-    el.innerHTML = S ? S.html("empty", msg, "gl-pending-leaf")
-      : `<div class="state-message gl-pending-leaf" role="status">${msg}</div>`;
-  }
-
   // On load the active leaf chip is brought into view (the strip wraps, so
   // this only moves the page when the strip itself sits off screen).
   function _scrollActiveChip() {
@@ -1351,7 +1346,10 @@ function _methCaptureCurve(bt) {
     <p class="meth-note">eFV concentrates <strong>${t20x}%</strong> of all realized career WAR in the top 20% of its board, against ${t20c}% for the consensus. It sorts the eventual contributors toward the top more sharply. Full graded pool (n=${cc.pool_n.toLocaleString()}, debuted + busts); the public sources don't grade the lower-minors busts, so this lift curve is eFV against the consensus it is built to upgrade.</p>
   </div>`;
 }
-function _methProseHTML() {
+// The Methodology prose, one part per piece the chapters assemble
+// (renderMethodology). Text moves verbatim from the one-scroll view; the
+// section headings sit one level under each chapter's h2.
+function _methProseParts() {
   // Tiered $/WAR for the worked example, read from the live framework snapshot
   // (data/value_framework.js -> window.VALUE_FRAMEWORK) instead of re-hardcoded
   // prose: the $7.7M/$9.7M/$15.1M this sentence used to carry had rotted a full
@@ -1361,9 +1359,9 @@ function _methProseHTML() {
   const _dpwTxt = (_dpwF(_dpwT.lt_1) && _dpwF(_dpwT["1_to_2"]) && _dpwF(_dpwT["2plus"]))
     ? ` (about ${_dpwF(_dpwT.lt_1)} / ${_dpwF(_dpwT["1_to_2"])} / ${_dpwF(_dpwT["2plus"])} by WAR level)`
     : "";
-  return `
-  <div class="meth-prose">
-    <h2 class="meth-h">How eFV is built <span class="meth-sub">the site's primary grade</span></h2>
+  return {
+    efv: `
+    <h3 class="meth-h">How eFV is built <span class="meth-sub">the site's primary grade</span></h3>
     <p><strong>eFV (eephusFV)</strong> is our outcome-grounded Future Value grade, and the
     primary grade and ranking signal site-wide. A scout FV grades the tool profile; eFV predicts
     the career it produces: <em>given everything known before a prospect debuts, his distribution
@@ -1415,8 +1413,9 @@ function _methProseHTML() {
     artifact at render time, noise floors included. eFV is <strong>provisional</strong> and near
     the data's rank ceiling; its historical track is a current-model retrospective, not the grade
     we showed at the time.</p>
-
-    <h2 class="meth-h">How the consensus FV (eFV's prior) is built</h2>
+`,
+    consensus: `
+    <h3 class="meth-h">How the consensus FV (eFV's prior) is built</h3>
     <p>The consensus FV is the scout-grade aggregate eFV anchors on, and the reference shown
     alongside eFV everywhere. Every source that publishes an explicit 20-80 Future Value grade
     feeds an <strong>equal-weight</strong> consensus: every source votes at exactly 1.0. An
@@ -1437,8 +1436,9 @@ function _methProseHTML() {
     just added) is pulled toward a prior, so one aggressive outlier source can't swing the
     number until corroborating grades arrive. The chart you see on every prospect page is this
     point-in-time consensus history; the per-source overlay shows the inputs it blends.</p>
-
-    <h2 class="meth-h">How the Arkmetrics are derived</h2>
+`,
+    arkmetrics: `
+    <h3 class="meth-h">How the Arkmetrics are derived</h3>
     <dl class="meth-dl">
       <dt>WAG - WAR Above Grade <span class="meth-tag">graduates</span></dt>
       <dd>A graduate's career WAR <em>rate</em> projected to a role-typical full season
@@ -1475,15 +1475,17 @@ function _methProseHTML() {
       a starter's Fastball/Command), so growing the <em>right</em> tools scores higher than
       padding the average.</dd>
     </dl>
-
+`,
+    example: `
     <div class="meth-eg-card">
       <div class="meth-eg-title">Worked example · how a grade becomes a dollar figure</div>
       <div class="meth-eg-row">An <b>${gTermLink("fv", "FV")} 60</b> shortstop: the FV→WAR anchor maps the grade to a per-year WAR expectation, the position multiplier nudges it for the up-the-middle profile, and the seven cost-controlled years are priced at the tiered ${gTermLink("dpw_tier", "$/WAR")}${_dpwTxt} minus the league-min-plus-arb cost basis, then probability-weighted across debut and bust outcomes and discounted to present value.</div>
       <div class="meth-eg-row">The result is the published ${gTermLink("surplus_value", "surplus value")} on that player's card. A higher ${gTermLink("dvm_plus", "$DvM+")} (faster-than-mean development) and stronger underlying rates (${gTermLink("k_pct", "K%")} / ${gTermLink("bb_pct", "BB%")}, ${gTermLink("ops_plus", "OPS+ vs lvl")}) lift the expectation within the FV band.</div>
       <div class="meth-eg-note">Illustrative - each player's card carries their own current figure, which moves with the FV→WAR table and the $/WAR market.</div>
     </div>
-
-    <h2 class="meth-h">Surplus value - the economic model</h2>
+`,
+    surplus: `
+    <h3 class="meth-h">Surplus value - the economic model</h3>
     <p>A prospect is an asset because the seven years of club control after debut are paid below
     market. Surplus value is the dollar production those controlled years are expected to deliver
     above what they cost. The grade priced here is <strong>eFV</strong> (the consensus FV is the
@@ -1510,8 +1512,32 @@ function _methProseHTML() {
     <em>disabled</em> under that set. The published per-prospect figure is ${gTermLink("surplus_value", "Surplus value")}; the per-FV-point
     and per-dollar efficiency cuts are ${gTermLink("surplus_per_fv_pt", "Surplus / FV-pt")} and ${gTermLink("dollars_per_fv", "$/FV-pt")}.
     The <em>Interactive</em> tab below walks an FV through every step.</p>
-
-    <h2 class="meth-h">Farm-system grades - how the org letter is built</h2>
+`,
+    aggregation: `
+    <h3 class="meth-h">Aggregation - player level to farm level</h3>
+    <p>Roll-ups are explicit, not implied. Org surplus is the sum of its active prospects' per-player
+    surplus dollars (the authoritative engine aggregate, <code>_active_surplus_net_mm</code>); the farm
+    list, the detail Surplus tile, and the Finances tab all read that one number. DvM+ / ToolDvM+
+    aggregate per-tool development across the org's actives with acquisitions nullified (so a trade
+    doesn't read as development) and graduations not subtracted (so promoting a star doesn't read
+    as a loss). The "+" indices (DvM+, RPS+, SC+, OrgSur+) are all built to the wRC+/OPS+ convention - 
+    100 = the relevant mean, ±10 ≈ one standard deviation - so they share one mental scale.</p>
+`,
+    analogue: `
+    <h3 class="meth-h">Where the Arkmetrics sit vs public metrics</h3>
+    <table class="meth-cmp">
+      <thead><tr><th>Arkmetric</th><th>Closest public analogue</th><th>What's different</th></tr></thead>
+      <tbody>
+        <tr><td>${gTermLink("wag", "WAG")}</td><td>WAR vs draft-pick / FV expectation</td><td>Measures realized career WAR against the WAR a player's FV grade <em>implied</em> - a grade-calibration residual, not raw production.</td></tr>
+        <tr><td>${gTermLink("dvm_plus", "DvM+ / $DvM+")}</td><td>Farm-system surplus-value rankings (e.g. public prospect-value tables)</td><td>Indexed wRC+-style (100 = mean) and scoped to in-system <em>development</em> with acquisitions removed, so it isolates org skill rather than hoarded talent.</td></tr>
+        <tr><td>${gTermLink("surplus_value", "Surplus value")}</td><td>Surplus-value frameworks (FV→WAR→$ minus cost)</td><td>Same skeleton, but probability-weighted over a bucketed outcome distribution and discounted, rather than applying a single FV-tier dollar constant.</td></tr>
+        <tr><td>${gTermLink("rps_plus", "RPS+")}</td><td>wRC+ / ERA-</td><td>Re-anchored to the player's own age × position-group cohort and level, so a young hitter at a hard level isn't penalized against older peers.</td></tr>
+        <tr><td>${gTermLink("statcast_plus", "SC+")}</td><td>Statcast percentile dashboards</td><td>Collapses the tracked-data panel into one side-aware, pool-anchored composite on the wRC+ scale.</td></tr>
+      </tbody>
+    </table>
+`,
+    farm: `
+    <h3 class="meth-h">Farm-system grades - how the org letter is built</h3>
     <p>The org grade is a weighted tree (${gTermLink("farm_report_card", "Farm grade tree")}), not a single
     formula, so each letter is auditable down to its leaves. Four branches, value-led (v40):
     <strong>Value</strong> (65% - the org's aggregate risk-adjusted controlled surplus, the total $ value of
@@ -1526,91 +1552,20 @@ function _methProseHTML() {
     Every leaf is z-scored across the 30 orgs and anchored so the composite reads on a 100 = league-mean
     scale; sparse leaves return " - " rather than guessing. Surplus enters the Value branch as realized
     capital efficiency and again via the development of surplus dollars (Org $DvM+).</p>
-
-    <h2 class="meth-h">Aggregation - player level to farm level</h2>
-    <p>Roll-ups are explicit, not implied. Org surplus is the sum of its active prospects' per-player
-    surplus dollars (the authoritative engine aggregate, <code>_active_surplus_net_mm</code>); the farm
-    list, the detail Surplus tile, and the Finances tab all read that one number. DvM+ / ToolDvM+
-    aggregate per-tool development across the org's actives with acquisitions nullified (so a trade
-    doesn't read as development) and graduations not subtracted (so promoting a star doesn't read
-    as a loss). The "+" indices (DvM+, RPS+, SC+, OrgSur+) are all built to the wRC+/OPS+ convention - 
-    100 = the relevant mean, ±10 ≈ one standard deviation - so they share one mental scale.</p>
-
-    <h2 class="meth-h">Where the Arkmetrics sit vs public metrics</h2>
-    <table class="meth-cmp">
-      <thead><tr><th>Arkmetric</th><th>Closest public analogue</th><th>What's different</th></tr></thead>
-      <tbody>
-        <tr><td>${gTermLink("wag", "WAG")}</td><td>WAR vs draft-pick / FV expectation</td><td>Measures realized career WAR against the WAR a player's FV grade <em>implied</em> - a grade-calibration residual, not raw production.</td></tr>
-        <tr><td>${gTermLink("dvm_plus", "DvM+ / $DvM+")}</td><td>Farm-system surplus-value rankings (e.g. public prospect-value tables)</td><td>Indexed wRC+-style (100 = mean) and scoped to in-system <em>development</em> with acquisitions removed, so it isolates org skill rather than hoarded talent.</td></tr>
-        <tr><td>${gTermLink("surplus_value", "Surplus value")}</td><td>Surplus-value frameworks (FV→WAR→$ minus cost)</td><td>Same skeleton, but probability-weighted over a bucketed outcome distribution and discounted, rather than applying a single FV-tier dollar constant.</td></tr>
-        <tr><td>${gTermLink("rps_plus", "RPS+")}</td><td>wRC+ / ERA-</td><td>Re-anchored to the player's own age × position-group cohort and level, so a young hitter at a hard level isn't penalized against older peers.</td></tr>
-        <tr><td>${gTermLink("statcast_plus", "SC+")}</td><td>Statcast percentile dashboards</td><td>Collapses the tracked-data panel into one side-aware, pool-anchored composite on the wRC+ scale.</td></tr>
-      </tbody>
-    </table>
-
-    <h2 class="meth-h">Data sources &amp; references</h2>
-    <ul class="meth-refs">
-      <li><strong>Scouting grades / FV:</strong> FanGraphs, MLB Pipeline (domestic + international), ESPN, Just Baseball, TJStats; rank-only fallbacks from Baseball America and The Athletic.</li>
-      <li><strong>Performance &amp; tracked data:</strong> MLB Stats API (MLB + MiLB statlines), Baseball Savant (Statcast) where available for upper-level / debuted players, pulled via pybaseball.</li>
-      <li><strong>Contracts &amp; bonuses:</strong> published MLB draft-pool and international bonus-pool figures; Spotrac for graduate contract/AAV data.</li>
-      <li><strong>Framework anchors:</strong> the FanGraphs scouting primer (FV→WAR ranges) and public $/WAR estimates (tiered, rolling multi-year average). The surplus engine's outcome buckets and discount rate are documented in <code>value_framework.py</code>.</li>
-      <li><strong>Valuation set:</strong> production prices through <code>clemens_2026</code>, the FanGraphs / Ben Clemens 2026 published prospect-valuation framework, its tier values fetched from the source posts and checksum-validated at load. Under this set the FA signings-implied $/WAR re-anchor (<code>fa_implied</code>) is disabled; served dollars sit on the published FanGraphs rate basis.</li>
-    </ul>
-
-    <h2 class="meth-h">Data sources &amp; attribution</h2>
-    <p class="meth-note">PROSPX grades are a consensus built across seven independent industry sources - the value added is the aggregation, calibration, and track-record audit, not any single list. Player cards show excerpts of the scouting reports FanGraphs, MLB Pipeline, Baseball America, ESPN and Just Baseball have published (the opening of each report, at most 280 characters, labelled with its source, list and publication date, with a View on link to the player's page at the source where we know it and otherwise to the source's page for that list), and the draft board shows excerpts of the draft reports from FanGraphs, MLB Pipeline and Baseball America the same way. The full reports stay with their publishers. All trademarks, data and report text remain the property of their owners. The full attribution page lives at <a href="/sources/">/sources/</a>.</p>
-    <div class="article-grid">
-      ${[
-        ["FanGraphs", "https://www.fangraphs.com/", "Prospect rankings, FV + tool grades, prospect and draft scouting reports (consensus input); league stats and park factors."],
-        ["MLB Pipeline", "https://www.mlb.com/prospects", "Prospect rankings, grades, and prospect and draft scouting reports (consensus input); draft bonus pools and slot values."],
-        ["Baseball America", "https://www.baseballamerica.com/", "Prospect rankings, grades, and prospect and draft scouting reports (consensus input)."],
-        ["ESPN", "https://www.espn.com/mlb/", "Prospect rankings and scouting reports (consensus input); team logo imagery on internal surfaces."],
-        ["The Athletic", "https://www.nytimes.com/athletic/", "Prospect rankings (consensus input)."],
-        ["Just Baseball", "https://www.justbaseball.com/", "Prospect rankings and scouting reports (consensus input)."],
-        ["TJStats", "https://x.com/TJStats", "Prospect rankings (consensus input) and movers wire."],
-        ["MLB Stats API / Baseball Savant", "https://baseballsavant.mlb.com/", "Game logs, transactions, rosters, Statcast tracking data, and player headshots."],
-        ["Baseball-Reference", "https://www.baseball-reference.com/", "war_daily (bWAR): the run frame the served eWAR is built on, plus historical player pages."],
-        ["pybaseball", "https://github.com/jldbc/pybaseball", "Open-source Python toolkit used to pull Statcast, FanGraphs, and Baseball-Reference data programmatically."],
-        ["Spotrac", "https://www.spotrac.com/", "Contracts, payrolls, free-agent classes, and international signing trackers."],
-      ].map(([nm, url, use]) => `<div class="card source-card"><h3><a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(nm)}</a></h3><p>${escapeHtml(use)}</p></div>`).join("")}
-    </div>
-    <p class="meth-note">All grades remain the property of their publishers; the site stores them to compute a consensus and does not redistribute source lists wholesale.</p>
-
-    <h2 class="meth-h">Methodology changelog</h2>
-    <ul class="meth-changelog">
-      <li><span class="mc-date">2026-10-03</span> The fWAR label epoch: the TRAINING label behind eFV, the FV-to-WAR anchors, the projections, the draft slot curve, star odds, WAG and the arbitration model moved from eWAR v2 to published fWAR, frozen per season (FanGraphs' WAR adopted wholesale: its 57/43 replacement split, its league pool and positional ladder, Statcast fielding with framing inside it). The DISPLAYED WAR stays eWAR v2. The move buys one currency across the label, the FanGraphs FV-to-WAR tables and the $/WAR kernel; it is a change of definition by owner decision, and no accuracy gain is claimed from it.</li>
-      <li><span class="mc-date">2026-09-30</span> The org promotion multipliers left the served ETA: in the keep-or-remove gate (list vintage 2024) the two arms gave the same debut year on all 503 scored rows, so the multipliers had not earned a place and the served call passes no org tendency. Receipt: block <code>org_timing_gate_2026_09_25</code> of <a href="/data/eta_eval.json"><code>data/eta_eval.json</code></a>; registry row <code>eta</code>; gate <code>docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md</code> section 7.</li>
-      <li><span class="mc-date">2026-09-25</span> eFV V2 serves the board (owner decision DS-02): consensus percentile plus admitted skill and timing drivers within each side and list year, labelled as tying the consensus until a reserved read says otherwise. Receipt: registry row <code>efv_v2</code> (provisional); gate <code>docs/efv-v2/EFV_V2_GATE.md</code>.</li>
-      <li><span class="mc-date">2026-09-25</span> The head-to-head headline moved to the timing-pinned vintage-matched frame vm2, where eFV's consensus input is the raters' own preseason read (owner answer FP3-1); vm1 stays in the ledger as superseded history. eFV against each source is now one Holm-corrected family (FP3-3), and a cell carries a verdict only when it survives the correction. Receipt: registry row <code>xfv_headtohead_frame</code>; <a href="/data/source_backtest.json"><code>data/source_backtest.json</code></a> (<code>accuracy.head_to_head_verdict</code>, <code>accuracy.head_to_head_vs_sources</code>); <a href="/data/efv_progress.json"><code>data/efv_progress.json</code></a>.</li>
-      <li><span class="mc-date">2026-09-04</span> The eWAR label epoch: site-wide WAR and every model labelled, anchored or priced in WAR (the eFV label, the FV outcome anchors, WAG, surplus, arbitration, farm grades, the projections) moved from bWAR to eWAR v2 together, by owner basis decision. Measured on identical rows, the swap did not improve eFV: hitters equivalent (+0.00006), pitchers undecided (-0.01823, permutation p 0.0635). Receipt: registry row <code>xfv_ewar_label_epoch</code>; gate <code>docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md</code> part 9.</li>
-      <li><span class="mc-date">2026-07-31</span> Surplus moved to an EXPECTED-VALUE objective (calibration isotonic-real-v6-evframe): the correction map is now a count-weighted isotonic (PAVA) fit on resolved-cohort bin means, targeting the conditional mean instead of the median. The $0 floor on bottom-tier prospects is gone; the board total moved up while the ordering did not. The map deliberately loses the old median-objective MAE gate and that loss is committed, not hidden.</li>
-      <li><span class="mc-date">2026-07-30</span> The eFV headline grade's outcome-implied FV mapping re-keyed to the recalibrated empirical FV→WAR anchors, so the grade and the dollars read off the same curve.</li>
-      <li><span class="mc-date">2026-07-29/30</span> Valuation recalibration: sub-45 anchors repaired, the board-scale re-expression turned off, and <code>clemens_2026</code> (the published FanGraphs / Ben Clemens 2026 framework, checksummed anchors, <code>fa_implied</code> disabled) made the default production valuation set.</li>
-      <li><span class="mc-date">2026-07-25</span> Consensus source weighting REVERTED to equal. The June accuracy weights (Pipeline 1.06 / FanGraphs 0.94) failed a hardened forward-chained re-measurement: d&rho; -0.0012 against a minimum detectable effect of 0.0068, so the weighted blend's win was inside the noise floor and unearned. Every source votes 1.0 again; the revert is committed in data/source_weights.json.</li>
-      <li><span class="mc-date">2026-07</span> Cross-source scale normalization: each source's grades are quantile-mapped onto the FanGraphs scale over the players both grade before blending, so a hot or cold outlet is de-biased by the shape of its whole distribution. Per-source grades on the card are unchanged; only the consensus scale is.</li>
-      <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017-2020 boards (new-format CSVs) + MLB Pipeline 2017-2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021-2023 (3 base years) to 2017-2023 (7), and the common scored set grew with it. On the larger, further-resolved sample the blend's edge over its best single input is two-legged: it separates future contributors better (the AUC leg resolves), while the ordering gap (Spearman) sits inside the noise floor the backtest can resolve. The live legs, floors, and common-set size render in Source Comparison below.</li>
-      <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
-      <li><span class="mc-date">2026-06</span> The page split into three views (today Terms, Methodology and Source Comparison); taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
-      <li><span class="mc-date">2026-06</span> Farm grade tree v40: value-tracking reweight. The org letter is now primarily driven by aggregate risk-adjusted controlled surplus (the Value branch, 65%); Development drops from the top weight to a secondary controllable-skill signal (9%), MLB Production 18%, Acquisition Strategy 8%. This stops the grade from reading as a per-prospect tool-development index decoupled from aggregate farm value.</li>
-      <li><span class="mc-date">2026-05</span> Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the 40% top weight.</li>
-      <li><span class="mc-date">2026-06</span> Consensus FV moved to ACCURACY-WEIGHTED source blending after a vintage-disciplined A/B beat equal-weight on both Spearman and AUC (weights shrunk toward equal, clamped, frozen per vintage; sources without resolved history stay at 1.0). Reverted 2026-07-25, above: the hardened re-measurement could not resolve the win.</li>
-      <li><span class="mc-date">2026-05</span> Source-vs-source backtest published (resolved cohorts only) as the Source Comparison area.</li>
-      <li><span class="mc-date">2026-04</span> Consensus FV: equal-weight mean confirmed over weighted schemes at that window; Bayesian shrinkage + forward-fill formalized.</li>
-    </ul>
-    <p class="meth-note">Versioned methodology pairs with the Time Machine: a board state and the rules that produced it are both reconstructable for any past month.</p>
-
-    <h2 class="meth-h">FAQ</h2>
+`,
+    faq: `
     <dl class="meth-dl">
       <dt>Why a consensus instead of one source?</dt>
       <dd>Averaging cancels idiosyncratic source error, and the measured edge is two-legged: on resolved cohorts the blend separates future contributors from non-contributors better than any single input (the AUC leg clears its floor), while on ordering realized WAR the gap to its best input sits inside the noise floor the backtest can resolve. Blending buys discrimination, not ordering; the live legs and floors render in Source Comparison. Per-source edges are small and unstable year to year, which is why the blend stays at equal weights rather than chasing them.</dd>
       <dt>How are sources weighted?</dt>
-      <dd>Equally: every source votes at exactly 1.0. An accuracy-weighted blend (per-source weights from measured track records, shrunk toward equal and clamped) shipped in June 2026 and was reverted on 2026-07-25, when a hardened forward-chained re-measurement showed its edge was smaller than the test could resolve (d&rho; -0.0012 vs a minimum detectable effect of 0.0068) - the weights were unearned, so they came off. Only two of eight outlets even have resolvable outcome history. The interactive below lets you test any weighting yourself.</dd>
+      <dd>Equally: every source votes at exactly 1.0. An accuracy-weighted blend (per-source weights from measured track records, shrunk toward equal and clamped) shipped in June 2026 and was reverted on 2026-07-25, when a hardened forward-chained re-measurement showed its edge was smaller than the test could resolve (d&rho; -0.0012 vs a minimum detectable effect of 0.0068) - the weights were unearned, so they came off. Only two of eight outlets even have resolvable outcome history. The interactive in Value and surplus lets you test any weighting yourself.</dd>
       <dt>How often does it update?</dt>
       <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board stamps its own cadence.</dd>
       <dt>What's the track record - and its limits?</dt>
       <dd>The evaluation window spans seven preseason base years (2017-2023): the 2017-2020 cohorts are fully resolved while 2021-2023 are still accruing WAR, and cumulative WAR is censored at today. Top FV tiers stay thin (n≈40-70), so their rates move on a few outcomes. The Source Comparison area lists sample sizes and these caveats in full rather than headlining an inflated number.</dd>
     </dl>
-  </div>`;
+`,
+  };
 }
 
 // Smooth (Catmull-Rom) calibration line: x = FV tier, y = an outcome metric,
@@ -2184,8 +2139,8 @@ function _basisTag(basis) {
 }
 
 // Calibration cross-link tile: this view is the historical case; the live,
-// nightly-updating counterpart is the calibration monitor on the Methodology
-// view. Shows the current tripwire status inline once the shared reliability
+// nightly-updating counterpart is the calibration monitor on the Calibration
+// leaf. Shows the current tripwire status inline once the shared reliability
 // artifact (_loadReliability) has arrived; renders without it otherwise. The
 // anchor drives the same #view= hash the nav chips sync to.
 function _methCalibCrossLink() {
@@ -2199,7 +2154,7 @@ function _methCalibCrossLink() {
   }
   return `<div class="meth-findings"><div class="meth-find-card">
     <div class="meth-find-stat">${stat}</div>
-    <div class="meth-find-label">eFV publishes its own live calibration - <a href="#view=methodology">see the monitor in Methodology</a></div>
+    <div class="meth-find-label">eFV publishes its own live calibration - <a href="#view=calibration">see the monitor in Calibration</a></div>
     ${status}
     <div class="meth-find-sub">the shipped outcome distribution is re-scored nightly against resolved outcomes, with a drift tripwire</div>
   </div></div>`;
@@ -2647,7 +2602,7 @@ window._gxSurplus = _gxSurplus;
 
 function _methInteractivesHTML() {
   return `
-  <h2 class="meth-h">Interactive - manipulate the models</h2>
+  <h3 class="meth-h">Interactive - manipulate the models</h3>
   <p class="meth-note">These run on the live framework values. Move the inputs to see how a scouting grade, a source-weighting scheme, and the surplus walk respond.</p>
 
   <div class="gx-card">
@@ -2699,7 +2654,7 @@ function _methInteractivesHTML() {
 }
 
 // Live calibration monitor artifact (finding 37): shared lazy loader. The
-// Methodology view renders the full monitor; the Source Comparison view shows
+// Calibration leaf renders the full monitor; the Source Comparison view shows
 // the tripwire status on its calibration cross-link tile. One in-flight guard,
 // one cached payload; the resolve re-renders whichever consumer view is
 // active. Diagnostic only; a failed fetch or absent artifact simply drops the
@@ -2709,7 +2664,7 @@ function _loadReliability() {
   if (_S.reliability || _S.relLoading) return;
   _S.relLoading = true;
   const rerender = () => {
-    if (_S.view === "methodology") renderMethodology();
+    if (_S.view === "calibration") renderCalibration();
     else if (_S.view === "source-comparison") renderSourceComparison();
   };
   fetch("/data/xfv_reliability.json", { cache: "no-cache" })
@@ -2722,7 +2677,8 @@ function _loadReliability() {
 // that says what eFV is, shows the honest headline results, and carries the
 // no-ship discipline line. Every number is read AT CLICK TIME from the loaded
 // artifacts (xfv_scoreboard_eval.json head_to_head + disagreement receipts;
-// model_registry.json for the ledger tile), never hardcoded, so the card can
+// the model registry for the ledger tile, fetched by the click itself through
+// _loadRegistryThen), never hardcoded, so the card can
 // never carry a number the page does not. Claims match the corrected prose:
 // equal-weight consensus, EV surplus, and NO per-side margin is stated as a
 // win (the hitter rank margin sits under its own MDE floor). The head-to-head
@@ -2808,7 +2764,7 @@ function _methAdGfxSpec() {
 }
 
 // ==== INDUSTRY COMPARISON (2026-08-19) =======================================
-// Methodology-view section "Our tables vs the industry's" (#industry-comparison).
+// Methods chapter "Our tables vs the industry's" (#industry-comparison).
 // Each block is one casual paragraph, then the arithmetic shape, then the
 // artifact or doc pointer. Every number is derived at render time: from
 // window.VALUE_FRAMEWORK (already loaded on this page), from artifacts pulled
@@ -2935,43 +2891,60 @@ function _methIndustryHTML() {
     <p class="meth-note"><strong>The market re-prices a win every winter.</strong>${dpwLine} Served prospect dollars ride the checksummed <code>clemens_2026</code> valuation set with the FA-implied re-anchor disabled, so a single hot winter cannot silently reflate every board.</p>
   </div>`;
 
-  return `<div class="source-comp-wrap" id="industry-comparison">
+  return `<div class="source-comp-wrap">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Our tables vs the industry's · same names, different quantities</div>
-    <h2 class="meth-h">Our tables vs the industry's</h2>
     <p class="meth-note">Public prospect math mostly fails on units, not opinions. Each block below names one trap, shows the arithmetic shape, and points at the committed artifact; the per-model numbers live in the entry receipts under Terms.</p>
     <div class="meth-tables">${blockA}${blockB}${blockC}${blockD}${blockE}</div>
   </div>`;
 }
 
+// The Methods chapters (LIBRARY_5), in reading order. Each chapter is an h2
+// with its id; the rail (900 px and wider) and the chapter select (narrower)
+// are built from this list. A function, not a const, so a render that runs
+// before this line is reached never meets a temporal dead zone.
+function _methChapters() {
+  return [
+    { id: "meth-efv", label: "eFV" },
+    { id: "meth-consensus", label: "Consensus FV" },
+    { id: "meth-arkmetrics", label: "Arkmetrics" },
+    { id: "meth-value", label: "Value and surplus" },
+    { id: "meth-farm", label: "Farm grade" },
+    { id: "industry-comparison", label: "Our tables vs the industry's" },
+    { id: "meth-faq", label: "FAQ" },
+  ];
+}
+
+// One pixel lamp per rail entry, drawn with the px-lamp tokens of
+// assets/site.css: unlit (lo) on every chapter but the current one (lt).
+function _methRailLamp() {
+  return '<svg class="px-lamp meth-rail-lamp" width="8" height="8" viewBox="0 0 8 8" aria-hidden="true">'
+    + '<rect class="lo" x="0" y="0" width="8" height="8"/></svg>';
+}
+
+// The model registry, fetched only when a reader asks for the Generate GFX
+// card (its ledger tile counts the verdicts); the Methodology view itself
+// never requests it. Every caller waiting on the one fetch runs on arrival.
+function _loadRegistryThen(cb) {
+  if (_S.registry) { cb(); return; }
+  (_S.regWaiters = _S.regWaiters || []).push(cb);
+  if (_S.regLoading) return;
+  _S.regLoading = true;
+  const done = j => {
+    _S.registry = j || { __error: true };
+    _S.regLoading = false;
+    const waiting = _S.regWaiters || [];
+    _S.regWaiters = [];
+    waiting.forEach(f => f());
+  };
+  fetch("/data/model_registry.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(done)
+    .catch(() => done(null));
+}
+
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
-  // Model registry (accountability ledger) - lazy-loaded once, same
-  // pattern as the source backtest. Re-renders this view on arrival.
-  if (!_S.registry && !_S.regLoading) {
-    _S.regLoading = true;
-    fetch("/data/model_registry.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.registry = j || { __error: true };
-        if (_S.view === "methodology") renderMethodology(); })
-      .catch(() => { _S.registry = { __error: true };
-        if (_S.view === "methodology") renderMethodology(); });
-  }
-  // Live calibration monitor (finding 37): shared lazy loader above.
-  _loadReliability();
-  // eFV valuation curve: lazy-load the per-tier published-vs-model-vs-live
-  // worth-of-a-grade artifact (efv_export._valuation_curve), same guard and
-  // re-render pattern as the reliability monitor. Diagnostic only; absent or
-  // errored, the section simply does not render.
-  if (!_S.valcurve && !_S.vcLoading) {
-    _S.vcLoading = true;
-    fetch("/data/xfv_valuation_curve.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.valcurve = j || { __error: true };
-        if (_S.view === "methodology") renderMethodology(); })
-      .catch(() => { _S.valcurve = { __error: true };
-        if (_S.view === "methodology") renderMethodology(); });
-  }
   // Scoreboard artifact: feeds the ad-card GFX spec (numbers at click time).
   // Its sideCal fetch also feeds the industry-comparison cross-side block.
   _loadScoreboard();
@@ -2983,65 +2956,123 @@ function renderMethodology() {
   const gfxChip = (window.EEPHUS_GFX && window.EEPHUS_GFX.chipHTML)
     ? window.EEPHUS_GFX.chipHTML("gl-meth-gfx", "Generate GFX") : "";
   const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button>${gfxChip}</div>`;
-  el.innerHTML = printHead + toolbar + _methProseHTML() + _methIndustryHTML() + _methRegistryHTML() + _methReliabilityHTML() + _methValuationCurveHTML() + _methInteractivesHTML();
+  const P = _methProseParts();
+  const prose = s => `<div class="meth-prose">${s}</div>`;
+  const inner = {
+    "meth-efv": prose(P.efv + `    <p>Every model on the site, with its verdict and its eval artifact, is listed on the <a href="/models/">Models</a> page.</p>\n`),
+    "meth-consensus": prose(P.consensus + `    <p>The upstream data sources and the credit each publisher is owed are on the <a href="/sources/">Data Sources</a> page. The public data catalog, every file the site publishes, sits on the same page.</p>\n`),
+    "meth-arkmetrics": prose(P.arkmetrics),
+    "meth-value": prose(P.example + P.surplus + P.aggregation + P.analogue) + _methInteractivesHTML(),
+    "meth-farm": prose(P.farm),
+    "industry-comparison": _methIndustryHTML(),
+    "meth-faq": prose(P.faq),
+  };
+  const chs = _methChapters();
+  const rail = `<nav class="meth-rail" aria-label="Chapters"><ol>${chs.map(c =>
+    `<li><a href="#view=methodology&amp;ch=${c.id}" data-meth-go="${c.id}">${_methRailLamp()}<span>${escapeHtml(c.label)}</span></a></li>`).join("")}</ol></nav>`;
+  const select = `<label class="meth-chsel"><span class="meth-chsel-k">Chapter</span><select id="meth-chsel" aria-label="Go to a chapter">${chs.map(c =>
+    `<option value="${c.id}">${escapeHtml(c.label)}</option>`).join("")}</select></label>`;
+  const chapters = chs.map(c => `<section class="meth-chapter" data-meth-ch="${c.id}">
+    <h2 class="meth-chapter-h" id="${c.id}">${escapeHtml(c.label)}</h2>
+    ${inner[c.id]}
+  </section>`).join("");
+  el.innerHTML = printHead + toolbar
+    + `<div class="meth-chaptered">${rail}<div class="meth-chapters">${select}${chapters}</div></div>`;
   if (window.EEPHUS_GL) window.EEPHUS_GL.wire(el);
-  // Ad-card GFX: spec built at click time from the loaded artifacts; a click
-  // before the scoreboard resolves (or with the engine absent) is a clean no-op.
+  // Ad-card GFX: spec built at click time from the loaded artifacts; the
+  // registry is fetched on this click and the card opens once it answers. A
+  // click before the scoreboard resolves (or with the engine absent) is a
+  // clean no-op.
   const gfxBtn = document.getElementById("gl-meth-gfx");
-  if (gfxBtn) gfxBtn.onclick = () => {
+  if (gfxBtn) gfxBtn.onclick = () => _loadRegistryThen(() => {
     const spec = _methAdGfxSpec();
     if (spec && window.EEPHUS_GFX) window.EEPHUS_GFX.open(spec);
-  };
-  // Populate the interactives' initial state.
+  });
+  // Populate the interactives' initial state, then wire the chapters (a
+  // deep-link scroll must follow the widgets' own height).
   _gx2080(); _gxConsensus(); _gxSurplus();
+  _methWireChapters(el);
 }
 
-// Model accountability ledger (model-audit Phase 5, WS-11): the committed
-// registry rendered VERBATIM - unvalidated rows and misses included; that
-// is the point. One row per model: champion, baseline, verdict, artifact.
-const _REG_VERDICT_GLYPH = { validated: "✓ validated", provisional: "◐ provisional",
-                             unvalidated: "○ unvalidated", deprecated: "✗ deprecated" };
-function _methRegistryHTML() {
-  const reg = _S.registry;
-  let body;
-  if (!reg) {
-    body = `<div class="state-message">Loading model registry…</div>`;
-  } else if (reg.__error || !Array.isArray(reg.models) || !reg.models.length) {
-    body = `<p class="meth-note">The model registry is unavailable.</p>`;
-  } else {
-    const counts = {};
-    reg.models.forEach(m => { counts[m.verdict] = (counts[m.verdict] || 0) + 1; });
-    const rows = reg.models.map(m => {
-      const art = m.eval_artifact
-        ? `${_artifactHTML(m.eval_artifact)}${m.stale ? " <em>(stale)</em>" : ""}`
-        : " - ";
-      const mainRow = `<tr>
-        <td><strong>${escapeHtml(m.model_id)}</strong><br><span class="meth-note">${escapeHtml(m.surface || "")}</span></td>
-        <td>${escapeHtml(m.champion || "")}</td>
-        <td>${escapeHtml(m.baseline || "")}</td>
-        <td>${_REG_VERDICT_GLYPH[m.verdict] || escapeHtml(m.verdict || "")}</td>
-        <td>${art}</td>
-      </tr>`;
-      // The registry's `notes` carry the real audit trail - A/B numbers, the
-      // surprise findings, the committed losing challengers. Render them in an
-      // expandable row so the strongest honesty signal isn't dropped.
-      const notesRow = m.notes
-        ? `<tr class="meth-registry-notes"><td colspan="5"><details><summary>methodology notes &amp; committed results</summary><div class="meth-note">${escapeHtml(m.notes)}</div></details></td></tr>`
-        : "";
-      return mainRow + notesRow;
-    }).join("");
-    body = `
-      <p class="meth-note">Every predictive model on the platform, with its verdict and committed eval artifact. <strong>${counts.validated || 0} validated · ${counts.provisional || 0} provisional · ${counts.unvalidated || 0} unvalidated · ${counts.deprecated || 0} deprecated</strong>${reg.checked_at ? ` · last checked ${escapeHtml(reg.checked_at)}` : ""}. Unvalidated rows are listed precisely so they can't hide; losing challengers stay committed.</p>
-      <div class="meth-registry-scroll"><table class="meth-table meth-registry-table">
-        <thead><tr><th>Model · surface</th><th>Champion</th><th>Baseline</th><th class="sacc-verdict">Verdict</th><th>Eval artifact</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>`;
+// The rail and the select move the reader between chapters without touching
+// the view hash; an IntersectionObserver lights the lamp of the chapter the
+// reader is in (the last chapter whose heading has crossed the top quarter
+// of the viewport). Each render replaces the markup, so the observer is
+// rebuilt with it.
+function _methWireChapters(el) {
+  const chs = _methChapters();
+  const go = id => {
+    const h = document.getElementById(id);
+    if (h) h.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  el.querySelectorAll("[data-meth-go]").forEach(a => {
+    a.onclick = e => { e.preventDefault(); go(a.dataset.methGo); };
+  });
+  const sel = document.getElementById("meth-chsel");
+  if (sel) sel.onchange = () => go(sel.value);
+  const light = () => {
+    const line = window.innerHeight * 0.25;
+    let cur = chs[0].id;
+    for (const c of chs) {
+      const h = document.getElementById(c.id);
+      if (h && h.getBoundingClientRect().top <= line) cur = c.id;
+    }
+    el.querySelectorAll("[data-meth-go]").forEach(a => {
+      const on = a.dataset.methGo === cur;
+      if (on) a.setAttribute("aria-current", "location"); else a.removeAttribute("aria-current");
+      const r = a.querySelector(".meth-rail-lamp rect");
+      if (r) r.setAttribute("class", on ? "lt" : "lo");
+    });
+    if (sel && sel.value !== cur) sel.value = cur;
+  };
+  if (_S.methObs) _S.methObs.disconnect();
+  if ("IntersectionObserver" in window) {
+    _S.methObs = new IntersectionObserver(light, { rootMargin: "0px 0px -75% 0px", threshold: [0, 1] });
+    el.querySelectorAll(".meth-chapter, .meth-chapter-h").forEach(n => _S.methObs.observe(n));
   }
-  return `<div class="source-comp-wrap">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Model accountability · the registry, rendered verbatim</div>
-    <h2 class="meth-h">Which models are validated - and which aren't</h2>
-    ${body}
-  </div>`;
+  light();
+  // A chapter deep link scrolls there on each render for a moment, so the
+  // late artifact renders above it cannot push it off screen.
+  if (_S.methCh) {
+    const h = document.getElementById(_S.methCh);
+    if (h) h.scrollIntoView({ block: "start" });
+    if (!_S.methChTimer) _S.methChTimer = setTimeout(() => { _S.methCh = null; _S.methChTimer = null; }, 2500);
+  }
+}
+
+// Evidence > Calibration (LIBRARY_5): the two measurements that left the
+// Methodology view, the live calibration monitor and what an eFV grade is
+// worth. Each fetch re-renders this leaf on arrival; until both answer the
+// leaf shows the shared loading box, and if neither renders it says so.
+function _loadValuationCurve() {
+  if (_S.valcurve || _S.vcLoading) return;
+  _S.vcLoading = true;
+  // eFV valuation curve: the per-tier published-vs-model-vs-live
+  // worth-of-a-grade artifact (efv_export._valuation_curve). Diagnostic only;
+  // absent or errored, the section simply does not render.
+  const rerender = () => { if (_S.view === "calibration") renderCalibration(); };
+  fetch("/data/xfv_valuation_curve.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _S.valcurve = j || { __error: true }; rerender(); })
+    .catch(() => { _S.valcurve = { __error: true }; rerender(); });
+}
+
+function renderCalibration() {
+  const el = document.getElementById("calibration-body");
+  if (!el) return;
+  _loadReliability();
+  _loadValuationCurve();
+  const body = _methReliabilityHTML() + _methValuationCurveHTML();
+  if (body) {
+    el.innerHTML = body;
+    if (window.EEPHUS_GL) window.EEPHUS_GL.wire(el);
+    return;
+  }
+  const S = window.EephusState;
+  const waiting = !_S.reliability || !_S.valcurve;
+  const msg = waiting ? "Loading the calibration tables..." : "The calibration tables could not be loaded.";
+  el.innerHTML = S ? S.html(waiting ? "loading" : "failed", msg, "gl-cal-state")
+    : `<div class="state-message gl-cal-state" role="status">${msg}</div>`;
 }
 
 // Live calibration monitor (finding 37): the flagship self-monitoring, made
@@ -3060,6 +3091,32 @@ function _methRegistryHTML() {
 const _REL_BUCKET_LABEL = { bust: "Bust", bench: "Bench", regular: "Regular",
                             good: "Good", star: "Star" };
 const _REL_BUCKET_ORDER = ["bust", "bench", "regular", "good", "star"];
+// The tripwire as one lamp row (LIBRARY_5): one lamp per tenth of the drift
+// threshold, lit up to the bust-bucket ECE, so ten lit lamps reach the
+// threshold. The row runs ten lamps, longer when the ECE is over the
+// threshold; a rule marks the threshold, and lamps past it take the second
+// lamp colour. Every value is read from the reliability artifact's tripwire.
+function _relTripLamp(tw) {
+  const ece = Number(tw.bust_ece), thr = Number(tw.threshold);
+  if (!(thr > 0) || isNaN(ece)) return "";
+  const lit = Math.max(0, Math.round((ece / thr) * 10));
+  const n = Math.max(10, lit), C = 10, G = 3, R = 4, H = 14;
+  const x = i => i * (C + G) + (i >= 10 ? R : 0);
+  let cells = "";
+  for (let i = 0; i < n; i++) {
+    const cls = i < lit ? (i < 10 ? "lt" : "lb") : "lo";
+    cells += `<rect class="${cls}" x="${x(i)}" y="0" width="${C}" height="${H}"/>`;
+  }
+  const rx = 10 * (C + G);
+  cells += `<rect class="lr" x="${rx}" y="0" width="2" height="${H}"/>`;
+  const W = x(n - 1) + C;
+  const f3 = v => v.toFixed(3);
+  return `<div class="px-lamp-wrap meth-trip-lamp"><svg class="px-lamp" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img"`
+    + ` aria-label="Bust-bucket calibration error ${f3(ece)} against a drift threshold of ${f3(thr)}: ${lit} lamps lit, ten reach the threshold">${cells}</svg></div>`
+    + `<div class="px-lamp-key"><span><i class="px-lk t"></i>one lamp per tenth of the threshold (${f3(thr)})</span>`
+    + (lit > 10 ? `<span><i class="px-lk b"></i>past the threshold</span>` : "")
+    + `<span>${lit} lit; the rule is the threshold</span></div>`;
+}
 function _methReliabilityHTML() {
   const rel = _S.reliability;
   // Silent while the fetch is in flight (null) or failed (__error); the
@@ -3091,7 +3148,7 @@ function _methReliabilityHTML() {
       <strong>${tripped ? "Drift flagged for review" : "Calibration within the expected band"}</strong>
       · bust-bucket calibration error (ECE) is <b>${f3(tw.bust_ece)}</b> against a drift threshold of <b>${f3(tw.threshold)}</b>${tripped
         ? ", so the bust bin has widened and is queued for a calibration review."
-        : ", so no drift is flagged this run."}</div>`;
+        : ", so no drift is flagged this run."}</div>${_relTripLamp(tw)}`;
   }
 
   // --- Per-outcome-bucket calibration error (both vintages carry this) ------
