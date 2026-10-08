@@ -2977,7 +2977,7 @@ def _fair_american(p, *, lo: float = 0.005, hi: float = 0.995):
     return round(-100.0 * p / (1.0 - p)) if p >= 0.5 else round(100.0 * (1.0 - p) / p)
 
 
-FUTURES_AS_OF_TEMPLATE = ("As of the end of the regular season ({build}): "
+FUTURES_AS_OF_TEMPLATE = ("As of the end of the regular season ({mlb_regular_end}): "
                           "postseason results are not in these odds.")
 
 
@@ -2994,6 +2994,13 @@ def futures_as_of_note(generated_at, regular_season_end) -> str | None:
     generated_at) and the season's last scheduled regular-season date. None
     before that date, and None when either date is missing or unreadable, so a
     regular-season build carries no line.
+
+    THE DATE PRINTED IS THE SEASON'S END (site pass SP-D5, 2026-10-08). The line
+    printed the build date, so /projections/ and /franchise/ read "As of the end
+    of the regular season (2026-10-02)" for a season that ended 2026-09-27. It
+    now prints regular_season_end, the same StatsAPI regularSeasonEndDate the
+    site season state serves as mlb_regular_end; the build date only decides
+    whether the line shows.
     """
     import datetime as _dt
     if not generated_at or not regular_season_end:
@@ -3004,7 +3011,7 @@ def futures_as_of_note(generated_at, regular_season_end) -> str | None:
             return None
     except ValueError:
         return None
-    return FUTURES_AS_OF_TEMPLATE.format(build=build)
+    return FUTURES_AS_OF_TEMPLATE.format(mlb_regular_end=end)
 
 
 def _regular_season_end_on_disk(season: int) -> str | None:

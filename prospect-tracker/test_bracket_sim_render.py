@@ -72,7 +72,7 @@ def _futures():
     clubs.sort(key=lambda c: -c["wsPct"])
     return {"generated_at": "2026-10-12T07:00:00+00:00", "season": 2026,
             "regular_season_end": "2026-09-27",
-            "as_of_note": ("As of the end of the regular season (2026-10-12): postseason "
+            "as_of_note": ("As of the end of the regular season (2026-09-27): postseason "
                            "results are not in these odds."),
             "content_hash": "fixture", "sims": 20000, "clubs": clubs,
             "no_market": {"captured": False, "what_is_missing": "No futures price has been captured.",

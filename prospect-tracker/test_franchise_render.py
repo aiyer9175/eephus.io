@@ -476,7 +476,7 @@ def test_the_odds_section_prints_the_season_over_line_only_when_the_payload_has_
     above the tiles. Before then the copy key is empty and nothing prints."""
     import copy as _copy
     d = _served()
-    line = ("As of the end of the regular season (2026-10-01): postseason "
+    line = ("As of the end of the regular season (2026-09-27): postseason "
             "results are not in these odds.")
     p = _strip_bracket(_copy.deepcopy(d))
     p["copy"]["odds_as_of"] = line
@@ -512,13 +512,13 @@ def test_the_pennant_tile_reads_the_bracket_simulator_while_it_serves():
         "pennant_pct": 0.123456, "ws_pct": 0.0456, "seed": 2, "series_now": "fixture",
         "as_of": "2026-10-02", "label": "implied, no market",
         "registry_row": "postseason_bracket_sim", "verdict": "unvalidated", "basis": "fixture"}
-    note = ("As of the end of the regular season (2026-10-02): postseason results are not "
+    note = ("As of the end of the regular season (2026-09-27): postseason results are not "
             "in the Division, Playoffs, Bye, Proj W and Win band columns.")
     brline = ("Pennant and World Series: implied by the postseason bracket simulator as of "
               "2026-10-02, no market.")
     p["copy"]["odds_division_as_of"] = note
     p["copy"]["odds_bracket_line"] = brline
-    p["copy"]["odds_as_of"] = "As of the end of the regular season (2026-10-02): postseason results are not in these odds."
+    p["copy"]["odds_as_of"] = "As of the end of the regular season (2026-09-27): postseason results are not in these odds."
     html, _ = _render(team="LAD", payload=p)
     sec = html.split('data-frsec="odds"')[1]
     assert note in sec and brline in sec

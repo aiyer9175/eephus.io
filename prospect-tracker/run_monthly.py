@@ -3035,6 +3035,22 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:                              # noqa: BLE001
                 pass
 
+        # --- d00b. Site season state (site pass SP-D5) --------------------
+        # One object from the StatsAPI season calendar (phase, the MLB and
+        # MiLB season ends, next opening day, Draft, J2 and posting dates)
+        # written into the marked block of assets/eephus-config.js, the boot
+        # file every page loads; assets/eephus-ui.js reads it as
+        # EephusSeason. build_site.py restamps the hand pages after this run.
+        # A failure keeps the previous block and never ends the night.
+        with _step("d00b. Site season state", log):
+            try:
+                import season_state as _sst
+                _sst_state = _sst.compute()
+                log.info("season state: %s (%s)", _sst_state.get("phase"),
+                         "written" if _sst.write_boot(_sst_state) else "unchanged")
+            except Exception:                              # noqa: BLE001
+                log.exception("season state step crashed - the previous block stays")
+
         # --- d0. TJStats Live board (daily point-in-time capture) ---------
         # TJStats updates continuously, so a daily Live pull gives finer Time
         # Machine resolution AND keeps TJStats's present-day consensus contribution

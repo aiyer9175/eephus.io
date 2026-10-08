@@ -10639,11 +10639,11 @@
      inert - no Supabase SDK fetch, no behavior change - and the site works exactly
      as today (logged-out, localStorage watchlist). When config IS present, the
      module self-injects the Supabase SDK and lights up the account UI. -->
-<script src="/assets/eephus-config.js?v=5e092777" defer></script>
+<script src="/assets/eephus-config.js?v=7c802691" defer></script>
 <script src="/assets/eephus-account.js?v=22deb404" defer></script>
 <script src="/assets/eephus-nav.js?v=f4200190" defer></script>
 <script src="/assets/eephus-state.js?v=bf1de8b3" defer></script>
-<script src="/assets/eephus-ui.js?v=446a737d" defer></script>
+<script src="/assets/eephus-ui.js?v=0a250392" defer></script>
   <script src="/assets/eephus-gl.js?v=ca0479a7" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
   <script src="/assets/eephus-hub.js?v=b31cc98a" defer></script>
@@ -15455,7 +15455,11 @@ function _l15OpsChip(p) {
   const ops = obp + slg;
   // 3 decimals, leading zero stripped (.847 / 1.050) - matches fmtRate3.
   const opsStr = ops < 1 ? ops.toFixed(3).replace(/^0/, "") : ops.toFixed(3);
-  return `<span class="stat-pill" title="OPS over the last 15 games (all levels)" style="font-size:11px;padding:2px 7px;margin-left:8px;vertical-align:middle;">L15 ${opsStr} OPS</span>`;
+  // Outside the regular season the window is the season's final games (SP-D5).
+  const fin = (typeof _pxSeasonLabel === "function") && _pxSeasonLabel("recent") === "Final";
+  const chipLbl = fin ? "Final 15 G" : "L15";
+  const chipTip = fin ? "OPS over the final 15 games of the season (all levels)" : "OPS over the last 15 games (all levels)";
+  return `<span class="stat-pill" title="${chipTip}" style="font-size:11px;padding:2px 7px;margin-left:8px;vertical-align:middle;">${chipLbl} ${opsStr} OPS</span>`;
 }
 
 function _debutFvCohortBlock(p) {
@@ -15677,7 +15681,7 @@ const state = {
   // toggles Rankings / Season Stats / Posting Tracker / Recently Signed /
   // Leaderboard inside the Overseas panel.
   overseasLeague: "all",
-  overseasView: "rankings",
+  overseasView: null,     // first render: Posting Tracker inside the posting window, else Rankings
   // v28 - Draft + Overseas filter/sort state. All default to wide-open
   // so the chip strips read as "no filter" on first load. Sort defaults
   // mirror the page's main render-order: consensus FV desc.
@@ -17052,10 +17056,15 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
       <span style="color:var(--text-tertiary);margin-left:5px;font-family:var(--font-mono);font-size:10px;">${escapeHtml(dateShort)}${escapeHtml(opp)}</span>
     </button>`;
   }).join("");
+  // Outside the regular season a line of its own names the window (site pass
+  // SP-D5); it is shorter than the line below, so the headline keeps its width.
+  const _standoutSeasonLbl = (typeof _pxSeasonLabel === "function")
+    ? _pxSeasonLabel("standout", new Date(_nowMs).getFullYear()) : "";
   root.innerHTML = `<div class="news-ticker">
     <button class="news-ticker-headline" data-go-section="spotlights" type="button"
             title="Standout single-game performances from MiLB gameLogs, weighted toward higher-FV prospects">
       <span class="ntk-masthead">Standout performances</span>
+      ${_standoutSeasonLbl ? `<span class="ntk-subline">${escapeHtml(_standoutSeasonLbl)}</span>` : ""}
       <span class="ntk-subline">top FV first · ${top.length} game${top.length === 1 ? "" : "s"} · raw box-line · through ${escapeHtml(new Date(_nowMs).toISOString().slice(5, 10))}</span>
     </button>
     <div class="news-ticker-strip">${chips}</div>
@@ -20492,7 +20501,7 @@ function _lbWindowDates() {
   }
   const N = Number(state.lbWindow) || 14;
   return { from: addDays(asOf, -(N - 1)), to: asOf, days: N,
-           label: `Last ${N} days`, asOf };
+           label: `${_pxSeasonLabel("window", asOf)} ${N} days`, asOf };
 }
 
 // What the game-log slice covers (census M02-07): the nightly build pulls the top
@@ -20892,6 +20901,13 @@ function _formBadgeHTML(p){
   const word  = f.hot?"Hot":f.cold?"Cold":"Steady";
   const fmt = v => f.isP? Number(v).toFixed(2) : Number(v).toFixed(3).replace(/^(-?)0\./,"$1.");
   const dTxt = (f.delta>0?"+":"") + fmt(f.delta);
+  // Outside the regular season (site pass SP-D5) the games are the season's
+  // last ones, not a current streak: the chip names them, with no hot or cold
+  // word, arrow or colour.
+  if ((typeof _pxSeasonLabel === "function") && _pxSeasonLabel("recent") === "Final") {
+    const tipF = `Final ${f.n} games of the season: ${f.metric} ${fmt(f.val)} vs season ${fmt(f.season)} (${dTxt} ${f.metric}). Full breakdown on the Stats / Statcast tab.`;
+    return `<span class="stat-pill" style="color:var(--text-secondary);border-color:var(--text-secondary);font-size:11px;padding:2px 7px;" title="${escapeHtml(tipF)}">Final ${f.n} G ${f.metric} ${fmt(f.val)}</span>`;
+  }
   const tip = `Recent form: last ${f.n} G ${f.metric} ${fmt(f.val)} vs season ${fmt(f.season)} (${dTxt} ${f.metric}). ${f.hot?"Trending up":f.cold?"Trending down":"In line with the season line"}. Full breakdown on the Stats / Statcast tab.`;
   return `<span class="stat-pill" style="color:${color};border-color:${color};font-size:11px;padding:2px 7px;" title="${escapeHtml(tip)}">${arrow} ${word} · L${f.n} ${f.metric} ${fmt(f.val)}</span>`;
 }
@@ -20996,8 +21012,16 @@ function renderLeaderboards() {
   });
   // v45 - Timeframe chip state, custom-range visibility, and dimming of any
   // stat chip that can't be recomputed from box lines while a window is active.
-  document.querySelectorAll("[data-lb-window]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbWindow === (state.lbWindow || "season")));
+  // "Final" once the game-log slice reaches the last MiLB game (site pass SP-D5).
+  const _lbWinWord = _pxSeasonLabel("window", (DATA.leaderboard_gamelogs || {}).as_of);
+  document.querySelectorAll("[data-lb-window]").forEach(b => {
+    b.classList.toggle("active", b.dataset.lbWindow === (state.lbWindow || "season"));
+    const n = Number(b.dataset.lbWindow);
+    if (n) {
+      b.textContent = `${_lbWinWord} ${n}d`;
+      b.title = `Stats over the ${_lbWinWord.toLowerCase()} ${n} days of games`;
+    }
+  });
   const _lbRangeEl = document.getElementById("lb-window-range");
   if (_lbRangeEl) _lbRangeEl.style.display = (state.lbWindow === "custom") ? "" : "none";
   document.querySelectorAll("[data-lb-stat]").forEach(b =>
@@ -24139,10 +24163,11 @@ async function renderDraft() {
     return;
   }
 
-  // Default landing year: the newest completed class (its picks and results
-  // are on file), derived from the export instead of a fixed year. Falls back
-  // to the most recent class when no class has been drafted yet.
-  const PREFERRED_DRAFT_YEAR = _draftNewestCompletedYear(classes);
+  // Default landing year: the next class after the season state's draft date
+  // (site pass SP-D5); without the state, the newest completed class (its
+  // picks and results are on file). Falls back to the most recent class when
+  // neither is on file.
+  const PREFERRED_DRAFT_YEAR = _pxDraftDefaultYear(classes) ?? _draftNewestCompletedYear(classes);
   if (state.draftYear !== "overall" &&
       (!state.draftYear || !classes.find(c => c.year === state.draftYear))) {
     const preferred = classes.find(c => c.year === PREFERRED_DRAFT_YEAR);
@@ -26792,7 +26817,8 @@ async function renderIFA() {
   }
   if (state.ifaYear !== "all" &&
       (!state.ifaYear || !classes.find(c => c.year === state.ifaYear))) {
-    state.ifaYear = classes[0].year;   // newest first
+    // The class whose signing period is open (season state j2_open), else newest.
+    state.ifaYear = _pxIfaDefaultYear(classes) ?? classes[0].year;
   }
 
   const usd = n => n == null ? " - "
@@ -27042,7 +27068,8 @@ async function renderOverseas() {
     });
   });
 
-  // Sub-view chips
+  // Sub-view chips. The landing view follows the season state (site pass SP-D5).
+  if (!state.overseasView) state.overseasView = _pxOverseasDefaultView() || "rankings";
   document.querySelectorAll("[data-overseas-view]").forEach(b => {
     b.classList.toggle("active", b.dataset.overseasView === state.overseasView);
     b.onclick = () => {
@@ -28996,6 +29023,48 @@ function _draftUpcomingYear(classes) {
   const scouted = cur.filter(c => (c.n_prospects || 0) > 0);
   const pool = scouted.length ? scouted : cur;
   return pool.length ? Math.min(...pool.map(c => c.year)) : undefined;
+}
+
+// Site season state (site pass SP-D5): one reader, EephusSeason in
+// assets/eephus-ui.js, fed nightly by season_state.py. Each helper returns
+// undefined (or the in-season word) when the state is absent, so its caller
+// keeps the default it had before the state existed.
+function _pxSeason() {
+  const S = (typeof window !== "undefined") && window.EephusSeason;
+  return S ? S.get() : null;
+}
+function _pxSeasonToday(today) {
+  return today || ((typeof window !== "undefined" && window.EephusSeason) ? window.EephusSeason.today()
+    : new Date().toISOString().slice(0, 10));
+}
+function _pxSeasonLabel(kind, arg) {
+  const S = (typeof window !== "undefined") && window.EephusSeason;
+  if (S) return S.label(kind, arg);
+  return (kind === "window" || kind === "recent") ? "Last" : "";
+}
+// Draft: the next class after the season's draft date (the draft's own class
+// until that date passes).
+function _pxDraftDefaultYear(classes, today) {
+  const s = _pxSeason();
+  if (!s || !s.draft_date) return undefined;
+  const y = Number(String(s.draft_date).slice(0, 4)) + (_pxSeasonToday(today) > s.draft_date ? 1 : 0);
+  return (classes || []).some(c => c.year === y) ? y : undefined;
+}
+// International amateurs: the class whose signing period is open (from j2_open
+// on, that year's class; before it, the class signed the January before).
+function _pxIfaDefaultYear(classes, today) {
+  const s = _pxSeason();
+  if (!s || !s.j2_open) return undefined;
+  const y = Number(String(s.j2_open).slice(0, 4)) - (_pxSeasonToday(today) >= s.j2_open ? 0 : 1);
+  return (classes || []).some(c => c.year === y) ? y : undefined;
+}
+// Overseas: Posting Tracker is the landing view inside the posting window.
+function _pxOverseasDefaultView(today) {
+  const s = _pxSeason();
+  const w = s && s.posting_window;
+  if (!Array.isArray(w) || w.length !== 2) return undefined;
+  const t = _pxSeasonToday(today);
+  return (t >= w[0] && t <= w[1]) ? "posting" : undefined;
 }
 
 // The newest completed (drafted) class with prospects, or undefined.
@@ -58618,6 +58687,12 @@ function _renderBootFailure(content, detail) {
 // =============================================================================
 async function _bootProspx() {
   DATA = await loadData();
+  // The deferred shell scripts (the season state among them) run when parsing
+  // ends; a cached boot payload can resolve before that, so the first render
+  // waits for them rather than painting the pre-state defaults.
+  if (document.readyState === "loading") {
+    await new Promise(r => document.addEventListener("DOMContentLoaded", r, { once: true }));
+  }
   const content = document.getElementById("content");
 
   if (DATA.__error) {
