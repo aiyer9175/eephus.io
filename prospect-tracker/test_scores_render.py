@@ -64,12 +64,14 @@ SCORES_JS_GZIP = 20 * KB
 SCORES_BRACKET_JS_RAW = 12 * KB
 SCORES_PREGAME_JS_RAW = 12 * KB          # SCORES_6, eager: counted in the cold first paint
 SCORES_CSS_RAW = 20 * KB
+SPORTS_PAGE_CSS_RAW = 10 * KB            # SCORES_7a: the shared sports-page classes and the bracket styles
+SCORES_ABOUT_JS_RAW = 6 * KB             # SCORES_7a: the lazy About chunk
 SHELL_RAW = 16 * KB
 COLD_FIRST_PAINT_GZIP = 70 * KB
 #: The card floors of assets/scores.css at 390 px (plan 1.3), measured from
 #: the fixtures below with their longest strings.
 #: "prer" (SCORES_6) is a regular-season pregame card, with room for the model line.
-SLOT_MIN = {"pre": 236, "prer": 276, "lf": 316, "off": 168}
+SLOT_MIN = {"pre": 222, "prer": 260, "lf": 304, "off": 164}   # SCORES_7a re-measured them on the agate cards
 WIDTHS = (390, 1280, 1440)
 
 
@@ -421,6 +423,7 @@ def test_shell_is_a_pure_reader_on_the_ledger_pattern():
     assert html.count('id="scores-app-root"') == 1
     assert "EEPHUS_DATA_VERS" not in html
     for asset, ver in (("scores.css", build_site._SCORES_CSS_VER), ("scores.js", build_site._SCORES_VER),
+                       ("sports-page.css", build_site._SPORTS_PAGE_CSS_VER),
                        ("eephus-hub.js", build_site._HUB_VER), ("eephus-teampick.js", build_site._TEAMPICK_VER)):
         assert f"/assets/{asset}?v={ver}" in html, asset
     assert "scores-video.js" not in html
@@ -434,6 +437,9 @@ def test_shell_is_a_pure_reader_on_the_ledger_pattern():
     # the bracket chunk is never a script tag: the mount root names its stamped path for the lazy loader
     assert f'data-bracket-src="/assets/scores-bracket.js?v={build_site._SCORES_BRACKET_VER}"' in html
     assert html.count("scores-bracket.js") == 1 and '<script src="/assets/scores-bracket.js' not in html
+    # SCORES_7a: the About view is a lazy chunk named the same way, and the shared sports-page css comes first
+    assert f'data-about-src="/assets/scores-about.js?v={build_site._SCORES_ABOUT_VER}"' in html
+    assert html.count("scores-about.js") == 1 and html.index("sports-page.css") < html.index("/assets/scores.css")
     assert "<title>MLB Scores - eephus.io</title>" in html
     assert "Scores / Standings" in html and build_site._stage_chip("scores") in html
     assert build_site.MODULE_STAGE["scores"] == (
@@ -459,6 +465,9 @@ def _lf(path: Path) -> bytes:
 def test_budgets_and_the_cold_first_paint():
     js, css = _lf(ROOT / "assets" / "scores.js"), _lf(ROOT / "assets" / "scores.css")
     pre_js = _lf(ROOT / "assets" / "scores-pregame.js")
+    sp_css = _lf(ROOT / "assets" / "sports-page.css")
+    assert len(sp_css) <= SPORTS_PAGE_CSS_RAW, len(sp_css)
+    assert len(_lf(ROOT / "assets" / "scores-about.js")) <= SCORES_ABOUT_JS_RAW
     shell = build_site.build_scores().encode("utf-8")
     assert len(js) <= SCORES_JS_RAW, len(js)
     assert len(gzip.compress(js, 9)) <= SCORES_JS_GZIP, len(gzip.compress(js, 9))
@@ -467,11 +476,11 @@ def test_budgets_and_the_cold_first_paint():
     assert len(shell) <= SHELL_RAW, len(shell)
     p = pregame_payloads()
     first = shell + js + css + sc.dumps(p["latest.json"]).encode() + sc.dumps(p[f"{TODAY}.json"]).encode()
-    owned = sum(len(gzip.compress(b, 9)) for b in (shell, js, pre_js, css, sc.dumps(p["latest.json"]).encode(),
+    owned = sum(len(gzip.compress(b, 9)) for b in (shell, js, pre_js, css, sp_css, sc.dumps(p["latest.json"]).encode(),
                                                     sc.dumps(p[f"{TODAY}.json"]).encode()))
     assert owned <= COLD_FIRST_PAINT_GZIP, owned
     assert len(first) > 0
-    # every scores style lives in scores.css; scores.js has no player and draws no bracket: it
+    # every scores style lives in scores.css or sports-page.css; scores.js has no player and draws no bracket: it
     # loads the lazy chunk from the shell's stamped data-bracket-src and hands it the block
     assert "<video" not in js.decode() and "iframe" not in js.decode()
     assert "scb-" not in js.decode() and "Winner of" not in js.decode() and "scores-bracket.js" not in js.decode()
@@ -508,7 +517,8 @@ def test_day_view_has_no_page_scroll_and_no_console_errors(site, pw, width, them
 def test_each_state_renders_its_fields(site, pw):
     with serve_site(site) as base, scores_page(base, pw, hash_=f"#date={TODAY}") as page:
         _wait_cards(page, 5)
-        txt = lambda pk: page.locator(f'article[data-pk="{pk}"]').inner_text()
+        # text_content: the state kicker is uppercased by CSS (SCORES_7a), the words stay the job's
+        txt = lambda pk: page.locator(f'article[data-pk="{pk}"]').text_content()
         live = txt(849846)
         assert "Bottom 1, 0 outs" in live and "Count 0-1" in live and "No-hitter in progress" in live
         assert "MLB win probability: CHW 84%" in live and "MLB, provisional" in live and "104 pitches" in live
@@ -632,10 +642,13 @@ def test_polls_move_nothing_and_a_late_game_waits_for_its_notice(tmp_path, pw):
 @pytest.mark.parametrize("width", WIDTHS)
 def test_game_view_tabs_have_no_page_scroll(site, pw, width, theme):
     with serve_site(site) as base, scores_page(base, pw, width=width, theme=theme, hash_="#game=849845") as page:
-        page.wait_for_selector(".sc-wp-frame svg")
-        for tab in ("summary", "box", "plays", "lineups", "info"):
+        page.wait_for_selector('#sc-tab-summary[aria-selected="true"]')
+        # SCORES_7a: Summary, Box score, Plays, Win Prob; the old lineups and info addresses land on Box and Summary
+        for tab in ("summary", "box", "plays", "wp", "lineups", "info"):
             page.evaluate(f"location.hash = '#game=849845&tab={tab}'")
-            page.wait_for_selector(f'#sc-tab-{tab}[aria-selected="true"]')
+            page.wait_for_selector(f'#sc-tab-{dict(lineups="box", info="summary").get(tab, tab)}[aria-selected="true"]')
+            if tab == "wp":
+                page.wait_for_selector(".sc-wp-frame svg")
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), (tab, "page scroll")
         assert any("player_links.json" in u for u in page._requests), "the game view loads the player links"
         _no_errors(page)
@@ -643,8 +656,9 @@ def test_game_view_tabs_have_no_page_scroll(site, pw, width, theme):
 
 def test_chart_role_label_twin_crosshair_and_keys(site, pw):
     with serve_site(site) as base, scores_page(base, pw, hash_="#game=849845") as page:
-        page.wait_for_selector(".sc-wp-frame svg")
         page.wait_for_selector("a.sc-player")  # the player links landed and the view repainted once
+        page.evaluate("location.hash = '#game=849845&tab=wp'")       # the chart has its own tab (SCORES_7a)
+        page.wait_for_selector(".sc-wp-frame svg")
         frame = page.locator(".sc-wp-frame svg")
         fr = page.locator(".sc-wp-frame")
         assert fr.get_attribute("role") == "img"
@@ -677,7 +691,7 @@ def test_chart_role_label_twin_crosshair_and_keys(site, pw):
 
 def test_box_score_prints_pitch_rates_from_the_game_file(site, pw):
     with serve_site(site) as base, scores_page(base, pw, width=1280, hash_="#game=849845&tab=box") as page:
-        page.wait_for_selector(".sc-box")
+        page.wait_for_selector(".sc-box a.sc-player")   # after the player-links repaint, so no node goes stale
         heads = page.locator(".sc-box thead").all_inner_texts()
         assert any("P/AB" in h for h in heads) and any("P/IP" in h for h in heads)
         assert not any("P/PA" in h for h in heads)
@@ -707,7 +721,7 @@ def test_twelve_innings_scroll_inside_the_line_score(site, pw):
         assert page.evaluate("(() => { const f = document.querySelector('.sc-line-wide');"
                              " return f.scrollWidth > f.clientWidth; })()")
         assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-        assert "Final, 12 innings" in page.locator(".sc-state-big").inner_text()
+        assert "Final, 12 innings" in page.locator(".sc-state-big").text_content()
 
 
 _TARGETS = """() => {
@@ -730,10 +744,11 @@ def test_targets_and_no_nested_interactive_elements(site, pw):
         _wait_cards(page, 5)
         res = page.evaluate(_TARGETS)
         assert res["nested"] == 0 and res["bad"] == [], res
-        page.evaluate("location.hash = '#game=849845'")
-        page.wait_for_selector(".sc-wp-frame svg")
-        res = page.evaluate(_TARGETS)
-        assert res["nested"] == 0 and res["bad"] == [], res
+        for h in ("#game=849845", "#game=849845&tab=wp"):
+            page.evaluate(f"location.hash = '{h}'")
+            page.wait_for_selector(".sc-wp-frame svg" if h.endswith("wp") else "a.sc-player")
+            res = page.evaluate(_TARGETS)
+            assert res["nested"] == 0 and res["bad"] == [], (h, res)
 
 
 def test_about_is_built_from_the_index(site, pw):
@@ -793,7 +808,7 @@ def test_the_bracket_view_prints_series_state_and_no_probability(october_site, p
         assert page.locator(".sc-bk .scb-round h3").all_inner_texts() == [
             "Wild Card Series", "Division Series", "Championship Series", "World Series"]
         assert page.locator(".sc-bk .scb-s").count() == 11
-        assert page.locator("h2").first.inner_text() == "2026 postseason"
+        assert page.locator("h2").first.text_content() == "2026 postseason"   # the banner uppercases it
         # MLB's placeholders print unlinked, never as a link
         unresolved = page.locator('.sc-bk [data-club-nolink="unresolved"]').all_inner_texts()
         assert "Winner of HOU and CWS" in unresolved and "NL Lower Seed" in unresolved
