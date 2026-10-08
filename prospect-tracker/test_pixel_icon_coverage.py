@@ -121,8 +121,6 @@ def test_nav_controls_are_pixel_icons_with_the_same_labels():
         assert glyph not in ctrl, glyph
     for aria in ('aria-label="Quick search (Ctrl+K)"', 'aria-label="Watchlist"', 'aria-label="Toggle dark mode"'):
         assert aria in ctrl
-    assert "☾" not in B.THEME_BTN and "☀" not in B.THEME_BTN
-    assert [s for _w, s in _icons(B.THEME_BTN)] == ["theme-dark", "theme-light"]
 
 
 # ------------------------------------------- rail, cards, mastheads, team
@@ -132,26 +130,26 @@ def home() -> str:
     return B.build_home([], {})
 
 
-def test_rail_draws_16px_module_icons_and_12px_tab_icons(home):
-    nav = re.search(r'<nav class="sb-nav"[^>]*>(.*?)</nav>', home, re.S).group(1)
-    links = re.findall(r'<a href="([^"]+)"[^>]*>(.*?)</a>', nav, re.S)
-    by_href = {h: k for k, _l, h in B.nav_leaves()}
-    assert len(links) == len(by_href)
-    for href, inner in links:
-        assert _icons(inner) == [(16, _sym(by_href[href]))], href
-    sub = re.search(r'<nav class="sb-subnav"[^>]*>(.*?)</nav>', home, re.S).group(1)
+def test_band_links_and_band_marks_draw_their_pixel_icons(home):
+    # HOME_4: the homepage's module list is the shared header's (its icons are
+    # pinned with the header above); the PROSPX sub-nav is the Prospects
+    # band's link row, every section still one click away.
+    sub = re.search(r'<nav class="band-links"[^>]*>(.*?)</nav>', home, re.S).group(1)
     subs = re.findall(r'<a href="([^"]+)">(.*?)</a>', sub, re.S)
     assert len(subs) == len(B.PROSPX_SUBNAV)
     for href, inner in subs:
         assert _icons(inner) == [(12, _sym(B._prospx_subnav_section(href)))], href
         assert "›" not in inner
-    lockup = re.search(r'sb-group-label--lockup">(.*?)PROSPX</div>', home, re.S).group(1)
-    assert _icons(lockup) == [(12, "prospx")]
+    lead = sub.split('<span class="band-links-lab">PROSPX</span>', 1)[0]
+    assert _icons(lead) == [(12, "prospx")]
+    for band in B.HOME_BAND_ORDER:
+        mark = re.search(rf'id="band-{band}".*?<span class="band-mark">(.*?)</span>', home, re.S).group(1)
+        assert _icons(mark) == [(32, _sym(B._WIRE_FAMILIES[band]["mark"]))], band
     assert 'class="px-ball"' not in home
 
 
 def test_cross_module_card_titles_carry_one_16px_icon():
-    strip = B._cross_module_strip()
+    strip = B._xmod_cards_html()
     titles = re.findall(r'<span class="xmod-title">(.*?)</span>', strip, re.S)
     assert titles
     for t in titles:

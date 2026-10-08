@@ -770,12 +770,6 @@ def _ensure_font_preload(text: str) -> str:
     return text[:m.end()] + lines + text[m.end():]
 
 
-THEME_BTN = (
-    '<button type="button" class="home-theme-toggle" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode">'
-    f'<span class="lbl-dark">{_ico("theme-dark", 12)}Dark</span>'
-    f'<span class="lbl-light">{_ico("theme-light", 12)}Light</span></button>'
-)
-
 # Favicons + PWA + theme-color - SVG primary (crisp at any size), ICO + 32px PNG
 # fallbacks, apple-touch for home-screen pins, the web manifest (installable
 # identity), and theme-color for the mobile browser chrome (navy on light,
@@ -2963,60 +2957,6 @@ def _spotlight_html(players: list, spotlights: dict | None = None) -> str:
     label, p, chip, color = slots[datetime.now().timetuple().tm_yday % len(slots)]
     return _spotlight_card(label, p, chip, color)
 
-# Homepage teaser rotation - curated Arkmetrics showcase. The phrases are
-# label expansions (hints), not definitions; the canonical entry lives in
-# data/glossary.json and the link deep-links it by slug.
-_GLOSSARY_TERMS = [
-    ("dvm_plus", "DvM+", "development vs. mean"),
-    ("tvi", "Sur+", "FV-implied surplus value"),
-    ("rps_plus", "RPS+", "rate performance vs. same-age peers"),
-    ("statcast_plus", "SC+", "Statcast composite"),
-    ("wag", "WAG", "WAR above grade"),
-    ("tool", "Tool+", "20-80 tool composite"),
-]
-
-# The teaser used to rotate the six hardcoded pairs above out of the 285 real
-# entries in data/glossary.json, so 279 of them were unreachable from the
-# homepage and the six drifted from their canonical definitions. It now rotates
-# the REAL Arkmetrics shelf (the `custom-index` + `farm` categories, which
-# glossary.json's own `groups` map calls "Arkmetrics" - the same grouping
-# /glossary/ renders), keyed by day-of-year exactly as before.
-_GLOSSARY_TEASER_GROUP = "Arkmetrics"
-
-def _glossary_hint(text: str, limit: int = 76) -> str:
-    """A one-line hint from a canonical definition: first sentence, clipped at a
-    WORD boundary. The teaser slot is a single narrow line, and the real entries
-    run to ~250 characters."""
-    s = " ".join(str(text or "").split())
-    # First sentence, but only when the period really ends one ("2.5 WAR" and
-    # "vs. peers" must not split the line).
-    m = re.search(r"(?<=[a-z0-9)\]])\.(?=\s+[A-Z(])", s)
-    if m:
-        s = s[:m.start()]
-    if len(s) > limit:
-        cut = s[:limit].rsplit(" ", 1)[0].rstrip(" ,;:")
-        s = (cut or s[:limit]) + "…"
-    return s
-
-@functools.lru_cache(maxsize=1)
-def _glossary_teaser_terms() -> tuple:
-    """(slug, term, hint) for every Arkmetrics entry, ordered by slug so the
-    day-of-year rotation is STABLE across rebuilds (glossary.json's entry order
-    is a build artifact and must not be allowed to reshuffle the calendar).
-    Falls back to the curated six when the file is missing or has no group."""
-    doc = _cached_data_json("glossary.json")
-    groups = doc.get("groups") or {}
-    out = []
-    for e in (doc.get("entries") or []):
-        e = e or {}
-        if groups.get(e.get("category")) != _GLOSSARY_TEASER_GROUP:
-            continue
-        slug, term, defn = e.get("id"), e.get("term"), e.get("definition")
-        if slug and term and defn:
-            out.append((str(slug), str(term), _glossary_hint(defn)))
-    out.sort(key=lambda t: t[0])
-    return tuple(out) or tuple(_GLOSSARY_TERMS)
-
 def page_home(title: str, inner: str, description: str = "") -> str:
     desc = html.escape(description or "eephus.io - sabermetrics")
     social = _social_meta(title, description or "eephus.io - sabermetrics",
@@ -3033,6 +2973,9 @@ def page_home(title: str, inner: str, description: str = "") -> str:
 {FAVICON_LINKS}
 {FONT_PRELOAD}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
+<script src="/assets/eephus-nav.js?v={_NAV_VER}" defer></script>
+<script src="/assets/eephus-tiers.js?v={_TIERS_VER}" defer></script>
+<script src="/assets/eephus-state.js?v={_STATE_VER}" defer></script>
 {ACCOUNT_CSS_LINK}
 </head>
 <body class="eephus-page eephus-home">
@@ -3578,49 +3521,80 @@ def build_this_day(data: dict | None = None) -> str:
                 "signings and IL moves from past seasons.",
                 url=f"{SITE_ORIGIN}/history/")
 
-def _date_callout() -> str:
-    """Date-aware countdown when a prospect-calendar event is near.
+def _postseason_live(today: date) -> bool:
+    """True while data/bracket_sim.json says this year's postseason is on: the
+    file is this season's, its serve block is on, it was built inside the 14
+    days before today, and the World Series is not decided. No file, an older season, a
+    stale file or a decided World Series all read False, so the callout never
+    says "Underway" off a guess."""
+    bs = _cached_data_json("bracket_sim.json")
+    if not bs:
+        return False
+    try:
+        if int(bs.get("season") or 0) != today.year:
+            return False
+        built = date.fromisoformat(str(bs.get("as_of") or "")[:10])
+    except (TypeError, ValueError):
+        return False
+    if not (bs.get("serve") or {}).get("on") or not 0 <= (today - built).days <= 14:
+        return False
+    series = bs.get("series") or []
+    ws = [s for s in series if s.get("round") == "W"]
+    return bool(series) and not (ws and all(s.get("decided") for s in ws))
+
+
+def _date_callout(band: str, today: date | None = None) -> str:
+    """The band's date-aware callout (HOME_4, LANE_HOME 3.2 row 11): MLB events
+    in the MLB band, prospect events in the Prospects band, one callout per band.
 
     Events carry a (start, end) range rather than a single date - the MLB
     Draft runs three days (Jul 11-13), not one, so "days until" has to count
     down to the START, and the callout needs an in-progress state for the
     days the event is actually happening, not just before/after.
 
-    CALENDAR COVERAGE. The table used to hold only the Draft and the January
-    international window, so from mid-July through the end of November the
-    callout rendered nothing at all - the emptiest stretch of the site's year
-    covered none of the events a prospect reader actually tracks. The four
-    additions below close it. Ranges are the RECURRING windows, not scraped
-    dates: the trade deadline has sat on Jul 31 since 2019, the Rule 5 draft
-    closes the Winter Meetings (a moving day inside the second week of
-    December, hence a window rather than a false-precision single date), the
-    Futures Game is All-Star Saturday, and FanGraphs' offseason org lists run
-    through the late fall. Anything softer than that does not belong here.
+    DATES. Read from data where a data source exists: the postseason is live
+    while data/bracket_sim.json says so (_postseason_live). Every other range
+    is a RECURRING window, not a scraped date: the trade deadline has sat on
+    Jul 31 since 2019, the Rule 5 draft closes the Winter Meetings (a moving
+    day inside the second week of December, hence a window rather than a
+    false-precision single date), the Futures Game is All-Star Saturday, and
+    FanGraphs' offseason org lists run through the late fall. Anything softer
+    than that does not belong here, which is why the option and qualifying
+    offer window, the free-agent market and the arbitration exchange have no
+    callout: no served file carries their dates.
 
     ORDER MATTERS: the loop returns the FIRST event (by start date) that is
     live or inside the 45-day horizon, so windows are kept short deliberately.
     A months-long "list season" range would sit "Underway" across December and
     January and swallow both the Rule 5 draft and the international window.
     """
-    today = date.today()
+    today = today or date.today()
     yr = today.year
-    events = [
-        # All-Star Saturday. Listed BEFORE the Draft so that on a shared start
-        # date the one-day event wins the (stable-sorted) tie and the Draft
-        # takes the slot back for the rest of its run.
-        (date(yr, 7, 11), date(yr, 7, 11), "Futures Game", "/prospx/"),
-        (date(yr, 7, 11), date(yr, 7, 13), "MLB Draft", "/prospx/#tab=draft"),
-        (date(yr, 7, 31), date(yr, 7, 31), "MLB trade deadline", "/prospx/#tab=traded"),
-        # FanGraphs list season - the offseason org-list run that re-grades the
-        # consensus board. Capped at November on purpose (see ORDER MATTERS).
-        (date(yr, 11, 1), date(yr, 11, 30), "FanGraphs list season", "/prospx/"),
-        # Rule 5 draft - final day of the Winter Meetings; the window spans the
-        # days that day has landed on rather than asserting one.
-        (date(yr, 12, 8), date(yr, 12, 12), "Rule 5 draft", "/prospx/#tab=traded"),
-        (date(yr if today <= date(yr, 1, 15) else yr + 1, 1, 15),
-         date(yr if today <= date(yr, 1, 15) else yr + 1, 1, 15),
-         "International signing period", "/prospx/#tab=ifa"),
-    ]
+    if band == "mlb":
+        if _postseason_live(today):
+            return ('<a class="home-callout" href="/scores/">'
+                    '<span class="cal-tag">◆ Live</span>'
+                    '<span class="cal-msg"><strong>Postseason</strong> · Underway</span>'
+                    '<span class="cal-go">View →</span></a>')
+        events = [
+            (date(yr, 7, 31), date(yr, 7, 31), "MLB trade deadline", "/prospx/#tab=traded"),
+        ]
+    else:
+        ifa = date(yr if today <= date(yr, 1, 15) else yr + 1, 1, 15)
+        events = [
+            # All-Star Saturday. Listed BEFORE the Draft so that on a shared start
+            # date the one-day event wins the (stable-sorted) tie and the Draft
+            # takes the slot back for the rest of its run.
+            (date(yr, 7, 11), date(yr, 7, 11), "Futures Game", "/prospx/"),
+            (date(yr, 7, 11), date(yr, 7, 13), "MLB Draft", "/prospx/#tab=draft"),
+            # FanGraphs list season - the offseason org-list run that re-grades the
+            # consensus board. Capped at November on purpose (see ORDER MATTERS).
+            (date(yr, 11, 1), date(yr, 11, 30), "FanGraphs list season", "/prospx/"),
+            # Rule 5 draft - final day of the Winter Meetings; the window spans the
+            # days that day has landed on rather than asserting one.
+            (date(yr, 12, 8), date(yr, 12, 12), "Rule 5 draft", "/prospx/#tab=traded"),
+            (ifa, ifa, "International signing period", "/prospx/#tab=ifa"),
+        ]
     for start, end, name, href in sorted(events, key=lambda e: e[0]):
         if today > end:
             continue
@@ -3645,84 +3619,6 @@ def _date_callout() -> str:
 # no projection for. Those rows are a spike ON the floor, not a distribution, so
 # every homepage read of the eFV shape excludes them and SAYS it excludes them.
 _EFV_FLOOR = 20.0
-
-def _scatter_points(players: list, n: int) -> list[tuple[float, float]]:
-    """`n` REAL (age, eFV) pairs spread across the graded board, chosen
-    deterministically from the day's ordinal.
-
-    Spread along the GRADE AXIS, not uniformly and not by rank. A uniform draw
-    is ~72% floor rows, and even with the floor dropped it piles two thirds of
-    its dots into the 38-49 band - a horizontal smear, not a scatter. Equal-COUNT
-    strata are barely better: the board is right-skewed, so the top sixteenth
-    still spans 48-61 and the elite corner usually goes unrepresented. Walking
-    evenly UP THE GRADE RANGE and taking the nearest real player at each step
-    (each used once) spans 21 to 61 with sixteen actual prospects. It samples the
-    board, it does not estimate its density - the caption says exactly that."""
-    import random
-    by_grade: dict[int, list] = {}
-    for p in players:
-        age, fv = p.get("age"), _primary_fv(p)
-        if not (isinstance(age, (int, float)) and isinstance(fv, (int, float))):
-            continue
-        # Gate on the DISPLAYED grade, exactly as the histogram does - a raw
-        # 20.2 displays as 20 and is a floor row, not a graded one.
-        g = _round_half_up(fv)
-        if g > _EFV_FLOOR:
-            by_grade.setdefault(g, []).append((float(age), float(fv)))
-    present = sorted(by_grade)
-    if not present:
-        return []
-    rnd = random.Random(date.today().toordinal())
-    lo_g, hi_g = present[0], present[-1]
-    out = []
-    for k in range(n):
-        target = lo_g + (hi_g - lo_g) * k / max(1, n - 1)
-        # Nearest grade that still has an unused player; ties break low.
-        for g in sorted(present, key=lambda q: (abs(q - target), q)):
-            if by_grade[g]:
-                out.append(by_grade[g].pop(rnd.randrange(len(by_grade[g]))))
-                break
-        else:
-            break                       # board exhausted (tiny/test data layer)
-    return out
-
-def _scatter_teaser(players: list | None = None) -> str:
-    """Tiny inline scatter linking to the Scatterplots builder.
-
-    The dots used to be 16 RANDOM coordinates seeded off the date - a picture of
-    nothing, on the front page of a site whose whole claim is measured numbers.
-    They are now 16 real prospects plotted as age (x) against eFV (y), on the
-    real domains, with the fill carrying the tier split the rest of the page
-    uses (foil and up = gold). Same SVG budget: same box, same dot count, no
-    fetch. With no data layer the card renders without its chart rather than
-    falling back to invented dots."""
-    pts_data = _scatter_points(players or [], 16)
-    svg = ""
-    if len(pts_data) >= 2:
-        ages = [a for a, _ in pts_data]
-        fvs = [f for _, f in pts_data]
-        a_lo, a_hi = min(ages), max(ages)
-        f_lo, f_hi = min(fvs), max(fvs)
-        a_span = (a_hi - a_lo) or 1.0
-        f_span = (f_hi - f_lo) or 1.0
-        pts = "".join(
-            f'<circle cx="{8 + ((a - a_lo) / a_span) * 134:.0f}" '
-            f'cy="{42 - ((f - f_lo) / f_span) * 36:.0f}" r="2.2" '
-            f'style="fill:var(--{"text-gold" if f >= 50 else "accent-green"});opacity:0.85;"/>'
-            for a, f in pts_data)
-        cap = (f'{len(pts_data)} prospects sampled across the graded board: '
-               f'age {a_lo:.1f}-{a_hi:.1f} on x, '
-               f'eFV {_round_half_up(f_lo)}-{_round_half_up(f_hi)} on y')
-        svg = (f'<div class="st-svg"><svg viewBox="0 0 150 48" preserveAspectRatio="none" '
-               f'role="img" aria-label="{html.escape(cap)}"><title>{html.escape(cap)}</title>'
-               f'<line x1="6" y1="44" x2="144" y2="44" style="stroke:var(--border);stroke-width:1;"/>'
-               f'<line x1="6" y1="4" x2="6" y2="44" style="stroke:var(--border);stroke-width:1;"/>'
-               f'{pts}</svg></div>')
-    return (f'<a class="scatter-teaser" href="/prospx/#tab=charts">'
-            f'{svg}'
-            f'<div class="st-txt"><strong>Build a scatterplot</strong>'
-            f'<span>Any X/Y metric · color &amp; size encodings · brush-to-zoom</span></div>'
-            f'<span class="st-go">Scatterplots →</span></a>')
 
 def _tm_seed_key(p: dict) -> str:
     """The key a /trademachine/#tm= seed carries for one trade_values row. An MLB
@@ -3752,12 +3648,15 @@ def _park_window_label(pf: dict, year: int) -> str:
     return lab
 
 
-def _cross_module_strip() -> str:
-    """Across eephus.io - the homepage's window into the non-PROSPX
-    modules (cohesion: every module surfaces on the front page). Reads
-    the committed sidecars at build time; any missing file just drops
-    its card."""
-    cards = []
+def _xmod_cards() -> dict:
+    """The homepage module cards by id: (title, href, sub-head, rows). Reads
+    the committed sidecars at build time; any missing file just drops its
+    card. The bands place them (HOME_4): FA, Projections, Trade Machine and
+    Alchemy Lab in the MLB band, MLB Stats, Defense and Leverage merged into
+    the Leaders card, Fantasy and Diamond merged into the Diamond strip,
+    CollegeSavant and Park Factors in the Prospects band, the model verdict
+    counts in the site strip."""
+    cards: dict = {}
     # MLB Free Agency - top of the current class board
     try:
         fa = _cached_data_json("fa_class.json")
@@ -3779,8 +3678,8 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{m.get("projYears") or "?"}y / ${(m["projGuar"] / 1e6):.0f}M</span></a>'
             for m in top)
         if rows:
-            cards.append((f'{_ico("fa", 16)}Free Agency', '/fa/',
-                          f'{fa.get("class_year", 2027) - 1}-{str(fa.get("class_year", 2027))[2:]} projected market leaders', rows))
+            cards["fa"] = (f'{_ico("fa", 16)}Free Agency', '/fa/',
+                          f'{fa.get("class_year", 2027) - 1}-{str(fa.get("class_year", 2027))[2:]} projected market leaders', rows)
     except (OSError, ValueError, KeyError):
         pass
     # MLB Projections - 5y WAR leaders
@@ -3795,8 +3694,8 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{v["warTotal"]:.1f} WAR</span></a>'
             for v in top)
         if rows:
-            cards.append((f'{_ico("projections", 16)}MLB Projections', '/projections/',
-                          'five-year eWAR leaders', rows))
+            cards["projections"] = (f'{_ico("projections", 16)}MLB Projections', '/projections/',
+                          'five-year eWAR leaders', rows)
     except (OSError, ValueError, KeyError):
         pass
     # Trade Machine - top surplus trade values (prospects + MLB, one currency).
@@ -3826,15 +3725,15 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">${p["trade_value_mm"]:.0f}M</span></a>'
             for p in top)
         if rows:
-            cards.append((f'{_ico("trademachine", 16)}Trade Machine', '/trademachine/',
-                          'surplus trade value, prospects + MLB', rows))
+            cards["trademachine"] = (f'{_ico("trademachine", 16)}Trade Machine', '/trademachine/',
+                          'surplus trade value, prospects + MLB', rows)
     except (OSError, ValueError, KeyError):
         pass
     # CollegeSavant - static teaser (its data bundles stay in-module)
-    cards.append((f'{_ico("collegesavant", 16)}CollegeSavant', '/collegesavant/',
+    cards["collegesavant"] = (f'{_ico("collegesavant", 16)}CollegeSavant', '/collegesavant/',
                   'college baseball percentiles',
                   '<a class="xmod-row" href="/collegesavant/"><span class="xmod-name">Hitter dashboard</span><span class="xmod-val">EV · xwOBA · discipline →</span></a>'
-                  '<a class="xmod-row" href="/collegesavant/pitcher_index.html"><span class="xmod-name">Pitcher dashboard</span><span class="xmod-val">Stuff+ · shapes →</span></a>'))
+                  '<a class="xmod-row" href="/collegesavant/pitcher_index.html"><span class="xmod-name">Pitcher dashboard</span><span class="xmod-val">Stuff+ · shapes →</span></a>')
     # MLB Stats / REM+ - top relievers by REM+ (the reliever run-prevention metric)
     try:
         bl = _cached_data_json("bullpen_leaderboards.json")
@@ -3847,8 +3746,8 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{round(r["rem_plus"])} REM+</span></a>'
             for r in top)
         if rows:
-            cards.append((f'{_ico("mlbstats", 16)}MLB Stats', '/mlbstats/#section=bullpen',
-                          'top relievers by REM+', rows))
+            cards["mlbstats"] = (f'{_ico("mlbstats", 16)}MLB Stats', '/mlbstats/#section=bullpen',
+                          'top relievers by REM+', rows)
     except (OSError, ValueError, KeyError):
         pass
     # Leverage Leaderboards - realized win-probability impact, the one side of
@@ -3877,8 +3776,8 @@ def _cross_module_strip() -> str:
             for s in sp)
         if rows:
             # i-li, the win-probability swing (the old ⇅ glyph, redrawn).
-            cards.append((f'{_ico("li", 16)}Leverage', '/mlbstats/#section=leverage',
-                          'realized win-probability added', rows))
+            cards["leverage"] = (f'{_ico("li", 16)}Leverage', '/mlbstats/#section=leverage',
+                          'realized win-probability added', rows)
     except (OSError, ValueError, KeyError):
         pass
     # Defense Leaderboards (DEM+, 2026-09-11) - the fifth /mlbstats/ section and
@@ -3898,8 +3797,8 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{round(f["dem_plus"])} DEM+</span></a>'
             for f in top)
         if rows:
-            cards.append((f'{_ico("defense", 16)}Defense', '/mlbstats/#section=defense',
-                          'top qualified fielders by DEM+', rows))
+            cards["defense"] = (f'{_ico("defense", 16)}Defense', '/mlbstats/#section=defense',
+                          'top qualified fielders by DEM+', rows)
     except (OSError, ValueError, KeyError, TypeError):
         pass
     # Alchemy Lab - highest RP->SP fit scores. The copy says "screen", not
@@ -3917,8 +3816,8 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{round(c["fit"])} FIT</span></a>'
             for c in top)
         if rows:
-            cards.append((f'{_ico("pal", 16)}Alchemy Lab', '/pal/',
-                          'reliever-to-starter conversion screen', rows))
+            cards["pal"] = (f'{_ico("pal", 16)}Alchemy Lab', '/pal/',
+                          'reliever-to-starter conversion screen', rows)
     except (OSError, ValueError, KeyError):
         pass
     # Fantasy - rest-of-season projected points leaders off the Redraft
@@ -3953,8 +3852,8 @@ def _cross_module_strip() -> str:
                     f'<span class="xmod-sub">board built {html.escape(built)} is empty</span>'
                     '<span class="xmod-val">open →</span></a>')
         if rows:
-            cards.append((f'{_ico("fantasy", 16)}Fantasy', '/fantasy/#m=redraft&amp;section=ros_hitter',
-                          'rest-of-season hitter points leaders', rows))
+            cards["fantasy"] = (f'{_ico("fantasy", 16)}Fantasy', '/fantasy/#m=redraft&amp;section=ros_hitter',
+                          'rest-of-season hitter points leaders', rows)
     except (OSError, ValueError, KeyError):
         pass
     # MiLB Park Factors - the most offense-inflating venues on the current
@@ -3979,8 +3878,8 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{f:.2f} run PF</span></a>'
             for v, f in top)
         if rows:
-            cards.append((f'{_ico("parks", 16)}Park Factors', '/parks/',
-                          f'MiLB venues that add the most offense ({_park_window_label(pf, year)})', rows))
+            cards["parks"] = (f'{_ico("parks", 16)}Park Factors', '/parks/',
+                          f'MiLB venues that add the most offense ({_park_window_label(pf, year)})', rows)
     except (OSError, ValueError, KeyError, TypeError):
         pass
     # Model Accountability - the verdict split, counted off the registry at build
@@ -4005,9 +3904,9 @@ def _cross_module_strip() -> str:
             # QHOC03: the head counts registry rows, every verdict listed under
             # it (provisional was missing, and some rows are datasets or
             # pre-registered tests rather than models).
-            cards.append((f'{_ico("models", 16)}{PAGE_LABELS["/models/"]}', '/models/',
+            cards["models"] = (f'{_ico("models", 16)}{PAGE_LABELS["/models/"]}', '/models/',
                           f'{sum(tally.values())} registry rows by verdict',
-                          rows))
+                          rows)
     except (OSError, ValueError, KeyError, TypeError):
         pass
     # Diamond - static teaser (CollegeSavant's pattern: no data dependency; the
@@ -4018,18 +3917,60 @@ def _cross_module_strip() -> str:
     # in this same run, and a quiet missing card would just hide that earlier.
     free_line = ("member pass" if _diamond_cfg()["gating"]
                  else "free during the founding preview")
-    cards.append((f'{_ico("diamond", 16)}Diamond', '/diamond/',
+    cards["diamond"] = (f'{_ico("diamond", 16)}Diamond', '/diamond/',
                   'the paid tier: fantasy and betting',
                   '<a class="xmod-row" href="/fantasy/"><span class="xmod-name">Fantasy</span><span class="xmod-val">redraft · dynasty · DFS →</span></a>'
                   '<a class="xmod-row" href="/betting/"><span class="xmod-name">Sports Betting</span><span class="xmod-val">model vs the book price →</span></a>'
-                  f'<a class="xmod-row" href="/diamond/"><span class="xmod-name">Diamond Pass</span><span class="xmod-val">{free_line} →</span></a>'))
-    body = "".join(
-        f'<div class="xmod-card"><div class="xmod-head"><span class="xmod-title">{title}</span>'
-        f'<a class="xmod-link" href="{href}">open →</a></div>'
-        f'<div class="xmod-sub-head">{html.escape(sub)}</div>{rows}</div>'
-        for title, href, sub, rows in cards)
-    return (f'<div class="xmod-strip"><div class="xmod-eyebrow">Across eephus.io</div>'
-            f'<div class="xmod-grid">{body}</div></div>')
+                  f'<a class="xmod-row" href="/diamond/"><span class="xmod-name">Diamond Pass</span><span class="xmod-val">{free_line} →</span></a>')
+    return cards
+
+
+def _xmod_card_html(card: tuple, cls: str = "") -> str:
+    """One module card: icon and title, the open link, the sub-head, the rows."""
+    title, href, sub, rows = card
+    return (f'<div class="xmod-card{" " + cls if cls else ""}"><div class="xmod-head"><span class="xmod-title">{title}</span>'
+            f'<a class="xmod-link" href="{href}">open →</a></div>'
+            f'<div class="xmod-sub-head">{html.escape(sub)}</div>{rows}</div>')
+
+
+def _xmod_cards_html(ids: tuple | None = None) -> str:
+    """The named module cards in order (every card when ids is None); a card
+    whose file is missing is simply absent."""
+    cards = _xmod_cards()
+    return "".join(_xmod_card_html(cards[i]) for i in (ids or tuple(cards)) if i in cards)
+
+
+def _xmod_first_row(rows: str) -> str:
+    """The first xmod-row anchor of a card's rows (its leader)."""
+    end = rows.find("</a>")
+    return rows[:end + 4] if end >= 0 else ""
+
+
+def _home_leaders_card(cards: dict) -> str:
+    """The MLB band's Leaders card (HOME_4, LANE_HOME 3.2 row 21): the MLB
+    Stats REM+, Defense DEM+ and Leverage WPA cards merged into one row each,
+    the leader each card already printed, each row linking its own section."""
+    rows = "".join(_xmod_first_row(cards[k][3]) for k in ("mlbstats", "defense", "leverage") if k in cards)
+    if not rows:
+        return ""
+    return _xmod_card_html((f'{_ico("mlbstats", 16)}Leaders', "/mlbstats/",
+                            "top reliever by REM+, fielder by DEM+, batter by WPA", rows))
+
+
+def _home_diamond_strip(cards: dict) -> str:
+    """One Diamond strip (HOME_4): the Fantasy card's rows beside the Diamond
+    card's three links, under the Diamond card's head."""
+    if "diamond" not in cards:
+        return ""
+    title, href, sub, rows = cards["diamond"]
+    fan = ""
+    if "fantasy" in cards:
+        _ft, f_href, f_sub, f_rows = cards["fantasy"]
+        fan = (f'<div class="xmod-part"><a class="xmod-part-head" href="{f_href}">'
+               f'{_ico("fantasy", 12)}Fantasy</a>'
+               f'<div class="xmod-sub-head">{html.escape(f_sub)}</div>{f_rows}</div>')
+    body = f'<div class="xmod-split">{fan}<div class="xmod-part">{rows}</div></div>'
+    return _xmod_card_html((title, href, sub, body), cls="xmod-strip-card")
 
 
 # --------------------------------------------------------------------------- #
@@ -4243,64 +4184,42 @@ _WIRE_RAIL_JS = '''<script>
   if (!bar || !feed) return;
   var st = document.getElementById("wire-key-status");
   var empty = document.getElementById("wire-empty");
-  bar.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-wire-filter]");
-    if (!b) return;
-    var f = b.getAttribute("aria-pressed") === "true" ? "" : b.getAttribute("data-wire-filter");
-    bar.querySelectorAll("[data-wire-filter]").forEach(function (x) {
-      var on = !!f && x === b;
-      x.classList.toggle("active", on);
-      x.setAttribute("aria-pressed", on ? "true" : "false");
-    });
+  // At 900 px and below the rail is a block in the page that shows 6 rows
+  // (HOME_4); a filter there shows the first 6 rows of its family.
+  var mq = window.matchMedia ? window.matchMedia("(max-width: 900px)") : null;
+  var cur = "", curBtn = null;
+  function apply(announce) {
+    var cap = mq && mq.matches ? 6 : Infinity;
     var shown = 0, day = null, dayAny = false;
-    function closeDay() { if (day) day.style.display = dayAny ? "" : "none"; }
+    function closeDay() { if (day) day.style.display = dayAny ? "flex" : "none"; }
     Array.prototype.forEach.call(feed.children, function (el) {
       if (el.classList.contains("feed-day")) { closeDay(); day = el; dayAny = false; return; }
       if (!el.classList.contains("feed-item")) return;
-      var show = !f || el.getAttribute("data-fam") === f;
-      el.style.display = show ? "" : "none";
+      var show = (!cur || el.getAttribute("data-fam") === cur) && shown < cap;
+      el.style.display = show ? "flex" : "none";
       if (show) { shown++; dayAny = true; }
     });
     closeDay();
     if (empty) {
       empty.hidden = shown !== 0;
-      if (!shown) empty.textContent = "No " + b.getAttribute("title") + " rows in this list.";
+      if (!shown && curBtn) empty.textContent = "No " + curBtn.getAttribute("title") + " rows in this list.";
     }
-    if (st) st.textContent = shown + (shown === 1 ? " row" : " rows") + " shown";
-  });
-})();
-</script>'''
-
-
-_HOME_DRAWER_JS = '''<script>
-/* Homepage sidebar drawer (<=900px): the hamburger in .sb-brand opens the
-   search + module list + wire feed; Esc / outside click close it; resizing
-   back to desktop resets the state. Desktop widths ignore all of this
-   (the .home-nav-toggle is display:none above 900px). */
-(function () {
-  "use strict";
-  var sb = document.getElementById("home-sidebar");
-  var btn = sb ? sb.querySelector(".home-nav-toggle") : null;
-  if (!sb || !btn) return;
-  function set(open) {
-    if (open) sb.setAttribute("data-nav-open", "");
-    else sb.removeAttribute("data-nav-open");
-    btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    if (st && announce) st.textContent = shown + (shown === 1 ? " row" : " rows") + " shown";
   }
-  btn.addEventListener("click", function () { set(!sb.hasAttribute("data-nav-open")); });
-  document.addEventListener("click", function (e) {
-    if (sb.hasAttribute("data-nav-open") && !sb.contains(e.target)) set(false);
+  bar.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-wire-filter]");
+    if (!b) return;
+    cur = b.getAttribute("aria-pressed") === "true" ? "" : b.getAttribute("data-wire-filter");
+    curBtn = cur ? b : null;
+    bar.querySelectorAll("[data-wire-filter]").forEach(function (x) {
+      var on = !!cur && x === b;
+      x.classList.toggle("active", on);
+      x.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    apply(true);
   });
-  document.addEventListener("keydown", function (e) {
-    if ((e.key === "Escape" || e.key === "Esc") && sb.hasAttribute("data-nav-open")) {
-      set(false);
-      btn.focus();
-    }
-  });
-  var mq = window.matchMedia ? window.matchMedia("(max-width: 900px)") : null;
   if (mq) {
-    var onmq = function () { if (!mq.matches) set(false); };
+    var onmq = function () { apply(false); };
     if (mq.addEventListener) mq.addEventListener("change", onmq);
     else if (mq.addListener) mq.addListener(onmq);
   }
@@ -4308,107 +4227,151 @@ _HOME_DRAWER_JS = '''<script>
 </script>'''
 
 
+# The homepage's two bands (HOME_4, SP-D1): MLB first, then Prospects. A
+# reversal is this one line; the jump bar and the band order both read it.
+HOME_BAND_ORDER = ("mlb", "pro")
+# Band id -> (anchor, h2, jump-bar label, 32 px mark). The mark is the family's
+# key mark (_WIRE_FAMILIES), so the band and the news key read as one system;
+# the rule under each band head is the family colour (--wire-mlb, --wire-pro).
+_HOME_BANDS = {
+    "mlb": ("band-mlb", "MLB", "MLB", _WIRE_FAMILIES["mlb"]["mark"]),
+    "pro": ("band-pro", "Prospects", "Prospects", _WIRE_FAMILIES["pro"]["mark"]),
+}
+# The rail's row count on desktop; at 900 px and below the rail shows the
+# first _HOME_RAIL_PHONE_ROWS (the server marks the rest wire-more).
+_HOME_RAIL_ROWS = 20
+_HOME_RAIL_PHONE_ROWS = 6
+# The lead story runs only while the newest article is this fresh; an older
+# article is one line in the site strip (H10).
+_HOME_LEAD_MAX_DAYS = 30
+# The Prospects band's PROSPX link row: these six sections, then the rest under
+# "All sections" (every PROSPX_SUBNAV link stays one click away).
+_HOME_PROSPX_LINKS = ("/prospx/", "/prospx/#tab=farm", "/prospx/#tab=leaderboards",
+                      "/prospx/#tab=draft", "/prospx/#tab=timemachine", "/prospx/#tab=charts")
+
+
+def _home_band(band: str, count_line: str, body: str, extra_head: str = "") -> str:
+    """One band: its masthead (32 px mark, h2, one count line read from served
+    data, a 2 px rule in the family colour) and its blocks."""
+    anchor, h2, _jump, mark = _HOME_BANDS[band]
+    return (f'<section class="home-band home-band--{band}" id="{anchor}" aria-labelledby="{anchor}-h">'
+            f'<div class="band-head"><span class="band-mark">{_ico(mark, 32)}</span>'
+            f'<div class="band-titles"><h2 id="{anchor}-h">{html.escape(h2)}</h2>'
+            f'<span class="band-count">{count_line}</span></div></div>'
+            f'{extra_head}{body}</section>')
+
+
+def _home_club_logos() -> str:
+    """The 30 club logos (HOME_4), each linking its Franchises club view by the
+    hash assets/franchise.js reads (#view=club&team=<CODE>). The logo is the
+    hub's own small URL (QHOP01), the same bytes every module page caches."""
+    rows = sorted(_club_table()["rows"], key=lambda r: r["code"])
+    links = "".join(
+        f'<a class="club-logo-link" href="/franchise/#view=club&amp;team={r["code"]}" '
+        f'title="{_esc_hub(r["name"])}: franchise overview">'
+        f'<img class="club-logo" src="{_esc_hub(r["logo"])}" alt="{_esc_hub(r["name"])}" width="28" height="28" '
+        f'loading="lazy" onerror="this.outerHTML=\'<span class=&quot;club-logo&quot;>{r["code"]}</span>\'"></a>'
+        for r in rows)
+    return f'<nav class="club-logos" aria-label="MLB clubs">{links}</nav>'
+
+
+def _home_prospx_links() -> str:
+    """The Prospects band's link row: six PROSPX sections with their 12 px tab
+    icons, then "All sections" opening the rest (the old rail sub-nav)."""
+    def a(label, href):
+        return f'<a href="{href}">{_ico(_prospx_subnav_section(href), 12)}{html.escape(label)}</a>'
+    main = [a(lab, h) for lab, h in PROSPX_SUBNAV if h in _HOME_PROSPX_LINKS]
+    rest = [a(lab, h) for lab, h in PROSPX_SUBNAV if h not in _HOME_PROSPX_LINKS]
+    more = (f'<details class="band-links-more"><summary>All sections</summary>'
+            f'<div class="band-links-menu">{"".join(rest)}</div></details>') if rest else ""
+    return (f'<nav class="band-links" aria-label="PROSPX sections">'
+            f'{_ico("prospx", 12)}<span class="band-links-lab">PROSPX</span>{"".join(main)}{more}</nav>')
+
+
+def _home_article_age(a: dict, today: date) -> int | None:
+    try:
+        return (today - date.fromisoformat(str(a.get("date_sort") or "")[:10])).days
+    except ValueError:
+        return None
+
+
 def build_home(articles: list[dict], data: dict | None = None) -> str:
-    """Homepage = sidebar + newspaper-style main, with live PROSPX modules + the
-    MLB News feed read from the build-time data layer."""
+    """Homepage (HOME_4, LANE_HOME 3): the shared site header, the MLB News
+    rail on the left, and in the main column a slim masthead, then the MLB
+    band and the Prospects band in HOME_BAND_ORDER, then the site strip. Every
+    block keeps its builder and its numbers; this layer only places them."""
     data = data or {}
     players = data.get("players") or []
     org_summary = data.get("org_summary") or []
     graduates = data.get("graduates") or []
     as_of = data.get("as_of", " - ")
+    today_d = date.today()
     today = datetime.now().strftime("%A, %B %d, %Y").replace(" 0", " ")
     events = _collect_events(players, graduates, _load_fa_events_for_wire())
     spotlight_buckets = data.get("spotlights") or {}
 
-    # ---- sidebar ----
-    # The sidebar has room for fuller module names than the horizontal
-    # header nav, so a couple of labels expand here (key → sidebar label).
-    # Every module carries its 16 px pixel icon (final-pass plan 5.7, PX-05),
-    # drawn once in assets/eephus-icons.svg and keyed by the NAV_ITEMS key;
-    # PROSPX's 16 px ball monogram became i-prospx (no monogram below 40 px).
-    # The unicode glyph map this replaced was a third icon vocabulary.
-    # Lifecycle sigils live on module mastheads, not here.
-    sidebar_labels = {"fa": "MLB Free Agency", "projections": "MLB Projections",
-                      "collegesavant": "CollegeSavant"}
-    def _sb_link(key, label, href, grouped=False):
-        classes = []
-        if key == "home":
-            classes.append("is-active")   # the sidebar only renders on the homepage
-        if grouped:
-            classes.append("sb-grouped")
-        cls = f' class="{" ".join(classes)}"' if classes else ""
-        icon = f'<span class="sb-ico" aria-hidden="true">{_ico(key, 16)}</span>'
-        return f'<a href="{href}"{cls}>{icon}{html.escape(label)}</a>'
-    nav = []
-    for item in NAV_ITEMS:
-        if _nav_is_group(item):
-            # A nested, always-expanded sub-block in the vertical rail (the
-            # dropdown is for the horizontal top bar; the rail has room).
-            nav.append(f'<div class="sb-subhead">{html.escape(item["group"])}</div>')
-            for k, l, h in item["children"]:
-                nav.append(_sb_link(k, l, h, grouped=True))   # leaf label under the subhead
-        else:
-            key, label, href = item
-            nav.append(_sb_link(key, sidebar_labels.get(key, label), href))
-    # The PROSPX sub-nav: each deep link carries its section tab's 12 px icon
-    # (PX-05), the same symbol the PROSPX tab strip draws, where a cyan "›"
-    # used to repeat on every row.
-    sub = "".join(f'<a href="{href}">{_ico(_prospx_subnav_section(href), 12)}{html.escape(label)}</a>'
-                  for label, href in PROSPX_SUBNAV)
-    feed = _feed_html(events, 12) or _px_state("empty", "No recent activity.")
-    spotlight = _spotlight_html(players, spotlight_buckets)
-    search = ('<input class="sb-search" type="search" placeholder="Search prospects…" aria-label="Search prospects" '
-              "onkeydown=\"if(event.key==='Enter'&&this.value.trim()){location.href='/prospx/#q='+encodeURIComponent(this.value.trim());}\">")
-    # Mobile drawer (<=900px): the homepage does not load eephus-nav.js, so the
-    # sidebar carries its own hamburger + inline wiring; site.css collapses
-    # everything but .sb-brand until [data-nav-open]. Desktop is unaffected
-    # (.home-nav-toggle is display:none above 900px).
-    drawer_btn = ('<button type="button" class="home-nav-toggle" '
-                  'aria-controls="home-sidebar" aria-expanded="false" '
-                  'aria-label="Open menu">☰</button>')
-    sidebar = (
-        '<aside class="home-sidebar" id="home-sidebar">'
-        f'<div class="sb-brand"><a class="wm" href="/">{eephus_merged_wordmark("sb", tag="span")}</a>{THEME_BTN}{drawer_btn}</div>'
-        # eephus.io - account entry point for the homepage (page_home has no
-        # .eephus-nav top bar). refreshNav() in eephus-ui.js injects the Sign-in /
-        # avatar control into any .eephus-nav-controls, including this sidebar slot.
-        '<div class="sb-account eephus-nav-controls"></div>'
-        f'{search}'
-        f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav" aria-label="Modules">{"".join(nav)}</nav></div>'
-        # MLB News feed sits high (where the PROSPX sub-nav used to be);
-        # the PROSPX sub-nav drops below the spotlight feature.
-        f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All {NEWS_LABEL}"><span class="blip"></span>{NEWS_LABEL}<span class="feed-head-more">all →</span></a></div>'
+    # ---- the MLB News rail (LANE_HOME 3.2 row 6) ----
+    # Its own sticky scroller above 900 px; at 900 px and below a block after
+    # the masthead showing _HOME_RAIL_PHONE_ROWS rows (rows past it carry
+    # wire-more, which the phone stylesheet hides), never inside a drawer.
+    feed = _feed_html(events, _HOME_RAIL_ROWS)
+    if feed:
+        parts = re.split(r'(?=<a class="feed-item")|(?=<div class="feed-day")', feed)
+        n_rows, out, pending_day = 0, [], ""
+        for part in parts:
+            if part.startswith('<div class="feed-day"'):
+                pending_day = part
+                continue
+            if not part:
+                continue
+            n_rows += 1
+            more = n_rows > _HOME_RAIL_PHONE_ROWS
+            if pending_day:
+                out.append(pending_day.replace('class="feed-day"', 'class="feed-day wire-more"', 1)
+                           if more else pending_day)
+                pending_day = ""
+            out.append(part.replace('class="feed-item"', 'class="feed-item wire-more"', 1) if more else part)
+        feed = "".join(out)
+    else:
+        feed = _px_state("empty", "No recent activity.")
+    rail = (
+        f'<aside class="home-rail" id="home-rail" aria-label="{NEWS_LABEL}">'
+        f'<div class="sb-feed"><div class="feed-head"><a href="/news/" title="All {NEWS_LABEL}"><span class="blip"></span>{NEWS_LABEL}<span class="feed-head-more">all →</span></a></div>'
         # The family key (HOME_2): mark plus tag, a filter over the rows below.
         f'<div class="filter-bar wire-key" id="wire-key" role="group" aria-label="Filter {NEWS_LABEL} by family">'
         f'{_wire_key_html("data-wire-filter", tags=True)}</div>'
         '<div class="visually-hidden" id="wire-key-status" role="status" aria-live="polite"></div>'
         f'<div class="wire-rows" id="wire-rows">{feed}</div>'
-        '<p class="news-empty" id="wire-empty" hidden></p></div></div>'
-        f'{spotlight}'
-        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{_ico("prospx", 12)}PROSPX</div><nav class="sb-subnav" aria-label="PROSPX sections">{sub}</nav></div>'
+        '<p class="news-empty" id="wire-empty" hidden></p>'
+        f'<a class="feed-all" href="/news/">All {NEWS_LABEL} →</a>'
+        f'<p class="feed-asof">As of {html.escape(as_of)}</p></div>'
         '</aside>'
-        + _HOME_DRAWER_JS
         + _WIRE_RAIL_JS
     )
 
     # ---- top wire ticker ----
-    # Decorative scrolling marquee - duplicates the accessible MLB News feed
-    # in the sidebar, so it's hidden from assistive tech (aria-hidden) to avoid
-    # reading the same items twice / announcing a moving region.
+    # Decorative scrolling marquee - duplicates the accessible MLB News rail,
+    # so it's hidden from assistive tech (aria-hidden) to avoid reading the
+    # same items twice / announcing a moving region.
     ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><a href="/news/" tabindex="-1"><span class="blip"></span>{NEWS_LABEL}</a></span>'
               f'<div class="ticker-track">{_ticker_html(events)}</div></div>')
 
-    # ---- masthead ----
+    # ---- slim masthead (row 9) and the phone jump bar ----
     masthead = (
         '<div class="masthead">'
         f'{eephus_logo_lockup()}'
         '<div class="dateline"><span>Sabermetric Analysis</span>'
         f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div></div>'
     )
+    jump = ('<nav class="home-jump" aria-label="Homepage bands">'
+            + "".join(f'<a href="#{_HOME_BANDS[b][0]}">{html.escape(_HOME_BANDS[b][2])}</a>'
+                      for b in HOME_BAND_ORDER)
+            + '</nav>')
     # Draft War Room banner: hidden by default, revealed by a small client-side
     # check ONLY while the live draft feed reports status "live" (draft night).
-    # Links into the PROSPX draft section's War Room view. No em dashes (copy rule).
-    masthead += (
+    # Links into the PROSPX draft section's War Room view. No em dashes (copy
+    # rule). It sits in the Prospects band's callout slot (row 10).
+    war_room = (
         '<div id="draft-war-room-banner" style="display:none;margin:10px 0 0;">'
         '<a href="/prospx/#tab=draft&amp;dview=war-room" '
         'style="display:block;padding:10px 14px;border-radius:8px;'
@@ -4423,13 +4386,14 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '.catch(function(){});}catch(e){}})();</script>'
     )
 
-    # ---- lead story (latest human-written article) ----
+    # ---- lead story (row 12) ----
     # Owner decision 2026-08-04: the homepage editorial section carries HUMAN
-    # editorials only. The generated "From the data" lead card that used to take
-    # this slot on a stale article is deleted; the same wire facts still appear on
-    # /news/, in the sidebar feed, the ticker and the movers modules.
+    # editorials only. The full lead runs only while the newest article is
+    # _HOME_LEAD_MAX_DAYS old or less; an older one is a line in the site strip.
     latest = articles[0] if articles else None
-    if latest:
+    age = _home_article_age(latest, today_d) if latest else None
+    lead = ""
+    if latest and age is not None and age <= _HOME_LEAD_MAX_DAYS:
         lead = (
             '<article class="lead-story no-img">'
             '<div><div class="lead-kicker">Latest</div>'
@@ -4439,22 +4403,11 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
             f'<a class="read" href="/articles/{latest["slug"]}/">Read the full story →</a></div>'
             '</article>'
         )
-    else:
-        lead = ('<article class="lead-story no-img"><div><div class="lead-kicker">Latest</div>'
-                + _px_state("empty", "<strong>No articles yet</strong>") + '</div></article>')
-    sec = articles[1:4]
-    if sec:
-        secondary = ('<div class="secondary-stories">' + "".join(
-            f'<a href="/articles/{a["slug"]}/"><div class="s-kicker">{html.escape(a.get("date_disp", ""))}</div>'
-            f'<h3>{html.escape(a["title"])}</h3></a>' for a in sec) + '</div>')
-    elif latest:
-        # Single-piece front: only one story so far. Keep the broadsheet rhythm
-        # (the same double rule the secondary row carries) and say so plainly
-        # rather than leaving a bare gap under the lead.
-        secondary = ('<div class="more-soon-strip"><span>More analysis soon</span>'
-                     '<a href="/articles/">All articles →</a></div>')
-    else:
-        secondary = ""
+        sec = articles[1:4]
+        if sec:
+            lead += ('<div class="secondary-stories">' + "".join(
+                f'<a href="/articles/{a["slug"]}/"><div class="s-kicker">{html.escape(a.get("date_disp", ""))}</div>'
+                f'<h3>{html.escape(a["title"])}</h3></a>' for a in sec) + '</div>')
 
     # ---- live PROSPX modules ----
     # Top Movers = biggest GENUINE moves from the de-noised movement engine
@@ -4510,22 +4463,67 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     farm_body = "".join(_row_farm(o, o.get("farm_rank") or i) for i, o in enumerate(fm, 1))
     farm = _home_module("Top Farm Systems", "/prospx/#tab=farm", "Farm systems", farm_body) if farm_body else ""
 
-    # Rotates the real Arkmetrics shelf out of data/glossary.json (110 entries),
-    # not the six hardcoded pairs, still keyed by day-of-year.
-    terms = _glossary_teaser_terms()
-    slug, term, defn = terms[datetime.now().timetuple().tm_yday % len(terms)]
-    glossary = (f'<div class="glossary-teaser"><span>Today\'s term: <strong>{html.escape(term)}</strong> - {html.escape(defn)}</span>'
-                f'<a href="/glossary/#g={slug}">{GLOSSARY_DISPLAY_NAME} →</a></div>')
-
-    callout = _date_callout()
+    spot = _spotlight_html(players, spotlight_buckets)
+    spot = f'<section class="home-module spot-module">{spot}</section>' if spot else ""
     otd = _this_day_html(graduates, players)
     trades_mod = _recent_trades_html(players)
-    scatter = _scatter_teaser(players)
-    cross = _cross_module_strip()
-    # Full-width band under the 2x3 grid: a histogram wants width, and it reads
-    # as the summary of the six ranking modules above it rather than a seventh
-    # competing card (a 7th cell would also strand a half-empty grid row).
     efv_dist = _efv_distribution_html(players)
+    cards = _xmod_cards()
+
+    # ---- the MLB band (LANE_HOME 3.2 rows 11, 21; new blocks) ----
+    # The Scores / Standings strip slot is empty until HOME_6 fills it.
+    mlb_cells = [c for c in (
+        _xmod_card_html(cards["fa"]) if "fa" in cards else "",
+        _xmod_card_html(cards["projections"]) if "projections" in cards else "",
+        _home_leaders_card(cards),
+        _xmod_card_html(cards["trademachine"]) if "trademachine" in cards else "",
+        _xmod_card_html(cards["pal"]) if "pal" in cards else "",
+    ) if c]
+    n_clubs = len(_club_table()["rows"])
+    mlb_band = _home_band(
+        "mlb", f"{n_clubs} clubs",
+        _date_callout("mlb", today_d)
+        + '<div class="home-scores-slot" id="home-scores-slot" hidden></div>'
+        + _home_club_logos()
+        + f'<div class="band-grid">{"".join(mlb_cells)}</div>'
+        + _home_diamond_strip(cards))
+
+    # ---- the Prospects band (rows 7, 8, 10, 14 to 20, 21) ----
+    n_ranked = sum(1 for p in players if p.get("overall_rank"))
+    n_farms = sum(1 for o in org_summary if o.get("farm_rank"))
+    pro_count = " · ".join(x for x in (
+        f"{n_ranked:,} ranked prospects" if n_ranked else "",
+        f"{n_farms} farm systems" if n_farms else "") if x) or "the prospect board"
+    pro_cards = "".join(_xmod_card_html(cards[k]) for k in ("collegesavant", "parks") if k in cards)
+    pro_band = _home_band(
+        "pro", pro_count,
+        _date_callout("pro", today_d) + war_room
+        + f'<div class="module-cols">{spot}{topp}{movers}{grads}{farm}{otd}{trades_mod}</div>'
+        + efv_dist
+        + (f'<div class="band-grid">{pro_cards}</div>' if pro_cards else ""),
+        extra_head=_home_prospx_links())
+
+    bands = {"mlb": mlb_band, "pro": pro_band}
+
+    # ---- site strip: Articles, Model Accountability, Library ----
+    if latest and not lead:
+        art_rows = (f'<a class="xmod-row xmod-row--stack" href="/articles/{latest["slug"]}/">'
+                    f'<span class="xmod-name">{html.escape(latest["title"])}</span>'
+                    f'<span class="xmod-sub">{html.escape(latest.get("date_disp", ""))}</span></a>')
+        art_sub = "the latest piece"
+    else:
+        art_rows = '<a class="xmod-row" href="/articles/"><span class="xmod-name">Every article</span><span class="xmod-val">open →</span></a>'
+        art_sub = "long-form analysis"
+    strip = [_xmod_card_html((f'{_ico("articles", 16)}Articles', "/articles/", art_sub, art_rows))]
+    if "models" in cards:
+        strip.append(_xmod_card_html(cards["models"]))
+    strip.append(_xmod_card_html((
+        f'{_ico("glossary", 16)}{GLOSSARY_DISPLAY_NAME}', "/glossary/",
+        "definitions and methodology for every metric on the site",
+        f'<a class="xmod-row" href="/glossary/"><span class="xmod-name">Terms and models</span>'
+        f'<span class="xmod-val">open →</span></a>')))
+    site_strip = f'<section class="home-site-strip" aria-label="Across eephus.io"><div class="band-grid band-grid--3">{"".join(strip)}</div></section>'
+
     # eephus.io - Forums module (third content pillar). Hydrated client-side by
     # eephus-ui.js (#eph-home-forums): bump/Hot ordering, last-active first.
     #
@@ -4551,18 +4549,13 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     )
     main = (
         '<main class="home-main" id="main" tabindex="-1">'
-        f'{masthead}{callout}{lead}{secondary}'
-        # 2-col grid, paired by row: [This Day | Top Movers] (today's activity),
-        # [Top Prospects | Farm] (rankings), [Recent Graduates | Recent Trades]
-        # (recent transactions).
-        f'<div class="module-cols">{otd}{movers}{topp}{farm}{grads}{trades_mod}</div>'
-        f'{efv_dist}'
-        f'{cross}'
-        f'{forums_mod}'
-        f'<div class="teaser-row">{glossary}{scatter}</div>'
+        f'{lead}'
+        + "".join(bands[b] for b in HOME_BAND_ORDER)
+        + f'{forums_mod}{site_strip}'
         '</main>'
     )
-    inner = f'{ticker}<div class="home-shell">{sidebar}{main}</div>'
+    inner = (f'{ticker}{_nav("home")}<div class="home-shell">'
+             f'<div class="home-head">{masthead}</div>{jump}{rail}{main}</div>')
     return page_home("eephus.io - sabermetrics", inner,
                      "Prospect board graded by eFV, plus MLB free agency, projections, leaderboards, "
                      "fantasy and betting models.")

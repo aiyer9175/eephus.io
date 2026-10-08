@@ -56,7 +56,6 @@ def test_no_served_nav_masthead_or_title_says_glossary(rel):
     for pat in (r'<nav\s+class="eephus-links">(.*?)</nav>',
                 r'<nav class="eephus-footer-links"[^>]*>(.*?)</nav>',
                 r'<footer class="eephus-footer">(.*?)</footer>',
-                r'<nav class="sb-nav">(.*?)</nav>',
                 r'<div class="section-head[^"]*">(.*?)</div>'):
         for block in re.findall(pat, text, re.S):
             assert ">Glossary<" not in block and "Glossary &amp;" not in block, (rel, pat)
@@ -81,8 +80,9 @@ def test_glossary_page_masthead_title_and_meta_read_library():
 
 def test_rail_footer_and_404_read_library():
     home = B.build_home([], {})
-    rail = re.search(r'<nav class="sb-nav">(.*?)</nav>', home, re.S).group(1)
-    assert re.search(r'href="/glossary/"[^>]*>.*?</span>Library</a>', rail, re.S)
+    # HOME_4: the homepage takes the shared header, whose link reads Library.
+    nav = re.search(r'<nav class="eephus-links">(.*?)</nav>', home, re.S).group(1)
+    assert re.search(r'href="/glossary/"[^>]*>.*?</span>Library</a>', nav, re.S)
     assert '<a href="/glossary/">Library</a>' in B._footer()
     assert '<a href="/glossary/">Library</a>' in B.build_404()
 
