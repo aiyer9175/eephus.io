@@ -182,6 +182,7 @@ _INTRINSIC_DRIVER_POLARITY: dict[str, str] = {
     "skills broken":                 "bad",
     "high-fv decline":               "bad",
     "unsupported by x-metrics":      "bad",
+    "x-metrics disagree":            "bad",
     # v19 - additional negative narratives.
     "demotion":                      "bad",
     "demoted":                       "bad",
@@ -1108,17 +1109,17 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
                     score += 2.0
                     drivers.append({"label": f"SC+ {int(_scpv_r)} confirms rebound",
                                     "valence": "good",
-                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥{_SC_ELITE}, elite) strongly supports the rebound - underlying contact / pitch quality is back to peak."})
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (elite, >= {_SC_ELITE}): contact and pitch quality at peak; the rebound is supported."})
                 elif _scpv_r >= _SC_ABOVE:
                     score += 1.0
                     drivers.append({"label": f"SC+ {int(_scpv_r)} supports rebound",
                                     "valence": "good",
-                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥{_SC_ABOVE}, above pool) supports the rebound narrative."})
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (above pool, >= {_SC_ABOVE}): the rebound is supported."})
                 elif _scpv_r <= _SC_BELOW:
                     score -= 1.5
                     drivers.append({"label": f"SC+ {int(_scpv_r)} undercuts rebound",
                                     "valence": "bad",
-                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≤{_SC_BELOW}, below pool) undercuts the rebound - surface bounce isn't backed by tracked data."})
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (below pool, <= {_SC_BELOW}): tracked data does not back the rebound."})
             # v12 - same xMetric gate as risers. AAA-only.
             verif = _xmetric_verification(p, "up")
             if verif == "unsupported":
@@ -1404,12 +1405,12 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             score -= 1.0
             drivers.append({"label": f"SC+ {int(_scpv_f)} confirms decline",
                             "valence": "bad",
-                            "tooltip": f"Statcast+ {int(_scpv_f)} (≤{_SC_BELOW}, below pool mean) reinforces the surface decline - underlying contact / pitch quality is below pool too."})
+                            "tooltip": f"Statcast+ {int(_scpv_f)} (below pool mean, <= {_SC_BELOW}): tracked quality agrees with the decline."})
         elif _scpv_f >= _SC_ABOVE:
             score += 1.5
             drivers.append({"label": f"SC+ {int(_scpv_f)} counters decline",
                             "valence": "good",
-                            "tooltip": f"Statcast+ {int(_scpv_f)} (≥{_SC_ABOVE}, above pool mean) counters the surface dip - tracked-data signal suggests the slump is BABIP / sequencing noise rather than a real decline."})
+                            "tooltip": f"Statcast+ {int(_scpv_f)} (above pool mean, >= {_SC_ABOVE}): tracked quality holds; the dip reads as BABIP and sequencing."})
     # v12 - xMetric verification gate for AAA fallers. If the surface
     # dip isn't supported by underlying Statcast (wOBA under xWOBA,
     # ERA over xFIP), demote to "none" - the cold streak is bad luck
@@ -1417,7 +1418,9 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # rebuild can revisit the call.
     verif = _xmetric_verification(p, "down")
     if verif == "unsupported":
-        drivers.append("unsupported by x-metrics (likely bad luck)")
+        drivers.append("x-metrics disagree: ERA over xFIP"
+                       if (p.get("statline") or {}).get("is_pitcher")
+                       else "x-metrics disagree: wOBA under xwOBA")
         return ("none", 0.0, drivers)
     if verif == "verified":
         drivers.append("x-metrics verified")
