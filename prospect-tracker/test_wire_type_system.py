@@ -280,6 +280,9 @@ def test_the_ten_tokens_in_site_css_and_prospx():
     px = _COMMENT.sub("", _src("prospx/index.html"))
     assert _tokens(px, ":root {") == want_light
     assert _tokens(px, '[data-theme="dark"] {') == want_dark
+    # HOME_8: PROSPX's event accents resolve to the family tokens.
+    for acc, fam in (("traded", "trd"), ("il", "inj"), ("graduated", "pro")):
+        assert re.search(r"--accent-%s:\s*var\(--wire-%s\);" % (acc, fam), px), acc
 
 
 # ------------------------------------------------------------ in the browser
