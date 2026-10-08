@@ -12,20 +12,20 @@
   <link rel="preload" href="/assets/fonts/pixelmplus12-regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/pixelmplus12-bold.woff2" as="font" type="font/woff2" crossorigin>
   <title>PROSPX - prospect analytics - eephus.io</title>
-  <meta name="description" content="Prospect analytics: outcome-grounded eFV grades, surplus value, and scouting consensus across the minors.">
+  <meta name="description" content="Prospect analytics: eFV grades, surplus value, and scouting consensus across the minors.">
 
   <!-- Social cards + canonical (mirrors build_site.py's _social_meta block;
        this file is hand-edited so the tags are inlined here). -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="PROSPX - prospect analytics">
-  <meta property="og:description" content="Prospect analytics: outcome-grounded eFV grades, surplus value, and scouting consensus across the minors.">
+  <meta property="og:description" content="Prospect analytics: eFV grades, surplus value, and scouting consensus across the minors.">
   <meta property="og:site_name" content="eephus.io">
   <meta property="og:url" content="https://eephus.io/prospx/">
   <link rel="canonical" href="https://eephus.io/prospx/">
   <meta property="og:image" content="https://eephus.io/assets/share-default.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="PROSPX - prospect analytics">
-  <meta name="twitter:description" content="Prospect analytics: outcome-grounded eFV grades, surplus value, and scouting consensus across the minors.">
+  <meta name="twitter:description" content="Prospect analytics: eFV grades, surplus value, and scouting consensus across the minors.">
   <meta name="twitter:image" content="https://eephus.io/assets/share-default.png">
 
   <!-- Favicons + PWA + theme-color (committed artifacts; tools/generate_brand_assets.py).
@@ -102,7 +102,7 @@
 
       /* Semantic accents (variable names kept for inline-JS compatibility).
          Mapped to muted, ink-on-paper baseball-card values. */
-      --neon-green: #1F7A3A; /* forest green - up */
+      --neon-green: #1A6B32; /* forest green - up; 4.61:1 or better on its pill tints (QPRA12) */
       --neon-magenta: #B91C1C; /* brick red - down */
       --neon-cyan: #0E2B4D; /* navy - link / accent */
       --neon-amber: #C9A227; /* card gold - highlight */
@@ -174,8 +174,8 @@
       --fv-40-bg: #BDB9A5;  --fv-40-fg: #36352E;  --fv-40-bd: #686358;  /* stone */
       --fv-35-bg: #B0AE9F;  --fv-35-fg: #333330;  --fv-35-bd: #645F55;  /* gray-tan */
       --fv-30-bg: #A1A097;  --fv-30-fg: #303030;  --fv-30-bd: #5F5A50;  /* cool gray */
-      --fv-25-bg: #92928B;  --fv-25-fg: #FBF8F0;  --fv-25-bd: #5A554B;  /* slate (light text) */
-      --fv-20-bg: #82817C; --fv-20-fg: #FBF8F0; --fv-20-bd: #555047; /* muted slate - recedes */
+      --fv-25-bg: #72716C;  --fv-25-fg: #FBF8F0;  --fv-25-bd: #5A554B;  /* slate (light text) */
+      --fv-20-bg: #63625D; --fv-20-fg: #FBF8F0; --fv-20-bd: #555047; /* muted slate - recedes */
 
       --level-very-young-bg: #DEEAD7;  --level-very-young-fg: #244B22;
       --level-young-bg:      #D9E5EE;  --level-young-fg:      #1F3F66;
@@ -185,9 +185,16 @@
       --level-too-old-bg:    #F8D6D1;  --level-too-old-fg:    #871B16;
       --level-mlb-bg:        #0E2B4D;  --level-mlb-fg:        #FBF8F0;
 
-      --up:    #1F7A3A;
+      --up:    #1A6B32;
       --down:  #B91C1C;
       --grad:  #6B4FA8;
+      /* Reading inks the light paper needs where the accent itself is too pale
+         (QPRA08, QPRA10, QPRA12); the dark block keeps the neon values. */
+      --age-young-ink: #2F6690;
+      --eta-near-ink:  #367230;
+      --eta-far-ink:   #9A5410;
+      --tool-s1: #B91C1C; --tool-s2: #6B3FB8; --tool-s3: #0B6B74; --tool-s4: #7D5F08;
+      --tool-s5: #1A6B32; --tool-s6: #A3238A; --tool-s7: #9A5410;
 
       /* Named accent tokens - each row variant gets its own semantic
          color slot so cross-section accent changes happen here, not
@@ -377,6 +384,11 @@
       --up:    #4FFF9E;
       --down:  #FF6B7A;
       --grad:  #B47CFF;
+      --age-young-ink: #5B9FD1;
+      --eta-near-ink:  #4FA64A;
+      --eta-far-ink:   #C97A1B;
+      --tool-s1: #FF6B7A; --tool-s2: #B47CFF; --tool-s3: #4FD9FF; --tool-s4: #FFD700;
+      --tool-s5: #4FFF9E; --tool-s6: #FF6FE0; --tool-s7: #FFAB4F;
 
       /* FV tiers - refractor rainbow (replaces the warm gold ramp).
          80=gold, 70=magenta, 65=purple, 60=cyan, 55=mint, 50-20 dim
@@ -388,7 +400,7 @@
       --fv-60-bg: #4FD9FF;  --fv-60-fg: #02181F;  --fv-60-bd: #1AB0E0;
       --fv-55-bg: #4FFF9E;  --fv-55-fg: #021A0B;  --fv-55-bd: #1AE070;
       --fv-50-bg: #B8C5D8;  --fv-50-fg: #0F1420;  --fv-50-bd: #8B95AB;
-      --fv-45-bg: #6B7A8F;  --fv-45-fg: #E8EEF5;  --fv-45-bd: #4A5468;
+      --fv-45-bg: #5C6A80;  --fv-45-fg: #E8EEF5;  --fv-45-bd: #4A5468;
       --fv-40-bg: #4A5468;  --fv-40-fg: #E8EEF5;  --fv-40-bd: #353C4E;
       --fv-35-bg: #3A4254;  --fv-35-fg: #D0D8E8;  --fv-35-bd: #2A3142;
       --fv-30-bg: #2E3548;  --fv-30-fg: #B8C5D8;  --fv-30-bd: #232A3A;
@@ -1154,7 +1166,6 @@
       font-weight: 800;
       width: 38px;
       flex-shrink: 0;
-      opacity: 0.7;
     }
     .filter-label {
       font-family: var(--font-sans);
@@ -1567,7 +1578,7 @@
       font-variant-numeric:tabular-nums; color:var(--text-primary); }
     .split-table tbody tr:hover td { background:var(--bg-secondary); }
     .split-rowlabel { font-family:var(--font-sans); font-weight:600; color:var(--text-primary); }
-    .split-sub { color:var(--text-tertiary); opacity:0.6; }
+    .split-sub { color:var(--text-tertiary); }
     .split-delta { display:block; font-size:9px; font-weight:600; margin-top:1px; }
     .split-plus-pos { color:var(--up); } .split-plus-neg { color:var(--down); }
     .split-custom { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:flex-end; margin-bottom:10px;
@@ -1949,6 +1960,17 @@
       outline-offset: 2px;
       border-radius: 3px;
     }
+    .col-header .sort-header:focus-visible,
+    .debut-header .sort-header:focus-visible,
+    .spotlight-header .sort-header:focus-visible { outline-color: var(--col-header-fg); }
+    /* QPRA03: the row's player name is its link. */
+    .row-name-link { color: inherit; text-decoration: none; }
+    .row-name-link:hover { text-decoration: underline; }
+    .row-name-link:focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 2px; }
+    /* QPRP02: #content always holds at least one viewport, so the footer never
+       paints inside the first screen while the loader (or a section's own
+       loading line) is up and then jumps 7,600px when the board mounts. */
+    #content { min-height: 100vh; }
     /* v29 - Active sort column shows a direction-specific arrow (▲ asc
        / ▼ desc) sourced from the `data-sort-dir` attribute that
        syncSortHeaderActive() stamps onto the active header. Lets the
@@ -3404,7 +3426,6 @@
     }
     .tool-grade-pill .tg-code {
       font-weight: 600;
-      opacity: 0.85;
     }
     .tool-grade-pill .tg-val {
       font-weight: 700;
@@ -3565,7 +3586,6 @@
       font-family: var(--font-sans);
       font-weight: 500;
       font-size: 10px;
-      opacity: 0.78;
     }
 
     /* === MiLB cell ================================================ */
@@ -3682,10 +3702,10 @@
        current-year (anchors as 'ready now'); softer leaf-green for +1;
        cyan/gold/orange for +2/+3/+4; gray once we're 5+ years out. */
     .eta-now      { color: var(--neon-green); font-weight: 700; }
-    .eta-near     { color: #4FA64A; }
+    .eta-near     { color: var(--eta-near-ink); }
     .eta-close    { color: var(--neon-cyan); }
-    .eta-mid      { color: var(--neon-amber); }
-    .eta-far      { color: #C97A1B; }
+    .eta-mid      { color: var(--text-gold); }
+    .eta-far      { color: var(--eta-far-ink); }
     .eta-very-far { color: var(--text-tertiary); }
 
     /* === Detail panel ============================================= */
@@ -4002,6 +4022,10 @@
       overflow-wrap: anywhere;
     }
     .spotlight-track-record:empty { display: none; }
+    .spotlight-track-record > details > summary { cursor: pointer; }
+    .px-how { margin: 0 0 10px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .px-how > summary { cursor: pointer; font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.04em; }
+    .px-how > p { margin: 6px 0 0; }
     .spotlight-track-record .str-head { font-weight: 600; color: var(--text-primary); }
     .spotlight-track-record .str-v { font-weight: 600; }
     .spotlight-track-record .str-v.is-clears { color: var(--up, var(--neon-cyan)); }
@@ -6494,8 +6518,8 @@
        per-source comparison panel. Subtle by default, accent on hover. */
     .src-attr-link {
       font-family: var(--font-sans); font-size: 10px;
-      color: var(--text-tertiary); text-decoration: none;
-      white-space: nowrap; opacity: 0.85;
+      color: var(--text-secondary); text-decoration: none;
+      white-space: nowrap;
     }
     .src-attr-link:hover { color: var(--neon-cyan, var(--accent-cyan)); opacity: 1; text-decoration: underline; }
     /* Prominent source-page CTA at the top of the FanGraphs writeup body -
@@ -6766,7 +6790,6 @@
     .detail-chip-ribbon .ribbon-sc-lbl {
       font-size: 9px;
       letter-spacing: 0.04em;
-      opacity: 0.85;
     }
     .detail-chip-ribbon .ribbon-sc-val {
       font-variant-numeric: tabular-nums;
@@ -8880,6 +8903,19 @@
          watch button's 44px target there. */
       .row-actions .compare-add-btn.is-compact,
       .row-actions .row-expand-btn { width: 44px; height: 44px; }
+      /* QPRA11: chips, sort headers, the org picker, the Debuted row buttons and
+         the card's back link, source toggle and meta links reach 44px too. */
+      button.chip { min-width: 44px; }
+      .org-picker-trigger, .back-link, .tm-src-toggle, .efv-claim-chip {
+        min-height: 44px; display: inline-flex; align-items: center;
+      }
+      /* Sort headers are grid items (some hidden by .desktop-only), so they take
+         the height only; their display stays the grid's. */
+      .col-header .sort-header, .debut-header .sort-header { min-height: 44px; align-content: center; }
+      .debut-row .compare-add-btn.is-compact,
+      .spotlight-row .compare-add-btn.is-compact { width: 44px; height: 44px; }
+      .detail-page-header .compare-add-btn { min-height: 44px; }
+      .detail-page-header .player-display-meta a { display: inline-block; padding: 14px 0; margin: -14px 0; }
 
       /* --- Dense tables → horizontally scrollable so columns never squish
          below legible size. display:block keeps an anonymous table inside
@@ -9075,7 +9111,7 @@
   <!-- position:relative re-anchors the absolute .global-controls rail to this
        masthead (not the page), so it sits below the eephus.io site nav. -->
   <header class="header" style="position: relative;">
-    <h1>
+    <h1 aria-label="PROSPX beta">
       <!-- v30 - Baseball badge logo. Cream face + dark outline read as
            a vintage Topps-card baseball; the seam arc is painted with
            the same cardinal → gold → green → navy gradient used on the
@@ -9083,7 +9119,7 @@
            CSS gradients aren't required on `stroke`). The stitching
            dashes overlay the seam to evoke a real ball without
            cluttering the silhouette. -->
-      <svg class="h1-logo" viewBox="0 0 44 44" role="img" aria-label="PROSPX baseball logo" style="cursor:pointer;" title="Back to MiLB Prospects" onclick="goToProspectsBoard()">
+      <svg class="h1-logo" viewBox="0 0 44 44" aria-hidden="true" focusable="false" style="cursor:pointer;" title="Back to MiLB Prospects" onclick="goToProspectsBoard()">
         <defs>
           <linearGradient id="ball-seam-gradient" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%"   stop-color="#B91C1C"/>
@@ -9109,7 +9145,7 @@
         </g>
       </svg>
       <span class="h1-title" style="cursor:pointer;" title="Back to MiLB Prospects" onclick="goToProspectsBoard()">PROSPX<span class="h1-rule" aria-hidden="true"></span></span>
-      <span class="eephus-beta h1-stage" title="PROSPX is in beta">&beta; beta</span>
+      <span class="eephus-beta h1-stage" title="PROSPX is in beta"><span aria-hidden="true">&beta; </span>beta</span>
       <!-- @MLBPROSPX lives in the title space the beta tag vacated (the badge
            moved to the eephus.io wordmark). Opens in a new tab. -->
       <a class="eph-xlink eph-xlink--mast eph-xlink--live" href="https://x.com/MLBPROSPX" target="_blank" rel="noopener noreferrer" aria-label="Follow @MLBPROSPX on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="eph-xlink-handle">@MLBPROSPX</span></a>
@@ -9129,12 +9165,15 @@
     </div>
   </header>
 
-  <div id="content">
+  <main id="content">
     <!-- The boot loader is the pixel state component's loading kind (final-pass
          plan 5.7, PX-12), written statically because it paints before any
          script runs; assets/eephus-state.js draws the same markup. -->
     <div class="px-state is-loading" role="status" aria-live="polite"><span class="px-lob" aria-hidden="true"><i></i><svg width="92" height="36" viewBox="0 0 46 18" shape-rendering="crispEdges"><rect class="f" x="0" y="15" width="2" height="2" style="animation-delay:-1.6s"/><rect class="f" x="4" y="11" width="2" height="2" style="animation-delay:-1.5s"/><rect class="f" x="7" y="7" width="2" height="2" style="animation-delay:-1.4s"/><rect class="f" x="11" y="5" width="2" height="2" style="animation-delay:-1.3s"/><rect class="f" x="15" y="3" width="2" height="2" style="animation-delay:-1.2s"/><rect class="f" x="18" y="1" width="2" height="2" style="animation-delay:-1.1s"/><rect class="f r" x="22" y="1" width="2" height="2" style="animation-delay:-1.0s"/><rect class="f" x="26" y="1" width="2" height="2" style="animation-delay:-0.9s"/><rect class="f" x="29" y="3" width="2" height="2" style="animation-delay:-0.8s"/><rect class="f" x="33" y="5" width="2" height="2" style="animation-delay:-0.7s"/><rect class="f" x="37" y="7" width="2" height="2" style="animation-delay:-0.6s"/><rect class="f" x="40" y="11" width="2" height="2" style="animation-delay:-0.5s"/><rect class="f" x="44" y="15" width="2" height="2" style="animation-delay:-0.4s"/><rect class="f" x="44" y="16" width="2" height="2" style="animation-delay:-0.3s"/><rect class="f" x="44" y="15" width="2" height="2" style="animation-delay:-0.2s"/><rect class="f" x="44" y="15" width="2" height="2" style="animation-delay:-0.1s"/></svg></span><div class="px-state-msg">Loading prospect data…</div></div>
-  </div>
+  </main>
+  <!-- QPRA13: one persistent polite region; the sync pass mirrors the result
+       count into it so filter, search and sort changes are announced. -->
+  <div id="px-live" class="visually-hidden" role="status" aria-live="polite"></div>
 
 </div>
 
@@ -9142,7 +9181,7 @@
      below) + side panel. Pinned prospects/farms persist in localStorage
      so refresh / sharing keeps the comparison alive. Up to 3 items
      side-by-side. The chip auto-hides when the cart is empty. -->
-<div class="gfx-overlay" id="gfx-overlay" role="dialog" aria-label="Generate graphic">
+<div class="gfx-overlay" id="gfx-overlay" role="dialog" aria-modal="true" aria-label="Generate graphic">
   <div class="gfx-modal">
     <div class="gfx-modal-head">
       <span class="gfx-modal-title">Generate graphic</span>
@@ -9244,7 +9283,7 @@
   </div>
 </div>
 
-<aside class="compare-panel" id="compare-panel" role="dialog" aria-label="Compare">
+<aside class="compare-panel" id="compare-panel" role="dialog" aria-modal="true" aria-label="Compare">
   <div class="compare-head">
     <div class="compare-title">Compare</div>
     <button class="compare-close" id="compare-close" type="button" aria-label="Close">×</button>
@@ -9304,7 +9343,7 @@
        this button so the user lands on the list without scrolling past
        80px of filter chrome. Hidden on desktop via CSS. -->
   <div class="filter-toggle-row">
-    <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false">
+    <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-bar">
       <span class="filter-toggle-label">Filters</span>
       <span class="filter-toggle-count" id="filter-toggle-count"></span>
       <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
@@ -9359,7 +9398,6 @@
       <div class="filter-group">
         <span class="filter-label">Level</span>
         <button class="chip active" data-filter-level="all">All</button>
-        <button class="chip" data-filter-level="MLB">MLB</button>
         <button class="chip" data-filter-level="AAA">AAA</button>
         <button class="chip" data-filter-level="AA">AA</button>
         <button class="chip" data-filter-level="A+">A+</button>
@@ -9423,9 +9461,9 @@
         <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 92 - below pool mean. Surfaces prospects whose tracked data lags the surface stats; useful for regression-watch.">SC+ below</button>
       </div>
       <div class="filter-group">
-        <span class="filter-label" title="Filter by the SHAPE of the modeled eFV outcome (not its level): the outcome-bucket distribution each graded prospect already carries. Empty = show all. Multiple selected = OR (union). Prior-anchored / provisional grades (no pro track record yet) are excluded since their band is the consensus prior, not a model read.">Risk profile</span>
-        <button class="chip is-multi" data-filter-risk="floor" title="High floor - low modeled bust risk (P(bust) ≤ 40%). Safe, likely to be a real contributor: the win-now trade target.">High floor</button>
-        <button class="chip is-multi" data-filter-risk="lottery" title="Lottery ticket - elevated bust risk but a real good/star ceiling (P(good-or-better) ≥ 10%). Boom-or-bust upside for a rebuild.">Lottery</button>
+        <span class="filter-label" title="Filter by the shape of the consensus outcome table read at the eFV grade (not its level): the outcome-bucket distribution each graded prospect already carries. Empty = show all. Multiple selected = OR (union). Prior-anchored / provisional grades (no pro track record yet) are excluded since their band is the consensus prior, not a model read.">Risk profile</span>
+        <button class="chip is-multi" data-filter-risk="floor" title="High floor - low bust share in the consensus outcome table at the eFV grade (P(bust) ≤ 40%). Safe, likely to be a real contributor: the win-now trade target.">High floor</button>
+        <button class="chip is-multi" data-filter-risk="lottery" title="Lottery ticket - high bust risk but a real good/star ceiling (P(good-or-better) ≥ 10%). Boom-or-bust upside for a rebuild.">Lottery</button>
         <button class="chip is-multi" data-filter-risk="balanced" title="Balanced - meaningful floor mass with a modest ceiling; the middle of the risk distribution (neither clearly high-floor nor a lottery ticket).">Balanced</button>
       </div>
       <div class="filter-group">
@@ -9456,7 +9494,7 @@
             <option value="delivery">Delivery</option>
           </optgroup>
         </select>
-        <select class="chip" id="tool-filter-min">
+        <select class="chip" id="tool-filter-min" aria-label="Minimum tool grade">
           <option value="0">≥ any</option>
           <option value="50">≥ 50</option>
           <option value="55">≥ 55</option>
@@ -9472,7 +9510,7 @@
       <div class="filter-group">
         <span class="filter-label">Rank by</span>
         <div class="grade-toggle" role="group" aria-label="Rank the board by eFV or consensus FV" style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
-          <button type="button" class="chip grade-toggle-btn" data-grade-toggle="xfv" title="Rank + lead with eFV (our outcome-grounded grade)" style="border:0;border-radius:0;">eFV</button>
+          <button type="button" class="chip grade-toggle-btn" data-grade-toggle="xfv" title="Rank + lead with eFV (the consensus order reordered by admitted drivers)" style="border:0;border-radius:0;">eFV</button>
           <button type="button" class="chip grade-toggle-btn" data-grade-toggle="fv" title="Rank + lead with consensus FV (the public scouting aggregate)" style="border:0;border-radius:0;border-left:1px solid var(--border);">Consensus</button>
         </div>
         <a class="efv-claim-chip" data-efv-claim href="/glossary/#view=source-comparison" hidden style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);text-decoration:none;border:1px dashed var(--border);border-radius:4px;padding:2px 6px;white-space:nowrap;"></a>
@@ -9481,10 +9519,10 @@
         <span class="filter-label">Sort</span>
         <select class="chip" id="sort-select">
           <optgroup label="Grade">
-            <option value="xfv">eFV (our outcome-grounded grade)</option>
+            <option value="xfv">eFV (consensus order reordered by drivers)</option>
             <option value="fv">Consensus FV</option>
             <option value="xfv_delta">eFV − consensus gap (biggest first)</option>
-            <option value="conviction">Conviction board (boldest bets, both ways)</option>
+            <option value="conviction">Largest eFV - consensus gaps (both ways)</option>
             <option value="upside">Upside (^) first</option>
             <option value="statcast_plus">Statcast+ (highest)</option>
             <option value="source_confidence">Source confidence (most sources first)</option>
@@ -9596,7 +9634,7 @@
          render an empty duplicate. -->
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">MiLB Prospects</span>
-      <span class="newsprint-eyebrow-meta">the full tracked board · consensus FV, tools, Statcast &amp; stock movement</span>
+      <span class="newsprint-eyebrow-meta">the full tracked board · eFV, consensus FV, tools, Statcast &amp; stock movement</span>
     </div>
     <div class="active-grid">
       <div id="rows"></div>
@@ -10402,11 +10440,9 @@
       <span class="newsprint-eyebrow-label">Build-Your-Own Scatterplot</span>
       <span class="newsprint-eyebrow-meta">pick a prospect group &amp; any two axes · trendline, R² &amp; color encoding</span>
     </div>
-    <p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px;line-height:1.5;">
-      Pick a prospect group, then any two stats for the X / Y axes. Toggle the
-      least-squares trendline + R² to gauge how tightly the two move together.
-      Click any dot to open that player. Hover for exact values.
-    </p>
+    <details class="px-how"><summary>How this works</summary>
+      <p>Pick a group and two axes; the least-squares trendline and R² show how tightly they move together. A dot opens that player.</p>
+    </details>
     <!-- v36 - Controls grouped into the WHO / WHAT / HOW clusters shared with
          the MiLB prospect filter bar: WHAT chooses the group, axes & color
          encoding; WHO narrows the plotted population; HOW controls
@@ -10622,7 +10658,7 @@
      without a fetch race. Auto-generated by value_framework.py; the
      payload assigns to window.VALUE_FRAMEWORK. Regenerate via:
         python value_framework.py --emit-snapshots -->
-<script src="/data/value_framework.js"></script>
+<script src="/data/value_framework.js?v=50e00146"></script>
 
 <script>
 // =============================================================================
@@ -11929,7 +11965,7 @@ function fvBadgeSingleMarkHTML(player) {
     ? "Thinly sourced - no scouting source has graded this prospect yet; the grade is a production-only leading indicator from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards)."
     : "Thinly sourced - only one published grade across this player's history (single observation). Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.";
   // Inner span so the "~" (which sits high in its em-box) can be optically centered in the chip.
-  return `<span class="fv-single-mark" title="${tip}"><span>~</span></span>`;
+  return `<span class="fv-single-mark" title="${tip}"><span aria-hidden="true">~</span><span class="visually-hidden">thinly sourced</span></span>`;
 }
 
 // v14 - Returns " is-breakout" when the prospect carries the active-
@@ -12315,7 +12351,7 @@ function healthBadgeHTML(p) {
   // is smaller / more dense so the indicator can live inline with the
   // player name + Tool grade pill without crowding.
   const _glyph = (tier, tip, aria) =>
-    `<span class="health-glyph is-${tier}" title="${tip}" aria-label="${aria}"><span class="health-glyph-plus">+</span></span>`;
+    `<span class="health-glyph is-${tier}" role="img" title="${tip}" aria-label="${aria}"><span class="health-glyph-plus" aria-hidden="true">+</span></span>`;
 
   const il = p.il_status || {};
   if (il.is_on_il) {
@@ -13208,6 +13244,30 @@ function fvAxisFloor(values) {
 // reading shouldn't suppress to the lower tier when displayed.
 // Returns the original value when not finite (preserves " - " / null
 // rendering at call sites that null-check before formatting).
+// Latest season any overseas prospect in this league has on file (cached per league).
+const _OV_LG_SEASON = {};
+function _ovLeagueSeason(lg) {
+  if (_OV_LG_SEASON[lg] != null) return _OV_LG_SEASON[lg] || null;
+  let mx = 0;
+  ((DATA.overseas || {}).leagues || []).forEach(l => (l.prospects || []).forEach(q => {
+    (q.stats || q.stat_rows || q.career_stats || []).forEach(r => {
+      if (r && r.league === lg && Number(r.season) > mx) mx = Number(r.season);
+    });
+  }));
+  if (((DATA.overseas || {}).leagues || []).length) _OV_LG_SEASON[lg] = mx;
+  return mx || null;
+}
+// QPRC14: eta.py's confidence tier counts the inputs present (high = 3 or more of
+// the ETA signals, medium = 2, low = 0 or 1); it is printed as that count.
+function _etaInputs(conf) {
+  return conf === "high" ? "3+ input signals" : conf === "medium" ? "2 input signals" : conf === "low" ? "0 or 1 input signals" : "";
+}
+// English ordinal: 1st, 2nd, 3rd, 4th, 11th, 12th, 13th, 21st, 42nd.
+function _ord(n) {
+  const v = Math.abs(Math.round(Number(n))), t = v % 100;
+  const suf = (t >= 11 && t <= 13) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[v % 10] || "th");
+  return `${Math.round(Number(n))}${suf}`;
+}
 function fvCeil(v) {
   if (v == null) return v;
   const n = Number(v);
@@ -14142,6 +14202,7 @@ function goToPlayer(key) {
   const p = new URLSearchParams();
   p.set("player", key);
   _pushHash(p);
+  _pxFocusSoon("#content .detail-page-header .player-display-name");
 }
 function goToDraftee(key) {
   const p = new URLSearchParams();
@@ -14547,7 +14608,7 @@ function makeEtaCell(p, opts) {
   const halfChip = halfBucket
     ? `<span style="font-family:var(--font-serif);font-style:italic;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;margin-right:3px;" title="${halfBucket === 'Early' ? 'Apr-Jun debut window' : 'Jul-Sep debut window'} - blends fractional ETA distance + current-level bias">${halfBucket}</span>`
     : '';
-  return `<div class="eta-cell" title="${eta.confidence ? eta.confidence + ' confidence' : 'ETA estimate'}${halfBucket ? ` · ${halfBucket} ${eta.year}` : ''}">
+  return `<div class="eta-cell" title="${eta.confidence ? 'ETA from ' + _etaInputs(eta.confidence) : 'ETA estimate'}${halfBucket ? ` · ${halfBucket} ${eta.year}` : ''}">
     ${halfChip}<span class="eta-year ${cls}">${eta.year}</span>${avlHTML}
   </div>`;
 }
@@ -15043,7 +15104,7 @@ function _milbBaselineEvChips(p) {
   const nbbe = cq.batted_balls;
   const thinSample = nbbe != null && nbbe < MIN_EV_BBE;
   const nNote = nbbe != null
-    ? (thinSample ? ` over ${nbbe} batted balls - too few to tier vs the MLB pool` : ` over ${nbbe} batted balls`)
+    ? (thinSample ? ` over ${nbbe} batted balls, too few to tier` : ` over ${nbbe} batted balls`)
     : " over tracked batted balls";
   const _color = (v, eliteAt, weakAt) =>
     v == null || thinSample ? "var(--text-tertiary)"
@@ -15250,9 +15311,9 @@ function _statcastPercentileBlock(p, opts = {}) {
   };
   const bars = specs.map(s => {
     const cls = pctClass(s.pct);
-    const pctLabel = s.pct >= 90 ? `${s.pct}th percentile · top ${100 - s.pct}%`
-                    : s.pct >= 50 ? `${s.pct}th percentile`
-                    : `${s.pct}th percentile · bottom ${s.pct}%`;
+    const pctLabel = s.pct >= 90 ? `${_ord(s.pct)} percentile · top ${100 - s.pct}%`
+                    : s.pct >= 50 ? `${_ord(s.pct)} percentile`
+                    : `${_ord(s.pct)} percentile · bottom ${s.pct}%`;
     const valStr = s.fmt(s.val);
     const rowTip = `${s.label}: ${valStr} · ${pctLabel} vs ${ourLevel} ${isPit ? "pitchers" : "hitters"}`
       + (s.lowerIsBetter ? " (lower raw value is better, so the percentile is flipped)" : "");
@@ -15450,7 +15511,7 @@ function _debutFvCohortBlock(p) {
       <span style="display:flex;align-items:baseline;gap:8px;">
         <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">${escapeHtml(fmt(r.val))}</span>
         <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${color};font-variant-numeric:tabular-nums;">#${r.rank} of ${r.total}</span>
-        <span style="font-size:10px;color:${color};">(${pctile}th)</span>
+        <span style="font-size:10px;color:${color};">(${_ord(pctile)})</span>
       </span>
     </div>`;
   };
@@ -17225,8 +17286,8 @@ function _prospectDetailSidebarCards(p, activeTab) {
       { key: "FV sources", value: sourceCount || " - " },
       spread != null ? { key: "FV spread", value: spread.toFixed(1), valColor: spread >= 10 ? "var(--neon-violet)" : "var(--text-primary)" } : null,
       (p.tools || {}).composite_overall != null ? { key: "Tool comp", value: Math.round(p.tools.composite_overall) } : null,
-      fvBadgeBreakoutClass(p) ? { key: "Breakout", value: "★ flagged", valColor: "#7FFFD4" } : null,
-      fvBadgeUpsideClass(p) ? { key: "Upside", value: "^ flagged", valColor: "var(--upside-pink)" } : null,
+      fvBadgeBreakoutClass(p) ? { key: "Breakout", value: "★ flagged", valColor: "var(--up)" } : null,
+      fvBadgeUpsideClass(p) ? { key: "Upside", value: "^ flagged", valColor: "var(--text-primary)" } : null,
     ].filter(Boolean);
     return [
       { type: "leaderboard", title: `Toolsiest · ${pos} peers`, rows: peers },
@@ -18142,7 +18203,7 @@ function convictionBanner() {
     cred = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);line-height:1.5;margin-top:6px;">Track record: on <b style="color:var(--neon-cyan);">${det.n_disagreements}</b> resolved disagreements this size (grades at least 15 percentile points apart), eFV landed closer to the realized MLB outcome <b style="color:var(--neon-cyan);">${pct}%</b> of the time <span style="color:var(--text-tertiary);">· out-of-sample, debuted cohorts. See the full track record on the Debuted tab.</span></div>`;
   }
   return `<div class="conviction-banner" style="margin:0 0 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);padding:10px 14px;">
-      <div style="font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);">Conviction board <span style="color:var(--text-tertiary);font-weight:400;">· our boldest bets vs the consensus</span></div>
+      <div style="font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);">Largest eFV - consensus gaps <span style="color:var(--text-tertiary);font-weight:400;">· both ways</span></div>
       <div style="font-size:11px;color:var(--text-tertiary);line-height:1.5;margin-top:4px;">Ranked by the size of the gap between eFV and the scouting consensus right now, in both directions - where we grade a prospect furthest above OR below the industry. Prior-anchored grades (no pro track record yet) are held out; these are model reads, not prior placement.</div>
       ${cred}
     </div>`;
@@ -18264,8 +18325,8 @@ function renderActives() {
   // Every column is now click-to-sort - Player (alpha), MiLB level, etc.
   const header = `<div class="col-header${physOn ? " has-phys" : ""}${starOddsOn ? " has-star-odds" : ""}">
     <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness (LHB/RHB/SHB or LHP/RHP). Click to sort alphabetically.">Player<span class="hdr-more"> · pos · org · age · B/T</span></span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV rank - our outcome-grounded ranking (primary). Diamond border matches the rarity tier. The line under the diamond is his place inside his org on the same eFV order. Click to sort."><span class="hdr-efv">eFV </span>Rank</span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV - our outcome-grounded Future Value (primary grade). Click to sort by eFV.">eFV · FV</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV rank - the consensus order reordered by admitted drivers (primary). Diamond border matches the rarity tier. The line under the diamond is his place inside his org on the same eFV order. Click to sort."><span class="hdr-efv">eFV </span>Rank</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV - our Future Value grade, the consensus order reordered by admitted drivers (primary grade). Click to sort by eFV.">eFV · FV</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline - hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
     ${physOn ? `<span class="desktop-only" style="text-align:center;white-space:nowrap;" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). Click Ht, Wt, or BMI to sort by that dimension; click the same one again to reverse.">
@@ -18386,11 +18447,17 @@ function renderSpotlightTrackRecord(bucket) {
   }).filter(Boolean);
   if (!parts.length) { el.innerHTML = ""; return; }
   const kr = (t.kill_rule || {}).verdict_recommendation;
-  el.innerHTML = `<div class="str-head">Track record${(j.v2 || {}).registered ? ", re-scored " + escapeHtml(j.v2.registered) : ""}</div>`
+  const vsum = ["h30", "h60"].map(hk => {
+    const h = t.horizons[hk];
+    if (!h || h.hit_rate == null || h.control_rate == null || !Array.isArray(h.gap_ci)) return "";
+    const v = vword[h.verdict] ? h.verdict : "inside";
+    return `${hk.slice(1)}d <span class="str-v is-${v}">${vword[v]}</span>`;
+  }).filter(Boolean).join(" · ");
+  el.innerHTML = `<details><summary class="str-head">Track record${(j.v2 || {}).registered ? ", re-scored " + escapeHtml(j.v2.registered) : ""}${vsum ? ": " + vsum : ""}</summary>`
     + parts.join("")
     + `<div class="str-note">Matched controls: unflagged board players drawn at random from the same FV band, level and age band on the emit night; intervals clustered by player; ${Number(t.matured_monthly_cohorts) || 0} monthly cohorts.`
-    + (kr === "deprecated" ? " The registered kill rule recommends deprecating this bucket; it stays up pending the owner's decision." : "")
-    + ` <a href="/glossary/#g=spotlights">Receipt</a></div>`;
+    + (kr === "deprecated" ? ` The registered kill rule recommends deprecating this bucket; the owner kept it on 2026-10-01 and it is read again at 5 matured monthly cohorts${(Number(t.matured_monthly_cohorts) || 0) >= 5 ? " (due now)" : ""}.` : "")
+    + ` <a href="/glossary/#g=spotlights">Receipt</a></div></details>`;
 }
 
 function renderSpotlights() {
@@ -18463,11 +18530,10 @@ function renderSpotlights() {
   // raw movement output. Surfaces above the rows. Clickable into the
   // glossary entry for the full formula.
   const ageCapNote = `<div style="font-size:11px;color:var(--text-tertiary);margin:4px 0 10px;line-height:1.5;">
-    Filtered to age-eligible prospects per level - 
+    Age-eligible only:
     <span class="g-term" data-term="spotlight_age_cap" style="cursor:help;color:var(--neon-cyan);">hitters &lt; +2y</span>,
     <span class="g-term" data-term="spotlight_age_cap" style="cursor:help;color:var(--neon-cyan);">pitchers &lt; +3y</span>
-    above the level-prospect baseline (AAA=24, MLB=26). Journeymen past
-    their prospect window are dropped from every bucket.
+    above the level baseline (AAA 24, MLB 26).
   </div>`;
 
   // v18 - Spotlight header titles align with the active-list header:
@@ -19333,6 +19399,7 @@ const _fmt2 = v => Number(v).toFixed(2);
 const CHART_AXES = {
   prospects: [
     { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
+    { key: "efv",            label: "eFV",                getter: p => efvBoardValue(getEfv(p)),             fmt: v => Math.round(v).toString() },
     { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => fvCeil(v).toString() },
     { key: "overall_rank",   label: "Overall rank",       getter: p => boardRankOf(p),                       fmt: v => "#" + v },
     { key: "rps_plus",       label: "RPS+",               getter: p => _rpsPlusValue(p), fmt: v => formatMetric(v, 'plus') },   // 2026-07-29: this axis used to substitute ops_plus_level when the (always-empty) baked rps_plus was missing, i.e. an axis LABELLED RPS+ that plotted a different metric than the RPS+ pill. Now on the one shared RPS+ (_rpsPlusValue), which also covers pitchers.
@@ -20646,7 +20713,7 @@ function _splitRow(b, isP, metrics, showPlus, ui, base){
 function _splitTable(buckets, isP, ui, showPlus){
   const metrics = isP?PIT_SPLIT_METRICS:HIT_SPLIT_METRICS;
   const sampleHead = isP ? `<th title="Innings pitched">IP</th><th title="Batters faced (sample)">BF</th>` : `<th title="Plate appearances (sample)">PA</th>`;
-  let head = `<th>Split</th>${sampleHead}`+metrics.map(m=>`<th title="${escapeHtml(m.lbl+(m.st?` · stabilizes ~${m.st.k>=99999?"never":m.st.k} ${m.st.d.toUpperCase()}`:"")+(m.st?")":""))}">${m.lbl}</th>`).join("");
+  let head = `<th>Split</th>${sampleHead}`+metrics.map(m=>`<th title="${escapeHtml(m.lbl+(m.st?` · stabilizes ~${m.st.k>=99999?"never":m.st.k} ${m.st.d.toUpperCase()}`:""))}">${m.lbl}</th>`).join("");
   if (showPlus) head += isP?`<th title="ERA indexed to level (100=avg, lower better)">ERA-</th>`:`<th title="OPS indexed to level (100=avg)">OPS+</th><th title="ISO indexed to level (100=avg)">ISO+</th>`;
   const base = ui.delta?buckets[0]:null;
   const rows = buckets.map((b,i)=>_splitRow(b,isP,metrics,showPlus,ui,(base&&i>0)?base:null)).join("");
@@ -21641,7 +21708,7 @@ function _tmRenderControls() {
   }
 
   el.innerHTML = `${modeToggle}${body}
-    <p class="tm-note">Board reconstructed from each prospect's point-in-time consensus-FV history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} - ${_tmFmtDate(latest)}), ranked by consensus FV. The grade pill shows the point-in-time eFV (our model grade re-scored at that snapshot), falling back to consensus FV where no eFV history exists. A prospect appears on every board dated <em>before</em> their MLB debut at their grade/rank then, and leaves on their debut date - debut date is the practical proxy for rookie-eligibility exhaustion. Hindsight outcomes (WAR / WAR-per-season / WAG) are realized results known only now, distinct from the as-of grade.</p>`;
+    <details class="px-how"><summary>How this works</summary><p class="tm-note">Board reconstructed from each prospect's point-in-time history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} - ${_tmFmtDate(latest)}), ranked and graded by the point-in-time eFV (the model grade re-scored at that snapshot), with consensus FV where no eFV history exists. A prospect appears on every board dated <em>before</em> their MLB debut at their grade/rank then, and leaves on their debut date - debut date is the practical proxy for rookie-eligibility exhaustion. Hindsight outcomes (WAR / WAR-per-season / WAG) are realized results known only now, distinct from the as-of grade.</p></details>`;
 
   el.querySelectorAll("[data-tm-mode]").forEach(b => b.onclick = () => {
     state.tmMode = b.dataset.tmMode; _tmRenderControls(); _tmRenderBody(); syncToURL();
@@ -22043,8 +22110,8 @@ function renderInjured() {
   const _ilTypePalette = (type) => {
     const t = String(type || "").toLowerCase();
     if (t.startsWith("7"))  return { bg: "rgba(31,122,58,0.12)",  fg: "var(--up)",         bd: "var(--up)" };
-    if (t.startsWith("10")) return { bg: "rgba(232,165,31,0.10)", fg: "#d9b14b",           bd: "#d9b14b" };
-    if (t.startsWith("15")) return { bg: "rgba(232,165,31,0.16)", fg: "var(--neon-amber)", bd: "var(--neon-amber)" };
+    if (t.startsWith("10")) return { bg: "rgba(232,165,31,0.10)", fg: "var(--text-gold)", bd: "var(--neon-amber)" };
+    if (t.startsWith("15")) return { bg: "rgba(232,165,31,0.16)", fg: "var(--text-gold)", bd: "var(--neon-amber)" };
     if (t.startsWith("60")) return { bg: "rgba(203,55,55,0.14)",  fg: "var(--down)",       bd: "var(--down)" };
     return { bg: "var(--bg-tertiary)", fg: "var(--text-secondary)", bd: "var(--border)" };
   };
@@ -25167,7 +25234,7 @@ function _renderWarRoom(host) {
       </tr>`;
     }).join("");
     host.innerHTML = head
-      + `<div class="fa-note" style="margin:6px 0;">${picks.length} picks in · updated ${escapeHtml(String(d.generated_at || ""))}. Reach/steal = our board rank minus the pick number; slot surplus = the historical value of that pick slot; implied surplus = the FanGraphs 2026 tier value for the pick's FV and role minus the bonus (actual once signed, otherwise the expected slot).</div>`
+      + `<div class="fa-note" aria-live="polite" style="margin:6px 0;">${picks.length} picks in · updated ${escapeHtml(String(d.generated_at || ""))}. Reach/steal = our board rank minus the pick number; slot surplus = the historical value of that pick slot; implied surplus = the FanGraphs 2026 tier value for the pick's FV and role minus the bonus (actual once signed, otherwise the expected slot).</div>`
       + `<table class="detail-table"><thead><tr>
           <th>#</th><th>Team</th><th>Player</th><th>Our board</th><th>Reach / steal</th><th>Slot surplus</th><th>Exp 6yr WAR</th><th>Bonus</th><th title="FanGraphs 2026 tier value for the pick's FV and role minus the bonus (actual once signed, otherwise the expected slot)">Implied surplus</th>
         </tr></thead><tbody>${rows}</tbody></table>`;
@@ -25177,7 +25244,12 @@ function _renderWarRoom(host) {
     if (state.section !== "draft" || state.draftView !== "war-room") {
       clearInterval(_warRoom.timer); _warRoom.timer = null; return;
     }
-    _loadWarRoom(() => { if (state.draftView === "war-room") _renderWarRoom(host); });
+    _loadWarRoom(() => {
+      if (state.draftView !== "war-room") return;
+      _renderWarRoom(host);
+      const note = host.querySelector(".fa-note"), live = document.getElementById("px-live");
+      if (note && live) live.textContent = note.textContent.split(".")[0];
+    });
   }, 60000);
 }
 
@@ -27172,8 +27244,7 @@ function _renderOverseasRankings(host, leagues) {
        border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);
        display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <span><strong style="color:var(--text-primary);">${escapeHtml(leagueList)} -
-    ${countFragment} prospects</strong>, sorted by consensus FV.
-    Each card shows its league + country flag inline next to the team.</span>
+    ${countFragment} prospects</strong> · sorted by consensus FV</span>
     ${groupToggle}
   </div>`;
 
@@ -27378,8 +27449,13 @@ function _renderOverseasCard(p) {
       ).join("");
       const ssn = latest.season ? String(latest.season).slice(-2) : "";
       const lg  = latest.league ? `${latest.league}` : "";
+      // Sitepass (4): a past-season line says so when the league already has a
+      // newer season on file (35 of 41 overseas prospects carry 2026 rows).
+      const lgCur = lg ? _ovLeagueSeason(lg) : null;
+      const stale = (lgCur && latest.season && Number(latest.season) < lgCur)
+        ? ` · no ${lgCur} line` : "";
       const eyebrow = (ssn || lg)
-        ? `<span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-right:2px;" title="Most recent season on file">${escapeHtml(lg)}${ssn ? ' ′' + ssn : ''}</span>`
+        ? `<span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-right:2px;" title="Most recent season on file">${escapeHtml(lg)}${ssn ? ' ′' + ssn : ''}${escapeHtml(stale)}</span>`
         : "";
       overseasChips = `<div class="draft-college-stats" style="display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-top:4px;min-width:0;">
         ${eyebrow}${chips}
@@ -28854,7 +28930,7 @@ function _playerOriginHTML(p) {
   if (!bits.length) return "";
   return '<div class="player-display-meta player-origin" style="margin-top:3px;font-size:var(--fs-sm);color:var(--text-tertiary);">'
     + '<span style="text-transform:uppercase;letter-spacing:.06em;font-size:10px;font-weight:700;">Origin</span> '
-    + bits.filter(Boolean).join(' <span style="opacity:.5;">·</span> ') + '</div>';
+    + bits.filter(Boolean).join(' <span aria-hidden="true">·</span> ') + '</div>';
 }
 
 let _collegeSort = { key: null, dir: -1 };
@@ -32106,7 +32182,7 @@ function renderDebuts() {
           <span style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;">FV ${s.median}</span>
           <span style="font-family:var(--font-mono);font-size:10px;color:${tone};font-weight:700;">${label}</span>
         </div>
-        <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${s.percentile}th pct · n=${s.n}</div>
+        <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${_ord(s.percentile)} pct · n=${s.n}</div>
       </div>`;
     }).join("");
     return `<div class="class-strength-strip" style="display:flex;flex-wrap:wrap;border:1px solid var(--border-light);border-radius:var(--radius-md);background:var(--bg-secondary);margin-bottom:var(--space-3);overflow:hidden;">
@@ -32137,7 +32213,7 @@ function renderDebuts() {
 
 const SOURCE_LABELS = {
   fangraphs: "FanGraphs", espn: "ESPN", just_baseball: "Just Baseball",
-  tjstats: "TJStats", baseball_america: "Baseball America",
+  tjstats: "TJStats", baseball_america: "Baseball America", baseballamerica: "Baseball America",
   mlb_pipeline: "MLB Pipeline", the_athletic: "The Athletic",
   auto_detect: "Auto-detect"
 };
@@ -32241,12 +32317,13 @@ function _resetStatcastPlusCache() { /* no client-side SC+ pool to clear */ }
 // swings exist (bat tracking has never run below MLB), so the lookup
 // resolves for debuted players. Fetched once at boot; a miss before
 // the fetch lands just skips the pill for that paint.
-// P(debut) survival curves (data/eta_eval.json km_survival_by_level -
+// P(debut) survival curves (km_survival_by_level from eta_backtest -
 // cure-aware Kaplan-Meier over vintage-listed cohorts). Renders BESIDE
-// the ETA point year, never instead of it. 6KB, fetched once.
+// the ETA point year, never instead of it. QPRP08: the slim curves file
+// (about 0.5 KB) in place of the 0.9 MB backtest artifact, fetched once.
 let _ETA_CURVES = null;
 (function loadEtaCurves() {
-  fetch("/data/eta_eval.json", { cache: "no-cache" })
+  fetch("/data/eta_curves.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _ETA_CURVES = (j && j.km_survival_by_level) || {}; })
     .catch(() => { _ETA_CURVES = {}; });
@@ -32677,7 +32754,7 @@ function provSectionHeadHTML(n, continued) {
   }
   return `<div class="prov-section-head" role="heading" aria-level="3" style="margin:14px 0 6px;padding:10px 12px;border:1px dashed var(--border);border-radius:var(--radius-sm,4px);background:var(--bg-tertiary);font-size:12px;color:var(--text-secondary);line-height:1.5;">
       <div><strong style="color:var(--text-primary);font-size:13px;">${title}</strong> · ${Number(n).toLocaleString()} player${n === 1 ? "" : "s"}${e12 ? ` · ordered by the chance of a first grade by ${escapeHtml(_provDate(e12))}` : ""}</div>
-      <div style="font-size:11px;color:var(--text-tertiary);margin-top:3px;">No grade from ${escapeHtml(provLabelSourcesText())} yet, so no board rank. Each row shows the expected first grade on the FanGraphs scale, the chance of a first grade${e6 ? ` by ${escapeHtml(_provDate(e6))}` : ""}, and the production grade from his MiLB line. These rows rejoin the board rank only after a frozen window shows the expected first grade beating a constant${nxt ? `; the next window closes ${escapeHtml(nxt)}` : ""}. <a href="/glossary/#view=source-comparison" style="color:var(--neon-cyan);">Track record</a></div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:3px;">No grade from ${escapeHtml(provLabelSourcesText())} yet, so no board rank. Each row shows the expected first grade on the FanGraphs scale, the chance of a first grade${e6 ? ` by ${escapeHtml(_provDate(e6))}` : ""}, and the production grade from his MiLB line or the signing grade. These rows rejoin the board rank only after a frozen window shows the expected first grade beating a constant${nxt ? `; the next window closes ${escapeHtml(nxt)}` : ""}. <a href="/glossary/#view=source-comparison" style="color:var(--neon-cyan);">Track record</a></div>
     </div>`;
 }
 // The board grade cell for a section row (PG-Q3): expected first grade, the production
@@ -32774,7 +32851,7 @@ function provReceiptHTML(p) {
   } else {
     txt += "; no first grade inside the window";
   }
-  return `<div class="prov-receipt" style="margin-top:8px;padding:6px 9px;border-left:2px solid var(--border);background:var(--bg-tertiary);border-radius:3px;font-family:var(--font-mono);font-size:10.5px;color:var(--text-secondary);line-height:1.45;" title="The production grade frozen on that date, and the first label-source opinion after it (provisional track record). The freeze is committed and never rewritten.">${escapeHtml(txt)}.</div>`;
+  return `<div class="prov-receipt" style="margin-top:8px;padding:6px 9px;border-left:2px solid var(--border);background:var(--bg-tertiary);border-radius:3px;font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--text-secondary);line-height:1.45;" title="The production grade frozen on that date, and the first label-source opinion after it (provisional track record). The freeze is committed and never rewritten.">${escapeHtml(txt)}.</div>`;
 }
 // THE SAME PLAYER WAS ON THE BOARD TWICE. 2,636 keys carry BOTH a graded row (the
 // fabricated FV-35 performance anchor, which the outcome curve maps to its floor for
@@ -33289,8 +33366,9 @@ function alevelSignalPillsHTML(p) {
 // legible instead of surprising.
 //
 // The normalized per-source value is only displayable when the payload carries
-// it; the key name is owned upstream, so probe the plausible ones and say
-// "not in this payload" rather than guessing or back-solving a number.
+// it; the key name is owned upstream, so probe the plausible ones and print
+// nothing when none is present rather than guessing or back-solving a number
+// (QPRC06: 0 of 7,741 latest per-source rows carry one).
 function _normalizedFvOf(info) {
   if (!info || typeof info !== "object") return null;
   for (const k of ["fv_normalized", "fv_norm", "fv_for_consensus",
@@ -33332,9 +33410,7 @@ function _perSourceGradeTip(src, info, label) {
     ? `published ${Number.isInteger(pub) ? pub : Number(pub).toFixed(1)}${info.fv_plus && _fvQualifiesForPlus(pub) ? "+" : ""}`
     : "published grade: none (rank only)");
   const norm = _normalizedFvOf(info);
-  bits.push(norm != null
-    ? `normalized ${Number(norm).toFixed(1)}`
-    : "normalized grade not in this payload");
+  if (norm != null) bits.push(`normalized ${Number(norm).toFixed(1)}`);
   const w = _srcWeightText(src);
   if (w) bits.push(`weight ${w}`);
   if (info.rank != null) bits.push(`rank #${info.rank}`);
@@ -33738,8 +33814,10 @@ function ensureEfvTrack() {
 // dedicated CSS block on purpose - it follows the detail-card inline idiom).
 const _EFV_TRK_TH = 'style="text-align:left;padding:2px 8px 2px 0;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;"';
 const _EFV_TRK_TD = 'style="padding:2px 8px 2px 0;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;"';
-function _efvTrkWinTd(v, win) {
-  return `<td style="padding:2px 8px 2px 0;font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:${win ? "var(--up)" : "var(--text-secondary)"};font-weight:${win ? 700 : 400};">${v}${win ? " ★" : ""}</td>`;
+// QPRC04: the artifacts carry point estimates only (no paired interval on the
+// difference), so neither column is marked the winner; the cell prints the value.
+function _efvTrkWinTd(v) {
+  return `<td style="padding:2px 8px 2px 0;font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-secondary);">${v}</td>`;
 }
 // C1a - pooled OOS head-to-head bars for one side (hitters or pitchers), from the
 // side's xfv_eval payload: consensus baseline vs the shipped eFV blend, Spearman
@@ -33754,13 +33832,12 @@ function _efvTrackBars(label, ev) {
   const bar = (name, v, col, win) => `<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;font-size:11px;">
       <span style="width:92px;flex:none;color:var(--text-secondary);">${name}</span>
       <span style="flex:1;height:7px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;"><span style="display:block;height:100%;width:${W(v)}%;background:${col};"></span></span>
-      <span style="width:58px;flex:none;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:${win ? 700 : 400};color:${win ? "var(--up)" : "var(--text-secondary)"};">${Number(v).toFixed(3)}${win ? " ★" : ""}</span>
+      <span style="width:58px;flex:none;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-secondary);">${Number(v).toFixed(3)}</span>
     </div>`;
-  const win = efv > cons;
   return `<div style="margin-bottom:10px;">
       <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">${label} · ordering skill (Spearman ρ, grade vs realized 6-yr WAR)${n != null ? ` · n=${n}` : ""}</div>
-      ${bar("Consensus FV", cons, "var(--text-tertiary)", !win)}
-      ${bar("eFV", efv, "var(--neon-cyan)", win)}
+      ${bar("Consensus FV", cons, "var(--text-tertiary)")}
+      ${bar("eFV V1", efv, "var(--neon-cyan)")}
     </div>`;
 }
 // C1b - per-era splits (both sides in one table) from era_split_debuted: does the
@@ -33781,10 +33858,10 @@ function _efvTrackEraTable(hit, pit) {
   const tr = rows.map(r => `<tr>
       <td ${_EFV_TRK_TD}>${escapeHtml(r.side)}</td><td ${_EFV_TRK_TD}>${escapeHtml(r.era)}</td>
       <td ${_EFV_TRK_TD}>${r.n != null ? r.n : " - "}</td>
-      ${_efvTrkWinTd(r.cons.toFixed(3), r.cons > r.efv)}${_efvTrkWinTd(r.efv.toFixed(3), r.efv > r.cons)}
+      ${_efvTrkWinTd(r.cons.toFixed(3))}${_efvTrkWinTd(r.efv.toFixed(3))}
     </tr>`).join("");
   return `<div style="margin-bottom:10px;">
-      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">By debut era · Spearman ρ, the better grade starred</div>
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">By debut era · Spearman ρ, point estimates (no paired interval, no winner marked)</div>
       <table style="border-collapse:collapse;"><thead><tr><th ${_EFV_TRK_TH}>Side</th><th ${_EFV_TRK_TH}>Era</th><th ${_EFV_TRK_TH}>n</th><th ${_EFV_TRK_TH}>Consensus ρ</th><th ${_EFV_TRK_TH}>eFV ρ</th></tr></thead><tbody>${tr}</tbody></table>
     </div>`;
 }
@@ -33796,11 +33873,11 @@ function _efvTrackTierTable(bt) {
   const tr = det.per_tier.map(t => `<tr>
       <td ${_EFV_TRK_TD}>${escapeHtml(String(t.tier))}</td>
       <td ${_EFV_TRK_TD}>${t.n != null ? t.n : " - "}</td>
-      ${_efvTrkWinTd(t.consensus_spearman != null ? t.consensus_spearman.toFixed(3) : " - ", t.consensus_spearman != null && t.xfv_spearman != null && t.consensus_spearman > t.xfv_spearman)}
-      ${_efvTrkWinTd(t.xfv_spearman != null ? t.xfv_spearman.toFixed(3) : " - ", t.consensus_spearman != null && t.xfv_spearman != null && t.xfv_spearman > t.consensus_spearman)}
+      ${_efvTrkWinTd(t.consensus_spearman != null ? t.consensus_spearman.toFixed(3) : " - ")}
+      ${_efvTrkWinTd(t.xfv_spearman != null ? t.xfv_spearman.toFixed(3) : " - ")}
     </tr>`).join("");
   return `<div style="margin-bottom:10px;">
-      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">By consensus-FV tier · ordering skill within each tier, the better grade starred</div>
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">By consensus-FV tier · ordering skill within each tier, point estimates</div>
       <table style="border-collapse:collapse;"><thead><tr><th ${_EFV_TRK_TH}>FV tier</th><th ${_EFV_TRK_TH}>n</th><th ${_EFV_TRK_TH}>Consensus ρ</th><th ${_EFV_TRK_TH}>eFV ρ</th></tr></thead><tbody>${tr}</tbody></table>
     </div>`;
 }
@@ -33872,7 +33949,7 @@ function efvReliabilityDiagram(iso) {
       <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Calibration of the 5-bucket outcome distribution · out-of-fold${nPool != null ? ` · n=${nPool}` : ""}</div>
       ${svg}
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${legend.join("")}</div>
-      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:5px;">Each point bins players by the probability the shipped eFV distribution assigned to that outcome bucket: x = the mean predicted probability in the bin, y = the share that actually landed there (forward-chained out-of-fold, 2020-2023 decision cohorts, hitters + pitchers pooled; hover a point for its n). The dashed diagonal is perfect calibration; ECE is the bin-weighted gap. Honest read: mid-probability bust calls land ABOVE the diagonal (more busts than predicted), so bust risk on FV 45+ prospects runs understated; a rank-preserving recalibration is in the review queue.</div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:5px;">Each point bins players by the probability the shipped eFV distribution assigned to that outcome bucket: x = the mean predicted probability in the bin, y = the share that actually landed there (forward-chained out-of-fold, 2020-2023 decision cohorts, hitters + pitchers pooled; hover a point for its n). The dashed diagonal is perfect calibration; ECE is the bin-weighted gap. Mid-probability bust calls land above the diagonal (more busts than predicted), so bust risk on FV 45+ prospects runs understated. Three recalibrations were tested and failed their gates (registry xfv_isotonic_calibration, xfv_grade_recal, xfv_dist_recalibration); the served distribution is uncalibrated.</div>
     </div>`;
 }
 // The Debuted-tab panel: collapsed by default, renders only what the artifacts
@@ -33887,7 +33964,7 @@ function efvTrackRecordSection() {
   const relia = efvReliabilityDiagram(t.iso);
   if (!(bars || era || tier || receipts || relia)) return "";
   return `<details style="margin:0 0 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
-      <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">eFV vs consensus FV · the track record <span style="color:var(--text-tertiary);font-weight:400;">· out-of-sample, resolved cohorts</span></summary>
+      <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">eFV V1 (graduates' locked grade) vs consensus FV · the track record <span style="color:var(--text-tertiary);font-weight:400;">· out-of-sample, resolved cohorts</span></summary>
       <div style="padding:2px 12px 12px;">
         <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-bottom:10px;">Every number below is out-of-sample: the model graded each cohort using only earlier years, then the realized MLB outcomes were scored against both grades. The full methodology and source-by-source comparison live on the <a href="/glossary/#view=source-comparison" style="color:var(--neon-cyan);">Source Comparison</a> page.</div>
         ${bars}${era}${tier}${receipts}${relia}
@@ -34356,14 +34433,14 @@ function efvMinusConsensusDisplay(x) {
 }
 // Signed integer for the chip ("+1", "0", "-2").
 function efvDeltaText(d) {
-  return d == null ? "" : `${d > 0 ? "+" : ""}${d}`;
+  return d == null ? "" : d === 0 ? "±0" : `${d > 0 ? "+" : ""}${d}`;
 }
 // Risk-profile shape from the eFV outcome-bucket distribution the prospect already
 // carries (p_bucket: {bust, bench, regular, good, star}, summing to 1). Returns
 // "floor" | "lottery" | "balanced" | null. This is the SHAPE of the modeled
 // outcome, not its level:
 //   floor    - low bust probability (safe, likely to be a real contributor)
-//   lottery  - elevated bust risk BUT a real good/star ceiling (boom-or-bust)
+//   lottery  - high bust risk BUT a real good/star ceiling (boom-or-bust)
 //   balanced - meaningful floor mass with a modest ceiling (the middle)
 //   null     - deep filler with no meaningful outcome shape, OR a grade with no
 //              model outcome read (prior-anchored / provisional) which is excluded
@@ -34387,6 +34464,7 @@ function efvTooltip(x) {
   const locked = x.kind === "debuted";
   const parts = [locked
     ? `eFV ${efvGradeDisplay(x)} - FINAL grade, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR so far)` : ""}`
+    : efvIsV2(x) ? `eFV ${efvGradeDisplay(x)} - the consensus order reordered by admitted drivers`
     : `eFV ${efvGradeDisplay(x)} - our outcome-grounded grade (provisional)`];
   // RPR03: a placeholder consensus is not a source grade, so it is never printed as one.
   if (x.consensus_is_placeholder) {
@@ -34645,7 +34723,7 @@ function efvDetailHeaderHTML(p, fvBadge, lead) {
           + ` · prior-anchored · awaiting pro debut</div>`
         : `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
           + `Consensus FV <b style="color:var(--text-secondary);">${efvConsensusDisplay(x)}</b>`
-          + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">eFV ${dtxt}</span>` : "")
+          + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">eFV - consensus ${dtxt}</span>` : "")
           // RPR05: a graduate's header says what its grade is (the tooltip's 'FINAL grade,
           // locked at MLB debut') in place of the prior-anchored wording it used to borrow.
           + (gb.locked ? ` · <span title="${escapeHtml("The eFV grade was fixed at the player's MLB debut and does not move after it.")}">locked at debut</span>` : "")
@@ -34755,7 +34833,7 @@ function efvDetailCard(p) {
     : "";
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
-        <div title="${_v2 ? "The drivers that moved this prospect's place in the consensus order inside his side, biggest first. The number is percentile points of the side's board. Notes marked 'not in the grade' state a condition (injury, age, reliever role, Statcast) and move nothing." : "Signals that moved eFV off the consensus prior, biggest first. The number is that signal's contribution size on the model's own scale, and the bar is the same number on a log scale so the large ones stay apart. They rank against each other; they do not sum to the eFV-minus-consensus gap. Game power is intentionally not a driver (scouts over-price it vs realized WAR)."}" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${efvDeltaText(d)}</span> &rarr; eFV ${xg}` : ""}</div>
+        <div title="${_v2 ? "The drivers that moved this prospect's place in the consensus order inside his side, biggest first. The number is percentile points of the side's board. Notes marked 'not in the grade' state a condition (injury, age, reliever role, Statcast) and move nothing." : "Signals that moved eFV off the consensus prior, biggest first. The number is that signal's contribution size on the model's own scale, and the bar is the same number on a log scale so the large ones stay apart. They rank against each other; they do not sum to the eFV-minus-consensus gap. Game power is intentionally not a driver (scouts over-price it vs realized WAR)."}" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} &rarr; eFV ${xg} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">(gap ${efvDeltaText(d)})</span>` : ""}</div>
         ${x.factors.slice().sort((a, b) => (Number(b && b.mag) || 0) - (Number(a && a.mag) || 0)).map(f => {
           if (f && f.on_grade === false) {
             return `<div class="efv-note-chip" style="display:flex;align-items:center;gap:7px;margin-bottom:3px;font-size:11px;">
@@ -34983,7 +35061,7 @@ function handednessChipPairHTML(p, overrideColor = null) {
   const handColor = side => {
     if (overrideColor) return overrideColor;
     return side === "L" ? "var(--neon-violet)"
-         : side === "R" ? "var(--neon-amber)"
+         : side === "R" ? "var(--text-gold)"
          : side === "S" ? "var(--neon-cyan)"
          : "var(--text-tertiary)";
   };
@@ -38410,6 +38488,8 @@ function _starRealizedFor(p) {
 // cell placement). Colored by magnitude so higher odds read brighter,
 // consistent with the surrounding numeric columns.
 function makeStarOddsCell(p) {
+  if (typeof inProvSection === "function" && inProvSection(p))
+    return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);color:var(--text-tertiary);" title="Star Odds reads the FanGraphs 2026 table at a source FV; no source has graded this prospect yet."><div style="font-size:13px;font-weight:700;line-height:1.05;">-</div></div>`;
   const v = (p && p.surplus && p.surplus.star_odds != null) ? Number(p.surplus.star_odds) : null;
   const col = (v == null || !isFinite(v)) ? "var(--text-tertiary)"
             : v >= 0.20 ? "var(--up)"
@@ -38579,7 +38659,7 @@ function dollarDvmColor(v) {
   if (v >= 115) return "var(--up)";
   if (v >= 105) return "var(--neon-cyan)";
   if (v >= 95)  return "var(--text-secondary)";
-  if (v >= 85)  return "var(--neon-amber)";
+  if (v >= 85)  return "var(--text-gold)";
   return "var(--down)";
 }
 function dollarDvmTooltip(v) {
@@ -38731,17 +38811,20 @@ document.addEventListener("click", (e) => {
   if (btn.dataset.playerTab) {
     state.playerTab = btn.dataset.playerTab;
     syncToURL(); render();
+    _pxFocusSoon("#content .detail-tab.active");
     return;
   }
   if (btn.dataset.farmTab) {
     state.farmTab = btn.dataset.farmTab;
     syncToURL(); render();
+    _pxFocusSoon("#content .detail-tab.active");
     return;
   }
   if (btn.dataset.prospectTab) {
     // Shared by both draft + overseas detail pages.
     state.prospectTab = btn.dataset.prospectTab;
     syncToURL(); render();
+    _pxFocusSoon("#content .detail-tab.active");
     return;
   }
   // Pagination chip - find which page key fired.
@@ -39314,7 +39397,21 @@ function mountOrgPicker(mountId, stateKey, allLabel, onChange) {
   trigger.addEventListener("click", (e) => { e.stopPropagation(); if (panel.hidden) open(); else close(); });
   search.addEventListener("click", (e) => e.stopPropagation());
   search.addEventListener("input", () => _filterOrgPickerOptions(mount, search.value));
-  search.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); trigger.focus(); } });
+  trigger.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowDown" || !panel.hidden) return;
+    e.preventDefault(); open();
+  });
+  panel.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); trigger.focus(); return; }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const opts = [...panel.querySelectorAll(".org-picker-option")].filter(o => o.style.display !== "none");
+    if (!opts.length) return;
+    e.preventDefault();
+    const i = opts.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") (opts[i + 1] || opts[0]).focus();
+    else if (i <= 0) search.focus();
+    else opts[i - 1].focus();
+  });
   panel.addEventListener("click", (e) => {
     const opt = e.target.closest(".org-picker-option");
     if (!opt) return;
@@ -39376,9 +39473,9 @@ function _ageHeatColor(age) {
   if (age == null || !isFinite(age)) return "var(--text-tertiary)";
   const delta = age - _poolMeanAge();
   if (delta <= -1.5) return "var(--neon-cyan)"; // very young - cool blue
-  if (delta < -0.4) return "#5b9fd1"; // young-ish - tan-blue
+  if (delta < -0.4) return "var(--age-young-ink)"; // young-ish - tan-blue
   if (delta <   0.4) return "var(--text-secondary)";  // neutral
-  if (delta <= 1.5) return "var(--neon-amber)"; // older-ish - warm amber
+  if (delta <= 1.5) return "var(--text-gold)"; // older-ish - warm amber
   return "var(--down)"; // very old - red
 }
 
@@ -39628,7 +39725,7 @@ function makeQuickReadSummaryParts(p, opts = {}) {
     }
     if (isP) {
       if (_fgExtras.sits) {
-        const fbType = _fgExtras.fb_type ? `, ${escapeHtml(_fgExtras.fb_type)} FB` : "";
+        const fbType = (_fgExtras.fb_type && _fgExtras.fb_type !== "None") ? `, ${escapeHtml(_fgExtras.fb_type)} FB` : "";
         parts.push(`<span style="color:var(--text-primary);">${escapeHtml(_fgExtras.sits)} sit${fbType}</span>`);
       }
       // Post-TJ flag when surgery date is within 18 months.
@@ -39763,7 +39860,7 @@ function _buildDetailChipRibbon(p) {
     const _rpsPill = sl.level !== "MLB" ? _rpsPlusValue(p) : null;
     if (_rpsPill != null) {
       const c = _rpsPill >= 110 ? "var(--up)" : _rpsPill <= 90 ? "var(--down)" : "var(--text-secondary)";
-      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="RPS+ (Rate Performance Score) ${_rpsPill} · level-relative production (OPS+ vs level for hitters, ERA- vs level for pitchers) plus the age-vs-level adjustment, re-anchored to the mean prospect in the same age x position-group cohort. 100 = cohort mean.">RPS+ ${_rpsPill}</span>`);
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="RPS+ (Rate Performance Score) ${_rpsPill} · level-relative production (wRC+ vs level for hitters, ERA- vs level for pitchers) plus the age-vs-level adjustment, re-anchored to the mean prospect in the same age x position-group cohort. 100 = cohort mean.">RPS+ ${_rpsPill}</span>`);
     }
     // TWO NUMBERS WERE BOTH CALLED "ERA-" ON ONE MLB PITCHER CARD (audit F05-06,
     // 2026-09-09). This pill is the site's level index; the MLB sabermetrics tile further
@@ -39973,21 +40070,21 @@ function _toolHistoryChart(p) {
   // for visual consistency.
   const TOOLS = isPit
     ? [
-        ["fb",  "FB",  "#FF6B7A"],   // red
-        ["sl",  "SL",  "#B47CFF"],   // violet
-        ["cb",  "CB",  "#4FD9FF"],   // cyan
-        ["ch",  "CH",  "#FFD700"],   // gold
-        ["cmd", "CMD", "#4FFF9E"],   // mint
-        ["ct",  "CT",  "#FF6FE0"],   // magenta
+        ["fb",  "FB",  "var(--tool-s1)"],   // red
+        ["sl",  "SL",  "var(--tool-s2)"],   // violet
+        ["cb",  "CB",  "var(--tool-s3)"],   // cyan
+        ["ch",  "CH",  "var(--tool-s4)"],   // gold
+        ["cmd", "CMD", "var(--tool-s5)"],   // mint
+        ["ct",  "CT",  "var(--tool-s6)"],   // magenta
       ]
     : [
-        ["hit",       "HIT",  "#FF6B7A"],
-        ["pwr",       "PWR",  "#B47CFF"],
-        ["speed",     "SPD",  "#4FD9FF"],
-        ["field",     "FLD",  "#FFD700"],
-        ["throw",     "ARM",  "#4FFF9E"],
-        ["pitch_sel", "PSEL", "#FF6FE0"],
-        ["bat_ctrl",  "BCT",  "#FFAB4F"],
+        ["hit",       "HIT",  "var(--tool-s1)"],
+        ["pwr",       "PWR",  "var(--tool-s2)"],
+        ["speed",     "SPD",  "var(--tool-s3)"],
+        ["field",     "FLD",  "var(--tool-s4)"],
+        ["throw",     "ARM",  "var(--tool-s5)"],
+        ["pitch_sel", "PSEL", "var(--tool-s6)"],
+        ["bat_ctrl",  "BCT",  "var(--tool-s7)"],
       ];
 
   // For each tool, build (date, grade) series from points whose
@@ -40126,8 +40223,8 @@ function _toolHistoryChart(p) {
   const legendItems = TOOLS.filter(([tk]) => series[tk]).map(([tk, lbl, color]) => {
     const latest = series[tk][series[tk].length - 1];
     return `<span style="display:inline-flex;align-items:baseline;gap:4px;font-size:10px;font-family:var(--font-mono);color:var(--text-secondary);margin-right:10px;">
-      <span style="display:inline-block;width:10px;height:2px;background:${color};vertical-align:middle;border-radius:1px;"></span>
-      <span style="color:${color};font-weight:700;">${escapeHtml(lbl)}</span>
+      <span aria-hidden="true" style="display:inline-block;width:10px;height:3px;background:${color};vertical-align:middle;"></span>
+      <span style="color:var(--text-primary);font-weight:700;">${escapeHtml(lbl)}</span>
       <span style="color:var(--text-tertiary);">${fvCeil(latest.v)}</span>
     </span>`;
   }).join("");
@@ -46616,7 +46713,7 @@ function makeZoneMetricsBlock(z) {
     const color = ambiguous ? "var(--neon-cyan)" : p >= 75 ? "var(--up)" : p <= 25 ? "var(--down)" : "var(--neon-cyan)";
     return `<div class="zone-battery" title="Level-relative percentile among qualified ${isPitcher ? "pitchers" : "hitters"}${n ? ` (n=${n})` : ""}. Battery fill = percentile.">
       <span class="zone-battery-body"><span class="zone-battery-fill" style="width:${p.toFixed(1)}%;background:${color};"></span></span>
-      <span>${Math.round(p)}th</span>
+      <span>${_ord(Math.round(p))}</span>
     </div>`;
   };
   const metricRead = (key, row) => {
@@ -47710,25 +47807,6 @@ function _statcastPercentileOf(val, vals, lowerIsBetter = false) {
   return Math.round((below / finite.length) * 100);
 }
 
-function _sameLevelPitcherStatcastCohort(player, level) {
-  const all = [
-    ...((DATA && DATA.players) || []),
-    ...((DATA && DATA.debuts) || []),
-  ];
-  const seen = new Set();
-  const cohort = [];
-  for (const q of all) {
-    if (!q || q.player_key === (player || {}).player_key || seen.has(q.player_key)) continue;
-    seen.add(q.player_key);
-    const qSc = _statcastSplitForLevel(q.statcast_metrics, level);
-    const qSl = q.statline || {};
-    const qIsPit = !!(qSc && qSc.is_pitcher != null ? qSc.is_pitcher : qSl.is_pitcher);
-    if (!qIsPit) continue;
-    if ((qSc && qSc.level === level) || qSl.level === level) cohort.push({ p: q, sc: qSc || {} });
-  }
-  return cohort;
-}
-
 function _pitcherCompositeStuffPlusFromSc(sc) {
   const pitches = (((sc || {}).pitch_movement || {}).pitch_summary || [])
     .map(px => {
@@ -47748,6 +47826,42 @@ function _pitcherCompositeStuffPlusFromSc(sc) {
   return pitches.reduce((s, p) => s + p.stuff * p.weight, 0) / wsum;
 }
 
+// QPRP05: one card render formats every pitch row of every pitch table, and each
+// row used to rebuild the same-level cohort by scanning every player and debut
+// (24 scans per pitcher-card render). The (level, pitch type) peer values are now
+// built once per synchronous render pass and dropped at the next microtask, so a
+// detail sidecar that lands later is always read fresh. The cohort rule is the one
+// the per-row scan used (pitchers at the level across players then debuts, first
+// row per key wins, the player himself left out), so every percentile is unchanged.
+let _pxStuffPeerMemo = null;
+function _pitchStuffPeerVals(level, type) {
+  if (!_pxStuffPeerMemo) {
+    _pxStuffPeerMemo = new Map();
+    queueMicrotask(() => { _pxStuffPeerMemo = null; });
+  }
+  let byType = _pxStuffPeerMemo.get(level);
+  if (!byType) {
+    byType = new Map();
+    const seen = new Set();
+    for (const q of [...((DATA && DATA.players) || []), ...((DATA && DATA.debuts) || [])]) {
+      if (!q || seen.has(q.player_key)) continue;
+      seen.add(q.player_key);
+      const qSc = _statcastSplitForLevel(q.statcast_metrics, level);
+      const qSl = q.statline || {};
+      const qIsPit = !!(qSc && qSc.is_pitcher != null ? qSc.is_pitcher : qSl.is_pitcher);
+      if (!qIsPit) continue;
+      if (!((qSc && qSc.level === level) || qSl.level === level)) continue;
+      for (const px of ((((qSc || {}).pitch_movement || {}).pitch_summary) || [])) {
+        if (!px) continue;
+        if (!byType.has(px.pitch_type)) byType.set(px.pitch_type, []);
+        byType.get(px.pitch_type).push({ key: q.player_key, v: Number(px.avg_stuff_plus) });
+      }
+    }
+    _pxStuffPeerMemo.set(level, byType);
+  }
+  return byType.get(type) || [];
+}
+
 function _formatPitchStuffPercentile(player, sc, pitch) {
   const raw = Number(pitch && pitch.avg_stuff_plus);
   if (!isFinite(raw)) return " - ";
@@ -47755,14 +47869,14 @@ function _formatPitchStuffPercentile(player, sc, pitch) {
   const level = (sc && sc.level) || ((player && player.statcast_metrics) || {}).level || ((player && player.statline) || {}).level || null;
   const type = pitch && pitch.pitch_type;
   if (!level || !type) return rawLabel;
-  const vals = _sameLevelPitcherStatcastCohort(player, level)
-    .flatMap(q => ((((q.sc || {}).pitch_movement || {}).pitch_summary || [])))
-    .filter(px => px && px.pitch_type === type)
-    .map(px => Number(px.avg_stuff_plus))
+  const selfKey = (player || {}).player_key;
+  const vals = _pitchStuffPeerVals(level, type)
+    .filter(e => e.key !== selfKey)
+    .map(e => e.v)
     .filter(Number.isFinite);
   if (vals.length < 5) return `<span title="${escapeHtml(`Raw Stuff+ ${rawLabel}; fewer than 5 same-level ${type} peer pitches for percentile.`)}">${rawLabel}</span>`;
   const pct = _statcastPercentileOf(raw, vals, false);
-  return `<span title="${escapeHtml(`Raw Stuff+ ${rawLabel}; ${pct}th percentile among same-level ${type} pitches.`)}">${rawLabel} <span style="color:var(--text-tertiary);font-size:10px;">(${pct}th)</span></span>`;
+  return `<span title="${escapeHtml(`Raw Stuff+ ${rawLabel}; ${_ord(pct)} percentile among same-level ${type} pitches.`)}">${rawLabel} <span style="color:var(--text-tertiary);font-size:10px;">(${_ord(pct)})</span></span>`;
 }
 
 function _formatStuffPercentileFromArsenalPitch(player, pitch) {
@@ -47925,11 +48039,11 @@ function makeArsenalBlock(pa, p) {
   let fgArsenalLine = "";
   if (p) {
     const ex = _getFgExtras(p);
-    if (ex && (ex.sits || ex.tops || ex.fb_type || ex.rpm_fb || ex.rpm_break)) {
+    if (ex && (ex.sits || ex.tops || (ex.fb_type && ex.fb_type !== "None") || ex.rpm_fb || ex.rpm_break)) {
       const parts = [];
       if (ex.sits) parts.push(`<span style="color:var(--text-primary);font-weight:600;">${escapeHtml(ex.sits)} sit</span>`);
       if (ex.tops) parts.push(`<span style="color:var(--text-secondary);">tops ${escapeHtml(ex.tops)}</span>`);
-      if (ex.fb_type) parts.push(`<span style="color:var(--text-secondary);">${escapeHtml(ex.fb_type)} FB</span>`);
+      if (ex.fb_type && ex.fb_type !== "None") parts.push(`<span style="color:var(--text-secondary);">${escapeHtml(ex.fb_type)} FB</span>`);
       if (ex.rpm_fb) parts.push(`<span style="color:var(--text-tertiary);">${escapeHtml(String(ex.rpm_fb))} RPM (FB)</span>`);
       if (ex.rpm_break) parts.push(`<span style="color:var(--text-tertiary);">${escapeHtml(String(ex.rpm_break))} RPM (Break)</span>`);
       // Phase B3 - velocity trend sparkline. Replaces the static sits
@@ -48725,7 +48839,7 @@ function makeFvTape(points) {
   let rsiChip = "";
   if (rsi != null) {
     const rsiState = rsi >= 70 ? "overbought" : rsi <= 30 ? "oversold" : "neutral";
-    const rsiCol = rsi >= 70 ? "var(--neon-amber)" : rsi <= 30 ? "var(--neon-cyan)" : "var(--text-secondary)";
+    const rsiCol = rsi >= 70 ? "var(--text-gold)" : rsi <= 30 ? "var(--neon-cyan)" : "var(--text-secondary)";
     rsiChip = chip("RSI", `${rsi}`, rsiCol, `Relative strength of grade changes (${rsiState}); a momentum gauge, not a projection`);
   }
   const volChip = vol != null ? chip("VOL", vol.toFixed(1), "var(--text-secondary)", "Realized volatility: standard deviation across sources on the latest grade") : "";
@@ -49040,7 +49154,7 @@ function renderPlayerDetail(key) {
   const statusPill = p.status === "debuted"
     ? `<span class="debut-pill" style="background:var(--bg-tertiary);color:var(--grad);">Debuted ${p.debut_date || ""}</span>`
     : ilNow
-      ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border-color:var(--accent-il);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
+      ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--text-gold);border-color:var(--accent-il);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
       : "";
 
   // Post-Tommy John chip. The health_profile.tj_surgery_date is set
@@ -49223,7 +49337,7 @@ function renderPlayerDetail(key) {
             if (!d) return "";
             const dt = new Date(d + "T00:00:00");
             if (isNaN(dt.getTime())) return "";
-            return dt.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+            return dt.toLocaleDateString("en-US", { month: "short", year: "numeric" });
           };
           const hDate = fmtFvDate(p.fv_high_date);
           const lDate = fmtFvDate(p.fv_low_date);
@@ -49248,7 +49362,7 @@ function renderPlayerDetail(key) {
           };
           const sinceTxt = s.from_date ? ` since ${fmtDate(s.from_date)}` : "";
           const tipParts = [];
-          if (s.from_label != null && s.to_label != null) tipParts.push(`FV ${s.from_label} → ${s.to_label}`);
+          if (s.from_label != null && s.to_label != null) tipParts.push(`${/^[A-Za-z]/.test(String(s.from_label)) ? "" : "FV "}${s.from_label} → ${s.to_label}`);
           if (s.from_date && s.to_date) tipParts.push(`${s.from_date} → ${s.to_date}`);
           else if (s.from_date) tipParts.push(`since ${s.from_date}`);
           const tip = tipParts.join(" · ");
@@ -49525,7 +49639,7 @@ function renderPlayerDetail(key) {
     ["Age vs. level", ageTileValue, ageSub],
     [perfTileLabel,  perfTileValue, perfTileSub],
     etaServed(p) ? ["ETA",          etaDisplayYear(eta),
-      [eta.confidence ? `${eta.confidence} confidence` : "",
+      [eta.confidence ? _etaInputs(eta.confidence) : "",
        (typeof debutProbLine === "function" && sl.level) ? debutProbLine(sl.level) : ""]
         .filter(Boolean).join(" · ")] : null,
     topToolTile,
@@ -49836,7 +49950,7 @@ function renderPlayerDetail(key) {
     const _surpLabel = _useEfv ? (p.status === "debuted" ? "eFV prospect valuation" : "eFV surplus")
                      : (p.status === "debuted" ? "Expected surplus (FV)" : "Surplus value");
     const _surpSub = _useEfv
-      ? `eFV ${efvGradeDisplay(_xf)} · ${_winWords} (outcome-grounded)${p.status === "debuted" ? " · priced as a prospect, not on his contract" : ""}`
+      ? `eFV ${efvGradeDisplay(_xf)} · ${_winWords}${efvIsV2(_xf) ? "" : " (outcome-grounded)"}${p.status === "debuted" ? " · priced as a prospect, not on his contract" : ""}`
       : `FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · ${_winWords}`;
     const surplusRow = surplus != null
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
@@ -50065,7 +50179,7 @@ function renderPlayerDetail(key) {
       : "";
     const inner = tvLeadSlot + surplusRow + greeksRow + bakedDetailRow + dvmRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
     if (!inner) return "";
-    const _srcLabel = _useEfv ? "eFV · outcome-grounded" : _baked ? "career-path mixture engine" : "FV-implied · FanGraphs 2019 framework";
+    const _srcLabel = _useEfv ? (efvIsV2(_xf) ? "eFV V2 · consensus order reordered by drivers" : "eFV · outcome-grounded") : _baked ? "career-path mixture engine" : "FV-implied · FanGraphs 2019 framework";
     return `<div class="detail-title">Surplus value <span class="detail-title-sub">${_srcLabel}</span></div>
       <div class="detail-card">${inner}</div>`;
   })();
@@ -50244,7 +50358,7 @@ function renderPlayerDetail(key) {
       // not surfaced here.
       const lines = [];
       lines.push(consensusVal != null
-        ? `Consensus ${Number.isInteger(consensusVal) ? consensusVal : consensusVal.toFixed(1)}`
+        ? `Consensus ${fvCeil(consensusVal)}`
         : "Consensus - ");
       // v17 - resolve pwr per-source from game_pwr+raw_pwr when the
       // source didn't pre-compute it; resolve frame/athl/delivery from
@@ -50324,7 +50438,7 @@ function renderPlayerDetail(key) {
       const d = td.delta;
       const cls = d > 0 ? "is-pos" : d < 0 ? "is-neg" : "is-flat";
       const arrow = d > 0 ? "▲" : d < 0 ? "▼" : "·";
-      const tip = `Consensus grew from ${td.first} on ${td.first_date} to ${td.last} on ${td.last_date} (${td.n_obs} grades on file)`;
+      const tip = `Consensus ${td.last >= td.first ? "grew" : "fell"} from ${fvCeil(td.first)} on ${td.first_date} to ${fvCeil(td.last)} on ${td.last_date} (${td.n_obs} grades on file)`;
       return `<span class="tool-delta ${cls}" title="${escapeHtml(tip)}">${arrow}${Math.abs(d)}</span>`;
     };
     const gradeCell = (key, label) => {
@@ -50335,7 +50449,7 @@ function renderPlayerDetail(key) {
       let spreadTag = "";
       if (spread && spread >= 5) {
         const strong = spread >= 10;
-        const color = strong ? "var(--neon-amber)" : "rgba(255,191,0,0.7)";
+        const color = strong ? "var(--text-gold)" : "var(--text-secondary)";
         spreadTag = `<span style="font-size:9px;color:${color};margin-left:4px;" title="Source spread ${spread} grade-points">±${Math.round(spread)}</span>`;
       }
       const dualMark = key === "speed" ? dualMarkerHTML : "";
@@ -50514,7 +50628,7 @@ function renderPlayerDetail(key) {
     }
     if (sourceBadge || sources) {
       const publishingTxt = sources ? `Publishing: ${escapeHtml(sources)}` : "";
-      footerParts.push(`${sourceBadge}${publishingTxt}`);
+      footerParts.push(`${sourceBadge}${sourceBadge && publishingTxt ? " · " : ""}${publishingTxt}`);
     }
     if (toolsPlusDisclosure) {
       footerParts.push(toolsPlusDisclosure);
@@ -50981,7 +51095,7 @@ function renderPlayerDetail(key) {
         ? `${s.label} - ${nCycles} cycle${nCycles === 1 ? "" : "s"} on file (latest ${latestBySrc[s.key].date})`
         : `${s.label} - no report on file (no long-form scouting prose ingested from this source yet)`;
       const countTag = nCycles > 1 ? ` <span class="sr-tab-count">${nCycles}</span>` : "";
-      return `<button class="${cls}" data-sr-source="${escapeHtml(s.key)}" ${disabled} title="${escapeHtml(title)}" type="button">${escapeHtml(s.label)}${countTag}</button>`;
+      return `<button class="${cls}" role="tab" aria-selected="${has && s.key === defaultSrc ? "true" : "false"}" data-sr-source="${escapeHtml(s.key)}" ${disabled} title="${escapeHtml(title)}" type="button">${escapeHtml(s.label)}${countTag}</button>`;
     }).join("");
     const bodies = SOURCES.map(s => {
       const list = entriesBySrc[s.key];
@@ -51351,11 +51465,11 @@ function renderPlayerDetail(key) {
         <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
           <th style="text-align:left;padding-bottom:4px;">Source</th>
           <th style="text-align:right;padding-bottom:4px;">Rank</th>
-          <th style="text-align:right;padding-bottom:4px;" title="${escapeHtml("FV as PUBLISHED by that source. Hover a row for the quantile-normalized grade the consensus vote is actually taken over, and the source's vote weight.")}">FV</th>
+          <th style="text-align:right;padding-bottom:4px;" title="${escapeHtml("FV as PUBLISHED by that source. Hover a row for the source's vote weight.")}">FV</th>
         </tr></thead>
         <tbody>${sourceRows}</tbody>
       </table>
-      <div style="font-size:10px;color:var(--text-tertiary);margin-top:5px;line-height:1.45;">${escapeHtml("Consensus is the weighted mean of each source's QUANTILE-NORMALIZED grade, not of the published grades above, so it can sit outside the published range. Hover a row for published vs normalized vs weight.")}</div>`;
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:5px;line-height:1.45;">${escapeHtml("Consensus is the weighted mean of each source's QUANTILE-NORMALIZED grade, not of the published grades above, so it can sit outside the published range. Hover a row for the source's weight.")}</div>`;
 
     // Tools panel -------------------------------------------------------
     const toolEntries = entries.filter(([, v]) => v && v.tools && Object.keys(v.tools).length);
@@ -51753,7 +51867,7 @@ function renderPlayerDetail(key) {
          </div>`
       : "";
     const confLine = eta.confidence
-      ? `<span class="detail-title-sub">${escapeHtml(eta.confidence)} confidence</span>` : "";
+      ? `<span class="detail-title-sub">${escapeHtml(_etaInputs(eta.confidence))}</span>` : "";
     const survivalCurve = (typeof makeDebutSurvivalCurve === "function")
       ? makeDebutSurvivalCurve((p.statline || {}).level) : "";
     return `<div class="detail-title">ETA breakdown · ${etaDisplayYear(eta)} ${confLine}</div>
@@ -53713,7 +53827,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const rosterHeader = rosterEyebrow + `<div class="col-header${_frPhysOn ? " has-phys" : ""}">
     <span class="sort-header" data-roster-sort="name" title="Player name + meta · click to sort">Player · pos · age · B/T</span>
     <span class="sort-header" data-roster-sort="avg_rank" title="Sort by rank" style="text-align:center;">Rank</span>
-    <span class="sort-header" data-roster-sort="fv" title="Sort by eFV (high to low) - our outcome-grounded grade (consensus FV fallback where eFV abstains)" style="text-align:center;">FV Grade</span>
+    <span class="sort-header" data-roster-sort="fv" title="Sort by eFV (high to low), consensus FV where eFV abstains" style="text-align:center;">FV Grade</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline">FV history</span>
     <span class="desktop-only" style="text-align:center;">MiLB · age vs. level</span>
     ${_frPhysOn ? `<span class="desktop-only" style="text-align:center;">Ht · Wt · BMI</span>` : ""}
@@ -54701,7 +54815,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       ${posFilterBar}
       <div class="filter-bar" style="padding:6px 10px;">
         <span class="filter-label">Sort roster</span>
-        <button class="chip${(state.rosterSort || "fv") === "fv" ? " active" : ""}" data-roster-sort="fv" type="button" title="eFV (default) - our outcome-grounded grade, consensus FV fallback">FV</button>
+        <button class="chip${(state.rosterSort || "fv") === "fv" ? " active" : ""}" data-roster-sort="fv" type="button" title="eFV (default), consensus FV where eFV abstains">FV</button>
         <button class="chip${state.rosterSort === "avg_rank" ? " active" : ""}" data-roster-sort="avg_rank" type="button" title="Average rank across sources">Avg rank</button>
         <button class="chip${state.rosterSort === "age" ? " active" : ""}" data-roster-sort="age" type="button" title="Youngest first">Age</button>
         <button class="chip${state.rosterSort === "eta" ? " active" : ""}" data-roster-sort="eta" type="button" title="Soonest ETA first">ETA</button>
@@ -55375,6 +55489,151 @@ function observeLazyCharts() {
   });
 }
 
+// QPRA03: the player name inside a row becomes <a href="#player=KEY">, so the row
+// needs no button role (a 4,000-character name with three nested buttons). Returns
+// true when the row has a name to carry the link.
+function _pxRowNameLink(row) {
+  if (!row.dataset.key) return false;
+  const nm = row.querySelector(".player-name");
+  if (!nm) return false;
+  if (nm.querySelector("a.row-name-link")) return true;
+  const tn = [...nm.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+  if (!tn) return false;
+  const a = document.createElement("a");
+  a.className = "row-name-link";
+  a.href = "#player=" + encodeURIComponent(row.dataset.key);
+  tn.replaceWith(a);
+  a.appendChild(tn);
+  row.removeAttribute("role");
+  row.removeAttribute("tabindex");
+  return true;
+}
+// Focus a control the next render paints (the card name heading, the pressed tab).
+// The card re-renders as its sidecars land, so for 3 s any drop back to <body>
+// is caught and the same control takes focus again.
+function _pxFocusSoon(sel) {
+  const until = Date.now() + 3000;
+  const tick = () => {
+    const el = document.querySelector(sel), ae = document.activeElement;
+    if (el && (!ae || ae === document.body || !ae.isConnected)) el.focus({ preventScroll: true });
+    if (Date.now() < until) setTimeout(tick, 120);
+  };
+  requestAnimationFrame(tick);
+}
+// QPRA04 / QPRA05 / QPRA06 / QPRA13: one pass, run after every #content change
+// (class flips included), states the active section and detail tab, names each
+// filter group and its selects, sets aria-pressed on toggle chips, marks the card
+// name and section heads as headings, titles the document after the open card and
+// mirrors the result count into the live region.
+let _pxA11yQueued = false, _pxA11ySeq = 0, _pxLiveLast = "";
+const _PX_TITLE = document.title;
+function _pxIsToggleChip(b) {
+  if (b.id || b.classList.contains("reset-chip")) return false;
+  return [...b.attributes].some(a => a.name.startsWith("data-") && a.name !== "data-reset-page");
+}
+function _pxA11ySync() {
+  _pxA11yQueued = false;
+  const root = document.getElementById("content");
+  if (!root) return;
+  root.querySelectorAll(".section-tab, .detail-tab").forEach(t => {
+    if (t.classList.contains("active")) t.setAttribute("aria-current", "page");
+    else t.removeAttribute("aria-current");
+  });
+  root.querySelectorAll(".filter-group").forEach(g => {
+    if (!g.hasAttribute("role")) g.setAttribute("role", "group");
+    const lab = g.querySelector(":scope > .filter-label");
+    if (lab) {
+      if (!lab.id) lab.id = "px-fl-" + (++_pxA11ySeq);
+      if (!g.hasAttribute("aria-labelledby")) g.setAttribute("aria-labelledby", lab.id);
+      g.querySelectorAll("select").forEach(s => {
+        if (!s.hasAttribute("aria-label") && !s.hasAttribute("aria-labelledby")) s.setAttribute("aria-labelledby", lab.id);
+      });
+    }
+    g.querySelectorAll("button.chip").forEach(b => {
+      if (_pxIsToggleChip(b)) b.setAttribute("aria-pressed", b.classList.contains("active") ? "true" : "false");
+    });
+  });
+  root.querySelectorAll("div.player-display-name").forEach(h => {
+    h.setAttribute("role", "heading"); h.setAttribute("aria-level", "2");
+    if (!h.hasAttribute("tabindex")) h.setAttribute("tabindex", "-1");
+  });
+  root.querySelectorAll("div.detail-title").forEach(h => {
+    if (!h.hasAttribute("role")) { h.setAttribute("role", "heading"); h.setAttribute("aria-level", "3"); }
+  });
+  decorateA11yRows();
+  const nm = (state.view && state.view.type && state.view.type !== "list")
+    ? root.querySelector(".detail-page-header .player-display-name") : null;
+  const name = nm ? nm.textContent.replace(/\s+/g, " ").trim() : "";
+  document.title = name ? `${name} - PROSPX - eephus.io` : _PX_TITLE;
+  const live = document.getElementById("px-live"), cnt = root.querySelector(".pg-count");
+  const said = cnt ? cnt.textContent.trim() : "";
+  if (live && said && said !== _pxLiveLast) { _pxLiveLast = said; live.textContent = said; }
+}
+function _pxQueueA11y() {
+  if (_pxA11yQueued) return;
+  _pxA11yQueued = true;
+  requestAnimationFrame(_pxA11ySync);
+}
+// QPRA03: the GFX dialog and the compare panel are modal. Opening moves focus to the
+// close button, Tab cycles inside, Escape closes, and focus goes back to the opener.
+const _PX_DIALOGS = [
+  { id: "gfx-overlay",   openCls: "is-open", first: "#gfx-close",     close: () => closeGfxModal() },
+  { id: "compare-panel", openCls: "open",    first: "#compare-close", close: () => document.getElementById("compare-panel").classList.remove("open") },
+];
+const _pxDlgOpener = {};
+function _pxOpenDialog() {
+  for (const d of _PX_DIALOGS) {
+    const el = document.getElementById(d.id);
+    if (el && el.classList.contains(d.openCls)) return { d, el };
+  }
+  return null;
+}
+function _pxFocusables(el) {
+  return [...el.querySelectorAll('a[href],button:not([disabled]),select:not([disabled]),input:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+    .filter(x => x.getClientRects().length > 0);
+}
+function _pxWireA11y() {
+  _PX_DIALOGS.forEach(d => {
+    const el = document.getElementById(d.id);
+    if (!el) return;
+    let was = el.classList.contains(d.openCls);
+    new MutationObserver(() => {
+      const now = el.classList.contains(d.openCls);
+      if (now === was) return;
+      was = now;
+      if (now) {
+        const a = document.activeElement;
+        _pxDlgOpener[d.id] = (a && a !== document.body && !el.contains(a)) ? a : null;
+        setTimeout(() => {
+          const f = el.querySelector(d.first);
+          if (f && !el.contains(document.activeElement)) f.focus();
+        }, 0);
+      } else {
+        const o = _pxDlgOpener[d.id];
+        _pxDlgOpener[d.id] = null;
+        if (o && o.isConnected && (el.contains(document.activeElement) || document.activeElement === document.body)) o.focus();
+      }
+    }).observe(el, { attributes: true, attributeFilter: ["class"] });
+  });
+  document.addEventListener("keydown", (e) => {
+    const o = _pxOpenDialog();
+    if (!o) return;
+    if (e.key === "Escape") { e.preventDefault(); o.d.close(); return; }
+    if (e.key !== "Tab") return;
+    const f = _pxFocusables(o.el);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (!o.el.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  const root = document.getElementById("content");
+  if (root) new MutationObserver(_pxQueueA11y).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+  _pxQueueA11y();
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", _pxWireA11y);
+else _pxWireA11y();
+
 // Phase 4 a11y: every list/grid row that the delegated click handler
 // treats as activatable also needs tabindex + role so keyboard users
 // can tab to it, AND a screen reader announces it as a button. We do
@@ -55383,6 +55642,7 @@ function observeLazyCharts() {
 var A11Y_CLICK_CONTROLS = ".g-term[data-term], tr.psh-fold-row, .overview-tile[onclick]";
 function decorateA11yRows() {
   document.querySelectorAll(".player-row[data-key], .spotlight-row[data-key], .debut-row[data-key], .farm-row[data-org], .pos-depth-card[data-key]").forEach(row => {
+    if (_pxRowNameLink(row)) return;
     if (!row.hasAttribute("tabindex")) row.setAttribute("tabindex", "0");
     if (!row.hasAttribute("role"))     row.setAttribute("role", "button");
   });
@@ -55940,7 +56200,7 @@ function rpsPlusPillHTML(p) {
   // age + group for the tooltip.
   const bucketParts = String(rp.bucket).split("::");
   const ageNum = parseInt(bucketParts[0], 10);
-  const groupTag = bucketParts.length > 1 ? bucketParts[1] : null;
+  const groupTag = bucketParts.length > 1 ? (bucketParts[1] === "?" ? "pitcher or unlisted-position" : bucketParts[1]) : null;
   const ageLabel = ageNum >= 25 ? "25+yo" : `${ageNum}yo`;
   const cohortLabel = groupTag ? `${ageLabel} ${groupTag}` : `${ageLabel} (all positions)`;
   const diff = rp.plus - 100;
@@ -56521,11 +56781,11 @@ function tradeValuePillHTML(p) {
   if (v == null) return "";
   const formatted = `$${v >= 100 ? v.toFixed(0) : v.toFixed(1)}M`;
   const fvc = (baked != null && p.surplus.fv_continuous != null)
-    ? Number(p.surplus.fv_continuous).toFixed(1)
-    : (p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : "?");
+    ? fvCeil(p.surplus.fv_continuous)
+    : (p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : null);
   const tip = baked != null
-    ? `Expected MLB surplus value ${formatted} from the career-path mixture engine - probability-weighted across five outcome buckets (bust→star) at FV ${fvc}. Click for methodology.`
-    : `Estimated MLB surplus value at consensus FV ${fvc}`;
+    ? `Expected MLB surplus value ${formatted} from the career-path mixture engine - probability-weighted across five outcome buckets (bust→star)${fvc != null ? ` at consensus FV ${fvc}` : ""}. Click for methodology.`
+    : `Estimated MLB surplus value${fvc != null ? ` at consensus FV ${fvc}` : ""}`;
   return `<span class="rps-plus-pill is-neutral g-term" data-term="${baked != null ? "surplus_value" : "tvi"}" style="color:var(--card-gold);border-color:var(--card-gold);background:rgba(201,162,39,0.10);" title="${escapeHtml(tip)}">Sur+ ${formatted}</span>`;
 }
 
@@ -57183,8 +57443,10 @@ function attachHandlers() {
       const card = srTab.closest(".scouting-reports-card");
       if (!card) return;
       const src = srTab.dataset.srSource;
-      card.querySelectorAll(".sr-tab").forEach(t =>
-        t.classList.toggle("is-active", t === srTab));
+      card.querySelectorAll(".sr-tab").forEach(t => {
+        t.classList.toggle("is-active", t === srTab);
+        t.setAttribute("aria-selected", t === srTab ? "true" : "false");
+      });
       card.querySelectorAll(".sr-body").forEach(b =>
         b.classList.toggle("is-hidden", b.dataset.srBody !== src));
       return;
@@ -57347,6 +57609,12 @@ function attachHandlers() {
       });
       return;
     }
+    // A row's name link opens the card in this tab; a modified click opens a new one.
+    const nameLink = e.target.closest("a.row-name-link");
+    if (nameLink) {
+      if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+      e.preventDefault();
+    }
     const row = e.target.closest("[data-key], [data-org]");
     if (!row) return;
     if (row.dataset.key)      goToPlayer(row.dataset.key);
@@ -57455,6 +57723,12 @@ function attachHandlers() {
     sectionTabsToggle.addEventListener("click", () => {
       const open = sectionTabsBar.classList.toggle("is-open");
       sectionTabsToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    sectionTabsBar.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || !sectionTabsBar.classList.contains("is-open")) return;
+      e.stopPropagation();
+      closeSectionTabs();
+      sectionTabsToggle.focus();
     });
     document.querySelectorAll(".section-tab").forEach(btn => {
       btn.addEventListener("click", () => {
