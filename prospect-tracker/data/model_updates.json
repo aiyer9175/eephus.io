@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-08T17:49:25Z",
+ "generated_at": "2026-10-08T18:38:00Z",
  "rule": "append-only; an event is added when a model's registry state, its card legs, an eFV progress ledger row or a dated note changes; every number is copied from the artifact key named in the event; the edge is printed by edge() v1; events sit in append order, each run's batch ordered by date",
  "edge_rule_version": 1,
  "result_form": "Result ({stat}): {body}",
@@ -8,12 +8,12 @@
  "sources": [
   {
    "path": "data/model_registry.json",
-   "sha256": "711e4e21fd819c337d415937c592c7510fec0c8a4c025eb9321f9cbcf45a76ad"
+   "sha256": "58a5098819c2b4e09a5eb3789f4765c2c132bc09cc0f0e77ba5c844de23493c7"
   },
   {
    "path": "data/efv_progress.json",
-   "sha256": "e163b240b1b8a711c9f48c3ee37a85cfdcb1d697bc168f26f5da6d1eb1a8dc25",
-   "generated_at": "2026-10-04T04:06:04Z"
+   "sha256": "d6dab4ad8fbd63aa8a759fb893fb14464f8ea7cf6185b597b77606740916629f",
+   "generated_at": "2026-10-08T17:43:19Z"
   },
   {
    "path": "data/model_updates_typed.json",
@@ -66,7 +66,7 @@
   },
   {
    "path": "data/xhem_served_regate_eval.json",
-   "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9",
+   "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959",
    "generated_at": "2026-09-18"
   },
   {
@@ -208,7 +208,7 @@
   "note": "eFV progress frames are selected by name and no other frame is opened; nothing is cut by consensus-FV cell; no registry prose number is quoted"
  },
  "efv_copy": {
-  "rows_copied": 27,
+  "rows_copied": 29,
   "skipped_other_frames": 30,
   "skipped_vm_after_handover": 0,
   "not_copied_no_alias": [
@@ -244,7 +244,7 @@
  },
  "note_problems": [],
  "counts": {
-  "events": 507,
+  "events": 510,
   "default_view": 108,
   "by_kind": {
    "artifact_change": 26,
@@ -252,31 +252,31 @@
    "data_correction": 4,
    "first_scored": 21,
    "frame_change": 1,
-   "model_change": 11,
+   "model_change": 13,
    "note": 18,
-   "registered": 342,
+   "registered": 343,
    "removed": 1,
    "rescored": 44,
    "scoring_correction": 2,
    "verdict": 33
   },
   "by_layer": {
-   "development": 7,
+   "development": 9,
    "headline": 92,
    "note": 18,
-   "registration": 369,
+   "registration": 370,
    "typed": 21
   },
   "verdict_changes": 33,
-  "registry_models": 341,
-  "served_models": 244,
+  "registry_models": 342,
+  "served_models": 245,
   "scored_models": 22,
   "scored_legs": 42,
   "model_states": {
    "lead": 13,
    "no_benchmark": 71,
    "no_contest": 1,
-   "no_eval": 21,
+   "no_eval": 22,
    "tie": 4,
    "trails": 1,
    "unresolved": 3,
@@ -285,7 +285,7 @@
   "registry_verdicts": {
    "deprecated": 88,
    "provisional": 155,
-   "unvalidated": 44,
+   "unvalidated": 45,
    "validated": 54
   },
   "by_family": {
@@ -302,7 +302,7 @@
    "MLB Projections": 7,
    "MLB Stats": 25,
    "Management": 9,
-   "Other": 9,
+   "Other": 10,
    "PROSPX and eFV": 107,
    "Sources and Consensus": 11,
    "Trade Machine": 5,
@@ -409,7 +409,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 74,
     "age_is_evidence": false,
     "stale": false
    }
@@ -674,7 +674,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 74,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1047,7 +1047,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 1,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1753,7 +1753,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 70,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2452,7 +2452,7 @@
    "last_update": "2026-09-24",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 14,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2608,7 +2608,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2895,7 +2895,7 @@
      },
      "source": {
       "path": "data/xhem_served_regate_eval.json",
-      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
+      "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959"
      }
     }
    ],
@@ -4031,7 +4031,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 100,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4057,7 +4057,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 100,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5773,7 +5773,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 64,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5877,7 +5877,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 76,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6085,7 +6085,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6163,7 +6163,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6189,7 +6189,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 74,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6319,7 +6319,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6501,7 +6501,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6631,7 +6631,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 76,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6813,7 +6813,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 68,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7073,7 +7073,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 76,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7203,7 +7203,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7515,7 +7515,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 64,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7827,7 +7827,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 76,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7853,7 +7853,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 75,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7879,7 +7879,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 76,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7931,7 +7931,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 1,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8061,7 +8061,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 76,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8166,7 +8166,7 @@
      },
      "source": {
       "path": "data/xhem_served_regate_eval.json",
-      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
+      "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959"
      }
     }
    ],
@@ -8356,7 +8356,7 @@
    "last_update": "2026-09-25",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9344,7 +9344,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9890,7 +9890,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10525,6 +10525,32 @@
    "edge": {
     "state": "no_benchmark",
     "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "prospect_anchor",
+   "label": "Prospect Anchor",
+   "family": "Other",
+   "served": true,
+   "verdict": "unvalidated",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_eval",
+   "edge": {
+    "state": "no_eval",
+    "text": "no eval artifact on record"
    },
    "today": [],
    "registered": "2026-10-08",
@@ -37661,6 +37687,501 @@
    "event_id": "2026-10-08|team_dem_plus|registered|bc68a27a",
    "family": "MLB Stats",
    "label": "Team DEM+",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "prospect_anchor",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as unvalidated",
+   "verdict": {
+    "before": null,
+    "after": "unvalidated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "a9450fe0"
+   },
+   "state": {
+    "verdict": "unvalidated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "bd518ffe10406a0c3737b1120dfed3e810d495cdf73fae18f0fdbb63bb66547b",
+   "event_id": "2026-10-08|prospect_anchor|registered|bd518ffe",
+   "family": "Other",
+   "label": "Prospect Anchor",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "efv_v2_ds_assembled",
+   "registry_ids": [],
+   "kind": "model_change",
+   "layer": "development",
+   "change": "model change on the vintage-matched development frame",
+   "verdict": null,
+   "statistic": {
+    "stat": "Spearman, within side and vintage",
+    "better": "higher",
+    "before": 0.3755,
+    "after": 0.3713,
+    "improvement": null,
+    "n_before": 803,
+    "n": 830,
+    "same_rows": false,
+    "frame": "vm_dev"
+   },
+   "benchmark": {
+    "label": "PROSPX consensus",
+    "value": 0.3814
+   },
+   "edge": {
+    "state": "tie",
+    "text": "Result (Spearman, within side and vintage): tie (-0.0101)",
+    "delta": -0.01006,
+    "ci95": [
+     -0.0386,
+     0.0159
+    ],
+    "mde95": 0.0229,
+    "t": null,
+    "resolvable": null
+   },
+   "legs": [
+    {
+     "stat": "Spearman, within side and vintage",
+     "better": "higher",
+     "role": "headline",
+     "model": 0.3713,
+     "benchmark_label": "PROSPX consensus",
+     "benchmark": 0.3814,
+     "n": 830,
+     "delta": -0.01006,
+     "ci95": [
+      -0.0386,
+      0.0159
+     ],
+     "mde95": 0.0229,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (Spearman, within side and vintage): tie (-0.0101)",
+     "keys": {
+      "model": "raters.efv.spearman",
+      "benchmark": "raters.prospx_consensus.spearman",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_prospx_consensus.spearman.delta",
+      "ci95": "deltas.vs_prospx_consensus.spearman.ci95",
+      "mde95": "deltas.vs_prospx_consensus.spearman.mde95",
+      "resolvable": "deltas.vs_prospx_consensus.spearman.resolvable"
+     },
+     "before": 0.3755,
+     "n_before": 803,
+     "same_rows": false,
+     "improvement": null
+    },
+    {
+     "stat": "AUC",
+     "better": "higher",
+     "role": "headline",
+     "model": 0.7388,
+     "benchmark_label": "PROSPX consensus",
+     "benchmark": 0.743,
+     "n": 830,
+     "delta": -0.00418,
+     "ci95": [
+      -0.0193,
+      0.0108
+     ],
+     "mde95": 0.0124,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (AUC): tie (-0.0042)",
+     "keys": {
+      "model": "raters.efv.auc",
+      "benchmark": "raters.prospx_consensus.auc",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_prospx_consensus.auc.delta",
+      "ci95": "deltas.vs_prospx_consensus.auc.ci95",
+      "mde95": "deltas.vs_prospx_consensus.auc.mde95",
+      "resolvable": "deltas.vs_prospx_consensus.auc.clears_e_cond_floor"
+     }
+    },
+    {
+     "stat": "Spearman, within side and vintage vs MLB Pipeline",
+     "better": "higher",
+     "role": "secondary",
+     "model": 0.3713,
+     "benchmark_label": "MLB Pipeline",
+     "benchmark": 0.3816,
+     "n": 830,
+     "delta": -0.01029,
+     "ci95": [
+      -0.0528,
+      0.029
+     ],
+     "mde95": 0.0342,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (Spearman, within side and vintage vs MLB Pipeline): tie (-0.0103)",
+     "keys": {
+      "model": "raters.efv.spearman",
+      "benchmark": "raters.mlb_pipeline.spearman",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_mlb_pipeline.spearman.delta",
+      "ci95": "deltas.vs_mlb_pipeline.spearman.ci95",
+      "mde95": "deltas.vs_mlb_pipeline.spearman.mde95",
+      "resolvable": "deltas.vs_mlb_pipeline.spearman.holm.reject_holm"
+     }
+    },
+    {
+     "stat": "AUC vs MLB Pipeline",
+     "better": "higher",
+     "role": "secondary",
+     "model": 0.7388,
+     "benchmark_label": "MLB Pipeline",
+     "benchmark": 0.759,
+     "n": 830,
+     "delta": -0.02023,
+     "ci95": [
+      -0.0384,
+      -0.0019
+     ],
+     "mde95": 0.0153,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "trails",
+     "edge_text": "Result (AUC vs MLB Pipeline): trails by 0.0202",
+     "keys": {
+      "model": "raters.efv.auc",
+      "benchmark": "raters.mlb_pipeline.auc",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_mlb_pipeline.auc.delta",
+      "ci95": "deltas.vs_mlb_pipeline.auc.ci95",
+      "mde95": "deltas.vs_mlb_pipeline.auc.mde95",
+      "resolvable": "deltas.vs_mlb_pipeline.auc.holm.reject_holm"
+     }
+    },
+    {
+     "stat": "Spearman, within side and vintage vs FanGraphs",
+     "better": "higher",
+     "role": "secondary",
+     "model": 0.3713,
+     "benchmark_label": "FanGraphs",
+     "benchmark": 0.3363,
+     "n": 830,
+     "delta": 0.03499,
+     "ci95": [
+      -0.009,
+      0.0775
+     ],
+     "mde95": 0.0371,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (Spearman, within side and vintage vs FanGraphs): tie (+0.0350)",
+     "keys": {
+      "model": "raters.efv.spearman",
+      "benchmark": "raters.fangraphs.spearman",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_fangraphs.spearman.delta",
+      "ci95": "deltas.vs_fangraphs.spearman.ci95",
+      "mde95": "deltas.vs_fangraphs.spearman.mde95",
+      "resolvable": "deltas.vs_fangraphs.spearman.holm.reject_holm"
+     }
+    },
+    {
+     "stat": "AUC vs FanGraphs",
+     "better": "higher",
+     "role": "secondary",
+     "model": 0.7388,
+     "benchmark_label": "FanGraphs",
+     "benchmark": 0.7168,
+     "n": 830,
+     "delta": 0.02202,
+     "ci95": [
+      -0.0006,
+      0.0459
+     ],
+     "mde95": 0.0192,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (AUC vs FanGraphs): tie (+0.0220)",
+     "keys": {
+      "model": "raters.efv.auc",
+      "benchmark": "raters.fangraphs.auc",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_fangraphs.auc.delta",
+      "ci95": "deltas.vs_fangraphs.auc.ci95",
+      "mde95": "deltas.vs_fangraphs.auc.mde95",
+      "resolvable": "deltas.vs_fangraphs.auc.holm.reject_holm"
+     }
+    }
+   ],
+   "source": {
+    "path": "data/efv_progress.json",
+    "run_id": "2026-10-08T17:39:23Z|vm_dev|67626ced",
+    "ledger_model_id": "efv_v2_ds_assembled",
+    "model_commit": "8e2361f4",
+    "row_content_hash": "67626ced0ac4bf7916908861ddb8480855926d48c8e24eb716a9a481b64b5eec"
+   },
+   "content_hash": "74977215393cbf94b3632c3923ffe8a56a0877cb0abc23552718bdb4c33187f3",
+   "event_id": "2026-10-08|efv_v2_ds_assembled|model_change|74977215",
+   "family": "PROSPX and eFV",
+   "label": "eFV v2 (development)",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "efv_v2_ds_assembled",
+   "registry_ids": [],
+   "kind": "model_change",
+   "layer": "development",
+   "change": "model change on the list vintage development frame",
+   "verdict": null,
+   "statistic": {
+    "stat": "Spearman, within side and vintage",
+    "better": "higher",
+    "before": 0.1619,
+    "after": 0.1676,
+    "improvement": 0.0057,
+    "n_before": 2862,
+    "n": 2862,
+    "same_rows": true,
+    "frame": "lv_dev"
+   },
+   "benchmark": {
+    "label": "PROSPX consensus",
+    "value": 0.1792
+   },
+   "edge": {
+    "state": "tie",
+    "text": "Result (Spearman, within side and vintage): tie (-0.0116)",
+    "delta": -0.01163,
+    "ci95": [
+     -0.0332,
+     0.0095
+    ],
+    "mde95": 0.018,
+    "t": null,
+    "resolvable": null
+   },
+   "legs": [
+    {
+     "stat": "Spearman, within side and vintage",
+     "better": "higher",
+     "role": "headline",
+     "model": 0.1676,
+     "benchmark_label": "PROSPX consensus",
+     "benchmark": 0.1792,
+     "n": 2862,
+     "delta": -0.01163,
+     "ci95": [
+      -0.0332,
+      0.0095
+     ],
+     "mde95": 0.018,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (Spearman, within side and vintage): tie (-0.0116)",
+     "keys": {
+      "model": "raters.efv.spearman",
+      "benchmark": "raters.prospx_consensus.spearman",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_prospx_consensus.spearman.delta",
+      "ci95": "deltas.vs_prospx_consensus.spearman.ci95",
+      "mde95": "deltas.vs_prospx_consensus.spearman.mde95",
+      "resolvable": "deltas.vs_prospx_consensus.spearman.resolvable"
+     },
+     "before": 0.1619,
+     "n_before": 2862,
+     "same_rows": true,
+     "improvement": 0.0057
+    },
+    {
+     "stat": "AUC",
+     "better": "higher",
+     "role": "headline",
+     "model": 0.7352,
+     "benchmark_label": "PROSPX consensus",
+     "benchmark": 0.7468,
+     "n": 2862,
+     "delta": -0.01164,
+     "ci95": [
+      -0.029,
+      0.0072
+     ],
+     "mde95": 0.0151,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (AUC): tie (-0.0116)",
+     "keys": {
+      "model": "raters.efv.auc",
+      "benchmark": "raters.prospx_consensus.auc",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_prospx_consensus.auc.delta",
+      "ci95": "deltas.vs_prospx_consensus.auc.ci95",
+      "mde95": "deltas.vs_prospx_consensus.auc.mde95",
+      "resolvable": "deltas.vs_prospx_consensus.auc.clears_e_cond_floor"
+     }
+    },
+    {
+     "stat": "Spearman, within side and vintage vs MLB Pipeline",
+     "better": "higher",
+     "role": "secondary",
+     "model": 0.1676,
+     "benchmark_label": "MLB Pipeline",
+     "benchmark": 0.2034,
+     "n": 2862,
+     "delta": -0.03334,
+     "ci95": [
+      -0.0641,
+      -0.0019
+     ],
+     "mde95": 0.0256,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "trails",
+     "edge_text": "Result (Spearman, within side and vintage vs MLB Pipeline): trails by 0.0333",
+     "keys": {
+      "model": "raters.efv.spearman",
+      "benchmark": "raters.mlb_pipeline.spearman",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_mlb_pipeline.spearman.delta",
+      "ci95": "deltas.vs_mlb_pipeline.spearman.ci95",
+      "mde95": "deltas.vs_mlb_pipeline.spearman.mde95",
+      "resolvable": "deltas.vs_mlb_pipeline.spearman.holm.reject_holm"
+     }
+    },
+    {
+     "stat": "AUC vs MLB Pipeline",
+     "better": "higher",
+     "role": "secondary",
+     "model": 0.7352,
+     "benchmark_label": "MLB Pipeline",
+     "benchmark": 0.747,
+     "n": 2862,
+     "delta": -0.01009,
+     "ci95": [
+      -0.0319,
+      0.0123
+     ],
+     "mde95": 0.0188,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (AUC vs MLB Pipeline): tie (-0.0101)",
+     "keys": {
+      "model": "raters.efv.auc",
+      "benchmark": "raters.mlb_pipeline.auc",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_mlb_pipeline.auc.delta",
+      "ci95": "deltas.vs_mlb_pipeline.auc.ci95",
+      "mde95": "deltas.vs_mlb_pipeline.auc.mde95",
+      "resolvable": "deltas.vs_mlb_pipeline.auc.holm.reject_holm"
+     }
+    },
+    {
+     "stat": "Spearman, within side and vintage vs FanGraphs",
+     "better": "higher",
+     "role": "secondary",
+     "model": 0.1676,
+     "benchmark_label": "FanGraphs",
+     "benchmark": 0.1714,
+     "n": 2862,
+     "delta": 0.0061,
+     "ci95": [
+      -0.029,
+      0.0402
+     ],
+     "mde95": 0.0292,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (Spearman, within side and vintage vs FanGraphs): tie (+0.0061)",
+     "keys": {
+      "model": "raters.efv.spearman",
+      "benchmark": "raters.fangraphs.spearman",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_fangraphs.spearman.delta",
+      "ci95": "deltas.vs_fangraphs.spearman.ci95",
+      "mde95": "deltas.vs_fangraphs.spearman.mde95",
+      "resolvable": "deltas.vs_fangraphs.spearman.holm.reject_holm"
+     }
+    },
+    {
+     "stat": "AUC vs FanGraphs",
+     "better": "higher",
+     "role": "secondary",
+     "model": 0.7352,
+     "benchmark_label": "FanGraphs",
+     "benchmark": 0.7053,
+     "n": 2862,
+     "delta": 0.02151,
+     "ci95": [
+      -0.0054,
+      0.0475
+     ],
+     "mde95": 0.0226,
+     "t": null,
+     "resolvable": null,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (AUC vs FanGraphs): tie (+0.0215)",
+     "keys": {
+      "model": "raters.efv.auc",
+      "benchmark": "raters.fangraphs.auc",
+      "n": "raters.efv.n",
+      "delta": "deltas.vs_fangraphs.auc.delta",
+      "ci95": "deltas.vs_fangraphs.auc.ci95",
+      "mde95": "deltas.vs_fangraphs.auc.mde95",
+      "resolvable": "deltas.vs_fangraphs.auc.holm.reject_holm"
+     }
+    }
+   ],
+   "source": {
+    "path": "data/efv_progress.json",
+    "run_id": "2026-10-08T17:39:23Z|lv_dev|592b5df0",
+    "ledger_model_id": "efv_v2_ds_assembled",
+    "model_commit": "8e2361f4",
+    "row_content_hash": "592b5df08a374d5ba2b27fea02cec2c01270db385221bf01197503d3f2102b51"
+   },
+   "content_hash": "0bc7b453e0a9461e401220036f9c4fbe87338f42fbc5db916b9b99b91b9e5c02",
+   "event_id": "2026-10-08|efv_v2_ds_assembled|model_change|0bc7b453",
+   "family": "PROSPX and eFV",
+   "label": "eFV v2 (development)",
    "served": true,
    "default_view": false
   }
