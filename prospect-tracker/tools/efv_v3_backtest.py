@@ -301,6 +301,61 @@ def attach_columns(rows: list[dict], cfg: dict, side: str, head: str, cols: dict
     return out
 
 
+def w2_values_reserved(names, *, lv: dict, vm: dict, frames_dev: dict, frames_res: dict,
+                       raw_by_side: dict, pinned_asof: dict, gate_sha: str,
+                       log=print) -> dict:
+    """The named wave-2 columns on the reserved frames, {fid: {side: {name: values}}}:
+    the scouting-grade builder (efv_w2_scout.values_for) at each row's own as-of date (an
+    lv row at its frame row's latest in-window read, a vm training row at its matrix
+    cutoff, a vm test row at its pinned preseason read). R-LV rows and vm training rows
+    read the development index; the 2025 test rows read efv_w2_scout.look_index, whose
+    date range ends at the 2025 window's end and which needs the committed gate sha. The
+    MiLB-profile builder's cache ends with the 2022 season, so those columns are not
+    buildable here and raise."""
+    import efv_w2_scout as SC
+    out: dict = {fid: {s: {} for s in F.SIDES} for fid in FRAMES_RES}
+    Y = F.R_VM_FIRST_DEBUT_YEAR
+    asof_lv: dict = {s: {} for s in F.SIDES}
+    for s in F.SIDES:
+        for V, (rows, _l) in {**frames_dev[s], **frames_res[s]}.items():
+            for r in rows:
+                asof_lv[s][(int(V), r["player_key"])] = r.get("asof_date")
+    dev_index = SC.default_index()
+    look = SC.look_index(gate_sha)
+    for name in names:
+        spec = V3.W2_COLUMNS[name]
+        if spec["module"] != "efv_w2_scout":
+            raise NotImplementedError(f"{name}: no reserved-frame builder (the MiLB profile "
+                                      f"cache ends with the 2022 season)")
+        side = spec["side"]
+        slots = {}
+        for V, blk in lv["by_side"][side].items():
+            for kind in ("train", "test"):
+                for r in blk[kind]:
+                    key = (int(r["decision_year"]), r["player_key"], kind)
+                    slots[key] = (key, r["player_key"],
+                                  asof_lv[side].get((int(r["decision_year"]), r["player_key"])))
+        got = SC.values_for(list(slots.values()), spec["arg"], dev_index)
+        out["lv_res"][side][name] = {k: (None if v is None else float(v)) for k, v in got.items()}
+        blk = vm["by_side"][side][Y]
+        tr_slots = [((int(r["decision_year"]), r["player_key"], "train"), r["player_key"],
+                     (raw_by_side[side].get(r["player_key"]) or {}).get("asof_date"))
+                    for r in blk["train"]]
+        te_slots = [((int(r["decision_year"]), r["player_key"], "test"), r["player_key"],
+                     pinned_asof[side].get(r["player_key"])) for r in blk["test"]]
+        got = SC.values_for(tr_slots, spec["arg"], dev_index)
+        got.update(SC.values_for(te_slots, spec["arg"], look))
+        out["vm_pros"][side][name] = {k: (None if v is None else float(v)) for k, v in got.items()}
+        n_lv = sum(1 for v in out["lv_res"][side][name].values() if v is not None)
+        n_vm = sum(1 for v in out["vm_pros"][side][name].values() if v is not None)
+        n_te = sum(1 for k, v in out["vm_pros"][side][name].items()
+                   if k[2] == "test" and v is not None)
+        log(f"  column {name}: R-LV {n_lv} of {len(out['lv_res'][side][name])} slots; R-VM "
+            f"{n_vm} of {len(out['vm_pros'][side][name])} slots, {n_te} of {len(te_slots)} "
+            f"test rows (index range to {look.cap})")
+    return out
+
+
 class Inputs:
     """One frame set (development or reserved) with everything a fit reads: the C03
     fold blocks, the anchor tables and groups, the wave-2 columns, the weights."""
@@ -1179,8 +1234,9 @@ def build_reserved(cfg: dict, *, gate_sha: str, log=print) -> Inputs:
     cols: dict = {fid: {s: {} for s in F.SIDES} for fid in FRAMES_RES}
     names = [n for s in F.SIDES for h in V3.HEADS for n in cfg["add"][s][h]]
     if names:
-        raise NotImplementedError(f"a wave-2 column on the reserved frames needs its builder "
-                                  f"opened on the gate sha: {names}")
+        cols = w2_values_reserved(names, lv=lv, vm=vm, frames_dev=frames_dev,
+                                  frames_res=frames_res, raw_by_side=raw_by_side,
+                                  pinned_asof=pinned_asof, gate_sha=gate_sha, log=log)
     label = _label()
     return Inputs(frames, weights=weights, absent_ok=None, tables=tables, groups=groups,
                   single=single, cols=cols, label=label, guards=guards, gate_sha=gate_sha,
@@ -1490,14 +1546,18 @@ def ledger_rows(doc: dict, *, artifact: Path, trigger: str, role: str, date: str
     return rows
 
 
-def append_ledger(doc: dict, *, artifact: Path, trigger: str, role: str) -> dict:
+def append_ledger(doc: dict, *, artifact: Path, trigger: str, role: str,
+                  ledger_path: Path | None = None) -> dict:
+    """The rows into data/efv_progress.json and its durable copy (efv_progress.LEDGER_PATH
+    unless `ledger_path` names another: a worktree whose .cache is a junction to the
+    main tree hands in its own, so the main tree's durable copy is untouched)."""
     import efv_progress as P
     now = datetime.now(timezone.utc)
     now_iso = P._now_iso(now)
     rows = ledger_rows(doc, artifact=artifact, trigger=trigger, role=role,
                        date=now.date().isoformat(), now_iso=now_iso)
-    return P.commit_rows(rows, data_dir=P.DATA_DIR, sb=P._load_json(P.DATA_DIR / P.SB_NAME),
-                         now_iso=now_iso)
+    return P.commit_rows(rows, data_dir=P.DATA_DIR, ledger_path=ledger_path,
+                         sb=P._load_json(P.DATA_DIR / P.SB_NAME), now_iso=now_iso)
 
 
 # ---------------------------------------------------------------------------
@@ -1524,7 +1584,11 @@ def main(argv=None) -> int:
     ap.add_argument("--B", type=int, default=B_DEFAULT, help="E_cond draws")
     ap.add_argument("--b-refit", type=int, default=B_REFIT_DEFAULT, help="E_refit draws")
     ap.add_argument("--no-ledger", action="store_true", help="write the artifact, no ledger row")
+    ap.add_argument("--ledger-path", default=None,
+                    help="the durable ledger copy (default efv_progress.LEDGER_PATH; a "
+                         "worktree with a junctioned .cache names its own)")
     a = ap.parse_args(argv)
+    ledger_path = Path(a.ledger_path) if a.ledger_path else None
 
     def log(msg):
         print(msg, flush=True)
@@ -1556,7 +1620,8 @@ def main(argv=None) -> int:
         (LAB_DIR / "efv_v3_select_partial.json").unlink(missing_ok=True)
         log(f"wrote {out} and {V3.SPEC_PATH}: {doc['selected']['description']}")
         if not a.no_ledger:
-            r = append_ledger(doc, artifact=out, trigger="efv_change", role="development")
+            r = append_ledger(doc, artifact=out, trigger="efv_change", role="development",
+                              ledger_path=ledger_path)
             log(f"progress ledger: appended {len(r['appended'])} rows, {r['n_rows']} rows")
         return 0
     if a.confirm:
@@ -1577,7 +1642,8 @@ def main(argv=None) -> int:
         for line in summary_lines(doc):
             log(line)
         if not a.no_ledger:
-            r = append_ledger(doc, artifact=out, trigger="look", role="reserved")
+            r = append_ledger(doc, artifact=out, trigger="look", role="reserved",
+                              ledger_path=ledger_path)
             log(f"progress ledger: appended {len(r['appended'])} rows, {r['n_rows']} rows")
         return 0
     ap.print_help()

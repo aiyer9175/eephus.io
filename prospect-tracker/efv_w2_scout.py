@@ -233,29 +233,32 @@ def report_grades(text) -> tuple[dict, dict]:
 
 class SnapshotIndex:
     """{player_key: [(snapshot_date, source, tools, present, extras, position)]} over
-    the board snapshots of SOURCES dated before SNAPSHOT_CAP, sorted by date."""
+    the board snapshots of SOURCES dated before the index's cap (SNAPSHOT_CAP, the R-VM
+    pin, for every development read), sorted by date."""
 
-    def __init__(self, entries: dict[str, list[tuple]]):
+    def __init__(self, entries: dict[str, list[tuple]], *, cap: str = SNAPSHOT_CAP):
         self.by_key = {k: sorted(v, key=lambda e: (e[0], e[1])) for k, v in entries.items()}
+        self.cap = str(cap)
 
     @classmethod
-    def from_db(cls, path: Path | str = DB_PATH) -> "SnapshotIndex":
+    def from_db(cls, path: Path | str = DB_PATH, *, cap: str = SNAPSHOT_CAP) -> "SnapshotIndex":
         con = sqlite3.connect(f"file:{Path(path).as_posix()}?mode=ro", uri=True)
         try:
             q = ("select source, snapshot_date, player_key, position, tools_json "
                  "from snapshots where source in (%s) and snapshot_date < ?"
                  % ",".join("?" * len(SOURCES)))
-            rows = con.execute(q, (*SOURCES, SNAPSHOT_CAP)).fetchall()
+            rows = con.execute(q, (*SOURCES, str(cap))).fetchall()
         finally:
             con.close()
-        return cls.from_rows(rows)
+        return cls.from_rows(rows, cap=cap)
 
     @classmethod
-    def from_rows(cls, rows) -> "SnapshotIndex":
+    def from_rows(cls, rows, *, cap: str = SNAPSHOT_CAP) -> "SnapshotIndex":
         """rows: (source, snapshot_date, player_key, position, tools_json)."""
         out: dict[str, list[tuple]] = {}
+        cap = str(cap)
         for src, sd, pk, pos, tj in rows:
-            if not pk or not sd or src not in SOURCES or str(sd)[:10] >= SNAPSHOT_CAP:
+            if not pk or not sd or src not in SOURCES or str(sd)[:10] >= cap:
                 continue
             try:
                 t = json.loads(tj) if tj else {}
@@ -278,7 +281,7 @@ class SnapshotIndex:
             extras = {"arm": _f(ex.get("arm"))}
             out.setdefault(pk, []).append((str(sd)[:10], src, tools, present, extras,
                                            pos))
-        return cls(out)
+        return cls(out, cap=cap)
 
     def asof(self, player_key: str, asof_date: str | None,
              lookback_days: int = LOOKBACK_DAYS) -> dict[str, tuple]:
@@ -287,8 +290,8 @@ class SnapshotIndex:
         if not asof_date:
             return {}
         hi = str(asof_date)[:10]
-        if hi >= SNAPSHOT_CAP:
-            raise F.ReservedFrameError(f"as-of {hi} reaches the R-VM cap {SNAPSHOT_CAP}")
+        if hi >= self.cap:
+            raise F.ReservedFrameError(f"as-of {hi} reaches the R-VM cap {self.cap}")
         lo = (date.fromisoformat(hi) - timedelta(days=int(lookback_days))).isoformat()
         out: dict[str, tuple] = {}
         for e in self.by_key.get(player_key) or ():
@@ -353,6 +356,24 @@ def default_index() -> SnapshotIndex:
     if _INDEX is None:
         _INDEX = SnapshotIndex.from_db()
     return _INDEX
+
+
+def look_cap() -> str:
+    """The cap of the one reserved read: the end of the first R-VM cohort's preseason
+    window, so a 2025 test row reads the grades published before its own read and
+    nothing later (source_backtest's window end)."""
+    return f"{F.R_VM_FIRST_DEBUT_YEAR}{SB._WINDOW_END_MMDD}"
+
+
+def look_index(gate_sha: str | None, path: Path | str = DB_PATH) -> SnapshotIndex:
+    """The index for the ONE reserved confirmation read (tools/efv_v3_backtest.py,
+    owner EW2-6): snapshots dated before look_cap(), opened only on the committed
+    gate sha (efv_vintage_frame.gate_sha_committed), as every other reserved guard
+    opens. Without it the cap stays SNAPSHOT_CAP and this raises."""
+    if not F.gate_sha_committed(gate_sha):
+        raise F.ReservedFrameError(f"the snapshot cap {SNAPSHOT_CAP} opens only on the "
+                                   f"committed gate sha, got {gate_sha!r}")
+    return SnapshotIndex.from_db(path, cap=look_cap())
 
 
 def lv_slots(side: str, frames: dict) -> list[tuple]:

@@ -92,3 +92,60 @@ the other anchors; a factor taken removes the other factors on that (side, head)
   (frames lv_res and vm_pros, trigger look, model `efv_v3`, labelled "eFV v3 backtest,
   reserved frames, owner waiver 2026-10-08"), to `data/efv_progress.json`. A second
   confirmation run refuses while the artifact exists.
+
+## 4. The step log (appended by the selection run, 2026-10-08)
+
+Run: `python -u tools/efv_v3_backtest.py --select` from commit fc5b9cc0 (artifact
+`data/_labs/efv_v3/efv_v3_select.json`, generated 2026-10-08T20:47:57Z, 428.7 s; label
+`fwar@2026-10-02-0341299c20ec`; V2 base reproduces the DS-16 block; v3 at base_config()
+reproduces V2 on all 3,692 scored rows bit for bit). Scope deltas are lv_dev / vm_dev.
+
+| round | available | qualified (scope delta lv / vm) | admitted |
+|---|---|---|---|
+| 1 | 44 | scale hit skill x0.25 (+0.02102 / +0.00190); scale hit skill x0.5 (+0.01611 / +0.00652); remove hit skill contact (+0.00384 / 0); remove hit skill is_college (+0.00803 / +0.00597); add pit skill w2s_cmd_pit (+0.00257 / 0) | scale hit skill x0.25 |
+| 2 | 41 | scale hit timing x0 (+0.00380 / +0.02119); x0.25 (+0.00388 / +0.02133); x0.5 (+0.00270 / +0.01657); remove hit timing level_rank (+0.00230 / +0.02139); add pit skill w2s_cmd_pit (+0.00257 / 0) | scale hit timing x0.25 |
+| 3 | 38 | add pit skill w2s_cmd_pit (+0.00257 / 0) | add pit skill w2s_cmd_pit |
+| 4 | 37 | remove pit skill k_rel (+0.00305 / 0) | remove pit skill k_rel |
+| 5 | 36 | none | stop |
+
+Steps that did not qualify, round 1 (the full list is in the artifact): the three anchors
+lift lv_dev and lower vm_dev beyond the tolerance (an1_rel +0.01407 / -0.01875, an1_pl
++0.01724 / -0.01093, an2_pos +0.01407 / -0.02453, each the wave-2 artifact's own number);
+hit skill x0 (+0.01691 / -0.01938); hit timing x0 (+0.00141 / +0.01134, under the lv bar);
+remove hit skill tool_hit (a no-op on lv_dev, -0.02209 on vm_dev); the MiLB profile columns
+(w2m_k_hit -0.00044, w2m_iso_hit -0.00564, w2m_air_hit -0.00750 on lv_dev); every pitcher
+step reads 0 on vm_dev (pitchers are the consensus order there in every fold).
+
+The selected configuration (`data/efv_v3_spec.json`): hitters, the skill head at a quarter
+of its P5 weight (0.908861 to 0.227215) and the timing head at a quarter (0.202573 to
+0.050643); pitchers, the K-rate driver withheld and the scouting command grade
+(w2s_cmd_pit) offered to the skill head, which the admission rule admitted on the lv 2017
+fold alone (the 2018 and 2019 lv folds and every vm fold stay the consensus order).
+
+The selected configuration's development read (E_cond, B 2000; a read on the frames it
+was chosen on, which adjudicates nothing):
+
+| frame | n | v3 within | V2 | consensus | Pipeline | FanGraphs | v3 minus V2 (CI95) | v3 minus consensus (CI95) | v3 minus Pipeline | v3 minus FanGraphs |
+|---|---|---|---|---|---|---|---|---|---|---|
+| lv_dev | 2,862 | 0.1831 | 0.1676 | 0.1792 | 0.2034 | 0.1714 | +0.0155 (-0.0020 to +0.0330) | +0.0039 (-0.0035 to +0.0110) | -0.0153 (-0.0370 to +0.0071) | +0.0240 (-0.0043 to +0.0505) |
+| vm_dev | 830 | 0.3829 | 0.3713 | 0.3814 | 0.3816 | 0.3363 | +0.0116 (-0.0064 to +0.0303) | +0.0015 (-0.0116 to +0.0138) | +0.0013 (-0.0312 to +0.0334) | +0.0466 (+0.0093 to +0.0805) |
+
+Per side, within, v3 minus V2 and v3 minus consensus: lv_dev hitters +0.0249 (-0.0008 to
++0.0512) and +0.0041 (-0.0092 to +0.0168), pitchers +0.0056 (-0.0162 to +0.0278) and
++0.0037 (-0.0032 to +0.0102); vm_dev hitters +0.0232 (-0.0153 to +0.0599) and +0.0031
+(-0.0236 to +0.0297), pitchers 0 and 0 (consensus order). Pooled after the map: lv_dev
++0.0153 vs V2, +0.0026 vs consensus; vm_dev +0.0088 and -0.0012. Contributor AUC: lv_dev
++0.0167 vs V2 (+0.0010 to +0.0310), +0.0051 vs consensus; vm_dev +0.0067 and +0.0025.
+Position-group cells, v3 minus consensus within: lv_dev C +0.0046 (n 168), IF +0.0095
+(n 710), OF -0.0053 (n 572), pitchers +0.0037 (n 1,397); vm_dev IF +0.0063 (n 207), OF
++0.0144 (n 144), C under 60 rows, pitchers 0. The MAE of the priced grade: lv_dev v3
+0.9157 against V2 0.9405 and consensus 0.9122; vm_dev 3.6629 against 3.6976 and 3.6248 (a
+source's MAE prices its own FV through the consensus-fitted line and reads a scale
+difference, not accuracy; it is not compared).
+
+Reading, development only: the configuration closes V2's gap to consensus on both frames
+(V2 minus consensus -0.0116 and -0.0101 become +0.0039 and +0.0015) and reads about +0.012
+to +0.016 above V2, every interval against consensus spanning zero. The lift over V2 is
+the hitter weight factor (DIAG item 2, the quarter weights); the pitcher steps add +0.003
+on lv_dev pitchers and nothing on vm_dev. A tie with consensus, selected on these frames:
+only section 5 can say more.
