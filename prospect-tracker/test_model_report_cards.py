@@ -979,3 +979,33 @@ def test_the_ledger_links_itself_not_the_retired_library_view():
     page = _models_page()
     assert "#view=models" not in page
     assert 'href="#ledger"' in page and 'id="ledger"' in page
+
+
+def test_the_ledger_leads_with_the_rows_not_yet_validated():
+    """REDESIGN_glossary_models: the ledger's default order puts the open claims
+    first (provisional, unvalidated, deprecated, then validated), the verdict
+    chips above it follow the same order, and Freshness and Gaps fold away with
+    their counts in the summary line."""
+    import build_site
+    page = _models_page()
+    want = ["provisional", "unvalidated", "deprecated", "validated"]
+    assert list(build_site._ACCT_LEDGER_ORDER) == want
+    present = {m.get("verdict") for m in mr.load()["models"]}
+    groups = re.findall(r'<div class="acct-group" data-acct-group="([^"]+)"', page)
+    assert groups[:len([v for v in want if v in present])] == [v for v in want if v in present]
+    # the first rendered row is not a validated one when any other verdict exists
+    first = re.search(r'<details class="acct-row".*?<b data-v="([a-z]+)">', page, re.S)
+    if present - {"validated"}:
+        assert first and first.group(1) != "validated"
+    chips = re.findall(r'data-acct-filter="([a-z_]+)"', page)
+    assert chips[0] == "all"
+    assert [c for c in chips if c in want] == [v for v in want if v in chips]
+    # the verdict filter sits above the ledger rows
+    assert page.index('data-acct-filter="all"') < page.index('<div id="acct-rows">')
+    # Freshness and Gaps are collapsed details, each with counts in its summary
+    for key in ("freshness", "gaps"):
+        m = re.search(r'<details class="acct-fold" data-acct-fold="' + key
+                      + r'"><summary>(.*?)</summary>', page, re.S)
+        assert m, key
+        assert re.search(r'acct-foldn">[^<]*\d', m.group(1)), key
+    assert "<details class=\"acct-fold\" data-acct-fold=\"freshness\" open" not in page
