@@ -2016,6 +2016,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   padding: 2px 0; border-bottom: 1px dotted var(--border-light); }
 .fa-app .fa-rail-row:last-child { border-bottom: 0; }
 .fa-app .fa-rail-row a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* a rail row's club mark is a link of its own: it keeps its size and its
+   24 px hit area (the clip above is for the player name's ellipsis) */
+.fa-app .fa-rail-row a.club-link { flex: none; overflow: visible; }
 .fa-app .fa-rail-num { margin-left: auto; font-family: var(--font-retro-mono); font-size: 11px; white-space: nowrap; }
 .fa-app .fa-year-table td, .fa-app .fa-year-table th { text-align: right; }
 .fa-app .fa-year-table td:first-child, .fa-app .fa-year-table th:first-child { text-align: left; }

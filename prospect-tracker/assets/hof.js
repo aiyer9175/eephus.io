@@ -359,8 +359,17 @@
         return r ? esc(r.name) + " " + num(r.primary_war) : "";
       }).join(", ");
     }
+    // A current franchise's name links to its Franchises page through the
+    // hub's one club resolver (owner ask 9), printing the name this table
+    // prints; a defunct club has no page, so it is marked, never linked.
+    function frName(u) {
+      if (u.defunct) return '<span data-club-nolink="defunct">' + esc(u.name) + "</span>";
+      var H = window.EEPHUS_HUB, link = "";
+      try { link = H && H.clubLinkHTML ? H.clubLinkHTML(u.code, { text: String(u.name || "") }) : ""; } catch (e) { link = ""; }
+      return link || esc(u.name);
+    }
     var rows = units.map(function (u) {
-      return "<tr" + (u.defunct ? ' class="hof-fr-defunct"' : "") + '><td class="hof-c-name">' + esc(u.name) + "</td>" +
+      return "<tr" + (u.defunct ? ' class="hof-fr-defunct"' : "") + '><td class="hof-c-name">' + frName(u) + "</td>" +
         '<td class="hof-c-n">' + esc(u.n) + "</td>" +
         '<td class="hof-c-n">' + esc(u.n_player_bbwaa) + "</td>" +
         '<td class="hof-c-n">' + esc(u.n_route_unverified) + "</td>" +
@@ -372,7 +381,7 @@
         var r = byId[id];
         if (!r) return "";
         return '<tr><td class="hof-c-name">' + esc(r.name) + "</td>" +
-          (u.defunct ? '<td class="hof-c-pos">' + esc(r.primary_label) + "</td>" : "") +
+          (u.defunct ? '<td class="hof-c-pos"><span data-club-nolink="defunct">' + esc(r.primary_label) + "</span></td>" : "") +
           '<td class="hof-c-n">' + num(r.primary_war) + "</td>" +
           '<td class="hof-c-n">' + esc(r.primary_seasons) + "</td>" +
           '<td class="hof-c-n">' + num(r.career_war) + "</td>" +

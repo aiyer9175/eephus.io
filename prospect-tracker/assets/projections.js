@@ -101,6 +101,31 @@
     if (!org) return "";
     return `<img class="fa-logo" src="${esc(teamLogoSrc(org))}" alt="${esc(org)}" loading="lazy" onerror="this.replaceWith('${esc(org)}')">`;
   }
+  // A club mention links to its club (owner ask 9) through the hub's one club
+  // resolver (EEPHUS_HUB.club + clubHref), never a raw payload code: a
+  // prospect's club opens its farm system page (opts.ctx "farm"), every other
+  // club its Franchises page. `inner` is the markup printed before (the mark,
+  // the code). opts.mark makes a mark that sits beside its own linked code a
+  // mouse twin (out of the tab order, hidden from a screen reader). A code the
+  // hub does not know keeps its markup in a span marked
+  // data-club-nolink="unresolved", never a guessed link.
+  function clubA(org, inner, opts) {
+    const o = opts || {};
+    const H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+    if (!H || !H.club || !H.clubHref) return inner;
+    const c = org ? H.club(org) : null;
+    if (!c) return org ? `<span data-club-nolink="unresolved">${inner}</span>` : inner;
+    const farm = o.ctx === "farm";
+    return `<a class="club-link${o.cls ? " " + o.cls : ""}${o.mark ? " club-link--mark" : ""}" href="${esc(H.clubHref(c.code, farm ? "farm" : "franchise"))}"`
+      + ` data-club="${c.code}" title="${esc(c.name + (farm ? ": farm system" : ": franchise overview"))}"`
+      + (o.mark ? ` tabindex="-1" aria-hidden="true"` : "") + `>${inner}</a>`;
+  }
+  // The farm system href, through the same resolver ("" off the 30 clubs).
+  function farmHref(code) {
+    const H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+    if (H && H.clubHref) return H.clubHref(code, "farm");
+    return code ? `/prospx/#farm-org=${encodeURIComponent(code)}` : "";
+  }
 
   // ===========================================================================
   // Headshots (2026-08-04; face-cropped 2026-08-05). ONE builder for every
@@ -1106,8 +1131,9 @@
     }
     const body = viewRows.map((r, i) => {
       const f = r.farm || {};
+      const fmHref = farmHref(r.team);
       const farmCell = f.farmRank != null
-        ? `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}" title="PROSPX farm system detail">#${f.farmRank}</a> <span class="fa-sub">${f.farmScore != null ? Math.round(f.farmScore) : ""}</span>`
+        ? `${fmHref ? `<a href="${esc(fmHref)}" title="PROSPX farm system detail">#${f.farmRank}</a>` : `#${f.farmRank}`} <span class="fa-sub">${f.farmScore != null ? Math.round(f.farmScore) : ""}</span>`
         : EM_DASH;
       const surCell = f.farmSurplusMM != null
         ? `<span class="${f.farmSurplusMM >= 0 ? "proj-pos" : "proj-neg"}" title="Net prospect surplus NPV over the org's active prospect pool">$${Math.round(f.farmSurplusMM)}M</span>`
@@ -1116,7 +1142,7 @@
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub">FV ${esc(String(f.topProspect.fv || "?"))}</span>`
         : EM_DASH;
       const frHref = franchiseHref(r.team);
-      const openCell = `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}">farm</a> · <a href="/prospx/#farm-org=${encodeURIComponent(r.team)}&ftab=tendencies" title="Open the Org Tendencies tab">tendencies</a> · <a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>${frHref ? ` · <a href="${esc(frHref)}" title="Open the club on Franchises">franchise</a>` : ""}`;
+      const openCell = `${fmHref ? `<a href="${esc(fmHref)}">farm</a> · <a href="${esc(fmHref)}&ftab=tendencies" title="Open the Org Tendencies tab">tendencies</a> · ` : ""}<a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>${frHref ? ` · <a href="${esc(frHref)}" title="Open the club on Franchises">franchise</a>` : ""}`;
       const w = Math.round(r.wins);
       const wl = `${w}-${162 - w}`;
       const wlTip = r.depthWar != null
@@ -1127,7 +1153,7 @@
         // playoff odds / remaining SOS. Team + rank columns are shared.
         return `<tr>
       <td>${i + 1}</td>
-      <td class="proj-player">${teamLogo(r.team)}<strong>${esc(r.team)}</strong></td>
+      <td class="proj-player">${clubA(r.team, `${logoMark(r.team)}<strong>${esc(r.team)}</strong>`)}</td>
       <td>${currentCell(r)}</td>
       <td>${pythagCell(r)}</td>
       <td>${blendCell(r)}</td>
@@ -1137,7 +1163,7 @@
       }
       return `<tr>
       <td>${i + 1}</td>
-      <td class="proj-player">${teamLogo(r.team)}<strong>${esc(r.team)}</strong></td>
+      <td class="proj-player">${clubA(r.team, `${logoMark(r.team)}<strong>${esc(r.team)}</strong>`)}</td>
       <td class="proj-war ${EephusTiers.cls(r.war, "rosterWar")}">${r.war.toFixed(1)}</td>
       <td title="${esc(wlTip)}"><strong>${wl}</strong></td>
       ${hasControl ? `<td>${controlCell(r)}</td>` : ""}
@@ -1896,7 +1922,10 @@
       // Sub line: position and team as TEXT (the CSV and a screen reader get
       // the org), then the facts whose columns fold at narrow widths (CSS shows
       // them only then), then the row tags and the async FA chip.
-      const sub = `<span class="proj-pl-sub"><span class="proj-sub-id">${esc(m.pos || "")}${m.team ? ` &middot; ${logoMark(m.team)}${esc(m.team)}` : " &middot; FA"}</span>`
+      // The club links to its club page (owner ask 9): a prospect's to his farm
+      // system, a veteran's to Franchises. The row's own click handler skips
+      // links, so the club link never opens the row's detail line.
+      const sub = `<span class="proj-pl-sub"><span class="proj-sub-id">${esc(m.pos || "")}${m.team ? ` &middot; ${clubA(m.team, `${logoMark(m.team)}${esc(m.team)}`, { ctx: isPros ? "farm" : "franchise" })}` : " &middot; FA"}</span>`
         + `<span class="proj-sub-age">age ${age}</span>`
         + (isPros ? "" : `<span class="proj-sub-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.fold)}</span>`)
         + rowTagsHtml(m, pros)
@@ -2187,11 +2216,16 @@
     // series colour is the fact this view actually has: it says which line on
     // the chart below is whose. The photo well is emitted unconditionally and
     // filled by fillRowPhotos, exactly as it is on the board.
+    // The club: the mark in the name box is the mouse twin of the code link on
+    // the sub line (the name box clips, so the link with the 24 px hit area is
+    // the code), the same pair the board row prints. A prospect's club opens
+    // his farm system, a veteran's Franchises.
+    const cmpCtx = m => (m.src === "prospect" ? "farm" : "franchise");
     const head = (m, color) => `<div class="proj-cmp-head" style="--org-color:${color}">
       ${rowPhoto(m)}
       <span class="proj-cmp-id">
-        <strong class="proj-cmp-name" style="color:${color};" title="${esc(m.name)}">${teamLogo(m.team)}${esc(m.name)}</strong>
-        <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}${tagFor(m)}</span>
+        <strong class="proj-cmp-name" style="color:${color};" title="${esc(m.name)}">${clubA(m.team, teamLogo(m.team), { mark: true, ctx: cmpCtx(m) })}${esc(m.name)}</strong>
+        <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? ` · ${clubA(m.team, esc(m.team), { ctx: cmpCtx(m) })}` : " · FA"}${tagFor(m)}</span>
       </span></div>`;
     const seasonRows = seasons.map((s, t) => {
       const va = warAt(a, t), vb = warAt(b, t);
@@ -3659,8 +3693,8 @@
       <div class="mlbp-hero">
         ${photo}
         <div class="mlbp-hero-main">
-          <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
-          <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${franchiseHref(p.team) ? `<a class="fa-player-link" href="${esc(franchiseHref(p.team))}">${esc(p.team)}</a>` : esc(p.team)}` : " · FA"} · ${contract}</div>
+          <div class="mlbp-name">${clubA(p.team, teamLogo(p.team), { mark: true })}<h2>${esc(p.name || key)}</h2></div>
+          <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${clubA(p.team, esc(p.team), { cls: "fa-player-link" })}` : " · FA"} · ${contract}</div>
           ${originLine}
           <div class="mlbp-hero-actions"><button class="chip egfx-chip" id="mlbp-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}">&#8646; Trade Machine</a>` : ""}</div>
         </div>

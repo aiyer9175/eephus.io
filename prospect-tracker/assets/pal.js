@@ -221,6 +221,23 @@
     } catch (e) { link = ""; }
     return '<span class="proj-dim"> ' + (link || esc(team || "")) + "</span>";
   }
+  // A card's mark, in front of the name: the mouse twin of the code link
+  // orgTag prints after the name (same href, out of the tab order and hidden
+  // from a screen reader, so the keyboard meets the player link first and the
+  // club once). The href comes from the hub's one club resolver.
+  function orgMark(team, ctx) {
+    var img = logo(team), c = null, href = "";
+    if (!img) return "";
+    try {
+      var H = window.EEPHUS_HUB;
+      c = H && H.club ? H.club(team) : null;
+      href = c && H.clubHref ? H.clubHref(c.code, ctx === "farm" ? "farm" : "franchise") : "";
+    } catch (e) { href = ""; }
+    if (!href) return team ? '<span data-club-nolink="unresolved">' + img + "</span>" : img;
+    return '<a class="club-link club-link--mark" href="' + esc(href) + '" data-club="' + c.code + '" title="' +
+      esc(c.name + (ctx === "farm" ? ": farm system" : ": franchise overview")) +
+      '" tabindex="-1" aria-hidden="true">' + img + "</a>";
+  }
   function cardRows(rows, field) {
     var out = byOrg(rows, field);
     return cardOrder === "org" ? sortByOrg(out, field, true) : out;
@@ -1014,7 +1031,7 @@
       }).join("");
     }
     var cards = rows.map(function (m) {
-      return '<div class="pal-mix-card"><h4><span>' + logo(m.team) + nameLink(m.name, m.mlbam) + orgTag(m.team)
+      return '<div class="pal-mix-card"><h4><span>' + orgMark(m.team) + nameLink(m.name, m.mlbam) + orgTag(m.team)
         + '</span><span class="pal-dir' + dirClass(m.direction) + '">'
         + esc((m.direction || "").replace("->", "→")) + " " + esc(m.year) + "</span></h4>"
         + '<div class="pal-mix-cols"><div><h4>Before</h4>' + usageBars(m.before) + "</div>"
@@ -1036,7 +1053,7 @@
       var arsenal = (r.arsenal || []).slice().sort(function (a, b) { return (b.usage || 0) - (a.usage || 0); })
         .map(function (p) { return esc(p.pitch) + " " + fPct(p.usage); }).join(" &middot; ");
       var pri = rec.priority === "high" ? " pal-flag--warn" : " pal-flag--good";
-      return '<div class="pal-mix-card"><h4><span>' + logo(r.team) + nameLink(r.name, r.mlbam) + orgTag(r.team)
+      return '<div class="pal-mix-card"><h4><span>' + orgMark(r.team) + nameLink(r.name, r.mlbam) + orgTag(r.team)
         + '</span><span class="pal-fit ' + fitClass(r.fit) + '">' + f1(r.fit) + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:4px 0">Current: ' + (arsenal || "-") + "</div>"
         + '<div style="margin:7px 0"><span class="pal-flag' + pri + '">ADD ' + esc(rec.add) + "</span>"
@@ -1187,7 +1204,7 @@
         ? '<a class="mlbstats-name-link" href="/prospx/#player=' + encodeURIComponent(p.player_key)
           + '" title="Open the PROSPX card">' + esc(p.name) + "</a>"
         : esc(p.name);
-      return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + nm + orgTag(p.org, "farm") + "</span>"
+      return '<div class="pal-mix-card"><h4><span>' + orgMark(p.org, "farm") + nm + orgTag(p.org, "farm") + "</span>"
         + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position)
         + " &middot; " + gradeText(p)

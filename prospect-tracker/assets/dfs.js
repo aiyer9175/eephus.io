@@ -208,6 +208,38 @@
   function teamLogo(team) {
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team) : "";
   }
+  // A club mention links to the club's Franchises page (owner ask 9) through
+  // the hub's one club resolver (EEPHUS_HUB.club + clubHref), never a raw
+  // payload code. clubA wraps the markup printed before; clubMark is a logo
+  // standing alone (its name is the club's full name, and a logo that fails to
+  // load leaves the code behind); clubCode is a printed code; vsClub is the
+  // "vs CODE" / "@ CODE" opponent with the code linked. A code the hub does not
+  // know keeps its markup in a span marked data-club-nolink="unresolved",
+  // never a guessed link. Links only: no figure is added to a cell.
+  function clubA(team, inner) {
+    var H = window.EEPHUS_HUB, c = null;
+    if (!inner || !H || !H.club || !H.clubHref) return inner;
+    try { c = team ? H.club(team) : null; } catch (e) { c = null; }
+    if (!c) return team ? '<span data-club-nolink="unresolved">' + inner + "</span>" : inner;
+    return '<a class="club-link" href="' + esc(H.clubHref(c.code)) + '" data-club="' + c.code +
+      '" title="' + esc(c.name + ": franchise overview") + '">' + inner + "</a>";
+  }
+  function clubMark(team) {
+    var H = window.EEPHUS_HUB, c = null;
+    try { c = team && H && H.club ? H.club(team) : null; } catch (e) { c = null; }
+    if (!c || !H.teamLogoURL) return clubA(team, teamLogo(team));
+    return clubA(c.code, '<img class="eephus-teamlogo" src="' + esc(H.teamLogoURL(c.code)) + '" alt="' + esc(c.name) +
+      '" loading="lazy" onerror="this.outerHTML=\'&lt;span&gt;' + c.code + '&lt;/span&gt;\'">');
+  }
+  function clubCode(team, logo) {
+    if (!team) return "";
+    var mark = logo && window.EEPHUS_HUB && EEPHUS_HUB.teamLogo
+      ? EEPHUS_HUB.teamLogo(team, null, { decorative: true }) + " " : "";
+    return clubA(team, mark + esc(team));
+  }
+  function vsClub(isHome, opp) {
+    return esc(isHome ? "vs " : "@ ") + clubCode(opp || "");
+  }
   // Glossary term span, on the betting.js contract: the span carries NO
   // .g-term of its own. eephus-gl's wire() adds that class only when the slug
   // resolves against the loaded glossary, so a slug the artifact does not
@@ -801,7 +833,7 @@
   }
   function fmtCell(p, key) {
     var v = cellOf(p, key);
-    if (key === "name") return teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) +
+    if (key === "name") return clubMark(p.team) + " " + nameLink(p.mlbam, p.name) +
       ' <span class="dfs-elig">' + esc(eligOf(p).join("/")) + "</span>";
     // Ahead of the null guard on purpose: this column's null covers TWO states
     // and only one of them is "-".
@@ -809,7 +841,7 @@
     if (v == null || v === "") return "-";
     // The opponent cell is where the matchup multiplier is legible, so it is
     // where an unresolved lookup gets said out loud.
-    if (key === "opp") return esc(v) + matchupMark(p.ctx);
+    if (key === "opp") return vsClub(p.is_home, p.opp) + matchupMark(p.ctx);
     if (key === "salary") return money(v);
     if (key === "value") return num(v, 2);
     // A confirmed start is a FACT and a projected one is a guess, and 100% next
@@ -995,9 +1027,9 @@
     var shown = capRows(priced);
     var rows = shown.map(function (p, i) {
       return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="dfs-l">' +
-        teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) +
+        clubMark(p.team) + " " + nameLink(p.mlbam, p.name) +
         ' <span class="dfs-elig">' + esc(eligOf(p).join("/")) + "</span></td><td>" +
-        esc((p.is_home ? "vs " : "@ ") + (p.opp || "")) + matchupMark(p.ctx) + "</td><td>" + num(ptsOf(p), 1) +
+        vsClub(p.is_home, p.opp) + matchupMark(p.ctx) + "</td><td>" + num(ptsOf(p), 1) +
         "</td><td>" + money(salaryOf(p)) + "</td><td>" + num(valueOf(p), 2) + "</td><td>" +
         (p.side === "hit" && p.start_rate != null ? Math.round(p.start_rate * 100) + "%" : "-") +
         "</td></tr>";
@@ -1049,8 +1081,8 @@
     }).sort(function (a, b) { return b.pts4 - a.pts4; });
     var shown = capRows(rows);
     var body = shown.map(function (r, i) {
-      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="dfs-l">' + teamLogo(r.team) + " " +
-        esc(r.team) + "</td><td>" + esc((r.is_home ? "vs " : "@ ") + (r.opp || "")) + "</td><td>" +
+      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="dfs-l">' + clubCode(r.team, true) +
+        "</td><td>" + vsClub(r.is_home, r.opp) + "</td><td>" +
         esc(r.opp_sp || "TBD") + "</td><td>" + num(r.opp_pitch, 0) + matchupMark(r.ctx) +
         "</td><td>" + (r.itt == null ? "-" : num(r.itt, 2)) + "</td><td>" + num(r.pts4, 1) +
         "</td><td>" + num(r.pts5, 1) + "</td><td>" + (r.sal4 ? money(r.sal4) : "-") +
@@ -1369,8 +1401,8 @@
     if (!res.ok) return head + '<div class="dfs-warn">' + esc(res.msg) + "</div>";
     var rows = res.roster.map(function (p, i) {
       var slot = res.tpl.slots[i];
-      return "<tr><td>" + esc(slot.slot) + '</td><td class="dfs-l">' + teamLogo(p.team) + " " +
-        nameLink(p.mlbam, p.name) + "</td><td>" + esc((p.is_home ? "vs " : "@ ") + (p.opp || "")) +
+      return "<tr><td>" + esc(slot.slot) + '</td><td class="dfs-l">' + clubMark(p.team) + " " +
+        nameLink(p.mlbam, p.name) + "</td><td>" + vsClub(p.is_home, p.opp) +
         "</td><td>" + num(ptsOf(p), 1) + "</td><td>" + money(salaryOf(p)) + "</td><td>" +
         num(valueOf(p), 2) + "</td></tr>";
     }).join("");
@@ -1394,8 +1426,7 @@
     var cards = games.map(function (g) {
       function sideLine(s) {
         var pp = (s || {}).probable;
-        return '<div class="dfs-slate-row"><span class="dfs-slate-team">' + teamLogo((s || {}).org) + " " +
-          esc((s || {}).org || "") +
+        return '<div class="dfs-slate-row"><span class="dfs-slate-team">' + clubCode((s || {}).org, true) +
           ((s || {}).lineup_posted ? ' <span class="dfs-conf">card</span>' : "") +
           ((s || {}).vegas_itt != null
             ? ' <span class="dfs-itt">' + num(s.vegas_itt, 2) + "</span>" : "") +

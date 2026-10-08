@@ -237,6 +237,35 @@
   function teamLogo(team) {
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team) : "";
   }
+  // A club mention links to the club's Franchises page (owner ask 9) through
+  // the hub's one club resolver (EEPHUS_HUB.club + clubHref), never a raw
+  // payload code. clubA wraps the markup printed before; `mark` makes the logo
+  // beside a name the mouse twin of the code link printed under it (out of the
+  // tab order, hidden from a screen reader). clubMark is a logo standing alone:
+  // its name is the club's full name, and a logo that fails to load leaves the
+  // code behind. A code the hub does not know keeps its markup in a span marked
+  // data-club-nolink="unresolved", never a guessed link.
+  function clubA(team, inner, mark) {
+    var H = window.EEPHUS_HUB, c = null;
+    if (!inner || !H || !H.club || !H.clubHref) return inner;
+    try { c = team ? H.club(team) : null; } catch (e) { c = null; }
+    if (!c) return team ? '<span data-club-nolink="unresolved">' + inner + "</span>" : inner;
+    return '<a class="club-link' + (mark ? " club-link--mark" : "") + '" href="' + esc(H.clubHref(c.code)) + '" data-club="' + c.code +
+      '" title="' + esc(c.name + ": franchise overview") + '"' +
+      (mark ? ' tabindex="-1" aria-hidden="true"' : "") + ">" + inner + "</a>";
+  }
+  // The logo beside its own code inside one link is decorative (alt=""), so a
+  // screen reader hears the club once.
+  function teamLogoDeco(team) {
+    return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team, null, { decorative: true }) : "";
+  }
+  function clubMark(team) {
+    var H = window.EEPHUS_HUB, c = null;
+    try { c = team && H && H.club ? H.club(team) : null; } catch (e) { c = null; }
+    if (!c || !H.teamLogoURL) return clubA(team, teamLogo(team));
+    return clubA(c.code, '<img class="eephus-teamlogo" src="' + esc(H.teamLogoURL(c.code)) + '" alt="' + esc(c.name) +
+      '" loading="lazy" onerror="this.outerHTML=\'&lt;span&gt;' + c.code + '&lt;/span&gt;\'">');
+  }
 
   // ---- filter bar (2026-08-16) ----------------------------------------------
   // A VIEW over the board, never a re-score. Name is a case-insensitive
@@ -417,8 +446,8 @@
   function rosIdentity(o) {
     var p = o.p;
     var sub = (p.elig && p.elig.length) ? p.elig.join("/") : (p.pos || "");
-    return '<div class="rd-id ff-id"><span class="mlb-name">' + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) +
-      '</span><span class="mlb-sub">' + esc(sub) + (p.team ? " &middot; " + esc(p.team) : "") + offTag(p) +
+    return '<div class="rd-id ff-id"><span class="mlb-name">' + clubA(p.team, teamLogo(p.team), true) + " " + nameLink(p.mlbam, p.name) +
+      '</span><span class="mlb-sub">' + esc(sub) + (p.team ? " &middot; " + clubA(p.team, esc(p.team)) : "") + offTag(p) +
       "</span></div>";
   }
   var SCORE_TITLE = "Rest-of-season value in the selected format. Points: projection times the format's weight table. Categories: summed z-scores over this board.";
@@ -576,7 +605,7 @@
       }).join("");
       return '<div class="mlb-card ff-card rd-card" style="--org-color:' +
         (opts.stripeOf ? opts.stripeOf(row, rk) : stripeFor(rk)) + ";grid-template-columns:" + tracks + '"' +
-        (href ? ' tabindex="0" role="button" data-rdhref="' + esc(href) + '"' : "") + ">" +
+        (href ? ' data-rdhref="' + esc(href) + '"' : "") + ">" +
         hcols.map(function (c) { return cardCell(c, row, rk); }).join("") +
         '<div class="mlb-tape"><div class="mlb-tape-inner">' + chips + "</div></div></div>";
     }).join("");
@@ -681,7 +710,7 @@
     var rows = (byDay[S.streamerDay] || []).slice(0, 40).map(function (st, i) {
       var p = rec(st.mlbam, "pit") || {}, s = p.skill || {};   // probables are pitchers
       return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="rd-nm">' +
-        nameLink(st.mlbam, st.name) + " " + teamLogo(st.team) + "</td><td>" + atVs(st.is_home) + esc(st.opp_org) +
+        nameLink(st.mlbam, st.name) + " " + clubMark(st.team) + "</td><td>" + atVs(st.is_home) + clubA(st.opp_org, esc(st.opp_org)) +
         " (Off+ " + num(st.opp_off, 0) + ')</td><td class="rd-sc">' + num(st.per_start_fgp, 1) + "</td><td>" +
         (s.sem_plus != null ? num(s.sem_plus, 0) : "-") + "</td><td>" + esc(st.venue || "") + "</td></tr>";
     }).join("");
@@ -710,11 +739,11 @@
     }
     var rows = list.slice(0, 60).map(function (t, i) {
       var legs = (t.legs || []).map(function (l) {
-        var leg = atVs(l.is_home) + esc(l.opp_org) + " (" + num(l.exp_fgp, 0) + ")";
+        var leg = atVs(l.is_home) + clubA(l.opp_org, esc(l.opp_org)) + " (" + num(l.exp_fgp, 0) + ")";
         return l.projected ? '<span class="rd-proj">' + leg + " (proj)</span>" : leg;
       }).join(" · ");
       return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="rd-nm">' + nameLink(t.mlbam, t.name) + " " +
-        teamLogo(t.team) + "</td><td>" + esc(t.n_starts) + '</td><td class="rd-sc">' + num(t.total_fgp, 1) +
+        clubMark(t.team) + "</td><td>" + esc(t.n_starts) + '</td><td class="rd-sc">' + num(t.total_fgp, 1) +
         "</td><td>" + legs + "</td></tr>";
     }).join("");
     return '<div class="rd-note">Two starts this scoring week. (proj) marks a start projected from the team ' +
@@ -760,7 +789,7 @@
         var val = '<span class="rd-sc ' + cls + '">' + (gap > 0 ? "+" : "") +
           num(gap, 3) + "</span>";
         var blank = '<span class="rd-dim">-</span>';
-        return '<tr><td class="rd-nm">' + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + offTag(p) + chip + "</td><td>" +
+        return '<tr><td class="rd-nm">' + clubMark(p.team) + " " + nameLink(p.mlbam, p.name) + offTag(p) + chip + "</td><td>" +
           esc(p.pos || "") + "</td><td>" + (isHit ? val : blank) + "</td><td>" +
           (isHit ? blank : val) + "</td></tr>";
       }).join("");
@@ -850,7 +879,7 @@
       }).join("");
       // A team whose depth ids all miss the player index would otherwise render
       // as a logo over nothing. Say so instead.
-      return '<div class="rd-team-card"><div class="rd-team-hd">' + teamLogo(tm) + " " + esc(tm) + "</div>" +
+      return '<div class="rd-team-card"><div class="rd-team-hd">' + clubA(tm, teamLogoDeco(tm) + " " + esc(tm)) + "</div>" +
         (lst || '<div class="rd-relief rd-dim">No projectable arms in this build.</div>') + "</div>";
     }).join("");
     // Copy contract (test_fantasy_claims.py): fantasy_closer_depth is a
@@ -1019,10 +1048,11 @@
         fire(true);
       });
     });
-    // Whole-card activation. The guard must EXCLUDE THE CARD ITSELF: the card
-    // carries role="button", and closest() starts at the element it is called
-    // on, so a naive closest("a,button,[role=button]") matched the card on
-    // every click and shipped card activation as dead.
+    // Whole-card activation, a mouse convenience: the card is not a button
+    // (it holds the player link and the club links, and no link may sit inside
+    // a button), so the name link is the keyboard path. A click on a link or a
+    // control inside the card is left to it; the guard still compares the hit
+    // to the card itself, as it did when the card carried role="button".
     r.querySelectorAll("[data-rdhref]").forEach(function (c) {
       function onCard(e) {
         var t = e.target.closest("a,button,[role=button]");

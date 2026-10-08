@@ -128,6 +128,37 @@ function _tmTeamLogo(org, decorative) {
   if (hub && hub.teamLogo) return hub.teamLogo(org, "tm-logo", { size: _TM_LOGO_PX, decorative: !!decorative });
   return "";
 }
+// A club mention links to its club (owner ask 9) through the hub's one club
+// resolver (EEPHUS_HUB.club + clubHref), never a raw payload code: a prospect's
+// club opens its farm system page (opts.ctx "farm"), every other club its
+// Franchises page. `inner` is the markup printed before (the mark, the code).
+// opts.stop keeps the click on the link inside a clickable row; opts.mark makes
+// a mark that sits beside its own linked code a mouse twin (out of the tab
+// order, hidden from a screen reader). A code the hub does not know keeps its
+// markup in a span marked data-club-nolink="unresolved", never a guessed link.
+function _tmClubA(org, inner, opts) {
+  const o = opts || {};
+  const hub = window.EEPHUS_HUB;
+  if (!hub || !hub.club || !hub.clubHref) return inner;
+  const c = org ? hub.club(org) : null;
+  if (!c) return org ? `<span data-club-nolink="unresolved">${inner}</span>` : inner;
+  const farm = o.ctx === "farm";
+  return `<a class="club-link${o.cls ? " " + o.cls : ""}${o.mark ? " club-link--mark" : ""}" href="${escapeHtml(hub.clubHref(c.code, farm ? "farm" : "franchise"))}"`
+    + ` data-club="${c.code}" title="${escapeHtml(c.name + (farm ? ": farm system" : ": franchise overview"))}"`
+    + (o.stop ? ` onclick="event.stopPropagation();"` : "")
+    + (o.mark ? ` tabindex="-1" aria-hidden="true"` : "") + `>${inner}</a>`;
+}
+// A mark standing alone (no code printed beside it): the link's name is the
+// club's full name, and a mark that fails to load leaves the code behind, so
+// the link never goes empty.
+function _tmClubMark(org, opts) {
+  const hub = window.EEPHUS_HUB;
+  const c = org && hub && hub.club ? hub.club(org) : null;
+  if (!c || !hub.teamLogoURL) return _tmClubA(org, _tmTeamLogo(org), opts);
+  const img = `<img class="tm-logo" src="${escapeHtml(hub.teamLogoURL(c.code, _TM_LOGO_PX))}" alt="${escapeHtml(c.name)}"`
+    + ` loading="lazy" onerror="this.outerHTML='&lt;span&gt;${c.code}&lt;/span&gt;'">`;
+  return _tmClubA(c.code, img, opts);
+}
 // Surplus $M -> board tier. The SAME cuts the board's tier filter and the
 // server's bayes_trade_value._platform_tier use (Elite $40M+ / High $20-40M /
 // Mid $8-20M), so one dollar figure gets one tier everywhere.
@@ -553,7 +584,7 @@ function _tmCbtHtml() {
     if (!side) return "";
     const lines = _tmCbtLines(side, cbt).map(l =>
       `<div class="tm-cbt-line">${escapeHtml(l.text)}</div>`).join("");
-    return `<div class="tm-cbt-side"><div class="tm-cbt-club">${_tmTeamLogo(who.club, true)} Side ${label}: ${escapeHtml(who.club)}</div>${lines}</div>`;
+    return `<div class="tm-cbt-side"><div class="tm-cbt-club">${_tmClubA(who.club, _tmTeamLogo(who.club, true), { mark: true })} Side ${label}: ${_tmClubA(who.club, escapeHtml(who.club))}</div>${lines}</div>`;
   };
   const src = cbt.source || {};
   const srcBits = [src.payroll, src.thresholds, src.calendar].filter(Boolean).map(escapeHtml).join("; ");
@@ -639,7 +670,7 @@ function renderTradeMachine(opts) {
       return `
       <div class="tm-row">
         <span class="tm-kind tm-kind--${x.kind}" title="${x.kind === "prospect" ? "Prospect (eFV surplus)" : "MLB (contract surplus)"}">${x.kind === "prospect" ? "P" : "M"}</span>
-        ${_tmTeamLogo(x.org)}
+        ${_tmClubMark(x.org, { ctx: x.kind === "prospect" ? "farm" : "franchise" })}
         <a class="fa-player-link tm-name" href="${x.kind === "prospect" ? `/prospx/#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
         <span class="tm-sub">${escapeHtml(x.pos || "")}</span>
         ${rosChip}
@@ -1417,14 +1448,16 @@ function _renderTBRows() {
     // Navigate to player detail: MLB players -> their MLB Projections page,
     // prospects -> their PROSPX page. If no key, no navigation. The whole row
     // stays clickable as a convenience, but the player name is a REAL anchor so
-    // keyboard and screen-reader users can reach the player page too (the row
-    // onclick preventDefaults the anchor and routes to the same destination).
+    // keyboard and screen-reader users can reach the player page too. The row
+    // handler skips a click that lands on a link or a button (the player link
+    // opens its own href, the club link its club, the GRPO chip its panel), so
+    // it never swallows a link that goes somewhere else.
     const nav = _tbNavTarget(p, isMlb);
     const href = nav
       ? (nav.mlb ? "/projections/#player=" : "/prospx/#player=") + encodeURIComponent(nav.key)
       : "";
     const rowClick = nav
-      ? `onclick="event.preventDefault();_tmNavPlayer('${escapeHtml(nav.key)}',${nav.mlb});" style="cursor:pointer;"`
+      ? `onclick="if(event.target.closest('a,button'))return;event.preventDefault();_tmNavPlayer('${escapeHtml(nav.key)}',${nav.mlb});" style="cursor:pointer;"`
       : "";
 
     // Signals: status badge + ceiling flag + injury warning + GRPO breakout badge.
@@ -1461,7 +1494,7 @@ function _renderTBRows() {
       <td class="tm-player">${href ? `<a class="fa-player-link" href="${href}">${name}</a>` : name}</td>
       <td class="tm-num tm-dim">${p.age != null ? Number(p.age).toFixed(1) : "-"}</td>
       <td class="tm-dim">${pos}</td>
-      <td>${org ? `<a class="tm-org-cell" href="/franchise/#team=${encodeURIComponent(p.org)}" onclick="event.stopPropagation();" title="${org} on Franchises">${_tmTeamLogo(org, true)}<span class="tm-org-abbr">${org}</span></a>` : ""}</td>
+      <td>${org ? _tmClubA(p.org, `${_tmTeamLogo(org, true)}<span class="tm-org-abbr">${org}</span>`, { cls: "tm-org-cell", stop: true, ctx: isMlb ? "franchise" : "farm" }) : ""}</td>
       <td class="tm-num tm-dim">${fv}</td>
       <td class="tm-num tm-col-div tm-grade">${grade ? `<span class="tm-grade-chip" style="color:${tvCol};border-color:${tvCol};" title="Trade Value Grade ${grade} (${_tbFmt(tv)} contract-adjusted surplus)">${grade}</span>` : ""}</td>
       <td class="tm-num tm-surplus" style="color:${tvCol};">${_tbFmt(tv)}</td>
@@ -1689,11 +1722,11 @@ function _tbShowGroup(playerKey) {
       const mHref = m.player_key ? "/prospx/#player=" + encodeURIComponent(m.player_key) : "";
       const mName = escapeHtml(m.player_name || "?");
       return `<tr style="font-size:12px;cursor:pointer;" class="prospect-row"
-                  onclick="_tmNavPlayer('${escapeHtml(m.player_key||'')}',false);">
+                  onclick="if(event.target.closest('a,button'))return;_tmNavPlayer('${escapeHtml(m.player_key||'')}',false);">
         <td style="padding:4px 6px;color:var(--text-secondary);">${i + 1}</td>
         <td style="padding:4px 6px;font-weight:600;">${mHref ? `<a class="fa-player-link" href="${mHref}">${mName}</a>` : mName}</td>
         <td style="padding:4px 6px;color:var(--text-secondary);">${escapeHtml(m.position || "")}</td>
-        <td style="padding:4px 6px;color:var(--text-secondary);">${escapeHtml(m.org || "")}</td>
+        <td style="padding:4px 6px;color:var(--text-secondary);">${_tmClubA(m.org, escapeHtml(m.org || ""), { stop: true, ctx: "farm" })}</td>
         <td style="padding:4px 6px;text-align:right;">${m.fv != null ? String(Math.ceil(Number(m.fv))) : " - "}</td>
         <td style="padding:4px 6px;text-align:right;">${m.age != null ? Number(m.age).toFixed(1) : " - "}</td>
         <td style="padding:4px 6px;">${escapeHtml(m.current_level || "")}</td>
