@@ -1112,3 +1112,29 @@ Swartz is more accurate at every step on both pools; the units repair moved
 the frozen pool's Swartz figure only past the fourth decimal, because 222 of
 its 262 rows sit in the first fold. The History's MLBTR column fills 859 of
 863 rows (was 287).
+
+## 15. 2026-10-08: the board applies the CBA maximum cut after a contracted season
+
+Recorded 2026-10-08 (owner answer M11-2, 2026-09-25). Nothing above this
+section is edited.
+
+The board chains each award off the panel's salary, so it cannot see a
+contract the club has already signed for the next season. `salary_path`
+floors an arbitration rung that follows a contracted season at 80% of the
+signed salary (CBA Article VI) and the board did not, so the two printed
+different figures for the same season: 17 rows on the 2026-09-24 census.
+`arb_export.build_board` now runs the same walk
+(`_apply_max_cut_after_contract`), reading the signed seasons off the served
+path's `contract` cells: a contracted season opens the carry, a rung below
+0.80 x prior is raised to it and becomes the next rung's prior, a PRE-ARB
+rung closes the carry. Later rungs are NOT re-predicted off a floored
+figure, exactly as on the path. A floored row carries flag bit 64.
+
+**Measured today it binds on 0 rows.** Since the 2026-10-03 Spotrac refetch
+the 2026 column has rolled off, so no signed 2026 salary sits before a 2027
+rung, and the two 2027-to-2028 contract junctions on the board (Cole Ragans
+$4.417M to $6.590M, Vinnie Pasquantino $5.550M to $6.039M) already clear the
+floor; the served path's own `cba_floored_steps` reads 0. The rule stays so
+the board and the path cannot diverge when a signed season next sits below
+one. Section 11f's must-not-move list is about the `SALARY_PATH_MODE` flip,
+which this does not touch.

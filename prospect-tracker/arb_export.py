@@ -50,6 +50,11 @@ F_NO_SALARY = 4       # no salary on file for that season
 F_CARRY_FWD = 8       # season is past the 2026-12-01 CBA expiry
 F_PRORATED = 16       # 2020, paid at 60/162 of contract
 F_ORDER_FIX = 32      # a Spotrac status ran against service order and was repaired
+F_CBA_FLOOR = 64      # an arbitration rung floored at 80% of a signed salary before it
+
+#: CBA Article VI: an arbitration award may not cut the prior salary by more
+#: than 20 percent. salary_path.MAX_CUT is the same rule on the served path.
+MAX_CUT = 0.80
 
 CBA_EXPIRES = "2026-12-01"
 
@@ -104,6 +109,71 @@ def _projected_war() -> dict[int, list[float]]:
         if m and isinstance(w, list):
             out[int(m)] = [first, [float(x) if x is not None else 0.0 for x in w]]
     return out
+
+
+def _signed_salaries() -> dict[int, dict[int, int]]:
+    """{mlbam: {season: usd}} for every season a signed contract prices, read
+    off the served salary path's `contract` cells in data/mlb_projections.json.
+
+    The board's own chain raises off the panel's salary, which knows nothing
+    of a contract the club has already signed for the next season, so the
+    path floored those rungs and the board did not (owner answer M11-2). The
+    contract cells are what the path itself prices from, so reading them is
+    what makes the two agree; they come from Spotrac through proj_export and
+    never from this board (a season a contract prices is rule 1 there), so
+    the one-cycle read cannot feed the board back into itself."""
+    p = ROOT / "data" / "mlb_projections.json"
+    try:
+        doc = json.loads(p.read_text("utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out: dict[int, dict[int, int]] = {}
+    for v in doc.get("vets") or []:
+        m = v.get("mlbam")
+        cells = {int(c[0]): int(c[1]) for c in (v.get("salPath") or [])
+                 if len(c) > 5 and c[5] == "contract" and c[1]}
+        if m and cells:
+            out[int(m)] = cells
+    return out
+
+
+def _apply_max_cut_after_contract(steps: list, signed: dict, season: int) -> int:
+    """Floor arbitration rungs at 80% of a signed salary the season before,
+    in place; returns the number of rungs floored.
+
+    The same walk as salary_path.salary_path's Article VI block, so the board
+    and the path print the same figure: a contracted season sets the prior
+    and opens the carry, an ARB rung below 0.80 x prior is raised to it and
+    the floored figure is the next rung's prior, a PRE-ARB rung closes the
+    carry. Later rungs are NOT re-predicted off the floored figure; they are
+    only held to the same floor, as on the path. A rung on a season the
+    contract itself prices is left as published (the path prices that season
+    from the contract)."""
+    if not signed:
+        return 0
+    prior = signed.get(int(season) - 1)
+    carry = prior is not None
+    by = {int(st[0]): st for st in steps}
+    floored = 0
+    for y in sorted(set(by) | {s for s in signed if s >= int(season)}):
+        if y in signed:
+            carry, prior = True, signed[y]
+            continue
+        st = by[y]
+        if st[1] is None:
+            continue
+        if str(st[4] or "").upper().startswith("ARB"):
+            if carry and prior:
+                fl = _k(MAX_CUT * float(prior))
+                if fl and st[1] < fl:
+                    st[1] = fl
+                    st[2] = fl if (st[2] or 0) < fl else st[2]
+                    st[3] = max(int(st[3] or fl), fl)
+                    floored += 1
+        else:
+            carry = False
+        prior = st[1]
+    return floored
 
 
 def _link_targets() -> dict[int, str]:
@@ -234,7 +304,7 @@ def _repair_status_order(raw: list, ladder: list, base: dict) -> tuple[list, boo
 
 def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                 s1=None, s2=None, defl=None, banded=None,
-                frame: str | None = None) -> dict:
+                frame: str | None = None, signed=None) -> dict:
     """The projections board: every player with remaining arbitration years,
     with the ladder PRICED by chaining the model forward.
 
@@ -252,6 +322,7 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
 
     frame = frame or Mod.FRAME
     status = A.spotrac_status_by_mlbam()
+    signed = _signed_salaries() if signed is None else signed
     proj = _projected_war()
     links = _link_targets()
     # Latest observed row per player, for the salary anchor and the features.
@@ -404,6 +475,9 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                 prior = pred
             else:
                 steps.append([int(y), None, None, None, tok])
+        n_floor = _apply_max_cut_after_contract(steps, signed.get(mlbam), season)
+        if n_floor:
+            total = sum(st[1] or 0 for st in steps)
         rows.append({
             "m": mlbam,
             "n": base.get("name"),
@@ -419,7 +493,8 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             # a surface; both exist to let a lab say how old its evidence is.
             "svy": base.get("season") if base.get("service_time") else None,
             "c": _token_step(ladder[0][1])[0],
-            "e": _flags(base, season) | (F_ORDER_FIX if order_fixed else 0),
+            "e": (_flags(base, season) | (F_ORDER_FIX if order_fixed else 0)
+                  | (F_CBA_FLOOR if n_floor else 0)),
             "yl": len(ladder),
             "l": steps,
             "tot": total or None,
@@ -442,7 +517,9 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                   "2 step from the debut heuristic, 4 no salary on file, "
                   "8 past the CBA expiry, 16 2020 prorated, "
                   "32 status order repaired (a Spotrac status that put a "
-                  "later season in a lower arbitration class was rewritten)"),
+                  "later season in a lower arbitration class was rewritten), "
+                  "64 an arbitration rung floored at 80% of the signed salary "
+                  "the season before (CBA maximum cut)"),
             "yl": "club-control years remaining",
             "l": "ladder, one tuple per remaining season: [season, proj_usd, lo_usd, hi_usd, token]",
             "tot": ("sum of the ladder, usd: projected arbitration rungs plus "
