@@ -2275,7 +2275,12 @@ def _fa_member_team(key) -> str | None:
     """The club of FA class member `key`, or None."""
     return _fa_member_teams().get(key) or None if key else None
 
-def _collect_events(players: list, graduates: list, fa_events: list | None = None) -> list:
+def _collect_events(players: list, graduates: list, fa_events: list | None = None,
+                    mlb_recent: dict | None = None, today: date | None = None) -> list:
+    # `mlb_recent` (recent.json's payload, HOME_3) is passed only while
+    # mlb_events.MLB_EVENTS_LIVE is True, by the homepage rail and ticker: the
+    # MLB rows join, deduplicated, and the list is the rail's selection
+    # (_wire_rail_rows). None keeps the full prospect wire as before.
     # Each event is (date, typ, glyph, ticker_text, key, org, name, val);
     # `typ` is a type code of the MLB News registry (_WIRE_TYPES):
     # `ticker_text` is the one-string form the scrolling WIRE marquee uses;
@@ -2412,6 +2417,9 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
                 f'{nm} {"▲" if up else "▼"} {val}', key, org,
                 name=nm, val=val, weight=weight)
     ev.sort(key=lambda e: (e[0], e[8]), reverse=True)
+    if mlb_recent is not None:
+        return _wire_rail_rows(ev, players, graduates, fa_events, mlb_recent,
+                               today or date.today())
     return [e[:8] for e in ev]
 
 def _feed_day_header(dt: str, gfx: bool = False) -> str:
@@ -2810,17 +2818,24 @@ def _deal_names(grp: list) -> str:
     return ", ".join(names[:2]) + (f" +{len(names) - 2}" if len(names) > 2 else "")
 
 
-def _group_deals(rows: list, board: dict) -> list:
+def _group_deals(rows: list, board: dict, lead_sort=None, by_desc: bool = False) -> list:
     """Trade rows grouped per deal: (date, unordered club pair), board players
-    first inside a deal. Returns [(date, [rows])] in input order."""
+    first inside a deal. Returns [(date, [rows])] in input order. `by_desc`
+    (the homepage rail, HOME_3) adds the normalized StatsAPI description to
+    the deal key, so two deals between the same clubs on one day stay two
+    rows; `lead_sort` replaces the order inside a deal."""
     deals: dict = {}
     for r in rows:
         pair = frozenset(c for c in (r.get("from"), r.get("to")) if c is not None)
-        deals.setdefault((r["date"], pair), []).append(r)
+        k = (r["date"], pair)
+        if by_desc:
+            k += (" ".join(str(r.get("desc") or "").lower().split()),)
+        deals.setdefault(k, []).append(r)
     out = []
-    for (dt, _pair), grp in deals.items():
-        grp.sort(key=lambda r: (int(r["mlbam"]) not in board, r.get("tx") or 0, r.get("name") or ""))
-        out.append((dt, grp))
+    for k, grp in deals.items():
+        grp.sort(key=lead_sort or (lambda r: (int(r["mlbam"]) not in board, r.get("tx") or 0,
+                                              r.get("name") or "")))
+        out.append((k[0], grp))
     return out
 
 
@@ -2836,24 +2851,26 @@ def _board_mlbam(data: dict) -> dict:
     return board
 
 
-def _news_mlb_merge(events: list, data: dict, fa_events: list,
-                    recent: dict | None = None) -> tuple[list, dict]:
-    """The /news/ event list with the MLB rows folded in, and a map from each
-    MLB row's event tuple to {"descs", "mlbam"} for its detail line, title and
-    GFX headshot. A row whose player has neither a PROSPX page nor an MLB
-    player page is left out (every feed row links). `recent` is recent.json's
-    payload (default: the served file)."""
-    if recent is None:
-        recent = _cached_data_json("mlb_events/recent.json")
+def _links_mlbam() -> dict:
+    """{FA player key: mlbam} from data/player_links.json byKey."""
+    return {k: int(v["mlbam"]) for k, v in
+            (_cached_data_json("player_links.json").get("byKey") or {}).items()
+            if isinstance(v, dict) and v.get("mlbam")}
+
+
+def _mlb_event_rows(recent: dict, board: dict, fa_events: list, types,
+                    lead_sort=None, by_desc: bool = False) -> tuple[list, list]:
+    """recent.json rows of the type codes `types` as wire events: a list of
+    (event tuple, {"descs", "mlbam"}, weight) and the board rows they replace,
+    [(board key, type, date, day window)]. Shared by /news/ and the homepage
+    rail. A repeated cache row (the same transaction id for the same person)
+    is the same (mlbam, date, type code) and is dropped with it."""
     rows = [r for r in (recent.get("rows") or [])
-            if isinstance(r, dict) and r.get("type") in _NEWS_MLB_TYPES
+            if isinstance(r, dict) and r.get("type") in types
             and r.get("src") != "fa_class" and r.get("mlbam") and r.get("date")]
     if not rows:
-        return events, {}
-    board = _board_mlbam(data)
-    links = {k: int(v["mlbam"]) for k, v in
-             (_cached_data_json("player_links.json").get("byKey") or {}).items()
-             if isinstance(v, dict) and v.get("mlbam")}
+        return [], []
+    links = _links_mlbam()
     fa_signed: dict[int, list] = {}
     for e in fa_events or []:
         mid = links.get(e.get("key"))
@@ -2894,12 +2911,17 @@ def _news_mlb_merge(events: list, data: dict, fa_events: list,
             ev = (r["date"], "il_place", "✚", f"{nm} to {val}", hk, club, nm, val)
             if mid in board:
                 drop_board.append((board[mid], "il_place", r["date"], _NEWS_MLB_ABSORB_DAYS))
-        else:
+        elif r["type"] == "fa_sign":
             val = _WIRE_TYPES["fa_sign"]["val"]
             weight = _WIRE_TYPES["fa_sign"]["weight"]
             ev = (r["date"], "fa_sign", "✎", f"{nm} signs · {club or '?'} {val}", hk, club, nm, val)
+        else:
+            row = _WIRE_TYPES[r["type"]]
+            val, weight = row["val"], row["weight"]
+            ev = (r["date"], r["type"], "◆", f"{nm} {val}", hk, club, nm, val)
         out_rows.append((ev, {"descs": [r.get("desc") or ""], "mlbam": mid}, weight))
-    for dt, grp in _group_deals([r for r in kept if r["type"] == "trade"], board):
+    for dt, grp in _group_deals([r for r in kept if r["type"] == "trade"], board,
+                                lead_sort, by_desc):
         lead = next((r for r in grp if href_key(r)), None)
         if lead is None:
             continue
@@ -2913,17 +2935,172 @@ def _news_mlb_merge(events: list, data: dict, fa_events: list,
         for r in grp:
             if int(r["mlbam"]) in board:
                 drop_board.append((board[int(r["mlbam"])], "trade", dt, 1))
+    return out_rows, drop_board
 
-    def replaced(e) -> bool:
-        return any(e[4] == k and e[1] == t and _day_gap(e[0], d) <= w
-                   for k, t, d, w in drop_board)
 
-    base = [e for e in events if not replaced(e)]
+def _replaced_by_mlb(e, drop_board: list) -> bool:
+    """A board row an MLB row replaces (plan 3.5 item 3 precedence)."""
+    return any(e[4] == k and e[1] == t and _day_gap(e[0], d) <= w
+               for k, t, d, w in drop_board)
+
+
+def _news_mlb_merge(events: list, data: dict, fa_events: list,
+                    recent: dict | None = None) -> tuple[list, dict]:
+    """The /news/ event list with the MLB rows folded in, and a map from each
+    MLB row's event tuple to {"descs", "mlbam"} for its detail line, title and
+    GFX headshot. A row whose player has neither a PROSPX page nor an MLB
+    player page is left out (every feed row links). `recent` is recent.json's
+    payload (default: the served file)."""
+    if recent is None:
+        recent = _cached_data_json("mlb_events/recent.json")
+    out_rows, drop_board = _mlb_event_rows(recent, _board_mlbam(data), fa_events,
+                                           _NEWS_MLB_TYPES)
+    if not out_rows and not drop_board:
+        return events, {}
+    base = [e for e in events if not _replaced_by_mlb(e, drop_board)]
     out_rows.sort(key=lambda x: (x[0][0], x[2]), reverse=True)
     # A stable sort on the date alone: the prospect rows keep their own order at
     # the head of each day and the MLB rows follow, heaviest first.
     merged = sorted(base + [x[0] for x in out_rows], key=lambda e: e[0], reverse=True)
     return merged, {x[0]: x[1] for x in out_rows}
+
+
+# ---- MLB rows on the homepage rail and ticker (HOME_3, LANE_HOME 2.5) -----
+# While mlb_events.MLB_EVENTS_LIVE is True the rail and the ticker carry the
+# MLB rows of recent.json beside the prospect and FA rows, deduplicated by the
+# site-pass plan 3.5 item 3, and select by its item 4 (SP-D2: significant
+# moves only, the registry's rail flag): the last _RAIL_WINDOW_DAYS days,
+# _HOME_RAIL_ROWS rows, by date then weight, at most _RAIL_FAM_DAY_CAP rows per
+# family per day except trades. A window holding fewer rows than the rail
+# fills with the newest older rows, the /news/ off-season rule
+# (_news_recent_events), so the rail is never empty between seasons.
+_RAIL_WINDOW_DAYS = 7
+_RAIL_FAM_DAY_CAP = 6
+# A prospect debut absorbs a callup or recall this many days before it.
+_RAIL_DEBUT_ABSORB_DAYS = 3
+# recent.json's newest date older than this many days draws the unmeasured
+# state on the families StatsAPI feeds.
+_RAIL_STALE_DAYS = 2
+_RAIL_STALE_FAMS = ("mlb", "trd", "inj")
+_RAIL_MLB_TYPES = tuple(t for t, r in _WIRE_TYPES.items() if r["rail"] in (True, "board"))
+
+
+def _mlb_career_war(key) -> float:
+    """Career WAR of an MLB player page (the sum of mlb_player_detail.json's
+    season war, batting and pitching), for the order inside a deal only."""
+    p = ((_cached_data_json("mlb_player_detail.json").get("players") or {}).get(key or "")
+         or {})
+    tot = 0.0
+    for s in (p.get("career") or []) + (p.get("careerPit") or []):
+        try:
+            tot += float(s.get("war") or 0)
+        except (TypeError, ValueError, AttributeError):
+            pass
+    return tot
+
+
+def _wire_rail_rows(ev: list, players: list, graduates: list, fa_events: list | None,
+                    recent: dict, today: date) -> list:
+    """The rail and ticker selection with the MLB rows (HOME_3). `ev` is
+    _collect_events' weighted list (date, typ, glyph, text, key, org, name, val,
+    weight), newest first. Returns event tuples without the weight."""
+    board = _board_mlbam({"players": players})
+    key_mlbam: dict = {}
+    rank: dict = {}
+    for p in list(players) + list(graduates):
+        k, mid = p.get("player_key"), p.get("mlbam_id")
+        if k and mid:
+            key_mlbam.setdefault(k, int(mid))
+    for p in players:
+        if p.get("player_key") and p.get("overall_rank"):
+            rank[p["player_key"]] = float(p["overall_rank"])
+    links = _links_mlbam()
+
+    def lead_sort(r):
+        mid = int(r["mlbam"])
+        bk = board.get(mid)
+        return (bk is None, rank.get(bk, 1e9), -_mlb_career_war(r.get("key")),
+                r.get("name") or "", mid)
+
+    def mlbam_of(key):
+        key = str(key or "")
+        if key.startswith("fa:"):
+            return links.get(key[3:])
+        return key_mlbam.get(key)
+
+    # 1. the prospect and FA rows, weighted by the registry (grade moves by
+    #    their step, a 60-day IL placement 85); rail-ineligible types leave.
+    rows: list = []          # [event tuple, weight, mlbam or None]
+    for e in ev:
+        reg = _WIRE_TYPES.get(e[1])
+        if not reg or reg["rail"] is False:
+            continue
+        if e[1] in ("grade_up", "grade_down"):
+            w = e[8]
+        elif e[1] == "il_place" and str(e[7]).startswith("60-day"):
+            w = 85
+        else:
+            w = reg["weight"]
+        rows.append((tuple(e[:8]), w, mlbam_of(e[4])))
+    # 2. the MLB rows; a StatsAPI deal or IL placement replaces the board's row.
+    mlb_rows, drop_board = _mlb_event_rows(recent or {}, board, fa_events, _RAIL_MLB_TYPES,
+                                           lead_sort=lead_sort, by_desc=True)
+    rows = [x for x in rows if not _replaced_by_mlb(x[0], drop_board)]
+    for evt, info, w in mlb_rows:
+        if _WIRE_TYPES[evt[1]]["rail"] == "board" and info["mlbam"] not in board:
+            continue
+        rows.append((evt, w, info["mlbam"]))
+    # 3. a prospect debut absorbs a callup or recall up to 3 days before it.
+    debuts = [(x[2], x[0][0]) for x in rows if x[0][1] == "debut" and x[2]]
+
+    def absorbed(x) -> bool:
+        if x[0][1] not in ("callup", "recall") or not x[2]:
+            return False
+        return any(m == x[2] and 0 <= (date.fromisoformat(d) - date.fromisoformat(x[0][0])).days
+                   <= _RAIL_DEBUT_ABSORB_DAYS for m, d in debuts)
+    rows = [x for x in rows if not absorbed(x)]
+    # 4. one row per (mlbam, date, type code) across the sources; the
+    #    prospect and FA rows come first, so an FA module signing with terms
+    #    keeps its row (the precedence above already removed the board rows a
+    #    StatsAPI row replaces).
+    seen, uniq = set(), []
+    for x in rows:
+        k = (x[2] if x[2] is not None else ("key", x[0][4]), x[0][0], x[0][1])
+        if k in seen:
+            continue
+        seen.add(k)
+        uniq.append(x)
+    # 5. selection: date then weight, the family cap per day, the window.
+    uniq.sort(key=lambda x: (x[0][0], x[1]), reverse=True)
+    per: dict = {}
+    capped = []
+    for x in uniq:
+        fam = _WIRE_TYPES[x[0][1]]["fam"]
+        if fam != "trd":
+            n = per.get((x[0][0], fam), 0)
+            if n >= _RAIL_FAM_DAY_CAP:
+                continue
+            per[(x[0][0], fam)] = n + 1
+        capped.append(x[0])
+    lo = (today - timedelta(days=_RAIL_WINDOW_DAYS - 1)).isoformat()
+    win = [e for e in capped if lo <= e[0] <= today.isoformat()]
+    return (win if len(win) >= _HOME_RAIL_ROWS else capped)[:_HOME_RAIL_ROWS]
+
+
+def _wire_mlb_freshness(recent: dict, today: date) -> tuple[str, str]:
+    """(as-of text, unmeasured message or "") for the rail: recent.json's
+    newest date ("MLB moves through 10/01"), and the unmeasured state's
+    message when that date is more than _RAIL_STALE_DAYS days old or absent."""
+    thr = str((recent or {}).get("through") or "")[:10]
+    try:
+        d = date.fromisoformat(thr)
+    except ValueError:
+        return "", "No MLB transaction log on this build."
+    md = f"{d.month:02d}/{d.day:02d}"
+    if (today - d).days > _RAIL_STALE_DAYS:
+        return (f"MLB moves through {md}",
+                f"MLB moves through {md}: the transaction log has not refreshed since.")
+    return f"MLB moves through {md}", ""
 
 
 def build_news(data: dict | None = None) -> str:
@@ -4599,6 +4776,42 @@ _WIRE_RAIL_JS = '''<script>
 </script>'''
 
 
+def _wire_patch(src: str, old: str, new: str) -> str:
+    if src.count(old) != 1:
+        raise ValueError(f"rail script anchor not found once: {old!r}")
+    return src.replace(old, new)
+
+
+# The live rail (HOME_3): a family whose rows come from StatsAPI (MLB, TRD,
+# IL) draws the unmeasured state (#wire-stale) when the transaction log is
+# stale, in place of the empty line. Off, the rail script is unchanged.
+_WIRE_RAIL_JS_LIVE = _wire_patch(_wire_patch(
+    _WIRE_RAIL_JS,
+    '  var empty = document.getElementById("wire-empty");\n',
+    '  var empty = document.getElementById("wire-empty");\n'
+    '  var stale = document.getElementById("wire-stale");\n'
+    '  var staleFams = stale ? (stale.getAttribute("data-fams") || "").split(" ") : [];\n'),
+    '    if (empty) {\n      empty.hidden = shown !== 0;\n',
+    '    var staleOn = !!(stale && cur && staleFams.indexOf(cur) >= 0);\n'
+    '    if (stale) stale.hidden = !staleOn;\n'
+    '    if (empty) {\n      empty.hidden = shown !== 0 || staleOn;\n')
+
+
+def _wire_stale_html(msg: str) -> str:
+    """The rail's hidden unmeasured state for the StatsAPI families, or ''
+    when the transaction log is fresh."""
+    if not msg:
+        return ""
+    # Scoped here, not in site.css: the state sits on the theme-fixed panel,
+    # so it takes the panel's ink in both themes.
+    return ('<style>.sb-feed .wire-stale .px-state{margin:10px 0;background:transparent;'
+            'border-color:var(--wire-panel-dim);color:var(--wire-panel-dim);}'
+            '.sb-feed .wire-stale .px-art .s{fill:var(--wire-panel-dim);}'
+            '.sb-feed .wire-stale .px-art .k{fill:var(--wire-panel-ink);}</style>'
+            f'<div class="wire-stale" id="wire-stale" data-fams="{" ".join(_RAIL_STALE_FAMS)}" hidden>'
+            f'{_px_state("unmeasured", html.escape(msg))}</div>')
+
+
 # The homepage's two bands (HOME_4, SP-D1): MLB first, then Prospects. A
 # reversal is this one line; the jump bar and the band order both read it.
 HOME_BAND_ORDER = ("mlb", "pro")
@@ -4699,7 +4912,16 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     as_of = data.get("as_of", " - ")
     today_d = date.today()
     today = datetime.now().strftime("%A, %B %d, %Y").replace(" 0", " ")
-    events = _collect_events(players, graduates, _load_fa_events_for_wire())
+    # While the MLB events feed is live the rail and the ticker read the
+    # selection with the MLB rows (HOME_3); off, the prospect wire as before.
+    live = _events_live()
+    if live:
+        mlb_recent = _cached_data_json("mlb_events/recent.json")
+        events = _collect_events(players, graduates, _load_fa_events_for_wire(),
+                                 mlb_recent=mlb_recent, today=today_d)
+        mlb_asof, mlb_stale = _wire_mlb_freshness(mlb_recent, today_d)
+    else:
+        events = _collect_events(players, graduates, _load_fa_events_for_wire())
     spotlight_buckets = data.get("spotlights") or {}
 
     # ---- the MLB News rail (LANE_HOME 3.2 row 6) ----
@@ -4735,10 +4957,13 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '<div class="visually-hidden" id="wire-key-status" role="status" aria-live="polite"></div>'
         f'<div class="wire-rows" id="wire-rows">{feed}</div>'
         '<p class="news-empty" id="wire-empty" hidden></p>'
-        f'<a class="feed-all" href="/news/">All {NEWS_LABEL} →</a>'
-        f'<p class="feed-asof">As of {html.escape(as_of)}</p></div>'
+        + (_wire_stale_html(mlb_stale) if live else '')
+        + f'<a class="feed-all" href="/news/">All {NEWS_LABEL} →</a>'
+        f'<p class="feed-asof">As of {html.escape(as_of)}'
+        + (f' · {html.escape(mlb_asof)}' if live and mlb_asof else '')
+        + '</p></div>'
         '</aside>'
-        + _WIRE_RAIL_JS
+        + (_WIRE_RAIL_JS_LIVE if live else _WIRE_RAIL_JS)
     )
 
     # ---- top wire ticker ----
@@ -4746,7 +4971,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # so it's hidden from assistive tech (aria-hidden) to avoid reading the
     # same items twice / announcing a moving region.
     ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><a href="/news/" tabindex="-1"><span class="blip"></span>{NEWS_LABEL}</a></span>'
-              f'<div class="ticker-track">{_ticker_html(events)}</div></div>')
+              f'<div class="ticker-track">{_ticker_html(events, _HOME_RAIL_ROWS) if live else _ticker_html(events)}</div></div>')
 
     # ---- slim masthead (row 9) and the phone jump bar ----
     masthead = (
