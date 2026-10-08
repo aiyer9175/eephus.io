@@ -3936,6 +3936,65 @@ guard) and 7e-D (the last day).
 
 
 
+### Result (run 2026-10-08, once): INDETERMINATE, and `star_out` stays dark
+
+**The run.** Once, on 2026-10-08 from 17:39:31Z to 17:39:51Z, in the same harness run as
+5c-B's look and after it: harness `tools/b4_availability_look.py` at `b9bf49c8` (blob
+`27520045`), against 5c-B's dated note, committed alone at `15282680` before the first
+outcome join of any B3/B4 column on this harness (5c-B's look, 17:39:02Z); incumbent the
+vintage-mode pricer at `6e82acd5`. The record is `data/_labs/b4_look/5cC_look_record.json`,
+committed with this block. The store hash at the run equals the note's (`f8d6ea17...1b6c`,
+59 files), and so do M, both counts and the anchored window.
+
+**The slip, disclosed.** The registered first day was 2026-10-05. The fWAR label epoch
+moved it: the owner's E5 waiver (EPOCH-Q1, the 2026-10-02 amendment in
+`docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md` part 3) put both B4 looks after step Z,
+recorded 2026-10-03. The look code landed 2026-10-07 at `b9bf49c8`, a registered look date
+for another family, so 2026-10-08 is the first day after 2026-10-05 on which the pinned
+harness ran under the same window, code and rules. It is the one look.
+
+**Verdict row 1, INDETERMINATE: step 1 fails on the fit floor.** The dated-value fit side
+holds 76 games against `VINTAGE_MIN_FIT_GAMES` (100). Under row 1 nothing else is
+computed: no coefficient was fitted, no game was scored, no twin was drawn, the
+identification precondition was not counted and leg 1 did not run. No number relates
+`star_out` to a game outcome or a price.
+
+**Step 0, which passed.** The zero-coefficient identity check on the 290 window games: 0
+mismatches. The vintage parity and the forward parity: equal. `_paired_delta` at
+`6e82acd5` uses the n divisor, so this column's written form is the inline n-1 one (no
+statistic was computed under it). Both arms would have taken `_lab_runline_split` of the
+anchored fit window. `_vintage_cut_index`'s cut at the run is 2026-08-01, the governing
+split.
+
+**Step 1, the counts.**
+- Present nights 2026-09-05 to 2026-10-02: 21 of 28 (floor 14). Missing: 2026-09-08,
+  09-11, 09-12, 09-15, 09-20, 09-22 and 09-25.
+- F 2026-09-06, L 2026-09-19, M 2026-09-12. Fit side 76 games (floor 100, fails), graded
+  109 (floor 50, met).
+- Why L is 2026-09-19 and not 2026-09-27: every vintage from 2026-09-19 lacks the build
+  stamp, which was never built (stamp missing, 49 games), and every vintage captured after
+  `809902c6` (2026-09-23T16:54Z, the corpus label keyed by side, a construction-class
+  change on the label path) is post-retrain (56 games). Step D (`8232729f`, 2026-10-03)
+  and the X9 event `d11ed73f` (2026-09-25, the vet team rule) fall after it, so X9 holds 0.
+  Stated null 0; not a present night 0.
+- Outside the window: basis unconfirmed 15 (the 2026-09-04 vintage, all dated 2026-09-05),
+  pre-change ranking basis 205 (the eight 2026-08-20 to 2026-09-03 vintages), predates the
+  column 572, no vintage 1,347. With the window's 185 dated-value, 49 stamp-missing and 56
+  post-retrain games these sum to the cache's 2,429.
+- Inside dated value: basis unrecorded 185 of 185. `parks_short_window`: fit side 0 with,
+  76 without; graded 79 with, 30 without. Dated-value games on vintages before and after
+  `419811bb`'s nightly cadence: 106 and 79. Vintage age: 60 of 185 on a vintage 2 or more
+  days old, game-weighted mean 1.405 days.
+- Leg 1's step A pins were on disk and matched part 9 (`mlb_projections.json` SHA-256
+  `1e9383f3cbcd61e16737d5f8269053f038056f4ce0ce79527bd27cfd6fb33c86`, `war_provider` `ewar_v2`, champion fit key `9f2638f2`); leg 1 did not
+  run because step 1 failed, not for want of them.
+- Not reported, because the store does not carry it: the champion fit key per night.
+
+**What it changes.** Nothing served. `SERVE_STAR_OUT` was never built and nothing is
+proposed. The column stays dark and keeps accruing, 2026 is closed for it, and a 2027 test
+is a new registration under N9, on the fWAR basis the ranking field now reads. No verdict
+permits a second 2026 read.
+
 ## 5d. Schema 4: bullpen availability, schedule rest, weather (pre-registered 2026-09-07)
 
 **Written before the schema bump it describes exists in code and before any
