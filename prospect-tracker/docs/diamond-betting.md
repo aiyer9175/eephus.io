@@ -2984,6 +2984,76 @@ once, each teed to a file before anything else runs, from the harness at `b9bf49
 against this note. A run whose store, anchored window, M or counts differ from this note
 refuses before any number.
 
+### Result (run 2026-10-08, once): FAIL, and `lineup_strength` stays dark
+
+**The run.** Once, on 2026-10-08 from 17:39:02Z to 17:39:25Z in the main tree on host
+NOAH-PC: harness `tools/b4_availability_look.py` at `b9bf49c8` (blob `27520045`), against
+the dated note above, committed alone at `15282680`; incumbent the vintage-mode pricer at
+`6e82acd5`. The full record, with every reported number and each twin's 200 means, is
+`data/_labs/b4_look/5cB_look_record.json`, committed with this block. The store hash at the
+run equals the note's (`f8d6ea17...1b6c`, 59 files), and so do M, both counts and the
+anchored window. Nothing failed to run.
+
+**The slip, disclosed.** The registered first day was 2026-10-05. The fWAR label epoch
+moved it: the owner's E5 waiver (EPOCH-Q1, the 2026-10-02 amendment in
+`docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md` part 3) put both B4 looks after step Z,
+recorded 2026-10-03. The look code landed 2026-10-07 at `b9bf49c8`, a registered look date
+for another family, so 2026-10-08 is the first day after 2026-10-05 on which the pinned
+harness ran under the same window, code and rules. It is the one look.
+
+**Verdict row 2, FAIL**, on three requirements: criterion 1 (t 1.337, under 1.645),
+criterion 4 (the total's mean is negative) and twin B (not beaten). Criteria 2 and 3, twin
+A and leg 1 hold.
+
+**Step 0.** The c = 0 identity check on the 264 window games: 0 mismatches. The vintage
+parity and the forward parity: equal. `_paired_delta` at `6e82acd5` uses the n divisor and
+differs from the written form, so the inline n-1 form ran. Both arms took
+`_lab_runline_split` of the anchored fit window. `_vintage_cut_index`'s cut at the run is
+2026-08-01, the governing split.
+
+**Step 1.** Present nights 21 of 28. F 2026-09-08, L 2026-09-27, M 2026-09-17 (written
+before the fit). Fit side 120 games, graded 83. The row builder skipped no game.
+
+**Step 2.** c = 0.340946 runs per standard deviation (standard error 0.207326), `xbar_fit`
+0.020707, on 240 fit-side rows.
+
+**Leg 2, on the 83 graded games** (incumbent loss minus candidate loss, n-1 divisor):
+
+| Criterion | Mean | sd | t | lb95 | Result |
+|---|---|---|---|---|---|
+| 1. Moneyline Brier | 0.008593 | 0.058536 | 1.337 | -0.001976 | FAIL (t < 1.645) |
+| 2. Moneyline log loss | 0.019256 | 0.121925 | 1.439 | -0.002759 | holds (mean >= 0) |
+| 3. Sign | c = 0.340946 | | | | holds (c > 0) |
+| 4. Total, absolute error | -0.069563 | 0.378039 | -1.676 | -0.137822 | FAIL (mean < 0) |
+
+**The twins** (the candidate's criterion 1 mean against 200 replicates each):
+- Twin A (`random.Random(k)`): 190th smallest mean 0.004256; the candidate's mean exceeds
+  197 of the 200. Beaten.
+- Twin B (`random.Random(200 + k)`): 190th smallest mean 0.012382; the candidate's mean exceeds
+  77 of the 200. Not beaten. No club's value is constant within either half.
+
+**Leg 1, CONTAMINATED** (season-to-date features; it can only fail the candidate): each
+club's season-end value from the 2026-09-26 vintage, all 30 clubs, none excluded; the
+forward incumbent split at 2026-08-03 (1,682 fit-half games, 3,364 rows; 747 eval games).
+c1 = 0.008928 (standard error 0.054733); forward-eval paired Brier mean 0.0000377 (t
+0.702). Silent: the mean is positive and c1 is positive.
+
+**Reported, never qualifying.**
+- The `z_off` arm: slope 0.136574 (standard error 0.209680); graded paired Brier mean
+  0.005548 (t 2.076).
+- The correlation of `z_lineup_strength` with `z_off`, from features only: 0.518 on the
+  fit side, 0.558 on the graded side.
+- The runline: the two tails' log loss sum, mean 0.032300 (t 1.396); Brier at home -1.5,
+  mean 0.010423 (t 1.974); Brier at away -1.5, mean 0.003338 (t 0.480).
+- RMS of candidate minus incumbent `p_home` over the graded games 0.0694; sqrt(n) x RMS
+  0.632.
+- Step M landed on 2026-10-03 (`a4bd70e8`), after every vintage that prices a window game;
+  the post-retrain bucket holds 0 window games.
+
+**What it changes.** Nothing served. `SERVE_LINEUP_STRENGTH` was never built and nothing
+is proposed. The column stays dark and keeps accruing, 2026 is closed for it, and a 2027
+test is a new registration under N9. There is no second read on 2026 data.
+
 ### 5c-C. The B4 availability gate: `star_out`, look 2026-10-05 (drafted 2026-09-11, revised 2026-09-16)
 
 **Standing.** This is the gate section rule 1 requires for `star_out`. It was drafted on
