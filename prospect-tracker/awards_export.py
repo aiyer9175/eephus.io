@@ -70,13 +70,17 @@ proj_below get no rows at all while awards_core.proj_blocked_on(S) is set
 label season whose registered looks are open. Nothing here groups a realized
 number by FV, eFV or consensus band or reads the realized FV anchor.
 
-THE WINNERS FILE. data/_labs/awards/award_winners.json (AWARDS_4) is read when
-present, in this shape: {"fetched_at", "seasons_covered": [...], "rows":
-[{"award": "MVP"|"CY"|"ROY"|"MOY", "league": "AL"|"NL", "season", "winner":
-{"person_id", "name", "team_id"}|null, "finalists": [{"person_id", "name",
-"team_id"}], "finalists_announced": "YYYY-MM-DD"|null, "announced":
-"YYYY-MM-DD"|null}]}. Manager recipients are people; the comparison joins on
-the club through the team id.
+THE WINNERS FILE. data/_labs/awards/award_winners.json (AWARDS_4, written by
+tools/award_winners_ingest.py from MLB's StatsAPI) is read when present, in this
+shape: {"fetched_at", "source", "copyright", "seasons": {"<S>": {"<StatsAPI award
+id>": {"person_id", "name", "team_id", "team_code", "date", "votes"?,
+"finalists"?, "finalists_announced"?}}}}, the award ids of STATSAPI_AWARD_IDS.
+winner_rows() turns it into one row per award, league and season; a season in the
+file is a closed one, so its writers' block is status final. Manager recipients
+are people; the comparison joins on the club through the team id. The rule's
+place of the writers' 1st is read on the rule's ballot (the BBWAA length,
+awards_core.BALLOT_RULES): past it, or off the pool, the place is null, which the
+page prints as outside the rule's ballot.
 
 THE PIPELINE. run_monthly's daily step d10h and monthly step 6b7f call
 export() through run_monthly._export_awards_board, which files the health row
@@ -166,6 +170,13 @@ MGMT_FAMILIES = ("pitching_change", "pinch_hit", "pinch_run", "intentional_walk"
 SHORT_SEASON_NOTE = "a {g}-game season"
 
 WRITERS_PENDING = "Writers' vote: not announced yet."
+#: StatsAPI award id -> (award, league), the ids of tools/award_winners_ingest.py.
+STATSAPI_AWARD_IDS = {
+    "ALMVP": ("MVP", "AL"), "NLMVP": ("MVP", "NL"),
+    "ALCY": ("CY", "AL"), "NLCY": ("CY", "NL"),
+    "ALROY": ("ROY", "AL"), "NLROY": ("ROY", "NL"),
+    "ALMOY": ("MOY", "AL"), "NLMOY": ("MOY", "NL"),
+}
 
 
 class AwardsRefusal(RuntimeError):
@@ -413,6 +424,7 @@ class _Ctx:
         self.proj = inp.data_json("mlb_projections.json", required=False) or {}
         self.registry_doc = inp.data_json("model_registry.json", required=False) or {}
         self.winners = inp.labs_json("award_winners.json", required=False)
+        self.winner_list = winner_rows(self.winners)
         self._worlds: dict = {}
         #: The rule_place race (2027 on): where the nightly vintages live, and tonight's
         #: record before it is written (so the race block carries tonight's point).
@@ -806,6 +818,36 @@ def _decorate(ctx: _Ctx, w: dict, award: str, rows: list) -> list:
     return out
 
 
+def winner_rows(doc) -> list:
+    """The winners file as rows: [{"award", "league", "season", "winner": {"person_id",
+    "name", "team_id", "team_code"}, "finalists": [...], "finalists_announced",
+    "announced"}], one per award id and season, seasons ascending."""
+    out = []
+    for s_key, by_id in sorted(((doc or {}).get("seasons") or {}).items(), key=lambda kv: int(kv[0])):
+        for aid, rec in (by_id or {}).items():
+            al = STATSAPI_AWARD_IDS.get(str(aid))
+            if al is None or not isinstance(rec, dict):
+                continue
+            win = None
+            if rec.get("person_id") is not None:
+                win = {k: rec.get(k) for k in ("person_id", "name", "team_id", "team_code")}
+            out.append({"award": al[0], "league": al[1], "season": int(s_key), "winner": win,
+                        "finalists": list(rec.get("finalists") or []),
+                        "finalists_announced": rec.get("finalists_announced"),
+                        "announced": rec.get("date")})
+    return out
+
+
+def ballot_place(award: str, full_top: list, wid):
+    """The rule's place of the row keyed wid on the rule's ballot (the BBWAA length
+    of awards_core.BALLOT_RULES), or None past the ballot or off the pool."""
+    if wid is None:
+        return None
+    n = A.BALLOT_RULES[award]["n"]
+    place = next((r["rank"] for r in full_top or [] if _row_key(r) == wid), None)
+    return place if place is not None and place <= n else None
+
+
 def _writers(ctx: _Ctx, award: str, lg: str, S: int, full_top: list) -> dict:
     rec = _winner_row(ctx, award, lg, S)
     out = {"status": "pending", "announce_label": WRITERS_PENDING, "finalists": [],
@@ -820,15 +862,14 @@ def _writers(ctx: _Ctx, award: str, lg: str, S: int, full_top: list) -> dict:
     if win:
         wid = _winner_id(ctx, award, win)
         out["status"] = "final"
+        out["announce_label"] = None
         out["winner"] = {"id": wid, "name": win.get("name")}
-        out["rule_place_of_winner"] = next((r["rank"] for r in full_top if _row_key(r) == wid), None)
+        out["rule_place_of_winner"] = ballot_place(award, full_top, wid)
     return out
 
 
 def _winner_row(ctx: _Ctx, award, lg, S):
-    if not ctx.winners:
-        return None
-    for r in ctx.winners.get("rows") or []:
+    for r in ctx.winner_list:
         if (str(r.get("award")) == award and str(r.get("league")) == lg
                 and int(r.get("season") or 0) == int(S)):
             return r
@@ -837,7 +878,7 @@ def _winner_row(ctx: _Ctx, award, lg, S):
 
 def _winner_id(ctx: _Ctx, award: str, person: dict):
     if award == "MOY":
-        code = ctx.abbrev.get(int(person.get("team_id") or 0))
+        code = ctx.abbrev.get(int(person.get("team_id") or 0)) or person.get("team_code")
         return "c" + str(_club(code) or "").lower() if code else None
     pid = person.get("person_id")
     return int(pid) if pid is not None else None
@@ -1333,9 +1374,7 @@ def _vote_table(ctx: _Ctx, shard_firsts: dict, built_full: dict) -> list:
                 rec = _winner_row(ctx, award, lg, S)
                 win = rec.get("winner") if rec else None
                 wid = _winner_id(ctx, award, win) if win else None
-                place = None
-                if wid is not None and full is not None:
-                    place = next((r["rank"] for r in full["top"] if _row_key(r) == wid), None)
+                place = ballot_place(award, (full or {}).get("top"), wid)
                 g = A.scheduled_games(S)
                 rows.append({
                     "season": S, "award": award, "league": lg, "rule_first": first,
@@ -1462,9 +1501,7 @@ def _frozen_record(ctx: _Ctx, labs: Path, S: int):
 
 
 def _finalists_date(ctx: _Ctx, S: int):
-    if not ctx.winners:
-        return None
-    dates = [str(r.get("finalists_announced")) for r in ctx.winners.get("rows") or []
+    dates = [str(r.get("finalists_announced")) for r in ctx.winner_list
              if int(r.get("season") or 0) == S and r.get("finalists_announced")]
     return min(dates) if dates else None
 
@@ -1592,7 +1629,7 @@ def _eval_doc(ctx: _Ctx, cur: dict, i1: dict, copies: dict, labs: Path, generate
     rook = {"status": "no winners file", "n_winners": None, "n_pass": None, "rows": []}
     if ctx.winners:
         rows = []
-        for r in ctx.winners.get("rows") or []:
+        for r in ctx.winner_list:
             if r.get("award") != "ROY" or not r.get("winner"):
                 continue
             S = int(r.get("season") or 0)
@@ -1888,7 +1925,7 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
             for a, by in cur["awards"].items() for lg, blk in by.items()}
     win = ctx.winners or {}
     msg = (f"{n_rows} candidate rows for {S}; award_winners.json "
-           + (f"fetched {win.get('fetched_at')}, seasons {_span(win.get('seasons_covered'))}"
+           + (f"fetched {win.get('fetched_at')}, seasons {_span(win.get('seasons'))}"
               if win else "absent"))
     log(f"  awards: {msg}; wrote {len(files)} files to {out}")
     return {"ok": True, "reason": None, "message": msg, "n_rows": n_rows, "out_dir": str(out),

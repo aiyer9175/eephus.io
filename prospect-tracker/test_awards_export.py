@@ -720,20 +720,24 @@ def test_the_winners_file_feeds_the_writers_line_the_vote_table_and_the_rookie_c
     club = cands["pools"]["al-moy"]["rows"][2][0][1:].upper()
     team_id = next(int(k) for k, v in _load(fresh.cache / "team_abbrev_map.json").items()
                    if A._club_code(v) == club)
-    winners = {"fetched_at": "2026-11-20", "seasons_covered": [SEASON], "rows": [
-        {"award": "ROY", "league": "AL", "season": SEASON,
-         "winner": {"person_id": win["mlbam"], "name": win["name"], "team_id": 0},
-         "finalists": [{"person_id": r["mlbam"], "name": r["name"], "team_id": 0} for r in doc["awards"]["ROY"]["AL"]["top"][:3]],
-         "finalists_announced": "2026-10-01", "announced": "2026-10-02"},
-        {"award": "MOY", "league": "AL", "season": SEASON,
-         "winner": {"person_id": 1, "name": "A Manager", "team_id": team_id},
-         "finalists": [], "finalists_announced": None, "announced": "2026-11-18"}]}
+    # The shape tools/award_winners_ingest.py writes: seasons -> StatsAPI award id -> record,
+    # with the optional finalists keys a later ingest may add.
+    winners = {"fetched_at": "2026-11-20", "source": {"id": "awards_statsapi"}, "copyright": "c",
+               "seasons": {str(SEASON): {
+                   "ALROY": {"person_id": win["mlbam"], "name": win["name"], "team_id": 0,
+                             "team_code": None, "date": "2026-10-02",
+                             "finalists": [{"person_id": r["mlbam"], "name": r["name"], "team_id": 0}
+                                           for r in doc["awards"]["ROY"]["AL"]["top"][:3]],
+                             "finalists_announced": "2026-10-01"},
+                   "ALMOY": {"person_id": 1, "name": "A Manager", "team_id": team_id,
+                             "team_code": None, "date": "2026-11-18"}}}}
     (fresh.labs / "award_winners.json").write_text(json.dumps(winners), encoding="utf-8")
     res = fresh.export()
     assert res["ok"] and "fetched 2026-11-20" in res["message"]
     doc = fresh.read("awards.json")
     w = doc["awards"]["ROY"]["AL"]["writers"]
     assert w["status"] == "final" and w["winner"] == {"id": win["mlbam"], "name": win["name"]}
+    assert w["announce_label"] is None
     assert w["rule_place_of_winner"] == 2 and len(w["finalists"]) == 3
     wm = doc["awards"]["MOY"]["AL"]["writers"]
     assert wm["winner"]["id"] == "c" + club.lower() and wm["rule_place_of_winner"] == 3
@@ -748,3 +752,31 @@ def test_the_winners_file_feeds_the_writers_line_the_vote_table_and_the_rookie_c
     assert fz["ok"]
     rec = _load(fresh.labs / f"frozen_{SEASON}.json")
     assert rec["freeze"]["finalists_announced"] == "2026-10-01" and rec["freeze"]["after_finalists"] is True
+
+
+def test_the_winners_place_is_read_on_the_rules_ballot():
+    """rule_place_of_winner and rule_place_of_writers_first read the rule's ballot (the
+    BBWAA length): a winner past it, or off the pool, is null, outside the rule's ballot."""
+    top = [{"rank": i, "mlbam": 1000 + i} for i in range(1, 13)]
+    assert E.ballot_place("MVP", top, 1004) == 4
+    assert E.ballot_place("MVP", top, 1010) == 10
+    assert E.ballot_place("MVP", top, 1011) is None
+    assert E.ballot_place("CY", top, 1005) == 5 and E.ballot_place("CY", top, 1006) is None
+    assert E.ballot_place("ROY", top, 1003) == 3 and E.ballot_place("ROY", top, 1004) is None
+    assert E.ballot_place("ROY", top, 99) is None and E.ballot_place("ROY", top, None) is None
+    clubs = [{"rank": 1, "club": "TB"}, {"rank": 2, "club": "HOU"}, {"rank": 3, "club": "NYY"},
+             {"rank": 4, "club": "SEA"}]
+    assert E.ballot_place("MOY", clubs, "cnyy") == 3 and E.ballot_place("MOY", clubs, "csea") is None
+
+
+def test_winner_rows_read_the_ingest_shape():
+    doc = {"seasons": {"2012": {"ALMVP": {"person_id": 5, "name": "B", "team_id": 116,
+                                          "team_code": "DET", "date": "2012-11-15"}},
+                       "2011": {"NLMOY": {"person_id": 7, "name": "M", "team_id": 109,
+                                          "team_code": "ARI", "date": "2011-11-16"},
+                                "XXMVP": {"person_id": 9}}}}
+    rows = E.winner_rows(doc)
+    assert [(r["season"], r["award"], r["league"]) for r in rows] == [(2011, "MOY", "NL"), (2012, "MVP", "AL")]
+    assert rows[1]["winner"] == {"person_id": 5, "name": "B", "team_id": 116, "team_code": "DET"}
+    assert rows[1]["announced"] == "2012-11-15" and rows[1]["finalists"] == []
+    assert E.winner_rows(None) == [] and E.winner_rows({}) == []

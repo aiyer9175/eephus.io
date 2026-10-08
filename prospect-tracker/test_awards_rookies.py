@@ -382,8 +382,9 @@ def test_tracked_file_is_small_and_byte_stable():
 
 def _roy_recipients(doc) -> list[tuple[int, int]]:
     """(season, mlbam) for every Rookie of the Year recipient found in award_winners.json,
-    whatever its shape: records that carry a season, a person id and an award tag that
-    says ROY (on the record or on an enclosing key)."""
+    whatever its shape: records that carry a season (on the record or as an enclosing
+    four-digit key, the shape tools/award_winners_ingest.py writes), a person id and an
+    award tag that says ROY (on the record or on an enclosing key)."""
     out = []
 
     def _pid(rec):
@@ -394,11 +395,11 @@ def _roy_recipients(doc) -> list[tuple[int, int]]:
         p = rec.get("person") or rec.get("player") or {}
         return p.get("id") if isinstance(p, dict) and isinstance(p.get("id"), int) else None
 
-    def walk(node, tags):
+    def walk(node, tags, outer=None):
         if isinstance(node, dict):
             own = " ".join(str(node.get(k, "")) for k in ("award", "award_id", "id", "name"))
             here = tags + [own]
-            season = node.get("season")
+            season = node.get("season", outer)
             try:
                 season = int(season)
             except (TypeError, ValueError):
@@ -407,10 +408,11 @@ def _roy_recipients(doc) -> list[tuple[int, int]]:
             if season and pid and any("ROY" in t.upper() or "ROOKIE" in t.upper() for t in here):
                 out.append((season, pid))
             for k, v in node.items():
-                walk(v, here + [str(k)])
+                key = str(k)
+                walk(v, here + [key], int(key) if key.isdigit() and len(key) == 4 else season)
         elif isinstance(node, list):
             for v in node:
-                walk(v, tags)
+                walk(v, tags, outer)
     walk(doc, [])
     return sorted(set(out))
 
