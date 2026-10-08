@@ -2952,7 +2952,8 @@ def build_news(data: dict | None = None) -> str:
     sub = ("MLB and MiLB transactions · eFV moves · FA · last 30 days" if live
            else "debuts, trades, level moves, IL, eFV changes, FA signings and options")
     how_mlb = ('<li>MLB rows are trades, IL placements and major-league signings from the '
-               'MLB StatsAPI transaction log; each quotes its StatsAPI text.</li>') if live else ""
+               f'{_gl("mlb_transaction_log", "MLB StatsAPI transaction log")}; each quotes its '
+               'StatsAPI text.</li>') if live else ""
     body = (
         '<div class="news-app">'
         f'<div class="section-head"><h1>{_masthead_icon("news")}{NEWS_LABEL}</h1>'
@@ -3753,8 +3754,9 @@ def build_this_day(data: dict | None = None) -> str:
 
     label = HISTORY_LABEL_LIVE if live else "Today in Prospect History"
     if live:
-        mlb_li = (f'<li>MLB trades and major-league signings come from the MLB StatsAPI transaction '
-                  f'log (the earliest on this date: {mlb_first}); each row&#39;s title quotes its text.</li>'
+        mlb_li = (f'<li>MLB trades and major-league signings come from the '
+                  f'{_gl("mlb_transaction_log", "MLB StatsAPI transaction log")} (the earliest on this '
+                  f'date: {mlb_first}); each row&#39;s title quotes its text.</li>'
                   if mlb_first else
                   '<li>The MLB StatsAPI transaction log holds no trade or major-league signing on this date.</li>')
     else:

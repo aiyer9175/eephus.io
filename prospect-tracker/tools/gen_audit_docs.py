@@ -184,7 +184,7 @@ _SHARED_ASSETS = {
 _ROUTE_NOTES = {
     "index.html": "Home: brand hero + module cards + wire/ticker",
     "news/index.html": "News feed page (de-noised event wire)",
-    "history/index.html": "Today in Prospect History: debuts, trades, signings and IL moves on today's MM-DD",
+    "history/index.html": "On This Day: debuts, MLB and prospect trades, signings and IL moves on today's MM-DD",
     "articles/index.html": "article card grid, newest first",
     "articles/{a['slug']}/index.html": "one page per content/articles/*.md",
     "forums/index.html": "account/forum shell; Supabase-backed, inert without assets/eephus-config.js",

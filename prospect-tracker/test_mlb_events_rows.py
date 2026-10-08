@@ -268,7 +268,9 @@ def _history(monkeypatch, live: bool) -> str:
 
 def test_history_flag_off_is_the_prospect_page(monkeypatch):
     html = _history(monkeypatch, live=False)
-    assert "Today in Prospect History - " in html and "On This Day" not in html
+    h1 = re.search(r"<h1>(.*?)</h1>", html, re.S).group(1)
+    assert "Today in Prospect History - " in h1 and "On This Day" not in h1
+    assert "<title>Today in Prospect History - eephus.io</title>" in html
     assert "<h2>Signings &amp; free agency on this day</h2>" in html
     assert "Pro Kid, Vet A" not in html and "StatsAPI" not in html
     assert html.count('class="otd-row otd-trade"') == 1, "the graduate's own trade row only"
@@ -393,3 +395,26 @@ def test_fa_flag_on_draws_the_column_sorts_and_folds(browser, server):
     finally:
         page.close()
     assert not errors, errors
+
+
+def test_on_this_day_names_the_page_on_every_built_page():
+    """The flip renames /history/ everywhere it is named (site-pass plan 3.5):
+    footers, the homepage kicker, the Library row and the page itself."""
+    if not M.MLB_EVENTS_LIVE:
+        pytest.skip("the flag is off: the page keeps its prospect name")
+    pages = [ROOT / "404.html", ROOT / "index.html"] + [
+        p for p in sorted(ROOT.glob("*/**/index.html"))
+        if not p.relative_to(ROOT).as_posix().startswith((".", "_"))
+        and p.relative_to(ROOT).as_posix().split("/")[0] not in {"node_modules", "data", "docs", "tools", "branding"}]
+    named = 0
+    for p in pages:
+        if not p.exists():
+            continue
+        html = p.read_text(encoding="utf-8")
+        assert "Today in Prospect History" not in html, p.relative_to(ROOT)
+        named += '<a href="/history/">On This Day</a>' in html
+    assert named >= 20, named
+    assert '<div class="kicker"><h2>On This Day</h2>' in (ROOT / "index.html").read_text(encoding="utf-8")
+    gl = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    ids = {e["id"] for e in gl["entries"]}
+    assert {"mlb_transaction_log", "il_days_3y"} <= ids

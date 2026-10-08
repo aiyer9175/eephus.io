@@ -1,5 +1,5 @@
 {
- "version": "2026-10-07",
+ "version": "2026-10-08",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -4872,7 +4872,7 @@
     "ticker"
    ],
    "priority": 83,
-   "definition": "MLB News, the homepage event feed and ticker: debuts, promotions, trades, IL moves, real FV changes and free-agency winter events, dated and color-coded by type. FV items are real grade changes only; composite movement scores are not shown as news.",
+   "definition": "The homepage MLB News feed and ticker: MLB and MiLB transactions, debuts, IL moves, eFV changes and FA events, dated, typed by colour and glyph.",
    "seeAlso": [
     "stock_arrow",
     "first_seen_dates"
@@ -4882,6 +4882,51 @@
    ],
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "il_days_3y",
+   "term": "IL days (3y)",
+   "category": "fa",
+   "section": "Value & Contracts",
+   "aliases": [
+    "IL days, last three seasons",
+    "IL 3y"
+   ],
+   "priority": 60,
+   "definition": "In-season days a free agent spent on the injured list in each of the last three seasons, summed. Descriptive: a record of time missed, not an availability forecast.",
+   "methodology": "Each IL stint counts its days inside Apr 1 to Oct 1 (2020: Jul 23 to Sep 28), ended by the player's next IL move; a stint still open stops at the transaction log's last day. The row details split the total by season.",
+   "seeAlso": [
+    "mlb_transaction_log",
+    "il_10_15_60",
+    "on_il"
+   ],
+   "module": [
+    "fa"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "mlb_transaction_log",
+   "term": "MLB transaction log",
+   "category": "transactions",
+   "section": "Value & Contracts",
+   "aliases": [
+    "StatsAPI transactions",
+    "MLB transactions",
+    "transaction log"
+   ],
+   "priority": 60,
+   "definition": "Every roster move the 30 clubs file with MLB (trades, signings, IL placements and activations, call-ups, options, DFAs, claims, releases), read from the MLB StatsAPI each night. The site keeps one row per player, date and type and prints each description as MLB filed it.",
+   "methodology": "The log on file runs from 2008 and is thin before 2009. A trade is one deal per date and pair of clubs. It feeds the Timeline on an MLB player page, the MLB rows on MLB News and On This Day, and the IL days column on Free Agency. No injury forecast is drawn from it.",
+   "seeAlso": [
+    "wire_ticker",
+    "il_days_3y",
+    "il_10_15_60"
+   ],
+   "module": [
+    "platform"
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "active_pool",

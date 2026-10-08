@@ -66,7 +66,7 @@ payloads are real page traffic and are attributed to every page loading it).
 |---|---|---|---|---|
 | `/` | `build_site.build_home()` | server-rendered | - | Home: brand hero + module cards + wire/ticker |
 | `/news/` | `build_site.build_news()` | server-rendered | `player_links.json` | News feed page (de-noised event wire) |
-| `/history/` | `build_site.build_this_day()` | server-rendered | - | Today in Prospect History: debuts, trades, signings and IL moves on today's MM-DD |
+| `/history/` | `build_site.build_this_day()` | server-rendered | - | On This Day: debuts, MLB and prospect trades, signings and IL moves on today's MM-DD |
 | `/articles/` | `build_site.build_articles_index()` | server-rendered | - | article card grid, newest first |
 | `/articles/<slug>/` | `build_site.build_article_page()` | server-rendered | - | one page per content/articles/*.md |
 | `/forums/` | `build_site.build_forums_index()` | server-rendered | - | account/forum shell; Supabase-backed, inert without assets/eephus-config.js |

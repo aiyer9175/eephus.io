@@ -1023,7 +1023,7 @@
     }
     if (m.prevAav != null) parts.push(g("Prior deal", `${money(m.prevAav)} AAV`));
     const il = ilOn() ? ilOf(m) : null;
-    if (il) parts.push(g("IL days", `${il.total} &middot; ${esc(ilSplit(il))}`));
+    if (il) parts.push(g("IL days", `${il.total} &middot; ${esc(ilSplit(il))}`, "il_days_3y"));
     if (m.thinPlatform) parts.push(g("Thin platform", `${esc(m.thinPlatform)}. Low-confidence projection; the market line inherits it.`, "thin_platform"));
     if ((m.comps || []).length) {
       parts.push(g("Comps", m.comps.slice(0, 3).map(c =>

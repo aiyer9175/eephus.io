@@ -11,8 +11,9 @@ the homepage rail head and ticker tag, the /news/ h1, title and meta, every
 footer link to /news/, the Generate GFX card specs and the Library page-index
 row. The URL stays /news/. PROSPX keeps its own "Prospect news" ribbon (it
 lists prospect events only), so prospx/index.html is exempt from the
-no-old-name check. The claims rule (C9) is pinned too: no descriptive copy
-says the feed carries "MLB transactions" until MLB rows are served."""
+no-old-name check. The claims rule (C9) is pinned too: the descriptive copy
+names MLB transactions now that the Q9_22c flip serves MLB rows (copy rows
+CP-019, CP-020, CP-185, CP-210), and only while the flag is on."""
 from __future__ import annotations
 
 import json
@@ -64,9 +65,10 @@ def test_news_page_head():
     assert "<title>MLB News - eephus.io</title>" in html
     assert re.search(r"</svg>MLB News</h1>", html)
     meta = re.search(r'<meta name="description" content="([^"]*)"', html).group(1)
-    assert meta.startswith("MLB News on eephus.io:")
-    for word in ("prospect", "MLB", "free-agency", "trades"):
-        assert word in meta, f"/news/ meta description lacks {word!r}: {meta}"
+    assert meta == ("MLB and MiLB transactions, debuts, IL moves, eFV changes and FA signings, "
+                    "filterable by type."), meta
+    assert ('<span class="section-sub">MLB and MiLB transactions · eFV moves · FA · last 30 days</span>'
+            in html)
 
 
 def test_every_footer_links_mlb_news():
@@ -106,9 +108,14 @@ def test_ticker_empty_fallback():
 
 
 def test_library_page_index_row():
+    """The Page Index is generated in build_site since LIBRARY_8; its /news/ row
+    names MLB transactions while they are served (CP-210)."""
     js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
-    assert '["/news/", "MLB News", ' in js
     assert '["/news/", "Prospect News"' not in js
+    assert B.PAGE_INDEX_NAMES["/news/"] == NEW
+    assert B.PAGE_INDEX_PURPOSE["/news/"] == "MLB and MiLB transactions, debuts, IL, eFV changes, FA signings"
+    gl = _read("glossary/index.html")
+    assert '["/news/","MLB News","MLB and MiLB transactions, debuts, IL, eFV changes, FA signings"]' in gl
 
 
 def test_prospx_ribbon_keeps_its_name():
@@ -116,11 +123,16 @@ def test_prospx_ribbon_keeps_its_name():
     assert ">Prospect news</span>" in html
 
 
-def test_claims_rule_no_mlb_transactions_yet():
-    """Until MLB rows are served (Q9_22c), no description says so."""
+def test_claims_rule_names_mlb_transactions_once_served():
+    """The flip (Q9_22c) serves MLB rows, so the copy says so; a build with the
+    flag off would say nothing of them (test_mlb_events_rows pins that side)."""
+    import mlb_events
+    assert mlb_events.MLB_EVENTS_LIVE is True
     html = _read("news/index.html")
-    assert "MLB transactions" not in html
+    assert "MLB and MiLB transactions" in html
     gl = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
     entry = next(e for e in gl["entries"] if e.get("id") == "wire_ticker")
-    assert entry["definition"].startswith("MLB News, ")
+    assert entry["definition"] == ("The homepage MLB News feed and ticker: MLB and MiLB transactions, "
+                                   "debuts, IL moves, eFV changes and FA events, dated, typed by colour "
+                                   "and glyph.")
     assert "MLB transactions" not in entry["definition"]

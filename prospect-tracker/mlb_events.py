@@ -74,8 +74,10 @@ DATA = ROOT / "data"
 TX_DIR = ROOT / ".cache" / "mlb_transactions"
 DRAFT_DIR = ROOT / ".cache" / "draft_history"
 
-#: THE flag. False: write only under PREVIEW_DIR. Flipped by Q9_22c in one commit.
-MLB_EVENTS_LIVE = False
+#: THE flag. False: write only under PREVIEW_DIR. Flipped by Q9_22c in one
+#: commit (2026-10-08, after the fWAR label epoch's step Z entry): the builder
+#: fills data/mlb_events/ and the pages serve the MLB rows.
+MLB_EVENTS_LIVE = True
 PREVIEW_DIR = ROOT / ".cache" / "mlb_events" / "preview"
 SERVED_DIR = DATA / "mlb_events"
 
