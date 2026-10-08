@@ -23,6 +23,10 @@ dark, and checks what the pixel work promised on every page it touched:
               the settled page are the same with and without the preference
   pagemiss    the PROSPX player miss draws its card back (PX-20) beside the
               unchanged message
+  pxmark      the PROSPX pages carry one masthead mark, a whole-pixel 44 x 44
+              box; when it is the pixel mark (PB-05, under PIXEL_BRAND) it has
+              no text and every drawn pixel equals the generator's 22 x 22
+              drawing at 2x in the fills the page resolves (0 pixels off)
 
 Pages: /, /prospx/, the PROSPX player miss, /ledger/, the Ledger Method tab
 (finding M09-23 asked for it at 390), /management/, /betting/ and /404.html.
@@ -95,7 +99,15 @@ _MEASURE = r"""
   const probs = Array.from(document.querySelectorAll('.bt-game-probs'));
   const fenced = probs.reduce((n, el) => n + el.querySelectorAll(pixelSel).length, 0);
   const miss = document.querySelector('.cf-miss');
+  const marks = Array.from(document.querySelectorAll('header.header h1 svg.h1-logo')).map((s) => {
+    const b = s.getBoundingClientRect();
+    const fills = {};
+    s.querySelectorAll('path').forEach((p) => { fills[p.getAttribute('class') || ''] = getComputedStyle(p).fill; });
+    return {x: b.left + window.scrollX, y: b.top + window.scrollY, w: b.width, h: b.height,
+            pixel: s.classList.contains('px-mark'), texts: s.querySelectorAll('text').length, fills};
+  });
   return {
+    marks,
     sw: de.scrollWidth, iw: window.innerWidth, theme: de.getAttribute('data-theme'),
     icos, foot, probs: probs.length, fenced,
     probsHtml: probs.map((e) => e.outerHTML).join('\n'),
@@ -170,6 +182,34 @@ def _paint(img, ico: dict, dark: bool) -> str | None:
     return None
 
 
+def _rgb(css: str):
+    nums = [int(float(v)) for v in css[css.index("(") + 1:css.index(")")].split(",")[:3]]
+    return tuple(nums)
+
+
+def _pxmark_off(img, mark: dict) -> str | None:
+    """None when the pixel PROSPX mark on the page equals the generator's
+    drawing at 2x in the page's own fills, else how many pixels are off."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import pixel_brand as PB
+
+    rows = PB.pxmark()
+    scale = int(round(mark["w"])) // len(rows)
+    x0, y0 = int(round(mark["x"])), int(round(mark["y"]))
+    crop = img.convert("RGB").crop((x0, y0, x0 + len(rows) * scale, y0 + len(rows) * scale))
+    off = total = 0
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch == ".":
+                continue
+            want = _rgb(mark["fills"][PB.PXMARK_CLASS[ch]])
+            for dy in range(scale):
+                for dx in range(scale):
+                    total += 1
+                    off += crop.getpixel((x * scale + dx, y * scale + dy)) != want
+    return f"{off} of {total} pixels off the drawing" if off else None
+
+
 def run(base: str, out: Path, pages=PAGES, widths=WIDTHS, themes=THEMES) -> dict:
     from PIL import Image
     from playwright.sync_api import sync_playwright
@@ -237,6 +277,15 @@ def run(base: str, out: Path, pages=PAGES, widths=WIDTHS, themes=THEMES) -> dict
                             ms = m["miss"]
                             if not ms or not ms["cardback"] or "Unknown prospect" not in ms["text"]:
                                 fail.append(f"{tag}: the player miss shows no card back beside its message: {ms}")
+                        if key.startswith("prospx"):
+                            mk = m["marks"]
+                            rec["pxmark"] = [{"w": k["w"], "h": k["h"], "pixel": k["pixel"]} for k in mk]
+                            if len(mk) != 1 or (mk[0]["w"], mk[0]["h"]) != (44, 44):
+                                fail.append(f"{tag}: the PROSPX masthead mark is not one 44 x 44 box: {rec['pxmark']}")
+                            elif mk[0]["pixel"]:
+                                why = "text inside" if mk[0]["texts"] else _pxmark_off(img, mk[0])
+                                if why:
+                                    fail.append(f"{tag}: the pixel PROSPX mark: {why}")
                         report["captures"][tag] = rec
             for key, hashes in probs_html.items():
                 report["fence"][key] = {"variants": len(hashes)}
