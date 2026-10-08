@@ -326,11 +326,12 @@
   function boardHow() {
     return '<details class="arb-how"><summary>How this works</summary><ul>' +
       "<li>Ladder: each remaining season and its token (ARB 1 to 4, PRE-ARB) from the Spotrac club grids.</li>" +
-      "<li>Arb 1: the <span data-gl=\"arb_award_model\">award model</span>, from the prior salary, WAR " +
-      "(fWAR basis; projected for unplayed seasons), age, role, playing time and the latest season's " +
-      "skill metrics, floored at the league minimum.</li>" +
+      "<li>Arb 1: the <span data-gl=\"arb_award_model\">award model</span>, from the prior salary and " +
+      "the platform season, the one before the award: its WAR (fWAR basis; projected when it is unplayed), " +
+      "role, playing time and skill metrics (the latest observed season's when it is unplayed), plus age, " +
+      "floored at the league minimum.</li>" +
       "<li>Arb 2 to 4: the rung before times the median observed raise for its step and prior-salary band, " +
-      "never below a 20% cut or the league minimum. The model did not beat this multiplier.</li>" +
+      "never below a 20% cut or the league minimum. The Model tab says how this compares with the model.</li>" +
       "<li>Pre-arb: the league minimum by rule.</li>" +
       "<li>Each rung raises off the one before, so a later rung carries the earlier rung's error.</li>" +
       "<li>Total remaining = the sum of the ladder, pre-arb minimums included.</li>" +

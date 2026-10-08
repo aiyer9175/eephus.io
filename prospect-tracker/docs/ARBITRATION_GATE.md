@@ -977,3 +977,34 @@ The champion key tuple, the ridge, the smearing, the deflator, the pool, the
 seed, B and every criterion. This repairs the information set to the one the
 section 1 estimand already documents; it is not a refit to a new target, and
 no constant is tuned against the result.
+
+### 13f. Result (scored 2026-10-08, after 13a to 13e were committed)
+
+`tools/arb_gate_a.py --write --B 1200 --frame platform`, then the same-day
+twin with `--frame award`. Pool 1,069 rows, 596 players, class years
+2022-2026, 4 folds (1,043 rows on 2026-08-09). Read from
+`data/arbitration_eval.json`.
+
+| step | frame | n | MdAPE model | MdAPE bar | gain | MDE95 | x floor | A3 p95 | A5 delta | verdict |
+|---|---|---|---|---|---|---|---|---|---|---|
+| arb-1 | platform | 421 | 0.1844 | 0.3394 | +0.1550 | 0.0433 | 3.58 | +0.0841 | -0.0040 | PASS |
+| arb-2+ | platform | 391 | 0.0990 | 0.1815 | +0.0825 | 0.0270 | 3.05 | +0.0121 | +0.0012 | PASS |
+| arb-1 | award, same-day twin | 421 | 0.2396 | 0.4363 | +0.1967 | 0.0486 | 4.05 | +0.0795 | -0.0080 | PASS |
+| arb-2+ | award, same-day twin | 391 | 0.1623 | 0.1815 | +0.0192 | 0.0270 | 0.71 | -0.0072 | -0.0026 | NULL |
+| arb-1 | award, 2026-08-09 hindcast | 409 | 0.2545 | 0.4284 | +0.1739 | 0.0529 | 3.29 | +0.0836 | +0.0185 | PASS |
+| arb-2+ | award, 2026-08-09 hindcast | 379 | 0.1580 | 0.1812 | +0.0232 | 0.0278 | 0.83 | -0.0101 | +0.0134 | NULL |
+
+A6 on the 2026-08-09 loader (section 14 repairs it): ours 0.1734 against
+Swartz 0.0815, n 262, a 2.13x gap (twin 2.71x; hindcast 2.66x, n 261), the
+paired MdAPE gap -0.0918 with a player-clustered interval of -0.1277 to
+-0.0656. Still a loss.
+
+Reading, without upgrading it. Arbitration pays for the season before the
+award, and the frame that reads that season is the better model at both
+steps: the arb-1 model error falls from 0.2396 to 0.1844 on identical rows,
+and arb-2 and later go from a NULL (0.71x) to a PASS (3.05x). The look-ahead
+did not flatter the model; it fed it the wrong season. Under 13d the board
+now serves the platform-frame champion at arb-1, and the banded multiplier
+keeps serving arb-2 and later until a change of its own switches it. The
+2026-08-09 block is `hindcast_2026_08_09_award_frame` and the twin is
+`award_frame_same_day_twin`; neither adjudicates anything.

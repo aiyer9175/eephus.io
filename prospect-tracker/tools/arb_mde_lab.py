@@ -61,19 +61,15 @@ SEED = 20260808
 OUT_PATH = ROOT / "data" / "arb_mde_floor.json"
 
 
-def load_pool():
-    """The scored pool with the projectable career features attached."""
+def load_pool(frame: str = "award"):
+    """The scored pool with the projectable career features attached.
+
+    `frame` is arb_model's feature frame (docs/ARBITRATION_GATE.md section
+    13). The default stays "award" so this floor lab reproduces
+    data/arb_mde_floor.json; tools/arb_gate_a.py passes its own."""
     panel_doc = A.build_panel()
     rows = panel_doc["rows"]
-    sc = A.scored_rows(rows)
-    war_by: dict[int, dict[int, float]] = {}
-    for r in rows:
-        war_by.setdefault(r["mlbam"], {})[r["season"]] = r["war"]
-    for r in sc:
-        hist = war_by.get(r["mlbam"], {})
-        r["war3"] = round(sum(hist.get(r["season"] - k, 0.0) for k in (0, 1, 2)), 2)
-        r["career_war"] = round(
-            sum(v for y, v in hist.items() if y <= r["season"]), 2)
+    sc = Mod.attach_frame(A.scored_rows(rows), rows, frame)
     metrics = M.metric_panel(2018, 2026)
     return sc, metrics
 

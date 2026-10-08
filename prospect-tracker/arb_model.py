@@ -73,6 +73,58 @@ CHAMPION_KEYS = (
 )
 CEILING_KEYS = CHAMPION_KEYS + ("hr", "sb", "sv", "hld")
 
+# WHICH SEASON THE PRODUCTION BLOCK IS READ FROM (docs/ARBITRATION_GATE.md
+# section 13, registered 2026-10-08). "platform" reads the season before the
+# award, the last one complete when the award is set, which is the section 1
+# estimand. "award" is the frame GATE A was first scored on (2026-08-09): it
+# read the award season itself, unplayed at award time, and is kept only so
+# that hindcast stays reproducible.
+FRAMES = ("platform", "award")
+FRAME = "platform"
+PRODUCTION_FIELDS = ("war", "pa", "ipouts", "gs")
+
+
+def attach_frame(rows: list[dict], panel_rows: list[dict],
+                 frame: str = FRAME) -> list[dict]:
+    """Copies of `rows` with the production block set for `frame`.
+
+    Both frames attach `war3` (three seasons ending at the frame's last
+    season) and `career_war` (through it). The platform frame also replaces
+    war / pa / ipouts / gs with the panel's values for season s - 1 (0 when
+    the player has no MLB season there) and keys the metric block on s - 1
+    through `metrics_season`, and `award_war` keeps the row's own
+    completed-season WAR for the deflator, which section 13 leaves unchanged.
+    The input rows are
+    not mutated, so a caller can still publish award-season WAR beside them.
+    """
+    if frame not in FRAMES:
+        raise ValueError("unknown arbitration feature frame %r" % (frame,))
+    by: dict[int, dict[int, dict]] = {}
+    for r in panel_rows:
+        by.setdefault(int(r["mlbam"]), {})[int(r["season"])] = r
+    out = []
+    for r in rows:
+        hist = by.get(int(r["mlbam"]), {})
+        s = int(r["season"])
+        x = dict(r)
+        last = s if frame == "award" else s - 1
+        if frame == "platform":
+            # Set on this frame only, so the award frame reproduces the
+            # 2026-08-09 arithmetic exactly (its A3 control permuted the WAR
+            # the deflator read).
+            x["award_war"] = r.get("war")
+            src = hist.get(last) or {}
+            x["war"] = round(float(src.get("war") or 0.0), 2)
+            for k in ("pa", "ipouts", "gs"):
+                x[k] = int(src.get(k) or 0)
+            x["metrics_season"] = last
+        w = {y: float(p.get("war") or 0.0) for y, p in hist.items()}
+        x["war3"] = round(sum(w.get(last - k, 0.0) for k in (0, 1, 2)), 2)
+        x["career_war"] = round(sum(v for y, v in w.items() if y <= last), 2)
+        x["feature_frame"] = frame
+        out.append(x)
+    return out
+
 
 def _f(v, default=0.0):
     try:
@@ -143,7 +195,10 @@ def fit_deflator(rows: list[dict], *, base_year: int) -> dict[int, float]:
     cols = []
     y = []
     for r in rows:
-        v = [1.0, _f(r.get("war")), _f(r.get("war")) ** 2]
+        # The row's own completed-season WAR on either frame (section 13b:
+        # the deflator is not changed by the platform frame).
+        w = _f(r.get("award_war", r.get("war")))
+        v = [1.0, w, w ** 2]
         v += [1.0 if int(r["arb_year"]) == s else 0.0 for s in steps[1:]]
         v += [1.0 if int(r["season"]) == yr else 0.0 for yr in years[1:]]
         cols.append(v)
@@ -385,7 +440,10 @@ def fit_stage2(rows, metrics_by, defl, keys=CHAMPION_KEYS):
 
 
 def _mx(metrics_by, row):
-    return (metrics_by.get(int(row["season"])) or {}).get(int(row["mlbam"]))
+    # `metrics_season` is the platform season on the platform frame; a row
+    # without it reads its own season, which is the award frame.
+    yr = row.get("metrics_season", row["season"])
+    return (metrics_by.get(int(yr)) or {}).get(int(row["mlbam"]))
 
 
 def predict(row, metrics_by, defl, s1, s2):
@@ -460,8 +518,8 @@ def forward_chain(rows, metrics_by, *, seasons, keys=CHAMPION_KEYS,
             rec["b1"] = baseline_b1(r, mult, defl)
             # THE SERVED ESTIMATOR, which is what the board actually shows and
             # therefore what the history must score. GATE A selects it per step:
-            # the model for arb-1 (PASSED at 3.25x its floor), the empirical
-            # banded multiplier for arb2+ (the model is a NULL there). Scoring
+            # the model for arb-1 (a PASS), the empirical banded multiplier for
+            # arb2+ (docs/ARBITRATION_GATE.md section 13d). Scoring
             # the history against something the board does not serve would make
             # the accuracy panel describe a different product.
             rec["served"] = (rec["champion"] if step == 1

@@ -233,7 +233,8 @@ def _repair_status_order(raw: list, ladder: list, base: dict) -> tuple[list, boo
 
 
 def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
-                s1=None, s2=None, defl=None, banded=None) -> dict:
+                s1=None, s2=None, defl=None, banded=None,
+                frame: str | None = None) -> dict:
     """The projections board: every player with remaining arbitration years,
     with the ladder PRICED by chaining the model forward.
 
@@ -242,10 +243,14 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
     later rung inherits the earlier rung's error, which is why the interval has
     to widen down the ladder rather than being a per-year residual quantile
     applied independently.
+
+    `frame` is arb_model's feature frame (docs/ARBITRATION_GATE.md section
+    13); it must be the frame `s1` was fit on.
     """
     import arb_dataset as A
     import arb_model as Mod
 
+    frame = frame or Mod.FRAME
     status = A.spotrac_status_by_mlbam()
     proj = _projected_war()
     links = _link_targets()
@@ -256,9 +261,12 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
     # below is usually an unscored pre-arb season, so a forward rung used to
     # read war3 = career_war = 0 through features()' default.
     war_by: dict[int, dict[int, float]] = {}
+    # Every observed panel row, for the platform season's PA, outs and starts.
+    obs_by: dict[int, dict[int, dict]] = {}
     for r in sorted(panel_rows, key=lambda x: x["season"]):
         by_player[int(r["mlbam"])] = r
         war_by.setdefault(int(r["mlbam"]), {})[int(r["season"])] = float(r.get("war") or 0.0)
+        obs_by.setdefault(int(r["mlbam"]), {})[int(r["season"])] = r
     last_obs = max((int(r["season"]) for r in panel_rows), default=season - 1)
     lm = A.league_min_by_year()
 
@@ -330,33 +338,46 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             if prior is None and step == 1:
                 prior = lm.get(int(y) - 1) or (lm.get(max(lm)) if lm else None)
             row["prior_salary"] = prior
-            row["war"] = war if war is not None else base.get("war")
-            # The forward row is built the way a training row is: war3 is the
-            # award season plus the two before it and career_war runs through
-            # the award season inclusive, realized WAR where it exists and the
-            # projection after it. Age advances with the season.
-            row["war3"] = round(sum(_war_at(int(y) - k) for k in (0, 1, 2)), 2)
+            # The forward row is built the way a training row is, on the
+            # model's own frame. Platform frame (section 13): production is
+            # season y - 1's, realized where it has been played and projected
+            # after it, with the latest observed season's PA, outs and starts
+            # as the stated proxy past it. Award frame (the 2026-08-09
+            # hindcast): production is season y's. war3 is three seasons
+            # ending at that season and career_war runs through it. Age
+            # advances with the season on both.
+            last = int(y) - 1 if frame == "platform" else int(y)
+            if frame == "platform":
+                row["war"] = round(_war_at(last), 2)
+                src = (obs_by.get(mlbam) or {}).get(last) if last <= last_obs else base
+                for fk in ("pa", "ipouts", "gs"):
+                    row[fk] = int((src or {}).get(fk) or 0)
+            else:
+                row["war"] = war if war is not None else base.get("war")
+            row["war3"] = round(sum(_war_at(last - k) for k in (0, 1, 2)), 2)
             row["career_war"] = round(
-                sum(v for yr, v in hist.items() if yr <= min(int(y), last_obs))
-                + sum(_war_at(yr) for yr in range(last_obs + 1, int(y) + 1)), 2)
+                sum(v for yr, v in hist.items() if yr <= min(last, last_obs))
+                + sum(_war_at(yr) for yr in range(last_obs + 1, last + 1)), 2)
             if base.get("age") is not None:
                 row["age"] = float(base["age"]) + (int(y) - base_season)
-            # Training reads hem/sem/rem from the award season itself, which
-            # has not been played. The latest observed season's block is the
-            # stated proxy; keying on the future season found nothing and
-            # every forward rung defaulted to 100.
-            rung_metrics = {int(y): (metrics or {}).get(base_season) or {}}
+            # hem/sem/rem: the frame's season where it has been observed,
+            # else the latest observed season, the stated proxy (keying on an
+            # unplayed season found nothing and defaulted every rung to 100).
+            met_season = (last if (metrics or {}).get(last, {}).get(mlbam)
+                          else base_season)
+            row.pop("metrics_season", None)
+            rung_metrics = {int(y): (metrics or {}).get(met_season) or {}}
             row["league_min"] = lm.get(int(y))
             pred = None
             if defl is not None:
                 try:
                     # WHICH ESTIMATOR SERVES WHICH STEP IS A GATE RESULT, not a
-                    # design preference. GATE A: arb-1 PASSED at 3.25x its
-                    # floor, so the model serves it. arb-2-and-later is a NULL -
-                    # the model does not beat an empirical step multiplier by
-                    # more than the floor - so the multiplier serves those, and
-                    # serving the model there would be shipping a more complex
-                    # estimator the evidence does not support.
+                    # design preference (data/arbitration_eval.json results).
+                    # arb-1 PASSED, so the model serves it. arb-2-and-later
+                    # serves the banded step multiplier: a NULL on the
+                    # 2026-08-09 frame, and docs/ARBITRATION_GATE.md section
+                    # 13d keeps it serving after the platform re-run, because
+                    # switching the served estimator there is its own change.
                     if step == 1:
                         d = Mod.predict(row, rung_metrics, defl, s1, None)
                     else:
@@ -522,26 +543,26 @@ def _write(path: Path, doc: dict, cap: int, log) -> int:
     return n
 
 
-def export(*, write: bool = True, log=print) -> dict:
-    """Build both payloads. Offline: reads the committed panel inputs only."""
+def export(*, write: bool = True, log=print, frame: str | None = None) -> dict:
+    """Build both payloads. Offline: reads the committed panel inputs only.
+
+    `frame` defaults to arb_model.FRAME (the platform season since the
+    docs/ARBITRATION_GATE.md section 13 amendment); "award" rebuilds the
+    2026-08-09 frame for comparison and is never written by the pipeline."""
     import arb_dataset as A
     import arb_metrics as M
     import arb_model as Mod
 
     panel = A.build_panel(log=None)
     rows = panel["rows"]
+    frame = frame or Mod.FRAME
+    # `sc` keeps each row's own season WAR for the History's WAR and vs Value
+    # columns; the model reads the framed copies.
     sc = A.scored_rows(rows)
-    war_by: dict[int, dict[int, float]] = {}
-    for r in rows:
-        war_by.setdefault(r["mlbam"], {})[r["season"]] = r["war"]
-    for r in sc:
-        hist = war_by.get(r["mlbam"], {})
-        r["war3"] = round(sum(hist.get(r["season"] - k, 0.0) for k in (0, 1, 2)), 2)
-        r["career_war"] = round(sum(v for y, v in hist.items()
-                                    if y <= r["season"]), 2)
+    fr = Mod.attach_frame(sc, rows, frame)
     metrics = M.metric_panel(2018, 2026)
     seasons = sorted({r["season"] for r in sc})
-    recs = Mod.forward_chain(sc, metrics, seasons=seasons)
+    recs = Mod.forward_chain(fr, metrics, seasons=seasons)
 
     try:
         import value_framework as vf
@@ -563,12 +584,12 @@ def export(*, write: bool = True, log=print) -> dict:
 
     # The SERVED model is fit on the whole scored pool. The forward-chained
     # folds above are the evidence; this is the estimator they licensed.
-    defl = Mod.fit_deflator(sc, base_year=seasons[0])
-    s1 = Mod.fit_stage1(sc, metrics, defl)
-    s2 = Mod.fit_stage2(sc, metrics, defl)
-    banded = Mod.fit_banded_multipliers(sc, defl)
+    defl = Mod.fit_deflator(fr, base_year=seasons[0])
+    s1 = Mod.fit_stage1(fr, metrics, defl)
+    s2 = Mod.fit_stage2(fr, metrics, defl)
+    banded = Mod.fit_banded_multipliers(fr, defl)
     board = build_board(rows, eval_doc, metrics, dpw, season=2027,
-                        s1=s1, s2=s2, defl=defl, banded=banded)
+                        s1=s1, s2=s2, defl=defl, banded=banded, frame=frame)
     history = build_history(recs, sc, A.load_ledger(), dpw)
     if write:
         _write(BOARD_PATH, board, BOARD_CAP_BYTES, log)

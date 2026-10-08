@@ -22,6 +22,7 @@ URLs the page asks for without depending on the network.
 from __future__ import annotations
 
 import base64
+import json
 import re
 from pathlib import Path
 
@@ -221,5 +222,10 @@ def test_display_pass_keeps_every_pinned_disclosure(server):
             browser.close()
     assert "club control ends" in cav and "overstate" in cav
     assert b["rules"]["expires"] in cav and "no interval covers" in cav
-    assert "beat its baseline" in sub and "step multiplier" in sub and "did not" in sub
+    # The masthead's arb-2+ clause follows the artifact's verdict
+    # (build_site._arb_masthead_verdict; docs/ARBITRATION_GATE.md section 13).
+    a2 = ((json.loads((ROOT / "data" / "arbitration_eval.json").read_text(encoding="utf-8"))
+           .get("results") or {}).get("arb2plus") or {}).get("verdict")
+    assert "beat its baseline" in sub and "step multiplier" in sub
+    assert ("now beats it" if a2 == "PASS" else "did not") in sub
     assert "Not a payroll forecast" in note and "tendered" in note

@@ -174,8 +174,8 @@ def _gain(rows, metrics, seasons, split, bar, *, leak=False):
     }
 
 
-def run(B: int) -> dict:
-    rows, metrics = L.load_pool()
+def run(B: int, frame: str = Mod.FRAME) -> dict:
+    rows, metrics = L.load_pool(frame)
     seasons = sorted({r["season"] for r in rows})
     rng = np.random.default_rng(SEED)
     out_floors = {}
@@ -248,9 +248,11 @@ def run(B: int) -> dict:
     ship = verdicts.get("arb1") == "PASS" or verdicts.get("arb2plus") == "PASS"
     doc = {
         "generated_at": date.today().isoformat(),
-        "produced_by": f"python tools/arb_gate_a.py --write --B {B}",
+        "produced_by": f"python tools/arb_gate_a.py --write --B {B} --frame {frame}",
         "model": "arb_award_v1",
         "gate": "docs/ARBITRATION_GATE.md section 4 (GATE A)",
+        "frame": frame,
+        "frame_description": FRAME_DESCRIPTION[frame],
         "purpose": ("Does the two-stage arbitration award model beat the "
                     "class-appropriate baseline by more than its own measured "
                     "floor, and is the margin production information rather "
@@ -295,23 +297,89 @@ def run(B: int) -> dict:
             "measured_mdape_gain": out_floors["arb2plus"]["mdape_gain"],
             "floor": out_floors["arb2plus"]["mde95_onesided"],
             "verdict": "NULL",
-            "statement": (
-                "The arb-2-and-later model is a NULL. Its margin over a median "
-                "step multiplier off the prior salary is below the floor "
-                "measured for this basis. The A3 control shows the production "
-                "block does carry signal there - permuting it makes the model "
-                "WORSE than the baseline - so this is a power limit, not an "
-                "absence of information, and it is still reported as a null."),
+            "statement": _arb2_null_statement(out_floors["arb2plus"]),
         })
     return doc
+
+
+def _arb2_null_statement(r: dict) -> str:
+    """The arb-2+ NULL sentence, its A3 reading derived from the block it
+    sits beside rather than written in advance."""
+    c = r["a3_control"]
+    head = ("The arb-2-and-later model is a NULL. Its margin over a median "
+            "step multiplier off the prior salary is below the floor "
+            "measured for this basis. ")
+    if c["permuted_mean"] < r["mdape_gain"]:
+        return head + (
+            "The A3 control shows the production block does carry signal "
+            "there: permuting it lowers the gain (mean %+.4f against %+.4f "
+            "real), so this is a power limit, not an absence of information, "
+            "and it is still reported as a null."
+            % (c["permuted_mean"], r["mdape_gain"]))
+    return head + (
+        "The A3 control does not separate the real block from a permuted one "
+        "(mean %+.4f against %+.4f real), so this program measured no "
+        "production information beyond the salary track at these steps."
+        % (c["permuted_mean"], r["mdape_gain"]))
+
+
+#: Section 13. Each block names the season its production was read from.
+FRAME_DESCRIPTION = {
+    "platform": ("production (WAR, PA, outs, starts, war3, career WAR and the "
+                 "hem/sem/rem block) read from the platform season, the season "
+                 "before the award, complete when the award is set"),
+    "award": ("production read from the award season itself, which had not "
+              "been played when the award was set: the 2026-08-09 frame, a "
+              "hindcast that adjudicates nothing (section 13a)"),
+}
+
+#: The top-level GATE A fields of data/arbitration_eval.json. The platform
+#: re-run replaces them; the 2026-08-09 values move verbatim under HINDCAST_KEY.
+GATE_A_KEYS = ("generated_at", "produced_by", "model", "gate", "frame",
+               "frame_description", "purpose", "conventions", "pool", "B",
+               "seed", "results", "a6_swartz", "verdict", "loss_ledger")
+HINDCAST_KEY = "hindcast_2026_08_09_award_frame"
+TWIN_KEY = "award_frame_same_day_twin"
+
+
+def merge_into(existing: dict, doc: dict, *, twin: bool) -> dict:
+    """Write a run into the eval artifact without dropping any other block
+    (gate_c_verification, gate_c2, the hindcast, the twin).
+
+    The first platform write moves the 2026-08-09 top-level fields under
+    HINDCAST_KEY, labelled, before replacing them; a twin run lands under
+    TWIN_KEY and touches nothing else."""
+    out = dict(existing)
+    if twin:
+        out[TWIN_KEY] = dict(doc, role=(
+            "same-day award-frame twin (section 13c): separates the frame's "
+            "effect from pool drift since 2026-08-09; adjudicates nothing"))
+        return out
+    if (HINDCAST_KEY not in out and existing.get("frame", "award") == "award"
+            and existing.get("results")):
+        old = {k: existing[k] for k in GATE_A_KEYS if k in existing}
+        old["label"] = (
+            "HINDCAST. Scored 2026-08-09 on award-season production, which "
+            "had not been played when the award was set (census M08-05, "
+            "docs/ARBITRATION_GATE.md section 13a). Kept for the record; "
+            "adjudicates nothing. The top-level GATE A fields carry the "
+            "platform-season re-run.")
+        out[HINDCAST_KEY] = old
+    for k in GATE_A_KEYS:
+        out.pop(k, None)
+    rest = out
+    out = {k: doc[k] for k in GATE_A_KEYS if k in doc}
+    out.update(rest)
+    return out
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--B", type=int, default=1500)
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--frame", choices=Mod.FRAMES, default=Mod.FRAME)
     args = ap.parse_args(argv)
-    doc = run(args.B)
+    doc = run(args.B, args.frame)
     for name, r in doc["results"].items():
         print(f"\n{name}  vs {r['bar']}  n={r['n_paired']}")
         print(f"  MdAPE champion {r['mdape_champion']:.4f} vs bar "
@@ -325,8 +393,10 @@ def main(argv=None) -> int:
         print(f"  VERDICT: {r['verdict']}")
     print(f"\nartifact verdict: {doc['verdict']}")
     if args.write:
-        OUT.write_text(json.dumps(doc, indent=1, default=float), encoding="utf-8")
-        print(f"wrote {OUT.relative_to(ROOT)}")
+        existing = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
+        merged = merge_into(existing, doc, twin=(args.frame != Mod.FRAME))
+        OUT.write_text(json.dumps(merged, indent=1, default=float), encoding="utf-8")
+        print(f"wrote {OUT.relative_to(ROOT)} ({'twin' if args.frame != Mod.FRAME else 'top level'})")
     return 0
 
 
