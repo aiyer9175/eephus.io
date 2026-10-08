@@ -65,6 +65,8 @@ number bit for bit (test_efv_v2_model.py).
 RESERVED FRAMES. oos_scores refuses any year at or after
 efv_vintage_frame.R_VM_FIRST_DEBUT_YEAR, and lv_scores refuses any list vintage in
 RESERVED_LV without the committed gate's sha (efv_vintage_frame.guard_score_request).
+_check_years opens a reserved R-VM year on that same committed sha and on nothing
+else (gate_sha, efv_vintage_frame.gate_sha_committed); no served path hands one in.
 
 GATE COMPLIANCE (docs/PROSPECT_ANCHOR_GATE.md): the consensus FV enters only as a
 continuous regressor inside a map. Nothing here groups, counts or averages rows by
@@ -427,10 +429,12 @@ def served_views(scores: dict[str, float], consensus: dict[str, float]) -> dict:
 # forward-chained out-of-sample scores on the v1 matrices (the vintage-matched frame)
 # ---------------------------------------------------------------------------
 
-def _check_years(years) -> list[int]:
+def _check_years(years, *, gate_sha: str | None = None) -> list[int]:
+    """The years as ints; a reserved R-VM year raises unless `gate_sha` names the
+    committed registration (the one path that opens a reserved frame)."""
     ys = [int(y) for y in years]
     bad = [y for y in ys if y >= F.R_VM_FIRST_DEBUT_YEAR]
-    if bad:
+    if bad and not F.gate_sha_committed(gate_sha):
         raise F.ReservedFrameError(
             f"years {bad} reach the reserved R-VM cohorts (first "
             f"{F.R_VM_FIRST_DEBUT_YEAR}); see docs/efv-v2/PROGRAM.md s2.4")

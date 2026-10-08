@@ -1,6 +1,6 @@
 # eFV v2 registration: EFV_V2_GATE
 
-Registration status: DRAFT
+Registration status: REGISTERED
 
 THIS IS A DRAFT (DS-15, `docs/efv-v2/DRIVER_SYSTEM_V2.md` s5). It is committed so its text is
 dated before any development read of the assembled V2 (DS-16), not as the registration. The
@@ -968,3 +968,53 @@ at RT V + 5 (`efv_labels.py`).
 | ESPN report text | first published 2025 (dated 2025-08-20, outside every window); first inside a window 2026-01-27 | V 2026, on W3 at RT 2031 |
 | Just Baseball report text | first published 2026 (dated 2026-03-04) | V 2026, on W3 at RT 2031 |
 | TJStats report text | first published 2026 (the first `tjstats_snapshots` writeup is dated 2026-04-14) | V 2026, on W3 at RT 2031 |
+
+---
+
+## 11. Registration by decision EW2-6, with the preconditions it leaves unmet (2026-10-08)
+
+Appended 2026-10-08 (EFV3_W3_SELECT_CONFIRM) below the last section; nothing above it is
+edited except the status line at the top, which now reads REGISTERED. Decision EW2-6 of
+2026-10-08 (`_audit_2026-09-09/DECISIONS_FOR_OWNER.md`) moves the reserved read from
+2026-12-01 to the same day: the owner judged that waiting a month would not change the
+reading (eFV ties consensus on every development frame) and chose a same-day backtest of
+every new eFV idea, with one rule kept, that the configuration is chosen on the
+development frames only, committed, and then read ONCE on the reserved frames. Decision
+EW2-7 fixes the reading in advance: eFV v3 is shippable if its within Spearman beats served
+eFV (V2) on both reserved frames (point estimates, pooled over sides), and the copy can say
+it beats consensus only if the CI95 lower bound against consensus is above 0.
+
+### 11.1 What the status line opens, and for what
+
+The guard (`efv_vintage_frame.gate_sha_committed`) opens for the sha of the commit that
+carries this file with the status line REGISTERED. That sha is handed to
+`tools/efv_v3_backtest.py --confirm --gate-sha`, the one tool run that reads R-LV (list
+vintages 2020 and 2021) and R-VM (the 2025 debut cohort) under
+`docs/efv-v2/EFV_V3_BACKTEST.md` s3. The R-VM leg opens on the same sha through
+`efv_vintage_frame.guard_vm_request` and `efv_v2_model._check_years(gate_sha=...)`;
+`reserved_vm_pins()` stays empty and the pinned constants are not widened. The tool refuses
+without the sha, refuses a second run while `data/_labs/efv_v3/efv_v3_confirm.json` exists,
+and is the look record this file's s2.2 names for R-VM look 1. The candidate it reads is eFV
+v3 at the configuration committed in `data/efv_v3_spec.json` (sha256 88d46b4b00f601e46cd5c5aeee97b5e0b64da346ef6646c7e118d565b466babd) at commit
+1a546ad4fc488dec9b9cd6681cf657626c000b1e, selected on the development frames by the rule of `EFV_V3_BACKTEST.md` s2; the
+served eFV (V2 as assembled) is read beside it as a comparator, so the V2 number on the
+reserved frames is also read once, by the same run. No served number moves: `efv_v3.EFV_V3_ON`
+is False and the ship task (EFV3_W3_SHIP) reads the artifact.
+
+### 11.2 The preconditions of s1 at this registration
+
+| id | state at registration |
+|---|---|
+| P1 | MET: the fWAR label epoch's freeze (`docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md`, step Z, label `fwar@2026-10-02-0341299c20ec`). |
+| P2 | UNMET, waived by EW2-6: EV-05's F-LV floors (`data/efv_lv_floor.json`) do not exist. The confirmation read carries its own E_cond and E_refit intervals on the reserved frames themselves. |
+| P3 | UNMET, waived by EW2-6: the v1 parity lab was not built. |
+| P4 | RE-TAKEN HERE: `data/efv_v2_assembly.json` sha256 35fe32c7a5448e8186259a8e4551be6f148d2f8346aa2016a40fb72f6afd2823; `efv_v2_model.py` sha256 3134c039922c463893c0930377d8b85f113f9e1f915137a47cd8537bb35b4929; `efv_v2_stat.py` sha256 0a1db56abe2cac3528563b1538291b3dabc994b5694b814c52824d9ce73c07c3; `data/efv_v3_spec.json` sha256 88d46b4b00f601e46cd5c5aeee97b5e0b64da346ef6646c7e118d565b466babd. The s4.3 table above keeps its draft-time eWAR v2 values; the P5 weights are hit w_skill 0.908861 w_time 0.202573, pit w_skill 1 w_time 0.020473 (`data/efv_v2_assembly.json`, 2026-10-04). |
+| P5 | MET: the weights re-derived once on the frozen label (2026-10-04) and DS-16 re-run once on it (2026-10-08, `data/efv_v2_dev_eval.json` ds16). |
+| P6 | SUPERSEDED by EW2-6 and EW2-7 (what ships, and on what reading, is fixed there); PROGRAM.md Q3 and Q4 stay open and decide nothing here. |
+| P7 | UNMET, waived by EW2-6: the look runner EV-13 (`tools/efv_v2_look.py`) was not built; `tools/efv_v3_backtest.py --confirm` plays its part for this one read (refuses without the sha, refuses a spent read, pins its inputs by sha256 in the artifact). |
+
+The s9 results section stays empty: the reserved numbers live in
+`data/_labs/efv_v3/efv_v3_confirm.json` and in `EFV_V3_BACKTEST.md` s5, and the ledger rows
+(frames lv_res and vm_pros, model efv_v3, trigger look) in `data/efv_progress.json`. The
+forking-path denominator of s6 gains the selection's evaluated steps (every one recorded in
+`data/_labs/efv_v3/efv_v3_select.json`) and the two reserved reads.

@@ -236,14 +236,14 @@ def group_reliability(rows_by_side_vintage: dict, global_rel: dict, *,
     stats_doc: dict = {}
     for side, by_v in rows_by_side_vintage.items():
         vintages = sorted(int(v) for v in by_v)
-        H._check_years(vintages)
+        H._check_years(vintages, gate_sha=gate_sha)
         if frame == "lv":
             for v in vintages:
                 F.guard_score_request(v, gate_sha=gate_sha, purpose="anchor group table")
         srcs = list(global_rel["sources"][side])
         targets = (vintages if target_vintages is None
                    else sorted(int(v) for v in target_vintages))
-        H._check_years(targets)
+        H._check_years(targets, gate_sha=gate_sha)
         table[side], stats_doc[side] = {}, {}
         for V in targets:
             if frame == "lv":

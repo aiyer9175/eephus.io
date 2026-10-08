@@ -6,9 +6,10 @@
 """DS-15 pins (docs/efv-v2/DRIVER_SYSTEM_V2.md s5): the eFV v2 registration draft and the
 registered statistic.
 
-1. docs/efv-v2/EFV_V2_GATE.md exists, is marked DRAFT, has an empty results section, and
-   carries the numbers it names from their artifacts (the weights, the statistic's
-   constants).
+1. docs/efv-v2/EFV_V2_GATE.md exists, is marked REGISTERED by decision EW2-6 (2026-10-08)
+   with the dated waiver section (s11) that names every precondition's state, has an
+   empty results section, and carries the numbers it names from their artifacts (the
+   weights, the statistic's constants).
 2. A DRAFT never opens the reserved guard: gate_sha_committed is False for a commit whose
    gate document is a draft, True only for one marked REGISTERED (checked on a scratch
    repository), and the guard refuses every reserved vintage without it.
@@ -51,14 +52,22 @@ def _text() -> str:
 # 1. the draft
 # ---------------------------------------------------------------------------
 
-def test_the_gate_is_a_draft_until_its_preconditions_hold():
+def test_the_gate_is_registered_by_decision_ew2_6_with_its_waiver():
+    # 2026-10-08: decision EW2-6 registered the gate with its s11 waiver (the status
+    # line reads REGISTERED, every precondition's state is named in s11).
     t = _text()
     status = [ln.strip() for ln in t.splitlines()
               if ln.strip().startswith(F.GATE_STATUS_PREFIX)]
-    assert status == ["Registration status: DRAFT"]
-    assert F.gate_doc_registered(t) is False
+    assert status == [F.GATE_STATUS_REGISTERED]
+    assert F.gate_doc_registered(t) is True
+    head = "## 11. Registration by decision EW2-6"
+    assert head in t
+    s11 = t.split(head, 1)[1]
     for pid in ("P1", "P2", "P3", "P4", "P5", "P6", "P7"):
-        assert f"| {pid} |" in t, pid
+        assert f"| {pid} |" in t and f"| {pid} |" in s11, pid
+    for s in ("EW2-7", "guard_vm_request", "efv_v3_backtest.py --confirm",
+              "data/efv_v3_spec.json", "reserved_vm_pins()", "stays empty"):
+        assert s in s11, s
 
 
 def test_results_section_is_empty():
@@ -292,7 +301,8 @@ LAB = ROOT / "tools" / "efv_screen_lab.py"
 def _s10() -> str:
     t = _text()
     assert "## 10. Screening lab" in t
-    return t.split("## 10. Screening lab", 1)[1]
+    # s10 runs to the next top-level section (s11, the 2026-10-08 registration note)
+    return t.split("## 10. Screening lab", 1)[1].split("\n## 11. ", 1)[0]
 
 
 def _lab_wave() -> list[str]:

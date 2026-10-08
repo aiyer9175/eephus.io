@@ -145,8 +145,14 @@ def production_models(*, refresh: bool = False) -> dict[str, dict]:
     if _MODELS is not None and not refresh:
         return _MODELS
     import efv_v2_model as H
+    import efv_v3 as V3
     import efv_vintage_frame as F
     weights = H.load_weights()
+    if V3.EFV_V3_ON:
+        # DARK (efv_v3.EFV_V3_ON is False): the selected eFV v3 configuration fitted on
+        # the same rows; EFV3_W3_SHIP flips the flag after the confirmation read.
+        _MODELS = V3.production_models(weights=weights)
+        return _MODELS
     out = {}
     for side in F.SIDES:
         train = [r for r in H.matrix_training_rows(side)

@@ -46,7 +46,11 @@ opens the guard; see GATE_STATUS_REGISTERED); every builder here calls it, and s
 every scorer that reads this frame.
 The prospective leg R-VM (the 2025 and later debut cohorts) is pinned by
 reserved_vm_pins(): source_backtest.CANDIDATE_YEARS and efv_model.SCORED_YEARS may not
-include R_VM_FIRST_DEBUT_YEAR or later until its look record exists.
+include R_VM_FIRST_DEBUT_YEAR or later until its look record exists. A read of an
+R-VM cohort by an explicit year list goes through guard_vm_request(), which opens on
+the same committed gate sha and on nothing else (owner EW2-6, 2026-10-08: the one
+confirmation read of eFV v3, tools/efv_v3_backtest.py); the pinned constants are
+never widened by it.
 
 GATE COMPLIANCE (docs/PROSPECT_ANCHOR_GATE.md). Nothing here groups, counts, averages or
 strata rows by consensus-FV level. The only summary this module emits is row counts by
@@ -102,6 +106,9 @@ MILB_FLOOR_LV: int = 2005
 MILB_FLOOR_LV_WITHHELD: frozenset[str] = frozenset({"pit"})
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+#: (repository root, sha) -> the committed-gate answer, memoized per process: a sha
+#: names immutable content, and the guard is asked once per fit on a reserved read.
+_GATE_SHA_MEMO: dict[tuple[str, str], bool] = {}
 
 
 def lv_milb_floor(side: str) -> int:
@@ -153,13 +160,16 @@ def gate_sha_committed(gate_sha: str | None) -> bool:
     history) is False."""
     if not isinstance(gate_sha, str) or not _SHA_RE.match(gate_sha):
         return False
-    if not _git_ok("cat-file", "-e", f"{gate_sha}^{{commit}}"):
-        return False
-    if not _git_ok("cat-file", "-e", f"{gate_sha}:./{GATE_DOC}"):
-        return False
-    if not gate_doc_registered(_git_show(f"{gate_sha}:./{GATE_DOC}")):
-        return False
-    return _git_ok("merge-base", "--is-ancestor", gate_sha, "HEAD")
+    memo_key = (str(ROOT), gate_sha)
+    if memo_key in _GATE_SHA_MEMO:
+        return _GATE_SHA_MEMO[memo_key]
+    ok = False
+    if (_git_ok("cat-file", "-e", f"{gate_sha}^{{commit}}")
+            and _git_ok("cat-file", "-e", f"{gate_sha}:./{GATE_DOC}")
+            and gate_doc_registered(_git_show(f"{gate_sha}:./{GATE_DOC}"))):
+        ok = _git_ok("merge-base", "--is-ancestor", gate_sha, "HEAD")
+    _GATE_SHA_MEMO[memo_key] = bool(ok)
+    return bool(ok)
 
 
 def guard_score_request(vintage: int, *, gate_sha: str | None = None,
@@ -175,6 +185,24 @@ def guard_score_request(vintage: int, *, gate_sha: str | None = None,
         f"list vintage {v} is reserved (R-LV, RESERVED_LV={sorted(RESERVED_LV)}); "
         f"a {purpose} request needs the sha of the commit carrying {GATE_DOC}, "
         f"got {gate_sha!r}. See docs/efv-v2/PROGRAM.md s2.4.")
+
+
+def guard_vm_request(years, *, gate_sha: str | None = None,
+                     purpose: str = "score") -> None:
+    """Raise ReservedFrameError for any read of a reserved R-VM debut cohort (a year
+    at or after R_VM_FIRST_DEBUT_YEAR) unless `gate_sha` names the committed
+    registration, exactly as guard_score_request opens R-LV. Development years pass.
+    The constants reserved_vm_pins() checks are not widened by a read that passes
+    here; the caller hands the years in explicitly."""
+    bad = sorted({int(y) for y in years if int(y) >= R_VM_FIRST_DEBUT_YEAR})
+    if not bad:
+        return
+    if gate_sha_committed(gate_sha):
+        return
+    raise ReservedFrameError(
+        f"debut cohorts {bad} are reserved (R-VM, from {R_VM_FIRST_DEBUT_YEAR}); a "
+        f"{purpose} request needs the sha of the commit carrying {GATE_DOC}, got "
+        f"{gate_sha!r}. See docs/efv-v2/PROGRAM.md s2.4.")
 
 
 def reserved_vm_pins() -> list[str]:

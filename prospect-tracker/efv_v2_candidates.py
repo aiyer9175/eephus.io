@@ -119,18 +119,21 @@ MC5_RP_TOKENS: tuple[str, ...] = ("RP", "CL", "RELIEVER", "CLOSER")
 # guards
 # ---------------------------------------------------------------------------
 
-def guard_training_rows(train: list[dict], frame: str) -> list[int]:
+def guard_training_rows(train: list[dict], frame: str, *,
+                        gate_sha: str | None = None) -> list[int]:
     """The years of the training rows, after the reserved-frame guards: a 2025+ year
     raises through efv_v2_model._check_years on either frame, and on the list-vintage
-    frame a reserved list vintage raises through efv_vintage_frame.guard_score_request
-    (no gate sha is ever handed in here). Runs before any fit in this module."""
+    frame a reserved list vintage raises through efv_vintage_frame.guard_score_request.
+    Only the committed gate's sha (`gate_sha`, the reserved confirmation read of
+    tools/efv_v3_backtest.py) opens either; the screen hands none in. Runs before any
+    fit in this module."""
     if frame not in ("lv", "vm"):
         raise ValueError(f"frame must be lv or vm, got {frame!r}")
     years = sorted({int(r["decision_year"]) for r in train})
-    H._check_years(years)
+    H._check_years(years, gate_sha=gate_sha)
     if frame == "lv":
         for y in years:
-            F.guard_score_request(y, purpose="candidate fit")
+            F.guard_score_request(y, gate_sha=gate_sha, purpose="candidate fit")
     return years
 
 
@@ -602,7 +605,7 @@ def build_source_reliability(rows_by_side_vintage: dict[str, dict[int, list[dict
     srcs_doc: dict = {}
     for side, by_v in rows_by_side_vintage.items():
         vintages = sorted(int(v) for v in by_v)
-        H._check_years(vintages)
+        H._check_years(vintages, gate_sha=gate_sha)
         for v in vintages:
             if frame == "lv":
                 F.guard_score_request(v, gate_sha=gate_sha, purpose="reliability table")
@@ -610,7 +613,7 @@ def build_source_reliability(rows_by_side_vintage: dict[str, dict[int, list[dict
         srcs_doc[side] = srcs
         targets = (vintages if target_vintages is None
                    else sorted(int(v) for v in target_vintages))
-        H._check_years(targets)
+        H._check_years(targets, gate_sha=gate_sha)
         table[side], reads[side], stats_doc[side] = {}, {}, {}
         for V in targets:
             if frame == "lv":
