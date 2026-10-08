@@ -2999,6 +2999,18 @@ def _mlb_career_war(key) -> float:
     return tot
 
 
+def _deal_lead_sort(board: dict, rank: dict):
+    """The order inside a deal (plan 3.5 item 3): board players first by their
+    overall rank, then career WAR, then name. `board` is {mlbam: player key},
+    `rank` {player key: overall rank}."""
+    def lead_sort(r):
+        mid = int(r["mlbam"])
+        bk = board.get(mid)
+        return (bk is None, rank.get(bk, 1e9), -_mlb_career_war(r.get("key")),
+                r.get("name") or "", mid)
+    return lead_sort
+
+
 def _wire_rail_rows(ev: list, players: list, graduates: list, fa_events: list | None,
                     recent: dict, today: date) -> list:
     """The rail and ticker selection with the MLB rows (HOME_3). `ev` is
@@ -3015,12 +3027,7 @@ def _wire_rail_rows(ev: list, players: list, graduates: list, fa_events: list | 
         if p.get("player_key") and p.get("overall_rank"):
             rank[p["player_key"]] = float(p["overall_rank"])
     links = _links_mlbam()
-
-    def lead_sort(r):
-        mid = int(r["mlbam"])
-        bk = board.get(mid)
-        return (bk is None, rank.get(bk, 1e9), -_mlb_career_war(r.get("key")),
-                r.get("name") or "", mid)
+    lead_sort = _deal_lead_sort(board, rank)
 
     def mlbam_of(key):
         key = str(key or "")
@@ -3101,6 +3108,228 @@ def _wire_mlb_freshness(recent: dict, today: date) -> tuple[str, str]:
         return (f"MLB moves through {md}",
                 f"MLB moves through {md}: the transaction log has not refreshed since.")
     return f"MLB moves through {md}", ""
+
+
+# ---- the MLB band's Transactions module (HOME_5, LANE_HOME 3.2 row 19) ----
+# Two columns in one module, built only while mlb_events.MLB_EVENTS_LIVE is
+# True; off, the prospect-only Recent Trades module stays in the Prospects band.
+# Trades: every deal of the last _TX_TRADE_DAYS days, recent.json's StatsAPI
+# rows grouped per deal as the rail groups them (_group_deals with the
+# description, _deal_lead_sort), plus the board's own trades (timeseries) that
+# no StatsAPI deal replaces within a day, which is the Recent Trades module it
+# absorbs. A row: the date, the club logos from and to, up to two names then
+# "+n", each board prospect's overall rank, and on a deal with a board player
+# the link to the PROSPX Transactions Trade Audit. The first _TX_TRADE_ROWS
+# deals show and the rest open below them. Roster moves: the last
+# _TX_MOVE_DAYS days of 60-day IL placements, DFAs, waiver claims and contract
+# selections, _TX_MOVE_ROWS rows by date then the registry weight, each with
+# its family pictogram and colour (_WIRE_TYPES). A row's title is the StatsAPI
+# text verbatim. A stale or absent log draws the unmeasured state.
+_TX_TRADE_DAYS = 30
+_TX_TRADE_ROWS = 8
+_TX_MOVE_DAYS = 7
+_TX_MOVE_ROWS = 8
+_TX_MOVE_TYPES = ("il_place", "dfa", "claim", "callup")
+# PROSPX Transactions, trades only, searched to the deal's lead board player:
+# the Trade Audit card sits under his row.
+_TX_AUDIT_HREF = "/prospx/#tab=traded&acq=trade&q="
+# Scoped to the module (tokens only), so the stylesheet and every page that
+# stamps it stay as they are.
+_TX_CSS = (
+    "<style>"
+    ".tx-mod .tx-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 30px}"
+    ".tx-mod .tx-col{min-width:0}"
+    ".tx-mod .tx-h{display:flex;align-items:center;gap:6px;margin:0;padding:2px 4px 6px;"
+    "border-bottom:1px solid var(--border);font:700 12px var(--font-retro-mono);letter-spacing:.08em;"
+    "text-transform:uppercase;color:var(--text-primary)}"
+    ".tx-mod .tx-win{margin-left:auto;font-weight:400;letter-spacing:0;text-transform:none;"
+    "font-size:11px;color:var(--text-tertiary)}"
+    ".tx-mod .tx-row{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 4px;"
+    "border-bottom:1px solid var(--border-light);text-decoration:none;color:var(--text-primary)}"
+    ".tx-mod a.tx-row:hover{background:var(--bg-tertiary)}"
+    ".tx-mod .tx-date{flex:none;font:11px var(--font-retro-mono);color:var(--text-tertiary);"
+    "font-variant-numeric:tabular-nums}"
+    ".tx-mod .tx-names{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+    "font:700 13px var(--font-retro)}"
+    ".tx-mod .tx-names a{color:var(--text-primary);text-decoration:none}"
+    ".tx-mod .tx-names a:hover{text-decoration:underline}"
+    ".tx-mod .tx-rank{margin-left:4px;font:700 11px var(--font-retro-mono);color:var(--wire-pro)}"
+    ".tx-mod .tx-more{flex:none;margin-left:-4px;font:11px var(--font-retro-mono);color:var(--text-tertiary)}"
+    ".tx-mod .wire-val{flex:none;font:700 11px var(--font-retro-mono)}"
+    ".tx-mod .tx-audit{flex:none;padding:2px 6px;font:700 11px var(--font-retro-mono);"
+    "color:var(--wire-trd);text-decoration:none;border:1px solid var(--wire-trd)}"
+    ".tx-mod .tx-audit:hover{background:var(--bg-tertiary)}"
+    ".tx-mod .tx-all>summary{cursor:pointer;padding:7px 4px;font:700 12px var(--font-retro);"
+    "color:var(--accent-navy)}"
+    ".tx-mod .px-state{margin:10px 0}"
+    ".tx-mod .tx-asof{margin:6px 0 0;font:10px var(--font-retro-mono);color:var(--text-tertiary)}"
+    "@media (max-width:900px){.tx-mod .tx-cols{grid-template-columns:minmax(0,1fr);gap:16px}}"
+    "</style>"
+)
+
+
+def _tx_recent_rows(recent: dict, types, lo: str, hi: str) -> list:
+    """recent.json's StatsAPI rows of the type codes `types` dated lo to hi,
+    one per (mlbam, date, type code): a repeated cache row is dropped."""
+    seen, out = set(), []
+    for r in (recent or {}).get("rows") or []:
+        if (not isinstance(r, dict) or r.get("type") not in types or r.get("src") == "fa_class"
+                or not r.get("mlbam") or not lo <= str(r.get("date") or "") <= hi):
+            continue
+        k = (int(r["mlbam"]), r["date"], r["type"])
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(r)
+    return out
+
+
+def _tx_deals(players: list, recent: dict, today: date) -> list:
+    """The Trades column, newest first, a day's deals by their best board
+    rank: one dict per deal with date, frm and to (the club codes of the lead
+    player's move), two_way, descs (StatsAPI text) and people, a list of
+    (name, href key or None, overall rank or None, board key or None) in lead
+    order."""
+    board = _board_mlbam({"players": players})
+    rank = {p["player_key"]: int(p["overall_rank"]) for p in players
+            if p.get("player_key") and p.get("overall_rank")}
+    lo = (today - timedelta(days=_TX_TRADE_DAYS - 1)).isoformat()
+    hi = today.isoformat()
+    deals: list = []
+    covered: list = []       # (board key, date) a StatsAPI deal carries
+    rows = _tx_recent_rows(recent, ("trade",), lo, hi)
+    for dt, grp in _group_deals(rows, board, _deal_lead_sort(board, rank), by_desc=True):
+        people = []
+        for r in grp:
+            bk = board.get(int(r["mlbam"]))
+            if bk:
+                covered.append((bk, dt))
+            people.append((r.get("name") or "", bk or (f'mlb:{r["key"]}' if r.get("key") else None),
+                           rank.get(bk), bk))
+        lead = grp[0]
+        deals.append({"date": dt, "frm": _club_abbr(lead.get("from")), "to": _club_abbr(lead.get("to")),
+                      "two_way": len({(r.get("from"), r.get("to")) for r in grp}) > 1,
+                      "descs": list(dict.fromkeys(r["desc"] for r in grp if r.get("desc"))),
+                      "people": people})
+    # The board's own trades, grouped per (date, unordered club pair); a
+    # StatsAPI deal carrying the player within a day replaces his row.
+    own: dict = {}
+    for p in players:
+        k = p.get("player_key")
+        if not k:
+            continue
+        for tr in p.get("trades") or []:
+            dt = str(tr.get("trade_date") or "")[:10]
+            if len(dt) != 10 or not lo <= dt <= hi:
+                continue
+            if any(bk == k and _day_gap(d, dt) <= 1 for bk, d in covered):
+                continue
+            pair = frozenset(c for c in (tr.get("from_org"), tr.get("to_org")) if c)
+            own.setdefault((dt, pair), []).append((p, tr))
+    for (dt, _pair), grp in own.items():
+        grp.sort(key=lambda x: (rank.get(x[0]["player_key"], 1e9), x[0].get("player_name") or ""))
+        lead = grp[0][1]
+        deals.append({"date": dt, "frm": lead.get("from_org"), "to": lead.get("to_org"),
+                      "two_way": len({(tr.get("from_org"), tr.get("to_org")) for _p, tr in grp}) > 1,
+                      "descs": [],
+                      "people": [(p.get("player_name") or "", p["player_key"], rank.get(p["player_key"]),
+                                  p["player_key"]) for p, _tr in grp]})
+    deals.sort(key=lambda d: (d["date"], -min((x[2] for x in d["people"] if x[2]), default=1e9)),
+               reverse=True)
+    return deals
+
+
+def _tx_moves(recent: dict, today: date) -> list:
+    """The Roster moves column: recent.json rows of the last _TX_MOVE_DAYS days
+    of _TX_MOVE_TYPES (an IL placement only to the 60-day list), by date then
+    the registry weight (a 60-day placement 85), _TX_MOVE_ROWS of them."""
+    lo = (today - timedelta(days=_TX_MOVE_DAYS - 1)).isoformat()
+    rows = [r for r in _tx_recent_rows(recent, _TX_MOVE_TYPES, lo, today.isoformat())
+            if r["type"] != "il_place" or str(r.get("il") or "").startswith("60-day")]
+    rows.sort(key=lambda r: (r["date"], 85 if r["type"] == "il_place"
+                             else _WIRE_TYPES[r["type"]]["weight"]), reverse=True)
+    return rows[:_TX_MOVE_ROWS]
+
+
+def _tx_club(code) -> str:
+    return _team_logo(code, "otd-logo") if code else '<span class="otd-logo">?</span>'
+
+
+def _tx_deal_html(d: dict) -> str:
+    """One deal: pictogram and hidden prefix, date, the club logos from and to,
+    up to two names then "+n" with each board prospect's rank, and the Trade
+    Audit link when a board player is in the deal."""
+    from urllib.parse import quote
+
+    def person(nm, href, rk, _bk):
+        n = html.escape(nm)
+        n = f'<a href="{html.escape(_player_href(href))}">{n}</a>' if href else n
+        return n + (f'<span class="tx-rank">{_sr("board rank")}#{rk}</span>' if rk else "")
+    more = len(d["people"]) - 2
+    names = ", ".join(person(*x) for x in d["people"][:2])
+    plus = f'<span class="tx-more">+{more}</span>' if more > 0 else ""
+    arrow = "⇄" if d["two_way"] else "→"
+    logos = (f'<span class="trade-logos" title="Traded {html.escape(d["frm"] or "?")} {arrow} '
+             f'{html.escape(d["to"] or "?")}">{_tx_club(d["frm"])}'
+             f'<span class="otd-arrow">{arrow}</span>{_tx_club(d["to"])}</span>')
+    lead_board = next((x for x in d["people"] if x[3]), None)
+    audit = (f'<a class="tx-audit" href="{html.escape(_TX_AUDIT_HREF + quote(lead_board[0]))}">'
+             'Trade Audit</a>') if lead_board else ""
+    tip = f' title="{html.escape(" ".join(d["descs"]))}"' if d["descs"] else ""
+    dt = d["date"]
+    return (f'<div class="tx-row"{_wire_attrs("trade")}{tip}>{_wire_lead("trade")}'
+            f'<span class="tx-date">{dt[5:7]}/{dt[8:10]}</span>{logos}'
+            f'<span class="tx-names">{names}</span>{plus}{audit}</div>')
+
+
+def _tx_move_html(r: dict, board: dict) -> str:
+    """One roster move: pictogram and hidden prefix, date, club logo, name and
+    the value in the family colour; it links the player's page when he has
+    one."""
+    typ = r["type"]
+    bk = board.get(int(r["mlbam"]))
+    href = bk or (f'mlb:{r["key"]}' if r.get("key") else None)
+    club = _club_abbr(r.get("to")) or _club_abbr(r.get("from"))
+    val = (r.get("il") or "IL") if typ == "il_place" else _WIRE_TYPES[typ]["val"]
+    tag = "a" if href else "div"
+    ha = f' href="{html.escape(_player_href(href))}"' if href else ""
+    tip = f' title="{html.escape(r["desc"])}"' if r.get("desc") else ""
+    dt = r["date"]
+    return (f'<{tag} class="tx-row"{ha}{_wire_attrs(typ)}{tip}>{_wire_lead(typ)}'
+            f'<span class="tx-date">{dt[5:7]}/{dt[8:10]}</span>{_team_logo(club, "otd-logo") if club else ""}'
+            f'<span class="tx-names">{html.escape(r.get("name") or "")}</span>'
+            f'<span class="wire-val">{html.escape(val)}</span></{tag}>')
+
+
+def _home_transactions(players: list, recent: dict, today: date) -> str:
+    """The MLB band's Transactions module (HOME_5): Trades beside Roster
+    moves. Read only while mlb_events.MLB_EVENTS_LIVE is True."""
+    asof, stale = _wire_mlb_freshness(recent, today)
+    deals = _tx_deals(players, recent, today)
+    moves = _tx_moves(recent, today)
+    board = _board_mlbam({"players": players})
+
+    def head(fam: str, mark: str, label: str, days: int) -> str:
+        return (f'<h3 class="tx-h" data-fam="{fam}"><span class="wire-ico">{_ico(mark, 12)}</span>'
+                f'{label}<span class="tx-win">last {days} days</span></h3>')
+
+    def tail(n: int, what: str, days: int) -> str:
+        if stale:
+            return _px_state("unmeasured", html.escape(stale))
+        return "" if n else _px_state("empty", f"No {what} in the last {days} days.")
+
+    rows = [_tx_deal_html(d) for d in deals]
+    trades = "".join(rows[:_TX_TRADE_ROWS])
+    if len(rows) > _TX_TRADE_ROWS:
+        trades += (f'<details class="tx-all"><summary>{len(rows) - _TX_TRADE_ROWS} more deals</summary>'
+                   f'{"".join(rows[_TX_TRADE_ROWS:])}</details>')
+    col_t = (f'<div class="tx-col" id="tx-trades">{head("trd", _WIRE_FAMILIES["trd"]["mark"], "Trades", _TX_TRADE_DAYS)}'
+             f'{trades}{tail(len(deals), "trades", _TX_TRADE_DAYS)}</div>')
+    col_m = (f'<div class="tx-col" id="tx-moves">{head("mlb", _WIRE_FAMILIES["mlb"]["mark"], "Roster moves", _TX_MOVE_DAYS)}'
+             f'{"".join(_tx_move_html(r, board) for r in moves)}{tail(len(moves), "roster moves", _TX_MOVE_DAYS)}</div>')
+    foot = f'<p class="tx-asof">{html.escape(asof)}</p>' if asof and not stale else ""
+    body = f'{_TX_CSS}<div class="tx-mod"><div class="tx-cols">{col_t}{col_m}</div>{foot}</div>'
+    return _home_module("Transactions", "/news/", f"All {NEWS_LABEL}", body, full=True)
 
 
 def build_news(data: dict | None = None) -> str:
@@ -5085,7 +5314,11 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     spot = _spotlight_html(players, spotlight_buckets)
     spot = f'<section class="home-module spot-module">{spot}</section>' if spot else ""
     otd = _this_day_html(graduates, players)
-    trades_mod = _recent_trades_html(players)
+    # While the MLB events feed is live the board's trades join every MLB deal
+    # in the MLB band's Transactions module (HOME_5); off, Recent Trades stays
+    # in the Prospects band.
+    trades_mod = "" if live else _recent_trades_html(players)
+    tx_mod = _home_transactions(players, mlb_recent, today_d) if live else ""
     efv_dist = _efv_distribution_html(players)
     cards = _xmod_cards()
 
@@ -5104,6 +5337,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         _date_callout("mlb", today_d)
         + '<div class="home-scores-slot" id="home-scores-slot" hidden></div>'
         + _home_club_logos()
+        + tx_mod
         + f'<div class="band-grid">{"".join(mlb_cells)}</div>'
         + _home_diamond_strip(cards))
 
