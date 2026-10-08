@@ -243,10 +243,21 @@ def test_progress_ledger_fetch_resolves_and_renders(server, browser):
     # chart plots (the page's _progSeriesRows rule). The DS-17 P(bust) rows carry an AUC
     # for reaching the majors and no Spearman, so they sit in the table only.
     # FP3-1 (2026-09-25): vm1 is superseded and sits in the table only.
+    # EFV3_B8: a screening lab row (model efv_v2_screen:...) sits in its own collapsed
+    # block and is charted only when its registered run admitted it (verdict PASS,
+    # screening.exploratory false), the page's _progScreenAdmitted rule.
+    def _screen(r):
+        return str(r.get("model_id") or "").startswith("efv_v2_screen:") or isinstance(
+            r.get("screening"), dict)
+
+    def _screen_admitted(r):
+        return (r.get("verdict") == "PASS"
+                and (r.get("screening") or {}).get("exploratory") is False)
     charted = [r for r in rows if r.get("role") not in ("tilted", "secondary", "superseded")
                and r.get("frame") in ("vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")
                and ((r.get("deltas") or {}).get("vs_prospx_consensus") or {})
-               .get("spearman", {}).get("delta") is not None]
+               .get("spearman", {}).get("delta") is not None
+               and (not _screen(r) or _screen_admitted(r))]
     assert out["marks"] == len(charted), (out["marks"], len(charted))
     tilted = [r for r in rows if r.get("role") == "tilted"]
     assert out["tilted"] == len(tilted) and out["open"] in (False, None)

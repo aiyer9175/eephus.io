@@ -338,3 +338,126 @@ def test_dev_artifact_contract():
                 assert leg["estimator"] == "E_cond"
     txt = json.dumps(doc, ensure_ascii=False)
     assert "—" not in txt and "–" not in txt
+
+
+# ---------------------------------------------------------------------------
+# 9. the screening flag (EFV3_B7, docs/efv-v2/EFV_V2_GATE.md s10.13): off by default,
+#    the candidate lists and the fitted heads are the committed module's; on, an
+#    admitted column reaches its declared head and nowhere else
+
+import subprocess  # noqa: E402
+
+_LIST_SKILL = {"hit": ("obp_rel", "contact", "tool_hit", "tool_speed", "is_college",
+                       "level_rank", "pl_rev"),
+               "pit": ("k_rel", "bmi", "pl_rev")}
+_LIST_TIMING = {(False, False): ("age_rel_level", "level_rank"),
+                (True, False): ("age_rel_level", "level_rank", "on_40man", "nov_add"),
+                (True, True): ("age_rel_level", "level_rank", "milb_absent", "on_40man",
+                               "nov_add")}
+_W = {"hit": {"w_skill": 0.5, "w_time": 0.2}, "pit": {"w_skill": 0.5, "w_time": 0.2}}
+
+
+def _lv_rows(side: str, seed: int = 11, n: int = 90, plant: float = 0.6,
+             key: str | None = None) -> list[dict]:
+    """Labelled F-LV style rows with a planted driver (hitters tool_hit, pitchers
+    k_rel) and, under `key`, a planted screening column on every row's v2 block."""
+    rng = np.random.default_rng(seed)
+    out, i = [], 0
+    for yr in range(2013, 2020):
+        for _ in range(n):
+            fv = float(rng.normal(45, 5))
+            th = float(rng.normal(50, 8))
+            kr = float(rng.normal(0, 0.05))
+            drv = 0.08 * (th - 50) if side == "hit" else 20.0 * kr
+            x = float(rng.normal())
+            t = 0.1 * (fv - 45) + drv + plant * x + float(rng.normal(0, 1))
+            feats = {"milb_unavailable": 0.0, "milb_missing": 0.0,
+                     "obp_rel": float(rng.normal(0, 0.03)), "k_rel": kr, "peak_k_rel": kr,
+                     "level_rank": float(rng.integers(0, 6)),
+                     "age_rel_level": float(rng.normal(0, 1)), "tool_hit": th,
+                     "tool_speed": 48.0, "is_college": 0.0, "is_ifa": 0.0,
+                     "pick_missing": 1.0}
+            extra = {"bmi": float(rng.normal(25, 2)), "pl_rev": None,
+                     "on_40man": float(rng.random() < 0.2),
+                     "nov_add": float(rng.random() < 0.1)}
+            v2 = H.v2_row(feats, extra)
+            if key:
+                v2[key] = x
+            out.append({"player_key": f"{side}{i}", "decision_year": yr, "fv": fv,
+                        "target": t, "reached": float(t > 0.5), "weight": 1.0,
+                        "feats": feats, "extra": extra, "v2": v2, "frame": "lv",
+                        "ids_outcome_blind": True})
+            i += 1
+    return out
+
+
+def _committed_module(tmp_path):
+    """efv_v2_model.py as committed at HEAD, loaded under another name."""
+    import importlib.util
+    r = subprocess.run(["git", "show", "HEAD:./efv_v2_model.py"], cwd=ROOT,
+                       capture_output=True, text=True, encoding="utf-8")
+    if r.returncode != 0 or not r.stdout:
+        pytest.skip("the committed efv_v2_model.py is not readable here")
+    p = tmp_path / "efv_v2_model_committed.py"
+    p.write_text(r.stdout, encoding="utf-8")
+    spec = importlib.util.spec_from_file_location("efv_v2_model_committed", p)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _dump(x) -> str:
+    return json.dumps(x, sort_keys=True, default=str)
+
+
+def test_screen_flag_off_keeps_the_lists_the_heads_and_the_assembly(tmp_path):
+    import efv_v2_serve as S
+    assert H.V2_SCREEN_CANDIDATES_ON is False
+    for side in F.SIDES:
+        assert H.skill_candidates(side) == _LIST_SKILL[side]
+        assert H.screen_admitted("skill", side) == () and H.screen_admitted("timing", side) == ()
+        for (ob, ab), keys in _LIST_TIMING.items():
+            assert H.timing_candidates(side, ids_outcome_blind=ob, absence_admitted=ab) == keys
+    committed = _committed_module(tmp_path)
+    for side in F.SIDES:
+        assert committed.skill_candidates(side) == H.skill_candidates(side)
+        rows = _lv_rows(side)
+        a = H.fit_v2(rows, side, frame="lv", weights=_W, absent_ok=False)
+        b = committed.fit_v2(rows, side, frame="lv", weights=_W, absent_ok=False)
+        assert _dump(a) == _dump(b)
+    # the served heads: production_models() fits what the committed module fits
+    weights = H.load_weights()
+    served = S.production_models()
+    for side in F.SIDES:
+        train = [r for r in H.matrix_training_rows(side)
+                 if int(r["decision_year"]) < F.R_VM_FIRST_DEBUT_YEAR]
+        ref = committed.fit_v2(train, side, frame="vm", weights=weights)
+        for head in ("skill", "timing"):
+            assert _dump(served[side][head]) == _dump(ref[head]), (side, head)
+    # and the registration artifact is byte-identical to the committed copy
+    r = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", "data/efv_v2_assembly.json"],
+                       cwd=ROOT)
+    assert r.returncode == 0, "data/efv_v2_assembly.json differs from HEAD"
+
+
+def test_screen_flag_on_offers_the_admitted_column_to_its_head_only(monkeypatch):
+    key = f"{H.V2_SCREEN_PREFIX}planted"
+    monkeypatch.setattr(H, "V2_SCREEN_CANDIDATES_ON", True)
+    monkeypatch.setattr(H, "V2_SCREEN_ADMITTED",
+                        {"skill": {"hit": (key,), "pit": ()}, "timing": {"hit": (), "pit": ()}})
+    assert H.skill_candidates("hit") == _LIST_SKILL["hit"] + (key,)
+    assert H.skill_candidates("pit") == _LIST_SKILL["pit"]
+    for side in F.SIDES:
+        for (ob, ab), keys in _LIST_TIMING.items():
+            assert H.timing_candidates(side, ids_outcome_blind=ob, absence_admitted=ab) == keys
+    hit = H.fit_v2(_lv_rows("hit", key=key), "hit", frame="lv", weights=_W, absent_ok=False)
+    assert key in hit["skill"]["candidates"] and key in hit["skill"]["keys"]
+    assert key not in (hit["timing"] or {}).get("candidates", [])
+    pit = H.fit_v2(_lv_rows("pit", seed=12, key=key), "pit", frame="lv", weights=_W,
+                   absent_ok=False)
+    for head in ("skill", "timing"):
+        assert key not in ((pit[head] or {}).get("candidates") or [])
+    # a key without the screening prefix is refused
+    monkeypatch.setattr(H, "V2_SCREEN_ADMITTED", {"skill": {"hit": ("planted",)}})
+    with pytest.raises(ValueError):
+        H.skill_candidates("hit")

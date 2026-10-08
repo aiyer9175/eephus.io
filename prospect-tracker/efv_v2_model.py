@@ -1239,6 +1239,37 @@ V2_FIRST_SCORED_YEAR = RULE_LAST_YEAR + 1
 #: The registration artifact (weights, rule receipt, per-fold admission, coverage).
 ASSEMBLY_PATH = DATA_DIR / "efv_v2_assembly.json"
 IDENTITY_BALANCE_PATH = DATA_DIR / "efv_identity_balance.json"
+#: EFV3_B7 (docs/efv-v2/EFV_V2_GATE.md s10.13): a column the screening lab's registered
+#: run ADMITTED (verdict PASS) joins the declared head's candidate list on its side ONLY
+#: while this flag is on. Default OFF: with it off skill_candidates and
+#: timing_candidates return exactly the lists above, so fit_v2 and
+#: efv_v2_serve.production_models never see an admitted column before a reserved read
+#: and the fitted heads and data/efv_v2_assembly.json stay byte-identical
+#: (test_efv_v2_model.py). Only the look runner (EV-13) reads the admitted columns with
+#: the flag on, inside the look; the flag flips in served code only after a registered
+#: look passes, through EV-15.
+V2_SCREEN_CANDIDATES_ON = False
+#: {head: {side: keys}} of the admitted screening columns, each carrying
+#: V2_SCREEN_PREFIX, copied from the PASS arms of data/xfv_screen_wave1.json. Wave 1's
+#: registered run (2026-10-08, label fwar@2026-10-02-0341299c20ec) admitted none: six
+#: arms NULL, one withheld (gate s10.7).
+V2_SCREEN_ADMITTED: dict[str, dict[str, tuple[str, ...]]] = {
+    "skill": {"hit": (), "pit": ()},
+    "timing": {"hit": (), "pit": ()},
+}
+
+
+def screen_admitted(head: str, side: str) -> tuple[str, ...]:
+    """The admitted screening columns for one head and side while
+    V2_SCREEN_CANDIDATES_ON is True; () while it is off."""
+    if not V2_SCREEN_CANDIDATES_ON:
+        return ()
+    keys = tuple((V2_SCREEN_ADMITTED.get(head) or {}).get(side) or ())
+    for k in keys:
+        if not str(k).startswith(V2_SCREEN_PREFIX):
+            raise ValueError(f"an admitted screening column must carry the prefix "
+                             f"{V2_SCREEN_PREFIX!r}, got {k!r}")
+    return keys
 
 
 def skill_candidates(side: str) -> tuple[str, ...]:
@@ -1250,7 +1281,7 @@ def skill_candidates(side: str) -> tuple[str, ...]:
         base = tuple(V2_PIT_SKILL_CANDIDATES) + tuple(V2_PIT_SKILL_EXTRA)
     else:
         raise ValueError(f"side must be one of {F.SIDES}, got {side!r}")
-    out = tuple(base) + (V2_PL_REV_KEY,)
+    out = tuple(base) + (V2_PL_REV_KEY,) + screen_admitted("skill", side)
     if V2_ABSENCE_KEY in out:
         raise ValueError("the absence flag may not enter the skill head (DS-04)")
     return out
@@ -1263,7 +1294,8 @@ def timing_candidates(side: str, *, ids_outcome_blind: bool = False,
     matrix ids are a debut proxy, bug B4, so protection never enters a matrix fit)."""
     keys = timing_keys(side, ids_outcome_blind=ids_outcome_blind,
                        absence_admitted=absence_admitted)
-    return keys + (V2_PROTECTION_KEYS if ids_outcome_blind else ())
+    return (keys + (V2_PROTECTION_KEYS if ids_outcome_blind else ())
+            + screen_admitted("timing", side))
 
 
 def absence_admitted(side: str, path: Path | None = None) -> bool:
