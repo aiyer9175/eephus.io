@@ -3089,27 +3089,36 @@
       })
       .catch(() => { FIELDING = { players: {} }; FIELDING_LOADING = false; });
   }
-  // Consensus-FV trajectory as a tiny inline sparkline (ex-PROSPX players). The
-  // arc is [[date, fv], ...] baked from the same series the PROSPX FV-history
-  // chart draws; here it is a hero-strip glyph next to the FV open->close read.
-  function fvSparkSVG(spark) {
-    if (!spark || spark.length < 2) return "";
-    const vals = spark.map(s => s[1]).filter(v => v != null);
-    if (vals.length < 2) return "";
-    const W = 108, H = 22, PX = 2, PY = 3;
-    const mn = Math.min(...vals), mx = Math.max(...vals);
-    const x = i => PX + i * (W - 2 * PX) / (spark.length - 1);
-    const y = v => PY + (mx - v) * (H - 2 * PY) / ((mx - mn) || 1);
-    const pts = spark.map((s, i) => s[1] != null ? `${x(i).toFixed(1)},${y(s[1]).toFixed(1)}` : null).filter(Boolean).join(" ");
-    const last = vals[vals.length - 1];
-    // The GEOMETRY plots the raw arc (a rounded path would step, not curve), but
-    // every number SAID out loud is a consensus FV, so it displays CEILING per
-    // the owner rule. The baked arc is fractional (8,984 of the points in the
-    // shipped mlb_player_detail.json are), so this read "FV 67.8" before.
-    const fvc = v => (window.EEPHUS_HUB ? EEPHUS_HUB.fvCeil(v) : Math.ceil(v));
-    return `<svg class="mlbp-fvspark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Consensus FV trajectory, ${fvc(vals[0])} to ${fvc(last)}" preserveAspectRatio="none">
-      <polyline points="${pts}" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" stroke-linejoin="round"/>
-      <circle cx="${x(spark.length - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="1.8" fill="var(--accent-cyan)"><title>latest consensus FV ${fvc(last)}</title></circle></svg>`;
+  // A graduate's final tracked-park Statcast hitter line (origin.aaaHit, from
+  // the PROSPX hitter card's sidecar): the level and season it came from, the
+  // through or as-of date that keeps a partial season from reading as the
+  // full one, and the four contact numbers PROSPX prints, in its format.
+  const AAA_MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function aaaShortDate(d) {
+    if (!d || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(d)) return "";
+    const mon = AAA_MON[Number(d.slice(5, 7)) - 1];
+    return mon ? `${mon} ${Number(d.slice(8, 10))}` : "";
+  }
+  function aaaHitLine(h) {
+    if (!h || h.season == null) return "";
+    const fx = (v, d) => (v != null && isFinite(v)) ? Number(v).toFixed(d) : null;
+    const parts = [
+      fx(h.xwoba, 3) != null ? `xwOBA ${fx(h.xwoba, 3)}` : "",
+      fx(h.ev, 1) != null ? `EV ${fx(h.ev, 1)} mph` : "",
+      fx(h.hardHit, 1) != null ? `HardHit% ${fx(h.hardHit, 1)}%` : "",
+      fx(h.whiff, 1) != null ? `Whiff% ${fx(h.whiff, 1)}%` : "",
+    ].filter(Boolean);
+    if (!parts.length) return "";
+    const lv = (Array.isArray(h.levels) && h.levels.length)
+      ? h.levels.map(l => (l === "A" ? "A (FSL)" : String(l))).join(" + ") : "";
+    const when = h.thru && aaaShortDate(h.thru) ? ` through ${aaaShortDate(h.thru)}`
+      : h.asOf && aaaShortDate(h.asOf) ? ` as of ${aaaShortDate(h.asOf)}` : "";
+    const head = [lv, `${esc(String(h.season))}${when}`].filter(Boolean).join(" ")
+      + (h.pa != null ? `, ${esc(String(h.pa))} PA` : "");
+    const title = "Baseball Savant minors Statcast, tracked parks only (every AAA park and the"
+      + " Single-A Florida State League): his latest season with 100+ PA there, the line his"
+      + " PROSPX card shows.";
+    return `<div class="fa-sub mlbp-origin-line" title="${esc(title)}">Statcast (tracked parks), ${head}: ${parts.join(" · ")}</div>`;
   }
   // 20-80 scouting-scale color (50 = MLB average). Tool grades display CEILING.
   function gradeColor(v) {
@@ -3589,6 +3598,7 @@
       `Statcast percentiles ${SAVANT_POOL}`,
       p.swingPlus != null ? "Swing+ (MLB bat tracking 2024+)" : "",
       p.aaaStuffPlus != null ? "aStuff+: in-house AAA pitch model, latest tracked AAA season" : "",
+      (p.origin || {}).aaaHit ? "Statcast (tracked parks): Baseball Savant minors, latest 100+ PA season" : "",
       sk.def ? "Fielding, framing and positional runs: FanGraphs, via MLB StatsAPI" : "",
     ].filter(Boolean).join(" · ");
   }
@@ -3636,11 +3646,19 @@
       : _cThru
       ? _cWord
       : (p.fa ? `free agent${p.fa.type ? ` · ${esc(p.fa.type)}` : ""}` : "arb / pre-arb");
-    // Prospect origin line (ex-PROSPX players): the FV arc endpoints +
-    // debut date - the hub strip carries the link to the full arc.
+    // Prospect origin block (ex-PROSPX graduates, wiring W06): what PROSPX
+    // said before he arrived. The one grade it prints is eFV at debut
+    // (the backgrade's xfv_grade_at_debut) to the nearest point, never the
+    // consensus arc (owner answer Q-E4), beside the debut date and the club
+    // he debuted with; a hitter's final tracked-park Statcast line sits under
+    // it, the batter twin of the aStuff+ tile. One player's own numbers only.
     const org = p.origin;
+    const devOrg = org && org.devOrg
+      ? (franchiseHref(org.devOrg)
+        ? ` with <a class="fa-player-link" href="${esc(franchiseHref(org.devOrg))}">${esc(org.devOrg)}</a>`
+        : ` with ${esc(org.devOrg)}`) : "";
     const originLine = (org && org.prospx)
-      ? `<div class="fa-sub mlbp-origin-line"><a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(org.prospx)}">ex-PROSPX prospect &rarr;</a>${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} &rarr; ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}${fvSparkSVG(org.fvSpark)}</div>`
+      ? `<div class="fa-sub mlbp-origin-line"><a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(org.prospx)}">ex-PROSPX prospect &rarr;</a>${org.efvDebut != null ? `<span>· ${term("xfv", "eFV")} at debut ${Math.round(org.efvDebut)}</span>` : ""}${org.debut ? `<span>· debuted ${esc(org.debut)}${devOrg}</span>` : ""}</div>${aaaHitLine(org.aaaHit)}`
       : "";
     const ov = overviewPanel(p, key);
     const hit = hitSide ? hittingPanel(p) : null;
