@@ -130,7 +130,7 @@ STATSAPI = "https://statsapi.mlb.com/api/v1"
 #: stamp. war_source.py is the authority on the ids; this is display text only.
 _WAR_SERIES = {
     "bwar": ("bWAR: the Baseball-Reference run frame, pitchers priced on the "
-             "runs they actually allowed"),
+             "runs they allowed"),
     "ewar_v2": ("eWAR v2: the Baseball-Reference run frame with pitching "
                 "re-priced on FIP within role (fielding unchanged pending SDR; "
                 "position players match bWAR except in seasons they also pitched)"),
@@ -634,10 +634,10 @@ def _basis_sentence(war_basis: dict, gate: Optional[dict]) -> str:
     gate verdict was measured on, so a reader can never take the two for one
     measurement. Derived from the stamps, so it cannot go stale on its own."""
     if not war_basis.get("available"):
-        live = ("WAR outcomes are UNAVAILABLE in this build (the WAR pull failed), so "
+        live = ("WAR outcomes are unavailable in this build (the WAR pull failed), so "
                 "every war_delta rho above is null by construction, not by measurement.")
     elif not war_basis.get("provider_known"):
-        live = ("WAR outcomes are present but UNLABELLED: this build did not run the "
+        live = ("WAR outcomes are present but unlabelled: this build did not run the "
                 "loader that records the series (a substituted loader), so the rhos "
                 "above cannot be attributed to a WAR provider.")
     else:
@@ -645,15 +645,15 @@ def _basis_sentence(war_basis: dict, gate: Optional[dict]) -> str:
                                           or str(war_basis.get("provider")))
                 + ", stamped " + str(war_basis.get("stamped")) + ".")
     if not gate:
-        return live + (" No gate verdict is available: data/pal_eval.json is missing "
+        return live + (" No gate verdict is available: /data/pal_eval.json is missing "
                        "or carries no per-direction block.")
-    out = (live + " The pre-registered gate (data/pal_eval.json, "
+    out = (live + " The pre-registered gate (/data/pal_eval.json, "
            + str(gate.get("generated_at")) + ") ran on "
            + (gate.get("basis_series") or str(gate.get("basis_provider"))
               or "an unlabelled WAR series") + ".")
     if (war_basis.get("available") and war_basis.get("provider_known")
             and not gate.get("same_basis_as_live")):
-        out += (" It has NOT been re-run on the series above, so the rhos and the "
+        out += (" It has not been re-run on the series above, so the rhos and the "
                 "verdicts beside them are not the same measurement.")
     return out
 
@@ -1222,9 +1222,9 @@ def _disclaimer(war_basis: dict, gate: Optional[dict]) -> str:
     copy-only restamp (restamp_copy) rebuilds it from the payload's own blocks."""
     return ("A screen, not a success-probability model. The conversion sample is small and "
             "selection-biased (only pitchers teams chose to convert), so the weights are frozen "
-            "priors from the literature. The gated evaluation (per-direction rho vs same-event "
-            "baselines, bootstrap CI) is data/pal_eval.json; the rhos here are the live stamp of "
-            "the same repaired backtest code. Held labels read "
+            "priors from the literature. Gate: per-direction rho against same-event baselines, "
+            "bootstrap CI (/data/pal_eval.json); the rhos here are the live stamp of the same "
+            "repaired backtest code. Held labels read "
             "closed >=20 IP follow-up seasons only. " + _basis_sentence(war_basis, gate))
 
 
@@ -1257,15 +1257,38 @@ def write_payload(payload: dict, out_path: Path = OUT_PATH, log=print) -> None:
         log(f"  pal: wrote {shown}")
 
 
+def _revoice_recs(node) -> None:
+    """Walk the payload and re-word every pitch-add object in place
+    (pc.revoice_rec); copy only."""
+    if isinstance(node, dict):
+        if {"add", "reason", "priority"} <= node.keys():
+            pc.revoice_rec(node)
+            return
+        for v in node.values():
+            _revoice_recs(v)
+    elif isinstance(node, list):
+        for v in node:
+            _revoice_recs(v)
+
+
 def restamp_copy(out_path: Path = OUT_PATH, log=print) -> None:
     """COPY-ONLY rewrite of the served payload: read it back, rebuild the
-    exporter's own prose from the payload's own blocks (the disclaimer), and
-    write it through write_payload. No row, rho or rule is recomputed, so a
-    wording change ships without a data refresh moving served numbers."""
+    exporter's own prose from the payload's own blocks (the series labels, the
+    disclaimer, the pitch-add reasons), and write it through write_payload. No
+    row, rho or rule is recomputed, so a wording change ships without a data
+    refresh moving served numbers."""
     payload = json.loads(out_path.read_text(encoding="utf-8"))
     bt = payload.get("backtest")
-    if isinstance(bt, dict) and "disclaimer" in bt:
-        bt["disclaimer"] = _disclaimer(bt.get("war_basis") or {}, bt.get("gate"))
+    if isinstance(bt, dict):
+        gate, wb = bt.get("gate"), bt.get("war_basis")
+        if isinstance(gate, dict) and gate.get("basis_provider") in _WAR_SERIES:
+            gate["basis_series"] = _WAR_SERIES[gate["basis_provider"]]
+        if (isinstance(wb, dict) and wb.get("series")
+                and wb.get("provider") in _WAR_SERIES):
+            wb["series"] = _WAR_SERIES[wb["provider"]]
+        if "disclaimer" in bt:
+            bt["disclaimer"] = _disclaimer(wb or {}, gate)
+    _revoice_recs(payload)
     write_payload(payload, out_path, log)
 
 

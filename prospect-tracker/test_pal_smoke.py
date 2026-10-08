@@ -317,8 +317,8 @@ def test_fetch_failure_renders_error_state():
                  "catch:function(cb){cb(new Error('network down'));return this;}};};")
     ctx.eval(_prelude("") + err_fetch + JS)
     html = ctx.eval("__html['pal-app-root'] || ''")
-    assert "Data failed to load" in html
-    assert "nightly build is mid-run" in html
+    assert "Alchemy Lab did not load" in html
+    assert "nightly build may be writing it" in html
     assert "pal-retry" in html               # the retry affordance exists
     assert 'role="alert"' in html
 
@@ -329,8 +329,8 @@ def test_null_payload_still_reads_as_not_exported():
                "json:function(){return FT(null);}});};")
     ctx.eval(_prelude("") + ok_null + JS)
     html = ctx.eval("__html['pal-app-root'] || ''")
-    assert "being computed" in html
-    assert "Data failed to load" not in html
+    assert "not built yet on this deploy" in html
+    assert "did not load" not in html
 
 
 # ---------------------------------------------------------------------------

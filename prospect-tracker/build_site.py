@@ -6125,14 +6125,13 @@ def build_pal() -> str:
     # splits, and the OAA the fielding side reads - so the attribution is split
     # rather than deleted. The tab list also went stale: Pitch-Add Lab,
     # Reverse-Platoon Radar and Prospect Watch all shipped after the copy was
-    # written and were invisible to a search snippet. Length 270 chars after
-    # the 2026-09-11 copy pass (296 before it, 325 before that); this page has
-    # seven surfaces to name.
+    # written and were invisible to a search snippet. Length 211 chars and 24
+    # words after the 2026-10-08 copy pass (share cards 25 words or fewer; 270
+    # chars before it); this page has seven surfaces to name.
     return page("Alchemy Lab - eephus.io", "pal", body,
-                "MLB role and position conversions: reliever-to-starter and starter-to-relief "
-                "candidates, position fit, pitch-add, reverse-platoon and prospect boards, and the "
-                "conversion backtest. Arsenals and velocity from Statcast; the positional ladder "
-                "fitted from Baseball-Reference.",
+                "MLB role and position conversions: RP-to-SP, SP-to-RP, position fit, pitch-add, "
+                "reverse-platoon and prospect boards, the conversion backtest. Statcast arsenals and "
+                "velocity; Baseball-Reference positional ladder.",
                 url=f"{SITE_ORIGIN}/pal/", image=module_share_image("pal"))
 
 def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
@@ -6789,8 +6788,8 @@ def build_parks() -> str:
     )
     return page("MiLB Park Factors - eephus.io", "parks", body,
                 "Minor-league park factors for every affiliated venue: run and home-run factors by "
-                "season and on a three-season window, with the level, affiliate and home-game sample "
-                "behind each. Home vs road scoring, league-centered, sample-shrunk. Display only.",
+                "season and three-season window, home vs road, league-centered, sample-shrunk. "
+                "Display only.",
                 url=f"{SITE_ORIGIN}/parks/")
 
 def build_management() -> str:

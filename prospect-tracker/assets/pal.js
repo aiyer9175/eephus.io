@@ -202,7 +202,7 @@
       + '<span class="proj-dim pal-count">' + (orgFilter ? esc(n) + " of " + esc(all.length) : esc(all.length))
       + " " + esc(noun) + "</span>" + (extra || "") + "</div>";
   }
-  function orgEmpty() { return empty("No " + orgFilter + " rows in this view."); }
+  function orgEmpty() { return empty("No " + orgFilter + " rows match these filters."); }
   // The Org cell: the club's logo and code, linked to its club page (the farm
   // system page for a prospect).
   function orgCell(team, ctx) {
@@ -1575,7 +1575,7 @@
     var subNote = !fielderCentred ? "not the imposed zero"
       : (Math.abs(sum8) < 0.005 ? "0 by construction"
         : (Math.abs(sum8) <= nField8 * 0.005 + 1e-9 ? "0 by construction, 2 dp rounding"
-          : "DOES NOT ADD UP, off by " + pfSigned(sum8, 2)));
+          : "does not add up, off by " + pfSigned(sum8, 2)));
     rows += "<tr>"
       + "<td" + subTd + "><strong>Sum of the " + fInt(nField8) + "</strong></td>"
       + "<td" + subTd + "><strong>" + pfSigned(sum8, 2) + "</strong></td>"
@@ -1692,10 +1692,10 @@
 
   function renderPosFit() {
     if (PF_ERROR) {
-      return pxState("failed", "The position-fit model failed to load. "
-        + 'Refresh to retry. <button type="button" class="chip" id="pf-retry">Retry</button>', "pal-load-error");
+      return pxState("failed", "Position-fit model did not load. "
+        + '<button type="button" class="chip" id="pf-retry">Retry</button>', "pal-load-error");
     }
-    if (!PF) return pxState("loading", esc("Loading the position-fit model…"));
+    if (!PF) return pxState("loading", esc("Loading the position-fit model."));
     var all = PF.rows || [];
     if (!all.length) return empty("No qualified hitters in the position-fit model yet.");
     var views = [["misplaced", "Misplaced hitters"], ["down", "Move down the spectrum"],
@@ -1762,16 +1762,15 @@
     }
     if (!DATA) {
       root.innerHTML = LOAD_ERROR
-        ? pxState("failed", "Data failed to load. Refresh to retry; "
-          + "if it persists the nightly build is mid-run. "
+        ? pxState("failed", "Alchemy Lab did not load; the nightly build may be writing it. "
           + '<button type="button" class="chip" id="pal-retry">Retry</button>', "pal-load-error")
-        : LOADING ? pxState("loading", esc("Loading…"))
+        : LOADING ? pxState("loading", esc("Loading the Alchemy Lab."))
         // Names the ACTUAL source mix. This read "from Statcast", which is only
         // the arsenal and velocity half: role, rates and platoon splits are
         // StatsAPI (through bullpen_export) and the conversion WAR column is
         // Baseball-Reference.
-        : pxState("unmeasured", esc("The Alchemy Lab is being computed from Statcast arsenals, StatsAPI roles and "
-                + "platoon splits, and run-frame WAR. Check back shortly."));
+        : pxState("unmeasured", esc("Alchemy Lab not built yet on this deploy; the nightly build writes it "
+                + "from Statcast arsenals, StatsAPI roles and platoon splits, and run-frame WAR."));
       var retry = document.getElementById("pal-retry");
       if (retry) retry.addEventListener("click", function () { load(); });
       return;
@@ -1780,9 +1779,9 @@
       ensureBlock(section);
       if (hasBlock(section)) return;   // answered at once: that render already painted
       root.innerHTML = BLOCK_ERROR[section]
-        ? pxState("failed", "This tab's rows failed to load. "
+        ? pxState("failed", "This tab's rows did not load. "
           + '<button type="button" class="chip" id="pal-block-retry">Retry</button>', "pal-load-error")
-        : pxState("loading", esc("Loading…"));
+        : pxState("loading", esc("Loading this tab's rows."));
       var bretry = document.getElementById("pal-block-retry");
       if (bretry) bretry.addEventListener("click", function () {
         BLOCK_ERROR[section] = false; render();

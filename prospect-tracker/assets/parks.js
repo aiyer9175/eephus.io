@@ -440,7 +440,7 @@
       + viz(rows)
       + (rows.length
           ? '<div class="mlbstats-scroll">' + boardTable(rows) + "</div>"
-          : pxState("empty", "No venue matches that filter."));
+          : pxState("empty", "No venues match these filters."));
   }
 
   // ---- league spread --------------------------------------------------------
@@ -692,15 +692,14 @@
     var root = document.getElementById("parks-app-root");
     if (!root) return;
     if (LOAD_ERROR) {
-      root.innerHTML = pxState("failed", '<strong>Park factors did not load</strong> '
-        + 'The venue table lives at <code>/data/milb_park_factors.json</code>. '
+      root.innerHTML = pxState("failed", '<strong>Park factors did not load.</strong> '
         + '<button type="button" class="chip" id="pk-retry">Retry</button>');
       var rb = document.getElementById("pk-retry");
       if (rb) rb.addEventListener("click", load);
       return;
     }
     if (!DATA) {
-      root.innerHTML = pxState("loading", "Loading venues...");
+      root.innerHTML = pxState("loading", "Loading park factors.");
       return;
     }
     root.innerHTML = section === "method" ? renderMethod()
