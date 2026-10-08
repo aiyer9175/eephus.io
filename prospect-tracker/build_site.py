@@ -390,7 +390,8 @@ def _headshot_url(mlbam, box_w: int = 84, box_h: int | None = None) -> str | Non
 # PROSPX), FA, Projections, Articles, Forums, Glossary, Team.
 # 2026-06-12: the standalone Teams module merged into MLB Projections
 # (Team Outlook view carries the org-dashboard columns); /teams/ now
-# redirects there and the nav entry is gone.
+# redirects there through the 404 page's map (RETIRED_ROUTES) and the nav
+# entry is gone.
 # A nav entry is either a LEAF (key, label, href) or a GROUP dict
 #   {"group": <label>, "key": <group key>, "children": [(key, label, href), ...]}
 # rendered as a click dropdown in the top bar (_nav) and a nested sub-block in
@@ -446,8 +447,9 @@ NAV_ITEMS = [
     # collapsed back into ONE "Fantasy" leaf, because three of the group's six
     # entries were three tabs of one module and the dropdown read as six
     # products. They are sub-modules of /fantasy/ now and /dynasty/, /redraft/
-    # and /dfs/ are hash-preserving redirect stubs, so every bookmark written
-    # against the split still lands on the board it named. Every page in this
+    # and /dfs/ forward through the 404 page's hash-preserving map
+    # (RETIRED_ROUTES), so every bookmark written against the split still
+    # lands on the board it named. Every page in this
     # group ships PUBLIC with "Diamond preview" labeling. The group key is
     # deliberately NOT "diamond" so it cannot be confused with the leaf of that
     # name (the leaf key is what _nav() matches `active` against).
@@ -5425,35 +5427,6 @@ def build_fantasy() -> str:
                 url=f"{SITE_ORIGIN}/fantasy/", image=module_share_image("fantasy"))
 
 
-def _fantasy_redirect(title: str, module: str, label: str) -> str:
-    """A retired fantasy page dir, kept as a HASH-PRESERVING redirect stub.
-
-    Same shape as build_teams_redirect(), with one addition it does not need:
-    these three URLs were the addresses of working boards for two days and
-    people bookmarked deep links into them, so the stub carries the incoming
-    hash across instead of dropping the reader on the module's default tab.
-    `/redraft/#section=ros_sp&sys=sabr` becomes
-    `/fantasy/#m=redraft&section=ros_sp&sys=sabr`, and the coordinator on the
-    other side accepts the un-namespaced form too, so a hash this script cannot
-    carry (JS off, meta refresh wins the race) still resolves.
-
-    The dirs STAY in deploy/publish_paths.txt. A redirect that does not ship is
-    a 404, which is the whole reason the stub exists."""
-    return f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{html.escape(title)} - eephus.io</title>
-{FAVICON_LINKS}
-<meta name="robots" content="noindex">
-<meta http-equiv="refresh" content="0; url=/fantasy/#m={module}">
-<script>(function(){{var h=(location.hash||"").replace(/^#/,"").replace(/(^|&)m=[^&]*/g,"").replace(/^&+/,"");
-location.replace("/fantasy/#m={module}"+(h?"&"+h:""));}})();</script>
-</head><body>
-<p style="font-family:monospace;padding:2rem;">{html.escape(label)} moved into
-<a href="/fantasy/#m={module}">Fantasy &rarr; {html.escape(label)}</a>.</p>
-</body></html>
-"""
-
 # --------------------------------------------------------------------------- #
 # The Diamond section (2026-08-05, fantasy merged back 2026-08-07)
 # --------------------------------------------------------------------------- #
@@ -5469,9 +5442,10 @@ location.replace("/fantasy/#m={module}"+(h?"&"+h:""));}})();</script>
 # spelled out per builder; the data attribute is data-<module>section and the
 # three ids are <module>-section / <module>-banner / <module>-app-root.
 #
-# /dynasty/, /redraft/ and /dfs/ were pages of their own for two days and are
-# redirect stubs now. They still BUILD and still SHIP, because the addresses
-# were public and a redirect that does not ship is a 404.
+# /dynasty/, /redraft/ and /dfs/ were pages of their own for two days and were
+# redirect stubs from 2026-08-07. Since 2026-10-07 (owner answer LB-Q3) the
+# stub dirs are gone and the 404 page forwards each address, hash and all,
+# through RETIRED_ROUTES.
 # --------------------------------------------------------------------------- #
 
 def _diamond_cfg(src: str | None = None) -> dict:
@@ -5573,18 +5547,6 @@ def _diamond_ledger_card() -> str:
         'Deprecated rows are shown on purpose.</p>'
         '<p class="diamond-fine">Counted at build time from data/model_registry.json.</p>'
         '</div>')
-
-
-def build_dynasty() -> str:
-    return _fantasy_redirect("Dynasty", "dynasty", "Dynasty")
-
-
-def build_redraft() -> str:
-    return _fantasy_redirect("Redraft", "redraft", "Redraft")
-
-
-def build_dfs() -> str:
-    return _fantasy_redirect("DFS", "dfs", "DFS")
 
 
 def build_betting() -> str:
@@ -6963,6 +6925,8 @@ def build_glossary() -> str:
         '<div id="gl-az"></div>'
         '</div>'
         f"{_glossary_bodies()}"
+        # The Page Index rows, generated (LIBRARY_8): see page_index_groups().
+        f"{_page_index_data()}"
         '</div>'
         # Shared GFX engine (hub + gfx, the FA / news inject pattern): powers
         # the Source Comparison "Generate GFX" share card. Loaded BEFORE
@@ -7311,7 +7275,8 @@ def build_team() -> str:
 # 2026-06-12). The org-dashboard columns (farm rank/score, farm surplus,
 # top prospect, cross-module links) now ride the Team Outlook view's
 # baked farm blocks (proj_export._org_farm_blocks). The URL stays alive
-# as a redirect so bookmarks and external links keep working.
+# through the 404 page's redirect map (RETIRED_ROUTES) so bookmarks and
+# external links keep working.
 # --------------------------------------------------------------------------- #
 def _artifact_card(row: dict) -> str:
     """One published-artifact card for the /sources/ catalog.
@@ -7664,11 +7629,50 @@ def build_bug_report() -> str:
                 url=f"{SITE_ORIGIN}/report/")
 
 
+# Retired addresses forwarded by the 404 page (owner answer LB-Q3, 2026-10-02;
+# built 2026-10-07). Each was a redirect folder of its own with no link from
+# the site: /teams/ since 2026-06-12, /dfs/, /dynasty/ and /redraft/ since
+# 2026-08-07. The box answers every missing path with 404.html
+# (`error_page 404 /404.html;`), so the map below does what the four folders
+# did. Value: (target, carry_hash). carry_hash False drops the incoming hash,
+# as the /teams/ folder did; True carries it the way the fantasy folders did:
+# every m= pair is removed and the rest is appended after the target's own
+# m=, so /redraft/#section=ros_sp&sys=sabr lands on
+# /fantasy/#m=redraft&section=ros_sp&sys=sabr.
+RETIRED_ROUTES = {
+    "/teams/": ("/projections/#view=teams", False),
+    "/dfs/": ("/fantasy/#m=dfs", True),
+    "/dynasty/": ("/fantasy/#m=dynasty", True),
+    "/redraft/": ("/fantasy/#m=redraft", True),
+}
+
+
+def _retired_routes_script() -> str:
+    """The inline redirect the 404 page runs first, written from
+    RETIRED_ROUTES. The path matches with and without the trailing slash and
+    with index.html; any other path renders the not-found page."""
+    table = json.dumps({p: [t, 1 if carry else 0]
+                        for p, (t, carry) in RETIRED_ROUTES.items()},
+                       separators=(",", ":"))
+    return (
+        "<script>(function(){var R=" + table + ";"
+        'var p=location.pathname.replace(/index\\.html$/,"");'
+        'if(p.charAt(p.length-1)!=="/")p+="/";'
+        "if(!Object.prototype.hasOwnProperty.call(R,p))return;"
+        "var t=R[p][0];"
+        'if(R[p][1]){var h=(location.hash||"").replace(/^#/,"")'
+        '.replace(/(^|&)m=[^&]*/g,"").replace(/^&+/,"");if(h)t+="&"+h;}'
+        "location.replace(t);})();</script>"
+    )
+
+
 def build_404() -> str:
     """The not-found page (nginx: `error_page 404 /404.html;`). On-theme,
     no dead ends: home link + the module rail + the palette hint. The rail is
     read off nav_leaves() so a module added to NAV_ITEMS lands here too (the
-    hand-typed list had stopped at seven modules and missed ten)."""
+    hand-typed list had stopped at seven modules and missed ten). A retired
+    address in RETIRED_ROUTES forwards before the page paints: the redirect
+    script is the first thing in <head>."""
     rail = "".join(f'<a href="{h}">{html.escape(l)}</a>'
                    for k, l, h in nav_leaves() if k != "home")
     body = (
@@ -7680,8 +7684,9 @@ def build_404() -> str:
         '<p>Player search: <strong>Ctrl+K</strong> (⌘K on Mac).</p>'
         '</div>'
     )
-    return page("Page not found - eephus.io", "", body,
-                "Page not found on eephus.io.", robots="noindex")
+    out = page("Page not found - eephus.io", "", body,
+               "Page not found on eephus.io.", robots="noindex")
+    return out.replace("<head>\n", "<head>\n" + _retired_routes_script() + "\n", 1)
 
 
 def build_robots() -> str:
@@ -7691,18 +7696,15 @@ def build_robots() -> str:
         "User-agent: *\n"
         "Disallow: /data/\n"
         "Disallow: /player/\n"
-        "Disallow: /teams/\n"
         "Allow: /\n"
         f"Sitemap: {SITE_ORIGIN}/sitemap.xml\n"
     )
 
 
-def build_sitemap(articles: list[dict]) -> str:
-    """sitemap.xml over the canonical public surfaces. lastmod is the build
-    date for app pages (data refreshes nightly) and the article date for
-    articles."""
-    today = date.today().isoformat()
-    pages = [
+def sitemap_pages() -> list[tuple]:
+    """The canonical public surfaces as (path, changefreq, priority): the one
+    page list sitemap.xml and the Library's Page Index both read."""
+    return [
         ("/", "daily", "1.0"),
         ("/news/", "daily", "0.8"),
         ("/history/", "daily", "0.6"),
@@ -7718,9 +7720,10 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/ledger/", "daily", "0.7"),
         ("/franchise/", "daily", "0.7"),
         ("/scores/", "hourly", "0.8"),
-        # /dynasty/, /redraft/ and /dfs/ are redirect stubs into /fantasy/ and
-        # carry meta robots=noindex, so they are deliberately absent here (same
-        # treatment as /teams/). Their content is one crawlable page.
+        # /dynasty/, /redraft/ and /dfs/ are retired addresses the 404 page
+        # forwards into /fantasy/ (RETIRED_ROUTES), so they are deliberately
+        # absent here (same treatment as /teams/). Their content is one
+        # crawlable page.
         ("/fantasy/", "daily", "0.8"),
         ("/betting/", "daily", "0.8"),
         ("/diamond/", "monthly", "0.6"),
@@ -7735,8 +7738,15 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/team/", "monthly", "0.3"),
         ("/report/", "monthly", "0.2"),
     ]
+
+
+def build_sitemap(articles: list[dict]) -> str:
+    """sitemap.xml over the canonical public surfaces. lastmod is the build
+    date for app pages (data refreshes nightly) and the article date for
+    articles."""
+    today = date.today().isoformat()
     urls = []
-    for path, freq, prio in pages:
+    for path, freq, prio in sitemap_pages():
         urls.append(
             f"  <url><loc>{SITE_ORIGIN}{path}</loc><lastmod>{today}</lastmod>"
             f"<changefreq>{freq}</changefreq><priority>{prio}</priority></url>"
@@ -7752,20 +7762,137 @@ def build_sitemap(articles: list[dict]) -> str:
             + "\n".join(urls) + "\n</urlset>\n")
 
 
-def build_teams_redirect() -> str:
-    return f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Teams - eephus.io</title>
-{FAVICON_LINKS}
-<meta name="robots" content="noindex">
-<meta http-equiv="refresh" content="0; url=/projections/#view=teams">
-<script>location.replace("/projections/#view=teams");</script>
-</head><body>
-<p style="font-family:monospace;padding:2rem;">The Teams dashboard moved into
-<a href="/projections/#view=teams">MLB Projections &rarr; Team Outlook</a>.</p>
-</body></html>
-"""
+# --------------------------------------------------------------------------- #
+# The Library's Page Index (LIBRARY_8, 2026-10-07). The view used to be a hand
+# list in assets/glossary.js that called itself every page with its own address
+# and had missed 14 module roots. Its rows are now written here at build time:
+# the full pages from NAV_ITEMS and sitemap_pages(), the in-module views from
+# PAGE_INDEX_VIEWS (each checked against its module's router by
+# test_page_index), the player cards as before. A page with no purpose line
+# prints an empty cell and fails test_page_index, so a page added to the
+# sitemap without a row cannot pass.
+# --------------------------------------------------------------------------- #
+
+# Names for the sitemap pages that have no top-bar entry (a top-bar page takes
+# its NAV_ITEMS label).
+PAGE_INDEX_NAMES = {
+    "/news/": "MLB News",
+    "/history/": "Today in Prospect History",
+    "/collegesavant/pitcher_index.html": "CollegeSavant Pitchers",
+    "/parks/": "MiLB Park Factors",
+    "/models/": "Model Accountability",
+    "/models/updates/": "Model Updates",
+    "/sources/": "Data Sources & Attribution",
+    "/report/": "Report a bug",
+}
+
+# One line per page: what a reader finds there.
+PAGE_INDEX_PURPOSE = {
+    "/": "the front page, with a card for every module",
+    "/prospx/": "the prospect board: eFV grades, consensus FV, surplus value and every list source",
+    "/collegesavant/": "percentile profiles for college hitters: batted-ball quality, plate discipline and year-over-year change",
+    "/collegesavant/pitcher_index.html": "percentile profiles for college pitchers",
+    "/franchise/": "one page per club: the Franchise Index and its three branches",
+    "/scores/": "MLB scores by date: win probability, box scores and Stars of the Game",
+    "/fa/": "the free-agent class: projected contracts, rational value against price, deal verdicts and team fits",
+    "/projections/": "five-year WAR projections for every MLB player, with club-control surplus",
+    "/mlbstats/": "MLB leaderboards: eWAR and the plus-stat boards, by season or year range",
+    "/pal/": "role and position conversions: reliever to starter, starter to relief, position fit and pitch add",
+    "/trademachine/": "value a trade in one currency: eFV surplus for prospects, projection surplus for MLB players",
+    "/arbitration/": "projected arbitration salaries for every eligible player, and a per-season record of the market",
+    "/ledger/": "each club's CBT payroll and contract commitments, from Spotrac and our own models",
+    "/management/": "every in-game decision in the play corpus, with the win probability that moved after it",
+    "/hof/": "career WAR, WAR7 and JAWS for every ten-season player, with the ballot record",
+    "/fantasy/": "fantasy baseball: Redraft ranks in your league format, the Dynasty and keeper board, and the DFS slate",
+    "/betting/": "game win probabilities against de-vigged book prices, with the flat-stake public record",
+    "/diamond/": "the paid tier: what Diamond includes and what stays free",
+    "/articles/": "long-form editorial pieces, newest first",
+    "/forums/": "community discussion across prospects, farm systems and articles",
+    "/glossary/": "terms, methods, evidence and sources; this index is one of its views",
+    "/team/": "who builds, runs and writes the site: the one page that carries the credits",
+    "/news/": "the full event wire: debuts, trades, promotions, IL moves, grade changes and FA signings",
+    "/history/": "debut anniversaries, prospect trades, signings and IL moves that landed on today's calendar date",
+    "/parks/": "run environments for every affiliated park; the Methodology tab (/parks/#method) documents the estimator",
+    "/models/": "the model ledger: every model that makes a predictive claim, its verdict and the eval artifact behind it",
+    "/models/updates/": "one row per model update: the scored statistic before and after, and the edge over the benchmark",
+    "/sources/": "every upstream the site reads, what it is used for, and the public data catalog",
+    "/report/": "how to report a bug and what to put in the message",
+}
+
+# Views inside a module that have their own address: (href, name, purpose).
+# A None name on a /glossary/ row takes the view's label from GLOSSARY_VIEWS.
+# PUBLIC ONLY: the dark previews (#tape=1, #cards=1) and the plain module
+# leaderboards are deliberately not listed.
+PAGE_INDEX_VIEWS = (
+    ("/fa/#view=dpw", "FA · $/WAR by winter", "the full signings-implied price-of-a-win series and how it is estimated"),
+    ("/fa/#view=tracker", "FA · Signing Tracker", "actual vs predicted contract for every signing"),
+    ("/fa/#view=fits", "FA · Team Fits", "which clubs fit which free agents, component by component"),
+    ("/fa/#view=archive", "FA · Archive", "past winters with realized WAR and realized surplus per signing"),
+    ("/fa/#view=model", "FA · Model Accountability", "the FA market model held to its own record"),
+    ("/projections/#view=teams", "Projections · Team Outlook", "club-level projected standings built from the player projections"),
+    ("/projections/#view=accountability", "Projections · Accountability", "the projection engine scored against what happened"),
+    ("/prospx/#tab=timemachine", "PROSPX · Time Machine", "the board as it stood at any past snapshot, or a diff of two dates"),
+    ("/prospx/#tab=charts", "PROSPX · Scatterplots", "build-your-own X/Y charts across every prospect group"),
+    ("/prospx/#tab=draft", "PROSPX · MLB Draft/HS", "draft boards, slots, bonuses, and High School Details"),
+    ("/prospx/#tab=draft&dview=war-room", "PROSPX · Draft War Room", "pick-by-pick draft planning on the live board"),
+    ("/prospx/#tab=farm", "PROSPX · Farm Systems", "org rankings and detail pages; each org page carries a Tendencies tab (development habits by org)"),
+    ("/pal/#posfit=ladder", "Alchemy Lab · Positional Ladder", "the fielder-centred positional-fit ladder"),
+    ("/pal/#rp2sp", "Alchemy Lab · RP to SP", "relievers with starter traits, ranked by conversion fit"),
+    ("/pal/#sp2rp", "Alchemy Lab · SP to RP", "starters whose stuff plays up in relief"),
+    ("/pal/#history", "Alchemy Lab · History", "past role conversions and how they went"),
+    ("/pal/#pitchadd", "Alchemy Lab · Pitch Add", "which pitch each arm should add next"),
+    ("/pal/#platoon", "Alchemy Lab · Platoon", "platoon-split profiles and pairings"),
+    ("/pal/#prospects", "Alchemy Lab · Prospect Watch", "the pipeline read through the lab's conversion lenses"),
+    ("/fantasy/#m=dynasty", "Fantasy · Dynasty", "the eFV-graded dynasty board, Call-up Watch and the keeper calculator"),
+    ("/fantasy/#m=dfs", "Fantasy · DFS", "the day's slate with per-game projections and the lineup optimizer"),
+    ("/glossary/#view=guide", None, "how to read a player card, the FV history chart and a farm-system page"),
+    ("/glossary/#view=formulas", None, "every term that carries a formula, each linking its definition"),
+    ("/glossary/#view=methodology", None, "how eFV, consensus FV, the Arkmetrics and the value framework are built"),
+    ("/glossary/#view=source-comparison", None, "eFV against each prospect source on the same graduates"),
+    ("/glossary/#view=source-accuracy", None, "which source grades which cohort better"),
+    ("/glossary/#view=source-updates", None, "the dates each prospect outlet published a list or changed a live list, newest first, grouped by outlet"),
+)
+
+PAGE_INDEX_PLAYER_ROWS = (
+    ("/prospx/#player=", "PROSPX prospect pages", "the full prospect card: grades, history, statlines, eFV explainers (append the player key)"),
+    ("/projections/#player=", "MLB player cards", "projection cards for every MLB player (append the player key)"),
+    ("/fa/#player=", "FA player cards", "contract projection and rational value for each free agent (append the player key)"),
+)
+
+
+def page_index_groups() -> list[dict]:
+    """The Page Index rows, grouped: the top-bar pages in nav order, the other
+    sitemap pages in sitemap order, the in-module views, the player cards.
+    Each row is [href, name, purpose]."""
+    nav = [(href, label) for key, label, href in nav_leaves()]
+    nav_hrefs = {h for h, _ in nav}
+    modules = [[h, label, PAGE_INDEX_PURPOSE.get(h, "")] for h, label in nav]
+    reference = [[p, PAGE_INDEX_NAMES.get(p, ""), PAGE_INDEX_PURPOSE.get(p, "")]
+                 for p, _f, _p in sitemap_pages() if p not in nav_hrefs]
+    gviews = {v["id"]: v for v in GLOSSARY_VIEWS}
+    views = []
+    for href, name, purpose in PAGE_INDEX_VIEWS:
+        if name is None:
+            vid = href.split("#view=", 1)[1]
+            name = f"{GLOSSARY_DISPLAY_NAME} · {gviews[vid]['label']}" if vid in gviews else ""
+        views.append([href, name, purpose])
+    return [
+        {"title": "Modules", "sub": "every entry in the top bar", "rows": modules},
+        {"title": "Reference pages", "sub": "reached from the footer, the homepage or a module",
+         "rows": reference},
+        {"title": "Views inside a module", "sub": "addresses that open one view of a module app",
+         "rows": views},
+        {"title": "Player cards", "sub": "per-player cards, addressable by URL",
+         "rows": [list(r) for r in PAGE_INDEX_PLAYER_ROWS]},
+    ]
+
+
+def _page_index_data() -> str:
+    """The Page Index rows as an inert JSON script the glossary client reads."""
+    blob = json.dumps(page_index_groups(), ensure_ascii=False, separators=(",", ":"))
+    # "</" would terminate the script element mid-blob; the JSON-safe escape keeps it inert.
+    return ('<script type="application/json" id="page-index-data">'
+            + blob.replace("</", "<\\/") + "</script>")
 
 
 def build_library_redirect() -> str:
@@ -7795,9 +7922,9 @@ def build_franchises_redirect() -> str:
 
     The module's display name became "Franchises" while its key and URL stayed
     /franchise/, so the plural address a reader might type resolves too. A
-    canonical, noindex stub on the build_teams_redirect shape that carries the
-    incoming hash across, so /franchises/#team=NYY opens that club. It ships
-    (deploy/publish_paths.txt) and stays out of the sitemap like /teams/."""
+    canonical, noindex stub (the shape of the retired /teams/ folder) that
+    carries the incoming hash across, so /franchises/#team=NYY opens that
+    club. It ships (deploy/publish_paths.txt) and stays out of the sitemap."""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8436,10 +8563,8 @@ def main() -> None:
     _write("trademachine/index.html", build_trademachine())
     _write("arbitration/index.html", build_arbitration())
     _write("fantasy/index.html", build_fantasy())
-    # Diamond section (2026-08-05). Six public pages; the gate flag is off.
-    _write("dynasty/index.html", build_dynasty())
-    _write("redraft/index.html", build_redraft())
-    _write("dfs/index.html", build_dfs())
+    # Diamond section (2026-08-05). Three public pages; the gate flag is off.
+    # /dynasty/, /redraft/ and /dfs/ forward through 404.html (RETIRED_ROUTES).
     _write("betting/index.html", build_betting())
     _write("diamond/index.html", build_diamond())
     _write("parks/index.html", build_parks())
@@ -8459,7 +8584,6 @@ def main() -> None:
     _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())
     _write("library/index.html", build_library_redirect())
-    _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())
     _write("sources/index.html", build_sources())
     _write("report/index.html", build_bug_report())

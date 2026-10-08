@@ -1,9 +1,17 @@
-# Glossary copy audit — Phase 1 ledger (2026-06-10)
+# Glossary copy audit: Phase 1 ledger (2026-06-10)
+
+> **ARCHIVED 2026-10-07. Historical record, not current status.** This is the
+> Phase 1 term-by-term copy ledger of 2026-06-10, kept as written (two dashes in
+> its title and legend became a colon and a comma). Its counts are from that
+> date: it grades 182 definitions, and data/glossary.json is the current
+> definitions file. Its fixes were applied by build_glossary_data.py and the
+> backlog cleared on 2026-07-01 (f894429d). Moved here from docs/ on 2026-10-07
+> (task LIBRARY_8, under the owner answer M23-4 archive convention).
 
 Term-by-term quality assessment of all 182 definitions (176 PROSPX + 6 FA)
 against the unified-glossary quality standard. Verdicts:
 PASS (meets standard) · LIGHT (one-line fix) · REWRITE (content defect) ·
-RESTRUCTURE (methodology long is an unstructured wall — content fine).
+RESTRUCTURE (methodology long is an unstructured wall, content fine).
 
 | Term | Source | Category | Verdict | Diagnosis |
 |---|---|---|---|---|

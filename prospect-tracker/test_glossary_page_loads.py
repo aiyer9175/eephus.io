@@ -669,8 +669,9 @@ def test_source_accuracy_subtabs_render(server, browser):
 
 def test_library_view_renders(server, browser):
     """The Page Index view (2026-08-04; id index since LIBRARY_3): the legacy
-    #view=library alias renders the standalone-page index with all three
-    groups and the recon-verified routes. The view registry (assets/glossary.js
+    #view=library alias renders the page index with its four groups and the
+    recon-verified routes. Since LIBRARY_8 (2026-10-07) the rows are generated
+    by build_site.page_index_groups() into the shell (#page-index-data). The view registry (assets/glossary.js
     VIEWS, mirrored by build_site.GLOSSARY_VIEWS, pinned equal by
     test_library_section_registry) replaced the four registration points.
     Skips cleanly while the built shell predates the index-body mount div (the
@@ -698,12 +699,12 @@ def test_library_view_renders(server, browser):
 
     assert not page_errors, "JS errors on library view:\n  " + "\n  ".join(page_errors)
     assert visible, "#view=library did not unhide the page index body"
-    for group in ("Full pages", "In-module artifact pages", "Player pages"):
+    for group in ("Modules", "Reference pages", "Views inside a module", "Player cards"):
         assert group in html, f"library view missing the {group!r} group"
     # Spot-check recon-verified routes from every module family.
     for route in ("/parks/", "/fa/#view=dpw", "/projections/#view=teams",
                   "/prospx/#tab=timemachine", "/pal/#posfit=ladder",
-                  "/glossary/#view=models"):
+                  "/glossary/#view=source-updates", "/prospx/", "/scores/"):
         assert route in html, f"library view missing route {route}"
     # PUBLIC ONLY: the dark previews must never be listed.
     assert "tape=1" not in html and "cards=1" not in html, \

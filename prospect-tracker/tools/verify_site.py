@@ -10,7 +10,8 @@ run. It imports conftest.serve_site only, which is a plain static server.
 import sys
 import pathlib
 
-ROOT = pathlib.Path(r"c:/Users/noah/baseball-projects/BaseballR/prospect-tracker")
+# The module root this file sits in (tools/..), so a worktree checks itself.
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from playwright.sync_api import sync_playwright  # noqa: E402
@@ -29,9 +30,9 @@ ROUTES = [
     ("/fantasy/",                      ".fantasy-mod, .rd-card, tbody tr"),
     ("/fantasy/#m=dynasty",            ".fantasy-mod"),
     ("/fantasy/#m=dfs",                ".fantasy-mod"),
-    ("/redraft/",                      "a[href*='/fantasy/']"),
-    ("/dynasty/",                      "a[href*='/fantasy/']"),
-    ("/dfs/",                          "a[href*='/fantasy/']"),
+    # /redraft/, /dynasty/ and /dfs/ left this list on 2026-10-07: their
+    # folders are gone and 404.html forwards them (build_site.RETIRED_ROUTES)
+    # to /fantasy/, #m=dynasty and #m=dfs, the three routes above.
     ("/models/",                       ".dm-table, table, .acct-row, tbody tr"),
     ("/projections/",                  "table.proj-board-table tbody tr[data-key]"),
     ("/projections/#view=teams",       "tbody tr, .mlb-card"),

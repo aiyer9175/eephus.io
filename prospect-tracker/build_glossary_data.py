@@ -6,7 +6,7 @@
 """One-time builder for data/glossary.json - the unified definitions layer.
 
 Extracts the legacy inline PROSPX GLOSSARY + the FA glossary, applies the
-Phase-1 copy-audit fixes (docs/glossary-copy-audit.md), restructures the
+Phase-1 copy-audit fixes (docs/archive/glossary-copy-audit.md), restructures the
 methodology walls into scannable paragraphs, and registers the new entries
 the audit found missing. After this runs once, data/glossary.json is the
 CANONICAL hand-edited source - this script is kept for provenance and is

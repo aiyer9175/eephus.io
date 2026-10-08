@@ -5991,61 +5991,24 @@ function renderModels() {
 }
 
 // ---- Library view ----------------------------------------------------------
-// The public standalone-page index (owner ask 2026-08-04): every full page,
-// in-module artifact page, and player-page surface, each with a one-line
-// purpose. HAND-MAINTAINED here, matching the ported-prose convention -
-// every route below is cross-checked against SITE_MAP.md and the module's
-// own hash router before it is listed. PUBLIC ONLY: the dark previews
-// (#tape=1, #cards=1) and the plain module leaderboards are deliberately
-// not listed. A hoisted function (not a const) on purpose: boot() can run
-// during IIFE evaluation, and a const this far down would sit in the
-// temporal dead zone at that moment (the _RATER_META lesson, 2026-06-10).
+// The Page Index (owner ask 2026-08-04; generated since LIBRARY_8,
+// 2026-10-07): every page with its own address, each with a one-line purpose.
+// The rows are written by build_site.page_index_groups() into the shell as an
+// inert JSON script (#page-index-data): the full pages from the nav and the
+// sitemap, the in-module views from a constant checked against each module's
+// router, and the player cards. This view only reads and renders them. A
+// hoisted function (not a const) on purpose: boot() can run during IIFE
+// evaluation, and a const this far down would sit in the temporal dead zone at
+// that moment (the _RATER_META lesson, 2026-06-10).
 function _libraryGroups() {
-  return [
-  { title: "Full pages",
-    sub: "standalone destinations with their own route",
-    rows: [
-      ["/models/", "Model Accountability", "the full ledger: every model that makes a predictive claim, its verdict, and the eval artifact behind that verdict, plus the gaps counted rather than omitted"],
-      ["/parks/", "MiLB Park Factors", "run environments for every affiliated park; the Methodology tab (/parks/#method) documents the estimator"],
-      ["/sources/", "Data Sources & Attribution", "every upstream the platform reads, what it is used for, and the editorial stance"],
-      ["/history/", "Today in Prospect History", "debut anniversaries, prospect trades, signings, and IL moves that landed on today's calendar date"],
-      ["/news/", "MLB News", "the full de-noised event wire: debuts, trades, promotions, IL, grade changes, FA signings"],
-      ["/articles/", "Articles", "long-form editorial pieces, newest first"],
-      ["/team/", "Masthead", "who builds, runs and writes the site: the one page that carries the credits"],
-    ] },
-  { title: "In-module artifact pages",
-    sub: "deep-linkable views inside the module apps",
-    rows: [
-      ["/fa/#view=dpw", "FA · $/WAR by winter", "the full signings-implied price-of-a-win series and how it is estimated"],
-      ["/fa/#view=tracker", "FA · Signing Tracker", "actual vs predicted contract for every signing, in real time"],
-      ["/fa/#view=fits", "FA · Team Fits", "which clubs fit which free agents, component by component"],
-      ["/fa/#view=archive", "FA · Archive", "past winters with realized WAR and realized surplus per signing"],
-      ["/fa/#view=model", "FA · Model Accountability", "the FA market model held to its own record"],
-      ["/projections/#view=teams", "Projections · Team Outlook", "club-level projected standings built from the player projections"],
-      ["/projections/#view=accountability", "Projections · Accountability", "the projection engine scored against what actually happened"],
-      ["/prospx/#tab=timemachine", "PROSPX · Time Machine", "the board as it stood at any past snapshot, or a diff of two dates"],
-      ["/prospx/#tab=charts", "PROSPX · Scatterplots", "build-your-own X/Y charts across every prospect group"],
-      ["/prospx/#tab=draft", "PROSPX · MLB Draft/HS", "draft boards, slots, bonuses, and High School Details"],
-      ["/prospx/#tab=draft&dview=war-room", "PROSPX · Draft War Room", "pick-by-pick draft planning on the live board"],
-      ["/prospx/#tab=farm", "PROSPX · Farm Systems", "org rankings and detail pages; each org page carries a Tendencies tab (development habits by org)"],
-      ["/pal/#posfit=ladder", "Alchemy Lab · Positional Ladder", "the fielder-centred positional-fit ladder"],
-      ["/pal/#rp2sp", "Alchemy Lab · RP to SP", "relievers with starter traits, ranked by conversion fit"],
-      ["/pal/#sp2rp", "Alchemy Lab · SP to RP", "starters whose stuff plays up in relief"],
-      ["/pal/#history", "Alchemy Lab · History", "past role conversions and how they went"],
-      ["/pal/#pitchadd", "Alchemy Lab · Pitch Add", "which pitch each arm should add next"],
-      ["/pal/#platoon", "Alchemy Lab · Platoon", "platoon-split profiles and pairings"],
-      ["/pal/#prospects", "Alchemy Lab · Prospect Watch", "the pipeline read through the lab's conversion lenses"],
-      ["/glossary/#view=models", _suPageTitle("Models & Proofs"), `the same ledger as /models/, read inside the ${LIB_NAME}: every predictive model with its verdict and eval artifact, next to the terms it defines`],
-      ["/glossary/#view=source-updates", _suPageTitle("Source Updates"), "the dates each prospect outlet published a list or changed a live list, newest first, grouped by outlet"],
-    ] },
-  { title: "Player pages",
-    sub: "per-player cards, addressable by URL",
-    rows: [
-      ["/prospx/#player=", "PROSPX prospect pages", "the full prospect card: grades, history, statlines, eFV explainers (append the player key)"],
-      ["/projections/#player=", "MLB player cards", "projection cards for every MLB player (append the player key)"],
-      ["/fa/#player=", "FA player cards", "contract projection and rational value for each free agent (append the player key)"],
-    ] },
-  ];
+  const el = document.getElementById("page-index-data");
+  if (!el) return [];
+  try {
+    const groups = JSON.parse(el.textContent || "[]");
+    return Array.isArray(groups) ? groups : [];
+  } catch (e) {
+    return [];
+  }
 }
 
 function renderLibrary() {
@@ -6065,11 +6028,12 @@ function renderLibrary() {
       </table></div>
     </div>`;
   };
+  const groups = _libraryGroups();
   el.innerHTML = `<div class="source-comp-wrap">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Page Index · every standalone page on the site</div>
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Page Index · every page with its own address</div>
     <h2 class="meth-h">The page index</h2>
-    <p class="meth-note">Everything on eephus.io that has its own address, in one place: the full pages, the deep-linkable artifact views inside each module, and the per-player cards. Every route here is public and stable.</p>
-    <div class="meth-tables">${_libraryGroups().map(group).join("")}</div>
+    <p class="meth-note">Every page on eephus.io with its own address: the modules, the reference pages, the views inside each module you can link to, and the player cards.</p>
+    <div class="meth-tables">${groups.length ? groups.map(group).join("") : '<p class="meth-note">The page list did not load with this page. Reload to try again.</p>'}</div>
   </div>`;
 }
 
@@ -6082,12 +6046,6 @@ function renderLibrary() {
 // long-form date come from the payload; this view formats no date of its own.
 // Hoisted functions only (no const at this depth), for the TDZ reason the
 // Library view gives above.
-function _suPageTitle(section) {
-  // LIB_NAME is the display name build_site emits on the shell, so a rename
-  // of the module renames this label with it.
-  return LIB_NAME ? `${LIB_NAME} · ${section}` : section;
-}
-
 function _suSlug(s) {
   return "su-" + String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }

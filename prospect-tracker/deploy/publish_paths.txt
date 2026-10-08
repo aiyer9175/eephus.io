@@ -21,6 +21,13 @@
 # so build_site._acct_artifact_url() re-derives that rule at build time and
 # refuses to emit a link the deploy cannot serve.
 #
+# 2026-10-07: teams/, dfs/, dynasty/ and redraft/ are off this list and out
+# of the tree (owner answer LB-Q3, task LIBRARY_8). Nothing on the site linked
+# them; the box answers each address with 404.html, whose redirect map
+# (build_site.RETIRED_ROUTES) sends /teams/ to /projections/#view=teams and
+# the three fantasy addresses into /fantasy/ with the hash carried, as the
+# folders did. The 2026-08-07 note above is history.
+#
 # Directories ship recursively; bare filenames ship from the app root.
 # data/ is handled separately by both consumers (top-level *.json plus
 # the pitch_plots/, player_detail/ and debuts_full/ per-player splits and,
@@ -56,9 +63,7 @@ articles
 assets
 betting
 collegesavant
-dfs
 diamond
-dynasty
 fa
 fantasy
 forums
@@ -78,11 +83,9 @@ parks
 player
 projections
 prospx
-redraft
 report
 scores
 sources
 team
-teams
 trademachine
 vendor
