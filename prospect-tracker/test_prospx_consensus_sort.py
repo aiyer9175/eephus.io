@@ -170,8 +170,11 @@ def booted_page():
         except Exception as exc:
             pytest.skip(f"chromium not installed for playwright: {exc}")
         page = browser.new_page()
+        # The filter bar opens closed (site pass REDESIGN_prospx); a stored choice
+        # opens it so the Rank-by toggle inside it is clickable.
         page.add_init_script(
-            "try{localStorage.setItem('prospect-tracker.gate-unlocked','1')}catch(e){}")
+            "try{localStorage.setItem('prospect-tracker.gate-unlocked','1');"
+            "localStorage.setItem('prospect-tracker.filters.filter-bar','open')}catch(e){}")
         errs: list[str] = []
         page.on("pageerror", lambda err: errs.append(err.message))
         page.goto(base + "prospx/index.html", wait_until="load", timeout=60_000)

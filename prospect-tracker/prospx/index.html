@@ -1479,6 +1479,41 @@
       color: inherit;
       transition: opacity 0.12s;
     }
+    /* One-line ribbon outside the regular season (site pass REDESIGN_prospx):
+       masthead and the window's name share a line, the window name trims
+       with an ellipsis before the headline takes more than half the row. */
+    .news-ticker.ntk-oneline .news-ticker-headline {
+      flex-direction: row;
+      align-items: baseline;
+      gap: 8px;
+      min-width: 0;
+      max-width: 55%;
+      white-space: nowrap;
+      overflow: hidden;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+    .news-ticker.ntk-oneline .ntk-masthead { flex-shrink: 0; }
+    .news-ticker.ntk-oneline .ntk-subline {
+      margin-top: 0;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Phones: the window's name sits under the masthead and wraps, inside the
+       height the chip strip already takes. */
+    @media (max-width: 640px) {
+      .news-ticker.ntk-oneline .news-ticker-headline {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        max-width: 50%;
+        white-space: normal;
+        padding-top: 2px;
+        padding-bottom: 2px;
+      }
+      .news-ticker.ntk-oneline .ntk-subline { margin-top: 2px; }
+    }
     .news-ticker-headline:hover .ntk-subline {
       color: var(--neon-cyan);
       text-decoration: underline;
@@ -5118,9 +5153,51 @@
          the Stock column now clears the right edge with margin. The header
          label typography below is nudged so the two flexible-track labels
          still read at the tighter track widths. */
-      grid-template-columns: 32px 56px 180px 80px 110px 76px 160px minmax(0,1fr) 156px minmax(0,1fr) 50px 54px 60px 60px 60px 44px;
+      /* Site pass REDESIGN_prospx: Table is the default view at every width, so
+         the board steps down by width instead of falling back to cards: the
+         full 16 columns from 1520px (Organization, trajectory, Top prospects
+         and Level depth flex inside floors that keep them readable), and the
+         tiers below drop the secondary columns (see the fc-* rules after
+         this block). */
+      grid-template-columns: 32px 56px minmax(140px,180px) 80px 110px 76px minmax(110px,160px) minmax(170px,1fr) 156px minmax(90px,1fr) 50px 54px 60px 60px 60px 44px;
       gap: 6px;
       align-items: center;
+    }
+    /* Table tiers by width (cards mode keeps its own layout). Each tier names
+       its columns; the hidden ones go with !important because several cells
+       carry an inline display. 1146 to 1519: no Positions, Level depth, Avg
+       age or ROI. 1024 to 1199: no Tool DvM+ or trajectory either. 721 to
+       1023: rank, logo, organization, grade, DvM+, top prospects, actions.
+       720 and below: rank, logo, organization, grade, actions. */
+    @media (max-width: 1519px) {
+      #farm-section:not(.farm-rows-cards) .farm-header,
+      #farm-section:not(.farm-rows-cards) .farm-row {
+        grid-template-columns: 32px 56px minmax(140px,180px) 80px 110px 76px minmax(110px,160px) minmax(170px,1fr) 60px 60px 60px 44px;
+      }
+      #farm-section:not(.farm-rows-cards) :is(.farm-header, .farm-row) > :is(.fc-pos, .fc-lvl, .fc-age, .fc-roi) { display: none !important; }
+    }
+    @media (max-width: 1199px) {
+      #farm-section:not(.farm-rows-cards) .farm-header,
+      #farm-section:not(.farm-rows-cards) .farm-row {
+        grid-template-columns: 32px 56px minmax(130px,180px) 80px 110px minmax(170px,1fr) 60px 60px 60px 44px;
+      }
+      #farm-section:not(.farm-rows-cards) :is(.farm-header, .farm-row) > :is(.fc-tool, .fc-traj) { display: none !important; }
+    }
+    @media (max-width: 1023px) {
+      #farm-section:not(.farm-rows-cards) .farm-header,
+      #farm-section:not(.farm-rows-cards) .farm-row {
+        grid-template-columns: 32px 44px minmax(120px,1fr) 80px 110px minmax(150px,1.4fr) 56px;
+      }
+      #farm-section:not(.farm-rows-cards) :is(.farm-header, .farm-row) > :is(.fc-spend, .fc-surplus, .fc-stock) { display: none !important; }
+    }
+    @media (max-width: 720px) {
+      #farm-section:not(.farm-rows-cards) .farm-header,
+      #farm-section:not(.farm-rows-cards) .farm-row {
+        grid-template-columns: 28px 32px minmax(0,1fr) 56px 56px;
+      }
+      #farm-section:not(.farm-rows-cards) :is(.farm-header, .farm-row) > :is(.fc-dvm, .fc-top) { display: none !important; }
+      /* The organization reads in full on two lines rather than trimming. */
+      #farm-section:not(.farm-rows-cards) .farm-org-cell .farm-org-name .farm-org { white-space: normal; font-size: 14px; line-height: 1.15; }
     }
     /* Hard-clip positions + level-depth cells so any residual chip
        overflow stays inside the grid track instead of painting over
@@ -7305,20 +7382,7 @@
       }
       .spotlight-header span:nth-child(n+4),
       .spotlight-row > div:nth-child(n+4) { display: none; }
-      /* Farm list (mobile) - keep the three-up hero (#, logo, org,
-         grade, DvM+) plus top prospect + compare button. Drop the
-         sparkline + secondary cells (positions / level depth / age /
-         spend / stock). */
-      .farm-header, .farm-row {
-        grid-template-columns: 28px 32px 1fr 56px 60px 1fr 56px;
-      }
-      /* Hide sparkline (col 6), positions (8), level (9), age (10),
-         spend (11), stock (12). Top prospect (7) takes col 6 of the
-         mobile grid via re-positioning. */
-      .farm-header > span:nth-child(6),
-      .farm-header > span:nth-child(n+8):not(:last-child),
-      .farm-row > div:nth-child(6),
-      .farm-row > div:nth-child(n+8):not(:last-child) { display: none; }
+      /* Farm list: the width tiers sit beside the base farm grid rule. */
       .detail-page-header .player-display-name { font-size: 22px; }
       .detail-page-header { gap: 10px; padding: 12px 14px 12px 18px; margin-bottom: 12px; }
       .detail-page-header .player-display-meta { font-size: 12px; margin-top: 4px; }
@@ -9341,9 +9405,9 @@
            placeholder="Search" autocomplete="off" spellcheck="false">
   </div>
 
-  <!-- Mobile filter toggle. At <720px the filter chips collapse behind
-       this button so the user lands on the list without scrolling past
-       80px of filter chrome. Hidden on desktop via CSS. -->
+  <!-- Filter toggle. The filter chips sit closed behind this button at
+       every width (site pass REDESIGN_prospx) so the reader lands on the
+       list; a stored per-viewer choice wins. -->
   <div class="filter-toggle-row">
     <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-bar">
       <span class="filter-toggle-label">Filters</span>
@@ -10208,6 +10272,10 @@
           <button class="chip" type="button" data-tend-mode="or" title="Show orgs that earn ANY selected tendency (union)">ANY</button>
         </span>
         <button class="chip" type="button" data-farm-sort="tendency" title="Sort the board by how pronounced each org's tendencies are (the selected ones when a filter is active)">↕ Strength</button>
+        <!-- Site pass REDESIGN_prospx: one select (its first line counts the
+             tendencies) in place of a chip per tendency; picks print as
+             removable chips here and beside the Filters toggle. -->
+        <select id="farm-tendency-select" class="chip" aria-label="Add a tendency filter"></select>
         <span id="farm-tendency-chips" class="farm-tendency-chips"></span>
       </div>
       <div class="filter-group" style="margin-left:auto;">
@@ -10221,8 +10289,8 @@
       </div>
       <div class="filter-group">
         <span class="filter-label">View</span>
-        <button class="chip active" data-farm-view="table" title="The full 16-column board. Its fixed tracks need about 1300px of window width; narrower windows fall back to cards until you pick Table here.">Table</button>
-        <button class="chip"        data-farm-view="cards" title="One card per organization. Reads at any width, and the layout narrow windows fall back to.">Cards</button>
+        <button class="chip active" data-farm-view="table" title="One row per organization, the default. All 16 columns show from 1520px of window width; narrower windows drop the secondary columns.">Table</button>
+        <button class="chip"        data-farm-view="cards" title="One card per organization, with the per-org metrics on each card.">Cards</button>
       </div>
       <!-- v18 - Reset chip for the farm page -->
       <div class="filter-group">
@@ -13824,10 +13892,8 @@ function syncToURL(push) {
   if (state.density     && state.density !== "compact") p.set("density", state.density);
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank") p.set("farm",  state.farmSort);
-  // "table" is the default value, so it normally stays out of the URL - but once the
-  // user has PINNED a view it has to survive a reload, or a narrow window would
-  // auto-fall-back to cards again and silently undo the choice.
-  if (state.farmViewMode && (state.farmViewMode !== "table" || state.farmViewPinned)) p.set("farmview", state.farmViewMode);
+  // "table" is the default value at every width, so only Cards goes in the URL.
+  if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
   if (state.farmTendencyFilter && state.farmTendencyFilter.size) p.set("ftend", [...state.farmTendencyFilter].join(","));
   if (state.farmTendencyMode === "or") p.set("ftmode", "or");
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
@@ -13948,6 +14014,8 @@ function syncToURL(push) {
   if ((_pg.farmRoster  || 1) > 1) p.set("frpage",  _pg.farmRoster);
   if ((_pg.farmTx      || 1) > 1) p.set("ftxpage", _pg.farmTx);
   if ((_pg.tradeboard  || 1) > 1) p.set("tbpage",  _pg.tradeboard);
+  if ((_pg.injured     || 1) > 1) p.set("ilpage",  _pg.injured);
+  if ((_pg.ifa         || 1) > 1) p.set("ifapage", _pg.ifa);
   // Shareable compare state - encode the currently pinned prospect keys
   // and farm orgs into the hash so the URL alone reproduces the cart on
   // load. Mutual exclusivity guarantees at most one of these is non-
@@ -14030,7 +14098,7 @@ function _syncFromURLBody() {
   if (p.has("farm"))  state.farmSort    = p.get("farm");
   // An explicit farmview in the link is a choice, from this user or whoever shared
   // it, so it pins and the width fallback leaves it alone.
-  if (p.has("farmview")) { state.farmViewMode = p.get("farmview"); state.farmViewPinned = true; }
+  if (p.has("farmview")) state.farmViewMode = p.get("farmview");
   state.farmTendencyFilter = new Set(p.has("ftend") ? p.get("ftend").split(",").filter(Boolean) : []);
   state.farmTendencyMode = p.get("ftmode") === "or" ? "or" : "and";
   if (p.has("rsort")) state.rosterSort   = p.get("rsort");
@@ -14150,6 +14218,8 @@ function _syncFromURLBody() {
   _readPage("frpage",  "farmRoster");
   _readPage("ftxpage", "farmTx");
   _readPage("tbpage",  "tradeboard");
+  _readPage("ilpage",  "injured");
+  _readPage("ifapage", "ifa");
   // Shareable compare state. When both keys are present (stale link),
   // keep the longer list and clear the other - mutual exclusivity
   // means at most one should be set going forward. A cart is only ever
@@ -15782,12 +15852,9 @@ const state = {
   // (auto-fit columns), better for narrow viewports + visual scan.
   // v17 - Default farm-list view back to table (was cards). Table is the
   // info-dense view; cards are an alternative for quick browsing.
+  // Site pass REDESIGN_prospx: Table at every width (its columns step down by
+  // width in CSS); Cards only when the reader picks it.
   farmViewMode: "table",
-  // Did the user PICK this view, or is it just the default? The board falls back
-  // to cards on windows too narrow for the 16-column table (farmViewEffective),
-  // and that fallback must never override a deliberate choice. Set by the View
-  // chips and by an explicit ?farmview= in the URL; cleared by Reset filters.
-  farmViewPinned: false,
   // Farm-system board tendency filter. A Set of org-tendency badge kinds
   // (e.g. "aggressive", "trade-happy", "over-slot", "high-il") sourced
   // from org_tendencies.json. Empty = no filter. farmTendencyMode controls
@@ -15935,10 +16002,12 @@ const state = {
   pages: {
     leaderboard: 1, actives: 1, draft: 1, overseas: 1,
     spotlights: 1, watchlist: 1, farmRoster: 1, farmTx: 1,
+    injured: 1, ifa: 1,
   },
   pageSizes: {
     leaderboard: 25, actives: 50, draft: 50, overseas: 50,
     spotlights: 25, watchlist: 25, farmRoster: 50, farmTx: 50,
+    injured: 50, ifa: 50,
   },
   view: null,
   // v29 - Universal column-sort direction toggle. For sort families
@@ -17056,16 +17125,17 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
       <span style="color:var(--text-tertiary);margin-left:5px;font-family:var(--font-mono);font-size:10px;">${escapeHtml(dateShort)}${escapeHtml(opp)}</span>
     </button>`;
   }).join("");
-  // Outside the regular season a line of its own names the window (site pass
-  // SP-D5); it is shorter than the line below, so the headline keeps its width.
+  // Outside the regular season (site pass SP-D5) the ribbon collapses to one
+  // line (site pass REDESIGN_prospx): the masthead and the window's name side
+  // by side, the detail line moving into the headline's title.
   const _standoutSeasonLbl = (typeof _pxSeasonLabel === "function")
     ? _pxSeasonLabel("standout", new Date(_nowMs).getFullYear()) : "";
-  root.innerHTML = `<div class="news-ticker">
+  const _standoutDetail = `top FV first · ${top.length} game${top.length === 1 ? "" : "s"} · raw box-line · through ${new Date(_nowMs).toISOString().slice(5, 10)}`;
+  root.innerHTML = `<div class="news-ticker${_standoutSeasonLbl ? " ntk-oneline" : ""}">
     <button class="news-ticker-headline" data-go-section="spotlights" type="button"
-            title="Standout single-game performances from MiLB gameLogs, weighted toward higher-FV prospects">
+            title="Standout single-game performances from MiLB gameLogs, weighted toward higher-FV prospects${_standoutSeasonLbl ? ` (${escapeHtml(_standoutDetail)})` : ""}">
       <span class="ntk-masthead">Standout performances</span>
-      ${_standoutSeasonLbl ? `<span class="ntk-subline">${escapeHtml(_standoutSeasonLbl)}</span>` : ""}
-      <span class="ntk-subline">top FV first · ${top.length} game${top.length === 1 ? "" : "s"} · raw box-line · through ${escapeHtml(new Date(_nowMs).toISOString().slice(5, 10))}</span>
+      <span class="ntk-subline">${escapeHtml(_standoutSeasonLbl || _standoutDetail)}</span>
     </button>
     <div class="news-ticker-strip">${chips}</div>
   </div>`;
@@ -22123,6 +22193,19 @@ function renderInjured() {
   _applySortDir(filtered, "ilSort");
   _gfxSet("injured", "prospect", filtered, {});
 
+  // Fifty rows a page like every PROSPX list (site pass REDESIGN_prospx); a
+  // change of filter, sort or search starts again at page 1, and a page past
+  // the end falls back to page 1.
+  const _ilSig = JSON.stringify([_ilOrg, _ilType, state.ilSort || "", state.ilStatcastSort || "",
+    !!(state.sortRev || {}).ilSort, state.search || ""]);
+  if (_pxPageSig.injured != null && _pxPageSig.injured !== _ilSig) state.pages.injured = 1;
+  _pxPageSig.injured = _ilSig;
+  const _ilSize = state.pageSizes.injured || 50;
+  if ((state.pages.injured || 1) > Math.max(1, Math.ceil(filtered.length / _ilSize))) state.pages.injured = 1;
+  const _ilPage = state.pages.injured || 1;
+  const _ilOffset = (_ilPage - 1) * _ilSize;
+  const _ilPager = renderPaginationStrip(_ilPage, filtered.length, _ilSize, "injured");
+
   // Grid columns live on `.col-header.is-injured` / `.player-row.is-injured`.
   // Days / Since / FV headers are click-sortable; the active chip stays
   // in sync via the shared SORT_HEADER_MAP routing. Days toggles between
@@ -22148,7 +22231,7 @@ function renderInjured() {
     if (t.startsWith("60")) return { bg: "rgba(203,55,55,0.14)",  fg: "var(--down)",       bd: "var(--down)" };
     return { bg: "var(--bg-tertiary)", fg: "var(--text-secondary)", bd: "var(--border)" };
   };
-  const rows = filtered.map(({ p, il, days, since, fv }, i) => {
+  const rows = pageSlice(filtered, _ilPage, _ilSize).map(({ p, il, days, since, fv }, i) => {
     const tjBadge = (p.health_profile || {}).is_post_tj
       ? `<span style="font-size:9px;color:var(--accent-tj);background:var(--accent-tj-soft);border:1px solid var(--accent-tj-border);padding:1px 5px;border-radius:2px;letter-spacing:0.04em;text-transform:uppercase;font-weight:700;margin-left:4px;">Post-TJ</span>`
       : "";
@@ -22156,7 +22239,7 @@ function renderInjured() {
     const _pal = _ilTypePalette(il.type);
     return `
       <div class="player-row is-injured" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (i + 1)}</span></div></div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (_ilOffset + i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
@@ -22177,13 +22260,17 @@ function renderInjured() {
 
   const _hasIlFilter = state.search || _ilOrg !== "all" || _ilType !== "all";
   document.getElementById("injured-rows").innerHTML = filtered.length
-    ? header + rows
+    ? _ilPager + header + rows + _ilPager
     : (_hasIlFilter
-        ? `<div class="state-message">No injured prospects match the current filters.</div>`
-        : `<div class="state-message">No tracked prospects are currently on the IL.</div>`);
+        ? _pxStateHTML("empty", "No injured prospects match the current filters.")
+        : _pxStateHTML("empty", "No tracked prospects are currently on the IL."));
   renderInjuredActiveFilters();
   syncSortHeaderActive();
 }
+
+// Last-rendered filter signature per paged list (Injured List, International
+// Amateurs): a changed signature resets that list to page 1.
+const _pxPageSig = { injured: null, ifa: null };
 
 // Active-filters strip for the Injured List (mirrors the main-list strip).
 // Each chip clears its own dimension via the shared delegated clear handler.
@@ -24136,6 +24223,7 @@ async function renderDraft() {
   const host = document.getElementById("draft-rows");
   const classChips = document.getElementById("draft-class-chips");
   if (!host) return;
+  _pxRenderBarChips("draft");
 
   // Lazy-load the draft payload. Shape:
   //   { generated_at, classes: [{year, is_current, n_prospects,
@@ -24847,19 +24935,22 @@ function _renderDraftRankings(host, cls) {
   }
   const _srcLabels = _srcSeen.map(s => _DRAFT_SRC_LABEL[s] || s).sort();
 
-  // Header strip
-  let html = `<div style="padding:12px 14px;background:var(--bg-secondary);
-       border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
-    <strong style="color:var(--text-primary);">${cls.year} draft class - 
+  // Header strip: one summary line, the method notes one click away (site pass
+  // REDESIGN_prospx keeps the first card in the first viewport).
+  let html = `<details class="draft-class-note" style="padding:8px 14px;background:var(--bg-secondary);
+       border-radius:6px;margin:10px 0;font-size:12px;color:var(--text-secondary);">
+    <summary style="cursor:pointer;"><strong style="color:var(--text-primary);">${cls.year} draft class - 
     ${prospects.length}${prospects.length !== totalUnfiltered ? ` of ${totalUnfiltered}` : ""} ${_nTail ? "prospects" : "ranked prospects"}</strong>${_nTail ? ` · ${_nRanked} with a whole-class rank` : ""}
-    ${cls.is_current ? " · still pre-draft" : " · drafted"}
-    ${_srcLabels.length ? `· sources: ${escapeHtml(_srcLabels.join(", "))}.` : ""}
+    ${cls.is_current ? " · still pre-draft" : " · drafted"} · how this class is ranked</summary>
+    <div style="margin-top:6px;">
+    ${_srcLabels.length ? `Sources: ${escapeHtml(_srcLabels.join(", "))}.` : ""}
     Draft Stock+ is normalized within this class only (100 = class median).
     ${_nTailScoped ? `The ${_nTail} unranked prospects carry no #n: they follow Baseball America's ${_tailHid.shown} list in BA's order, with BA's rank inside that list (BA ${_tailHid.shown === "College" ? "Col" : "HS"} #n), which is not a class order.` : ""}
     ${_tailHid.n ? `One BA list shows at a time: the ${_tailHid.n} unranked prospects on BA's ${_tailHid.pool} list show with
       <a href="#" onclick="event.preventDefault();state.draftPool='${_tailHid.pool === "College" ? "COL" : "HS"}';resetPage('draft');restoreUIFromState();render();syncToURL();"
          style="color:var(--neon-cyan);">Pool set to ${_tailHid.pool}</a>.` : ""}
-  </div>`;
+    </div>
+  </details>`;
 
   const pageSize = state.pageSizes.draft || 50;
   const totalItems = prospects.length;
@@ -24871,12 +24962,14 @@ function _renderDraftRankings(host, cls) {
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "draft");
   const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "draft");
 
-  html += `<div class="draft-grid">`;
+  // The class note sits under the cards, beside the unranked tail it explains,
+  // so the first card leads the page (site pass REDESIGN_prospx).
+  let grid = `<div class="draft-grid">`;
   for (const p of pagedItems) {
-    html += _renderDraftCard(p);
+    grid += _renderDraftCard(p);
   }
-  html += `</div>`;
-  host.innerHTML = paginationStripTop + html + paginationStrip;
+  grid += `</div>`;
+  host.innerHTML = paginationStripTop + grid + html + paginationStrip;
 }
 
 function _renderDraftCard(p) {
@@ -26796,23 +26889,23 @@ async function renderIFA() {
   if (!host) return;
 
   if (!DATA.ifa) {
-    host.innerHTML = `<div class="state-message is-loading">Loading international-amateur data…</div>`;
+    host.innerHTML = _pxStateHTML("loading", "Loading international amateur signings…");
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(base + "ifa_timeseries.json", { cache: "no-cache" });
       if (!resp.ok) throw new Error("HTTP " + resp.status);
       DATA.ifa = await resp.json();
     } catch (e) {
-      host.innerHTML = `<div class="state-message is-error">Could not load international-amateur data: ${escapeHtml(String(e.message || e))}.
-        Run <code>python run_monthly.py --rebuild-only</code> to regenerate
-        <code>data/ifa_timeseries.json</code>.</div>`;
+      // Reader copy on the page, the developer detail in the console (SPR04).
+      console.error("PROSPX: could not load the international amateur file: " + String(e.message || e));
+      host.innerHTML = _pxStateHTML("failed", "The international amateur signings did not load. Try again in a moment.");
       return;
     }
   }
 
   const classes = (DATA.ifa && DATA.ifa.classes) || [];
   if (!classes.length) {
-    host.innerHTML = `<div class="state-message">No international-amateur classes available.</div>`;
+    host.innerHTML = _pxStateHTML("unmeasured", "No international amateur classes are on file yet.");
     return;
   }
   if (state.ifaYear !== "all" &&
@@ -26857,11 +26950,10 @@ async function renderIFA() {
   // before the Jan-15 signing window opens). Clear placeholder instead of
   // an empty leaderboard / zeroed trends.
   if ((cls.signings || []).length === 0) {
-    host.innerHTML = `<div class="state-message">
-      <div class="state-message-title">The ${cls.year} international class hasn't signed yet</div>
+    host.innerHTML = _pxStateHTML("unmeasured",
+      `<div class="state-message-title">The ${cls.year} international class hasn't signed yet</div>
       <div class="state-message-body">J2 signings open January 15 of the class year. Bonuses,
-      signing teams, and org spending populate here as deals are reported.</div>
-    </div>`;
+      signing teams, and org spending populate here as deals are reported.</div>`);
     return;
   }
   const t = cls.trends || {};
@@ -26907,6 +26999,16 @@ async function renderIFA() {
   const showAll = !!state.ifaShowAll || !!orgFilter || yrCountry !== "all" || yrTracked;
   const shown = showAll ? sortedSignings : sortedSignings.filter(s => _featured.has(s));
   const hiddenCount = signings.length - shown.length;
+  // Fifty rows a page like every PROSPX list (site pass REDESIGN_prospx); a
+  // change of class, filter, sort, search or the Show-all switch starts again
+  // at page 1.
+  const _ifaSig = JSON.stringify([cls.year, orgFilter, yrCountry, yrTracked, sortMode, showAll, _q]);
+  if (_pxPageSig.ifa != null && _pxPageSig.ifa !== _ifaSig) state.pages.ifa = 1;
+  _pxPageSig.ifa = _ifaSig;
+  const _ifaSize = state.pageSizes.ifa || 50;
+  if ((state.pages.ifa || 1) > Math.max(1, Math.ceil(shown.length / _ifaSize))) state.pages.ifa = 1;
+  const _ifaPage = state.pages.ifa || 1;
+  const _ifaPager = renderPaginationStrip(_ifaPage, shown.length, _ifaSize, "ifa");
 
   const sigRow = (s) => {
     const logo = s.org ? teamLogoHTML(s.org, "sm", fullOrgName(s.org)) : "";
@@ -26943,7 +27045,7 @@ async function renderIFA() {
   };
   const tableHTML = `<table class="detail-table" style="width:100%;">
     <thead><tr><th style="text-align:left;">Player · pos · country</th><th style="text-align:left;" title="FV at signing (earliest grade on file) → current FV">FV · signing → now</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Bonus</th><th style="text-align:right;" title="Share of the signing team's international bonus pool this signing used">Pool %</th></tr></thead>
-    <tbody>${shown.map(sigRow).join("") || `<tr><td colspan="5" style="color:var(--text-tertiary);padding:10px;">No signings.</td></tr>`}</tbody></table>`;
+    <tbody>${pageSlice(shown, _ifaPage, _ifaSize).map(sigRow).join("") || `<tr><td colspan="5" style="color:var(--text-tertiary);padding:10px;">No signings.</td></tr>`}</tbody></table>`;
   const expandBtn = (!showAll && hiddenCount > 0)
     ? `<button class="chip" id="ifa-show-all" style="margin-top:8px;">Show all ${signings.length} signings (+${hiddenCount} more)</button>` : "";
   const filterBanner = orgFilter
@@ -26988,7 +27090,7 @@ async function renderIFA() {
     <span style="font-size:11px;color:var(--text-tertiary);">Sort</span>${sortSel}</div>`;
 
   host.innerHTML = `${summary}<div class="ifa-grid">
-    <div class="ifa-main">${filterBanner}${tableHTML}${expandBtn}</div>
+    <div class="ifa-main">${filterBanner}${_ifaPager}${tableHTML}${_ifaPager}${expandBtn}</div>
     <div class="ifa-side">${orgCard}${countryCard}${distCard}${bigCard}</div>
   </div>`;
 
@@ -27012,6 +27114,7 @@ async function renderOverseas() {
   const host = document.getElementById("overseas-rows");
   const leagueChips = document.getElementById("overseas-league-chips");
   if (!host) return;
+  _pxRenderBarChips("overseas");
 
   // Lazy-load the overseas payload.
   if (!DATA.overseas) {
@@ -29065,6 +29168,46 @@ function _pxOverseasDefaultView(today) {
   if (!Array.isArray(w) || w.length !== 2) return undefined;
   const t = _pxSeasonToday(today);
   return (t >= w[0] && t <= w[1]) ? "posting" : undefined;
+}
+
+// Active-filter chips beside the Draft and Overseas toggles (site pass
+// REDESIGN_prospx). The bars open closed, so every non-default filter prints
+// beside the toggle as a removable chip; the shared clear handler (the "bar:"
+// keys) resets that one filter. Labels are read from the bar's own chips.
+const _PX_BAR_CHIPS = {
+  draft: { strip: "draft-active-filters-strip",
+    fields: [["Pool", "draftPool", "filter-draft-pool"], ["Side", "draftSide", "filter-draft-side"],
+             ["Position", "draftPos", "filter-draft-pos"], ["Status", "draftStatus", "filter-draft-status"]],
+    multi: ["draftFvIndicators", "filter-draft-fvind"] },
+  overseas: { strip: "overseas-active-filters-strip",
+    fields: [["Side", "overseasSide", "filter-overseas-side"], ["Position", "overseasPos", "filter-overseas-pos"],
+             ["Status", "overseasStatus", "filter-overseas-status"]],
+    multi: ["overseasFvIndicators", "filter-overseas-fvind"] },
+};
+function _pxBarChipsHTML(kind) {
+  const cfg = _PX_BAR_CHIPS[kind];
+  if (!cfg) return "";
+  const label = (attr, v) => {
+    const b = (typeof document !== "undefined")
+      ? document.querySelector(`[data-${attr}="${String(v).replace(/["\\]/g, "")}"]`) : null;
+    return b ? b.textContent.trim() : String(v);
+  };
+  const chip = (axis, value, key) =>
+    `<button type="button" class="active-filter-chip" data-clear-filter="${escapeHtml(key)}" title="Clear this filter">`
+    + `<span class="afc-axis">${escapeHtml(axis)}:</span><span>${escapeHtml(value)}</span><span class="afc-x" aria-hidden="true">×</span></button>`;
+  const out = [];
+  for (const [axis, key, attr] of cfg.fields) {
+    const v = state[key];
+    if (v && v !== "all") out.push(chip(axis, label(attr, v), `bar:${kind}:${key}`));
+  }
+  const set = state[cfg.multi[0]];
+  if (set && set.size) for (const k of set) out.push(chip("FV indicator", label(cfg.multi[1], k), `bar:${kind}:${cfg.multi[0]}:${k}`));
+  return out.join("");
+}
+function _pxRenderBarChips(kind) {
+  const cfg = _PX_BAR_CHIPS[kind];
+  const el = cfg && document.getElementById(cfg.strip);
+  if (el) el.innerHTML = _pxBarChipsHTML(kind);
 }
 
 // The newest completed (drafted) class with prospects, or undefined.
@@ -38888,7 +39031,7 @@ function renderSvDistribution(dist, opts) {
 // bars; the data-attribute on the button names which state slot to
 // mutate. After mutating, re-run the view-routing render() and persist
 // the new state to the URL so back/forward + sharable links work.
-const _PG_KEYS = ["leaderboard","actives","draft","overseas","spotlights","watchlist","farmRoster","farmTx","tradeboard"];
+const _PG_KEYS = ["leaderboard","actives","draft","overseas","spotlights","watchlist","farmRoster","farmTx","tradeboard","injured","ifa"];
 document.addEventListener("click", (e) => {
   const btn = e.target && e.target.closest && e.target.closest("[data-player-tab],[data-farm-tab],[data-prospect-tab]," + _PG_KEYS.map(k => `[data-${k}-page]`).join(","));
   if (!btn || btn.disabled) return;
@@ -39081,6 +39224,14 @@ document.addEventListener("click", (e) => {
     case key === "sort":   state.sort = "xfv"; break;
     case key === "il-org":  state.ilOrgFilter  = "all"; break;
     case key === "il-type": state.ilTypeFilter = "all"; break;
+    // Draft and Overseas bar chips: "bar:<page>:<state field>[:<set member>]".
+    case key.startsWith("bar:"): {
+      const [, page, field, member] = key.split(":");
+      if (member != null) { if (state[field] && state[field].delete) state[field].delete(member); }
+      else state[field] = "all";
+      resetPage(page);
+      break;
+    }
     case key.startsWith("ften:"):
       if (state.farmTendencyFilter && state.farmTendencyFilter.delete) {
         state.farmTendencyFilter.delete(key.slice(5));
@@ -44901,25 +45052,13 @@ function makeToolDvmCell(org) {
   </div>`;
 }
 
-// The farm table's 16 columns are 1178px of FIXED tracks plus 15 6px gutters = a
-// 1268px hard minimum (.farm-header/.farm-row above), and the v45 layout has no
-// overflow wrapper on purpose: the sticky column header needs a real scrollport,
-// so a wrapper would break it. Below the threshold the board therefore pushes
-// page-level horizontal scroll. The cards view is the same data in a layout that
-// reads at any width, so it is the fallback. 1300 (not 1268) leaves room for the
-// page gutters that sit outside the grid itself.
-const FARM_TABLE_MIN_PX = 1300;
-function farmTableFitsViewport() {
-  const w = (typeof window !== "undefined") ? window.innerWidth : 0;
-  return !w || w >= FARM_TABLE_MIN_PX;
-}
-// Which farm layout to actually render. A pinned choice always wins: the fallback
-// exists to stop the board overflowing a window the user never chose to be narrow,
-// not to overrule someone who asked for the table anyway.
+// Which farm layout to render: the reader's pick, Table by default. The table no
+// longer falls back to cards on narrow windows (site pass REDESIGN_prospx): its
+// width tiers in CSS (the fc-* rules beside .farm-row) drop secondary columns so
+// it fits every width with no page-level horizontal scroll and no wrapper, which
+// keeps the sticky column header working.
 function farmViewEffective() {
-  const mode = state.farmViewMode || "table";
-  if (mode !== "table" || state.farmViewPinned) return mode;
-  return farmTableFitsViewport() ? "table" : "cards";
+  return state.farmViewMode || "table";
 }
 
 function renderFarmSystems() {
@@ -45065,27 +45204,27 @@ function renderFarmSystems() {
   // the existing farm-sort key vocabulary; attachChipGroup picks up
   // any element with data-farm-sort regardless of element type.
   const header = `<div class="farm-header">
-    <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Farm rank (1 = #1 system). Click to sort by overall grade.">Rank</span>
-    <span></span>
-    <span>Organization</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade (v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition). Click to sort.">Grade</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ - wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract - pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${escapeHtml(winLabel)} trajectory chart. Click to sort by ${escapeHtml(winLabel)} DvM+.">${escapeHtml(winLabel)} trajectory</span>
-    <span class="sort-header" data-farm-sort="top_end" title="Top prospects in the org. Click to sort by top-end talent (tiered FV sum of the top 5 prospects).">Top prospects</span>
-    <span class="sort-header" data-farm-sort="depth" title="Position spread. Click to sort by depth (tiered FV sum of prospects #6-25).">Positions</span>
-    <span class="sort-header" data-farm-sort="count" title="Level depth. Click to sort by total active prospect count.">Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="avg_age" title="Average age of the org's active prospects. Click to sort youngest first.">Avg age</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="roi" title="Financial ROI - career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</span>
-    <span style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix
+    <span class="sort-header fc-rank" style="text-align:center;" data-farm-sort="farm_rank" title="Farm rank (1 = #1 system). Click to sort by overall grade.">Rank</span>
+    <span class="fc-logo"></span>
+    <span class="fc-org">Organization</span>
+    <span class="sort-header fc-grade" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade (v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition). Click to sort.">Grade</span>
+    <span class="sort-header fc-dvm" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ - wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract - pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
+    <span class="sort-header fc-tool" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
+    <span class="sort-header fc-traj" style="text-align:center;" data-farm-sort="trajectory" title="${escapeHtml(winLabel)} trajectory chart. Click to sort by ${escapeHtml(winLabel)} DvM+.">${escapeHtml(winLabel)} trajectory</span>
+    <span class="sort-header fc-top" data-farm-sort="top_end" title="Top prospects in the org. Click to sort by top-end talent (tiered FV sum of the top 5 prospects).">Top prospects</span>
+    <span class="sort-header fc-pos" data-farm-sort="depth" title="Position spread. Click to sort by depth (tiered FV sum of prospects #6-25).">Positions</span>
+    <span class="sort-header fc-lvl" data-farm-sort="count" title="Level depth. Click to sort by total active prospect count.">Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
+    <span class="sort-header fc-age" style="text-align:center;" data-farm-sort="avg_age" title="Average age of the org's active prospects. Click to sort youngest first.">Avg age</span>
+    <span class="sort-header fc-roi" style="text-align:center;" data-farm-sort="roi" title="Financial ROI - career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</span>
+    <span class="fc-spend" style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix
       <span style="display:flex;gap:8px;justify-content:center;margin-top:3px;font-weight:400;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;">
         <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-ifa);"></span>IFA</span>
         <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-draft);"></span>Draft</span>
       </span>
     </span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="surplus" title="Net surplus across the org's active prospects (millions USD): eFV expected surplus minus the acquisition bonuses paid. Click to sort by surplus.">Surplus</span>
-    <span style="text-align:right;">Stock</span>
-    <span></span>
+    <span class="sort-header fc-surplus" style="text-align:center;" data-farm-sort="surplus" title="Net surplus across the org's active prospects (millions USD): eFV expected surplus minus the acquisition bonuses paid. Click to sort by surplus.">Surplus</span>
+    <span class="fc-stock" style="text-align:right;">Stock</span>
+    <span class="fc-act"></span>
   </div>`;
 
   const buildRow = (org, displayRank) => {
@@ -45245,56 +45384,56 @@ function renderFarmSystems() {
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
         ${heroHtml}
-        <div class="farm-rank table-only-cell">#${displayRank}${deltaChip}</div>
-        <div class="table-only-cell farm-logo-cell">${teamLogoHTML(org.org, "lg", fullOrgName(org.org))}</div>
-        <div class="farm-org-cell table-only-cell">
+        <div class="farm-rank table-only-cell fc-rank">#${displayRank}${deltaChip}</div>
+        <div class="table-only-cell farm-logo-cell fc-logo">${teamLogoHTML(org.org, "lg", fullOrgName(org.org))}</div>
+        <div class="farm-org-cell table-only-cell fc-org">
           <div class="farm-org-name">
             <div class="farm-org">${escapeHtml(fullOrgName(org.org))}</div>
             <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}${alumniBadge}</div>
           </div>
         </div>
-        <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : ' - '}/100">
+        <div class="farm-grade-cell fc-grade" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : ' - '}/100">
           <span class="fg-letter" style="color:${gradeColorVal};">${escapeHtml(overall)}</span>${tbHtml}
           <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : ' - '}${confDot}</span>
           ${makeComponentGrades(org)}
           ${makeOrgTierBar(org)}
         </div>
-        <div class="farm-dvm-hero">${(() => {
+        <div class="farm-dvm-hero fc-dvm">${(() => {
           const v = (org.dvm_plus || {})[win];
           if (v == null) return `<span class="fdh-value" style="color:var(--text-tertiary);"> - </span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
           const color = v >= 110 ? 'var(--up)' : v <= 90 ? 'var(--down)' : 'var(--neon-violet)';
           return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
         })()}</div>
-        <div>${makeToolDvmCell(org)}</div>
-        <div title="${escapeHtml(pulseTooltip)}">${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win, org.org)}${pulseHtml}</div>
-        <div>${topHtml}</div>
-        <div>${makePosBreakdown(org.pos_groups)}${makeOrgEtaWave(etaByOrg[org.org], currentYear)}</div>
-        <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
-        <div style="text-align:center;font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : " - "}</div>
+        <div class="fc-tool">${makeToolDvmCell(org)}</div>
+        <div class="fc-traj" title="${escapeHtml(pulseTooltip)}">${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win, org.org)}${pulseHtml}</div>
+        <div class="fc-top">${topHtml}</div>
+        <div class="fc-pos">${makePosBreakdown(org.pos_groups)}${makeOrgEtaWave(etaByOrg[org.org], currentYear)}</div>
+        <div class="level-depth-cell fc-lvl">${makeLevelDepth(org.level_counts, activeLevel)}</div>
+        <div class="fc-age" style="text-align:center;font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : " - "}</div>
         ${(() => {
           // v16 - Financial ROI: career WAR per million USD spent on
           // signing bonuses (draft + IFA). Pulled from financial_roi.
           const fr = org.financial_roi || {};
           const v = fr.war_per_million;
           if (v == null) {
-            return `<div style="text-align:center;color:var(--text-tertiary);font-size:12px;"> - </div>`;
+            return `<div class="fc-roi" style="text-align:center;color:var(--text-tertiary);font-size:12px;"> - </div>`;
           }
           const cls = v >= 4 ? "var(--up)" : v <= 1 ? "var(--down)" : "var(--text-secondary)";
           const tip = `${(v).toFixed(2)} WAR / $1M signing-bonus spent (${fr.grad_count_with_bonus || 0} grads)`;
-          return `<div style="text-align:center;font-family:var(--font-mono);font-size:12px;color:${cls};font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">${v.toFixed(1)}</div>`;
+          return `<div class="fc-roi" style="text-align:center;font-family:var(--font-mono);font-size:12px;color:${cls};font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">${v.toFixed(1)}</div>`;
         })()}
-        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div class="fc-spend" style="display:flex;flex-direction:column;align-items:center;gap:2px;">
           ${makeSpendingDonut(org)}
         </div>
-        <div class="farm-surplus-cell">${(() => {
+        <div class="farm-surplus-cell fc-surplus">${(() => {
             const s = surplusByOrg[org.org];
             const n = countByOrg[org.org];
             if (s == null || !n) return '<span style="color:var(--text-tertiary);"> - </span>';
             const fmt = s >= 100 ? s.toFixed(0) : s.toFixed(1);
             return `<span class="g-term farm-surplus-amt" data-term="surplus_value" title="Net surplus across ${n} active prospects: eFV expected surplus minus the acquisition bonuses paid">$${fmt}M</span><div class="farm-surplus-count">${n}p</div>`;
           })()}</div>
-        <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
-        <div style="text-align:right;display:flex;gap:4px;justify-content:flex-end;align-items:center;">
+        <div class="stock-cell fc-stock" style="font-size:12px;">${stockHtml}</div>
+        <div class="fc-act" style="text-align:right;display:flex;gap:4px;justify-content:flex-end;align-items:center;">
           <button class="watch-btn${farmWatchlistHas(org.org) ? " is-in" : ""}" data-farm-watch-key="${escapeHtml(org.org)}" type="button" aria-label="Toggle farm watchlist" title="${farmWatchlistHas(org.org) ? "Remove farm from watchlist" : "Add farm to watchlist"}">${farmWatchlistHas(org.org) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${farmCompareHas(org.org) ? " is-in" : ""}" data-farm-compare-key="${escapeHtml(org.org)}" type="button" title="${farmCompareHas(org.org) ? "Remove farm from compare" : "Add farm to compare"}" aria-label="Toggle farm compare">${farmCompareHas(org.org) ? "✓" : "+"}</button>
         </div>
@@ -53331,16 +53470,21 @@ function renderFarmTendencyChips() {
     b.classList.toggle("active", b.dataset.tendMode === _mode);
     b.style.opacity = sel.size >= 2 ? "" : "0.55";
   });
+  // One select lists the tendencies not yet picked, its first line counting
+  // them; each pick prints as an active chip (click to remove).
+  const pick = document.getElementById("farm-tendency-select");
+  if (pick) {
+    const left = ALL_TENDENCY_BADGES.filter(({ kind }) => !sel.has(kind));
+    pick.innerHTML = `<option value="">${sel.size ? "Add a tendency" : "Any tendency"} (${left.length} of ${ALL_TENDENCY_BADGES.length})</option>`
+      + left.map(({ kind, label }) => `<option value="${escapeHtml(kind)}">${escapeHtml(label)}</option>`).join("");
+    pick.value = "";
+  }
   const mount = document.getElementById("farm-tendency-chips");
   if (mount) {
     const loading = sel.size > 0 && !_orgTendencies;
-    mount.innerHTML = ALL_TENDENCY_BADGES.map(({ kind, label }) => {
-      const active = sel.has(kind);
-      // Tint the icon with the badge color when inactive so each chip carries
-      // its identity hue; the active chip flips to its own text color.
-      const iconCol = active ? "currentColor" : ((_OT_BADGE[kind] || {}).c || "currentColor");
-      return `<button class="chip is-multi${active ? " active" : ""}" type="button" data-farm-tendency="${escapeHtml(kind)}" title="${escapeHtml(label)} (org-tendency badge)"><span class="ft-glyph" aria-hidden="true" style="display:inline-flex;vertical-align:middle;">${_otIcon(kind, 13, iconCol)}</span> ${escapeHtml(label)}</button>`;
-    }).join("") + (loading ? `<span class="ft-loading">loading tendencies…</span>` : "");
+    mount.innerHTML = ALL_TENDENCY_BADGES.filter(({ kind }) => sel.has(kind)).map(({ kind, label }) =>
+      `<button class="chip is-multi active" type="button" data-farm-tendency="${escapeHtml(kind)}" title="${escapeHtml(label)} (org-tendency badge). Click to remove."><span class="ft-glyph" aria-hidden="true" style="display:inline-flex;vertical-align:middle;">${_otIcon(kind, 13, "currentColor")}</span> ${escapeHtml(label)} <span aria-hidden="true">×</span></button>`
+    ).join("") + (loading ? `<span class="ft-loading">loading tendencies…</span>` : "");
   }
   // Active-filters strip (visible even when the filter bar is collapsed).
   const strip = document.getElementById("farm-active-filters");
@@ -57753,13 +57897,13 @@ function attachHandlers() {
   // player names + org codes/names. Limits results to 12 so the modal
   // stays scannable without a search refinement.
 
-  // Filters/sort accordion - default OPEN on desktop, collapsed below the mobile
-  // breakpoint, with a per-section manual collapse remembered across reload +
-  // navigation. One stored key per bar id; an explicit stored choice wins on
-  // every viewport - the viewport only decides the no-preference fallback, and
-  // each section is independent (collapsing one never collapses another).
+  // Filters/sort accordion - CLOSED by default at every width (site pass
+  // REDESIGN_prospx: the first data row lands in the first viewport, and the
+  // active filters print as removable chips beside the toggle), with a
+  // per-section manual choice remembered across reload + navigation. One
+  // stored key per bar id; a stored choice always wins, and each section is
+  // independent (opening one never opens another).
   const FILTER_LS_PREFIX = "prospect-tracker.filters.";
-  const FILTER_MOBILE_BP = 720;  // matches the site's @media (max-width: 720px)
   function filterBarStored(id) {
     try { return localStorage.getItem(FILTER_LS_PREFIX + id); } catch (_) { return null; }
   }
@@ -57768,16 +57912,13 @@ function attachHandlers() {
   }
   function applyFilterBarDefault(bar, btn) {
     if (!bar || !bar.id) return;
-    const pref = filterBarStored(bar.id);
-    const open = pref === "open" ? true
-               : pref === "collapsed" ? false
-               : window.innerWidth > FILTER_MOBILE_BP;  // no pref: desktop open, mobile collapsed
+    const open = filterBarStored(bar.id) === "open";  // no stored choice: closed
     bar.classList.toggle("is-open", open);
     if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
   }
 
   // Main list (id-based). The toggle persists the explicit choice; init applies
-  // the per-viewport default unless the user already chose.
+  // the closed default unless the user already chose.
   const filterToggle = document.getElementById("filter-toggle");
   if (filterToggle) {
     filterToggle.addEventListener("click", () => {
@@ -58010,8 +58151,8 @@ function attachHandlers() {
       btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
       setFilterBarPref(id, isOpen);
     });
-    // Default-open on desktop / collapsed on mobile, honoring any stored choice - 
-    // applied per section so each (Farm, Draft, Overseas, …) is independent.
+    // Closed by default, honoring any stored choice; applied per section so
+    // each (Farm, Draft, Overseas, …) is independent.
     const initId = btn.dataset.collapseTarget;
     const initBar = initId ? document.getElementById(initId) : null;
     if (initBar) applyFilterBarDefault(initBar, btn);
@@ -58156,6 +58297,15 @@ function attachHandlers() {
     if (!state.farmTendencyFilter) state.farmTendencyFilter = new Set();
     if (state.farmTendencyFilter.has(kind)) state.farmTendencyFilter.delete(kind);
     else state.farmTendencyFilter.add(kind);
+    renderFarmSystems();
+    syncToURL();
+  });
+  const farmTendPick = document.getElementById("farm-tendency-select");
+  if (farmTendPick) farmTendPick.addEventListener("change", () => {
+    const kind = farmTendPick.value;
+    if (!kind) return;
+    if (!state.farmTendencyFilter) state.farmTendencyFilter = new Set();
+    state.farmTendencyFilter.add(kind);
     renderFarmSystems();
     syncToURL();
   });
@@ -58450,29 +58600,10 @@ function attachHandlers() {
     // the cart stays in sync with the rest of the app.
     renderCompareCart();
   });
-  // Farm view-mode toggle (table / cards) - flips state + re-renders. Clicking
-  // either chip PINS the choice, which switches off the narrow-window fallback to
-  // cards. attachChipGroup has already written state.farmViewMode by the time this
-  // runs, and syncToURL runs after it, so both the render and the URL see the pin.
+  // Farm view-mode toggle (table / cards) - flips state + re-renders.
+  // attachChipGroup has already written state.farmViewMode by the time this runs.
   attachChipGroup("farm-view", "farmViewMode", () => {
-    state.farmViewPinned = true;
     renderFarmSystems();
-  });
-  // Width fallback for the farm board. The 16-column table cannot fit under
-  // FARM_TABLE_MIN_PX (fixed tracks, no overflow wrapper by design), so an
-  // unpinned board re-renders as cards when the window crosses that line. Only
-  // fires on an actual crossing, and never against a pinned choice.
-  let _farmFits = farmTableFitsViewport();
-  let _farmFitTimer = null;
-  window.addEventListener("resize", () => {
-    const fits = farmTableFitsViewport();
-    if (fits === _farmFits) return;
-    _farmFits = fits;
-    if (state.farmViewPinned) return;
-    clearTimeout(_farmFitTimer);
-    _farmFitTimer = setTimeout(() => {
-      if (state.section === "farm" && !state.view) renderFarmSystems();
-    }, 120);
   });
 
   // v18 - Reset filters chip. Per-page scope - each chip carries
@@ -58528,7 +58659,6 @@ function _resetPageFilters(page) {
     state.farmSort      = "farm_rank";
     state.formWindow    = "7y";   // 7y is the documented default (matches the ★ chip + state initializer)
     state.farmViewMode  = "table";
-    state.farmViewPinned = false;   // back to the default, which includes the width fallback
     state.farmCompareOrg = "";
     state.farmTreeView  = "expanded";
     state.farmTendencyFilter = new Set();
