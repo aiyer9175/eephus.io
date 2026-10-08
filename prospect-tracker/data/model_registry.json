@@ -6087,6 +6087,21 @@
    "notes": "Registered 2026-10-08 (PROSPECT_ANCHOR_PRODUCERS) pointing at docs/PROSPECT_ANCHOR_GATE.md (pre-registered 2026-09-23). The lab tools/prospect_anchor_gate.py, its test test_prospect_anchor_gate.py and the flag SERVE_PROSPECT_ANCHOR_V2 (default False, one read site inside fv_to_6yr_avg_war) are built and tested on fixtures only; nothing was read on real rows and no statistic by consensus-FV cell exists. The look runs once, not before 2026-11-20 and after the fWAR label epoch's step Z entry (2026-10-03) plus 14 days, on the fwar label at RESOLVED_THROUGH 2026, and writes data/prospect_anchor_gate.json, whose verdict this row then carries with the frame and the fitted-file hash scored. The registry enum has no word registered, so the row reads unvalidated (a predictive claim with no measurement yet) until the look. prospect_surplus is untouched; it moves only under one outcome and only by the owner's flip.",
    "last_checked": "2026-10-08",
    "stale": false
+  },
+  {
+   "model_id": "cots_deferral_check",
+   "summary": "Measurement only: every deferred signing found on the Cot's Contracts club sheets, matched against the curated deferral ledger; a coverage list, not a model.",
+   "surface": "data/cots_deferral_check.json (no served page)",
+   "predicts": "Nothing. Lists deferred signings in the capture with no entry in data/deferrals.json, and ledger entries that say no deferral where the sheet records one.",
+   "champion": "tools/ingest_cots.py: one scripted capture of the 30 club sheets (owner answer X05-20 = b, 2026-09-30), then manual drops; deferral notes parsed off each player's contract history and keyed player_key:class_year as the ledger is.",
+   "baseline": "n/a: a descriptive coverage check (the leverage_board precedent), not a predictive model",
+   "metric": "descriptive; counts of deferred signings, of those with a ledger entry, and of those the ledger contradicts. Source: Cot's Contracts (Baseball Prospectus).",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-10-08 (plan rows X05-20 and M04-25). Source attribution: Cot's Contracts (Baseball Prospectus). The sheets carry only players on a club sheet at the capture date, so the list is a floor on the deferred deals, not a census. No served valuation number reads it; the arbitration cases parsed from the same capture go to the lab file data/_labs/cots_arb_cases.json for the ARB-CLUB-1 backfill, a later task.",
+   "last_checked": "2026-10-08",
+   "stale": false,
+   "provisional_kind": "measurement_only"
   }
  ],
  "problems": []

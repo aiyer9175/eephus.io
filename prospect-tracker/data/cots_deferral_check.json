@@ -1,0 +1,747 @@
+{
+ "_doc": [
+  "Deferral check per plan row M04-25 / X05-20: every deferred signing found on the Cot's Contracts club sheets, matched against the curated ledger data/deferrals.json by player_key:class_year.",
+  "Source: Cot's Contracts (Baseball Prospectus). One scripted capture (owner answer X05-20 = b, 2026-09-30) then manual drops; see tools/ingest_cots.py.",
+  "Measurement only: no served valuation number reads this file. The sheets carry only players on a club sheet at the capture date, so the signings listed are a floor on the deferred deals, not a census."
+ ],
+ "attribution": "Cot's Contracts (Baseball Prospectus)",
+ "source_url": "https://legacy.baseballprospectus.com/compensation/cots/",
+ "fetched_at_range": [
+  "20261008T231211Z",
+  "20261008T231616Z"
+ ],
+ "n_sheets": 30,
+ "n_players_parsed": 2193,
+ "ledger_file": "data/deferrals.json",
+ "ledger_threshold_note": "the ledger's own ship gate covers guarantees >= $200M; this check looks below it",
+ "deferral_coverage": {
+  "n_deferred_signings": 44,
+  "n_in_ledger": 9,
+  "n_without_ledger_entry": 35,
+  "n_ledger_entry_says_no_deferral": 4,
+  "winters_covered": [
+   2014,
+   2015,
+   2017,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025,
+   2026,
+   2027
+  ],
+  "signings": [
+   {
+    "player": "Mookie Betts",
+    "ledger_key": "mookie_betts:2021",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "12 years/$365M (2021-32)",
+    "total_usd": 365000000,
+    "class_year": 2021,
+    "last_season": 2032,
+    "notes": [
+     "$115M in salary is deferred ($8M/year of 2021-25 salaries, $10M/year of 2026-27 salaries, $11M/year of 2028-32 salaries)",
+     "deferred money to be paid each July 1, 2033-44: $8M/year in 2033-37, $10M/year in 2038-39, $11M/year in 2040-44.",
+     "deferrals reduce present-day value to $306,657,882 (per MLBPA)",
+     "if Betts is traded, deferrals are eliminated & salary is paid as earned"
+    ]
+   },
+   {
+    "player": "Francisco Lindor",
+    "ledger_key": "francisco_lindor:2022",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "new-york-mets",
+    "contract": "10 years/$341M (2022-31)",
+    "total_usd": 341000000,
+    "class_year": 2022,
+    "last_season": 2031,
+    "notes": [
+     "$50M ($5M in salary each year) is deferred, to be paid 2032-41"
+    ]
+   },
+   {
+    "player": "Rafael Devers",
+    "ledger_key": "rafael_devers:2024",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "san-francisco-giants",
+    "contract": "10 years/$313.5M (2024-33)",
+    "total_usd": 313500000,
+    "class_year": 2024,
+    "last_season": 2033,
+    "notes": [
+     "Devers to defer $75M in salary: $7.5M annually, paid $3.75M each Feb. 1 and Nov. 30, 10 years after it is earned through 2043",
+     "deferrals reduce contract\u2019s average annual value to about $29M"
+    ]
+   },
+   {
+    "player": "Nolan Arenado",
+    "ledger_key": "nolan_arenado:2019",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "arizona-diamondbacks",
+    "contract": "8 years/$260M (2019-26)",
+    "total_usd": 260000000,
+    "class_year": 2019,
+    "last_season": 2026,
+    "notes": [
+     "Arenado agreed to defer $20M of his 2021 salary, paid with 2% interest in 10 equal installments each July 1, 2022-31",
+     "Arenado agreed to defer $6M annually in 2022-26 salaries, paid with no interest in 10 installments of $3M each July 1, 2032-41",
+     "guaranteed payments: $14,429,500 in 2021 (toward 2021 salary), $16M in 2023 (toward deferral of 2022 salary)"
+    ]
+   },
+   {
+    "player": "Christian Yelich",
+    "ledger_key": "christian_yelich:2020",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "milwaukee-brewers",
+    "contract": "9 years/$215M (2020-28), plus 2029 mutual option",
+    "total_usd": 215000000,
+    "class_year": 2020,
+    "last_season": 2028,
+    "notes": [
+     "20 :$12.5M, 21 :$14M, 22-28 :$26M annually, 29 :$20M mutual option ($6.5M buyout, including $2M deferred)",
+     "Yelich agreed to annual deferrals of $4M of 2022-28 salaries",
+     "if buyout is paid, $30M in deferred money will be paid in 12 installments of $2.5M each July 1, 2031-42",
+     "if buyout is not paid, $28M in deferred money will be paid in 11 installments of $2.3M each July 1, 2031-41 and a final payment of $2.7M on July 1, 2042"
+    ]
+   },
+   {
+    "player": "Jos\u00e9 Ram\u00edrez",
+    "ledger_key": "jose_ramirez:2026",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "cleveland-guardians",
+    "contract": "7 years/$175M (2026-32)",
+    "total_usd": 175000000,
+    "class_year": 2026,
+    "last_season": 2032,
+    "notes": [
+     "$70M deferred ($10M annually), paid in 10 installments of $1M each, starting 10 years after it is earned"
+    ]
+   },
+   {
+    "player": "Stephen Strasburg",
+    "ledger_key": "stephen_strasburg:2017",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [
+     "stephen_strasburg:2020"
+    ],
+    "sheet": "washington-nationals",
+    "contract": "7 years/$175M (2017-23)",
+    "total_usd": 175000000,
+    "class_year": 2017,
+    "last_season": 2023,
+    "notes": [
+     "$70M deferred without interest ($30M in 2019, $10M in 2020, $30M in 2023), paid in seven $10M installments each July 1, 2024-30, reducing the contract\u2019s present-day value to about $162M",
+     "with opt-out after 2019, $30M in deferred 2019 salary to be paid in three $10M installments each July 1, 2020-22",
+     "with opt-out after 2020, $40M in deferred 2019-20 salaries to be paid in four $10M installments each July 1, 2021-24"
+    ]
+   },
+   {
+    "player": "Chris Sale",
+    "ledger_key": "chris_sale:2020",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "atlanta-braves",
+    "contract": "5 years/$145M (2020-24), plus 2025 club option",
+    "total_usd": 145000000,
+    "class_year": 2020,
+    "last_season": 2024,
+    "notes": [
+     "$50M is deferred, reducing average annual value to $25.6M ($10M annually in 2020-24, to be paid each June 30, 2035-39",
+     "if club exercises 2025 option, $5M is deferred, paid 6/30/40",
+     "Sale\u2019s salary for purposes of Competitive Balance Tax payroll is $27.5M, the amount still due under the contract ($25,551,440 reduced for deferrals under CBA Art. XXIII(E)(6), using the October 2023 discount rate of 4.43%)"
+    ]
+   },
+   {
+    "player": "Nico Hoerner",
+    "ledger_key": "nico_hoerner:2027",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "chicago-cubs",
+    "contract": "6 years/$141M (2027-32)",
+    "total_usd": 141000000,
+    "class_year": 2027,
+    "last_season": 2032,
+    "notes": [
+     "$10M is deferred ($2.5M annually from 2029 to 2032), paid in eight installments of $1.25M each 12/31, 2040-47"
+    ]
+   },
+   {
+    "player": "Patrick Corbin",
+    "ledger_key": "patrick_corbin:2019",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "toronto-blue-jays",
+    "contract": "6 years/$140M (2019-24)",
+    "total_usd": 140000000,
+    "class_year": 2019,
+    "last_season": 2024,
+    "notes": [
+     "$10M in 2024 salary deferred without interest, to be paid between November 2024 and January 2026"
+    ]
+   },
+   {
+    "player": "Will Smith",
+    "ledger_key": "will_smith:2024",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "10 years/$140M (2024-33)",
+    "total_usd": 140000000,
+    "class_year": 2024,
+    "last_season": 2033,
+    "notes": [
+     "$5M annually is deferred, to be paid 2034-43, reducing average annual value to $12,241,285 for Competitive Balance Tax purposes"
+    ]
+   },
+   {
+    "player": "Jacob deGrom",
+    "ledger_key": "jacob_degrom:2019",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "texas-rangers",
+    "contract": "5 years/$137.5M (2019-23), plus 2024 option",
+    "total_usd": 137500000,
+    "class_year": 2019,
+    "last_season": 2023,
+    "notes": [
+     "$52.5M is deferred ($12M in 2020, $13.5M in 2021, $15M in 2022, $12M in 2023), plus additional $15M in 2024 if option is exercised, to be paid July 1 in 15th year after salary is earned (2035-2039)",
+     "deferrals reduce present-day average annual value to $108.9M"
+    ]
+   },
+   {
+    "player": "Alex Bregman",
+    "ledger_key": "alex_bregman:2025",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [
+     "alex_bregman:2026"
+    ],
+    "sheet": "chicago-cubs",
+    "contract": "3 years/$120M (2025-27)",
+    "total_usd": 120000000,
+    "class_year": 2025,
+    "last_season": 2027,
+    "notes": [
+     "$60M is deferred ($20M annually), to be paid 2035-46"
+    ]
+   },
+   {
+    "player": "Ketel Marte",
+    "ledger_key": "ketel_marte:2025",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "arizona-diamondbacks",
+    "contract": "7 years/$116.5M (2025-31)",
+    "total_usd": 116500000,
+    "class_year": 2025,
+    "last_season": 2031,
+    "notes": [
+     "$46M is deferred and paid 10 years after it is earned ($5M in 2025, $6M in 2026, $3M in 2027, $10M in 2028, $11M each in 2029-30)"
+    ]
+   },
+   {
+    "player": "J.T. Realmuto",
+    "ledger_key": "j_t_realmuto:2021",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "philadelphia-phillies",
+    "contract": "5 years/$115.5M (2021-25)",
+    "total_usd": 115500000,
+    "class_year": 2021,
+    "last_season": 2025,
+    "notes": [
+     "$10M of 2021 salary is deferred without interest, paid in $5M installments on 7/15/26 and 7/15/27, reducing the contract\u2019s present value to $114.9M"
+    ]
+   },
+   {
+    "player": "Framber Valdez",
+    "ledger_key": "framber_valdez:2026",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "detroit-tigers",
+    "contract": "3 years/$115M (2026-28)",
+    "total_usd": 115000000,
+    "class_year": 2026,
+    "last_season": 2028,
+    "notes": [
+     "$20M signing bonus (deferred, paid 10 x $2M, 2030-39)"
+    ]
+   },
+   {
+    "player": "Cristopher S\u00e1nchez",
+    "ledger_key": "cristopher_sanchez:2027",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "philadelphia-phillies",
+    "contract": "6 years/$104M (2027-32), plus 2033 conditional option",
+    "total_usd": 104000000,
+    "class_year": 2027,
+    "last_season": 2032,
+    "notes": [
+     "$20M is deferred, with $10M of 2031 salary paid in five $2M installments each July 1, 2035-39 and $10M of 2032 salary paid in five $2M installments each July 1, 2040-44"
+    ]
+   },
+   {
+    "player": "Edwin D\u00edaz",
+    "ledger_key": "edwin_diaz:2023",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "5 years/$102M (2023-27), plus 2028 club option",
+    "total_usd": 102000000,
+    "class_year": 2023,
+    "last_season": 2027,
+    "notes": [
+     "Diaz to defer $26.5M in salary ($5.5M each in 2023-25 and $5M each in 2026-27), reducing salary for tax purposes to about $18.6M",
+     "deferred money to be paid each July 1 as follows:",
+     "Mets to be reimbursed for 2023 salary of $18.64M (discounted to reflect deferral) under MLB insurance policy for players injured during the World Baseball Classic. The contract\u2019s average annual value will count toward the club\u2019s Competitive Balance Tax payroll."
+    ]
+   },
+   {
+    "player": "Anthony Santander",
+    "ledger_key": "anthony_santander:2025",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "toronto-blue-jays",
+    "contract": "5 years/$92.5M (2025-29), plus 2030 club option",
+    "total_usd": 92500000,
+    "class_year": 2025,
+    "last_season": 2029,
+    "notes": [
+     "$61.75M is deferred ($6.75M of signing bonus, $5M buyout and $10M of each annual salary)"
+    ]
+   },
+   {
+    "player": "Salvador Perez",
+    "ledger_key": "salvador_perez:2022",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "kansas-city-royals",
+    "contract": "4 years/$82M (2022-25), plus 2026 club option",
+    "total_usd": 82000000,
+    "class_year": 2022,
+    "last_season": 2025,
+    "notes": [
+     "$2M of 2025 salary is deferred without interest, paid June 30, 2027"
+    ]
+   },
+   {
+    "player": "Sean Manaea",
+    "ledger_key": "sean_manaea:2025",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "new-york-mets",
+    "contract": "3 years/$75M (2025-27)",
+    "total_usd": 75000000,
+    "class_year": 2025,
+    "last_season": 2027,
+    "notes": [
+     "$23.25M is deferred ($7.75M/year), paid in equal installments, 2035-44, reducing regular LRD salary to $19.7M annually and average annual value to $22,009,731 for CBT purposes"
+    ]
+   },
+   {
+    "player": "Tommy Edman",
+    "ledger_key": "tommy_edman:2025",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "5 years/$74M (2025-29), plus 2030 club option",
+    "total_usd": 74000000,
+    "class_year": 2025,
+    "last_season": 2029,
+    "notes": [
+     "Edman to defer $25M ($6.25M annually, 2026-29), to be paid in 10 installments of $2.5M each July 1, 2035-44",
+     "deferrals reduce average annual value for competitive balance tax purposes from $14.8M to $13,276,822",
+     "deferrals reduce 2026-29 regular LRD salaries by about $3.6M each"
+    ]
+   },
+   {
+    "player": "Tanner Scott",
+    "ledger_key": "tanner_scott:2025",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "4 years/$72M (2025-28)",
+    "total_usd": 72000000,
+    "class_year": 2025,
+    "last_season": 2028,
+    "notes": [
+     "$21M is deferred ($5.25M annually)"
+    ]
+   },
+   {
+    "player": "Edwin D\u00edaz",
+    "ledger_key": "edwin_diaz:2026",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "3 years/$69M (2026-28), plus conditional 2029 club option",
+    "total_usd": 69000000,
+    "class_year": 2026,
+    "last_season": 2028,
+    "notes": [
+     "D\u00edaz to defer $13.5M ($4.5M annually), to be paid in 10 equal annual installments beginning 10 years after it is earned"
+    ]
+   },
+   {
+    "player": "Jameson Taillon",
+    "ledger_key": "jameson_taillon:2023",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "toronto-blue-jays",
+    "contract": "4 years/$68M (2023-26)",
+    "total_usd": 68000000,
+    "class_year": 2023,
+    "last_season": 2026,
+    "notes": [
+     "Cubs may defer $10M of Taillon\u2019s 2026 salary if he has a right elbow injury at the end of the 2025 season"
+    ]
+   },
+   {
+    "player": "Teoscar Hern\u00e1ndez",
+    "ledger_key": "teoscar_hernandez:2025",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "3 years/$66M (2025-27), 2028 club option, 2029 conditional option",
+    "total_usd": 66000000,
+    "class_year": 2025,
+    "last_season": 2027,
+    "notes": [
+     "$23.5M is deferred ($7.5M in 2025, $8M each in 2026, 2027), with deferred money paid beginning in 2031, six years after it is earned"
+    ]
+   },
+   {
+    "player": "Blake Snell",
+    "ledger_key": "blake_snell:2024",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [
+     "blake_snell:2025"
+    ],
+    "sheet": "los-angeles-dodgers",
+    "contract": "2 years/$62M (2024-25)",
+    "total_usd": 62000000,
+    "class_year": 2024,
+    "last_season": 2025,
+    "notes": [
+     "if option is exercised, $15M is deferred and paid 7/1/27"
+    ]
+   },
+   {
+    "player": "Devin Williams",
+    "ledger_key": "devin_williams:2026",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "new-york-mets",
+    "contract": "3 years/$51M (2026-28)",
+    "total_usd": 51000000,
+    "class_year": 2026,
+    "last_season": 2028,
+    "notes": [
+     "26 :$15M, 27 :$15M, 28 :$15M ($5M annually is deferred)",
+     "$15M is deferred ($5M in salary annually), to be paid in installments of $1.5M each July 1, 2036-45"
+    ]
+   },
+   {
+    "player": "Salvador Perez",
+    "ledger_key": "salvador_perez:2026",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "kansas-city-royals",
+    "contract": "2 years/$25M (2026-27)",
+    "total_usd": 25000000,
+    "class_year": 2026,
+    "last_season": 2027,
+    "notes": [
+     "$2.5M of 2026 salary is deferred, paid $1M each May 10, 2030-31 and $500,000 on May 10, 2032",
+     "$2.5M of 2027 salary is deferred, paid $500,000 on May 10, 2032 and $1M each May 10, 2033-34"
+    ]
+   },
+   {
+    "player": "Teoscar Hern\u00e1ndez",
+    "ledger_key": "teoscar_hernandez:2024",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "1 year/$23.5M (2024)",
+    "total_usd": 23500000,
+    "class_year": 2024,
+    "last_season": 2024,
+    "notes": [
+     "Hern\u00e1ndez to defer $8.5M of salary, to be paid in 10 installments, each July 1, 2030-39"
+    ]
+   },
+   {
+    "player": "Zac Gallen",
+    "ledger_key": "zac_gallen:2026",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "arizona-diamondbacks",
+    "contract": "1 year/$22.025M (2026)",
+    "total_usd": 22025000,
+    "class_year": 2026,
+    "last_season": 2026,
+    "notes": [
+     "$14.025M is deferred, to be paid 2032-34"
+    ]
+   },
+   {
+    "player": "Kik\u00e9 Hern\u00e1ndez",
+    "ledger_key": "kike_hernandez:2021",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "2 years/$14M (2021-22)",
+    "total_usd": 14000000,
+    "class_year": 2021,
+    "last_season": 2022,
+    "notes": [
+     "$1.5M of 2021 salary is deferred without interest, paid $250,000 each Jan. 15, 2027-32",
+     "$1M of 2022 salary is deferred without interest, paid $250,000 each Jan. 15, 2033-36"
+    ]
+   },
+   {
+    "player": "Justin Verlander",
+    "ledger_key": "justin_verlander:2026",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "detroit-tigers",
+    "contract": "1 year/$13M (2026)",
+    "total_usd": 13000000,
+    "class_year": 2026,
+    "last_season": 2026,
+    "notes": [
+     "$11M in salary is deferred, paid 10 x $1.1M, 2030-39"
+    ]
+   },
+   {
+    "player": "Kyle Finnegan",
+    "ledger_key": "kyle_finnegan:2025",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "detroit-tigers",
+    "contract": "1 year/$6M (2025)",
+    "total_usd": 6000000,
+    "class_year": 2025,
+    "last_season": 2025,
+    "notes": [
+     "$4M in salary is deferred without interest"
+    ]
+   },
+   {
+    "player": "Aroldis Chapman",
+    "ledger_key": "aroldis_chapman:2014",
+    "in_ledger": false,
+    "ledger_deferred": null,
+    "ledger_names_other_years": [],
+    "sheet": "boston-red-sox",
+    "contract": "1 year/$5M (2014), plus bonus",
+    "total_usd": 5000000,
+    "class_year": 2014,
+    "last_season": 2014,
+    "notes": [
+     "also due deferred $3M bonus when arbitration-eligible after 2013"
+    ]
+   },
+   {
+    "player": "Kyle Tucker",
+    "ledger_key": "kyle_tucker:2026",
+    "in_ledger": true,
+    "ledger_deferred": false,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "4 years/$240M (2026-29)",
+    "total_usd": 240000000,
+    "class_year": 2026,
+    "last_season": 2029,
+    "notes": [
+     "$30M in salary is deferred ($10M annually, 2027-29), paid in 10 installments of $3M each, Dec. 1, 2036-45"
+    ]
+   },
+   {
+    "player": "Corbin Burnes",
+    "ledger_key": "corbin_burnes:2025",
+    "in_ledger": true,
+    "ledger_deferred": false,
+    "ledger_names_other_years": [],
+    "sheet": "arizona-diamondbacks",
+    "contract": "6 years/$210M (2025-30)",
+    "total_usd": 210000000,
+    "class_year": 2025,
+    "last_season": 2030,
+    "notes": [
+     "$64M is deferred ($10M/year in 2025-26, $11M/year in 2027-30, paid $10M each Nov. 1, 2031-32 and $11M each Nov. 1, 2033-36",
+     "if Burnes exercises right to opt out of contract, the $20M deferred in 2025-26 will be paid $10M each Nov. 1, 2027-28"
+    ]
+   },
+   {
+    "player": "Dylan Cease",
+    "ledger_key": "dylan_cease:2026",
+    "in_ledger": true,
+    "ledger_deferred": false,
+    "ledger_names_other_years": [],
+    "sheet": "toronto-blue-jays",
+    "contract": "7 years/$210M (2026-32)",
+    "total_usd": 210000000,
+    "class_year": 2026,
+    "last_season": 2032,
+    "notes": [
+     "$64M in salary is deferred ($10M in 2026, $9M each in 2027-32), paid $5M each in 2033-34 and $4.5M each in 2035-46"
+    ]
+   },
+   {
+    "player": "Alex Bregman",
+    "ledger_key": "alex_bregman:2026",
+    "in_ledger": true,
+    "ledger_deferred": false,
+    "ledger_names_other_years": [],
+    "sheet": "chicago-cubs",
+    "contract": "5 years/$175M (2026-30)",
+    "total_usd": 175000000,
+    "class_year": 2026,
+    "last_season": 2030,
+    "notes": [
+     "$70M in salary is deferred ($15M each in 2026 and 2029, $10M each in 2027 and 2028, $20M in 2030)",
+     "deferred money is paid in eight installments each July 31, 2034-41:",
+     "2026, 2029 deferrals paid in installments of $1.875M",
+     "2027, 2028 deferrals paid in installments of $1.25M",
+     "2030 deferral paid in installments of $2.5M"
+    ]
+   },
+   {
+    "player": "Shohei Ohtani",
+    "ledger_key": "shohei_ohtani:2024",
+    "in_ledger": true,
+    "ledger_deferred": true,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "10 years/$700M (2024-33)",
+    "total_usd": 700000000,
+    "class_year": 2024,
+    "last_season": 2033,
+    "notes": [
+     "24-33 : $70M annually, with $68M deferred each year",
+     "deferred money will be paid without interest in equal $68M installments each July 1 from 2034 to 2043",
+     "club agrees to use savings from Ohtani\u2019s salary deferrals to build and maintain competitive roster"
+    ]
+   },
+   {
+    "player": "Stephen Strasburg",
+    "ledger_key": "stephen_strasburg:2020",
+    "in_ledger": true,
+    "ledger_deferred": true,
+    "ledger_names_other_years": [],
+    "sheet": "washington-nationals",
+    "contract": "7 years/$245M (2020-26)",
+    "total_usd": 245000000,
+    "class_year": 2020,
+    "last_season": 2026,
+    "notes": [
+     "$80M ($11,428,571.43 annually) is deferred with 1 percent interest, payable in equal installments of $26,666,667 on July 1 in 2027, 2028 and 2029, plus interest payment of $3,999,974 on 12/31/29",
+     "MLBPA calculates present value with deferrals at about $228.9M",
+     "retired 4/6/24, with Strasburg agreeing to defer undisclosed amount of remaining salaries"
+    ]
+   },
+   {
+    "player": "Max Scherzer",
+    "ledger_key": "max_scherzer:2015",
+    "in_ledger": true,
+    "ledger_deferred": true,
+    "ledger_names_other_years": [],
+    "sheet": "toronto-blue-jays",
+    "contract": "7 years/$210M (2015-21)",
+    "total_usd": 210000000,
+    "class_year": 2015,
+    "last_season": 2021,
+    "notes": [
+     "2019-21 salaries ($105M) deferred without interest, to be paid in seven $15M installments each July 1 from 2022 to 2028",
+     "deferrals reduce contract\u2019s present-day value to $191,401,086 (by MLB calculation) or $191,409,858 (MLBPA calculation)"
+    ]
+   },
+   {
+    "player": "Blake Snell",
+    "ledger_key": "blake_snell:2025",
+    "in_ledger": true,
+    "ledger_deferred": true,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "5 years/$182M (2025-29), plus conditional club option",
+    "total_usd": 182000000,
+    "class_year": 2025,
+    "last_season": 2029,
+    "notes": [
+     "$66M in salary is deferred ($13.2M annually), paid in 12 equal installments each July 1, 2035-46",
+     "deferrals reduce average annual value for purposes of competitive balance tax from $36.4M to $31,735,498",
+     "deferrals reduce regular LRD salaries to about $27.9M annually and deal\u2019s total present value to about $140M (not adjusted for inflation)"
+    ]
+   },
+   {
+    "player": "Freddie Freeman",
+    "ledger_key": "freddie_freeman:2022",
+    "in_ledger": true,
+    "ledger_deferred": true,
+    "ledger_names_other_years": [],
+    "sheet": "los-angeles-dodgers",
+    "contract": "6 years/$162 (2022-27)",
+    "total_usd": null,
+    "class_year": 2022,
+    "last_season": 2027,
+    "notes": [
+     "Freeman agreed to defer $57M without interest ($7M per year in 2022-24 and $12M per year in 2025-27) reducing the contract\u2019s present value to $148,195,494, as calculated by the MLBPA)",
+     "deferred money will be paid in:"
+    ]
+   }
+  ]
+ },
+ "options": {
+  "n": 727,
+  "by_kind": {
+   "option": 344,
+   "opt_out": 123,
+   "buyout": 260
+  }
+ }
+}
