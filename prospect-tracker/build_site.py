@@ -7717,12 +7717,16 @@ HAND_AUTHORED_PAGES = (
 _STYLESHEET_TAG_RE = re.compile(r"<link\b[^>]*\brel=[\"']stylesheet[\"'][^>]*>", re.I)
 _SCRIPT_TAG_RE = re.compile(r"<script\b[^>]*\bsrc=[\"'][^\"']+[\"'][^>]*>", re.I)
 _USE_TAG_RE = re.compile(r"<use\b[^>]*\bhref=[\"'][^\"']+[\"'][^>]*>", re.I)
-_ASSET_URL_RE = re.compile(r'((?:href|src)=")(/assets/[^"?#]+)(?:\?v=[^"#]*)?(#[^"]*)?(")')
+# /data/value_framework.js is the one /data/ payload a hand page loads by <script
+# src>; /data/ is served with a 7-day max-age, so it is stamped like an asset
+# (QPRP11) or a re-emitted $/WAR table can sit stale in a browser for a week.
+_ASSET_URL_RE = re.compile(r'((?:href|src)=")(/assets/[^"?#]+|/data/value_framework\.js)(?:\?v=[^"#]*)?(#[^"]*)?(")')
 
 
 def _restamp_html(text: str) -> str:
     """Return `text` with every /assets/ stylesheet href, script src and <use>
-    href stamped with the asset's current content hash, any #fragment kept.
+    href (and the /data/value_framework.js script src) stamped with the asset's
+    current content hash, any #fragment kept.
     Refs whose target is absent from the tree keep whatever they carry - there
     is no content to hash."""
 

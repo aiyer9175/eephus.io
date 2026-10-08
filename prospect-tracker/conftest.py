@@ -607,6 +607,8 @@ _SIDECAR_GLOBS = (
     "data/dpw_forecast_eval.json",
     "data/dpw_path_owner.json",
     "data/dpw_path_ledger.json",
+    # QPRP08: eta_backtest's served P(debut) curves (redirected below).
+    "data/eta_curves.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -1000,6 +1002,8 @@ _SIDECAR_WRITE_TARGETS = (
     ("tools.dpw_path_gate", "LEDGER_PATH", "data/dpw_path_ledger.json"),
     ("tools.dpw_path_gate", "OWNER_PATH", "data/dpw_path_owner.json"),
     ("tools.dpw_path_gate", "SERIES_PATH", "data/fa_dpw_series.json"),
+    # QPRP08: eta_backtest's second output, the served P(debut) curves.
+    ("eta_backtest", "CURVES_PATH", "data/eta_curves.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

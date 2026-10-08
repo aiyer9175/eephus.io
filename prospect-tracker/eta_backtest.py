@@ -69,6 +69,7 @@ from __future__ import annotations
 import json
 import logging
 import statistics
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -81,6 +82,10 @@ log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
 OUT_PATH = DATA_DIR / "eta_eval.json"
+# QPRP08: the slim served copy of km_survival_by_level. PROSPX reads only these
+# curves at boot; eta_eval.json (about 0.9 MB, mostly lab gate blocks) stays the
+# accountability artifact.
+CURVES_PATH = DATA_DIR / "eta_curves.json"
 DEBUTS_PATH = DATA_DIR / "debuts.json"
 
 VINTAGE_YEARS = (2018, 2019, 2020, 2021, 2022, 2023)
@@ -632,11 +637,29 @@ def run(persist: bool = True) -> dict:
             pass
         OUT_PATH.write_text(json.dumps(out, indent=1), encoding="utf-8")
         log.info("wrote %s", OUT_PATH)
+        write_curves(out)
     return out
+
+
+def write_curves(out: dict) -> dict:
+    """Write CURVES_PATH: the km_survival_by_level block of an eta_eval payload,
+    byte-for-byte the same lists, and nothing else (resolved at call time so the
+    test harness redirect lands)."""
+    payload = {
+        "source": "eta_eval.json km_survival_by_level (eta_backtest.py)",
+        "km_survival_by_level": out.get("km_survival_by_level") or {},
+    }
+    CURVES_PATH.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+    log.info("wrote %s", CURVES_PATH)
+    return payload
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    if "--curves-only" in sys.argv:
+        # Re-emit the served curves from the artifact on disk without a rerun.
+        write_curves(json.loads(OUT_PATH.read_text(encoding="utf-8")))
+        raise SystemExit(0)
     rep = run()
     print(f"cohort: {rep['accounting']}")
     for k in ("champion_heuristic", "baseline_naive_level_table",

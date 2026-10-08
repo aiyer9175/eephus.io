@@ -94,8 +94,23 @@ def test_index_html_includes_value_framework_script() -> None:
     """index.html must load data/value_framework.js so the
     window.VALUE_FRAMEWORK global is defined before downstream JS runs."""
     src = (_ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
-    assert 'src="/data/value_framework.js"' in src, \
+    assert 'src="/data/value_framework.js' in src, \
         "prospx/index.html missing <script src=/data/value_framework.js>"
+
+
+def test_index_html_stamps_value_framework_with_its_content_hash() -> None:
+    """QPRP11: /data/ is served with a 7-day max-age, so the script ref carries the
+    file's content hash (build_site._restamp_html writes it) and a re-emitted $/WAR
+    table busts the browser cache."""
+    import hashlib
+    import re
+    src = (_ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    m = re.search(r'src="/data/value_framework\.js\?v=([0-9a-f]{8})"', src)
+    assert m, "prospx/index.html loads value_framework.js without a ?v= stamp"
+    want = hashlib.md5((_DATA / "value_framework.js").read_bytes()).hexdigest()[:8]
+    assert m.group(1) == want, (
+        f"value_framework.js stamped ?v={m.group(1)}, content hash is {want}: "
+        "run python build_site.py (restamp_hand_authored_pages)")
 
 
 def test_index_html_drops_hardcoded_surplus_tables() -> None:
