@@ -262,8 +262,8 @@ def test_mlbtr_arb_ledger_is_a_lab_file_not_a_served_one():
 
 def test_excluded_data_is_not_a_registry_artifact():
     """model_registry.json eval artifacts are publicly hyperlinked from the
-    glossary Models & Proofs table (assets/glossary.js renders <a href>
-    per row), so excluding one would 404 the site's own proof links."""
+    /models/ ledger (build_site.build_models renders <a href> per row), so
+    excluding one would 404 the site's own proof links."""
     reg = json.loads((ROOT / "data" / "model_registry.json")
                      .read_text(encoding="utf-8"))
     arts: set[str] = set()
@@ -283,7 +283,7 @@ def test_excluded_data_is_not_a_registry_artifact():
     offenders = [n for n in _excluded_data_files() if n in arts]
     assert not offenders, (
         f"data_exclude.txt lists registry eval artifacts {offenders} - "
-        "they are publicly linked from Models & Proofs and must ship")
+        "they are publicly linked from the /models/ ledger and must ship")
 
 
 def test_ledger_clubs_shards_ship_in_both_deploy_consumers():

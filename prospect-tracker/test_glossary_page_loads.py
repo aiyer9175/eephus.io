@@ -61,7 +61,7 @@ def _browser_page(browser, page_errors):
 
 def _open_view(page, view):
     """Open a view the way a reader does since LIBRARY_3: its shelf chip, then
-    its leaf chip. An unlisted view (Models & Proofs) opens from its URL."""
+    its leaf chip. An unlisted view opens from its URL."""
     leaf = page.locator(f'[data-glossary-view="{view}"]')
     if leaf.get_attribute("data-gl-unlisted") is not None:
         page.evaluate(f"location.hash = '#view={view}'")
@@ -114,7 +114,6 @@ def test_all_four_views_render(server, browser):
     # replace a fixed 900ms sleep per view; timeouts are swallowed so the
     # assertions do the failing.
     ready = {
-        "models": " && el.innerHTML.indexOf('gl-verdict') !== -1",
         "source-comparison": (
             " && (el.innerHTML.indexOf('The full head-to-head') !== -1"
             " || el.innerHTML.indexOf('A different kind of Future Value') !== -1"
@@ -135,7 +134,6 @@ def test_all_four_views_render(server, browser):
         page.wait_for_selector(".gl-app .glossary-card", timeout=10_000)
         for view, body_id in [("guide", "guide-body"),
                               ("methodology", "methodology-body"),
-                              ("models", "models-body"),
                               ("source-comparison", "source-comparison-body"),
                               ("source-accuracy", "source-accuracy-body"),
                               ("calibration", "calibration-body")]:
@@ -155,10 +153,6 @@ def test_all_four_views_render(server, browser):
         # length-only assertion - never again).
         sc_html = page.evaluate(
             "document.getElementById('source-comparison-body').innerHTML")
-        # Models & Proofs must render the registry-driven accountability cards,
-        # not strand on loading (same lesson).
-        models_html = page.evaluate(
-            "document.getElementById('models-body').innerHTML")
         sacc_html = page.evaluate(
             "document.getElementById('source-accuracy-body').innerHTML")
     finally:
@@ -191,8 +185,6 @@ def test_all_four_views_render(server, browser):
         assert ("The full head-to-head" in sc_html
                 or "no resolved cohorts" in sc_html), \
             "source comparison rendered neither data nor empty-state"
-    assert "gl-verdict" in models_html, "Models & Proofs stranded (no verdict badges rendered)"
-    assert "Predicts" in models_html, "Models & Proofs cards missing the Predicts row"
     # Source Accuracy (C-A4): the sub-tab bar plus the read-first tiles, never
     # the loading placeholder.
     assert "Loading the cohort accuracy measurement" not in sacc_html, \
