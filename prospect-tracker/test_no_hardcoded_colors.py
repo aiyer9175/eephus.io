@@ -133,7 +133,8 @@ def test_px_viz_rules_live_outside_the_prospx_style(style_block):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("rel", ["assets/awards.css", "assets/awards.js",
-                                 "assets/awards-ballot.css", "assets/awards-ballot.js"])
+                                 "assets/awards-ballot.css", "assets/awards-ballot.js",
+                                 "assets/awards-tabs.js"])
 def test_awards_assets_type_no_colour(rel):
     text = (Path(__file__).parent / rel).read_text(encoding="utf-8")
     assert not re.findall(r"#[0-9a-fA-F]{3,8}\b", text)

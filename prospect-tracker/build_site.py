@@ -185,6 +185,9 @@ _AWARDS_CSS_VER = _asset_ver("assets/awards.css")
 # first My Ballot open from the stamped URLs on the mount's data attributes.
 _AWARDS_BALLOT_VER = _asset_ver("assets/awards-ballot.js")
 _AWARDS_BALLOT_CSS_VER = _asset_ver("assets/awards-ballot.css")
+# Superlatives, Rule and vote and Method (AWARDS_8): the chunk awards.js loads on the
+# first open of any of the three, from the stamped URL on the mount's data-tabs-js.
+_AWARDS_TABS_VER = _asset_ver("assets/awards-tabs.js")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
 # surface still tells the truth with JavaScript off.
@@ -7208,8 +7211,8 @@ def build_awards(live: bool | None = None) -> str:
     """The /awards/ page of Awards / HoF: the shared head, then one mount that
     assets/awards.js fills from data/awards.json (Selections; My Ballot is the lazy
     assets/awards-ballot.js chunk, AWARDS_9; Share and Save image load eephus-gfx.js
-    on the first press, AWARDS_10; Superlatives, Rule and vote and Method
-    land with AWARDS_8). The value
+    on the first press, AWARDS_10; Superlatives, Rule and vote and Method are
+    the lazy assets/awards-tabs.js chunk, AWARDS_8). The value
     ruler and the state component ride the shared head block. Not written to the
     published tree while awards_core.AWARDS_LIVE is False (write_awards_page)."""
     body = (
@@ -7218,6 +7221,7 @@ def build_awards(live: bool | None = None) -> str:
         f'<div id="awards-app-root" class="aw-root"{_csv_optin("awards")}'
         f' data-ballot-js="/assets/awards-ballot.js?v={_AWARDS_BALLOT_VER}"'
         f' data-ballot-css="/assets/awards-ballot.css?v={_AWARDS_BALLOT_CSS_VER}"'
+        f' data-tabs-js="/assets/awards-tabs.js?v={_AWARDS_TABS_VER}"'
         f' data-gfx-js="/assets/eephus-gfx.js?v={_GFX_VER}"></div>'
         '</div>'
         f'<link rel="stylesheet" href="/assets/awards.css?v={_AWARDS_CSS_VER}">'

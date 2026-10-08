@@ -48,7 +48,21 @@ card carries "Choices mine." and no selection, Portrait carries every filled bal
 the active one; a blocked Manager rule has no chip and the slate prints "Not published". The PNGs land
 in --out as gfx_*.png.
 
-    python tools/awards_render_check.py --port 9141 --out <dir> [--preview <dir>] [--only ballot|gfx]
+Superlatives, Rule and vote and Method (AWARDS_8, --only tabs), against the same fixtures with the
+superlative lists given awards_core.sl_present's fields, one prospect row graded at the floor, the
+vote table's writers from the tracked award_winners.json, and the frozen fixture's two 2026 rows
+after the vote (one with the rule's 1st's finish): every superlative card's title, definition,
+frame stamp, values in text ink with the i-ev-up or i-ev-down glyph in --up or --down, the unit and
+context line, the dumbbell's hollow and filled ends at the payload's from and to on the card's axis
+and its connector colour, every lamp bar's count, unit (widened 1-2-5 past 60 lamps) and fill, the
+unmeasured state with blocked_on, the stale registry chip, the floor tag, 3 rows at 390 with Show 5
+(aria-expanded, aria-controls) and 5 from 768 px; Rule and vote's tables newest first with the
+plan's columns and cells, the tag, no colour, no tick or cross and no count; Method's cards, the
+credits and 'What this page does not claim' equal to the payload, the MLB terms link and the value
+ruler key; the chunk requested once on the first open and never in the Selections cold paint, the
+deep links, How measured, the CSV download and a failing chunk with Retry.
+
+    python tools/awards_render_check.py --port 9141 --out <dir> [--preview <dir>] [--only ballot|gfx|tabs]
 """
 from __future__ import annotations
 
@@ -73,7 +87,8 @@ LABS = ROOT / "data" / "_labs" / "awards"
 WIDTHS = (390, 768, 1024, 1280, 1440)
 THEMES = ("light", "dark")
 #: Data files the shells and the shared runtimes fetch (copied into the temporary site).
-SHARED_DATA = ("glossary.json", "hof_board.json", "search_index.json", "team.json", "watchlist.json")
+SHARED_DATA = ("glossary.json", "glossary_index.json", "hof_board.json", "search_index.json", "team.json",
+               "watchlist.json")
 ONLY = "all"
 
 
@@ -169,6 +184,7 @@ def make_fixtures() -> dict:
             for k in ("al-moy", "nl-moy"):
                 doc["pools"].pop(k, None)
         shards[p.name] = doc
+    _tab_fixtures(live, frozen, shards)
     return {"live": dict(shards, **{"awards.json": live}),
             "frozen": dict(shards, **{"awards.json": frozen}),
             "stale": dict(shards, **{"awards.json": stale})}
@@ -383,6 +399,8 @@ def run(port: int, out: Path) -> dict:
                     _run_ballot(browser, base, site, fixtures, out, report)
                 if ONLY in ("all", "gfx"):
                     _run_gfx(browser, base, site, fixtures, out, report)
+                if ONLY in ("all", "tabs"):
+                    _run_tabs(browser, base, site, fixtures, out, report)
             finally:
                 browser.close()
     finally:
@@ -481,8 +499,13 @@ def _run_all(browser, base, site, fixtures, out, report):
             if not page.query_selector(".aw-drift"):
                 res["bad"].append("frozen fixture draws no Now value")
             wl = page.text_content("#aw-c-mvp-al .aw-writers") or ""
-            if "The rule placed him 2nd." not in wl:
+            if "The rule placed him 2nd. The rule's 1st finished 2nd in the vote." not in wl:
                 res["bad"].append(f"writers' line after the vote reads {wl!r}")
+            fd = dt.date.fromisoformat(doc["stamp"]["frozen_at"][:10])
+            want = f"The selection was frozen on {fd:%B} {fd.day}, {fd.year}, before the writers' results."
+            wp = page.text_content("#aw-c-roy-al .aw-writers") or ""
+            if not wp.endswith(want):
+                res["bad"].append(f"writers' line before the vote reads {wp!r}")
         if w in (390, 1280) or fx != "live":
             for d in page.query_selector_all("details.aw-d"):
                 d.evaluate("(e) => { e.open = true; }")
@@ -511,9 +534,10 @@ def _run_all(browser, base, site, fixtures, out, report):
                 res["bad"].append(f"focus ring {f}")
             if f["id"] != "aw-tab-superlatives" or f["selected"] != "true":
                 res["bad"].append(f"arrow key did not move and select the next tab: {f}")
-            msg = page.text_content("#aw-panel-superlatives .px-state-msg") or ""
-            if msg.strip() != "This section is being built.":
-                res["bad"].append(f"superlatives panel reads {msg!r}")
+            try:
+                page.wait_for_selector("#aw-panel-superlatives .aw-sll", timeout=15000)
+            except Exception:  # noqa: BLE001 - a missing panel is a failure line, not a crash
+                res["bad"].append("the superlatives panel did not render its cards")
             page.keyboard.press("End")
             f2 = page.evaluate(FOCUS_JS)
             if f2["id"] != "aw-tab-method":
@@ -1308,13 +1332,411 @@ def _run_gfx(browser, base, site, fixtures, out, report):
         ctx.close()
 
 
+
+# --- Superlatives, Rule and vote, Method (AWARDS_8) -------------------------------------------------
+
+def _tab_fixtures(live: dict, frozen: dict, shards: dict) -> None:
+    """Gives every superlative list the fields awards_core.sl_present adds (the preview files
+    predate it; the exporter writes them from AWARDS_8 on), marks one prospect row as graded at
+    the floor, and fills the vote table's writers from the tracked award_winners.json: the rule's
+    place of the writers' 1st is read on the shard's own ballot for 2021 to 2025, and for an
+    older season only an equal id is filled in (place 1). The frozen fixture adds two 2026 rows
+    after the vote, one of them carrying the rule's 1st's finish."""
+    import awards_core as A
+    import awards_export as E
+
+    for doc in [live, frozen] + [d for k, d in shards.items() if k.startswith("awards_20")]:
+        S = doc["season"]
+        doc["superlatives"] = [A.sl_present(s, S) for s in doc.get("superlatives") or []]
+    for doc in (live, frozen):
+        pa = next(s for s in doc["superlatives"] if s["id"] == "prospect_above")
+        if pa.get("rows"):
+            r = pa["rows"][-1]
+            r["efv_at_debut"], r["flags"] = A.EFV_FLOOR, ["graded_at_floor"]
+        doc["superlatives"] = [A.sl_present(s, doc["season"]) for s in doc["superlatives"]]
+    wfile = LABS / "award_winners.json"
+    win = {}
+    if wfile.exists():
+        for w in E.winner_rows(_load(wfile)):
+            if w["winner"]:
+                p = w["winner"]
+                if w["award"] == "MOY":
+                    code = E._club(p.get("team_code"))
+                    wid = "c" + code.lower() if code else None
+                else:
+                    wid = p.get("person_id")
+                win[(w["season"], w["award"], w["league"])] = {"id": wid, "name": p.get("name")}
+    for doc in (live, frozen):
+        for r in doc.get("vote_table") or []:
+            w = win.get((r["season"], r["award"], r["league"]))
+            if not w:
+                continue
+            sh = shards.get(f"awards_{r['season']}.json")
+            if sh and r["award"] in sh.get("awards", {}):
+                top = sh["awards"][r["award"]][r["league"]].get("top") or []
+                r["writers_first"] = w
+                r["rule_place_of_writers_first"] = E.ballot_place(r["award"], top, w["id"])
+            elif (r.get("rule_first") or {}).get("id") == w["id"]:
+                r["writers_first"], r["rule_place_of_writers_first"] = w, 1
+    top = frozen["awards"]["MVP"]["AL"]["top"]
+    topn = frozen["awards"]["MVP"]["NL"]["top"]
+    S = frozen["season"]
+    frozen["vote_table"] = [
+        {"season": S, "award": "MVP", "league": "AL", "rule_first": {"id": top[0]["mlbam"], "name": top[0]["name"]},
+         "writers_first": {"id": top[1]["mlbam"], "name": top[1]["name"]}, "rule_place_of_writers_first": 2,
+         "writers_finish_of_rule_first": 2, "computed_after_the_fact": False, "note": None},
+        {"season": S, "award": "MVP", "league": "NL", "rule_first": {"id": topn[0]["mlbam"], "name": topn[0]["name"]},
+         "writers_first": {"id": topn[0]["mlbam"], "name": topn[0]["name"]}, "rule_place_of_writers_first": 1,
+         "writers_finish_of_rule_first": 1, "computed_after_the_fact": False, "note": None},
+    ] + list(frozen.get("vote_table") or [])
+
+
+SL_JS = r"""
+(doc) => {
+  const bad = [], T = window.EephusTiers;
+  const probe = document.createElement("span");
+  document.body.appendChild(probe);
+  const tok = (n) => { probe.style.color = "var(" + n + ")"; return getComputedStyle(probe).color; };
+  const fillOf = (rect) => {
+    const m = /url\(#([^)]+)\)/.exec(rect.getAttribute("fill") || "");
+    const pr = m && document.getElementById(m[1]);
+    return pr ? getComputedStyle(pr.querySelector("rect")).fill : "";
+  };
+  const wide = matchMedia("(min-width: 768px)").matches;
+  let nCards = 0, nRows = 0, nPics = 0;
+  for (const s of doc.superlatives || []) {
+    const id = s.id, card = document.getElementById("aw-sl-" + id);
+    if (!card) { bad.push("missing superlative " + id); continue; }
+    nCards++;
+    if ((card.querySelector("h3") || {}).textContent !== s.title) bad.push(id + ": title");
+    for (const f of ["definition", "frame_label"]) if (s[f] && card.textContent.indexOf(s[f]) < 0) bad.push(id + ": lacks " + f);
+    const rows = s.blocked_on ? [] : (s.rows || []);
+    const how = card.querySelector(".aw-foot a.aw-chip");
+    if (!how || how.getAttribute("href").indexOf("section=method") < 0 || how.getAttribute("href").indexOf("sl=" + id) < 0) bad.push(id + ": How measured link");
+    if (!rows.length) {
+      const msg = card.querySelector(".px-state.is-unmeasured .px-state-msg");
+      if (!msg || msg.textContent.trim() !== (s.blocked_on || "No player in this view clears the floor.")) bad.push(id + ": unmeasured sentence");
+      continue;
+    }
+    if (!card.querySelector("[data-aw-csv]")) bad.push(id + ": CSV chip");
+    const reg = (doc.registry || {})[s.registry];
+    if (reg && reg.stale) {
+      const chip = card.querySelector(".aw-reg");
+      if (!chip || !chip.classList.contains("is-stale") || chip.textContent.indexOf("stale") < 0) bad.push(id + ": stale registry chip");
+    }
+    const ol = card.querySelector("ol.aw-sll"), lis = ol ? Array.from(ol.children) : [];
+    if (lis.length !== rows.length) bad.push(id + ": rows " + lis.length + " != " + rows.length);
+    const shown = lis.filter((li) => li.getBoundingClientRect().height > 0).length;
+    const want = wide || (ol && ol.classList.contains("open")) ? rows.length : Math.min(3, rows.length);
+    if (shown !== want) bad.push(id + ": visible rows " + shown + " != " + want);
+    const more = card.querySelector(".aw-more");
+    if (rows.length > 3) {
+      if (!more || more.getAttribute("aria-controls") !== ol.id || !more.hasAttribute("aria-expanded")) bad.push(id + ": Show 5 button");
+      else if (!wide && !more.getBoundingClientRect().height) bad.push(id + ": Show 5 hidden at a phone width");
+      else if (wide && more.getBoundingClientRect().height) bad.push(id + ": Show 5 drawn from 768 px");
+    }
+    const A0 = s.kind === "index" ? 100 : 0;
+    let uu = Number(s.lamp_unit) || 1, k = 0;
+    const mx = Math.max.apply(null, rows.map((x) => Math.abs((Number(x.value_display) || 0) - A0)));
+    while (mx / uu > 60 && k < 40) uu = +(uu * [2, 2.5, 2][k++ % 3]).toPrecision(6);
+    rows.forEach((r, i) => {
+      const li = lis[i], at = id + " row " + (i + 1) + ": ";
+      if (!li) return;
+      nRows++;
+      const val = r.value_display == null ? "" : String(r.value_display), ne = li.querySelector(".aw-num");
+      if (!ne || ne.textContent !== val) bad.push(at + "value " + (ne && ne.textContent) + " != " + val);
+      if (ne && getComputedStyle(ne).color !== tok("--text-primary")) bad.push(at + "value not in text ink");
+      const ue = li.querySelector(".aw-unit");
+      if ((s.unit || null) !== (ue ? ue.textContent : null)) bad.push(at + "unit");
+      if ((li.querySelector(".aw-name") || {}).textContent !== r.name) bad.push(at + "name");
+      if (r.context && li.querySelector(".aw-sub").textContent.indexOf(r.context) < 0) bad.push(at + "context line");
+      if ((r.flags || []).indexOf("graded_at_floor") >= 0 && !li.querySelector(".aw-tag")) bad.push(at + "graded at the floor tag");
+      const v = Number(r.value_display), d = v - A0, up = li.querySelector(".aw-up"), dn = li.querySelector(".aw-dn");
+      if (d > 0 && (!up || dn || getComputedStyle(up).color !== tok("--up") || !up.querySelector('use[href$="#i-ev-up"]'))) bad.push(at + "up glyph");
+      if (d < 0 && (!dn || up || getComputedStyle(dn).color !== tok("--down") || !dn.querySelector('use[href$="#i-ev-down"]'))) bad.push(at + "down glyph");
+      if (s.kind === "dumbbell") {
+        const lo = Number(ol.dataset.lo), hi = Number(ol.dataset.hi), W = Number(ol.dataset.w);
+        const xa = Math.round((Number(r.from) - lo) / (hi - lo) * (W - 8)), xb = Math.round((Number(r.to) - lo) / (hi - lo) * (W - 8));
+        const a = li.querySelector(".aw-db-a"), b = li.querySelector(".aw-db-b"), c = li.querySelector('rect[class^="aw-f-"]:not(.aw-db-b)');
+        if (!(lo <= Math.min(r.from, r.to) && hi >= Math.max(r.from, r.to))) bad.push(at + "axis does not span the row");
+        if (!a || Number(a.dataset.x) !== xa || Math.abs(Number(a.getAttribute("x")) - 0.5 - xa) > 1e-9) bad.push(at + "hollow end at " + (a && a.dataset.x) + ", payload from puts it at " + xa);
+        if (!b || Number(b.dataset.x) !== xb || Number(b.getAttribute("x")) !== xb) bad.push(at + "filled end at " + (b && b.dataset.x) + ", payload to puts it at " + xb);
+        const dir = Number(r.to) >= Number(r.from) ? "--up" : "--down";
+        if (!c || getComputedStyle(c).fill !== tok(dir)) bad.push(at + "connector colour is not " + dir);
+        if (c && Number(c.getAttribute("width")) !== Math.abs(xb - xa)) bad.push(at + "connector width");
+        if (b && getComputedStyle(b).fill !== tok("--text-primary")) bad.push(at + "filled end not ink");
+        nPics++;
+      } else {
+        const P = Number(ol.dataset.pitch), lit = Math.round(Math.abs(d) / uu), rect = li.querySelector("rect.aw-lit");
+        if (Number(ol.dataset.unit) !== uu) bad.push(id + ": lamp unit " + ol.dataset.unit + " != " + uu);
+        if (lit > 60) bad.push(at + "over 60 lamps");
+        if (lit && (!rect || Number(rect.getAttribute("width")) / P !== lit)) bad.push(at + "lamps " + (rect && Number(rect.getAttribute("width")) / P) + " != " + lit);
+        const f = d < 0 ? "down" : s.kind === "signed" ? "up" : (T.tier(v, s.ruler || s.family) || "ink");
+        const tn = f === "ink" ? "--text-primary" : f === "down" ? "--down" : f === "up" ? "--up" : "--vt-" + f;
+        if (rect && fillOf(rect) !== tok(tn)) bad.push(at + "lamp colour is not " + tn);
+        nPics++;
+      }
+    });
+  }
+  probe.remove();
+  return {bad, nCards, nRows, nPics};
+}
+"""
+
+VOTE_JS = r"""
+(doc) => {
+  const bad = [], panel = document.getElementById("aw-panel-vote"), rows = doc.vote_table || [];
+  const probe = document.createElement("span");
+  document.body.appendChild(probe);
+  const tok = (n) => { probe.style.color = "var(" + n + ")"; return getComputedStyle(probe).color; };
+  const ord = (n) => { const m = n % 100, t = n % 10; return n + ((m >= 11 && m <= 13) ? "th" : t === 1 ? "st" : t === 2 ? "nd" : t === 3 ? "rd" : "th"); };
+  const TITLE = {MVP: "MVP", CY: "Cy Young", ROY: "Rookie of the Year", MOY: "Manager of the Year"};
+  const seasons = Array.from(new Set(rows.map((r) => r.season))).sort((a, b) => b - a);
+  const tables = Array.from(panel.querySelectorAll("table.aw-vt"));
+  if (tables.map((t) => t.id).join() !== seasons.map((s) => "aw-v-" + s).join()) bad.push("season tables are not one per season, newest first");
+  const fin = rows.some((r) => r.writers_finish_of_rule_first != null);
+  const cols = ["Award", "League", "Rule's 1st", "Writers' 1st"].concat(fin ? ["Rule's 1st in the vote"] : [], ["Writers' 1st on the rule"]);
+  let nRows = 0;
+  seasons.forEach((S) => {
+    const t = document.getElementById("aw-v-" + S), rs = rows.filter((r) => r.season === S);
+    if (!t) return;
+    const heads = Array.from(t.querySelectorAll("thead th")).map((h) => h.textContent);
+    if (heads.join("|") !== cols.join("|")) bad.push(S + ": columns " + heads.join("|"));
+    const late = rs.every((r) => r.computed_after_the_fact);
+    if (late !== !!t.querySelector("caption .aw-tag")) bad.push(S + ": computed after the fact tag");
+    const trs = t.querySelectorAll("tbody tr");
+    if (trs.length !== rs.length) bad.push(S + ": rows " + trs.length + " != " + rs.length);
+    rs.forEach((r, i) => {
+      const tr = trs[i];
+      if (!tr) return;
+      nRows++;
+      const w = r.writers_first, p = r.rule_place_of_writers_first, f = r.writers_finish_of_rule_first;
+      const want = [TITLE[r.award] + (!late && r.computed_after_the_fact ? " computed after the fact" : ""), r.league,
+        (r.rule_first || {}).name || "-", w ? w.name + (typeof w.id === "string" ? " (" + w.id.slice(1).toUpperCase() + ")" : "") : "-"]
+        .concat(fin ? [f == null ? "-" : ord(f)] : [], [!w ? "-" : p ? ord(p) : "outside the rule's ballot"]);
+      const got = Array.from(tr.children).map((c) => c.textContent);
+      if (got.join("|") !== want.join("|")) bad.push(S + " " + r.award + " " + r.league + ": " + got.join("|") + " != " + want.join("|"));
+    });
+  });
+  const ink = [tok("--text-primary"), tok("--text-secondary"), tok("--text-tertiary")];
+  probe.style.backgroundColor = "var(--bg-secondary)";
+  const bg2 = getComputedStyle(probe).backgroundColor;
+  panel.querySelectorAll("table.aw-vt td, table.aw-vt th").forEach((c) => {
+    if (ink.indexOf(getComputedStyle(c).color) < 0) bad.push("a coloured cell: " + c.textContent);
+    const bg = getComputedStyle(c).backgroundColor;
+    if (bg !== "rgba(0, 0, 0, 0)" && bg !== bg2) bad.push("a filled cell: " + c.textContent);
+  });
+  const txt = panel.textContent;
+  if (/[✓✔✗✘❌]/.test(txt)) bad.push("a tick or a cross");
+  if (/\b\d+ of \d+\b/.test(txt) || /same 1st place/i.test(txt)) bad.push("a count of matches");
+  if (!/The writers vote on their own reading of value; the rule ranks one metric family\./.test(txt)) bad.push("intro");
+  probe.remove();
+  return {bad, nTables: tables.length, nRows};
+}
+"""
+
+METHOD_JS = r"""
+(doc) => {
+  const bad = [], panel = document.getElementById("aw-panel-method"), sq = (s) => String(s).replace(/\s+/g, " ").trim();
+  const KEY = {MVP: "mvp", CY: "cy", ROY: "roy", MOY: "moy"};
+  for (const A of ["MVP", "CY", "ROY", "MOY"]) {
+    const c = document.getElementById("aw-m-" + KEY[A]), r = (doc.rules || {})[A] || {};
+    if (!c) { bad.push("method card " + A); continue; }
+    for (const f of ["label", "floor_label", "tie_label", "two_way_label", "eligibility_label", "blocked_on"]) {
+      if (r[f] && c.textContent.indexOf(r[f]) < 0) bad.push(A + ": method card lacks " + f);
+    }
+  }
+  for (const s of doc.superlatives || []) {
+    const c = document.getElementById("aw-m-" + s.id);
+    if (!c) { bad.push("method card " + s.id); continue; }
+    for (const f of ["definition", "floor_label", "frame_label", "caption", "producer", "blocked_on", "axis_label"]) {
+      if (s[f] && c.textContent.indexOf(s[f]) < 0) bad.push(s.id + ": method card lacks " + f);
+    }
+  }
+  const cr = Array.from(panel.querySelectorAll(".aw-credits li")).map((li) => sq(li.textContent));
+  if (cr.join("\n") !== (doc.credits || []).map(sq).join("\n")) bad.push("credits differ from the payload");
+  const mlb = (doc.credits || []).filter((c) => /MLB Advanced Media/.test(c))[0];
+  if (mlb) {
+    const url = (/(https?:\/\/\S+)/.exec(mlb) || [])[1], a = panel.querySelector('.aw-credits a[href="' + url + '"]');
+    if (!a || a.textContent !== url) bad.push("the MLB terms link");
+  }
+  const cl = Array.from(panel.querySelectorAll(".aw-claims li")).map((li) => li.textContent);
+  if (cl.join("\n") !== (doc.what_this_page_does_not_claim || []).join("\n")) bad.push("'What this page does not claim' differs from the payload");
+  if (!panel.querySelector('.g-term[data-gl="value_ruler"]')) bad.push("value ruler glossary link");
+  if (!panel.querySelector(".vt-key")) bad.push("value ruler key");
+  return {bad, nCredits: cr.length, nClaims: cl.length};
+}
+"""
+
+TAB_SHOT_WIDTHS = (390, 1280)
+
+
+def _open_tab(page, base: str, hash_: str, sel: str):
+    page.goto(f"{base}/awards/#{hash_}", wait_until="networkidle")
+    page.wait_for_selector(sel, timeout=15000)
+
+
+def _run_tabs(browser, base, site, fixtures, out, report):
+    # 1. The live fixture: every width and theme, each of the three tabs.
+    plan = [("live", w, t) for w in WIDTHS for t in THEMES]
+    plan += [("frozen", w, t) for w in (390, 1280) for t in THEMES]
+    current = None
+    for fx, w, theme in plan:
+        if fx != current:
+            write_fixture(site, fixtures[fx])
+            current = fx
+        doc = fixtures[fx]["awards.json"]
+        for tab, sel, js in (("superlatives", "#aw-panel-superlatives .aw-sll", SL_JS),
+                             ("vote", "#aw-panel-vote table.aw-vt", VOTE_JS),
+                             ("method", "#aw-panel-method .aw-credits", METHOD_JS)):
+            if fx == "frozen" and tab == "superlatives":
+                continue
+            ctx = _context(browser, w, theme)
+            log: list = []
+            page = _page(ctx, log)
+            _open_tab(page, base, f"section={tab}", sel)
+            name = f"{fx}_{tab}_{w}_{theme}"
+            res = page.evaluate(js, doc)
+            lay = page.evaluate(LAYOUT_JS)
+            res["bad"] += lay["bad"]
+            res.update({"contrast_worst": lay["worst"], "contrast_worst_at": lay["worstWhat"]})
+            if tab == "superlatives" and w == 390:
+                btn = page.query_selector(".aw-more")
+                if btn:
+                    ctl = btn.get_attribute("aria-controls")
+                    btn.click()
+                    if btn.get_attribute("aria-expanded") != "true":
+                        res["bad"].append("Show 5 did not set aria-expanded")
+                    n = page.evaluate("(id) => Array.from(document.getElementById(id).children)"
+                                      ".filter((li) => li.getBoundingClientRect().height > 0).length", ctl)
+                    if n != 5:
+                        res["bad"].append(f"Show 5 shows {n} rows")
+                    res2 = page.evaluate(js, doc)
+                    res["bad"] += [f"(after Show 5) {b}" for b in res2["bad"]]
+            if tab == "method":
+                for d in page.query_selector_all("#aw-panel-method details"):
+                    d.evaluate("(e) => { e.open = true; }")
+                lay2 = page.evaluate(LAYOUT_JS)
+                res["bad"] += [f"(inputs open) {b}" for b in lay2["bad"]]
+            if fx == "frozen" and tab == "vote" and "Rule's 1st in the vote" not in (page.text_content("#aw-panel-vote") or ""):
+                res["bad"].append("the finish column is missing when the source has finishes")
+            shot = out / f"{name}.png"
+            page.screenshot(path=str(shot), full_page=True)
+            report["screens"].append(shot.name)
+            _record(report, name, res, _errors(log, page._aw_aborted))
+            ctx.close()
+
+    # 2. Past seasons: a closed season with no race record, one whose Manager rule is blocked.
+    write_fixture(site, fixtures["live"])
+    for S in (2023, 2022):
+        doc = fixtures["live"][f"awards_{S}.json"]
+        for w in TAB_SHOT_WIDTHS:
+            for theme in THEMES:
+                for tab, sel, js in (("superlatives", "#aw-panel-superlatives .aw-sll", SL_JS),
+                                     ("method", "#aw-panel-method .aw-credits", METHOD_JS)):
+                    ctx = _context(browser, w, theme)
+                    log = []
+                    page = _page(ctx, log)
+                    _open_tab(page, base, f"section={tab}&season={S}", sel)
+                    name = f"season{S}_{tab}_{w}_{theme}"
+                    res = page.evaluate(js, doc)
+                    lay = page.evaluate(LAYOUT_JS)
+                    res["bad"] += lay["bad"]
+                    res.update({"contrast_worst": lay["worst"], "contrast_worst_at": lay["worstWhat"]})
+                    if tab == "method" and S == 2022 and doc["rules"]["MOY"].get("blocked_on") not in (
+                            page.text_content("#aw-m-moy") or ""):
+                        res["bad"].append("the blocked Manager rule's sentence is not on its Method card")
+                    shot = out / f"{name}.png"
+                    page.screenshot(path=str(shot), full_page=True)
+                    report["screens"].append(shot.name)
+                    _record(report, name, res, _errors(log, page._aw_aborted))
+                    ctx.close()
+
+    # 3. The chunk loads lazily; deep links; How measured; the CSV chip; a failing chunk.
+    write_fixture(site, fixtures["live"])
+    ctx = _context(browser, 1280, "light")
+    log = []
+    page = _page(ctx, log)
+    reqs: list = []
+    page.on("request", lambda r: reqs.append(r.url))
+    page.goto(f"{base}/awards/", wait_until="networkidle")
+    page.wait_for_selector(".aw-hero", timeout=15000)
+    res = {"bad": []}
+    if any("awards-tabs.js" in u for u in reqs):
+        res["bad"].append("the Selections cold paint requested the tabs chunk")
+    page.click("#aw-tab-superlatives")
+    page.wait_for_selector("#aw-panel-superlatives .aw-sll", timeout=15000)
+    if sum("awards-tabs.js" in u for u in reqs) != 1:
+        res["bad"].append("the tabs chunk was not requested exactly once on the first open")
+    page.click("#aw-tab-method")
+    page.wait_for_selector("#aw-panel-method .aw-credits", timeout=15000)
+    if sum("awards-tabs.js" in u for u in reqs) != 1:
+        res["bad"].append("the tabs chunk was requested again")
+    page.click("#aw-tab-superlatives")
+    page.wait_for_selector("#aw-sl-relief .aw-foot a.aw-chip", timeout=15000)
+    sl = next(s for s in fixtures["live"]["awards.json"]["superlatives"] if s["id"] == "relief")
+    if sl.get("rows") and not sl.get("blocked_on"):
+        with page.expect_download() as dl:
+            page.click('#aw-sl-relief [data-aw-csv="relief"]')
+        f = dl.value
+        text = Path(f.path()).read_text(encoding="utf-8-sig")
+        lines = [ln for ln in text.splitlines() if ln.strip()]
+        if "awards-relief-" + str(fixtures["live"]["awards.json"]["season"]) not in f.suggested_filename \
+                or len(lines) != 1 + len(sl["rows"]):
+            res["bad"].append(f"CSV {f.suggested_filename} with {len(lines)} lines")
+        elif sl["rows"][0]["name"] not in lines[1]:
+            res["bad"].append("CSV first row")
+    page.click("#aw-sl-relief .aw-foot a.aw-chip")
+    page.wait_for_selector("#aw-panel-method:not([hidden]) #aw-m-relief", timeout=15000)
+    page.wait_for_timeout(200)
+    top = page.evaluate("() => document.getElementById('aw-m-relief').getBoundingClientRect().top")
+    if not (-2 <= top <= 80):
+        res["bad"].append(f"How measured left the relief method card at y={top}")
+    _record(report, "tabs_lazy_links_csv", res, _errors(log, page._aw_aborted))
+    ctx.close()
+    # a visitor arriving on a superlative's deep link (a fresh page, as a shared link opens)
+    for w in (390, 1280):
+        ctx = _context(browser, w, "light")
+        log = []
+        page = _page(ctx, log)
+        page.goto(f"{base}/awards/#section=superlatives&sl=glove", wait_until="networkidle")
+        page.wait_for_selector("#aw-sl-glove .aw-sll", timeout=15000)
+        page.wait_for_timeout(200)
+        res = {"bad": []}
+        top = page.evaluate("() => document.getElementById('aw-sl-glove').getBoundingClientRect().top")
+        if not (-2 <= top <= 80):
+            res["bad"].append(f"the glove deep link left its card at y={top}")
+        page.screenshot(path=str(out / f"deeplink_glove_{w}_light.png"))
+        report["screens"].append(f"deeplink_glove_{w}_light.png")
+        _record(report, f"tabs_deeplink_{w}", res, _errors(log, page._aw_aborted))
+        ctx.close()
+
+    ctx = _context(browser, 390, "dark")
+    log = []
+    page = _page(ctx, log)
+    page.route("**/assets/awards-tabs.js*", lambda r: r.fulfill(status=500, body="no"))
+    page.goto(f"{base}/awards/#section=vote", wait_until="networkidle")
+    page.wait_for_selector("#aw-panel-vote .px-state.is-failed", timeout=15000)
+    res = {"bad": []}
+    if not page.query_selector("#aw-panel-vote .aw-retry"):
+        res["bad"].append("a failed chunk has no Retry")
+    page.unroute("**/assets/awards-tabs.js*")
+    page.click("#aw-panel-vote .aw-retry")
+    page.wait_for_selector("#aw-panel-vote table.aw-vt", timeout=15000)
+    page.screenshot(path=str(out / "state_tabs_retry_390_dark.png"))
+    report["screens"].append("state_tabs_retry_390_dark.png")
+    errs = [e for e in _errors(log, page._aw_aborted) if "awards-tabs.js" not in e]
+    _record(report, "tabs_failed_chunk", res, errs)
+    ctx.close()
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--port", type=int, default=9141)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--preview", type=Path, default=None,
                     help="read the fixture payloads from this copy of .cache/awards/preview/")
-    ap.add_argument("--only", choices=("all", "selections", "ballot", "gfx"), default="all")
+    ap.add_argument("--only", choices=("all", "selections", "ballot", "gfx", "tabs"), default="all")
     a = ap.parse_args(argv)
     global PREVIEW, ONLY
     if a.preview:

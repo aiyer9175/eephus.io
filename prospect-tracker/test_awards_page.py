@@ -68,10 +68,11 @@ def test_js_types_no_colour_and_reuses_the_shared_pieces():
 
 def test_the_state_sentences_are_the_plans():
     js = _js()
-    for s in ("Loading the awards.", "The awards could not load.", "This section is being built.",
+    for s in ("Loading the awards.", "The awards could not load.",
               "Weekly standings are not on file for ", ". The card shows the season-end order only.",
               "numbers may be out of date."):
         assert s in js, s
+    assert "This section is being built." not in js + _tjs(), "AWARDS_8 built the last three tabs"
 
 
 def test_share_renders_only_when_the_shell_names_the_engine():
@@ -206,3 +207,73 @@ def test_ballot_copy_is_the_plans():
     assert '(cx.gfx ? btn("img", "Save image") : "")' in js
     assert 'NOTE.ok + (cx.gfx ? " or save the image." : ".")' in js
     assert "eephus-gfx" not in js and "EEPHUS_GFX" not in js
+
+
+
+# --- Superlatives, Rule and vote, Method (AWARDS_8; AWARDS_PLAN 5.5 to 5.7, 5.14, 5.15) ---------
+
+TJS = ROOT / "assets" / "awards-tabs.js"
+
+
+def _tjs() -> str:
+    return TJS.read_text(encoding="utf-8")
+
+
+def test_tabs_chunk_budget_motion_and_colour():
+    """The three tabs are a lazy chunk so awards.js keeps its 60 KB budget; the chunk holds
+    20 KB served (LF) bytes, adds no motion and types no colour."""
+    assert _served_bytes(TJS) <= 20 * 1024, _served_bytes(TJS)
+    js = _tjs()
+    assert "requestAnimationFrame" not in js and "@keyframes" not in js
+    assert not HEX.findall(js) and "rgb(" not in js and "hsl(" not in js
+
+
+def test_tabs_load_lazily_from_a_stamped_url():
+    out = B.build_awards(live=True)
+    assert f'data-tabs-js="/assets/awards-tabs.js?v={B._asset_ver("assets/awards-tabs.js")}"' in out
+    assert '<script src="/assets/awards-tabs.js' not in out, "the chunk is not in the cold paint"
+    js = _js()
+    assert 'root.getAttribute("data-tabs-js")' in js
+    assert 'if (!window.EephusAwardsTabs && s.section !== "selections")' in js
+    assert "window.EephusAwardsTabs = { superlatives: on(superlatives), vote: on(vote), method: on(method), csv: on(csv) };" in _tjs()
+    assert "fetch(" not in _tjs(), "the chunk reads the payload awards.js already holds"
+
+
+def test_superlatives_card_anatomy_is_the_plans():
+    js = _tjs()
+    assert 'var SL_REQ = ["prospect_above", "prospect_below", "proj_above", "proj_below", "next_rise", "next_drop"];' in js
+    for s in ("More from the site&#39;s numbers", "How measured", "graded at the floor", 'class="aw-share aw-more"',
+              'aria-expanded="false" aria-controls="aw-sll-', "'\">Show ' + rows.length", 'ico(d > 0 ? "ev-up" : "ev-down", 12)',
+              "No player in this view clears the floor.", "data-aw-csv", "EephusCSV.downloadModel",
+              'shareChip("superlative"'):
+        assert s in js, s
+    assert "s.unit" in js and "s.axis_label" in js and "r.context" in js, "units and context lines come from the payload"
+    # the three pictures: dumbbell squares at from and to, lamp bars from 0 or from 100
+    assert 'class="aw-db-a" data-x="' in js and 'aw-f-ink aw-db-b" data-x="' in js
+    assert 's.kind === "index" ? 100 : 0' in js and "MAX_LAMPS" in js and "[2, 2.5, 2]" in js
+    css = _css()
+    assert ".aw-sll:not(.open) > li:nth-child(n+4) { display: none; }" in css
+    assert ".aw-up { color: var(--up); }" in css and ".aw-dn { color: var(--down); }" in css
+
+
+def test_rule_and_vote_scores_nothing():
+    js = _tjs()
+    v = js[js.index("function vote()"):js.index("// ---- Method")]
+    for s in ("The writers vote on their own reading of value; the rule ranks one metric family.",
+              "It does not score either one: a different 1st place is a different answer",
+              "computed after the fact", "Rule&#39;s 1st", "Writers&#39; 1st on the rule", "outside the rule&#39;s ballot"):
+        assert s.replace("&#39;", "'") in v or s in v, s
+    for banned in ("Same 1st place", "match", "agree", "aw-up", "aw-dn", "vt-", "\u2713", "\u2717", "check"):
+        assert banned not in v, banned
+    assert "writers_finish_of_rule_first" in v, "the finish column only when the source has finishes"
+
+
+def test_method_prints_the_payloads_credits_and_claims():
+    js = _tjs()
+    m = js[js.index("function method(doc)"):]
+    assert "doc.credits" in m and "doc.what_this_page_does_not_claim" in m
+    assert "What this page does not claim" in m and "Credits" in m
+    assert 'gl("value ruler", "value_ruler")' in m and "T.keyHTML()" in m
+    assert "Deserved" not in js, "the xHEM+ and xSEM+ links print the metric names only"
+    for unit in ("eWAR v2", "eWAR v3", "fWAR"):
+        assert unit not in js, unit
