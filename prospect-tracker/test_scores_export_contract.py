@@ -116,7 +116,7 @@ def test_plan_8_1_keys(built):
     assert set(date["day_top_plays"][0]) == {"pk", "ab", "text", "bat_team", "before", "after", "swing", "live"}
     card = date["games"][0]
     want = {"pk", "rev", "type", "state", "reason", "start", "tbd", "dh", "venue", "series", "tv", "away", "home", "line",
-            "sit", "wp", "of_record", "star", "top_play", "videos", "flags", "weather", "makeup", "resume", "updated_at",
+            "sit", "end", "wp", "of_record", "star", "top_play", "videos", "flags", "weather", "makeup", "resume", "updated_at",
             "stale_since"}
     assert set(card) == want
     assert set(card["away"]) == {"team_id", "code", "name", "short", "wl", "r", "h", "e", "probable", "lineup_posted"}

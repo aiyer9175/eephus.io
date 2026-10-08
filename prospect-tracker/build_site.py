@@ -173,6 +173,8 @@ _SCORES_VIDEO_VER = _asset_ver("assets/scores-video.js")
 _SCORES_BRACKET_VER = _asset_ver("assets/scores-bracket.js")   # the lazy bracket chunk (SCORES_4b)
 _SCORES_ABOUT_VER = _asset_ver("assets/scores-about.js")   # the lazy About chunk (SCORES_7a)
 _SCORES_PREGAME_VER = _asset_ver("assets/scores-pregame.js")   # the pregame context (SCORES_6), eager
+_SCORES_PIXEL_VER = _asset_ver("assets/scores-pixel.js")   # the pixel art (SCORES_7b), eager
+_SCORES_PIXEL_CSS_VER = _asset_ver("assets/scores-pixel.css")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
 _AWARDS_VER = _asset_ver("assets/awards.js")
@@ -6466,7 +6468,9 @@ def build_scores() -> str:
     SCORES_7a (the sports-page layout) links assets/sports-page.css, the
     newspaper classes and the bracket styles /standings/ shares, before the
     module css, and moves the About view to the lazy assets/scores-about.js,
-    named by the mount root's data-about-src."""
+    named by the mount root's data-about-src. SCORES_7b links the pixel art,
+    assets/scores-pixel.css after the module css and the eager
+    assets/scores-pixel.js before scores.js."""
     body = (
         '<div class="fa-app scores-app">'
         + _scores_module_head("scores")
@@ -6479,10 +6483,12 @@ def build_scores() -> str:
         '</div>'
         f'<link rel="stylesheet" href="/assets/sports-page.css?v={_SPORTS_PAGE_CSS_VER}">'
         f'<link rel="stylesheet" href="/assets/scores.css?v={_SCORES_CSS_VER}">'
+        f'<link rel="stylesheet" href="/assets/scores-pixel.css?v={_SCORES_PIXEL_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/scores-pregame.js?v={_SCORES_PREGAME_VER}" defer></script>'
+        f'<script src="/assets/scores-pixel.js?v={_SCORES_PIXEL_VER}" defer></script>'
         f'<script src="/assets/scores.js?v={_SCORES_VER}" defer></script>'
     )
     return page("MLB Scores - eephus.io", "scores", body,

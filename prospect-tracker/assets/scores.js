@@ -98,13 +98,6 @@
     if (on.length === 3) return "bases loaded";
     return (on.length === 1 ? "runner on " : "runners on ") + on.join(" and ");
   }
-  function basesAria(b) {
-    var names = ["first", "second", "third"], on = [];
-    for (var i = 0; i < 3; i++) if (b && b[i]) on.push(names[i]);
-    if (!on.length) return "Bases empty";
-    if (on.length === 3) return "Bases loaded";
-    return (on.length === 1 ? "Runner on " : "Runners on ") + on.join(" and ");
-  }
 
   // ---- stale rule
   function validLatest(L) {
@@ -353,7 +346,8 @@
       head = '<thead><tr><th scope="col" class="sc-tm"><span class="sr-only">Club</span></th>' + h +
         '<th scope="col" class="sc-r">R</th><th scope="col" class="sc-he">H</th><th scope="col" class="sc-he">E</th></tr></thead>';
     }
-    return '<div class="sc-line' + (wide ? " sc-line-wide" : "") + '" data-hook="linescore"><table class="sc-teams sp-agate' + (score ? " has-score" : "") + '">' + head + "<tbody>" +
+    return '<div class="sc-line' + (wide ? " sc-line-wide" : "") + '" data-hook="linescore"><table class="sc-teams sp-agate' + (score ? " has-score" : "") + '">' +
+      (score ? '<caption class="sr-only">Line score: runs by inning, then runs, hits and errors</caption>' : "") + head + "<tbody>" +
       teamRow(c, "away", score) + teamRow(c, "home", score) + "</tbody></table></div>";
   }
   function probableText(p) {
@@ -364,13 +358,8 @@
     if (p.era != null && p.era !== "") bits.push(p.era + " ERA");
     return bits.join(", ");
   }
-  function diamond(b) {
-    var on = function (i) { return b && b[i] ? " is-on" : ""; };
-    return '<svg class="sc-bases" viewBox="0 0 30 22" width="30" height="22" role="img" aria-label="' + esc(basesAria(b)) + '">' +
-      '<rect class="sc-base' + on(1) + '" x="11" y="1" width="8" height="8" transform="rotate(45 15 5)"/>' +
-      '<rect class="sc-base' + on(2) + '" x="2" y="10" width="8" height="8" transform="rotate(45 6 14)"/>' +
-      '<rect class="sc-base' + on(0) + '" x="20" y="10" width="8" height="8" transform="rotate(45 24 14)"/></svg>';
-  }
+  // SC7-2: the pixel diamond from assets/scores-pixel.js (bases, outs, and the count's lamps when live)
+  function px(s, m, k) { var P = window.EephusScoresPixel; return P && s ? P.diamond(s, m, k) : ""; }
   function lastUpdate(c) {
     var s = c.sit || {};
     return "Last update: " + (s.inning ? half3(s.half) === "Bot" ? "Bottom " + s.inning : "Top " + s.inning : "Live") +
@@ -401,7 +390,7 @@
         out.push('<p class="sc-row">' + lastUpdate(c) + "</p>");
         return out.join("");
       }
-      out.push('<div class="sc-sit"><span data-hook="diamond">' + diamond(s.bases) + "</span>" +
+      out.push('<div class="sc-sit"><span data-hook="diamond">' + px(s, "live") + "</span>" +
         '<span class="sc-count">Count ' + (s.balls || 0) + "-" + (s.strikes || 0) +
         '<span class="sr-only">: ' + (s.balls || 0) + (s.balls === 1 ? " ball, " : " balls, ") +
         (s.strikes || 0) + (s.strikes === 1 ? " strike" : " strikes") + "</span></span></div>");
@@ -456,6 +445,7 @@
     if (c.series && c.series.if_necessary) series += (series ? ". " : "") + (gone ? "Not needed" : "If necessary");
     return '<div class="sc-head"><h3 class="sc-match"><a class="sc-stretch" href="#game=' + c.pk + '">' +
       esc(c.away.code || c.away.short) + " at " + esc(c.home.code || c.home.short) + "</a></h3>" +
+      (c.state === "final" && c.end ? '<span class="sc-endpx" data-hook="diamond">' + px(c.end, "end") + "</span>" : "") +
       '<span class="sc-state">' + esc(stateLine(c, st)) + "</span>" + asOf + "</div>" +
       '<p class="sc-series">' + series + "</p>" + teamsTable(c) +
       '<div class="sc-body">' + cardBody(c, ix, st) + "</div>";
@@ -489,44 +479,7 @@
     return pts;
   }
   function chartSVG(g, W, live) {
-    var c = g.card, pts = chartModel(g);
-    var H = W < 600 ? 180 : 240, AX = 24, PADL = 12, PADR = live ? 58 : 12, PADT = 10;
-    var iw = Math.max(40, W - PADL - PADR), ih = H - PADT;
-    var n = pts.length;
-    var x = function (i) { return PADL + (n <= 1 ? iw / 2 : i / (n - 1) * iw); };
-    var y = function (th) { return PADT + (1 - th / 1000) * ih; };
-    var o = '<svg class="sc-wp-svg" width="' + W + '" height="' + (H + AX) + '" viewBox="0 0 ' + W + " " + (H + AX) + '" aria-hidden="true" focusable="false">';
-    [0, 250, 500, 750, 1000].forEach(function (g2) {
-      o += '<line class="sc-gl' + (g2 === 500 ? " is-mid" : "") + '" x1="' + PADL + '" x2="' + (PADL + iw) + '" y1="' + y(g2).toFixed(1) + '" y2="' + y(g2).toFixed(1) + '"/>';
-    });
-    o += '<text class="sc-ax" x="' + (PADL + 2) + '" y="' + (y(1000) + 12) + '">' + esc((c.home.code || c.home.short) + " 100%") + "</text>";
-    o += '<text class="sc-ax" x="' + (PADL + 2) + '" y="' + (y(0) - 4) + '">' + esc((c.away.code || c.away.short) + " 100%") + "</text>";
-    o += '<text class="sc-ax" x="' + (PADL + iw - 2) + '" y="' + (y(500) - 4) + '" text-anchor="end">50%</text>';
-    var d = "", pen = false, lastInn = null;
-    for (var i = 0; i < n; i++) {
-      var p = pts[i];
-      if (p.half === "top" && p.inning !== lastInn) {
-        o += '<text class="sc-ax" x="' + x(i).toFixed(1) + '" y="' + (H + 16) + '" text-anchor="middle">' + p.inning + "</text>";
-        lastInn = p.inning;
-      }
-      if (!isNum(p.wp)) { pen = false; continue; }
-      d += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(p.wp).toFixed(1);
-      pen = true;
-    }
-    o += '<path class="sc-wp-line" d="' + d + '"/>';
-    for (i = 0; i < n; i++) {
-      if (pts[i].rank && isNum(pts[i].wp)) {
-        o += '<g class="sc-mark"><circle cx="' + x(i).toFixed(1) + '" cy="' + y(pts[i].wp).toFixed(1) + '" r="9"/>' +
-          '<text x="' + x(i).toFixed(1) + '" y="' + (y(pts[i].wp) + 4).toFixed(1) + '" text-anchor="middle">' + pts[i].rank + "</text></g>";
-      }
-    }
-    if (live && n && isNum(pts[n - 1].wp)) {
-      var lead = wpLead(c, pts[n - 1].wp);
-      o += '<circle class="sc-end" cx="' + x(n - 1).toFixed(1) + '" cy="' + y(pts[n - 1].wp).toFixed(1) + '" r="4"/>' +
-        '<text class="sc-ax sc-endlbl" x="' + (x(n - 1) + 8).toFixed(1) + '" y="' + (y(pts[n - 1].wp) + 4).toFixed(1) + '">' + esc(lead.code + " " + lead.pct + "%") + "</text>";
-    }
-    o += '<line class="sc-cross" x1="0" x2="0" y1="' + PADT + '" y2="' + (PADT + ih) + '" visibility="hidden"/></svg>';
-    return { svg: o, pts: pts, x: x, y: y, W: W, H: H };
+    return window.EephusScoresPixel.chart(g, W, live, chartModel(g), { lead: wpLead, signed: signed });
   }
   function chartAria(g) {
     var c = g.card, ser = (g.wp && g.wp.series) || [], last = null;
@@ -641,7 +594,8 @@
         '<div class="sc-wp-frame" tabindex="0" role="img" aria-label="' + esc(chartAria(g)) + '"></div>' + chartTable(g), "figure", "sc-wp")
       : '<p class="sc-dim">No MLB win probability for this game yet.</p>';
     return "<h3>Win probability</h3><p class=\"sc-dim\">MLB's model, after each plate appearance" + (g.card.state !== "final" ? ", so far" : "") +
-      ". The numbered marks are the biggest plays, listed under Summary.</p>" + '<div data-hook="wp-sprite"></div>' + chart;
+      ". The numbered marks are the biggest plays, listed under Summary.</p>" + '<div data-hook="wp-sprite">' +
+      (chart.indexOf("sc-wp-frame") > 0 && window.EephusScoresPixel ? window.EephusScoresPixel.key(g) : "") + "</div>" + chart;
   }
   function chartTable(g) {
     var by = {}, home = g.card.home.code || g.card.home.short;
@@ -892,7 +846,7 @@
       if (r.view === "bracket") {
         if (nav || !root.querySelector(".sc-bk")) {
           root.innerHTML = '<p class="sc-back"><a href="#">Back to scores</a></p>' + mast(r.season + " postseason", Lt.today) +
-            '<div data-hook="bracket-art"></div><div class="sc-bk"></div>';
+            '<div class="sc-bk"></div>';
           root.querySelector("h2").focus();
         }
         stamp();
@@ -1098,7 +1052,9 @@
         }).join(' <span class="sc-at">at</span> ') + "</h2>" +
         (c.series && c.series.text ? '<p class="sc-dim">' + esc(c.series.text) + "</p>" : "") +
         '<p class="sc-dim">' + esc((c.venue && c.venue.name ? c.venue.name + ", " : "") + startTime(c)) + "</p>" +
-        teamsTable(c, 1) + '<div class="sc-follows">' + follow + '<div data-hook="gfx"></div></div></header>' +
+        teamsTable(c, 1) + (c.state === "live" && c.sit || c.state === "final" && c.end ? '<div class="sc-sit" data-hook="diamond">' +
+        (c.state === "live" ? px(c.sit, "live") : px(c.end, "end") + '<span class="sc-dim">Last play</span>') + "</div>" : "") +
+        '<div class="sc-follows">' + follow + '<div data-hook="gfx"></div></div></header>' +
         '<div class="sc-tabs" role="tablist" aria-label="Game sections">' + tabs.map(function (t) {
           return '<button type="button" role="tab" class="sc-tab" id="sc-tab-' + t[0] + '" aria-controls="sc-panel" data-tab="' + t[0] + '" aria-selected="' + (t[0] === tab) + '" tabindex="' + (t[0] === tab ? "0" : "-1") + '">' + t[1] + "</button>";
         }).join("") + '</div><div class="sc-panel" id="sc-panel" role="tabpanel" aria-labelledby="sc-tab-' + tab + '">';

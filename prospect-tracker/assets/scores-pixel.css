@@ -1,0 +1,63 @@
+/* Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Noah J. Dengler (@ARKNDJL), 2026 */
+
+/* /scores/ pixel art (SCORES_7b, owner SC7-2), drawn by assets/scores-pixel.js.
+   Sprites are SVG on a whole-number grid (shape-rendering: crispEdges, a whole
+   number of CSS px per cell), so they stay sharp at 1x and 2x. Site tokens
+   only, both themes: lit cells take --text-gold (bronze on paper, gold on the
+   dark page, the scoreboard's bulbs), unlit outlines --text-dim, base paths
+   --border. The one animation (the live chart's end marker) stops under
+   prefers-reduced-motion. */
+
+/* ---- the base/outs diamond: B S O lamps on a live card, the last play's state on a final */
+.scores-app .px-sprite { display: block; flex: 0 0 auto; }
+.scores-app .px-sprite .px-on { fill: var(--text-gold); }
+.scores-app .px-sprite .px-off { fill: var(--text-dim); }
+.scores-app .px-sprite .px-dim { fill: var(--border); }
+.scores-app .px-sprite .px-ink { fill: var(--text-primary); }
+.scores-app .sc-sit .sc-count { font: 11.5px/1.35 var(--font-retro-mono); }
+.scores-app .sc-endpx { margin-left: auto; align-self: center; display: inline-flex; }
+.scores-app .sc-endpx + .sc-state { margin-left: 6px; }
+.scores-app .sc-ghead .sc-sit { margin: 6px 0 2px; font-size: 12px; }
+
+/* ---- the game head's line score as a manual scoreboard: hung number plates,
+   still the paper's linescore (head rule, inning numbers in agate, R H E after a rule) */
+.scores-app .sc-line-wide { margin: 6px 0 4px; padding: 4px 0 2px; border-top: 2px solid var(--text-primary); }
+.scores-app .sc-line-wide .sc-teams { border-collapse: separate; border-spacing: 2px; }
+.scores-app .sc-line-wide thead th { border-bottom: 0; padding: 0 2px; font: 700 10.5px/1.4 var(--font-retro-mono); color: var(--text-secondary); }
+.scores-app .sc-line-wide tbody td {
+  min-width: 22px; height: 24px; padding: 0 3px; box-sizing: border-box; font: 700 14px/24px var(--font-retro-mono);
+  font-variant-numeric: tabular-nums; color: var(--text-primary); background: var(--bg-tertiary);
+  box-shadow: inset 0 0 0 1px var(--border), inset 0 -3px 0 var(--border);
+}
+.scores-app .sc-line-wide tbody tr + tr th, .scores-app .sc-line-wide tbody tr + tr td { border-top: 0; }
+.scores-app .sc-line-wide .sc-r { border-left: 0; }
+.scores-app .sc-line-wide tbody .sc-r { background: var(--text-primary); color: var(--bg-secondary); box-shadow: inset 0 -3px 0 var(--text-secondary); }
+.scores-app .sc-line-wide thead .sc-r { box-shadow: inset 2px 0 0 var(--text-primary); }
+.scores-app .sc-line-wide .sc-r { position: relative; }
+.scores-app .sc-line-wide tbody .sc-r::before { content: ""; position: absolute; left: -4px; top: -2px; bottom: -2px; width: 2px; background: var(--text-primary); }
+.scores-app .sc-line-wide tbody th { padding-right: 10px; }
+/* a phone keeps the code and the plates; the club name and record return from 768 px, so nine innings and R H E fit */
+@media (max-width: 767px) {
+  .scores-app .sc-line-wide .sc-short, .scores-app .sc-line-wide .sc-rec { display: none; }
+  .scores-app .sc-line-wide tbody td { min-width: 20px; padding: 0 2px; }
+}
+
+/* ---- the Win Prob chart: a stepped line on whole pixels, square marks, the biggest swing's plate */
+.scores-app .sc-wp-line { stroke-linejoin: miter; stroke-linecap: square; }
+.scores-app .sc-mark rect { fill: var(--viz-1); stroke: var(--bg-secondary); stroke-width: 2; }
+.scores-app .sc-mark.is-top rect { fill: var(--bg-secondary); stroke: var(--viz-2); stroke-width: 2; }
+.scores-app .sc-mark.is-top text { fill: var(--text-primary); }
+.scores-app .sc-swing .sc-lead { fill: var(--text-primary); }
+.scores-app .sc-swing .sc-plate { fill: var(--bg-secondary); stroke: var(--text-primary); stroke-width: 1; }
+.scores-app .sc-swing text { fill: var(--text-primary); font: 700 11px var(--font-retro-mono); }
+.scores-app .sc-wp-key { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; font-size: 12px; color: var(--text-secondary); }
+.scores-app .px-key { flex: 0 0 auto; }
+.scores-app .px-key .px-line { fill: var(--viz-1); }
+.scores-app .px-key .px-mark { fill: var(--viz-1); }
+.scores-app .px-key .px-top { fill: var(--bg-secondary); stroke: var(--viz-2); stroke-width: 2; }
+.scores-app .px-blink { animation: px-blink 1.2s step-end infinite; }
+@keyframes px-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .scores-app .px-blink { animation: none; } }
