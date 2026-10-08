@@ -256,3 +256,6 @@ tools/bucket_age_head/verify_sandbox/
 # data/*.json sidecar. It was NOT ignored, which would have committed a
 # 30-club simulation snapshot on every rebuild.
 data/futures.json
+
+# Local Scores feed: a junction to .cache/scores/out (the box serves /opt/eephus/scores here via nginx)
+/data/scores
