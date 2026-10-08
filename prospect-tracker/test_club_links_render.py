@@ -104,9 +104,39 @@ MLB_B = [
     "pal/#posfit=board",
 ]
 ROUTES += [r for r in MLB_B if r not in ROUTES]
+# Q9_08 (PROSPX, A17 to A24): the board-family rows (board, Spotlights,
+# Transactions, Injured, Leaderboards, Debuted) and their context rails, the
+# Farm Systems list (table and cards), the farm page header and rail, the
+# player card (header, origin line, rail title, career table), the draft
+# (cards, results, signing trends, order, overperformers), the IFA board, an
+# overseas league page (a signed pro's MLB club opens Franchises) and the Time
+# Machine (logos inside player row anchors are marked row-anchor). Every other
+# PROSPX mention opens the club's farm page.
+PROSPX = [
+    "prospx/",
+    "prospx/#tab=spotlights",
+    "prospx/#tab=traded",
+    "prospx/#tab=injured",
+    "prospx/#tab=leaderboards",
+    "prospx/#tab=debuts",
+    "prospx/#tab=farm",
+    "prospx/#tab=farm&farmview=cards",
+    "prospx/#farm-org=CHW",
+    "prospx/#player=jesus_made",
+    "prospx/#player=jesus_made&ptab=stats",
+    "prospx/#tab=draft&dyear=2026",
+    "prospx/#tab=draft&dyear=2026&dview=results",
+    "prospx/#tab=draft&dyear=2026&dview=signing-trends",
+    "prospx/#tab=draft&dyear=2026&dview=order",
+    "prospx/#tab=draft&dyear=2026&dview=overperformers",
+    "prospx/#tab=ifa",
+    "prospx/#league=NPB",
+    "prospx/#tab=timemachine",
+]
+ROUTES += PROSPX
 # Routes whose club mentions have been converted (the SWEPT checks run on each).
 # Each surface task appends its own routes.
-SWEPT: list[str] = ["franchise/#team=CHW"] + MLB_A + MLB_B
+SWEPT: list[str] = ["franchise/#team=CHW"] + MLB_A + MLB_B + PROSPX
 # A 1 px PNG served for every ESPN logo request.
 _PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
 
@@ -308,3 +338,145 @@ def test_lineup_charts_white_sox_lands_on_the_white_sox(browser, base):
         pytest.skip("no CWS lineup card on the served data")
     assert got == [["/franchise/#team=CHW", "CHW"]], got
     assert _landing_name(browser, base, got[0][0]) == "Chicago White Sox"
+
+
+def _prospx_errors(errors):
+    return [e for e in errors if "ERR_FAILED" not in e and "Failed to load resource" not in e]
+
+
+@pytest.mark.parametrize("width", [1280, 390])
+def test_prospx_board_rows_split_the_player_link_and_the_club_link(browser, base, width):
+    """Owner answer Q-L1 (split row links): a board row is no button; its
+    player name is the row's link and its org cluster is a separate club link
+    that sits above the row (position relative, z-index 1), comes after the
+    player link in the tab order, and opens the farm page, not the player."""
+    pg, errors = _open(browser, base, "prospx/", width)
+    pg.wait_for_selector(".player-row[data-key] .org-cluster a.club-link", state="attached", timeout=60000)
+    rows = pg.evaluate("""() => [...document.querySelectorAll('#content .player-row[data-key]')].slice(0, 20).map(r => {
+      const name = r.querySelector('a.row-name-link'), club = r.querySelector('.org-cluster a.club-link');
+      const cs = club ? getComputedStyle(club) : null;
+      return {role: r.getAttribute('role'), name: !!name, club: club ? club.getAttribute('href') : null,
+              after: !!(name && club && (name.compareDocumentPosition(club) & Node.DOCUMENT_POSITION_FOLLOWING)),
+              z: cs ? cs.zIndex : null, pos: cs ? cs.position : null,
+              stop: club ? (club.getAttribute('onclick') || '') : ''}; })""")
+    bad = pg.evaluate("""() => document.querySelectorAll('#content [role=button] a, #content [role=button] button').length""")
+    assert rows and bad == 0, (len(rows), bad)
+    for r in rows:
+        assert r["role"] is None and r["name"] and r["after"], r
+        assert r["club"] and r["club"].startswith("/prospx/#farm-org="), r
+        assert r["z"] == "1" and r["pos"] == "relative" and "_pxClubClick" in r["stop"], r
+    # Tab from the player link reaches the club link of the same row.
+    first = pg.query_selector("#content .player-row[data-key]")
+    key = first.get_attribute("data-key")
+    first.query_selector("a.row-name-link").focus()
+    reached = False
+    for _ in range(12):
+        pg.keyboard.press("Tab")
+        on = pg.evaluate("""() => { const a = document.activeElement;
+          const row = a && a.closest('.player-row[data-key]');
+          return [row ? row.getAttribute('data-key') : null, !!(a && a.matches('a.club-link'))]; }""")
+        if on[0] != key:
+            break
+        if on[1]:
+            reached = True
+            break
+    assert reached, "Tab from the player link never reached the row's club link"
+    # A click on the club link opens the farm page and never the player card.
+    link = first.query_selector(".org-cluster a.club-link")
+    href = link.get_attribute("href")
+    link.click()
+    # the farm page adds its own view keys after the org (for example &ftree=)
+    pg.wait_for_function("h => (location.pathname + location.hash + '&').startsWith(h + '&')", arg=href, timeout=15000)
+    pg.wait_for_selector("#farm-detail-body .player-display-name", timeout=60000)
+    pg.close()
+    assert not _prospx_errors(errors), errors[:3]
+
+
+def test_prospx_farm_rows_name_their_farm_and_are_not_buttons(browser, base):
+    """A18: the Farm Systems org name is a real link to the farm page, so the
+    row is no role=button around its watch, compare and glossary controls."""
+    for route in ("prospx/#tab=farm", "prospx/#tab=farm&farmview=cards"):
+        pg, errors = _open(browser, base, route, 1280)
+        pg.wait_for_selector(".farm-row[data-org] a.club-link", state="attached", timeout=60000)
+        got = pg.evaluate("""() => [...document.querySelectorAll('#content .farm-row[data-org]')].map(r => {
+          const a = [...r.querySelectorAll('a.club-link:not(.club-link--mark)')].find(x => x.getClientRects().length);
+          return [r.getAttribute('data-org'), r.getAttribute('role'), a ? a.getAttribute('href') : null,
+                  a ? a.textContent.trim() : null]; })""")
+        nested = pg.evaluate("""() => document.querySelectorAll('#content [role=button] a, #content [role=button] button').length""")
+        pg.close()
+        assert len(got) == 30 and nested == 0, (route, len(got), nested)
+        for org, role, href, text in got:
+            assert role is None and href == "/prospx/#farm-org=" + org and text, (route, org, role, href, text)
+        assert not _prospx_errors(errors), errors[:3]
+
+
+def test_prospx_ifa_org_links_are_anchors_through_the_resolver(browser, base):
+    """A21: the IFA org mark was a span with an onclick and no href; it is a
+    keyboard-reachable link built through the resolver, so a payload's OAK
+    opens the Athletics farm page, and a name no club owns stays text."""
+    pg, errors = _open(browser, base, "prospx/#tab=ifa", 1280)
+    pg.wait_for_selector(".ifa-org-link", timeout=60000)
+    tags = pg.evaluate("""() => [...document.querySelectorAll('.ifa-org-link')].map(e => [e.tagName, e.getAttribute('href') || ''])""")
+    oak = pg.evaluate("() => _ifaOrgLink('OAK')")
+    off = pg.evaluate("() => _ifaOrgLink('Texas')")
+    pg.close()
+    assert tags and all(tag == "A" and HREF_RE.match(h) for tag, h in tags), tags[:3]
+    assert 'href="/prospx/#farm-org=ATH"' in oak and 'data-club="ATH"' in oak, oak
+    assert 'data-club-nolink="unresolved"' in off and "href=" not in off, off
+    assert not _prospx_errors(errors), errors[:3]
+
+
+def test_prospx_clickable_rows_skip_their_club_links(browser, base):
+    """Binding rule: inside a clickable row the club link stops propagation and
+    the row handler skips a,button targets (the draft card guard pattern)."""
+    for route in ("prospx/#tab=draft&dyear=2026", "prospx/#tab=draft&dyear=2026&dview=results",
+                  "prospx/#tab=draft&dyear=2026&dview=overperformers"):
+        pg, _ = _open(browser, base, route, 1280)
+        pg.wait_for_selector("#content a.club-link", timeout=60000)
+        got = pg.evaluate("""() => [...document.querySelectorAll('#content a.club-link')].map(a => {
+          const row = a.parentElement.closest('[onclick]');
+          return [a.getAttribute('onclick') || '', row ? (row.getAttribute('onclick') || '') : null]; })""")
+        pg.close()
+        assert got, route
+        for link_click, row_click in got:
+            assert "_pxClubClick" in link_click, (route, link_click)
+            if row_click is not None:
+                assert "closest('a,button')" in row_click, (route, row_click)
+
+
+def test_prospx_farm_page_header_opens_the_franchise_and_the_rail_farms(browser, base):
+    """A24: on a farm page the club's own name opens its Franchises page; the
+    comparable farms in the rail open their farm pages. An alias route (CWS)
+    lands on the same club and builds the same canonical links."""
+    for route in ("prospx/#farm-org=CHW", "prospx/#farm-org=CWS"):
+        pg, _ = _open(browser, base, route, 1280)
+        pg.wait_for_selector("#farm-detail-body .detail-page-header a.club-link", timeout=60000)
+        head = pg.evaluate("""() => [...document.querySelectorAll('#farm-detail-body .detail-page-header a.club-link')]
+          .map(a => a.getAttribute('href'))""")
+        rail = pg.evaluate("""() => [...document.querySelectorAll('#content .farm-side-card [data-org] a.club-link')]
+          .map(a => [a.closest('[data-org]').getAttribute('data-org'), a.getAttribute('href')])""")
+        pg.close()
+        assert head and set(head) == {"/franchise/#team=CHW"}, (route, head)
+        assert all(h == "/prospx/#farm-org=" + o for o, h in rail), (route, rail)
+
+
+def test_prospx_overseas_signed_clubs_open_their_franchise(browser, base):
+    """A22: a signed overseas pro's MLB club opens its Franchises page."""
+    r = _read(browser, base, "prospx/#league=NPB", 1280)
+    if not r["links"]:
+        pytest.skip("no signed NPB alumni on the served data")
+    assert all(link["href"].startswith("/franchise/#team=") for link in r["links"]), r["links"][:3]
+
+
+def test_prospx_time_machine_logos_are_marked_row_anchor(browser, base):
+    """A23: a Time Machine row is one player link, so the logo inside it stays
+    unlinked and says why."""
+    pg, _ = _open(browser, base, "prospx/#tab=timemachine", 1280)
+    pg.wait_for_selector("a.tm-row", timeout=60000)
+    got = pg.evaluate("""() => [...document.querySelectorAll('a.tm-row img[src*="teamlogos/mlb"]')]
+      .map(i => i.getAttribute('data-club-nolink'))""")
+    pg.close()
+    if not got:
+        pytest.skip("no Time Machine row on the served data")
+    assert set(got) == {"row-anchor"}, set(got)
+

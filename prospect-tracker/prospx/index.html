@@ -2004,6 +2004,15 @@
     .row-name-link { color: inherit; text-decoration: none; }
     .row-name-link:hover { text-decoration: underline; }
     .row-name-link:focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 2px; }
+    /* Q9_08: a club mention (logo + code) is one link through the club resolver
+       (orgLinkHTML). It keeps the lockup of the wrapper it replaces (the
+       wrapper's own gap) and sits above the row it lives in, so a click on it
+       never reaches the row's player. */
+    #content a.club-link.px-club { display: inline-flex; align-items: center; gap: inherit; z-index: 1; }
+    #content a.club-link.px-club--text { display: inline; z-index: 1; }
+    /* a logo that is the mouse twin of its code link keeps the box and the paint
+       order the bare logo had (no stacking context, no widened hit box) */
+    #content a.club-link--mark { position: static; display: inline-flex; align-items: center; }
     /* QPRP02: #content always holds at least one viewport, so the footer never
        paints inside the first screen while the loader (or a section's own
        loading line) is up and then jumps 7,600px when the board mounts. */
@@ -17244,9 +17253,11 @@ function renderDetailSidebar(cards) {
       const link = card.link
         ? `<a class="ctx-card-link" href="${escapeHtml(card.link.href || "#")}" onclick="${card.link.onclick || ""}">${escapeHtml(card.link.label || "view all →")}</a>`
         : "";
+      // titleHTML (Q9_08): a title that names a club carries its club link.
+      const _t = card.titleHTML || escapeHtml(card.title || "");
       const titleRow = link
-        ? `<div class="ctx-title-row"><div class="ctx-title">${escapeHtml(card.title || "")}</div>${link}</div>`
-        : `<div class="ctx-title">${escapeHtml(card.title || "")}</div>`;
+        ? `<div class="ctx-title-row"><div class="ctx-title">${_t}</div>${link}</div>`
+        : `<div class="ctx-title">${_t}</div>`;
       return `<div class="ctx-card">${titleRow}${rows || `<div style="color:var(--text-tertiary);font-size:11px;">No data yet.</div>`}</div>`;
     }
     if (card.type === "signals") {
@@ -17305,7 +17316,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
   const orgLinkCard = {
     type: "link",
     title: "Org farm system",
-    href: "#",
+    href: pxClubHref(p.org) || "#",
     onclick: `event.preventDefault();goToFarm('${escapeHtml(p.org || "")}');`,
     label: `View ${escapeHtml(p.org || " - ")} farm →`,
   };
@@ -17468,7 +17479,8 @@ function _prospectDetailSidebarCards(p, activeTab) {
     p.age != null ? { key: "Age", value: p.age.toFixed(1) } : null,
   ].filter(Boolean);
   return [
-    { type: "leaderboard", title: `${p.org || "Org"} · top 5 by eFV`, rows: orgPeers },
+    { type: "leaderboard", title: `${p.org || "Org"} · top 5 by eFV`, rows: orgPeers,
+      titleHTML: p.org && _pxClub(p.org) ? `${orgLinkHTML(p.org, escapeHtml(p.org), { cls: "px-club--text" })} · top 5 by eFV` : null },
     { type: "signals",     title: "At a glance", signals },
     orgLinkCard,
   ];
@@ -18010,7 +18022,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
       name: p.player_name,
       pos: p.position ? String(p.position).split("/")[0] : null,
       level: _level,
-      teamLogoHTML: p.org ? teamLogoHTML(p.org, "sm", p.org) : "",
+      teamLogoHTML: p.org ? orgLinkHTML(p.org, pxClubLogoHTML(p.org, "sm", true), { cls: "px-club" }) : "",
       rightHTML: `<span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d}</span>`,
     });
   }).join("");
@@ -18067,7 +18079,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
       name: p.player_name,
       pos: p.position ? String(p.position).split("/")[0] : null,
       level: _level,
-      teamLogoHTML: p.org ? teamLogoHTML(p.org, "sm", p.org) : "",
+      teamLogoHTML: p.org ? orgLinkHTML(p.org, pxClubLogoHTML(p.org, "sm", true), { cls: "px-club" }) : "",
       rightHTML: `<span class="ctx-tool-grade" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);">${rounded}</span>`,
     });
   }).join("");
@@ -18117,7 +18129,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
       name: p.player_name,
       pos: p.position ? String(p.position).split("/")[0] : null,
       level: _level,
-      teamLogoHTML: p.org ? teamLogoHTML(p.org, "sm", p.org) : "",
+      teamLogoHTML: p.org ? orgLinkHTML(p.org, pxClubLogoHTML(p.org, "sm", true), { cls: "px-club" }) : "",
       rightHTML: `<span style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);padding:1px 5px;border:1px solid var(--neon-cyan);border-radius:2px;">${days}d back</span>`,
     });
   }).join("");
@@ -18137,7 +18149,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
       name: s.player_name,
       pos: s.pos || (s.position ? String(s.position).split("/")[0] : null),
       level: s.level || null,
-      teamLogoHTML: s.org ? teamLogoHTML(s.org, "sm", s.org) : "",
+      teamLogoHTML: s.org ? orgLinkHTML(s.org, pxClubLogoHTML(s.org, "sm", true), { cls: "px-club" }) : "",
       rightHTML: efvCompactBadge(s, { size: "size-sm", fallback: s.fv }),
     });
   };
@@ -19440,9 +19452,9 @@ function renderWatchlist() {
     return `
       <div class="player-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)};display:flex;align-items:center;gap:12px;cursor:pointer;">
         <div class="rank-num" style="min-width:32px;text-align:center;"><span class="rank-num-inner">#${i + 1}</span></div>
-        ${teamLogoHTML(org.org, "md", fullOrgName(org.org))}
+        ${orgLinkHTML(org.org, pxClubLogoHTML(org.org, "md"), { mark: true })}
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${escapeHtml(fullOrgName(org.org))}</div>
+          <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${orgLinkHTML(org.org, escapeHtml(fullOrgName(org.org)), { cls: "px-club--text" })}</div>
           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;margin-top:2px;">${escapeHtml(org.org)}${tp ? ` · top: ${tp.player_key ? `<a href="#player=${escapeHtml(tp.player_key)}" onclick="event.stopPropagation();" style="color:var(--text-secondary);text-decoration:none;">${escapeHtml(tp.name)}</a>` : `<span style="color:var(--text-secondary);">${escapeHtml(tp.name)}</span>`} <span class="fv-badge ${fvClass(tp.fv_label)} size-xs">${escapeHtml(tp.fv_label)}</span>` : ""}</div>
         </div>
         <div style="font-family:var(--font-serif);font-size:22px;line-height:1;color:${gradeColor(overall)};font-weight:700;min-width:36px;text-align:center;" title="Farm grade">${escapeHtml(overall)}</div>
@@ -21735,7 +21747,7 @@ function _tmHindRowHTML(r) {
       onclick="event.preventDefault();state.section='timemachine';state.view={type:'player',key:'${escapeHtml(r.key)}'};render();syncToURL();">
       <span class="tm-rank">${r.rank}</span>
       ${_tmRowPhoto(r)}
-      ${r.org ? teamLogoHTML(r.org, "sm")
+      ${r.org ? pxClubNoLink(teamLogoHTML(r.org, "sm"), "row-anchor")
               : `<span class="team-logo tm-org-gap" title="Org as of this date unavailable" aria-label="Org unavailable"></span>`}
       <span class="tm-name">${escapeHtml(r.name)}</span>
       <span class="tm-pos">${escapeHtml(r.pos || "")}</span>
@@ -21754,7 +21766,7 @@ function _tmBoardRowHTML(r, opts) {
       onclick="event.preventDefault();state.section='timemachine';state.view={type:'player',key:'${escapeHtml(r.key)}'};render();syncToURL();">
       <span class="tm-rank">${r.rank}</span>
       ${_tmRowPhoto(r)}
-      ${r.org ? teamLogoHTML(r.org, "sm")
+      ${r.org ? pxClubNoLink(teamLogoHTML(r.org, "sm"), "row-anchor")
               : `<span class="team-logo tm-org-gap" title="Org as of this date unavailable" aria-label="Org unavailable"></span>`}
       <span class="tm-name">${escapeHtml(r.name)}</span>
       <span class="tm-pos">${escapeHtml(r.pos || "")}</span>
@@ -23124,9 +23136,10 @@ function renderRecentlyTraded() {
       // v15 - 20px logo before each abbreviation. Logos load from ESPN CDN
       // via teamLogoHTML; fall back to a styled abbreviation chip if the
       // image fails. Keeps the "BOS → WSN" text affordance for scanning.
-      const _fromLogo = _fromOrg !== "?" ? teamLogoHTML(_fromOrg, "sm", _fromOrg) : "";
-      const _toLogo   = _toOrg   !== "?" ? teamLogoHTML(_toOrg,   "sm", _toOrg)   : "";
-      const headLine = `<span style="color:var(--text-tertiary);display:inline-flex;align-items:center;gap:4px;">${_fromLogo}${escapeHtml(_fromOrg)}</span> <span style="color:var(--accent-traded);">→</span> <span style="color:var(--text-primary);display:inline-flex;align-items:center;gap:4px;">${_toLogo}${escapeHtml(_toOrg)}</span>`;
+      // Q9_08: each side is one club link (logo + code); an affiliate or foreign
+      // club name stays text, marked unresolved.
+      const _side = o => o !== "?" ? orgLinkHTML(o, pxClubLogoHTML(o, "sm") + escapeHtml(o), { cls: "px-club" }) : escapeHtml(o);
+      const headLine = `<span style="color:var(--text-tertiary);display:inline-flex;align-items:center;gap:4px;">${_side(_fromOrg)}</span> <span style="color:var(--accent-traded);">→</span> <span style="color:var(--text-primary);display:inline-flex;align-items:center;gap:4px;">${_side(_toOrg)}</span>`;
       const desc = (acq.description || "").trim();
       // The narrative from the MLB API reads "{TeamA} traded X to {TeamB}
       // for Y." - but the from→to is already encoded in the head line
@@ -23348,10 +23361,9 @@ function renderRecentlyTraded() {
         // ★/tinted inside its side so the card ties back to the row above.
         const _hl = highlightKeys;
         const orgLine = (orgCode, tone, received, split, unpriced) => {
-          const logo = (typeof teamLogoHTML === "function" && orgCode)
-            ? teamLogoHTML(orgCode, "sm", (typeof fullOrgName === "function" ? fullOrgName(orgCode) : orgCode)) : "";
+          const logo = orgCode ? pxClubLogoHTML(orgCode, "sm") : "";
           return `<div style="display:flex;align-items:baseline;gap:6px;width:100%;">
-            <span style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;min-width:52px;">${logo}<span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${tone};">${escapeHtml(orgCode)}</span></span>
+            <span style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;min-width:52px;">${orgLinkHTML(orgCode, `${logo}<span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${tone};">${escapeHtml(orgCode)}</span>`, { cls: "px-club" })}</span>
             <span style="color:var(--text-tertiary);font-size:9px;flex-shrink:0;letter-spacing:0.04em;">receives ▸</span>
             <span style="flex:1;min-width:0;display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:3px 6px;">${sidePlayerChips(orgCode, _hl)}</span>
             <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${tone};white-space:nowrap;margin-left:auto;flex-shrink:0;">${_taMM(received)}${unpriced ? ` <span style="color:var(--text-tertiary);font-weight:500;font-size:9px;">incl. ${unpriced} unpriced at $0</span>` : ""}${fvSuffix(split)}</span>
@@ -24451,7 +24463,7 @@ function _lottoDrawHTML(odds) {
     const deltaText = seed == null ? "-" : delta > 0 ? `↑ from #${seed}` : delta < 0 ? `↓ from #${seed}` : `held #${seed}`;
     return `<tr>
       <td style="text-align:center;font-weight:700;">${i + 1}</td>
-      <td><span class="draft-cell-ico">${teamLogoHTML(w.team, "sm")}<strong>${escapeHtml(w.team)}</strong></span></td>
+      <td><span class="draft-cell-ico">${orgLinkHTML(w.team, `${pxClubLogoHTML(w.team, "sm")}<strong>${escapeHtml(w.team)}</strong>`, { cls: "px-club" })}</span></td>
       <td style="text-align:right;color:var(--text-secondary);">${w.odds_pct.toFixed(2)}%</td>
       <td style="text-align:center;color:${deltaColor};">${deltaText}</td>
     </tr>`;
@@ -24534,7 +24546,7 @@ function _renderDraftLottery(host, cls) {
     return `<tr>
       <td style="text-align:center;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:${isComp ? "var(--text-tertiary)" : "var(--text-primary)"};">${isComp ? "-" : o.pick_pos}</td>
       <td><span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.04em;color:${rlColor(rl)};border:1px solid ${rlColor(rl)};">${escapeHtml(rl)}</span></td>
-      <td><span class="draft-cell-ico">${teamLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team)}</strong></span></td>
+      <td><span class="draft-cell-ico">${orgLinkHTML(o.team, `${pxClubLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team)}</strong>`, { cls: "px-club" })}</span></td>
       <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:${oddsColor(o.odds_pct)};">${fmtOdds(o.odds_pct)}</td>
       <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:${oddsColor(o.odds_top6_pct)};">${fmtOdds(o.odds_top6_pct)}</td>
       <td style="text-align:right;font-variant-numeric:tabular-nums;color:${(() => { const g = gbToTop3(o); return g == null ? "var(--text-tertiary)" : g <= 0 ? "var(--up)" : g <= 3 ? "var(--neon-amber)" : "var(--text-secondary)"; })()};">${fmtGB(gbToTop3(o))}</td>
@@ -25053,7 +25065,7 @@ function _renderDraftCard(p) {
                  ? ` (${p.over_slot_pct > 0 ? "+" : ""}${p.over_slot_pct}% slot)` : ""}`
       : (p.signed ? "" : " · unsigned");
     statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-cyan);display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;">
-      ${teamLogoHTML(p.drafted_team, "sm")}DRAFTED · R${p.drafted_round || "?"} #${p.drafted_pick} · ${escapeHtml(p.drafted_team)}${bonusStr}
+      ${orgLinkHTML(p.drafted_team, pxClubLogoHTML(p.drafted_team, "sm"), { mark: true })}DRAFTED · R${p.drafted_round || "?"} #${p.drafted_pick} · ${orgLinkHTML(p.drafted_team, escapeHtml(p.drafted_team), { cls: "px-club--text" })}${bonusStr}
     </div>`;
   } else if (p.status === "unsigned") {
     statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-orange);">UNSIGNED</div>`;
@@ -25257,7 +25269,7 @@ function _renderDraftOrder(host, cls) {
     const base = `
       <td style="text-align:center;font-weight:600;">${o.pick_overall}</td>
       <td>${escapeHtml(roundLbl(o))}</td>
-      <td><span class="draft-cell-ico">${teamLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team || "?")}</strong></span></td>`;
+      <td><span class="draft-cell-ico">${orgLinkHTML(o.team, `${pxClubLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team || "?")}</strong>`, { cls: "px-club" })}</span></td>`;
     // Pre-draft: only the columns that have data (no empty Player/Bonus/Signed
     // columns, and no misleading red "unsigned" cross before a draft happens).
     if (!isPost) {
@@ -25357,7 +25369,7 @@ function _renderWarRoom(host) {
       const impLabel = impBasis === "actual_bonus" ? "vs bonus" : (impBasis === "expected_slot" ? "vs slot" : "");
       return `<tr>
         <td class="tm-num">${p.pick_overall}</td>
-        <td>${p.team ? teamLogoHTML(p.team) : ""} ${escapeHtml(p.team || "")}</td>
+        <td>${p.team ? orgLinkHTML(p.team, `${pxClubLogoHTML(p.team)} ${escapeHtml(p.team)}`, { cls: "px-club--text" }) : ""}</td>
         <td><strong>${escapeHtml(p.player_name || "?")}</strong></td>
         <td>${our}</td>
         <td class="tm-num"><span style="color:${tagCol};text-transform:uppercase;font-size:10px;">${escapeHtml(tag || "")}</span> ${deltaStr}</td>
@@ -25444,7 +25456,7 @@ function _renderMockDraft(host, cls) {
       : escapeHtml(p.player_name || "");
     rows += `<tr>
       <td style="text-align:center;font-weight:600;">${p.pick_overall}</td>
-      <td><span class="draft-cell-ico">${teamLogoHTML(p.team, "sm")}<strong>${escapeHtml(p.team || "?")}</strong></span></td>
+      <td><span class="draft-cell-ico">${orgLinkHTML(p.team, `${pxClubLogoHTML(p.team, "sm")}<strong>${escapeHtml(p.team || "?")}</strong>`, { cls: "px-club" })}</span></td>
       <td><span class="draft-cell-ico">${logo}${nameCell}</span></td>
       <td style="white-space:nowrap;">${escapeHtml(p.position || "")} ${_poolChip(p)}</td>
       <td style="text-align:center;font-weight:700;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}${p.consensus_fv_plus ? "<span style='font-size:9px;'>+</span>" : ""}</td>
@@ -25805,8 +25817,8 @@ function _simStatusHTML() {
   return `
     <div class="draft-panel" style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;">
       <div style="display:flex;align-items:center;gap:10px;">
-        ${!complete && slot ? `${teamLogoHTML(slot.team, "md")}
-          <div><strong style="font-size:15px;">${escapeHtml(slot.team)} on the clock</strong>
+        ${!complete && slot ? `${orgLinkHTML(slot.team, pxClubLogoHTML(slot.team, "md"), { mark: true })}
+          <div><strong style="font-size:15px;">${orgLinkHTML(slot.team, escapeHtml(slot.team), { cls: "px-club--text" })} on the clock</strong>
           <div style="font-size:11px;color:var(--text-secondary);">Round ${escapeHtml(String(slot.round))} · Pick ${slot.pick} of ${activeLen}</div></div>`
         : `<strong>${complete ? "Draft complete" : "Not started"}</strong>`}
       </div>
@@ -25885,7 +25897,7 @@ function _simResultsHTML() {
     return `
       <tr>
         <td style="text-align:center;">${pick.pick}</td>
-        <td><span class="draft-cell-ico">${teamLogoHTML(pick.team, "sm")}${escapeHtml(pick.team)}</span></td>
+        <td><span class="draft-cell-ico">${orgLinkHTML(pick.team, pxClubLogoHTML(pick.team, "sm") + escapeHtml(pick.team), { cls: "px-club" })}</span></td>
         <td>${escapeHtml(player ? player.player_name : "Unknown")}</td>
         <td>${escapeHtml(player ? player.position : "-")}</td>
         <td style="text-align:center;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
@@ -25921,7 +25933,7 @@ function _simRecapHTML() {
     return `
       <div style="margin-top:8px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          ${teamLogoHTML(teamId, "sm")}<strong>${escapeHtml(teamId)}</strong>
+          ${orgLinkHTML(teamId, `${pxClubLogoHTML(teamId, "sm")}<strong>${escapeHtml(teamId)}</strong>`, { cls: "px-club" })}
           <span style="font-size:11px;color:var(--text-tertiary);">${picks.length} picks · pool ${_simMoney(budget.total)} · spent ${_simMoney(budget.spent)}</span>
         </div>
       </div>`;
@@ -25972,7 +25984,7 @@ function _renderDraftResults(host, cls) {
     const sortedTeams = poolTeams.slice().sort((a, b) => (pool[b] || 0) - (pool[a] || 0));
     const totalPool = poolTeams.reduce((sm, t) => sm + (pool[t] || 0), 0);
     const prows = sortedTeams.map(t => `<tr>
-      <td><span class="draft-cell-ico">${teamLogoHTML(t, "sm")}<strong>${escapeHtml(t)}</strong></span></td>
+      <td><span class="draft-cell-ico">${orgLinkHTML(t, `${pxClubLogoHTML(t, "sm")}<strong>${escapeHtml(t)}</strong>`, { cls: "px-club" })}</span></td>
       <td style="text-align:right;">${_fmtUSD(pool[t])}</td>
     </tr>`).join("");
     host.innerHTML = _draftCaption(`${cls.year} bonus pools`,
@@ -25997,7 +26009,7 @@ function _renderDraftResults(host, cls) {
                     : pct > 0 ? "var(--neon-orange)"
                     : "var(--neon-cyan)";
     return `<tr>
-      <td><span class="draft-cell-ico">${teamLogoHTML(t, "sm")}<strong>${escapeHtml(t)}</strong></span></td>
+      <td><span class="draft-cell-ico">${orgLinkHTML(t, `${pxClubLogoHTML(t, "sm")}<strong>${escapeHtml(t)}</strong>`, { cls: "px-club" })}</span></td>
       <td style="text-align:right;">${_fmtUSD(p)}</td>
       <td style="text-align:right;">${_fmtUSD(s)}</td>
       <td style="text-align:right;color:${overColor};">${pct == null ? " - " : (pct > 0 ? "+" : "") + pct + "%"}</td>
@@ -26038,10 +26050,10 @@ function _renderDraftResults(host, cls) {
       <div class="draft-panel">
         <h3>Biggest bonuses</h3>
         <ul class="draft-list">
-          ${biggest.map(p => `<li onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
+          ${biggest.map(p => `<li onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
             <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
             <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span>
-            <small class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</small>
+            <small class="draft-cell-ico">${orgLinkHTML(p.drafted_team, pxClubLogoHTML(p.drafted_team, "sm") + escapeHtml(p.drafted_team || "?"), { cls: "px-club" }) || "?"}</small>
             <span style="float:right;">${_fmtUSD(p.signing_bonus)}</span>
           </li>`).join("")}
         </ul>
@@ -26050,10 +26062,10 @@ function _renderDraftResults(host, cls) {
           : ""}
         <h3 style="margin-top:14px;">Biggest over-slot</h3>
         <ul class="draft-list">
-          ${biggestOver.map(p => `<li onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
+          ${biggestOver.map(p => `<li onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
             <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
             <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span>
-            <small class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</small>
+            <small class="draft-cell-ico">${orgLinkHTML(p.drafted_team, pxClubLogoHTML(p.drafted_team, "sm") + escapeHtml(p.drafted_team || "?"), { cls: "px-club" }) || "?"}</small>
             <span style="float:right;color:var(--neon-cyan);">${p.over_slot_usd != null ? "+" + _fmtUSD(p.over_slot_usd) + " " : ""}(+${Math.round(p.over_slot_pct)}%)</span>
           </li>`).join("")}
         </ul>
@@ -26506,7 +26518,7 @@ function _renderSigningTrends(host, classes, year) {
       <td><a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');"><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${escapeHtml(p.player_name)}</span></a></td>
       ${aggMode ? `<td style="color:var(--text-tertiary);">${p._year}</td>` : ""}
       <td>${escapeHtml(p.position || "?")}</td>
-      <td><span class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</span></td>
+      <td><span class="draft-cell-ico">${orgLinkHTML(p.drafted_team, pxClubLogoHTML(p.drafted_team, "sm") + escapeHtml(p.drafted_team || "?"), { cls: "px-club" }) || "?"}</span></td>
       <td style="font-family:var(--font-mono);">${usd(p.signing_bonus)}</td>
       <td style="font-family:var(--font-mono);color:${ovColor};">${ovTxt}</td>
     </tr>`;
@@ -26527,7 +26539,7 @@ function _renderSigningTrends(host, classes, year) {
     .slice(0, 12)
     .map((r, i) => `<tr>
       <td>${i + 1}</td>
-      <td><span class="draft-cell-ico">${teamLogoHTML(r.team, "sm")}<strong>${escapeHtml(r.team)}</strong></span></td>
+      <td><span class="draft-cell-ico">${orgLinkHTML(r.team, `${pxClubLogoHTML(r.team, "sm")}<strong>${escapeHtml(r.team)}</strong>`, { cls: "px-club" })}</span></td>
       <td style="font-family:var(--font-mono);">${usd(r.spend)}</td>
       <td>${r.picks}</td>
     </tr>`).join("");
@@ -26661,12 +26673,12 @@ function _overseasStatusColor(status) {
 // that carry their own (filter) click handlers. logoOnly renders just the
 // logo as the link (used where the surrounding row already does something
 // else on click, so only the logo navigates).
+// Q9_08: a real link (href, keyboard reachable) through the club resolver, so a
+// payload's OAK opens the Athletics farm page; the click stays on the link.
 function _ifaOrgLink(org, { logoOnly = false } = {}) {
   if (!org) return `<span style="color:var(--text-tertiary);"> - </span>`;
-  const full = (typeof fullOrgName === "function" ? fullOrgName(org) : org);
-  const logo = teamLogoHTML(org, "sm", full);
-  const inner = logoOnly ? logo : `${logo}${escapeHtml(org)}`;
-  return `<span class="ifa-org-link" onclick="event.stopPropagation();goToFarm('${escapeHtml(org)}')" title="Open ${escapeHtml(full)} farm system" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;">${inner}</span>`;
+  const inner = logoOnly ? pxClubLogoHTML(org, "sm", true) : `${pxClubLogoHTML(org, "sm")}${escapeHtml(org)}`;
+  return orgLinkHTML(org, inner, { cls: "ifa-org-link", style: "display:inline-flex;align-items:center;gap:4px;" });
 }
 
 // IFA grade basis. ifa_export writes the CURRENT grade on the eFV basis whenever
@@ -27011,7 +27023,6 @@ async function renderIFA() {
   const _ifaPager = renderPaginationStrip(_ifaPage, shown.length, _ifaSize, "ifa");
 
   const sigRow = (s) => {
-    const logo = s.org ? teamLogoHTML(s.org, "sm", fullOrgName(s.org)) : "";
     const nowNote = (s.is_tracked && s.current_org && s.current_org !== s.org)
       ? `<span style="color:var(--text-tertiary);font-size:9px;margin-left:4px;" title="Current org (traded since signing)">now ${escapeHtml(s.current_org)}</span>` : "";
     // Rectangular "baseball-card" silhouette like the MiLB list, but smaller
@@ -27049,7 +27060,7 @@ async function renderIFA() {
   const expandBtn = (!showAll && hiddenCount > 0)
     ? `<button class="chip" id="ifa-show-all" style="margin-top:8px;">Show all ${signings.length} signings (+${hiddenCount} more)</button>` : "";
   const filterBanner = orgFilter
-    ? `<div style="margin-bottom:8px;font-size:12px;">${teamLogoHTML(orgFilter, "sm", fullOrgName(orgFilter))} <strong>${escapeHtml(fullOrgName(orgFilter))}</strong>'s ${cls.year} signing class · <button class="chip" id="ifa-clear-filter" style="font-size:11px;">✕ clear</button></div>` : "";
+    ? `<div style="margin-bottom:8px;font-size:12px;">${orgLinkHTML(orgFilter, `${pxClubLogoHTML(orgFilter, "sm")} <strong>${escapeHtml(fullOrgName(orgFilter))}</strong>`, { cls: "px-club--text" })}'s ${cls.year} signing class · <button class="chip" id="ifa-clear-filter" style="font-size:11px;">✕ clear</button></div>` : "";
 
   // Sidebar - org spending leaderboard (drill-down) + trend modules.
   const orgRows = (cls.org_spending || []).slice(0, 16).map((o, i) =>
@@ -27519,11 +27530,11 @@ function _renderOverseasCard(p) {
   let statusBadge = "";
   if (p.status === "mlb_promoted" && p.signed_team) {
     statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-green);">
-      MLB-SIGNED · ${escapeHtml(p.signed_team)}${p.signed_bonus_usd
+      MLB-SIGNED · ${orgLinkHTML(p.signed_team, escapeHtml(p.signed_team), { ctx: "franchise", cls: "px-club--text" }) || escapeHtml(p.signed_team)}${p.signed_bonus_usd
         ? ` · ${_fmtUSD(p.signed_bonus_usd)}` : ""}</div>`;
   } else if (p.status === "signed" && p.proj_team) {
     statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-cyan);">
-      Pending → ${escapeHtml(p.proj_team)}</div>`;
+      Pending → ${orgLinkHTML(p.proj_team, escapeHtml(p.proj_team), { ctx: "franchise", cls: "px-club--text" }) || escapeHtml(p.proj_team)}</div>`;
   } else if (p.status === "posted") {
     statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-orange);">
       POSTED${p.posting_days_remaining != null
@@ -27959,7 +27970,7 @@ function _renderDraftTendencies(host, classes, year) {
   };
   const rows = data.map((r, i) => `<tr>
     <td>${i + 1}</td>
-    <td><span class="draft-cell-ico">${teamLogoHTML(r.org, "sm")}<strong>${escapeHtml((typeof ORG_NAMES !== "undefined" && ORG_NAMES[r.org]) || r.org)}</strong></span></td>
+    <td><span class="draft-cell-ico">${orgLinkHTML(r.org, `${pxClubLogoHTML(r.org, "sm")}<strong>${escapeHtml((typeof ORG_NAMES !== "undefined" && ORG_NAMES[r.org]) || r.org)}</strong>`, { cls: "px-club" })}</span></td>
     <td style="text-align:right;color:var(--text-tertiary);">${r.n || " - "}</td>
     <td style="text-align:right;color:${_z(r.zPitch)};" title="z ${(r.zPitch ?? 0).toFixed(2)} vs league">${pct(r.pitchShare)}</td>
     <td style="text-align:right;color:${_z(r.zColl)};" title="z ${(r.zColl ?? 0).toFixed(2)} vs league · prep% is the complement">${pct(r.collShare)}</td>
@@ -28076,12 +28087,12 @@ function _renderDraftOverperformers(host, classes, year) {
     const rows = ranked.map((p, i) => {
       const war = p.career_war;
       const warColor = war == null ? "var(--text-tertiary)" : war > 0 ? "var(--neon-green)" : "var(--neon-red)";
-      return `<tr onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
+      return `<tr onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
         <td>${i + 1}</td>
         <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span></td>
         <td>${escapeHtml(p.position || "?")}</td>
         <td style="color:var(--text-tertiary);">${p._year}</td>
-        <td style="text-align:right;"><span class="draft-cell-ico" style="justify-content:flex-end;">${teamLogoHTML(p.drafted_team, "sm")}#${p.drafted_pick}</span></td>
+        <td style="text-align:right;"><span class="draft-cell-ico" style="justify-content:flex-end;">${orgLinkHTML(p.drafted_team, pxClubLogoHTML(p.drafted_team, "sm", true), { cls: "px-club" })}#${p.drafted_pick}</span></td>
         <td style="text-align:center;">${_fvChip(p.current_fv)}</td>
         <td style="text-align:center;color:var(--text-tertiary);">${p.expected_fv_for_pick != null ? fvCeil(p.expected_fv_for_pick) : " - "}</td>
         <td style="text-align:right;color:var(--neon-cyan);font-family:var(--font-mono);font-weight:700;">+${p.overperf_fv}</td>
@@ -28112,13 +28123,13 @@ function _renderDraftOverperformers(host, classes, year) {
     ranked = ranked.slice(0, 50);
     const rows = ranked.map((x, i) => {
       const p = x.p;
-      return `<tr onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
+      return `<tr onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
         <td>${i + 1}</td>
         <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span></td>
         <td>${escapeHtml(p.position || "?")}</td>
         <td style="color:var(--text-tertiary);">${p._year}</td>
         <td style="text-align:right;" title="Pre-draft consensus rank">#${_consPick(p)}</td>
-        <td style="text-align:right;"><span class="draft-cell-ico" style="justify-content:flex-end;">${teamLogoHTML(p.drafted_team, "sm")}#${p.drafted_pick}</span></td>
+        <td style="text-align:right;"><span class="draft-cell-ico" style="justify-content:flex-end;">${orgLinkHTML(p.drafted_team, pxClubLogoHTML(p.drafted_team, "sm", true), { cls: "px-club" })}#${p.drafted_pick}</span></td>
         <td style="text-align:right;color:var(--neon-orange);font-family:var(--font-mono);font-weight:700;" title="Picks past where the consensus ranked them">+${x.slide}</td>
         <td style="text-align:center;">${_fvChip(p.current_fv != null ? p.current_fv : p.consensus_fv)}</td>
       </tr>`;
@@ -29050,6 +29061,14 @@ function _ensureIfaForOrigin(p) {
     finally { _originIfaLoading = false; }
   })();
 }
+// The club named in the origin line ("drafted Milwaukee Brewers ..."), linked to
+// its farm page through the resolver (Q9_08); a name the resolver does not know
+// prints as it did.
+function _pxOriginClub(a) {
+  const txt = String(a.team_name || a.team_abbr);
+  const code = (_pxClub(a.team_abbr) || _pxClub(a.team_name) || {}).code;
+  return code ? orgLinkHTML(code, escapeHtml(txt), { cls: "px-club--text" }) : escapeHtml(txt);
+}
 function _playerOriginHTML(p) {
   const a = (p && p.acquisition) || {};
   const bits = [];
@@ -29059,14 +29078,14 @@ function _playerOriginHTML(p) {
     // object dropped, so HS schools rendered as plain text instead of links.
     if (a.school) bits.push(_draftSchoolLinkHTML({ ...p, school: a.school }));
     const dr = [];
-    if (a.team_name || a.team_abbr) dr.push(escapeHtml(String(a.team_name || a.team_abbr)));
+    if (a.team_name || a.team_abbr) dr.push(_pxOriginClub(a));
     if (a.round_label) dr.push("R" + escapeHtml(String(a.round_label)));
     if (a.pick_overall) dr.push("#" + escapeHtml(String(a.pick_overall)));
     if (a.year) dr.push(escapeHtml(String(a.year)));
     if (dr.length) bits.push("drafted " + dr.join(" "));
   } else if (a.method === "international_fa") {
     const ifa = [];
-    if (a.team_name || a.team_abbr) ifa.push(escapeHtml(String(a.team_name || a.team_abbr)));
+    if (a.team_name || a.team_abbr) ifa.push(_pxOriginClub(a));
     if (a.year) ifa.push(escapeHtml(String(a.year)));
     bits.push("signed (Intl FA)" + (ifa.length ? " " + ifa.join(" · ") : ""));
     const country = _playerOriginCountry(p);
@@ -29990,7 +30009,7 @@ async function renderLeagueDetail(name) {
       const wpy = s.war_per_yr != null ? (s.war_per_yr > 0 ? "+" : "") + (+s.war_per_yr).toFixed(2) : " - ";
       return '<tr>'
         + '<td><strong>' + escapeHtml(s.player_name) + '</strong>' + (s.is_import ? ' <span style="color:var(--text-tertiary);font-size:10px;" title="Import (foreign player who played in this league)">import</span>' : '') + '</td>'
-        + '<td style="text-align:center;">' + (s.signed_team ? escapeHtml(s.signed_team) : " - ") + '</td>'
+        + '<td style="text-align:center;">' + (s.signed_team ? orgLinkHTML(s.signed_team, escapeHtml(s.signed_team), { ctx: "franchise", cls: "px-club--text" }) : " - ") + '</td>'
         + '<td style="text-align:right;font-family:var(--font-mono);' + (s.career_war > 0 ? 'color:var(--neon-green);font-weight:700;' : '') + '">' + war + '</td>'
         + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-secondary);">' + wpy + '</td>'
         + '</tr>';
@@ -30460,6 +30479,11 @@ async function renderDraftDetail(key) {
   root.innerHTML = headerHtml + tabBarWithRail;
 }
 
+// The MLB club of a signed overseas pro, linked to its Franchises page through
+// the resolver (Q9_08); text the resolver does not know prints as it did.
+function _osClub(team) {
+  return orgLinkHTML(team, escapeHtml(team), { ctx: "franchise", cls: "px-club--text" }) || escapeHtml(team);
+}
 async function renderOverseasDetail(key) {
   const root = document.getElementById("overseas-detail-body");
   if (!root) return;
@@ -30489,9 +30513,9 @@ async function renderOverseasDetail(key) {
   const headshotBig = _headshotImg(p.headshot_url, p.player_name,
     { fv: p.consensus_fv });
   const statusPill = p.status === "mlb_promoted"
-    ? `<span class="debut-pill" style="background:var(--bg-tertiary);color:var(--neon-green);">MLB-promoted${p.signed_team ? ` · ${escapeHtml(p.signed_team)}` : ""}</span>`
+    ? `<span class="debut-pill" style="background:var(--bg-tertiary);color:var(--neon-green);">MLB-promoted${p.signed_team ? ` · ${_osClub(p.signed_team)}` : ""}</span>`
     : p.status === "signed" || (p.status === "posted" && p.signed_team)
-      ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--neon-cyan);">Signed${p.signed_team ? ` · ${escapeHtml(p.signed_team)}` : ""}</span>`
+      ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--neon-cyan);">Signed${p.signed_team ? ` · ${_osClub(p.signed_team)}` : ""}</span>`
       : p.status === "posted"
         ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--neon-orange);">POSTED${p.posting_days_remaining != null ? ` · ${p.posting_days_remaining}d remaining` : ""}</span>`
         : "";
@@ -30530,7 +30554,7 @@ async function renderOverseasDetail(key) {
     ${_statTileHTML("Current team", escapeHtml(p.current_team || " - "))}
     ${p.eta_year ? _statTileHTML("ETA", String(p.eta_year)) : ""}
     ${bonus ? _statTileHTML(p.signed_bonus_usd ? "Signed bonus" : "Proj bonus", _fmtUSD(bonus)) : ""}
-    ${p.signed_team ? _statTileHTML("Signed by", escapeHtml(p.signed_team), { tone: "pos" }) : ""}
+    ${p.signed_team ? _statTileHTML("Signed by", _osClub(p.signed_team), { tone: "pos" }) : ""}
   </div>`;
 
   // Career-arc sparkline if data exists.
@@ -30675,8 +30699,8 @@ async function renderOverseasDetail(key) {
       ${p.posted_date ? `<div><strong style="color:var(--text-primary);">${escapeHtml(p.posted_date)}</strong> - posted by ${escapeHtml(p.current_team || "his ${p.league || 'overseas'} team")}</div>` : ""}
       ${p.posting_days_remaining != null && p.status === "posted"
         ? `<div style="color:var(--neon-orange);"><strong>${p.posting_days_remaining}d</strong> remaining in the posting window</div>` : ""}
-      ${p.signed_team ? `<div><strong style="color:var(--text-primary);">${escapeHtml(p.signed_date || " - ")}</strong> - signed by <strong style="color:var(--neon-cyan);">${escapeHtml(p.signed_team)}</strong>${p.signed_bonus_usd ? ` for <strong>${_fmtUSD(p.signed_bonus_usd)}</strong>` : ""}</div>` : ""}
-      ${!p.signed_team && p.proj_team ? `<div>Projected to sign with <strong>${escapeHtml(p.proj_team)}</strong>${p.proj_bonus_usd ? ` for ~${_fmtUSD(p.proj_bonus_usd)}` : ""}</div>` : ""}
+      ${p.signed_team ? `<div><strong style="color:var(--text-primary);">${escapeHtml(p.signed_date || " - ")}</strong> - signed by <strong style="color:var(--neon-cyan);">${_osClub(p.signed_team)}</strong>${p.signed_bonus_usd ? ` for <strong>${_fmtUSD(p.signed_bonus_usd)}</strong>` : ""}</div>` : ""}
+      ${!p.signed_team && p.proj_team ? `<div>Projected to sign with <strong>${_osClub(p.proj_team)}</strong>${p.proj_bonus_usd ? ` for ~${_fmtUSD(p.proj_bonus_usd)}` : ""}</div>` : ""}
     </div>
     <div class="detail-title">League context</div>
     <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
@@ -30932,7 +30956,7 @@ function _renderOverseasPosting(host, prospects) {
       <td><strong>${escapeHtml(p.player_name)}</strong> ${milbLink}</td>
       <td>${escapeHtml(p.league)}</td>
       <td>${escapeHtml(p.posted_date || " - ")}</td>
-      <td><strong>${escapeHtml(p.signed_team || "?")}</strong></td>
+      <td><strong>${p.signed_team ? _osClub(p.signed_team) : "?"}</strong></td>
       <td style="text-align:right;font-family:var(--font-mono);">${_fmtUSD(signed) || " - "}</td>
       <td style="text-align:right;font-family:var(--font-mono);color:var(--text-tertiary);">${_fmtUSD(proj) || " - "}</td>
       <td style="text-align:right;font-family:var(--font-mono);color:${deltaColor};">${deltaTxt}</td>
@@ -31071,7 +31095,7 @@ function _renderOverseasSigned(host, signings) {
         ? ` <span class="fv-badge ${fvClass(String(fvCeil(op.consensus_fv)))}" style="font-size:9px;padding:0 4px;">${fvCeil(op.consensus_fv)}</span>` : "";
       const team = op.signed_team || op.proj_team || "";
       const teamCell = team
-        ? `<span style="display:inline-flex;align-items:center;gap:5px;">${teamLogoHTML(team, "sm", (typeof fullOrgName === "function" ? fullOrgName(team) : team))}<strong>${escapeHtml(team)}</strong></span>`
+        ? `<span style="display:inline-flex;align-items:center;gap:5px;">${orgLinkHTML(team, `${pxClubLogoHTML(team, "sm")}<strong>${escapeHtml(team)}</strong>`, { ctx: "franchise", cls: "px-club" })}</span>`
         : `<span style="color:var(--text-tertiary);">?</span>`;
       return `<tr>
         <td><strong>${escapeHtml(op.player_name)}</strong>${fvBadge}</td>
@@ -31126,13 +31150,13 @@ function _renderOverseasSigned(host, signings) {
   const orgRows = Object.entries(orgCounts)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 10)
-    .map(([org, n]) => `<div class="ctx-row" onclick="goToFarm('${escapeHtml(org)}')" title="${escapeHtml(_orgFull(org))} - ${n} signing${n !== 1 ? "s" : ""}">
-      <span style="display:inline-flex;align-items:center;gap:5px;min-width:0;">${teamLogoHTML(org, "sm")}<strong>${escapeHtml(org)}</strong></span>
+    .map(([org, n]) => `<div class="ctx-row" onclick="if(event.target.closest('a,button'))return;goToFarm('${escapeHtml(org)}')" title="${escapeHtml(_orgFull(org))} - ${n} signing${n !== 1 ? "s" : ""}">
+      <span style="display:inline-flex;align-items:center;gap:5px;min-width:0;">${orgLinkHTML(org, `${pxClubLogoHTML(org, "sm")}<strong>${escapeHtml(org)}</strong>`, { cls: "px-club" })}</span>
       <span class="ctx-row-tag">${n}</span>
     </div>`).join("");
 
   const _leaderRow = (op, val, color) => `<div class="ctx-row" style="cursor:default;" title="${escapeHtml(op.player_name)} - ${escapeHtml(op.signed_team || "")}">
-      <span style="display:inline-flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${teamLogoHTML(op.signed_team, "sm")}<span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(op.player_name)}</span></span>
+      <span style="display:inline-flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${op.signed_team ? orgLinkHTML(op.signed_team, pxClubLogoHTML(op.signed_team, "sm", true), { ctx: "franchise", cls: "px-club" }) : ""}<span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(op.player_name)}</span></span>
       <span class="ctx-row-tag" style="font-family:var(--font-mono);color:${color};">${val}</span>
     </div>`;
   const warRows = signed.filter(op => op.career_war != null)
@@ -31443,7 +31467,7 @@ function _renderOverseasLeagueContext(host, leagues, prospects) {
       </div>
       ${topRecent ? `<div style="font-size:11px;color:var(--text-tertiary);border-top:1px solid var(--border-subtle);padding-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
         Best outcome to date: <strong style="color:var(--text-primary);">${escapeHtml(topRecent.player_name)}</strong>
-        →${topRecent.signed_team ? ` ${teamLogoHTML(topRecent.signed_team, "sm", (typeof fullOrgName === "function" ? fullOrgName(topRecent.signed_team) : topRecent.signed_team))}` : ""} ${escapeHtml(topRecent.signed_team || "?")} · ${topRecent.career_war.toFixed(1)} career WAR
+        →${topRecent.signed_team ? ` ${orgLinkHTML(topRecent.signed_team, `${pxClubLogoHTML(topRecent.signed_team, "sm")} ${escapeHtml(topRecent.signed_team)}`, { ctx: "franchise", cls: "px-club" })}` : " ?"} · ${topRecent.career_war.toFixed(1)} career WAR
       </div>` : ""}
       ${ctx.citation ? `<div style="font-size:10px;color:var(--text-tertiary);font-style:italic;">Sources: ${escapeHtml(ctx.citation)}</div>` : ""}
     </div>`;
@@ -39521,7 +39545,7 @@ function headshotHTML(player, sizePx = 36) {
 }
 // Render a team logo with an inline fallback when the CDN 404s. `size`
 // must match a CSS class suffix (sm, md, lg, xl).
-function teamLogoHTML(org, size = "sm", title = null) {
+function teamLogoHTML(org, size = "sm", title = null, alt = null) {
   if (!org) return "";
   org = _orgForLogo(org);                  // MiLB affiliate -> MLB parent
   const url = teamLogoURL(org);
@@ -39532,7 +39556,11 @@ function teamLogoHTML(org, size = "sm", title = null) {
     return `<span class="team-logo team-logo-${size} team-logo-fallback">${fb}</span>`;
   }
   const t = title != null ? title : org;
-  return `<img class="team-logo team-logo-${size}" src="${url}" alt="${escapeHtml(org)}" title="${escapeHtml(t)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;team-logo team-logo-${size} team-logo-fallback&quot;>${fb}</span>';">`;
+  // alt "" (Q9_08): the logo sits inside a club link beside its own code, so the
+  // image adds no text and its fallback adds no second code.
+  const a = alt != null ? alt : org;
+  const fbErr = alt === "" ? "" : fb;
+  return `<img class="team-logo team-logo-${size}" src="${url}" alt="${escapeHtml(a)}"${t ? ` title="${escapeHtml(t)}"` : ""} loading="lazy" onerror="this.outerHTML='<span class=&quot;team-logo team-logo-${size} team-logo-fallback&quot;>${fbErr}</span>';">`;
 }
 
 // =============================================================================
@@ -39553,7 +39581,7 @@ function _orgPickerOptionsHTML(allLabel) {
     const name = (typeof fullOrgName === "function") ? fullOrgName(org) : org;
     const hay = escapeHtml((org + " " + name).toLowerCase());
     html += `<button class="org-picker-option" type="button" role="option" data-org="${escapeHtml(org)}" data-search="${hay}">
-      ${teamLogoHTML(org, "sm")}
+      ${pxClubNoLink(teamLogoHTML(org, "sm"), "row-anchor")}
       <span class="org-picker-opt-code">${escapeHtml(org)}</span>
       <span class="org-picker-opt-text">${escapeHtml(name)}</span></button>`;
   }
@@ -39592,7 +39620,7 @@ function syncOrgPicker(mountId, stateKey) {
     if (labelEl) labelEl.textContent = allLabel;
     mount.classList.remove("is-set");
   } else {
-    if (logoEl)  logoEl.innerHTML = teamLogoHTML(val, "sm");
+    if (logoEl)  logoEl.innerHTML = pxClubNoLink(teamLogoHTML(val, "sm"), "row-anchor");
     if (labelEl) labelEl.textContent = (typeof fullOrgName === "function") ? fullOrgName(val) : val;
     mount.classList.add("is-set");
   }
@@ -39795,11 +39823,15 @@ function playerMetaHTML(p, opts = {}) {
   // ilTag dropped from the meta line - same signal renders as the
   // healthBadgeHTML inline pill (in _inlineBadgeStrip). Showing both
   // duplicated IL state per row. The pill is more glanceable.
-  const orgLogo = orgMeta && orgMeta.logoHTML != null ? orgMeta.logoHTML : teamLogoHTML(p.org, "sm");
+  const orgLogo = orgMeta && orgMeta.logoHTML != null ? orgMeta.logoHTML : pxClubLogoHTML(p.org, "sm");
   const orgLabel = orgMeta && orgMeta.labelHTML != null ? orgMeta.labelHTML : `<span>${escapeHtml(p.org ?? " - ")}</span>`;
+  // Q9_08: the org cluster is one club link (logo + code) to the farm page. It
+  // follows the row's player name link, so the tab order is player then club.
+  const orgCluster = orgMeta && orgMeta.clusterHTML != null ? orgMeta.clusterHTML
+    : (p.org ? orgLinkHTML(p.org, orgLogo + orgLabel, { cls: "px-club" }) : orgLogo + orgLabel);
   // M29 S2: the position list is one nowrap unit, so a wrap falls between the position,
   // org and age/B-T clusters and never inside "SS / 2B / 3B".
-  return `<div class="player-meta"><span class="pos-cluster">${positionLabel} · </span><span class="org-cluster">${orgLogo}${orgLabel}</span>${ageHand}${rosterTag}</div>`;
+  return `<div class="player-meta"><span class="pos-cluster">${positionLabel} · </span><span class="org-cluster">${orgCluster}</span>${ageHand}${rosterTag}</div>`;
 }
 
 // "Current level" resolver - returns the player's most-recent assignment
@@ -42234,7 +42266,7 @@ function makeFarmReportCard(org) {
     return `<button class="chip${_winActive === val ? ' active' : ''}" data-form-window="${val}"${tip} style="font-size:10px;padding:2px 7px;letter-spacing:0.04em;">${lbl}${star}</button>`;
   };
   const _windowSelector = `
-    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Trailing window the WHOLE farm grade is computed over - composite letter + farm_score + DvM+ family of sub-leaves all re-grade to the selected window. 7y is the empirically-optimal default.">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Trailing window the WHOLE farm grade is computed over - composite letter + farm_score + DvM+ family of sub-leaves all re-grade to the selected window. 7y is the empirically-optimal default.">
       <span style="letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">Grade window</span>
       ${_winChip('3y', '3y')}${_winChip('4y', '4y')}${_winChip('5y', '5y')}${_winChip('6y', '6y')}${_winChip('7y', '7y')}${_winChip('8y', '8y')}
     </div>`;
@@ -45361,11 +45393,9 @@ function renderFarmSystems() {
     const dvm = ((org.dvm_plus || {})[win]);
     const heroHtml = `
       <div class="farm-card-hero card-only" style="display:none;">
-        <a href="#farm-org=${escapeHtml(org.org)}" class="hero-logo-link" onclick="event.preventDefault();goToFarm('${escapeHtml(org.org)}');">
-          ${teamLogoHTML(org.org, "md", fullOrgName(org.org))}
-        </a>
+        ${orgLinkHTML(org.org, pxClubLogoHTML(org.org, "md"), { cls: "hero-logo-link", mark: true })}
         <div class="hero-meta">
-          <div class="hero-name">${escapeHtml(fullOrgName(org.org))}</div>
+          <div class="hero-name">${orgLinkHTML(org.org, escapeHtml(fullOrgName(org.org)), { cls: "px-club--text" })}</div>
           <div class="hero-rank">#${displayRank} · ${escapeHtml(org.org)}${alumniBadge}</div>
           ${_farmSortPill(org)}
         </div>
@@ -45385,10 +45415,10 @@ function renderFarmSystems() {
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
         ${heroHtml}
         <div class="farm-rank table-only-cell fc-rank">#${displayRank}${deltaChip}</div>
-        <div class="table-only-cell farm-logo-cell fc-logo">${teamLogoHTML(org.org, "lg", fullOrgName(org.org))}</div>
+        <div class="table-only-cell farm-logo-cell fc-logo">${orgLinkHTML(org.org, pxClubLogoHTML(org.org, "lg"), { mark: true })}</div>
         <div class="farm-org-cell table-only-cell fc-org">
           <div class="farm-org-name">
-            <div class="farm-org">${escapeHtml(fullOrgName(org.org))}</div>
+            <div class="farm-org">${orgLinkHTML(org.org, escapeHtml(fullOrgName(org.org)), { cls: "px-club--text" })}</div>
             <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}${alumniBadge}</div>
           </div>
         </div>
@@ -45510,6 +45540,61 @@ function clubFranchiseHref(x) {
   const H = window.EEPHUS_HUB;
   if (H && H.clubHref) return H.clubHref(x);
   return x ? `/franchise/#team=${encodeURIComponent(x)}` : "";
+}
+// Q9_08 (owner ask 9; links_efv_display.md A17 to A24): a club mention on
+// PROSPX links through the same resolver. ctx "farm" (the default here) opens the
+// club's farm system page; "franchise" opens its Franchises page (the MLB club a
+// signed overseas pro joined, and the club named in a farm page's own header).
+// The caller hands over the markup the surface prints today, so the link text
+// stays the code or name already on screen. opts.mark makes a logo the mouse twin
+// of a code link beside it (out of the tab order and the accessibility tree). An
+// input that is not one of the 30 clubs (an affiliate, an overseas club) keeps its
+// markup in a span marked data-club-nolink="unresolved", never a guessed club.
+function _pxClub(x) {
+  const H = window.EEPHUS_HUB;
+  if (H && H.club) return H.club(x);
+  // before the deferred hub runs: only a code org_summary carries, exactly
+  const os = (typeof DATA !== "undefined" && DATA && DATA.org_summary) || [];
+  return (x && os.some(o => o.org === x)) ? { code: x, name: fullOrgName(x) } : null;
+}
+function pxClubHref(x, ctx = "farm") {
+  const c = _pxClub(x);
+  if (!c) return "";
+  return (ctx === "franchise" ? "/franchise/#team=" : "/prospx/#farm-org=") + c.code;
+}
+function orgLinkHTML(org, inner, opts = {}) {
+  const { ctx = "farm", cls = "", style = "", mark = false } = opts;
+  const c = _pxClub(org);
+  if (!c) return inner ? `<span data-club-nolink="unresolved">${inner}</span>` : "";
+  const tip = ctx === "franchise" ? `${c.name}: franchise overview` : `${fullOrgName(c.code)}: farm system`;
+  return `<a class="club-link${mark ? " club-link--mark" : ""}${cls ? " " + cls : ""}" href="${pxClubHref(c.code, ctx)}"`
+    + ` data-club="${escapeHtml(c.code)}" title="${escapeHtml(tip)}"`
+    + (mark ? ` tabindex="-1" aria-hidden="true"` : "")
+    + (style ? ` style="${style}"` : "")
+    + ` onclick="return _pxClubClick(event, this)">${inner}</a>`;
+}
+// The logo inside a club link: decorative (alt "") beside the link's own text;
+// a logo-only link names the club in its alt.
+function pxClubLogoHTML(org, size = "sm", alone = false) {
+  const c = _pxClub(org);
+  return teamLogoHTML(org, size, alone ? null : "", alone ? (c ? fullOrgName(c.code) : org) : "");
+}
+// A mention that stays unlinked carries its reason on its first tag
+// (row-anchor: it sits inside a link that opens the row's player).
+function pxClubNoLink(html, reason) {
+  return String(html || "").replace(/^(\s*<[a-z]+)/i, `$1 data-club-nolink="${reason}"`);
+}
+// A club link's click stays on the link (the row around it never sees it). A
+// plain click on a farm link opens the farm page in place, the path goToFarm
+// takes; a modified click and a Franchises link navigate as links do.
+function _pxClubClick(e, a) {
+  e.stopPropagation();
+  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button) return true;
+  const m = /^\/prospx\/#farm-org=([A-Z]{2,3})$/.exec(a.getAttribute("href") || "");
+  if (!m || !/^\/prospx\/(index\.html)?$/.test(location.pathname)) return true;
+  e.preventDefault();
+  goToFarm(m[1]);
+  return false;
 }
 function findOrg(org) {
   const code = clubCanon(org);
@@ -46124,9 +46209,18 @@ function _statRowOrgMetaHTML(player, row, size = "sm") {
   const label = info.split
     ? orgs.map(escapeHtml).join(`<span class="org-sep" aria-hidden="true">/</span>`)
     : escapeHtml(orgs[0]);
+  // Q9_08: each org of the row is its own club link (logo + code); a split
+  // season keeps its "/" and its "+N" fold.
+  const _one = o => orgLinkHTML(o, `${pxClubLogoHTML(o, size)}<span>${escapeHtml(o)}</span>`, { cls: "px-club" });
+  const _sep = `<span class="org-sep" aria-hidden="true">/</span>`;
+  const _links = orgs.length <= 3 ? orgs.map(_one).join(_sep)
+    : _one(orgs[0]) + _sep + `<span class="org-more" title="${escapeHtml(orgs.slice(1, -1).join(" / "))}">+${orgs.length - 2}</span>` + _sep + _one(orgs[orgs.length - 1]);
   return {
     logoHTML: _orgLogoSequenceHTML(orgs, size),
     labelHTML: `<span title="${escapeHtml(title)}">${label}</span>`,
+    clusterHTML: info.split
+      ? `<span class="org-split" title="${escapeHtml(title)}" style="display:inline-flex;align-items:center;gap:inherit;">${_links}</span>`
+      : _links,
     title,
     split: info.split,
   };
@@ -46154,7 +46248,6 @@ function _rowOpsPlus(s) {
 // move. `statCellsFn(line)` renders the stat <td>s so the split rows match
 // the main row's columns.
 function _careerOrgAndStints(s, player, statCellsFn) {
-  const _logo = o => (typeof teamLogoHTML === "function" ? teamLogoHTML(o, "sm") : escapeHtml(o));
   // Stat lines from the affiliate ladder stamp the AFFILIATE name
   // ("Biloxi Shuckers"), not an MLB org code - teamLogoHTML can't map
   // that, so the cell used to print the name twice with no logo. An org
@@ -46200,7 +46293,7 @@ function _careerOrgAndStints(s, player, statCellsFn) {
       ? `${_aff} (${_code || "?"} affiliate) - this season's club`
       : `${_org} - this season's org`;
     const orgCell = _code
-      ? `<td style="text-align:center;"><span title="${escapeHtml(_tip)}">${_logo(_code)}${escapeHtml(_code)}</span></td>`
+      ? `<td style="text-align:center;"><span title="${escapeHtml(_tip)}">${orgLinkHTML(_code, pxClubLogoHTML(_code, "sm") + escapeHtml(_code), { cls: "px-club" })}</span></td>`
       : (_org
         ? `<td style="text-align:center;"><span title="${escapeHtml(_tip)}">${escapeHtml(_org)}</span></td>`
         : `<td style="text-align:center;color:var(--text-tertiary);" title="Org unresolved in this season's stat data"> - </td>`);
@@ -46208,7 +46301,7 @@ function _careerOrgAndStints(s, player, statCellsFn) {
   }
   const orgs = stints.map(st => st.org);
   const key = `${s.season}-${s.level}`;
-  const logos = _orgLogoSequenceHTML(orgs, "sm");
+  const logos = _orgLogoSequenceHTML(orgs, "sm").replace(/<img /g, '<img data-club-nolink="row-anchor" ');
   const tip = `${orgs.join(" → ")} - split season (in-season trade); click to expand the per-org split`;
   const orgCell = `<td class="career-org-multi" style="text-align:center;cursor:pointer;" `
     + `data-stint-toggle="${key}" title="${escapeHtml(tip)}" role="button" tabindex="0" aria-expanded="false">`
@@ -46216,7 +46309,7 @@ function _careerOrgAndStints(s, player, statCellsFn) {
   const stintRows = stints.map(st =>
     `<tr class="stint-row" data-stint-rows="${key}" hidden>`
     + `<td></td><td></td>`
-    + `<td style="text-align:center;"><span class="stint-org" title="${escapeHtml(st.org)} stint">${_logo(st.org)}${escapeHtml(st.org)}</span></td>`
+    + `<td style="text-align:center;"><span class="stint-org" title="${escapeHtml(st.org)} stint">${orgLinkHTML(st.org, pxClubLogoHTML(st.org, "sm") + escapeHtml(st.org), { cls: "px-club" })}</span></td>`
     + `<td><span class="level-pill level-neutral">${st.level || s.level}</span></td>`
     + statCellsFn(st) + `</tr>`).join("");
   return { orgCell, stintRows };
@@ -49364,7 +49457,7 @@ function renderPlayerDetail(key) {
   // header .gfx-card-btn always graphics the player currently in view.
   _gfxSet("prospect-detail", "prospect-card", [p], {});
   const orgLink = p.org
-    ? `<a href="#farm-org=${escapeHtml(p.org)}" onclick="event.preventDefault();goToFarm('${escapeHtml(p.org)}');" style="color:var(--neon-cyan);text-decoration:none;">${escapeHtml(p.org)}</a>`
+    ? orgLinkHTML(p.org, escapeHtml(p.org), { style: "color:var(--neon-cyan);" })
     : " - ";
   // Header status pill - graduated wins over IL when both apply (a
   // graduated player who later goes on the MLB IL is now an MLB story,
@@ -49507,7 +49600,7 @@ function renderPlayerDetail(key) {
       <span class="cf-edge" aria-hidden="true"></span>
       <div style="display:flex;align-items:flex-start;gap:16px;flex:1;min-width:0;">
         <div class="headshot-frame">${headshotHTML(p, 130)}</div>
-        ${teamLogoHTML(p.org, "lg", p.org ? fullOrgName(p.org) : "")}
+        ${p.org ? orgLinkHTML(p.org, pxClubLogoHTML(p.org, "lg"), { mark: true }) : ""}
         <div style="min-width:0;">
           <div class="player-display-name">${escapeHtml(p.player_name)}${optionsDotsHTML(p) ? `<span style="margin-left:10px;display:inline-flex;align-items:center;vertical-align:middle;">${optionsDotsHTML(p)}</span>` : ""}</div>
           <div class="player-display-meta">
@@ -53259,7 +53352,7 @@ function _renderOrgTendencies(orgCode) {
         const pct = Math.max(0, Math.round(s.score * 100));
         const shared = (s.shared || []).map(d => `<span style="display:inline-block;font-size:9px;background:var(--bg-tertiary);border:1px solid var(--border-light);color:var(--text-secondary);border-radius:3px;padding:1px 5px;margin:2px 3px 0 0;">${escapeHtml(d.label || d.feature)}</span>`).join("");
         return `<a href="#farm-org=${escapeHtml(s.org)}&ftab=tendencies" style="display:block;border:1px solid var(--border);background:var(--bg-secondary);padding:10px;text-decoration:none;color:inherit;">
-          <div style="display:flex;align-items:center;gap:8px;">${teamLogoHTML(s.org, "sm", fullOrgName(s.org))}<strong style="font-size:13px;">${escapeHtml(fullOrgName(s.org))}</strong>
+          <div style="display:flex;align-items:center;gap:8px;">${pxClubNoLink(teamLogoHTML(s.org, "sm", fullOrgName(s.org)), "row-anchor")}<strong style="font-size:13px;">${escapeHtml(fullOrgName(s.org))}</strong>
             <span style="margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--up);" title="tendency-vector cosine similarity">${pct}%</span></div>
           <div style="margin-top:5px;">${shared || '<span style="font-size:10px;color:var(--text-tertiary);">broad profile match</span>'}</div>
         </a>`;
@@ -53797,11 +53890,11 @@ function _renderFarmDetailBody(orgCode, org, root) {
     </div>
     <div class="detail-page-header" style="${orgStripe(org.org)}">
       <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0;">
-        ${teamLogoHTML(org.org, "xl", fullOrgName(org.org))}
+        ${orgLinkHTML(org.org, pxClubLogoHTML(org.org, "xl"), { ctx: "franchise", mark: true })}
         <div>
           <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
           <div class="player-display-meta">
-            <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${escapeHtml(org.org)}</span>
+            <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${orgLinkHTML(org.org, escapeHtml(org.org), { ctx: "franchise", cls: "px-club--text" })}</span>
             Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition">#${farmWindowRank(org)}</strong> of 30 · ${farmPoolCountsText(org, rosterPlayersAll.length)} · Total FV of graded <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : " - "}</strong>
           </div>
         </div>
@@ -54589,8 +54682,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     return `<div class="farm-side-card">
       <div class="side-title">Comparable farms <span class="side-count">composite: FV mix · positions · tiers · momentum · age · spend</span></div>
       ${comps.map(({ o, sim }) => `<div data-org="${escapeHtml(o.org)}" style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;">
-        ${teamLogoHTML(o.org, "sm", fullOrgName(o.org))}
-        <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(fullOrgName(o.org))} <span style="color:var(--text-tertiary);font-size:9px;letter-spacing:0.06em;">${escapeHtml(o.org)}</span></span>
+        ${orgLinkHTML(o.org, pxClubLogoHTML(o.org, "sm"), { mark: true })}
+        <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${orgLinkHTML(o.org, escapeHtml(fullOrgName(o.org)), { cls: "px-club--text" })} <span style="color:var(--text-tertiary);font-size:9px;letter-spacing:0.06em;">${escapeHtml(o.org)}</span></span>
         <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;" title="Composite cosine similarity score across talent distribution, positional mix, tier counts, stock momentum, ${win.toUpperCase()} DvM+, age profile, young-for-level count, and 3yr IFA/Draft spend mix.">${Math.round(sim * 100)}%</span>
       </div>`).join("")}
     </div>`;
@@ -55872,6 +55965,13 @@ var A11Y_CLICK_CONTROLS = ".g-term[data-term], tr.psh-fold-row, .overview-tile[o
 function decorateA11yRows() {
   document.querySelectorAll(".player-row[data-key], .spotlight-row[data-key], .debut-row[data-key], .farm-row[data-org], .pos-depth-card[data-key]").forEach(row => {
     if (_pxRowNameLink(row)) return;
+    // Q9_08: a Farm Systems row's club name is its link (keyboard path), so the
+    // row is no button around its watch, compare and glossary controls.
+    if (row.matches(".farm-row[data-org]") && row.querySelector("a.club-link:not(.club-link--mark)")) {
+      row.removeAttribute("role");
+      row.removeAttribute("tabindex");
+      return;
+    }
     if (!row.hasAttribute("tabindex")) row.setAttribute("tabindex", "0");
     if (!row.hasAttribute("role"))     row.setAttribute("role", "button");
   });
@@ -57838,6 +57938,8 @@ function attachHandlers() {
       });
       return;
     }
+    // Q9_08: a club link inside a row is its own target; the row handler skips it.
+    if (e.target.closest("a.club-link")) return;
     // A row's name link opens the card in this tab; a modified click opens a new one.
     const nameLink = e.target.closest("a.row-name-link");
     if (nameLink) {
