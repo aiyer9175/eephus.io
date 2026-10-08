@@ -79,3 +79,28 @@ def test_pending_regen_artifacts_are_still_pending():
         assert _BARE.search(text.replace("docs/archive/", "")) and \
             "docs/archive/REVIEW_QUEUE.md" not in text, (
                 f"{rel} now cites the archive path; drop it from PENDING_REGEN")
+
+
+# LIBRARY_8 (2026-10-07): the 2026-06-10 glossary copy ledger moved from docs/
+# to docs/archive/ under the same convention, and its two by-path citations
+# (build_glossary_data.py and docs/audit-2026-07/AUDIT_FINDINGS.md) moved with it.
+_OLD_COPY_AUDIT = re.compile(r"(?<!archive/)glossary-copy-audit\.md")
+
+
+def test_the_glossary_copy_ledger_lives_in_docs_archive_with_its_banner():
+    assert not (ROOT / "docs" / "glossary-copy-audit.md").exists(), \
+        "glossary-copy-audit.md is back in docs/"
+    text = (ROOT / "docs" / "archive" / "glossary-copy-audit.md").read_text(encoding="utf-8")
+    assert "ARCHIVED 2026-10-07" in text[:1500], "the copy ledger lost its archived banner"
+    assert chr(0x2014) not in text and chr(0x2013) not in text
+
+
+def test_no_file_cites_the_old_copy_ledger_path():
+    offenders = [f"{p.relative_to(ROOT)}:{i}"
+                 for p in _scanned()
+                 for i, line in enumerate(p.read_text(encoding="utf-8", errors="ignore")
+                                          .splitlines(), 1)
+                 if _OLD_COPY_AUDIT.search(line)]
+    assert not offenders, f"cite docs/archive/glossary-copy-audit.md: {offenders[:12]}"
+    for rel in ("build_glossary_data.py", "docs/audit-2026-07/AUDIT_FINDINGS.md"):
+        assert "docs/archive/glossary-copy-audit.md" in (ROOT / rel).read_text(encoding="utf-8"), rel

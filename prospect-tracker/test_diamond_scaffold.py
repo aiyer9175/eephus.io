@@ -56,10 +56,11 @@ DIAMOND_LEAVES = [
     ("betting", "Sports Betting", "/betting/"),
     ("diamond", "Diamond Pass", "/diamond/"),
 ]
-# The page DIRS are still six, and that is the point: /dynasty/, /redraft/ and
-# /dfs/ were public addresses for two days, so they still build and still ship
-# as hash-preserving redirect stubs.
-DIAMOND_DIRS = ["betting", "dfs", "diamond", "dynasty", "fantasy", "redraft"]
+# The page DIRS are three. /dynasty/, /redraft/ and /dfs/ were public
+# addresses for two days and redirect stubs from 2026-08-07; since 2026-10-07
+# (owner answer LB-Q3) their folders are gone and 404.html forwards each one,
+# hash and all, through build_site.RETIRED_ROUTES.
+DIAMOND_DIRS = ["betting", "diamond", "fantasy"]
 MERGED_DIRS = ["dynasty", "redraft", "dfs"]
 
 
@@ -171,9 +172,6 @@ def test_the_three_content_modules_are_labeled_diamond_preview():
 
 @pytest.mark.parametrize("rel,fn", [
     ("fantasy/index.html", "build_fantasy"),
-    ("dynasty/index.html", "build_dynasty"),
-    ("redraft/index.html", "build_redraft"),
-    ("dfs/index.html", "build_dfs"),
     ("betting/index.html", "build_betting"),
     ("diamond/index.html", "build_diamond"),
 ])
@@ -191,20 +189,20 @@ def test_diamond_routes_are_in_the_sitemap():
 
 
 @pytest.mark.parametrize("mod", MERGED_DIRS)
-def test_the_split_dirs_are_hash_preserving_redirects_into_fantasy(mod: str):
+def test_the_split_addresses_are_hash_preserving_redirects_into_fantasy(mod: str):
     """The merge reversed the 2026-08-05 direction: /fantasy/ is the module and
-    the three split dirs are the stubs. HASH-PRESERVING is the load-bearing
-    word. These three URLs carried working boards for two days and people
-    bookmarked deep links into them, so a stub that dropped the hash would
-    answer every one of those bookmarks with the module's default tab."""
-    html = getattr(build_site, f"build_{mod}")()
-    assert f'content="0; url=/fantasy/#m={mod}"' in html
-    assert f'location.replace("/fantasy/#m={mod}"' in html
-    assert 'location.hash' in html, "the stub drops the incoming hash"
-    assert 'name="robots" content="noindex"' in html
-    # And it never sends the reader back to a page that is now a stub itself.
+    the three split addresses forward into it. HASH-PRESERVING is the
+    load-bearing word. These three URLs carried working boards for two days and
+    people bookmarked deep links into them, so a forward that dropped the hash
+    would answer every one of those bookmarks with the module's default tab.
+    Since 2026-10-07 the forward is the 404 page's map, not a folder."""
+    assert build_site.RETIRED_ROUTES[f"/{mod}/"] == (f"/fantasy/#m={mod}", True)
+    script = build_site._retired_routes_script()
+    assert 'location.hash' in script, "the 404 map drops the incoming hash"
+    assert script in build_site.build_404()
+    # And it never sends the reader back to an address that is retired itself.
     for other in MERGED_DIRS:
-        assert f'"/{other}/"' not in html, f"{mod} stub links at /{other}/"
+        assert f"/{other}/" not in build_site.RETIRED_ROUTES[f"/{mod}/"][0]
 
 
 def test_the_fantasy_module_is_the_only_one_of_the_four_in_the_sitemap():
@@ -231,14 +229,19 @@ def test_publish_paths_carry_every_diamond_dir():
     assert not missing, f"deploy/publish_paths.txt is missing {missing} - they will 404 in production"
 
 
-def test_the_retired_fantasy_dirs_still_ship():
-    """They are redirect stubs, and a redirect that does not ship is a 404.
-    This is the direction that flipped on 2026-08-07: /fantasy/ is the module
-    and /dynasty/, /redraft/ and /dfs/ are the stubs."""
+def test_the_retired_fantasy_dirs_are_off_the_list_and_resolved_by_the_404_map():
+    """/fantasy/ is the module and ships. /dynasty/, /redraft/ and /dfs/ left
+    the deploy list on 2026-10-07 (owner answer LB-Q3): the box answers each
+    with 404.html, whose map (build_site.RETIRED_ROUTES) sends it into
+    /fantasy/, so no bookmark to them becomes a dead end."""
     manifest = _manifest_paths()
-    for d in MERGED_DIRS + ["fantasy"]:
-        assert d in manifest, (
-            f"/{d}/ is not on the deploy list; every bookmark to it becomes a 404")
+    assert "fantasy" in manifest, "/fantasy/ is not on the deploy list"
+    assert "404.html" in manifest, "404.html is not on the deploy list"
+    for d in MERGED_DIRS:
+        assert d not in manifest, f"/{d}/ is back on the deploy list"
+        assert not (ROOT / d).exists(), f"{d}/ is back in the tree"
+        target, carry = build_site.RETIRED_ROUTES[f"/{d}/"]
+        assert target == f"/fantasy/#m={d}" and carry
 
 
 # ---------------------------------------------------------------------------

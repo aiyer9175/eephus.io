@@ -34,7 +34,7 @@ The split is still a client split. It is still not a second corpus.
 | `#m=redraft` | rest of season and daily | `assets/redraft.js` |
 | `#m=dynasty` | keepers and prospects | `assets/dynasty.js` |
 | `#m=dfs` | tonight's slate | `assets/dfs.js` |
-| `/redraft/`, `/dynasty/`, `/dfs/` | hash-preserving redirect stubs | none |
+| `/redraft/`, `/dynasty/`, `/dfs/` | retired addresses the 404 page forwards, hash carried (`build_site.RETIRED_ROUTES`) | none |
 
 **Mount ids.** Every client resolves its root, banner, control slot and section
 nav through a candidate list that ends at the pre-split shared id
@@ -89,12 +89,13 @@ its own default. Everything else in the hash rides across verbatim, because the
 module's own client is what canonicalizes an alias and it cannot do that if the
 coordinator ate it. `test_fantasy_split` enumerates every one of these.
 
-`/redraft/`, `/dynasty/` and `/dfs/` are stubs on the `/teams/` template with
-one addition: they carry the incoming hash across, so
-`/redraft/#section=ros_sp&sys=sabr` lands on
+`/redraft/`, `/dynasty/` and `/dfs/` were redirect stubs from 2026-08-07 to
+2026-10-07. Their folders are gone now (owner answer LB-Q3): the box answers
+each address with `404.html`, whose redirect map (`build_site.RETIRED_ROUTES`,
+one constant beside the `/teams/` row) carries the incoming hash across the
+way the stubs did, so `/redraft/#section=ros_sp&sys=sabr` lands on
 `/fantasy/#m=redraft&section=ros_sp&sys=sabr` rather than on the module's
-default tab. All four dirs stay in `deploy/publish_paths.txt`; a redirect that
-does not ship is a 404.
+default tab. `test_fantasy_split` and `test_page_index` drive that map.
 
 ## One exporter, three clients
 

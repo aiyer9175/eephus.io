@@ -1,6 +1,5 @@
 User-agent: *
 Disallow: /data/
 Disallow: /player/
-Disallow: /teams/
 Allow: /
 Sitemap: https://eephus.io/sitemap.xml

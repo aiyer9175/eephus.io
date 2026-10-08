@@ -63,7 +63,6 @@ TARGETS: list[str] = [
     "arbitration/index.html",
     "news/index.html",
     "sources/index.html",
-    "teams/index.html",
     "library/index.html",
     "franchises/index.html",
     "report/index.html",
@@ -84,10 +83,7 @@ TARGETS: list[str] = [
     # copy rather than a cleanup; a page nobody scans is one bad paste away from
     # shipping a dash the owner's rule forbids.
     "betting/index.html",
-    "dfs/index.html",
     "diamond/index.html",
-    "dynasty/index.html",
-    "redraft/index.html",
     "fantasy/index.html",
     "history/index.html",
     "parks/index.html",

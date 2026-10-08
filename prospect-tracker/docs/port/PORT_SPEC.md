@@ -60,12 +60,13 @@ parts of this platform are not earning their place.
 | `data/debuts_full/<player_key>.json` | 2,761 | 74.33 |
 | **total published** | **12,235** | **1,768.91** |
 
-**Routes.** 29 written by `build_site.main()` (`build_site.py:6492-6523`): `/`, `/news/`,
+**Routes.** 26 written by `build_site.main()` (`build_site.py:6492-6523`): `/`, `/news/`,
 `/history/`, `/articles/`, `/articles/<slug>/`, `/forums/`, `/fa/`, `/projections/`,
-`/mlbstats/`, `/pal/`, `/trademachine/`, `/arbitration/`, `/fantasy/`, `/dynasty/`,
-`/redraft/`, `/dfs/`, `/betting/`, `/diamond/`, `/parks/`, `/hof/`, `/management/`,
-`/models/`, `/glossary/`, `/teams/`, `/team/`, `/sources/`, `/report/`, `/404.html`,
-`/robots.txt`, `/sitemap.xml`.
+`/mlbstats/`, `/pal/`, `/trademachine/`, `/arbitration/`, `/fantasy/`, `/betting/`,
+`/diamond/`, `/parks/`, `/hof/`, `/management/`, `/models/`, `/glossary/`, `/team/`,
+`/sources/`, `/report/`, `/404.html`, `/robots.txt`, `/sitemap.xml`. The retired
+`/teams/`, `/dynasty/`, `/redraft/` and `/dfs/` folders are gone (2026-10-07, owner
+answer LB-Q3): `/404.html` forwards each address through `build_site.RETIRED_ROUTES`.
 
 4 more are **hand-maintained and NOT generated**: `/prospx/` (a 3.09 MiB single-file inline
 app, 48 top-level JSON plus 3 templated patterns), `/collegesavant/` and

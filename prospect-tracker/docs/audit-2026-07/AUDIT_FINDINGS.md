@@ -77,7 +77,7 @@ model registry 39 rows (15 validated / 21 provisional / 3 unvalidated), validate
   invariant (trade_value_mm >= active rarity floor) held throughout. FIXED (9fe4852): floor
   exposed in the in-memory result (board_slim drops it from the written payload; trade_values
   .json unchanged), test asserts the invariant instead of the tag. Suite fully green.
-- "Glossary copy backlog is 78 items": ledger totals in docs/glossary-copy-audit.md are
+- "Glossary copy backlog is 78 items": ledger totals in docs/archive/glossary-copy-audit.md are
   PASS 158 / LIGHT 8 / REWRITE 3 / RESTRUCTURE 13 -> 24 open items.
 
 ### F-08: /mlbstats/ headline metrics lack on-page explainers
