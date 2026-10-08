@@ -1,5 +1,5 @@
 /* =============================================================================
-   eephus.io - /awards/, the Awards section of Awards / HoF (AWARDS_7)
+   eephus.io - /awards/, the Awards section of Awards / HoF (AWARDS_7, AWARDS_8)
    Tokens only: no hex, no theme media query, no animation. The dark values come
    from site.css [data-theme="dark"]; the one theme rule here swaps the
    scoreboard ink, because dark --text-on-accent is near-black on the dark band.
@@ -142,12 +142,38 @@
 .aw-wt th[scope="row"], .aw-cmp-t th[scope="row"] { position: sticky; left: 0; z-index: 1; background: var(--bg-secondary);
   box-shadow: 1px 0 0 var(--border-light); }
 
+/* Superlatives, Rule and vote, Method (AWARDS_8). Direction is --up or --down beside ink text. */
+.aw-slg { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin: 8px 0 16px; }
+.aw-frame { margin: 0 0 6px; font-size: 11px; line-height: 1.4; color: var(--text-tertiary); }
+.aw-sll { list-style: none; margin: 0; padding: 0; }
+.aw-up { color: var(--up); }
+.aw-dn { color: var(--down); }
+.aw-up .ico, .aw-dn .ico { margin-right: 3px; vertical-align: -1px; }
+.aw-f-up { fill: var(--up); }
+.aw-db-a { fill: none; stroke: var(--text-primary); }
+.aw-tag { display: inline-block; padding: 0 4px; font: 700 10px var(--font-retro-mono); color: var(--text-secondary);
+  border: 1px solid var(--border); }
+.aw-foot { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.aw-app a.aw-reg.is-stale { border-style: dashed; }
+.aw-vt { margin: 4px 0 14px; }
+.aw-vt caption { font: 700 12px var(--font-retro-mono); color: var(--text-primary); }
+.aw-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 10px; margin: 8px 0; font-size: 12px; line-height: 1.45; }
+.aw-dl dt { font: 700 11px var(--font-retro-mono); color: var(--text-secondary); }
+.aw-dl dd { min-width: 0; margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.aw-ml { margin: 4px 0 12px; padding-left: 18px; font-size: 12px; line-height: 1.5; color: var(--text-primary); overflow-wrap: anywhere; }
+
 @media (max-width: 767px) {
+  .aw-sll:not(.open) > li:nth-child(n+4) { display: none; }
   .aw-jump { position: sticky; top: 0; z-index: 3; padding: 6px 0; overflow-x: auto; background: var(--bg-primary); }
   .aw-jump > * { flex: none; }
 }
+@media (min-width: 768px) {
+  .aw-slg { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .aw-app .aw-more { display: none; }
+}
 @media (min-width: 1024px) {
   .aw-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+  .aw-slg { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (pointer: coarse) {
   .aw-app a.aw-chip, .aw-app a.aw-reg, .aw-app .aw-share, .aw-app summary, .aw-season select, .aw-hero a,

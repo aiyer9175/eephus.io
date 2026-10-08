@@ -12,8 +12,8 @@
    Share (each card, the hero, and the superlatives' seam) and My Ballot's Save
    image open the shared GFX modal's awards cards (AWARDS_10), rendered only
    when the shell names the engine, which loads on the first press.
-   Superlatives, Rule and vote and Method render the unmeasured state until
-   AWARDS_8 lands.
+   Superlatives, Rule and vote and Method (AWARDS_8) are assets/awards-tabs.js,
+   loaded on the first open of any of the three.
 
    Every number is printed from the payload as served (score_display, lead,
    compare values) and every label from its payload field; the client builds no
@@ -50,7 +50,7 @@
                 "October", "November", "December"];
   var SUFFIX = /^(jr\.?|sr\.?|ii|iii|iv|v)$/i;
   var LAMP = { s: { w: 4, h: 10, p: 5 }, l: { w: 6, h: 12, p: 8 } };
-  var FILLS = ["elite", "great", "good", "above", "avg", "below", "poor", "ink", "down", "off"];
+  var FILLS = ["elite", "great", "good", "above", "avg", "below", "poor", "ink", "down", "up", "off"];
   var MAX_LAMPS = 60;
   var STALE_MS = 48 * 3600 * 1000;
 
@@ -184,13 +184,13 @@
       var t = e.target.closest && e.target.closest('[role="tab"]');
       if (keyMove && t && t.getAttribute("aria-selected") !== "true") {
         keyMove = false;
-        go(merge({ section: t.getAttribute("data-section"), award: null, lg: null }));
+        go(merge({ section: t.getAttribute("data-section"), award: null, lg: null, sl: null }));
       }
       keyMove = false;
     });
     list.addEventListener("click", function (e) {
       var t = e.target.closest && e.target.closest('[role="tab"]');
-      if (t) go(merge({ section: t.getAttribute("data-section"), award: null, lg: null }));
+      if (t) go(merge({ section: t.getAttribute("data-section"), award: null, lg: null, sl: null }));
     });
     if (window.EephusUI && window.EephusUI.wireTablist) window.EephusUI.wireTablist(list);
     root.addEventListener("change", function (e) {
@@ -203,6 +203,15 @@
       if (r) { delete shards[state.season]; apply(state, false); }
       var sh = e.target.closest && e.target.closest("[data-aw-share]");
       if (sh) share(sh);
+      var cv = e.target.closest && e.target.closest("[data-aw-csv]");
+      if (cv && window.EephusAwardsTabs) window.EephusAwardsTabs.csv(tabsCtx(), cv.getAttribute("data-aw-csv"));
+      var mo = e.target.closest && e.target.closest(".aw-more");
+      if (mo) {
+        var ol = document.getElementById(mo.getAttribute("aria-controls")), on = mo.getAttribute("aria-expanded") !== "true";
+        ol.classList.toggle("open", on);
+        mo.setAttribute("aria-expanded", on ? "true" : "false");
+        mo.textContent = "Show " + (on ? 3 : ol.children.length);
+      }
     });
   }
   function merge(o) {
@@ -228,9 +237,20 @@
       }
     });
     var panel = document.getElementById("aw-panel-" + s.section);
+    var el = null;
     if (s.section === "ballot") { ballot(panel, s); return; }
-    if (s.section !== "selections") {
-      panel.innerHTML = controls(s.section) + stateBox("unmeasured", "This section is being built.");
+    if (!window.EephusAwardsTabs && s.section !== "selections") {
+      panel.innerHTML = controls(s.section) + stateBox("loading", "Loading the awards.");
+      tabsLoad().then(function () { if (state === s) apply(s, scroll); }, function () {
+        if (state === s) panel.innerHTML = controls(s.section) + stateBox("failed", 'The awards could not load. <button type="button" class="aw-retry">Retry</button>');
+      });
+      return;
+    }
+    var X = window.EephusAwardsTabs;
+    if (s.section === "vote") {
+      panel.innerHTML = X.vote(tabsCtx());
+      el = scroll && s.season !== main.default_season && document.getElementById("aw-v-" + s.season);
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: "start" });
       return;
     }
     var doc = docFor(s.season);
@@ -244,11 +264,14 @@
       return;
     }
     layoutKey = layout();
-    panel.innerHTML = selections(doc);
-    if (scroll && s.award) {
-      var el = document.getElementById(s.lg ? "aw-c-" + s.award + "-" + s.lg : "aw-g-" + s.award);
-      if (el && el.scrollIntoView) el.scrollIntoView({ block: "start" });
+    panel.innerHTML = s.section === "selections" ? selections(doc) : X[s.section](tabsCtx(), doc);
+    if (window.EEPHUS_GL && window.EEPHUS_GL.wire) window.EEPHUS_GL.wire(panel);
+    if (scroll && s.section === "selections" && s.award) {
+      el = document.getElementById(s.lg ? "aw-c-" + s.award + "-" + s.lg : "aw-g-" + s.award);
+    } else if (scroll && s.sl) {
+      el = document.getElementById((s.section === "method" ? "aw-m-" : "aw-sl-") + s.sl);
     }
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "start" });
   }
 
   function docFor(season) {
@@ -380,14 +403,11 @@
     var id = KEY[A] + "-" + LG.toLowerCase();
     var rule = doc.rules[A] || {};
     var full = LEAGUE[LG] + " " + (rule.name || TITLE[A]);
-    var reg = rule.registry && (doc.registry || main.registry || {})[rule.registry];
-    var verdict = reg && reg.verdict ? reg.verdict : "not yet registered";
     var b = block(doc, A, LG);
     var h = '<article class="aw-card" id="aw-c-' + id + '" aria-labelledby="aw-cn-' + id + '">' +
       '<header class="aw-card-h"><h3 title="' + esc(full) + '">' + ico("aw-podium", 16) + LG + " " + TITLE[A] + "</h3>" +
       '<span id="aw-cn-' + id + '" hidden>' + esc(full) + "</span>" +
-      (rule.registry ? '<a class="aw-reg" href="/models/#' + esc(rule.registry) + '" title="' +
-        esc("Registry row " + rule.registry + ": " + verdict + ".") + '">' + esc(verdict) + "</a>" : "") +
+      regChip(doc, rule.registry) +
       (b ? shareChip("podium", ' data-award="' + KEY[A] + '" data-lg="' + LG.toLowerCase() + '"',
         "Share " + LG + " " + TITLE[A] + " as an image") : "") + "</header>";
     if (!b) {
@@ -410,7 +430,7 @@
           return "<li>" + esc(e.label || e.name) + "</li>";
         }).join("") + "</ul></details>";
     }
-    h += writers(b, A);
+    h += writers(doc, b, A, LG);
     var n = ((doc.ballot_rules || main.ballot_rules || {})[A] || {}).n || b.top.length;
     h += '<details class="aw-d" data-d="cmp"' + (twoCol() ? " open" : "") + "><summary>Compare the three</summary>" +
       compare(doc, A, LG, b) + "</details>";
@@ -519,16 +539,26 @@
     return '<span class="aw-sub aw-parts">' + esc((lab.sequencing || "sequencing") + " " + signed(p.sequencing_display, 1) +
       "; " + (lab.runs_vs_player_value || "runs against player value") + " " + signed(p.runs_vs_player_value_display, 1)) + "</span>";
   }
-  function writers(b, A) {
-    var w = b.writers || {}, t = "";
+  // The writers' line (AWARDS_PLAN 5.6): the vote's state, the rule's place of the
+  // writers' 1st, the rule's 1st's finish where the source has finishes, and
+  // before the vote the freeze date from the payload.
+  function writers(doc, b, A, LG) {
+    var w = b.writers || {}, t = "", fz = doc.status !== "closed" && doc.stamp && doc.stamp.frozen_at;
     if (w.status === "final" && w.winner) {
       var p = w.rule_place_of_winner, who = A === "MOY" ? "his club" : "him";
+      var v = (main.vote_table || []).filter(function (r) { return r.season === doc.season && r.award === A && r.league === LG; })[0];
       t = "Writers' 1st: " + w.winner.name + ". " + (p === 1 ? "The rule placed " + who + " 1st too."
-        : p ? "The rule placed " + who + " " + ord(p) + "." : "Outside the rule's ballot.");
+        : p ? "The rule placed " + who + " " + ord(p) + "." : "Outside the rule's ballot.") +
+        (p !== 1 && v && v.writers_finish_of_rule_first ? " The rule's 1st finished " + ord(v.writers_finish_of_rule_first) + " in the vote." : "");
+      fz = null;
     } else if (w.status === "finalists" && w.finalists && w.finalists.length) {
       t = "Writers' finalists: " + w.finalists.map(function (f) { return f.name; }).join(", ") + ".";
     } else {
       t = w.announce_label || "";
+    }
+    if (t && fz) {
+      t += " The selection was frozen on " + dateLong(fz) + ((doc.freeze || {}).after_finalists ? ", after the writers' finalists were named."
+        : ", before the writers' results.");
     }
     return t ? '<p class="aw-writers">' + esc(t) + "</p>" : "";
   }
@@ -711,6 +741,35 @@
     return h;
   }
 
+  // ---- Superlatives, Rule and vote, Method (AWARDS_8) -------------------------
+  // assets/awards-tabs.js renders the three; it loads on the first open of any
+  // of them from the stamped URL on the mount (data-tabs-js), so the Selections
+  // cold paint stays awards.js and awards.json. regChip is shared with the cards.
+  function regChip(doc, id) {
+    if (!id) return "";
+    var g = (doc.registry || main.registry || {})[id] || {}, v = g.verdict || "not yet registered";
+    return '<a class="aw-reg' + (g.stale ? " is-stale" : "") + '" href="/models/#' + esc(id) + '" title="' +
+      esc("Registry row " + id + ": " + v + "." + (g.stale ? " Its eval is " + g.age_days + " days old; stale until it is refreshed." : "")) +
+      '">' + esc(v + (g.stale ? ", stale" : "")) + "</a>";
+  }
+  var tabsChunk = null;
+  function tabsLoad() {
+    if (!tabsChunk) {
+      tabsChunk = new Promise(function (ok, no) {
+        var t = document.createElement("script");
+        t.onload = ok; t.onerror = no; t.src = root.getAttribute("data-tabs-js"); document.head.appendChild(t);
+      }).then(function () { if (!window.EephusAwardsTabs) throw new Error("chunk"); });
+      tabsChunk.catch(function () { tabsChunk = null; });
+    }
+    return tabsChunk;
+  }
+  function tabsCtx() {
+    return { main: main, root: root, state: function () { return state; }, esc: esc, num: num, fmt: fmt, ord: ord, ico: ico,
+      stateBox: stateBox, controls: controls, stampLine: stampLine, shareChip: shareChip, hashOf: hashOf, block: block,
+      tierOf: tierOf, dateLong: dateLong, docFor: docFor, regChip: regChip, wide: wide, twoCol: twoCol, LAMP: LAMP,
+      MAX_LAMPS: MAX_LAMPS, TITLE: TITLE, AWARDS: AWARDS, KEY: KEY };
+  }
+
   // ---- My Ballot (AWARDS_9; AWARDS_PLAN 5.8) ----------------------------------
   // assets/awards-ballot.js and its stylesheet load on the first My Ballot open
   // (their stamped URLs ride the mount's data attributes); the chunk fetches the
@@ -815,7 +874,7 @@
       st.pic = s.kind === "index" || s.kind === "signed" ? s.kind : "dumbbell";
       st.dec = (String(s.rows[0].value_display).split(".")[1] || "").length;
       st.rows = s.rows.slice(0, 5).map(function (r) {
-        var t = s.kind === "index" ? tierOf(r.value, s.family) : "";
+        var t = s.kind === "index" ? tierOf(r.value_display, s.ruler || s.family) : "";
         return { r: r.rank, n: r.name, c: r.club_code, t: r.value_display, v: r.value, f: r.from, to: r.to,
           ink: t ? "--vt-" + t : null };
       });
@@ -848,7 +907,7 @@
         main = j;
         shell();
         var s = parseHash();
-        apply(s, !!s.award);
+        apply(s, !!(s.award || s.sl));
       })
       .catch(function () {
         root.innerHTML = stateBox("failed", 'The awards could not load. <button type="button" class="aw-boot-retry">Retry</button>');
@@ -860,7 +919,7 @@
   window.addEventListener("popstate", onHash);
   var resizeTimer = null;
   window.addEventListener("resize", function () {
-    if (!main || !state || state.section !== "selections") return;
+    if (!main || !state || state.section === "ballot" || state.section === "vote") return;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () { if (layout() !== layoutKey) apply(state, false); }, 150);
   });

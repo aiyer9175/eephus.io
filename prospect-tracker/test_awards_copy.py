@@ -327,6 +327,7 @@ def test_the_page_strings_are_clean():
         "assets/awards.css": (ROOT / "assets" / "awards.css").read_text(encoding="utf-8"),
         "assets/awards-ballot.js": (ROOT / "assets" / "awards-ballot.js").read_text(encoding="utf-8"),
         "assets/awards-ballot.css": (ROOT / "assets" / "awards-ballot.css").read_text(encoding="utf-8"),
+        "assets/awards-tabs.js (AWARDS_8)": (ROOT / "assets" / "awards-tabs.js").read_text(encoding="utf-8"),
         "the GFX awards painter (AWARDS_10)": _gfx_block(),
         "the /awards/ shell": out[i:j],
         "sub line": B._AWARDS_SUB, "meta description": B._AWARDS_DESCRIPTION,
@@ -335,3 +336,111 @@ def test_the_page_strings_are_clean():
         _clean(text, where)
     assert "Not a forecast of the writers' vote." in B._AWARDS_SUB
     assert B._AWARDS_DESCRIPTION.endswith("Not a forecast of the vote.")
+
+
+
+# --- AWARDS_8: what a superlative card prints, and the glossary drafts ------------------------
+
+def _sl_blocks(prov: str, *, displayed: str | None = None):
+    frames = {"lv_first": 2020, "vm_first": 2025}
+    prow = [{"mlbam": 1, "name": "A", "club_code": "BOS", "player_key": "a", "debut_season": 2017,
+             "efv_at_debut": 20.0, "war": 4.0, "pa": 600, "ip": 0}]
+    nrow = [{"mlbam": 1, "name": "A", "club_code": "BOS", "war_realized": 1.0, "war_next": 2.0,
+             "displayed": 1.2, "pa": 600, "ip": 0}]
+    hit = [{"mlbam": 1, "name": "A", "team": "PHI", "pa": 600, "luck_gap": 0.04, "xwoba": 0.38, "woba": 0.34}]
+    fld = [{"mlbam": 1, "name": "A", "team": "DET", "pos": "C", "inn": 900.0, "qualified": True,
+            "dem_plus": 130, "dem_plus_raw": 130.1, "def_runs": 20.0}]
+    rel = [{"mlbam": 1, "name": "A", "team": "SD", "rem_plus": 190, "rem_plus_raw": 190.2, "qualified": True,
+            "ip": 70.0, "gmli": 1.9, "wpa": 5.0, "saves": 30}]
+    clubs = [{"club": "TBR", "season": 2026, "n_pitching_change": 500, "mwpa_pitching_change": 8.0}]
+    nxt = A.next_rise(nrow, 2026, bundle_provider=prov, realized_provider=prov)
+    if displayed:
+        nxt["displayed_provider"] = displayed
+    return [A.prospect_above(prow, 2026, war_provider=prov, frames=frames),
+            A.proj_below(nrow, 2026, war_provider=prov), nxt,
+            A.glove(fld, 2026), A.contact_ahead(hit, 2026), A.relief(rel, 2026), A.pitching_changes(clubs, 2026)]
+
+
+def test_sl_present_is_clean_idempotent_and_built_from_the_provider():
+    """AWARDS_8 (AWARDS_PLAN 5.5, I12): every unit, axis label and context line a superlative
+    card prints is built in awards_core from the block's fields and its war_provider."""
+    for prov in ("ewar_v2", "ewar_v3"):
+        unit = A.war_unit_label(prov)
+        other = "eWAR v3" if prov == "ewar_v2" else "eWAR v2"
+        for b in _sl_blocks(prov):
+            s = A.sl_present(b, 2026)
+            _clean(s, f"sl_present {s['id']} {prov}")
+            assert A.sl_present(s, 2026) == s, "idempotent"
+            assert {k: v for k, v in s.items() if k not in ("unit", "war_unit", "axis_label", "ruler", "rows")} == \
+                {k: v for k, v in b.items() if k != "rows"}, "no served field moves"
+            assert other not in json.dumps(s)
+            if s["id"].startswith(("prospect_", "proj_", "next_")):
+                assert s["war_unit"] == unit and unit in s["axis_label"]
+            for r in s["rows"]:
+                assert r["context"]
+        by = {b["id"]: A.sl_present(b, 2026) for b in _sl_blocks(prov)}
+        assert by["next_rise"]["unit"] == unit and by["next_rise"]["rows"][0]["context"] == f"2026 1.0, 2027 2.0 {unit}"
+        assert by["prospect_above"]["unit"] == "pts" and "graded_at_floor" in by["prospect_above"]["rows"][0]["flags"]
+        assert by["glove"]["ruler"] == "z" and by["relief"]["ruler"] == "run"
+        assert by["glove"]["rows"][0]["context"] == "C, 900 innings, +20.0 defensive runs"
+        assert by["contact_ahead"]["rows"][0]["context"] == "xwOBA .380, wOBA .340, 600 PA"
+        assert by["relief"]["rows"][0]["context"] == "70.0 IP, gmLI 1.90, WPA +5.00, 30 saves"
+        assert by["pitching_changes"]["unit"] == "WPA"
+    # a bundle on fWAR while the page displays eWAR v2: both named from their providers
+    fw = A.sl_present(_sl_blocks("fwar", displayed="ewar_v2")[2], 2026)
+    assert fw["unit"] == "fWAR" and fw["rows"][0]["context"] == "2026 1.0, 2027 2.0 fWAR, the page's eWAR v2 1.2"
+    # a block from the frozen record (no presentation fields) gains them; blocked blocks stay empty
+    dark = A.sl_present(A.proj_above([], 2026, war_provider="ewar_v2"), 2026)
+    assert dark["rows"] == [] and dark["blocked_on"]
+
+
+def test_the_glossary_drafts_are_clean_and_land_only_at_the_flip(tmp_path, monkeypatch):
+    """AWARDS_PLAN 4.10: the fourteen entries drafted in tools/awards_glossary.py pass the copy
+    rules and the glossary's own shelf rules, a dry run writes nothing, a second apply changes
+    nothing, the file keeps its line endings and indent, and --write refuses while
+    AWARDS_LIVE is False (AWARDS_11 writes them; row I13)."""
+    import awards_glossary as G
+    import glossary_sections as GS
+
+    ents = G.entries()
+    assert [e["id"] for e in ents] == list(G._ids())
+    assert len(ents) == 14
+    for e in ents:
+        _clean(e, f"glossary draft {e['id']}")
+        assert "Deserved" not in json.dumps(e)
+        assert e["module"] == ["hof"] and e["section"] == GS.section_for(e, {})
+        assert e["shelf"] in ("ark", "industry", "foundation")
+        if e["shelf"] in ("ark", "industry"):
+            assert e.get("origin")
+        assert e["definition"] and e["term"]
+    by = {e["id"]: e for e in ents}
+    assert by["rookie_proxy"]["definition"] == (
+        "The site's test for rookie status: MLB's at-bat and innings limits from prior seasons, and an "
+        "estimate of MLB's 45-day active-roster limit built from MLB's transaction log until the site "
+        "measures service time.")
+    assert by["sl_prospect_expectation"]["definition"].startswith(
+        "Former prospects against their grade at debut: where a player's season eWAR places him in the pool")
+    assert "2020 and 2021 prospect list vintages" in by["sl_prospect_expectation"]["definition"]
+    assert "14, 9, 8, 7, 6, 5, 4, 3, 2, 1" in by["bbwaa_ballot"]["definition"]
+    assert "252" in by["awards_rule_mvp"]["methodology"] and "81" in by["awards_rule_mvp"]["methodology"]
+    assert "win probability added" in by["award_race_strip"]["definition"]
+    raw = (ROOT / "data" / "glossary.json").read_bytes()
+    doc = json.loads(raw)
+    ids = {e["id"] for e in doc["entries"]}
+    assert ids.isdisjoint(G._ids()), "no awards entry before the flip (I13)"
+    assert G.dump(doc, b"\r\n" in raw) == raw, "the dump is the file's own format"
+    new, changed = G.apply(doc)
+    assert changed == [f"add {i}" for i in G._ids()]
+    assert new["entries"][:len(doc["entries"])] == doc["entries"], "nothing already there moves"
+    again, changed2 = G.apply(new)
+    assert changed2 == [] and again == new
+    known = ids | set(G._ids())
+    for e in ents:
+        assert set(e["seeAlso"]) <= known, e["id"]
+    copy_ = tmp_path / "glossary.json"
+    copy_.write_bytes(raw)
+    monkeypatch.setattr(G, "GLOSSARY", copy_)
+    assert G.main([]) == 0 and G.main(["--check"]) == 1
+    monkeypatch.setattr(A, "AWARDS_LIVE", False)
+    assert G.main(["--write"]) == 2
+    assert copy_.read_bytes() == raw, "a dry run, a check and a refused write leave the file alone"

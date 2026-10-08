@@ -519,6 +519,19 @@ def test_i11_war_provider_sits_on_every_war_bearing_block(world):
     assert world.eval["war_provider"] == PROV
 
 
+def test_served_superlatives_carry_what_the_page_prints(world):
+    """AWARDS_8: every served superlative block carries the unit, axis label, ruler and row
+    context lines awards_core.sl_present builds from its own fields (idempotent, so a
+    block read from a frozen record gains them without the record being rewritten)."""
+    for s in world.awards["superlatives"]:
+        assert {"unit", "war_unit", "axis_label", "ruler"} <= set(s), s["id"]
+        assert A.sl_present(s, SEASON) == s, s["id"]
+        assert all("context" in r for r in s["rows"])
+    by = {s["id"]: s for s in world.awards["superlatives"]}
+    assert by["glove"]["ruler"] == "z" and by["relief"]["ruler"] == "run"
+    assert by["next_rise"]["unit"] == A.war_unit_label(PROV)
+
+
 def test_payload_strings_carry_no_verdict_word_ban_word_or_dash(world):
     def strings(obj, key=None):
         if isinstance(obj, str):

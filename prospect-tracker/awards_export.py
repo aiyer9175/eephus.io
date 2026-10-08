@@ -1206,7 +1206,8 @@ def _shard_doc(ctx: _Ctx, p: dict, *, status: str, generated_at: str) -> dict:
         "season": S, "status": status, "war_provider": ctx.provider,
         "stamp": {"through": p["through"], "frozen_at": None},
         "ballot_rules": A.ballot_rules_payload(),
-        "rules": p["rules"], "awards": p["awards"], "superlatives": p["superlatives"],
+        "rules": p["rules"], "awards": p["awards"],
+        "superlatives": [A.sl_present(s, S) for s in p["superlatives"]],
         "race": _race(ctx, S),
         "credits": _credits(ctx, current, st.get("copyright")),
         "what_this_page_does_not_claim": A.does_not_claim_lines(ctx.provider),
@@ -1876,7 +1877,7 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
             "selection_caption": A.selection_caption(S, frozen is not None),
             "stamps": None, "registry": doc["registry"],
             "ballot_rules": doc["ballot_rules"], "rules": cur["rules"], "awards": cur["awards"],
-            "superlatives": cur["superlatives"], "race": doc["race"], "vote_table": vote_table,
+            "superlatives": doc["superlatives"], "race": doc["race"], "vote_table": vote_table,
             "credits": doc["credits"],
             "what_this_page_does_not_claim": doc["what_this_page_does_not_claim"],
         }

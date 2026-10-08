@@ -955,9 +955,12 @@ def _next_pair(rows, season, *, bundle_provider, realized_provider, largest_firs
         if real is None or nxt is None:
             continue
         d = nxt - real
-        scored.append((d, r, {"from": real, "to": nxt, "value_display": _signed(d, 1),
-                              "realized_display": score_display(real),
-                              "projected_display": score_display(nxt)}))
+        extra = {"from": real, "to": nxt, "value_display": _signed(d, 1),
+                 "realized_display": score_display(real), "projected_display": score_display(nxt)}
+        if _num(r.get("displayed")) is not None:
+            # the displayed series' season total, printed beside when the bundle's differs
+            extra["displayed_display"] = score_display(r["displayed"])
+        scored.append((d, r, extra))
     sl_id = "next_rise" if largest_first else "next_drop"
     return _sl_block(
         sl_id, season, _sl_rows(scored, largest_first=largest_first, top_n=top_n),
@@ -1094,6 +1097,89 @@ def pitching_changes(club_rows, season, *, top_n=SL_TOP_N) -> dict:
                     "only and never summed with another; realized value, not skill."),
         floor_label=f"Floor: at least {PITCHING_CHANGES_MIN_N} pitching changes in the season.",
         frame_label=f"Season {int(season)}; the decision ledger covers 2018, 2019 and 2021 on.")
+
+
+# --- what a superlative card prints beside its numbers (AWARDS_8) --------------------
+
+#: The value ruler an index card's lamps are tiered on: the boards' own ladders
+#: (DEM+ on z, REM+ on run, as the compare strip reads them). The block's
+#: `family` names the metric; `ruler` names the EephusTiers ladder.
+SL_RULERS = {"glove": "z", "relief": "run"}
+SL_UNITS = {"pitching_changes": "WPA"}
+
+
+def _f(v, spec: str):
+    n = _num(v)
+    return None if n is None else format(n, spec)
+
+
+def _rate(v):
+    s = _f(v, ".3f")
+    return None if s is None else (s[1:] if s.startswith("0.") else s)
+
+
+def _sl_context(sid: str, r: dict, S: int, wu, du) -> str | None:
+    def part(v, text):
+        return text if _num(v) is not None else None
+    if sid.startswith("prospect_"):
+        parts = [f"debut {r['debut_season']}" if r.get("debut_season") else None,
+                 part(r.get("efv_at_debut"), f"eFV at debut {_f(r.get('efv_at_debut'), '.1f')}"),
+                 part(r.get("war_display"), f"{_f(r.get('war_display'), '.1f')} {wu}")]
+    elif sid.startswith("proj_"):
+        parts = [part(r.get("projected_display"), f"projected {_f(r.get('projected_display'), '.1f')}, "
+                      f"realized {_f(r.get('realized_display'), '.1f')} {wu}"),
+                 part(r.get("p10"), f"P10 to P90 {_f(r.get('p10'), '.1f')} to {_f(r.get('p90'), '.1f')}")
+                 if _num(r.get("p90")) is not None else None]
+    elif sid.startswith("next_"):
+        parts = [part(r.get("realized_display"), f"{S} {_f(r.get('realized_display'), '.1f')}, "
+                      f"{S + 1} {_f(r.get('projected_display'), '.1f')} {wu}"),
+                 part(r.get("displayed_display"), f"the page's {du} {_f(r.get('displayed_display'), '.1f')}")
+                 if du else None]
+    elif sid == "glove":
+        parts = [r.get("pos"), part(r.get("inn"), f"{_f(r.get('inn'), '.0f')} innings"),
+                 part(r.get("def_runs"), f"{_f(r.get('def_runs'), '+.1f')} defensive runs")]
+    elif sid in ("contact_ahead", "results_ahead"):
+        parts = [part(r.get("xwoba"), f"xwOBA {_rate(r.get('xwoba'))}"),
+                 part(r.get("woba"), f"wOBA {_rate(r.get('woba'))}"),
+                 part(r.get("pa"), f"{_f(r.get('pa'), '.0f')} PA")]
+    elif sid == "relief":
+        parts = [part(r.get("ip"), f"{_f(r.get('ip'), '.1f')} IP"),
+                 part(r.get("gmli"), f"gmLI {_f(r.get('gmli'), '.2f')}"),
+                 part(r.get("wpa"), f"WPA {_f(r.get('wpa'), '+.2f')}"),
+                 part(r.get("saves"), f"{r.get('saves')} saves")]
+    elif sid == "pitching_changes":
+        parts = [part(r.get("n_pitching_change"), f"{r.get('n_pitching_change')} pitching changes")]
+    else:
+        parts = []
+    return ", ".join(p for p in parts if p) or None
+
+
+def sl_present(block: dict, season: int) -> dict:
+    """A copy of a superlative block with what the page prints beside its numbers:
+    `unit` (the value's unit), `war_unit`, `axis_label` (the dumbbell's two ends),
+    `ruler` and each row's `context` line, each built from the block's own fields
+    and its war_provider. Idempotent; the exporter applies it to the live, frozen
+    and closed lists, so a frozen record is read and never rewritten."""
+    b = copy.deepcopy(block)
+    sid, S = str(b.get("id")), int(season)
+    prov = b.get("war_provider")
+    wu = war_unit_label(prov) if prov else None
+    disp = b.get("displayed_provider")
+    du = war_unit_label(disp) if disp and disp != prov else None
+    unit, axis = SL_UNITS.get(sid), None
+    if sid.startswith("prospect_") and wu:
+        unit = "pts"
+        axis = f"Pool percentile: hollow at the eFV at debut, filled at the season's {wu}."
+    elif sid.startswith("proj_") and wu:
+        unit = wu
+        axis = f"{wu}: hollow at the preseason projection, filled at the season."
+    elif sid.startswith("next_") and wu:
+        unit = wu
+        axis = f"{wu}: hollow at {S}, filled at the {S + 1} projection."
+    for r in b.get("rows") or []:
+        r["context"] = _sl_context(sid, r, S, wu, du)
+    b.update(unit=unit, war_unit=wu, axis_label=axis, ruler=SL_RULERS.get(sid))
+    return b
 
 
 # --- labels (every string a card prints, built from fields) ---------------------------
