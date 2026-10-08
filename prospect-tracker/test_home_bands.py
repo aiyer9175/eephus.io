@@ -14,17 +14,25 @@ its band; the sidebar search, the module nav, the drawer, "More analysis
 soon", the glossary teaser and the scatter teaser are gone. Measured at HEAD
 before the change: the first news row at y 1165 at 1280 x 900 and inside the
 closed drawer at 390; the first MLB content at y 1886 of 2829 at 1280.
+
+HOME_5: while mlb_events.MLB_EVENTS_LIVE is True the MLB band carries the
+Transactions module (Trades: every deal of the last 30 days, one row per deal,
+board prospects flagged by overall rank, the PROSPX Trade Audit link only on a
+deal with a board player; Roster moves: 8 rows of 60-day IL placements, DFAs,
+claims and contract selections of the last 7 days) and the prospect-only
+Recent Trades module leaves the Prospects band. Off, the page is unchanged.
 """
 from __future__ import annotations
 
 import inspect
 import re
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
 
 import build_site as B
+import mlb_events as M
 
 ROOT = Path(__file__).resolve().parent
 
@@ -65,15 +73,21 @@ def test_the_reversal_is_one_line(monkeypatch):
 
 def test_every_block_sits_in_its_band(home):
     mlb, pro = _band(home, "mlb"), _band(home, "pro")
+    # While the MLB events feed is live, Recent Trades merges into the MLB
+    # band's Transactions module (HOME_5); off, it stays in the Prospects band.
+    live = B._events_live()
+    trades = ("<h2>Transactions</h2>", "<h2>Recent Trades</h2>")
     for needle in ('id="home-scores-slot"', '<nav class="club-logos"', ">Free Agency<",
                    "MLB Projections<", "Leaders<", "Trade Machine<", "Alchemy Lab<",
-                   'class="xmod-card xmod-strip-card"', ">Diamond Pass<", "FG pts"):
+                   'class="xmod-card xmod-strip-card"', ">Diamond Pass<", "FG pts") + trades[:live]:
         assert needle in mlb, needle
     for needle in ('<nav class="band-links"', 'class="home-module spot-module"', "<h2>Top Prospects</h2>",
                    "<h2>Top Movers</h2>", "<h2>Recent Debuts</h2>", "<h2>Top Farm Systems</h2>",
-                   "Prospect History", "<h2>eFV Distribution</h2>", "CollegeSavant<", "Park Factors<",
-                   "<h2>Recent Trades</h2>", 'id="draft-war-room-banner"'):
+                   B._HISTORY_LABEL, "<h2>eFV Distribution</h2>", "CollegeSavant<", "Park Factors<",
+                   'id="draft-war-room-banner"') + trades[1:] * (not live):
         assert needle in pro, needle
+    assert trades[1] not in mlb and trades[0] not in pro
+    assert (trades[1] in home) is not live
     # the MLB band carries no prospect module and the Prospects band no MLB card
     for needle in ("<h2>Top Prospects</h2>", "spot-module", "Park Factors<"):
         assert needle not in mlb, needle
@@ -168,6 +182,179 @@ def test_one_callout_per_band_from_its_own_calendar(monkeypatch):
     assert "Postseason" not in B._date_callout("mlb", oct7)
     monkeypatch.setattr(B, "_cached_data_json", bracket(live, as_of="2026-09-01"))
     assert "Postseason" not in B._date_callout("mlb", oct7)
+
+
+# ---- the Transactions module (HOME_5), on a fixture recent.json ------------
+
+TX_TODAY = date.today()
+
+
+def _d(n: int) -> str:
+    return (TX_TODAY - timedelta(days=n)).isoformat()
+
+
+NYY, BOS, SEA, TEX = 147, 111, 136, 140
+DEAL_A = "Boston Red Sox traded RHP Vet A and SS Pro Kid to New York Yankees for C Vet C."
+
+
+def _tx(mlbam, day, typ, tx, key=None, name=None, frm=None, to=None, desc="", **kw):
+    r = {"mlbam": mlbam, "name": name or f"P{mlbam}", "date": day, "type": typ, "tx": tx,
+         "clubs": [c for c in (frm, to) if c is not None], "desc": desc or f"row {tx}"}
+    if key:
+        r["key"] = key
+    if frm is not None:
+        r["from"] = frm
+    if to is not None:
+        r["to"] = to
+    if typ == "trade":
+        r["deal"] = tx
+    r.update(kw)
+    return r
+
+
+TX_ROWS = [
+    # Deal A: two veterans and a board prospect, one row repeated in the cache.
+    _tx(10, _d(1), "trade", 900, "vet_a", "Vet A", BOS, NYY, DEAL_A),
+    _tx(10, _d(1), "trade", 900, "vet_a", "Vet A", BOS, NYY, DEAL_A),
+    _tx(20, _d(1), "trade", 900, None, "Pro Kid", BOS, NYY, DEAL_A),
+    _tx(40, _d(1), "trade", 900, "vet_c", "Vet C", NYY, BOS, DEAL_A),
+    # Deal B: the same clubs and day, another deal, no board player.
+    _tx(11, _d(1), "trade", 901, "vet_b", "Vet B", BOS, NYY, "Boston Red Sox traded LHP Vet B."),
+    # Outside the 30-day window.
+    _tx(12, _d(32), "trade", 902, "vet_old", "Vet Old", BOS, SEA, "old deal"),
+] + [
+    # Seven more single-player deals: ten in all, the first eight show.
+    _tx(200 + i, _d(2), "trade", 920 + i, f"t{i}", f"Trade {i}", 108 + i, 133 + i, f"deal {i}")
+    for i in range(7)
+] + [
+    _tx(50, _d(2), "il_place", 950, "il60", "Sixty Day", None, SEA,
+        "Seattle Mariners placed RHP Sixty Day on the 60-day injured list.", il="60-day IL"),
+    _tx(51, _d(1), "il_place", 951, "il15", "Fifteen Day", None, SEA,
+        "Seattle Mariners placed RHP Fifteen Day on the 15-day injured list.", il="15-day IL"),
+    _tx(52, _d(1), "claim", 952, "cl", "Claimed Guy", SEA, TEX, "Texas Rangers claimed Claimed Guy."),
+    _tx(53, _d(3), "callup", 953, "cu", "Selected Guy", None, TEX, "Texas Rangers selected Selected Guy."),
+    _tx(54, _d(1), "recall", 954, "rc", "Recalled Guy", None, TEX, "Texas Rangers recalled Recalled Guy."),
+    _tx(55, _d(9), "dfa", 955, "olddfa", "Old Dfa", TEX, None, "Texas Rangers designated Old Dfa."),
+] + [
+    _tx(60 + i, _d(4), "dfa", 960 + i, f"dfa{i}", f"Dfa {i}", TEX, None, f"Texas Rangers designated Dfa {i}.")
+    for i in range(7)
+]
+TX_RECENT = {"through": _d(1), "rows": TX_ROWS}
+TX_PLAYERS = [
+    # The StatsAPI deal replaces Pro Kid's own trade row within a day.
+    {"player_key": "pro_kid", "mlbam_id": 20, "player_name": "Pro Kid", "org": "NYY",
+     "overall_rank": 5, "trades": [{"trade_date": _d(1), "from_org": "BOS", "to_org": "NYY"}]},
+    # A board trade StatsAPI does not carry: a deal from the board's own row.
+    {"player_key": "board_two", "mlbam_id": 22, "player_name": "Board Two", "org": "TEX",
+     "overall_rank": 50, "trades": [{"trade_date": _d(3), "from_org": "SEA", "to_org": "TEX"}]},
+]
+
+
+@pytest.fixture
+def tx_fake(monkeypatch):
+    orig = B._cached_data_json
+    store = {"recent": TX_RECENT}
+
+    def f(name):
+        if name == "mlb_events/recent.json":
+            return store["recent"]
+        if name == "player_links.json":
+            return {"byKey": {}}
+        if name == "fa_class.json":
+            return {"events": []}
+        if name == "mlb_player_detail.json":
+            return {"players": {"vet_a": {"career": [{"war": 5.0}]},
+                                "vet_c": {"career": [{"war": 20.0}], "careerPit": [{"war": 10.0}]}}}
+        return orig(name)
+    monkeypatch.setattr(B, "_cached_data_json", f)
+    monkeypatch.setattr(B, "_save_wire_fv_ledger", lambda *a, **k: None)
+    monkeypatch.setattr(M, "MLB_EVENTS_LIVE", True)
+    return store
+
+
+def _tx_home(store, recent) -> str:
+    store["recent"] = recent
+    return B.build_home([], {"players": TX_PLAYERS, "graduates": [], "as_of": "2026-10-01"})
+
+
+def _tx_col(page: str, col: str) -> str:
+    return page.split(f'<div class="tx-col" id="tx-{col}">', 1)[1].split('<div class="tx-col"', 1)[0]
+
+
+_DEAL_RE = r'<div class="tx-row" data-fam="trd" data-type="trade"[^>]*>(.*?)</div>'
+
+
+def test_transactions_list_each_deal_once_and_flag_board_players(tx_fake):
+    page = _tx_home(tx_fake, TX_RECENT)
+    mlb, pro = _band(page, "mlb"), _band(page, "pro")
+    assert "<h2>Transactions</h2>" in mlb and 'class="tx-mod"' not in pro
+    assert "<h2>Recent Trades</h2>" not in page, "Recent Trades merges into Trades"
+    trades = _tx_col(page, "trades")
+    deals = re.findall(_DEAL_RE, trades)
+    # Deal A, deal B, seven single-player deals, Board Two's own deal; the old
+    # deal is outside the window and Pro Kid's own trade row is replaced.
+    assert len(deals) == 10, deals
+    assert sum("Pro Kid" in d for d in deals) == 1
+    assert not any("Vet Old" in d for d in deals)
+    shown, more = trades.split('<details class="tx-all">', 1)
+    assert len(re.findall(r'class="tx-row"', shown)) == B._TX_TRADE_ROWS
+    assert "<summary>2 more deals</summary>" in more
+    a = next(d for d in deals if "Pro Kid" in d)
+    # The board player leads, then career WAR (Vet C 30 over Vet A 5), then "+n".
+    names = re.sub(r"<[^>]+>", "", a.split('class="tx-names">', 1)[1].split('<a class="tx-audit"', 1)[0])
+    assert names == "Pro Kidboard rank #5, Vet C+1"
+    assert '<span class="tx-rank"><span class="visually-hidden">board rank </span>#5</span>' in a
+    assert 'title="Traded BOS ⇄ NYY"' in a, "players moved both ways"
+    two = next(d for d in deals if "Board Two" in d)
+    assert ">#50</span>" in two and 'title="Traded SEA → TEX"' in two
+    assert sum(d.count('class="tx-rank"') for d in deals) == 2, "only board players carry a rank"
+
+
+def test_the_trade_audit_link_rides_only_deals_with_a_board_player(tx_fake):
+    page = _tx_home(tx_fake, TX_RECENT)
+    deals = re.findall(_DEAL_RE, _tx_col(page, "trades"))
+    audits = [re.search(r'<a class="tx-audit" href="([^"]+)">Trade Audit</a>', d) for d in deals]
+    with_board = [d for d in deals if 'class="tx-rank"' in d]
+    assert sum(1 for x in audits if x) == len(with_board) == 2
+    hrefs = sorted(x.group(1) for x in audits if x)
+    assert hrefs == ["/prospx/#tab=traded&amp;acq=trade&amp;q=Board%20Two",
+                     "/prospx/#tab=traded&amp;acq=trade&amp;q=Pro%20Kid"]
+    assert "tx-audit" not in next(d for d in deals if "Vet B" in d)
+
+
+def test_roster_moves_are_the_last_week_of_four_types(tx_fake):
+    page = _tx_home(tx_fake, TX_RECENT)
+    moves = re.findall(r'<(?:a|div) class="tx-row"(?: href="[^"]*")? data-fam="(\w+)" data-type="(\w+)"'
+                       r' title="([^"]*)"', _tx_col(page, "moves"))
+    assert len(moves) == B._TX_MOVE_ROWS == 8
+    assert {t for _f, t, _d in moves} <= set(B._TX_MOVE_TYPES)
+    titles = [t for _f, _t, t in moves]
+    assert not any("15-day" in t or "Old Dfa" in t or "recalled" in t for t in titles)
+    # date first, then the weight: the claim (75) before the 60-day IL a day older
+    assert titles[:2] == ["Texas Rangers claimed Claimed Guy.",
+                          "Seattle Mariners placed RHP Sixty Day on the 60-day injured list."]
+    assert {f for f, _t, _d in moves} == {"mlb", "inj"}
+    assert '<span class="wire-val">60-day IL</span>' in page
+
+
+def test_a_stale_log_draws_the_unmeasured_state(tx_fake):
+    page = _tx_home(tx_fake, dict(TX_RECENT, through=_d(5)))
+    for col in ("trades", "moves"):
+        assert 'class="px-state is-unmeasured"' in _tx_col(page, col), col
+    fresh = _tx_home(tx_fake, {"through": _d(1), "rows": []})
+    assert "No roster moves in the last 7 days." in _tx_col(fresh, "moves")
+
+
+def test_flag_off_keeps_recent_trades_and_never_builds_transactions(tx_fake, monkeypatch):
+    monkeypatch.setattr(M, "MLB_EVENTS_LIVE", False)
+    with_rows = _tx_home(tx_fake, TX_RECENT)
+
+    def boom(*a, **k):
+        raise AssertionError("the Transactions module is built with the flag off")
+    monkeypatch.setattr(B, "_home_transactions", boom)
+    assert _tx_home(tx_fake, {}) == with_rows, "flag off, recent.json is never read"
+    assert "<h2>Recent Trades</h2>" in _band(with_rows, "pro")
+    assert 'class="tx-mod"' not in with_rows and "<h2>Transactions</h2>" not in with_rows
 
 
 # ---- the browser: the news is on screen, never in a drawer ------------------
