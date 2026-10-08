@@ -1560,3 +1560,27 @@
     onWatchChange: onWatchChange
   };
 })();
+
+// ---- EephusSeason: the site's one season state (site pass SP-D5) -----------
+// season_state.py writes window.EEPHUS_SEASON into assets/eephus-config.js every
+// night from the StatsAPI calendar ({phase, mlb_regular_end, milb_last_game, ...});
+// this reader adds no fetch. Absent state reads as in-season, so every consumer
+// keeps the default it had before the state existed.
+(function () {
+  "use strict";
+  function get() { var s = window.EEPHUS_SEASON; return (s && s.phase) ? s : null; }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function today() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function live() { var s = get(); return !s || s.phase === "regular"; }
+  // label("window", sliceAsOf): "Final" once the slice reaches the last MiLB game, else "Last".
+  // label("recent"): "Final" outside the regular season, else "Last".
+  // label("standout", season): the ribbon's off-season label, "" in season.
+  function label(kind, arg) {
+    var s = get();
+    if (kind === "window") return (s && s.milb_last_game && String(arg || today()) >= s.milb_last_game) ? "Final" : "Last";
+    if (kind === "recent") return live() ? "Last" : "Final";
+    if (kind === "standout") return live() ? "" : "Final two weeks of the " + (arg || String(s.milb_last_game || s.season).slice(0, 4)) + " MiLB season";
+    return "";
+  }
+  window.EephusSeason = { get: get, today: today, phase: function () { var s = get(); return s ? s.phase : null; }, live: live, label: label };
+})();

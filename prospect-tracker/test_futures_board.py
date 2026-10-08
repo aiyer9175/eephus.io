@@ -242,7 +242,7 @@ def test_the_tab_says_there_is_no_market_before_it_shows_a_number():
 # The season-over line (Part 8 intensity lane, finding F1)
 # --------------------------------------------------------------------------
 
-STAMP = ("As of the end of the regular season (2026-10-01): postseason results "
+STAMP = ("As of the end of the regular season (2026-09-27): postseason results "
          "are not in these odds.")
 
 
@@ -250,11 +250,14 @@ def test_the_season_over_line_renders_from_the_two_payload_dates():
     """The simulator reads the regular-season schedule only and plays the
     bracket from final standings, so after the last regular-season game its
     odds stop learning. The line is built from the build date and the season's
-    last regular-season date, and nothing else."""
+    last regular-season date, and nothing else; the date it prints is the
+    season's end (mlb_regular_end, site pass SP-D5), never the build date."""
     assert pe.futures_as_of_note("2026-10-01T11:33:03+00:00", "2026-09-27") == STAMP
+    assert "2026-10-01" not in STAMP
     # on the last regular-season date itself the line is already shown
-    assert pe.futures_as_of_note("2026-09-27T23:00:00+00:00", "2026-09-27") == (
-        STAMP.replace("2026-10-01", "2026-09-27"))
+    assert pe.futures_as_of_note("2026-09-27T23:00:00+00:00", "2026-09-27") == STAMP
+    # every later build prints the same date
+    assert pe.futures_as_of_note("2026-12-01T07:00:00+00:00", "2026-09-27") == STAMP
 
 
 def test_the_season_over_line_is_absent_before_the_season_ends():
@@ -279,6 +282,10 @@ def test_build_futures_carries_both_dates_and_the_derived_line():
 def test_the_served_line_agrees_with_the_served_dates(d):
     if "regular_season_end" not in d:
         pytest.skip("futures.json predates the season-over line; rebuild it")
+    build = str(d.get("generated_at") or "")[:10]
+    if build != str(d["regular_season_end"])[:10] and f"({build})" in str(d.get("as_of_note") or ""):
+        pytest.skip("futures.json predates the mlb_regular_end stamp (it names its "
+                    "build date); the next proj_export build rewrites it")
     assert d.get("as_of_note") == pe.futures_as_of_note(
         d.get("generated_at"), d.get("regular_season_end"))
 

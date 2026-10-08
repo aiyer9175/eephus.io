@@ -25,3 +25,7 @@ window.EEPHUS_ANALYTICS = {
   domain: "",          // your site domain as registered with the provider
   goatcounter: ""      // GoatCounter endpoint (only if using GoatCounter)
 };
+
+// season-state:begin (season_state.py writes this block every night; do not edit)
+window.EEPHUS_SEASON = {"phase": "postseason", "season": 2026, "mlb_regular_end": "2026-09-27", "mlb_postseason_end": "2026-10-31", "milb_last_game": "2026-09-20", "next_opening_day": "2027-03-25", "draft_date": "2026-07-12", "j2_open": "2027-01-15", "posting_window": ["2026-11-01", "2026-12-15"]};
+// season-state:end

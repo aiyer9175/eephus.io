@@ -449,7 +449,8 @@ def paths(tmp_path, monkeypatch):
     (tmp_path / "data").mkdir(parents=True, exist_ok=True)
     (tmp_path / "data" / "futures.json").write_text(json.dumps({
         "generated_at": "2026-10-12T07:00:00+00:00", "season": 2026,
-        "as_of_note": "As of the end of the regular season (2026-10-12): stamp"}), encoding="utf-8")
+        "regular_season_end": "2026-09-27",
+        "as_of_note": "As of the end of the regular season (2026-09-27): stamp"}), encoding="utf-8")
     import betting_model as bm
     monkeypatch.setattr(bm, "completed_games", lambda season=None, refresh=True: elo_games())
     return tmp_path
@@ -485,6 +486,9 @@ def test_first_run_freezes_the_header_and_one_entry(paths):
     assert doc["serve"]["line"] == ("Pennant and World Series: implied by the postseason "
                                     "bracket simulator as of 2026-10-12, no market.")
     assert "Division, Playoffs, Bye, Proj W and Win band" in doc["serve"]["division_columns_note"]
+    # dated by the season's end (mlb_regular_end), never by the build date (SP-D5)
+    assert doc["serve"]["division_columns_note"].startswith(
+        "As of the end of the regular season (2026-09-27): ")
     assert doc["record"]["n_days"] == 1 and doc["record"]["n_scored"] == 0
     # the page serves the frozen entry, number for number
     frozen = rec["entries"][0]["outputs"]["clubs"]

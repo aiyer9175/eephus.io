@@ -70,7 +70,7 @@ SERVE_BRACKET_SIM = True
 LABEL = "implied, no market"
 LINE_TEMPLATE = ("Pennant and World Series: implied by the postseason bracket "
                  "simulator as of {as_of}, no market.")
-DIVISION_COLUMNS_TEMPLATE = ("As of the end of the regular season ({build}): "
+DIVISION_COLUMNS_TEMPLATE = ("As of the end of the regular season ({mlb_regular_end}): "
                              "postseason results are not in the Division, "
                              "Playoffs, Bye, Proj W and Win band columns.")
 NOT_UPDATED_TEMPLATE = "The postseason odds did not update on {as_of}."
@@ -1076,10 +1076,16 @@ def record_summary(rec: dict) -> dict:
 
 
 def _division_columns_note(futures: dict | None) -> str | None:
+    """The stamp over the season simulator's columns, dated by the season's last
+    regular-season date (the futures payload's regular_season_end, the date the
+    site season state serves as mlb_regular_end), never by the build date (site
+    pass SP-D5, 2026-10-08: it printed 2026-10-02 for a season that ended
+    2026-09-27)."""
     fu = futures or {}
-    if not fu.get("as_of_note") or not fu.get("generated_at"):
+    end = str(fu.get("regular_season_end") or "")[:10]
+    if not fu.get("as_of_note") or not end:
         return None
-    return DIVISION_COLUMNS_TEMPLATE.format(build=str(fu["generated_at"])[:10])
+    return DIVISION_COLUMNS_TEMPLATE.format(mlb_regular_end=end)
 
 
 def build_payload(rec: dict, entry: dict | None, state: str, *, run_as_of: str,
