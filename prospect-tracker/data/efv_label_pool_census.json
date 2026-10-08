@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-04T04:05:48Z",
+ "generated_at": "2026-10-08T17:42:59Z",
  "produced_by": "tools/efv_label_pool_census.py",
  "model_id": "efv_label_pool",
  "role": "development",
@@ -51,7 +51,7 @@
   "label_view"
  ],
  "code": {
-  "commit": "e5710c768160b06f7ecd5722a86b2fe59f1d7b89",
+  "commit": "8e2361f40ce81685ee2ceaec5d54676f1bc2eb12",
   "tool_sha256": "7e3f767e43b94518483d16b723b1fb177eb829a801ac007ae0fbcf37437077ee",
   "frame_module_sha256": "8aada0480ebb1d63442659a135300b14d79c8d94d91a85e88144b2e942282c00",
   "resolver_sha256": "54a5f8072ff065404d86c654e8a4766353b31f6905b0235b5544ff87a3c8616f"
@@ -365,7 +365,7 @@
     "fv_players_in_window": 0,
     "in_window_share": 0.0,
     "first_snapshot": "2026-07-23",
-    "last_snapshot": "2026-10-03",
+    "last_snapshot": "2026-10-07",
     "real_grader": false
    },
    {
@@ -881,7 +881,7 @@
     "rows": 138,
     "fv_rows": 138,
     "first": "2026-07-23",
-    "last": "2026-10-03",
+    "last": "2026-10-07",
     "list_years": [
      2026
     ]
@@ -2226,26 +2226,26 @@
     "frame_type": "vm",
     "estimator": "E_cond",
     "statistic": "within",
-    "sd_ref": 0.00886,
-    "n_ref": 803,
-    "n_clusters_ref": 803,
+    "sd_ref": 0.01394,
+    "n_ref": 830,
+    "n_clusters_ref": 830,
     "path": "data/efv_v2_dev_eval.json",
     "key": "ds16.frames.vm_dev.deltas.v2_vs_prospx_consensus.spearman.sd",
-    "generated_at": "2026-09-25T21:28:38Z",
-    "sha256": "6dfab7511688b01d4de3ae5eae31d568a55730ce69afc4b980b1891f8357cecf"
+    "generated_at": "2026-10-08T17:39:23Z",
+    "sha256": "e9ced847bca2a4aecaab5079a0e0e5c8038c2d59773845f20fe7bef8d7f33b67"
    },
    {
     "id": "lv_econd_within",
     "frame_type": "lv",
     "estimator": "E_cond",
     "statistic": "within",
-    "sd_ref": 0.00944,
+    "sd_ref": 0.01093,
     "n_ref": 2862,
     "n_clusters_ref": 1753,
     "path": "data/efv_v2_dev_eval.json",
     "key": "ds16.frames.lv_dev.deltas.v2_vs_prospx_consensus.spearman.sd",
-    "generated_at": "2026-09-25T21:28:38Z",
-    "sha256": "6dfab7511688b01d4de3ae5eae31d568a55730ce69afc4b980b1891f8357cecf"
+    "generated_at": "2026-10-08T17:39:23Z",
+    "sha256": "e9ced847bca2a4aecaab5079a0e0e5c8038c2d59773845f20fe7bef8d7f33b67"
    },
    {
     "id": "vm_erefit_pooled",
@@ -2263,32 +2263,32 @@
   ],
   "curve": {
    "vm_econd_within": {
-    "829": 0.0143,
-    "858": 0.0141,
-    "995": 0.0131,
-    "1179": 0.012,
-    "1266": 0.0116,
-    "1464": 0.0108,
-    "1864": 0.0096,
-    "149": 0.0338,
-    "176": 0.0311,
-    "210": 0.0285,
-    "2667": 0.008,
-    "5529": 0.0056
+    "829": 0.0229,
+    "858": 0.0226,
+    "995": 0.0209,
+    "1179": 0.0192,
+    "1266": 0.0186,
+    "1464": 0.0173,
+    "1864": 0.0153,
+    "149": 0.0541,
+    "176": 0.0498,
+    "210": 0.0456,
+    "2667": 0.0128,
+    "5529": 0.0089
    },
    "lv_econd_within": {
-    "829": 0.0289,
-    "858": 0.0284,
-    "995": 0.0263,
-    "1179": 0.0242,
-    "1266": 0.0233,
-    "1464": 0.0217,
-    "1864": 0.0192,
-    "149": 0.0681,
-    "176": 0.0626,
-    "210": 0.0573,
-    "2667": 0.0161,
-    "5529": 0.0112
+    "829": 0.0334,
+    "858": 0.0328,
+    "995": 0.0305,
+    "1179": 0.028,
+    "1266": 0.027,
+    "1464": 0.0251,
+    "1864": 0.0223,
+    "149": 0.0788,
+    "176": 0.0725,
+    "210": 0.0664,
+    "2667": 0.0186,
+    "5529": 0.0129
    },
    "vm_erefit_pooled": {
     "829": 0.0298,
