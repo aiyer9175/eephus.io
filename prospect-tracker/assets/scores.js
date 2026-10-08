@@ -156,7 +156,7 @@
     if (q.mine === "1") r.mine = true;
     if (/^\d{1,9}$/.test(q.game || "")) {
       r.view = "game"; r.game = +q.game;
-      if (/^(summary|preview|box|plays|lineups|info)$/.test(q.tab || "")) r.tab = q.tab;
+      if (/^(summary|preview|box|plays|lineups|info|wp)$/.test(q.tab || "")) r.tab = q.tab;
       if (/^\d{1,4}$/.test(q.play || "")) r.play = +q.play;
     } else if (/^\d{4}$/.test(q.bracket || "")) {
       r.view = "bracket"; r.season = +q.bracket;
@@ -287,6 +287,12 @@
     var hub = window.EEPHUS_HUB, c = hub && hub.club ? hub.club(side.team_id) : null;
     return c ? hub.clubLinkHTML(c.code) : '<span class="sc-club" data-club-nolink="unresolved">' + esc(side.code || side.short || "") + "</span>";
   }
+  // SC7-1: a club mark from the hub; px 16 is the pixel chip (sp-logo), a big fetch the clean header mark. alt ""
+  // beside the printed code, removed on error so the code stands alone.
+  function logo(side, cls, px) {
+    var hub = window.EEPHUS_HUB, c = hub && hub.club ? hub.club(side.team_id) : null;
+    return c && hub.teamLogo ? hub.teamLogo(c.code, cls, { size: px, decorative: true }) : "";
+  }
   function player(id, name) {
     if (LINKS && LINKS.byMlbam && LINKS.byMlbam[String(id)]) {
       return '<a class="sc-player" href="/player/#' + encodeURIComponent(String(id)) + '">' + esc(name) + "</a>";
@@ -323,7 +329,7 @@
     var t = c[side], o = c[side === "away" ? "home" : "away"];
     var won = c.state === "final" && isNum(t.r) && isNum(o.r) && t.r > o.r;
     var rec = t.wl && isNum(t.wl.w) ? t.wl.w + "-" + t.wl.l : "";
-    var cells = '<th scope="row" class="sc-tm">' + clubLink(t) + ' <span class="sc-short">' + esc(t.short || "") +
+    var cells = '<th scope="row" class="sc-tm">' + logo(t, "sp-logo", 16) + clubLink(t) + ' <span class="sc-short">' + esc(t.short || "") +
       "</span>" + (won ? ' <span class="sr-only">winner</span>' : "") +
       (rec ? ' <span class="sc-rec">' + esc(rec) + "</span>" : "") + "</th>";
     if (showScore) {
@@ -337,7 +343,7 @@
     }
     return '<tr class="' + (won ? "is-won" : "") + '">' + cells + "</tr>";
   }
-  function teamsTable(c) {
+  function teamsTable(c, wide) {
     var score = c.state === "live" || c.state === "final" || (c.state === "delayed" && c.sit && c.sit.inning) ||
       c.state === "suspended";
     var head = "";
@@ -347,7 +353,7 @@
       head = '<thead><tr><th scope="col" class="sc-tm"><span class="sr-only">Club</span></th>' + h +
         '<th scope="col" class="sc-r">R</th><th scope="col" class="sc-he">H</th><th scope="col" class="sc-he">E</th></tr></thead>';
     }
-    return '<div class="sc-line"><table class="sc-teams' + (score ? " has-score" : "") + '">' + head + "<tbody>" +
+    return '<div class="sc-line' + (wide ? " sc-line-wide" : "") + '" data-hook="linescore"><table class="sc-teams sp-agate' + (score ? " has-score" : "") + '">' + head + "<tbody>" +
       teamRow(c, "away", score) + teamRow(c, "home", score) + "</tbody></table></div>";
   }
   function probableText(p) {
@@ -375,8 +381,8 @@
     var out = [];
     if (c.state === "scheduled" || c.state === "pregame" || (c.state === "delayed" && !(c.sit && c.sit.inning))) {
       out.push('<p class="sc-row sc-venue">' + esc(c.venue && c.venue.name || "") + "</p>");
-      out.push('<p class="sc-row">' + esc((c.away.code || c.away.short) + ": " + probableText(c.away.probable)) + "</p>");
-      out.push('<p class="sc-row">' + esc((c.home.code || c.home.short) + ": " + probableText(c.home.probable)) + "</p>");
+      out.push('<p class="sc-row sc-agl">' + esc((c.away.code || c.away.short) + ": " + probableText(c.away.probable)) + "</p>");
+      out.push('<p class="sc-row sc-agl">' + esc((c.home.code || c.home.short) + ": " + probableText(c.home.probable)) + "</p>");
       if (c.state === "pregame") {
         out.push('<p class="sc-row">' + (c.away.lineup_posted && c.home.lineup_posted ? "Lineups posted" : "Lineups not posted yet") + "</p>");
       }
@@ -395,7 +401,7 @@
         out.push('<p class="sc-row">' + lastUpdate(c) + "</p>");
         return out.join("");
       }
-      out.push('<div class="sc-sit">' + diamond(s.bases) +
+      out.push('<div class="sc-sit"><span data-hook="diamond">' + diamond(s.bases) + "</span>" +
         '<span class="sc-count">Count ' + (s.balls || 0) + "-" + (s.strikes || 0) +
         '<span class="sr-only">: ' + (s.balls || 0) + (s.balls === 1 ? " ball, " : " balls, ") +
         (s.strikes || 0) + (s.strikes === 1 ? " strike" : " strikes") + "</span></span></div>");
@@ -417,7 +423,7 @@
       if (rec.w) dec.push("W " + lastName(rec.w.name));
       if (rec.l) dec.push("L " + lastName(rec.l.name));
       if (rec.sv) dec.push("S " + lastName(rec.sv.name));
-      if (dec.length) out.push('<p class="sc-row">' + esc(dec.join(", ")) + "</p>");
+      if (dec.length) out.push('<p class="sc-row sc-agl">' + esc(dec.join(", ")) + "</p>");
       if (c.star) {
         out.push(labelled(ix, "scores_stars_rule", "Star: " + esc(lastName(c.star.name)) + " (" + esc(c.star.team) + "). " +
           esc(c.star.why || ""), "p", "sc-row sc-star"));
@@ -459,6 +465,11 @@
     if (state === "delayed") return "lf";
     if (state === "scheduled" || state === "pregame") return type === "R" ? "prer" : "pre";
     return "off";
+  }
+  // SC7-4: the first paint of a date reads live, then final, then upcoming, then off; a poll never re-sorts.
+  function band(c) {
+    var s = c.state;
+    return s === "live" || (s === "delayed" && c.sit && c.sit.inning) ? 0 : s === "final" ? 1 : slotOf(s, c.type) === "off" ? 3 : 2;
   }
 
   // ---- the chart
@@ -581,9 +592,6 @@
   }
 
   // ---- game view
-  function lineScore(c) {
-    return '<div class="sc-line sc-line-wide">' + teamsTable(c).replace('<div class="sc-line">', "").replace(/<\/div>$/, "") + "</div>";
-  }
   function bigRows(g, ix, live) {
     if (!g.plays_big || !g.plays_big.length) return '<p class="sc-dim">' + esc(g.plays_big_reason || "No plate appearance moved win probability 3 points or more yet.") + "</p>";
     var rows = g.plays_big.map(function (b) {
@@ -619,18 +627,21 @@
     if (!rows) return "";
     return "<h3>Scoring</h3>" + labelled(ix, "scores_mlb_wp", '<ul class="sc-scoring">' + rows + "</ul>", "div", "sc-block-num");
   }
+  // SC7-4 tabs: Summary (stars, video, biggest plays, scoring, game info), Box, Plays, Win Prob.
   function summaryTab(g, ix) {
-    var live = g.card.state !== "final";
+    var live = g.card.state !== "final", o = live ? "" : starsBlock(g, ix) + vslot("game", 0);
+    o += "<h3>Biggest plays</h3><p class=\"sc-dim\">The five plate appearances that moved win probability most" + (live ? ", so far" : "") + "</p>";
+    o += regRow(ix, "scores_biggest_plays_rule") ? labelled(ix, "scores_biggest_plays_rule", bigRows(g, ix, live), "div", "sc-rule") : bigRows(g, ix, live);
+    o += scoringBlock(g, ix);
+    return o + (g.info ? "<h3>Game info</h3>" + infoTab(g) : "");
+  }
+  function wpTab(g, ix) {
     var chart = regRow(ix, "scores_mlb_wp") && g.wp && g.wp.series && g.wp.series.length
       ? labelled(ix, "scores_mlb_wp",
         '<div class="sc-wp-frame" tabindex="0" role="img" aria-label="' + esc(chartAria(g)) + '"></div>' + chartTable(g), "figure", "sc-wp")
-      : "";
-    var o = "<h3>Win probability</h3><p class=\"sc-dim\">MLB's model, after each plate appearance" + (live ? ", so far" : "") + "</p>" + chart;
-    o += "<h3>Biggest plays</h3><p class=\"sc-dim\">The five plate appearances that moved win probability most" + (live ? ", so far" : "") + "</p>";
-    o += regRow(ix, "scores_biggest_plays_rule") ? labelled(ix, "scores_biggest_plays_rule", bigRows(g, ix, live), "div", "sc-rule") : bigRows(g, ix, live);
-    if (g.card.state === "final") o += starsBlock(g, ix) + vslot("game", 0);
-    o += scoringBlock(g, ix);
-    return o;
+      : '<p class="sc-dim">No MLB win probability for this game yet.</p>';
+    return "<h3>Win probability</h3><p class=\"sc-dim\">MLB's model, after each plate appearance" + (g.card.state !== "final" ? ", so far" : "") +
+      ". The numbered marks are the biggest plays, listed under Summary.</p>" + '<div data-hook="wp-sprite"></div>' + chart;
   }
   function chartTable(g) {
     var by = {}, home = g.card.home.code || g.card.home.short;
@@ -645,7 +656,7 @@
       ' win probability after</th><th scope="col">Swing</th></tr></thead><tbody>' + rows + "</tbody></table></div></details>";
   }
   function boxTab(g, ix) {
-    if (!g.box) return '<p class="sc-dim">The box score posts after first pitch.</p>';
+    if (!g.box) return '<p class="sc-dim">The box score posts after first pitch.</p>' + lineupsTab(g);
     var c = g.card, o = "";
     ["away", "home"].forEach(function (side) {
       var b = g.box[side] || {}, code = c[side].code || c[side].short;
@@ -663,14 +674,14 @@
           "</td><td>" + r.k + "</td><td>" + r.hr + "</td><td>" + r.pc + "-" + r.strikes + "</td><td>" + f1(r.p_ip) + "</td><td>" + esc(signed3(r.wpa)) +
           "</td><td>" + f2(r.pli) + "</td></tr>";
       }).join("");
-      o += "<h3>" + esc(code) + "</h3>" + labelled(ix, "scores_mlb_wp",
-        '<div class="sc-scroll"><table class="sc-tbl sc-box"><caption class="sr-only">' + esc(code) + ' batting</caption><thead><tr><th scope="col" class="sc-name">Batting</th>' +
+      o += '<section class="sc-boxside"><h3 class="sp-boxhead">' + esc(code + " " + (c[side].short || "")) + "</h3>" + labelled(ix, "scores_mlb_wp",
+        '<div class="sc-scroll"><table class="sc-tbl sc-box sp-agate"><caption class="sr-only">' + esc(code) + ' batting</caption><thead><tr><th scope="col" class="sc-name">Batting</th>' +
         '<th scope="col">AB</th><th scope="col">R</th><th scope="col">H</th><th scope="col">RBI</th><th scope="col">BB</th><th scope="col">K</th><th scope="col"><span class="g-term" data-gl="pitches_per_ab">P/AB</span></th><th scope="col">WPA</th><th scope="col">pLI</th></tr></thead><tbody>' + bat + "</tbody></table></div>" +
-        '<div class="sc-scroll"><table class="sc-tbl sc-box"><caption class="sr-only">' + esc(code) + ' pitching</caption><thead><tr><th scope="col" class="sc-name">Pitching</th>' +
+        '<div class="sc-scroll"><table class="sc-tbl sc-box sp-agate"><caption class="sr-only">' + esc(code) + ' pitching</caption><thead><tr><th scope="col" class="sc-name">Pitching</th>' +
         '<th scope="col">IP</th><th scope="col">H</th><th scope="col">R</th><th scope="col">ER</th><th scope="col">BB</th><th scope="col">K</th><th scope="col">HR</th><th scope="col">PC-ST</th><th scope="col"><span class="g-term" data-gl="pitches_per_ip">P/IP</span></th><th scope="col">WPA</th><th scope="col">pLI</th></tr></thead><tbody>' + pit + "</tbody></table></div>",
-        "div", "sc-block-num") + ((b.notes || []).length ? '<p class="sc-dim">' + esc(b.notes.join(" ")) + "</p>" : "");
+        "div", "sc-block-num") + ((b.notes || []).length ? '<p class="sc-dim">' + esc(b.notes.join(" ")) + "</p>" : "") + "</section>";
     });
-    return o;
+    return '<div class="sc-boxwrap">' + o + "</div>";
   }
   function playsTab(g, ix, focusAb) {
     if (!g.plays || !g.plays.length) return '<p class="sc-dim">Plate appearances post after first pitch.</p>';
@@ -754,11 +765,8 @@
   }
   function tabsFor(c, hasGame) {
     var pre = c.state === "scheduled" || c.state === "pregame" || (c.state === "delayed" && !(c.sit && c.sit.inning));
-    var t = pre ? [["preview", "Preview"]] : [["summary", "Summary"]];
-    if (hasGame && !pre) t.push(["box", "Box score"], ["plays", "Plays"]);
-    t.push(["lineups", "Lineups"]);
-    if (c.state === "final" && hasGame) t.push(["info", "Game info"]);
-    return t;
+    if (pre) return [["preview", "Preview"], ["lineups", "Lineups"]];
+    return hasGame ? [["summary", "Summary"], ["box", "Box score"], ["plays", "Plays"], ["wp", "Win Prob"]] : [["summary", "Summary"]];
   }
 
   // ---- the app
@@ -780,7 +788,7 @@
   function dmd() { var D = window.EephusDiamond; try { return !!(D && D.gated()); } catch (e) { return false; } }
   function boot(root) {
     var L = makeLoader(function (u, o) { return fetch(u, o); });
-    HX = { esc: esc, labelled: labelled, player: player, now: L.serverNow, gated: dmd };
+    HX = { esc: esc, labelled: labelled, player: player, now: L.serverNow, gated: dmd, comma: comma, isNum: isNum };
     var app = { route: parseRoute(location.hash), stale: null, date: null, dateDoc: null, shown: {}, pending: [],
       timer: null, errors: 0, lastFetch: 0, paused: store("eephus.scores.paused") === "1", announceAt: 0, queue: null,
       prev: {}, focusPk: null, game: null };
@@ -858,24 +866,33 @@
     var D = window.EephusDiamond;
     if (D && D.onEntitlement) D.onEntitlement(function () { if (L.state.latest) refresh(false); });
 
-    function bk(el, y, o) {
-      app.bk = app.bk || new Promise(function (ok, no) {
+    function load(src, name) {
+      return new Promise(function (ok, no) {
         var s = document.createElement("script");
-        s.src = root.getAttribute("data-bracket-src"); s.onload = function () { ok(window.EephusScoresBracket); }; s.onerror = no;
+        s.src = src; s.onload = function () { ok(window[name]); }; s.onerror = no;
         document.head.appendChild(s);
       });
+    }
+    function bk(el, y, o) {
+      app.bk = app.bk || load(root.getAttribute("data-bracket-src"), "EephusScoresBracket");
       return Promise.all([app.bk, L.season(y)]).then(function (a) { return a[0].mount(el, a[1] && a[1].bracket, o); });
     }
 
     // ---- rendering
+    // SC7-4: the sports-page masthead, a section banner over a dateline that carries the stamp.
+    function mast(h, ds) {
+      return '<header class="sp-mast"><h2 class="sp-banner" tabindex="-1">' + esc(h) + '</h2><div class="sp-dateline"><span>' +
+        esc(longDate(ds) + ", " + ds.slice(0, 4)) + '</span><div class="sc-stamp" role="status" aria-live="off"></div></div>' +
+        '<div data-hook="gfx"></div></header>';
+    }
     function refresh(nav) {
       var r = app.route, Lt = L.state.latest;
       app.stale = scoresStaleState(Lt, L.serverNow(), r.date || Lt.today);
       if (r.view === "about") { renderAbout(); return null; }
       if (r.view === "bracket") {
         if (nav || !root.querySelector(".sc-bk")) {
-          root.innerHTML = '<p class="sc-back"><a href="#">Back to scores</a></p><h2 tabindex="-1">' + r.season +
-            ' postseason</h2><div class="sc-stamp" role="status" aria-live="off"></div><div class="sc-bk"></div>';
+          root.innerHTML = '<p class="sc-back"><a href="#">Back to scores</a></p>' + mast(r.season + " postseason", Lt.today) +
+            '<div data-hook="bracket-art"></div><div class="sc-bk"></div>';
           root.querySelector("h2").focus();
         }
         stamp();
@@ -968,9 +985,9 @@
     function renderDay(doc, nav) {
       var d = app.date;
       if (nav || !root.querySelector(".sc-day-view")) {
-        root.innerHTML = '<div class="sc-day-view"><p class="sc-banner" role="note" hidden></p>' + strip(d) + filters(d) +
-          '<div class="sc-stamp" role="status" aria-live="off"></div><div class="sc-layout"><div class="sc-grid-wrap">' +
-          '<div class="sc-grid"></div><div class="sc-empty"></div><div class="sc-late"></div></div><div class="sc-railslot"></div></div>' +
+        root.innerHTML = '<div class="sc-day-view"><p class="sc-banner" role="note" hidden></p>' + mast("Scores", d) + strip(d) + filters(d) +
+          '<div class="sc-layout"><div class="sc-grid-wrap">' +
+          '<div class="sc-grid sp-cols"></div><div class="sc-empty"></div><div class="sc-late"></div></div><div class="sc-railslot"></div></div>' +
           '<p class="sc-about-link"><a href="#about">About these numbers</a></p></div>';
         app.shown = {};
       }
@@ -982,7 +999,8 @@
       var byPk = {};
       games.forEach(function (c) { byPk[c.pk] = c; });
       if (!known) {
-        grid.innerHTML = games.map(function (c) { app.shown[c.pk] = c; return article(c, false); }).join("");
+        grid.innerHTML = games.slice().sort(function (a, b) { return band(a) - band(b); })
+          .map(function (c) { app.shown[c.pk] = c; return article(c, false); }).join("");
       } else {
         games.forEach(function (c) {
           if (!app.shown[c.pk]) { fresh.push(c); return; }
@@ -1057,20 +1075,15 @@
         paintGame(card, g, nav);
       });
     }
-    var V = null, VP = null;
+    var V = null, VP = null, AB = null;
     function video(g) {
-      VP = VP || new Promise(function (ok, no) {
-        var s = document.createElement("script");
-        s.src = "/assets/scores-video.js?v=" + (root.getAttribute("data-vv") || "");
-        s.onload = function () { ok(V = window.EephusScoresVideo); }; s.onerror = no;
-        document.head.appendChild(s);
-      });
-      VP.then(function (v) { if (app.game === g) v.mount(root, g, L.state.index, app.route.play); }, function () {});
+      VP = VP || load("/assets/scores-video.js?v=" + (root.getAttribute("data-vv") || ""), "EephusScoresVideo");
+      VP.then(function (v) { V = v; if (app.game === g) v.mount(root, g, L.state.index, app.route.play); }, function () {});
     }
     function paintGame(c, g, nav) {
       var ix = L.state.index, r = app.route;
       if (!nav && V && V.isOpen(root)) { V.held(root, g, function () { paintGame(c, g, false); }); stamp(); return; }
-      var tabs = tabsFor(c, !!g), tab = r.tab;
+      var tabs = tabsFor(c, !!g), tab = r.tab === "info" ? "summary" : r.tab === "lineups" && tabs[0][0] !== "preview" ? "box" : r.tab;
       if (!tab || !tabs.some(function (t) { return t[0] === tab; })) tab = tabs[0][0];
       var A = c.away, H = c.home, mine = mineSet();
       var follow = [A, H].filter(function (s) { return s.code; }).map(function (s) {
@@ -1079,11 +1092,13 @@
       }).join("");
       var head = '<div class="sc-game-view"><p class="sc-back"><a href="' + dayHash(app.route, { date: app.date }) + '">All games on ' + esc(longDate(app.date)) + "</a></p>" +
         '<div class="sc-stamp" role="status" aria-live="off"></div>' +
-        '<h2 class="sc-game-h" tabindex="-1">' + clubLink(A) + " " + (isNum(A.r) ? A.r : "") + " at " + clubLink(H) + " " + (isNum(H.r) ? H.r : "") + "</h2>" +
-        '<p class="sc-state-big">' + esc(stateLine(c, c.state === "live" ? app.stale : null)) + "</p>" +
+        '<header class="sc-ghead' + (c.state === "live" ? " is-live" : "") + '"><p class="sc-state-big">' + esc(stateLine(c, c.state === "live" ? app.stale : null)) + "</p>" +
+        '<h2 class="sc-game-h" tabindex="-1">' + [A, H].map(function (s) {
+          return '<span class="sc-gt">' + logo(s, "sc-hlogo", 80) + clubLink(s) + ' <b class="sc-gr">' + (isNum(s.r) ? s.r : "") + "</b></span>";
+        }).join(' <span class="sc-at">at</span> ') + "</h2>" +
         (c.series && c.series.text ? '<p class="sc-dim">' + esc(c.series.text) + "</p>" : "") +
         '<p class="sc-dim">' + esc((c.venue && c.venue.name ? c.venue.name + ", " : "") + startTime(c)) + "</p>" +
-        lineScore(c) + '<div class="sc-follows">' + follow + "</div>" +
+        teamsTable(c, 1) + '<div class="sc-follows">' + follow + '<div data-hook="gfx"></div></div></header>' +
         '<div class="sc-tabs" role="tablist" aria-label="Game sections">' + tabs.map(function (t) {
           return '<button type="button" role="tab" class="sc-tab" id="sc-tab-' + t[0] + '" aria-controls="sc-panel" data-tab="' + t[0] + '" aria-selected="' + (t[0] === tab) + '" tabindex="' + (t[0] === tab ? "0" : "-1") + '">' + t[1] + "</button>";
         }).join("") + '</div><div class="sc-panel" id="sc-panel" role="tabpanel" aria-labelledby="sc-tab-' + tab + '">';
@@ -1093,8 +1108,8 @@
       else if (tab === "summary") body = summaryTab(g, ix);
       else if (tab === "box") body = boxTab(g, ix);
       else if (tab === "plays") body = playsTab(g, ix, r.play);
+      else if (tab === "wp") body = wpTab(g, ix);
       else if (tab === "lineups") body = lineupsTab(g);
-      else if (tab === "info") body = infoTab(g);
       var keepScroll = !nav ? window.scrollY : null;
       var pin = root.querySelector(".sc-wp-frame");
       var pinned = pin ? pin._pin : null;
@@ -1109,45 +1124,15 @@
         if (f && f.scrollIntoView) f.scrollIntoView({ block: "center" });
       } else if (keepScroll != null) window.scrollTo(0, keepScroll);
     }
+    // The About view is a lazy chunk (SC7-4 moved it out of this file's budget); it prints from the index alone.
     function renderAbout() {
-      var ix = L.state.index || {}, acc = (ix.accuracy && ix.accuracy.mlb_wp) || {}, rules = ix.rules || {};
-      var o = '<div class="sc-about"><p class="sc-back"><a href="' + dayHash(app.route, { date: app.date || L.state.latest.today }) + '">Back to scores</a></p>' +
-        '<h2 tabindex="-1">About these numbers</h2>';
-      var p1 = "Win probability is MLB's live model, read from its public feed after every plate appearance.";
-      var pv = acc.pregame_values || {}, keys = Object.keys(pv);
-      if (keys.length && keys.every(function (k) { return k === "500"; })) {
-        p1 += " It starts every game at 50 percent, so it is not a pregame forecast.";
-      }
-      p1 += " Inside a game it moves with the situation and, by this site's own check, also carries some team strength; it can trail the score by one play.";
-      if (isNum(acc.feed_brier) && isNum(acc.base_rate_brier) && isNum(acc.n_plays) && (acc.seasons || []).length) {
-        p1 += " In this site's own check over " + comma(acc.n_plays) + " regular-season plays from the " +
-          (acc.seasons.length > 1 ? acc.seasons.slice(0, -1).join(", ") + " and " + acc.seasons[acc.seasons.length - 1] + " seasons" : acc.seasons[0] + " season") +
-          " (no postseason game is in the check), it scored a Brier of " + acc.feed_brier.toFixed(4) + ", against " + acc.base_rate_brier.toFixed(4) +
-          " for a constant base rate (lower is better).";
-      }
-      p1 += " Where MLB's feed has no number for a plate appearance, the line has a gap.";
-      o += labelled(ix, "scores_mlb_wp", esc(p1), "p") || "<p>" + esc(p1) + "</p>";
-      var s = rules.stars || {};
-      if (s.rule) {
-        var p2 = "Stars of the Game is a rule, not an award. Each player is ranked by win probability added, from MLB's live model: hitters by their plate appearances, pitchers by the batters they faced.";
-        if (isNum(s.min_outs)) p2 += " A pitcher who records " + s.min_outs + " or more outs without losing win probability is credited instead with his runs prevented against the league rate when that is larger, so a starter's work in a lopsided game still counts.";
-        if (s.first_star_winner) p2 += " The first star comes from the winning team, so he can rank below the second star.";
-        p2 += " Ties go to the player whose plate appearances carried more leverage. Fielding, and base running inside a plate appearance, are not credited to anyone.";
-        o += "<h3>Stars of the Game</h3><p>" + esc(p2) + "</p>";
-      }
-      var pl = rules.plays || {};
-      if (pl.rule) {
-        var words = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
-        o += "<h3>Biggest plays</h3><p>" + esc("The " + (words[pl.n] || pl.n) + " plate appearances that moved MLB's win probability most.") + "</p>";
-        var w = (L.state.latest.window || {})[L.state.latest.today];
-        if (w && isNum(w.clips_of) && w.clips_of > 0 && isNum(w.clips_matched)) {
-          o += "<p>" + esc("Clips matched today: " + w.clips_matched + " of " + w.clips_of + " biggest plays.") + "</p>";
-        }
-      }
-      o += "<h3>Source</h3><p>Scores, box scores and play data come from MLB's public StatsAPI feed.</p>";
-      if (ix.copyright) o += '<p class="sc-dim">' + esc(ix.copyright) + "</p>";
-      root.innerHTML = o + "</div>";
-      var h = root.querySelector("h2"); if (h) h.focus();
+      AB = AB || load(root.getAttribute("data-about-src"), "EephusScoresAbout");
+      AB.then(function (A) {
+        if (app.route.view !== "about") return;
+        root.innerHTML = '<div class="sc-about"><p class="sc-back"><a href="' + dayHash(app.route, { date: app.date || L.state.latest.today }) +
+          '">Back to scores</a></p><h2 tabindex="-1">About these numbers</h2>' + A.html(L.state.index || {}, L.state.latest, HX) + "</div>";
+        root.querySelector("h2").focus();
+      });
     }
 
     // ---- events

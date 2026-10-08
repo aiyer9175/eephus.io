@@ -3,26 +3,31 @@
  * Proprietary and confidential
  * Written by Noah J. Dengler (@ARKNDJL), 2026 */
 
-/* /scores/ - Scores / Standings, the scores page (SCORES_3). Every scores
-   style lives here; site.css carries only the two chart tokens --viz-1 and
-   --viz-2. Tokens only, no team colours. State is never shown by colour
-   alone: every state has its words.
+/* /scores/ - Scores / Standings (SCORES_3; the sports-page layout SCORES_7a).
+   Every scores style lives here or, for the classes /standings/ shares (the
+   sports page and the bracket), in assets/sports-page.css; site.css carries
+   only the chart tokens --viz-1 and --viz-2. Tokens only, no team colours. State is
+   never shown by colour alone: every state has its words.
 
-   CARD HEIGHTS (plan 1.3). Each state slot has a min-height measured at
-   390 px from the longest fixture strings (test_scores_render.py pins it):
-   live and final share one slot, so the live-to-final change moves nothing
-   below, and a poll within a state never changes a card's height. Content
-   may grow past the floor; nothing is clipped. */
+   CARD HEIGHTS (plan 1.3). Each state slot has a min-height measured at 390 px
+   from the longest fixture strings (test_scores_render.py pins it): live and
+   final share one slot, so the live-to-final change moves nothing below, and a
+   poll within a state never changes a card's height. Nothing is clipped. */
 
+/* ---- the scores page */
 .scores-app .sr-only {
   position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
-.scores-app { --sc-gap: 12px; }
 .scores-app h2 { font-size: 16px; margin: 16px 0 6px; }
 .scores-app h3 { font-size: 14px; margin: 16px 0 6px; }
 .scores-app .sc-dim { color: var(--text-secondary); }
 .scores-app #scores-app-root:has(> .px-state.is-loading) { min-height: 60vh; }
+/* HOOKS for the pixel art and the GFX (SCORES_7b, SCORES_7c), one container each, hidden while empty:
+   data-hook="linescore" wraps every line score (card and game head), "diamond" the live card's bases,
+   "wp-sprite" sits over the Win Prob chart, "bracket-art" over the bracket view, "gfx" in the day
+   masthead and beside the game head's Follow buttons. */
+.scores-app [data-hook]:empty { display: none; }
 
 /* buttons: 44 px at phone width (strip chips, tabs, filters) */
 .scores-app .sc-btn {
@@ -32,8 +37,10 @@
 .scores-app .sc-btn[aria-pressed="true"] { border-color: var(--text-primary); box-shadow: inset 0 -2px 0 var(--accent-gold); font-weight: 700; }
 .scores-app .sc-btn:hover { background: var(--bg-tertiary); }
 .scores-app :focus-visible { outline: 2px solid var(--accent-lilac); outline-offset: 2px; }
+/* a heading or play row the page moves focus to is a reading target, not a control */
+.scores-app [tabindex="-1"]:focus { outline: none; }
 
-/* ---- the date strip, sticky */
+/* ---- the day nav: a sticky strip under the dateline */
 .scores-app .sc-strip {
   position: sticky; top: 0; z-index: 3; display: flex; align-items: stretch; gap: 4px;
   background: var(--bg-primary); padding: 6px 0; border-bottom: 1px solid var(--border-light);
@@ -50,6 +57,7 @@
   text-decoration: none; font-size: 12px; line-height: 1.25; white-space: nowrap;
 }
 .scores-app .sc-day.is-on { border-color: var(--text-primary); box-shadow: inset 0 -2px 0 var(--accent-gold); font-weight: 700; }
+.scores-app .sc-chip-d { font-family: var(--font-retro-mono); }
 .scores-app .sc-chip-n { color: var(--text-secondary); font-size: 11px; font-weight: 400; }
 .scores-app .sc-pickdate { display: flex; }
 .scores-app .sc-dateinput {
@@ -61,44 +69,52 @@
 @media (min-width: 768px) { .scores-app .sc-dateinput { width: auto; } }
 
 .scores-app .sc-filters { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
-.scores-app .sc-stamp { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 6px 0 10px; font-size: 12px; color: var(--text-secondary); }
-.scores-app .sc-stamp .sc-btn { font-size: 11px; }
+.scores-app .sc-stamp { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; font-size: 11.5px; color: var(--text-secondary); }
+.scores-app .sc-game-view > .sc-stamp { margin: 4px 0; }
+.scores-app .sc-stamp .sc-btn { font-size: 11px; min-height: 28px; padding: 2px 8px; }
 .scores-app .sc-banner { border: 1px solid var(--border-light); border-left: 3px solid var(--accent-gold); background: var(--bg-secondary); padding: 8px 12px; margin: 8px 0; font-size: 13px; }
 
-/* ---- the day layout: one column, two from 768, three from 1200, rail from 1400 */
+/* ---- the day layout: one column, two from 768, three from 1200, rail from 1400.
+   Cards stretch to their row at two columns and wider, so the column rules meet. */
 .scores-app .sc-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.scores-app .sc-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sc-gap); align-items: start; }
+.scores-app .sc-grid { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 768px) { .scores-app .sc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1200px) { .scores-app .sc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1400px) { .scores-app .sc-layout { grid-template-columns: minmax(0, 1fr) 280px; } }
 .scores-app .sc-railslot { display: none; }
 @media (min-width: 1400px) { .scores-app .sc-railslot { display: block; } .scores-app .sc-railslot:empty { display: none; } }
 .scores-app .sc-late:empty, .scores-app .sc-empty:empty { display: none; }
-.scores-app .sc-late { margin-top: var(--sc-gap); }
+.scores-app .sc-late { margin-top: 12px; }
 
-/* ---- cards */
+/* ---- cards: one agate box each, ruled into columns by .sp-cols */
 .scores-app .sc-card {
-  position: relative; box-sizing: border-box; min-width: 0; border: 1px solid var(--border-light);
-  background: var(--bg-secondary); padding: 10px 12px; font-size: 13px; line-height: 1.4;
+  position: relative; box-sizing: border-box; min-width: 0; background: var(--bg-secondary);
+  padding: 8px 12px 10px; font-size: 12.5px; line-height: 1.35;
 }
-.scores-app .sc-card.slot-pre { min-height: 236px; }
+.scores-app .sc-card.slot-pre { min-height: 222px; }
 /* a regular-season pregame card has room for the model line (SCORES_6) before it posts */
-.scores-app .sc-card.slot-prer { min-height: 276px; }
-.scores-app .sc-card.slot-lf { min-height: 316px; }
-.scores-app .sc-card.slot-off { min-height: 168px; }
-.scores-app .sc-card.is-live { border-left: 3px solid var(--viz-1); }
-.scores-app .sc-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
-.scores-app .sc-match { font-size: 15px; margin: 0; }
+.scores-app .sc-card.slot-prer { min-height: 260px; }
+.scores-app .sc-card.slot-lf { min-height: 304px; }
+.scores-app .sc-card.slot-off { min-height: 164px; }
+.scores-app .sc-card.is-live { box-shadow: inset 3px 0 0 var(--viz-1), 1px 0 0 var(--border-light), 0 1px 0 var(--border-light); }
+.scores-app .sc-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px; }
+.scores-app .sc-match { font: 700 14px var(--font-retro-mono); letter-spacing: .04em; margin: 0; }
 .scores-app .sc-stretch { color: var(--text-primary); text-decoration: none; display: inline-block; min-height: 24px; }
 .scores-app .sc-stretch::after { content: ""; position: absolute; inset: 0; }
 .scores-app .sc-stretch:hover { text-decoration: underline; }
-.scores-app .sc-state { font-weight: 700; font-size: 12px; }
-.scores-app .sc-asof, .scores-app .sc-series { font-size: 12px; color: var(--text-secondary); }
-.scores-app .sc-series { margin: 2px 0 4px; min-height: 17px; }
+/* the status kicker: the state's own words, uppercased; a live game's inverts */
+.scores-app .sc-state, .scores-app .sc-state-big {
+  display: inline-block; padding: 1px 5px; border: 1px solid var(--text-primary); font: 700 10.5px/1.35 var(--font-retro-mono);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-primary);
+}
+.scores-app .is-live .sc-state, .scores-app .sc-ghead.is-live .sc-state-big { background: var(--text-primary); color: var(--bg-secondary); }
+.scores-app .sc-asof, .scores-app .sc-series { font-size: 11.5px; color: var(--text-secondary); }
+.scores-app .sc-series { margin: 2px 0 4px; min-height: 16px; font-style: italic; }
 .scores-app .sc-club, .scores-app .club-link, .scores-app .sc-up, .scores-app .sc-card .sc-model a { position: relative; z-index: 1; }
 .scores-app .sc-club, .scores-app .club-link { display: inline-block; min-height: 24px; line-height: 24px; font-weight: 700; }
-.scores-app .sc-short, .scores-app .sc-rec { color: var(--text-secondary); font-size: 12px; }
+.scores-app .sc-short, .scores-app .sc-rec { color: var(--text-secondary); font-size: 11.5px; }
 .scores-app .sc-row { margin: 3px 0; }
+.scores-app .sc-agl { font: 11.5px/1.35 var(--font-retro-mono); }
 .scores-app .sc-last { color: var(--text-secondary); }
 .scores-app .sc-sit { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
 .scores-app .sc-bases .sc-base { fill: none; stroke: var(--text-secondary); stroke-width: 1.2; }
@@ -110,13 +126,13 @@
 }
 a.sc-chip:hover { background: var(--bg-tertiary); }
 
-/* the line score: R H E on a phone card, innings from 768; the game view scrolls in its frame */
+/* the line score, set as agate: R H E on a phone card, innings from 768; the game view scrolls in its frame */
 .scores-app .sc-line { overflow-x: auto; margin: 4px 0; }
-.scores-app .sc-teams { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
-.scores-app .sc-teams th, .scores-app .sc-teams td { padding: 1px 4px; text-align: center; font-weight: 400; }
-.scores-app .sc-teams .sc-tm { text-align: left; white-space: nowrap; width: 100%; }
-.scores-app .sc-teams thead th { font-size: 11px; color: var(--text-secondary); }
-.scores-app .sc-teams .sc-r { font-weight: 700; }
+.scores-app .sc-teams { width: 100%; }
+.scores-app .sc-teams th, .scores-app .sc-teams td { text-align: center; }
+.scores-app .sc-teams .sc-tm { text-align: left; width: 100%; padding-left: 0; }
+.scores-app .sc-teams .sc-r { font-weight: 700; border-left: 1px solid var(--border); }
+.scores-app .sc-teams tbody tr + tr th, .scores-app .sc-teams tbody tr + tr td { border-top: 1px solid var(--border-subtle); }
 .scores-app .sc-teams tr.is-won .sc-tm, .scores-app .sc-teams tr.is-won .sc-r { font-weight: 700; }
 .scores-app .sc-card .sc-inn { display: none; }
 @media (min-width: 768px) { .scores-app .sc-card .sc-inn { display: table-cell; } }
@@ -131,29 +147,34 @@ a.sc-chip:hover { background: var(--bg-tertiary); }
 }
 .scores-app div.sc-model > .sc-src, .scores-app figure.sc-model > .sc-src { margin: 6px 0 0; }
 
-/* ---- the rail */
-.scores-app .sc-rail { border: 1px solid var(--border-light); background: var(--bg-secondary); padding: 10px 12px; font-size: 12.5px; align-self: start; }
-.scores-app .sc-rail h2 { font-size: 14px; margin: 0 0 6px; }
+/* ---- the rail: sidebar columns under a small banner */
+.scores-app .sc-rail { border-top: 3px double var(--text-primary); background: var(--bg-secondary); padding: 8px 12px 10px; font-size: 12.5px; align-self: start; }
+.scores-app .sc-rail h2 { font: 700 12px var(--font-retro-mono); letter-spacing: .1em; text-transform: uppercase; margin: 0 0 6px; padding-bottom: 3px; border-bottom: 1px solid var(--text-primary); }
 .scores-app .sc-railplays { margin: 0; padding-left: 18px; }
 .scores-app .sc-railplays li { margin: 0 0 8px; }
 .scores-app .sc-rail + .sc-rail { margin-top: 12px; }
 .scores-app .sc-about-link { margin: 16px 0; font-size: 13px; }
 
-/* ---- the game view */
+/* ---- the game view: a box head (kicker, clean logos, score), the agate line score, tabs */
 .scores-app .sc-back { margin: 8px 0; font-size: 13px; }
 .scores-app .sc-back a { display: inline-block; min-height: 24px; line-height: 24px; }
-.scores-app .sc-game-h { font-size: 20px; margin: 8px 0 2px; }
-.scores-app .sc-state-big { font-weight: 700; margin: 2px 0; }
-.scores-app .sc-game-view > .sc-dim { margin: 2px 0; font-size: 13px; }
-.scores-app .sc-follows { display: flex; gap: 6px; margin: 8px 0; }
+.scores-app .sc-ghead { border-top: 3px double var(--text-primary); border-bottom: 1px solid var(--text-primary); padding: 8px 0 2px; margin: 4px 0 0; }
+.scores-app .sc-ghead > .sc-dim { margin: 2px 0; font-size: 12.5px; }
+.scores-app .sc-game-h { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font: 700 20px/1.2 var(--font-retro-mono); margin: 8px 0 4px; }
+.scores-app .sc-gt { display: inline-flex; align-items: center; gap: 8px; }
+.scores-app .sc-hlogo { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 .8px var(--text-dim)); }
+.scores-app .sc-gr { font-size: 26px; font-variant-numeric: tabular-nums; }
+.scores-app .sc-at { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
+.scores-app .sc-follows { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .scores-app .sc-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--border); margin: 12px 0 0; }
 .scores-app .sc-tab {
-  font: inherit; font-size: 12.5px; min-height: 44px; padding: 4px 12px; cursor: pointer; color: var(--text-secondary);
+  font: 700 12px var(--font-retro-mono); letter-spacing: .04em; min-height: 44px; padding: 4px 12px; cursor: pointer; color: var(--text-secondary);
   background: transparent; border: 1px solid transparent; border-bottom: 0;
 }
-.scores-app .sc-tab[aria-selected="true"] { color: var(--text-primary); background: var(--bg-secondary); border-color: var(--border); box-shadow: inset 0 2px 0 var(--accent-gold); font-weight: 700; }
+.scores-app .sc-tab[aria-selected="true"] { color: var(--text-primary); background: var(--bg-secondary); border-color: var(--border); box-shadow: inset 0 2px 0 var(--accent-gold); }
 .scores-app .sc-panel { padding: 4px 0 12px; font-size: 13px; line-height: 1.45; }
 .scores-app .sc-panel p { margin: 4px 0; }
+.scores-app .sc-panel h3 { font-family: var(--font-retro-mono); letter-spacing: .04em; padding-bottom: 2px; border-bottom: 1px solid var(--border); }
 
 /* the win probability chart (plan 1.5) */
 .scores-app .sc-wp { margin: 6px 0 12px; }
@@ -174,26 +195,34 @@ a.sc-chip:hover { background: var(--bg-tertiary); }
 }
 .scores-app .sc-tip b, .scores-app .sc-tip span { display: block; }
 
-/* tables: scroll inside their frame, the name column sticky at 390 */
+/* tables: scroll inside their frame; the box score is agate with its name column sticky at 390 */
 .scores-app .sc-scroll { overflow-x: auto; margin: 6px 0; }
 .scores-app .sc-tbl { border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; min-width: 100%; }
 .scores-app .sc-tbl th, .scores-app .sc-tbl td { padding: 4px 6px; border-bottom: 1px solid var(--border-subtle); text-align: right; white-space: nowrap; }
 .scores-app .sc-tbl thead th { color: var(--text-secondary); font-weight: 700; }
+.scores-app .sc-tbl.sp-agate { font-size: 11.5px; }
+.scores-app .sc-tbl.sp-agate th, .scores-app .sc-tbl.sp-agate td { padding: 1px 6px; border-bottom: 0; }
+.scores-app .sc-tbl.sp-agate thead th { border-bottom: 1px solid var(--text-primary); }
 .scores-app .sc-tbl .sc-name, .scores-app .sc-twin td:nth-child(2), .scores-app .sc-twin th:nth-child(2) { text-align: left; }
 .scores-app .sc-twin td:nth-child(2) { white-space: normal; min-width: 180px; }
-.scores-app .sc-box .sc-name { position: sticky; left: 0; z-index: 1; background: var(--bg-secondary); font-weight: 400; }
+.scores-app .sc-box .sc-name { position: sticky; left: 0; z-index: 1; background: var(--bg-primary); font-weight: 400; }
+.scores-app .sc-box thead .sc-name { font-weight: 700; }
+/* the two clubs side by side where both fit, a column rule between, as a printed box score */
+.scores-app .sc-boxwrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 0 25px; }
+.scores-app .sc-boxside { min-width: 0; }
+@media (min-width: 1040px) { .scores-app .sc-boxside + .sc-boxside { border-left: 1px solid var(--border); padding-left: 12px; } }
 .scores-app .sc-twin summary { cursor: pointer; min-height: 24px; font-size: 12.5px; }
 
 .scores-app .sc-bigs, .scores-app .sc-stars { list-style: none; margin: 4px 0; padding: 0; }
 .scores-app .sc-bigs > li, .scores-app .sc-stars > li { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border-subtle); }
 .scores-app .sc-rank {
   flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
-  border-radius: 50%; background: var(--viz-1); color: var(--bg-secondary); font-size: 11px; font-weight: 700;
+  background: var(--viz-1); color: var(--bg-secondary); font: 700 11px var(--font-retro-mono);
 }
 .scores-app .sc-note { font-size: 12.5px; font-style: italic; }
 .scores-app .sc-scoring { margin: 4px 0; padding-left: 18px; }
 .scores-app .sc-half { border-bottom: 1px solid var(--border-subtle); }
-.scores-app .sc-half > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 700; }
+.scores-app .sc-half > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font: 700 12.5px var(--font-retro-mono); }
 .scores-app .sc-pas { margin: 0 0 8px; padding-left: 18px; }
 .scores-app .sc-pa { padding: 4px 0; }
 .scores-app .sc-pa[data-focus="1"] { background: var(--bg-tertiary); }
@@ -203,28 +232,24 @@ a.sc-chip:hover { background: var(--bg-tertiary); }
 .scores-app .sc-dl dd { margin: 0; }
 .scores-app .sc-about { max-width: 78ch; font-size: 13.5px; line-height: 1.55; }
 
-/* ---- video (SCORES_4a): poster buttons, MLB's frame, the links; the player
-   code is the lazy chunk scores-video.js. Tokens only. */
+/* ---- video (SCORES_4a): poster buttons, MLB's frame, the links; the player code is the lazy scores-video.js */
 .scores-app .sc-v:empty { display: none; }
 .scores-app .sc-v { margin-top: 6px; }
 .scores-app .sc-bigs > li > div, .scores-app .sc-stars > li > div { flex: 1 1 auto; min-width: 0; }
 .scores-app .sc-clip {
   position: relative; display: block; width: 100%; max-width: 480px; padding: 0; overflow: hidden; cursor: pointer;
-  font: inherit; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px;
+  font: inherit; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border);
 }
 .scores-app .sc-clip img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
 .scores-app .sc-disc {
-  position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%;
+  position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px;
   background: var(--bg-secondary); box-shadow: 0 0 0 2px var(--border);
 }
 .scores-app .sc-disc::after {
   content: ""; position: absolute; left: 19px; top: 14px; border-style: solid; border-width: 10px 0 10px 16px;
   border-color: transparent transparent transparent var(--text-primary);
 }
-.scores-app .sc-dur {
-  position: absolute; right: 6px; bottom: 6px; padding: 1px 6px; border-radius: 4px; font-size: 12px;
-  background: var(--bg-secondary); color: var(--text-primary);
-}
+.scores-app .sc-dur { position: absolute; right: 6px; bottom: 6px; padding: 1px 6px; font-size: 12px; background: var(--bg-secondary); color: var(--text-primary); }
 .scores-app .sc-clip-sm {
   display: inline-flex; align-items: center; gap: 8px; width: auto; max-width: 100%; min-height: 44px;
   padding: 4px 12px 4px 6px; font-size: 13px; vertical-align: middle; background: var(--bg-secondary);
@@ -241,31 +266,6 @@ a.sc-chip:hover { background: var(--bg-tertiary); }
 .scores-app .sc-vlink { display: inline-flex; align-items: center; min-height: 24px; }
 .scores-app .sc-vnone { margin: 4px 0 0; font-size: 12.5px; }
 
-/* ---- the October bracket (SCORES_4b), drawn by the lazy assets/scores-bracket.js.
-   Not scoped to .scores-app, so /standings/ mounts it unchanged. Rounds sit in
-   columns where they fit and stack on a phone and in the rail. Series state in
-   words; no colour carries it. */
-.scb-rounds { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; align-items: start; }
-.scb-round { min-width: 0; }
-.scb-round h3 { font-size: 13px; margin: 0 0 6px; }
-.scb-series { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.scb-s { border: 1px solid var(--border-light); background: var(--bg-secondary); padding: 8px 10px; font-size: 12.5px; line-height: 1.4; min-width: 0; }
-.scb-lab { margin: 0 0 2px; font-size: 11.5px; color: var(--text-secondary); }
-.scb-clubs { list-style: none; margin: 0; padding: 0; }
-.scb-c { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.scb-c strong { display: contents; }
-.scb-club { display: inline-block; min-height: 24px; line-height: 24px; font-weight: 700; overflow-wrap: anywhere; }
-span.scb-club { font-weight: 400; color: var(--text-secondary); line-height: 1.35; padding: 3px 0; }
-.scb-w { font-variant-numeric: tabular-nums; }
-.scb-text { margin: 4px 0 0; font-weight: 700; }
-.scb-games { list-style: none; margin: 6px 0 0; padding: 0; font-size: 12px; color: var(--text-secondary); }
-.scb-games a { display: inline-block; min-height: 24px; line-height: 24px; }
-.scb-src, .scb-none { font-size: 12px; color: var(--text-secondary); margin: 10px 0 0; }
-.scb-compact .scb-rounds { grid-template-columns: minmax(0, 1fr); gap: 4px; }
-.scb-compact .scb-round h3 { font-size: 12.5px; margin: 4px 0 2px; }
-.scb-compact .scb-s { border: 0; background: none; padding: 0; }
-.scb-compact .scb-text { font-weight: 400; }
-.scb .sr-only { position: absolute !important; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* SCORES_6: the pregame context (assets/scores-pregame.js) and the betting note it prints once */
 .scores-app .sc-pre { margin: 10px 0; }
 .scores-app .sc-pre p, .scores-app .sc-pregame p { margin: 4px 0; overflow-wrap: anywhere; }

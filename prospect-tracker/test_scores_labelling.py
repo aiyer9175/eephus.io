@@ -48,7 +48,7 @@ PRE_IDS = {r["model_id"] for r in PRE_REGISTRY}
 SCORES_IDS = {"scores_mlb_wp", "scores_stars_rule", "scores_biggest_plays_rule"}
 BETTING_WORDS = re.compile(r"\b(edge|value|ev|kelly|pick|lean|bet)\b", re.IGNORECASE)
 VIEWS = [f"#date={TODAY}", "#date=2026-09-29", "#date=2026-10-01", "#game=849845", "#game=849845&tab=box",
-         "#game=849845&tab=plays", "#game=849845&tab=lineups", "#game=849845&tab=info", "#game=849846",
+         "#game=849845&tab=plays", "#game=849845&tab=wp", "#game=849845&tab=lineups", "#game=849845&tab=info", "#game=849846",
          "#game=849841", "#about"]
 
 _AUDIT = """() => {

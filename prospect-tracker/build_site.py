@@ -166,10 +166,12 @@ _TEAM_CSS_VER = _asset_ver("assets/team.css")
 # (SCORES_4a, SCORES_4b) get their own stamps when they land.
 _SCORES_VER = _asset_ver("assets/scores.js")
 _SCORES_CSS_VER = _asset_ver("assets/scores.css")
+_SPORTS_PAGE_CSS_VER = _asset_ver("assets/sports-page.css")   # the shared sports-page classes (SCORES_7a)
 # The lazy video chunk (SCORES_4a): scores.js loads it on the first game-view
 # open from the mount root's data-vv stamp, never as a tag in the shell.
 _SCORES_VIDEO_VER = _asset_ver("assets/scores-video.js")
 _SCORES_BRACKET_VER = _asset_ver("assets/scores-bracket.js")   # the lazy bracket chunk (SCORES_4b)
+_SCORES_ABOUT_VER = _asset_ver("assets/scores-about.js")   # the lazy About chunk (SCORES_7a)
 _SCORES_PREGAME_VER = _asset_ver("assets/scores-pregame.js")   # the pregame context (SCORES_6), eager
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
@@ -6460,16 +6462,22 @@ def build_scores() -> str:
     SCORES_6 adds the Diamond config and helper (scores.js asks
     window.EephusDiamond before it prints a model number), the eager
     assets/scores-pregame.js, and BETTING_DISCLAIMER in an inert template the
-    chunk prints once wherever the pregame model number renders."""
+    chunk prints once wherever the pregame model number renders.
+    SCORES_7a (the sports-page layout) links assets/sports-page.css, the
+    newspaper classes and the bracket styles /standings/ shares, before the
+    module css, and moves the About view to the lazy assets/scores-about.js,
+    named by the mount root's data-about-src."""
     body = (
         '<div class="fa-app scores-app">'
         + _scores_module_head("scores")
         + f'<div id="scores-app-root" data-vv="{_SCORES_VIDEO_VER}"'
-        f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"></div>'
+        f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"'
+        f' data-about-src="/assets/scores-about.js?v={_SCORES_ABOUT_VER}"></div>'
         # SCORES_6: the site's betting note, printed once wherever the pregame
         # model number renders (plan 9); inert until scores-pregame.js copies it
         f'<template id="scores-betnote">{BETTING_DISCLAIMER}</template>'
         '</div>'
+        f'<link rel="stylesheet" href="/assets/sports-page.css?v={_SPORTS_PAGE_CSS_VER}">'
         f'<link rel="stylesheet" href="/assets/scores.css?v={_SCORES_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'

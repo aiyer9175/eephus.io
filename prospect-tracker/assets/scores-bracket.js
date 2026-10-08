@@ -46,6 +46,12 @@
     return '<a class="scb-club" href="/franchise/#team=' + encodeURIComponent(c.code) + '" title="' + esc(c.name) + '">' +
       esc(c.code) + "</a>";
   }
+  // SC7-1: the pixel logo chip beside a decided club, from the page's hub when it has one (the code prints
+  // beside it, so its alt is empty; it removes itself on error). Without the hub the chunk draws codes only.
+  function chip(c) {
+    var H = window.EEPHUS_HUB;
+    return c && c.code && H && H.club && H.club(c.code) ? H.teamLogo(c.code, "sp-logo", { size: 16, decorative: true }) : "";
+  }
   function short(s, id) {
     for (var i = 0; i < s.clubs.length; i++) {
       var c = s.clubs[i];
@@ -68,8 +74,8 @@
 
   function clubRow(s, c) {
     var won = s.over && s.winner_id != null && c.team_id === s.winner_id;
-    var inner = club(c) + ' <span class="scb-w">' + (isNum(c.wins) ? c.wins : 0) + "</span>";
-    return '<li class="scb-c' + (won ? " is-won" : "") + '">' + (won ? "<strong>" + inner + '</strong><span class="sr-only"> winner</span>' : inner) + "</li>";
+    var inner = chip(c) + club(c) + ' <span class="scb-w">' + (isNum(c.wins) ? c.wins : 0) + "</span>";
+    return '<li class="scb-c' + (won ? " is-won" : s.over ? " is-out" : "") + '">' + (won ? "<strong>" + inner + '</strong><span class="sr-only"> winner</span>' : inner) + "</li>";
   }
 
   function seriesHTML(r, s, o, href) {
@@ -77,14 +83,14 @@
     if (o.compact) {
       // a placeholder already names its league ("AL Lower Seed"), so the label waits for two clubs
       var lg = s.lg && s.clubs.every(function (c) { return c.code; }) ? '<span class="scb-lab">' + esc(s.lg) + "</span> " : "";
-      return '<li class="scb-s scb-line">' + lg + club(s.clubs[0]) + " vs " +
-        club(s.clubs[1]) + (s.text ? ': <span class="scb-text">' + esc(s.text) + "</span>" : "") + "</li>";
+      return '<li class="scb-s scb-line">' + lg + chip(s.clubs[0]) + club(s.clubs[0]) + " vs " +
+        chip(s.clubs[1]) + club(s.clubs[1]) + (s.text ? ': <span class="scb-text">' + esc(s.text) + "</span>" : "") + "</li>";
     }
     var games = (s.games || []).map(function (g) { return gameRow(s, g, href); }).join("");
     return '<li class="scb-s' + (s.over ? " is-over" : "") + '"><p class="scb-lab">' + esc(lab) +
       (s.best_of ? ", best of " + s.best_of : "") + '</p><ul class="scb-clubs">' +
       s.clubs.map(function (c) { return clubRow(s, c); }).join("") + "</ul>" +
-      (s.text ? '<p class="scb-text">' + esc(s.text) + "</p>" : "") +
+      (s.text ? '<p class="scb-text sp-kicker">' + esc(s.text) + "</p>" : "") +
       (games ? '<ol class="scb-games">' + games + "</ol>" : "") + "</li>";
   }
 
