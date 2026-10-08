@@ -578,6 +578,11 @@ _SIDECAR_GLOBS = (
     # EFV3_C05: the MC-5 pricing read, a development record the progress ledger
     # copies from (tools/efv_v2_pricing_calibration.py).
     "data/efv_v2_pricing_calibration_eval.json",
+    # EFV3_C03: the one model-class screen (tools/efv_v2_model_class_screen.py), a
+    # spent-frame record the progress ledger and the arm ledger copy from; and the
+    # arm ledger itself, which the screen regenerates.
+    "data/efv_v2_model_class_screen.json",
+    "data/xfv_arm_ledger.json",
     # M21-4: the Fantasy Rank, its monthly model cache and its backtest.
     "data/fantasy_rank.json",
     "data/fantasy_rank_eval.json",
@@ -963,6 +968,10 @@ _SIDECAR_WRITE_TARGETS = (
     # EFV3_C05: tools/efv_v2_pricing_calibration.write resolves OUT_PATH at call time.
     ("tools.efv_v2_pricing_calibration", "OUT_PATH",
      "data/efv_v2_pricing_calibration_eval.json"),
+    # EFV3_C03: tools/efv_v2_model_class_screen.main resolves OUT_PATH at call time;
+    # tools/efv_arm_ledger.main writes OUT, resolved at call time.
+    ("tools.efv_v2_model_class_screen", "OUT_PATH", "data/efv_v2_model_class_screen.json"),
+    ("tools.efv_arm_ledger", "OUT", "data/xfv_arm_ledger.json"),
     # VAL_3 surplus-odds gate: surplus_odds_gate.run writes its one read as a block
     # of its parent artifact through OUT_PATH, resolved at call time.
     ("surplus_odds_gate", "OUT_PATH", "data/surplus_backtest_real.json"),

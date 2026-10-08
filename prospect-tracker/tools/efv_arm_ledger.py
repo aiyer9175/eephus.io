@@ -90,6 +90,10 @@ PROBES: tuple[tuple[str, str, str], ...] = (
     # frame (each carries five comparisons by the within, pooled and AUC statistics).
     # A dotted key names a block inside the artifact.
     ("efv_v2_dev_eval.json", "ds16.probes", "V2 development read (DS-16)"),
+    # EFV3_C03: the one model-class screen (docs/efv-v2/MODEL_CLASS_SCREEN.md), one
+    # probe per arm and frame (ten), each carrying the arm-minus-V2 within delta, its
+    # twin, its permutation p and its Holm-adjusted p; a failed arm reads NULL.
+    ("efv_v2_model_class_screen.json", "probes", "model-class screen (EFV3_C03)"),
     # EFV3 lane A G7: the one validity read of the bust pool ids (W3 > 0 share by the
     # bust_id_resolved indicator on the lv_dev pool rows); counts, never a score.
     ("efv_bust_pool_receipt.json", "probes", "bust pool id balance (EFV3 G7)"),

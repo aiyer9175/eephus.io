@@ -94,6 +94,11 @@ ANCHOR_KEY = "u_anchor"
 #: or above it, with a block, is the upper band; every other row is the lower band.
 MC3_BAND_AA_RANK = 4.0
 MC3_BANDS: tuple[str, ...] = ("upper", "lower")
+#: MC-3 twin control hook (EFV3_C03, MODEL_CLASS_SCREEN.md s5): a row carrying a band
+#: label under this key is read as that band by band_of_row. The screen's
+#: zero-information twin permutes the band labels within vintage by writing it; no
+#: frame row, matrix row or served path carries the key.
+MC3_BAND_KEY = "mc3_band"
 #: MC-4b: folds with fewer has-block training rows fall back to MC-4a.
 MC4B_MIN_HAS_BLOCK_ROWS = 300
 #: MC-4b: the spline's interior breakpoints, the training terciles of the driver.
@@ -564,8 +569,16 @@ def _row_sources(by_v: dict, sources) -> list[str]:
 def build_source_reliability(rows_by_side_vintage: dict[str, dict[int, list[dict]]], *,
                              single_source: dict, sources=None,
                              min_group_rows: int = H.MIN_TEST_ROWS,
-                             target_vintages=None, gate_sha: str | None = None) -> dict:
+                             target_vintages=None, gate_sha: str | None = None,
+                             frame: str = "lv") -> dict:
     """The MC-2 reliability table keyed (source, side, V).
+
+    `frame` names what the years are (guard_training_rows' distinction): on "lv" they
+    are list vintages, so a reserved one (R-LV) raises through
+    efv_vintage_frame.guard_score_request; on "vm" they are debut years of the
+    vintage-matched frame (the screen's MC-2 design rule: career WAR on the debut
+    frame), which the R-LV guard does not name, and the one guard is
+    efv_v2_model._check_years (no year at or after the first reserved debut cohort).
 
     Rows are {side: {V: rows}}, each row carrying `grades` ({source: FV at the V
     read}) and `target` (the W3 the caller joined; read as ranks only). For every
@@ -579,6 +592,8 @@ def build_source_reliability(rows_by_side_vintage: dict[str, dict[int, list[dict
     history at V keeps weight 1.0 (never punished for being new). `single_source` is
     {"k", "prior"}, consensus.SINGLE_SOURCE_K and SINGLE_SOURCE_PRIOR handed in by the
     runner (this module may not import consensus). The rule is fixed and not tuned."""
+    if frame not in ("lv", "vm"):
+        raise ValueError(f"frame must be lv or vm, got {frame!r}")
     k_ss = float(single_source["k"])
     prior = float(single_source["prior"])
     table: dict = {}
@@ -589,14 +604,17 @@ def build_source_reliability(rows_by_side_vintage: dict[str, dict[int, list[dict
         vintages = sorted(int(v) for v in by_v)
         H._check_years(vintages)
         for v in vintages:
-            F.guard_score_request(v, gate_sha=gate_sha, purpose="reliability table")
+            if frame == "lv":
+                F.guard_score_request(v, gate_sha=gate_sha, purpose="reliability table")
         srcs = _row_sources(by_v, sources)
         srcs_doc[side] = srcs
         targets = (vintages if target_vintages is None
                    else sorted(int(v) for v in target_vintages))
+        H._check_years(targets)
         table[side], reads[side], stats_doc[side] = {}, {}, {}
         for V in targets:
-            F.guard_score_request(V, gate_sha=gate_sha, purpose="reliability table")
+            if frame == "lv":
+                F.guard_score_request(V, gate_sha=gate_sha, purpose="reliability table")
             hist = [v for v in vintages if v <= V - RELIABILITY_LAG]
             reads[side][str(V)] = hist
             stats = {}
@@ -633,6 +651,7 @@ def build_source_reliability(rows_by_side_vintage: dict[str, dict[int, list[dict
                      f"V - {RELIABILITY_LAG}, relative to the mean over sources with "
                      "history, shrunk toward equal and clamped; the single-source "
                      "rule unchanged; no indicator for a missing source"),
+            "frame": frame,
             "lag": RELIABILITY_LAG, "shrink_k": SB.WEIGHT_SHRINK_K,
             "clamp": list(SB.WEIGHT_CLAMP), "rho_floor": SB.SPEARMAN_FLOOR,
             "min_group_rows": int(min_group_rows),
@@ -785,7 +804,13 @@ def predict_mc2(model: dict, rows: list[dict]) -> list[dict]:
 
 def band_of_row(r: dict) -> str:
     """"upper" for a row whose as-of MiLB block puts its last level at AA or above;
-    "lower" for every other row, a no-block row included (never a third value)."""
+    "lower" for every other row, a no-block row included (never a third value). A
+    label written under MC3_BAND_KEY (the screen's twin control) is read as given."""
+    ov = r.get(MC3_BAND_KEY)
+    if ov is not None:
+        if ov not in MC3_BANDS:
+            raise ValueError(f"{MC3_BAND_KEY} must be one of {MC3_BANDS}, got {ov!r}")
+        return str(ov)
     v2 = r["v2"]
     lr = v2.get("level_rank")
     if v2.get("has_block") and lr is not None and float(lr) >= MC3_BAND_AA_RANK:
