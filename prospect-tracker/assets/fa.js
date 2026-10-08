@@ -369,6 +369,7 @@
       rows.innerHTML = `<div class="state-message">Free-agency data not exported yet.</div>`;
       return;
     }
+    if (ilLive()) await loadIl(cls);
     _faPhotoLegacy = !cls.members.some(m => m.mlbam);
     const futureNote = state.classYear
       ? `<div class="fa-cba-note">&#9432; ${state.classYear - 1}-${String(state.classYear).slice(2)} is a projected class: contract-expiry members with option and QO statuses, priced at that winter's ex-ante <span data-gl="winter_dpw">$/WAR</span>. No signings yet.</div>`
@@ -772,6 +773,9 @@
   // under another name and has its own column. warCvar10, pAnyStar and prevAav
   // have NO column at any width, so the picker is the only way to reach them and
   // it is therefore never hidden.
+  // IL days, last three seasons (wiring W01, Q9_22c): a key only while the MLB
+  // events feed is live, so with the flag off the board is unchanged.
+  if (ilLive()) FA_SORT_KEYS.push("ilDays");
   const FA_PICK_KEYS = FA_SORT_KEYS.filter(k => k !== "rank");
   // First click ascending: A-Z, youngest, and the status ladder from locked.
   const FA_ASC_FIRST = ["name", "age", "status"];
@@ -782,6 +786,7 @@
   // sort opened on the four unprojected rows.
   function faSortVal(m, k) {
     if (k === "rank") return m.projGuar ?? null;
+    if (k === "ilDays") { const x = ilOf(m); return x ? x.total : null; }
     if (k === "name") return String(m.name || "");
     if (k === "status" || k === "verdict") return String(m[k] || "") || null;
     return m[k] ?? null;
@@ -809,7 +814,60 @@
     surplus: "Surplus", dealPlus: "Deal+", rational: "Rational value",
     warY1: "WAR y1", warTotal: "Deal WAR", warCvar10: "Downside WAR",
     pAnyStar: "Star odds", age: "Age", prevAav: "Prior AAV",
+    ilDays: "IL days, last 3 seasons",
   };
+
+  // ---- IL days, last three seasons (wiring W01, Q9_22c) ----------------------
+  // Read only while the page shell says the MLB events feed is live
+  // (data-mlb-events on #fa-rows, written from mlb_events.MLB_EVENTS_LIVE): the
+  // column, its sort key and the detail line read il_recent from the events
+  // index, in-season IL days per season (Apr 1 to Oct 1, ended by the next IL
+  // move). A member
+  // resolves to an MLBAM id through its own mlbam or the player links map.
+  // Descriptive only: no availability forecast rides on it.
+  let IL = null;            // {seasons, days} once loaded, false if it failed
+  let IL_LINKS = null;
+  function ilLive() {
+    const r = document.getElementById("fa-rows");
+    return !!(r && r.dataset.mlbEvents === "live");
+  }
+  function ilOn() { return ilLive() && !!IL; }
+  function loadIl(cls) {
+    if (!ilLive()) return Promise.resolve(null);
+    const needLinks = !IL_LINKS && cls && (cls.members || []).some(m => !m.mlbam) && window.EEPHUS_HUB;
+    const links = needLinks
+      ? window.EEPHUS_HUB.links().then(L => { IL_LINKS = L || null; }, () => {})
+      : Promise.resolve();
+    const idx = IL !== null ? Promise.resolve()
+      : fetch("/data/mlb_events/index.json", { cache: "no-cache" })
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then(j => { IL = (j && j.il_recent && Array.isArray(j.il_recent.seasons)) ? j.il_recent : false; })
+        .catch(() => { IL = false; });
+    return Promise.all([idx, links]).then(() => IL);
+  }
+  function ilMlbam(m) {
+    if (m.mlbam) return m.mlbam;
+    const row = IL_LINKS && (IL_LINKS.byKey || {})[m.key];
+    return row && row.mlbam ? row.mlbam : null;
+  }
+  // {per: [days by season], total} or null when the member has no MLBAM id.
+  // A resolved player missing from il_recent had no IL day in the window: the
+  // index carries every MLB-club IL move.
+  function ilOf(m) {
+    if (!IL) return null;
+    const id = ilMlbam(m);
+    if (!id) return null;
+    const per = (IL.days || {})[String(id)] || IL.seasons.map(() => 0);
+    return { per, total: per.reduce((a, b) => a + b, 0) };
+  }
+  function ilSplit(x) {
+    return IL.seasons.map((y, i) => `${y}: ${x.per[i]}`).join(", ");
+  }
+  function ilCell(m) {
+    const x = ilOf(m);
+    if (!x) return EM_DASH;
+    return `<span title="In-season IL days by season (${esc(ilSplit(x))})">${x.total}</span>`;
+  }
 
   // Which "biggest misses" category the Model Accountability table is showing.
   let modelMissTab = "guar";   // guar | years | aav
@@ -964,6 +1022,8 @@
         + (m.optValue != null ? ` &middot; modelled value ${money(m.optValue)}` : "")));
     }
     if (m.prevAav != null) parts.push(g("Prior deal", `${money(m.prevAav)} AAV`));
+    const il = ilOn() ? ilOf(m) : null;
+    if (il) parts.push(g("IL days", `${il.total} &middot; ${esc(ilSplit(il))}`));
     if (m.thinPlatform) parts.push(g("Thin platform", `${esc(m.thinPlatform)}. Low-confidence projection; the market line inherits it.`, "thin_platform"));
     if ((m.comps || []).length) {
       parts.push(g("Comps", m.comps.slice(0, 3).map(c =>
@@ -983,7 +1043,8 @@
     // colspan past the painted columns adds phantom columns to a fixed-layout
     // table and crushes the Player column.
     const pad = c => `<td class="${c} fa-dt-pad" aria-hidden="true"></td>`;
-    const tail = ["fc-sur", "fc-dp", "fc-rat", "fc-w1", "fc-wt", "fc-age", "fc-st"];
+    const tail = ["fc-sur", "fc-dp", "fc-rat", "fc-w1", "fc-wt", "fc-age"]
+      .concat(ilOn() ? ["fc-il"] : [], ["fc-st"]);
     return `<tr class="fa-detail" id="fad-${esc(m.key)}" data-export-skip>${pad("fc-rank")}`
       + `<td colspan="5" class="fa-dt-cell"><div class="fa-dt">${parts.join("")}</div></td>`
       + tail.map(pad).join("") + `</tr>`;
@@ -1023,6 +1084,7 @@
       + `<td class="fc-w1">${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}</td>`
       + `<td class="fc-wt">${m.warTotal != null ? formatMetric(m.warTotal, "war") : EM_DASH}</td>`
       + `<td class="fc-age">${m.age != null ? Math.floor(m.age) : EM_DASH}</td>`
+      + (ilOn() ? `<td class="fc-il">${ilCell(m)}</td>` : "")
       + `<td class="fc-st"><span class="fa-st ${st.cls}" title="${esc(st.tip)}">${st.short}</span></td>`
       + `</tr>`;
   }
@@ -1063,6 +1125,9 @@
       + th("warY1", `WAR<span class="fa-th-unit">y1</span>`, "fc-w1", "Projected year-1 WAR (fWAR basis, the training label)", "WAR y1")
       + th("warTotal", `WAR<span class="fa-th-unit">deal</span>`, "fc-wt", "Projected WAR over the predicted term (fWAR basis)", "Deal WAR")
       + th("age", "Age", "fc-age", "Age in the free-agent season", "Age")
+      + (ilOn() ? th("ilDays", `IL<span class="fa-th-unit">3y</span>`, "fc-il",
+        `IL days, last three seasons: in-season days on the injured list, ${IL.seasons[0]} to ${IL.seasons[IL.seasons.length - 1]}, summed`,
+        "IL days 3y") : "")
       + th("status", "Status", "fc-st", "Market status: UFA, a pending option with its price, or the signed deal", "Status")
       + `</tr></thead>`;
     const body = members.map((m, i) => faRowHtml(m, i) + (FA_OPEN.has(m.key) ? faDetailRow(m, cls) : "")).join("");

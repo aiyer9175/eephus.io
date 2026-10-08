@@ -835,13 +835,30 @@ FEEDBACK_MAILTO = (
 # this one constant; the URL stays /news/.
 NEWS_LABEL = "MLB News"
 
+
+def _events_live() -> bool:
+    """mlb_events.MLB_EVENTS_LIVE, the one definition of the MLB events flag
+    (wiring W01). False when the module cannot be imported."""
+    try:
+        import mlb_events
+    except Exception:  # noqa: BLE001
+        return False
+    return bool(getattr(mlb_events, "MLB_EVENTS_LIVE", False))
+
+
+# /history/ is renamed On This Day in the commit that serves its MLB rows
+# (Q9_22c, site-pass plan 3.5): the page, the homepage module kicker, the
+# footer link and the Library row read this while the flag is on.
+HISTORY_LABEL_LIVE = "On This Day"
+_HISTORY_LABEL = HISTORY_LABEL_LIVE if _events_live() else "Today in Prospect History"
+
 # ONE NAME PER DESTINATION (QHOC11). The footer said About for the page the
 # nav calls Masthead and This Day for Today in Prospect History, and the home
 # card said Model Ledger (easily read as the Club Ledger) for Model
 # Accountability. Nav leaves keep their NAV_ITEMS label; the three pages with
 # no nav row are named here, and every surface that links them reads this map.
 PAGE_LABELS = {h: lab for _k, lab, h in nav_leaves()}
-PAGE_LABELS.update({"/history/": "Today in Prospect History",
+PAGE_LABELS.update({"/history/": _HISTORY_LABEL,
                     "/models/": "Model Accountability",
                     "/news/": NEWS_LABEL})
 
@@ -1609,6 +1626,9 @@ def _player_href(key: str) -> str:
     # they deep-link the /fa/ player card, not a PROSPX player page.
     if key and key.startswith("fa:"):
         return f"/fa/#player={key[3:]}"
+    # "mlb:" keys are MLB player pages (the MLB News rows of Q9_22c).
+    if key and key.startswith("mlb:"):
+        return f"/projections/#player={key[4:]}"
     return f"/prospx/#player={key}" if key else "/prospx/"
 
 # ORG abbreviation -> ESPN logo slug (mirrors ESPN_LOGO_SLUGS in prospx/index.html).
@@ -2447,16 +2467,22 @@ def _news_detail(p: dict, typ: str) -> str:
             parts.append(f"ETA {yr}")
     return _meta(*parts)
 
-def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap, title: str = "") -> str:
+def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap, title: str = "",
+                    mlb: dict | None = None) -> str:
     """Richer /news/ row: pictogram | hidden family prefix | logo | name +
     scouting line | current-FV chip | value. Reuses _feed_item_html's classes so it inherits the wire palette; the
     detail line + FV pill are scoped to .news-feed in CSS, so the homepage
     sidebar wire is untouched. `pmap` maps player_key -> record (players +
-    graduates); rows with no match (FA signings) degrade to the plain layout."""
+    graduates); rows with no match (FA signings) degrade to the plain layout.
+    `mlb` (an MLB StatsAPI row, Q9_22c) puts the StatsAPI description, verbatim,
+    in the detail line and the row title."""
     logo = _team_logo(org, "feed-logo") if org else ""
     data_cat = f' data-cat="{html.escape(cat)}"' if cat else ""
     p = pmap.get(key) if pmap else None
     detail = _news_detail(p, typ)
+    if mlb:
+        detail = html.escape(mlb["descs"][0])
+        title = " / ".join(mlb["descs"])
     meta = f'<span class="news-meta">{detail}</span>' if detail else ""
     fv = _fv_pill(p) if (p and p.get("fv_close") is not None) else ""
     tip = f' title="{html.escape(title)}"' if title else ""
@@ -2514,13 +2540,15 @@ def _news_recent_events(events: list, window_days: int = 30,
         recent = events[:min_items]
     return recent[:max_items]
 
-def _news_feed_html(events: list, pmap: dict | None = None) -> str:
+def _news_feed_html(events: list, pmap: dict | None = None, mlb: dict | None = None) -> str:
     """Day-grouped feed for the standalone /news/ page: a richer row than the
     homepage sidebar (name + scouting line + current-FV chip), windowed to
     recent activity; each row's data-fam and data-type let the filter chips
     show/hide by family (and the Grades chip by type). Each day is wrapped in a .news-day block so a filtered-empty
-    day hides cleanly. `pmap` resolves player_key -> record for the detail."""
+    day hides cleanly. `pmap` resolves player_key -> record for the detail;
+    `mlb` maps an MLB row's event tuple to its StatsAPI text (_news_mlb_merge)."""
     recent = _news_recent_events(events)
+    mlb = mlb or {}
     out = []
     last_day = None
     open_day = False
@@ -2533,7 +2561,8 @@ def _news_feed_html(events: list, pmap: dict | None = None) -> str:
             out.append(_feed_day_header(dt, gfx=True))
             open_day = True
         out.append(_news_item_html(typ, glyph, text, key, org, name, val, "", pmap,
-                                   title=_wire_row_title(dt, key, val)))
+                                   title=_wire_row_title(dt, key, val),
+                                   mlb=mlb.get((dt, typ, glyph, text, key, org, name, val))))
     if open_day:
         out.append("</div>")
     return "".join(out)
@@ -2587,7 +2616,8 @@ def _gfx_chip_html(chip_id: str) -> str:
             'title="Share graphic of this view">'
             '<span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>')
 
-def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None) -> str:
+def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None,
+                   mlb: dict | None = None) -> str:
     """The /news/ Generate GFX data model: the current feed's events as a
     compact JSON list of {date, typ, glyph, name, pos, org, val, mlbam?,
     pctx?, logo?}, embedded as an inert application/json script the digest
@@ -2599,15 +2629,17 @@ def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None) -> s
     'none': the client needs to tell "no photo on file" apart from "not resolved
     yet" so it can emit no URL at all for the former rather than fetch a
     known-404. Absent pctx = unresolved, and the client asks the '67' set.
-    logo is the org's ESPN CDN logo slug."""
+    logo is the org's ESPN CDN logo slug. An MLB row (`mlb`, Q9_22c) carries
+    its own mlbam."""
     items = []
-    for dt, typ, glyph, text, key, org, name, val in (
-            recent if max_events is None else recent[:max_events]):
+    mlb = mlb or {}
+    for ev in (recent if max_events is None else recent[:max_events]):
+        dt, typ, glyph, text, key, org, name, val = ev
         p = pmap.get(key) or {}
         it = {"date": dt, "typ": typ, "glyph": glyph,
               "name": name or text, "pos": _pos_label(p.get("position")),
               "org": org or "", "val": val}
-        mlbam = p.get("mlbam_id")
+        mlbam = p.get("mlbam_id") or (mlb.get(tuple(ev)) or {}).get("mlbam")
         if mlbam:
             it["mlbam"] = mlbam
             ctx = _PHOTO_CTX.get(str(mlbam))
@@ -2723,17 +2755,183 @@ def _news_gfx_js() -> str:
           for code, row in _WIRE_TYPES.items()}
     return _NEWS_GFX_JS.replace("__WIRE_TYPES__", json.dumps(wt, separators=(",", ":")))
 
+# ---- MLB rows on /news/ (wiring W01 part 3, Q9_22c) -----------------------
+# MLB veterans' trades, IL placements and major-league signings from the MLB
+# events builder's recent.json (data/mlb_events/, written by mlb_events.py),
+# read only while mlb_events.MLB_EVENTS_LIVE is True. The homepage rail and
+# ticker do not take them here (HOME_3 adds them there). Deduplication follows
+# the site-pass plan 3.5 item 3: one row per (mlbam, date, type code); a
+# StatsAPI trade replaces the board's own trade row within a day and keeps the
+# PROSPX href; a StatsAPI IL placement replaces the board's il_status row; an
+# FA module signing with terms replaces a StatsAPI signing within 3 days; a
+# trade is one row per deal (date and unordered club pair), up to two names
+# then "+n". StatsAPI text is printed verbatim, never re-voiced.
+_NEWS_MLB_TYPES = ("trade", "il_place", "fa_sign")
+_NEWS_MLB_ABSORB_DAYS = 3
+
+
+def _club_abbr(team_id) -> str | None:
+    """Our club code for an MLBAM team id (scores_core.CLUB_BY_ID); None for an
+    affiliate or a club outside the 30."""
+    import scores_core
+    return scores_core.club_code(team_id)
+
+
+def _day_gap(a: str, b: str) -> int:
+    try:
+        return abs((date.fromisoformat(str(a)[:10]) - date.fromisoformat(str(b)[:10])).days)
+    except ValueError:
+        return 99
+
+
+def _trade_val(grp: list, lead: dict) -> str:
+    """"NYY→SEA" when every player in the deal moved the same way, "NYY⇄SEA"
+    when players moved both ways; "?" for a club outside the 30."""
+    a = _club_abbr(lead.get("from")) or "?"
+    b = _club_abbr(lead.get("to")) or "?"
+    dirs = {(r.get("from"), r.get("to")) for r in grp}
+    return f"{a}→{b}" if len(dirs) == 1 else f"{a}⇄{b}"
+
+
+def _deal_names(grp: list) -> str:
+    """Up to two names, then "+n" (plan 3.5 item 3)."""
+    names = [r.get("name") or "" for r in grp]
+    return ", ".join(names[:2]) + (f" +{len(names) - 2}" if len(names) > 2 else "")
+
+
+def _group_deals(rows: list, board: dict) -> list:
+    """Trade rows grouped per deal: (date, unordered club pair), board players
+    first inside a deal. Returns [(date, [rows])] in input order."""
+    deals: dict = {}
+    for r in rows:
+        pair = frozenset(c for c in (r.get("from"), r.get("to")) if c is not None)
+        deals.setdefault((r["date"], pair), []).append(r)
+    out = []
+    for (dt, _pair), grp in deals.items():
+        grp.sort(key=lambda r: (int(r["mlbam"]) not in board, r.get("tx") or 0, r.get("name") or ""))
+        out.append((dt, grp))
+    return out
+
+
+def _board_mlbam(data: dict) -> dict:
+    """{mlbam: player_key} of the active board (timeseries players, plan 3.5
+    item 3). A graduate is an MLB player: his MLB rows link the MLB player
+    page, not his old prospect card."""
+    board: dict[int, str] = {}
+    for p in data.get("players") or []:
+        mid, k = p.get("mlbam_id"), p.get("player_key")
+        if mid and k:
+            board.setdefault(int(mid), k)
+    return board
+
+
+def _news_mlb_merge(events: list, data: dict, fa_events: list,
+                    recent: dict | None = None) -> tuple[list, dict]:
+    """The /news/ event list with the MLB rows folded in, and a map from each
+    MLB row's event tuple to {"descs", "mlbam"} for its detail line, title and
+    GFX headshot. A row whose player has neither a PROSPX page nor an MLB
+    player page is left out (every feed row links). `recent` is recent.json's
+    payload (default: the served file)."""
+    if recent is None:
+        recent = _cached_data_json("mlb_events/recent.json")
+    rows = [r for r in (recent.get("rows") or [])
+            if isinstance(r, dict) and r.get("type") in _NEWS_MLB_TYPES
+            and r.get("src") != "fa_class" and r.get("mlbam") and r.get("date")]
+    if not rows:
+        return events, {}
+    board = _board_mlbam(data)
+    links = {k: int(v["mlbam"]) for k, v in
+             (_cached_data_json("player_links.json").get("byKey") or {}).items()
+             if isinstance(v, dict) and v.get("mlbam")}
+    fa_signed: dict[int, list] = {}
+    for e in fa_events or []:
+        mid = links.get(e.get("key"))
+        if e.get("type") == "signing" and mid and e.get("date"):
+            fa_signed.setdefault(mid, []).append(str(e["date"])[:10])
+
+    def href_key(r: dict) -> str | None:
+        mid = int(r["mlbam"])
+        if mid in board:
+            return board[mid]
+        return f'mlb:{r["key"]}' if r.get("key") else None
+
+    seen, kept = set(), []
+    for r in rows:
+        k = (int(r["mlbam"]), r["date"], r["type"])
+        if k in seen:
+            continue
+        seen.add(k)
+        if r["type"] == "fa_sign" and any(_day_gap(d, r["date"]) <= _NEWS_MLB_ABSORB_DAYS
+                                          for d in fa_signed.get(int(r["mlbam"]), ())):
+            continue
+        kept.append(r)
+
+    out_rows: list = []      # (event tuple, info, weight)
+    drop_board: list = []    # (board key, type, date, day window)
+    for r in kept:
+        if r["type"] == "trade":
+            continue
+        hk = href_key(r)
+        if hk is None:
+            continue
+        mid = int(r["mlbam"])
+        nm = r.get("name") or ""
+        club = _club_abbr(r.get("to")) or _club_abbr(r.get("from"))
+        if r["type"] == "il_place":
+            val = r.get("il") or "IL"
+            weight = 85 if val.startswith("60-day") else _WIRE_TYPES["il_place"]["weight"]
+            ev = (r["date"], "il_place", "✚", f"{nm} to {val}", hk, club, nm, val)
+            if mid in board:
+                drop_board.append((board[mid], "il_place", r["date"], _NEWS_MLB_ABSORB_DAYS))
+        else:
+            val = _WIRE_TYPES["fa_sign"]["val"]
+            weight = _WIRE_TYPES["fa_sign"]["weight"]
+            ev = (r["date"], "fa_sign", "✎", f"{nm} signs · {club or '?'} {val}", hk, club, nm, val)
+        out_rows.append((ev, {"descs": [r.get("desc") or ""], "mlbam": mid}, weight))
+    for dt, grp in _group_deals([r for r in kept if r["type"] == "trade"], board):
+        lead = next((r for r in grp if href_key(r)), None)
+        if lead is None:
+            continue
+        name_txt = _deal_names(grp)
+        val = _trade_val(grp, lead)
+        org = _club_abbr(lead.get("to")) or _club_abbr(lead.get("from"))
+        ev = (dt, "trade", "⇄", f"{name_txt} traded {val}", href_key(lead), org, name_txt, val)
+        descs = list(dict.fromkeys(r.get("desc") or "" for r in grp))
+        out_rows.append((ev, {"descs": descs, "mlbam": int(lead["mlbam"])},
+                         _WIRE_TYPES["trade"]["weight"]))
+        for r in grp:
+            if int(r["mlbam"]) in board:
+                drop_board.append((board[int(r["mlbam"])], "trade", dt, 1))
+
+    def replaced(e) -> bool:
+        return any(e[4] == k and e[1] == t and _day_gap(e[0], d) <= w
+                   for k, t, d, w in drop_board)
+
+    base = [e for e in events if not replaced(e)]
+    out_rows.sort(key=lambda x: (x[0][0], x[2]), reverse=True)
+    # A stable sort on the date alone: the prospect rows keep their own order at
+    # the head of each day and the MLB rows follow, heaviest first.
+    merged = sorted(base + [x[0] for x in out_rows], key=lambda e: e[0], reverse=True)
+    return merged, {x[0]: x[1] for x in out_rows}
+
+
 def build_news(data: dict | None = None) -> str:
     """/news/ - the expanded MLB News page: the full recent event feed
     (debuts, trades, promotions/demotions, IL, FV grade changes, FA signings
-    and option decisions),
+    and option decisions, and while mlb_events.MLB_EVENTS_LIVE is True the MLB
+    veterans' trades, IL placements and signings),
     day-grouped with category filter chips. Same event pipeline + row markup as
     the homepage sidebar feed, just a wider window. Reached by clicking the
     MLB News header (sidebar feed or top ticker) on the homepage. The name is
     NEWS_LABEL; the URL stays /news/."""
     data = data or load_site_data() or {}
+    fa_events = _load_fa_events_for_wire()
     events = _collect_events(data.get("players") or [], data.get("graduates") or [],
-                             _load_fa_events_for_wire())
+                             fa_events)
+    live = _events_live()
+    mlb: dict = {}
+    if live:
+        events, mlb = _news_mlb_merge(events, data, fa_events)
     # player_key -> record, so each row can carry the player's current FV chip
     # and scouting line. Active prospects win ties; graduates fill the debuts.
     pmap: dict = {}
@@ -2743,16 +2941,22 @@ def build_news(data: dict | None = None) -> str:
     for g in (data.get("graduates") or []):
         if g.get("player_key") and g["player_key"] not in pmap:
             pmap[g["player_key"]] = g
-    feed = _news_feed_html(events, pmap)
+    feed = _news_feed_html(events, pmap, mlb)
     recent = _news_recent_events(events)
     # The family key as the filter bar: All, the five families (each with its
     # mark), and Grades (owner decision M20-4, DECISIONS_FOR_OWNER.md:515).
     chips = _wire_key_html("data-news-filter",
                            lead=(("all", "All"),), tail=(("grades", "Grades"),))
+    # Claims rule C9: the copy names MLB transactions only while they are
+    # served (the Q9_22c flip; copy rows CP-019 and CP-020).
+    sub = ("MLB and MiLB transactions · eFV moves · FA · last 30 days" if live
+           else "debuts, trades, level moves, IL, eFV changes, FA signings and options")
+    how_mlb = ('<li>MLB rows are trades, IL placements and major-league signings from the '
+               'MLB StatsAPI transaction log; each quotes its StatsAPI text.</li>') if live else ""
     body = (
         '<div class="news-app">'
         f'<div class="section-head"><h1>{_masthead_icon("news")}{NEWS_LABEL}</h1>'
-        '<span class="section-sub">debuts, trades, level moves, IL, eFV changes, FA signings and options</span>'
+        f'<span class="section-sub">{sub}</span>'
         f'{_gfx_chip_html("news-gfx-chip")}</div>'
         f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last 30 days, newest first.</p>'
         '<details class="news-how"><summary>How this works</summary><ul>'
@@ -2760,6 +2964,7 @@ def build_news(data: dict | None = None) -> str:
         '<li>&quot;to eFV floor&quot; and &quot;off eFV floor&quot; mark a player reaching or leaving '
         'the model floor, not a re-grade.</li>'
         '<li>A dashed grade is a player no source has graded yet; &quot;floor&quot; is the eFV floor.</li>'
+        f'{how_mlb}'
         '</ul></details>'
         '<div class="filter-bar" id="news-filter-bar" role="group" aria-labelledby="news-filter-label">'
         f'<span class="filter-label" id="news-filter-label">Filter</span>{chips}</div>'
@@ -2771,19 +2976,19 @@ def build_news(data: dict | None = None) -> str:
         '<style>.news-feed .feed-day{gap:10px;}'
         '.news-app .news-feed button.chip.egfx-day-chip{margin-left:auto;font-size:10px;'
         'padding:2px 8px;line-height:1.5;}</style>'
-        + _news_gfx_blob(recent, pmap)
+        + _news_gfx_blob(recent, pmap, mlb=mlb)
         + _NEWS_FILTER_JS
         + _news_gfx_js()
         # Shared Generate GFX engine (same two-script injection as /fa/).
         + f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         + f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
     )
-    # Claims rule C9: this names what the feed carries today. The words "MLB
-    # transactions" join it in the commit that serves MLB rows (Q9_22c).
-    return page(f"{NEWS_LABEL} - eephus.io", "news", body,
-                f"{NEWS_LABEL} on eephus.io: prospect level moves, MLB debuts, trades, IL "
-                "moves, eFV grade changes, free-agency signings and option decisions, "
-                "filterable by type.",
+    desc = ("MLB and MiLB transactions, debuts, IL moves, eFV changes and FA signings, "
+            "filterable by type." if live else
+            f"{NEWS_LABEL} on eephus.io: prospect level moves, MLB debuts, trades, IL "
+            "moves, eFV grade changes, free-agency signings and option decisions, "
+            "filterable by type.")
+    return page(f"{NEWS_LABEL} - eephus.io", "news", body, desc,
                 url=f"{SITE_ORIGIN}/news/")
 
 def _fv_step_runs(n: int, w: int) -> list:
@@ -3241,10 +3446,12 @@ def _load_history_db() -> tuple[dict, dict]:
     """Group prospects.db player_transactions (SGN/TR/DFA/SFA only) and
     il_history by MM-DD. STRICTLY read-only (file:...?mode=ro) - the build
     must never write the pipeline's DB. Returns
-    ({mmdd: [(iso_date, code, player_key, team_name, minor), ...]},
+    ({mmdd: [(iso_date, code, player_key, team_name, minor, tx_id), ...]},
      {mmdd: [(iso_since, player_key, il_type), ...]}); empty dicts when the
     DB is absent (cold checkouts / CI without a seeded DB). `minor` is True
-    for a row whose StatsAPI description names a minor league contract."""
+    for a row whose StatsAPI description names a minor league contract;
+    `tx_id` is its StatsAPI transaction id (the /history/ MLB rows fold a
+    ledger row they also carry, Q9_22c)."""
     global _HIST_DB_CACHE
     if _HIST_DB_CACHE is not None:
         return _HIST_DB_CACHE
@@ -3275,7 +3482,7 @@ def _load_history_db() -> tuple[dict, dict]:
                         seen.add(sig)
                         team = t.get("to_team_name") or t.get("from_team_name") or ""
                         minor = "minor league contract" in str(t.get("description") or "").lower()
-                        tx.setdefault(dt[5:10], []).append((dt[:10], code, key, team, minor))
+                        tx.setdefault(dt[5:10], []).append((dt[:10], code, key, team, minor, t.get("id")))
                 seen.clear()
                 for key, since, il_type in con.execute(
                         "SELECT player_key, since, il_type FROM il_history"):
@@ -3435,8 +3642,8 @@ def build_this_day(data: dict | None = None) -> str:
     tx_today.sort(key=lambda t: t[0], reverse=True)
     tx_today.sort(key=lambda t: (0, -(_primary_fv(pmap[t[2]]) or 0)) if t[2] in pmap else (1, 0))
     TX_CAP = 40
-    tx_rows = []
-    for dt, code, key, team, *rest in tx_today[:TX_CAP]:
+
+    def _ledger_row(dt, code, key, team, *rest) -> str:
         p = pmap.get(key)
         nm = html.escape((p or {}).get("player_name") or _name_from_key(key))
         pos = _pos_label((p or {}).get("position"))
@@ -3449,14 +3656,49 @@ def build_this_day(data: dict | None = None) -> str:
                  f'<span class="otd-body" title="{nm} {verb}{pos_tail}">{logo} <strong>{nm}</strong> '
                  f'<span class="wire-val">{verb}</span>{pos_tail}</span>')
         if p:
-            tx_rows.append(f'<a class="otd-row" href="{_player_href(key)}"{_wire_attrs(wt)}>{inner}{_fv_pill(p)}</a>')
-        else:
-            tx_rows.append(f'<div class="otd-row"{_wire_attrs(wt)}>{inner}</div>')
-    if len(tx_today) > TX_CAP:
-        tx_rows.append(
-            '<div class="otd-more" style="margin:8px 4px;font-family:var(--font-retro-mono);'
-            'font-size:11px;color:var(--text-tertiary);">'
-            f'+ {len(tx_today) - TX_CAP} more transactions on {html.escape(mon_d)} in the ledger</div>')
+            return f'<a class="otd-row" href="{_player_href(key)}"{_wire_attrs(wt)}>{inner}{_fv_pill(p)}</a>'
+        return f'<div class="otd-row"{_wire_attrs(wt)}>{inner}</div>'
+
+    def _more(n: int, what: str) -> str:
+        return ('<div class="otd-more" style="margin:8px 4px;font-family:var(--font-retro-mono);'
+                'font-size:11px;color:var(--text-tertiary);">'
+                f'+ {n} more {what} on {html.escape(mon_d)} in the ledger</div>')
+
+    live = _events_live()
+    if not live:
+        tx_rows = [_ledger_row(*t) for t in tx_today[:TX_CAP]]
+        if len(tx_today) > TX_CAP:
+            tx_rows.append(_more(len(tx_today) - TX_CAP, "transactions"))
+    else:
+        mlb_trades, mlb_signs, mlb_first = _hist_mlb_rows(today, data, pmap)
+        mlb_tx = {t for t in (mlb_trades["tx"] | mlb_signs["tx"]) if t is not None}
+        mlb_names = mlb_trades["names"] | mlb_signs["names"]
+
+        def _carried(t) -> bool:
+            """A ledger row the MLB log also carries: the same transaction id, or
+            (a ledger row with no id) the same date, code and player name."""
+            if len(t) > 5 and t[5] is not None:
+                return t[5] in mlb_tx
+            nm = (pmap.get(t[2]) or {}).get("player_name") or _name_from_key(t[2])
+            return (t[0], t[1], _norm_name(nm)) in mlb_names
+
+        # One row per transaction: a ledger row the MLB log also carries goes.
+        ledger = [t for t in tx_today if not _carried(t)]
+        led_tr = [t for t in ledger if t[1] == "TR"]
+        led_sg = [t for t in ledger if t[1] != "TR"]
+        # A board trade the MLB log carries (same player, within a day) goes too.
+        trade_cands = [c for c in trade_cands
+                       if not any(c[2].get("player_key") == k and _day_gap(c[1].isoformat(), d) <= 1
+                                  for k, d in mlb_trades["board"])]
+        trade_rows = [_otd_trade_row(p, tr, d) for _, d, p, tr in trade_cands]
+        trade_rows += [_ledger_row(*t) for t in led_tr[:TX_CAP]]
+        if len(led_tr) > TX_CAP:
+            trade_rows.append(_more(len(led_tr) - TX_CAP, "prospect trades"))
+        trade_rows += mlb_trades["rows"]
+        tx_rows = [_ledger_row(*t) for t in led_sg[:TX_CAP]]
+        if len(led_sg) > TX_CAP:
+            tx_rows.append(_more(len(led_sg) - TX_CAP, "prospect signings"))
+        tx_rows += mlb_signs["rows"]
 
     # ---- IL on this day ----------------------------------------------------
     il_today = [t for t in il_all.get(mmdd, []) if int(t[0][:4]) < today.year]
@@ -3486,26 +3728,45 @@ def build_this_day(data: dict | None = None) -> str:
                 f'<div class="kicker"><h2>{html.escape(title)}</h2></div>'
                 + "".join(rows) + '</section>')
 
-    sections = (
-        _section("Debut anniversaries", debut_rows)
-        + _section("Trades on this day", trade_rows)
-        + _section("Signings & free agency on this day", tx_rows)
-        + _section("IL on this day", il_rows)
-    )
+    if live:
+        # Plan 4.3: Debuts, Trades, Signings, Injuries, each with its family mark.
+        sections = (
+            _section("Debuts", debut_rows)
+            + _section("Trades", trade_rows)
+            + _section("Signings", tx_rows)
+            + _section("Injuries", il_rows)
+        )
+    else:
+        sections = (
+            _section("Debut anniversaries", debut_rows)
+            + _section("Trades on this day", trade_rows)
+            + _section("Signings & free agency on this day", tx_rows)
+            + _section("IL on this day", il_rows)
+        )
     if not sections:
         sections = ('<p class="news-intro">No tracked prospect history on '
-                    f'{html.escape(mon_d)}.</p>')
+                    f'{html.escape(mon_d)}.</p>' if not live else
+                    f'<p class="news-intro">No tracked history on {html.escape(mon_d)}.</p>')
 
     # The family key as the filter bar (HOME_2): All and the five families.
     chips = _wire_key_html("data-hist-filter", lead=(("all", "All"),))
 
+    label = HISTORY_LABEL_LIVE if live else "Today in Prospect History"
+    if live:
+        mlb_li = (f'<li>MLB trades and major-league signings come from the MLB StatsAPI transaction '
+                  f'log (the earliest on this date: {mlb_first}); each row&#39;s title quotes its text.</li>'
+                  if mlb_first else
+                  '<li>The MLB StatsAPI transaction log holds no trade or major-league signing on this date.</li>')
+    else:
+        mlb_li = ""
     body = (
         '<div class="news-app hist-app">'
-        f'<div class="section-head"><h1>{_masthead_icon("history")}Today in Prospect History - {html.escape(mon_d)}</h1>'
+        f'<div class="section-head"><h1>{_masthead_icon("history")}{label} - {html.escape(mon_d)}</h1>'
         '<span class="section-sub">debut anniversaries, trades, signings &amp; IL moves on this calendar date</span></div>'
         '<p class="news-intro">Past seasons on this exact date.</p>'
         '<details class="news-how"><summary>How this works</summary><ul>'
         f'<li>{_hist_spans(tx_all, il_all).strip() or "Ledgers read from prospects.db."}</li>'
+        f'{mlb_li}'
         f'<li>Debut rows carry {_gl("wag", "WAG")}{_wag_gate_clause()}.</li>'
         '<li>No eFV-move section: grade history is stamped at model re-run dates, '
         'not the day a grade changed.</li></ul></details>'
@@ -3516,10 +3777,108 @@ def build_this_day(data: dict | None = None) -> str:
         '</div>'
         + _HIST_FILTER_JS
     )
-    return page("Today in Prospect History - eephus.io", "", body,
-                "Prospect history for this calendar date: MLB debut anniversaries, prospect trades, "
-                "signings and IL moves from past seasons.",
+    desc = ("This calendar date in past seasons: MLB debut anniversaries, MLB trades and "
+            "major-league signings, and prospect signings and IL moves." if live else
+            "Prospect history for this calendar date: MLB debut anniversaries, prospect trades, "
+            "signings and IL moves from past seasons.")
+    return page(f"{label} - eephus.io", "", body, desc,
                 url=f"{SITE_ORIGIN}/history/")
+
+
+# The /history/ MLB rows (Q9_22c): at most this many deals and signings each.
+_HIST_MLB_CAP = 40
+
+
+def _norm_name(name) -> str:
+    """A player name folded for matching across sources: accents dropped,
+    lower case, letters only ("Luis Ortiz" and "luis_ortiz" agree)."""
+    s = unicodedata.normalize("NFKD", str(name or ""))
+    return re.sub(r"[^a-z]", "", "".join(c for c in s if not unicodedata.combining(c)).lower())
+
+
+def _hist_mlb_rows(today: "date", data: dict, pmap: dict) -> tuple[dict, dict, int | None]:
+    """The /history/ MLB trades (one row per deal) and major-league signings on
+    today's calendar date in past seasons, read from the transaction cache by
+    mlb_events.on_this_day. Each block: {"rows": html rows, "tx": transaction
+    ids shown or folded, "board": [(board key, date)] of board players in it};
+    the third value is the earliest year shown (None for no row). A row links
+    the PROSPX page of a board player or graduate (the page's own trade rows
+    come from both, so the MLB deal that replaces one keeps its href), else
+    the MLB player page, else nothing; its title quotes the StatsAPI text."""
+    try:
+        import mlb_events
+        rows = mlb_events.on_this_day(today.month, today.day, before_year=today.year)
+    except Exception:  # noqa: BLE001
+        rows = []
+    board: dict[int, str] = {}
+    for k, p in pmap.items():
+        if p.get("mlbam_id"):
+            board.setdefault(int(p["mlbam_id"]), k)
+    pages = {}
+    for k, p in (_cached_data_json("mlb_player_detail.json").get("players") or {}).items():
+        if isinstance(p, dict) and p.get("mlbam"):
+            pages[int(p["mlbam"])] = p.get("key") or k
+
+    def href(mid: int) -> str | None:
+        if mid in board:
+            return board[mid]
+        return f"mlb:{pages[mid]}" if mid in pages else None
+
+    def pill(h: str | None) -> str:
+        p = pmap.get(h) if h and not h.startswith("mlb:") else None
+        return _fv_pill(p) if p else ""
+
+    def wrap(h, cls: str, typ: str, inner: str) -> str:
+        if h:
+            return f'<a class="{cls}" href="{_player_href(h)}"{_wire_attrs(typ)}>{inner}{pill(h)}</a>'
+        return f'<div class="{cls}"{_wire_attrs(typ)}>{inner}</div>'
+
+    def more(n: int, what: str) -> str:
+        return ('<div class="otd-more" style="margin:8px 4px;font-family:var(--font-retro-mono);'
+                'font-size:11px;color:var(--text-tertiary);">'
+                f'+ {n} more {what} on this date in the MLB log</div>')
+
+    trades = {"rows": [], "tx": set(), "board": [], "names": set()}
+    signs = {"rows": [], "tx": set(), "board": [], "names": set()}
+    deals = _group_deals([r for r in rows if r["type"] == "trade"], board)
+    for i, (dt, grp) in enumerate(deals):
+        for r in grp:
+            trades["tx"].add(r.get("tx"))
+            trades["names"].add((dt, "TR", _norm_name(r.get("name"))))
+            if int(r["mlbam"]) in board:
+                trades["board"].append((board[int(r["mlbam"])], dt))
+        if i >= _HIST_MLB_CAP:
+            continue
+        h = next((href(int(r["mlbam"])) for r in grp if href(int(r["mlbam"]))), None)
+        lead = grp[0]
+        two_way = len({(r.get("from"), r.get("to")) for r in grp}) > 1
+        logos = (f'{_team_logo(_club_abbr(lead.get("from")), "otd-logo")}'
+                 f'<span class="otd-arrow">{"⇄" if two_way else "→"}</span>'
+                 f'{_team_logo(_club_abbr(lead.get("to")), "otd-logo")}')
+        tip = html.escape(" / ".join(dict.fromkeys(r.get("desc") or "" for r in grp)))
+        inner = (f'{_wire_lead("trade")}<span class="otd-when">{html.escape(_otd_date(date.fromisoformat(dt)))}</span>'
+                 f'<span class="otd-body" title="{tip}">{logos} <strong>{html.escape(_deal_names(grp))}</strong> '
+                 f'<span class="wire-val">traded</span></span>')
+        trades["rows"].append(wrap(h, "otd-row otd-trade", "trade", inner))
+    if len(deals) > _HIST_MLB_CAP:
+        trades["rows"].append(more(len(deals) - _HIST_MLB_CAP, "MLB trades"))
+    sg = [r for r in rows if r["type"] == "fa_sign"]
+    for i, r in enumerate(sg):
+        signs["tx"].add(r.get("tx"))
+        signs["names"].add((r["date"], "SFA", _norm_name(r.get("name"))))
+        if i >= _HIST_MLB_CAP:
+            continue
+        mid = int(r["mlbam"])
+        logo = _team_logo(_club_abbr(r.get("to")), "otd-logo")
+        inner = (f'{_wire_lead("fa_sign")}<span class="otd-when">{html.escape(_otd_date(date.fromisoformat(r["date"])))}</span>'
+                 f'<span class="otd-body" title="{html.escape(r.get("desc") or "")}">{logo} '
+                 f'<strong>{html.escape(r.get("name") or "")}</strong> '
+                 f'<span class="wire-val">signed as a free agent</span></span>')
+        signs["rows"].append(wrap(href(mid), "otd-row", "fa_sign", inner))
+    if len(sg) > _HIST_MLB_CAP:
+        signs["rows"].append(more(len(sg) - _HIST_MLB_CAP, "MLB signings"))
+    first = min((int(r["date"][:4]) for r in rows), default=None)
+    return trades, signs, first
 
 def _postseason_live(today: date) -> bool:
     """True while data/bracket_sim.json says this year's postseason is on: the
@@ -4635,7 +4994,7 @@ def build_fa() -> str:
         '<div id="fa-banner"></div>'
         '<div class="filter-bar"><span class="filter-label">View</span>'
         '<span id="fa-view-chips"></span></div>'
-        f'<div id="fa-rows" class="fa-hold"{_csv_optin("fa-class")}></div>'
+        f'<div id="fa-rows" class="fa-hold"{_csv_optin("fa-class")}{_mlb_events_attr()}></div>'
         # QMLP04: the empty board can paint before fa.js runs, so a tall view
         # holds one viewport from the first frame; the card and the tracker are
         # short and drop the hold before that frame.
@@ -7770,7 +8129,7 @@ def build_sitemap(articles: list[dict]) -> str:
 # its NAV_ITEMS label).
 PAGE_INDEX_NAMES = {
     "/news/": "MLB News",
-    "/history/": "Today in Prospect History",
+    "/history/": _HISTORY_LABEL,
     "/collegesavant/pitcher_index.html": "CollegeSavant Pitchers",
     "/parks/": "MiLB Park Factors",
     "/models/": "Model Accountability",
@@ -7803,8 +8162,13 @@ PAGE_INDEX_PURPOSE = {
     "/forums/": "community discussion across prospects, farm systems and articles",
     "/glossary/": "terms, methods, evidence and sources; this index is one of its views",
     "/team/": "who builds, runs and writes the site: the one page that carries the credits",
-    "/news/": "the full event wire: debuts, trades, promotions, IL moves, grade changes and FA signings",
-    "/history/": "debut anniversaries, prospect trades, signings and IL moves that landed on today's calendar date",
+    # The /news/ and /history/ rows name MLB transactions only while they are
+    # served (claims rule C9; the Q9_22c flip, copy row CP-210).
+    "/news/": ("MLB and MiLB transactions, debuts, IL, eFV changes, FA signings" if _events_live()
+               else "the full event wire: debuts, trades, promotions, IL moves, grade changes and FA signings"),
+    "/history/": ("debut anniversaries, MLB trades and signings, prospect signings and IL moves that landed on today's calendar date"
+                  if _events_live() else
+                  "debut anniversaries, prospect trades, signings and IL moves that landed on today's calendar date"),
     "/parks/": "run environments for every affiliated park; the Methodology tab (/parks/#method) documents the estimator",
     "/models/": "the model ledger: every model that makes a predictive claim, its verdict and the eval artifact behind it",
     "/models/updates/": "one row per model update: the scored statistic before and after, and the edge over the benchmark",

@@ -67,10 +67,15 @@ def test_board_draws_headshots_without_the_links_map():
     assert "if (m.mlbam)" in photo and "faHeadshotURL(m.mlbam, 24)" in photo
     assert "if (!_faPhotoLegacy || !window.EEPHUS_HUB) return;" in _fn("fillRowPhotos")
     assert "_faPhotoLegacy = !cls.members.some(m => m.mlbam);" in JS
-    # links() is read only by the legacy fill and by an opened card.
-    callers = [f for f in ("fillRowPhotos", "renderPlayer") if "EEPHUS_HUB.links()" in _fn(f)]
-    assert callers == ["fillRowPhotos", "renderPlayer"]
-    assert JS.count("EEPHUS_HUB.links()") == 2
+    # links() is read only by the legacy fill, by an opened card, and by the IL
+    # days column (Q9_22c) while the MLB events feed is live and a member lacks
+    # its own mlbam.
+    callers = [f for f in ("fillRowPhotos", "renderPlayer", "loadIl") if "EEPHUS_HUB.links()" in _fn(f)]
+    assert callers == ["fillRowPhotos", "renderPlayer", "loadIl"]
+    assert JS.count("EEPHUS_HUB.links()") == 3
+    il = _fn("loadIl")
+    assert "if (!ilLive()) return Promise.resolve(null);" in il
+    assert "(cls.members || []).some(m => !m.mlbam)" in il
 
 
 # ---- QMLP12: fa_archive only for the Archive view ---------------------------
