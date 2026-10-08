@@ -591,7 +591,15 @@
   // structural screen, SP->RP is validated). Module accent = cyan (the RP->SP
   // primary direction + the "hi" FIT tier - the pal identity color).
   function gfxChip(id) {
-    return window.EEPHUS_GFX ? " &middot; " + EEPHUS_GFX.chipHTML(id, "Generate GFX") : "";
+    return window.EEPHUS_GFX ? EEPHUS_GFX.chipHTML(id, "Generate GFX") : "";
+  }
+  // HOW THIS WORKS (display pass 2026-10-08). The gate sentence, its caveat,
+  // the tier cuts and the coverage counts are read once and checked rarely, so
+  // they sit in one collapsed fold under a one-line lede; the table leads. They
+  // are moved, never dropped: every disclosure a test pins is still in the page.
+  function howBlock(html) {
+    return html ? '<details class="fa-valmap pal-how"><summary>How this works</summary>'
+      + '<div class="fa-valmap-wrap mlbstats-note">' + html + "</div></details>" : "";
   }
   // Plain-text (canvas-safe) velocity cell: current FB velo -> role-projected
   // velo. veloCell() emits HTML spans, so the board needs its own text-only
@@ -720,22 +728,23 @@
     var rows = (DATA && DATA.rp2sp) || [];
     if (!rows.length) return empty("No RP→SP candidates yet.");
     var note = '<div class="mlbstats-note">' + gloss("RP→SP FIT", "rp_sp_fit")
-      + ": arsenal depth first, then command, platoon-neutrality and contact quality. "
-      + esc(verdictSentence("RP->SP")) + " A candidate screen, not a forecast. Click a row for components."
-      + gfxChip("pal-rp2sp-gfx") + "</div>" + tierLegend("rp2sp");
+      + " ranks arsenal depth first, then command, platoon-neutrality and contact quality."
+      + " A candidate screen, not a forecast.</div>";
+    var how = howBlock(esc(verdictSentence("RP->SP")) + tierLegend("rp2sp"));
     var shown = byOrg(sortRows(rows, RP_COLS), "team");
-    return rp2spViz() + note + orgBar(rows, "team", "relievers")
+    return note + how + rp2spViz() + orgBar(rows, "team", "relievers", false, gfxChip("pal-rp2sp-gfx"))
       + (shown.length ? candTable(shown, RP_COLS) : orgEmpty());
   }
   function renderSP2RP() {
     var rows = (DATA && DATA.sp2rp) || [];
     if (!rows.length) return empty("No SP→RP candidates yet.");
     var note = '<div class="mlbstats-note">' + gloss("SP→RP FIT", "sp_rp_fit")
-      + ": relief upside scaled by conversion need, so a starter succeeding in the rotation scores low. "
-      + "SP ERA is the need signal; proj REM+ is display-only. " + esc(verdictSentence("SP->RP"))
-      + " A candidate screen, not a forecast." + gfxChip("pal-sp2rp-gfx") + "</div>" + tierLegend("sp2rp");
+      + ": relief upside scaled by conversion need, so a starter succeeding in the rotation scores low."
+      + " A candidate screen, not a forecast.</div>";
+    var how = howBlock("SP ERA is the need signal; proj REM+ is display-only. "
+      + esc(verdictSentence("SP->RP")) + tierLegend("sp2rp"));
     var shown = byOrg(sortRows(rows, SP_COLS), "team");
-    return sp2rpViz() + note + orgBar(rows, "team", "starters")
+    return note + how + sp2rpViz() + orgBar(rows, "team", "starters", false, gfxChip("pal-sp2rp-gfx"))
       + (shown.length ? candTable(shown, SP_COLS) : orgEmpty());
   }
 
@@ -935,7 +944,6 @@
           ? '<span class="pal-sc-stat">no converter sample yet</span>'
           : '<span class="pal-sc-stat">converter median FIT: <b>' + esc(b.converter_median_fit_pool_pctile)
             + esc(ordSuffix(Math.round(Number(b.converter_median_fit_pool_pctile)))) + "</b> pct of the field</span>")
-      + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
       + "</div>";
   }
   // A sub-view strip: real tabs (role, selected state, the panel they control),
@@ -967,7 +975,10 @@
   function renderHistory() {
     var rows = (DATA && DATA.history) || [];
     if (!rows.length) return empty("No conversion history yet.");
-    if (historyView === "mix") return scorecard() + historyToggle() + viewPanel("Pitch-mix changes", renderMix());
+    // the backtest's terms, under the card both views share
+    var how = howBlock("Before and After: the pre-role and post-role seasons. Arsenal shift: pitches "
+      + "added (+) or dropped (-). " + esc(btBlock().disclaimer || ""));
+    if (historyView === "mix") return scorecard() + how + historyToggle() + viewPanel("Pitch-mix changes", renderMix());
     // Sortable, recency-first by default (year desc -> 2026 conversions lead).
     // Click any numeric column header to re-sort.
     var all = rows;
@@ -986,10 +997,9 @@
         + "<td>" + successCell(h) + "</td></tr>";
     }).join("") + "</tbody>";
     var note = '<div class="mlbstats-note">Every detected ' + gloss("SP↔RP switch", "pal_conversion")
-      + " since 2018. WAR before &rarr; after: realized pitcher WAR"
-      + (warSeriesShort() ? " on " + esc(warSeriesShort()) : "") + ", pre-role and post-role seasons. "
-      + "Arsenal shift: pitches added (+) or dropped (-).</div>";
-    return scorecard() + historyToggle() + viewPanel("Conversions", note + orgBar(all, "team", "conversions")
+      + " since 2018, with realized pitcher WAR" + (warSeriesShort() ? " on " + esc(warSeriesShort()) : "")
+      + " before and after.</div>";
+    return scorecard() + how + historyToggle() + viewPanel("Conversions", note + orgBar(all, "team", "conversions")
       + (rows.length ? '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>"
         : orgEmpty()));
   }
@@ -1047,8 +1057,8 @@
     var all = view;
     view = byOrg(sortRows(view, PLATOON_COLS), "team");
     var note = '<div class="mlbstats-note">' + gloss("Reverse split", "reverse_platoon")
-      + ": tougher on opposite-handed hitters, a plus for RP&rarr;SP. " + gloss("Extreme split", "platoon_split")
-      + ": a conversion blocker. OPS-against by batter hand, 100+ TBF per hand. Descriptive, not a backtested model.</div>";
+      + ": tougher on opposite-handed hitters, a plus for RP&rarr;SP; " + gloss("extreme split", "platoon_split")
+      + ": a conversion blocker. OPS-against by batter hand, 100+ TBF a hand; descriptive, not backtested.</div>";
     var head = headRow(PLATOON_COLS);
     var body = "<tbody>" + view.map(function (r) {
       // BOTH FLAGS, WHEN BOTH ARE SET. `reverse` is a DIRECTION (own-side OPS
@@ -1124,8 +1134,9 @@
       }
     }
     var note = '<div class="mlbstats-note">Scouted role vs ' + gloss("starter shape", "starter_shape")
-      + " (" + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 grades; no minors pitch "
-      + "tracking, so tool grades, not stuff). " + esc(DATA.n_prospects || "") + " prospect pitchers scanned"
+      + " (" + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 tool grades; no minors pitch "
+      + "tracking). Descriptive shape screen, not a backtested model.</div>";
+    var how = howBlock(esc(DATA.n_prospects || "") + " prospect pitchers scanned"
       // COVERAGE, STATED. A mismatch needs a stated role for the shape to
       // disagree with, and a position of RHP, LHP or P states handedness and no
       // role. Those rows can never appear here, correctly, and the bare
@@ -1136,8 +1147,7 @@
             + (rule.n_role_unstated_above_fv
                ? " (" + esc(rule.n_role_unstated_above_fv) + " of those clear the FV floor)" : "")
             + ".")
-         : ".") + bound
-      + " Descriptive shape screen, not a backtested model.</div>";
+         : ".") + bound);
     function toolBars(tools) {
       tools = tools || {};
       return ["fb", "sl", "cb", "ch", "ct", "cmd"].filter(function (k) { return tools[k] != null; }).map(function (k) {
@@ -1186,7 +1196,7 @@
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
         + toolBars(p.tools) + "</div>";
     }).join("");
-    return note + orgBar(all, "org", "prospects", true)
+    return note + how + orgBar(all, "org", "prospects", true)
       + (rows.length ? '<div class="pal-mix-grid">' + cards + "</div>" : orgEmpty());
   }
 
@@ -1582,11 +1592,12 @@
         return ladderRow(p, false, '<span class="proj-dim"> not in the sum</span>');
       }).join("");
     var note = '<div class="mlbstats-note">' + gloss("Positional ladder", "positional_ladder")
-      + ", inverted from Baseball-Reference: least squares of positional runs per 650 PA on innings shares, "
-      + "no intercept; " + fThou(L.nPlayerSeasons) + " player-seasons, " + esc((L.seasons || [])[0])
-      + " to " + esc((L.seasons || [])[1]) + ", " + fInt(L.minPa) + "+ PA. R&sup2; " + (L.r2 == null ? "-" : f1(L.r2 * 100) + "%")
-      + ", residual SD " + f2(L.residSd) + " runs. A rung is what BRef prices the position at, not an independent "
-      + "measure of difficulty." + pfFolkloreNote(L) + pfWindowNote(L) + "</div>";
+      + ", inverted from Baseball-Reference: " + fThou(L.nPlayerSeasons) + " player-seasons, "
+      + esc((L.seasons || [])[0]) + " to " + esc((L.seasons || [])[1]) + ", " + fInt(L.minPa) + "+ PA; R&sup2; "
+      + (L.r2 == null ? "-" : f1(L.r2 * 100) + "%") + ", residual SD " + f2(L.residSd) + " runs. A rung is "
+      + "what BRef prices the position at, not an independent measure of difficulty.</div>"
+      + howBlock("Least squares of positional runs per 650 PA on innings shares, no intercept."
+        + pfFolkloreNote(L) + pfWindowNote(L));
     // WHICH SUM IS ZERO, stated on the page rather than left to be
     // rediscovered. Only rendered when the artifact carries the identification
     // block (added 2026-07-31); older artifacts get the table with no claim
@@ -1708,10 +1719,12 @@
         + fInt(PF.nFlaggedDemotion) + " qualified. Part of every corner-outfield-to-first-base gain is a league-wide "
         + "constant; the expanded row splits it out."
       : "Every qualified hitter (" + fInt(fr.headline_min_pa) + "+ PA, " + fInt(fr.headline_min_innings)
-        + "+ defensive innings), by gain at his best position. Click a row for the breakdown.";
+        + "+ defensive innings), by gain at his best position.";
     var note = '<div class="mlbstats-note">' + gloss("Position fit", "position_fit") + ". " + esc(lead)
-      + " Runs per 650 PA, " + esc(PF.season || "") + " season. Value identity: " + esc(PF.valueIdentity || "")
-      + ". A valuation, not a prediction: who gets moved measured null (see The positional ladder).</div>";
+      + " Runs per 650 PA, " + esc(PF.season || "") + " season; a valuation, not a prediction: who gets moved "
+      + "measured null (see The positional ladder).</div>"
+      + howBlock(PF.valueIdentity ? "Value identity: " + esc(PF.valueIdentity) + ". The bat is the same at "
+        + "every position, so fielding and the positional adjustment decide the move." : "");
     if (!rows.length) return nav + viewPanel(curLabel, note + empty("No hitters clear the flag in this view."));
     var shown = byOrg(pfSortedRows(rows), "team");
     return nav + viewPanel(curLabel, note + orgBar(rows, "team", "hitters")
@@ -1741,9 +1754,7 @@
       // artifact that is not refit nightly, so its age is the reader's to see.
       if (pfBanner) pfBanner.innerHTML = PF
         ? '<div class="mlbstats-note">Season ' + esc(PF.season || "") + " &middot; " + esc(PF.model || "")
-          + (PF.generated_at ? ", built " + esc(String(PF.generated_at).slice(0, 10)) : "")
-          + " &middot; valuation, not prediction: move SIZE validated out of sample; who gets moved "
-          + "down measured null.</div>"
+          + (PF.generated_at ? ", built " + esc(String(PF.generated_at).slice(0, 10)) : "") + "</div>"
         : "";
       bindTable(root);
       wireGlossary(root);
@@ -1783,11 +1794,12 @@
       : (section === "prospects") ? renderProspects() : renderRP2SP();
     var banner = document.getElementById("pal-banner");
     if (banner) banner.innerHTML = DATA.season
-      ? '<div class="mlbstats-note">Season ' + esc(DATA.season) + ' &middot; candidate screen, not a projection'
-        // Per-direction and DERIVED: the banner used to name the winner and the
-        // loser in literal text, which survived a change of WAR series.
-        + ' &middot; SP&rarr;RP: ' + esc(verdictPhrase("SP->RP"))
-        + ' &middot; RP&rarr;SP: ' + esc(verdictPhrase("RP->SP")) + ' '
+      ? '<div class="mlbstats-note">Season ' + esc(DATA.season)
+        // The build date is the reader's to see (census M07-25). The two
+        // per-direction verdicts are not repeated here: the masthead derives
+        // them from the same gate block, and the boards' folds carry them long.
+        + (DATA.generated_at ? " &middot; built " + esc(String(DATA.generated_at).slice(0, 10)) : "")
+        + " &middot; candidate screen, not a projection "
         + esc((DATA.verdict && DATA.verdict !== "validated") ? "[" + DATA.verdict + "]" : "") + "</div>" : "";
     bindTable(root);
     wireGlossary(root);

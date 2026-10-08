@@ -323,3 +323,45 @@ def test_picking_an_org_in_the_select_filters_and_writes_the_hash(site):
         assert page.evaluate("() => location.hash") == "#history"
     finally:
         page.close()
+
+
+# ---- COPY TRIM (owner 2026-09-25: "get rid of a lot of bloated copy") --------
+# The lede leads; the gate sentence, its caveat, the tier cuts, the coverage
+# counts and the disclaimer move into one collapsed "How this works" fold. They
+# are moved, never dropped, so the smoke tests that pin them still find them.
+def _render_sections(hash_, payload=None):
+    pytest.importorskip("py_mini_racer")
+    import test_pal_smoke as S
+    from py_mini_racer import MiniRacer
+    pre = S._prelude(hash_)
+    if payload is not None:
+        pre = pre.replace(f"var SAMPLE={S.SAMPLE};", "var SAMPLE=" + json.dumps(payload) + ";")
+    ctx = MiniRacer()
+    ctx.eval(pre + S.JS)
+    return ctx.eval("__html['pal-app-root'] || ''"), ctx.eval("__html['pal-banner'] || ''")
+
+
+@pytest.mark.parametrize("hash_,folded", [
+    ("#sp2rp", ("Gate: validated", "SP ERA is the need signal", "Bullpen Upside</b> (55.0+")),
+    ("#rp2sp", ("Gate: structural screen", "Worth a Look</b> (55.0+")),
+    ("#history", ("A screen, not a success-probability model.", "Arsenal shift: pitches")),
+    ("#prospects", ("prospect pitchers scanned", "severe</b> at 20.0+")),
+])
+def test_the_method_prose_sits_in_the_fold_under_the_lede(hash_, folded):
+    html, _ = _render_sections(hash_)
+    fold = html.find('<details class="fa-valmap pal-how"><summary>How this works</summary>')
+    assert fold >= 0, hash_
+    for text in folded:
+        at = html.find(text)
+        assert at > fold, (hash_, text, "is above the fold or gone")
+
+
+def test_the_banner_states_the_build_not_the_verdicts_again():
+    import test_pal_smoke as S
+    d = json.loads(S.SAMPLE)
+    d["generated_at"] = "2026-10-03"
+    _, banner = _render_sections("#sp2rp", d)
+    assert "built 2026-10-03" in banner
+    assert "candidate screen, not a projection" in banner
+    assert "SP&rarr;RP:" not in banner and "RP&rarr;SP:" not in banner, "the banner repeats the masthead"
+    assert "[provisional]" in banner
