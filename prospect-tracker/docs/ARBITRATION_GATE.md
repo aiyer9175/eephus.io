@@ -1008,3 +1008,87 @@ now serves the platform-frame champion at arb-1, and the banded multiplier
 keeps serving arb-2 and later until a change of its own switches it. The
 2026-08-09 block is `hindcast_2026_08_09_award_frame` and the twin is
 `award_frame_same_day_twin`; neither adjudicates anything.
+
+## 14. A6 / C3' amendment (registered 2026-10-08, before any re-score): the repaired MLBTR pool
+
+Registered and committed alone, after section 13's re-run and before the
+loader repair below is scored. Owner answer M12-3 (2026-09-25): repair the
+Swartz loader now, register an amendment naming the repaired pool, and score
+on BOTH the frozen and the repaired pool. Nothing above this section is
+edited.
+
+### 14a. The two defects
+
+1. **The loader keeps one MLBTR entry per player and class year.**
+   `arb_dataset.load_ledger` indexes `data/_labs/arb_ledger.json` as
+   {key: {class_year: entry}}, so when MLBTR's arbitration TRACKER post
+   (settled and filed figures) and its PROJECTION post (Matt Swartz's
+   pre-settlement figure) both name a player for one class year, whichever
+   is read last wins. For class years 2024 to 2026 the tracker wins for
+   nearly every settled player: the census (M08-04, judge probe) counted 76,
+   72 and 76 projection entries surviving the loader against 297, 273 and 288
+   in the ledger. `build_history` and the A6 lab both read it, so the
+   History's MLBTR column was filled on 18, 16 and 17 rows for 2024, 2025 and
+   2026 against 236 for 2023, and the A6 pool (n 261 on 2026-08-09, 262 on
+   2026-10-08) is about 90% one class year.
+2. **A6 scores Swartz on a different scale from ours.** The lab compares the
+   nominal Swartz figure with the ACTUAL salary deflated by the fold's
+   train-only deflator. In the first fold (2023, trained on 2022) that
+   deflator is 1.0, so the defect was invisible on a 2023 pool; from 2024 on
+   the actual is divided by the carried deflator level and Swartz is not.
+   The history's `Ours` column has the same unit defect against its nominal
+   `Actual` (repaired in its own change, owner answer M11-4).
+
+### 14b. The repair and the two pools
+
+- **The repaired loader** is a separate function,
+  `arb_dataset.load_swartz_projections()`: every `kind == "projection"` entry
+  with a published figure, keyed by (Baseball Reference id or MLBAM id,
+  class year), never overwritten by a tracker entry. `load_ledger` is NOT
+  changed, because the panel's published-service-time votes read it and
+  changing it would move the scored pool itself.
+- The join is the one `build_history` already uses: the entry's own MLBAM id
+  when it carries one, else the panel's Baseball Reference id to MLBAM map.
+  An (MLBAM, class year) reached by two projection entries with different
+  figures is a COLLISION: it is counted, published, and left out of the
+  repaired pool rather than settled by a guess. Entries with neither id are
+  counted and left out.
+- **The frozen pool** is the row set the 2026-08-09 loader reaches
+  (`load_ledger` plus the same join), unchanged.
+- **The repaired pool** is the row set the repaired loader reaches.
+- **The units repair applies to both pools**: Swartz is put on the actual's
+  own scale (its figure divided by the same deflator level the fold divided
+  the actual by), which is the comparison the lab's own comment describes.
+  MdAPE is scale-free within a row, so this changes only rows after the
+  first fold.
+
+### 14c. What is scored, and what each pool is for
+
+- **A6** (section 4): the served estimator (platform-frame champion at
+  arb-1, banded multiplier at arb-2 and later) against the published Swartz
+  figure on identical rows, MdAPE, by step where n >= 15, with the
+  player-clustered gap interval, seed 20260808. Scored on the repaired pool
+  and on the frozen pool, published side by side. The verdict rule is
+  unchanged (PASS only if ours is below Swartz), and single-season
+  comparisons stay pre-committed NULL: only the pooled figure adjudicates.
+- **The repaired pool is the headline from this date.** It becomes the
+  top-level `a6_swartz` block of `data/arbitration_eval.json`, which every
+  surface quoting the Swartz ratio reads; the frozen pool is written beside
+  it as `a6_swartz_frozen_pool`. Section 13f's 2.13x (frozen pool, unrepaired
+  units) stays as the record of that run.
+- **C3'** (section 11d) is scored on both pools when GATE C2 is scored, with
+  its registered bound (0.216) unchanged: the frozen pool is the history rows
+  whose MLBTR figure the frozen loader carries, the repaired pool is every
+  history row with an MLBTR figure. Its response stays "no revert; recorded
+  and blocks the verdict leaving provisional".
+- The repaired join also fills the History's MLBTR column (and through it
+  the Club Ledger's realized Swartz figure). A coverage check is pinned: for
+  each class year 2023 to 2026, history rows with an MLBTR figure over
+  history rows whose player has a projection entry for that year, at least
+  0.95.
+
+### 14d. Not reopened
+
+The champion, the frame, the folds, the seed, the verdict rule and the C3'
+bound. This restores the comparison section 4 already describes (identical
+rows, the same scale) on the data the ledger already holds.
