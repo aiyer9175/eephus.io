@@ -1682,17 +1682,17 @@
  "elapsed_s": 36.6,
  "ds16": {
   "item": "DS-16",
-  "generated_at": "2026-09-25T21:28:38Z",
+  "generated_at": "2026-10-08T17:39:23Z",
   "model_id": "efv_v2_ds_assembled",
   "role": "development",
   "adjudicates": false,
   "selects": false,
-  "note": "the one pre-declared development read of the assembled V2 on the eWAR v2 label; spent frames, not a claim; the registered development number is its re-run on the frozen fWAR label (EFV_V2_GATE.md P5)",
+  "note": "the one pre-declared development read of the assembled V2, re-run once on the frozen fWAR label with the re-derived weights (EFV_V2_GATE.md P5): the registered development number; spent frames, not a claim",
   "declared_in": {
    "doc": "docs/efv-v2/EFV_V2_GATE.md",
    "section": "s7",
-   "commit": "0dbe3a4f113b870e93fca9a9081c74ecdc0b2e97",
-   "committed_at": "2026-09-25T17:23:18-04:00",
+   "commit": "72ac70988b55b9b3e76b6580350690ccc573775a",
+   "committed_at": "2026-10-03T21:41:30-04:00",
    "status": "DRAFT"
   },
   "statistic": {
@@ -1703,29 +1703,29 @@
    "group": "(side, list vintage) on lv_dev; (side, base year) on vm_dev",
    "map": "efv_v2_model.output_map on every rater, on the compared rows",
    "code": "efv_v2_stat.py",
-   "code_sha256": "1da3ae57d8a63c68123112772358529d4d0b02f2e99ab283971cbaba8d45aaf7"
+   "code_sha256": "0a1db56abe2cac3528563b1538291b3dabc994b5694b814c52824d9ce73c07c3"
   },
   "label": {
-   "provider": "ewar_v2",
-   "resolved_through": 2025,
-   "id": "ewar_v2@2026-09-03T12:35:09"
+   "provider": "fwar",
+   "resolved_through": 2026,
+   "id": "fwar@2026-10-02-0341299c20ec"
   },
   "code": {
-   "commit": "0dbe3a4f",
-   "efv_v2_model_sha256": "f83c94316b701cd59eeea4914cf5f910bbd0f558b891f788dbbee50d348a4d0e",
+   "commit": "8e2361f4",
+   "efv_v2_model_sha256": "aaa002e836baff042e661a830ccdf1557132a9ad6c04c28cea577e09e0afdaea",
    "tool": "tools/efv_v2_dev_read.py --ds16"
   },
   "weights": {
    "hit": {
-    "w_skill": 0.599508,
-    "w_time": 0.012287
+    "w_skill": 0.908861,
+    "w_time": 0.202573
    },
    "pit": {
     "w_skill": 1.0,
-    "w_time": 0.107279
+    "w_time": 0.020473
    }
   },
-  "assembly_sha256": "422fc5439253ad13d867320b00b634a178e62a8b291025326056377d6d4436ec",
+  "assembly_sha256": "35fe32c7a5448e8186259a8e4551be6f148d2f8346aa2016a40fb72f6afd2823",
   "bootstrap": {
    "B": 2000,
    "seed": 20260906,
@@ -1772,7 +1772,7 @@
     "contributor": "career WAR >= 3.0",
     "folds": {
      "hit|2017": {
-      "n_scored": 43,
+      "n_scored": 51,
       "consensus_only": true,
       "skill_keys": null,
       "timing_keys": [],
@@ -1780,68 +1780,71 @@
       "w_time": 0.0
      },
      "hit|2018": {
-      "n_scored": 41,
-      "consensus_only": true,
-      "skill_keys": null,
-      "timing_keys": [],
-      "w_skill": 0.0,
-      "w_time": 0.0
+      "n_scored": 48,
+      "consensus_only": false,
+      "skill_keys": [
+       "tool_hit"
+      ],
+      "timing_keys": [
+       "age_rel_level",
+       "level_rank"
+      ],
+      "w_skill": 0.908861,
+      "w_time": 0.202573
      },
      "hit|2019": {
-      "n_scored": 65,
-      "consensus_only": true,
-      "skill_keys": null,
-      "timing_keys": [],
-      "w_skill": 0.0,
-      "w_time": 0.0
+      "n_scored": 68,
+      "consensus_only": false,
+      "skill_keys": [
+       "tool_hit",
+       "tool_speed"
+      ],
+      "timing_keys": [
+       "level_rank"
+      ],
+      "w_skill": 0.908861,
+      "w_time": 0.202573
      },
      "hit|2020": {
       "n_scored": 57,
       "consensus_only": false,
       "skill_keys": [
-       "obp_rel",
-       "contact",
        "tool_hit",
        "tool_speed",
        "is_college"
       ],
       "timing_keys": [
-       "age_rel_level",
        "level_rank"
       ],
-      "w_skill": 0.599508,
-      "w_time": 0.012287
+      "w_skill": 0.908861,
+      "w_time": 0.202573
      },
      "hit|2021": {
       "n_scored": 63,
       "consensus_only": false,
       "skill_keys": [
-       "obp_rel",
-       "contact",
        "tool_hit"
       ],
       "timing_keys": [
-       "age_rel_level",
        "level_rank"
       ],
-      "w_skill": 0.599508,
-      "w_time": 0.012287
+      "w_skill": 0.908861,
+      "w_time": 0.202573
      },
      "hit|2022": {
-      "n_scored": 110,
+      "n_scored": 111,
       "consensus_only": false,
       "skill_keys": [
-       "contact",
        "tool_hit"
       ],
       "timing_keys": [
        "level_rank"
       ],
-      "w_skill": 0.599508,
-      "w_time": 0.012287
+      "w_skill": 0.908861,
+      "w_time": 0.202573
      },
      "hit|2023": {
-      "n_scored": 83,
+      "n_scored": 84,
       "consensus_only": false,
       "skill_keys": [
        "tool_hit"
@@ -1849,8 +1852,8 @@
       "timing_keys": [
        "level_rank"
       ],
-      "w_skill": 0.599508,
-      "w_time": 0.012287
+      "w_skill": 0.908861,
+      "w_time": 0.202573
      },
      "hit|2024": {
       "n_scored": 79,
@@ -1861,11 +1864,11 @@
       "timing_keys": [
        "level_rank"
       ],
-      "w_skill": 0.599508,
-      "w_time": 0.012287
+      "w_skill": 0.908861,
+      "w_time": 0.202573
      },
      "pit|2017": {
-      "n_scored": 28,
+      "n_scored": 29,
       "consensus_only": true,
       "skill_keys": null,
       "timing_keys": null,
@@ -1873,7 +1876,7 @@
       "w_time": 0.0
      },
      "pit|2018": {
-      "n_scored": 49,
+      "n_scored": 53,
       "consensus_only": true,
       "skill_keys": null,
       "timing_keys": null,
@@ -1881,7 +1884,7 @@
       "w_time": 0.0
      },
      "pit|2019": {
-      "n_scored": 71,
+      "n_scored": 73,
       "consensus_only": true,
       "skill_keys": null,
       "timing_keys": null,
@@ -1889,7 +1892,7 @@
       "w_time": 0.0
      },
      "pit|2020": {
-      "n_scored": 94,
+      "n_scored": 97,
       "consensus_only": true,
       "skill_keys": null,
       "timing_keys": null,
@@ -1897,65 +1900,49 @@
       "w_time": 0.0
      },
      "pit|2021": {
-      "n_scored": 89,
-      "consensus_only": false,
-      "skill_keys": [
-       "k_rel"
-      ],
-      "timing_keys": [
-       "level_rank"
-      ],
-      "w_skill": 1.0,
-      "w_time": 0.107279
+      "n_scored": 91,
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": null,
+      "w_skill": 0.0,
+      "w_time": 0.0
      },
      "pit|2022": {
-      "n_scored": 87,
-      "consensus_only": false,
-      "skill_keys": [
-       "k_rel"
-      ],
-      "timing_keys": [
-       "level_rank"
-      ],
-      "w_skill": 1.0,
-      "w_time": 0.107279
+      "n_scored": 86,
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": null,
+      "w_skill": 0.0,
+      "w_time": 0.0
      },
      "pit|2023": {
       "n_scored": 114,
-      "consensus_only": false,
-      "skill_keys": [
-       "k_rel"
-      ],
-      "timing_keys": [
-       "level_rank"
-      ],
-      "w_skill": 1.0,
-      "w_time": 0.107279
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": null,
+      "w_skill": 0.0,
+      "w_time": 0.0
      },
      "pit|2024": {
       "n_scored": 107,
-      "consensus_only": false,
-      "skill_keys": [
-       "k_rel"
-      ],
-      "timing_keys": [
-       "level_rank"
-      ],
-      "w_skill": 1.0,
-      "w_time": 0.107279
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": null,
+      "w_skill": 0.0,
+      "w_time": 0.0
      }
     },
     "dropped": {
      "no_v2_score": 0,
      "v2_fold_year_differs": 0
     },
-    "population_rows": 3255,
-    "n": 803,
+    "population_rows": 3327,
+    "n": 830,
     "n_by_side": {
-     "pit": 415,
-     "hit": 388
+     "pit": 424,
+     "hit": 406
     },
-    "n_players": 803,
+    "n_players": 830,
     "groups": [
      "hit|2017",
      "hit|2018",
@@ -1975,48 +1962,48 @@
     "statistic": "within (side, vintage) Spearman, size-weighted",
     "raters": {
      "efv_v2": {
-      "spearman": 0.3755,
-      "auc": 0.7511,
-      "n": 803,
-      "within": 0.3755,
-      "pooled": 0.4071,
-      "within_rows": 788,
+      "spearman": 0.3713,
+      "auc": 0.7388,
+      "n": 830,
+      "within": 0.3713,
+      "pooled": 0.3932,
+      "within_rows": 814,
       "within_groups": 13
      },
      "efv_v1": {
-      "spearman": 0.3852,
-      "auc": 0.7523,
-      "n": 803,
-      "within": 0.3852,
-      "pooled": 0.4091,
-      "within_rows": 788,
+      "spearman": 0.3942,
+      "auc": 0.7498,
+      "n": 830,
+      "within": 0.3942,
+      "pooled": 0.4093,
+      "within_rows": 814,
       "within_groups": 13
      },
      "prospx_consensus": {
-      "spearman": 0.3813,
-      "auc": 0.7492,
-      "n": 803,
-      "within": 0.3813,
-      "pooled": 0.4129,
-      "within_rows": 788,
+      "spearman": 0.3814,
+      "auc": 0.743,
+      "n": 830,
+      "within": 0.3814,
+      "pooled": 0.4031,
+      "within_rows": 814,
       "within_groups": 13
      },
      "mlb_pipeline": {
-      "spearman": 0.376,
-      "auc": 0.7559,
-      "n": 803,
-      "within": 0.376,
-      "pooled": 0.4128,
-      "within_rows": 788,
+      "spearman": 0.3816,
+      "auc": 0.759,
+      "n": 830,
+      "within": 0.3816,
+      "pooled": 0.4028,
+      "within_rows": 814,
       "within_groups": 13
      },
      "fangraphs": {
-      "spearman": 0.3341,
-      "auc": 0.7283,
-      "n": 803,
-      "within": 0.3341,
-      "pooled": 0.3738,
-      "within_rows": 788,
+      "spearman": 0.3363,
+      "auc": 0.7168,
+      "n": 830,
+      "within": 0.3363,
+      "pooled": 0.3591,
+      "within_rows": 814,
       "within_groups": 13
      }
     },
@@ -2025,8 +2012,8 @@
       "spearman": {
        "statistic": "within",
        "label": "within (side, vintage) Spearman, size-weighted",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": [
         "hit|2017",
         "hit|2018",
@@ -2042,18 +2029,18 @@
         "pit|2022",
         "pit|2023"
        ],
-       "rows_in_kept_groups": 788,
+       "rows_in_kept_groups": 814,
        "min_group_rows": 20,
-       "a": 0.37552,
-       "b": 0.38127,
-       "delta": -0.00575,
+       "a": 0.37132,
+       "b": 0.38139,
+       "delta": -0.01006,
        "ci95": [
-        -0.0231,
-        0.0116
+        -0.0386,
+        0.0159
        ],
-       "sd": 0.00886,
-       "mde95": 0.0146,
-       "p_gt_0": 0.2715,
+       "sd": 0.01394,
+       "mde95": 0.0229,
+       "p_gt_0": 0.2285,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2065,21 +2052,21 @@
       "pooled": {
        "statistic": "pooled",
        "label": "pooled Spearman after the identical output map",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.40707,
-       "b": 0.41288,
-       "delta": -0.0058,
+       "a": 0.39315,
+       "b": 0.40311,
+       "delta": -0.00995,
        "ci95": [
-        -0.0215,
-        0.0096
+        -0.0356,
+        0.015
        ],
-       "sd": 0.00782,
-       "mde95": 0.0129,
-       "p_gt_0": 0.2375,
+       "sd": 0.0129,
+       "mde95": 0.0212,
+       "p_gt_0": 0.214,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2091,21 +2078,21 @@
       "auc": {
        "statistic": "auc",
        "label": "contributor AUC after the identical output map, pooled",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.75113,
-       "b": 0.74918,
-       "delta": 0.00195,
+       "a": 0.73878,
+       "b": 0.74296,
+       "delta": -0.00418,
        "ci95": [
-        -0.0064,
-        0.0106
+        -0.0193,
+        0.0108
        ],
-       "sd": 0.00435,
-       "mde95": 0.0072,
-       "p_gt_0": 0.689,
+       "sd": 0.00754,
+       "mde95": 0.0124,
+       "p_gt_0": 0.297,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2119,8 +2106,8 @@
       "spearman": {
        "statistic": "within",
        "label": "within (side, vintage) Spearman, size-weighted",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": [
         "hit|2017",
         "hit|2018",
@@ -2136,18 +2123,18 @@
         "pit|2022",
         "pit|2023"
        ],
-       "rows_in_kept_groups": 788,
+       "rows_in_kept_groups": 814,
        "min_group_rows": 20,
-       "a": 0.37552,
-       "b": 0.38519,
-       "delta": -0.00967,
+       "a": 0.37132,
+       "b": 0.39422,
+       "delta": -0.02289,
        "ci95": [
-        -0.0346,
-        0.0165
+        -0.0533,
+        0.0084
        ],
-       "sd": 0.01269,
-       "mde95": 0.0209,
-       "p_gt_0": 0.234,
+       "sd": 0.01619,
+       "mde95": 0.0266,
+       "p_gt_0": 0.084,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2159,21 +2146,21 @@
       "pooled": {
        "statistic": "pooled",
        "label": "pooled Spearman after the identical output map",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.40707,
-       "b": 0.40913,
-       "delta": -0.00206,
+       "a": 0.39315,
+       "b": 0.40928,
+       "delta": -0.01612,
        "ci95": [
-        -0.0233,
-        0.0187
+        -0.0424,
+        0.0104
        ],
-       "sd": 0.01066,
-       "mde95": 0.0175,
-       "p_gt_0": 0.4235,
+       "sd": 0.01348,
+       "mde95": 0.0222,
+       "p_gt_0": 0.113,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2185,21 +2172,21 @@
       "auc": {
        "statistic": "auc",
        "label": "contributor AUC after the identical output map, pooled",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.75113,
-       "b": 0.7523,
-       "delta": -0.00117,
+       "a": 0.73878,
+       "b": 0.74982,
+       "delta": -0.01104,
        "ci95": [
-        -0.0135,
-        0.0106
+        -0.0264,
+        0.0046
        ],
-       "sd": 0.0062,
-       "mde95": 0.0102,
-       "p_gt_0": 0.438,
+       "sd": 0.00774,
+       "mde95": 0.0127,
+       "p_gt_0": 0.0775,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2213,8 +2200,8 @@
       "spearman": {
        "statistic": "within",
        "label": "within (side, vintage) Spearman, size-weighted",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": [
         "hit|2017",
         "hit|2018",
@@ -2230,18 +2217,18 @@
         "pit|2022",
         "pit|2023"
        ],
-       "rows_in_kept_groups": 788,
+       "rows_in_kept_groups": 814,
        "min_group_rows": 20,
-       "a": 0.38519,
-       "b": 0.38127,
-       "delta": 0.00393,
+       "a": 0.39422,
+       "b": 0.38139,
+       "delta": 0.01283,
        "ci95": [
-        -0.0206,
-        0.0285
+        -0.0104,
+        0.0342
        ],
-       "sd": 0.01229,
-       "mde95": 0.0202,
-       "p_gt_0": 0.6075,
+       "sd": 0.01131,
+       "mde95": 0.0186,
+       "p_gt_0": 0.86,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2253,21 +2240,21 @@
       "pooled": {
        "statistic": "pooled",
        "label": "pooled Spearman after the identical output map",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.40913,
-       "b": 0.41288,
-       "delta": -0.00374,
+       "a": 0.40928,
+       "b": 0.40311,
+       "delta": 0.00617,
        "ci95": [
-        -0.0235,
-        0.0164
+        -0.0103,
+        0.0219
        ],
-       "sd": 0.01006,
-       "mde95": 0.0166,
-       "p_gt_0": 0.3625,
+       "sd": 0.00812,
+       "mde95": 0.0134,
+       "p_gt_0": 0.775,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2279,21 +2266,21 @@
       "auc": {
        "statistic": "auc",
        "label": "contributor AUC after the identical output map, pooled",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.7523,
-       "b": 0.74918,
-       "delta": 0.00313,
+       "a": 0.74982,
+       "b": 0.74296,
+       "delta": 0.00686,
        "ci95": [
-        -0.0084,
-        0.0156
+        -0.0034,
+        0.0171
        ],
-       "sd": 0.00605,
-       "mde95": 0.01,
-       "p_gt_0": 0.7045,
+       "sd": 0.00527,
+       "mde95": 0.0087,
+       "p_gt_0": 0.9055,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2307,8 +2294,8 @@
       "spearman": {
        "statistic": "within",
        "label": "within (side, vintage) Spearman, size-weighted",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": [
         "hit|2017",
         "hit|2018",
@@ -2324,18 +2311,18 @@
         "pit|2022",
         "pit|2023"
        ],
-       "rows_in_kept_groups": 788,
+       "rows_in_kept_groups": 814,
        "min_group_rows": 20,
-       "a": 0.37552,
-       "b": 0.376,
-       "delta": -0.00048,
+       "a": 0.37132,
+       "b": 0.38161,
+       "delta": -0.01029,
        "ci95": [
-        -0.0356,
-        0.0333
+        -0.0528,
+        0.029
        ],
-       "sd": 0.01725,
-       "mde95": 0.0284,
-       "p_gt_0": 0.482,
+       "sd": 0.02079,
+       "mde95": 0.0342,
+       "p_gt_0": 0.302,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2347,21 +2334,21 @@
       "pooled": {
        "statistic": "pooled",
        "label": "pooled Spearman after the identical output map",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.40707,
-       "b": 0.41278,
-       "delta": -0.00571,
+       "a": 0.39315,
+       "b": 0.40284,
+       "delta": -0.00969,
        "ci95": [
-        -0.0328,
-        0.0213
+        -0.0417,
+        0.022
        ],
-       "sd": 0.01346,
-       "mde95": 0.0221,
-       "p_gt_0": 0.349,
+       "sd": 0.01647,
+       "mde95": 0.0271,
+       "p_gt_0": 0.276,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2373,36 +2360,36 @@
       "auc": {
        "statistic": "auc",
        "label": "contributor AUC after the identical output map, pooled",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.75113,
-       "b": 0.75593,
-       "delta": -0.0048,
+       "a": 0.73878,
+       "b": 0.75901,
+       "delta": -0.02023,
        "ci95": [
-        -0.0205,
-        0.0104
+        -0.0384,
+        -0.0019
        ],
-       "sd": 0.00786,
-       "mde95": 0.0129,
-       "p_gt_0": 0.2975,
+       "sd": 0.00929,
+       "mde95": 0.0153,
+       "p_gt_0": 0.0135,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
        "estimator": "E_cond",
        "ci95_estimator": "E_cond, paired, player-clustered",
        "status": "derived",
-       "reading": "development only; CI95 spans zero"
+       "reading": "development only; CI95 below zero"
       }
      },
      "v2_vs_fangraphs": {
       "spearman": {
        "statistic": "within",
        "label": "within (side, vintage) Spearman, size-weighted",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": [
         "hit|2017",
         "hit|2018",
@@ -2418,134 +2405,134 @@
         "pit|2022",
         "pit|2023"
        ],
-       "rows_in_kept_groups": 788,
+       "rows_in_kept_groups": 814,
        "min_group_rows": 20,
-       "a": 0.37552,
-       "b": 0.33406,
-       "delta": 0.04146,
+       "a": 0.37132,
+       "b": 0.33633,
+       "delta": 0.03499,
        "ci95": [
-        0.0039,
-        0.0778
+        -0.009,
+        0.0775
        ],
-       "sd": 0.01911,
-       "mde95": 0.0314,
-       "p_gt_0": 0.9865,
+       "sd": 0.02253,
+       "mde95": 0.0371,
+       "p_gt_0": 0.939,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
        "estimator": "E_cond",
        "ci95_estimator": "E_cond, paired, player-clustered",
        "status": "derived",
-       "reading": "development only; CI95 above zero"
+       "reading": "development only; CI95 spans zero"
       },
       "pooled": {
        "statistic": "pooled",
        "label": "pooled Spearman after the identical output map",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.40707,
-       "b": 0.37379,
-       "delta": 0.03328,
+       "a": 0.39315,
+       "b": 0.35911,
+       "delta": 0.03404,
        "ci95": [
-        0.0012,
-        0.0662
+        -0.0048,
+        0.0716
        ],
-       "sd": 0.01631,
-       "mde95": 0.0268,
-       "p_gt_0": 0.98,
+       "sd": 0.01985,
+       "mde95": 0.0326,
+       "p_gt_0": 0.958,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
        "estimator": "E_cond",
        "ci95_estimator": "E_cond, paired, player-clustered",
        "status": "derived",
-       "reading": "development only; CI95 above zero"
+       "reading": "development only; CI95 spans zero"
       },
       "auc": {
        "statistic": "auc",
        "label": "contributor AUC after the identical output map, pooled",
-       "n": 803,
-       "n_clusters": 803,
+       "n": 830,
+       "n_clusters": 830,
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.75113,
-       "b": 0.72826,
-       "delta": 0.02287,
+       "a": 0.73878,
+       "b": 0.71676,
+       "delta": 0.02202,
        "ci95": [
-        0.0048,
-        0.0424
+        -0.0006,
+        0.0459
        ],
-       "sd": 0.00976,
-       "mde95": 0.0161,
-       "p_gt_0": 0.993,
+       "sd": 0.01168,
+       "mde95": 0.0192,
+       "p_gt_0": 0.971,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
        "estimator": "E_cond",
        "ci95_estimator": "E_cond, paired, player-clustered",
        "status": "derived",
-       "reading": "development only; CI95 above zero"
+       "reading": "development only; CI95 spans zero"
       }
      }
     },
     "secondary": {
      "statistic": "pooled Spearman after the identical output map",
      "raters": {
-      "efv_v2": 0.4071,
-      "efv_v1": 0.4091,
-      "prospx_consensus": 0.4129,
-      "mlb_pipeline": 0.4128,
-      "fangraphs": 0.3738
+      "efv_v2": 0.3932,
+      "efv_v1": 0.4093,
+      "prospx_consensus": 0.4031,
+      "mlb_pipeline": 0.4028,
+      "fangraphs": 0.3591
      },
      "deltas": {
       "v2_vs_prospx_consensus": {
-       "delta": -0.0058,
+       "delta": -0.00995,
        "ci95": [
-        -0.0215,
-        0.0096
+        -0.0356,
+        0.015
        ],
-       "mde95": 0.0129,
+       "mde95": 0.0212,
        "reading": "development only; CI95 spans zero"
       },
       "v2_vs_efv_v1": {
-       "delta": -0.00206,
+       "delta": -0.01612,
        "ci95": [
-        -0.0233,
-        0.0187
+        -0.0424,
+        0.0104
        ],
-       "mde95": 0.0175,
+       "mde95": 0.0222,
        "reading": "development only; CI95 spans zero"
       },
       "efv_v1_vs_prospx_consensus": {
-       "delta": -0.00374,
+       "delta": 0.00617,
        "ci95": [
-        -0.0235,
-        0.0164
+        -0.0103,
+        0.0219
        ],
-       "mde95": 0.0166,
+       "mde95": 0.0134,
        "reading": "development only; CI95 spans zero"
       },
       "v2_vs_mlb_pipeline": {
-       "delta": -0.00571,
+       "delta": -0.00969,
        "ci95": [
-        -0.0328,
-        0.0213
+        -0.0417,
+        0.022
        ],
-       "mde95": 0.0221,
+       "mde95": 0.0271,
        "reading": "development only; CI95 spans zero"
       },
       "v2_vs_fangraphs": {
-       "delta": 0.03328,
+       "delta": 0.03404,
        "ci95": [
-        0.0012,
-        0.0662
+        -0.0048,
+        0.0716
        ],
-       "mde95": 0.0268,
-       "reading": "development only; CI95 above zero"
+       "mde95": 0.0326,
+       "reading": "development only; CI95 spans zero"
       }
      }
     },
@@ -2561,11 +2548,11 @@
     "outcome": "W3 (WAR over the first three MLB seasons, 0 if no debut within three seasons of V)",
     "contributor": "W3 >= w_star_dev",
     "w_star_dev": {
-     "w_star": 1.19,
-     "n": 3063,
-     "n_six_season_contributors": 538,
-     "six_season_contributor_share": 0.1756,
-     "w3_exceedance_share_at_w_star": 0.1766,
+     "w_star": 1.1,
+     "n": 3065,
+     "n_six_season_contributors": 572,
+     "six_season_contributor_share": 0.1866,
+     "w3_exceedance_share_at_w_star": 0.1873,
      "vintages": [
       2011,
       2012,
@@ -2575,7 +2562,7 @@
       2016
      ],
      "six_season_threshold": 3.0,
-     "convention": "the k-th largest W3 on the rows, k = the number of six-season contributors; development convention on the eWAR v2 label, re-derived by EV-05 on the frozen label"
+     "convention": "the k-th largest W3 on the rows, k = the number of six-season contributors; development convention on the fwar label, re-derived by EV-05 on the frozen label"
     },
     "per_vintage": [
      {
@@ -2583,12 +2570,12 @@
       "vintage": 2017,
       "frame_rows": 472,
       "n_train_v2": 1038,
-      "n_train_v1": 363,
+      "n_train_v1": 367,
       "v1_status": "ok",
       "consensus_only": false,
       "skill_keys": [
        "obp_rel",
-       "tool_hit",
+       "contact",
        "tool_speed"
       ],
       "timing_keys": [
@@ -2596,52 +2583,51 @@
        "on_40man",
        "nov_add"
       ],
-      "w_skill": 0.599508,
-      "w_time": 0.012287,
+      "w_skill": 0.908861,
+      "w_time": 0.202573,
       "n_scored": 472,
       "reserved_vm_kept_w3_zero": 0
      },
      {
       "side": "hit",
       "vintage": 2018,
-      "frame_rows": 449,
+      "frame_rows": 450,
       "n_train_v2": 1474,
-      "n_train_v1": 473,
+      "n_train_v1": 485,
       "v1_status": "ok",
       "consensus_only": false,
       "skill_keys": [
        "obp_rel",
-       "tool_hit",
        "is_college"
       ],
       "timing_keys": [
-       "age_rel_level",
        "nov_add"
       ],
-      "w_skill": 0.599508,
-      "w_time": 0.012287,
-      "n_scored": 449,
+      "w_skill": 0.908861,
+      "w_time": 0.202573,
+      "n_scored": 450,
       "reserved_vm_kept_w3_zero": 4
      },
      {
       "side": "hit",
       "vintage": 2019,
-      "frame_rows": 542,
+      "frame_rows": 543,
       "n_train_v2": 1922,
-      "n_train_v1": 646,
+      "n_train_v1": 665,
       "v1_status": "ok",
       "consensus_only": false,
       "skill_keys": [
        "obp_rel",
-       "tool_hit"
+       "contact",
+       "is_college"
       ],
       "timing_keys": [
-       "age_rel_level",
+       "milb_absent",
        "nov_add"
       ],
-      "w_skill": 0.599508,
-      "w_time": 0.012287,
-      "n_scored": 542,
+      "w_skill": 0.908861,
+      "w_time": 0.202573,
+      "n_scored": 543,
       "reserved_vm_kept_w3_zero": 11
      },
      {
@@ -2658,60 +2644,59 @@
       "timing_keys": [
        "age_rel_level",
        "level_rank",
+       "milb_absent",
        "on_40man",
        "nov_add"
       ],
       "w_skill": 1.0,
-      "w_time": 0.107279,
+      "w_time": 0.020473,
       "n_scored": 469,
       "reserved_vm_kept_w3_zero": 0
      },
      {
       "side": "pit",
       "vintage": 2018,
-      "frame_rows": 440,
+      "frame_rows": 439,
       "n_train_v2": 1468,
-      "n_train_v1": 486,
+      "n_train_v1": 487,
       "v1_status": "ok",
       "consensus_only": false,
       "skill_keys": [
        "k_rel"
       ],
       "timing_keys": [
-       "age_rel_level",
        "nov_add"
       ],
       "w_skill": 1.0,
-      "w_time": 0.107279,
-      "n_scored": 440,
+      "w_time": 0.020473,
+      "n_scored": 439,
       "reserved_vm_kept_w3_zero": 1
      },
      {
       "side": "pit",
       "vintage": 2019,
-      "frame_rows": 490,
+      "frame_rows": 489,
       "n_train_v2": 1882,
-      "n_train_v1": 696,
+      "n_train_v1": 701,
       "v1_status": "ok",
       "consensus_only": false,
       "skill_keys": [
        "k_rel"
       ],
       "timing_keys": [
-       "age_rel_level",
        "nov_add"
       ],
       "w_skill": 1.0,
-      "w_time": 0.107279,
-      "n_scored": 490,
+      "w_time": 0.020473,
+      "n_scored": 489,
       "reserved_vm_kept_w3_zero": 13
      }
     ],
     "reserved_vm_kept_w3_zero": 29,
     "n": 2862,
     "n_by_side": {
-     "hit": 1463,
-     "pit": 1399
+     "hit": 1465,
+     "pit": 1397
     },
     "n_players": 1753,
     "groups": [
@@ -2725,47 +2710,47 @@
     "statistic": "within (side, vintage) Spearman, size-weighted",
     "raters": {
      "efv_v2": {
-      "spearman": 0.1619,
-      "auc": 0.7477,
+      "spearman": 0.1676,
+      "auc": 0.7352,
       "n": 2862,
-      "within": 0.1619,
-      "pooled": 0.1478,
+      "within": 0.1676,
+      "pooled": 0.1529,
       "within_rows": 2862,
       "within_groups": 6
      },
      "efv_v1": {
-      "spearman": 0.1477,
-      "auc": 0.7388,
+      "spearman": 0.1788,
+      "auc": 0.7425,
       "n": 2862,
-      "within": 0.1477,
-      "pooled": 0.1375,
+      "within": 0.1788,
+      "pooled": 0.1619,
       "within_rows": 2862,
       "within_groups": 6
      },
      "prospx_consensus": {
-      "spearman": 0.1624,
-      "auc": 0.7476,
+      "spearman": 0.1792,
+      "auc": 0.7468,
       "n": 2862,
-      "within": 0.1624,
-      "pooled": 0.1496,
+      "within": 0.1792,
+      "pooled": 0.1656,
       "within_rows": 2862,
       "within_groups": 6
      },
      "mlb_pipeline": {
-      "spearman": 0.1914,
-      "auc": 0.7446,
+      "spearman": 0.2034,
+      "auc": 0.747,
       "n": 2574,
-      "within": 0.1914,
-      "pooled": 0.1609,
+      "within": 0.2034,
+      "pooled": 0.17,
       "within_rows": 2574,
       "within_groups": 6
      },
      "fangraphs": {
-      "spearman": 0.1398,
-      "auc": 0.703,
+      "spearman": 0.1714,
+      "auc": 0.7053,
       "n": 2370,
-      "within": 0.1398,
-      "pooled": 0.1159,
+      "within": 0.1714,
+      "pooled": 0.1455,
       "within_rows": 2370,
       "within_groups": 6
      }
@@ -2787,16 +2772,16 @@
        ],
        "rows_in_kept_groups": 2862,
        "min_group_rows": 20,
-       "a": 0.16193,
-       "b": 0.16239,
-       "delta": -0.00047,
+       "a": 0.1676,
+       "b": 0.17923,
+       "delta": -0.01163,
        "ci95": [
-        -0.0197,
-        0.0172
+        -0.0332,
+        0.0095
        ],
-       "sd": 0.00944,
-       "mde95": 0.0155,
-       "p_gt_0": 0.478,
+       "sd": 0.01093,
+       "mde95": 0.018,
+       "p_gt_0": 0.131,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2813,16 +2798,16 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.14782,
-       "b": 0.14962,
-       "delta": -0.0018,
+       "a": 0.15293,
+       "b": 0.16564,
+       "delta": -0.01271,
        "ci95": [
-        -0.0199,
-        0.0161
+        -0.0354,
+        0.0105
        ],
-       "sd": 0.00937,
-       "mde95": 0.0154,
-       "p_gt_0": 0.4315,
+       "sd": 0.01167,
+       "mde95": 0.0192,
+       "p_gt_0": 0.131,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2839,16 +2824,16 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.74771,
-       "b": 0.74764,
-       "delta": 7e-05,
+       "a": 0.7352,
+       "b": 0.74684,
+       "delta": -0.01164,
        "ci95": [
-        -0.0134,
-        0.0143
+        -0.029,
+        0.0072
        ],
-       "sd": 0.00722,
-       "mde95": 0.0119,
-       "p_gt_0": 0.4985,
+       "sd": 0.00921,
+       "mde95": 0.0151,
+       "p_gt_0": 0.101,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2874,16 +2859,16 @@
        ],
        "rows_in_kept_groups": 2862,
        "min_group_rows": 20,
-       "a": 0.16193,
-       "b": 0.14774,
-       "delta": 0.01418,
+       "a": 0.1676,
+       "b": 0.17878,
+       "delta": -0.01118,
        "ci95": [
-        -0.0134,
-        0.0421
+        -0.0353,
+        0.0136
        ],
-       "sd": 0.01419,
-       "mde95": 0.0233,
-       "p_gt_0": 0.8435,
+       "sd": 0.01242,
+       "mde95": 0.0204,
+       "p_gt_0": 0.1875,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2900,16 +2885,16 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.14782,
-       "b": 0.13753,
-       "delta": 0.01029,
+       "a": 0.15293,
+       "b": 0.16189,
+       "delta": -0.00896,
        "ci95": [
-        -0.014,
-        0.0338
+        -0.033,
+        0.014
        ],
-       "sd": 0.0124,
-       "mde95": 0.0204,
-       "p_gt_0": 0.7955,
+       "sd": 0.01211,
+       "mde95": 0.0199,
+       "p_gt_0": 0.2325,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2926,16 +2911,16 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.74771,
-       "b": 0.73877,
-       "delta": 0.00894,
+       "a": 0.7352,
+       "b": 0.74252,
+       "delta": -0.00733,
        "ci95": [
-        -0.0105,
-        0.0287
+        -0.0256,
+        0.0127
        ],
-       "sd": 0.01001,
-       "mde95": 0.0165,
-       "p_gt_0": 0.8045,
+       "sd": 0.00979,
+       "mde95": 0.0161,
+       "p_gt_0": 0.2295,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2961,16 +2946,16 @@
        ],
        "rows_in_kept_groups": 2862,
        "min_group_rows": 20,
-       "a": 0.14774,
-       "b": 0.16239,
-       "delta": -0.01465,
+       "a": 0.17878,
+       "b": 0.17923,
+       "delta": -0.00045,
        "ci95": [
-        -0.0416,
-        0.0128
+        -0.0234,
+        0.022
        ],
-       "sd": 0.01403,
-       "mde95": 0.0231,
-       "p_gt_0": 0.1465,
+       "sd": 0.01157,
+       "mde95": 0.019,
+       "p_gt_0": 0.461,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -2987,16 +2972,16 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.13753,
-       "b": 0.14962,
-       "delta": -0.01209,
+       "a": 0.16189,
+       "b": 0.16564,
+       "delta": -0.00375,
        "ci95": [
-        -0.0355,
-        0.0109
+        -0.0246,
+        0.0164
        ],
-       "sd": 0.01188,
-       "mde95": 0.0196,
-       "p_gt_0": 0.156,
+       "sd": 0.0104,
+       "mde95": 0.0171,
+       "p_gt_0": 0.3455,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -3013,16 +2998,16 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.73877,
-       "b": 0.74764,
-       "delta": -0.00887,
+       "a": 0.74252,
+       "b": 0.74684,
+       "delta": -0.00432,
        "ci95": [
-        -0.0271,
-        0.0103
+        -0.02,
+        0.0114
        ],
-       "sd": 0.00953,
-       "mde95": 0.0157,
-       "p_gt_0": 0.18,
+       "sd": 0.00802,
+       "mde95": 0.0132,
+       "p_gt_0": 0.29,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -3048,23 +3033,23 @@
        ],
        "rows_in_kept_groups": 2574,
        "min_group_rows": 20,
-       "a": 0.16368,
-       "b": 0.19136,
-       "delta": -0.02767,
+       "a": 0.17007,
+       "b": 0.20341,
+       "delta": -0.03334,
        "ci95": [
-        -0.0558,
-        0.0014
+        -0.0641,
+        -0.0019
        ],
-       "sd": 0.01458,
-       "mde95": 0.024,
-       "p_gt_0": 0.0315,
+       "sd": 0.01559,
+       "mde95": 0.0256,
+       "p_gt_0": 0.0215,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
        "estimator": "E_cond",
        "ci95_estimator": "E_cond, paired, player-clustered",
        "status": "derived",
-       "reading": "development only; CI95 spans zero"
+       "reading": "development only; CI95 below zero"
       },
       "pooled": {
        "statistic": "pooled",
@@ -3074,16 +3059,16 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.14988,
-       "b": 0.1609,
-       "delta": -0.01101,
+       "a": 0.15662,
+       "b": 0.17,
+       "delta": -0.01338,
        "ci95": [
-        -0.0374,
-        0.0143
+        -0.0419,
+        0.0161
        ],
-       "sd": 0.01351,
-       "mde95": 0.0222,
-       "p_gt_0": 0.2155,
+       "sd": 0.0147,
+       "mde95": 0.0242,
+       "p_gt_0": 0.1755,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -3100,16 +3085,16 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.74921,
-       "b": 0.7446,
-       "delta": 0.00462,
+       "a": 0.73691,
+       "b": 0.747,
+       "delta": -0.01009,
        "ci95": [
-        -0.015,
-        0.0248
+        -0.0319,
+        0.0123
        ],
-       "sd": 0.01024,
-       "mde95": 0.0169,
-       "p_gt_0": 0.6675,
+       "sd": 0.01143,
+       "mde95": 0.0188,
+       "p_gt_0": 0.1835,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -3135,16 +3120,16 @@
        ],
        "rows_in_kept_groups": 2370,
        "min_group_rows": 20,
-       "a": 0.16469,
-       "b": 0.13977,
-       "delta": 0.02492,
+       "a": 0.17747,
+       "b": 0.17137,
+       "delta": 0.0061,
        "ci95": [
-        -0.0063,
-        0.0552
+        -0.029,
+        0.0402
        ],
-       "sd": 0.01602,
-       "mde95": 0.0264,
-       "p_gt_0": 0.943,
+       "sd": 0.01774,
+       "mde95": 0.0292,
+       "p_gt_0": 0.6385,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
@@ -3161,23 +3146,23 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.15373,
-       "b": 0.11586,
-       "delta": 0.03787,
+       "a": 0.16006,
+       "b": 0.14548,
+       "delta": 0.01458,
        "ci95": [
-        0.0073,
-        0.0671
+        -0.0198,
+        0.0492
        ],
-       "sd": 0.01523,
-       "mde95": 0.0251,
-       "p_gt_0": 0.9955,
+       "sd": 0.01756,
+       "mde95": 0.0289,
+       "p_gt_0": 0.799,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
        "estimator": "E_cond",
        "ci95_estimator": "E_cond, paired, player-clustered",
        "status": "derived",
-       "reading": "development only; CI95 above zero"
+       "reading": "development only; CI95 spans zero"
       },
       "auc": {
        "statistic": "auc",
@@ -3187,80 +3172,80 @@
        "groups_kept": null,
        "rows_in_kept_groups": null,
        "min_group_rows": null,
-       "a": 0.73871,
-       "b": 0.70301,
-       "delta": 0.0357,
+       "a": 0.72682,
+       "b": 0.70532,
+       "delta": 0.02151,
        "ci95": [
-        0.013,
-        0.0592
+        -0.0054,
+        0.0475
        ],
-       "sd": 0.01165,
-       "mde95": 0.0192,
-       "p_gt_0": 0.9995,
+       "sd": 0.01376,
+       "mde95": 0.0226,
+       "p_gt_0": 0.941,
        "B": 2000,
        "B_used": 2000,
        "seed": 20260906,
        "estimator": "E_cond",
        "ci95_estimator": "E_cond, paired, player-clustered",
        "status": "derived",
-       "reading": "development only; CI95 above zero"
+       "reading": "development only; CI95 spans zero"
       }
      }
     },
     "secondary": {
      "statistic": "pooled Spearman after the identical output map",
      "raters": {
-      "efv_v2": 0.1478,
-      "efv_v1": 0.1375,
-      "prospx_consensus": 0.1496,
-      "mlb_pipeline": 0.1609,
-      "fangraphs": 0.1159
+      "efv_v2": 0.1529,
+      "efv_v1": 0.1619,
+      "prospx_consensus": 0.1656,
+      "mlb_pipeline": 0.17,
+      "fangraphs": 0.1455
      },
      "deltas": {
       "v2_vs_prospx_consensus": {
-       "delta": -0.0018,
+       "delta": -0.01271,
        "ci95": [
-        -0.0199,
-        0.0161
+        -0.0354,
+        0.0105
        ],
-       "mde95": 0.0154,
+       "mde95": 0.0192,
        "reading": "development only; CI95 spans zero"
       },
       "v2_vs_efv_v1": {
-       "delta": 0.01029,
+       "delta": -0.00896,
        "ci95": [
-        -0.014,
-        0.0338
+        -0.033,
+        0.014
        ],
-       "mde95": 0.0204,
+       "mde95": 0.0199,
        "reading": "development only; CI95 spans zero"
       },
       "efv_v1_vs_prospx_consensus": {
-       "delta": -0.01209,
+       "delta": -0.00375,
        "ci95": [
-        -0.0355,
-        0.0109
+        -0.0246,
+        0.0164
        ],
-       "mde95": 0.0196,
+       "mde95": 0.0171,
        "reading": "development only; CI95 spans zero"
       },
       "v2_vs_mlb_pipeline": {
-       "delta": -0.01101,
+       "delta": -0.01338,
        "ci95": [
-        -0.0374,
-        0.0143
+        -0.0419,
+        0.0161
        ],
-       "mde95": 0.0222,
+       "mde95": 0.0242,
        "reading": "development only; CI95 spans zero"
       },
       "v2_vs_fangraphs": {
-       "delta": 0.03787,
+       "delta": 0.01458,
        "ci95": [
-        0.0073,
-        0.0671
+        -0.0198,
+        0.0492
        ],
-       "mde95": 0.0251,
-       "reading": "development only; CI95 above zero"
+       "mde95": 0.0289,
+       "reading": "development only; CI95 spans zero"
       }
      }
     },
@@ -3273,22 +3258,22 @@
     "tag": "DS-16:vm_dev.v2_vs_consensus",
     "verdict": "READ",
     "ci95": [
-     -0.0231,
-     0.0116
+     -0.0386,
+     0.0159
     ],
-    "reason": "n 803; within delta -0.00575, pooled delta -0.0058; one frame read carrying 5 comparisons by within, pooled and AUC"
+    "reason": "n 830; within delta -0.01006, pooled delta -0.00995; one frame read carrying 5 comparisons by within, pooled and AUC"
    },
    "DS-16:lv_dev.v2_vs_consensus": {
     "tag": "DS-16:lv_dev.v2_vs_consensus",
     "verdict": "READ",
     "ci95": [
-     -0.0197,
-     0.0172
+     -0.0332,
+     0.0095
     ],
-    "reason": "n 2862; within delta -0.00047, pooled delta -0.0018; one frame read carrying 5 comparisons by within, pooled and AUC"
+    "reason": "n 2862; within delta -0.01163, pooled delta -0.01271; one frame read carrying 5 comparisons by within, pooled and AUC"
    }
   },
   "n_probes": 2,
-  "elapsed_s": 57.2
+  "elapsed_s": 75.8
  }
 }

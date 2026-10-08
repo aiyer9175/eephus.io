@@ -288,7 +288,7 @@ def w_star_dev(label_rows: list[tuple[int, dict]]) -> dict:
             "six_season_threshold": V1._CONTRIB_WAR,
             "convention": ("the k-th largest W3 on the rows, k = the number of "
                            "six-season contributors; development convention on the "
-                           "eWAR v2 label, re-derived by EV-05 on the frozen label")}
+                           f"{L.provider()} label, re-derived by EV-05 on the frozen label")}
 
 
 def lv_dev() -> tuple[list[dict], dict]:
@@ -753,6 +753,17 @@ def _ds16_frame(blk: dict, rows: list[dict], **extra) -> dict:
             "verdict": prim["reading"], "note": DS16_NOTE}
 
 
+def _ds16_note(provider: str | None) -> str:
+    """The block's note, named after the label the read ran on."""
+    if provider == "fwar":
+        return ("the one pre-declared development read of the assembled V2, re-run once on "
+                "the frozen fWAR label with the re-derived weights (EFV_V2_GATE.md P5): "
+                "the registered development number; spent frames, not a claim")
+    return (f"the one pre-declared development read of the assembled V2 on the {provider} "
+            "label; spent frames, not a claim; the registered development number is "
+            "its re-run on the frozen fWAR label (EFV_V2_GATE.md P5)")
+
+
 def run_ds16(data_dir: Path | None = None, *, write: bool = True,
              check: bool = False) -> dict:
     t0 = time.time()
@@ -809,9 +820,7 @@ def run_ds16(data_dir: Path | None = None, *, write: bool = True,
         "role": "development",
         "adjudicates": False,
         "selects": False,
-        "note": ("the one pre-declared development read of the assembled V2 on the eWAR v2 "
-                 "label; spent frames, not a claim; the registered development number is "
-                 "its re-run on the frozen fWAR label (EFV_V2_GATE.md P5)"),
+        "note": _ds16_note(L.provider()),
         "declared_in": declared,
         "statistic": {"primary": S.STAT_LABEL[S.PRIMARY],
                       "secondary": S.STAT_LABEL[S.SECONDARY],
