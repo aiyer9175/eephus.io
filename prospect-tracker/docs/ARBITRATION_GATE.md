@@ -880,3 +880,100 @@ for the plain-key award. From 2026-10-04 the join (`proj_export._join_contract`,
 AAV, and never lets it move a plain key; the salary path prices those seasons
 from the tokens through the arbitration board, as before. Served surplus did
 not move (no row by more than $1M; none at all on the worktree regen).
+
+## 13. GATE A amendment (registered 2026-10-08, before any re-run): production lagged to the platform season
+
+Registered and committed alone, before `tools/arb_gate_a.py` was run under it.
+Nothing above this section is edited. Owner answer M12-2 (2026-09-25,
+`_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, final-pass 'more' batch 12):
+register a GATE A amendment lagging production to the platform season and
+re-run. Owner answer M12-1 holds GATE C2 (section 11) until this lands.
+
+### 13a. The defect
+
+Section 1 states the estimand as an award "given only information observable
+as of the tender deadline". The battery scored on 2026-08-09 did not do that.
+For a panel row whose award season is `s` (the season the award pays), the
+champion read `war`, `pa`, `ipouts`, `gs`, `war3` (seasons s, s-1, s-2),
+`career_war` (through s) and the `hem` / `sem` / `rem` block of season `s`
+itself. Season `s` has not been played when the award is set in the winter
+before it. The arb-1 PASS (3.25x its floor) and the A6 comparison were
+therefore scored with production a club, an agent and a panel could not
+see. The census recorded it as M08-05; `tools/arb_mde_lab.load_pool` and
+`arb_export.export` build the same frame, so the served arb-1 model was fit
+on it too.
+
+### 13b. The platform frame
+
+For an award season `s` the platform season is `p = s - 1`, the last season
+complete when the award is set.
+
+- `war`, `pa`, `ipouts`, `gs`: the panel's values for (player, p), and 0 when
+  the panel holds no MLB season p for the player. `pa_share`, `ip_share`,
+  `gs_share`, `is_pitcher` and `is_reliever` follow from them, as they did.
+- `war3` is WAR in p, p-1 and p-2; `career_war` runs through p inclusive.
+- `hem`, `sem`, `rem`: the arb_metrics block of season p (100 when absent, as
+  before).
+- Unchanged, because each is already known at the tender deadline: `arb_year`,
+  `super_two`, the prior salary (season s-1, a platform figure by
+  construction), `has_prior`, and `age` (the player's age in season s, fixed
+  by his birth date).
+- The arb-1 bars read the same platform WAR. A bar may not see what the
+  champion cannot.
+- The deflator is NOT changed. It is fit on train-year rows only, its
+  production term reads each train row's own completed season, and no test
+  row's information enters it. Leaving it alone keeps the banded arb-2+
+  multipliers, the served arb-2+ rungs and `salary_path.board_raise_fn`
+  byte-identical, which this amendment asserts rather than assumes.
+- The `award` frame is kept in code (`arb_model.FRAMES`) so the 2026-08-09
+  numbers stay reproducible. It adjudicates nothing from this date.
+
+### 13c. Protocol, unchanged from section 4
+
+`tools/arb_gate_a.py --write --B 1200 --frame platform`: the scored pool
+(`arb_dataset.scored_rows`), forward-chained by class year, seed 20260808,
+B = 1200 (the 2026-08-09 run's B), the player-clustered bootstrap refitting
+the deflator and both stages every draw, A3 with 200 within-cell
+permutations, A5, and A6 exactly as the 2026-08-09 lab computed it (the
+MLBTR loader repair is section 14's and is registered separately, after this
+re-run). The criteria are section 4's: a step PASSES when its gain is
+resolvable against its one-sided MDE95, beats the A3 permuted p95, and the
+A5 leak is smaller than the margin.
+
+The pool regenerates nightly (1,043 rows on 2026-08-09). So the frame's own
+effect can be told apart from pool drift, the same lab runs once more with
+`--frame award` on the same day's pool, written beside the result as
+`award_frame_same_day_twin`. The twin adjudicates nothing.
+
+### 13d. What serves, fixed before the re-run
+
+- **arb-1 PASS.** The /arbitration/ board's ARB 1 rungs and the History's
+  arb-1 'Ours' serve the champion refit on the platform frame. A forward rung
+  for season y reads platform season y - 1: realized WAR, PA, outs and starts
+  where y - 1 has been played, the projection after it (the latest observed
+  season's PA, outs and starts as the stated proxy); `hem` / `sem` / `rem`
+  from season y - 1 where observed, else the latest observed season (the
+  section 11h proxy, now one season closer).
+- **arb-1 NULL.** The ARB 1 rungs serve the bar the champion failed to beat
+  (A2: the arb-1 intercept plus one platform-WAR term, smearing-corrected,
+  refit on the whole pool), the way arb-2 and later serve their baseline. The
+  artifact verdict falls with the gate (provisional only while some step
+  passes).
+- **arb-2 and later, PASS or NULL.** The served estimator stays the banded
+  step multiplier in this change. A PASS there would be recorded as licensing
+  the stage-2 model, and switching to it is its own measured change.
+- **The 2026-08-09 block stays as a labelled HINDCAST.** Its fields move
+  verbatim under `hindcast_2026_08_09_award_frame` in
+  `data/arbitration_eval.json`, labelled as scored on award-season production
+  unavailable at award time, quoted for the record and adjudicating nothing.
+  The top-level GATE A fields carry this re-run, so every surface that quotes
+  the arb-1 margin or the Swartz ratio quotes the platform frame.
+- Section 9's GATE C record (2026-08-19) was scored on the award-frame model
+  and stands as a dated record of that model; it is not re-scored here.
+
+### 13e. Not reopened
+
+The champion key tuple, the ridge, the smearing, the deflator, the pool, the
+seed, B and every criterion. This repairs the information set to the one the
+section 1 estimand already documents; it is not a refit to a new target, and
+no constant is tuned against the result.
