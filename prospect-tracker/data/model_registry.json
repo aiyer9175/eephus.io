@@ -3198,6 +3198,19 @@
    "artifact_age_days": 44
   },
   {
+   "model_id": "trade_partner_screen",
+   "summary": "Registered, not read: the share of 2027 acquirers in the frozen top five, against contenders-only and 5/29 random baselines; one look 2027-08-05, nothing scored yet.",
+   "surface": "None served: Trade Machine partner screen v1, built dark behind TRADE_PARTNER_SCREEN_LIVE (task W08_1); a descriptive screen, never a price, a grade or a trade value",
+   "predicts": "Whether the club that acquires a traded MLB player sits in the top five of his partner screen frozen the day before the trade",
+   "champion": "partner_v1: equal-weight sum of four within-candidate factor scores (need by slot, contention, marginal tax in the M27 form, farm surplus) over the 29 other clubs; registered, not read (one look 2027-08-05)",
+   "baseline": "contenders-only (a random five among clubs at frozen playoff odds of at least 0.25) and random among the 29 other clubs (5/29); gated by registration",
+   "metric": "share of real acquirers inside the frozen top five per traded MLB player, 2027 Opening Day to the deadline; one-sided exact tests, Holm m = 2, alpha 0.05; not resolvable below 30 units",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "notes": "Owner answer W-OQ4 (a) 'Build and register', 2026-10-01 (_audit_2026-09-09/DECISIONS_FOR_OWNER.md, early answers for the wiring lanes and deploy). Registered 2026-10-08 before any screen code, slice, frozen record or screen output existed. The screen (W08_1 dark, W08_2 flip) ranks the 29 clubs other than the player's own by the published rule partner_v1, every factor visible, labelled a screen, never a rumor board, with no verdict word and no cap-space cell (the tax factor prints in the M27 form). Frozen record: one gzip entry per as-of date at .cache/trade_partner_screen/record/<YYYY-MM-DD>.json.gz with a SHA-256 hash chain in chain.json, first write wins, retained until at least 365 days after the look; preview files under .cache/trade_partner_screen/preview/ are never scored. The rule may not change between the first frozen day and the read without a dated re-registration. Frame: every 2027 trade from the first regular-season game to the deadline, deals named by the Trade Audit's trade table and the StatsAPI TR log; unit is a traded MLB player with an entry on the day before the trade. One look 2027-08-05 (moves only per the gate), one run, a crash after scoring reported and never rerun; output data/trade_partner_screen_eval.json, after which the verdict moves to provisional whatever the outcome. Unvalidated because the predictive claim has no measurement yet; registration_status carries the registered state. Nothing is priced, graded or recorded from the screen, and it never enters a Trade Machine value. Gate: docs/trademachine-2026-10/TRADE_PARTNER_SCREEN_GATE.md."
+  },
+  {
    "model_id": "upgrade_option",
    "summary": "Provisional: low grades are option-dominated (45 FV hitter OPT% about 60%); thin high grades read low or negative. Shown on the player-page eFV card.",
    "surface": "PROSPX player page PLUS% line (eFV card, under Star Odds; off the board since 2026-09-30)",
