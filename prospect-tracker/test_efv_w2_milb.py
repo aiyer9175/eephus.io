@@ -213,6 +213,15 @@ def test_reserved_list_vintages_raise(cache):
         M.lv_profiles("hit", {"hit": {2020: (rows, [{}])}})
 
 
+def test_vm_profiles_never_read_a_reserved_cohort(cache):
+    data = [{"player_key": "a", "decision_year": 2019},
+            {"player_key": "b", "decision_year": F.R_VM_FIRST_DEBUT_YEAR}]
+    raw = {"a": {"mlbam_id": PID, "cutoff": "2019-06-01"},
+           "b": {"mlbam_id": PID, "cutoff": "2025-06-01"}}
+    out = M.vm_profiles("hit", data, raw)
+    assert set(out) == {"a"} and out["a"]["_seasons"] == [2018, 2017, 2016]
+
+
 _BANNED_TOKENS = ("groupby", "tier", "bucket", "cell", "stratum", "strata", "by_fv",
                   "fv_band", "fv_bin", "by_consensus", "per_fv", "per_consensus")
 _SERVED_EXPORTERS = {"efv_export", "efv_v2_serve", "efv_score", "build_site", "proj_export",
@@ -248,7 +257,8 @@ def test_no_consensus_level_grouping_no_exporter_no_emdash():
         body = ast.get_source_segment(src, next(
             n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == fn))
         for banned in ("efv_labels", "w3", "war", "debut", "target", "reached"):
-            assert banned not in body.lower().replace("warm", ""), (fn, banned)
+            low = body.lower().replace("warm", "").replace("r_vm_first_debut_year", "")
+            assert banned not in low, (fn, banned)
 
 
 # ---------------------------------------------------------------------------

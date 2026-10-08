@@ -430,9 +430,12 @@ def screen_column(stat: str, side: str, frames: dict) -> dict:
 def vm_profiles(side: str, data: list[dict], raw_by_key: dict) -> dict:
     """{player_key: profile} on the vintage-matched matrix rows: read at the row's
     decision year, as of its matrix cutoff, from the served default floor (the floor
-    the matrices were built at)."""
+    the matrices were built at). A row whose decision year reaches the reserved R-VM
+    cohorts (2025 and later) is never read."""
     out = {}
     for d in data:
+        if int(d["decision_year"]) >= F.R_VM_FIRST_DEBUT_YEAR:
+            continue
         raw = raw_by_key.get(d["player_key"]) or {}
         out[d["player_key"]] = profile(raw.get("mlbam_id"), int(d["decision_year"]),
                                        raw.get("cutoff"), side, D.MILB_FLOOR_DEFAULT)
@@ -677,7 +680,8 @@ def vm_read(arms, *, B: int, log=print) -> dict:
         if mism:
             raise RuntimeError(f"vm base parity failed on {s}: {mism} rows")
         scored = {c["key"] for c in side_rows}
-        dy = {d["player_key"]: int(d["decision_year"]) for d in data}
+        dy = {d["player_key"]: int(d["decision_year"]) for d in data
+              if int(d["decision_year"]) < F.R_VM_FIRST_DEBUT_YEAR}
         out["coverage"][s] = {}
         for st in STATS:
             if STATS[st]["side"] != s:
