@@ -6822,6 +6822,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             trades_by_player = career_war_all = None
         _gc.collect()
 
+        # --- 6-pre. FA realized ledger, once after each regular season ------
+        # Owner answer M14-3 (2026-09-25): the /fa/ Archive's realized ledger is
+        # rebuilt yearly after the regular season ends (on the displayed eWAR,
+        # PE-Q2). rebuild_realized_ledger acts on the first monthly run after a
+        # season's last scheduled regular-season date and records it, so every
+        # later month passes; step 6 below then exports the rebuilt ledger.
+        with _step("6-pre. FA realized ledger (once after each regular season)", log):
+            try:
+                import fa_pipeline
+                log.info("fa realized ledger: %s", fa_pipeline.rebuild_realized_ledger())
+            except Exception:
+                log.exception("fa realized ledger rebuild failed - continuing")
+
         # --- 6. Free Agency module (the standalone /fa/ surface) --------
         # Refresh the constructed class (Spotrac, page-cached) + payroll
         # ledger, then re-export the fa_* sidecars assets/fa.js consumes.

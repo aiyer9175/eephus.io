@@ -2474,12 +2474,15 @@ def build_all() -> tuple:
                              "signing is not stored), so only the league rate prints"),
         "priors_basis": "from fa_fit.behavior_priors (fa_meta.teams)",
         "realized_title": "Contract value delivered (realized, elapsed seasons only)",
-        "realized_method": "level_proration_backcast_dpw_v1",
+        # The method the archive's ledger rows carry (fa_archive.ledgerMethod);
+        # the June 2026 build predates the field and was the v1 method.
+        "realized_method": fa_archive.get("ledgerMethod") or "level_proration_backcast_dpw_v1",
         "realized_sentence": ("This is what the contracts returned, not how well the club chose them. "
                               "The counterfactual, what the same dollars would have bought elsewhere "
                               "that winter, is not observed, so no club is ranked by it."),
-        "realized_coverage": ("covered signings carry the realized block; the current winter carries none "
-                              "because no season has elapsed"),
+        "realized_coverage": ("covered signings carry the realized block; a winter carries none until its "
+                              "first season is played and the ledger is rebuilt after "
+                              "the regular season (once a year)"),
         "realized_not_skill": ("Realized value, not skill: what happened after the money was spent, "
                                "with the counterfactual unobserved."),
         "qo_none": "no live QO stamps",

@@ -137,15 +137,56 @@ def _resolve_signed_via_war_daily(classes: dict[int, dict],
 
 def backfill_historical(first_year: int | None = None,
                         last_year: int | None = None,
-                        force: bool = False) -> dict:
-    """Ingest every historical class, resolve ids, fetch career bWAR for
-    the signed pool, build the ledger, persist. Returns a summary dict."""
+                        force: bool = False,
+                        completed_season: int | None = None,
+                        from_store: bool = False) -> dict:
+    """Ingest every historical class, resolve ids, fetch career WAR for
+    the signed pool, build the ledger, persist. Returns a summary dict.
+
+    ``completed_season`` (owner answer M14-3, the yearly post-season rebuild):
+    the season whose regular season has ended. Its signing winter (class_year
+    = that season) is the last class built, and that season counts as elapsed
+    in every ledger row; without it a season counts only once the calendar
+    year has turned, so the ledger built in October left the season just
+    played out (winter 2026 carried warTd on 0 of 169 rows).
+
+    The realized WAR reads the DISPLAYED series, named "ewar_v2" like every
+    display door (owner answer PE-Q2, 2026-10-03), stamped on every ledger row
+    as war_basis.
+    When the WAR frames do not load, nothing is persisted: the stored ledger
+    is kept rather than overwritten with ledger-less rows.
+
+    ``from_store`` rebuilds the ledger on the signings already stored
+    (storage.load_fa_signings) instead of re-scraping each winter's class
+    page: the yearly rebuild refreshes realized WAR, not the contract lists,
+    which the daily in-window job and a plain --backfill own. A stored row
+    that no longer resolves loses its old ledger block, exactly as a
+    re-scraped row would, so no figure on an older basis survives.
+
+    Every signing is priced on the deferral-adjusted NPV guarantee
+    (fa_market.npv_guarantee_usd) before the ledger is built: ledger_for_signing
+    has prorated npv_guarantee_usd since the 2026-07-24 basis repair, but no
+    caller supplied it, so every deferred deal still prorated its sticker."""
     cfg = get_config()
     first = first_year or int(cfg["backfill"]["first_class_year"])
-    last = last_year or date.today().year       # 2026 = the 2025-26 winter (complete)
+    if completed_season is not None:
+        last = last_year or int(completed_season)
+    else:
+        last = last_year or date.today().year   # 2026 = the 2025-26 winter (complete)
     classes: dict[int, dict] = {}
     for year in range(first, last + 1):
-        classes[year] = fa_class.build_historical_class(year, force=force)
+        if from_store:
+            stored = storage.load_fa_signings(year)
+            classes[year] = {"class_year": year,
+                             "signed": [dict(s) for _, s in sorted(stored.items())]}
+        else:
+            classes[year] = fa_class.build_historical_class(year, force=force)
+    import fa_market
+    for year, cls in classes.items():
+        for s in cls["signed"]:
+            if s.get("guarantee_usd"):
+                s["npv_guarantee_usd"], _ = fa_market.npv_guarantee_usd(
+                    s.get("player_key"), year, int(s["guarantee_usd"]))
 
     # ---- identity + per-season bWAR via the B-Ref war_daily tables ----------
     # The platform's PlayerIndex covers PROSPECTS; FA veterans (back to the
@@ -158,9 +199,16 @@ def backfill_historical(first_year: int | None = None,
     resolved, war_by_key, id_stats = _resolve_signed_via_war_daily(
         classes, first_year=first, last_year=last)
     log.info("fa backfill: war_daily identity — %s", id_stats)
+    if id_stats.get("error"):
+        log.error("fa backfill: %s; nothing persisted, the stored ledger is kept",
+                  id_stats["error"])
+        return {"classes": len(classes), "first_year": first, "last_year": last,
+                "error": id_stats["error"], "persisted": False, "ledger_rows": 0}
 
     # ---- ledger + persistence ----------------------------------------------
-    ledger_rows = fa_class.build_ledger(classes, war_by_key)
+    ledger_rows = fa_class.build_ledger(
+        classes, war_by_key,
+        current_season=(int(completed_season) + 1) if completed_season is not None else None)
     n_sign = 0
     for year, cls in classes.items():
         # stamp ledger blocks back onto their signing rows before persisting
@@ -170,6 +218,9 @@ def backfill_historical(first_year: int | None = None,
             led = led_by_key.get((s.get("player_key"), year))
             if led:
                 s["ledger"] = led
+            else:
+                s.pop("ledger", None)
+            s.pop("npv_guarantee_usd", None)     # pricing input, not a stored field
         n_sign += storage.upsert_fa_signings(year, cls["signed"])
     summary = {
         "classes": len(classes),
@@ -180,9 +231,76 @@ def backfill_historical(first_year: int | None = None,
         "id_resolved": id_stats.get("resolved"), "id_no_match": id_stats.get("no_match"),
         "id_ambiguous": id_stats.get("ambiguous"),
         "ledger_rows": len(ledger_rows),
+        "completed_season": completed_season,
+        "persisted": True,
     }
     log.info("fa backfill summary: %s", summary)
     return summary
+
+
+# ============================================================================
+# M14-3: the realized ledger is rebuilt once after each regular season ends
+# ============================================================================
+# Owner answer M14-3 (2026-09-25): rebuilt at the fWAR epoch AND on a yearly
+# post-season schedule; PE-Q2 (2026-10-03): on the displayed eWAR. run_monthly
+# calls rebuild_realized_ledger() every month; it acts once per season, on the
+# first run after that season's last scheduled regular-season date, and records
+# the rebuild in source_checks so the next month's run passes.
+
+REALIZED_LEDGER_CHECK = "fa_realized_ledger"
+#: The day used when the season calendar is not on disk: later than any
+#: scheduled end the season cache has recorded (2025-09-28, 2026-09-27).
+SEASON_END_FALLBACK = (10, 15)
+
+
+def last_completed_season(today: date | None = None) -> tuple[int | None, str]:
+    """(the latest season whose regular season ended before ``today``, basis).
+    The end date is regularSeasonEndDate from the cached StatsAPI /seasons
+    payload (mgmt_decisions.regular_season_end_on_disk, disk only)."""
+    import mgmt_decisions
+    today = today or date.today()
+    for season in (today.year, today.year - 1):
+        raw = mgmt_decisions.regular_season_end_on_disk(season)
+        try:
+            end = date.fromisoformat(str(raw)[:10]) if raw else None
+        except ValueError:
+            end = None
+        if end is None:
+            end = date(season, *SEASON_END_FALLBACK)
+            basis = f"fallback end {end.isoformat()}, no season calendar on disk"
+        else:
+            basis = f"regular season ended {end.isoformat()}"
+        if today > end:
+            return season, basis
+    return None, "no regular season has ended"
+
+
+def rebuild_realized_ledger(completed_season: int | None = None, *,
+                            today: date | None = None, force: bool = False) -> dict:
+    """Rebuild the FA realized ledger through ``completed_season``.
+
+    With no season given (the run_monthly call) it picks the last completed
+    season and runs only when that season has no recorded rebuild; ``force``
+    or an explicit season always runs. Returns a summary dict, with
+    "ran": False and the reason when it did nothing."""
+    import war_source
+    basis = "explicit season"
+    if completed_season is None:
+        completed_season, basis = last_completed_season(today)
+        if completed_season is None:
+            return {"ran": False, "reason": basis}
+        done = storage.load_source_checks().get((REALIZED_LEDGER_CHECK, str(completed_season)))
+        if done and not force:
+            return {"ran": False, "season": completed_season,
+                    "reason": f"already rebuilt for {completed_season} on {done.get('checked_at')}"}
+    summary = backfill_historical(completed_season=int(completed_season), from_store=True)
+    if summary.get("persisted") and summary.get("ledger_rows"):
+        storage.record_source_check(REALIZED_LEDGER_CHECK, str(completed_season),
+                                    n_rows=summary["ledger_rows"])
+    out = {"ran": True, "season": int(completed_season), "basis": basis,
+           "war_basis": war_source.DISPLAY_PROVIDER, **summary}
+    log.info("fa realized ledger: %s", out)
+    return out
 
 
 def refresh_current_class(class_year: int, force: bool = False) -> dict:
@@ -696,7 +814,12 @@ def main() -> None:
     ap.add_argument("--force", action="store_true", help="bypass page caches")
     ap.add_argument("--quarantine", action="store_true",
                     help="hold option and QO stamps first seen before their window opened")
+    ap.add_argument("--realized-ledger", nargs="?", const=0, type=int, metavar="SEASON",
+                    help="rebuild the realized ledger through SEASON (default: the last "
+                         "completed regular season, once per season unless --force)")
     args = ap.parse_args()
+    if args.realized_ledger is not None:
+        print(rebuild_realized_ledger(args.realized_ledger or None, force=args.force))
     if args.quarantine:
         print(quarantine_premature_winter_events())
     if args.backfill:
@@ -707,7 +830,8 @@ def main() -> None:
               "players:", len(cls["players"]))
     if args.payroll:
         print("payroll rows:", refresh_payroll(force=args.force))
-    if not (args.backfill or args.current or args.payroll or args.quarantine):
+    if not (args.backfill or args.current or args.payroll or args.quarantine
+            or args.realized_ledger is not None):
         ap.print_help()
 
 

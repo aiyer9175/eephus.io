@@ -8486,7 +8486,7 @@
    ],
    "priority": 40,
    "definition": "What a club's free agent contracts have returned so far, valued at each elapsed season's dollars per win, beside what has been paid to date: realized value, not a measure of how well the club chose.",
-   "methodology": "fa_archive.json carries war_to_date, paid_to_date and surplus_to_date per signing (method level_proration_backcast_dpw_v1); ledger_export.py sums them by signing club and winter with the coverage count. The counterfactual, what the same dollars would have bought elsewhere, is not observed, so no club is ranked by it.",
+   "methodology": "Each archived signing carries WAR to date, paid to date and surplus to date. Realized WAR is the displayed eWAR, valued at each elapsed season's dollars per win; paid to date is the deferral-adjusted guarantee prorated over the elapsed years. The ledger is rebuilt once a year after the regular season. The Club Ledger sums the rows by signing club and winter with a coverage count. The counterfactual, what the same dollars would have bought elsewhere, is not observed, so no club is ranked by it.",
    "example": "",
    "formula": "",
    "seeAlso": [
