@@ -200,8 +200,11 @@
     if (n >= 42) return "pal-mid";
     return "pal-lo";
   }
+  // tabindex -1 keeps the glossary hook (hover, aria-describedby) on every
+  // cell but takes it out of the Tab order: the column header carries the
+  // same term once, and a stop per row put 285 extra stops on RP->SP (QREA15).
   function fitCell(v, term) {
-    return '<span class="pal-fit ' + fitClass(v) + '" data-gl="' + esc(term) + '">' + f1(v) + "</span>";
+    return '<span class="pal-fit ' + fitClass(v) + '" data-gl="' + esc(term) + '" tabindex="-1">' + f1(v) + "</span>";
   }
   // Color the conversion-direction chip by direction. RP->SP is the value-additive
   // move (a starter is worth more than a reliever) so it gets the prominent color;
@@ -805,16 +808,26 @@
       + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
       + "</div>";
   }
+  // A sub-view strip: real tabs (role, selected state, the panel they control),
+  // so the tablist is not an empty one around two plain buttons (QREA15).
+  function viewTab(attr, key, label, on) {
+    return '<button type="button" class="mlbstats-tab' + (on ? " active" : "") + '" ' + attr + '="' + key
+      + '" role="tab" aria-selected="' + (on ? "true" : "false") + '" aria-controls="pal-view">'
+      + esc(label) + "</button>";
+  }
+  function viewPanel(label, html) {
+    return '<div id="pal-view" role="tabpanel" aria-label="' + esc(label) + '">' + html + "</div>";
+  }
   function historyToggle() {
-    return '<div class="mlbstats-tabs" role="tablist">'
-      + '<button type="button" class="mlbstats-tab' + (historyView === "table" ? " active" : "") + '" data-histview="table">Conversions</button>'
-      + '<button type="button" class="mlbstats-tab' + (historyView === "mix" ? " active" : "") + '" data-histview="mix">Pitch-mix changes</button>'
+    return '<div class="mlbstats-tabs" role="tablist" aria-label="Conversion History views">'
+      + viewTab("data-histview", "table", "Conversions", historyView === "table")
+      + viewTab("data-histview", "mix", "Pitch-mix changes", historyView === "mix")
       + "</div>";
   }
   function renderHistory() {
     var rows = (DATA && DATA.history) || [];
     if (!rows.length) return empty("No conversion history yet.");
-    if (historyView === "mix") return scorecard() + historyToggle() + renderMix();
+    if (historyView === "mix") return scorecard() + historyToggle() + viewPanel("Pitch-mix changes", renderMix());
     // Sortable, recency-first by default (year desc -> 2026 conversions lead).
     // Click any numeric column header to re-sort.
     rows = sortRows(rows, HISTORY_COLS);
@@ -839,8 +852,8 @@
       + " since 2018. WAR before &rarr; after: realized pitcher WAR"
       + (warSeriesShort() ? " on " + esc(warSeriesShort()) : "") + ", pre-role and post-role seasons. "
       + "Arsenal shift: pitches added (+) or dropped (-).</div>";
-    return scorecard() + historyToggle() + note
-      + '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>";
+    return scorecard() + historyToggle() + viewPanel("Conversions", note
+      + '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>");
   }
   function renderMix() {
     var rows = (DATA && DATA.pitch_mix_changes) || [];
@@ -1498,15 +1511,13 @@
     if (!PF) return pxState("loading", esc("Loading the position-fit model…"));
     var all = PF.rows || [];
     if (!all.length) return empty("No qualified hitters in the position-fit model yet.");
-    var tabs = [["misplaced", "Misplaced hitters"], ["down", "Move down the spectrum"],
-                ["board", "Every qualified hitter"], ["ladder", "The positional ladder"]]
-      .map(function (t) {
-        return '<button type="button" class="mlbstats-tab' + (posfitView === t[0] ? " active" : "")
-          + '" data-pfview="' + t[0] + '" role="tab" aria-selected="' + (posfitView === t[0]) + '">'
-          + esc(t[1]) + "</button>";
-      }).join("");
+    var views = [["misplaced", "Misplaced hitters"], ["down", "Move down the spectrum"],
+                 ["board", "Every qualified hitter"], ["ladder", "The positional ladder"]];
+    var tabs = views.map(function (t) { return viewTab("data-pfview", t[0], t[1], posfitView === t[0]); }).join("");
+    var curLabel = "";
+    views.forEach(function (t) { if (t[0] === posfitView) curLabel = t[1]; });
     var nav = '<div class="mlbstats-tabs" role="tablist" aria-label="Position Fit views">' + tabs + "</div>";
-    if (posfitView === "ladder") return nav + pfLadder();
+    if (posfitView === "ladder") return nav + viewPanel(curLabel, pfLadder());
 
     var rows = posfitView === "misplaced" ? all.filter(function (r) { return r.misplaced; })
       : posfitView === "down" ? all.filter(function (r) { return r.demoted; })
@@ -1525,8 +1536,8 @@
     var note = '<div class="mlbstats-note">' + gloss("Position fit", "position_fit") + ". " + esc(lead)
       + " Runs per 650 PA, " + esc(PF.season || "") + " season. Value identity: " + esc(PF.valueIdentity || "")
       + ". A valuation, not a prediction: who gets moved measured null (see The positional ladder).</div>";
-    if (!rows.length) return nav + note + empty("No hitters clear the flag in this view.");
-    return nav + note + pfTable(pfSortedRows(rows));
+    if (!rows.length) return nav + viewPanel(curLabel, note + empty("No hitters clear the flag in this view."));
+    return nav + viewPanel(curLabel, note + pfTable(pfSortedRows(rows)));
   }
 
   function loadPosFit() {

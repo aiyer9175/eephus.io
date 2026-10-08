@@ -2717,7 +2717,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 /* ---- mlbx end ---- */
 /* ---- Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
 .pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }
-.pal-hi { color: var(--accent-cyan); }
+/* --text-cyan is the light-theme READING ink (5.48:1 on --bg-secondary; the
+   accent read 4.35); dark aliases it to --accent-cyan, so dark is unchanged. */
+.pal-hi { color: var(--text-cyan); }
 .pal-good { color: var(--accent-green); }
 .pal-mid { color: var(--text-primary); }
 .pal-lo { color: var(--text-tertiary); }
@@ -2761,8 +2763,13 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .pal-pending { color: var(--text-tertiary); }
 /* direction-colored conversion chips: RP->SP is the value-additive move (prominent
    cyan), SP->RP is the muted salvage direction (orange). */
-.pal-dir--rp2sp { color: var(--accent-cyan); border-color: var(--accent-cyan); }
-.pal-dir--sp2rp { color: var(--accent-orange); border-color: var(--accent-orange); opacity: .85; }
+.pal-dir--rp2sp { color: var(--text-cyan); border-color: var(--accent-cyan); }
+/* No opacity: at .85 the orange read 3.88:1 (light); full strength reads AA. */
+.pal-dir--sp2rp { color: var(--accent-orange); border-color: var(--accent-orange); }
+/* Only a header that sorts says so with the cursor (QREA15). */
+.pal-app .mlbstats-table th:not([data-col]) { cursor: default; }
+/* The Org column reads left like the name beside it. */
+.pal-app .mlbstats-table th.mlbstats-col-org, .pal-app .mlbstats-table td.pal-org-cell { text-align: left; }
 /* evidence chips on the Position Fit accounting cards: what the model was
    measured to do (pass) vs the question it measured as a null. */
 .pal-dir--pass { color: var(--accent-green); border-color: var(--accent-green); }
