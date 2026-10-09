@@ -896,6 +896,39 @@ def _build_class(year: int,
 _OVERPERF_PICK_BUCKETS = [(1, 5), (6, 10), (11, 20), (21, 40),
                           (41, 75), (76, 150), (151, 10 ** 9)]
 
+# DRAFT_CURRENT_FV_EFV (owner ask 5, 2026-09-30; owner answer Q-E3 "switch to eFV after
+# step Z, built behind a flag"; Part 8 lane links_efv_display B-DD6). Off (today), a
+# drafted pick's current_fv is the board's consensus FV now (fv_close off
+# timeseries.json / debuts.json, current_fv_basis "board_fv") and the output is
+# byte-identical to the export before the flag existed. On, current_fv is the eFV grade
+# (xfv.json by_player xfv_grade, graded actives and debuted players only; the eFV locked
+# at debut for a debuted player) with current_fv_basis "efv", so expected_fv_for_pick and
+# overperf_fv recompute on the eFV basis and the Overperformers list and the
+# high-school and college "vs Slot" figures move. Career WAR still comes from the board
+# payloads. It flips in its own commit (Q9_15).
+DRAFT_CURRENT_FV_EFV = False
+_EFV_CURRENT_KINDS = ("active", "debuted")
+
+
+def _load_efv_current(data_dir: Path) -> dict[str, float]:
+    """player_key -> eFV grade (xfv_grade) for graded actives and debuted players, read
+    from the previous cycle's data/xfv.json (as the board payloads are). Empty, and loud,
+    when the file cannot be read: every pick then publishes current_fv=null."""
+    try:
+        d = json.loads((data_dir / "xfv.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.error("draft overperformance: could not read xfv.json - with "
+                  "DRAFT_CURRENT_FV_EFV on every pick publishes current_fv=null")
+        return {}
+    out: dict[str, float] = {}
+    for k, e in ((d or {}).get("by_player") or {}).items():
+        if not isinstance(e, dict) or e.get("kind") not in _EFV_CURRENT_KINDS:
+            continue
+        g = e.get("xfv_grade")
+        if isinstance(g, (int, float)) and not isinstance(g, bool):
+            out[k] = float(g)
+    return out
+
 
 def _record_overperf_anomaly(message: str) -> None:
     """Raise an unusable overperformance basis into the ingest-health RED ledger.
@@ -912,7 +945,7 @@ def _record_overperf_anomaly(message: str) -> None:
         log.debug("could not record the draft-overperformance anomaly", exc_info=True)
 
 
-def _attach_overperformance(classes: list[dict]) -> None:
+def _attach_overperformance(classes: list[dict], data_dir: Path | None = None) -> None:
     """Bake draft-overperformance fields onto each COMPLETED class's drafted
     prospects, in place. For every drafted pick we resolve the player's CURRENT
     value (latest prospect FV via promoted/milb key, plus career WAR where they
@@ -958,10 +991,13 @@ def _attach_overperformance(classes: list[dict]) -> None:
     # Anchor to the module dir - the pipeline runs under varying cwds
     # (the overseas_export lesson). Reading the PREVIOUS cycle's export
     # here is intentional (the draft phase runs before the re-export).
-    _data_dir = Path(__file__).resolve().parent / "data"
+    _data_dir = data_dir or (Path(__file__).resolve().parent / "data")
     _n_read = _ingest(_data_dir / "timeseries.json")
     _n_read += _ingest(_data_dir / "debuts.json")
-    _n_graded = sum(1 for v in val.values() if v.get("fv") is not None)
+    _efv_cur = _load_efv_current(_data_dir) if DRAFT_CURRENT_FV_EFV else None
+    _basis = "efv" if DRAFT_CURRENT_FV_EFV else "board_fv"
+    _n_graded = (len(_efv_cur) if DRAFT_CURRENT_FV_EFV
+                 else sum(1 for v in val.values() if v.get("fv") is not None))
     log.info("draft overperformance: board basis = %d rows read, %d distinct "
              "player_keys, %d carrying a current FV", _n_read, len(val), _n_graded)
     if not _n_graded:
@@ -1013,11 +1049,15 @@ def _attach_overperformance(classes: list[dict]) -> None:
                     cand = val[kk]
                     break
             cur_fv = (cand or {}).get("fv")
+            if DRAFT_CURRENT_FV_EFV:
+                # Same key order as the board join; the grade is the eFV.
+                cur_fv = next((_efv_cur[kk] for kk in (p.get("promoted_key"), p.get("milb_key"),
+                                                       p.get("player_key")) if kk and kk in _efv_cur), None)
             p["current_fv"] = cur_fv
             # Explicit sentinel rather than a magic number: a reader (and the
             # frontend) can tell a resolved board grade from "we never found
             # this player" without comparing current_fv to consensus_fv.
-            p["current_fv_basis"] = "board_fv" if cur_fv is not None else "unresolved"
+            p["current_fv_basis"] = _basis if cur_fv is not None else "unresolved"
             p["current_fv_resolved"] = cur_fv is not None
             p["career_war"] = (cand or {}).get("war")
             if cur_fv is not None:
@@ -1027,7 +1067,7 @@ def _attach_overperformance(classes: list[dict]) -> None:
             "n_drafted":    c_drafted,
             "n_resolved":   c_resolved,
             "n_unresolved": c_drafted - c_resolved,
-            "basis":        "board_fv",
+            "basis":        _basis,
         }
         n_drafted_all += c_drafted
         n_resolved_all += c_resolved
