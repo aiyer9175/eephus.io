@@ -286,7 +286,9 @@ WAVE2_DEV: dict[str, tuple[str, ...]] = {
 #: module as ARMS (this file's candidate shape, column source "module") and reads
 #: them through that module's development read; wave 1 above is unchanged.
 #: efv_w2_nri (EFV4_NRI_ASOF, owner EW2-10 2026-10-08): timing-head columns.
-WAVE2_ARM_MODULES: tuple[str, ...] = ("efv_w2_milb", "efv_w2_il_backfill", "efv_w2_nri")
+#: efv_w2_pbp_bb (EFV4_PBP_BATTED_BALL_BUNDLE): batted-ball skill-head columns.
+WAVE2_ARM_MODULES: tuple[str, ...] = ("efv_w2_milb", "efv_w2_il_backfill", "efv_w2_nri",
+                                      "efv_w2_pbp_bb")
 
 
 def wave2_candidates() -> tuple[dict, ...]:
