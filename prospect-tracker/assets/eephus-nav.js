@@ -26,6 +26,31 @@
 //      dropdown (role=menu) the arrow keys, Home and End move between items,
 //      ArrowDown on a group's summary opening it at its first item.
 // Idempotent and dependency-free; safe to load on pages with no group nav.
+// The pixel icon helper (PX_SYSTEM_SWEEP, plan 5.7.1): window.EephusIco(key,
+// size) returns the same svg.ico markup build_site._ico() emits, so a
+// module's runtime-built control draws from the shared sprite instead of a
+// unicode glyph. The sprite URL (with its content stamp) is read off the first
+// stamped <use> on the page (every page's nav carries one); sizes are 12, 16,
+// 24 or 32 and nothing else. Defined before the nav guard so a second load of
+// this file still leaves it in place. Decoration only: aria-hidden.
+(function () {
+  "use strict";
+  if (window.EephusIco) return;
+  var base = null;
+  function sprite() {
+    if (base) return base;
+    var u = document.querySelector('use[href*="/assets/eephus-icons.svg"]');
+    var h = u ? String(u.getAttribute("href") || "") : "";
+    base = h ? h.split("#")[0] : "/assets/eephus-icons.svg";
+    return base;
+  }
+  window.EephusIco = function (key, size) {
+    if ([12, 16, 24, 32].indexOf(size) < 0) return "";
+    var core = size === 12 || size === 24;
+    return `<svg class="ico" width="${size}" height="${size}" viewBox="${core ? "2 2 12 12" : "0 0 16 16"}" ` +
+      `aria-hidden="true" focusable="false"><use href="${sprite()}#i-${key}"${core ? ' width="16" height="16"' : ""}/></svg>`;
+  };
+})();
 (function () {
   "use strict";
   if (window.__eephusNavGroup) return;
@@ -168,7 +193,7 @@
     b.setAttribute("aria-controls", links.id);
     b.setAttribute("aria-expanded", "false");
     b.setAttribute("aria-label", "Open navigation menu");
-    b.innerHTML = '<span aria-hidden="true">☰</span>';
+    b.innerHTML = '<span aria-hidden="true">' + window.EephusIco("menu", 16) + "</span>";
     b.addEventListener("click", function () {
       var open = !h.hasAttribute("data-nav-open");
       setNavOpen(h, open);

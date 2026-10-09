@@ -56,7 +56,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=b722281b">
+  <link rel="stylesheet" href="/assets/site.css?v=68e3574c">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -2712,7 +2712,7 @@
         inset -2px 0 0 0 var(--edge-right),
         inset  2px 0 0 0 var(--edge-left),
         inset 0 -2px 0 0 var(--edge-bottom);
-      animation: fvIndicatorPulse 2.4s ease-in-out infinite;
+      animation: fvIndicatorPulse 2.4s step-end infinite;
     }
     /* Per-indicator edge colors - wrapped in color-mix so the
        animated --edge-pulse drives the visible alpha. */
@@ -2825,7 +2825,7 @@
     }
     .fv-badge.is-breakout {
       --edge-bottom: color-mix(in srgb, var(--breakout-edge) var(--edge-pulse), transparent);
-      animation: fvIndicatorPulse 2.4s ease-in-out infinite, fvBreakoutColor 2s ease-in-out infinite;
+      animation: fvIndicatorPulse 2.4s step-end infinite, fvBreakoutColor 2s step-end infinite;
     }
 
     /* Row tag pills - shared shape for the flag counter, health,
@@ -4386,15 +4386,13 @@
       width: 8px; height: 8px;
       border-radius: var(--radius-sm);
       background: var(--neon-green);
-      box-shadow: 0 0 0 0 rgba(31, 122, 58, 0.50);
-      animation: grb-pulse 2s infinite;
+      animation: grb-pulse 2s step-end infinite;
       flex-shrink: 0;
     }
-    @keyframes grb-pulse {
-      0%   { box-shadow: 0 0 0 0   rgba(31, 122, 58, 0.50); }
-      70%  { box-shadow: 0 0 0 10px rgba(31, 122, 58, 0); }
-      100% { box-shadow: 0 0 0 0   rgba(31, 122, 58, 0); }
-    }
+    /* A lamp blink (PX_SYSTEM_SWEEP): the dot is lit, then dim, in two whole
+       steps, the WIRE blip's idiom; the old soft ring that grew by sub-pixels
+       retired. */
+    @keyframes grb-pulse { 50% { opacity: 0.25; } }
     /* The pulse runs under Reduce Motion too (owner, 2026-10-01). */
     .debut-recent-banner .grb-text strong {
       color: var(--neon-green);
@@ -4403,9 +4401,9 @@
 
     /* === Empty / loading / error states =========================== */
     /* v31.9 - Three variants stamped via modifier classes:
-       .state-message (empty) → grey flag, default copy color
-       .state-message.is-loading → pulsing animation, no glyph
-       .state-message.is-error  → red exclamation glyph + danger color */
+       .state-message (empty) → the on-deck scene, default copy color
+       .state-message.is-error  → the E scoreboard (PX_SYSTEM_SWEEP)
+       Loading draws the lamp loader through pxLoadingHTML(). */
     .state-message {
       text-align: center;
       padding: 4rem 1rem;
@@ -4414,41 +4412,27 @@
       font-family: var(--font-sans);
       line-height: 1.5;
     }
+    /* PX_SYSTEM_SWEEP: the empty glyph (a unicode flag) and the error "!" box
+       became the state component's ballpark scenes (assets/eephus-state.js,
+       plan 5.7 PX-11): the on-deck circle for empty, the scoreboard reading E
+       for an error, 32 x 16 lamps at 2x, one ink each through a mask so the
+       drawing stays on the theme tokens. Static; the message keeps the meaning. */
     .state-message::before {
-      content: "⚐";
+      content: "";
       display: block;
-      font-size: 28px;
-      color: var(--text-tertiary);
-      opacity: 0.7;
-      margin-bottom: 8px;
-      line-height: 1;
-    }
-    .state-message.is-loading {
-      animation: state-pulse 1.6s ease-in-out infinite;
-    }
-    /* Loading swaps the empty-state glyph for a branded pixel spinner: a sharp
-       (radius forced to 0 site-wide) square that spins with two iridescent holo
-       edges - the brand lilac leading, cyan trailing. Reads as a Y2K/digital
-       loader instead of a generic ring. */
-    .state-message.is-loading::before {
-      content: ""; width: 32px; height: 32px; box-sizing: border-box;
-      border: 4px solid var(--border);
-      border-top-color: var(--accent-lilac); border-right-color: var(--neon-cyan);
-      margin: 0 auto 12px; opacity: 1;
-      animation: prospx-spin 0.8s steps(8) infinite;
-    }
-    @keyframes prospx-spin { to { transform: rotate(360deg); } }
-    /* Both run under Reduce Motion too (owner, 2026-10-01). */
-    .state-message.is-error::before {
-      content: "!";
-      font-weight: 700;
-      color: var(--down);
-      opacity: 1;
-      border: 2px solid var(--down);
-      border-radius: var(--radius-sm);
-      width: 32px; height: 32px;
-      display: flex; align-items: center; justify-content: center;
+      width: 64px; height: 32px;
       margin: 0 auto 8px;
+      background: var(--text-dim);
+      -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2016'%20shape-rendering='crispEdges'%3E%3Cpath%20d='M10%203h12v1h-12zM6%204h4v1h-4zM22%204h4v1h-4zM4%205h2v1h-2zM26%205h2v1h-2zM3%206h1v2h-1zM28%206h1v2h-1zM4%208h2v1h-2zM26%208h2v1h-2zM6%209h4v1h-4zM22%209h4v1h-4zM10%2010h12v1h-12zM4%2013h2v1h-2zM4%2014h16v1h-16zM4%2015h2v1h-2zM20%2013h9v1h-9zM20%2014h10v1h-10zM20%2015h9v1h-9z'/%3E%3C/svg%3E") 0 0/64px 32px no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2016'%20shape-rendering='crispEdges'%3E%3Cpath%20d='M10%203h12v1h-12zM6%204h4v1h-4zM22%204h4v1h-4zM4%205h2v1h-2zM26%205h2v1h-2zM3%206h1v2h-1zM28%206h1v2h-1zM4%208h2v1h-2zM26%208h2v1h-2zM6%209h4v1h-4zM22%209h4v1h-4zM10%2010h12v1h-12zM4%2013h2v1h-2zM4%2014h16v1h-16zM4%2015h2v1h-2zM20%2013h9v1h-9zM20%2014h10v1h-10zM20%2015h9v1h-9z'/%3E%3C/svg%3E") 0 0/64px 32px no-repeat;
+    }
+    /* The in-app loaders draw the lamp loader through pxLoadingHTML() (the
+       state component, PX-11); the steps(8) square and its fade retired
+       (PX_SYSTEM_SWEEP, the R01 half the PX_C pass left here). */
+    .state-message.is-error::before {
+      background: var(--text-secondary);
+      -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2016'%20shape-rendering='crispEdges'%3E%3Cpath%20d='M2%201h28v1h-28zM2%202h1v9h-1zM29%202h1v9h-1zM2%2011h28v1h-28zM8%2012h2v3h-2zM22%2012h2v3h-2zM0%2015h32v1h-32zM13%203h5v1h-5zM13%204h1v2h-1zM13%206h4v1h-4zM13%207h1v2h-1zM13%209h5v1h-5z'/%3E%3C/svg%3E") 0 0/64px 32px no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2016'%20shape-rendering='crispEdges'%3E%3Cpath%20d='M2%201h28v1h-28zM2%202h1v9h-1zM29%202h1v9h-1zM2%2011h28v1h-28zM8%2012h2v3h-2zM22%2012h2v3h-2zM0%2015h32v1h-32zM13%203h5v1h-5zM13%204h1v2h-1zM13%206h4v1h-4zM13%207h1v2h-1zM13%209h5v1h-5z'/%3E%3C/svg%3E") 0 0/64px 32px no-repeat;
     }
     .state-message code { font-size: 12px; }
     /* The player-miss card back (final-pass plan 5.7, PX-20). An unknown
@@ -4486,10 +4470,6 @@
       color: var(--text-secondary);
     }
     .state-error { color: var(--down); }
-    @keyframes state-pulse {
-      0%, 100% { opacity: 0.55; }
-      50%      { opacity: 1; }
-    }
     .footnote {
       font-size: 11px;
       color: var(--text-tertiary);
@@ -4694,7 +4674,7 @@
       background-color: transparent !important;
       background-repeat: repeat !important;
       background-size: 100% 100%, 200% 200% !important;
-      animation: foil-shift 8s linear infinite;
+      animation: foil-shift 8s steps(32, end) infinite;
     }
     /* Chrome (FV 55) - silver-white shimmer, faster cadence than foil. */
     .headshot.fv-headshot-ring.card-rarity-chrome {
@@ -4711,8 +4691,8 @@
       background-color: transparent !important;
       background-repeat: repeat !important;
       background-size: 100% 100%, 300% 300% !important;
-      animation: chrome-shimmer 4.2s linear infinite,
-                 chrome-headshot-pulse 2s ease-in-out infinite;
+      animation: chrome-shimmer 4.2s steps(16, end) infinite,
+                 chrome-headshot-pulse 2s step-end infinite;
     }
     /* Holo (FV 60) - full rainbow shift. Higher tier than chrome per
        v18.3 user re-tiering. */
@@ -4725,8 +4705,8 @@
       background-color: transparent !important;
       background-repeat: repeat !important;
       background-size: 100% 100%, 300% 300% !important;
-      animation: holo-shift 5s linear infinite,
-                 holo-headshot-pulse 2s ease-in-out infinite;
+      animation: holo-shift 5s steps(20, end) infinite,
+                 holo-headshot-pulse 2s step-end infinite;
     }
     /* Legendary (FV 70+) - rainbow + chrome accent, FASTER animation,
        plus the breakout-style pulsing outline glow (matches
@@ -4744,8 +4724,8 @@
       background-color: transparent !important;
       background-repeat: repeat !important;
       background-size: 100% 100%, 400% 400% !important;
-      animation: holo-shift 3s linear infinite,
-                 legendary-headshot-pulse 2s ease-in-out infinite;
+      animation: holo-shift 3s steps(12, end) infinite,
+                 legendary-headshot-pulse 2s step-end infinite;
     }
     @keyframes legendary-headshot-pulse {
       0%, 100% { outline: 1px solid rgba(127, 255, 212, 0.60); outline-offset: 1px; }
@@ -4772,13 +4752,13 @@
        isn't clipped by the wrapper's default overflow: hidden. */
     .prospect-headshot-wrap.fv-headshot-ring.card-rarity-holo {
       overflow: visible !important;
-      animation: holo-shift 5s linear infinite,
-                 holo-headshot-pulse 2s ease-in-out infinite;
+      animation: holo-shift 5s steps(20, end) infinite,
+                 holo-headshot-pulse 2s step-end infinite;
     }
     .prospect-headshot-wrap.fv-headshot-ring.card-rarity-chrome {
       overflow: visible !important;
-      animation: chrome-shimmer 4.2s linear infinite,
-                 chrome-headshot-pulse 2s ease-in-out infinite;
+      animation: chrome-shimmer 4.2s steps(16, end) infinite,
+                 chrome-headshot-pulse 2s step-end infinite;
     }
     /* FV-ringed draft/overseas wrappers - specificity boost so the
        team-color top wins over .fv-headshot-ring.fv-tier-NN, same
@@ -4928,15 +4908,11 @@
     .freshness-stamp .fresh-dot {
       width: 6px; height: 6px; border-radius: var(--radius-sm);
       background: var(--up);
-      box-shadow: 0 0 0 0 var(--up);
-      animation: freshPulse 2.4s ease-out infinite;
+      animation: freshPulse 2.4s step-end infinite;
     }
     .freshness-stamp.is-grades .fresh-dot { background: var(--text-tertiary); animation: none; }
-    @keyframes freshPulse {
-      0%   { box-shadow: 0 0 0 0 var(--up); opacity: 1; }
-      70%  { box-shadow: 0 0 0 5px transparent; opacity: 0.7; }
-      100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
-    }
+    /* A lamp blink, as grb-pulse (PX_SYSTEM_SWEEP). */
+    @keyframes freshPulse { 50% { opacity: 0.25; } }
     /* freshPulse runs under Reduce Motion too (owner, 2026-10-01). */
 
     /* === Time Machine ============================================= */
@@ -5594,7 +5570,7 @@
       transition: background 0.12s, color 0.12s, border-color 0.12s;
     }
     .gfx-list-btn:hover { background: var(--neon-cyan); color: var(--bg-primary); }
-    .gfx-list-btn .gfx-list-btn-icon { font-size: 13px; line-height: 1; }
+    .gfx-list-btn .gfx-list-btn-icon { display: inline-flex; line-height: 0; }
     /* v40 - Detail-page (prospect / farm) GFX button. Same outlined-cyan
        treatment as the list button but sized to sit inline in the header
        action row (no margin-left:auto - it's placed deliberately). */
@@ -5608,7 +5584,7 @@
       transition: background 0.12s, color 0.12s, border-color 0.12s;
     }
     .gfx-card-btn:hover, .gfx-compare-btn:hover { background: var(--neon-cyan); color: var(--bg-primary); }
-    .gfx-card-btn .gfx-card-btn-icon { font-size: 12px; line-height: 1; }
+    .gfx-card-btn .gfx-card-btn-icon, .gfx-compare-btn .ico { display: inline-flex; line-height: 0; }
     /* In card mode, reveal the .card-only elements (they ship with
        inline display:none for back-compat) and hide the now-redundant
        hero pieces (rank cell, logo cell, org cell, grade cell) since
@@ -7140,7 +7116,7 @@
           rgba(255,255,255,0.85) 50%,
           rgba(160,170,200,0.45) 65%,
           rgba(220,220,235,0.85) 100%) border-box;
-      animation: chrome-shimmer 4.2s linear infinite;
+      animation: chrome-shimmer 4.2s steps(16, end) infinite;
       background-size: 100% 100%, 300% 300%;
     }
     @keyframes chrome-shimmer {
@@ -7153,7 +7129,7 @@
         linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
         var(--refractor-holo) border-box;
       background-size: 100% 100%, 300% 300%;
-      animation: holo-shift 6s linear infinite;
+      animation: holo-shift 6s steps(24, end) infinite;
     }
     @keyframes holo-shift {
       from { background-position: 0% 0%, 0% 0%; }
@@ -7172,7 +7148,7 @@
           rgba(240,240,250,0.7) 50%,
           rgba(200,200,210,0.55) 100%) border-box;
       background-size: 100% 100%, 200% 200%;
-      animation: foil-shift 8s linear infinite;
+      animation: foil-shift 8s steps(32, end) infinite;
     }
     @keyframes foil-shift {
       from { background-position: 0% 0%, 0% 0%; }
@@ -7200,7 +7176,7 @@
           var(--refractor-violet) 42%, var(--refractor-pink) 56%, var(--refractor-gold) 70%,
           var(--refractor-cyan) 84%, var(--refractor-violet) 100%) border-box;
       background-size: 100% 100%, 400% 400%;
-      animation: legendary-shift 3s linear infinite;
+      animation: legendary-shift 3s steps(12, end) infinite;
       box-shadow: 0 0 8px rgba(180,85,255,0.35);
     }
     @keyframes legendary-shift {
@@ -8182,7 +8158,7 @@
       scroll-margin-top: 80px;
     }
     .glossary-card.is-highlighted {
-      animation: glossary-highlight 1.8s ease-out;
+      animation: glossary-highlight 1.8s steps(4, end);
     }
     @keyframes glossary-highlight {
       0%   { background: rgba(143, 205, 245, 0.25); }
@@ -8620,7 +8596,8 @@
     .active-filter-chip:hover .afc-x { opacity: 1; }
 
     /* Watchlist star - inline button on prospect rows + the detail-page
-       header. Filled gold when starred, hollow gray otherwise. Click +
+       header. The pixel star (i-watchlist) when starred, the empty one
+       (i-watch-off) otherwise. Click +
        'c'-style hotkey both route through watchlistToggle. */
     .watch-btn {
       display: inline-flex; align-items: center; justify-content: center;
@@ -8634,11 +8611,13 @@
       cursor: pointer;
       transition: color 0.12s, border-color 0.12s, background 0.12s;
     }
-    .watch-btn:hover { color: var(--card-gold); border-color: var(--card-gold); }
+    /* Starred reads in the icon accent, not gold (PX_SYSTEM_SWEEP: gold on dark
+       means elite FV only; the pixel set never draws in gold). */
+    .watch-btn:hover { color: var(--accent-lilac); border-color: var(--accent-lilac); }
     .watch-btn.is-in {
-      color: var(--card-gold);
-      border-color: var(--card-gold);
-      background: rgba(201, 162, 39, 0.10);
+      color: var(--accent-lilac);
+      border-color: var(--accent-lilac);
+      background: color-mix(in srgb, var(--accent-lilac) 10%, transparent);
     }
     /* Notes textarea on prospect detail. Stays narrow so it doesn't
        dominate the body; localStorage-keyed by player. */
@@ -8793,12 +8772,6 @@
       letter-spacing: 0.05em; color: var(--text-primary);
     }
     .gfx-busy[hidden] { display: none; }
-    .gfx-busy-spin {
-      width: 22px; height: 22px; flex: none;
-      border: 3px solid var(--border); border-top-color: var(--neon-cyan);
-      border-radius: var(--radius-sm); animation: gfx-spin 0.7s linear infinite;
-    }
-    @keyframes gfx-spin { to { transform: rotate(360deg); } }
     .gfx-preview {
       overflow: auto; padding: 16px; background: var(--bg-tertiary);
       display: flex; justify-content: center; align-items: flex-start;
@@ -8866,7 +8839,6 @@
         box-shadow: 0 -6px 20px rgba(0,0,0,0.18);
       }
       .gfx-modal-foot .gfx-btn { flex: 1; min-height: 48px; font-size: 14px; justify-content: center; display: inline-flex; align-items: center; }
-      .gfx-busy-spin { width: 28px; height: 28px; }
       .gfx-busy { font-size: 15px; }
     }
 
@@ -9172,44 +9144,44 @@
        static copies: prospx + the two CollegeSavant pages; test_collegesavant_nav_in_sync
        guards them). The MLB modules sit in an "MLB Modules" dropdown. -->
   <nav class="eephus-links">
-    <a href="/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-home" width="16" height="16"/></svg></span>Home</a>
-    <a href="/prospx/" class="is-active"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-prospx" width="16" height="16"/></svg></span>PROSPX</a>
-    <a href="/collegesavant/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-collegesavant" width="16" height="16"/></svg></span>CollegeSavant</a>
+    <a href="/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-home" width="16" height="16"/></svg></span>Home</a>
+    <a href="/prospx/" class="is-active"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-prospx" width="16" height="16"/></svg></span>PROSPX</a>
+    <a href="/collegesavant/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-collegesavant" width="16" height="16"/></svg></span>CollegeSavant</a>
     <details class="eephus-nav-group" data-nav-group>
       <summary aria-haspopup="true">MLB Modules<span class="nav-caret" aria-hidden="true">▾</span></summary>
       <div class="eephus-nav-menu" role="menu">
-        <a href="/franchise/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-franchise" width="16" height="16"/></svg>Franchises</a>
-        <a href="/scores/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-scores" width="16" height="16"/></svg>Scores / Standings</a>
-        <a href="/fa/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-fa" width="16" height="16"/></svg>Free Agency</a>
-        <a href="/projections/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-projections" width="16" height="16"/></svg>Projections</a>
-        <a href="/mlbstats/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-mlbstats" width="16" height="16"/></svg>MLB Stats</a>
-        <a href="/pal/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-pal" width="16" height="16"/></svg>Alchemy Lab</a>
-        <a href="/trademachine/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-trademachine" width="16" height="16"/></svg>Trade Machine</a><a href="/arbitration/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-arbitration" width="16" height="16"/></svg>Arbitration</a><a href="/ledger/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-ledger" width="16" height="16"/></svg>Club Ledger</a><a href="/management/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-management" width="16" height="16"/></svg>In-Game Management</a><a href="/awards/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-hof" width="16" height="16"/></svg>Awards / HoF</a>
+        <a href="/franchise/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-franchise" width="16" height="16"/></svg>Franchises</a>
+        <a href="/scores/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-scores" width="16" height="16"/></svg>Scores / Standings</a>
+        <a href="/fa/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-fa" width="16" height="16"/></svg>Free Agency</a>
+        <a href="/projections/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-projections" width="16" height="16"/></svg>Projections</a>
+        <a href="/mlbstats/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-mlbstats" width="16" height="16"/></svg>MLB Stats</a>
+        <a href="/pal/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-pal" width="16" height="16"/></svg>Alchemy Lab</a>
+        <a href="/trademachine/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-trademachine" width="16" height="16"/></svg>Trade Machine</a><a href="/arbitration/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-arbitration" width="16" height="16"/></svg>Arbitration</a><a href="/ledger/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-ledger" width="16" height="16"/></svg>Club Ledger</a><a href="/management/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-management" width="16" height="16"/></svg>In-Game Management</a><a href="/awards/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-hof" width="16" height="16"/></svg>Awards / HoF</a>
       </div>
     </details>
     <details class="eephus-nav-group" data-nav-group>
       <summary aria-haspopup="true">Diamond<span class="nav-caret" aria-hidden="true">▾</span></summary>
       <div class="eephus-nav-menu" role="menu">
-        <a href="/fantasy/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-fantasy" width="16" height="16"/></svg>Fantasy</a>
-        <a href="/betting/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-betting" width="16" height="16"/></svg>Sports Betting</a>
-        <a href="/diamond/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-diamond" width="16" height="16"/></svg>Diamond Pass</a>
+        <a href="/fantasy/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-fantasy" width="16" height="16"/></svg>Fantasy</a>
+        <a href="/betting/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-betting" width="16" height="16"/></svg>Sports Betting</a>
+        <a href="/diamond/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-diamond" width="16" height="16"/></svg>Diamond Pass</a>
       </div>
     </details>
-    <a href="/articles/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-articles" width="16" height="16"/></svg></span>Articles</a>
-    <a href="/forums/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-forums" width="16" height="16"/></svg></span>Forums</a>
-    <a href="/glossary/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-library" width="16" height="16"/></svg></span>Library</a>
-    <a href="/team/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-team" width="16" height="16"/></svg></span>Masthead</a>
+    <a href="/articles/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-articles" width="16" height="16"/></svg></span>Articles</a>
+    <a href="/forums/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-forums" width="16" height="16"/></svg></span>Forums</a>
+    <a href="/glossary/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-library" width="16" height="16"/></svg></span>Library</a>
+    <a href="/team/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-team" width="16" height="16"/></svg></span>Masthead</a>
   </nav>
   <div class="eephus-nav-controls">
     <button class="eephus-nav-ctrl" id="global-watchlist" type="button"
             title="Open your watchlist" aria-label="Watchlist">
-      <svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-watchlist" width="16" height="16"/></svg>
+      <svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-watchlist" width="16" height="16"/></svg>
       <span class="eephus-nav-ctrl-label">Watchlist</span>
       <span class="global-ctrl-count" id="global-watchlist-count" hidden>0</span>
     </button>
     <button class="eephus-nav-ctrl" id="global-theme-toggle" type="button"
             aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
-      <span class="theme-icon" aria-hidden="true"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false" data-theme-glyph="light"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-theme-dark" width="16" height="16"/></svg><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false" data-theme-glyph="dark" hidden><use href="/assets/eephus-icons.svg?v=d87bef7d#i-theme-light" width="16" height="16"/></svg></span>
+      <span class="theme-icon" aria-hidden="true"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false" data-theme-glyph="light"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-theme-dark" width="16" height="16"/></svg><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false" data-theme-glyph="dark" hidden><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-theme-light" width="16" height="16"/></svg></span>
       <span class="eephus-nav-ctrl-label theme-label">Dark Mode</span>
     </button>
   </div>
@@ -9237,7 +9209,7 @@
     <div class="global-controls" id="global-controls">
       <button class="global-ctrl global-compare is-empty-hidden" id="global-compare" type="button"
               title="Open compare panel" aria-label="Compare">
-        <span aria-hidden="true">⇆</span>
+        <span aria-hidden="true"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-compare" width="16" height="16"/></svg></span>
         <span class="global-ctrl-label">Compare</span>
         <span class="global-ctrl-count" id="global-compare-count">0</span>
       </button>
@@ -9264,7 +9236,7 @@
   <div class="gfx-modal">
     <div class="gfx-modal-head">
       <span class="gfx-modal-title">Generate graphic</span>
-      <button class="gfx-btn gfx-close-x" id="gfx-close" type="button" aria-label="Close">✕</button>
+      <button class="gfx-btn gfx-close-x" id="gfx-close" type="button" aria-label="Close"><svg class="ico" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-close"/></svg></button>
     </div>
     <div class="gfx-controls">
       <label class="gfx-ctrl">Format
@@ -9342,7 +9314,7 @@
       <button class="gfx-btn" id="gfx-copy" type="button" title="Copy image to clipboard">Copy</button>
       <button class="gfx-btn is-animate" id="gfx-animate" type="button" hidden title="Export a short looping clip where the rarity foil shimmers">✦&nbsp;Animate</button>
     </div>
-    <div class="gfx-busy" id="gfx-busy" hidden><span class="gfx-busy-spin" aria-hidden="true"></span>Rendering…</div>
+    <div class="gfx-busy" id="gfx-busy" hidden><span class="px-lob" aria-hidden="true"><i></i><svg width="92" height="36" viewBox="0 0 46 18" shape-rendering="crispEdges"><rect class="f" x="0" y="15" width="2" height="2" style="animation-delay:-1.6s"/><rect class="f" x="4" y="11" width="2" height="2" style="animation-delay:-1.5s"/><rect class="f" x="7" y="7" width="2" height="2" style="animation-delay:-1.4s"/><rect class="f" x="11" y="5" width="2" height="2" style="animation-delay:-1.3s"/><rect class="f" x="15" y="3" width="2" height="2" style="animation-delay:-1.2s"/><rect class="f" x="18" y="1" width="2" height="2" style="animation-delay:-1.1s"/><rect class="f r" x="22" y="1" width="2" height="2" style="animation-delay:-1.0s"/><rect class="f" x="26" y="1" width="2" height="2" style="animation-delay:-0.9s"/><rect class="f" x="29" y="3" width="2" height="2" style="animation-delay:-0.8s"/><rect class="f" x="33" y="5" width="2" height="2" style="animation-delay:-0.7s"/><rect class="f" x="37" y="7" width="2" height="2" style="animation-delay:-0.6s"/><rect class="f" x="40" y="11" width="2" height="2" style="animation-delay:-0.5s"/><rect class="f" x="44" y="15" width="2" height="2" style="animation-delay:-0.4s"/><rect class="f" x="44" y="16" width="2" height="2" style="animation-delay:-0.3s"/><rect class="f" x="44" y="15" width="2" height="2" style="animation-delay:-0.2s"/><rect class="f" x="44" y="15" width="2" height="2" style="animation-delay:-0.1s"/></svg></span><span class="gfx-busy-label">Rendering…</span></div>
   </div>
 </div>
 
@@ -9392,21 +9364,21 @@
       <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
     </button>
     <div class="section-tabs-scroll" id="section-tabs-scroll">
-    <button class="section-tab active" data-section="active"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-prospects" width="16" height="16"/></svg>MiLB Prospects</button>
-    <button class="section-tab" data-section="spotlights"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-spotlights" width="16" height="16"/></svg>Spotlights</button>
-    <button class="section-tab" data-section="farm"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-farm" width="16" height="16"/></svg>Farm Systems</button>
-    <button class="section-tab" data-section="traded"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-transactions" width="16" height="16"/></svg>Transactions</button>
-    <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-il" width="16" height="16"/></svg>Injured List</button>
-    <button class="section-tab" data-section="leaderboards"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-leaderboards" width="16" height="16"/></svg>Leaderboards</button>
-    <button class="section-tab" data-section="debuts"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-debuted" width="16" height="16"/></svg>Debuted</button>
-    <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-draft" width="16" height="16"/></svg>MLB Draft/HS</button>
-    <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021-present)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-intl" width="16" height="16"/></svg>International Amateurs</button>
-    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort with its own performance index, RPS-Intl+ (100+15z within the league cohort) - not the MiLB board's ratio RPS+."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-overseas" width="16" height="16"/></svg>Overseas</button>
-    <button class="section-tab" data-section="timemachine" title="The board at any past snapshot, or a diff of two dates: risers, fallers, adds, graduates."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-timemachine" width="16" height="16"/></svg>Time Machine</button>
-    <button class="section-tab" data-section="charts" title="Scatterplot: any two metrics over one prospect group (MiLB, Debuted, Draft, IFA, Overseas, Farms)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-scatter" width="16" height="16"/></svg>Scatterplots</button>
+    <button class="section-tab active" data-section="active"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-prospects" width="16" height="16"/></svg>MiLB Prospects</button>
+    <button class="section-tab" data-section="spotlights"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-spotlights" width="16" height="16"/></svg>Spotlights</button>
+    <button class="section-tab" data-section="farm"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-farm" width="16" height="16"/></svg>Farm Systems</button>
+    <button class="section-tab" data-section="traded"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-transactions" width="16" height="16"/></svg>Transactions</button>
+    <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-il" width="16" height="16"/></svg>Injured List</button>
+    <button class="section-tab" data-section="leaderboards"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-leaderboards" width="16" height="16"/></svg>Leaderboards</button>
+    <button class="section-tab" data-section="debuts"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-debuted" width="16" height="16"/></svg>Debuted</button>
+    <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-draft" width="16" height="16"/></svg>MLB Draft/HS</button>
+    <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021-present)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-intl" width="16" height="16"/></svg>International Amateurs</button>
+    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort with its own performance index, RPS-Intl+ (100+15z within the league cohort) - not the MiLB board's ratio RPS+."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-overseas" width="16" height="16"/></svg>Overseas</button>
+    <button class="section-tab" data-section="timemachine" title="The board at any past snapshot, or a diff of two dates: risers, fallers, adds, graduates."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-timemachine" width="16" height="16"/></svg>Time Machine</button>
+    <button class="section-tab" data-section="charts" title="Scatterplot: any two metrics over one prospect group (MiLB, Debuted, Draft, IFA, Overseas, Farms)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-px-scatter" width="16" height="16"/></svg>Scatterplots</button>
     <!-- The Library lives on its own surface (/glossary/) - a real link styled
          as a section tab, with the site's § module glyph. -->
-    <a class="section-tab section-tab-link" href="/glossary/" title="Library - every term, model derivation, and the track record behind the site"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-library" width="16" height="16"/></svg>Library</a>
+    <a class="section-tab section-tab-link" href="/glossary/" title="Library - every term, model derivation, and the track record behind the site"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-library" width="16" height="16"/></svg>Library</a>
     </div>
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
       <span>Compare</span><span class="compare-count" id="compare-count">0</span>
@@ -9701,7 +9673,7 @@
       <!-- v31.9 - Density toggle removed. Compact is the only mode site-wide
            (Expanded view was inferior in every way per user direction). -->
       <div class="filter-group">
-        <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, and sort on the prospect list">↺ Reset filters</button>
+        <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, and sort on the prospect list"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-reset" width="16" height="16"/></svg> Reset filters</button>
         <button class="chip" type="button" id="board-csv-btn" title="Download CSV: all rows under the current filters and sort. Grades print as the board prints them (eFV to the nearest point, consensus FV rounded up) with the decimal beside each; the file stamps its as-of date, grade basis and sort on every row.">Download CSV <span class="board-csv-n" style="color:var(--text-tertiary);"></span></button>
       </div>
     </div>
@@ -9763,7 +9735,7 @@
               title="Pedigree-comeback narrative: previously hyped (first-round pick / IFA / $1M+ bonus) prospects whose prior season was weak but who have bounced back this year with improved skills.">Rebounders</button>
       <button class="chip" data-spotlight-bucket="fallers"
               title="Prospects whose 2026 performance has materially deteriorated. Excludes very young and young pedigreed prospects unless K% has collapsed past the screen's cut.">Fallers</button>
-      <button class="chip reset-chip" type="button" data-reset-page="spotlights" title="Reset spotlight bucket back to default (Risers)" style="margin-left:12px;">↺ Reset</button>
+      <button class="chip reset-chip" type="button" data-reset-page="spotlights" title="Reset spotlight bucket back to default (Risers)" style="margin-left:12px;"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-reset" width="16" height="16"/></svg> Reset</button>
     </div>
     <div id="spotlight-track-record" class="spotlight-track-record" aria-live="polite"></div>
     <div class="active-grid">
@@ -9829,7 +9801,7 @@
         </select>
       </div>
       <div class="filter-group">
-        <button class="chip reset-chip" type="button" data-reset-page="injured" title="Reset Injured List filters back to defaults">↺ Reset filters</button>
+        <button class="chip reset-chip" type="button" data-reset-page="injured" title="Reset Injured List filters back to defaults"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-reset" width="16" height="16"/></svg> Reset filters</button>
       </div>
     </div>
     <!-- v31.9 - IL list now ships the right-side context rail. -->
@@ -9982,7 +9954,7 @@
       </div>
       <div class="filter-group">
         <button class="chip reset-chip" type="button" data-reset-page="draft"
-                title="Reset draft filters and sort back to defaults">↺ Reset</button>
+                title="Reset draft filters and sort back to defaults"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-reset" width="16" height="16"/></svg> Reset</button>
       </div>
     </div>
     <div id="draft-rows"></div>
@@ -10092,7 +10064,7 @@
       </div>
       <div class="filter-group">
         <button class="chip reset-chip" type="button" data-reset-page="overseas"
-                title="Reset overseas filters and sort back to defaults">↺ Reset</button>
+                title="Reset overseas filters and sort back to defaults"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-reset" width="16" height="16"/></svg> Reset</button>
       </div>
     </div>
     <div id="overseas-rows"></div>
@@ -10307,7 +10279,7 @@
       </div>
       <!-- v18 - Reset chip for the farm page -->
       <div class="filter-group">
-        <button class="chip reset-chip" type="button" data-reset-page="farm" title="Reset farm sort, development window, and view back to defaults">↺ Reset filters</button>
+        <button class="chip reset-chip" type="button" data-reset-page="farm" title="Reset farm sort, development window, and view back to defaults"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-reset" width="16" height="16"/></svg> Reset filters</button>
       </div>
     </div>
     <div id="farm-rows"></div>
@@ -10331,7 +10303,7 @@
         <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
       </button>
       <div class="active-filters-strip" id="lb-active-filters-strip"></div>
-      <button class="chip reset-chip" type="button" data-reset-page="leaderboard" title="Reset the leaderboard to its defaults">↺ Reset</button>
+      <button class="chip reset-chip" type="button" data-reset-page="leaderboard" title="Reset the leaderboard to its defaults"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-reset" width="16" height="16"/></svg> Reset</button>
       <button class="chip" type="button" data-lbc="csv" title="Download the filtered table (every page) as CSV">CSV</button>
     </div>
     <div class="filter-bar collapsible-filter-bar" id="leaderboard-bar" style="flex-wrap:wrap;gap:6px;">
@@ -10504,9 +10476,9 @@
         </div>
         <div class="filter-group">
           <button class="chip" id="chart-reset-view" type="button" title="Reset zoom/pan to fit all points" style="display:none;">⤢ Reset view</button>
-          <button class="chip" id="chart-share" type="button" title="Copy a link to this chart and its filters.">🔗 Share</button>
+          <button class="chip" id="chart-share" type="button" title="Copy a link to this chart and its filters."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-link" width="16" height="16"/></svg> Share</button>
           <button class="chip" id="chart-save-png" type="button" title="Export this scatterplot as an on-theme graphic (Generate GFX)">⤴ Generate GFX</button>
-          <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, size, ranges, and highlight">↺ Reset</button>
+          <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, size, ranges, and highlight"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-reset" width="16" height="16"/></svg> Reset</button>
         </div>
       </div>
     </div>
@@ -10532,9 +10504,9 @@
          the Active Prospects landing page (cross-page parity). -->
     <div id="watchlist-prospects-panel">
       <div id="watchlist-empty" class="state-message" style="display:none;">
-        <div style="font-size:32px;margin-bottom:var(--space-2);opacity:0.5;">☆</div>
+        <div style="margin-bottom:var(--space-2);opacity:0.5;"><svg class="ico" width="32" height="32" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-watch-off"/></svg></div>
         <div style="font-size:var(--fs-md);color:var(--text-secondary);margin-bottom:var(--space-1);">No prospects starred yet</div>
-        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Star a prospect (☆) to list it here. Watchlist + notes are private to this browser.</div>
+        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Star a prospect (<svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-watch-off" width="16" height="16"/></svg>) to list it here. Watchlist + notes are private to this browser.</div>
       </div>
       <div class="active-grid">
         <div id="watchlist-rows"></div>
@@ -10543,9 +10515,9 @@
     </div>
     <div id="watchlist-farms-panel" style="display:none;">
       <div id="watchlist-farms-empty" class="state-message" style="display:none;">
-        <div style="font-size:32px;margin-bottom:var(--space-2);opacity:0.5;">☆</div>
+        <div style="margin-bottom:var(--space-2);opacity:0.5;"><svg class="ico" width="32" height="32" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-watch-off"/></svg></div>
         <div style="font-size:var(--fs-md);color:var(--text-secondary);margin-bottom:var(--space-1);">No farm systems starred yet</div>
-        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Star a farm (☆) to list it here. Watchlist is private to this browser.</div>
+        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Star a farm (<svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=2b3fef2b#i-watch-off" width="16" height="16"/></svg>) to list it here. Watchlist is private to this browser.</div>
       </div>
       <div id="watchlist-farms-rows"></div>
     </div>
@@ -10588,7 +10560,7 @@
 
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
-<script src="/assets/eephus-export.js?v=552e2152" defer></script>
+<script src="/assets/eephus-export.js?v=3c53bd73" defer></script>
 <script src="/assets/eephus-tiers.js?v=aecbf6d2" defer></script>
 <script src="/assets/eephus-csv.js?v=4a00e52b" defer></script>
 
@@ -10600,12 +10572,12 @@
      module self-injects the Supabase SDK and lights up the account UI. -->
 <script src="/assets/eephus-config.js?v=7c802691" defer></script>
 <script src="/assets/eephus-account.js?v=22deb404" defer></script>
-<script src="/assets/eephus-nav.js?v=f4200190" defer></script>
+<script src="/assets/eephus-nav.js?v=bbac27b2" defer></script>
 <script src="/assets/eephus-state.js?v=bf1de8b3" defer></script>
-<script src="/assets/eephus-ui.js?v=0a250392" defer></script>
+<script src="/assets/eephus-ui.js?v=ab5e8d8c" defer></script>
   <script src="/assets/eephus-gl.js?v=ca0479a7" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
-  <script src="/assets/eephus-hub.js?v=b31cc98a" defer></script>
+  <script src="/assets/eephus-hub.js?v=264024a7" defer></script>
   <!-- Team picker: logo listbox on every select[data-team-picker] (reads the hub's club table) -->
   <script src="/assets/eephus-teampick.js?v=7fffda4b" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial
@@ -10844,7 +10816,8 @@ const DATA_URL = "/data/timeseries.json";   // root-absolute so /prospx/ resolve
       el.addEventListener("click", () => el.remove());
       document.body && document.body.appendChild(el);
     }
-    el.textContent = "⚠ " + msg;
+    el.textContent = " " + msg;
+    if (typeof pxIcoHTML === "function") el.insertAdjacentHTML("afterbegin", pxIcoHTML("warn", 12));
     setTimeout(() => { if (el && el.parentNode) el.remove(); }, 8000);
   }
   window.addEventListener("error", (ev) => {
@@ -16747,6 +16720,7 @@ function marqueeifyTicker(root) {
         buildCopies(2);
         track.style.removeProperty("--ntk-shift");          // CSS default: -50%
         track.style.setProperty("animation-duration", "40s");
+        track.style.removeProperty("animation-timing-function");
         track.dataset.state = "marquee-fallback";
       }
       return;
@@ -16760,6 +16734,9 @@ function marqueeifyTicker(root) {
     track.dataset.state = "marquee";
     track.style.setProperty("--ntk-shift", "-" + oneCopy + "px");  // shift one copy
     track.style.setProperty("animation-duration", Math.max(16, Math.round(oneCopy / 55)) + "s");  // ~55px/sec, 16s floor
+    // Whole-pixel steps (PX_SYSTEM_SWEEP): one step per pixel of travel, so the
+    // strip never rests between two pixels; the cadence is unchanged.
+    track.style.setProperty("animation-timing-function", "steps(" + Math.max(1, Math.round(oneCopy)) + ", end)");
   };
   if ("ResizeObserver" in window) {
     root._mqRO = new ResizeObserver(() => { try { apply(); } catch (e) {} });
@@ -18415,7 +18392,7 @@ function renderActives() {
         ${starOddsOn ? makeStarOddsCell(p) : ""}
         ${playerExpandedMetaHTML(p)}
         <div class="player-row-toolstrip has-actions">${_summary}<span class="row-actions">
-          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${pxWatchIco(watchlistHas(p.player_key))}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></span></div>
       </div>
@@ -18609,7 +18586,7 @@ function renderSpotlights() {
           ${playerMetaHTML(s)}
         </div>
         <!-- v17 - Compare + Watchlist on spotlight rows. -->
-        <button class="watch-btn${watchlistHas(s.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(s.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(s.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(s.player_key) ? "★" : "☆"}</button>
+        <button class="watch-btn${watchlistHas(s.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(s.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(s.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${pxWatchIco(watchlistHas(s.player_key))}</button>
         <button class="compare-add-btn is-compact${compareHas(s.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(s.player_key)}" type="button" title="${compareHas(s.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(s.player_key) ? "✓" : "+"}</button>
       </div>
       <div style="text-align:center;">${efvBadgeHTML(_full, { primary: "xfv" })}</div>
@@ -18930,6 +18907,16 @@ const FV_RARITY_STEPS = [[70, "card-rarity-legendary"], [61, "card-rarity-holo"]
 // _ico() rule in build_site.py). The sprite URL, with its content stamp, is
 // read off the static nav's own <use>, which restamp_hand_authored_pages()
 // keeps current, so a JS-drawn icon never carries a stale version.
+// The watchlist pair (PX_SYSTEM_SWEEP): the filled star when the player or farm
+// is starred, the empty one otherwise, at 12 px from the shared sprite.
+// The lamp loader for an in-app load (PX_SYSTEM_SWEEP): the state component's
+// loading box with its message, or the bare box if the component has not
+// loaded yet. msg is HTML the caller already escaped.
+function pxLoadingHTML(msg) {
+  if (window.EephusState) return window.EephusState.html("loading", msg);
+  return '<div class="px-state is-loading" role="status" aria-live="polite"><div class="px-state-msg">' + msg + "</div></div>";
+}
+function pxWatchIco(on) { return pxIcoHTML(on ? "watchlist" : "watch-off", 12); }
 function pxIcoHTML(key, size) {
   if ([12, 16, 24, 32].indexOf(size) < 0) return "";
   if (!pxIcoHTML._base) {
@@ -19182,7 +19169,7 @@ function renderWatchlist() {
               <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
               ${playerMetaHTML(p)}
             </div>
-            <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Remove from watchlist" title="Remove from watchlist">★</button>
+            <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Remove from watchlist" title="Remove from watchlist">${pxWatchIco(true)}</button>
             <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
             <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></div>${arsenalLineHTML(p)}
           </div>
@@ -19254,7 +19241,7 @@ function renderWatchlist() {
         </div>
         <div style="font-family:var(--font-serif);font-size:22px;line-height:1;color:${gradeColor(overall)};font-weight:700;min-width:36px;text-align:center;" title="Farm grade">${escapeHtml(overall)}</div>
         <div style="font-family:var(--font-mono);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:${dvm == null ? 'var(--text-tertiary)' : (dvm >= 110 ? 'var(--up)' : dvm <= 90 ? 'var(--down)' : 'var(--neon-violet)')};min-width:42px;text-align:right;" title="${win.toUpperCase()}DvM+">${dvm == null ? " - " : dvm}</div>
-        <button class="watch-btn is-in" data-farm-watch-key="${escapeHtml(org.org)}" type="button" aria-label="Remove farm from watchlist" title="Remove farm from watchlist">★</button>
+        <button class="watch-btn is-in" data-farm-watch-key="${escapeHtml(org.org)}" type="button" aria-label="Remove farm from watchlist" title="Remove farm from watchlist">${pxWatchIco(true)}</button>
       </div>
     `;
   }).join("");
@@ -20121,7 +20108,7 @@ function renderCharts() {
   const yLbl = (axes.find(a => a.key === state.chartY) || {}).label || "Y";
   const activeChips = [];
   const addChip = (clear, txt) => activeChips.push(
-    `<button class="chart-fchip" type="button" data-clear="${clear}" title="Remove this filter">${escapeHtml(txt)} ✕</button>`);
+    `<button class="chart-fchip" type="button" data-clear="${clear}" title="Remove this filter">${escapeHtml(txt)} ${pxIcoHTML("close", 12)}</button>`);
   if (fOrg !== "all")   addChip("org", `Org: ${fOrg}`);
   if (fLevel !== "all") addChip("level", `Level: ${fLevel}`);
   if (fPos !== "all")   addChip("pos", `Pos: ${fPos}`);
@@ -22290,7 +22277,7 @@ function renderInjured() {
             ${playerMetaHTML(p, { showIL: false, showRoster: false })}
           </div>
           <!-- v17 - Add Watchlist alongside the existing Compare button on IL rows. -->
-          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${pxWatchIco(watchlistHas(p.player_key))}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="debut-pill" style="background:${_pal.bg};color:${_pal.fg};border:1px solid ${_pal.bd};">${escapeHtml(il.type || "?")} IL</span></div>
@@ -24389,7 +24376,7 @@ async function renderDraft() {
   //                              fv_distribution, prospects: [...],
   //                              draft_order: [...], team_pool_usd, ...}] }
   if (!DATA.draft) {
-    host.innerHTML = `<div class="state-message is-loading">Loading draft data…</div>`;
+    host.innerHTML = pxLoadingHTML("Loading draft data…");
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(base + "draft_timeseries.json", { cache: "no-cache" });
@@ -24434,7 +24421,7 @@ async function renderDraft() {
       // Every undrafted class carries is_current, and more than one can hold
       // prospects (the next draft plus an early list for the one after it).
       // Only the upcoming class, the earliest undrafted class with prospects,
-      // gets the ⏳ marker; a later scouted class is labeled a future class,
+      // gets the hourglass icon; a later scouted class is labeled a future class,
       // and a class with no prospects is a lottery projection only.
       const scouted   = c.year === upcomingYear;
       const future    = c.is_current && (c.n_prospects || 0) > 0 && !scouted;
@@ -24444,7 +24431,7 @@ async function renderDraft() {
         : `${c.n_prospects} prospects${scouted ? " · upcoming draft, being scouted" : future ? " · future class, early list" : ""}`;
       return `<button class="chip ${c.year === state.draftYear ? "active" : ""}"
             data-draft-year="${c.year}" title="${title}">
-      ${c.year}${scouted ? " ⏳" : ""}</button>`;
+      ${c.year}${scouted ? " " + pxIcoHTML("hourglass", 12) : ""}</button>`;
     }).join("");
   classChips.querySelectorAll("[data-draft-year]").forEach(b => {
     b.addEventListener("click", () => {
@@ -25492,7 +25479,7 @@ function _renderWarRoom(host) {
   const d = _warRoom.data;
   const head = `<div class="detail-title">Draft War Room <span class="detail-title-sub">live picks priced against our board</span></div>`;
   if (!_warRoom.loaded) {
-    host.innerHTML = head + `<div class="state-message is-loading">Loading the live draft feed...</div>`;
+    host.innerHTML = head + pxLoadingHTML("Loading the live draft feed...");
   } else if (d && d.status === "error") {
     host.innerHTML = head + `<div class="state-message is-error">The live draft feed is unavailable right now. It refreshes automatically.</div>`;
   } else if (!d || d.status !== "live" || !(d.picks && d.picks.length)) {
@@ -26476,7 +26463,7 @@ function _renderClassStrength(host, classes) {
           ${summary.map(r => {
             const totalN = r.hit + r.pit;
             return `<tr style="cursor:pointer;" data-jump-year="${r.c.year}">
-              <td><strong>${r.c.year}${r.c.is_current ? " ⏳" : ""}</strong></td>
+              <td><strong>${r.c.year}${r.c.is_current ? " " + pxIcoHTML("hourglass", 12) : ""}</strong></td>
               <td>${r.c.n_prospects}</td>
               <td><span style="color:var(--text-secondary);">${r.hit}</span>
                   / <span style="color:var(--neon-orange);">${r.pit}</span></td>
@@ -26507,7 +26494,7 @@ function _renderClassStrength(host, classes) {
       </g>`;
     }).join("");
     return `<div class="draft-panel" style="text-align:center;cursor:pointer;overflow:hidden;min-width:0;" data-jump-year="${c.year}">
-      <h3>${c.year}${c.is_current ? " ⏳" : ""}</h3>
+      <h3>${c.year}${c.is_current ? " " + pxIcoHTML("hourglass", 12) : ""}</h3>
       <svg viewBox="0 0 ${groupW} ${barH + 20}" width="${groupW}" height="${barH + 20}" preserveAspectRatio="xMidYMin meet" style="display:block;margin:8px auto;max-width:100%;height:auto;">
         ${bars}
       </svg>
@@ -26906,7 +26893,7 @@ function _renderIFAAllTime(host, classes, usd) {
     const top = b ? `${escapeHtml(b.player_name)} <span style="color:var(--text-tertiary);">${escapeHtml(b.org || "")}</span> ${usd(b.bonus_usd)}` : " - ";
     return `<tr>
       <td style="color:var(--text-tertiary);">${i + 1}</td>
-      <td><strong>${c.year}</strong>${c.is_current ? ' <span style="font-size:9px;color:var(--text-tertiary);">⏳</span>' : ""}</td>
+      <td><strong>${c.year}</strong>${c.is_current ? ' <span style="color:var(--text-tertiary);">' + pxIcoHTML("hourglass", 12) + '</span>' : ""}</td>
       <td style="text-align:right;font-family:var(--font-mono);font-weight:700;">${usd(c.total_usd)}</td>
       <td style="text-align:right;font-family:var(--font-mono);">${c.n_signings}</td>
       <td style="text-align:right;font-family:var(--font-mono);">${c.n_tracked}</td>
@@ -26970,7 +26957,7 @@ function _renderIFAAllTime(host, classes, usd) {
     <span class="filter-label" style="margin-left:8px;">Country</span>
     <select class="chip" id="ifa-all-country"><option value="all">All countries</option>${countryOpts.map(c => _opt(c, aCountry, c)).join("")}</select>
     <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);margin-left:8px;"><input type="checkbox" id="ifa-all-tracked" ${aTracked ? "checked" : ""}> Tracked only</label>
-    ${(aSort !== "bonus" || _bigFiltered) ? `<button class="chip reset-chip" id="ifa-all-reset" type="button" style="margin-left:auto;">↺ Reset</button>` : ""}
+    ${(aSort !== "bonus" || _bigFiltered) ? `<button class="chip reset-chip" id="ifa-all-reset" type="button" style="margin-left:auto;">${pxIcoHTML("reset", 12)} Reset</button>` : ""}
   </div>`;
   const bigExpander = (!bigShowAll && bigHidden > 0)
     ? `<button class="chip" id="ifa-all-show-all" style="margin-top:8px;">Show all ${bigList.length} signings (+${bigHidden} more)</button>` : "";
@@ -27083,7 +27070,7 @@ async function renderIFA() {
        title="Rank every class all-time + cross-year biggest signings and org spending">★ All-time</button>` +
     classes.map(c =>
       `<button class="chip ${c.year === state.ifaYear ? "active" : ""}" data-ifa-year="${c.year}"
-         title="${c.n_signings} signings · ${usd(c.total_usd)}${c.is_current ? " · current class" : ""}">${c.year}${c.is_current ? " ⏳" : ""}</button>`
+         title="${c.n_signings} signings · ${usd(c.total_usd)}${c.is_current ? " · current class" : ""}">${c.year}${c.is_current ? " " + pxIcoHTML("hourglass", 12) : ""}</button>`
     ).join("");
   classChips.querySelectorAll("[data-ifa-year]").forEach(b => b.addEventListener("click", () => {
     const v = b.dataset.ifaYear;
@@ -27207,7 +27194,7 @@ async function renderIFA() {
   const expandBtn = (!showAll && hiddenCount > 0)
     ? `<button class="chip" id="ifa-show-all" style="margin-top:8px;">Show all ${signings.length} signings (+${hiddenCount} more)</button>` : "";
   const filterBanner = orgFilter
-    ? `<div style="margin-bottom:8px;font-size:12px;">${orgLinkHTML(orgFilter, `${pxClubLogoHTML(orgFilter, "sm")} <strong>${escapeHtml(fullOrgName(orgFilter))}</strong>`, { cls: "px-club--text" })}'s ${cls.year} signing class · <button class="chip" id="ifa-clear-filter" style="font-size:11px;">✕ clear</button></div>` : "";
+    ? `<div style="margin-bottom:8px;font-size:12px;">${orgLinkHTML(orgFilter, `${pxClubLogoHTML(orgFilter, "sm")} <strong>${escapeHtml(fullOrgName(orgFilter))}</strong>`, { cls: "px-club--text" })}'s ${cls.year} signing class · <button class="chip" id="ifa-clear-filter" style="font-size:11px;">${pxIcoHTML("close", 12)} clear</button></div>` : "";
 
   // Sidebar - org spending leaderboard (drill-down) + trend modules.
   const orgRows = (cls.org_spending || []).slice(0, 16).map((o, i) =>
@@ -27242,7 +27229,7 @@ async function renderIFA() {
   const trackedChk = `<label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);"><input type="checkbox" id="ifa-tracked" ${yrTracked ? "checked" : ""}> Tracked only</label>`;
   const summary = `<div style="margin-bottom:10px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
     <span style="font-size:16px;font-weight:700;">${cls.year} International Amateur class</span>
-    <span style="color:var(--text-tertiary);font-size:12px;"> · ${cls.n_signings} signings · ${usd(cls.total_usd)} total · avg ${usd(t.avg_bonus)} · median ${usd(t.median_bonus)} · ${cls.n_tracked} tracked${cls.is_current ? " · current ⏳" : ""}</span>
+    <span style="color:var(--text-tertiary);font-size:12px;"> · ${cls.n_signings} signings · ${usd(cls.total_usd)} total · avg ${usd(t.avg_bonus)} · median ${usd(t.median_bonus)} · ${cls.n_tracked} tracked${cls.is_current ? " · current " + pxIcoHTML("hourglass", 12) : ""}</span>
     <span style="margin-left:auto;font-size:11px;color:var(--text-tertiary);">Country</span>${countrySel}
     ${trackedChk}
     <span style="font-size:11px;color:var(--text-tertiary);">Sort</span>${sortSel}</div>`;
@@ -27276,7 +27263,7 @@ async function renderOverseas() {
 
   // Lazy-load the overseas payload.
   if (!DATA.overseas) {
-    host.innerHTML = `<div class="state-message is-loading">Loading overseas data…</div>`;
+    host.innerHTML = pxLoadingHTML("Loading overseas data…");
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(base + "overseas_timeseries.json", { cache: "no-cache" });
@@ -28062,7 +28049,7 @@ function _renderDraftTendencies(host, classes, year) {
           Run <code>python org_tendencies.py</code> to regenerate <code>data/org_tendencies.json</code>.</div>`;
         return;
       }
-      host.innerHTML = `<div class="state-message is-loading">Loading org draft tendencies…</div>`;
+      host.innerHTML = pxLoadingHTML("Loading org draft tendencies…");
       _ensureOrgTendencies(() => { if (state.draftView === "org-tendencies") renderDraft(); });
       return;
     }
@@ -28685,7 +28672,7 @@ function _hsBackToOverview() {
 async function _renderHSDetails(host, classes) {
   if (_hsView.entity) return _renderHSEntityDetail(host, _hsView.mode, _hsView.entity, classes);
 
-  host.innerHTML = '<div class="state-message is-loading">Loading high-school geography...</div>';
+  host.innerHTML = pxLoadingHTML("Loading high-school geography...");
   const demo = await _hsLoadDemographics();
   const mode = _HS_MODE_META[_hsView.mode] ? _hsView.mode : "states";
   _hsView.mode = mode;
@@ -28878,7 +28865,7 @@ function _hsCollectRoster(classes, mode, key) {
 // One entity detail page (state / school / region) - rank chips, lens
 // tiles, comparison vs national, roster, and a context side panel.
 async function _renderHSEntityDetail(host, mode, key, classes) {
-  host.innerHTML = '<div class="state-message is-loading">Loading detail...</div>';
+  host.innerHTML = pxLoadingHTML("Loading detail...");
   const demo = await _hsLoadDemographics();
   const meta = _HS_MODE_META[mode] || _HS_MODE_META.states;
   const agg = _hsAggregate(classes, demo, mode);
@@ -29513,7 +29500,7 @@ function _findCollege(name) {
 async function renderCollegeDetail(name) {
   const root = document.getElementById("college-detail-body");
   if (!root) return;
-  root.innerHTML = '<div class="state-message is-loading">Loading college...</div>';
+  root.innerHTML = pxLoadingHTML("Loading college...");
   if (!DATA.draft) {
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
@@ -29888,7 +29875,7 @@ function _findCountry(name) {
 async function renderCountryDetail(name) {
   const root = document.getElementById("country-detail-body");
   if (!root) return;
-  root.innerHTML = '<div class="state-message is-loading">Loading country...</div>';
+  root.innerHTML = pxLoadingHTML("Loading country...");
   if (!DATA.ifa) {
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
@@ -30083,7 +30070,7 @@ function _renderOverseasLeagues(host, leagues) {
 async function renderLeagueDetail(name) {
   const root = document.getElementById("league-detail-body");
   if (!root) return;
-  root.innerHTML = '<div class="state-message is-loading">Loading league...</div>';
+  root.innerHTML = pxLoadingHTML("Loading league...");
   if (!DATA.overseas) {
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
@@ -30175,7 +30162,7 @@ async function renderDraftDetail(key) {
   if (!root) return;
   // Lazy-load the draft payload if it hasn't arrived yet.
   if (!DATA.draft) {
-    root.innerHTML = `<div class="state-message is-loading">Loading draft data…</div>`;
+    root.innerHTML = pxLoadingHTML("Loading draft data…");
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(`${base}draft_timeseries.json`);
@@ -30635,7 +30622,7 @@ async function renderOverseasDetail(key) {
   const root = document.getElementById("overseas-detail-body");
   if (!root) return;
   if (!DATA.overseas) {
-    root.innerHTML = `<div class="state-message is-loading">Loading overseas data…</div>`;
+    root.innerHTML = pxLoadingHTML("Loading overseas data…");
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(`${base}overseas_timeseries.json`);
@@ -31791,7 +31778,7 @@ function _tbWorryBadge(w) {
   if (!w || w.score < 0.15) return "";
   const label = w.type === "approach" ? "approach" : w.type === "contact_quality" ? "contact" : "skills";
   const col = w.score > 0.5 ? "var(--neon-red)" : "var(--neon-amber)";
-  return `<span style="font-size:10px;color:${col}" title="Worriedness ${(w.score*100).toFixed(0)}% - ${label} signal">⚠ ${label}</span>`;
+  return `<span style="font-size:10px;color:${col}" title="Worriedness ${(w.score*100).toFixed(0)}% - ${label} signal">${pxIcoHTML("warn", 12)} ${label}</span>`;
 }
 // _tbCtrlBadge - DELETED 2026-09-17. A stale fork of the /trademachine/ badge
 // that never learned the salary path: its tooltip was [salary, player options,
@@ -31883,7 +31870,7 @@ function _renderTBRows() {
     // Signals: status badge + ceiling flag + injury warning + GRPO breakout badge.
     let signals = `<span style="color:${statusCol};font-size:10px;">${statusLbl}</span>`;
     if (flash.is_bimodal) signals += ` <span style="color:var(--card-gold);font-size:10px;" title="Ceiling player (p_click=${flash.p_click})">↑</span>`;
-    if (injD > 0.05)      signals += ` <span style="color:var(--neon-red);font-size:10px;" title="Injury discount ${(injD*100).toFixed(0)}%">⚕</span>`;
+    if (injD > 0.05)      signals += ` <span style="color:var(--neon-red);font-size:10px;" title="Injury discount ${(injD*100).toFixed(0)}%">${pxIcoHTML("ev-il", 12)}</span>`;
     // GRPO breakout badge - shows group comps panel on click
     const grpoSc = p.grpo_breakout_score;
     const grpoAdj = p.grpo_fv_adj;
@@ -32045,7 +32032,7 @@ function _mtRenderList(side) {
       <span style="display:flex;align-items:center;gap:8px;">
         <span style="font-weight:700;color:${col};">${_tbFmt(tv)}</span>
         <button class="chip" style="padding:1px 6px;font-size:10px;" aria-label="Remove"
-          onclick="_mtRemove('${escapeHtml(side)}','${escapeHtml(p.player_key||"")}')">✕</button>
+          onclick="_mtRemove('${escapeHtml(side)}','${escapeHtml(p.player_key||"")}')">${pxIcoHTML("close", 12)}</button>
       </span>
     </li>`;
   }).join("");
@@ -32450,7 +32437,7 @@ function renderDebuts() {
             ${playerMetaHTML(g, { showIL: false, showRoster: false })}
           </div>
           <!-- v17 - Compare + Watchlist on graduate rows. -->
-          <button class="watch-btn${watchlistHas(g.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(g.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(g.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(g.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn${watchlistHas(g.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(g.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(g.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${pxWatchIco(watchlistHas(g.player_key))}</button>
           <button class="compare-add-btn is-compact${compareHas(g.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(g.player_key)}" type="button" title="${compareHas(g.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(g.player_key) ? "✓" : "+"}</button>
         </div>
         <div class="debut-date-cell">
@@ -35071,11 +35058,11 @@ function efvBadgeHTML(p, opts) {
     ? `<span title="eFV applies an injury penalty (factor ${x.injury_factor})${
          x.xfv_grade_healthy != null
            ? `. Healthy he would grade about ${Math.round(x.xfv_grade_healthy)}`
-           : ""}" style="color:var(--accent-il);font-size:9px;">⚕</span>` : "";
+           : ""}" style="color:var(--accent-il);line-height:0;">${pxIcoHTML("ev-il", 12)}</span>` : "";
   // Locked: once a prospect debuts, its eFV is frozen at the final pre-debut grade (the grade
   // it carried into the majors) -- our last word on it as a prospect.
   const lock = (x && x.kind === "debuted")
-    ? `<span title="Final eFV, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR)` : ""}" style="color:var(--text-tertiary);font-size:9px;">🔒</span>` : "";
+    ? `<span title="Final eFV, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR)` : ""}" style="color:var(--text-tertiary);line-height:0;">${pxIcoHTML("lock", 12)}</span>` : "";
   // eFV ONLY (the default): clean single grade, no consensus subscript or delta. The board's
   // "Rank by" toggle is how a user switches the whole list to consensus FV instead. consNum is
   // unused here by design; full eFV-vs-consensus comparison lives on the player detail page.
@@ -36627,20 +36614,33 @@ function _gfxFooterNote(kind) {
 // the GFX palette + theme-forcing so they match the list graphics and the live
 // site. buildGfxBoard() branches to these on the snapshot's `kind`.
 // ===========================================================================
+// The PROSPX mark on a GFX card or board (PX_SYSTEM_SWEEP): the 22 x 22 pixel
+// drawing the page masthead serves (PB-05, assets/brand/prospx-mark.svg),
+// cloned from the h1 with each run's computed fill written inline, because
+// html2canvas serializes an inline <svg> with no stylesheet. Drawn at a whole
+// multiple of 22 px so every pixel lands on the grid. It replaced the vector
+// ball with a serif P/X, the mark the brand retired.
+function _gfxPxMark(px) {
+  const s = 22 * Math.max(1, Math.floor((px || 22) / 22));
+  const src = document.querySelector("svg.px-mark");
+  if (!src) return "";
+  const c = src.cloneNode(true);
+  const live = src.querySelectorAll("path");
+  c.querySelectorAll("path").forEach((p, i) => {
+    const fill = live[i] ? getComputedStyle(live[i]).fill : "";
+    p.removeAttribute("class");
+    p.setAttribute("style", "fill:" + (fill || "currentColor"));
+  });
+  ["class", "title", "onclick", "style"].forEach(a => c.removeAttribute(a));
+  c.setAttribute("width", s); c.setAttribute("height", s);
+  c.setAttribute("shape-rendering", "crispEdges");
+  c.setAttribute("style", "flex:none;display:block;");
+  return c.outerHTML;
+}
 function _gfxWordmark(accent, P, px) {
   const s = px || 22;
   return `<div style="display:flex;align-items:center;gap:7px;">
-    <svg width="${s}" height="${s}" viewBox="0 0 44 44" style="flex:none;display:block;" aria-hidden="true">
-      <defs><linearGradient id="gfxSeam${s}" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#B91C1C"/><stop offset="35%" stop-color="#C9A227"/>
-        <stop offset="65%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>
-      </linearGradient></defs>
-      <circle cx="22" cy="22" r="19" fill="#FBF8F0" stroke="#C9C1AE" stroke-width="1"/>
-      <path d="M 32 8 Q 40 22 32 36" fill="none" stroke="url(#gfxSeam${s})" stroke-width="2.2"/>
-      <path d="M 12 8 Q 4 22 12 36" fill="none" stroke="url(#gfxSeam${s})" stroke-width="2.2"/>
-      <text x="18.5" y="30" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="20" fill="#0E2B4D">P</text>
-      <text x="26" y="30" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="20" fill="#B91C1C">X</text>
-    </svg>
+    ${_gfxPxMark(s)}
     <span style="font-family:var(--font-retro);font-weight:700;font-size:${Math.round(s * 0.86)}px;color:${accent};letter-spacing:0.02em;">PROSPX</span>
   </div>`;
 }
@@ -38339,17 +38339,7 @@ function buildGfxBoard() {
       <div style="display:flex;align-items:center;gap:14px;flex:none;margin-left:24px;">
         <div style="text-align:right;">
           <div style="display:flex;align-items:center;justify-content:flex-end;gap:7px;">
-            <svg width="22" height="22" viewBox="0 0 44 44" style="flex:none;display:block;" aria-hidden="true">
-              <defs><linearGradient id="gfxBallSeam" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stop-color="#B91C1C"/><stop offset="35%" stop-color="#C9A227"/>
-                <stop offset="65%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>
-              </linearGradient></defs>
-              <circle cx="22" cy="22" r="19" fill="#FBF8F0" stroke="#C9C1AE" stroke-width="1"/>
-              <path d="M 32 8 Q 40 22 32 36" fill="none" stroke="url(#gfxBallSeam)" stroke-width="2.2"/>
-              <path d="M 12 8 Q 4 22 12 36" fill="none" stroke="url(#gfxBallSeam)" stroke-width="2.2"/>
-              <text x="18.5" y="30" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="20" fill="#0E2B4D">P</text>
-              <text x="26" y="30" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="20" fill="#B91C1C">X</text>
-            </svg>
+            ${_gfxPxMark(22)}
             <span style="font-family:var(--font-retro);font-weight:700;font-size:19px;color:${accent};">PROSPX</span>
           </div>
           <div style="font-family:var(--font-mono);font-size:12px;color:${P.text3};margin-top:3px;">eephus.io/PROSPX · ${_gfxAsOf()}</div>
@@ -38563,8 +38553,10 @@ function _gfxSetActionState(state) {   // 'preparing' | 'ready' | 'empty' | 'err
   if (busy) {
     busy.hidden = !(preparing || state === "error");
     const lbl = busy.querySelector(".gfx-busy-label") || busy;
-    if (state === "error") busy.textContent = "Render failed - tap Download to retry";
-    else if (preparing && lbl) { /* spinner markup retained; text below */ }
+    if (state === "error") lbl.textContent = "Render failed - tap Download to retry";
+    else if (preparing && lbl) lbl.textContent = "Rendering…";
+    const lob = busy.querySelector(".px-lob");
+    if (lob) lob.hidden = state === "error";
   }
   // Pre-generate readiness dot on Copy so it reads ready vs still preparing.
   if (cp && !cp.dataset.label) cp.dataset.label = cp.textContent;
@@ -38852,7 +38844,7 @@ document.addEventListener("keydown", (e) => {
 function _gfxInjectListButtons() {
   const btnHTML = '<button class="gfx-list-btn" type="button" '
     + 'title="Generate a shareable PROSPX graphic of this list">'
-    + '<span class="gfx-list-btn-icon" aria-hidden="true">\u{1F4CA}</span>Generate GFX</button>';
+    + '<span class="gfx-list-btn-icon" aria-hidden="true">' + pxIcoHTML("gfx", 12) + '</span>Generate GFX</button>';
   const addTo = (el) => { if (el && !el.querySelector(":scope > .gfx-list-btn")) el.insertAdjacentHTML("beforeend", btnHTML); };
   // Every list section's inline controls row (active, injured, draft, overseas,
   // debuts, farm, leaderboards all render a .filter-toggle-row).
@@ -45745,7 +45737,7 @@ function renderFarmSystems() {
           })()}</div>
         <div class="stock-cell fc-stock" style="font-size:12px;">${stockHtml}</div>
         <div class="fc-act" style="text-align:right;display:flex;gap:4px;justify-content:flex-end;align-items:center;">
-          <button class="watch-btn${farmWatchlistHas(org.org) ? " is-in" : ""}" data-farm-watch-key="${escapeHtml(org.org)}" type="button" aria-label="Toggle farm watchlist" title="${farmWatchlistHas(org.org) ? "Remove farm from watchlist" : "Add farm to watchlist"}">${farmWatchlistHas(org.org) ? "★" : "☆"}</button>
+          <button class="watch-btn${farmWatchlistHas(org.org) ? " is-in" : ""}" data-farm-watch-key="${escapeHtml(org.org)}" type="button" aria-label="Toggle farm watchlist" title="${farmWatchlistHas(org.org) ? "Remove farm from watchlist" : "Add farm to watchlist"}">${pxWatchIco(farmWatchlistHas(org.org))}</button>
           <button class="compare-add-btn is-compact${farmCompareHas(org.org) ? " is-in" : ""}" data-farm-compare-key="${escapeHtml(org.org)}" type="button" title="${farmCompareHas(org.org) ? "Remove farm from compare" : "Add farm to compare"}" aria-label="Toggle farm compare">${farmCompareHas(org.org) ? "✓" : "+"}</button>
         </div>
         ${metricsHtml}
@@ -49976,9 +49968,9 @@ function renderPlayerDetail(key) {
         })()}
         ${latest && latest.avg_rank != null ? `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:4px;">Avg rank #${latest.avg_rank.toFixed(1)}</div>` : ""}
         <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px;align-items:center;flex-wrap:wrap;">
-          <button class="gfx-card-btn" type="button" title="Generate a shareable PROSPX graphic of this prospect"><span class="gfx-card-btn-icon" aria-hidden="true">📊</span>Generate GFX</button>
-          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
-          <button class="watch-btn" id="detail-copy-url" type="button" title="Copy shareable link" aria-label="Copy link">🔗</button>
+          <button class="gfx-card-btn" type="button" title="Generate a shareable PROSPX graphic of this prospect"><span class="gfx-card-btn-icon" aria-hidden="true">${pxIcoHTML("gfx", 12)}</span>Generate GFX</button>
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${pxWatchIco(watchlistHas(p.player_key))}</button>
+          <button class="watch-btn" id="detail-copy-url" type="button" title="Copy shareable link" aria-label="Copy link">${pxIcoHTML("link", 12)}</button>
           <button class="watch-btn" id="detail-copy-key" type="button" data-copy-key="${escapeHtml(p.player_key)}" title="Copy player key" aria-label="Copy player key">⧉</button>
           <button class="compare-add-btn${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button">${compareHas(p.player_key) ? "✓ In compare" : "+ Add to compare"}</button>
         </div>
@@ -54210,7 +54202,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       </div>
       <div style="display:flex;align-items:center;flex:none;gap:8px;">
         ${clubFranchiseHref(org.org) ? `<a class="chip" href="${escapeHtml(clubFranchiseHref(org.org))}" title="Open this club on Franchises: the org-level grade tree and every module's numbers for the club">Franchises</a>` : ""}
-        <button class="gfx-card-btn" type="button" title="Generate a shareable PROSPX graphic of this farm system"><span class="gfx-card-btn-icon" aria-hidden="true">📊</span>Generate GFX</button>
+        <button class="gfx-card-btn" type="button" title="Generate a shareable PROSPX graphic of this farm system"><span class="gfx-card-btn-icon" aria-hidden="true">${pxIcoHTML("gfx", 12)}</span>Generate GFX</button>
       </div>
     </div>
     ${makeFarmReportCard(org)}
@@ -54425,7 +54417,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
             ${playerMetaHTML(p)}
           </div>
-          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${pxWatchIco(watchlistHas(p.player_key))}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></div>${arsenalLineHTML(p)}
         </div>
@@ -55675,7 +55667,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     // Organization Tendencies - behavioral profile from the committed
     // sidecar (data/org_tendencies.json), fetched lazily on first open.
     { key: "tendencies",   label: "Tendencies",
-      html: '<div id="org-tendencies-mount"><div class="state-message is-loading">Loading organization tendencies&hellip;</div></div>' },
+      html: '<div id="org-tendencies-mount">' + pxLoadingHTML("Loading organization tendencies&hellip;") + '</div>' },
     { key: "finances",     label: "Finances",     html: financesTabHtml },
     { key: "transactions", label: "Transactions & Pipeline", html: transactionsTabHtml },
     // eephus.io - per-farm Discussion thread (same component as prospect pages).
@@ -56470,7 +56462,7 @@ function syncWatchlistButtons() {
   document.querySelectorAll(".watch-btn[data-watch-key]").forEach(btn => {
     const isIn = inSet.has(btn.dataset.watchKey);
     btn.classList.toggle("is-in", isIn);
-    btn.textContent = isIn ? "★" : "☆";
+    btn.innerHTML = pxWatchIco(isIn);
     btn.title = isIn ? "Remove from watchlist" : "Add to watchlist";
   });
 }
@@ -56503,7 +56495,7 @@ function syncFarmWatchlistButtons() {
   document.querySelectorAll(".watch-btn[data-farm-watch-key]").forEach(btn => {
     const isIn = inSet.has(btn.dataset.farmWatchKey);
     btn.classList.toggle("is-in", isIn);
-    btn.textContent = isIn ? "★" : "☆";
+    btn.innerHTML = pxWatchIco(isIn);
     btn.title = isIn ? "Remove farm from watchlist" : "Add farm to watchlist";
   });
 }
@@ -58075,7 +58067,7 @@ function renderCompareCart() {
   if (players.length || stubs.length) {
     const stubHTML = stubs.map(k => `<div class="compare-card"><div style="color:var(--text-tertiary);">Player "${escapeHtml(k)}" not in current data.</div><button class="cc-remove" data-compare-remove="${escapeHtml(k)}">remove</button></div>`).join("");
     if (players.length) {
-      html += `<div class="detail-title flush no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);display:flex;align-items:center;justify-content:space-between;gap:8px;">Prospects · ${players.length}${players.length >= 2 ? `<button class="gfx-compare-btn" type="button" title="Generate a side-by-side comparison graphic"><span aria-hidden="true">📊</span> Generate GFX</button>` : ""}</div>`;
+      html += `<div class="detail-title flush no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);display:flex;align-items:center;justify-content:space-between;gap:8px;">Prospects · ${players.length}${players.length >= 2 ? `<button class="gfx-compare-btn" type="button" title="Generate a side-by-side comparison graphic"><span aria-hidden="true">${pxIcoHTML("gfx", 12)}</span> Generate GFX</button>` : ""}</div>`;
       html += makeCompareSideBySide(players);
     }
     html += stubHTML;

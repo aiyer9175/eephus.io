@@ -474,14 +474,15 @@
       + '" stroke-width="' + (o.stroke || 1.8) + '" stroke-linejoin="round" stroke-linecap="round"/>' + lastMark + dots + "</svg>";
   }
 
-  // The module registry for the strip: id -> {label, glyph, href(row)}.
-  // Module accents mirror the homepage sidebar glyph identity.
+  // The module registry for the strip: id -> {label, ico, href(row)}. ico is the
+  // module's pixel icon (PX_SYSTEM_SWEEP: the old text glyphs retired), drawn by
+  // window.EephusIco from the shared sprite at 12 px.
   const MODULES = [
-    { id: "prospx", label: "PROSPX", glyph: "●", note: "prospect card",
+    { id: "prospx", label: "PROSPX", ico: "prospx", note: "prospect card",
       href: r => r.prospx ? `/prospx/#player=${encodeURIComponent(r.prospx)}` : null },
-    { id: "fa", label: "FREE AGENCY", glyph: "$", note: "market card",
+    { id: "fa", label: "FREE AGENCY", ico: "fa", note: "market card",
       href: r => r.fa ? `/fa/#player=${encodeURIComponent(r.key)}` : null },
-    { id: "mlb", label: "MLB PROJECTIONS", glyph: "Δ", note: "player page",
+    { id: "mlb", label: "MLB PROJECTIONS", ico: "projections", note: "player page",
       // AUDIT 2026-07-18 (A6): only offer the projections chip to players who have a
       // projections page. player_links now tags projection-universe players proj:true;
       // never-debuted prospects get proj:false. Older payloads without the flag
@@ -499,7 +500,7 @@
       const href = m.href(row);
       if (!href && m.id !== active) return "";
       const cls = m.id === active ? "hub-chip is-active" : "hub-chip";
-      const inner = `<span class="hub-glyph">${m.glyph}</span>${m.label}<span class="hub-note">${m.note}</span>`;
+      const inner = `<span class="hub-glyph">${window.EephusIco ? window.EephusIco(m.ico, 12) : ""}</span>${m.label}<span class="hub-note">${m.note}</span>`;
       return m.id === active
         ? `<span class="${cls}" title="You are on this player's ${m.note}">${inner}</span>`
         : `<a class="${cls}" href="${href}" title="Open this player's ${m.note}">${inner}</a>`;

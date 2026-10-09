@@ -1008,9 +1008,9 @@ MODULE_STAGE = {
     # gated: these pages are public and free while the section is built out.
     # One row for the merged module (2026-08-07). Dynasty, Redraft and DFS are
     # sub-modules under one masthead now, so there is one chip, not three.
-    "fantasy": ("◆ Diamond preview", "Diamond preview: free and public"),
-    "betting": ("◆ Diamond preview", "Diamond preview: free and public"),
-    "diamond": ("◆ Diamond preview", "Nothing is for sale yet; the whole site is free"),
+    "fantasy": ("Diamond preview", "Diamond preview: free and public"),
+    "betting": ("Diamond preview", "Diamond preview: free and public"),
+    "diamond": ("Diamond preview", "Nothing is for sale yet; the whole site is free"),
 }
 
 # A module's display name where it differs from its key's history (the
@@ -2504,7 +2504,7 @@ def _feed_day_header(dt: str, gfx: bool = False) -> str:
         md = f"{int(dt[5:7])}/{int(dt[8:10])}"
         btn = (f'<button class="chip egfx-chip egfx-day-chip" type="button" data-gfx-date="{dt}" '
                f'title="Share graphic: {dt}">'
-               f'<span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>GFX {md}</button>')
+               f'<span class="egfx-chip-glyph" aria-hidden="true">{_ico("gfx", 12)}</span>GFX {md}</button>')
     return (f'<div class="feed-day"><span class="feed-day-date">{ts}</span>'
             f'{btn}'
             f'<a class="feed-day-tm" href="/prospx/#tab=timemachine&tm={dt}" '
@@ -2614,7 +2614,7 @@ def _ticker_html(events: list, n: int = 14) -> str:
             body = f'{logo}<span class="glyph">{_wire_glyph(typ, glyph)}</span> {html.escape(text)}'
         items.append(f'<a href="{html.escape(href)}" tabindex="-1"{_wire_attrs(typ)}{tip}>{body}</a>')
     if not items:
-        items = [f'<span><span class="glyph">◆</span> {NEWS_LABEL} · live</span>']
+        items = [f'<span><span class="glyph">{_ico("news", 12)}</span> {NEWS_LABEL} · live</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
 
 def _news_recent_events(events: list, window_days: int = 30,
@@ -2703,7 +2703,7 @@ _NEWS_FILTER_JS = """<script>
 def _gfx_chip_html(chip_id: str) -> str:
     return (f'<button class="chip egfx-chip" id="{chip_id}" type="button" '
             'title="Share graphic of this view">'
-            '<span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>')
+            f'<span class="egfx-chip-glyph" aria-hidden="true">{_ico("gfx", 12)}</span>Generate GFX</button>')
 
 def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None,
                    mlb: dict | None = None) -> str:
@@ -4419,7 +4419,7 @@ def _date_callout(band: str, today: date | None = None) -> str:
     if band == "mlb":
         if _postseason_live(today):
             return ('<a class="home-callout" href="/scores/">'
-                    '<span class="cal-tag">◆ Live</span>'
+                    '<span class="cal-tag">Live</span>'
                     '<span class="cal-msg"><strong>Postseason</strong> · Underway</span>'
                     '<span class="cal-go">View →</span></a>')
         events = [
@@ -4446,9 +4446,9 @@ def _date_callout(band: str, today: date | None = None) -> str:
             continue
         days = (start - today).days
         if start <= today <= end:
-            tag, when = "◆ Live", "Underway"
+            tag, when = "Live", "Underway"
         elif 0 <= days <= 45:
-            tag = "◆ Upcoming"
+            tag = "Upcoming"
             when = "Tomorrow" if days == 1 else f"in {days} days"
         else:
             continue
@@ -5655,7 +5655,7 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
   <div id="tb-group-panel" style="display:none;margin:8px 0;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <span id="tb-group-title" style="font-weight:700;font-size:13px;"></span>
-      <button type="button" aria-label="Close the profile group" onclick="document.getElementById('tb-group-panel').style.display='none';" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;">&#10005;</button>
+      <button type="button" aria-label="Close the profile group" onclick="document.getElementById('tb-group-panel').style.display='none';" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;line-height:0;">{_ICO_CLOSE}</button>
     </div>
     <div id="tb-group-body"></div>
   </div>
@@ -6047,7 +6047,7 @@ def build_trademachine() -> str:
         f'<span class="section-sub">One currency of {_gl("surplus_value", "surplus")}: '
         'prospects on eFV, MLB players on projections, and a debuted player no projection prices on his '
         'locked eFV backgrade (registry row xfv_backgrade, provisional)</span></div>'
-        + _TRADE_MACHINE_BODY +
+        + _TRADE_MACHINE_BODY.replace("{_ICO_CLOSE}", _ico("close", 12)) +
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
@@ -8762,7 +8762,8 @@ def _initials(name: str) -> str:
 
 
 # Social marks on a card back: third-party brand glyphs, drawn as given (the
-# pixel set never redraws a third-party mark), riding currentColor.
+# pixel set never redraws a third-party mark), riding currentColor. The two
+# marks that are not a brand (web, mail) are pixel icons (PX_SYSTEM_SWEEP).
 _SOC_SVG = {
     "x": ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 '
           '8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 '
@@ -8771,11 +8772,7 @@ _SOC_SVG = {
                  '0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
                  '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 '
                  '0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>'),
-    "web": ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.93 '
-            '9h-3.46a15.6 15.6 0 0 0-1.21-5.07A8.03 8.03 0 0 1 19.93 11zM12 4.06c.93 1.28 1.85 3.7 2.16 '
-            '6.94H9.84c.31-3.24 1.23-5.66 2.16-6.94zM4.07 13h3.46c.18 1.85.6 3.6 1.21 5.07A8.03 8.03 0 0 1 4.07 '
-            '13zm3.46-2H4.07a8.03 8.03 0 0 1 4.67-5.07A15.6 15.6 0 0 0 7.53 11zM12 19.94c-.93-1.28-1.85-3.7-2.16-6.94h4.32c-.31 '
-            '3.24-1.23 5.66-2.16 6.94zm3.26-1.87c.61-1.47 1.03-3.22 1.21-5.07h3.46a8.03 8.03 0 0 1-4.67 5.07z"/></svg>'),
+    "web": _ico("web", 12),
     "github": ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 '
                '9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 '
                '18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 '
@@ -8784,8 +8781,7 @@ _SOC_SVG = {
                '2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 '
                '3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 '
                '22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>'),
-    "mail": ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 '
-             '2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>'),
+    "mail": _ico("mail", 12),
 }
 
 

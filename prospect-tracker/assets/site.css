@@ -1012,6 +1012,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   /* Touch targets: every top-bar control (search / watchlist / theme) and
      the hamburger meet the 44px minimum tap size. */
   .eephus-nav .eephus-nav-ctrl { padding: 0 10px; min-height: 44px; min-width: 44px; justify-content: center; }
+  .eephus-nav .eephus-nav-toggle .ico { display: block; }
   .eephus-nav .eephus-nav-toggle {
     display: inline-flex; align-items: center; justify-content: center;
     width: 44px; height: 44px; flex: none;
@@ -1746,15 +1747,15 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   border: 1px solid var(--border); background: var(--bg-secondary);
   color: var(--text-secondary);
   /* anchors in the chip row (the Glossary link) read EXACTLY like the
-     view chips - same box, no underline, glyph accent (the § the site
-     uses for the glossary module). */
+     view chips - same box, no underline, the Library's pixel icon before the
+     word (PX_SYSTEM_SWEEP; it was a gold section sign). */
   text-decoration: none; display: inline-block;
 }
 .fa-app button.chip:hover, .fa-app a.chip:hover {
   background: var(--bg-tertiary); color: var(--text-primary);
   border-color: var(--text-tertiary);
 }
-.fa-app a.chip .chip-glyph { color: var(--text-gold); margin-right: 4px; font-weight: 700; }
+.fa-app a.chip .chip-glyph { display: inline-flex; vertical-align: -2px; margin-right: 4px; }
 .fa-app button.chip.active {
   background: var(--bg-secondary); color: var(--text-primary);
   border-color: var(--accent-gold); font-weight: 700;
@@ -3586,7 +3587,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
       margin-bottom: 10px;
       scroll-margin-top: 80px; }
 .gl-app .glossary-card.is-highlighted {
-      animation: glossary-highlight 1.8s ease-out; }
+      animation: glossary-highlight 1.8s steps(4, end); }
 @keyframes glossary-highlight {
       0%   { background: rgba(143, 205, 245, 0.25); }
       100% { background: var(--bg-secondary); }
@@ -3903,11 +3904,11 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   cursor: pointer; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
 .egfx-btn:hover { border-color: var(--accent-cyan); }
 .egfx-btn-primary { background: var(--accent-cyan); color: var(--bg-primary); border-color: var(--accent-cyan); }
-.egfx-chip-glyph { margin-right: 5px; opacity: .8; }
+.egfx-chip-glyph { display: inline-flex; vertical-align: -2px; margin-right: 5px; opacity: .8; }
 .egfx-flash { position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%);
   background: var(--text-primary); color: var(--bg-primary); font-family: var(--font-retro-mono);
   font-size: 11px; font-weight: 700; padding: 6px 12px; opacity: 0;
-  pointer-events: none; transition: opacity .2s; }
+  pointer-events: none; transition: opacity .2s steps(4, start); }
 .egfx-flash.is-show { opacity: 1; }
 
 /* ---- MLB player pages (/projections/#player=) ---- */
@@ -4247,7 +4248,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   padding: 7px 13px; border-left: 1px solid var(--border);
 }
 .hub-chip:first-child { border-left: none; }
-.hub-chip .hub-glyph { color: var(--text-gold); font-weight: 700; }
+.hub-chip .hub-glyph { display: inline-flex; color: inherit; }
 .hub-chip .hub-note {
   font-size: 10px; font-weight: 600; letter-spacing: .03em;
   color: var(--text-tertiary); text-transform: lowercase;

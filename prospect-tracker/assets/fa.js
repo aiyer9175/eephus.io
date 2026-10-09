@@ -353,7 +353,7 @@
         const on = state.view === k;
         return `<button type="button" class="chip${on ? " active" : ""}" data-fa-view="${k}" role="tab" aria-selected="${on}" aria-controls="fa-rows">${label}</button>`;
       }).join("") + `</span>`
-      + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Free Agency terms in the Library"><span class="chip-glyph" aria-hidden="true">§</span>Library</a>`;
+      + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Free Agency terms in the Library"><span class="chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("library", 12) : ""}</span>Library</a>`;
     chips.querySelectorAll("[data-fa-view]").forEach(b => b.onclick = () => {
       state.view = b.dataset.faView; state.player = null; syncToURL(); render();
     });
@@ -409,7 +409,7 @@
       ? `<div class="fa-cba-note">&#9432; ${state.classYear - 1}-${String(state.classYear).slice(2)} is a projected class: contract-expiry members with option and QO statuses, priced at that winter's ex-ante <span data-gl="winter_dpw">$/WAR</span>. No signings yet.</div>`
       : "";
     banner.innerHTML = futureNote + (cls.cba_carry_forward
-      ? `<div class="fa-cba-note">&#9888; CBA past 2026-12-01 <span data-gl="cba_carry_forward">carried forward</span>: thresholds and QO values not yet bargained.</div>`
+      ? `<div class="fa-cba-note">${window.EephusIco ? window.EephusIco("warn", 12) : ""} CBA past 2026-12-01 <span data-gl="cba_carry_forward">carried forward</span>: thresholds and QO values not yet bargained.</div>`
       : "") + freshnessLine(meta);
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(banner);
     if (state.player) { renderPlayer(rows, cls, state.player); }
@@ -559,7 +559,7 @@
   // Disclosure badges - the model's weak spots are surfaced, never hidden.
   function thinBadge(m) {
     return m.thinPlatform
-      ? ` <span class="fa-thin" title="${esc(m.thinPlatform)}. Low-confidence projection; the market line inherits it.">&#9888;</span>` : "";
+      ? ` <span class="fa-thin" title="${esc(m.thinPlatform)}. Low-confidence projection; the market line inherits it.">${window.EephusIco ? window.EephusIco("warn", 12) : ""}</span>` : "";
   }
 
   function freshnessLine(meta) {
@@ -580,7 +580,7 @@
       return `<div class="fa-note fa-sources" title="Sources (${esc(each)}) last checked successfully ${esc(String(dates[0]))}, not the page build date. A quiet market counts as checked; a source that stopped parsing does not.">${meta.generated_at ? `as of ${esc(String(meta.generated_at))} &middot; ` : ""}sources ${esc(String(dates[0]))}</div>`;
     }
     const parts = Object.entries(src).map(([k, d]) =>
-      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last confirmed ${d}, more than 14 days ago.">&#9888; stale</span>` : ""}`);
+      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last confirmed ${d}, more than 14 days ago.">${window.EephusIco ? window.EephusIco("warn", 12) : ""} stale</span>` : ""}`);
     return `<div class="fa-note fa-sources" title="Date each source was last checked successfully, not the page build date. A quiet market counts as checked; a source that stopped parsing does not.">${gen ? gen + " &middot; " : ""}sources: ${parts.join(" &middot; ")}</div>`;
   }
 
@@ -1199,7 +1199,7 @@
         `<option value="${k}"${sortKey === k ? " selected" : ""}>${esc(FA_SORT_LBL[k] || k)}</option>`).join("")}${extraOpt}</select>
       <button type="button" class="chip" id="fa-sort-dir" aria-label="Reverse sort">${arrow} ${dirWord}</button></span>
       <button type="button" class="chip fa-filter-toggle" id="fa-filter-toggle" aria-controls="fa-filter-bar" aria-expanded="${faFiltersOpen}">Filters${nFilt ? ` &middot; ${nFilt}` : ""}</button>
-      <button type="button" class="chip egfx-chip" id="fa-gfx-btn" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
+      <button type="button" class="chip egfx-chip" id="fa-gfx-btn" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("gfx", 12) : ""}</span>Generate GFX</button></div>`;
     const filterBar = `<div class="fa-filter-bar${faFiltersOpen ? " is-open" : ""}" id="fa-filter-bar">
       <span class="filter-label">Type</span>
       ${fchip("type", "all", "All", boardState.type === "all")}
@@ -1631,7 +1631,7 @@
     }).join("");
     const remaining = cls.members.filter(m => m.status !== "signed" && m.status !== "option_exercised" && m.projGuar != null).slice(0, 10);
     const trackerGfx = scored.length
-      ? ` &middot; <button class="chip egfx-chip" id="fa-tracker-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>`
+      ? ` &middot; <button class="chip egfx-chip" id="fa-tracker-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("gfx", 12) : ""}</span>Generate GFX</button>`
       : "";
     const trackerMain = `${sigRows ? `<table class="detail-table">
         <thead><tr><th><span data-gl="first_seen_dates">Seen</span></th><th>Player</th><th>From &rarr; To</th><th>Actual</th><th><span data-gl="m_guarantee">Predicted</span></th><th>&Delta; Guar</th><th><span data-gl="deal_plus">Deal+</span> real</th></tr></thead>
@@ -1841,7 +1841,7 @@
         <div class="mlbp-hero-main">
           <div class="mlbp-name">${clubA(m.from, teamLogo(m.from), { mark: true })}<h2>${esc(m.name)}</h2></div>
           <div class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? "age " + Math.floor(m.age) : "?"} &middot; ${clubLink(m.from)}${handLabel(m) ? " &middot; " + esc(handLabel(m)) : ""} &middot; ${statusChip(m)}</div>
-          <div style="margin-top:8px;"><button class="chip egfx-chip" id="fa-player-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
+          <div style="margin-top:8px;"><button class="chip egfx-chip" id="fa-player-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("gfx", 12) : ""}</span>Generate GFX</button></div>
         </div>
         <div class="mlbp-tiles">
           ${m.projGuar != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">projected</span><span class="mlbp-tile-val">${m.projYears != null ? m.projYears + "y" : "?"} / ${money(m.projGuar)}</span></div>` : ""}
@@ -1849,7 +1849,7 @@
           ${m.dealPlus != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">Deal+</span><span class="mlbp-tile-val">${Math.round(m.dealPlus)}</span></div>` : ""}
         </div>
       </div>
-      ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; <span data-gl="thin_platform">Thin platform</span>: ${esc(m.thinPlatform)}. The projection and every price built on it are low-confidence.</div>` : ""}
+      ${m.thinPlatform ? `<div class="fa-cba-note">${window.EephusIco ? window.EephusIco("warn", 12) : ""} <span data-gl="thin_platform">Thin platform</span>: ${esc(m.thinPlatform)}. The projection and every price built on it are low-confidence.</div>` : ""}
       ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${strip}${tabBody}`;
     bindFaCardTabs(rows, m);

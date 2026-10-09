@@ -804,7 +804,7 @@
   // the FA module's glossary link, deep-linked to the Platform & Methodology
   // group). Rendered into the filter bar on every view so switching is one
   // click and the glossary is always at hand.
-  const GLOSSARY_CHIP = ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Platform & Methodology")}" title="Projection and methodology terms in the Library"><span class="chip-glyph" aria-hidden="true">§</span>Library</a>`;
+  const GLOSSARY_CHIP = ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Platform & Methodology")}" title="Projection and methodology terms in the Library"><span class="chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("library", 12) : ""}</span>Library</a>`;
   function viewChips(active) {
     const c = (v, label, title) =>
       `<button class="chip${active === v ? " active" : ""}" data-pv="${v}"${title ? ` title="${esc(title)}"` : ""}>${label}</button>`;
@@ -831,7 +831,7 @@
     banner.innerHTML = `<div class="fa-note fa-sources">
       ${first}-${last} projected <span data-gl="war">WAR</span> (fWAR basis) &middot; ${DATA.n_vets} veterans, ${DATA.n_prospects} prospects
       &middot; <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.generated_at ? ` &middot; data as of ${esc(String(DATA.generated_at))}` : ""}
-      &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
+      &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("gfx", 12) : ""}</span>Generate GFX</button></div>
       <details class="proj-how"><summary class="fa-sub">How this works</summary><div class="fa-note">
       Veterans: proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion.${projGateSentence()}${faGateClause()}
       Prospects: <span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA.
@@ -939,7 +939,7 @@
         + ` &middot; <span data-gl="forward_gate">forward gate</span> on Model Accountability`;
       banner.innerHTML = `<div class="fa-note fa-sources">
         ${frame}${DATA.generated_at ? ` &middot; data as of ${esc(String(DATA.generated_at))}` : ""}
-        &middot; <button class="chip egfx-chip" id="proj-teams-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
+        &middot; <button class="chip egfx-chip" id="proj-teams-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("gfx", 12) : ""}</span>Generate GFX</button></div>`;
       const tgfx = document.getElementById("proj-teams-gfx");
       if (tgfx) tgfx.onclick = () => {
         if (window.EEPHUS_GFX && rows.length) window.EEPHUS_GFX.open(_teamOutlookBoardSpec(rows));
@@ -1917,7 +1917,7 @@
       const age = m.age != null ? Math.floor(m.age) : EM_DASH;
       const inCmp = state.cmp.includes(m.key);
       const open = OPEN.has(m.key);
-      const cmpBtn = `<button type="button" class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" aria-pressed="${inCmp}" aria-label="Compare ${esc(m.name)}" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}">⇄</button>`;
+      const cmpBtn = `<button type="button" class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" aria-pressed="${inCmp}" aria-label="Compare ${esc(m.name)}" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}">${window.EephusIco ? window.EephusIco("compare", 12) : ""}</button>`;
       const xpBtn = `<button type="button" class="proj-xp-btn" data-xp-key="${esc(m.key)}" aria-expanded="${open}"${open ? ` aria-controls="projd-${esc(m.key)}"` : ""} aria-label="Details: ${esc(m.name)}" title="Details">▾</button>`;
       // Sub line: position and team as TEXT (the CSV and a screen reader get
       // the org), then the facts whose columns fold at narrow widths (CSS shows
@@ -2165,7 +2165,7 @@
     if (banner) banner.innerHTML = "";
     const a = findRow(state.cmp[0]), b = findRow(state.cmp[1]);
     bar.innerHTML = `<a class="chip" href="#" id="cmp-back">← back to projections</a>
-      <button class="chip egfx-chip" id="cmp-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>`;
+      <button class="chip egfx-chip" id="cmp-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("gfx", 12) : ""}</span>Generate GFX</button>`;
     document.getElementById("cmp-back").onclick = (e) => {
       e.preventDefault(); state.cmp = []; syncToURL(); render();
     };
@@ -3745,7 +3745,7 @@
           <div class="mlbp-name">${clubA(p.team, teamLogo(p.team), { mark: true })}<h2>${esc(p.name || key)}</h2></div>
           <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${clubA(p.team, esc(p.team), { cls: "fa-player-link" })}` : " · FA"} · ${contract}</div>
           ${originLine}
-          <div class="mlbp-hero-actions"><button class="chip egfx-chip" id="mlbp-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}">&#8646; Trade Machine</a>` : ""}</div>
+          <div class="mlbp-hero-actions"><button class="chip egfx-chip" id="mlbp-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("gfx", 12) : ""}</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}">${window.EephusIco ? window.EephusIco("trademachine", 12) : ""} Trade Machine</a>` : ""}</div>
         </div>
         <div class="mlbp-tiles">${heroTiles(p)}${salaryStripHtml(p.proj, { cls: "mlbp-sp" })}</div>
       </div>

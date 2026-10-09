@@ -744,7 +744,7 @@ function renderLeaderboard() {
       </select>
       ${qualifierControl(qual)}
       <button class="control-button" type="button" data-reset>Reset</button>
-      <button class="chip egfx-chip" id="cs-lb-gfx" title="Share graphic of this view"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>
+      <button class="chip egfx-chip" id="cs-lb-gfx" title="Share graphic of this view"><span class="egfx-chip-glyph" aria-hidden="true">${window.EephusIco ? window.EephusIco("gfx", 12) : ""}</span>Generate GFX</button>
     </section>
     <p class="note-line">${filtered.length.toLocaleString()} pitcher${filtered.length === 1 ? "" : "s"}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ and percentiles compare against the whole ${state.year} pool.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
     <p class="note-line cs-stamp">${escapeHtml(dataStamp())}</p>
@@ -1306,7 +1306,7 @@ function renderPitcher(pitcher) {
         ${teamBadge(pitcher, "large")}
         <div class="profile-title">
           <a class="pill" href="#/">Back to leaderboard</a>
-          <button class="pill" id="cs-share" type="button" title="Download this profile as a PNG share card">&#8681; share card</button>
+          <button class="pill" id="cs-share" type="button" title="Download this profile as a PNG share card">${window.EephusIco ? window.EephusIco("gfx", 12) : ""} share card</button>
           <h1>${escapeHtml(displayName(pitcher.pitcher_name))}</h1>
           <div class="profile-team">${teamBadge(pitcher, "mini")}<span>${escapeHtml(formatTeamName(pitcher.team))}</span>${plusPill(state.csPlus && state.csPlus.get(pitcher.slug), "CS+")}${playerSeasons(pitcher)}</div>
           <p>${escapeHtml(profileSummaryText())}</p>

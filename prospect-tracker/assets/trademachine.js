@@ -1110,7 +1110,7 @@ function _tbWorryBadge(w) {
   if (!w || w.score < 0.15) return "";
   const label = w.type === "approach" ? "approach" : w.type === "contact_quality" ? "contact" : "skills";
   const col = w.score > 0.5 ? "var(--neon-red)" : "var(--text-amber)";
-  return `<span style="font-size:10px;color:${col}" title="Worriedness ${(w.score*100).toFixed(0)}% - ${label} signal">⚠ ${label}</span>`;
+  return `<span style="font-size:10px;color:${col}" title="Worriedness ${(w.score*100).toFixed(0)}% - ${label} signal">${window.EephusIco ? window.EephusIco("warn", 12) : ""} ${label}</span>`;
 }
 // § CRUNCH chip: flags roster-decision exposure (Rule 5 must-protect, out of
 // options on the 40-man). Reads the compact crunch sub-dict on each board row.
@@ -1463,7 +1463,7 @@ function _renderTBRows() {
     // Signals: status badge + ceiling flag + injury warning + GRPO breakout badge.
     let signals = `<span style="color:${statusCol};font-size:10px;">${statusLbl}</span>`;
     if (flash.is_bimodal) signals += ` <span style="color:var(--card-gold);font-size:10px;" title="Ceiling player (p_click=${flash.p_click})">↑</span>`;
-    if (injD > 0.05)      signals += ` <span style="color:var(--neon-red);font-size:10px;" title="Injury discount ${(injD*100).toFixed(0)}%">⚕</span>`;
+    if (injD > 0.05)      signals += ` <span style="color:var(--neon-red);font-size:10px;" title="Injury discount ${(injD*100).toFixed(0)}%">${window.EephusIco ? window.EephusIco("ev-il", 12) : ""}</span>`;
     signals += _tbCrunchChip(p.crunch);
     // BASIS CHIP. This row asked for an eFV backgrade and did not get one: it
     // has no salary on file, so there is nothing to price a control window over

@@ -384,3 +384,24 @@ def test_the_untyped_ticker_glyph_keeps_the_panel_ink_and_no_family_is_gold():
     assert m and "color: inherit" in m.group(1)
     fam_rules = re.findall(r"\[data-fam=\"\w+\"\][^{]*\{([^}]*)\}", css)
     assert fam_rules and not any("gold" in r for r in fam_rules)
+
+# PX_SYSTEM_SWEEP (docs/pixel/PX_SWEEP_2026-10.md): the MLB news family
+# pictograms of the site-pass plan 3.3 (HOME_7 swaps them into _WIRE_TYPES)
+# and the controls that drew a unicode glyph or emoji before the sweep.
+SWEEP_WIRE_KEYS = ("ev-mlb", "ev-callup", "ev-dfa", "ev-claim", "ev-release", "ev-retire",
+                   "ev-suspend", "ev-award", "ev-option", "ev-qo", "ev-il-off")
+SWEEP_UI_KEYS = ("gfx", "export", "link", "account", "close", "reset", "menu", "watch-off",
+                 "compare", "hourglass", "lock", "warn", "web", "mail")
+
+
+@pytest.mark.parametrize("key", SWEEP_WIRE_KEYS + SWEEP_UI_KEYS)
+def test_every_sweep_key_is_drawn_and_served(key):
+    sprite = _src("assets/eephus-icons.svg")
+    assert key in B.ICON_KEYS, key
+    assert f'<symbol id="i-{key}"' in sprite, key
+    for size in (12, 16, 24, 32):
+        assert _icons(B._ico(key, size)) == [(size, key)]
+
+
+def test_the_draft_and_intl_aliases_resolve_to_their_tab_drawings():
+    assert B.ICON_FOR["ev-draft"] == "px-draft" and B.ICON_FOR["ev-intl"] == "px-intl"

@@ -746,7 +746,8 @@
     chip.type = "button";
     chip.setAttribute("aria-label", kind === "chart" ? "Export chart" : "Copy or export table");
     chip.title = chip.getAttribute("aria-label");
-    chip.innerHTML = '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M10 1H3a1 1 0 0 0-1 1v9h1.5V2.5H10V1zm2.5 2.5H6a1 1 0 0 0-1 1V14a1 1 0 0 0 1 1h6.5a1 1 0 0 0 1-1V4.5a1 1 0 0 0-1-1zm-.5 10H6.5v-8.5H12V13.5z"/></svg>';
+    // The pixel export icon (PX_SYSTEM_SWEEP) replaces the vector copy glyph.
+    chip.innerHTML = window.EephusIco ? window.EephusIco("export", 12) : "";
     chip.addEventListener("click", function (e) {
       e.preventDefault(); e.stopPropagation();
       if (EephusExport._menu) { closeMenu(); return; }
@@ -807,7 +808,7 @@
     css.textContent = [
       ".eephus-exportable{ }",
       // quiet chip: low-opacity, top-right, brightens on host hover / focus
-      ".eephus-export-chip{position:absolute;top:4px;right:4px;z-index:6;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;cursor:pointer;color:var(--text-tertiary,#777);background:var(--bg-secondary,#fff);border:1px solid var(--border,#ccc);border-radius:0;opacity:0;transition:opacity .12s ease,color .12s ease,border-color .12s ease;}",
+      ".eephus-export-chip{position:absolute;top:4px;right:4px;z-index:6;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;cursor:pointer;color:var(--text-tertiary,#777);background:var(--bg-secondary,#fff);border:1px solid var(--border,#ccc);border-radius:0;opacity:0;transition:opacity .12s steps(3,start),color .12s steps(3,start),border-color .12s steps(3,start);}",
       ".eephus-exportable:hover > .eephus-export-chip,.eephus-export-chip:focus-visible{opacity:.85;}",
       ".eephus-export-chip:hover{opacity:1;color:var(--accent-lilac,#6E56CF);border-color:var(--accent-lilac,#6E56CF);}",
       // the chip (22 px wide at right:4px) sits over the right end of the header
@@ -822,9 +823,10 @@
       ".ex-menu-item:hover{background:var(--bg-hover,rgba(0,0,0,.05));color:var(--accent-lilac,#6E56CF);}",
       ".ex-menu-item small{color:var(--text-tertiary,#777);font-size:10px;white-space:nowrap;}",
       ".ex-menu-sep{height:1px;background:var(--border-light,#eee);margin:4px 2px;}",
-      ".eephus-export-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);z-index:10000;background:var(--bg-header,#0E2B4D);color:var(--text-on-accent,#fff);font-family:var(--font-retro,monospace);font-size:12.5px;padding:9px 16px;border:1px solid var(--accent-lilac,#6E56CF);opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;}",
+      ".eephus-export-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);z-index:10000;background:var(--bg-header,#0E2B4D);color:var(--text-on-accent,#fff);font-family:var(--font-retro,monospace);font-size:12.5px;padding:9px 16px;border:1px solid var(--accent-lilac,#6E56CF);opacity:0;pointer-events:none;transition:opacity .15s steps(4,start),transform .15s steps(4,start);}",
       ".eephus-export-toast.is-on{opacity:1;transform:translateX(-50%) translateY(0);}",
-      /* the .15 s chip and toast transitions run under Reduce Motion too (owner, 2026-10-01) */
+      /* the chip and toast step in whole frames (PX_SYSTEM_SWEEP, the lamp idiom: the toast rises 8 px in
+         four 2 px steps, the first at once) and run under Reduce Motion too (owner, 2026-10-01) */
     ].join("\n");
     document.head.appendChild(css);
   }
