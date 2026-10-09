@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**347 models.** Verdicts: validated: 54, provisional: 158, unvalidated: 47, deprecated: 88.
+**348 models.** Verdicts: validated: 54, provisional: 158, unvalidated: 48, deprecated: 88.
 
 ## Instrument boundary
 
@@ -366,6 +366,7 @@ can be measured.
 | `cots_deferral_check` | Measurement only: every deferred signing found on the Cot's Contracts club sheets, matched against the curated deferral ledger; a coverage list, not a model. | data/cots_deferral_check.json (no served page) | Nothing. Lists deferred signings in the capture with no entry in data/deferrals.json, and ledger entries that say no deferral w... | tools/ingest_cots.py: one scripted capture of the 30 club sheets (owner answe... | n/a: a descriptive coverage check (the leverage_board precedent), not a predi... | descriptive; counts of deferred signings, of those with a ledger entry, and o... | **provisional** | - | - | no |
 | `service_time` | Provisional: service days counted from MLB transactions miss published service time by 10.21 days on average over 563 holdout player-seasons; 93.8% agree on rounded years. | roster_status.service_years_decimal on the PROSPX debuted... | MLB service time (days, 172 = one year) at a date, from the transaction history with the CBA day count | service_time.py state machine over the StatsAPI transaction feed merged with... | none served before: service_years_decimal was never written, so every graduat... | MAE in days and rounded-year agreement against MLB Trade Rumors published ser... | **provisional** | `data/service_time_eval.json` | 0 | no |
 | `starter_workload_xouts` | Registered, not run: expected outs and pitches per start for a listed starter, read once on 2024-2025 corpus starts against the served props length. | No surface: nothing served reads it; the stage-1 lab tool... | The listed starter's outs recorded in a start (primary) and pitches thrown (secondary): xouts = min(27, budget / (ppo x r_L)),... | the candidate of docs/diamond-betting.md section 'Starter workload: expected... | A0, the served props length: 3 x clip(season-to-date IP / GS over all appeara... | Registered, not computed: paired outs MAE(A0) minus MAE(candidate) pooled ove... | **unvalidated** | - | - | no |
+| `efv_surplus_from_served_odds` | Not served. Its one read, a FAIL on coverage, is void: the owner ruled the frame substituted. A new registration names another frame. | None served: a registered challenger for the PROSPX eFV s... | Realized control-window surplus of a resolved prospect, as the eFV surplus mean and fan drawn from the row's served outcome odds | none - the incumbent prices the fan from the curve at the display grade; the... | The served incumbent pricing on the same rows, same display grade and dollar map | Pooled PIT coverage of the 10 to 90 band, bias and slope of realized on predi... | **unvalidated** | - | - | - |
 
 Stored problems at last refresh: none.
 

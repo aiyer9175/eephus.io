@@ -6170,6 +6170,19 @@
    "notes": "Registered 2026-10-08 (Q10_04a, checklist PM-08) with the lab code, per docs/diamond-betting.md section 'Starter workload: expected outs and pitches per start' (pre-registered 2026-09-30, plan candidate N6(d), owner ask 16). The lab tools/starter_workload_lab.py and its test test_starter_workload_lab.py are built and tested on fixtures only; no corpus row was read and no number exists. Stage 1 runs once (task Q10_04b), not before 2026-10-11 (the owner's PM-Q3 answer), never on another gate's look day, on .cache/pbp_corpus seasons 2018, 2019 and 2021-2025 and never a 2026 game. The run commit sets eval_artifact to data/starter_workload_eval.json and the verdict: PASS gives provisional (dark), FAIL or PASS-BELOW-FLOOR gives deprecated. A stage-1 PASS licenses nothing served: no props or price change exists before the stage-2 moneyline look (not before 2027-07-01).",
    "last_checked": "2026-10-08",
    "stale": false
+   },
+   {
+   "model_id": "efv_surplus_from_served_odds",
+   "summary": "Not served. Its one read, a FAIL on coverage, is void: the owner ruled the frame substituted. A new registration names another frame.",
+   "surface": "None served: a registered challenger for the PROSPX eFV surplus fan on graduate and bust cards; efv_score.SURPLUS_FROM_SERVED_ODDS_DEFAULT stays False",
+   "predicts": "Realized control-window surplus of a resolved prospect, as the eFV surplus mean and fan drawn from the row's served outcome odds",
+   "champion": "none - the incumbent prices the fan from the curve at the display grade; the candidate draws it from the served odds vector, bucket dollar values held",
+   "baseline": "The served incumbent pricing on the same rows, same display grade and dollar map",
+   "metric": "Pooled PIT coverage of the 10 to 90 band, bias and slope of realized on predicted, player-clustered paired bootstrap; no statistic by FV cell",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "void (owner 2026-09-30, frame substituted)",
+   "notes": "Owner answer VAL3-Q3 (b), 2026-09-30 (DECISIONS_FOR_OWNER.md): the one read of docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md (registration fc90703d, build 79a637e3, read 27ee25f9, FAIL on G2 coverage 0.7401 against 0.7544) is VOID because its frame was substituted: the task named surplus_backtest_real's resolved listing cohorts and the read ran on the eFV resolved matrix forward-chained over decision years 2016-2019. The void read adjudicates nothing; its block stays in data/surplus_backtest_real.json as a record with void true, and that frame is spent for this candidate. efv_score.SURPLUS_FROM_SERVED_ODDS_DEFAULT stays False; nothing served moves. VAL_3 created no registry row, so this row is new (2026-10-08); its verdict is unvalidated because the verdict enum has no void value and a void read leaves no measurement, and eval_artifact stays null until a valid read. A new registration on another frame follows in its own commit (docs/efv-2026-09-25/SURPLUS_ODDS_GATE_2.md)."
   }
  ],
  "problems": []
