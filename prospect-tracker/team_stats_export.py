@@ -54,10 +54,14 @@ TENDENCIES. Copied unchanged from management_board.json (clubs.rows and
 teams.rows) with that module's own sentences. Style z columns carry no value
 colour and no plus sign; realized columns keep their family floors.
 
-F-SCORE HOOK (8.E). When data/fscore.json exists (the F-SCORE plan's FS-2)
-each club's score, letter and rank are copied verbatim into `fscore`; until
-then the payload says the join is pending. Whichever of this task and FS-2
-lands second wires the page column.
+F-SCORE HOOK (8.E, orchestrator ruling X13). ONE column per club: while
+fscore_export.FSCORE_LIVE is True and data/fscore.json exists, each club's
+score, letter and rank are copied verbatim into `fscore`, and nothing else of
+F-SCORE joins (no division-title field, no pillar, no per-season value).
+While the flag is False the payload carries the pending note only, byte for
+byte what it carried before the join was wired. The nightly writes this
+payload in its own step right after the F-SCORE step (run_daily 6b7h), so the
+copy is never a night old.
 
 THE FLAG. league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE. While it is False the
 file goes to .cache/league_teams/preview/ and nothing under data/ changes
@@ -676,11 +680,22 @@ def tendencies(season: int, data_dir: Optional[Path] = None) -> tuple[dict, dict
     return out, sentences
 
 
-def fscore_join(data_dir: Optional[Path] = None) -> tuple[Optional[dict], dict]:
-    """({club: {score, letter, rank}} copied verbatim, meta) when data/fscore.json
-    exists (F-SCORE FS-2); (None, the pending note) until then."""
+def _fscore_live() -> bool:
+    try:
+        import fscore_export
+    except Exception:                                   # noqa: BLE001
+        return False
+    return bool(fscore_export.FSCORE_LIVE)
+
+
+def fscore_join(data_dir: Optional[Path] = None,
+                live: Optional[bool] = None) -> tuple[Optional[dict], dict]:
+    """({club: {score, letter, rank}} copied verbatim, meta) when F-SCORE is
+    live (fscore_export.FSCORE_LIVE, or `live`) and data/fscore.json exists;
+    (None, the pending note) otherwise. Only FSCORE_KEYS cross."""
+    live = _fscore_live() if live is None else bool(live)
     p = Path(data_dir or DATA_DIR) / "fscore.json"
-    blob = _read_json(p)
+    blob = _read_json(p) if live else None
     if not isinstance(blob, dict):
         return None, {"joined": False,
                       "note": "data/fscore.json is not on disk yet; the F-SCORE column "

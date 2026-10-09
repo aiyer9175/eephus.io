@@ -417,20 +417,49 @@ def test_history_covers_the_completed_seasons_on_the_earned_basis(doc):
     assert h["seasons"]["2000"]["index_basis"] is None
 
 
-def test_fscore_join_copies_verbatim_or_says_it_is_pending(tmp_path):
-    rows, meta = T.fscore_join(tmp_path)
-    assert rows is None and meta["joined"] is False
-    blob = {"generated_at": "x", "as_of": "2026-09-30",
-            "clubs": {"LAD": {"score": 127.7, "rank": 1, "letter": "A+", "raw": 0.3},
+PENDING_NOTE = {"joined": False,
+                "note": "data/fscore.json is not on disk yet; the F-SCORE column joins here "
+                        "verbatim once FS-2 lands"}
+
+
+def _fscore_blob():
+    return {"generated_at": "x", "as_of": "2026-09-30",
+            "clubs": {"LAD": {"score": 127.7, "rank": 1, "letter": "A+", "raw": 0.3,
+                              "pillars": {"results": {"z": 2.7, "score": 127.0}},
+                              "counts": {"division_titles": 6, "titles": 3, "pennants": 3},
+                              "seasons": [[2024, 98, 64, 156, 1, 5, 3, 56.2, 0.16, 0.0, False, "x"]]},
                       "CWS": {"score": 81.0, "rank": 29, "letter": "D"}}}
+
+
+def test_fscore_join_copies_verbatim_or_says_it_is_pending(tmp_path):
+    """On fixtures (FS_2A, ruling X13): live, the join copies score, letter and
+    rank and nothing else; dark, the pending note, byte for byte as before."""
+    rows, meta = T.fscore_join(tmp_path, live=True)
+    assert rows is None and meta == PENDING_NOTE
+    blob = _fscore_blob()
     (tmp_path / "fscore.json").write_text(json.dumps(blob), encoding="utf-8")
-    rows, meta = T.fscore_join(tmp_path)
+    rows, meta = T.fscore_join(tmp_path, live=True)
     assert meta["joined"] is True and meta["n"] == 2
     assert rows["LAD"] == {"score": 127.7, "letter": "A+", "rank": 1}
     assert rows["CHW"] == {"score": 81.0, "letter": "D", "rank": 29}
     for club, v in rows.items():
         src = blob["clubs"]["CWS" if club == "CHW" else club]
+        assert set(v) == set(T.FSCORE_KEYS) == {"score", "letter", "rank"}
         assert all(v[k] == src[k] for k in T.FSCORE_KEYS)
+    txt = json.dumps(rows).lower()
+    for k in ("division", "div_", "pillar", "season", "titles", "pennants", "counts", "raw"):
+        assert k not in txt, k
+
+
+def test_fscore_join_is_dark_while_the_flag_is_off(tmp_path, monkeypatch):
+    import fscore_export
+    (tmp_path / "fscore.json").write_text(json.dumps(_fscore_blob()), encoding="utf-8")
+    assert fscore_export.FSCORE_LIVE is False
+    assert T.fscore_join(tmp_path) == (None, PENDING_NOTE)
+    assert T.fscore_join(tmp_path, live=False) == (None, PENDING_NOTE)
+    monkeypatch.setattr(fscore_export, "FSCORE_LIVE", True)
+    rows, meta = T.fscore_join(tmp_path)
+    assert meta["joined"] is True and rows["LAD"]["score"] == 127.7
 
 
 def test_no_fit_correlation_or_forecast_word(doc):

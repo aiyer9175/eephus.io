@@ -443,6 +443,14 @@ SCHEDULED_EXPORTS = (
     # like a quiet night. Appended BELOW franchise_export on purpose
     # (test_mgmt_export scans a fixed window above mgmt_export).
     "postseason_cache",
+    # F-SCORE (step 6b7g, fscore_export.py): the seven-season franchise score.
+    # The exporter REFUSES (FscoreRefusal) on a missing club, a missing
+    # completed season, a broken bracket or a failed identity and leaves the
+    # previous file on disk, so without this row a refusal never reaches INGEST
+    # RED. While fscore_export.FSCORE_LIVE is False it writes the preview under
+    # .cache/fscore/preview/ only. Appended BELOW postseason_cache on purpose
+    # (test_mgmt_export scans a fixed window above mgmt_export).
+    "fscore_export",
     # THE CLOSE-ODDS CAPTURE. Not an export this pipeline runs at all: it is
     # tools/betting_close_job.py, on its own cron, and that is exactly why it is
     # watched from here. The job exits 0 on every legitimate no-op, so a cron
@@ -1620,15 +1628,18 @@ def _lab_should_skip(artifact: Path, label: str, log: logging.Logger,
 
 
 def _league_teams_payloads(log: logging.Logger, label: str) -> dict:
-    """Plan Part 8 P8.2 (owner asks 13, 14, 15 and 18 of 2026-09-30): the four
-    display-only exporters behind the League, Teams and player-drawer surfaces
-    of /mlbstats/, in their dependency order. league_averages writes the League
+    """Plan Part 8 P8.2 (owner asks 13, 14, 15 and 18 of 2026-09-30): the three
+    display-only exporters behind the League and player-drawer surfaces of
+    /mlbstats/, in their dependency order. league_averages writes the League
     Averages season panels (the live one, plus any completed season missing)
-    and the over-time series; team_stats_export the Team Stats payload;
-    mlbstats_trends_export the drawer's player-season index file;
+    and the over-time series; mlbstats_trends_export the drawer's
+    player-season index file;
     mlbstats_rolling_export the drawer's per-player game files and their index
     (it refuses, keeping its last good files, when the play frame's last game
-    date is more than two days behind the boards' last game date).
+    date is more than two days behind the boards' last game date). The Team
+    Stats payload (team_stats_export) is no longer written here: it runs in
+    run_daily's own step 6b7h right after the F-SCORE step 6b7g (orchestrator
+    ruling X13), so its F-SCORE column is never a night old.
 
     While league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE and
     mlbstats_trends_export.MLBSTATS_DRAWER_LIVE are False every file goes under
@@ -1639,9 +1650,7 @@ def _league_teams_payloads(log: logging.Logger, label: str) -> dict:
     import league_averages
     import mlbstats_rolling_export
     import mlbstats_trends_export
-    import team_stats_export
     for name, fn in (("league_averages", league_averages.export),
-                     ("team_stats_export", team_stats_export.export),
                      ("mlbstats_trends_export", mlbstats_trends_export.export),
                      ("mlbstats_rolling_export", mlbstats_rolling_export.export)):
         try:
@@ -2832,6 +2841,53 @@ def _export_franchise_board(log) -> bool:
             log.exception("franchise export failed - continuing")
             _record_ingest("franchise_export", False, 0,
                            f"franchise export raised: {e}", "mlb", log)
+        return False
+
+
+def _export_fscore(log) -> bool:
+    """Write F-SCORE (the body of nightly step 6b7g): data/fscore.json once
+    fscore_export.FSCORE_LIVE is True, .cache/fscore/preview/fscore.json until
+    then. True on a write. A refusal (a missing club, a missing completed
+    season, a broken bracket, a pillar short of 30 clubs, a failed identity)
+    or a raise leaves the previous file on disk and files a red under
+    "fscore_export"."""
+    try:
+        import fscore_export as _fx
+        _fxd = _fx.build()
+        _fxn = _fx.write(_fxd)
+        _fx_top = min(_fxd["clubs"].items(), key=lambda kv: kv[1]["rank"])
+        _where = "served" if _fx.FSCORE_LIVE else "preview"
+        log.info("fscore (%s): %d clubs, %d bytes; #1 %s %s; OPERATIONS %s",
+                 _where, len(_fxd["clubs"]), _fxn, _fx_top[0], _fx_top[1]["score"],
+                 "live" if _fxd["scheme"]["operations_live"] else "dark")
+        _record_ingest("fscore_export", True, len(_fxd["clubs"]),
+                       f"F-SCORE ({_where})", "mlb", log)
+        return True
+    except Exception as e:                # noqa: BLE001
+        # A refusal is a result, not a crash (the 6b7d idiom): matched by name
+        # so a failed import cannot leave the alias unbound in this clause.
+        if type(e).__name__ == "FscoreRefusal":
+            log.warning("F-SCORE REFUSED: %s; the previous file stands", e)
+            _record_ingest("fscore_export", False, 0, f"fscore export refused: {e}", "mlb", log)
+        else:
+            log.exception("fscore export failed - continuing")
+            _record_ingest("fscore_export", False, 0, f"fscore export raised: {e}", "mlb", log)
+        return False
+
+
+def _export_team_stats(log) -> bool:
+    """Write the Team Stats payload (the body of nightly step 6b7h): the
+    preview while the flag is off. True on a write; a refusal keeps the last
+    good file and a raise is logged, and neither stops the night."""
+    try:
+        import team_stats_export as _tse
+        res = _tse.export(log=log.info) or {}
+        if res.get("refused"):
+            log.warning("team stats REFUSED: %s; the last good file stands", res["refused"])
+            return False
+        return bool(res.get("written"))
+    except Exception:                     # noqa: BLE001
+        log.exception("team stats export failed - its last good file stands - continuing")
         return False
 
 
@@ -4039,9 +4095,10 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # --- 9e-pre0h. League, Team Stats and drawer payloads (dark) --------
         # Plan Part 8 P8.2 (owner asks 13, 14, 15 and 18; task Q8_11). Runs
         # _league_teams_payloads: the League Averages panels and series, the
-        # Team Stats payload, the drawer's player-season index file and its
-        # per-player game files, all under .cache/league_teams/preview/ while
-        # their flags are False. Display only, so placed AFTER the 9e-pre
+        # drawer's player-season index file and its per-player game files, all
+        # under .cache/league_teams/preview/ while their flags are False. The
+        # Team Stats payload moved to step 6b7h (after F-SCORE, ruling X13);
+        # the label keeps its text so the step id other tasks pin stays put. Display only, so placed AFTER the 9e-pre
         # vintage snapshot (no model and no priced cell reads any of it), and
         # after 9e-pre0e, whose open-season corpus refresh and management board
         # the game files and the Team Stats tendencies read. Not an epoch
@@ -4050,7 +4107,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # `chained` skips the night monthly 6b4l built all four. Never aborts.
         with _step("9e-pre0h. League, Team Stats and drawer payloads (league_teams preview)", log):
             # Writes mlb_league_panel_<season>.json, mlb_league_series.json,
-            # mlb_team_stats.json, mlbstats_trends.json, mlbstats_player/ and
+            # mlbstats_trends.json, mlbstats_player/ and
             # mlbstats_player_index.json (the preview directory while dark).
             if chained:
                 log.info("daily: SKIP 9e-pre0h: monthly 6b4l just built the league, "
@@ -4762,6 +4819,35 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             # writes the same rows; only the `built` stamp moves. The comment
             # sits inside the _step body for tools/gen_audit_docs.py.
             _export_source_updates(log)
+
+        # --- 6b7g. F-SCORE board -------------------------------------------
+        with _step("6b7g. F-SCORE board (fscore.json)", log):
+            # F-SCORE, the seven-season franchise score (owner ask B,
+            # 2026-09-30; fscore_export.py). Reads the standings and postseason
+            # caches, the served boards, the cache-only Spotrac payroll reader
+            # and the registry; never a socket. Sits AFTER d10e and the night's
+            # projections and BEFORE 6b7d, whose board embeds it once
+            # fscore_export.FSCORE_LIVE is True; while the flag is False it
+            # writes .cache/fscore/preview/ only and nothing served moves. The
+            # label is the next free 6b7 letter by commit order (6b7f is the
+            # Awards board). A refusal or a raise leaves the previous file on
+            # disk and files a red under "fscore_export" (SCHEDULED_EXPORTS),
+            # the 6b7d idiom. The comment sits inside the _step body for
+            # tools/gen_audit_docs.py.
+            _export_fscore(log)
+
+        # --- 6b7h. Team Stats payload --------------------------------------
+        with _step("6b7h. Team Stats payload (mlb_team_stats.json)", log):
+            # The Teams tab payload (team_stats_export.py, plan Part 8 P8.2),
+            # moved here out of 9e-pre0h and 6b4l by orchestrator ruling X13:
+            # it copies F-SCORE's score, letter and rank, so it runs right
+            # after 6b7g on EVERY night, daily or monthly, and is never skipped
+            # as chained; the last write of the Teams payload always follows
+            # the last fscore_export run. While
+            # league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE is False it writes
+            # .cache/league_teams/preview/ only. A refusal keeps the last good
+            # file; a raise is logged and the night goes on.
+            _export_team_stats(log)
 
         # --- 6b7d. Franchise board ----------------------------------------
         with _step("6b7d. Franchise board (franchise_board.json)", log):
@@ -7221,8 +7307,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.exception("multi-year window lab failed - continuing")
 
         # --- 6b4l. League, Team Stats and drawer payloads (dark) -------------
-        # Plan Part 8 P8.2 (task Q8_11): the four exporters of
-        # _league_teams_payloads, after 6b4k because the drawer's index file
+        # Plan Part 8 P8.2 (task Q8_11): the three exporters of
+        # _league_teams_payloads (the Team Stats payload is written by the
+        # chained daily's step 6b7h, after F-SCORE), after 6b4k because the drawer's index file
         # reads the window lab's memoised season panels and the four boards
         # 6b4 to 6b4i just wrote. On a monthly night the chained daily run
         # skips its 9e-pre0h twin. Writes only under
@@ -7230,7 +7317,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # the vintage snapshot freezes moves. Additive; never aborts.
         with _step("6b4l. League, Team Stats and drawer payloads (league_teams preview)", log):
             # Writes mlb_league_panel_<season>.json, mlb_league_series.json,
-            # mlb_team_stats.json, mlbstats_trends.json, mlbstats_player/ and
+            # mlbstats_trends.json, mlbstats_player/ and
             # mlbstats_player_index.json (the preview directory while dark).
             try:
                 _league_teams_payloads(log, "6b4l")

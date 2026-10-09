@@ -49,7 +49,7 @@ happen inside the called module, so this file alone cannot split them).
 | 9e-pre0e. In-Game Management nightly (management_board.json) | management_baseline.json, management_board.json, management_bunt.json, management_decisions.json, management_running.json |
 | 9e-pre0f. Steal context (management_steal_context.json) | management_steal_context.json, tx_YYYY_MM.json |
 | 9e-pre0g. MLB transaction events (mlb_events preview) | - |
-| 9e-pre0h. League, Team Stats and drawer payloads (league_teams preview) | mlb_league_series.json, mlb_team_stats.json, mlbstats_player_index.json, mlbstats_trends.json |
+| 9e-pre0h. League, Team Stats and drawer payloads (league_teams preview) | mlb_league_series.json, mlbstats_player_index.json, mlbstats_trends.json |
 | 9e-pre-wx. Forecast weather capture (dark, armed) | betting_model_eval.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
 | 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, job_heartbeat.json, slate.json |
@@ -63,6 +63,8 @@ happen inside the called module, so this file alone cannot split them).
 | d10e. Club Ledger board (ledger_board.json) | ledger_board.json |
 | d10f. Postseason bracket simulator (bracket_sim.json) | bracket_sim.json, bracket_sim_record.json, record.json |
 | d10g. Source update dates (source_updates.json) | source_updates.json |
+| 6b7g. F-SCORE board (fscore.json) | fscore.json |
+| 6b7h. Team Stats payload (mlb_team_stats.json) | mlb_team_stats.json |
 | 6b7d. Franchise board (franchise_board.json) | franchise_board.json, franchise_spine.json |
 | d10h. Awards board (awards.json) | awards.json, timeseries.json |
 | d11. Rebuild site (build_site) | pipeline_steps_daily.json, timeseries.json |
@@ -129,7 +131,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4i. Defense Leaderboards (defense_leaderboards.json) | defense_history.json, defense_leaderboards.json, war_leaderboards.json |
 | 6b4j. eWAR Leaderboard (war_leaderboards.json) | war_leaderboards.json |
 | 6b4k. Multi-year windows (mlbstats_window_*.json) | bullpen_leaderboards.json, defense_leaderboards.json, hitter_leaderboards.json, mlbstats_window_l3.json, mlbstats_windows.json, starter_leaderboards.json |
-| 6b4l. League, Team Stats and drawer payloads (league_teams preview) | mlb_league_series.json, mlb_team_stats.json, mlbstats_player_index.json, mlbstats_trends.json |
+| 6b4l. League, Team Stats and drawer payloads (league_teams preview) | mlb_league_series.json, mlbstats_player_index.json, mlbstats_trends.json |
 | 6b5. Alchemy Lab (pal.json) | arbitration.json, pal.json |
 | 6b7. Arbitration Predictor (arbitration.json) | arbitration.json, management_baseline.json, management_decisions.json |
 | 6b7e. In-Game Management decision ledger | management_baseline.json, management_board.json |

@@ -1015,3 +1015,138 @@ def test_the_ledger_tax_floor_flag_rides_the_fin_tile_leaf_and_board(d, clubs):
         assert ("guaranteed 2027 contract AAV" in lf["basis"]) == (code in below), code
         assert (c["sections"]["fin"]["tax_payroll_2027_source"] == "guaranteed_aav") == (code in below), code
     assert d["copy"]["tax_floor_note"] == lg["copy"]["tax_floor_note"]
+
+
+# --------------------------------------------------------------------------
+# F-SCORE (FS_2A_EXPORT_DARK): the embed is keyed on fscore_export.FSCORE_LIVE.
+# Flag off, the board is byte for byte what it was; flag on, the block equals
+# fscore.json, checked ON FIXTURES (never on data/ artifacts: the box's deploy
+# gate runs this suite on whatever its nightly wrote). The runner rule that
+# forbids pennants on Franchise is overridden for pennants, titles and
+# postseason rounds as served facts by the owner's F-SCORE ask of 2026-09-30;
+# the decision-quality and manager-skill bans stay.
+# --------------------------------------------------------------------------
+
+def _fscore_fixture():
+    import fscore_export as fx
+    from test_fscore_export import SEASONS, TODAY, fixture_inputs
+    return fx.compute(fixture_inputs(), SEASONS, today=TODAY)
+
+
+def _franchise_fixture(codes):
+    import franchise_export as fe
+    return {
+        "clubs": [{"code": c, "sections": {"history": {}}} for c in codes],
+        "board": [{"code": c, "index_score": 100.0} for c in codes],
+        "copy": {"history_pennants": fe.HISTORY_PENNANTS_DARK},
+        "what_this_page_does_not_claim": ["a forecast", fe.NOT_CLAIMED_PENNANTS_DARK],
+        "field_key": {}, "basis": {}, "sections_status": {},
+    }
+
+
+def test_flag_off_the_build_never_reads_or_embeds_fscore(monkeypatch):
+    import fscore_export
+    import franchise_export as fe
+    assert fscore_export.FSCORE_LIVE is False and fe.fscore_live() is False
+    assert fe.forbidden_keys() == fe.FORBIDDEN_KEYS
+    assert {"pennants", "titles"} <= fe.FORBIDDEN_KEYS
+
+    def boom(*_a, **_k):
+        raise AssertionError("the flag is off: nothing may read or embed fscore.json")
+    monkeypatch.setattr(fe, "fscore_payload", boom)
+    monkeypatch.setattr(fe, "embed_fscore", boom)
+    doc = fe.build()
+    txt = json.dumps(doc)
+    assert '"fscore' not in txt and '"extra_sections"' not in txt
+    assert doc["copy"]["history_pennants"] == fe.HISTORY_PENNANTS_DARK
+    assert fe.NOT_CLAIMED_PENNANTS_DARK in doc["what_this_page_does_not_claim"]
+
+
+def test_the_served_board_carries_no_fscore_while_the_flag_is_off(d):
+    import franchise_export as fe
+    if fe.fscore_live():
+        pytest.skip("F-SCORE is live; the flip's own tests cover the served board")
+    assert "fscore" not in d["sections_status"] and "extra_sections" not in d
+    for c in d["clubs"]:
+        assert "fscore" not in c and "fscore" not in c["sections"], c["code"]
+    assert all(not k.startswith("fscore") for r in d["board"] for k in r)
+
+
+def test_flag_on_the_fscore_block_equals_fscore_json_on_fixtures():
+    import franchise_export as fe
+    fs = _fscore_fixture()
+    codes = sorted(fs["clubs"])
+    doc = fe.embed_fscore(_franchise_fixture(codes), fs)
+    for c in doc["clubs"]:
+        f = fs["clubs"][c["code"]]
+        b = c["fscore"]
+        assert (b["score"], b["rank"], b["letter"]) == (f["score"], f["rank"], f["letter"])
+        assert b["pillars"] == {p: f["pillars"][p]["score"] for p in fe.FSCORE_PILLARS}
+        assert b["counts"] == f["counts"] and b["in_progress"] == f["in_progress"]
+        assert b["spark"] == [[s[0], s[7], s[10]] for s in f["seasons"]]
+        sec = c["sections"]["fscore"]
+        assert sec["seasons"] == f["seasons"] and sec["legs"] == f["legs"] and sec["pillars"] == f["pillars"]
+    for r in doc["board"]:
+        f = fs["clubs"][r["code"]]
+        assert (r["fscore_score"], r["fscore_rank"], r["fscore_letter"]) == (f["score"], f["rank"], f["letter"])
+        for p in fe.FSCORE_PILLARS:
+            assert r[f"fscore_{p}"] == f["pillars"][p]["score"]
+    assert doc["extra_sections"] == ["fscore"]
+    assert doc["copy"]["fscore"] == fs["copy"]
+    assert doc["copy"]["history_pennants"] == fe.HISTORY_PENNANTS_LIVE
+    assert fe.NOT_CLAIMED_PENNANTS_LIVE in doc["what_this_page_does_not_claim"]
+    assert fe.NOT_CLAIMED_PENNANTS_DARK not in doc["what_this_page_does_not_claim"]
+    assert doc["sections_status"]["fscore"]["live"] is True
+    assert doc["fscore_meta"]["facts"] == fs["facts"]
+    for s in (fe.HISTORY_PENNANTS_LIVE, fe.NOT_CLAIMED_PENNANTS_LIVE):
+        assert EM not in s and EN not in s and "pennants" in s
+
+
+def test_flag_on_with_no_fresh_fscore_json_the_section_is_dark_and_says_why():
+    import franchise_export as fe
+    doc = fe.embed_fscore(_franchise_fixture(["LAD", "COL"]), None)
+    st = doc["sections_status"]["fscore"]
+    assert st["live"] is False and "fscore_export" in st["blocked_on"]
+    assert all("fscore" not in c for c in doc["clubs"])
+
+
+def test_flag_on_a_club_missing_from_fscore_json_is_refused():
+    import franchise_export as fe
+    fs = _fscore_fixture()
+    fs["clubs"].pop("COL")
+    with pytest.raises(fe.FranchiseRefusal, match="COL"):
+        fe.embed_fscore(_franchise_fixture(sorted(fs["clubs"]) + ["COL"]), fs)
+
+
+def test_fscore_payload_reads_only_today_s_file(tmp_path, monkeypatch):
+    import datetime as _dt
+    import franchise_export as fe
+    monkeypatch.setattr(fe, "DATA", tmp_path)
+    assert fe.fscore_payload(_dt.date(2026, 10, 8)) is None
+    (tmp_path / "fscore.json").write_text(json.dumps({"as_of": "2026-10-07", "clubs": {"LAD": {}}}),
+                                          encoding="utf-8")
+    assert fe.fscore_payload(_dt.date(2026, 10, 8)) is None
+    assert fe.fscore_payload(_dt.date(2026, 10, 7))["as_of"] == "2026-10-07"
+
+
+def test_pennants_and_titles_pass_only_live_and_the_quality_bans_stay(d, monkeypatch):
+    import franchise_export as fe
+    live = fe.forbidden_keys(live=True)
+    assert "pennants" not in live and "titles" not in live
+    for k in ("decision_quality", "manager_skill", "revenue", "valuation", "hof_plaques"):
+        assert k in live and k in fe.forbidden_keys(live=False), k
+    doc = json.loads(json.dumps(d))
+    doc["clubs"][0]["fscore"] = {"counts": {"pennants": 1, "titles": 0}}
+    monkeypatch.setattr(fe, "fscore_live", lambda: True)
+    fe._assert_document(doc)
+    doc["clubs"][0]["fscore"]["decision_quality"] = 1
+    with pytest.raises(AssertionError, match="decision_quality"):
+        fe._assert_document(doc)
+    doc["clubs"][0]["fscore"].pop("decision_quality")
+    doc["clubs"][0]["fscore"]["manager_skill"] = 1
+    with pytest.raises(AssertionError, match="manager_skill"):
+        fe._assert_document(doc)
+    doc["clubs"][0]["fscore"].pop("manager_skill")
+    monkeypatch.setattr(fe, "fscore_live", lambda: False)
+    with pytest.raises(AssertionError, match="pennants"):
+        fe._assert_document(doc)

@@ -31,7 +31,12 @@ artifact's own interval sentence instead).
 
 NEVER SERVED, decided before the first number: pennants or titles as a served
 field, any club decision-quality grade, any manager skill claim, revenue or
-valuation figures. The HoF tile was on this list while the HoF franchises
+valuation figures. The owner's F-SCORE ask (2026-09-30) lifts the pennant and
+title ban for postseason RESULTS only, keyed on fscore_export.FSCORE_LIVE:
+while the flag is False FORBIDDEN_KEYS holds both and nothing below embeds
+F-SCORE, so the board is byte for byte what it was; once True the board embeds
+data/fscore.json (embed_fscore) and the two keys pass. The decision-quality,
+manager-skill, revenue and valuation bans never lift. The HoF tile was on this list while the HoF franchises
 section was dark; the owner froze its attribution rule on 2026-09-25 (final-pass
 batch 6, docs/HOF_FRANCHISE_ATTRIBUTION.md), so HISTORY now re-serves
 hof_export's per-franchise credit, and it goes dark again with hof_export's own
@@ -206,6 +211,37 @@ def settled_odds_disagreements(club_docs: list, futures: dict, seeds: dict | Non
 FORBIDDEN_KEYS = {"revenue", "revenues", "valuation", "valuations", "tv_money", "rsn",
                   "pennants", "titles", "manager_skill", "decision_quality", "hof_plaques"}
 FORBIDDEN_KEY_FRAGMENTS = ("ou_total", "ou_combined", "ou_sum")
+#: The two FORBIDDEN_KEYS the owner's F-SCORE ask lifts, for postseason results
+#: as served facts, and only while fscore_export.FSCORE_LIVE is True (plan X13).
+FSCORE_LIFTED_KEYS = frozenset({"pennants", "titles"})
+
+#: The HISTORY pennants line and the not-claimed line, dark and live (plan X13):
+#: the dark text stands until the F-SCORE flip, the live text from it on.
+HISTORY_PENNANTS_DARK = ("pennants and titles are not on disk as a served field; only clinched and "
+                         "divisionChamp for the cached season")
+HISTORY_PENNANTS_LIVE = ("pennants, titles and postseason rounds are served as results, read from the "
+                         "StatsAPI postseason series by season and joined by team id; F-SCORE counts "
+                         "them over its seven seasons")
+NOT_CLAIMED_PENNANTS_DARK = ("pennants and titles as a served field: only clinched and divisionChamp "
+                             "for the cached season")
+NOT_CLAIMED_PENNANTS_LIVE = ("postseason skill: pennants, titles and rounds are served as results, not "
+                             "as evidence a club is built for October")
+
+
+def fscore_live() -> bool:
+    """fscore_export.FSCORE_LIVE, False when the module cannot be imported."""
+    try:
+        import fscore_export
+    except Exception:                                          # noqa: BLE001
+        return False
+    return bool(fscore_export.FSCORE_LIVE)
+
+
+def forbidden_keys(live: bool | None = None) -> set:
+    """FORBIDDEN_KEYS as they bind today: pennants and titles pass only while
+    F-SCORE is live; every other key stays forbidden either way."""
+    live = fscore_live() if live is None else live
+    return set(FORBIDDEN_KEYS) - set(FSCORE_LIFTED_KEYS) if live else set(FORBIDDEN_KEYS)
 
 #: ESPN logo slugs differ from the lower-cased StatsAPI code for two clubs only;
 #: pinned against build_site.ESPN_SLUGS by test_franchise_export.
@@ -1337,7 +1373,7 @@ def build() -> dict:
         "park_not_tiered": "100 = neutral; a hitter's park is not better, so nothing here takes a ladder",
         "park_attendance": "attendance is not served in v1 (owner decision D11)",
         "history_note": f"standings {STANDINGS_FIRST}-{SEASON_NOW} join by StatsAPI team id and need no spine; the bWAR line runs through franchise_spine.json",
-        "history_pennants": "pennants and titles are not on disk as a served field; only clinched and divisionChamp for the cached season",
+        "history_pennants": HISTORY_PENNANTS_DARK,
         "bwar_basis": "club bWAR by season, Baseball-Reference basis (war_daily), through the spine",
         "odds_interval": futures.get("what_the_intervals_are") or "",
         "odds_no_market": ((futures.get("no_market") or {}).get("what_is_missing") or ""),
@@ -1485,7 +1521,7 @@ def build() -> dict:
             "revenue, operating income or a franchise valuation: no source in the tree carries them",
             "attendance before 2026, ticket prices, local or national TV money, revenue-sharing status: not sourced",
             "minor-league payroll, front-office salaries, actual CBT bills paid: not sourced",
-            "pennants and titles as a served field: only clinched and divisionChamp for the cached season",
+            NOT_CLAIMED_PENNANTS_DARK,
             "the cap a Hall of Fame plaque shows: the HISTORY tile credits each inductee to the franchise where he accumulated the most bWAR (hof_export's frozen rule), by playing WAR, whatever the plaque's role",
             "a per-game MLB park index over a home slate: the per-club park factor table is what is served (fa_meta.park_factors)",
             "defensive shifts, manager identity, any per-club decision-quality grade or manager skill claim",
@@ -1500,7 +1536,79 @@ def build() -> dict:
     if settled_bad:
         raise FranchiseRefusal(f"odds: {len(settled_bad)} ODDS fields contradict the final standings "
                                f"after regular_season_end {futures.get('regular_season_end')}: {settled_bad[:8]}")
+    if fscore_live():
+        embed_fscore(doc, fscore_payload())
     _assert_document(doc)
+    return doc
+
+
+# --------------------------------------------------------------------------
+# F-SCORE (fscore.md 4.3 as the plan amends it; live only)
+# --------------------------------------------------------------------------
+
+FSCORE_PILLARS = ("results", "strength", "pipeline", "operations")
+
+
+def fscore_payload(today: date | None = None) -> dict | None:
+    """data/fscore.json when this night's fscore_export wrote it (its as_of is
+    today), else None. Read only while FSCORE_LIVE is True."""
+    import fscore_export
+    blob = _j(fscore_export.OUT_NAME, DATA)
+    today = today or date.today()
+    if isinstance(blob, dict) and blob.get("clubs") and blob.get("as_of") == today.isoformat():
+        return blob
+    return None
+
+
+def embed_fscore(doc: dict, fs: dict | None) -> dict:
+    """Embed F-SCORE in the Franchise document, copied from fscore.json and
+    never recomputed. Called by build() only while FSCORE_LIVE is True.
+
+    Per club: `fscore` on the board (score, rank, letter, the four pillar
+    scores, the season sparkline [[season, value, in_progress]], the counts and
+    in_progress) and `sections.fscore` in the club file (the seasons table, the
+    legs, the pillar z and score). Board rows gain fscore_score, fscore_rank,
+    fscore_letter and the four pillar scores; `extra_sections` names the
+    section; the HISTORY pennants line and the not-claimed line switch to their
+    live text. With no fresh fscore.json the section is dark and says why."""
+    if fs is None:
+        doc["sections_status"]["fscore"] = {
+            "live": False,
+            "blocked_on": "fscore_export has not run tonight: data/fscore.json is absent or not today's"}
+        return doc
+    by = fs.get("clubs") or {}
+    missing = sorted(d["code"] for d in doc["clubs"] if d["code"] not in by)
+    if missing:
+        raise FranchiseRefusal(f"fscore: {len(missing)} clubs absent from fscore.json: {missing}")
+    for d in doc["clubs"]:
+        f = by[d["code"]]
+        d["fscore"] = {
+            "score": f["score"], "rank": f["rank"], "letter": f["letter"],
+            "pillars": {p: (f["pillars"].get(p) or {}).get("score") for p in FSCORE_PILLARS},
+            "spark": [[s[0], s[7], s[10]] for s in f["seasons"]],
+            "counts": dict(f["counts"]), "in_progress": f["in_progress"],
+        }
+        d["sections"]["fscore"] = {"seasons": f["seasons"], "legs": dict(f["legs"]),
+                                   "pillars": {p: dict(f["pillars"][p]) for p in FSCORE_PILLARS}}
+    for row in doc["board"]:
+        f = by[row["code"]]
+        row.update({"fscore_score": f["score"], "fscore_rank": f["rank"], "fscore_letter": f["letter"]})
+        for p in FSCORE_PILLARS:
+            row[f"fscore_{p}"] = (f["pillars"].get(p) or {}).get("score")
+    doc["extra_sections"] = ["fscore"]
+    doc["fscore_meta"] = {"as_of": fs.get("as_of"), "window": fs.get("window"), "scheme": fs.get("scheme"),
+                          "facts": fs.get("facts"), "season_cols": fs.get("season_cols"),
+                          "what_fscore_does_not_claim": fs.get("what_fscore_does_not_claim"),
+                          "registry": fs.get("registry")}
+    doc["copy"]["fscore"] = dict(fs.get("copy") or {})
+    doc["copy"]["history_pennants"] = HISTORY_PENNANTS_LIVE
+    doc["what_this_page_does_not_claim"] = [NOT_CLAIMED_PENNANTS_LIVE if s == NOT_CLAIMED_PENNANTS_DARK else s
+                                            for s in doc["what_this_page_does_not_claim"]]
+    doc["field_key"]["sections.fscore.seasons"] = "[" + ", ".join(fs.get("season_cols") or []) + "]"
+    doc["field_key"]["fscore.spark"] = "[season, value_wins, in_progress]"
+    doc["basis"]["fscore"] = fs.get("generated_at")
+    doc["sections_status"]["fscore"] = {"live": True, "as_of": fs.get("as_of"),
+                                        "operations_live": (fs.get("scheme") or {}).get("operations_live")}
     return doc
 
 
@@ -1542,9 +1650,10 @@ def _assert_document(doc: dict) -> None:
             assert br["verdict"] == verdict_of.get(br["registry_row"]), d["code"]
             assert br["label"] == "implied, no market" and br["as_of"], d["code"]
         assert d["sections"]["dugout"]["plus_metric"] is False and d["sections"]["dugout"]["letter"] is None
+    forbidden = forbidden_keys()
     for path, k in _walk_keys(doc):
         ks = str(k).lower()
-        assert ks not in FORBIDDEN_KEYS, path
+        assert ks not in forbidden, path
         for frag in FORBIDDEN_KEY_FRAGMENTS:
             assert frag not in ks, path
         assert not ("ou_mkt" in ks and "ou_war" in ks), path
