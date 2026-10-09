@@ -1646,3 +1646,234 @@ records `registered_response_mode: "off"`, the /arbitration/ Model tab shows
 the gate as FAIL with the registered response beside the served mode, and
 the registry row stays `provisional`, which C3' and these failures block
 from leaving.
+
+---
+
+## 19. Section 13a amendment (registered 2026-10-09, before any 13a number exists): the award band from out-of-fold residual quantiles
+
+Registered 2026-10-09, docs only, committed alone with its pin test
+(`test_arb_band_calibration_registration.py`). Nothing above this section is
+edited: section 13, including 13a's own text ("named here, registered later")
+and 13b to 13f, stands exactly as it was committed in 8df1a091. This section is
+the dated amendment 13a names. At this commit no producer, flag, column,
+quantile, coverage reading or interval score of any band exists, and none has
+been computed.
+
+**Numbering.** The plan (master plan Part 8, row FAA-1; the lane design
+`finance_to_fa_arb.md`, section 2.4) calls this part "12a". Section 13's map
+applies: the plan's 12a is 13a, and this section registers it. A later task
+that names "12a" or "13a" of this gate means this section.
+
+**Preconditions, as they stood on 2026-10-09.** GATE C2 scored (section 18,
+f6d2bb0d); the M11/M12 sequence committed (sections 15 to 18); the B5
+known-season gate registered (section 14). ARB-CLUB-2 reads (c); its
+point-award term and the section 4 amendment it needs are 13e, registered
+before this section, and nothing here touches the point award.
+
+### 19a. What is calibrated, and why
+
+The award band is the low and high figure beside every projected arbitration
+award: the /arbitration/ board's rungs (`arb_export.build_board`, the low and
+high of each step in the `l` ladder), the Club Ledger ladder that prints them,
+and the salary path's closure seasons (`salary_path.board_raise_fn`, served as
+`surSalLo` and `surSalHi`). Today it is one fixed rule,
+`point x (1 -/+ (0.22 + 0.08 x (step - 1)))` (arb_export.py @64bf1bb3 lines
+251-258, in `build_board()`; `salary_path.BAND_BASE` and `BAND_STEP`), with its
+low end floored at the league minimum since 3fcdd4ee (owner answer M12-4). Its
+constants were set from the champion's observed MdAPE, and the code, the
+glossary entry `arb_award_band` and the salary-path entry all say it is not a
+calibrated interval and never a P10 or P90.
+
+13b scales a calibrated band, so this part comes first. The quantity: a central
+80% predictive band, P10 to P90, for the award at a rung, given what the board
+knows at its vintage.
+
+### 19b. Read to write this
+
+The writer read this gate (sections 0 to 18), the band code above,
+`arb_model.forward_chain`, `tools/arb_c1_window.py` (the served chain C1'
+scores), and the accuracy this gate already publishes: the MdAPE by step in
+sections 15f and 16e and the realized arb-1 p90 that C10' publishes (section
+18b). A median absolute percentage error says something about a band's
+central width, so this frame is not blind to point accuracy. No residual
+quantile, coverage reading, tail rate or interval score of any band, fixed or
+calibrated, was computed or read; `data/arbitration_eval.json` carries none.
+
+### 19c. The residuals
+
+- **Estimator.** The SERVED estimator as section 15d fixes it: the
+  platform-frame champion at arb-1, the banded step multiplier at arb-2 and
+  later. Not a candidate.
+- **Pool.** `arb_dataset.scored_rows` on the platform frame (class years 2022
+  to 2026 at registration), the pool GATE A scores.
+- **Rung.** The arbitration trip, `arb_year`; a Super Two first trip is arb-1.
+  Rung groups: arb-1, arb-2, arb-3 and later.
+- **Chain depth.** The number of predicted rungs from the last observed salary
+  to the rung, inclusive: depth 1 when the season before the rung carries an
+  observed salary, depth d when the d - 1 rungs before it are themselves
+  predictions. On the board and the salary path, depth counts from the
+  vintage's last completed season, so the coming winter's award is depth 1.
+  Depth groups: 1, 2, 3 and deeper.
+- **The chain.** For a rung in season Y at depth d, start from the player's
+  observed salary in season Y - d and walk the served chain forward the way
+  `tools/arb_c1_window.served_window` does: each rung raises off the previous
+  prediction, with the league-minimum floor on the point. Every arm (deflator,
+  champion, banded multipliers) is fit on class years up to Y - d only, under
+  the `forward_chain` rule (a train set of at least 60 rows, a test set of at
+  least 15), so the chain knows what a board built after season Y - d knew. A
+  chain needs the player's trips in consecutive seasons and the target's
+  salary on file; anything else is dropped and counted.
+- **A stated proxy.** The arb-1 champion reads platform production. Inside a
+  backtest chain an arb-1 rung reads the REALIZED platform season, as C1'
+  does; on the board an arb-1 rung at depth 2 or deeper reads a PROJECTED
+  season (section 15d). The backtest cannot see the projection's error, so a
+  calibrated band on those rungs is expected to cover less than measured. They
+  are counted, flagged on the board row, and named in the copy, and no
+  coverage is claimed for them.
+- **Residual.** `log(actual / point)`, with the served point
+  (smearing-corrected, league-minimum floored) and the actual put on the same
+  fold deflator level, the board's last train level carried forward.
+  Scale-free inside a row.
+
+### 19d. The calibrated band
+
+- **Quantiles, forward-chained.** For a test winter Y, each (rung group, depth
+  group) cell takes the empirical 10th and 90th percentiles of the residuals
+  whose target season is strictly before Y. A residual from winter Y never
+  sets winter Y's band, and no later winter sets an earlier one.
+- **Thin cells, fixed now, from counts alone.** A cell with fewer than 40
+  training residuals for winter Y borrows the next shallower depth group of
+  the same rung group; a short depth-1 cell borrows the depth-1 residuals of
+  all rung groups pooled. Which cell borrowed for which winter is written to
+  the artifact before any quantile is computed. The depth 3 and deeper group
+  serves every deeper rung; depths past 3 are not scored.
+- **Band.** `low = point x exp(q10)` and `high = point x exp(q90)`, then
+  `low = min(low, point)` and `high = max(high, point)`, so the band always
+  holds the served point.
+- **The M12-4 floor on both bands.** The calibrated band and the fixed control
+  are each floored at the season's league minimum, in scoring and in serving,
+  so neither is credited for a range no club may pay. In serving the floor
+  holds on both printed bands, the board's and the salary path's. No other
+  floor or cap is added; the CBA maximum cut stays a rule on the point
+  (section 17), not a band edge.
+- **What serves, if it ships.** One function in `arb_model` builds the
+  quantile table. The lab scores it, `arb_export` and `salary_path` both read
+  it, and a test pins the served table's hash to the artifact's (the lab and
+  the export import one builder). Served quantiles come from every residual
+  through the latest class year, under the same thin-cell rule.
+
+### 19e. Metric, power and floors
+
+- **Metric: the interval score** of the central 80% band (alpha = 0.20: the
+  width plus 2/alpha times each miss), in deflated dollars, paired against
+  today's fixed band (the control, M12-4 floored) on identical rows and
+  identical points. 13b uses the same metric.
+- **Guardrail.** Dollar interval score is owned by the largest awards, so the
+  scale-free form (each row's interval score over its point) is reported too,
+  and the calibrated band must not lose on it by more than 10% relative,
+  section 3's guardrail form.
+- **Scored winters.** 2024, 2025 and 2026 at depth 1 (2023 has no earlier
+  residual to set its band), 2025 and 2026 at depth 2, 2026 at depth 3. This
+  departs from section 3's ">= 4 independent splits", disclosed here: the arms
+  keep their four forward splits and the quantile step adds one lag. A
+  leave-one-winter-out quantile would let a later winter's error set an
+  earlier winter's band, the look-ahead section 15 removed from the award.
+- **Power precondition, written first.** The scored rungs, all cells, must
+  number at least 246 before any residual is read: the count at which the 95%
+  binomial half-width of a coverage reading at 0.80,
+  1.96 x sqrt(0.80 x 0.20 / n), reaches 0.05 (n = 245.9, rounded up). The
+  count reads presence only. Short of 246, 13a is a pre-committed NULL.
+- **Floors, under section 3's conventions.** A paired bootstrap clustered on
+  PLAYER, resampling train and test with a refit on every draw (deflator,
+  arms, chains, residuals, quantiles), B = 1000, seed 20261009; the one-sided
+  MDE95 (1.645 sd) of the paired contrast; the two-sided coverage check on the
+  floor estimator itself, n_check >= 200; and a detection check: residuals
+  drawn from the cells' own residuals, resampled by player, with the
+  control's half-widths scaled until its expected interval score exceeds the
+  calibrated band's by the MDE95. The procedure must detect that planted gap on
+  at least 80% of the n_check draws, or the instrument is dead and the result
+  is a NULL.
+- **Frame frozen before scoring.** The sorted (mlbam, season, depth) list of
+  scored rungs and its sha256 go into the artifact before any residual is
+  computed, with the dropped count and its causes, the way 14c freezes GATE
+  K's frame.
+
+### 19f. Pass rule
+
+All four, or 13a is a NULL:
+
+1. **Interval score.** The calibrated band beats the fixed band on mean
+   interval score by more than the one-sided MDE95 of the paired contrast,
+   and does not breach the scale-free guardrail.
+2. **Coverage.** Pooled out-of-fold coverage of the scored rungs lies within
+   0.05 of 0.80, and each tail's miss share (below the low end, above the
+   high end) lies between 0.05 and 0.15.
+3. **No rung group pays for the pool.** Every rung group with at least 62
+   scored rungs (the 13b count) has coverage within 0.10 of 0.80 and does not
+   lose on mean interval score by more than its own one-sided MDE95. Smaller
+   groups and every (rung, depth) cell are reported with their n and not
+   gated.
+4. **The instrument sees.** The detection check in 19e passes.
+
+Reported beside the verdict, never a criterion: the fixed band's own coverage
+and tail shares on the same rows, by cell; the borrowed cells; the proxy count
+from 19c.
+
+### 19g. The response
+
+**PASS.** The calibrated band is built behind `ARB_BAND_CALIBRATED` (off by
+default; off reproduces today's payloads byte for byte). A printed band digit
+moves on the board, the Club Ledger ladder and the salary path's closure
+seasons, so the flag flips only after the owner's answer, in one commit
+carrying the flag, the regenerated artifacts, a registry row `arb_award_band`
+and the rewritten glossary text (the `arb_award_band` entry and the
+salary-path paragraph that says the band is not a calibrated interval, with
+the measured coverage read from the artifact), naming every row that moves.
+The point award and every `tot` do not move. For 13a's words "does not ship":
+13a ships when its verdict is PASS and the flag is on.
+
+**NULL.** The fixed band keeps serving and the copy keeps saying it is not a
+calibrated interval. Recorded verbatim: *"The calibrated award band is a NULL.
+Out-of-fold residual quantiles by rung and chain depth did not price
+arbitration awards better than the fixed band by more than the measured
+floor, or missed the 0.80 coverage target, or the frame held fewer than 246
+scoreable rungs. The band stays the fixed spread and is not a calibrated
+interval."* Under 13a, 13b is then recorded `NOT SCORED`. The fixed band's
+measured coverage may be quoted beside it, read from the artifact only.
+
+### 19h. What never moves
+
+The champion and its tuple (`arb_model.CHAMPION_KEYS`), `projectable_keys`,
+the banded multipliers, the deflator, every point award, every `tot`, every
+surplus point figure, and section 13 itself. No club-process key enters this
+band: club process reaches the band only through 13b, after this part ships.
+Section 8's sentence on the CBA's 2026-12-01 expiry stands: the calibrated
+band covers the model's error on past winters, not a change of the rules.
+
+### 19i. The look order
+
+1. This amendment (2026-10-09), committed alone with its pin test.
+2. The producer `tools/arb_band_calibration.py`, the shared quantile function
+   in `arb_model`, and `test_arb_band_calibration.py` pinning this section's
+   criteria verbatim, committed before the run; a dry run on fixtures with
+   null residuals exercises the whole reporting path.
+3. The frame frozen and counted (19e): row list, sha256, drops, borrowed
+   cells. Short of 246 scored rungs, the NULL is recorded without reading a
+   residual.
+4. The one look: the floors first (MDE95, the coverage check, the detection
+   check), then the contrast and the coverage, written once to a
+   `band_calibration` block in `data/arbitration_eval.json`, with stdout and
+   stderr teed before anything else runs. Never on a registered look day. A
+   re-score after the read is a new dated registration.
+5. The response (19g) committed; on PASS the flag is built off and flips only
+   on the owner's answer.
+
+Timing against section 13: steps 2 to 5 run before the January 2027
+exchange-day capture (13d step 5). If they slip, they still run before 13b's
+look, and whether 13a has shipped at that look decides 13b exactly as 13a
+says.
+
+### 19j. Results
+
+Empty at registration. No residual, quantile, coverage reading or interval
+score has been computed.
