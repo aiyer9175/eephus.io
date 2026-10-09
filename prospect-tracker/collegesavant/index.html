@@ -28,7 +28,7 @@
     <script>(function(){try{var t=localStorage.getItem("prospect-tracker.theme");if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>
     <link rel="stylesheet" href="/assets/site.css?v=14f539aa" />
     <link rel="stylesheet" href="/assets/eephus-account.css?v=b08f8afa" />
-    <link rel="stylesheet" href="styles.css?v=32b1ea2f" />
+    <link rel="stylesheet" href="styles.css?v=15422322" />
   </head>
   <body>
     <!-- Site-wide nav - mirrors build_site.py NAV_ITEMS (keep in sync) -->
@@ -83,6 +83,9 @@
         <a href="#/prospects" data-route="prospects">Draft Prospects</a>
         <a href="#/projections" data-route="projections">MiLB Projections</a>
       </nav>
+      <!-- Dataset badge + season picker, filled by cs_season.js from the
+           loaded season file (never written here). -->
+      <div class="cs-season" data-cs-season></div>
       <div class="global-search" data-global-search>
         <input type="search" placeholder="Search players" aria-label="Search all players" data-global-search-input>
         <div class="global-results" data-global-search-results></div>
@@ -104,18 +107,19 @@
          under /data/ by ensurePayload on the views that read them (QREP01),
          each stamped from the CS_PAYLOAD_VER map below, which
          build_site.restamp_hand_authored_pages rewrites (QREP02). -->
-    <script>window.EEPHUS_GL_DATA_VER="4717e202";window.CS_PAYLOAD_VER={"collegesavant_translation":"55874983","collegesavant_draft_prospects":"8d48483e"};</script>
+    <script>window.EEPHUS_GL_DATA_VER="c41416c6";window.CS_PAYLOAD_VER={"collegesavant_translation":"55874983","collegesavant_draft_prospects":"8d48483e"};</script>
     <script src="data.js?v=d03ef6a2" defer></script>
     <script src="hitter_year_data.js?v=66d48b8b" defer></script>
     <script src="team_names.js?v=3731eb70" defer></script>
     <script src="global_search.js?v=cf43d4ae" defer></script>
     <script src="table_sort.js?v=55a1daf6" defer></script>
-    <script src="app.js?v=f3eb6783" defer></script>
+    <script src="cs_season.js?v=9f353a05" defer></script>
+    <script src="app.js?v=3a15ef87" defer></script>
     <script src="/assets/eephus-config.js?v=7c802691" defer></script>
     <script src="/assets/eephus-account.js?v=22deb404" defer></script>
     <script src="/assets/eephus-nav.js?v=f4200190" defer></script>
     <script src="/assets/eephus-ui.js?v=0a250392" defer></script>
-    <script src="/assets/eephus-bg.js?v=9dd26b43" defer></script>
+    <script src="/assets/eephus-bg.js?v=426ba8b6" defer></script>
     <script src="/assets/eephus-gl.js?v=ca0479a7" defer></script>
     <script src="/assets/eephus-hub.js?v=b31cc98a" defer></script>
     <script src="/assets/eephus-teampick.js?v=7fffda4b" defer></script>
