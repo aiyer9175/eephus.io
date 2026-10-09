@@ -4642,6 +4642,20 @@
    "artifact_age_days": 69
   },
   {
+   "model_id": "xfv_thin_lane_surplus_odds",
+   "summary": "Registered, not read: the provisional dollar range drawn from its thin-sample odds. One look, not before the 2028 count; no resolved frame exists yet.",
+   "surface": "None served: registered challenger for the dollar range on provisional eFV cards (prospects with no source grade)",
+   "predicts": "Realized surplus of each provisional prospect, as a fan whose bust share equals the served thin-sample P(bust)",
+   "champion": "none - registered, not read (frame captured by 2027-02-14; one look once 1,317 rows resolve and at most 2.5 percent stay unresolved)",
+   "baseline": "The served fan, priced from the grade-only outcome curve at the same grade; gated by registration",
+   "metric": "Pooled PIT coverage of the 80 percent band, bias and slope against realized surplus; pass: coverage gain lo95 > 0, bias and slope not resolvably worse",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "provisional_kind": "data_blocked_stub",
+   "registration_status": "registered, not read",
+   "notes": "Registered 2026-10-08 (owner answer VAL3-Q2 = (b), 2026-09-30) before any number on its frame: docs/efv-2026-09-25/PROVISIONAL_ODDS_GATE.md, the parent being docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md (read 27ee25f9, FAIL on G2), whose section 8 named this lane out of scope. Lane: every row efv_ungraded.build writes (P(bust) and p_bucket from the thin-sample head, the fan from the grade-only curve), served on R1 (data/xfv.json grade_basis provisional_capped via efv_score._v2_provisional_entry; 2,686 rows on 2026-10-07, 2 trip the page's two-bases rule and print the note) and R2 (data/xfv_ungraded.json, 6,067 rows, 4 trips, R2 cards print no fan). Candidate: weights = the served odds vector, bucket dollars held, mean not re-pinned (vf.mixture_surplus_usd, vf.sv_distribution bucket_probs). Frame: no resolved provisional frame is admissible (cohorts 2015-2018 fitted the head, 2019 was its sensitivity read, 2021 is R-LV, 2022+ debut into R-VM and are unresolved), so the frame is a prospective capture of the producer's rows committed by 2027-02-14 (step 1). Power precondition: P1 at least 1,317 resolved rows (the parent's MDE arithmetic, 0.02 coverage at one-sided 0.025 and power 0.80), P2 at most 2.5 percent unresolved; P2 binds; no count can pass before the RT 2028 run, expected by H = 2039 at the latest. Clauses G0 reproduction, G1 one object, G2 D_cov lo95 > 0, G3 and G4 do no harm, player-clustered paired bootstrap B 2,000 seed 20261008, pooled only, never backtest.run_backtest, no reserved read. One look after step Z + 14 days and the conditions above; looking early disqualifies. The two-bases note stays until the look. Open owner question: the lane serves raw dollars (P10 $0.0 on every row) while the board serves calibrated ones."
+  },
+  {
    "model_id": "xfv_tools",
    "summary": "Provisional: tool grades already track MLB stats (power to ISO 0.52); production adds out of sample only for fastball to K% (0.309 vs 0.244), so only that blend stays.",
    "surface": "/prospx (provisional)",
