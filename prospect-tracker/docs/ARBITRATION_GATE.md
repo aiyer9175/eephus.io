@@ -1140,3 +1140,80 @@ floor; the served path's own `cba_floored_steps` reads 0. The rule stays so
 the board and the path cannot diverge when a signed season next sits below
 one. Section 11f's must-not-move list is about the `SALARY_PATH_MODE` flip,
 which this does not touch.
+
+## 16. GATE C2 receipt (scored 2026-10-08, as section 11d registers each clause)
+
+Recorded 2026-10-08. Nothing above this section is edited. Owner answer M12-1
+held this gate until the GATE A look-ahead fix landed (section 13); the
+MLBTR repair (section 14) landed before it as well. Scored on the served
+model of that day: `SALARY_PATH_MODE = "full"`, the platform-frame award
+model, board vintage 2026-10-08. `tools/arb_path_gate.py --write` writes the
+`gate_c2` block of `data/arbitration_eval.json`; seed 20260917, B 1000.
+
+### 16a. The registered clauses
+
+| clause | result | verdict | response (11e) |
+|---|---|---|---|
+| C1' | served chain window MAE $2.088M against `clemens_2026` $8.336M (gain $6.248M, MDE95 $1.020M, 6.13x) and the fitted ladder $5.409M (gain $3.321M, MDE95 $0.873M, 3.80x); 286 paired of 291, 5 dropped | PASS | - |
+| C2' | 193 realized 2026 awards: path MdAPE 0.1552 equals the board's own 0.1552 (the same figure by construction, see 16b); signed median residual -0.0255 | PASS | - |
+| C3' | repaired pool n 808, ours 0.1780 against Swartz 0.0769; frozen pool n 262, ours 0.1735 against 0.0815; both under 0.216 | PASS | - |
+| C4' | 221 rows move by more than $1M; 128 carry a newly priced season and 93 do not, every one of the 93 moved by the tender cliff (a cut season); Spearman on the 1,046 rows whose path is unchanged 1.0000; whole-board Spearman 0.9249 (recorded) | FAIL | `"off"` |
+| C5' | 0 cuts below 80% of the season before, contract junctions included | PASS | - |
+| C6' | 0 prospect rows carry `salPath` | PASS | - |
+| C7'a | 0 rows whose floor lowered the total (874 scored, 278 cut, $980.4M restored); 2 kept cuttable seasons with negative surplus | FAIL | `"closure"` (cliff off) |
+| C7'b | backward induction never below forward; strictly greater on 119 rows | PASS | - |
+| C8' | 81 grids, closure derives the held season's token on 73 (0.901) and its salary exactly where it does (MdAPE 0.000); the 8 misses are grids listing ARB 4 with no Super Two marker after ARB 3, where closure ends the window at ARB 3 | FAIL | `"ladder"` (closure off) |
+| C9' | n 149 rows with current service time, 1 off by one season, 0 off by more | PASS | - |
+
+Three clauses fail. The modes nest (`off` < `ladder` < `closure` < `full`),
+so the registered responses resolve to the lowest one named: **`"off"`**,
+which the block records as `registered_response_mode`. Section 11e: "a
+failure does not withhold a ship. It reverts one." The revert lands in its
+own commit after this receipt, with every served number it moves.
+
+What the three failures are, read without upgrading or excusing them:
+
+- **C4'** fails on the tender cliff, which the same change shipped. Its
+  criterion reads "every row moving by more than $1M must have at least one
+  newly priced season", and a row the cliff cuts moves with none. No row
+  moved without either a new season or a cut, so nothing points at an
+  implementation defect; the clause as registered still fails.
+- **C7'a** fails on its second half, the conflict the lab published before
+  scoring: backward induction keeps a negative season when a later one pays
+  for it (R1), and 2 rows do.
+- **C8'** fails on evidence: 8 Spotrac grids carry an ARB 4 season after a
+  plain ARB 3, and closure, which reads a non-Super-Two class as ending at
+  ARB 3, does not reproduce them. Either the grids omit the Super Two
+  marker or closure ends those windows a season early; this clause cannot
+  tell which, and C9' (1 row off by one of 149) does not settle it.
+
+### 16b. Deviations added after registration, published beside it
+
+These are the shapes `tools/arb_path_gate.py` gave the clauses on
+2026-09-17, after section 11d was registered. Each is in
+`gate_c2.deviations_added_after_registration` and none enters a verdict.
+
+- **C2' chain split.** The lab replaced the registered MdAPE half, which
+  compares the board's 2026 figure with itself, with the raise estimator
+  re-derived off each row's realized 2025 salary against a frozen 0.171:
+  0.1605 on 86 arb-2-and-later rows (124 skipped for no prior), PASS; level
+  half -0.0255, PASS.
+- **C4' lab shape.** Counts rows with an arbitration season (675) and
+  contract-only rows (199) without a pre/post comparison: PASS.
+- **C5' with contract junctions counted apart**: 0 violations, 0 unrepaired
+  junctions, PASS.
+- **C7'a on its first half only**: PASS, with the same count of 2 published.
+- **C10'**, the star-tail clause the lab added: served ARB 1 rungs reach
+  $11.673M against a realized arb-1 p90 of $4.200M (n 235 served, 421
+  realized), PASS. It is published at the top level and is not one of
+  section 11d's clauses.
+
+The 2026-08-19 C1 lab was a scratchpad file; C1' runs the protocol text of
+section 9b, implemented in `tools/arb_c1_window.py`. Its served-chain MAE on
+the award frame ($2.185M on 286 players) reproduces the 2026-08-19 $2.215M;
+the `clemens_2026` arm reads higher than its $4.927M because the value
+framework's market prices moved with the fWAR label epoch.
+
+`C2_CHAIN_MDAPE_BOUND` (0.171) was read off the History when its Ours column
+was still in deflated dollars (fixed in this task, owner answer M11-4). It is
+a registered constant and is not changed here.

@@ -544,5 +544,309 @@
    "method": "paired percentile bootstrap: whole clusters drawn with replacement, both arms scored on every draw, predictions held fixed (no refit)"
   },
   "role": "the 2026-08-09 loader's row set, scored beside the repaired headline pool (docs/ARBITRATION_GATE.md section 14c)"
+ },
+ "gate_c2": {
+  "scored_at": "2026-10-08",
+  "produced_by": "tools/arb_path_gate.py --write",
+  "protocol": "docs/ARBITRATION_GATE.md section 11, registered before this lab existed; scored as section 11d registers each clause, after the GATE A platform-frame re-run (section 13) and the MLBTR repair (section 14), per owner answers M12-1 to M12-3",
+  "order_of_events": "THIS GATE SCORES A SERVED MODEL, NOT A CANDIDATE. The owner ordered the control-window salary path served in full on 2026-09-16 before any clause here had been scored. A failure does not withhold a ship; it moves the served number back, and section 11e fixes which clause reverts how far.",
+  "seed": 20260917,
+  "B": 1000,
+  "discount": 0.07,
+  "served_mode": "full",
+  "board_vintage": "2026-10-08",
+  "c1_window_mae": {
+   "criterion": "re-run the 2026-08-19 C1 protocol on the current pool (window MAE of the discounted total, paired, clustered on player): the served chain must beat both clemens_2026 and the fitted ladder by more than the one-sided MDE95 of each contrast. Prior: $2.215M against $4.927M and $5.372M, a 4.98x floor",
+   "protocol": "docs/ARBITRATION_GATE.md section 9b, implemented in tools/arb_c1_window.py; seed and B per section 11c",
+   "prior": {
+    "served_mae_usd": 2215000,
+    "clemens_2026_mae_usd": 4927000,
+    "fitted_ladder_mae_usd": 5372000,
+    "floor_multiple": 4.98
+   },
+   "response_if_failed": "SALARY_PATH_MODE = \"off\"",
+   "frame": "platform",
+   "pool_players": 291,
+   "n_paired": 286,
+   "dropped": 5,
+   "fitted_ladder": [
+    0.12520186014681647,
+    0.23819331421879544,
+    0.3421887378699622,
+    0.3421887378699622
+   ],
+   "mae_usd": {
+    "served": 2088004.4895730885,
+    "clemens_2026": 8335545.390169714,
+    "fitted": 5408518.557573998
+   },
+   "seed": 20260917,
+   "B": 1000,
+   "B_successful": {
+    "clemens_2026": 1000,
+    "fitted": 1000
+   },
+   "vs_clemens_2026": {
+    "gain_usd": 6247540.900596625,
+    "mde95_onesided_usd": 1019637.0402183149,
+    "gain_over_floor": 6.12722042665198,
+    "resolvable": true
+   },
+   "vs_fitted": {
+    "gain_usd": 3320514.06800091,
+    "mde95_onesided_usd": 872804.9196630552,
+    "gain_over_floor": 3.8044172222159203,
+    "resolvable": true
+   },
+   "verdict": "PASS"
+  },
+  "c2_realized_2026_awards": {
+   "criterion": "on every player whose 2026 award is in data/arb_history.json and whose 2026 step the path would have projected from the 2025 board: MdAPE <= the MdAPE the board itself records for those rows, and the signed median residual inside [-0.05, +0.05]",
+   "n": 193,
+   "path_mdape": 0.15516129032258064,
+   "board_mdape": 0.15516129032258064,
+   "signed_median_residual": -0.02549618320610687,
+   "mdape_half": "PASS",
+   "level_half": "PASS",
+   "basis": "data/arb_history.json Ours in nominal dollars (owner answer M11-4), on the platform-frame model (section 13)",
+   "by_construction": "the MdAPE half compares the path's 2026 figure with the board's own 2026 figure, which are the same number; it cannot fail",
+   "verdict": "PASS",
+   "response_if_failed": "SALARY_PATH_MODE = \"off\""
+  },
+  "c3_swartz_gap": {
+   "criterion": "on the rows both cover, our MdAPE must not exceed the 2026-08-19 figure (0.216 against Swartz 0.081, a standing NULL)",
+   "pools": {
+    "repaired": {
+     "n": 808,
+     "our_mdape": 0.17799833887043187,
+     "swartz_mdape": 0.07692307692307693,
+     "verdict": "PASS"
+    },
+    "frozen": {
+     "n": 262,
+     "our_mdape": 0.1734642857142857,
+     "swartz_mdape": 0.08152414709791758,
+     "verdict": "PASS"
+    }
+   },
+   "n_at_registration": 261,
+   "bound": 0.216,
+   "n": 808,
+   "our_mdape": 0.17799833887043187,
+   "swartz_mdape": 0.07692307692307693,
+   "basis": "History Ours in nominal dollars on the platform-frame model; the repaired pool is every History row with an MLBTR figure, the frozen pool the rows the 2026-08-09 loader reached",
+   "verdict": "PASS",
+   "response_if_failed": "no revert; recorded and blocks the verdict leaving provisional"
+  },
+  "c4_reordering_is_the_coverage": {
+   "criterion": "Spearman(pre, post) on rows whose salary path is UNCHANGED must be 1.0000; every row moving by more than $1M must have at least one newly priced season; the count of moving rows must equal the count of rows with a newly priced season and a delta over tolerance. Whole-board Spearman is RECORDED, not gated",
+   "pre": "proj_export.build_payload() with SALARY_PATH_MODE \"off\" on today's inputs",
+   "n_rows": 1400,
+   "n_unchanged_path": 1046,
+   "spearman_unchanged_rows": 1.0,
+   "n_moving_over_1m": 221,
+   "n_new_season_and_moving": 128,
+   "n_moving_without_a_new_season": 93,
+   "moving_without_a_new_season_by_cause": {
+    "tender_cliff_cut": 93
+   },
+   "examples": [
+    [
+     "andrew_abbott",
+     5746503,
+     8342631
+    ],
+    [
+     "pedro_pages",
+     15313530,
+     17796810
+    ],
+    [
+     "spencer_torkelson",
+     991615,
+     2826335
+    ],
+    [
+     "matt_mclain",
+     5101882,
+     7818494
+    ],
+    [
+     "jake_irvin",
+     -2532969,
+     2245805
+    ]
+   ],
+   "recorded_whole_board_spearman": 0.9248633214709342,
+   "verdict": "FAIL",
+   "response_if_failed": "SALARY_PATH_MODE = \"off\" until the bug is found"
+  },
+  "c5_monotone_paths": {
+   "criterion": "violations of usd < 0.80 * prev across every served path, closure seasons included: 0",
+   "violations": 0,
+   "examples": [],
+   "within_thousand_rounding": 0,
+   "verdict": "PASS",
+   "response_if_failed": "\"ladder\" (closure off) until it is fixed"
+  },
+  "c6_prospect_clamps": {
+   "criterion": "prospect rows carrying salPath: 0",
+   "n_prospects_with_a_path": 0,
+   "verdict": "PASS",
+   "response_if_failed": "\"off\" immediately - out-of-population use"
+  },
+  "c10_salary_leg_star_tail": {
+   "criterion": "the served ARB 1 step distribution must reach the realized arb-1 p90 somewhere in the board rows: a ladder with no star tail cannot price a star control window",
+   "n_served": 235,
+   "n_realized": 421,
+   "served_median_usd": 1587000,
+   "served_max_usd": 11673000,
+   "realized_median_usd": 1800000.0,
+   "realized_p90_usd": 4200000.0,
+   "realized_max_usd": 14500000.0,
+   "rung_compression_x": 1.134,
+   "verdict": "PASS",
+   "root_cause": "arb_export.build_board: `row = dict(base)` from panel_rows, while war3/career_war are attached only to scored_rows(rows) in arb_export.export(). Two of arb_model.CHAMPION_KEYS read 0.0 on every board row",
+   "direction_on_the_served_number": "arbitration salaries too low, surplus too high, hardest on the stars at the top of the board",
+   "response_if_failed": "NOT a revert of the salary path: the defect is upstream of it and predates it. The repair builds war3/career_war and the metric block on every forward row inside build_board, which moves /arbitration/ published l and tot, so it landed as its own measured change (2026-09-24) with no refit. Registered in docs/ARBITRATION_GATE.md section 11h",
+   "added_after_registration": "C10' is not one of section 11d's clauses: the lab added it on 2026-09-17, after registration. Published, never part of the verdict"
+  },
+  "c7a_floor_never_lowers": {
+   "criterion": "floored NPV >= raw NPV on every row, and no floored season-surplus is negative on a cuttable season. Floored rows and dollars restored are recorded",
+   "n_scored": 874,
+   "rows_whose_floor_lowered_the_total": 0,
+   "cut_rows": 278,
+   "dollars_restored_usd": 980444587,
+   "cut_first_season": {
+    "2027": 85,
+    "2028": 82,
+    "2029": 73,
+    "2030": 38
+   },
+   "negative_surplus_on_a_kept_cuttable_season": 2,
+   "verdict": "FAIL",
+   "criterion_conflict_published_not_edited": "The SECOND half of this criterion as registered ('no floored season-surplus is negative on a cuttable season') contradicts R1, which the same spec ships: backward induction DELIBERATELY keeps a negative arbitration season when a later season in the same window pays for it, which is the worked example [-5, +30, -40] -> $23.0M, cut at index 2. It was written for the forward stopping rule R1 replaced. The count is therefore PUBLISHED above and the verdict rests on the first half. The registered wording is NOT edited, because editing a criterion after a result is visible is the thing pre-registration exists to stop.",
+   "response_if_failed": "\"closure\" (cliff off) until the arithmetic is repaired",
+   "verdict_basis": "both halves of the registered criterion"
+  },
+  "c7b_backward_beats_forward": {
+   "criterion": "recompute the forward stopping rule on every path: backward induction >= forward on 100% of rows, with the count of rows where it is strictly greater recorded (that count is the bug the repair fixed)",
+   "n_scored": 874,
+   "rows_where_forward_beats_backward": 0,
+   "rows_where_backward_is_strictly_greater": 119,
+   "verdict": "PASS",
+   "response_if_failed": "\"closure\" (cliff off) until the arithmetic is repaired"
+  },
+  "c8_closure_chain": {
+   "criterion": "hold out the last season of every grid with >= 3 seasons, derive it by closure, compare the derived token and salary. Token accuracy 1.000 and salary MdAPE <= the board's arb-2+ MdAPE (0.158). n must be published in the receipt",
+   "n_pool": 81,
+   "n_scored": 73,
+   "token_accuracy": 0.9012345679012346,
+   "salary_mdape": 0.0,
+   "bound_mdape": 0.158,
+   "verdict": "FAIL",
+   "what_this_does_not_test": "the HORIZON. Spotrac's grid increments the class by construction (0 non-consecutive chains and 0 mixed-(S2) rows measured on all 852 rows), so a chain test is self-consistent. C9' is the external check",
+   "response_if_failed": "\"ladder\" (closure off)"
+  },
+  "c9_horizon_vs_service_time": {
+   "criterion": "on every board row where the panel resolves an MLBTR service-time string (data/_labs/arb_ledger.json), derive remaining arbitration years from service time and compare with K - k_last. Criterion: 0 rows off by more than one season, with the disagreement count and n published. If n < 25 the verdict is pre-registered as UNDERPOWERED",
+   "n": 149,
+   "off_by_one": 1,
+   "off_by_more_than_one": 0,
+   "service_time_as_of": 2026,
+   "rows_dropped_for_a_stale_service_time": 2,
+   "examples": [],
+   "verdict": "PASS",
+   "underpowered_is_not_a_pass": "closure keeps serving under the owner's order, the registry verdict stays provisional, the horizon hole stays published in the accountability census, and this clause is re-scored when n reaches 25",
+   "response_if_failed": "\"ladder\" (closure off)"
+  },
+  "non_degrade": {
+   "producer": "surplus_backtest_real.py",
+   "argument": "producer-independent of this path (it reads storage / value_framework / backtest / consensus and never reads data/mlb_projections.json), so the 2026-08-19 C2 argument carries verbatim; the artifact hash is recorded as pre == post rather than re-derived"
+  },
+  "registered_followups": {
+   "D5_last_controlled_season": "proj_export._last_controlled_season and bayes_trade_value._remaining_control_years still come from debut+6, beside a salary path that names the window end. Both fields keep being emitted (the contract-aware rank gate reads one), and the SURFACES suppress the control-years line wherever salThru exists, so no page states two window lengths at once. Switching the fields themselves moves Team Outlook out-year WAR and the playoff odds that ride on it: its own measured change.",
+   "D7_fa_non_tender_class": "the board privately predicts a 2027 non-tender market /fa/ does not show. The census publishes the rows and their first cut season; extending /fa/ is a later change.",
+   "D10_option_seasons": "data/contract_options.json is a hand-curated supplement of SIX players, not a league-wide option inventory: its own _note says it exists because player opt-outs and club options are not in Spotrac's years_remaining. Inside 2027-2031 it lists 9 player-option seasons on 6 rows and no club option. Those dollars assume the player never opts out; a club option Spotrac folded into salary_by_year is invisible to the path and is priced as guaranteed money by rule 1. Stamped (salOpt) and disclosed, not priced. The blocking dependency is the league-wide option inventory, not the opt-out model.",
+   "D11_prearb_abandonment": "a club abandons a pre-arbitration player by option or designation, not by declining to tender him. The mechanism is different and the copy would be wrong, so the option is NOT priced; the residual negative pre-arb dollars are published in the projection payload's accountability census instead."
+  },
+  "successor_question": "No clause above scores SURPLUS accuracy out of sample, because this tree holds no realized control-window surplus label set (realized WAR times the realized winter $/WAR, minus money actually paid, over closed control windows). Building that label set is the successor gate, not this one.",
+  "deviations_added_after_registration": {
+   "note": "Shapes tools/arb_path_gate.py gave these clauses on 2026-09-17, after section 11d was registered. Each is published for the record and adjudicates nothing; the registered clause above carries the verdict.",
+   "c2_chain_split": {
+    "criterion": "(a) the signed median residual of the board's realized 2026 record inside [-0.05, +0.05]; (b) the raise estimator class closure runs, re-derived off each 2026 row's REALIZED 2025 salary, MdAPE <= 0.171 - the incumbent's own record on the same class, registered as a CONSTANT in docs/ARBITRATION_GATE.md section 11b",
+    "n": 193,
+    "board_mdape": 0.15516129032258064,
+    "signed_median_residual": -0.02549618320610687,
+    "level_verdict": "PASS",
+    "chain_n": 86,
+    "chain_mdape": 0.16050490883590462,
+    "chain_bound": 0.171,
+    "chain_rows_skipped_no_prior": 124,
+    "chain_verdict": "PASS",
+    "verdict": "PASS",
+    "note": "half (b) scores arb-2-and-later only, which is the population class closure actually prices: at arb-1 the path takes the board's own step verbatim and there is nothing independent to score. The bound is a number, not the quantity being tested",
+    "response_if_failed": "level FAIL: SALARY_PATH_MODE = \"off\". chain FAIL: SALARY_PATH_MODE = \"ladder\", which drops class closure and keeps the board's own listed steps"
+   },
+   "c4_lab_shape": {
+    "criterion": "Spearman(pre, post) on rows whose salary path is UNCHANGED must be 1.0000; every row moving by more than $1M must have at least one newly priced season; the count of moving rows must equal the count of rows with a newly priced season and a delta over tolerance. Whole-board Spearman is RECORDED, not gated",
+    "n_rows_with_an_arb_season": 675,
+    "n_rows_contract_only": 199,
+    "n_moving_without_a_new_season": 0,
+    "verdict": "PASS",
+    "recorded_whole_board_spearman_note": "measured at implementation on the 2026-09-16 artifacts: 0.8974 (ladder 0.8835, closure 0.8649), top-50 overlap 31 of 50. RECORDED, NOT GATED - GATE C's old C4 (>= 0.97) was written for a level move",
+    "response_if_failed": "SALARY_PATH_MODE = \"off\" until the bug is found"
+   },
+   "c5_contract_junctions_counted_apart": {
+    "criterion": "violations of usd < 0.80 * prev across every served path where BOTH seasons come from the estimator (one arbitration season after another, closure included): 0. A contract-to-arbitration junction is floored by CBA Article VI inside salary_path and is counted, not scored",
+    "violations": 0,
+    "examples": [],
+    "cba_floor_junctions_unrepaired": 0,
+    "verdict": "PASS",
+    "response_if_failed": "\"ladder\" (closure off) until it is fixed"
+   },
+   "c7a_first_half_only": {
+    "criterion": "floored NPV >= raw NPV on every row, and no floored season-surplus is negative on a cuttable season. Floored rows and dollars restored are recorded",
+    "n_scored": 874,
+    "rows_whose_floor_lowered_the_total": 0,
+    "cut_rows": 278,
+    "dollars_restored_usd": 980444587,
+    "cut_first_season": {
+     "2027": 85,
+     "2028": 82,
+     "2029": 73,
+     "2030": 38
+    },
+    "negative_surplus_on_a_kept_cuttable_season": 2,
+    "verdict": "PASS",
+    "criterion_conflict_published_not_edited": "The SECOND half of this criterion as registered ('no floored season-surplus is negative on a cuttable season') contradicts R1, which the same spec ships: backward induction DELIBERATELY keeps a negative arbitration season when a later season in the same window pays for it, which is the worked example [-5, +30, -40] -> $23.0M, cut at index 2. It was written for the forward stopping rule R1 replaced. The count is therefore PUBLISHED above and the verdict rests on the first half. The registered wording is NOT edited, because editing a criterion after a result is visible is the thing pre-registration exists to stop.",
+    "response_if_failed": "\"closure\" (cliff off) until the arithmetic is repaired"
+   },
+   "c10_salary_leg_star_tail": "published at the top level, outside the verdict"
+  },
+  "verdicts": {
+   "c1_window_mae": "PASS",
+   "c2_realized_2026_awards": "PASS",
+   "c3_swartz_gap": "PASS",
+   "c4_reordering_is_the_coverage": "FAIL",
+   "c5_monotone_paths": "PASS",
+   "c6_prospect_clamps": "PASS",
+   "c7a_floor_never_lowers": "FAIL",
+   "c7b_backward_beats_forward": "PASS",
+   "c8_closure_chain": "FAIL",
+   "c9_horizon_vs_service_time": "PASS"
+  },
+  "failing_clauses": [
+   "c4_reordering_is_the_coverage",
+   "c7a_floor_never_lowers",
+   "c8_closure_chain"
+  ],
+  "verdict": "FAIL",
+  "failing_clauses_that_move_the_served_number": [
+   "c4_reordering_is_the_coverage",
+   "c7a_floor_never_lowers",
+   "c8_closure_chain"
+  ],
+  "registered_response_mode": "off"
  }
 }

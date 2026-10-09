@@ -148,3 +148,34 @@ def test_no_failing_clause_silently_moves_the_served_number():
     assert moving is not None
     for k in moving:
         assert blk[k]["verdict"] == "FAIL"
+
+
+def test_the_verdict_reads_the_registered_clauses_only():
+    """Scored 2026-10-08 as section 11d registers each clause. C10' and the
+    lab's own shapes are published beside it and enter no verdict."""
+    g = _block()
+    assert set(g["verdicts"]) == set(CLAUSES) - {"c10_salary_leg_star_tail"}
+    assert "added_after_registration" in g["c10_salary_leg_star_tail"]
+    dev = g["deviations_added_after_registration"]
+    for k in ("c2_chain_split", "c4_lab_shape", "c5_contract_junctions_counted_apart",
+              "c7a_first_half_only"):
+        assert dev[k].get("criterion"), k
+    assert g["c7a_floor_never_lowers"]["verdict_basis"] == "both halves of the registered criterion"
+
+
+def test_c1_is_scored_on_the_registered_protocol():
+    c1 = _block()["c1_window_mae"]
+    assert c1["verdict"] in ("PASS", "FAIL")
+    assert "section 9b" in c1["protocol"]
+    assert c1["n_paired"] > 0 and c1["seed"] == 20260917 and c1["B"] == 1000
+    for arm in ("vs_clemens_2026", "vs_fitted"):
+        assert c1[arm]["mde95_onesided_usd"] > 0
+        assert c1[arm]["resolvable"] == (c1[arm]["gain_usd"] > c1[arm]["mde95_onesided_usd"])
+
+
+def test_c3_is_scored_on_both_mlbtr_pools():
+    c3 = _block()["c3_swartz_gap"]
+    assert set(c3["pools"]) == {"repaired", "frozen"}
+    assert c3["pools"]["repaired"]["n"] >= c3["pools"]["frozen"]["n"]
+    assert c3["verdict"] == ("PASS" if all(p["verdict"] == "PASS"
+                                           for p in c3["pools"].values()) else "FAIL")
