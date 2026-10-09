@@ -212,11 +212,12 @@ def test_the_flag_is_the_served_pixel_lockup(tmp_path, monkeypatch):
     for uid, tag in (("nav", "span"), ("sb", "span"), ("mast", "h1")):
         mark = B.eephus_merged_wordmark(uid, tag=tag)
         assert re.match(rf'<{tag} class="nameplate [^"]*">.*<span class="wm-txt">eephus\.io</span></{tag}>$', mark), uid
-    monkeypatch.setattr(B, "PIXEL_BRAND", False)
-    for uid, tag in (("nav", "span"), ("sb", "span"), ("mast", "h1")):
-        assert "wm-txt" not in B.eephus_merged_wordmark(uid, tag=tag), uid
+    # Since PX_LOGO_ANIMATION (owner ask 2026-10-02) every wordmark is the pixel
+    # lockup whatever the flag says, and PB-10 committed the flag on: every
+    # served page carries the probe, so every export paints the pixel lockup.
+    assert re.search(r"^PIXEL_BRAND = True$", (ROOT / "build_site.py").read_text(encoding="utf-8"), re.M)
     for rel in list(B.HAND_AUTHORED_PAGES) + ["index.html", "fa/index.html", "news/index.html", "glossary/index.html"]:
-        assert "wm-txt" not in (ROOT / rel).read_text(encoding="utf-8"), rel
+        assert 'class="wm-txt">eephus.io</span>' in (ROOT / rel).read_text(encoding="utf-8"), rel
 
 
 # ---------------------------------------------------------------- 3. geometry = generator

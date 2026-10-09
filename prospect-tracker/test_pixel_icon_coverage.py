@@ -187,7 +187,8 @@ def test_masthead_draws_one_32px_icon_first_in_the_h1(key):
     out = MASTHEADS[key]()
     icons32 = [s for w, s in _icons(out) if w == 32]
     assert icons32 == [_sym(key)], icons32
-    h1 = re.search(r"<h1>(.*?)</h1>", out, re.S).group(1)
+    # The plain h1, or PB-06's grid masthead under the committed PIXEL_BRAND.
+    h1 = re.search(r'<h1(?: class="mh-px")?>(.*?)</h1>', out, re.S).group(1)
     assert h1.startswith('<svg class="ico" width="32"'), h1[:80]
     if key in B.MODULE_STAGE:
         assert B._stage_chip(key) in h1, "the stage chip is untouched"
@@ -268,6 +269,10 @@ def test_cs_bar_title_takes_the_12px_icon_under_the_flag(rel):
     bar = re.search(r'<span class="cs-bar-title cs-bar-title--px">(.*?)</span></span>', synced, re.S).group(1)
     assert _icons(bar) == [(12, "collegesavant")] and 'viewBox="2 2 12 12"' in bar
     assert re.sub(r"<svg\b.*?</svg>", "", bar).startswith("CollegeSavant <span class=\"eephus-beta\"")
+    if B.PIXEL_BRAND:
+        # PB-10 flipped the flag: restamp has already synced the committed page.
+        assert synced == page, "flag on: the committed bar is the synced bar"
+        return
     # one hunk: the title line, nothing else on the page
     a, b = page.splitlines(), synced.splitlines()
     assert len(a) == len(b) and sum(x != y for x, y in zip(a, b)) == 1

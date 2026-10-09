@@ -379,8 +379,8 @@ def test_brand_manifest_is_the_served_one_with_its_icons_in_assets_brand():
 
 def test_favicon_links_follow_the_pixel_brand_flag():
     import build_site as B
-    assert B.PIXEL_BRAND is False
-    assert B.FAVICON_LINKS == B._FAVICON_LINKS_LEGACY
+    assert B.PIXEL_BRAND is True  # PB-10's flip, after the fWAR epoch's step Z
+    assert B.FAVICON_LINKS == B._FAVICON_LINKS_PIXEL
     legacy = re.findall(r'href="([^"]+)"', B._FAVICON_LINKS_LEGACY)
     pixel = re.findall(r'href="([^"]+)"', B._FAVICON_LINKS_PIXEL)
     assert len(pixel) == len(legacy) == 5
@@ -388,6 +388,29 @@ def test_favicon_links_follow_the_pixel_brand_flag():
         assert new == "/assets/brand/" + old.rsplit("/", 1)[1], (old, new)
         assert (ROOT / new.lstrip("/")).exists(), new
     assert re.sub(r'href="[^"]+"', "", B._FAVICON_LINKS_PIXEL) == re.sub(r'href="[^"]+"', "", B._FAVICON_LINKS_LEGACY)
+
+
+@pytest.mark.parametrize("old", ["favicon.ico", "assets/favicon.svg", "assets/favicon-32.png",
+                                 "assets/favicon-16.png", "assets/apple-touch-icon.png", "assets/icon-192.png",
+                                 "assets/icon-512.png", "assets/icon-maskable-512.png",
+                                 "branding/icons/apple-touch-icon.png", "branding/icons/icon-192.png",
+                                 "branding/icons/icon-512.png", "branding/icons/icon-maskable-512.png"])
+def test_old_served_icon_paths_hold_the_pixel_set(old):
+    # PB-10 copied the pixel set over the vector-era files at their old paths,
+    # so the hand-kept pages' links, the old manifest and /favicon.ico (which
+    # crawlers ask for unconditionally) serve the same art as assets/brand/.
+    new = BRAND / Path(old).name
+    if old.endswith(".svg"):
+        assert (ROOT / old).read_bytes().replace(b"\r\n", b"\n") == new.read_bytes().replace(b"\r\n", b"\n")
+        return
+    a, b = Image.open(ROOT / old), Image.open(new)
+    if old.endswith(".ico"):
+        sizes = sorted(a.ico.sizes())
+        assert sizes == sorted(b.ico.sizes()) == [(16, 16), (32, 32), (48, 48)]
+        for size in sizes:
+            assert _same(a.ico.getimage(size).convert("RGBA"), b.ico.getimage(size).convert("RGBA")), (old, size)
+        return
+    assert _same(a.convert("RGBA"), b.convert("RGBA")), old
 
 
 @pytest.mark.parametrize("flag", [False, True])

@@ -271,9 +271,12 @@ transparent balls in `icons/`. `python tools/pixel_brand.py --check`
 regenerates into a temp folder and fails on any output that does not
 reproduce (text byte for byte, images pixel for pixel) and on any stale file.
 The served pages use the pixel lockup on every page (since 2026-10-02); the
-pixel favicon set and the cards serve only when `build_site.py`'s `PIXEL_BRAND`
-flag is on, and until then the pages serve PX-23's copies of the same favicon
-strikes.
+pixel favicon set, the app icons and the cards serve while `build_site.py`'s
+`PIXEL_BRAND` flag is on, as it is since PB-10's flip (after the fWAR epoch's
+step Z). The old paths in `assets/` (`favicon.svg`, `favicon-16.png`,
+`favicon-32.png`, `apple-touch-icon.png`, `icon-*.png`, `share-default.png`)
+and the root `favicon.ico` hold copies of the same files, so the hand-kept
+pages, the old manifest and any link made before the flip get the same art.
 
 ## The dark-mode starfield
 
@@ -306,10 +309,11 @@ with pixel stars, the lowercase lockup (the real mark, never capitals), one ball
 (the lockup's own; one mark per surface), no numbers or grades.
 
 - `social/share-default.png`: the pixel default card, the lockup at s 10
-  centred over "sabermetrics" at s 4 and the URL at s 2. The site serves
-  `assets/share-default.png` (`DEFAULT_SHARE_IMAGE` in `build_site.py`), the
-  vector-era card; with `PIXEL_BRAND` on (PB-07) it serves the same pixel card
-  from `assets/brand/share-default.png` (`DEFAULT_SHARE_IMAGE_PIXEL`).
+  centred over "sabermetrics" at s 4 and the URL at s 2. With `PIXEL_BRAND` on
+  (PB-07, flipped by PB-10) a page without its own card names
+  `assets/brand/share-default.png` (`DEFAULT_SHARE_IMAGE_PIXEL` in
+  `build_site.py`); the flag-off path `assets/share-default.png`
+  (`DEFAULT_SHARE_IMAGE`) holds a copy of the same card since the flip.
 - Per-module cards: `assets/og/<module>.png` (served with `PIXEL_BRAND` on), the lockup at s 4, the module's
   pixel icon at 8x, the title at s 6 (s 5 when long) over a 1 u banded rule,
   one line cut from the page's own meta description, and the URL. Per-page
@@ -391,7 +395,7 @@ assets/
                                 served on every page), the s 2 and s 4 wordmark
                                 strikes the canvas exports paint, and the pixel
                                 favicon and app-icon set with its manifest (served
-                                only when build_site.py's PIXEL_BRAND is on)
+                                while build_site.py's PIXEL_BRAND is on, since PB-10)
 
 tools/
   pixel_icons.py                source and generator of the pixel icon set
