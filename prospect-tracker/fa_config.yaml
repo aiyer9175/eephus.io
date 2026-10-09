@@ -121,6 +121,26 @@ projection:
     rate_eval_min_pa: 150
     rate_eval_min_bf: 150
 
+# Aging v3, the one aging service (docs/AGING_V3_GATE.md; aging_v3.py; PLAN
+# section 9.3). Each consumer door reads its flag at CALL time
+# (aging_v3.consumer_aging) and selects aging="v3" only when it is true; false
+# keeps every served byte of that consumer identical (the goldens in
+# test_aging_v3_byte_identity.py). No flag flips before the gate's section 19
+# records a pass for that consumer (AG_8 to AG_12, owner answer AG-Q4, staged).
+# `health` stays false until the health look (AG_13) records a pass. An
+# optional `fit` sub-block (arms, knobs) is written by the flip that serves a
+# composition; absent, no arm is active and the service reproduces v2.
+aging_v3:
+  consumers:
+    proj_display: false
+    team_outlook: false
+    fa_pricing: false
+    prospect_surplus: false
+    contract_tail: false
+    trade_fallback: false
+    fantasy: false
+  health: false
+
 fit:
   blocker_fv_min: 50            # existing FV grid line — no parallel thresholds
   blocker_eta_horizon: 1        # ETA <= class_year + 1 blocks the position
