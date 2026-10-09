@@ -613,7 +613,11 @@ def test_committed_artifact_headline_alias_contract():
 #   no grade, quantile, p_bust or WAR field moves. The committed file at HEAD already read
 #   65b77ee1... against the 9b21c897... pinned here (stale before this change), and the
 #   file stamped here also carries 63 rows of input churn from the 2026-10-09 regen.
-_GOLDEN_XFV_SHA256 = "ca52da8e487a91df0e99531da6554ad1713d9f61fdd41db51bf35b55e68f6d97"
+# 2026-10-09 INTEGRATION RESTAMP (M11_PROSPECT_ARB_VIA_MODEL merged into the main tree):
+#   regenerated on the merged code (arb_export.export, run_monthly --rebuild-only twice,
+#   export_trade_values); against the branch's stamped file 505 of 9,515 rows move dist and
+#   band_p90_mm (501) and surplus_mm on 23; no grade, quantile, p_bust or WAR field moves.
+_GOLDEN_XFV_SHA256 = "a1270cc3d6faa43980aa308a3e47cfdcf0ddbe730a9979b7eb6990cd179e1506"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which
