@@ -272,7 +272,7 @@ WAVE2_DEV: dict[str, tuple[str, ...]] = {
 #: WAVE 2 (EFV3_W2, owner EW2-6 2026-10-08): each family keeps its arms in its own
 #: module as ARMS (this file's candidate shape, column source "module") and reads
 #: them through that module's development read; wave 1 above is unchanged.
-WAVE2_ARM_MODULES: tuple[str, ...] = ("efv_w2_milb",)
+WAVE2_ARM_MODULES: tuple[str, ...] = ("efv_w2_milb", "efv_w2_il_backfill")
 
 
 def wave2_candidates() -> tuple[dict, ...]:

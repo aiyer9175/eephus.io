@@ -4415,7 +4415,6 @@ function _progScreenBlock(prog) {
     ? `<div class="table-scroll-x"><table class="meth-table">${head}<tbody>${rows.map(r => _progScreenRowHtml(r)).join("")}</tbody></table></div>`
     : `<p class="meth-note">No screening row is on the ledger yet.</p>`;
   const noSource = [
-    ["IL stints", "the injury history starts in 2017 and is thin before 2026; first read once the resolved cohort holds a hundred stints recorded before each list date"],
     ["Signing bonus before the 2017 draft classes", "no table holds it; never, unless a pre-2017 bonus table is ingested"],
     ["College production", "the college tables start with the 2021 and 2022 classes; a count-only StatsAPI probe of earlier seasons decides, otherwise the 2021 class first resolves about 2029"],
     ["AAA and Florida State League Statcast, A-ball signals", "tracking starts in 2021 (FSL) and 2023 (AAA); the 2022 list first resolves in 2027 and the 2024 list in 2029; the chain's second link can be screened now"],
