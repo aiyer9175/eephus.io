@@ -259,3 +259,50 @@ needs a new registration or an explicit owner waiver).
 (c) Copy only: print the fan's own bust share beside the calibrated P(bust).
 (d) Hide the eFV fan on graduate and bust cards (a debuted player's card already leads
 with the Trade Machine value).
+
+## 10. VOID (owner, 2026-09-30; recorded 2026-10-08)
+
+Appended after section 9; nothing above this section was edited.
+
+**The owner declares the read of section 9 VOID.** Owner answer VAL3-Q3, 2026-09-30,
+recorded in `_audit_2026-09-09/DECISIONS_FOR_OWNER.md` under 'ANSWERED 2026-09-30
+(AskUserQuestion), Cot's terms, the ETA FanGraphs entry, VAL_3 follow-ups', verbatim:
+"**(b) Void and re-register on another frame**: the read is declared VOID in the gate doc
+and registry; a new registration names a different admissible frame or reports that none
+exists."
+
+**The reason: the frame was substituted.** The task that asked for this gate named
+surplus_backtest_real's resolved listing cohorts as the frame. On those rows the candidate
+equals the incumbent (a consensus key carries no eFV odds, section 3), so this document
+registered a different frame instead: surplus_backtest_real's realized side and resolved
+rules on the eFV resolved matrix, forward-chained over test decision years 2016 to 2019.
+The substitution was disclosed in section 3 and committed before the read, but the owner
+did not choose that frame, and the owner rules that a read on a frame the owner did not
+choose does not adjudicate the question.
+
+**What the void means.**
+
+- The verdict of section 9 (FAIL on G2) and every number in it adjudicate nothing. They
+  are kept as the record of what was run, not as evidence for or against the candidate.
+- `efv_score.SURPLUS_FROM_SERVED_ODDS_DEFAULT` stays False (`efv_score.py:1501`). Nothing
+  served moves: no surplus_mm, band, fan, grade or odds. The "Two bases" card note keeps
+  showing where the page's rule trips (section 9, 'What stays served').
+- The void read's frame is spent for this question. The forward-chained decision years
+  2016 to 2019 of the eFV resolved matrix may not be the frame of any later read of this
+  candidate, because their numbers on it are known.
+- The `surplus_odds_gate` block of `data/surplus_backtest_real.json` carries
+  `"void": true` and the reason; nothing in the block was recomputed.
+- The registry row `efv_surplus_from_served_odds` records the void as its
+  `registration_status`, "void (owner 2026-09-30, frame substituted)". VAL_3 created no
+  registry row for this gate, so the row is new here; its verdict is `unvalidated`
+  because the registry's verdict field takes only the four enum values
+  (`model_registry.VERDICTS`) and a void read leaves the candidate with no measurement.
+- `surplus_odds_gate.py` must not be run again. It has no second-run guard, and a re-run
+  would overwrite the void block through `persist_block`.
+
+**What follows.** A new registration on another frame, committed alone and before any
+number on that frame exists: `docs/efv-2026-09-25/SURPLUS_ODDS_GATE_2.md`. The owner
+questions of section 9 (how graduate and bust cards reconcile P(bust) and the fan) and
+of section 8 (the thin-sample provisional rows: answered VAL3-Q2 (b), a separate
+registration, task SURPLUS_ODDS_THIN_LANE_GATE_REG) keep their defaults until a valid
+read exists.

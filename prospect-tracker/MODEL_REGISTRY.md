@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**342 models.** Verdicts: validated: 54, provisional: 155, unvalidated: 45, deprecated: 88.
+**343 models.** Verdicts: validated: 54, provisional: 155, unvalidated: 46, deprecated: 88.
 
 ## Instrument boundary
 
@@ -361,6 +361,7 @@ can be measured.
 | `leverage_deploy_plus` | Provisional by inheritance: Lev Deploy+ is REM+ weighted by relief IP x gmLI over arms with a gmLI feed, club today; descriptive, no eval of its own. | /mlbstats/ Bullpen Leaderboards, Teams sub-tab, Lev Deplo... | nothing; a descriptive weighted mean of REM+ on the club-today basis the team sub-tabs serve | IP x gmLI weighted REM+ over the club's relievers with a gmLI feed; blank wit... | n/a; inherits the rem_plus gate; the gmLI weights are the leverage feed's | n/a; inherits the rem_plus row's metric; no team-level eval | **provisional** | - | - | no |
 | `team_dem_plus` | Provisional by inheritance: Team DEM+ is the innings-weighted DEM+ of a club's fielders, framing included, club today; descriptive, no eval of its own. | /mlbstats/ Defense Leaderboards, Teams sub-tab, Team DEM+... | nothing; a descriptive weighted mean of DEM+ on the club-today basis the team sub-tabs serve | innings-weighted unrounded DEM+ over the club's fielders, catchers and framin... | n/a; inherits the dem_plus gate (DEM+ validated per player) | n/a; inherits the dem_plus row's metric; no team-level eval | **provisional** | - | - | no |
 | `prospect_anchor` | Registered, not computed: one look on the fWAR label asks whether the served realized anchor matches resolved prospects by FV cell; not before 2026-11-20. Nothing served moves. | No surface: the served realized anchor value_framework.fv... | Nothing forward: whether fv_to_6yr_avg_war, the bust-inclusive first-six-season mean the framework assigns per FV, matches what... | the served empirical_anchors table in data/value_framework_fitted.json (step... | separately gated by docs/PROSPECT_ANCHOR_GATE.md: a two-sided equivalence rea... | Registered, not computed: per cell D_C = label / 6 minus anchor(fv), percenti... | **unvalidated** | - | - | no |
+| `efv_surplus_from_served_odds` | Not served. Its one read, a FAIL on coverage, is void: the owner ruled the frame substituted. A new registration names another frame. | None served: a registered challenger for the PROSPX eFV s... | Realized control-window surplus of a resolved prospect, as the eFV surplus mean and fan drawn from the row's served outcome odds | none - the incumbent prices the fan from the curve at the display grade; the... | The served incumbent pricing on the same rows, same display grade and dollar map | Pooled PIT coverage of the 10 to 90 band, bias and slope of realized on predi... | **unvalidated** | - | - | - |
 
 Stored problems at last refresh: none.
 

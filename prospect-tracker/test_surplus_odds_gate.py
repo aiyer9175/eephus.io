@@ -237,3 +237,27 @@ def test_parent_writer_carries_the_block_over():
     assert G.BLOCK_KEY in sbr.CARRIED_BLOCKS
     # the harness mirrors the gate's path, so compare the file each module names
     assert G.OUT_PATH.name == sbr.OUT_PATH.name == "surplus_backtest_real.json"
+
+
+def test_the_read_is_void_and_the_flag_stays_off():
+    """Owner answer VAL3-Q3 (b), 2026-09-30: the one read is VOID (frame substituted).
+    The verdict text now reads void in the gate doc, the registry row and the block;
+    the block is kept as a record and the flag stays off."""
+    assert S.SURPLUS_FROM_SERVED_ODDS_DEFAULT is False
+    doc = (ROOT / G.GATE_DOC).read_text(encoding="utf-8")
+    assert "## 10. VOID (owner, 2026-09-30" in doc
+    assert doc.index("## 9. Results") < doc.index("## 10. VOID")
+    import model_registry as R
+    rows = {m["model_id"]: m for m in R.load()["models"]}
+    row = rows["efv_surplus_from_served_odds"]
+    assert row["registration_status"] == "void (owner 2026-09-30, frame substituted)"
+    assert row["verdict"] == "unvalidated" and row["eval_artifact"] is None
+    art = ROOT / "data" / "surplus_backtest_real.json"
+    if not art.exists():
+        pytest.skip("the parent artifact is not generated on this machine")
+    blk = json.loads(art.read_text(encoding="utf-8")).get(G.BLOCK_KEY)
+    if blk is None:
+        pytest.skip("the one read has not run")
+    assert blk["void"] is True
+    assert blk["void_reason"].startswith("frame substituted")
+    assert blk["decision"]["verdict"] == "FAIL" and blk["ships"] is False

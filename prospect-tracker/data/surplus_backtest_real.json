@@ -570,6 +570,9 @@
    "before_2026_10_04": true,
    "holds": true
   },
-  "ships": false
+  "ships": false,
+  "void": true,
+  "void_reason": "frame substituted: the task named surplus_backtest_real's resolved listing cohorts; the registration (section 3) put the read on the eFV resolved matrix forward-chained over decision years 2016-2019 instead, and the owner declared the read VOID (answer VAL3-Q3 (b), 2026-09-30). The block is kept as a record; nothing in it was recomputed and it adjudicates nothing.",
+  "void_record": "docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md section 10; registry row efv_surplus_from_served_odds"
  }
 }

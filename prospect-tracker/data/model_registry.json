@@ -6087,6 +6087,19 @@
    "notes": "Registered 2026-10-08 (PROSPECT_ANCHOR_PRODUCERS) pointing at docs/PROSPECT_ANCHOR_GATE.md (pre-registered 2026-09-23). The lab tools/prospect_anchor_gate.py, its test test_prospect_anchor_gate.py and the flag SERVE_PROSPECT_ANCHOR_V2 (default False, one read site inside fv_to_6yr_avg_war) are built and tested on fixtures only; nothing was read on real rows and no statistic by consensus-FV cell exists. The look runs once, not before 2026-11-20 and after the fWAR label epoch's step Z entry (2026-10-03) plus 14 days, on the fwar label at RESOLVED_THROUGH 2026, and writes data/prospect_anchor_gate.json, whose verdict this row then carries with the frame and the fitted-file hash scored. The registry enum has no word registered, so the row reads unvalidated (a predictive claim with no measurement yet) until the look. prospect_surplus is untouched; it moves only under one outcome and only by the owner's flip.",
    "last_checked": "2026-10-08",
    "stale": false
+  },
+  {
+   "model_id": "efv_surplus_from_served_odds",
+   "summary": "Not served. Its one read, a FAIL on coverage, is void: the owner ruled the frame substituted. A new registration names another frame.",
+   "surface": "None served: a registered challenger for the PROSPX eFV surplus fan on graduate and bust cards; efv_score.SURPLUS_FROM_SERVED_ODDS_DEFAULT stays False",
+   "predicts": "Realized control-window surplus of a resolved prospect, as the eFV surplus mean and fan drawn from the row's served outcome odds",
+   "champion": "none - the incumbent prices the fan from the curve at the display grade; the candidate draws it from the served odds vector, bucket dollar values held",
+   "baseline": "The served incumbent pricing on the same rows, same display grade and dollar map",
+   "metric": "Pooled PIT coverage of the 10 to 90 band, bias and slope of realized on predicted, player-clustered paired bootstrap; no statistic by FV cell",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "void (owner 2026-09-30, frame substituted)",
+   "notes": "Owner answer VAL3-Q3 (b), 2026-09-30 (DECISIONS_FOR_OWNER.md): the one read of docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md (registration fc90703d, build 79a637e3, read 27ee25f9, FAIL on G2 coverage 0.7401 against 0.7544) is VOID because its frame was substituted: the task named surplus_backtest_real's resolved listing cohorts and the read ran on the eFV resolved matrix forward-chained over decision years 2016-2019. The void read adjudicates nothing; its block stays in data/surplus_backtest_real.json as a record with void true, and that frame is spent for this candidate. efv_score.SURPLUS_FROM_SERVED_ODDS_DEFAULT stays False; nothing served moves. VAL_3 created no registry row, so this row is new (2026-10-08); its verdict is unvalidated because the verdict enum has no void value and a void read leaves no measurement, and eval_artifact stays null until a valid read. A new registration on another frame follows in its own commit (docs/efv-2026-09-25/SURPLUS_ODDS_GATE_2.md)."
   }
  ],
  "problems": []
