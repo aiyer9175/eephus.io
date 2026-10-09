@@ -146,8 +146,14 @@ def production_models(*, refresh: bool = False) -> dict[str, dict]:
         return _MODELS
     import efv_v2_model as H
     import efv_v3 as V3
+    import efv_v4 as V4
     import efv_vintage_frame as F
     weights = H.load_weights()
+    if V4.EFV_V4_ON:
+        # DARK (efv_v4.EFV_V4_ON is False): eFV v4 at its committed configuration on the
+        # same rows; the ship rule of docs/efv-v2/EFV_V4_BACKTEST.md flips the flag.
+        _MODELS = V4.production_models(weights=weights)
+        return _MODELS
     if V3.EFV_V3_ON:
         # DARK (efv_v3.EFV_V3_ON is False): the selected eFV v3 configuration fitted on
         # the same rows; EFV3_W3_SHIP flips the flag after the confirmation read.
