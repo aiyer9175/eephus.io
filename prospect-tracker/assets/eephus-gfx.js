@@ -1092,7 +1092,7 @@
   function chipHTML(id, label) {
     return '<button class="chip egfx-chip" id="' + esc(id) + '" type="button" ' +
       'title="Share graphic of this view">' +
-      '<span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>' + esc(label || "Generate GFX") + "</button>";
+      '<span class="egfx-chip-glyph" aria-hidden="true">' + (window.EephusIco ? window.EephusIco("gfx", 12) : "") + '</span>' + esc(label || "Generate GFX") + "</button>";
   }
 
   window.EEPHUS_GFX = { open: open, close: close, chipHTML: chipHTML, FORMATS: FORMATS,

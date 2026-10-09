@@ -5246,7 +5246,7 @@ function renderSourceComparison() {
       <p class="meth-note">Every prospect a source graded that preseason is in its cohort - players who never debuted stay in at 0 WAR (no survivorship cherry-picking). Cumulative WAR is censored at today, so younger cohorts (2023) have had less time to accrue it; the rate columns (WAR/yr, Reg pace) are less sensitive to that. <strong>eFV note:</strong> eFV is shown on its out-of-sample resolved cohort, which is debuted-heavy (its grades come from the labeled training pool), so its absolute WAR/contributor levels run a touch higher than the sources' full cohorts - compare the <em>shape</em> of the tier separation, not the absolute height.</p>
       <div class="meth-tables">${bt.raters.concat(bt.cohorts.xfv ? ["xfv"] : []).map(r => _methTierTable(bt, r)).join("")}</div>
       <div class="meth-caveats">
-        <div class="meth-caveats-title">⚠ Read this honestly</div>
+        <div class="meth-caveats-title">${window.EephusIco ? window.EephusIco("warn", 12) : ""} Read this honestly</div>
         <ul>
           <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
           <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40-60 across all years - a handful of hits or misses moves its rates a lot.</li>
@@ -5488,7 +5488,7 @@ function _saccReadFirst(d) {
     <h3 class="meth-h3">The ${_saccN(m.cells_flagged_answerable)} cells that cleared their floor</h3>
     <p class="meth-note">${holm.length ? `After a Holm correction inside each partition, ${holm.length} survive: ${holm.map(h => `<code>${escapeHtml(h)}</code>`).join(", ")}. ` : ""}${escapeHtml(m.survivors_overlap_note || "")}</p>
     <div class="meth-caveats">
-      <div class="meth-caveats-title">&#9888; Read this honestly</div>
+      <div class="meth-caveats-title">${window.EephusIco ? window.EephusIco("warn", 12) : ""} Read this honestly</div>
       <ul>
         <li><strong>The global head-to-head does not resolve.</strong> Pooled difference ${_s4((d.accuracy || {}).pooled && d.accuracy.pooled.d_rho)} against a minimum detectable effect of ${_f4((d.accuracy || {}).pooled && d.accuracy.pooled.mde95)}, bootstrap two-sided p ${_f4((d.accuracy || {}).pooled && d.accuracy.pooled.boot_p_two_sided)}. Every cohort claim on the tabs below sits inside that.</li>
         <li><strong>A survivor count is not a family test.</strong> ${_saccN(m.cells_tested)} cells at alpha 0.05 produce about ${_f2(m.expected_false_positives_at_alpha_05)} flags with no signal at all.</li>

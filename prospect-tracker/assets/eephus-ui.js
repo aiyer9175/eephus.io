@@ -693,7 +693,7 @@
           '<div class="eph-menu-sep"></div>' +
           '<button data-act="signout">Sign out</button></div>';
     } else {
-      node.innerHTML = '<button class="eph-acct-btn" data-act="signin" aria-label="Sign in"><span aria-hidden="true">◔</span><span class="eph-acct-label">Sign in</span></button>';
+      node.innerHTML = '<button class="eph-acct-btn" data-act="signin" aria-label="Sign in"><span aria-hidden="true">' + (window.EephusIco ? window.EephusIco("account", 12) : "") + '</span><span class="eph-acct-label">Sign in</span></button>';
     }
     controls.appendChild(node);
     var menu = qs(".eph-acct-menu", node);

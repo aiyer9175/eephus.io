@@ -668,7 +668,7 @@
   }
   // SC7-3: the Generate GFX chip; the cards are a lazy chunk (the root's data-sgfx-src).
   function gchip(k) {
-    return '<button type="button" class="sc-btn sc-gfx" data-gfx="' + k + '"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>';
+    return '<button type="button" class="sc-btn sc-gfx" data-gfx="' + k + '"><span class="egfx-chip-glyph" aria-hidden="true">' + (window.EephusIco ? window.EephusIco("gfx", 12) : "") + '</span>Generate GFX</button>';
   }
   function vslot(m, k) { return '<div class="sc-v" data-m="' + m + '" data-k="' + k + '"></div>'; }
   function lineupsTab(g) {
