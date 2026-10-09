@@ -2560,6 +2560,11 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
     return out
 
 
+def _forward_vintage_on_record(season: int) -> bool:
+    import proj_forward_vintage as pfv
+    return bool(pfv.on_record(season)[0])
+
+
 def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
                              season_remainder: list[float], depth_acct: dict) -> None:
     """data/team_outlook_eval.json - the league-sum accounting plus the
@@ -2647,7 +2652,12 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
             "status": "pending",
             "first_scoreable": f"end of the {FIRST_SEASON} season",
             "scope": f"first season only; {FIRST_SEASON + 1}+ are not gateable",
-            "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward"},
+            "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward",
+            # The forecast it grades is the write-once preseason freeze, never
+            # this nightly file (owner answer M15-2, PROJ_FORWARD_VINTAGE_GATE).
+            "forecast": "the frozen preseason copy of the first projected season, "
+                        "taken before its first game and pinned by hash; never a nightly build",
+            "forecast_on_record": _forward_vintage_on_record(FIRST_SEASON)},
     })
     # System Duration / Window Alignment coverage + league distribution. A
     # descriptive rollup of committed inputs (eta model validated, surplus
@@ -3376,10 +3386,13 @@ def _accountability_block() -> dict:
         "projections": {
             "engine": (vet_horizons.get("champion") or {}).get("model"),
             "comparator": (vet_horizons.get("baseline") or {}).get("model"),
-            "gate": "player-level WAR, row-matched holdout",
+            "gate": "player-level WAR holdout, both engines on the same frame",
             "frame": "2022-2024 holdout",
             "artifact": "data/proj_horizon_eval.json",
             "generated_at": he.get("generated_at"),
+            # the gate row's own caveat, printed beside the figures it qualifies
+            "registry_row": "fa_war_paths_decay",
+            "remeasure_pending": (by_id.get("fa_war_paths_decay") or {}).get("remeasure_pending"),
             "by_horizon": proj_rows,
         } if proj_rows else None,
         "fa": {
@@ -3388,6 +3401,8 @@ def _accountability_block() -> dict:
             "gate": "FA Gate 2, market model",
             "artifact": "data/fa_gate2_eval.json",
             "generated_at": g2.get("generated_at"),
+            "registry_row": "fa_market",
+            "remeasure_pending": (by_id.get("fa_market") or {}).get("remeasure_pending"),
             "war_provider": g2.get("war_provider"),
             "pass": g2.get("pass"),
             "pooled": g2_pooled,

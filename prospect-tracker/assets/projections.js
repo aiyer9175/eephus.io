@@ -2592,6 +2592,10 @@
   function measuredOn(when) {
     return when ? `, measured ${esc(String(when).slice(0, 10))}` : "";
   }
+  // A gate row that is pending re-measure says so beside its figures.
+  function pendingNote(x) {
+    return x && x.remeasure_pending ? ` Its registry row: ${esc(x.remeasure_pending)}.` : "";
+  }
   function projGateSentence() {
     const p = surfaceEngines().projections;
     const rows = ((p && p.by_horizon) || []).filter(r => r.mae != null && r.mae_comparator != null);
@@ -2599,14 +2603,14 @@
     const ahead = rows.filter(r => r.mae < r.mae_comparator).length;
     const h1 = rows[0];
     const where = ahead === rows.length ? "at every scored horizon" : `at ${ahead} of ${rows.length} scored horizons`;
-    return ` ${esc(p.engine)} serves here: it is ahead of ${esc(p.comparator)} ${where} of the ${esc(p.frame)} (year ${h1.h} MAE ${h1.mae.toFixed(3)} against ${h1.mae_comparator.toFixed(3)}${measuredOn(p.generated_at)}).`;
+    return ` ${esc(p.engine)} serves here: it is ahead of ${esc(p.comparator)} ${where} of the ${esc(p.frame)} (year ${h1.h} MAE ${h1.mae.toFixed(3)} against ${h1.mae_comparator.toFixed(3)}${measuredOn(p.generated_at)}).${pendingNote(p)}`;
   }
   function faGateClause() {
     const f = surfaceEngines().fa;
     const g = f && f.pooled && f.pooled.guarantee;
     if (!g || g.mae_model == null || g.mae_base == null) return "";
     const verdict = f.pass ? "passed" : "is failing";
-    return ` /fa/ keeps the champion path, the input its market model ${verdict} <span data-gl="fa_gates">Gate 2</span> on (guarantee MAE $${g.mae_model.toFixed(2)}M against $${g.mae_base.toFixed(2)}M for its baseline, n ${String(Math.round(Number(g.n))).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${measuredOn(f.generated_at)}).`;
+    return ` /fa/ keeps the champion path, the input its market model ${verdict} <span data-gl="fa_gates">Gate 2</span> on (guarantee MAE $${g.mae_model.toFixed(2)}M against $${g.mae_base.toFixed(2)}M for its baseline, n ${String(Math.round(Number(g.n))).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${measuredOn(f.generated_at)}).${pendingNote(f)}`;
   }
   function projectionPanel(p) {
     const pr = p.proj || {};

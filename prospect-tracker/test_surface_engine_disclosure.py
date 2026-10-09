@@ -147,6 +147,22 @@ def test_the_card_fa_block_reads_the_gate_and_drops_the_unbacked_claim():
     assert "ML paths failed" not in src
 
 
+def test_a_pending_re_measure_is_printed_beside_the_figures(monkeypatch):
+    reg = {"models": [{"model_id": "fa_war_paths_decay",
+                       "remeasure_pending": "measured on the pre-repair labels"}]}
+    monkeypatch.setattr(pe, "_read_data_json",
+                        lambda name: reg if name == "model_registry.json" else _fake(name))
+    se = pe._accountability_block()["surface_engines"]
+    assert se["projections"]["remeasure_pending"] == "measured on the pre-repair labels"
+    assert se["fa"]["remeasure_pending"] is None
+    s = _se()
+    s["projections"]["remeasure_pending"] = "measured on the pre-repair labels"
+    S, board = _board_with(s)
+    fold = _render(S, board, "")["proj-banner"]
+    assert "measured 2026-08-19). Its registry row: measured on the pre-repair labels." in fold
+    assert fold.count("Its registry row") == 1
+
+
 # ---------------------------------------------------------------------------
 # /fa/: the season panel
 # ---------------------------------------------------------------------------

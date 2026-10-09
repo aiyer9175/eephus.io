@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-07",
+ "generated_at": "2026-10-09",
  "first_season": 2027,
  "league_sum_accounting": {
   "roster_war_sum": 954.1,
@@ -28,8 +28,8 @@
    {
     "season": 2028,
     "roster_war_sum": 661.5,
-    "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 9.8
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 9.79
    },
    {
     "season": 2029,
@@ -69,10 +69,12 @@
   "status": "pending",
   "first_scoreable": "end of the 2027 season",
   "scope": "first season only; 2028+ are not gateable",
-  "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward"
+  "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward",
+  "forecast": "the frozen preseason copy of the first projected season, taken before its first game and pinned by hash; never a nightly build",
+  "forecast_on_record": false
  },
  "retro_backtest": {
-  "generated_at": "2026-08-04",
+  "generated_at": "2026-10-09",
   "design": {
    "targets": [
     2022,
@@ -88,197 +90,197 @@
   "player_level": {
    "pooled": {
     "n": 8866,
-    "bias_act_minus_pred": 0.049,
-    "mae": 0.541,
-    "r": 0.636
+    "bias_act_minus_pred": 0.019,
+    "mae": 0.461,
+    "r": 0.682
    },
    "assigned_only": {
     "n": 5029,
-    "bias_act_minus_pred": 0.086,
-    "mae": 0.855,
-    "r": 0.603
+    "bias_act_minus_pred": 0.074,
+    "mae": 0.72,
+    "r": 0.656
    },
    "unassigned_only": {
     "n": 3837,
-    "bias_act_minus_pred": -0.0,
-    "mae": 0.131,
+    "bias_act_minus_pred": -0.054,
+    "mae": 0.122,
     "r": 0
    },
    "_reading": "pooled mixes rostered players with players who never took a roster spot (actual WAR 0 by construction); assigned_only is the population the team roll-up is built from and is the one to quote",
    "hit:0-25": {
     "n": 540,
-    "bias_act_minus_pred": 0.22,
-    "mae": 1.047,
-    "r": 0.606
+    "bias_act_minus_pred": 0.199,
+    "mae": 0.981,
+    "r": 0.628
    },
    "hit:26-29": {
     "n": 1428,
-    "bias_act_minus_pred": 0.081,
-    "mae": 0.623,
-    "r": 0.704
+    "bias_act_minus_pred": 0.079,
+    "mae": 0.595,
+    "r": 0.701
    },
    "hit:30-33": {
     "n": 1054,
-    "bias_act_minus_pred": 0.051,
-    "mae": 0.587,
-    "r": 0.74
+    "bias_act_minus_pred": 0.041,
+    "mae": 0.545,
+    "r": 0.749
    },
    "hit:34-99": {
     "n": 602,
-    "bias_act_minus_pred": 0.007,
-    "mae": 0.357,
-    "r": 0.558
+    "bias_act_minus_pred": -0.042,
+    "mae": 0.329,
+    "r": 0.551
    },
    "pit:0-25": {
     "n": 454,
-    "bias_act_minus_pred": -0.129,
-    "mae": 0.794,
-    "r": 0.387
+    "bias_act_minus_pred": -0.167,
+    "mae": 0.663,
+    "r": 0.484
    },
    "pit:26-29": {
     "n": 2120,
-    "bias_act_minus_pred": 0.015,
-    "mae": 0.501,
-    "r": 0.567
+    "bias_act_minus_pred": -0.013,
+    "mae": 0.401,
+    "r": 0.682
    },
    "pit:30-33": {
     "n": 1669,
-    "bias_act_minus_pred": 0.069,
-    "mae": 0.418,
-    "r": 0.483
+    "bias_act_minus_pred": 0.019,
+    "mae": 0.306,
+    "r": 0.63
    },
    "pit:34-99": {
     "n": 999,
-    "bias_act_minus_pred": 0.053,
-    "mae": 0.391,
-    "r": 0.527
+    "bias_act_minus_pred": -0.003,
+    "mae": 0.276,
+    "r": 0.679
    }
   },
   "cohort_intercepts_fit_2022_24": {
-   "hit:0-25": 0.278,
-   "hit:26-29": 0.113,
-   "hit:30-33": 0.018,
-   "hit:34-99": -0.006,
-   "pit:0-25": -0.082,
-   "pit:26-29": 0.014,
-   "pit:30-33": 0.066,
-   "pit:34-99": 0.031
+   "hit:0-25": 0.232,
+   "hit:26-29": 0.108,
+   "hit:30-33": 0.015,
+   "hit:34-99": -0.056,
+   "pit:0-25": -0.146,
+   "pit:26-29": -0.012,
+   "pit:30-33": 0.022,
+   "pit:34-99": -0.014
   },
   "team_level_per_season": [
    {
     "season": 2022,
-    "n_assigned_players": 1197,
-    "roster_war_sum": 787.5,
-    "assigned_actual_war": 919.1,
-    "assigned_pred_war": 787.5,
-    "assigned_level_deficit": -131.6,
+    "n_assigned_players": 1242,
+    "roster_war_sum": 814.2,
+    "assigned_actual_war": 940.5,
+    "assigned_pred_war": 814.2,
+    "assigned_level_deficit": -126.3,
     "is_holdout": false,
     "raw": {
-     "mae": 9.47,
+     "mae": 9.59,
      "r": 0.757
     },
     "recentered": {
-     "mae": 9.54,
+     "mae": 9.03,
      "r": 0.757
     },
     "cohort_recentered": {
-     "mae": 9.81,
-     "r": 0.737
+     "mae": 9.11,
+     "r": 0.745
     },
     "served_recentered": {
-     "mae": 9.6,
-     "r": 0.755
+     "mae": 9.03,
+     "r": 0.757
     },
     "baseline_prior_wins": {
-     "mae": 10.41,
-     "r": 0.563
+     "mae": 10.83,
+     "r": 0.551
     }
    },
    {
     "season": 2023,
-    "n_assigned_players": 1206,
-    "roster_war_sum": 836.7,
-    "assigned_actual_war": 920.4,
-    "assigned_pred_war": 836.7,
-    "assigned_level_deficit": -83.7,
+    "n_assigned_players": 1245,
+    "roster_war_sum": 862.9,
+    "assigned_actual_war": 938.5,
+    "assigned_pred_war": 862.9,
+    "assigned_level_deficit": -75.7,
     "is_holdout": false,
     "raw": {
-     "mae": 10.83,
-     "r": 0.506
+     "mae": 10.59,
+     "r": 0.504
     },
     "recentered": {
-     "mae": 9.68,
-     "r": 0.506
+     "mae": 9.59,
+     "r": 0.504
     },
     "cohort_recentered": {
-     "mae": 9.79,
-     "r": 0.484
+     "mae": 9.66,
+     "r": 0.494
     },
     "served_recentered": {
-     "mae": 9.63,
-     "r": 0.5
+     "mae": 9.59,
+     "r": 0.504
     },
     "baseline_prior_wins": {
-     "mae": 11.38,
-     "r": 0.536
+     "mae": 11.33,
+     "r": 0.53
     }
    },
    {
     "season": 2024,
-    "n_assigned_players": 1219,
-    "roster_war_sum": 804.6,
-    "assigned_actual_war": 919.5,
-    "assigned_pred_war": 804.6,
-    "assigned_level_deficit": -114.9,
+    "n_assigned_players": 1261,
+    "roster_war_sum": 843.4,
+    "assigned_actual_war": 942.5,
+    "assigned_pred_war": 843.4,
+    "assigned_level_deficit": -99.0,
     "is_holdout": false,
     "raw": {
-     "mae": 8.88,
-     "r": 0.692
+     "mae": 8.67,
+     "r": 0.712
     },
     "recentered": {
-     "mae": 7.18,
-     "r": 0.692
+     "mae": 6.77,
+     "r": 0.712
     },
     "cohort_recentered": {
-     "mae": 7.16,
-     "r": 0.688
+     "mae": 6.78,
+     "r": 0.714
     },
     "served_recentered": {
-     "mae": 7.23,
-     "r": 0.697
+     "mae": 6.77,
+     "r": 0.712
     },
     "baseline_prior_wins": {
-     "mae": 9.45,
-     "r": 0.541
+     "mae": 9.3,
+     "r": 0.542
     }
    },
    {
     "season": 2025,
-    "n_assigned_players": 1225,
-    "roster_war_sum": 834.8,
-    "assigned_actual_war": 922.9,
-    "assigned_pred_war": 834.8,
-    "assigned_level_deficit": -88.1,
+    "n_assigned_players": 1281,
+    "roster_war_sum": 875.9,
+    "assigned_actual_war": 948.3,
+    "assigned_pred_war": 875.9,
+    "assigned_level_deficit": -72.4,
     "is_holdout": true,
     "raw": {
-     "mae": 8.31,
-     "r": 0.634
+     "mae": 8.13,
+     "r": 0.61
     },
     "recentered": {
-     "mae": 7.21,
-     "r": 0.634
+     "mae": 7.12,
+     "r": 0.61
     },
     "cohort_recentered": {
-     "mae": 7.27,
-     "r": 0.621
+     "mae": 7.33,
+     "r": 0.601
     },
     "served_recentered": {
-     "mae": 7.18,
-     "r": 0.629
+     "mae": 7.12,
+     "r": 0.61
     },
     "baseline_prior_wins": {
-     "mae": 7.24,
-     "r": 0.705
+     "mae": 7.3,
+     "r": 0.698
     }
    }
   ],
@@ -288,13 +290,27 @@
    "holdout_season": 2025,
    "challenger_wins": false,
    "holdout_mae": {
-    "raw": 8.31,
-    "recentered": 7.21,
-    "cohort_recentered": 7.27,
-    "served_recentered": 7.18,
-    "baseline_prior_wins": 7.24
+    "raw": 8.13,
+    "recentered": 7.12,
+    "cohort_recentered": 7.33,
+    "served_recentered": 7.12,
+    "baseline_prior_wins": 7.3
    },
-   "served_vector_note": "served_recentered scores the vector proj_export actually serves today, which the challenger-vs-incumbent comparison does not. A served arm that matches 'recentered' means the vector is doing nothing; worse means it is actively costing wins."
+   "served_vector_note": "served_recentered scores the vector proj_export actually serves today, which the challenger-vs-incumbent comparison does not. A served arm that matches 'recentered' means the vector is doing nothing; worse means it is actively costing wins.",
+   "holdout_gap_ci_vs_prior_wins": {
+    "mae": {
+     "point": 0.1819,
+     "lo95": -1.843,
+     "hi95": 2.1778
+    },
+    "B": 2000,
+    "seed": 20261007,
+    "cluster": "team (org)",
+    "clusters": 30,
+    "n": 30,
+    "orientation": "improvement: benchmark minus model for a lower-is-better statistic, model minus benchmark otherwise; positive means the model is better",
+    "method": "paired percentile bootstrap: whole clusters drawn with replacement, both arms scored on every draw, predictions held fixed (no refit)"
+   }
   }
  },
  "horizon": 5,
@@ -330,11 +346,11 @@
  "serve_vector_flag": false,
  "serve_vector_tripwire": {
   "question": "does the served vector read worse than plain recentering on the holdout retro fold",
-  "holdout_mae_served_recentered": 7.18,
-  "holdout_mae_recentered": 7.21,
+  "holdout_mae_served_recentered": 7.12,
+  "holdout_mae_recentered": 7.12,
   "flag": false,
   "vector_serving": false,
-  "vector_note": "the cohort-intercept vector does not serve; served_recentered scores the vector as it stood when proj_backtest last ran (2026-08-04), and the live roll-up is the plain recentered arm",
+  "vector_note": "the cohort-intercept vector does not serve; served_recentered scores the vector as it stood when proj_backtest last ran (2026-10-09), and the live roll-up is the plain recentered arm",
   "source": "retro_backtest.ship_decision.holdout_mae (proj_backtest.py; preserved across re-exports; flag is None when the block is absent)"
  }
 }
