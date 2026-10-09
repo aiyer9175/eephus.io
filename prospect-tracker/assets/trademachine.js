@@ -720,6 +720,131 @@ function _tmCompVerdict(net, clubA, clubB) {
 }
 // ---- end comparable real trades -------------------------------------------
 
+// ---- Trade partner screen rule partner_v1 (begin)
+// Wiring W08 (owner answer W-OQ4 (a), 2026-10-01): the published rule of
+// docs/trademachine-2026-10/TRADE_PARTNER_SCREEN_GATE.md sections 2.2 to 2.5.
+// For one player, the 29 clubs other than his own, ordered by four factor
+// scores of equal weight, every factor printed, and labelled as a screen.
+// Pure functions; trade_partner_screen.py holds the Python twin, and the
+// record writer hashes the text between these two markers. Factor scores are
+// integer 56ths and the Score integer 112ths, so both languages order alike.
+const TM_PARTNER_RULE = "partner_v1";
+const TM_PARTNER_TOP = 5;
+const TM_PARTNER_FIELD = ["C", "1B", "2B", "3B", "SS", "LF", "CF", "RF"];
+const TM_PARTNER_SP = ["SP", "RHP", "LHP", "P"];
+const TM_PARTNER_RP = ["RP", "CL", "SIRP", "MIRP", "CP"];
+const TM_PARTNER_ORDER = ["C", "SS", "CF", "2B", "3B", "1B", "LF", "RF", "OF", "SP", "RP",
+  "CL", "RHP", "LHP", "P", "DH"];
+// The Trade Machine's primary position, then the slot: a fielder at his
+// position, DH, SP or RP. Any other position (OF, INF, TWP) has no slot.
+function _tmPartnerSlot(pos) {
+  const s = String(pos || "").toUpperCase().trim();
+  if (!s) return null;
+  const parts = s.split("/").map(x => x.trim()).filter(Boolean);
+  const prim = TM_PARTNER_ORDER.find(x => parts.includes(x)) || parts[0] || "";
+  if (TM_PARTNER_FIELD.includes(prim) || prim === "DH") return prim;
+  if (TM_PARTNER_SP.includes(prim)) return "SP";
+  if (TM_PARTNER_RP.includes(prim)) return "RP";
+  return null;
+}
+function _tmPartnerNum(v) {
+  if (v == null || typeof v === "boolean" || v === "") return null;
+  const x = Number(v);
+  return isFinite(x) ? x : null;
+}
+// Gate 2.2 Tax, the M27 form: the club's tax payroll before and after the
+// player's CBT charge (prorated in season), the threshold, the brackets, the
+// payor tier, and the marginal tax in whole dollars (lower counts more).
+function _tmPartnerTax(fin, season, charge, frac, rates, tiers) {
+  const f = fin || {};
+  const before = _tmPartnerNum(f["tax_payroll_" + season]);
+  const thr = _tmPartnerNum(f.threshold_usd);
+  const tier = f["payor_" + season] || "Non-Tax";
+  if (before == null || thr == null || !rates || !tiers) return null;
+  const moved = Number(charge) * frac;
+  const after = before + moved;
+  const b0 = _tmCbtBill(before, thr, tier, rates, tiers);
+  const b1 = _tmCbtBill(after, thr, tier, rates, tiers);
+  return { before: before, after: after, moved: moved, threshold: thr, carry: !!f.threshold_carry_forward,
+           tier: tier, bracketBefore: b0.bracket, bracketAfter: b1.bracket,
+           marginal: Math.floor((b1.bill - b0.bill) + 0.5) };
+}
+// Gate 2.3 step 1: rank the candidates that carry a value, ties at their
+// average rank, score (29 - rank) / 28, returned as 56ths: 58 - 2 x rank. A
+// candidate with no value gets null (it scores 0.5, gate 2.3 step 3).
+function _tmPartnerFactor(cands, valueOf, higher) {
+  const have = [];
+  for (const c of cands) {
+    const v = _tmPartnerNum(valueOf(c));
+    if (v != null) have.push([c, v]);
+  }
+  have.sort((x, y) => (higher ? y[1] - x[1] : x[1] - y[1]) || (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0));
+  const out = {};
+  for (const c of cands) out[c] = null;
+  let i = 0;
+  while (i < have.length) {
+    let j = i;
+    while (j + 1 < have.length && have[j + 1][1] === have[i][1]) j++;
+    for (let k = i; k <= j; k++) out[have[k][0]] = 58 - (i + j + 2);
+    i = j + 1;
+  }
+  return out;
+}
+// partner_v1 for one player ({slot, club, cbt_usd}): null when he has no slot
+// or no club in the slice; else his club, the slot and the 29 candidates in
+// rule order, each with its raw inputs, its four factor scores and its Score
+// (units: 1/112).
+function _tmPartnerScreen(slice, player) {
+  const clubs = (slice && slice.clubs) || {};
+  const slot = player && player.slot;
+  const own = player && player.club;
+  if (!slot || !own || !Object.prototype.hasOwnProperty.call(clubs, own)) return null;
+  const codes = Object.keys(clubs).sort();
+  const cands = codes.filter(c => c !== own);
+  const field = TM_PARTNER_FIELD.includes(slot);
+  const con = slice.contention;
+  const tx = slice.tax;
+  const season = tx.season;
+  const frac = (tx.days && tx.days_left != null) ? tx.days_left / tx.days : 1;
+  const charge = _tmPartnerNum(player.cbt_usd) || 0;
+  const key = { DH: "offense_plus", SP: "rotation_plus", RP: "bullpen_plus" };
+  const raw = {};
+  for (const c of codes) {
+    const r = clubs[c].roster || {};
+    const st = field ? ((r.starters || {})[slot] || null) : null;
+    raw[c] = {
+      needA: _tmPartnerNum(field ? (st ? st.hem_plus : null) : r[key[slot]]),
+      needB: field ? _tmPartnerNum(r.team_dem_plus) : null,
+      starter: st ? st.name : null,
+      contention: _tmPartnerNum((clubs[c][con.section] || {})[con.key]),
+      tax: _tmPartnerTax(clubs[c].fin, season, charge, frac, tx.rates, tx.surcharge_tiers_usd),
+      pay: _tmPartnerNum((clubs[c].farm || {}).farm_surplus_mm),
+    };
+  }
+  const fa = _tmPartnerFactor(cands, c => raw[c].needA, false);
+  const fb = field ? _tmPartnerFactor(cands, c => raw[c].needB, false) : null;
+  const fc = _tmPartnerFactor(cands, c => raw[c].contention, true);
+  const ft = _tmPartnerFactor(cands, c => (raw[c].tax ? raw[c].tax.marginal : null), false);
+  const fp = _tmPartnerFactor(cands, c => raw[c].pay, true);
+  const u = x => (x == null ? 28 : x);
+  const rows = cands.map(c => {
+    const need = field ? u(fa[c]) + u(fb[c]) : 2 * u(fa[c]);
+    const cont = 2 * u(fc[c]), tax = 2 * u(ft[c]), pay = 2 * u(fp[c]);
+    const missing = [["need", fa[c]], ["need_dem", field ? fb[c] : 0], ["contention", fc[c]],
+      ["tax", ft[c]], ["pay", fp[c]]].filter(m => m[1] == null).map(m => m[0]);
+    return { club: c, raw: raw[c], missing: missing,
+             u: { need: need, contention: cont, tax: tax, pay: pay, score: need + cont + tax + pay } };
+  });
+  rows.sort((x, y) => (y.u.score - x.u.score) || (y.u.need - x.u.need)
+    || (y.u.contention - x.u.contention) || (y.u.pay - x.u.pay)
+    || (x.club < y.club ? -1 : x.club > y.club ? 1 : 0));
+  rows.forEach((x, i) => { x.order = i + 1; });
+  return { rule: TM_PARTNER_RULE, slot: slot, own: own, ownRaw: raw[own], season: season,
+           charge: charge, frac: frac, rows: rows,
+           top: rows.slice(0, TM_PARTNER_TOP).map(x => x.club) };
+}
+// ---- Trade partner screen rule partner_v1 (end)
+
 const _TMC = { doc: null, state: "idle", month: null };
 const _TM_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 // The deal list is read once, the first time both sides hold a player.
@@ -833,6 +958,154 @@ function _tmPaintComps() {
     _TMC.month = Number(sel.value) || null;
     _tmPaintComps();
     const again = document.querySelector("#tm-comps [data-tm-comp-month]");
+    if (again) again.focus();
+  };
+}
+
+// ---- Trade partner screen panel (wiring W08) -------------------------------
+// Drawn only when build_site writes data-tm-partner="live" on the module root,
+// which it does only while trade_partner_screen.TRADE_PARTNER_SCREEN_LIVE is
+// True. With the flag off the builder renders exactly as before and the slice
+// is never requested. Display only: nothing here enters a trade value, the
+// CBT block or the comparable trades above.
+const _TMP = { slice: null, state: "idle", pick: null };
+function _tmPartnerLive() {
+  const r = document.getElementById("proj-view-trademachine");
+  return !!(r && r.getAttribute("data-tm-partner") === "live");
+}
+function _tmEnsurePartner() {
+  if (_TMP.state !== "idle") return;
+  _TMP.state = "loading";
+  fetch(DATA_BASE + "trade_partner_slice.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      const ok = j && j.clubs && j.tax && j.contention;
+      _TMP.slice = ok ? j : null;
+      _TMP.state = ok ? "ready" : "unavailable";
+    })
+    .catch(() => { _TMP.state = "unavailable"; })
+    .then(_tmPaintPartner);
+}
+function _tmPartnerItems() {
+  return _TM.a.map((x, i) => ({ x: x, id: "a:" + i, side: "A" }))
+    .concat(_TM.b.map((x, i) => ({ x: x, id: "b:" + i, side: "B" })));
+}
+// One builder item as the rule's player: the slot, his club through the one
+// club resolver, and the CBT charge the CBT block uses, for the screen's tax year.
+function _tmPartnerPlayer(x, sl) {
+  const proj = (x && x.kind === "mlb" && _TM.detail && _TM.detail[x.key]) ? _TM.detail[x.key].proj : null;
+  const ch = _tmCbtCharge(x, proj, Number(sl.tax.season), Number(sl.season_now));
+  return { slot: _tmPartnerSlot(x.pos), club: _tmCanonOrg(x.org), cbt_usd: ch.usd, cbt_known: ch.known };
+}
+const _TM_PARTNER_NEED = { DH: "Offense+", SP: "Rotation+", RP: "Bullpen+" };
+function _tmPartnerFs(units, per) {
+  return `<span class="tm-partner-fs" title="factor score, 0 to 1">${(units / per).toFixed(2)}</span>`;
+}
+const _TM_PARTNER_NOF = `<span class="tm-partner-nof">- not on file</span>`;
+function _tmPartnerTaxText(t, sl) {
+  if (!t) return null;
+  const br = (sl.tax && sl.tax.brackets) || {};
+  const b = k => br[k] || k || "-";
+  const bracket = t.bracketBefore === t.bracketAfter ? b(t.bracketBefore) : `${b(t.bracketBefore)} to ${b(t.bracketAfter)}`;
+  return escapeHtml(`tax payroll ${_tmUsdM(t.before)} to ${_tmUsdM(t.after)}; threshold ${_tmUsdM(t.threshold)}`
+    + `${t.carry ? ` (the ${sl.season_now} figure carried forward)` : ""}; bracket: ${bracket}; `
+    + `marginal tax ${_tmUsdM(t.marginal)}; payor tier ${t.tier}`);
+}
+function _tmPartnerNeedText(raw, slot) {
+  const v = n => (n == null ? null : String(Math.round(n)));
+  if (TM_PARTNER_FIELD.includes(slot)) {
+    const a = v(raw.needA), b = v(raw.needB);
+    return `${a == null ? "HEM+ not on file" : `HEM+ ${a}${raw.starter ? ` (${escapeHtml(raw.starter)})` : ""}`}; `
+      + `${b == null ? "DEM+ not on file" : `DEM+ ${b}`}`;
+  }
+  const a = v(raw.needA);
+  return a == null ? null : `${_TM_PARTNER_NEED[slot]} ${a}`;
+}
+function _tmPartnerContText(v, con) {
+  if (v == null) return null;
+  return con.section === "odds" ? `${Math.round(v * 100)}%` : `${v.toFixed(1)} wins`;
+}
+function _tmPartnerProfile(p) {
+  if (!p || (p.volume == null && p.players_moved == null)) return `<span class="tm-partner-nof">not on file</span>`;
+  const net = p.net_prospects != null ? `; net prospects ${Number(p.net_prospects) > 0 ? "+" : ""}${p.net_prospects}` : "";
+  const moved = p.players_moved != null ? `<span class="tm-partner-dim">${p.players_moved} players moved${net}${p.window ? `, ${escapeHtml(p.window)}` : ""}</span>` : "";
+  return `<span class="tm-partner-raw">${escapeHtml(p.volume || "-")}</span>${moved}`;
+}
+function _tmPartnerRowHtml(code, raw, row, sl, slot) {
+  const cell = (txt, units, per) => `<td class="tm-partner-f">${txt == null ? _TM_PARTNER_NOF
+    : `<span class="tm-partner-raw">${txt}</span>`}${units == null ? "" : _tmPartnerFs(units, per)}</td>`;
+  const need = _tmPartnerNeedText(raw, slot);
+  const tax = _tmPartnerTaxText(raw.tax, sl);
+  const prof = (sl.clubs[code] || {}).trade_profile;
+  const own = !row;
+  return `<tr class="${own ? "tm-partner-own" : ""}" data-tm-partner-club="${code}">
+      <td class="tm-partner-ord">${own ? "his club" : row.order}</td>
+      <td class="tm-partner-club">${_tmClubA(code, _tmTeamLogo(code, true), { mark: true })} ${_tmClubA(code, escapeHtml(code))}</td>
+      ${cell(need, own ? null : row.u.need, 112)}
+      ${cell(_tmPartnerContText(raw.contention, sl.contention), own ? null : row.u.contention, 112)}
+      ${cell(tax, own ? null : row.u.tax, 112)}
+      ${cell(raw.pay == null ? null : `$${raw.pay.toFixed(1)}M`, own ? null : row.u.pay, 112)}
+      <td class="tm-partner-score">${own ? `<span class="tm-partner-dim">not ranked</span>` : (row.u.score / 112).toFixed(2)}</td>
+      <td class="tm-partner-prof">${_tmPartnerProfile(prof)}</td>
+    </tr>`;
+}
+function _tmPartnerHtml() {
+  const items = _tmPartnerItems();
+  if (!items.length) return "";
+  const head = `<div class="tm-partner-head"><h3 class="tm-partner-h">Trade partner screen</h3>`
+    + `<span class="tm-partner-tag">a screen, not a rumor board</span></div>`;
+  if (_TMP.state === "unavailable") return head + `<div class="tm-partner-note">The club inputs could not be read; the evaluator above is unaffected.</div>`;
+  if (_TMP.state !== "ready") return head + `<div class="tm-partner-note">Loading the club inputs.</div>`;
+  const sl = _TMP.slice;
+  const cur = items.find(t => t.id === _TMP.pick) || items[0];
+  const opts = items.map(t => `<option value="${t.id}"${t.id === cur.id ? " selected" : ""}>Side ${t.side}: ${escapeHtml(t.x.name)}</option>`).join("");
+  const pick = `<label class="tm-partner-pick">Player <select class="chip" data-tm-partner-pick aria-label="The player the partner screen is for">${opts}</select></label>`;
+  const pl = _tmPartnerPlayer(cur.x, sl);
+  const sc = _tmPartnerScreen(sl, pl);
+  const name = escapeHtml(cur.x.name);
+  if (!sc) {
+    const why = !pl.slot
+      ? `his listed position (${escapeHtml(cur.x.pos || "none")}) is not one of the published slots: C, 1B, 2B, 3B, SS, LF, CF, RF, DH, SP and RP`
+      : "no club on file";
+    return head + `<div class="tm-partner-for">${pick}</div><div class="tm-partner-note">No screen for ${name}: ${why}.</div>`;
+  }
+  const con = sl.contention;
+  const tx = sl.tax;
+  const charge = `${_tmUsdM(sc.charge)}${pl.cbt_known ? "" : " (no salary on file, counted as $0)"}`
+    + `${sc.frac < 1 ? `, prorated over ${tx.days_left} of ${tx.days} regular-season days left` : ""}`;
+  const needHead = TM_PARTNER_FIELD.includes(sc.slot)
+    ? `starter's HEM+ at ${sc.slot}; team DEM+` : _TM_PARTNER_NEED[sc.slot];
+  const note = `<div class="tm-partner-note">${name}: slot ${sc.slot}; his club ${_tmClubA(sc.own, escapeHtml(sc.own))}; `
+    + `CBT charge for ${sc.season} ${charge}. Club inputs as of ${escapeHtml(sl.as_of || "")}.</div>`;
+  const th = (label, sub) => `<th scope="col">${label}${sub ? `<span class="tm-partner-sub">${sub}</span>` : ""}</th>`;
+  const table = `<div class="tm-partner-scroll" role="region" aria-label="Partner screen table" tabindex="0"><table class="tm-partner-table">
+      <thead><tr>${th("#", "")}${th("Club", "")}${th("Need", `${needHead}; lower counts as more need`)}`
+    + `${th("Contention", `${escapeHtml(con.label)}; ${escapeHtml(con.frame)}; higher counts more`)}`
+    + `${th("Tax", `CBT, ${tx.season}; marginal tax lower counts more`)}`
+    + `${th("Ability to pay", "farm surplus; higher counts more")}`
+    + `${th("Score", "0 to 4")}${th("Org trade profile", "shown, weight 0")}</tr></thead>
+      <tbody>${_tmPartnerRowHtml(sc.own, sc.ownRaw, null, sl, sc.slot)}${sc.rows.map(r => _tmPartnerRowHtml(r.club, r.raw, r, sl, sc.slot)).join("")}</tbody>
+    </table></div>`;
+  const method = `<div class="tm-partner-method">Rule ${TM_PARTNER_RULE}, every factor printed. For each factor the 29 clubs other than his own are ordered`
+    + ` and scored (29 - rank) / 28: 1.00 at the top, 0.00 at the bottom, ties at their average rank; an input not on file scores 0.50.`
+    + ` Need: ${needHead}, lower counts as more need${TM_PARTNER_FIELD.includes(sc.slot) ? ", the mean of the two factor scores" : ""}.`
+    + ` Contention: ${escapeHtml(con.label)} on ${escapeHtml(con.frame)} until the first regular-season game, playoff odds from it on; higher counts more.`
+    + ` Tax: the marginal tax his CBT charge carries at the club's payor tier, the schedule the <a href="/ledger/">Club Ledger</a> prints; lower counts more.`
+    + ` Ability to pay: farm surplus; higher counts more.`
+    + ` Score: the four added with equal weight, 0 to 4; ties go to need, then contention, then ability to pay, then the club code.`
+    + ` The org trade profile is shown with weight 0. Display only: no figure here enters a trade value, and the screen makes no claim about any trade.</div>`;
+  return head + `<div class="tm-partner-for">${pick}</div>` + note + table + method;
+}
+function _tmPaintPartner() {
+  const host = document.getElementById("tm-partner");
+  if (!host) return;
+  host.innerHTML = _tmPartnerHtml();
+  _tmWireGl(host);
+  const sel = host.querySelector("[data-tm-partner-pick]");
+  if (sel) sel.onchange = () => {
+    _TMP.pick = sel.value;
+    _tmPaintPartner();
+    const again = document.querySelector("#tm-partner [data-tm-partner-pick]");
     if (again) again.focus();
   };
 }
@@ -971,12 +1244,15 @@ function renderTradeMachine(opts) {
     <div class="tm-grid">${sideHtml("a", "Side A")}${sideHtml("b", "Side B")}</div>
     ${verdict}
     ${_tmCbtHtml()}
-    <section id="tm-comps" class="tm-comps" aria-label="Comparable real trades"></section>
+    <section id="tm-comps" class="tm-comps" aria-label="Comparable real trades"></section>${_tmPartnerLive() ? '<section id="tm-partner" class="tm-partner" aria-label="Trade partner screen"></section>' : ""}
   </div>`;
   _tmWireGl(el);
   // Comparable real trades (W07): the deal list loads once both sides hold a player.
   if (bothSides) _tmEnsureDeals();
   _tmPaintComps();
+  // The partner screen (W08), only behind its flag: the slice loads once the
+  // builder holds a player.
+  if (_tmPartnerLive()) { if (have) _tmEnsurePartner(); _tmPaintPartner(); }
   if (opts.announce) _tmAnnounce(opts.announce, bothSides ? vText : "");
   el.querySelectorAll("[data-tm-search]").forEach(inp => {
     inp.addEventListener("focus", _tmEnsureDetail);

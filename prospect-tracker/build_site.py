@@ -5805,6 +5805,21 @@ def _mlb_events_attr() -> str:
     return ' data-mlb-events="live"' if getattr(mlb_events, "MLB_EVENTS_LIVE", False) else ""
 
 
+def _tm_partner_attr() -> str:
+    """The Trade Machine partner screen switch (wiring W08): ' data-tm-partner="live"'
+    on the /trademachine/ module root while
+    trade_partner_screen.TRADE_PARTNER_SCREEN_LIVE is True, and nothing otherwise,
+    so with the flag off the shell is byte-identical and assets/trademachine.js
+    draws no panel and requests no slice. trade_partner_screen holds the one
+    definition."""
+    try:
+        import trade_partner_screen
+    except Exception:  # noqa: BLE001
+        return ""
+    return (' data-tm-partner="live"'
+            if getattr(trade_partner_screen, "TRADE_PARTNER_SCREEN_LIVE", False) else "")
+
+
 def build_projections() -> str:
     """The /projections/ MLB Projections app - the FA module's projection
     engine applied to the whole league plus post-ETA PROSPX prospects.
@@ -6143,7 +6158,7 @@ def build_trademachine() -> str:
         f'<link rel="stylesheet" href="/assets/trademachine.css?v={_TM_CSS_VER}">'
         # id="proj-view-trademachine" is kept for trademachine.js, which scopes its
         # filter + collapse wiring to that id; .tm-app carries the standalone theming.
-        '<div class="fa-app proj-app tm-app" id="proj-view-trademachine">'
+        f'<div class="fa-app proj-app tm-app" id="proj-view-trademachine"{_tm_partner_attr()}>'
         f'<div class="section-head section-head--byline"><div class="section-head-titles"><h1>{_masthead_icon("trademachine")}Trade Machine '
         f'{_stage_chip("trademachine")}</h1></div>'
         f'<span class="section-sub">One currency of {_gl("surplus_value", "surplus")}: '

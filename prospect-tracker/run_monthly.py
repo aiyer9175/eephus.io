@@ -2840,6 +2840,12 @@ def _export_franchise_board(log) -> bool:
                  len(_frd["clubs"]), _fr_top["code"], _fr_top["index"]["score"])
         _record_ingest("franchise_export", True, len(_frd["clubs"]),
                        "franchise board", "mlb", log)
+        # W08 (owner answer W-OQ4 (a)): the Trade Machine partner screen's slim
+        # slice and the day's frozen record entry, written from the board just
+        # written and the CBT sidecar d10e wrote before it. While
+        # trade_partner_screen.TRADE_PARTNER_SCREEN_LIVE is False both go to
+        # .cache/trade_partner_screen/preview/ and nothing served moves.
+        _export_trade_partner_screen(log)
         return True
     except Exception as e:                # noqa: BLE001
         # A refusal is a result, not a crash: the exporter declined to
@@ -2853,6 +2859,22 @@ def _export_franchise_board(log) -> bool:
             log.exception("franchise export failed - continuing")
             _record_ingest("franchise_export", False, 0,
                            f"franchise export raised: {e}", "mlb", log)
+        return False
+
+
+def _export_trade_partner_screen(log) -> bool:
+    """Write the Trade Machine partner screen's slice and the day's record
+    entry (trade_partner_screen.run; docs/trademachine-2026-10/
+    TRADE_PARTNER_SCREEN_GATE.md section 3). True on a run. First write wins,
+    so a same-day re-run writes nothing; a refusal or a raise is logged and
+    the files on disk stand. Nothing is filed in the ingest ledger while the
+    screen is dark (W08_2 adds its watched row with the flip)."""
+    try:
+        import trade_partner_screen as _tps
+        _tps.run(log_fn=log.info)
+        return True
+    except Exception:                     # noqa: BLE001
+        log.exception("trade partner screen failed - continuing")
         return False
 
 
