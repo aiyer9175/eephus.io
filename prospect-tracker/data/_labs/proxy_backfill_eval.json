@@ -1,0 +1,199 @@
+{
+  "role": "development",
+  "task": "TL_8_PROXY_BACKFILL",
+  "lab": "tools/proxy_backfill_lab.py",
+  "gate": "docs/proj-prospect-2026-10/PROSPECT_STATLINE_GATE.md",
+  "model": "efv_proxy refit backward (pre-debut eFV features -> first-MLB Savant est_woba)",
+  "estimator": "efv_proxy._eval_forward: StandardScaler + Ridge(alpha=3.0), a test year is skipped under 25 training or 10 test pairs",
+  "cohort_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "test_years": [
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "min_pa": 50,
+  "served_cohort_years": [
+    2024,
+    2025,
+    2026
+  ],
+  "season_flags": {
+    "2020": "60-game season: the 2020 cohort's first MLB season is the shortened 2020 season"
+  },
+  "frames": "Debut cohorts 2016 to 2021 only. R-VM (2025 and later) and holdout H (2022 to 2024) are never read. List vintages 2020 and 2021 enter only as as-of points of the 2020 and 2021 debut cohorts (gate 0.6). No statistic is cut by consensus-FV level.",
+  "survivorship": "Debuts only: every number is accuracy among players who reached the majors and posted a first-season Savant line at the PA floor.",
+  "served_untouched": "data/xfv_proxy_eval.json and registry row xfv_proxy are not read or written",
+  "generated": "2026-10-09",
+  "sides": {
+    "hit": {
+      "per_year": {
+        "2018": {
+          "n": 31,
+          "r": 0.4668,
+          "spearman": 0.406,
+          "train_n": 57,
+          "test_cohort_n": 31,
+          "train_cohorts": [
+            2016,
+            2017
+          ]
+        },
+        "2019": {
+          "n": 54,
+          "r": 0.2539,
+          "spearman": 0.2326,
+          "train_n": 88,
+          "test_cohort_n": 54,
+          "train_cohorts": [
+            2016,
+            2017,
+            2018
+          ]
+        },
+        "2020": {
+          "n": 23,
+          "r": 0.0383,
+          "spearman": 0.1334,
+          "train_n": 142,
+          "test_cohort_n": 23,
+          "train_cohorts": [
+            2016,
+            2017,
+            2018,
+            2019
+          ],
+          "flag": "60-game season: the 2020 cohort's first MLB season is the shortened 2020 season"
+        },
+        "2021": {
+          "n": 36,
+          "r": 0.2898,
+          "spearman": 0.2486,
+          "train_n": 165,
+          "test_cohort_n": 36,
+          "train_cohorts": [
+            2016,
+            2017,
+            2018,
+            2019,
+            2020
+          ],
+          "train_includes_flagged": [
+            2020
+          ]
+        }
+      },
+      "pooled": {
+        "n": 144,
+        "r": 0.2366,
+        "spearman": 0.2472
+      },
+      "target": "first-MLB xwOBA (est_woba)",
+      "pairs": 201,
+      "per_cohort": {
+        "2016": 28,
+        "2017": 29,
+        "2018": 31,
+        "2019": 54,
+        "2020": 23,
+        "2021": 36
+      }
+    },
+    "pit": {
+      "per_year": {
+        "2018": {
+          "n": 40,
+          "r": -0.0291,
+          "spearman": -0.0418,
+          "train_n": 55,
+          "test_cohort_n": 40,
+          "train_cohorts": [
+            2016,
+            2017
+          ]
+        },
+        "2019": {
+          "n": 55,
+          "r": 0.2106,
+          "spearman": 0.1791,
+          "train_n": 95,
+          "test_cohort_n": 55,
+          "train_cohorts": [
+            2016,
+            2017,
+            2018
+          ]
+        },
+        "2020": {
+          "n": 44,
+          "r": 0.1168,
+          "spearman": 0.0751,
+          "train_n": 150,
+          "test_cohort_n": 44,
+          "train_cohorts": [
+            2016,
+            2017,
+            2018,
+            2019
+          ],
+          "flag": "60-game season: the 2020 cohort's first MLB season is the shortened 2020 season"
+        },
+        "2021": {
+          "n": 71,
+          "r": 0.2062,
+          "spearman": 0.1638,
+          "train_n": 194,
+          "test_cohort_n": 71,
+          "train_cohorts": [
+            2016,
+            2017,
+            2018,
+            2019,
+            2020
+          ],
+          "train_includes_flagged": [
+            2020
+          ]
+        }
+      },
+      "pooled": {
+        "n": 210,
+        "r": 0.1299,
+        "spearman": 0.1369
+      },
+      "target": "first-MLB xwOBA-against (est_woba)",
+      "pairs": 265,
+      "per_cohort": {
+        "2016": 38,
+        "2017": 17,
+        "2018": 40,
+        "2019": 55,
+        "2020": 44,
+        "2021": 71
+      }
+    }
+  },
+  "inputs_sha256": {
+    "data/debuts.json": "83bf4c5f00499a9f23413e41f3497f526ef68d4d33a5229b3e8c21ead6006eec",
+    "efv_proxy.py": "0c3103b72b9a821ab1ea7f44d0af09ca5f0e23e04bd6fa4b6e152ac2dc509277",
+    ".cache/savant_mlb/expected_batter_2016.csv": "9f0cc11f247a968073fc761a00a58f3d89be6824be8cc8407be9ff242ae0ed16",
+    ".cache/savant_mlb/expected_pitcher_2016.csv": "12f45d0c3695416ee753eb82516bbbb4fb7b2269f7e89650dcbe3585fcb47235",
+    ".cache/savant_mlb/expected_batter_2017.csv": "eec55473fc2db5d72997a09d58717da3a8c8024515409e69d0d7631a37ec9920",
+    ".cache/savant_mlb/expected_pitcher_2017.csv": "88d822b383a93a30eb6f0a795728c86c7b2184cacf25618f389297f1d64bf76a",
+    ".cache/savant_mlb/expected_batter_2018.csv": "6cf2c023f8c9bdef7c3a5b359ef0364429ac6bee4e1e83d294b2d28c048d5361",
+    ".cache/savant_mlb/expected_pitcher_2018.csv": "384dee71832bdef5159ab5b13d2144e0886f64e78679a531441f95265f6b4b8c",
+    ".cache/savant_mlb/expected_batter_2019.csv": "9beea6d5192ae16fa4d710d8e7ac6ce767e9f9eb721fdabb9656ef96fd1ecbfd",
+    ".cache/savant_mlb/expected_pitcher_2019.csv": "58eefb050d6027d6345850e2ac9e851fabaf7bdd2d1e2f2e79fceb9fa785ded5",
+    ".cache/savant_mlb/expected_batter_2020.csv": "3be0ec9c5ec5cef39b3d51904a119431dc2e290b0a1cce27614b4f7ef1f08ce3",
+    ".cache/savant_mlb/expected_pitcher_2020.csv": "b1c47feb25ff203d2d9e883a4e562b0d280dc3f642e07c5d6da51f6a9aed6b6d",
+    ".cache/savant_mlb/expected_batter_2021.csv": "cd412383dc259dc97dcce08b6edf6408f98c78a5b29e6a8239043f06125ac846",
+    ".cache/savant_mlb/expected_pitcher_2021.csv": "b1c764932ffbe1889c67a5d8f7440783fbd970c9690fb4ab8b296a68d3800d37"
+  }
+}

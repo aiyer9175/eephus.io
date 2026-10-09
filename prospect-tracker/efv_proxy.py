@@ -62,12 +62,15 @@ def _pull_targets(year: int, side: str) -> dict:
     return out
 
 
-def _build_pairs(side: str) -> list[dict]:
-    """(pre-debut features -> first-MLB est_woba) pairs for the debut cohorts."""
+def _build_pairs(side: str, cohort_years: tuple = COHORT_YEARS) -> list[dict]:
+    """(pre-debut features -> first-MLB est_woba) pairs for the debut cohorts.
+
+    cohort_years defaults to the served COHORT_YEARS; tools/proxy_backfill_lab.py passes
+    earlier cohorts (its own guard refuses reserved or holdout debut years first)."""
     debuts = json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8"))
     if isinstance(debuts, dict):
         debuts = debuts.get("players") or []
-    targets = {y: _pull_targets(y, side) for y in COHORT_YEARS}
+    targets = {y: _pull_targets(y, side) for y in cohort_years}
     keys, _m = _feature_spec(side)
     pairs = []
     for rec in debuts:
@@ -76,7 +79,7 @@ def _build_pairs(side: str) -> list[dict]:
         dd = rec.get("debut_date") or ""
         y = int(dd[:4]) if dd[:4].isdigit() else None
         mlbam = rec.get("mlbam_id")
-        if y not in COHORT_YEARS or not mlbam:
+        if y not in cohort_years or not mlbam:
             continue
         tgt = targets.get(y, {}).get(str(mlbam))
         if tgt is None:                                  # no qualifying MLB target -> drop (unobserved)
@@ -93,10 +96,11 @@ def _build_pairs(side: str) -> list[dict]:
     return pairs
 
 
-def _eval_forward(pairs: list[dict], keys: list[str]) -> dict:
+def _eval_forward(pairs: list[dict], keys: list[str],
+                  test_years: tuple = (2025, 2026)) -> dict:
     """Forward-chained: train on cohorts < test year, predict the test year; pool OOS preds."""
     yhat, ytrue = [], []
-    for test_y in (2025, 2026):
+    for test_y in test_years:
         tr = [p for p in pairs if p["year"] < test_y]
         te = [p for p in pairs if p["year"] == test_y]
         if len(tr) < 25 or len(te) < 10:
