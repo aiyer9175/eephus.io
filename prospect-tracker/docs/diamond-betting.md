@@ -41,7 +41,7 @@ leakage check it is held to.
 | `tools/betting_calibration.py` | The calibration ledger and `market_gate()` (section 7b) |
 | `test_leaderboard_vintages.py` | The vintage store, the strictly-before read, both modes, the three gates |
 | `test_backfill_vintages.py` | The commit-date cutoff, the named skips, first-write-wins, the arm split |
-| `betting_weather.py` | Section 5h: the pregame forecast capture (armed 2026-09-11), the 5h-C Previous Runs backfill, their two readers, the literature props prior |
+| `betting_weather.py` | Section 5h: the pregame forecast capture (armed 2026-09-11; National Weather Service since 2026-10-08), the 5h-C Previous Runs backfill (inert since 2026-10-08), their two readers, the literature props prior |
 | `test_betting_weather.py` | Section 5h: the arming pins, the row-timestamp and issue-time readers, the arm split, the wind geometry, nothing served reads it |
 | `test_fixtures/odds_api_mlb_sample.json` | The only odds any test ever reads |
 
@@ -60,7 +60,7 @@ Artifacts written:
 | `.cache/leaderboard_vintages/<date>.json` | Dated team inputs, ~25 KB each, first write wins | daily |
 | `.cache/betting/market_gate_state.json` | Section 7b dwell state, one evaluation per UTC day | daily tail |
 | `.cache/weather_forecasts/<date>-<hhmm>.json` | Section 5h forecast captures, immutable | daily (armed 2026-09-11) |
-| `.cache/weather_forecasts/previous-runs-<date>-<hhmm>.json` | Section 5h-C backfill snapshots, immutable, first write wins per game | daily, after the capture, when there are new games |
+| `.cache/weather_forecasts/previous-runs-<date>-<hhmm>.json` | Section 5h-C backfill snapshots, immutable, first write wins per game | none since 2026-10-08 (the archive arm is gone, 5h amendment 2026-10-08) |
 | `.cache/weather_forecasts/state/backfill_last_run.json` | The last armed backfill run's counts and skips by code; the one mutable file in the store, outside both snapshot globs | daily, after the capture |
 
 ---
@@ -5326,6 +5326,79 @@ Everything else stands: the three additions, the split rule, criterion 2, the
 contaminated leg, the permuted-venue twin (200, seed 20260911), the clock, and 5h-C's
 agreement check. 5h-B is a props estimand under the dark props frame's own interval rule,
 not a member.
+
+### Amendment (2026-10-08): the live source changes to the National Weather Service, and the archive arm is gone
+
+**Standing.** Filed under the 5c correction rule as 5e and 5c used it: a
+pre-registration may be amended before its first look, on a fact established
+without touching outcomes. No 5h look has run. On 2026-10-08, before this
+amendment landed, `coverage()` read 27 live snapshots, all Open-Meteo, 194
+open-air rows carrying a forecast, `clock_started` 2026-09-13 and a calendar
+half of 2026-10-11; the 400-game floor is not met, so no look is admissible.
+**Nothing in this amendment was measured against a game result**; the counts
+above are coverage counts, and the store was read for its `source` field only.
+
+**The fact.** The owner answered on 2026-09-25 (final-pass batch 5, FP5-2,
+"Switch weather to NWS (lose the Open-Meteo archive backfill)"), because
+Open-Meteo's free endpoint is non-commercial only and names subscription sites
+as commercial. The change landed on 2026-10-08:
+`betting_weather.FORECAST_SOURCE = "nws"` and `FORECAST_SOURCE_SINCE =
+"2026-10-08"`. Every live snapshot from that date names `source: "nws"`; every
+earlier one names `"open-meteo"`.
+
+**The source as built.** `api.weather.gov`, no key, a User-Agent naming the site
+and a contact (`(eephus.io, https://eephus.io/sources/)`, overridable through
+`EEPHUS_NWS_USER_AGENT`). Two requests per fetched venue: `/points/{lat},{lon}`,
+then the hourly gridpoint forecast that response names, each tried at most
+twice. One probe on 2026-10-08 (Wrigley Field, gridpoint LOT/75,76) returned
+HTTP 200 and 156 hourly periods in the shape the parser reads. A fetch with no
+snapshot written, for every open-air and retractable home park in the venue
+table the same day, returned a 156-hour series at 28 of 29 parks in 58
+requests; Rogers Centre answered 404, as expected. NWS data is a US Government
+work in the public domain.
+
+**The columns.** Same store (`.cache/weather_forecasts/`), same file names,
+same row schema, same three-hour mean from the first-pitch hour.
+`fc_temp_f`, `fc_rh_pct`, `fc_wind_mph`, `fc_wind_from_deg`, `fc_wind_out_mph`
+and `fc_precip_prob_pct` are filled from NWS. NWS's hourly forecast carries no
+surface pressure and no gust, so `fc_pressure_hpa` and the per-hour gust are
+null on every NWS row; neither is in the candidate. Wind direction arrives as
+a 16-point compass string, so `fc_wind_from_deg` moves in 22.5 degree steps,
+and `fc_wind_out_mph` inherits that resolution. A calm hour arrives as "0 mph"
+with an empty direction; `wind_out_component` reads any zero speed as a zero
+component, never a null (an Open-Meteo hour always carried a direction, so no
+earlier row changes). NWS covers the US only:
+Rogers Centre (TOR, retractable) gets a stated null row, which the primary arm
+never reads.
+
+**What changes in the gate, and only this. It only tightens.**
+- The live arm keeps its one clock (started 2026-09-13), its 400-game floor and
+  every criterion. Both sources are pregame forecasts held to the same
+  captured-at rule on the row, so the source change does not restart the clock.
+- At the look, the report gives n by source, and criterion 1 and the
+  permuted-venue twin are reported a second time on the NWS rows alone. That
+  second reading can only DISQUALIFY: if the NWS-only improvement has the
+  opposite sign to the pooled one, the look is INDETERMINATE, whatever the
+  pooled t.
+- The fidelity check (addition 3) is reported by source, and `WIND_PASS_THROUGH`
+  is measured on NWS rows only, because the served path, if one ever exists,
+  would read NWS.
+
+**The archive arm is gone.** NWS keeps no archive, so 5h-C cannot continue:
+`BACKFILL_ENABLED = False`, and the backfill is inert twice over (its flag, and
+a source other than Open-Meteo). The 2,429 `previous-runs-*.json` rows it wrote
+for the 2026 regular season stay on disk, immutable, counted by
+`coverage()["backfill"]` and read by no candidate. `live_archive_agreement()`
+can gain no pair: its overlap stopped at 15 days (2026-09-13 to 2026-09-27),
+short of the 28 days 5h-C requires, so `holds` stays None and no backfilled row
+is ever read. The 2027 continuation decision named in "What the approval buys"
+is moot. 5h-A's Holm membership is unchanged, and the archive arm never had a
+route into it.
+
+**Attribution.** Decision 4 closes: NWS needs no attribution line. /sources/
+now credits the National Weather Service with its public-domain note, in place
+of Open-Meteo's CC BY 4.0 line. The dark-column contract is unchanged: nothing
+served reads a forecast, and no forecast is priced.
 
 
 ## 5i. Ballpark awareness: the Athletics' park, and park by bat side (pre-registered 2026-09-11)

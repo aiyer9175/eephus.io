@@ -7,8 +7,9 @@
 
 The upstream list on /sources/ omitted MLB Trade Rumors (the arbitration
 comparator and results tracker), The Odds API (the prices on /betting/) and
-Open-Meteo (the nightly weather capture, whose data licence requires
-attribution). Each external host written in an ingest module must map, by
+Open-Meteo (the nightly weather capture, whose data licence required
+attribution). Since 2026-10-08 the capture reads the National Weather Service
+(owner answer FP5-2), whose row replaced Open-Meteo's. Each external host written in an ingest module must map, by
 registered domain, to a row on the page. A host the code names but never calls
 is listed in _NOT_CALLED with the reason.
 """
@@ -25,9 +26,9 @@ _HOST_RE = re.compile(r"https?://([A-Za-z0-9.-]+)")
 
 # host -> why no /sources/ row is owed
 _NOT_CALLED = {
-    "weather.gov": ("betting_weather.SOURCES['nws'] is a configured alternative; "
-                    "FORECAST_SOURCE names Open-Meteo, so no request reaches it "
-                    "(guarded below)"),
+    "open-meteo.com": ("betting_weather.SOURCES['open-meteo'] and PREVIOUS_RUNS are "
+                       "retired: FORECAST_SOURCE names NWS since 2026-10-08 and the "
+                       "backfill is off, so no request reaches it (guarded below)"),
 }
 
 # Our own domain is not an upstream (staff_ingest.py's links, the scores job's
@@ -93,14 +94,17 @@ def test_every_ingest_host_has_a_sources_row():
 
 def test_the_not_called_allowance_still_holds():
     import betting_weather
-    assert betting_weather.FORECAST_SOURCE != "nws", (
-        "the forecast capture now calls weather.gov: give NWS a /sources/ row "
+    assert betting_weather.FORECAST_SOURCE != "open-meteo", (
+        "the forecast capture calls Open-Meteo again: give it a /sources/ row with "
+        "its CC BY 4.0 attribution and drop it from _NOT_CALLED")
+    assert betting_weather.backfill_arming_state()["armed"] is False, (
+        "the Previous Runs backfill calls Open-Meteo again: give it a /sources/ row "
         "and drop it from _NOT_CALLED")
 
 
 def test_the_three_missing_upstreams_are_named():
     rows = _sources_domains()
-    for reg in ("mlbtraderumors.com", "the-odds-api.com", "open-meteo.com"):
+    for reg in ("mlbtraderumors.com", "the-odds-api.com", "weather.gov"):
         assert reg in rows, f"/sources/ has no row for {reg}"
 
 

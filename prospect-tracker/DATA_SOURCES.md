@@ -228,11 +228,13 @@ between the sentinels.
   month: the open and close snapshots cost 3 credits each, about 186 a month.
   Props are priced per event and armed separately (EEPHUS_PROPS_CREDITS).
   Display terms for the served prices are an open owner review item.
-- Open-Meteo (`betting_weather.py`) is captured nightly, keyless, on the free
-  endpoint, whose terms are non-commercial only and name subscription sites
-  as commercial; the data is CC BY 4.0 with attribution required. Setting the
-  key variable moves the capture to the commercial endpoint. Owner review item
-  before any paid Diamond tier.
+- The National Weather Service (`betting_weather.py`, api.weather.gov) is the
+  forecast source since 2026-10-08 (owner answer FP5-2, 2026-09-25): keyless,
+  a User-Agent naming the site and a contact, two requests per fetched venue,
+  US only (Toronto is a stated null). Its data is public domain, so no
+  attribution line is owed; /sources/ credits it. It keeps no archive, so the
+  Open-Meteo Previous Runs backfill (5h-C) is off and its 2026 rows stay on
+  disk unread. Before 2026-10-08 the capture read Open-Meteo's free endpoint.
 - MLB Trade Rumors (`tools/ingest_arbitration_ledger.py`) is a hand-run,
   permanently cached, rate-limited ingest (MLBTR firewalls rapid requests),
   never on the pipeline. Its ledger is a lab file at
