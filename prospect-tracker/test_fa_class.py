@@ -248,8 +248,9 @@ def test_the_war_map_source_names_the_displayed_basis_explicitly():
     D + U (2026-10-03) the default is the training label (fWAR) while the Archive's
     realized WAR is a displayed number that stays eWAR v2 (owner answer EPOCH-Q4), so
     the frames are read on provider "ewar_v2" by name and the stamp names the same
-    series; never a hardcoded "bbref". Queue 7 M14 chooses the provider for its
-    post-epoch rebuild on fWAR (owner answer M14-3) explicitly when it runs."""
+    series; never a hardcoded "bbref". M14 rebuilt the ledger on 2026-10-08 on this
+    same provider: owner answer M14-3 sets when the ledger is rebuilt and PE-Q2
+    sets its basis, the displayed eWAR."""
     from pathlib import Path
     src = (Path(__file__).parent / "fa_pipeline.py").read_text(encoding="utf-8")
     assert '"source": "bbref"' not in src
@@ -265,10 +266,63 @@ def test_served_archive_labels_follow_its_war_basis():
     here = Path(__file__).parent
     arc = json.loads((here / "data" / "fa_archive.json").read_text(encoding="utf-8"))
     meta = json.loads((here / "data" / "fa_meta.json").read_text(encoding="utf-8"))
-    assert arc.get("warBasis") in ("bwar", "ewar_v2", "mixed")
+    assert arc.get("warBasis") in _KNOWN_WAR_BASES
     assert meta.get("archive_war_basis") == arc["warBasis"]
     js = (here / "assets" / "fa.js").read_text(encoding="utf-8")
     assert "Realized eWAR" not in js, "a realized label is hardcoded to eWAR"
     assert js.count("${realizedWar()}") >= 5
     dpw = (here / "assets" / "fa_dpw.js").read_text(encoding="utf-8")
     assert "REALIZED_WAR = j.archive_war_basis" in dpw
+
+
+# Every WAR basis a ledger can carry: the providers war_source knows, the eWAR v3
+# token (spelled "ewar_v3" until war_source registers one), and "mixed".
+_KNOWN_WAR_BASES = ("bwar", "ewar_v2", "ewar_v3", "ewar_merged", "fwar", "mixed")
+_EXPECTED_WAR_LABELS = {"bwar": "bWAR", "ewar_v2": "eWAR", "ewar_v3": "eWAR",
+                        "ewar_merged": "eWAR", "fwar": "fWAR", "mixed": "mixed-basis WAR"}
+
+
+def _js_label_map(src: str, name: str) -> dict:
+    import re
+    body = src.split(f"const {name} = {{", 1)[1].split("};", 1)[0]
+    out = {}
+    for key, val in re.findall(r'(\w+):\s*(?:\[\s*)?"([^"]+)"', body):
+        out[key] = val
+    return out
+
+
+def test_every_war_basis_token_has_its_own_realized_label():
+    """POSTEPOCH_10 (PE-Q2): the Archive's realized WAR names its provider. Every
+    token war_source.PROVIDERS knows, the eWAR v3 token and "mixed" map to their
+    own label in both /fa/ scripts, and none of them prints plain "WAR" (which is
+    left for a missing or unknown basis only)."""
+    from pathlib import Path
+    import war_source
+    here = Path(__file__).parent
+    v3 = [p for p in war_source.PROVIDERS if p.startswith("ewar_v3")] or ["ewar_v3"]
+    tokens = set(war_source.PROVIDERS) | set(v3) | {"mixed"}
+    assert tokens <= set(_KNOWN_WAR_BASES) | set(v3)
+    fa = _js_label_map((here / "assets" / "fa.js").read_text(encoding="utf-8"),
+                       "REALIZED_WAR_LABELS")
+    dpw = _js_label_map((here / "assets" / "fa_dpw.js").read_text(encoding="utf-8"),
+                        "WAR_LABELS")
+    for tok in sorted(tokens):
+        want = _EXPECTED_WAR_LABELS.get(tok, "eWAR")
+        for name, labels in (("fa.js", fa), ("fa_dpw.js", dpw)):
+            assert tok in labels, f"{name} has no label for WAR basis {tok!r}"
+            assert labels[tok] != "WAR", f"{name} prints plain WAR for {tok!r}"
+            assert labels[tok] == want, (name, tok, labels[tok])
+
+
+def test_dpw_chart_names_both_bases_only_when_they_differ():
+    """The dollars-per-WAR chart gains one sentence naming both series' bases, shown
+    only when they differ, and it never says either basis is more accurate."""
+    from pathlib import Path
+    src = (Path(__file__).parent / "assets" / "fa_dpw.js").read_text(encoding="utf-8")
+    body = src.split("function basisNote()", 1)[1].split("\n  }", 1)[0]
+    assert "IMPLIED_WAR === REALIZED_WAR" in body
+    assert "IMPLIED_WAR = j.war_provider" in src
+    assert "${basisNote()}" in src
+    low = body.lower()
+    for word in ("accura", "better", "truth", "calibrat"):
+        assert word not in low, word

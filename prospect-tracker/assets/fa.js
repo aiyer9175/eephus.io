@@ -2034,14 +2034,27 @@
   }
 
   // M04-04: the realized ledger names the WAR it was built on
-  // (fa_archive.warBasis). The June 2026 build predates the eWAR label and
-  // reads bWAR; the labels follow the payload instead of assuming eWAR.
+  // (fa_archive.warBasis); the labels follow the payload instead of assuming
+  // one. Every provider token war_source.PROVIDERS knows has its own label,
+  // plus "ewar_v3" (eWAR v3, not registered as a provider yet) and "mixed"
+  // (a ledger whose rows carry more than one basis). Only a missing or
+  // unknown basis prints plain "WAR". POSTEPOCH_10 (PE-Q2): M14 rebuilt the
+  // ledger on the displayed eWAR (ewar_v2) on 2026-10-08.
+  const REALIZED_WAR_LABELS = {
+    bwar: "bWAR", ewar_v2: "eWAR", ewar_v3: "eWAR", ewar_merged: "eWAR",
+    fwar: "fWAR", mixed: "mixed-basis WAR",
+  };
   function realizedWar() {
     const b = (D.fa_archive || {}).warBasis;
-    return b === "bwar" ? "bWAR" : b === "ewar_v2" ? "eWAR" : "WAR";
+    return REALIZED_WAR_LABELS[b] || "WAR";
   }
   function realizedWarNote() {
     const arc = D.fa_archive || {};
+    if (arc.warBasis === "mixed") {
+      const counts = Object.entries(arc.warBasisCounts || {})
+        .map(([k, n]) => `${esc(REALIZED_WAR_LABELS[k] || k)} ${Number(n).toLocaleString()}`).join(", ");
+      return `Realized WAR and surplus mix WAR bases across rows${counts ? " (" + counts + ")" : ""}.`;
+    }
     if (arc.warBasis !== "bwar") return "";
     return `Realized WAR and surplus read bWAR: the ledger was last built before the eWAR label and has not been rebuilt${arc.ledgerBuilt ? " (built " + esc(arc.ledgerBuilt) + ")" : ""}.`;
   }
