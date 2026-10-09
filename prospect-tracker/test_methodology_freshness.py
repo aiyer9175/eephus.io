@@ -172,6 +172,10 @@ MODEL_GLOSSARY = {
     "fa_projection_marcel": ["fa_projection_engine"],
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row
+    # docs/PROJ_COMPONENTS_GATE.md (2026-10-08): registered, not read; nothing served
+    # reads either row until a PJ-C pass and the PJ_8 flip carry a glossary term.
+    "proj_components": "internal",
+    "proj_component_stack": "internal",
     "prospect_def_value": "internal",  # Will Cahoon def model (local reconstruction); eFV-swap loss ledger
     # eephus WAR: the served WAR series from the 2026-09-03 epoch (war_source
     # default provider ewar_v2); the glossary entry carries the frame disclosure

@@ -86,3 +86,28 @@ def test_no_persist_leaves_artifact_untouched(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["proj_eval.py", "--no-persist"])
     pe.main()
     assert artifact.read_text(encoding="utf-8") == before
+
+
+# run() and run_rowmatch() stay byte-identical while the component scorer
+# (run_components, task PJ_3_COMPONENT_SCORER) is added beside them. Neither
+# can run on a fixture without the corpus build, so their source text is
+# pinned instead. A deliberate edit to either updates its hash here, in the
+# same commit, with the reason.
+_PINNED_SOURCE_SHA256 = {
+    "run": "1c36bb43bd8ad8fac17918474403bd65bf913dd0df42cc5b8060a68ffcf897d7",
+    "run_rowmatch": "9ad58b4d390657e1e6edca1928260255c958a73297fd92a2694ca8a10a24902f",
+}
+
+
+def _source_sha256(fn) -> str:
+    import hashlib
+    import inspect
+    return hashlib.sha256(inspect.getsource(fn).encode("utf-8")).hexdigest()
+
+
+def test_run_source_is_pinned():
+    assert _source_sha256(pe.run) == _PINNED_SOURCE_SHA256["run"]
+
+
+def test_run_rowmatch_source_is_pinned():
+    assert _source_sha256(pe.run_rowmatch) == _PINNED_SOURCE_SHA256["run_rowmatch"]
