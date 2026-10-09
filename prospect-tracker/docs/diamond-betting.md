@@ -4223,6 +4223,17 @@ assignment BEFORE first pitch.** A column filled from a completed feed would be
 dated after the game it describes, which is the exact leak this store exists to
 close.
 
+**Reopened (2026-10-08, owner answer 2026-09-25 batch 5).** The paragraphs above are left
+as written. Their premise, that the assignment is not knowable at pricing time, rested
+on one `Preview`-state live feed; the schedule endpoint with `hydrate=officials` is a
+different source (census X05-04). The section "The home-plate umpire: a dark pregame
+assignment capture" registers the capture and its family, and its capture time rule is
+what the sentence above asks for: only an assignment captured before the slate's price
+vintage counts. No umpire column is added to the vintage store; the candidate columns
+live in a frozen prior-season table. The contaminated effect-size measurement this
+section describes has still not been run, and the new section forbids it outside its
+look.
+
 ### Correction (2026-09-07, same day): there are no prior seasons to build climatology from
 
 The 5d-C table above says `wx_temp_climo` and `wx_wind_out_climo` are built
@@ -7610,6 +7621,237 @@ candidate.
 recorded by dated correction whenever they occur. Any other change is possible only by
 a dated correction recorded before any stage-1 number exists, on a fact established
 without outcomes; a change after that closes the section.
+
+**No number has been computed on this candidate.**
+
+---
+
+
+## 5n. The home-plate umpire: a dark pregame assignment capture (pre-registered 2026-10-08)
+
+**Written before any capture, builder, column, table, lab, flag or number on the
+candidate exists**, in the discipline of 5a, 5c, 5d, 5j, 5l and 5m. Nothing served reads
+anything in this section, and no served price, props fair line, slot, record row or page
+changes. Every name below that does not exist in code today is marked (to be built). Other
+sections, specs and tests refer to this section by its title, "The home-plate umpire: a
+dark pregame assignment capture", never by its letter: betting registrations take their
+letters in commit order. The long form, with the read ledger, the candidate census and the
+look's step order, is docs/BETTING_UMPIRE_GATE.md; the two carry the same thresholds in
+the same words, and test_betting_umpire_registration.py (to be built) pins them to each
+other.
+
+**The owner answer this registers** (2026-09-25, batch 5): register a DARK home-plate
+umpire betting family, reopening the 5d-F ban on a new fact. The fact is census item
+X05-04 (docs/master-plan-2026-09-24-final-pass.md): the MLB schedule endpoint carries the
+game's officials, the home-plate umpire among them, before the game, and the 2026-09-08
+probe that 5d-F rests on read a single `Preview`-state live feed (game_pk 824792), not
+the schedule.
+
+**What is known about the source tonight, and what is not.** One StatsAPI request was
+made to write this section: `/api/v1/schedule?sportId=1&startDate=2026-10-08&endDate=2026-10-11&gameType=R,F,D,L,W&hydrate=officials`
+at 2026-10-09T00:01:42Z (20:01 ET on 2026-10-08). It returned three postseason games.
+Game 849832 (type D, abstract state `Live`, detailed state `Warmup`, first pitch 0.0 hours
+away) carried six officials, the home-plate umpire among them. Games 849831 (48 hours out)
+and 849809 (72 hours out) carried none. So the schedule hydrate names the plate umpire by
+first pitch, which the live feed in `Preview` state did not; **how many hours before first
+pitch it does so is NOT measured.** The census line says "hours before"; this probe neither
+confirms nor refutes that, and a postseason crew is not a regular-season rotation. The lead
+is the first thing the capture measures. No score, result, line, price or edge was read
+from the response, and it is not committed.
+
+**Neighbouring results recorded when this section commits, disclosed by verdict.** 5c-B
+`lineup_strength` FAIL and 5c-C `star_out` INDETERMINATE (both run 2026-10-08); 7g FAIL and
+7h INDETERMINATE (both run 2026-09-11) and 7h's one re-read FAIL (run 2026-10-02), each
+leaving the Poisson total serving; 11b FAIL (2026-08-16). None of them reads an umpire. No
+result is recorded for 5c-A, 5d, 5e, 5k or the run-environment family RE. The writer of
+this section read those headings and verdict lines, the served code and documents cited
+here, and the one probe above; no data value about any umpire was read.
+
+**The pregame source.** StatsAPI `/api/v1/schedule` with `hydrate=officials` (free, keyless,
+zero Odds API credits), all five game types R, F, D, L and W so postseason assignments are
+captured. The home-plate umpire is the entry whose `officialType` is "Home Plate". Never
+the live feed, never a completed feed, never `liveData.boxscore.officials`, never a
+third-party umpire site, and never a rotation guess: an assignment the schedule has not
+published is not an assignment.
+
+**The capture time rule.** For a game g, let T_price(g) be the `captured_at` of the slate's
+price vintage: the open odds snapshot (kind `open`, `betting_ingest`) that the served board
+priced g's slate against, which is the price the shadow ledger records. An assignment
+counts for g only when it stands in a capture row whose `captured_at` is strictly earlier
+than T_price(g) AND at least 5 minutes before g's first pitch. The row that counts is the
+NEWEST such row; if that row names no plate umpire (a retraction), g has no assignment.
+A game whose slate has no open snapshot has no T_price and is excluded and counted.
+A game whose first assignment row was captured at or after T_price(g) is excluded from
+every criterion and counted under "assignment after price vintage". An assignment that a
+capture outage delayed is excluded by the same rule, so an outage can only shrink the
+graded set, never put a later fact before an earlier price. **One pre-look correction is
+allowed:** if the capture's own timing (when rows first appear relative to the open
+snapshot, a fact about publication with no outcome in it) shows the open is earlier than
+publication on most games, a dated correction filed before any look number exists may
+re-point T_price to the close snapshot (kind `close`) for every game. It may not be made
+after a look number exists, and it changes nothing else.
+
+**The capture (step 2 of the owner answer).** `tools/betting_umpire_job.py` (to be built
+next, in its own commit after this section): a self-gating job in the
+`tools/betting_lineup_job.py` shape, cron `*/15 * * * *` under `TZ=UTC`, one schedule call
+per acting invocation over the UTC dates D-1 to D+2, writing immutable files
+`<UTC date>-<HHMM>.json` under `.cache/umpire_captures/` (created exclusively, never
+overwritten). A row is written per game whose plate assignment CHANGED since its last row
+(first sighting, a different umpire, or a retraction), only while the game is pregame and
+at least 5 minutes from first pitch. Each row carries `game_pk`, `game_type`,
+`official_date`, `first_pitch`, `captured_at`, `lead_minutes`, `status`, `double_header`,
+`home_team_id`, `away_team_id`, `venue_id`, `hp_umpire_id`, `hp_umpire_name`, `crew` (every
+listed official's type and id) and `last_unassigned_at` (the newest earlier call at which
+the job saw the game pregame with no plate umpire, so publication is bracketed between
+that instant and `captured_at`). That list is the capture schema `umpire_capture/1`, and
+nothing else is stored: **no score, run, winner, line, price or any other outcome field
+sits beside an assignment**, the job reads no game feed and imports no pricer, settle,
+scores or results module, and no served module imports the job. Tests pin each of these.
+
+**The candidate columns (to be built; both game-level, both from PRIOR SEASONS ONLY).**
+For a 2027 game whose counted assignment names plate umpire u:
+
+- **5n-A `ump_cs_rate_prior`**: u's called-strike share of taken pitches over his
+  home-plate games in prior regular seasons, as a deviation from each season's league
+  share: the sum over u's taken pitches of (1 if called strike else 0, minus that season's
+  league called-strike share of taken pitches), divided by (u's taken pitches + k_c), with
+  k_c = 3000 taken pitches. A taken pitch is a pitch row with `call_code` "C" (called
+  strike), "B" or "*B" (ball); every other code is excluded and the code census is
+  published. Units: share of taken pitches. Predicted sign on runs: NEGATIVE (a wider
+  called zone lowers scoring).
+- **5n-B `ump_rpg_prior`**: u's runs-per-game effect over his home-plate games in prior
+  regular seasons: the sum over those games of (the game's total runs minus that season's
+  league mean total runs per game), divided by (u's games + k_r), with k_r = 150 games.
+  Units: runs per game. Predicted sign: POSITIVE.
+- Source: `.cache/pbp_corpus`, regular season, seasons 2018, 2019 and 2021 to 2026 (the
+  corpus holds no 2020), never 2027. A game's plate umpire is the `home_plate_umpire_id`
+  on its first pitch; a game whose id changes within the game stays with the first
+  umpire and is counted. 2026 pitches that the feed marks as overturned by an ABS
+  challenge are excluded from 5n-A and counted; if the builder cannot identify them,
+  5n-A drops 2026 entirely and says so. An umpire with no prior home-plate game (5n-B) or
+  no prior taken pitch (5n-A) is None, never zero, and the game is excluded and counted.
+- k_c and k_r are fixed here without reading any umpire data. They are not estimated, no
+  variance component is fitted, and no other value is tried: another k is a close variant.
+- Both columns are frozen once, before Opening Day 2027, in one table
+  (`data/_labs/umpire_prior/umpire_prior_2027.json`, to be built by
+  `tools/umpire_prior_table.py`, to be built), keyed by umpire id with each umpire's counts,
+  and its sha256 is recorded in a dated `### Builder landed YYYY-MM-DD` amendment here.
+  data/_labs/ ships in neither deploy consumer.
+- **The builder computes each umpire's value and nothing else.** No summary across
+  umpires (spread, standard deviation, top or bottom list, correlation with anything,
+  split-half or year-to-year stability) is computed, printed or stored before the look.
+  The builder's published counts are taken pitches, games, excluded codes and the null
+  count. A year-to-year stability of 5n-B would be a read of the look's own question on
+  earlier seasons, and is forbidden by name.
+
+**The look's estimand and criteria (the 5k form, on the TOTAL).** The incumbent is the
+served model on the look day, fitted on the fit window as the 7f to 7h labs fit it. Each
+challenger is the incumbent plus ONE additive term c x v_g on both sides' expected runs,
+where v_g is the column's value for g's counted umpire, with c fitted by
+`fit_coefficients` on the fit window and nothing else re-solved (5h-A's rule). Each
+model's scored total is `lam_home + lam_away` as `expected_runs` returns them, before any
+total-pricing layer. Regular-season 2027 games only; postseason captures accrue and are
+never graded; no 2026 game is ever evidence.
+
+- **Halves.** Eligible games are 2027 regular-season games with a counted assignment and a
+  non-null value. The fit window is the first whole dates of eligible games holding at
+  least VINTAGE_FIT_TARGET_GAMES (300); the eval half is every later eligible game through
+  the day before the look.
+- **Criterion 1.** Paired absolute error on the game total, d_i = |err_inc,i| -
+  |err_chal,i|, mean above 0, with the 5k pinned t: clustered on date with the CR1 factor,
+  one-sided p from t with G - 1 degrees of freedom, at the member's Holm level in family
+  UMP.
+- **Criterion 2.** Moneyline paired Brier not worse on the point estimate.
+- **Criterion 3, the twin.** The 5c rule 3 control as an ASSIGNMENT twin: within each
+  date, permute the column's values across that date's eligible games (fit window and
+  eval half alike), refit c, grade on the same games; seeds 0 to 199 with
+  `numpy.random.default_rng(seed)`. The member's mean improvement must strictly exceed
+  `numpy.percentile(twin_improvements, 95)`. The twin asks whether THIS umpire on THIS
+  game carries information beyond a value of the same size landing on another game that
+  night.
+- **Criterion 4, the sign.** The fitted c carries the predicted sign (negative for 5n-A,
+  positive for 5n-B). A wrong-signed member FAILS whatever criteria 1 to 3 read.
+- **Criterion 5, the counts.** At least VINTAGE_MIN_GRADED_GAMES (600) eval-half games
+  behind the 300-game fit window, AND at least 4 weeks (28 days) between the first 2027
+  regular-season capture row and the look date.
+- **The power precondition (the 5l form).** At n = 600, one-sided 0.025 (the Holm level
+  of the harder member) and 80 percent power, the smallest detectable improvement is
+  (1.96 + 0.84) x sd_d / sqrt(600) = 0.114 x sd_d, with sd_d the standard deviation of d_i
+  measured ONCE on the fit window from the candidate fit, before any eval-half game is
+  read, recorded as in-sample and lenient. The floor of interest is 1 percent of the
+  incumbent's fit-window mean absolute error on the total, computed in the same step. If
+  0.114 x sd_d exceeds the floor the member is UNDERPOWERED without reading the eval half;
+  a criterion 1 pass below the floor is PASS-BELOW-FLOOR and ships nothing.
+- **Verdicts.** PASS needs criteria 1 to 5 and the precondition. PASS, FAIL and
+  PASS-BELOW-FLOOR are final; UNDERPOWERED and NOT READ wait for the 2028 look.
+- **Reported whichever way it lands, never qualifying.** The counts excluded by each rule
+  (assignment after price vintage, retraction, null value, refusal boundary, postseason);
+  the publication lead distribution (`captured_at` and `last_unassigned_at` against first
+  pitch and against T_price); assignment agreement, the counted umpire against the
+  completed feed's plate umpire, an identity count only; c and its sign; paired squared
+  error on the total; the twin distribution; the pair's joint fit as a diagnostic; each
+  member's correlation with 5d-D's `catch_frame_rate` on shared games.
+
+**The Holm family UMP.** Members, one test each: 5n-A, 5n-B; m = 2. Family alpha 0.05,
+one-sided, Holm: the smaller p at 0.025, the larger at 0.05, ties ranked 5n-A first.
+Criteria 2 to 5, the twin and the screen carry no alpha and add nothing to m (the 5k
+rule). UMP is not RE: RE's membership was fixed by its own section's commit history
+before 2026-09-28, and a member added after that would amend a family already scheduled
+to read. Not N6, not MG, not the coefficient-vector family (7e-B/C/D), and not 5d's
+moneyline candidates. Why one family: both members ask one question of the total (does
+the plate umpire move tonight's run total beyond the served model) from two correlated
+measurements of one umpire; offered the better of the two, a reader has been offered the
+best of two looks.
+
+**The clock.** 5c rule 2 and criterion 5. The capture accrues from the night it is
+installed; nothing accrues while it is not. **The earliest admissible look is
+2027-06-01**, on the first nightly on or after 2027-06-01 on which criterion 5 holds, the
+prior table's `### Builder landed` amendment exists, and no other registered look falls
+that day (docs/*GATE*.md, this document, plan Part 8 section 8.B); otherwise it yields
+to the next such nightly and records the yield. If criterion 5 does not hold by
+2027-08-01, the look waits for 2028. Tool: `tools/betting_umpire_gate.py` (to be built),
+which reads the capture store, the frozen table and the vintage path only, refuses a run
+dated before 2027-06-01, a run without the table hash, and a second run, and writes one
+`umpire_gate` block to data/betting_umpire_eval.json (to be built; never
+data/betting_model_eval.json, which the nightly rebuilds from scratch) with registry row
+`betting_umpire_dark` (to be built, `unvalidated` until the look). The result is appended
+here as `### Result (run DATE, once): VERDICT`. **Looking early DISQUALIFIES.**
+
+**The SERVE flag and the schema.** `SERVE_UMPIRE = False` (to be built) lands in
+betting_model.py with the gate tool, in the SERVE_RUN_DISPERSION idiom, and stays False.
+The capture schema is `umpire_capture/1`; the two candidate columns live in the frozen
+table and are never added to the leaderboard vintage store, whose team and pitcher columns
+cannot carry a game-level fact. The flip, in ONE commit and only after a PASS that the
+contaminated screen did not disqualify: `SERVE_UMPIRE` True, the `MODEL_VERSION` bump, the
+`--context` re-run, the tripwire test and the persisted `umpire_gate` block. They move
+together or not at all, and a flip is the owner's call even on a PASS (7g).
+
+**The contaminated screen (5c rule 4, the 5l form).** Once, after the look and on a later
+calendar date, only on a member that passed: the same term with u's value replaced by his
+2027 regular-season value through the look date (the graded games included), labelled
+contaminated. It can only DISQUALIFY (a paired absolute-error delta at or below 0 on the
+eval half's point estimate); a contaminated positive qualifies nothing.
+
+**Not asked, each needing its own section.** A rotation prediction of the plate umpire
+before the schedule publishes it; a crew effect; a location-adjusted zone metric; the
+umpire's strikeout or walk rate; any props estimand (strikeouts, walks); a moneyline
+estimand; a same-season or trailing-window form; a third-party umpire figure.
+
+**Disqualification.** Any number relating either column, the captured assignment, or a
+close variant to a game result, a price, an edge, a slot, or a shadow, calibration or
+ledger row outside the look voids the member under 5c rule 1, on any game, whether
+computed before or after this commit. The close variants are: other k values or seasons;
+the umpire's identity as a fixed effect; the same-season or trailing form; the crew; a
+location-adjusted zone; the umpire's strikeout, walk or run-value rate; any between-umpire
+spread or stability read of 5n-B. The only admissible reads are the builder's per-umpire
+values (above), the capture's timing and identity counts, and the look. A voided member
+may return only as a new registration that discloses the early read.
+
+**Changes after the commit.** The capture's install date, the builder's landing and the
+table hash are recorded by dated amendment whenever they occur, and the one T_price
+correction above may be filed before any look number exists. Any other change is possible
+only by a dated correction recorded before any number on either column exists, on a fact
+established without outcomes; a change after that closes the section.
 
 **No number has been computed on this candidate.**
 
