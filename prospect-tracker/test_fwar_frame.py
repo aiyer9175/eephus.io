@@ -833,3 +833,46 @@ def test_the_pipeline_step_survives_a_systemexit_and_records_the_heartbeat(monke
     assert run_monthly._ewar_nightly_step(logging.getLogger("t"), "daily") == 2
     assert rows and rows[-1][0] == "ewar_nightly" and rows[-1][1] is False
     assert "SystemExit" in rows[-1][2] and run_monthly._EWAR_NIGHTLY_DONE is None
+
+
+# --------------------------------------------------------------------------
+# the count_map hook (the eWAR v3 skill part, EBR_GATE.md part 9.4 S2)
+# --------------------------------------------------------------------------
+
+def _replica():
+    import sys
+    tools = str(ROOT / "tools")
+    if tools not in sys.path:
+        sys.path.insert(0, tools)
+    import fwar_replica_eval as R
+    return R
+
+
+def test_pitchers_count_map_hook_defaults_to_none_and_reproduces_the_scored_tables():
+    """pitchers(count_map=None), the default, prices the cached counts: an empty
+    map and an identity map (every pitcher's own counts) reproduce its scored
+    tables exactly, and a map that moves one count moves the tables."""
+    import inspect
+    R = _replica()
+    assert inspect.signature(R.pitchers).parameters["count_map"].default is None
+    season = 2024
+    needed = [R.CACHE / f"fa_statsapi_pitching_{season}.json",
+              R.CACHE / f"statsapi_saber_pitching_{season}.json",
+              R.CACHE / f"statsapi_standings_{season}.json",
+              R.CACHE / "war_daily" / "pit.parquet"]
+    if not all(x.exists() for x in needed) or not R.constants(season):
+        pytest.skip("the 2024 pitching caches are not on this box")
+    base = R.pitchers(season)
+    assert "components" in base
+    assert R.pitchers(season, count_map=None) == base
+    assert R.pitchers(season, count_map={}) == base
+    keys = ("homeRuns", "baseOnBalls", "hitByPitch", "strikeOuts")
+    identity = {pid: {k: (c.get("stat") or {}).get(k) for k in keys}
+                for pid, c in R.counts("pitching", season).items()}
+    assert R.pitchers(season, count_map=identity) == base
+    pid = max(identity, key=lambda i: float(identity[i]["homeRuns"] or 0))
+    moved = dict(identity)
+    moved[pid] = dict(identity[pid], homeRuns=2.0 * float(identity[pid]["homeRuns"]))
+    other = R.pitchers(season, count_map=moved)
+    assert other["components"]["fip_runs"] != base["components"]["fip_runs"]
+    assert other["rows"] == base["rows"]
