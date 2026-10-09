@@ -487,7 +487,7 @@ def _export_with_frozen(tmp_path, monkeypatch, *, recorded: bool, tamper: bool =
         E._display_provider = old
         E.reset_frames()
     assert res["ok"], res
-    files = {p.name: p.read_bytes() for p in w.preview.iterdir() if p.is_file()}
+    files = {p.name: p.read_bytes() for p in w.dest.iterdir() if p.is_file()}
     return w.read("awards.json"), files, sentinels
 
 
