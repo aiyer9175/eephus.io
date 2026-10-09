@@ -58,10 +58,12 @@ def _resolve_signed_via_war_daily(classes: dict[int, dict],
             # DISPLAY DOOR (fWAR label epoch step D + U, 2026-10-03): the Archive's
             # realized WAR is a displayed number, so it names eWAR v2 explicitly
             # (owner answer EPOCH-Q4; orchestrator ruling EPOCH-Q4-IMPL R1a).
-            # Owner answer M14-3 wants the realized ledger rebuilt on fWAR at the
-            # epoch and yearly: queue 7 M14 owns that rebuild and chooses its
-            # provider explicitly when it runs after step Z; this run never
-            # executes backfill_historical.
+            # Owner answer M14-3 sets WHEN the realized ledger is rebuilt (at the
+            # fWAR epoch and once after each regular season); owner answer PE-Q2
+            # (answered 2026-10-02) sets its provider: the displayed eWAR, not
+            # fWAR. M14 rebuilt it on ewar_v2 on 2026-10-08 (fa_archive.warBasis
+            # ewar_v2). A later switch of the displayed eWAR (EBR-Q5, eWAR v3)
+            # changes this provider by name.
             return war_source.stint_frame(side, provider="ewar_v2")
         except Exception as e:                                # noqa: BLE001
             log.warning("%s fetch failed: %s", label, e)

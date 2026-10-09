@@ -32,7 +32,30 @@
   let DATA = null;
   let PRICING = null;
   let REALIZED_WAR = null;
+  let IMPLIED_WAR = null;
   let loading = null;
+
+  // The WAR basis tokens the series can carry (war_source.PROVIDERS, plus
+  // "ewar_v3" before it is registered and "mixed" for a ledger on more than
+  // one basis), each with its own label; only a missing or unknown basis
+  // prints plain WAR. The glossary key, when one fits, rides along.
+  const WAR_LABELS = {
+    bwar: ["bWAR", null], ewar_v2: ["eWAR", "ewar"], ewar_v3: ["eWAR", "ewar"],
+    ewar_merged: ["eWAR", "ewar"], fwar: ["fWAR", "war"], mixed: ["mixed-basis WAR", null],
+  };
+  function warLabel(basis) {
+    const hit = WAR_LABELS[basis];
+    if (!hit) return "WAR";
+    return hit[1] ? `<span data-gl="${hit[1]}">${hit[0]}</span>` : hit[0];
+  }
+  // One sentence beside the chart, only when the two series sit on different
+  // bases. It names both and says nothing about which basis is more accurate.
+  function basisNote() {
+    if (!IMPLIED_WAR || !REALIZED_WAR || IMPLIED_WAR === REALIZED_WAR) return "";
+    return `<p class="dpw-note">The implied series is written from the free agent corpus on the
+          ${warLabel(IMPLIED_WAR)} label, while the realized series reads the Archive's ledger
+          on ${warLabel(REALIZED_WAR)}, so the two lines use different WAR bases.</p>`;
+  }
 
   // ---- palette --------------------------------------------------------------
   // Two series, so two hues, and they are the only categorical assignment on
@@ -277,10 +300,10 @@
 
       <div class="dpw-panel">
         <h3>Implied vs realized</h3>
-        <p class="dpw-note">Realized: money paid over ${REALIZED_WAR === "bwar" ? "bWAR"
-          : `<span data-gl="ewar">eWAR</span>`} banked
+        <p class="dpw-note">Realized: money paid over ${warLabel(REALIZED_WAR)} banked
           to date${REALIZED_WAR === "bwar" ? " (ledger built before the eWAR label, not rebuilt)" : ""}. Unfinished
           recent terms are not comparable to old ones; hollow points are under 90% elapsed.</p>
+        ${basisNote()}
         <div class="dpw-legend">${legend}</div>
         ${lineChart(series, { xs, aria: "Implied and realized dollars per WAR by winter" })}
       </div>
@@ -339,6 +362,7 @@
           if (s && s.usd_per_war_by_winter) {
             DATA = s; PRICING = j.dpw_pricing || null;
             REALIZED_WAR = j.archive_war_basis || null;
+            IMPLIED_WAR = j.war_provider || null;
             return DATA;
           }
         } catch (e) { /* try the next source */ }
