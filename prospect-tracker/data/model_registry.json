@@ -2335,6 +2335,36 @@
    "artifact_age_days": 94
   },
   {
+   "model_id": "proj_components",
+   "summary": "Registered, not read: veteran WAR components on FanGraphs' frame, scored on component labels once on the holdout; the scorer exists, no head or number does yet.",
+   "surface": "none yet (registered, not served); on a pass, the component lines of the /projections/ player Projection tab",
+   "predicts": "per veteran and season, FanGraphs-frame WAR components (batting, baserunning, fielding, positional, league, replacement runs; pitcher FIP-based and RA9-based WAR) as means, and playing time",
+   "champion": "none",
+   "baseline": "a naive three-season rate and the served engine implicit value per component",
+   "metric": "PJ-C, docs/PROJ_COMPONENTS_GATE.md section 4",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "depends_on": [
+    "fa_projection_marcel",
+    "fa_war_paths_decay"
+   ],
+   "notes": "Registered 2026-10-08 in docs/PROJ_COMPONENTS_GATE.md (task PJ_1_COMPONENTS_GATE_REGISTRATION, commit cbbbae48) before any component number existed; this row was written 2026-10-09 by task PJ_3_COMPONENT_SCORER (round 4, mechanics 3). Scorer: proj_eval.run_components with _paired_cluster_bootstrap (paired, clustered on player, B 1000, seed 20261124, VIF 1.8 on every sd, one-sided MDE95 1.645 sd), dry-run on fixtures with nulls only; no frame, head, fit or score exists. Labels: the frozen fWAR vintage run parts (fwar_vintage.load()); PA and IP from the raw StatsAPI season caches through fa_sources; label season 2026 is never read and no WAR residual is computed. Frames: DEV bases 2014-2021 (label seasons up to 2021, 2020 excluded), HOLDOUT bases 2022-2024 (label seasons 2022-2025), one look (gate section 5). Heads under verdict: H3 BsR, H4 + H5 Fld + Pos, P4 gmLI through the relief runs it multiplies, P5 the RA9 gap; H0 PA and P0 IP carry the registered exposure test against the prior-season and 5/4/3 exposure. The look writes the holdout block of the component eval artifact named in gate section 5, and this row then moves to provisional whatever the outcome."
+  },
+  {
+   "model_id": "proj_component_stack",
+   "summary": "Registered, not read: a dark twin of the serving WAR-path bundle with component stack features, read once on the 2027 season; never served under this registration.",
+   "surface": "none (dark twin bundle, never served under this registration)",
+   "predicts": "veteran WAR paths with component stack features",
+   "champion": "none",
+   "baseline": "the serving proj_lgbm bundle",
+   "metric": "PJ-W, docs/PROJ_COMPONENTS_GATE.md section 6",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "notes": "Registered 2026-10-08 in docs/PROJ_COMPONENTS_GATE.md section 6 (task PJ_1_COMPONENTS_GATE_REGISTRATION, commit cbbbae48) before any bundle, feature or score existed; this row was written 2026-10-09 by task PJ_3_COMPONENT_SCORER (round 4, mechanics 3). W2: a twin of the serving proj_lgbm bundle (same hyperparameters) with projected BsR, Fld and Pos runs per 600 PA, last-season sprint speed with a missing flag, projected gmLI and the RA9 gap as added features, trained point-in-time into model/proj_lgbm_components/ (task PJ_9) and never loaded by the served path. Label: the 2027 fWAR season from the frozen vintage; rows row-matched like proj_eval.run_rowmatch; paired bootstrap clustered on player, B 1000, seed 20271109, VIF 1.8. Pass: one-sided 95% upper bound of delta pooled MAE below 0 and star slice below +0.0065; MDE95 at or above 0.0065 is UNDERPOWERED, the registered prior. The veto read uses bases 2022-2025 only, labelled READ."
+  },
+  {
    "model_id": "prospect_def_value",
    "summary": "Beats FanGraphs fielding grades at predicting positional value (Spearman 0.68 vs 0.28, n 263), but adds nothing to eFV or the projection model; display only.",
    "surface": "xFV defensive-input swap candidate (Will Cahoon model, local reconstruction)",
