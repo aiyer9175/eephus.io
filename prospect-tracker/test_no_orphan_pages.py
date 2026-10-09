@@ -83,8 +83,17 @@ def test_the_two_modules_that_shipped_orphaned_are_in_the_nav():
     """
     from build_site import nav_leaves
     hrefs = {h for _k, _l, h in nav_leaves()}
-    for u in ("/hof/", "/management/"):
+    # Since AWARDS_11 (2026-10-09) the Hall of Fame slot's leaf reads "Awards / HoF" and
+    # points at /awards/; /hof/ is the "Hall of Fame" link on the module strip both
+    # pages of the module draw, so it stays one click from the nav.
+    for u in ("/awards/", "/management/"):
         assert u in hrefs, f"{u} fell out of NAV_ITEMS again"
+    awards = ROOT / "awards" / "index.html"
+    if not awards.exists():
+        pytest.skip("awards/index.html not built on this machine")
+    strip = re.search(r'<nav class="mlbstats-sectionnav hof-modstrip"[^>]*>(.*?)</nav>',
+                      awards.read_text(encoding="utf-8"), re.S)
+    assert strip and 'href="/hof/"' in strip.group(1), "/hof/ fell off the Awards / HoF strip"
 
 
 def test_every_nav_link_has_a_page_behind_it():

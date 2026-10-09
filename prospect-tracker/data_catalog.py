@@ -729,9 +729,8 @@ ARTIFACTS = (
                  "superlatives, the season index and the rule-and-vote table."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_awards_export.py",
-        "note": ("Rendering payload for /awards/, served once awards_core.AWARDS_LIVE is "
-                 "True; until then awards_export.py writes it under .cache/awards/preview/. "
-                 "Every WAR-bearing block names its war_provider."),
+        "note": ("Rendering payload for /awards/, the Awards page of Awards / HoF, "
+                 "rebuilt nightly. Every WAR-bearing block names its war_provider."),
     },
     {
         "file": "awards_*.json", "group": "mlb",

@@ -53,6 +53,11 @@
 # the page ships from here: its game files are written by tools/scores_job.py
 # into their own directory on the box behind their own nginx location
 # (deploy/README.md), so neither consumer copies them from the app tree.
+#
+# 2026-10-09: awards/ is the Awards page of Awards / HoF (AWARDS_11_FLIP_RENAME).
+# Its payloads (awards.json, awards_<S>.json, awards_candidates_<S>.json,
+# awards_eval.json) sit at data/ depth one, which both consumers already ship;
+# data/_labs/awards/ ships in neither.
 index.html
 404.html
 robots.txt
@@ -61,6 +66,7 @@ favicon.ico
 arbitration
 articles
 assets
+awards
 betting
 collegesavant
 diamond

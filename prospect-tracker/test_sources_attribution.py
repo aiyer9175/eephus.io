@@ -123,3 +123,14 @@ def test_the_scores_files_hosts_are_credited():
     assert {_registered(h) for h in seen} == {"mlb.com"}, seen
     html = build_site.build_sources()
     assert "Scores / Standings page, live scores, win probability, box scores and highlight video" in html
+
+
+def test_the_awards_results_are_credited():
+    """AWARDS_11_FLIP_RENAME (2026-10-09; AW-Q4): the writers' results come from MLB's
+    StatsAPI awards endpoint, so the MLB Stats API row names what the Awards / HoF page
+    reads, and the ingest's only host is MLB's."""
+    seen = {_registered(h) for h in _hosts(ROOT / "tools" / "award_winners_ingest.py")} - _OWN
+    assert seen == {"mlb.com"}, seen
+    html = build_site.build_sources()
+    assert ("The Awards / HoF page reads the writers' MVP, Cy Young, Rookie and Manager of the "
+            "Year results from MLB's awards endpoint.").replace("'", "&#x27;") in html

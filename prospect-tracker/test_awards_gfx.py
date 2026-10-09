@@ -89,12 +89,14 @@ def test_the_awards_card_row_is_the_plans_and_the_hof_card_is_unchanged():
     assert "awards" not in B.OG_CARD_KEYS and all(m[0] != "awards" for m in SRC.MODULES)
 
 
-def test_the_card_is_held_while_the_flag_is_off(monkeypatch):
-    assert awards_core.AWARDS_LIVE is False
-    assert SRC.AWARDS_CARD not in PB.card_modules()
-    assert not (ROOT / "assets" / "og" / "awards.png").exists()
-    monkeypatch.setattr(awards_core, "AWARDS_LIVE", True)
+def test_the_card_ships_with_the_flag_and_is_held_without_it(monkeypatch):
+    """AWARDS_11_FLIP_RENAME turned the flag on, so tools/pixel_brand.py wrote the card into
+    assets/og/; with the flag off it is held out again (the preview only)."""
+    assert awards_core.AWARDS_LIVE is True
     assert PB.card_modules()[-1] == SRC.AWARDS_CARD
+    assert (ROOT / "assets" / "og" / "awards.png").exists()
+    monkeypatch.setattr(awards_core, "AWARDS_LIVE", False)
+    assert SRC.AWARDS_CARD not in PB.card_modules()
 
 
 def test_the_preview_card_is_1200_by_630(tmp_path):

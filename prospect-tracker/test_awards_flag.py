@@ -4,7 +4,13 @@
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
 """awards_core.AWARDS_LIVE, the export part (AWARDS_3_EXPORTER; AWARDS_PLAN 6 'Invariants
-and tests' row I13 and 3 'The flag').
+and tests' row I13 and 3 'The flag'), and the flip (AWARDS_11_FLIP_RENAME, 2026-10-09).
+
+The flag is True since the flip. The rules for a flag-off build still hold and are tested
+with the flag set False by monkeypatch; the flip's own rows (one nav leaf to /awards/ lit on
+both pages, the h1 "Awards / HoF" on both, the strip's aria-current, the /hof/ underline row,
+/awards/ in the sitemap and the publish paths, the served payloads, the registry row and the
+glossary entries) are tested on the committed files.
 
 While the flag is False: the exporter writes nothing under data/ except exactly
 data/_labs/awards/frozen_<S>.json and data/_labs/awards/freeze_log.json, both by --freeze;
@@ -73,14 +79,14 @@ def _kw(tree: Path) -> dict:
                 model_dir=tree / "model", log=lambda *_a, **_k: None)
 
 
-def test_the_flag_is_false_at_head():
-    assert A.AWARDS_LIVE is False
+def test_the_flag_is_true_after_the_flip():
+    assert A.AWARDS_LIVE is True
     assert E.PREVIEW == E.CACHE / "awards" / "preview"
     assert E.LABS == E.DATA / "_labs" / "awards"
 
 
-def test_with_the_flag_false_the_export_writes_only_under_the_preview(tree):
-    assert A.AWARDS_LIVE is False
+def test_with_the_flag_false_the_export_writes_only_under_the_preview(tree, monkeypatch):
+    monkeypatch.setattr(A, "AWARDS_LIVE", False)
     before = _files(tree)
     preview = tree / ".cache" / "awards" / "preview"
     res = E.export(out_dir=tree / "data", preview_dir=preview, **_kw(tree))
@@ -95,8 +101,20 @@ def test_with_the_flag_false_the_export_writes_only_under_the_preview(tree):
     assert "awards.json" in res["files"] and f"awards_candidates_{SEASON}.json" in res["files"]
 
 
-def test_the_freeze_writes_exactly_the_two_labs_files_and_nothing_else(tree):
-    assert A.AWARDS_LIVE is False
+def test_with_the_flag_true_the_export_writes_at_data_depth_one(tree):
+    assert A.AWARDS_LIVE is True
+    before = _files(tree)
+    res = E.export(out_dir=tree / "data", preview_dir=tree / ".cache" / "awards" / "preview", **_kw(tree))
+    assert res["ok"], res
+    new = _files(tree) - before
+    assert new == {f"data/{n}" for n in res["files"]}, sorted(new)
+    assert {"awards.json", "awards_eval.json", f"awards_candidates_{SEASON}.json"} <= set(res["files"])
+    assert all(n.count("/") == 1 for n in new), "every published awards file sits at data/ depth one"
+
+
+@pytest.mark.parametrize("live", [False, True])
+def test_the_freeze_writes_exactly_the_two_labs_files_and_nothing_else(tree, monkeypatch, live):
+    monkeypatch.setattr(A, "AWARDS_LIVE", live)
     before = _files(tree)
     res = E.freeze(SEASON, **_kw(tree))
     assert res["ok"], res
@@ -120,34 +138,47 @@ def test_the_main_entry_points_route_freeze_and_export(tree, monkeypatch):
     assert calls == [("freeze", 2026), ("export", None), ("export", 2025)]
 
 
-def test_publish_paths_glossary_and_registry_carry_no_awards_entry_while_the_flag_is_false():
-    if A.AWARDS_LIVE:
-        pytest.skip("the flip commit adds them")
+def test_the_flip_carries_publish_paths_sitemap_glossary_registry_and_payloads():
+    """AWARDS_11: one commit carries the flag, the publish path, the sitemap row, the
+    fourteen glossary entries, the registry row and the served payloads."""
+    assert A.AWARDS_LIVE is True
     paths = [ln.strip() for ln in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8").splitlines()
              if ln.strip() and not ln.startswith("#")]
-    assert "awards" not in paths and "hof" in paths
+    assert "awards" in paths and "hof" in paths
+    assert ("/awards/", "daily", "0.7") in B.sitemap_pages() and ("/hof/", "weekly", "0.6") in B.sitemap_pages()
+    sm = (ROOT / "sitemap.xml").read_text(encoding="utf-8")
+    assert "<loc>https://eephus.io/awards/</loc>" in sm
     gl = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
-    entries = gl if isinstance(gl, list) else (gl.get("entries") or gl.get("terms") or [])
-    ids = {e.get("id") or e.get("slug") for e in entries if isinstance(e, dict)}
-    for new_id in ("eephus_selection", "awards_rule_mvp", "rookie_proxy", "bbwaa_ballot", "my_ballot",
-                   "rule_and_vote", "sl_next_season_change"):
-        assert new_id not in ids, new_id
+    by = {e["id"]: e for e in gl["entries"]}
+    import awards_glossary as G
+    assert len(G._ids()) == 14
+    for new_id in G._ids():
+        assert by[new_id]["module"] == ["hof"], new_id
     reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
-    assert A.SELECTION_REGISTRY not in {m.get("model_id") for m in reg["models"]}
-    assert not any(p.name.startswith("awards") for p in (ROOT / "data").glob("awards*.json")), \
-        "a served awards file exists under data/ while the flag is False"
+    row = {m.get("model_id"): m for m in reg["models"]}[A.SELECTION_REGISTRY]
+    assert row["verdict"] == "provisional" and row["eval_artifact"] == "data/awards_eval.json"
+    assert row["surface"].startswith("/awards/")
+    names = {p.name for p in (ROOT / "data").glob("awards*.json")}
+    assert {"awards.json", "awards_eval.json"} <= names
+    assert {f"awards_{s}.json" for s in range(2021, 2027)} <= names
+    assert {f"awards_candidates_{s}.json" for s in range(2021, 2027)} <= names
+    ev = json.loads((ROOT / "data" / "awards_eval.json").read_text(encoding="utf-8"))
+    log = json.loads((ROOT / "data" / "_labs" / "awards" / "freeze_log.json").read_text(encoding="utf-8"))
+    assert ev["freeze"] == log["entries"], "the eval artifact copies the freeze hashes"
 
 
-def test_the_watched_tuple_gains_awards_export_only_inside_the_flag_branch():
+def test_the_watched_tuple_holds_awards_export_below_statsapi_standings():
+    """AWARDS_PLAN 4.9: the flip writes the row into the tuple below statsapi_standings,
+    printed as "Awards / HoF: awards board"; nothing above mgmt_export moves."""
     src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
     i = src.index("SCHEDULED_EXPORTS = (")
     j = src.index("\n)\n", i)
-    assert '"awards_export"' not in src[i:j]
-    assert '"statsapi_standings"' in src[i:j]
-    k = src.index('SCHEDULED_EXPORTS = SCHEDULED_EXPORTS + ("awards_export",)')
-    assert k > j
-    assert "if _AWARDS_LIVE:" in src[j:k]
-    assert "from awards_core import AWARDS_LIVE as _AWARDS_LIVE" in src[j:k]
+    block = src[i:j]
+    assert block.count('"awards_export"') == 1
+    assert block.index('"statsapi_standings"') < block.index('"awards_export"')
+    assert "SCHEDULED_EXPORTS = SCHEDULED_EXPORTS +" not in src
+    assert 'AWARDS_HEALTH_LABEL = "Awards / HoF: awards board"' in src
+    assert "f\"{AWARDS_HEALTH_LABEL} ({_where})\"" in src
     # the window scan test_mgmt_export relies on
     assert '"mgmt_export"' in src[i:i + 3200]
 
@@ -162,7 +193,7 @@ def _unstamped(text: str) -> str:
 
 
 def test_with_the_flag_false_build_site_writes_no_awards_page(tmp_path, monkeypatch):
-    assert A.AWARDS_LIVE is False
+    monkeypatch.setattr(A, "AWARDS_LIVE", False)
     wrote = []
     monkeypatch.setattr(B, "_write", lambda rel, content: wrote.append(rel))
     monkeypatch.setattr(B, "AWARDS_PREVIEW_SITE", tmp_path / "site")
@@ -171,20 +202,55 @@ def test_with_the_flag_false_build_site_writes_no_awards_page(tmp_path, monkeypa
     assert wrote == []
     page = tmp_path / "site" / "awards" / "index.html"
     assert page.exists(), "the preview copy is the only /awards/ render while the flag is False"
-    assert not (ROOT / "awards" / "index.html").exists()
     src = inspect.getsource(B.main)
-    assert "write_awards_page()" in src and 'build_awards()' not in src
+    # main() names the published route by literal under the flag (tools/gen_audit_docs.py
+    # reads it) and calls write_awards_page() only while the flag is False.
+    k = src.index('_write("awards/index.html", build_awards())')
+    assert "if _awards_live():" in src[k - 200:k] and "write_awards_page()" in src[k:k + 200]
 
 
-def test_with_the_flag_false_hof_is_its_committed_bytes_except_stamps():
-    assert A.AWARDS_LIVE is False
+def test_hof_is_its_committed_bytes_except_stamps_and_the_flag_off_head_is_the_shelfs(monkeypatch):
+    assert A.AWARDS_LIVE is True
     served = (ROOT / "hof" / "index.html").read_text(encoding="utf-8")
+    assert _unstamped(B.build_hof()) == _unstamped(served)
+    monkeypatch.setattr(A, "AWARDS_LIVE", False)
     built = B.build_hof()
-    assert _unstamped(built) == _unstamped(served)
-    assert "hof-modstrip" not in built and "Awards / HoF" not in built
+    assert "hof-modstrip" not in built and "<h1>" in built
     assert '<div class="mlbstats-sectionnav" role="tablist" aria-label="Hall of Fame sections">' in built
     head = B._hof_module_head("hof")
-    assert "<h1>" in head and "Hall of Fame" in head and "<nav" not in head
+    assert "<h1>" in head and "Hall of Fame" in head and "<nav" not in head and "Awards / HoF" not in head
+
+
+_LEAF = re.compile(r'<a href="(/[a-z]+/)" role="menuitem"( class="is-active")?><svg[^>]*>'
+                   r'<use href="[^"]*#i-hof"[^>]*/></svg>([^<]+)</a>')
+
+
+def test_the_served_pages_carry_the_rename():
+    """AWARDS_PLAN 3: one nav leaf in the Hall of Fame slot pointing at /awards/, lit on both
+    pages of the module; the h1 "Awards / HoF" on both; the strip's aria-current on the page it
+    sits on; the /hof/ underline row; the names agree across the places they live."""
+    assert B.MODULE_NAME["hof"] == A.MODULE_LABEL == "Awards / HoF"
+    leaf = [(k, label, href) for k, label, href in B.nav_leaves() if k == "hof"]
+    assert leaf == [("hof", "Awards / HoF", "/awards/")]
+    assert "/hof/" not in {h for _k, _l, h in B.nav_leaves()}
+    assert B.MODULE_STAGE["hof"][1] == ("Beta. Award selections follow a published rule, not a forecast "
+                                        "of the vote; every unpublished section names its blocker")
+    pages = {"awards": (ROOT / "awards" / "index.html").read_text(encoding="utf-8"),
+             "hof": (ROOT / "hof" / "index.html").read_text(encoding="utf-8")}
+    for key, page in pages.items():
+        leaves = _LEAF.findall(page)
+        assert leaves == [("/awards/", ' class="is-active"', "Awards / HoF")], (key, leaves)
+        assert re.search(r'<h1><svg class="ico" width="32"[^>]*>.*?</svg>Awards / HoF <span class="eephus-beta"',
+                         page), key
+        nav = re.search(r'<nav class="mlbstats-sectionnav hof-modstrip" aria-label="Awards / HoF">(.*?)</nav>',
+                        page, re.S)
+        on = [a for a in re.findall(r"<a ([^>]*)>", nav.group(1)) if 'aria-current="page"' in a]
+        assert len(on) == 1 and f'href="/{key}/"' in on[0], key
+    assert '<div class="mlbstats-tabs" role="tablist" aria-label="Hall of Fame sections">' in pages["hof"]
+    assert "<title>MLB Awards - eephus.io</title>" in pages["awards"]
+    assert "<title>Hall of Fame - eephus.io</title>" in pages["hof"]
+    other = (ROOT / "fa" / "index.html").read_text(encoding="utf-8")
+    assert _LEAF.findall(other) == [("/awards/", "", "Awards / HoF")]
 
 
 def test_with_the_flag_true_the_strip_marks_the_current_page(monkeypatch, tmp_path):

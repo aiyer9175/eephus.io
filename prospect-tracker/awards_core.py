@@ -11,7 +11,7 @@ Pure functions over inputs passed in: nothing here opens a socket, reads a serve
 file or writes one. awards_export.py (AWARDS_3) reads the files and hands the rows
 in; build_site and the page read the payload the exporter writes.
 
-THE FLAG. AWARDS_LIVE defaults False and only AWARDS_11_FLIP_RENAME sets it True.
+THE FLAG. AWARDS_LIVE defaulted False and AWARDS_11_FLIP_RENAME set it True.
 While it is False nothing renames, no awards page is written into the published
 tree, the exporter writes only under .cache/awards/preview/ (except --freeze), and
 publish paths, glossary and registry carry no awards entry.
@@ -89,8 +89,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
-#: The module flag (AWARDS_PLAN 3 'The flag'). Only AWARDS_11_FLIP_RENAME sets it True.
-AWARDS_LIVE = False
+#: The module flag (AWARDS_PLAN 3 'The flag'). Only AWARDS_11_FLIP_RENAME sets it True,
+#: and it did (2026-10-09): /awards/ is served and the module reads "Awards / HoF".
+AWARDS_LIVE = True
 #: The module's display name once the flag is True (AWARDS_PLAN 3, C1).
 MODULE_LABEL = "Awards / HoF"
 

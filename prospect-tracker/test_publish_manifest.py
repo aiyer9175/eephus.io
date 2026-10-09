@@ -388,3 +388,15 @@ def test_the_scores_page_ships_and_its_data_does_not():
         assert "data/scores" not in wf_path.read_text(encoding="utf-8")
     excl = (ROOT / "deploy" / "data_exclude.txt").read_text(encoding="utf-8")
     assert not any(ln.strip().startswith(("scores", "data/scores")) for ln in excl.splitlines())
+
+
+def test_the_awards_page_ships_with_its_payloads():
+    """AWARDS_11_FLIP_RENAME (2026-10-09; AWARDS_PLAN 4.1 and I11): awards/ is in the
+    manifest; its payloads sit at data/ depth one, which both consumers ship, and no
+    exclusion names them; the tracked records under data/_labs/awards/ ship in neither."""
+    assert "awards" in _manifest_paths() and "hof" in _manifest_paths()
+    excl = (ROOT / "deploy" / "data_exclude.txt").read_text(encoding="utf-8")
+    rules = [ln.strip() for ln in excl.splitlines() if ln.strip() and not ln.startswith("#")]
+    assert not any(r.startswith(("awards", "data/awards")) for r in rules)
+    for p in (ROOT / "data").glob("awards*.json"):
+        assert p.parent == ROOT / "data", p

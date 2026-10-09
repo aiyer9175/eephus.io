@@ -106,3 +106,17 @@ def test_the_site_map_lists_the_scores_page():
     reg = gen.render_one("MODEL_REGISTRY.md")
     for mid in ("scores_mlb_wp", "scores_stars_rule", "scores_biggest_plays_rule"):
         assert f"`{mid}`" in reg, mid
+
+
+def test_the_site_map_lists_the_awards_page():
+    """AWARDS_11_FLIP_RENAME (2026-10-09): main() writes /awards/ by literal, so the
+    generated site map and README routes list it under the module's leaf, /hof/ keeps
+    its row as an unnavigated page, and the registry doc carries the awards row."""
+    gen = _gen()
+    site_map = gen.render_one("SITE_MAP.md")
+    row = next(ln for ln in site_map.splitlines() if ln.startswith("| `/awards/` |"))
+    assert "`build_site.build_awards()`" in row and "Awards / HoF" in row
+    routes = gen.render_readme_routes()
+    assert "| `/awards/` | Awards / HoF (MLB Modules)" in routes
+    assert "| `/hof/` | Hall of Fame" in routes
+    assert "`awards_selection`" in gen.render_one("MODEL_REGISTRY.md")

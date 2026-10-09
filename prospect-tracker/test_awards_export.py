@@ -13,9 +13,10 @@ model_registry.json, xfv.json, debuts_lite.json, the StatsAPI standings cache, t
 map, data/_labs/awards/rookies.json and the projection bundle meta. The stint frames are
 injected through the exporter's memoised reader (awards_export.inject_frames), so no test
 touches the network: an autouse fixture refuses every socket. The exporter runs with
-awards_core.AWARDS_LIVE False, so every file lands under a temp preview directory with the
-names it would carry at data/ depth one (awards.json, awards_<S>.json,
-awards_candidates_<S>.json, awards_eval.json).
+awards_core.AWARDS_LIVE True since the flip (AWARDS_11), so every file lands under the temp
+out directory it is handed, with the names it carries at data/ depth one (awards.json,
+awards_<S>.json, awards_candidates_<S>.json, awards_eval.json); World.dest names where the
+exporter writes under the flag either way.
 """
 from __future__ import annotations
 
@@ -88,8 +89,13 @@ class World:
         args.update(kw)
         return E.freeze(season, **args)
 
+    @property
+    def dest(self) -> Path:
+        """Where the exporter writes: the out directory under the flag, the preview without."""
+        return self.out if A.AWARDS_LIVE else self.preview
+
     def read(self, name: str):
-        return _load(self.preview / name)
+        return _load(self.dest / name)
 
     def edit_json(self, rel: str, fn):
         p = self.base / rel
@@ -418,17 +424,17 @@ def test_i9_freeze_is_write_once_and_the_frozen_card_grows_a_drift_column(fresh)
         for d, r in zip(blk["drift"], blk["top"]):
             assert d["war_provider"] == PROV and d["unit_label"] == A.drift_unit_label(PROV)
             assert abs(d["score_now"] - r["score"]) < 1e-9
-    shard = fresh.preview / f"awards_{SEASON}.json"
+    shard = fresh.dest / f"awards_{SEASON}.json"
     assert shard.exists() and _load(shard)["status"] == "frozen"
     assert frozen.read_bytes() == raw, "a rebuild moved the frozen record"
 
 
 def test_i9_closed_season_shards_are_byte_stable_across_runs(fresh):
     fresh.export()
-    before = {p.name: p.read_bytes() for p in fresh.preview.glob("awards_20*.json")}
+    before = {p.name: p.read_bytes() for p in fresh.dest.glob("awards_20*.json")}
     assert before and all(not n.startswith("awards_candidates") for n in before)
     fresh.export()
-    after = {p.name: p.read_bytes() for p in fresh.preview.glob("awards_20*.json")}
+    after = {p.name: p.read_bytes() for p in fresh.dest.glob("awards_20*.json")}
     assert after == before
     for name, raw in before.items():
         doc = json.loads(raw)
@@ -572,12 +578,12 @@ def _snapshot(d: Path) -> dict:
 
 def _refuses(fresh, mutate, needle: str, **kw):
     assert fresh.export()["ok"]
-    before = _snapshot(fresh.preview)
+    before = _snapshot(fresh.dest)
     mutate()
     res = fresh.export(**kw)
     assert res["ok"] is False and res["files"] == {}, res
     assert needle in res["reason"], res["reason"]
-    assert _snapshot(fresh.preview) == before, "a refusal moved yesterday's files"
+    assert _snapshot(fresh.dest) == before, "a refusal moved yesterday's files"
     return res
 
 
@@ -694,10 +700,11 @@ def test_the_pipeline_steps_sit_where_the_plan_puts_them():
     i = src.index("SCHEDULED_EXPORTS = (")
     j = src.index("\n)\n", i)
     literal = src[i:j]
-    assert '"awards_export"' not in literal, "the watched row joins the tuple only at the flip"
-    assert '"statsapi_standings"' in literal
-    branch = src.index('SCHEDULED_EXPORTS = SCHEDULED_EXPORTS + ("awards_export",)')
-    assert branch > j and "if _AWARDS_LIVE:" in src[j:branch]
+    # The flip (AWARDS_11) wrote the watched row into the tuple, below statsapi_standings.
+    assert literal.count('"awards_export"') == 1, "the watched row joined the tuple at the flip"
+    assert literal.index('"statsapi_standings"') < literal.index('"awards_export"')
+    assert "SCHEDULED_EXPORTS = SCHEDULED_EXPORTS +" not in src
+    assert 'AWARDS_HEALTH_LABEL = "Awards / HoF: awards board"' in src
 
 
 def test_the_catalog_names_the_published_files_and_the_labs_files():

@@ -103,6 +103,12 @@ TARGETS: list[str] = [
     "scores/index.html",
     "scores_core.py",
     "tools/scores_job.py",
+    # Awards / HoF (AWARDS_11_FLIP_RENAME, 2026-10-09): the Awards page, the
+    # rules core whose built labels land in the payloads verbatim, and the
+    # exporter that writes them.
+    "awards/index.html",
+    "awards_core.py",
+    "awards_export.py",
     # /models/ renders registry `notes` prose verbatim, so its copy is only ever
     # as clean as the registry's, and it inherits any dash a future row carries.
     "models/index.html",

@@ -454,7 +454,12 @@ NAV_ITEMS = [
         # source for the top bar, the sidebar and the hand-kept static copies.
         # A reader could reach either module only by typing its URL.
         ("management", "In-Game Management", "/management/"),
-        ("hof",        "Hall of Fame",       "/hof/"),
+        # Awards / HoF (AWARDS_11_FLIP_RENAME, 2026-10-09; owner ask 2026-10-02,
+        # AWARDS_PLAN 3 'The rename'): one leaf in the Hall of Fame slot, key
+        # unchanged, pointing at /awards/; /hof/ stays one tap away on the
+        # module strip both pages draw. The hand-kept static copies carry the
+        # same entry in the same slot (test_collegesavant_nav_in_sync).
+        ("hof",        "Awards / HoF",       "/awards/"),
     ]},
     # 2026-08-05: the Diamond section. 2026-08-07: Dynasty / Redraft / DFS
     # collapsed back into ONE "Fantasy" leaf, because three of the group's six
@@ -968,7 +973,7 @@ MODULE_STAGE = {
     "forums": ("β", "Forums is in beta"),
     "parks": ("β", "Beta. Display only: no model reads these factors"),
     "management": ("β", "Beta. Realized value only; the gate returned a bounded null for the steal and no family is ranked by skill"),
-    "hof": ("β", "Beta. Every unpublished section names its blocker"),
+    "hof": ("β", "Beta. Award selections follow a published rule, not a forecast of the vote; every unpublished section names its blocker"),
     # Scores / Standings (SCORES_3, behind scores_core.SCORES_LIVE).
     "scores": ("β", "Beta. Scores, win probability and video come from MLB; Stars of the Game is a published rule"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
@@ -980,6 +985,15 @@ MODULE_STAGE = {
     "fantasy": ("◆ Diamond preview", "Diamond preview: free and public"),
     "betting": ("◆ Diamond preview", "Diamond preview: free and public"),
     "diamond": ("◆ Diamond preview", "Nothing is for sale yet; the whole site is free"),
+}
+
+# A module's display name where it differs from its key's history (the
+# Awards / HoF rename, AWARDS_11_FLIP_RENAME; AWARDS_PLAN 3 and 8 C1, the house
+# spacing around the slash). The shared Awards / HoF masthead reads it; the
+# NAV_ITEMS leaf carries the same words (test_awards_flag pins the three equal,
+# with awards_core.MODULE_LABEL).
+MODULE_NAME = {
+    "hof": "Awards / HoF",
 }
 
 # Chip text per stage sigil. Census X07-10 (2026-09-25): eleven module shells
@@ -7198,7 +7212,9 @@ def build_hof(live: bool | None = None) -> str:
     three bands do not partition the ten-plus-season population exactly.
 
     In NAV_ITEMS under MLB Modules since the 2026-09-06 nav fix (it shipped
-    unreachable before that); the three static nav copies carry it too.
+    unreachable before that); since AWARDS_11 (2026-10-09) the module's one
+    leaf reads "Awards / HoF" and points at /awards/, and this page is the
+    "Hall of Fame" link on the module strip both pages draw.
 
     The head comes from _hof_module_head("hof") (AWARDS_7). With
     awards_core.AWARDS_LIVE False this page is byte-identical to the shell
@@ -7236,9 +7252,10 @@ AWARDS_PREVIEW_SITE = ROOT / ".cache" / "awards" / "preview" / "site"
 _AWARDS_SUB = ("The eephus selection for each BBWAA award, chosen by a published rule over the "
                "site's own numbers, with superlatives from the same numbers and a ballot of your own. "
                "Not a forecast of the writers' vote.")
+# The meta description holds to the copy lint's 25-word line for share text (rule L3,
+# docs/COPY_STYLE.md), so AWARDS_PLAN 5.15's longer draft is cut at the flip.
 _AWARDS_DESCRIPTION = ("MVP, Cy Young, Rookie and Manager of the Year: the eephus selection by a "
-                       "published rule over eWAR and the site's metrics, season races, superlatives, "
-                       "and a ballot you can fill in, save and share. Not a forecast of the vote.")
+                       "published rule, superlatives, your ballot. Not a forecast of the vote.")
 # The /hof/ section row: one list, two styles (boxed buttons while the flag is False,
 # the underline tab row once it is True), the same ARIA either way.
 _HOF_SECTIONS = (("board", "Leaderboards"), ("franchises", "Franchises"),
@@ -7265,7 +7282,7 @@ def _hof_module_head(active: str, live: bool | None = None) -> str:
         return ('<div class="section-head section-head--byline"><div class="section-head-titles">'
                 f'<h1>{_masthead_icon("hof")}Hall of Fame {_stage_chip("hof")}</h1></div>'
                 f'<span class="section-sub">{sub}</span></div>')
-    name = html.escape(awards_core.MODULE_LABEL)
+    name = html.escape(MODULE_NAME["hof"])
     links = []
     for key, label, href, icon in (("awards", "Awards", "/awards/", "aw-podium"),
                                    ("hof", "Hall of Fame", "/hof/", "hof")):
@@ -7329,8 +7346,10 @@ def write_awards_preview(site: Path | None = None) -> Path:
 
 
 def write_awards_page() -> str:
-    """main()'s one awards step: awards/index.html when the flag is True, else the
-    preview copy only. Returns the path written."""
+    """The awards step: awards/index.html when the flag is True, else the
+    preview copy only. Returns the path written. main() names the published
+    route by literal (tools/gen_audit_docs.py reads the literal _write calls
+    there) and calls this only while the flag is False."""
     if _awards_live():
         _write("awards/index.html", build_awards())
         return "awards/index.html"
@@ -9178,14 +9197,15 @@ SOURCE_ROWS = [
      "terms": "https://x.com/en/tos", "terms_label": "Terms (X)",
      "use": ("Prospect rankings (consensus input) and movers wire.")},
     {"name": "MLB Stats API / Baseball Savant", "url": "https://baseballsavant.mlb.com/",
-     "take": "Game logs, transactions, rosters, Statcast, headshots; live scores and video",
+     "take": "Game logs, transactions, rosters, Statcast, headshots; live scores and video; award results",
      "cadence": "Daily; live during games",
      "terms": "http://gdx.mlb.com/components/copyright.txt", "terms_label": "Copyright notice",
      "use": ("Game logs, transactions, rosters, the sabermetrics feed (league wOBA constants; the "
              "fielding and framing runs behind DEM+), Statcast tracking data (pitch, batted-ball "
              "and zone metrics), and player headshots via MLB static media; on the Scores / "
              "Standings page, live scores, win probability, box scores and highlight video "
-             "played in MLB's own embedded player.")},
+             "played in MLB's own embedded player. The Awards / HoF page reads the writers' MVP, "
+             "Cy Young, Rookie and Manager of the Year results from MLB's awards endpoint.")},
     {"name": "Baseball-Reference", "url": "https://www.baseball-reference.com/",
      "take": "war_daily (bWAR), historical player pages",
      "cadence": "Daily",
@@ -9429,6 +9449,7 @@ def sitemap_pages() -> list[tuple]:
         ("/betting/", "daily", "0.8"),
         ("/diamond/", "monthly", "0.6"),
         ("/parks/", "weekly", "0.6"),
+        ("/awards/", "daily", "0.7"),
         ("/hof/", "weekly", "0.6"),
         ("/management/", "weekly", "0.6"),
         ("/models/", "daily", "0.6"),
@@ -9486,6 +9507,9 @@ PAGE_INDEX_NAMES = {
     "/models/updates/": "Model Updates",
     "/sources/": "Data Sources & Attribution",
     "/report/": "Report a bug",
+    # The shelf page of Awards / HoF: the nav leaf points at /awards/ since
+    # AWARDS_11, and /hof/ is reached from the module strip on both pages.
+    "/hof/": "Hall of Fame",
 }
 
 # One line per page: what a reader finds there.
@@ -9504,6 +9528,7 @@ PAGE_INDEX_PURPOSE = {
     "/arbitration/": "projected arbitration salaries for every eligible player, and a per-season record of the market",
     "/ledger/": "each club's CBT payroll and contract commitments, from Spotrac and our own models",
     "/management/": "every in-game decision in the play corpus, with the win probability that moved after it",
+    "/awards/": "the eephus selection for MVP, Cy Young, Rookie and Manager of the Year by a published rule, superlatives, and a ballot of your own",
     "/hof/": "career WAR, WAR7 and JAWS for every ten-season player, with the ballot record",
     "/fantasy/": "fantasy baseball: Redraft ranks in your league format, the Dynasty and keeper board, and the DFS slate",
     "/betting/": "game win probabilities against de-vigged book prices, with the flat-stake public record",
@@ -10385,7 +10410,13 @@ def main() -> None:
     _write("diamond/index.html", build_diamond())
     _write("parks/index.html", build_parks())
     _write("hof/index.html", build_hof())
-    write_awards_page()
+    # /awards/ ships behind awards_core.AWARDS_LIVE: the published page from the
+    # flip (AWARDS_11), named by literal so tools/gen_audit_docs.py lists the
+    # route; the preview copy only while the flag is False (AWARDS_7).
+    if _awards_live():
+        _write("awards/index.html", build_awards())
+    else:
+        write_awards_page()
     _write("management/index.html", build_management())
     _write("franchise/index.html", build_franchise())
     _write("franchises/index.html", build_franchises_redirect())

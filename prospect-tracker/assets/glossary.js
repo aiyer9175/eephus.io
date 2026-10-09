@@ -206,7 +206,8 @@
                       ["industry", "INDUSTRY", "external metric, credited"],
                       ["foundation", "FOUNDATION", "shared concept or standard stat"]];
   const MOD_LABEL = { prospx: "PROSPX", fa: "MLB FA", foundations: "FOUNDATIONS",
-                      platform: "PLATFORM", franchise: "FRANCHISES", scores: "SCORES / STANDINGS" };
+                      platform: "PLATFORM", franchise: "FRANCHISES", scores: "SCORES / STANDINGS",
+                      hof: "AWARDS / HOF" };
 
   function entrySection(e) { return SECTIONS.includes(e.section) ? e.section : "Site & Methods"; }
 
