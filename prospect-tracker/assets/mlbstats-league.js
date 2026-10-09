@@ -952,15 +952,622 @@
     render();
   }
 
+  // =============================================================================
+  // The Teams tab (owner asks 15 and 20 of 2026-09-30; final-pass plan Part 8
+  // P8.2, task LT-08, the Teams half; lane design league_team_stats section 5).
+  // =============================================================================
+  // One sortable table of the thirty clubs, read from the Team Stats payload
+  // that team_stats_export.py writes (the same lazy script as League; the
+  // landing board never asks for either). Views: Standard, EM+, Runs, Pitch
+  // counts, Depth and Tendencies, each a column set in the COL_VIEWS manner.
+  //
+  // TWO CLUB BASES, both named (owner answer LTS-2): Earned is the default (each
+  // player's season index weighted by what he did for each club), Club today is
+  // the rollup the boards' team tabs serve, copied unchanged. A column that
+  // exists on one basis only says so in its header. Past seasons are earned only.
+  //
+  // DESCRIPTIVE ONLY. Every number is copied, summed, re-weighted or MLB's own
+  // expected record. RD, W - xW and every "vs lg" print signed in text ink and
+  // never take a colour. The style z columns of the Tendencies view take no
+  // value class at all (a frequency has no good direction). The two Runs
+  // charts draw the identity line and a zero line, and no fitted line.
+  //
+  // HASH KEYS use the t prefix: tseason, tcols, tbasis, tsort. Only non-defaults
+  // are written, through mlbstats.js writeHash, which asks teamHashParts().
+  var TEAMS_FILE = "mlb_team_stats.json";
+  var TVIEWS = [["standard", "Standard"], ["emplus", "EM+"], ["runs", "Runs"],
+                ["pitch", "Pitch counts"], ["depth", "Depth"], ["tend", "Tendencies"]];
+  var TBASES = [["earned", "Earned"], ["today", "Club today"]];
+  var T_SORT0 = { key: "wl", asc: false };
+  var T = { season: null, cols: "standard", basis: "earned", sort: null };
+  var TRE = {
+    season: /(?:^#|[#&])tseason=(\d{4})\b/, cols: /(?:^#|[#&])tcols=([a-z]+)\b/,
+    basis: /(?:^#|[#&])tbasis=(earned|today)\b/, sort: /(?:^#|[#&])tsort=([a-z0-9_]+)\.(a|d)\b/
+  };
+  // The value ruler family of each EM+ column: the family the board that
+  // serves it paints it with (mlbstats.js hemCell is ratio, remCell z, runCell
+  // run), so a club reads the same colour here as on its board's team tab.
+  // test_value_ruler.py pins the two files together. Nothing else on this
+  // table takes a family: the deltas are signed text, team PAR has no better
+  // direction, eWAR is a counting total, and a style z is a frequency.
+  var TEAM_FAMILY = { offense_plus: "ratio", heart_hem: "ratio", rest_hem: "ratio",
+                      rotation_plus: "z", front_sem: "run", bullpen_plus: "z",
+                      high_lev_core_rem: "z", leverage_deploy_plus: "z", team_dem_plus: "z" };
+  var MEAN_KEY = { offense_plus: "offense_plus_pa_weighted", rotation_plus: "rotation_plus_ip_weighted",
+                   bullpen_plus: "bullpen_plus_ip_weighted", team_dem_plus: "team_dem_plus_inn_weighted" };
+
+  // ---- columns ------------------------------------------------------------------
+  // basis: "pick" follows the pill; "today" or "earned" is fixed (the header
+  // names it when it differs from the pill); "" is a record, earned by nature.
+  // live: the column exists only for the live season (past seasons carry the
+  // earned basis and the records, nothing else).
+  function bx(r, b) { return (b === "today" ? r.today : r.earned) || null; }
+  function pct(a, b) { return (isN(a) && isN(b) && (a + b) > 0) ? a / (a + b) : null; }
+  function pair(p) { return (p && p.length === 2) ? p : null; }
+  var TCOL = {};
+  function tdef(c) { TCOL[c.key] = c; }
+  tdef({ key: "wl", label: "W-L", term: "season_record", kind: "rec", title: "Wins and losses, from the StatsAPI standings.",
+         get: function (r) { return pct(r.w, r.l); }, show: function (r) { return isN(r.w) ? r.w + "-" + r.l : DASH; } });
+  tdef({ key: "rd", label: "RD", kind: "signed", title: "Run differential: runs scored minus runs allowed.",
+         get: function (r) { return r.rd; } });
+  tdef({ key: "xwl", label: "xW-L", kind: "rec", copy: "xwl",
+         get: function (r) { return pct(r.xw, r.xl); }, show: function (r) { return isN(r.xw) ? r.xw + "-" + r.xl : DASH; } });
+  tdef({ key: "wx", label: "W - xW", kind: "signed", copy: "w_minus_xw", get: function (r) { return r.wx; } });
+  tdef({ key: "rs", label: "RS", kind: "int", title: "Runs scored.", get: function (r) { return r.rs; } });
+  tdef({ key: "ra", label: "RA", kind: "int", title: "Runs allowed.", get: function (r) { return r.ra; } });
+  tdef({ key: "rs_g", label: "RS/G", kind: "d2", title: "Runs scored per game.", get: function (r) { return safeDiv(r.rs, r.g); } });
+  tdef({ key: "ra_g", label: "RA/G", kind: "d2", title: "Runs allowed per game.", get: function (r) { return safeDiv(r.ra, r.g); } });
+  tdef({ key: "one_run", label: "1-run", kind: "rec", live: true, title: "Record in games decided by one run (StatsAPI split records).",
+         get: function (r) { var p = pair(r.one_run); return p ? pct(p[0], p[1]) : null; },
+         show: function (r) { var p = pair(r.one_run); return p ? p[0] + "-" + p[1] : DASH; } });
+  tdef({ key: "extra", label: "Extra inn", kind: "rec", live: true, title: "Record in extra-inning games (StatsAPI split records).",
+         get: function (r) { var p = pair(r.extra); return p ? pct(p[0], p[1]) : null; },
+         show: function (r) { var p = pair(r.extra); return p ? p[0] + "-" + p[1] : DASH; } });
+  [["offense_plus", "Offense+"], ["rotation_plus", "Rotation+"], ["bullpen_plus", "Bullpen+"],
+   ["team_dem_plus", "Team DEM+"]].forEach(function (p) {
+    var k = p[0];
+    tdef({ key: k, label: p[1], term: k, kind: "plus", basis: "pick",
+           get: function (r, b) { var x = bx(r, b); return x ? x[k] : null; } });
+    tdef({ key: k + "_vs", label: "vs lg", kind: "delta", basis: "pick", of: k,
+           title: p[1] + " minus the league's own weighted mean of it on this basis, which the payload carries. Signed, not coloured.",
+           get: function (r, b, M) {
+             var x = bx(r, b), m = M ? M[MEAN_KEY[k]] : null;
+             if (!x || !isN(m)) return null;
+             var raw = isN(x[k + "_raw"]) ? x[k + "_raw"] : x[k];
+             return isN(raw) ? Number(raw) - Number(m) : null;
+           } });
+  });
+  [["heart_hem", "Heart 3", "Mean HEM+ of the club's top three qualified hitters by HEM+."],
+   ["front_sem", "Front 3", "Mean SEM+ of the club's top three starters by SEM+."],
+   ["high_lev_core_rem", "Hi-Lev Core", "Mean REM+ of the club's three relievers with the highest gmLI."],
+   ["leverage_deploy_plus", "Lev Deploy+", "REM+ weighted by relief innings times gmLI, over the arms with a gmLI feed. Blank with no coverage."]
+  ].forEach(function (p) {
+    tdef({ key: p[0], label: p[1], term: p[0] === "leverage_deploy_plus" ? "leverage_deploy_plus" : "", kind: "plus",
+           basis: "today", live: true, title: p[2],
+           get: function (r) { return r.today ? r.today[p[0]] : null; } });
+  });
+  tdef({ key: "war_today", label: "eWAR today", term: "ewar", kind: "d1", live: true,
+         title: "Team eWAR on the club-today basis, as the Overall board serves it: a traded player's season counts for the club that holds him now.",
+         get: function (r) { return r.today ? r.today.war : null; } });
+  tdef({ key: "war_earned", label: "eWAR earned", term: "ewar", kind: "d1", live: true,
+         title: "eWAR produced for this club this season, by stint, as the Overall board serves it.",
+         get: function (r) { return r.earned ? r.earned.war : null; } });
+  // Pitch counts: earned from MLB's club lines; the club-today columns read the
+  // boards' own team keys when the boards serve them, and earned until then.
+  [["p_pa", "Lineup P/PA", "p_per_pa", "lineup_p_pa", "d3", "Pitches seen per plate appearance, every plate appearance the club took."],
+   ["lineup_par", "Lineup PAR", "lineup_par", "lineup_par", "int", "Team PAR of the lineup's P/PA: 100 is the mean of the thirty club rates."],
+   ["p_ip", "Staff P/IP", "p_per_ip", "", "d2", "Pitches thrown per inning by the whole staff."],
+   ["sp_p_ip", "Rotation P/IP", "sp_p_per_ip", "rot_p_ip", "d2", "Pitches per inning in starts, from MLB's starter split."],
+   ["rotation_par", "Rotation PAR", "rotation_par", "rot_par", "int", "Team PAR of the rotation's P/IP: 100 is the mean of the thirty club rates."],
+   ["rp_p_ip", "Bullpen P/IP", "rp_p_per_ip", "pen_p_ip", "d2", "Pitches per inning in relief, from MLB's reliever split."],
+   ["bullpen_par", "Bullpen PAR", "bullpen_par", "pen_par", "int", "Team PAR of the bullpen's P/IP: 100 is the mean of the thirty club rates."],
+   ["sp_ip_gs", "Rotation IP/GS", "sp_ip_per_gs", "", "d2", "Innings thrown in starts per start (the starter split), not the boards' IP/GS."],
+   ["relief_share", "Relief IP %", "relief_ip_share", "", "pct", "The share of the club's innings thrown in relief."]
+  ].forEach(function (p) {
+    tdef({ key: p[0], label: p[1], kind: p[4], basis: "pitch", todayKey: p[3], title: p[5],
+           term: p[0].indexOf("p_ip") >= 0 ? "pitches_per_ip" : "",
+           get: function (r, b) {
+             if (b === "today" && p[3] && T_PIT_TODAY[p[3]]) return r.today ? r.today[p[3]] : null;
+             return r.pit ? r.pit[p[2]] : null;
+           } });
+  });
+  [["rest_hem", "Rest", "plus", "PA-weighted HEM+ of the club's hitters outside its top three."],
+   ["gap", "Gap", "signed1", "Heart 3 minus Rest. Signed, not coloured."],
+   ["pa100", "PA at 100+", "pct", "The share of the club's plate appearances taken by hitters at HEM+ 100 or better."]
+  ].forEach(function (p) {
+    var src = p[0] === "pa100" ? "pa_share_hem_100" : p[0];
+    tdef({ key: p[0], label: p[1], kind: p[2], basis: "today", live: true, title: p[3],
+           get: function (r) { return r.depth ? r.depth[src] : null; } });
+  });
+  // Depth's Heart 3 is the same served value as the EM+ view's; one column.
+  tdef({ key: "hook", label: "Hook", kind: "d1", live: true, title: "Median pitch count at which the club pulled its starter.",
+         get: function (r) { return r.tend && r.tend.style ? r.tend.style.hook_median_pitches : null; } });
+  [["z_hook", "Hook z", "hook_z", " (negative = earlier)"], ["z_pen", "Pen z", "pen_z", ""],
+   ["z_bench", "Bench z", "bench_z", ""], ["z_ibb", "IBB z", "ibb_z", ""], ["z_visit", "Visit z", "visit_z", ""]
+  ].forEach(function (p) {
+    tdef({ key: p[0], label: p[1], term: p[2], kind: "z", live: true,
+           title: "Style, not skill: a signed z-score across the thirty clubs of the season" + p[3] + ". No colour: a frequency has no good direction.",
+           get: function (r) { return r.tend && r.tend.style ? r.tend.style[p[0]] : null; } });
+  });
+  tdef({ key: "pen_g", label: "Pen/G", kind: "d2", live: true, title: "Pitching changes per game.",
+         get: function (r) { return r.tend && r.tend.style ? r.tend.style.pen_per_game : null; } });
+  tdef({ key: "sb_att", label: "SB att", kind: "int", live: true, title: "Stolen-base attempts: what the club chose to do.",
+         get: function (r) { return r.tend && r.tend.running ? r.tend.running.attempts : null; } });
+  tdef({ key: "sb_pct", label: "SB%", kind: "pct", live: true, title: "Share of stolen-base attempts that succeeded.",
+         get: function (r) { return r.tend && r.tend.running ? r.tend.running.success_rate : null; } });
+  tdef({ key: "to3b", label: "To 3B", kind: "pct", live: true, title: "Share of stolen-base attempts aimed at third base.",
+         get: function (r) { return r.tend && r.tend.running ? r.tend.running.share_3B : null; } });
+
+  // keys in view order ("|" opens a column group); phone: the club, W-L and
+  // the view's two lead columns (lane design 5.1).
+  var TVIEW_COLS = {
+    standard: { keys: ["wl", "rd", "xwl", "wx", "|", "offense_plus", "rotation_plus", "bullpen_plus", "team_dem_plus",
+                       "|", "war_today", "war_earned"], phone: ["wl", "rd", "xwl"] },
+    emplus: { keys: ["wl", "|", "offense_plus", "offense_plus_vs", "heart_hem", "|", "rotation_plus", "rotation_plus_vs",
+                     "front_sem", "|", "bullpen_plus", "bullpen_plus_vs", "high_lev_core_rem", "leverage_deploy_plus",
+                     "|", "team_dem_plus", "team_dem_plus_vs"], phone: ["wl", "offense_plus", "offense_plus_vs"] },
+    runs: { keys: ["wl", "|", "rs", "ra", "rd", "|", "rs_g", "ra_g", "|", "xwl", "wx", "|", "one_run", "extra"],
+            phone: ["wl", "rs", "ra"] },
+    pitch: { keys: ["wl", "|", "p_pa", "lineup_par", "|", "p_ip", "|", "sp_p_ip", "rotation_par", "sp_ip_gs", "|",
+                    "rp_p_ip", "bullpen_par", "relief_share"], phone: ["wl", "p_pa", "lineup_par"] },
+    depth: { keys: ["wl", "|", "heart_hem", "rest_hem", "gap", "pa100", "|", "front_sem", "|", "high_lev_core_rem"],
+             phone: ["wl", "heart_hem", "rest_hem"] },
+    tend: { keys: ["wl", "|", "hook", "z_hook", "z_pen", "pen_g", "|", "z_bench", "z_ibb", "z_visit", "|",
+                   "sb_att", "sb_pct", "to3b"], phone: ["wl", "hook", "z_hook"] }
+  };
+  var T_PIT_TODAY = {};
+
+  // ---- state and the hash ----------------------------------------------------------
+  function viewOk(id) { return TVIEWS.some(function (v) { return v[0] === id; }); }
+  function readTeamsHash(h) {
+    h = h || "";
+    var m;
+    if ((m = TRE.season.exec(h))) T.season = Number(m[1]);
+    if ((m = TRE.cols.exec(h)) && viewOk(m[1])) T.cols = m[1];
+    if ((m = TRE.basis.exec(h))) T.basis = m[1];
+    if ((m = TRE.sort.exec(h)) && (TCOL[m[1]] || m[1] === "club")) T.sort = { key: m[1], asc: m[2] === "a" };
+  }
+  function teamHashParts() {
+    var p = [];
+    if (T.season) p.push("tseason=" + T.season);
+    if (T.cols !== "standard") p.push("tcols=" + T.cols);
+    if (T.basis !== "earned") p.push("tbasis=" + T.basis);
+    if (T.sort && !(T.sort.key === T_SORT0.key && !!T.sort.asc === !!T_SORT0.asc)) {
+      p.push("tsort=" + T.sort.key + "." + (T.sort.asc ? "a" : "d"));
+    }
+    return p;
+  }
+
+  // ---- data ------------------------------------------------------------------------
+  var TCTX = null, TDOC = null, TSTATE = "", TFOLD = { about: false, charts: false };
+  function loadTeams() {
+    if (TSTATE) return;
+    TSTATE = "loading";
+    getJSON(DATA_DIR + TEAMS_FILE, function (j) {
+      TDOC = (j && j.teams && j.teams.length) ? j : null;
+      TSTATE = TDOC ? "ok" : "error";
+      if (TCTX && TCTX.active()) renderTeams();
+    });
+  }
+  function tLive(doc) { return num(doc.season); }
+  function tSeasons(doc) {
+    var ys = [tLive(doc)];
+    Object.keys(((doc.history || {}).seasons) || {}).forEach(function (y) { if (ys.indexOf(Number(y)) < 0) ys.push(Number(y)); });
+    return ys.sort(function (a, b) { return b - a; });
+  }
+  function tSeason(doc) {
+    var y = T.season;
+    return (y && tSeasons(doc).indexOf(y) >= 0) ? y : tLive(doc);
+  }
+  // One row shape for the live season and for a history row, so every column
+  // reads the same fields on either.
+  function tRows(doc, y) {
+    if (y === tLive(doc)) {
+      return (doc.teams || []).map(function (t) {
+        return { club: t.club, g: t.g, w: t.w, l: t.l, rs: t.rs, ra: t.ra, rd: t.rd, xw: t.xw, xl: t.xl,
+                 wx: t.w_minus_xw, one_run: t.one_run, extra: t.extra_inning, today: t.roster || null,
+                 earned: t.earned || null, pit: t.pitches || null, depth: t.depth || null, tend: t.tendencies || null };
+      });
+    }
+    var h = doc.history || {}, s = ((h.seasons || {})[String(y)]) || null, cols = h.cols || [];
+    if (!s) return [];
+    return (s.rows || []).map(function (a) {
+      var o = {};
+      for (var i = 0; i < cols.length; i++) o[cols[i]] = a[i];
+      var e = {};
+      Object.keys(MEAN_KEY).forEach(function (k) { e[k] = o[k]; });
+      return { club: o.club, g: o.g, w: o.w, l: o.l, rs: o.rs, ra: o.ra,
+               rd: (isN(o.rs) && isN(o.ra)) ? o.rs - o.ra : null, xw: o.xw, xl: o.xl,
+               wx: (isN(o.w) && isN(o.xw)) ? o.w - o.xw : null, one_run: null, extra: null, today: null,
+               earned: e, pit: o, depth: null, tend: null };
+    });
+  }
+  function tMeans(doc, y, b) {
+    if (y === tLive(doc)) {
+      var lg = doc.league || {};
+      return b === "today" ? ((lg.roster || {}).means || null) : ((lg.earned || {}).means || null);
+    }
+    var s = (((doc.history || {}).seasons || {})[String(y)]) || {};
+    return (s.league || {}).earned || null;
+  }
+  function tBasis(doc, y) { return (y === tLive(doc)) ? T.basis : "earned"; }
+  function colBasis(c, b) {
+    if (c.basis === "pick") return b;
+    if (c.basis === "pitch") return (b === "today" && c.todayKey && T_PIT_TODAY[c.todayKey]) ? "today" : "earned";
+    return c.basis || "";
+  }
+  function tPlan(live, id) {
+    var v = TVIEW_COLS[id || T.cols] || TVIEW_COLS.standard, out = [], grp = false;
+    v.keys.forEach(function (k) {
+      if (k === "|") { grp = true; return; }
+      var c = TCOL[k];
+      if (!c || (c.live && !live) || (c.basis === "today" && !live)) return;
+      out.push({ c: c, grp: grp && out.length > 0, phone: v.phone.indexOf(k) >= 0 });
+      grp = false;
+    });
+    return out;
+  }
+
+  // ---- cells --------------------------------------------------------------------------
+  function fSign(v, nd) {
+    if (!isN(v)) return DASH;
+    var d = pyRound(Number(v), nd), s = Math.abs(d).toFixed(nd);
+    return d > 0 ? "+" + s : d < 0 ? "-" + s : s;
+  }
+  function tShow(c, r, b, M) {
+    if (c.show) return esc(c.show(r));
+    var v = c.get(r, b, M);
+    if (!isN(v)) return DASH;
+    v = Number(v);
+    switch (c.kind) {
+      case "plus": {
+        var fam = TEAM_FAMILY[c.key];
+        var cls = (fam && window.EephusTiers) ? window.EephusTiers.cls(v, fam) : "";
+        return '<span class="rem-plus' + (cls ? " " + cls : "") + '">' + Math.round(v) + "</span>";
+      }
+      case "delta": case "signed1": case "z": return fSign(v, 1);
+      case "signed": return fSign(v, 0);
+      case "d1": return v.toFixed(1);
+      case "d2": return v.toFixed(2);
+      case "d3": return v.toFixed(3);
+      case "pct": return (v * 100).toFixed(1) + "%";
+      default: return String(Math.round(v));
+    }
+  }
+  function clubCell(code) {
+    var H = window.EEPHUS_HUB, c = null;
+    try { c = H && H.club ? H.club(code) : null; } catch (e) { c = null; }
+    if (!c) return '<td class="mlbstats-name"><span data-club-nolink="unresolved">' + esc(code) + "</span></td>";
+    var mark = H.teamLogo ? H.teamLogo(c.code, null, { decorative: true }) : "";
+    var href = H.clubHref ? H.clubHref(c.code) : "/franchise/#team=" + c.code;
+    return '<td class="mlbstats-name"><a class="club-link mlbstats-name-link" href="' + esc(href)
+      + '" data-club="' + esc(c.code) + '" title="' + esc(c.name + ": franchise overview") + '">'
+      + mark + esc(c.code) + "</a></td>";
+  }
+  function tSortRows(rows, sort, b, M) {
+    var c = sort.key === "club" ? null : TCOL[sort.key];
+    return rows.slice().sort(function (x, y) {
+      if (!c) return sort.asc ? String(x.club).localeCompare(y.club) : String(y.club).localeCompare(x.club);
+      var a = c.get(x, b, M), d = c.get(y, b, M);
+      var na = !isN(a), nd = !isN(d);
+      if (na || nd) return (na && nd) ? String(x.club).localeCompare(y.club) : (na ? 1 : -1);
+      if (a === d) return String(x.club).localeCompare(y.club);
+      return sort.asc ? a - d : d - a;
+    });
+  }
+  function tSort(plan) {
+    var s = T.sort || T_SORT0;
+    if (s.key === "club" || plan.some(function (p) { return p.c.key === s.key; })) return s;
+    return T_SORT0;
+  }
+  function tTable(rows, plan, sort, b, M) {
+    var head = '<thead><tr><th scope="col" class="mlbstats-col-club' + (sort.key === "club" ? " is-sorted" : "")
+      + '" tabindex="0" aria-sort="' + (sort.key === "club" ? (sort.asc ? "ascending" : "descending") : "none")
+      + '" data-col="club" data-tsort="club" data-export-text="Club">Club</th>';
+    plan.forEach(function (p) {
+      var c = p.c, cb = colBasis(c, b), on = c.key === sort.key;
+      var tag = (cb && cb !== b) ? ' <span class="mlbx-tmtag">' + (cb === "today" ? "club today" : "earned") + "</span>" : "";
+      var tip = c.copy ? ((TDOC.copy || {})[c.copy] || "") : (c.title || "");
+      if (cb && cb !== b) tip += (tip ? " " : "") + (cb === "today" ? "Club-today basis on every pill." : "Earned basis on every pill.");
+      var cls = "mlbstats-col-" + c.key + (on ? " is-sorted" : "") + (p.phone ? "" : " mlbstats-cv-wide") + (p.grp ? " mlbstats-cv-grp" : "");
+      head += '<th scope="col" class="' + cls + '"' + (tip ? ' title="' + esc(tip) + '"' : "") + ' tabindex="0" aria-sort="'
+        + (on ? (sort.asc ? "ascending" : "descending") : "none") + '" data-col="' + c.key + '" data-tsort="' + c.key
+        + '" data-export-text="' + esc(c.label + (tag ? (cb === "today" ? " (club today)" : " (earned)") : "")) + '">'
+        + (c.term ? '<span class="g-term" data-gl="' + esc(c.term) + '">' + esc(c.label) + "</span>" : esc(c.label))
+        + tag + "</th>";
+    });
+    head += "</tr></thead>";
+    var body = rows.map(function (r) {
+      return "<tr>" + clubCell(r.club) + plan.map(function (p) {
+        var cls = (p.phone ? "" : "mlbstats-cv-wide") + (p.grp ? (p.phone ? "" : " ") + "mlbstats-cv-grp" : "");
+        var c = p.c, t = "";
+        if (c.key === "leverage_deploy_plus" && r.today && isN(r.today.leverage_deploy_cov)) {
+          t = ' title="' + esc("Covered share of relief innings: " + (Number(r.today.leverage_deploy_cov) * 100).toFixed(0) + "%") + '"';
+        }
+        return "<td" + (cls ? ' class="' + cls + '"' : "") + t + ">" + tShow(c, r, b, M) + "</td>";
+      }).join("") + "</tr>";
+    }).join("");
+    return '<div class="mlbstats-scroll"><table class="mlbstats-table mlbx-tmtable">'
+      + '<caption class="visually-hidden">Team stats, thirty clubs</caption>' + head + "<tbody>" + body + "</tbody></table></div>";
+  }
+
+  // ---- copy (every count, mean and date is read from the payload) ------------------
+  function tFreshHTML(doc, y, n) {
+    var bits = ["Season " + esc(y)];
+    if (y === tLive(doc)) {
+      var st = ((doc.as_of || {}).boards) || {}, last = "";
+      Object.keys(st).forEach(function (k) { var a = (st[k] || {}).as_of; if (a && a > last) last = a; });
+      if (last) bits.push("boards through " + esc(last));
+    } else {
+      bits.push("final");
+    }
+    bits.push(esc(n) + " clubs");
+    return '<div class="mlbstats-note mlbstats-freshness">' + bits.join(" &middot; ") + "</div>";
+  }
+  function tMeansLine(doc, y, b) {
+    var M = tMeans(doc, y, b);
+    if (!M) return "";
+    var names = { offense_plus: "Offense+", rotation_plus: "Rotation+", bullpen_plus: "Bullpen+", team_dem_plus: "Team DEM+" };
+    var parts = Object.keys(MEAN_KEY).filter(function (k) { return isN(M[MEAN_KEY[k]]); }).map(function (k) {
+      return names[k] + " " + fmtMean(M[MEAN_KEY[k]]);
+    });
+    return parts.length ? "League weighted means on this basis: " + parts.join(", ") + "." : "";
+  }
+  // One line under the controls: the club basis on the two views whose + columns
+  // follow the pill, and the view's own reading on the other four (records,
+  // pitch counts, depth and tendencies are not on the pill).
+  function tBasisNote(doc, y, b) {
+    var cp = doc.copy || {}, tc = cp.tendencies || {}, live = y === tLive(doc);
+    var lead = "", s = "";
+    if (T.cols === "emplus" || T.cols === "standard") {
+      lead = "Basis:";
+      s = (live ? (b === "today" ? cp.basis_roster : cp.basis_earned) : cp.past_seasons) + " " + tMeansLine(doc, y, b);
+      var hs = (((doc.history || {}).seasons || {})[String(y)]) || null;
+      if (hs && !hs.index_basis) s += " No EM+ index is built for this season, so its + columns are blank.";
+    } else if (T.cols === "runs") {
+      s = (cp.xwl || "") + " " + (cp.w_minus_xw || "");
+    } else if (T.cols === "pitch") {
+      s = cp.pitches || "";
+    } else if (T.cols === "depth") {
+      s = cp.depth || "";
+    } else {
+      s = tc.style_sentence || "";
+    }
+    return '<p class="mlbstats-note mlbx-tmbasis">' + (lead ? "<b>" + lead + "</b> " : "") + esc(s) + "</p>";
+  }
+  function tCoverageHTML(doc, y) {
+    var cv = (doc.league || {}).coverage || {};
+    if (y !== tLive(doc) || !isN(cv.offense_pa) || !isN(cv.league_pa)) return "";
+    var line = "Scored exposure: Offense+ " + fmtCount(cv.offense_pa) + " of " + fmtCount(cv.league_pa)
+      + " league PA; Rotation+ " + fmtCount(cv.rotation_ip) + " and Bullpen+ " + fmtCount(cv.bullpen_ip)
+      + " of " + fmtCount(cv.league_ip) + " league IP. " + ((doc.copy || {}).coverage || "");
+    return '<p class="mlbstats-note">' + esc(line) + "</p>";
+  }
+  function tFoldHTML(doc, y) {
+    var cp = doc.copy || {}, tc = cp.tendencies || {};
+    var keys = ["plus_scale", "basis_earned", "basis_roster", "past_seasons", "xwl", "w_minus_xw", "pitches", "depth"];
+    var ps = keys.filter(function (k) { return cp[k]; }).map(function (k) { return "<p>" + esc(cp[k]) + "</p>"; }).join("");
+    var tend = "";
+    if (T.cols === "tend") {
+      tend = [tc.style_sentence, tc.running_columns_are_style_not_skill, tc.agent_sentence]
+        .filter(Boolean).map(function (s) { return "<p>" + esc(s) + "</p>"; }).join("")
+        + (tc.why_no_plus_metric ? "<p>No plus metric for a club's decisions: " + esc(tc.why_no_plus_metric) + "</p>" : "")
+        + '<p>Realized decision value, family by family, is on the <a href="/management/">In-Game Management</a> board.</p>';
+    }
+    return '<details class="mlbx-lgfold" data-tfold="about"' + (TFOLD.about ? " open" : "") + ">"
+      + "<summary>" + esc(cp.lead || "") + "</summary><div class=\"mlbx-lgfold-body\">"
+      + tend + ps + tCoverageHTML(doc, y) + "</div></details>";
+  }
+  function fmtMean(v) { return Number(v).toFixed(1); }
+  function fmtCount(v) { return isN(v) ? String(Math.round(Number(v))).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : DASH; }
+
+  // ---- the Runs charts: earned basis, no fitted line -----------------------------------
+  function tChartWidth() {
+    var host = TCTX && TCTX.host ? TCTX.host() : null;
+    var w = Number(host && host.clientWidth);
+    if (!(w > 0)) return 600;
+    var cell = w > 820 ? (w - 16) / 2 : w;
+    return Math.max(260, Math.min(640, Math.round(cell - 26)));
+  }
+  function tCharts(rows, live) {
+    var H = window.EEPHUS_HUB;
+    if (!H || !H.scatter) return "";
+    var W = tChartWidth(), Hh = Math.round(Math.min(280, Math.max(220, W * 0.6)));
+    var a = rows.filter(function (r) { return isN(r.xw) && isN(r.w); }).map(function (r) {
+      return { x: r.xw, y: r.w, r: 3, color: "var(--viz-1)", label: r.club + ": W " + r.w + ", xW " + r.xw };
+    });
+    var s1 = H.scatter(a, { width: W, height: Hh, xLabel: "expected wins (xW)", yLabel: "wins", diag: true,
+      aria: "Wins against expected wins, " + a.length + " clubs, with the identity line" });
+    var s2 = "";
+    if (live) {
+      var b2 = rows.filter(function (r) { return r.earned && isN(r.earned.war) && isN(r.rd); }).map(function (r) {
+        return { x: r.earned.war, y: r.rd, r: 3, color: "var(--viz-1)",
+                 label: r.club + ": eWAR earned " + Number(r.earned.war).toFixed(1) + ", RD " + fSign(r.rd, 0) };
+      });
+      s2 = H.scatter(b2, { width: W, height: Hh, xLabel: "eWAR earned", yLabel: "run differential", yRef: 0, yRefLabel: "0",
+        aria: "Run differential against eWAR earned, " + b2.length + " clubs, with a zero line" });
+    }
+    if (!s1 && !s2) return "";
+    return '<details class="mlbx-lgfold mlbx-tmcharts" data-tfold="charts"' + (TFOLD.charts ? " open" : "") + ">"
+      + "<summary>Charts (earned basis)</summary><div class=\"mlbstats-viz\">"
+      + (s1 ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Wins against expected wins</div>' + s1 + "</div>" : "")
+      + (s2 ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Run differential against eWAR earned</div>' + s2 + "</div>" : "")
+      + "</div><p class=\"mlbstats-note\">One dot per club. The dashed lines are the identity line (wins equal to expected wins)"
+      + " and zero run differential; no line is fitted. Every number is in the table above.</p></details>";
+  }
+
+  // ---- controls and render ---------------------------------------------------------------
+  function tControls(doc, y) {
+    var live = y === tLive(doc);
+    var seasons = tSeasons(doc).map(function (s) {
+      return '<option value="' + s + '"' + (s === y ? " selected" : "") + ">" + s + "</option>";
+    }).join("");
+    var sel = '<label class="mlbstats-ctl">season <select id="mlbx-tm-season" data-tsel="season">' + seasons + "</select></label>";
+    var basis = '<div class="mlbstats-seasons mlbstats-roles" role="group" aria-label="Club basis"><span class="mlbstats-roles-lbl">Basis</span>'
+      + TBASES.map(function (p) {
+          var on = (live ? T.basis : "earned") === p[0], dis = !live && p[0] === "today";
+          return '<button type="button" class="mlbstats-season' + (on ? " active" : "") + '" data-tbasis="' + p[0]
+            + '" aria-pressed="' + on + '"' + (dis ? ' disabled aria-disabled="true" title="' + esc((doc.copy || {}).past_seasons || "") + '"' : "")
+            + ">" + p[1] + "</button>";
+        }).join("") + "</div>";
+    var views = '<div class="mlbstats-seasons mlbstats-roles mlbstats-views" role="group" aria-label="Columns"><span class="mlbstats-roles-lbl">Columns</span>'
+      // A view with nothing but W-L on this season (Depth and Tendencies on a
+      // past season) offers no pill; a deep link to one prints the note.
+      + TVIEWS.filter(function (v) { return v[0] === T.cols || tPlan(live, v[0]).length > 1; }).map(function (v) {
+          var on = T.cols === v[0];
+          return '<button type="button" class="mlbstats-season' + (on ? " active" : "") + '" data-colview="teams:' + v[0]
+            + '" data-tcols="' + v[0] + '" aria-pressed="' + on + '">' + v[1] + "</button>";
+        }).join("") + "</div>";
+    var gfx = (window.EEPHUS_GFX && window.EEPHUS_GFX.chipHTML) ? window.EEPHUS_GFX.chipHTML("mlbx-teams-gfx", "Generate GFX") : "";
+    return '<div class="mlbstats-toolrow">' + sel + basis + "</div>"
+      + '<div class="mlbstats-toolrow">' + views + gfx + "</div>";
+  }
+  function tRulerKey(plan) {
+    if (!plan.some(function (p) { return TEAM_FAMILY[p.c.key] && p.c.kind === "plus"; })) return "";
+    var k = (window.EephusTiers && window.EephusTiers.keyHTML) ? window.EephusTiers.keyHTML({ neg: false }) : "";
+    return '<div class="mlbx-tmkey"><span class="mlbstats-note"><span data-gl="value_ruler">Colour reads on the value ruler.</span></span>' + k + "</div>";
+  }
+  var T_LAST = { rows: [], basis: "earned", season: null, live: true };
+  function teamsBody() {
+    if (!TDOC) loadTeams();
+    if (!TDOC) {
+      if (TSTATE === "error") {
+        return TCTX.pxState("failed", "The team stats did not load. The nightly build may be writing them. "
+          + '<button type="button" class="chip" data-tretry="1">Retry</button>', "mlbstats-load-error");
+      }
+      return TCTX.pxState("loading", "Loading the team stats.");
+    }
+    var doc = TDOC, y = tSeason(doc), live = y === tLive(doc), b = tBasis(doc, y);
+    T_PIT_TODAY = {};
+    if (live) {
+      (doc.teams || []).forEach(function (t) {
+        var ro = t.roster || {};
+        ["lineup_p_pa", "lineup_par", "rot_p_ip", "rot_par", "pen_p_ip", "pen_par"].forEach(function (k) {
+          if (isN(ro[k])) T_PIT_TODAY[k] = true;
+        });
+      });
+    }
+    var rows = tRows(doc, y), M = tMeans(doc, y, b), plan = tPlan(live), sort = tSort(plan);
+    rows = tSortRows(rows, sort, b, M);
+    T_LAST = { rows: rows, basis: b, season: y, live: live };
+    var table = plan.length > 1 ? tTable(rows, plan, sort, b, M)
+      : '<div class="mlbstats-empty">This view is built for the live season only; pick ' + esc(tLive(doc)) + " to read it.</div>";
+    return tFreshHTML(doc, y, rows.length) + tControls(doc, y) + tBasisNote(doc, y, b)
+      + (plan.length > 1 ? tRulerKey(plan) : "") + table
+      + (T.cols === "runs" && plan.length > 1 ? tCharts(rows, live) : "") + tFoldHTML(doc, y);
+  }
+  function renderTeams() {
+    if (!TCTX) return;
+    var host = TCTX.host();
+    if (!host) return;
+    host.innerHTML = teamsBody();
+    if (TCTX.wireGlossary) TCTX.wireGlossary(host);
+    if (TCTX.markFit) TCTX.markFit(host);
+  }
+  function teamsChanged() {
+    if (TCTX && TCTX.writeHash) TCTX.writeHash();
+    renderTeams();
+  }
+  function tGfxRows() {
+    var b = T_LAST.basis;
+    return T_LAST.rows.map(function (r) {
+      var x = bx(r, b) || {};
+      return { team: r.club, w: r.w, l: r.l, rd: r.rd, offense_plus: x.offense_plus, rotation_plus: x.rotation_plus,
+               bullpen_plus: x.bullpen_plus, team_dem_plus: x.team_dem_plus };
+    });
+  }
+  function onTeamsClick(e) {
+    var t = e.target && e.target.closest ? e.target.closest("[data-tsort],[data-tcols],[data-tbasis],[data-tretry],#mlbx-teams-gfx") : null;
+    if (t) teamsAct(t);
+  }
+  function teamsAct(t) {
+    if (t.id === "mlbx-teams-gfx") {
+      if (window.EEPHUS_GFX && TCTX && TCTX.gfxSpec) {
+        var asOf = "", st = ((TDOC || {}).as_of || {}).boards || {};
+        Object.keys(st).forEach(function (k) { var a = (st[k] || {}).as_of; if (a && a > asOf) asOf = a; });
+        window.EEPHUS_GFX.open(TCTX.gfxSpec("teams", tGfxRows(), {
+          season: T_LAST.season, as_of: T_LAST.live ? asOf : "",
+          basis: T_LAST.basis === "today" ? "club today" : "earned" }));
+      }
+      return;
+    }
+    if (t.hasAttribute("data-tretry")) { TSTATE = ""; TDOC = null; }
+    else if (t.hasAttribute("data-tcols")) { T.cols = t.getAttribute("data-tcols"); }
+    else if (t.hasAttribute("data-tbasis")) { if (t.disabled) return; T.basis = t.getAttribute("data-tbasis"); }
+    else {
+      var k = t.getAttribute("data-tsort"), cur = T.sort || T_SORT0;
+      T.sort = (cur.key === k) ? { key: k, asc: !cur.asc } : { key: k, asc: k === "club" };
+    }
+    teamsChanged();
+  }
+  function onTeamsKey(e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var t = e.target;
+    if (!t || !t.getAttribute || !t.getAttribute("data-tsort")) return;
+    if (e.preventDefault) e.preventDefault();
+    var k = t.getAttribute("data-tsort");
+    teamsAct(t);
+    var host = TCTX && TCTX.host();
+    var again = host && host.querySelector ? host.querySelector('th[data-tsort="' + k + '"]') : null;
+    if (again && again.focus) again.focus();
+  }
+  function onTeamsChange(e) {
+    var el = e.target;
+    if (!el || !el.getAttribute || el.getAttribute("data-tsel") !== "season") return;
+    var y = Number(el.value);
+    T.season = (TDOC && y && y !== tLive(TDOC)) ? y : null;
+    teamsChanged();
+  }
+  function onTeamsToggle(e) {
+    var d = e.target;
+    if (!d || !d.getAttribute) return;
+    var k = d.getAttribute("data-tfold");
+    if (k) TFOLD[k] = !!d.open;
+  }
+  var tBound = null, tStarted = false, tResize = null, tLastW = 0;
+  function showTeams(ctx) {
+    TCTX = ctx;
+    if (!tStarted) {
+      tStarted = true;
+      try { readTeamsHash(location.hash || ""); } catch (e) { /* no location */ }
+      try {
+        window.addEventListener("resize", function () {
+          if (tResize) clearTimeout(tResize);
+          tResize = setTimeout(function () {
+            var w = tChartWidth();
+            if (w !== tLastW && TCTX && TCTX.active()) { tLastW = w; renderTeams(); }
+          }, 150);
+        });
+      } catch (e) { /* no window events */ }
+    }
+    var host = TCTX.host();
+    if (host && tBound !== host) {
+      tBound = host;
+      host.addEventListener("click", onTeamsClick);
+      host.addEventListener("keydown", onTeamsKey);
+      host.addEventListener("change", onTeamsChange);
+      host.addEventListener("toggle", onTeamsToggle, true);
+    }
+    tLastW = tChartWidth();
+    renderTeams();
+  }
+
   window.MLBX_LEAGUE = {
     show: show, hashParts: hashParts, readHash: readHash, render: render,
+    showTeams: showTeams, teamHashParts: teamHashParts, readTeamsHash: readTeamsHash,
     // test seams (test_mlbstats_league_page.py): the pooling and the group map
     _pool: function (doc, side, st) { return poolBlock(doc, side, rowsOf(doc, side).filter(function (r) { return passes(doc, side, r, st); })); },
     _groupKey: groupKey, _pyRound: pyRound, _state: function () { return JSON.parse(JSON.stringify(S)); },
-    _writeHash: function () { if (CTX && CTX.writeHash) CTX.writeHash(); },
-    _reset: function () { S = { view: "avg", side: "hit", season: null, pos: [], role: [], hand: [], age: "", qual: "", lg: "", stat: "", cmp: "" }; }
+    _writeHash: function () { if (CTX && CTX.writeHash) CTX.writeHash(); else if (TCTX && TCTX.writeHash) TCTX.writeHash(); },
+    _reset: function () { S = { view: "avg", side: "hit", season: null, pos: [], role: [], hand: [], age: "", qual: "", lg: "", stat: "", cmp: "" }; },
+    // the Teams seams: the rows in table order and a header or pill click
+    _teamRows: function () { return T_LAST.rows.map(function (r) { return r.club; }); },
+    _teamClick: function (attrs) {
+      teamsAct({ id: "", disabled: false, hasAttribute: function (n) { return attrs[n] != null; },
+                 getAttribute: function (n) { return attrs[n] != null ? attrs[n] : null; } });
+    }
   };
-  // The tab was opened before this file landed: mlbstats.js left its context.
+  // A tab was opened before this file landed: mlbstats.js left its context.
   try {
     var want = window.MLBX_LEAGUE_CTX;
     if (typeof want === "function") {
@@ -968,4 +1575,11 @@
       if (c && c.active && c.active()) show(c);
     }
   } catch (e) { /* the next showSection calls show() */ }
+  try {
+    var wantT = window.MLBX_TEAMS_CTX;
+    if (typeof wantT === "function") {
+      var ct = wantT();
+      if (ct && ct.active && ct.active()) showTeams(ct);
+    }
+  } catch (e) { /* the next showSection calls showTeams() */ }
 })();

@@ -787,3 +787,31 @@ def test_between_stops_is_a_mix_of_its_two_neighbours(ruler):
     assert _pct(ruler, 50) == "color-mix(in oklab, var(--vt-avg) 50%, var(--vt-above))"
     assert _pct(ruler, 97) == "color-mix(in oklab, var(--vt-great) 30%, var(--vt-elite))"
     assert _pct(ruler, 12.5) == "color-mix(in oklab, var(--vt-poor) 37.5%, var(--vt-below))"
+
+
+def test_the_teams_tab_paints_the_boards_families_and_no_style_z():
+    """The /mlbstats/ Teams tab (Q8_13b) paints each EM+ team column with the
+    family the board that serves it uses (Offense+ and Heart 3 on ratio,
+    Front 3 on run, the rest on z), so a club reads the same colour on both
+    pages, and the In-Game Management style z columns take no family at all:
+    a frequency has no good direction (registry row mgmt_style_z). The
+    exporter's own value_ruler map agrees with the page."""
+    js = (ASSETS / "mlbstats.js").read_text(encoding="utf-8")
+    lg = (ASSETS / "mlbstats-league.js").read_text(encoding="utf-8")
+    m = re.search(r"var TEAM_FAMILY = \{(.*?)\};", lg, re.S)
+    assert m, "TEAM_FAMILY moved"
+    fam = dict(re.findall(r'(\w+): "(\w+)"', m.group(1)))
+    helper = {"hemCell": "ratio", "remCell": "z", "runCell": "run"}
+    for key in ("offense_plus", "heart_hem", "rotation_plus", "front_sem", "bullpen_plus",
+                "high_lev_core_rem", "leverage_deploy_plus", "team_dem_plus"):
+        c = re.search(r'\{ key: "%s",[^}]*?fmt: (\w+)' % key, js)
+        assert c, key
+        assert fam.get(key) == helper[c.group(1)], (key, fam.get(key), c.group(1))
+    for z in ("z_hook", "z_pen", "z_bench", "z_ibb", "z_visit", "hook", "pen_g", "sb_pct",
+              "rd", "wx", "gap", "lineup_par", "rotation_par", "bullpen_par", "war_today", "war_earned"):
+        assert z not in fam, z
+    src = (ROOT / "team_stats_export.py").read_text(encoding="utf-8")
+    v = re.search(r'"value_ruler": \{(.*?)\}', src, re.S)
+    assert v, "team_stats_export's value_ruler map moved"
+    for key, f in re.findall(r'"(\w+)": "(\w+)"', v.group(1)):
+        assert fam.get(key) == f, (key, fam.get(key), f)

@@ -2772,6 +2772,23 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
      the Players column out of a 358px box. */
   .mlbx .mlbx-lgtable tbody th.mlbx-lgstat { white-space: normal; min-width: 7em; max-width: 9.5em; line-height: 1.25; }
 }
+/* ---- the Teams tab (assets/mlbstats-league.js) --------------------------------
+   A column on a fixed club basis names it under its label; the value ruler key
+   sits on the table it reads (owner answer A-3). */
+.mlbx .mlbx-tmtable th { white-space: normal; max-width: 5.6em; line-height: 1.15; vertical-align: bottom; }
+.mlbx .mlbx-tmtable th:first-child, .mlbx .mlbx-tmtable td.mlbstats-name { white-space: nowrap; max-width: none; }
+.mlbx .mlbx-tmtable th .mlbx-tmtag { display: block; font-weight: 400; font-size: 9px; letter-spacing: 0;
+  color: var(--text-tertiary); }
+.mlbx .mlbx-tmkey { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 0 0 6px; }
+.mlbx .mlbx-tmkey .mlbstats-note { margin: 0; }
+.mlbx .mlbx-tmbasis { margin: 0 0 8px; max-width: 980px; }
+.mlbx details.mlbx-tmcharts > .mlbstats-viz { margin-top: 8px; }
+/* EM+ carries thirteen columns: one step denser below 1024 so the club code
+   keeps its width in a 720px box. */
+@media (max-width: 1023px) {
+  .mlbx .mlbx-tmtable th, .mlbx .mlbx-tmtable td { padding-left: 5px; padding-right: 5px; }
+  .mlbx .mlbx-tmtable th { font-size: 9.5px; max-width: 5.5em; }
+}
 /* ---- mlbx end ---- */
 /* ---- Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
 .pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }

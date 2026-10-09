@@ -105,6 +105,12 @@ PAGES = [
     ("league filtered", "league", "section=league&gpos=C,SS&ghand=L&gqual=floor", None),
     ("league pitchers", "league", "section=league&gside=pit&grole=SP,RP", None),
     ("league teams", "league", "section=league&gside=team", None),
+    # The Teams tab (P8.2, LT-08, the Teams half; task Q8_13b), dark behind the
+    # same flag: every named view is read off its own Columns strip, so all six
+    # are measured on each state. Skipped, never failed, while dark.
+    ("teams earned", "teams", "section=teams", None),
+    ("teams club today", "teams", "section=teams&tbasis=today", None),
+    ("teams 2025", "teams", "section=teams&tseason=2025", None),
 ]
 # The five sections that carry a methodology fold and a Team note, which is what
 # the vertical-budget case below measures. Overall carries neither (spec 4.7
@@ -164,6 +170,12 @@ _STICKY = r"""
 
 def _boards_built() -> bool:
     return all((ROOT / "data" / f).exists() for f in BOARD_FILES)
+
+
+def _teams_built() -> bool:
+    """The served shell carries the Teams tab and its payload is on disk."""
+    shell = (ROOT / "mlbstats" / "index.html").read_text(encoding="utf-8")
+    return 'data-mlbsection="teams"' in shell and (ROOT / "data" / "mlb_team_stats.json").exists()
 
 
 def _league_built() -> bool:
@@ -264,7 +276,9 @@ def test_every_board_and_view_fits_and_the_page_never_scrolls_sideways(browser, 
                 continue
             if "years=" in hash_ and not all((ROOT / "data" / f).exists() for f in WINDOW_FILES):
                 continue
-            if "season=" in hash_ and not (ROOT / "data" / (
+            if sec == "teams" and not _teams_built():
+                continue
+            if sec != "teams" and "season=" in hash_ and not (ROOT / "data" / (
                     {"bullpen": "bullpen", "starters": "starter", "hitters": "hitter",
                      "defense": "defense"}[sec] + "_history.json")).exists():
                 continue
@@ -877,3 +891,46 @@ def test_the_league_charts_fit_and_print_readable_labels(browser, server, size):
     finally:
         ctx.close()
     assert not problems, "\n".join(problems)
+
+
+# ---------------------------------------------------------------- the Teams charts
+# The Runs view's two scatters (wins against expected wins with the identity
+# line; run differential against earned eWAR with a zero line; no fitted line)
+# are drawn at their cell's real width: every label at 8px or taller and no
+# sideways page scroll. Skipped, never failed, while the tab is dark.
+_TEAMS_CHART_TEXT = r"""
+() => {
+  const root = document.getElementById('mlbstats-section-teams');
+  const d = root.querySelector('details[data-tfold="charts"]');
+  if (d) d.open = true;
+  const svgs = Array.from(root.querySelectorAll('svg')).filter(s => s.getClientRects().length
+    && s.getAttribute('aria-hidden') !== 'true');
+  const hs = [];
+  svgs.forEach(s => s.querySelectorAll('text').forEach(t => { const h = t.getBoundingClientRect().height; if (h) hs.push(h); }));
+  return {n_svg: svgs.length, min_h: hs.length ? Math.min.apply(null, hs) : null,
+          aria: svgs.every(s => s.getAttribute('role') === 'img' && !!s.getAttribute('aria-label')),
+          page_overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth};
+}
+"""
+
+
+@pytest.mark.parametrize("size", SIZES, ids=["%dx%d" % s for s in SIZES])
+def test_the_teams_charts_fit_and_print_readable_labels(browser, server, size):
+    if not _teams_built():
+        pytest.skip("the Teams tab is dark in this build")
+    w, h = size
+    ctx = _context(browser, w, h)
+    page = ctx.new_page()
+    try:
+        page.goto("about:blank")
+        page.goto(server + "mlbstats/#section=teams&tcols=runs", wait_until="load", timeout=60_000)
+        page.wait_for_selector("#mlbstats-section-teams .mlbstats-table", timeout=30_000)
+        page.wait_for_timeout(300)
+        m = page.evaluate(_TEAMS_CHART_TEXT)
+    finally:
+        ctx.close()
+    assert m["page_overflow"] <= 0, m
+    assert m["n_svg"] == 2, m
+    assert m["min_h"] is None or m["min_h"] >= 8, m
+    assert m["aria"], m
+

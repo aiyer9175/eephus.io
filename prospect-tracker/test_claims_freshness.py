@@ -1683,3 +1683,24 @@ def test_league_tab_coverage_and_fold_copy_type_no_figure():
     # the floors, the coverage counts and the reasons come from these payload keys
     for key in ("qualify", "coverage", "n_hand", "n_index", "games_per_team", "left_out", "deferred"):
         assert key in src, key
+
+
+def test_teams_tab_copy_types_no_figure():
+    """Q8_13b (final-pass plan Part 8 P8.2, LT-08, the Teams half). The Teams
+    tab's freshness line, basis note, league weighted means, coverage sentence
+    and fold print dates, counts and the league's own weighted mean of each
+    rollup, and every one of them is read from the Team Stats payload: the
+    functions that write them carry no digit, so a typed mean (the lane read
+    99.85, 102.09, 101.62, 100.81 at 64bf1bb3) cannot hide in them."""
+    src = _read_text("assets/mlbstats-league.js").replace("\r\n", "\n")
+    for name in ("tFreshHTML", "tMeansLine", "tBasisNote", "tCoverageHTML", "tFoldHTML"):
+        m = re.search(r"^  function %s\([^)]*\) \{.*?\n  \}\n" % name, src, re.S | re.M)
+        assert m, name
+        code = "\n".join(ln for ln in m.group(0).split("\n") if not ln.lstrip().startswith("//"))
+        assert not re.search(r"\d", code), (name, re.findall(r".{0,30}\d.{0,10}", code)[:5])
+    for n in ("99.85", "102.09", "101.62", "100.81", "99.87", "102.1", "101.54", "100.79"):
+        assert n not in src, n
+    # the means and the coverage come from these payload keys
+    for key in ("offense_plus_pa_weighted", "rotation_plus_ip_weighted", "bullpen_plus_ip_weighted",
+                "team_dem_plus_inn_weighted", "coverage", "offense_pa", "league_ip", "past_seasons"):
+        assert key in src, key

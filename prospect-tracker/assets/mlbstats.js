@@ -3365,11 +3365,12 @@
     // defense) + the per-section view (#view= bullpen, #sview= starters,
     // #dview= defense). Each key is anchored to a separator so e.g.
     // "sview=teams" or "dview=teams" can never match the "view=" regex.
-    // `league` is honoured only while the shell carries the League tab
-    // (data-league-src on the root, build_site's MLBSTATS_LEAGUE_TEAMS_LIVE);
-    // without it the link opens the landing board, as an unknown section does.
-    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage|defense|war|league)\b/.exec(h);
-    if (s && (s[1] !== "league" || leagueSrc())) section = s[1];
+    // `league` and `teams` are honoured only while the shell carries those
+    // tabs (data-league-src on the root, build_site's
+    // MLBSTATS_LEAGUE_TEAMS_LIVE); without it the link opens the landing
+    // board, as an unknown section does.
+    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage|defense|war|league|teams)\b/.exec(h);
+    if (s && ((s[1] !== "league" && s[1] !== "teams") || leagueSrc())) section = s[1];
     var m = /(?:^#|[#&])view=(relievers|teams|depth)\b/.exec(h);
     if (m) view = m[1];
     var sv = /(?:^#|[#&])sview=(starters|teams|charts)\b/.exec(h);
@@ -3463,6 +3464,7 @@
     pushSort(parts, "wsort", warSort);
     pushSort(parts, "wtsort", warTeamSort);
     leagueHashParts(parts);
+    teamsHashParts(parts);
     // The ACTIVE section's team, so the URL describes the board on screen
     // rather than a club the reader left behind on another one.
     var tm = activeTeam();
@@ -5739,7 +5741,7 @@
     return (window.EEPHUS_GFX && EEPHUS_GFX.chipHTML) ? EEPHUS_GFX.chipHTML(id, "Generate GFX") : "";
   }
 
-  function _mlbstatsBoardSpec(view, rows) {
+  function _mlbstatsBoardSpec(view, rows, meta) {
     rows = rows || [];
     // Season/window label for the subtitle: the live board reports the season +
     // as-of date; a past-season pill reports "<year> season". Count noun varies.
@@ -5986,6 +5988,39 @@
     // total and keeps both sides under it. Role is the column that says why a
     // name a reader cannot place is on the list (a swingman on neither pitcher
     // board, a two-way player on both).
+    // The Teams tab's card: assets/mlbstats-league.js passes the rows in the
+    // table's own order and basis, and `meta` names the season and the basis.
+    if (view === "teams") {
+      var tm = meta || {};
+      var tmRows = rows.map(function (t, i) {
+        return { cells: [
+          { t: i + 1 },
+          { t: t.team || EM_DASH },
+          { t: (t.w != null && t.l != null) ? t.w + "-" + t.l : EM_DASH },
+          { t: fInt(t.offense_plus) },
+          { t: fInt(t.rotation_plus) },
+          { t: fInt(t.bullpen_plus) },
+          { t: fInt(t.team_dem_plus) },
+          { t: fSignedInt(t.rd) },
+        ] };
+      });
+      return spec("MLB Stats · Team Stats",
+        (tm.season ? "Season " + tm.season + " · " : "") + (tm.as_of ? "through " + tm.as_of + " · " : "")
+          + (tm.basis ? tm.basis + " basis · " : "") + rows.length + " clubs",
+        "mlbstats-team-stats",
+        "Offense+, Rotation+, Bullpen+ and Team DEM+ on the " + (tm.basis || "earned") + " club basis",
+        { defaultCount: 30, counts: [10, 30], legend: "100 = the average qualified player of each board", columns: [
+          { label: "#", frac: 0.06 },
+          { label: "Team", frac: 0.16 },
+          { label: "W-L", frac: 0.14 },
+          { label: "Offense+", frac: 0.13 },
+          { label: "Rotation+", frac: 0.13 },
+          { label: "Bullpen+", frac: 0.13 },
+          { label: "Team DEM+", frac: 0.13, wideOnly: true },
+          { label: "RD", frac: 0.12 },
+        ], rows: tmRows });
+    }
+
     if (view === "ewar") {
       var ewarRows = rows.map(function (r, i) {
         return { cells: [
@@ -6391,7 +6426,8 @@
     var sects = { war: "mlbstats-section-war", bullpen: "mlbstats-section-bullpen",
                   starters: "mlbstats-section-starters",
                   hitters: "mlbstats-section-hitters", leverage: "mlbstats-section-leverage",
-                  defense: "mlbstats-section-defense", league: "mlbstats-section-league" };
+                  defense: "mlbstats-section-defense", league: "mlbstats-section-league",
+                  teams: "mlbstats-section-teams" };
     Object.keys(sects).forEach(function (k) {
       var el = document.getElementById(sects[k]);
       if (el) { if (k === name) el.removeAttribute("hidden"); else el.setAttribute("hidden", "hidden"); }
@@ -6405,12 +6441,14 @@
     else if (name === "war") initWar();
     else if (name === "bullpen") initBullpen();
     else if (name === "league") initLeague();
+    else if (name === "teams") initTeams();
   }
-  // ---- the League tab (assets/mlbstats-league.js, lazy) ----------------------
-  // The shell names the script on its root only while the tab is live, so a
-  // dark build carries no League button, no panel and no fetch. The script is
-  // injected ONCE, the first time the tab opens; the landing board never asks
-  // for it. Its hash keys all start with g (Leverage owns lview and lseason).
+  // ---- the League and Teams tabs (assets/mlbstats-league.js, lazy) ----------
+  // The shell names the script on its root only while the tabs are live, so a
+  // dark build carries no League or Teams button, no panel and no fetch. The
+  // script carries both tabs and is injected ONCE, the first time either opens;
+  // the landing board never asks for it. League hash keys all start with g
+  // (Leverage owns lview and lseason), Teams keys with t.
   function leagueSrc() {
     var r = document.querySelector(".mlbx");
     return (r && r.getAttribute && r.getAttribute("data-league-src")) || "";
@@ -6422,31 +6460,51 @@
              writeHash: writeHash, bannerHTML: bannerHTML, pxState: pxState, gloss: gloss,
              wireGlossary: wireGlossary, filtCls: filtCls, filtBtn: filtBtn };
   }
+  function teamsCtx() {
+    return { root: document.querySelector(".mlbx"),
+             host: function () { return document.getElementById("mlbstats-teams-root"); },
+             active: function () { return section === "teams"; },
+             writeHash: writeHash, pxState: pxState, wireGlossary: wireGlossary, markFit: markFit,
+             gfxSpec: _mlbstatsBoardSpec };
+  }
   var leagueAsked = false;
-  function initLeague() {
-    if (window.MLBX_LEAGUE && window.MLBX_LEAGUE.show) { window.MLBX_LEAGUE.show(leagueCtx()); return; }
-    // The script calls this when it lands, and shows itself only if the
-    // reader is still on the tab.
-    window.MLBX_LEAGUE_CTX = leagueCtx;
+  // `tab` is the label the loading state names and `hostId` the root that
+  // shows it. One script serves both tabs, so it is asked for once.
+  function askLeagueScript(hostId, tab) {
     var src = leagueSrc();
-    if (leagueAsked || !src) return;
+    if (!src) return;
+    var host = document.getElementById(hostId);
+    if (host) host.innerHTML = pxState("loading", "Loading the " + tab + " tab.");
+    if (leagueAsked) return;
     leagueAsked = true;
-    var host = document.getElementById("mlbstats-league-root");
-    if (host) host.innerHTML = pxState("loading", "Loading the League tab.");
     var el = document.createElement("script");
     el.src = src;
     el.defer = true;
     el.onerror = function () {
       leagueAsked = false;
-      var h = document.getElementById("mlbstats-league-root");
-      if (h) h.innerHTML = pxState("failed", "The League tab did not load. "
-        + '<button type="button" class="chip" data-mlbleagueretry="1">Retry</button>', "mlbstats-load-error");
+      [["mlbstats-league-root", "League"], ["mlbstats-teams-root", "Teams"]].forEach(function (p) {
+        var h = document.getElementById(p[0]);
+        if (h) h.innerHTML = pxState("failed", "The " + p[1] + " tab did not load. "
+          + '<button type="button" class="chip" data-mlbleagueretry="1">Retry</button>', "mlbstats-load-error");
+      });
     };
     (document.head || document.body).appendChild(el);
   }
+  function initLeague() {
+    if (window.MLBX_LEAGUE && window.MLBX_LEAGUE.show) { window.MLBX_LEAGUE.show(leagueCtx()); return; }
+    // The script calls this when it lands, and shows itself only if the
+    // reader is still on the tab.
+    window.MLBX_LEAGUE_CTX = leagueCtx;
+    askLeagueScript("mlbstats-league-root", "League");
+  }
+  function initTeams() {
+    if (window.MLBX_LEAGUE && window.MLBX_LEAGUE.showTeams) { window.MLBX_LEAGUE.showTeams(teamsCtx()); return; }
+    window.MLBX_TEAMS_CTX = teamsCtx;
+    askLeagueScript("mlbstats-teams-root", "Teams");
+  }
   try { document.addEventListener("click", function (e) {
     var b = e.target && e.target.closest ? e.target.closest("[data-mlbleagueretry]") : null;
-    if (b) initLeague();
+    if (b) { if (section === "teams") initTeams(); else initLeague(); }
   }); } catch (e) { /* no document events */ }
   // The League keys ride every writeHash. Before the script has landed, a
   // deep link's own g keys are carried through untouched.
@@ -6457,6 +6515,15 @@
     var h = location.hash || "", m;
     LEAGUE_KEY_RE.lastIndex = 0;
     while ((m = LEAGUE_KEY_RE.exec(h))) parts.push(m[1]);
+  }
+  // The Teams keys likewise: tseason, tcols, tbasis, tsort.
+  var TEAMS_KEY_RE = /(?:^#|[#&])(t(?:season|cols|basis|sort)=[a-z0-9_.]+)/g;
+  function teamsHashParts(parts) {
+    var L = window.MLBX_LEAGUE;
+    if (L && L.teamHashParts) { L.teamHashParts().forEach(function (p) { parts.push(p); }); return; }
+    var h = location.hash || "", m;
+    TEAMS_KEY_RE.lastIndex = 0;
+    while ((m = TEAMS_KEY_RE.exec(h))) parts.push(m[1]);
   }
   // The bullpen board is lazy like the other five now, because it is no longer
   // the one a bare URL opens: measured on the served payloads, the landing
