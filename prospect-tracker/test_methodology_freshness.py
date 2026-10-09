@@ -986,6 +986,12 @@ MODEL_GLOSSARY = {
     # Nothing served reads it and a stage-1 PASS licenses nothing served, so it
     # has no reader-facing term until a props or price flip names one.
     "starter_workload_xouts": "internal",
+    # team_win_distribution and team_run_projection (2026-10-09, TM_2_TEAM_SCORER)
+    # are the two team gate rows docs/TEAM_PROJECTIONS_GATE.md section 5.3
+    # defines: registered, not read, nothing served, no candidate number yet.
+    # A reader-facing term arrives with the flip that serves one (TM_8).
+    "team_win_distribution": "internal",
+    "team_run_projection": "internal",
 }
 
 

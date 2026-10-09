@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**351 models.** Verdicts: validated: 54, provisional: 159, unvalidated: 50, deprecated: 88.
+**353 models.** Verdicts: validated: 54, provisional: 159, unvalidated: 52, deprecated: 88.
 
 ## Instrument boundary
 
@@ -370,6 +370,8 @@ can be measured.
 | `service_time` | Provisional: service days counted from MLB transactions miss published service time by 10.21 days on average over 563 holdout player-seasons; 93.8% agree on rounded years. | roster_status.service_years_decimal on the PROSPX debuted... | MLB service time (days, 172 = one year) at a date, from the transaction history with the CBA day count | service_time.py state machine over the StatsAPI transaction feed merged with... | none served before: service_years_decimal was never written, so every graduat... | MAE in days and rounded-year agreement against MLB Trade Rumors published ser... | **provisional** | `data/service_time_eval.json` | 0 | no |
 | `starter_workload_xouts` | Registered, not run: expected outs and pitches per start for a listed starter, read once on 2024-2025 corpus starts against the served props length. | No surface: nothing served reads it; the stage-1 lab tool... | The listed starter's outs recorded in a start (primary) and pitches thrown (secondary): xouts = min(27, budget / (ppo x r_L)),... | the candidate of docs/diamond-betting.md section 'Starter workload: expected... | A0, the served props length: 3 x clip(season-to-date IP / GS over all appeara... | Registered, not computed: paired outs MAE(A0) minus MAE(candidate) pooled ove... | **unvalidated** | - | - | no |
 | `efv_surplus_from_served_odds` | Not served. Its one read, a FAIL on coverage, is void: the owner ruled the frame substituted. A new registration names another frame. | None served: a registered challenger for the PROSPX eFV s... | Realized control-window surplus of a resolved prospect, as the eFV surplus mean and fan drawn from the row's served outcome odds | none - the incumbent prices the fan from the curve at the display grade; the... | The served incumbent pricing on the same rows, same display grade and dollar map | Pooled PIT coverage of the 10 to 90 band, bias and slope of realized on predi... | **unvalidated** | - | - | - |
+| `team_win_distribution` | Registered, not read: each club's win-total distribution with talent and schedule uncertainty, scored once on the 2026 season against the schedule-only incumbent. | none yet (registered, not served); on a pass, the win ran... | each club season win-total distribution with talent and schedule uncertainty | none | the schedule-only distribution of playoff_odds_sim | TM-A, docs/TEAM_PROJECTIONS_GATE.md section 3 | **unvalidated** | - | - | - |
+| `team_run_projection` | Registered, not read: club runs scored and allowed for the first projected season, scored once on 2026 against carry-forward and league average. | none yet (registered, not served); on a pass, RS, RA, run... | club runs scored and allowed for the first projected season | none | prior-season carry-forward and league average | TM-C | **unvalidated** | - | - | - |
 
 Stored problems at last refresh: none.
 
