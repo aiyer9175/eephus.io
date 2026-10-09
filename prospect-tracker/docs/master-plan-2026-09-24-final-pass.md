@@ -9863,3 +9863,1502 @@ PASS R7 dispositions recorded under Validation
 PASS R6 the round 6 checks (and through them rounds 5, 4, 3 and 2) still pass, with no assertion swapped
 RESULT: OK
 ```
+
+
+## Part 9. The owner's 2026-10-01 asks: projections, aging, tools, team and the scouting page
+
+- Status: CLEAN 2026-10-01 at verify round 3 (`part9/VERIFY_round3.md`), re-verified CLEAN the same day at round 5 (`part9/VERIFY_round5.md`) after the round 4 skeptic panel's amendments; source `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part9/PLAN.md`.
+- Bundle: `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part9/` (PLAN.md, LANE_A.md, LANE_B.md, LANE_C.md, BRIEF_COMMON.md, QUEUE_TASKS.json, OWNER_QUESTIONS.json); the lane files are cited by path and are not appended here.
+- Queue (dq/queue.json, 62 task ids by family): PJ (12): PJ_1_COMPONENTS_GATE_REGISTRATION, PJ_2_COMPONENT_FRAME, PJ_3_COMPONENT_SCORER, PJ_4_COMPONENT_HEADS_DEV, PJ_5_COMPONENT_LOOK, PJ_6_COMPONENT_EXPORT_DARK, PJ_7_COMPONENT_DISPLAY_DARK, PJ_8_COMPONENT_FLIP, PJ_9_STACK_ARM_DARK, PJ_10_FORWARD_FREEZE_AMENDMENT, PJ_11_WAR_LOOK_2027, PJ_12_PUBLIC_BENCHMARK; AG (17): AG_1_AGING_DOCS_TRUTH, AG_2_AGING_V3_GATE_REGISTRATION, AG_3_TM_PREPEAK_FIX, AG_4_CHAMPION_PT_CAP, AG_5_AGING_SERVICE_BUILD_DARK, AG_6_AGING_V3_DEV_AND_POWER, AG_7_AGING_V3_LOOK, AG_8_FLIP_PROJ_DISPLAY, AG_9_FLIP_TEAM_OUTLOOK, AG_10_FA_GUARD_AND_FLIP, AG_11_PROSPECT_SURPLUS_FLIP, AG_12_TAIL_TRADE_FANTASY_FLIP, AG_13_HEALTH_LOOK, AG_14_ML_V3_FORWARD_REGISTRATION, AG_15_ML_V3_SHADOW_BUNDLE, AG_16_ML_V3_FORWARD_LOOK, AG_17_DISPLAY_AGING_EXPLAINER; TL (24): TL_1_POWER_SURFACE_AUDIT, TL_2_TOOL_GATE_REGISTRATION, TL_3_STATLINE_GATE_REGISTRATION, TL_4_TOOL_LAB_BUILD, TL_5_POWER_COMPOSITE_LOOK, TL_6_POWER_COMPOSITE_DARK, TL_7_POWER_COMPOSITE_FLIP, TL_8_PROXY_BACKFILL, TL_9_EFV_TOOL_SIDECAR, TL_10_EFV_V2_TOOL_AMENDMENT, TL_11_STATLINE_BUILD_DARK, TL_12_TOOL_WEIGHTS_LOOK, TL_13_TOOL_WEIGHTS_DARK, TL_14_TOOL_ACCURACY_DISPLAY_DARK, TL_15_TOOL_DISPLAY_FLIP, TL_16_EFV_TOOL_DEV_ADMISSION, TL_17_STATLINE_LOOK, TL_18_STATLINE_DISPLAY_FLIP, TL_19_TOOL_TABLE_REDERIVE_REGISTRATION, TL_20_SCOUTING_PAGE_REGISTRATION, TL_21_TOOL_TABLE_REDERIVE_LOOK, TL_22_SCOUTING_PAGE_BUILD_DARK, TL_23_SCOUTING_PAGE_FLIP, TL_24_SCOUTING_FV_COLUMN_POST_ANCHOR; TM (9): TM_1_TEAM_GATE_REGISTRATION, TM_2_TEAM_SCORER, TM_3_TEAM_CANDIDATES_DARK, TM_4_TEAM_LOOK_2026, TM_5_PRESEASON_2027_DARK, TM_6_PRESEASON_2027_FLIP, TM_7_TEAM_DISPLAY_DARK, TM_8_TEAM_FLIPS, TM_9_TEAM_LOOK_2027; the program's 63rd task, FWAR_VINTAGE_FREEZE_2027, carries no family prefix.
+- Answers: `C:/Users/noah/baseball-projects/_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, section 'ANSWERED 2026-10-01 (standing instruction), the projections, aging, tools and team program (Part 9), TL/AG/PJ/TM questions'.
+
+Owner asks of 2026-10-01 (three messages, quoted verbatim in `BRIEF_COMMON.md` section 0 and in
+every task spec). This part unifies three read-only lane designs into one program:
+
+- lane A: `LANE_A.md`, component and team projections (families PJ, TM);
+- lane B: `LANE_B.md`, aging v3 (family AG);
+- lane C: `LANE_C.md`, tools, the power composite, the prospect stat line and tools as eFV
+  candidates (family TL).
+
+All three files sit beside this one in the durable Part 9 bundle
+`C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part9/`, with `BRIEF_COMMON.md`,
+`QUEUE_TASKS.json` and `OWNER_QUESTIONS.json`. Every spec cites that bundle first. The session
+scratchpad directory `proj2026/` is the fallback copy only, the way the P8 preamble treats
+`_finalpass_2026-09-24/part8/`. The unifier adds the owner's third message: re-derived tool
+tables, plus a public /scouting/ page.
+
+Deliverables beside this file:
+- `QUEUE_TASKS.json`: 63 tasks (PJ 12, TM 9, AG 17, TL 24, and the round 4 freeze
+  `FWAR_VINTAGE_FREEZE_2027`);
+- `OWNER_QUESTIONS.json`: 20 questions in 5 batches;
+- `make_unified.py`: builds both JSON files from the lane returns, fills the two generated tables
+  below and runs the validation.
+
+Pins. Lane A cites `0d4892bb`; lanes B and C cite `ed5e0ae5`. The unifier's own checks ran at
+`00c726b7` (2026-10-01). A line number belongs to the commit written beside it; where the anchor
+beside a number disagrees with the number at HEAD, the anchor wins.
+
+Rules this part keeps:
+- Nothing here was fitted, scored or run on an eFV frame, on the reserved frames, or by
+  consensus-FV cell.
+- The served window closed on 2026-10-03. Until the fWAR epoch's step Z entry exists, only docs
+  and registrations land; served changes come after step Z, behind default-off flags that are
+  byte-identical while OFF.
+- Plan Part 8 rules apply as written: 8.A 'Rules this part adds to Part 0.2', 8.B 'The clock: the
+  fWAR epoch calendar' and the P8 preamble.
+
+---
+
+### 9.0 The owner's asks and the honest answer to each
+
+Each answer says one of four things: **done already**, **tested and lost**, **designed here**, or
+**declined, and why**.
+
+**M1a. "Project not just WAR but specific components of WAR ... more specificity ... more accurate
+by feeding more data."**
+- **Done already, in part.** The champion engine is already a component model:
+  - Marcel K%, BB%, ISO, BABIP, HR rate and playing time go through `fit_war_map` to WAR;
+  - /projections/ already serves wOBA, wRC+ and FIP paths (9.1.1 A1, A2).
+- **Designed here (9.2).** This program adds what FanGraphs' WAR puts on top of the bat, each as
+  its own projected line on FanGraphs' frame:
+  - baserunning, fielding, positional, league and replacement runs;
+  - the FIP-based pitcher WAR algebra, gmLI for relievers and an RA9 gap;
+  - PA and IP on the page.
+- **Tested and lost.** "More accurate by more data" has been tried:
+  - the full Statcast bundle (rejected 2026-06-23);
+  - four pWOBA Statcast arms;
+  - every WAR-level data arm that passed moved MAE by only 0.0027 to 0.0189 (9.1.1 A7).
+- **What to expect.** One forward season resolves about 0.010 WAR of MAE, so the 2027 WAR read is
+  registered in advance as most likely UNDERPOWERED. The dependable gain is specificity, not a
+  WAR accuracy claim, and no copy will say otherwise.
+
+**M1b. "Aging curves aren't just a straight decline ... getting better until they hit their
+prime."**
+- **Done already on the prospect path.** The tent climbs 0.04 a year to a peak at 27 for hitters
+  and 25 for pitchers. A FV 55 hitter debuting at 21 climbs through all 7 control seasons, from
+  1.99 to 2.61 WAR (9.1.2 B3).
+- **Not met in three places (9.1.2):**
+  1. The /projections/ ML headline path. Its label scores an absent season as 0, so paths fall
+     with horizon for 14 of 22 one-plus-WAR players aged 23 and under. That is attrition, not
+     aging.
+  2. The veteran champion curve. A survivorship correction flattens ages 23 to 27, so the hitter
+     rate peaks near 24.5.
+  3. The Trade Machine fallback factor, which is inverted before the peak.
+- **Designed here (9.3):** aging v3, with an interim fix for the third item.
+
+**M1c. "Positionally bucket aging curves across the site."**
+- **Designed here (9.3, ARM P).** Today the veteran engine knows only catcher against everyone
+  else, and the prospect path knows no position at all.
+- Aging v3 fits bucket curves shrunk toward a pooled parent. One service serves every consumer,
+  each behind its own flag.
+
+**M1d. "Archetypes of players that age differently."**
+- **Tested and lost, then redesigned.** The season-ISO hitter cohorts measured worse and are
+  parked at 99/0: same-season selection re-injects mean reversion.
+- **Designed here (9.3, ARM R).** Archetypes come from the three seasons before each
+  season-to-season change, never from the change's own start season.
+
+**M1e. "Health modelling ... adjust their aging curve."**
+- **Tested and lost.** W1 PT-RISK failed out of sample on 2026-07-23 because of a post-2021 shift
+  in IL usage.
+- **Designed here (9.3, ARM H).** A new registration with features standardized within each
+  season. It is a playing-time hazard only, never a talent change, and has its own look on
+  2027-01-12. A null is the likely outcome and is stated in advance.
+- **Why health moves playing time only (round 4).** The last test (W1 PT-RISK) failed on
+  playing time, and nothing on disk links IL history to a change in a player's rates. A PT
+  hazard can be checked on the 2026 CONFIRM season with league exposure held fixed. A talent
+  effect would be a claim with no test behind it.
+
+**What prospects get, and what they do not (round 4).**
+- **Position buckets: yes.** The prospect shape reads the same bucket curves (9.3).
+- **Archetypes: declined.** ARM R assigns an archetype from the three MLB seasons before each
+  change, and a prospect has none. A tool-grade archetype would group prospects by grade cells,
+  which is barred before the anchor look (9.10).
+- **Health: declined.** ARM H's features are MLB IL and Tommy John histories, standardized within
+  each season. The minor league injury record is too sparse to fit (LANE_B 2.6,
+  `xfv_injury_history_eval`).
+- AG_1 and AG_17 copy must not imply that archetypes or health apply to prospects.
+
+**M1f. "Expand upon team projections."**
+- **Done already, in part.** The site already has:
+  - a 2,430-win roll-up and Core Control;
+  - an in-season blend and log5 strength of schedule;
+  - a 20,000-run season simulator and bracket_v1 (9.1.4).
+- **Designed here (9.5):**
+  - win ranges that carry talent uncertainty;
+  - a PA/IP budget per club;
+  - runs scored, runs allowed and run differential;
+  - 2027 preseason odds;
+  - blended in-season talent;
+  - a per-club drill-down.
+- The 2026 club season is unread as a projection target, so it becomes a one-look gate on
+  2026-12-08. At 30 clubs, a difference under about one win cannot be resolved.
+
+**M1g. "Tool-implied statistics in combination with aging curves for prospects ... power grade to
+ISO."**
+- **Done already, in part.** The measured grade-to-stat tables already exist
+  (`TOOL_GRADE_TABLES.md`).
+- **Tested and lost once.** The stats-built prospect fork (WS-7) won MAE and lost rank (Spearman
+  0.154 against 0.193).
+- **Designed here (9.4.6).** A prospect stat line on rates, gated on its own holdout. Its inputs
+  are:
+  - tool-implied production;
+  - translated minor league rates;
+  - the xwOBA prior;
+  - the one aging service.
+- The FV-anchored WAR stays served unless the WAR leg also passes and the owner answers.
+
+**M1h. "Use our projected MLB-first xwOBA from PROSPX."**
+- **Designed here, with an honest ceiling.** The `efv_proxy` out-of-sample record is hitters
+  r 0.27 (n 133) and pitchers r 0.19 (n 166). That evidence sits only on the 2025 and 2026 debut
+  cohorts (R-VM), and the proxy's inputs are the eFV features.
+- It enters the stat line as a stacked prior, refit backward on cohorts up to 2021 (round 4: the
+  2022-2024 cohorts are the stat-line holdout, so TL_8 never reads them). Its expected
+  increment over its own inputs is near zero (9.4.6).
+
+**M1i. "We are only using raw power grade ... blend game power ... test as an eFV driver."**
+- **The claim, audited (9.4.1).** It does not hold literally: no surface reads raw power alone,
+  eFV reads no power grade at all, and every outlet's single Power maps to game power.
+- **Where it holds in effect.** For 857 of 1,040 graded active hitters (82%), the served PWR is
+  half FanGraphs' raw grade, and raw orders realized ISO worse than game power does.
+- **Designed here (9.4.4).** The blend is gated as look P on 2026-10-21.
+- **Tested and lost, four times:** game power as an eFV driver. A fifth re-test on the spent frame
+  is declined; the legitimate route is a new candidate family (9.4.5).
+- **When the eFV answer comes (round 4).** Under TL-Q1 (a), answered 2026-10-01, this program gives
+  the power composite no eFV verdict. TL_16 runs a development diagnostic that decides nothing and
+  pre-declares candidates. The first eFV verdict comes at the next registration, the 2027 label
+  epoch.
+
+**M2. "Similar to the way we do WAG ... accuracy-weight our tool grades ... then check if tool
+grades can be used as eFV drivers."**
+- **Done once already.** Lane BA2 (2026-08-08) ran this measurement; only hit passed (+0.0134 rho,
+  Pipeline weighted up).
+- **Why it is not credited.** Its board years 2020 and 2021 are now reserved (R-LV), so its hit
+  result cannot back an eFV V2 candidate.
+- **Designed here (9.4.2, 9.4.3).** A WAG-like per-player triple (TAG) and look W on 2026-12-03,
+  after the R-LV record.
+- **On the eFV half.** The hit tool is already an admitted V2 driver. The whole tool family is
+  expected to add +0.000 to +0.003 against a resolution of about 0.03, so the recommended route is
+  pre-declaration for the next registration (9.4.5, TL-Q1).
+
+**M3a. "You can rederive tool to statistical production grades ... the FanGraphs translations are
+estimates."**
+- **Done already, descriptively.** `TOOL_GRADE_TABLES.md` derived 47 tables and found our curves
+  flatter than every published table.
+- **Designed here (9.4.8).** Part T, a registered gate: our table against the published estimate
+  on a time-forward holdout (the 2026 season), vintage-matched and identity-resolved, with Holm
+  and a resolvable margin. One look, on 2026-10-28.
+
+**M3b. "A standalone scouting page that explains the 20-80 FV grading scale, with WAR projections
+for each FV tier and tool projections for each tool tier."**
+- **Designed here (9.4.8).** The page is built dark from 2026-10-29 and served from 2026-10-30.
+- **FV tier column.** Until the Prospect Anchor look, it shows only the published industry tables
+  and served configs, and computes nothing new by FV cell.
+- **Tool tier column.** It shows FanGraphs' estimates, labelled as such, and our measured value
+  only in the cells that pass Part T.
+
+---
+
+### 9.1 Findings at HEAD (merged, deduplicated, each cited)
+
+#### 9.1.1 Projections engine and labels (lane A)
+
+**A1. The engine is a component model; the served WAR head is not.**
+- `fa_projection.build_corpus` (fa_projection.py@0d4892bb:288) carries `k_pct, bb_pct, iso, babip,
+  hr_pa, woba` for hitters and `k_pct, bb_pct, hr_bf, fip, ip, bf` for pitchers.
+- `project_player` (:1576) applies Marcel 5/3/2. `war_from_projection` (:1889) maps the result to
+  WAR through the OLS `fit_war_map` (near :1840), which has an F-DEF column and an F-REALWAR
+  residual channel (:1165-1264).
+- The served head `proj_lgbm_v1` (proj_ml.py@0d4892bb:68-71) stacks 50 quantile heads on those
+  components and outputs WAR only.
+
+**A2. What is served today.**
+- `fp.rate_path` (:1747) serves wOBA, wRC+, AVG and FIP paths through `proj_export._veteran_rows`
+  (proj_export.py@0d4892bb:1078-1088, at 'Projected RATE lines').
+- No served row carries PA, IP, baserunning, fielding or positional value. M05-16 ("Playing time
+  is computed but never shown") is confirmed and unqueued.
+
+**A3. The label.**
+- The training label today is `war_total` on `war_source.DEFAULT_PROVIDER`. The live bundle reads
+  `war_provider: ewar_v2`, `max_label_season: 2025` (model/proj_lgbm/meta.json).
+- The epoch's step D+U flips the label to fWAR and step M retrains
+  (FWAR_LABEL_EPOCH_GATE.md part 7).
+- The defensive inputs are Baseball-Reference's: `data/mlb_def_history.json` feeds both
+  `pos_adj_prior` and F-DEF. Moving them to the feed's runs is the epoch's step M arm, not this
+  program's.
+- The switch to fWAR is owner decision O1 (2026-09-17), not an open question here.
+
+**A4. Brief fact F10 is half wrong.**
+- `data/war_leaderboards.json` and `hitter_leaderboards.json` carry eWAR.
+- FanGraphs' run parts exist only in the live StatsAPI sabermetrics cache, 2011-2026
+  (`saber_feed.RUN_PARTS`, saber_feed.py@0d4892bb:42). That cache may not be used as a label.
+- The frozen labels arrive with EPOCH_E3 and EPOCH_D9_FREEZE.
+
+**A5. The FanGraphs replica.** `fwar_frame.py` reproduces every hitter component in 16 of 16
+seasons, but pitcher WAR runs in only 4 of 16 (data/fwar_replica_eval.json). DECISIONS_FOR_OWNER
+14a names the three missing inputs.
+
+**A6. Accuracy record.**
+- Gate 1 at h1: WAR MAE 0.5157 against naive 0.6242 (n 20,721); wRC+ 19.02 against 24.25; FIP
+  0.721 against 0.919 (data/fa_gate1_eval.json `pooled`).
+- Row-matched, the ML head beats the champion at h1: 0.5846 against 0.5988.
+- Baserunning, fielding and position have never been a projection target.
+
+**A7. The "more data" loss ledger.** These attempts are spent and are not re-run here:
+- the Statcast bundle;
+- the xwOBA output blend (keep-alive re-gate 2026-11-16);
+- the EV/barrel arm;
+- bat tracking;
+- the pitcher pWOBA leg;
+- hitter ISO cohorts;
+- IL playing-time features;
+- pitcher PTFIT;
+- three WAR mean heads;
+- def_war_share;
+- Marcel 5/4/3.
+
+Survivors: F-REALWAR, F-PTFIT hit, F-DEF, the 40% xISO blend and `pos_adj_prior`. Gains came
+from defense, position and playing time, never the batting rate.
+
+**A8. No unread WAR label season before 2027.** PROJ_PATH_SHAPE_GATE.md owns:
+- the read ledger G-0.1 (2015-2025);
+- DEV 2008-2011 and GATE 2012-2014;
+- CONFIRM 2026.
+
+**A9. Power.** Gate 1's MDE95 of 0.0027 at n 20,721, scaled to about 1,400 rows, is about 0.010
+WAR (arithmetic on published numbers).
+
+**A10. Consumers.** The consumers of `contract_war_path` and `mlb_projections.json` are named in
+LANE_A.md A10. Two of them are dark betting inputs:
+- `vets[].woba[0]`, the input of `lineup_strength`;
+- `warY1Champ`, the input of `star_out`.
+
+#### 9.1.2 Aging (lane B)
+
+**B1. Five aging treatments, not three.** docs/aging-curves.md (2026-07-01) defends three:
+
+| treatment | where | shape |
+|---|---|---|
+| A1, prospect tent | `value_framework._aging_multiplier`, :1146 | climb, then decline |
+| A2, veteran champion curves | `fa_projection.fit_aging_curves`, :665 | delta method, survivorship-corrected |
+| A3, ML learned response | `proj_ml` age features, :180 | learned |
+| A4, contract tail seam | `fa_market.chain_aging_tail`, :399, VAL_2 2026-09-30 | chained from h5 |
+| A5, trade fallback | `bayes_trade_value._aging_factor`, :1472 | inverted before the peak |
+
+**B2. Who inherits each shape.**
+- A2 prices /fa/ (`use_ml=False`), Team Outlook `warChamp` sums, Franchise OUTLOOK, the F-SCORE
+  outlook leg, Ledger Cost+, Futures and fantasy dynasty.
+- A3 serves the /projections/ headline and arbitration's forward WAR.
+- A1 serves prospect surplus through xFV `surplus_mm`.
+
+**B3. The prospect tent already climbs to the prime.** Config at HEAD:
+`climb_per_year_before_peak 0.04`, `decline_per_year_after_peak 0.07`, peak 27 for hitters and 25
+for pitchers, 7 control seasons under `clemens_2026`. A FV 55 hitter's path:
+- debuting at 21: 1.99, 2.09, 2.20, 2.30, 2.40, 2.51, 2.61;
+- debuting at 25: 2.40, 2.50, 2.61, then a decline.
+
+No position or archetype is used anywhere on this path.
+
+**B4. The champion hitter curve peaks near 24.5.** The survivorship correction (lambda 1.0,
+fa_projection.py :784) subtracts 0.020 to 0.037 WAR/600 at every age from 23 to 27. Served paths:
+
+| player | WAR path | PA path |
+|---|---|---|
+| hitter 24, 3.0 WAR, 650 PA | 3.00, 3.12, 3.11, 2.95, 2.75, 2.47 | |
+| hitter 22, 3.0 WAR, 650 PA | 3.00, 3.48, 3.69, 3.82, 3.80, 3.62 | 650 to 798 |
+
+The 22-year-old's PA run to 798 because `_decay_path` adds an uncapped pool-average PT delta.
+
+The bWAR calibration prior (`data/proj_calibration_eval.json`) points the same way:
+
+| cell | bias |
+|---|---|
+| hitters 24 and under | -0.198 (under-projected) |
+| hitters 34 and over | +0.127 |
+| pitchers 24 and under | +0.222 |
+| catchers | +0.245 |
+
+**B5. The ML headline falls for young players.** In the served vets, one-plus-WAR, aged 23 and
+under, the ML `war` h5 sits below h1 for 14 of 22 (mean -0.47), against 1 of 22 for `warChamp`.
+This is the absent-season-equals-0 label plus sawtooth across 50 heads. The path-shape battery
+owns it: ARM A on 10-23, ARM B with B-AGE on 11-13.
+
+**B6. The Trade Machine fallback is inverted before the peak.**
+`min(1.10, 1 + 0.025*(peak - age))` makes a 23-year-old read 1.075, 1.05, 1.025, 1.0. It prices
+the 63 `bayes_unrepointed` rows, one of them under 27.
+
+Handed to the Trade Machine owner: Corbin, Quintana and Kimbrel carry six remaining control years,
+worth $111.2M, $45.4M and $24.6M.
+
+**B7. The committed curves are stale, and the cache can serve old code.**
+- `data/fa_aging_curves.json` is a bWAR snapshot from 2026-06-10 that nothing writes.
+- The served curves are refit at run time into `.cache/fa_fits_*.pkl`, whose key hashes corpus
+  rows and not code.
+- The registry row `fa_aging_curves` is unvalidated.
+
+**B8. Positions and archetypes today.**
+- Positions are C against H only. The StatsAPI split already carries every position, so no fetch
+  is needed.
+- The live pitcher cohorts SP|pwr and SP|fin select on the same season's K%, the rule that
+  measured worse for hitter ISO.
+
+**B9. Health.** Brief fact F8 is corrected:
+- `fa_pt_risk` failed both arms;
+- `xfv_injury_history` is coverage-starved;
+- `xfv_health_profile` is descriptive only;
+- the pitcher-only IL penalty is `efv_score._injury_factor` (:1251), not eWAR.
+
+Data on disk:
+- 223 monthly transaction files in `.cache/mlb_transactions/`, `tx_2008_01` to `tx_2026_07`
+  (the directory's 225 entries also hold `il_table.json` and `mlb_teams.json`);
+- `data/tj_surgery.json`, 2,522 players.
+
+#### 9.1.3 Tools (lane C, plus the unifier's checks for message 3)
+
+**C1. Message 2 was measured once already (BA2).** Source: docs/efv-2026-08-07b/
+TOOL_GRADE_WEIGHT_GATE.md section '### 8.2 ARM A', data/ba_tool_grade_eval.json.
+
+| tool | change in rho | verdict |
+|---|---|---|
+| hit | +0.0134 | SHIP |
+| game_pwr | +0.0039 | null |
+| speed | +0.0043 | marginal |
+| fb | -0.0067 | loss |
+| cmd | +0.0041 | null |
+
+Pipeline alone beats the consensus on 4 of 5 tools. Its board years 2020 and 2021 are now R-LV,
+the B9a pattern.
+
+**C2. The power census.** Two sources, one per count:
+- per-source row counts, from `prospects.db snapshots.tools_json`: FanGraphs carries 11,594
+  game_pwr rows and 11,596 raw_pwr rows;
+- every other outlet's single Power maps to `game_pwr` (scrapers.py :752, tjstats.py :177,
+  baseballamerica_csv.py :459);
+- the served `pwr` is the mean of the game and raw consensus (consensus.py at '# v12', 1584-1595);
+- the served composition, from `data/timeseries.json` (`players[].tools.grades`): 857 actives
+  carry both grades, 183 game only, 0 raw only;
+- eFV v1 and V2 read no power grade (`efv_model._FEATURES_HIT`; EFV_V2_GATE.md '### 4.2').
+
+**C3. Game power as an eFV driver failed four times** (`data/xfv_arm_ledger.json`). Brief fact
+F2's CHANGELOG citation is the tool-eFV gate, not a driver test. Facts about the other tool
+features:
+- The hit tool is an admitted V2 driver.
+- Raw power and the PWR composite have never been an arm.
+- FanGraphs tool grades start in 2017, so a FanGraphs-based feature is constant on V2's
+  development folds.
+
+**C4. The tool tables exist** (docs/efv-2026-07-30/TOOL_GRADE_TABLES.md, data/tool_grade_tables.json).
+
+| tool and stat | rho |
+|---|---|
+| game power to HR/600 | 0.577 |
+| hit to AVG | 0.312 |
+| hit to K% | -0.55 |
+| speed to SB | 0.716 |
+| field | 0.309 |
+| cmd to BB% | -0.373 |
+| raw power to EV | 0.562 |
+
+- Our curves are flatter than every published table ('### 2.1').
+- The AAA-minus-MLB offsets are in '### 2.10'.
+- The incumbent published tables are FANGRAPHS_FV_FRAMEWORK.md Part 2 ('2.1 ... S3, 2014';
+  '2.2 Mark Smith's z-score tables (W2, 2013)') and the `audit_vs_published` blocks of the
+  artifact.
+
+**C5. PROSPX xwOBA (`efv_proxy.py`, row `xfv_proxy`).**
+- Forward out of sample: hitters r 0.2735 (n 133), pitchers r 0.1878 (n 166), on the 2025 and 2026
+  debut cohorts.
+- The Savant expected-stats cache has no 2020 file.
+- `milb_translation` is unvalidated: leave-one-out r2 is 0.326 for hitter K% and 0.117 for pitcher
+  K%.
+
+**C6. WAG is unified.** One definition since 2026-09-11 (`storage.WAG_UNIFIED`). Brief fact F9's
+"three metrics" was the design audit's F25 finding, now resolved.
+
+**C7. The served FV-to-WAR configs, checked by the unifier and corrected in rounds 2 and 3** (at
+c96bfb0f).
+- `fv_to_6yr_avg_war` is not an industry fit, and what serves is not the yaml table.
+  `value_framework.fv_to_6yr_avg_war()` reads `data/value_framework_fitted.json`
+  `empirical_anchors.anchors` whenever `anchor_calibration.use_empirical` is true
+  (value_framework_config.yaml at 'use_empirical: true', line 185). It falls back to the yaml table
+  only when that key is absent.
+- What serves: `empirical_anchors`, written by `empirical_anchors.derive_empirical_war_anchors()`
+  during `value_framework --fit`:
+  - `cohort_window` [2014, 2020], `n_cohort` 3,462;
+  - the bust-inclusive mean realized WAR per season over the first six MLB seasons (never
+    debuted counts as 0);
+  - blended with the public Edwards-scale reference at `blend_weight_public` 0.5, with more
+    public weight where a tier holds fewer than 40 players, then made monotone;
+  - `generated_at` 2026-09-04.
+- That blend serves only FV 45 to 80 (round 3). FV 80 has no player (n 0), so it is the public
+  scale alone.
+- FV 35 and 40 do not serve the blend. `empirical_anchors.anchors_provenance` (fit file line 287)
+  opens "SUB-45 KNOTS RE-AMENDED 2026-09-04 for the eWAR LABEL EPOCH". It records the two knots as
+  a separate, unblended re-measurement: "RE-MEASURED ON THE eWAR LABEL, resolved matrix pool, both
+  sides, target_censored over 6". FV 35 is 0.0069 and FV 40 is 0.0710 WAR per season (n 704 and
+  1,201). The 2014-2020 blend would give FV 40 0.19.
+- FV 20 to 30 are a monotone floor under the FV 35 knot, not a measurement.
+- STANDING TRAP (the same text): any later `value_framework --fit` reverts the sub-45 knots to
+  the blend's single 0.19.
+- The yaml comment at '# v47' ("resolved 2017-2020 cohorts", n 2,684, yaml lines 150-153)
+  describes only the fallback seed. The round 1 text quoted that comment as if it served.
+- `fv_to_prime_war` is a display anchor of industry shape: 50 is 1.7, 60 is 3.0, 80 is 6.5.
+- The /scouting/ page may print the served values (it computes nothing new by FV cell).
+- **Round 4 (ruling R1).** The fWAR epoch's step J runs `value_framework.py --fit` and then
+  re-applies the sub-45 knots, re-measured on the fWAR label, and records that in
+  `anchors_provenance`. TL_22 runs after step Z, so it reads a rewritten file. The page's copy is
+  therefore this template, verbatim, filled at build time from the fit file as it stands after
+  step J:
+
+  > 45 and up: the {Y0}-{Y1} average ({N} players), blended half and half with the public Edwards scale, more public weight where a tier is thin, the top tier the public scale alone; 35 and 40: re-measured on {LABEL} without a blend; below 35: a floor, not a measurement.
+
+  - {Y0}, {Y1} and {N} come from `cohort_window` and `n_cohort`.
+  - {LABEL} is the label the post-step-J `anchors_provenance` records: FanGraphs WAR, under
+    EPOCH-Q4.
+  - At c96bfb0f the template reads "...2014-2020 average (3,462 players)... re-measured on our
+    eWAR label...". That is the pre-epoch reading TL-Q7 was asked and answered on, and it is
+    never printed.
+- A test pins the filled sentence to the post-step-J fit file (9.4.8, TL_20, TL_22):
+  - it reads `cohort_window`, `n_cohort`, `blend_weight_public` and `anchors_provenance`;
+  - it copies the post-step-J marker substrings into the test at build time;
+  - it never reads `anchors` or `diagnostics`, so the "top tier" clause is not pinned.
+  - On any mismatch it fails with "the fit file no longer matches the provenance sentence:
+    change the copy". Changing the copy is its only remedy.
+- No task of this program re-applies the knots, edits `anchors_provenance` or runs `--fit`.
+  Those belong to EPOCH_RUN step J alone.
+
+**C8. No /scouting/ route exists.**
+- `build_site.py` nav tuple: at '("glossary", "Glossary"', near line 390.
+- `HAND_AUTHORED_PAGES` lists prospx and collegesavant only (:6934).
+- The glossary receipts pattern is `_receiptSpecs` (assets/glossary.js:305).
+
+#### 9.1.4 Team (lane A)
+
+**T1. Inventory.**
+
+| item | source |
+|---|---|
+| 2027 W-L, roster WAR and depthWar | `_team_outlook`, proj_export.py@0d4892bb:2151 |
+| byYear 2027-2031 (payload only) | `_team_outlook` |
+| Core Control (`lockedPct`) | `_team_outlook` |
+| in-season blend, k = 40 | `_current_blend`, :2535 |
+| log5 strength of schedule | `_attach_current_season`, :2588 |
+| season simulator (pure 2027 prior as talent) | `proj_current.simulate_playoffs`, :580 |
+| postseason odds | bracket_v1 |
+| Franchise OUTLOOK | `franchise_export`, at 'v_outlook' |
+| F-SCORE outlook leg (planned) | 0.05 of the index |
+| Cost+ and $ per projected win | `ledger_export` |
+| FA Fit baseline | `fa_fit._outlook_wins`, :750 |
+| winter frame | Q9_03 |
+| forward freeze | M15 |
+
+**T2. Record** (data/team_outlook_eval.json).
+- Served-recentered MAE, 2022 to 2025: 9.60, 9.63, 7.23 and 7.18 wins, against carry-forward
+  10.41, 11.38, 9.45 and 7.24.
+- Arms differ by at most 0.09 wins in 2025.
+- The roster level sits 83.7 to 131.6 WAR under the actual.
+
+**T3. Gaps.**
+- The win band is schedule noise only (`data/futures.json win_total_basis`).
+- The simulator uses the pure prior.
+- There is no RS, RA or run differential.
+- There is no club PA/IP budget.
+- There are no 2027 preseason odds.
+- There is no per-club drill-down (M05-18).
+- The banner's word "eWAR" belongs to step X's copy sweep.
+
+#### 9.1.5 Corrections to the brief, and the unifier's own findings
+
+| # | finding | evidence | consequence |
+|---|---|---|---|
+| U-1 | F10 is half wrong: no FanGraphs run parts in the served leaderboard files | A4 | labels from the frozen vintage only |
+| U-2 | F8 is wrong about eWAR: the IL penalty is `efv_score._injury_factor` | B9 | ARM H is a new registration |
+| U-3 | F2's citation is the tool-eFV gate, not a driver test | C3 | the four failed driver arms are in xfv_arm_ledger |
+| U-4 | F9: WAG is one metric since 2026-09-11 | C6 | the TAG analogue mirrors the unified triple |
+| U-5 | The brief's line 7 swaps the reserved-frame labels | `efv_vintage_frame.RESERVED_LV` and `R_VM_FIRST_DEBUT_YEAR`, the P8 preamble | R-LV is list vintages 2020-21 and R-VM is debut cohorts 2025+; every spec states it (U4) |
+| U-6 | `fv_to_6yr_avg_war` serves the fit file's `empirical_anchors`, not an industry fit and not the yaml seed. FV 45 to 80: list years 2014-2020, n 3,462, blended 0.5 with the public scale (FV 80, n 0, the public scale alone). FV 35 and 40: re-measured on the eWAR label without a blend (0.0069 and 0.071, n 704 and 1,201). Below 35: a floor. Step J of the fWAR epoch rewrites all of it before TL_22 runs (round 4) | C7 | the scouting page prints the provenance template filled from the post-step-J fit file, pinned by a test whose only remedy is changing the copy |
+| U-7 | Two looks on 2026-11-24 (AG_7 and PJ_5): each would block the other under the look-day rule | lane task lists | PJ_5 moves to 2026-11-25 |
+| U-8 | Lane dates on other gates' look days | queue specs: W11_3 10-20; SG_6 and SG_8 12-02; TL_12 12-03; TL_17 12-10 | dates moved (9.8) |
+| U-9 | A sixth aging treatment would have appeared (PJ's local linear age terms for BsR and Fld) | LANE_A 2.1 H3, H4 | the terms live in aging_v3 (9.7) |
+| U-10 | TL-Q3 (BA Power mapping) is answered by measurement (nearer game, +2.15 against -3.76) | LANE_C TL-Q3 | not asked; fixed |
+| U-11 | TM-Q3 (out-year W-L) was decided by the owner on 2026-06-19 | mlb-projections-module memory | not asked; hidden stays |
+
+The lane dates that sat on other gates' look days (U-8):
+
+| task | lane date | conflicts with |
+|---|---|---|
+| TM_3 | 2026-10-20 | the W11_3 read |
+| AG_9 | 2026-12-02 | the SG_6 and SG_8 reads |
+| AG_10 | 2026-12-03 | TL_12's look |
+| TM_8 | 2026-12-10 | TL_17's look |
+
+---
+
+### 9.2 Component projections (family PJ; LANE_A.md sections 2.1 to 3.2)
+
+**The heads.** Veterans only, horizons 1 to 5, each a MEAN:
+
+| head | what it projects | form |
+|---|---|---|
+| H0 | PA | the champion exposure walk |
+| H1 | rates | `project_player` plus `rate_path` |
+| H2 | batting runs | `fwar_frame.wraa` on projected wOBA times PA, park neutral |
+| H3 | baserunning runs | Marcel of `baseRunning`/PA, shrunk by PA on the grid {300, 600, 1200, 2400}; a sprint-speed term only if DEV says so; times H0 |
+| H4 | fielding runs | per 1,000 innings, shrunk on {1000, 2000, 4000, 8000}; OAA and arm terms only if DEV says so |
+| H5 | positional runs | `fwar_frame.positional` on the Marcel-weighted position mix |
+| H6 | league runs | `league_adjustment_rate` |
+| H7 | replacement runs | `replacement_per_pa` |
+| H8 | component WAR | (H2 to H7 summed) / rpw |
+| P0 | IP and role | |
+| P1 | rates | |
+| P2 | FIP | |
+| P3 | pitcher WAR | the FIP-based `fwar_frame` chain |
+| P4 | gmLI | Marcel, shrunk toward 1.0 |
+| P5 | RA9 gap | shrunk toward 0 |
+
+Out-year league constants are held at the last completed season.
+
+**Unifier change (9.7 'one aging service').** The H3 and H4 age terms are
+`aging_v3.AgingModel.component_curve(side, 'bsr' | 'fld')`. They are fitted point-in-time per base
+by the service, with the incumbent delta-method estimator, on the frozen-vintage run parts. No
+local age fit exists in `proj_components.py`. PJ-C judges each head including its age term; the
+aging gate does not adjudicate these two curves.
+
+**Coherence.**
+- The served `war` and `warChamp` stay the incumbent.
+- The card prints the components, the WAR they imply and a labelled gap line, so components plus
+  gap equals the served WAR by construction (PJ-Q1).
+- A pooled mean gap above 0.30 WAR at h1 blocks the flip.
+- Every component carries its own 80% range. No WAR range is ever built from component ranges,
+  and a test forbids summing quantile points.
+- No WAR-label mean head is built in any form (path-shape section 15).
+
+**Targets.** FanGraphs' components from the frozen fWAR vintage (O1). House eWAR v3 parts are
+never a label in this program (eBR plan section 5). The card names both frames.
+
+**Inputs ("more data"), each tested on its own component:**
+- sprint speed for H3;
+- OAA, arm and framing for H4;
+- innings by position for H5;
+- gmLI for P4.
+
+Never added: Statcast contact quality, IL history, Will Cahoon's PT model.
+
+**WAR arms, read on label season 2027 only.**
+- W1: component-built WAR against the served WAR.
+- W2: a dark twin of `proj_lgbm_v1` with component stack features, never loaded by the served
+  path.
+- Pass: the one-sided 95% upper bound below 0, and the star slice below +0.0065.
+- UNDERPOWERED at MDE95 of 0.0065 or more, followed by a registered 2028 accumulation read.
+- W2 is vetoed by a Tier-2 pooled upper bound at or above +0.0065, read on bases 2022-2025 only
+  (round 4). The twin's component features come from params frozen on labels up to 2021, so
+  bases 2015-2021 are not point-in-time.
+- The 2027 label is frozen by `FWAR_VINTAGE_FREEZE_2027` (round 4), which PJ_11 and AG_16
+  require.
+
+**Labels (round 4, ruling R6).**
+- Pitching run parts come from the vintage: war, rar, fip, xfip, ra9War, gmli, exli and pli
+  (EPOCH_E3's note).
+- inningsPitched, gamesStarted and gamesPlayed are not in the saber feed. They come from the raw
+  StatsAPI season cache (`fa_sources`).
+
+**Registry rows (round 4).** PJ_1 and TM_1 commit their gate documents alone. Their rows land
+with PJ_3 and TM_2 after step Z, staged without the pipeline churn.
+
+**Display.**
+- The Projection tab gets a component table and the board gets a PA/IP cell value, under
+  `PROJ_COMPONENTS_LIVE`.
+- Keys are added only. A test pins `war, warChamp, warY1Champ, woba, wrc, fip` byte-identical with
+  the flag on and off.
+- The player detail may grow by at most 15%.
+- PA and IP lines are served only if H0 and P0 pass a registered exposure test (round 4). The test
+  scores exposure MAE on HOLDOUT against the prior-season and the 5/4/3 exposure; these are
+  comparators, not candidates.
+- Copy never claims the WAR got more accurate (PJ-Q2). PJ_7 and PJ_8 carry the ban.
+- PJ_12 builds an industry benchmark (Steamer, ZiPS) only from files the owner saves by hand
+  (PJ-Q4):
+  - file contract (round 4): `<system>_<season>_<bat|pit>.csv`, with required headers and a
+    preseason projection date; each file is validated before any scoring;
+  - it writes a projections row to the industry scoreboard (master plan Part 3). PJ_11 updates
+    that row with the 2027 forward read.
+
+---
+
+### 9.3 Aging v3 (the one aging service) (family AG; LANE_B.md sections 2 and 3)
+
+**The service.** `aging_v3.py`: one fitted object, many consumers, call-scoped selection
+(`aging="v2" | "v3"`, the `use_def` precedent), default "v2" everywhere. Its methods:
+- `rate_delta`;
+- `pt_next`;
+- `level` (relative, peak 1.0, floor 0.25);
+- `shape` (prospects, mean 1.0 over the window, so the FV anchors keep every level and only
+  timing moves);
+- `factor` (the A5 replacement);
+- `component_curve` (read-only for lanes PJ and TL);
+- `meta`.
+
+ML features stay pinned to v2 until a retrained bundle says otherwise. **Unifier additions:**
+- `component_curve(side, 'bsr' | 'fld')` for lane PJ (9.2);
+- the sidecar's run parts come from the frozen vintage reader, never the live cache.
+
+**The ladder.** Adjudicated in order, each arm against the composition of the arms already
+accepted:
+
+- **ARM T, playing time.** A multiplicative, tiered, capped next exposure,
+  `min(cap, pt_prev * rho)`, with the cap at the 99.5th percentile by side and role. It removes the
+  650-to-798 PA overshoot.
+- **ARM S, the rate estimator.** Survivorship lambda in {0.0, 0.5, 1.0}, and a smoother: the
+  3-age moving average against a second-difference penalized fit with penalty {1, 4, 16}.
+- **ARM P, positional buckets** (AG-Q1). Hitters C, SS, 2B/3B, CF, LF/RF, 1B and DH; pitchers SP
+  and RP. Each is shrunk toward the pooled parent with `n/(n+k_P)`, `k_P` in {50, 100, 200, 400}.
+- **ARM R, archetypes out of window** (AG-Q2). Assigned from seasons t-3 to t-1 only, with rates
+  regressed to the league:
+  - hitters: OLD_SKILLS against YOUNG_SKILLS;
+  - pitchers: POWER against COMMAND.
+
+  Statcast and body size are excluded.
+- **ARM H, health** (AG-Q3). A PT hazard only, clipped to [0.80, 1.05] and recentred so league
+  exposure is unchanged, using within-season z-scored IL and TJ features. Expected null.
+
+**Prospects.** Get a bucket only, never an archetype, and no health adjustment (reasons in 9.0
+M1e).
+
+**Interim fixes (AG-Q5, merged; answered 2026-10-01 'Fix both now').**
+- AG_3: the trade factor's pre-peak branch moves onto the tent ratio.
+- AG_4: a PT cap on the incumbent.
+- Each is dark, then flipped not before 2026-11-19, after the path-shape ARM B look, with its
+  blast published.
+- AG_4 (round 4):
+  - passes `pt_cap=False` at the fantasy and hitter_export call sites;
+  - carries AG_8's `warY1Champ` / star_out guard;
+  - keeps the FA Fit on the FA Fit field (9.7): Q9_03's pre-free-agency frame, never the winter
+    frame (round 5).
+
+**Three more served age treatments (round 4).** AG_1 documents them; AG_2 registers each as a
+consumer or a stated exclusion:
+- A6: `positional_fit.fit_aging`, a straight-line glove decline served on /pal/;
+- A7: `mlb_trade_lookup._compute_surplus`, -0.4 WAR a year past 29 in the trade audit;
+- A8: `bayes_trade_value` `catcher_dev.late_peak_bonus`, which AG_12 (b) zeroes when the
+  C-bucket factor applies.
+
+**Cache.** Versioned, never deleted, while the path-shape battery holds its pins. The key hashes
+the fit function's source.
+
+**Consumers and flags.** All under `fa_config.yaml aging_v3.consumers`, default false, one golden
+test per consumer:
+
+| flag | consumer | flip task | date |
+|---|---|---|---|
+| `proj_display` | the display | AG_8 | 11-26 |
+| `team_outlook` | Team Outlook | AG_9 | 12-04 |
+| `fa_pricing` | /fa/ pricing | AG_10 | 12-05, after the Gate 2 guard |
+| `prospect_surplus` | prospect surplus | AG_11 | 12-07 |
+| `contract_tail`, `trade_fallback`, `fantasy` | tails, trade fallback, fantasy | AG_12 | 12-07 |
+
+The ML heads move only through the 2027 forward read (AG_14 to AG_16, AG-Q7). The component
+curves that betting reads never change.
+
+**Gate (docs/AGING_V3_GATE.md, registered before 2026-10-23).**
+- Frames on the fWAR corpus by label season:
+  - DEV 2008-2010;
+  - GATE 2011-2013;
+  - Tier-2 2014-2025, veto only;
+  - CONFIRM 2026.
+- Primary statistic: ACAL over 10 age-band by side cells, Bonferroni p < 0.0125.
+- Guards: G1 to G4.
+- PS (prospect shape) is read in the same session. It uses corpus debut cohorts 2014-2018 and
+  reads no FV and no list.
+- Health is read on 2027-01-12.
+
+---
+
+### 9.4 Tools: framework, source accuracy, the power composite, prospect stat projections v2, tools as eFV V2 candidates (family TL; LANE_C.md section 2)
+
+#### 9.4.1 The power composite audit
+
+The audit in 9.1.3 C2, re-verified at HEAD by TL_1 and published as
+docs/tools-2026-10/POWER_SURFACE_AUDIT.md.
+
+#### 9.4.2 The tool-to-stat framework and tool above grade (TAG)
+
+**Tool-implied production (TIP), built from our derived tables:**
+- TIP_mat: per-grade-bin medians with thin bins dropped, weighted isotonic regression,
+  interpolation, flat beyond the last bin.
+- TIP_first: TIP_mat plus the stat-specific age change from aging_v3, aging="v2" until a pass.
+- AAA: TIP_MLB plus the within-player offsets of '### 2.10'.
+- Below AAA: league-relative, labelled uncalibrated.
+- Point in time (round 4). For an eFV vintage V, the level norms, the AAA ISO offset and the TIP
+  table use seasons up to V-1 only:
+  - never `compute_level_norms`' default of today;
+  - never the 2023-onward `context_offset_aaa_minus_mlb`;
+  - the build asserts no input season at or after V, and none in 2026 or later.
+
+**TAG**, per debuted player, source, tool and stat:
+- the gap over the first three MLB seasons after the board year;
+- the PIT percentile;
+- a regressed gap with `k_m` from split-half reliability on MLB 2015-2019.
+
+Source metrics: ordering (the only input to a weight), bias (displayed, never offset) and error
+(displayed).
+
+#### 9.4.3 Source accuracy for tools
+
+**Estimator.** BA2's, imported from `tools/ba_tool_grade_lab.py` and `source_backtest`:
+- shrink K 150;
+- clamp 0.6 to 1.5;
+- lag 3;
+- G1 to G5, Holm, controls C6.1 to C6.7.
+
+**Primary stat per tool.**
+
+| tool | primary stat |
+|---|---|
+| hit | K% (TL-Q2, answered) |
+| speed | sprint speed |
+| field | OAA per 1,000 innings |
+| throw | arm mph |
+| game_pwr, fb, cmd | not primaries (round 4): BA2 already read ISO (NO SHIP), K% (LOSS) and BB% (NO SHIP); its verdicts stand, and these rows are descriptive only |
+
+**Look W** runs on 2026-12-03, after the R-LV record, on board years 2017-2024 and debuts up to
+2024. Expectation: hit is the only plausible PASS; the modal outcome elsewhere is NULL. Weighted
+grades live on a separate key, `tools_consensus_w`, that eFV never reads.
+- **Disclosure (round 4).** Board years 2017-2019 carry flat weights, so the informative rows are
+  2020-2024, BA2's own board years. A hit PASS is not independent of BA2.
+- **Fallback (round 4).** If no R-LV record exists by 2027-02-01, look W runs on board years
+  2017-2019 and 2022-2024, after a docs-only dated amendment. TL_12 no longer requires
+  EFV_V2_RESERVED_READ.
+
+#### 9.4.4 The power composite
+
+**Candidates.**
+- C0: today's mean of game and raw.
+- C1: game only.
+- C2: `a*game + (1-a)*raw`, with `a` cross-fitted, player-disjoint.
+
+**Look P (2026-10-21).**
+- Frame: hitters with both grades, board years 2017-2019 and 2022-2024, debuts up to 2024, MLB ISO
+  over the first three seasons.
+- Statistic: within-year Spearman difference, with a permutation floor, an AUC veto and Holm.
+- Expected: +0.01 to +0.03 rho for C1 and C2.
+
+**Serving.** Under `POWER_COMPOSITE_MODE` (TL-Q4). The blast is measured over:
+- `pwr`, `composite_off`, `composite_overall`;
+- DvM+ leaves;
+- stat flags;
+- PROSPX ties;
+- IFA.
+
+eFV cannot move, because no eFV input reads power.
+
+#### 9.4.5 Tools as eFV drivers
+
+**A new family, never a re-run:**
+- `pwr_comp` (round 4): a candidate only if look P served C2 with `a` below 1. A C1 serve, or
+  `a` = 1.0, re-reads the spent key D-1:tool_game_pwr:hit. `a` is cross-fitted per fold on board
+  years up to V-3, using players outside the fold, never the served `a`;
+- `tip_iso_resid`, built point-in-time per V (9.4.2);
+- `tool_hit_w`, built per fold outside the V frame.
+
+**Expected effect.** +0.000 to +0.003 against about 0.03 resolvable.
+
+**Routes.**
+- Recommended (TL-Q1 a): a DS-06 admission diagnostic on development folds after the reserved
+  read (TL_16), pre-declaring the admitted features for the next registration.
+- Under (b): only `pwr_comp` and `tip_iso_resid` join V2 by an amendment before EV-12 (TL_10).
+- Timing of (b) (round 2). EFV_V2_EV12 may dispatch from 2026-10-11 (queue position 121; it
+  requires Z1_RUN and Q10_11). So TL-Q1 is due 2026-10-10. On (b), the orchestrator adds TL_10
+  to EV12's requires before EV12 dispatches, and V2's registration then waits until at least
+  2026-10-22 (TL_10 needs look P of 2026-10-21). If EV12 has registered V2 first, (b) is void and
+  (a) applies: TL_10 records the void line and TL_16 runs as under (a).
+- `tool_hit_w` never joins V2, because its evidence touches R-LV.
+
+#### 9.4.6 Prospect stat-line projections
+
+`prospect_statline.py`: a stacked ridge per stat and side. Inputs:
+- TIP_first;
+- translated MiLB rates;
+- the backward-refit xwOBA proxy;
+- aging_v3 component curves;
+- FanGraphs present grades;
+- PJ's playing time.
+
+WAR comes through PJ's component assembly, on FanGraphs' frame, for the whole program.
+
+**Gate (docs/proj-prospect-2026-10/PROSPECT_STATLINE_GATE.md).**
+- Frames: dev cohorts 2017-2021 (spent by WS-7, disclosed); holdout cohorts 2022-2024, read once on
+  2026-12-10, after the anchor look.
+- L1: per-stat MAE against the best single baseline.
+- L2: WAR MAE AND within-cohort Spearman against the FV-anchored path.
+- Expected: L1 passes for K% and probably ISO; L2 ties or loses rank. The arrival line ships as
+  components only (TL-Q6).
+- Holdout overlap (round 4). Looks P, T and W read realized lines of the 2022-2024 cohorts before
+  TL_17. TL_3 discloses this and TL_17 prints the overlap counts. No table fit by those looks is
+  an input or a baseline of `prospect_statline`. TL_8's proxy uses cohorts up to 2021 only.
+
+#### 9.4.7 Displays
+
+| surface | flag | class |
+|---|---|---|
+| Source Accuracy "Tools" tab | `SOURCE_ACCURACY_TOOLS_TAB` | 2 |
+| PWR | `POWER_COMPOSITE_MODE` | 3 |
+| weighted chips | `TOOL_SOURCE_WEIGHTS` (TL-Q5) | 3 |
+| arrival line | `SERVE_PROSPECT_STATLINE` | 2 |
+
+Source Comparison keeps its eFV progress ledger whole and gets one link line.
+
+#### 9.4.8 Re-derived tool tables and the /scouting/ page (message 3)
+
+**Part T: the re-derivation gate.** TL_19 registers it; TL_21 runs the look on 2026-10-28.
+
+*Incumbent.* The published estimates: FANGRAPHS_FV_FRAMEWORK.md Part 2 and the
+`audit_vs_published` blocks.
+- Game power to ISO (round 4): Mark Smith's W2 (2013) ISO column, framework section 2.2: .140 at
+  50, .191 at 60, .242 at 70, .294 at 80. Its one negative row (20, -.013) is floored at .000
+  and disclosed (round 5). The page prints it, labelled.
+- Hit to K%, which has no published table, keeps the grade-blind league line.
+
+*Candidate.* OUR table by the TIP_mat rule, with no free parameter.
+
+*Rows.*
+- The grade is the last pre-debut consensus point; identity is resolved outcome-blind.
+- Always excluded: list vintages 2020-21 and debut cohorts 2025+.
+- FIT: one row per player over MLB seasons 2015-2025, 2020 excluded.
+- HOLDOUT: the 2026 season only, read after the regular season ended (a time-forward holdout).
+
+*Primary cells.* Seven:
+- game_pwr to HR/600;
+- game_pwr to ISO;
+- hit to AVG;
+- hit to K%;
+- speed to SB/600;
+- cmd to BB% (SP);
+- fb to velocity (SP).
+
+*Statistic.*
+- MAE difference on identical rows, paired bootstrap B 2000, seed 20261028.
+- MDE95 per cell (round 4): computed by TL_4 on FIT rows only and committed alone as a dated Part
+  T amendment before 2026-10-28. TL_21 refuses to run without it and never recomputes it.
+- PASS: the upper bound below 0 AND an improvement of at least max(MDE95, 5% of the incumbent
+  MAE), Holm at 0.05.
+- NOT COMPUTABLE below 60 rows.
+
+*Prediction.* Our flatter tables win where the published ladder is steepest.
+
+*Scope of the verdict.* It moves no grade, weight or eFV input. It decides only which tool-tier
+numbers the public page prints.
+
+**The /scouting/ page.** TL_20 registers it, TL_22 builds it dark and TL_23 flips it; TL_24 runs
+after the anchor look. It is a `build_site.py` generator page on the shared shell, so site.css
+tokens and asset stamping come with it; a hand-authored version would have to join
+`HAND_AUTHORED_PAGES`. Its sections:
+- **A. The 20-80 scale:** framework Part 1, cited by source id.
+- **B. FV tiers:** two columns never mixed (TL-Q7).
+  - "If he arrives": McDaniel 2014, the 2018 and 2022 primers, served `fv_to_prime_war`.
+  - "Expected, bust-inclusive": the Clemens 2026 table, served `fv_to_6yr_avg_war` with its
+    provenance sentence, and `p_bucket_given_fv`.
+  - The 2-3x trap explained.
+  - HARD RULE (round 4, ruling R2), verbatim: "nothing is computed by consensus-FV cell before
+    PROSPECT_ANCHOR_LOOK; the served anchor table (in part a realized table) is printed exactly as
+    served with its provenance". Before the look, only these tables print; the FV 35 and 40 cells
+    are not held back. After the look, TL_24 adds only what the record releases.
+  - Calibration line (round 4): the column says it is under the Prospect Anchor calibration test,
+    and never calls it accurate or validated. A note reconciles it with the glossary's seed
+    table, which the glossary prints until the gate repoints its emitter.
+  - The guard's scope (round 2). The page reads through value_framework's served functions, but
+    value_framework.py imports `empirical_anchors` lazily in its `--fit` path (near :3712), and
+    that module reads resolved cohorts. So the source scan covers `tools/scouting_export.py`'s
+    own source and its direct imports:
+    - value_framework is an allowed import;
+    - only `fv_to_prime_war`, `fv_to_6yr_avg_war` and `p_bucket_given_fv` are called;
+    - never `fit_and_write()` (the `--fit` path), `_fitted()` or `empirical_anchors`;
+    - no literal naming debuts, prospects.db, cohorts, outcomes, eFV files or the fit file.
+
+    The provenance sentence is copy: C7's template, filled at build time from the fit file as it
+    stands after epoch step J (round 4, ruling R1). A separate test reads only `cohort_window`,
+    `n_cohort`, `blend_weight_public` and `anchors_provenance` from the fit file, never `anchors`
+    or `diagnostics`. It pins the post-step-J markers. On a mismatch its only remedy is "change
+    the copy"; it never points at the knots or `--fit`.
+- **C. Tool tiers:** the FanGraphs estimate, labelled, plus our measured value only in Part T PASS
+  cells, with n and interval.
+- **D. How eephus uses grades.**
+
+Every number maps to a registry row: the new row `scouting_reference` (eval artifact
+`data/reference/fv_framework_tables.json`, a cited transcription), the value_framework rows,
+`tool_grade_tables` and `tool_tables_rederived`.
+
+Flags: `SCOUTING_PAGE_LIVE` and `SCOUTING_ANCHOR_COLUMN_LIVE`. Placement follows TL-Q8 (answered
+2026-10-01: in the nav). TL_23's one flip commit (round 4) also:
+- adds `('scouting', 'Scouting', '/scouting/')` to NAV_ITEMS right after the glossary;
+- edits the three static navs (prospx and the two CollegeSavant pages) under
+  `test_collegesavant_nav_in_sync.py`;
+- adds the pixel icon to ICON_FOR;
+- adds the PROSPX card and Source Accuracy links;
+- then runs `restamp_hand_authored_pages()`.
+
+---
+
+### 9.5 Team projections (family TM; LANE_A.md sections 2.6 to 3.3)
+
+| option | what | gate | class | flag |
+|---|---|---|---|---|
+| T1 | talent-uncertain win distribution: sigma_T from DEV residuals net of schedule noise, shrinking in-season by k/(k+G) | TM-A | 3 | `TEAM_TALENT_RANGE_LIVE` |
+| T2 | club PA/IP budget (constants frozen from 2022-2025 means), replacement fill, then the 2,430 pin | TM-B (expected unresolvable) | 3 | `TEAM_PT_BUDGET_LIVE` |
+| T3 | RS, RA, run differential and Pythagenpat from PJ's runs and T2's exposure | TM-C | 2 | `TEAM_RUNS_LIVE` |
+| T4 | 2027 preseason season simulation from the Q9_03 as-of-signings frame | forward record only | 3 | `FUTURES_2027_PRESEASON_LIVE` (TM-Q2 a) or `TEAM_OUTLOOK_2027_ODDS_LIVE` (b) |
+| T5 | blended in-season talent | TM-D, dark shadow, 2027 | 3 after its look | |
+| T7 | per-club drill-down reconciling to roster WAR | descriptive | 2 | `TEAM_DRILLDOWN_LIVE` (TM-Q4) |
+| T6 | out-year W-L | stays hidden (owner 2026-06-19) | | |
+
+Not proposed:
+- cohort intercepts (three consecutive losses);
+- a team-level mean recalibration (the 2,430 pin already fixes the level).
+
+**Frames.**
+- DEV: the retro seasons 2022-2025.
+- GATE: the 2026 club season, one look on 2026-12-08, using the retro engine's point-in-time
+  projection with no player-level 2026 residual.
+- FORWARD: 2027, not before 2027-11-16.
+
+Both TM arms pass `aging="v2"` explicitly (unifier, 9.7).
+
+TM_5 and TM_6 move to 2026-11-03 and 2026-11-04 (round 4), the first free days after the World
+Series under TM-Q2 ("from the day after the World Series"). TM_5 still checks that the Series is
+over.
+
+---
+
+### 9.6 Gates and frames (one table)
+
+| gate doc | candidate | frame | statistic | pass rule | look date | flag |
+|---|---|---|---|---|---|---|
+| docs/PROJ_COMPONENTS_GATE.md, PJ-C (PJ_1, PJ_5) | H3 BsR, H4+H5 Fld+Pos, P4 gmLI, P5 RA9 gap; receipts for H0-H2, H6-H8, P0-P3 | component labels from the frozen vintage; DEV bases 2014-2021 (labels <= 2021); HOLDOUT bases 2022-2024 (labels 2022-2025, 2020 excluded); label 2026 never read | rate MAE (runs per 600 PA or 100 IP), survived rows, exposure-weighted, h1; paired player-cluster bootstrap B 1000, seed 20261124, VIF 1.8 | UB95 of the delta < 0 against NAIVE and IMPLICIT; h2-h3 and star UB < +10%; DEV MDE95 > 10% of naive MAE = UNDERPOWERED; gap tripwire 0.30 WAR blocks the flip; H0 and P0 exposure MAE UB95 < 0 against prior-season and 5/4/3 exposure, else PA and IP print 'not projected' (round 4) | 2026-11-25 | `PROJ_COMPONENTS_LIVE` |
+| same doc, PJ-W (PJ_9, PJ_11) | W1 component WAR; W2 twin bundle with component features | label season 2027 frozen by FWAR_VINTAGE_FREEZE_2027; OD 2027 vintage rows; W2 Tier-2 veto on point-in-time bases 2022-2025 (round 4) | delta pooled MAE h1, star slice (base WAR >= 4), tail ratio; bootstrap B 1000, seed 20271109, VIF 1.8 | UB95 < 0 and star UB < +0.0065; MDE95 >= 0.0065 = UNDERPOWERED, then a 2028 accumulation read | not before 2027-11-09 | none (owner word only) |
+| docs/TEAM_PROJECTIONS_GATE.md, TM-A (TM_1, TM_4) | T1 talent-uncertain distribution | DEV retro 2022-2025; GATE 2026 club season (30 clubs) | mean CRPS, candidate minus schedule-only, paired over clubs, B 2000, seed 20261208 | UB95 < 0; coverage reported with Wilson | 2026-12-08 | `TEAM_TALENT_RANGE_LIVE` |
+| same, TM-B | T2 PT budget | same | team wins MAE, paired | UB95 < 0 (expected unresolvable) | 2026-12-08 | `TEAM_PT_BUDGET_LIVE` |
+| same, TM-C | T3 RS and RA | same | RS MAE, RA MAE against carry-forward and league average | UB95 < 0 against both, per side | 2026-12-08 | `TEAM_RUNS_LIVE` |
+| same, TM-D (TM_5, TM_9) | T5 blended talent | 2027 forward shadow, chain-hashed record | Brier of divisionPct and playoffPct at six checkpoints, cluster = club, B 2000 | pooled UB95 < 0 | not before 2027-11-16 | served only after the look |
+| none: forward record only (TM_5, TM_6) | T4 2027 preseason season simulation from the Q9_03 as-of-signings frame | 2027 forward record, descriptive | none | no gate verdict; class 3 flip only on owner answer TM-Q2 | none in this program | `FUTURES_2027_PRESEASON_LIVE` (TM-Q2 a) or `TEAM_OUTLOOK_2027_ODDS_LIVE` (b) |
+| none: descriptive (TM_7) | T7 per-club drill-down reconciling to roster WAR | the served roll-up | none (the reconciliation to roster WAR is a test, not a statistic) | descriptive, class 2 | none | `TEAM_DRILLDOWN_LIVE` (TM-Q4) |
+| docs/AGING_V3_GATE.md, ladder (AG_2, AG_7) | arms T, S, P, R in order | fWAR corpus by label season: DEV 2008-2010; GATE 2011-2013; Tier-2 2014-2025 veto; CONFIRM 2026 (n >= 1,000) | D = ACAL(pred) - ACAL(arm) over 10 cells; player-cluster bootstrap B 2000, seed 20261124 | one-sided p < 0.0125 plus G1 MAE UB <= +0.003, G2 star bias, G3 tail ratio, G4 bucket veto; MDE95 > 0.03 = UNDERPOWERED | 2026-11-24 | `aging_v3.consumers.*` (7) |
+| same, PS | v3 `shape()` against the tent | corpus debut cohorts 2014-2018, no FV, no list | mean paired level-free SSE difference | lo95 > 0; debut-age and bucket guards (10%) | 2026-11-24, same session | `proj_display` (prospect part), `prospect_surplus` |
+| same, H (AG_13) | ARM H PT hazard | DEV 2011-2014; GATE 2015-2018; CONFIRM 2026 | paired exposure MAE h1-h3 | lo95 > 0; WAR MAE UB <= +0.003; league drift < 1% | 2027-01-12 | the surfaces already on v3 |
+| docs/AGING_V3_ML_FORWARD_GATE.md (AG_14, AG_16) | shadow bundle on v3 features | label season 2027 | registered by AG_14 (path-shape 5.3 absorption rule) | registered by AG_14 | 2027-10-20 | the ML path flip |
+| guard, not a look (AG_10) | /fa/ on v3 | Gate 2 rows, persist=False | guarantee MAE change | UB <= +1% | with AG_10 | `fa_pricing` |
+| none, defect fixes (AG_3, AG_4) | trade pre-peak branch; PT cap | blast only | | owner answer AG-Q5 | not before 2026-11-19 | `TRADE_AGING_PREPEAK_FIX`, `projection.pt_cap_enabled` |
+| docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md Part P (TL_2, TL_5) | C1 game only, C2 blend, against C0 | both-graded hitters, board years 2017-2019 and 2022-2024, debuts <= 2024, ISO over 3 seasons, 300 PA | within-year Spearman difference; paired player bootstrap B 2000, seed 20261021; permutation floor | lo95 > 0 AND >= 2x floor AND AUC veto; Holm over C1, C2 | 2026-10-21 | `POWER_COMPOSITE_MODE` |
+| same, Part T (TL_19, TL_21) | our PAVA tables against the published estimates (game power to ISO: W2's ISO column; hit to K%: the grade-blind line; round 4) | FIT MLB seasons 2015-2025 per player; HOLDOUT 2026 season; no LV 2020-21, no debuts 2025+ | MAE difference, paired over players, B 2000, seed 20261028 | UB95 < 0 AND >= max(MDE95, 5%); Holm over 7 cells; < 60 rows NOT COMPUTABLE | 2026-10-28 | `SCOUTING_PAGE_LIVE` (display only) |
+| same, Part W (TL_12) | accuracy-weighted tool consensus; TAG; primaries hit (K%), speed, field, throw, never BA2's three pairs (round 4) | board years 2017-2024 after the R-LV record (2017-2019 flat, disclosed); fallback 2017-2019 and 2022-2024 if no R-LV record by 2027-02-01; debuts <= 2024; outcomes through 2026 | BA2 G1-G5 per tool | BA2's rule, Holm across primaries | 2026-12-03 | `TOOL_SOURCE_WEIGHTS`, `SOURCE_ACCURACY_TOOLS_TAB` |
+| docs/proj-prospect-2026-10/PROSPECT_STATLINE_GATE.md (TL_3, TL_17) | stacked-ridge stat line | dev debut cohorts 2017-2021; holdout 2022-2024 | L1 per-stat MAE against the best baseline; L2 WAR MAE and within Spearman against FV-anchored | L1 lo95 > 0, Holm, coverage veto; L2 both lo95 > 0 and slope not worse | 2026-12-10 | `SERVE_PROSPECT_STATLINE` |
+| EFV_V2_GATE.md amendment, TL-Q1 route (b) (TL_10) | `pwr_comp` (only if look P served C2 with a < 1, a cross-fitted per fold; round 4), `tip_iso_resid`; never `tool_hit_w` | V2's frames | V2's (DS-06 inside every fold) | V2's | 2026-12-01, EFV_V2_RESERVED_READ (V2's own look; this program adds none) | none here |
+| next registration, TL-Q1 route (a), or (b) void (TL_16) | `pwr_comp`, `tip_iso_resid`, `tool_hit_w` | development folds only, after the R-LV record | DS-06 admission diagnostic; adjudicates nothing | pre-declaration for the next registration only | none in this program | none |
+| no gate: HARD RULE (TL_23, TL_24) | scouting FV tier column | industry tables and served configs only; the served anchor table printed exactly as served with its provenance (round 4) | none | nothing computed by consensus-FV cell before the anchor look; after, only what the record releases | after the anchor look's record | `SCOUTING_ANCHOR_COLUMN_LIVE` |
+| none: the 2027 label freeze (FWAR_VINTAGE_FREEZE_2027, round 4) | the 2027 fWAR season added to the frozen vintage, never a refreeze | 2027 only | none (a freeze, no number) | committed alone with its vintage id | the first free day on or after 2027-10-06 after the regular season ends | none |
+
+Common to every gate:
+- the registration is committed before any number exists;
+- one look, with a fixture dry run first;
+- output is teed;
+- an exception after scoring began is never rerun (OWNER_QUESTION.md);
+- a null is a finding;
+- thresholds are frozen;
+- failed challengers are recorded as blocks inside the parent artifact;
+- (round 4) a late look: "if today is after the registered date, first file a docs-only dated
+  amendment to the gate naming the new date and the reason, commit it alone, and only then run;
+  never early";
+- (round 4) eval artifacts ship. No `*_eval.json` is listed in `deploy/data_exclude.txt`; lab-only
+  files live under `data/_labs/`.
+
+---
+
+### 9.7 Conflicts resolved
+
+| conflict | between | resolution |
+|---|---|---|
+| **One aging service** | 9.2 (PJ fitted its own linear age terms for BsR and Fld), 9.3, 9.4 (TL needs stat-specific age deltas) | `aging_v3.py` is the only place this program adds an age adjustment. AG_5 also builds `component_curve(side, 'bsr' / 'fld')` with the incumbent estimator; PJ_4 requires AG_5 and fits no local age term; TL_4's `tip_first` and TL_11 call `component_curve` with aging="v2" until AG_7 passes (TL_11 requires AG_5 and PJ_4). The aging gate does not adjudicate the two new curves (PJ-C does). The existing K%, BB%, ISO, BABIP and HR curves never change (betting `woba[0]`). |
+| **The label question** | PJ, AG, TL against eWAR v3 and EPOCH-Q4 | Every label is FanGraphs' WAR or run parts from the frozen vintage (EPOCH_E3, D9), never the live cache. The displayed WAR stays eWAR (v2, then v3 at EBR_3; EPOCH-Q4, EBR-Q5), so projected lines say "FanGraphs frame" and realized seasons say "eWAR". LANE_C's line "house eWAR v3 parts after EBR_3" is overruled by the eBR plan section 5: the stat line's WAR leg stays on FanGraphs' frame for the whole program (TL_3, TL_11 U5). A switch to a house part is the 2027 label epoch's question, not this program's. |
+| **Display doors: the Projection tab** | PJ_7/PJ_8, AG_8/AG_17 | Sequential: PJ_8 (11-26) before AG_17 (11-27, now requiring PJ_8). Tab order: WAR path, components, aging. The byte-identity pins are flag-relative. |
+| **Display doors: Team Outlook wins** | AG_9 `team_outlook`, TM_8 `TEAM_PT_BUDGET_LIVE`, AG_4's PT cap, AG_10 | TM_2 and TM_3 pin aging="v2" in both arms, so the TM verdict does not depend on AG_9. TM_8 measures its blast on whatever engine serves at flip time and names an AG_9 flip. Not chained by requires, so an unanswered AG-Q4 cannot block TM. FA Fit (round 4, ruling R5; frame fixed in round 5): `fa_fit._outlook_wins` reads one field, the pre-free-agency frame's wins that Q9_03 emits under their own name for fa_fit (never the winter frame, never the served 'wins'), always on the aging="v2", uncapped, un-budgeted engine. No Part 9 flip adds a second key; `byYear[].winsFaFit`, on that same frame, is only the fallback if Q9_03 emitted no separate field. A repoint is proven by a test that fa_fit's per-club input wins are equal before and after. TM_3, AG_4, AG_10 and AG_13 require Q9_03; AG_9 requires it through Q9_03b. AG_9 asserts data/fa_class.json byte-identical with its flag on and off. AG_4 and AG_10 assert it across a Team Outlook-only change, because AG-Q5 and AG-Q4 move FA guarantees by design. |
+| **Display doors: betting inputs** | PJ, AG_8, AG_4, AG_13 against 5c-B/5c-C | PJ adds keys only (pin test). AG_8 lists warY1Champ movement and STOPs if a 5c-C column that reads it is served. AG_4 and AG_13 carry the same guard (round 4). AG_4 passes `pt_cap=False` at the fantasy and hitter_export call sites. AG_13 lists fantasy and hitter_export moves for consumers already on v3. |
+| **Display doors: DISPLAY pass** | every display task | PJ_7, AG_8, AG_17, TL_18 require DISPLAY_projections. TM_7 requires DISPLAY_projections and DISPLAY_franchise. TL_7 requires DISPLAY_prospx. TL_14 requires DISPLAY_glossary_models. AG_10 requires DISPLAY_fa. AG_12 requires DISPLAY_trademachine and DISPLAY_fantasy. TL_22 (/scouting/) requires DISPLAY_glossary_models and DISPLAY_home_shell. Round 4: `requires` does not prove a pass landed (qctl marks STOPPED tasks done), so each of these checks `dq/results/DISPLAY_<module>.md` exists and does not start with STOPPED. |
+| **eWAR v3 (EBR plan)** | PJ components against house parts | Components target FanGraphs; house parts are never labels here; no task reads `ewar_v3`. |
+| **efv2026 (SG_*)** | dates; frames | No shared frame. AG_9 moved off 12-02 (the SG_6 and SG_8 reads). No task of this program reads a 2026 MiLB line for eFV. |
+| **F-SCORE** | outlook leg reads served wins | T3's run differential never enters F-SCORE. Round 4: no Part 9 task requires FS_2F_FLIP. TM_8, AG_4 and AG_9 re-export F-SCORE only when `FSCORE_LIVE` is True at HEAD. Their blasts name F-SCORE and its OUTLOOK leg, not the retired Index (FS-Q4 (b)). TM_9 no longer requires TM_8 and reads the live flags. |
+| **The DISPLAY pass and copy** | copy and receipts | Every flip carries the glossary, registry and copy-lint gates. The scouting page follows DISPLAY_home_shell's shell conventions. Round 4: each flip (PJ_8, AG_8, AG_17, TM_8, TL_7, TL_15, TL_18) adds a `_receiptSpecs` entry reading its shipped eval artifact. TL_14 writes no glossary term; TL_15 carries them. |
+| **The epoch calendar and its bans** | every dated task | Every build carries `not_before` >= 2026-10-12 and checks the step Z entry. The program's own looks are on distinct days off every other gate's look day (U1 in every spec; 9.8). PJ_5 moved to 11-25 (AG_7 keeps 11-24). TM_3 moved to 10-22, AG_8/PJ_8/AG_14 to 11-26, AG_17 to 11-27, AG_9 to 12-04, AG_10 to 12-05, AG_11 to 12-07, TM_8 to 12-11. Nothing writes between step A and step Z. Round 4 (ruling R4): U1 reads every look day a record defines from that record: the anchor look under PROSPECT_ANCHOR_GATE sections 14 and 18, the reserved read under EFV_V2_GATE '## 9. Results', each Part 9 gate's own entry. Every exporter, lab or look stops if any look record in docs/*GATE*.md is dated today. TM_5 and TM_6 moved to 11-03 and 11-04. |
+| **PROJ_PATH_SHAPE_GATE** | WAR label seasons, the proj_ml schema, catcher and age levers | PJ reads no WAR label before 2027. W2 waits for ARM B (PJ_9 on 11-19). AG registers before 10-23, versions its caches, pins the ML features to v2, and reaches the ML heads only through the 2027 forward read. AG_3 and AG_4 flip after ARM B. |
+| **PROSPECT_ANCHOR_GATE** | the prospect level and FV cells | No task computes a statistic by consensus-FV cell. AG_11 now requires PROSPECT_ANCHOR_LOOK. TL_17 requires it. The scouting FV column is industry tables and served configs only until TL_24 reads the record. Round 4: the served anchor table, in part a realized table, prints exactly as served with its provenance (ruling R2). The provenance is filled from the post-step-J fit file, and no task re-applies the knots or runs `--fit` outside EPOCH_RUN step J (ruling R1). |
+| **The Statcast and ISO-cohort loss ledger** | PJ inputs, AG arms, TL units | No Statcast contact-quality input to any WAR or batting head. Sprint speed and OAA enter only BsR and Fld heads through a DEV decision recorded before the holdout, and W2's 2027 read. AG excludes every Statcast feature. TL uses Statcast only as outcome units. Hitter season-ISO cohorts are not re-run; ARM R's out-of-window rule is the change, registered as new. |
+| **The eFV frontier** | TL_9, TL_10, TL_16 | Closed to re-running spent arms. The tool family enters only by pre-declaration (TL-Q1 a) or a pre-EV-12 amendment (b; the orchestrator then adds TL_10 to EFV_V2_EV12's requires before EV12 dispatches, the Q10_11 mechanism). TL-Q1 is due 2026-10-10, the day before EV12 may dispatch; under (b) V2's registration waits until at least 2026-10-22; if EV12 registered first, (b) is void and (a) applies. BA2's hit result is not credited. |
+| **M15 forward vintage and Q9_03 winter frame** | PJ_10, TM_3, TM_5, AG_9 | PJ_10 amends M15's document after it exists. TM_3 builds on Q9_03's two frames. AG_9 flips between the December and January freezes and logs the engine change. |
+| **bracket_v1** | Futures in October | TM_6 never touches bracket_sim; Pennant and WS stay on bracket_v1 until its record ends. |
+
+---
+
+### 9.8 Queue insertion plan
+
+Groups:
+- **G0 (gap docs):** after EPOCH_E3 (round 4, mechanics 8; it was after
+  W11_2_STEAL_RUNNER_SPLIT_REGISTRATION), so BET_7H_REREAD, GRPO_FWD_30D and EPOCH_E3 (all
+  not_before 2026-10-02) dispatch first. AG_2 first, because it must commit before 2026-10-23.
+  The nine are already in the live queue at positions 76 to 84 under a 2026-10-03 hold, and
+  `dq/sync_part9.py` does not move existing tasks. The orchestrator moves them by hand, or does
+  not pass `--release-holds` until those three have dispatched.
+- **G1 (first post-Z builds and look P):** after Q9_03_TEAM_OUTLOOK_WINTER_FRAME, so they run
+  ahead of the 10-11 backlog that would otherwise push look P past its date.
+- **G2 (display-dependent work, late October):** after DISPLAY_collegesavant.
+- **G3 (November onward):** after Q11_10_BRAND_SWEEP_AND_FLIP, at the tail.
+
+In each group, every row goes after the row above it.
+
+<!--Q98-->
+| # | id | kind | not_before | requires | goes after (existing queue id or the previous row) |
+|---|---|---|---|---|---|
+| 1 | AG_2_AGING_V3_GATE_REGISTRATION | P8 | null (gap docs) | none | EPOCH_E3 |
+| 2 | PJ_1_COMPONENTS_GATE_REGISTRATION | P8 | null (gap docs) | none | AG_2_AGING_V3_GATE_REGISTRATION |
+| 3 | TM_1_TEAM_GATE_REGISTRATION | P8 | null (gap docs) | none | PJ_1_COMPONENTS_GATE_REGISTRATION |
+| 4 | TL_1_POWER_SURFACE_AUDIT | P8 | null (gap docs) | none | TM_1_TEAM_GATE_REGISTRATION |
+| 5 | TL_2_TOOL_GATE_REGISTRATION | P8 | null (gap docs) | TL_1_POWER_SURFACE_AUDIT | TL_1_POWER_SURFACE_AUDIT |
+| 6 | TL_3_STATLINE_GATE_REGISTRATION | P8 | null (gap docs) | TL_2_TOOL_GATE_REGISTRATION | TL_2_TOOL_GATE_REGISTRATION |
+| 7 | TL_19_TOOL_TABLE_REDERIVE_REGISTRATION | P8 | null (gap docs) | TL_2_TOOL_GATE_REGISTRATION | TL_3_STATLINE_GATE_REGISTRATION |
+| 8 | TL_20_SCOUTING_PAGE_REGISTRATION | P8 | null (gap docs) | TL_19_TOOL_TABLE_REDERIVE_REGISTRATION | TL_19_TOOL_TABLE_REDERIVE_REGISTRATION |
+| 9 | AG_1_AGING_DOCS_TRUTH | P8 | null (gap docs) | none | TL_20_SCOUTING_PAGE_REGISTRATION |
+| 10 | PJ_10_FORWARD_FREEZE_AMENDMENT | P8 | 2026-10-12 | M15_PROJECTIONS_FREEZE_TRIPWIRE, PJ_1_COMPONENTS_GATE_REGISTRATION | Q9_03_TEAM_OUTLOOK_WINTER_FRAME |
+| 11 | PJ_2_COMPONENT_FRAME | P8 | 2026-10-12 | PJ_1_COMPONENTS_GATE_REGISTRATION, EPOCH_RUN | PJ_10_FORWARD_FREEZE_AMENDMENT |
+| 12 | PJ_3_COMPONENT_SCORER | P8 | 2026-10-12 | PJ_1_COMPONENTS_GATE_REGISTRATION, EPOCH_RUN | PJ_2_COMPONENT_FRAME |
+| 13 | TL_4_TOOL_LAB_BUILD | P8 | 2026-10-12 | EPOCH_RUN, TL_2_TOOL_GATE_REGISTRATION, TL_19_TOOL_TABLE_REDERIVE_REGISTRATION | PJ_3_COMPONENT_SCORER |
+| 14 | TL_8_PROXY_BACKFILL | P8 | 2026-10-12 | EPOCH_RUN, TL_3_STATLINE_GATE_REGISTRATION | TL_4_TOOL_LAB_BUILD |
+| 15 | AG_5_AGING_SERVICE_BUILD_DARK | P8 | 2026-10-14 | AG_2_AGING_V3_GATE_REGISTRATION, EPOCH_RUN | TL_8_PROXY_BACKFILL |
+| 16 | PJ_4_COMPONENT_HEADS_DEV | P8 | 2026-10-14 | PJ_2_COMPONENT_FRAME, PJ_3_COMPONENT_SCORER, AG_5_AGING_SERVICE_BUILD_DARK | AG_5_AGING_SERVICE_BUILD_DARK |
+| 17 | TM_2_TEAM_SCORER | P8 | 2026-10-14 | TM_1_TEAM_GATE_REGISTRATION, EPOCH_RUN, M15_PROJECTIONS_FREEZE_TRIPWIRE | PJ_4_COMPONENT_HEADS_DEV |
+| 18 | PJ_6_COMPONENT_EXPORT_DARK | P8 | 2026-10-19 | PJ_4_COMPONENT_HEADS_DEV | TM_2_TEAM_SCORER |
+| 19 | TL_5_POWER_COMPOSITE_LOOK | P8 | 2026-10-21 | TL_4_TOOL_LAB_BUILD | PJ_6_COMPONENT_EXPORT_DARK |
+| 20 | TL_6_POWER_COMPOSITE_DARK | P8 | 2026-10-22 | TL_5_POWER_COMPOSITE_LOOK | TL_5_POWER_COMPOSITE_LOOK |
+| 21 | TL_9_EFV_TOOL_SIDECAR | EV | 2026-10-22 | EPOCH_RUN, TL_5_POWER_COMPOSITE_LOOK | TL_6_POWER_COMPOSITE_DARK |
+| 22 | TL_10_EFV_V2_TOOL_AMENDMENT | EV | 2026-10-22 | TL_5_POWER_COMPOSITE_LOOK, TL_9_EFV_TOOL_SIDECAR | TL_9_EFV_TOOL_SIDECAR |
+| 23 | TM_3_TEAM_CANDIDATES_DARK | P8 | 2026-10-22 | TM_2_TEAM_SCORER, PJ_4_COMPONENT_HEADS_DEV, Q9_03_TEAM_OUTLOOK_WINTER_FRAME | TL_10_EFV_V2_TOOL_AMENDMENT |
+| 24 | PJ_7_COMPONENT_DISPLAY_DARK | DISPLAY | 2026-10-26 | PJ_6_COMPONENT_EXPORT_DARK, DISPLAY_projections | DISPLAY_collegesavant |
+| 25 | PJ_12_PUBLIC_BENCHMARK | P8 | 2026-10-26 | PJ_1_COMPONENTS_GATE_REGISTRATION | PJ_7_COMPONENT_DISPLAY_DARK |
+| 26 | TL_7_POWER_COMPOSITE_FLIP | P8 | 2026-10-26 | TL_6_POWER_COMPOSITE_DARK, DISPLAY_prospx | PJ_12_PUBLIC_BENCHMARK |
+| 27 | AG_6_AGING_V3_DEV_AND_POWER | P8 | 2026-10-27 | AG_5_AGING_SERVICE_BUILD_DARK | TL_7_POWER_COMPOSITE_FLIP |
+| 28 | TL_11_STATLINE_BUILD_DARK | P8 | 2026-10-27 | TL_3_STATLINE_GATE_REGISTRATION, TL_4_TOOL_LAB_BUILD, TL_8_PROXY_BACKFILL, AG_5_AGING_SERVICE_BUILD_DARK, PJ_4_COMPONENT_HEADS_DEV | AG_6_AGING_V3_DEV_AND_POWER |
+| 29 | TL_21_TOOL_TABLE_REDERIVE_LOOK | P8 | 2026-10-28 | TL_4_TOOL_LAB_BUILD, TL_19_TOOL_TABLE_REDERIVE_REGISTRATION | TL_11_STATLINE_BUILD_DARK |
+| 30 | TL_22_SCOUTING_PAGE_BUILD_DARK | DISPLAY | 2026-10-29 | TL_20_SCOUTING_PAGE_REGISTRATION, TL_21_TOOL_TABLE_REDERIVE_LOOK, DISPLAY_glossary_models, DISPLAY_home_shell | TL_21_TOOL_TABLE_REDERIVE_LOOK |
+| 31 | TL_23_SCOUTING_PAGE_FLIP | P8 | 2026-10-30 | TL_22_SCOUTING_PAGE_BUILD_DARK | TL_22_SCOUTING_PAGE_BUILD_DARK |
+| 32 | TM_5_PRESEASON_2027_DARK | P8 | 2026-11-03 | TM_1_TEAM_GATE_REGISTRATION, Q9_03_TEAM_OUTLOOK_WINTER_FRAME, BRACKET_SIM_BUILD | Q11_10_BRAND_SWEEP_AND_FLIP |
+| 33 | TM_6_PRESEASON_2027_FLIP | P8 | 2026-11-04 | TM_5_PRESEASON_2027_DARK | TM_5_PRESEASON_2027_DARK |
+| 34 | AG_3_TM_PREPEAK_FIX | P8 | 2026-11-19 | EPOCH_RUN | TM_6_PRESEASON_2027_FLIP |
+| 35 | AG_4_CHAMPION_PT_CAP | P8 | 2026-11-19 | EPOCH_RUN, Q9_03_TEAM_OUTLOOK_WINTER_FRAME | AG_3_TM_PREPEAK_FIX |
+| 36 | PJ_9_STACK_ARM_DARK | P8 | 2026-11-19 | PJ_4_COMPONENT_HEADS_DEV, EPOCH_RUN | AG_4_CHAMPION_PT_CAP |
+| 37 | TL_24_SCOUTING_FV_COLUMN_POST_ANCHOR | P8 | 2026-11-23 | TL_23_SCOUTING_PAGE_FLIP, PROSPECT_ANCHOR_LOOK | PJ_9_STACK_ARM_DARK |
+| 38 | AG_7_AGING_V3_LOOK | P8 | 2026-11-24 | AG_6_AGING_V3_DEV_AND_POWER | TL_24_SCOUTING_FV_COLUMN_POST_ANCHOR |
+| 39 | PJ_5_COMPONENT_LOOK | P8 | 2026-11-25 | PJ_4_COMPONENT_HEADS_DEV | AG_7_AGING_V3_LOOK |
+| 40 | AG_8_FLIP_PROJ_DISPLAY | P8 | 2026-11-26 | AG_7_AGING_V3_LOOK, DISPLAY_projections | PJ_5_COMPONENT_LOOK |
+| 41 | PJ_8_COMPONENT_FLIP | P8 | 2026-11-26 | PJ_5_COMPONENT_LOOK, PJ_6_COMPONENT_EXPORT_DARK, PJ_7_COMPONENT_DISPLAY_DARK | AG_8_FLIP_PROJ_DISPLAY |
+| 42 | AG_14_ML_V3_FORWARD_REGISTRATION | P8 | 2026-11-26 | AG_7_AGING_V3_LOOK, M15_PROJECTIONS_FREEZE_TRIPWIRE | PJ_8_COMPONENT_FLIP |
+| 43 | AG_17_DISPLAY_AGING_EXPLAINER | DISPLAY | 2026-11-27 | AG_8_FLIP_PROJ_DISPLAY, DISPLAY_projections, PJ_8_COMPONENT_FLIP | AG_14_ML_V3_FORWARD_REGISTRATION |
+| 44 | TL_12_TOOL_WEIGHTS_LOOK | P8 | 2026-12-03 | TL_4_TOOL_LAB_BUILD | AG_17_DISPLAY_AGING_EXPLAINER |
+| 45 | AG_9_FLIP_TEAM_OUTLOOK | P8 | 2026-12-04 | AG_8_FLIP_PROJ_DISPLAY, Q9_03b_OUTLOOK_FREEZE_2026_12 | TL_12_TOOL_WEIGHTS_LOOK |
+| 46 | TL_13_TOOL_WEIGHTS_DARK | P8 | 2026-12-04 | TL_12_TOOL_WEIGHTS_LOOK | AG_9_FLIP_TEAM_OUTLOOK |
+| 47 | TL_14_TOOL_ACCURACY_DISPLAY_DARK | DISPLAY | 2026-12-04 | TL_12_TOOL_WEIGHTS_LOOK, DISPLAY_glossary_models | TL_13_TOOL_WEIGHTS_DARK |
+| 48 | TL_16_EFV_TOOL_DEV_ADMISSION | EV | 2026-12-04 | TL_9_EFV_TOOL_SIDECAR, TL_12_TOOL_WEIGHTS_LOOK, EFV_V2_RESERVED_READ | TL_14_TOOL_ACCURACY_DISPLAY_DARK |
+| 49 | AG_10_FA_GUARD_AND_FLIP | P8 | 2026-12-05 | AG_8_FLIP_PROJ_DISPLAY, DISPLAY_fa, Q9_03_TEAM_OUTLOOK_WINTER_FRAME | TL_16_EFV_TOOL_DEV_ADMISSION |
+| 50 | AG_11_PROSPECT_SURPLUS_FLIP | P8 | 2026-12-07 | AG_8_FLIP_PROJ_DISPLAY, PROSPECT_ANCHOR_LOOK | AG_10_FA_GUARD_AND_FLIP |
+| 51 | AG_12_TAIL_TRADE_FANTASY_FLIP | P8 | 2026-12-07 | AG_10_FA_GUARD_AND_FLIP, DISPLAY_trademachine, DISPLAY_fantasy | AG_11_PROSPECT_SURPLUS_FLIP |
+| 52 | TL_15_TOOL_DISPLAY_FLIP | P8 | 2026-12-07 | TL_13_TOOL_WEIGHTS_DARK, TL_14_TOOL_ACCURACY_DISPLAY_DARK | AG_12_TAIL_TRADE_FANTASY_FLIP |
+| 53 | TM_4_TEAM_LOOK_2026 | P8 | 2026-12-08 | TM_3_TEAM_CANDIDATES_DARK | TL_15_TOOL_DISPLAY_FLIP |
+| 54 | TM_7_TEAM_DISPLAY_DARK | DISPLAY | 2026-12-09 | TM_4_TEAM_LOOK_2026, PJ_8_COMPONENT_FLIP, DISPLAY_projections, DISPLAY_franchise | TM_4_TEAM_LOOK_2026 |
+| 55 | TL_17_STATLINE_LOOK | P8 | 2026-12-10 | TL_11_STATLINE_BUILD_DARK, PROSPECT_ANCHOR_LOOK | TM_7_TEAM_DISPLAY_DARK |
+| 56 | TM_8_TEAM_FLIPS | P8 | 2026-12-11 | TM_7_TEAM_DISPLAY_DARK | TL_17_STATLINE_LOOK |
+| 57 | TL_18_STATLINE_DISPLAY_FLIP | P8 | 2026-12-11 | TL_17_STATLINE_LOOK, DISPLAY_projections, DISPLAY_prospx | TM_8_TEAM_FLIPS |
+| 58 | AG_15_ML_V3_SHADOW_BUNDLE | P8 | 2027-01-05 | AG_14_ML_V3_FORWARD_REGISTRATION | TL_18_STATLINE_DISPLAY_FLIP |
+| 59 | AG_13_HEALTH_LOOK | P8 | 2027-01-12 | AG_7_AGING_V3_LOOK, Q9_03_TEAM_OUTLOOK_WINTER_FRAME | AG_15_ML_V3_SHADOW_BUNDLE |
+| 60 | FWAR_VINTAGE_FREEZE_2027 | P8 | 2027-10-06 | EPOCH_E3, EPOCH_RUN | AG_13_HEALTH_LOOK |
+| 61 | AG_16_ML_V3_FORWARD_LOOK | P8 | 2027-10-20 | AG_15_ML_V3_SHADOW_BUNDLE, FWAR_VINTAGE_FREEZE_2027 | FWAR_VINTAGE_FREEZE_2027 |
+| 62 | PJ_11_WAR_LOOK_2027 | P8 | 2027-11-09 | PJ_9_STACK_ARM_DARK, PJ_10_FORWARD_FREEZE_AMENDMENT, PJ_8_COMPONENT_FLIP, FWAR_VINTAGE_FREEZE_2027 | AG_16_ML_V3_FORWARD_LOOK |
+| 63 | TM_9_TEAM_LOOK_2027 | P8 | 2027-11-16 | TM_5_PRESEASON_2027_DARK, PJ_10_FORWARD_FREEZE_AMENDMENT | PJ_11_WAR_LOOK_2027 |
+<!--/Q98-->
+
+Orchestrator notes:
+1. TL-Q1 is due 2026-10-10 because EFV_V2_EV12 may dispatch from 2026-10-11. On answer (b),
+   add TL_10_EFV_V2_TOOL_AMENDMENT to EFV_V2_EV12's requires before EV12 dispatches; V2's
+   registration then waits until at least 2026-10-22, the first day TL_10 can land after look P.
+   If EV12 has already registered V2 when the answer arrives, (b) is void and (a) applies:
+   TL_10 records the void line in DECISIONS_FOR_OWNER.md and changes nothing, and TL_16 runs as
+   under (a).
+2. The look days the program's tasks avoid (U1, rewritten in round 4 under ruling R4):
+   - A look day that a record defines is read from that record, never from a fixed date:
+     - the Prospect Anchor look: PROSPECT_ANCHOR_GATE section 14's rule, the later of 11-20 and
+       step Z + 14, and its section 18 record;
+     - the eFV reserved read: EFV_V2_GATE '## 9. Results';
+     - each Part 9 look: its own gate's look entry.
+   - Every exporter, lab or look task STOPs with 'BLOCKER: date <next day>' if any look record
+     anywhere in docs/*GATE*.md is dated today.
+   - The fixed dates are floors as registered on 2026-10-01:
+     - other gates: 10-20, 10-23, 10-31, 11-02, 11-06, 11-13, 11-16, 11-17, 11-18, 11-20 (floor),
+       12-01 (floor), 12-02 and 2027-02-15;
+     - this program: 10-21, 10-28, 11-24, 11-25, 12-03, 12-08, 12-10, 2027-01-12, 2027-10-20,
+       2027-11-09 and 2027-11-16.
+3. Every single-date look carries the same late-look clause (round 4, ruling R8): AG_13, AG_16,
+   TM_4, TM_9, PJ_11, TL_21, TL_12, TL_17, TL_5, AG_7 and PJ_5. The clause reads: "if today is
+   after the registered date, first file a docs-only dated amendment to the gate naming the new
+   date and the reason, commit it alone, and only then run; never early".
+4. New task (round 4, ruling R7): FWAR_VINTAGE_FREEZE_2027 (P8, not_before 2027-10-06, requires
+   EPOCH_E3 and EPOCH_RUN) goes after AG_13_HEALTH_LOOK and before AG_16. It is the E3 builder
+   run once, as a freeze of the 2027 season, on the first free day after the 2027 regular season
+   ends, committed alone with its vintage id. It never refreezes an earlier season. AG_16 and
+   PJ_11 require it.
+5. Requires changed in round 4:
+   - TM_8 drops FS_2F_FLIP;
+   - TM_9 drops TM_8;
+   - TL_12 drops EFV_V2_RESERVED_READ; its registered fallback is 2027-02-01;
+   - AG_16 and PJ_11 add FWAR_VINTAGE_FREEZE_2027.
+
+   Date changes: TM_5 moves to 2026-11-03 and TM_6 to 2026-11-04.
+6. Requires changed in round 5 (VERIFY_round4 item 4): AG_4, AG_10 and AG_13 add
+   Q9_03_TEAM_OUTLOOK_WINTER_FRAME, because the FA Fit field they pin is Q9_03's pre-free-agency
+   field (TM_3 already requires it; AG_9 requires it through Q9_03b). Q9_03 is not_before
+   2026-10-11 and sits at live queue position 140, ahead of all three. No task is added and no
+   date moves in round 5.
+
+---
+
+### 9.9 Owner questions (20, in 5 batches of 4; full text in OWNER_QUESTIONS.json)
+
+The lanes proposed 21 questions; the unifier adds two for message 3 (TL-Q7, TL-Q8).
+
+Merged or dropped:
+- AG-Q6 (Trade Machine pre-peak) merges into AG-Q5. The new question is "Interim fix", with
+  options both, fold, trade factor only, or cap only; its default (fold) equals both old defaults.
+- TL-Q3 (Baseball America Power mapping) is answered by measurement, so BA stays on game power;
+  the sentence moves into TL-Q4.
+- TM-Q3 (out-year W-L) was already decided by the owner on 2026-06-19 (stay hidden).
+
+Batches are ordered by `needed_by`. Each question's first option is the recommendation.
+
+All 20 were answered on 2026-10-01 under the owner's standing instruction, each with its
+recommended option (DECISIONS_FOR_OWNER.md, 'ANSWERED 2026-10-01 (standing instruction)'). The
+question texts below are kept as asked. Round 4 adds a file contract to the PJ-Q4 owner-side
+action. Files are named `<system>_<season>_<bat|pit>.csv` (steamer or zips), in
+`C:/Users/noah/baseball-projects/_public_projections/`. Each carries:
+- an id column (MLBAMID or playerid);
+- PA, WAR and wOBA or wRC+ for batters, and IP, WAR and FIP for pitchers;
+- a projection date before that season's opener, from a date column or a
+  `<system>_<season>_<bat|pit>.asof.txt` sidecar.
+
+PJ_12 refuses any other file. Preseason 2027 files saved before the 2027 opener let PJ_11 add
+the 2027 industry row.
+
+<!--Q99-->
+| batch | id | header | needed_by | recommendation (first option) | default if unanswered (from the question text) |
+|---|---|---|---|---|---|
+| 1 | TL-Q1 | eFV path | 2026-10-10 | Next registration (Recommended) | If unanswered by 2026-10-10 the default is (a). |
+| 1 | TL-Q2 | Hit target | 2026-10-10 | K% primary (Recommended) | If unanswered by 2026-10-10 the default is (a). |
+| 1 | TL-Q4 | PWR meaning | 2026-10-10 | Production power (Recommended) | If unanswered by 2026-10-10 the look registers (a)'s target, and no served flip happens without an answer. |
+| 1 | AG-Q1 | Age buckets | 2026-10-20 | Seven hitter buckets (Recommended) | If unanswered by 2026-10-20 the registration takes the first option. |
+| 2 | AG-Q2 | Archetypes | 2026-10-20 | Two per side (Recommended) | If unanswered by 2026-10-20, the first option. |
+| 2 | AG-Q3 | Health arm | 2026-10-20 | Register, read 2027-01-12 (Recommended) | If unanswered by 2026-10-20, the first option. |
+| 2 | AG-Q5 | Interim fix | 2026-10-20 | Fix both now (Recommended) | If unanswered by 2026-10-20, option 2: nothing served moves, the cap is tested inside ARM T at the 2026-11-24 look and the trade factor waits for the aging v3 trade-fallback flip. |
+| 2 | PJ-Q4 | Benchmark | 2026-10-25 | I will save the files (Recommended) | If unanswered, nothing is built. |
+| 3 | TL-Q7 | FV column | 2026-10-27 | Both, arrives first (Recommended) | If unanswered by 2026-10-27, option 1. |
+| 3 | TL-Q8 | Scout page | 2026-10-27 | /scouting/ in the nav (Recommended) | If unanswered by 2026-10-27, option 1. |
+| 3 | TM-Q2 | 2027 odds | 2026-11-08 | Switch Futures to 2027 (Recommended) | If unanswered, nothing switches. |
+| 3 | PJ-Q2 | Comp timing | 2026-11-24 | After their own test (Recommended) | If unanswered, nothing flips. |
+| 4 | PJ-Q1 | Comp lines | 2026-11-24 | Parts plus a gap line (Recommended) | If unanswered, the flip uses option 1 and records it. |
+| 4 | PJ-Q3 | Pitcher WAR | 2026-11-24 | Both lines, FIP first (Recommended) | If unanswered, the flip uses option 1. |
+| 4 | AG-Q4 | Dollar scope | 2026-11-25 | Staged, each after its guard (Recommended) | If unanswered by 2026-11-25, the display flip proceeds and every dollar flip waits for an answer. |
+| 4 | AG-Q7 | ML path | 2026-11-25 | Shadow, read after 2027 (Recommended) | If unanswered by 2026-11-25, the first option. |
+| 5 | TL-Q5 | Tool weights | 2026-12-07 | Served chips, display key (Recommended) | If unanswered by 2026-12-07 the default is (b). |
+| 5 | TM-Q4 | Team page | 2026-12-08 | Team Outlook, linked (Recommended) | If unanswered, option 1 is recorded as the default. |
+| 5 | TM-Q1 | Team model | 2026-12-09 | Serve each that passes (Recommended) | If unanswered, neither flips. |
+| 5 | TL-Q6 | Arrival line | 2026-12-11 | Arrival line on both pages (Recommended) | If unanswered by 2026-12-11 the default is (a). |
+<!--/Q99-->
+
+---
+
+### 9.10 What this program does NOT do
+
+**Projections and labels**
+- No Statcast contact-quality input to the WAR head or the batting component. No re-run of the
+  xwOBA arm (NOV15's re-gate owns it).
+- No WAR-label mean head in any form, no pooled age recentering, no catcher or age lever on the
+  ML heads (path-shape section 15, ARM B).
+- No WAR verdict on label seasons 2008-2026. W2's Tier-2 read is veto only.
+- No hitter ISO cohorts, no Marcel 5/4/3, no pitcher PTFIT, and no IL-history playing-time
+  features in the old W1-B form.
+- No ML path into /fa/ pricing. No summing of quantile points. No WAR range built from component
+  ranges.
+- No house eWAR v3 part as a label. No scripted FanGraphs pull: the benchmark uses only files the
+  owner saves. No licensed playing-time model.
+
+**Aging and team**
+- No change to the existing component curves or anything betting reads.
+- No bucket-age head (deprecated; it would be an FV-cell statistic today).
+- No Statcast or body-size archetypes. No tool-grade archetypes before the anchor look.
+- No cohort intercepts and no team-level recalibration. No change to bracket_v1 or the futures
+  ledger scorer.
+- No fix of the Trade Machine's six control years on 37-to-39-year-olds (handed to its owner).
+
+**Tools and eFV**
+- No re-run of BA2 and no lag laundering. Look W carries none of BA2's three pairs as a primary
+  (round 4). No per-source offsets, no pooled cross-tool weight, and no weighting of a
+  single-source tool.
+- No `pwr_comp` unless look P served C2 with `a` below 1, cross-fitted per fold (round 4).
+- No 2026 MiLB line, and no level norm built on the default of today, in any eFV feature
+  (round 4).
+- No re-test of game power as an eFV driver on the spent frame. No credit for BA2's hit result in
+  V2.
+- No use of `efv_proxy`'s 2025-26 evaluation as evidence.
+- No served tool grade into the eFV matrices.
+
+**FV cells, frames and served numbers**
+- No realized statistic by consensus-FV cell anywhere. The scouting page prints only industry
+  tables and served configs until the anchor look's record, and then only what it releases. The
+  served anchor table, in part a realized table, prints exactly as served with its provenance
+  (round 4).
+- No `value_framework.py --fit` and no re-application of the sub-45 knots outside EPOCH_RUN
+  step J (round 4).
+- No score on R-LV before its record, and none ever on R-VM.
+- No served number moves before the step Z entry. No dollar moves without AG-Q4. No class 3 flip
+  without its gate or answer.
+
+---
+
+### Validation
+
+#### Round 2 dispositions (VERIFY_round1.md, "FIX AGAIN" items 1 to 8)
+
+| # | item | disposition | where |
+|---|---|---|---|
+| 1 | TL-Q1 route (b) foreclosed by EFV_V2_EV12 (position 121, not_before 2026-10-11) | FIXED. TL-Q1 needed_by is 2026-10-10 (batch 1, first row), and its text says why. Option (b) now says V2's registration waits until at least 2026-10-22 and that (b) is void if V2 registers first. Orchestrator note 1 and TL_10's U5 are rewritten: on (b), add TL_10 to EV12's requires before EV12 dispatches; if EV12 has registered, (b) is void and (a) applies (TL_10 records the void line; NOT A DEFECT, not a BLOCKER). TL_16's U5 runs it under a void (b). TL_9's default date moves to 2026-10-10. A new validation line checks TL-Q1's date against EV12's. | OWNER_QUESTIONS.json TL-Q1; PLAN 9.4.5, 9.6 (split eFV rows), 9.7 'The eFV frontier', 9.8 note 1; QUEUE_TASKS.json TL_9, TL_10, TL_16; LANE_C.md section 5 |
+| 2 | Specs cite scratchpad lane files; 12 read a lane file whole | FIXED. Durable bundle `C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part9/` holds PLAN.md, LANE_A.md, LANE_B.md, LANE_C.md, BRIEF_COMMON.md, QUEUE_TASKS.json and OWNER_QUESTIONS.json, copied by `make_unified.py` on every build. Every spec's first citation is the bundle's PLAN.md. Every lane-file path in a spec body now points at the bundle. A new (U0) clause names the bundle files, the scratchpad as fallback only, and a STOP if both are missing. PLAN's opening paragraph says the same. Two new validation lines check this: each spec cites the bundle before the scratchpad, the scratchpad appears only as the two named fallbacks, and the bundle files are byte-identical. | PLAN opening paragraph; every spec (prefix, body, U0) |
+| 3 | fv_to_6yr_avg_war provenance wrong ("resolved 2017-2020 cohorts") | FIXED. Re-checked at c96bfb0f. What serves is `data/value_framework_fitted.json` `empirical_anchors`: cohort_window [2014, 2020], n 3,462, blend_weight_public 0.5 (use_empirical true). The FV 35 and 40 knots were re-measured on 2026-09-04 and FV 20 to 30 are a floor. The '# v47' text is the yaml seed comment only. The public sentence is drafted in the specs and pinned by a test. | PLAN C7, U-6; OWNER_QUESTIONS.json TL-Q7; QUEUE_TASKS.json TL_20 (PROVENANCE clause, READ FIRST), TL_22 (PROVENANCE clause and pin test) |
+| 4 | TL_22's FV-cell guard conflicts with its own required reads | FIXED. The scan scope is now stated: `tools/scouting_export.py`'s own source and its direct imports. value_framework is allowed. Only fv_to_prime_war, fv_to_6yr_avg_war and p_bucket_given_fv may be called, never fit_and_write() (the `--fit` path, which imports empirical_anchors at :3712), _fitted() or empirical_anchors. The test is ast-based, plus a monkeypatch that makes those paths raise. | QUEUE_TASKS.json TL_22; PLAN 9.4.8 section B |
+| 5 | Gates table incomplete (T4, T7; the eFV row named two looks) | FIXED. New rows for T4 (TM_5/TM_6: no gate, forward record only, class 3 on TM-Q2) and T7 (TM_7: descriptive, class 2). The eFV row is split by route. Under (b) (TL_10), the look is EFV_V2_RESERVED_READ on 2026-12-01. Under (a), or a void (b) (TL_16), this program has no look, and TL_16 adjudicates nothing. | PLAN 9.6 |
+| 6 | Crash and dry-run clauses missing in TM_9, AG_7, AG_16 | FIXED. TM_9 U5 adds the crash clause (exception after scoring began: STOP, no rerun, OWNER_QUESTION.md) and tee-before-dry-run. AG_7 U5 and AG_16 U5 run in this order: tee first, then the fixture dry run on nulls (AG_7 uses `tools/aging_v3_lab.py look --fixture`, built by AG_6; AG_16 STOPs if its scorer has no fixture mode), then the one scoring run, with the crash clause. | QUEUE_TASKS.json TM_9, AG_7, AG_16 (U5) |
+| 7 | 225 transaction files | FIXED. There are 223 monthly files, tx_2008_01 to tx_2026_07. The directory's 225 entries also hold il_table.json and mlb_teams.json (re-counted at c96bfb0f). | PLAN B9; LANE_B.md section 1 (line 194) |
+| 8 | 857 / 183 / 0 attributed to prospects.db | FIXED. The composition is cited to `data/timeseries.json` (`players[].tools.grades`). prospects.db `snapshots.tools_json` is kept only for the per-source row counts. | PLAN C2 |
+
+#### Round 3 dispositions (VERIFY_round2.md, final section, the one item)
+
+| # | item | disposition | where |
+|---|---|---|---|
+| 1 | fv_to_6yr_avg_war provenance sentence still wrong for FV 35 and 40 | FIXED. Only FV 45 to 80 are the 2014-2020 blend (n 3,462); FV 80 (n 0) is the public scale alone. FV 35 and 40 serve 0.0069 and 0.071, an unblended re-measurement on the eWAR label (n 704 and 1,201), per `empirical_anchors.anchors_provenance` (fit file line 287 at c96bfb0f). The public sentence now reads "45 and up: the 2014-2020 average (3,462 players), blended half and half with the public Edwards scale, more public weight where a tier is thin, the top tier the public scale alone; 35 and 40: re-measured on our eWAR label without a blend; below 35: a floor, not a measurement." The pin test also reads `anchors_provenance` and requires the markers "SUB-45 KNOTS RE-AMENDED" and "RE-MEASURED ON THE eWAR LABEL". It still never reads `anchors` or `diagnostics`, and it fails until the copy changes if a later `--fit` reverts the knots. TL-Q7 carries the same sentence. A new validation line checks the sentence is identical in all four places, the old wording is gone, and both markers are in the fit file and in TL_22. | PLAN C7, U-6, 9.4.8 section B; QUEUE_TASKS.json TL_20 and TL_22 (PROVENANCE clause; TL_22 pin test); OWNER_QUESTIONS.json TL-Q7; make_unified.py PROV_SENT, PROV_MARK_A, PROV_MARK_B |
+
+#### Round 4 dispositions (skeptic panel 2026-10-01: PANEL_leakage.md, PANEL_mechanics.md, PANEL_intent.md, PANEL_completeness.md; orchestrator rulings R1 to R10)
+
+Every change is made in `make_unified.py` (REPL4 body edits, R4_AMEND amendments, the U1 rewrite,
+REQ_DROP, the new task) or in this file. The lane JSON files are unchanged; the generator edits
+their specs on the way out.
+
+Context found while fixing: all 20 owner questions were answered on 2026-10-01 with the
+recommended option (DECISIONS_FOR_OWNER.md). Where a correction met an answered question, the
+answer governs.
+
+| lens | # | finding | disposition | where |
+|---|---|---|---|---|
+| leakage | 1 | TL_8 reads holdout H (2022-2024 debut cohorts) before TL_17 | APPLIED (R10). Cohorts 2016-2021 and test years 2018-2021 only. Any 2022 or later debut raises until TL_17's record exists, and 2025 and later always. | TL_8 body; PLAN 9.0 M1h, 9.4.6; validation line |
+| leakage | 2 | `tip_level` reads 2026 MiLB lines and post-V data through `compute_level_norms(today)` and a concurrent AAA offset | APPLIED (R10). TL_4 builds `tip_level(..., vintage V)` and TL_9 builds per V: level norms, the AAA ISO offset and the TIP table from seasons up to V-1, with filtered rows and an explicit as-of date, never the default today and never `context_offset_aaa_minus_mlb`. Each asserts no input season at or after V, and none in 2026 or later. | TL_4 (a) and R4 amendment; TL_9 body; PLAN 9.4.2, 9.10; validation line |
+| leakage | 3 | `pwr_comp` re-runs the spent arm (C1, a = 1) and is fit on its own folds | APPLIED (R10). It is a candidate only if look P served C2 with a below 1. `a` is cross-fitted per fold on board years up to V-3, players outside the fold, never the served `a`. The sidecar stores only the inputs. | TL_9, TL_10, TL_16 bodies; PLAN 9.4.5, 9.6, 9.10; validation line |
+| leakage | 4 | TL_20/TL_22 pin breaks at epoch step J, and its message points at re-applying the knots | APPLIED (R1). The public sentence is a template, filled at build time from the post-step-J fit file. {LABEL} is the label that file records under EPOCH-Q4 (FanGraphs WAR). TL_22 copies the post-J markers into the test, and STOPs if they do not name the fWAR label. The failure message is "the fit file no longer matches the provenance sentence: change the copy", its only remedy. No task re-applies the knots or runs `--fit` outside step J. TL-Q7 keeps the pre-epoch reading it was answered on. | make_unified.py PROV_TEMPLATE, PROV, PIN_FAIL; TL_20, TL_22; PLAN C7, U-6, 9.4.8, 9.7, 9.10; validation lines |
+| leakage | 5 | Look W re-reads BA2's three cells on BA2's board years | APPLIED (R10). Part W's primaries are hit (K%), speed, field and throw. game_pwr to ISO, fb to K% and cmd to BB% are descriptive secondaries only, and BA2's verdicts stand. The flat 2017-2019 weights are disclosed, and a hit PASS is labelled as not independent of BA2. | TL_2 Part W; TL_12 amendment; PLAN 9.4.3, 9.6, 9.10; validation line |
+| leakage | 6 | No task publishes Part T's MDE95 before the look | APPLIED (R10). TL_4 runs `--look T --mde-only` on FIT rows (2015-2025, 2020 out, no holdout row) and commits the per-cell MDE95 alone, as a dated Part T amendment before 2026-10-28. TL_21's check (3b) refuses without it and copies it. TL_2's Part 4 now allows this second amendment, and TL_19's T.5 says so. | TL_4 amendment; TL_19 T.5; TL_21 (3b); TL_2 Part 4; PLAN 9.4.8; validation line |
+| leakage | 7 | PJ_1's WAR-label ban contradicts PJ_12 | APPLIED (R10). The ban names PJ_12's industry READ as a second exception: incumbents only, h1, labelled READ, never 2026 or 2008-2014. | PJ_1 section 7 |
+| leakage | 8 | Holdout H "touched once" is false (looks P, T, W) | APPLIED (R10). TL_3 registers the overlap disclosure, and TL_17 prints the counts from row keys only. No table fit by looks P, T or W is an input or baseline of `prospect_statline` (TL_11 adds a source-scan test). | TL_3 body and amendment; TL_11, TL_17 amendments; PLAN 9.4.6; validation line |
+| leakage | 9 | PJ_9's veto bases 2015-2021 are not point-in-time | APPLIED (R10), first option. The veto reads bases 2022-2025 only. Refitting the params per base was not chosen, because it adds a new fit of the twin's features to a veto-only read. | PJ_1 section 6; PJ_9 body; PLAN 9.2, 9.6; validation line |
+| leakage | 10 | TL_20's hard rule wording contradicts what the page prints | APPLIED (R2). The rule now reads, verbatim: "nothing is computed by consensus-FV cell before PROSPECT_ANCHOR_LOOK; the served anchor table (in part a realized table) is printed exactly as served with its provenance". The FV 35 and 40 cells are not held. | TL_20; PLAN 9.4.8, 9.6, 9.7, 9.10; validation line |
+| mechanics | 1 | Eval artifacts listed in `deploy/data_exclude.txt` fail the manifest and report-card tests | APPLIED (R3). Eval artifacts ship, and no `*_eval.json` goes into `data_exclude.txt`. Lab-only files go under `data/_labs/`, which ships in neither consumer. TL_5 and TL_12 point the registry rows at the shipped files. | TL_4 (e), TL_5, TL_8, TL_12 bodies; PLAN 9.6 'Common to every gate'; validation line |
+| mechanics | 2 | U1 pins moving look days as fixed dates | APPLIED (R4). U1 is rewritten in all 63 specs: (U1a) the recorded-date STOP, (U1b) record-defined days read from their records, (U1c) the fixed list kept as a floor, (U1d) the rule. Fixed lists inside lane bodies stay as extra floors, and U1 says it replaces them. | make_unified.py u_common, REC_STOP; PLAN 9.7, 9.8 note 2; validation lines |
+| mechanics | 3 | PJ_1 and TM_1 commit the served, churned `model_registry.json` in the gap | APPLIED, first option. PJ_1 and TM_1 commit their gate documents alone, with no data/ write and no pytest. PJ_3 and TM_2 write the rows after step Z against `git show HEAD:`, staging only the new rows' hunks. | PJ_1, TM_1 bodies; PJ_3, TM_2 amendments (REG_MOVE); PLAN 9.2; validation line |
+| mechanics | 4 | "DISPLAY_x committed" cannot be verified | APPLIED. A generated (U5d) clause in every task that requires a DISPLAY_* (TM_7 and AG_17 included) checks that `dq/results/DISPLAY_<module>.md` exists and does not start with STOPPED. | make_unified.py u_common; PLAN 9.7; validation line |
+| mechanics | 5 | TM_8 requires FS_2F_FLIP; TM_9 requires TM_8 | APPLIED. Both requires are dropped. F-SCORE is re-exported only when FSCORE_LIVE is True at HEAD (TM_8, and also AG_4 and AG_9). TM_9 reads the live flags. | TM_8, TM_9, AG_4, AG_9; PLAN 9.7, 9.8 note 5; validation line |
+| mechanics | 6 | TL_12 waits forever if R-LV never lands | APPLIED WITH CHANGE. The fallback is registered in TL_2's Part W at registration, since TL_2 has not run: board years 2017-2019 and 2022-2024 on or after 2027-02-01, after a docs-only dated amendment. 2027-02-01 is the day after Q10_15's 2027-01-31 complement-frame date, so the two never share a day. EFV_V2_RESERVED_READ leaves TL_12's requires, or the fallback could never dispatch. | TL_2, TL_12; PLAN 9.4.3, 9.6, 9.8 note 5; validation line |
+| mechanics | 7 | TL_14's dark build writes served glossary terms | APPLIED. TL_14 writes no glossary term, and TL_15's flip carries them. | TL_14 body; TL_15 amendment; validation line |
+| mechanics | 8 | G0 sits ahead of BET_7H_REREAD, GRPO_FWD_30D and EPOCH_E3 | APPLIED in the plan: G0's anchor is now EPOCH_E3. `sync_part9.py` does not move existing tasks, so the orchestrator moves the nine by hand or keeps their 2026-10-03 hold until those three dispatch. I did not edit the live queue. | PLAN 9.8 groups and table |
+| intent | 1 | TL_20/TL_22 provenance is the pre-epoch file | APPLIED (R1); same change as leakage 4. | as leakage 4 |
+| intent | 2 | AG_4, AG_9 and AG_10 move the FA Fit unpinned | AG_9 APPLIED as ruled: own key `winsFaFit`, and `data/fa_class.json` byte-identical with the flag on and off. AG_4 and AG_10 APPLIED WITH CHANGE: the own-key read is as ruled, but the byte-identity assert runs across a Team Outlook-only change. Whole-file identity with the flag on and off would contradict two owner answers that move FA guarantees in `fa_class.json` by design: AG-Q5 'Fix both now' (the cap fixes /fa/) and AG-Q4 'Staged' (/fa/ on 12-05). TM_3 names the one shared key. | AG_4, AG_9, AG_10, TM_3; AG_13 amendment; PLAN 9.3, 9.7; validation line |
+| intent | 3 | Part T's ISO incumbent should be W2's published column, not grade-blind | APPLIED. W2's ISO column (section 2.2) is the incumbent, with its negative rows floored at .000 and disclosed, and is printed labelled. Hit to K% keeps the grade-blind line. T.5's prediction is updated to match. | TL_19 T.1, T.5; TL_20 copy; TL_22; PLAN 9.4.8, 9.6 |
+| intent | 4 | The FV column omits the calibration-test status and conflicts with the glossary seed table | APPLIED. The calibration line and the reconciliation note are verbatim in TL_20, with no "accurate" or "validated". TL_22 pins both. | TL_20, TL_22; PLAN 9.4.8; validation line |
+| intent | 5 | No builder for the nav slot, static navs, icon and inbound links | APPLIED. TL_23's flip commit adds the NAV_ITEMS entry right after the glossary, the three static navs (sync test), the ICON_FOR pixel icon, and the PROSPX card and Source Accuracy links, then restamps. TL_22 notes that its flag covers the generated nav only. | TL_22, TL_23; PLAN 9.4.8 |
+| intent | 6 | 9.0 does not say prospects get no archetype or health term, or why health is PT-only | APPLIED. | PLAN 9.0 M1e, 9.3 |
+| intent | 7 | 9.0 does not say the power composite gets no eFV verdict here | APPLIED. | PLAN 9.0 M1i |
+| intent | 8 | PJ-Q2's copy ban is missing from PJ_7 and PJ_8 | APPLIED. | PJ_7, PJ_8 amendments; PLAN 9.2 |
+| intent | 9 | TM_8 and AG_9 blasts name the retired Index | APPLIED. Each now names F-SCORE and its OUTLOOK leg, and lists the Index only if FSCORE_LIVE is False and the page still serves it. | TM_8 commit 3; AG_9 blast |
+| intent | 10 | TM_5/TM_6 on 11-09/11-10 with no reason | APPLIED. They move to 2026-11-03 and 2026-11-04, the first free days after the World Series (TM-Q2, answered). TM_5 still checks that the Series is over. | DATE_MOVES; TM_5, TM_6 amendments; PLAN 9.5, 9.8; validation line |
+| completeness | 1 | The vintage lacks the pitching fields PJ reads | APPLIED (R6). The EPOCH_E3 note was already added by the orchestrator. PJ_1 section 3 and PJ_2 (7) now take inningsPitched, gamesStarted and gamesPlayed from the raw StatsAPI season cache through `fa_sources`, never from the vintage. | PJ_1, PJ_2; PLAN 9.2; validation line |
+| completeness | 2 | Nothing freezes the 2027 fWAR season | APPLIED (R7). New task FWAR_VINTAGE_FREEZE_2027 (P8, not_before 2027-10-06, requires EPOCH_E3 and EPOCH_RUN): a freeze of 2027 only, never a refreeze, committed alone with its vintage id. It stops if an earlier season's hash moves or a label= pin breaks. AG_16 and PJ_11 require it, and 9.8 places it before AG_16. 2027-10-06 is also the floor of the betting 5f look, so the U1 recorded-date STOP governs that day. | new task; AG_16, PJ_11; PLAN 9.2, 9.6, 9.8 note 4; validation line |
+| completeness | 3 | Single-date looks lack the late-look amendment step | APPLIED (R8). The clause is verbatim in all 11 looks (U1e), in TL_19's T.7 and in 9.6 'Common to every gate'. | make_unified.py LATE_LOOK; PLAN 9.6, 9.8 note 3; validation line |
+| completeness | 4 | AG_4 and AG_13 blasts miss warY1Champ, star_out and fantasy | APPLIED. Both carry AG_8's U6 guard. AG_4 takes the second option: `pt_cap=False` explicitly at the fantasy_export and hitter_export call sites, so the cap moves only what AG-Q5 named. AG_13 lists the fantasy and hitter_export moves for consumers already on v3. | AG_4, AG_13 amendments; PLAN 9.3, 9.7 |
+| completeness | 5 | AG_9 changes the FA Fit unreported | APPLIED, first option, under R5 (as intent 2). | AG_9 |
+| completeness | 6 | A6 to A8 age treatments are missing | APPLIED. AG_1 documents them. AG_2 registers each as a consumer or a stated exclusion (defaults given). AG_12 (b) zeroes `late_peak_bonus` under the C bucket, with a test. | AG_1, AG_2, AG_12 amendments; PLAN 9.3 |
+| completeness | 7 | PA and IP are served with no measured error | APPLIED. PJ_1 registers an H0 and P0 exposure MAE against prior-season and 5/4/3 exposure. These are comparators only; 9.10's ban is on 5/4/3 as a candidate. PJ_3 adds the scorer case, PJ_5 reads it, and PJ_8 serves PA and IP only on a PASS. | PJ_1 section 4; PJ_3, PJ_5, PJ_8; PLAN 9.2, 9.6 |
+| completeness | 8 | Flips add no glossary receipt; two eval files cannot ship | APPLIED WITH CHANGE. Each flip (PJ_8, AG_8, AG_17, TM_8, TL_7, TL_15, TL_18) adds a `_receiptSpecs` entry reading its shipped eval artifact. No separate verdict copy (`*_verdict.json`) is written, because under R3 the eval files themselves ship. | RECEIPT amendments; PLAN 9.7 |
+| completeness | 9 | No file contract for the owner-saved benchmark files | APPLIED WITH CHANGE. The contract (names, headers, preseason date, validation STOP, dates and hashes recorded) is in PJ_12 and in 9.9's owner-side action. The PJ-Q4 question text is not edited, because it was answered on 2026-10-01 and is kept as asked. | PJ_12 amendment; PLAN 9.2, 9.9 |
+| completeness | 10 | No task updates the industry scoreboard or takes its next forward measurement | APPLIED WITH CHANGE. The panel file is cut off after its evidence, so the correction is inferred. PJ_12 appends a dated projections row to the master plan's Part 3 industry scoreboard. PJ_11 updates it with the 2027 read on owner-saved 2027 preseason files, labelled READ. | PJ_12, PJ_11 amendments; PLAN 9.2, 9.9 |
+
+#### Round 5 dispositions (VERIFY_round4.md 'FIX AGAIN' items 1 to 7, then every panel finding re-checked; orchestrator rulings R1 to R10)
+
+Every change is made in `make_unified.py` (the TL_19, TL_21 and PROV strings, the TL_12 REPL4
+entry, the FA_FIELD definition, the ROUND 5 block with REPL5, GLOBAL5 and the Q9_03 requires) or
+in this file and LANE_C.md section 2.4 (a superseded note). The lane JSON files are unchanged.
+No task is added and no not_before moves in round 5. Requires change for three tasks (9.8 note 6).
+
+The seven verifier items, each mapped to its panel finding below:
+1. TL_12 (2) now blocks with 'BLOCKER: date <the earlier of today + 7 days and 2027-02-01>', never
+   a task blocker on EFV_V2_RESERVED_READ (mechanics 6).
+2. TL_21 (3) admits the one docs-only late-look date amendment (U1e) committed alone, and (5)
+   accepts a later date that amendment names, committed today or earlier (completeness 3, R8).
+3. TL_2 reads LANE_C.md sections 2 and 3 only, with its own Part W winning; LANE_C.md 2.4 carries
+   a superseded note (leakage 5).
+4. The FA Fit field is defined by its frame: Q9_03's pre-free-agency field on the v2, uncapped,
+   un-budgeted engine. `winsFaFit` is only a same-frame fallback, a repoint is proven equal before
+   it lands, and AG_4, AG_10 and AG_13 now require Q9_03 (intent 2, completeness 5).
+5. TL_19 T.1 names W2's ISO column's one negative row (20, -.013) (intent 3).
+6. The doubled PRE-EPOCH READING clause is gone from TL_20 and TL_22 (leakage 4, intent 1).
+7. 'BLOCKER: date step Z' becomes 'BLOCKER: task EPOCH_RUN' in all 22 specs that carried it, not
+   only TL_21, and the bare '(BLOCKER: date, the next free day)' gets a date placeholder
+   (mechanics 2). The re-check also found AG_16's body still waiting on an undefined '2027 label
+   epoch' with a bare 'BLOCKER: date'; it now names FWAR_VINTAGE_FREEZE_2027 (completeness 2).
+
+| lens | # | finding | disposition | where |
+|---|---|---|---|---|
+| leakage | 1 | TL_8 reads holdout H before TL_17 | APPLIED (R10, round 4; re-checked). Cohorts up to 2021, test years 2018 to 2021, any 2022 or later debut raises until TL_17's record. | TL_8; validation line |
+| leakage | 2 | `tip_level` reads 2026 MiLB lines and post-V data | APPLIED (R10, round 4; re-checked). Level norms, AAA ISO offset and TIP table per V from seasons up to V-1, explicit as-of date, assert none at or after V or 2026. | TL_4, TL_9; validation lines (round 4 and the round 5 re-run) |
+| leakage | 3 | `pwr_comp` re-runs the spent arm and is fit on its own folds | APPLIED (R10, round 4; re-checked). Candidate only on a C2 serve with a below 1, cross-fitted per fold. | TL_9, TL_10, TL_16; validation line |
+| leakage | 4 | TL_20/TL_22 pin breaks at step J; its message points at the knots | APPLIED (R1). Round 5 removed the doubled PRE-EPOCH READING clause (item 6); the template, the post-step-J pin and the 'change the copy' remedy are unchanged. | make_unified.py PROV; TL_20, TL_22; validation lines |
+| leakage | 5 | Look W re-reads BA2's three cells | APPLIED (R10). Round 5 (item 3): TL_2 no longer reads LANE_C.md whole, and LANE_C.md 2.4 carries a superseded note, so no text a spec sends the writer to lists fb K% or cmd BB% as primaries. | TL_2 READ FIRST; LANE_C.md 2.4; validation line |
+| leakage | 6 | No task publishes Part T's MDE95 before the look | APPLIED (R10, round 4; re-checked). TL_4's dated FIT-only amendment before 10-28; TL_21 (3b) refuses without it. | TL_4, TL_19 T.5, TL_21, TL_2 Part 4 |
+| leakage | 7 | PJ_1's WAR-label ban contradicts PJ_12 | APPLIED (R10, round 4; re-checked). | PJ_1 section 7 |
+| leakage | 8 | Holdout H "touched once" is false | APPLIED (R10, round 4; re-checked). | TL_3, TL_11, TL_17 |
+| leakage | 9 | PJ_9's veto bases 2015-2021 are not point-in-time | APPLIED (R10, first option, round 4; re-checked). Bases 2022-2025 only. | PJ_1 section 6, PJ_9; validation line |
+| leakage | 10 | TL_20's hard rule wording | APPLIED (R2, round 4; re-checked). The rule is verbatim; FV 35 and 40 are not held. | TL_20; validation line |
+| mechanics | 1 | Eval artifacts listed in `data_exclude.txt` | APPLIED (R3, round 4; re-checked). A round 5 validation line re-scans every spec for an eval file listed in a data_exclude clause. | TL_4 (e), TL_5, TL_8, TL_12; validation lines |
+| mechanics | 2 | U1 pins moving look days as fixed dates | APPLIED (R4, round 4). Round 5 (item 7) also brings every blocker into P8's four forms: 22 specs' 'BLOCKER: date step Z' become 'BLOCKER: task EPOCH_RUN', and the calendar line's bare date blocker gets a placeholder. A validation line checks every BLOCKER. | make_unified.py u_common, GLOBAL5; all 63 specs; validation line |
+| mechanics | 3 | PJ_1 and TM_1 commit the churned registry in the gap | APPLIED (round 4; re-checked). | PJ_1, TM_1, PJ_3, TM_2 |
+| mechanics | 4 | "DISPLAY_x committed" cannot be verified | APPLIED (round 4; re-checked). | (U5d) in 10 specs; validation line |
+| mechanics | 5 | TM_8 requires FS_2F_FLIP; TM_9 requires TM_8 | APPLIED (round 4; re-checked). | TM_8, TM_9, AG_4, AG_9 |
+| mechanics | 6 | TL_12 waits forever if R-LV never lands | APPLIED WITH CHANGE. The fallback is registered in TL_2's Part W at registration (2027-02-01), since TL_2 has not run. Round 5 (item 1): TL_12 (2) blocks with a date, never on the reserved-read task, so a re-arm cannot put that task back in front of the fallback. | TL_2, TL_12; validation line |
+| mechanics | 7 | TL_14 writes served glossary terms | APPLIED (round 4; re-checked). | TL_14, TL_15 |
+| mechanics | 8 | G0 ahead of BET_7H_REREAD, GRPO_FWD_30D and EPOCH_E3 | APPLIED in the plan (round 4). The live queue still holds the nine at positions 76 to 84; the orchestrator keeps their 2026-10-03 hold until those three dispatch. I did not edit the live queue. | PLAN 9.8 |
+| intent | 1 | TL_20/TL_22 provenance is the pre-epoch file | APPLIED (R1), as leakage 4. | as leakage 4 |
+| intent | 2 | AG_4, AG_9, AG_10 move the FA Fit unpinned | APPLIED WITH CHANGE (R5). AG_9 asserts `data/fa_class.json` byte-identical with the flag on and off. AG_4 and AG_10 assert it across a Team Outlook-only change, because owner answers AG-Q5 'Fix both now' and AG-Q4 'Staged' move FA guarantees by design. Round 5 (item 4): the field is defined by its frame, Q9_03's pre-free-agency field on the v2, uncapped, un-budgeted engine, with no second key unless Q9_03 emitted none. A repoint is proven equal before it lands, and AG_4, AG_10 and AG_13 require Q9_03. | make_unified.py FA_FIELD, R5_FIT, FA_KEY; TM_3, AG_4, AG_9, AG_10, AG_13; PLAN 9.3, 9.7; validation lines |
+| intent | 3 | Part T's ISO incumbent should be W2's column | APPLIED. Round 5 (item 5): T.1 and PLAN 9.4.8 name the one negative row (20, -.013), floored at .000 and disclosed; the HR/PA negatives are not this cell's incumbent. | TL_19 T.1; PLAN 9.4.8; validation line |
+| intent | 4 | FV column omits the calibration status and conflicts with the glossary seed | APPLIED (round 4; re-checked). | TL_20, TL_22 |
+| intent | 5 | No builder for the nav slot, static navs, icon and links | APPLIED (round 4; re-checked). | TL_22, TL_23 |
+| intent | 6 | 9.0 silent on prospect archetypes, health, and PT-only health | APPLIED (round 4; re-checked). | PLAN 9.0 M1e, 9.3 |
+| intent | 7 | 9.0 silent on the power composite's eFV verdict | APPLIED (round 4; re-checked). | PLAN 9.0 M1i |
+| intent | 8 | PJ-Q2's copy ban missing from PJ_7 and PJ_8 | APPLIED (round 4; re-checked). | PJ_7, PJ_8 |
+| intent | 9 | Blasts name the retired Index | APPLIED (round 4; re-checked). | TM_8, AG_9 |
+| intent | 10 | TM_5/TM_6 dates without a reason | APPLIED (round 4; re-checked). 2026-11-03 and 2026-11-04. | DATE_MOVES; TM_5, TM_6 |
+| completeness | 1 | The vintage lacks PJ's pitching fields | APPLIED (R6, round 4; re-checked). | PJ_1 section 3, PJ_2 (7) |
+| completeness | 2 | Nothing freezes the 2027 fWAR season | APPLIED (R7, round 4). Round 5: AG_16's body no longer waits on an undefined '2027 label epoch'; it names FWAR_VINTAGE_FREEZE_2027 and blocks on that task. | FWAR_VINTAGE_FREEZE_2027; AG_16 (REPL5), PJ_11; validation line |
+| completeness | 3 | Single-date looks lack the late-look step | APPLIED (R8). Round 5 (item 2): TL_21's checks (3) and (5) now agree with U1e. The other ten looks were re-read and none conflicts (PJ_5 (7) and AG_7 already accept a date recorded the same day). | TL_21; validation lines |
+| completeness | 4 | AG_4 and AG_13 blasts miss warY1Champ, star_out and fantasy | APPLIED (round 4; re-checked). | AG_4, AG_13 |
+| completeness | 5 | AG_9 changes the FA Fit unreported | APPLIED (R5), as intent 2, including round 5's frame definition. | AG_9 |
+| completeness | 6 | A6 to A8 age treatments missing | APPLIED (round 4; re-checked). | AG_1, AG_2, AG_12 |
+| completeness | 7 | PA and IP served with no measured error | APPLIED (round 4; re-checked). | PJ_1 section 4, PJ_3, PJ_5, PJ_8 |
+| completeness | 8 | Flips add no glossary receipt | APPLIED WITH CHANGE (round 4; re-checked). Receipts read the shipped eval artifacts. No separate verdict copy is written, because under R3 the eval files ship. | RECEIPT amendments |
+| completeness | 9 | No file contract for the benchmark files | APPLIED WITH CHANGE (round 4; re-checked). The contract is in PJ_12 and 9.9; the answered PJ-Q4 text is kept as asked. | PJ_12; PLAN 9.9 |
+| completeness | 10 | No scoreboard update or forward measurement | APPLIED WITH CHANGE (round 4; re-checked). The panel text is cut off, so the correction is inferred: PJ_12 appends the row, PJ_11 updates it in 2027. | PJ_12, PJ_11 |
+
+No finding is DECLINED.
+
+`make_unified.py` parses both JSON files and checks:
+- schema keys and id patterns;
+- unknown and skipped requires;
+- cycles and date order;
+- queue order against requires;
+- dates on look days and look dates;
+- PLAN citations;
+- dashes and BAN_RE hits;
+- the question schema, batch sizes, headers, the recommendation flag and dead question ids;
+- (round 2) the durable bundle cited first in every spec, its files byte-identical, and TL-Q1
+  due before EFV_V2_EV12 may dispatch;
+- (round 3, amended in round 4) one provenance template in TL_20, TL_22 and PLAN.md, with TL-Q7
+  keeping its answered pre-epoch reading;
+- (round 4) no `*_eval.json` in any data_exclude clause;
+- (round 4) every look task carries the late-look clause, and every task the recorded-date STOP
+  and the record-based U1;
+- (round 4) FWAR_VINTAGE_FREEZE_2027 exists, sits before AG_16, and AG_16 and PJ_11 require it;
+- (round 4) no spec names 2026 MiLB lines as an eFV input, and TL_4 and TL_9 assert their
+  seasons per V;
+- (round 4) checks for each binding ruling: R1 TL_22's pin, R2 TL_20's rule, R5 the FA Fit own
+  key, R6 the pitching fields;
+- (round 4) checks for each mechanics fix: requires drops, TL_8's frame, TL_14's glossary, the
+  registry move, DISPLAY evidence, `pwr_comp`, the veto bases, look W, MDE95, the holdout
+  disclosure and the TM dates.
+- (round 5) re-runs of the four requested rules: no `*_eval.json` in any data_exclude clause;
+  every look carries both the late-look clause and the recorded-date STOP;
+  FWAR_VINTAGE_FREEZE_2027 exists and AG_16 and PJ_11 require it; no 2026 MiLB line as an eFV
+  input;
+- (round 5) one line per verifier item: TL_12's date blocker, TL_21's checks (3) and (5), no
+  whole-lane read, the FA Fit field's frame and its Q9_03 requires, W2's one negative row, the
+  single PRE-EPOCH READING clause, and every BLOCKER in one of P8's four forms.
+
+Its output:
+
+<!--VAL-->
+```
+python C:/Users/noah/AppData/Local/Temp/claude/c--Users-noah-baseball-projects-BaseballR/b7a7d3e5-214d-4434-a171-b2b4900b0199/scratchpad/proj2026/make_unified.py
+ok   task ids unique (63 tasks)
+ok   every task has exactly the schema keys
+ok   ids are FAMILY_n_SLUG in UPPER_SNAKE, families PJ/TM/AG/TL (plus the round 4 freeze FWAR_VINTAGE_FREEZE_2027)
+ok   kinds in EV/PX/DISPLAY/P8
+ok   preambles P8 or EV
+ok   every requires resolves to the queue or this list (unknown: [])
+ok   no requires names a skipped queue task (found: [])
+ok   no cycles among the program's tasks ([])
+ok   no task dated before (or undated while requiring) a dated task it requires ([])
+ok   queue order puts every required program task first ([])
+ok   every dated build, look or served change is 2026-10-11 or later ([])
+ok   no non-look task dated on a look day ([])
+ok   every look carries its registered date ([])
+ok   no two looks of this program share a date
+ok   no look of this program sits on another gate's look day
+ok   every spec cites PLAN.md by section number and title
+ok   every spec quotes the owner ask it serves
+ok   no em or en dash in any spec or question ([])
+ok   no tools/copy_lint.py BAN_RE hit in specs or questions ([])
+ok   owner questions unique and at most 20 (20)
+ok   every question has exactly the schema keys
+ok   at most 4 questions per batch ({1: 4, 2: 4, 3: 4, 4: 4, 5: 4})
+ok   headers at most 12 characters
+ok   2 to 4 options per question
+ok   first option, and only it, is the recommendation
+ok   question ids FAMILY-Qn, needed_by dates well formed
+ok   every question id a spec names exists, retired ids only as 'the former X' notes ([])
+ok   every spec opens with the plan section and the owner ask (within its first 900 characters)
+ok   every spec cites the durable bundle first; the scratchpad appears only as the two named fallbacks ([])
+ok   bundle C:/Users/noah/baseball-projects/_finalpass_2026-09-24/part9/ holds byte-identical copies of the lane files, the brief and both JSON files ([]); PLAN.md is copied after this output is written
+ok   TL-Q1 is due (2026-10-10) before EFV_V2_EV12 may dispatch (2026-10-11)
+ok   (round 3, as amended in round 4) one provenance TEMPLATE in TL_20, TL_22 and PLAN.md (missing []); TL-Q7 keeps the pre-epoch reading it was answered on; old wording gone ([]); the pre-epoch markers are still in the fit file at HEAD
+ok   (round 4, R3) no *_eval.json in any data_exclude clause; eval artifacts ship ([], old wording [])
+ok   (round 4, R4 and R8) all 11 look tasks carry the late-look clause ([]) and every task carries the recorded-date STOP ([])
+ok   (round 4, R4) U1 reads record-defined look days from their records in every spec (old U1 [], missing [])
+ok   (round 4, R7) FWAR_VINTAGE_FREEZE_2027 exists (P8, not_before 2027-10-06, requires EPOCH_E3 and EPOCH_RUN, never a refreeze), sits before AG_16, and AG_16 and PJ_11 require it
+ok   (round 4, R10 leakage 2) no spec names a 2026 MiLB line as an eFV input ([]); TL_4 and TL_9 build level norms, the AAA offset and the TIP table per V from seasons up to V-1 and assert none is 2026 or later ([])
+ok   (round 4, R1) TL_22 pins the post-step-J fit file, names the EPOCH-Q4 label, and its only remedy is 'change the copy' (knot remedy in [])
+ok   (round 4, R2 and intent 4) TL_20 carries the reworded hard rule verbatim, the calibration line and the reconciliation note
+ok   (round 4, R5) AG_4, AG_9 and AG_10 keep the FA Fit on the v2, uncapped own key and assert data/fa_class.json byte-identical ([])
+ok   (round 4, R6) PJ_1 and PJ_2 take inningsPitched, gamesStarted and gamesPlayed from the raw StatsAPI cache, never the vintage ([])
+ok   (round 4, mechanics 5 and 6) TM_8 no longer requires FS_2F_FLIP, TM_9 no longer requires TM_8, TL_12 carries its registered fallback instead of requiring EFV_V2_RESERVED_READ
+ok   (round 4, R10 leakage 1) TL_8 reads cohorts up to 2021 only and raises on any 2022 or later debut until TL_17's record
+ok   (round 4, mechanics 7) TL_14 writes no glossary term; TL_15 carries them
+ok   (round 4, mechanics 3) PJ_1 and TM_1 commit their gate documents alone; PJ_3 and TM_2 write the rows against HEAD, churn unstaged
+ok   (round 4, mechanics 4) every task requiring a DISPLAY_* pass checks its results file for STOPPED ([])
+ok   (round 4, R10 leakage 3) pwr_comp is admitted only on a C2 serve with a below 1, cross-fitted per fold ([])
+ok   (round 4, R10 leakage 9) the W2 veto read is limited to point-in-time bases 2022-2025
+ok   (round 4, R10 leakage 5, 6, 8) look W drops BA2's pairs and discloses the flat years; Part T's MDE95 is a dated pre-look amendment TL_21 requires; TL_3 discloses the holdout overlap
+ok   (round 4, intent 10) TM_5 and TM_6 move to the first free days after the World Series (11-03, 11-04)
+ok   (round 5) every one of the 11 look tasks carries both the late-look clause and the recorded-date STOP ([])
+ok   (round 5, R3 re-run) no *_eval.json in any deploy/data_exclude.txt clause of any spec ([])
+ok   (round 5, R7 re-run) FWAR_VINTAGE_FREEZE_2027 exists and AG_16 and PJ_11 require it; AG_16's body no longer waits on an undefined '2027 label epoch' and blocks on that task instead
+ok   (round 5, R10 re-run) no spec names 2026 MiLB lines as an eFV input ([])
+ok   (round 5, item 1) TL_12 waits on R-LV with a date blocker only, so its 2027-02-01 fallback can dispatch; no task blocks on the reserved read without requiring it ([])
+ok   (round 5, item 2) TL_21's checks (3) and (5) admit the same-day late-look amendment (U1e) and nothing else beyond the MDE95 amendment
+ok   (round 5, item 3) no spec reads a lane file whole; TL_2 reads LANE_C.md sections 2 and 3 with its own Part W winning, and LANE_C.md 2.4 carries the superseded note ([])
+ok   (round 5, item 4) the FA Fit field is Q9_03's pre-free-agency frame on the v2, uncapped, un-budgeted engine in TM_3, AG_4, AG_9, AG_10 (and AG_13), with winsFaFit only as its same-frame fallback; each requires Q9_03 (AG_9 through Q9_03b) ([], [])
+ok   (round 5, item 5) TL_19 T.1 and PLAN.md name W2's ISO column's one negative row (20, -.013)
+ok   (round 5, item 6) the PRE-EPOCH READING clause appears once in TL_20 and once in TL_22
+ok   (round 5, item 7) every BLOCKER line is one of P8's four forms, every date blocker carries a date or a date placeholder, and every literal task blocker names a queue or program task ([])
+```
+<!--/VAL-->
