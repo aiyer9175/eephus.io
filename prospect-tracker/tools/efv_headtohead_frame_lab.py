@@ -291,5 +291,207 @@ def run(B: int = 2000, write: bool = True):
     return out
 
 
+# ---------------------------------------------------------------------------
+# EFV3_A5: the E_refit floor of frame version vm3 (the consensus-present rule), with
+# the both-source (vm1 rule) vintage-matched floor re-derived beside it from the SAME
+# draws. The spec's E_refit instrument is this lab's (tools/efv_mde_lab.py headtohead
+# mechanics: resample the eFV matrix pool by player, refit the v1 forward chain in
+# every draw, score both legs on the rows the resampled players own). As on the vm2
+# headline, whose floor is carried from vm1, eFV here is v1 refit with the MATRIX
+# consensus input, not the timing-pinned one; the development read's rows apply the
+# pin, so its n sits at or under this lab's. Seed: source_backtest._CLAIM_SEED, the
+# registered resampler's.
+# ---------------------------------------------------------------------------
+
+VM3_FLOOR_PATH = ROOT / "data" / "efv_vm3_frame_floor.json"
+
+
+def _load_h2h_vm3():
+    """`_load_h2h_framed` under the CONSENSUS-PRESENT rule (EFV3_A5): a player's
+    payload rows are every resolved base year with an in-window PROSPX consensus read,
+    each tagged with whether FanGraphs and MLB Pipeline BOTH graded it (the vm1 and vm2
+    membership rule). Payload: (consensus_fv, war, is_common, base_year)."""
+    import source_backtest as SB
+    from efv_dataset import matrix_path
+    uni = SB._load_universe(SB.DATA_DIR)
+    years = SB._resolved_years(uni, SB.date.today().year)
+    by_key: dict[str, list] = {}
+    for p in uni:
+        out = SB._outcome(p)
+        for y in years:
+            g = SB._rater_grades_for_year(p, y)
+            if not g or SB.CONSENSUS_KEY not in g:
+                continue
+            common = all(r in g for r in SB.SCORED_SOURCES)
+            by_key.setdefault(p.get("player_key"), []).append(
+                (float(g[SB.CONSENSUS_KEY]), float(out["war"]), bool(common), int(y)))
+    pools = {}
+    for side in SIDES:
+        raw = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+        full = [r for r in raw if not (r["kind"] == "bust" and r.get("bust_recent"))]
+        prep = E._prep(full, "target_censored", side)
+        keys, _m = E._feature_spec(side)
+        pools[side] = {
+            "side": side, "keys": list(keys),
+            "X": np.array([[r["feats"].get(k, 0.0) for k in keys] for r in prep], dtype=float),
+            "y": np.array([r["target"] for r in prep], dtype=float),
+            "w": np.clip(np.array([float(r.get("weight", 1.0) or 0.0) for r in prep]), 1e-3, None),
+            "fv": np.array([r["fv"] for r in prep], dtype=float),
+            "dy": np.array([r["decision_year"] for r in prep], dtype=int),
+            "lam": E.blend_lambda(side),
+            "n": len(prep),
+            "rows": [by_key.get(r["player_key"]) or [] for r in prep],
+        }
+    return pools, len(by_key), years
+
+
+def _h2h_pass_vm3(P, sel=None):
+    """One forward-chained pass under the consensus-present payload. Returns
+    (efv, consensus, war, is_vm3, is_vm_common): the vintage-matched mask (base year
+    equals the decision year) and the same mask restricted to both-source rows. The
+    fold logic is `_h2h_pass_framed`'s byte for byte."""
+    G, C, T, V3, VC = [], [], [], [], []
+    for side, D in P.items():
+        s = np.arange(D["n"]) if sel is None else sel[side]
+        X, y, w, fv, dy = D["X"][s], D["y"][s], D["w"][s], D["fv"][s], D["dy"][s]
+        rows = [D["rows"][i] for i in s]
+        lam = D["lam"]
+        for yr in E.SCORED_YEARS:
+            tr = np.flatnonzero(dy < yr)
+            te = np.flatnonzero(dy == yr)
+            if len(te) < 15 or len(tr) < 60:
+                continue
+            o = ols_fit(fv[tr], y[tr])
+            rg = ridge_fit(X[tr], y[tr], w[tr])
+            if o is None or rg is None:
+                continue
+            cal = E._fit_linear_calibration(
+                list(zip(ridge_pred(rg, X[tr]).tolist(), y[tr].tolist())))
+            a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+            cons = np.maximum(0.0, o[0] + o[1] * fv[te])
+            mod = np.maximum(-2.0, a + b * ridge_pred(rg, X[te]))
+            grade = (1 - lam) * cons + lam * mod
+            for j, i in enumerate(te):
+                dec_yr = int(dy[te[j]])
+                for cfv, war, common, base_yr in rows[i]:
+                    G.append(grade[j])
+                    C.append(cfv)
+                    T.append(war)
+                    V3.append(base_yr == dec_yr)
+                    VC.append(base_yr == dec_yr and common)
+    if not G:
+        return None
+    return (np.array(G), np.array(C), np.array(T),
+            np.array(V3, dtype=bool), np.array(VC, dtype=bool))
+
+
+def _label_stamp() -> dict:
+    """The label the floor was measured on (EFV3_A5: provider and resolved_through
+    stamped on every read)."""
+    import efv_dataset as _ed
+    import war_source as _ws
+    return {"provider": _ws.DEFAULT_PROVIDER, "resolved_through": _ed.RESOLVED_THROUGH}
+
+
+def run_vm3(B: int = 2000, write: bool = True, seed: int | None = None):
+    import source_backtest as SB
+    seed = SB._CLAIM_SEED if seed is None else int(seed)
+    P, n_players, years = _load_h2h_vm3()
+    pt = _h2h_pass_vm3(P)
+    if pt is None:
+        raise SystemExit("no scored rows")
+    g, c, t, v3, vc = pt
+    point = {
+        "vm3": {"n_rows": int(v3.sum()), "efv": round(float(wrho(g[v3], t[v3])), 5),
+                "consensus": round(float(wrho(c[v3], t[v3])), 5)},
+        "vintage_matched_common": {"n_rows": int(vc.sum()),
+                                   "efv": round(float(wrho(g[vc], t[vc])), 5),
+                                   "consensus": round(float(wrho(c[vc], t[vc])), 5)},
+    }
+    for k in point:
+        point[k]["delta"] = round(point[k]["efv"] - point[k]["consensus"], 5)
+    rng = np.random.default_rng(seed)
+    d3, dc = [], []
+    t0 = time.time()
+    for i in range(B):
+        sel = {s: rng.integers(0, P[s]["n"], P[s]["n"]) for s in P}
+        r = _h2h_pass_vm3(P, sel)
+        if r is None:
+            continue
+        gg, cc, tt, m3, mc = r
+        a3 = (wrho(gg[m3], tt[m3]) - wrho(cc[m3], tt[m3])) if m3.sum() >= 40 else np.nan
+        ac = (wrho(gg[mc], tt[mc]) - wrho(cc[mc], tt[mc])) if mc.sum() >= 40 else np.nan
+        if np.isfinite(a3) and np.isfinite(ac):
+            d3.append(a3)
+            dc.append(ac)
+        if (i + 1) % 100 == 0:
+            print(f"  {i+1}/{B}  {time.time()-t0:.0f}s", flush=True)
+    a3 = np.array(d3, dtype=float)
+    ac = np.array(dc, dtype=float)
+    ad = a3 - ac
+
+    def _cell(point_delta, arr):
+        sd = float(arr.std(ddof=1))
+        return {"delta": round(float(point_delta), 5), "sd": round(sd, 5),
+                "mde95": round(1.645 * sd, 4), "mde95_twosided": round(1.96 * sd, 4),
+                "ci95": [round(float(np.percentile(arr, 2.5)), 5),
+                         round(float(np.percentile(arr, 97.5)), 5)],
+                "p_gt_0": round(float((arr > 0).mean()), 4),
+                "estimator": "E_refit",
+                "reading": "development only; a floor, not a claim"}
+
+    out = {
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "produced_by": "tools/efv_headtohead_frame_lab.py vm3",
+        "task": "EFV3_A5",
+        "role": "development",
+        "label": _label_stamp(),
+        "basis": {
+            "scored_years": list(E.SCORED_YEARS),
+            "window": [min(years), max(years)] if years else None,
+            "consensus_present_players": n_players,
+            "frames": {
+                "vm3": ("vintage-matched rows (base year equal to the decision year) "
+                        "under the consensus-present rule: an in-window PROSPX "
+                        "consensus read, FanGraphs and MLB Pipeline optional"),
+                "vintage_matched_common": ("the same rows restricted to those FanGraphs "
+                                           "and MLB Pipeline both graded (the vm1 and "
+                                           "vm2 membership rule), re-derived here"),
+            },
+            "efv": ("eFV v1 refit in every draw, scored with the MATRIX consensus "
+                    "input (the vm1 convention carried by the vm2 headline); the "
+                    "development read applies the timing pin to its rows, so its n "
+                    "sits at or under this lab's"),
+        },
+        "protocol": ("cluster paired bootstrap, resampled BY PLAYER over the eFV matrix "
+                     "pool, forward chain refit inside every draw, both legs scored on "
+                     "the consensus-present rows the resampled players own; both frames "
+                     "scored inside the same draw. MDE95 = 1.645 * sd(delta), one-sided"),
+        "B_requested": int(B), "B_used": int(len(a3)), "seed": seed,
+        "elapsed_s": round(time.time() - t0, 1),
+        "point": point,
+        "vm3": _cell(point["vm3"]["delta"], a3),
+        "vintage_matched_common": _cell(point["vintage_matched_common"]["delta"], ac),
+        "paired_difference": {
+            "delta": round(point["vm3"]["delta"] - point["vintage_matched_common"]["delta"], 5),
+            "sd": round(float(ad.std(ddof=1)), 5),
+            "ci95": [round(float(np.percentile(ad, 2.5)), 5),
+                     round(float(np.percentile(ad, 97.5)), 5)],
+            "note": "the frames share their draws; the sd is the paired difference's",
+        },
+        "not_a_claim": ("a development floor on a spent frame; vm2 stays the headline "
+                        "and no served number reads this file"),
+    }
+    if write:
+        VM3_FLOOR_PATH.write_text(json.dumps(out, indent=1), encoding="utf-8")
+        print("wrote", VM3_FLOOR_PATH)
+    print(json.dumps(out, indent=1))
+    return out
+
+
 if __name__ == "__main__":
-    run(int(sys.argv[1]) if len(sys.argv) > 1 else 2000)
+    _args = sys.argv[1:]
+    if _args and _args[0] == "vm3":
+        run_vm3(int(_args[1]) if len(_args) > 1 else 2000)
+    else:
+        run(int(_args[0]) if _args else 2000)

@@ -101,6 +101,10 @@ PROBES: tuple[tuple[str, str, str], ...] = (
     # Q10_10 (owner ask 19): the pitch-rate sidecar's no-outcome steps, coverage by
     # (V, side) and descriptive correlations with obp_rel, k_rel and bb_rel.
     ("_labs/efv_pitch_rate_features.json", "probes", "pitch-rate sidecar probes (PM19)"),
+    # EFV3_A5: the vm3 frame read (tools/efv_vm3_frame_read.py), one probe per frame
+    # read, each carrying the V2-minus-consensus within interval; a development frame
+    # census, never a verdict on a driver.
+    ("efv_vm3_frame_eval.json", "probes", "vm3 frame read (EFV3_A5)"),
 )
 
 #: Fields an arm may carry that the ledger copies through unchanged, so a driver's

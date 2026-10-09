@@ -356,3 +356,388 @@ def test_vm2_rows_drop_a_mismatched_or_out_of_window_pin():
     assert rec["n_input_equals_rater_consensus"] == 1
     assert out[0]["xfv_input"]["window"] == ["2019-01-01", "2019-05-01"]
     assert json.dumps(rows, sort_keys=True) == before, "vm1 rows were modified"
+
+
+# ---------------------------------------------------------------------------
+# EFV3_A5: frame version vm3 (the consensus-present rule), a DEVELOPMENT frame
+# beside the vm2 headline (lane A E3-Q1 = A). Producer: tools/efv_vm3_frame_read.py
+# -> data/efv_vm3_frame_eval.json; its E_refit floor from
+# tools/efv_headtohead_frame_lab.py vm3 -> data/efv_vm3_frame_floor.json. The
+# headline switch to vm3 is a frame change that only the reserved read's record
+# and a later owner answer can make, so the pins here are: vm2 stays the
+# headline, every vm3 row's eFV input is dated inside the window, the row count
+# is the counted ceiling, and the reserved debut cohorts stay unread.
+
+VM3_ARTIFACT = DATA / "efv_vm3_frame_eval.json"
+VM3_FLOOR = DATA / "efv_vm3_frame_floor.json"
+PROGRESS = DATA / "efv_progress.json"
+
+
+def _vm3_frame():
+    d = _load(VM3_ARTIFACT)
+    f = ((d.get("vm3") or {}).get("frames") or {}).get("vm3")
+    if not f:
+        pytest.skip("efv_vm3_frame_eval.json carries no vm3 frame")
+    return d, f
+
+
+def test_reserved_debut_cohorts_stay_out_of_every_vm_frame():
+    """CANDIDATE_YEARS and SCORED_YEARS may not reach the first reserved R-VM cohort,
+    and the vm3 frame's window is CANDIDATE_YEARS' resolved years only."""
+    import efv_model as em
+    import efv_vintage_frame as F
+    import source_backtest as sb
+    assert F.reserved_vm_pins() == []
+    assert max(sb.CANDIDATE_YEARS) < F.R_VM_FIRST_DEBUT_YEAR
+    assert max(em.SCORED_YEARS) < F.R_VM_FIRST_DEBUT_YEAR
+    if VM3_ARTIFACT.exists():
+        d, f = _vm3_frame()
+        g = d.get("reserved_guard") or {}
+        assert g.get("reserved_vm_pins") == [] and g.get("list_vintages_read") == []
+        assert g.get("grouped_by_consensus_fv") is False
+        assert max(f["window"]) < F.R_VM_FIRST_DEBUT_YEAR
+        assert set(r["year"] for r in f["rows"]) <= set(sb.CANDIDATE_YEARS)
+
+
+def test_vm3_rows_keep_every_consensus_present_row_with_an_in_window_pin():
+    """The frame rule on fixtures: membership is the consensus read plus the pinned
+    eFV score dated inside the row's own window; FanGraphs and Pipeline are optional
+    columns, never a membership rule, and the candidate rows are not modified."""
+    import source_backtest as sb
+    C = sb.CONSENSUS_KEY
+
+    def row(k, y, cons, **extra):
+        return {"key": k, "year": y, "outcome": {"debut_year": y, "war": 1.0,
+                                                 "contributor": False},
+                "grades": {C: cons, **extra}}
+    rows = [row("a", 2019, 50.0, mlb_pipeline=50.0, fangraphs=45.0),
+            row("b", 2019, 45.0),
+            row("c", 2020, 40.0, mlb_pipeline=40.0),
+            row("d", 2020, 40.0, fangraphs=40.0),
+            row("e", 2021, 55.0, mlb_pipeline=55.0, fangraphs=55.0)]
+    pin = {"a": 5.0, "b": 0.5, "c": 0.1, "d": 0.2}
+    rc = {"a": {"asof_date": "2019-03-01", "window_year": 2019, "consensus_fv_raw": 50.0},
+          "b": {"asof_date": "2019-02-01", "window_year": 2019, "consensus_fv_raw": 45.0},
+          "c": {"asof_date": "2020-06-01", "window_year": 2020, "consensus_fv_raw": 40.0},
+          "d": {"asof_date": "2021-03-01", "window_year": 2021, "consensus_fv_raw": 40.0}}
+    before = json.dumps(rows, sort_keys=True)
+    out, rec = sb._vm3_frame_rows(rows, pin, rc)
+    assert [r["key"] for r in out] == ["a", "b"]
+    assert rec["n_candidates"] == 5 and rec["n_rows"] == 2
+    assert rec["n_without_pin"] == 1 and rec["n_outside_window"] == 1
+    assert rec["n_pin_year_differs"] == 1
+    assert rec["n_both_sources"] == 1 and rec["n_with_mlb_pipeline"] == 1
+    assert rec["n_with_fangraphs"] == 1 and rec["n_input_equals_rater_consensus"] == 2
+    assert out[0]["grades"]["xfv"] == 5.0 and out[1]["grades"].get("fangraphs") is None
+    assert out[1]["xfv_input"]["window"] == ["2019-01-01", "2019-05-01"]
+    assert json.dumps(rows, sort_keys=True) == before, "candidate rows were modified"
+
+
+def test_consensus_present_rows_are_debut_cohort_rows_with_the_required_read():
+    import source_backtest as sb
+
+    def pt(day, cons, **srcs):
+        return {"snapshot_date": day, "consensus_fv_raw": cons,
+                "per_source": {s: {"fv_published": v} for s, v in srcs.items()}}
+    uni = [{"player_key": "p1", "player_name": "P1", "debut_date": "2019-06-01",
+            "position": "SS", "points": [pt("2019-02-10", 50.0, mlb_pipeline=50.0)]},
+           {"player_key": "p2", "player_name": "P2", "debut_date": "2019-06-01",
+            "position": "SS", "points": [pt("2018-02-10", 45.0, mlb_pipeline=45.0)]},
+           {"player_key": "p3", "player_name": "P3", "debut_date": "2024-06-01",
+            "position": "SS", "points": [pt("2024-02-10", 45.0, mlb_pipeline=45.0)]},
+           {"player_key": "p4", "player_name": "P4", "position": "SS",
+            "points": [pt("2019-02-10", 45.0, mlb_pipeline=45.0)]}]
+    rows = sb._consensus_present_rows(uni, [2019, 2020])
+    assert [r["key"] for r in rows] == ["p1"]
+    assert rows[0]["year"] == 2019 and rows[0]["grades"]["mlb_pipeline"] == 50.0
+    assert rows[0]["grades"].get("fangraphs") is None
+    assert sb._consensus_present_rows(uni, [2019], require=("fangraphs",)) == []
+
+
+def test_own_rows_cells_score_each_source_on_the_rows_it_graded():
+    """The vm3 convention through source_backtest's own Holm wrapper: a source's
+    cell is eFV and the source on their identical rows, n is their count, the
+    family and k are unchanged, and the served (own_rows off) output has no such key."""
+    import random
+    import source_backtest as sb
+    C = sb.CONSENSUS_KEY
+    rng = random.Random(7)
+    rows = []
+    for i in range(80):
+        war = rng.uniform(0, 12)
+        g = {C: 40 + 5 * round(war / 3), "xfv": war + rng.uniform(-3, 3),
+             "mlb_pipeline": 40 + 5 * round((war + rng.uniform(-2, 2)) / 3)}
+        if i < 40:
+            g["fangraphs"] = 40 + 5 * round((war + rng.uniform(-4, 4)) / 3)
+        rows.append({"key": f"k{i}", "grades": g,
+                     "outcome": {"war": war, "contributor": war >= 3.0}})
+    block = {}
+    for rater in ["xfv", C, "mlb_pipeline", "fangraphs"]:
+        rr = [c for c in rows if c["grades"].get(rater) is not None]
+        block[rater] = {"n": len(rr),
+                        "spearman": round(sb._spearman([c["grades"][rater] for c in rr],
+                                                       [c["outcome"]["war"] for c in rr]), 4),
+                        "auc": round(sb._auc([c["grades"][rater] for c in rr],
+                                             [c["outcome"]["contributor"] for c in rr]), 4)}
+    own = sb._head_to_head_vs_sources(rows, block, frame="t", basis="t", own_rows=True)
+    assert own["own_rows"] is True and own["holm"]["k"] == 6
+    assert own["holm"]["family"] == [f"{r}.{m}" for r in sb.H2H_HOLM_RATERS
+                                     for m in sb.H2H_HOLM_METRICS]
+    fg = own["sources"]["fangraphs"]["spearman"]
+    sub = rows[:40]
+    assert fg["n"] == 40
+    assert fg["xfv"] == round(sb._spearman([c["grades"]["xfv"] for c in sub],
+                                           [c["outcome"]["war"] for c in sub]), 4)
+    assert fg["rater"] == block["fangraphs"]["spearman"]
+    assert fg["delta"] == round(fg["xfv"] - fg["rater"], 5)
+    assert own["sources"]["mlb_pipeline"]["auc"]["n"] == 80
+    served = sb._head_to_head_vs_sources(rows, block, frame="t", basis="t")
+    assert "own_rows" not in served
+    assert served["sources"]["fangraphs"]["spearman"]["xfv"] == block["xfv"]["spearman"]
+
+
+def test_every_vm3_row_consensus_input_is_dated_inside_its_window(pinned):
+    """Every vm3 row's eFV consensus input (the pinned read) is dated inside the
+    row's own preseason window, and the window year is the row's debut year."""
+    d, f = _vm3_frame()
+    rc = {}
+    for side, (_v1, _v2, r) in pinned.items():
+        rc.update(r)
+    assert f["n"] == len(f["rows"]) > 500
+    for r in f["rows"]:
+        rec = rc.get(r["key"])
+        assert rec, f"{r['key']}: a vm3 row without a pinned receipt"
+        assert rec["window_year"] == r["year"], (r, rec)
+        lo, hi = f"{r['year']}-01-01", f"{r['year']}-05-01"
+        assert lo <= rec["asof_date"] < hi, (r, rec)
+    assert f["receipt"]["n_outside_window"] == 0
+    assert f["receipt"]["n_input_equals_rater_consensus"] == f["n"]
+
+
+def test_vm3_row_count_equals_the_counted_ceiling_within_5_per_side(pinned):
+    """The ceiling, recounted here from the inputs: every debut-cohort row of the
+    window with an in-window consensus read and a pinned eFV score dated inside
+    that window, by side. The frame may sit within 5 rows of it per side."""
+    import efv_dataset as ed
+    import source_backtest as sb
+    d, f = _vm3_frame()
+    years = list(range(f["window"][0], f["window"][1] + 1))
+    uni = sb._load_universe(DATA)
+    cand = sb._consensus_present_rows(uni, years)
+    pin, rc = {}, {}
+    for side, (_v1, v2, r) in pinned.items():
+        pin.update(v2)
+        rc.update(r)
+    ceiling, _rec = sb._vm3_frame_rows(cand, pin, rc)
+    side_of = {}
+    for side in ("hit", "pit"):
+        for r in json.loads(ed.matrix_path(side).read_text(encoding="utf-8")):
+            side_of.setdefault(r["player_key"], side)
+    nbs = {}
+    for c in ceiling:
+        s = side_of.get(c["key"])
+        nbs[s] = nbs.get(s, 0) + 1
+    assert set(f["n_by_side"]) == {"hit", "pit"}
+    for side in ("hit", "pit"):
+        assert abs(f["n_by_side"][side] - nbs.get(side, 0)) <= 5, (side, f["n_by_side"], nbs)
+    # the consensus-present rule keeps more rows than the both-source rule
+    assert f["receipt"]["n_candidates"] >= f["n"] > f["receipt"]["n_both_sources"]
+    assert f["n"] == sum(f["n_by_side"].values())
+
+
+def test_vm3_is_a_development_frame_and_vm2_stays_the_headline():
+    """No served number moves: the headline verdict stays on vm2, the vm3 frame's
+    role is development everywhere it is registered, its row adjudicates nothing,
+    the label the read ran on is stamped, and a pre-epoch read says exploratory."""
+    import efv_progress as P
+    import source_backtest as sb
+    d, f = _vm3_frame()
+    assert d["vm3"]["role"] == "development" and f["resolvable"] is None
+    assert d["vm3"]["adjudicates"] is False and d["vm3"]["selects"] is False
+    assert f["frame_version"] == sb.VM3_FRAME_VERSION == "vm3"
+    assert f["basis"] == sb.VM3_BASIS and f["rule"] == sb.VM3_RULE
+    assert f["verdict"].startswith("development only")
+    lab = d["label"]
+    assert lab["provider"] and lab["resolved_through"] and "provider" in lab
+    if lab["provider"] != "fwar":
+        assert d["exploratory"] is True
+        assert f["note"] == "exploratory, eWAR label, frame census; not a claim"
+    else:
+        assert d["exploratory"] is False and "not a claim" in f["note"]
+    assert P.FRAMES["vm3"]["role"] == "development" and "vm3" not in P.CHART_FRAMES
+    assert "vm3" not in P.BASIS_TO_FRAME.values()
+    assert any(n == P.VM3_NAME and fr == ("vm3",) and sub == P.VM3_SUBKEY
+               for n, fr, _rm, _dm, sub in P.DEV_ARTIFACTS)
+    # the registered statistic, every comparison on identical rows, the E_cond floor
+    prim = f["deltas"]["v2_vs_prospx_consensus"]
+    assert f["statistic"] == "within (side, vintage) Spearman, size-weighted"
+    for slot in ("spearman", "pooled", "auc"):
+        leg = prim[slot]
+        assert leg["identical_rows"] is True and leg["estimator"] == "E_cond"
+        assert leg["B"] == 2000 and leg["seed"] == 20260906
+        assert leg["n"] == f["n"]
+    assert prim["spearman"]["mde95"] == round(1.645 * prim["spearman"]["sd"], 4)
+    # the E_refit floor from the lab, when it has run, rides on the primary leg
+    if VM3_FLOOR.exists():
+        fl = _load(VM3_FLOOR)
+        assert fl["seed"] == 20260906 and fl["B_used"] >= 500
+        assert prim["spearman"]["mde95_e_refit"] == fl["vm3"]["mde95"]
+        assert f["e_refit_floor"]["estimator"] == "E_refit"
+    # each source on its own rows: Pipeline's and FanGraphs' n are their own
+    assert f["raters"]["mlb_pipeline"]["n"] == f["receipt"]["n_with_mlb_pipeline"]
+    assert f["raters"]["fangraphs"]["n"] == f["receipt"]["n_with_fangraphs"]
+    assert f["deltas"]["v2_vs_fangraphs"]["spearman"]["n"] == f["raters"]["fangraphs"]["n"]
+    # the Holm family, unchanged, own rows
+    h = f["holm"]
+    assert h["own_rows"] is True and h["holm"]["k"] == 6
+    assert h["holm"]["family"] == [f"{r}.{m}" for r in sb.H2H_HOLM_RATERS
+                                   for m in sb.H2H_HOLM_METRICS]
+    assert h["sources"]["prospx_consensus"]["spearman"]["verdict"] is None
+    for r, cell in h["sources"].items():
+        for m in ("spearman", "auc"):
+            leg = cell[m]
+            assert leg["n"] == f["raters"][r]["n"]
+            if leg["verdict"]:
+                assert leg["holm"]["reject_holm"] is True
+    # the served artifact: vm2 is the headline and the census counts the same frame
+    if BACKTEST.exists():
+        acc = _load(BACKTEST).get("accuracy") or {}
+        hv = acc.get("head_to_head_verdict") or {}
+        assert hv.get("frame_version") == "vm2" and hv.get("role") == "headline"
+        assert "vintage_matched_vm3" not in (acc.get("head_to_head_by_frame") or {})
+        census = acc.get("vm3_census")
+        if census:
+            assert census["role"] == "development" and census["n_rows"] == f["n"]
+            assert census["n_by_side"] == f["n_by_side"]
+            assert census["n_both_sources"] >= f["receipt"]["n_both_sources"]
+    # the ledger: a vm3 row, role development, provider stamped, both versions kept
+    if PROGRESS.exists():
+        prog = _load(PROGRESS)
+        rows = [r for r in prog["rows"] if r["frame"] == "vm3"]
+        assert rows, "no vm3 row in efv_progress.json"
+        for r in rows:
+            assert r["role"] == "development" and r["resolvable"] is None
+            assert r["model_version"]["provider"] == lab["provider"]
+            assert r["model_version"]["resolved_through"] == lab["resolved_through"]
+            assert r["frame_version"] == "vm3" and r["statistic"] == f["statistic"]
+        assert [r for r in prog["rows"] if r["frame"] == "vm2" and r["role"] == "headline"]
+        assert prog["headline_frame"] == "vm2"
+
+
+# ---------------------------------------------------------------------------
+# EFV3_A5 (2): the Pipeline-only panel, debut cohorts 2011 to 2016 with an
+# in-window MLB Pipeline read, frame vm_pipeline_2011_2016, role development,
+# scored by eFV v1 only; consensus on these rows is Pipeline alone; never pooled
+# with vm2 or vm3 rows.
+
+PANEL = "vm_pipeline_2011_2016"
+
+
+def _panel_frame():
+    d = _load(VM3_ARTIFACT)
+    f = ((d.get(PANEL) or {}).get("frames") or {}).get(PANEL)
+    if not f:
+        pytest.skip("efv_vm3_frame_eval.json carries no Pipeline panel")
+    return d, f
+
+
+def test_panel_rows_require_the_pipeline_read_and_set_aside_fangraphs_rows():
+    import source_backtest as sb
+
+    def pt(day, cons, **srcs):
+        return {"snapshot_date": day, "consensus_fv_raw": cons,
+                "per_source": {s: {"fv_published": v} for s, v in srcs.items()}}
+    uni = [{"player_key": "a", "player_name": "A", "debut_date": "2014-06-01", "position": "SS",
+            "points": [pt("2014-02-10", 50.0, mlb_pipeline=50.0)]},
+           {"player_key": "b", "player_name": "B", "debut_date": "2015-06-01", "position": "SS",
+            "points": [pt("2015-02-10", 45.0, mlb_pipeline=45.0, fangraphs=45.0)]},
+           {"player_key": "c", "player_name": "C", "debut_date": "2016-06-01", "position": "SS",
+            "points": [pt("2016-02-10", 40.0, baseball_america=40.0)]},
+           {"player_key": "d", "player_name": "D", "debut_date": "2017-06-01", "position": "SS",
+            "points": [pt("2017-02-10", 55.0, mlb_pipeline=55.0)]}]
+    rows, n_fg = sb._pipeline_panel_rows(uni)
+    assert [r["key"] for r in rows] == ["a"] and n_fg == 1
+    assert rows[0]["grades"].get("fangraphs") is None and rows[0]["year"] == 2014
+    assert rows[0]["consensus_sources"] == []
+    uni[0]["points"][0]["sources_contributing"] = ["mlb_pipeline"]
+    rows, _n = sb._pipeline_panel_rows(uni)
+    assert rows[0]["consensus_sources"] == ["mlb_pipeline"]
+    census = sb.pipeline_panel_census(uni)
+    assert census["window"] == [2011, 2016] and census["n_pipeline_present"] == 1
+    assert census["n_with_fangraphs_excluded"] == 1
+    assert census["consensus"]["n_consensus_sources_pipeline_only"] == 1
+    assert census["consensus"]["n_consensus_value_equals_pipeline"] == 1
+    assert set(census["by_debut_year"]) == {str(y) for y in sb.PIPELINE_PANEL_YEARS}
+    assert census["by_debut_year"]["2014"]["debuts"] == 1
+    assert max(sb.PIPELINE_PANEL_YEARS) < min(sb.CANDIDATE_YEARS)
+
+
+def test_the_panel_contains_no_row_with_a_fangraphs_grade_in_its_window():
+    """Recounted from the inputs: for every panel row the raters' in-window grades
+    carry no FanGraphs value, and the receipt counts zero."""
+    import source_backtest as sb
+    d, f = _panel_frame()
+    uni = {p.get("player_key"): p for p in sb._load_universe(DATA)}
+    assert f["n"] == len(f["rows"]) > 200
+    for r in f["rows"]:
+        g = sb._rater_grades_for_year(uni[r["key"]], r["year"])
+        assert g.get("fangraphs") is None, r
+        assert g.get("mlb_pipeline") is not None and g.get(sb.CONSENSUS_KEY) is not None, r
+        assert r["year"] in sb.PIPELINE_PANEL_YEARS
+    assert f["receipt"]["n_with_fangraphs"] == 0
+    assert "fangraphs" not in f["raters"]
+    assert f["holm"]["sources"].get("fangraphs") is None
+    assert f["holm"]["holm"]["k"] == 6, "a missing cell stays in the family at p = 1"
+
+
+def test_the_panel_is_pipeline_alone_v1_only_and_never_pooled():
+    import efv_model as em
+    import efv_progress as P
+    d, f = _panel_frame()
+    _d, vm3 = _vm3_frame()
+    assert d[PANEL]["role"] == "development" and d[PANEL]["model_id"] == "efv_v1"
+    assert d[PANEL]["consensus_is"].startswith("MLB Pipeline alone")
+    assert d[PANEL]["never_pooled_with"] == ["vm2", "vm3"]
+    assert f["resolvable"] is None and f["verdict"].startswith("development only")
+    assert "MLB Pipeline alone" in f["note"] and "never pooled" in f["note"]
+    assert f["window"] == [2011, 2016]
+    assert set(r["year"] for r in f["rows"]) <= set(range(2011, 2017))
+    assert min(r["year"] for r in f["rows"]) >= min(em.SCORED_YEARS)
+    # consensus on these rows is Pipeline alone: on every row the consensus read's
+    # only contributing source is mlb_pipeline; its value is the source-calibrated
+    # grade, so the receipt reports rank agreement, not value equality
+    rc = f["receipt"]["consensus"]
+    assert rc["n_consensus_sources_pipeline_only"] == rc["n_rows"] == f["n"]
+    assert rc["consensus_is"].startswith("MLB Pipeline alone")
+    assert all(v is not None and v > 0.5
+               for v in rc["consensus_vs_pipeline_rank_agreement_by_year"].values())
+    assert f["raters"]["prospx_consensus"]["n"] == f["raters"]["mlb_pipeline"]["n"] == f["n"]
+    assert f["raters"]["efv_v1"]["n"] == f["n"] and "efv_v2" not in f["raters"]
+    # never pooled: no panel player is a vm3 row and the windows do not touch
+    assert not {r["key"] for r in f["rows"]} & {r["key"] for r in vm3["rows"]}
+    assert max(r["year"] for r in f["rows"]) < min(r["year"] for r in vm3["rows"])
+    assert d["reserved_guard"]["panel_pooled_with_vm"] is False
+    # the statistic and the floors, as on vm3
+    prim = f["deltas"]["efv_v1_vs_prospx_consensus"]
+    for slot in ("spearman", "pooled", "auc"):
+        assert prim[slot]["identical_rows"] is True and prim[slot]["estimator"] == "E_cond"
+        assert prim[slot]["B"] == 2000 and prim[slot]["seed"] == 20260906
+    assert f["e_refit_floor"] is None
+    # registered in the ledger as its own development frame
+    assert P.FRAMES[PANEL]["role"] == "development" and PANEL not in P.CHART_FRAMES
+    assert any(n == P.VM3_NAME and fr == (PANEL,) and sub == P.PANEL_SUBKEY
+               for n, fr, _rm, _dm, sub in P.DEV_ARTIFACTS)
+    if BACKTEST.exists():
+        census = (_load(BACKTEST).get("accuracy") or {}).get("pipeline_panel_census")
+        if census:
+            assert census["n_with_fangraphs_excluded"] >= 0
+            assert census["n_pipeline_present"] >= f["n"]
+            assert census["n_scoreable_by_efv_v1"] >= f["n"]
+    if PROGRESS.exists():
+        rows = [r for r in _load(PROGRESS)["rows"] if r["frame"] == PANEL]
+        assert rows, "no panel row in efv_progress.json"
+        for r in rows:
+            assert r["role"] == "development" and r["model_id"] == "efv_v1"
+            assert r["resolvable"] is None and r["model_version"]["provider"] == d["label"]["provider"]
+            assert set(r["raters"]) == {"efv", "prospx_consensus", "mlb_pipeline"}
+            assert set(r["deltas"]) == {"vs_prospx_consensus", "vs_mlb_pipeline"}
