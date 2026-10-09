@@ -145,7 +145,10 @@ def test_band_links_and_band_marks_draw_their_pixel_icons(home):
     assert _icons(lead) == [(12, "prospx")]
     for band in B.HOME_BAND_ORDER:
         mark = re.search(rf'id="band-{band}".*?<span class="band-mark">(.*?)</span>', home, re.S).group(1)
-        assert _icons(mark) == [(32, _sym(B._WIRE_FAMILIES[band]["mark"]))], band
+        # HOME_7 (PA3): the family's key mark first; the Prospects band adds
+        # i-collegesavant beside i-prospx.
+        assert _icons(mark) == [(32, _sym(m)) for m in B._HOME_BANDS[band][3]], band
+        assert B._HOME_BANDS[band][3][0] == B._WIRE_FAMILIES[band]["mark"]
     assert 'class="px-ball"' not in home
 
 

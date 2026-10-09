@@ -63,16 +63,16 @@ def test_the_registry_holds_every_row_of_the_design_table():
         "trd": ("TRD", "Trade:"), "inj": ("IL", "Injury:")}
 
 
-def test_the_interim_symbols_are_the_plan_s():
-    """Plan 3.3: the symbols in use until PX_SYSTEM_SWEEP draws the final set."""
+def test_the_final_symbols_are_the_plan_s():
+    """Plan 3.3: the final symbols PX_SYSTEM_SWEEP drew, swapped in by HOME_7."""
     t = B._WIRE_TYPES
-    assert [B._WIRE_FAMILIES[f]["mark"] for f in FAMS] == ["prospx", "franchise", "ev-signing", "ev-trade", "ev-il"]
-    assert t["callup"]["ico"] == t["recall"]["ico"] == "ev-promo" and t["optioned"]["ico"] == "ev-demo"
-    for code in ("dfa", "outright", "claim", "release", "retire", "suspend", "rule5"):
-        assert t[code]["ico"] == "franchise", code
-    assert t["award"]["ico"] == "hof" and t["il_return"]["ico"] == "ev-il"
-    for code in ("opt_declined", "opt_exercised", "qo"):
-        assert t[code]["ico"] == "ev-signing", code
+    assert [B._WIRE_FAMILIES[f]["mark"] for f in FAMS] == ["prospx", "ev-mlb", "ev-signing", "ev-trade", "ev-il"]
+    want = {"callup": "ev-callup", "recall": "ev-callup", "optioned": "ev-demo", "dfa": "ev-dfa",
+            "outright": "ev-dfa", "claim": "ev-claim", "rule5": "ev-claim", "release": "ev-release",
+            "retire": "ev-retire", "suspend": "ev-suspend", "award": "ev-award",
+            "opt_declined": "ev-option", "opt_exercised": "ev-option", "qo": "ev-qo",
+            "il_place": "ev-il", "il_return": "ev-il-off", "fa_sign": "ev-signing", "trade": "ev-trade"}
+    assert {c: t[c]["ico"] for c in want} == want
     assert (t["draft_sign"]["ico"], t["intl_sign"]["ico"]) == ("ev-draft", "ev-intl")
     assert (B.ICON_FOR["ev-draft"], B.ICON_FOR["ev-intl"]) == ("px-draft", "px-intl")
 

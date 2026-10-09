@@ -34,7 +34,9 @@ import pytest
 from conftest import serve_site
 
 MODES = ("reduce", "no-preference")
-BLIPS = (".home-ticker .ticker-tag .blip", ".sb-feed .feed-head .blip")
+# HOME_7 (PA1) replaced the sidebar feed dot with the five family lamps, which
+# blink with the same ticker-blip when lit (test_home_pixel_signals.py).
+BLIPS = (".home-ticker .ticker-tag .blip",)
 
 # Animation events bubble, so a capturing window listener registered before
 # any page script sees every rect of the 404 art from its first frame.

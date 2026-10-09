@@ -557,14 +557,14 @@ _PX_SECTION_ICON = {
 # filter chip. mark: the family's pictogram on the key and the chips.
 _WIRE_FAMILIES = {
     "pro": {"tag": "PRO", "sr": "Prospect:", "label": "Prospects", "mark": "prospx"},
-    "mlb": {"tag": "MLB", "sr": "MLB:", "label": "MLB", "mark": "franchise"},
+    "mlb": {"tag": "MLB", "sr": "MLB:", "label": "MLB", "mark": "ev-mlb"},
     "fa":  {"tag": "FA", "sr": "Free agency:", "label": "Free agency", "mark": "ev-signing"},
     "trd": {"tag": "TRD", "sr": "Trade:", "label": "Trades", "mark": "ev-trade"},
     "inj": {"tag": "IL", "sr": "Injury:", "label": "Injuries", "mark": "ev-il"},
 }
 # type code -> fam, ico (pictogram key), val (value label), weight, rail.
-# ico is the interim symbol of plan 3.3 (HOME_7 swaps in the final keys once
-# PX_SYSTEM_SWEEP draws them); ev-draft and ev-intl are ICON_FOR aliases.
+# ico is the final symbol of plan 3.3 (PX_SYSTEM_SWEEP drew them, HOME_7
+# swapped them in for the interim set); ev-draft and ev-intl are ICON_FOR aliases.
 # weight is the rail and ticker order of plan 3.5 item 4 (0: grade moves order
 # by step size; a 60-day IL placement takes 85; a code the plan does not weigh
 # takes 60 when rail-eligible and 40 otherwise). rail: True, False, or "board"
@@ -579,26 +579,26 @@ _WIRE_TYPES = {
     "debut":         {"fam": "pro", "ico": "ev-debut", "val": "MLB debut", "weight": 95, "rail": True},
     "draft_sign":    {"fam": "pro", "ico": "ev-draft", "val": "signed", "weight": 50, "rail": "board"},
     "intl_sign":     {"fam": "pro", "ico": "ev-intl", "val": "IFA signing", "weight": 50, "rail": "board"},
-    "callup":        {"fam": "mlb", "ico": "ev-promo", "val": "contract selected", "weight": 70, "rail": True},
-    "recall":        {"fam": "mlb", "ico": "ev-promo", "val": "recalled", "weight": 40, "rail": False},
+    "callup":        {"fam": "mlb", "ico": "ev-callup", "val": "contract selected", "weight": 70, "rail": True},
+    "recall":        {"fam": "mlb", "ico": "ev-callup", "val": "recalled", "weight": 40, "rail": False},
     "optioned":      {"fam": "mlb", "ico": "ev-demo", "val": "optioned", "weight": 40, "rail": False},
-    "dfa":           {"fam": "mlb", "ico": "franchise", "val": "DFA", "weight": 80, "rail": True},
-    "outright":      {"fam": "mlb", "ico": "franchise", "val": "outrighted", "weight": 40, "rail": False},
-    "claim":         {"fam": "mlb", "ico": "franchise", "val": "claimed", "weight": 75, "rail": True},
-    "release":       {"fam": "mlb", "ico": "franchise", "val": "released", "weight": 60, "rail": True},
-    "retire":        {"fam": "mlb", "ico": "franchise", "val": "retired", "weight": 60, "rail": True},
-    "suspend":       {"fam": "mlb", "ico": "franchise", "val": "suspended", "weight": 60, "rail": True},
-    "rule5":         {"fam": "mlb", "ico": "franchise", "val": "Rule 5 pick", "weight": 58, "rail": True},
-    "award":         {"fam": "mlb", "ico": "hof", "val": "award", "weight": 60, "rail": True},
+    "dfa":           {"fam": "mlb", "ico": "ev-dfa", "val": "DFA", "weight": 80, "rail": True},
+    "outright":      {"fam": "mlb", "ico": "ev-dfa", "val": "outrighted", "weight": 40, "rail": False},
+    "claim":         {"fam": "mlb", "ico": "ev-claim", "val": "claimed", "weight": 75, "rail": True},
+    "release":       {"fam": "mlb", "ico": "ev-release", "val": "released", "weight": 60, "rail": True},
+    "retire":        {"fam": "mlb", "ico": "ev-retire", "val": "retired", "weight": 60, "rail": True},
+    "suspend":       {"fam": "mlb", "ico": "ev-suspend", "val": "suspended", "weight": 60, "rail": True},
+    "rule5":         {"fam": "mlb", "ico": "ev-claim", "val": "Rule 5 pick", "weight": 58, "rail": True},
+    "award":         {"fam": "mlb", "ico": "ev-award", "val": "award", "weight": 60, "rail": True},
     "fa_sign":       {"fam": "fa", "ico": "ev-signing", "val": "MLB deal", "weight": 90, "rail": True},
     "minor_deal":    {"fam": "fa", "ico": "ev-signing", "val": "MiLB deal", "weight": 40, "rail": False},
-    "opt_declined":  {"fam": "fa", "ico": "ev-signing", "val": "option declined", "weight": 45, "rail": True},
-    "opt_exercised": {"fam": "fa", "ico": "ev-signing", "val": "option exercised", "weight": 45, "rail": True},
-    "qo":            {"fam": "fa", "ico": "ev-signing", "val": "QO offered", "weight": 44, "rail": True},
+    "opt_declined":  {"fam": "fa", "ico": "ev-option", "val": "option declined", "weight": 45, "rail": True},
+    "opt_exercised": {"fam": "fa", "ico": "ev-option", "val": "option exercised", "weight": 45, "rail": True},
+    "qo":            {"fam": "fa", "ico": "ev-qo", "val": "QO offered", "weight": 44, "rail": True},
     "fa_elect":      {"fam": "fa", "ico": "ev-signing", "val": "elected free agency", "weight": 40, "rail": False},
     "trade":         {"fam": "trd", "ico": "ev-trade", "val": "trade", "weight": 100, "rail": True},
     "il_place":      {"fam": "inj", "ico": "ev-il", "val": "IL", "weight": 65, "rail": True},
-    "il_return":     {"fam": "inj", "ico": "ev-il", "val": "activated", "weight": 40, "rail": False},
+    "il_return":     {"fam": "inj", "ico": "ev-il-off", "val": "activated", "weight": 40, "rail": False},
 }
 # The two pictogram keys that are aliases, not drawings (plan 3.3).
 _WIRE_ICON_ALIAS = {"ev-draft": "px-draft", "ev-intl": "px-intl"}
@@ -2600,7 +2600,7 @@ def _feed_day_header(dt: str, gfx: bool = False) -> str:
         btn = (f'<button class="chip egfx-chip egfx-day-chip" type="button" data-gfx-date="{dt}" '
                f'title="Share graphic: {dt}">'
                f'<span class="egfx-chip-glyph" aria-hidden="true">{_ico("gfx", 12)}</span>GFX {md}</button>')
-    return (f'<div class="feed-day"><span class="feed-day-date">{ts}</span>'
+    return (f'<div class="feed-day" data-day="{html.escape(dt)}"><span class="feed-day-date">{ts}</span>'
             f'{btn}'
             f'<a class="feed-day-tm" href="/prospx/#tab=timemachine&tm={dt}" '
             f'title="Time Machine - the full board as of {dt}">Time Machine →</a></div>')
@@ -2779,12 +2779,24 @@ _NEWS_FILTER_JS = """<script>
       });
       day.style.display=any?'':'none';
     });
+    // PA7 (HOME_7): a family with no rows draws the pixel empty state
+    // (EephusState); a StatsAPI family on a stale log draws the unmeasured
+    // state the server wrote (#news-stale) instead.
+    var stale=document.getElementById('news-stale');
+    var staleOn=!!(stale&&(' '+(stale.getAttribute('data-fams')||'')+' ').indexOf(' '+f+' ')>=0);
+    if(stale)stale.hidden=!staleOn;
     if(!empty){
       empty=document.createElement('div');
-      empty.className='news-empty';
+      empty.className='news-empty wire-state';
       feed.appendChild(empty);
     }
-    if(shown===0){empty.textContent='No '+b.textContent.trim()+' rows in this window.';empty.style.display='';}
+    if(shown===0&&!staleOn){
+      var m='No '+b.textContent.trim()+' rows in this window.';
+      var S=window.EephusState;
+      if(S&&S.html){empty.innerHTML=S.html('empty',m.replace(/&/g,'&amp;').replace(/</g,'&lt;'));}
+      else{empty.textContent=m;}
+      empty.style.display='';
+    }
     else{empty.style.display='none';}
     var st=document.getElementById('news-filter-status');
     if(st)st.textContent=shown+(shown===1?' row':' rows')+' shown';
@@ -3525,6 +3537,11 @@ def build_news(data: dict | None = None) -> str:
             pmap[g["player_key"]] = g
     feed = _news_feed_html(events, pmap, mlb)
     recent = _news_recent_events(events)
+    # PA7 (HOME_7): the MLB, TRD and IL filter views draw the unmeasured state
+    # while the transaction log is stale, as the rail does.
+    stale = (_wire_stale_html(_wire_mlb_freshness(_cached_data_json("mlb_events/recent.json"),
+                                                  date.today())[1], "news-stale")
+             if live else "")
     # The family key as the filter bar: All, the five families (each with its
     # mark), and Grades (owner decision M20-4, DECISIONS_FOR_OWNER.md:515).
     chips = _wire_key_html("data-news-filter",
@@ -3552,7 +3569,7 @@ def build_news(data: dict | None = None) -> str:
         '<div class="filter-bar" id="news-filter-bar" role="group" aria-labelledby="news-filter-label">'
         f'<span class="filter-label" id="news-filter-label">Filter</span>{chips}</div>'
         '<div class="visually-hidden" id="news-filter-status" role="status" aria-live="polite"></div>'
-        f'<div class="sb-feed news-feed" id="news-feed">{feed}</div>'
+        f'<div class="sb-feed news-feed" id="news-feed">{feed}{stale}</div>'
         '</div>'
         # Page-scoped sizing for the per-date GFX chips (site.css owns the base
         # .chip/.egfx-chip look; this only shrinks them into the thin day rows).
@@ -3561,6 +3578,7 @@ def build_news(data: dict | None = None) -> str:
         'padding:2px 8px;line-height:1.5;}</style>'
         + _news_gfx_blob(recent, pmap, mlb=mlb)
         + _NEWS_FILTER_JS
+        + _WIRE_UNREAD_JS
         + _news_gfx_js()
         # Shared Generate GFX engine (same two-script injection as /fa/).
         + f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
@@ -3978,9 +3996,14 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
         f'<div class="otd-subhead">Trades on this day</div>{"".join(trade_rows)}'
         if trade_rows else ""
     )
+    # PA6 (HOME_7): the i-history calendar at 16 px with today's day number
+    # beside it, static; the hidden text names the date.
+    cal = (f'<span class="otd-cal" aria-hidden="true">{_ico("history", 16)}'
+           f'<span class="otd-cal-day">{today.day}</span></span>')
     return (
         '<section class="home-module otd-module">'
-        f'<div class="kicker"><h2>{PAGE_LABELS["/history/"]}</h2>'
+        f'<div class="kicker"><h2>{cal}{PAGE_LABELS["/history/"]}'
+        f'{_sr(", " + today.strftime("%B") + " " + str(today.day))}</h2>'
         '<a class="see-all" href="/history/">See all →</a></div>'
         + "".join(rows) + trades_block +
         '</section>'
@@ -4350,7 +4373,11 @@ def build_this_day(data: dict | None = None) -> str:
         mlb_li = ""
     body = (
         '<div class="news-app hist-app">'
-        f'<div class="section-head"><h1>{_masthead_icon("history")}{label} - {html.escape(mon_d)}</h1>'
+        # PA6 (HOME_7): the 32 px calendar carries today's day number inside, in
+        # PixelMplus12 (site.css .hist-cal draws it from --cal-day over the
+        # calendar's face); the h1 keeps its one sprite icon and its words.
+        f'<div class="section-head hist-cal" style="--cal-day:&quot;{today.day}&quot;">'
+        f'<h1>{_masthead_icon("history")}{label} - {html.escape(mon_d)}</h1>'
         '<span class="section-sub">this date in past seasons</span></div>'
         '<details class="news-how"><summary>How this works</summary><ul>'
         f'<li>{_hist_spans(tx_all, il_all).strip() or "Ledgers read from prospects.db."}</li>'
@@ -4548,9 +4575,11 @@ def _date_callout(band: str, today: date | None = None) -> str:
         days = (start - today).days
         if start <= today <= end:
             tag, when = "Live", "Underway"
+            lamps = _cal_lamps_svg((end - start).days + 1, (today - start).days)
         elif 0 <= days <= 45:
             tag = "Upcoming"
             when = "Tomorrow" if days == 1 else f"in {days} days"
+            lamps = _cal_lamps_svg(days, 0)
         else:
             continue
         md = start.strftime("%b %d").replace(" 0", " ")
@@ -4559,7 +4588,7 @@ def _date_callout(band: str, today: date | None = None) -> str:
         return (f'<a class="home-callout" href="{href}">'
                 f'<span class="cal-tag">{tag}</span>'
                 f'<span class="cal-msg"><strong>{html.escape(name)}</strong> · {md} · {when}</span>'
-                f'<span class="cal-go">View →</span></a>')
+                f'{lamps}<span class="cal-go">View →</span></a>')
     return ""
 
 # The eFV model floors at 20 for the long tail of organizational filler it has
@@ -5149,7 +5178,8 @@ _WIRE_RAIL_JS = '''<script>
     closeDay();
     if (empty) {
       empty.hidden = shown !== 0;
-      if (!shown && curBtn) empty.textContent = "No " + curBtn.getAttribute("title") + " rows in this list.";
+      var msg = empty.querySelector(".px-state-msg") || empty;
+      if (!shown && curBtn) msg.textContent = "No " + curBtn.getAttribute("title") + " rows in this list.";
     }
     if (st && announce) st.textContent = shown + (shown === 1 ? " row" : " rows") + " shown";
   }
@@ -5195,9 +5225,10 @@ _WIRE_RAIL_JS_LIVE = _wire_patch(_wire_patch(
     '    if (empty) {\n      empty.hidden = shown !== 0 || staleOn;\n')
 
 
-def _wire_stale_html(msg: str) -> str:
+def _wire_stale_html(msg: str, el_id: str = "wire-stale") -> str:
     """The rail's hidden unmeasured state for the StatsAPI families, or ''
-    when the transaction log is fresh."""
+    when the transaction log is fresh. /news/ draws the same state under its
+    own id (HOME_7, PA7)."""
     if not msg:
         return ""
     # Scoped here, not in site.css: the state sits on the theme-fixed panel,
@@ -5206,19 +5237,130 @@ def _wire_stale_html(msg: str) -> str:
             'border-color:var(--wire-panel-dim);color:var(--wire-panel-dim);}'
             '.sb-feed .wire-stale .px-art .s{fill:var(--wire-panel-dim);}'
             '.sb-feed .wire-stale .px-art .k{fill:var(--wire-panel-ink);}</style>'
-            f'<div class="wire-stale" id="wire-stale" data-fams="{" ".join(_RAIL_STALE_FAMS)}" hidden>'
+            f'<div class="wire-stale" id="{el_id}" data-fams="{" ".join(_RAIL_STALE_FAMS)}" hidden>'
             f'{_px_state("unmeasured", html.escape(msg))}</div>')
+
+
+# ---- HOME_7 pixel signals (site-pass plan 4.4, LANE_HOME 4) ----------------
+# PA1: five 6 x 6 family lamps in the rail head, one per MLB News family. A
+# family with a row dated yesterday or today (the build's day granularity
+# for "the last 24 h") lights its lamp in its panel colour, which blinks with
+# ticker-blip (1.4 s, step-end); a family with none is the unlit lamp
+# (var(--border-light)) and still. The counts are the title and hidden text.
+_FAM_LAMP_DAYS = 1
+
+
+def _fam_lamps_html(events: list, today: date) -> str:
+    since = today - timedelta(days=_FAM_LAMP_DAYS)
+    cut = since.isoformat()
+    n = {f: 0 for f in _WIRE_FAMILIES}
+    for e in events:
+        row = _WIRE_TYPES.get(e[1])
+        if row and str(e[0])[:10] >= cut:
+            n[row["fam"]] += 1
+    txt = (f"Rows dated {since.strftime('%b')} {since.day} or later: "
+           + ", ".join(f'{_WIRE_FAMILIES[f]["label"]} {n[f]}' for f in n))
+    lamps = "".join(f'<i class="fam-lamp{" is-lit" if n[f] else ""}" data-fam="{f}"></i>' for f in n)
+    return f'<span class="fam-lamps" title="{html.escape(txt)}">{lamps}{_sr(txt + ".")}</span>'
+
+
+# PA2: the unread bar. Rows dated after the newest row the reader saw on the
+# last visit carry .is-unread (site.css: a 2 px bar in the family colour that
+# blinks twice, 0.8 s steps(1) x 2, then stays lit). The newest row date seen
+# is kept in localStorage "eephus.news.seen"; every read and write sits in
+# try/catch, and with no storage (or on a first visit) no row gets a bar.
+# The script only adds the class.
+_WIRE_UNREAD_JS = '''<script>
+(function () {
+  "use strict";
+  var KEY = "eephus.news.seen", seen = null;
+  try { seen = window.localStorage.getItem(KEY); } catch (e) { return; }
+  var re = /^\\d{4}-\\d{2}-\\d{2}$/, newest = "";
+  ["wire-rows", "news-feed"].forEach(function (id) {
+    var feed = document.getElementById(id);
+    if (!feed) return;
+    var day = "";
+    Array.prototype.forEach.call(feed.querySelectorAll(".feed-day, .feed-item"), function (el) {
+      if (el.classList.contains("feed-day")) {
+        day = el.getAttribute("data-day") || "";
+        if (re.test(day) && day > newest) newest = day;
+        return;
+      }
+      if (seen && re.test(seen) && re.test(day) && day > seen) el.classList.add("is-unread");
+    });
+  });
+  if (newest && (!seen || !re.test(seen) || newest > seen)) {
+    try { window.localStorage.setItem(KEY, newest); } catch (e) { /* no storage: no bars */ }
+  }
+})();
+</script>'''
+
+
+# PA4: the callout lamp countdown. One 4 x 4 lamp per day left before the
+# event (up to 45, rows of 15, 2 px apart) in the band colour; today's lamp is
+# its own path and blinks with ticker-blip. While the event is live every
+# lamp of its run is lit and today's blinks. aria-hidden: the callout's words
+# carry the count.
+_CAL_LAMP_MAX = 45
+_CAL_LAMP_COLS = 15
+
+
+def _cal_lamps_svg(n: int, today_i: int = 0) -> str:
+    n = max(1, min(int(n), _CAL_LAMP_MAX))
+    today_i = min(max(int(today_i), 0), n - 1)
+    cols = min(n, _CAL_LAMP_COLS)
+    rows = -(-n // _CAL_LAMP_COLS)
+    w, h = cols * 6 - 2, rows * 6 - 2
+
+    def lamp(i: int) -> str:
+        return f"M{(i % _CAL_LAMP_COLS) * 6} {(i // _CAL_LAMP_COLS) * 6}h4v4h-4z"
+    rest = "".join(lamp(i) for i in range(n) if i != today_i)
+    return (f'<svg class="cal-lamps" width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
+            f'shape-rendering="crispEdges" aria-hidden="true" focusable="false">'
+            + (f'<path class="cl-on" d="{rest}"/>' if rest else "")
+            + f'<path class="cl-today" d="{lamp(today_i)}"/></svg>')
+
+
+# PA5: the phone jump bar lamp. The link of the band in view carries
+# .is-here (the server marks the first band); an IntersectionObserver on a
+# thin line 40% down the viewport moves the class, and site.css draws the
+# 2 px lamp under that label only, so the lamp moves in one step. The lamp
+# blinks with ticker-blip; there is no transition.
+_HOME_JUMP_JS = '''<script>
+(function () {
+  "use strict";
+  function init() {
+    var nav = document.querySelector(".home-jump");
+    if (!nav || !("IntersectionObserver" in window)) return;
+    var links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#band-"]'));
+    var bands = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+    function pick() {
+      var cur = 0, line = window.innerHeight * 0.4;
+      bands.forEach(function (b, i) { if (b && b.getBoundingClientRect().top <= line) cur = i; });
+      links.forEach(function (a, i) { a.classList.toggle("is-here", i === cur); });
+    }
+    var io = new IntersectionObserver(pick, { rootMargin: "-40% 0px -59% 0px", threshold: 0 });
+    bands.forEach(function (b) { if (b) io.observe(b); });
+    pick();
+  }
+  // The bands follow the bar in the page, so wait for them.
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>'''
 
 
 # The homepage's two bands (HOME_4, SP-D1): MLB first, then Prospects. A
 # reversal is this one line; the jump bar and the band order both read it.
 HOME_BAND_ORDER = ("mlb", "pro")
-# Band id -> (anchor, h2, jump-bar label, 32 px mark). The mark is the family's
-# key mark (_WIRE_FAMILIES), so the band and the news key read as one system;
-# the rule under each band head is the family colour (--wire-mlb, --wire-pro).
+# Band id -> (anchor, h2, jump-bar label, 32 px marks). The first mark is the
+# family's key mark (_WIRE_FAMILIES), so the band and the news key read as one
+# system; the rule under each band head is the family colour (--wire-mlb,
+# --wire-pro). PA3 (HOME_7): the MLB band draws ev-mlb (home plate), the
+# Prospects band i-prospx with i-collegesavant beside it; static.
 _HOME_BANDS = {
-    "mlb": ("band-mlb", "MLB", "MLB", _WIRE_FAMILIES["mlb"]["mark"]),
-    "pro": ("band-pro", "Prospects", "Prospects", _WIRE_FAMILIES["pro"]["mark"]),
+    "mlb": ("band-mlb", "MLB", "MLB", (_WIRE_FAMILIES["mlb"]["mark"],)),
+    "pro": ("band-pro", "Prospects", "Prospects", (_WIRE_FAMILIES["pro"]["mark"], "collegesavant")),
 }
 # The rail's row count on desktop; at 900 px and below the rail shows the
 # first _HOME_RAIL_PHONE_ROWS (the server marks the rest wire-more).
@@ -5236,9 +5378,9 @@ _HOME_PROSPX_LINKS = ("/prospx/", "/prospx/#tab=farm", "/prospx/#tab=leaderboard
 def _home_band(band: str, count_line: str, body: str, extra_head: str = "") -> str:
     """One band: its masthead (32 px mark, h2, one count line read from served
     data, a 2 px rule in the family colour) and its blocks."""
-    anchor, h2, _jump, mark = _HOME_BANDS[band]
+    anchor, h2, _jump, marks = _HOME_BANDS[band]
     return (f'<section class="home-band home-band--{band}" id="{anchor}" aria-labelledby="{anchor}-h">'
-            f'<div class="band-head"><span class="band-mark">{_ico(mark, 32)}</span>'
+            f'<div class="band-head"><span class="band-mark">{"".join(_ico(m, 32) for m in marks)}</span>'
             f'<div class="band-titles"><h2 id="{anchor}-h">{html.escape(h2)}</h2>'
             f'<span class="band-count">{count_line}</span></div></div>'
             f'{extra_head}{body}</section>')
@@ -5349,13 +5491,14 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         feed = _px_state("empty", "No recent activity.")
     rail = (
         f'<aside class="home-rail" id="home-rail" aria-label="{NEWS_LABEL}">'
-        f'<div class="sb-feed"><div class="feed-head"><a href="/news/" title="All {NEWS_LABEL}"><span class="blip"></span>{NEWS_LABEL}<span class="feed-head-more">all →</span></a></div>'
+        f'<div class="sb-feed"><div class="feed-head">{_fam_lamps_html(events, today_d)}'
+        f'<a href="/news/" title="All {NEWS_LABEL}">{NEWS_LABEL}<span class="feed-head-more">all →</span></a></div>'
         # The family key (HOME_2): mark plus tag, a filter over the rows below.
         f'<div class="filter-bar wire-key" id="wire-key" role="group" aria-label="Filter {NEWS_LABEL} by family">'
         f'{_wire_key_html("data-wire-filter", tags=True)}</div>'
         '<div class="visually-hidden" id="wire-key-status" role="status" aria-live="polite"></div>'
         f'<div class="wire-rows" id="wire-rows">{feed}</div>'
-        '<p class="news-empty" id="wire-empty" hidden></p>'
+        f'<div class="wire-state" id="wire-empty" hidden>{_px_state("empty", "")}</div>'
         + (_wire_stale_html(mlb_stale) if live else '')
         + f'<a class="feed-all" href="/news/">All {NEWS_LABEL} →</a>'
         f'<p class="feed-asof">As of {html.escape(as_of)}'
@@ -5363,6 +5506,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         + '</p></div>'
         '</aside>'
         + (_WIRE_RAIL_JS_LIVE if live else _WIRE_RAIL_JS)
+        + _WIRE_UNREAD_JS
     )
 
     # ---- top wire ticker ----
@@ -5381,10 +5525,12 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     )
     # The scoreboard strip (SCORES_7d) follows the masthead in the head block;
     # assets/home-scores.js fills it at runtime (_home_scoreboard).
+    here = ' class="is-here"'
     jump = ('<nav class="home-jump" aria-label="Homepage bands">'
-            + "".join(f'<a href="#{_HOME_BANDS[b][0]}">{html.escape(_HOME_BANDS[b][2])}</a>'
-                      for b in HOME_BAND_ORDER)
-            + '</nav>')
+            + "".join(f'<a href="#{_HOME_BANDS[b][0]}"{here if i == 0 else ""}>'
+                      f'{html.escape(_HOME_BANDS[b][2])}</a>'
+                      for i, b in enumerate(HOME_BAND_ORDER))
+            + '</nav>' + _HOME_JUMP_JS)
     # Draft War Room banner: hidden by default, revealed by a small client-side
     # check ONLY while the live draft feed reports status "live" (draft night).
     # Links into the PROSPX draft section's War Room view. No em dashes (copy

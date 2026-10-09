@@ -367,7 +367,6 @@
    Scope: homepage live "blip" dots + the PROSPX IL / health status dots.
    (Stock direction already uses pointed ▲/▼ glyphs - no round dot to convert.) */
 .home-ticker .ticker-tag .blip,
-.sb-feed .feed-head .blip,
 .row-tag.health-il::before, .row-tag.health-tj::before, .row-tag.health-chronic::before,
 .row-tag.health-watch::before, .row-tag.health-healthy::before { transform: rotate(45deg); }
 
@@ -1177,7 +1176,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   display: flex; align-items: center; gap: 12px;
   padding: 0 0 8px; border-bottom: 2px solid var(--band-c);
 }
-.band-mark { flex: none; color: var(--band-c); line-height: 0; }
+.band-mark { flex: none; display: flex; gap: 4px; color: var(--band-c); line-height: 0; }
 .band-mark .ico { display: block; }
 .band-titles { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; min-width: 0; }
 .band-head h2 {
@@ -1251,7 +1250,6 @@ span.club-logo { display: inline-flex; align-items: center; justify-content: cen
 .sb-feed { background: #0B0E07; border: 1px solid var(--border); padding: 10px 11px; }
 [data-theme="dark"] .sb-feed { background: #0a0c06; }
 .sb-feed .feed-head { display: flex; align-items: center; gap: 7px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8fe3b0; margin-bottom: 8px; }
-.sb-feed .feed-head .blip { width: 7px; height: 7px; background: #6ee7a8; animation: ticker-blip 1.4s step-end infinite; }
 /* Clickable section header -> /news/. Keeps the terminal-green color; an
    "all ->" affordance trails the label and brightens on hover. */
 .sb-feed .feed-head a { display: inline-flex; align-items: center; gap: 7px; color: inherit; text-decoration: none; width: 100%; }
@@ -1329,7 +1327,57 @@ span.club-logo { display: inline-flex; align-items: center; justify-content: cen
 .news-app button.wire-chip[data-fam].active { border-color: var(--wire-c); }
 .news-empty { padding: 2rem 1rem; text-align: center; color: var(--text-tertiary); }
 .sb-feed .news-empty { color: var(--wire-panel-dim); }
-.sb-feed #wire-empty { padding: 10px 2px; margin: 0; font-family: var(--font-retro-mono); font-size: 11px; text-align: left; }
+/* ---- HOME_7 pixel signals (site-pass plan 4.4; LANE_HOME 4) ----
+   Each piece carries a reading, draws whole pixels in theme tokens, and is a
+   CSS steps animation with its still frame as the base style; script only
+   toggles a class. They run under Reduce Motion as without it (owner,
+   2026-10-01). No gold, nothing on the wordmark, ramp, starfield or marquee.
+   PA1: five 6 x 6 family lamps in the rail head; a family with a row dated
+   yesterday or today is lit in its panel colour and blinks (ticker-blip,
+   1.4 s step-end); the rest are the unlit lamp, still. */
+.sb-feed .fam-lamps { display: inline-flex; align-items: center; gap: 2px; flex: none; }
+.sb-feed .fam-lamp { display: block; width: 6px; height: 6px; background: var(--border-light); }
+.sb-feed .fam-lamp.is-lit { background: var(--wire-c); animation: ticker-blip 1.4s step-end infinite; }
+/* PA2: the unread bar, a 2 px family-colour bar at the row's left edge that
+   blinks twice (0.8 s, steps(1), 2 iterations) and then stays lit. */
+.feed-item.is-unread { box-shadow: inset 2px 0 0 var(--wire-c); animation: wire-unread .8s steps(1) 2; }
+@keyframes wire-unread { 0% { box-shadow: none; } 50% { box-shadow: inset 2px 0 0 var(--wire-c); } }
+/* PA7: the family empty and unmeasured states on the theme-fixed panel (the
+   rail and the /news/ feed) take the panel's ink. */
+.sb-feed .wire-state { padding: 0; }
+.sb-feed .wire-state .is-empty, .sb-feed .wire-state .is-unmeasured { margin: 10px 0; background: transparent; border-color: var(--wire-panel-dim); color: var(--wire-panel-dim); }
+.sb-feed .wire-state .px-art .s { fill: var(--wire-panel-dim); }
+.sb-feed .wire-state .px-art .k { fill: var(--wire-panel-ink); }
+/* PA4: the callout lamp countdown, one 4 x 4 lamp per day left (up to 45) in
+   the band colour; today's lamp blinks. */
+.home-callout .cal-lamps { display: block; flex: none; }
+.home-callout .cal-lamps path { fill: var(--band-c, var(--text-secondary)); }
+.home-callout .cal-lamps .cl-today { animation: ticker-blip 1.4s step-end infinite; }
+/* PA6: the On This Day calendar, static. 16 px with the day number beside it
+   on the module card; on the /history/ masthead the 32 px calendar shows the
+   day number inside, in PixelMplus12, over the calendar's face (the h1 keeps
+   its one sprite icon: --cal-day carries the number). */
+.otd-cal { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; vertical-align: -1px; color: var(--band-c, var(--text-primary)); }
+.otd-cal .ico { display: block; }
+.otd-cal-day { font: 400 12px/16px "PixelMplus12", var(--font-retro-mono); letter-spacing: 0; }
+.hist-cal h1 { position: relative; }
+.hist-cal h1 > .ico:first-child { vertical-align: top; margin-top: 2px; }
+.hist-cal h1::before {
+  content: var(--cal-day) / ""; position: absolute; left: 8px; top: 12px; width: 16px; height: 14px;
+  background: var(--bg-primary); color: var(--text-primary);
+  font: 400 12px/14px "PixelMplus12", var(--font-retro-mono); letter-spacing: 0; text-align: center;
+}
+/* PA5: the phone jump bar lamp, 2 px under the label of the band in view
+   (.is-here); the class moves in one step and the lamp blinks. */
+@media (max-width: 900px) {
+  .home-jump a { position: relative; }
+  .home-jump a.is-here::after {
+    content: ""; position: absolute; left: 50%; bottom: 7px; width: 12px; height: 2px; margin-left: -6px;
+    animation: ticker-blip 1.4s step-end infinite;
+  }
+  .home-jump a.is-here[href="#band-mlb"]::after { background: var(--wire-mlb); }
+  .home-jump a.is-here[href="#band-pro"]::after { background: var(--wire-pro); }
+}
 
 /* ---- /news/ expanded Prospect News page ---- */
 .news-app .news-intro { font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-width: 760px; margin: 6px 0 4px; }

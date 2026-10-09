@@ -54,7 +54,8 @@ def test_label_constant():
 def test_homepage_rail_and_ticker():
     html = _read("index.html")
     assert OLD not in html
-    assert 'title="All MLB News"><span class="blip"></span>MLB News<' in html
+    # HOME_7 (PA1): the family lamps replaced the rail head's blip.
+    assert 'title="All MLB News">MLB News<span class="feed-head-more">' in html
     # tabindex=-1 since QHOA06: the ticker is aria-hidden, so its tag leaves the Tab order
     assert '<span class="ticker-tag"><a href="/news/" tabindex="-1"><span class="blip"></span>MLB News</a></span>' in html
 
