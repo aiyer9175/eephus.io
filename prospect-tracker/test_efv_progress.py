@@ -473,10 +473,13 @@ LV2026 = {
 #: The registry before SG_5, by frame id.
 _PRE_SG5_FRAMES = {"vm", "vm2", "vm_dev", "lv_dev", "vm_oos_dev", "lv_res", "vm_pros",
                    "predebut", "all_vintages", "disagreement"}
+#: EFV3_A5: the vm3 frame, a development frame registered after SG_5
+#: (test_headtohead_frame.py pins its rows).
+_EFV3_A5_FRAMES = {"vm3"}
 
 
 def test_lv2026_frames_are_registered_as_specified():
-    assert set(P.FRAMES) == _PRE_SG5_FRAMES | set(LV2026)
+    assert set(P.FRAMES) == _PRE_SG5_FRAMES | set(LV2026) | _EFV3_A5_FRAMES
     for fid, meta in LV2026.items():
         assert P.FRAMES[fid] == meta, fid
         assert "basis_key" not in P.FRAMES[fid]
@@ -526,7 +529,7 @@ def test_lv2026_registration_changes_no_existing_row():
     assert not [r for r in rows if r["frame"] in LV2026]
     assert P.restamp_roles(rows) == rows
     for r in rows:
-        assert r["frame"] in _PRE_SG5_FRAMES
+        assert r["frame"] in _PRE_SG5_FRAMES | _EFV3_A5_FRAMES
         assert r.get("content_hash") == P.content_hash(r)
     for fid, meta in (doc.get("frames") or {}).items():
         if fid in LV2026:

@@ -1,0 +1,90 @@
+{
+ "generated_at": "2026-10-09T01:05:24Z",
+ "produced_by": "tools/efv_headtohead_frame_lab.py vm3",
+ "task": "EFV3_A5",
+ "role": "development",
+ "label": {
+  "provider": "fwar",
+  "resolved_through": 2026
+ },
+ "basis": {
+  "scored_years": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "window": [
+   2017,
+   2023
+  ],
+  "consensus_present_players": 2135,
+  "frames": {
+   "vm3": "vintage-matched rows (base year equal to the decision year) under the consensus-present rule: an in-window PROSPX consensus read, FanGraphs and MLB Pipeline optional",
+   "vintage_matched_common": "the same rows restricted to those FanGraphs and MLB Pipeline both graded (the vm1 and vm2 membership rule), re-derived here"
+  },
+  "efv": "eFV v1 refit in every draw, scored with the MATRIX consensus input (the vm1 convention carried by the vm2 headline); the development read applies the timing pin to its rows, so its n sits at or under this lab's"
+ },
+ "protocol": "cluster paired bootstrap, resampled BY PLAYER over the eFV matrix pool, forward chain refit inside every draw, both legs scored on the consensus-present rows the resampled players own; both frames scored inside the same draw. MDE95 = 1.645 * sd(delta), one-sided",
+ "B_requested": 2000,
+ "B_used": 2000,
+ "seed": 20260906,
+ "elapsed_s": 514.3,
+ "point": {
+  "vm3": {
+   "n_rows": 1025,
+   "efv": 0.39827,
+   "consensus": 0.36785,
+   "delta": 0.03042
+  },
+  "vintage_matched_common": {
+   "n_rows": 833,
+   "efv": 0.41021,
+   "consensus": 0.40268,
+   "delta": 0.00753
+  }
+ },
+ "vm3": {
+  "delta": 0.03042,
+  "sd": 0.01581,
+  "mde95": 0.026,
+  "mde95_twosided": 0.031,
+  "ci95": [
+   -0.00774,
+   0.0555
+  ],
+  "p_gt_0": 0.936,
+  "estimator": "E_refit",
+  "reading": "development only; a floor, not a claim"
+ },
+ "vintage_matched_common": {
+  "delta": 0.00753,
+  "sd": 0.01389,
+  "mde95": 0.0229,
+  "mde95_twosided": 0.0272,
+  "ci95": [
+   -0.02406,
+   0.0304
+  ],
+  "p_gt_0": 0.5905,
+  "estimator": "E_refit",
+  "reading": "development only; a floor, not a claim"
+ },
+ "paired_difference": {
+  "delta": 0.02289,
+  "sd": 0.01004,
+  "ci95": [
+   0.00143,
+   0.04071
+  ],
+  "note": "the frames share their draws; the sd is the paired difference's"
+ },
+ "not_a_claim": "a development floor on a spent frame; vm2 stays the headline and no served number reads this file"
+}

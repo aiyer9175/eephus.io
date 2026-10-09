@@ -1,0 +1,6207 @@
+{
+ "schema": 1,
+ "task": "EFV3_A5",
+ "generated_at": "2026-10-09T01:13:25Z",
+ "produced_by": "tools/efv_vm3_frame_read.py",
+ "plan": "EFV3_PLAN.md s3 (G2); lane A E3-Q1 = A; vm2 stays the headline",
+ "exploratory": false,
+ "label": {
+  "provider": "fwar",
+  "resolved_through": 2026,
+  "id": "fwar@2026-10-02-0341299c20ec",
+  "vintage": "2026-10-02-0341299c20ec",
+  "exploratory": false
+ },
+ "code": {
+  "commit": "0f9fb164",
+  "tool": "tools/efv_vm3_frame_read.py",
+  "source_backtest_sha256": "f911fb17ebef63cf440cee812a45ca836ac53d7bf68e1ee85f6c9b2626ac029c",
+  "efv_v2_stat_sha256": "0a1db56abe2cac3528563b1538291b3dabc994b5694b814c52824d9ce73c07c3"
+ },
+ "statistic": {
+  "primary": "within (side, vintage) Spearman, size-weighted",
+  "secondary": "pooled Spearman after the identical output map",
+  "veto": "contributor AUC after the identical output map, pooled",
+  "min_group_rows": 20,
+  "group": "(side, debut year)",
+  "own_rows": "each source scored on the rows it graded",
+  "code": "efv_v2_stat.py"
+ },
+ "reserved_guard": {
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "r_vm_first_debut_year": 2025,
+  "reserved_vm_pins": [],
+  "candidate_years_max": 2024,
+  "scored_years_max": 2024,
+  "vm_years_read": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "list_vintages_read": [],
+  "grouped_by_consensus_fv": false,
+  "closed_arms_rerun": 0
+ },
+ "census": {
+  "frame_version": "vm3",
+  "role": "development",
+  "basis": "pooled_efv_common_vintage_matched_vm3",
+  "rule": "every debut-cohort row (base year equal to the debut year) with an in-window PROSPX consensus read and a timing-pinned eFV score; FanGraphs and MLB Pipeline are optional columns scored on their own rows, never a membership rule",
+  "window": [
+   2017,
+   2023
+  ],
+  "n_rows": 1022,
+  "n_by_side": {
+   "hit": 481,
+   "pit": 541
+  },
+  "n_consensus_present": 1065,
+  "n_both_sources": 863,
+  "by_debut_year": {
+   "2017": {
+    "debuts": 93,
+    "consensus_present": 85,
+    "both_sources": 50,
+    "vm3_rows": 80
+   },
+   "2018": {
+    "debuts": 114,
+    "consensus_present": 104,
+    "both_sources": 75,
+    "vm3_rows": 101
+   },
+   "2019": {
+    "debuts": 171,
+    "consensus_present": 147,
+    "both_sources": 124,
+    "vm3_rows": 141
+   },
+   "2020": {
+    "debuts": 184,
+    "consensus_present": 160,
+    "both_sources": 136,
+    "vm3_rows": 154
+   },
+   "2021": {
+    "debuts": 208,
+    "consensus_present": 157,
+    "both_sources": 131,
+    "vm3_rows": 151
+   },
+   "2022": {
+    "debuts": 260,
+    "consensus_present": 207,
+    "both_sources": 174,
+    "vm3_rows": 197
+   },
+   "2023": {
+    "debuts": 243,
+    "consensus_present": 205,
+    "both_sources": 173,
+    "vm3_rows": 198
+   }
+  },
+  "receipt": {
+   "frame_version": "vm3",
+   "rule": "every debut-cohort row (base year equal to the debut year) with an in-window PROSPX consensus read and a timing-pinned eFV score; FanGraphs and MLB Pipeline are optional columns scored on their own rows, never a membership rule",
+   "n_candidates": 1065,
+   "n_rows": 1022,
+   "n_without_pin": 40,
+   "n_pin_year_differs": 3,
+   "n_outside_window": 0,
+   "n_both_sources": 830,
+   "n_with_mlb_pipeline": 923,
+   "n_with_fangraphs": 928,
+   "n_input_equals_rater_consensus": 1022,
+   "window_mmdd": [
+    "-01-01",
+    "-05-01"
+   ]
+  },
+  "scored_by": "tools/efv_vm3_frame_read.py (data/efv_vm3_frame_eval.json)",
+  "note": "counts only, published first; the frame is a development frame beside the vm2 headline and nothing served reads it"
+ },
+ "vm3": {
+  "item": "EFV3_A5",
+  "role": "development",
+  "generated_at": "2026-10-09T01:13:25Z",
+  "model_id": "efv_v2",
+  "adjudicates": false,
+  "selects": false,
+  "exploratory": false,
+  "note": "development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, consensus-present rule; vm2 stays the headline; not a claim",
+  "label": {
+   "provider": "fwar",
+   "resolved_through": 2026,
+   "id": "fwar@2026-10-02-0341299c20ec",
+   "vintage": "2026-10-02-0341299c20ec",
+   "exploratory": false
+  },
+  "code": {
+   "commit": "0f9fb164",
+   "tool": "tools/efv_vm3_frame_read.py",
+   "source_backtest_sha256": "f911fb17ebef63cf440cee812a45ca836ac53d7bf68e1ee85f6c9b2626ac029c",
+   "efv_v2_stat_sha256": "0a1db56abe2cac3528563b1538291b3dabc994b5694b814c52824d9ce73c07c3"
+  },
+  "scored_object": {
+   "efv_v2": "efv_v2_serve.served_oos_scores(timing_pin=True): the vm2 headline's scored object",
+   "efv_v1": "efv_model.oos_grades(timing_pin=True)"
+  },
+  "bootstrap": {
+   "B": 2000,
+   "seed": 20260906,
+   "estimator": "E_cond",
+   "unit": "player cluster"
+  },
+  "frames": {
+   "vm3": {
+    "frame_version": "vm3",
+    "basis": "pooled_efv_common_vintage_matched_vm3",
+    "window": [
+     2017,
+     2023
+    ],
+    "rule": "every debut-cohort row (base year equal to the debut year) with an in-window PROSPX consensus read and a timing-pinned eFV score; FanGraphs and MLB Pipeline are optional columns scored on their own rows, never a membership rule",
+    "outcome": "career WAR to date",
+    "contributor": "career WAR >= 3.0",
+    "n": 1022,
+    "n_by_side": {
+     "hit": 481,
+     "pit": 541
+    },
+    "n_players": 1022,
+    "groups": [
+     "hit|2017",
+     "hit|2018",
+     "hit|2019",
+     "hit|2020",
+     "hit|2021",
+     "hit|2022",
+     "hit|2023",
+     "pit|2017",
+     "pit|2018",
+     "pit|2019",
+     "pit|2020",
+     "pit|2021",
+     "pit|2022",
+     "pit|2023"
+    ],
+    "receipt": {
+     "frame_version": "vm3",
+     "rule": "every debut-cohort row (base year equal to the debut year) with an in-window PROSPX consensus read and a timing-pinned eFV score; FanGraphs and MLB Pipeline are optional columns scored on their own rows, never a membership rule",
+     "n_candidates": 1065,
+     "n_rows": 1022,
+     "n_without_pin": 40,
+     "n_pin_year_differs": 3,
+     "n_outside_window": 0,
+     "n_both_sources": 830,
+     "n_with_mlb_pipeline": 923,
+     "n_with_fangraphs": 928,
+     "n_input_equals_rater_consensus": 1022,
+     "window_mmdd": [
+      "-01-01",
+      "-05-01"
+     ]
+    },
+    "dropped": {
+     "no_v1_pinned_score": 0,
+     "no_side": 0
+    },
+    "population_rows": 1065,
+    "statistic": "within (side, vintage) Spearman, size-weighted",
+    "raters": {
+     "efv_v2": {
+      "spearman": 0.3418,
+      "auc": 0.738,
+      "n": 1022,
+      "within": 0.3418,
+      "pooled": 0.3529,
+      "within_rows": 1022,
+      "within_groups": 14,
+      "own_rows": true
+     },
+     "efv_v1": {
+      "spearman": 0.3835,
+      "auc": 0.7555,
+      "n": 1022,
+      "within": 0.3835,
+      "pooled": 0.3878,
+      "within_rows": 1022,
+      "within_groups": 14,
+      "own_rows": true
+     },
+     "prospx_consensus": {
+      "spearman": 0.3554,
+      "auc": 0.7425,
+      "n": 1022,
+      "within": 0.3554,
+      "pooled": 0.3674,
+      "within_rows": 1022,
+      "within_groups": 14,
+      "own_rows": true
+     },
+     "mlb_pipeline": {
+      "spearman": 0.3855,
+      "auc": 0.7618,
+      "n": 923,
+      "within": 0.3855,
+      "pooled": 0.3833,
+      "within_rows": 923,
+      "within_groups": 14,
+      "own_rows": true
+     },
+     "fangraphs": {
+      "spearman": 0.3184,
+      "auc": 0.7169,
+      "n": 928,
+      "within": 0.3184,
+      "pooled": 0.3457,
+      "within_rows": 911,
+      "within_groups": 13,
+      "own_rows": true
+     }
+    },
+    "deltas": {
+     "v2_vs_prospx_consensus": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 1022,
+       "n_clusters": 1022,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2017",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 1022,
+       "min_group_rows": 20,
+       "a": 0.34181,
+       "b": 0.3554,
+       "delta": -0.01359,
+       "ci95": [
+        -0.0384,
+        0.0104
+       ],
+       "sd": 0.01243,
+       "mde95": 0.0204,
+       "p_gt_0": 0.134,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true,
+       "mde95_e_refit": 0.026,
+       "mde95_e_refit_estimator": "E_refit, pooled Spearman, eFV v1 refit per draw",
+       "mde95_e_refit_source": "data/efv_vm3_frame_floor.json (tools/efv_headtohead_frame_lab.py vm3)"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 1022,
+       "n_clusters": 1022,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.35291,
+       "b": 0.36737,
+       "delta": -0.01446,
+       "ci95": [
+        -0.0393,
+        0.0095
+       ],
+       "sd": 0.01229,
+       "mde95": 0.0202,
+       "p_gt_0": 0.117,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 1022,
+       "n_clusters": 1022,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.73798,
+       "b": 0.74252,
+       "delta": -0.00454,
+       "ci95": [
+        -0.0187,
+        0.0092
+       ],
+       "sd": 0.00722,
+       "mde95": 0.0119,
+       "p_gt_0": 0.2635,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      }
+     },
+     "v2_vs_efv_v1": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 1022,
+       "n_clusters": 1022,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2017",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 1022,
+       "min_group_rows": 20,
+       "a": 0.34181,
+       "b": 0.38352,
+       "delta": -0.0417,
+       "ci95": [
+        -0.0723,
+        -0.0107
+       ],
+       "sd": 0.01511,
+       "mde95": 0.0249,
+       "p_gt_0": 0.0045,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 below zero",
+       "identical_rows": true
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 1022,
+       "n_clusters": 1022,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.35291,
+       "b": 0.38784,
+       "delta": -0.03493,
+       "ci95": [
+        -0.0621,
+        -0.0083
+       ],
+       "sd": 0.01327,
+       "mde95": 0.0218,
+       "p_gt_0": 0.004,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 below zero",
+       "identical_rows": true
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 1022,
+       "n_clusters": 1022,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.73798,
+       "b": 0.75547,
+       "delta": -0.0175,
+       "ci95": [
+        -0.0328,
+        -0.0028
+       ],
+       "sd": 0.00772,
+       "mde95": 0.0127,
+       "p_gt_0": 0.0125,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 below zero",
+       "identical_rows": true
+      }
+     },
+     "efv_v1_vs_prospx_consensus": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 1022,
+       "n_clusters": 1022,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2017",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 1022,
+       "min_group_rows": 20,
+       "a": 0.38352,
+       "b": 0.3554,
+       "delta": 0.02811,
+       "ci95": [
+        0.0053,
+        0.0518
+       ],
+       "sd": 0.01181,
+       "mde95": 0.0194,
+       "p_gt_0": 0.991,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 above zero",
+       "identical_rows": true
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 1022,
+       "n_clusters": 1022,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.38784,
+       "b": 0.36737,
+       "delta": 0.02047,
+       "ci95": [
+        0.0027,
+        0.0396
+       ],
+       "sd": 0.00945,
+       "mde95": 0.0155,
+       "p_gt_0": 0.9865,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 above zero",
+       "identical_rows": true
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 1022,
+       "n_clusters": 1022,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.75547,
+       "b": 0.74252,
+       "delta": 0.01295,
+       "ci95": [
+        0.002,
+        0.0245
+       ],
+       "sd": 0.00571,
+       "mde95": 0.0094,
+       "p_gt_0": 0.9875,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 above zero",
+       "identical_rows": true
+      }
+     },
+     "v2_vs_mlb_pipeline": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 923,
+       "n_clusters": 923,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2017",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 923,
+       "min_group_rows": 20,
+       "a": 0.37831,
+       "b": 0.38547,
+       "delta": -0.00715,
+       "ci95": [
+        -0.0448,
+        0.0269
+       ],
+       "sd": 0.01844,
+       "mde95": 0.0303,
+       "p_gt_0": 0.341,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 923,
+       "n_clusters": 923,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.37999,
+       "b": 0.3833,
+       "delta": -0.00331,
+       "ci95": [
+        -0.0344,
+        0.0263
+       ],
+       "sd": 0.01561,
+       "mde95": 0.0257,
+       "p_gt_0": 0.4255,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 923,
+       "n_clusters": 923,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.74606,
+       "b": 0.76182,
+       "delta": -0.01576,
+       "ci95": [
+        -0.0334,
+        0.0028
+       ],
+       "sd": 0.00901,
+       "mde95": 0.0148,
+       "p_gt_0": 0.0405,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      }
+     },
+     "v2_vs_fangraphs": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 928,
+       "n_clusters": 928,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 911,
+       "min_group_rows": 20,
+       "a": 0.3366,
+       "b": 0.31839,
+       "delta": 0.01822,
+       "ci95": [
+        -0.0229,
+        0.0615
+       ],
+       "sd": 0.02219,
+       "mde95": 0.0365,
+       "p_gt_0": 0.7885,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 928,
+       "n_clusters": 928,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.36932,
+       "b": 0.34572,
+       "delta": 0.0236,
+       "ci95": [
+        -0.0124,
+        0.061
+       ],
+       "sd": 0.01891,
+       "mde95": 0.0311,
+       "p_gt_0": 0.9005,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 928,
+       "n_clusters": 928,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.73429,
+       "b": 0.71689,
+       "delta": 0.0174,
+       "ci95": [
+        -0.004,
+        0.0391
+       ],
+       "sd": 0.01077,
+       "mde95": 0.0177,
+       "p_gt_0": 0.95,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      }
+     }
+    },
+    "secondary": {
+     "statistic": "pooled Spearman after the identical output map",
+     "raters": {
+      "efv_v2": 0.3529,
+      "efv_v1": 0.3878,
+      "prospx_consensus": 0.3674,
+      "mlb_pipeline": 0.3833,
+      "fangraphs": 0.3457
+     },
+     "deltas": {
+      "v2_vs_prospx_consensus": {
+       "delta": -0.01446,
+       "ci95": [
+        -0.0393,
+        0.0095
+       ],
+       "mde95": 0.0202,
+       "reading": "development only; CI95 spans zero"
+      },
+      "v2_vs_efv_v1": {
+       "delta": -0.03493,
+       "ci95": [
+        -0.0621,
+        -0.0083
+       ],
+       "mde95": 0.0218,
+       "reading": "development only; CI95 below zero"
+      },
+      "efv_v1_vs_prospx_consensus": {
+       "delta": 0.02047,
+       "ci95": [
+        0.0027,
+        0.0396
+       ],
+       "mde95": 0.0155,
+       "reading": "development only; CI95 above zero"
+      },
+      "v2_vs_mlb_pipeline": {
+       "delta": -0.00331,
+       "ci95": [
+        -0.0344,
+        0.0263
+       ],
+       "mde95": 0.0257,
+       "reading": "development only; CI95 spans zero"
+      },
+      "v2_vs_fangraphs": {
+       "delta": 0.0236,
+       "ci95": [
+        -0.0124,
+        0.061
+       ],
+       "mde95": 0.0311,
+       "reading": "development only; CI95 spans zero"
+      }
+     }
+    },
+    "holm": {
+     "frame": "vintage_matched_vm3",
+     "basis": "pooled_efv_common_vintage_matched_vm3",
+     "n": 1022,
+     "estimator": "E_cond",
+     "resampling_unit": "player cluster",
+     "B": 2000,
+     "seed": 20260906,
+     "convention": "delta = eFV minus the rater on identical rows; ci95 is the 2.5th and 97.5th percentile of the paired player-clustered bootstrap; MDE95 = 1.645 * sd(delta), one-sided",
+     "note": "a cell prints a verdict word only if it clears its floor after a Holm correction across the six cells in `holm.family`; otherwise it is read as its interval only (owner answer FP3-3, 2026-09-25)",
+     "sources": {
+      "prospx_consensus": {
+       "label": "PROSPX consensus",
+       "spearman": {
+        "xfv": 0.3527,
+        "rater": 0.3675,
+        "n": 1022,
+        "delta": -0.0148,
+        "point_delta_unrounded": -0.01476,
+        "ci95": [
+         -0.0396,
+         0.0092
+        ],
+        "sd": 0.0123,
+        "mde95": 0.0202,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": false,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.11444,
+         "holm_step": 3,
+         "holm_alpha": 0.0125,
+         "holm_z_one_sided": 2.2414,
+         "mde95_holm": 0.0276,
+         "reject_holm": false
+        },
+        "verdict": null,
+        "reading": "interval only"
+       },
+       "auc": {
+        "xfv": 0.7376,
+        "rater": 0.7425,
+        "n": 1022,
+        "delta": -0.0049,
+        "point_delta_unrounded": -0.00492,
+        "ci95": [
+         -0.0191,
+         0.009
+        ],
+        "sd": 0.00724,
+        "mde95": 0.0119,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": false,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.24927,
+         "holm_step": 4,
+         "holm_alpha": 0.016667,
+         "holm_z_one_sided": 2.128,
+         "mde95_holm": 0.0154,
+         "reject_holm": false
+        },
+        "verdict": null,
+        "reading": "interval only"
+       }
+      },
+      "mlb_pipeline": {
+       "label": "MLB Pipeline",
+       "spearman": {
+        "xfv": 0.3823,
+        "rater": 0.3921,
+        "n": 923,
+        "delta": -0.0098,
+        "point_delta_unrounded": -0.00983,
+        "ci95": [
+         -0.0407,
+         0.0215
+        ],
+        "sd": 0.01627,
+        "mde95": 0.0268,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": false,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.27348,
+         "holm_step": 5,
+         "holm_alpha": 0.025,
+         "holm_z_one_sided": 1.96,
+         "mde95_holm": 0.0319,
+         "reject_holm": false
+        },
+        "verdict": null,
+        "reading": "interval only"
+       },
+       "auc": {
+        "xfv": 0.7463,
+        "rater": 0.7482,
+        "n": 923,
+        "delta": -0.0019,
+        "point_delta_unrounded": -0.00185,
+        "ci95": [
+         -0.0204,
+         0.0171
+        ],
+        "sd": 0.00969,
+        "mde95": 0.0159,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": false,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.42227,
+         "holm_step": 6,
+         "holm_alpha": 0.05,
+         "holm_z_one_sided": 1.6449,
+         "mde95_holm": 0.0159,
+         "reject_holm": false
+        },
+        "verdict": null,
+        "reading": "interval only"
+       }
+      },
+      "fangraphs": {
+       "label": "FanGraphs",
+       "spearman": {
+        "xfv": 0.3699,
+        "rater": 0.3455,
+        "n": 928,
+        "delta": 0.0244,
+        "point_delta_unrounded": 0.02447,
+        "ci95": [
+         -0.012,
+         0.0647
+        ],
+        "sd": 0.01965,
+        "mde95": 0.0323,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": false,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.10717,
+         "holm_step": 2,
+         "holm_alpha": 0.01,
+         "holm_z_one_sided": 2.3263,
+         "mde95_holm": 0.0457,
+         "reject_holm": false
+        },
+        "verdict": null,
+        "reading": "interval only"
+       },
+       "auc": {
+        "xfv": 0.7347,
+        "rater": 0.7004,
+        "n": 928,
+        "delta": 0.0343,
+        "point_delta_unrounded": 0.03428,
+        "ci95": [
+         0.0131,
+         0.0562
+        ],
+        "sd": 0.01087,
+        "mde95": 0.0179,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": true,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.0008,
+         "holm_step": 1,
+         "holm_alpha": 0.008333,
+         "holm_z_one_sided": 2.394,
+         "mde95_holm": 0.026,
+         "reject_holm": true
+        },
+        "verdict": "beats FanGraphs",
+        "reading": "verdict"
+       }
+      }
+     },
+     "own_rows": true,
+     "own_rows_note": "each source is scored on the rows it graded; a cell's point values are eFV and the rater on those identical rows and n is their count",
+     "holm": {
+      "family": [
+       "prospx_consensus.spearman",
+       "prospx_consensus.auc",
+       "mlb_pipeline.spearman",
+       "mlb_pipeline.auc",
+       "fangraphs.spearman",
+       "fangraphs.auc"
+      ],
+      "k": 6,
+      "alpha": 0.05,
+      "procedure": "Holm step-down, one-sided on |delta| / sd, sd = the cell's E_cond bootstrap sd",
+      "rule": "a cell carries a verdict word only when it survives Holm; the PROSPX consensus Spearman cell also needs head_to_head_verdict to resolve in the same direction; every other cell is read as its interval only",
+      "registered": "owner answer FP3-3, 2026-09-25, before this block was first read",
+      "n_verdicts": 1
+     },
+     "role": "development",
+     "reading_rule": "development frame: no headline verdict exists for it, so the PROSPX consensus Spearman cell carries no word; every cell is read as its interval"
+    },
+    "e_refit_floor": {
+     "mde95": 0.026,
+     "sd": 0.01581,
+     "ci95": [
+      -0.00774,
+      0.0555
+     ],
+     "delta": 0.03042,
+     "n_rows": 1025,
+     "estimator": "E_refit",
+     "B_used": 2000,
+     "seed": 20260906,
+     "generated_at": "2026-10-09T01:05:24Z",
+     "source": "data/efv_vm3_frame_floor.json (tools/efv_headtohead_frame_lab.py vm3)",
+     "measured_on": "eFV v1 refit in every draw, scored with the MATRIX consensus input (the vm1 convention carried by the vm2 headline); the development read applies the timing pin to its rows, so its n sits at or under this lab's",
+     "label": {
+      "provider": "fwar",
+      "resolved_through": 2026
+     },
+     "vintage_matched_common_same_draws": {
+      "delta": 0.00753,
+      "sd": 0.01389,
+      "mde95": 0.0229,
+      "mde95_twosided": 0.0272,
+      "ci95": [
+       -0.02406,
+       0.0304
+      ],
+      "p_gt_0": 0.5905,
+      "estimator": "E_refit",
+      "reading": "development only; a floor, not a claim"
+     },
+     "paired_difference": {
+      "delta": 0.02289,
+      "sd": 0.01004,
+      "ci95": [
+       0.00143,
+       0.04071
+      ],
+      "note": "the frames share their draws; the sd is the paired difference's"
+     }
+    },
+    "resolvable": null,
+    "verdict": "development only; CI95 spans zero",
+    "note": "development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, consensus-present rule; vm2 stays the headline; not a claim",
+    "rows": [
+     {
+      "key": "yoendrys_gomez",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jonathan_bowlan",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "kelvin_caceres",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "anthony_veneziano",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "orion_kerkering",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "junior_caminero",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "joey_estes",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_nicolas",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "joe_boyle",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "heston_kjerstad",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jackson_rutledge",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_hurt",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "pete_crowarmstrong",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "sawyer_gipsonlong",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "victor_vodnik",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "evan_carter",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jordan_lawlar",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "davis_daniel",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "alexander_canario",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "connor_phillips",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "carson_spiers",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jasson_dominguez",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "austin_wells",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "ronny_mauricio",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "nick_loftin",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "andre_lipcius",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "kyren_paris",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "darius_vines",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "steven_cruz",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "ceddanne_rafaela",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "drew_millas",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "hunter_goodman",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jordan_wicks",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_harrison",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "wilyer_abreu",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "everson_pereira",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "parker_meadows",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "drew_rom",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "noelvi_marte",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "masyn_winn",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "john_mcmillon",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "bryce_jarvis",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "wade_meckler",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "osleivis_basabe",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "lawrence_butler",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "hagen_danner",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "emerson_hancock",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "colin_selby",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jonathan_ornelas",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "lyon_richardson",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jose_tena",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "curtis_mead",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "davis_schneider",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "blake_rutherford",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "slade_cecconi",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jordyn_adams",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "marco_luciano",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "alika_williams",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "sal_frelick",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jackson_wolf",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "prelander_berroa",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "cade_marlowe",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "alex_speas",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "devin_sweet",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "endy_rodriguez",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "christian_encarnacionstrand",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "quinn_priester",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "johan_rojas",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "alek_jacob",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_soderstrom",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "zack_gelof",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "trey_cabbage",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "abner_uribe",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "dominic_canzone",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "kyle_leahy",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "justin_martinez",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "isaiah_campbell",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "angel_felipe",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "colton_cowser",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "daniel_palencia",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jose_a_ferrer",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "alec_marsh",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "victor_mederos",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "james_mcarthur",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jared_triolo",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "amos_willingham",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jordan_westburg",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "nick_gonzales",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "brandon_walter",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "gavin_williams",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "david_hamilton",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jose_rodriguez_679563",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "shawn_dubin",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "henry_davis",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "grant_hartwig",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "spencer_horwitz",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jordan_balazovic",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jacob_amaya",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "kolton_ingram",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "samad_taylor",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "emmet_sheehan",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "carmen_mlodzinski",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "matt_krook",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "luis_matos",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "brendan_white",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "keaton_winn",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "owen_white",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "ty_adcock",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "ricky_karcher",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jose_lopez",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jonny_deluca",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "chris_murphy",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "grae_kessinger",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "nick_robertson",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "elly_de_la_cruz",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "andrew_abbott",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "aj_smithshawver",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "bryan_woo",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jose_soriano",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "reese_olson",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "blair_calvo",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "grant_anderson",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "ben_joyce",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "sam_bachman",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "randy_vasquez",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "bobby_miller",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "ryan_walker",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "patrick_bailey",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "lucas_erceg",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "karl_kauffmann",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "riley_pint",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "brayan_rocchio",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "brandon_williamson",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "matt_mclain",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "cody_bradford",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "garrett_acton",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "eury_perez",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "casey_schmitt",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jake_alu",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jp_france",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "juan_then",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "matt_mervis",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "braden_shewmake",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "miguel_amaya",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "austin_cox",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "gavin_stone",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "brandon_pfaadt",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jake_irvin",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "bryce_miller",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "xavier_edwards",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "guillo_zuniga",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "dominic_fletcher",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "cody_bolton",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "tom_cosgrove",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "joey_ortiz",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "tanner_bibee",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "luis_medina",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "michael_busch",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "brenton_doyle",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "logan_allen",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "tristan_beck",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "enmanuel_valdez",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "levi_stoudt",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "brent_headrick",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "blake_perkins",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "mason_miller",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "brett_sullivan",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "george_soriano",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "zach_neto",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jose_caballero",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "casey_legumina",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "hogan_harris",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "taj_bradley",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "edouard_julien",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "mckinley_moore",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "grayson_rodriguez",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "dylan_dodd",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jared_shuster",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "cesar_salazar",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "tim_herrin",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jhony_brito",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "joey_wiemer",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "thaddeus_ward",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "jose_e_hernandez",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "shintaro_fujinami",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "kevin_kelly",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "corey_julks",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "jordan_walker",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "anthony_volpe",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "brice_turang",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "oscar_colas",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "blake_sabol",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "nathan_lukes",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "carlos_vargas",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "mason_englert",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "brett_wisely",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "ryan_noda",
+      "year": 2023,
+      "side": "hit"
+     },
+     {
+      "key": "gus_varland",
+      "year": 2023,
+      "side": "pit"
+     },
+     {
+      "key": "yerry_rodriguez",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "noah_davis",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "simeon_woods_richardson",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "bo_naylor",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "brendon_davis",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "francisco_alvarez",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "logan_ohoppe",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "ford_proctor",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "ezequiel_tovar",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "ji_hwan_bae",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "miles_mastrobuoni",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "michael_siani",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "ronny_henriquez",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "gavin_hollowell",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "jordan_diaz",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "matt_wallner",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "frank_german",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "drey_jameson",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "luis_ortiz",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "jordan_groshans",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "cole_waites",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "mark_vientos",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "josh_jung",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "israel_pineda",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "alec_burleson",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "louis_varland",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "hayden_wesneski__27581",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "hunter_brown",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "ryne_nelson",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "peyton_burdick",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "triston_casas",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "bryce_montes_de_oca",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "oswald_peraza",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "yainer_diaz",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "spencer_steer",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "ryan_kreidler",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "cody_morris",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "donny_sands",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "ken_waldichuk",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "cody_thomas",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "gunnar_henderson",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "michael_toglia",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "corbin_carroll",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "zack_kelly",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "garrett_mitchell",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "david_hensley",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "cade_cavalli",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "eguy_rosario",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "michael_plassmeyer",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "drew_waters",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jose_butto",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "brett_baty",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "oswaldo_cabrera",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "freddy_tarnok",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "shea_langeliers",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "andrew_nardi",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "xzavion_curry",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "dl_hall",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "vaughn_grissom",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "hunter_gaddis",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "cole_ragans",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "bubba_thompson",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "miguel_vargas",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "tyler_freeman",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "tommy_henry",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "yusniel_diaz",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "james_outman",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "terrin_vavra",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jj_bleday",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "max_meyer",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "maikel_garcia",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "michael_massey",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "nick_pratto",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "nate_eaton",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "elier_hernandez",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "esteury_ruiz",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "nolan_jones",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "brayan_bello",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "david_villar",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "garrett_hill",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "michael_stefanic",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "korey_lee",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "vinnie_pasquantino",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jonathan_aranda",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "lenyn_sosa",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jeter_downs",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jerar_encarnacion",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "riley_greene",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "liover_peguero",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "buddy_kennedy",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jake_bird",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "jonah_bride",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "canaan_smithnjigba",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "kyle_stowers",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "gabriel_moreno",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "travis_swaggerty",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "ezequiel_duran",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "caleb_kilian",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "zack_thompson",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "evan_lee",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "kody_clemens",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jermaine_palacios",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "josh_smith__sa3009923",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "nelson_velazquez",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "anderson_espinoza",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "ethan_small",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "michael_harris_ii",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "josh_winckowski",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "brewer_hicklen",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "ivan_herrera",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "cal_mitchell",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "graham_ashcraft",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "adley_rutschman",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "matthew_liberatore",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "nolan_gorman",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "brian_serven",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "christopher_morel",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "davis_martin",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "logan_gillaspie",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "michael_grove",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "colin_holderman",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "chase_silseth",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "ryan_pepiot",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "joey_wentz",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "yennier_cano",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "jake_walsh",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "calvin_faucher",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "francisco_morales",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "alek_thomas",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "george_kirby",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "jared_solomon",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "royce_lewis",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "sean_hjelle",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "juan_yepez",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "alex_faedo",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "mj_melendez",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jose_miranda",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "elehuris_montero",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "cole_sands",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_bradish",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "penn_murfee",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "bowden_francis",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "william_woods",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "jack_suwinski",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "rene_pinto",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "brendan_donovan",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "richie_palacios",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "ray_kerr",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "beau_brieske",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "angel_de_jesus",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "gabriel_arias",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jj_matijevic",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "mark_kolozsvary",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "zach_logue",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "nick_allen",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "parker_mushinski",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "mackenzie_gore",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "nick_plummer",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "konnor_pilkington",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "anderson_severino",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "nick_lodolo",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "jp_sears",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "josh_winder",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "adam_oller",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "matt_brash",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "bryce_elder",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "tommy_romero",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "simon_muzziotti",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "hunter_greene",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "andre_pallante",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "elvin_rodriguez",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "bryan_lavastida",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "felix_bautista",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "heliot_ramos",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "lucius_fox",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "collin_snider",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "jose_herrera",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "steven_wilson",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "ron_marinaccio",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "ethan_roberts",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "julio_rodriguez",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "spencer_torkelson",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "cj_abrams",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "bryson_stott",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jhoan_duran",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "bennett_sousa",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "joe_perez",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "daniel_duarte",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "alexis_diaz",
+      "year": 2022,
+      "side": "pit"
+     },
+     {
+      "key": "bobby_witt_jr",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jeremy_pena",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "steven_kwan",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "diego_castillo",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "cooper_hummel",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "jose_azocar",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "gosuke_katoh",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "wynton_bernard",
+      "year": 2022,
+      "side": "hit"
+     },
+     {
+      "key": "joan_adon",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "oneil_cruz",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "kyle_dohy",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "spencer_strider",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "angel_zerpa",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "roansy_contreras",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "riley_obrien",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "hans_crouse",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "shane_baz",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "luis_frias",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "nick_fortes",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "tj_friedl",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "ryan_vilade",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jonathan_heasley",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "payton_henry",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jovani_moran",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "connor_seabold",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "seth_beer",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "josh_lowe",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "oliver_ortega",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "colton_welker",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "mike_baumann",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "kervin_castro",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "ryan_feltner",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "joe_ryan",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "aj_alexy",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "alfonso_rivas_iii",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "glenn_otto_jr",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "edward_cabrera",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "jacob_latz",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "kevin_smith",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "otto_lopez",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "andre_jackson",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "yohel_pozo",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "damon_jones",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "packy_naughton",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "greg_deichmann",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "yonny_hernandez",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "luis_gil",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "reid_detmers",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "michael_rucker",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "akeem_bostick",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "curtis_terry",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "josiah_gray",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "brandon_marsh",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jarren_duran",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "trey_amburgey",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "cal_raleigh",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jakson_reetz",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "reiss_knehr",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "vidal_brujan",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "stuart_fairchild",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jake_burger",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "aaron_ashby",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "thomas_szapucki",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "gavin_sheets",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "max_kranick",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "alex_wells",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "tylor_megill",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "wander_franco",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "mason_thompson",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "connor_wong",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "matt_manning",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_muller",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "tony_santillan",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "riley_adams",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jackson_kowar",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "jason_foley",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "cristopher_sanchez",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "angel_rondon",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "cory_abbott",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "chris_gittens",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "gilberto_celestino",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "tyler_nevin",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "vladimir_gutierrez",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "eli_morgan",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "alek_manoah",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "owen_miller",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "taylor_walls",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jc_mejia",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_ivey",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "luis_barrera",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "bailey_ober",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "khalil_lee",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "ivan_castillo",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jarred_kelenic",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "logan_gilbert",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "cody_poteet",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "trevor_larnach",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "isaac_mattson",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "nick_gordon",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "anthony_bender",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "daniel_lynch_iv",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "keegan_thompson",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "alec_bettinger",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "lucas_gilbreath",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "wyatt_mills",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "nick_sandlin",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "mario_feliciano",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "edwin_uceta",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "ben_rortvedt",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "justin_lawrence",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "bailey_falter",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "zac_lowther",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "jose_devers",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "corey_ray",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "ryan_hendrix",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "dj_peters",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "gregory_santos",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "zack_short",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "rodolfo_castro",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jb_bukauskas",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "sam_hentges",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "nick_maton",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "camilo_doval",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "peter_solomon",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "eduard_bazardo",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "ronnie_dawson",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "justin_steele",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "brent_honeywell",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "bryan_de_la_cruz",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "alex_lange",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "luke_raley",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "joshua_palacios",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "matt_peacock",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "kevin_padlo",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "ryan_mckenna",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "akil_baddoo",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "tyler_wells",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "garrett_whitlock",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "geraldo_perdomo",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jake_brentz",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "luis_oviedo",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "trevor_stephan",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "zach_pop",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "paul_campbell",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "andrew_vaughn",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "chris_rodriguez",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "ben_bowden",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "jordan_sheffield",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "tucupita_marcano",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "haseong_kim",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "taylor_trammell",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jonathan_india",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "kyle_isbel",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "jake_hager",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "aaron_northcraft",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "taylor_gushue",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "chas_mccormick",
+      "year": 2021,
+      "side": "hit"
+     },
+     {
+      "key": "brett_de_geus",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "will_vest",
+      "year": 2021,
+      "side": "pit"
+     },
+     {
+      "key": "brailyn_marquez",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "tucker_davidson",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "edwar_colina",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "tommy_doyle",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "jared_oliva",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "adonis_medina",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "patrick_murphy",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "demarcus_evans",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "bruce_zimmermann",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "hector_perez",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "zach_mckinstry",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "mickey_moniak",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "tanner_houck",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "travis_blankenhorn",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "blake_cederlind",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "rafael_marchan",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "braxton_garrett",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "jonathan_stiever",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "alejandro_kirk",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "pavin_smith",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "daulton_jefferies",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "sherten_apostel",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "sam_huff",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "kyle_nelson",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "daz_cameron",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "jose_mujica",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "jorge_ona",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "dean_kremer",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "sergio_alcantara",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "mauricio_llovera",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "luis_campusano",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "clarke_schmidt",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "luis_garcia",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "brent_rooker",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "patrick_weigel",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "derek_hill",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "bernardo_flores_jr",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "kebryan_hayes",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "jazz_chisholm_jr",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "antonio_santos",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "carlos_hernandez",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "eli_white",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "jahmai_jones",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "miguel_yajure",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "bobby_dalbec",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "deivi_garcia",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "mitch_white",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "estevan_florial",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "ben_braymer",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "jose_barrero",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "luis_alexander_basabe",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "will_craig",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "ian_anderson",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "trevor_rogers",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "jonah_heim",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "josh_fleming",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "triston_mckenzie",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "wil_crowe",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "sixto_sanchez",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "ryan_mountcastle",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "cristian_pache",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "jesus_sanchez",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "jojo_romero",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "aaron_fletcher",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_cody",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "joey_bart",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "ryan_jeffers",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "ramon_urias",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "casey_mize",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "dane_dunning",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "johan_oviedo",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "drew_rasmussen",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "tarik_skubal",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "angel_perdomo",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "jesus_cruz",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "isaac_paredes",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "luis_gonzalez",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "tyson_miller",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "ricardo_sanchez",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "keibert_ruiz",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "james_kaprielian",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "dylan_carlson",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "jake_woodford",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "seth_elledge",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "ljay_newsome",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "lewin_diaz",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "luis_garcia_jr",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "keegan_akin",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "alec_bohm",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "jorge_mateo",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "seth_romero",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "ali_sanchez",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "spencer_howard",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "albert_abreu",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "ryan_castellani",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "nick_mears",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "zack_burdi",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "humberto_mejia",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "jorge_guzman",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "anderson_tejeda",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "luis_patino",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "sterling_sharp",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "roel_ramirez",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "monte_harrison",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "jo_adell",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "joey_gerber",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "franklyn_kilome",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "nick_nelson",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "carlos_sanabria",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "andrew_young",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "nick_madrigal",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "kris_bubic",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "victor_gonzalez",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "daulton_varsho",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "nate_pearson",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "brooks_kriske",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "david_peterson",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "rony_garcia",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "nivaldo_rodriguez",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_stephenson",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "brandon_bielak",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "beau_burrows",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "anthony_castro",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_funkhouser",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "foster_griffin",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "jake_cronenworth",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "thomas_hatch",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "kodi_whitley",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "jordan_holloway",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "cam_hill",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "brady_singer",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "cristian_javier",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "edward_olivares",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "alex_vesia",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "daniel_johnson",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "jimmy_lambert",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "taylor_widener",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "nick_neidert",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "luis_robert_jr",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "andres_gimenez",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "evan_white",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "william_contreras",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "leody_taveras",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "codi_heuer",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "enoli_paredes",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "blake_taylor",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_zuber",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "yohan_ramirez",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "brandon_bailey",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "domingo_tapia",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "wyatt_mathisen",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "brandon_leibrandt",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "robinson_leyer",
+      "year": 2020,
+      "side": "pit"
+     },
+     {
+      "key": "eddy_alvarez",
+      "year": 2020,
+      "side": "hit"
+     },
+     {
+      "key": "michael_king",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "jorge_alcala",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "james_karinchak",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "tres_barrera",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "justin_dunn",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "jesus_luzardo",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_lewis",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "nico_hoerner",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "anthony_kay",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "tyrone_taylor",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "kean_wong",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "sam_haggerty",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "tj_zeuch",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "gavin_lux",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "ronald_bolanos",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "brusdar_graterol",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "bryan_garcia",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "david_bednar",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "sheldon_neuse",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "sam_hilliard",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "willi_castro",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "abraham_toro",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "jonathan_hernandez",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "jake_fraley",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "aj_puk",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "nick_solak",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "brock_burke",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "logan_webb",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "hunter_harvey",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "joel_kuhnel",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "randy_arozarena",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "junior_fernandez",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "isan_diaz",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "patrick_sandoval",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "robert_dugger",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "kevin_ginkel",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "emmanuel_clase",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "yennsy_diaz",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "dustin_may",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "trent_grisham",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "bryan_abreu",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "jake_rogers",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "bo_bichette",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "dillon_tate",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "adrian_morejon",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "michel_baez",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "zach_green",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "luis_escobar",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "andres_munoz",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "mauricio_dubon",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "dylan_cease",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "matt_thaiss",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "lewis_thorpe",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "brendan_mckay",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "yu_chang",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "lamonte_wade_jr",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "edwin_rios",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "tony_gonsolin",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "bobby_bradley",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "domingo_leyba",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "aaron_civale",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "adbert_alzolay",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "zac_gallen",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "humberto_arteaga",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "zack_collins",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "huascar_ynoa",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "rogelio_armenteros",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "jordan_yamamoto",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "yordan_alvarez",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "joe_palumbo",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "colin_poche",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "tommy_edman",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "mike_shawaryn",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "peter_lambert",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "adam_haseley",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "jose_suarez",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "andrew_knizner",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "jesus_tinoco",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "genesis_cabrera",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "will_smith",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "devin_smeltzer",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "mitch_keller",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "josh_naylor",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "cavan_biggio",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "sean_murphy",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "luis_arraez",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "brendan_rodgers",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "austin_riley",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "shaun_anderson",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "keston_hiura",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "nicky_lopez",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "oscar_mercado",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "corbin_martin",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "cole_irvin",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "shed_long_jr",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "austin_allen",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "gregory_soto",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "edgar_garcia",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "nick_senzel",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "skye_bolt",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "cal_quantrill",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "griffin_canning",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "nathaniel_lowe",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "kelvin_gutierrez",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "vladimir_guerrero_jr",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "carter_kieboom",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "ty_france",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "luis_rengifo",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "taylor_hearn",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "jose_quijada",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "darwinzon_hernandez",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "travis_lakins",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "thairo_estrada",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "cole_tucker",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "michael_chavis",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "bryan_reynolds",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "brett_martin",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "lane_thomas",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "ryan_helsley",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "pedro_avila",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "yonathan_daza",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "richard_lovelady",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "alex_jackson",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "jason_martin",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "jon_duplantier",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "brandon_brennan",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "sam_selman",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "eric_stamets",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "brady_lail",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "mike_yastrzemski",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "rangel_ravelo",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "matt_ramsey",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "miguel_del_pozo",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "seth_mejiasbrean",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "chris_paddack",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "elvis_luciano",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "nick_margevicius",
+      "year": 2019,
+      "side": "pit"
+     },
+     {
+      "key": "fernando_tatis_jr",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "eloy_jimenez",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "pete_alonso",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "richie_martin_jr",
+      "year": 2019,
+      "side": "hit"
+     },
+     {
+      "key": "edmundo_sosa",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "justus_sheffield",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "myles_straw",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "reese_mcguire",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "rowdy_tellez",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "cd_pelham",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_wright",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "nick_ciuffo",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "meibrys_viloria",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "ian_hamilton",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "dawel_lugo",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "luis_urias",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "michael_kopech",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "bryse_wilson",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "stephen_gonsalves",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "aristides_aquino",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "touki_toussaint",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "danny_jansen",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "sean_reidfoley",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "kohl_stewart",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "cedric_mullins",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "thomas_pannone",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "jacob_nix",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "brandon_lowe",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "trey_wingenter",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "chance_adams",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "ramon_laureano",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "kolby_allard",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "dakota_hudson",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "ranger_suarez",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "garrett_hampson",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "justin_williams",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "cionel_perez",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "corbin_burnes",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "enyel_de_los_santos",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_tucker",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "pablo_lopez",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "ryan_borucki",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "duane_underwood_jr",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "heath_fillmyer",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "yency_almonte",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "jonathan_loaisiga",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "david_fletcher",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "jake_bauers",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "zack_littell",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "dennis_santana",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "dylan_cozens",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "walker_lockett",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "shane_bieber",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "dustin_peterson",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "willy_adames",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "ariel_jurado",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "austin_meadows",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "michael_hermosillo",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "juan_soto",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "franmil_reyes",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "freddy_peralta",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "luis_guillorme",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "elieser_hernandez",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "seranthony_dominguez",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "fernando_romero",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "michael_soroka",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "jesmuel_valentin",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "ronald_acuna_jr",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "eric_lauer",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "gleyber_torres",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "tyler_oneill",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "merandy_gonzalez",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "gerson_bautista",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "jacob_nottingham",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "ronald_guzman",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "jaime_barria",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "isiah_kinerfalefa",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "beau_taylor",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "mitch_walding",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "jesse_biddle",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "ronny_rodriguez",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "jason_adam",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "rosell_herrera",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "gabriel_guerrero",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "drew_gagnon",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "patrick_wisdom",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "stephen_tarpley",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "victor_reyes",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "grayson_greiner",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "brett_graves",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "justin_hancock",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "alfredo_gonzalez",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "jimmy_cordero",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "austen_williams",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "zack_weiss",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "matt_skole",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "jose_briceno",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "justin_anderson",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "carlos_tocci",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "scott_kingery",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "billy_mckinney",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "shohei_ohtani",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "yairo_munoz",
+      "year": 2018,
+      "side": "hit"
+     },
+     {
+      "key": "jordan_hicks",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "brad_keller",
+      "year": 2018,
+      "side": "pit"
+     },
+     {
+      "key": "tanner_scott",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "tomas_nido",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "willie_calhoun",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "victor_arano",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "victor_robles",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "walker_buehler",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "austin_hays",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "jp_crawford",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "luiz_gohara",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "sandy_alcantara",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "francisco_mejia",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "alex_verdugo",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "jack_flaherty",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "chance_sisco",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "richard_urena",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "jairo_labourt",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_mahle",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "anthony_santander",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "ryan_mcmahon",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "dominic_smith",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "max_fried",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "amed_rosario",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "ozzie_albies",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "lucas_sims",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "drew_anderson",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "chris_flexen",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "rafael_devers",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "harrison_bader",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "andrew_stevenson",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "clint_frazier",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "felix_jorge",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "dustin_fowler",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "miguel_andujar",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "tyler_wade",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "franklin_barreto",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "ryder_jones",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "eduardo_paredes",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "ronald_herrera",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "lewis_brinson",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "josh_hader",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "francis_martes",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "brett_phillips",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "randy_rosario",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "ricardo_pinto",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "anthony_alford",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "ian_happ",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "magneuris_sierra",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "jose_alvarado",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "cody_bellinger",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "christian_arroyo",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "joe_jimenez",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "antonio_senzatela",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "daniel_robertson",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "luis_torrens",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "miguel_diaz",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "allen_cordoba",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "deck_mcguire",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "nik_turley",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "phillip_evans",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "cesar_puello",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "aj_jimenez",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "nicky_delmonico",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "angel_sanchez",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "mike_ohlman",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "niko_goodrum",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "nolan_fontana",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "christian_villanueva",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "willy_garcia",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "carlos_moncrief",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "johan_camargo",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "dwight_smith_jr",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "jace_fry",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "stuart_turner",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "tyler_smith",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "cameron_perkins",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "ramon_torres",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "glenn_sparkman",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "jason_wheeler",
+      "year": 2017,
+      "side": "pit"
+     },
+     {
+      "key": "chad_wallach",
+      "year": 2017,
+      "side": "hit"
+     },
+     {
+      "key": "christopher_bostick",
+      "year": 2017,
+      "side": "hit"
+     }
+    ]
+   }
+  }
+ },
+ "probes": {
+  "EFV3_A5:vm3.efv_vs_consensus": {
+   "tag": "EFV3_A5:vm3.efv_vs_consensus",
+   "verdict": "READ",
+   "ci95": [
+    -0.0384,
+    0.0104
+   ],
+   "reason": "n 1022; within delta -0.01359, pooled delta -0.01446; one frame read carrying 5 comparisons by within, pooled and AUC; development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, consensus-present rule; vm2 stays the headline; not a claim"
+  }
+ },
+ "n_probes": 1,
+ "not_a_claim": "development frames; vm2 stays the headline; no served number reads this file; copy keeps 'ties consensus'",
+ "elapsed_s": 44.5
+}

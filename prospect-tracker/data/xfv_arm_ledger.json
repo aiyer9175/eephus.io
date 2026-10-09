@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-08T18:53:35+00:00",
+ "generated_at": "2026-10-09T01:13:27+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
  "n_arms": 398,
  "by_lane": {
@@ -5669,9 +5669,21 @@
    "probe": "PM19:coverage.ppa_rel:hit",
    "verdict": "COUNTED",
    "generated_at": "2026-10-07T16:43:10+00:00"
+  },
+  {
+   "lane": "vm3 frame read (EFV3_A5)",
+   "artifact": "efv_vm3_frame_eval.json",
+   "probe": "EFV3_A5:vm3.efv_vs_consensus",
+   "verdict": "READ",
+   "generated_at": "2026-10-09T01:13:25Z",
+   "reason": "n 1022; within delta -0.01359, pooled delta -0.01446; one frame read carrying 5 comparisons by within, pooled and AUC; development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, consensus-present rule; vm2 stays the headline; not a claim",
+   "ci95": [
+    -0.0384,
+    0.0104
+   ]
   }
  ],
- "n_probes": 59,
+ "n_probes": 60,
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
  "sources_pending": [],

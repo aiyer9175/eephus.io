@@ -2465,7 +2465,156 @@ def _vm2_frame_rows(rows_x, raw_vm1, xfv_oos_vm2, receipts, is_vintage_matched):
     return out, receipt
 
 
-def _head_to_head_vs_sources(rows, block, *, frame, basis, headline=None):
+#: EFV3_A5 (EFV3_PLAN.md s3 G2; lane A E3-Q1 = A, the recommended option under the
+#: owner's standing instruction of 2026-10-01): frame version vm3, the vintage-matched
+#: frame under the CONSENSUS-PRESENT rule. vm2 keeps a debut-cohort row only when
+#: FanGraphs and MLB Pipeline BOTH graded it in the debut year's preseason window; vm3
+#: keeps every debut-cohort row with an in-window PROSPX consensus read and a
+#: timing-pinned eFV score, and scores each source on its own rows (the lv_dev
+#: convention of docs/efv-v2/STATUS.md). Same players, same raters, no fresh evidence:
+#: a DEVELOPMENT frame. vm2 stays the headline; the headline switch is a frame change
+#: that only EFV_V2_RESERVED_READ's record and a later owner answer can make. The
+#: frame is scored by tools/efv_vm3_frame_read.py (data/efv_vm3_frame_eval.json);
+#: this exporter publishes its counts only (accuracy.vm3_census, counts first).
+VM3_BASIS = "pooled_efv_common_vintage_matched_vm3"
+VM3_FRAME_KEY = "vintage_matched_vm3"
+VM3_FRAME_VERSION = "vm3"
+VM3_ROLE = "development"
+VM3_RULE = ("every debut-cohort row (base year equal to the debut year) with an "
+            "in-window PROSPX consensus read and a timing-pinned eFV score; FanGraphs "
+            "and MLB Pipeline are optional columns scored on their own rows, never a "
+            "membership rule")
+
+
+def _consensus_present_rows(universe, years, *, require=(CONSENSUS_KEY,)):
+    """Debut-cohort candidate rows under the consensus-present rule (vm3, EFV3_A5).
+
+    One row per player whose debut year is in `years`, at that base year, with an
+    in-window read from every rater in `require` (the consensus alone for vm3). Grades
+    carry every scored rater present in the window, so FanGraphs and Pipeline are
+    optional columns here, never a membership rule. A row is built exactly as a
+    common-set row is (`_rater_grades_for_year`, `_outcome`, `_archetype`); a player
+    with no debut date, or a debut outside `years`, has no row."""
+    years = set(years)
+    out = []
+    for p in universe:
+        o = _outcome(p)
+        dy = o.get("debut_year")
+        if dy is None or dy not in years:
+            continue
+        g = _rater_grades_for_year(p, dy)
+        if not g or any(r not in g for r in require):
+            continue
+        out.append({"key": p.get("player_key"), "name": p.get("player_name"),
+                    "year": dy, "grades": dict(g), "outcome": o,
+                    "archetype": _archetype(p)})
+    return out
+
+
+def _vm3_frame_rows(rows, xfv_oos_pin, receipts):
+    """The vm3 rows: `rows` (from `_consensus_present_rows`) kept when the player's
+    timing-pinned eFV score exists and its receipt is dated inside the row's own
+    preseason window, the vm2 rule of `_vm2_frame_rows` minus the both-source
+    membership. Rows are shallow copies carrying `grades["xfv"]` (the pinned score)
+    and `xfv_input` (the receipt); nothing in `rows` is modified. Returns
+    (rows, receipt) with the counts a reader needs to see what left."""
+    receipt = {"frame_version": VM3_FRAME_VERSION, "rule": VM3_RULE,
+               "n_candidates": len(rows), "n_rows": 0, "n_without_pin": 0,
+               "n_pin_year_differs": 0, "n_outside_window": 0,
+               "n_both_sources": 0, "n_with_mlb_pipeline": 0, "n_with_fangraphs": 0,
+               "n_input_equals_rater_consensus": 0,
+               "window_mmdd": [_WINDOW_START_MMDD, _WINDOW_END_MMDD]}
+    out = []
+    for c in rows:
+        k = c.get("key")
+        if k not in xfv_oos_pin:
+            receipt["n_without_pin"] += 1
+            continue
+        rec = receipts.get(k) or {}
+        if rec.get("window_year") != c.get("year"):
+            receipt["n_pin_year_differs"] += 1
+            continue
+        lo, hi = f"{c['year']}{_WINDOW_START_MMDD}", f"{c['year']}{_WINDOW_END_MMDD}"
+        if not (lo <= (rec.get("asof_date") or "") < hi):
+            receipt["n_outside_window"] += 1
+            continue
+        receipt["n_input_equals_rater_consensus"] += int(
+            rec.get("consensus_fv_raw") == c["grades"].get(CONSENSUS_KEY))
+        row = dict(c)
+        row["grades"] = dict(c["grades"], xfv=xfv_oos_pin[k])
+        row["xfv_input"] = {"asof_date": rec.get("asof_date"), "window": [lo, hi],
+                            "consensus_fv_raw": rec.get("consensus_fv_raw")}
+        out.append(row)
+        has = {s for s in SCORED_SOURCES if c["grades"].get(s) is not None}
+        receipt["n_with_mlb_pipeline"] += int("mlb_pipeline" in has)
+        receipt["n_with_fangraphs"] += int("fangraphs" in has)
+        receipt["n_both_sources"] += int(len(has) == len(SCORED_SOURCES))
+    receipt["n_rows"] = len(out)
+    return out, receipt
+
+
+def vm3_census(universe, years, xfv_oos_pin, receipts, side_of) -> dict:
+    """The vm3 counts, published before any statistic (EFV3_A5): per debut cohort the
+    debuts, the rows with an in-window consensus read, the both-source rows (the vm2
+    rule's ceiling) and the vm3 rows, with the frame's row count by side. Counts
+    only: the frame's statistics are the development read's
+    (tools/efv_vm3_frame_read.py), never this exporter's."""
+    years = list(years)
+    cand = _consensus_present_rows(universe, years)
+    rows, rec = _vm3_frame_rows(cand, xfv_oos_pin, receipts)
+    by_year = {y: {"debuts": 0, "consensus_present": 0, "both_sources": 0,
+                   "vm3_rows": 0} for y in years}
+    for p in universe:
+        dy = _outcome(p).get("debut_year")
+        if dy in by_year:
+            by_year[dy]["debuts"] += 1
+    for c in cand:
+        by_year[c["year"]]["consensus_present"] += 1
+        by_year[c["year"]]["both_sources"] += int(
+            all(c["grades"].get(s) is not None for s in SCORED_SOURCES))
+    nbs: dict = {}
+    for c in rows:
+        by_year[c["year"]]["vm3_rows"] += 1
+        s = side_of.get(c.get("key"))
+        if s:
+            nbs[s] = nbs.get(s, 0) + 1
+    return {
+        "frame_version": VM3_FRAME_VERSION, "role": VM3_ROLE, "basis": VM3_BASIS,
+        "rule": VM3_RULE,
+        "window": [min(years), max(years)] if years else None,
+        "n_rows": len(rows),
+        "n_by_side": {k: nbs[k] for k in ("hit", "pit") if k in nbs},
+        "n_consensus_present": len(cand),
+        "n_both_sources": sum(b["both_sources"] for b in by_year.values()),
+        "by_debut_year": {str(y): by_year[y] for y in sorted(by_year)},
+        "receipt": rec,
+        "scored_by": "tools/efv_vm3_frame_read.py (data/efv_vm3_frame_eval.json)",
+        "note": ("counts only, published first; the frame is a development frame "
+                 "beside the vm2 headline and nothing served reads it"),
+    }
+
+
+def _own_rows_point(rows, rater, metric):
+    """eFV and `rater` on the rows both graded (the own-rows convention of the vm3
+    frame): the two point values of a cell and the row count behind them."""
+    use = [c for c in rows if (c.get("grades") or {}).get("xfv") is not None
+           and (c.get("grades") or {}).get(rater) is not None]
+    if len(use) < 2:
+        return None, None, len(use)
+    xs = [c["grades"]["xfv"] for c in use]
+    rs = [c["grades"][rater] for c in use]
+    if metric == "auc":
+        tgt = [bool((c.get("outcome") or {}).get("contributor")) for c in use]
+        xv, rv = _auc(xs, tgt), _auc(rs, tgt)
+    else:
+        tgt = [(c.get("outcome") or {}).get("war") or 0.0 for c in use]
+        xv, rv = _spearman(xs, tgt), _spearman(rs, tgt)
+    return ((None if xv is None else round(xv, 4)),
+            (None if rv is None else round(rv, 4)), len(use))
+
+
+def _head_to_head_vs_sources(rows, block, *, frame, basis, headline=None,
+                             own_rows=False):
     """eFV against each rater on one frame, both legs, each with its paired
     player-clustered CI95 and E_cond MDE95 (EV-00, PROGRAM.md s5.1 item 2),
     and ONE Holm family over the six cells (owner answer FP3-3, 2026-09-25).
@@ -2488,6 +2637,12 @@ def _head_to_head_vs_sources(rows, block, *, frame, basis, headline=None):
     E_refit mde95), so its word also needs the headline to resolve in the same
     direction; the page can then never print a per-source word the headline
     does not.
+
+    `own_rows=True` (the vm3 development frame, EFV3_A5): a source is scored on
+    the rows it graded (the lv_dev convention), so each cell's point values are
+    eFV and the rater on their identical rows (`_own_rows_point`) rather than
+    the block's whole-frame values, and `n` is that row count. The family, its
+    order, k and the correction are unchanged.
     """
     block = block or {}
     x = block.get("xfv") or {}
@@ -2503,12 +2658,19 @@ def _head_to_head_vs_sources(rows, block, *, frame, basis, headline=None):
                     "otherwise it is read as its interval only (owner answer "
                     "FP3-3, 2026-09-25)"),
            "sources": {}}
+    if own_rows:
+        out["own_rows"] = True
+        out["own_rows_note"] = ("each source is scored on the rows it graded; a "
+                                "cell's point values are eFV and the rater on those "
+                                "identical rows and n is their count")
     fam_cells = []
     for rater in H2H_HOLM_RATERS:
         r = block.get(rater) or {}
         cell = {"label": _H2H_SOURCE_LABELS.get(rater, rater)} if r else None
         for metric in H2H_HOLM_METRICS:
-            xv, rv = x.get(metric), r.get(metric)
+            xv, rv, n_cell = x.get(metric), r.get(metric), r.get("n")
+            if own_rows and cell is not None:
+                xv, rv, n_cell = _own_rows_point(rows, rater, metric)
             if cell is None or xv is None or rv is None:
                 if cell is not None:
                     cell[metric] = None
@@ -2519,7 +2681,7 @@ def _head_to_head_vs_sources(rows, block, *, frame, basis, headline=None):
             delta = round(xv - rv, 5)
             mde = fl.get("mde95")
             cell[metric] = {
-                "xfv": xv, "rater": rv, "n": r.get("n"),
+                "xfv": xv, "rater": rv, "n": n_cell,
                 "delta": delta,
                 "point_delta_unrounded": fl.get("point_delta"),
                 "ci95": fl.get("ci95"),
@@ -4072,6 +4234,17 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         efv_common_vintage if len(efv_common_vintage) >= _CLAIM_MIN_ROWS
         else pooled_common,
         [s for s in SCORED_SOURCES] + [CONSENSUS_KEY, "xfv"], m_side)
+    # EFV3_A5: frame version vm3 (the consensus-present rule), a DEVELOPMENT frame
+    # beside vm2. Counts only, published first (EFV3_PLAN.md s3 G2); the frame is
+    # scored by tools/efv_vm3_frame_read.py and its rows land in
+    # data/efv_progress.json with role development. Nothing else in this artifact
+    # reads the block, and vm2 stays the headline.
+    try:
+        accuracy["vm3_census"] = vm3_census(universe, years, xfv_oos_vm2,
+                                            vm2_receipts, m_side)
+    except Exception:                                         # noqa: BLE001
+        log.exception("vm3 census unavailable - continuing")
+        accuracy["vm3_census"] = None
     # M-1 row accounting. Published rather than left in a doc, because the strip
     # changes the population every head-to-head number is computed on and a reader
     # has to be able to see exactly what left.

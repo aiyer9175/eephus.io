@@ -145,6 +145,17 @@ MC_SCREEN_DELTAS = (("vs_efv_v2_base", "arm_vs_efv_v2"),
                     ("vs_prospx_consensus", "arm_vs_prospx_consensus"),
                     ("vs_mlb_pipeline", "arm_vs_mlb_pipeline"),
                     ("vs_fangraphs", "arm_vs_fangraphs"))
+#: EFV3_A5: the vm3 frame (tools/efv_vm3_frame_read.py), a sub-document in the DS-16
+#: shape under the frame's own key. It scores the served eFV V2 (the vm2 headline's
+#: scored object) beside v1 and the raters, each source on its own rows. Rows carry
+#: the primary statistic and the pooled secondary like the DS-16 rows; resolvable is
+#: copied from the artifact (null: a development read adjudicates nothing).
+VM3_NAME = "efv_vm3_frame_eval.json"
+VM3_SUBKEY = "vm3"
+#: The E_refit floor a development leg may carry beside its E_cond interval (the vm3
+#: frame, EFV3_A5: tools/efv_headtohead_frame_lab.py vm3). Copied when the leg carries
+#: it, so no other row's content or hash moves.
+_E_REFIT_LEG_FIELDS = ("mde95_e_refit", "mde95_e_refit_estimator", "mde95_e_refit_source")
 #: Every development artifact the ledger copies from: (file, its frames, rater map,
 #: delta map, sub-document key or None). Each frame must be registered in FRAMES with
 #: role "development".
@@ -153,7 +164,8 @@ DEV_ARTIFACTS = ((DEV_NAME, DEV_FRAMES, DEV_RATERS, DEV_DELTAS, None),
                  (PBUST_NAME, ("vm_oos_dev", "lv_dev"), _SAME_RATERS, _SAME_DELTAS, None),
                  (DEV_NAME, DEV_FRAMES, V2_RATERS, V2_DELTAS, DS16_SUBKEY),
                  (SCREEN_NAME, ("lv_dev",), SCREEN_RATERS, SCREEN_DELTAS, None),
-                 (MC_SCREEN_NAME, DEV_FRAMES, MC_SCREEN_RATERS, MC_SCREEN_DELTAS, None))
+                 (MC_SCREEN_NAME, DEV_FRAMES, MC_SCREEN_RATERS, MC_SCREEN_DELTAS, None),
+                 (VM3_NAME, ("vm3",), V2_RATERS, V2_DELTAS, VM3_SUBKEY))
 #: EFV3_D3: the scoreboard matrix (tools/efv_matrix.py), FRAME x CELL x COMPARATOR x
 #: STATISTIC. The headline row points at its vm2 block; the DS-16 development row
 #: (the one read the matrix's lv_dev block repeats, tools/efv_v2_dev_read.v2_lv_dev)
@@ -262,6 +274,15 @@ FRAMES = {
                    "label": "List vintage 2026, W3 at RT 2031",
                    "note": ("the frozen frame's registered long-run primary; never "
                             "the headline")},
+    # EFV3_A5 (lane A E3-Q1 = A): frame version vm3, the vintage-matched frame under
+    # the consensus-present rule (source_backtest.VM3_RULE), a development frame
+    # beside the vm2 headline; both versions stay in the ledger and the headline
+    # switch is a frame change only the reserved read's record and a later owner
+    # answer can make. Table only, never charted (CHART_FRAMES), no basis_key.
+    "vm3": {"role": "development", "tilted": False,
+            "label": "Vintage-matched, consensus-present rule (vm3)",
+            "note": ("development frame, consensus-present rule; vm2 stays the "
+                     "headline; not a claim")},
 }
 
 #: Registered role changes, applied to every stored row of the frame on each
@@ -647,6 +668,7 @@ def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger:
                                 "key": f"frames.{fid}.deltas.{comp}.{metric}"}
                 if screen:
                     legs[metric].update({k: leg[k] for k in SCREEN_LEG_FIELDS if k in leg})
+                legs[metric].update({k: leg[k] for k in _E_REFIT_LEG_FIELDS if k in leg})
             if legs:
                 deltas[name] = legs
         nbs = {s: (f.get("n_by_side") or {})[s] for s in STRATA
@@ -656,7 +678,10 @@ def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger:
                "frame": fid, "frame_version": f.get("frame_version"),
                "role": meta["role"], "tilted": bool(meta["tilted"]),
                "window": f.get("window"), "n": f.get("n"), "n_by_side": nbs,
-               "raters": raters, "deltas": deltas, "resolvable": None,
+               "raters": raters, "deltas": deltas,
+               # copied from the artifact (EFV3_A5); absent on every earlier
+               # artifact, so those rows keep their content and hash
+               "resolvable": f.get("resolvable"),
                "verdict": f.get("verdict"), "share": None,
                "sources": [dict(s) for s in sources],
                "note": f.get("note") or meta.get("note") or "",
@@ -1058,6 +1083,39 @@ def update_screening(data_dir=None, trigger: str = "efv_change", *, out_path=Non
             statistic_fields=True)
     if not cands:
         return {"appended": [], "status": f"no development rows in {SCREEN_NAME}"}
+    res = commit_rows(cands, data_dir=data_dir, out_path=out, ledger_path=led,
+                      sb=_load_json(data_dir / SB_NAME), now_iso=now_iso)
+    res["status"] = "ok"
+    return res
+
+
+def update_vm3(data_dir=None, trigger: str = "efv_change", *, out_path=None,
+               ledger_path=None, now: datetime | None = None) -> dict:
+    """The vm3 frame's rows alone (EFV3_A5, tools/efv_vm3_frame_read.py): one
+    development row per frame the artifact carries (every DEV_ARTIFACTS entry of it),
+    appended when it changed, leaving every other frame's candidates (the served rows
+    among them) to the nightly update(), which builds the same rows. A post-epoch run
+    is a new row, never an edit (append-only)."""
+    data_dir, out, led = _paths(data_dir, out_path, ledger_path)
+    now_dt = now or datetime.now(timezone.utc)
+    now_iso = _now_iso(now_dt)
+    path = data_dir / VM3_NAME
+    doc = _load_json(path)
+    cands: list[dict] = []
+    if doc:
+        for name, fids, rmap, dmap, sub in DEV_ARTIFACTS:
+            if name != VM3_NAME:
+                continue
+            d = doc.get(sub) if isinstance(doc.get(sub), dict) else None
+            if not d:
+                continue
+            cands += build_dev_rows(
+                d, sources=[{"path": _rel(path), "generated_at": d.get("generated_at"),
+                             "sha256": _sha256(path)}],
+                date=now_dt.date().isoformat(), trigger=trigger, now_iso=now_iso,
+                frames=fids, raters=rmap, deltas=dmap, statistic_fields=True)
+    if not cands:
+        return {"appended": [], "status": f"no development rows in {VM3_NAME}"}
     res = commit_rows(cands, data_dir=data_dir, out_path=out, ledger_path=led,
                       sb=_load_json(data_dir / SB_NAME), now_iso=now_iso)
     res["status"] = "ok"
