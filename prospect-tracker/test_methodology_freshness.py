@@ -1002,6 +1002,11 @@ MODEL_GLOSSARY = {
     # A reader-facing term arrives with the flip that serves one (TM_8).
     "team_win_distribution": "internal",
     "team_run_projection": "internal",
+    # game_intensity_effects (2026-10-09, Q10_07) is the stage-1 read of the
+    # betting section "Game intensity: stakes, matchup quality and the
+    # postseason". Nothing served reads it and stage 1 licenses no price; the
+    # chip's own row and glossary terms arrive with the chip (Q10_09).
+    "game_intensity_effects": "internal",
 }
 
 

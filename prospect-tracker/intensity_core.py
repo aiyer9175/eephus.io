@@ -62,11 +62,12 @@ CONSTRUCTION = "ix_v1"
 #: G_REF, the mean G of an Opening Day game between average clubs. The registered
 #: synthetic league: 30 equal clubs at 0-0 on a 162-game schedule of 52 division,
 #: 64 league and 46 interleague games, 300,000 simulations at seed 20260930, no data.
-#: The gate tool's own commit (Q10_07) recomputes it once from that league and
-#: records the frozen literal in the section by a dated amendment; until then
-#: G_REF is None and nothing can compute S without passing a reference explicitly.
+#: The gate tool's own commit (Q10_07) recomputed it once from that league
+#: (tools/intensity_lab.py --g-ref, 2026-10-09: 0.011575302, rounded to five
+#: decimals) and recorded the frozen literal in the section by the dated amendment
+#: "G_REF recorded"; it is never computed at a look.
 G_REF_DRAFT = 0.01145
-G_REF: float | None = None
+G_REF: float | None = 0.01158
 G_REF_SEED = 20260930
 G_REF_SIMS = 300_000
 G_REF_CLUBS = 30
