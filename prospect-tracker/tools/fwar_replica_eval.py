@@ -583,14 +583,22 @@ PF_SOURCES = ("fg_fip", "fip_minus", "war_loo")
 def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] = None,
              mode: str = "role", pf_source: str = "fip_minus",
              fip_pf: Optional[dict] = None, framing: Optional[dict] = None,
-             keep_rows: bool = False) -> dict:
+             keep_rows: bool = False, count_map: Optional[dict] = None) -> dict:
     """Price every pitcher-season. `iffb` ({mlbam: IFFB}) switches the runs leg
     to ifFIP; `role_ip` ({mlbam: start innings}) overrides the B-Ref start-inning
     share; `mode` is "role" (convention 6) or "blended"; `pf_source` is one of
     PF_SOURCES, and "fg_fip" needs `fip_pf` ({team_id: decimal}); `framing`
     ({mlbam: CFraming runs}) charges each pitcher the framing earned on his
     pitches (fwar_frame convention 9). The driver passes the FanGraphs inputs
-    whenever they are cached (see build and PITCHER_ARMS)."""
+    whenever they are cached (see build and PITCHER_ARMS).
+
+    `count_map` ({mlbam: {"homeRuns", "baseOnBalls", "hitByPitch", "strikeOuts"}})
+    replaces a pitcher's own counts in HIS runs leg only: the league totals, the
+    park-factor pool and every row it does not name stay as cached. It is the
+    seam the eWAR v3 skill part prices its shrunk arm through (swar.py,
+    docs/ebr-2026-09-30/EBR_GATE.md part 9.4 S2: the same chain twice, as the
+    difference of two runs). None, the default, prices the cached counts and
+    reproduces the scored tables exactly (test_fwar_frame.py pins it)."""
     if pf_source not in PF_SOURCES:
         raise ValueError(f"pf_source {pf_source!r} not in {PF_SOURCES}")
     if pf_source == "fg_fip" and not fip_pf:
@@ -664,8 +672,11 @@ def pitchers(season: int, iffb: Optional[dict] = None, role_ip: Optional[dict] =
         r = rows.get(pid)
         st = (r or {}).get("stat") or {}
         L_row = (c.get("league") or {}).get("id")
-        cnts = (_num(s.get("homeRuns")), _num(s.get("baseOnBalls")), _num(s.get("hitByPitch")),
-                _num(s.get("strikeOuts")))
+        cm = (count_map or {}).get(pid) or {}
+        cnts = (_num(cm.get("homeRuns", s.get("homeRuns"))),
+                _num(cm.get("baseOnBalls", s.get("baseOnBalls"))),
+                _num(cm.get("hitByPitch", s.get("hitByPitch"))),
+                _num(cm.get("strikeOuts", s.get("strikeOuts"))))
         f_val = F.fip(*cnts, ip, const, _num((iffb or {}).get(pid)) if iffb is not None else 0.0)
         # the INPUT check is always plain FIP against the published FIP, whatever
         # the runs leg: the feed publishes FIP, never ifFIP
