@@ -194,6 +194,7 @@ entry, an amendment, and each score are recorded here.
 
 - 2026-10-09: registered. No frozen file, producer or score exists.
 - 2026-10-09: amendment A1 (section 10) registered after the owner's OUTLOOK answer (a): the Team Outlook winter frames are frozen monthly from 2026-11-01 to 2027-03-01 and scored once as a separate arm. Sections 2 to 5 are unchanged. No winter-frame code, frozen file or score exists.
+- 2026-10-09: amendment A2 (section 11) registered for task PJ_10_FORWARD_FREEZE_AMENDMENT: the Opening Day 2027 freeze also carries the component lines of docs/PROJ_COMPONENTS_GATE.md (H8, P3 and the gap line included), W2's paths and the 2027 team frames of docs/TEAM_PROJECTIONS_GATE.md, each hash-pinned in the same commit or recorded absent. Sections 2 to 5 and 10 are unchanged. No element file, element writer or score exists.
 
 ## 10. Amendment A1 (2026-10-09): the Team Outlook winter frames
 
@@ -319,3 +320,90 @@ One row per task, filled by the task that freezes; a row is never edited once fi
 | Q9_03c | 2027-01-01 | pending | | | | | |
 | Q9_03d | 2027-02-01 | pending | | | | | |
 | Q9_03e | 2027-03-01 | pending | | | | | |
+
+## 11. Amendment A2 (2026-10-09): the component lines, W2's paths and the team frames
+
+Task PJ_10_FORWARD_FREEZE_AMENDMENT, plan Part 9 section 9.2 'Component projections' and
+LANE_A sections 3.2 (the frozen rows of PJ-W) and 3.3 (FORWARD); owner answer **M15-2**
+(this document's opening) is the freeze this amendment extends. The two gates whose 2027 reads need
+these elements are `docs/PROJ_COMPONENTS_GATE.md` (PJ-W, section 6) and
+`docs/TEAM_PROJECTIONS_GATE.md` (sections 2.3, 3.4 and 3.5); each names this document "as
+amended by PJ_10" as the source of its 2027 rows.
+
+Written and committed alone, BEFORE any component line, W2 bundle, team candidate or element
+writer exists (at this commit `proj_components.py`, `tools/proj_component_stack.py`,
+`model/proj_lgbm_components/`, `model/team_projection/` and
+`data/proj_forward_vintage/FREEZE_LOG.json` are all absent), before the Opening Day freeze and
+before any 2027 game. It adds elements to the one Opening Day freeze. It changes no threshold,
+frame, date, comparator, verdict word or precondition of sections 2 to 5 and 10.
+
+### 11.1 What the Opening Day 2027 freeze also commits
+
+In the same commit as the frozen file of section 3, each beside it under
+`data/proj_forward_vintage/`, each WRITE-ONCE and hash-pinned like that file:
+
+| element | file | what it holds | where the bytes come from |
+|---|---|---|---|
+| E1, the component lines | `proj_components_2027_preseason.json` | for every veteran row of the frozen file, keyed by `mlbam` and `key`, the component lines for seasons 2027 to 2031 exactly as the exporter computed them on the night of the frozen file: every head of `docs/PROJ_COMPONENTS_GATE.md` section 1 the exporter emits (H0 to H7 and P0 to P5 as built), H8 and P3 (the component WAR), the gap line ("rest of the served projection", served `war` minus component WAR), and each component's 80% range where the exporter emits one | `data/` (the player detail's `comp` blocks and the board's PA and IP scalars) when `proj_export.PROJ_COMPONENTS_LIVE` is True that night, else `.cache/proj_components/preview/` |
+| E2, W2's paths | `proj_component_stack_2027_preseason.json` | for the same veteran rows, W2's WAR path for 2027 to 2031 (the dark twin bundle of `docs/PROJ_COMPONENTS_GATE.md` section 6), with the sha256 of each file of the bundle that produced it and the bundle's `max_label_season` | `model/proj_lgbm_components/`, only when PJ_9_STACK_ARM_DARK built it and its veto read did not veto it |
+| E3, the 2027 team frames | `team_frames_2027_preseason.json` | per club: the 2027 win-total distribution with the talent range (T1, `sigma_T` from `model/team_projection/params.json`, whose sha256 is recorded) and without it (schedule-only), each as the full histogram of simulated win totals (lossless for the CRPS of `docs/TEAM_PROJECTIONS_GATE.md` section 3.1); the T2 budgeted wins and the served wins on both of Q9_03's frames (the as-of-signings frame and the pre-free-agency frame of section 10.1); projected runs scored and runs allowed (T3) | `data/` for each candidate whose flag (`TEAM_TALENT_RANGE_LIVE`, `TEAM_PT_BUDGET_LIVE`, `TEAM_RUNS_LIVE`) is True that night, else `.cache/team_projection/preview/` |
+
+Every element file records `source` (the path it was read from), `source_generated_at`, the
+state of each flag named above, and the HEAD commit of the build that wrote it.
+
+**W2's retrain.** If the twin bundle's `max_label_season` differs from the served bundle's
+(`model/proj_lgbm/meta.json` `max_label_season`), the bundle is first retrained by
+`python tools/proj_component_stack.py --final` (PJ_9's command) to the served bundle's value,
+and E2's paths are computed from the retrained bundle on the inputs the last nightly used. If
+the command is absent, fails, or cannot finish before the first pitch, E2 is recorded absent
+with that reason. The retrain and the path computation never run on a registered look day of
+another gate (docs/*GATE*.md); if that leaves no admissible day before the first game, E2 is
+recorded absent with that reason.
+
+### 11.2 Hash pin and log
+
+The freeze's `FREEZE_LOG.json` entry for 2027 gains an `elements` list, one item per element
+E1 to E3: `element`, `file` (null when absent), `sha256` of the file's bytes (null when
+absent), `source`, `source_generated_at`, the flag states, `status` (`present` or `absent`)
+and `reason` (required when absent). `--check` re-verifies each present element's hash with
+the frozen file's. The freeze commit adds each present element's sha256 to
+`test_proj_forward_vintage.py` as a literal, as section 3 does for the frozen file.
+
+The element writer is not part of this registration. If `tools/freeze_proj_forward_vintage.py`
+has no element step at the freeze, the person taking the freeze copies each element's bytes
+from the source named in 11.1, records the `elements` list by hand in the same commit and
+says so in the log; an element that can be neither written nor copied is recorded absent.
+
+### 11.3 Absent elements
+
+- An element missing at the freeze (its producer never landed, its flag and its preview both
+  empty, PJ_9 not built or vetoed, the retrain failed, a precondition below failed) is recorded
+  `absent` with its reason. It is never back-filled, re-computed from a later build, or
+  replaced by a replay; a later build is not a substitute (section 2, F5).
+- An element's preconditions, each recorded and never a refusal of the frozen file: its rows
+  cover the frozen file's veteran rows (E1, E2) or the 30 clubs (E3); its source was written by
+  the same nightly as the frozen file (E1, E3) or from the inputs that nightly used (E2); its
+  `source_generated_at` is on or before the first game's date. A failed precondition makes
+  that element `absent`, never the freeze.
+- An absent element never blocks, delays or invalidates the frozen file of section 3, its
+  extract, the section 4 flip guard, the section 5 score or the section 10 winter frames.
+
+### 11.4 Where these elements are scored
+
+Not here. E1 (H8 and P3) and E2 are scored only by PJ-W (`docs/PROJ_COMPONENTS_GATE.md`
+section 6, task PJ_11_WAR_LOOK_2027); E3 only by `docs/TEAM_PROJECTIONS_GATE.md` section 3
+(TM-A to TM-C re-read on 2027, section 3.5; TM-D reads its own shadow record), task
+TM_9_TEAM_LOOK_2027. Section 5's producer does not read them, and P1, T1 and arm W keep their
+forecast fields, comparators, intervals and verdict words. The freeze computes no realized
+2027 number. The component lines are on FanGraphs' frame (Part 9 rule U2) and say so in E1's
+header; the realized seasons they are later scored against are the frozen fWAR vintage's.
+
+### 11.5 What this amendment does not do
+
+- It moves no served number, writes nothing under `data/` and flips no flag.
+- It changes no section 2 to 5 or section 10 rule, field, comparator, threshold, frame, date or
+  verdict word, and does not re-date the Opening Day freeze.
+- It computes no realized-WAR mean, residual, anchor or count by consensus-FV cell; the frozen
+  prospect rows stay unscored (section 5, 'Population').
+- It touches no frame of `docs/PROJ_PATH_SHAPE_GATE.md`; label season 2027 is read only by the
+  section 5 score and the two gates named in 11.4, each once (section 6's disclosure applies).
