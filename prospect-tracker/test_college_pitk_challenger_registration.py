@@ -61,7 +61,8 @@ def test_registry_row_is_registered_not_scored():
     row = rows["college_pitk_box_challenger"]
     assert row["verdict"] == "provisional"
     assert row["provisional_kind"] == "data_blocked_stub"
-    assert row["registration_status"] == "registered, not scored"
+    # Re-registered on the held NCAA K/9 lines 2026-10-08 (owner answer M19CS-1).
+    assert row["registration_status"] == "registered, not read"
     assert not row["eval_artifact"]
     # The docs/ path left the registry's reader fields in COPY_11 (2026-10-04);
     # the row still says it is gated, and the gate doc is the file GATE names.
@@ -120,3 +121,19 @@ def test_score_reads_signal_and_noise_as_the_gate_says():
     bad = lab.score(_synthetic(80, False))
     assert bad["verdict"] == "FAIL", bad
     assert not bad["clauses"]["P1_beats_null"]
+
+
+def test_k9_amendment_is_appended_before_any_look():
+    """Owner answer M19CS-1: the box K% frame cannot be scored, so the gate is
+    re-registered on the held NCAA K/9 lines by an appended, dated amendment."""
+    text = GATE.read_text(encoding="utf-8")
+    head = "## 10. Amendment 2026-10-08: re-registered on the held NCAA K/9 lines"
+    assert head in text
+    # Appended after the original sections, which stay in place.
+    assert text.index("## 9. What this gate does not do") < text.index(head)
+    amend = text[text.index(head):]
+    for needle in ("M19CS-1", "unscoreable", "|S| = 9", "9 * SO / IP", "Why K/9 is not K%",
+                   "BF_PER_9", "seed 20261102", "Holm", "COVERAGE-STARVED",
+                   "**Date: 2026-11-02, kept**", "### 10.6 Crash protocol", "### 10.7 Bans",
+                   "### 10.8 Read to write this"):
+        assert needle in amend, needle
