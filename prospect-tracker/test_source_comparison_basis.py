@@ -25,12 +25,14 @@ print a verdict word only where the artifact's Holm family gives one.
 Two layers:
 1. STATIC (always runs): the head-to-head renderers read no pooled block and
    reach the verdict's block only through _hhBlock, stars go through the floor
-   helper, the per-year chart draws no eFV line, and the share-card engine
-   honours star:false.
+   helper, the per-year chart reads only its registered key
+   (accuracy.per_year_vintage_matched, owner answer M7-1), and the share-card
+   engine honours star:false.
 2. RENDERED (skips without playwright or data/source_backtest.json): the bars
    print the verdict block's numbers, a star appears only on the floored
    pair's winner when it resolves and tops every bar, no AUC bar is ever
-   starred, and the share card carries no AUC tile.
+   starred, the share card carries no AUC tile, and a per-year cohort under
+   its floor is drawn hollow.
 """
 from __future__ import annotations
 
@@ -111,12 +113,19 @@ def test_per_source_cells_print_only_the_artifacts_words():
     assert not _STAT_LITERAL_ANY.findall(re.sub(r'[\w-]+="[^"$]*"', "", code))
 
 
-def test_per_year_chart_draws_no_efv_line_and_counts_no_wins():
+def test_per_year_chart_reads_only_the_registered_key():
+    """M7-1 (docs/efv-2026-09-25/PER_YEAR_BLOCK.md s5): the per-year chart reads
+    accuracy.per_year_vintage_matched and no other accuracy key, so it can never
+    draw accuracy.per_year or a tilted frame; it no longer filters eFV out,
+    types no statistic and counts no cohort for any grader."""
     code = _fn_code(_js(), "_methPerYearChart")
-    assert 'r !== "xfv"' in code, "per-year chart no longer excludes eFV"
-    assert 'push("xfv")' not in code, "per-year chart adds eFV back"
-    assert not re.search(r"\bwins\b", code), (
-        "per-year chart counts cohort wins again; no per-cohort floor exists")
+    assert set(re.findall(r"accuracy\.(\w+)", code)) == {"per_year_vintage_matched"}
+    assert not re.search(r"\bper_year\b|per_year_scale_view|head_to_head_by_frame", code)
+    assert 'r !== "xfv"' not in code, "per-year chart still leaves eFV out"
+    assert not re.search(r"\b(wins?|best|beats?|leads?|loses?)\b", code, re.I), (
+        "per-year chart prints a per-cohort verdict or counts cohorts led")
+    assert not _STAT_LITERAL.findall(re.sub(r'[\w-]+="[^"$]*"', "", code))
+    assert "under_floor === false" in code and "is-hollow" in code
 
 
 def test_share_card_engine_honours_star_false():
@@ -416,7 +425,7 @@ _READ = r"""
     val: r.querySelector('.meth-bar-val').innerText.trim(),
     best: r.querySelector('.meth-bar-val').classList.contains('is-best'),
   }));
-  const py = [...el.querySelectorAll('.meth-chart')].find(c => /preseason cohort/.test(c.innerText));
+  const py = el.querySelector('.meth-chart[data-chart="per-year-vm"]');
   return {
     sp: metrics[0] ? rows(metrics[0]) : [],
     au: metrics[1] ? rows(metrics[1]) : [],
@@ -469,7 +478,8 @@ def test_bars_print_the_verdict_block_and_star_only_past_a_floor(server, browser
         assert not starred, f"Spearman star {starred} on an unresolved head-to-head"
     else:
         assert len(starred) <= 1
-    assert out["perYearLegend"] is None or not any(k.startswith("eFV") for k in out["perYearLegend"])
+    if (acc.get("per_year_vintage_matched") or {}).get("cohorts"):
+        assert out["perYearLegend"] and any(k.startswith("eFV") for k in out["perYearLegend"])
     assert not re.search(r"best ordering skill in \d+ of \d+", out["text"])
     spec = out["spec"]
     if spec is not None:
@@ -480,6 +490,81 @@ def test_bars_print_the_verdict_block_and_star_only_past_a_floor(server, browser
         assert all(p.get("star") is False for p in auc_panels)
         sp_panel = [p for p in spec["comp"]["panels"] if "Spearman" in p["title"]][0]
         assert sp_panel.get("star") is (hh.get("resolvable") is True and bool(starred))
+
+
+_READ_PER_YEAR = r"""
+() => {
+  const c = document.querySelector('#source-comparison-body .meth-chart[data-chart="per-year-vm"]');
+  if (!c) return null;
+  const dots = [...c.querySelectorAll('circle.py-dot')].map(d => ({
+    year: d.dataset.year, rater: d.dataset.rater,
+    hollow: d.classList.contains('is-hollow'), fill: d.getAttribute('fill')}));
+  const sub = {}, n = {};
+  c.querySelectorAll('text.py-sub').forEach(e => { sub[e.dataset.year] = e.textContent.trim(); });
+  c.querySelectorAll('text.py-n').forEach(e => { n[e.dataset.year] = e.textContent.trim(); });
+  return {dots, sub, n, text: c.innerText};
+}
+"""
+
+
+def _render_per_year(server, browser, doc):
+    errors: list[str] = []
+    page = browser.new_page()
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    body = json.dumps(doc)
+    page.route("**/data/source_backtest.json*", lambda route, req=None: route.fulfill(
+        status=200, body=body, content_type="application/json"))
+    try:
+        page.goto(server + "glossary/index.html#view=source-comparison",
+                  wait_until="load", timeout=15_000)
+        page.wait_for_function(
+            "() => { const e = document.getElementById('source-comparison-body');"
+            " return !!e && !!e.querySelector('.meth-accuracy'); }", timeout=15_000)
+        out = page.evaluate(_READ_PER_YEAR)
+    finally:
+        page.close()
+    assert not errors, "JS errors on source comparison:\n  " + "\n  ".join(errors)
+    return out
+
+
+def test_per_year_chart_draws_every_grader_and_hollows_under_floor(server, browser):
+    """M7-1 rendered: every grader of the block is drawn on every cohort from the
+    key; a cohort forced under its floor renders hollow and labelled, the others
+    filled with their n and the eFV minus consensus MDE95; with the key removed
+    the chart is gone even though accuracy.per_year is still in the artifact."""
+    doc = _artifact()
+    blk = doc["accuracy"].get("per_year_vintage_matched") or {}
+    if not blk.get("cohorts"):
+        pytest.skip("source_backtest.json predates the per-year vintage-matched block")
+    d = json.loads(json.dumps(doc))
+    cohorts = d["accuracy"]["per_year_vintage_matched"]["cohorts"]
+    years = sorted(cohorts)
+    under = years[1]
+    cohorts[under].update({"n": blk["min_n"] - 1, "under_floor": True,
+                           "floor_vs_efv": None})
+    out = _render_per_year(server, browser, d)
+    assert out is not None, "per-year chart missing with the block present"
+    for y in years:
+        c = cohorts[y]
+        drawn = {x["rater"] for x in out["dots"] if x["year"] == y}
+        want = {g for g in blk["graders"] if c["spearman"].get(g) is not None}
+        assert drawn == want, (y, drawn, want)
+        hollow = {x["hollow"] for x in out["dots"] if x["year"] == y}
+        assert out["n"][y] == f"n {c['n']}"
+        if y == under:
+            assert hollow == {True}
+            assert all(x["fill"] == "none" for x in out["dots"] if x["year"] == y)
+            assert out["sub"][y] == "under floor"
+        else:
+            assert hollow == {False}
+            mde = c["floor_vs_efv"]["prospx_consensus"]["mde95"]
+            assert out["sub"][y] == f"MDE95 {mde:.3f}", (y, out["sub"][y])
+    assert not re.search(r"\b(wins?|best|beats?|leads?)\b", out["text"], re.I)
+    d2 = json.loads(json.dumps(doc))
+    d2["accuracy"].pop("per_year_vintage_matched")
+    assert d2["accuracy"].get("per_year"), "fixture needs the tilted per_year block present"
+    assert _render_per_year(server, browser, d2) is None, (
+        "the per-year chart falls back to another frame when its key is absent")
 
 
 def _with_verdict(doc, xfv_sp, resolvable, xfv_beats):
