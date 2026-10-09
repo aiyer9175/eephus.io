@@ -26,6 +26,7 @@ import json
 import re
 from pathlib import Path
 
+import fscore_export
 import pitch_rates
 
 ROOT = Path(__file__).resolve().parent
@@ -47,6 +48,14 @@ DYNAMIC_SLUGS = {"provisional_pick"}
 # 15). While the flag is off these four may be missing; once it is on, they
 # must resolve like every other slug.
 DARK_PITCH_SLUGS = {"p_ip", "p_bf", "p_pa", "par"}
+
+# The F-SCORE card, section, board mode and Teams column (FS_2B_SURFACES_DARK,
+# owner ask B of 2026-09-30) render only once franchise_export and
+# team_stats_export embed F-SCORE, which they do only while
+# fscore_export.FSCORE_LIVE is True; FS_2F_FLIP adds these two entries in the
+# flip commit. While the flag is off they may be missing; once it is on, they
+# must resolve like every other slug.
+DARK_FSCORE_SLUGS = {"franchise_score", "postseason_ladder"}
 
 
 def _sources():
@@ -85,7 +94,9 @@ def test_every_referenced_glossary_slug_resolves():
                 refs.setdefault(m.group(1), set()).add(f.relative_to(ROOT).as_posix())
     for slug in DYNAMIC_SLUGS:
         refs.setdefault(slug, set()).add("(runtime)")
-    dark = set() if pitch_rates.SERVE_PITCH_RATES else DARK_PITCH_SLUGS
+    dark = set() if pitch_rates.SERVE_PITCH_RATES else set(DARK_PITCH_SLUGS)
+    if not fscore_export.FSCORE_LIVE:
+        dark |= DARK_FSCORE_SLUGS
     missing = {s: sorted(v) for s, v in refs.items() if s.lower() not in keys and s not in dark}
     assert not missing, f"glossary slugs with no entry: {missing}"
 

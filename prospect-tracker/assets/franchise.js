@@ -43,7 +43,7 @@
   var LOAD_ERROR = "";
   var CLUBS = {};
   var state = { view: "club", team: "", tree: "canopy", sec: "", treeSet: false,
-                sort: { key: "index_score", asc: false } };
+                sort: { key: "index_score", asc: false }, bview: "index" };
 
   // ---- helpers --------------------------------------------------------------
   function esc(s) {
@@ -189,6 +189,7 @@
   var TEAM_RE = /(?:^#|[#&])team=([A-Z]{2,3})\b/;
   var TREE_RE = /(?:^#|[#&])tree=(hidden|canopy|full)\b/;
   var SEC_RE = /(?:^#|[#&])sec=([a-z_]+)\b/;
+  var BVIEW_RE = /(?:^#|[#&])bview=(index|fscore)\b/;
   function hashNow() {
     try { return (typeof location !== "undefined" && location.hash) || ""; } catch (e) { return ""; }
   }
@@ -212,7 +213,11 @@
     var tr = TREE_RE.exec(h);
     if (tr) { state.tree = tr[1]; state.treeSet = true; }
     var s = SEC_RE.exec(h);
-    state.sec = s && DATA && DATA.branch_order.indexOf(s[1]) >= 0 ? s[1] : "";
+    // A section the payload lists in extra_sections (F-SCORE, once it ships)
+    // is a section like a branch; a key neither list names is dropped.
+    state.sec = s && DATA && (DATA.branch_order.indexOf(s[1]) >= 0 || (DATA.extra_sections || []).indexOf(s[1]) >= 0) ? s[1] : "";
+    var bv = BVIEW_RE.exec(h);
+    state.bview = bv && bv[1] === "fscore" && fsOn() ? "fscore" : "index";
     if (aliased) writeHash();
   }
   function canonCode(x) {
@@ -230,6 +235,7 @@
       if (state.treeSet) parts.push("tree=" + state.tree);
       if (state.sec) parts.push("sec=" + state.sec);
     }
+    if (state.view === "board" && state.bview === "fscore") parts.push("bview=fscore");
     try {
       if (typeof history !== "undefined" && history.replaceState) history.replaceState(null, "", "#" + parts.join("&"));
       else if (typeof location !== "undefined") location.hash = "#" + parts.join("&");
@@ -273,7 +279,105 @@
       '<span class="fr-root-rank">#' + esc(ix.rank) + " of " + esc(DATA.league.n) + "</span>" +
       '<span class="fr-root-score">' + scoreSpan(ix.score) + "</span></div>" +
       '<div class="fr-root-sentence">' + esc(copy("root_sentence")) + "</div>" +
-      '<div class="fr-root-foot">' + foot + "<br>" + esc(copy("root_foot_descriptive")) + "</div></div>";
+      '<div class="fr-root-foot">' + foot + "<br>" + esc(copy("root_foot_descriptive")) +
+      (fsOf(d) && fsCopy("fscore_vs_index") ? "<br>" + esc(fsCopy("fscore_vs_index")) : "") + "</div></div>";
+  }
+
+  // ---- F-SCORE (owner ask B, 2026-09-30; XWAR_FSCORE_PLAN.md 5, fscore.md 3.1 to 3.3) ----
+  // DARK UNTIL THE PAYLOAD CARRIES IT: franchise_export embeds F-SCORE only
+  // while fscore_export.FSCORE_LIVE is True (extra_sections, fscore_meta,
+  // copy.fscore, clubs[i].fscore, sections.fscore). With none of those every
+  // function here returns "" and the page is what it was. Every figure and
+  // sentence is the payload's; only a SCORE takes the z ladder, a LETTER stays
+  // neutral. Postseason rounds print as results, never as a skill claim.
+  var FS_PILLARS = [["results", "RESULTS"], ["strength", "STRENGTH"], ["pipeline", "PIPELINE"], ["operations", "OPERATIONS"]];
+  function fsOn() { return !!(DATA && DATA.fscore_meta && (DATA.extra_sections || []).indexOf("fscore") >= 0); }
+  function fsOf(d) { return fsOn() && d && d.fscore ? d.fscore : null; }
+  function fsCopy(k) { return ((DATA && DATA.copy && DATA.copy.fscore) || {})[k] || ""; }
+  function fsMeta() { return (DATA && DATA.fscore_meta) || {}; }
+  function fsSeasons() { return ((fsMeta().window || {}).seasons) || []; }
+  function fsSpan() {
+    var s = fsSeasons();
+    return s.length ? s[0] + " to " + s[s.length - 1] : "";
+  }
+  function fsVerdict() {
+    var rows = fsMeta().registry || [];
+    for (var i = 0; i < rows.length; i++) if (rows[i].model_id === "franchise_score") return rows[i].verdict || "";
+    return "";
+  }
+  // signed with one decimal, zero printed plain
+  function fsSigned(v) { return isNum(v) && Number(Number(v).toFixed(1)) === 0 ? "0.0" : signed(v, 1); }
+  function fsPillarLine(f) {
+    return FS_PILLARS.map(function (p) {
+      var v = (f.pillars || {})[p[0]];
+      return esc(p[1]) + " " + (isNum(v) ? scoreSpan(v) : esc(copy("dark_tag")));
+    }).join(" &middot; ");
+  }
+  // THE CARD SPARKLINE: the hub's lineChart (Part 8 8.E: P8.2 owns it), drawn
+  // at the card's own pixel width so its 9-unit labels print near 9 px; the
+  // league average (0 wins, each season centred on it) rides as a dashed
+  // reference line; the season still in its postseason is the hollow dot.
+  // The numbers sit in the table under it, so the chart drops its own.
+  function fsSparkWidth() {
+    try {
+      var w = typeof window !== "undefined" ? Number(window.innerWidth) : 0;
+      if (!(w > 0) || w >= 1100) return 230;
+      return Math.max(240, Math.min(720, Math.round(w - 74)));
+    } catch (e) { return 230; }
+  }
+  function fsSparkSVG(d, width) {
+    var H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+    var f = fsOf(d);
+    if (!f || !H || !H.lineChart) return "";
+    var pts = (f.spark || []).filter(function (p) { return isNum(p[1]); });
+    if (pts.length < 2) return "";
+    var xs = pts.map(function (p) { return String(p[0]); });
+    var first = xs[0], last = xs[xs.length - 1];
+    var aria = (d.name || d.code) + " F-SCORE season value in wins against the league average, " + first + " to " + last +
+      (pts[pts.length - 1][2] ? ", " + last + " postseason in progress" : "");
+    return H.lineChart([
+      { label: "League average", color: "var(--text-tertiary)", dash: "3 3", pts: [{ y: first, v: 0 }, { y: last, v: 0 }] },
+      { label: "Season value", color: "var(--viz-1)", pts: pts.map(function (p) { return { y: String(p[0]), v: Number(p[1]), partial: !!p[2] }; }) }
+    ], { xs: xs, width: width, height: 112, pl: 32, pr: 40, ticks: 4, table: false, aria: aria,
+         fmt: fsSigned, tickFmt: function (v) { return Number(v) === 0 ? "0" : signed(v, 0); },
+         tip: function (s, p) { return s.label + " " + p.y + ": " + fsSigned(p.v) + (p.partial ? " (in progress)" : ""); } });
+  }
+  function fsSparkTable(f) {
+    var rows = (f.spark || []).slice().reverse().map(function (p) {
+      return [esc(p[0]), esc(fsSigned(p[1])) + (p[2] ? ' <span class="fr-tag">in progress</span>' : "")];
+    });
+    return rows.length ? '<details class="fr-fs-numbers"><summary>Season values, wins</summary>' + mini(rows) + "</details>" : "";
+  }
+  function renderFsCard(d) {
+    var f = fsOf(d);
+    if (!f) return "";
+    var w = fsSparkWidth();
+    var foot = esc(fsCopy("weights_foot")) + (f.in_progress && fsCopy("fscore_in_progress") ? "<br>" + esc(fsCopy("fscore_in_progress")) : "");
+    return '<div class="fr-fs" title="' + esc(fsCopy("board_tooltip")) + '">' +
+      '<div class="fr-root-eyebrow">' + gl("F-SCORE", "franchise_score") + "</div>" +
+      '<div class="fr-root-row"><span class="fr-root-letter">' + esc(f.letter || "-") + "</span>" +
+      '<span class="fr-root-rank">#' + esc(f.rank) + " of " + esc(DATA.league.n) + "</span>" +
+      '<span class="fr-root-score">' + scoreSpan(f.score) + "</span></div>" +
+      '<div class="fr-fs-pillars">' + fsPillarLine(f) + "</div>" +
+      '<div class="fr-fs-spark" data-frfs-spark="' + esc(d.code) + '" data-w="' + w + '">' + fsSparkSVG(d, w) + "</div>" +
+      fsSparkTable(f) +
+      '<div class="fr-root-sentence">' + esc(fsCopy("fscore_sentence")) + "</div>" +
+      '<div class="fr-root-foot">' + foot + "</div>" +
+      '<a class="fr-tile-open" href="#view=club&amp;team=' + esc(d.code) + '&amp;sec=fscore" data-frgo="1">' + esc(copy("tile_open")) + "</a></div>";
+  }
+  // Redraw each card sparkline at the width its box really has (the first
+  // draw guesses from the window), so a label never shrinks under 8 px.
+  function fsFitSparks() {
+    try {
+      Array.prototype.forEach.call(document.querySelectorAll("[data-frfs-spark]"), function (box) {
+        var w = Math.round(Number(box.clientWidth) || 0), had = Number(box.getAttribute("data-w")) || 0;
+        if (w < 120 || Math.abs(w - had) < 2) return;
+        var d = clubOf(box.getAttribute("data-frfs-spark"));
+        if (!d) return;
+        box.innerHTML = fsSparkSVG(d, w);
+        box.setAttribute("data-w", String(w));
+      });
+    } catch (e) { /* the first draw stands */ }
   }
 
   // ---- the canopy (root + three graded bubbles + nine nameplates) --------------
@@ -766,6 +870,8 @@
         (i % 2 === 0 ? '<text x="' + (x + bw / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(String(r[0]).slice(2)) + "</text>" : "");
     }).join("");
     var strip = '<div class="fr-strip"><svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="wins and losses by season"><line class="fr-axis" x1="5" x2="' + (W - 5) + '" y1="' + (H - 14 - 0.5 * (H - 22)) + '" y2="' + (H - 14 - 0.5 * (H - 22)) + '"/>' + bars + "</svg></div>";
+    var marks = postMarks(d, s, W, n);
+    strip = marks.svg + strip + marks.legend;
     var line = spark(s.bwar, 0, "club bWAR by season");
     var t = (s.best ? tile("Best season since " + esc(String(s.standings[0] ? s.standings[0][0] : "")), esc(s.best[0]), esc(s.best[1] + "-" + s.best[2]) + " &middot; run differential " + esc(signed(s.best[3], 0))) : "") +
       (s.worst ? tile("Worst season", esc(s.worst[0]), esc(s.worst[1] + "-" + s.worst[2]) + " &middot; run differential " + esc(signed(s.worst[3], 0))) : "");
@@ -774,6 +880,50 @@
       '<p class="fr-count">' + prose(copy("history_note"), copy("history_pennants")) + "</p>" +
       "<h3>Club bWAR by season</h3>" + line + '<p class="fr-count">' + esc(copy("bwar_basis")) + " &middot; spine: " + spine + " &middot; " + esc(s.bwar.length) + " seasons</p>" +
       '<div class="fr-tiles">' + t + "</div>" + hofTile(d, s.hof || {});
+  }
+  // THE POSTSEASON MARKS over the standings strip (fscore.md 3.3; orchestrator
+  // ruling X19): one glyph per season the F-SCORE payload holds in which the
+  // club reached the postseason, a circle for a berth, a triangle for a
+  // pennant, a star for a title, hollow while that postseason is running.
+  // Every glyph is its own role=img with an aria-label naming the season and
+  // the result (the strip's own svg is one image, so the marks sit in a group
+  // svg above it on the same 0..W scale), and at 640px and below a text legend
+  // prints under the strip, since a touch screen shows no title tooltip.
+  // Nothing renders while the payload carries no F-SCORE block.
+  function postGlyph(kind, cx, cy) {
+    var x = Number(cx), y = Number(cy);
+    if (kind === "title") {
+      var pts = [];
+      for (var k = 0; k < 10; k++) {
+        var r = k % 2 ? 2.4 : 6, a = Math.PI / 5 * k - Math.PI / 2;
+        pts.push((x + r * Math.cos(a)).toFixed(1) + "," + (y + r * Math.sin(a)).toFixed(1));
+      }
+      return '<polygon points="' + pts.join(" ") + '"/>';
+    }
+    if (kind === "pennant") return '<polygon points="' + x.toFixed(1) + "," + (y - 5).toFixed(1) + " " + (x + 5).toFixed(1) + "," + (y + 4).toFixed(1) + " " + (x - 5).toFixed(1) + "," + (y + 4).toFixed(1) + '"/>';
+    return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4"/>';
+  }
+  var POST_KIND = [[5, "title", "&#9733;"], [4, "pennant", "&#9650;"], [1, "berth", "&#9675;"]];
+  function postMarks(d, s, W, n) {
+    var rows = fsOn() && d.sections.fscore ? (d.sections.fscore.seasons || []) : [];
+    var at = {};
+    s.standings.forEach(function (r, i) { at[r[0]] = i; });
+    var bw = (W - 10) / Math.max(n, 1), g = "", items = [];
+    rows.forEach(function (r) {
+      var rnd = Number(r[5]), i = at[r[0]];
+      if (!(rnd >= 1) || i === undefined) return;
+      var kind = POST_KIND.filter(function (p) { return rnd >= p[0]; })[0];
+      var name = r[0] + ": " + (r[11] || kind[1]);
+      g += '<g role="img" aria-label="' + esc(name) + '" class="fr-pm fr-pm-' + kind[1] + (r[10] ? " fr-pm-live" : "") + '"><title>' + esc(name) + "</title>" +
+        postGlyph(kind[1], 5 + i * bw + bw / 2, 8) + "</g>";
+      items.push('<span class="fr-pm-item"><span aria-hidden="true">' + kind[2] + "</span> " + esc(r[0]) + " " + esc(r[11] || kind[1]) + "</span>");
+    });
+    if (!g) return { svg: "", legend: "" };
+    var key = POST_KIND.map(function (p) { return '<span aria-hidden="true">' + p[2] + "</span> " + p[1]; }).join(" &middot; ");
+    return {
+      svg: '<div class="fr-strip fr-post"><svg viewBox="0 0 ' + W + ' 16" role="group" aria-label="postseason results by season, ' + esc(fsSpan()) + '">' + g + "</svg></div>",
+      legend: '<p class="fr-post-legend fr-count">' + key + ": " + items.join("; ") + "</p>"
+    };
   }
   // THE HALL OF FAME TILE re-serves /hof/'s Franchises section: one franchise
   // per inductee under the owner's frozen rule (2026-09-25). Every figure and
@@ -838,6 +988,89 @@
       '<p class="fr-count">' + esc(copy("odds_ledger")) + ". " + esc(copy("odds_no_market")) + "</p>" +
       '<p class="fr-count">' + esc(copy("odds_win_total_basis")) + "</p>";
   }
+  // ---- the F-SCORE section (#sec=fscore; extra_sections, never branch_order) ----
+  // A table whose listed columns hide in a narrow block (the Postseason words
+  // wrap); the rest is the fr-table idiom.
+  function fsTable(headers, rows, hide, wrap) {
+    function cls(i) { return (hide.indexOf(i) >= 0 ? "fr-col-hide" : "") + (i === wrap ? " fr-wrapcell" : ""); }
+    var th = headers.map(function (h, i) { return '<th scope="col" class="' + cls(i) + '">' + h + "</th>"; }).join("");
+    var body = rows.map(function (r) {
+      return "<tr>" + r.map(function (c, i) { return '<td class="' + cls(i) + '">' + c + "</td>"; }).join("") + "</tr>";
+    }).join("");
+    return '<div class="fr-scroll"><table class="fr-table"><thead><tr>' + th + "</tr></thead><tbody>" + body + "</tbody></table></div>";
+  }
+  function fsHead(d) {
+    var v = fsVerdict();
+    var chip = v ? '<span class="eephus-beta fr-verdict" title="' + esc(fsCopy("fscore_honesty")) + '">franchise_score ' + esc(v) + "</span>" : "";
+    var meta = fsMeta();
+    return '<div class="fr-sec-head"><h2 id="fr-sec-fscore">F-SCORE <span class="fr-sec-title">' + esc(fsSpan()) + " and today</span></h2>" + chip + "</div>" +
+      '<div class="fr-basis">basis: fscore_export, as of ' + esc(meta.as_of || "") + "</div>" +
+      '<div class="fr-open">' + esc(copy("open_in")) + ' <a href="#view=board&amp;bview=fscore" data-frlink="1">F-SCORE board</a>' +
+      '<a href="#view=board" data-frlink="1">Franchise Index board</a></div>';
+  }
+  function secFscore(d) {
+    var f = fsOf(d), s = d.sections.fscore;
+    if (!f || !s) return "";
+    var meta = fsMeta(), sch = meta.scheme || {}, k = f.counts || {}, win = meta.window || {};
+    var ap = sch.applied || sch.pillars || {}, legs = sch.legs || {}, L = s.legs || {};
+    var span = fsSpan(), ss = fsSeasons(), short = ss.length ? ss[0] + "-" + String(ss[ss.length - 1]).slice(2) : "";
+    var t = tile("Record " + esc(short), esc(nInt(k.w)) + "-" + esc(nInt(k.l)), esc(span)) +
+      tile("Titles", esc(nInt(k.titles)), "won the World Series") +
+      tile("Pennants", esc(nInt(k.pennants)), "reached the World Series") +
+      tile("Division titles", esc(nInt(k.division_titles)), esc(span)) +
+      tile("Postseason berths", esc(nInt(k.berths)), esc(span)) +
+      tile("Series won", esc(nInt(k.series_won)), "postseason series") +
+      tile("Run differential", '<span class="' + signCls(k.rd) + '">' + esc(signed(k.rd, 0)) + "</span>", esc(span));
+    var seasons = fsTable(["Season", "W-L", "RD", "Division", "Postseason", "Value (wins)", "Weight"],
+      (s.seasons || []).slice().reverse().map(function (r) {
+        return [esc(r[0]), esc(r[1] + "-" + r[2]), '<span class="' + signCls(r[3]) + '">' + esc(signed(r[3], 0)) + "</span>",
+                r[4] ? "won" : "", esc(r[11] || ""), esc(fsSigned(r[7])), esc(pct(r[8], 1))];
+      }), [2, 3, 6], 4);
+    function legRow(label, value, w) { return esc(label) + " " + value + (isNum(w) ? ' <span class="fr-tag">' + esc(weightPct(w)) + "</span>" : ""); }
+    var ls = legs.strength || {}, lp = legs.pipeline || {};
+    var P = s.pillars || {};
+    function pscore(p) { var v = (P[p] || {}).score; return isNum(v) ? scoreSpan(v) : esc(copy("dark_tag")); }
+    var pillars = fsTable(["Pillar", "Score", "Legs", "Weight", "Open"], [
+      ["RESULTS", pscore("results"), legRow("season value, window mean (wins)", esc(fsSigned(L.results_wins)), null), esc(weightPct(ap.results)),
+       '<a href="#view=club&amp;team=' + esc(d.code) + '&amp;sec=history" data-frgo="1">History</a>'],
+      ["STRENGTH", pscore("strength"),
+       legRow("run differential per 162", esc(signed(L.rd162, 1)), ls.rd162) + "<br>" +
+       legRow(fsCopy("roster_leg") || "roster today", "z " + esc(signed(L.roster_z, 2)), ls.roster) + "<br>" +
+       legRow("projected " + esc(DATA.class_year) + " wins", "z " + esc(signed(L.outlook_z, 2)), ls.outlook),
+       esc(weightPct(ap.strength)),
+       '<a href="#view=club&amp;team=' + esc(d.code) + '&amp;sec=roster" data-frgo="1">Roster</a> <a href="#view=club&amp;team=' + esc(d.code) + '&amp;sec=outlook" data-frgo="1">Outlook</a>'],
+      ["PIPELINE", pscore("pipeline"),
+       legRow("farm composite", "z " + esc(signed(L.farm_z, 2)), lp.farm) + "<br>" +
+       legRow("7yDvM+", esc(nInt(L.dvm7)), lp.dvm7),
+       esc(weightPct(ap.pipeline)), d.links.farm ? '<a href="' + esc(d.links.farm) + '">Farm page</a>' : ""],
+      ["OPERATIONS", pscore("operations"),
+       isNum(L.ops) ? legRow("payroll efficiency, window mean (normal score)", esc(signed(L.ops, 2)), null) : esc(fsCopy("operations_note")),
+       esc(weightPct(ap.operations)), d.links.ledger ? '<a href="' + esc(d.links.ledger) + '">Club Ledger</a>' : ""]
+    ], [2], 2);
+    var dug = fsCopy("fscore_dugout")
+      ? '<p class="fr-count">' + esc(fsCopy("fscore_dugout")) + ' <a href="#view=club&amp;team=' + esc(d.code) + '&amp;sec=dugout" data-frgo="1">DUGOUT</a></p>' : "";
+    var steps = (sch.ladder || {}).steps || [];
+    var LADDER_LABEL = ["Missed", "Postseason berth", "Division series or a bye", "LCS", "World Series", "Title"];
+    var ladder = steps.length ? mini(steps.slice(1).map(function (v, i) { return [esc(LADDER_LABEL[i + 1]), esc(nInt(v)) + " wins"]; })
+      .concat([["Division title", esc(nInt((sch.ladder || {}).division)) + " wins"]])) : "";
+    var wts = win.weights || {};
+    var recency = mini(Object.keys(wts).sort().reverse().map(function (y) { return [esc(y), esc(pct(wts[y], 1))]; }));
+    var facts = meta.facts || {};
+    var src = Object.keys(facts).sort().map(function (y) { return esc(y) + " " + esc(facts[y].source || "") + (facts[y].fetched_at ? " " + esc(String(facts[y].fetched_at).slice(0, 10)) : ""); }).join(" &middot; ");
+    var notClaimed = (meta.what_fscore_does_not_claim || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
+    var how = '<details class="fr-how"><summary>How F-SCORE is built</summary>' +
+      ["ladder_note", "recency_note", "rule_2020_note", "operations_note", "fscore_overlap", "fscore_honesty"].map(function (key) {
+        return fsCopy(key) ? '<p class="fr-count">' + prose(fsCopy(key)) + "</p>" : "";
+      }).join("") +
+      '<div class="fr-grid2"><div><h3>' + gl("Postseason ladder", "postseason_ladder") + "</h3>" + ladder + "</div><div><h3>Recency weights</h3>" + recency + "</div></div>" +
+      (notClaimed ? "<h3>What F-SCORE does not claim</h3><ul class=\"fr-count\">" + notClaimed + "</ul>" : "") +
+      (src ? '<p class="fr-count">Postseason results: ' + src + "</p>" : "") + "</details>";
+    return '<p class="fr-note">' + prose(fsCopy("fscore_vs_index")) + "</p>" +
+      (f.in_progress && fsCopy("fscore_in_progress") ? '<p class="fr-note"><strong>' + esc(fsCopy("fscore_in_progress")) + "</strong></p>" : "") +
+      '<div class="fr-tiles">' + t + "</div>" +
+      "<h3>Seasons, " + esc(span) + "</h3>" + seasons +
+      "<h3>Pillars</h3>" + pillars + dug + how;
+  }
   var SECTION_RENDER = { roster: secRoster, season: secSeason, outlook: secOutlook, farm: secFarm, fin: secFin,
                          market: secMarket, front_office: secFrontOffice, dugout: secDugout, arbitration: secArbitration,
                          park: secPark, history: secHistory, odds: secOdds };
@@ -854,7 +1087,12 @@
       var fn = SECTION_RENDER[key];
       return '<section class="fr-block" data-frsec="' + esc(key) + '">' + head(d, key) + (fn ? fn(d) : "") + "</section>";
     }).join("");
-    return renderMast(d) + '<div class="fr-top">' + renderRoot(d) + '<div class="fr-canopy">' + (state.tree !== "hidden" ? renderCanopy(d) : "") + "</div></div>" +
+    // F-SCORE, when the payload carries it: the card under the root card in
+    // one left column (fscore.md 3.1) and its section ahead of the branches.
+    var fsCard = renderFsCard(d), fsSec = fsCard && d.sections.fscore ? secFscore(d) : "";
+    if (fsSec) blocks = '<section class="fr-block" data-frsec="fscore">' + fsHead(d) + fsSec + "</section>" + blocks;
+    var left = fsCard ? '<div class="fr-topcol">' + renderRoot(d) + fsCard + "</div>" : renderRoot(d);
+    return renderMast(d) + '<div class="fr-top">' + left + '<div class="fr-canopy">' + (state.tree !== "hidden" ? renderCanopy(d) : "") + "</div></div>" +
       renderTree(d) + how([copy("weights_note"), copy("score_basis")]) + blocks + rail(d);
   }
   // THE LINK RAIL (QCLC17): one strip at the foot, grouped by the module that
@@ -899,9 +1137,54 @@
     ["tax_payroll_2027", "CBT payroll ", 1, "cbt_payroll"], ["farm_rank", "Farm rank", 0, null], ["playoff_pct", "Playoff", 0, null]
   ];
   var TEXT_COLS = { code: 1 };
+  // F-SCORE on the board (fscore.md 3.2): one column after Index in Index mode,
+  // and its own mode (#view=board&bview=fscore) on the same table shell. The
+  // phone subset of the F-SCORE mode is Club, F-SCORE and RESULTS.
+  var FS_INDEX_COL = ["fscore_score", "F-SCORE", 0, "franchise_score"];
+  var FS_COLS = [
+    ["code", "Club", 1, null], ["fscore_score", "F-SCORE", 1, "franchise_score"], ["fscore_results", "RESULTS", 1, null],
+    ["fscore_strength", "STRENGTH", 0, null], ["fscore_pipeline", "PIPELINE", 0, null], ["fscore_operations", "OPERATIONS", 0, null],
+    ["fs_w", "W-L", 0, null], ["fs_titles", "Titles", 0, null], ["fs_pennants", "Pennants", 0, null],
+    ["fs_division_titles", "Division titles", 0, null], ["fs_series_won", "Series won", 0, null], ["fs_rd", "RD", 0, null],
+    ["fs_spark", "Seasons", 0, null]
+  ];
+  var FS_UNSORTED = { fs_spark: 1 };
+  function boardCols() {
+    if (state.bview === "fscore" && fsOn()) return FS_COLS;
+    if (!fsOn()) return BOARD_COLS;
+    var out = [];
+    BOARD_COLS.forEach(function (c) { out.push(c); if (c[0] === "index_score") out.push(FS_INDEX_COL); });
+    return out;
+  }
+  function boardRows() {
+    if (!(state.bview === "fscore" && fsOn())) return DATA.board;
+    return DATA.board.map(function (r) {
+      var f = (clubOf(r.code) || {}).fscore || {}, k = f.counts || {}, o = {};
+      Object.keys(r).forEach(function (key) { o[key] = r[key]; });
+      o.fs_w = k.w; o.fs_l = k.l; o.fs_titles = k.titles; o.fs_pennants = k.pennants;
+      o.fs_division_titles = k.division_titles; o.fs_series_won = k.series_won; o.fs_rd = k.rd; o.fs_spark = f.spark || [];
+      return o;
+    });
+  }
+  function boardSpark(r) {
+    var H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+    if (!H || !H.spark) return "";
+    var pts = (r.fs_spark || []).filter(function (p) { return isNum(p[1]); }).map(function (p) { return { y: String(p[0]), v: Number(p[1]), partial: !!p[2] }; });
+    if (pts.length < 2) return "";
+    return '<span class="fr-bspark">' + H.spark(pts, { width: 72, height: 20, last: true, style: "display:block;width:72px;height:20px;",
+      aria: r.code + " F-SCORE season value in wins, " + pts[0].y + " to " + pts[pts.length - 1].y,
+      tip: function (p) { return p.y + ": " + fsSigned(p.v) + (p.partial ? " (in progress)" : ""); } }) + "</span>";
+  }
   function boardCell(r, key) {
     var v = r[key];
+    if (key === "code" && state.bview === "fscore" && fsOn()) return '<a href="#view=club&amp;team=' + esc(r.code) + '&amp;sec=fscore" data-frgo="1" title="' + esc(r.name || "") + '">' + esc(r.code) + "</a>";
     if (key === "code") return '<a href="#view=club&team=' + esc(r.code) + '" data-frlink="1" title="' + esc(r.name || "") + '">' + esc(r.code) + "</a>";
+    if (key === "fscore_score") return '<span class="fr-board-letter">' + esc(r.fscore_letter || "-") + "</span>" + scoreSpan(v) + ' <span class="fr-tag">#' + esc(r.fscore_rank) + "</span>";
+    if (key === "fscore_results" || key === "fscore_strength" || key === "fscore_pipeline" || key === "fscore_operations") return isNum(v) ? scoreSpan(v) : esc(copy("dark_tag"));
+    if (key === "fs_w") return esc(nInt(r.fs_w)) + "-" + esc(nInt(r.fs_l));
+    if (key === "fs_rd") return '<span class="' + signCls(v) + '">' + esc(signed(v, 0)) + "</span>";
+    if (key === "fs_titles" || key === "fs_pennants" || key === "fs_division_titles" || key === "fs_series_won") return esc(nInt(v));
+    if (key === "fs_spark") return boardSpark(r);
     if (key === "index_score") return '<span class="fr-board-letter">' + esc(r.index_letter || "-") + "</span>" + scoreSpan(v) + ' <span class="fr-tag">#' + esc(r.index_rank) + "</span>";
     if (key === "roster_score" || key === "outlook_score" || key === "farm_score") return scoreSpan(v);
     if (key === "cost_plus") return '<span class="fr-neutral">' + esc(nInt(v)) + "</span>";
@@ -912,8 +1195,18 @@
     if (key === "playoff_pct") return esc(pct(v, 0));
     return esc(v == null ? "" : v);
   }
+  // The sort in force: the one picked if the shown columns hold it, else the
+  // shown mode's default (Index: the payload's board_default_sort; F-SCORE:
+  // F-SCORE descending).
+  function boardSort() {
+    var cols = boardCols(), k = state.sort.key;
+    if (cols.some(function (c) { return c[0] === k; }) && !FS_UNSORTED[k]) return state.sort;
+    if (cols === FS_COLS) return { key: "fscore_score", asc: false };
+    var d0 = DATA.board_default_sort || ["index_score"];
+    return { key: d0[0], asc: d0[1] === "asc" };
+  }
   function sortedBoard() {
-    var rows = DATA.board.slice(), k = state.sort.key, asc = state.sort.asc;
+    var srt = boardSort(), rows = boardRows().slice(), k = srt.key, asc = srt.asc;
     rows.sort(function (a, b) {
       var x = a[k], y = b[k];
       if (TEXT_COLS[k]) { x = String(x || ""); y = String(y || ""); return asc ? x.localeCompare(y) : y.localeCompare(x); }
@@ -933,21 +1226,37 @@
     // THE SORTABLE HEADS (QCLA12): a native <button> inside <th scope=col
     // aria-sort>, the /arbitration/ pattern, so the sort state is announced and
     // Enter and Space need no key shim. The Playoff head names its model (QCLC20).
-    var head = BOARD_COLS.map(function (c) {
-      var label = c[1] + (c[0] === "wins_2027" || c[0] === "tax_payroll_2027" ? DATA.class_year : "");
+    var cols = boardCols(), srt = boardSort(), fsMode = cols === FS_COLS;
+    var ss = fsSeasons(), wl = ss.length ? " " + ss[0] + "-" + String(ss[ss.length - 1]).slice(2) : "";
+    var head = cols.map(function (c) {
+      var label = c[1] + (c[0] === "wins_2027" || c[0] === "tax_payroll_2027" ? DATA.class_year : "") + (c[0] === "fs_w" ? wl : "");
       var lab = c[3] ? glInert(label, c[3]) : esc(label);
-      var on = state.sort.key === c[0];
-      var arrow = '<span class="fr-sort-ind" aria-hidden="true">' + (on ? (state.sort.asc ? "&#9650;" : "&#9660;") : "") + "</span>";
-      var tip = c[0] === "playoff_pct" ? copy("board_playoff_title") : "";
-      return '<th scope="col" class="' + (c[2] ? "" : "fr-bcol-hide") + '" aria-sort="' + (on ? (state.sort.asc ? "ascending" : "descending") : "none") + '"' +
+      if (FS_UNSORTED[c[0]]) return '<th scope="col" class="' + (c[2] ? "" : "fr-bcol-hide") + '" data-export-text="' + esc(label) + '">' + lab + "</th>";
+      var on = srt.key === c[0];
+      var arrow = '<span class="fr-sort-ind" aria-hidden="true">' + (on ? (srt.asc ? "&#9650;" : "&#9660;") : "") + "</span>";
+      var tip = c[0] === "playoff_pct" ? copy("board_playoff_title") : c[0] === "fscore_score" ? fsCopy("board_tooltip") : "";
+      return '<th scope="col" class="' + (c[2] ? "" : "fr-bcol-hide") + '" aria-sort="' + (on ? (srt.asc ? "ascending" : "descending") : "none") + '"' +
         (tip ? ' title="' + esc(tip) + '"' : "") + ' data-export-text="' + esc(label) + '"><button type="button" class="fr-sort" data-frsort="' + esc(c[0]) + '">' + lab + arrow + "</button></th>";
     }).join("");
     var body = sortedBoard().map(function (r) {
-      return "<tr>" + BOARD_COLS.map(function (c) { return '<td class="' + (c[2] ? "" : "fr-bcol-hide") + '">' + boardCell(r, c[0]) + "</td>"; }).join("") + "</tr>";
+      return "<tr>" + cols.map(function (c) { return '<td class="' + (c[2] ? "" : "fr-bcol-hide") + '">' + boardCell(r, c[0]) + "</td>"; }).join("") + "</tr>";
     }).join("");
-    return '<p class="fr-lede">' + esc(copy("board_lede")) + "</p>" +
+    var lede = fsMode ? fsCopy("fscore_vs_index") : copy("board_lede");
+    var foot = fsMode ? [fsCopy("fscore_sentence"), fsCopy("board_tooltip"), fsCopy("fscore_honesty"), fsCopy("weights_foot"), fsCopy("ladder_note"), fsCopy("recency_note")]
+      : [copy("board_foot"), copy("score_basis"), copy("board_playoff_title")];
+    return boardSwitch() + '<p class="fr-lede">' + esc(lede) + "</p>" +
       '<div class="fr-board"><table class="fr-table"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>" +
-      how([copy("board_foot"), copy("score_basis"), copy("board_playoff_title")]);
+      how(foot);
+  }
+  // THE MODE SWITCH (fscore.md 3.2): Franchise Index | F-SCORE, shown only
+  // while the payload carries F-SCORE.
+  function boardSwitch() {
+    if (!fsOn()) return "";
+    function b(val, lbl) {
+      var on = (state.bview === "fscore") === (val === "fscore");
+      return '<button class="chip' + (on ? " active" : "") + '" type="button" data-frbview="' + val + '" aria-pressed="' + (on ? "true" : "false") + '">' + lbl + "</button>";
+    }
+    return '<div class="fr-bview" role="group" aria-label="Board index">' + b("index", "Franchise Index") + b("fscore", "F-SCORE") + "</div>";
   }
 
   // ---- GFX: the shared eephus-gfx.js board renderer draws the header ---------------
@@ -992,6 +1301,7 @@
     root.innerHTML = state.view === "board" ? renderBoard() : renderClub();
     syncTabs();
     wire();
+    if (state.view === "club") fsFitSparks();
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(root); } catch (e) { /* glossary optional */ }
     if (state.sec) {
       try { var target = el("fr-sec-" + state.sec); if (target && target.scrollIntoView) target.scrollIntoView(); } catch (e) { /* optional */ }
@@ -1012,9 +1322,9 @@
     });
     Array.prototype.forEach.call(document.querySelectorAll("button[data-frsort]"), function (btn) {
       btn.addEventListener("click", function () {
-        var k = btn.getAttribute("data-frsort");
-        if (state.sort.key === k) state.sort.asc = !state.sort.asc;
-        else { state.sort.key = k; state.sort.asc = !!TEXT_COLS[k]; }
+        var k = btn.getAttribute("data-frsort"), cur = boardSort();
+        if (cur.key === k) state.sort = { key: k, asc: !cur.asc };
+        else state.sort = { key: k, asc: !!TEXT_COLS[k] };
         render();
         // The re-render replaced the button: focus returns to the sorted head,
         // so the next Tab moves along the heads, not to the CSV button.
@@ -1030,6 +1340,27 @@
         readHash();
         render();
         try { if (typeof window !== "undefined" && window.scrollTo) window.scrollTo(0, 0); } catch (err) { /* optional */ }
+      });
+    });
+    // the board's Index | F-SCORE switch; the sort falls back to the mode's own
+    Array.prototype.forEach.call(document.querySelectorAll("button[data-frbview]"), function (b) {
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-frbview");
+        state.bview = v === "fscore" && fsOn() ? "fscore" : "index";
+        writeHash(); render();
+        try { var nb = document.querySelector('button[data-frbview="' + v + '"]'); if (nb && nb.focus) nb.focus(); } catch (e) { /* optional */ }
+      });
+    });
+    // an in-page link to a section (F-SCORE card, section and board links):
+    // the render scrolls to the section instead of the top
+    Array.prototype.forEach.call(document.querySelectorAll("a[data-frgo]"), function (a) {
+      a.addEventListener("click", function (e) {
+        var href = a.getAttribute("href") || "";
+        if (href.indexOf("#") !== 0) return;
+        e.preventDefault();
+        try { if (typeof history !== "undefined" && history.replaceState) history.replaceState(null, "", href); } catch (err) { /* optional */ }
+        readHash();
+        render();
       });
     });
     var g = el("fr-gfx");
@@ -1050,6 +1381,11 @@
     try {
       if (typeof window !== "undefined" && window.addEventListener) {
         window.addEventListener("hashchange", function () { readHash(); render(); });
+        var fsResize = null;
+        window.addEventListener("resize", function () {
+          if (fsResize) clearTimeout(fsResize);
+          fsResize = setTimeout(function () { if (DATA && state.view === "club") fsFitSparks(); }, 150);
+        });
       }
     } catch (e) { /* optional */ }
     // The lamp loader goes up before the fetch: with DATA still null, render()
