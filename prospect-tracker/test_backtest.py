@@ -224,10 +224,14 @@ def test_sensitivity_dominated_by_dpw_and_discount() -> None:
 def test_calibration_config_never_ships_synthetic() -> None:
     """The original contract: no synthetic fit is ever committed. Since
     Phase 4 (WS-6) the block IS enabled — but only because a REAL-data
-    LOyO-validated fit shipped; identity remains the only other legal state."""
+    LOyO-validated fit shipped; identity remains the only other legal state.
+    The 2026-10-09 refit (docs/ARBITRATION_GATE.md section 19) is a REAL-data
+    knots-only fit, which computes no held-out statistic before the
+    PROSPECT_ANCHOR look, so its provenance says knots-only instead."""
     cal = vf._config()["calibration"]
     if cal["enabled"]:
-        assert "REAL-data fit" in cal["fit_provenance"]
+        prov = cal["fit_provenance"]
+        assert "REAL-data fit" in prov or "REAL-data knots-only fit" in prov
         assert cal["version"].startswith(("isotonic-real-", "linear-real-"))
     else:
         assert vf.apply_calibration(123.4) == 123.4     # identity passthrough

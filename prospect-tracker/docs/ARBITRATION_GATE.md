@@ -1646,3 +1646,97 @@ records `registered_response_mode: "off"`, the /arbitration/ Model tab shows
 the gate as FAIL with the registered response beside the served mode, and
 the registry row stays `provisional`, which C3' and these failures block
 from leaving.
+
+## 19. 2026-10-09: prospects price their arbitration seasons through the board's chain
+
+Recorded 2026-10-09 (owner answer, final-pass 'more' batch 11, 2026-09-25:
+price PROSPECT arbitration seasons through the same arbitration model debuted
+players use, starting from a league-minimum salary, instead of the clemens
+ladder; and OD-4, 2026-09-30, verbatim: "Each index's own history, and
+create+land the prospect arbitration model"). Census X02-05. Nothing above
+this section is edited. It overrides section 6's "Never-debuted prospects:
+keep the ladder" by owner decision; section 6's reasons (no prior salary, rungs
+four to seven seasons out, a model fit on observed awards extrapolated onto a
+population it never saw) are not refuted here and stand as the disclosed risk.
+
+### 19a. What prices a prospect's arbitration season
+
+Under `service_time.arb_pricing: arb_model` (the clemens_2026 set,
+`config/valuation_sets/clemens_2026.yaml`; revert `schedule`):
+
+- **ARB 1** is the board's stage1 level model (`arb_model.predict` on the
+  platform frame, section 15) with the season before it, a pre-arbitration
+  season, as the prior salary at the league minimum (`has_prior = 1`).
+- **ARB 2 and later** raise off the rung before through the board's banded
+  step multiplier (`arb_model.banded_predict`, section 15d), floored at the
+  CBA maximum cut and the league minimum.
+- **Every rung** is re-inflated at the deflator's last level, the board's own
+  carry-forward for a season past its last award year, and floored at the
+  league minimum, exactly as `arb_export.build_board` prices a forward rung.
+  The arbitration index growth rule (own trend, 2.2 percent a year) is
+  applied to these rungs later, by the $/WAR path's flip (VAL_5 F-D).
+- **The one input a prospect lacks**, a platform season's playing time and
+  Arkmetric indices, is the median arb-1 training row of his role (hitter,
+  starter, reliever) in platform-WAR bins (edges 0.5, 1.5, 2.5, 3.5; a bin of
+  fewer than 8 rows merges into the bin below), interpolated linearly in the
+  path's platform WAR. WAR, the three-season sum, career WAR and age are the
+  path's own.
+- **The club's non-tender option** is priced on the path's arbitration
+  seasons by `salary_path.tender_cliff`'s backward induction, the option a
+  debuted player's path already carries. Without it the model's tendered
+  award would charge a bust path an arbitration salary no club pays.
+
+The coefficients are the ones the board was priced with in the same
+`arb_export` run, written to `data/arb_prospect_rungs.json` (stage1 means,
+scales, weights, intercept and smearing factor; the banded cells; the
+deflator; the role profile). The engine (`value_framework.arb_rung_usd`) only
+does arithmetic on it. `test_prospect_arb_via_model.py` rebuilds every rung
+through `arb_model.predict` and `arb_model.banded_predict` on rows built the
+way the board builds them and requires equality.
+
+### 19b. Both sides of the calibration pool, and the refit
+
+Section 5's rule holds: the realized side of `surplus_backtest_real` imputes
+its arbitration seasons with the same chain (`_impute_seasons(profile=...)`,
+the listed role, the realized WAR of the seasons before each rung), so the
+prediction and the realized target carry one arbitration convention. The
+calibration map was refit in the same change through the knots-only entry
+(`backtest.fit_calibration_knots`, `tools/fit_surplus_calibration.py
+--target today_flat`), which computes no held-out, error, by-role or by-FV-cell
+statistic (docs/PROSPECT_ANCHOR_GATE.md). Its top knot at $400M continues the
+last fitted segment, the v6 map's documented convention, because the
+interpolator clamps above its last knot.
+
+Section 5's cancellation check (`|delta bias| < 0.4 * |delta level|`) is NOT
+computed: it needs a held-out bias, which the PROSPECT_ANCHOR clock forbids
+before its look. B7 (`prospect_surplus` moves validated -> provisional at the
+swap) is NOT applied: the registry keeps a verdict the owner's call
+(model_registry.py, QMLC01) and test_prospect_anchor_gate.py pins the row
+validated, so the row instead carries `remeasure_pending` (the /projections/
+accountability card prints it beside the badge): its held-out bias and slope
+describe the replaced v6 map. Whether to move it to provisional is an owner
+question.
+
+### 19c. Scope
+
+Moves: the prospect bucket paths and the collapsed comparator
+(`_service_path_surplus_usd`), the debuted-prospect remaining paths
+(`_remaining_path_surplus_usd`, so `start_k = 0` still reproduces the prospect
+path), the realized side of the calibration pool, and the glossary's surplus
+walk (from the snapshot's `service_time.arb_model_flat_cost_mm`).
+
+Does not move: the QO tax's forfeited slot (`fa_market._slot_surplus_usd`
+passes no profile and keeps the ladder). It prices ONE flat path at the
+slot's mean WAR (about 0.25 a season at slot 55), and the award model charges
+such a path near its intercept, so the swap would cut the tax by a third
+(CBT payor $10,288,276 to $6,851,418) in the direction opposite to what the
+model does to an outcome mixture, whose rare hits it prices cheaper than the
+ladder. It waits for a mixture pricing of the slot, an owner question. Nor
+the /arbitration/ board and history (byte-identical but for
+`generated_at`), the salary path for debuted players, a debuted player's
+already-played seasons (`realized_consumed_seasons` keeps the ladder for a
+season with no salary on file), the surplus-odds gate's frozen read
+(`surplus_odds_gate` calls `_impute_seasons` without a profile), the
+`prospx_current` identity set, and any caller that passes no role profile.
+`data/surplus_backtest_real.json` was not re-run: it calls
+`backtest.run_backtest`, which computes a by-FV-cell table.

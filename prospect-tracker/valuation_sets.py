@@ -339,6 +339,11 @@ def engine_params(set_id: str) -> dict:
         if arb.get("basis") is not None:
             # New key; consumed by the Phase-3 salary path (prior_season vs current).
             st["arb_basis"] = str(arb["basis"])
+        if arb.get("pricing") is not None:
+            # "arb_model" prices a prospect's arbitration seasons through the
+            # /arbitration/ board's chain (value_framework.arb_pricing);
+            # "schedule" keeps the fraction ladder above.
+            st["arb_pricing"] = str(arb["pricing"])
     if ctrl and ctrl.get("years") is not None:
         st["control_years"] = int(ctrl["years"])
     if ctrl and ctrl.get("basis") is not None:

@@ -46,6 +46,11 @@ from surplus_backtest_real import build_cohorts, _resolved_only     # noqa: E402
 import value_framework as vf                                        # noqa: E402
 
 N_BREAKPOINTS = 25
+#: The top knot the map is extended to. apply_calibration CLAMPS above its last
+#: knot and the fitted top knot is reachable by the best prospects, so, as the
+#: v6 map documented ("TOP EXTENDED"), the last fitted segment continues to
+#: this knot. That region is extrapolated, not fitted.
+TOP_KNOT_MM = 400.0
 VERSION_BY_TARGET = {"today_flat": "isotonic-real-v3-todaypriced",
                      "today_path": "isotonic-real-v4-todaypath"}
 
@@ -58,13 +63,31 @@ def _downsample(xs: list[float], ys: list[float], k: int) -> tuple[list, list]:
     return [xs[i] for i in idx], [ys[i] for i in idx]
 
 
-def fit_provenance(n_players: int, n_knots: int, target_pricing: str) -> str:
+def fit_provenance(n_players: int, n_knots: int, target_pricing: str,
+                   top_knot_mm: float | None = None) -> str:
     """Names ONLY the pool, n, the knot count and the target pricing: the
-    knots-only entry computes no slope, bias or held-out figure, so none is quoted."""
-    return ("REAL-data knots-only fit, BINNED isotonic (count-weighted PAVA on equal-count bin "
+    knots-only entry computes no slope, bias or held-out figure, so none is quoted.
+    `top_knot_mm` names the extrapolated top knot when one was appended."""
+    text = ("REAL-data knots-only fit, BINNED isotonic (count-weighted PAVA on equal-count bin "
             "means) on the surplus_backtest_real resolved pool, 2017-2019 listings, n=%d; "
             "target pricing %s; breakpoints downsampled to %d knots." % (
                 n_players, target_pricing, n_knots))
+    if top_knot_mm is not None:
+        text += (" The knot at $%.0fM continues the last fitted segment, extrapolated and "
+                 "not fitted, so the map does not clamp above its last fitted knot."
+                 % top_knot_mm)
+    return text
+
+
+def extend_top(xs: list[float], ys: list[float],
+               top: float = TOP_KNOT_MM) -> tuple[list, list]:
+    """Append a knot at `top` on the line through the last two fitted knots
+    (unchanged when the last knot already reaches it)."""
+    if len(xs) < 2 or xs[-1] >= top:
+        return xs, ys
+    run = xs[-1] - xs[-2]
+    rise = (ys[-1] - ys[-2]) / run if run > 0 else 1.0
+    return xs + [top], ys + [ys[-1] + rise * (top - xs[-1])]
 
 
 def build_block(target_pricing: str = "today_flat") -> dict:
@@ -75,6 +98,8 @@ def build_block(target_pricing: str = "today_flat") -> dict:
     xs = [float(v) for v in corr.get("x_mm", [])]
     ys = [float(v) for v in corr.get("y_mm", [])]
     xs, ys = _downsample(xs, ys, N_BREAKPOINTS)
+    n_fitted = len(xs)
+    xs, ys = extend_top(xs, ys)
     level_mm = (vf.price_level(vf.pricing_base_season()) / 1e6 if target_pricing == "today_path"
                 else vf.dollars_per_war_flat())
     return {
@@ -88,7 +113,8 @@ def build_block(target_pricing: str = "today_flat") -> dict:
         "linear": {"slope": 1.0, "intercept_mm": 0.0},
         "isotonic": {"x_mm": [round(x, 2) for x in xs],
                      "y_mm": [round(y, 2) for y in ys]},
-        "fit_provenance": fit_provenance(fit["n_players"], len(xs), target_pricing),
+        "fit_provenance": fit_provenance(fit["n_players"], n_fitted, target_pricing,
+                                         TOP_KNOT_MM if len(xs) > n_fitted else None),
     }
 
 

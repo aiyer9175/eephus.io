@@ -1019,6 +1019,10 @@ _SIDECAR_WRITE_TARGETS = (
     ("tools.dpw_path_gate", "SERIES_PATH", "data/fa_dpw_series.json"),
     # QPRP08: eta_backtest's second output, the served P(debut) curves.
     ("eta_backtest", "CURVES_PATH", "data/eta_curves.json"),
+    # M11 prospect arbitration: arb_export's third output, the prospect rung
+    # model, and its one reader; both resolved at call time.
+    ("arb_export", "PROSPECT_RUNGS_PATH", "data/arb_prospect_rungs.json"),
+    ("value_framework", "_ARB_PROSPECT_PATH", "data/arb_prospect_rungs.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

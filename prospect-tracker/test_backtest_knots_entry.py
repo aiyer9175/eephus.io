@@ -62,6 +62,15 @@ def test_today_flat_returns_the_map_and_nothing_else(records):
     assert len(xs) == len(ys) >= 2 and all(b >= a for a, b in zip(ys, ys[1:]))
 
 
+def test_the_return_carries_no_fv_or_tier_key(records):
+    """M11_PROSPECT_ARB_VIA_MODEL (docs/PROSPECT_ANCHOR_GATE.md): the refit the
+    prospect arbitration swap runs may not return anything keyed by an FV cell
+    or a tier, at any depth."""
+    for target in ("today_flat",):
+        keys = _keys(backtest.fit_calibration_knots(records, target_pricing=target))
+        assert not [k for k in keys if "fv" in k or "tier" in k], keys
+
+
 def test_today_path_needs_the_unified_path(records, tmp_path):
     with pytest.raises(ValueError):
         backtest.fit_calibration_knots(records, target_pricing="today_path")

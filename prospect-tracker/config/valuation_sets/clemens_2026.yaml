@@ -95,10 +95,16 @@ params:
     level: fa_winter
   # Arbitration: percent of the PRIOR season's FA-equivalent value, Arb 1-4.
   # 3 pre-arb (league min) + 4 arb over a 7-season control window.
+  # pricing: arb_model (owner answer 2026-09-25 'more' batch 11 and OD-4,
+  # 2026-09-30; docs/ARBITRATION_GATE.md section 19): a prospect's arbitration
+  # seasons price through the /arbitration/ board's own chain from a
+  # league-minimum start (data/arb_prospect_rungs.json). The schedule above it
+  # stays the fallback (no role profile, or no artifact). Revert: schedule.
   arbitration:
     schedule: [0.15, 0.35, 0.50, 0.75]
     basis: prior_season
     pre_arb_years: 3
+    pricing: arb_model
   control:
     years: 7
     basis: roster_day

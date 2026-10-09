@@ -614,6 +614,8 @@ def _reset_caches() -> None:
     and tests). Clears the FV-WAR-scale caches too: those are keyed only on
     (fv, role) but READ the active set's config (the reconciliation anchor), so a
     valuation-set switch must invalidate them or a stale scale leaks across sets."""
+    global _ARB_RUNGS
+    _ARB_RUNGS = None
     _config.cache_clear()
     _fitted.cache_clear()
     _bucket_sv_usd.cache_clear()
@@ -1551,7 +1553,8 @@ def _aged_trajectory(role: str, level: float, debut_age: float | None) -> list[f
 
 
 def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
-                              eta_years: float = 0.0, eta_origin: float | None = None) -> float:
+                              eta_years: float = 0.0, eta_origin: float | None = None,
+                              profile=None) -> float:
     """Discounted sum over control years of (season market value - season salary),
     with performance-adaptive arbitration. Standard path = pre_arb_years league-min
     years then escalating-fraction arb years; super-two converts one pre-arb year
@@ -1563,11 +1566,17 @@ def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
     inflation = 0 and eta_years = 0 this is exactly the prior 1/(1+r)^k discount.
 
     Unified $/WAR path mode (VAL_5): see _service_path_surplus_unified_usd; the
-    legacy branch below is unchanged and eta_origin is ignored there."""
+    legacy branch below is unchanged and eta_origin is ignored there.
+
+    `profile` = (arb_role, age at control season 0 or None). With it, under
+    arb_pricing = arb_model, the arbitration seasons price through the award
+    model (_arb_model_salaries) and carry the club's non-tender option
+    (_cliff_sum); without it, or under the fraction ladder, nothing changes."""
     if dpw_path_active():
-        return _service_path_surplus_unified_usd(season_wars, super_two, eta_years, eta_origin)
+        return _service_path_surplus_unified_usd(season_wars, super_two, eta_years, eta_origin,
+                                                 profile=profile)
     markets = [tiered_war_value_usd(w) for w in season_wars]
-    salaries = _service_path_salaries(season_wars, markets, super_two)
+    salaries = _service_path_salaries(season_wars, markets, super_two, profile=profile)
     cfg = _config()
     infl = float(cfg.get("dollars_per_war_inflation", 0.0))
     r = float(cfg["discount_rate"])
@@ -1576,13 +1585,19 @@ def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
     # or discount is applied anywhere on this path (present_value() is intentionally
     # never called). test_salary_discount guards this.
     net = (1.0 + infl) / (1.0 + r)
+    if profile is not None and arb_pricing() == "arb_model":
+        pre_arb = _arb_ladder(_config()["service_time"], super_two)[0]
+        return _cliff_sum([(markets[t] - salaries[t]) * (net ** (float(eta_years) + t))
+                           for t in range(len(season_wars))],
+                          [t >= pre_arb for t in range(len(season_wars))])
     return sum((markets[t] - salaries[t]) * (net ** (float(eta_years) + t))
                for t in range(len(season_wars)))
 
 
 def _service_path_surplus_unified_usd(season_wars: list[float], super_two: bool,
                                       eta_years: float = 0.0,
-                                      eta_origin: float | None = None) -> float:
+                                      eta_origin: float | None = None,
+                                      profile=None) -> float:
     """Unified mode (I1, I2, I6): control season t is the calendar season
     s_t = eta_origin + eta_years + t, so the priced season does not depend on
     which year the caller measured the ETA from. Each season is priced at its own
@@ -1592,13 +1607,18 @@ def _service_path_surplus_unified_usd(season_wars: list[float], super_two: bool,
     s0 = origin + float(eta_years)
     seasons = [s0 + t for t in range(len(season_wars))]
     markets = [season_value_usd(w, s) for w, s in zip(season_wars, seasons)]
-    salaries = _service_path_salaries_unified(season_wars, seasons, super_two)
+    salaries = _service_path_salaries_unified(season_wars, seasons, super_two, profile=profile)
+    if profile is not None and arb_pricing() == "arb_model":
+        pre_arb = _arb_ladder(_config()["service_time"], super_two)[0]
+        return _cliff_sum([(markets[t] - salaries[t]) * season_discount(seasons[t], legacy_base=origin)
+                           for t in range(len(season_wars))],
+                          [t >= pre_arb for t in range(len(season_wars))])
     return sum((markets[t] - salaries[t]) * season_discount(seasons[t], legacy_base=origin)
                for t in range(len(season_wars)))
 
 
 def _service_path_salaries_unified(season_wars: list[float], seasons: list[float],
-                                   super_two: bool) -> list[float]:
+                                   super_two: bool, profile=None) -> list[float]:
     """Row 2 in unified mode: the league minimum of the season (league_min_for,
     which reads the CBA table and fixes the flat 0.76M against the tabled 0.78M);
     arbitration on the prior_season basis as max(minimum, frac x the prior
@@ -1608,6 +1628,11 @@ def _service_path_salaries_unified(season_wars: list[float], seasons: list[float
     cfg = _config()
     st = cfg["service_time"]
     legacy_min = float(st["league_min_usd"])
+    if profile is not None and arb_pricing() == "arb_model":
+        # The rungs sit at the deflator's carry-forward level; VAL_5 F-D
+        # applies the arbitration index growth rule to them at its flip.
+        return _arb_model_salaries(season_wars, super_two, profile,
+                                   lambda t: league_min_for(seasons[t], legacy=legacy_min))
     pre_arb, arb_fracs = _arb_ladder(st, super_two)
     arb_basis = str(st.get("arb_basis", "current_season"))
     out: list[float] = []
@@ -1647,8 +1672,198 @@ def _arb_ladder(st: dict, super_two: bool) -> tuple[int, list[float]]:
     return int(st["pre_arb_years"]) - 1, [s2_first] + fracs
 
 
+# =============================================================================
+# Prospect arbitration through the award model (owner answer 2026-09-25, 'more'
+# batch 11, and OD-4 2026-09-30; census X02-05; docs/ARBITRATION_GATE.md
+# section 19)
+# =============================================================================
+# Under service_time.arb_pricing = "arb_model" (the clemens_2026 set) a
+# prospect's arbitration seasons are priced by the SAME chain the /arbitration/
+# board serves a debuted player: ARB 1 is the award model's level prediction
+# (arb_model.fit_stage1 on the platform frame) with the season before it, a
+# pre-arbitration season, as its prior salary at the league minimum; ARB 2 and
+# later raise off the rung before through the board's banded step multiplier
+# (arb_model.banded_predict), floored at the CBA maximum cut and the league
+# minimum. The coefficients are the ones arb_export fit for the board in the
+# same run, read from data/arb_prospect_rungs.json, so pricing here is pure
+# arithmetic and never fits. Every rung is priced at the deflator's last
+# level, the board's own carry-forward for a season past its last award year;
+# the arbitration index growth rule is applied to these rungs later, by the
+# $/WAR path's flip (VAL_5 F-D), not here.
+#
+# A prospect has no observed platform season, so ARB 1's playing time and
+# skill-index features come from the training rows themselves: the median
+# arb-1 training row of his role (hitter, starter, reliever), interpolated in
+# platform WAR between WAR bins (the artifact's `profile` block). WAR, war3,
+# career WAR and age are the path's own. The fixed-ladder fallback
+# (arb_model.fractions_of_fa_value) stays for the base-identity set, for any
+# caller that passes no role profile, and for a cold tree with no artifact.
+_ARB_PROSPECT_PATH = _HERE / "data" / "arb_prospect_rungs.json"
+_ARB_RUNGS: dict | None = None
+_ARB_RUNGS_MISSING_LOGGED = False
+ARB_ROLES = ("hit", "sp", "rp")
+
+
+def _arb_rung_model() -> dict | None:
+    """The committed rung model, memoized; None when absent or unreadable.
+    Resolved at call time through _ARB_PROSPECT_PATH (conftest points it
+    at its mirror)."""
+    global _ARB_RUNGS
+    if _ARB_RUNGS is None:
+        try:
+            doc = json.loads(Path(_ARB_PROSPECT_PATH).read_text(encoding="utf-8"))
+            s1 = doc["stage1"]
+            doc["_cells"] = {(int(a), int(b)): float(m) for a, b, m in doc["banded"]["cells"]}
+            doc["_by_band"] = {int(b): float(m) for b, m in doc["banded"]["by_band"]}
+            doc["_level"] = float(doc["deflator"][max(doc["deflator"], key=int)])
+            assert len(s1["keys"]) == len(s1["mu"]) == len(s1["sd"]) == len(s1["w"])
+            _ARB_RUNGS = doc
+        except (OSError, ValueError, KeyError, TypeError, AssertionError):
+            _ARB_RUNGS = {}
+    return _ARB_RUNGS or None
+
+
+def arb_pricing() -> str:
+    """'arb_model' when the active set prices arbitration through the award
+    model and the rung model is on disk, else 'schedule' (the fraction ladder).
+    A set that asks for the model on a tree without the artifact falls back
+    to the ladder and logs it once."""
+    global _ARB_RUNGS_MISSING_LOGGED
+    want = str(_config()["service_time"].get("arb_pricing", "schedule"))
+    if want != "arb_model":
+        return "schedule"
+    if _arb_rung_model() is None:
+        if not _ARB_RUNGS_MISSING_LOGGED:
+            import logging
+            logging.getLogger(__name__).warning(
+                "value_framework: arb_pricing=arb_model but %s is missing; "
+                "pricing prospect arbitration on the fraction ladder", _ARB_PROSPECT_PATH)
+            _ARB_RUNGS_MISSING_LOGGED = True
+        return "schedule"
+    return "arb_model"
+
+
+def arb_role(role: str, reliever: bool = False) -> str:
+    """The rung model's role key for an engine role: 'hit', 'sp' or 'rp'."""
+    if role != "pitcher":
+        return "hit"
+    return "rp" if reliever else "sp"
+
+
+def _interp_clamped(xs, ys, x: float) -> float:
+    if x <= xs[0]:
+        return float(ys[0])
+    if x >= xs[-1]:
+        return float(ys[-1])
+    for i in range(1, len(xs)):
+        if x <= xs[i]:
+            x0, x1, y0, y1 = xs[i - 1], xs[i], ys[i - 1], ys[i]
+            return float(y0 + (y1 - y0) * (x - x0) / (x1 - x0))
+    return float(ys[-1])
+
+
+def arb_rung_profile(role: str, platform_war: float) -> dict:
+    """The platform-season playing time and skill indices a rung reads for a
+    player with no observed platform season: the role's arb-1 training medians
+    interpolated in platform WAR. Keys are the raw panel fields arb_model.features
+    reads (pa, ipouts, gs; hem/sem/rem on the 100 scale)."""
+    prof = _arb_rung_model()["profile"][role]
+    xs = prof["war"]
+    return {k: _interp_clamped(xs, prof[k], float(platform_war))
+            for k in ("pa", "ipouts", "gs", "hem", "sem", "rem")}
+
+
+def arb_rung_usd(step: int, prior_usd: float, *, role: str, super_two: bool,
+                 war: float, war3: float, career_war: float, age: float,
+                 league_min_usd: float) -> float:
+    """One arbitration rung, nominal $, exactly as arb_export.build_board prices
+    a forward rung at the deflator's carry-forward level: ARB 1 through the
+    award model (smearing-corrected), ARB 2+ through the banded raise
+    multiplier off `prior_usd`, both floored at the league minimum."""
+    M = _arb_rung_model()
+    lvl = M["_level"]
+    if int(step) == 1:
+        s1 = M["stage1"]
+        p = arb_rung_profile(role, war)
+        pa, ipouts, gs = p["pa"], p["ipouts"], p["gs"]
+        is_pit = 1.0 if ipouts > 0 and pa < 50 else 0.0
+        vals = {
+            "arb_year": 1.0,
+            "super_two": 1.0 if super_two else 0.0,
+            "log_prior_salary": math.log(prior_usd) if prior_usd else 0.0,
+            "has_prior": 1.0 if prior_usd else 0.0,
+            "war": float(war), "war3": float(war3), "career_war": float(career_war),
+            "age": float(age),
+            "pa_share": pa / 650.0, "ip_share": ipouts / 600.0, "gs_share": gs / 32.0,
+            "is_pitcher": is_pit,
+            "is_reliever": 1.0 if (is_pit and gs < 5 and ipouts > 0) else 0.0,
+            "hem": p["hem"] / 100.0, "sem": p["sem"] / 100.0, "rem": p["rem"] / 100.0,
+        }
+        z = float(s1["b"]) + sum((vals[k] - mu) / sd * w for k, mu, sd, w in
+                                 zip(s1["keys"], s1["mu"], s1["sd"], s1["w"]))
+        pred = math.exp(z) * float(s1["smear"]) * lvl
+    else:
+        band = len(M["banded"]["bands_usd"]) - 1
+        for i, (lo, hi) in enumerate(M["banded"]["bands_usd"]):
+            if lo <= prior_usd < (float("inf") if hi is None else hi):
+                band = i
+                break
+        m = (M["_cells"].get((int(step), band)) or M["_by_band"].get(band)
+             or float(M["banded"]["fallback"]))
+        base = prior_usd / lvl
+        pred = max(base * m, base * float(M["banded"]["max_cut"]), league_min_usd / lvl) * lvl
+    return max(float(pred), float(league_min_usd))
+
+
+def _arb_model_salaries(season_wars: list[float], super_two: bool, profile,
+                        lm_at) -> list[float]:
+    """Per-season salary over a service path under arb_pricing = arb_model:
+    the pre-arbitration seasons at lm_at(t), then one rung per arbitration
+    season chained off the salary before it, so the first rung starts from a
+    league-minimum salary. `profile` is (role, age at control season 0 or
+    None); with no age the first rung sits at the training median arb-1 age.
+    Each rung reads the path's own WAR through the season before it (the
+    platform frame): war, the three-season sum and the career sum."""
+    role, age0 = profile
+    st = _config()["service_time"]
+    pre_arb, _fracs = _arb_ladder(st, super_two)
+    M = _arb_rung_model()
+    out: list[float] = []
+    for t in range(len(season_wars)):
+        lm = float(lm_at(t))
+        if t < pre_arb:
+            out.append(lm)
+            continue
+        step = t - pre_arb + 1
+        prior = out[t - 1] if t > 0 else lm
+        plat = float(season_wars[t - 1]) if t > 0 else 0.0
+        war3 = float(sum(season_wars[max(0, t - 3):t]))
+        career = float(sum(season_wars[:t]))
+        age = (float(age0) + t) if age0 is not None else (
+            float(M["age_arb1_median"]) + (t - pre_arb))
+        out.append(arb_rung_usd(step, prior, role=role, super_two=bool(super_two and step == 1),
+                                war=plat, war3=war3, career_war=career, age=age,
+                                league_min_usd=lm))
+    return out
+
+
+def _cliff_sum(terms: list[float], cuttable: list[bool]) -> float:
+    """The club's non-tender option on a path's ARBITRATION seasons, by backward
+    induction, exactly salary_path.tender_cliff's rule on terms that are
+    already discounted (scaling every term by one positive factor leaves each
+    continuation's sign unchanged): a club walks away before an arbitration
+    season whose continuation is negative and keeps the seasons before it. A
+    pre-arbitration season is never cuttable. Applied under arb_pricing =
+    arb_model only, the same option a debuted player's path prices."""
+    w = 0.0
+    for t in range(len(terms) - 1, -1, -1):
+        cont = float(terms[t]) + w
+        w = 0.0 if (cuttable[t] and cont < 0.0) else cont
+    return w
+
+
 def _service_path_salaries(season_wars: list[float], markets: list[float],
-                           super_two: bool) -> list[float]:
+                           super_two: bool, profile=None) -> list[float]:
     """Per-season salary ($) over the control window: pre_arb_years at the league
     minimum, then escalating-fraction arbitration years.
 
@@ -1664,6 +1879,8 @@ def _service_path_salaries(season_wars: list[float], markets: list[float],
     cfg = _config()
     st = cfg["service_time"]
     league_min = float(st["league_min_usd"])
+    if profile is not None and arb_pricing() == "arb_model":
+        return _arb_model_salaries(season_wars, super_two, profile, lambda t: league_min)
     pre_arb, arb_fracs = _arb_ladder(st, super_two)
     arb_basis = str(st.get("arb_basis", "current_season"))
     out: list[float] = []
@@ -1711,8 +1928,10 @@ def _bucket_sv_usd_cached(role: str, reliever: bool,
     out = []
     for b in range(_N_BUCKETS):
         wars = _bucket_season_wars(role, b, reliever, debut_age, war_scale)
-        sv_std = _service_path_surplus_usd(wars, False, eta_years, eta_origin)
-        sv_s2 = _service_path_surplus_usd(wars, True, eta_years, eta_origin) if f > 0 else sv_std
+        prof = (arb_role(role, reliever), debut_age)
+        sv_std = _service_path_surplus_usd(wars, False, eta_years, eta_origin, profile=prof)
+        sv_s2 = (_service_path_surplus_usd(wars, True, eta_years, eta_origin, profile=prof)
+                 if f > 0 else sv_std)
         sv = (1.0 - f) * sv_std + f * sv_s2
         floor = float(floors[_BUCKETS[b]].get("surplus_floor_usd", 0))
         out.append(max(floor, sv))
@@ -1909,9 +2128,10 @@ def point_estimate_surplus_usd(fv: float | None, is_pitcher: bool, position: str
     st = _config()["service_time"]
     s2 = st["super_two"]
     fr = float(s2["fraction"]) if s2.get("enabled") else 0.0
-    _, eta_eff = _resolve_timing(age, eta_years)
-    sv = ((1.0 - fr) * _service_path_surplus_usd(wars, False, eta_eff, eta_origin)
-          + fr * _service_path_surplus_usd(wars, True, eta_eff, eta_origin))
+    debut_age, eta_eff = _resolve_timing(age, eta_years)
+    prof = (arb_role(role, reliever), debut_age)
+    sv = ((1.0 - fr) * _service_path_surplus_usd(wars, False, eta_eff, eta_origin, profile=prof)
+          + fr * _service_path_surplus_usd(wars, True, eta_eff, eta_origin, profile=prof))
     return max(0.0, sv * position_multiplier(position))
 
 
@@ -2651,21 +2871,33 @@ def system_surplus_distribution(prospects, *, draws=None, seed=None, correlation
 # =============================================================================
 # Debuted-player mode (Prompt D): realized (consumed) + remaining (projected)
 # =============================================================================
-def _remaining_path_surplus_usd(season_wars: list[float], start_k: int, super_two: bool) -> float:
+def _remaining_path_surplus_usd(season_wars: list[float], start_k: int, super_two: bool,
+                                profile=None) -> float:
     """Value control seasons [start_k:] on the ACTUAL service clock (salary by
     absolute service year), discounting from NOW (the player is already in MLB,
     so the first remaining season is undiscounted). start_k=0 reproduces the
     full prospect path at eta=0 exactly.
 
     Unified $/WAR path mode (VAL_5, row 4): see
-    _remaining_path_surplus_unified_usd; the legacy branch below is unchanged."""
+    _remaining_path_surplus_unified_usd; the legacy branch below is unchanged.
+
+    `profile` as in _service_path_surplus_usd: under arb_pricing = arb_model the
+    WHOLE path's salaries come from _arb_model_salaries (so start_k = 0 still
+    reproduces the prospect path) and the seasons from start_k carry the
+    non-tender option."""
     if dpw_path_active():
-        return _remaining_path_surplus_unified_usd(season_wars, start_k, super_two)
+        return _remaining_path_surplus_unified_usd(season_wars, start_k, super_two,
+                                                   profile=profile)
     cfg = _config()
     st = cfg["service_time"]
     league_min = float(st["league_min_usd"])
     pre_arb, arb_fracs = _arb_ladder(st, super_two)
     net = (1.0 + float(cfg.get("dollars_per_war_inflation", 0.0))) / (1.0 + float(cfg["discount_rate"]))
+    if profile is not None and arb_pricing() == "arb_model":
+        sal = _arb_model_salaries(season_wars, super_two, profile, lambda t: league_min)
+        ks = range(int(start_k), len(season_wars))
+        return _cliff_sum([(tiered_war_value_usd(season_wars[k]) - sal[k]) * (net ** (k - int(start_k)))
+                           for k in ks], [k >= pre_arb for k in ks])
     # Honor service_time.arb_basis + the league-min floor EXACTLY like
     # _service_path_salaries (the prospect path), so start_k=0 really does reproduce
     # the full prospect path at eta=0. Under the production clemens_2026 set
@@ -2693,7 +2925,7 @@ def _remaining_path_surplus_usd(season_wars: list[float], start_k: int, super_tw
 
 
 def _remaining_path_surplus_unified_usd(season_wars: list[float], start_k: int,
-                                        super_two: bool) -> float:
+                                        super_two: bool, profile=None) -> float:
     """Row 4, unified: the remaining control seasons are calendar seasons
     s = N + 1 + (k - start_k) (the first remaining season is season B whatever
     the caller's calendar year), priced at their own level with salaries by
@@ -2706,6 +2938,13 @@ def _remaining_path_surplus_unified_usd(season_wars: list[float], start_k: int,
     first = float(last_realized_winter() + 1)
     total = 0.0
     start_k = int(start_k)
+    if profile is not None and arb_pricing() == "arb_model":
+        sal = _arb_model_salaries(season_wars, super_two, profile,
+                                  lambda k: league_min_for(first + (k - start_k), legacy=legacy_min))
+        ks = range(start_k, len(season_wars))
+        return _cliff_sum([(season_value_usd(season_wars[k], first + (k - start_k)) - sal[k])
+                           * season_discount(first + (k - start_k), legacy_base=first)
+                           for k in ks], [k >= pre_arb for k in ks])
     for k in range(start_k, len(season_wars)):
         s = first + (k - start_k)
         market = season_value_usd(season_wars[k], s)
@@ -2735,8 +2974,9 @@ def _remaining_bucket_sv_usd(role: str, reliever: bool, debut_age: float | None,
     for b in range(_N_BUCKETS):
         wars = _bucket_season_wars(role, b, reliever, debut_age, war_scale)
         f = float(super_two_fraction)
-        sv = ((1.0 - f) * _remaining_path_surplus_usd(wars, start_k, False)
-              + f * _remaining_path_surplus_usd(wars, start_k, True))
+        prof = (arb_role(role, reliever), debut_age)
+        sv = ((1.0 - f) * _remaining_path_surplus_usd(wars, start_k, False, profile=prof)
+              + f * _remaining_path_surplus_usd(wars, start_k, True, profile=prof))
         out.append(max(float(floors[_BUCKETS[b]].get("surplus_floor_usd", 0)), sv))
     return out
 
@@ -2775,8 +3015,9 @@ def _remaining_continuous_sv_usd(role: str, true_talent_rate: float, debut_age: 
         level = _reliever_level(level)
     wars = _aged_trajectory(role, level, debut_age)
     f = float(super_two_fraction)
-    sv = ((1.0 - f) * _remaining_path_surplus_usd(wars, start_k, False)
-          + f * _remaining_path_surplus_usd(wars, start_k, True))
+    prof = (arb_role(role, reliever), debut_age)
+    sv = ((1.0 - f) * _remaining_path_surplus_usd(wars, start_k, False, profile=prof)
+          + f * _remaining_path_surplus_usd(wars, start_k, True, profile=prof))
     return max(0.0, sv)
 
 
@@ -4741,6 +4982,8 @@ def _build_snapshot_body() -> dict:
             "pre_arb_years": int(cfg["service_time"]["pre_arb_years"]),
             "arb_fractions_of_fa_value": list(cfg["service_time"]["arb_model"]["fractions_of_fa_value"]),
             "super_two": dict(cfg["service_time"]["super_two"]),
+            "arb_pricing": arb_pricing(),
+            "arb_model_flat_cost_mm": arb_model_flat_cost_table(),
         },
         "distribution": {                              # effective Prompt-E values (the `output` block supersedes `distribution`)
             "monte_carlo_draws": _mc_draws(),
@@ -4781,6 +5024,26 @@ def _build_snapshot_body() -> dict:
             "reconciliation": fitted.get("reconciliation", {}),
         },
     }
+
+
+def arb_model_flat_cost_table() -> dict | None:
+    """What the arbitration seasons cost under arb_pricing = arb_model, for the
+    glossary's flat surplus walk: for a flat WAR path on the standard (not
+    super-two) service path, the undiscounted sum of the arbitration rungs in
+    $M, by role (hit, sp, rp), at each WAR on the grid. None under the ladder."""
+    if arb_pricing() != "arb_model":
+        return None
+    st = _config()["service_time"]
+    n = int(st["control_years"])
+    pre_arb = _arb_ladder(st, False)[0]
+    lm = float(st["league_min_usd"])
+    grid = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0]
+    out = {"war": grid, "arb_years": n - pre_arb}
+    for role in ARB_ROLES:
+        out[role] = [round(sum(_arb_model_salaries([w] * n, False, (role, None),
+                                                   lambda t: lm)[pre_arb:]) / 1e6, 3)
+                     for w in grid]
+    return out
 
 
 def emit_snapshots(out_dir: Path | None = None) -> tuple[Path, Path]:

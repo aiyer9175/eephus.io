@@ -227,32 +227,70 @@ def _last_activity(rows: list[dict]) -> int | None:
     return max(seasons) if seasons else None
 
 
-def _impute_seasons(war_by_year: dict[str, float], debut: int) -> tuple[RealizedSeason, ...]:
+def _impute_seasons(war_by_year: dict[str, float], debut: int,
+                    profile=None) -> tuple[RealizedSeason, ...]:
     """First six MLB seasons with framework-convention imputed salaries.
     Gap years (no WAR row) don't price and don't accrue service —
-    documented approximation of injury/option years."""
+    documented approximation of injury/option years.
+
+    `profile` = (arb_role, birth_date or None). With it, under the active set's
+    arb_pricing = arb_model, each arbitration season is imputed through the
+    same chain the prediction side prices (value_framework.arb_rung_usd): the
+    first rung from a league-minimum prior, each later one off the rung
+    before, every rung reading the realized WAR of the seasons before it. The
+    two sides of the calibration pool then carry one arbitration convention
+    (docs/ARBITRATION_GATE.md section 5's both-sides rule, section 19).
+    Without it the fraction ladder imputes, as before."""
     cfg = vf._config()
     fracs = list(cfg["service_time"]["arb_model"]["fractions_of_fa_value"])
     pre_arb = int(cfg["service_time"]["pre_arb_years"])
     lm_by_year = {int(k): float(v) for k, v in
                   (cfg.get("league_min_by_year") or {}).items()}
     lm_default = float(cfg["service_time"]["league_min_usd"]) / 1e6
+    model = profile is not None and vf.arb_pricing() == "arb_model"
     out = []
     service_seasons = 0
+    wars: list[float] = []
+    prior_usd = lm_default * 1e6
     for y in sorted(int(y) for y in war_by_year):
         if y > LAST_FULL_SEASON or service_seasons >= CONTROL_YEARS:
             break
         war = float(war_by_year[str(y)])
         if service_seasons < pre_arb:
             sal = lm_by_year.get(y, lm_default)
+        elif model:
+            role, birth = profile
+            age = _age_at(birth, f"{y}-06-30") if birth else None
+            rung = vf.arb_rung_usd(
+                service_seasons - pre_arb + 1, prior_usd, role=role, super_two=False,
+                war=wars[-1] if wars else 0.0, war3=sum(wars[-3:]), career_war=sum(wars),
+                age=float(int(age)) if age is not None else
+                float(vf._arb_rung_model()["age_arb1_median"]) + (service_seasons - pre_arb),
+                league_min_usd=lm_default * 1e6)
+            prior_usd = rung
+            sal = rung / 1e6
         else:
             i = service_seasons - pre_arb
             frac = fracs[i] if i < len(fracs) else fracs[-1]
             sal = frac * vf.tiered_war_value_usd(war) / 1e6
         out.append(RealizedSeason(y, round(war, 2), round(sal, 3),
                                   _SERVICE_FULL_DAYS))
+        wars.append(war)
         service_seasons += 1
     return tuple(out)
+
+
+def _realized_arb_profile(b: dict) -> tuple:
+    """The realized side's role profile from the listing bio: a hitter, or a
+    pitcher split by his listed position (a reliever position reads 'rp').
+    The prediction side mixes starter and reliever outcomes by bucket; the
+    realized side has only the listed position, a disclosed approximation."""
+    if not b.get("is_pitcher"):
+        role = "hit"
+    else:
+        rel = set(vf._config()["position"]["reliever_positions"])
+        role = "rp" if vf._pos_primary(b.get("position")) in rel else "sp"
+    return (role, b.get("birth_date"))
 
 
 def build_cohorts() -> tuple[list[PlayerRecord], dict]:
@@ -277,7 +315,7 @@ def build_cohorts() -> tuple[list[PlayerRecord], dict]:
             continue
         if war_seasons:
             debut = min(int(y) for y in war_seasons)
-            seasons = _impute_seasons(war_seasons, debut)
+            seasons = _impute_seasons(war_seasons, debut, profile=_realized_arb_profile(b))
             realized = RealizedRecord(key, debut, seasons)
             resolved = (debut + CONTROL_YEARS - 1) <= LAST_FULL_SEASON
         elif mlb_seen:
