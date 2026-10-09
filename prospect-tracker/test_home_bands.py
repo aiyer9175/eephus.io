@@ -102,8 +102,9 @@ def test_every_block_sits_in_its_band(home):
 
 
 def test_thirty_club_logos_link_their_franchise_view(home):
+    # club links through the resolver (owner ask 9): the #team=<CODE> shape
     row = re.search(r'<nav class="club-logos"[^>]*>(.*?)</nav>', home, re.S).group(1)
-    codes = re.findall(r'href="/franchise/#view=club&amp;team=([A-Z]{2,3})"', row)
+    codes = re.findall(r'class="club-logo-link club-link" href="/franchise/#team=([A-Z]{2,3})" data-club="\1"', row)
     assert len(codes) == 30 == len(set(codes))
     assert set(codes) == {r["code"] for r in B._club_table()["rows"]}
     assert len(re.findall(r'<img class="club-logo" ', row)) == 30

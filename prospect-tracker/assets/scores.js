@@ -276,9 +276,13 @@
   // ---- links
   var LINKS = null;
   // The one club resolver (EEPHUS_HUB.clubHref / clubLinkHTML, by MLBAM id).
-  function clubLink(side) {
+  // `mark` (the club's logo) goes inside the link, so the logo and the code are
+  // one link to the club (owner ask 9), never a loose logo beside it.
+  function clubLink(side, mark) {
     var hub = window.EEPHUS_HUB, c = hub && hub.club ? hub.club(side.team_id) : null;
-    return c ? hub.clubLinkHTML(c.code) : '<span class="sc-club" data-club-nolink="unresolved">' + esc(side.code || side.short || "") + "</span>";
+    if (!c) return '<span class="sc-club" data-club-nolink="unresolved">' + esc(side.code || side.short || "") + "</span>";
+    var a = hub.clubLinkHTML(c.code), i = a.indexOf(">") + 1;
+    return mark ? a.slice(0, i) + mark + a.slice(i) : a;
   }
   // SC7-1: a club mark from the hub; px 16 is the pixel chip (sp-logo), a big fetch the clean header mark. alt ""
   // beside the printed code, removed on error so the code stands alone.
@@ -322,7 +326,7 @@
     var t = c[side], o = c[side === "away" ? "home" : "away"];
     var won = c.state === "final" && isNum(t.r) && isNum(o.r) && t.r > o.r;
     var rec = t.wl && isNum(t.wl.w) ? t.wl.w + "-" + t.wl.l : "";
-    var cells = '<th scope="row" class="sc-tm">' + logo(t, "sp-logo", 16) + clubLink(t) + ' <span class="sc-short">' + esc(t.short || "") +
+    var cells = '<th scope="row" class="sc-tm">' + clubLink(t, logo(t, "sp-logo", 16)) + ' <span class="sc-short">' + esc(t.short || "") +
       "</span>" + (won ? ' <span class="sr-only">winner</span>' : "") +
       (rec ? ' <span class="sc-rec">' + esc(rec) + "</span>" : "") + "</th>";
     if (showScore) {
@@ -1056,7 +1060,7 @@
         '<div class="sc-stamp" role="status" aria-live="off"></div>' +
         '<header class="sc-ghead' + (c.state === "live" ? " is-live" : "") + '"><p class="sc-state-big">' + esc(stateLine(c, c.state === "live" ? app.stale : null)) + "</p>" +
         '<h2 class="sc-game-h" tabindex="-1">' + [A, H].map(function (s) {
-          return '<span class="sc-gt">' + logo(s, "sc-hlogo", 80) + clubLink(s) + ' <b class="sc-gr">' + (isNum(s.r) ? s.r : "") + "</b></span>";
+          return '<span class="sc-gt">' + clubLink(s, logo(s, "sc-hlogo", 80)) + ' <b class="sc-gr">' + (isNum(s.r) ? s.r : "") + "</b></span>";
         }).join(' <span class="sc-at">at</span> ') + "</h2>" +
         (c.series && c.series.text ? '<p class="sc-dim">' + esc(c.series.text) + "</p>" : "") +
         '<p class="sc-dim">' + esc((c.venue && c.venue.name ? c.venue.name + ", " : "") + startTime(c)) + "</p>" +

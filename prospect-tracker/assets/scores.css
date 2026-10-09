@@ -163,6 +163,7 @@ a.sc-chip:hover { background: var(--bg-tertiary); }
 .scores-app .sc-ghead > .sc-dim { margin: 2px 0; font-size: 12.5px; }
 .scores-app .sc-game-h { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font: 700 20px/1.2 var(--font-retro-mono); margin: 8px 0 4px; }
 .scores-app .sc-gt { display: inline-flex; align-items: center; gap: 8px; }
+.scores-app .sc-gt > .club-link { display: inline-flex; align-items: center; gap: 8px; }
 .scores-app .sc-hlogo { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 .8px var(--text-dim)); }
 .scores-app .sc-gr { font-size: 26px; font-variant-numeric: tabular-nums; }
 .scores-app .sc-at { font-size: 12px; font-weight: 400; color: var(--text-secondary); }

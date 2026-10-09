@@ -19,6 +19,11 @@ Two kinds of check, per route, at 1280 and 390 px:
   carries data-club-nolink with an allowed reason, and one sampled link lands
   on a Franchises page naming that club.
 
+THE SWEEP (Q9_09): every route SITE_MAP.md lists (read from the file, so a
+new route joins on its own) and the generated pages are SWEPT routes, checked
+at 1280 and 390 px in the light and the dark theme; the alias routes
+/franchise/#team=CWS and /prospx/#farm-org=OAK land on their clubs.
+
 Off-loopback requests are aborted, except the ESPN logo images, which are
 answered with a local 1 px image so a logo stays in the page to be checked
 (an aborted logo removes itself). The page must raise no console error.
@@ -27,6 +32,7 @@ from __future__ import annotations
 
 import base64
 import re
+from pathlib import Path
 
 import pytest
 
@@ -134,9 +140,44 @@ PROSPX = [
     "prospx/#tab=timemachine",
 ]
 ROUTES += PROSPX
+# Q9_09 (A14 to A16 and the sweep): the generated home page, the news wire and
+# /history/ (whole-row player links keep one target and mark their logos
+# row-anchor, owner answer Q-L1; a logo outside a row link links its club),
+# the Scores / Standings day, bracket and game views, and every route
+# SITE_MAP.md lists.
+ROOT = Path(__file__).parent
+GENERATED = ["", "news/", "history/", "scores/", "scores/#bracket=2026"]
+
+
+def _site_map_routes() -> list[str]:
+    """Every page route of SITE_MAP.md's surface tables, as a path under the
+    site root (robots.txt and sitemap.xml are no pages; /articles/<slug>/ is
+    the first article on disk)."""
+    out = []
+    text = (ROOT / "SITE_MAP.md").read_text(encoding="utf-8")
+    for path in re.findall(r"^\| `(/[^`]*)` \|", text, re.M):
+        if path.endswith((".txt", ".xml")):
+            continue
+        if "<slug>" in path:
+            slugs = sorted(p.parent.name for p in (ROOT / "articles").glob("*/index.html"))
+            if not slugs:
+                continue
+            path = path.replace("<slug>", slugs[0])
+        if path.lstrip("/") not in out:
+            out.append(path.lstrip("/"))
+    return out
+
+
+SITE_MAP_ROUTES = _site_map_routes()
+ROUTES += [r for r in dict.fromkeys(GENERATED + SITE_MAP_ROUTES) if r not in ROUTES]
 # Routes whose club mentions have been converted (the SWEPT checks run on each).
 # Each surface task appends its own routes.
-SWEPT: list[str] = ["franchise/#team=CHW"] + MLB_A + MLB_B + PROSPX
+SWEPT: list[str] = list(dict.fromkeys(["franchise/#team=CHW"] + MLB_A + MLB_B + PROSPX
+                                      + GENERATED + SITE_MAP_ROUTES))
+# The sweep routes run in both themes; the rest in the default (light) theme.
+THEMED = set(GENERATED + SITE_MAP_ROUTES)
+CASES = [pytest.param(r, w, t, id=f"{r or 'home'}-{w}-{t}")
+         for r in ROUTES for w in (1280, 390) for t in (("light", "dark") if r in THEMED else ("light",))]
 # A 1 px PNG served for every ESPN logo request.
 _PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
 
@@ -179,8 +220,10 @@ def _offsite(r):
         r.abort()
 
 
-def _open(browser, base, route, width):
+def _open(browser, base, route, width, theme=None):
     pg = browser.new_page(viewport={"width": width, "height": 900})
+    if theme:
+        pg.add_init_script("try{localStorage.setItem('prospect-tracker.theme',%r);}catch(e){}" % theme)
     errors = []
     pg.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     pg.on("pageerror", lambda e: errors.append(str(e)))
@@ -190,9 +233,10 @@ def _open(browser, base, route, width):
     return pg, errors
 
 
-def _read(browser, base, route, width):
-    pg, errors = _open(browser, base, route, width)
+def _read(browser, base, route, width, theme=None):
+    pg, errors = _open(browser, base, route, width, theme)
     out = pg.evaluate(_READ)
+    out["theme"] = pg.evaluate("() => document.documentElement.getAttribute('data-theme')")
     pg.close()
     # aborted off-loopback requests surface as net::ERR_FAILED console lines
     out["errors"] = [e for e in errors if "ERR_FAILED" not in e and "Failed to load resource" not in e]
@@ -202,12 +246,18 @@ def _read(browser, base, route, width):
 def test_skeleton_lists_are_well_formed():
     assert len(set(ROUTES)) == len(ROUTES)
     assert set(SWEPT) <= set(ROUTES), "a swept route is also an ALWAYS route"
+    # the sweep reads SITE_MAP.md: its home, wire, history, scores, PROSPX and
+    # Franchises rows are all there, and no crawler file is taken for a page
+    for r in ("", "news/", "history/", "scores/", "prospx/", "franchise/", "collegesavant/pitcher_index.html"):
+        assert r in SITE_MAP_ROUTES, r
+    assert not [r for r in SITE_MAP_ROUTES if r.endswith((".txt", ".xml")) or "<" in r]
 
 
-@pytest.mark.parametrize("width", [1280, 390])
-@pytest.mark.parametrize("route", ROUTES)
-def test_every_club_link_is_well_formed(browser, base, route, width):
-    r = _read(browser, base, route, width)
+@pytest.mark.parametrize("route,width,theme", CASES)
+def test_every_club_link_is_well_formed(browser, base, route, width, theme):
+    r = _read(browser, base, route, width, theme)
+    if route in THEMED and r["theme"] is not None:
+        assert r["theme"] == theme, (route, r["theme"])
     for link in r["links"]:
         m = HREF_RE.match(link["href"])
         assert m, (route, link)
@@ -238,6 +288,33 @@ def test_a_sampled_club_link_lands_on_its_club(browser, base, route):
     href = r["sample"]["href"]
     assert href.startswith(("/franchise/#team=", "/prospx/#farm-org=")), (route, href)
     assert _landing_name(browser, base, href) == r["sample"]["name"], (route, r["sample"])
+
+
+@pytest.mark.parametrize("href,name", [("/franchise/#team=CWS", "Chicago White Sox"),
+                                       ("/prospx/#farm-org=OAK", "Athletics")])
+def test_alias_routes_land_on_their_club(browser, base, href, name):
+    """A payload spelling (CWS, OAK) opens its own club, never Arizona or an
+    unknown organization (the trap links_efv_display.md A.0 measured)."""
+    assert _landing_name(browser, base, href) == name
+
+
+def test_generated_rows_keep_one_target_and_free_logos_link_their_club():
+    """Owner answer Q-L1 on the generated pages (build_site, the server mirror):
+    a logo inside a whole-row player link stays unlinked and says row-anchor;
+    a logo outside any row link is a logo-only club link through the resolver
+    (alt the full club name); a team name no club owns never links."""
+    import build_site as B
+    row = B._feed_item_html("debut", "", "", "jesus_made", "CWS", "Jesus Made", "debut")
+    assert row.count("<a ") == 1 and 'data-club-nolink="row-anchor"' in row and "club-link" not in row
+    assert 'data-club-nolink="row-anchor"' in B._row_logo("NYM")
+    free = B._club_logo_link("CWS")
+    assert free.startswith('<a class="club-link club-link--logo-only" href="/franchise/#team=CHW" data-club="CHW"')
+    assert 'alt="Chicago White Sox"' in free
+    assert B._club_logo_link("Seattle Mariners").count('href="/franchise/#team=SEA"') == 1
+    for name in ("Worcester Red Sox", "ACL D-backs", "Texas"):
+        got = B._club_logo_link(name)
+        assert "href=" not in got and 'data-club-nolink="unresolved"' in got, name
+    assert B._row_farm({"org": "CHW", "count": 1}, 1).startswith('<a class="row-link" href="/prospx/#farm-org=CHW">')
 
 
 def test_hall_of_fame_franchises_link_current_clubs_and_mark_defunct_ones(browser, base):

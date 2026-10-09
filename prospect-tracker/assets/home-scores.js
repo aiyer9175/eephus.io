@@ -179,7 +179,9 @@
   // ---- markup
   function mark(side, hub) {
     var c = hub && hub.club ? hub.club(side.team_id) || hub.club(side.code) : null;
-    return c && hub.teamLogo ? hub.teamLogo(c.code, "sp-logo", { size: 16, decorative: true }) : "";
+    // inside the game's own link (owner answer Q-L1): the chip stays unlinked and says why
+    return c && hub.teamLogo ? hub.teamLogo(c.code, "sp-logo", { size: 16, decorative: true })
+      .replace("<img ", '<img data-club-nolink="row-anchor" ') : "";
   }
   function teamCells(c, side, hub, scored) {
     var t = c[side] || {}, o = c[side === "away" ? "home" : "away"] || {};
