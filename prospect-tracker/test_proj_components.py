@@ -725,3 +725,28 @@ def test_params_hash_is_independent_of_formatting():
     PC.check_params(a, PC.params_hash(a).upper())
     with pytest.raises(PC.ParamsHashMismatch):
         PC.check_params(a, "0" * 64)
+
+
+def test_params_json_loads_and_its_hash_matches_the_gate_record():
+    """DEV is frozen once: model/proj_components/params.json hashes to the
+    value the gate's section 9 row records, and carries the registered
+    choices on the frame schema the current code builds."""
+    params = PC.load_params()
+    doc = (ROOT / "docs" / "PROJ_COMPONENTS_GATE.md").read_text(encoding="utf-8")
+    recorded = re.findall(r"DEV frozen \d{4}-\d{2}-\d{2} at [0-9a-f]{7,40}, params sha256 ([0-9a-f]{64})", doc)
+    assert recorded, "the gate's section 9 carries no DEV freeze record"
+    PC.check_params(params, recorded[-1])
+    assert set(params["shrink"]) == set(PC.K_GRIDS)
+    for key, K in params["shrink"].items():
+        assert K in PC.K_GRIDS[key]
+    assert set(params["savant"]) == set(PC.SAVANT_TERMS)
+    for term, spec in params["savant"].items():
+        assert spec["head"] == PC.SAVANT_TERMS[term][0]
+        assert (spec["beta"] is not None) == bool(spec["admitted"])
+    assert params["frame_schema_tag"] == PC.schema_tag(params["frame_schema"]["corpus"])
+    assert params["frame_schema"] == PC.frame_schema(params["frame_schema"]["corpus"])
+    assert max(params["dev"]["label_seasons"]) <= 2021
+    assert 2020 not in params["dev"]["label_seasons"]
+    assert params["R_relief"] > 0
+    receipt = json.loads((PC.PARAMS_DIR / "dev_receipt.json").read_text(encoding="utf-8"))
+    assert receipt["params_sha256"] == recorded[-1]
