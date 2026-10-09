@@ -160,6 +160,19 @@ def build_current_class(class_year: int, force: bool = False) -> dict:
     ingested fields; nothing here is invented."""
     rows = dedupe_double_listings(
         fa_sources.scrape_spotrac_fa_available(class_year, force=force), class_year)
+    # M14-4: the AVAILABLE page no longer prints option strikes, so each pending
+    # option's strike and type are read off the player's contract page (cached,
+    # rate-limited, provenance on the row; a known strike is kept when the page
+    # yields none). Before exercise_probability, which prices the strike.
+    try:
+        import fa_strikes
+        import storage
+        prior = {k: p for (k, yr), p in storage.load_fa_class_players(class_year).items()
+                 if yr == class_year}
+        fa_strikes.attach_strikes(rows, class_year, prior, force=force)
+    except Exception:                                    # noqa: BLE001 - strikes are additive
+        log.exception("fa class %d: contract-page strikes failed - the page's own "
+                      "strikes stand", class_year)
     players = []
     for r in rows:
         ep = exercise_probability(r)

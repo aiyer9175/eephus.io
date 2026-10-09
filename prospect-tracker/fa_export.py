@@ -746,6 +746,9 @@ def _build_fa_class_payload_body(class_year: int = CLASS_YEAR) -> dict:
             "from": _contract_orgs().get(row.get("player_key")) or row.get("from_team"), "bt": row.get("bat_throw"),
             "status": row.get("status"), "type": row.get("fa_type"),
             "optPrice": row.get("option_price_usd"),
+            # M14-4: where the strike came from and when (fa_strikes).
+            "optPriceSrc": row.get("strike_src") if row.get("option_price_usd") else None,
+            "optPriceAsOf": row.get("strike_as_of") if row.get("option_price_usd") else None,
             "enterProb": row.get("enter_prob"),
             "prevAav": row.get("prev_aav_usd"), "prevWar": row.get("prev_war"),
             "qoValue": row.get("qo_value_usd"),

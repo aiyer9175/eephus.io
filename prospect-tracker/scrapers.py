@@ -1065,6 +1065,11 @@ def _cache_ttl_for_key(cache_key: str) -> int:
     # eval scores against) landed a day late (M04-05, 2026-09-25). Current
     # and future classes only: a past winter's page is history and keeps the
     # long cache below.
+    # Spotrac player contract pages (fa_strikes, owner answer M14-4): an option's
+    # strike is fixed by contract, so a week-old copy is current. Ahead of the
+    # year rule below, which would read a Spotrac id like 20008 as a year.
+    if cache_key.startswith("spotrac_player_"):
+        return 7 * 24 * 3600
     if cache_key.startswith(("spotrac_fa_avail_", "spotrac_fa_class_")):
         m_sp = _re_local.search(r"(20\d{2})", cache_key)
         if m_sp and int(m_sp.group(1)) >= _date_local.today().year:
