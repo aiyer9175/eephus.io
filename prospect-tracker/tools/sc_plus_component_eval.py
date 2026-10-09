@@ -114,8 +114,8 @@ def _p_two_sided(r, n):
 # --------------------------------------------------- component z tables
 
 def component_z_table(season: int, side: str) -> dict[int, dict]:
-    """{mlbam: {"z": {comp: signed z}, "sc_plus_analog": 100+10z}} for one
-    AAA season pool. Core-component pool membership and z math mirror
+    """{mlbam: {"z": {comp: signed z}, "sc_plus_analog": 100+10z/sd}} for
+    one AAA season pool, sd being the pool's own composite sd. Core-component pool membership and z math mirror
     arkmetric_forward_eval.sc_analog_index exactly (parity asserted in
     run()); extras get a z only where the CSV value exists, with pool
     stats over the same qualifying players."""
@@ -145,7 +145,7 @@ def component_z_table(season: int, side: str) -> dict[int, dict]:
     import statistics as st
     stats = {c: (st.mean(v), st.pstdev(v) or 1.0)
              for c, v in cols.items() if len(v) >= 30}
-    out: dict[int, dict] = {}
+    zrows: list[tuple[int, dict, float]] = []
     for mid, vals in per:
         zs = {}
         for c in comps:
@@ -153,8 +153,19 @@ def component_z_table(season: int, side: str) -> dict[int, dict]:
             if v is None or c not in stats:
                 continue
             zs[c] = signs[c] * (v - stats[c][0]) / stats[c][1]
-        comp_z = _mean([zs[c] for c in CORE])
-        out[mid] = {"z": zs, "sc_plus_analog": round(100 + 10 * comp_z, 1)}
+        zrows.append((mid, zs, _mean([zs[c] for c in CORE])))
+    # Composite scale: arkmetric_forward_eval.sc_analog_index divides the
+    # equal-weight mean by the pool's own composite sd since a953ddc0
+    # (2026-08-07, the SC+ rescale). This copy kept the old 100 + 10z and
+    # failed the parity check on 3,537 of 3,588 rows; it mirrors the same
+    # divisor and guard here. Component z values are unchanged.
+    sd = (st.pstdev([z for _, _, z in zrows]) if len(zrows) > 1 else 1.0)
+    if sd <= 1e-9:
+        sd = 1.0
+    out: dict[int, dict] = {}
+    for mid, zs, comp_z in zrows:
+        out[mid] = {"z": zs,
+                    "sc_plus_analog": round(100 + 10 * (comp_z / sd), 1)}
     return out
 
 
@@ -375,9 +386,62 @@ def blend_check(records):
     return out
 
 
+LABELS = {"launch_speed": "avg EV", "hardhit_percent": "HardHit%",
+          "barrels_per_bbe_percent": "Barrel%/BBE",
+          "swing_miss_percent": "SwingMiss%", "xwoba": "xwOBA",
+          "k_percent": "K%", "bb_percent": "BB%"}
+
+
+def _join(names):
+    names = list(names)
+    if len(names) <= 1:
+        return "".join(names)
+    return ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def _beats(a, b):
+    """Comparison word derived from the two numbers (2026-10-08: the
+    2026-07-02 prose hardcoded 'beats', 'directionally positive' and 'misses
+    the bar', and three of those went false on the next run)."""
+    if a is None or b is None:
+        return "cannot be compared with"
+    return "beats" if a > b else "does not beat"
+
+
+def _component_sentence(tbl_rate, tbl_war, outcome):
+    groups = {"signal": [], "lean": [], "noise": []}
+    for c in CORE:
+        read = _classify(tbl_rate, tbl_war, c)
+        key = ("signal" if read.startswith("signal")
+               else "lean" if read.startswith("lean") else "noise")
+        b = tbl_rate[c]
+        flip = (b.get("r") is not None and tbl_war[c].get("r") is not None
+                and (b["r"] > 0) != (tbl_war[c]["r"] > 0))
+        txt = f"{LABELS[c]} (r={b['r']}"
+        if key == "signal":
+            txt += f", p={b['p_two_sided']}"
+        if flip:
+            txt += ", sign flips on the WAR join"
+        groups[key].append(txt + ")")
+    parts = []
+    if groups["signal"]:
+        parts.append(f"{_join(groups['signal'])} "
+                     f"{'carries' if len(groups['signal']) == 1 else 'carry'} "
+                     f"the forward signal vs {outcome} (p<{P_SIGNAL:.2f})")
+    else:
+        parts.append(f"no core component clears p<{P_SIGNAL:.2f} vs {outcome}")
+    if groups["lean"]:
+        parts.append(f"{_join(groups['lean'])} "
+                     f"{'is a weak lean' if len(groups['lean']) == 1 else 'are weak leans'}")
+    if groups["noise"]:
+        parts.append(f"{_join(groups['noise'])} "
+                     f"{'is' if len(groups['noise']) == 1 else 'are'} noise at these ns")
+    return "; ".join(parts)
+
+
 def findings(per_comp, blend):
-    """Headline answers, numbers interpolated from the computed tables
-    (deterministic; regenerated on every run)."""
+    """Headline answers. Every number AND every comparison word is derived
+    from the computed tables (deterministic; regenerated on every run)."""
     h = per_comp["hitters"]["vs_first_mlb_ops"]
     hw = per_comp["hitters"]["vs_war_2y"]
     p = per_comp["pitchers"]["vs_first_mlb_era_inv"]
@@ -385,48 +449,60 @@ def findings(per_comp, blend):
     bh = blend["rate_outcome"]["hitters"]["pooled_oos"]
     bp = blend["rate_outcome"]["pitchers"]["pooled_oos"]
     wh = blend["war_outcome"]["hitters"]["pooled_oos"]
+
+    def _gain(b):
+        return round((b["r_blend_r_weighted"] or 0) - (b["r_composite"] or 0), 4)
+
+    gh, gp = _gain(bh), _gain(bp)
+    clears = [s for s, g in (("hitter", gh), ("pitcher", gp))
+              if g >= BLEND_IMPROVE_MIN]
+    misses = [s for s, g in (("hitter", gh), ("pitcher", gp))
+              if g < BLEND_IMPROVE_MIN]
+    war_rev = ((wh["r_blend_r_weighted"] or 0) < (wh["r_composite"] or 0))
+    bar = f"+{BLEND_IMPROVE_MIN:.2f}"
+    if misses:
+        bar_txt = (f"misses the pre-registered {bar} bar on the "
+                   f"{_join(misses)} side{'s' if len(misses) > 1 else ''}")
+        if clears:
+            bar_txt = (f"clears the {bar} bar on the {_join(clears)} side "
+                       f"but " + bar_txt)
+    else:
+        bar_txt = f"clears the pre-registered {bar} bar on both sides"
+    war_txt = (f"{'REVERSES' if war_rev else 'holds'} on the hitter 2y-bWAR "
+               f"join (blend {wh['r_blend_r_weighted']} vs composite "
+               f"{wh['r_composite']})")
+    robust = (not misses) and not war_rev
+    xw_sides = [s for s, t in (("hit", hw), ("pit", pw))
+                if (t["xwoba"]["r"] or 0) > (t["composite"]["r"] or 0)]
+    xw_word = ("beats the composite on both sides" if len(xw_sides) == 2
+               else "beats the composite on one side only" if xw_sides
+               else "does not beat the composite on either side")
     return {
         "which_component_carries_signal": {
-            "hitters": f"Barrel%/BBE is the only core component with a "
-                       f"meaningful forward r vs first-MLB OPS "
-                       f"(r={h['barrels_per_bbe_percent']['r']}, "
-                       f"p={h['barrels_per_bbe_percent']['p_two_sided']}); "
-                       f"avg EV is a weak lean "
-                       f"(r={h['launch_speed']['r']}); HardHit% "
-                       f"(r={h['hardhit_percent']['r']}) and SwingMiss% "
-                       f"(r={h['swing_miss_percent']['r']}, sign flips on "
-                       f"the WAR join) are noise",
-            "pitchers": f"SwingMiss% carries essentially all of it "
-                        f"(r={p['swing_miss_percent']['r']} vs inverted "
-                        f"first-MLB ERA, "
-                        f"p={p['swing_miss_percent']['p_two_sided']}); all "
-                        f"three contact-against components are noise, with "
-                        f"Barrel%-against mildly wrong-signed "
-                        f"(r={p['barrels_per_bbe_percent']['r']})",
+            "hitters": _component_sentence(
+                h, hw, "first-MLB OPS"),
+            "pitchers": _component_sentence(
+                p, pw, "inverted first-MLB ERA"),
         },
         "reference_components_outperform": (
-            f"plain K% beats the whole contact composite for pitchers "
-            f"(r={p['k_percent']['r']} vs composite "
-            f"{p['composite']['r']}), and BB% does for hitters "
-            f"(r={h['bb_percent']['r']} vs composite "
+            f"plain K% {_beats(p['k_percent']['r'], p['composite']['r'])} "
+            f"the whole contact composite for pitchers "
+            f"(r={p['k_percent']['r']} vs composite {p['composite']['r']}); "
+            f"BB% {_beats(h['bb_percent']['r'], h['composite']['r'])} it "
+            f"for hitters (r={h['bb_percent']['r']} vs composite "
             f"{h['composite']['r']}); on the 2y-bWAR join Savant xwOBA "
-            f"beats the composite on both sides "
+            f"{xw_word} "
             f"(hit {hw['xwoba']['r']} vs {hw['composite']['r']}, "
-            f"pit {pw['xwoba']['r']} vs {pw['composite']['r']}). The weak "
-            f"part of SC+ is the contact-quality framing, not the Savant "
-            f"source data"),
+            f"pit {pw['xwoba']['r']} vs {pw['composite']['r']})"),
         "blend_vs_composite_oos": (
-            f"the forward-chained top-2 reweight is directionally positive "
-            f"on rate outcomes (hitters r {bh['r_blend_r_weighted']} vs "
-            f"composite {bh['r_composite']}, gain "
-            f"{round((bh['r_blend_r_weighted'] or 0) - (bh['r_composite'] or 0), 4)}; "
-            f"pitchers {bp['r_blend_r_weighted']} vs {bp['r_composite']}, "
-            f"gain "
-            f"{round((bp['r_blend_r_weighted'] or 0) - (bp['r_composite'] or 0), 4)}) "
-            f"but misses the pre-registered +0.05 bar on the pitcher side "
-            f"and REVERSES on the hitter 2y-bWAR join (blend "
-            f"{wh['r_blend_r_weighted']} vs composite {wh['r_composite']}), "
-            f"so the reweight is not robust at these ns"),
+            f"on all pooled out-of-sample rows (open 2026 season included) "
+            f"the forward-chained top-2 reweight reads hitters r "
+            f"{bh['r_blend_r_weighted']} vs composite {bh['r_composite']} "
+            f"(gain {gh}) and pitchers {bp['r_blend_r_weighted']} vs "
+            f"{bp['r_composite']} (gain {gp}); it {bar_txt} and {war_txt}, "
+            f"so the reweight is "
+            f"{'consistent' if robust else 'not robust'} at these ns. The "
+            f"decision reads the closed-season rows (see recommendation)"),
     }
 
 
@@ -493,6 +569,15 @@ def run(persist: bool = True) -> dict:
         reads[s] = {c: _classify(per_comp[s][rk], per_comp[s]["vs_war_2y"], c)
                     for c in CORE}
 
+    def _n(side, outcome):
+        return per_comp[side][outcome]["composite"]["n"]
+
+    def _open_n(side):
+        for f in blend["rate_outcome"][side]["folds"]:
+            if f["test_season"] + 1 > DECISION_MAX_DEBUT_YEAR:
+                return f.get("test_n")
+        return 0
+
     out = {
         "generated_at": date.today().isoformat(),
         "tool": "tools/sc_plus_component_eval.py",
@@ -535,11 +620,18 @@ def run(persist: bool = True) -> dict:
         "findings": findings(per_comp, blend),
         "recommendation": rec,
         "caveats": [
-            "ns are small (about 50 per side on rate outcomes, about 100 "
-            "on the 2y-bWAR join); single-component r differences under "
-            "0.15 are not individually significant here",
-            "the 2025->2026 test fold is thin (2026 debut season in "
-            "progress), so pooled OOS leans on the 2024->2025 fold",
+            # ns derived from the tables (the 2026-07-02 text said "about
+            # 50" and "thin" and went stale as the open season filled in)
+            f"ns are small ({_n('hitters', 'vs_first_mlb_ops')} hitters / "
+            f"{_n('pitchers', 'vs_first_mlb_era_inv')} pitchers on rate "
+            f"outcomes, {_n('hitters', 'vs_war_2y')} / "
+            f"{_n('pitchers', 'vs_war_2y')} on the 2y-bWAR join); "
+            "single-component r differences under 0.15 are not "
+            "individually significant here",
+            f"the 2025->2026 test fold reads an open outcome season (2026 "
+            f"debuts, test n {_open_n('hitters')} hitters / "
+            f"{_open_n('pitchers')} pitchers) and moves with every stats "
+            "refresh; pooled_oos includes it, the decision does not",
             "this scores the 4-component historical analog, not the live "
             "6-component SC+ (Z-Contact/Chase have no historical source)",
         ],

@@ -22,12 +22,9 @@ _BARE = re.compile(r"(?<![\w/])(REVIEW_QUEUE|BETA_READINESS)(\.md)?\b")
 # Served artifacts whose producer carries the new path but cannot be re-run
 # today; hand-editing a generated artifact is not allowed, so each waits for
 # its producer. Remove the entry once the artifact is regenerated.
-PENDING_REGEN = {
-    "data/sc_plus_component_eval.json": (
-        "tools/sc_plus_component_eval.py cites docs/archive/REVIEW_QUEUE.md; the "
-        "tool stops at its composite parity assertion (3,537 mismatches on "
-        "2026-10-01), so the artifact keeps the old citation until it runs"),
-}
+# data/sc_plus_component_eval.json left this set on 2026-10-08 when its
+# producer's parity defect was repaired and it was regenerated.
+PENDING_REGEN: dict[str, str] = {}
 
 
 def test_both_files_live_in_docs_archive_with_their_banner():
