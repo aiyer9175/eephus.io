@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**343 models.** Verdicts: validated: 54, provisional: 156, unvalidated: 45, deprecated: 88.
+**344 models.** Verdicts: validated: 54, provisional: 157, unvalidated: 45, deprecated: 88.
 
 ## Instrument boundary
 
@@ -362,6 +362,7 @@ can be measured.
 | `team_dem_plus` | Provisional by inheritance: Team DEM+ is the innings-weighted DEM+ of a club's fielders, framing included, club today; descriptive, no eval of its own. | /mlbstats/ Defense Leaderboards, Teams sub-tab, Team DEM+... | nothing; a descriptive weighted mean of DEM+ on the club-today basis the team sub-tabs serve | innings-weighted unrounded DEM+ over the club's fielders, catchers and framin... | n/a; inherits the dem_plus gate (DEM+ validated per player) | n/a; inherits the dem_plus row's metric; no team-level eval | **provisional** | - | - | no |
 | `prospect_anchor` | Registered, not computed: one look on the fWAR label asks whether the served realized anchor matches resolved prospects by FV cell; not before 2026-11-20. Nothing served moves. | No surface: the served realized anchor value_framework.fv... | Nothing forward: whether fv_to_6yr_avg_war, the bust-inclusive first-six-season mean the framework assigns per FV, matches what... | the served empirical_anchors table in data/value_framework_fitted.json (step... | separately gated by docs/PROSPECT_ANCHOR_GATE.md: a two-sided equivalence rea... | Registered, not computed: per cell D_C = label / 6 minus anchor(fv), percenti... | **unvalidated** | - | - | no |
 | `cots_deferral_check` | Measurement only: every deferred signing found on the Cot's Contracts club sheets, matched against the curated deferral ledger; a coverage list, not a model. | data/cots_deferral_check.json (no served page) | Nothing. Lists deferred signings in the capture with no entry in data/deferrals.json, and ledger entries that say no deferral w... | tools/ingest_cots.py: one scripted capture of the 30 club sheets (owner answe... | n/a: a descriptive coverage check (the leverage_board precedent), not a predi... | descriptive; counts of deferred signings, of those with a ledger entry, and o... | **provisional** | - | - | no |
+| `service_time` | Provisional: service days counted from MLB transactions miss published service time by 10.21 days on average over 563 holdout player-seasons; 93.8% agree on rounded years. | roster_status.service_years_decimal on the PROSPX debuted... | MLB service time (days, 172 = one year) at a date, from the transaction history with the CBA day count | service_time.py state machine over the StatsAPI transaction feed merged with... | none served before: service_years_decimal was never written, so every graduat... | MAE in days and rounded-year agreement against MLB Trade Rumors published ser... | **provisional** | `data/service_time_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

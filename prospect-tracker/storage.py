@@ -8221,6 +8221,17 @@ def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
         return None
 
 
+# M10_SERVICE_TIME_ENGINE (owner answer 2026-09-25). roster_status.service_years_decimal
+# was read below but never written, so debuted_player_value priced every graduate on the
+# full control window (Ohtani's remaining value read $751.8M on 7 of 7 control years).
+# True: export_timeseries_json writes the service fields from service_time.py (the CBA
+# day count off the transaction history, validated against published service time in
+# data/service_time_eval.json, registry row service_time) onto each row's roster_status
+# before the debuted block is built. False: the fields are not written and every
+# graduate prices at service 0 again.
+DEBUTED_SERVICE_TIME = True
+
+
 def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
                            career_war=None, roster_status=None,
                            contract=None, career_stats=None, wag_fv=None):
@@ -10043,6 +10054,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 _ids_for_identity[_k_id] = int(_m_id)
             except (TypeError, ValueError):
                 pass
+    if DEBUTED_SERVICE_TIME:
+        # Service time on the same id the row serves (DEBUTED_SERVICE_TIME above).
+        try:
+            from service_time import overlay_roster_status, store_from_rows
+            roster_status, _svc_receipt = overlay_roster_status(
+                roster_status, _ids_for_identity,
+                store_from_rows(load_player_transactions(), load_player_transactions_meta()))
+            log.info("export: service time written %s", _svc_receipt)
+        except Exception:
+            log.exception("export: service time overlay failed, graduates price at service 0")
     career_war, _cw_screen = screen_career_war_to_ids(career_war, _ids_for_identity)
     _cw_foreign = _cw_screen.pop("foreign_by_key", {})
     log.info("export: career_war identity screen %s", _cw_screen)
