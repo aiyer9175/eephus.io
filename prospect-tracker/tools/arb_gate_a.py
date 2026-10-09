@@ -67,7 +67,8 @@ def _permute_production(rows, rng):
     return out
 
 
-def _swartz_head_to_head(rows, metrics, seasons, B: int | None = None) -> dict:
+def _swartz_head_to_head(rows, metrics, seasons, B: int | None = None, *,
+                         pool: str = "repaired", units: str = "repaired") -> dict:
     """A6. The champion against the published MLBTR / Matt Swartz projection on
     identical rows.
 
@@ -76,24 +77,24 @@ def _swartz_head_to_head(rows, metrics, seasons, B: int | None = None) -> dict:
     PUBLISHED PRE-SETTLEMENT projection on the settled figures. It is not a
     recalibrated-Swartz comparison, which would be the stronger test; if we
     cannot beat raw Swartz there is no point building the recalibration.
+
+    docs/ARBITRATION_GATE.md section 16. `pool` "repaired" joins every
+    projection entry (arb_dataset.load_swartz_projections); "frozen" is the
+    2026-08-09 join through load_ledger, where the tracker post shadowed the
+    projection for most settled 2024-2026 players. `units` "repaired" puts
+    Swartz on the actual's scale with the fold's own deflator level; "frozen"
+    compares the nominal figure with the deflated actual, as the 2026-08-09
+    lab did (identical on the first fold, whose deflator level is 1.0).
     """
     import arb_dataset as A
     import arb_model as Mod
     import numpy as _np
 
-    ledger = A.load_ledger()
-    bref = {str(r["bbref"]): int(r["mlbam"]) for r in rows if r.get("bbref")}
-    swartz = {}
-    for key, per_year in ledger.items():
-        for cy, ent in per_year.items():
-            if ent.get("kind") != "projection" or not ent.get("projected_usd"):
-                continue
-            m = ent.get("mlbam") or bref.get(str(ent.get("bbref_id") or key))
-            if m:
-                swartz[(int(m), int(cy))] = float(ent["projected_usd"])
+    if units not in ("repaired", "frozen"):
+        raise ValueError("unknown A6 units %r" % (units,))
+    swartz, census = A.swartz_by_mlbam(rows, pool=pool)
 
     recs = Mod.forward_chain(rows, metrics, seasons=seasons)
-    defl_by_season = {}
     pairs = []
     for r in recs:
         s = swartz.get((int(r["mlbam"]), int(r["season"])))
@@ -102,11 +103,13 @@ def _swartz_head_to_head(rows, metrics, seasons, B: int | None = None) -> dict:
         # Both predictions are compared in the SAME space. The served value and
         # actual are deflated; the Swartz figure is nominal, so it is scaled by
         # the same ratio actual/nominal-actual carries.
+        if units == "repaired":
+            s = s * r["actual"] / r["salary"]
         pairs.append((r["actual"], r["served"], s, int(r["arb_year"]),
                       int(r["season"]), r["name"], int(r["mlbam"])))
     if len(pairs) < 30:
-        return {"n": len(pairs), "insufficient": True}
-    # Put Swartz on the deflated scale using each row's own actual pair.
+        return {"n": len(pairs), "insufficient": True, "pool": pool,
+                "units": units, "join_census": census}
     out_rows = []
     for act, ours, swz, step, season, name, _mlbam in pairs:
         out_rows.append((act, ours, swz, step, name, season))
@@ -139,6 +142,11 @@ def _swartz_head_to_head(rows, metrics, seasons, B: int | None = None) -> dict:
         "swartz_mdape": swz_m,
         "ratio_ours_over_swartz": ours_m / swz_m if swz_m else None,
         "by_step": by_step,
+        "by_season_n": {str(y): sum(1 for p in pairs if p[4] == y)
+                        for y in sorted({p[4] for p in pairs})},
+        "pool": pool,
+        "units": units,
+        "join_census": census,
         "verdict": "PASS" if ours_m < swz_m else "NULL",
         "claim": ("our SERVED estimator against the PUBLISHED pre-settlement "
                   "Swartz projection, on settled figures, identical rows"),
@@ -174,8 +182,8 @@ def _gain(rows, metrics, seasons, split, bar, *, leak=False):
     }
 
 
-def run(B: int) -> dict:
-    rows, metrics = L.load_pool()
+def run(B: int, frame: str = Mod.FRAME) -> dict:
+    rows, metrics = L.load_pool(frame)
     seasons = sorted({r["season"] for r in rows})
     rng = np.random.default_rng(SEED)
     out_floors = {}
@@ -242,15 +250,18 @@ def run(B: int) -> dict:
             "verdict": verdict,
         }
 
-    # A6: the MLB Trade Rumors / Matt Swartz comparison.
-    a6 = _swartz_head_to_head(rows, metrics, seasons, B)
+    # A6: the MLB Trade Rumors / Matt Swartz comparison, on the repaired pool
+    # (the headline) and the frozen pool beside it (section 16c).
+    a6, a6_frozen = _a6_both(rows, metrics, seasons, B)
 
     ship = verdicts.get("arb1") == "PASS" or verdicts.get("arb2plus") == "PASS"
     doc = {
         "generated_at": date.today().isoformat(),
-        "produced_by": f"python tools/arb_gate_a.py --write --B {B}",
+        "produced_by": f"python tools/arb_gate_a.py --write --B {B} --frame {frame}",
         "model": "arb_award_v1",
         "gate": "docs/ARBITRATION_GATE.md section 4 (GATE A)",
+        "frame": frame,
+        "frame_description": FRAME_DESCRIPTION[frame],
         "purpose": ("Does the two-stage arbitration award model beat the "
                     "class-appropriate baseline by more than its own measured "
                     "floor, and is the margin production information rather "
@@ -277,41 +288,155 @@ def run(B: int) -> dict:
         "seed": SEED,
         "results": out_floors,
         "a6_swartz": a6,
+        "a6_swartz_frozen_pool": a6_frozen,
         "verdict": "provisional" if ship else "unvalidated",
         "loss_ledger": [],
     }
     if a6.get("verdict") == "NULL":
-        doc["loss_ledger"].append({
-            "claim": a6["claim"],
-            "n": a6["n"],
-            "ours_mdape": a6["ours_mdape"],
-            "swartz_mdape": a6["swartz_mdape"],
-            "verdict": "NULL",
-            "statement": a6["statement"],
-        })
+        doc["loss_ledger"].append(_a6_loss(a6))
     if verdicts.get("arb2plus") != "PASS":
         doc["loss_ledger"].append({
             "claim": "the model beats the step-multiplier baseline on arb 2/3/4",
             "measured_mdape_gain": out_floors["arb2plus"]["mdape_gain"],
             "floor": out_floors["arb2plus"]["mde95_onesided"],
             "verdict": "NULL",
-            "statement": (
-                "The arb-2-and-later model is a NULL. Its margin over a median "
-                "step multiplier off the prior salary is below the floor "
-                "measured for this basis. The A3 control shows the production "
-                "block does carry signal there - permuting it makes the model "
-                "WORSE than the baseline - so this is a power limit, not an "
-                "absence of information, and it is still reported as a null."),
+            "statement": _arb2_null_statement(out_floors["arb2plus"]),
         })
     return doc
+
+
+def _a6_both(rows, metrics, seasons, B):
+    """(headline, frozen) A6 blocks, section 16c: the repaired pool is the
+    headline and the frozen 2026-08-09 pool is scored beside it, both with
+    Swartz on the actual's scale."""
+    a6 = _swartz_head_to_head(rows, metrics, seasons, B, pool="repaired")
+    fz = _swartz_head_to_head(rows, metrics, seasons, B, pool="frozen")
+    fz["role"] = ("the 2026-08-09 loader's row set, scored beside the repaired "
+                  "headline pool (docs/ARBITRATION_GATE.md section 16c)")
+    return a6, fz
+
+
+def _a6_loss(a6: dict) -> dict:
+    return {"claim": a6["claim"], "n": a6["n"], "ours_mdape": a6["ours_mdape"],
+            "swartz_mdape": a6["swartz_mdape"], "verdict": "NULL",
+            "statement": a6["statement"]}
+
+
+def rescore_a6(existing: dict, B: int, frame: str) -> dict:
+    """Re-score A6 alone on the frame the top-level block was scored on and
+    write it in place: a6_swartz, a6_swartz_frozen_pool and the A6 entry of
+    the loss ledger. Everything else in the artifact is left as it is; A6
+    draws from its own generator on SEED, so it equals what a full run
+    writes."""
+    if existing.get("frame", "award") != frame:
+        raise SystemExit("the top-level block is not on frame %r" % (frame,))
+    rows, metrics = L.load_pool(frame)
+    seasons = sorted({r["season"] for r in rows})
+    a6, fz = _a6_both(rows, metrics, seasons, B)
+    out = dict(existing)
+    out["a6_swartz"] = a6
+    out["a6_swartz_frozen_pool"] = fz
+    ledger = [x for x in out.get("loss_ledger") or []
+              if x.get("claim") != a6["claim"]]
+    if a6.get("verdict") == "NULL":
+        ledger.insert(0, _a6_loss(a6))
+    out["loss_ledger"] = ledger
+    return out
+
+
+def _arb2_null_statement(r: dict) -> str:
+    """The arb-2+ NULL sentence, its A3 reading derived from the block it
+    sits beside rather than written in advance."""
+    c = r["a3_control"]
+    head = ("The arb-2-and-later model is a NULL. Its margin over a median "
+            "step multiplier off the prior salary is below the floor "
+            "measured for this basis. ")
+    if c["permuted_mean"] < r["mdape_gain"]:
+        return head + (
+            "The A3 control shows the production block does carry signal "
+            "there: permuting it lowers the gain (mean %+.4f against %+.4f "
+            "real), so this is a power limit, not an absence of information, "
+            "and it is still reported as a null."
+            % (c["permuted_mean"], r["mdape_gain"]))
+    return head + (
+        "The A3 control does not separate the real block from a permuted one "
+        "(mean %+.4f against %+.4f real), so this program measured no "
+        "production information beyond the salary track at these steps."
+        % (c["permuted_mean"], r["mdape_gain"]))
+
+
+#: Section 15. Each block names the season its production was read from.
+FRAME_DESCRIPTION = {
+    "platform": ("production (WAR, PA, outs, starts, war3, career WAR and the "
+                 "hem/sem/rem block) read from the platform season, the season "
+                 "before the award, complete when the award is set"),
+    "award": ("production read from the award season itself, which had not "
+              "been played when the award was set: the 2026-08-09 frame, a "
+              "hindcast that adjudicates nothing (section 15a)"),
+}
+
+#: The top-level GATE A fields of data/arbitration_eval.json. The platform
+#: re-run replaces them; the 2026-08-09 values move verbatim under HINDCAST_KEY.
+GATE_A_KEYS = ("generated_at", "produced_by", "model", "gate", "frame",
+               "frame_description", "purpose", "conventions", "pool", "B",
+               "seed", "results", "a6_swartz", "a6_swartz_frozen_pool",
+               "verdict", "loss_ledger")
+HINDCAST_KEY = "hindcast_2026_08_09_award_frame"
+TWIN_KEY = "award_frame_same_day_twin"
+
+
+def merge_into(existing: dict, doc: dict, *, twin: bool) -> dict:
+    """Write a run into the eval artifact without dropping any other block
+    (gate_c_verification, gate_c2, the hindcast, the twin).
+
+    The first platform write moves the 2026-08-09 top-level fields under
+    HINDCAST_KEY, labelled, before replacing them; a twin run lands under
+    TWIN_KEY and touches nothing else."""
+    out = dict(existing)
+    if twin:
+        out[TWIN_KEY] = dict(doc, role=(
+            "same-day award-frame twin (section 15c): separates the frame's "
+            "effect from pool drift since 2026-08-09; adjudicates nothing"))
+        return out
+    if (HINDCAST_KEY not in out and existing.get("frame", "award") == "award"
+            and existing.get("results")):
+        old = {k: existing[k] for k in GATE_A_KEYS if k in existing}
+        old["label"] = (
+            "HINDCAST. Scored 2026-08-09 on award-season production, which "
+            "had not been played when the award was set (census M08-05, "
+            "docs/ARBITRATION_GATE.md section 15a). Kept for the record; "
+            "adjudicates nothing. The top-level GATE A fields carry the "
+            "platform-season re-run.")
+        out[HINDCAST_KEY] = old
+    for k in GATE_A_KEYS:
+        out.pop(k, None)
+    rest = out
+    out = {k: doc[k] for k in GATE_A_KEYS if k in doc}
+    out.update(rest)
+    return out
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--B", type=int, default=1500)
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--frame", choices=Mod.FRAMES, default=Mod.FRAME)
+    ap.add_argument("--a6-only", action="store_true",
+                    help="re-score A6 on both pools and write it in place")
     args = ap.parse_args(argv)
-    doc = run(args.B)
+    if args.a6_only:
+        existing = json.loads(OUT.read_text(encoding="utf-8"))
+        merged = rescore_a6(existing, args.B, args.frame)
+        for k in ("a6_swartz", "a6_swartz_frozen_pool"):
+            a = merged[k]
+            print(f"{k}: n {a['n']}  ours {a['ours_mdape']:.4f}  swartz "
+                  f"{a['swartz_mdape']:.4f}  ratio {a['ratio_ours_over_swartz']:.2f}  "
+                  f"{a['verdict']}  by season {a.get('by_season_n')}")
+        if args.write:
+            OUT.write_text(json.dumps(merged, indent=1, default=float), encoding="utf-8")
+            print(f"wrote {OUT.relative_to(ROOT)} (A6 only)")
+        return 0
+    doc = run(args.B, args.frame)
     for name, r in doc["results"].items():
         print(f"\n{name}  vs {r['bar']}  n={r['n_paired']}")
         print(f"  MdAPE champion {r['mdape_champion']:.4f} vs bar "
@@ -325,8 +450,10 @@ def main(argv=None) -> int:
         print(f"  VERDICT: {r['verdict']}")
     print(f"\nartifact verdict: {doc['verdict']}")
     if args.write:
-        OUT.write_text(json.dumps(doc, indent=1, default=float), encoding="utf-8")
-        print(f"wrote {OUT.relative_to(ROOT)}")
+        existing = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
+        merged = merge_into(existing, doc, twin=(args.frame != Mod.FRAME))
+        OUT.write_text(json.dumps(merged, indent=1, default=float), encoding="utf-8")
+        print(f"wrote {OUT.relative_to(ROOT)} ({'twin' if args.frame != Mod.FRAME else 'top level'})")
     return 0
 
 

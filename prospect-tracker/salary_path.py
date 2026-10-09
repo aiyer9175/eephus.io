@@ -326,7 +326,12 @@ def board_raise_fn():
         lvl = defl.get(int(season)) or defl[max(defl)]
         pred = d * lvl
         sp = _band_spread(cls)
-        return _k(pred), _k(pred * (1 - sp)), _k(pred * (1 + sp))
+        # The board's band rule, low end held at the league minimum (owner
+        # answer M12-4), so a closure season's band matches a grid season's.
+        lo = pred * (1 - sp)
+        if lm_usd and lo < lm_usd:
+            lo = float(lm_usd)
+        return _k(pred), _k(lo), _k(pred * (1 + sp))
 
     _RAISE_CACHE = _raise
     return _raise

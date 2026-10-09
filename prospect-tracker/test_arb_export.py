@@ -382,8 +382,10 @@ def test_a_forward_arb1_rung_reads_built_features_not_zeros(monkeypatch):
 
     monkeypatch.setattr(M, "predict", spy)
     metrics = {2026: {7: {"hem": 130.0, "sem": 100.0, "rem": 100.0}}}
+    # The award frame: the 2026-08-09 hindcast, kept reproducible
+    # (docs/ARBITRATION_GATE.md section 15).
     X.build_board(panel, {}, metrics, {}, season=2027, s1={"keys": []},
-                  defl={2026: 1.0}, banded={})
+                  defl={2026: 1.0}, banded={}, frame="award")
     assert len(seen) == 1
     row, mx = seen[0]
     assert row["season"] == 2028
@@ -395,6 +397,81 @@ def test_a_forward_arb1_rung_reads_built_features_not_zeros(monkeypatch):
     assert mx and mx["hem"] == 130.0, "metrics must come from the latest observed season"
     # the PRE-ARB rung before it sets the prior at the league minimum
     assert row["prior_salary"] == 780000.0
+
+
+def test_a_forward_rung_reads_the_platform_season(monkeypatch):
+    """Section 15: a rung for season y reads production from y - 1. For a
+    2027 rung that is the realized 2026 season; for 2028 it is the 2027
+    projection, with the latest observed PA, outs and starts as the proxy and
+    the latest observed metric block."""
+    import arb_dataset as A
+    panel = [
+        {"mlbam": 7, "season": 2024, "war": 1.0, "name": "P", "team": "AAA",
+         "age": 22.0, "pa": 300, "ipouts": 0, "gs": 0, "salary": None},
+        {"mlbam": 7, "season": 2025, "war": 3.0, "name": "P", "team": "AAA",
+         "age": 23.0, "pa": 600, "ipouts": 0, "gs": 0, "salary": None},
+        {"mlbam": 7, "season": 2026, "war": 4.0, "name": "P", "team": "AAA",
+         "age": 24.0, "pa": 640, "ipouts": 0, "gs": 0, "salary": None},
+    ]
+    monkeypatch.setattr(A, "spotrac_status_by_mlbam",
+                        lambda: {7: {2027: "ARB 1", 2028: "ARB 2"}})
+    monkeypatch.setattr(A, "league_min_by_year",
+                        lambda: {2025: 760000.0, 2026: 780000.0})
+    monkeypatch.setattr(X, "_projected_war", lambda: {7: [2027, [5.0, 6.0]]})
+    seen = []
+
+    def spy(row, metrics_by, defl, s1, s2):
+        seen.append((dict(row), M._mx(metrics_by, row)))
+        return 1_000_000.0
+
+    monkeypatch.setattr(M, "predict", spy)
+    metrics = {2025: {7: {"hem": 110.0}}, 2026: {7: {"hem": 130.0}}}
+    X.build_board(panel, {}, metrics, {}, season=2027, s1={"keys": []},
+                  defl={2026: 1.0}, banded={}, frame="platform")
+    assert len(seen) == 1                  # the ARB 2 rung is the multiplier's
+    row, mx = seen[0]
+    assert row["season"] == 2027
+    assert row["war"] == 4.0               # the 2026 platform season, realized
+    assert row["pa"] == 640
+    assert row["war3"] == 8.0              # 2026 + 2025 + 2024
+    assert row["career_war"] == 8.0        # through 2026, nothing projected
+    assert row["age"] == 25.0              # age in the award season
+    assert mx and mx["hem"] == 130.0       # the platform season's block
+
+
+def test_the_platform_frame_lags_production_and_keeps_the_deflator_input():
+    rows = [{"mlbam": 1, "season": 2025, "war": 2.0, "pa": 500, "ipouts": 0,
+             "gs": 0, "salary": 3e6}]
+    panel = rows + [
+        {"mlbam": 1, "season": 2024, "war": 5.0, "pa": 650, "ipouts": 0, "gs": 0},
+        {"mlbam": 1, "season": 2023, "war": 1.0, "pa": 200, "ipouts": 0, "gs": 0},
+    ]
+    p = M.attach_frame(rows, panel, "platform")[0]
+    assert (p["war"], p["pa"], p["war3"], p["career_war"]) == (5.0, 650, 6.0, 6.0)
+    assert p["metrics_season"] == 2024 and p["award_war"] == 2.0
+    a = M.attach_frame(rows, panel, "award")[0]
+    assert (a["war"], a["war3"], a["career_war"]) == (2.0, 8.0, 8.0)
+    assert "metrics_season" not in a and "award_war" not in a
+    assert rows[0]["war"] == 2.0 and "war3" not in rows[0], "inputs are not mutated"
+    with pytest.raises(ValueError):
+        M.attach_frame(rows, panel, "season")
+
+
+def test_history_ours_is_nominal_on_its_own_folds_deflator():
+    """Owner answer M11-4: Ours prints in nominal dollars, each fold's
+    prediction re-inflated by that fold's own deflator level (salary /
+    actual), so it sits on the same basis as Actual and MLBTR."""
+    recs = [{"mlbam": 5, "season": 2025, "served": 1_500_000.0,
+             "actual": 2_000_000.0, "salary": 2_400_000.0}]
+    rows = [{"mlbam": 5, "season": 2025, "salary": 2_400_000.0, "arb_year": 2,
+             "name": "R", "team": "AAA", "war": 1.0,
+             "arb_year_source": "mlbtr_service"}]
+    h = X.build_history(recs, rows, None, {}, projections=[])
+    row = h["rows"][0]
+    assert row[5] == 2_400_000                 # actual, nominal
+    assert row[6] == 1_800_000                 # 1.5M x 2.4M / 2.0M
+    assert row[8] == 600_000                   # vs Market on one basis
+    assert "NOMINAL" in h["field_key"]["ours"]
 
 
 def test_a_first_trip_with_no_salary_on_file_raises_off_the_league_minimum(monkeypatch):
@@ -412,6 +489,16 @@ def test_a_first_trip_with_no_salary_on_file_raises_off_the_league_minimum(monke
     assert seen[0]["prior_salary"] == 780000.0
     # and no award is served below the league minimum
     assert out["rows"][0]["l"][0][1] == 780000
+    # nor is the low end of its band (owner answer M12-4)
+    assert out["rows"][0]["l"][0][2] == 780000
+
+
+def test_no_served_band_reaches_below_the_league_minimum():
+    b = _doc("arbitration.json")
+    lm = min(s[1] for r in b["rows"] for s in r["l"] if s[4] == "PRE-ARB" and s[1])
+    low = [(r["n"], s) for r in b["rows"] for s in r["l"]
+           if s[2] is not None and s[2] < lm]
+    assert not low, low[:5]
 
 
 def _arb1_rungs(board):

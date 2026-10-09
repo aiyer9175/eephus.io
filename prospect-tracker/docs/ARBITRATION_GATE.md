@@ -1271,3 +1271,378 @@ On 2026-10-08 it does not: the artifact (generated 2026-08-09) has no
 `gate_c2` block, and section 11h records that no C2 number had been read on
 2026-09-24. **The build of this gate WAITS ON GATE C2.** Nothing in 14b to 14f
 has been built, fetched or fit.
+
+---
+
+## 15. GATE A amendment (registered 2026-10-08, before any re-run): production lagged to the platform season
+
+Numbering note (integration, 2026-10-08): this section and sections 16 to 18
+were written as sections 13 to 16 on their worktree branch and renumbered when
+they merged after the club arbitration process (section 13) and GATE K
+(section 14) registrations; only the section numbers changed.
+
+Registered and committed alone, before `tools/arb_gate_a.py` was run under it.
+Nothing above this section is edited. Owner answer M12-2 (2026-09-25,
+`_audit_2026-09-09/DECISIONS_FOR_OWNER.md`, final-pass 'more' batch 12):
+register a GATE A amendment lagging production to the platform season and
+re-run. Owner answer M12-1 holds GATE C2 (section 11) until this lands.
+
+### 15a. The defect
+
+Section 1 states the estimand as an award "given only information observable
+as of the tender deadline". The battery scored on 2026-08-09 did not do that.
+For a panel row whose award season is `s` (the season the award pays), the
+champion read `war`, `pa`, `ipouts`, `gs`, `war3` (seasons s, s-1, s-2),
+`career_war` (through s) and the `hem` / `sem` / `rem` block of season `s`
+itself. Season `s` has not been played when the award is set in the winter
+before it. The arb-1 PASS (3.25x its floor) and the A6 comparison were
+therefore scored with production a club, an agent and a panel could not
+see. The census recorded it as M08-05; `tools/arb_mde_lab.load_pool` and
+`arb_export.export` build the same frame, so the served arb-1 model was fit
+on it too.
+
+### 15b. The platform frame
+
+For an award season `s` the platform season is `p = s - 1`, the last season
+complete when the award is set.
+
+- `war`, `pa`, `ipouts`, `gs`: the panel's values for (player, p), and 0 when
+  the panel holds no MLB season p for the player. `pa_share`, `ip_share`,
+  `gs_share`, `is_pitcher` and `is_reliever` follow from them, as they did.
+- `war3` is WAR in p, p-1 and p-2; `career_war` runs through p inclusive.
+- `hem`, `sem`, `rem`: the arb_metrics block of season p (100 when absent, as
+  before).
+- Unchanged, because each is already known at the tender deadline: `arb_year`,
+  `super_two`, the prior salary (season s-1, a platform figure by
+  construction), `has_prior`, and `age` (the player's age in season s, fixed
+  by his birth date).
+- The arb-1 bars read the same platform WAR. A bar may not see what the
+  champion cannot.
+- The deflator is NOT changed. It is fit on train-year rows only, its
+  production term reads each train row's own completed season, and no test
+  row's information enters it. Leaving it alone keeps the banded arb-2+
+  multipliers, the served arb-2+ rungs and `salary_path.board_raise_fn`
+  byte-identical, which this amendment asserts rather than assumes.
+- The `award` frame is kept in code (`arb_model.FRAMES`) so the 2026-08-09
+  numbers stay reproducible. It adjudicates nothing from this date.
+
+### 15c. Protocol, unchanged from section 4
+
+`tools/arb_gate_a.py --write --B 1200 --frame platform`: the scored pool
+(`arb_dataset.scored_rows`), forward-chained by class year, seed 20260808,
+B = 1200 (the 2026-08-09 run's B), the player-clustered bootstrap refitting
+the deflator and both stages every draw, A3 with 200 within-cell
+permutations, A5, and A6 exactly as the 2026-08-09 lab computed it (the
+MLBTR loader repair is section 16's and is registered separately, after this
+re-run). The criteria are section 4's: a step PASSES when its gain is
+resolvable against its one-sided MDE95, beats the A3 permuted p95, and the
+A5 leak is smaller than the margin.
+
+The pool regenerates nightly (1,043 rows on 2026-08-09). So the frame's own
+effect can be told apart from pool drift, the same lab runs once more with
+`--frame award` on the same day's pool, written beside the result as
+`award_frame_same_day_twin`. The twin adjudicates nothing.
+
+### 15d. What serves, fixed before the re-run
+
+- **arb-1 PASS.** The /arbitration/ board's ARB 1 rungs and the History's
+  arb-1 'Ours' serve the champion refit on the platform frame. A forward rung
+  for season y reads platform season y - 1: realized WAR, PA, outs and starts
+  where y - 1 has been played, the projection after it (the latest observed
+  season's PA, outs and starts as the stated proxy); `hem` / `sem` / `rem`
+  from season y - 1 where observed, else the latest observed season (the
+  section 11h proxy, now one season closer).
+- **arb-1 NULL.** The ARB 1 rungs serve the bar the champion failed to beat
+  (A2: the arb-1 intercept plus one platform-WAR term, smearing-corrected,
+  refit on the whole pool), the way arb-2 and later serve their baseline. The
+  artifact verdict falls with the gate (provisional only while some step
+  passes).
+- **arb-2 and later, PASS or NULL.** The served estimator stays the banded
+  step multiplier in this change. A PASS there would be recorded as licensing
+  the stage-2 model, and switching to it is its own measured change.
+- **The 2026-08-09 block stays as a labelled HINDCAST.** Its fields move
+  verbatim under `hindcast_2026_08_09_award_frame` in
+  `data/arbitration_eval.json`, labelled as scored on award-season production
+  unavailable at award time, quoted for the record and adjudicating nothing.
+  The top-level GATE A fields carry this re-run, so every surface that quotes
+  the arb-1 margin or the Swartz ratio quotes the platform frame.
+- Section 9's GATE C record (2026-08-19) was scored on the award-frame model
+  and stands as a dated record of that model; it is not re-scored here.
+
+### 15e. Not reopened
+
+The champion key tuple, the ridge, the smearing, the deflator, the pool, the
+seed, B and every criterion. This repairs the information set to the one the
+section 1 estimand already documents; it is not a refit to a new target, and
+no constant is tuned against the result.
+
+### 15f. Result (scored 2026-10-08, after 15a to 15e were committed)
+
+`tools/arb_gate_a.py --write --B 1200 --frame platform`, then the same-day
+twin with `--frame award`. Pool 1,069 rows, 596 players, class years
+2022-2026, 4 folds (1,043 rows on 2026-08-09). Read from
+`data/arbitration_eval.json`.
+
+| step | frame | n | MdAPE model | MdAPE bar | gain | MDE95 | x floor | A3 p95 | A5 delta | verdict |
+|---|---|---|---|---|---|---|---|---|---|---|
+| arb-1 | platform | 421 | 0.1844 | 0.3394 | +0.1550 | 0.0433 | 3.58 | +0.0841 | -0.0040 | PASS |
+| arb-2+ | platform | 391 | 0.0990 | 0.1815 | +0.0825 | 0.0270 | 3.05 | +0.0121 | +0.0012 | PASS |
+| arb-1 | award, same-day twin | 421 | 0.2396 | 0.4363 | +0.1967 | 0.0486 | 4.05 | +0.0795 | -0.0080 | PASS |
+| arb-2+ | award, same-day twin | 391 | 0.1623 | 0.1815 | +0.0192 | 0.0270 | 0.71 | -0.0072 | -0.0026 | NULL |
+| arb-1 | award, 2026-08-09 hindcast | 409 | 0.2545 | 0.4284 | +0.1739 | 0.0529 | 3.29 | +0.0836 | +0.0185 | PASS |
+| arb-2+ | award, 2026-08-09 hindcast | 379 | 0.1580 | 0.1812 | +0.0232 | 0.0278 | 0.83 | -0.0101 | +0.0134 | NULL |
+
+A6 on the 2026-08-09 loader (section 16 repairs it): ours 0.1734 against
+Swartz 0.0815, n 262, a 2.13x gap (twin 2.71x; hindcast 2.66x, n 261), the
+paired MdAPE gap -0.0918 with a player-clustered interval of -0.1277 to
+-0.0656. Still a loss.
+
+Reading, without upgrading it. Arbitration pays for the season before the
+award, and the frame that reads that season is the better model at both
+steps: the arb-1 model error falls from 0.2396 to 0.1844 on identical rows,
+and arb-2 and later go from a NULL (0.71x) to a PASS (3.05x). The look-ahead
+did not flatter the model; it fed it the wrong season. Under 15d the board
+now serves the platform-frame champion at arb-1, and the banded multiplier
+keeps serving arb-2 and later until a change of its own switches it. The
+2026-08-09 block is `hindcast_2026_08_09_award_frame` and the twin is
+`award_frame_same_day_twin`; neither adjudicates anything.
+
+## 16. A6 / C3' amendment (registered 2026-10-08, before any re-score): the repaired MLBTR pool
+
+Registered and committed alone, after section 15's re-run and before the
+loader repair below is scored. Owner answer M12-3 (2026-09-25): repair the
+Swartz loader now, register an amendment naming the repaired pool, and score
+on BOTH the frozen and the repaired pool. Nothing above this section is
+edited.
+
+### 16a. The two defects
+
+1. **The loader keeps one MLBTR entry per player and class year.**
+   `arb_dataset.load_ledger` indexes `data/_labs/arb_ledger.json` as
+   {key: {class_year: entry}}, so when MLBTR's arbitration TRACKER post
+   (settled and filed figures) and its PROJECTION post (Matt Swartz's
+   pre-settlement figure) both name a player for one class year, whichever
+   is read last wins. For class years 2024 to 2026 the tracker wins for
+   nearly every settled player: the census (M08-04, judge probe) counted 76,
+   72 and 76 projection entries surviving the loader against 297, 273 and 288
+   in the ledger. `build_history` and the A6 lab both read it, so the
+   History's MLBTR column was filled on 18, 16 and 17 rows for 2024, 2025 and
+   2026 against 236 for 2023, and the A6 pool (n 261 on 2026-08-09, 262 on
+   2026-10-08) is about 90% one class year.
+2. **A6 scores Swartz on a different scale from ours.** The lab compares the
+   nominal Swartz figure with the ACTUAL salary deflated by the fold's
+   train-only deflator. In the first fold (2023, trained on 2022) that
+   deflator is 1.0, so the defect was invisible on a 2023 pool; from 2024 on
+   the actual is divided by the carried deflator level and Swartz is not.
+   The history's `Ours` column has the same unit defect against its nominal
+   `Actual` (repaired in its own change, owner answer M11-4).
+
+### 16b. The repair and the two pools
+
+- **The repaired loader** is a separate function,
+  `arb_dataset.load_swartz_projections()`: every `kind == "projection"` entry
+  with a published figure, keyed by (Baseball Reference id or MLBAM id,
+  class year), never overwritten by a tracker entry. `load_ledger` is NOT
+  changed, because the panel's published-service-time votes read it and
+  changing it would move the scored pool itself.
+- The join is the one `build_history` already uses: the entry's own MLBAM id
+  when it carries one, else the panel's Baseball Reference id to MLBAM map.
+  An (MLBAM, class year) reached by two projection entries with different
+  figures is a COLLISION: it is counted, published, and left out of the
+  repaired pool rather than settled by a guess. Entries with neither id are
+  counted and left out.
+- **The frozen pool** is the row set the 2026-08-09 loader reaches
+  (`load_ledger` plus the same join), unchanged.
+- **The repaired pool** is the row set the repaired loader reaches.
+- **The units repair applies to both pools**: Swartz is put on the actual's
+  own scale (its figure divided by the same deflator level the fold divided
+  the actual by), which is the comparison the lab's own comment describes.
+  MdAPE is scale-free within a row, so this changes only rows after the
+  first fold.
+
+### 16c. What is scored, and what each pool is for
+
+- **A6** (section 4): the served estimator (platform-frame champion at
+  arb-1, banded multiplier at arb-2 and later) against the published Swartz
+  figure on identical rows, MdAPE, by step where n >= 15, with the
+  player-clustered gap interval, seed 20260808. Scored on the repaired pool
+  and on the frozen pool, published side by side. The verdict rule is
+  unchanged (PASS only if ours is below Swartz), and single-season
+  comparisons stay pre-committed NULL: only the pooled figure adjudicates.
+- **The repaired pool is the headline from this date.** It becomes the
+  top-level `a6_swartz` block of `data/arbitration_eval.json`, which every
+  surface quoting the Swartz ratio reads; the frozen pool is written beside
+  it as `a6_swartz_frozen_pool`. Section 15f's 2.13x (frozen pool, unrepaired
+  units) stays as the record of that run.
+- **C3'** (section 11d) is scored on both pools when GATE C2 is scored, with
+  its registered bound (0.216) unchanged: the frozen pool is the history rows
+  whose MLBTR figure the frozen loader carries, the repaired pool is every
+  history row with an MLBTR figure. Its response stays "no revert; recorded
+  and blocks the verdict leaving provisional".
+- The repaired join also fills the History's MLBTR column (and through it
+  the Club Ledger's realized Swartz figure). A coverage check is pinned: for
+  each class year 2023 to 2026, history rows with an MLBTR figure over
+  history rows whose player has a projection entry for that year, at least
+  0.95.
+
+### 16d. Not reopened
+
+The champion, the frame, the folds, the seed, the verdict rule and the C3'
+bound. This restores the comparison section 4 already describes (identical
+rows, the same scale) on the data the ledger already holds.
+
+### 16e. Result (scored 2026-10-08, after 16a to 16d were committed)
+
+`tools/arb_gate_a.py --a6-only --write --B 1200 --frame platform`, the
+platform-frame served estimator, Swartz on the actual's scale in both pools.
+Read from `data/arbitration_eval.json`.
+
+| pool | n | by class year (2023 / 2024 / 2025 / 2026) | ours MdAPE | Swartz MdAPE | ratio | paired gap, 95% interval | verdict |
+|---|---|---|---|---|---|---|---|
+| repaired (`a6_swartz`, headline) | 808 | 222 / 209 / 185 / 192 | 0.1780 | 0.0769 | 2.31x | -0.1011 (-0.1216 to -0.0879) | NULL |
+| frozen (`a6_swartz_frozen_pool`) | 262 | 222 / 15 / 14 / 11 | 0.1734 | 0.0815 | 2.13x | -0.0918 (-0.1278 to -0.0647) | NULL |
+
+The repaired join read 1,393 projection entries and joined 1,270, with 0
+collisions, 7 entries carrying no id and 116 whose player has no scored
+row. By step on the repaired pool: arb-1 0.1846 against 0.0923 (n 419),
+arb-2 0.1956 against 0.0725 (n 235), arb-3 0.1636 against 0.0588 (n 154).
+Swartz is more accurate at every step on both pools; the units repair moved
+the frozen pool's Swartz figure only past the fourth decimal, because 222 of
+its 262 rows sit in the first fold. The History's MLBTR column fills 859 of
+863 rows (was 287).
+
+## 17. 2026-10-08: the board applies the CBA maximum cut after a contracted season
+
+Recorded 2026-10-08 (owner answer M11-2, 2026-09-25). Nothing above this
+section is edited.
+
+The board chains each award off the panel's salary, so it cannot see a
+contract the club has already signed for the next season. `salary_path`
+floors an arbitration rung that follows a contracted season at 80% of the
+signed salary (CBA Article VI) and the board did not, so the two printed
+different figures for the same season: 17 rows on the 2026-09-24 census.
+`arb_export.build_board` now runs the same walk
+(`_apply_max_cut_after_contract`), reading the signed seasons from the
+Spotrac contract tables it already reads status tokens from
+(`arb_dataset.spotrac_salary_by_mlbam`; on all 880 board players they equal
+the path's 2027-2031 contract seasons): a contracted season opens the carry, a rung below
+0.80 x prior is raised to it and becomes the next rung's prior, a PRE-ARB
+rung closes the carry. Later rungs are NOT re-predicted off a floored
+figure, exactly as on the path. A floored row carries flag bit 64.
+
+**Measured today it binds on 0 rows.** Since the 2026-10-03 Spotrac refetch
+the 2026 column has rolled off, so no signed 2026 salary sits before a 2027
+rung, and the two 2027-to-2028 contract junctions on the board (Cole Ragans
+$4.417M to $6.590M, Vinnie Pasquantino $5.550M to $6.039M) already clear the
+floor; the served path's own `cba_floored_steps` reads 0. The rule stays so
+the board and the path cannot diverge when a signed season next sits below
+one. Section 11f's must-not-move list is about the `SALARY_PATH_MODE` flip,
+which this does not touch.
+
+## 18. GATE C2 receipt (scored 2026-10-08, as section 11d registers each clause)
+
+Recorded 2026-10-08. Nothing above this section is edited. Owner answer M12-1
+held this gate until the GATE A look-ahead fix landed (section 15); the
+MLBTR repair (section 16) landed before it as well. Scored on the served
+model of that day: `SALARY_PATH_MODE = "full"`, the platform-frame award
+model, board vintage 2026-10-08. `tools/arb_path_gate.py --write` writes the
+`gate_c2` block of `data/arbitration_eval.json`; seed 20260917, B 1000.
+
+### 18a. The registered clauses
+
+| clause | result | verdict | response (11e) |
+|---|---|---|---|
+| C1' | served chain window MAE $2.088M against `clemens_2026` $8.336M (gain $6.248M, MDE95 $1.020M, 6.13x) and the fitted ladder $5.409M (gain $3.321M, MDE95 $0.873M, 3.80x); 286 paired of 291, 5 dropped | PASS | - |
+| C2' | 193 realized 2026 awards: path MdAPE 0.1552 equals the board's own 0.1552 (the same figure by construction, see 18b); signed median residual -0.0255 | PASS | - |
+| C3' | repaired pool n 808, ours 0.1780 against Swartz 0.0769; frozen pool n 262, ours 0.1735 against 0.0815; both under 0.216 | PASS | - |
+| C4' | 221 rows move by more than $1M; 128 carry a newly priced season and 93 do not, every one of the 93 moved by the tender cliff (a cut season); Spearman on the 1,046 rows whose path is unchanged 1.0000; whole-board Spearman 0.9249 (recorded) | FAIL | `"off"` |
+| C5' | 0 cuts below 80% of the season before, contract junctions included | PASS | - |
+| C6' | 0 prospect rows carry `salPath` | PASS | - |
+| C7'a | 0 rows whose floor lowered the total (874 scored, 278 cut, $980.4M restored); 2 kept cuttable seasons with negative surplus | FAIL | `"closure"` (cliff off) |
+| C7'b | backward induction never below forward; strictly greater on 119 rows | PASS | - |
+| C8' | 81 grids, closure derives the held season's token on 73 (0.901) and its salary exactly where it does (MdAPE 0.000); the 8 misses are grids listing ARB 4 with no Super Two marker after ARB 3, where closure ends the window at ARB 3 | FAIL | `"ladder"` (closure off) |
+| C9' | n 149 rows with current service time, 1 off by one season, 0 off by more | PASS | - |
+
+Three clauses fail. The modes nest (`off` < `ladder` < `closure` < `full`),
+so the registered responses resolve to the lowest one named: **`"off"`**,
+which the block records as `registered_response_mode`. Section 11e: "a
+failure does not withhold a ship. It reverts one." Section 18c records why
+that revert is not applied in this task and goes to the owner.
+
+What the three failures are, read without upgrading or excusing them:
+
+- **C4'** fails on the tender cliff, which the same change shipped. Its
+  criterion reads "every row moving by more than $1M must have at least one
+  newly priced season", and a row the cliff cuts moves with none. No row
+  moved without either a new season or a cut, so nothing points at an
+  implementation defect; the clause as registered still fails.
+- **C7'a** fails on its second half, the conflict the lab published before
+  scoring: backward induction keeps a negative season when a later one pays
+  for it (R1), and 2 rows do.
+- **C8'** fails on evidence: 8 Spotrac grids carry an ARB 4 season after a
+  plain ARB 3, and closure, which reads a non-Super-Two class as ending at
+  ARB 3, does not reproduce them. Either the grids omit the Super Two
+  marker or closure ends those windows a season early; this clause cannot
+  tell which, and C9' (1 row off by one of 149) does not settle it.
+
+### 18b. Deviations added after registration, published beside it
+
+These are the shapes `tools/arb_path_gate.py` gave the clauses on
+2026-09-17, after section 11d was registered. Each is in
+`gate_c2.deviations_added_after_registration` and none enters a verdict.
+
+- **C2' chain split.** The lab replaced the registered MdAPE half, which
+  compares the board's 2026 figure with itself, with the raise estimator
+  re-derived off each row's realized 2025 salary against a frozen 0.171:
+  0.1605 on 86 arb-2-and-later rows (124 skipped for no prior), PASS; level
+  half -0.0255, PASS.
+- **C4' lab shape.** Counts rows with an arbitration season (675) and
+  contract-only rows (199) without a pre/post comparison: PASS.
+- **C5' with contract junctions counted apart**: 0 violations, 0 unrepaired
+  junctions, PASS.
+- **C7'a on its first half only**: PASS, with the same count of 2 published.
+- **C10'**, the star-tail clause the lab added: served ARB 1 rungs reach
+  $11.673M against a realized arb-1 p90 of $4.200M (n 235 served, 421
+  realized), PASS. It is published at the top level and is not one of
+  section 11d's clauses.
+
+The 2026-08-19 C1 lab was a scratchpad file; C1' runs the protocol text of
+section 9b, implemented in `tools/arb_c1_window.py`. Its served-chain MAE on
+the award frame ($2.185M on 286 players) reproduces the 2026-08-19 $2.215M;
+the `clemens_2026` arm reads higher than its $4.927M because the value
+framework's market prices moved with the fWAR label epoch.
+
+`C2_CHAIN_MDAPE_BOUND` (0.171) was read off the History when its Ours column
+was still in deflated dollars (fixed in this task, owner answer M11-4). It is
+a registered constant and is not changed here.
+
+### 18c. The registered response is NOT applied in this task, and why
+
+Section 11e makes the revert mechanical and section 11a says it "needs no
+other edit". Both stopped being true after registration, and applying the
+constant today would break two served things that have nothing to do with
+the failing clauses:
+
+1. **The Club Ledger cannot export an "off" payload.** `ledger_export`
+   (shipped 2026-09-23) reconciles each club's served surplus against its
+   salary-path rows and asserts the match; under `"off"` the projection rows
+   carry no `salPath`, the first club reads $640.5M served against $0.0M of
+   rows, and the export raises. The nightly would keep the last Ledger file
+   and file a red, so the Ledger would go on printing full-mode figures
+   beside an off-mode trade board.
+2. **"off" also switches off the contract tail** (owner answer M05-01,
+   2026-09-25), which rides the same flag (`mode != "off"` in
+   `salary_path`). Measured on today's inputs, "off" moves 286 projection
+   rows and $1,042.8M of veteran surplus ($12,515.5M to $11,472.7M), the
+   trade board from $31,318.9M to $30,276.1M, and the largest single moves
+   are contract-tail rows the gate never scored (Vladimir Guerrero Jr.
+   -$108.0M to +$30.9M, Juan Soto $83.9M to $196.7M), beside the
+   arbitration rows it did (Junior Caminero $295.3M to $175.6M).
+
+So `SALARY_PATH_MODE` stays `"full"` and the decision goes to the owner
+(11e: "Keeping a failed clause serving is the owner's call, and either way
+the failure is published"). The failure is published: the `gate_c2` block
+records `registered_response_mode: "off"`, the /arbitration/ Model tab shows
+the gate as FAIL with the registered response beside the served mode, and
+the registry row stays `provisional`, which C3' and these failures block
+from leaving.

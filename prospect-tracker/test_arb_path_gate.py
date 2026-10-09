@@ -148,3 +148,55 @@ def test_no_failing_clause_silently_moves_the_served_number():
     assert moving is not None
     for k in moving:
         assert blk[k]["verdict"] == "FAIL"
+
+
+def test_the_verdict_reads_the_registered_clauses_only():
+    """Scored 2026-10-08 as section 11d registers each clause. C10' and the
+    lab's own shapes are published beside it and enter no verdict."""
+    g = _block()
+    assert set(g["verdicts"]) == set(CLAUSES) - {"c10_salary_leg_star_tail"}
+    assert "added_after_registration" in g["c10_salary_leg_star_tail"]
+    dev = g["deviations_added_after_registration"]
+    for k in ("c2_chain_split", "c4_lab_shape", "c5_contract_junctions_counted_apart",
+              "c7a_first_half_only"):
+        assert dev[k].get("criterion"), k
+    assert g["c7a_floor_never_lowers"]["verdict_basis"] == "both halves of the registered criterion"
+
+
+def test_c1_is_scored_on_the_registered_protocol():
+    c1 = _block()["c1_window_mae"]
+    assert c1["verdict"] in ("PASS", "FAIL")
+    assert "section 9b" in c1["protocol"]
+    assert c1["n_paired"] > 0 and c1["seed"] == 20260917 and c1["B"] == 1000
+    for arm in ("vs_clemens_2026", "vs_fitted"):
+        assert c1[arm]["mde95_onesided_usd"] > 0
+        assert c1[arm]["resolvable"] == (c1[arm]["gain_usd"] > c1[arm]["mde95_onesided_usd"])
+
+
+def test_c3_is_scored_on_both_mlbtr_pools():
+    c3 = _block()["c3_swartz_gap"]
+    assert set(c3["pools"]) == {"repaired", "frozen"}
+    assert c3["pools"]["repaired"]["n"] >= c3["pools"]["frozen"]["n"]
+    assert c3["verdict"] == ("PASS" if all(p["verdict"] == "PASS"
+                                           for p in c3["pools"].values()) else "FAIL")
+
+
+def test_the_registered_response_is_recorded_and_a_kept_mode_says_why():
+    """The modes nest, so the failing clauses' responses resolve to one mode.
+    When the served constant differs from it, the owner holds the decision
+    (section 11e) and the gate doc and the registry row must say so; the
+    Model tab prints both."""
+    import salary_path as sp
+    g = _block()
+    order = ("off", "ladder", "closure", "full")
+    assert g["registered_response_mode"] in order
+    if not g["failing_clauses"]:
+        return
+    if g["registered_response_mode"] != sp.SALARY_PATH_MODE:
+        doc = (ROOT / "docs" / "ARBITRATION_GATE.md").read_text(encoding="utf-8")
+        assert "### 18c. The registered response is NOT applied in this task, and why" in doc
+        reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+        row = [m for m in reg["models"] if m["model_id"] == "control_window_salary_path"][0]
+        assert "It is NOT applied" in row["notes"]
+        html = (ROOT / "arbitration" / "index.html").read_text(encoding="utf-8")
+        assert "<dt>registered response</dt><dd>%s, not applied" % g["registered_response_mode"] in html

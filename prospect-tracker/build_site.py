@@ -5733,15 +5733,25 @@ def _arb_model_panel() -> str:
             "over an intercept-plus-WAR baseline, in minimum detectable effects",
             "green" if a1.get("resolvable") else "orange"))
     if a2:
+        # Derived from the verdict (a PASS since the 2026-10-08 platform
+        # re-run); the served arb-2+ estimator is still the multiplier.
         tiles.append(tile(
             "%.2fx" % (a2.get("gain_over_floor") or 0), "arb-2+ vs its floor",
-            "under 1.00: a NULL against a step multiplier", "orange"))
+            ("a PASS against a step multiplier; the board still serves the "
+             "multiplier" if a2.get("verdict") == "PASS" else
+             "under 1.00: a NULL against a step multiplier"),
+            "green" if a2.get("verdict") == "PASS" else "orange"))
     if a6.get("n"):
+        # Both A6 pools, side by side (docs/ARBITRATION_GATE.md section 16):
+        # the repaired join is the headline, the 2026-08-09 join beside it.
+        fz = ev.get("a6_swartz_frozen_pool") or {}
         tiles.append(tile(
             "%.1fx" % (a6.get("ratio_ours_over_swartz") or 0),
             "Swartz is more accurate",
-            "on %d settled seasons with an MLBTR projection"
-            % a6["n"], "red"))
+            "on %d settled seasons with an MLBTR projection%s"
+            % (a6["n"], ("; %.1fx on the %d in the original pool"
+                         % (fz.get("ratio_ours_over_swartz") or 0, fz["n"])
+                         if fz.get("n") else "")), "red"))
     tiles.append(tile(
         pool.get("rows", "-"), "scored player-seasons",
         "%s players over %s forward-chained folds"
@@ -5845,14 +5855,26 @@ def _arb_model_panel() -> str:
         sp_mode = "?"
     if g2:
         vd = str(g2.get("verdict", "?"))
+        # The failing clauses and the mode their registered responses name,
+        # beside the mode actually served (ARBITRATION_GATE section 18).
+        resp = str(g2.get("registered_response_mode") or "")
+        extra = ""
+        if g2.get("failing_clauses"):
+            extra += ('<dt>failing clauses</dt><dd>%s</dd>'
+                      % html.escape(", ".join(
+                          re.sub(r"^c(\d+)([a-z]?)$", r"C\1'\2", str(c).split("_")[0])
+                          for c in g2["failing_clauses"])))
+        if resp and resp != sp_mode:
+            extra += ('<dt>registered response</dt><dd>%s, not applied: the owner '
+                      'decides</dd>' % html.escape(resp))
         downstream.append(
             '<details class="arb-row"><summary class="arb-sum">'
             '<span class="arb-vd arb-vd--%s">%s</span> GATE C2, the '
             'club-control-window salary path (scored %s)</summary><dl>'
-            '<dt>served mode</dt><dd>%s</dd></dl></details>'
+            '<dt>served mode</dt><dd>%s</dd>%s</dl></details>'
             % ("pass" if vd == "PASS" else "null", html.escape(vd),
                html.escape(str(g2.get("scored_at") or g2.get("generated_at") or "?")),
-               html.escape(sp_mode)))
+               html.escape(sp_mode), extra))
     else:
         downstream.append(
             '<details class="arb-row" open><summary class="arb-sum">'
@@ -5864,11 +5886,30 @@ def _arb_model_panel() -> str:
             'card has no receipt yet.</dd></dl></details>'
             % html.escape(sp_mode))
 
+    # THE FRAME (docs/ARBITRATION_GATE.md section 15): which season the
+    # production block was read from, and the 2026-08-09 record it replaced,
+    # both read off the artifact.
+    frame_note = ""
+    hc = ev.get("hindcast_2026_08_09_award_frame") or {}
+    if ev.get("frame") == "platform":
+        hres = hc.get("results") or {}
+        frame_note = (
+            '<p class="arb-lede">Production is read from the platform season, '
+            'the one before the award. The %s record read the award season '
+            'itself, which had not been played, and is kept as a hindcast '
+            '(arb-1 %.2fx, arb-2+ %.2fx its floor).</p>'
+            % (html.escape(str(hc.get("generated_at", "earlier"))),
+               (hres.get("arb1") or {}).get("gain_over_floor") or 0,
+               (hres.get("arb2plus") or {}).get("gain_over_floor") or 0)
+            if hres else
+            '<p class="arb-lede">Production is read from the platform season, '
+            'the one before the award.</p>')
+
     return (
         '<div class="arb-scorecard">%s</div>'
         '<div class="section-head"><h2>What was measured</h2>'
         '<span class="section-sub">pre-registered</span></div>'
-        '%s'
+        '%s%s'
         '<div class="section-head"><h2>Downstream gates</h2>'
         '<span class="section-sub">built on this model</span></div>'
         '%s'
@@ -5876,9 +5917,28 @@ def _arb_model_panel() -> str:
         '<ul class="arb-losses">%s</ul>'
         '<div class="section-head"><h2>What this model cannot tell you</h2></div>'
         '<div class="card arb-note">%s</div>'
-        % ("".join(tiles), "".join(rows), "".join(downstream),
+        % ("".join(tiles), frame_note, "".join(rows), "".join(downstream),
            "".join(losses) or "<li>No rejected variants recorded.</li>",
            gaps))
+
+
+def _arb_masthead_verdict() -> str:
+    """The masthead's one line on which estimator prices which step, read
+    off data/arbitration_eval.json rather than typed: arb-2+ has served the
+    multiplier through both verdicts (docs/ARBITRATION_GATE.md section 15d)."""
+    import json as _json
+    try:
+        res = _json.loads((ROOT / "data" / "arbitration_eval.json")
+                          .read_text(encoding="utf-8")).get("results") or {}
+    except (OSError, ValueError):
+        res = {}
+    a1 = (res.get("arb1") or {}).get("verdict")
+    a2 = (res.get("arb2plus") or {}).get("verdict")
+    one = ("Arb 1 is model-priced (it beat its baseline)" if a1 == "PASS"
+           else "Arb 1 is priced off its baseline")
+    two = ("Arb 2+ a step multiplier (the model now beats it; not switched)"
+           if a2 == "PASS" else "Arb 2+ a step multiplier (the model did not)")
+    return one + "; " + two + "."
 
 
 def build_arbitration() -> str:
@@ -5895,8 +5955,7 @@ def build_arbitration() -> str:
         + '<h1>' + _masthead_icon("arbitration") + 'Arbitration Predictor ' + _stage_chip("arbitration") + '</h1></div>'
         '<span class="section-sub">Projected and settled '
         + _gl("arb_award_model", "arbitration awards")
-        + '. Arb 1 is model-priced (it beat its baseline); '
-        'Arb 2+ a step multiplier (the model did not).</span></div>'
+        + '. ' + _arb_masthead_verdict() + '</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Arbitration sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-arbsection="projections" role="tab" aria-selected="true" aria-controls="arb-panel-projections">Projections</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-arbsection="history" role="tab" aria-selected="false" aria-controls="arb-panel-history">Arbitration History</button>'

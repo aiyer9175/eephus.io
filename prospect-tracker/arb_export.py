@@ -50,6 +50,11 @@ F_NO_SALARY = 4       # no salary on file for that season
 F_CARRY_FWD = 8       # season is past the 2026-12-01 CBA expiry
 F_PRORATED = 16       # 2020, paid at 60/162 of contract
 F_ORDER_FIX = 32      # a Spotrac status ran against service order and was repaired
+F_CBA_FLOOR = 64      # an arbitration rung floored at 80% of a signed salary before it
+
+#: CBA Article VI: an arbitration award may not cut the prior salary by more
+#: than 20 percent. The projections path applies the same constant.
+MAX_CUT = 0.80
 
 CBA_EXPIRES = "2026-12-01"
 
@@ -104,6 +109,64 @@ def _projected_war() -> dict[int, list[float]]:
         if m and isinstance(w, list):
             out[int(m)] = [first, [float(x) if x is not None else 0.0 for x in w]]
     return out
+
+
+def _signed_salaries() -> dict[int, dict[int, int]]:
+    """{mlbam: {season: usd}} for every season a signed Spotrac contract
+    prices: arb_dataset.spotrac_salary_by_mlbam, the same team pages and the
+    same id map the board's status tokens come from.
+
+    The board's own chain raises off the panel's salary, which knows nothing
+    of a contract the club has already signed for the next season, so the
+    projections path floored those rungs and the board did not (owner answer
+    M11-2). Measured 2026-10-08: on all 880 board players these seasons equal
+    the contract seasons the projections payload prices for 2027-2031. The
+    board still reads nothing that path writes."""
+    import arb_dataset as A
+    try:
+        return A.spotrac_salary_by_mlbam()
+    except Exception as exc:                      # pragma: no cover - defensive
+        _log.warning("arb_export: signed salaries unavailable: %s", exc)
+        return {}
+
+
+def _apply_max_cut_after_contract(steps: list, signed: dict, season: int) -> int:
+    """Floor arbitration rungs at 80% of a signed salary the season before,
+    in place; returns the number of rungs floored.
+
+    The same walk as the projections path's Article VI block, so the board
+    and that path print the same figure: a contracted season sets the prior
+    and opens the carry, an ARB rung below 0.80 x prior is raised to it and
+    the floored figure is the next rung's prior, a PRE-ARB rung closes the
+    carry. Later rungs are NOT re-predicted off the floored figure; they are
+    only held to the same floor, as on the path. A rung on a season the
+    contract itself prices is left as published (the path prices that season
+    from the contract)."""
+    if not signed:
+        return 0
+    prior = signed.get(int(season) - 1)
+    carry = prior is not None
+    by = {int(st[0]): st for st in steps}
+    floored = 0
+    for y in sorted(set(by) | {s for s in signed if s >= int(season)}):
+        if y in signed:
+            carry, prior = True, signed[y]
+            continue
+        st = by[y]
+        if st[1] is None:
+            continue
+        if str(st[4] or "").upper().startswith("ARB"):
+            if carry and prior:
+                fl = _k(MAX_CUT * float(prior))
+                if fl and st[1] < fl:
+                    st[1] = fl
+                    st[2] = fl if (st[2] or 0) < fl else st[2]
+                    st[3] = max(int(st[3] or fl), fl)
+                    floored += 1
+        else:
+            carry = False
+        prior = st[1]
+    return floored
 
 
 def _link_targets() -> dict[int, str]:
@@ -233,7 +296,8 @@ def _repair_status_order(raw: list, ladder: list, base: dict) -> tuple[list, boo
 
 
 def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
-                s1=None, s2=None, defl=None, banded=None) -> dict:
+                s1=None, s2=None, defl=None, banded=None,
+                frame: str | None = None, signed=None) -> dict:
     """The projections board: every player with remaining arbitration years,
     with the ladder PRICED by chaining the model forward.
 
@@ -242,11 +306,16 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
     later rung inherits the earlier rung's error, which is why the interval has
     to widen down the ladder rather than being a per-year residual quantile
     applied independently.
+
+    `frame` is arb_model's feature frame (docs/ARBITRATION_GATE.md section
+    15); it must be the frame `s1` was fit on.
     """
     import arb_dataset as A
     import arb_model as Mod
 
+    frame = frame or Mod.FRAME
     status = A.spotrac_status_by_mlbam()
+    signed = _signed_salaries() if signed is None else signed
     proj = _projected_war()
     links = _link_targets()
     # Latest observed row per player, for the salary anchor and the features.
@@ -256,9 +325,12 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
     # below is usually an unscored pre-arb season, so a forward rung used to
     # read war3 = career_war = 0 through features()' default.
     war_by: dict[int, dict[int, float]] = {}
+    # Every observed panel row, for the platform season's PA, outs and starts.
+    obs_by: dict[int, dict[int, dict]] = {}
     for r in sorted(panel_rows, key=lambda x: x["season"]):
         by_player[int(r["mlbam"])] = r
         war_by.setdefault(int(r["mlbam"]), {})[int(r["season"])] = float(r.get("war") or 0.0)
+        obs_by.setdefault(int(r["mlbam"]), {})[int(r["season"])] = r
     last_obs = max((int(r["season"]) for r in panel_rows), default=season - 1)
     lm = A.league_min_by_year()
 
@@ -330,33 +402,46 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             if prior is None and step == 1:
                 prior = lm.get(int(y) - 1) or (lm.get(max(lm)) if lm else None)
             row["prior_salary"] = prior
-            row["war"] = war if war is not None else base.get("war")
-            # The forward row is built the way a training row is: war3 is the
-            # award season plus the two before it and career_war runs through
-            # the award season inclusive, realized WAR where it exists and the
-            # projection after it. Age advances with the season.
-            row["war3"] = round(sum(_war_at(int(y) - k) for k in (0, 1, 2)), 2)
+            # The forward row is built the way a training row is, on the
+            # model's own frame. Platform frame (section 15): production is
+            # season y - 1's, realized where it has been played and projected
+            # after it, with the latest observed season's PA, outs and starts
+            # as the stated proxy past it. Award frame (the 2026-08-09
+            # hindcast): production is season y's. war3 is three seasons
+            # ending at that season and career_war runs through it. Age
+            # advances with the season on both.
+            last = int(y) - 1 if frame == "platform" else int(y)
+            if frame == "platform":
+                row["war"] = round(_war_at(last), 2)
+                src = (obs_by.get(mlbam) or {}).get(last) if last <= last_obs else base
+                for fk in ("pa", "ipouts", "gs"):
+                    row[fk] = int((src or {}).get(fk) or 0)
+            else:
+                row["war"] = war if war is not None else base.get("war")
+            row["war3"] = round(sum(_war_at(last - k) for k in (0, 1, 2)), 2)
             row["career_war"] = round(
-                sum(v for yr, v in hist.items() if yr <= min(int(y), last_obs))
-                + sum(_war_at(yr) for yr in range(last_obs + 1, int(y) + 1)), 2)
+                sum(v for yr, v in hist.items() if yr <= min(last, last_obs))
+                + sum(_war_at(yr) for yr in range(last_obs + 1, last + 1)), 2)
             if base.get("age") is not None:
                 row["age"] = float(base["age"]) + (int(y) - base_season)
-            # Training reads hem/sem/rem from the award season itself, which
-            # has not been played. The latest observed season's block is the
-            # stated proxy; keying on the future season found nothing and
-            # every forward rung defaulted to 100.
-            rung_metrics = {int(y): (metrics or {}).get(base_season) or {}}
+            # hem/sem/rem: the frame's season where it has been observed,
+            # else the latest observed season, the stated proxy (keying on an
+            # unplayed season found nothing and defaulted every rung to 100).
+            met_season = (last if (metrics or {}).get(last, {}).get(mlbam)
+                          else base_season)
+            row.pop("metrics_season", None)
+            rung_metrics = {int(y): (metrics or {}).get(met_season) or {}}
             row["league_min"] = lm.get(int(y))
             pred = None
             if defl is not None:
                 try:
                     # WHICH ESTIMATOR SERVES WHICH STEP IS A GATE RESULT, not a
-                    # design preference. GATE A: arb-1 PASSED at 3.25x its
-                    # floor, so the model serves it. arb-2-and-later is a NULL -
-                    # the model does not beat an empirical step multiplier by
-                    # more than the floor - so the multiplier serves those, and
-                    # serving the model there would be shipping a more complex
-                    # estimator the evidence does not support.
+                    # design preference (data/arbitration_eval.json results).
+                    # arb-1 PASSED, so the model serves it. arb-2-and-later
+                    # serves the banded step multiplier: a NULL on the
+                    # 2026-08-09 frame, and docs/ARBITRATION_GATE.md section
+                    # 15d keeps it serving after the platform re-run, because
+                    # switching the served estimator there is its own change.
                     if step == 1:
                         d = Mod.predict(row, rung_metrics, defl, s1, None)
                     else:
@@ -377,12 +462,21 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                 # published as a calibrated interval - see the eval artifact.
                 k = max(0, (step or 1) - 1)
                 spread = 0.22 + 0.08 * k
-                steps.append([int(y), _k(pred), _k(pred * (1 - spread)),
+                # The low end never sits below the league minimum, the same
+                # rule as the point (owner answer M12-4): a band that admits
+                # an award no club may pay is not a range of awards.
+                lo = pred * (1 - spread)
+                if floor and lo < floor:
+                    lo = float(floor)
+                steps.append([int(y), _k(pred), _k(lo),
                               _k(pred * (1 + spread)), tok])
                 total += _k(pred) or 0
                 prior = pred
             else:
                 steps.append([int(y), None, None, None, tok])
+        n_floor = _apply_max_cut_after_contract(steps, signed.get(mlbam), season)
+        if n_floor:
+            total = sum(st[1] or 0 for st in steps)
         rows.append({
             "m": mlbam,
             "n": base.get("name"),
@@ -398,7 +492,8 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             # a surface; both exist to let a lab say how old its evidence is.
             "svy": base.get("season") if base.get("service_time") else None,
             "c": _token_step(ladder[0][1])[0],
-            "e": _flags(base, season) | (F_ORDER_FIX if order_fixed else 0),
+            "e": (_flags(base, season) | (F_ORDER_FIX if order_fixed else 0)
+                  | (F_CBA_FLOOR if n_floor else 0)),
             "yl": len(ladder),
             "l": steps,
             "tot": total or None,
@@ -421,7 +516,9 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                   "2 step from the debut heuristic, 4 no salary on file, "
                   "8 past the CBA expiry, 16 2020 prorated, "
                   "32 status order repaired (a Spotrac status that put a "
-                  "later season in a lower arbitration class was rewritten)"),
+                  "later season in a lower arbitration class was rewritten), "
+                  "64 an arbitration rung floored at 80% of the signed salary "
+                  "the season before (CBA maximum cut)"),
             "yl": "club-control years remaining",
             "l": "ladder, one tuple per remaining season: [season, proj_usd, lo_usd, hi_usd, token]",
             "tot": ("sum of the ladder, usd: projected arbitration rungs plus "
@@ -443,26 +540,20 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
     }
 
 
-def build_history(recs, panel_rows, ledger, dpw) -> dict:
-    """Per-season actual vs ours vs the MLBTR/Swartz projection."""
+def build_history(recs, panel_rows, ledger, dpw, projections=None) -> dict:
+    """Per-season actual vs ours vs the MLBTR/Swartz projection.
+
+    The MLBTR column reads the REPAIRED pool (docs/ARBITRATION_GATE.md
+    section 16): every projection entry, joined on its MLBAM id or the
+    panel's Baseball Reference id. Through load_ledger the arbitration
+    tracker post overwrote the projection for nearly every settled 2024-2026
+    player, and the column was filled on 18, 16 and 17 rows for those years
+    against 236 for 2023. `ledger` is no longer read; `projections` lets a
+    test pass entries in."""
+    import arb_dataset as A
     by = {(r["mlbam"], r["season"]): r for r in recs}
-    # bbref -> mlbam, from the panel. The ledger keys most entries by Baseball
-    # Reference id (that is what the MLBTR hrefs carry) and only the
-    # name-resolved pre-2023 rows carry an mlbam, so joining on mlbam alone
-    # matched 23 of about 1,400 available projections and made the Swartz
-    # comparison look far thinner than it is.
-    bref2mlbam = {}
-    for r in panel_rows:
-        if r.get("bbref"):
-            bref2mlbam[str(r["bbref"])] = int(r["mlbam"])
-    swartz = {}
-    for key, per_year in (ledger or {}).items():
-        for cy, ent in per_year.items():
-            if ent.get("kind") != "projection" or not ent.get("projected_usd"):
-                continue
-            m = ent.get("mlbam") or bref2mlbam.get(str(ent.get("bbref_id") or key))
-            if m:
-                swartz[(int(m), int(cy))] = ent["projected_usd"]
+    swartz, _census = A.swartz_by_mlbam(panel_rows, pool="repaired",
+                                        projections=projections)
 
     links = _link_targets()
     out = []
@@ -471,7 +562,16 @@ def build_history(recs, panel_rows, ledger, dpw) -> dict:
         if not rec or not r.get("salary"):
             continue
         act = _k(r["salary"])
-        pred = _k(rec.get("served"))
+        # NOMINAL DOLLARS, like Actual and MLBTR (owner answer M11-4). The
+        # fold scores in deflated dollars; each prediction is re-inflated by
+        # its own fold's deflator level for that season, salary / actual,
+        # the same factor that deflated the actual it is compared with.
+        # Printing the deflated figure put every 2024-2026 Ours on a 2022
+        # dollar basis beside a nominal Actual, and vs Market inherited it.
+        served = rec.get("served")
+        if served and rec.get("actual") and rec.get("salary"):
+            served = served * float(rec["salary"]) / float(rec["actual"])
+        pred = _k(served)
         swz = _k(swartz.get((int(r["mlbam"]), int(r["season"]))))
         war = r.get("war") or 0.0
         d = dpw.get(str(r["season"])) or dpw.get(r["season"])
@@ -491,6 +591,9 @@ def build_history(recs, panel_rows, ledger, dpw) -> dict:
             "rows": "[season, mlbam, name, team, arb_year, actual_usd, "
                     "ours_usd, swartz_usd, ou_mkt_usd, ou_war_usd, war, flags, "
                     "link]",
+            "ours": ("this model's forward-chained prediction in NOMINAL "
+                     "dollars, re-inflated by the deflator its own fold "
+                     "fitted on earlier seasons"),
             "link": ("the name's link token, as the board's h: p:<key> opens "
                      "/projections/#player=<key>, x:<slug> opens "
                      "/prospx/#player=<slug>, null links nothing"),
@@ -522,26 +625,26 @@ def _write(path: Path, doc: dict, cap: int, log) -> int:
     return n
 
 
-def export(*, write: bool = True, log=print) -> dict:
-    """Build both payloads. Offline: reads the committed panel inputs only."""
+def export(*, write: bool = True, log=print, frame: str | None = None) -> dict:
+    """Build both payloads. Offline: reads the committed panel inputs only.
+
+    `frame` defaults to arb_model.FRAME (the platform season since the
+    docs/ARBITRATION_GATE.md section 15 amendment); "award" rebuilds the
+    2026-08-09 frame for comparison and is never written by the pipeline."""
     import arb_dataset as A
     import arb_metrics as M
     import arb_model as Mod
 
     panel = A.build_panel(log=None)
     rows = panel["rows"]
+    frame = frame or Mod.FRAME
+    # `sc` keeps each row's own season WAR for the History's WAR and vs Value
+    # columns; the model reads the framed copies.
     sc = A.scored_rows(rows)
-    war_by: dict[int, dict[int, float]] = {}
-    for r in rows:
-        war_by.setdefault(r["mlbam"], {})[r["season"]] = r["war"]
-    for r in sc:
-        hist = war_by.get(r["mlbam"], {})
-        r["war3"] = round(sum(hist.get(r["season"] - k, 0.0) for k in (0, 1, 2)), 2)
-        r["career_war"] = round(sum(v for y, v in hist.items()
-                                    if y <= r["season"]), 2)
+    fr = Mod.attach_frame(sc, rows, frame)
     metrics = M.metric_panel(2018, 2026)
     seasons = sorted({r["season"] for r in sc})
-    recs = Mod.forward_chain(sc, metrics, seasons=seasons)
+    recs = Mod.forward_chain(fr, metrics, seasons=seasons)
 
     try:
         import value_framework as vf
@@ -563,13 +666,13 @@ def export(*, write: bool = True, log=print) -> dict:
 
     # The SERVED model is fit on the whole scored pool. The forward-chained
     # folds above are the evidence; this is the estimator they licensed.
-    defl = Mod.fit_deflator(sc, base_year=seasons[0])
-    s1 = Mod.fit_stage1(sc, metrics, defl)
-    s2 = Mod.fit_stage2(sc, metrics, defl)
-    banded = Mod.fit_banded_multipliers(sc, defl)
+    defl = Mod.fit_deflator(fr, base_year=seasons[0])
+    s1 = Mod.fit_stage1(fr, metrics, defl)
+    s2 = Mod.fit_stage2(fr, metrics, defl)
+    banded = Mod.fit_banded_multipliers(fr, defl)
     board = build_board(rows, eval_doc, metrics, dpw, season=2027,
-                        s1=s1, s2=s2, defl=defl, banded=banded)
-    history = build_history(recs, sc, A.load_ledger(), dpw)
+                        s1=s1, s2=s2, defl=defl, banded=banded, frame=frame)
+    history = build_history(recs, sc, None, dpw)
     if write:
         _write(BOARD_PATH, board, BOARD_CAP_BYTES, log)
         _write(HISTORY_PATH, history, HISTORY_CAP_BYTES, log)

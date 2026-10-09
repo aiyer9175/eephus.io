@@ -98,29 +98,73 @@ def _vets():
 def c1_window_mae():
     """C1': the served chain against clemens_2026 and a fitted ladder.
 
-    NOT SCORED HERE, and the reason is named rather than papered over: the
-    2026-08-19 lab that produced the prior figures ($2.215M against $4.927M and
-    $5.372M, 4.98x and 3.51x floors) lived in a scratchpad and is not in this
-    tree, so anything this file computed would be a NEW protocol wearing the old
-    clause's name. The clause stays registered, its prior is carried, and the
-    lab is the named follow-up. Section 11e's response to a C1' failure
-    (revert to "off") is unaffected: it simply cannot fire until the protocol is
-    back in the tree.
+    Scored 2026-10-08 by tools/arb_c1_window.py, which implements the C1
+    protocol as section 9b registers it (pool, served chain, both ladders,
+    discounted nominal window MAE, in-sample fits, paired drop, player-clustered
+    floor). The 2026-08-19 lab that produced the prior was a scratchpad file
+    and is not in this tree; the protocol TEXT is, and that is what is run.
+    Seed and B are section 11c's. The served chain is the platform-frame model
+    (section 15), which is what the board serves today.
     """
-    return {
+    import arb_c1_window as C1
+    import arb_model as Mod
+    res = C1.score(Mod.FRAME, seed=SEED, B=B)
+    out = {
         "criterion": ("re-run the 2026-08-19 C1 protocol on the current pool "
                       "(window MAE of the discounted total, paired, clustered on "
                       "player): the served chain must beat both clemens_2026 and "
                       "the fitted ladder by more than the one-sided MDE95 of each "
                       "contrast. Prior: $2.215M against $4.927M and $5.372M, a "
                       "4.98x floor"),
-        "verdict": "NOT_SCORED",
-        "blocking_reason": ("the 2026-08-19 C1 lab is not committed to this tree "
-                            "(produced_by: 'scratchpad gate_c_verify_lab.py'), so "
-                            "re-running it here would be a new protocol under an "
-                            "old clause name"),
+        "protocol": ("docs/ARBITRATION_GATE.md section 9b, implemented in "
+                     "tools/arb_c1_window.py; seed and B per section 11c"),
         "prior": {"served_mae_usd": 2215000, "clemens_2026_mae_usd": 4927000,
                   "fitted_ladder_mae_usd": 5372000, "floor_multiple": 4.98},
+        "response_if_failed": 'SALARY_PATH_MODE = "off"',
+    }
+    out.update(res)
+    return out
+
+
+def c2_as_registered():
+    """C2' exactly as section 11d registers it: on every 2026 award in
+    data/arb_history.json whose 2026 step the path would have projected from
+    the 2025 board, the path's MdAPE must not exceed the MdAPE the board
+    itself records for those rows, and the signed median residual must sit
+    inside [-0.05, +0.05].
+
+    WHAT THE PATH WOULD HAVE PROJECTED. A 2025 board prices 2026 from the
+    realized 2025 salary and platform season, and the path takes the board's
+    own step for every season the board lists (rule 2). The History's Ours for
+    2026 is exactly that figure (the fold trained on 2022-2025, scored on
+    2026), so the first half compares a number with itself and passes by
+    construction; the lab's chain half (gate_c2.deviations_added_after_
+    registration.c2_chain_split) is the deviation that gives it teeth. The
+    signed-median half is a real test."""
+    hist = _doc("arb_history.json")
+    pairs = [(float(r[5]), float(r[6])) for r in hist.get("rows") or []
+             if r[0] == 2026 and r[5] and r[6]]
+    path_mdape = _mdape(pairs)
+    board_mdape = _mdape(pairs)
+    med = _median([(p - a) / a for a, p in pairs if a])
+    ok_md = path_mdape is not None and path_mdape <= board_mdape + 1e-12
+    ok_lv = med is not None and abs(med) <= C2_SIGNED_MEDIAN_BOUND
+    return {
+        "criterion": ("on every player whose 2026 award is in data/arb_history.json "
+                      "and whose 2026 step the path would have projected from the "
+                      "2025 board: MdAPE <= the MdAPE the board itself records for "
+                      "those rows, and the signed median residual inside "
+                      "[-0.05, +0.05]"),
+        "n": len(pairs), "path_mdape": path_mdape, "board_mdape": board_mdape,
+        "signed_median_residual": med,
+        "mdape_half": "PASS" if ok_md else "FAIL",
+        "level_half": "PASS" if ok_lv else "FAIL",
+        "basis": ("data/arb_history.json Ours in nominal dollars (owner answer "
+                  "M11-4), on the platform-frame model (section 15)"),
+        "by_construction": ("the MdAPE half compares the path's 2026 figure with "
+                            "the board's own 2026 figure, which are the same "
+                            "number; it cannot fail"),
+        "verdict": "PASS" if (ok_md and ok_lv) else "FAIL",
         "response_if_failed": 'SALARY_PATH_MODE = "off"',
     }
 
@@ -229,33 +273,165 @@ def c2_realized_2026():
 
 
 def c3_swartz():
+    """C3' on BOTH pools (docs/ARBITRATION_GATE.md section 16c, owner answer
+    M12-3): the repaired MLBTR join and the frozen 2026-08-09 join, each on
+    the History rows both cover, against the registered 0.216 bound. The
+    clause passes only if both pools pass; its response is no revert either
+    way."""
+    import arb_dataset as A
     hist = _doc("arb_history.json")
-    ours, sw = [], []
-    for r in hist.get("rows") or []:
-        actual, o, s = r[5], r[6], r[7]
-        if not actual or not o or not s:
-            continue
-        ours.append((float(actual), float(o)))
-        sw.append((float(actual), float(s)))
-    a, b = _mdape(ours), _mdape(sw)
-    ok = a is not None and a <= 0.216 + 1e-9
+    sc = A.scored_rows(A.build_panel(log=None)["rows"])
+    frozen_keys = set(A.swartz_by_mlbam(sc, pool="frozen")[0])
+    pools = {}
+    for name, keep in (("repaired", lambda r: True),
+                       ("frozen", lambda r: (int(r[1]), int(r[0])) in frozen_keys)):
+        ours, sw = [], []
+        for r in hist.get("rows") or []:
+            actual, o, sz = r[5], r[6], r[7]
+            if not actual or not o or not sz or not keep(r):
+                continue
+            ours.append((float(actual), float(o)))
+            sw.append((float(actual), float(sz)))
+        a, b = _mdape(ours), _mdape(sw)
+        pools[name] = {"n": len(ours), "our_mdape": a, "swartz_mdape": b,
+                       "verdict": "PASS" if (a is not None and a <= 0.216 + 1e-9)
+                       else "FAIL"}
+    ok = all(v["verdict"] == "PASS" for v in pools.values())
     return {
         "criterion": ("on the rows both cover, our MdAPE must not exceed the "
                       "2026-08-19 figure (0.216 against Swartz 0.081, a standing "
                       "NULL)"),
-        "n": len(ours), "n_at_registration": 261, "our_mdape": a,
-        "swartz_mdape": b, "bound": 0.216,
+        "pools": pools, "n_at_registration": 261, "bound": 0.216,
+        "n": pools["repaired"]["n"], "our_mdape": pools["repaired"]["our_mdape"],
+        "swartz_mdape": pools["repaired"]["swartz_mdape"],
+        "basis": ("History Ours in nominal dollars on the platform-frame model; "
+                  "the repaired pool is every History row with an MLBTR figure, "
+                  "the frozen pool the rows the 2026-08-09 loader reached"),
         "verdict": "PASS" if ok else "FAIL",
-        "what_moved": ("this clause scores the AWARD MODEL, which the "
-                       "control-window salary path does not touch: the path "
-                       "reads the board published steps and never re-fits them. "
-                       "The pool itself moved between registration and scoring "
-                       "(n 261 -> %d as the settled-row set grew) and the miss "
-                       "is at the third decimal. Recorded as a standing NULL "
-                       "getting no better, not as evidence about the coverage "
-                       "change" % (len(ours),)),
         "response_if_failed": ("no revert; recorded and blocks the verdict leaving "
                               "provisional"),
+    }
+
+
+def _off_payload():
+    """The pre-change payload: proj_export's builder with SALARY_PATH_MODE
+    "off", which section 11a registers as reproducing the pre-2026-09-16
+    payload. Built in memory; the builder's side write of
+    data/team_outlook_eval.json is restored byte for byte."""
+    import salary_path as sp
+    import proj_export as PE
+    side = DATA / "team_outlook_eval.json"
+    keep = side.read_bytes() if side.exists() else None
+    was = sp.SALARY_PATH_MODE
+    try:
+        sp.SALARY_PATH_MODE = "off"
+        return PE.build_payload()
+    finally:
+        sp.SALARY_PATH_MODE = was
+        if keep is not None:
+            side.write_bytes(keep)
+
+
+def c4_as_registered(vets, off, first_season):
+    """C4' exactly as registered: pre = the "off" payload, post = the served
+    one. Spearman on rows whose salary path did not change must be 1.0000;
+    every row moving by more than $1M must carry a newly priced season; the
+    moving count must equal the count of rows with a new season and a delta
+    over tolerance. Whole-board Spearman is recorded, not gated.
+
+    A season is PRICED pre when the off payload carries a season surplus for
+    it (the off payload has no salPath), and post when the served salPath
+    prices it (a season the tender cliff cuts is still priced: its salary is
+    known, the club declines to pay it). A NEWLY priced season is one priced
+    post and not pre. The rows that move with none are published with what
+    moved them, so the reader can see whether the cause is a defect or the
+    tender cliff the same change shipped."""
+    def val(v):
+        return v.get("surTotal") if v.get("surTotal") is not None else v.get("surNpv")
+
+    def pre_priced(v):
+        return {first_season + t for t, x in enumerate(v.get("sur") or []) if x is not None}
+
+    def post_priced(v):
+        if v.get("salPath"):
+            return {int(c[0]) for c in v["salPath"] if c[1] is not None}
+        return pre_priced(v)
+
+    pre = {v["key"]: v for v in (off.get("vets") or []) if v.get("key")}
+    tol = 1_000_000
+    unchanged_pre, unchanged_post, all_pre, all_post = [], [], [], []
+    moving, new_and_moving = 0, 0
+    without, cause = [], Counter()
+    for v in vets:
+        o = pre.get(v["key"])
+        if o is None:
+            continue
+        a, b = val(o) or 0.0, val(v) or 0.0
+        all_pre.append(a)
+        all_post.append(b)
+        new = post_priced(v) - pre_priced(o)
+        cut = any(len(c) > 6 and c[6] for c in v.get("salPath") or [])
+        if not new and not cut and post_priced(v) == pre_priced(o):
+            unchanged_pre.append(a)
+            unchanged_post.append(b)
+        if abs(b - a) > tol:
+            moving += 1
+            if new:
+                new_and_moving += 1
+            else:
+                without.append([v["key"], round(a), round(b)])
+                cause["tender_cliff_cut" if cut else "no_cut_no_new_season"] += 1
+    rho_unch = _spearman(unchanged_pre, unchanged_post)
+    ok = ((rho_unch is None or rho_unch >= 0.99995)
+          and not without and moving == new_and_moving)
+    return {
+        "criterion": ("Spearman(pre, post) on rows whose salary path is UNCHANGED "
+                      "must be 1.0000; every row moving by more than $1M must have "
+                      "at least one newly priced season; the count of moving rows "
+                      "must equal the count of rows with a newly priced season and "
+                      "a delta over tolerance. Whole-board Spearman is RECORDED, "
+                      "not gated"),
+        "pre": "proj_export.build_payload() with SALARY_PATH_MODE \"off\" on today's inputs",
+        "n_rows": len(all_post), "n_unchanged_path": len(unchanged_post),
+        "spearman_unchanged_rows": rho_unch,
+        "n_moving_over_1m": moving, "n_new_season_and_moving": new_and_moving,
+        "n_moving_without_a_new_season": len(without),
+        "moving_without_a_new_season_by_cause": dict(cause),
+        "examples": without[:5],
+        "recorded_whole_board_spearman": _spearman(all_pre, all_post),
+        "verdict": "PASS" if ok else "FAIL",
+        "response_if_failed": 'SALARY_PATH_MODE = "off" until the bug is found',
+    }
+
+
+def c5_as_registered(vets):
+    """C5' exactly as registered: violations of usd < 0.80 * prev across every
+    served path, closure seasons included, a contract-to-arbitration junction
+    included (the lab's shape counts those apart; see the deviations block).
+    Every pair whose later season is an arbitration season is scored. Figures
+    are published to the nearest $1,000, so a shortfall of under $500 is a
+    rounding of the floor itself and is counted separately, not as a cut."""
+    bad, rounding = [], 0
+    for v in vets:
+        prev = None
+        for c in v.get("salPath") or []:
+            usd, src, tok = c[1], c[5], str(c[4] or "")
+            if usd is None:
+                continue
+            is_arb = src in ("arb_ladder", "class_closure") and tok.upper().startswith("ARB")
+            if prev is not None and is_arb and usd < prev * 0.80:
+                if prev * 0.80 - usd < 500:
+                    rounding += 1
+                else:
+                    bad.append([v["key"], c[0], prev, usd])
+            prev = usd
+    return {
+        "criterion": ("violations of usd < 0.80 * prev across every served path, "
+                      "closure seasons included: 0"),
+        "violations": len(bad), "examples": bad[:5],
+        "within_thousand_rounding": rounding,
+        "verdict": "PASS" if not bad else "FAIL",
+        "response_if_failed": '"ladder" (closure off) until it is fixed',
     }
 
 
@@ -641,14 +817,43 @@ def c9_horizon_against_published_service_time():
     }
 
 
+def _c7a_as_registered(c7a: dict) -> dict:
+    """C7'a with BOTH halves of its registered criterion. The lab's shape
+    rests the verdict on the first half and publishes the second half's count
+    (the R1 conflict); that shape is kept in the deviations block."""
+    out = dict(c7a)
+    scored = out.get("n_scored") or 0
+    ok = (scored and out.get("rows_whose_floor_lowered_the_total") == 0
+          and out.get("negative_surplus_on_a_kept_cuttable_season") == 0)
+    out["verdict"] = "NOT_SCORED" if not scored else ("PASS" if ok else "FAIL")
+    out["verdict_basis"] = "both halves of the registered criterion"
+    return out
+
+
+#: Section 11d's clauses, in its order. C10' is the lab's own addition.
+REGISTERED_CLAUSES = ("c1_window_mae", "c2_realized_2026_awards", "c3_swartz_gap",
+                      "c4_reordering_is_the_coverage", "c5_monotone_paths",
+                      "c6_prospect_clamps", "c7a_floor_never_lowers",
+                      "c7b_backward_beats_forward", "c8_closure_chain",
+                      "c9_horizon_vs_service_time")
+
+
 def build() -> dict:
     import salary_path as sp
     proj, vets = _vets()
     c7 = c7_the_floor(proj, vets)
+    off = _off_payload()
+    c10 = c10_the_salary_leg_has_a_star_tail(proj)
+    c10["added_after_registration"] = (
+        "C10' is not one of section 11d's clauses: the lab added it on "
+        "2026-09-17, after registration. Published, never part of the verdict")
     block = {
         "scored_at": None,
-        "produced_by": "tools/arb_path_gate.py",
-        "protocol": "docs/ARBITRATION_GATE.md section 11, registered before this lab existed",
+        "produced_by": "tools/arb_path_gate.py --write",
+        "protocol": ("docs/ARBITRATION_GATE.md section 11, registered before this "
+                     "lab existed; scored as section 11d registers each clause, "
+                     "after the GATE A platform-frame re-run (section 15) and the "
+                     "MLBTR repair (section 16), per owner answers M12-1 to M12-3"),
         "order_of_events": (
             "THIS GATE SCORES A SERVED MODEL, NOT A CANDIDATE. The owner ordered "
             "the control-window salary path served in full on 2026-09-16 before any "
@@ -659,13 +864,13 @@ def build() -> dict:
         "served_mode": sp.SALARY_PATH_MODE,
         "board_vintage": sp.board_rows().get("vintage"),
         "c1_window_mae": c1_window_mae(),
-        "c2_realized_2026_awards": c2_realized_2026(),
+        "c2_realized_2026_awards": c2_as_registered(),
         "c3_swartz_gap": c3_swartz(),
-        "c4_reordering_is_the_coverage": c4_reordering_is_exactly_the_coverage(vets),
-        "c5_monotone_paths": c5_monotone(vets),
+        "c4_reordering_is_the_coverage": c4_as_registered(vets, off, int(proj.get("first_season") or 0)),
+        "c5_monotone_paths": c5_as_registered(vets),
         "c6_prospect_clamps": c6_no_prospect_is_arb_priced(proj),
-        "c10_salary_leg_star_tail": c10_the_salary_leg_has_a_star_tail(proj),
-        "c7a_floor_never_lowers": c7["c7a"],
+        "c10_salary_leg_star_tail": c10,
+        "c7a_floor_never_lowers": _c7a_as_registered(c7["c7a"]),
         "c7b_backward_beats_forward": c7["c7b"],
         "c8_closure_chain": c8_closure_chain(),
         "c9_horizon_vs_service_time": c9_horizon_against_published_service_time(),
@@ -718,12 +923,27 @@ def build() -> dict:
     }
     from datetime import date
     block["scored_at"] = date.today().isoformat()
-    verdicts = {k: v.get("verdict") for k, v in block.items()
-                if isinstance(v, dict) and "verdict" in v}
+    # THE LAB'S OWN SHAPES, published beside the registered scoring as
+    # deviations added after registration (owner answer M12-1 and the
+    # task that scored this block). None of them enters a verdict.
+    block["deviations_added_after_registration"] = {
+        "note": ("Shapes tools/arb_path_gate.py gave these clauses on 2026-09-17, "
+                 "after section 11d was registered. Each is published for the "
+                 "record and adjudicates nothing; the registered clause above "
+                 "carries the verdict."),
+        "c2_chain_split": c2_realized_2026(),
+        "c4_lab_shape": c4_reordering_is_exactly_the_coverage(vets),
+        "c5_contract_junctions_counted_apart": c5_monotone(vets),
+        "c7a_first_half_only": c7["c7a"],
+        "c10_salary_leg_star_tail": "published at the top level, outside the verdict",
+    }
+    verdicts = {k: block[k].get("verdict") for k in REGISTERED_CLAUSES}
     block["verdicts"] = verdicts
     fails = sorted(k for k, v in verdicts.items() if v == "FAIL")
     block["failing_clauses"] = fails
-    block["verdict"] = "FAIL" if fails else "PASS_WITH_UNSCORED_CLAUSES"
+    unscored = sorted(k for k, v in verdicts.items() if v in ("NOT_SCORED", "UNDERPOWERED"))
+    block["verdict"] = ("FAIL" if fails else
+                        ("PASS_WITH_UNSCORED_CLAUSES" if unscored else "PASS"))
     # WHICH FAILURE MOVES WHAT. A block verdict of FAIL is not by itself an
     # instruction; each clause carries its own registered response and two of
     # them were registered as recorded-not-reverted before anything was scored.
@@ -733,6 +953,20 @@ def build() -> dict:
                  if "SALARY_PATH_MODE" in str(block[k].get("response_if_failed"))
                  or str(block[k].get("response_if_failed", "")).startswith('"')]
     block["failing_clauses_that_move_the_served_number"] = reverting
+    # THE MODE THE REGISTERED RESPONSES SET. The modes nest (off < ladder <
+    # closure < full: each adds one rule), so several failing clauses resolve
+    # to the lowest mode any of them names. Section 11e; a failure the owner
+    # chooses to keep serving is his call and is recorded beside this, never
+    # in place of it.
+    order = ("off", "ladder", "closure", "full")
+    named = []
+    for k in reverting:
+        resp = str(block[k].get("response_if_failed") or "")
+        hit = [m for m in order if '"%s"' % m in resp]
+        if hit:
+            named.append(min(hit, key=order.index))
+    block["registered_response_mode"] = (min(named, key=order.index) if named
+                                         else block["served_mode"])
     return block
 
 
