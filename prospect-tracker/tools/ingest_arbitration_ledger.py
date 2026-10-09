@@ -42,11 +42,36 @@ USAGE
     python tools/ingest_arbitration_ledger.py fetch         # <=6 pages, resumes
     python tools/ingest_arbitration_ledger.py build         # parse cache -> ledger
     python tools/ingest_arbitration_ledger.py check         # offline re-parse
+    python tools/ingest_arbitration_ledger.py recapture --date 2026-10-09
+                                                            # one dated re-capture
+
+DATED RE-CAPTURES (task Q9_17, plan row FAA-3)
+The January pages above are permanent and their sha1 values in the ledger stay
+reproducible, so a later look at the same URLs never overwrites them. A
+re-capture is written under its own dated key, .cache/mlbtr/recapture/<date>/,
+with a receipts.json naming each request (URL, fetch time, status, bytes,
+sha1). One invocation fetches RECAPTURE_URLS (the three trackers and the three
+"Players Exchange Filing Figures" posts, six requests) under the same limits as
+fetch: 8 s delay plus jitter, at most --max-requests (6), and the first non-200
+or connection error aborts the batch. A dated key that already holds a receipt
+is never fetched again. build reads every dated key and adds, to the January
+tracker rows only, the re-captured outcome and club, a hearing block when a
+hearing line fires, and the filed figures; no entry is added or removed.
+
+The capture plan from this winter on: an exchange-day capture in January 2027
+(the evening of the filing deadline) and a post-hearing capture in February 2027
+(after the last hearing), each under its own dated key. MLBTR does not write
+hearing results into these pages: the 2026-10-09 re-capture found no hearing
+line on any of the six, although the 2024 and 2025 trackers were last modified
+2024-09-21 and 2025-09-12 and the 2024 filing post 2024-07-22, months after
+those winters' hearings. The February capture must therefore name the
+hearing-result posts it reads as URLs of their own.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import logging
 import random
@@ -80,6 +105,20 @@ INDEX_URLS = (
     "https://www.mlbtraderumors.com/arbitration-eligibles",
 )
 
+# The one dated re-capture's six URLs: the three exchange-day trackers and the
+# three filing-figure posts each tracker links to (2024's carries a different
+# title, "Requested Salary Figures For 22 Players ...").
+RECAPTURE_DIR = CACHE / "recapture"
+RECAPTURE_URLS = (
+    "https://www.mlbtraderumors.com/2024/01/2024-arbitration-tracker.html",
+    "https://www.mlbtraderumors.com/2025/01/2025-arbitration-tracker.html",
+    "https://www.mlbtraderumors.com/2026/01/2026-arbitration-tracker.html",
+    "https://www.mlbtraderumors.com/2024/01/requested-salary-figures-for-22-"
+    "players-who-didnt-reach-agreements-by-arbitration-filing-deadline.html",
+    "https://www.mlbtraderumors.com/2025/01/17-players-exchange-filing-figures.html",
+    "https://www.mlbtraderumors.com/2026/01/18-players-exchange-filing-figures.html",
+)
+
 _ARB_URL_RE = re.compile(
     r"https?://(?:www\.)?mlbtraderumors\.com/(\d{4})/(\d{2})/"
     r"([^\"'?#]*arbitration[^\"'?#]*\.html)", re.I)
@@ -105,11 +144,14 @@ _OUTCOME_PATTERNS = (
                              r"(?!.*\barbitration\b)", re.I)),
     ("club_option", re.compile(r"\bclub option\b|\bexercised\b", re.I)),
     ("split_deal", re.compile(r"\bsplit deal\b|\bsplit contract\b", re.I)),
+    # The hearing classes precede `exchanged`: a tracker line updated after a
+    # hearing keeps its exchange-day words ("No agreement reached, likely
+    # heading to hearing. Won hearing"), and the later fact must win.
+    ("hearing_won", re.compile(r"won .{0,20}hearing|prevailed", re.I)),
+    ("hearing_lost", re.compile(r"lost .{0,20}hearing", re.I)),
     ("exchanged", re.compile(r"no agreement reached|did not reach agreement|"
                              r"head(?:ing|ed) (?:to|for) (?:a )?hearing|"
                              r"exchanged figures", re.I)),
-    ("hearing_won", re.compile(r"won .{0,20}hearing|prevailed", re.I)),
-    ("hearing_lost", re.compile(r"lost .{0,20}hearing", re.I)),
     ("nontendered", re.compile(r"non-?tender", re.I)),
     ("agreed", re.compile(r"\bagreement\b|\bagreed\b|\bsettled\b", re.I)),
 )
@@ -201,12 +243,14 @@ class Blocked(Exception):
     """Connection-level failure or a throttling status. Stop everything."""
 
 
-def fetch_one(url: str, *, force: bool = False, first: bool = False) -> Path:
-    """Fetch one URL into the permanent cache.
+def fetch_one(url: str, *, force: bool = False, first: bool = False,
+              dest: Path | None = None) -> Path:
+    """Fetch one URL into the permanent cache (or into `dest`, a dated
+    re-capture directory, when given).
 
     Raises DeadURL for 404/410 (skip this url, keep going) and Blocked for
     anything else (stop the batch)."""
-    p = cache_path(url)
+    p = cache_path(url) if dest is None else dest / _slug(url)
     if p.exists() and not force:
         return p
     _assert_online(f"fetch {url}")
@@ -221,7 +265,7 @@ def fetch_one(url: str, *, force: bool = False, first: bool = False) -> Path:
     except (urllib.error.URLError, urllib.error.HTTPError, OSError,
             RuntimeError) as exc:
         code = getattr(exc, "code", None)
-        err = CACHE / f"{_slug(url)}.err.json"
+        err = (CACHE if dest is None else dest) / f"{_slug(url)}.err.json"
         err.parent.mkdir(parents=True, exist_ok=True)
         err.write_text(json.dumps({
             "url": url, "at": datetime.now(timezone.utc).isoformat(),
@@ -440,13 +484,300 @@ def candidate_urls(first: int = 2021, last: int = 2026) -> set[str]:
     return out
 
 
+# --------------------------------------------------------------------------- #
+# Dated re-captures and the filing-figure posts (task Q9_17, plan row FAA-3)
+# --------------------------------------------------------------------------- #
+
+_FILING_SLUG_RE = re.compile(r"filing-figures|filing-deadline", re.I)
+# The club as the subject of a hearing verb: the word right before it.
+_CLUB_SUBJECT_RE = re.compile(
+    r"\b(?:team|club|" + "|".join(re.escape(n) for n in TRACKER_CLUB_CODES)
+    + r")\s+$", re.I)
+
+
+def hearing_result(text: str) -> str | None:
+    """'player_won', 'club_won' or None for one tracker line.
+
+    Tracker lines are written about the player ("Filed at ...", "$4MM
+    agreement"), so "won his hearing" is a player win and "lost his hearing" a
+    club win; a line whose subject is the club ("Tigers won the hearing")
+    reverses that. The vocabulary is Cot's Contracts' (player_won / club_won),
+    so the 2011-2023 backfill and the trackers read alike."""
+    cls = _classify(text)
+    if cls not in ("hearing_won", "hearing_lost"):
+        return None
+    m = re.search(r"\b(?:won|lost|prevailed)\b", text, re.I)
+    subject_is_club = bool(m and _CLUB_SUBJECT_RE.search(text[:m.start()]))
+    player_won = (cls == "hearing_won") != subject_is_club
+    return "player_won" if player_won else "club_won"
+
+
+def _recapture_kind(url: str) -> tuple[int | None, str | None]:
+    """(class_year, kind) for a re-captured URL: 'tracker' or 'filing'."""
+    cy, kind = _classify_url(url)
+    if kind == "tracker":
+        return cy, kind
+    m = re.search(r"/(\d{4})/(\d{2})/(.+)\.html", url)
+    if m and _FILING_SLUG_RE.search(m.group(3)):
+        # A filing post goes up on exchange day, in January of the class year.
+        return int(m.group(1)), "filing"
+    return None, None
+
+
+def parse_filing_post(html: str, *, class_year: int, source_url: str) -> list[dict]:
+    """One "Players Exchange Filing Figures" post -> one row per exchanged case.
+
+    Two layouts. 2025 and 2026: a plain club heading paragraph, then
+    "Name (5.114): Filed at $32MM, team filed at $19MM". 2024: no headings and no
+    service time, "Name: $4.8MM in desired salary. <strong>Angels</strong>
+    offered $4.3MM". The player's figure is the first dollar figure and the
+    club's the second; the club is the heading above the list, else the club
+    named inside the line."""
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+    body = soup.find(class_="entry-content") or soup
+    out: list[dict] = []
+    for li in body.find_all("li"):
+        # A player link is a Baseball Reference page, or a Baseball Reference
+        # search link when the name is ambiguous (2024 Jose Suarez and Jacob
+        # Webb, 2026 Dylan Lee and Bryce Miller); the latter joins by name.
+        a = li.find("a", href=re.compile(r"baseball-reference\.com/", re.I))
+        if a is None:
+            continue
+        bref = _BREF_RE.search(a.get("href") or "")
+        text = li.get_text(" ", strip=True).replace("\xa0", " ")
+        figs = [m for m in _MONEY_RE.finditer(text)]
+        if len(figs) < 2:
+            continue
+        ul = li.find_parent("ul")
+        prev = ul.find_previous_sibling() if ul is not None else None
+        head = None
+        if prev is not None and prev.name == "p":
+            t = prev.get_text(" ", strip=True)
+            head = t if t in TRACKER_CLUB_CODES else None
+        if head is None:
+            for st in li.find_all("strong"):
+                t = st.get_text(" ", strip=True)
+                if t in TRACKER_CLUB_CODES:
+                    head = t
+                    break
+        if head is None:
+            # 2024 Vladimir Guerrero Jr.: "$19.9MM. Blue Jays $18.05MM", the
+            # club in plain text between the two figures.
+            mid = text[figs[0].end():figs[1].start()]
+            for name in sorted(TRACKER_CLUB_CODES, key=len, reverse=True):
+                if re.search(r"\b" + re.escape(name) + r"\b", mid):
+                    head = name
+                    break
+        svc = _SERVICE_RE.search(text)
+        out.append({
+            "class_year": int(class_year),
+            "bbref_id": bref.group(1) if bref else None,
+            "player_name": a.get_text(" ", strip=True),
+            "service_time": f"{svc.group(1)}.{svc.group(2)}" if svc else None,
+            "club_heading": head,
+            "club": TRACKER_CLUB_CODES.get(head) if head else None,
+            "player_usd": _money(figs[0].group(0)),
+            "club_usd": _money(figs[1].group(0)),
+            "source_url": source_url,
+            "text": text[:240],
+        })
+    return out
+
+
+def load_recaptures() -> list[dict]:
+    """Every dated re-capture on disk, oldest first, parsed but not joined."""
+    out = []
+    if not RECAPTURE_DIR.exists():
+        return out
+    for d in sorted(p for p in RECAPTURE_DIR.iterdir() if p.is_dir()):
+        rp = d / "receipts.json"
+        if not rp.exists():
+            continue
+        receipts = json.loads(rp.read_text("utf-8"))
+        pages = []
+        for req in receipts.get("requests") or []:
+            if req.get("status") != 200:
+                continue
+            p = d / req["file"]
+            html = p.read_text("utf-8", errors="ignore")
+            cy, kind = _recapture_kind(req["url"])
+            if kind == "tracker":
+                rows = parse_post(html, class_year=cy, kind="tracker",
+                                  source_url=req["url"])
+            elif kind == "filing":
+                rows = parse_filing_post(html, class_year=cy, source_url=req["url"])
+            else:
+                rows = []
+            mod = re.search(r'dateModified"\s*:\s*"([^"]+)"', html)
+            pages.append({"url": req["url"], "class_year": cy, "kind": kind,
+                          "rows": rows, "html": html,
+                          "sha1_bytes": req.get("sha1_bytes"),
+                          "page_modified": mod.group(1) if mod else None})
+        out.append({"date": d.name, "receipts": receipts, "pages": pages})
+    return out
+
+
+def apply_recaptures(entries: list[dict], captures: list[dict]) -> dict:
+    """Add the re-capture fields to the exchange-day tracker rows, in place.
+
+    Every tracker row gains `hearing`: None unless a hearing line fires on the
+    exchange-day page or on a re-capture, else {"result", "capture", "text"}.
+    A row the re-captured tracker lists gains `recaptured` (date, outcome,
+    club). An exchanged row the filing post lists gains `filing` (player and
+    club figures, the club the post names). Nothing else on a row changes: the
+    exchange-day outcome, figure and club stay the record, and no entry is
+    added or removed, so every consumer of the ledger reads what it read."""
+    def key(cy, bref, name):
+        return (int(cy), bref or (name or "").lower())
+
+    tracker = {key(e["class_year"], e.get("bbref_id"), e.get("player_name")): e
+               for e in entries if e.get("kind") == "tracker"}
+    by_name: dict[tuple, list] = {}
+    for e in tracker.values():
+        by_name.setdefault((int(e["class_year"]), (e.get("player_name") or "").lower()),
+                           []).append(e)
+
+    def find(r):
+        # Baseball Reference id first; else the name, only when exactly one
+        # tracker row of that winter carries it.
+        e = tracker.get(key(r["class_year"], r.get("bbref_id"), r.get("player_name")))
+        if e is None:
+            hits = by_name.get((int(r["class_year"]), (r.get("player_name") or "").lower()))
+            e = hits[0] if hits and len(hits) == 1 else None
+        return e
+
+    for e in tracker.values():
+        res = hearing_result(e.get("text") or "")
+        e["hearing"] = ({"result": res, "capture": "exchange_day",
+                         "text": e.get("text")} if res else None)
+    block: dict[str, dict] = {}
+    for cap in captures:
+        srcs: dict[str, dict] = {}
+        for page in cap["pages"]:
+            s = {"class_year": page["class_year"], "kind": page["kind"],
+                 "sha1_bytes": page["sha1_bytes"],
+                 "page_modified": page["page_modified"],
+                 "n_rows": len(page["rows"]), "n_joined": 0}
+            if page["kind"] == "tracker":
+                from bs4 import BeautifulSoup
+                s["club_headings"] = len(club_headings(
+                    BeautifulSoup(page["html"], "html.parser")))
+                s.update(n_outcome_changed=0, n_club_changed=0, n_hearing_lines=0)
+                for r in page["rows"]:
+                    e = find(r)
+                    if e is None:
+                        continue
+                    s["n_joined"] += 1
+                    e["recaptured"] = {"on": cap["date"], "outcome": r["outcome"],
+                                       "club": r.get("club")}
+                    s["n_outcome_changed"] += r["outcome"] != e["outcome"]
+                    s["n_club_changed"] += r.get("club") != e.get("club")
+                    res = hearing_result(r.get("text") or "")
+                    if res:
+                        s["n_hearing_lines"] += 1
+                        e["hearing"] = {"result": res, "capture": cap["date"],
+                                        "text": r.get("text")}
+            elif page["kind"] == "filing":
+                s.update(n_club_differs_from_tracker=0, unjoined=[])
+                for r in page["rows"]:
+                    e = find(r)
+                    if e is None:
+                        s["unjoined"].append(r["player_name"])
+                        continue
+                    s["n_joined"] += 1
+                    e["filing"] = {"player_usd": r["player_usd"],
+                                   "club_usd": r["club_usd"], "club": r["club"],
+                                   "on": cap["date"], "source_url": r["source_url"]}
+                    s["n_club_differs_from_tracker"] += r["club"] != e.get("club")
+            srcs[page["url"]] = s
+        block[cap["date"]] = {
+            "receipts": f".cache/mlbtr/recapture/{cap['date']}/receipts.json",
+            "aborted": cap["receipts"].get("aborted"),
+            "sources": srcs,
+        }
+    return block
+
+
+def cots_backfill() -> dict:
+    """The 2011-2023 arbitration backfill read off the Cot's Contracts club
+    sheets of the one scripted capture (owner answers ARB-CLUB-1 (b) and
+    X05-20 (b), task COTS_CAPTURE_DEFERRALS), with that capture's receipts.
+
+    Never fetches: it reads tools/ingest_cots.py's cached sheets and receipts
+    only. PARTIAL by construction (a case appears only for a player still on a
+    club sheet at the capture date). The club is the one the sheet's note names
+    ("re-signed by Houston", "won arbitration case with Houston"), the club the
+    player settled or went to a hearing with; the sheet he sits on today is
+    kept beside it. `exchanged` is True when figures are listed or a hearing was
+    held, None when the note lists no figures (the sheet does not say)."""
+    spec = importlib.util.spec_from_file_location(
+        "ingest_cots", ROOT / "tools" / "ingest_cots.py")
+    cots = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cots)
+    files = cots.newest_files()
+    if not files:
+        return {"available": False, "reason": "no Cot's capture in .cache/cots"}
+    receipts = cots._load_receipts()
+    by_file = {s.get("file"): s for s in (receipts.get("sheets") or [])
+               + (receipts.get("drops") or [])}
+    cases, cited = [], []
+    for slug, fp in sorted(files.items()):
+        rec = by_file.get(fp.name) or {}
+        cited.append({"sheet": slug, "url": rec.get("url"),
+                      "fetched_at": rec.get("fetched_at"), "file": fp.name,
+                      "bytes": rec.get("bytes"), "sha256": rec.get("sha256"),
+                      "source": rec.get("source")})
+        for p in cots.parse_sheet(fp.read_text(encoding="utf-8", errors="replace"), slug):
+            cases += cots.arbitration_events(p)
+    cots._club_codes(cases)
+    lo, hi = cots.BACKFILL_FIRST, cots.BACKFILL_LAST
+    rows, seen = [], set()
+    for c in cases:
+        if not c["season"] or not lo <= c["season"] <= hi:
+            continue
+        k = (c["player"], c["season"], c["kind"])
+        if k in seen:
+            continue
+        seen.add(k)
+        hearing = c["kind"] == "hearing"
+        figures = c["player_figure_usd"] is not None
+        rows.append({
+            "class_year": int(c["season"]), "player_name": c["player"],
+            "club": c.get("club"), "club_raw": c["club_raw"], "sheet": c["sheet"],
+            "process": "hearing" if hearing else "settled",
+            "exchanged": True if (hearing or figures) else None,
+            "hearing": {"result": c["result"]} if hearing else None,
+            "filing": ({"player_usd": c["player_figure_usd"],
+                        "club_usd": c["club_figure_usd"]} if figures else None),
+            "date": c["date"],
+        })
+    rows.sort(key=lambda r: (r["class_year"], r["club"] or "", r["player_name"]))
+    return {
+        "available": True,
+        "attribution": cots.ATTRIBUTION,
+        "source_url": cots.BASE,
+        "window": [lo, hi],
+        "note": ("PARTIAL by construction: only players still on a Cot's club "
+                 "sheet at the capture date carry their history. Lab only; "
+                 "docs/ARBITRATION_GATE.md section 13b does not read it unless a "
+                 "dated amendment says so."),
+        # The capture run's own record, without its User-Agent string.
+        "capture": {k: v for k, v in ((receipts.get("captures") or [{}])[0]).items()
+                    if k != "user_agent"},
+        "receipts": cited,
+        "n_cases": len(rows),
+        "rows": rows,
+    }
+
+
 def build(*, offline: bool = False) -> dict:
     """Parse everything in the cache into the committed ledger."""
     entries: list[dict] = []
     sources: dict[str, dict] = {}
     unclassified: list[str] = []
     for p in sorted(CACHE.glob("*")):
-        if p.suffix in (".json",):
+        if p.suffix in (".json",) or p.is_dir():
             continue
         html = p.read_text("utf-8", errors="ignore")
         url = None
@@ -485,6 +816,7 @@ def build(*, offline: bool = False) -> dict:
             src["format_gap"] = {"bbref_links": n_bref, "service_tokens": n_svc}
         sources[url] = src
     id_census = {} if offline else resolve_names(entries)
+    recaptures = apply_recaptures(entries, load_recaptures())
     coverage: dict[str, dict] = {}
     for e in entries:
         cy = str(e["class_year"])
@@ -507,6 +839,8 @@ def build(*, offline: bool = False) -> dict:
         "coverage": coverage,
         "identity_census": id_census,
         "unclassified_cache_files": unclassified,
+        "recaptures": recaptures,
+        "cots_backfill": cots_backfill(),
         "entries": sorted(entries, key=lambda e: (e["class_year"],
                                                   e.get("bbref_id") or "",
                                                   e.get("player_name") or "")),
@@ -645,10 +979,55 @@ def cmd_fetch(args) -> int:
     return 0
 
 
+def _receipts_path(date: str) -> Path:
+    return RECAPTURE_DIR / date / "receipts.json"
+
+
+def cmd_recapture(date: str, max_requests: int) -> int:
+    """One dated re-capture of RECAPTURE_URLS under .cache/mlbtr/recapture/<date>/."""
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date or ""):
+        print("--date YYYY-MM-DD is required")
+        return 2
+    if _receipts_path(date).exists():
+        print(f"refused: {date} already holds a receipt; a dated key is captured once")
+        return 2
+    if len(RECAPTURE_URLS) > max_requests:
+        print(f"refused: {len(RECAPTURE_URLS)} URLs exceed --max-requests {max_requests}")
+        return 2
+    dest = RECAPTURE_DIR / date
+    dest.mkdir(parents=True, exist_ok=True)
+    run = {"captured_on": date, "user_agent": UA,
+           "limits": {"min_delay_s": MIN_DELAY, "jitter_s": JITTER,
+                      "max_requests": max_requests},
+           "requests": [], "aborted": None}
+    for i, u in enumerate(RECAPTURE_URLS):
+        # Taken before fetch_one's polite delay: when the request was queued.
+        at = datetime.now(timezone.utc).isoformat()
+        try:
+            p = fetch_one(u, first=(i == 0), dest=dest)
+        except (DeadURL, Blocked) as exc:
+            # Circuit breaker: the first non-200 ends the batch, a 404 included.
+            run["requests"].append({"url": u, "requested_at": at, "status": None,
+                                    "error": f"{type(exc).__name__}: {exc}"})
+            run["aborted"] = f"at {u}: {exc}"
+            print(f"ABORT (circuit breaker) at {u}: {exc}")
+            break
+        body = p.read_bytes()
+        run["requests"].append({
+            "url": u, "requested_at": at, "status": 200, "file": p.name,
+            "bytes": len(body),
+            "sha1_bytes": hashlib.sha1(body).hexdigest()})
+        print(f"  [{i + 1}/{len(RECAPTURE_URLS)}] {u} ({len(body)} bytes)")
+    _receipts_path(date).write_text(json.dumps(run, indent=1), encoding="utf-8")
+    return 1 if run["aborted"] else 0
+
+
 def main(argv=None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("command", choices=("discover", "fetch", "build", "check"))
+    ap.add_argument("command", choices=("discover", "fetch", "build", "check",
+                                        "recapture"))
+    ap.add_argument("--date", help="recapture: the dated cache key, YYYY-MM-DD")
     ap.add_argument("--max-requests", type=int, default=DEFAULT_MAX_REQUESTS)
     ap.add_argument("--write", action="store_true",
                     help="build/check: write data/_labs/arb_ledger.json")
@@ -664,6 +1043,8 @@ def main(argv=None) -> int:
         return 0
     if args.command == "fetch":
         return cmd_fetch(args)
+    if args.command == "recapture":
+        return cmd_recapture(args.date, args.max_requests)
     doc = check() if args.command == "check" else build()
     print(f"entries: {len(doc['entries'])}")
     for cy in sorted(doc["coverage"]):

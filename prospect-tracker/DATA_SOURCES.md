@@ -244,6 +244,10 @@ between the sentinels.
   `data/_labs/arb_ledger.json`, which ships in neither deploy consumer, so
   the projection and tracker entries are not republished (owner answer
   M23-3, 2026-09-25). MLBTR keeps its /sources/ credit as a comparator.
+  Re-captures go under a dated key, `.cache/mlbtr/recapture/<date>/`, with
+  a receipts file, so the permanent January pages and their sha1 stay
+  reproducible; the first (2026-10-09, six requests) added the filed
+  figures and a hearing field to the tracker rows.
 - Cot's Contracts (Baseball Prospectus), `tools/ingest_cots.py`: ONE scripted
   capture of the 30 club sheets (owner answer X05-20 = b, 2026-09-30, 'one
   scripted capture with attribution'), cached under the gitignored
