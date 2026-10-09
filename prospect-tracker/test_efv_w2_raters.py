@@ -447,6 +447,7 @@ def test_progress_rows_are_development_rows_with_a_screening_block(tmp_path):
     docs = W.arm_docs(doc)
     assert len(docs) == 1 and docs[0]["role"] == "development"
     assert docs[0]["screening"]["development_only"] is True
+    assert docs[0]["screening"]["admitted_folds"] == 2          # a number the page prints
     rows = P.build_dev_rows(docs[0], sources=[], date="2026-10-09", trigger="efv_change",
                             now_iso="2026-10-09T03:00:00Z", frames=W.DEV_FRAMES,
                             raters=P.SCREEN_RATERS, deltas=P.SCREEN_DELTAS,

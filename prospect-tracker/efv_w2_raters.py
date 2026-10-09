@@ -395,6 +395,8 @@ def read_arm(inp, fid: str, arm: dict, *, B: int, twin_cols: dict | None = None)
                          n_by_side={s: sum(1 for g in cols[1] if g.startswith(s + "|"))
                                     for s in sides})
     blk["frame_version"] = "lv1_v2" if FRAME_KIND[fid] == "lv" else "vm2"
+    blk["verdict"] = VERDICT              # SC.frame_block stamps the scouting lane's text
+    blk["note"] = NOTE if fid in DEV_FRAMES else f"{SPENT_LABEL}; chooses and tunes nothing"
     blk["fold_deltas_note"] = "candidate minus V2 base within each (side, vintage) group"
     if twin_cols is not None:
         saved = inp.cols
@@ -709,7 +711,9 @@ def arm_docs(doc: dict) -> list[dict]:
                "side": "both" if len(a["sides"]) > 1 else a["sides"][0], "kind": a["kind"],
                "components": ["rater_panel_resid"], "exploratory": False,
                "development_only": True, "artifact": "data/_labs/efv_w2/efv_w2_raters.json",
-               "admitted_folds": {fid: a["frames"][fid]["admitted_folds"] for fid in DEV_FRAMES},
+               "admitted_folds": sum(a["frames"][fid]["admitted_folds"] for fid in DEV_FRAMES),
+               "admitted_folds_by_frame": {fid: a["frames"][fid]["admitted_folds"]
+                                           for fid in DEV_FRAMES},
                "twin_within": {fid: (a["frames"][fid].get("twin") or {}).get("within")
                                for fid in DEV_FRAMES}}
         out.append({"role": "development", "model_id": a["model_id"],
