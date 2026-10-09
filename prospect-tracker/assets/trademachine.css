@@ -181,6 +181,43 @@
 #trade-machine .tm-cbt-foot a { color: var(--accent-cyan); }
 @media (max-width: 720px) { #trade-machine .tm-cbt-grid { grid-template-columns: 1fr; } }
 
+/* Comparable real trades under the evaluator (wiring W07): the five nearest
+   real deals from the PROSPX Trade Audit, display only. */
+#trade-machine .tm-comps {
+  display: block; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border);
+  font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.5; min-width: 0;
+}
+#trade-machine .tm-comps:empty { display: none; }
+#trade-machine .tm-comps-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 4px; }
+#trade-machine .tm-comps-h { margin: 0; font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); }
+#trade-machine .tm-comps-month { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-tertiary); }
+#trade-machine .tm-comps-note, #trade-machine .tm-comps-method { font-size: 11px; color: var(--text-tertiary); overflow-wrap: anywhere; }
+#trade-machine .tm-comps-method { margin-top: 6px; }
+#trade-machine .tm-comps a { color: var(--accent-cyan); }
+#trade-machine .tm-comps-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+#trade-machine .tm-comp {
+  padding: 6px 10px; background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 4px); min-width: 0;
+}
+#trade-machine .tm-comp-top { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; margin-bottom: 2px; }
+#trade-machine .tm-comp-date { font-family: var(--font-mono); font-size: 11px; color: var(--text-primary); font-weight: 700; }
+#trade-machine .tm-comp-clubs { font-weight: 600; color: var(--text-primary); }
+#trade-machine .tm-comp-d { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+#trade-machine .tm-comp-side { padding: 2px 0; min-width: 0; }
+#trade-machine .tm-comp-club { display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; color: var(--text-secondary); }
+#trade-machine .tm-comp-club .club-link { font-weight: 700; color: var(--text-primary); }
+#trade-machine .tm-comp-total { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text-primary); }
+#trade-machine .tm-comp-parties { display: flex; flex-wrap: wrap; gap: 2px 12px; padding-left: 2px; min-width: 0; }
+#trade-machine .tm-comp-party { display: inline-flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+#trade-machine .tm-comp-name { color: var(--text-primary); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+#trade-machine a.tm-comp-name:hover { color: var(--accent-cyan); }
+#trade-machine .tm-comp-party .tm-val { font-size: 11px; }
+#trade-machine .tm-comp-zero { color: var(--text-tertiary); }
+#trade-machine .tm-comp-legs { display: flex; flex-wrap: wrap; gap: 2px 16px; margin-top: 3px; padding-top: 3px; border-top: 1px dashed var(--border); }
+#trade-machine .tm-comp-leg { min-width: 0; overflow-wrap: anywhere; }
+#trade-machine .tm-comp-lbl { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; color: var(--text-tertiary); margin-right: 4px; }
+#trade-machine .tm-comp-foot { margin-top: 2px; font-size: 10px; color: var(--text-tertiary); overflow-wrap: anywhere; }
+
 /* Trade Board table: finished column treatment (header band, row dividers, hover,
    right-aligned numerics, and group dividers separating identity | value | signals). */
 .tm-board-table { width: 100%; border-collapse: collapse; }

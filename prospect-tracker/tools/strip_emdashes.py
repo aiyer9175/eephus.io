@@ -137,6 +137,7 @@ TARGETS: list[str] = [
     "betting_export.py",
     "war_board_export.py",
     "trade_realized_export.py",
+    "trade_audit_export.py",
     "bullpen_export.py",
     "pal_export.py",
     "source_backtest.py",

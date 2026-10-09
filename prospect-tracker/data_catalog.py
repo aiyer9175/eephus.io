@@ -353,6 +353,19 @@ ARTIFACTS = (
                  "and every later stint. No row means no MLB time, counted as zero."),
     },
     {
+        "file": "trade_audit_deals.json", "group": "mlb",
+        "title": "Trade Audit deal list",
+        "what": ("Every real deal the PROSPX Transactions Trade Audit prices, one row "
+                 "per deal with each party's value today and realized-to-date leg, "
+                 "for the Trade Machine's Comparable real trades panel."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_trade_comps.py",
+        "note": ("Rebuilt by trade_audit_export.py with the audit page's own rules and "
+                 "pinned against its served cards. Values are today's trade values, "
+                 "not the deal date's; a party with no trade value counts $0 and is "
+                 "named. No verdict is stored."),
+    },
+    {
         "file": "mlbstats_windows.json", "group": "mlb",
         "title": "Multi-year windows (index)",
         "what": ("Which multi-season windows the lab built, what each window's "

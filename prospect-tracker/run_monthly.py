@@ -2356,6 +2356,15 @@ def rebuild_only(out_dir: Path = Path("data"), *,
                                        log=log.info)
             except Exception:
                 log.exception("trade realized export failed in rebuild_only - continuing")
+            # The Trade Audit's deal list (wiring W07): every real deal the PROSPX
+            # Transactions audit prices, on the board and realized leg just written,
+            # for the Trade Machine's Comparable real trades panel.
+            try:
+                from trade_audit_export import export as _export_trade_audit_deals
+                _export_trade_audit_deals(out_path=out_dir / "trade_audit_deals.json",
+                                          data_dir=out_dir, log=log.info)
+            except Exception:
+                log.exception("trade audit deals export failed in rebuild_only - continuing")
         except Exception:
             log.exception("trade value export crashed in rebuild_only - continuing")
 

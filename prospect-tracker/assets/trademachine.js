@@ -601,6 +601,227 @@ function _tmCbtHtml() {
 // real model uncertainty, so a sub-$5M edge is not a meaningful "winner."
 const BALANCED_THRESHOLD_MM = 5;
 
+// ---- Comparable real trades (wiring W07, owner ask 4, 2026-09-30) ---------
+// The five real deals from the PROSPX Transactions Trade Audit nearest the deal
+// on the builder, read from the audit's own deal list (trade_audit_deals,
+// written by trade_audit_export.py with the page's rules). Display only: no
+// figure here enters a trade value or the verdict above. A comparable is
+// context, not a price precedent: every real deal is priced at today's trade
+// values, not on its deal date, with a party who has no trade value at $0 and
+// named (owner answer M9-1), and its realized leg runs through the eWAR as-of
+// date (owner answer M9-2). The functions between this marker and the end
+// marker are pure; the tests run them in a real JS engine on the served list.
+const TM_COMP_RULE = "comps_v1";
+const TM_COMP_N = 5;
+// Weights of the published rule: per prospect or MLB player of difference, per
+// hitter or pitcher of difference, and per month between the deal months.
+const TM_COMP_W = { mix: 0.5, pos: 0.25, month: 1 / 6 };
+const _TM_COMP_PITCH = ["SP", "RP", "P", "RHP", "LHP", "SHP", "SIRP", "MIRP", "CP", "CL"];
+function _tmCompPosGroup(pos) {
+  const t = String(pos || "").split("/")[0].trim().toUpperCase();
+  if (!t) return null;
+  return _TM_COMP_PITCH.indexOf(t) >= 0 ? "pit" : "hit";
+}
+// A side total in $M on a signed log scale whose unit is the balanced band: two
+// totals a band apart sit close, and $100M against $120M counts for less than
+// $0M against $20M.
+function _tmCompSlog(mm) {
+  const x = Number(mm) || 0;
+  return Math.sign(x) * Math.log(1 + Math.abs(x) / BALANCED_THRESHOLD_MM);
+}
+// One side: value received, prospects (P), MLB players (M), hitters, pitchers.
+function _tmCompFeat(mm, parts) {
+  const f = { mm: Number(mm) || 0, p: 0, m: 0, hit: 0, pit: 0 };
+  for (const x of parts) {
+    if (x.kind === "P") f.p++; else f.m++;
+    const g = _tmCompPosGroup(x.pos);
+    if (g) f[g]++;
+  }
+  return f;
+}
+// The builder's side, from its evaluator items ({kind, pos, mm}).
+function _tmCompBuiltSide(items) {
+  const list = items || [];
+  return _tmCompFeat(list.reduce((s, x) => s + (Number(x.mm) || 0), 0),
+    list.map(x => ({ kind: x.kind === "prospect" ? "P" : "M", pos: x.pos })));
+}
+// A real deal's parties as objects, by the list's own field order.
+function _tmCompParties(deal, fields) {
+  return (deal.parties || []).map(r => {
+    const o = {};
+    fields.forEach((f, i) => { o[f] = r[i]; });
+    return o;
+  });
+}
+function _tmCompDealSides(deal, fields) {
+  const ps = _tmCompParties(deal, fields);
+  return {
+    a: _tmCompFeat(deal.a_mm, ps.filter(x => x.side === "a")),
+    b: _tmCompFeat(deal.b_mm, ps.filter(x => x.side === "b")),
+    parties: ps,
+  };
+}
+function _tmCompSideDist(x, y) {
+  return Math.abs(_tmCompSlog(x.mm) - _tmCompSlog(y.mm))
+    + TM_COMP_W.mix * (Math.abs(x.p - y.p) + Math.abs(x.m - y.m))
+    + TM_COMP_W.pos * (Math.abs(x.hit - y.hit) + Math.abs(x.pit - y.pit));
+}
+// Months between two calendar months, around the year (December to January is 1).
+function _tmCompMonthGap(m1, m2) {
+  const g = Math.abs(m1 - m2) % 12;
+  return Math.min(g, 12 - g);
+}
+// Distance from the built deal to one real deal, in the orientation that fits
+// best (Side A against the club named first, or against the club named second;
+// a tie keeps the order named). Rounded to 1e-6 so ties order alike everywhere.
+function _tmCompDistance(builtA, builtB, month, deal, fields) {
+  const s = _tmCompDealSides(deal, fields);
+  const ab = _tmCompSideDist(builtA, s.a) + _tmCompSideDist(builtB, s.b);
+  const ba = _tmCompSideDist(builtA, s.b) + _tmCompSideDist(builtB, s.a);
+  const mo = parseInt(String(deal.date || "").slice(5, 7), 10);
+  const gap = (isFinite(mo) && month) ? _tmCompMonthGap(month, mo) : 6;
+  const flip = ba < ab;
+  return { d: Math.round(((flip ? ba : ab) + TM_COMP_W.month * gap) * 1e6) / 1e6, flip, sides: s };
+}
+// The n nearest real deals: distance, then the newer deal, then the deal key.
+function _tmComps(itemsA, itemsB, month, doc, n) {
+  if (!doc || !Array.isArray(doc.deals) || !doc.party_fields) return [];
+  if (!(itemsA && itemsA.length && itemsB && itemsB.length)) return [];
+  const A = _tmCompBuiltSide(itemsA), B = _tmCompBuiltSide(itemsB);
+  return doc.deals
+    .map(deal => Object.assign({ deal }, _tmCompDistance(A, B, month, deal, doc.party_fields)))
+    .sort((x, y) => (x.d - y.d)
+      || String(y.deal.date || "").localeCompare(String(x.deal.date || ""))
+      || String(x.deal.key || "").localeCompare(String(y.deal.key || "")))
+    .slice(0, n == null ? TM_COMP_N : n);
+}
+// The only verdict words a comparable prints: the shared balanced band, or the
+// club that received more. clubA is the club whose total is netA's first term.
+function _tmCompVerdict(net, clubA, clubB) {
+  if (net == null || !isFinite(Number(net))) return null;
+  const v = Number(net);
+  if (Math.abs(v) < BALANCED_THRESHOLD_MM) return { kind: "balanced", text: `Balanced: within $${BALANCED_THRESHOLD_MM}M` };
+  return { kind: v > 0 ? "a" : "b", text: `${v > 0 ? clubA : clubB} received $${Math.abs(v).toFixed(1)}M more` };
+}
+// ---- end comparable real trades -------------------------------------------
+
+const _TMC = { doc: null, state: "idle", month: null };
+const _TM_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// The deal list is read once, the first time both sides hold a player.
+function _tmEnsureDeals() {
+  if (_TMC.state !== "idle") return;
+  _TMC.state = "loading";
+  fetch(DATA_BASE + "trade_audit_deals.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      const ok = j && Array.isArray(j.deals) && Array.isArray(j.party_fields);
+      _TMC.doc = ok ? j : null;
+      _TMC.state = ok ? "ready" : "unavailable";
+    })
+    .catch(() => { _TMC.state = "unavailable"; })
+    .then(_tmPaintComps);
+}
+function _tmCompMonth() {
+  return _TMC.month || (new Date().getMonth() + 1);
+}
+function _tmCompMoney(v) {
+  const x = Number(v) || 0;
+  return `${x < 0 ? "-$" : "$"}${Math.abs(x).toFixed(1)}M`;
+}
+// One club's line in a real deal: what it received, each party with his kind,
+// position and value today, and the side total.
+function _tmCompSideRow(club, like, parties, total, extra) {
+  const chips = parties.map(x => {
+    const kind = x.kind === "P" ? "prospect" : "mlb";
+    const name = x.key
+      ? `<a class="tm-comp-name" href="/prospx/#player=${encodeURIComponent(x.key)}">${escapeHtml(x.name)}</a>`
+      : `<span class="tm-comp-name">${escapeHtml(x.name)}</span>`;
+    const val = x.mm == null
+      ? `<span class="tm-val tm-comp-zero" title="No trade value on file today; counted as $0 in this side's total">$0, unpriced</span>`
+      : `<span class="tm-val">${_tmCompMoney(x.mm)}</span>`;
+    return `<span class="tm-comp-party" data-tm-comp-mm="${x.mm == null ? 0 : x.mm}"><span class="tm-kind tm-kind--${kind}" title="${kind === "prospect" ? "Prospect" : "MLB player"}">${x.kind === "P" ? "P" : "M"}</span>${name}${x.pos ? `<span class="tm-sub">${escapeHtml(x.pos)}</span>` : ""}${val}</span>`;
+  });
+  if (extra > 0.005) chips.push(`<span class="tm-comp-party"><span class="tm-sub">bonus pool or cash</span><span class="tm-val">$${Number(extra).toFixed(2)}M</span></span>`);
+  return `<div class="tm-comp-side">
+      <div class="tm-comp-club">${_tmClubA(club, escapeHtml(club))} received <span class="tm-cbt-dim">(matched to Side ${like})</span><span class="tm-comp-total">${_tmCompMoney(total)}</span></div>
+      <div class="tm-comp-parties">${chips.length ? chips.join("") : '<span class="tm-cbt-dim">no named player</span>'}</div>
+    </div>`;
+}
+function _tmCompItemHtml(c) {
+  const g = c.deal;
+  const ps = c.sides.parties;
+  const first = c.flip ? "b" : "a", second = c.flip ? "a" : "b";
+  const club = s => (s === "a" ? g.a : g.b);
+  const tot = s => (s === "a" ? g.a_mm : g.b_mm);
+  const ext = s => (s === "a" ? g.a_extra : g.b_extra);
+  const mo = parseInt(String(g.date || "").slice(5, 7), 10);
+  const when = isFinite(mo) ? `${_TM_MONTHS[mo - 1]} ${String(g.date).slice(0, 4)}` : escapeHtml(g.date || "");
+  const vt = _tmCompVerdict(g.net, g.a, g.b);
+  const rzReady = g.rz_a_war != null && g.rz_b_war != null && g.rz_net != null;
+  const rv = rzReady && g.rz_any ? _tmCompVerdict(g.rz_net, g.a, g.b) : null;
+  const rzSide = s => `${escapeHtml(club(s))} ${Number(s === "a" ? g.rz_a_war : g.rz_b_war).toFixed(1)} WAR, ${_tmCompMoney(s === "a" ? g.rz_a_mm : g.rz_b_mm)}`;
+  const rzText = !rzReady ? "not available"
+    : !g.rz_any ? "no MLB time for either club since the deal"
+    : `${rzSide(first)}; ${rzSide(second)}. ${!rv ? "" : rv.kind === "balanced" ? `Balanced so far: within $${BALANCED_THRESHOLD_MM}M` : escapeHtml(rv.text) + " so far"}`;
+  const unpriced = ps.filter(x => x.mm == null);
+  const foot = unpriced.length
+    ? `<div class="tm-comp-foot">Unpriced, valued at $0: ${unpriced.map(x => `${escapeHtml(x.name)} (to ${escapeHtml(club(x.side))})`).join(", ")}.</div>`
+    : "";
+  return `<li class="tm-comp" data-tm-comp="${escapeHtml(g.key)}" data-tm-comp-d="${c.d}" data-tm-comp-verdict="${vt ? vt.kind : ""}">
+      <div class="tm-comp-top"><span class="tm-comp-date">${when}</span><span class="tm-comp-clubs">${escapeHtml(club(first))} and ${escapeHtml(club(second))}</span><span class="tm-comp-d" title="Distance under rule ${TM_COMP_RULE}; lower is nearer">distance ${c.d.toFixed(2)}</span></div>
+      ${_tmCompSideRow(club(first), "A", ps.filter(x => x.side === first), tot(first), ext(first))}
+      ${_tmCompSideRow(club(second), "B", ps.filter(x => x.side === second), tot(second), ext(second))}
+      <div class="tm-comp-legs">
+        <div class="tm-comp-leg"><span class="tm-comp-lbl">Value today</span> ${vt ? escapeHtml(vt.text) : ""}</div>
+        <div class="tm-comp-leg"><span class="tm-comp-lbl">Realized to date</span> ${rzText}</div>
+      </div>
+      ${foot}
+    </li>`;
+}
+function _tmCompsHtml() {
+  const both = _TM.a.length && _TM.b.length;
+  const month = _tmCompMonth();
+  const opts = _TM_MONTHS.map((m, i) => `<option value="${i + 1}"${i + 1 === month ? " selected" : ""}>${m}</option>`).join("");
+  const head = `<div class="tm-comps-head"><h3 class="tm-comps-h">Comparable real trades</h3>`
+    + (both ? `<label class="tm-comps-month">Deal month <select class="chip" data-tm-comp-month aria-label="Month of the deal on the builder">${opts}</select></label>` : "")
+    + `</div>`;
+  const audit = `<a href="/prospx/#tab=traded&amp;acq=trade">PROSPX Trade Audit</a>`;
+  // Nothing until both sides hold a player, like the CBT block: an empty builder
+  // keeps its fold for the board.
+  if (!both) return "";
+  if (_TMC.state === "unavailable") return head + `<div class="tm-comps-note">The real-deal list could not be read; the evaluator above is unaffected.</div>`;
+  if (_TMC.state !== "ready") return head + `<div class="tm-comps-note">Loading the real deals.</div>`;
+  const doc = _TMC.doc;
+  const comps = _tmComps(_TM.a, _TM.b, month, doc, TM_COMP_N);
+  const dpw = doc.dollars_per_war_mm != null ? `$${Number(doc.dollars_per_war_mm).toFixed(1)}M` : "the trade value's rate";
+  const basis = `<div class="tm-comps-note">Context, not a price precedent. Each real deal is priced at today's trade values`
+    + `${doc.values_as_of ? ` (${escapeHtml(doc.values_as_of)})` : ""}, not on its deal date; a party with no trade value counts $0 and is named.`
+    + ` Realized to date is the WAR each player produced for the club that received him since the deal`
+    + `${doc.realized_as_of ? `, through ${escapeHtml(doc.realized_as_of)}` : ""}, at ${dpw} per WAR.</div>`;
+  const method = `<div class="tm-comps-method">Method (rule ${TM_COMP_RULE}, nearest ${TM_COMP_N} of ${doc.deals.length} deals in the ${audit}):`
+    + ` per side, the gap in value received on the scale s(v) = sign(v) x ln(1 + |v| / $${BALANCED_THRESHOLD_MM}M),`
+    + ` plus ${TM_COMP_W.mix} per prospect and per MLB player of difference, plus ${TM_COMP_W.pos} per hitter and per pitcher of difference;`
+    + ` plus the months between the deal months over 6. Each real deal is read in the orientation that fits best; ties go to the newer deal.`
+    + ` The builder's sides are on its own prices; verdicts use the same $${BALANCED_THRESHOLD_MM}M balanced band.</div>`;
+  const list = comps.length
+    ? `<ol class="tm-comps-list">${comps.map(c => _tmCompItemHtml(c)).join("")}</ol>`
+    : `<div class="tm-comps-note">No real deal on file.</div>`;
+  return head + basis + list + method;
+}
+function _tmPaintComps() {
+  const host = document.getElementById("tm-comps");
+  if (!host) return;
+  host.innerHTML = _tmCompsHtml();
+  _tmWireGl(host);
+  const sel = host.querySelector("[data-tm-comp-month]");
+  if (sel) sel.onchange = () => {
+    _TMC.month = Number(sel.value) || null;
+    _tmPaintComps();
+    const again = document.querySelector("#tm-comps [data-tm-comp-month]");
+    if (again) again.focus();
+  };
+}
+
 // One-subject card exports go through EEPHUS_HUB.openCard (the shared wrapper -
 // DE-DUP 2026-07-23; it prefers the GFX modal, falls back to the direct
 // shareCard download).
@@ -735,8 +956,12 @@ function renderTradeMachine(opts) {
     <div class="tm-grid">${sideHtml("a", "Side A")}${sideHtml("b", "Side B")}</div>
     ${verdict}
     ${_tmCbtHtml()}
+    <section id="tm-comps" class="tm-comps" aria-label="Comparable real trades"></section>
   </div>`;
   _tmWireGl(el);
+  // Comparable real trades (W07): the deal list loads once both sides hold a player.
+  if (bothSides) _tmEnsureDeals();
+  _tmPaintComps();
   if (opts.announce) _tmAnnounce(opts.announce, bothSides ? vText : "");
   el.querySelectorAll("[data-tm-search]").forEach(inp => {
     inp.addEventListener("focus", _tmEnsureDetail);
