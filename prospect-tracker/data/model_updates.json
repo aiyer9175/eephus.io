@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-08T18:38:00Z",
+ "generated_at": "2026-10-09T03:39:18Z",
  "rule": "append-only; an event is added when a model's registry state, its card legs, an eFV progress ledger row or a dated note changes; every number is copied from the artifact key named in the event; the edge is printed by edge() v1; events sit in append order, each run's batch ordered by date",
  "edge_rule_version": 1,
  "result_form": "Result ({stat}): {body}",
@@ -8,12 +8,12 @@
  "sources": [
   {
    "path": "data/model_registry.json",
-   "sha256": "58a5098819c2b4e09a5eb3789f4765c2c132bc09cc0f0e77ba5c844de23493c7"
+   "sha256": "cbf946524a4675afd2ceb1d1753f41cb8c0184532abd03520c2ff11cf2fd4841"
   },
   {
    "path": "data/efv_progress.json",
-   "sha256": "d6dab4ad8fbd63aa8a759fb893fb14464f8ea7cf6185b597b77606740916629f",
-   "generated_at": "2026-10-08T17:43:19Z"
+   "sha256": "56002b9993ccabe18c9809858d10c8e51c25b02c3f8f2c6842b996678a830d8f",
+   "generated_at": "2026-10-09T03:10:59Z"
   },
   {
    "path": "data/model_updates_typed.json",
@@ -21,8 +21,8 @@
   },
   {
    "path": "data/arbitration_eval.json",
-   "sha256": "83305b16ebf6568658808c28c672c5d2e1b6b7520ba76e60d3dbb64933e06459",
-   "generated_at": "2026-08-09"
+   "sha256": "6f801da0ba22f604c0a489dac1e396457019a2034adec0462d2e5827e0b4899e",
+   "generated_at": "2026-10-08"
   },
   {
    "path": "data/betting_model_eval.json",
@@ -51,8 +51,8 @@
   },
   {
    "path": "data/fa_gate2_eval.json",
-   "sha256": "417f404d00b7234f76372185a4afa9f0eafdd55d07e7593ee2a4b8a45b2304ee",
-   "generated_at": "2026-08-19T22:15:29Z"
+   "sha256": "e0bb53293ee5cf47b3bf35940ad365b88324bc4835a60cc72796d4a076183398",
+   "generated_at": "2026-10-08T23:11:22Z"
   },
   {
    "path": "data/fa_gate1_eval.json",
@@ -208,8 +208,8 @@
   "note": "eFV progress frames are selected by name and no other frame is opened; nothing is cut by consensus-FV cell; no registry prose number is quoted"
  },
  "efv_copy": {
-  "rows_copied": 29,
-  "skipped_other_frames": 30,
+  "rows_copied": 30,
+  "skipped_other_frames": 37,
   "skipped_vm_after_handover": 0,
   "not_copied_no_alias": [
    {
@@ -239,44 +239,496 @@
    {
     "run_id": "2026-10-04T04:05:48Z|lv_dev|94f808b9",
     "ledger_model_id": "efv_label_pool"
+   },
+   {
+    "run_id": "2026-10-08T18:01:30Z|lv_dev|4091ed03",
+    "ledger_model_id": "efv_v2_screen:wave1:txt_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T18:01:30Z|lv_dev|80ace01d",
+    "ledger_model_id": "efv_v2_screen:wave1:txt_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T18:01:30Z|lv_dev|08481e9c",
+    "ledger_model_id": "efv_v2_screen:wave1:txt_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T18:01:30Z|lv_dev|fa9fa5fb",
+    "ledger_model_id": "efv_v2_screen:wave1:milb_floor_2005:both"
+   },
+   {
+    "run_id": "2026-10-08T18:01:30Z|lv_dev|7b67fa80",
+    "ledger_model_id": "efv_v2_screen:wave1:pick_overall_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T18:01:30Z|lv_dev|4aae23e5",
+    "ledger_model_id": "efv_v2_screen:wave1:pick_overall_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|vm_dev|e0f8cf8a",
+    "ledger_model_id": "efv_v2_mc_1"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|lv_dev|d3cc7c20",
+    "ledger_model_id": "efv_v2_mc_1"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|vm_dev|47e90592",
+    "ledger_model_id": "efv_v2_mc_2"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|lv_dev|a755a80e",
+    "ledger_model_id": "efv_v2_mc_2"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|vm_dev|06f2fa1a",
+    "ledger_model_id": "efv_v2_mc_3"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|lv_dev|6ddf8456",
+    "ledger_model_id": "efv_v2_mc_3"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|vm_dev|393343b0",
+    "ledger_model_id": "efv_v2_mc_4a"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|lv_dev|e2b3d51d",
+    "ledger_model_id": "efv_v2_mc_4a"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|vm_dev|fe92a2d5",
+    "ledger_model_id": "efv_v2_mc_4b"
+   },
+   {
+    "run_id": "2026-10-08T18:30:31Z|lv_dev|f9e5c08d",
+    "ledger_model_id": "efv_v2_mc_4b"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|00237a38",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_fb_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|18870c08",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_fb_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|be16ad4e",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_brk_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|977e200d",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_brk_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|ad782d72",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_ch_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|ffdc6b71",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_ch_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|513130aa",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_cmd_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|10c4e406",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_cmd_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|eef6ec64",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_cmd_present_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|d18f0f04",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_cmd_present_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|ff36c507",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_raw_pwr_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|06ea172a",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_raw_pwr_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|1c45c9fe",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_game_pwr_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|ea0136ed",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_game_pwr_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|6a33a0a0",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_pwr_present_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|3ddcd8e3",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_pwr_present_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|a556e964",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_field_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|1c7fdbd8",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_field_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|930c9bd4",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_arm_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|38680e49",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_arm_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|c6c187ce",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_posval_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|2d4a0a3d",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_posval_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|25128f19",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_arsenal_set_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|d5c934a7",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_arsenal_set_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|lv_dev|621d8c3a",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_defence_set_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:47:11Z|vm_dev|64dbfaf6",
+    "ledger_model_id": "efv_w2_scout:wave2:w2s_defence_set_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:50:22Z|lv_dev|9fcee75b",
+    "ledger_model_id": "efv_w2_anchor:an1_rel"
+   },
+   {
+    "run_id": "2026-10-08T19:50:22Z|vm_dev|cf705b24",
+    "ledger_model_id": "efv_w2_anchor:an1_rel"
+   },
+   {
+    "run_id": "2026-10-08T19:50:22Z|vm_dev|709322d9",
+    "ledger_model_id": "efv_w2_anchor:an1_pl"
+   },
+   {
+    "run_id": "2026-10-08T19:50:22Z|lv_dev|9a41baf5",
+    "ledger_model_id": "efv_w2_anchor:an2_pos"
+   },
+   {
+    "run_id": "2026-10-08T19:50:22Z|vm_dev|69db268b",
+    "ledger_model_id": "efv_w2_anchor:an2_pos"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|lv_dev|2f88f37a",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_bb_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|vm_dev|f76fc39d",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_bb_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|lv_dev|9fe5c9f1",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_k_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|vm_dev|b70c7544",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_k_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|lv_dev|a559077a",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_iso_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|vm_dev|5cd4427a",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_iso_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|lv_dev|51571e0e",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_hr_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|vm_dev|82b9fbb1",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_hr_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|lv_dev|87b5e8e2",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_air_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|vm_dev|1bae8668",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_air_hit:hit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|lv_dev|17a2b14f",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_bb_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|vm_dev|ac6ef164",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_bb_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|lv_dev|358ac75c",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_gb_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|vm_dev|e80fece4",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_gb_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|lv_dev|c3a48483",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_hr_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T19:56:20Z|vm_dev|9281d59c",
+    "ledger_model_id": "efv_v2_screen:wave2:w2m_hr_pit:pit"
+   },
+   {
+    "run_id": "2026-10-08T20:47:57Z|lv_dev|2e3f891c",
+    "ledger_model_id": "efv_v3"
+   },
+   {
+    "run_id": "2026-10-08T20:47:57Z|vm_dev|4cc2fbec",
+    "ledger_model_id": "efv_v3"
+   },
+   {
+    "run_id": "2026-10-09T02:40:06Z|lv_dev|c311ce9c",
+    "ledger_model_id": "efv_v2_screen:efv4:w4p_pop_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:40:06Z|vm_dev|e6be9385",
+    "ledger_model_id": "efv_v2_screen:efv4:w4p_pop_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:40:06Z|lv_dev|ef98de01",
+    "ledger_model_id": "efv_v2_screen:efv4:w4p_pop_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:40:06Z|vm_dev|5f7d5165",
+    "ledger_model_id": "efv_v2_screen:efv4:w4p_pop_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|84600657",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_stints_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|82287914",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_stints_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|f847d322",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_days_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|d1ff3f2b",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_days_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|1198c2ba",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_sixty_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|b0b0625b",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_sixty_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|6e363c4a",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_open_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|2676a036",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_open_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|0b6838d3",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_recur_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|c8851756",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_recur_time_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|d3334e25",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_stints_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|611047a2",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_stints_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|46a0a8f2",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_days_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|30edfa98",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_days_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|10f67e8c",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_sixty_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|d94b053c",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_sixty_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|79a7e1d5",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_open_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|7f4a8631",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_open_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|6b6946b1",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_recur_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|533b2555",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_recur_time_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|0c9d7858",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_stints_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|aa5c6593",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_stints_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|8a2068f3",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_days_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|2904bf09",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_days_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|819b96d9",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_sixty_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|9534eb36",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_sixty_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|edecd3c1",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_open_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|9d2da980",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_open_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|lv_dev|e0c24824",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_recur_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:41:55Z|vm_dev|8a2d081d",
+    "ledger_model_id": "efv_v2_screen:wave2:w2i_recur_skill_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:54:24Z|lv_dev|304f4975",
+    "ledger_model_id": "efv_v2_screen:wave2:w2n_nri_pre_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:54:24Z|vm_dev|ca523745",
+    "ledger_model_id": "efv_v2_screen:wave2:w2n_nri_pre_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:54:24Z|lv_dev|d8e24531",
+    "ledger_model_id": "efv_v2_screen:wave2:w2n_nri_pre_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:54:24Z|vm_dev|fd76d259",
+    "ledger_model_id": "efv_v2_screen:wave2:w2n_nri_pre_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:54:24Z|lv_dev|ece215d4",
+    "ledger_model_id": "efv_v2_screen:wave2:w2n_nri_count_pre_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:54:24Z|vm_dev|a128605a",
+    "ledger_model_id": "efv_v2_screen:wave2:w2n_nri_count_pre_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T02:54:24Z|lv_dev|14cd332f",
+    "ledger_model_id": "efv_v2_screen:wave2:w2n_nri_count_pre_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T02:54:24Z|vm_dev|9b0a0a84",
+    "ledger_model_id": "efv_v2_screen:wave2:w2n_nri_count_pre_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T03:05:45Z|lv_dev|25e148ea",
+    "ledger_model_id": "efv_w2_raters:wave4:w2r_panel_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T03:05:45Z|vm_dev|23e820d1",
+    "ledger_model_id": "efv_w2_raters:wave4:w2r_panel_hit:hit"
+   },
+   {
+    "run_id": "2026-10-09T03:05:45Z|lv_dev|859d7956",
+    "ledger_model_id": "efv_w2_raters:wave4:w2r_panel_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T03:05:45Z|vm_dev|c5322a0c",
+    "ledger_model_id": "efv_w2_raters:wave4:w2r_panel_pit:pit"
+   },
+   {
+    "run_id": "2026-10-09T03:05:45Z|lv_dev|12da5000",
+    "ledger_model_id": "efv_w2_raters:wave4:w2r_panel_both:both"
+   },
+   {
+    "run_id": "2026-10-09T03:05:45Z|vm_dev|c94175d6",
+    "ledger_model_id": "efv_w2_raters:wave4:w2r_panel_both:both"
    }
   ]
  },
  "note_problems": [],
  "counts": {
-  "events": 510,
-  "default_view": 108,
+  "events": 518,
+  "default_view": 111,
   "by_kind": {
    "artifact_change": 26,
    "backfill": 4,
    "data_correction": 4,
    "first_scored": 21,
    "frame_change": 1,
-   "model_change": 13,
+   "model_change": 14,
    "note": 18,
-   "registered": 343,
-   "removed": 1,
-   "rescored": 44,
+   "registered": 347,
+   "removed": 2,
+   "rescored": 46,
    "scoring_correction": 2,
    "verdict": 33
   },
   "by_layer": {
    "development": 9,
-   "headline": 92,
+   "headline": 95,
    "note": 18,
-   "registration": 370,
+   "registration": 375,
    "typed": 21
   },
   "verdict_changes": 33,
-  "registry_models": 342,
-  "served_models": 245,
+  "registry_models": 345,
+  "served_models": 248,
   "scored_models": 22,
   "scored_legs": 42,
   "model_states": {
    "lead": 13,
-   "no_benchmark": 71,
+   "no_benchmark": 73,
    "no_contest": 1,
-   "no_eval": 22,
+   "no_eval": 23,
    "tie": 4,
    "trails": 1,
    "unresolved": 3,
@@ -284,8 +736,8 @@
   },
   "registry_verdicts": {
    "deprecated": 88,
-   "provisional": 155,
-   "unvalidated": 45,
+   "provisional": 157,
+   "unvalidated": 46,
    "validated": 54
   },
   "by_family": {
@@ -295,15 +747,15 @@
    "CollegeSavant": 7,
    "Development": 97,
    "Draft": 8,
-   "Fantasy": 9,
+   "Fantasy": 10,
    "Franchise": 3,
    "Free Agency": 14,
    "Hall of Fame": 6,
    "MLB Projections": 7,
    "MLB Stats": 25,
    "Management": 9,
-   "Other": 10,
-   "PROSPX and eFV": 107,
+   "Other": 11,
+   "PROSPX and eFV": 108,
    "Sources and Consensus": 11,
    "Trade Machine": 5,
    "eWAR": 6
@@ -409,7 +861,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": false,
     "stale": false
    }
@@ -435,7 +887,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 63,
     "age_is_evidence": true,
     "stale": false
    }
@@ -454,25 +906,25 @@
    "state": "lead",
    "edge": {
     "state": "lead",
-    "text": "Result (MdAPE, arb-1): +0.174 lead"
+    "text": "Result (MdAPE, arb-1): +0.155 lead"
    },
    "today": [
     {
      "stat": "MdAPE, arb-1",
      "better": "lower",
      "role": "headline",
-     "model": 0.255,
+     "model": 0.184,
      "benchmark_label": "intercept plus one WAR term",
-     "benchmark": 0.428,
-     "n": 409,
-     "delta": 0.174,
+     "benchmark": 0.339,
+     "n": 421,
+     "delta": 0.155,
      "ci95": null,
-     "mde95": 0.053,
+     "mde95": 0.043,
      "t": null,
      "resolvable": true,
      "digits": 3,
      "edge_state": "lead",
-     "edge_text": "Result (MdAPE, arb-1): +0.174 lead",
+     "edge_text": "Result (MdAPE, arb-1): +0.155 lead",
      "keys": {
       "model": "results.arb1.mdape_champion",
       "benchmark": "results.arb1.mdape_bar",
@@ -482,25 +934,25 @@
      },
      "source": {
       "path": "data/arbitration_eval.json",
-      "sha256": "83305b16ebf6568658808c28c672c5d2e1b6b7520ba76e60d3dbb64933e06459"
+      "sha256": "6f801da0ba22f604c0a489dac1e396457019a2034adec0462d2e5827e0b4899e"
      }
     },
     {
      "stat": "MdAPE, arb-2+",
      "better": "lower",
      "role": "secondary",
-     "model": 0.158,
+     "model": 0.099,
      "benchmark_label": "median step multiplier",
-     "benchmark": 0.181,
-     "n": 379,
-     "delta": 0.023,
+     "benchmark": 0.182,
+     "n": 391,
+     "delta": 0.083,
      "ci95": null,
-     "mde95": 0.028,
+     "mde95": 0.027,
      "t": null,
-     "resolvable": false,
+     "resolvable": true,
      "digits": 3,
-     "edge_state": "tie",
-     "edge_text": "Result (MdAPE, arb-2+): tie (+0.023)",
+     "edge_state": "lead",
+     "edge_text": "Result (MdAPE, arb-2+): +0.083 lead",
      "keys": {
       "model": "results.arb2plus.mdape_champion",
       "benchmark": "results.arb2plus.mdape_bar",
@@ -510,41 +962,48 @@
      },
      "source": {
       "path": "data/arbitration_eval.json",
-      "sha256": "83305b16ebf6568658808c28c672c5d2e1b6b7520ba76e60d3dbb64933e06459"
+      "sha256": "6f801da0ba22f604c0a489dac1e396457019a2034adec0462d2e5827e0b4899e"
      }
     },
     {
      "stat": "MdAPE vs MLBTR",
      "better": "lower",
      "role": "secondary",
-     "model": 0.216,
+     "model": 0.178,
      "benchmark_label": "MLB Trade Rumors projection",
-     "benchmark": 0.081,
-     "n": 261,
-     "delta": -0.135,
-     "ci95": null,
+     "benchmark": 0.077,
+     "n": 808,
+     "delta": -0.101,
+     "ci95": [
+      -0.122,
+      -0.088
+     ],
      "mde95": null,
      "t": null,
      "resolvable": null,
      "digits": 3,
-     "edge_state": "unresolved",
-     "edge_text": "Result (MdAPE vs MLBTR): 0.135 behind, no interval on record",
+     "edge_state": "trails",
+     "edge_text": "Result (MdAPE vs MLBTR): trails by 0.101",
      "keys": {
       "model": "a6_swartz.ours_mdape",
       "benchmark": "a6_swartz.swartz_mdape",
-      "n": "a6_swartz.n"
+      "n": "a6_swartz.n",
+      "ci95": [
+       "a6_swartz.gap_ci_vs_swartz.mdape.lo95",
+       "a6_swartz.gap_ci_vs_swartz.mdape.hi95"
+      ]
      },
      "source": {
       "path": "data/arbitration_eval.json",
-      "sha256": "83305b16ebf6568658808c28c672c5d2e1b6b7520ba76e60d3dbb64933e06459"
+      "sha256": "6f801da0ba22f604c0a489dac1e396457019a2034adec0462d2e5827e0b4899e"
      }
     }
    ],
    "registered": "2026-08-09",
-   "last_update": "2026-10-03",
-   "events": 2,
+   "last_update": "2026-10-08",
+   "events": 3,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -674,7 +1133,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1177,7 +1636,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1203,7 +1662,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1258,7 +1717,7 @@
    "last_update": "2026-10-03",
    "events": 16,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1284,7 +1743,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1362,7 +1821,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1727,7 +2186,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1753,7 +2212,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 71,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2162,7 +2621,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2259,25 +2718,25 @@
    "state": "lead",
    "edge": {
     "state": "lead",
-    "text": "Result (MAE, guarantee $M): +1.43 lead"
+    "text": "Result (MAE, guarantee $M): +0.88 lead"
    },
    "today": [
     {
      "stat": "MAE, guarantee $M",
      "better": "lower",
      "role": "headline",
-     "model": 9.69,
+     "model": 9.85,
      "benchmark_label": "nearest-comps median",
-     "benchmark": 11.12,
+     "benchmark": 10.74,
      "n": 1199,
-     "delta": 1.43,
+     "delta": 0.88,
      "ci95": null,
      "mde95": null,
      "t": null,
      "resolvable": true,
      "digits": 2,
      "edge_state": "lead",
-     "edge_text": "Result (MAE, guarantee $M): +1.43 lead",
+     "edge_text": "Result (MAE, guarantee $M): +0.88 lead",
      "keys": {
       "model": "pooled.guarantee.mae_model",
       "benchmark": "pooled.guarantee.mae_base",
@@ -2286,15 +2745,15 @@
      },
      "source": {
       "path": "data/fa_gate2_eval.json",
-      "sha256": "417f404d00b7234f76372185a4afa9f0eafdd55d07e7593ee2a4b8a45b2304ee"
+      "sha256": "e0bb53293ee5cf47b3bf35940ad365b88324bc4835a60cc72796d4a076183398"
      }
     }
    ],
    "registered": "2026-06-10",
-   "last_update": "2026-08-19",
-   "events": 4,
+   "last_update": "2026-10-08",
+   "events": 5,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2398,7 +2857,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2452,7 +2911,7 @@
    "last_update": "2026-09-24",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 15,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2530,7 +2989,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2582,7 +3041,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2842,7 +3301,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -3302,7 +3761,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3641,7 +4100,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4031,7 +4490,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 100,
+    "artifact_age_days": 101,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4057,7 +4516,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 100,
+    "artifact_age_days": 101,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4858,7 +5317,7 @@
    "last_update": "2026-10-03",
    "events": 14,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5175,7 +5634,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5513,7 +5972,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5903,7 +6362,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6033,7 +6492,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6059,7 +6518,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6137,7 +6596,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6189,7 +6648,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 74,
+    "artifact_age_days": 75,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6475,7 +6934,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6813,7 +7272,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 68,
+    "artifact_age_days": 69,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6891,7 +7350,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6917,7 +7376,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6943,7 +7402,7 @@
    "last_update": "2026-07-30",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7281,7 +7740,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 70,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7359,7 +7818,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 60,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7567,7 +8026,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 54,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7593,7 +8052,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 54,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7853,7 +8312,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 76,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8252,7 +8711,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 58,
+    "artifact_age_days": 59,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8278,7 +8737,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8304,7 +8763,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8330,7 +8789,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8382,7 +8841,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8408,7 +8867,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8622,6 +9081,32 @@
    }
   },
   {
+   "model_id": "fantasy_prospect_leg_blend",
+   "label": "Fantasy Prospect Leg Blend",
+   "family": "Fantasy",
+   "served": true,
+   "verdict": "unvalidated",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_eval",
+   "edge": {
+    "state": "no_eval",
+    "text": "no eval artifact on record"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
    "model_id": "sdr_mlb",
    "label": "Sdr MLB",
    "family": "eWAR",
@@ -8694,7 +9179,7 @@
    "last_update": "2026-08-19",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8876,7 +9361,7 @@
    "last_update": "2026-10-02",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8954,7 +9439,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9006,7 +9491,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 34,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9032,7 +9517,7 @@
    "last_update": "2026-10-03",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9058,7 +9543,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 34,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9084,7 +9569,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 34,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9110,7 +9595,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 34,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9136,7 +9621,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 34,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9188,7 +9673,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9292,7 +9777,7 @@
    "last_update": "2026-09-06",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 31,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9370,7 +9855,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9422,7 +9907,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 27,
+    "artifact_age_days": 28,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9448,7 +9933,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 27,
+    "artifact_age_days": 28,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9630,7 +10115,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 31,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9656,7 +10141,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 31,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9682,7 +10167,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9708,7 +10193,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9734,7 +10219,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9760,7 +10245,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 13,
+    "artifact_age_days": 14,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9786,7 +10271,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 13,
+    "artifact_age_days": 14,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9838,7 +10323,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9890,7 +10375,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10117,28 +10602,28 @@
    "state": "tie",
    "edge": {
     "state": "tie",
-    "text": "Result (Spearman): tie (-0.0049)"
+    "text": "Result (Spearman): tie (-0.0002)"
    },
    "today": [
     {
      "stat": "Spearman",
      "better": "higher",
      "role": "headline",
-     "model": 0.3919,
+     "model": 0.403,
      "benchmark_label": "PROSPX consensus",
-     "benchmark": 0.3968,
-     "n": 829,
-     "delta": -0.0049,
+     "benchmark": 0.4032,
+     "n": 830,
+     "delta": -0.0002,
      "ci95": [
-      -0.0211,
-      0.0108
+      -0.0204,
+      0.0205
      ],
      "mde95": 0.0303,
      "t": null,
      "resolvable": false,
      "digits": 4,
      "edge_state": "tie",
-     "edge_text": "Result (Spearman): tie (-0.0049)",
+     "edge_text": "Result (Spearman): tie (-0.0002)",
      "keys": {
       "model": "raters.efv.spearman",
       "benchmark": "raters.prospx_consensus.spearman",
@@ -10150,28 +10635,28 @@
      },
      "source": {
       "path": "data/efv_progress.json",
-      "run_id": "2026-10-02T15:51:28Z|vm2|3887f350"
+      "run_id": "2026-10-03T22:45:08Z|vm2|9870e86f"
      }
     },
     {
      "stat": "AUC",
      "better": "higher",
      "role": "headline",
-     "model": 0.7521,
+     "model": 0.7446,
      "benchmark_label": "PROSPX consensus",
-     "benchmark": 0.7496,
-     "n": 829,
-     "delta": 0.0025,
+     "benchmark": 0.743,
+     "n": 830,
+     "delta": 0.0016,
      "ci95": [
-      -0.0071,
-      0.0114
+      -0.01,
+      0.0131
      ],
-     "mde95": 0.0078,
+     "mde95": 0.0098,
      "t": null,
      "resolvable": false,
      "digits": 4,
      "edge_state": "tie",
-     "edge_text": "Result (AUC): tie (+0.0025)",
+     "edge_text": "Result (AUC): tie (+0.0016)",
      "keys": {
       "model": "raters.efv.auc",
       "benchmark": "raters.prospx_consensus.auc",
@@ -10183,28 +10668,28 @@
      },
      "source": {
       "path": "data/efv_progress.json",
-      "run_id": "2026-10-02T15:51:28Z|vm2|3887f350"
+      "run_id": "2026-10-03T22:45:08Z|vm2|9870e86f"
      }
     },
     {
      "stat": "Spearman vs MLB Pipeline",
      "better": "higher",
      "role": "secondary",
-     "model": 0.3919,
+     "model": 0.403,
      "benchmark_label": "MLB Pipeline",
-     "benchmark": 0.3978,
-     "n": 829,
-     "delta": -0.0059,
+     "benchmark": 0.4022,
+     "n": 830,
+     "delta": 0.0008,
      "ci95": [
-      -0.0355,
-      0.0216
+      -0.0309,
+      0.0318
      ],
-     "mde95": 0.0239,
+     "mde95": 0.0264,
      "t": null,
      "resolvable": false,
      "digits": 4,
      "edge_state": "tie",
-     "edge_text": "Result (Spearman vs MLB Pipeline): tie (-0.0059)",
+     "edge_text": "Result (Spearman vs MLB Pipeline): tie (+0.0008)",
      "keys": {
       "model": "raters.efv.spearman",
       "benchmark": "raters.mlb_pipeline.spearman",
@@ -10216,28 +10701,28 @@
      },
      "source": {
       "path": "data/efv_progress.json",
-      "run_id": "2026-10-02T15:51:28Z|vm2|3887f350"
+      "run_id": "2026-10-03T22:45:08Z|vm2|9870e86f"
      }
     },
     {
      "stat": "AUC vs MLB Pipeline",
      "better": "higher",
      "role": "secondary",
-     "model": 0.7521,
+     "model": 0.7446,
      "benchmark_label": "MLB Pipeline",
-     "benchmark": 0.7407,
-     "n": 829,
-     "delta": 0.0114,
+     "benchmark": 0.743,
+     "n": 830,
+     "delta": 0.0016,
      "ci95": [
-      -0.0051,
-      0.0267
+      -0.0154,
+      0.019
      ],
-     "mde95": 0.0132,
+     "mde95": 0.0145,
      "t": null,
      "resolvable": false,
      "digits": 4,
      "edge_state": "tie",
-     "edge_text": "Result (AUC vs MLB Pipeline): tie (+0.0114)",
+     "edge_text": "Result (AUC vs MLB Pipeline): tie (+0.0016)",
      "keys": {
       "model": "raters.efv.auc",
       "benchmark": "raters.mlb_pipeline.auc",
@@ -10249,28 +10734,28 @@
      },
      "source": {
       "path": "data/efv_progress.json",
-      "run_id": "2026-10-02T15:51:28Z|vm2|3887f350"
+      "run_id": "2026-10-03T22:45:08Z|vm2|9870e86f"
      }
     },
     {
      "stat": "Spearman vs FanGraphs",
      "better": "higher",
      "role": "secondary",
-     "model": 0.3919,
+     "model": 0.403,
      "benchmark_label": "FanGraphs",
-     "benchmark": 0.3508,
-     "n": 829,
-     "delta": 0.0411,
+     "benchmark": 0.3575,
+     "n": 830,
+     "delta": 0.0455,
      "ci95": [
-      0.0093,
-      0.0739
+      0.0089,
+      0.0837
      ],
-     "mde95": 0.0276,
+     "mde95": 0.0313,
      "t": null,
      "resolvable": true,
      "digits": 4,
      "edge_state": "lead",
-     "edge_text": "Result (Spearman vs FanGraphs): +0.0411 lead",
+     "edge_text": "Result (Spearman vs FanGraphs): +0.0455 lead",
      "keys": {
       "model": "raters.efv.spearman",
       "benchmark": "raters.fangraphs.spearman",
@@ -10282,28 +10767,28 @@
      },
      "source": {
       "path": "data/efv_progress.json",
-      "run_id": "2026-10-02T15:51:28Z|vm2|3887f350"
+      "run_id": "2026-10-03T22:45:08Z|vm2|9870e86f"
      }
     },
     {
      "stat": "AUC vs FanGraphs",
      "better": "higher",
      "role": "secondary",
-     "model": 0.7521,
+     "model": 0.7446,
      "benchmark_label": "FanGraphs",
-     "benchmark": 0.7141,
-     "n": 829,
-     "delta": 0.038,
+     "benchmark": 0.7016,
+     "n": 830,
+     "delta": 0.043,
      "ci95": [
-      0.019,
-      0.0568
+      0.0222,
+      0.0642
      ],
-     "mde95": 0.0161,
+     "mde95": 0.018,
      "t": null,
      "resolvable": true,
      "digits": 4,
      "edge_state": "lead",
-     "edge_text": "Result (AUC vs FanGraphs): +0.0380 lead",
+     "edge_text": "Result (AUC vs FanGraphs): +0.0430 lead",
      "keys": {
       "model": "raters.efv.auc",
       "benchmark": "raters.fangraphs.auc",
@@ -10315,13 +10800,13 @@
      },
      "source": {
       "path": "data/efv_progress.json",
-      "run_id": "2026-10-02T15:51:28Z|vm2|3887f350"
+      "run_id": "2026-10-03T22:45:08Z|vm2|9870e86f"
      }
     }
    ],
    "registered": "2026-09-25",
-   "last_update": "2026-10-02",
-   "events": 10,
+   "last_update": "2026-10-08",
+   "events": 11,
    "freshness": {
     "artifact_age_days": 13,
     "age_is_evidence": true,
@@ -10560,6 +11045,58 @@
     "artifact_age_days": null,
     "age_is_evidence": null,
     "stale": null
+   }
+  },
+  {
+   "model_id": "cots_deferral_check",
+   "label": "Cots Deferral Check",
+   "family": "Other",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "service_time",
+   "label": "Service Time",
+   "family": "PROSPX and eFV",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "shipped_partial_measurement",
+   "benchmark": false,
+   "benchmark_label": null,
+   "eval_artifact": "data/service_time_eval.json",
+   "headline_source": null,
+   "state": "no_benchmark",
+   "edge": {
+    "state": "no_benchmark",
+    "text": "no benchmark registered"
+   },
+   "today": [],
+   "registered": "2026-10-08",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
+    "age_is_evidence": true,
+    "stale": false
    }
   }
  ],
@@ -38182,6 +38719,679 @@
    "event_id": "2026-10-08|efv_v2_ds_assembled|model_change|0bc7b453",
    "family": "PROSPX and eFV",
    "label": "eFV v2 (development)",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "benchmark": null,
+   "change": "registered as provisional",
+   "content_hash": "996cb1f5d68cc7d204810965859d23c7d03c7eb4924e25e545edaf77abac90ca",
+   "date": "2026-10-08",
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "event_id": "2026-10-08|awards_selection|registered|996cb1f5",
+   "kind": "registered",
+   "layer": "registration",
+   "legs": [],
+   "model_id": "awards_selection",
+   "sort_date": "2026-10-08",
+   "source": {
+    "commit": "b1a263e8",
+    "path": "data/model_registry.json"
+   },
+   "state": {
+    "card": null,
+    "eval_artifact": "data/awards_eval.json",
+    "removed": false,
+    "verdict": "provisional"
+   },
+   "statistic": null,
+   "verdict": {
+    "after": "provisional",
+    "before": null
+   },
+   "family": "Other",
+   "label": "Awards Selection",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "benchmark": {
+    "label": "PROSPX consensus",
+    "value": 0.4032
+   },
+   "change": "model change on the vintage-matched, timing-pinned (vm2) frame",
+   "content_hash": "d4d0c2a81526d94e394b6c173b1a9f13f95d3d031e59d6d4118f37d7031482e3",
+   "date": "2026-10-08",
+   "edge": {
+    "ci95": [
+     -0.0204,
+     0.0205
+    ],
+    "delta": -0.0002,
+    "mde95": 0.0303,
+    "resolvable": false,
+    "state": "tie",
+    "t": null,
+    "text": "Result (Spearman): tie (-0.0002)"
+   },
+   "event_id": "2026-10-08|efv_v2|model_change|d4d0c2a8",
+   "kind": "model_change",
+   "layer": "headline",
+   "legs": [
+    {
+     "before": 0.3919,
+     "benchmark": 0.4032,
+     "benchmark_label": "PROSPX consensus",
+     "better": "higher",
+     "ci95": [
+      -0.0204,
+      0.0205
+     ],
+     "delta": -0.0002,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (Spearman): tie (-0.0002)",
+     "improvement": null,
+     "keys": {
+      "benchmark": "raters.prospx_consensus.spearman",
+      "ci95": "deltas.vs_prospx_consensus.spearman.ci95",
+      "delta": "deltas.vs_prospx_consensus.spearman.delta",
+      "mde95": "deltas.vs_prospx_consensus.spearman.mde95",
+      "model": "raters.efv.spearman",
+      "n": "raters.efv.n",
+      "resolvable": "deltas.vs_prospx_consensus.spearman.resolvable"
+     },
+     "mde95": 0.0303,
+     "model": 0.403,
+     "n": 830,
+     "n_before": 829,
+     "resolvable": false,
+     "role": "headline",
+     "same_rows": false,
+     "stat": "Spearman",
+     "t": null
+    },
+    {
+     "benchmark": 0.743,
+     "benchmark_label": "PROSPX consensus",
+     "better": "higher",
+     "ci95": [
+      -0.01,
+      0.0131
+     ],
+     "delta": 0.0016,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (AUC): tie (+0.0016)",
+     "keys": {
+      "benchmark": "raters.prospx_consensus.auc",
+      "ci95": "deltas.vs_prospx_consensus.auc.ci95",
+      "delta": "deltas.vs_prospx_consensus.auc.delta",
+      "mde95": "deltas.vs_prospx_consensus.auc.mde95",
+      "model": "raters.efv.auc",
+      "n": "raters.efv.n",
+      "resolvable": "deltas.vs_prospx_consensus.auc.clears_e_cond_floor"
+     },
+     "mde95": 0.0098,
+     "model": 0.7446,
+     "n": 830,
+     "resolvable": false,
+     "role": "headline",
+     "stat": "AUC",
+     "t": null
+    },
+    {
+     "benchmark": 0.4022,
+     "benchmark_label": "MLB Pipeline",
+     "better": "higher",
+     "ci95": [
+      -0.0309,
+      0.0318
+     ],
+     "delta": 0.0008,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (Spearman vs MLB Pipeline): tie (+0.0008)",
+     "keys": {
+      "benchmark": "raters.mlb_pipeline.spearman",
+      "ci95": "deltas.vs_mlb_pipeline.spearman.ci95",
+      "delta": "deltas.vs_mlb_pipeline.spearman.delta",
+      "mde95": "deltas.vs_mlb_pipeline.spearman.mde95",
+      "model": "raters.efv.spearman",
+      "n": "raters.efv.n",
+      "resolvable": "deltas.vs_mlb_pipeline.spearman.holm.reject_holm"
+     },
+     "mde95": 0.0264,
+     "model": 0.403,
+     "n": 830,
+     "resolvable": false,
+     "role": "secondary",
+     "stat": "Spearman vs MLB Pipeline",
+     "t": null
+    },
+    {
+     "benchmark": 0.743,
+     "benchmark_label": "MLB Pipeline",
+     "better": "higher",
+     "ci95": [
+      -0.0154,
+      0.019
+     ],
+     "delta": 0.0016,
+     "digits": 4,
+     "edge_state": "tie",
+     "edge_text": "Result (AUC vs MLB Pipeline): tie (+0.0016)",
+     "keys": {
+      "benchmark": "raters.mlb_pipeline.auc",
+      "ci95": "deltas.vs_mlb_pipeline.auc.ci95",
+      "delta": "deltas.vs_mlb_pipeline.auc.delta",
+      "mde95": "deltas.vs_mlb_pipeline.auc.mde95",
+      "model": "raters.efv.auc",
+      "n": "raters.efv.n",
+      "resolvable": "deltas.vs_mlb_pipeline.auc.holm.reject_holm"
+     },
+     "mde95": 0.0145,
+     "model": 0.7446,
+     "n": 830,
+     "resolvable": false,
+     "role": "secondary",
+     "stat": "AUC vs MLB Pipeline",
+     "t": null
+    },
+    {
+     "benchmark": 0.3575,
+     "benchmark_label": "FanGraphs",
+     "better": "higher",
+     "ci95": [
+      0.0089,
+      0.0837
+     ],
+     "delta": 0.0455,
+     "digits": 4,
+     "edge_state": "lead",
+     "edge_text": "Result (Spearman vs FanGraphs): +0.0455 lead",
+     "keys": {
+      "benchmark": "raters.fangraphs.spearman",
+      "ci95": "deltas.vs_fangraphs.spearman.ci95",
+      "delta": "deltas.vs_fangraphs.spearman.delta",
+      "mde95": "deltas.vs_fangraphs.spearman.mde95",
+      "model": "raters.efv.spearman",
+      "n": "raters.efv.n",
+      "resolvable": "deltas.vs_fangraphs.spearman.holm.reject_holm"
+     },
+     "mde95": 0.0313,
+     "model": 0.403,
+     "n": 830,
+     "resolvable": true,
+     "role": "secondary",
+     "stat": "Spearman vs FanGraphs",
+     "t": null
+    },
+    {
+     "benchmark": 0.7016,
+     "benchmark_label": "FanGraphs",
+     "better": "higher",
+     "ci95": [
+      0.0222,
+      0.0642
+     ],
+     "delta": 0.043,
+     "digits": 4,
+     "edge_state": "lead",
+     "edge_text": "Result (AUC vs FanGraphs): +0.0430 lead",
+     "keys": {
+      "benchmark": "raters.fangraphs.auc",
+      "ci95": "deltas.vs_fangraphs.auc.ci95",
+      "delta": "deltas.vs_fangraphs.auc.delta",
+      "mde95": "deltas.vs_fangraphs.auc.mde95",
+      "model": "raters.efv.auc",
+      "n": "raters.efv.n",
+      "resolvable": "deltas.vs_fangraphs.auc.holm.reject_holm"
+     },
+     "mde95": 0.018,
+     "model": 0.7446,
+     "n": 830,
+     "resolvable": true,
+     "role": "secondary",
+     "stat": "AUC vs FanGraphs",
+     "t": null
+    }
+   ],
+   "model_id": "efv_v2",
+   "registry_ids": [
+    "efv_v2"
+   ],
+   "sort_date": "2026-10-08",
+   "source": {
+    "ledger_model_id": "efv_v2",
+    "model_commit": "ad521ba6",
+    "path": "data/efv_progress.json",
+    "row_content_hash": "9870e86f23cc53bdf8c4a634f4226bc0a28174eab89d84660ed1a64a49379ac9",
+    "run_id": "2026-10-03T22:45:08Z|vm2|9870e86f"
+   },
+   "statistic": {
+    "after": 0.403,
+    "before": 0.3919,
+    "better": "higher",
+    "frame": "vm2",
+    "improvement": null,
+    "n": 830,
+    "n_before": 829,
+    "same_rows": false,
+    "stat": "Spearman"
+   },
+   "verdict": null,
+   "family": "PROSPX and eFV",
+   "label": "eFV V2",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "arb_award",
+   "kind": "rescored",
+   "layer": "headline",
+   "change": "rescored",
+   "verdict": null,
+   "statistic": {
+    "stat": "MdAPE, arb-1",
+    "better": "lower",
+    "before": 0.255,
+    "after": 0.184,
+    "improvement": null,
+    "n_before": 409,
+    "n": 421,
+    "same_rows": false,
+    "frame": null
+   },
+   "benchmark": {
+    "label": "intercept plus one WAR term",
+    "value": 0.339
+   },
+   "edge": {
+    "state": "lead",
+    "text": "Result (MdAPE, arb-1): +0.155 lead",
+    "delta": 0.155,
+    "ci95": null,
+    "mde95": 0.043,
+    "t": null,
+    "resolvable": true
+   },
+   "legs": [
+    {
+     "stat": "MdAPE, arb-1",
+     "better": "lower",
+     "role": "headline",
+     "model": 0.184,
+     "benchmark_label": "intercept plus one WAR term",
+     "benchmark": 0.339,
+     "n": 421,
+     "delta": 0.155,
+     "ci95": null,
+     "mde95": 0.043,
+     "t": null,
+     "resolvable": true,
+     "digits": 3,
+     "edge_state": "lead",
+     "edge_text": "Result (MdAPE, arb-1): +0.155 lead",
+     "keys": {
+      "model": "results.arb1.mdape_champion",
+      "benchmark": "results.arb1.mdape_bar",
+      "n": "results.arb1.n_paired",
+      "mde95": "results.arb1.mde95_onesided",
+      "resolvable": "results.arb1.resolvable"
+     },
+     "before": 0.255,
+     "n_before": 409,
+     "same_rows": false,
+     "improvement": null
+    },
+    {
+     "stat": "MdAPE, arb-2+",
+     "better": "lower",
+     "role": "secondary",
+     "model": 0.099,
+     "benchmark_label": "median step multiplier",
+     "benchmark": 0.182,
+     "n": 391,
+     "delta": 0.083,
+     "ci95": null,
+     "mde95": 0.027,
+     "t": null,
+     "resolvable": true,
+     "digits": 3,
+     "edge_state": "lead",
+     "edge_text": "Result (MdAPE, arb-2+): +0.083 lead",
+     "keys": {
+      "model": "results.arb2plus.mdape_champion",
+      "benchmark": "results.arb2plus.mdape_bar",
+      "n": "results.arb2plus.n_paired",
+      "mde95": "results.arb2plus.mde95_onesided",
+      "resolvable": "results.arb2plus.resolvable"
+     },
+     "before": 0.158,
+     "n_before": 379,
+     "same_rows": false,
+     "improvement": null
+    },
+    {
+     "stat": "MdAPE vs MLBTR",
+     "better": "lower",
+     "role": "secondary",
+     "model": 0.178,
+     "benchmark_label": "MLB Trade Rumors projection",
+     "benchmark": 0.077,
+     "n": 808,
+     "delta": -0.101,
+     "ci95": [
+      -0.122,
+      -0.088
+     ],
+     "mde95": null,
+     "t": null,
+     "resolvable": null,
+     "digits": 3,
+     "edge_state": "trails",
+     "edge_text": "Result (MdAPE vs MLBTR): trails by 0.101",
+     "keys": {
+      "model": "a6_swartz.ours_mdape",
+      "benchmark": "a6_swartz.swartz_mdape",
+      "n": "a6_swartz.n",
+      "ci95": [
+       "a6_swartz.gap_ci_vs_swartz.mdape.lo95",
+       "a6_swartz.gap_ci_vs_swartz.mdape.hi95"
+      ]
+     },
+     "before": 0.216,
+     "n_before": 261,
+     "same_rows": false,
+     "improvement": null
+    }
+   ],
+   "source": {
+    "path": "data/arbitration_eval.json",
+    "commit": "b9f7f9ef",
+    "sha256": "6f801da0ba22f604c0a489dac1e396457019a2034adec0462d2e5827e0b4899e",
+    "rederivable": true,
+    "read_from": "working tree"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/arbitration_eval.json",
+    "card": [
+     {
+      "stat": "MdAPE, arb-1",
+      "benchmark_label": "intercept plus one WAR term",
+      "model": 0.184,
+      "benchmark": 0.339,
+      "n": 421,
+      "ci95": null,
+      "t": null,
+      "mde95": 0.043
+     },
+     {
+      "stat": "MdAPE, arb-2+",
+      "benchmark_label": "median step multiplier",
+      "model": 0.099,
+      "benchmark": 0.182,
+      "n": 391,
+      "ci95": null,
+      "t": null,
+      "mde95": 0.027
+     },
+     {
+      "stat": "MdAPE vs MLBTR",
+      "benchmark_label": "MLB Trade Rumors projection",
+      "model": 0.178,
+      "benchmark": 0.077,
+      "n": 808,
+      "ci95": [
+       -0.122,
+       -0.088
+      ],
+      "t": null,
+      "mde95": null
+     }
+    ],
+    "removed": false
+   },
+   "content_hash": "27d407a9a01be04bc0edb00b832b155aca73a6e163b1472b03ab5784d4913de9",
+   "event_id": "2026-10-08|arb_award|rescored|27d407a9",
+   "family": "Arbitration",
+   "label": "Arb Award",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "fa_market",
+   "kind": "rescored",
+   "layer": "headline",
+   "change": "rescored",
+   "verdict": null,
+   "statistic": {
+    "stat": "MAE, guarantee $M",
+    "better": "lower",
+    "before": 9.69,
+    "after": 9.85,
+    "improvement": -0.16,
+    "n_before": 1199,
+    "n": 1199,
+    "same_rows": true,
+    "frame": null
+   },
+   "benchmark": {
+    "label": "nearest-comps median",
+    "value": 10.74
+   },
+   "edge": {
+    "state": "lead",
+    "text": "Result (MAE, guarantee $M): +0.88 lead",
+    "delta": 0.88,
+    "ci95": null,
+    "mde95": null,
+    "t": null,
+    "resolvable": true
+   },
+   "legs": [
+    {
+     "stat": "MAE, guarantee $M",
+     "better": "lower",
+     "role": "headline",
+     "model": 9.85,
+     "benchmark_label": "nearest-comps median",
+     "benchmark": 10.74,
+     "n": 1199,
+     "delta": 0.88,
+     "ci95": null,
+     "mde95": null,
+     "t": null,
+     "resolvable": true,
+     "digits": 2,
+     "edge_state": "lead",
+     "edge_text": "Result (MAE, guarantee $M): +0.88 lead",
+     "keys": {
+      "model": "pooled.guarantee.mae_model",
+      "benchmark": "pooled.guarantee.mae_base",
+      "n": "pooled.guarantee.n",
+      "resolvable": "gates.guarantee"
+     },
+     "before": 9.69,
+     "n_before": 1199,
+     "same_rows": true,
+     "improvement": -0.16
+    }
+   ],
+   "source": {
+    "path": "data/fa_gate2_eval.json",
+    "commit": "b9f7f9ef",
+    "sha256": "e0bb53293ee5cf47b3bf35940ad365b88324bc4835a60cc72796d4a076183398",
+    "rederivable": true,
+    "read_from": "working tree"
+   },
+   "state": {
+    "verdict": "validated",
+    "eval_artifact": "data/fa_gate2_eval.json",
+    "card": [
+     {
+      "stat": "MAE, guarantee $M",
+      "benchmark_label": "nearest-comps median",
+      "model": 9.85,
+      "benchmark": 10.74,
+      "n": 1199,
+      "ci95": null,
+      "t": null,
+      "mde95": null
+     }
+    ],
+    "removed": false
+   },
+   "content_hash": "a4ccbce08edd3e16b10dfeab8f43bfc17d7eca38a5b469a69f731a5474cabecc",
+   "event_id": "2026-10-08|fa_market|rescored|a4ccbce0",
+   "family": "Free Agency",
+   "label": "FA Market",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "fantasy_prospect_leg_blend",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as unvalidated",
+   "verdict": {
+    "before": null,
+    "after": "unvalidated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "b9f7f9ef"
+   },
+   "state": {
+    "verdict": "unvalidated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "8c64481f79ac134e50ee84dc5a0c80620878654ef40a34483373afd00d8965b8",
+   "event_id": "2026-10-08|fantasy_prospect_leg_blend|registered|8c64481f",
+   "family": "Fantasy",
+   "label": "Fantasy Prospect Leg Blend",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "cots_deferral_check",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "b9f7f9ef"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "46e37fd1c48624dd3d68cd63feb1b6c8eba4440215748ec3159e8c2c56394a17",
+   "event_id": "2026-10-08|cots_deferral_check|registered|46e37fd1",
+   "family": "Other",
+   "label": "Cots Deferral Check",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "service_time",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "b9f7f9ef"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/service_time_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "8e40b2cd331c22f47f464ae1a02a0125a0e27d6dd3ae6a2549ed69121fb34a71",
+   "event_id": "2026-10-08|service_time|registered|8e40b2cd",
+   "family": "PROSPX and eFV",
+   "label": "Service Time",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-08",
+   "sort_date": "2026-10-08",
+   "model_id": "awards_selection",
+   "kind": "removed",
+   "layer": "registration",
+   "change": "removed from the registry",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "b9f7f9ef"
+   },
+   "state": {
+    "card": null,
+    "eval_artifact": "data/awards_eval.json",
+    "removed": true,
+    "verdict": "provisional"
+   },
+   "content_hash": "cd6073da622fca1be4d38131ecc4ad9f2e70072cd99c9c82ef152ccc012f4f1f",
+   "event_id": "2026-10-08|awards_selection|removed|cd6073da",
+   "family": "Other",
+   "label": "Awards Selection",
    "served": true,
    "default_view": false
   }
