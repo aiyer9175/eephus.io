@@ -1314,7 +1314,14 @@ def test_the_shell_opts_every_section_root_into_csv_and_uses_short_nav_labels():
     Defense. A section added later joins both lists; none leaves."""
     src = (ROOT / "build_site.py").read_text(encoding="utf-8")
     i = src.index("def build_mlbstats(")
-    body = src[i:src.index("\ndef ", i + 1)]
+    fn = src[i:src.index("\ndef ", i + 1)]
+    # The League tab (Q8_13a) is assembled above the shell, behind
+    # league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE, and joins it through
+    # placeholders after Leverage; the six live sections are read from the
+    # shell itself.
+    pre, body = fn.split("    body = (", 1)
+    assert "if league_live:" in pre and 'data-mlbsection="league"' in pre
+    assert 'data-mlbsection="league"' not in body
     roots = dict(re.findall(r'<div id="mlbstats-([a-z]+)-root"\{_csv_optin\("([a-z-]+)"\)\}', body))
     for rid, name in {"app": "mlb-leaderboards", "starters": "mlb-starters", "hitters": "mlb-hitters",
                       "leverage": "mlb-leverage", "defense": "mlb-defense", "war": "mlb-ewar"}.items():

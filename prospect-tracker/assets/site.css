@@ -2731,6 +2731,47 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .mlbx .mlbstats-range-fromto { width: 100%; margin-top: 4px; }
   .mlbx .mlbx-season { flex-basis: 100%; }
 }
+/* ---- the League tab (assets/mlbstats-league.js) ------------------------------
+   Rows are statistics, so each row header is a th that must not take the
+   sticky, upper-case column-header look. "vs all" stays in text ink: whether
+   higher is better differs by statistic, so no colour says better. */
+.mlbx .mlbx-lgtable tbody th { position: static; cursor: default; user-select: auto; text-align: left;
+  font-family: var(--font-retro); font-size: 12px; font-weight: 400; letter-spacing: 0;
+  text-transform: none; color: var(--text-primary); background: transparent; }
+.mlbx .mlbx-lgtable tbody tr.mlbx-lggrp > th { font-family: var(--font-retro-mono); font-size: 10px;
+  font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary);
+  background: var(--bg-tertiary); }
+.mlbx .mlbx-lgtable .mlbx-lgnum { text-align: right; font-variant-numeric: tabular-nums; }
+.mlbx .mlbx-lgtable td.mlbx-lgval { font-weight: 700; color: var(--text-primary); }
+.mlbx .mlbx-lgtable td.mlbx-lgvs { color: var(--text-primary); }
+.mlbx .mlbx-lgchips { display: flex; flex-wrap: wrap; gap: 0 18px; }
+.mlbx .mlbx-lgchips > .mlbstats-seasons { margin: 0 0 8px; align-items: center; }
+.mlbx .mlbx-lgcov { margin: 0 0 8px; }
+.mlbx details.mlbx-lgfold { margin: 10px 0; }
+.mlbx details.mlbx-lgfold > summary { cursor: pointer; font-size: 12px; color: var(--text-secondary); }
+.mlbx .mlbx-lgfold-body { font-size: 12px; line-height: 1.5; color: var(--text-secondary); max-width: 760px; }
+.mlbx .mlbx-lgfold-body ul { margin: 4px 0 8px 18px; padding: 0; }
+.mlbx .mlbx-lgchartwrap, .mlbx .mlbx-lgchart { border: 1px solid var(--border); background: var(--bg-secondary);
+  padding: 10px 12px; margin: 8px 0 12px; min-width: 0; }
+.mlbx .mlbx-lglegend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; color: var(--text-secondary); margin: 0 0 6px; }
+.mlbx .mlbx-lglegend i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; }
+.mlbx .mlbx-lglegend i.is-hollow { width: 6px; height: 6px; border: 2px solid var(--viz-1); border-radius: 50%;
+  background: var(--bg-secondary); }
+.mlbx .eephus-chart-table > summary { cursor: pointer; font-size: 11px; color: var(--text-secondary); margin: 6px 0 2px; }
+.mlbx .eephus-chart-table table { border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+.mlbx .eephus-chart-table :is(th, td) { padding: 2px 12px 2px 0; text-align: left; }
+.mlbx .mlbx-lgsmalls { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 6px 0 12px; }
+.mlbx button.mlbx-lgsmall { appearance: none; display: block; min-width: 0; text-align: left; font: inherit;
+  color: inherit; cursor: pointer; border: 1px solid var(--border-light); background: var(--bg-secondary); padding: 6px 8px; }
+.mlbx button.mlbx-lgsmall:hover, .mlbx button.mlbx-lgsmall.is-on { border-color: var(--accent-gold); }
+.mlbx .mlbx-lgsmall-h { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; margin-bottom: 2px; }
+.mlbx .mlbx-lgsmall-h em { font-style: normal; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  .mlbx .mlbx-lgsmalls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* A long label (FIP, standard, season constant) wraps rather than pushing
+     the Players column out of a 358px box. */
+  .mlbx .mlbx-lgtable tbody th.mlbx-lgstat { white-space: normal; min-width: 7em; max-width: 9.5em; line-height: 1.25; }
+}
 /* ---- mlbx end ---- */
 /* ---- Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
 .pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }

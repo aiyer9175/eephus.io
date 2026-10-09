@@ -6036,12 +6036,34 @@ def build_mlbstats() -> str:
     Download CSV control (_csv_optin), which exports the columns on screen:
     hidden view columns carry data-export-skip. Styles ride the .fa-app block plus
     the .mlbstats-app extension in site.css; the Defense section reuses the
-    existing board and depth-card classes, so it adds no CSS."""
+    existing board and depth-card classes, so it adds no CSS.
+
+    THE LEAGUE TAB (owner asks 13 and 14 of 2026-09-30; final-pass plan Part 8
+    P8.2, task LT-08) is built dark: while league_averages'
+    MLBSTATS_LEAGUE_TEAMS_LIVE is False this shell is the six-tab page, byte for
+    byte. Live, the root names assets/mlbstats-league.js in data-league-src
+    (mlbstats.js injects it the first time the tab opens, so the landing board
+    fetches nothing new) and the newest season panel on disk in
+    data-league-live, and a League button and panel follow Leverage."""
+    import league_averages
+    league_root = league_btn = league_panel = ""
+    league_live = bool(league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE)
+    if league_live:
+        ys = sorted(int(p.stem.rsplit("_", 1)[1]) for p in DATA_DIR.glob("mlb_league_panel_*.json")
+                    if p.stem.rsplit("_", 1)[1].isdigit())
+        league_root = (f' data-league-src="/assets/mlbstats-league.js?v={_asset_ver("assets/mlbstats-league.js")}"'
+                       + (f' data-league-live="{ys[-1]}"' if ys else ""))
+        league_btn = ('<button type="button" class="mlbstats-sectionbtn" data-mlbsection="league" role="tab" '
+                      'aria-selected="false" aria-controls="mlbstats-section-league">League</button>')
+        league_panel = ('<div id="mlbstats-section-league" class="mlbstats-section" role="tabpanel" aria-label="League" hidden>'
+                        f'<div id="mlbstats-league-root"{_csv_optin("mlb-league")}></div>'
+                        '</div>')
     body = (
         # .mlbx is carried by THIS root only: every /mlbstats/ column-view rule in
         # site.css is scoped under it, because .mlbstats-app is shared by ten
         # module roots (test_mlbx_css_scope.py pins the scope).
-        '<div class="fa-app mlbstats-app mlbx">'
+        '<div class="fa-app mlbstats-app mlbx"'
+        f'{league_root}>'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("mlbstats")}MLB Stats {_stage_chip("mlbstats")}</h1></div>'
         # One line: each board's number once, and the scale. The tabs under it
@@ -6069,6 +6091,7 @@ def build_mlbstats() -> str:
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="bullpen" role="tab" aria-selected="false" aria-controls="mlbstats-section-bullpen">Bullpen</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="defense" role="tab" aria-selected="false" aria-controls="mlbstats-section-defense">Defense</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="leverage" role="tab" aria-selected="false" aria-controls="mlbstats-section-leverage">Leverage</button>'
+        f'{league_btn}'
         '</div>'
         # Panel order follows the nav, so tab order and reading order agree.
         '<div id="mlbstats-section-war" class="mlbstats-section" role="tabpanel" aria-label="Overall">'
@@ -6090,6 +6113,7 @@ def build_mlbstats() -> str:
         '<div id="mlbstats-section-leverage" class="mlbstats-section" role="tabpanel" aria-label="Leverage" hidden>'
         f'<div id="mlbstats-leverage-root"{_csv_optin("mlb-leverage")}></div>'
         '</div>'
+        f'{league_panel}'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
@@ -6099,7 +6123,7 @@ def build_mlbstats() -> str:
     return page("MLB Stats - eephus.io", "mlbstats", body,
                 "MLB leaderboards: every player by eWAR, season or year range; HEM+, SEM+, "
                 "REM+, RIV+ and DEM+ boards; WPA leverage; team Bullpen+, Rotation+, Offense+, "
-                "DEM+.",
+                "DEM+" + (f"; league averages since {league_averages.FIRST_SEASON}." if league_live else "."),
                 url=f"{SITE_ORIGIN}/mlbstats/", image=module_share_image("mlbstats"))
 
 _PAL_REVERSED_LABEL = {
