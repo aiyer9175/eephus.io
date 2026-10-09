@@ -900,18 +900,21 @@ def test_the_catcher_chip_alone_adds_frm_to_the_defense_standard_view():
 FROZEN_KEYS = {
     "REL_COLS": ["name", "rem_plus", "rem_plus_3yr", "xrem_plus", "luck", "war_ip_plus", "war_ip_plus_adj",
                  "war_ip_plus_3yr", "war", "ip", "g", "saves", "holds", "k_pct", "bb_pct", "k_bb_pct", "fip",
-                 "swstr_pct", "era", "gmli", "gmli_3yr", "riv_plus", "wpa", "wpa_li", "sd_md"],
+                 "swstr_pct", "era", "gmli", "gmli_3yr", "riv_plus", "wpa", "wpa_li", "sd_md",
+                 "p_ip", "par", "p_bf", "pit_per_g"],
     "TEAM_COLS": ["team", "bullpen_plus", "team_war", "leverage_deploy_plus", "n_above_avg",
-                  "high_lev_core_rem", "relief_ip", "team_wpa", "sd_md"],
+                  "high_lev_core_rem", "relief_ip", "team_wpa", "sd_md", "pen_p_ip", "pen_par"],
     "STARTER_COLS": ["name", "sem_plus", "sem_plus_3yr", "xsem_plus", "luck", "war_ip_plus", "war_ip_plus_adj",
                      "war_ip_plus_3yr", "war", "ip", "gs", "ip_per_gs", "k_pct", "bb_pct", "k_bb_pct", "gb_pct",
-                     "fip", "era", "hr9"],
+                     "fip", "era", "hr9", "p_ip", "par", "p_bf", "pit_per_gs", "sp_ip_per_gs"],
     "STARTER_TEAM_COLS": ["team", "rotation_plus", "team_war", "front_sem", "n_above_avg", "starter_ip",
-                          "total_gs"],
+                          "total_gs", "rot_p_ip", "rot_par", "rot_pit_per_gs"],
     "HITTER_COLS": ["name", "hem_plus", "wrc_plus", "hem_plus_3yr", "xhem_plus", "fwdhem_plus", "pwoba",
                     "luck_gap", "war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr", "war", "pa", "hr", "sb",
-                    "avg", "obp", "slg", "ops", "iso", "woba_raw", "woba", "bb_pct", "k_pct", "babip"],
-    "HITTER_TEAM_COLS": ["team", "offense_plus", "team_war", "heart_hem", "n_above_avg", "team_pa"],
+                    "avg", "obp", "slg", "ops", "iso", "woba_raw", "woba", "bb_pct", "k_pct", "babip",
+                    "p_pa", "par", "pit"],
+    "HITTER_TEAM_COLS": ["team", "offense_plus", "team_war", "heart_hem", "n_above_avg", "team_pa",
+                         "lineup_p_pa", "lineup_par"],
     "BAT_LEV_COLS": ["name", "wpa", "pli", "clutch", "wpa_li", "war", "pa"],
     "STARTER_LEV_COLS": ["name", "wpa", "wpa_per_start", "wpa_li", "war", "gs", "starts"],
     "DEFENSE_COLS": ["name", "pos", "dem_plus", "dem_plus_3yr", "dem_plus_pos_pct", "fld_total", "fld_runs",
@@ -930,9 +933,9 @@ BOARD_ARRAYS = {"rel": "REL_COLS", "sp": "STARTER_COLS", "hit": "HITTER_COLS", "
                 "spteam": "STARTER_TEAM_COLS", "hitteam": "HITTER_TEAM_COLS", "defteam": "DEFENSE_TEAM_COLS",
                 "war": "WAR_COLS", "warteam": "WAR_TEAM_COLS"}
 # The view ids a deep link can name (rcols= / scols= / hcols= / dcols=).
-FROZEN_VIEWS = {"rel": ["standard", "skill", "value", "leverage", "all"],
-                "sp": ["standard", "skill", "value", "all"],
-                "hit": ["standard", "skill", "value", "batting", "all"],
+FROZEN_VIEWS = {"rel": ["standard", "skill", "value", "leverage", "pitches", "all"],
+                "sp": ["standard", "skill", "value", "pitches", "all"],
+                "hit": ["standard", "skill", "value", "batting", "pitches", "all"],
                 "def": ["standard", "runs", "catching", "all"]}
 
 
@@ -1048,6 +1051,14 @@ def test_every_render_call_names_a_registry_board():
         assert boards and all(b in reg for b in boards), c
 
 
+def _dark_pitch_slugs() -> set[str]:
+    """The pitch-rate slugs (Q8_04) are allowed to miss the glossary only while
+    pitch_rates.SERVE_PITCH_RATES is off: the entries land in the flip commit
+    (Q8_06), and from then on these resolve like every other slug."""
+    import pitch_rates
+    return set() if pitch_rates.SERVE_PITCH_RATES else {"p_ip", "p_bf", "p_pa", "par"}
+
+
 def _glossary_ids() -> set[str]:
     g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
     return {e["id"] for e in g["entries"]}
@@ -1060,7 +1071,7 @@ def test_every_glossary_slug_the_page_links_resolves():
     for p in pats:
         slugs |= set(re.findall(p, JS))
     assert len(slugs) >= 50, len(slugs)
-    missing = sorted(slugs - _glossary_ids())
+    missing = sorted(slugs - _glossary_ids() - _dark_pitch_slugs())
     assert not missing, missing
 
 
@@ -1756,3 +1767,219 @@ def test_one_delegated_listener_clears_the_team_on_whichever_board_is_active():
     assert ctx.eval("__hashes[__hashes.length - 1]") == "#section=bullpen"
     ctx.eval("__fire('click', %s)" % _MISS)        # a click elsewhere clears nothing
     assert "Closer Alpha" in ctx.eval(root)
+
+
+
+# ---------------------------------------------------------------- pitch rates (Q8_04)
+# Owner asks 17 and 20 (2026-09-30): P/IP and PAR on the Starters and
+# Relievers boards, P/PA on Hitters, the club units on the three team tables,
+# and a chip on the three chart tabs. The exporters write the keys only with
+# pitch_rates.SERVE_PITCH_RATES on (Q8_03), so the page side carries two
+# contracts: with no key on any row the page is the page it was (no column, no
+# Pitches pill, no chip, no scatter), and with the keys it shows the lane's
+# views (part8/pitch_metrics.md 5.1 and 5.2). PAR is uncoloured (owner answer
+# PM-Q1): no tier class on its cell or its chip.
+PITCH_VIEW = {
+    "rel": ["name", "rem_plus", "p_ip", "par", "p_bf", "pit_per_g", "g", "k_pct", "bb_pct", "ip"],
+    "sp": ["name", "sem_plus", "p_ip", "par", "p_bf", "pit_per_gs", "sp_ip_per_gs", "ip_per_gs",
+           "k_pct", "bb_pct", "ip"],
+    "hit": ["name", "hem_plus", "p_pa", "par", "pit", "bb_pct", "k_pct", "chase_pct", "whiff_pct", "pa"],
+}
+PITCH_PHONE = {"rel": ["p_ip", "par", "pit_per_g", "ip"], "sp": ["p_ip", "par", "pit_per_gs", "ip"],
+               "hit": ["p_pa", "par", "pit", "pa"]}
+PITCH_KEYS = {"rel": ["p_ip", "par", "p_bf", "pit_per_g"],
+              "sp": ["p_ip", "par", "p_bf", "pit_per_gs", "sp_ip_per_gs"],
+              "hit": ["p_pa", "par", "pit"]}
+PITCH_TEAM_KEYS = {"relteam": ["pen_p_ip", "pen_par"], "spteam": ["rot_p_ip", "rot_par", "rot_pit_per_gs"],
+                   "hitteam": ["lineup_p_pa", "lineup_par"]}
+_PITCH_HASH = {"rel": "#section=bullpen&rcols=pitches", "sp": "#section=starters&scols=pitches",
+               "hit": "#section=hitters&hcols=pitches"}
+_DEFAULT_SORT = {"rel": "rem_plus", "sp": "sem_plus", "hit": "hem_plus"}
+
+
+def _stamp_pitch(board):
+    """The keys the exporters append with the flag on, in their stored
+    precision; the last row of each board carries None (no pitch count)."""
+    def go(p):
+        rows = p[ROWS_KEY[board]]
+        for i, r in enumerate(rows):
+            none = i == len(rows) - 1
+            if board == "hit":
+                pa = r.get("pa") or 0
+                r.update({"p_pa": None if none else 3.912, "par": None if none else 101,
+                          "par_delta": None if none else 0.026,
+                          "pit": None if none else int(pa * 3.912)})
+            else:
+                r.update({"p_ip": None if none else 15.94, "p_bf": None if none else 3.871,
+                          "par": None if none else 97, "par_delta": None if none else -0.55,
+                          "role_line_basis": None if none else "role_split"})
+                if board == "sp":
+                    r.update({"pit_per_gs": None if none else 88.4,
+                              "sp_ip_per_gs": None if none else 5.83})
+                else:
+                    r.update({"pit_per_g": None if none else 17.2})
+        for j, t in enumerate(p.get("teams") or []):
+            if board == "rel":
+                t.update({"pen_p_ip": 16.14 + j, "pen_par": 98 + j})
+            elif board == "sp":
+                t.update({"rot_p_ip": 16.49 + j, "rot_par": 100 + j, "rot_pit_per_gs": 84.1 + j})
+            else:
+                t.update({"lineup_p_pa": 3.95 - 0.1 * j, "lineup_par": 101 - 2 * j})
+    return go
+
+
+def _pitch_render(board, hash_):
+    return _render_subs(board, {_PAYLOAD_RENDER[board][1]: _stamp_pitch(board)}, hash_)
+
+
+@pytest.mark.parametrize("board", ["rel", "sp", "hit"])
+def test_with_no_pitch_key_the_page_is_the_page_it_was(board):
+    """The flag-off contract: the sample payloads carry no pitch-rate key, so no
+    pr column reaches any view (All included), the Pitches pill is off the
+    strip, and a deep link naming it opens Standard."""
+    fn, hash_ = DEFAULT_RENDERS[board]
+    for h in (hash_, _PITCH_HASH[board].replace("pitches", "all"), _PITCH_HASH[board]):
+        html = fn(h)
+        heads = [k for _, k, _ in _heads(html)]
+        assert not set(PITCH_KEYS[board]) & set(heads), (board, h)
+        assert 'data-colview="%s:pitches"' % board not in html, (board, h)
+    assert _visible(fn(_PITCH_HASH[board])) == STANDARD[board]
+    team = {"rel": "relteam", "sp": "spteam", "hit": "hitteam"}[board]
+    tfn, thash = DEFAULT_RENDERS[team]
+    assert not set(PITCH_TEAM_KEYS[team]) & {k for _, k, _ in _heads(tfn(thash))}, team
+
+
+@pytest.mark.parametrize("board", ["rel", "sp", "hit"])
+def test_the_pitches_view_shows_its_columns_and_its_phone_subset(board):
+    html = _pitch_render(board, _PITCH_HASH[board])
+    assert ('data-colview="%s:pitches" aria-pressed="true"' % board) in html
+    assert _visible(html) == PITCH_VIEW[board], _visible(html)
+    keep = set(PITCH_PHONE[board]) | {_DEFAULT_SORT[board]}
+    for key in PITCH_VIEW[board][1:]:
+        assert ("mlbstats-cv-wide" in _cls(html, key)) == (key not in keep), (board, key)
+    # the Standard view a reader lands on does not move when the keys arrive
+    assert _visible(_pitch_render(board, DEFAULT_RENDERS[board][1])) == STANDARD[board]
+
+
+@pytest.mark.parametrize("board,n", [("rel", 34), ("sp", 30), ("hit", 33)])
+def test_all_keeps_every_column_with_the_pitch_rates(board, n):
+    html = _pitch_render(board, _PITCH_HASH[board].replace("pitches", "all"))
+    assert len(_heads(html)) == n and len(_visible(html)) == n, len(_heads(html))
+    assert set(PITCH_KEYS[board]) <= set(_visible(html))
+
+
+@pytest.mark.parametrize("board", ["rel", "sp", "hit"])
+def test_par_is_uncoloured_carries_its_gap_and_reads_blank_without_pitches(board):
+    html = _pitch_render(board, _PITCH_HASH[board])
+    cells = _cells(html, "par")
+    assert not any("vt-" in c or "rem-plus" in c for c in cells), cells
+    want = {"rel": 'title="0.6 fewer pitches an inning than the league average in relief">97<',
+            "sp": 'title="0.6 fewer pitches an inning than the league average in starts">97<',
+            "hit": 'title="0.03 more pitches a plate appearance than the league average">101<'}[board]
+    filled = [c for c in cells if c.strip() != "-"]
+    assert filled and all(want in c for c in filled), filled
+    th = _table(html).split('data-col="par"')[1].split("</th>")[0]
+    assert 'data-gl="par"' in th
+
+
+def test_a_row_without_pitches_reads_the_absent_token_never_zero():
+    """The last starter carries None on every pitch key: each cell is the
+    absent token. The qualified filter is on by default, so the row is read
+    off the All view of the stamped board with every row qualified."""
+    def stamp(p):
+        _stamp_pitch("sp")(p)
+        for r in p["starters"]:
+            r["qualified"] = True
+    html = _render_subs("sp", {"STARTER_SAMPLE": stamp}, "#section=starters&scols=all")
+    last = [h for h in json.loads(smoke.STARTER_SAMPLE)["starters"]][-1]["name"]
+    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", _table(html).split("<tbody>")[1], re.S)
+    row = [r for r in rows if last in r]
+    assert len(row) == 1
+    heads = [k for _, k, _ in _heads(html)]
+    tds = re.findall(r"<td[^>]*>(.*?)</td>", row[0], re.S)
+    for key in PITCH_KEYS["sp"]:
+        assert tds[heads.index(key)].strip() == "-", (key, tds[heads.index(key)])
+
+
+@pytest.mark.parametrize("team", ["relteam", "spteam", "hitteam"])
+def test_the_team_tables_carry_the_club_units(team):
+    board = {"relteam": "rel", "spteam": "sp", "hitteam": "hit"}[team]
+    html = _render_subs(team, {_PAYLOAD_RENDER[team][1]: _stamp_pitch(board)})
+    assert _visible(html) == STANDARD[team] + PITCH_TEAM_KEYS[team], _visible(html)
+    par = PITCH_TEAM_KEYS[team][1]
+    assert not any("vt-" in c for c in _cells(html, par))
+
+
+def test_the_bullpen_chart_chip_and_slot_rate():
+    def stamp(p):
+        _stamp_pitch("rel")(p)
+        for t in p["teams"]:
+            for d in t.get("depth") or []:
+                d["key"] = {"Closer Alpha": "a", "Middle Beta": "b"}[d["name"]]
+    html = _render_subs("rel", {"SAMPLE": stamp}, "#section=bullpen&view=depth")
+    assert '<span class="proj-dim mlbstats-pchip" data-gl="par" style="white-space:nowrap;margin-left:auto" title="' in html
+    assert "P/IP 16.1 &middot; PAR 98</span>" in html and "P/IP 17.1 &middot; PAR 99</span>" in html
+    assert '<span class="proj-dim"> 15.9 P/IP</span>' in html
+    assert "mlbstats-pchip" not in _render_bullpen("#section=bullpen&view=depth")
+
+
+def _stamp_every_starter(p):
+    """The scatter asks for 12 qualified starters with both values, as the
+    board's other charts do, so every sample starter gets them here."""
+    _stamp_pitch("sp")(p)
+    p["starters"][-1].update({"par": 104, "par_delta": 0.66, "sp_ip_per_gs": 5.2})
+
+
+def test_the_rotation_chart_chip_slot_rate_and_scatter():
+    html = _render_subs("sp", {"STARTER_SAMPLE": _stamp_every_starter}, "#section=starters&sview=charts")
+    assert "P/IP 16.5 &middot; PAR 100</span>" in html
+    assert '<span class="proj-dim"> 15.9 P/IP</span>' in html
+    assert html.count("hub-scatter") == 2 and "PAR vs IP/GS" in html
+    plain = smoke._render_starters("#section=starters&sview=charts")
+    assert "mlbstats-pchip" not in plain and plain.count("hub-scatter") == 1
+    assert "PAR vs IP/GS" not in plain
+
+
+def test_the_par_scatter_never_draws_2024_or_2025():
+    """2024 and 2025 are the seasons the starter-workload stage-1 lab scores on
+    the same efficiency-against-length relation, so the chart never draws them."""
+    for season, drawn in ((2025, False), (2024, False), (2026, True)):
+        def stamp(p, season=season):
+            _stamp_every_starter(p)
+            p["season"] = season
+        html = _render_subs("sp", {"STARTER_SAMPLE": stamp}, "#section=starters&sview=charts")
+        assert ("PAR vs IP/GS" in html) == drawn, season
+
+
+def _nine_sample(drop_pit=("503",)):
+    d = json.loads(smoke._lineup_sample())
+    for h in d["hitters"]:
+        h["pit"] = None if h["key"] in drop_pit else int(h["pa"] * 3.9) + int(h["key"]) % 7
+        h["p_pa"] = None
+    d["teams"][0]["lineup_p_pa"] = 3.95
+    d["teams"][1]["lineup_p_pa"] = 3.85
+    return d
+
+
+@pytest.mark.parametrize("split", ["vr", "vl"])
+def test_the_lineup_chip_pools_the_displayed_nine_and_skips_a_hole(split):
+    """Pitches over PA pooled across the nine on the card, joined to the board
+    rows by key; 503 has no pitch count and is skipped, never a zero; BOS's
+    nine has no board row at all, so its card carries no chip."""
+    d = _nine_sample()
+    rows = {h["key"]: h for h in d["hitters"]}
+    order = d["teams"][0]["orders"][split]
+    used = [rows[s["key"]] for s in order if s["key"] in rows and rows[s["key"]]["pit"] is not None]
+    assert len(used) == 8
+    rate = sum(h["pit"] for h in used) / sum(h["pa"] for h in used)
+    par = int(100 * rate / 3.90 + 0.5)
+    cards = smoke._cards(smoke._render_lineups(json.dumps(d), split))
+    assert ("P/PA %.2f &middot; PAR %d</span>" % (rate, par)) in cards["NYY"], (rate, par)
+    assert "by the 8 of this nine" in cards["NYY"]
+    assert "mlbstats-pchip" not in cards["BOS"]
+
+
+def test_no_lineup_chip_without_the_club_units():
+    plain = smoke._cards(smoke._render_lineups(smoke._lineup_sample()))
+    assert plain and not any("mlbstats-pchip" in c for c in plain.values())
+    assert "Display only: nothing here reaches betting." in JS.split("function ninePitchRate")[0][-700:]
