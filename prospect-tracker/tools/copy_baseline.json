@@ -1,7 +1,7 @@
 {
  "_about": "Copy-lint ratchet (SP-D6). Each rule lists sha1 of the normalised sentence (NFKC, lower case, digit runs to 0) for every finding accepted on 2026-10-02; L4 and L5_density list surfaces; coverage lists shipped data files a page fetches whose 8+ word strings come from a writer outside COPY_PRODUCERS. `copy_lint.py --served --check` fails on a finding not listed here and on an entry that is no longer a finding, so the file only shrinks. Rewrite it with --write-baseline only in the commit that fixes copy.",
  "_counts": {
-  "L1": 41,
+  "L1": 40,
   "L2": 25,
   "L3": 1,
   "L5": 74,
