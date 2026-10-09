@@ -18,7 +18,9 @@ sha256, committed by hand, and never re-taken.
             served file it was taken from
   Log       FREEZE_LOG.json, {"entries": [...]}, one entry per season. A
             `frozen` entry carries the file's sha256, its source, the first
-            game, and an `extract` with its own `extract_sha256`. A `no_season`
+            game, `label_provider` (the WAR series the projection bundle was
+            trained on at freeze time, gate section 5 "The labels"), and an
+            `extract` with its own `extract_sha256`. A `no_season`
             entry (no regular-season game was played) carries the dated
             amendment that recorded it and no file.
 
@@ -42,6 +44,9 @@ from pathlib import Path
 
 DATA_DIR = Path(__file__).parent / "data"
 VINTAGE_DIR = DATA_DIR / "proj_forward_vintage"
+#: The serving projection bundle's meta; its war_provider is the training label
+#: the freeze log records (gate section 5 "The labels").
+BUNDLE_META = Path(__file__).parent / "model" / "proj_lgbm" / "meta.json"
 LOG_NAME = "FREEZE_LOG.json"
 #: The first season the gate freezes. Nothing before it was ever saved, so the
 #: flip guard asks for nothing earlier.
@@ -179,8 +184,12 @@ def freeze_problems(payload: dict, season: int, first_game_date: str) -> list[st
 
 def freeze(season: int, source: Path, *, first_game_pk: int, first_game_date: str,
            source_label: str, vintage_dir: Path | None = None,
-           frozen_at: str | None = None) -> dict:
+           frozen_at: str | None = None, label_provider: str | None = None) -> dict:
     """Copy `source` byte for byte into the folder and append its log entry.
+
+    `label_provider` is the WAR series the frozen projection was trained on; when
+    it is not given it is read from the serving bundle's meta (BUNDLE_META
+    war_provider), and the freeze refuses when neither names one.
 
     Write-once: refuses when the season already has any entry or file. Refuses
     on any F2 precondition. Returns the entry it appended."""
@@ -195,6 +204,14 @@ def freeze(season: int, source: Path, *, first_game_pk: int, first_game_date: st
     target = d / frozen_name(season)
     if target.exists():
         probs.append(f"{target.name} already exists; the freeze is write-once")
+    if not label_provider:
+        try:
+            label_provider = json.loads(BUNDLE_META.read_text(encoding="utf-8")).get("war_provider")
+        except (OSError, ValueError):
+            label_provider = None
+    if not label_provider:
+        probs.append("no training label: pass label_provider or keep war_provider in "
+                     f"{BUNDLE_META.name}")
     if probs:
         raise ValueError("freeze refused: " + "; ".join(probs))
     ex = extract(payload)
@@ -209,6 +226,7 @@ def freeze(season: int, source: Path, *, first_game_pk: int, first_game_date: st
         "first_game": {"gamePk": int(first_game_pk), "gameDate": str(first_game_date)},
         "frozen_at": frozen_at or date.today().isoformat(),
         "gate": "docs/PROJ_FORWARD_VINTAGE_GATE.md",
+        "label_provider": str(label_provider),
         "n_vets": len(ex["vets"]),
         "n_team_outlook": len(ex["team_outlook"]),
         "extract_sha256": extract_sha256(ex),

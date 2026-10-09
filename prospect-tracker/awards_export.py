@@ -64,11 +64,16 @@ sha256 differs from freeze_log.json's; a payload over its size line.
 THE FRAME GUARDS (AWARDS_PLAN F10 to F12, I7). Prospect rows are handed to
 awards_core only for debut cohorts awards_core.prospect_pool_open() admits
 (debut seasons before min(RESERVED_LV) today), so no eFV at debut is paired
-with a season for a reserved cohort, not even in memory. proj_above and
-proj_below get no rows at all while awards_core.proj_blocked_on(S) is set
-(2026 is dark, AW-Q3), so no realized-minus-projected number is computed on a
-label season whose registered looks are open. Nothing here groups a realized
-number by FV, eFV or consensus band or reads the realized FV anchor.
+with a season for a reserved cohort, not even in memory. proj_above,
+proj_below and the Manager card's preseason column read M15's frozen Opening
+Day file only through awards_core.preseason_read, which asks the look gate
+before it opens the freeze log or the file (2026 is dark, AW-Q3), so no
+projected number is loaded and no realized-minus-projected number is computed
+on a label season whose registered looks are open. The realized side of the
+pair is on the frozen file's own WAR series (the freeze log's label_provider),
+the displayed series printed beside it when the two differ. Nothing here
+groups a realized number by FV, eFV or consensus band or reads the realized FV
+anchor.
 
 THE WINNERS FILE. data/_labs/awards/award_winners.json (AWARDS_4, written by
 tools/award_winners_ingest.py from MLB's StatsAPI) is read when present, in this
@@ -116,6 +121,10 @@ PREVIEW = CACHE / "awards" / "preview"
 #: checkout would revert it; tools/awards_race.py writes the tracked race_<S>.json once on
 #: the dev box after the season closes.
 RULE_PLACE_FIRST = 2027
+#: Where the look gate documents and M15's freeze log are read (None: the repo's
+#: own docs/ and data/proj_forward_vintage/); tests point both at fixtures.
+GATE_ROOT: Path | None = None
+PROJ_VINTAGE_DIR: Path | None = None
 VINTAGE_TOP = 10
 VINTAGES = CACHE / "awards_vintages"
 RACE_RULE_LABEL = ("Place on the selection rule among every eligible player, week by week, "
@@ -430,6 +439,17 @@ class _Ctx:
         #: record before it is written (so the race block carries tonight's point).
         self.vintage_dir: Path | None = None
         self.pending_vintage: dict | None = None
+        self.gate_root = GATE_ROOT if GATE_ROOT is not None else ROOT
+        self.proj_vintage_dir = PROJ_VINTAGE_DIR
+        self._preseason: dict = {}
+
+    def preseason(self, season: int, scope: str) -> dict:
+        """awards_core.preseason_read for (S, scope), once per run."""
+        k = (int(season), scope)
+        if k not in self._preseason:
+            self._preseason[k] = A.preseason_read(season, scope=scope, root=self.gate_root,
+                                                  vintage_dir=self.proj_vintage_dir)
+        return self._preseason[k]
 
     def rookie_block(self, season: int):
         for blk in self.rookies.get("seasons") or []:
@@ -580,7 +600,8 @@ def _ballots(ctx: _Ctx, w: dict, award: str, lg: str, n=None) -> dict:
         stand, outlook, earned, _ = _manager_inputs(ctx, w)
         if not stand:
             return None
-        return A.manager_ballot(stand, outlook, earned, lg, S, war_provider=ctx.provider, n=n)
+        return A.manager_ballot(stand, outlook, earned, lg, S, war_provider=ctx.provider, n=n,
+                                preseason=ctx.preseason(S, "clubs"))
     raise ValueError(award)
 
 
@@ -902,6 +923,8 @@ def _card(ctx: _Ctx, w: dict, award: str, lg: str) -> dict | None:
     }
     if award == "MOY" and card.get("unscored"):
         block["unscored"] = card["unscored"]
+    if award == "MOY" and "preseason_column" in card:
+        block["preseason_column"] = card["preseason_column"]
     return {"card": block, "full": full}
 
 
@@ -995,19 +1018,79 @@ def _fwar_realized(S: int) -> dict:
     return out
 
 
+def _proj_rows(ctx: _Ctx, w: dict, pre: dict):
+    """(rows, label_provider, why) for proj_above / proj_below from an OPEN
+    preseason read: per frozen veteran who appeared in S, the realized season on
+    the frozen file's own WAR series, the frozen war[0] and its P10 and P90, and
+    the displayed series' total beside. `why` closes the pair when the realized
+    side cannot be read on that series."""
+    S = w["season"]
+    label = pre["label_provider"]
+    war = _season_war(w)
+    if label == ctx.provider:
+        realized = {m: t["war"] for m, t in war.items()}
+    elif label == "fwar":
+        try:
+            realized = _fwar_realized(S)
+        except Exception:  # noqa: BLE001 (a missing vintage closes the pair)
+            realized = {}
+        if not realized:
+            return None, label, (f"The frozen {A.war_unit_label(label)} vintage does not hold "
+                                 f"{S} yet, so this card stays closed.")
+    else:
+        return None, label, (f"The frozen projection is on {A.war_unit_label(label)}, a series "
+                             f"this page does not read for {S}, so this card stays closed.")
+    rows = []
+    for m, p in pre["vets"].items():
+        if m not in war or m not in realized:
+            continue
+        t = war[m]
+        rows.append({"mlbam": m, "name": t["name"], "club_code": t["club_code"],
+                     "pa": t["pa"], "ip": t["ip"], "war_realized": realized[m],
+                     "war_proj": p["war"], "p10": p["p10"], "p90": p["p90"],
+                     "displayed": t["war"] if label != ctx.provider else None})
+    return rows, label, None
+
+
+def _proj_blocks(ctx: _Ctx, w: dict) -> list:
+    """The projection pair. While preseason_read is closed for S the pair gets no
+    rows and the frozen file is never opened (AWARDS_PLAN 4.3, I7)."""
+    S = w["season"]
+    pre = ctx.preseason(S, "players")
+    out = []
+    if pre["blocked_on"]:
+        for fn in (A.proj_above, A.proj_below):
+            out.append(fn([], S, war_provider=ctx.provider, root=ctx.gate_root,
+                          blocked_on=pre["blocked_on"]))
+        return out
+    rows, label, why = _proj_rows(ctx, w, pre)
+    for fn in (A.proj_above, A.proj_below):
+        if rows is None:
+            blk = fn([], S, war_provider=label, root=ctx.gate_root, blocked_on=why,
+                     displayed_provider=ctx.provider)
+        else:
+            blk = fn(rows, S, war_provider=label, root=ctx.gate_root,
+                     displayed_provider=ctx.provider)
+        blk["preseason_file"] = {"file": pre["file"], "sha256": pre["sha256"],
+                                 "frozen_at": pre["frozen_at"], "label_provider": label}
+        out.append(blk)
+    return out
+
+
+def _preseason_stamp(ctx: _Ctx, S: int) -> dict:
+    pre = ctx.preseason(S, "players")
+    return {"season": int(S), "blocked_on": pre["blocked_on"], "file": pre["file"],
+            "sha256": pre["sha256"], "frozen_at": pre["frozen_at"],
+            "label_provider": pre["label_provider"]}
+
+
 def _superlatives(ctx: _Ctx, w: dict, *, live_next: bool = True) -> list:
     S = w["season"]
     b = w["boards"]
     out = []
     out.append(A.prospect_above(_prospect_rows(ctx, w), S, war_provider=ctx.provider))
     out.append(A.prospect_below(_prospect_rows(ctx, w), S, war_provider=ctx.provider))
-    # The projection pair gets no rows while it is dark: nothing realized is
-    # subtracted from a projection on a label season whose looks are open.
-    for fn in (A.proj_above, A.proj_below):
-        blocked = A.proj_blocked_on(S)
-        out.append(fn([], S, war_provider=ctx.provider) if blocked else
-                   _blocked_block(fn.__name__, S, ctx.provider,
-                                  "The frozen Opening Day file reader lands with AWARDS_13."))
+    out += _proj_blocks(ctx, w)
     if live_next and S == ctx.board_season:
         rows, bundle, realized_prov, why = _next_rows(ctx, w)
         if rows is None:
@@ -1871,7 +1954,7 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
             "status": "frozen" if frozen else "live", "war_provider": doc["war_provider"],
             "stamp": {"through": cur["through"], "ewar_vintage": vint,
                       "frozen_at": (freeze_blk or {}).get("frozen_at"),
-                      "projections_build": _proj_stamp(ctx), "preseason_file": None,
+                      "projections_build": _proj_stamp(ctx), "preseason_file": _preseason_stamp(ctx, S),
                       "stint_frames": {"provider": ctx.provider, "stale": _served_stale()}},
             "freeze": freeze_blk,
             "selection_caption": A.selection_caption(S, frozen is not None),

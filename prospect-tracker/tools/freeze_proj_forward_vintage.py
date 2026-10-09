@@ -44,6 +44,8 @@ def main(argv=None) -> int:
     ap.add_argument("--first-game-pk", type=int)
     ap.add_argument("--first-game-date")
     ap.add_argument("--vintage-dir", type=Path, default=pfv.VINTAGE_DIR)
+    ap.add_argument("--label-provider",
+                    help="the WAR series the bundle was trained on (default: the bundle meta's)")
     a = ap.parse_args(argv)
     if a.check:
         probs = pfv.check(a.vintage_dir)
@@ -56,7 +58,7 @@ def main(argv=None) -> int:
         ap.error("a freeze needs --" + ", --".join(m.replace("_", "-") for m in missing))
     entry = pfv.freeze(a.season, a.source, first_game_pk=a.first_game_pk,
                        first_game_date=a.first_game_date, source_label=a.source_label,
-                       vintage_dir=a.vintage_dir)
+                       vintage_dir=a.vintage_dir, label_provider=a.label_provider)
     print(json.dumps({k: entry[k] for k in entry if k != "extract"}, indent=1))
     print(f"commit {a.vintage_dir} by hand and pin sha256 {entry['sha256']} "
           "in test_proj_forward_vintage.py")
