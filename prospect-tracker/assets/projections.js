@@ -833,7 +833,7 @@
       &middot; <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.generated_at ? ` &middot; data as of ${esc(String(DATA.generated_at))}` : ""}
       &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
       <details class="proj-how"><summary class="fa-sub">How this works</summary><div class="fa-note">
-      Veterans: proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion.
+      Veterans: proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion.${projGateSentence()}${faGateClause()}
       Prospects: <span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA.
       Priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.pricing_basis ? `, each season at its own level on the one written path (escalator ${(DATA.pricing_basis.g_ref * 100).toFixed(2)}%/yr, discounted at ${(DATA.pricing_basis.nominal_rate * 100).toFixed(2)}%)` : (DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons")}.
       WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, unsigned seasons through ${last} at most and a longer guarantee through its last season on the champion aging curve chained from the ${last} WAR.</div></details>`;
@@ -2563,8 +2563,8 @@
   }
   // TWO PATHS, SAID ONCE (M05-06, 2026-09-25). The expected path above is
   // proj_lgbm_v1; the FA numbers in this block (Rational value, Contract
-  // surplus, Deal+) are priced on the Marcel champion path, because ML paths as
-  // market inputs failed Gate 2 (fa_export use_ml=False, a do-not-reopen item).
+  // surplus, Deal+) are priced on the Marcel champion path, the input the FA
+  // market model was gated on (fa_export use_ml=False, a do-not-reopen item).
   // The block names the path it prices and its per-season values, so a reader
   // moving between this card and /fa/ sees why the two pages print different
   // WAR for the same season instead of finding a contradiction.
@@ -2579,7 +2579,38 @@
     const cmp = n && first != null
       ? ` Over ${first}-${first + n - 1} the FA path sums ${fmtWar(sum(fp, n))} against ${fmtWar(sum(ml, n))} on the projection path above.`
       : "";
-    return `<div class="fa-sub mlbp-block-foot" data-fa-pricing-path>FA values are priced on the ${term("fa_projection_engine", "Marcel champion path")}, not the projection path above: ${fp.map(fmtWar).join(" / ")}${first != null ? ` (${first}-${first + fp.length - 1})` : ""}, Deal WAR ${fmtWar(f.warTotal)}.${cmp} ML paths failed the ${term("fa_gates", "Gate 2")} market test, so /fa/ keeps the champion.</div>`;
+    return `<div class="fa-sub mlbp-block-foot" data-fa-pricing-path>FA values are priced on the ${term("fa_projection_engine", "Marcel champion path")}, not the projection path above: ${fp.map(fmtWar).join(" / ")}${first != null ? ` (${first}-${first + fp.length - 1})` : ""}, Deal WAR ${fmtWar(f.warTotal)}.${cmp}${faGateClause()}</div>`;
+  }
+  // EACH SURFACE SERVES THE ENGINE THAT WON ITS OWN GATE (owner answer M15-1,
+  // 2026-09-25). Both sentences read accountability.surface_engines, which
+  // proj_export copies out of the two committed eval artifacts, so the verdict
+  // each prints is the measured one and an absent block prints nothing. The
+  // markup is literal, not term(): the fold calls these from render().
+  function surfaceEngines() {
+    return ((DATA && DATA.accountability) || {}).surface_engines || {};
+  }
+  function measuredOn(when) {
+    return when ? `, measured ${esc(String(when).slice(0, 10))}` : "";
+  }
+  // A gate row that is pending re-measure says so beside its figures.
+  function pendingNote(x) {
+    return x && x.remeasure_pending ? ` Its registry row: ${esc(x.remeasure_pending)}.` : "";
+  }
+  function projGateSentence() {
+    const p = surfaceEngines().projections;
+    const rows = ((p && p.by_horizon) || []).filter(r => r.mae != null && r.mae_comparator != null);
+    if (!rows.length) return "";
+    const ahead = rows.filter(r => r.mae < r.mae_comparator).length;
+    const h1 = rows[0];
+    const where = ahead === rows.length ? "at every scored horizon" : `at ${ahead} of ${rows.length} scored horizons`;
+    return ` ${esc(p.engine)} serves here: it is ahead of ${esc(p.comparator)} ${where} of the ${esc(p.frame)} (year ${h1.h} MAE ${h1.mae.toFixed(3)} against ${h1.mae_comparator.toFixed(3)}${measuredOn(p.generated_at)}).${pendingNote(p)}`;
+  }
+  function faGateClause() {
+    const f = surfaceEngines().fa;
+    const g = f && f.pooled && f.pooled.guarantee;
+    if (!g || g.mae_model == null || g.mae_base == null) return "";
+    const verdict = f.pass ? "passed" : "is failing";
+    return ` /fa/ keeps the champion path, the input its market model ${verdict} <span data-gl="fa_gates">Gate 2</span> on (guarantee MAE $${g.mae_model.toFixed(2)}M against $${g.mae_base.toFixed(2)}M for its baseline, n ${String(Math.round(Number(g.n))).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${measuredOn(f.generated_at)}).${pendingNote(f)}`;
   }
   function projectionPanel(p) {
     const pr = p.proj || {};

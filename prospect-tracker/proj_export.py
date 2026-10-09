@@ -70,8 +70,37 @@ from scrapers import normalize_key
 log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
-FIRST_SEASON = 2027          # first fully projected season (2026 is in progress)
+FIRST_SEASON = 2027          # first fully projected season; a MANUAL, dated flip
+FIRST_SEASON_SET_ON = "2026-06-10"   # the date of the last flip; moves with it
 HORIZON = 5                  # 2027..2031
+# THE FIRST-SEASON FLIP GUARD (owner answer M15-3, 2026-09-25;
+# docs/PROJ_FORWARD_VINTAGE_GATE.md section 4). FIRST_SEASON never rolls by the
+# calendar: it moves by hand in its own dated commit, with FIRST_SEASON_SET_ON.
+# Before it may move past a season, that season's preseason forecast must be on
+# record (a frozen file whose hash still matches, or a no_season entry), so the
+# forward score always has the forecast it grades. build_payload calls this
+# first, so a premature flip fails the export rather than serving a board whose
+# predecessor was never kept.
+
+
+def assert_first_season_flip_allowed(first_season: int | None = None,
+                                     vintage_dir: Path | None = None) -> None:
+    import proj_forward_vintage as pfv
+    fs = FIRST_SEASON if first_season is None else int(first_season)
+    missing = []
+    for season in range(pfv.FIRST_FROZEN_SEASON, fs):
+        ok, why = pfv.on_record(season, vintage_dir)
+        if not ok:
+            missing.append(f"{season} ({why})")
+    if missing:
+        raise RuntimeError(
+            f"FIRST_SEASON {fs} refused: the preseason forecast of "
+            + ", ".join(missing) + " is not on record. Freeze it with "
+            "tools/freeze_proj_forward_vintage.py before the season's first game "
+            "(docs/PROJ_FORWARD_VINTAGE_GATE.md), or record a no_season entry by "
+            "dated amendment.")
+
+
 # THE CONTRACT TAIL (owner answer 2026-09-25, census M05-01 step 2). A
 # guaranteed contract that runs past the last projected season is priced
 # through its last guaranteed season, not only through FIRST_SEASON+HORIZON-1.
@@ -2531,6 +2560,11 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
     return out
 
 
+def _forward_vintage_on_record(season: int) -> bool:
+    import proj_forward_vintage as pfv
+    return bool(pfv.on_record(season)[0])
+
+
 def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
                              season_remainder: list[float], depth_acct: dict) -> None:
     """data/team_outlook_eval.json - the league-sum accounting plus the
@@ -2618,7 +2652,12 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
             "status": "pending",
             "first_scoreable": f"end of the {FIRST_SEASON} season",
             "scope": f"first season only; {FIRST_SEASON + 1}+ are not gateable",
-            "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward"},
+            "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward",
+            # The forecast it grades is the write-once preseason freeze, never
+            # this nightly file (owner answer M15-2, PROJ_FORWARD_VINTAGE_GATE).
+            "forecast": "the frozen preseason copy of the first projected season, "
+                        "taken before its first game and pinned by hash; never a nightly build",
+            "forecast_on_record": _forward_vintage_on_record(FIRST_SEASON)},
     })
     # System Duration / Window Alignment coverage + league distribution. A
     # descriptive rollup of committed inputs (eta model validated, surplus
@@ -3326,6 +3365,50 @@ def _accountability_block() -> dict:
         "ship_decision": pe.get("ship_decision"),
     } if champ else {}
 
+    # EACH SURFACE SERVES THE ENGINE THAT WON ITS OWN GATE (owner answer M15-1,
+    # 2026-09-25, "use whichever model wins"): /projections/ the ML heads that
+    # beat the champion on the player-level holdout, /fa/ the champion path its
+    # market model passed Gate 2 on (fa_market.enriched_signings, use_ml=False).
+    # Both pages disclose it, and both disclosures read THIS block, which copies
+    # the two committed eval artifacts, so neither verdict is a sentence in code.
+    base_by_h = {r["h"]: r for r in ((vet_horizons.get("baseline") or {}).get("horizons") or [])}
+    proj_rows = [{"h": r["h"], "n": r.get("n"), "mae": r.get("mae"),
+                  "mae_comparator": (base_by_h.get(r["h"]) or {}).get("mae")}
+                 for r in ((vet_horizons.get("champion") or {}).get("horizons") or [])]
+    g2 = _read_data_json("fa_gate2_eval.json")
+    g2_pooled = {k: {"mae_model": v.get("mae_model"), "mae_base": v.get("mae_base"),
+                     "n": v.get("n")}
+                 for k, v in (g2.get("pooled") or {}).items()
+                 if k in ("guarantee", "aav", "years") and isinstance(v, dict)}
+    surface_engines = {
+        "rule": "each surface serves the engine that won its own gate "
+                "(owner answer M15-1, 2026-09-25)",
+        "projections": {
+            "engine": (vet_horizons.get("champion") or {}).get("model"),
+            "comparator": (vet_horizons.get("baseline") or {}).get("model"),
+            "gate": "player-level WAR holdout, both engines on the same frame",
+            "frame": "2022-2024 holdout",
+            "artifact": "data/proj_horizon_eval.json",
+            "generated_at": he.get("generated_at"),
+            # the gate row's own caveat, printed beside the figures it qualifies
+            "registry_row": "fa_war_paths_decay",
+            "remeasure_pending": (by_id.get("fa_war_paths_decay") or {}).get("remeasure_pending"),
+            "by_horizon": proj_rows,
+        } if proj_rows else None,
+        "fa": {
+            "engine": "marcel_decay_v2",
+            "input": "champion paths (fa_market.enriched_signings, use_ml=False)",
+            "gate": "FA Gate 2, market model",
+            "artifact": "data/fa_gate2_eval.json",
+            "generated_at": g2.get("generated_at"),
+            "registry_row": "fa_market",
+            "remeasure_pending": (by_id.get("fa_market") or {}).get("remeasure_pending"),
+            "war_provider": g2.get("war_provider"),
+            "pass": g2.get("pass"),
+            "pooled": g2_pooled,
+        } if g2_pooled else None,
+    }
+
     return {
         "generated_at": date.today().isoformat(),
         "registry_version": reg.get("version"),
@@ -3344,6 +3427,7 @@ def _accountability_block() -> dict:
             "data/proj_horizon_eval.json": vet_horizons,
             "data/prospect_path_eval.json": prospect_paths,
         },
+        "surface_engines": surface_engines,
     }
 
 
@@ -3424,6 +3508,7 @@ def _team_basis_block(vets: list[dict]) -> dict:
 def build_payload() -> dict:
     """The /projections/ payload. In unified $/WAR path mode (VAL_5 row 10) the
     stamps name P(B), the path by season and the pricing basis."""
+    assert_first_season_flip_allowed()
     payload = _build_payload_body()
     if vf.dpw_path_active():
         _stamp_dpw_path(payload)

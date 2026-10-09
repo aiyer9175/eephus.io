@@ -58,7 +58,10 @@ LEGS = [
 ]
 #: The legs whose producer rerun reproduced the stored points on 2026-10-07,
 #: so their interval was written beside them (tools/gap_intervals_beside.py).
-WRITTEN = {("eta", 0), ("eta", 1), ("ewar", 0), ("ewar", 1), ("betting_game_prob", 1)}
+#: The team-wins leg joined on 2026-10-09, written by proj_backtest's own re-run
+#: (owner answer M15-4), not by the beside tool.
+WRITTEN = {("eta", 0), ("eta", 1), ("ewar", 0), ("ewar", 1), ("betting_game_prob", 1),
+           ("team_win_projections", 0)}
 
 
 def _doc(rel):
@@ -244,8 +247,9 @@ def test_each_written_interval_exists_and_brackets_its_point():
 
 def test_each_interval_point_is_the_gap_between_the_points_beside_it():
     """The interval was measured on the stored rows: its point (unrounded
-    arithmetic) equals the gap between the stored champion and baseline, which
-    carry 3 or 4 decimals, to that rounding."""
+    arithmetic) equals the gap between the stored champion and baseline to the
+    stored rounding: 3 or 4 decimals on most legs, 2 on the team-wins leg,
+    whose producer rounds wins MAE to 2 (proj_backtest._team_tables)."""
     for mid, i, rel, leg, champ, base, better in LEGS:
         doc = _doc(rel)
         blk = _get(doc, leg)
@@ -253,7 +257,8 @@ def test_each_interval_point_is_the_gap_between_the_points_beside_it():
             continue
         c, b = _get(doc, champ), _get(doc, base)
         gap = (b - c) if better == "lower" else (c - b)
-        assert abs(gap - blk["point"]) <= 0.0011, (mid, i, gap, blk["point"])
+        tol = 0.0101 if mid == "team_win_projections" else 0.0011
+        assert abs(gap - blk["point"]) <= tol, (mid, i, gap, blk["point"])
 
 
 def _head_doc(rel):
