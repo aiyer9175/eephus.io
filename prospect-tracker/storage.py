@@ -6681,14 +6681,17 @@ def _compute_top_grads_leaf(gagg: dict) -> dict:
     bust sample floor (already filtered into `_top_grads` upstream).
     Gates at ≥3 qualifying grads or returns None (`top3_war_per_yr`)."""
     grads = gagg.get("_top_grads") or []
-    yvals = [g["war_per_yr"] for g in grads
+    # VAL_4: each record carries the club's development share `w`; the leaf reads
+    # the WAR/yr credited to the club (share x WAR/yr). w is 1.0 for a graduate one
+    # club developed alone, and absent on records built before VAL_4.
+    yvals = [g.get("w", 1.0) * g["war_per_yr"] for g in grads
              if g.get("war_per_yr") is not None]
     yvals.sort(reverse=True)
     top3 = yvals[:3]
     return {
         "top3_war_per_yr": (round(sum(top3) / len(top3), 2)
                             if len(top3) >= 3 else None),
-        "grad_count_qualifying": len(grads),
+        "grad_count_qualifying": round(sum(g.get("w", 1.0) for g in grads), 2),
         # Also expose top-3 career WAR for the swapped mlb_*_wag input.
         "top3_career_war": _top3_career_war(grads, is_pitcher=None),
     }
@@ -6702,7 +6705,7 @@ def _top3_career_war(grads: list[dict], is_pitcher: bool | None) -> float | None
         pool = list(grads)
     else:
         pool = [g for g in grads if bool(g.get("is_pitcher")) == is_pitcher]
-    cwars = sorted([g["career_war"] for g in pool
+    cwars = sorted([g.get("w", 1.0) * g["career_war"] for g in pool
                     if g.get("career_war") is not None], reverse=True)[:3]
     return round(sum(cwars) / len(cwars), 2) if len(cwars) >= 3 else None
 
@@ -6756,13 +6759,15 @@ def _compute_conviction_leaf(gagg: dict, today: date | None = None) -> dict:
                 "career_war":   round(cwa, 2),
                 "season_peak":  round(season_peak, 2),
                 "reason":       "career" if is_career_star else "season",
+                "w":            g.get("w", 1.0),
             })
 
     # Order stars by descending signal magnitude so the top 5 tooltip
     # surfaces the most-impressive contributors.
     stars.sort(key=lambda s: max(s["war_per_yr"], s["season_peak"]),
                reverse=True)
-    star_count = len(stars)
+    # VAL_4: a star counts by the club's development share (graduate-equivalents).
+    star_count = round(sum(s.get("w", 1.0) for s in stars), 2)
     peak_war_per_yr = max((s["war_per_yr"] for s in stars), default=None)
     peak_career_war = max((s["career_war"] for s in stars), default=None)
     peak_season_war = max((s["season_peak"] for s in stars), default=None)
@@ -6778,8 +6783,8 @@ def _compute_conviction_leaf(gagg: dict, today: date | None = None) -> dict:
         "peak_season_war": round(peak_season_war, 2) if peak_season_war is not None else None,
         # Legacy binary conviction — kept so cached frontends keep
         # rendering. New leaf scoring keys on star_count instead.
-        "conviction":      1 if star_count >= 1 else 0,
-        "grad_count_qualifying": len(grads),
+        "conviction":      1 if stars else 0,
+        "grad_count_qualifying": round(sum(g.get("w", 1.0) for g in grads), 2),
     }
 
 
@@ -6825,15 +6830,17 @@ def _compute_hof_track_leaf(gagg: dict) -> dict:
                 "name":        g.get("player_name"),
                 "season_peak": round(season_peak, 2),
                 "career_war":  round(g.get("career_war") or 0.0, 2),
+                "w":           g.get("w", 1.0),
             })
     hof_grads.sort(key=lambda s: s["season_peak"], reverse=True)
     return {
-        "hof_count":         len(hof_grads),
+        # VAL_4: counted by the club's development share (graduate-equivalents)
+        "hof_count":         round(sum(h.get("w", 1.0) for h in hof_grads), 2),
         "hof_names":         [h["name"] for h in hof_grads[:5] if h.get("name")],
         "hof_grads":         hof_grads[:5],
         "peak_season_war":   max((h["season_peak"] for h in hof_grads), default=None),
         "threshold":         _HOF_TRACK_SEASON_WAR_THRESHOLD,
-        "grad_count_qualifying": len(grads),
+        "grad_count_qualifying": round(sum(g.get("w", 1.0) for g in grads), 2),
     }
 
 
@@ -7366,7 +7373,9 @@ def _compute_draft_pool_efficiency(gagg: dict,
 
     relevant = [g for g in grads
                 if start_year <= g["draft_year"] <= end_year]
-    war_total = sum(g["career_war"] for g in relevant) if relevant else 0.0
+    # VAL_4: the WAR credited to the drafting club (share x WAR); the pool is its own.
+    war_total = sum(g.get("w", 1.0) * g["career_war"] for g in relevant) if relevant else 0.0
+    n_rel = sum(g.get("w", 1.0) for g in relevant)
     pool_total = 0
     for y in range(start_year, end_year + 1):
         pools_y = (draft_pools.get(y) or {}).get("team_pools") or {}
@@ -7379,7 +7388,7 @@ def _compute_draft_pool_efficiency(gagg: dict,
     fv_per_m  = None
     if pool_total > 0:
         pool_total_mm = pool_total / 1_000_000.0
-        if len(relevant) >= 3:
+        if n_rel >= 3:
             war_per_m = round(war_total / pool_total_mm, 3)
         if fv_total_active > 0:
             fv_per_m = round(fv_total_active / pool_total_mm, 3)
@@ -7387,7 +7396,7 @@ def _compute_draft_pool_efficiency(gagg: dict,
     return {
         "war_per_m_pool":   war_per_m,
         "fv_per_m_pool":    fv_per_m,
-        "grad_count":       len(relevant),
+        "grad_count":       round(n_rel, 2),
         "war_total":        round(war_total, 2),
         "fv_total_active":  round(fv_total_active, 1),
         "pool_total_usd":   pool_total,
@@ -7423,7 +7432,9 @@ def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
     if not relevant:
         return {"war_per_m_ifa": None, "grad_count": 0,
                 "war_total": 0.0, "ifa_total_usd": 0}
-    war_total = sum(g["career_war"] for g in relevant)
+    # VAL_4: the WAR credited to the signing club (share x WAR).
+    war_total = sum(g.get("w", 1.0) * g["career_war"] for g in relevant)
+    n_rel = round(sum(g.get("w", 1.0) for g in relevant), 2)
     # v8 — Sum the org's TOTAL IFA spend across the same year window
     # from Spotrac. Falls back to per-grad bonus sum when org-level
     # data is missing.
@@ -7434,12 +7445,12 @@ def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
     if ifa_total <= 0:
         ifa_total = sum(int(g.get("bonus_usd") or 0) for g in relevant)
     if ifa_total <= 0:
-        return {"war_per_m_ifa": None, "grad_count": len(relevant),
+        return {"war_per_m_ifa": None, "grad_count": n_rel,
                 "war_total": round(war_total, 2), "ifa_total_usd": 0}
     war_per_m = round(war_total / (ifa_total / 1_000_000.0), 3)
     return {
         "war_per_m_ifa": war_per_m,
-        "grad_count":    len(relevant),
+        "grad_count":    n_rel,
         "war_total":     round(war_total, 2),
         "ifa_total_usd": ifa_total,
     }
@@ -9110,6 +9121,7 @@ def _build_org_fv_history(
     filter_real_trades,
     trades_by_player: dict[str, list[dict]],
     xfv_hist_by_key: dict | None = None,
+    calendar=None,
 ) -> dict[str, dict]:
     """
     Build per-org cumulative **development** FV time series + events.
@@ -9154,6 +9166,15 @@ def _build_org_fv_history(
     rather than "cumulative roster FV". Event markers (trade in/out,
     graduation) still annotate the chart even though they don't move
     the line.
+
+    VAL_4 (2026-10-08): `calendar(player_key)` returns the player's org
+    tenures (dev_attribution). With one, the club on each date comes from the
+    calendar, not from trades alone (a waiver claim, Rule 5 move, release or
+    signing elsewhere also changes the club, and a graduate who left by free
+    agency no longer sits at his new club for his whole history), and a
+    snapshot-to-snapshot step that spans a club change is split by days
+    between the clubs; an unaffiliated stretch credits nobody. Players the
+    calendar does not cover keep the trade rule above.
     """
     from trades import canonical_org
     from collections import defaultdict
@@ -9186,6 +9207,12 @@ def _build_org_fv_history(
                 continue
             trades.append({"date": d, "from": cf, "to": ct})
         trades.sort(key=lambda t: t["date"])
+
+        _cal = calendar(p.player_key) if calendar is not None else None
+        if _cal:
+            _cal_player_history(p, sorted_points, trades, _cal, xfv_hist_by_key,
+                                contribs, events_by_org, dates_by_org)
+            continue
 
         # Initial org: pre-first-trade owner if any trade exists, else
         # the player's current org. Canonicalized to align with the keys
@@ -9306,6 +9333,107 @@ def _build_org_fv_history(
                         key=lambda e: (e["date"], e["kind"]))
         result[org] = {"series": series, "events": events}
     return result
+
+
+def _cal_player_history(p, sorted_points, trades, cal, xfv_hist_by_key,
+                        contribs, events_by_org, dates_by_org) -> None:
+    """One player's development credit on an org calendar (VAL_4).
+
+    Same rule as the trade path of _build_org_fv_history: the first snapshot
+    plants a baseline and credits nothing; each later snapshot credits the
+    expected-WAR delta from the previous one. The club comes from the calendar,
+    and a step that spans a club change is split by days across the tenures it
+    spans (dev_attribution.split_pair); an earlier club's part is dated at its
+    tenure's end. Trade and debut markers annotate the chart as before."""
+    import dev_attribution as _da
+    _xmap = {pt.get("d"): pt.get("x")
+             for pt in ((xfv_hist_by_key or {}).get(p.player_key) or [])
+             if pt.get("d") and pt.get("x") is not None}
+    stream: list[tuple] = []
+    for pt in sorted_points:
+        stream.append((pt.snapshot_date, "snapshot", _xmap.get(pt.snapshot_date, pt.consensus_fv_raw)))
+    for t in trades:
+        stream.append((t["date"], "trade", t["from"], t["to"]))
+    if p.status == "debuted" and p.debut_date:
+        stream.append((p.debut_date, "debut_marker"))
+    stream.sort(key=lambda x: x[0])
+    prev = None                     # (date, fv) of the last snapshot
+    fv_now = 0.0
+    for ev in stream:
+        d, kind = ev[0], ev[1]
+        if kind == "snapshot":
+            new_fv = ev[2]
+            if prev is None:
+                o = _da.org_on(cal, d)
+                if o:
+                    dates_by_org[o].add(d)
+            else:
+                war_before = _fv_to_expected_war(prev[1]) or 0.0
+                war_after = _fv_to_expected_war(new_fv) or 0.0
+                delta_war = war_after - war_before
+                if delta_war != 0:
+                    for i, f in _da.split_pair(prev[0], d, cal):
+                        o = cal[i].org
+                        if not o:
+                            continue
+                        cd = d if cal[i].end > d else cal[i].end
+                        contribs[(o, cd)] += delta_war * f
+                        dates_by_org[o].add(cd)
+            prev = (d, new_fv)
+            fv_now = new_fv if new_fv is not None else fv_now
+        elif kind == "trade":
+            from_org, to_org = ev[2], ev[3]
+            dates_by_org[from_org].add(d)
+            dates_by_org[to_org].add(d)
+            events_by_org[from_org].append({
+                "date": d, "kind": "trade", "player_name": p.player_name,
+                "player_key": p.player_key, "fv": round(fv_now or 0.0, 1),
+                "other_org": to_org, "direction": "out",
+            })
+            events_by_org[to_org].append({
+                "date": d, "kind": "trade", "player_name": p.player_name,
+                "player_key": p.player_key, "fv": round(fv_now or 0.0, 1),
+                "other_org": from_org, "direction": "in",
+            })
+        elif kind == "debut_marker":
+            o = _da.org_on(cal, d)
+            if o:
+                events_by_org[o].append({
+                    "date": d, "kind": "debut_marker",
+                    "player_name": p.player_name,
+                    "player_key": p.player_key, "fv": round(fv_now or 0.0, 1),
+                })
+
+
+def _build_dev_attribution(players, trades_by_player, acquisitions, filter_real_trades):
+    """VAL_4: the development attribution for the export's player pools, or None
+    (logged) when it cannot be built, in which case every consumer keeps the
+    current-club credit."""
+    try:
+        import dev_attribution as _da
+        from trades import canonical_org as _co
+        infos = []
+        for p in players:
+            if not p.player_key:
+                continue
+            debut = p.debut_date if p.status == "debuted" else None
+            listed = None
+            for pt in reversed(p.points or []):
+                if pt.org and (not debut or (pt.snapshot_date or "") <= debut):
+                    listed = _co(pt.org)
+                    break
+            status = ("debuted" if p.status == "debuted"
+                      else "active" if p.status == "active" else "inactive")
+            infos.append(_da.PlayerInfo(p.player_key, _co(p.org) if p.org else None,
+                                        status, debut, listed))
+        trades = {k: filter_real_trades(v or []) for k, v in (trades_by_player or {}).items()}
+        since = (date.today() - timedelta(days=FARM_TOOL_DELTA_LOOKBACK_DAYS)).isoformat()
+        with connect() as con:
+            return _da.build(infos, trades_by_player=trades, acquisitions=acquisitions or {},
+                             con=con, tool_since=since)
+    except Exception:                                   # noqa: BLE001 - degrade, never abort
+        log.exception("dev_attribution: build failed; graduates and ToolDvM+ keep the current club")
+        return None
 
 
 def _file_equals_bytes(path: Path, data: bytes, chunk: int = 1 << 20) -> bool:
@@ -12743,6 +12871,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     inactives = _dedup_by_mlbam(inactives, "inactives")
 
     _phase_done("classify")
+    # VAL_4 (owner answer FP2-4, 2026-09-25): development attribution. One org
+    # calendar per player (dev_attribution.py; design in
+    # docs/farm-attribution-2026-09-25/DEVELOPMENT_ATTRIBUTION.md) feeds the
+    # graduate leaves, ToolDvM+ and DvM+ below and the dev_credit block on every
+    # graduate row. None (a build failure, logged) keeps the current-club credit.
+    _dev_attr = _build_dev_attribution(actives + grads + inactives, trades_by_player,
+                                       acquisitions, _filter_real_trades)
+    _tenure_tool_sums: dict[str, dict[str, list]] = {}
+    _tenure_tool_sums_by_bucket: dict[str, dict[str, dict[str, list]]] = {}
+    _phase_done("dev_attribution")
     # ── DATA-INTEGRITY GUARD (historical-leak tripwire) ───────────────────
     # The active pool must contain only current prospects: none graduated, none
     # FV-stale beyond the aged-out ceiling. This catches regressions if a future
@@ -13340,7 +13478,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # WAR-tail-weighted: store the FV→WAR-converted delta rather
         # than the raw FV grade delta, so a 70→75 hit-tool lift counts
         # ~10x a 40→45 hit-tool lift in the per-tool DvM+ math.
-        _td = _compute_tool_deltas([
+        # VAL_4 (2026-10-08): with a development attribution the deltas are the
+        # prospect's TENURE tool growth (same-source pairs, split by days across
+        # the clubs that held him, inside the same trailing window), each credited
+        # to the club where it happened, gathered in _tenure_tool_sums and merged
+        # into each club's accumulator in the second pass. The lifetime consensus
+        # delta credited to the current club stays only as the fallback for a
+        # prospect the attribution does not cover.
+        _pa_tools = _dev_attr.get(p.player_key) if _dev_attr is not None else None
+        if _pa_tools is not None and _pa_tools.basis == "none":
+            _pa_tools = None
+        _td = {} if _pa_tools is not None else _compute_tool_deltas([
             {"snapshot_date": pt.snapshot_date,
              "tools_consensus": pt.tools_consensus}
             for pt in p.points
@@ -13369,6 +13517,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     .setdefault(_prospect_bucket, {}) \
                     .setdefault(_tk, []) \
                     .append(delta_war)
+        if _pa_tools is not None:
+            for _t_org, _t_tools in _pa_tools.tool_growth.items():
+                for _tk, _g in _t_tools.items():
+                    delta_war = _g * _level_weight
+                    _tenure_tool_sums.setdefault(_t_org, {}).setdefault(_tk, []).append(delta_war)
+                    if _prospect_bucket is not None:
+                        _tenure_tool_sums_by_bucket.setdefault(_t_org, {}) \
+                            .setdefault(_prospect_bucket, {}) \
+                            .setdefault(_tk, []) \
+                            .append(delta_war)
 
         # Extended report-card accumulators (Farm Overhaul Step 5/6/7).
         m["_active_keys"].append(p.player_key)
@@ -13547,6 +13705,122 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if pt.status == "debuted" else None)
         return _debuted_memo[pt.player_key]
 
+    def _new_grad_bucket() -> dict:
+        # One graduate pool per club. VAL_4: a graduate enters each pool by his
+        # development share (dev_attribution), so every count below is a
+        # share-weighted count (graduate-equivalents) and every sum a
+        # share-weighted sum.
+        return {
+                "wag_sum": 0.0, "wag_count": 0,
+                "war_sum": 0.0, "war_count": 0,
+                "bonus_sum": 0, "bonus_count": 0,
+                # Tree v2 splits — same WAG but partitioned by acquisition
+                # method (IFA vs Draft) and position type (Hitter vs Pitcher)
+                # so the grade tree's Acquisitions and MLB Production
+                # branches can each grade their own sub-axis.
+                "ifa_wag_sum": 0.0,   "ifa_wag_count":   0,
+                "draft_wag_sum": 0.0, "draft_wag_count": 0,
+                "hit_wag_sum": 0.0,   "hit_wag_count":   0,
+                "pit_wag_sum": 0.0,   "pit_wag_count":   0,
+                # Grad-Contract Surplus — current AAV − (bonus amortized over
+                # 6 years, the rough cost-controlled window before the player
+                # would have hit arb/FA). Positive = grad's MLB salary value
+                # exceeds the org's signing-bonus outlay.
+                "contract_surplus_sum": 0.0, "contract_surplus_count": 0,
+                # Pick-slot-adjusted draft performance (v2 of Draft Pick
+                # Performance). actual_war − slot_expected_war per drafted
+                # grad. Credits orgs that beat the market at each pick slot;
+                # strictly more informative than raw WAG for the "did this
+                # org draft well?" question.
+                "draft_pick_value_sum": 0.0, "draft_pick_value_count": 0,
+                # Tree v3 splits — supplemental WAR/yr + cumulative WAR
+                # aggregators per IFA / hitter / pitcher subset. The 3-input
+                # composite (WAG + WAR/yr + cumulative WAR) is the v3 leaf
+                # score for IFA Performance + Hitter MLB Production + Pitcher
+                # MLB Production. Captures peak rate (WAR/yr) and total
+                # impact (cumulative WAR), not just the WAG expectation delta.
+                "ifa_war_per_yr_sum":  0.0, "ifa_war_per_yr_count":  0,
+                "ifa_career_war_sum":  0.0, "ifa_career_war_count":  0,
+                "hit_war_per_yr_sum":  0.0, "hit_war_per_yr_count":  0,
+                "hit_career_war_sum":  0.0, "hit_career_war_count":  0,
+                "pit_war_per_yr_sum":  0.0, "pit_war_per_yr_count":  0,
+                "pit_career_war_sum":  0.0, "pit_career_war_count":  0,
+                # BOOM / BUST counters — populated below from
+                # _compute_boom_bust. boom_pct / bust_pct rollups use these
+                # to surface per-org "developmental tail" rates on farm cards.
+                "boom_count":      0,
+                "bust_count":      0,
+                "settled_count":   0,   # boom + bust + settled (i.e. excluded "unsettled")
+                # v4 top-end / financial inputs.
+                # _top_grads:  list of (career_war, war_per_yr, season_count, is_pitcher, last_mlb_year) for grads
+                #              that clear the boom-bust sample floor. Used for
+                #              top-3 grad WAR + Conviction leaf.
+                # _draft_pool_grads:  list of (draft_year, career_war) — fuels
+                #                     fin_draft_pool_efficiency leaf.
+                # _ifa_grads:         list of (signed_year, bonus_usd, career_war)
+                #                     — fuels fin_ifa_roi leaf.
+                "_top_grads":         [],
+                "_draft_pool_grads":  [],
+                "_ifa_grads":         [],
+                # v30.8 — Per-method star/grad counters for the Acquisition
+                # Deviation league pass. Keyed by method (draft, international_fa,
+                # trade, waiver, rule_5, contract_purchase, free_agent). A "star"
+                # grad is one whose career WAR/yr ≥ 3.0 OR any single MLB
+                # season ≥ 3.5 WAR (mirrors the Conviction leaf's star
+                # thresholds, so the two grade signals stay aligned).
+                "_method_grad_counts": {},
+                "_method_star_counts": {},
+                # v31.5 — Per-channel WAR + bonus accumulators for the
+                # Financial WAR per $M leaf's sub-leaf split. Lets the
+                # tree show "this org's $/WAR came from draft signings vs
+                # IFA bonuses" instead of one aggregate number. Each grad
+                # with both a bonus AND career WAR routes into exactly one
+                # channel based on their acquisition method.
+                "war_sum_draft":      0.0, "bonus_sum_draft": 0,
+                "war_sum_ifa":        0.0, "bonus_sum_ifa":   0,
+                "war_sum_other":      0.0, "bonus_sum_other": 0,
+                "grad_count_draft":   0,
+                "grad_count_ifa":     0,
+                "grad_count_other":   0,
+                # v31.5 — Sleeper development counters per acquisition
+                # method. A "sleeper" grad is one whose FV-at-acquisition
+                # (fv_open on the PlayerTimeseries) was ≤45 AND who went
+                # on to clear ≥2.0 WAR/yr in MLB. Sleeper hit rate =
+                # sleepers / low-FV-acquisitions per method. Higher =
+                # better at finding talent that wasn't obvious upfront.
+                "sleeper_low_fv_draft": 0, "sleeper_hit_draft": 0,
+                "sleeper_low_fv_ifa":   0, "sleeper_hit_ifa":   0,
+                # v31.5 — Per-position-bucket Production accumulators.
+                # Splits the existing hit_war_per_yr_* + pit_war_per_yr_*
+                # totals by position bucket (C/INF/OF for hitters,
+                # SP/RP for pitchers) so MLB Hitter/Pitcher Production
+                # can surface per-bucket sub-leaves. Each grad lands in
+                # exactly one bucket based on their position.
+                "hit_war_per_yr_sum_C":   0.0, "hit_war_per_yr_count_C":   0,
+                "hit_war_per_yr_sum_INF": 0.0, "hit_war_per_yr_count_INF": 0,
+                "hit_war_per_yr_sum_OF":  0.0, "hit_war_per_yr_count_OF":  0,
+                "pit_war_per_yr_sum_SP":  0.0, "pit_war_per_yr_count_SP":  0,
+                "pit_war_per_yr_sum_RP":  0.0, "pit_war_per_yr_count_RP":  0,
+                # v31.1 — Draft round-tier + IFA bonus-tier accumulators.
+                # Feed the new sub-leaf league pass that letter-grades each
+                # tier's WAR/yr mean across the league. Tiers:
+                #   draft_r1     : pick_round == 1
+                #   draft_day1   : pick_round in 2..10 (Day 1 + early Day 2)
+                #   draft_late   : pick_round >= 11
+                #   ifa_top      : bonus_usd ≥ $2M
+                #   ifa_mid      : $500K ≤ bonus_usd < $2M
+                #   ifa_lower    : bonus_usd < $500K OR missing
+                # WAR/yr sums (and counts) are aggregated per grad whose
+                # acquisition method + tier criteria match. WAR/yr ≥ 0
+                # required so unsigned grads don't slip in.
+                "draft_r1_war_per_yr_sum":     0.0, "draft_r1_war_per_yr_count":     0,
+                "draft_day1_war_per_yr_sum":   0.0, "draft_day1_war_per_yr_count":   0,
+                "draft_late_war_per_yr_sum":   0.0, "draft_late_war_per_yr_count":   0,
+                "ifa_top_war_per_yr_sum":      0.0, "ifa_top_war_per_yr_count":      0,
+                "ifa_mid_war_per_yr_sum":      0.0, "ifa_mid_war_per_yr_count":      0,
+                "ifa_lower_war_per_yr_sum":    0.0, "ifa_lower_war_per_yr_count":    0,
+        }
+
     grad_agg: dict[str, dict] = {}
     for gp in grads:
         if not gp.points:
@@ -13559,7 +13833,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             roster_org_by_key.get(gp.player_key) or
             gp.org
         )
-        if not gp_org:
+        if not gp_org and (_dev_attr is None or _dev_attr.get(gp.player_key) is None):
             continue
         # Build a minimal payload that _grad_wag can read. Pass through
         # the player's position so the rate-based WAG picks the right
@@ -13604,353 +13878,277 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         gp_contract = (contracts_by_key or {}).get(gp.player_key) or {}
         gp_aav = gp_contract.get("aav_usd")
 
-        bucket = grad_agg.setdefault(gp_org, {
-            "wag_sum": 0.0, "wag_count": 0,
-            "war_sum": 0.0, "war_count": 0,
-            "bonus_sum": 0, "bonus_count": 0,
-            # Tree v2 splits — same WAG but partitioned by acquisition
-            # method (IFA vs Draft) and position type (Hitter vs Pitcher)
-            # so the grade tree's Acquisitions and MLB Production
-            # branches can each grade their own sub-axis.
-            "ifa_wag_sum": 0.0,   "ifa_wag_count":   0,
-            "draft_wag_sum": 0.0, "draft_wag_count": 0,
-            "hit_wag_sum": 0.0,   "hit_wag_count":   0,
-            "pit_wag_sum": 0.0,   "pit_wag_count":   0,
-            # Grad-Contract Surplus — current AAV − (bonus amortized over
-            # 6 years, the rough cost-controlled window before the player
-            # would have hit arb/FA). Positive = grad's MLB salary value
-            # exceeds the org's signing-bonus outlay.
-            "contract_surplus_sum": 0.0, "contract_surplus_count": 0,
-            # Pick-slot-adjusted draft performance (v2 of Draft Pick
-            # Performance). actual_war − slot_expected_war per drafted
-            # grad. Credits orgs that beat the market at each pick slot;
-            # strictly more informative than raw WAG for the "did this
-            # org draft well?" question.
-            "draft_pick_value_sum": 0.0, "draft_pick_value_count": 0,
-            # Tree v3 splits — supplemental WAR/yr + cumulative WAR
-            # aggregators per IFA / hitter / pitcher subset. The 3-input
-            # composite (WAG + WAR/yr + cumulative WAR) is the v3 leaf
-            # score for IFA Performance + Hitter MLB Production + Pitcher
-            # MLB Production. Captures peak rate (WAR/yr) and total
-            # impact (cumulative WAR), not just the WAG expectation delta.
-            "ifa_war_per_yr_sum":  0.0, "ifa_war_per_yr_count":  0,
-            "ifa_career_war_sum":  0.0, "ifa_career_war_count":  0,
-            "hit_war_per_yr_sum":  0.0, "hit_war_per_yr_count":  0,
-            "hit_career_war_sum":  0.0, "hit_career_war_count":  0,
-            "pit_war_per_yr_sum":  0.0, "pit_war_per_yr_count":  0,
-            "pit_career_war_sum":  0.0, "pit_career_war_count":  0,
-            # BOOM / BUST counters — populated below from
-            # _compute_boom_bust. boom_pct / bust_pct rollups use these
-            # to surface per-org "developmental tail" rates on farm cards.
-            "boom_count":      0,
-            "bust_count":      0,
-            "settled_count":   0,   # boom + bust + settled (i.e. excluded "unsettled")
-            # v4 top-end / financial inputs.
-            # _top_grads:  list of (career_war, war_per_yr, season_count, is_pitcher, last_mlb_year) for grads
-            #              that clear the boom-bust sample floor. Used for
-            #              top-3 grad WAR + Conviction leaf.
-            # _draft_pool_grads:  list of (draft_year, career_war) — fuels
-            #                     fin_draft_pool_efficiency leaf.
-            # _ifa_grads:         list of (signed_year, bonus_usd, career_war)
-            #                     — fuels fin_ifa_roi leaf.
-            "_top_grads":         [],
-            "_draft_pool_grads":  [],
-            "_ifa_grads":         [],
-            # v30.8 — Per-method star/grad counters for the Acquisition
-            # Deviation league pass. Keyed by method (draft, international_fa,
-            # trade, waiver, rule_5, contract_purchase, free_agent). A "star"
-            # grad is one whose career WAR/yr ≥ 3.0 OR any single MLB
-            # season ≥ 3.5 WAR (mirrors the Conviction leaf's star
-            # thresholds, so the two grade signals stay aligned).
-            "_method_grad_counts": {},
-            "_method_star_counts": {},
-            # v31.5 — Per-channel WAR + bonus accumulators for the
-            # Financial WAR per $M leaf's sub-leaf split. Lets the
-            # tree show "this org's $/WAR came from draft signings vs
-            # IFA bonuses" instead of one aggregate number. Each grad
-            # with both a bonus AND career WAR routes into exactly one
-            # channel based on their acquisition method.
-            "war_sum_draft":      0.0, "bonus_sum_draft": 0,
-            "war_sum_ifa":        0.0, "bonus_sum_ifa":   0,
-            "war_sum_other":      0.0, "bonus_sum_other": 0,
-            "grad_count_draft":   0,
-            "grad_count_ifa":     0,
-            "grad_count_other":   0,
-            # v31.5 — Sleeper development counters per acquisition
-            # method. A "sleeper" grad is one whose FV-at-acquisition
-            # (fv_open on the PlayerTimeseries) was ≤45 AND who went
-            # on to clear ≥2.0 WAR/yr in MLB. Sleeper hit rate =
-            # sleepers / low-FV-acquisitions per method. Higher =
-            # better at finding talent that wasn't obvious upfront.
-            "sleeper_low_fv_draft": 0, "sleeper_hit_draft": 0,
-            "sleeper_low_fv_ifa":   0, "sleeper_hit_ifa":   0,
-            # v31.5 — Per-position-bucket Production accumulators.
-            # Splits the existing hit_war_per_yr_* + pit_war_per_yr_*
-            # totals by position bucket (C/INF/OF for hitters,
-            # SP/RP for pitchers) so MLB Hitter/Pitcher Production
-            # can surface per-bucket sub-leaves. Each grad lands in
-            # exactly one bucket based on their position.
-            "hit_war_per_yr_sum_C":   0.0, "hit_war_per_yr_count_C":   0,
-            "hit_war_per_yr_sum_INF": 0.0, "hit_war_per_yr_count_INF": 0,
-            "hit_war_per_yr_sum_OF":  0.0, "hit_war_per_yr_count_OF":  0,
-            "pit_war_per_yr_sum_SP":  0.0, "pit_war_per_yr_count_SP":  0,
-            "pit_war_per_yr_sum_RP":  0.0, "pit_war_per_yr_count_RP":  0,
-            # v31.1 — Draft round-tier + IFA bonus-tier accumulators.
-            # Feed the new sub-leaf league pass that letter-grades each
-            # tier's WAR/yr mean across the league. Tiers:
-            #   draft_r1     : pick_round == 1
-            #   draft_day1   : pick_round in 2..10 (Day 1 + early Day 2)
-            #   draft_late   : pick_round >= 11
-            #   ifa_top      : bonus_usd ≥ $2M
-            #   ifa_mid      : $500K ≤ bonus_usd < $2M
-            #   ifa_lower    : bonus_usd < $500K OR missing
-            # WAR/yr sums (and counts) are aggregated per grad whose
-            # acquisition method + tier criteria match. WAR/yr ≥ 0
-            # required so unsigned grads don't slip in.
-            "draft_r1_war_per_yr_sum":     0.0, "draft_r1_war_per_yr_count":     0,
-            "draft_day1_war_per_yr_sum":   0.0, "draft_day1_war_per_yr_count":   0,
-            "draft_late_war_per_yr_sum":   0.0, "draft_late_war_per_yr_count":   0,
-            "ifa_top_war_per_yr_sum":      0.0, "ifa_top_war_per_yr_count":      0,
-            "ifa_mid_war_per_yr_sum":      0.0, "ifa_mid_war_per_yr_count":      0,
-            "ifa_lower_war_per_yr_sum":    0.0, "ifa_lower_war_per_yr_count":    0,
-        })
-        # Boom/Bust classification for this graduate (computed above with the WAG).
-        career_rows = (career_stats or {}).get(gp.player_key, []) or []
-        if boom_label == "boom":
-            bucket["boom_count"] += 1
-            bucket["settled_count"] += 1
-        elif boom_label == "bust":
-            bucket["bust_count"] += 1
-            bucket["settled_count"] += 1
-        elif boom_label == "settled":
-            bucket["settled_count"] += 1
-        if wag is not None:
-            bucket["wag_sum"] += wag
-            bucket["wag_count"] += 1
-            # Acquisition-method split
-            if gp_method == "international_fa":
-                bucket["ifa_wag_sum"] += wag
-                bucket["ifa_wag_count"] += 1
-            elif gp_method == "draft":
-                bucket["draft_wag_sum"] += wag
-                bucket["draft_wag_count"] += 1
-            # Position split for MLB Production branch
-            if gp_is_pitcher:
-                bucket["pit_wag_sum"] += wag
-                bucket["pit_wag_count"] += 1
-            else:
-                bucket["hit_wag_sum"] += wag
-                bucket["hit_wag_count"] += 1
-        if career_war_val is not None:
-            bucket["war_sum"] += float(career_war_val)
-            bucket["war_count"] += 1
-        # Tree v3 — cumulative WAR + WAR-per-year splits for IFA /
-        # Hitter / Pitcher subsets. Per `career_war` payload shape:
-        # `career_war` (total) + `war_per_yr` (career_war /
-        # war_seasons_count). The 3-input composite at the leaf level
-        # blends WAG + WAR/yr + cumulative WAR equally.
-        war_per_yr = cw.get("war_per_yr")
-        if career_war_val is not None or war_per_yr is not None:
-            cval = float(career_war_val) if career_war_val is not None else None
-            yval = float(war_per_yr)     if war_per_yr     is not None else None
-            if gp_method == "international_fa":
-                if cval is not None:
-                    bucket["ifa_career_war_sum"]  += cval
-                    bucket["ifa_career_war_count"] += 1
-                if yval is not None:
-                    bucket["ifa_war_per_yr_sum"]   += yval
-                    bucket["ifa_war_per_yr_count"] += 1
-            if gp_is_pitcher:
-                if cval is not None:
-                    bucket["pit_career_war_sum"]  += cval
-                    bucket["pit_career_war_count"] += 1
-                if yval is not None:
-                    bucket["pit_war_per_yr_sum"]   += yval
-                    bucket["pit_war_per_yr_count"] += 1
-            else:
-                if cval is not None:
-                    bucket["hit_career_war_sum"]  += cval
-                    bucket["hit_career_war_count"] += 1
-                if yval is not None:
-                    bucket["hit_war_per_yr_sum"]   += yval
-                    bucket["hit_war_per_yr_count"] += 1
-            # v31.5 — Sleeper development tracking. Grades each org's
-            # ability to find ≥2 WAR/yr graduates from low-FV
-            # (≤45 fv_open) acquisitions. Only fires for draft / IFA
-            # method grads; trade / waiver acquisitions are excluded
-            # since the org isn't doing initial scouting on those.
-            _fv_open = getattr(gp, "fv_open", None)
-            if _fv_open is not None and float(_fv_open) <= 45.0:
-                if gp_method == "draft":
-                    bucket["sleeper_low_fv_draft"] += 1
-                    if yval is not None and float(yval) >= 2.0:
-                        bucket["sleeper_hit_draft"] += 1
-                elif gp_method == "international_fa":
-                    bucket["sleeper_low_fv_ifa"] += 1
-                    if yval is not None and float(yval) >= 2.0:
-                        bucket["sleeper_hit_ifa"] += 1
-            # v31.5 — Per-position-bucket production split. Routes
-            # this grad's WAR/yr into the right C/INF/OF (hitter) or
-            # SP/RP (pitcher) bucket so the Production leaves can
-            # break their grade out by position type.
-            if yval is not None:
-                _grad_bucket = _pos_bucket_v2(gp.position)
-                if _grad_bucket in ("C", "INF", "OF"):
-                    bucket[f"hit_war_per_yr_sum_{_grad_bucket}"]   += yval
-                    bucket[f"hit_war_per_yr_count_{_grad_bucket}"] += 1
-                elif _grad_bucket in ("SP", "RP"):
-                    bucket[f"pit_war_per_yr_sum_{_grad_bucket}"]   += yval
-                    bucket[f"pit_war_per_yr_count_{_grad_bucket}"] += 1
-            # v31.1 — Draft round-tier + IFA bonus-tier per-grad WAR/yr
-            # accumulators. Only fires when WAR/yr is on file (graduate
-            # has a non-empty MLB career). Tiers are mutually exclusive
-            # within method, so a grad lands in exactly one tier bucket.
-            if yval is not None and gp_method == "draft":
-                _round = gp_acq.get("pick_round")
-                if isinstance(_round, int) and _round >= 1:
-                    if _round == 1:
-                        bucket["draft_r1_war_per_yr_sum"]   += yval
-                        bucket["draft_r1_war_per_yr_count"] += 1
-                    elif _round <= 10:
-                        bucket["draft_day1_war_per_yr_sum"]   += yval
-                        bucket["draft_day1_war_per_yr_count"] += 1
-                    else:
-                        bucket["draft_late_war_per_yr_sum"]   += yval
-                        bucket["draft_late_war_per_yr_count"] += 1
-            if yval is not None and gp_method == "international_fa":
-                _bonus = gp_acq.get("bonus_usd")
-                _bonus_n = float(_bonus) if _bonus else 0.0
-                if _bonus_n >= 2_000_000:
-                    bucket["ifa_top_war_per_yr_sum"]   += yval
-                    bucket["ifa_top_war_per_yr_count"] += 1
-                elif _bonus_n >= 500_000:
-                    bucket["ifa_mid_war_per_yr_sum"]   += yval
-                    bucket["ifa_mid_war_per_yr_count"] += 1
+        # VAL_4 (owner answer FP2-4, 2026-09-25): the graduate is credited to the
+        # clubs that developed him, not the club he plays for now. dev_attribution
+        # cuts his pre-debut history into org tenures and gives each club its share
+        # (acquisition value to the signing club, tenure growth to each developing
+        # club; docs/farm-attribution-2026-09-25/DEVELOPMENT_ATTRIBUTION.md). He
+        # enters each club pool with weight _w. Acquisition-channel accumulators
+        # (draft and IFA splits, bonus, slot, pools, method counts) read _acq_method
+        # and _acq_bonus, which are set only at the signing club. Without an
+        # attribution the current club takes the whole share, as before.
+        _credit = (_dev_attr.graduate_credit(gp.player_key, gp_org)
+                   if _dev_attr is not None else [(gp_org, 1.0, True)])
+        for _c_org, _w, _is_sign in _credit:
+            if not _c_org or _w <= 0:
+                continue
+            _acq_method = gp_method if _is_sign else None
+            _acq_bonus = bonus_usd if _is_sign else None
+            bucket = grad_agg.setdefault(_c_org, _new_grad_bucket())
+            # Boom/Bust classification for this graduate (computed above with the WAG).
+            career_rows = (career_stats or {}).get(gp.player_key, []) or []
+            if boom_label == "boom":
+                bucket["boom_count"] += _w
+                bucket["settled_count"] += _w
+            elif boom_label == "bust":
+                bucket["bust_count"] += _w
+                bucket["settled_count"] += _w
+            elif boom_label == "settled":
+                bucket["settled_count"] += _w
+            if wag is not None:
+                bucket["wag_sum"] += _w * (wag)
+                bucket["wag_count"] += _w
+                # Acquisition-method split
+                if _acq_method == "international_fa":
+                    bucket["ifa_wag_sum"] += _w * (wag)
+                    bucket["ifa_wag_count"] += _w
+                elif _acq_method == "draft":
+                    bucket["draft_wag_sum"] += _w * (wag)
+                    bucket["draft_wag_count"] += _w
+                # Position split for MLB Production branch
+                if gp_is_pitcher:
+                    bucket["pit_wag_sum"] += _w * (wag)
+                    bucket["pit_wag_count"] += _w
                 else:
-                    bucket["ifa_lower_war_per_yr_sum"]   += yval
-                    bucket["ifa_lower_war_per_yr_count"] += 1
-        if bonus_usd is not None:
-            bucket["bonus_sum"] += int(bonus_usd)
-            bucket["bonus_count"] += 1
-            # v31.5 — Channel split: route this grad's bonus + WAR
-            # into the right channel bucket so the WAR/$M leaf can
-            # surface a per-channel sub-leaf breakdown (Draft / IFA /
-            # Other). career_war_val may be None — handled below by
-            # checking before incrementing the WAR sum.
-            _chan = "other"
-            if gp_method == "draft":
-                _chan = "draft"
-            elif gp_method == "international_fa":
-                _chan = "ifa"
-            bucket[f"bonus_sum_{_chan}"] += int(bonus_usd)
-            bucket[f"grad_count_{_chan}"] += 1
+                    bucket["hit_wag_sum"] += _w * (wag)
+                    bucket["hit_wag_count"] += _w
             if career_war_val is not None:
-                bucket[f"war_sum_{_chan}"] += float(career_war_val)
-        # Grad-Contract Surplus accumulator. 6-year amortization mirrors
-        # the typical pre-FA cost-controlled window for a graduate; longer
-        # extensions get credited yearly via aav_usd, not the bonus.
-        if gp_aav and bonus_usd:
-            try:
-                surplus_yr = float(gp_aav) - (float(bonus_usd) / 6.0)
-                bucket["contract_surplus_sum"]   += surplus_yr
-                bucket["contract_surplus_count"] += 1
-            except (TypeError, ValueError):
-                pass
-        # Pick-slot-adjusted draft value (v2 of Acquisitions/Draft).
-        # Requires both a draft method AND a numeric pick_overall AND a
-        # career_war on file. The delta is positive when the org
-        # extracted more MLB value from that pick slot than the league
-        # historically gets — credits late-round hits more than #1
-        # overalls reaching the majors. Falls back silently when any
-        # piece is missing (Spotrac-only graduates, IFA signings, etc.)
-        if gp_method == "draft" and career_war_val is not None:
-            slot_exp = _pick_slot_expected_war(gp_acq.get("pick_overall"))
-            if slot_exp is not None:
-                bucket["draft_pick_value_sum"]   += float(career_war_val) - slot_exp
-                bucket["draft_pick_value_count"] += 1
+                bucket["war_sum"] += _w * (float(career_war_val))
+                bucket["war_count"] += _w
+            # Tree v3 — cumulative WAR + WAR-per-year splits for IFA /
+            # Hitter / Pitcher subsets. Per `career_war` payload shape:
+            # `career_war` (total) + `war_per_yr` (career_war /
+            # war_seasons_count). The 3-input composite at the leaf level
+            # blends WAG + WAR/yr + cumulative WAR equally.
+            war_per_yr = cw.get("war_per_yr")
+            if career_war_val is not None or war_per_yr is not None:
+                cval = float(career_war_val) if career_war_val is not None else None
+                yval = float(war_per_yr)     if war_per_yr     is not None else None
+                if _acq_method == "international_fa":
+                    if cval is not None:
+                        bucket["ifa_career_war_sum"]  += _w * (cval)
+                        bucket["ifa_career_war_count"] += _w
+                    if yval is not None:
+                        bucket["ifa_war_per_yr_sum"]   += _w * (yval)
+                        bucket["ifa_war_per_yr_count"] += _w
+                if gp_is_pitcher:
+                    if cval is not None:
+                        bucket["pit_career_war_sum"]  += _w * (cval)
+                        bucket["pit_career_war_count"] += _w
+                    if yval is not None:
+                        bucket["pit_war_per_yr_sum"]   += _w * (yval)
+                        bucket["pit_war_per_yr_count"] += _w
+                else:
+                    if cval is not None:
+                        bucket["hit_career_war_sum"]  += _w * (cval)
+                        bucket["hit_career_war_count"] += _w
+                    if yval is not None:
+                        bucket["hit_war_per_yr_sum"]   += _w * (yval)
+                        bucket["hit_war_per_yr_count"] += _w
+                # v31.5 — Sleeper development tracking. Grades each org's
+                # ability to find ≥2 WAR/yr graduates from low-FV
+                # (≤45 fv_open) acquisitions. Only fires for draft / IFA
+                # method grads; trade / waiver acquisitions are excluded
+                # since the org isn't doing initial scouting on those.
+                _fv_open = getattr(gp, "fv_open", None)
+                if _fv_open is not None and float(_fv_open) <= 45.0:
+                    if _acq_method == "draft":
+                        bucket["sleeper_low_fv_draft"] += _w
+                        if yval is not None and float(yval) >= 2.0:
+                            bucket["sleeper_hit_draft"] += _w
+                    elif _acq_method == "international_fa":
+                        bucket["sleeper_low_fv_ifa"] += _w
+                        if yval is not None and float(yval) >= 2.0:
+                            bucket["sleeper_hit_ifa"] += _w
+                # v31.5 — Per-position-bucket production split. Routes
+                # this grad's WAR/yr into the right C/INF/OF (hitter) or
+                # SP/RP (pitcher) bucket so the Production leaves can
+                # break their grade out by position type.
+                if yval is not None:
+                    _grad_bucket = _pos_bucket_v2(gp.position)
+                    if _grad_bucket in ("C", "INF", "OF"):
+                        bucket[f"hit_war_per_yr_sum_{_grad_bucket}"]   += _w * (yval)
+                        bucket[f"hit_war_per_yr_count_{_grad_bucket}"] += _w
+                    elif _grad_bucket in ("SP", "RP"):
+                        bucket[f"pit_war_per_yr_sum_{_grad_bucket}"]   += _w * (yval)
+                        bucket[f"pit_war_per_yr_count_{_grad_bucket}"] += _w
+                # v31.1 — Draft round-tier + IFA bonus-tier per-grad WAR/yr
+                # accumulators. Only fires when WAR/yr is on file (graduate
+                # has a non-empty MLB career). Tiers are mutually exclusive
+                # within method, so a grad lands in exactly one tier bucket.
+                if yval is not None and _acq_method == "draft":
+                    _round = gp_acq.get("pick_round")
+                    if isinstance(_round, int) and _round >= 1:
+                        if _round == 1:
+                            bucket["draft_r1_war_per_yr_sum"]   += _w * (yval)
+                            bucket["draft_r1_war_per_yr_count"] += _w
+                        elif _round <= 10:
+                            bucket["draft_day1_war_per_yr_sum"]   += _w * (yval)
+                            bucket["draft_day1_war_per_yr_count"] += _w
+                        else:
+                            bucket["draft_late_war_per_yr_sum"]   += _w * (yval)
+                            bucket["draft_late_war_per_yr_count"] += _w
+                if yval is not None and _acq_method == "international_fa":
+                    _bonus = gp_acq.get("bonus_usd")
+                    _bonus_n = float(_bonus) if _bonus else 0.0
+                    if _bonus_n >= 2_000_000:
+                        bucket["ifa_top_war_per_yr_sum"]   += _w * (yval)
+                        bucket["ifa_top_war_per_yr_count"] += _w
+                    elif _bonus_n >= 500_000:
+                        bucket["ifa_mid_war_per_yr_sum"]   += _w * (yval)
+                        bucket["ifa_mid_war_per_yr_count"] += _w
+                    else:
+                        bucket["ifa_lower_war_per_yr_sum"]   += _w * (yval)
+                        bucket["ifa_lower_war_per_yr_count"] += _w
+            if _acq_bonus is not None:
+                bucket["bonus_sum"] += int(_acq_bonus)
+                bucket["bonus_count"] += 1
+                # v31.5 — Channel split: route this grad's bonus + WAR
+                # into the right channel bucket so the WAR/$M leaf can
+                # surface a per-channel sub-leaf breakdown (Draft / IFA /
+                # Other). career_war_val may be None — handled below by
+                # checking before incrementing the WAR sum.
+                _chan = "other"
+                if _acq_method == "draft":
+                    _chan = "draft"
+                elif _acq_method == "international_fa":
+                    _chan = "ifa"
+                bucket[f"bonus_sum_{_chan}"] += int(_acq_bonus)
+                bucket[f"grad_count_{_chan}"] += _w
+                if career_war_val is not None:
+                    bucket[f"war_sum_{_chan}"] += _w * (float(career_war_val))
+            # Grad-Contract Surplus accumulator. 6-year amortization mirrors
+            # the typical pre-FA cost-controlled window for a graduate; longer
+            # extensions get credited yearly via aav_usd, not the bonus.
+            if gp_aav and bonus_usd:
+                try:
+                    surplus_yr = float(gp_aav) - (float(bonus_usd) / 6.0)
+                    bucket["contract_surplus_sum"]   += _w * (surplus_yr)
+                    bucket["contract_surplus_count"] += _w
+                except (TypeError, ValueError):
+                    pass
+            # Pick-slot-adjusted draft value (v2 of Acquisitions/Draft).
+            # Requires both a draft method AND a numeric pick_overall AND a
+            # career_war on file. The delta is positive when the org
+            # extracted more MLB value from that pick slot than the league
+            # historically gets — credits late-round hits more than #1
+            # overalls reaching the majors. Falls back silently when any
+            # piece is missing (Spotrac-only graduates, IFA signings, etc.)
+            if _acq_method == "draft" and career_war_val is not None:
+                slot_exp = _pick_slot_expected_war(gp_acq.get("pick_overall"))
+                if slot_exp is not None:
+                    bucket["draft_pick_value_sum"]   += _w * (float(career_war_val) - slot_exp)
+                    bucket["draft_pick_value_count"] += _w
 
-        # v4 — top-end / financial lists.
-        # Top-3 grad list: only grads that clear the boom_bust sample
-        # v15 — Relax the gate. Previously required boom/bust/settled label
-        # (which itself requires 800 PA / 200 IP / 2 seasons floor — most
-        # recent graduates won't clear that). Now any graduate with a
-        # populated career_war qualifies for _top_grads; the leaf still
-        # gates on ≥3 grads to produce a meaningful top-3 statistic.
-        if career_war_val is not None:
-            yval = cw.get("war_per_yr")
-            seasons = cw.get("war_seasons_count") or 0
-            # Find last MLB year for Conviction's 6-year recency window.
-            mlb_seasons = [int(r.get("season") or 0)
-                           for r in career_rows
-                           if (r.get("level") == "MLB" and r.get("season"))]
-            last_mlb_year = max(mlb_seasons) if mlb_seasons else None
-            # v30.8 — Peak single-season WAR for the star-evaluation
-            # path (Conviction + Acq Deviation use ≥3.5 single-season
-            # WAR as a star threshold). seasons may be a {year: war}
-            # dict (FanGraphs career_war shape) or sparser.
-            season_peak = 0.0
-            _seasons_dict = cw.get("seasons")
-            try:
-                if isinstance(_seasons_dict, dict):
-                    _vals = [float(v) for v in _seasons_dict.values()
-                             if v is not None and float(v) == float(v)]
-                    if _vals:
-                        season_peak = max(_vals)
-            except (TypeError, ValueError):
-                pass
-            bucket["_top_grads"].append({
-                "player_name": gp.player_name,
-                "player_key":  gp.player_key,
-                "career_war":   float(career_war_val),
-                "war_per_yr":   float(yval) if yval is not None else None,
-                "seasons":      _seasons_dict if isinstance(_seasons_dict, dict) else int(seasons),
-                "season_peak":  round(season_peak, 2),
-                "is_pitcher":   gp_is_pitcher,
-                "last_mlb_year": last_mlb_year,
-                # v30.8 — Acquisition method for per-method star-rate
-                # aggregation in the Acq Deviation league pass.
-                "method":       gp_method,
-            })
-            # v30.8 — Per-method counters for Acquisition Deviation.
-            # Every grad with WAR data counts toward the method's
-            # grad_count denominator; grads who hit the star threshold
-            # add to the numerator.
-            if gp_method:
-                bucket["_method_grad_counts"][gp_method] = \
-                    bucket["_method_grad_counts"].get(gp_method, 0) + 1
-                _is_star = ((yval is not None and float(yval) >= _STAR_WAR_PER_YR_THRESHOLD)
-                            or (season_peak >= _STAR_SEASON_WAR_THRESHOLD))
-                if _is_star:
-                    bucket["_method_star_counts"][gp_method] = \
-                        bucket["_method_star_counts"].get(gp_method, 0) + 1
-        # Draft-pool efficiency: grads drafted via the draft method,
-        # tagged with their draft year + career WAR. The leaf-level
-        # computation joins these to the per-year draft pool spend.
-        if gp_method == "draft" and career_war_val is not None:
-            dy = gp_acq.get("year")
-            if dy is not None:
-                bucket["_draft_pool_grads"].append({
-                    "draft_year": int(dy),
-                    "career_war": float(career_war_val),
+            # v4 — top-end / financial lists.
+            # Top-3 grad list: only grads that clear the boom_bust sample
+            # v15 — Relax the gate. Previously required boom/bust/settled label
+            # (which itself requires 800 PA / 200 IP / 2 seasons floor — most
+            # recent graduates won't clear that). Now any graduate with a
+            # populated career_war qualifies for _top_grads; the leaf still
+            # gates on ≥3 grads to produce a meaningful top-3 statistic.
+            if career_war_val is not None:
+                yval = cw.get("war_per_yr")
+                seasons = cw.get("war_seasons_count") or 0
+                # Find last MLB year for Conviction's 6-year recency window.
+                mlb_seasons = [int(r.get("season") or 0)
+                               for r in career_rows
+                               if (r.get("level") == "MLB" and r.get("season"))]
+                last_mlb_year = max(mlb_seasons) if mlb_seasons else None
+                # v30.8 — Peak single-season WAR for the star-evaluation
+                # path (Conviction + Acq Deviation use ≥3.5 single-season
+                # WAR as a star threshold). seasons may be a {year: war}
+                # dict (FanGraphs career_war shape) or sparser.
+                season_peak = 0.0
+                _seasons_dict = cw.get("seasons")
+                try:
+                    if isinstance(_seasons_dict, dict):
+                        _vals = [float(v) for v in _seasons_dict.values()
+                                 if v is not None and float(v) == float(v)]
+                        if _vals:
+                            season_peak = max(_vals)
+                except (TypeError, ValueError):
+                    pass
+                bucket["_top_grads"].append({
+                    "w":            _w,
+                    "player_name": gp.player_name,
+                    "player_key":  gp.player_key,
+                    "career_war":   float(career_war_val),
+                    "war_per_yr":   float(yval) if yval is not None else None,
+                    "seasons":      _seasons_dict if isinstance(_seasons_dict, dict) else int(seasons),
+                    "season_peak":  round(season_peak, 2),
+                    "is_pitcher":   gp_is_pitcher,
+                    "last_mlb_year": last_mlb_year,
+                    # v30.8 — Acquisition method for per-method star-rate
+                    # aggregation in the Acq Deviation league pass.
+                    "method":       gp_method,
                 })
-        # IFA ROI: grads signed via IFA, tagged with their signing year
-        # + (optional) bonus + career WAR.
-        # v22 — Dropped the per-grad `bonus_usd` requirement. The
-        # downstream `_compute_ifa_roi` uses org-level IFA spend from
-        # `ifa_org_spending` as the denominator (Spotrac), not per-grad
-        # bonus sums. Filtering grads out for missing bonus_usd was the
-        # real bottleneck — only 23 of 492 debuted IFAs had bonus on
-        # file, leaving 18 orgs with zero contributors. Now every IFA
-        # debut with career WAR + signing year counts toward the
-        # numerator.
-        if gp_method == "international_fa" and career_war_val is not None:
-            sy = gp_acq.get("year")
-            if sy is not None:
-                bucket["_ifa_grads"].append({
-                    "signed_year": int(sy),
-                    "bonus_usd":   int(bonus_usd) if bonus_usd else 0,
-                    "career_war":  float(career_war_val),
-                })
+                # v30.8 — Per-method counters for Acquisition Deviation.
+                # Every grad with WAR data counts toward the method's
+                # grad_count denominator; grads who hit the star threshold
+                # add to the numerator.
+                if _acq_method:
+                    bucket["_method_grad_counts"][_acq_method] = \
+                        bucket["_method_grad_counts"].get(_acq_method, 0) + _w
+                    _is_star = ((yval is not None and float(yval) >= _STAR_WAR_PER_YR_THRESHOLD)
+                                or (season_peak >= _STAR_SEASON_WAR_THRESHOLD))
+                    if _is_star:
+                        bucket["_method_star_counts"][_acq_method] = \
+                            bucket["_method_star_counts"].get(_acq_method, 0) + _w
+            # Draft-pool efficiency: grads drafted via the draft method,
+            # tagged with their draft year + career WAR. The leaf-level
+            # computation joins these to the per-year draft pool spend.
+            if _acq_method == "draft" and career_war_val is not None:
+                dy = gp_acq.get("year")
+                if dy is not None:
+                    bucket["_draft_pool_grads"].append({
+                        "w":            _w,
+                        "draft_year": int(dy),
+                        "career_war": float(career_war_val),
+                    })
+            # IFA ROI: grads signed via IFA, tagged with their signing year
+            # + (optional) bonus + career WAR.
+            # v22 — Dropped the per-grad `bonus_usd` requirement. The
+            # downstream `_compute_ifa_roi` uses org-level IFA spend from
+            # `ifa_org_spending` as the denominator (Spotrac), not per-grad
+            # bonus sums. Filtering grads out for missing bonus_usd was the
+            # real bottleneck — only 23 of 492 debuted IFAs had bonus on
+            # file, leaving 18 orgs with zero contributors. Now every IFA
+            # debut with career WAR + signing year counts toward the
+            # numerator.
+            if _acq_method == "international_fa" and career_war_val is not None:
+                sy = gp_acq.get("year")
+                if sy is not None:
+                    bucket["_ifa_grads"].append({
+                        "w":            _w,
+                        "signed_year": int(sy),
+                        "bonus_usd":   int(bonus_usd) if bonus_usd else 0,
+                        "career_war":  float(career_war_val),
+                    })
+
+    # VAL_4: share-weighted counts are graduate-equivalents. A whole count stays an
+    # int (a club that developed its graduates alone serves the same integers as
+    # before); a fractional one is kept to 4 decimals.
+    def _tidy_count(v):
+        if isinstance(v, float):
+            return int(v) if v.is_integer() else round(v, 4)
+        return v
+    for _gb in grad_agg.values():
+        for _k, _v in list(_gb.items()):
+            if _k.endswith("_count") or _k.startswith(("sleeper_", "grad_count_")):
+                _gb[_k] = _tidy_count(_v)
+            elif _k in ("_method_grad_counts", "_method_star_counts"):
+                _gb[_k] = {mk: _tidy_count(mv) for mk, mv in _v.items()}
 
     # Finalize each org entry
     org_summary = []
@@ -14136,6 +14334,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # per-tool DvM+ + composite ToolsDvM+ are computed in a second
         # league-wide pass below, once every org's mean_delta is known.
         _tool_sums = m.pop("_tool_dev_sums") or {}
+        # VAL_4: tenure tool growth credited to this club (by any prospect it
+        # held, including one it has since traded away).
+        for _tk, _vals in (_tenure_tool_sums.get(org) or {}).items():
+            _tool_sums.setdefault(_tk, []).extend(_vals)
         per_tool: dict[str, dict] = {}
         for _tk, _deltas in _tool_sums.items():
             if len(_deltas) < 3:
@@ -14150,6 +14352,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # DvM+ for those cells, so dropping a noisy bucket here doesn't
         # leave the UI blank).
         _tool_sums_by_bucket = m.pop("_tool_dev_sums_by_bucket") or {}
+        for _bk, _tdict in (_tenure_tool_sums_by_bucket.get(org) or {}).items():
+            for _tk, _vals in _tdict.items():
+                _tool_sums_by_bucket.setdefault(_bk, {}).setdefault(_tk, []).extend(_vals)
         per_tool_by_bucket: dict[str, dict[str, dict]] = {}
         for _bucket, _tool_dict in _tool_sums_by_bucket.items():
             _bucket_pertool: dict[str, dict] = {}
@@ -14869,9 +15074,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # pages. Trades show as +/- moves between orgs; graduations are
     # graduation-neutral — the cumulative line stays flat through them so
     # a productive farm isn't punished for promoting its top prospects.
+    _dev_calendar = _dev_attr.calendar if _dev_attr is not None else None
     org_fv_history = _build_org_fv_history(
         actives + grads + inactives, _filter_real_trades, trades_by_player,
-        xfv_hist_by_key=_xfv_hist_by_key,
+        xfv_hist_by_key=_xfv_hist_by_key, calendar=_dev_calendar,
     )
     for entry in org_summary:
         hist = org_fv_history.get(entry["org"], {})
@@ -14894,8 +15100,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     all_players_for_cohort = actives + grads + inactives
     hitter_players  = [p for p in all_players_for_cohort if not _primary_is_pitcher(p.position)]
     pitcher_players = [p for p in all_players_for_cohort if     _primary_is_pitcher(p.position)]
-    hitter_fv_history  = _build_org_fv_history(hitter_players,  _filter_real_trades, trades_by_player, xfv_hist_by_key=_xfv_hist_by_key)
-    pitcher_fv_history = _build_org_fv_history(pitcher_players, _filter_real_trades, trades_by_player, xfv_hist_by_key=_xfv_hist_by_key)
+    hitter_fv_history  = _build_org_fv_history(hitter_players,  _filter_real_trades, trades_by_player, xfv_hist_by_key=_xfv_hist_by_key, calendar=_dev_calendar)
+    pitcher_fv_history = _build_org_fv_history(pitcher_players, _filter_real_trades, trades_by_player, xfv_hist_by_key=_xfv_hist_by_key, calendar=_dev_calendar)
     for entry in org_summary:
         entry["hitter_fv_history"]  = hitter_fv_history.get(entry["org"],  {}).get("series", [])
         entry["pitcher_fv_history"] = pitcher_fv_history.get(entry["org"], {}).get("series", [])
@@ -14936,7 +15142,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                if _pos_bucket_for(p.position) == bucket]
         _bucket_fv_history[bucket] = _build_org_fv_history(
             sub, _filter_real_trades, trades_by_player,
-            xfv_hist_by_key=_xfv_hist_by_key,
+            xfv_hist_by_key=_xfv_hist_by_key, calendar=_dev_calendar,
         )
     for entry in org_summary:
         # Per-bucket series stays on the entry so the trajectory pass
@@ -16894,8 +17100,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     if lmy is None or wpy is None:
                         continue
                     if _now_yr - int(lmy) <= win_years:
-                        vals_w.append(float(wpy))
-                org_mean = sum(vals_w) / len(vals_w) if len(vals_w) >= 3 else None
+                        vals_w.append((float(wpy), g.get("w", 1.0)))
+                # VAL_4: share-weighted mean, gated on graduate-equivalents
+                _wsum = sum(w for _, w in vals_w)
+                org_mean = (sum(v * w for v, w in vals_w) / _wsum) if _wsum >= 3 else None
                 org_vals.append(org_mean)
             present = [v for v in org_vals if v is not None]
             n_p = len(present)
@@ -16939,10 +17147,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     if yr is None or cw is None:
                         continue
                     if _now_yr - int(yr) <= win_years:
-                        vals_w.append(float(cw))
+                        vals_w.append((float(cw), g.get("w", 1.0)))
                 # Use career WAR mean as the in-window signal (WAR/yr
                 # not stored on _draft_pool_grads / _ifa_grads).
-                org_mean = sum(vals_w) / len(vals_w) if len(vals_w) >= 3 else None
+                # VAL_4: share-weighted mean, gated on graduate-equivalents
+                _wsum = sum(w for _, w in vals_w)
+                org_mean = (sum(v * w for v, w in vals_w) / _wsum) if _wsum >= 3 else None
                 org_vals.append(org_mean)
             present = [v for v in org_vals if v is not None]
             n_p = len(present)
@@ -17167,6 +17377,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     active_payload = [_serialize(p) for p in actives]
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
+    # VAL_4: who developed each graduate (club shares, signing club, tenures).
+    # `org` stays the club he is with now; the farm leaves, the Club Ledger and
+    # the PROSPX farm page credit the clubs in dev_credit.shares instead.
+    if _dev_attr is not None:
+        for _gpl in graduate_payload:
+            _pa_g = _dev_attr.get(_gpl.get("player_key"))
+            if _pa_g is not None and _pa_g.shares:
+                _gpl["dev_credit"] = _pa_g.as_payload()
     _phase_done("serialise")
     # v38 — Item-6: stamp the per-prospect $DvM+ (computed in the league pre-pass
     # above) onto each active payload so the farm financial detail can surface it
@@ -17672,7 +17890,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     )
     _LITE_WHOLE = (
         "statline", "sabermetrics", "career_war", "stock", "trades",
-        "il_status", "il_stints", "acquisition", "breakout_meta",
+        "il_status", "il_stints", "acquisition", "breakout_meta", "dev_credit",
     )
 
     def _lite_handedness(g: dict):

@@ -809,13 +809,13 @@
    "model_id": "dvm_plus_tools",
    "summary": "Unvalidated, descriptive: per-tool 100 + 10z across orgs, with ToolDvM+ a position-weighted mean; cells blank under 3 prospects.",
    "surface": "PROSPX farm detail Tool Development panel (ToolDvM+ headline + per-tool grid)",
-   "predicts": "descriptive index of an org's mean lifetime tool-grade delta, per tool and position-weighted overall",
+   "predicts": "descriptive index of an org's mean tool-grade growth during the tenures it held each active prospect (same-source pairs, split by days across clubs), per tool and position-weighted overall",
    "champion": "storage.py per-tool development pass (per_tool_dvm_plus, tools_dvm_plus, per_tool_dvm_plus_by_bucket)",
    "baseline": "n/a (descriptive league-relative index)",
    "metric": "none standalone",
    "eval_artifact": null,
    "verdict": "unvalidated",
-   "notes": "2026-07-29 display-index registration (standing rule: every shipped model gets a row). SCALE: each per-tool DvM+ is 100 + 10z across the orgs; ToolDvM+ is a position-importance-weighted mean OF those already-anchored values, so it inherits the 10-points-per-sigma reading without being a z-score of itself. COMPUTING SITE: storage.py. Cells render blank under 3 contributing prospects, and a per-tool value needs 2 or more consensus observations of that tool. Documented by the tools_dvm_plus and tool_specific_dvm_plus glossary entries."
+   "notes": "2026-07-29 display-index registration (standing rule: every shipped model gets a row). SCALE: each per-tool DvM+ is 100 + 10z across the orgs; ToolDvM+ is a position-importance-weighted mean OF those already-anchored values, so it inherits the 10-points-per-sigma reading without being a z-score of itself. COMPUTING SITE: storage.py. Cells render blank under 3 contributing prospects, and a per-tool value needs 2 or more consensus observations of that tool. Documented by the tools_dvm_plus and tool_specific_dvm_plus glossary entries. VAL_4 (2026-10-08, owner answer FP2-4): growth is credited to the club that held the prospect when it happened (dev_attribution.py org tenures, docs/farm-attribution-2026-09-25/DEVELOPMENT_ATTRIBUTION.md), no longer the lifetime consensus delta credited to his current org; a per-tool value needs 2 or more same-source observations of that tool."
   },
   {
    "model_id": "efv_age_pipeline",
