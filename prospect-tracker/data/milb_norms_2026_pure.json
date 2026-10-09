@@ -1,0 +1,202 @@
+{
+ "produced_by": "tools/milb_season_freeze.py --write",
+ "pure": {
+  "hitting": {
+   "A": {
+    "bb_pct": 0.1233,
+    "iso": 0.14,
+    "k_pct": 0.2392,
+    "n": 508,
+    "obp": 0.356,
+    "ops": 0.744
+   },
+   "A+": {
+    "bb_pct": 0.1163,
+    "iso": 0.16,
+    "k_pct": 0.2367,
+    "n": 524,
+    "obp": 0.35,
+    "ops": 0.7665
+   },
+   "AA": {
+    "bb_pct": 0.1058,
+    "iso": 0.1545,
+    "k_pct": 0.2444,
+    "n": 528,
+    "obp": 0.338,
+    "ops": 0.749
+   },
+   "AAA": {
+    "bb_pct": 0.1118,
+    "iso": 0.157,
+    "k_pct": 0.2278,
+    "n": 558,
+    "obp": 0.347,
+    "ops": 0.768
+   },
+   "CPX": {
+    "bb_pct": 0.1419,
+    "iso": 0.1445,
+    "k_pct": 0.2413,
+    "n": 290,
+    "obp": 0.378,
+    "ops": 0.776
+   },
+   "DSL": {
+    "bb_pct": 0.1623,
+    "iso": 0.112,
+    "k_pct": 0.1862,
+    "n": 529,
+    "obp": 0.4,
+    "ops": 0.782
+   }
+  },
+  "pitching": {
+   "A": {
+    "bb_pct": 0.1168,
+    "era": 4.87,
+    "k_pct": 0.239,
+    "n": 561
+   },
+   "A+": {
+    "bb_pct": 0.1163,
+    "era": 4.87,
+    "k_pct": 0.2395,
+    "n": 572
+   },
+   "AA": {
+    "bb_pct": 0.1045,
+    "era": 4.735,
+    "k_pct": 0.2424,
+    "n": 580
+   },
+   "AAA": {
+    "bb_pct": 0.1103,
+    "era": 4.78,
+    "k_pct": 0.2249,
+    "n": 617
+   },
+   "CPX": {
+    "bb_pct": 0.1293,
+    "era": 5.76,
+    "k_pct": 0.2328,
+    "n": 259
+   },
+   "DSL": {
+    "bb_pct": 0.1465,
+    "era": 5.4,
+    "k_pct": 0.1983,
+    "n": 503
+   }
+  }
+ },
+ "schema": 1,
+ "season": 2026,
+ "served_blend_on_pin_date": {
+  "date": "2026-10-09",
+  "norms": {
+   "hitting": {
+    "A": {
+     "bb_pct": 0.1211,
+     "iso": 0.1204,
+     "k_pct": 0.2344,
+     "n": 508,
+     "norm_prior_blend_w": 0.497,
+     "obp": 0.3484,
+     "ops": 0.7103
+    },
+    "A+": {
+     "bb_pct": 0.1121,
+     "iso": 0.1398,
+     "k_pct": 0.2345,
+     "n": 524,
+     "norm_prior_blend_w": 0.519,
+     "obp": 0.3399,
+     "ops": 0.7288
+    },
+    "AA": {
+     "bb_pct": 0.1021,
+     "iso": 0.1385,
+     "k_pct": 0.2403,
+     "n": 528,
+     "norm_prior_blend_w": 0.515,
+     "obp": 0.3293,
+     "ops": 0.7141
+    },
+    "AAA": {
+     "bb_pct": 0.1098,
+     "iso": 0.1575,
+     "k_pct": 0.2277,
+     "n": 558,
+     "norm_prior_blend_w": 0.504,
+     "obp": 0.347,
+     "ops": 0.764
+    },
+    "CPX": {
+     "bb_pct": 0.1275,
+     "iso": 0.1254,
+     "k_pct": 0.237,
+     "n": 290,
+     "norm_prior_blend_w": 0.49,
+     "obp": 0.3647,
+     "ops": 0.7428
+    },
+    "DSL": {
+     "bb_pct": 0.1528,
+     "iso": 0.1058,
+     "k_pct": 0.1926,
+     "n": 529,
+     "norm_prior_blend_w": 0.483,
+     "obp": 0.386,
+     "ops": 0.7535
+    }
+   },
+   "pitching": {
+    "A": {
+     "bb_pct": 0.1139,
+     "era": 4.4394,
+     "k_pct": 0.2356,
+     "n": 561,
+     "norm_prior_blend_w": 0.502
+    },
+    "A+": {
+     "bb_pct": 0.1113,
+     "era": 4.4058,
+     "k_pct": 0.2377,
+     "n": 572,
+     "norm_prior_blend_w": 0.506
+    },
+    "AA": {
+     "bb_pct": 0.102,
+     "era": 4.2655,
+     "k_pct": 0.2381,
+     "n": 580,
+     "norm_prior_blend_w": 0.508
+    },
+    "AAA": {
+     "bb_pct": 0.1095,
+     "era": 4.7547,
+     "k_pct": 0.2257,
+     "n": 617,
+     "norm_prior_blend_w": 0.493
+    },
+    "CPX": {
+     "bb_pct": 0.1172,
+     "era": 5.0634,
+     "k_pct": 0.228,
+     "n": 259,
+     "norm_prior_blend_w": 0.486
+    },
+    "DSL": {
+     "bb_pct": 0.1372,
+     "era": 5.0519,
+     "k_pct": 0.1992,
+     "n": 503,
+     "norm_prior_blend_w": 0.48
+    }
+   }
+  },
+  "rule": "milb_history.league_norms blends the current season with the prior at w = n_cur / (n_cur + n_prior) while the calendar reads the season; the blend ends 2027-01-01, when the served 2026 norms become these pure norms with no new data"
+ },
+ "what_this_is": "Pure 2026 MiLB level norms per side and level, from the frozen copy data/milb_season_frozen/2026/, with milb_history.level_norms_from_rows (lines with at least 100 PA or BF, the median of each rate, four places, None under 30 lines) and NO current-year blend. NOT served."
+}

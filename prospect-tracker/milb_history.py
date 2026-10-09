@@ -256,6 +256,43 @@ def league_norms(season: int, level: str, group: str,
         if lv == level or (level in ("DSL", "CPX") and sport == 16):
             rows.extend(r for r in season_splits(sport, season, group, fetch=fetch)
                         if r.get("level") == level)
+    out = level_norms_from_rows(rows, group)
+    if out is None:
+        return None
+    # AUDIT FIX 2026-07-14: mid-season norms for the CURRENT season embed
+    # seasonal/selection drift - five weeks into a DSL season only the
+    # early-everyday regulars clear the 100-PA qualifier, so the "level
+    # median" ran 0.06-0.10 OPS hot at the low levels (DSL .829 vs a stable
+    # .70-.73 multi-year band) and every prospect's rel-rates read cool.
+    # Stabilize by blending with the PRIOR season's full norm, weighted by
+    # qualified count: w = n_cur / (n_cur + n_prior). Converges to the pure
+    # current-season norm as the season fills in; past seasons never blend.
+    # (At season end w sits near 0.5, not 1, so the pure norm arrives only on
+    # 2027-01-01; docs/efv-v2/STATUS.md 2026-10-09 discloses that step, and
+    # data/milb_norms_2026_pure.json pins the pure 2026 norms.)
+    from datetime import date as _date
+    if season == _date.today().year:
+        prior = league_norms(season - 1, level, group, fetch=False)
+        if prior:
+            n = out["n"]
+            n_prior = prior.get("n") or 0
+            if n_prior > 0:
+                w = n / (n + n_prior)
+                blended = {}
+                for k, v in out.items():
+                    if k != "n" and prior.get(k) is not None:
+                        blended[k] = round(w * v + (1 - w) * prior[k], 4)
+                    elif k != "n":
+                        blended[k] = v
+                out = blended | {"n": n, "norm_prior_blend_w": round(w, 3)}
+    return out
+
+
+def level_norms_from_rows(rows: list[dict], group: str) -> dict | None:
+    """The pure (unblended) level norm of one level-season's rows: the median of each
+    rate over lines with at least 100 PA (hitting) or BF (pitching), rounded to four
+    places, plus the qualified count `n`; None under 30 qualified lines. league_norms
+    reads it, then blends the current season with the prior one."""
     vals: dict[str, list[float]] = {}
     n = 0
     for r in rows:
@@ -291,30 +328,7 @@ def league_norms(season: int, level: str, group: str,
                 vals.setdefault("bb_pct", []).append(bb / bf)
     if n < 30:
         return None
-    out = {k: round(statistics.median(v), 4) for k, v in vals.items()} | {"n": n}
-    # AUDIT FIX 2026-07-14: mid-season norms for the CURRENT season embed
-    # seasonal/selection drift - five weeks into a DSL season only the
-    # early-everyday regulars clear the 100-PA qualifier, so the "level
-    # median" ran 0.06-0.10 OPS hot at the low levels (DSL .829 vs a stable
-    # .70-.73 multi-year band) and every prospect's rel-rates read cool.
-    # Stabilize by blending with the PRIOR season's full norm, weighted by
-    # qualified count: w = n_cur / (n_cur + n_prior). Converges to the pure
-    # current-season norm as the season fills in; past seasons never blend.
-    from datetime import date as _date
-    if season == _date.today().year:
-        prior = league_norms(season - 1, level, group, fetch=False)
-        if prior:
-            n_prior = prior.get("n") or 0
-            if n_prior > 0:
-                w = n / (n + n_prior)
-                blended = {}
-                for k, v in out.items():
-                    if k != "n" and prior.get(k) is not None:
-                        blended[k] = round(w * v + (1 - w) * prior[k], 4)
-                    elif k != "n":
-                        blended[k] = v
-                out = blended | {"n": n, "norm_prior_blend_w": round(w, 3)}
-    return out
+    return {k: round(statistics.median(v), 4) for k, v in vals.items()} | {"n": n}
 
 
 if __name__ == "__main__":
