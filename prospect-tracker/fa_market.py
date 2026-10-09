@@ -295,22 +295,46 @@ MAX_PATH_YEARS = 15
 
 
 def _decay_path(war1: float, expo: float, side: str, role: str, age: int,
-                curves: dict) -> list[float]:
+                curves: dict, aging: str = "v2", mlbam=None) -> list[float]:
     """Decay a year-1 WAR along the aging curves: the WAR RATE (per 600 PA /
     250 BF) and playing time each walk their fitted deltas at the advancing
     age. Shared by the central path and the P10/P90 variants so uncertainty
-    propagates through the SAME aging machinery."""
+    propagates through the SAME aging machinery.
+
+    ``aging`` is the CALL-SCOPED engine selector (docs/AGING_V3_GATE.md section
+    2): "v2" (default) walks the incumbent curves exactly as before; "v3" walks
+    the aging_v3 model attached by fitted_models(..., aging="v3"), its bucket
+    from the base-season position and, from year 2 on, the archetype of the
+    three seasons before the base (the ARM R serve rule); with no arm active
+    the v3 walk reproduces the v2 walk."""
     per = 600.0 if side == "hit" else 250.0
     rate = (war1 / expo * per) if expo > 0 else 0.0
+    _v3 = None
+    if aging == "v3":
+        import aging_v3
+        _v3 = aging_v3.model_of(curves)
+        if _v3 is None:
+            raise ValueError("aging='v3' needs the curves of fitted_models(..., aging='v3')")
+        _seasons = _v3.meta.get("corpus_seasons") or [None, None]
+        _base = (_v3.meta.get("max_season") or _seasons[1] or 0) + 1
+        _bucket = _v3.bucket_of(mlbam, _base - 1, side, role)
+        _arch = _v3.archetype_of(mlbam, _base, side)
+    elif aging != "v2":
+        raise ValueError(f"aging must be 'v2' or 'v3', got {aging!r}")
     path = []
     a = age
     e = expo
     for t in range(MAX_PATH_YEARS):
         if t > 0:
             a += 1
-            rate += fp.curve_delta(curves, side, role, "war_rate", a)
-            e += fp.curve_delta(curves, side, role, "pt", a)
-            e = max(0.0, e)
+            if _v3 is None:
+                rate += fp.curve_delta(curves, side, role, "war_rate", a)
+                e += fp.curve_delta(curves, side, role, "pt", a)
+                e = max(0.0, e)
+            else:
+                rate += _v3.rate_delta(side, "war_rate", a, bucket=_bucket, archetype=_arch,
+                                       role=role)
+                e = _v3.pt_next(side, role, e, a, bucket=_bucket)
         path.append(max(0.0, rate * e / per))
     return path
 
@@ -462,7 +486,7 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
                       league: dict, in_progress: tuple[int, float] | None = None,
                       use_ml: bool | None = None,
                       ml_models: dict | None = None,
-                      p20: bool = False) -> dict | None:
+                      p20: bool = False, aging: str = "v2") -> dict | None:
     """WAR by contract year: year 1 from the full Marcel engine; later
     years decay the WAR rate and playing time along the SAME aging curves
     (war_rate per-600/250 deltas + pt deltas at the advancing age).
@@ -484,7 +508,12 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
 
     ``p20`` (default off; only the $/WAR path writer's enrichment sets it)
     applies correction P20 of docs/dpw-2026-09-25/DPW_PATH_GATE.md section 1.1
-    inside the projection's playing-time formula."""
+    inside the projection's playing-time formula.
+
+    ``aging`` ("v2" default) is the call-scoped aging engine selector passed to
+    _decay_path; the champion path, its P10/P90 variants and the year-1 PT step
+    (through the curves fitted_models(..., aging=) returned) walk the same
+    engine (docs/AGING_V3_GATE.md section 2)."""
     proj = fp.project_player(hist, side, class_year, curves, league, age,
                              in_progress=in_progress, p20=p20)
     if proj is None:
@@ -497,7 +526,8 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     # falls back to the base role wherever a cohort cell is thin.
     decay_role = fp.profile_role(hist, side, role, league)
     a = age or 30
-    path = _decay_path(war1, expo, side, decay_role, a, curves)
+    _mlbam = hist[0].get("mlbam") if hist else None
+    path = _decay_path(war1, expo, side, decay_role, a, curves, aging=aging, mlbam=_mlbam)
     out = {"war_by_year": [round(w, 2) for w in path],
            # The champion MEAN path, carried alongside the (possibly ML)
            # display path for team roll-up consumers that must sum MEANS, not
@@ -524,8 +554,10 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
         q = _gate1_band_quantiles().get(_band_bucket(side, expo))
         band_src = "bucket"
     if q:
-        p10 = _decay_path(war1 + q["q10"], expo, side, decay_role, a, curves)
-        p90 = _decay_path(war1 + q["q90"], expo, side, decay_role, a, curves)
+        p10 = _decay_path(war1 + q["q10"], expo, side, decay_role, a, curves,
+                          aging=aging, mlbam=_mlbam)
+        p90 = _decay_path(war1 + q["q90"], expo, side, decay_role, a, curves,
+                          aging=aging, mlbam=_mlbam)
         out["war_by_year_p10"] = [round(w, 2) for w in p10]
         out["war_by_year_p90"] = [round(w, 2) for w in p90]
         out["band_source"] = band_src
