@@ -424,23 +424,28 @@ def test_the_glossary_drafts_are_clean_and_land_only_at_the_flip(tmp_path, monke
     assert "14, 9, 8, 7, 6, 5, 4, 3, 2, 1" in by["bbwaa_ballot"]["definition"]
     assert "252" in by["awards_rule_mvp"]["methodology"] and "81" in by["awards_rule_mvp"]["methodology"]
     assert "win probability added" in by["award_race_strip"]["definition"]
+    # The flip (AWARDS_11) wrote the fourteen entries: the served file is the pre-flip file
+    # with exactly these appended, and a second apply changes nothing.
     raw = (ROOT / "data" / "glossary.json").read_bytes()
     doc = json.loads(raw)
     ids = {e["id"] for e in doc["entries"]}
-    assert ids.isdisjoint(G._ids()), "no awards entry before the flip (I13)"
+    assert set(G._ids()) <= ids, "the flip wrote every awards entry"
     assert G.dump(doc, b"\r\n" in raw) == raw, "the dump is the file's own format"
-    new, changed = G.apply(doc)
+    assert G.apply(doc)[1] == [], "the served file is the script's own output"
+    pre = dict(doc, entries=[e for e in doc["entries"] if e["id"] not in set(G._ids())])
+    new, changed = G.apply(pre)
     assert changed == [f"add {i}" for i in G._ids()]
-    assert new["entries"][:len(doc["entries"])] == doc["entries"], "nothing already there moves"
+    assert new["entries"][:len(pre["entries"])] == pre["entries"], "nothing already there moves"
+    assert new["entries"] == doc["entries"]
     again, changed2 = G.apply(new)
     assert changed2 == [] and again == new
-    known = ids | set(G._ids())
     for e in ents:
-        assert set(e["seeAlso"]) <= known, e["id"]
+        assert set(e["seeAlso"]) <= ids, e["id"]
     copy_ = tmp_path / "glossary.json"
-    copy_.write_bytes(raw)
+    pre_raw = G.dump(pre, b"\r\n" in raw)
+    copy_.write_bytes(pre_raw)
     monkeypatch.setattr(G, "GLOSSARY", copy_)
     assert G.main([]) == 0 and G.main(["--check"]) == 1
     monkeypatch.setattr(A, "AWARDS_LIVE", False)
     assert G.main(["--write"]) == 2
-    assert copy_.read_bytes() == raw, "a dry run, a check and a refused write leave the file alone"
+    assert copy_.read_bytes() == pre_raw, "a dry run, a check and a refused write leave the file alone"

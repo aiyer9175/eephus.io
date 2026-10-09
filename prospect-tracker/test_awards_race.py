@@ -299,7 +299,8 @@ def test_the_exporter_copies_the_race_file_byte_for_byte_and_writes_no_vintage_b
     assert res["ok"], res
     assert res["vintage"] is None
     assert not (tmp_path / "preview" / "awards_vintages").exists()
-    doc = json.loads((tmp_path / "preview" / "awards.json").read_text(encoding="utf-8"))
+    assert not (tmp_path / "cache" / "awards_vintages").exists()
+    doc = json.loads((Path(res["out_dir"]) / "awards.json").read_text(encoding="utf-8"))
     for k in KEYS:
         assert json.dumps(doc["race"][k], sort_keys=True) == json.dumps(race[k], sort_keys=True), k
     assert doc["seasons"][0]["race"] is True

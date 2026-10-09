@@ -1,5 +1,5 @@
 {
- "version": "2026-10-08",
+ "version": "2026-10-09",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -9969,6 +9969,302 @@
    ],
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io (dev_attribution.py)."
+  },
+  {
+   "id": "eephus_selection",
+   "term": "The eephus selection",
+   "category": "site-feature",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "eephus selection",
+    "the eephus selection",
+    "Awards selection"
+   ],
+   "priority": 35,
+   "definition": "The site's Top 3 for an MLB award, chosen by a rule published on the Awards page: one metric family, one frame, one playing-time floor and one tie rule per award. Frozen after the regular season, before the writers' results. Not a forecast of the vote.",
+   "methodology": "Before the freeze the cards read 'Current leaders on the rule'. The freeze runs once, on the exporter's first run after the regular season's last game, into a write-once record; later changes to the site's WAR show beside the frozen value as 'Now' and never move the order. The WAR it reads is the series the site displays, named on every card.",
+   "seeAlso": [
+    "awards_rule_mvp",
+    "awards_rule_cy",
+    "awards_rule_roy",
+    "awards_rule_moy",
+    "rule_and_vote"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "awards_rule_mvp",
+   "term": "MVP rule",
+   "category": "method",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "MVP rule",
+    "Most Valuable Player rule"
+   ],
+   "priority": 35,
+   "definition": "The published rule behind the eephus selection for MVP: in-league eWAR, batting plus pitching, summed before rounding.",
+   "methodology": "Floor: in-league PA of at least 252 or IP of at least 81 in a 162-game season (1.55 PA and 0.5 IP per scheduled game). Ties: the unrounded score, then in-league WPA, then MLBAM id. A player traded across leagues is a candidate in each league with that league's share only, and both shares print on his row.",
+   "seeAlso": [
+    "eephus_selection",
+    "ewar",
+    "bbwaa_ballot"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "awards_rule_cy",
+   "term": "Cy Young rule",
+   "category": "method",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "Cy Young rule"
+   ],
+   "priority": 35,
+   "definition": "The published rule behind the eephus selection for the Cy Young Award: in-league pitching eWAR, which prices pitching on FIP.",
+   "methodology": "Floor: in-league IP of at least 41 in a 162-game season (0.25 IP per scheduled game), so relievers stay eligible. Ties: the unrounded score, then in-league IP, then SEM+ for a starter or REM+ for a reliever, then MLBAM id.",
+   "seeAlso": [
+    "eephus_selection",
+    "ewar",
+    "sem_plus",
+    "rem_plus"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "awards_rule_roy",
+   "term": "Rookie of the Year rule",
+   "category": "method",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "Rookie of the Year rule",
+    "ROY rule"
+   ],
+   "priority": 35,
+   "definition": "The published rule behind the eephus selection for Rookie of the Year: in-league eWAR, both sides, among players who pass the site's rookie test.",
+   "methodology": "Floor: PA of at least 100 or IP of at least 30 in the season. Rookie test: at most 130 career AB and 50 career IP through the prior season, and at most 45 estimated active days; a player removed by the days estimate alone is listed under the card with his days.",
+   "seeAlso": [
+    "eephus_selection",
+    "rookie_proxy",
+    "ewar"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "awards_rule_moy",
+   "term": "Manager of the Year rule",
+   "category": "method",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "Manager of the Year rule",
+    "MOY rule"
+   ],
+   "priority": 35,
+   "definition": "The published rule behind the eephus selection for Manager of the Year: the club-season's wins above the club's own earned eWAR. The agent is the club-season; manager names join when the manager ledger lands.",
+   "methodology": "Score: W minus (47.7 plus the club's earned eWAR) times games played over 162, with no floor, so a losing club can lead. It splits into W minus Pythagorean wins and Pythagorean wins minus the eWAR line, printed beside the score. The decision values on In-Game Management are realized value, not skill, and are never summed across families.",
+   "seeAlso": [
+    "eephus_selection",
+    "ewar",
+    "realized_mwpa"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "rookie_proxy",
+   "term": "Rookie proxy",
+   "category": "method",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "rookie test",
+    "rookie proxy",
+    "45-day estimate"
+   ],
+   "priority": 35,
+   "definition": "The site's test for rookie status: MLB's at-bat and innings limits from prior seasons, and an estimate of MLB's 45-day active-roster limit built from MLB's transaction log until the site measures service time.",
+   "methodology": "At-bats and innings come from MLB's season lines through the prior season. The days count open on a selection, purchase, recall, reinstatement or activation to an MLB club and close on an injured list placement, option, outright, designation, release, trade, waiver claim, assignment, free agency, suspension or retirement, counted only from Opening Day to September 1.",
+   "seeAlso": [
+    "awards_rule_roy"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "bbwaa_ballot",
+   "term": "BBWAA ballot",
+   "category": "mlb-rules",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "BBWAA ballot",
+    "writers' ballot"
+   ],
+   "priority": 35,
+   "definition": "The writers' award ballot: 30 voters per league, two per city. MVP lists 10 places (14, 9, 8, 7, 6, 5, 4, 3, 2, 1 points), Cy Young 5 (7, 4, 3, 2, 1), Rookie and Manager 3 each (5, 3, 1). Ballots are due before the postseason, so the vote covers the regular season.",
+   "seeAlso": [
+    "my_ballot",
+    "eephus_selection"
+   ],
+   "shelf": "industry",
+   "origin": "The Baseball Writers' Association of America, which votes the four awards."
+  },
+  {
+   "id": "award_race_strip",
+   "term": "Race strip",
+   "category": "site-feature",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "race strip",
+    "the race"
+   ],
+   "priority": 35,
+   "definition": "Where each of the three finalists stood week by week, drawn as lamps: tall for 1st, middle for 2nd, short for 3rd. Through the 2026 season it is their order among the three on realized win probability added, which is not the selection metric; from 2027 it is the place on the selection rule among every eligible player, from the site's nightly snapshots. Weeks with no record are marked, never filled in.",
+   "seeAlso": [
+    "eephus_selection",
+    "wpa"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "finalist_comparison",
+   "term": "Compare the three",
+   "category": "site-feature",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "Compare the three",
+    "finalist comparison"
+   ],
+   "priority": 35,
+   "definition": "The three finalists on each metric's own value ruler, with the numbers beside them.",
+   "seeAlso": [
+    "value_ruler",
+    "eephus_selection"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "rule_and_vote",
+   "term": "Rule and vote",
+   "category": "site-feature",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "Rule and vote"
+   ],
+   "priority": 35,
+   "definition": "The eephus selection beside the writers' result, season by season. A record of both lists; it scores neither.",
+   "methodology": "Winners come from MLB's public StatsAPI awards feed. Seasons before the site published a selection are computed after the fact by the same rule from the same files and say so.",
+   "seeAlso": [
+    "eephus_selection",
+    "bbwaa_ballot"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "my_ballot",
+   "term": "My Ballot",
+   "category": "site-feature",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "My Ballot",
+    "ballot"
+   ],
+   "priority": 35,
+   "definition": "Your own ballot for each award, with the BBWAA places and points and the site's statistics beside every candidate. Kept in your browser only; share it as a link or an image.",
+   "seeAlso": [
+    "bbwaa_ballot"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "sl_prospect_expectation",
+   "term": "Former prospects against the grade at debut",
+   "category": "method",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "prospects against expectation",
+    "grade at debut"
+   ],
+   "priority": 35,
+   "definition": "Former prospects against their grade at debut: where a player's season eWAR places him in the pool beside where his eFV at debut placed him. Open to debut seasons before 2020: the site holds out the 2020 and 2021 prospect list vintages, whose players debut in 2020 or later, and the debut cohorts from 2025 for registered checks of eFV, and each opens once its check is recorded.",
+   "methodology": "Both places are mid-rank percentiles inside the season's pool, ties shared; the pool is players with PA of at least 300 or IP of at least 80 and an eFV at debut. One player at a time: nothing is averaged or counted by grade band. Rows at eFV 20 carry 'graded at the floor'.",
+   "seeAlso": [
+    "xfv",
+    "ewar"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "sl_preseason_projection",
+   "term": "Against the preseason projection",
+   "category": "method",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "preseason projection",
+    "against the projection"
+   ],
+   "priority": 35,
+   "definition": "Season WAR minus the WAR projected for the season in the projection file frozen the day before Opening Day, one player at a time, with that file's P10 to P90 band beside it. No file was saved before the 2026 season, so the card is dark for 2026; from 2027 it reads the frozen file once that season's registered checks are recorded.",
+   "seeAlso": [
+    "ewar",
+    "sl_next_season_change"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "sl_next_season_change",
+   "term": "Projected change for next season",
+   "category": "method",
+   "section": "Hall of Fame",
+   "module": [
+    "hof"
+   ],
+   "aliases": [
+    "projected rise",
+    "projected drop",
+    "next season change"
+   ],
+   "priority": 35,
+   "definition": "The projections engine's WAR for next season minus the season's realized WAR on the same WAR series, one player at a time, naming the projections build it read. The engine's path pulls unusual seasons back toward a player's longer record, so both lists are mostly that.",
+   "seeAlso": [
+    "ewar",
+    "sl_preseason_projection"
+   ],
+   "shelf": "foundation"
   }
  ]
 }

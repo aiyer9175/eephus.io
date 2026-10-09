@@ -1997,6 +1997,8 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
         log(f"  awards board REFUSED: {e}; the previous files stand")
         return {"ok": False, "reason": str(e), "message": f"refused: {e}", "n_rows": 0,
                 "out_dir": str(out), "files": {}, "top3": {}, "status": None}
+    # Every file lands at out/<name>: awards.json, the closed shards, the candidate
+    # files and awards_eval.json (copy_lint's writer scan reads this comment).
     for name, raw in files.items():
         _write_bytes(out / name, raw)
     vintage = None

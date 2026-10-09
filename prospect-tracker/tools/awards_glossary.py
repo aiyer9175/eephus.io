@@ -102,7 +102,7 @@ def entries() -> list[dict]:
           "WAR it reads is the series the site displays, named on every card.",
           rules + ["rule_and_vote"]),
         e("awards_rule_mvp", "MVP rule", "method", ["MVP rule", "Most Valuable Player rule"],
-          "The published rule behind the eephus selection for Most Valuable Player: in-league eWAR, "
+          "The published rule behind the eephus selection for MVP: in-league eWAR, "
           "batting plus pitching, summed before rounding.",
           f"Floor: in-league PA of at least {mvp_pa} or IP of at least {mvp_ip} in a {G}-game season "
           f"({A.MVP_PA_PER_GAME} PA and {A.MVP_IP_PER_GAME} IP per scheduled game). Ties: the unrounded "

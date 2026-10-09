@@ -199,6 +199,7 @@ _ROUTE_NOTES = {
     "diamond/index.html": "Diamond Pass page; server-rendered structure, live receipt numbers filled by assets/diamond.js",
     "parks/index.html": "MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off)",
     "hof/index.html": "Hall of Fame: career WAR / WAR7 / JAWS for every ten-season player, reproduced from Baseball-Reference's own daily WAR file, in three bands (eligible, active, not yet eligible) with the ballot record joined. No Hall line and no snub list; each dark section names its blocker, and Franchises credits every inductee to one franchise under the owner's 2026-09-25 rule.",
+    "awards/index.html": "Awards / HoF, the Awards page: the eephus selection for MVP, Cy Young, Rookie and Manager of the Year in each league by a published rule over the site's own numbers (in-league eWAR split by stint; club-season wins above earned eWAR for Manager), never a forecast of the BBWAA vote; the 2026 selection is read from the write-once frozen record. Tabs: Selections, Superlatives, My Ballot (kept in the browser only), Rule and vote, Method. Payloads data/awards.json, data/awards_<S>.json, data/awards_candidates_<S>.json from awards_export.py.",
     "management/index.html": "In-Game Management: every stolen-base attempt since 2018 priced against win probability with a league-average runner. NO per-club plus metric, because the gate battery returned a BOUNDED null (split-half 0.069 inside a permutation band, detection floor 0.0005 wins per attempt). Ships the league result, the club STYLE board, and the run-expectancy and half-inning-start reference tables.",
     "franchise/index.html": "Franchises: the org-level grade tree per club (Franchise Index = weighted mean of ROSTER / OUTLOOK / FARM branch scores, re-standardised across 30 clubs, descriptive) with twelve sections that re-serve every module's numbers for the club on their own scales; no HoF tile, no pennants, no decision-quality grade.",
     "scores/index.html": "Scores / Standings: MLB games by date, a pure reader of the files tools/scores_job.py writes to /data/scores/ (MLB's live win probability shown as MLB serves it, Biggest plays with MLB's video, box scores, and Stars of the Game by the published stars_v1 rule); in the nav after Franchises and in the sitemap since SCORES_5b.",
@@ -359,6 +360,7 @@ _UNNAVED_PAGE_NAMES = {
     "/franchises/": "Redirect to /franchise/",
     "/sources/": "Sources and data",
     "/report/": "Report a bug",
+    "/hof/": "Hall of Fame (Awards / HoF; reached from the module strip)",
     "/404.html": "Not-found page; forwards /teams/, /dfs/, /dynasty/, /redraft/",
 }
 

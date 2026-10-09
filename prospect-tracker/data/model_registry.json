@@ -5918,6 +5918,23 @@
    "notes": "NO_SHIP_DISCRIMINATION, and the loss is the deliverable. L2 logistic on the in-house shelf (career WAR, WAR7, JAWS, WAA, positive-WAA, ink, seasons, position indicators), fit per fold on players whose ballot resolved strictly earlier, 15 forward-chained blocks 1956-2030, scored on 1,067 out-of-fold players at a 10.0% base rate. AUC 0.9557 against hof_monitor 0.9785: a deficit of 0.0228 that CLEARS its own 0.0138 player-clustered detection floor, so the gap is real. Worse calibrated too (Brier 0.0427 vs 0.0353), so the calibration-first gate never opens. THE MODEL IS NOT BAD: it beats every in-house arm, 0.9557 against 0.9492 for the strongest single column, and beats hof_standard (0.9473) and JAWS (0.9463). The gap to hof_monitor is MISSING DATA, not modelling: that metric is built from batting titles, MVP shares, All-Star selections and postseason play and none of it is in our feature set, exactly as docs/HOF_BAKEOFF_GATE.md predicted before the run. Features are in-house ONLY; a public arm as a feature would score the model against its own input. Do not re-attempt on these features: the honest unlock is awards data. Rerun with tools/hof_merit.py."
   },
   {
+   "model_id": "awards_selection",
+   "summary": "A published ranking rule over served metrics; it makes no forecast. Its receipt: all 30 Rookie of the Year winners, 2011 to 2025, pass its rookie test.",
+   "surface": "/awards/: the Selections cards and hero, the Rule and vote table, Method, and the Eephus place column on My Ballot",
+   "predicts": "nothing: a DESCRIPTIVE published ranking rule (the eephus selection) over served metrics; MVP, Cy Young and Rookie of the Year on in-league eWAR split by stint, Manager of the Year on club-season wins above the club's earned eWAR; not a forecast of the BBWAA vote",
+   "champion": "awards_core's four rules as the page prints them: MVP in-league WAR, batting plus pitching, over a playing-time floor; Cy Young in-league pitching WAR; Rookie the MVP score among players MLB's three rookie gates admit (the 45-day gate estimated from MLB's transaction log); Manager W minus (47.7 + earned eWAR) x GP / 162 (owner answer AW-Q1)",
+   "baseline": "n/a: descriptive by design, a rule and not a model (the scores_stars_rule and leverage_board precedent); the writers' vote is recorded beside it on Rule and vote and never scored",
+   "metric": "descriptive; no forward gate by design. The receipt data/awards_eval.json counts the reconciliation of every served number with its producer (invariants I1 to I4), the rookie test on every Rookie of the Year winner in data/_labs/awards/award_winners.json, and the freeze hashes copied from data/_labs/awards/freeze_log.json",
+   "eval_artifact": "data/awards_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "owner": "Awards / HoF module",
+   "notes": "AWARDS_11_FLIP_RENAME 2026-10-09, the commit that serves /awards/ and renames the module Awards / HoF (owner ask 2026-10-02). A published rule, not a model and not a forecast: the page prints no chance of winning and no count of agreement with the writers. The 2026 selection reads the write-once record data/_labs/awards/frozen_2026.json (sha256 fc51d2e9b763, frozen 2026-10-08 on ewar_v2, owner answer AW-Q2); later revisions show as Now and never move the podium. Manager of the Year ranks club-seasons because no manager entity is on disk (M-MWAR-2). The projection superlatives are dark for 2026 (AW-Q3); the prospect superlatives read only debut cohorts the reserved eFV frames leave open. Writers' results come from MLB's StatsAPI awards endpoint (AW-Q4).",
+   "last_checked": "2026-10-09",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
    "model_id": "mgmt_decision_ledger",
    "summary": "Descriptive ledger: 298,640 decisions over eight seasons in nine families, valued as endpoint differences per club-season; no family total, no skill claim.",
    "surface": "/management/, the Clubs, Decisions and League tabs. data/management_decisions.json summarised into data/management_board.json; per club-season shards under data/mgmt_decisions/.",

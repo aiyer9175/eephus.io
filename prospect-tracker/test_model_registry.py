@@ -692,3 +692,21 @@ def test_the_scores_rows_land_with_the_page():
         assert m["provisional_kind"] == "measurement_only"
         assert "descriptive" in m["baseline"] or "descriptive" in m["metric"]
     assert "stars_v1" in stars["predicts"] and "bp_v1" in bp["predicts"]
+
+
+def test_the_awards_row_lands_with_the_page():
+    """AWARDS_11_FLIP_RENAME (2026-10-09; AWARDS_PLAN 4.10): one provisional row for the
+    published rule, naming only /awards/, scored on data/awards_eval.json, with the summary's
+    count read off the artifact."""
+    import awards_core
+    assert awards_core.AWARDS_LIVE is True, "the awards row names a surface that is not served"
+    row = _by_id()["awards_selection"]
+    assert row["verdict"] == "provisional" and row["provisional_kind"] == "measurement_only"
+    assert row["surface"].startswith("/awards/")
+    assert row["eval_artifact"] == "data/awards_eval.json"
+    assert "descriptive" in row["baseline"] and "descriptive" in row["metric"]
+    assert row["summary"].startswith("A published ranking rule over served metrics; it makes no forecast.")
+    ev = json.loads((ROOT / row["eval_artifact"]).read_text(encoding="utf-8"))
+    rw = ev["rookie_winners"]
+    assert rw["n_pass"] == rw["n_winners"]
+    assert f"all {rw['n_winners']} Rookie of the Year winners" in row["summary"]

@@ -92,3 +92,7 @@ def test_static_nav_carries_the_2026_10_02_renames(page: Path):
     assert re.search(r'href="/franchise/"[^>]*>(?:<svg.*?</svg>)?Franchises</a>', nav, re.S), page.name
     assert re.search(r'href="/team/"[^>]*>.*?Masthead</a>', nav, re.S), page.name
     assert ">Franchise<" not in nav and ">Developers<" not in nav, page.name
+    # The owner's Awards / HoF rename (2026-10-02, landed by AWARDS_11_FLIP_RENAME):
+    # the Hall of Fame slot's leaf points at /awards/ under the module's new name.
+    assert re.search(r'href="/awards/"[^>]*>(?:<svg.*?</svg>)?Awards / HoF</a>', nav, re.S), page.name
+    assert 'href="/hof/"' not in nav and ">Hall of Fame<" not in nav, page.name

@@ -502,6 +502,13 @@ SCHEDULED_EXPORTS = (
     # so. Filed off what the read returned and the cache file's age; it never
     # fetches.
     "statsapi_standings",
+    # The Awards / HoF awards board (steps d10h and 6b7f, _export_awards_board,
+    # AWARDS_PLAN 4.9; printed label "Awards / HoF: awards board"). Joined the
+    # tuple at the flip (AWARDS_11), BELOW statsapi_standings, so nothing above
+    # mgmt_export moves (test_mgmt_export scans a fixed window). It refuses
+    # rather than publishes and files ok=False with the reason; the page paints
+    # its failed state on a missing payload.
+    "awards_export",
     # The Source Updates list on /glossary/ (step d10g: source_updates.json,
     # owner ask 2026-10-02). Read-only over the snapshot tables; a raise or a
     # payload over its size line leaves the previous file and files a red here.
@@ -535,19 +542,6 @@ SCHEDULED_EXPORTS = (
     # job prints "!!! INGEST RED: scores_job" where it should be running.
     "scores_job",
 )
-
-# The Awards board's health row (steps d10h and 6b7f, _export_awards_board,
-# AWARDS_PLAN 4.9). Appended BELOW statsapi_standings and every row above it,
-# and only inside the module flag: while awards_core.AWARDS_LIVE is False the
-# exporter writes its preview alone and the row stays unwatched; the flip
-# (AWARDS_11) turns the flag and the row joins the tuple on the same commit.
-# Nothing above mgmt_export moves (test_mgmt_export scans a fixed window).
-try:
-    from awards_core import AWARDS_LIVE as _AWARDS_LIVE
-except Exception:   # noqa: BLE001 - without the module the tuple stands as written
-    _AWARDS_LIVE = False
-if _AWARDS_LIVE:
-    SCHEDULED_EXPORTS = SCHEDULED_EXPORTS + ("awards_export",)
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
 _INGEST_HEALTH: list[dict] = []
@@ -2910,8 +2904,8 @@ def _export_awards_board(log) -> bool:
     cache, a frozen record whose hash the freeze log does not carry. While
     awards_core.AWARDS_LIVE is False every file lands under .cache/awards/preview/
     and nothing served moves. True on a write; a refusal or a raise leaves the
-    previous files on disk and files a red under "awards_export", a row the
-    watched tuple holds only once the flag is True."""
+    previous files on disk and files a red under "awards_export", the watched
+    row the flip (AWARDS_11) added, printed as AWARDS_HEALTH_LABEL."""
     try:
         import awards_export as _aw
         _res = _aw.export(log=log.info)
@@ -2919,17 +2913,22 @@ def _export_awards_board(log) -> bool:
         if _res.get("ok"):
             log.info("awards (%s): %s", _where, _res.get("message"))
             _record_ingest("awards_export", True, int(_res.get("n_rows") or 0),
-                           f"awards board ({_where})", "mlb", log)
+                           f"{AWARDS_HEALTH_LABEL} ({_where})", "mlb", log)
             return True
         log.warning("awards board REFUSED: %s; the previous files stand", _res.get("reason"))
         _record_ingest("awards_export", False, 0,
-                       f"awards export refused: {_res.get('reason')}", "mlb", log)
+                       f"{AWARDS_HEALTH_LABEL}: refused: {_res.get('reason')}", "mlb", log)
         return False
     except Exception as e:                # noqa: BLE001
         log.exception("awards export failed - continuing")
         _record_ingest("awards_export", False, 0,
-                       f"awards export raised: {e}", "mlb", log)
+                       f"{AWARDS_HEALTH_LABEL}: raised: {e}", "mlb", log)
         return False
+
+
+#: The awards_export health row's printed label (AWARDS_11_FLIP_RENAME): the
+#: module's display name, then the board.
+AWARDS_HEALTH_LABEL = "Awards / HoF: awards board"
 
 
 def _rebuild_ledger_and_franchise(out_dir: Path, log) -> dict:

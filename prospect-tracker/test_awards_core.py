@@ -63,7 +63,7 @@ def world():
 # --- constants and pins -----------------------------------------------------------------
 
 def test_flag_label_and_ballot_rules():
-    assert A.AWARDS_LIVE is False
+    assert A.AWARDS_LIVE is True, "AWARDS_11_FLIP_RENAME turned the module flag on"
     assert A.MODULE_LABEL == "Awards / HoF"
     assert A.BALLOT_RULES["MVP"] == {"n": 10, "points": [14, 9, 8, 7, 6, 5, 4, 3, 2, 1]}
     assert A.BALLOT_RULES["CY"] == {"n": 5, "points": [7, 4, 3, 2, 1]}

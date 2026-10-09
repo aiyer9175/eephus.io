@@ -621,11 +621,14 @@ def test_awards_core_never_reads_the_training_default():
     assert A.war_unit_label("ewar_v2") == "eWAR v2" and A.war_unit_label("ewar_v3") == "eWAR v3"
 
 
-def test_flag_is_off_and_nothing_served_names_awards():
-    assert A.AWARDS_LIVE is False
-    assert "awards" not in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8").split()
-    for name in ("glossary.json", "model_registry.json"):
-        text = (ROOT / "data" / name).read_text(encoding="utf-8")
-        assert '"awards_selection"' not in text and '"eephus_selection"' not in text, name
-    assert not (ROOT / "awards" / "index.html").exists()
-    assert not (ROOT / "data" / "awards.json").exists()
+def test_the_flip_serves_awards_in_one_commit():
+    """AWARDS_11_FLIP_RENAME: the flag, the page, the payload, the publish path, the registry
+    row and the glossary entries land together (AWARDS_PLAN 3 'The flag')."""
+    assert A.AWARDS_LIVE is True
+    assert "awards" in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8").split()
+    reg = (ROOT / "data" / "model_registry.json").read_text(encoding="utf-8")
+    assert '"model_id": "' + A.SELECTION_REGISTRY + '"' in reg
+    gl = (ROOT / "data" / "glossary.json").read_text(encoding="utf-8")
+    assert '"id": "eephus_selection"' in gl
+    assert (ROOT / "awards" / "index.html").exists()
+    assert (ROOT / "data" / "awards.json").exists()

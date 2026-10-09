@@ -135,3 +135,22 @@ def test_the_scores_entries_land_with_the_page():
     assert "first star from the winning team" in by_id["stars_of_the_game"]["definition"]
     js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
     assert 'scores: "SCORES / STANDINGS"' in js, "the module badge reads the renamed module"
+
+
+def test_the_awards_entries_land_with_the_page():
+    """AWARDS_11_FLIP_RENAME (2026-10-09; AWARDS_PLAN 4.10): the fourteen entries are the
+    script's own output, filed under the hof module, each seeAlso resolves, and the module
+    badge reads the renamed module."""
+    import sys
+    sys.path.insert(0, str(ROOT / "tools"))
+    import awards_glossary as G
+    g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    by_id = {e["id"]: e for e in g["entries"]}
+    for e in G.entries():
+        assert by_id[e["id"]] == e, e["id"]
+        assert by_id[e["id"]]["module"] == ["hof"], e["id"]
+        for other in e.get("seeAlso") or []:
+            assert other in by_id, (e["id"], other)
+    assert by_id["rookie_proxy"]["definition"].startswith("The site's test for rookie status")
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
+    assert 'hof: "AWARDS / HOF"' in js, "the module badge reads the renamed module"
