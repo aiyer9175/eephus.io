@@ -90,9 +90,35 @@
 .fr-app .fr-acc-leaves li { display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid var(--border-subtle); padding: 4px 0; font-size: 12px; }
 .fr-app .fr-acc-leaves li b { font-family: var(--font-mono); font-weight: 600; white-space: nowrap; }
 
+/* F-SCORE (owner ask B, 2026-09-30; fscore.md 3.1): when the payload carries
+   it, the root card and the F-SCORE card share one left column at the root
+   card's width, the canopy on the right; at 1100px and below both stack at
+   full width. Absent from the page while F-SCORE is dark. */
+.fr-app .fr-topcol { flex: 0 0 260px; max-width: 260px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.fr-app .fr-topcol .fr-root { flex: 0 0 auto; max-width: none; }
+.fr-app .fr-topcol + .fr-canopy { align-self: flex-start; }
+.fr-app .fr-fs { border: 1px solid var(--border-light); background: var(--bg-secondary); padding: 10px 14px; min-width: 0; }
+.fr-app .fr-fs-pillars { font-family: var(--font-mono); font-size: 11px; line-height: 1.6; color: var(--text-secondary); margin-top: 6px; }
+.fr-app .fr-fs-spark { margin: 8px 0 0; min-width: 0; }
+.fr-app .fr-fs-numbers summary { font-size: 11.5px; color: var(--text-secondary); }
+.fr-app .fr-scroll { overflow-x: auto; min-width: 0; }
+.fr-app .fr-table td.fr-wrapcell { white-space: normal; text-align: left; min-width: 9em; }
+.fr-app .fr-table th.fr-wrapcell { text-align: left; }
+.fr-app .fr-bview { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 4px; }
+.fr-app .fr-bview .chip { font-size: 11px; padding: 3px 10px; letter-spacing: .04em; }
+.fr-app .fr-bspark { display: inline-block; width: 72px; vertical-align: middle; }
+/* the postseason marks over the standings strip: shape carries the result, no
+   colour; a hollow glyph is a postseason still running */
+.fr-app .fr-strip.fr-post { margin: 6px 0 0; }
+.fr-app .fr-strip.fr-post svg { height: 16px; color: var(--text-secondary); }
+.fr-app .fr-post .fr-pm { fill: currentColor; stroke: currentColor; stroke-width: 1; }
+.fr-app .fr-post .fr-pm-berth { fill: none; stroke-width: 1.5; }
+.fr-app .fr-post .fr-pm-live { fill: none; stroke-dasharray: 2 1.5; }
+.fr-app .fr-post-legend { display: none; }
 @media (max-width: 1100px) {
   .fr-app .fr-top { flex-direction: column; }
   .fr-app .fr-root { max-width: none; flex-basis: auto; }
+  .fr-app .fr-topcol { max-width: none; flex-basis: auto; }
   .fr-app .fr-canopy { display: none; }
   .fr-app .fr-tree-wrap { display: none; }
   .fr-app .fr-tree-fallback { display: block; margin-top: 10px; }
@@ -236,6 +262,8 @@
 /* 44px touch targets at phone width (QCLA12, QCLA13, QREA22): the board's club
    codes, the tile "open" chips, the section "Open in" chips and the link rail */
 @media (max-width: 640px) {
+  .fr-app .fr-post-legend { display: block; line-height: 1.6; }
+  .fr-app .fr-bview .chip { min-height: 44px; }
   .fr-app .fr-board td:first-child a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; margin: -4px 0; }
   .fr-app .fr-tile-open, .fr-app .fr-links a, .fr-app .fr-open a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; }
   .fr-app .fr-sort { min-height: 44px; margin: -4px 0; }

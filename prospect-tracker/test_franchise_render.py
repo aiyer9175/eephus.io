@@ -287,7 +287,13 @@ def test_glossary_hooks_resolve():
     html, _ = _render("club", team="LAD")
     hooks |= set(re.findall(r'data-gl="([a-z_0-9]+)"', html))
     assert hooks
-    missing = sorted(h for h in hooks if h not in ids)
+    # The F-SCORE hooks render only once the payload carries F-SCORE, and
+    # FS_2F_FLIP adds their entries in the flip commit; while
+    # fscore_export.FSCORE_LIVE is False they may be absent, once it is True
+    # they must resolve like every other hook.
+    import fscore_export
+    dark = set() if fscore_export.FSCORE_LIVE else FS_GLOSSARY
+    missing = sorted(h for h in hooks if h not in ids and h not in dark)
     assert not missing, missing
 
 
@@ -750,3 +756,221 @@ def test_open_in_chips_are_44px_at_phone_width_and_notes_dim_by_colour():
     for sel in (".fr-app .fr-count {", ".fr-app .fr-tag {"):
         rule = CSS[CSS.index(sel):CSS.index("}", CSS.index(sel))]
         assert "opacity" not in rule and "color: var(--text-secondary)" in rule, sel
+
+
+# ---------------------------------------------------------------- F-SCORE (FS_2B_SURFACES_DARK)
+# Owner ask B (2026-09-30): the card, the section, the board mode, the Index
+# column and the HISTORY marks, all rendering nothing while the payload carries
+# no F-SCORE block (fscore_export.FSCORE_LIVE False keeps franchise_export from
+# embedding it). The payload below is synthetic, in the shape fscore_export
+# writes and franchise_export.embed_fscore copies, over the served board's
+# thirty codes; nothing here reads or writes data/fscore.json.
+
+FS_GLOSSARY = {"franchise_score", "postseason_ladder"}
+HUB = (ROOT / "assets" / "eephus-hub.js").read_text(encoding="utf-8")
+FS_SEASONS = [2020, 2021, 2022, 2023, 2024, 2025, 2026]
+# (round, post_text) in turn: missed, a berth, a pennant, a title, a bye and out
+FS_POST = [(0, "missed"), (1, "lost the wild card series"), (4, "lost the World Series"),
+           (5, "won the World Series"), (2, "bye, lost the division series")]
+
+
+def _fs_payload(codes):
+    import franchise_export as fe
+    codes = sorted(codes)
+    n = len(codes)
+    clubs = {}
+    for i, c in enumerate(codes):
+        score = round(125.0 - 50.0 * i / (n - 1), 1)
+        seasons = []
+        for j, y in enumerate(FS_SEASONS):
+            rnd, txt = FS_POST[(i + j) % len(FS_POST)]
+            live = y == FS_SEASONS[-1] and rnd in (1, 2)
+            if live:
+                txt = "in the wild card series" if rnd == 1 else "bye, in the division series"
+            w = 70 + (i + 3 * j) % 30
+            seasons.append([y, w, 162 - w, 8 * (w - 81), 1 if rnd == 2 else 0, rnd, max(rnd - 1, 0),
+                            round((w - 81) + 8 * rnd - 9.5, 1), round(1 / 7, 4), 0.1, live, txt])
+        k = {"w": sum(r[1] for r in seasons), "l": sum(r[2] for r in seasons), "rd": sum(r[3] for r in seasons),
+             "division_titles": sum(r[4] for r in seasons), "berths": sum(1 for r in seasons if r[5] >= 1),
+             "series_won": sum(r[6] for r in seasons), "pennants": sum(1 for r in seasons if r[5] >= 4),
+             "titles": sum(1 for r in seasons if r[5] >= 5)}
+        pil = {p: {"z": round((score - 100) / 10, 3), "score": score} for p in ("results", "strength", "pipeline")}
+        pil["operations"] = {"z": None, "score": None} if i == 1 else {"z": 0.5, "score": 105.0}
+        clubs[c] = {"score": score, "rank": i + 1, "letter": fe.letter_for_rank(i + 1), "raw": 0.0, "pillars": pil,
+                    "legs": {"results_wins": 12.5, "rd162": 40.2, "roster_z": 0.5, "outlook_z": -0.25, "farm_z": 1.1,
+                             "dvm7": 104.0, "dvm7_z": 0.3, "ops": 0.12},
+                    "counts": k, "in_progress": any(r[10] for r in seasons), "seasons": seasons}
+    return {
+        "schema": 1, "generated_at": "2026-10-09T09:00:00+00:00", "as_of": "2026-10-09",
+        "window": {"seasons": FS_SEASONS, "newest": 2026, "half_life": 3.0,
+                   "weights": {str(y): round(1 / 7, 4) for y in FS_SEASONS}, "in_progress": [2026]},
+        "scheme": {"id": "A", "pillars": {"results": 0.5, "strength": 0.25, "pipeline": 0.2, "operations": 0.05},
+                   "applied": {"results": 0.5, "strength": 0.25, "pipeline": 0.2, "operations": 0.05},
+                   "operations_live": True, "legs": {"strength": {"rd162": 0.5, "roster": 0.3, "outlook": 0.2},
+                                                     "pipeline": {"farm": 0.6, "dvm7": 0.4}},
+                   "ladder": {"kind": "linear", "per_step": 8, "division": 8, "steps": [0, 8, 16, 24, 32, 40]}},
+        "facts": {str(y): {"complete": y < 2026, "source": "cache", "fetched_at": "2026-10-02T18:31:07+00:00"}
+                  for y in FS_SEASONS},
+        "season_cols": ["season", "w", "l", "rd", "div", "round", "series_won", "value", "weight", "ops_z",
+                        "in_progress", "post_text"],
+        "clubs": clubs,
+        "copy": {"fscore_sentence": "FS sentence.", "fscore_vs_index": "FS against the Index.",
+                 "board_tooltip": "FS board tooltip.", "weights_foot": "RESULTS 50%, STRENGTH 25%",
+                 "fscore_in_progress": "FS in progress.", "fscore_dugout": "FS dugout sentence.",
+                 "ladder_note": "FS ladder note.", "recency_note": "FS recency note.",
+                 "roster_leg": "team eWAR v2 on the current roster", "operations_note": "FS operations note.",
+                 "fscore_honesty": "FS honesty.", "fscore_overlap": "FS overlap."},
+        "registry": [{"model_id": "franchise_score", "verdict": None}],
+        "what_fscore_does_not_claim": ["a forecast of wins, a berth or a title"],
+    }
+
+
+def _fs_doc():
+    """The served document with the synthetic F-SCORE embedded exactly as
+    franchise_export.embed_fscore embeds a live payload."""
+    import copy
+    import franchise_export as fe
+    d = copy.deepcopy(_served())
+    return fe.embed_fscore(d, _fs_payload(d["codes"]))
+
+
+def _heads(board_html):
+    return re.findall(r"<th [^>]*>.*?</th>", board_html.split("<thead>")[1].split("</thead>")[0])
+
+
+def test_fscore_renders_nothing_while_the_payload_carries_none():
+    """FSCORE_LIVE False: the served board carries no fscore block, so the club
+    page, the board and the hash are what they were (no card, section, mode
+    switch, column or mark), and sec=fscore and bview=fscore are dropped."""
+    d = _served()
+    assert "fscore_meta" not in d and "fscore" not in (d.get("extra_sections") or [])
+    html, _ = _render("club", team="LAD", hub=HUB)
+    for bad in ("F-SCORE", "fr-fs", "fr-topcol", "fr-post", 'data-frsec="fscore"', "data-frgo"):
+        assert bad not in html, bad
+    board, _ = _render("board", hub=HUB)
+    for bad in ("F-SCORE", "fr-bview", "fscore_score", "fr-bspark"):
+        assert bad not in board, bad
+    assert len(_heads(board)) == 11
+    _, _, h = _render("club", hash_="#view=club&team=CWS&sec=fscore", hub=HUB, with_hash=True)
+    assert h == "#view=club&team=CHW", h
+    _, _, h = _render("board", hash_="#view=board&team=CWS&bview=fscore", hub=HUB, with_hash=True)
+    assert h == "#view=board", h
+
+
+def test_fscore_card_section_board_mode_and_index_column_render():
+    doc = _fs_doc()
+    fs = next(c for c in doc["clubs"] if c["code"] == "LAD")["fscore"]
+    html, _ = _render("club", team="LAD", payload=doc, hub=HUB)
+    # the card sits under the root card in one left column, beside the canopy
+    top = html.split('<div class="fr-top">')[1].split('<div class="fr-canopy">')[0]
+    assert top.startswith('<div class="fr-topcol"><div class="fr-root"') and '<div class="fr-fs"' in top
+    card = top.split('<div class="fr-fs"')[1]
+    assert 'data-gl="franchise_score"' in card and "#" + str(fs["rank"]) + " of 30" in card
+    for label in ("RESULTS", "STRENGTH", "PIPELINE", "OPERATIONS"):
+        assert label in card
+    assert "FS sentence." in card and "RESULTS 50%, STRENGTH 25%" in card
+    assert ("FS in progress." in card) == bool(fs["in_progress"])
+    # the section rides extra_sections, ahead of the twelve branches
+    assert html.count('<section class="fr-block"') == 13
+    assert html.index('data-frsec="fscore"') < html.index('data-frsec="roster"')
+    sec = html.split('data-frsec="fscore"')[1].split("</section>")[0]
+    assert 'id="fr-sec-fscore"' in sec and "2020 to 2026 and today" in sec
+    for t in ("Record 2020-26", "Titles", "Pennants", "Division titles", "Postseason berths", "Series won", "Run differential"):
+        assert '<div class="fr-tile-title">' + t + "</div>" in sec, t
+    rows = re.findall(r'<tr><td class="[^"]*">(20\d\d)</td>', sec)
+    assert rows == [str(y) for y in reversed(FS_SEASONS)], rows
+    assert "FS dugout sentence." in sec and "sec=dugout" in sec and "How F-SCORE is built" in sec
+    assert 'data-gl="postseason_ladder"' in sec and "FS ladder note." in sec
+    # board: the Index mode gains one F-SCORE column right after Index
+    board, _ = _render("board", payload=doc, hub=HUB)
+    heads = _heads(board)
+    assert len(heads) == 12
+    assert 'data-frsort="index_score"' in heads[1] and 'data-frsort="fscore_score"' in heads[2]
+    assert 'data-frbview="fscore" aria-pressed="false"' in board
+    # board: the F-SCORE mode, default F-SCORE descending, phone subset of three
+    fsb, _ = _render("board", payload=doc, hub=HUB, hash_="#view=board&bview=fscore")
+    heads = _heads(fsb)
+    assert [re.search(r'data-export-text="([^"]*)"', h).group(1) for h in heads] == [
+        "Club", "F-SCORE", "RESULTS", "STRENGTH", "PIPELINE", "OPERATIONS", "W-L 2020-26", "Titles", "Pennants",
+        "Division titles", "Series won", "RD", "Seasons"]
+    assert [h for h in heads if "fr-bcol-hide" not in h] == heads[:3]
+    assert 'aria-sort="descending"' in heads[1]
+    body = fsb.split("<tbody>")[1]
+    trs = re.findall(r"<tr>(.*?)</tr>", body)
+    assert len(trs) == 30 and ">#1<" in trs[0] and "sec=fscore" in trs[0]
+    assert body.count('class="eephus-chart eephus-spark"') == 30
+    assert 'data-frbview="fscore" aria-pressed="true"' in fsb and "FS against the Index." in fsb
+    # a dark pillar prints the dark tag, never a number (the rank-2 club here)
+    assert doc["copy"]["dark_tag"] in trs[1]
+
+
+def test_fscore_sparkline_is_named_and_carries_a_details_table():
+    """The card sparkline: the hub's lineChart (role=img, an aria-label naming
+    the club and the span), the hollow dot on the season still in its
+    postseason, every label at 9 units or more, and every value in a details
+    table."""
+    doc = _fs_doc()
+    html, _ = _render("club", team="LAD", payload=doc, hub=HUB)
+    box = html.split('<div class="fr-fs-spark"')[1].split("</details>")[0]
+    svg = re.search(r'<svg class="eephus-chart eephus-line"[^>]*>', box).group(0)
+    assert 'role="img"' in svg
+    aria = re.search(r'aria-label="([^"]*)"', svg).group(1)
+    assert aria.startswith("Los Angeles Dodgers F-SCORE") and "2020 to 2026" in aria
+    sizes = [float(x) for x in re.findall(r'font-size="([0-9.]+)"', box)]
+    assert sizes and min(sizes) >= 9
+    lad = next(c for c in doc["clubs"] if c["code"] == "LAD")["fscore"]
+    if lad["spark"][-1][2]:
+        assert 'fill="var(--bg-secondary)" stroke="var(--viz-1)"' in box, "the in-progress season is hollow"
+    tbl = box.split('<details class="fr-fs-numbers">')[1]
+    assert "<summary>" in tbl and tbl.count('<th scope="row">') == len(FS_SEASONS)
+
+
+def test_history_marks_name_every_glyph_and_print_a_phone_legend():
+    """Orchestrator ruling X19: every postseason glyph is its own role=img with
+    an aria-label naming the season and the result (never only a title), and a
+    text legend prints under the strip, shown at 640px and below."""
+    doc = _fs_doc()
+    lad = next(c for c in doc["clubs"] if c["code"] == "LAD")
+    html, _ = _render("club", team="LAD", payload=doc, hub=HUB)
+    sec = html.split('data-frsec="history"')[1].split("</section>")[0]
+    marks = sec.split('<div class="fr-strip fr-post">')[1].split("</svg>")[0]
+    assert re.search(r'<svg [^>]*role="group"[^>]*aria-label="[^"]+"', marks)
+    glyphs = re.findall(r'<g role="img" aria-label="([^"]+)"[^>]*>', marks)
+    want = [str(r[0]) + ": " + r[11] for r in lad["sections"]["fscore"]["seasons"] if r[5] >= 1]
+    assert glyphs == want and len(glyphs) >= 1
+    assert marks.count("<title>") == len(glyphs)
+    legend = sec.split('<p class="fr-post-legend')[1].split("</p>")[0]
+    for name in want:
+        y, txt = name.split(": ", 1)
+        assert y + " " + txt in legend
+    assert sec.index("fr-post") < sec.index('aria-label="wins and losses by season"') < sec.index("fr-post-legend")
+    assert ".fr-app .fr-post-legend { display: none; }" in CSS
+    i = CSS.index("@media (max-width: 640px)")
+    assert ".fr-app .fr-post-legend { display: block;" in CSS[i:]
+
+
+def test_fscore_sec_and_bview_round_trip_through_the_hash():
+    doc = _fs_doc()
+    html, _, h = _render("club", hash_="#view=club&team=CWS&sec=fscore", payload=doc, hub=HUB, with_hash=True)
+    assert h == "#view=club&team=CHW&sec=fscore", h
+    assert 'data-frsec="fscore"' in html
+    board, _, h = _render("board", hash_="#view=board&team=CWS&bview=fscore", payload=doc, hub=HUB, with_hash=True)
+    assert h == "#view=board&bview=fscore", h
+    assert 'data-frbview="fscore" aria-pressed="true"' in board
+    assert 'BVIEW_RE = /(?:^#|[#&])bview=(index|fscore)\\b/' in JS
+    assert 'parts.push("bview=fscore")' in JS
+
+
+def test_fscore_letters_carry_no_tier_class():
+    """A LETTER prints in neutral ink on the card, the board and the Index
+    column; only the scores take the z ladder."""
+    doc = _fs_doc()
+    html, _ = _render("club", team="LAD", payload=doc, hub=HUB)
+    card = html.split('<div class="fr-fs"')[1].split('<div class="fr-fs-pillars">')[0]
+    assert re.search(r'<span class="fr-root-letter">[A-F][+-]?</span>', card)
+    assert '<span class="vt-fam-z vt-avg">' in card
+    assert "vt-" not in re.sub(r'<span class="vt-fam-z vt-avg">[^<]*</span>', "", card)
+    for mode in ("", "#view=board&bview=fscore"):
+        board, _ = _render("board", payload=doc, hub=HUB, hash_=mode)
+        letters = re.findall(r'<span class="([^"]*)">[A-F][+-]?</span>', board)
+        assert letters and all(c == "fr-board-letter" for c in letters), set(letters)

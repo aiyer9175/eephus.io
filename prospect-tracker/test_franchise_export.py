@@ -701,7 +701,8 @@ def _src(rel):
 def test_every_link_uses_a_key_the_target_module_reads(clubs):
     mlbstats, proj, fa, betting = _src("assets/mlbstats.js"), _src("assets/projections.js"), _src("assets/fa.js"), _src("assets/betting.js")
     prospx, parks, arb, mgmt = _src("prospx/index.html"), _src("assets/parks.js"), _src("assets/arbitration.js"), _src("assets/management.js")
-    assert re.search(r"section=\(bullpen\|starters\|hitters\|leverage\|defense\|war\)", mlbstats)
+    # the six board sections, which the League and Teams tabs extend (Q8_13a, Q8_13b)
+    assert re.search(r"section=\(bullpen\|starters\|hitters\|leverage\|defense\|war[|)]", mlbstats)
     for key in ("view=(relievers|teams|depth)", "sview=(starters|teams|charts)", "hview=(hitters|teams|charts)",
                 "dview=(fielders|teams|charts)", "wview=(players|teams)", "team=\\(\\[A-Z\\]\\{2,3\\}\\)"):
         assert re.search(key.replace("(", "\\(").replace(")", "\\)").replace("|", "\\|") if "team=" not in key else key, mlbstats), key
@@ -939,7 +940,11 @@ def test_the_glossary_hooks_in_the_payload_resolve(d, clubs):
                     hooks.add(lf["gl"])
     hooks |= set(re.findall(r'gl\((?:[^()]|\([^()]*\))*?,\s*"([a-z_0-9]+)"\)', JS.read_text(encoding="utf-8")))
     assert hooks
-    missing = sorted(h for h in hooks if h not in ids)
+    # The F-SCORE card and section hooks (FS_2B_SURFACES_DARK) render only once
+    # the payload carries F-SCORE; FS_2F_FLIP adds the two entries with the flag.
+    import fscore_export
+    dark = set() if fscore_export.FSCORE_LIVE else {"franchise_score", "postseason_ladder"}
+    missing = sorted(h for h in hooks if h not in ids and h not in dark)
     assert not missing, missing
     for slug in ("franchise_index", "franchise_branch_score", "season_record", "locked_pct",
                  "leverage_deploy_plus", "cbt_space", "park_factor", "pythag_pct"):

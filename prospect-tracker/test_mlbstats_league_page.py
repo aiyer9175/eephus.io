@@ -643,3 +643,62 @@ def test_no_forecast_word_in_the_teams_copy():
     copy = " ".join(s for s in strings if " " in s).lower()
     for w in ("luck", " due ", "regress", "trending", " will ", "clutch", "sleeper", "breakout", "unlucky"):
         assert w not in copy, w
+
+
+# ---------------------------------------------------------------- the F-SCORE column (FS_2B_SURFACES_DARK)
+# Owner ask B (2026-09-30), plan 8.E and orchestrator ruling X13: ONE column,
+# the score, letter and rank team_stats_export copies from the F-SCORE payload,
+# on the live season only and only while the payload carries the join; no
+# division-title field, no pillar. Synthetic join over the fixture's clubs.
+def _fs_team_doc() -> dict:
+    doc = _team_doc()
+    for i, t in enumerate(doc["teams"]):
+        t["fscore"] = {"score": round(80.0 + 1.5 * i, 1), "letter": "A" if i > 24 else "C", "rank": 30 - i}
+    doc["fscore"] = {"joined": True, "generated_at": "2026-10-09T09:00:00+00:00", "as_of": "2026-10-09", "n": 30}
+    return doc
+
+
+def test_the_fscore_column_renders_from_the_join():
+    doc = _fs_team_doc()
+    html = _teams_html(_teams_ctx("#section=teams", doc))
+    head = re.search(r'<th [^>]*data-col="fscore"[^>]*>.*?</th>', html).group(0)
+    assert ">F-SCORE<" in head and 'data-gl="franchise_score"' in head
+    assert "mlbstats-cv-wide" in head, "F-SCORE is not in the phone subset"
+    cells = _cells_of(html, "fscore")
+    assert len(cells) == 30
+    by_club = {t["club"]: t["fscore"] for t in doc["teams"]}
+    for club, cell in zip(_clubs_in_order(html), cells):
+        fs = by_club[club]
+        assert 'href="/franchise/#team=' + club + '&amp;sec=fscore"' in cell, cell
+        assert '<span class="mlbx-fsletter">' + fs["letter"] + "</span>" in cell, cell
+        assert re.search(r'<span class="rem-plus vt [^"]*vt-fam-z[^"]*">' + re.escape("%.1f" % fs["score"]) + "</span>", cell), cell
+        assert "F-SCORE rank " + str(fs["rank"]) in cell
+    # sorted by F-SCORE, highest first
+    order = _clubs_in_order(_teams_html(_teams_ctx("#section=teams&tsort=fscore.d", doc)))
+    assert order == [t["club"] for t in sorted(doc["teams"], key=lambda t: -t["fscore"]["score"])]
+    # one column, Standard view only, live season only
+    for view in ("emplus", "runs", "pitch", "depth", "tend"):
+        assert 'data-col="fscore"' not in _teams_html(_teams_ctx("#section=teams&tcols=" + view, doc)), view
+    assert 'data-col="fscore"' not in _teams_html(_teams_ctx("#section=teams&tseason=2025", doc))
+
+
+def test_the_fscore_column_is_absent_without_the_join():
+    """FSCORE_LIVE False: team_stats_export writes the pending note and no
+    per-club block, so the Teams tab renders exactly the columns it had."""
+    base = _teams_html(_teams_ctx("#section=teams"))
+    assert 'data-col="fscore"' not in base and "F-SCORE" not in base
+    doc = _team_doc()
+    doc["fscore"] = {"joined": False, "note": "data/fscore.json is not on disk yet"}
+    assert _teams_html(_teams_ctx("#section=teams", doc)) == base
+
+
+def test_the_teams_tab_carries_no_division_title_field_with_fscore_joined():
+    """8.E and ruling X13 hold with the join on: the F-SCORE column adds no
+    division-title, title or pennant field, and its letter takes no tier class."""
+    html = _teams_html(_teams_ctx("#section=teams", _fs_team_doc())).lower()
+    for bad in ("division", "champion", "clinch", "pennant", "titles"):
+        assert bad not in html, bad
+    for cell in _cells_of(_teams_html(_teams_ctx("#section=teams", _fs_team_doc())), "fscore"):
+        assert re.search(r'<span class="mlbx-fsletter">[A-F][+-]?</span>', cell)
+    i = LEAGUE_JS.index('tdef({ key: "fscore"')
+    assert 'fscore: true' in LEAGUE_JS[i:i + 200] and "live: true" in LEAGUE_JS[i:i + 200]

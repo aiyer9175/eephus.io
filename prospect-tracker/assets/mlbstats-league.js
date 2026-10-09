@@ -1052,6 +1052,15 @@
   tdef({ key: "war_earned", label: "eWAR earned", term: "ewar", kind: "d1", live: true,
          title: "eWAR produced for this club this season, by stint, as the Overall board serves it.",
          get: function (r) { return r.earned ? r.earned.war : null; } });
+  // F-SCORE (owner ask B, 2026-09-30; plan 8.E, orchestrator ruling X13): ONE
+  // column, the score, letter and rank team_stats_export copies verbatim from
+  // the F-SCORE payload, on the live season only and only while the payload
+  // carries that join (fscore.joined). The letter prints in neutral ink, the
+  // score takes the z ladder, and the cell opens the club's F-SCORE section on
+  // Franchises. No pillar and no per-season value joins the Teams tab.
+  tdef({ key: "fscore", label: "F-SCORE", term: "franchise_score", kind: "fscore", live: true, fscore: true,
+         title: "F-SCORE, copied from Franchises: 100 is the league average and 10 points one standard deviation. Descriptive, not a forecast.",
+         get: function (r) { return r.fs ? r.fs.score : null; } });
   // Pitch counts: earned from MLB's club lines; the club-today columns read the
   // boards' own team keys when the boards serve them, and earned until then.
   [["p_pa", "Lineup P/PA", "p_per_pa", "lineup_p_pa", "d3", "Pitches seen per plate appearance, every plate appearance the club took."],
@@ -1102,7 +1111,7 @@
   // the view's two lead columns (lane design 5.1).
   var TVIEW_COLS = {
     standard: { keys: ["wl", "rd", "xwl", "wx", "|", "offense_plus", "rotation_plus", "bullpen_plus", "team_dem_plus",
-                       "|", "war_today", "war_earned"], phone: ["wl", "rd", "xwl"] },
+                       "|", "war_today", "war_earned", "|", "fscore"], phone: ["wl", "rd", "xwl"] },
     emplus: { keys: ["wl", "|", "offense_plus", "offense_plus_vs", "heart_hem", "|", "rotation_plus", "rotation_plus_vs",
                      "front_sem", "|", "bullpen_plus", "bullpen_plus_vs", "high_lev_core_rem", "leverage_deploy_plus",
                      "|", "team_dem_plus", "team_dem_plus_vs"], phone: ["wl", "offense_plus", "offense_plus_vs"] },
@@ -1166,7 +1175,8 @@
       return (doc.teams || []).map(function (t) {
         return { club: t.club, g: t.g, w: t.w, l: t.l, rs: t.rs, ra: t.ra, rd: t.rd, xw: t.xw, xl: t.xl,
                  wx: t.w_minus_xw, one_run: t.one_run, extra: t.extra_inning, today: t.roster || null,
-                 earned: t.earned || null, pit: t.pitches || null, depth: t.depth || null, tend: t.tendencies || null };
+                 earned: t.earned || null, pit: t.pitches || null, depth: t.depth || null, tend: t.tendencies || null,
+                 fs: t.fscore || null };
       });
     }
     var h = doc.history || {}, s = ((h.seasons || {})[String(y)]) || null, cols = h.cols || [];
@@ -1179,7 +1189,7 @@
       return { club: o.club, g: o.g, w: o.w, l: o.l, rs: o.rs, ra: o.ra,
                rd: (isN(o.rs) && isN(o.ra)) ? o.rs - o.ra : null, xw: o.xw, xl: o.xl,
                wx: (isN(o.w) && isN(o.xw)) ? o.w - o.xw : null, one_run: null, extra: null, today: null,
-               earned: e, pit: o, depth: null, tend: null };
+               earned: e, pit: o, depth: null, tend: null, fs: null };
     });
   }
   function tMeans(doc, y, b) {
@@ -1190,6 +1200,7 @@
     var s = (((doc.history || {}).seasons || {})[String(y)]) || {};
     return (s.league || {}).earned || null;
   }
+  function tFsOn() { return !!(TDOC && TDOC.fscore && TDOC.fscore.joined); }
   function tBasis(doc, y) { return (y === tLive(doc)) ? T.basis : "earned"; }
   function colBasis(c, b) {
     if (c.basis === "pick") return b;
@@ -1201,7 +1212,7 @@
     v.keys.forEach(function (k) {
       if (k === "|") { grp = true; return; }
       var c = TCOL[k];
-      if (!c || (c.live && !live) || (c.basis === "today" && !live)) return;
+      if (!c || (c.live && !live) || (c.basis === "today" && !live) || (c.fscore && !tFsOn())) return;
       out.push({ c: c, grp: grp && out.length > 0, phone: v.phone.indexOf(k) >= 0 });
       grp = false;
     });
@@ -1224,6 +1235,15 @@
         var fam = TEAM_FAMILY[c.key];
         var cls = (fam && window.EephusTiers) ? window.EephusTiers.cls(v, fam) : "";
         return '<span class="rem-plus' + (cls ? " " + cls : "") + '">' + Math.round(v) + "</span>";
+      }
+      case "fscore": {
+        var fs = r.fs || {}, H = window.EEPHUS_HUB, href = "";
+        try { href = H && H.clubHref ? H.clubHref(r.club) : ""; } catch (e) { href = ""; }
+        var zc = window.EephusTiers ? window.EephusTiers.cls(v, "z") : "";
+        var inner = '<span class="mlbx-fsletter">' + esc(fs.letter || DASH) + '</span> <span class="rem-plus' + (zc ? " " + zc : "") + '">'
+          + v.toFixed(1) + "</span>";
+        return href ? '<a class="club-link mlbx-fslink" href="' + esc(href + "&sec=fscore")
+          + '" title="' + esc("F-SCORE rank " + (isN(fs.rank) ? fs.rank : DASH) + ": open the club's F-SCORE section") + '">' + inner + "</a>" : inner;
       }
       case "delta": case "signed1": case "z": return fSign(v, 1);
       case "signed": return fSign(v, 0);
