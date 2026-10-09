@@ -6313,7 +6313,21 @@
    "team_win_projections"
   ],
   "notes": "Registered 2026-10-08 by TM_1_TEAM_GATE_REGISTRATION (docs/TEAM_PROJECTIONS_GATE.md section 1.3, candidate T3), row written 2026-10-09 by TM_2_TEAM_SCORER with the scorer (proj_backtest.score_team_runs). Statistic TM-C: RS MAE and RA MAE against actual 2026 RS and RA, each side paired against both comparators (the club's 2025 actuals carried forward; the 2025 league mean per club), bootstrap B 2000, seed 20261208, pass per side ub95 < 0 against both; Pythagenpat wins MAE reported beside served wins, no verdict. The GATE look (TM_4) runs once. Flag TEAM_RUNS_LIVE (class 2); a failed side keeps RS or RA off the page."
- }
+ },
+  {
+   "model_id": "game_intensity_effects",
+   "summary": "Registered, not run: whether game intensity moves moneylines and totals beyond a quality-only price, which team types and archetypes differ in high-stakes games, and what wins in October.",
+   "surface": "No surface: nothing served reads it; the stage-1 lab tools/intensity_lab.py writes data/game_intensity_eval.json at its one run",
+   "predicts": "Stage 1, model-free on the 2018, 2019 and 2021-2025 regular seasons: IX-A the home result against the literature Elo price given the stakes asymmetry ds = dPO_h - dPO_a; IX-A2 home field under symmetric stakes S; IX-B the game total in a club-season, venue-season and season-month panel; IX-TYPE four team types times S; IX-ARCH six prior-season archetypes' wOBA residual in top-decile-S games; IX-E postseason intervals 2000-2019 and 2021-2025",
+   "champion": "the members of docs/diamond-betting.md section 'Game intensity: stakes, matchup quality and the postseason' on the frozen construction ix_v1 (G_REF 0.01158)",
+   "baseline": "the literature Elo (1500, K 4, 24 points of home field, flat start each season) for the moneyline members and the fixed-effects panel for the total; every member also faces its B3 permuted-team twin (200 draws, the 95th percentile, strict) and a quality re-entry control",
+   "metric": "Registered, not computed: IX-A paired Brier improvement on the focus set |ds| >= 0.05 at one-sided t >= 1.645 graded on 2023-2025 after a fit on 2018, 2019, 2021 and 2022, log loss not worse, b > 0, twin and control; the two-sided members by CR1 t with Holm within each family at 0.05; IX-E intervals only",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "Registered 2026-10-09 (Q10_07, plan Part 8 P8.9 item IX-H3) with the lab code, per docs/diamond-betting.md section 'Game intensity: stakes, matchup quality and the postseason' (pre-registered 2026-10-08, owner ask 8 of 2026-09-30). The lab tools/intensity_lab.py and its test test_intensity_lab.py are built and tested on fixtures only; no real game was featurized, fitted, scored or twinned. G_REF was recomputed in that commit from the registered synthetic league (30 equal clubs, 300,000 simulations at seed 20260930, no data) and frozen at 0.01158 (draft 0.01145), recorded in the section by a dated amendment. Stage 1 runs once (task Q10_08), not before the later of 2026-11-02 and the day after the 2026 World Series, after the 5c-B, 5c-C, 5d, 5k and 7e-D looks are recorded or closed, never on another look's date. The run commit sets eval_artifact to data/game_intensity_eval.json. Stage 1 licenses no price; a serving flag can exist only after a stage-2 pass on the 2027 vintage.",
+   "last_checked": "2026-10-09",
+   "stale": false
+  }
  ],
  "problems": []
 }

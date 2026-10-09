@@ -8134,6 +8134,69 @@ that any price reads intensity, postseason prices (8a) included. No per-player "
 number is published, whatever IX-ARCH reads. **No number has been computed on this
 candidate.**
 
+### G_REF recorded (amendment, 2026-10-09)
+
+The gate tool's own commit (task Q10_07, `tools/intensity_lab.py --g-ref`) recomputed
+`G_REF` once from the registered synthetic league and no data: 30 equal clubs at 0-0 on
+the 162-game schedule of 52 division, 64 league and 46 interleague games; one Opening
+Day matching of each kind (12 division, 14 league and 15 interleague games), every
+listed game forced each way under common random numbers by the construction's own
+simulator (`intensity_core.regular_season_stakes`, six-club format, home edge 0.0345)
+over the whole 2,430-game schedule; the kind means weighted 52, 64 and 46 of 162;
+300,000 simulations at seed 20260930. G_REF recorded: 0.01158 (unrounded 0.0115753;
+division 0.01231, league 0.01146, interleague 0.01091; Monte Carlo standard error about
+0.0004 per game). It replaces the draft value 0.01145, is frozen as `intensity_core.G_REF`
+and `G_REF_RECORD` in the lab, and makes the denominator of S `ln(1 + 2 / G_REF)` =
+5.157. It is never computed at a look. No real game was read for it, and no stake, index
+or close variant was computed for any real game.
+
+### The stage-1 lab's pinned choices (amendment, 2026-10-09)
+
+Written with `tools/intensity_lab.py` and its fixture test (task Q10_07), before the lab
+read any real row. Each fixes a detail the text above leaves open; none changes `ix_v1`,
+a family, a member, a split, a threshold, the twin or Holm.
+
+- Row rules (5k's) apply to every scored set: `game_pk` deduplicated, the season
+  checked, innings below 9 or missing dropped, every resumed game (a `game_pk` the
+  schedule listed on two dates) dropped, each counted. Standings, Elo and the remaining
+  schedule use every final, and a final enters date D's knowledge only when its last
+  listed schedule date is before D.
+- Venue-season: the stored finals carry no venue, so the venue is the home club's park
+  (a neutral-site or relocated game goes to its home club), counted per row.
+- Stage-1 `A`: SEM+ cannot be rebuilt for past seasons, so a probable's percentile is of
+  his season-to-date starter (K - BB) per batter faced before D among starters with 3
+  or more starts; the probable is the completed-game row's; null when unannounced or
+  off that board, never zero.
+- Twins: per date in ascending order, one `rng.permutation` per date from
+  `numpy.random.default_rng(k)`, k = 0 to 199. IX-A, IX-A2 and IX-B permute the per-game
+  club slots (two a game) of that date's scored games; IX-TYPE permutes each type's club
+  values among the clubs playing that date; IX-ARCH permutes S among that date's games.
+  IX-A's twin grades on its own focus set; a twin with an empty focus set is counted and
+  left out of the percentile.
+- Statistics: IX-A's criterion 1 and its Holm p use the per-game paired t (the
+  `_paired_delta` form, one-sided normal), with the CR1 date-clustered t reported beside
+  it. The two-sided members take the CR1 t (date clusters; game clusters for IX-ARCH)
+  with G - 1 degrees of freedom, and a two-sided logistic member resolves only with a
+  positive improvement. IX-A, IX-A2 and IX-TYPE beat their twins on the graded paired
+  Brier improvement; IX-B and IX-ARCH on |t|.
+- Quality re-entry controls, compared on the point estimate on the same rows: IX-A `dq`;
+  IX-A2 `Q - Q_bar`; IX-TYPE `S x` the date-standardized `q` gap; IX-B `A`, then `Q`
+  (effect per SD); IX-ARCH the top decile of `Q` (|DiD|).
+- IX-ARCH: wOBA-denominator events (intentional walks, sacrifice bunts and catcher
+  interference out); qualified at 250 PA or 250 batters faced in the prior season; prior
+  rates shrunk with 200 league-average PA; the park factor is the home club's prior
+  home-over-road wOBA regressed half way to 1; platoon by same or opposite hand;
+  residuals centered by season; the top decile of S within each season.
+- IX-E: the game list and clubs from `postseason.py`'s cache, the score from the feed's
+  last play; the price is the end-of-regular-season Elo where that season's regular
+  finals are on disk; the venue run level is the home club's home-game total over its
+  all-games total, times the two clubs' mean total per game; normal intervals (Wilson for
+  a raw rate) and slopes with CR1 intervals by series.
+- Stated gaps at this commit, nulls unless a fetch lands before the look: the 2017 and
+  2020 season totals behind the 2018 and 2021 archetypes (the lab reads them from
+  `.cache/intensity_lab/season_totals_<year>.json` when present), and the 2000 to 2017
+  regular-season finals behind the IX-E price for the INT-B1 postseasons.
+
 ---
 
 
