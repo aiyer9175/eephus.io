@@ -2331,15 +2331,20 @@ def calibration_level_scale() -> float:
     """VAL_1 (2026-09-25): the factor s the dollar calibration is applied at.
 
     The isotonic knots are absolute $M, fit on raw surplus priced at the
-    level recorded in calibration.fit_dpw_flat_usd (the FanGraphs $11.74M,
-    v6 2026-07-31). Once prospects price at the free-agent winter level, raw
-    surplus is in a larger dollar unit, so the map is applied in its own
-    unit: s * f(x / s), s = live flat / fit flat. That is what a refit at the
-    new level targets (tools/fit_surplus_calibration.py prices its realized
-    targets at the live flat level) except for the league-minimum leg, which
-    does not scale with the level. It is a unit conversion, not a refit: the
-    knots are unchanged. 1.0 unless the fa_winter_level re-anchor applied, so
-    the prospx_current identity set keeps its byte-identical pricing."""
+    level recorded in calibration.fit_dpw_flat_usd. Should prospects price
+    at a level other than the one the knots were fit at, raw surplus is in a
+    different dollar unit, so the map is applied in its own unit:
+    s * f(x / s), s = live flat / fit flat. That bridge is a unit conversion,
+    not a refit: the knots are unchanged, and the league-minimum and anchor
+    legs do not scale with the level, so it is inexact. VAL_1 served it from
+    the v6 map (fit at the FanGraphs $11.74M) at s = 1.4603. Since the
+    2026-10-09 knots-only refit (CAL_KNOTS_REFIT_17M, owner answer VAL1-Q2)
+    the knots are fit at the live free-agent winter level itself, so
+    fit_dpw_flat_usd equals the live flat and s is 1.0: the served map IS the
+    refit knots. The function stays so a future level change bridges again
+    until its own refit. 1.0 as well unless the fa_winter_level re-anchor
+    applied, so the prospx_current identity set keeps its byte-identical
+    pricing."""
     cal = _config().get("calibration", {}) or {}
     fit = cal.get("fit_dpw_flat_usd")
     re = _config()["dollars_per_war"].get("_fa_reanchor") or {}

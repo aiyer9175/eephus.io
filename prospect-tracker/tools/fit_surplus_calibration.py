@@ -42,7 +42,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from backtest import fit_calibration_knots                          # noqa: E402
-from surplus_backtest_real import build_cohorts, _resolved_only     # noqa: E402
+from surplus_backtest_real import build_cohorts, _resolved_only, LISTING_YEARS  # noqa: E402
 import value_framework as vf                                        # noqa: E402
 
 N_BREAKPOINTS = 25
@@ -109,6 +109,13 @@ def build_block(target_pricing: str = "today_flat") -> dict:
         # VAL_1 (2026-09-25): the level the targets and raw predictions were
         # priced at; value_framework applies the map in this unit.
         "fit_dpw_flat_usd": int(round(level_mm * 1e6)),
+        # CAL_KNOTS_REFIT_17M: the refit's stamp, the date, the entry point
+        # and the rows it was fit on.
+        "fit_date": date.today().isoformat(),
+        "fit_entry_point": "backtest.fit_calibration_knots",
+        "fit_rows": ("surplus_backtest_real.build_cohorts pre-debut listings %s-%s, "
+                     "_resolved_only, n=%d" % (min(LISTING_YEARS), max(LISTING_YEARS),
+                                               fit["n_players"])),
         "target_pricing": target_pricing,
         "linear": {"slope": 1.0, "intercept_mm": 0.0},
         "isotonic": {"x_mm": [round(x, 2) for x in xs],

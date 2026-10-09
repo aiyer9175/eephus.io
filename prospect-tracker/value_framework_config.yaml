@@ -534,10 +534,18 @@ calibration:
   # isotonic-real-v6-evframe-2026-07-31, whose history and held-out readings
   # are in data/model_registry.json (prospect_surplus) and git.
   # fit_dpw_flat_usd is the level the knots were fit at (VAL_1): the map is
-  # applied as s * f(x / s), s = live flat / this.
+  # applied as s * f(x / s), s = live flat / this. CAL_KNOTS_REFIT_17M (owner
+  # answer VAL1-Q2, 2026-09-30): the knots are fit at the live free-agent
+  # winter level itself (data/fa_dpw_series.json pricing.level_usd), so s is
+  # 1.0 and the VAL_1 bridge from the v6 map (fit at 11,740,000) is retired at
+  # this level; a future level change bridges again until its own refit.
+  # fit_date, fit_entry_point and fit_rows are the refit's stamp.
   version: "isotonic-real-v3-todaypriced-2026-10-09"
   target_pricing: today_flat
   fit_dpw_flat_usd: 16856777
+  fit_date: "2026-10-09"
+  fit_entry_point: backtest.fit_calibration_knots
+  fit_rows: "surplus_backtest_real.build_cohorts pre-debut listings 2017-2019, _resolved_only, n=2235"
   method: isotonic            # linear | isotonic
   linear: {slope: 1.0, intercept_mm: 0.0}
   isotonic:
