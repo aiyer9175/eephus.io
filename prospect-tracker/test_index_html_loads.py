@@ -140,8 +140,8 @@ def test_every_section_renders(booted_page):
             // `.debut-row` is the debuts/graduates list row class
             // (renamed when the Graduates section became Debuted).
             const hasRows = !!sec.querySelector(
-                '.player-row, .debut-row, .grad-row, .farm-row, .spotlight-row');
-            const hasStateMsg = !!sec.querySelector('.state-message');
+                '.player-row, .debut-row, .grad-row, .farm-row, .spotlight-row, .px-lb-table tbody tr');
+            const hasStateMsg = !!sec.querySelector('.state-message, .px-state');
             return {{
                 found: true,
                 visible,

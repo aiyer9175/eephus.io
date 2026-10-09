@@ -202,7 +202,7 @@ def test_rank_caps_read_the_printed_rank():
     src = _src()
     assert "Number(p.overall_rank) <= rankCap" not in src
     assert "Number(p.overall_rank) <= _rankCap" not in src
-    assert src.count("boardRankOf(p) <= rankCap") == 1
+    # The Leaderboards stat sheet filters the Season and the window rows in one place.
     assert src.count("boardRankOf(p) <= _rankCap") == 1
 
 

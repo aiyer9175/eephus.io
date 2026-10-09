@@ -1129,10 +1129,7 @@
        The label stays pinned left and the chips flow beneath it. */
     #farm-sort-bar .filter-group { flex-wrap: wrap; min-width: 0; }
     #farm-sort-bar .filter-group .filter-label { flex: 0 0 auto; }
-    /* v45 - Leaderboard filter bar: the Stat group carries ~26 chips in a single
-       group that used to run off the right edge at 1280/1440 (page-level
-       horizontal scroll). Same treatment as the farm sort bar - let each group
-       wrap its chips to multiple rows, with the label pinned left. */
+    /* Leaderboard filter panel: each group wraps its chips, label pinned left. */
     #leaderboard-bar .filter-group { flex-wrap: wrap; min-width: 0; }
     #leaderboard-bar .filter-group .filter-label { flex: 0 0 auto; }
     /* v30.8 - Three-cluster filter layout. The active-list filter bar
@@ -1422,12 +1419,81 @@
       color-scheme: dark light;
     }
     input.lb-date-input:focus { outline: none; border-color: var(--neon-cyan); }
-    /* Stat chips that can't be recomputed from box lines dim out in
-       window mode (statcast / zone / "+" indices). */
-    .chip.lb-stat-disabled {
-      opacity: 0.32;
-      pointer-events: none;
-      filter: grayscale(0.6);
+    /* ---- Leaderboards stat sheet (site pass PROSPX_2_LB_TABLE) ----------
+       The table rides the shared .mlbstats-table dialect inside .mlbstats-scroll
+       (assets/site.css): sticky header, bounded desktop scrollport, the Rk rail
+       and the frozen Player column. Only density, widths and the phone layout
+       are set here. 12.5 px mono on a 16 px line with 6 + 5 px padding and the
+       1 px rule makes a 28 px row; the phone row is 32 px. */
+    .px-lb-controlrow { gap: 6px 8px; }
+    .px-lb-controls, .px-lb-crow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+    .px-lb-seg { display: inline-flex; }
+    .px-lb-seg button.chip { padding: 4px 9px; }
+    .px-lb-seg button.chip + button.chip { margin-left: -1px; }
+    .px-lb-seg button.chip[aria-disabled="true"] { color: var(--text-dim); cursor: not-allowed; }
+    .px-lb-ctl { display: inline-flex; align-items: center; gap: 5px; font-size: 10px;
+      font-family: var(--font-retro-mono); letter-spacing: .05em; text-transform: uppercase;
+      color: var(--text-tertiary); }
+    .px-lb-ctl select.chip { text-transform: none; letter-spacing: 0; padding: 4px 6px; min-width: 72px; }
+    .px-lb-switch input { margin: 0; }
+    .px-lb-switch .px-lb-cnt { text-transform: none; letter-spacing: 0; color: var(--text-secondary); }
+    .px-lb-range { margin: 0 0 8px; }
+    .px-lb-pool { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px;
+      font-size: 11.5px; color: var(--text-secondary); margin: 2px 0 6px; }
+    .px-lb-dist > summary { cursor: pointer; color: var(--text-tertiary); font-size: 11px; }
+    .px-lb-dist[open] { flex-basis: 100%; order: 3; }
+    .px-lb-key { margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10.5px; color: var(--text-tertiary); }
+    .px-lb-lamps { display: inline-flex; gap: 2px; }
+    .px-lb-lamp { display: inline-block; width: 6px; height: 6px; }
+    .px-lb-note { font-size: 11px; color: var(--text-tertiary); margin: -2px 0 6px; }
+    .px-lb-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+    .px-lb-foot .pg-strip { margin-right: auto; }
+    .px-lb-foot .px-lb-size { margin: 8px 0; }
+    #leaderboards-section .px-lb-table { width: auto; }
+    #leaderboards-section .px-lb-table th,
+    #leaderboards-section .px-lb-table td { line-height: 16px; padding: 6px 10px 5px; }
+    #leaderboards-section .px-lb-table th { cursor: default; vertical-align: bottom; text-transform: none; letter-spacing: .02em; font-size: 10.5px; }
+    #leaderboards-section .px-lb-table th.g-term { text-decoration: none; }
+    #leaderboards-section .px-lb-table .px-lb-left { text-align: left; }
+    #leaderboards-section .px-lb-table .px-lb-sort {
+      background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit;
+      letter-spacing: inherit; text-transform: inherit; cursor: pointer; line-height: 16px; }
+    #leaderboards-section .px-lb-table .px-lb-sort abbr { text-decoration: none; }
+    #leaderboards-section .px-lb-table .px-lb-sort:hover { color: var(--text-primary); }
+    #leaderboards-section .px-lb-table .px-lb-sort:focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 1px; }
+    #leaderboards-section .px-lb-table td.px-lb-name { width: 200px; max-width: 200px; }
+    #leaderboards-section .px-lb-table .px-lb-player { display: block; overflow: hidden; text-overflow: ellipsis;
+      color: var(--text-primary); text-decoration: none; }
+    #leaderboards-section .px-lb-table .px-lb-player:hover { color: var(--neon-cyan); }
+    #leaderboards-section .px-lb-table .px-lb-org { color: inherit; text-decoration: none; }
+    #leaderboards-section .px-lb-table .px-lb-org:hover { color: var(--neon-cyan); }
+    #leaderboards-section .px-lb-table td.px-lb-efv { text-align: center; }
+    #leaderboards-section .px-lb-table .px-lb-fv { font-size: 11px; line-height: 14px; padding: 0 4px; min-width: 24px; vertical-align: top; }
+    #leaderboards-section .px-lb-table .px-lb-dim { color: var(--text-tertiary); }
+    #leaderboards-section .px-lb-table td.px-lb-sorted {
+      background-image: linear-gradient(var(--lbh, transparent), var(--lbh, transparent));
+      color: var(--text-primary); font-weight: 700; }
+    @media (max-width: 640px) {
+      #leaderboards-section .px-lb-table th,
+      #leaderboards-section .px-lb-table td { font-size: 12px; padding: 8px 6px 7px; }
+      #leaderboards-section .px-lb-table th .px-lb-sort { min-height: 44px; }
+      #leaderboards-section .px-lb-scroll .px-lb-table .mlbstats-col-rank {
+        width: 32px; min-width: 32px; max-width: 32px; padding-left: 4px; padding-right: 4px; font-size: 10px; }
+      #leaderboards-section .px-lb-scroll .px-lb-table th.mlbstats-col-rank + th,
+      #leaderboards-section .px-lb-scroll .px-lb-table td.mlbstats-col-rank + td {
+        left: 32px; width: 120px; min-width: 120px; max-width: 120px; }
+      #leaderboards-section .px-lb-scroll .px-lb-table .px-lb-frz {
+        position: sticky; left: 152px; z-index: 1; background-color: var(--bg-primary); }
+      #leaderboards-section .px-lb-scroll .px-lb-table thead th.px-lb-frz { z-index: 3; background-color: var(--bg-secondary); }
+      #leaderboards-section .px-lb-scroll .px-lb-table tbody tr:hover td.px-lb-frz { background-color: var(--bg-tertiary); }
+      .px-lb-key { margin-left: 0; }
+      .px-lb-controls { width: 100%; }
+      .px-lb-crow { width: 100%; gap: 6px; }
+      .px-lb-crow:first-child { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+      .px-lb-crow:first-child::-webkit-scrollbar { display: none; }
+      .px-lb-crow .px-lb-seg { flex: 0 0 auto; }
+      .px-lb-ctl > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
     }
 
     /* === Prospect news ticker (newspaper-section style) ============
@@ -2098,10 +2164,6 @@
          alongside it). Freed space redistributed to FV history.
          # | Player+stats | FV | Rank | ETA | FV history */
       grid-template-columns: 32px 1.6fr 0.45fr 0.4fr 0.4fr 1.4fr;
-    }
-    .col-header.is-leaderboard, .player-row.is-leaderboard {
-      /* # | Player | Level | FV | Stat value | Trend | Supporting line */
-      grid-template-columns: 32px 1.8fr 0.55fr 0.45fr 0.85fr 0.55fr 1.5fr;
     }
     .col-header {
       font-family: var(--font-sans);
@@ -7349,11 +7411,6 @@
       }
       .col-header.is-farm-roster > span:nth-child(n+5),
       .player-row.is-farm-roster > div:nth-child(n+5) { display: none; }
-      .col-header.is-leaderboard, .player-row.is-leaderboard {
-        grid-template-columns: 28px 1.4fr 0.6fr 0.7fr;
-      }
-      .col-header.is-leaderboard > span:nth-child(n+5),
-      .player-row.is-leaderboard > div:nth-child(n+5) { display: none; }
       .debut-header, .debut-row {
         grid-template-columns: 28px 1.2fr 0.5fr 0.75fr;
       }
@@ -10300,203 +10357,80 @@
     <div id="farm-rows"></div>
   </div>
 
-  <!-- Cross-org leaderboards. Filter bar lets the user pick a stat ×
-       level × position group; the body renders the top 25 prospects by
-       that stat. Min-sample thresholds default per-stat so a 12-PA
-       hitter can't top wOBA. -->
+  <!-- Cross-org leaderboards: a stat sheet, one row per prospect, sorted by a
+       header click (site pass PROSPX_2_LB_TABLE). renderLeaderboards draws the
+       control row, the pool line and the table; the filter panel below holds
+       the WHO filters and stays closed until the reader opens it. -->
   <div id="leaderboards-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Prospect Leaderboards</span>
-      <span class="newsprint-eyebrow-meta">single-season stat leaders · filter by level, position, org &amp; season</span>
+      <span class="newsprint-eyebrow-meta">one row per prospect · click a header to sort · filter by level, position, org &amp; age</span>
     </div>
-    <div id="whats-standout-leaderboards" class="news-row news-row-standout"></div>
-    <!-- v29 - Collapsed-by-default filter accordion for leaderboards. -->
-    <div class="filter-toggle-row">
+    <div class="filter-toggle-row px-lb-controlrow">
+      <div id="lb-controls" class="px-lb-controls"></div>
       <button class="filter-toggle" type="button"
               data-collapse-target="leaderboard-bar" aria-expanded="false"
-              title="Show / hide leaderboard stat / level / position / org / season filters">
-        <span class="filter-toggle-label">Filters &amp; stat picker</span>
+              title="Show or hide the level, position, org, age and board rank filters">
+        <span class="filter-toggle-label">Filters</span>
         <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
       </button>
+      <div class="active-filters-strip" id="lb-active-filters-strip"></div>
+      <button class="chip reset-chip" type="button" data-reset-page="leaderboard" title="Reset the leaderboard to its defaults">↺ Reset</button>
+      <button class="chip" type="button" data-lbc="csv" title="Download the filtered table (every page) as CSV">CSV</button>
     </div>
-    <!-- v36 - Reorganized into the WHO / WHAT / HOW clusters shared with the
-         MiLB prospect filter bar: WHO narrows the pool (level / pos / org /
-         age), WHAT picks the metric (board + stat pickers), HOW controls
-         presentation (season + sort order). -->
     <div class="filter-bar collapsible-filter-bar" id="leaderboard-bar" style="flex-wrap:wrap;gap:6px;">
-      <!-- ============================== WHO ============================= -->
-      <div class="filter-cluster">
-        <span class="filter-cluster-label">WHO</span>
-        <div class="filter-group">
-          <span class="filter-label" title="Prospect leaderboard - MiLB levels only. Debuted players and MLB-level rows are excluded.">Level</span>
-          <button class="chip active" data-lb-level="all">All MiLB</button>
-          <button class="chip"        data-lb-level="AAA">AAA</button>
-          <button class="chip"        data-lb-level="AA">AA</button>
-          <button class="chip"        data-lb-level="A+">A+</button>
-          <button class="chip"        data-lb-level="A">A</button>
-          <button class="chip"        data-lb-level="CPX">CPX</button>
-          <button class="chip"        data-lb-level="DSL">DSL</button>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Position</span>
-          <button class="chip active" data-lb-pos="all">All</button>
-          <button class="chip"        data-lb-pos="C">C</button>
-          <button class="chip"        data-lb-pos="1B">1B</button>
-          <button class="chip"        data-lb-pos="2B">2B</button>
-          <button class="chip"        data-lb-pos="SS">SS</button>
-          <button class="chip"        data-lb-pos="3B">3B</button>
-          <button class="chip"        data-lb-pos="INF" title="Any infielder">INF</button>
-          <button class="chip"        data-lb-pos="CF">CF</button>
-          <button class="chip"        data-lb-pos="LF">LF</button>
-          <button class="chip"        data-lb-pos="RF">RF</button>
-          <button class="chip"        data-lb-pos="OF" title="Any outfielder">OF</button>
-          <button class="chip" data-lb-pos="P" title="Any pitcher - SP / RP / SIRP / MIRP / RHP / LHP">P</button>
-          <button class="chip"        data-lb-pos="SP" title="Starting pitcher">SP</button>
-          <button class="chip" data-lb-pos="RP" title="Relief pitcher - rolls up SIRP + MIRP + bare RP">RP</button>
-          <button class="chip" data-lb-pos="SIRP" title="Single-Inning Relief Pitcher - closer / setup role">SIRP</button>
-          <button class="chip" data-lb-pos="MIRP" title="Multi-Inning Relief Pitcher - long-relief / bulk follower">MIRP</button>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Org</span>
-          <div id="lb-org-picker" class="org-picker"></div>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label" title="Cap the board to prospects at or below this current age - surfaces young-for-the-level leaders.">Age</span>
-          <button class="chip active" data-lb-age="all">All</button>
-          <button class="chip"        data-lb-age="19" title="Age 19 or younger">≤19</button>
-          <button class="chip"        data-lb-age="21" title="Age 21 or younger">≤21</button>
-          <button class="chip"        data-lb-age="23" title="Age 23 or younger">≤23</button>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label" title="Limit the board to players at or inside this overall prospect rank.">Rank</span>
-          <button class="chip active" data-lb-rank="all">All</button>
-          <button class="chip"        data-lb-rank="50">Top 50</button>
-          <button class="chip"        data-lb-rank="100">Top 100</button>
-          <button class="chip"        data-lb-rank="200">Top 200</button>
-        </div>
+      <div class="filter-group">
+        <span class="filter-label" title="MiLB levels only. All MiLB is one row per prospect-season, summed across the levels he played.">Level</span>
+        <button class="chip active" data-lb-level="all">All MiLB</button>
+        <button class="chip"        data-lb-level="AAA">AAA</button>
+        <button class="chip"        data-lb-level="AA">AA</button>
+        <button class="chip"        data-lb-level="A+">A+</button>
+        <button class="chip"        data-lb-level="A">A</button>
+        <button class="chip"        data-lb-level="CPX">CPX</button>
+        <button class="chip"        data-lb-level="DSL">DSL</button>
       </div>
-      <!-- ============================== WHAT ============================ -->
-      <div class="filter-cluster">
-        <span class="filter-cluster-label">WHAT</span>
-        <div class="filter-group">
-          <span class="filter-label">Board</span>
-          <button class="chip active" data-lb-side="all">All</button>
-          <button class="chip"        data-lb-side="hit">Hitters</button>
-          <button class="chip"        data-lb-side="pit">Pitchers</button>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Stat</span>
-          <button class="chip active" data-lb-stat="ops"     title="On-base + slugging">OPS</button>
-          <button class="chip"        data-lb-stat="avg"     title="Batting average">AVG</button>
-          <button class="chip"        data-lb-stat="obp"     title="On-base percentage">OBP</button>
-          <button class="chip"        data-lb-stat="slg"     title="Slugging percentage">SLG</button>
-          <button class="chip"        data-lb-stat="iso"     title="Isolated power (SLG − AVG)">ISO</button>
-          <button class="chip"        data-lb-stat="bb_pct"  title="Walk rate">BB%</button>
-          <button class="chip"        data-lb-stat="k_pct"   title="Strikeout rate (lower is better)">K%</button>
-          <button class="chip"        data-lb-stat="hr"      title="Home runs">HR</button>
-          <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
-          <button class="chip" data-lb-stat="hit_level_plus" title="OPS vs level mean - surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
-          <button class="chip" data-lb-stat="rps_plus" title="RPS+ - level-anchored rate performance score, re-anchored to the player's age x position-group cohort. 100 = cohort mean; it is a RATIO index like wRC+, so +10 means 10% above the cohort mean, not one standard deviation. Active-board scale only: the Draft and Overseas sections carry their own 100 + 15-point indexes (RPS-Draft+ on fixed college anchors, RPS-Intl+ as a z-score within its cohort). Hitters only.">RPS+</button>
-          <button class="chip" data-lb-stat="iso_plus" title="ISO+ - isolated power indexed to level-average ISO (100 = league-average power). Hitters only.">ISO+</button>
-          <button class="chip" data-lb-stat="pow_plus" title="POW+ - power index: ISO+ (the performance axis, HR-rate retired as collinear) + Statcast hard-hit/barrel + Power grade (100 = average). Hitters only.">POW+</button>
-          <button class="chip" data-lb-stat="pd_plus" title="PD+ - plate-discipline index: BB%−K% vs level (100 = level average, 10 points = 1 std-dev of the differential) blended 70/30 with the Pitch-Selection grade. Hitters only.">PD+</button>
-          <button class="chip" data-lb-stat="sc_plus" title="SC+ - Statcast composite (contact quality) indexed to pool average. Hitters only.">SC+</button>
-          <button class="chip" data-lb-stat="dvm_plus" title="$DvM+ - surplus-development index (100 = FV-tier average).">$DvM+</button>
-          <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
-          <button class="chip"        data-lb-stat="whip"    title="Walks + hits / IP (lower is better)">WHIP</button>
-          <button class="chip"        data-lb-stat="fip"     title="Fielding Independent Pitching (lower is better)">FIP</button>
-          <button class="chip" data-lb-stat="pitcher_k_pct" title="Pitcher K% - strikeouts as % of batters faced">K%</button>
-          <button class="chip" data-lb-stat="pitcher_bb_pct" title="Pitcher BB% - walks as % of batters faced (lower is better)">BB%</button>
-          <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
-          <button class="chip"        data-lb-stat="pit_level_plus" title="ERA- vs level mean (100 = level-average; lower is better)">ERA- lvl</button>
-          <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - peripheral run prevention from per-batter K% and BB% plus HR/9, z-scored against the level mean and weighted 0.55 / 0.30 / 0.15 (100 = average peripherals, +10 = +1σ on each input rate). Same formula the server bakes onto the detail page. Pitchers only.">pStuff+</button>
-          <button class="chip" data-lb-stat="krp_plus" title="KRP+ - K-backed run prevention: a below-level ERA an above-level strikeout rate supports (100 = pool average, +10 = +1σ). Pitchers only.">KRP+</button>
-        </div>
-
-        <div class="filter-group">
-          <span class="filter-label">Hitter stats</span>
-          <button class="chip active" data-lb-stat="ops"     data-lb-stat-side="hit" title="On-base + slugging">OPS</button>
-          <button class="chip"        data-lb-stat="iso"     data-lb-stat-side="hit" title="Isolated power (SLG − AVG)">ISO</button>
-          <button class="chip"        data-lb-stat="bb_pct"  data-lb-stat-side="hit" title="Walk rate">BB%</button>
-          <button class="chip"        data-lb-stat="k_pct"   data-lb-stat-side="hit" title="Strikeout rate (lower is better)">K%</button>
-          <button class="chip"        data-lb-stat="hr"      data-lb-stat-side="hit" title="Home runs">HR</button>
-          <button class="chip"        data-lb-stat="sb"      data-lb-stat-side="hit" title="Stolen bases">SB</button>
-          <button class="chip"        data-lb-stat="zone_z_swing" data-lb-stat-side="hit" title="In-zone swing rate">Z-Swing%</button>
-          <button class="chip"        data-lb-stat="zone_z_contact" data-lb-stat-side="hit" title="Hitter zone contact percent">Z-Con%</button>
-          <button class="chip"        data-lb-stat="zone_chase" data-lb-stat-side="hit" title="Hitter chase rate; lower is better">Chase%</button>
-          <button class="chip"        data-lb-stat="xwoba_est" data-lb-stat-side="hit" title="Estimated xwOBA from tracked launch speed / angle">xwOBA</button>
-          <button class="chip"        data-lb-stat="xwobacon_est" data-lb-stat-side="hit" title="Estimated xwOBA on contact from tracked launch speed / angle">xwOBAcon</button>
-          <button class="chip"        data-lb-stat="avg_ev" data-lb-stat-side="hit" title="Average exit velocity">Avg EV</button>
-          <button class="chip"        data-lb-stat="p90_ev" data-lb-stat-side="hit" title="90th percentile exit velocity">90th EV</button>
-          <button class="chip"        data-lb-stat="max_ev" data-lb-stat-side="hit" title="Maximum exit velocity">Max EV</button>
-          <button class="chip"        data-lb-stat="hard_hit_pct" data-lb-stat-side="hit" title="95+ mph batted-ball rate">Hard%</button>
-          <button class="chip"        data-lb-stat="barrel_pct" data-lb-stat-side="hit" title="Approximate barrel rate from exit velocity and launch angle">Brl%</button>
-          <button class="chip"        data-lb-stat="pull_air_pct" data-lb-stat-side="hit" title="Pull-side airborne batted balls divided by total batted balls">Pull-air%</button>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Pitcher stats</span>
-          <button class="chip"        data-lb-stat="era"     data-lb-stat-side="pit" title="Earned-run average (lower is better)">ERA</button>
-          <button class="chip"        data-lb-stat="whip"    data-lb-stat-side="pit" title="Walks + hits / IP (lower is better)">WHIP</button>
-          <button class="chip" data-lb-stat="pitcher_k_pct" data-lb-stat-side="pit" title="Pitcher K% - strikeouts as % of batters faced">K%</button>
-          <button class="chip" data-lb-stat="pitcher_bb_pct" data-lb-stat-side="pit" title="Pitcher BB% - walks as % of batters faced (lower is better)">BB%</button>
-          <button class="chip"        data-lb-stat="pitcher_zone_whiff" data-lb-stat-side="pit" title="Pitcher whiffs per swing">Whiff%</button>
-          <button class="chip"        data-lb-stat="pitcher_zone_chase" data-lb-stat-side="pit" title="Pitcher chase rate induced; higher is better">Chase%</button>
-          <button class="chip"        data-lb-stat="pitcher_zone_z_swing" data-lb-stat-side="pit" title="In-zone swing rate induced">Z-Swing%</button>
-          <button class="chip"        data-lb-stat="pitcher_zone_z_contact" data-lb-stat-side="pit" title="Pitcher in-zone contact allowed; lower is better">Z-Con%</button>
-          <button class="chip"        data-lb-stat="fb_velo_feed" data-lb-stat-side="pit" title="Average velocity of the highest-usage fastball-like pitch from pitch feeds">FB velo</button>
-          <button class="chip"        data-lb-stat="fb_ivb_feed" data-lb-stat-side="pit" title="Average induced vertical break on the highest-usage fastball-like pitch from pitch feeds">FB IVB</button>
-          <button class="chip"        data-lb-stat="pitcher_avg_ev_allowed" data-lb-stat-side="pit" title="Average exit velocity allowed from tracked batted balls; lower is better">Avg EVa</button>
-          <button class="chip"        data-lb-stat="pitcher_hard_hit_allowed" data-lb-stat-side="pit" title="95+ mph batted-ball rate allowed; lower is better">HardA%</button>
-          <button class="chip"        data-lb-stat="pitcher_barrel_allowed" data-lb-stat-side="pit" title="Approximate barrel rate allowed; lower is better">BrlA%</button>
-        </div>
+      <div class="filter-group">
+        <span class="filter-label">Position</span>
+        <button class="chip active" data-lb-pos="all">All</button>
+        <button class="chip" data-lb-pos="C" data-lb-pos-side="hit">C</button>
+        <button class="chip" data-lb-pos="1B" data-lb-pos-side="hit">1B</button>
+        <button class="chip" data-lb-pos="2B" data-lb-pos-side="hit">2B</button>
+        <button class="chip" data-lb-pos="SS" data-lb-pos-side="hit">SS</button>
+        <button class="chip" data-lb-pos="3B" data-lb-pos-side="hit">3B</button>
+        <button class="chip" data-lb-pos="INF" data-lb-pos-side="hit" title="Any infielder">INF</button>
+        <button class="chip" data-lb-pos="CF" data-lb-pos-side="hit">CF</button>
+        <button class="chip" data-lb-pos="LF" data-lb-pos-side="hit">LF</button>
+        <button class="chip" data-lb-pos="RF" data-lb-pos-side="hit">RF</button>
+        <button class="chip" data-lb-pos="OF" data-lb-pos-side="hit" title="Any outfielder">OF</button>
+        <button class="chip" data-lb-pos="SP" data-lb-pos-side="pit" title="Starting pitcher">SP</button>
+        <button class="chip" data-lb-pos="RP" data-lb-pos-side="pit" title="Relief pitcher: SIRP, MIRP and bare RP">RP</button>
+        <button class="chip" data-lb-pos="SIRP" data-lb-pos-side="pit" title="Single-inning relief pitcher">SIRP</button>
+        <button class="chip" data-lb-pos="MIRP" data-lb-pos-side="pit" title="Multi-inning relief pitcher">MIRP</button>
       </div>
-      <!-- ============================== HOW ============================= -->
-      <div class="filter-cluster">
-        <span class="filter-cluster-label">HOW</span>
-        <div class="filter-group">
-          <span class="filter-label">Season</span>
-          <button class="chip active" data-lb-season="2026">2026</button>
-          <button class="chip"        data-lb-season="2025">2025</button>
-          <button class="chip"        data-lb-season="2024">2024</button>
-          <button class="chip"        data-lb-season="2023">2023</button>
-          <button class="chip"        data-lb-season="2022">2022</button>
-          <button class="chip"        data-lb-season="2021">2021</button>
-        </div>
-        <!-- v45 - Timeframe: full-season aggregates (default) vs a rolling
-             window or custom date range recomputed from per-game box lines
-             (data/leaderboard_gamelogs.json). Window mode only supports the
-             box-line stats (slash / ISO / BB% / K% / HR / SB ; ERA / WHIP /
-             FIP / K% / BB% / per-9) - statcast, zone and "+" indices grey out
-             since they need season-level machinery. Current-season only. -->
-        <div class="filter-group" id="lb-timeframe-group">
-          <span class="filter-label" title="Full season uses season totals. The rolling windows and custom range recompute each rate stat from that player's per-game box lines within the window.">Timeframe</span>
-          <button class="chip active" data-lb-window="season" title="Full-season aggregate stats">Full season</button>
-          <button class="chip"        data-lb-window="7"  title="Stats over the last 7 days of games">Last 7d</button>
-          <button class="chip"        data-lb-window="14" title="Stats over the last 14 days of games">Last 14d</button>
-          <button class="chip"        data-lb-window="30" title="Stats over the last 30 days of games">Last 30d</button>
-          <button class="chip"        data-lb-window="custom" title="Stats over a custom from-to date range">Custom range</button>
-        </div>
-        <div class="filter-group" id="lb-window-range" style="display:none;">
-          <span class="filter-label">From - To</span>
-          <input type="date" class="chip lb-date-input" id="lb-window-from" title="Window start date (inclusive)">
-          <input type="date" class="chip lb-date-input" id="lb-window-to" title="Window end date (inclusive)">
-        </div>
-        <div class="filter-group">
-          <span class="filter-label" title="Override the stat's natural ranking direction - handy for surfacing the lowest values too.">Order</span>
-          <button class="chip active" data-lb-dir="auto" title="Use the stat's natural direction (e.g. high OPS, low ERA)">Stat default</button>
-          <button class="chip"        data-lb-dir="hi" title="Highest value first">High → Low</button>
-          <button class="chip"        data-lb-dir="lo" title="Lowest value first">Low → High</button>
-        </div>
-        <div class="filter-group">
-          <!-- v18 - Reset chip for the leaderboards page -->
-          <button class="chip reset-chip" type="button" data-reset-page="leaderboard" title="Reset all leaderboard filters back to defaults">↺ Reset</button>
-        </div>
+      <div class="filter-group">
+        <span class="filter-label">Org</span>
+        <div id="lb-org-picker" class="org-picker"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Age on July 1 of the season shown, at or below the cap.">Age</span>
+        <button class="chip active" data-lb-age="all">All</button>
+        <button class="chip"        data-lb-age="19" title="Age 19 or younger">≤19</button>
+        <button class="chip"        data-lb-age="21" title="Age 21 or younger">≤21</button>
+        <button class="chip"        data-lb-age="23" title="Age 23 or younger">≤23</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Limit the table to prospects at or inside this board rank.">Board rank</span>
+        <button class="chip active" data-lb-rank="all">All</button>
+        <button class="chip"        data-lb-rank="50">Top 50</button>
+        <button class="chip"        data-lb-rank="100">Top 100</button>
+        <button class="chip"        data-lb-rank="200">Top 200</button>
       </div>
     </div>
-    <!-- Cohort histogram + top-10 sparklines land here in Phase 3.
-         Empty container today; renderLeaderboards fills it in once the
-         viz functions ship. -->
-    <div id="leaderboard-viz"></div>
+    <div class="filter-group px-lb-range" id="lb-window-range" style="display:none;">
+      <span class="filter-label">From - To</span>
+      <input type="date" class="chip lb-date-input" id="lb-window-from" title="Window start date (inclusive)">
+      <input type="date" class="chip lb-date-input" id="lb-window-to" title="Window end date (inclusive)">
+    </div>
     <div id="leaderboard-rows"></div>
   </div>
 
@@ -10699,6 +10633,7 @@
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
 <script src="/assets/eephus-export.js?v=552e2152" defer></script>
+<script src="/assets/eephus-tiers.js?v=aecbf6d2" defer></script>
 <script src="/assets/eephus-csv.js?v=4a00e52b" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
@@ -13979,13 +13914,19 @@ function syncToURL(push) {
   if (state.overseasStatus && state.overseasStatus !== "all") p.set("ovsstatus", state.overseasStatus);
   if (state.overseasSort   && state.overseasSort   !== "fv")  p.set("ovssort",   state.overseasSort);
   if (state.overseasGroupBy && state.overseasGroupBy !== "league") p.set("ovsgroup", state.overseasGroupBy);
-  if (state.lbStat      !== "ops")        p.set("lbstat",  state.lbStat);
-  if (state.lbSide      !== "all")        p.set("lbside",  state.lbSide);
+  if (state.lbSide      === "pit")        p.set("lbside",  "pit");
+  if (state.lbView && state.lbView !== "std") p.set("lbview", state.lbView);
+  if (state.lbSort)                       p.set("lbsort",  state.lbSort);
+  if (state.lbDir)                        p.set("lbdir",   state.lbDir);
+  if (state.lbQual === false)             p.set("lbq",     "0");
   if (state.lbLevel     !== "all")        p.set("lblvl",   state.lbLevel);
   if (state.lbPos       !== "all")        p.set("lbpos",   state.lbPos);
   if (state.lbOrg       !== "all")        p.set("lborg",   state.lbOrg);
+  if ((state.lbAgeMax || "all") !== "all") p.set("lbage", state.lbAgeMax);
   if ((state.lbRankMax || "all") !== "all") p.set("lbrank", state.lbRankMax);
-  if (state.lbSeason    !== String(new Date().getUTCFullYear())) p.set("lbseason", state.lbSeason);
+  if (state.lbSeason)                     p.set("lbseason", state.lbSeason);
+  if (state.pageSizes && state.pageSizes.leaderboard != null && state.pageSizes.leaderboard !== 50)
+    p.set("lbsize", state.pageSizes.leaderboard === 0 ? "all" : String(state.pageSizes.leaderboard));
   if ((state.lbWindow || "season") !== "season") p.set("lbwin", state.lbWindow);
   if (state.lbWindow === "custom" && state.lbFrom) p.set("lbfrom", state.lbFrom);
   if (state.lbWindow === "custom" && state.lbTo)   p.set("lbto",   state.lbTo);
@@ -14175,8 +14116,18 @@ function _syncFromURLBody() {
   if (p.has("ovsgroup"))  state.overseasGroupBy = p.get("ovsgroup");
   // Leaderboards filters - round-tripped so org pre-fill from
   // farm-detail's "View org leaderboards →" link sticks.
-  if (p.has("lbstat"))   state.lbStat   = p.get("lbstat");
-  if (p.has("lbside"))   state.lbSide   = p.get("lbside");
+  // Old single-stat links (lbstat=) map to the view and sort that hold the stat.
+  if (p.has("lbstat"))   _lbApplyLegacyStat(p.get("lbstat"));
+  if (p.has("lbside"))   state.lbSide   = p.get("lbside") === "pit" ? "pit" : "hit";
+  if (p.has("lbview"))   state.lbView   = p.get("lbview");
+  if (p.has("lbsort"))   state.lbSort   = p.get("lbsort");
+  if (p.has("lbdir"))    state.lbDir    = p.get("lbdir") === "asc" ? "asc" : "desc";
+  if (p.has("lbq"))      state.lbQual   = p.get("lbq") !== "0";
+  if (p.has("lbage"))    state.lbAgeMax = p.get("lbage");
+  if (p.has("lbsize")) {
+    const _n = p.get("lbsize") === "all" ? 0 : Number(p.get("lbsize"));
+    state.pageSizes.leaderboard = [50, 100, 250, 0].includes(_n) ? _n : 50;
+  }
   if (p.has("lblvl"))    state.lbLevel  = p.get("lblvl");
   if (p.has("lbpos"))    state.lbPos    = p.get("lbpos");
   if (p.has("lborg"))    state.lbOrg    = p.get("lborg");
@@ -14391,20 +14342,14 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.formWindow === state.formWindow));
   document.querySelectorAll("[data-spotlight-bucket]").forEach(b =>
     b.classList.toggle("active", b.dataset.spotlightBucket === state.spotlightBucket));
-  document.querySelectorAll("[data-lb-stat]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbStat === state.lbStat));
-  document.querySelectorAll("[data-lb-side]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbSide === state.lbSide));
   document.querySelectorAll("[data-lb-level]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbLevel === state.lbLevel));
   document.querySelectorAll("[data-lb-pos]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbPos === state.lbPos));
   document.querySelectorAll("[data-lb-age]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbAge === (state.lbAgeMax || "all")));
-  document.querySelectorAll("[data-lb-dir]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbDir === (state.lbDir || "auto")));
-  document.querySelectorAll("[data-lb-season]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbSeason === state.lbSeason));
+  document.querySelectorAll("[data-lb-rank]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbRank === (state.lbRankMax || "all")));
   syncOrgPicker("org-picker", "orgFilter");
   syncOrgPicker("lb-org-picker", "lbOrg");
   syncOrgPicker("il-org-picker", "ilOrgFilter");
@@ -15965,17 +15910,20 @@ const state = {
     } catch {}
     return "compact";
   })(),
-  // Leaderboards tab - stat × season × level × position-group × org
-  // selection. Pulls from career_stats (year-by-year per-level rows) so
-  // historical seasons work. The stat key matches a field on the
-  // career_stats row (ops, era, k_per_9, ...).
-  lbStat:   "ops",
-  lbSide:   "all",
+  // Leaderboards stat sheet: side, view, header sort ("" = the view's
+  // default sort and the stat's natural direction), the qualifier switch
+  // and the WHO filters. lbSeason "" = the newest season with data.
+  lbSide:   "hit",
+  lbView:   "std",
+  lbSort:   "",
+  lbDir:    "",
+  lbQual:   true,
+  lbAgeMax: "all",
   lbLevel:  "all",
   lbPos:    "all",
   lbOrg:    "all",
   lbRankMax: "all",
-  lbSeason: String(new Date().getUTCFullYear()),
+  lbSeason: "",
   // v45 - Leaderboard timeframe. "season" = full-season aggregates (default
   // legacy behavior); "7"/"14"/"30" = rolling day windows; "custom" = the
   // lbFrom..lbTo date range. The non-season modes recompute box-line stats
@@ -16005,7 +15953,7 @@ const state = {
     injured: 1, ifa: 1,
   },
   pageSizes: {
-    leaderboard: 25, actives: 50, draft: 50, overseas: 50,
+    leaderboard: 50, actives: 50, draft: 50, overseas: 50,
     spotlights: 25, watchlist: 25, farmRoster: 50, farmTx: 50,
     injured: 50, ifa: 50,
   },
@@ -18911,89 +18859,6 @@ function getFilteredAcquired() {
 // Back-compat alias for callers that still reference the old name.
 const getFilteredTraded = getFilteredAcquired;
 
-// Cross-org leaderboards - top N prospects by a chosen stat for the
-// chosen season. Pulls from career_stats (year-by-year per-level rows)
-// rather than the latest-statline blob, so historical seasons (2021+)
-// work and the AB/IP gates use the actual season's volume.
-//
-// Stat config: each key on `LB_STATS` defines how to render the value,
-// the supporting line, and how to sort (high vs low is better). The
-// minAB/minIP gates are intentionally generous so leaderboards stay
-// populated even in shallow MiLB seasons or early in the current year.
-//
-// Statline values arrive as a mix of floats (iso, era, whip, k_per_9,
-// bb_per_9, bb_pct, k_pct) and strings (ops, avg, obp, slg - kept as
-// ".788" so the leading-zero formatting is preserved). Formatters wrap
-// values in `Number(v)` defensively so either type works.
-// Shared "kitchen-sink" support builders. The Context cell on each
-// leaderboard now shows two lines packing every rate + counting stat we
-// have on file for the season - separators are mid-dots; missing values
-// collapse to em-dashes so the line shape stays stable across rows.
-const _lbHitterSupport = r => {
-  const slash = `${r.avg ?? " - "}/${r.obp ?? " - "}/${r.slg ?? " - "}`;
-  const ops = r.ops ?? " - ";
-  const iso = r.iso != null ? Number(r.iso).toFixed(3).replace(/^0/, "") : " - ";
-  const bb = r.bb_pct != null ? Number(r.bb_pct).toFixed(1) + "%" : " - ";
-  const k = r.k_pct != null ? Number(r.k_pct ).toFixed(1) + "%" : " - ";
-  const games = r.games != null ? `${r.games}G` : "";
-  const ab = r.ab != null ? `${r.ab} AB` : "";
-  const top    = `${slash} · OPS ${ops} · ISO ${iso}`;
-  const bottom = [
-    r.hr != null ? `${r.hr} HR` : null,
-    r.sb != null ? `${r.sb} SB` : null,
-    r.rbi != null ? `${r.rbi} RBI` : null,
-    r.bb_pct != null ? `BB ${bb}` : null,
-    r.k_pct != null ? `K ${k}` : null,
-    games || null,
-    ab || null,
-  ].filter(Boolean).join(" · ");
-  return `<div>${top}</div><div style="color:var(--text-tertiary);margin-top:2px;">${bottom}</div>`;
-};
-const _lbPitcherSupport = r => {
-  const wins = r.wins, losses = r.losses;
-  const top = [
-    r.ip != null ? `${r.ip} IP` : null,
-    r.era != null ? `${r.era} ERA` : null,
-    r.whip != null ? `${r.whip} WHIP` : null,
-  ].filter(Boolean).join(" · ") || " - ";
-  // v22 - Prefer per-batter rates (K% / BB%) over per-9 rates. Falls
-  // back to K/9 / BB/9 only when the per-batter rate is unavailable.
-  const _kRate = r.k_pct != null
-    ? `K% ${Number(r.k_pct).toFixed(1)}%`
-    : (r.k_per_9 != null ? `K/9 ${r.k_per_9}` : null);
-  const _bbRate = r.bb_pct != null
-    ? `BB% ${Number(r.bb_pct).toFixed(1)}%`
-    : (r.bb_per_9 != null ? `BB/9 ${r.bb_per_9}` : null);
-  const bottom = [
-    _kRate,
-    _bbRate,
-    (wins != null || losses != null) ? `${wins ?? 0}-${losses ?? 0}` : null,
-    r.games != null ? `${r.games}G` : null,
-  ].filter(Boolean).join(" · ");
-  return `<div>${top}</div><div style="color:var(--text-tertiary);margin-top:2px;">${bottom}</div>`;
-};
-const _lbZoneSupport = row => {
-  const z = row._zone || row;
-  const p = z.pitches != null ? `${z.pitches} pitches` : " - ";
-  const g = z.games != null ? `${z.games}G` : "";
-  const q = z.qualified ? `percentile cohort ${z.percentile_sample_size || "?"}` : `below ${z.qualifier_min_pitches || 200}-pitch qualifier`;
-  return `<div>${escapeHtml(z.level || " - ")} · ${p}${g ? ` · ${g}` : ""}</div><div style="color:var(--text-tertiary);margin-top:2px;">${escapeHtml(q)}</div>`;
-};
-const _lbStatcastSupport = row => {
-  const sc = row._statcast || row;
-  const cq = sc.contact_quality || {};
-  const pm = sc.pitch_movement || {};
-  const venues = (((sc.coverage || {}).venues || []).map(v => v.name).filter(Boolean).slice(0, 2).join(" / "));
-  const top = sc.is_pitcher
-    ? `${pm.tracked_pitches || 0} tracked pitches`
-    : `${cq.batted_balls || 0} batted balls`;
-  const bottom = [sc.level, venues || null, sc.source || "MLB Stats API"].filter(Boolean).join(" · ");
-  return `<div>${escapeHtml(top)}</div><div style="color:var(--text-tertiary);margin-top:2px;">${escapeHtml(bottom)}</div>`;
-};
-
-// Cell heat color - maps a numeric value into a red-violet-cyan ramp
-// anchored at the LEAGUE MEAN of the full qualified pool (not just the
-// displayed top-N). Values are z-scored against the pool's mean/stdev
 // Rank diamond rarity class - mirrors the FV tier ramp used by the
 // headshot ring so the rank diamond and the player picture share the
 // same rarity signal. Returns "" when no FV is available; the diamond
@@ -19092,197 +18957,135 @@ function fvKeyHTML() {
     + `</ul>`;
 }
 
-// so the spectrum spreads cleanly across the leaderboard: the top of
-// the board reads as several stdevs above mean, the bottom as the
-// quasi-league-average tail.
-//
-// `hi=true` means higher values are better; `hi=false` flips the ramp
-// so low ERA / WHIP / BB% reads green too. Returns an inline-style
-// `{bg, fg}` pair for use on a stat cell.
-function cellHeatColor(value, values, hi = true) {
-  if (value == null || isNaN(value)) return { bg: "transparent", fg: "var(--text-tertiary)" };
-  const valid = values.filter(v => v != null && !isNaN(v)).map(Number);
-  if (valid.length < 3) return { bg: "transparent", fg: "var(--text-primary)" };
-  const mean = valid.reduce((s, x) => s + x, 0) / valid.length;
-  const variance = valid.reduce((s, x) => s + (x - mean) ** 2, 0) / valid.length;
-  const stdev = Math.sqrt(variance) || 1;
-  let z = (Number(value) - mean) / stdev;
-  if (!hi) z = -z;
-  // Clamp to ±3σ. Above mean (z > 0) ramps red → violet → cyan;
-  // below mean (z < 0) stays muted. Most leaderboard entries land
-  // between z=0.5 and z=3, so the gradient gets real distribution.
-  z = Math.max(-1.5, Math.min(3.5, z));
-  let bg;
-  if (z <= 0) {
-    // At/below mean - soft slate wash, signals "table stakes."
-    bg = "rgba(120, 130, 145, 0.06)";
-  } else {
-    // Three-band gradient above mean:
-    //   0.0-1.0σ  → violet wash (above league mean)
-    //   1.0-2.0σ  → blue-cyan (well above)
-    //   2.0-3.5σ  → strong cyan + amber tip at the very top (elite)
-    if (z < 1.0) {
-      const a = 0.10 + 0.10 * z;                  // 0.10 → 0.20
-      bg = `rgba(180, 85, 255, ${a.toFixed(2)})`;
-    } else if (z < 2.0) {
-      const t = z - 1.0;                          // 0..1
-      const a = 0.20 + 0.12 * t;                  // 0.20 → 0.32
-      // Lerp violet → cyan along t.
-      const r = Math.round(180 + (78 - 180) * t);
-      const g = Math.round(85 + (224 - 85) * t);
-      const b = Math.round(255 + (255 - 255) * t);
-      bg = `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
-    } else {
-      const t = Math.min(1, (z - 2.0) / 1.5);     // 0..1
-      const a = 0.32 + 0.18 * t;                  // 0.32 → 0.50
-      // Lerp cyan → amber-hot at the elite tail.
-      const r = Math.round(78 + (255 - 78) * t);
-      const g = Math.round(224 + (200 - 224) * t);
-      const b = Math.round(255 + (90 - 255) * t);
-      bg = `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
+// Cross-org leaderboards: a stat sheet (site pass PROSPX_2_LB_TABLE). One row
+// per prospect, many stat columns, sorted by clicking a header. Every column is
+// one LB_STATS entry: label, natural direction (hi: true sorts high first),
+// house format, the Library id its header carries (gl) and the header title.
+// Rate cells print without a unit (the header carries it); `unit` is added
+// back where a value leaves the table (Generate GFX).
+const _lbFmt3 = v => (v == null || !isFinite(v)) ? "-" : Number(v).toFixed(3).replace(/^(-?)0\./, "$1.");
+const _lbFmt1 = v => (v == null || !isFinite(v)) ? "-" : Number(v).toFixed(1);
+const _lbFmt2 = v => (v == null || !isFinite(v)) ? "-" : Number(v).toFixed(2);
+const _lbFmtInt = v => (v == null || !isFinite(v)) ? "-" : String(Math.round(Number(v)));
+// IP sorts on outs and prints in the box-score X.Y notation (Y = outs).
+const _lbFmtOuts = v => (v == null || !isFinite(v)) ? "-" : `${Math.floor(v / 3)}.${Math.round(v) % 3}`;
+const LB_STATS = {
+  // ---- hitters ----
+  pa:     { label: "PA",  hi: true,  fmt: _lbFmtInt, title: "Plate appearances" },
+  g:      { label: "G",   hi: true,  fmt: _lbFmtInt, title: "Games" },
+  avg:    { label: "AVG", hi: true,  fmt: _lbFmt3, gl: "avg", title: "Batting average", side: "hit" },
+  obp:    { label: "OBP", hi: true,  fmt: _lbFmt3, gl: "obp", title: "On-base percentage, with HBP and SF", side: "hit" },
+  slg:    { label: "SLG", hi: true,  fmt: _lbFmt3, gl: "slg", title: "Slugging percentage", side: "hit" },
+  ops:    { label: "OPS", hi: true,  fmt: _lbFmt3, gl: "ops", title: "On-base plus slugging", side: "hit" },
+  iso:    { label: "ISO", hi: true,  fmt: _lbFmt3, gl: "iso", title: "Isolated power, SLG minus AVG", side: "hit" },
+  bb_pct: { label: "BB%", hi: true,  fmt: _lbFmt1, unit: "%", gl: "bb_pct", title: "Walks per plate appearance", side: "hit" },
+  k_pct:  { label: "K%",  hi: false, fmt: _lbFmt1, unit: "%", gl: "k_pct", title: "Strikeouts per plate appearance", side: "hit" },
+  hr:     { label: "HR",  hi: true,  fmt: _lbFmtInt, title: "Home runs", side: "hit" },
+  sb:     { label: "SB",  hi: true,  fmt: _lbFmtInt, gl: "sb", title: "Stolen bases", side: "hit" },
+  hit_level_plus: { label: "OPS+ lvl", hi: true, fmt: _lbFmtInt, gl: "ops_plus", title: "Offense indexed to the level that season, 100 = level average", side: "hit" },
+  iso_plus: { label: "ISO+", hi: true, fmt: _lbFmtInt, gl: "iso_plus", title: "ISO indexed to the level that season, 100 = level average", side: "hit" },
+  pd_plus:  { label: "PD+",  hi: true, fmt: _lbFmtInt, gl: "pd_plus", title: "Plate-discipline index, current season", side: "hit" },
+  pow_plus: { label: "POW+", hi: true, fmt: _lbFmtInt, gl: "pwr_plus", title: "Power index, current season", side: "hit" },
+  rps_plus: { label: "RPS+", hi: true, fmt: _lbFmtInt, gl: "rps_plus", title: "Rate performance score, current season", side: "hit" },
+  sc_plus:  { label: "SC+",  hi: true, fmt: _lbFmtInt, gl: "statcast_plus", title: "Tracked contact-quality index, current season" },
+  dvm_plus: { label: "$DvM+", hi: true, fmt: _lbFmtInt, gl: "fin_dollar_dvm", title: "Surplus-development index, current season" },
+  bbe:    { label: "BBE", hi: true, fmt: _lbFmtInt, title: "Tracked batted balls" },
+  avg_ev: { label: "Avg EV", hi: true, fmt: _lbFmt1, gl: "exit_velocity", title: "Average exit velocity, mph", side: "hit" },
+  p90_ev: { label: "90th EV", hi: true, fmt: _lbFmt1, gl: "p90_ev", title: "90th percentile exit velocity, mph", side: "hit" },
+  max_ev: { label: "Max EV", hi: true, fmt: _lbFmt1, gl: "max_ev", title: "Hardest-hit ball, mph", side: "hit" },
+  hard_hit_pct: { label: "Hard%", hi: true, fmt: _lbFmt1, unit: "%", gl: "hard_hit_pct", title: "Share of batted balls at 95 mph or more", side: "hit" },
+  barrel_pct:   { label: "Brl%", hi: true, fmt: _lbFmt1, unit: "%", gl: "barrel_pct", title: "Approximate barrel rate", side: "hit" },
+  pull_air_pct: { label: "Pull-air%", hi: true, fmt: _lbFmt1, unit: "%", gl: "pull_air_pct", title: "Pulled fly balls and line drives per batted ball", side: "hit" },
+  xwoba_est:    { label: "xwOBA est", hi: true, fmt: _lbFmt3, gl: "xwoba_est", title: "Estimated xwOBA from tracked launch speed and angle", side: "hit" },
+  xwobacon_est: { label: "xwOBAcon est", hi: true, fmt: _lbFmt3, gl: "xwoba_est", title: "Estimated xwOBA on contact", side: "hit" },
+  pitches:      { label: "Pitches", hi: true, fmt: _lbFmtInt, title: "Pitches seen with a zone read" },
+  zone_z_swing:   { label: "Z-Swing%", hi: true,  fmt: _lbFmt1, unit: "%", gl: "z_swing_pct", title: "Swings at pitches in the zone", side: "hit" },
+  zone_z_contact: { label: "Z-Con%",   hi: true,  fmt: _lbFmt1, unit: "%", gl: "z_contact_pct", title: "Contact on swings at pitches in the zone", side: "hit" },
+  zone_chase:     { label: "Chase%",   hi: false, fmt: _lbFmt1, unit: "%", gl: "chase_pct", title: "Swings at pitches outside the zone", side: "hit" },
+  // ---- pitchers ----
+  ip:    { label: "IP", hi: true, fmt: _lbFmtOuts, title: "Innings pitched", side: "pit" },
+  era:   { label: "ERA", hi: false, fmt: _lbFmt2, gl: "era", title: "Earned runs per nine innings", side: "pit" },
+  fip:   { label: "FIP", hi: false, fmt: _lbFmt2, gl: "fip", title: "Fielding independent pitching on one flat MiLB constant", side: "pit" },
+  whip:  { label: "WHIP", hi: false, fmt: _lbFmt2, gl: "whip", title: "Walks plus hits per inning", side: "pit" },
+  pitcher_k_pct:  { label: "K%",  hi: true,  fmt: _lbFmt1, unit: "%", gl: "k_pct_pitcher", title: "Strikeouts per batter faced", side: "pit" },
+  pitcher_bb_pct: { label: "BB%", hi: false, fmt: _lbFmt1, unit: "%", gl: "bb_pct_pitcher", title: "Walks per batter faced", side: "pit" },
+  kbb:      { label: "K-BB%", hi: true,  fmt: _lbFmt1, unit: "%", gl: "k_bb_pct", title: "Strikeouts minus walks per batter faced", side: "pit" },
+  hr_per_9: { label: "HR/9",  hi: false, fmt: _lbFmt2, gl: "hr_per_9", title: "Home runs allowed per nine innings", side: "pit" },
+  pit_level_plus: { label: "ERA- lvl", hi: false, fmt: _lbFmtInt, gl: "era_minus", title: "ERA indexed to the level that season, 100 = level average, lower is better", side: "pit" },
+  pstuff_plus: { label: "pStuff+", hi: true, fmt: _lbFmtInt, gl: "stf_plus", title: "Peripheral run prevention index, current season", side: "pit" },
+  krp_plus:    { label: "KRP+",    hi: true, fmt: _lbFmtInt, gl: "krp_plus", title: "Strikeout-backed run prevention index, current season", side: "pit" },
+  tracked:      { label: "Tracked", hi: true, fmt: _lbFmtInt, title: "Tracked pitches", side: "pit" },
+  fb_velo_feed: { label: "FB velo", hi: true, fmt: _lbFmt1, gl: "fb_velo", title: "Average velocity of the most-thrown fastball, mph", side: "pit" },
+  fb_ivb_feed:  { label: "FB IVB",  hi: true, fmt: _lbFmt1, gl: "fb_ivb", title: "Induced vertical break of the most-thrown fastball, inches", side: "pit" },
+  pitcher_zone_whiff:     { label: "Whiff%",   hi: true,  fmt: _lbFmt1, unit: "%", gl: "whiff_pct", title: "Misses per swing", side: "pit" },
+  pitcher_zone_chase:     { label: "Chase%",   hi: true,  fmt: _lbFmt1, unit: "%", gl: "chase_pct", title: "Swings induced outside the zone", side: "pit" },
+  pitcher_zone_z_swing:   { label: "Z-Swing%", hi: true,  fmt: _lbFmt1, unit: "%", gl: "z_swing_pct", title: "Swings induced at pitches in the zone", side: "pit" },
+  pitcher_zone_z_contact: { label: "Z-Con%",   hi: false, fmt: _lbFmt1, unit: "%", gl: "z_contact_pct", title: "Contact allowed on swings in the zone", side: "pit" },
+  pitcher_avg_ev_allowed:   { label: "Avg EVa", hi: false, fmt: _lbFmt1, gl: "exit_velocity", title: "Average exit velocity allowed, mph", side: "pit" },
+  pitcher_hard_hit_allowed: { label: "HardA%",  hi: false, fmt: _lbFmt1, unit: "%", gl: "hard_hit_pct", title: "Share of batted balls allowed at 95 mph or more", side: "pit" },
+  pitcher_barrel_allowed:   { label: "BrlA%",   hi: false, fmt: _lbFmt1, unit: "%", gl: "barrel_pct", title: "Approximate barrel rate allowed", side: "pit" },
+};
+// The identity block every view leads with (LANE_SURFACES 2.2): key, label,
+// width at 1280, natural direction, title. Rk is the position in the sort.
+const LB_ID_COLS = [
+  { k: "rk",   label: "Rk",     w: 48,  title: "Position in the current sort; equal printed values share a number" },
+  { k: "name", label: "Player", w: 200, dir: "asc",  title: "Player" },
+  { k: "age",  label: "Age",    w: 44,  dir: "asc",  title: "Age on July 1 of the season" },
+  { k: "org",  label: "Org",    w: 52,  dir: "asc",  title: "Organization that season" },
+  { k: "lvl",  label: "Lvl",    w: 56,  dir: "desc", title: "Level; a combined row lists every level played" },
+  { k: "efv",  label: "eFV",    w: 44,  dir: "desc", gl: "xfv", title: "eFV, the board grade (nearest)" },
+];
+// Four views per side: columns after the identity block (key, width at
+// 1280), the default sort, and where the numbers come from. `cur` marks the
+// columns that exist for the current season only; a view whose source is a
+// tracking feed (statcast, zone) is current-season only as a whole.
+const LB_VIEWS = {
+  hit: [
+    { id: "std", label: "Standard", src: "season", sort: "ops",
+      cols: [["pa", 48], ["g", 40], ["avg", 52], ["obp", 52], ["slg", 52], ["ops", 52], ["iso", 52],
+             ["bb_pct", 52], ["k_pct", 52], ["hr", 40], ["sb", 40]] },
+    { id: "rel", label: "Level-relative", src: "season", sort: "rps_plus", pastSort: "hit_level_plus",
+      cur: ["pd_plus", "pow_plus", "rps_plus", "sc_plus", "dvm_plus"],
+      cols: [["pa", 52], ["hit_level_plus", 52], ["iso_plus", 52], ["pd_plus", 52], ["pow_plus", 52],
+             ["rps_plus", 52], ["sc_plus", 52], ["dvm_plus", 52]] },
+    { id: "bb", label: "Batted ball", src: "statcast", sort: "p90_ev", minN: 50,
+      cols: [["bbe", 48], ["avg_ev", 52], ["p90_ev", 52], ["max_ev", 52], ["hard_hit_pct", 52],
+             ["barrel_pct", 52], ["pull_air_pct", 52], ["xwoba_est", 60], ["xwobacon_est", 60]] },
+    { id: "swing", label: "Swing decisions", src: "zone", sort: "zone_chase", minN: 200,
+      cols: [["pitches", 56], ["zone_z_swing", 60], ["zone_z_contact", 60], ["zone_chase", 60]] },
+  ],
+  pit: [
+    { id: "std", label: "Standard", src: "season", sort: "kbb",
+      cols: [["ip", 48], ["g", 40], ["era", 52], ["fip", 52], ["whip", 52], ["pitcher_k_pct", 52],
+             ["pitcher_bb_pct", 52], ["kbb", 52], ["hr_per_9", 52]] },
+    { id: "rel", label: "Level-relative", src: "season", sort: "krp_plus", pastSort: "pit_level_plus",
+      cur: ["pstuff_plus", "krp_plus"],
+      cols: [["ip", 52], ["pit_level_plus", 52], ["pstuff_plus", 52], ["krp_plus", 52]] },
+    { id: "pitch", label: "Pitch data", src: "zone", sort: "pitcher_zone_whiff", minN: 200,
+      cols: [["tracked", 56], ["fb_velo_feed", 52], ["fb_ivb_feed", 52], ["pitcher_zone_whiff", 60],
+             ["pitcher_zone_chase", 60], ["pitcher_zone_z_swing", 60], ["pitcher_zone_z_contact", 60]] },
+    { id: "contact", label: "Contact allowed", src: "statcast", sort: "pitcher_hard_hit_allowed", minN: 50,
+      cols: [["bbe", 48], ["pitcher_avg_ev_allowed", 60], ["pitcher_hard_hit_allowed", 60],
+             ["pitcher_barrel_allowed", 60]] },
+  ],
+};
+// Old single-stat links (lbstat=) land on the view and sort that hold the stat.
+// The retired keys map to their nearest column.
+const LB_LEGACY_STAT = { k_per_9: "pitcher_k_pct", bb_per_9: "pitcher_bb_pct", ivb_ff: "fb_ivb_feed",
+                         swing_plus: "rps_plus" };
+function _lbApplyLegacyStat(key) {
+  const k = LB_LEGACY_STAT[key] || key;
+  for (const side of ["hit", "pit"]) {
+    for (const v of LB_VIEWS[side]) {
+      if (v.cols.some(c => c[0] === k)) {
+        state.lbSide = side; state.lbView = v.id;
+        state.lbSort = (k === v.sort) ? "" : k; state.lbDir = "";
+        return true;
+      }
     }
   }
-  return { bg, fg: "var(--text-primary)" };
+  return false;
 }
-
-const LB_STATS = {
-  // ── Hitter ──
-  ops: { label: "OPS", hi: true, fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : " - ",
-             minAB: 50, support: _lbHitterSupport, side: "hit" },
-  avg: { label: "AVG", hi: true, fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : " - ",
-             minAB: 50, support: _lbHitterSupport, side: "hit" },
-  obp: { label: "OBP", hi: true, fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : " - ",
-             minAB: 50, support: _lbHitterSupport, side: "hit" },
-  slg: { label: "SLG", hi: true, fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : " - ",
-             minAB: 50, support: _lbHitterSupport, side: "hit" },
-  iso: { label: "ISO", hi: true, fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : " - ",
-             minAB: 50, support: _lbHitterSupport, side: "hit" },
-  bb_pct: { label: "BB%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-             minAB: 50, support: _lbHitterSupport, side: "hit" },
-  k_pct: { label: "K%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-             minAB: 50, support: _lbHitterSupport, side: "hit" },
-  hr: { label: "HR", hi: true, fmt: v => v != null ? String(v) : " - ",
-             minAB: 20, support: _lbHitterSupport, side: "hit" },
-  sb: { label: "SB", hi: true, fmt: v => v != null ? String(v) : " - ",
-             minAB: 20, support: _lbHitterSupport, side: "hit" },
-  // v12 - level-relative offense. Sort by how far the OPS sits above
-  // the level-cohort mean (signed %). Surfaces players whose surface
-  // OPS is great BECAUSE the level is hard, not because the level is
-  // soft. Field name is `level_plus_pct` (positive = better than mean).
-  // v44 - these "+" indices are JS-derived from the player's current statline,
-  // not baked per career-row, so each carries a `getter` and rides the per-player
-  // getter path in renderLeaderboards (fixing the previously-empty boards).
-  hit_level_plus: { label: "OPS+ lvl", hi: true,
-                    fmt: v => v != null ? Math.round(Number(v)).toString() : " - ",
-                    minAB: 50, support: _lbHitterSupport, side: "hit",
-                    getter: p => (p.statline ? _lvlPlus(p.statline) : null) },
-  // v17 - RPS+ leaderboard. Level-anchored Rate Performance Score (100 = mean,
-  // +10 = +1σ). Hitters only.
-  rps_plus: { label: "RPS+", hi: true,
-              fmt: v => v != null ? Math.round(Number(v)).toString() : " - ",
-              minAB: 50, support: _lbHitterSupport, side: "hit",
-              getter: p => { const r = (typeof getRpsPlus === "function") ? getRpsPlus(p) : null; return r ? r.plus : null; } },
-  // v44 - level-relative "+" index family (hitters), one entry per player.
-  iso_plus: { label: "ISO+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
-              minAB: 50, support: _lbHitterSupport, side: "hit", getter: p => computeIsoPlus(p) },
-  pow_plus: { label: "POW+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
-              minAB: 50, support: _lbHitterSupport, side: "hit",
-              getter: p => { const b = computePowerPlus(p); return b ? b.value : null; } },
-  pd_plus: { label: "PD+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
-              minAB: 50, support: _lbHitterSupport, side: "hit",
-              getter: p => { const b = computeDisciplinePlus(p); return b ? b.value : null; } },
-  sc_plus: { label: "SC+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
-              minAB: 50, support: _lbHitterSupport, side: "hit",
-              getter: p => (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null },
-  // Swing+ (Will Cahoon's bat-tracking model) - debuted hitters only by
-  // data boundary (MLB tracking 2024+); the sidecar loads async at boot,
-  // so the board fills on first paint after it lands.
-  swing_plus: { label: "Swing+", hi: true,
-              fmt: v => v != null ? Math.round(v).toString() : " - ",
-              minAB: 0, support: _lbHitterSupport, side: "hit",
-              getter: p => (typeof getSwingPlus === "function") ? getSwingPlus(p) : null },
-  dvm_plus: { label: "$DvM+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
-              minAB: 50, support: _lbHitterSupport, side: "hit",
-              getter: p => (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? p.dollar_dvm_plus : null },
-  // ── Pitcher ──
-  era: { label: "ERA", hi: false, fmt: v => v != null ? Number(v).toFixed(2) : " - ",
-             minIP: 15, support: _lbPitcherSupport, side: "pit" },
-  whip: { label: "WHIP", hi: false, fmt: v => v != null ? Number(v).toFixed(2) : " - ",
-             minIP: 15, support: _lbPitcherSupport, side: "pit" },
-  k_per_9: { label: "K/9", hi: true, fmt: v => v != null ? Number(v).toFixed(2) : " - ",
-             minIP: 15, support: _lbPitcherSupport, side: "pit" },
-  bb_per_9:{ label: "BB/9", hi: false, fmt: v => v != null ? Number(v).toFixed(2) : " - ",
-             minIP: 15, support: _lbPitcherSupport, side: "pit" },
-  hr_per_9:{ label: "HR/9", hi: false, fmt: v => v != null ? Number(v).toFixed(2) : " - ",
-             minIP: 15, support: _lbPitcherSupport, side: "pit" },
-  fip: { label: "FIP", hi: false, fmt: v => v != null ? Number(v).toFixed(2) : " - ",
-             minIP: 15, support: _lbPitcherSupport, side: "pit" },
-  // Pitcher K% / BB% - strikeouts and walks as % of batters faced.
-  // The lb-stat sort keys for the leaderboard chips use these
-  // identifiers; statline rows expose k_pct / bb_pct fields (pitcher
-  // statlines now also populate them, mirroring the hitter side).
-  pitcher_k_pct: { label: "K%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                    minIP: 15, support: _lbPitcherSupport, side: "pit", field: "k_pct" },
-  pitcher_bb_pct: { label: "BB%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                    minIP: 15, support: _lbPitcherSupport, side: "pit", field: "bb_pct" },
-  // v12 - level-relative run prevention. Sort by ERA's gap to the
-  // level-cohort mean. Same `level_plus_pct` field but inverted-
-  // direction since lower ERA = better.
-  pit_level_plus: { label: "ERA- lvl", hi: false,
-                    fmt: v => v != null ? Math.round(Number(v)).toString() : " - ",
-                    minIP: 15, support: _lbPitcherSupport, side: "pit",
-                    getter: p => (p.statline && p.statline.era_minus_level != null) ? p.statline.era_minus_level : null },
-  // v44 - pitcher peripherals index, one entry per player.
-  pstuff_plus: { label: "pStuff+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
-                 minIP: 15, support: _lbPitcherSupport, side: "pit", getter: p => computeStuffPlus(p) },
-  // KRP+ (K-backed Run Prevention): eFV run-prevention x missing-bats index, baked
-  // per-pitcher in xfv.json (100 = active-pool average, +10 = +1σ). Pitchers only.
-  krp_plus: { label: "KRP+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
-              minIP: 15, support: _lbPitcherSupport, side: "pit",
-              getter: p => { const x = (typeof getEfv === "function") ? getEfv(p) : null; return x && x.krp_plus != null ? x.krp_plus : null; } },
-  zone_z_contact: { label: "Z-Con%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                    source: "zone", side: "hit", field: "z_contact_pct", minPitches: 200, support: _lbZoneSupport },
-  zone_z_swing: { label: "Z-Swing%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                  source: "zone", side: "hit", field: "z_swing_pct", minPitches: 200, support: _lbZoneSupport },
-  zone_chase: { label: "Chase%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                source: "zone", side: "hit", field: "o_swing_pct", minPitches: 200, support: _lbZoneSupport },
-  pitcher_zone_whiff: { label: "Whiff%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                        source: "zone", side: "pit", field: "whiff_pct", minPitches: 200, support: _lbZoneSupport },
-  pitcher_zone_chase: { label: "Chase%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                        source: "zone", side: "pit", field: "o_swing_pct", minPitches: 200, support: _lbZoneSupport },
-  pitcher_zone_z_swing: { label: "Z-Swing%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                          source: "zone", side: "pit", field: "z_swing_pct", minPitches: 200, support: _lbZoneSupport },
-  pitcher_zone_z_contact: { label: "Z-Con%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                            source: "zone", side: "pit", field: "z_contact_pct", minPitches: 200, support: _lbZoneSupport },
-  avg_ev: { label: "Avg EV", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : " - ",
-            source: "statcast", side: "hit", field: "avg_ev", minBBE: 10, support: _lbStatcastSupport },
-  xwoba_est: { label: "Est. xwOBA", hi: true, fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : " - ",
-               source: "statcast", side: "hit", field: "xwoba_est", minBBE: 25, support: _lbStatcastSupport },
-  xwobacon_est: { label: "Est. xwOBAcon", hi: true, fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : " - ",
-                  source: "statcast", side: "hit", field: "xwobacon_est", minBBE: 25, support: _lbStatcastSupport },
-  p90_ev: { label: "90th EV", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : " - ",
-            source: "statcast", side: "hit", field: "p90_ev", minBBE: 10, support: _lbStatcastSupport },
-  max_ev: { label: "Max EV", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : " - ",
-            source: "statcast", side: "hit", field: "max_ev", minBBE: 5, support: _lbStatcastSupport },
-  hard_hit_pct: { label: "Hard%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                  source: "statcast", side: "hit", field: "hard_hit_pct", minBBE: 10, support: _lbStatcastSupport },
-  barrel_pct: { label: "Brl%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                source: "statcast", side: "hit", field: "barrel_pct", minBBE: 10, support: _lbStatcastSupport },
-  pull_air_pct: { label: "Pull-air%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                  source: "statcast", side: "hit", field: "pull_air_pct", minBBE: 10, support: _lbStatcastSupport },
-  fb_velo_feed: { label: "FB velo", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : " - ",
-                  source: "statcast", side: "pit", field: "fb_velo_feed", minTrackedPitches: 20, support: _lbStatcastSupport },
-  ivb_ff: { label: "FF IVB", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : " - ",
-            source: "statcast", side: "pit", field: "ivb_ff", minTrackedPitches: 20, support: _lbStatcastSupport },
-  fb_ivb_feed: { label: "FB IVB", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : " - ",
-                 source: "statcast", side: "pit", field: "fb_ivb_feed", minTrackedPitches: 20, support: _lbStatcastSupport },
-  pitcher_avg_ev_allowed: { label: "Avg EVa", hi: false, fmt: v => v != null ? Number(v).toFixed(1) : " - ",
-                            source: "statcast", side: "pit", field: "avg_ev", minBBE: 10, support: _lbStatcastSupport },
-  pitcher_hard_hit_allowed: { label: "HardA%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                              source: "statcast", side: "pit", field: "hard_hit_pct", minBBE: 10, support: _lbStatcastSupport },
-  pitcher_barrel_allowed: { label: "BrlA%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
-                            source: "statcast", side: "pit", field: "barrel_pct", minBBE: 10, support: _lbStatcastSupport },
-};
 
 // Watchlist tab - renders the starred prospects using the same row
 // template as the Active list. Empty state prompts the user with a
@@ -20391,21 +20194,11 @@ function renderCharts() {
 // =============================================================================
 // DATE-WINDOWED LEADERBOARDS (v45)
 // =============================================================================
-// "Full season" boards walk season-total career rows. The rolling-window and
-// custom-range boards instead recompute each rate stat from per-game box lines
-// (data/leaderboard_gamelogs.json) within the chosen date window. Only the
-// box-line-derived stats are supported in window mode - statcast / zone / "+"
-// indices need season-level machinery and grey out.
-const LB_WINDOW_STATS = {
-  hit: new Set(["ops", "avg", "obp", "slg", "iso", "bb_pct", "k_pct", "hr", "sb"]),
-  pit: new Set(["era", "whip", "fip", "hr_per_9", "pitcher_k_pct", "pitcher_bb_pct"]),
-};
-function _lbStatWindowOK(statKey) {
-  const cfg = LB_STATS[statKey];
-  if (!cfg) return false;
-  return (LB_WINDOW_STATS.hit.has(statKey) && cfg.side === "hit")
-      || (LB_WINDOW_STATS.pit.has(statKey) && cfg.side === "pit");
-}
+// The Season timeframe reads the season lines of the leaderboard file. The 7, 14
+// and 30 day and custom-range boards instead recompute each rate stat from per-game box lines
+// (data/leaderboard_gamelogs.json) within the chosen date window. The window
+// prints the Standard view only: the tracking feeds and the model indexes are
+// season-level numbers.
 
 // MiLB box scores report IP in "X.Y" notation where Y is outs (0/1/2), so
 // 4.1 + 5.2 IP is 4⅓ + 5⅔ = 10 IP, not 9.3. Sum in outs, format back to X.Y.
@@ -20502,50 +20295,6 @@ function _lbWindowStatValue(statKey, t, isP) {
   }
 }
 
-// Build the `r` row object the Context-column support builders read.
-const _lbF3 = x => (x != null && isFinite(x)) ? x.toFixed(3).replace(/^0/, "") : null;
-function _lbWindowRowHitter(t) {
-  const ab = t.ab, pa = t.pa;
-  const oneB = t.h - t._2b - t._3b - t.hr;
-  const avg = ab > 0 ? t.h / ab : null;
-  const obp = _lbObp(t);
-  const slg = ab > 0 ? (oneB + 2 * t._2b + 3 * t._3b + 4 * t.hr) / ab : null;
-  return {
-    level: t.lastLvl, is_pitcher: false,
-    avg: _lbF3(avg), obp: _lbF3(obp), slg: _lbF3(slg),
-    ops: (obp != null && slg != null) ? _lbF3(obp + slg) : null,
-    iso: (slg != null && avg != null) ? (slg - avg) : null,
-    bb_pct: pa > 0 ? 100 * t.bb / pa : null,
-    k_pct: pa > 0 ? 100 * t.so / pa : null,
-    hr: t.hr, sb: t.sb, rbi: t.rbi, ab: t.ab, games: t.g,
-  };
-}
-function _lbWindowRowPitcher(t) {
-  const ip = t.outs / 3;
-  return {
-    level: t.lastLvl, is_pitcher: true,
-    ip: _lbOutsToIpStr(t.outs),
-    era: ip > 0 ? (9 * t.er / ip).toFixed(2) : null,
-    whip: ip > 0 ? ((t.bb + t.h) / ip).toFixed(2) : null,
-    k_pct: (t.bfKnown && t.bf > 0) ? 100 * t.k / t.bf : null,
-    bb_pct: (t.bfKnown && t.bf > 0) ? 100 * t.bb / t.bf : null,
-    k_per_9: ip > 0 ? (9 * t.k / ip).toFixed(2) : null,
-    bb_per_9: ip > 0 ? (9 * t.bb / ip).toFixed(2) : null,
-    games: t.g,
-  };
-}
-
-// Window sample gates - scaled to window length so a 7-day board still
-// populates while a long custom range demands a fuller sample. Counting
-// stats (HR / SB) only require the player to have appeared.
-function _lbWindowQualifies(statKey, t, isP, days) {
-  if (!isP) {
-    if (statKey === "hr" || statKey === "sb") return t.pa >= 4;
-    return t.pa >= Math.max(8, Math.round(days * 0.5));
-  }
-  return t.outs >= Math.max(9, Math.round(days * 0.8));   // ~3 IP floor
-}
-
 function _lbFmtDate(iso) {
   const d = new Date(iso + "T00:00:00");
   return isNaN(d.getTime()) ? iso
@@ -20583,13 +20332,19 @@ function lbSliceScopeText() {
   if (!n) return "";
   const lim = gl.limit ? Number(gl.limit) : 0;
   return lim
-    ? `covers the top ${lim} prospects by board rank (${n.toLocaleString()} with a game log); everyone else appears only on the Full season board`
-    : `covers the ${n.toLocaleString()} prospects in the game-log slice; everyone else appears only on the Full season board`;
+    ? `covers the top ${lim} prospects by board rank (${n.toLocaleString()} with a game log); everyone else appears only on the Season timeframe`
+    : `covers the ${n.toLocaleString()} prospects in the game-log slice; everyone else appears only on the Season timeframe`;
 }
-// Build the window pool: every slice player that clears the WHO filters,
-// aggregated over the date window, gated by sample, scored on the stat.
-function _lbWindowPool(cfg, statKey, opt) {
-  const { lvl, pos, org, ageCap, rankCap, win } = opt;
+// Build the window rows: every slice player on the side, aggregated over the
+// date window at the level filter, with the Standard columns recomputed from
+// box lines. The qualifier scales with the window: max(8, days/2) PA or
+// max(3, days * 0.8 / 3) IP.
+function _lbWindowQualifies(t, isP, days) {
+  if (!isP) return t.pa >= Math.max(8, Math.round(days * 0.5));
+  return t.outs >= Math.max(9, Math.round(days * 0.8));   // ~3 IP floor
+}
+function _lbWindowPool(side, opt) {
+  const { lvl, win } = opt;
   const gl = DATA.leaderboard_gamelogs;
   const byKey = (gl && gl.players) || {};
   const pool = [];
@@ -20597,30 +20352,25 @@ function _lbWindowPool(cfg, statKey, opt) {
     const entry = byKey[p.player_key];
     if (!entry) continue;
     const isP = !!entry.is_pitcher;
-    if (cfg.side === "hit" && isP) continue;
-    if (cfg.side === "pit" && !isP) continue;
-    const bucket = positionBucket(p.position);
-    if (pos !== "all" && !positionMatches(bucket, pos)) continue;
-    if (org !== "all" && p.org !== org) continue;
-    if (ageCap != null && !(p.age != null && p.age <= ageCap)) continue;
-    if (rankCap != null && !(boardRankOf(p) != null && boardRankOf(p) <= rankCap)) continue;
+    if (isP !== (side === "pit")) continue;
     const games = [];
+    const lvls = new Set();
     for (const g of (entry.games || [])) {
       if (g.d < win.from || g.d > win.to) continue;
       if (lvl !== "all" && g.lvl !== lvl) continue;
       games.push(g);
+      if (g.lvl) lvls.add(g.lvl);
     }
     if (!games.length) continue;
     const t = isP ? _lbAggPitcher(games) : _lbAggHitter(games);
-    if (!_lbWindowQualifies(statKey, t, isP, win.days)) continue;
-    const v = _lbWindowStatValue(statKey, t, isP);
-    if (v == null || !isFinite(v)) continue;
-    const r = isP ? _lbWindowRowPitcher(t) : _lbWindowRowHitter(t);
-    // The window row is built from box lines, which carry no org; the Org cell
-    // printed "-" on every window row. The window is current-season, so the
-    // prospect's current org is the org of these games.
-    r.org = p.org; r.season = gl.season;
-    pool.push({ p, r, v });
+    if (isP ? !(t.outs > 0) : !(t.pa > 0)) continue;
+    const r = { side, s: gl.season, season: gl.season, lvl: _lbLevelSort([...lvls]).join("/") || "-", age: p.age,
+      vals: _lbWindowVals(t, isP), qual: _lbWindowQualifies(t, isP, win.days),
+      tie: isP ? t.outs : t.pa, pa: isP ? null : t.pa, outs: isP ? t.outs : null };
+    // The window row is built from box lines, which carry no org. The window is
+    // current-season, so the prospect's current org is the org of these games.
+    r.org = p.org;
+    pool.push({ p, r });
   }
   return pool;
 }
@@ -21035,370 +20785,655 @@ function renderToolCompRadar(key){
 }
 function toolCompSet(key, compKey){ _toolCompFor(key).comp = compKey || null; renderToolCompRadar(key); }
 
-function renderLeaderboards() {
-  // Standout single-game performances ticker - same feed as Spotlights,
-  // rendered into the leaderboards section's own container.
-  try { renderStandoutPerformances("whats-standout-leaderboards"); } catch (e) { /* silent */ }
-  const statKey = state.lbStat   || "ops";
-  const cfg = LB_STATS[statKey]   || LB_STATS.ops;
-  const boardSide = state.lbSide || "all";
-  const lvl    = state.lbLevel    || "all";
-  const pos    = state.lbPos      || "all";
-  const org    = state.lbOrg      || "all";
-  const ageMax = state.lbAgeMax   || "all";
-  const rankMax = state.lbRankMax || "all";
-  const dir    = state.lbDir      || "auto";   // auto = stat's natural direction
-  const season = Number(state.lbSeason || new Date().getUTCFullYear());
-  if (boardSide !== "all" && cfg.side !== boardSide) {
-    state.lbStat = boardSide === "pit" ? "era" : "ops";
-    return renderLeaderboards();
+// ---- Leaderboards stat sheet: data, rows, sort and render ------------------
+// The Season timeframe reads the lazy leaderboard file (prospx_leaderboard_export.py):
+// counting lines per player, season and level, one combined "MiLB" row per
+// player-season, the level indexes, Season FIP and K-BB%, team games per level
+// and season for the qualifier, and the current season's tracking feeds and
+// model indexes. The 7, 14 and 30 day and custom timeframes keep the window
+// engine over the game-log slice (_lbAggHitter, _lbAggPitcher, _lbFip and
+// _lbWindowStatValue), so no window FIP moves.
+const LB_LEVELS = ["DSL", "CPX", "A", "A+", "AA", "AAA"];
+const LB_PAGE_SIZES = [50, 100, 250, 0];   // 0 = All
+const _lbLevelSort = lv => lv.slice().sort((a, b) => LB_LEVELS.indexOf(a) - LB_LEVELS.indexOf(b));
+const _lbLevelRank = s => Math.max(-1, ...String(s || "").split("/").map(x => LB_LEVELS.indexOf(x)));
+let _lbDocLoaded = false;
+let _lbDocInFlight = null;
+let _lbIndex = null;
+function loadProspxLeaderboard() {
+  if (_lbDocLoaded) return Promise.resolve();
+  if (_lbDocInFlight) return _lbDocInFlight;
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  const versionParam = DATA && DATA.generated_at
+    ? `?v=${encodeURIComponent(DATA.generated_at)}`
+    : "";
+  _lbDocInFlight = fetch(base + "prospx_leaderboard.json" + versionParam, {
+    cache: versionParam ? "force-cache" : "no-cache",
+  })
+    .then(r => {
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then(payload => {
+      if (DATA) DATA.prospx_leaderboard = (payload && Array.isArray(payload.rows)) ? payload : null;
+      _lbDocLoaded = true;
+      _lbIndex = null;
+    })
+    .catch(err => {
+      console.warn("prospx_leaderboard fetch failed:", err);
+      if (DATA) DATA.prospx_leaderboard = null;
+      _lbDocLoaded = true;
+    })
+    .finally(() => { _lbDocInFlight = null; });
+  return _lbDocInFlight;
+}
+// The qualifier (SP-D4): 2.7 PA or 0.8 IP per team game at that level that
+// season; a combined row divides by its exposure-weighted team games (tg).
+// Both constants and the team games come from the file, never from here.
+function _lbTeamGames(doc, r) {
+  if (r.lvl === "MiLB") return r.tg || null;
+  const t = (doc.team_games || {})[String(r.s)];
+  return t ? (t[r.lvl] || null) : null;
+}
+function _lbQualifies(doc, r) {
+  const tg = _lbTeamGames(doc, r);
+  if (!tg) return false;
+  const q = (doc.basis && doc.basis.qualifier) || {};
+  return r.side === "hit"
+    ? (r.pa || 0) >= Number(q.pa_per_team_game) * tg
+    : (r.outs || 0) / 3 >= Number(q.ip_per_team_game) * tg;
+}
+function _lbIdx() {
+  const doc = DATA && DATA.prospx_leaderboard;
+  if (!doc) return null;
+  const nPlayers = (DATA.players || []).length;
+  if (_lbIndex && _lbIndex.doc === doc && _lbIndex.nPlayers === nPlayers) return _lbIndex;
+  const byRow = new Map();
+  const qualCount = { hit: {}, pit: {} };
+  const curSides = {};
+  for (const r of doc.rows) {
+    byRow.set(`${r.k}|${r.s}|${r.lvl}|${r.side}`, r);
+    if (r.lvl !== "MiLB") continue;
+    if (_lbQualifies(doc, r)) qualCount[r.side][r.s] = (qualCount[r.side][r.s] || 0) + 1;
+    if (r.s === doc.current_season) (curSides[r.k] || (curSides[r.k] = [])).push(r.side);
   }
-  // v45 - Timeframe. Window mode recomputes box-line stats over a date range;
-  // snap off any stat that can't be derived from game logs.
-  const windowMode = !!(state.lbWindow && state.lbWindow !== "season");
-  if (windowMode && !_lbStatWindowOK(statKey)) {
-    state.lbStat = cfg.side === "pit" ? "era" : "ops";
-    return renderLeaderboards();
-  }
-  document.querySelectorAll("[data-lb-stat]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbStat === state.lbStat));
-  document.querySelectorAll("[data-lb-side]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbSide === (state.lbSide || "all")));
-  document.querySelectorAll("[data-lb-level]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbLevel === lvl));
-  document.querySelectorAll("[data-lb-pos]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbPos === pos));
-  document.querySelectorAll("[data-lb-age]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbAge === ageMax));
-  document.querySelectorAll("[data-lb-rank]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbRank === rankMax));
-  document.querySelectorAll("[data-lb-dir]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbDir === dir));
-  document.querySelectorAll("[data-lb-season]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbSeason === String(season)));
-  document.querySelectorAll("[data-lb-stat-side]").forEach(btn => {
-    const side = btn.dataset.lbStatSide;
-    btn.style.display = (boardSide === "all" || side === boardSide) ? "" : "none";
-  });
-  // v45 - Timeframe chip state, custom-range visibility, and dimming of any
-  // stat chip that can't be recomputed from box lines while a window is active.
-  // "Final" once the game-log slice reaches the last MiLB game (site pass SP-D5).
-  const _lbWinWord = _pxSeasonLabel("window", (DATA.leaderboard_gamelogs || {}).as_of);
-  document.querySelectorAll("[data-lb-window]").forEach(b => {
-    b.classList.toggle("active", b.dataset.lbWindow === (state.lbWindow || "season"));
-    const n = Number(b.dataset.lbWindow);
-    if (n) {
-      b.textContent = `${_lbWinWord} ${n}d`;
-      b.title = `Stats over the ${_lbWinWord.toLowerCase()} ${n} days of games`;
-    }
-  });
-  const _lbRangeEl = document.getElementById("lb-window-range");
-  if (_lbRangeEl) _lbRangeEl.style.display = (state.lbWindow === "custom") ? "" : "none";
-  document.querySelectorAll("[data-lb-stat]").forEach(b =>
-    b.classList.toggle("lb-stat-disabled", windowMode && !_lbStatWindowOK(b.dataset.lbStat)));
-  const _winDates = windowMode ? _lbWindowDates() : null;
-  if (state.lbWindow === "custom" && _winDates) {
-    const fEl = document.getElementById("lb-window-from");
-    const tEl = document.getElementById("lb-window-to");
-    if (fEl && !fEl.value) fEl.value = _winDates.from;
-    if (tEl && !tEl.value) tEl.value = _winDates.to;
-  }
-
-  const statcastValue = (sc, field) => {
-    if (!sc) return null;
-    const cq = sc.contact_quality || {};
-    const pm = sc.pitch_movement || {};
-    const spray = cq.spray || {};
-    if (field === "pull_air_pct") return spray.pull_air_pct;
-    if (field in cq) return cq[field];
-    if (field === "fb_velo_feed") {
-      const hard = (pm.pitch_summary || []).filter(p => ["FF", "SI", "FT", "FC"].includes(p.pitch_type) && p.avg_velo != null);
-      if (!hard.length) return null;
-      hard.sort((a, b) => (b.count || 0) - (a.count || 0));
-      return hard[0].avg_velo;
-    }
-    if (field === "fb_ivb_feed") {
-      const hard = (pm.pitch_summary || []).filter(p => ["FF", "SI", "FT", "FC"].includes(p.pitch_type) && p.avg_ivb != null);
-      if (!hard.length) return null;
-      hard.sort((a, b) => (b.count || 0) - (a.count || 0));
-      return hard[0].avg_ivb;
-    }
-    if (field === "ivb_ff") {
-      const ff = (pm.pitch_summary || []).find(p => p.pitch_type === "FF");
-      return ff ? ff.avg_ivb : null;
-    }
-    return null;
+  const players = new Map((DATA.players || []).map(p => [p.player_key, p]));
+  _lbIndex = { doc, byRow, qualCount, curSides, players, nPlayers };
+  return _lbIndex;
+}
+// Seasons with at least 100 qualified rows on the side, newest first.
+function _lbSeasons(ix, side) {
+  const out = (ix.doc.seasons || []).filter(s => (ix.qualCount[side][s] || 0) >= 100);
+  return out.sort((a, b) => b - a);
+}
+function _lbHitVals(r) {
+  const ab = r.ab || 0, pa = r.pa || 0, h = r.h || 0, bb = r.bb || 0, hbp = r.hbp || 0, sf = r.sf || 0;
+  const avg = ab > 0 ? h / ab : null;
+  const obpDen = ab + bb + hbp + sf;
+  const obp = obpDen > 0 ? (h + bb + hbp) / obpDen : null;
+  const slg = ab > 0 ? (h + (r.d || 0) + 2 * (r.t || 0) + 3 * (r.hr || 0)) / ab : null;
+  return {
+    pa, g: r.g, avg, obp, slg,
+    ops: (obp != null && slg != null) ? obp + slg : null,
+    iso: (slg != null && avg != null) ? slg - avg : null,
+    bb_pct: pa > 0 ? 100 * bb / pa : null,
+    k_pct: pa > 0 ? 100 * (r.so || 0) / pa : null,
+    hr: r.hr, sb: r.sb,
+    hit_level_plus: r.ops_plus_lvl != null ? r.ops_plus_lvl : null,
+    iso_plus: r.iso_plus != null ? r.iso_plus : null,
   };
-
-  // Walk every (player, career_stats row) for the selected season. The
-  // leaderboards are an ACTIVE-PROSPECT surface only (owner ask): debuted/
-  // graduated players are no longer prospects and are excluded - their MLB
-  // stats live on the Debuted tab and /projections/, not the prospect boards.
-  // (DATA.players is the active pool: stale/aged-out and graduated players are
-  // already filtered out upstream in storage.export_timeseries_json.)
-  let pool = [];
-  const _ageCap = ageMax === "all" ? null : Number(ageMax);
-  const _rankCap = rankMax === "all" ? null : Number(rankMax);
-  if (windowMode) {
-    // Date-windowed board: aggregate per-game box lines from the (lazy)
-    // game-log slice. Gate on the slice being loaded; re-render when it lands.
+}
+function _lbPitVals(r) {
+  const outs = r.outs || 0, ip = outs / 3, bf = r.bf || 0;
+  return {
+    ip: outs, g: r.g,
+    era: ip > 0 ? 9 * (r.er || 0) / ip : null,
+    fip: r.fip != null ? r.fip : null,
+    whip: ip > 0 ? ((r.bb || 0) + (r.h || 0)) / ip : null,
+    pitcher_k_pct: bf > 0 ? 100 * (r.so || 0) / bf : null,
+    pitcher_bb_pct: bf > 0 ? 100 * (r.bb || 0) / bf : null,
+    kbb: r.kbb != null ? r.kbb : null,
+    hr_per_9: ip > 0 ? 9 * (r.hr || 0) / ip : null,
+    pit_level_plus: r.era_minus_lvl != null ? r.era_minus_lvl : null,
+  };
+}
+const _lbLvlText = r => (r.lvl === "MiLB")
+  ? (Array.isArray(r.lvls) && r.lvls.length ? _lbLevelSort(r.lvls).join("/") : "MiLB")
+  : r.lvl;
+// Season rows: one per prospect at the level filter ("all" = the combined row).
+// The current season's model indexes ride the combined row, or the row at the
+// level the player's current statline (where the index was computed) carries.
+function _lbSeasonRows(ix, side, view, season, lvl) {
+  const doc = ix.doc;
+  const isCur = season === doc.current_season;
+  const want = lvl === "all" ? "MiLB" : lvl;
+  const out = [];
+  for (const r of doc.rows) {
+    if (r.side !== side || r.s !== season || r.lvl !== want) continue;
+    const p = ix.players.get(r.k);
+    if (!p) continue;
+    if (side === "hit" ? !(r.pa > 0) : !(r.outs > 0)) continue;
+    const vals = side === "hit" ? _lbHitVals(r) : _lbPitVals(r);
+    if (view.id === "rel" && isCur) {
+      const cur = (doc.current || {})[r.k];
+      const sl = p.statline || {};
+      if (cur && cur.indexes && (lvl === "all" || sl.level === r.lvl)) {
+        for (const c of view.cur || []) if (cur.indexes[c] != null) vals[c] = cur.indexes[c];
+      }
+    }
+    out.push({ p, r: { side, s: season, season, lvl: _lbLvlText(r), org: r.org, age: r.age, vals,
+      qual: _lbQualifies(doc, r), tie: side === "hit" ? (r.pa || 0) : (r.outs || 0),
+      pa: r.pa, outs: r.outs } });
+  }
+  return out;
+}
+// Tracking rows (current season): one per prospect. A single-level filter reads
+// that level; "All MiLB" reads the level with the largest tracked sample,
+// because the feeds do not combine across levels, and Lvl names that level.
+function _lbTrackRows(ix, side, view, lvl) {
+  const doc = ix.doc, season = doc.current_season;
+  const out = [];
+  for (const k of Object.keys(doc.current || {})) {
+    if (!(ix.curSides[k] || []).includes(side)) continue;
+    const p = ix.players.get(k);
+    if (!p) continue;
+    const cur = doc.current[k];
+    const sc = cur.statcast || {}, zn = cur.zone || {};
+    const pick = (obj, n) => {
+      if (lvl !== "all") return obj[lvl] ? lvl : null;
+      let best = null;
+      for (const L of Object.keys(obj)) if (best == null || n(obj[L]) > n(obj[best])) best = L;
+      return best;
+    };
+    let L = null;
+    if (view.src === "statcast") L = pick(sc, x => x.batted_balls || 0);
+    else L = pick(zn, x => x.pitches || 0) || (view.id === "pitch" ? pick(sc, x => x.tracked_pitches || 0) : null);
+    if (!L) continue;
+    const s = sc[L] || {}, z = zn[L] || {};
+    let vals, n;
+    if (view.id === "bb") {
+      vals = { bbe: s.batted_balls, avg_ev: s.avg_ev, p90_ev: s.p90_ev, max_ev: s.max_ev,
+               hard_hit_pct: s.hard_hit_pct, barrel_pct: s.barrel_pct, pull_air_pct: s.pull_air_pct,
+               xwoba_est: s.xwoba_est, xwobacon_est: s.xwobacon_est };
+      n = s.batted_balls || 0;
+    } else if (view.id === "contact") {
+      vals = { bbe: s.batted_balls, pitcher_avg_ev_allowed: s.avg_ev,
+               pitcher_hard_hit_allowed: s.hard_hit_pct, pitcher_barrel_allowed: s.barrel_pct };
+      n = s.batted_balls || 0;
+    } else if (view.id === "swing") {
+      vals = { pitches: z.pitches, zone_z_swing: z.z_swing_pct, zone_z_contact: z.z_contact_pct,
+               zone_chase: z.o_swing_pct };
+      n = z.pitches || 0;
+    } else {
+      vals = { tracked: s.tracked_pitches, fb_velo_feed: s.fb_velo_feed, fb_ivb_feed: s.fb_ivb_feed,
+               pitcher_zone_whiff: z.whiff_pct, pitcher_zone_chase: z.o_swing_pct,
+               pitcher_zone_z_swing: z.z_swing_pct, pitcher_zone_z_contact: z.z_contact_pct };
+      n = z.pitches != null ? z.pitches : (s.tracked_pitches || 0);
+    }
+    if (!(n > 0)) continue;
+    const row = ix.byRow.get(`${k}|${season}|${L}|${side}`) || ix.byRow.get(`${k}|${season}|MiLB|${side}`) || {};
+    out.push({ p, r: { side, s: season, season, lvl: L, org: row.org || p.org, age: row.age != null ? row.age : p.age,
+      vals, qual: n >= (view.minN || 0), tie: side === "hit" ? (row.pa || 0) : (row.outs || 0),
+      pa: row.pa, outs: row.outs } });
+  }
+  return out;
+}
+// Cell value of a row for a column key (identity columns included).
+function _lbCellVal(row, key) {
+  switch (key) {
+    case "name": return row.p.player_name || "";
+    case "age":  return row.r.age != null ? Number(row.r.age) : null;
+    case "org":  return row.r.org || null;
+    case "lvl":  return _lbLevelRank(row.r.lvl);
+    case "efv": {
+      const x = (typeof getEfv === "function") ? getEfv(row.p) : null;
+      return (x && x.xfv_grade != null && !inProvSection(row.p)) ? efvBoardValue(x) : null;
+    }
+    default: {
+      const v = row.r.vals[key];
+      return (v == null || !isFinite(v)) ? null : Number(v);
+    }
+  }
+}
+// Printed text of a cell (Rk ties compare these, the CSV writes them).
+function _lbCellText(row, key) {
+  switch (key) {
+    case "name": return row.p.player_name || "";
+    case "age":  return row.r.age != null ? Number(row.r.age).toFixed(1) : "-";
+    case "org":  return row.r.org || "-";
+    case "lvl":  return row.r.lvl || "-";
+    case "efv": {
+      const v = _lbCellVal(row, "efv");
+      return v == null ? "-" : String(efvGradeDisplay(getEfv(row.p)));
+    }
+    default: {
+      const cfg = LB_STATS[key];
+      return cfg ? cfg.fmt(_lbCellVal(row, key)) : "-";
+    }
+  }
+}
+const _lbNaturalDir = key => {
+  const id = LB_ID_COLS.find(c => c.k === key);
+  if (id) return id.dir || "desc";
+  return (LB_STATS[key] && LB_STATS[key].hi === false) ? "asc" : "desc";
+};
+// Sort: missing values last in both directions; ties by PA (hitters) or IP
+// (pitchers) descending, then name.
+function _lbSortRows(rows, key, dir) {
+  const vals = new Map(rows.map(x => [x, _lbCellVal(x, key)]));
+  const sgn = dir === "asc" ? 1 : -1;
+  rows.sort((a, b) => {
+    const va = vals.get(a), vb = vals.get(b);
+    const na = va == null, nb = vb == null;
+    if (na !== nb) return na ? 1 : -1;
+    if (!na) {
+      const c = (typeof va === "string") ? va.localeCompare(vb) : (va - vb);
+      if (c) return sgn * c;
+    }
+    const t = (b.r.tie || 0) - (a.r.tie || 0);
+    if (t) return t;
+    return (a.p.player_name || "").localeCompare(b.p.player_name || "");
+  });
+  // Rk: position in the sort; equal printed values share the first one's number.
+  let prev = null, rk = 0;
+  rows.forEach((x, i) => {
+    const t = _lbCellText(x, key);
+    if (i === 0 || t !== prev) rk = i + 1;
+    x.rk = rk; prev = t;
+  });
+  return rows;
+}
+// Percentile of v in the sorted qualified values, oriented so better is higher.
+function _lbPct(sorted, v, hi) {
+  if (v == null || sorted.length < 3) return null;
+  let lo = 0, hiI = sorted.length;
+  while (lo < hiI) { const m = (lo + hiI) >> 1; if (sorted[m] < v) lo = m + 1; else hiI = m; }
+  let eq = lo;
+  while (eq < sorted.length && sorted[eq] === v) eq++;
+  const p = 100 * (lo + 0.5 * (eq - lo)) / sorted.length;
+  return hi ? p : 100 - p;
+}
+function _lbState(kind, msg) {
+  return (window.EephusState && window.EephusState.html)
+    ? window.EephusState.html(kind, msg, "px-lb-state")
+    : `<div class="state-message">${msg}</div>`;
+}
+function _lbPhone() {
+  return !!(window.matchMedia && window.matchMedia("(max-width: 640px)").matches);
+}
+// Everything the table shows for the current state: rows (filtered, sorted,
+// ranked), the effective view and columns, and the notes the control row needs.
+function _lbBuild() {
+  const ix = _lbIdx();
+  const side = state.lbSide === "pit" ? "pit" : "hit";
+  const views = LB_VIEWS[side];
+  const seasons = ix ? _lbSeasons(ix, side) : [];
+  const newest = seasons.length ? seasons[0] : null;
+  let season = state.lbSeason ? Number(state.lbSeason) : newest;
+  if (season == null || !seasons.includes(season)) season = newest;
+  const isCur = !!(ix && season === ix.doc.current_season);
+  const winOK = isCur;
+  const windowMode = winOK && !!(state.lbWindow && state.lbWindow !== "season");
+  const reasons = {};
+  for (const v of views) {
+    if (windowMode && v.id !== "std") reasons[v.id] = `${v.label} is a season view; the date windows print Standard only.`;
+    else if (!isCur && v.src !== "season") reasons[v.id] = `${v.label} comes from the tracking feeds, which cover the current season only.`;
+  }
+  let view = views.find(v => v.id === state.lbView) || views[0];
+  const notes = [];
+  if (reasons[view.id]) { notes.push(reasons[view.id] + " Showing Standard."); view = views[0]; }
+  let cols = view.cols;
+  let defSort = view.sort;
+  if (view.cur && !isCur) {
+    cols = cols.filter(c => !view.cur.includes(c[0]));
+    defSort = view.pastSort;
+    notes.push(`${view.cur.map(k => LB_STATS[k].label).join(", ")} exist for the current season only; ${season} shows the level indexes.`);
+  }
+  const colKeys = cols.map(c => c[0]);
+  let sortKey = state.lbSort || defSort;
+  if (!(colKeys.includes(sortKey) || LB_ID_COLS.some(c => c.k === sortKey && c.k !== "rk"))) sortKey = defSort;
+  const dir = state.lbDir || _lbNaturalDir(sortKey);
+  return { ix, side, views, view, cols, colKeys, seasons, newest, season, isCur, winOK, windowMode,
+           reasons, notes, sortKey, dir, defSort };
+}
+function _lbFilter(rows) {
+  const pos = state.lbPos || "all";
+  const org = state.lbOrg || "all";
+  const ageCap = (state.lbAgeMax && state.lbAgeMax !== "all") ? Number(state.lbAgeMax) : null;
+  const _rankCap = (state.lbRankMax && state.lbRankMax !== "all") ? Number(state.lbRankMax) : null;
+  const q = state.search ? state.search.toLowerCase() : "";
+  return rows.filter(({ p, r }) => {
+    if (pos !== "all" && !positionMatches(positionBucket(p.position), pos)) return false;
+    if (org !== "all" && r.org !== org) return false;
+    if (ageCap != null && !(r.age != null && Math.floor(r.age) <= ageCap)) return false;
+    if (_rankCap != null && !(boardRankOf(p) != null && boardRankOf(p) <= _rankCap)) return false;
+    if (q && !(p.player_name || "").toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+// Window values: the Standard columns recomputed from box lines in the window.
+function _lbWindowVals(t, isP) {
+  if (!isP) {
+    const v = { pa: t.pa, g: t.g };
+    for (const k of ["avg", "obp", "slg", "ops", "iso", "bb_pct", "k_pct", "hr", "sb"]) v[k] = _lbWindowStatValue(k, t, false);
+    return v;
+  }
+  const v = { ip: t.outs, g: t.g };
+  for (const k of ["era", "fip", "whip", "pitcher_k_pct", "pitcher_bb_pct", "hr_per_9"]) v[k] = _lbWindowStatValue(k, t, true);
+  v.kbb = (t.bfKnown && t.bf > 0) ? 100 * (t.k - t.bb) / t.bf : null;
+  return v;
+}
+function _lbControlsHTML(B) {
+  const esc = escapeHtml;
+  const seg = (label, kind, items, cur) => `<div class="px-lb-seg" role="group" aria-label="${esc(label)}">`
+    + items.map(it => {
+      const dis = it.reason ? ` aria-disabled="true" title="${esc(it.reason)}"` : (it.title ? ` title="${esc(it.title)}"` : "");
+      return `<button type="button" class="chip${it.v === cur ? " active" : ""}" data-lbc="${kind}" data-v="${esc(it.v)}" aria-pressed="${it.v === cur}"${dis}>${esc(it.label)}</button>`;
+    }).join("") + `</div>`;
+  const sideSeg = seg("Side", "side", [{ v: "hit", label: "Hitters" }, { v: "pit", label: "Pitchers" }], B.side);
+  const viewSeg = seg("View", "view", B.views.map(v => ({ v: v.id, label: v.label, reason: B.reasons[v.id] })), B.view.id);
+  const seasonSel = `<label class="px-lb-ctl"><span>Season</span><select class="chip" data-lbc="season" aria-label="Season">`
+    + (B.seasons.length ? B.seasons.map(s => `<option value="${s}"${s === B.season ? " selected" : ""}>${s}</option>`).join("")
+      : `<option value="">-</option>`) + `</select></label>`;
+  const word = _pxSeasonLabel("window", (DATA.leaderboard_gamelogs || {}).as_of);
+  const winCur = B.windowMode ? state.lbWindow : "season";
+  const winOpts = [["season", "Season"], ["7", `${word} 7d`], ["14", `${word} 14d`], ["30", `${word} 30d`], ["custom", "Custom"]];
+  const winSel = `<label class="px-lb-ctl"${B.winOK ? "" : ` title="The date windows cover the current season only"`}><span>Timeframe</span>`
+    + `<select class="chip" data-lbc="win" aria-label="Timeframe"${B.winOK ? "" : " disabled"}>`
+    + winOpts.map(o => `<option value="${o[0]}"${o[0] === winCur ? " selected" : ""}>${esc(o[1])}</option>`).join("")
+    + `</select></label>`;
+  const qual = `<label class="px-lb-ctl px-lb-switch"><input type="checkbox" data-lbc="qual"${state.lbQual !== false ? " checked" : ""}>`
+    + `<span data-gl="prospx_lb_qualified" tabindex="-1">Qualified</span><span class="px-lb-cnt" id="lb-qual-count"></span></label>`;
+  return `<div class="px-lb-crow">${sideSeg}${viewSeg}</div><div class="px-lb-crow">${seasonSel}${winSel}${qual}</div>`;
+}
+function _lbChipsHTML() {
+  const out = [];
+  const add = (axis, label, key) => out.push(`<button type="button" class="active-filter-chip" data-lbc="clear" data-v="${key}" title="Clear this filter">`
+    + `<span class="afc-axis">${escapeHtml(axis)}:</span><span>${escapeHtml(label)}</span><span class="afc-x" aria-hidden="true">×</span></button>`);
+  if (state.lbLevel && state.lbLevel !== "all") add("Level", state.lbLevel, "lbLevel");
+  if (state.lbPos && state.lbPos !== "all") add("Position", state.lbPos, "lbPos");
+  if (state.lbOrg && state.lbOrg !== "all") add("Org", state.lbOrg, "lbOrg");
+  if (state.lbAgeMax && state.lbAgeMax !== "all") add("Age", `≤${state.lbAgeMax}`, "lbAgeMax");
+  if (state.lbRankMax && state.lbRankMax !== "all") add("Board rank", `Top ${state.lbRankMax}`, "lbRankMax");
+  return out.join("");
+}
+function _lbHeadHTML(B, order) {
+  return order.map(c => {
+    if (c.k === "rk") {
+      return `<th scope="col" class="mlbstats-col-rank px-lb-c-rk"><abbr title="${escapeHtml(c.title)}">Rk</abbr></th>`;
+    }
+    const sorted = c.k === B.sortKey;
+    const cfg = LB_STATS[c.k];
+    const label = cfg ? cfg.label : c.label;
+    const title = cfg ? cfg.title : c.title;
+    const gl = cfg ? cfg.gl : c.gl;
+    const cls = ["px-lb-c-" + c.k.replace(/[^a-z0-9_]/g, ""), c.left ? "px-lb-left" : "", sorted ? "is-sorted" : "", c.frz ? "px-lb-frz" : ""]
+      .filter(Boolean).join(" ");
+    const w = c.w ? ` style="width:${c.w}px;min-width:${c.w}px"` : "";
+    const aria = sorted ? (B.dir === "asc" ? "ascending" : "descending") : "none";
+    const srt = sorted ? `<span class="visually-hidden"> sorted ${aria}</span>` : "";
+    return `<th scope="col" class="${cls}" aria-sort="${aria}"${gl ? ` data-gl="${gl}" tabindex="-1"` : ""}${w}>`
+      + `<button type="button" class="px-lb-sort" data-lbc="sort" data-v="${c.k}"><abbr title="${escapeHtml(title)}">${escapeHtml(label)}</abbr>${srt}</button></th>`;
+  }).join("");
+}
+function _lbRowHTML(B, order, x, pctOf) {
+  const p = x.p, r = x.r;
+  const tds = order.map(c => {
+    const cls = [c.left ? "px-lb-left" : "", c.frz ? "px-lb-frz" : ""];
+    let inner = "", style = "";
+    switch (c.k) {
+      case "rk": return `<td class="mlbstats-col-rank px-lb-c-rk">${x.rk}</td>`;
+      case "name":
+        return `<td class="mlbstats-name px-lb-name"><a class="px-lb-player" href="#player=${escapeHtml(p.player_key)}" title="${escapeHtml(p.player_name || "")}">${escapeHtml(p.player_name || "")}</a></td>`;
+      case "org": {
+        // Row-aware: the org of this season's line (the export's, or the
+        // current org on a current-season window row), never today's org
+        // folded back over a past season.
+        const om = _statRowOrgMetaHTML(p, r);
+        inner = (!om.split && r.org)
+          ? `<a class="px-lb-org" href="#farm-org=${escapeHtml(r.org)}" title="${escapeHtml(r.org)} farm system">${escapeHtml(r.org)}</a>`
+          : om.labelHTML;
+        break;
+      }
+      case "efv": {
+        const v = _lbCellVal(x, "efv");
+        if (v == null) { inner = `<span class="px-lb-dim" title="${inProvSection(p) ? "Not yet graded by any source" : "No eFV grade"}">-</span>`; break; }
+        const g = efvGradeDisplay(getEfv(p));
+        const br = boardRankOf(p);
+        inner = `<span class="fv-badge ${fvClass(String(g))} px-lb-fv" title="eFV ${g}${br != null ? ` · board #${br}` : ""}">${g}</span>`;
+        cls.push("px-lb-efv");
+        break;
+      }
+      default:
+        inner = escapeHtml(_lbCellText(x, c.k));
+    }
+    if (c.k === B.sortKey && LB_STATS[c.k]) {
+      const pc = pctOf(_lbCellVal(x, c.k));
+      const col = (pc != null && window.EephusTiers && window.EephusTiers.pctColor) ? window.EephusTiers.pctColor(pc) : "";
+      cls.push("px-lb-sorted");
+      if (col) style = ` style="--lbh:color-mix(in oklab, ${col} 18%, transparent)"`;
+    }
+    const k = cls.filter(Boolean).join(" ");
+    return `<td${k ? ` class="${k}"` : ""}${style}>${inner}</td>`;
+  }).join("");
+  return `<tr data-key="${escapeHtml(p.player_key)}"${r.qual ? "" : ` class="is-provisional" title="Below the qualifier"`}>${tds}</tr>`;
+}
+function _lbKeyHTML() {
+  const T = window.EephusTiers;
+  if (!T || !T.pctColor) return "";
+  const lamps = [0, 20, 40, 60, 80, 90, 100].map(n =>
+    `<i class="px-lb-lamp" style="background:${T.pctColor(n)}" title="${n}th percentile"></i>`).join("");
+  return `<span class="px-lb-key">colour = percentile in this pool <span class="px-lb-lamps" aria-hidden="true">${lamps}</span></span>`;
+}
+function _lbCsv() {
+  const B = _lbLast;
+  if (!B || !B.rows) return false;
+  const keys = ["rk", "name", "age", "org", "lvl", "efv", ...B.colKeys];
+  const headers = keys.map(k => k === "rk" ? "Rk" : ((LB_STATS[k] || LB_ID_COLS.find(c => c.k === k) || {}).label || k));
+  headers.push("Qualified", "Player key");
+  const rows = B.rows.map(x => [...keys.map(k => k === "rk" ? String(x.rk) : _lbCellText(x, k)),
+    x.r.qual ? "1" : "0", x.p.player_key]);
+  const stem = `prospx-leaderboard-${B.side === "pit" ? "pitchers" : "hitters"}-${B.view.id}-${B.windowMode ? "window" : B.season}`;
+  const ok = !!(window.EephusCSV && window.EephusCSV.downloadModel
+    && window.EephusCSV.downloadModel({ title: "PROSPX leaderboard", headers, rows, aligns: headers.map(() => "left") }, stem));
+  if (!ok && window.EephusExport && window.EephusExport.toast) window.EephusExport.toast("CSV export is unavailable on this page load");
+  return ok;
+}
+let _lbLast = null;
+function renderLeaderboards() {
+  _lbWireControls();
+  const host = document.getElementById("leaderboard-rows");
+  const ctl = document.getElementById("lb-controls");
+  if (!host || !ctl) return;
+  if (!_lbDocLoaded) {
+    host.innerHTML = _lbState("loading", "Loading the leaderboard…");
+    loadProspxLeaderboard().then(() => { if (state.section === "leaderboards") renderLeaderboards(); });
+    return;
+  }
+  const B = _lbBuild();
+  ctl.innerHTML = _lbControlsHTML(B);
+  const strip = document.getElementById("lb-active-filters-strip");
+  if (strip) strip.innerHTML = _lbChipsHTML();
+  document.querySelectorAll("[data-lb-pos-side]").forEach(b => { b.style.display = b.dataset.lbPosSide === B.side ? "" : "none"; });
+  const rangeEl = document.getElementById("lb-window-range");
+  if (rangeEl) rangeEl.style.display = (B.windowMode && state.lbWindow === "custom") ? "" : "none";
+  if (!B.ix) {
+    host.innerHTML = _lbState("unmeasured", "The leaderboard file is not built on this deploy; the nightly build writes it.");
+    _lbLast = null;
+    return;
+  }
+  const lvl = state.lbLevel || "all";
+  let rows, winDates = null;
+  if (B.windowMode) {
+    winDates = _lbWindowDates();
+    if (state.lbWindow === "custom") {
+      const fEl = document.getElementById("lb-window-from"), tEl = document.getElementById("lb-window-to");
+      if (fEl && !fEl.value) fEl.value = winDates.from;
+      if (tEl && !tEl.value) tEl.value = winDates.to;
+    }
     if (!_lbGamelogsLoaded) {
-      document.getElementById("leaderboard-rows").innerHTML =
-        `<div class="state-message">Loading game logs for the ${escapeHtml(_winDates ? _winDates.label : "date-windowed")} board…</div>`;
-      const _viz = document.getElementById("leaderboard-viz"); if (_viz) _viz.innerHTML = "";
+      host.innerHTML = _lbState("loading", `Loading game logs for the ${escapeHtml(winDates.label)} board…`);
       loadLeaderboardGamelogs().then(() => renderLeaderboards());
       return;
     }
     if (!DATA.leaderboard_gamelogs || !DATA.leaderboard_gamelogs.players) {
-      document.getElementById("leaderboard-rows").innerHTML =
-        `<div class="state-message">Date-windowed boards need <code>data/leaderboard_gamelogs.json</code>, which isn't present in this build. Switch Timeframe back to <strong>Full season</strong>.</div>`;
-      const _viz = document.getElementById("leaderboard-viz"); if (_viz) _viz.innerHTML = "";
+      host.innerHTML = _lbState("unmeasured", "The date windows need the game-log slice, which is not built on this deploy. Switch Timeframe back to Season.");
       return;
     }
-    pool = _lbWindowPool(cfg, statKey, {
-      lvl, pos, org, ageCap: _ageCap, rankCap: _rankCap, win: _winDates,
-    });
+    rows = _lbWindowPool(B.side, { lvl, win: winDates });
+  } else if (B.view.src === "season") {
+    rows = _lbSeasonRows(B.ix, B.side, B.view, B.season, lvl);
   } else {
-  const entityPool = (DATA.players || []).map(p => ({ p, isDebut: false }));
-  for (const { p, isDebut } of entityPool) {
-    const bucket = positionBucket(p.position);
-      if (pos !== "all" && !positionMatches(bucket, pos)) continue;
-      if (org !== "all" && p.org !== org) continue;
-      if (_ageCap != null && !(p.age != null && p.age <= _ageCap)) continue;
-      if (_rankCap != null && !isDebut && !(boardRankOf(p) != null && boardRankOf(p) <= _rankCap)) continue;
-      if (boardSide !== "all" && cfg.side !== boardSide) continue;
-    // v44 - Getter-based "+" index stats (ISO+/RPS+/SC+/POW+/PD+/pStuff+/$DvM+).
-    // These are JS-derived from the player's current statline (not baked per
-    // career-row), so they take a dedicated per-player path: one entry per
-    // player, gated by the current statline's sample. (This also FIXES the
-    // previously-empty rps_plus / hit_level_plus / pit_level_plus boards, which
-    // read non-existent career-row fields and returned 0 rows.)
-    if (cfg.getter) {
-      const sl = p.statline;
-      if (!sl) continue;
-      if (season != null && sl.season != null && Number(sl.season) !== Number(season)) continue;
-      if (lvl !== "all" && sl.level !== lvl) continue;
-      if (cfg.side === "hit" && sl.is_pitcher) continue;
-      if (cfg.side === "pit" && !sl.is_pitcher) continue;
-      if (cfg.minAB && Number(sl.ab ?? 0) < cfg.minAB) continue;
-      if (cfg.minIP && Number(sl.ip ?? 0) < cfg.minIP) continue;
-      const gv = cfg.getter(p);
-      if (gv == null || !isFinite(gv)) continue;
-      pool.push({ p, r: sl, v: Number(gv) });
-      continue;
-    }
-    if (cfg.source === "zone") {
-      const splits = (p.zone_metrics && Array.isArray(p.zone_metrics.level_splits) && p.zone_metrics.level_splits.length)
-        ? p.zone_metrics.level_splits
-        : (p.zone_metrics ? [p.zone_metrics] : []);
-      for (const z of splits) {
-        if (!z || z.season !== season) continue;
-        if (lvl !== "all" && z.level !== lvl) continue;
-        if (cfg.side === "hit" && z.is_pitcher) continue;
-        if (cfg.side === "pit" && !z.is_pitcher) continue;
-        if (cfg.minPitches && Number(z.pitches || 0) < cfg.minPitches) continue;
-        const v = z[cfg.field || statKey];
-        if (v == null) continue;
-        pool.push({ p, r: { _zone: z, level: z.level, season: z.season, is_pitcher: z.is_pitcher }, v: Number(v) });
-      }
-      continue;
-    }
-    if (cfg.source === "statcast") {
-      const sc = p.statcast_metrics;
-      if (!sc || sc.season !== season) continue;
-      const splits = (Array.isArray(sc.level_splits) && sc.level_splits.length)
-        ? sc.level_splits
-        : [sc];
-      for (const split of splits) {
-        if (!split || split.season !== season) continue;
-        if (lvl !== "all" && split.level !== lvl) continue;
-        if (cfg.side === "hit" && split.is_pitcher) continue;
-        if (cfg.side === "pit" && !split.is_pitcher) continue;
-        const cq = split.contact_quality || {};
-        const pm = split.pitch_movement || {};
-        if (cfg.minBBE && Number(cq.batted_balls || 0) < cfg.minBBE) continue;
-        if (cfg.minTrackedPitches && Number(pm.tracked_pitches || 0) < cfg.minTrackedPitches) continue;
-        const v = statcastValue(split, cfg.field || statKey);
-        if (v == null) continue;
-        pool.push({ p, r: { _statcast: split, level: split.level, season: split.season, is_pitcher: split.is_pitcher }, v: Number(v) });
-      }
-      continue;
-    }
-    const career = p.career_stats || [];
-    if (!career.length) continue;
-    // Wrong-side gate at the player level - `p.position` is the most
-    // current designation. is_pitcher on the row is authoritative
-    // when present.
-    for (const r of career) {
-      if (r.season !== season) continue;
-      if (!isDebut && r.level === "MLB") continue;  // active prospect leaderboard stays MiLB-only
-      if (cfg.side === "hit" && r.is_pitcher) continue;
-      if (cfg.side === "pit" && !r.is_pitcher) continue;
-      if (lvl !== "all" && r.level !== lvl) continue;
-      // Allow LB_STATS entries to override the row-field name (e.g.
-      // the leaderboard chip `pitcher_k_pct` reads the row's `k_pct`
-      // field so we can keep distinct chip IDs without polluting the
-      // row schema with duplicates).
-      const fieldKey = cfg.field || statKey;
-      const v = r[fieldKey];
-      if (v == null) continue;
-      // Sample gates - AB for hitters, IP for pitchers. Both may
-      // arrive as strings; Number()-coerce.
-      if (cfg.minAB && Number(r.ab ?? 0) < cfg.minAB) continue;
-      if (cfg.minIP && Number(r.ip ?? 0) < cfg.minIP) continue;
-      pool.push({ p, r, v: Number(v) });
-    }
+    rows = _lbTrackRows(B.ix, B.side, B.view, lvl);
   }
+  rows = _lbFilter(rows);
+  const nAll = rows.length;
+  const nQual = rows.filter(x => x.r.qual).length;
+  const qualOn = state.lbQual !== false;
+  if (qualOn) rows = rows.filter(x => x.r.qual);
+  _lbSortRows(rows, B.sortKey, B.dir);
+  B.rows = rows;
+  _lbLast = B;
+  const qc = document.getElementById("lb-qual-count");
+  if (qc) qc.textContent = `${nQual.toLocaleString()} of ${nAll.toLocaleString()}`;
+  const cfg = LB_STATS[B.sortKey];
+  const idc = LB_ID_COLS.find(c => c.k === B.sortKey);
+  const sortLabel = cfg ? cfg.label : (idc ? idc.label : B.sortKey);
+  // Generate GFX: the sorted column, in table order.
+  const gfxFmt = cfg ? (v => cfg.fmt(v) + (cfg.unit && v != null ? cfg.unit : "")) : (v => String(v));
+  _gfxSet("leaderboards", "leader", rows.map(x => ({ p: x.p,
+    r: { level: x.r.lvl, pa: B.side === "hit" ? x.r.pa : null, ip: B.side === "pit" && x.r.outs != null ? _lbFmtOuts(x.r.outs) : null },
+    v: cfg ? _lbCellVal(x, B.sortKey) : _lbCellText(x, B.sortKey) })),
+    { statLabel: sortLabel, fmt: gfxFmt, level: lvl, season: B.windowMode ? null : String(B.season),
+      window: winDates ? winDates.label : null });
+  // Heat: the sorted column's percentile in the qualified pool shown.
+  const hi = cfg ? cfg.hi !== false : true;
+  const qualVals = cfg ? rows.filter(x => x.r.qual).map(x => _lbCellVal(x, B.sortKey))
+    .filter(v => v != null).sort((a, b) => a - b) : [];
+  const pctOf = v => _lbPct(qualVals, v, hi);
+  // Pool line.
+  const sideWord = B.side === "hit" ? "hitters" : "pitchers";
+  const lvlWord = lvl === "all" ? "All MiLB" : lvl;
+  const shownVals = cfg ? rows.map(x => _lbCellVal(x, B.sortKey)).filter(v => v != null).sort((a, b) => a - b) : [];
+  const med = shownVals.length ? (shownVals.length % 2 ? shownVals[(shownVals.length - 1) / 2]
+    : (shownVals[shownVals.length / 2 - 1] + shownVals[shownVals.length / 2]) / 2) : null;
+  const when = B.windowMode ? winDates.label : String(B.season);
+  const poolTxt = [
+    qualOn ? `${rows.length.toLocaleString()} qualified ${sideWord}` : `${rows.length.toLocaleString()} ${sideWord}, ${nQual.toLocaleString()} qualified`,
+    lvlWord, when,
+    (cfg && med != null) ? `median ${sortLabel} ${cfg.fmt(med)}` : null,
+    `sorted by ${sortLabel}`,
+  ].filter(Boolean).join(" · ");
+  let notes = B.notes.slice();
+  if (B.view.src !== "season" && !B.windowMode && lvl === "all") notes.push("The tracking feeds do not combine across levels; each row is the level with the largest tracked sample.");
+  if (B.windowMode) {
+    notes.push(`${state.lbWindow === "custom" ? "Custom range" : winDates.label}: ${_lbFmtDate(winDates.from)} - ${_lbFmtDate(winDates.to)}, rates recomputed from per-game box lines, latest game ${_lbFmtDate(winDates.asOf)}.`
+      + (lbSliceScopeText() ? ` The game-log slice ${escapeHtml(lbSliceScopeText())}.` : ""));
   }
-  // Top-level search bar applies here too - narrows the pool to
-  // entries whose player name matches the query. Other list views
-  // (actives, spotlights, traded, graduates, injured) already honor
-  // state.search; leaderboards was the lone holdout.
-  if (state.search) {
-    const q = state.search.toLowerCase();
-    pool = pool.filter(({ p }) => (p.player_name || "").toLowerCase().includes(q));
-  }
-  // Sort direction: "auto" follows the stat's natural orientation (cfg.hi);
-  // "hi"/"lo" let the user override to surface highest or lowest values.
-  const _hiFirst = dir === "auto" ? cfg.hi : (dir === "hi");
-  pool.sort((a, b) => _hiFirst ? (b.v - a.v) : (a.v - b.v));
-  _gfxSet("leaderboards", "leader", pool,        // snapshot for Generate GFX
-          { statLabel: cfg.label, fmt: cfg.fmt, level: state.lbLevel, season: state.lbSeason,
-            window: _winDates ? _winDates.label : null });
-  const pageSize = state.pageSizes.leaderboard || 25;
-  const totalItems = pool.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  if ((state.pages.leaderboard || 1) > totalPages) state.pages.leaderboard = 1;
-  const curPage = state.pages.leaderboard || 1;
-  const ranked = pageSlice(pool, curPage, pageSize);
-  const rankOffset = (curPage - 1) * pageSize;
-  const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "leaderboard");
-  const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "leaderboard");
-
-  const header = `<div class="col-header is-leaderboard">
-    <span style="text-align:center;">#</span>
-    <span>Player · pos · org · age</span>
-    <span>Level</span>
-    <span style="text-align:center;">FV</span>
-    <span style="text-align:right;">${escapeHtml(cfg.label)}</span>
-    <span style="text-align:center;" title="Year-over-year ${escapeHtml(cfg.label)} trend across this prospect's career (oldest → newest season).">Trend</span>
-    <span title="Stat-specific context: for OPS shows slash + HR/SB; for ERA shows IP + K/9; etc.">Context</span>
-  </div>`;
-
-  // v45 - Window caption: which timeframe / date range the board reflects.
-  const _winNote = (windowMode && _winDates)
-    ? `<div style="margin:6px 0 10px;padding:7px 11px;border:1px solid var(--border);border-left:3px solid var(--neon-cyan);border-radius:var(--radius-sm);background:var(--bg-secondary);font-size:11px;line-height:1.5;">`
-      + `<strong style="color:var(--text-primary);">${state.lbWindow === "custom" ? "Custom range" : escapeHtml(_winDates.label)}</strong>`
-      + `<span style="color:var(--text-secondary);font-family:var(--font-mono);"> · ${_lbFmtDate(_winDates.from)} - ${_lbFmtDate(_winDates.to)}</span>`
-      + `<span style="color:var(--text-tertiary);"> · rate stats recomputed from per-game box lines · latest game ${_lbFmtDate(_winDates.asOf)}</span>`
-      + (lbSliceScopeText() ? `<div style="color:var(--text-tertiary);">Window boards: the game-log slice ${escapeHtml(lbSliceScopeText())}.</div>` : "")
-      + `</div>`
-    : "";
-
-  // Pre-Beta - Staleness notice. The game-log slice is a nightly build; if its
-  // stamp (generated_at, else as_of) is more than 3 days old, flag it quietly so
-  // window boards are not read as live. Fresh slices (<= 3 days) show nothing;
-  // the absent-file fallback above is untouched.
-  const _staleNote = (() => {
-    if (!windowMode) return "";
-    const gl = DATA.leaderboard_gamelogs;
-    const stamp = gl && (gl.generated_at || gl.as_of);
-    if (!stamp) return "";
-    const t = Date.parse(stamp);
-    if (isNaN(t)) return "";
-    if ((Date.now() - t) / 86400000 <= 3) return "";
-    const through = gl.as_of || String(stamp).slice(0, 10);
-    return `<div style="margin:6px 0 0;font-size:11px;color:var(--text-tertiary);">Window data through ${escapeHtml(_lbFmtDate(through))}</div>`;
-  })();
-
-  if (!ranked.length) {
-    const minLabel = windowMode
-      ? (cfg.side === "hit"
-          ? `${Math.max(8, Math.round((_winDates ? _winDates.days : 14) * 0.5))} PA`
-          : `${(Math.max(9, Math.round((_winDates ? _winDates.days : 14) * 0.8)) / 3).toFixed(1)} IP`)
-      : cfg.minAB ? `${cfg.minAB} AB`
-      : cfg.minIP ? `${cfg.minIP} IP`
-      : cfg.minPitches ? `${cfg.minPitches} pitches`
-      : cfg.minBBE ? `${cfg.minBBE} BBE`
-      : cfg.minTrackedPitches ? `${cfg.minTrackedPitches} tracked pitches`
-      : "available sample";
-    const _scope = windowMode && _winDates
-      ? `the ${escapeHtml(_winDates.label).toLowerCase()} ${escapeHtml(cfg.label)} window`
-      : `the ${season} ${escapeHtml(cfg.label)} board`;
-    document.getElementById("leaderboard-rows").innerHTML =
-      _staleNote + _winNote + header + `<div class="state-message">No active MiLB ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify for ${_scope} under these filters (min ${minLabel}).${windowMode && lbSliceScopeText() ? ` The game-log slice ${escapeHtml(lbSliceScopeText())}.` : ""}</div>`;
+  const dist = cfg ? makeCohortHistogram(rows.map(x => _lbCellVal(x, B.sortKey)).filter(v => v != null), {
+    threshold: rows[Math.min(9, rows.length - 1)] ? _lbCellVal(rows[Math.min(9, rows.length - 1)], B.sortKey) : null,
+    hi, fmt: cfg.fmt, label: sortLabel }) : "";
+  const prevDist = host.querySelector("details.px-lb-dist");
+  const distOpen = !!(prevDist && prevDist.open);
+  const pool = `<div class="px-lb-pool"><span role="status">${escapeHtml(poolTxt)}</span>`
+    + (dist ? `<details class="px-lb-dist"${distOpen ? " open" : ""}><summary>Distribution</summary>${dist}</details>` : "")
+    + _lbKeyHTML() + `</div>`
+    + notes.map(n => `<div class="px-lb-note">${n}</div>`).join("");
+  if (!rows.length) {
+    const minTxt = B.windowMode ? "the window sample"
+      : B.view.src === "season" ? (B.side === "hit" ? "2.7 PA per team game" : "0.8 IP per team game")
+      : `${B.view.minN} ${B.view.src === "zone" ? "pitches" : "batted balls"}`;
+    host.innerHTML = pool + _lbState("empty", `No ${sideWord} match these filters${qualOn ? ` at the qualifier (${escapeHtml(minTxt)}); switch Qualified off to see every row` : ""}.`
+      + (B.windowMode && lbSliceScopeText() ? ` The game-log slice ${escapeHtml(lbSliceScopeText())}.` : ""));
     return;
   }
-
-  // Heat-color reference set: every QUALIFYING value (not just the
-  // top-25 displayed) becomes the cohort for the league-mean anchor +
-  // z-score scaling. The top of the board lands several stdevs above
-  // mean and gets the strong color treatment; the tail closer to mean
-  // stays muted.
-  const _heatValues = pool.map(({ v }) => v).filter(v => v != null);
-  // Per-prospect career trend for the active stat. Reads ALL rows
-  // (any level, any season) sorted chronologically so the spark shows
-  // the prospect's arc, not just one year.
-  const trendField = cfg.field || statKey;
-  const rows = ranked.map(({ p, r, v }, i) => {
-    const fvLabel = fvCloseLabel(p); // v26 - includes "+" suffix
-    const heat = cellHeatColor(v, _heatValues, !!cfg.hi);
-    // Stat-side gate (hitter/pitcher) + same field-name fallback used
-    // upstream. Skip the season being viewed only if there's at least
-    // one prior data point - keep it if it's the only one.
-    const trendVals = (p.career_stats || [])
-      .filter(row =>
-        !cfg.source &&
-        (cfg.side !== "hit" || !row.is_pitcher) &&
-        (cfg.side !== "pit" || row.is_pitcher) &&
-        row.level !== "MLB" &&
-        row[trendField] != null
-      )
-      .sort((a, b) => (a.season || 0) - (b.season || 0))
-      .map(row => Number(row[trendField]));
-    const trendCell = trendVals.length >= 2
-      ? _miniSparkline(trendVals, {
-          width: 56, height: 18,
-          stroke: cfg.hi ? "var(--up)" : "var(--down)",
-          fill: "rgba(78, 224, 255, 0.12)",
-        })
-      : `<span style="color:var(--text-tertiary);font-size:10px;"> - </span>`;
-    return `
-      <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
-        <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
-          ${headshotHTML(p, 40)}
-          <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(p.player_name)}</div>
-            ${playerMetaHTML(p, { orgMeta: _statRowOrgMetaHTML(p, r) })}
-          </div>
-          <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
-        </div>
-        <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || " - ")}</span></div>
-        <div style="text-align:center;">${efvBadgeHTML(p)}</div>
-        <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:${heat.fg};background:${heat.bg};padding:4px 8px;border-radius:var(--radius-sm);">${cfg.fmt(v)}</div>
-        <div style="text-align:center;" title="${trendVals.length} season${trendVals.length === 1 ? "" : "s"} of ${escapeHtml(cfg.label)} data">${trendCell}</div>
-        <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(r)}</div>
-      </div>`;
-  }).join("");
-
-  document.getElementById("leaderboard-rows").innerHTML = _staleNote + _winNote + paginationStripTop + header + rows + paginationStrip;
-  // Phase 3 viz: cohort histogram showing where the top-10 sits in the
-  // full qualifying-prospect distribution. The vertical dashed line +
-  // cyan highlight bin makes the percentile context obvious.
-  const vizSlot = document.getElementById("leaderboard-viz");
-  if (vizSlot) {
-    const allValues = pool.map(({ v }) => v);
-    // 10th-place threshold for the highlight band. Falls back to the
-    // last ranked entry if the pool is shorter than 10.
-    const tenthIdx = Math.min(9, ranked.length - 1);
-    const threshold = ranked[tenthIdx] ? ranked[tenthIdx].v : null;
-    vizSlot.innerHTML = makeCohortHistogram(allValues, {
-      threshold,
-      hi: !!cfg.hi,
-      fmt: cfg.fmt,
-      label: cfg.label,
-    });
+  // Column order: identity, then the view. On a phone the sorted stat renders
+  // third and is frozen beside the name, so the ranked number is always on screen.
+  const id = LB_ID_COLS.map(c => ({ k: c.k, w: c.w, left: ["name", "org", "lvl"].includes(c.k), label: c.label, title: c.title, gl: c.gl }));
+  let order = id.concat(B.cols.map(c => ({ k: c[0], w: c[1] })));
+  if (_lbPhone() && B.sortKey !== "name") {
+    const i = order.findIndex(c => c.k === B.sortKey);
+    if (i > 2) { const [c] = order.splice(i, 1); order.splice(2, 0, c); }
+    order[2] = Object.assign({}, order[2], { frz: true });
+    order = order.map(c => Object.assign({}, c, { w: null }));
+  }
+  const size = state.pageSizes.leaderboard === 0 ? 0 : (state.pageSizes.leaderboard || 50);
+  const per = size || Math.max(1, rows.length);
+  const pages = Math.max(1, Math.ceil(rows.length / per));
+  if ((state.pages.leaderboard || 1) > pages) state.pages.leaderboard = 1;
+  const cur = state.pages.leaderboard || 1;
+  const pageRows = pageSlice(rows, cur, per);
+  const pagerTop = renderPaginationStrip(cur, rows.length, per, "leaderboard");
+  const sizeSel = `<label class="px-lb-ctl px-lb-size"><span>Rows</span><select class="chip" data-lbc="size" aria-label="Rows per page">`
+    + LB_PAGE_SIZES.map(n => `<option value="${n}"${n === size ? " selected" : ""}>${n ? n : "All"}</option>`).join("")
+    + `</select></label>`;
+  const table = `<div class="mlbstats-scroll px-lb-scroll"><table class="mlbstats-table px-lb-table" data-lb-view="${B.side}-${B.view.id}">`
+    + `<thead><tr>${_lbHeadHTML(B, order)}</tr></thead><tbody>`
+    + pageRows.map(x => _lbRowHTML(B, order, x, pctOf)).join("")
+    + `</tbody></table></div>`;
+  host.innerHTML = pool + pagerTop + table + `<div class="px-lb-foot">${renderPaginationStrip(cur, rows.length, per, "leaderboard")}${sizeSel}</div>`;
+  if (window.EEPHUS_GL && window.EEPHUS_GL.wire) { try { window.EEPHUS_GL.wire(document.getElementById("leaderboards-section")); } catch (e) { /* optional */ } }
+}
+// One delegated listener for the control row, the header sort and the pager size.
+function _lbWireControls() {
+  const sec = document.getElementById("leaderboards-section");
+  if (!sec || sec.dataset.lbWired) return;
+  sec.dataset.lbWired = "1";
+  const after = () => { resetPage("leaderboard"); renderLeaderboards(); syncToURL(); };
+  sec.addEventListener("click", e => {
+    const b = e.target.closest && e.target.closest("[data-lbc]");
+    if (!b || b.tagName === "SELECT" || b.tagName === "INPUT") return;
+    const kind = b.dataset.lbc, v = b.dataset.v;
+    if (b.getAttribute("aria-disabled") === "true") return;
+    if (kind === "side") {
+      if (state.lbSide === v) return;
+      state.lbSide = v; state.lbView = "std"; state.lbSort = ""; state.lbDir = ""; state.lbPos = "all";
+      document.querySelectorAll("[data-lb-pos]").forEach(c => c.classList.toggle("active", c.dataset.lbPos === "all"));
+    } else if (kind === "view") {
+      if (state.lbView === v) return;
+      state.lbView = v; state.lbSort = ""; state.lbDir = "";
+    } else if (kind === "sort") {
+      const B = _lbLast;
+      if (!B) return;
+      let dir = (B.sortKey === v) ? (B.dir === "asc" ? "desc" : "asc") : _lbNaturalDir(v);
+      const defSort = B.defSort;
+      state.lbSort = (v === defSort) ? "" : v;
+      state.lbDir = (dir === _lbNaturalDir(v)) ? "" : dir;
+    } else if (kind === "clear") {
+      state[v] = "all";
+      const attr = { lbLevel: "lb-level", lbPos: "lb-pos", lbAgeMax: "lb-age", lbRankMax: "lb-rank" }[v];
+      if (attr) document.querySelectorAll(`[data-${attr}]`).forEach(c => c.classList.toggle("active", c.getAttribute(`data-${attr}`) === "all"));
+      if (v === "lbOrg") syncOrgPicker("lb-org-picker", "lbOrg");
+    } else if (kind === "csv") {
+      _lbCsv();
+      return;
+    } else return;
+    after();
+  });
+  sec.addEventListener("change", e => {
+    const el = e.target.closest && e.target.closest("[data-lbc]");
+    if (!el) return;
+    const kind = el.dataset.lbc;
+    if (kind === "season") {
+      const B = _lbLast;
+      state.lbSeason = (B && Number(el.value) === B.newest) ? "" : el.value;
+      if (B && Number(el.value) !== B.ix.doc.current_season) state.lbWindow = "season";
+    } else if (kind === "win") {
+      state.lbWindow = el.value;
+      if (el.value !== "season") loadLeaderboardGamelogs().then(() => renderLeaderboards());
+    } else if (kind === "qual") {
+      state.lbQual = !!el.checked;
+    } else if (kind === "size") {
+      const n = Number(el.value);
+      state.pageSizes.leaderboard = LB_PAGE_SIZES.includes(n) ? n : 50;
+    } else return;
+    after();
+  });
+  if (window.matchMedia) {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const onMq = () => { if (state.section === "leaderboards") renderLeaderboards(); };
+    if (mq.addEventListener) mq.addEventListener("change", onMq); else if (mq.addListener) mq.addListener(onMq);
   }
 }
 
@@ -56035,8 +56070,9 @@ const CHIP_GROUP_DEFAULTS = {
   "filter-overseas-status":"all",
   // Leaderboard WHO/HOW chip groups.
   "lb-age":    "all",
-  "lb-dir":    "auto",
-  "lb-window": "season",
+  "lb-level":  "all",
+  "lb-pos":    "all",
+  "lb-rank":   "all",
 };
 function attachChipGroup(attr, stateKey, onChange, opts = {}) {
   const { clearView = false, allowDeselect = true } = opts;
@@ -58366,33 +58402,19 @@ function attachHandlers() {
   // of il.type inside renderInjured.
   attachChipGroup("il-type", "ilTypeFilter", () => { renderInjured(); syncToURL(); });
 
-  // Leaderboards chip groups - stat picker swaps the metric the board
-  // is sorted by; level/pos chips narrow the qualifying pool. All three
-  // re-render the leaderboard but don't touch other tabs.
-  attachChipGroup("lb-stat",   "lbStat",   () => { resetPage("leaderboard"); renderLeaderboards(); });
-  attachChipGroup("lb-side",   "lbSide",   () => { resetPage("leaderboard"); renderLeaderboards(); });
+  // Leaderboards WHO panel. Side, view, season, timeframe, the qualifier and
+  // the header sort are wired by _lbWireControls on the section itself.
   attachChipGroup("lb-level",  "lbLevel",  () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-pos",    "lbPos",    () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-age",    "lbAgeMax", () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-rank",   "lbRankMax", () => { resetPage("leaderboard"); renderLeaderboards(); });
-  attachChipGroup("lb-dir",    "lbDir",    () => { resetPage("leaderboard"); renderLeaderboards(); });
-  attachChipGroup("lb-season", "lbSeason", () => { resetPage("leaderboard"); renderLeaderboards(); });
-  // v45 - Timeframe chips + custom-range date inputs. Picking a non-season
-  // window kicks off the (lazy) game-log slice load; renderLeaderboards
-  // gates on _lbGamelogsLoaded and re-renders when it lands.
-  attachChipGroup("lb-window", "lbWindow", (val) => {
-    if (val && val !== "season") loadLeaderboardGamelogs().then(() => renderLeaderboards());
-    resetPage("leaderboard");
-    renderLeaderboards();
-  });
+  // Custom-range date inputs (the Timeframe select picks "custom").
   const _lbFromEl = document.getElementById("lb-window-from");
   const _lbToEl   = document.getElementById("lb-window-to");
   const _onLbDate = () => {
     state.lbFrom = (_lbFromEl && _lbFromEl.value) || "";
     state.lbTo   = (_lbToEl && _lbToEl.value) || "";
     state.lbWindow = "custom";
-    document.querySelectorAll("[data-lb-window]").forEach(b =>
-      b.classList.toggle("active", b.dataset.lbWindow === "custom"));
     resetPage("leaderboard");
     loadLeaderboardGamelogs().then(() => renderLeaderboards());
     renderLeaderboards();
@@ -58788,14 +58810,18 @@ function _resetPageFilters(page) {
   } else if (page === "spotlights") {
     state.spotlightBucket = "risers";
   } else if (page === "leaderboard") {
-    state.lbStat   = "ops";
+    state.lbSide   = "hit";
+    state.lbView   = "std";
+    state.lbSort   = "";
+    state.lbQual   = true;
+    state.pageSizes.leaderboard = 50;
     state.lbLevel  = "all";
     state.lbPos    = "all";
     state.lbOrg    = "all";
-    state.lbSeason = String(new Date().getUTCFullYear());
+    state.lbSeason = "";
     state.lbAgeMax = "all";
     state.lbRankMax = "all";
-    state.lbDir    = "auto";
+    state.lbDir    = "";
     state.lbWindow = "season";
     state.lbFrom   = "";
     state.lbTo     = "";
