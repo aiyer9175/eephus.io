@@ -6142,6 +6142,20 @@
    "last_checked": "2026-10-08",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "starter_workload_xouts",
+   "summary": "Registered, not run: expected outs and pitches per start for a listed starter, read once on 2024-2025 corpus starts against the served props length.",
+   "surface": "No surface: nothing served reads it; the stage-1 lab tools/starter_workload_lab.py writes data/starter_workload_eval.json at its one run",
+   "predicts": "The listed starter's outs recorded in a start (primary) and pitches thrown (secondary): xouts = min(27, budget / (ppo x r_L)), xIP = xouts / 3, xPitches = budget",
+   "champion": "the candidate of docs/diamond-betting.md section 'Starter workload: expected outs and pitches per start': a shrunk 365-day starts-only pitch budget over shrunk pitches per out, times the opposing club's shrunk 30-day P/PA ratio; priors from the registered grid chosen on the 2019 starts",
+   "baseline": "A0, the served props length: 3 x clip(season-to-date IP / GS over all appearances, 2.0, 7.5), 15.6 outs with no start; diagnostics D1 (starts only), D2 (no lineup term, tested as T1) and C1 (starts-only outs per start, tested as T2)",
+   "metric": "Registered, not computed: paired outs MAE(A0) minus MAE(candidate) pooled over 2024-2025, game-clustered bootstrap B 2000 seed 20260930 lower bound above 0, positive in each season, at or above a floor of 1 percent of A0's 2021-2023 outs MAE, and budget's pitches MAE no worse than the season-to-date mean",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "Registered 2026-10-08 (Q10_04a, checklist PM-08) with the lab code, per docs/diamond-betting.md section 'Starter workload: expected outs and pitches per start' (pre-registered 2026-09-30, plan candidate N6(d), owner ask 16). The lab tools/starter_workload_lab.py and its test test_starter_workload_lab.py are built and tested on fixtures only; no corpus row was read and no number exists. Stage 1 runs once (task Q10_04b), not before 2026-10-11 (the owner's PM-Q3 answer), never on another gate's look day, on .cache/pbp_corpus seasons 2018, 2019 and 2021-2025 and never a 2026 game. The run commit sets eval_artifact to data/starter_workload_eval.json and the verdict: PASS gives provisional (dark), FAIL or PASS-BELOW-FLOOR gives deprecated. A stage-1 PASS licenses nothing served: no props or price change exists before the stage-2 moneyline look (not before 2027-07-01).",
+   "last_checked": "2026-10-08",
+   "stale": false
   }
  ],
  "problems": []

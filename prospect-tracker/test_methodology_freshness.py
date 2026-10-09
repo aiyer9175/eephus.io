@@ -980,6 +980,11 @@ MODEL_GLOSSARY = {
     # of the predictor it gets a glossary entry and these lines move.
     "hof_ballot_panel": "internal",
     "hof_label_ledger": "internal",
+    # starter_workload_xouts (2026-10-08) is the stage-1 workload read of the
+    # betting section "Starter workload: expected outs and pitches per start".
+    # Nothing served reads it and a stage-1 PASS licenses nothing served, so it
+    # has no reader-facing term until a props or price flip names one.
+    "starter_workload_xouts": "internal",
 }
 
 
