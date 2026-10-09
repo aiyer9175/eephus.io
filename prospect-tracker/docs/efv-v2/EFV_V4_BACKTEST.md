@@ -145,3 +145,67 @@ step; there is no interaction, factor or removal step.
   consensus is above 0 (E_refit on the spent frames); every other reading is a tie.
 - The displayed PROSPX consensus FV never changes; no served number moves in this task
   unless the rule above passes.
+
+## 5. The step log (appended by the selection run, 2026-10-09)
+
+Run: `python -u tools/efv_v4_backtest.py --select --ledger-path .cache/efv4_select/progress_ledger.jsonl`
+from commit 1d3c1274 (artifact `data/_labs/efv_v4/efv_v4_select.json`, generated
+2026-10-09T07:09:02Z, 241.1 s; label `fwar@2026-10-02-0341299c20ec`; the V2 base reproduces
+the DS-16 block; v4 at base_config() reproduces V2 on all 3,692 scored rows bit for bit; the
+40 menu columns built by their families' own builders in 58 s). Scope deltas are lv_dev /
+vm_dev, within Spearman on the side the step touches, against the current configuration.
+
+| round | available | qualified (scope delta lv / vm) | admitted |
+|---|---|---|---|
+| 1 | 40 | add pit skill rpt_writer_minus_stated_pit (+0.00806 / +0.00245); add pit skill w2p_cstr_p (+0.00282 / 0) | add pit skill rpt_writer_minus_stated_pit |
+| 2 | 39 | none (w2p_cstr_p now +0.00137 / 0; w4p_pop_pit +0.00924 / -0.01425, outside the vm tolerance; w2r_panel_pit +0.00128 / 0; rpt_conviction_pit 0 / -0.00129) | stop |
+
+Round 1, every step's scope deltas reproduce its family's registered development read
+to the last digit (the same rows, builders and admission rule): the IL timing columns
+0 on lv_dev (admitted in no lv fold) and between -0.00083 and +0.00147 on vm_dev hitters;
+the pitcher IL skill columns -0.0005 to -0.0040 on lv_dev; NRI -0.0006 to -0.0001 on
+lv_dev; pitch events w2p_swstr_h +0.00121, w2p_contact_h -0.00044, w2p_swing_h +0.00003,
+w2p_two_strike_contact_h -0.00304, w2p_cstr_p +0.00282, w2p_csw_p -0.00217, w2p_k_resid_p
+-0.00299, w2p_fstrike_p 0; batted ball w2b_pull_h -0.00531, w2b_pu_p -0.00439; population
+translation w4p_pop_hit 0 / -0.01034 and w4p_pop_pit +0.01026 / -0.01473 (the one step that
+clears the lv bar by a margin and fails the vm tolerance); rater panel w2r_panel_hit
+-0.01234, w2r_panel_pit +0.00188; report fields on hitters 0 to +0.00082 on lv_dev with
+rpt_arrival_hit -0.01184 on vm_dev, on pitchers rpt_conviction_pit +0.00183 / +0.00141,
+rpt_writer_minus_stated_pit +0.00806 / +0.00245, rpt_arrival_pit -0.00051 / 0. Every
+hitter step reads 0 against V2 on at least one frame (the column was refused there) and
+no hitter step clears +0.0020 on lv_dev. The full table is in the artifact.
+
+The selected configuration (`data/efv_v4_spec.json`): pitchers, the report extraction's
+writer-minus-stated field (the FV the prose would justify minus the stated grade,
+`txt_writer_minus_stated`, extractor claude-sonnet-5-5, name-redacted documents) offered
+to the skill head beside K rate; hitters unchanged (V2). The admission rule took it in the
+lv 2017 and 2018 folds beside k_rel (2019: k_rel alone) and in the vm 2019, 2020 and 2021
+folds alone (2017, 2018, 2022 and 2023: no pitcher driver admitted, the consensus order).
+
+The selected configuration's development read (E_cond, B 2000; a read on the frames it
+was chosen on, which adjudicates nothing):
+
+| frame | n | v4 within | V2 | consensus | Pipeline | FanGraphs | v4 minus V2 (CI95) | v4 minus consensus (CI95) | v4 minus Pipeline | v4 minus FanGraphs |
+|---|---|---|---|---|---|---|---|---|---|---|
+| lv_dev | 2,862 | 0.1715 | 0.1676 | 0.1792 | 0.2034 | 0.1714 | +0.0039 (-0.0018 to +0.0100) | -0.0077 (-0.0308 to +0.0141) | -0.0290 (-0.0602 to +0.0042) | +0.0079 (-0.0285 to +0.0437) |
+| vm_dev | 830 | 0.3725 | 0.3713 | 0.3814 | 0.3816 | 0.3363 | +0.0012 (-0.0060 to +0.0084) | -0.0088 (-0.0389 to +0.0182) | -0.0091 (-0.0482 to +0.0291) | +0.0362 (-0.0091 to +0.0777) |
+
+Per side, within, v4 minus V2 and v4 minus consensus: lv_dev hitters 0 (V2) and -0.0209
+(-0.0596 to +0.0161), pitchers +0.0081 (-0.0035 to +0.0193) and +0.0061 (-0.0186 to
++0.0297); vm_dev hitters 0 and -0.0202 (-0.0759 to +0.0376), pitchers +0.0025 (-0.0121 to
++0.0173) and +0.0025. Per fold, v4 minus V2: lv pit 2017 +0.0228, 2018 +0.0013, 2019 0;
+vm pit 2019 +0.0292, 2020 +0.0235, 2021 -0.0353, the rest 0. Pooled after the map: lv_dev
++0.0024 vs V2, -0.0103 vs consensus; vm_dev -0.0027 and -0.0127. Contributor AUC: lv_dev
+-0.0041 vs V2 (-0.0095 to +0.0008), -0.0157 vs consensus; vm_dev -0.0005 and -0.0047.
+Position-group cells, v4 minus consensus within: lv_dev C -0.0299 (n 168), IF -0.0048
+(n 710), OF -0.0488 (n 572), pitchers +0.0061 (n 1,397); vm_dev IF +0.0040 (n 207), OF
+-0.0325 (n 144), C under 60 rows, pitchers +0.0025 (n 424). The MAE of the priced grade:
+lv_dev v4 0.9424 against V2 0.9405 and consensus 0.9122; vm_dev 3.6979 against 3.6976
+and 3.6248 (a scale reading, not accuracy; not compared).
+
+Reading, development only: one new-source column cleared the bar, on pitchers, worth
++0.0039 within over V2 on lv_dev and +0.0012 on vm_dev, both intervals spanning zero and
+both under their frames' floors against consensus (0.0189 and 0.0240); the hitter side,
+where V2's gap to consensus lives (-0.0209 and -0.0202), takes nothing from any new
+source. v4 still trails consensus on both frames (-0.0077, -0.0088). Only section 6 can
+say more, and it reads frames that are already spent.
