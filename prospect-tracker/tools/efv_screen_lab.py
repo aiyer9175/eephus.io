@@ -267,6 +267,17 @@ def w2_candidates(modules=W2_MODULES, kinds=("column",)) -> tuple[dict, ...]:
 #: it. Wave 1 (CANDIDATES) and its frozen run are untouched.
 WAVE2_DEV: dict[str, tuple[str, ...]] = {
     "efv_w2_anchor": ("an1_rel", "an1_pl", "an2_pos"),
+    # EFV4 report extraction (EFV4_REPORT_EXTRACT_PREP): registered, pending the
+    # extraction; its main([]) prints the corpus and store status, no statistic.
+    "efv_w2_report_llm": (
+        "rpt_conviction_hit", "rpt_hedge_count_hit", "rpt_risk_hit",
+        "rpt_injury_mention_hit", "rpt_makeup_hit", "rpt_body_projection_hit",
+        "rpt_role_ceiling_hit", "rpt_role_floor_hit", "rpt_approach_concern_hit",
+        "rpt_writer_minus_stated_hit", "rpt_arrival_hit",
+        "rpt_conviction_pit", "rpt_hedge_count_pit", "rpt_risk_pit",
+        "rpt_injury_mention_pit", "rpt_makeup_pit", "rpt_body_projection_pit",
+        "rpt_role_ceiling_pit", "rpt_role_floor_pit", "rpt_reliever_risk_pit",
+        "rpt_writer_minus_stated_pit", "rpt_arrival_pit"),
 }
 
 #: WAVE 2 (EFV3_W2, owner EW2-6 2026-10-08): each family keeps its arms in its own
