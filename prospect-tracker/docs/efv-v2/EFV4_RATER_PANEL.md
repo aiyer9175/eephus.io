@@ -104,6 +104,69 @@ Artifacts: `data/_labs/efv_w2/rater_panel.json` (the lists, resolved),
 lv_dev, vm_dev, R-LV and R-VM (point estimates, pooled over sides); nothing ships from this
 task (flags off), whatever the read.
 
-## 6. Results
+## 6. Results (read 2026-10-09 03:05 to 03:08 UTC, commit 58aa23de, label fwar@2026-10-02-0341299c20ec)
 
-Appended by the read commit.
+Disclosure first. Two exploratory smoke reads (B 50, written to the session scratch only, no
+artifact, no ledger row) ran BEFORE this registration was committed, against the claim in
+its first paragraph. The first exposed a defect: an lv row read the lists as of its latest
+consensus point (on 2011 to 2016 rows the 01-22 Pipeline board), so every list published
+later in the window was dropped and the column covered 1,499 of 3,426 hitter slots; its
+column was refused in every fold. The fix makes an lv row read on the last day of its own
+window, which is the rule this registration states (section 3, AS OF); coverage became
+3,406 of 3,426. Nothing else in the definition changed after either smoke read, and the
+smoke numbers equal the B 2000 points below. The same reads were rerun twice after two
+labelling fixes (the ledger rows' model id and verdict text, commits 5fc57138 and 58aa23de)
+with identical numbers; only the last run's rows are on the ledger.
+
+Coverage (rows carrying the column; lv_dev slots across all training and test rows): hitters
+3,406 of 3,426, pitchers 3,292 of 3,323; listed by at least one panel rater: 449 hitter and 372 pitcher slots (13 and 11 percent).
+vm_dev: test rows of debut years 2017 to 2019 only (the 2020 list is withheld from the
+development read and no list exists for 2021 to 2023), 560 of 1,892 hitter and 541 of
+2,020 pitcher slots.
+
+Within (side, vintage) Spearman deltas, E_cond CI95 (B 2000, paired, player-clustered):
+
+| arm | frame | n | vs V2 | vs PROSPX consensus | admitted folds |
+|---|---|---|---|---|---|
+| w2r_panel_hit | lv_dev | 1,465 | -0.0123 (-0.0317, +0.0065) | -0.0332 (-0.0765, +0.0076) | 3 of 3 |
+| w2r_panel_hit | vm_dev | 406 | 0 (never admitted) | -0.0202 (-0.0759, +0.0376) | 0 of 7 |
+| w2r_panel_pit | lv_dev | 1,397 | +0.0019 (-0.0026, +0.0062) | -0.0001 (-0.0215, +0.0198) | 2 of 3 |
+| w2r_panel_pit | vm_dev | 424 | 0 (never admitted) | 0 (pitchers take the consensus order) | 0 of 7 |
+| w2r_panel_both | lv_dev | 2,862 | -0.0054 (-0.0154, +0.0050) | -0.0170 (-0.0412, +0.0070) | 5 of 6 |
+| w2r_panel_both | vm_dev | 830 | 0 (never admitted) | -0.0101 (-0.0391, +0.0160) | 0 of 14 |
+
+The V2 base against consensus on the same rows: lv_dev hitters -0.0209, pitchers -0.0020,
+both -0.0116; vm_dev -0.0101. Zero-information twin (the column permuted within year and
+kind): 0 on every arm and frame but vm_dev (hitters +0.0006, both +0.0003). DS-03 balance
+probe of panel_absent on the lv_dev training rows the Pipeline lists: hitters IMBALANCED
+(partial -0.195, CI95 -0.292 to -0.101; W3 > 0 in 20.0 percent of unlisted rows against
+62.3 percent of listed rows), pitchers BALANCED (partial -0.003, CI95 -0.093 to +0.075). The
+identity pass reads no outcome (AST pin), so the hitter imbalance is the panel's own
+judgement carrying information beyond the consensus percentile, not a resolver leak; the
+skill head's use of the residual still lost on lv_dev hitters (fold deltas 2017 -0.031,
+2018 +0.018, 2019 -0.021).
+
+Spent frames (spent frame, read after the 10-08 confirmation; chooses and tunes nothing;
+artifact only):
+
+| arm | frame | n | vs V2 | vs PROSPX consensus | admitted folds |
+|---|---|---|---|---|---|
+| w2r_panel_hit | R-LV | 1,195 | +0.0129 (-0.0006, +0.0266) | +0.0187 (-0.0197, +0.0602) | 2 of 2 |
+| w2r_panel_hit | R-VM | 72 | -0.0080 (-0.0284, +0.0118) | +0.0749 (-0.0538, +0.2053) | 1 of 1 |
+| w2r_panel_pit | R-LV | 1,154 | -0.0003 (-0.0064, +0.0055) | -0.0029 (-0.0109, +0.0050) | 2 of 2 |
+| w2r_panel_pit | R-VM | 75 | 0 (never admitted) | 0 | 0 of 1 |
+| w2r_panel_both | R-LV | 2,349 | +0.0064 (-0.0012, +0.0141) | +0.0081 (-0.0130, +0.0287) | 4 of 4 |
+| w2r_panel_both | R-VM | 147 | -0.0039 (-0.0138, +0.0061) | +0.0367 (-0.0263, +0.1013) | 1 of 2 |
+
+The V2 base on the same reserved rows reproduces the v3 confirmation artifact's V2 numbers
+(R-LV +0.0016, R-VM +0.0406 against consensus). R-LV 2021 rows carry no panel (BP 2021 is
+paywalled) and R-VM 2025 test rows carry none (no list of their year), so a change there is
+the refit skill head on imputed values, not panel information.
+
+Reading. Choice is on the development frames only: the column does not earn a place there
+(hitters lose on lv_dev, pitchers +0.0019 inside a 0.009-wide interval, vm_dev never admits
+it). Under the EW2-10 ship rule (beat served V2 on lv_dev, vm_dev, R-LV and R-VM, pooled over
+sides) the pooled arm fails on lv_dev (-0.0054) and R-VM (-0.0039). The column is NOT
+admitted; nothing ships; the served grade and the displayed consensus FV do not move. The
+spent R-LV hitter read (+0.0129) runs opposite to its development read (-0.0123) and is
+recorded, not acted on.
