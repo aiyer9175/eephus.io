@@ -16,9 +16,15 @@ same walk, without re-predicting the rungs after a floored one.
 from __future__ import annotations
 
 import copy
+import json
+from pathlib import Path
+
+import pytest
 
 import arb_export as X
 import salary_path as sp
+
+ROOT = Path(__file__).parent
 
 
 def _steps():
@@ -61,3 +67,24 @@ def test_the_board_and_the_salary_path_print_the_same_figure():
                           mode="ladder", raise_fn=None)
     got = {c["season"]: c["usd"] for c in path["seasons"] if c["src"] == "arb_ladder"}
     assert got == {s[0]: s[1] for s in board}
+
+
+def test_the_served_board_and_the_served_path_agree_on_every_ladder_season():
+    """Census X03-07's acceptance: an arbitration season the projections path
+    takes from the board (src arb_ladder) carries the board's own figure."""
+    try:
+        board = json.loads((ROOT / "data" / "arbitration.json").read_text(encoding="utf-8"))
+        proj = json.loads((ROOT / "data" / "mlb_projections.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pytest.skip("served artifacts absent")
+    vint = next((v.get("salVintage") for v in proj.get("vets") or [] if v.get("salVintage")), None)
+    if vint and vint != board.get("generated_at"):
+        pytest.skip("the projections payload was priced off another board vintage")
+    by = {r["m"]: {s[0]: s[1] for s in r["l"]} for r in board["rows"]}
+    bad = []
+    for v in proj.get("vets") or []:
+        l = by.get(int(v["mlbam"])) if v.get("mlbam") else None
+        for c in v.get("salPath") or []:
+            if l and c[5] == "arb_ladder" and c[0] in l and l[c[0]] != c[1]:
+                bad.append((v["key"], c[0], l[c[0]], c[1]))
+    assert not bad, bad[:5]
