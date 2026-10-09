@@ -3,7 +3,24 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""DvM+ development-difficulty lab: the FRAME module only (DVM-1). COUNTS ONLY.
+"""DvM+ development-difficulty lab: the frame (DVM-1) and the study (DVM-3).
+
+DVM-3 (the second half of this file) builds what docs/dvm-difficulty-2026-09-30/
+DVM_DIFFICULTY_GATE.md registers: the pairs and their censoring (section 3), the
+expectation model with its shrunk interaction cells and floored spreads (section 5), the
+row credits DV and D0 and the 60 to 70 against 40 to 50 ratio (section 6), the club
+aggregation with the fallback tenure split (section 7), tools (section 8), the player index
+(section 9), H1 (section 10), H2 (section 11), the validation arms C0, DV and D0 and the
+decision rule (section 13), and the guards of sections 14 and 15. Every statistic is a
+pure function of the rows it is handed. Only run_look() reads the store, and it passes the
+clock first: it refuses before its registered date, on a registered look day, before the
+PROSPECT_ANCHOR look record, while a pipeline or a test session runs, and a second scored
+look (it re-prints the stored result instead). data/dvm_difficulty.json and
+data/dvm_difficulty_eval.json are written by the look and by nothing else. Before the look,
+--dry-run runs the whole reporting path on synthetic fixtures with nulls into a directory
+of the caller's choosing.
+
+The frame module (DVM-1) below is COUNTS ONLY.
 
 Owner ask 6 (2026-09-30): weight DvM+ by how hard a grade move is to make, by origin
 group (high school, college, international) and by starting grade. The design is the
@@ -73,6 +90,10 @@ Run from prospect-tracker/:
   python tools/dvm_difficulty_lab.py --counts OUT_DIR
       build the frame on the frozen copy and write frame_counts.json and
       frame_counts.txt into OUT_DIR (and a copy under .cache/dvm_difficulty/)
+  python tools/dvm_difficulty_lab.py --dry-run OUT_DIR
+      the whole reporting path on synthetic fixtures with nulls; writes only OUT_DIR
+  python tools/dvm_difficulty_lab.py --look TASK_DIR
+      THE ONE LOOK (gate section 14); refuses before its clock and a second scored look
 """
 
 from __future__ import annotations
@@ -80,12 +101,17 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
+import os
 import re
 import sqlite3
 import sys
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from statistics import NormalDist
+
+import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -231,8 +257,8 @@ def assert_growth_allowed(eta_text: str | None = None,
                           dvm_gate_text: str | None = None) -> None:
     """The gate every growth computation passes first (DVM-3 onward). Refuses before
     the ETA look record exists, and before the DvM+ difficulty gate is registered
-    (DVM-2, committed alone before any growth is read). This module calls no growth
-    computation; the guard is here so the lab that does inherits it."""
+    (DVM-2, committed alone before any growth is read). look_frame() passes it before
+    the one look; the study's statistics run only on the rows they are handed."""
     require_eta_record(eta_text)
     if dvm_gate_text is None:
         dvm_gate_text = _read_doc(DVM_GATE_DOC)
@@ -456,8 +482,33 @@ def load_reads(con: sqlite3.Connection, debut: dict[str, str], *,
         reads[(src, pk, V)] = {
             "date": d[:10], "fv": float(fv), "plus": bool(plus), "org": org,
             "position": pos, "name": name, "age": _num(ex.get("age")),
+            "tools": _tool_grades(tj), "present": _present_grades(ex),
         }
     return reads, rvm
+
+
+def _tool_grades(tools_json: str | None) -> dict[str, float]:
+    """The future tool grades a read printed (DVM-3, gate section 8); {} when none."""
+    try:
+        doc = json.loads(tools_json) if tools_json else {}
+    except ValueError:
+        return {}
+    out = {}
+    for k, v in (doc or {}).items():
+        if k == "_extras":
+            continue
+        x = _num(v)
+        if x is not None:
+            out[k] = x
+    return out
+
+
+def _present_grades(extras: dict) -> dict[str, float]:
+    """FanGraphs present tool grades (the future-minus-present gap of section 4)."""
+    pres = (extras or {}).get("present")
+    if not isinstance(pres, dict):
+        return {}
+    return {k: x for k, x in ((k, _num(v)) for k, v in pres.items()) if x is not None}
 
 
 def _num(v) -> float | None:
@@ -1434,6 +1485,1954 @@ def text_summary(c: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# DVM-3: the study (gate sections 3 to 15)
+# ---------------------------------------------------------------------------
+#
+# Every function in this part is a pure function of the rows it is handed. A row of
+# the study is a dict built by pairs_from_frame() (from the frozen store, at the look
+# only) or by fixture_pairs() (synthetic, for the dry run and the tests). Only
+# load_club_events() and run_look() open the store, and only at the look; no function
+# here reads a served artifact or any outcome.
+
+#: storage.FV_EXPECTED_WAR, copied (the lab never imports storage; parity pinned in
+#: test_dvm_difficulty_stat.py). A fixed primer table, not a realized quantity.
+VALUE_TABLE: dict[int, float] = {20: 0.0, 25: 0.0, 30: 0.0, 35: 0.1, 40: 0.5, 45: 1.5,
+                                 50: 3.0, 55: 6.0, 60: 12.0, 65: 17.0, 70: 25.0,
+                                 75: 40.0, 80: 60.0}
+
+#: Section 3: a dropped or exited row ends one rung below its club's lowest grade; S2
+#: codes a graduate at his start grade plus one rung.
+DROP_RUNG = 5.0
+GRAD_S2_BUMP = 5.0
+STATUSES: tuple[str, ...] = ("completed", "graduated", "dropped", "exited")
+VARIANTS: tuple[str, ...] = ("primary", "S1", "S2")
+
+#: Section 5.
+MIN_B_CELL = 30
+MIN_U_CELL = 20
+K_U_FLOOR = 20.0
+SPREAD_PSEUDO_DF = 30.0
+REF_RUNG = "50"
+REF_ORIGIN = "COL"
+REF_LEVEL = "A/A+"
+MODEL_ORIGINS: tuple[str, ...] = ("HS", "COL", "IFA", "PRO", "UNK")
+LEVELS: tuple[str, ...] = ("pre-pro", "DSL/CPX", "A/A+", "AA/AAA", "unresolved")
+RUNG_VALUE = {"<=35": 35.0, "40": 40.0, "45": 45.0, "50": 50.0, "55": 55.0, "60": 60.0,
+              "65+": 65.0}
+
+#: Section 7 and section 9.
+K_ORG_BOUNDS = (5.0, 50.0)
+MIN_PUBLISH_N = 10.0
+PLAYER_STEPS = 3
+PLAYER_SHRINK_K = 2.0
+
+#: Sections 10, 11 and 13.
+SEED = 20261201
+BOOT_B = 2000
+PERM_DRAWS = 500
+ALPHA = 0.05
+H1_MIN_PAIRS = 100
+H2_MIN_PAIRS = 50
+H2_L2 = 1.0
+H2_RUNGS: tuple[str, ...] = ("<=35", "40", "45", "50", "55", "60+")
+H2_TREND_RUNGS: tuple[str, ...] = ("40", "45", "50", "55", "60+")
+NONINF_MARGIN = -0.05
+VC_MAX = 0.20
+VC_BELOW_C0 = 0.10
+PIT_CORR_FLOOR = 0.9
+INDEX_WINDOW_YEARS = 3
+TRAITS: dict[str, tuple[str, ...]] = {
+    "hit": ("FV", "hit", "game_pwr", "raw_pwr", "speed", "field", "arm"),
+    "pit": ("FV", "fb", "sl", "cb", "ch", "cmd"),
+}
+DESCRIPTIVE_TRAITS: dict[str, tuple[str, ...]] = {"hit": ("pitch_sel", "bat_ctrl"),
+                                                  "pit": ("ct",)}
+#: The trait name against the key the sources print it under.
+TRAIT_KEY = {"arm": "throw"}
+H1_GROUPS: tuple[str, ...] = ("HS", "COL", "IFA")
+H1_CONTRASTS: tuple[tuple[str, str], ...] = (("HS", "COL"), ("IFA", "COL"), ("HS", "IFA"))
+ERAS = {"COMPLEMENT": ((2011, 2016), (2017, 2019), (2022, 9999)),
+        "FULL": ((2011, 2016), (2017, 2021), (2022, 9999))}
+VALIDATION_YEARS = {"FULL": tuple(range(2012, 2026)),
+                    "COMPLEMENT": tuple(list(range(2012, 2019)) + [2023, 2024, 2025])}
+
+#: Section 14: the clock.
+LOOK_EARLIEST_FULL = "2026-12-01"
+LOOK_EARLIEST_COMPLEMENT = "2027-01-31"
+#: Registered look days (gate section 14, plan Part 8 8.B and Part 9): never a look here.
+#: 2026-12-01 is the eFV reserved read.
+LOOK_DAYS: frozenset[str] = frozenset({
+    "2026-10-21", "2026-10-23", "2026-10-28", "2026-11-06", "2026-11-13", "2026-11-20",
+    "2026-11-24", "2026-11-25", "2026-12-01", "2026-12-03", "2026-12-08", "2026-12-10",
+    "2027-01-12", "2027-10-20", "2027-11-09", "2027-11-16",
+})
+ANCHOR_GATE_DOC = "docs/PROSPECT_ANCHOR_GATE.md"
+EFV_V2_GATE_DOC = "docs/efv-v2/EFV_V2_GATE.md"
+#: VAL_4's tenure table (gate section 7, P-1). Absent at registration: the fallback reads.
+VAL4_DIR = "docs/farm-attribution-2026-09-25"
+#: Section 2: the frozen store and the counts a fresh copy is checked against.
+FROZEN_DB_SHA256 = "7d7e56533e6c62ef3ec3d8400e079974779ea59ca533dbc0e43939f596d6a56e"
+REGISTERED_COUNTS = {"start_reads": 14961, "completed_pairs_12m": 8020,
+                     "completed_pairs_24m": 3205}
+COUNT_TOLERANCE = 0.01
+TABLE_ARTIFACT = "dvm_difficulty.json"
+EVAL_ARTIFACT = "dvm_difficulty_eval.json"
+LOOK_MARKER = "look_started.json"
+BUSY_TOKENS: tuple[str, ...] = ("run_monthly", "nightly", "pytest")
+
+
+# ---------------------------------------------------------------------------
+# grades, value and rungs
+# ---------------------------------------------------------------------------
+
+def value_of(g: float) -> float:
+    """W(G), the table linearly interpolated and rounded to 2 places as
+    storage._fv_to_expected_war does; a grade outside 20 to 80 takes the end value."""
+    v = min(80.0, max(20.0, float(g)))
+    keys = sorted(VALUE_TABLE)
+    for lo, hi in zip(keys, keys[1:]):
+        if lo <= v <= hi:
+            t = (v - lo) / (hi - lo)
+            return round(VALUE_TABLE[lo] + t * (VALUE_TABLE[hi] - VALUE_TABLE[lo]), 2)
+    return VALUE_TABLE[keys[-1]]
+
+
+def grade_value(fv: float, plus: bool) -> float:
+    """G = fv + 2.5 x fv_plus (a FanGraphs 45+ is 47.5)."""
+    return float(fv) + (2.5 if plus else 0.0)
+
+
+def rung_of(g: float) -> str:
+    """The rung cell of a grade: 5 x floor(G / 5), with <=35 and 65+ pooled."""
+    r = int(float(g) // 5 * 5)
+    if r <= 35:
+        return "<=35"
+    if r >= 65:
+        return "65+"
+    return str(r)
+
+
+def h2_rung(rung: str) -> str:
+    """H2 reads 60 and 65+ as one cell, 60+."""
+    return "60+" if rung in ("60", "65+") else rung
+
+
+def fold_origin(origin: str | None) -> str:
+    """The model's origin groups: junior college folds into college."""
+    o = origin or "UNK"
+    return "COL" if o == "JUCO" else (o if o in MODEL_ORIGINS else "UNK")
+
+
+# ---------------------------------------------------------------------------
+# censoring and the three frames (section 3)
+# ---------------------------------------------------------------------------
+
+def code_missing_end(g_start: float, *, debut_day: str | None, end_close: str,
+                     grad_grade: float | None, club_lowest: float | None,
+                     affiliated: bool | None) -> tuple[str, float | None]:
+    """(status, G_end) for a slot with no same-source end read, by the rule section 3
+    fixed before any growth was read.
+    Graduated: the debut fell before the end window closed; G_end is the last
+    same-source read before the debut (grad_grade; the caller passes the start grade
+    when there is no later read). Dropped: still in affiliated ball (or not known to
+    have left); G_end is one rung below the lowest grade the source printed for his
+    club at V + h, never above G_start. Exited: no affiliated season in V + h - 1 or
+    V + h (affiliated False); coded as dropped. With no club grade to read the row
+    has no end grade (None) and leaves the frame."""
+    if debut_day and str(debut_day)[:10] < end_close:
+        return "graduated", float(g_start if grad_grade is None else grad_grade)
+    status = "exited" if affiliated is False else "dropped"
+    if club_lowest is None:
+        return status, None
+    return status, min(float(club_lowest) - DROP_RUNG, float(g_start))
+
+
+def end_grade(pair: dict, variant: str = "primary") -> float | None:
+    """The end grade a frame variant reads: primary codes every row; S1 drops every
+    censored row; S2 codes a graduate at G_start + 5."""
+    st = pair["status"]
+    if variant == "S1" and st != "completed":
+        return None
+    if variant == "S2" and st == "graduated":
+        return float(pair["g0"]) + GRAD_S2_BUMP
+    g1 = pair.get("g1")
+    return None if g1 is None else float(g1)
+
+
+def end_tool(pair: dict, key: str, variant: str = "primary") -> float | None:
+    """A tool's end grade (section 3, tool rows): a graduate takes the tool grade of
+    his last same-source read before the debut (S1 drops him, S2 codes start + 5); a
+    dropped or exited row leaves the tool frame."""
+    t0 = (pair.get("tools0") or {}).get(key)
+    if t0 is None:
+        return None
+    st = pair["status"]
+    if st in ("dropped", "exited"):
+        return None
+    if st == "graduated":
+        if variant == "S1":
+            return None
+        if variant == "S2":
+            return float(t0) + GRAD_S2_BUMP
+    t1 = (pair.get("tools1") or {}).get(key)
+    return None if t1 is None else float(t1)
+
+
+def analysis_rows(pairs: list[dict], *, variant: str = "primary", trait: str = "FV",
+                  h: int = 1, side: str | None = None,
+                  sources: tuple[str, ...] | None = None) -> list[dict]:
+    """The rows one fit reads, with omega = 1 / (sources listing the player in that
+    start year and horizon, inside this frame)."""
+    key = TRAIT_KEY.get(trait, trait)
+    out = []
+    for p in pairs:
+        if p["h"] != h or (side and p["side"] != side):
+            continue
+        if sources and p["src"] not in sources:
+            continue
+        if trait == "FV":
+            g1 = end_grade(p, variant)
+            if g1 is None:
+                continue
+            g0 = float(p["g0"])
+            y, wv, rung, gap = g1 - g0, value_of(g1) - value_of(g0), p["rung"], None
+        else:
+            t0 = (p.get("tools0") or {}).get(key)
+            t1 = end_tool(p, key, variant)
+            if t0 is None or t1 is None:
+                continue
+            y, wv, rung = float(t1) - float(t0), None, rung_of(t0)
+            pres = (p.get("present0") or {}).get(key)
+            gap = (float(t0) - float(pres)) if (p["src"] == "fangraphs"
+                                                and pres is not None) else None
+        out.append({
+            "src": p["src"], "pk": p["pk"], "V": int(p["V"]), "h": int(p["h"]),
+            "side": p["side"], "y": float(y), "w": wv, "rung": rung,
+            "fv_rung": p["rung"], "g0": float(p["g0"]),
+            "origin": fold_origin(p.get("origin")), "origin_raw": p.get("origin") or "UNK",
+            "level": p.get("level") or "unresolved", "age_rel": p.get("age_rel"),
+            "agemiss": bool(p.get("agemiss")), "gap": gap, "status": p["status"],
+            "tau": dict(p.get("tau") or {}), "trait": trait,
+        })
+    n_src = Counter((r["pk"], r["V"], r["h"]) for r in out)
+    for r in out:
+        r["omega"] = 1.0 / n_src[(r["pk"], r["V"], r["h"])]
+    return out
+
+
+def censoring_census(pairs: list[dict]) -> dict:
+    """Censored counts pooled over side and rung (section 3; never by rung)."""
+    out = {}
+    for h in HORIZONS:
+        c = Counter(p["status"] for p in pairs if p["h"] == h)
+        out[f"{12 * h}m"] = {s: c.get(s, 0) for s in STATUSES}
+    return out
+
+
+# ---------------------------------------------------------------------------
+# small numerics
+# ---------------------------------------------------------------------------
+
+def _wmean(x, w) -> float:
+    x, w = np.asarray(x, float), np.asarray(w, float)
+    sw = float(w.sum())
+    return float((w * x).sum() / sw) if sw > 0 else 0.0
+
+
+def _wvar(x, w) -> float:
+    """Weighted variance about the weighted mean (weights normalized to their sum)."""
+    x, w = np.asarray(x, float), np.asarray(w, float)
+    sw = float(w.sum())
+    if sw <= 0 or x.size == 0:
+        return 0.0
+    m = float((w * x).sum() / sw)
+    return float((w * (x - m) ** 2).sum() / sw)
+
+
+def _solve(X: np.ndarray, y: np.ndarray, w: np.ndarray) -> np.ndarray:
+    """Weighted least squares through the normal equations with a pseudo-inverse: a
+    rank-deficient design keeps its estimable contrasts unique."""
+    if X.shape[0] == 0 or X.shape[1] == 0:
+        return np.zeros(X.shape[1])
+    xtw = X.T * w
+    return np.linalg.pinv(xtw @ X, rcond=1e-10, hermitian=True) @ (xtw @ y)
+
+
+def round_nearest(x: float) -> int:
+    """Plus stats round to nearest, halves up."""
+    return int(math.floor(float(x) + 0.5))
+
+
+def _rank(x) -> np.ndarray:
+    x = np.asarray(x, float)
+    order = np.argsort(x, kind="mergesort")
+    ranks = np.empty(len(x))
+    i = 0
+    while i < len(x):
+        j = i
+        while j + 1 < len(x) and x[order[j + 1]] == x[order[i]]:
+            j += 1
+        ranks[order[i:j + 1]] = (i + j) / 2.0 + 1.0
+        i = j + 1
+    return ranks
+
+
+def pearson(x, y) -> float | None:
+    x, y = np.asarray(x, float), np.asarray(y, float)
+    if x.size < 3 or x.std() == 0 or y.std() == 0:
+        return None
+    return float(np.corrcoef(x, y)[0, 1])
+
+
+def spearman(x, y) -> float | None:
+    """Spearman's rho with average ranks for ties; None on fewer than 3 points or a
+    constant side."""
+    if len(x) < 3:
+        return None
+    return pearson(_rank(x), _rank(y))
+
+
+def holm(pvals: list[float]) -> list[float]:
+    """Holm step-down adjusted p values, monotone, capped at 1."""
+    m = len(pvals)
+    order = sorted(range(m), key=lambda i: pvals[i])
+    adj = [1.0] * m
+    run = 0.0
+    for rank, i in enumerate(order):
+        run = max(run, min(1.0, (m - rank) * float(pvals[i])))
+        adj[i] = run
+    return adj
+
+
+def p_two_sided(draws, B: int) -> float:
+    """2 x min(share <= 0, share >= 0) over the finite draws, floored at 1/B."""
+    d = np.asarray(draws, float)
+    d = d[np.isfinite(d)]
+    if d.size == 0:
+        return 1.0
+    p = 2.0 * min(float((d <= 0).mean()), float((d >= 0).mean()))
+    return float(min(1.0, max(p, 1.0 / B)))
+
+
+def p_one_sided_below(draws, B: int) -> float:
+    """H0 'not below 0': the share of draws on or past 0, floored at 1/B."""
+    d = np.asarray(draws, float)
+    d = d[np.isfinite(d)]
+    if d.size == 0:
+        return 1.0
+    return float(min(1.0, max(float((d >= 0).mean()), 1.0 / B)))
+
+
+def _ci95(draws) -> list[float | None]:
+    d = np.asarray(draws, float)
+    d = d[np.isfinite(d)]
+    if d.size == 0:
+        return [None, None]
+    return [float(np.percentile(d, 2.5)), float(np.percentile(d, 97.5))]
+
+
+def _cluster_codes(rows: list[dict], key: str = "pk") -> tuple[np.ndarray, int]:
+    ids = {}
+    codes = np.array([ids.setdefault(r[key], len(ids)) for r in rows], dtype=int)
+    return codes, len(ids)
+
+
+def _draw_counts(rng: np.random.Generator, n: int) -> np.ndarray:
+    """One cluster bootstrap draw: how many times each cluster was drawn."""
+    return np.bincount(rng.integers(0, n, n), minlength=n).astype(float)
+
+
+# ---------------------------------------------------------------------------
+# the expectation model (section 5)
+# ---------------------------------------------------------------------------
+
+def shrink_cells(cells: dict, s2_eps: float) -> dict:
+    """The shrunk origin-by-rung interaction, from {cell: (n_c, mean residual of the
+    additive fit)}:
+      tau2_u = max(0, var_c(mean residual) - mean_c(s2_eps / n_c)) over cells n_c >= 20
+      k_u    = max(20, s2_eps / tau2_u)
+      u_hat  = n_c / (n_c + k_u) x mean residual when n_c >= 20, else 0.
+    tau2_u = 0 (fewer than two eligible cells, or no excess variance) means no
+    interaction survives: k_u is None and every u_hat is 0."""
+    elig = [(n, m) for n, m in cells.values() if n >= MIN_U_CELL]
+    tau2 = 0.0
+    if len(elig) >= 2:
+        means = np.array([m for _n, m in elig], float)
+        noise = float(np.mean([s2_eps / n for n, _m in elig]))
+        tau2 = max(0.0, float(np.var(means, ddof=1)) - noise)
+    k_u = max(K_U_FLOOR, s2_eps / tau2) if tau2 > 0 else None
+    u_hat = {c: ((n / (n + k_u)) * m if (k_u is not None and n >= MIN_U_CELL) else 0.0)
+             for c, (n, m) in cells.items()}
+    return {"u_hat": u_hat, "k_u": k_u, "tau2_u": tau2}
+
+
+def shrunk_spread(n_c: int, s2_c: float, s2_side: float,
+                  pseudo: float = SPREAD_PSEUDO_DF) -> float:
+    """The spread floor: sqrt((nu_c s2_c + 30 s2_side) / (nu_c + 30)), nu_c = n_c - 1."""
+    nu = max(int(n_c) - 1, 0)
+    return math.sqrt((nu * float(s2_c) + pseudo * float(s2_side)) / (nu + pseudo))
+
+
+def _features(r: dict, kind: str, own_b: set) -> list[tuple[str, float]]:
+    """The design row of section 5: a[s,V], b[s,r] (or b[r] pooled when its source cell
+    holds fewer than 30 pairs), c[g], d[L], e x age_rel, f x agemiss; tool rows add the
+    start FV rung and the FanGraphs future-minus-present gap with its known flag.
+    Reference levels (no column): rung 50, college, A/A+."""
+    f = [(f"a|{r['src']}|{r['V']}", 1.0)]
+    rg = r["rung"]
+    if rg != REF_RUNG:
+        f.append((f"b|{r['src']}|{rg}" if (r["src"], rg) in own_b else f"b|*|{rg}", 1.0))
+    if r["origin"] != REF_ORIGIN:
+        f.append((f"c|{r['origin']}", 1.0))
+    if r["level"] != REF_LEVEL:
+        f.append((f"d|{r['level']}", 1.0))
+    if r.get("age_rel") is not None:
+        f.append(("e|age_rel", float(r["age_rel"])))
+    if r.get("agemiss"):
+        f.append(("f|agemiss", 1.0))
+    if kind == "tool":
+        if r["fv_rung"] != REF_RUNG:
+            f.append((f"t|fv_rung|{r['fv_rung']}", 1.0))
+        if r.get("gap") is not None:
+            f.append(("t|gap", float(r["gap"])))
+            f.append(("t|gap_known", 1.0))
+    return f
+
+
+def _matrix(feats: list, cols: list[str]) -> np.ndarray:
+    idx = {c: i for i, c in enumerate(cols)}
+    X = np.zeros((len(feats), len(cols)))
+    for i, f in enumerate(feats):
+        for c, v in f:
+            j = idx.get(c)
+            if j is not None:
+                X[i, j] += v
+    return X
+
+
+def _own_b(rows: list[dict]) -> set:
+    cnt = Counter((r["src"], r["rung"]) for r in rows)
+    return {k for k, n in cnt.items() if n >= MIN_B_CELL and k[1] != REF_RUNG}
+
+
+def fit_expectation(rows: list[dict], *, outcome: str = "y", kind: str = "fv") -> dict:
+    """Section 5 on one side's rows: the additive WLS fit (weights omega), the shrunk
+    interaction cells, and the floored spread of y - E by start rung. Returns the frozen
+    table as a plain dict (what data/dvm_difficulty.json carries)."""
+    model = {"kind": kind, "outcome": outcome, "n": len(rows), "columns": [], "coef": {},
+             "own_b": [], "a_source_mean": {}, "u": {}, "k_u": None, "tau2_u": 0.0,
+             "s2_eps": 0.0, "s2_side": 0.0, "spread": {}}
+    if not rows:
+        return model
+    own = _own_b(rows)
+    feats = [_features(r, kind, own) for r in rows]
+    cols = sorted({c for f in feats for c, _v in f})
+    X = _matrix(feats, cols)
+    y = np.array([float(r[outcome]) for r in rows])
+    w = np.array([float(r["omega"]) for r in rows])
+    beta = _solve(X, y, w)
+    add = X @ beta
+    res = y - add
+    s2_eps = _wvar(res, w)
+    groups: dict = defaultdict(list)
+    for i, r in enumerate(rows):
+        groups[(r["origin"], r["rung"])].append(i)
+    cells = {c: (len(ix), _wmean(res[ix], w[ix])) for c, ix in groups.items()}
+    sh = shrink_cells(cells, s2_eps)
+    u = np.array([sh["u_hat"][(r["origin"], r["rung"])] for r in rows])
+    e2 = res - u
+    s2_side = _wvar(e2, w)
+    by_r: dict = defaultdict(list)
+    for i, r in enumerate(rows):
+        by_r[r["rung"]].append(i)
+    spread = {}
+    for rg in sorted(by_r, key=lambda k: RUNG_VALUE.get(k, 0.0)):
+        ix = by_r[rg]
+        s2c = _wvar(e2[ix], w[ix])
+        spread[rg] = {"n": len(ix), "s2": s2c,
+                      "s_hat": shrunk_spread(len(ix), s2c, s2_side)}
+    coef = {c: float(b) for c, b in zip(cols, beta)}
+    a_by_src: dict = defaultdict(list)
+    for c, b in coef.items():
+        if c.startswith("a|"):
+            a_by_src[c.split("|")[1]].append(b)
+    model.update({
+        "columns": cols, "coef": coef, "own_b": sorted([list(k) for k in own]),
+        "a_source_mean": {s: float(np.mean(v)) for s, v in sorted(a_by_src.items())},
+        "u": {f"{g}|{rg}": {"n": cells[(g, rg)][0], "mean_residual": cells[(g, rg)][1],
+                            "u_hat": sh["u_hat"][(g, rg)]} for (g, rg) in sorted(cells)},
+        "k_u": sh["k_u"], "tau2_u": sh["tau2_u"], "s2_eps": s2_eps, "s2_side": s2_side,
+        "spread": spread,
+    })
+    return model
+
+
+def predict(model: dict, rows: list[dict]) -> np.ndarray:
+    """E for each row from a frozen table. A source-year the fit never saw takes that
+    source's mean a (the serve-time centering absorbs the rest); a source rung cell with
+    no own coefficient falls back to the pooled one, then to the mean of the own cells
+    at that rung."""
+    coef = model.get("coef") or {}
+    if not coef:
+        return np.zeros(len(rows))
+    own = {tuple(k) for k in model.get("own_b") or []}
+    amean = model.get("a_source_mean") or {}
+    afall = float(np.mean(list(amean.values()))) if amean else 0.0
+    bfall: dict = defaultdict(list)
+    for c, b in coef.items():
+        if c.startswith("b|"):
+            bfall[c.split("|")[2]].append(b)
+    u = model.get("u") or {}
+    out = np.zeros(len(rows))
+    for i, r in enumerate(rows):
+        s = 0.0
+        for c, v in _features(r, model["kind"], own):
+            if c in coef:
+                s += coef[c] * v
+            elif c.startswith("a|"):
+                s += amean.get(r["src"], afall) * v
+            elif c.startswith("b|"):
+                vals = bfall.get(r["rung"])
+                s += (float(np.mean(vals)) if vals else 0.0) * v
+        s += float((u.get(f"{r['origin']}|{r['rung']}") or {}).get("u_hat", 0.0))
+        out[i] = s
+    return out
+
+
+def spread_of(model: dict, rung: str) -> float:
+    s = ((model.get("spread") or {}).get(rung) or {}).get("s_hat")
+    if s:
+        return float(s)
+    side = math.sqrt(float(model.get("s2_side") or 0.0))
+    return side if side > 0 else 1.0
+
+
+def recenter(rows: list[dict], x) -> np.ndarray:
+    """Serve-time centering: each (source, step end year) to an omega-weighted mean of 0."""
+    x = np.asarray(x, float).copy()
+    groups: dict = defaultdict(list)
+    for i, r in enumerate(rows):
+        groups[(r["src"], r["V"] + r["h"])].append(i)
+    w = np.array([r["omega"] for r in rows], float)
+    for ix in groups.values():
+        x[ix] -= _wmean(x[ix], w[ix])
+    return x
+
+
+def mid_pit_scores(rows: list[dict]) -> np.ndarray:
+    """Normal score of each y at the mid-PIT of its start rung's step distribution
+    (the D0 check of section 6): Phi^-1(F(y-) + P(y) / 2), omega-weighted."""
+    out = np.zeros(len(rows))
+    by_r: dict = defaultdict(list)
+    for i, r in enumerate(rows):
+        by_r[r["rung"]].append(i)
+    nd = NormalDist()
+    for ix in by_r.values():
+        y = np.array([rows[i]["y"] for i in ix], float)
+        w = np.array([rows[i]["omega"] for i in ix], float)
+        tot = float(w.sum())
+        for k, i in enumerate(ix):
+            less = float(w[y < y[k]].sum()) / tot
+            eq = float(w[y == y[k]].sum()) / tot
+            p = min(max(less + eq / 2.0, 1e-9), 1 - 1e-9)
+            out[i] = nd.inv_cdf(p)
+    return out
+
+
+def row_credits(rows: list[dict], model_y: dict, model_w: dict | None = None, *,
+                center: bool = True) -> dict:
+    """Section 6: DV v = w - E^W (value units) and D0 z = (y - E) / s_hat[rung], each
+    re-centered per (source, step end year) when `center`."""
+    y = np.array([r["y"] for r in rows], float)
+    E = predict(model_y, rows)
+    s = np.array([spread_of(model_y, r["rung"]) for r in rows], float)
+    z = (y - E) / s if len(rows) else np.zeros(0)
+    out = {"E": E, "z": recenter(rows, z) if center else z}
+    if model_w is not None:
+        wv = np.array([r["w"] for r in rows], float)
+        EW = predict(model_w, rows)
+        v = wv - EW
+        out.update({"EW": EW, "v": recenter(rows, v) if center else v})
+    return out
+
+
+def standardized_expectation(model: dict, rows: list[dict], rung: str) -> float | None:
+    """E at a start rung with origin, level, age and source held at the rows' pooled
+    mix: every row's rung set to `rung`, the predictions averaged with weights omega."""
+    if not rows:
+        return None
+    moved = [dict(r, rung=rung) for r in rows]
+    return _wmean(predict(model, moved), [r["omega"] for r in rows])
+
+
+def credit_ratio(ew60: float | None, ew40: float | None, e60: float | None,
+                 e40: float | None, s60: float | None, s40: float | None) -> dict:
+    """The owner's 60 to 70 against 40 to 50 question as a credit ratio (section 6).
+    today's FV-DvM+: (W70 - W60) / (W50 - W40) = 13.0 / 2.5 = 5.2; DV: (13.0 - E^W[60]) /
+    (2.5 - E^W[40]); D0: ((10 - E[60]) / s_hat[60]) / ((10 - E[40]) / s_hat[40]). A
+    ratio whose denominator is at or below 0 is "undefined", with both terms printed."""
+    hi = value_of(70) - value_of(60)
+    lo = value_of(50) - value_of(40)
+
+    def ratio(num, den):
+        if num is None or den is None:
+            return {"numerator": num, "denominator": den, "ratio": None}
+        if den <= 0:
+            return {"numerator": num, "denominator": den, "ratio": "undefined"}
+        return {"numerator": num, "denominator": den, "ratio": num / den}
+
+    dv = ratio(None if ew60 is None else hi - ew60, None if ew40 is None else lo - ew40)
+    d0 = ratio(None if (e60 is None or not s60) else (10.0 - e60) / s60,
+               None if (e40 is None or not s40) else (10.0 - e40) / s40)
+    return {"today": ratio(hi, lo), "DV": dv, "D0": d0,
+            "inputs": {"EW60": ew60, "EW40": ew40, "E60": e60, "E40": e40,
+                       "s_hat60": s60, "s_hat40": s40}}
+
+
+# ---------------------------------------------------------------------------
+# clubs, tenure and the player index (sections 7 and 9)
+# ---------------------------------------------------------------------------
+
+def _day(d) -> date:
+    return d if isinstance(d, date) else datetime.strptime(str(d)[:10], "%Y-%m-%d").date()
+
+
+def tenure_shares(start_day, end_day, events) -> dict[str, float]:
+    """The registered fallback tenure split (section 7). `events` are (day, club, kind),
+    kind "read" (the club printed on any source's read that day) or "trade" (a trades
+    row's to_org); the club on a day is that of the latest event dated on or before it,
+    a trade beating a read on the same day. The interval is [start, end) in days; a
+    zero-length interval is one day at the start. The shares sum to 1."""
+    d0, d1 = _day(start_day), _day(end_day)
+    if d1 <= d0:
+        d1 = d0 + timedelta(days=1)
+    evs = sorted(((_day(d), c, 0 if k == "read" else 1) for d, c, k in events if c),
+                 key=lambda e: (e[0], e[2]))
+    cur, later = None, []
+    for d, c, _k in evs:
+        if d <= d0:
+            cur = c
+        elif d < d1:
+            later.append((d, c))
+    if cur is None:
+        cur = later[0][1] if later else "UNK"
+    days: Counter = Counter()
+    t = d0
+    for d, c in later:
+        days[cur] += (d - t).days
+        t, cur = d, c
+    days[cur] += (d1 - t).days
+    tot = sum(days.values())
+    return {c: n / tot for c, n in sorted(days.items()) if n > 0}
+
+
+def club_items(rows: list[dict], values) -> list[tuple[str, float, float]]:
+    """(club, tau x omega, credit) for every tenure share of every row."""
+    out = []
+    for r, x in zip(rows, values):
+        for club, t in (r.get("tau") or {}).items():
+            if t > 0:
+                out.append((club, float(t) * float(r["omega"]), float(x)))
+    return out
+
+
+def kish_n(weights) -> float:
+    """Kish effective n: (sum a)^2 / sum a^2."""
+    a = np.asarray(list(weights), float)
+    s2 = float((a * a).sum())
+    return float(a.sum() ** 2 / s2) if s2 > 0 else 0.0
+
+
+def aggregate_clubs(items, k_org: float, clubs=None) -> dict:
+    """D_o (weighted mean credit), N_o (Kish) and D~_o = D_o N_o / (N_o + k_org); a
+    club with no rows enters at 0 with N 0."""
+    by: dict = defaultdict(list)
+    for club, a, x in items:
+        by[club].append((a, x))
+    out = {}
+    for club in sorted(set(by) | set(clubs or ())):
+        rows = by.get(club) or []
+        a = np.array([t[0] for t in rows], float)
+        x = np.array([t[1] for t in rows], float)
+        D = _wmean(x, a) if rows else 0.0
+        N = kish_n(a) if rows else 0.0
+        out[club] = {"D": D, "N": N, "D_shrunk": D * N / (N + k_org) if N > 0 else 0.0,
+                     "sum_a": float(a.sum()) if rows else 0.0,
+                     "publish": N >= MIN_PUBLISH_N}
+    return out
+
+
+def k_org_mom(items) -> dict:
+    """k_org = s2_within / tau2_org by the method of moments, bounded to [5, 50]:
+    s2_within is the pooled weighted within-club variance of the credits, tau2_org =
+    max(0, var_o(D_o) - mean_o(s2_within / N_o)); tau2_org = 0 takes the upper bound."""
+    by: dict = defaultdict(list)
+    for club, a, x in items:
+        by[club].append((a, x))
+    lo, hi = K_ORG_BOUNDS
+    if len(by) < 2:
+        return {"k_org": hi, "s2_within": None, "tau2_org": 0.0, "clubs": len(by)}
+    num = den = 0.0
+    Ds, Ns = [], []
+    for rows in by.values():
+        a = np.array([t[0] for t in rows], float)
+        x = np.array([t[1] for t in rows], float)
+        D = _wmean(x, a)
+        num += float((a * (x - D) ** 2).sum())
+        den += float(a.sum())
+        Ds.append(D)
+        Ns.append(kish_n(a))
+    s2w = num / den if den > 0 else 0.0
+    tau2 = max(0.0, float(np.var(Ds, ddof=1)) - float(np.mean([s2w / n for n in Ns if n > 0])))
+    k = (s2w / tau2) if tau2 > 0 else hi
+    return {"k_org": float(min(hi, max(lo, k))), "s2_within": s2w, "tau2_org": tau2,
+            "clubs": len(by)}
+
+
+def plus_index(values: dict) -> dict:
+    """100 + 10 x (x - mean) / sd across the clubs (population sd, as the served
+    DvM+), unclamped, rounded to nearest."""
+    xs = np.array(list(values.values()), float)
+    if xs.size == 0:
+        return {}
+    sd = float(xs.std())
+    m = float(xs.mean())
+    return {k: round_nearest(100 + 10 * ((float(v) - m) / sd if sd > 0 else 0.0))
+            for k, v in values.items()}
+
+
+def player_index(steps: dict, actives) -> dict:
+    """Section 9: per player the mean of his own credits over his last 3 annual steps
+    (each step's sources de-duplicated by omega), shrunk n / (n + 2), published
+    100 + 10 x value / sd across the actives, rounded to nearest.
+    `steps`: {player: {step end year: [(omega, credit), ...]}}."""
+    shrunk = {}
+    for pk, by_year in steps.items():
+        last = sorted(by_year)[-PLAYER_STEPS:]
+        vals = []
+        for yr in last:
+            om = np.array([t[0] for t in by_year[yr]], float)
+            cr = np.array([t[1] for t in by_year[yr]], float)
+            vals.append(_wmean(cr, om))
+        n = len(vals)
+        shrunk[pk] = (float(np.mean(vals)) * n / (n + PLAYER_SHRINK_K)) if n else 0.0
+    act = [shrunk[p] for p in actives if p in shrunk]
+    sd = float(np.std(act)) if act else 0.0
+    return {p: round_nearest(100 + 10 * (v / sd if sd > 0 else 0.0))
+            for p, v in shrunk.items() if p in set(actives)}
+
+
+# ---------------------------------------------------------------------------
+# H1: traits by origin group (section 10)
+# ---------------------------------------------------------------------------
+
+class _H1Fit:
+    """One (side, trait, horizon, frame) design for H1: the full model of section 5
+    (Theta_direct) and the source x year plus origin x rung cell model (Theta_total)."""
+
+    def __init__(self, rows: list[dict], kind: str):
+        self.rows = rows
+        self.n = len(rows)
+        self.y = np.array([r["y"] for r in rows], float)
+        self.w = np.array([r["omega"] for r in rows], float)
+        own = _own_b(rows)
+        feats = [_features(r, kind, own) for r in rows]
+        self.cols = sorted({c for f in feats for c, _v in f})
+        self.Xd = _matrix(feats, self.cols)
+        self.ocol = {g: self.cols.index(f"c|{g}") for g in MODEL_ORIGINS
+                     if f"c|{g}" in self.cols}
+        sv = sorted({(r["src"], r["V"]) for r in rows})
+        svi = {k: i for i, k in enumerate(sv)}
+        self.rungs = sorted({r["rung"] for r in rows}, key=lambda k: RUNG_VALUE.get(k, 0))
+        self.rcode = np.array([self.rungs.index(r["rung"]) for r in rows], int)
+        self.ocode = np.array([MODEL_ORIGINS.index(r["origin"]) for r in rows], int)
+        self.A = np.zeros((self.n, len(sv)))
+        self.A[np.arange(self.n), [svi[(r["src"], r["V"])] for r in rows]] = 1.0
+        rw = Counter()
+        for r in rows:
+            rw[r["rung"]] += r["omega"]
+        tot = sum(rw.values()) or 1.0
+        self.rung_weight = np.array([rw[k] / tot for k in self.rungs], float)
+        self.cluster, self.nclusters = _cluster_codes(rows)
+        strata: dict = defaultdict(list)
+        for i, r in enumerate(rows):
+            strata[(r["src"], r["V"], r["rung"])].append(i)
+        self.strata = [np.array(ix, int) for ix in strata.values() if len(ix) > 1]
+
+    def _cells(self, ocode: np.ndarray) -> np.ndarray:
+        nr = len(self.rungs)
+        C = np.zeros((self.n, len(MODEL_ORIGINS) * nr))
+        C[np.arange(self.n), ocode * nr + self.rcode] = 1.0
+        return np.hstack([self.A, C])
+
+    def _direct_X(self, ocode: np.ndarray) -> np.ndarray:
+        if ocode is self.ocode:
+            return self.Xd
+        X = self.Xd.copy()
+        for g, j in self.ocol.items():
+            X[:, j] = (ocode == MODEL_ORIGINS.index(g)).astype(float)
+        return X
+
+    def thetas(self, w: np.ndarray | None = None,
+               ocode: np.ndarray | None = None) -> dict:
+        """{(g1, g2): (Theta_total, Theta_direct)}; NaN where a group carries no weight."""
+        w = self.w if w is None else w
+        ocode = self.ocode if ocode is None else ocode
+        out = {}
+        if self.n == 0:
+            return {c: (float("nan"), float("nan")) for c in H1_CONTRASTS}
+        bd = _solve(self._direct_X(ocode), self.y, w)
+        if ocode is self.ocode:
+            if getattr(self, "_Xt", None) is None:
+                self._Xt = self._cells(ocode)
+            Xt = self._Xt
+        else:
+            Xt = self._cells(ocode)
+        bt = _solve(Xt, self.y, w)
+        nsv, nr = self.A.shape[1], len(self.rungs)
+        gw = {g: float(w[ocode == MODEL_ORIGINS.index(g)].sum()) for g in MODEL_ORIGINS}
+        cellw = np.zeros((len(MODEL_ORIGINS), nr))
+        np.add.at(cellw, (ocode, self.rcode), w)
+
+        def c_of(g):
+            if g == REF_ORIGIN:
+                return 0.0
+            j = self.ocol.get(g)
+            return float(bd[j]) if j is not None else float("nan")
+
+        for g1, g2 in H1_CONTRASTS:
+            if gw[g1] <= 0 or gw[g2] <= 0 or gw[REF_ORIGIN] <= 0:
+                direct = float("nan")
+            else:
+                direct = c_of(g1) - c_of(g2)
+            i1, i2 = MODEL_ORIGINS.index(g1), MODEL_ORIGINS.index(g2)
+            ok = (cellw[i1] > 0) & (cellw[i2] > 0)
+            if not ok.any():
+                total = float("nan")
+            else:
+                diff = bt[nsv + i1 * nr: nsv + (i1 + 1) * nr] - bt[nsv + i2 * nr: nsv + (i2 + 1) * nr]
+                rwt = self.rung_weight * ok
+                total = float((diff * rwt).sum() / rwt.sum())
+            out[(g1, g2)] = (total, direct)
+        return out
+
+    def bootstrap(self, B: int, rng: np.random.Generator) -> dict:
+        draws = {c: np.full((B, 2), np.nan) for c in H1_CONTRASTS}
+        if self.n == 0:
+            return draws
+        for b in range(B):
+            wb = self.w * _draw_counts(rng, self.nclusters)[self.cluster]
+            for c, (t, d) in self.thetas(wb).items():
+                draws[c][b] = (t, d)
+        return draws
+
+    def permutation(self, draws: int, rng: np.random.Generator) -> dict:
+        out = {c: np.full((draws, 2), np.nan) for c in H1_CONTRASTS}
+        if self.n == 0:
+            return out
+        for b in range(draws):
+            oc = self.ocode.copy()
+            for ix in self.strata:
+                oc[ix] = self.ocode[rng.permutation(ix)]
+            for c, (t, d) in self.thetas(ocode=oc).items():
+                out[c][b] = (t, d)
+        return out
+
+
+def _sign(x) -> int:
+    if x is None or not np.isfinite(x) or x == 0:
+        return 0
+    return 1 if x > 0 else -1
+
+
+def h1_verdict(estimate: float, p_holm: float, powered: bool, checks: list,
+               eras: list, g1: str, g2: str) -> str:
+    """The verdict word of section 10: Holm-resolved on the primary frame, the same sign
+    under every check (S1, S2, Pipeline alone, FanGraphs alone) and in at least two of
+    the three eras; otherwise "not resolved". A positive contrast means g1's grades rise
+    more than g2's."""
+    if not powered:
+        return "unpowered"
+    s = _sign(estimate)
+    if s == 0 or not (p_holm < ALPHA):
+        return "not resolved"
+    if any(_sign(c) != s for c in checks):
+        return "not resolved"
+    if sum(1 for e in eras if _sign(e) == s) < 2:
+        return "not resolved"
+    return f"easier for {g1} than {g2}" if s > 0 else f"harder for {g1} than {g2}"
+
+
+def run_h1(pairs: list[dict], *, frame_name: str, B: int, perms: int, seed: int,
+           log=None) -> dict:
+    """H1 on both horizons: two Holm families of 39 per horizon (Theta_total and
+    Theta_direct); verdict words only at 12 months; the descriptive traits outside."""
+    eras = ERAS[frame_name]
+    out: dict = {"families": {}, "descriptive": [], "eras": [list(e) for e in eras]}
+    for h in HORIZONS:
+        hz = f"{12 * h}m"
+        cells = []
+        for side in SIDES:
+            for trait in TRAITS[side] + DESCRIPTIVE_TRAITS[side]:
+                kind = "fv" if trait == "FV" else "tool"
+                rows = analysis_rows(pairs, variant="primary", trait=trait, h=h, side=side)
+                fit = _H1Fit(rows, kind)
+                point = fit.thetas()
+                descriptive = trait in DESCRIPTIVE_TRAITS[side]
+                rng = np.random.default_rng(seed)
+                boot = None if descriptive else fit.bootstrap(B, rng)
+                perm = None if descriptive else fit.permutation(perms, np.random.default_rng(seed))
+                comp = Counter(r["origin"] for r in rows if r["status"] == "completed")
+                checks = {}
+                for name, kw in (("S1", {"variant": "S1"}), ("S2", {"variant": "S2"}),
+                                 ("pipeline", {"sources": ("mlb_pipeline",)}),
+                                 ("fangraphs", {"sources": ("fangraphs",)})):
+                    sub = analysis_rows(pairs, trait=trait, h=h, side=side, **kw)
+                    checks[name] = _H1Fit(sub, kind).thetas()
+                era_pts = []
+                for lo, hi in eras:
+                    sub = [r for r in rows if lo <= r["V"] <= hi]
+                    era_pts.append(_H1Fit(sub, kind).thetas() if sub else None)
+                for g1, g2 in H1_CONTRASTS:
+                    powered = comp.get(g1, 0) >= H1_MIN_PAIRS and comp.get(g2, 0) >= H1_MIN_PAIRS
+                    for k, est_name in enumerate(("total", "direct")):
+                        est = point[(g1, g2)][k]
+                        cell = {"side": side, "trait": trait, "contrast": f"{g1}-{g2}",
+                                "estimand": est_name, "estimate": est,
+                                "completed_pairs": [comp.get(g1, 0), comp.get(g2, 0)],
+                                "powered": powered, "rows": len(rows)}
+                        cell["checks"] = {n: v[(g1, g2)][k] for n, v in checks.items()}
+                        cell["eras"] = [None if e is None else e[(g1, g2)][k] for e in era_pts]
+                        if descriptive:
+                            out["descriptive"].append(dict(cell, horizon=hz))
+                            continue
+                        d = boot[(g1, g2)][:, k]
+                        cell["ci95"] = _ci95(d)
+                        cell["p"] = p_two_sided(d, B) if (powered and np.isfinite(est)) else 1.0
+                        band = _ci95(perm[(g1, g2)][:, k])
+                        cell["permutation_band95"] = band
+                        cell["inside_permutation_band"] = (
+                            None if band[0] is None or not np.isfinite(est)
+                            else bool(band[0] <= est <= band[1]))
+                        cells.append(cell)
+                if log:
+                    log("h1", horizon=hz, side=side, trait=trait, rows=len(rows))
+        for est_name in ("total", "direct"):
+            fam = [c for c in cells if c["estimand"] == est_name]
+            adj = holm([c["p"] for c in fam])
+            for c, a in zip(fam, adj):
+                c["p_holm"] = a
+                g1, g2 = c["contrast"].split("-")
+                if h == 1:
+                    c["verdict"] = h1_verdict(
+                        c["estimate"], a, c["powered"],
+                        [c["checks"][n] for n in ("S1", "S2", "pipeline", "fangraphs")],
+                        c["eras"], g1, g2)
+                else:
+                    c["verdict"] = None
+            out["families"][f"{hz}|{est_name}"] = {"size": len(fam), "cells": fam}
+    return out
+
+
+# ---------------------------------------------------------------------------
+# H2: the next rung from a higher rung (section 11)
+# ---------------------------------------------------------------------------
+
+def _sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-np.clip(x, -35, 35)))
+
+
+def logistic_fit(X: np.ndarray, yb: np.ndarray, w: np.ndarray, pen: np.ndarray,
+                 lam: float = H2_L2, beta0: np.ndarray | None = None,
+                 iters: int = 100) -> np.ndarray:
+    """Weighted logistic regression by Newton's method, minimizing the weighted
+    negative log-likelihood plus lam / 2 x the sum of squared penalized coefficients
+    (pen is 1 for a penalized column, 0 for the intercept and the rung terms)."""
+    beta = np.zeros(X.shape[1]) if beta0 is None else beta0.copy()
+    ridge = lam * pen + 1e-9
+    for _ in range(iters):
+        p = _sigmoid(X @ beta)
+        g = X.T @ (w * (yb - p)) - ridge * beta
+        H = (X.T * (w * p * (1 - p))) @ X + np.diag(ridge)
+        step = np.linalg.solve(H, g)
+        beta = beta + step
+        if float(np.max(np.abs(step))) < 1e-8:
+            break
+    return beta
+
+
+class _H2Fit:
+    """One (side, horizon, frame) H2 design: intercept, start rung (reference 40),
+    then the penalized covariates of section 4 (source, list year, origin, level band,
+    age_rel, agemiss)."""
+
+    def __init__(self, rows: list[dict]):
+        self.rows = rows
+        self.n = len(rows)
+        self.y = np.array([r["y"] for r in rows], float)
+        self.w = np.array([r["omega"] for r in rows], float)
+        self.hr = [h2_rung(r["rung"]) for r in rows]
+        cols, pen = ["icpt"], [0.0]
+        self.rung_cols = {}
+        for rg in H2_RUNGS:
+            if rg != "40":
+                self.rung_cols[rg] = len(cols)
+                cols.append(f"r|{rg}")
+                pen.append(0.0)
+        cats = []
+        for name, vals, ref in (("s", [r["src"] for r in rows], None),
+                                ("V", [str(r["V"]) for r in rows], None),
+                                ("g", [r["origin"] for r in rows], REF_ORIGIN),
+                                ("L", [r["level"] for r in rows], REF_LEVEL)):
+            levels = sorted(set(vals))
+            ref = ref if ref in levels else (levels[0] if levels else None)
+            for lv in levels:
+                if lv != ref:
+                    cats.append((len(cols), name, lv))
+                    cols.append(f"{name}|{lv}")
+                    pen.append(1.0)
+        self.cols = cols
+        self.pen = np.array(pen + [1.0, 1.0])
+        X = np.zeros((self.n, len(cols) + 2))
+        X[:, 0] = 1.0
+        for i, r in enumerate(rows):
+            j = self.rung_cols.get(self.hr[i])
+            if j is not None:
+                X[i, j] = 1.0
+        keyval = {"s": "src", "V": "V", "g": "origin", "L": "level"}
+        for j, name, lv in cats:
+            X[:, j] = [1.0 if str(r[keyval[name]]) == lv else 0.0 for r in rows]
+        X[:, -2] = [float(r["age_rel"]) if r.get("age_rel") is not None else 0.0 for r in rows]
+        X[:, -1] = [1.0 if r.get("agemiss") else 0.0 for r in rows]
+        self.X = X
+        self.origin_cols = {lv: j for j, name, lv in cats if name == "g"}
+        self.cluster, self.nclusters = _cluster_codes(rows)
+
+    def _at(self, rung: str, origin: str | None = None) -> np.ndarray:
+        Xr = self.X.copy()
+        for j in self.rung_cols.values():
+            Xr[:, j] = 0.0
+        if rung in self.rung_cols:
+            Xr[:, self.rung_cols[rung]] = 1.0
+        if origin is not None:
+            for j in self.origin_cols.values():
+                Xr[:, j] = 0.0
+            if origin in self.origin_cols:
+                Xr[:, self.origin_cols[origin]] = 1.0
+        return Xr
+
+    def probs(self, k: int, w: np.ndarray | None = None, beta0=None,
+              origin: str | None = None) -> tuple[dict, np.ndarray]:
+        """P_k(r), standardized to the side's pooled covariate mix."""
+        w = self.w if w is None else w
+        yb = (self.y >= 5.0 * k).astype(float)
+        beta = logistic_fit(self.X, yb, w, self.pen, beta0=beta0)
+        return {rg: _wmean(_sigmoid(self._at(rg, origin) @ beta), w)
+                for rg in H2_RUNGS}, beta
+
+    def drift(self, w: np.ndarray | None = None, origin: str | None = None) -> dict:
+        """m(r) = E[y | r, x], the WLS analogue standardized the same way."""
+        w = self.w if w is None else w
+        beta = _solve(self.X, self.y, w)
+        return {rg: _wmean(self._at(rg, origin) @ beta, w) for rg in H2_RUNGS}
+
+
+def _logit(p: float) -> float:
+    p = min(max(float(p), 1e-9), 1 - 1e-9)
+    return math.log(p / (1 - p))
+
+
+def h2_trend(p1: dict) -> float:
+    """The least-squares slope of logit P_1 on rung (40 = 0, 45 = 1, ..., 60+ = 4)."""
+    xs = np.arange(len(H2_TREND_RUNGS), dtype=float)
+    ys = np.array([_logit(p1[rg]) for rg in H2_TREND_RUNGS])
+    xc = xs - xs.mean()
+    return float((xc * (ys - ys.mean())).sum() / (xc * xc).sum())
+
+
+def h2_contrast(p2: dict) -> float:
+    """The owner's contrast: P_2(60+) - P_2(40)."""
+    return float(p2["60+"] - p2["40"])
+
+
+def run_h2(pairs: list[dict], *, B: int, seed: int, log=None) -> dict:
+    """H2 per side (FV only): trend at 12 and 24 months, the 60+ against 40 two-rung
+    contrast at 24 (primary) and 12 months; one Holm family of 8 per frame; the verdict
+    needs the primary, S1 and S2 frames all resolved after Holm."""
+    out: dict = {"tests": [], "descriptive": {}}
+    comp: dict = {}
+    for h in HORIZONS:
+        for side in SIDES:
+            rows = analysis_rows(pairs, variant="primary", h=h, side=side)
+            comp[(h, side)] = Counter(h2_rung(r["rung"]) for r in rows
+                                      if r["status"] == "completed")
+    by_frame: dict = {}
+    for variant in VARIANTS:
+        tests = []
+        for side in SIDES:
+            for h in HORIZONS:
+                hz = f"{12 * h}m"
+                rows = analysis_rows(pairs, variant=variant, h=h, side=side)
+                fit = _H2Fit(rows)
+                if fit.n == 0:
+                    p1 = p2 = m = None
+                else:
+                    p1, b1 = fit.probs(1)
+                    p2, b2 = fit.probs(2)
+                    m = fit.drift()
+                desc = {"P1": p1, "P2": p2, "m": m, "rows": fit.n}
+                if variant == "primary" and fit.n:
+                    by_origin = {}
+                    for g in MODEL_ORIGINS:
+                        n_g = Counter(h2_rung(r["rung"]) for r in rows
+                                      if r["origin"] == g and r["status"] == "completed")
+                        keep = [rg for rg in H2_RUNGS if n_g.get(rg, 0) >= H2_MIN_PAIRS]
+                        if keep:
+                            pg1, _ = fit.probs(1, origin=g, beta0=b1)
+                            pg2, _ = fit.probs(2, origin=g, beta0=b2)
+                            mg = fit.drift(origin=g)
+                            by_origin[g] = {rg: {"P1": pg1[rg], "P2": pg2[rg], "m": mg[rg]}
+                                            for rg in keep}
+                    desc["by_origin"] = by_origin
+                out["descriptive"][f"{variant}|{side}|{hz}"] = desc
+                c = comp[(h, side)]
+                trend_ok = all(c.get(rg, 0) >= H2_MIN_PAIRS for rg in H2_TREND_RUNGS)
+                contrast_ok = c.get("40", 0) >= H2_MIN_PAIRS and c.get("60+", 0) >= H2_MIN_PAIRS
+                td = np.full(B, np.nan)
+                cd = np.full(B, np.nan)
+                if fit.n and (trend_ok or contrast_ok):
+                    rng = np.random.default_rng(seed)
+                    for b in range(B):
+                        wb = fit.w * _draw_counts(rng, fit.nclusters)[fit.cluster]
+                        q1, _ = fit.probs(1, w=wb, beta0=b1)
+                        q2, _ = fit.probs(2, w=wb, beta0=b2)
+                        td[b] = h2_trend(q1)
+                        cd[b] = h2_contrast(q2)
+                for test, ok, est, d in (
+                        ("trend", trend_ok, None if p1 is None else h2_trend(p1), td),
+                        ("contrast", contrast_ok, None if p2 is None else h2_contrast(p2), cd)):
+                    tests.append({
+                        "side": side, "horizon": hz, "test": test, "estimate": est,
+                        "powered": ok, "ci95": _ci95(d),
+                        "p": p_one_sided_below(d, B) if (ok and est is not None) else 1.0,
+                        "role": ("primary" if (test == "trend" or hz == "24m")
+                                 else "secondary"),
+                    })
+                if log:
+                    log("h2", frame=variant, side=side, horizon=hz, rows=fit.n)
+        adj = holm([t["p"] for t in tests])
+        for t, a in zip(tests, adj):
+            t["p_holm"] = a
+        by_frame[variant] = tests
+    for i, t in enumerate(by_frame["primary"]):
+        res = [by_frame[v][i] for v in VARIANTS]
+        if not t["powered"]:
+            verdict = "unpowered"
+        elif all(r["p_holm"] < ALPHA for r in res):
+            verdict = "list grades rise less often from higher rungs"
+        else:
+            verdict = "not resolved"
+        out["tests"].append(dict(t, frames={v: {"estimate": by_frame[v][i]["estimate"],
+                                                "p": by_frame[v][i]["p"],
+                                                "p_holm": by_frame[v][i]["p_holm"]}
+                                            for v in VARIANTS},
+                                 verdict=verdict))
+    out["family_size"] = len(by_frame["primary"])
+    out["completed_pairs_by_side_rung"] = {
+        f"{12 * h}m|{side}": dict(sorted(c.items())) for (h, side), c in comp.items()}
+    out["caveat"] = ("A pass reads 'list grades rise less often from higher rungs', never "
+                     "'developing talent is harder there' (section 11).")
+    return out
+
+
+# ---------------------------------------------------------------------------
+# validation (section 13)
+# ---------------------------------------------------------------------------
+
+ARMS: tuple[str, ...] = ("C0", "C0_mean", "DV", "D0")
+COMPOSITION: tuple[str, ...] = ("share_HS", "share_COL", "share_IFA", "mean_start_rung",
+                                "mean_age_rel", "pairs")
+
+
+def _scored(rows: list[dict], models: dict) -> list[dict]:
+    """Rows with their credits under one year's expectation (both sides), re-centered
+    per (source, step end year) over the rows scored together."""
+    out = []
+    for side in SIDES:
+        sr = [r for r in rows if r["side"] == side]
+        if not sr:
+            continue
+        my, mw = models[side]
+        cr = row_credits(sr, my, mw, center=False)
+        for r, v, z in zip(sr, cr["v"], cr["z"]):
+            out.append(dict(r, v=float(v), z=float(z)))
+    if out:
+        v = recenter(out, [r["v"] for r in out])
+        z = recenter(out, [r["z"] for r in out])
+        for r, a, b in zip(out, v, z):
+            r["v"], r["z"] = float(a), float(b)
+    return out
+
+
+def _arm_values(rows: list[dict], clubs: list[str], k_org: dict) -> dict:
+    out = {}
+    w_items = club_items(rows, [r["w"] for r in rows])
+    sums: dict = defaultdict(float)
+    for club, a, x in w_items:
+        sums[club] += a * x
+    out["C0"] = {c: sums.get(c, 0.0) for c in clubs}
+    agg = aggregate_clubs(w_items, 1.0, clubs)
+    out["C0_mean"] = {c: agg[c]["D"] for c in clubs}
+    for arm, key in (("DV", "v"), ("D0", "z")):
+        agg = aggregate_clubs(club_items(rows, [r[key] for r in rows]), k_org[arm], clubs)
+        out[arm] = {c: agg[c]["D_shrunk"] for c in clubs}
+    return out
+
+
+def _composition(rows: list[dict], clubs: list[str]) -> dict:
+    acc: dict = {c: defaultdict(float) for c in clubs}
+    for r in rows:
+        for club, t in (r.get("tau") or {}).items():
+            if club not in acc:
+                continue
+            a = t * r["omega"]
+            d = acc[club]
+            d["a"] += a
+            d["HS"] += a * (r["origin"] == "HS")
+            d["COL"] += a * (r["origin"] == "COL")
+            d["IFA"] += a * (r["origin"] == "IFA")
+            d["rung"] += a * RUNG_VALUE.get(r["rung"], 0.0)
+            if r.get("age_rel") is not None:
+                d["age"] += a * float(r["age_rel"])
+                d["age_a"] += a
+    out = {k: {} for k in COMPOSITION}
+    for c in clubs:
+        d = acc[c]
+        a = d["a"]
+        out["share_HS"][c] = d["HS"] / a if a else 0.0
+        out["share_COL"][c] = d["COL"] / a if a else 0.0
+        out["share_IFA"][c] = d["IFA"] / a if a else 0.0
+        out["mean_start_rung"][c] = d["rung"] / a if a else 0.0
+        out["mean_age_rel"][c] = d["age"] / d["age_a"] if d["age_a"] else 0.0
+        out["pairs"][c] = a
+    return out
+
+
+def _mean_stat(per_year: list) -> float | None:
+    vals = [v for v in per_year if v is not None and np.isfinite(v)]
+    return float(np.mean(vals)) if vals else None
+
+
+def run_validation(pairs: list[dict], *, frame_name: str, k_org: dict, B: int,
+                   seed: int, log=None) -> dict:
+    """Section 13 on 12-month primary FV rows: arms C0, C0 as a mean, DV and D0 at
+    club-years Y, each year's expectation refit leaving out list years Y-1, Y and Y+1;
+    V-P1, V-P2, V-S and V-C; the club-clustered bootstrap with paired deltas; the
+    decision rule."""
+    rows = analysis_rows(pairs, variant="primary", h=1)
+    years = VALIDATION_YEARS[frame_name]
+    clubs = sorted({c for r in rows for c in (r.get("tau") or {})})
+    models: dict = {}
+
+    def model_for(Y: int) -> dict:
+        if Y not in models:
+            leave = {Y - 1, Y, Y + 1}
+            train = [r for r in rows if r["V"] not in leave and r["V"] + r["h"] not in leave]
+            models[Y] = {s: (fit_expectation([r for r in train if r["side"] == s]),
+                             fit_expectation([r for r in train if r["side"] == s],
+                                             outcome="w"))
+                         for s in SIDES}
+        return models[Y]
+
+    per_year = {}
+    for Y in years:
+        sc = _scored([r for r in rows if Y - INDEX_WINDOW_YEARS < r["V"] + r["h"] <= Y + 1],
+                     model_for(Y))
+        win = [r for r in sc if Y - INDEX_WINDOW_YEARS < r["V"] + r["h"] <= Y]
+        one = [r for r in sc if r["V"] + r["h"] == Y]
+        tgt = [r for r in sc if r["V"] == Y]
+        sc_next = _scored([r for r in rows if r["V"] + r["h"] == Y + 1], model_for(Y + 1))
+        if not tgt:
+            continue
+        raw = aggregate_clubs(club_items(tgt, [r["w"] for r in tgt]), 1.0, clubs)
+        res = aggregate_clubs(club_items(tgt, [r["v"] for r in tgt]), 1.0, clubs)
+        per_year[Y] = {
+            "idx3": _arm_values(win, clubs, k_org),
+            "idx1": _arm_values(one, clubs, k_org),
+            "idx1_next": _arm_values(sc_next, clubs, k_org),
+            "raw": {c: raw[c]["D"] for c in clubs if raw[c]["N"] > 0},
+            "resid": {c: res[c]["D"] for c in clubs if res[c]["N"] > 0},
+            "comp": _composition(win, clubs),
+        }
+        if log:
+            log("validation", year=Y, target_rows=len(tgt), window_rows=len(win))
+
+    def stats(sample: list[str], with_vc: bool = True) -> dict:
+        out = {arm: {"VP1": [], "VP2": [], "VS": [], "VC": []} for arm in ARMS}
+        for Y, d in per_year.items():
+            keep = [c for c in sample if c in d["raw"]]
+            for arm in ARMS:
+                i3 = [d["idx3"][arm][c] for c in keep]
+                out[arm]["VP1"].append(spearman(i3, [d["raw"][c] for c in keep]))
+                out[arm]["VP2"].append(spearman(i3, [d["resid"][c] for c in keep]))
+                out[arm]["VS"].append(spearman([d["idx1"][arm][c] for c in sample],
+                                               [d["idx1_next"][arm][c] for c in sample]))
+                if with_vc:
+                    cm = [spearman(i3, [d["comp"][k][c] for c in keep]) for k in COMPOSITION]
+                    cm = [abs(x) for x in cm if x is not None]
+                    out[arm]["VC"].append(max(cm) if cm else None)
+        return {arm: {k: _mean_stat(v) for k, v in s.items()} for arm, s in out.items()}
+
+    point = stats(clubs)
+    rng = np.random.default_rng(seed)
+    deltas = {(arm, st): np.full(B, np.nan) for arm in ("DV", "D0") for st in ("VP1", "VP2", "VS")}
+    for b in range(B):
+        sample = [clubs[i] for i in rng.integers(0, len(clubs), len(clubs))] if clubs else []
+        s = stats(sample, with_vc=False)
+        for arm in ("DV", "D0"):
+            for st in ("VP1", "VP2", "VS"):
+                a, c0 = s[arm][st], s["C0"][st]
+                if a is not None and c0 is not None:
+                    deltas[(arm, st)][b] = a - c0
+    block: dict = {"years": sorted(per_year), "clubs": len(clubs), "point": point,
+                   "deltas": {}}
+    for st in ("VP1", "VP2", "VS"):
+        ps = {arm: p_two_sided(deltas[(arm, st)], B) for arm in ("DV", "D0")}
+        adj = holm([ps["DV"], ps["D0"]])
+        for arm, a in zip(("DV", "D0"), adj):
+            d = deltas[(arm, st)]
+            fin = d[np.isfinite(d)]
+            pa, pc = point[arm][st], point["C0"][st]
+            block["deltas"][f"{arm}|{st}"] = {
+                "delta": None if (pa is None or pc is None) else pa - pc,
+                "ci95": _ci95(d),
+                "lower_95_one_sided": float(np.percentile(fin, 5)) if fin.size else None,
+                "p": ps[arm], "p_holm": a if st in ("VP2", "VS") else None,
+            }
+    block["decision"] = {arm: decide(block, arm) for arm in ("DV", "D0")}
+    block["note"] = ("V-S is not validity: club composition persists, so it is read only "
+                     "beside V-C.")
+    return block
+
+
+def decide(block: dict, arm: str = "DV") -> dict:
+    """The decision rule of section 13 for one arm against C0, with the copy the
+    artifact allows."""
+    pt = block["point"]
+    vc, vc0 = pt[arm]["VC"], pt["C0"]["VC"]
+    c1 = vc is not None and (vc <= VC_MAX or (vc0 is not None and vc <= vc0 - VC_BELOW_C0))
+    p1 = block["deltas"][f"{arm}|VP1"]
+    c2 = p1["lower_95_one_sided"] is not None and p1["lower_95_one_sided"] > NONINF_MARGIN
+    losses = [st for st in ("VP2", "VS")
+              if (block["deltas"][f"{arm}|{st}"]["p_holm"] or 1.0) < ALPHA
+              and (block["deltas"][f"{arm}|{st}"]["delta"] or 0.0) < 0]
+    c3 = not losses
+    win_p1 = (p1["p"] < ALPHA and (p1["delta"] or 0.0) > 0)
+    p2 = block["deltas"][f"{arm}|VP2"]
+    win_p2 = ((p2["p_holm"] or 1.0) < ALPHA and (p2["delta"] or 0.0) > 0)
+    copy = []
+    if win_p1:
+        copy.append("predicts next-year farm growth better than the previous index")
+    if win_p2:
+        copy.append("predicts next year's growth above expectation better")
+    if not copy:
+        copy.append("difficulty-adjusted; ties the previous index on prediction")
+    return {"composition_check": c1, "non_inferior_vp1": c2,
+            "holm_losses": losses, "no_holm_loss": c3,
+            "verdict": "SHIP CANDIDATE" if (c1 and c2 and c3) else "NO SHIP",
+            "copy": copy, "composition_max": vc, "composition_max_c0": vc0}
+
+
+# ---------------------------------------------------------------------------
+# the whole read, on any pairs (the look's rows, or a fixture for the dry run)
+# ---------------------------------------------------------------------------
+
+def _tool_traits(side: str) -> tuple[str, ...]:
+    return tuple(t for t in TRAITS[side] if t != "FV") + DESCRIPTIVE_TRAITS[side]
+
+
+def run_analysis(pairs: list[dict], *, frame_name: str, B: int = BOOT_B,
+                 perms: int = PERM_DRAWS, seed: int = SEED, log=None) -> tuple[dict, dict]:
+    """(table, eval): the frozen table of data/dvm_difficulty.json and the read of
+    data/dvm_difficulty_eval.json, computed on `pairs`. Pure; writes nothing."""
+    table: dict = {"frame": frame_name, "censoring": censoring_census(pairs),
+                   "value_table": {str(k): v for k, v in VALUE_TABLE.items()},
+                   "models": {}, "tool_models": {}, "k_org": {}, "ratio": {}}
+    credits_rows: list[dict] = []
+    for h in HORIZONS:
+        hz = f"{12 * h}m"
+        for side in SIDES:
+            rows = analysis_rows(pairs, h=h, side=side)
+            my = fit_expectation(rows)
+            mw = fit_expectation(rows, outcome="w")
+            table["models"][f"{hz}|{side}"] = {"y": my, "w": mw}
+            if rows:
+                ew60 = standardized_expectation(mw, rows, "60")
+                ew40 = standardized_expectation(mw, rows, "40")
+                e60 = standardized_expectation(my, rows, "60")
+                e40 = standardized_expectation(my, rows, "40")
+                table["ratio"][f"{hz}|{side}"] = credit_ratio(
+                    ew60, ew40, e60, e40, spread_of(my, "60"), spread_of(my, "40"))
+            if h == 1 and rows:
+                cr = row_credits(rows, my, mw)
+                pit = recenter(rows, mid_pit_scores(rows))
+                for r, v, z, q in zip(rows, cr["v"], cr["z"], pit):
+                    credits_rows.append(dict(r, v=float(v), z=float(z), pit=float(q)))
+            if log:
+                log("model", horizon=hz, side=side, rows=len(rows))
+    clubs = sorted({c for r in credits_rows for c in (r.get("tau") or {})})
+    clubs_out = {}
+    for arm, key in (("DV", "v"), ("D0", "z"), ("D0_pit", "pit")):
+        items = club_items(credits_rows, [r[key] for r in credits_rows])
+        k = k_org_mom(items)
+        table["k_org"][arm] = k
+        agg = aggregate_clubs(items, k["k_org"], clubs)
+        clubs_out[arm] = agg
+    table["club_frame_index"] = {
+        arm: {c: {"D": a["D"], "N": a["N"], "D_shrunk": a["D_shrunk"],
+                  "publish": a["publish"]} for c, a in agg.items()}
+        for arm, agg in clubs_out.items() if arm != "D0_pit"}
+    pit_corr = pearson([clubs_out["D0"][c]["D_shrunk"] for c in clubs],
+                       [clubs_out["D0_pit"][c]["D_shrunk"] for c in clubs])
+    for side in SIDES:
+        for trait in _tool_traits(side):
+            rows = analysis_rows(pairs, trait=trait, h=1, side=side)
+            mt = fit_expectation(rows, kind="tool")
+            table["tool_models"][f"{side}|{trait}"] = mt
+            if rows:
+                z = row_credits(rows, mt)["z"]
+                table["k_org"][f"tool|{side}|{trait}"] = k_org_mom(club_items(rows, z))
+    table["residuals_12m"] = [
+        {"club": c, "tau": t, "pk": r["pk"], "src": r["src"], "V": r["V"],
+         "step_end": r["V"] + r["h"], "side": r["side"], "omega": r["omega"],
+         "v": r["v"], "z": r["z"]}
+        for r in credits_rows for c, t in sorted((r.get("tau") or {}).items())]
+    ev: dict = {"frame": frame_name, "seed": seed, "bootstrap_draws": B,
+                "permutation_draws": perms}
+    ev["d0_pit_club_correlation"] = pit_corr
+    ev["d0_pit_note"] = (None if pit_corr is None or pit_corr >= PIT_CORR_FLOOR else
+                         "the D0 club index and its mid-PIT normal-score version "
+                         "correlate below 0.9")
+    ev["h1"] = run_h1(pairs, frame_name=frame_name, B=B, perms=perms, seed=seed, log=log)
+    ev["h2"] = run_h2(pairs, B=B, seed=seed, log=log)
+    ev["validation"] = run_validation(
+        pairs, frame_name=frame_name,
+        k_org={"DV": table["k_org"]["DV"]["k_org"], "D0": table["k_org"]["D0"]["k_org"]},
+        B=B, seed=seed, log=log)
+    ev["ratio"] = table["ratio"]
+    ev["decision"] = ev["validation"]["decision"]["DV"]
+    return table, ev
+
+
+def clean_json(obj):
+    """JSON-safe copy: numpy scalars to Python, NaN and infinities to None, tuple keys
+    joined with '|'."""
+    if isinstance(obj, dict):
+        return {("|".join(map(str, k)) if isinstance(k, tuple) else str(k)): clean_json(v)
+                for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [clean_json(v) for v in obj]
+    if isinstance(obj, (np.floating, float)):
+        x = float(obj)
+        return x if math.isfinite(x) else None
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+    if isinstance(obj, np.ndarray):
+        return clean_json(obj.tolist())
+    return obj
+
+
+def summary_lines(table: dict, ev: dict) -> list[str]:
+    """The printed read. The first line names the frame."""
+    L = [f"FRAME: {ev['frame']}"]
+    for hz, c in table["censoring"].items():
+        L.append(f"censoring {hz} (pooled over side and rung): "
+                 + ", ".join(f"{k} {v}" for k, v in c.items()))
+    for key, r in sorted(table["ratio"].items()):
+        parts = []
+        for name in ("today", "DV", "D0"):
+            x = r[name]
+            rv = x["ratio"]
+            rv = "undefined" if rv == "undefined" else (None if rv is None else round(rv, 3))
+            parts.append(f"{name} {rv} ({_fmt(x['numerator'])} / {_fmt(x['denominator'])})")
+        L.append(f"60 to 70 over 40 to 50, {key}: " + "; ".join(parts))
+    for fam, blk in ev["h1"]["families"].items():
+        words = [f"{c['side']} {c['trait']} {c['contrast']}: {c['verdict']}"
+                 for c in blk["cells"] if c.get("verdict") not in (None, "not resolved",
+                                                                    "unpowered")]
+        L.append(f"H1 {fam} ({blk['size']} cells): " + ("; ".join(words) or "none resolved"))
+    for t in ev["h2"]["tests"]:
+        L.append(f"H2 {t['side']} {t['horizon']} {t['test']}: estimate {_fmt(t['estimate'])}, "
+                 f"p_holm {_fmt(t['p_holm'])}; {t['verdict']}")
+    val = ev["validation"]
+    for arm in ARMS:
+        pt = val["point"][arm]
+        L.append(f"validation {arm}: " + ", ".join(f"{k} {_fmt(v)}" for k, v in pt.items()))
+    d = ev["decision"]
+    L.append(f"DECISION (DV): {d['verdict']}; composition max {_fmt(d['composition_max'])} "
+             f"(C0 {_fmt(d['composition_max_c0'])}); copy: {' | '.join(d['copy'])}")
+    if ev.get("d0_pit_note"):
+        L.append(ev["d0_pit_note"])
+    return L
+
+
+def _fmt(x) -> str:
+    if x is None:
+        return "None"
+    if isinstance(x, str):
+        return x
+    return f"{float(x):.4f}"
+
+
+# ---------------------------------------------------------------------------
+# fixtures (the dry run and the tests): synthetic rows, never the store
+# ---------------------------------------------------------------------------
+
+def fixture_pairs(seed: int = SEED, players: int = 400, *, clubs: int = 30) -> list[dict]:
+    """Synthetic study rows with every kind of null the look can meet: unknown origins,
+    unresolved levels, missing ages, censored rows of every status, tool grades absent at
+    the start or the end, split tenures. Built from a seeded generator; no store read."""
+    rng = np.random.default_rng(seed)
+    club_names = [f"C{i:02d}" for i in range(clubs)]
+    years = [y for y in range(2011, 2027) if y not in RESERVED_LV]
+    origins = ("HS", "COL", "JUCO", "IFA", "PRO", "UNK")
+    tools = {"hit": ("hit", "game_pwr", "raw_pwr", "speed", "field", "throw", "pitch_sel",
+                     "bat_ctrl"),
+             "pit": ("fb", "sl", "cb", "ch", "cmd", "ct")}
+    pairs = []
+    for i in range(players):
+        pk = f"p{i:04d}"
+        side = SIDES[int(rng.integers(0, 2))]
+        origin = origins[int(rng.choice(6, p=[0.3, 0.3, 0.05, 0.25, 0.05, 0.05]))]
+        first = years[int(rng.integers(0, len(years) - 1))]
+        g = float(rng.choice([35, 40, 40, 45, 45, 47.5, 50, 50, 55, 60, 65]))
+        level = [None, "pre-pro", "DSL/CPX", "A/A+", "AA/AAA"][int(rng.integers(0, 5))]
+        age_rel = None if rng.random() < 0.2 else float(np.clip(rng.normal(0, 1.2), -3, 3))
+        home = club_names[int(rng.integers(0, clubs))]
+        srcs = [s for s in SOURCES if rng.random() < 0.7] or [SOURCES[0]]
+        base_tools = {k: float(rng.choice([30, 35, 40, 45, 50, 55, 60]))
+                      for k in tools[side] if rng.random() < 0.85}
+        for V in [y for y in years if first <= y < first + 4]:
+            for h in HORIZONS:
+                if V + h not in years:
+                    continue
+                for src in srcs:
+                    st = STATUSES[int(rng.choice(4, p=[0.6, 0.1, 0.25, 0.05]))]
+                    drift = float(rng.choice([-5, 0, 0, 0, 5, 10]))
+                    if origin == "HS":
+                        drift += float(rng.choice([0, 0, 5]))
+                    if st == "completed":
+                        g1 = min(80.0, max(20.0, g + drift))
+                    elif st == "graduated":
+                        g1 = g + float(rng.choice([0, 5]))
+                    else:
+                        g1 = min(g, 35.0) - DROP_RUNG
+                    t0 = {k: v for k, v in base_tools.items() if rng.random() < 0.9}
+                    t1 = ({k: v + float(rng.choice([-5, 0, 5])) for k, v in t0.items()
+                           if rng.random() < 0.85}
+                          if st in ("completed", "graduated") else None)
+                    pres = ({k: v - float(rng.choice([5, 10, 15])) for k, v in t0.items()}
+                            if src == "fangraphs" else {})
+                    tau = {home: 1.0}
+                    if rng.random() < 0.08:
+                        other = club_names[int(rng.integers(0, clubs))]
+                        split = float(rng.uniform(0.2, 0.8))
+                        tau = {home: split, other: 1.0 - split} if other != home else tau
+                    pairs.append({
+                        "src": src, "pk": pk, "V": V, "h": h, "side": side,
+                        "rung": rung_of(g), "g0": g, "g1": g1, "status": st,
+                        "tools0": t0, "tools1": t1, "present0": pres, "origin": origin,
+                        "level": level, "age_rel": age_rel, "agemiss": age_rel is None,
+                        "tau": tau,
+                    })
+        g = min(70.0, g + float(rng.choice([0, 0, 5])))
+    return pairs
+
+
+def run_dry(out_dir: Path, *, B: int = 40, perms: int = 10, players: int = 400) -> dict:
+    """The crash protocol's dry run (section 14): the whole reporting path on fixtures
+    with nulls, written to out_dir only (never data/)."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    log = _probe_logger(out_dir)
+    pairs = fixture_pairs(players=players)
+    log("dry_run_start", pairs=len(pairs))
+    table, ev = run_analysis(pairs, frame_name="COMPLEMENT", B=B, perms=perms, log=log)
+    table["receipt"] = {"generated_at": _now(), "fixture": True, "pairs": len(pairs)}
+    ev["receipt"] = {"generated_at": _now(), "fixture": True}
+    (out_dir / TABLE_ARTIFACT).write_text(
+        json.dumps(clean_json(table), indent=1, allow_nan=False), encoding="utf-8")
+    (out_dir / EVAL_ARTIFACT).write_text(
+        json.dumps(clean_json(ev), indent=1, allow_nan=False), encoding="utf-8")
+    text = "\n".join(summary_lines(table, ev)) + "\n"
+    (out_dir / "dry_run.txt").write_text(text, encoding="utf-8")
+    log("dry_run_end")
+    return {"table": table, "eval": ev, "text": text}
+
+
+# ---------------------------------------------------------------------------
+# the guards and the one look (sections 2, 14 and 15)
+# ---------------------------------------------------------------------------
+
+_DATED_ENTRY_RE = re.compile(r"^\s*(#{2,4}\s+|\*\*)?\(?\d{4}-\d{2}-\d{2}")
+
+
+def results_recorded(text: str | None, number: str) -> bool:
+    """True when the '## <number>.' results section of a gate document holds a dated
+    entry (a line that opens with a date, as a heading or in bold)."""
+    body = _section(text or "", number)
+    return any(_DATED_ENTRY_RE.match(ln) for ln in body.splitlines())
+
+
+def look_frame(today: str, *, eta_text: str | None, dvm_text: str | None,
+               anchor_text: str | None, efv_v2_text: str | None,
+               rlv_record: str | None = RLV_LOOK_RECORD) -> str:
+    """The clock of section 14: "FULL" or "COMPLEMENT", or ClockError. Never on a
+    registered look day; only after the ETA record, this gate's registration and the
+    PROSPECT_ANCHOR look record; FULL on or after 2026-12-01 when the R-LV record exists
+    (in EFV_V2_GATE part 9 AND as RLV_LOOK_RECORD, which lifts F-R1 in the frame);
+    COMPLEMENT on or after 2027-01-31 when it does not."""
+    today = str(today)[:10]
+    if today in LOOK_DAYS:
+        raise ClockError(f"{today} is a registered look day; no other look runs on it")
+    assert_growth_allowed(eta_text, dvm_text)
+    if not results_recorded(anchor_text, "18"):
+        raise ClockError(f"{ANCHOR_GATE_DOC} section 18 holds no look record; this look "
+                         "waits for it on every path (gate section 14)")
+    rec_doc = results_recorded(efv_v2_text, "9")
+    rec_code = excluded_list_years(rlv_record) != RESERVED_LV
+    if rec_doc != rec_code:
+        raise ClockError("the R-LV look record in EFV_V2_GATE part 9 and RLV_LOOK_RECORD "
+                         "disagree; set the constant by a dated amendment first")
+    if rec_doc:
+        if today < LOOK_EARLIEST_FULL:
+            raise ClockError(f"the FULL-frame look opens {LOOK_EARLIEST_FULL}")
+        return "FULL"
+    if today < LOOK_EARLIEST_COMPLEMENT:
+        raise ClockError(f"no R-LV record: the COMPLEMENT-frame look opens "
+                         f"{LOOK_EARLIEST_COMPLEMENT}")
+    return "COMPLEMENT"
+
+
+def tenure_source(root: Path = ROOT) -> str:
+    """P-1: the registered fallback, unless VAL_4's table exists (then this lab has no
+    reader for it yet, and the look stops for an amendment)."""
+    if (Path(root) / VAL4_DIR).exists():
+        raise ClockError(f"{VAL4_DIR} exists: VAL_4's tenure table must be read (gate "
+                         "section 7); add its reader by a dated amendment before the look")
+    return "fallback (gate section 7)"
+
+
+def _process_lines() -> list[tuple[int, str]] | None:
+    """(pid, command line) of every process, from the operating system's own lister
+    (PowerShell on Windows, ps elsewhere); None when the listing fails."""
+    import subprocess
+    if os.name == "nt":
+        cmd = ["powershell", "-NoProfile", "-Command",
+               "Get-CimInstance Win32_Process | ForEach-Object "
+               "{ [string]$_.ProcessId + ' ' + [string]$_.CommandLine }"]
+    else:
+        cmd = ["ps", "-eo", "pid=,args="]
+    try:
+        text = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
+                              check=True).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    out = []
+    for line in text.splitlines():
+        head, _, rest = line.strip().partition(" ")
+        if head.isdigit():
+            out.append((int(head), rest))
+    return out
+
+
+def busy_processes(lines: list[tuple[int, str]] | None = None) -> list[str]:
+    """Other processes running a pipeline, a nightly job or a test session (this
+    process and its parent excluded). A failed listing counts as busy: the look does
+    not run blind."""
+    if lines is None:
+        lines = _process_lines()
+    if lines is None:
+        return ["the process listing failed"]
+    skip = {os.getpid(), os.getppid()}
+    return [f"{pid}: {cmd[:120]}" for pid, cmd in lines
+            if pid not in skip and any(t in cmd.lower() for t in BUSY_TOKENS)]
+
+
+def stored_look(data_dir: Path = DATA_DIR) -> dict | None:
+    p = Path(data_dir) / EVAL_ARTIFACT
+    if not p.exists():
+        return None
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+class _Tee:
+    def __init__(self, stream, path: Path):
+        self.stream = stream
+        self.f = open(path, "a", encoding="utf-8")
+
+    def write(self, s):
+        self.stream.write(s)
+        self.f.write(s)
+        self.f.flush()
+
+    def flush(self):
+        self.stream.flush()
+        self.f.flush()
+
+
+def _probe_logger(task_dir: Path):
+    path = Path(task_dir) / "PROBES.jsonl"
+
+    def log(step: str, **kw):
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(clean_json({"t": _now(), "step": step, **kw})) + "\n")
+    return log
+
+
+def _owner_question(task_dir: Path, title: str, body: str) -> None:
+    (Path(task_dir) / "OWNER_QUESTION.md").write_text(
+        f"# {title}\n\n{body}\n", encoding="utf-8")
+
+
+def pairs_from_frame(frame: dict, *, debut: dict, club_events: dict, canon,
+                     active_in) -> tuple[list[dict], Counter]:
+    """The study rows from a built frame (section 3 censoring, section 7 tenures).
+    club_events: {player_key: [(day, club, kind)]}; canon: the club canonicalizer;
+    active_in(person, season): True, False or None (unknown) for affiliated activity."""
+    reads, rvm = frame["reads"], frame["rvm"]
+    lows: dict = {}
+    list_low: dict = {}
+    for (src, pk, V), rd in reads.items():
+        g = grade_value(rd["fv"], rd["plus"])
+        k = (src, V, canon(rd["org"]))
+        lows[k] = min(lows.get(k, g), g)
+        list_low[(src, V)] = min(list_low.get((src, V), g), g)
+    census: Counter = Counter()
+    out = []
+    for sl in frame["slots"]:
+        if not sl["in_frame"]:
+            census["rvm_end_out"] += 1
+            continue
+        src, pk, V = sl["key"]
+        h = sl["h"]
+        st = frame["starts"][sl["key"]]
+        rd = reads[sl["key"]]
+        g0 = grade_value(rd["fv"], rd["plus"])
+        close = f"{V + h}{WINDOW_END_MMDD}"
+        evs = club_events.get(pk) or [(rd["date"], canon(rd["org"]), "read")]
+        if sl["completed"]:
+            er = reads[(src, pk, V + h)]
+            status, g1, tools1, end_day = ("completed", grade_value(er["fv"], er["plus"]),
+                                           er.get("tools") or {}, er["date"])
+        else:
+            dd = debut.get(pk)
+            later = [v for v in range(V + 1, V + h + 1)
+                     if (src, pk, v) in reads or (src, pk, v) in rvm]
+            last = max(later) if later else None
+            if dd and dd[:10] < close and last is not None and (src, pk, last) in rvm:
+                census["rvm_graduate_out"] += 1
+                continue
+            gr = reads[(src, pk, last)] if last is not None else rd
+            end_day = min(close, dd[:10]) if dd else close
+            club = _club_on(evs, close)
+            person = st.get("person")
+            act = None
+            if person:
+                a1, a2 = active_in(person, V + h - 1), active_in(person, V + h)
+                act = True if (a1 or a2) else (False if (a1 is False and a2 is False)
+                                              else None)
+            status, g1 = code_missing_end(
+                g0, debut_day=dd, end_close=close, grad_grade=grade_value(gr["fv"], gr["plus"]),
+                club_lowest=lows.get((src, V + h, club), list_low.get((src, V + h))),
+                affiliated=act)
+            tools1 = (gr.get("tools") or {}) if status == "graduated" else None
+            if g1 is None:
+                census["no_end_grade_out"] += 1
+                continue
+        census[status] += 1
+        out.append({
+            "src": src, "pk": pk, "V": V, "h": h, "side": st["side"], "rung": st["rung"],
+            "g0": g0, "g1": g1, "status": status, "tools0": rd.get("tools") or {},
+            "tools1": tools1, "present0": rd.get("present") or {},
+            "origin": st.get("origin"), "level": st.get("level_band"),
+            "age_rel": st.get("age_rel"), "agemiss": st.get("agemiss"),
+            "tau": tenure_shares(rd["date"], end_day, evs), "person": st.get("person"),
+        })
+    return out, census
+
+
+def _club_on(events, day: str) -> str | None:
+    """The club of the latest event dated on or before `day` (a trade wins a tie)."""
+    d = _day(day)
+    cur = None
+    for e_day, club, kind in sorted(((_day(a), b, 0 if c == "read" else 1)
+                                     for a, b, c in events if b), key=lambda e: (e[0], e[2])):
+        if e_day <= d:
+            cur = club
+    return cur
+
+
+def load_club_events(con: sqlite3.Connection, players: set, debut: dict, *,
+                     excluded: frozenset[int], canon) -> dict:
+    """{player_key: [(day, club, kind)]}: the club printed on every read of any source
+    (international and overseas boards excluded, the reserved windows and R-VM inputs
+    skipped as everywhere in this lab) and every trades row's to_org."""
+    out: dict = defaultdict(list)
+    for pk, d, org, label in con.execute(
+            "SELECT player_key, snapshot_date, org, interval_label FROM snapshots "
+            "WHERE org IS NOT NULL ORDER BY snapshot_date, id"):
+        if pk not in players or not d or not _is_list_label(label):
+            continue
+        V = int(d[:4])
+        lo, hi = window_bounds(V, None)
+        in_window = lo <= d[:10] < hi
+        if in_window and (V in excluded or is_rvm_input(V, debut.get(pk))):
+            continue
+        out[pk].append((d[:10], canon(org), "read"))
+    for pk, d, to_org in con.execute(
+            "SELECT player_key, trade_date, to_org FROM trades WHERE to_org IS NOT NULL"):
+        if pk in players and d:
+            out[pk].append((str(d)[:10], canon(to_org), "trade"))
+    return dict(out)
+
+
+def _counts_of(frame: dict) -> dict:
+    s = summarize(frame)
+    return {"start_reads": s["clustering"]["start_reads"],
+            "completed_pairs_12m": s["pairs"]["12m"]["total_completed_pairs"],
+            "completed_pairs_24m": s["pairs"]["24m"]["total_completed_pairs"]}
+
+
+def run_look(task_dir: Path, *, today: str | None = None, data_dir: Path = DATA_DIR,
+             B: int = BOOT_B, perms: int = PERM_DRAWS) -> int:
+    """THE ONE LOOK. Tees stdout and stderr to task_dir first; re-prints a stored result
+    instead of scoring twice; refuses before its clock; pins the inputs at the start and
+    the end; on any exception after scoring began, writes OWNER_QUESTION.md and stops
+    (the marker it left refuses every later run)."""
+    task_dir = Path(task_dir)
+    task_dir.mkdir(parents=True, exist_ok=True)
+    out, err = sys.stdout, sys.stderr
+    sys.stdout = _Tee(out, task_dir / "look_stdout.txt")
+    sys.stderr = _Tee(err, task_dir / "look_stderr.txt")
+    try:
+        return _look(task_dir, today=today, data_dir=data_dir, B=B, perms=perms)
+    finally:
+        for t in (sys.stdout, sys.stderr):
+            if isinstance(t, _Tee):
+                t.f.close()
+        sys.stdout, sys.stderr = out, err
+
+
+def _look(task_dir: Path, *, today: str | None, data_dir: Path, B: int,
+          perms: int) -> int:
+    stored = stored_look(data_dir)
+    if stored is not None:
+        print("A scored look is stored; re-printing it. No second scored look runs.")
+        print(json.dumps(stored.get("decision"), indent=1))
+        return 0
+    marker = CACHE_DIR / LOOK_MARKER
+    if marker.exists():
+        print(f"REFUSED: {marker} records a look that began scoring and wrote no result; "
+              "the owner question it left is pending. No rerun.")
+        return 2
+    today = today or date.today().isoformat()
+    frame_name = look_frame(today, eta_text=_read_doc(ETA_GATE_DOC),
+                            dvm_text=_read_doc(DVM_GATE_DOC),
+                            anchor_text=_read_doc(ANCHOR_GATE_DOC),
+                            efv_v2_text=_read_doc(EFV_V2_GATE_DOC))
+    tenure = tenure_source()
+    busy = busy_processes()
+    if busy:
+        raise ClockError("a pipeline, nightly job or test session is running: "
+                         + "; ".join(busy))
+    print(f"FRAME: {frame_name}")
+    log = _probe_logger(task_dir)
+    pins_start = input_pins(data_dir)
+    db = CACHE_DIR / FROZEN_DB
+    sha = sha256_file(db) if db.exists() else None
+    print(f"frozen store {db} sha256 {sha} (registered {FROZEN_DB_SHA256})")
+    if sha != FROZEN_DB_SHA256:
+        fresh = freeze_db(dest_dir=CACHE_DIR / "look_copy")
+        print(f"fresh backup-API copy sha256 {fresh['sha256']}")
+        db = Path(fresh["path"])
+        con = sqlite3.connect(f"file:{db.as_posix()}?mode=ro&immutable=1", uri=True)
+        try:
+            got = _counts_of(build_frame(con, debut=load_debut_days(data_dir),
+                                         rlv_record=None))
+        finally:
+            con.close()
+        print(f"recount on the COMPLEMENT frame: {got} (registered {REGISTERED_COUNTS})")
+        bad = {k: (got[k], v) for k, v in REGISTERED_COUNTS.items()
+               if abs(got[k] - v) > COUNT_TOLERANCE * v}
+        if bad:
+            _owner_question(task_dir, "DvM+ difficulty look stopped: the store moved",
+                            f"The frozen store was missing or moved (sha {sha}); a fresh "
+                            f"copy recounts {bad} against section 12. Owner: read on the "
+                            "fresh copy, or restore the registered one?")
+            print("STOPPED: counts differ by more than 1 percent; OWNER_QUESTION.md written")
+            return 3
+    db_sha = sha256_file(db)
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(json.dumps({"started": _now(), "frame": frame_name}), encoding="utf-8")
+    try:
+        log("look_start", frame=frame_name, db_sha=db_sha, tenure=tenure)
+        from trades import canonical_org
+        debut = load_debut_days(data_dir)
+        con = sqlite3.connect(f"file:{db.as_posix()}?mode=ro&immutable=1", uri=True)
+        try:
+            frame = build_frame(con, debut=debut)
+            counts = summarize(frame)
+            players = {k[1] for k in frame["starts"]}
+            events = load_club_events(con, players, debut, excluded=frame["excluded"],
+                                      canon=canonical_org)
+        finally:
+            con.close()
+        ids = {st["person"] for st in frame["starts"].values() if st.get("person")}
+        last = max((k[2] for k in frame["starts"]), default=2011) + max(HORIZONS)
+        seasons = load_person_seasons(ids, min(last, date.today().year))
+
+        def active_in(person, season):
+            ps = seasons.get(person) or {}
+            if not any(season in (ps.get(g) or {}) for g in ID.GROUPS):
+                return False if season <= date.today().year - 1 else None
+            return True
+
+        pairs, census = pairs_from_frame(frame, debut=debut, club_events=events,
+                                         canon=canonical_org, active_in=active_in)
+        log("pairs", n=len(pairs), census=dict(census))
+        table, ev = run_analysis(pairs, frame_name=frame_name, B=B, perms=perms, log=log)
+        pins_end = input_pins(data_dir)
+        if pins_end != pins_start or sha256_file(db) != db_sha:
+            raise RuntimeError("an input moved during the look (section 15)")
+        receipt = {"generated_at": _now(), "today": today, "frame": frame_name,
+                   "frozen_db": str(db), "frozen_db_sha256": db_sha,
+                   "tenure_source": tenure, "frame_counts": _counts_of(frame),
+                   "dvm1_counts_clustering": counts["clustering"],
+                   "pair_census": dict(census),
+                   "excluded_list_years": sorted(frame["excluded"])}
+        table["frame_receipt"] = receipt
+        table["input_pins"] = {"start": pins_start, "end": pins_end}
+        ev["receipt"] = receipt
+        (Path(data_dir) / TABLE_ARTIFACT).write_text(
+            json.dumps(clean_json(table), indent=1, allow_nan=False), encoding="utf-8")
+        (Path(data_dir) / EVAL_ARTIFACT).write_text(
+            json.dumps(clean_json(ev), indent=1, allow_nan=False), encoding="utf-8")
+        for line in summary_lines(table, ev):
+            print(line)
+        log("look_end")
+        return 0
+    except Exception as exc:
+        _owner_question(task_dir, "DvM+ difficulty look crashed after scoring began",
+                        f"{type(exc).__name__}: {exc}\n\nThe look is not rerun (gate "
+                        f"section 14). The marker {marker} refuses later runs until the "
+                        "owner decides.")
+        raise
+
+
+# ---------------------------------------------------------------------------
 # command line
 # ---------------------------------------------------------------------------
 
@@ -1476,13 +3475,21 @@ def main(argv=None) -> int:
     ap.add_argument("--freeze", action="store_true")
     ap.add_argument("--counts", metavar="OUT_DIR")
     ap.add_argument("--db", default=None)
+    ap.add_argument("--dry-run", metavar="OUT_DIR",
+                    help="the whole reporting path on synthetic fixtures with nulls")
+    ap.add_argument("--look", metavar="TASK_DIR",
+                    help="THE ONE LOOK (gate section 14); refuses before its clock")
     a = ap.parse_args(argv)
+    if a.look:
+        return run_look(Path(a.look))
     if a.freeze:
         print(json.dumps(freeze_db(), indent=1))
     if a.counts:
         c = run_counts(Path(a.counts), a.db)
         print(text_summary(c))
-    if not (a.freeze or a.counts):
+    if a.dry_run:
+        print(run_dry(Path(a.dry_run))["text"])
+    if not (a.freeze or a.counts or a.dry_run):
         ap.print_help()
     return 0
 
