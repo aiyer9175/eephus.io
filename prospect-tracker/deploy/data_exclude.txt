@@ -88,3 +88,8 @@ cots_deferral_check.json
 # arb_export for the prospect surplus engine (value_framework.arb_rung_usd,
 # docs/ARBITRATION_GATE.md section 20). Model internals no page fetches.
 arb_prospect_rungs.json
+# efv_surrogate_pins_2026.json + milb_norms_2026_pure.json: the 2026 MiLB season
+# freeze's sha256 pins and pure level norms (SG_1, tools/milb_season_freeze.py).
+# Gate inputs for the surrogate draft; no page fetches either.
+efv_surrogate_pins_2026.json
+milb_norms_2026_pure.json

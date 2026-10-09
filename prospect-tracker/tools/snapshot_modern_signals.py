@@ -48,7 +48,10 @@ truncated: a new pull replaces the rows it carries (same key) and keeps every
 row it does not, so a player who drops out of a table mid-season keeps his
 last as-of row. A sidecar that keeps only the latest season per player
 (aStuff+) contributes its older-season rows to that season's file with
-completeness "partial_latest_season_only", written once.
+completeness "partial_latest_season_only", written once. An AAA source dated
+by its own fetch (savant_minors, aaa_pitch_physics) whose OLDEST source date
+precedes that season's last scheduled AAA regular-season date reads
+"partial_in_season": the file holds an in-season cut, not the season.
 
 NOT SERVED. These files sit under data/ at depth two, which neither deploy
 consumer ships (deploy/nightly-build.sh and the workflow name their shard
@@ -90,6 +93,15 @@ SCHEMA = 1
 MANIFEST = "manifest.json"
 COMPLETE = "complete"
 PARTIAL = "partial_latest_season_only"
+IN_SEASON = "partial_in_season"
+
+#: Last scheduled AAA regular-season date by season (StatsAPI /api/v1/seasons, sportId 11;
+#: the 2026 value fetched 2026-09-30 and pinned in data/efv_surrogate_pins_2026.json by
+#: tools/milb_season_freeze.py). A season not listed reads September 30.
+AAA_SEASON_END = {2026: "2026-09-20"}
+#: AAA sources dated by their own fetch. A season file whose OLDEST source date precedes
+#: that season's AAA end holds an in-season cut, so it reads IN_SEASON, not complete.
+SEASON_CUT_SIGNALS = ("savant_minors", "aaa_pitch_physics")
 
 DB_TABLES = ("statlines", "sabermetrics", "pitch_arsenals", "zone_metrics",
              "statcast_metrics")
@@ -158,6 +170,8 @@ class Batch:
         self.completeness = completeness
         self.meta = meta or {}
         self.rows: list[dict] = []
+        # {source part: YYYY-MM-DD it was fetched or generated}, for the in-season rule
+        self.source_dates: dict[str, str] = {}
 
 
 def _batches() -> dict:
@@ -360,6 +374,9 @@ def collect_sidecars(data_dir: Path) -> dict:
                      source="data/aaa_physics.json",
                      as_of=_day(ph.get("generated_at")),
                      meta={"registration": ph.get("registration")})
+                if _day(ph.get("generated_at")):
+                    out[("aaa_pitch_physics", int(s))].source_dates[
+                        "aaa_physics.json"] = _day(ph.get("generated_at"))
 
     sw = _load(data_dir / "swing_plus.json")
     if isinstance(sw, dict) and isinstance(sw.get("players"), dict):
@@ -422,7 +439,24 @@ def collect_savant(cache_dir: Path) -> dict:
             b = out[("savant_minors", int(s))]
             if (b.as_of or "") < _mtime_day(p):
                 b.as_of = _mtime_day(p)
+            b.source_dates[side] = _mtime_day(p)
     return out
+
+
+def season_end(season: int) -> str:
+    """The last scheduled AAA regular-season date of `season` (AAA_SEASON_END)."""
+    return AAA_SEASON_END.get(int(season), f"{int(season)}-09-30")
+
+
+def mark_season_cut(signal: str, season: int, batch: Batch) -> None:
+    """Record the source dates of a SEASON_CUT_SIGNALS batch in its meta, and mark it
+    IN_SEASON when its oldest source date precedes the season's AAA end."""
+    if signal not in SEASON_CUT_SIGNALS or not batch.source_dates:
+        return
+    batch.meta = dict(batch.meta, source_dates=dict(sorted(batch.source_dates.items())),
+                      season_end=season_end(season))
+    if batch.completeness == COMPLETE and min(batch.source_dates.values()) < season_end(season):
+        batch.completeness = IN_SEASON
 
 
 # --------------------------------------------------------------------------
@@ -575,6 +609,7 @@ def snapshot(*, snap_dir: Path = SNAP_DIR, data_dir: Path = DATA_DIR,
     for (signal, season), b in sorted(batches.items()):
         if not b.rows:
             continue
+        mark_season_cut(signal, season, b)
         actions[f"{season}/{signal}.json"] = write_signal(
             snap_dir, signal, season, b, live, taken_at)
     man = _manifest(snap_dir, live, taken_at)

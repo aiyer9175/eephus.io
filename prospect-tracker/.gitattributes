@@ -7,6 +7,12 @@ deploy/data_exclude.txt text eol=lf
 # The provisional-grade freeze (2026-09-25) is pinned by sha256 in
 # test_provisional_freeze_pin.py; never let git convert its bytes.
 data/provisional_freeze/** -text
+# The 2026 MiLB season freeze (SG_1) is pinned by sha256 in
+# data/efv_surrogate_pins_2026.json and test_milb_season_freeze.py; the pins are
+# taken on the committed bytes, so never let git convert them.
+data/milb_season_frozen/** -text
+data/efv_surrogate_*.json -text
+data/milb_norms_2026_pure.json -text
 
 # tools/pixel_brand.py --check compares its text outputs byte for byte; never
 # let git convert their line endings (core.autocrlf=true on the owner's box).

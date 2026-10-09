@@ -237,3 +237,37 @@ def test_the_committed_snapshot_is_well_formed():
         assert head["as_of"] and len(rows) == head["n_rows"]
         keys = [json.dumps([r.get(k) for k in head["key"]]) for r in rows]
         assert len(keys) == len(set(keys)), f"{rel}: duplicate key rows"
+
+
+def test_an_in_season_cut_reads_partial_and_names_its_source_dates(tmp_path):
+    """SG_1: an AAA source dated before the season's last scheduled AAA date holds an
+    in-season cut. savant_minors takes its OLDEST side; aaa_pitch_physics its file date."""
+    import os
+    from datetime import datetime
+    sv = tmp_path / "sv"
+    sv.mkdir()
+    for side, day in (("batter", (2026, 10, 1)), ("pitcher", (2026, 6, 12)),
+                      ("batter25", (2026, 6, 11))):
+        name = "batter_2025.csv" if side == "batter25" else f"{side}_2026.csv"
+        f = sv / name
+        f.write_text('"player_id","pa"\n10,120\n', encoding="utf-8")
+        ts = datetime(*day, 12).timestamp()
+        os.utime(f, (ts, ts))
+    data = tmp_path / "d"
+    data.mkdir()
+    (data / "aaa_physics.json").write_text(json.dumps({
+        "generated_at": "2026-08-03T10:00:00Z",
+        "players": {"7": {"2026": {"velo": 95.0}}}}), encoding="utf-8")
+    db = _db(tmp_path / "a.db", {"statlines": [_statline("a", 2026, ".800", "2026-09-01")]})
+    _run(tmp_path, db, today=date(2026, 10, 9), data_dir=data, savant=sv)
+    snap = tmp_path / "snap"
+    sav = json.loads((snap / "2026" / "savant_minors.json").read_text(encoding="utf-8"))
+    phy = json.loads((snap / "2026" / "aaa_pitch_physics.json").read_text(encoding="utf-8"))
+    old = json.loads((snap / "2025" / "savant_minors.json").read_text(encoding="utf-8"))
+    assert sav["completeness"] == S.IN_SEASON and sav["as_of"] == "2026-10-01"
+    assert sav["meta"]["source_dates"] == {"batter": "2026-10-01", "pitcher": "2026-06-12"}
+    assert phy["completeness"] == S.IN_SEASON and phy["as_of"] == "2026-08-03"
+    assert old["completeness"] == S.COMPLETE
+    man = json.loads((snap / S.MANIFEST).read_text(encoding="utf-8"))
+    assert man["files"]["2026/savant_minors.json"]["completeness"] == S.IN_SEASON
+    assert S.season_end(2026) == "2026-09-20"

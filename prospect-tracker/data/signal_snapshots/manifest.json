@@ -68,12 +68,12 @@
   },
   "2026/aaa_pitch_physics.json": {
    "as_of": "2026-08-03",
-   "bytes": 250606,
-   "completeness": "complete",
+   "bytes": 250690,
+   "completeness": "partial_in_season",
    "n_rows": 331
   },
   "2026/alevel_signals.json": {
-   "as_of": "2026-10-02",
+   "as_of": "2026-10-04",
    "bytes": 44347,
    "completeness": "complete",
    "n_rows": 717
@@ -97,10 +97,10 @@
    "n_rows": 1256
   },
   "2026/savant_minors.json": {
-   "as_of": "2026-06-23",
-   "bytes": 309051,
-   "completeness": "complete",
-   "n_rows": 918
+   "as_of": "2026-10-01",
+   "bytes": 380539,
+   "completeness": "partial_in_season",
+   "n_rows": 1143
   },
   "2026/statcast_metrics.json": {
    "as_of": "2026-10-02",
@@ -127,7 +127,7 @@
    "n_rows": 9488
   }
  },
- "generated_at": "2026-10-02",
+ "generated_at": "2026-10-09",
  "live_season": 2026,
  "retention_rule": "seasons earlier than live_season are written once and frozen; the live season merges by key and never drops a row",
  "savant_minors_history_check": {
@@ -148,6 +148,6 @@
   }
  },
  "schema": 1,
- "total_bytes": 11347742,
+ "total_bytes": 11419314,
  "what_this_is": "EV-03 modern-signal retention (docs/efv-v2/PROGRAM.md 3.4). Per-season, as-of-dated snapshots of prospect signals whose live sources keep one season. NOT served: depth-two data directory neither deploy consumer ships, no catalog row."
 }

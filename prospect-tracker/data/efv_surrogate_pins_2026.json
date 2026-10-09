@@ -1,0 +1,1196 @@
+{
+ "frozen_2026": {
+  "hitting_11.json": {
+   "bytes": 227465,
+   "cache_file": ".cache/milb_stats/hitting_11_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:45-04:00",
+    "utc": "2026-10-08T21:25:45+00:00"
+   },
+   "exposure": 171799.0,
+   "exposure_field": "pa",
+   "group": "hitting",
+   "rows": 927,
+   "sha256": "fb60ec2f8d7444578433e3cecd82082961fd61354951e1384dab2af9d6a63d18",
+   "sport": 11
+  },
+  "hitting_12.json": {
+   "bytes": 202890,
+   "cache_file": ".cache/milb_stats/hitting_12_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:45-04:00",
+    "utc": "2026-10-08T21:25:45+00:00"
+   },
+   "exposure": 156270.0,
+   "exposure_field": "pa",
+   "group": "hitting",
+   "rows": 830,
+   "sha256": "722b7169bf299108e065d48e420f4cc79e92567f28e852067ac33b31850382f8",
+   "sport": 12
+  },
+  "hitting_13.json": {
+   "bytes": 204763,
+   "cache_file": ".cache/milb_stats/hitting_13_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:45-04:00",
+    "utc": "2026-10-08T21:25:45+00:00"
+   },
+   "exposure": 151429.0,
+   "exposure_field": "pa",
+   "group": "hitting",
+   "rows": 837,
+   "sha256": "2c9e81caeac5052cd0f4f5645944aee3029bf394704e6e08f8792e730f115b61",
+   "sport": 13
+  },
+  "hitting_14.json": {
+   "bytes": 237886,
+   "cache_file": ".cache/milb_stats/hitting_14_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:46-04:00",
+    "utc": "2026-10-08T21:25:46+00:00"
+   },
+   "exposure": 151705.0,
+   "exposure_field": "pa",
+   "group": "hitting",
+   "rows": 979,
+   "sha256": "59eff07517e39455e767ab952007b02c27790ee530d08f1e6a96a4ad3317783e",
+   "sport": 14
+  },
+  "hitting_16.json": {
+   "bytes": 392313,
+   "cache_file": ".cache/milb_stats/hitting_16_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:46-04:00",
+    "utc": "2026-10-08T21:25:46+00:00"
+   },
+   "exposure": 163736.0,
+   "exposure_field": "pa",
+   "group": "hitting",
+   "rows": 1602,
+   "sha256": "8d1d073c2e19f0a36633438de19e904f0546786cb0b2fb9d87943b687a0e9dd1",
+   "sport": 16
+  },
+  "pitching_11.json": {
+   "bytes": 195394,
+   "cache_file": ".cache/milb_stats/pitching_11_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:47-04:00",
+    "utc": "2026-10-08T21:25:47+00:00"
+   },
+   "exposure": 171799.0,
+   "exposure_field": "bf",
+   "group": "pitching",
+   "rows": 1268,
+   "sha256": "c0d1521cb1a1522dadeeff2898f2475d5af42cc5342e295aaa01cbf75ca41b12",
+   "sport": 11
+  },
+  "pitching_12.json": {
+   "bytes": 160142,
+   "cache_file": ".cache/milb_stats/pitching_12_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:47-04:00",
+    "utc": "2026-10-08T21:25:47+00:00"
+   },
+   "exposure": 156270.0,
+   "exposure_field": "bf",
+   "group": "pitching",
+   "rows": 1044,
+   "sha256": "f293c38c190020f0633b267b3c0150f639a7763eaf84c7d2bf39cee82183e7d2",
+   "sport": 12
+  },
+  "pitching_13.json": {
+   "bytes": 167124,
+   "cache_file": ".cache/milb_stats/pitching_13_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:48-04:00",
+    "utc": "2026-10-08T21:25:48+00:00"
+   },
+   "exposure": 151429.0,
+   "exposure_field": "bf",
+   "group": "pitching",
+   "rows": 1090,
+   "sha256": "cc6292d4f4594df70c2d2cf7fa0325706309aaff33c18d37199e8cdf2daa5699",
+   "sport": 13
+  },
+  "pitching_14.json": {
+   "bytes": 201697,
+   "cache_file": ".cache/milb_stats/pitching_14_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:48-04:00",
+    "utc": "2026-10-08T21:25:48+00:00"
+   },
+   "exposure": 151705.0,
+   "exposure_field": "bf",
+   "group": "pitching",
+   "rows": 1328,
+   "sha256": "a392dad18f0ba8408210c060d372a2595c399caf4dfa19181ff948acccd25077",
+   "sport": 14
+  },
+  "pitching_16.json": {
+   "bytes": 318304,
+   "cache_file": ".cache/milb_stats/pitching_16_2026.json",
+   "cache_mtime": {
+    "local": "2026-10-08T17:25:49-04:00",
+    "utc": "2026-10-08T21:25:49+00:00"
+   },
+   "exposure": 163736.0,
+   "exposure_field": "bf",
+   "group": "pitching",
+   "rows": 2062,
+   "sha256": "5006d93457bccaff7b62cfca2563cbbb2636fb06df17ad83ec46a863f519e2e2",
+   "sport": 16
+  }
+ },
+ "frozen_2026_check": "rows and PA or BF total equal the 2026-09-30 refetch for every file (EXPECTED_2026)",
+ "line_endings": "data/milb_season_frozen/**, data/efv_surrogate_*.json and data/milb_norms_2026_pure.json are -text in .gitattributes, so each sha256 is the committed bytes on every machine",
+ "mlb_event_ids_2026": {
+  "mlb_event_ids_hitting.json": {
+   "group": "hitting",
+   "ids": 751,
+   "sha256": "8480bac986770205ab5499e364b8461d02ec054ba1b7539a9aa6ec74b05d0baf",
+   "source_cache_file": ".cache/milb_stats/hitting_1_2026.json",
+   "source_cache_mtime": {
+    "local": "2026-10-08T17:25:45-04:00",
+    "utc": "2026-10-08T21:25:45+00:00"
+   },
+   "source_id_column_sha256": "65a166b869aeb2d49f6b62a66c5d20076d43e0b72965e25e7751deb615e21712",
+   "source_rows": 751
+  },
+  "mlb_event_ids_pitching.json": {
+   "group": "pitching",
+   "ids": 868,
+   "sha256": "e31c000f0f524500ed902573ff70c5d1e620d898b9cd2db7328cae31038ef57f",
+   "source_cache_file": ".cache/milb_stats/pitching_1_2026.json",
+   "source_cache_mtime": {
+    "local": "2026-10-08T17:25:47-04:00",
+    "utc": "2026-10-08T21:25:47+00:00"
+   },
+   "source_id_column_sha256": "3782ada6ca84e5ef6f507e5c8ca28664724b0c0f02ad1378eba2cbaedcaed810",
+   "source_rows": 868
+  }
+ },
+ "mlb_event_ids_note": "sport 1 (MLB) 2026 lines are reduced to the sorted, deduplicated person ids with a regular-season line; the source id-column hash keeps duplicates; no MLB stat column enters the tree",
+ "pinned_on": "2026-10-09",
+ "produced_by": "tools/milb_season_freeze.py --write",
+ "pure_norms_file": "milb_norms_2026_pure.json",
+ "pure_norms_sha256": "493e5f0d30465d5d679031f50649b0c447ee40ddbacb328502e684c985fdeeb8",
+ "schema": 1,
+ "season_dates_2026": {
+  "by_league_sport16": {
+   "ACL": {
+    "end": "2026-07-23",
+    "start": "2026-05-02"
+   },
+   "DSL": {
+    "end": "2026-08-18",
+    "start": "2026-06-01"
+   },
+   "FCL": {
+    "end": "2026-07-23",
+    "start": "2026-05-02"
+   }
+  },
+  "by_sport": {
+   "1": {
+    "end": "2026-09-27",
+    "level": "MLB",
+    "start": "2026-03-25"
+   },
+   "11": {
+    "end": "2026-09-20",
+    "level": "AAA",
+    "start": "2026-03-27"
+   },
+   "12": {
+    "end": "2026-09-13",
+    "level": "AA",
+    "start": "2026-04-02"
+   },
+   "13": {
+    "end": "2026-09-06",
+    "level": "A+",
+    "start": "2026-04-02"
+   },
+   "14": {
+    "end": "2026-09-06",
+    "level": "A",
+    "start": "2026-04-02"
+   },
+   "16": {
+    "end": "2026-08-18",
+    "level": "rookie",
+    "start": "2026-05-02"
+   }
+  },
+  "source": "StatsAPI /api/v1/seasons?sportId=<id>&season=2026 and, for the sport-16 leagues, /api/v1/schedule?sportId=16 regular season, both fetched 2026-09-30 by the efv2026 lane (statsapi_seasons_2026.json, schedule_compare.json)"
+ },
+ "transactions_2026": {
+  "months": {
+   "2026_07": {
+    "fetched": {
+     "local": "2026-09-30T12:57:08-04:00",
+     "utc": "2026-09-30T16:57:08+00:00"
+    },
+    "file": "tx_2026_07.json.gz",
+    "first_date": "2026-07-01",
+    "last_date": "2026-07-31",
+    "sha256": "5ba7921ca7132907650098cded2ac97d49ca4a4a6ea5bae8a0615814f6634ff6",
+    "transactions": 8921
+   },
+   "2026_08": {
+    "fetched": {
+     "local": "2026-09-30T12:57:09-04:00",
+     "utc": "2026-09-30T16:57:09+00:00"
+    },
+    "file": "tx_2026_08.json.gz",
+    "first_date": "2026-08-01",
+    "last_date": "2026-08-31",
+    "sha256": "aff86b267ff883ef30ea3fcad6cb6d82239c0e71764ce6abe88c8561acc16c0e",
+    "transactions": 6091
+   },
+   "2026_09": {
+    "fetched": {
+     "local": "2026-09-30T12:57:10-04:00",
+     "utc": "2026-09-30T16:57:10+00:00"
+    },
+    "file": "tx_2026_09.json.gz",
+    "first_date": "2026-09-01",
+    "last_date": "2026-09-30",
+    "sha256": "344224244af2b239f3496f23664501b146166f53c994376304544185fa62ccda",
+    "transactions": 3882
+   }
+  },
+  "note": "the league transaction feed months SG_1 completed in .cache/mlb_transactions/ from the efv2026 lane's 2026-09-30 refetch (the cache had ended at 2026-07-24; tx_2026_07 replaced). efv_drivers DS-09 reads the feed through December of V - 1, so no row at V 2026 or earlier reads these months; V 2027 rows will. The 2026-09 file was fetched on its own last day, so the nightly's mlb_events refresh may refetch it once, and this receipt then records what SG_1 added, not the later file"
+ },
+ "transfer_hash_method": {
+  "cache_keys": {
+   "2b": "doubles",
+   "3b": "triples",
+   "id": "mlbam"
+  },
+  "encoding": "compact JSON (sort_keys, ASCII) of the list of projected rows, sha256",
+  "fields": [
+   "id",
+   "sport",
+   "level",
+   "league",
+   "pa",
+   "bf",
+   "ab",
+   "h",
+   "2b",
+   "3b",
+   "hr",
+   "bb",
+   "so",
+   "hbp",
+   "sf",
+   "ip",
+   "g",
+   "gs",
+   "age",
+   "avg",
+   "obp",
+   "slg",
+   "ops",
+   "era"
+  ],
+  "read": "milb_history.season_splits(sport, season, group, fetch=False)",
+  "sort": "person id, sport, league, then the projected row's compact JSON",
+  "sport_1": "id column only (sorted, duplicates kept), sha256 of its compact JSON",
+  "sport_15": "only where the file is non-empty"
+ },
+ "transfer_seasons": {
+  "2010": {
+   "hitting": {
+    "1": {
+     "id_sha256": "4a8980a2ce448535264fafeb3e26db65502c31c6d47e884971b0bf6099d886a5",
+     "rows": 1157
+    },
+    "11": {
+     "rows": 1532,
+     "sha256": "2d5cd6ab1d324979019e2a30c7b6706801fb6fdfc0c0d57570da21404e35f40f"
+    },
+    "12": {
+     "rows": 1105,
+     "sha256": "5fd65824b3df1acc702c01699fc0c6917f1788032d4c9cfc3a080dd03ca32c7e"
+    },
+    "13": {
+     "rows": 825,
+     "sha256": "7005943ee45c058dc92241e968838833758910234d687174b0f32c3528253537"
+    },
+    "14": {
+     "rows": 695,
+     "sha256": "35730ae9672c6813c10bf2ba1d8ad4ec9699d96da37341a177609bb6016b9fe4"
+    },
+    "15": {
+     "rows": 466,
+     "sha256": "0c51e8b3d0630a1ec861c1de64bb0a965ce1ac7d4b110ad3eec6a511db2957aa"
+    },
+    "16": {
+     "rows": 1704,
+     "sha256": "c246e19011bc05bd10005beaeedda578da2327bb3e34e73dce57c8e6bf375b88"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "ced412f4542480e950d9ae24e74d6dae0522259ed89cef05aed01b80c8c4711b",
+     "rows": 635
+    },
+    "11": {
+     "rows": 1224,
+     "sha256": "063116267e57ebfddcc29c514ea893634c78ce5ee038e46bb561bf33df4e2f56"
+    },
+    "12": {
+     "rows": 776,
+     "sha256": "289cd5f9e91b364132bd9f1e200803821742e775cbe367fa02307a6c9ce5a56f"
+    },
+    "13": {
+     "rows": 839,
+     "sha256": "2d3e79733eab5fc4a25d56adc509a7d973e072d2725d68fbcf5a805b991797dd"
+    },
+    "14": {
+     "rows": 720,
+     "sha256": "bef56d7718e60ae10dd217302882b674c829d83ce80226876999b99bdc7f9603"
+    },
+    "15": {
+     "rows": 509,
+     "sha256": "30b23d0521afd6f92174a1d1ce905a7b23c5a5962a1236c137b9176add17e475"
+    },
+    "16": {
+     "rows": 1800,
+     "sha256": "9207589d7719737ead06a3a577747d70634066cb2bb262e03e6de8d2e86ea2ab"
+    }
+   }
+  },
+  "2011": {
+   "hitting": {
+    "1": {
+     "id_sha256": "ddf1bd9248861b886553a4dc6b203b73d6a49dd425056349abcb17005a785c74",
+     "rows": 1173
+    },
+    "11": {
+     "rows": 1497,
+     "sha256": "105407c8e83bbc771cb2ad922393340365327522da6b040ab08e11c90d2db45b"
+    },
+    "12": {
+     "rows": 1052,
+     "sha256": "c64b257677927390b2a03b34d566f9178ae9c8f7257b572546f28674add46ad2"
+    },
+    "13": {
+     "rows": 762,
+     "sha256": "c916d62ca02904be446cf8bc22e67feb2a9f03b36ebb5663ab7f4c0c3db3edad"
+    },
+    "14": {
+     "rows": 670,
+     "sha256": "03273368a3788665882c4917277d72a6e71f38eb7fc121cf4c782d979ebc59cc"
+    },
+    "15": {
+     "rows": 454,
+     "sha256": "8d5855b2bdaa70fcd5346e4117d6bf9a851c15dd189a3f0e0238875e679dacfe"
+    },
+    "16": {
+     "rows": 1677,
+     "sha256": "36d622785973a569e2253685ac6caaea38b169c481a76adcb7e8879506014b6f"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "e480f1ceb8a974a0488dbb6421c2938577756477a6ad4b6d310e956b081e7062",
+     "rows": 662
+    },
+    "11": {
+     "rows": 1182,
+     "sha256": "77ec203eda62bbfc3872c3a5121357eb17119985581d09b7420d46a5f56b8a0f"
+    },
+    "12": {
+     "rows": 792,
+     "sha256": "d0e8817072ccddd3a57e97bf360c564b1cb2326dfb83a130213cec64a8781e31"
+    },
+    "13": {
+     "rows": 825,
+     "sha256": "88db54d20b5960c88e1f5b7c40a01b20cdf93a2c3ed9cdbd04cf2dd1f67bbfff"
+    },
+    "14": {
+     "rows": 726,
+     "sha256": "8a95845cf258b5500fd0ac29bff08abdc4d427001067be8e9aa2444bbf457d5c"
+    },
+    "15": {
+     "rows": 523,
+     "sha256": "15a4bf08b41d2e46865e1535d3af9411deb46984ceda2036e3415feb785058fb"
+    },
+    "16": {
+     "rows": 1821,
+     "sha256": "9442e94d497599d2a89a7ab1e72607344419bbafbbb5831c80a342ae25b1cad1"
+    }
+   }
+  },
+  "2012": {
+   "hitting": {
+    "1": {
+     "id_sha256": "393e9d0231adc8168be658689076c3dfae2eec854061e51c09c74dc6f037f89d",
+     "rows": 1185
+    },
+    "11": {
+     "rows": 1560,
+     "sha256": "6a58dc423829aa5738c2bcc51e80015e3e63ee291aae12014bfecd1147150330"
+    },
+    "12": {
+     "rows": 1112,
+     "sha256": "8cb2fc6f8b7d53e05763de707847473361fba9a69d690e893f2f0dc4d58e30f8"
+    },
+    "13": {
+     "rows": 777,
+     "sha256": "9057d3c9cafd9a47fb824fce562424031a51565a72fdff66538905f83d19a3d8"
+    },
+    "14": {
+     "rows": 693,
+     "sha256": "c2f6c4997050900b34c8031da2c326167efe48663d8a44dd3e7a0c1b3c6d7430"
+    },
+    "15": {
+     "rows": 481,
+     "sha256": "c007f9a8c3ec96e3f4aca26a8f636416dc5d7cc312ba5e2cac1136d69b6b7902"
+    },
+    "16": {
+     "rows": 1647,
+     "sha256": "0a1613056a5e170c9a9bb10155980a47fd63dcfd42cc9e3560b6e58cb01087d8"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "56e02c1a4eee2b7ce209b4c68aa2a039710d0bc97390c38a64b80265df767afb",
+     "rows": 662
+    },
+    "11": {
+     "rows": 1202,
+     "sha256": "0e4460285c339b5df60836396e4b5d6559a9360ed00ef0287bb425bd731475a3"
+    },
+    "12": {
+     "rows": 803,
+     "sha256": "15cf5ba6526378571982fc28e14e45a694a22e41e2abfafcac9510b20b4ea545"
+    },
+    "13": {
+     "rows": 844,
+     "sha256": "2ed575f9ac5389617edd3c1005c152e03a3cf080f7b021a496eb15bf3dcb2c2d"
+    },
+    "14": {
+     "rows": 754,
+     "sha256": "108ca667ca01b74a37eeaca32567fd06b23b35901cb4b6e71ae1fc97f16e53a3"
+    },
+    "15": {
+     "rows": 511,
+     "sha256": "19899e3216f250c890448027b3c6ccd88443f8edf03f059a564820d62964de9e"
+    },
+    "16": {
+     "rows": 1847,
+     "sha256": "98a8aeaa26dbdd99db270a60be5f09254cef0cb3b5b0c9bd2a960d155b0551be"
+    }
+   }
+  },
+  "2013": {
+   "hitting": {
+    "1": {
+     "id_sha256": "77255b5e65594044d2cc226cf6801eb4b2c71a9881c36e3f53203e52f49c8f20",
+     "rows": 1202
+    },
+    "11": {
+     "rows": 1488,
+     "sha256": "c05b2d9f50733c1931196fea37a1051c2d085dfcaee7c6c100304a76e6f816c0"
+    },
+    "12": {
+     "rows": 1072,
+     "sha256": "b519c59d79090de4bab3d6d49a81aa9b117e0e0b6d2aa5c6e292ba8b8670eea7"
+    },
+    "13": {
+     "rows": 763,
+     "sha256": "8283493604d41e5b93e1124de47682a4c1edb7849932af46d48a5b872b40f5d7"
+    },
+    "14": {
+     "rows": 701,
+     "sha256": "d62e17eba5d3b3fde0fd7247350c6deb43b1469cb52e6d2f559a4d0ffd5419ea"
+    },
+    "15": {
+     "rows": 466,
+     "sha256": "a1acbb3167578288ce44c7bf244a001e32b2ea0ee6e273066de48345ae196464"
+    },
+    "16": {
+     "rows": 1703,
+     "sha256": "2b5812ea4decf120ee86daff6021c242e44eb2ff279d1e359077506ab7482061"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "1bce8fd1bb7381a4f9806ef07f8bfb802b923a83a0617d3e59c1e0b9645e880a",
+     "rows": 679
+    },
+    "11": {
+     "rows": 1235,
+     "sha256": "d4a0db9518b70f28c99074939b78cc407c5d606cb54783962997a9a95103e9d0"
+    },
+    "12": {
+     "rows": 834,
+     "sha256": "20cde41f55ab1f23c06ba13f2ae8834104503c157b1cb20cc0bf7562ec5c399d"
+    },
+    "13": {
+     "rows": 903,
+     "sha256": "87e37417dfbfcdbeec3c0de84bb9164b6ed13169dbcab52d0b2a088ed5c32cea"
+    },
+    "14": {
+     "rows": 777,
+     "sha256": "d039e4f2a414a179e5f369eb8876b2088f177316357743e55cb092262f0b4218"
+    },
+    "15": {
+     "rows": 545,
+     "sha256": "a56bb3483c39b64f1f4ef87500c449a60cad4ca814f89a09f624f61d189e59d4"
+    },
+    "16": {
+     "rows": 1880,
+     "sha256": "0879776a4598e6734d3ecc52f6e3218c109dacccac4f96b185e9d464032aa227"
+    }
+   }
+  },
+  "2014": {
+   "hitting": {
+    "1": {
+     "id_sha256": "d142726cf94015cf467ad9659b5c34ee4369df53d8a1224689d2f8bc7a5cbb92",
+     "rows": 1212
+    },
+    "11": {
+     "rows": 1510,
+     "sha256": "dabe0b8666ea64f92dfff76bf676aa910ec22fbae22e24f0dbe5b8514b43a4de"
+    },
+    "12": {
+     "rows": 1090,
+     "sha256": "8bd4d186508a3aac81985c8e9638fc403ffbfc45b1773cca1e6ebe26dd5ba72f"
+    },
+    "13": {
+     "rows": 757,
+     "sha256": "c6c4cc1d1b9f71ebc0e3e2283a0de9c44f2a96bc45167444c7786d9cfba18ca5"
+    },
+    "14": {
+     "rows": 701,
+     "sha256": "58265ec659dbabbfe89aaf7d37c0de2829db0864ebce922738ef829296b5bf7e"
+    },
+    "15": {
+     "rows": 511,
+     "sha256": "e4279cbb53dbd298283d7ed75a42a80a3c4ab15808ba908a28ea000b5f492a0b"
+    },
+    "16": {
+     "rows": 1721,
+     "sha256": "dd0b7927045e64e173cf3ad88b959dda2a2002391a014d12a81eebfa2275370a"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "2701823ba5e89e452b9a2210db03d0decccdfdbc373523bee8bcd578d3d03f7c",
+     "rows": 692
+    },
+    "11": {
+     "rows": 1252,
+     "sha256": "a6818b4437cfccc85831f562525cc8dd493b5f7861a12032113fa6ebf5e36976"
+    },
+    "12": {
+     "rows": 824,
+     "sha256": "7d2a9e6177fc1266110f402a4c7cf59fb7bdca0f97d19c05fdd981d1131740f7"
+    },
+    "13": {
+     "rows": 860,
+     "sha256": "4e2d1975eaae4f484cd9840a287e424d53c692077c81c79c0db7080cc27b54c4"
+    },
+    "14": {
+     "rows": 784,
+     "sha256": "d419d8c0abc947ff959d08341a540f68f968cf037741a1347c52b341c1db66e9"
+    },
+    "15": {
+     "rows": 575,
+     "sha256": "0aa9cd333678893a4e22486589b88bca6ae329c4700e92ffda1b2a8503c73f18"
+    },
+    "16": {
+     "rows": 1962,
+     "sha256": "c506f4a471b184313ebafaf55c49d200620247e7947ee3c258be30afa2637b6e"
+    }
+   }
+  },
+  "2015": {
+   "hitting": {
+    "1": {
+     "id_sha256": "669dc6ca6910d35ae8e27c3d3aafc5a1294312fdf0a2563ed1d5f4051835f0a6",
+     "rows": 1252
+    },
+    "11": {
+     "rows": 1562,
+     "sha256": "a792948f4788b2562b4bb5d23d7a8836f5580edc97fa5134014f9a0fb5f8f78d"
+    },
+    "12": {
+     "rows": 1142,
+     "sha256": "3c2cc053b46c89f4d4708549c07a2211ee7fd432ac7ec4e283bc70211bdad8d2"
+    },
+    "13": {
+     "rows": 770,
+     "sha256": "d0121f0818d2b60e96c166e8f62f8a3600a035befab96a7a638357f1ebaac558"
+    },
+    "14": {
+     "rows": 722,
+     "sha256": "479f6dd8886db8f9c581057b83eb751deb96cfbd2ef69cbd2381739a716407cf"
+    },
+    "15": {
+     "rows": 486,
+     "sha256": "c54ff77a536a9110af647bccc23ed6fdeb3fc708bfd5c9c89021e9a250f8b7b3"
+    },
+    "16": {
+     "rows": 1717,
+     "sha256": "36e242a699ca04cfaa44382844d0e81087d11230f623b00590f6ae207102f824"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "2b87c6c207d8eb3c1b2e7ec3e43bfcedbd35c3662b6d0f44788ad6b0aa7bd548",
+     "rows": 735
+    },
+    "11": {
+     "rows": 1305,
+     "sha256": "43f64a1d69e1dd1fa61bc2e1379eee61c581df39029c19d7cfac1f195a1dadbc"
+    },
+    "12": {
+     "rows": 899,
+     "sha256": "b26ab5766ac18059c837d4c0f90a19d0bb19e677aa058faaf9cfbcf6859f50a3"
+    },
+    "13": {
+     "rows": 917,
+     "sha256": "8237a85cd09e355d02b1c6f699395b13f974a11063f4024250585b6506ff8216"
+    },
+    "14": {
+     "rows": 797,
+     "sha256": "f52e2dcacd1da7ed6d7b2610130d76f857c3f083d5f4e4708c9288b7bdf536be"
+    },
+    "15": {
+     "rows": 576,
+     "sha256": "eb8ea8c692dd843a6988779ac85b373029bb39c94aeb557f0f088d0dcd307029"
+    },
+    "16": {
+     "rows": 1970,
+     "sha256": "7387a99707a5c7183a413b9a54489f8fb573f464bb935139cc6c5f16e8caae81"
+    }
+   }
+  },
+  "2016": {
+   "hitting": {
+    "1": {
+     "id_sha256": "e998ce474d6e19deea446d990b6f3b48d0eee75333e1adafdf4fd252b234c7fd",
+     "rows": 1248
+    },
+    "11": {
+     "rows": 1627,
+     "sha256": "b1380d87c62321707e8401a0c3aacbf4d9506c70a98e1d276100de9d753be8e3"
+    },
+    "12": {
+     "rows": 1133,
+     "sha256": "ef26deaa0a70f46dbe03b992a4d1f430dfabceeac87be52c5bc26967535b6390"
+    },
+    "13": {
+     "rows": 780,
+     "sha256": "9744c56284cfdcd2994295f15cd5f2c88226c4755cd8021e1f3bcb4a232fe550"
+    },
+    "14": {
+     "rows": 710,
+     "sha256": "6550be4ff1470140dd2497daf707849001d0dbf3b150c53d9ba13f648ebb951f"
+    },
+    "15": {
+     "rows": 502,
+     "sha256": "b2ccd82e41480838cd2d1753f0065eb6f81e3e3b470d239ab3c977f41ce5babe"
+    },
+    "16": {
+     "rows": 1767,
+     "sha256": "24a04a5d9ca0be1710db10f5f4804443ae416c5d97d63b24771e51cc4f030791"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "15311f5921864fb3eab793e841dd33cd3a8fecf137ee996a0e34324b4b343d71",
+     "rows": 742
+    },
+    "11": {
+     "rows": 1335,
+     "sha256": "925e92ba46b86cfa4cba5fe22010af0a725d2de8f06756b5e9229556407a0936"
+    },
+    "12": {
+     "rows": 881,
+     "sha256": "30d6efeb06df4ce9374c1434fadf254fc6229eb12fb6b2209bf505af65aa56ee"
+    },
+    "13": {
+     "rows": 960,
+     "sha256": "aa296f93513b5e5a696dbcad7fee01b430e6d97adc5b84ed93b7be7aae450c01"
+    },
+    "14": {
+     "rows": 845,
+     "sha256": "2511d71e0b2d97518630936c5de6e3d406352d0c8af4448a59ebcd5ba4f82184"
+    },
+    "15": {
+     "rows": 612,
+     "sha256": "8b2bff27fbccecb6f1ba89c6e75ddf8304b3a9553af5de121840cc3144fb3b54"
+    },
+    "16": {
+     "rows": 2024,
+     "sha256": "ff7aceeaf2f2e400ae5cc6fde08fa7639acfab67cf4d9a41fbd2f1372cfd9786"
+    }
+   }
+  },
+  "2017": {
+   "hitting": {
+    "1": {
+     "id_sha256": "74af48f6a58396fc3585a706edacb68f031721d76a42fd51ad8b474d04b392be",
+     "rows": 1229
+    },
+    "11": {
+     "rows": 1592,
+     "sha256": "800ec6a219702f701f526669a761b3f77ba056525bd79933a5bd423badaf7faa"
+    },
+    "12": {
+     "rows": 1132,
+     "sha256": "d64427cacf1ac1550a619430424e0c09d34f7bcdcf51c75d1760a448b7b4013e"
+    },
+    "13": {
+     "rows": 829,
+     "sha256": "dc08793a392ef622b019a3e8c5d779dd9c4bc9af3ff9ae4a3616478145a94f48"
+    },
+    "14": {
+     "rows": 729,
+     "sha256": "679a036878626488dfb9d6a84652066f415b188c9d233cbae98fbff8d02a263f"
+    },
+    "15": {
+     "rows": 530,
+     "sha256": "0bcd8af2147a84101eddad1c2846060f5885e625d0ab3a94fdf0c1c2e0aff781"
+    },
+    "16": {
+     "rows": 1754,
+     "sha256": "af8bbb78b5a37d9b9321e1f4b1b5e9108d99ac60a565e7a6d8f08647e83a0396"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "427cecf6fcda4603a28540239f1a0ae83a20c2ab98c218e22d0e8cac0ccf45d2",
+     "rows": 755
+    },
+    "11": {
+     "rows": 1394,
+     "sha256": "ee19a9baaaeb18bed3c5e3e65220e7abd842deda8abcd8f57881ab66e878869c"
+    },
+    "12": {
+     "rows": 888,
+     "sha256": "4d2420331225439f31a492632696c78942c0d41592b6b660f7f12a19f0f1d2fd"
+    },
+    "13": {
+     "rows": 958,
+     "sha256": "c50f8da18506a6c7bf7cb31e75e29d6f27d0e4ecb8efb8164bcf35483bee820a"
+    },
+    "14": {
+     "rows": 852,
+     "sha256": "9d050b2f59e1e6597741bcfc00ee26562ab08a5099f72ccffca40bcb55a2881e"
+    },
+    "15": {
+     "rows": 620,
+     "sha256": "b3bc5d7dbefcf1dc83061db472e82e748433017acb8dc3e295522b90b49fc10e"
+    },
+    "16": {
+     "rows": 2071,
+     "sha256": "51ffbac46aa3ce34f908738e81df29b5b1725e5dc80c544fcb6dd8714e83207d"
+    }
+   }
+  },
+  "2018": {
+   "hitting": {
+    "1": {
+     "id_sha256": "aa0d112624c1424ec1ec31ef4cb3c9ca8d039d5235cd973ee54e105387e2f433",
+     "rows": 1270
+    },
+    "11": {
+     "rows": 1297,
+     "sha256": "3eb835bd801f087d165f88505ac3a4473e9a822947e692249804f468d93908c6"
+    },
+    "12": {
+     "rows": 1147,
+     "sha256": "9c0ff970b6dd1135e6e2ef30bfe83bb5c67796b9e755f54809d579ea08f0b800"
+    },
+    "13": {
+     "rows": 800,
+     "sha256": "e50a9a56a3fa8f9847ece4f5b70ea47a2ecb7e2a61ade2ad9f41c779cb3c5a31"
+    },
+    "14": {
+     "rows": 734,
+     "sha256": "9afec106d912f6fae0bf7bfbfc2e1204e665c73b93af841df3f1553e3722b7dd"
+    },
+    "15": {
+     "rows": 542,
+     "sha256": "1da7f8cf82062510c471b95082dd4cd9b8d0a35f62325bda2479ab5103c07bec"
+    },
+    "16": {
+     "rows": 1889,
+     "sha256": "bcb9d4ad4ad1362a82b610aa730be49b122f671b6d0b6c1d0b051b589bdd2d52"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "83aebb23415c4db87dcfc612d6a43225335027ce6f8fa11943d47bebc66079ab",
+     "rows": 799
+    },
+    "11": {
+     "rows": 1047,
+     "sha256": "20fb6203ff9defdd4aec69347ed3642cc560d687142f0d7f0d415d628c7753bc"
+    },
+    "12": {
+     "rows": 955,
+     "sha256": "167b04e38943c7994ac40acea426b9ea59189d260b4e0d704230b289334013ff"
+    },
+    "13": {
+     "rows": 1020,
+     "sha256": "6b9aa7cfb5c40622b41eb7783283be497c478d5bb481384c0eb48fb021fecd22"
+    },
+    "14": {
+     "rows": 849,
+     "sha256": "d968a5f600ac369b7952d9ef9885d77e32b2324b68396147d8796698dcdfe878"
+    },
+    "15": {
+     "rows": 630,
+     "sha256": "8a995267fe6a2e9ec5c83b583881fd2591d5fd4f26445bf94fa9fc94f27b76eb"
+    },
+    "16": {
+     "rows": 2210,
+     "sha256": "c40a1036885844ea82e0455e5e5cb1a92b4a8603740a452bd0d50c7a0a1ca028"
+    }
+   }
+  },
+  "2019": {
+   "hitting": {
+    "1": {
+     "id_sha256": "2e6bc321184bd8950550b7351e5672c87d7099fc50c36c0c65d8d350f86ccf50",
+     "rows": 1287
+    },
+    "11": {
+     "rows": 1665,
+     "sha256": "525ac97ce76167a72668ed984547994b352ce9a125bf7b180801e4c61faf5ed8"
+    },
+    "12": {
+     "rows": 1142,
+     "sha256": "c2f0321c47b2424f0f403cc923ecd09a78cd4188c2b35aac8ce52fc4ef9e2e19"
+    },
+    "13": {
+     "rows": 824,
+     "sha256": "1ec815d88d7b1c4aeb016cf5e872b3230da84d23900b01f82026de867fb8cf9e"
+    },
+    "14": {
+     "rows": 756,
+     "sha256": "548bc449b6504bb575b38f8b0ff9699aef265192de9d3bb1df82046a8af93321"
+    },
+    "15": {
+     "rows": 543,
+     "sha256": "fdec0b4bda5d1e2af5fccf7bc90bef8e4f1a885159174454ed11d7918349ad39"
+    },
+    "16": {
+     "rows": 1662,
+     "sha256": "19e134ac5a9dbe5aaa7980f945c87b259e5ea9b06d026a7f8f7e8af281c1706a"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "7d2d41685f47698ee633f02754d1c56728d4b520732605c5110885b4f0a4f1ec",
+     "rows": 831
+    },
+    "11": {
+     "rows": 1515,
+     "sha256": "b8766063c6f1f1cb46dfeac774c00f25e59d2605c1b3289f27914bb9bc86f7b8"
+    },
+    "12": {
+     "rows": 970,
+     "sha256": "02b6b32551bc252840682d0c0a21b78eabe6b6b5b1ca626cee7b96b17635d474"
+    },
+    "13": {
+     "rows": 1023,
+     "sha256": "8f9820600f2c1c9c932c1c745c4511ebacad1ee1553fef44d3a6437f6a68f4b3"
+    },
+    "14": {
+     "rows": 884,
+     "sha256": "5d47e7a30ee72a722cf703756b33e6f60fdfea77263b7b18c9b20e70038b45d4"
+    },
+    "15": {
+     "rows": 675,
+     "sha256": "ace236960529a9c3c821a841bf7ba65e893626d39070c2fdadb3515601f70d9f"
+    },
+    "16": {
+     "rows": 2056,
+     "sha256": "473284d77f739bc56a6cc7775faa36f1700a4a23d183aa8e34907dafcbde079f"
+    }
+   }
+  },
+  "2021": {
+   "hitting": {
+    "1": {
+     "id_sha256": "c55e44b9b6181017bfe04cdce01b355bb7cee506b3a9b36f30f965dfd59d5fbd",
+     "rows": 1374
+    },
+    "11": {
+     "rows": 1506,
+     "sha256": "1a87cbd8d9cead06c2f079a52ef73b90d6874ab965a4abf7e41a0a8f531d2bb6"
+    },
+    "12": {
+     "rows": 916,
+     "sha256": "c282fb5a80468d7d495644b23c85b4688b66e0c817ca35efc3eee8b79d1d7335"
+    },
+    "13": {
+     "rows": 837,
+     "sha256": "b4ebc225923dd152522ff953a58473175f1969d047d956b2fa8a7a3914ecda07"
+    },
+    "14": {
+     "rows": 908,
+     "sha256": "dbe5a49bb2e658921d0d53a90501698785a2aa8631e5120c26f6e27c3acf3d3e"
+    },
+    "16": {
+     "rows": 1928,
+     "sha256": "346e81141c09f5b6c7c964753f5778c0eb897a4d5a6c03627154d4d38e43b139"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "f33bf9379f75728b1584131ab436849263c8c9b1eb4fd7b889d513e5e2dbdbd0",
+     "rows": 909
+    },
+    "11": {
+     "rows": 1178,
+     "sha256": "0730156606331c6745994dc7a5c74d33dcd49a3e9b5fd161702e7f4aafb6bb81"
+    },
+    "12": {
+     "rows": 938,
+     "sha256": "3608d6ce9857926dc9b3f182e68e5d57211e88705bed8f6efd0fe49877358881"
+    },
+    "13": {
+     "rows": 1011,
+     "sha256": "3651547a5d6296932ee3710a765c190273eebe02647de7a5f0bb3ad2c4d50e36"
+    },
+    "14": {
+     "rows": 1143,
+     "sha256": "19574386b0c7a9741019c26fff9b5b23ebf988e8dc9874acb6c6d614b91fc93e"
+    },
+    "16": {
+     "rows": 2098,
+     "sha256": "78778d7b9a397f1b08ce4cdc5a67055e8e9e6b2ba81b07c4077f4cb2259f5f90"
+    }
+   }
+  },
+  "2022": {
+   "hitting": {
+    "1": {
+     "id_sha256": "d6b80427d23148bdc69603e410180bfc05e4e0ffac62c1a4579bc2aed7c760a8",
+     "rows": 794
+    },
+    "11": {
+     "rows": 1014,
+     "sha256": "ccc4bbb5d94ef8e16f1fe3a6f899f8541be1b2818e30610d954699388feef145"
+    },
+    "12": {
+     "rows": 770,
+     "sha256": "437db90bc08a417a0b356fd09161518a16337a466148101857694e965c255af3"
+    },
+    "13": {
+     "rows": 795,
+     "sha256": "370b7a51a4aceafb962750a1b69e2d8f024cc006cf7757b46a791909f272615c"
+    },
+    "14": {
+     "rows": 945,
+     "sha256": "22352ee83f5c85f3791a253b02c81bf089e384f610e5fbe37e930086993af031"
+    },
+    "16": {
+     "rows": 1944,
+     "sha256": "fbe79cfceb2a384a64db3658c85521658a3a1492b0619837ce85fff6f6c479cf"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "3aa6c6b3caa331127427abd82c6e8f8202b4f7110c94584f84ff321de5cac9c6",
+     "rows": 871
+    },
+    "11": {
+     "rows": 1258,
+     "sha256": "fc750d7cafbc107c2f4d955884fd9e8ec409f911141df466ee66acc76f915c47"
+    },
+    "12": {
+     "rows": 1032,
+     "sha256": "84dac13508845b8ace86fa9984a083e770ece37c101339093f6e4e23d21e8974"
+    },
+    "13": {
+     "rows": 994,
+     "sha256": "623ecc7175685b488a9b931957f676b3329bbd1b122277fa16a5e5419e22fd72"
+    },
+    "14": {
+     "rows": 1209,
+     "sha256": "4efb89b164bfbb1d26802016fe92187fbb61ab37645b0da288d52602b00d7f17"
+    },
+    "16": {
+     "rows": 2203,
+     "sha256": "822e33447580aadaf9b668623d582812aae1b7c5c5ffda887b088ef1e4f14634"
+    }
+   }
+  },
+  "2023": {
+   "hitting": {
+    "1": {
+     "id_sha256": "08c9d4f59c055553c94afc25fceb3ef284842a5b5048c1de94d4926839e64a9a",
+     "rows": 769
+    },
+    "11": {
+     "rows": 931,
+     "sha256": "1120b9ff62d3ac33dd58fd28971873817dcb6be3b28fd296d15e34f9814096b0"
+    },
+    "12": {
+     "rows": 801,
+     "sha256": "7b25d0fe8a4fcb3c71a0c7151e7f8f29f4511395b035c24fd552942081110aa7"
+    },
+    "13": {
+     "rows": 789,
+     "sha256": "d6970d6485103a6a1a85377e58dd0d84efbe21201e5ea648c7369040c74d1f42"
+    },
+    "14": {
+     "rows": 917,
+     "sha256": "128dd53c718abf0556a3de5c06a917c019707202c346d5d00b826073319724ab"
+    },
+    "16": {
+     "rows": 1911,
+     "sha256": "f6a0443fbfafcbd7de7683a0561837ba141bed88b24e20f7026be280d0064022"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "f44ef617a6cb824233a1e043f34df7b9f630c79fba0aeb13b4c84abb0f3a199b",
+     "rows": 863
+    },
+    "11": {
+     "rows": 1242,
+     "sha256": "4b1fb10418aaa63541432319e3f54a2d3b78699a90d91cb134956d52b64c4d39"
+    },
+    "12": {
+     "rows": 1033,
+     "sha256": "7447454f83e2c1e47a031c97f92e3acb2f8e15fde34e693627a5cefbab4566cc"
+    },
+    "13": {
+     "rows": 989,
+     "sha256": "96d6d01c64730712cd00f3ea7e1f0521defa15305f4645c98647b3529f99c30c"
+    },
+    "14": {
+     "rows": 1158,
+     "sha256": "85c191a59be9137c75d8001850d3bafdf4ac9a69927aacbc3152a8d3f797cd4d"
+    },
+    "16": {
+     "rows": 2171,
+     "sha256": "6267483e1156d0fd58437d7f04f4bc08e89c1e9486474e776555c397067b21cc"
+    }
+   }
+  },
+  "2024": {
+   "hitting": {
+    "1": {
+     "id_sha256": "53ad2d08d2ebd583cbe396db8df61bbd9f0851dc55d2c8996481231662c78b3b",
+     "rows": 742
+    },
+    "11": {
+     "rows": 885,
+     "sha256": "c455dc90a7fc6350d729cdc286817bbd030f5f089db31ee46c011f19e0b9a5c4"
+    },
+    "12": {
+     "rows": 742,
+     "sha256": "a70df5d40176a34636b28fd0ce25058f8bafccd9234677a7d9dd5c7c639f4347"
+    },
+    "13": {
+     "rows": 769,
+     "sha256": "86620e78f92cc383dc51d231f7f502b7846eed219d5d050f0121c5629f2af6aa"
+    },
+    "14": {
+     "rows": 905,
+     "sha256": "519cd27cf5ca51cab8425e984ec8a9b7cea33225add5766117c6c7dc806d203e"
+    },
+    "16": {
+     "rows": 1607,
+     "sha256": "8d1537b33f524d6ebfcc1c03db3e0da28814f5add3e6a6818bbc32a950faaaee"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "5ed02eefd47779a2a5eb8940c6574f24d46bddec4c50f571a3cdad303b0aee42",
+     "rows": 855
+    },
+    "11": {
+     "rows": 1234,
+     "sha256": "29b99f734b1578bdcf1335776e8ede176954ddeb49095dc1bc319cacc054a354"
+    },
+    "12": {
+     "rows": 972,
+     "sha256": "5defc735581aea8cc4fc737d52ec655bd8bf19f5029d32ede15d2c68fcba773f"
+    },
+    "13": {
+     "rows": 991,
+     "sha256": "146b8e8c8562b38861913670ddca8153ec46ef19e935829cd2717e411fa69405"
+    },
+    "14": {
+     "rows": 1187,
+     "sha256": "9a8036ee5126fc9db5c28e5b99d6aa755ae27187899400c81f9af4120252d4e5"
+    },
+    "16": {
+     "rows": 1976,
+     "sha256": "6f88a749cdcf3bb5a80d805405d38380f2035bb68323cf995d4b22047edce116"
+    }
+   }
+  },
+  "2025": {
+   "hitting": {
+    "1": {
+     "id_sha256": "4b9b3a6329958f2fbbb51f7dc16e6ec72ece752eeed51e5c3479533508970835",
+     "rows": 765
+    },
+    "11": {
+     "rows": 920,
+     "sha256": "460426bdc2fe245fd70ba05012894de686f83b3528699e48ebe132fce2969223"
+    },
+    "12": {
+     "rows": 772,
+     "sha256": "d830ae68116b2c5bc0ec8e8443978e20a7f532fdbbd9e08b7813d2ede46ecc44"
+    },
+    "13": {
+     "rows": 789,
+     "sha256": "54ebcbbf32b56f97dfdf7acacfc87c2298227e6a017e7185188df5211e2cd660"
+    },
+    "14": {
+     "rows": 922,
+     "sha256": "509ef33e08a417777b1e39395c06bc9f3bea169408208797e281c1ecf70e1e27"
+    },
+    "16": {
+     "rows": 1579,
+     "sha256": "d0c0ee957076c52f07169b02c4550f54eda056767d757130c43851ce325c5381"
+    }
+   },
+   "pitching": {
+    "1": {
+     "id_sha256": "6878c0f3832c3e5ea92368f2f14e82c838ecce061e3f1fa32121033aeed52a6a",
+     "rows": 873
+    },
+    "11": {
+     "rows": 1264,
+     "sha256": "b8f656d22ba414825a4daba55c13206e9aab2fdc6ad37f15f715bce52a764032"
+    },
+    "12": {
+     "rows": 1017,
+     "sha256": "52cd2a8743bac345792e7b0464062bfeb819595e24cb65c9695b7724f3de2e4b"
+    },
+    "13": {
+     "rows": 1040,
+     "sha256": "7dc69c77829632fb22aa2a666e8c74b5cfe56223a4a5e346118ba5f859ab17e5"
+    },
+    "14": {
+     "rows": 1223,
+     "sha256": "94d7988d16e908d54f85e0e62c50020ec8611019ce43a27d5b8119ca28990453"
+    },
+    "16": {
+     "rows": 1981,
+     "sha256": "317086432269f013a5a4be0354aa1cb74b80c9fa8993fd99911ed6f4d76a6166"
+    }
+   }
+  }
+ },
+ "what_this_is": "SG_1 pins for the 2026 MiLB season inputs (efv2026 PLAN.md N2, N3; the surrogate gate draft's s11). Inputs only: no outcome, score or label is read or stored here. NOT served."
+}
