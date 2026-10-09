@@ -319,6 +319,7 @@ MODEL_GLOSSARY = {
     # thin-sample p_bust DID ship and moves a number readers see on provisional
     # cards, so it points at the provisional entry rather than being internal.
     "xfv_thin_pbust": ["xfv_ungraded"],
+    "xfv_thin_lane_surplus_odds": "internal",  # registered 2026-10-08, not read; serves nothing
     "spotlights_movement": ["spotlights", "spotlight_age_cap"],
     "org_tendencies": ["org_tendencies"],
     "team_win_projections": ["mlb_projections"],
