@@ -17495,13 +17495,13 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
         key: q.player_key,
         name: q.player_name,
         tag: q.school || " - ",
-        value: q.consensus_fv != null ? `FV ${fvCeil(q.consensus_fv)}` : " - ",
+        value: q.consensus_fv != null ? `Cons. FV ${fvCeil(q.consensus_fv)}` : " - ",
       }));
     return [
       topTool ? { type: "leaderboard",
         title: `${cls.year} · top ${topTool.toUpperCase()} (you: ${Math.round(topVal)})`,
         rows: peers } : null,
-      posPeers.length ? { type: "leaderboard", title: `${cls.year} · ${pos || "pos"} peers by FV`,
+      posPeers.length ? { type: "leaderboard", title: `${cls.year} · ${pos || "pos"} peers by consensus FV`,
         rows: posPeers } : null,
       classRankCard,
     ].filter(Boolean);
@@ -17523,7 +17523,7 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
         tag: q.drafted_team || q.position || "",
         value: q.signing_bonus
           ? `$${(q.signing_bonus/1_000_000).toFixed(1)}M`
-          : (q.consensus_fv != null ? `FV ${fvCeil(q.consensus_fv)}` : " - "),
+          : (q.consensus_fv != null ? `Cons. FV ${fvCeil(q.consensus_fv)}` : " - "),
       })) : [];
     // Bonus context: top 5 bonuses in class so the user can place the
     // prospect's bonus on a relative scale.
@@ -17554,7 +17554,7 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
           key: q.player_key,
           name: q.player_name,
           tag: q.position || "",
-          value: q.consensus_fv != null ? `FV ${fvCeil(q.consensus_fv)}` : " - ",
+          value: q.consensus_fv != null ? `Cons. FV ${fvCeil(q.consensus_fv)}` : " - ",
         }))
     : [];
   const signals = [
@@ -17568,7 +17568,7 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
       valColor: p.over_slot_pct > 0 ? "var(--neon-cyan)" : p.over_slot_pct < 0 ? "var(--text-secondary)" : "var(--text-primary)" } : null,
   ].filter(Boolean);
   return [
-    adjPeers.length ? { type: "leaderboard", title: `${cls.year} · FV neighbors`, rows: adjPeers } : null,
+    adjPeers.length ? { type: "leaderboard", title: `${cls.year} · consensus FV neighbors`, rows: adjPeers } : null,
     signals.length ? { type: "signals", title: "Key signals", signals } : null,
     classRankCard,
   ].filter(Boolean);
@@ -17675,7 +17675,7 @@ function _overseasDetailSidebarCards(p, league, activeTab) {
       key: q.player_key,
       name: q.player_name,
       tag: q.position || "",
-      value: q.consensus_fv != null ? `FV ${fvCeil(q.consensus_fv)}` : " - ",
+      value: q.consensus_fv != null ? `Cons. FV ${fvCeil(q.consensus_fv)}` : " - ",
     })) : [];
   const signals = [
     fv != null ? { key: "Consensus FV", value: fvCeil(fv) } : null,
@@ -17686,7 +17686,7 @@ function _overseasDetailSidebarCards(p, league, activeTab) {
           valColor: p.posting_days_remaining <= 7 ? "var(--neon-orange)" : "var(--text-primary)" } : null,
   ].filter(Boolean);
   return [
-    adjPeers.length ? { type: "leaderboard", title: `${league.league} · FV neighbors`, rows: adjPeers } : null,
+    adjPeers.length ? { type: "leaderboard", title: `${league.league} · consensus FV neighbors`, rows: adjPeers } : null,
     signals.length ? { type: "signals", title: "Key signals", signals } : null,
     lgRankCard,
   ].filter(Boolean);
@@ -28423,15 +28423,15 @@ const _HS_METRICS = [
   { key: "volume", label: "Volume", unit: "prospects", token: "--neon-violet", modes: ["states", "regions", "schools"],
     val: r => r.n, fmt: r => String(r.n),
     blurb: "Raw count of high-school prospects across every class in view. The most literal lens; dominated by the biggest sources." },
-  { key: "quality", label: "Shrunk quality", unit: "mean FV", token: "--neon-green", modes: ["states", "regions", "schools"],
+  { key: "quality", label: "Shrunk quality", unit: "mean draft FV (consensus)", token: "--neon-green", modes: ["states", "regions", "schools"],
     val: r => r.meanShrunk, fmt: r => r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ",
     blurb: "Mean consensus FV pulled toward the national mean by sample size (empirical-Bayes, K=" + _HS_SHRINK_K + "). Stops a place with two lucky prospects from topping a quality board." },
   { key: "residual", label: "Production vs size", unit: "vs expected", token: "--neon-amber", needsDemo: true, modes: ["states"],
     val: r => r.residual, fmt: r => r.residual != null ? (r.residual > 0 ? "+" : "") + r.residual.toFixed(1) : " - ",
     blurb: "Prospects above or below what youth population predicts (a straight-line fit of count on youth population). Positive means it overproduces talent for its size." },
-  { key: "outcome", label: "Outcome vs slot", unit: "mean FV gain", token: "--neon-cyan", needsOutcome: true, modes: ["states", "regions", "schools"],
+  { key: "outcome", label: "Outcome vs slot", unit: "mean grade gain", token: "--neon-cyan", needsOutcome: true, modes: ["states", "regions", "schools"],
     val: r => r.meanOverperf, fmt: r => r.meanOverperf != null ? (r.meanOverperf > 0 ? "+" : "") + r.meanOverperf.toFixed(1) : " - ",
-    blurb: "Mean realized FV minus the FV expected for each drafted player's slot, pooled. Small samples, mature classes only: read it as a wide-band audit, not a confident ranking." }
+    blurb: "Mean current grade minus the median current grade of players drafted in the same pick band, pooled (the grade the draft data names: consensus FV now, or eFV now). Small samples, mature classes only: read it as a wide-band audit, not a confident ranking." }
 ];
 
 function _hsMetric(key) { return _HS_METRICS.find(m => m.key === key) || _HS_METRICS[0]; }
@@ -28511,6 +28511,47 @@ function _hsDomState(states) {
   return best;
 }
 
+// Owner ask 5 (2026-09-30), Part 8 lane links_efv_display B.3 (the drill-down pages). A
+// draft, high-school, college or overseas grade is the consensus FV on an amateur or a
+// foreign pro (no eFV exists before a player signs), so it prints named as consensus and
+// rounded up. A drafted player who has signed and carries an eFV grade also prints "eFV
+// now" (joined on promoted_key, then milb_key; rounded to nearest; for a player who reached
+// MLB, the eFV locked at his debut). The eFV-now cells and the value swaps on these pages
+// ride EFV_DISPLAY_SWAPS (efvDisplaySwaps()); the labels do not.
+const DRAFT_FV_TIP = "Draft FV (consensus): the industry consensus grade on the draft board, rounded up. No eFV exists before a player signs.";
+const OVERSEAS_FV_TIP = "Consensus FV: the industry consensus grade, rounded up. No eFV exists for a player in a foreign pro league.";
+const EFV_NOW_TIP = "eFV now: the pro grade of a drafted player who has signed, rounded to nearest (for a player who reached MLB, the eFV locked at his debut).";
+function _draftEfvNow(p) {
+  if (!p || typeof getEfv !== "function") return null;
+  for (const k of [p.promoted_key, p.milb_key]) {
+    if (!k) continue;
+    const x = getEfv({ player_key: k });
+    if (!x || (x.kind !== "active" && x.kind !== "debuted")) continue;
+    const raw = efvBoardValue(x);
+    if (raw == null || !isFinite(raw)) continue;
+    return { key: k, x, raw: Number(raw), val: efvGradeDisplay(x), debuted: x.kind === "debuted" };
+  }
+  return null;
+}
+function _draftEfvNowHTML(p) {
+  const e = _draftEfvNow(p);
+  if (!e) return '<span style="color:var(--text-tertiary);" title="No eFV: not signed, or no pro grade on file"> - </span>';
+  const tip = e.debuted ? "eFV " + e.val + ", locked at his MLB debut" : "eFV now " + e.val;
+  return '<span class="fv-badge ' + fvClass(String(e.val)) + ' size-xs" data-grade-basis="efv" title="' + escapeHtml(tip) + '">' + e.val + '</span>';
+}
+// The basis of the served current_fv, expected_fv_for_pick and overperf_fv: "efv" once
+// draft_export.DRAFT_CURRENT_FV_EFV is on (overperf_coverage.basis), else the consensus FV
+// now (basis "board_fv").
+function _draftNowIsEfv() {
+  const cl = (typeof DATA !== "undefined" && DATA && DATA.draft && DATA.draft.classes) || [];
+  return cl.some(c => !!(c && c.overperf_coverage && c.overperf_coverage.basis === "efv"));
+}
+function _draftVsSlotTip() {
+  return _draftNowIsEfv()
+    ? "eFV now minus the median eFV now of players drafted in the same pick band (small samples)"
+    : "Consensus FV now minus the median consensus FV now of players drafted in the same pick band (small samples)";
+}
+
 // Aggregate every in-view HS prospect into per-entity rows for `mode`,
 // carrying all lenses plus supporting counts.
 function _hsAggregate(classes, demo, mode) {
@@ -28527,7 +28568,7 @@ function _hsAggregate(classes, demo, mode) {
       if (!key) continue;
       const ab = _hsStateAbbr(p.school);
       const a = byKey[key] || (byKey[key] = {
-        key, name: (mode === "states" ? _US_STATE_NAMES[key] : key), n: 0, top: 0, sumFv: 0, nFv: 0,
+        key, name: (mode === "states" ? _US_STATE_NAMES[key] : key), n: 0, top: 0, sumFv: 0, nFv: 0, sumEfv: 0, nEfv: 0,
         drafted: 0, nBonus: 0, sumBonus: 0, overperf: [], reachedMlb: 0, totalWar: 0, programs: {}, states: {}, topProspect: null
       });
       a.n++; totN++;
@@ -28537,6 +28578,8 @@ function _hsAggregate(classes, demo, mode) {
         if (+fv >= 55) a.top++;
         if (!a.topProspect || +fv > a.topProspect.fv) a.topProspect = { name: p.player_name, fv: +fv, key: p.player_key };
       }
+      const _en = _draftEfvNow(p);
+      if (_en) { a.sumEfv += _en.raw; a.nEfv++; }
       if (p.drafted_pick != null) a.drafted++;
       if (p.signing_bonus != null) { a.sumBonus += +p.signing_bonus; a.nBonus++; }
       if (p.overperf_fv != null && isFinite(p.overperf_fv)) a.overperf.push(+p.overperf_fv);
@@ -28573,6 +28616,7 @@ function _hsAggregate(classes, demo, mode) {
     const meanOverperf = a.overperf.length ? a.overperf.reduce((s, x) => s + x, 0) / a.overperf.length : null;
     return Object.assign({}, a, {
       meanRaw, meanShrunk, shrinkW: w, youth, pop, rate, pred, residual,
+      meanEfv: a.nEfv ? a.sumEfv / a.nEfv : null,
       meanOverperf, overperfN: a.overperf.length, warPerDraftee: a.drafted ? a.totalWar / a.drafted : 0,
       nStates: Object.keys(a.states).length, domState: _hsDomState(a.states)
     });
@@ -28774,14 +28818,16 @@ function _hsRenderLeaderboard(rows, agg, metric, mode) {
       : '<strong>' + escapeHtml(r.key) + '</strong> <span style="color:var(--text-tertiary);">' + escapeHtml(r.name) + '</span>' });
   if (isRegions) cols.push({ key: "nStates", label: "States", align: "right", title: "States with a prospect", get: r => r.nStates, fmt: r => String(r.nStates) });
   cols.push({ key: "n", label: "Prospects", align: "right", title: "High-school prospects in view", get: r => r.n, fmt: r => String(r.n) });
-  cols.push({ key: "top", label: "FV 55+", align: "right", title: "How many graded consensus FV 55 or better", get: r => r.top, fmt: r => String(r.top) });
+  cols.push({ key: "top", label: "Cons. FV 55+", align: "right", title: "How many graded draft FV (consensus) 55 or better", get: r => r.top, fmt: r => String(r.top) });
   if (!isSchools) cols.push({ key: "rate", label: "Per 100k", align: "right", title: "Prospects per 100,000 residents age 0-18", get: r => r.rate, fmt: r => r.rate != null ? r.rate.toFixed(2) : " - " });
-  cols.push({ key: "meanRaw", label: "Mean FV", align: "right", title: "Raw mean consensus FV", get: r => r.meanRaw, fmt: r => r.meanRaw != null ? r.meanRaw.toFixed(1) : " - " });
-  cols.push({ key: "meanShrunk", label: "Shrunk FV", align: "right", title: "Mean FV shrunk toward the national mean by sample size (K=" + agg.k + ")", get: r => r.meanShrunk, fmt: r => r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - " });
+  cols.push({ key: "meanRaw", label: "Mean cons. FV", align: "right", title: "Raw mean draft FV (consensus)", get: r => r.meanRaw, fmt: r => r.meanRaw != null ? r.meanRaw.toFixed(1) : " - " });
+  cols.push({ key: "meanShrunk", label: "Shrunk cons. FV", align: "right", title: "Mean draft FV (consensus) shrunk toward the national mean by sample size (K=" + agg.k + ")", get: r => r.meanShrunk, fmt: r => r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - " });
+  if (efvDisplaySwaps()) cols.push({ key: "meanEfv", label: "eFV now", align: "right", title: "Mean eFV now over the signed players with an eFV grade (for a player who reached MLB, the eFV locked at his debut)", get: r => r.meanEfv,
+    fmt: r => r.meanEfv != null ? '<span data-grade-basis="efv" title="Mean eFV now over ' + r.nEfv + ' signed player' + (r.nEfv === 1 ? '' : 's') + '">' + r.meanEfv.toFixed(1) + '</span>' : " - " });
   if (mode === "states") cols.push({ key: "residual", label: "vs Size", align: "right", title: "Prospects above or below what youth population predicts", get: r => r.residual, fmt: r => r.residual != null ? (r.residual > 0 ? "+" : "") + r.residual.toFixed(1) : " - " });
   cols.push({ key: "reachedMlb", label: "Reached MLB", align: "right", title: "How many drafted players have accrued MLB time", get: r => r.reachedMlb, fmt: r => String(r.reachedMlb) });
   cols.push({ key: "totalWar", label: "Total WAR", align: "right", title: "Sum of career MLB WAR over the drafted players", get: r => r.totalWar, fmt: r => (r.totalWar > 0 ? "+" : "") + r.totalWar.toFixed(1) });
-  cols.push({ key: "meanOverperf", label: "vs Slot", align: "right", title: "Mean realized FV minus FV expected for draft slot (small samples)", get: r => r.meanOverperf, fmt: r => r.meanOverperf != null ? (r.meanOverperf > 0 ? "+" : "") + r.meanOverperf.toFixed(1) : " - " });
+  cols.push({ key: "meanOverperf", label: "vs Slot", align: "right", title: "Mean of: " + _draftVsSlotTip(), get: r => r.meanOverperf, fmt: r => r.meanOverperf != null ? (r.meanOverperf > 0 ? "+" : "") + r.meanOverperf.toFixed(1) : " - " });
 
   const metricCol = { rate: "rate", volume: "n", quality: "meanShrunk", residual: "residual", outcome: "meanOverperf" };
   const sk = _hsView.sort.key, sd = _hsView.sort.dir;
@@ -28938,14 +28984,15 @@ async function _renderHSEntityDetail(host, mode, key, classes) {
   // Lens tiles.
   const tiles = ['<div class="rs-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">'
     + _statTileHTML("Prospects", String(r.n))
-    + _statTileHTML("Top (FV 55+)", String(r.top))
+    + _statTileHTML("Top (cons. FV 55+)", String(r.top), { title: DRAFT_FV_TIP })
     + (mode !== "schools" ? _statTileHTML("Per 100k youth", r.rate != null ? r.rate.toFixed(2) : " - ", { title: "Prospects per 100,000 residents age 0-18" }) : "")
-    + _statTileHTML("Mean FV (raw)", r.meanRaw != null ? r.meanRaw.toFixed(1) : " - ")
-    + _statTileHTML("Mean FV (shrunk)", r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ", { title: "Pulled toward the national mean " + agg.grandMean.toFixed(1) + " by sample size (K=" + agg.k + ")" })
+    + _statTileHTML("Mean cons. FV (raw)", r.meanRaw != null ? r.meanRaw.toFixed(1) : " - ", { title: DRAFT_FV_TIP })
+    + _statTileHTML("Mean cons. FV (shrunk)", r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ", { title: "Draft FV (consensus), pulled toward the national mean " + agg.grandMean.toFixed(1) + " by sample size (K=" + agg.k + ")" })
+    + (efvDisplaySwaps() ? _statTileHTML("Mean eFV now (signed)", r.meanEfv != null ? '<span data-grade-basis="efv">' + r.meanEfv.toFixed(1) + '</span>' : " - ", { title: "Mean eFV now over the " + r.nEfv + " signed player" + (r.nEfv === 1 ? "" : "s") + " with an eFV grade" }) : "")
     + (mode === "states" ? _statTileHTML("Production vs size", r.residual != null ? (r.residual > 0 ? "+" : "") + r.residual.toFixed(1) : " - ", { tone: r.residual > 0 ? "pos" : "", title: "Actual minus expected prospects given youth population (expected " + (r.pred != null ? r.pred.toFixed(1) : "n/a") + ")" }) : "")
     + _statTileHTML("Reached MLB", String(r.reachedMlb))
     + _statTileHTML("Total MLB WAR", (r.totalWar > 0 ? "+" : "") + r.totalWar.toFixed(1), { tone: r.totalWar > 0 ? "pos" : "" })
-    + _statTileHTML("Mean FV vs slot", r.meanOverperf != null ? (r.meanOverperf > 0 ? "+" : "") + r.meanOverperf.toFixed(1) : " - ", { tone: r.meanOverperf > 0 ? "pos" : "", title: "Realized FV minus expected-for-slot, mean over " + r.overperfN + " drafted (small sample)" })
+    + _statTileHTML("Mean vs slot", r.meanOverperf != null ? (r.meanOverperf > 0 ? "+" : "") + r.meanOverperf.toFixed(1) : " - ", { tone: r.meanOverperf > 0 ? "pos" : "", title: _draftVsSlotTip() + "; mean over " + r.overperfN + " drafted" })
     + '</div>'].join("");
 
   // Comparison vs national.
@@ -28963,13 +29010,14 @@ async function _renderHSEntityDetail(host, mode, key, classes) {
     + '<table class="draft-table"><thead><tr><th>Lens</th>'
     + '<th style="text-align:right;">' + escapeHtml(mode === "states" ? r.key : "This") + '</th>'
     + '<th style="text-align:right;">National</th><th style="text-align:right;">Diff</th></tr></thead><tbody>'
-    + cmpRow("Mean FV", r.meanRaw, agg.grandMean, f1)
+    + cmpRow("Mean cons. FV", r.meanRaw, agg.grandMean, f1)
     + (mode !== "schools" ? cmpRow("Per 100k youth", r.rate, agg.nationalRate, f2) : "")
-    + cmpRow("Mean FV vs slot", r.meanOverperf, _hsNationalMeanOverperf(agg), f1)
+    + cmpRow("Mean vs slot", r.meanOverperf, _hsNationalMeanOverperf(agg), f1)
     + '</tbody></table>';
 
   // Roster.
   const roster = _hsCollectRoster(classes, mode, key);
+  const _efvCol = efvDisplaySwaps();
   const rosterRows = roster.map(p => {
     const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
     const drafted = p.drafted_pick != null ? escapeHtml((p.drafted_team || "") + " #" + p.drafted_pick) : " - ";
@@ -28984,7 +29032,8 @@ async function _renderHSEntityDetail(host, mode, key, classes) {
       + '<td style="text-align:center;color:var(--text-secondary);font-family:var(--font-mono);">' + p._year + '</td>'
       + '<td style="text-align:center;">' + escapeHtml(p.position || " - ") + '</td>'
       + schoolCol
-      + '<td style="text-align:right;"><span style="color:' + _draftFvBucketColor(p.consensus_fv) + ';font-family:var(--font-mono);font-weight:700;">' + (fvInt != null ? fvInt : " - ") + '</span></td>'
+      + '<td style="text-align:right;" data-grade-basis="consensus"><span style="color:' + _draftFvBucketColor(p.consensus_fv) + ';font-family:var(--font-mono);font-weight:700;">' + (fvInt != null ? fvInt : " - ") + '</span></td>'
+      + (_efvCol ? '<td style="text-align:right;">' + _draftEfvNowHTML(p) + '</td>' : '')
       + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-secondary);">' + drafted + '</td>'
       + '<td style="text-align:right;font-family:var(--font-mono);">' + over + '</td>'
       + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-secondary);">' + war + '</td>'
@@ -28994,8 +29043,10 @@ async function _renderHSEntityDetail(host, mode, key, classes) {
   const rosterTable = '<div class="detail-title">Prospects (' + roster.length + ')</div>'
     + '<table class="draft-table"><thead><tr>'
     + '<th>Player</th><th style="text-align:center;">Class</th><th style="text-align:center;">Pos</th>' + schoolHead
-    + '<th style="text-align:right;">FV</th><th style="text-align:right;">Drafted</th>'
-    + '<th style="text-align:right;" title="Realized FV minus FV expected for draft slot">vs Slot</th>'
+    + '<th style="text-align:right;" title="' + escapeHtml(DRAFT_FV_TIP) + '">Cons. FV</th>'
+    + (_efvCol ? '<th style="text-align:right;" title="' + escapeHtml(EFV_NOW_TIP) + '">eFV now</th>' : '')
+    + '<th style="text-align:right;">Drafted</th>'
+    + '<th style="text-align:right;" title="' + escapeHtml(_draftVsSlotTip()) + '">vs Slot</th>'
     + '<th style="text-align:right;">WAR</th></tr></thead><tbody>' + rosterRows + '</tbody></table>';
 
   // Side panel - mode-specific context.
@@ -29018,11 +29069,11 @@ async function _renderHSEntityDetail(host, mode, key, classes) {
       + '<div class="rs-grid" style="grid-template-columns:1fr;">'
       + _statTileHTML("Classes with a signee", yrs.length ? yrs.join(", ") : " - ")
       + _statTileHTML("Listed states", stateList.length ? stateList.join(", ") : " - ", stateList.length > 1 ? { title: "A national academy draws players from several states." } : undefined)
-      + (r.topProspect ? _statTileHTML("Top prospect", escapeHtml(r.topProspect.name) + " (" + fvCeil(r.topProspect.fv) + ")") : "")
+      + (r.topProspect ? _statTileHTML("Top prospect", escapeHtml(r.topProspect.name) + " (cons. FV " + fvCeil(r.topProspect.fv) + ")", { title: DRAFT_FV_TIP }) : "")
       + '</div>';
   }
 
-  host.innerHTML = '<div class="player-detail-grid"><div>'
+  host.innerHTML = '<div class="player-detail-grid"><div style="min-width:0;">'
     + header + '<div class="detail-title flush">Lenses</div>' + tiles + comparison + rosterTable
     + '</div><div class="player-detail-side">' + side + '</div></div>';
 
@@ -29407,11 +29458,13 @@ function _collegeAggregate(classes) {
       const pk = p.milb_key || p.player_name;
       const fv = p.consensus_fv != null ? +p.consensus_fv : null;
       const war = p.career_war != null ? +p.career_war : null;
+      const en = _draftEfvNow(p);
       const prev = a.players[pk];
-      if (!prev) a.players[pk] = { p, fv, war, year: c.year };
+      if (!prev) a.players[pk] = { p, fv, war, year: c.year, efv: en ? en.raw : null };
       else {
         if (war != null) prev.war = prev.war == null ? war : Math.max(prev.war, war);
         if (fv != null && (prev.fv == null || fv > prev.fv)) { prev.fv = fv; prev.p = p; prev.year = c.year; }
+        if (prev.efv == null && en) prev.efv = en.raw;
       }
     }
   }
@@ -29419,12 +29472,14 @@ function _collegeAggregate(classes) {
     const players = Object.values(a.players);
     const fvs = players.map(x => x.fv).filter(v => v != null);
     const wars = players.map(x => x.war).filter(v => v != null);
+    const efvs = players.map(x => x.efv).filter(v => v != null);
     let topProspect = null;
     for (const x of players) if (x.fv != null && (!topProspect || x.fv > topProspect.fv)) topProspect = { name: x.p.player_name, fv: x.fv };
     return {
       name: a.name, logo: a.logo, draftees: players.length, current: a.current,
       top: players.filter(x => x.fv != null && x.fv >= 55).length,
       meanFv: fvs.length ? fvs.reduce((s, x) => s + x, 0) / fvs.length : null,
+      meanEfv: efvs.length ? efvs.reduce((s, x) => s + x, 0) / efvs.length : null, nEfv: efvs.length,
       reachedMlb: wars.length, totalWar: wars.reduce((s, x) => s + x, 0), topProspect
     };
   });
@@ -29445,12 +29500,15 @@ function _renderColleges(host, classes) {
       fmt: r => '<span class="draft-cell-ico">' + _collegeLogoImg(r.logo, r.name, false) + '<strong>' + escapeHtml(r.name) + '</strong></span>' },
     { key: "draftees", label: "Draftees", align: "right", get: r => r.draftees, fmt: r => String(r.draftees), title: "Distinct players drafted out of this college (all classes in view)" },
     { key: "current", label: "Current", align: "right", get: r => r.current, fmt: r => r.current ? String(r.current) : " - ", title: "Prospects in the current scouted class" },
-    { key: "top", label: "FV 55+", align: "right", get: r => r.top, fmt: r => String(r.top), title: "Distinct players graded consensus FV 55 or better" },
-    { key: "meanFv", label: "Mean FV", align: "right", get: r => r.meanFv, fmt: r => r.meanFv != null ? r.meanFv.toFixed(1) : " - ", title: "Mean consensus FV of the program's draftees" },
+    { key: "top", label: "Cons. FV 55+", align: "right", get: r => r.top, fmt: r => String(r.top), title: "Distinct players graded draft FV (consensus) 55 or better" },
+    { key: "meanFv", label: "Mean cons. FV", align: "right", get: r => r.meanFv, fmt: r => r.meanFv != null ? r.meanFv.toFixed(1) : " - ", title: "Mean draft FV (consensus) of the program's draftees" },
     { key: "reachedMlb", label: "Reached MLB", align: "right", get: r => r.reachedMlb, fmt: r => String(r.reachedMlb), title: "How many have accrued MLB time" },
     { key: "totalWar", label: "Total WAR", align: "right", get: r => r.totalWar, fmt: r => (r.totalWar > 0 ? "+" : "") + r.totalWar.toFixed(1), title: "Sum of career MLB WAR over the program's draftees" },
-    { key: "top1", label: "Top prospect", align: "left", get: r => r.topProspect ? r.topProspect.fv : -Infinity, fmt: r => r.topProspect ? escapeHtml(r.topProspect.name) + ' <span style="color:var(--text-tertiary);">' + fvCeil(r.topProspect.fv) + '</span>' : " - " }
+    { key: "top1", label: "Top prospect", align: "left", get: r => r.topProspect ? r.topProspect.fv : -Infinity, fmt: r => r.topProspect ? escapeHtml(r.topProspect.name) + ' <span style="color:var(--text-tertiary);" data-grade-basis="consensus" title="' + escapeHtml(DRAFT_FV_TIP) + '">cons. FV ' + fvCeil(r.topProspect.fv) + '</span>' : " - ", title: "Highest draft FV (consensus) in the program" }
   ];
+  if (efvDisplaySwaps()) cols.splice(5, 0, { key: "meanEfv", label: "eFV now", align: "right", get: r => r.meanEfv,
+    fmt: r => r.meanEfv != null ? '<span data-grade-basis="efv" title="Mean eFV now over ' + r.nEfv + ' signed player' + (r.nEfv === 1 ? '' : 's') + '">' + r.meanEfv.toFixed(1) + '</span>' : " - ",
+    title: "Mean eFV now over the program's signed players with an eFV grade (for a player who reached MLB, the eFV locked at his debut)" });
   const sk = _collegeSort.key && cols.some(c => c.key === _collegeSort.key) ? _collegeSort.key : "draftees";
   const sd = _collegeSort.dir;
   const MIN = 2, CAP = 150;
@@ -29544,11 +29602,13 @@ async function renderCollegeDetail(name) {
     const pk = p.milb_key || p.player_name;
     const fv = p.consensus_fv != null ? +p.consensus_fv : null;
     const war = p.career_war != null ? +p.career_war : null;
+    const en = _draftEfvNow(p);
     const prev = byPlayer[pk];
-    if (!prev) byPlayer[pk] = { p, fv, war, year: p._year };
+    if (!prev) byPlayer[pk] = { p, fv, war, year: p._year, efvP: en ? p : null, efv: en ? en.raw : null };
     else {
       if (war != null) prev.war = prev.war == null ? war : Math.max(prev.war, war);
       if (fv != null && (prev.fv == null || fv > prev.fv)) { prev.fv = fv; prev.p = p; prev.year = p._year; }
+      if (prev.efv == null && en) { prev.efv = en.raw; prev.efvP = p; }
     }
   }
   const players = Object.values(byPlayer);
@@ -29573,10 +29633,13 @@ async function renderCollegeDetail(name) {
     + (current.length ? ' &middot; ' + current.length + ' in the ' + curYear + ' class' : '')
     + '</div></div></div>';
 
+  const _efvCol = efvDisplaySwaps();
+  const efvs = players.map(x => x.efv).filter(v => v != null);
   const tiles = '<div class="rs-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">'
     + _statTileHTML("Draftees", String(players.length))
-    + _statTileHTML("FV 55+", String(players.filter(x => x.fv != null && x.fv >= 55).length))
-    + _statTileHTML("Mean FV", fvs.length ? (fvs.reduce((s, x) => s + x, 0) / fvs.length).toFixed(1) : " - ")
+    + _statTileHTML("Cons. FV 55+", String(players.filter(x => x.fv != null && x.fv >= 55).length), { title: DRAFT_FV_TIP })
+    + _statTileHTML("Mean cons. FV", fvs.length ? (fvs.reduce((s, x) => s + x, 0) / fvs.length).toFixed(1) : " - ", { title: DRAFT_FV_TIP })
+    + (_efvCol ? _statTileHTML("Mean eFV now (signed)", efvs.length ? '<span data-grade-basis="efv">' + (efvs.reduce((s, x) => s + x, 0) / efvs.length).toFixed(1) + '</span>' : " - ", { title: "Mean eFV now over the " + efvs.length + " signed draftee" + (efvs.length === 1 ? "" : "s") + " with an eFV grade" }) : "")
     + _statTileHTML("Reached MLB", String(wars.length))
     + _statTileHTML("Total MLB WAR", (totalWar > 0 ? "+" : "") + totalWar.toFixed(1), { tone: totalWar > 0 ? "pos" : "" })
     + _statTileHTML("Current prospects", current.length ? String(current.length) : " - ")
@@ -29594,13 +29657,13 @@ async function renderCollegeDetail(name) {
       return '<tr>'
         + '<td><a href="#" onclick="event.preventDefault();goToDraftee(\'' + escapeHtml(p.player_key) + '\');" style="color:inherit;text-decoration:none;"><strong>' + escapeHtml(p.player_name) + '</strong></a></td>'
         + '<td style="text-align:center;">' + escapeHtml(p.position || " - ") + '</td>'
-        + '<td style="text-align:right;"><span style="color:' + _draftFvBucketColor(p.consensus_fv) + ';font-family:var(--font-mono);font-weight:700;">' + (fvInt != null ? fvInt : " - ") + '</span></td>'
+        + '<td style="text-align:right;" data-grade-basis="consensus"><span style="color:' + _draftFvBucketColor(p.consensus_fv) + ';font-family:var(--font-mono);font-weight:700;">' + (fvInt != null ? fvInt : " - ") + '</span></td>'
         + '<td style="font-size:11px;color:var(--text-secondary);">' + _collegeStatsLine(p.college_stats) + '</td>'
         + (anyCs ? '<td style="font-size:11px;">' + _csProjHTML(cs) + '</td>' : '')
         + '</tr>';
     }).join("");
     return '<div class="detail-title">' + title + '</div>'
-      + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:right;">FV</th>'
+      + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:right;" title="' + escapeHtml(DRAFT_FV_TIP) + '">Cons. FV</th>'
       + '<th>College stats</th>' + (anyCs ? '<th title="CollegeSavant projected Single-A line (small samples)">Proj A (CollegeSavant)</th>' : '') + '</tr></thead><tbody>' + rows + '</tbody></table>';
   };
   let currentBlock = current.length ? prospectTable(current, 'Current draft prospects (' + curYear + ')') : "";
@@ -29622,14 +29685,17 @@ async function renderCollegeDetail(name) {
         + '<td><a href="#" onclick="event.preventDefault();goToDraftee(\'' + escapeHtml(p.player_key) + '\');" style="color:inherit;text-decoration:none;"><strong>' + escapeHtml(p.player_name) + '</strong></a></td>'
         + '<td style="text-align:center;color:var(--text-secondary);font-family:var(--font-mono);">' + x.year + '</td>'
         + '<td style="text-align:center;">' + escapeHtml(p.position || " - ") + '</td>'
-        + '<td style="text-align:right;font-family:var(--font-mono);">' + (fvInt != null ? fvInt : " - ") + '</td>'
+        + '<td style="text-align:right;font-family:var(--font-mono);" data-grade-basis="consensus">' + (fvInt != null ? fvInt : " - ") + '</td>'
+        + (_efvCol ? '<td style="text-align:right;">' + _draftEfvNowHTML(x.efvP || p) + '</td>' : '')
         + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-secondary);">' + drafted + '</td>'
         + '<td style="text-align:right;font-family:var(--font-mono);' + (x.war > 0 ? 'color:var(--neon-green);font-weight:700;' : '') + '">' + war + '</td>'
         + '</tr>';
     }).join("");
     pastBlock = '<div class="detail-title">Draft history (' + past.length + ')</div>'
       + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Class</th><th style="text-align:center;">Pos</th>'
-      + '<th style="text-align:right;">FV</th><th style="text-align:right;">Drafted</th><th style="text-align:right;">WAR</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      + '<th style="text-align:right;" title="' + escapeHtml(DRAFT_FV_TIP) + '">Cons. FV</th>'
+      + (_efvCol ? '<th style="text-align:right;" title="' + escapeHtml(EFV_NOW_TIP) + '">eFV now</th>' : '')
+      + '<th style="text-align:right;">Drafted</th><th style="text-align:right;">WAR</th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
 
   const csNote = '<div style="font-size:11px;color:var(--text-tertiary);margin-top:10px;">'
@@ -29756,6 +29822,20 @@ function _countryAggregate(classes, opts) {
   return { rows, grandMean, totN, totPop, nationalRate: totPop ? totN / (totPop / 1e6) : null, k: _HS_SHRINK_K };
 }
 
+// The country "drift" lens: mean eFV now minus the mean consensus FV at signing.
+const _COUNTRY_DRIFT_TIP = "Mean eFV now minus the consensus FV at signing. These are two different scales, so this is not a measure of how the signing grades held up.";
+// The country page's signee FV cell. EFV_DISPLAY_SWAPS on: _ifaFvProgHTML, the IFA board's
+// own cell (the consensus grade at signing muted and named, then eFV now rounded to
+// nearest, no cross-scale delta). Off: the cell as it was, which rounds the eFV up.
+function _countrySigneeFvCell(s) {
+  if (efvDisplaySwaps()) return _ifaFvProgHTML(s);
+  return _ifaIsFloor(s)
+    ? (s.fv_signing != null ? fvCeil(s.fv_signing) + " &middot; " : "") + '<span title="' + escapeHtml(_IFA_FLOOR_TIP) + '">eFV floor</span>'
+    : (s.fv_signing != null || s.fv != null)
+    ? (s.fv_signing != null ? fvCeil(s.fv_signing) : "?") + (s.fv != null && s.fv !== s.fv_signing ? " &rarr; " + fvCeil(s.fv) : (s.fv != null && s.fv_signing == null ? fvCeil(s.fv) : ""))
+    : " - ";
+}
+
 // The Countries board (an IFA sub-view). Each row opens the country page.
 function _renderIFACountries(host, classes) {
   const agg = _countryAggregate(classes);
@@ -29770,10 +29850,12 @@ function _renderIFACountries(host, classes) {
     { key: "n", label: "Signings", align: "right", get: r => r.n, fmt: r => String(r.n), title: "Signings in view" },
     { key: "tracked", label: "Tracked", align: "right", get: r => r.tracked, fmt: r => String(r.tracked), title: "Signees we track as prospects (have a grade)" },
     { key: "sumBonus", label: "Total bonus", align: "right", get: r => r.sumBonus, fmt: r => r.sumBonus ? _fmtUSD(r.sumBonus) : " - ", title: "Total reported signing bonuses" },
-    { key: "meanShrunk", label: "Shrunk FV", align: "right", get: r => r.meanShrunk, fmt: r => r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ", title: "Mean FV of tracked signees, shrunk toward the global mean by sample size (K=" + agg.k + ")" }
+    { key: "meanShrunk", label: "Shrunk eFV", align: "right", get: r => r.meanShrunk, fmt: r => r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ", title: "Mean eFV of tracked signees (eFV floors left out), shrunk toward the global mean by sample size (K=" + agg.k + ")" }
   ];
   if (demoOk) cols.push({ key: "rate", label: "Per M pop", align: "right", get: r => r.rate, fmt: r => r.rate != null ? r.rate.toFixed(1) : " - ", title: "Signings per million residents" });
-  cols.push({ key: "fvDrift", label: "FV drift", align: "right", get: r => r.fvDrift, fmt: r => r.fvDrift != null ? (r.fvDrift > 0 ? "+" : "") + r.fvDrift.toFixed(1) : " - ", title: "Mean current FV minus FV at first grade (how the market's grades held up)" });
+  // eFV now minus the consensus FV at signing subtracts two different scales, so it says
+  // nothing about how the grades held up. EFV_DISPLAY_SWAPS drops it; until then it is named.
+  if (!efvDisplaySwaps()) cols.push({ key: "fvDrift", label: "eFV vs cons.", align: "right", get: r => r.fvDrift, fmt: r => r.fvDrift != null ? (r.fvDrift > 0 ? "+" : "") + r.fvDrift.toFixed(1) : " - ", title: _COUNTRY_DRIFT_TIP });
   cols.push({ key: "top1", label: "Top signing", align: "left", get: r => r.topSigning ? r.topSigning.bonus : -Infinity, fmt: r => r.topSigning ? escapeHtml(r.topSigning.name) + ' <span style="color:var(--text-tertiary);">' + (r.topSigning.bonus ? _fmtUSD(r.topSigning.bonus) : "") + '</span>' : " - " });
 
   const sk = _countrySort.key && cols.some(c => c.key === _countrySort.key) ? _countrySort.key : "n";
@@ -29939,14 +30021,15 @@ async function renderCountryDetail(name) {
     + rankChip("n", "Volume", true) + rankChip("meanShrunk", "Quality", true) + rankChip("rate", "Per-capita", true) + rankChip("sumBonus", "Spend", true)
     + '</div></div></div>';
 
+  const _dropDrift = efvDisplaySwaps();
   const tiles = '<div class="rs-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">'
     + _statTileHTML("Signings", String(r.n))
     + _statTileHTML("Tracked prospects", String(r.tracked))
-    + _statTileHTML("Top tier (FV 50+)", String(r.top))
-    + _statTileHTML("Mean FV (raw)", r.meanRaw != null ? r.meanRaw.toFixed(1) : " - ")
-    + _statTileHTML("Mean FV (shrunk)", r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ", { title: "Pulled toward the global mean " + agg.grandMean.toFixed(1) + " by sample size (K=" + agg.k + ")" })
+    + _statTileHTML("Top tier (eFV 50+)", String(r.top), { title: "Tracked signees with an eFV of 50 or better" })
+    + _statTileHTML("Mean eFV (raw)", r.meanRaw != null ? r.meanRaw.toFixed(1) : " - ", { title: "Mean eFV of tracked signees (eFV floors left out)" })
+    + _statTileHTML("Mean eFV (shrunk)", r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ", { title: "Mean eFV pulled toward the global mean " + agg.grandMean.toFixed(1) + " by sample size (K=" + agg.k + ")" })
     + _statTileHTML("Per million pop", r.rate != null ? r.rate.toFixed(1) : " - ", { title: "Signings per million residents" })
-    + _statTileHTML("FV drift", r.fvDrift != null ? (r.fvDrift > 0 ? "+" : "") + r.fvDrift.toFixed(1) : " - ", { tone: r.fvDrift > 0 ? "pos" : "", title: "Mean current FV minus FV at first grade" })
+    + (_dropDrift ? "" : _statTileHTML("eFV vs cons. at signing", r.fvDrift != null ? (r.fvDrift > 0 ? "+" : "") + r.fvDrift.toFixed(1) : " - ", { title: _COUNTRY_DRIFT_TIP }))
     + _statTileHTML("Total bonus", r.sumBonus ? _fmtUSD(r.sumBonus) : " - ")
     + _statTileHTML("Mean bonus", r.meanBonus != null ? _fmtUSD(r.meanBonus) : " - ")
     + '</div>';
@@ -29963,9 +30046,9 @@ async function renderCountryDetail(name) {
   const globalDrift = (() => { let s = 0, n = 0; agg.rows.forEach(x => { if (x.fvDrift != null) { s += x.fvDrift; n++; } }); return n ? s / n : null; })();
   const comparison = '<div class="detail-title">Versus global</div>'
     + '<table class="draft-table"><thead><tr><th>Lens</th><th style="text-align:right;">This</th><th style="text-align:right;">Global</th><th style="text-align:right;">Diff</th></tr></thead><tbody>'
-    + cmpRow("Mean FV", r.meanRaw, agg.grandMean, v => v.toFixed(1))
+    + cmpRow("Mean eFV", r.meanRaw, agg.grandMean, v => v.toFixed(1))
     + cmpRow("Per million pop", r.rate, agg.nationalRate, v => v.toFixed(1))
-    + cmpRow("FV drift", r.fvDrift, globalDrift, v => v.toFixed(1))
+    + (_dropDrift ? "" : cmpRow("eFV vs cons. at signing", r.fvDrift, globalDrift, v => v.toFixed(1)))
     + '</tbody></table>';
 
   // Signees (featured: tracked + top bonus), capped.
@@ -29973,11 +30056,7 @@ async function renderCountryDetail(name) {
   const featured = signings.slice().sort((a, b) => (b.is_tracked ? 1 : 0) - (a.is_tracked ? 1 : 0) || (b.bonus_usd || 0) - (a.bonus_usd || 0));
   const shown = featured.slice(0, CAP);
   const sigRows = shown.map(s => {
-    const fvProg = _ifaIsFloor(s)
-      ? (s.fv_signing != null ? fvCeil(s.fv_signing) + " &middot; " : "") + '<span title="' + escapeHtml(_IFA_FLOOR_TIP) + '">eFV floor</span>'
-      : (s.fv_signing != null || s.fv != null)
-      ? (s.fv_signing != null ? fvCeil(s.fv_signing) : "?") + (s.fv != null && s.fv !== s.fv_signing ? " &rarr; " + fvCeil(s.fv) : (s.fv != null && s.fv_signing == null ? fvCeil(s.fv) : ""))
-      : " - ";
+    const fvProg = _countrySigneeFvCell(s);
     const nm = (s.is_tracked && s.player_key)
       ? '<a href="#" onclick="event.preventDefault();goToPlayer(\'' + escapeHtml(s.player_key) + '\');" style="color:inherit;text-decoration:none;"><strong>' + escapeHtml(s.player_name) + '</strong></a>'
       : '<strong>' + escapeHtml(s.player_name) + '</strong>';
@@ -29993,7 +30072,7 @@ async function renderCountryDetail(name) {
   }).join("");
   const sigTable = '<div class="detail-title">Signees (' + signings.length + (signings.length > CAP ? ", top " + CAP + " shown" : "") + ')</div>'
     + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Class</th><th style="text-align:center;">Pos</th>'
-    + '<th style="text-align:center;" title="Age at signing">Age</th><th style="text-align:center;" title="FV at first grade then current">FV</th>'
+    + '<th style="text-align:center;" title="Age at signing">Age</th><th style="text-align:center;" title="Consensus FV at signing, then eFV now">Cons. at signing &rarr; eFV</th>'
     + '<th>Signing team</th><th style="text-align:right;">Bonus</th></tr></thead><tbody>' + sigRows + '</tbody></table>';
 
   // Side panel: teams buying here + position split.
@@ -30004,7 +30083,7 @@ async function renderCountryDetail(name) {
     + '<div class="detail-title">Position split</div>'
     + '<ul class="draft-list">' + (posArr.length ? posArr.map(p => '<li><strong>' + p.n + '</strong> &middot; ' + escapeHtml(p.p) + '</li>').join("") : '<li style="color:var(--text-tertiary);">None</li>') + '</ul>';
 
-  root.innerHTML = '<div class="player-detail-grid"><div>'
+  root.innerHTML = '<div class="player-detail-grid"><div style="min-width:0;">'
     + header + '<div class="detail-title flush">Lenses</div>' + tiles + comparison + sigTable
     + '</div><div class="player-detail-side">' + side + '</div></div>';
 }
@@ -30065,7 +30144,7 @@ function _renderOverseasLeagues(host, leagues) {
     + '<td style="text-align:right;font-family:var(--font-mono);' + (r.totalWar > 0 ? 'color:var(--neon-green);font-weight:700;' : '') + '">' + (r.totalWar > 0 ? "+" : "") + r.totalWar.toFixed(1) + '</td>'
     + '<td style="text-align:right;font-family:var(--font-mono);">' + (r.avgWpy != null ? (r.avgWpy > 0 ? "+" : "") + r.avgWpy.toFixed(2) : " - ") + '</td>'
     + '<td>' + (r.topAlum ? escapeHtml(r.topAlum.name) + ' <span style="color:var(--text-tertiary);">' + (r.topAlum.war > 0 ? "+" : "") + r.topAlum.war.toFixed(1) + ' WAR</span>' : " - ") + '</td>'
-    + '<td>' + (r.bestPro ? escapeHtml(r.bestPro.name) + ' <span style="color:var(--text-tertiary);">' + fvCeil(r.bestPro.fv) + '</span>' : " - ") + '</td>'
+    + '<td>' + (r.bestPro ? escapeHtml(r.bestPro.name) + ' <span style="color:var(--text-tertiary);" data-grade-basis="consensus" title="' + escapeHtml(OVERSEAS_FV_TIP) + '">cons. FV ' + fvCeil(r.bestPro.fv) + '</span>' : " - ") + '</td>'
     + '</tr>').join("");
   host.innerHTML = _draftCaption("International leagues",
     "the foreign professional leagues that feed MLB via posting or international free agency, ranked by the realized MLB value of their alumni. "
@@ -30075,7 +30154,7 @@ function _renderOverseasLeagues(host, leagues) {
     + '<th style="text-align:right;" title="Alumni who reached MLB">MLB alumni</th>'
     + '<th style="text-align:right;" title="Sum of alumni career MLB WAR">Total WAR</th>'
     + '<th style="text-align:right;" title="Mean WAR per year over alumni">WAR / yr</th>'
-    + '<th>Top alum</th><th>Best prospect</th></tr></thead><tbody>' + body + '</tbody></table>';
+    + '<th>Top alum</th><th title="Highest consensus FV on file">Best prospect</th></tr></thead><tbody>' + body + '</tbody></table>';
 }
 
 // Per-league detail page: how it translates to MLB, current prospects,
@@ -30139,13 +30218,13 @@ async function renderLeagueDetail(name) {
       return '<tr>'
         + '<td>' + nm + '</td>'
         + '<td style="text-align:center;">' + escapeHtml(p.position || " - ") + '</td>'
-        + '<td style="text-align:right;"><span style="color:' + _draftFvBucketColor(p.consensus_fv) + ';font-family:var(--font-mono);font-weight:700;">' + (fvInt != null ? fvInt : " - ") + '</span></td>'
+        + '<td style="text-align:right;" data-grade-basis="consensus"><span style="color:' + _draftFvBucketColor(p.consensus_fv) + ';font-family:var(--font-mono);font-weight:700;">' + (fvInt != null ? fvInt : " - ") + '</span></td>'
         + '<td>' + escapeHtml(p.current_team || " - ") + '</td>'
         + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-secondary);">' + escapeHtml(posting) + '</td>'
         + '</tr>';
     }).join("");
     prosBlock = '<div class="detail-title">Current prospects (' + pros.length + ')</div>'
-      + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:right;">FV</th><th>Team</th><th style="text-align:right;">Status</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:right;" title="' + escapeHtml(OVERSEAS_FV_TIP) + '">Cons. FV</th><th>Team</th><th style="text-align:right;">Status</th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
 
   // MLB alumni track record.
@@ -30248,7 +30327,8 @@ async function renderDraftDetail(key) {
       </div>
       <div style="text-align:right;">
         <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Consensus FV</div>
-        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvLbl != null ? fvLbl : " - "}</span>
+        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;" data-grade-basis="consensus" title="${escapeHtml(DRAFT_FV_TIP)}">${fvLbl != null ? fvLbl : " - "}</span>
+        ${(efvDisplaySwaps() && _draftEfvNow(p)) ? `<div style="margin-top:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">${_draftEfvNow(p).debuted ? "eFV at debut" : "eFV now"} ${_draftEfvNowHTML(p)}</div>` : ""}
         ${p.draft_stock_plus != null ? `<div style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:${stockColor};font-weight:700;" title="Draft Stock+ - z-normalized within the ${cls.year} class">DS+ ${p.draft_stock_plus}</div>` : ""}
         ${classRank ? `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);" title="Rank within the ${cls.year} class by consensus FV">#${classRank} of ${classTotal}</div>` : ""}
       </div>
@@ -30307,7 +30387,7 @@ async function renderDraftDetail(key) {
       const fontWeight = isMe ? 700 : 400;
       return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0;">
         <div style="width:100%;height:48px;display:flex;align-items:flex-end;justify-content:center;">
-          <div style="width:18px;height:${Math.max(2, heightPct * 0.48)}px;background:${barColor};border-radius:1px;" title="${c} prospect${c === 1 ? '' : 's'} at FV ${t}"></div>
+          <div style="width:18px;height:${Math.max(2, heightPct * 0.48)}px;background:${barColor};border-radius:1px;" title="${c} prospect${c === 1 ? '' : 's'} at consensus FV ${t}"></div>
         </div>
         <div style="font-family:var(--font-mono);font-size:9px;color:${labelColor};font-weight:${fontWeight};">${t}</div>
         <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${c}</div>
@@ -30319,7 +30399,7 @@ async function renderDraftDetail(key) {
         <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--text-primary);">#${classRank} of ${classTotal}</span>
         <span>·</span>
         <span style="color:${fvColor};font-weight:600;">Top ${classPct}%</span>
-        <span style="margin-left:auto;color:var(--text-tertiary);font-size:10px;">${cls.year} class FV distribution</span>
+        <span style="margin-left:auto;color:var(--text-tertiary);font-size:10px;">${cls.year} class consensus FV distribution</span>
       </div>
       <div style="display:flex;align-items:flex-end;gap:3px;">${bars}</div>
     </div>`;
@@ -30689,7 +30769,7 @@ async function renderOverseasDetail(key) {
       </div>
       <div style="text-align:right;">
         <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Consensus FV</div>
-        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvLbl != null ? fvLbl : " - "}</span>
+        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;" data-grade-basis="consensus" title="${escapeHtml(OVERSEAS_FV_TIP)}">${fvLbl != null ? fvLbl : " - "}</span>
       </div>
     </div>`;
 
