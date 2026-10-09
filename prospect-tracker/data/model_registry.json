@@ -6267,7 +6267,41 @@
    "verdict": "unvalidated",
    "registration_status": "void (owner 2026-09-30, frame substituted)",
    "notes": "Owner answer VAL3-Q3 (b), 2026-09-30 (DECISIONS_FOR_OWNER.md): the one read of docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md (registration fc90703d, build 79a637e3, read 27ee25f9, FAIL on G2 coverage 0.7401 against 0.7544) is VOID because its frame was substituted: the task named surplus_backtest_real's resolved listing cohorts and the read ran on the eFV resolved matrix forward-chained over decision years 2016-2019. The void read adjudicates nothing; its block stays in data/surplus_backtest_real.json as a record with void true, and that frame is spent for this candidate. efv_score.SURPLUS_FROM_SERVED_ODDS_DEFAULT stays False; nothing served moves. VAL_3 created no registry row, so this row is new (2026-10-08); its verdict is unvalidated because the verdict enum has no void value and a void read leaves no measurement, and eval_artifact stays null until a valid read. A new registration on another frame follows in its own commit (docs/efv-2026-09-25/SURPLUS_ODDS_GATE_2.md)."
-  }
+  },
+ {
+  "model_id": "team_win_distribution",
+  "summary": "Registered, not read: each club's win-total distribution with talent and schedule uncertainty, scored once on the 2026 season against the schedule-only incumbent.",
+  "surface": "none yet (registered, not served); on a pass, the win range and odds on /betting/ Futures, the Franchise ODDS section and Team Outlook",
+  "predicts": "each club season win-total distribution with talent and schedule uncertainty",
+  "champion": "none",
+  "baseline": "the schedule-only distribution of playoff_odds_sim",
+  "metric": "TM-A, docs/TEAM_PROJECTIONS_GATE.md section 3",
+  "eval_artifact": null,
+  "verdict": "unvalidated",
+  "registration_status": "registered, not read",
+  "depends_on": [
+   "playoff_odds_sim",
+   "team_win_projections"
+  ],
+  "notes": "Registered 2026-10-08 by TM_1_TEAM_GATE_REGISTRATION (docs/TEAM_PROJECTIONS_GATE.md section 1.1, candidate T1), row written 2026-10-09 by TM_2_TEAM_SCORER with the scorer (proj_backtest.team_frame, score_win_distribution, _club_bootstrap). Statistic TM-A: mean CRPS of the win-total distribution against actual 2026 wins, candidate minus the schedule-only incumbent, paired over 30 clubs, bootstrap B 2000, seed 20261208, pass ub95 < 0; 80% coverage with a Wilson interval reported beside. The GATE look (TM_4) runs once; no 2026 team quantity is related to a 2026 outcome before it. Flag TEAM_TALENT_RANGE_LIVE (class 3) needs the pass and owner answer TM-Q1."
+ },
+ {
+  "model_id": "team_run_projection",
+  "summary": "Registered, not read: club runs scored and allowed for the first projected season, scored once on 2026 against carry-forward and league average.",
+  "surface": "none yet (registered, not served); on a pass, RS, RA, run differential and Pythag wins on Team Outlook",
+  "predicts": "club runs scored and allowed for the first projected season",
+  "champion": "none",
+  "baseline": "prior-season carry-forward and league average",
+  "metric": "TM-C",
+  "eval_artifact": null,
+  "verdict": "unvalidated",
+  "registration_status": "registered, not read",
+  "depends_on": [
+   "proj_components",
+   "team_win_projections"
+  ],
+  "notes": "Registered 2026-10-08 by TM_1_TEAM_GATE_REGISTRATION (docs/TEAM_PROJECTIONS_GATE.md section 1.3, candidate T3), row written 2026-10-09 by TM_2_TEAM_SCORER with the scorer (proj_backtest.score_team_runs). Statistic TM-C: RS MAE and RA MAE against actual 2026 RS and RA, each side paired against both comparators (the club's 2025 actuals carried forward; the 2025 league mean per club), bootstrap B 2000, seed 20261208, pass per side ub95 < 0 against both; Pythagenpat wins MAE reported beside served wins, no verdict. The GATE look (TM_4) runs once. Flag TEAM_RUNS_LIVE (class 2); a failed side keeps RS or RA off the page."
+ }
  ],
  "problems": []
 }
