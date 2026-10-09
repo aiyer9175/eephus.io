@@ -254,7 +254,8 @@ def _names(tree):
             yield node.name
 
 
-@pytest.mark.parametrize("mod", ["efv_vintage_frame.py", "efv_labels.py"])
+@pytest.mark.parametrize("mod", ["efv_vintage_frame.py", "efv_labels.py"] + sorted(
+    p.name for p in ROOT.glob("efv_surrogate*.py")))
 def test_no_fv_cell_grouping(mod):
     tree = ast.parse((ROOT / mod).read_text(encoding="utf-8"))
     for name in _names(tree):
