@@ -798,6 +798,12 @@ MODEL_GLOSSARY = {
     "versa_positions": ["versa"],      # the versa entry states the same 10-game / 5-start rule
     "multiposition_bonus": "internal",
     "fa_aging_curves": "internal",     # engine internals; the FA methodology copy covers the projection, not the curve fits
+    # 2026-10-09 (AG_5_AGING_SERVICE_BUILD_DARK): aging v3 registered, not read, built dark;
+    # nothing served reads it until docs/AGING_V3_GATE.md records a pass, so no
+    # glossary entry exists yet; the flip that serves a consumer writes one.
+    "aging_v3": "internal",
+    "aging_v3_prospect_shape": "internal",
+    "aging_v3_health": "internal",
     "milb_translation": ["milb_translation"],
     "grpo_prospect": ["breakout_indicator"],  # the badge the score serves is documented there
     # stuff_grade_plus documents FVStuff+ only; no Cmd+ entry exists, so the
