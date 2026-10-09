@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-09T04:18:24Z",
+ "generated_at": "2026-10-09T04:20:41Z",
  "rule": "append-only; an event is added when a model's registry state, its card legs, an eFV progress ledger row or a dated note changes; every number is copied from the artifact key named in the event; the edge is printed by edge() v1; events sit in append order, each run's batch ordered by date",
  "edge_rule_version": 1,
  "result_form": "Result ({stat}): {body}",
@@ -8,7 +8,7 @@
  "sources": [
   {
    "path": "data/model_registry.json",
-   "sha256": "6cb2ed82c5825a19e99fb7e79e28b32fc681f4314d9b0f636ffb4728ce9ca5e6"
+   "sha256": "5d95e13b291606d3d20c9b50a98ca2b9cb03da62d0d80e4025df81919d07a6d4"
   },
   {
    "path": "data/efv_progress.json",
@@ -856,7 +856,7 @@
  },
  "note_problems": [],
  "counts": {
-  "events": 520,
+  "events": 521,
   "default_view": 111,
   "by_kind": {
    "artifact_change": 26,
@@ -866,7 +866,7 @@
    "frame_change": 1,
    "model_change": 14,
    "note": 18,
-   "registered": 349,
+   "registered": 350,
    "removed": 2,
    "rescored": 46,
    "scoring_correction": 2,
@@ -876,19 +876,19 @@
    "development": 9,
    "headline": 95,
    "note": 18,
-   "registration": 377,
+   "registration": 378,
    "typed": 21
   },
   "verdict_changes": 33,
-  "registry_models": 347,
-  "served_models": 250,
+  "registry_models": 348,
+  "served_models": 251,
   "scored_models": 22,
   "scored_legs": 42,
   "model_states": {
    "lead": 13,
    "no_benchmark": 73,
    "no_contest": 1,
-   "no_eval": 25,
+   "no_eval": 26,
    "tie": 4,
    "trails": 1,
    "unresolved": 3,
@@ -897,7 +897,7 @@
   "registry_verdicts": {
    "deprecated": 88,
    "provisional": 158,
-   "unvalidated": 47,
+   "unvalidated": 48,
    "validated": 54
   },
   "by_family": {
@@ -915,7 +915,7 @@
    "MLB Stats": 26,
    "Management": 9,
    "Other": 11,
-   "PROSPX and eFV": 109,
+   "PROSPX and eFV": 110,
    "Sources and Consensus": 11,
    "Trade Machine": 5,
    "eWAR": 6
@@ -11289,6 +11289,32 @@
    "model_id": "starter_workload_xouts",
    "label": "Starter Workload Xouts",
    "family": "MLB Stats",
+   "served": true,
+   "verdict": "unvalidated",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_eval",
+   "edge": {
+    "state": "no_eval",
+    "text": "no eval artifact on record"
+   },
+   "today": [],
+   "registered": "2026-10-09",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "efv_surplus_from_served_odds",
+   "label": "eFV Surplus From Served Odds",
+   "family": "PROSPX and eFV",
    "served": true,
    "verdict": "unvalidated",
    "provisional_kind": null,
@@ -39674,6 +39700,41 @@
    "event_id": "2026-10-09|starter_workload_xouts|registered|c3e4bfbf",
    "family": "MLB Stats",
    "label": "Starter Workload Xouts",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-09",
+   "sort_date": "2026-10-09",
+   "model_id": "efv_surplus_from_served_odds",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as unvalidated",
+   "verdict": {
+    "before": null,
+    "after": "unvalidated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "be1e18b0"
+   },
+   "state": {
+    "verdict": "unvalidated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "eaabc54b268db65c25d97365d14f4f830657744d091172e5ebc58d60eb3aaa19",
+   "event_id": "2026-10-09|efv_surplus_from_served_odds|registered|eaabc54b",
+   "family": "PROSPX and eFV",
+   "label": "eFV Surplus From Served Odds",
    "served": true,
    "default_view": false
   }
