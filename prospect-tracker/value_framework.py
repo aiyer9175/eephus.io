@@ -1422,7 +1422,8 @@ def _prime_war_scale_for(fv: float | None, role: str) -> float:
 
 
 def prospect_prime_path(fv: float, is_pitcher: bool, debut_age: float | None = None,
-                        reliever: bool = False) -> dict | None:
+                        reliever: bool = False, aging: str = "v2",
+                        bucket: str | None = None) -> dict | None:
     """Prime/talent DISPLAY path: P(bucket|FV)-weighted per-season WAR with the
     bucket levels reconciled to the PRIME anchor. Returns {mean, p10, p90, peak}
     where p10/p90 are the 10th/90th-percentile bucket paths (realistic floor /
@@ -1433,7 +1434,10 @@ def prospect_prime_path(fv: float, is_pitcher: bool, debut_age: float | None = N
     if probs is None:
         return None
     scale = _prime_war_scale_for(float(fv), role)
-    paths = [_bucket_season_wars(role, i, reliever, debut_age, scale)
+    # `aging` / `bucket`: the call-scoped aging v3 selector and the prospect's
+    # position bucket (docs/AGING_V3_GATE.md section 2); "v2" is the tent below.
+    paths = [_bucket_season_wars(role, i, reliever, debut_age, scale,
+                                 aging=aging, pos_bucket=bucket)
              for i in range(_N_BUCKETS)]
     n = len(paths[0])
     mean = [sum(probs[b] * paths[b][t] for b in range(_N_BUCKETS)) for t in range(n)]
@@ -1447,23 +1451,36 @@ def prospect_prime_path(fv: float, is_pitcher: bool, debut_age: float | None = N
         return _N_BUCKETS - 1
 
     return {"mean": mean, "p10": paths[_q_bucket(0.10)], "p90": paths[_q_bucket(0.90)],
-            "peak": prospect_peak_war(float(fv), is_pitcher, debut_age)}
+            "peak": prospect_peak_war(float(fv), is_pitcher, debut_age,
+                                      aging=aging, bucket=bucket)}
 
 
-def prospect_peak_war(fv: float, is_pitcher: bool, debut_age: float | None = None) -> float | None:
+def prospect_peak_war(fv: float, is_pitcher: bool, debut_age: float | None = None,
+                      aging: str = "v2", bucket: str | None = None) -> float | None:
     """Headline 'prime' WAR -- the prospect's projected best-season WAR at his
     peak age (prime-anchored). For young debutants whose 6yr control window ends
     before the peak, this surfaces the prime the window truncates."""
     anchor = fv_to_prime_war(float(fv))
     if anchor is None:
         return None
+    if aging not in ("v2", "v3"):
+        raise ValueError(f"aging must be 'v2' or 'v3', got {aging!r}")
     cfg = _config()
+    aging_engine = aging
     aging = cfg.get("aging", {})
     if debut_age is None or not aging.get("enabled", True):
         return round(anchor, 1)
     peak = float(aging["pitcher_peak_age" if is_pitcher else "hitter_peak_age"])
     n_years = int(cfg["service_time"]["control_years"])
-    raw = [_aging_multiplier(float(debut_age) + k, peak, aging) for k in range(n_years)]
+    if aging_engine == "v3":
+        # aging v3 (call-scoped): level() at the debut-age window the same way
+        # the tent is used below; its peak is 1.0 by construction.
+        import aging_v3
+        _m = aging_v3.served_model()
+        raw = [_m.level("pit" if is_pitcher else "hit", float(debut_age) + k, bucket)
+               for k in range(n_years)]
+    else:
+        raw = [_aging_multiplier(float(debut_age) + k, peak, aging) for k in range(n_years)]
     mean_raw = (sum(raw) / n_years) or 1.0
     # anchor is the window-average level; the peak-age multiplier is 1.0, so the
     # peak-age projection renormalizes by 1/mean_raw.
@@ -1489,15 +1506,29 @@ def _aging_multiplier(age: float, peak_age: float, aging_cfg: dict) -> float:
 # =============================================================================
 # Per-bucket dollar surplus (FV-INDEPENDENT in WAR; timing reshapes/discounts $)
 # =============================================================================
-def _trajectory_shape(role: str, debut_age: float | None, bname: str | None = None) -> list[float]:
+def _trajectory_shape(role: str, debut_age: float | None, bname: str | None = None,
+                      aging: str = "v2", bucket: str | None = None,
+                      reliever: bool = False) -> list[float]:
     """Per-season SHAPE (mean 1.0) across the control window. When aging is on
     and the debut age is known, the shape comes from the aging curve evaluated
     at the player's age each control season, renormalized to mean 1.0 (so the
     six-year AVERAGE still equals the level -- aging only redistributes WAR
-    across the window). Otherwise the fixed bucket_trajectory_shape is used."""
+    across the window). Otherwise the fixed bucket_trajectory_shape is used.
+
+    ``aging`` is the call-scoped aging engine selector (docs/AGING_V3_GATE.md
+    section 2): "v2" (default) is the tent; "v3" is aging_v3's shape() for the
+    prospect's position ``bucket`` (never an archetype), the same mean-1.0
+    renormalization, so the FV-anchored window mean is unchanged."""
+    if aging not in ("v2", "v3"):
+        raise ValueError(f"aging must be 'v2' or 'v3', got {aging!r}")
     cfg = _config()
     n_years = int(cfg["service_time"]["control_years"])
+    aging_engine = aging
     aging = cfg.get("aging", {})
+    if aging_engine == "v3" and aging.get("enabled", True) and debut_age is not None:
+        import aging_v3
+        return aging_v3.served_model().shape("pit" if role == "pitcher" else "hit",
+                                             float(debut_age), n_years, bucket, reliever)
     if aging.get("enabled", True) and debut_age is not None:
         peak = float(aging["pitcher_peak_age" if role == "pitcher" else "hitter_peak_age"])
         raw = [_aging_multiplier(float(debut_age) + k, peak, aging) for k in range(n_years)]
@@ -1534,12 +1565,15 @@ def _reliever_level(midpoint_war: float) -> float:
 
 
 def _bucket_season_wars(role: str, bucket_idx: int, reliever: bool,
-                        debut_age: float | None = None, war_scale: float = 1.0) -> list[float]:
+                        debut_age: float | None = None, war_scale: float = 1.0,
+                        aging: str = "v2", pos_bucket: str | None = None) -> list[float]:
     """Per-season WAR for a bucket across the control window. The bucket level =
     base SHAPE midpoint * `war_scale` (the FV-DEPENDENT scale, default 1.0); SP
     uses that, RELIEVER uses the bullpen-normalized, ceiling-capped value. Times
-    the aging/fixed shape."""
-    shape = _trajectory_shape(role, debut_age, _BUCKETS[bucket_idx])
+    the aging/fixed shape (``aging`` / ``pos_bucket``: the call-scoped aging v3
+    selector and position bucket, passed through to _trajectory_shape)."""
+    shape = _trajectory_shape(role, debut_age, _BUCKETS[bucket_idx],
+                              aging=aging, bucket=pos_bucket, reliever=reliever)
     mid = _calibrated_midpoints(role)[bucket_idx] * float(war_scale)
     level = _reliever_level(mid) if reliever else mid
     return [level * float(s) for s in shape]

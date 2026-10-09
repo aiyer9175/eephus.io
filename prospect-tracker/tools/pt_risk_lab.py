@@ -202,7 +202,10 @@ def cmd_fetch() -> None:
 # stint reconstruction
 # ============================================================================
 
-def _load_events():
+def _load_events(keep_desc: bool = False):
+    # keep_desc=True appends the lowercased description as a third tuple field
+    # (aging_v3_sidecar reads the 60-day placements off it); the default path
+    # and build_stints are unchanged.
     mlb_ids = set(json.loads((TX_DIR / "mlb_teams.json").read_text(encoding="utf-8")))
     seen_ids, seen_sig = set(), set()
     events = defaultdict(list)          # pid -> [(date, kind)] kind in {P, A}
@@ -243,7 +246,7 @@ def _load_events():
             if not ds:
                 continue
             dt = date.fromisoformat(ds[:10])
-            events[pid].append((dt, kind))
+            events[pid].append((dt, kind, desc) if keep_desc else (dt, kind))
             counts["placed" if kind == "P" else "activated"] += 1
     return events, counts
 

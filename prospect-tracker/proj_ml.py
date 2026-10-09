@@ -218,8 +218,12 @@ def build_features(hist: list[dict], side: str, base: int, age: float | None,
     path (and prevents recursion — the stack feature is always the
     champion, never the ML model feeding itself)."""
     if champ is None:
+        # aging="v2" EXPLICITLY: the heads were trained on v2 champion features
+        # (train/serve parity; docs/AGING_V3_GATE.md section 2; AG_16 is the
+        # only door for v3 here).
         champ = fm.contract_war_path(hist, side, base, HORIZONS, age,
-                                     curves, war_map, league, use_ml=False)
+                                     curves, war_map, league, use_ml=False,
+                                     aging="v2")
     if champ is None or age is None:
         return None
     by_season = {h["season"]: h for h in hist}
@@ -364,7 +368,7 @@ def build_training_frame(corpus: dict, first_base: int, max_label_season: int,
         X, y, ls = [], {h: [] for h in range(1, HORIZONS + 1)}, {h: [] for h in range(1, HORIZONS + 1)}
         row_idx = {h: [] for h in range(1, HORIZONS + 1)}
         for base in range(first_base, max_label_season + 1):
-            curves, war_map = fp.fitted_models(corpus, base - 1)
+            curves, war_map = fp.fitted_models(corpus, base - 1, aging="v2")
             for mlbam, seasons in by_player[side].items():
                 hist = [seasons[t] for t in (base - 1, base - 2, base - 3) if t in seasons]
                 if not hist:

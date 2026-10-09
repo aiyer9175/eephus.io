@@ -605,11 +605,31 @@ def _corpus_sig(corpus: dict) -> str:
     return sig
 
 
+def _aging_select(result: tuple[dict, dict], corpus: dict, max_season: int,
+                  use_cache: bool, aging: str) -> tuple[dict, dict]:
+    """The CALL-SCOPED aging selector of fitted_models (docs/AGING_V3_GATE.md
+    section 2, the `use_def` precedent). "v2" returns the incumbent (curves,
+    war_map) untouched; "v3" returns the same war_map with the curves dict
+    carrying the fitted aging_v3 model under `_aging_v3` (its own versioned
+    cache; this cache's name and bytes never move)."""
+    if aging == "v2":
+        return result
+    if aging != "v3":
+        raise ValueError(f"aging must be 'v2' or 'v3', got {aging!r}")
+    import aging_v3
+    curves, war_map = result
+    return aging_v3.attach(curves, corpus, max_season, use_cache=use_cache), war_map
+
+
 def fitted_models(corpus: dict, max_season: int, use_cache: bool = True,
-                  *, use_def: bool | None = None) -> tuple[dict, dict]:
+                  *, use_def: bool | None = None,
+                  aging: str = "v2") -> tuple[dict, dict]:
     """(curves, war_map) fitted on seasons <= max_season, disk-cached per
     max_season — Gate 2 and the live market model reuse Gate 1's twelve
-    point-in-time fits instead of recomputing them (load-time ask)."""
+    point-in-time fits instead of recomputing them (load-time ask).
+
+    ``aging`` selects the aging engine for THIS call only ("v2" default; "v3"
+    attaches the aging_v3 service, see _aging_select); never a module global."""
     # Key on corpus['last'] too (mirrors proj_ml's frame-cache key): a corpus
     # refresh strictly advances 'last' (annual rollover + the in-progress season
     # going partial->full + bWAR revisions), so omitting it served the PREVIOUS
@@ -631,7 +651,7 @@ def fitted_models(corpus: dict, max_season: int, use_cache: bool = True,
              f"_{_corpus_sig(corpus)}{_suffix}.pkl")
     if use_cache and cache.exists():
         with open(cache, "rb") as fh:
-            return pickle.load(fh)
+            return _aging_select(pickle.load(fh), corpus, max_season, use_cache, aging)
     curves = fit_aging_curves(corpus, max_season=max_season, write=False)
     war_map = fit_war_map(corpus, max_season=max_season, use_def=_use_def)
     # P-FITCACHE: use_cache=False must not WRITE either. The cache key is
@@ -645,7 +665,7 @@ def fitted_models(corpus: dict, max_season: int, use_cache: bool = True,
         CACHE_DIR.mkdir(exist_ok=True)
         with open(cache, "wb") as fh:
             pickle.dump((curves, war_map), fh)
-    return curves, war_map
+    return _aging_select((curves, war_map), corpus, max_season, use_cache, aging)
 
 
 def fit_aging_curves(corpus: dict | None = None, max_season: int | None = None,
@@ -1687,7 +1707,17 @@ def project_player(history: list[dict], side: str, target_season: int,
         pt = ip * 4.3                                          # BF ≈ 4.3 / IP
         out["ip_proj"] = round(ip, 1)
     if age:
-        pt += curve_delta(curves, side, role, "pt", age)
+        _v3 = curves.get("_aging_v3") if isinstance(curves, dict) else None
+        if _v3 is not None:
+            # aging v3, selected call-scoped through fitted_models(..., aging="v3"):
+            # the year-1 PT step is the service's pt_next on the bucket curve with
+            # no archetype (docs/AGING_V3_GATE.md section 5, ARM R serve rule). With
+            # no arm active it is this additive step, exactly.
+            pt = _v3.pt_next(side, role, pt, age,
+                             bucket=_v3.bucket_of(hist[0].get("mlbam"), target_season - 1,
+                                                  side, role))
+        else:
+            pt += curve_delta(curves, side, role, "pt", age)
     # W1 PT-RISK (gated, default OFF): injury-history PT adjustment from the
     # frozen-coefficient sidecar. Hitters adjust in PA; pitchers in
     # IP-equivalents (the engine's BF proxy is 4.3 * IP), keeping ip_proj and

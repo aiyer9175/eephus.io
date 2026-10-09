@@ -1478,15 +1478,27 @@ def _remaining_control_years(player: dict) -> tuple[float, str]:
 
 
 def _aging_factor(age_now: float | None, yr_offset: int, is_pitcher: bool,
-                  position: str | None = None) -> float:
+                  position: str | None = None, aging: str = "v2") -> float:
     """Simple aging curve: slight growth before peak, decline after.
 
     Peak ages (empirical): pitchers ~25, hitters ~27.
     Catchers use a faster decline and lower floor — the physical toll of the
     position accelerates aging past the league-average curve.
+
+    ``aging`` is the call-scoped aging engine selector (docs/AGING_V3_GATE.md
+    section 2): "v2" (default) is the tent below, byte for byte; "v3" is
+    aging_v3's factor(), level(age + k) / level(age) on the position's bucket
+    (the A5 replacement, consumer flag `trade_fallback`).
     """
     if age_now is None:
         return 1.0
+    if aging == "v3":
+        import aging_v3
+        return aging_v3.served_model().factor(
+            age_now, yr_offset, "pit" if is_pitcher else "hit",
+            aging_v3.bucket_from_position(position, is_pitcher))
+    if aging != "v2":
+        raise ValueError(f"aging must be 'v2' or 'v3', got {aging!r}")
 
     aging_cfg = _cfg().get("aging_curve", {})
     is_catcher = (position is not None and _pos_primary(position) == "C")

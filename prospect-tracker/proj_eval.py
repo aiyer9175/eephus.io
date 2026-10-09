@@ -104,8 +104,12 @@ def default_predict_fn(hist, side, base, age, curves, war_map, league):
     """The incumbent champion: Marcel year-1 + regressed-rate aging decay
     with Gate-1 quantile bands. use_ml=False PINS the champion — this
     baseline must stay the champion even after an ML bundle ships."""
+    # aging="v2" EXPLICITLY (docs/AGING_V3_GATE.md section 2): the eval scores
+    # the incumbent engine; the aging v3 lab scores its arms through its own
+    # predict_fn.
     return fm.contract_war_path(hist, side, base, HORIZONS, age,
-                                curves, war_map, league, use_ml=False)
+                                curves, war_map, league, use_ml=False,
+                                aging="v2")
 
 
 def run(bases: list[int], persist: bool = True, predict_fn=None,
@@ -120,7 +124,7 @@ def run(bases: list[int], persist: bool = True, predict_fn=None,
              for h in range(1, HORIZONS + 1)}
     n_players = 0
     for B in bases:
-        curves, war_map = fp.fitted_models(corpus, B - 1)
+        curves, war_map = fp.fitted_models(corpus, B - 1, aging="v2")
         for side in ("hit", "pit"):
             for mlbam, seasons in by_player[side].items():
                 hist = [seasons[t] for t in (B - 1, B - 2, B - 3) if t in seasons]
@@ -223,7 +227,7 @@ def run_rowmatch(bases: list[int]) -> dict:
              for h in range(1, HORIZONS + 1)}
     n_matched = 0
     for B in bases:
-        curves, war_map = fp.fitted_models(corpus, B - 1)
+        curves, war_map = fp.fitted_models(corpus, B - 1, aging="v2")
         bundle = proj_ml.train_cached(corpus, B - 1, quantiles=proj_ml.QUANTILES)
         for side in ("hit", "pit"):
             for mlbam, seasons in by_player[side].items():
