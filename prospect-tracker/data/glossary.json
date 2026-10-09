@@ -5408,6 +5408,33 @@
    "caveat": null
   },
   {
+   "id": "trade_partner_screen",
+   "term": "Trade partner screen",
+   "category": "site-feature",
+   "section": "Value & Contracts",
+   "module": [
+    "trademachine"
+   ],
+   "aliases": [
+    "partner screen",
+    "partner_v1"
+   ],
+   "priority": 40,
+   "definition": "For one player on the Trade Machine builder, the 29 clubs other than his own ordered by a published rule with every factor printed: need at his slot, contention, the marginal tax his CBT charge carries, and farm surplus as the ability to pay in prospects. A screen, not a rumor board: it makes no claim about any trade.",
+   "methodology": "Rule partner_v1, registered before any screen output existed: each factor ranks the 29 clubs, ties at their average rank, and scores (29 - rank) / 28; an input not on file scores 0.5. Need is the starter's HEM+ at the position with team DEM+ for a fielder, Offense+ for a designated hitter, Rotation+ for a starter and Bullpen+ for a reliever, lower counting as more need. Contention is Team Outlook's 2027 wins on the served frame before the first regular-season game and playoff odds after. Tax is the marginal tax of the player's CBT charge at the club's payor tier on the Club Ledger's schedule, printed as tax payroll before and after, threshold, bracket and payor tier, never as room under a line. Ability to pay is farm surplus. The Score adds the four with equal weight, 0 to 4. The org trade profile is shown with weight 0. Read from a slim slice of the Franchise board and the CBT sidecar; the daily output is frozen and hashed for one registered read after the 2027 deadline.",
+   "example": "",
+   "formula": "Score = Need + Contention + Tax + Ability to pay, each (29 - rank) / 28",
+   "seeAlso": [
+    "trade_machine",
+    "cbt_payroll",
+    "payor_tier",
+    "surplus_value",
+    "farm_report_card"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric rule, original to eephus.io, over numbers the site already serves."
+  },
+  {
    "id": "milb_translation",
    "term": "Proj first-MLB K% / BB%",
    "category": "custom-index",

@@ -58,6 +58,12 @@
 # Its payloads (awards.json, awards_<S>.json, awards_candidates_<S>.json,
 # awards_eval.json) sit at data/ depth one, which both consumers already ship;
 # data/_labs/awards/ ships in neither.
+#
+# 2026-10-09: the Trade Machine partner screen (W08_2_PARTNER_SCREEN_FLIP)
+# serves data/trade_partner_slice.json (tracked, beside franchise_board.json)
+# and data/trade_partner_screen_chain.json (gitignored, re-rendered nightly
+# from .cache/trade_partner_screen/record/). Both sit at data/ depth one,
+# which both consumers already ship; no exclusion names them.
 index.html
 404.html
 robots.txt

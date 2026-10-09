@@ -19,8 +19,10 @@ partner_v1 and the frozen record. What is pinned here:
     same-day re-run writes nothing, an earlier day and a changed rule text are
     refused, the chain verifies and an edit is caught, and a stored entry
     replays from its own inputs;
-  * the flag: TRADE_PARTNER_SCREEN_LIVE is False, nothing lands under data/,
-    and the page shell carries no switch;
+  * the flag: TRADE_PARTNER_SCREEN_LIVE is True since the flip (W08_2,
+    2026-10-09): live, the slice and the public chain land under data/ and the
+    record under the cache's record/ directory; dark, nothing lands under data/;
+    the page shell carries the switch only while the flag is on;
   * the panel renders at 390, 768 and 1440 px in both themes with the flag
     forced on in the harness, with no sideways page scroll.
 """
@@ -376,6 +378,21 @@ def test_first_write_wins_and_no_earlier_day_is_written(fx, tmp_path):
     assert ch["rows"][1]["prev_row_hash"] == ch["rows"][0]["row_hash"]
 
 
+def test_a_same_day_rerun_re_renders_the_public_chain(fx, tmp_path):
+    """Gate 3.2: each run re-renders the public chain. A checkout that lost its
+    gitignored copy gets it back from the record on a same-day re-run, and the
+    re-run writes no day file."""
+    first = _run(fx, tmp_path)
+    where = T.paths(False, fx["dir"], tmp_path)
+    pub = Path(where["public_chain"])
+    want = (Path(where["record"]) / "chain.json").read_bytes()
+    pub.unlink()
+    day = Path(first["path"]).read_bytes()
+    again = _run(fx, tmp_path, now=NOW + dt.timedelta(hours=3))
+    assert again["status"] == "exists"
+    assert pub.read_bytes() == want and Path(first["path"]).read_bytes() == day
+
+
 def test_a_changed_rule_text_is_refused_and_an_edited_chain_is_caught(fx, tmp_path):
     first = _run(fx, tmp_path)
     rec = Path(first["path"]).parent
@@ -396,10 +413,25 @@ def test_a_changed_rule_text_is_refused_and_an_edited_chain_is_caught(fx, tmp_pa
 # --------------------------------------------------------------------------- #
 # the flag
 # --------------------------------------------------------------------------- #
-def test_the_flag_is_off_and_nothing_lands_under_data(fx, tmp_path):
-    assert T.TRADE_PARTNER_SCREEN_LIVE is False
-    before = sorted(p.name for p in fx["dir"].rglob("*"))
+def test_the_flag_is_on_and_live_files_land_where_the_gate_says(fx, tmp_path):
+    """W08_2_PARTNER_SCREEN_FLIP: the flag is on; a live run writes the slice and
+    trade_partner_screen_chain.json beside the board and freezes the day under
+    record/, and the public chain is the record's chain byte for byte."""
+    assert T.TRADE_PARTNER_SCREEN_LIVE is True
     res = T.run(now=NOW, machine="local", data_dir=fx["dir"], cache_dir=tmp_path, log_fn=lambda *_: None)
+    assert res["live"] is True and res["status"] == "written"
+    rec = tmp_path / "trade_partner_screen" / "record"
+    assert {p.name for p in rec.iterdir()} == {"2026-10-09.json.gz", "chain.json"}
+    assert (fx["dir"] / "trade_partner_slice.json").is_file()
+    pub = fx["dir"] / "trade_partner_screen_chain.json"
+    assert pub.read_bytes() == (rec / "chain.json").read_bytes()
+    assert not (tmp_path / "trade_partner_screen" / "preview").exists()
+
+
+def test_dark_runs_land_nothing_under_data(fx, tmp_path):
+    before = sorted(p.name for p in fx["dir"].rglob("*"))
+    res = T.run(now=NOW, machine="local", live=False, data_dir=fx["dir"], cache_dir=tmp_path,
+                log_fn=lambda *_: None)
     assert res["live"] is False
     assert sorted(p.name for p in fx["dir"].rglob("*")) == before
     pv = tmp_path / "trade_partner_screen" / "preview"
@@ -412,11 +444,12 @@ def test_the_flag_is_off_and_nothing_lands_under_data(fx, tmp_path):
 
 def test_the_page_shell_carries_the_switch_only_when_live(monkeypatch):
     import build_site as B
-    off = B.build_trademachine()
-    assert "data-tm-partner" not in off
-    monkeypatch.setattr(T, "TRADE_PARTNER_SCREEN_LIVE", True)
     on = B.build_trademachine()
     assert 'id="proj-view-trademachine" data-tm-partner="live"' in on
+    assert 'data-tm-partner="live"' in (ROOT / "trademachine" / "index.html").read_text(encoding="utf-8")
+    monkeypatch.setattr(T, "TRADE_PARTNER_SCREEN_LIVE", False)
+    off = B.build_trademachine()
+    assert "data-tm-partner" not in off
     assert on.replace(' data-tm-partner="live"', "") == off
 
 
@@ -426,7 +459,12 @@ def test_the_nightly_writes_the_screen_after_the_franchise_board():
     body = src[i:src.index("\ndef ", i + 10)]
     assert body.index("_fr.write(_frd)") < body.index("_export_trade_partner_screen(log)")
     helper = src[src.index("def _export_trade_partner_screen("):src.index("def _export_fscore(")]
-    assert "_tps.run(" in helper and "_record_ingest" not in helper
+    assert "_tps.run(" in helper
+    assert '_record_ingest("trade_partner_screen", True' in helper
+    assert '_record_ingest("trade_partner_screen", False' in helper
+    import run_monthly
+    assert "trade_partner_screen" in run_monthly.SCHEDULED_EXPORTS
+    assert run_monthly._ingest_kind("trade_partner_screen") == "export"
 
 
 # --------------------------------------------------------------------------- #
