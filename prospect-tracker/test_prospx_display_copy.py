@@ -40,7 +40,11 @@ def test_qprc03_v2_surfaces_drop_the_v1_wording():
     assert 'title="eFV - our outcome-grounded Future Value' not in PAGE
     assert "SHAPE of the modeled eFV outcome" not in PAGE
     tip = _fn("efvTooltip", 1500)
-    assert "efvIsV2(x) ? `eFV ${efvGradeDisplay(x)} - the consensus order reordered by admitted drivers`" in tip
+    # COPY_3 (P3): the V2 badge tooltip carries the row's numbers; the method line
+    # prints once, in the eFV column header.
+    assert "efvIsV2(x) ? `eFV ${efvGradeDisplay(x)} (V2)`" in tip
+    assert "outcome-grounded" not in tip
+    assert "the consensus FV order within each side, reordered by admitted drivers" in PAGE
     assert '"eFV V2 · consensus order reordered by drivers"' in PAGE
 
 
