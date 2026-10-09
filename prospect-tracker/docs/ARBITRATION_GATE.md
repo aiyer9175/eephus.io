@@ -880,3 +880,269 @@ for the plain-key award. From 2026-10-04 the join (`proj_export._join_contract`,
 AAV, and never lets it move a plain key; the salary path prices those seasons
 from the tokens through the arbitration board, as before. Served surplus did
 not move (no row by more than $1M; none at all on the worktree regen).
+
+---
+
+## 13. Club arbitration process: a width term on the award band and one term in the point award (pre-registered 2026-10-08)
+
+Registered 2026-10-08, docs only, committed alone. At this commit no code, flag,
+column, label or number of either quantity registered here exists: the tracker
+re-capture and its club-heading parser (task Q9_17, plan row FAA-3) and the club
+labels and chips (Q9_18, FAA-4) come after it. Nothing above this section is
+edited.
+
+**Numbering.** The plan (master plan Part 8, row FAA-1; the lane design
+`finance_to_fa_arb.md`, section 2.4) calls this registration "section 12", with
+parts 12a to 12d. Section 12 was taken on 2026-10-04 by the Spotrac roll-off
+record, so the registration is section 13 and its parts map one for one: 13a is
+the plan's 12a, 13b is the plan's 12b, 13c is the plan's 12c, 13d is the plan's
+12d. 13e is the point-award term the owner added. A later task that names
+"section 12a" or "12b" of this gate means 13a or 13b.
+
+**The ask and the answers.** Owner ask 3 (2026-09-30), verbatim: "Can we wire
+the financial module into the Free Agency / arbitration modules to make them
+more accurate? Ex. to make team fit projections more accurate based on which
+teams actually spend money in free agency." ARB-CLUB-1 (b): descriptive chips
+from the 2024-2026 trackers now, and a 2011-2023 backfill from Cot's Contracts
+once its terms allow. ARB-CLUB-2 (c), the owner departing from the
+recommendation: club process is tested in the point award itself, which collides
+with section 4's ban on team effects and so needs its own amendment (13e) and a
+GATE A re-run that must pass before any serve; the band width term (13b) is
+registered as well.
+
+### Read to write this
+
+The 2024, 2025 and 2026 MLB Trade Rumors arbitration trackers were read to
+design this item, and so were those winters' hearing outcomes, which are public.
+No case from those three winters is ever scored under this section. What the
+design read, as the lane design recorded it on 2026-09-30 (descriptive counts,
+not a reading of any quantity registered here):
+
+- the cached January trackers (`.cache/mlbtr/2024_01_2024-arbitration-tracker.html`,
+  `2025_01_...`, `2026_01_...`): 30 club headings each; 22 exchanged cases
+  across 14 clubs in 2024, 17 across 12 in 2025, 18 across 14 in 2026; 25 clubs
+  exchanged at least once over the three winters, 5 never (ATH, ARI, CLE, COL,
+  CHW), BAL the most with 8; the 2026 page's Rangers policy note ("As always,
+  there will be no arb hearings for the team");
+- the outcome classes in `data/_labs/arb_ledger.json` (agreed 564, exchanged 57,
+  club_option 5, extension 4, split_deal 4, unknown 3; no hearing class fires,
+  because the cached pages are January snapshots taken before the hearings);
+- `data/arb_history.json` (766 rows, 2023 to 2026) and its season-end club
+  attribution (Tarik Skubal's 2026 award reads LAD; the tracker lists him under
+  Detroit);
+- the award band in `arb_export.build_board` (22% at arb-1, widening 8 points a
+  rung, not published as a calibrated interval) and the champion tuple
+  `arb_model.CHAMPION_KEYS`.
+
+The writer of this section opened none of the tracker pages and computed no
+statistic relating any club to any award, residual, band or hearing result.
+
+### 13a. Band calibration (the plan's 12a): named here, registered later
+
+Band calibration, to follow by a dated amendment after GATE C2 is scored (task
+Q9_20; also after the M11/M12 sequence and the B5 known-season registration).
+The plan's sketch: out-of-fold residual quantiles by rung and chain depth from
+the champion's forward-chained residuals, a coverage target of 0.80 for the P10
+to P90 band, the interval score against today's fixed band, player-clustered
+floors under the section 3 conventions, and the M12-4 league-minimum floor on
+both bands. Nothing in this section registers it.
+
+13b multiplies the band that 13a calibrates. If 13a is never registered, or is
+registered and does not ship, 13b is recorded `NOT SCORED`, which is neither a
+pass nor a NULL, and the band never reads club process.
+
+### 13b. Club-process width (the plan's 12b)
+
+**Treatment.** One scale multiplier `s` on the calibrated award band (13a's P10
+to P90) for cases at clubs labelled "File and trial" from winters strictly
+before the case's. The point award does not move: the two half-widths scale
+about it, `low = point - s * (point - P10)` and `high = point + s * (P90 - point)`,
+and the low end keeps the league-minimum floor. Cases at unlabelled clubs keep
+the calibrated band unchanged (s = 1).
+
+**The label, exactly as FAA-4 defines it.** A club is "File and trial" for a
+case in winter W when, over the captured winters strictly before W, it
+exchanged figures with at least 2 players (exchanged >= 2) and settled with
+none of them after the exchange (settled after the exchange = 0). The other
+label FAA-4 serves, "Settles before the exchange" (exchanged = 0 on at least 10
+cases), is not a treatment here. The label reads process classes and counts
+only: never a filed figure, an award amount or the dollars of a hearing result.
+
+**Thresholds, fixed at this commit.** exchanged >= 2; settled after the
+exchange = 0; winters strictly before the case's.
+
+**Inputs the label reads, and only these.** The MLB Trade Rumors tracker
+captures, attributed by the FAA-3 rule: a case belongs to the club under whose
+heading the tracker lists the player on exchange day, never to the season-end
+club in `arb_history`. The captured window starts with the 2024 tracker. The
+Cot's Contracts backfill (ARB-CLUB-1 (b), 2011-2023) is not read by this label
+unless a dated amendment written before the first count in 13d says so.
+
+**The case.** The section 1 estimand: a tendered, arbitration-eligible
+player-season settled or awarded at one year through the arbitration process,
+with the settled or awarded figure on file. Extensions, multi-year deals, club
+options, split deals and non-tenders are out, as the tracker classes already
+separate them.
+
+**Scored cases: only winters captured after this commit.** The January 2027
+exchange-day capture and the February 2027 post-hearing capture are the first;
+each later winter captured the same way joins the frame. No case from the 2024,
+2025 or 2026 winters is scored, ever, because those pages and their hearing
+outcomes were read to write this section. Those winters may supply labels and
+training rows (a 2027 case's label reads 2024 to 2026), never scored cases.
+
+**Fit.** `s` is one scalar, chosen on the fixed grid 0.50 to 2.00 in steps of
+0.05 to minimize the mean interval score of the labelled group over the
+training winters (every captured winter strictly before the scored winter that
+holds labelled cases with figures on file), refit forward-chained for each
+scored winter. The control is the same calibrated band with s = 1.
+
+**Metric.** The interval score of the central 80% band (alpha = 0.20: the width
+plus 2/alpha times each miss), in deflated dollars, within the labelled group,
+paired against the control. Floors: a paired bootstrap clustered on player, B =
+1000, seed 20261008, one-sided MDE95 (section 3).
+
+**Power precondition, written first.** The labelled group must hold at least 62
+scoreable cases across the scored winters before the read is allowed. That is
+the count at which the 95% binomial half-width of a coverage reading at 0.80,
+1.96 * sqrt(0.80 * 0.20 / n), reaches 0.10 (n = 61.5, rounded up): a coverage
+MDE95 of 0.10. The two-sided form is registered on purpose, though section 3's
+convention is one-sided (n = 44 at 1.645), because a band can miss its coverage
+in either direction. Short of 62 the arm is a pre-committed NULL, the A6
+single-season precedent.
+
+**Pass.** All three: (1) the arm's interval score beats the control's by more
+than the one-sided MDE95 of the paired contrast; (2) the arm's coverage inside
+the group lies within 0.10 of 0.80; (3) a label-permuted twin (the File and
+trial label reassigned at random across clubs within each winter, the count of
+labelled clubs held fixed, `s` refit on every draw, B >= 500) gains less than
+the real arm on at least 95% of draws. Anything else is a NULL.
+
+### 13c. What never moves
+
+The champion point award, the frozen feature tuple (`arb_model.CHAMPION_KEYS`)
+and `projectable_keys`. 13b enters after the champion, on the band only. The
+banned-key test in `test_arb_export.py` extends to every club-process key (the
+chip keys FAA-4 adds and the label itself), so no such key can reach the
+champion tuple or the serve path's projectable keys. The one exception the owner
+asked for, a single club term in the point award, is registered in 13e with its
+own amendment to section 4; until 13e passes and the owner flips its flag, this
+paragraph binds the served award as written. 13b never admits it.
+
+### 13d. The response, and the look order
+
+**13b PASS:** the band carries the club term behind its own flag
+(`ARB_BAND_CLUB_TERM`, off by default), flipped in one commit carrying the
+multiplier, a chip on every widened band that says the band is wider because the
+club takes its cases to a hearing, the registry row and the glossary entry. A
+printed band digit moves, so it ships only after the owner's answer.
+
+**13b NULL:** chips only, and the band stays as 13a ships it. Recorded
+verbatim: *"The club process term is a NULL on the award band. Cases at File and
+trial clubs were not priced better by a wider band than by the calibrated band
+itself, or the group held fewer than 62 scoreable cases. The band does not read
+club process."*
+
+**Look order, fixed now.**
+
+1. This registration (2026-10-08), committed alone.
+2. Q9_17 (FAA-3): the club heading in the tracker parser and the one dated
+   re-capture of the 2024 to 2026 trackers and filing-figure posts. Lab data
+   only.
+3. Q9_18 (FAA-4): the descriptive chips and the label function, behind
+   `ARB_CLUB_PROCESS_CHIPS`.
+4. GATE C2 scored, then 13a registered by dated amendment (Q9_20) and scored.
+5. The January 2027 exchange-day capture and the February 2027 post-hearing
+   capture; each later winter the same.
+6. After each February capture the scoreable labelled cases are COUNTED (labels
+   and case presence only; no award, band or residual is read).
+7. The one look: the first February capture at which the count reaches 62, and
+   no later than the February 2029 capture. If the count is still short at the
+   February 2029 capture, 13b and 13e are recorded NULL without reading any
+   outcome.
+8. At that look 13b is scored only if step 4 shipped a calibrated band
+   (otherwise `NOT SCORED`, per 13a), and 13e's GATE A re-run runs once.
+
+If the collective bargaining agreement in force for a scored winter changes the
+filing or hearing process, that winter joins the frame only by a dated amendment
+written before its February count.
+
+### 13e. One club-process term in the point award, and the amendment to section 4 (ARB-CLUB-2 (c))
+
+**The term.** One indicator, `club_file_and_trial`: 1 when the case's club
+carries 13b's File and trial label (the same rule, thresholds and inputs, winters
+strictly before the case's), 0 otherwise. It enters the point award through one
+coefficient on the log scale after the champion chain:
+`log(award') = log(award) + beta * club_file_and_trial`. The champion's coefficients, its tuple and the
+banded step multipliers are not refit; beta is the only fitted number. It is
+fit by least squares on the champion's out-of-fold log residuals over the
+training winters (every captured winter strictly before the scored winter),
+forward-chained, and section 3's smearing correction is recomputed with it. Its
+sign is not constrained.
+
+**Frame.** The 13b frame: scored cases only from winters captured after this
+registration (the January and February 2027 captures on). The 2024 to 2026
+winters may train beta and are never scored.
+
+**Power precondition.** The 13b count: at least 62 scoreable labelled cases
+before the read. Before the contrast is read, the section 3 floor procedure measures
+its floor (a paired bootstrap clustered on player with a refit on every draw, B =
+1000, seed 20261008, one-sided MDE95) and runs a detection check with an effect
+planted at the floor. If the count is short, or that procedure cannot see the
+planted effect, the term is a pre-committed NULL.
+
+**Pre-committed NULL:** *"The club process term is a NULL on the arbitration
+point award. Its effect on the scored winters is below the measured floor, or
+not separable from a club-permuted twin, or the group held fewer than 62
+scoreable cases. Section 4's ban on team effects stands in full."*
+
+**The GATE A re-run that must PASS before any serve.** Run once, at the 13d
+look, on the scored winters: the champion plus the term against the champion
+alone. Every line must hold:
+
+- the increment: the champion plus the term beats the champion on MSE in
+  deflated dollars by more than the contrast's one-sided MDE95, player-clustered,
+  and does not lose on median absolute percentage error by more than 10%
+  relative (section 3's guardrail);
+- A1 and A2 still pass, reported separately for arb1 and arb2+;
+- A3 in its club form: the label permuted across clubs within each winter, the
+  count of labelled clubs held fixed, beta refit; the real term beats the
+  permuted twin, and the twin's mean gain sits inside its own null band around
+  zero;
+- A4: a permutation null over the same cells, B >= 500; the real gain above the
+  null's 95th percentile;
+- A5: the deflator leak twin does not fire;
+- A8: signed bias by predicted-salary decile within 5% of the decile mean;
+- A10: every served row carries the term as its own factor in the explainer
+  array, and the exact remainder still reconstructs the served figure.
+
+A6 stays a standing NULL and is reported, not gated.
+
+**The amendment to section 4, and its scope.** Section 4 bans team fixed
+effects from the champion, as diagnostics only, because they correlate with
+quality and are post-treatment for mid-season trades. This amendment admits
+exactly one club term, `club_file_and_trial` as defined above, and nothing
+else: no club identity or club fixed effect, no other club-process key (cases,
+exchanged count or share, hearing count, hearing W-L, the "Settles before the
+exchange" label), and no payroll, Ledger or spending figure. The two reasons
+for the ban are answered by construction, not waived: the term is attributed to
+the exchange-day club and reads only winters strictly before the case's, so
+neither a mid-season trade nor the case's own hearing can reach it; and it
+enters after the champion's quality features, with the club-permuted twin as
+the control for a quality proxy. The case's own hearing occurrence, filed
+figures and settlement date stay banned. The term never enters
+`CHAMPION_KEYS`: it is a separate key on the award path, admitted by the
+banned-key test as the one named exception and only while the flag
+`ARB_AWARD_CLUB_TERM` is on. Until the re-run passes and the owner flips that
+flag, section 4 reads as written.
+
+**Response.** PASS: the term serves behind `ARB_AWARD_CLUB_TERM`, flipped by the
+owner in one commit carrying the flag, beta, the explainer factor, the registry
+row and the glossary entry, and naming every award that moves. FAIL or NULL:
+the term never serves, the NULL sentence above is recorded here and in the eval
+artifact, and any second club term needs a new registration.
+
+### 13f. Results
+
+Empty at registration. Nothing in this section has been read: no label
+computed, no case counted, no band or award scored.
