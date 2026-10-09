@@ -2853,6 +2853,70 @@ def _head_to_head_vs_sources(rows, block, *, frame, basis, headline=None,
     return out
 
 
+#: Owner answer M7-1 (2026-09-25), registered in
+#: docs/efv-2026-09-25/PER_YEAR_BLOCK.md before any per-cohort number existed:
+#: the Source Comparison per-year chart reads ONE key, the headline vm2 rows split
+#: into one cohort per debut year, every grader on identical rows.
+PER_YEAR_VM_KEY = "per_year_vintage_matched"
+PER_YEAR_VM_GRADERS = ("xfv", CONSENSUS_KEY, "mlb_pipeline", "fangraphs")
+PER_YEAR_VM_MIN_N = 40
+PER_YEAR_VM_REGISTRATION = "docs/efv-2026-09-25/PER_YEAR_BLOCK.md"
+
+
+def _per_year_vintage_matched(rows) -> dict:
+    """The per-year vintage-matched block (PER_YEAR_BLOCK.md s4).
+
+    `rows` are the headline frame's rows (vm2) exactly as the pooled cell scores
+    them; they are partitioned by base year, which on this frame is the debut
+    year, and nothing is added or dropped. Each cohort carries every grader's
+    Spearman on its rows; a cohort at or above PER_YEAR_VM_MIN_N rows also
+    carries, for eFV minus each other grader, the paired player-clustered E_cond
+    block (MDE95, CI95). A cohort below the floor, or one whose floor cannot be
+    derived, is `under_floor` with null floors. No verdict word and no count of
+    cohorts led is written: the block describes and adjudicates nothing."""
+    by_year: dict[int, list[dict]] = {}
+    for c in rows:
+        y = c.get("year")
+        if y is not None:
+            by_year.setdefault(int(y), []).append(c)
+    cohorts = {}
+    for y in sorted(by_year):
+        rr = by_year[y]
+        wars = [c["outcome"]["war"] for c in rr]
+        sp = {}
+        for g in PER_YEAR_VM_GRADERS:
+            vals = [c["grades"].get(g) for c in rr]
+            v = (_spearman(vals, wars)
+                 if vals and all(x is not None for x in vals) else None)
+            sp[g] = round(v, 4) if v is not None else None
+        floors = None
+        if len(rr) >= PER_YEAR_VM_MIN_N:
+            floors = {g: _paired_delta_ci(rr, "xfv", g, "spearman",
+                                          label=f"{y}.xfv_vs_{g}.spearman",
+                                          min_rows=PER_YEAR_VM_MIN_N)
+                      for g in PER_YEAR_VM_GRADERS if g != "xfv"}
+            if not all(f.get("mde95") for f in floors.values()):
+                floors = None
+        cohorts[str(y)] = {"n": len(rr), "under_floor": floors is None,
+                           "spearman": sp, "floor_vs_efv": floors}
+    return {
+        "frame_version": "vm2",
+        "basis": VM2_BASIS,
+        "cohort": "debut year",
+        "statistic": "spearman",
+        "min_n": PER_YEAR_VM_MIN_N,
+        "graders": list(PER_YEAR_VM_GRADERS),
+        "floor_estimator": (
+            "E_cond: paired, player-clustered bootstrap of the Spearman delta, eFV "
+            f"minus the grader, B {_CLAIM_BOOT_B}, seed {_CLAIM_SEED}, MDE95 = "
+            f"{_Z95} x sd, at least {_CLAIM_MIN_CLUSTERS} clusters; derived only for "
+            f"a cohort of {PER_YEAR_VM_MIN_N} rows or more"),
+        "registration": PER_YEAR_VM_REGISTRATION,
+        "n_total": sum(c["n"] for c in cohorts.values()),
+        "cohorts": cohorts,
+    }
+
+
 def _econd_two_target_floor(label, cluster_ids, a, a_target, b, b_target, *,
                             B=_CLAIM_BOOT_B, seed=_CLAIM_SEED):
     """Player-clustered E_cond bootstrap of rho(a, a_target) - rho(b, b_target).
@@ -4528,6 +4592,10 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         accuracy["head_to_head_verdict"] = _hv
     else:
         log.warning("no vm2 frame in this run: no head-to-head headline is published")
+    # M7-1 (PER_YEAR_BLOCK.md): the per-year chart's only input, the headline vm2
+    # rows split by debut year. Additive; absent when there is no headline frame.
+    accuracy[PER_YEAR_VM_KEY] = (_per_year_vintage_matched(efv_common_vintage_vm2)
+                                 if _frames.get(HEADLINE_FRAME_KEY) else None)
     # DS-02: which eFV the head-to-head cells scored. efv_progress copies model_id
     # into every ledger row, so a v2 row never displaces a v1 row of the same frame.
     accuracy["efv_scored_object"] = (

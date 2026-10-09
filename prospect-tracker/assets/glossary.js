@@ -2015,42 +2015,37 @@ function _methEfvFindings(bt) {
     </div>`).join("")}</div>`;
 }
 
-// Year-by-year ordering skill: Spearman per preseason cohort for each PUBLIC
-// board. Same inline-SVG idiom as _methCaptureCurve / _methCalibrationChart:
-// owner palette via _raterMeta, consensus solid, the single sources muted
-// (thin, dashed), identity carried by the legend + line style, never color
-// alone.
-//
-// eFV IS NOT DRAWN HERE (2026-09-24, census X01-01). accuracy.per_year scores
-// the boards on each full cohort and eFV on its out-of-sample resolved subset
-// of it (2023: 411 of 829 rows), so an eFV line compared different players,
-// and the bold caption under it counted "best in N of M cohorts" off those
-// mismatched rows. On matched rows that count does not hold, and the artifact
-// publishes no per-cohort floor to call any year either way.
-// HEADTOHEAD_FRAME_GATE puts every eFV comparison on the vintage-matched
-// basis, which lives in the head-to-head chart below; the boards here share
-// identical rows inside each cohort, so their lines remain a fair comparison.
+// Year-by-year ordering skill on the HEADLINE frame (owner answer M7-1,
+// registered in docs/efv-2026-09-25/PER_YEAR_BLOCK.md before any per-cohort
+// number existed). Reads ONE key, accuracy.per_year_vintage_matched: the
+// timing-pinned vintage-matched rows split by debut year, so every grader,
+// eFV included, is scored on identical players inside each cohort. Never
+// accuracy.per_year or any tilted frame; with the key absent nothing is drawn.
+// A cohort under the registered row floor is drawn hollow, unjoined and
+// labelled. No cohort is called for any grader and no lead is counted: the
+// block describes, and the headline verdict stays the pooled cell. Same
+// inline-SVG idiom as _methCaptureCurve: owner palette via _raterMeta, eFV and
+// consensus solid, the single sources thin and dashed, identity carried by the
+// legend and line style, never color alone.
 function _methPerYearChart(bt) {
-  const py = bt.accuracy && bt.accuracy.per_year;
-  if (!py || typeof py !== "object") return "";
-  const years = Object.keys(py).sort();
+  const blk = bt.accuracy && bt.accuracy.per_year_vintage_matched;
+  if (!blk || typeof blk !== "object" || !blk.cohorts) return "";
+  const years = Object.keys(blk.cohorts).sort();
   if (years.length < 2) return "";
-  // Fixed series order: the head-to-head raters as committed, eFV excluded.
-  const raterList = ((bt.accuracy && bt.accuracy.head_to_head_raters) || bt.raters || [])
-    .filter(r => r !== "xfv");
-  const series = raterList.map(r => ({
+  const coh = years.map(y => blk.cohorts[y] || {});
+  const solid = coh.map(c => c.under_floor === false);
+  const graders = Array.isArray(blk.graders) ? blk.graders : [];
+  const consKey = graders.find(r => r === "prospx_consensus");
+  const series = graders.map(r => ({
     rater: r,
-    pts: years.map(y => {
-      const e = py[y] && py[y][r];
-      return e && e.spearman != null ? e.spearman : null;
-    }),
+    pts: coh.map(c => (c.spearman && c.spearman[r] != null ? c.spearman[r] : null)),
   })).filter(s => s.pts.some(v => v != null));
   if (series.length < 2) return "";
   const allVals = series.flatMap(s => s.pts).filter(v => v != null);
-  const W = 580, H = 250, ML = 46, MR = 16, MT = 16, MB = 40;
+  const W = 580, H = 270, ML = 46, MR = 40, MT = 16, MB = 58;
   const iW = W - ML - MR, iH = H - MT - MB;
-  const yMax = Math.max(...allVals) * 1.15 || 1, yMin = 0;
-  const sx = i => ML + (years.length === 1 ? iW / 2 : (i / (years.length - 1)) * iW);
+  const yMax = Math.max(...allVals) * 1.15 || 1, yMin = Math.min(0, ...allVals);
+  const sx = i => ML + (i / (years.length - 1)) * iW;
   const sy = v => MT + iH - ((v - yMin) / (yMax - yMin)) * iH;
   const grid = [];
   for (let i = 0; i <= 4; i++) {
@@ -2058,24 +2053,49 @@ function _methPerYearChart(bt) {
     grid.push(`<line x1="${ML}" y1="${y}" x2="${ML + iW}" y2="${y}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,3"/>`,
       `<text x="${ML - 6}" y="${y}" dy="3" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${v.toFixed(2)}</text>`);
   }
-  const xlabels = years.map((y, i) =>
-    `<text x="${sx(i).toFixed(1)}" y="${MT + iH + 16}" text-anchor="middle" font-size="10" fill="var(--text-secondary)" font-weight="600">${escapeHtml(y)}</text>`).join("");
+  const xlabels = years.map((y, i) => {
+    const c = coh[i], x = sx(i).toFixed(1);
+    const fl = solid[i] && consKey && c.floor_vs_efv ? c.floor_vs_efv[consKey] : null;
+    const sub = solid[i]
+      ? (fl && fl.mde95 != null ? `MDE95 ${Number(fl.mde95).toFixed(3)}` : "")
+      : "under floor";
+    return `<text x="${x}" y="${MT + iH + 16}" text-anchor="middle" font-size="10" fill="var(--text-secondary)" font-weight="600">${escapeHtml(y)}</text>` +
+      `<text class="py-n" data-year="${escapeHtml(y)}" x="${x}" y="${MT + iH + 29}" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">n ${escapeHtml(String(c.n == null ? "-" : c.n))}</text>` +
+      `<text class="py-sub${solid[i] ? "" : " is-under-floor"}" data-year="${escapeHtml(y)}" x="${x}" y="${MT + iH + 41}" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">${escapeHtml(sub)}</text>`;
+  }).join("");
   const lines = series.map(s => {
-    const pts = s.pts.map((v, i) => (v == null ? null : { x: sx(i), y: sy(v) })).filter(Boolean);
-    if (pts.length < 2) return "";
-    const d = pts.map((p, i) => `${i ? "L" : "M"} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
     const col = _raterMeta(s.rater).color;
     const isEfv = s.rater === "xfv";
-    const emph = isEfv || s.rater === "prospx_consensus";
-    const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isEfv ? 3.8 : emph ? 3 : 2.4}" fill="${col}"/>`).join("");
-    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${isEfv ? 2.8 : emph ? 2.2 : 1.5}" ${emph ? "" : 'stroke-dasharray="5,3"'} stroke-linecap="round" stroke-linejoin="round"/>${dots}`;
+    const emph = isEfv || s.rater === consKey;
+    const segs = [];
+    for (let i = 0; i + 1 < years.length; i++) {
+      const a = s.pts[i], b = s.pts[i + 1];
+      if (a == null || b == null || !solid[i] || !solid[i + 1]) continue;
+      segs.push(`M ${sx(i).toFixed(1)},${sy(a).toFixed(1)} L ${sx(i + 1).toFixed(1)},${sy(b).toFixed(1)}`);
+    }
+    const path = segs.length
+      ? `<path d="${segs.join(" ")}" fill="none" stroke="${col}" stroke-width="${isEfv ? 2.8 : emph ? 2.2 : 1.5}" ${emph ? "" : 'stroke-dasharray="5,3"'} stroke-linecap="round" stroke-linejoin="round"/>`
+      : "";
+    const r = isEfv ? 3.8 : emph ? 3 : 2.4;
+    const dots = s.pts.map((v, i) => {
+      if (v == null) return "";
+      const tip = `${_raterMeta(s.rater).label}, ${years[i]}: Spearman ${Number(v).toFixed(3)} on ${coh[i].n} players${solid[i] ? "" : " (under the floor)"}`;
+      const paint = solid[i]
+        ? `fill="${col}"`
+        : `fill="none" stroke="${col}" stroke-width="1.5"`;
+      return `<circle class="py-dot${solid[i] ? "" : " is-hollow"}" data-year="${escapeHtml(years[i])}" data-rater="${escapeHtml(s.rater)}" cx="${sx(i).toFixed(1)}" cy="${sy(v).toFixed(1)}" r="${r}" ${paint}><title>${escapeHtml(tip)}</title></circle>`;
+    }).join("");
+    return path + dots;
   }).join("");
   const legend = series.map(s =>
     `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${_raterMeta(s.rater).color};"></span>${escapeHtml(_raterMeta(s.rater).label)}</span>`).join("");
-  const takeaway = `<p class="meth-note">Each point is one preseason cohort, every public board scored on the same players against the WAR those prospects went on to produce. eFV is not drawn: inside each cohort it grades only its out-of-sample resolved subset, so a line for it would compare different players. The head-to-head below scores eFV on identical, vintage-matched rows.</p>`;
-  return `<div class="meth-chart">
-    <div class="meth-chart-title">Ordering skill by preseason cohort <span class="meth-sub">Spearman ρ, grade vs realized WAR, per base year, public boards</span></div>
-    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Spearman ordering skill by preseason cohort for each public board">
+  const minN = blk.min_n != null ? String(blk.min_n) : "the registered minimum of";
+  const nTot = blk.n_total != null ? Number(blk.n_total).toLocaleString() : null;
+  const consLabel = consKey ? _raterMeta(consKey).label : "the consensus";
+  const takeaway = `<p class="meth-note">Each point is one debut-year cohort of the headline frame (timing-pinned, vintage-matched${nTot ? `, ${escapeHtml(nTot)} players over ${years.length} cohorts` : ""}): every grader, eFV included, scored on the same players against the WAR they went on to produce. Under each year: the cohort's n and the MDE95 of eFV minus ${escapeHtml(consLabel)} in that cohort, the smallest gap it could resolve. A hollow, unjoined marker is a cohort under the registered floor of ${escapeHtml(minN)} rows. No cohort is called for any grader; the verdict is the pooled head-to-head below.</p>`;
+  return `<div class="meth-chart" data-chart="per-year-vm">
+    <div class="meth-chart-title">Ordering skill by debut-year cohort <span class="meth-sub">Spearman ρ, grade vs realized WAR, headline frame, identical players per cohort</span></div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Spearman ordering skill by debut-year cohort for every grader on the headline frame">
       ${grid.join("")}
       <line x1="${ML}" y1="${MT + iH}" x2="${ML + iW}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
       <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
