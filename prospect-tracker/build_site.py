@@ -10137,6 +10137,41 @@ def _restamp_html(text: str) -> str:
     return text
 
 
+# QREP01/QREP02 (surface-quality audit 2026-10-02): the CollegeSavant pages
+# inject their /data/ sidecars at runtime on the views that read them, and
+# load the glossary through eephus-gl.js, so those stamps ride one inline tag
+# the restamp rewrites: the glossary data hash as window.EEPHUS_GL_DATA_VER
+# (the global the generated pages carry) and each sidecar's content hash in
+# window.CS_PAYLOAD_VER. The pages' relative refs (app.js, styles.css, the
+# vendored payloads) are stamped from the file beside the page.
+_CS_VER_TAG_RE = re.compile(
+    r'<script>window\.EEPHUS_GL_DATA_VER="[^"]*";window\.CS_PAYLOAD_VER=\{[^}]*\};</script>')
+CS_PAYLOADS = ("collegesavant_translation", "collegesavant_draft_prospects")
+_REL_REF_RE = re.compile(r'((?:href|src)=")([A-Za-z0-9_.-]+\.(?:js|css))(?:\?v=[^"#]*)?(")')
+
+
+def _restamp_cs(text: str, page_dir: str) -> str:
+    """Stamp a CollegeSavant page's inline payload-version tag and its
+    relative stylesheet and script refs with current content hashes."""
+    vers = ",".join(f'"{n}":"{_asset_ver(f"data/{n}.js")}"' for n in CS_PAYLOADS)
+    tag = (f'<script>window.EEPHUS_GL_DATA_VER="{_asset_ver("data/glossary.json")}";'
+           f'window.CS_PAYLOAD_VER={{{vers}}};</script>')
+    text = _CS_VER_TAG_RE.sub(lambda m: tag, text)
+
+    def _stamp_url(m: "re.Match[str]") -> str:
+        rel = f"{page_dir}/{m.group(2)}"
+        if not (ROOT / rel).exists():
+            return m.group(0)
+        return f"{m.group(1)}{m.group(2)}?v={_asset_ver(rel)}{m.group(3)}"
+
+    def _stamp_tag(m: "re.Match[str]") -> str:
+        return _REL_REF_RE.sub(_stamp_url, m.group(0))
+
+    for tag_re in (_STYLESHEET_TAG_RE, _SCRIPT_TAG_RE):
+        text = tag_re.sub(_stamp_tag, text)
+    return text
+
+
 # The nav lockup inside each hand-kept page's brand link: the retired vector
 # mark, or a pixel lockup an earlier build wrote (so a regenerated fragment
 # re-syncs). One line each, no nested <span class="nameplate">.
@@ -10224,6 +10259,8 @@ def restamp_hand_authored_pages() -> None:
             continue
         original = path.read_text(encoding="utf-8")
         stamped = _ensure_font_preload(pixel_brand_hand_nav(_restamp_html(original)))
+        if rel.startswith("collegesavant/"):
+            stamped = _restamp_cs(stamped, "collegesavant")
         if PIXEL_BRAND:
             stamped = pixel_brand_hand_og(stamped, rel)
             if rel == "prospx/index.html":

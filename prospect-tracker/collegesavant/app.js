@@ -40,7 +40,7 @@ function glLabel(metric) {
 // collegesavant/logos file, else the verified school's ESPN NCAA logo).
 
 const HOME_WIDGET_METRICS = [
-  { key: "cs_plus", label: "CS+ (pro profile)" },
+  { key: "cs_plus", label: "CS+" },
   { key: "average_exit_velocity", label: "EV" },
   { key: "90th_percentile_exit_velocity", label: "90th Percentile EV" },
   { key: "zone_contact_pct", label: "Z Contact" },
@@ -49,14 +49,17 @@ const HOME_WIDGET_METRICS = [
   { key: "k_minus_bb_pct", label: "K-BB %" },
 ];
 
-// Section hub on the home page: orient the reader to every CollegeSavant view
-// instead of dropping them straight into one dashboard.
-const HOME_SECTIONS = [
-  { route: "leaders", title: "Hitter Leaderboard", note: "Every tracked hitter, sortable across EV, discipline, and CS+, with team and qualified-PA filters." },
-  { route: "teams", title: "Team Tendencies", note: "Which college programs hit the ball hardest, chase the least, and run the best team CS+." },
-  { route: "prospects", title: "Draft Prospects", note: "Draft-eligible college hitters carried in by the box scores we hold, FV-ranked with a projected Single-A line." },
-  { route: "projections", title: "MiLB Projections", note: "Each hitter's projected Single-A line, the matched-pair method, and its leave-one-out backtest." },
-];
+// Each view opens on one h1 and at most a one-line lede (QREA13: the views
+// other than the dashboard rendered no h1).
+function viewHead(title, lede) {
+  return `<section class="home-intro cs-view-head"><h1>${escapeHtml(title)}</h1>${lede ? `<p>${lede}</p>` : ""}</section>`;
+}
+
+// The CS+ meaning, printed once as a visible note that every board pill names
+// through aria-describedby (QREA13: it was title-only on every row).
+function csPlusNote(id) {
+  return `<span id="${id}">CS+ is a tracked-skill index: 100 = the ${state.year} pool average, +10 = one standard deviation better. College-relative, not a Single-A projection.</span>`;
+}
 
 const LEADERBOARD_LIMIT = 300;
 
@@ -137,9 +140,10 @@ function computeCSPlus(players) {
 
 // Pill markup for a "+" index (CS+ or a component), matching the site is-pos /
 // is-neg thresholds (>=110 good, <=90 below). Returns "" for a missing value.
-function plusPill(value, label) {
+function plusPill(value, label, describedBy) {
   if (!Number.isFinite(value)) return "";
   const cls = value >= 110 ? "is-pos" : value <= 90 ? "is-neg" : "";
+  if (describedBy) return `<span class="cs-plus-pill ${cls}" aria-describedby="${describedBy}">${escapeHtml(label)} ${value}</span>`;
   const tip = `${label} ${value} - tracked-skill index, 100 = the ${state.year} pool average (${poolText(state.year)}), +10 = one standard deviation better. College-relative, not a Single-A projection.`;
   return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
@@ -190,6 +194,40 @@ function ensureHitterBip(year) {
   s.onerror = () => { _bipLoadState[year] = "failed"; render(); };
   document.head.appendChild(s);
   return false;
+}
+
+// QREP01: the projection sidecars (/data/collegesavant_translation.js, 2.1 MB,
+// and collegesavant_draft_prospects.js) load only on the views that read them,
+// never at boot, so the dashboard and leaderboard rows paint without them.
+// Each request carries the content stamp restamp_hand_authored_pages writes
+// into window.CS_PAYLOAD_VER on the page (QREP02). Returns true when the
+// global is on the page; otherwise injects the file once and returns false,
+// and onload repaints the current view.
+const _payloadState = {};   // name -> "loading" | "ready" | "failed"
+function ensurePayload(name, global) {
+  if (window[global]) return true;
+  if (_payloadState[name]) return false;
+  _payloadState[name] = "loading";
+  const ver = (window.CS_PAYLOAD_VER || {})[name];
+  const s = document.createElement("script");
+  s.src = `/data/${name}.js${ver ? `?v=${ver}` : ""}`;
+  s.onload = () => { _payloadState[name] = "ready"; render(); };
+  s.onerror = () => { _payloadState[name] = "failed"; render(); };
+  document.head.appendChild(s);
+  return false;
+}
+function ensureTranslation() {
+  return ensurePayload("collegesavant_translation", "CS_TRANSLATION");
+}
+function ensureDraftProspects() {
+  return ensurePayload("collegesavant_draft_prospects", "CS_DRAFT_PROSPECTS");
+}
+// The loading or failed panel a view shows while its sidecar is not on the page.
+function payloadWait(names, what) {
+  if (names.some((n) => _payloadState[n] === "failed")) {
+    return `<section class="empty" role="alert"><strong>The ${what} file did not load.</strong> Refresh to retry.</section>`;
+  }
+  return `<section class="loading-panel"><div class="loader"></div><p>Loading ${what}...</p></section>`;
 }
 
 async function init() {
@@ -367,7 +405,6 @@ function setActiveYear(year) {
   const previous = state.year;
   state.year = state.availableYears.includes(numericYear) ? numericYear : (state.availableYears[0] || numericYear);
   if (state.year !== previous) state.minPA = null;
-  ensureHitterBip(state.year);
   state.players = state.allPlayers.filter((player) => player.year === state.year);
   state.percentiles = computePercentiles(state.players);
   state.csPlus = computeCSPlus(state.players);
@@ -498,6 +535,8 @@ function updateNav(hash) {
       : hash.startsWith("#/projections") ? "#/projections"
       : hash.startsWith("#/prospects") ? "#/prospects" : "#/";
     link.classList.toggle("is-active", route === section);
+    if (route === section) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
   });
   // The hitters/pitchers toggle lands you on the same section on the other side
   // (Team Tendencies -> Team Tendencies, Pro Projections -> Pro Projections),
@@ -513,28 +552,18 @@ function updateNav(hash) {
 }
 
 function renderHome() {
-  const hub = HOME_SECTIONS.map((s) => {
-    const href = s.route === "leaders" ? `#/leaders/cs_plus/${state.year}` : `#/${s.route}`;
-    return `<a class="hub-card" href="${href}">
-      <strong>${s.title}</strong>
-      <span class="hub-note">${s.note}</span>
-      <span class="hub-go">Open</span>
-    </a>`;
-  }).join("");
   const q = qualifier();
   app.innerHTML = `
-    <section class="toolbar home-toolbar">${renderYearSelect()}${qualifierControl(q)}</section>
-
     <section class="home-intro">
       <h1>CollegeSavant - Hitters</h1>
-      <p>Tracked batted-ball quality and plate discipline, a pool-anchored CS+ index, and a college-to-Single-A projection for the ${state.year} college dataset.</p>
+      <p>College tracked contact quality and plate discipline, ranked by the CS+ index.</p>
       <p class="cs-stamp">${escapeHtml(dataStamp())}</p>
     </section>
 
-    <section class="hub-grid">${hub}</section>
+    <section class="toolbar home-toolbar">${renderYearSelect()}${qualifierControl(q)}</section>
 
-    <div class="panel-title" style="margin-top:20px;"><span>Top of the ${state.year} class</span><span>leaders by the metrics that travel to pro ball</span></div>
-    <p class="note-line">Listed: ${escapeHtml(qualifierText(q))}. CS+ 100 = the ${state.year} pool average (${escapeHtml(poolText(state.year))}).</p>
+    <div class="panel-title"><span>Top of the ${state.year} class</span><a href="#/leaders/cs_plus/${state.year}">Full leaderboard</a></div>
+    <p class="note-line">Listed: ${escapeHtml(qualifierText(q))}. CS+ 100 = the ${state.year} pool average.</p>
     <section class="widget-grid">
       ${HOME_WIDGET_METRICS.map((item) => renderTopWidget({ ...getMetric(item.key), label: item.label }, q)).join("")}
     </section>
@@ -657,6 +686,7 @@ function renderLeaderboard() {
       ${cells}</tr>`;
   }).join("");
   app.innerHTML = `
+    ${viewHead("Hitter Leaderboard")}
     <section class="toolbar">
       <input class="search-box" type="search" placeholder="Search hitter" value="${escapeHtml(state.query)}" aria-label="Search hitter">
       ${renderYearSelect()}
@@ -668,7 +698,7 @@ function renderLeaderboard() {
       <button class="control-button" type="button" data-reset>Reset</button>
       <button class="chip egfx-chip" id="cs-lb-gfx" title="Share graphic of this view"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>
     </section>
-    <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ and percentiles compare against the whole ${state.year} pool. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
+    <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ and percentiles compare against the whole ${state.year} pool.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
     <p class="note-line cs-stamp">${escapeHtml(dataStamp())}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th>${head}</tr></thead>
@@ -813,13 +843,14 @@ function renderTeams() {
       ${cells}</tr>`;
   }).join("");
   app.innerHTML = `
+    ${viewHead("Team Tendencies")}
     <section class="toolbar">
       ${renderYearSelect()}
       <select class="select-box" data-team-sort aria-label="Rank teams by">
         ${TEAM_TENDENCY_METRICS.map((m) => `<option value="${m.key}" ${m.key === sortKey ? "selected" : ""}>Rank by ${m.label}</option>`).join("")}
       </select>
     </section>
-    <p class="note-line">College team tendencies for ${state.year}: every team with at least ${TEAM_MIN_BATTERS} tracked batters, aggregated across its hitters. Team CS+ is the mean of its hitters' CS+ (100 = the ${state.year} pool average, ${poolText(state.year)}). Top EV is the team's single hardest-hit ball; the rest are team averages. ${escapeHtml(teamMapNote())}</p>
+    <p class="note-line">Teams with ${TEAM_MIN_BATTERS}+ tracked batters, ${state.year}. Team CS+ is the mean of its hitters' CS+ (100 = the ${state.year} pool average). Top EV is the team's hardest-hit ball; the rest are team means. ${escapeHtml(teamMapNote())}</p>
     <section class="leaderboard tt-board">
       <div class="tt-scroll"><table class="tt-table">
         <thead><tr><th class="tt-rank">#</th><th class="tt-team">Team</th>${head}</tr></thead>
@@ -854,6 +885,11 @@ const PROSPECT_COLS_HIT = [
 ];
 
 function renderProspects() {
+  const haveT = ensureTranslation(), haveP = ensureDraftProspects();
+  if (!haveT || !haveP) {
+    app.innerHTML = viewHead("Draft Prospects") + payloadWait(["collegesavant_translation", "collegesavant_draft_prospects"], "draft prospect");
+    return;
+  }
   const P = (window.CS_DRAFT_PROSPECTS && window.CS_DRAFT_PROSPECTS.hitters) || [];
   const years = [...new Set(P.map((x) => x.year).filter(Boolean))].sort((a, b) => b - a);
   const yf = state.prospectYear != null ? state.prospectYear : (years[0] || "all");
@@ -902,18 +938,22 @@ function renderProspects() {
       ${cells}</tr>`;
   }).join("");
   app.innerHTML = `
+    ${viewHead("Draft Prospects", "Draft-eligible college hitters from the box scores we hold (FanGraphs / NCAA), tracked or not.")}
     <section class="toolbar">
       <select class="select-box" data-prospect-year aria-label="Draft year">
         <option value="all" ${yf === "all" ? "selected" : ""}>All draft years</option>
         ${years.map((y) => `<option value="${y}" ${y === yf ? "selected" : ""}>${y} draft</option>`).join("")}
       </select>
     </section>
-    <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} hitter prospect${list.length === 1 ? "" : "s"} · conventional college stats, click a column to sort</span></div>
-    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. Proj A K% / BB% project a Single-A line straight from the college box via a matched-pair model. ${trustSentence((window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {}, [["box_k", "box K%"], ["box_bb", "box BB%"]])} Names link to a player's CollegeSavant page when they have tracking data.</p>
+    <div class="panel-title"><span>${yf === "all" ? "All draft years" : `${yf} draft`}</span><span>${list.length} hitter prospect${list.length === 1 ? "" : "s"} · college box scores</span></div>
+    <p class="note-line">FV is the consensus board grade, rounded up. Proj A K% / BB% translate the college box line to Single-A with a matched-pair model. Names link to the CollegeSavant page when tracking exists.</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${cols.length + 2}" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
-    </table></div></section>`;
+    </table></div></section>
+    <details class="cs-how"><summary>How accurate is this</summary>
+      <p class="trans-note">${trustSentence((window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {}, [["box_k", "box K%"], ["box_bb", "box BB%"]])}</p>
+    </details>`;
   app.querySelectorAll(".lb-th").forEach((th) => lbSortKeys(th, "data-psort", () => {
     const k = th.getAttribute("data-psort");
     if (k === sortKey) { state.prospectDir = -dir; }
@@ -957,7 +997,10 @@ function legFlag(E, k) {
 function legHead(label, flag) {
   return flag ? `${label} <span class="trans-flag">${flag}</span>` : label;
 }
-const MUTED_CELL = ' style="opacity:0.55"';
+// QREA12: a flagged leg's cells read in --text-secondary through the
+// [data-muted] rule in styles.css (AA in both themes), not an opacity that
+// dropped them to 3.81:1 on the light paper.
+const MUTED_CELL = " data-muted";
 
 // QREA01: a re-rendering board's sort header (th.lb-th, tabindex 0) answers
 // Enter and Space as it answers a click, says its state through aria-sort,
@@ -1053,10 +1096,14 @@ function offSeasonNote(listed, year, noun) {
   return ` ${off.toLocaleString()} of the ${listed.length.toLocaleString()} listed ${noun} project from another season's college line, printed beside the name.`;
 }
 
-// A dedicated home for the translation: an honest "how accurate is this" panel
-// from the leave-one-out backtest, then a board of every hitter's projected
-// Single-A line (expected + P10-P90 band), ranked by CS+ (the pro profile).
+// A dedicated home for the translation: the board of every hitter's projected
+// Single-A line (expected + P10-P90 band) ranked by CS+, then the "how accurate
+// is this" table from the leave-one-out backtest, then the method, folded.
 function renderProjections() {
+  if (!ensureTranslation()) {
+    app.innerHTML = viewHead("MiLB Projections") + payloadWait(["collegesavant_translation"], "projection");
+    return;
+  }
   const E = (window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {};
   const T = (window.CS_TRANSLATION && window.CS_TRANSLATION.translations) || {};
   const accRows = [["Proj Single-A K%", "hit_k"], ["Proj Single-A BB%", "hit_bb"], ["Proj Single-A OPS", "hit_ops"]]
@@ -1074,7 +1121,7 @@ function renderProjections() {
                  : (r2 != null && r2 < lowSignalR2()) ? ` <span class="trans-flag">low signal</span>` : "";
       // QREA02: the grey sits on the label and the numbers, never on the row,
       // so the flag that explains the grey keeps its full contrast.
-      const dim = notPredictive ? ` style="opacity:0.5"` : "";
+      const dim = notPredictive ? MUTED_CELL : "";
       const lab = notPredictive ? `<span${dim}>${label}</span>` : label;
       return `<tr><td class="tt-team">${lab}${flag}</td>
         <td class="tt-col"${dim}>${r2 != null ? r2.toFixed(2) : " - "}</td>
@@ -1101,33 +1148,35 @@ function renderProjections() {
     const logo = teamLogoUrl(x.p.team) ? `<img class="tt-logo" src="${teamLogoUrl(x.p.team)}" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.hitter_name))}</a>${sourceSeasonTag(x.t, state.year)}</td>
-      <td class="tt-col">${plusPill(x.cs, "CS+")}</td>
+      <td class="tt-col">${plusPill(x.cs, "CS+", "cs-plus-note")}</td>
       <td class="tt-col"${fk ? MUTED_CELL : ""}>${pband(sa.k_pct)}</td>
       <td class="tt-col"${fb ? MUTED_CELL : ""}>${pband(sa.bb_pct)}</td>
       <td class="tt-col"${fo ? MUTED_CELL : ""}>${pband(sa.ops, true)}</td></tr>`;
   }).join("");
   app.innerHTML = `
+    ${viewHead("MiLB Projections", "Each hitter's projected Single-A K%, BB% and OPS from one college season, with a P10-P90 band.")}
     <section class="toolbar">${renderYearSelect()}${qualifierControl(qual)}</section>
-    <div class="panel-title"><span>How the projection works</span><span>college-to-Single-A statistical translation</span></div>
-    <ol class="proj-method">
-      <li><strong>Matched pairs.</strong> We take college hitters who later reached Single-A, pair each one's college tracked rate with the Single-A rate they actually posted, and fit how the two relate.</li>
-      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by an amount set from how strongly the two levels track in the data, a fitted slope that is shrunk for sample size. An extreme college number is moderated, not copied straight across.</li>
-      <li><strong>Bands.</strong> The P10-P90 band is the spread of the model's misses on players it was not fit on (leave-one-out). When coverage sits near 80% in the table below, the band is sized to the data.</li>
-      <li><strong>What to trust.</strong> ${trustSentence(E, [["hit_k", "strikeout rate"], ["hit_bb", "walk rate"], ["hit_ops", "OPS"]])}</li>
-      <li><strong>What it does not do.</strong> No schedule-strength or park adjustment, since no college conference or park table is held. CS+ and the tracked skills describe college performance; they are not a scouting Future Value, which the tracked data does not predict.</li>
-    </ol>
+    <div class="panel-title"><span>Projected Single-A board</span><span>${list.length} hitters listed · ranked by CS+</span></div>
+    <p class="note-line">${listed.length.toLocaleString()} of ${projected.length.toLocaleString()} hitter${projected.length === 1 ? "" : "s"} with a projection listed, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ compares against the whole ${state.year} pool. Each hitter projects from one college season, the latest on file.${offSeasonNote(listed, state.year, "hitters")}${listed.length > list.length ? ` Showing the top ${list.length}.` : ""} ${csPlusNote("cs-plus-note")}</p>
+    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th><th class="tt-col">CS+</th><th class="tt-col">${legHead("Proj A K%", fk)}</th><th class="tt-col">${legHead("Proj A BB%", fb)}</th><th class="tt-col">${legHead("Proj A OPS", fo)}</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="6" class="note-line">No projections for this year.</td></tr>`}</tbody>
+    </table></div></section>
     <div class="panel-title" style="margin-top:18px;"><span class="g-term" data-gl="single_a_equivalent">How accurate is this</span><span>leave-one-out backtest on the matched college-to-Single-A pairs</span></div>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-team">Projection</th><th class="tt-col">r²</th><th class="tt-col">±band</th><th class="tt-col">MAE</th><th class="tt-col">P10-P90 cover</th><th class="tt-col">n pairs</th></tr></thead>
       <tbody>${accRows || `<tr><td colspan="6" class="note-line">No backtest on file.</td></tr>`}</tbody>
     </table></div></section>
-    <p class="trans-note">Coverage near 80% means the P10-P90 bands are sized to the data. Rows below r² ${lowSignalR2().toFixed(2)} are flagged and shown for context. Not adjusted for schedule strength or park (no conference / park table held). Stuff and tracked skills are descriptive (the CS+ index), not pro outcome forecasts.</p>
-    <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} hitters listed · ranked by CS+ (pro profile)</span></div>
-    <p class="note-line">${listed.length.toLocaleString()} of ${projected.length.toLocaleString()} hitter${projected.length === 1 ? "" : "s"} with a projection listed, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ compares against the whole ${state.year} pool. Each hitter projects from one college season, the latest on file.${offSeasonNote(listed, state.year, "hitters")}${listed.length > list.length ? ` Showing the top ${list.length}.` : ""}</p>
-    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
-      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th><th class="tt-col">CS+</th><th class="tt-col">${legHead("Proj A K%", fk)}</th><th class="tt-col">${legHead("Proj A BB%", fb)}</th><th class="tt-col">${legHead("Proj A OPS", fo)}</th></tr></thead>
-      <tbody>${body || `<tr><td colspan="6" class="note-line">No projections for this year.</td></tr>`}</tbody>
-    </table></div></section>`;
+    <p class="trans-note">Rows below r² ${lowSignalR2().toFixed(2)} are flagged and shown for context.</p>
+    <details class="cs-how"><summary>How this works</summary>
+    <ol class="proj-method">
+      <li><strong>Matched pairs.</strong> College hitters who later reached Single-A: each one's college tracked rate is paired with the Single-A rate he posted, and the fit relates the two.</li>
+      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by a fitted slope, shrunk for sample size, so an extreme college number is moderated, not copied across.</li>
+      <li><strong>Bands.</strong> The P10-P90 band is the spread of the model's misses on players it was not fit on (leave-one-out). Coverage near 80% in the table above means the band is sized to the data.</li>
+      <li><strong>What to trust.</strong> ${trustSentence(E, [["hit_k", "strikeout rate"], ["hit_bb", "walk rate"], ["hit_ops", "OPS"]])}</li>
+      <li><strong>What it does not do.</strong> No schedule-strength or park adjustment (no college conference or park table is held). CS+ and the tracked skills describe college performance; they are not a scouting Future Value, which the tracked data does not predict.</li>
+    </ol>
+    </details>`;
   const ys = app.querySelector(".year-select");
   if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderProjections(); });
   const pa = app.querySelector("[data-min-pa]");
@@ -1254,6 +1303,7 @@ function renderPlayer(player) {
     return;
   }
 
+  ensureTranslation();   // the projection block repaints in when the sidecar lands
   const pct = state.percentiles.get(player.slug);
   app.innerHTML = `
     <section class="profile">

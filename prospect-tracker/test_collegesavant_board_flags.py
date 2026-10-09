@@ -11,7 +11,9 @@ BB% and OPS, pitcher K%, which tie the predict-the-Single-A-mean baseline in
 college_translation_eval.json), but the Projected Single-A boards and the
 Draft Prospects board beside them printed every leg's expected value with no
 flag. A flagged leg now carries its flag in the board header and its cells
-are muted; the flag is read from CS_TRANSLATION.eval, never hardcoded.
+are muted (data-muted, read in --text-secondary since QREA12; an opacity
+dropped them to 3.81:1); the flag is read from CS_TRANSLATION.eval, never
+hardcoded.
 """
 from __future__ import annotations
 
@@ -95,7 +97,8 @@ def test_hitter_projection_board_flags_bb_and_ops():
     assert re.search(r"Proj A K%</th>", head), head
     assert re.search(r"Proj A BB% <span class=\"trans-flag\">not predictive</span>", head), head
     assert re.search(r"Proj A OPS <span class=\"trans-flag\">not predictive</span>", head), head
-    assert html.count('style="opacity:0.55"') >= 2
+    assert html.count("data-muted>") >= 2
+    assert "opacity" not in html
 
 
 def test_pitcher_projection_board_flags_k_not_bb():

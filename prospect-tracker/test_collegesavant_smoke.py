@@ -157,9 +157,10 @@ def test_new_features_actually_render():
     assert ctx.eval("GLwired") > 0, "EEPHUS_GL.wire was never called"
     ctx.eval("location.hash='#/leaders/cs_plus/2024';window.location.hash=location.hash;render();")
     board = ctx.eval("__html['app']||''")
-    # The leaderboard is now a sortable stat table: click-to-sort headers, a CS+
+    # The leaderboard is now a sortable stat table: click-to-sort headers that
+    # state their sort (aria-sort; the "click any column" line was cut), a CS+
     # column, the team/min-PA filters, and resolved national team names.
-    for needle in ["lb-th", 'data-sort="cs_plus"', "Georgia", "Click any column header",
+    for needle in ["lb-th", 'data-sort="cs_plus"', "Georgia", "aria-sort=",
                    "data-team-filter", "Min PA"]:
         assert needle in board, f"leaderboard is missing {needle!r}"
 

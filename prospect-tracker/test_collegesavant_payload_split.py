@@ -12,7 +12,10 @@ lazy-inject on first use (pitcher_app.js ensurePitchData / app.js
 ensureHitterBip, the same injector pattern as ensurePitchShapes). These pins
 hold the split in place:
 
-  - the HTML ships only the small recent-season files eagerly,
+  - the HTML ships no per-year table and no /data/ sidecar at boot (QREP01,
+    surface-quality audit 2026-10-02: the current-season tables and the 2.1 MB
+    translation sidecar held the first home row back 2.4 to 3.7 s at 10 Mbps;
+    every one is injected by the view that reads it),
   - the slimmed monolith files no longer carry the moved globals,
   - each per-year file carries exactly its own season (a regenerated payload
     that mixes seasons would silently double-ship), and
@@ -46,25 +49,31 @@ def _script_srcs(page: str) -> list[str]:
 # --------------------------------------------------------------------------- #
 # Page structure: what ships eagerly
 # --------------------------------------------------------------------------- #
-def test_hitter_page_ships_current_season_bip_only():
+SIDECARS = ("/data/collegesavant_translation.js", "/data/collegesavant_draft_prospects.js")
+
+
+def test_hitter_page_ships_no_batted_balls_or_sidecars_at_boot():
     srcs = _script_srcs("index.html")
     assert "data.js" in srcs
     # HITTER_DATA (all years) stays eager: the leaderboard and the global
     # search index every year of it.
     assert "hitter_year_data.js" in srcs
-    assert "hitter_bip_2025.js" in srcs, "current-season batted balls must ship at boot"
-    assert "hitter_bip_2024.js" not in srcs, "the 11.6MB 2024 cloud must stay lazy"
+    for year in BIP_YEARS:
+        assert f"hitter_bip_{year}.js" not in srcs, f"hitter_bip_{year}.js is injected by ensureHitterBip"
+    for side in SIDECARS:
+        assert side not in srcs, f"{side} is injected by ensurePayload on the views that read it"
     assert "pitcher_data.js" not in srcs, "pitcher payload is search-lazy on the hitter page"
 
 
-def test_pitcher_page_ships_recent_season_pitch_files_only():
+def test_pitcher_page_ships_no_pitch_tables_or_sidecars_at_boot():
     srcs = _script_srcs("pitcher_index.html")
     assert "data.js" in srcs
     # PITCHER_DATA (all years) stays eager: leaderboard + global search.
     assert "pitcher_data.js" in srcs
-    assert "pitcher_pitch_data_2025.js" in srcs
-    assert "pitcher_pitch_data_2026.js" in srcs
-    assert "pitcher_pitch_data_2024.js" not in srcs, "the 11.6MB 2024 table must stay lazy"
+    for year in PITCH_YEARS:
+        assert f"pitcher_pitch_data_{year}.js" not in srcs, f"pitcher_pitch_data_{year}.js is injected by ensurePitchData"
+    for side in SIDECARS:
+        assert side not in srcs, f"{side} is injected by ensurePayload on the views that read it"
     assert "hitter_year_data.js" not in srcs, "hitter payload is search-lazy on the pitcher page"
     for shape in ("pitch_shape_data_2024.js", "pitch_shape_data_2025.js"):
         assert shape not in srcs, f"{shape} is injected by ensurePitchShapes, never eager"
@@ -77,6 +86,19 @@ def test_apps_wire_the_lazy_injectors():
     hitter_app = (CS / "app.js").read_text(encoding="utf-8")
     assert "hitter_bip_${year}.js" in hitter_app
     assert "function ensureHitterBip" in hitter_app
+    # The boot path no longer fetches a season: setActiveYear only filters, and
+    # the profile views ask for their own tables.
+    for src, inj in ((hitter_app, "ensureHitterBip(state.year)"), (pitcher_app, "ensurePitchData(state.year)")):
+        set_year = src.split("function setActiveYear(")[1].split("\n}\n")[0]
+        assert inj not in set_year
+    assert "ensurePitchData(pitcher.year)" in pitcher_app.split("function renderPitcher(")[1].split("\n}\n")[0]
+    for src in (hitter_app, pitcher_app):
+        assert "function ensurePayload(name, global)" in src
+        assert "/data/${name}.js${ver ? `?v=${ver}` : \"\"}" in src
+        assert "window.CS_PAYLOAD_VER" in src
+        proj = src.split("function renderProjections()")[1].split("\n}\n")[0]
+        assert "if (!ensureTranslation())" in proj
+        assert "ensureDraftProspects()" in src.split("function renderProspects()")[1].split("\n}\n")[0]
 
 
 # --------------------------------------------------------------------------- #
