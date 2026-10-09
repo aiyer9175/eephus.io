@@ -9385,7 +9385,7 @@
       </span>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-pack" type="checkbox"> card pack</label>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-showval" type="checkbox" checked> value column</label>
-      <label class="gfx-ctrl gfx-ctrl-check" title="Face-centered player photos. On the single-player, compare and pack cards, and on Rows lists wherever the row is tall enough and the column wide enough to carry one without shortening the name. Tiles lists are names-only."><input id="gfx-photos" type="checkbox" checked> photos</label>
+      <label class="gfx-ctrl gfx-ctrl-check" title="Face-centered photos on single, compare and pack cards, and on Rows lists where one fits without shortening the name. Tiles: names only."><input id="gfx-photos" type="checkbox" checked> photos</label>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-logos" type="checkbox" checked> team logos</label>
     </div>
     <div class="gfx-preview" id="gfx-preview"></div>
@@ -9455,8 +9455,8 @@
     <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-draft" width="16" height="16"/></svg>MLB Draft/HS</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021-present)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-intl" width="16" height="16"/></svg>International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort with its own performance index, RPS-Intl+ (100+15z within the league cohort) - not the MiLB board's ratio RPS+."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-overseas" width="16" height="16"/></svg>Overseas</button>
-    <button class="section-tab" data-section="timemachine" title="Time-travel the board - view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-timemachine" width="16" height="16"/></svg>Time Machine</button>
-    <button class="section-tab" data-section="charts" title="Build your own scatterplot - pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-scatter" width="16" height="16"/></svg>Scatterplots</button>
+    <button class="section-tab" data-section="timemachine" title="The board at any past snapshot, or a diff of two dates: risers, fallers, adds, graduates."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-timemachine" width="16" height="16"/></svg>Time Machine</button>
+    <button class="section-tab" data-section="charts" title="Scatterplot: any two metrics over one prospect group (MiLB, Debuted, Draft, IFA, Overseas, Farms)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-scatter" width="16" height="16"/></svg>Scatterplots</button>
     <!-- The Library lives on its own surface (/glossary/) - a real link styled
          as a section tab, with the site's § module glyph. -->
     <a class="section-tab section-tab-link" href="/glossary/" title="Library - every term, model derivation, and the track record behind the site"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-library" width="16" height="16"/></svg>Library</a>
@@ -9522,7 +9522,7 @@
         </select>
       </div>
       <div class="filter-group">
-        <span class="filter-label" title="Filter by draft year (drafted prospects) or IFA signing year. 'Class of YYYY' equivalent - pick a year to see everyone the league acquired that year.">Class of</span>
+        <span class="filter-label" title="Acquisition class: every player drafted or signed in the chosen year.">Class of</span>
         <select class="chip" id="class-filter">
           <option value="all">All classes</option>
         </select>
@@ -9575,7 +9575,7 @@
       <div class="filter-group">
         <span class="filter-label" title="Toggle one or more FV-badge indicators. Empty = show all. Multiple selected = OR (union).">FV indicators</span>
         <button class="chip is-multi" data-filter-fvind="wide" title="Wide FV spread - ≥2 sources disagree by at least 10 grade points">W spread</button>
-        <button class="chip is-multi" data-filter-fvind="single" title="Thinly sourced - the grade rests on little-to-no published scouting input: a provisional (source-ungraded) prospect OR a single published grade">~ Thinly sourced</button>
+        <button class="chip is-multi" data-filter-fvind="single" title="Thin: zero or one published grade behind this row.">~ Thinly sourced</button>
         <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout - DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 110 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout ★</button>
         <button class="chip is-multi" data-filter-fvind="upside" title="Upside (^) - at least one source published a '+' upside mark on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside). Rendered on the FV chip as a ^ glyph so it doesn't collide with the health '+' pill.">Upside ^</button>
       </div>
@@ -9588,15 +9588,15 @@
            hasn't caught up to yet. -->
       <div class="filter-group">
         <span class="filter-label" title="Statcast composite (100 = pool mean, 10 points per standard deviation). Filter for prospects with elite, above-mean, or below-mean tracked-data signal.">Statcast</span>
-        <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 130 - elite tier (+3 standard deviations). Composite of contact quality + zone discipline for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ elite</button>
+        <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 130 - elite tier (+3 standard deviations). Hitters: contact quality and zone discipline. Pitchers: velo, whiffs, contact allowed.">SC+ elite</button>
         <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 107 - above pool mean. Tracked-data contact quality / pitch quality clears the league baseline.">SC+ above</button>
-        <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 92 - below pool mean. Surfaces prospects whose tracked data lags the surface stats; useful for regression-watch.">SC+ below</button>
+        <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 92 - below pool mean. Tracked data below the surface line: regression candidates.">SC+ below</button>
       </div>
       <div class="filter-group">
-        <span class="filter-label" title="Filter by the shape of the consensus outcome table read at the eFV grade (not its level): the outcome-bucket distribution each graded prospect already carries. Empty = show all. Multiple selected = OR (union). Prior-anchored / provisional grades (no pro track record yet) are excluded since their band is the consensus prior, not a model read.">Risk profile</span>
-        <button class="chip is-multi" data-filter-risk="floor" title="High floor - low bust share in the consensus outcome table at the eFV grade (P(bust) ≤ 40%). Safe, likely to be a real contributor: the win-now trade target.">High floor</button>
-        <button class="chip is-multi" data-filter-risk="lottery" title="Lottery ticket - high bust risk but a real good/star ceiling (P(good-or-better) ≥ 10%). Boom-or-bust upside for a rebuild.">Lottery</button>
-        <button class="chip is-multi" data-filter-risk="balanced" title="Balanced - meaningful floor mass with a modest ceiling; the middle of the risk distribution (neither clearly high-floor nor a lottery ticket).">Balanced</button>
+        <span class="filter-label" title="Filter on the shape of the eFV outcome mix, not its level. Several chips: union. Excludes prior-anchored and provisional grades (their band is the consensus prior).">Risk profile</span>
+        <button class="chip is-multi" data-filter-risk="floor" title="High floor: P(bust) ≤ 40% in the consensus outcome table at the eFV grade.">High floor</button>
+        <button class="chip is-multi" data-filter-risk="lottery" title="Lottery: P(bust) above 40% and P(good or better) ≥ 10%.">Lottery</button>
+        <button class="chip is-multi" data-filter-risk="balanced" title="Balanced: P(bust) 40% to 75% and P(good or better) under 10%.">Balanced</button>
       </div>
       <div class="filter-group">
         <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
@@ -9755,7 +9755,7 @@
            (Expanded view was inferior in every way per user direction). -->
       <div class="filter-group">
         <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, and sort on the prospect list">↺ Reset filters</button>
-        <button class="chip" type="button" id="board-csv-btn" title="Download CSV: every row matching the current filters, in the current sort, not only this page. Grades print as the board prints them (eFV to the nearest point, consensus FV rounded up) with the decimal beside each; the file stamps its as-of date, grade basis and sort on every row.">Download CSV <span class="board-csv-n" style="color:var(--text-tertiary);"></span></button>
+        <button class="chip" type="button" id="board-csv-btn" title="Download CSV: all rows under the current filters and sort. Grades print as the board prints them (eFV to the nearest point, consensus FV rounded up) with the decimal beside each; the file stamps its as-of date, grade basis and sort on every row.">Download CSV <span class="board-csv-n" style="color:var(--text-tertiary);"></span></button>
       </div>
     </div>
   </div>
@@ -9815,7 +9815,7 @@
       <button class="chip" data-spotlight-bucket="rebounders"
               title="Pedigree-comeback narrative: previously hyped (first-round pick / IFA / $1M+ bonus) prospects whose prior season was weak but who have bounced back this year with improved skills.">Rebounders</button>
       <button class="chip" data-spotlight-bucket="fallers"
-              title="Prospects whose 2026 performance has materially deteriorated. Very-young and young+pedigreed prospects are filtered out unless their K-rate has cratered (Bryce Rainer-style).">Fallers</button>
+              title="Prospects whose 2026 performance has materially deteriorated. Excludes very young and young pedigreed prospects unless K% has collapsed past the screen's cut.">Fallers</button>
       <button class="chip reset-chip" type="button" data-reset-page="spotlights" title="Reset spotlight bucket back to default (Risers)" style="margin-left:12px;">↺ Reset</button>
     </div>
     <div id="spotlight-track-record" class="spotlight-track-record" aria-live="polite"></div>
@@ -9938,7 +9938,7 @@
         <button class="chip" data-draft-view="simulate"
                 title="Run the draft yourself: control one team, several, or all thirty, and pick from the real consensus board pick by pick. The CPU drafts best-board-available within bonus-pool budget; every pick is graded against slot value and consensus rank.">Simulate</button>
         <button class="chip" data-draft-view="war-room"
-                title="Live draft board: each pick as it happens, priced against our board (consensus rank + eFV) and the historical pick-value curve, so you see the reach-or-steal in surplus dollars. Opens on draft night.">War Room</button>
+                title="Each pick, live, priced against the board (consensus rank + eFV) and the pick-value curve: reach or steal in surplus dollars. Opens on draft night.">War Room</button>
       </span>
       <span class="draft-subnav-group">
         <span class="draft-subnav-grouplabel">Trends &amp; Tendencies</span>
@@ -10066,7 +10066,7 @@
       <button class="chip" data-overseas-view="posting"
               title="Players currently posted (KBO/NPB posting system) - days remaining in their MLB negotiation window">Posting Tracker</button>
       <button class="chip" data-overseas-view="signed"
-              title="Overseas free agents who have signed with MLB clubs, grouped by arrival year, with how each signing has panned out">Past Signings</button>
+              title="Overseas signings by arrival year, with MLB results.">Past Signings</button>
       <button class="chip" data-overseas-view="leaderboard"
               title="Top by FV + per-position bests + biggest projected bonuses">Leaderboard</button>
       <button class="chip" data-overseas-view="league-context"
@@ -10207,7 +10207,7 @@
         <button class="chip" data-debut-sort="career_war"
                 title="Cumulative career WAR (BBref), highest first. Debuted players with no MLB time sink to the bottom.">Career WAR</button>
         <button class="chip" data-debut-sort="war_per_yr"
-                title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat - favors debuts with a strong sample-size-adjusted track record.">WAR/year</button>
+                title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat, shrunk for sample size.">WAR/year</button>
         <button class="chip" data-debut-sort="fv_close"
                 title="Highest final consensus FV (the FV when the player debuted) first">Final FV</button>
         <button class="chip" data-debut-sort="trade_value"
@@ -10217,7 +10217,7 @@
         <button class="chip" data-debut-sort="vs_fv_proj_low"
                 title="WAG, lowest first: graduates furthest behind their eFV grade at debut surface at the top. Graduates without a WAG sink to the bottom.">WAG (low)</button>
         <button class="chip" data-debut-sort="warwag"
-                title="WARWAG: WAR per season plus WAG. Rewards graduates who are both productive and ahead of their grade. Highest first; graduates without a WAG sink to the bottom.">WARWAG (high)</button>
+                title="WARWAG: WAR per season plus WAG. High when a graduate produces and beats his grade. Highest first; graduates without a WAG sink to the bottom.">WARWAG (high)</button>
         <button class="chip" data-debut-sort="warwag_low"
                 title="WARWAG, lowest first: graduates both unproductive and behind their grade surface at the top. Graduates without a WAG sink to the bottom.">WARWAG (low)</button>
       </div>
@@ -10251,7 +10251,7 @@
          idiom. -->
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">League-wide Farm System Rankings · 30 Organizations</span>
-      <span class="newsprint-eyebrow-meta">v40 composite grade · acquisition, development, financial &amp; MLB-production rollups</span>
+      <span class="newsprint-eyebrow-meta">composite grade · acquisition, development, financial, MLB production</span>
     </div>
     <!-- v29 - Collapsed-by-default filter accordion for farm system. -->
     <div class="filter-toggle-row">
@@ -10287,7 +10287,7 @@
              is selected in the right-hand "Development window" picker, so
              three chips (one per window) would just duplicate that control. -->
         <button class="chip" data-farm-sort="trajectory"
-                title="Sort by DvM+ for the development window selected on the right; the default is the principal window the farm grade anchors on. Acquisitions + debuts are nullified - pure development of prospects already in the system.">Trajectory (DvM+)</button>
+                title="Sort by DvM+ for the development window selected on the right; the default is the principal window the farm grade anchors on. Excludes acquisitions and debuts: development of players already in the system.">Trajectory (DvM+)</button>
         <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted debuts in the trailing 12 months">Grad pipeline</button>
         <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
         <button class="chip" data-farm-sort="draft_spend_pct" title="Draft's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to the draft rise to the top">Draft Spending %</button>
@@ -10317,9 +10317,9 @@
              gates at ≥5 graded prospects per side; orgs below the
              gate sink to the bottom of the sort. -->
         <button class="chip" data-farm-sort="statcast_plus_hit"
-                title="Mean Statcast+ across the farm's HITTERS with tracked data (EV / HH% / Brl% / Z-Con% / Whiff% / Chase% composite). 100 = pool average. Gated at ≥5 graded hitters per org.">SC+ hitters</button>
+                title="Mean Statcast+ of the farm's tracked hitters (EV, HH%, Brl%, Z-Con%, Whiff%, Chase%). 100 = pool average. Gated at ≥5 graded hitters per org.">SC+ hitters</button>
         <button class="chip" data-farm-sort="statcast_plus_pit"
-                title="Mean Statcast+ across the farm's PITCHERS with tracked data (top-pitch velo / Whiff% / Chase% / HH%-allowed / Brl%-allowed composite). 100 = pool average. Gated at ≥5 graded pitchers per org.">SC+ pitchers</button>
+                title="Mean Statcast+ of the farm's tracked pitchers (velo, Whiff%, Chase%, HH% and Brl% allowed). 100 = pool average. Gated at ≥5 graded pitchers per org.">SC+ pitchers</button>
       </div>
       <div class="filter-group">
         <span class="filter-label">Depth at level</span>
@@ -10345,12 +10345,12 @@
         <span id="farm-tendency-chips" class="farm-tendency-chips"></span>
       </div>
       <div class="filter-group" style="margin-left:auto;">
-        <span class="filter-label" title="Trailing window the WHOLE farm grade is computed over (composite letter, DvM+, sub-grades). Excludes incoming acquisitions so only true development counts. 7y is the empirically-optimal default (best predicts realized graduate output); pick any window to re-grade every farm.">Grade window</span>
+        <span class="filter-label" title="Trailing window for the whole farm grade (letter, DvM+, sub-grades); acquisitions excluded. 7y is the default: it best predicts graduate output.">Grade window</span>
         <button class="chip"        data-form-window="3y">3y</button>
         <button class="chip"        data-form-window="4y">4y</button>
         <button class="chip"        data-form-window="5y">5y</button>
         <button class="chip"        data-form-window="6y">6y</button>
-        <button class="chip active" data-form-window="7y" title="Default - the empirically-optimal trailing window (best predicts realized graduate output)">7y <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span></button>
+        <button class="chip active" data-form-window="7y" title="Default: the trailing window that best predicts graduate output.">7y <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span></button>
         <button class="chip"        data-form-window="8y">8y</button>
       </div>
       <div class="filter-group">
@@ -10557,7 +10557,7 @@
         </div>
         <div class="filter-group">
           <button class="chip" id="chart-reset-view" type="button" title="Reset zoom/pan to fit all points" style="display:none;">⤢ Reset view</button>
-          <button class="chip" id="chart-share" type="button" title="Copy a shareable link to this exact chart + filter configuration">🔗 Share</button>
+          <button class="chip" id="chart-share" type="button" title="Copy a link to this chart and its filters.">🔗 Share</button>
           <button class="chip" id="chart-save-png" type="button" title="Export this scatterplot as an on-theme graphic (Generate GFX)">⤴ Generate GFX</button>
           <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, size, ranges, and highlight">↺ Reset</button>
         </div>
@@ -10587,7 +10587,7 @@
       <div id="watchlist-empty" class="state-message" style="display:none;">
         <div style="font-size:32px;margin-bottom:var(--space-2);opacity:0.5;">☆</div>
         <div style="font-size:var(--fs-md);color:var(--text-secondary);margin-bottom:var(--space-1);">No prospects starred yet</div>
-        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Click the ☆ icon on any prospect to track them here. Watchlist + notes are private to this browser.</div>
+        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Star a prospect (☆) to list it here. Watchlist + notes are private to this browser.</div>
       </div>
       <div class="active-grid">
         <div id="watchlist-rows"></div>
@@ -10598,7 +10598,7 @@
       <div id="watchlist-farms-empty" class="state-message" style="display:none;">
         <div style="font-size:32px;margin-bottom:var(--space-2);opacity:0.5;">☆</div>
         <div style="font-size:var(--fs-md);color:var(--text-secondary);margin-bottom:var(--space-1);">No farm systems starred yet</div>
-        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Click the ☆ icon next to any farm to track it here. Watchlist is private to this browser.</div>
+        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Star a farm (☆) to list it here. Watchlist is private to this browser.</div>
       </div>
       <div id="watchlist-farms-rows"></div>
     </div>
@@ -11954,7 +11954,7 @@ function fvBadgeWideMarkHTML(player) {
   const range = (sp.min != null && sp.max != null)
     ? ` (FV ${fvCeil(sp.min)}-${fvCeil(sp.max)} across ${sp.n} sources)`
     : (sp.n ? ` across ${sp.n} sources` : "");
-  return `<span class="fv-wide-mark" title="Wide source disagreement - sources differ by ${gap} grade points${range}. Open the per-source breakdown (now inside the More details accordion) for the per-source FVs.">W</span>`;
+  return `<span class="fv-wide-mark" title="Wide source disagreement: sources differ by ${gap} grade points${range}. Per-source FVs: More details.">W</span>`;
 }
 
 // Returns " is-single-source" when the player has only ONE explicit-FV
@@ -11978,8 +11978,8 @@ function fvBadgeSingleClass(player) {
 function fvBadgeSingleMarkHTML(player) {
   if (!fvBadgeSingleClass(player)) return "";
   const tip = (player && player._is_provisional)
-    ? "Thinly sourced - no scouting source has graded this prospect yet; the grade is a production-only leading indicator from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards)."
-    : "Thinly sourced - only one published grade across this player's history (single observation). Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.";
+    ? "Thin: no source grade yet; production-only grade from translated MiLB stats."
+    : "Thin: one published grade. Shrunk 1/3 toward FV 35 (k = 0.5) until a second update lands, any source.";
   // Inner span so the "~" (which sits high in its em-box) can be optically centered in the chip.
   return `<span class="fv-single-mark" title="${tip}"><span aria-hidden="true">~</span><span class="visually-hidden">thinly sourced</span></span>`;
 }
@@ -12100,8 +12100,8 @@ function fvBadgeUpsideMarkHTML(player) {
     .filter(([, v]) => v && v.fv_plus && _fvQualifiesForPlus(v.fv_published))
     .map(([src]) => SOURCE_LABELS[src] || src);
   const reason = plusSrcs.length
-    ? `Upside grade - published "+" by ${plusSrcs.join(", ")}.`
-    : `Upside grade - at least one contributing source published a "+" on the latest snapshot.`;
+    ? `Upside grade: "+" from ${plusSrcs.join(", ")}.`
+    : `Upside grade: a contributing source published a "+" on the latest snapshot.`;
   // v30.3 - Glyph wrapped in an inner <span> so the CSS rule
   // .fv-upside-mark > span can translateY(2px) the caret independent
   // of the chip box, fixing the "^ sits too high in its em-box"
@@ -15093,7 +15093,7 @@ function makeMilbCell(p) {
         ? `<span class="stat-pill" title="${escapeHtml(eraMinusLevelTip())}">ERA- lvl ${Math.round(sl.era_minus_level)}</span>`
         : "")
     : (_lvlPlus(sl) != null
-        ? `<span class="stat-pill" title="wRC+ vs level: linear-weight offense against the PA-weighted league pool for his level and season. 100 is league average, higher is better.">wRC+ ${Math.round(_lvlPlus(sl))}</span>`
+        ? `<span class="stat-pill" title="wRC+ vs level ${Math.round(_lvlPlus(sl))}: 100 = level average.">wRC+ ${Math.round(_lvlPlus(sl))}</span>`
         : "");
   // v30.5 - Tailored Statcast outlier chips appended INLINE to the
   // existing detail line. Stays on the same row via inline-block;
@@ -15656,8 +15656,8 @@ function gradCareerWarHTML(p) {
   const seasons = cw.seasons || {};
   const years = Object.keys(seasons).sort();
   const tip = years.length
-    ? `Career WAR · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR unless they pitched)\n` + years.map(y => `${y}: ${seasons[y] >= 0 ? "+" : ""}${seasons[y]}`).join("\n")
-    : "Career WAR · eWAR (B-Ref frame, pitching on FIP; hitters match bWAR unless they pitched)";
+    ? `Career eWAR (B-Ref frame)\n` + years.map(y => `${y}: ${seasons[y] >= 0 ? "+" : ""}${seasons[y]}`).join("\n")
+    : "Career eWAR (B-Ref frame)";
   return `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">
     <span style="color:${totColor};font-weight:700;">${tot >= 0 ? "+" : ""}${tot.toFixed(1)} WAR</span>
     <span style="color:var(--text-tertiary);"> · </span><span style="color:${perColor};">${per >= 0 ? "+" : ""}${per.toFixed(2)}/yr</span>
@@ -15674,7 +15674,7 @@ function gradCurrentWarHTML(p) {
   if (w == null) return "";
   const yr = new Date().getUTCFullYear();
   const color = w >= 3 ? "var(--up)" : w <= 0 ? "var(--down)" : "var(--text-primary)";
-  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season eWAR (B-Ref frame, pitching on FIP; hitters match bWAR unless they pitched)">${yr} eWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
+  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season eWAR (B-Ref frame)">${yr} eWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
 }
 
 function makeGradMilbCell(p) {
@@ -16129,7 +16129,7 @@ function _applyFreshnessStamps(root) {
     el.classList.toggle("is-grades", kind === "grades");
     el.innerHTML = `<span class="fresh-dot" aria-hidden="true"></span>${escapeHtml(word)} ${escapeHtml(label)}`;
     el.title = kind === "grades"
-      ? "Grades, tool evaluations and Arkmetrics refresh on a monthly cadence."
+      ? "Grades, tools and Arkmetrics refresh monthly."
       : "Transactions, the Injured List and roster status refresh daily.";
   });
 }
@@ -18406,15 +18406,15 @@ function renderActives() {
   // Every column is now click-to-sort - Player (alpha), MiLB level, etc.
   const header = `<div class="col-header${physOn ? " has-phys" : ""}${starOddsOn ? " has-star-odds" : ""}">
     <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness (LHB/RHB/SHB or LHP/RHP). Click to sort alphabetically.">Player<span class="hdr-more"> · pos · org · age · B/T</span></span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV rank - the consensus order reordered by admitted drivers (primary). Diamond border matches the rarity tier. The line under the diamond is his place inside his org on the same eFV order. Click to sort."><span class="hdr-efv">eFV </span>Rank</span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV - our Future Value grade, the consensus order reordered by admitted drivers (primary grade). Click to sort by eFV.">eFV · FV</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV rank (primary sort). Diamond border: rarity tier. Under it: his org rank on the eFV order, kept under the Consensus toggle."><span class="hdr-efv">eFV </span>Rank</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV (primary grade): the consensus FV order within each side, reordered by admitted drivers; the grade is the consensus value at that rank. ${escapeHtml((efvServedClaim() || {}).text || "")}">eFV · FV</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline - hover for OHLC open / high / low / close">FV history</span>
-    <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
-    ${physOn ? `<span class="desktop-only" style="text-align:center;white-space:nowrap;" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). Click Ht, Wt, or BMI to sort by that dimension; click the same one again to reverse.">
+    <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level, age vs level, stat pills (wRC+ vs level: linear-weight offense vs his level's PA-weighted pool). Sort: nearest MLB first.">MiLB · age vs. level</span>
+    ${physOn ? `<span class="desktop-only" style="text-align:center;white-space:nowrap;" title="Height, weight, BMI, colored by z-score vs same-position peers. Click Ht, Wt or BMI to sort; again to reverse.">
       <span class="sort-header" data-sort-key="ht_desc" title="Sort by height (tallest first; click again to reverse)">Ht</span> · <span class="sort-header" data-sort-key="wt_desc" title="Sort by weight (heaviest first; click again to reverse)">Wt</span> · <span class="sort-header" data-sort-key="bmi_desc" title="Sort by BMI (highest first; click again to reverse)">BMI</span>
     </span>` : ""}
-    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first. Below the year: years older (+) or younger (-) than the median player at his current level, and the date he reached it.">ETA</span>
-    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected MLB surplus value ($M) from the career-path mixture engine, with the outcome-bucket bar (bust→star). Click to sort by expected SV.">Surplus</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA, earliest first. Below the year: years older (+) or younger (-) than the median player at his level, and the date he reached it.">ETA</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected surplus ($M): an expectation, not a forecast of his return. Bar: bust-to-star buckets. Fan: P10-P90, P25-P75, median, green mean.">Surplus</span>
     ${starOddsOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="star_odds" title="Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.">Star Odds</span>` : ""}
   </div>`;
 
@@ -20664,7 +20664,7 @@ function _rollingPerfChart(games, isP){
   </div>`;
 }
 function _splitFootnote(isP){
-  return `<div class="split-foot">Rates re-aggregated from box-line components over each window (totals summed, then rates derived - never averaged). ${isP?("FIP uses a flat "+_LB_FIP_CONST+" MiLB constant and counts HBP when every game carries it; xFIP / GB% need batted-ball data not in the box line."):"OBP counts HBP and SF and BABIP counts SF when every game in the window carries them (box lines built from 2026-09-25); older box lines lack both, and those windows fall back to (H+BB)/(AB+BB). wOBA needs season linear-weights not carried per game."} Cells dim when the sample is below the metric's stabilization point (hover for the threshold). By-level / by-season views index OPS/ISO (or ERA) to that level's average so cohorts stay comparable. Platoon (vs LHP/RHP) needs pitch-level handedness data, which is not available at this level.</div>`;
+  return `<div class="split-foot">Rates re-aggregated from box-line components over each window (totals summed, then rates derived - never averaged). ${isP?("FIP uses a flat "+_LB_FIP_CONST+" MiLB constant and counts HBP when every game carries it; xFIP / GB% need batted-ball data not in the box line."):"OBP counts HBP and SF and BABIP counts SF when every game in the window carries them (box lines built from 2026-09-25); older box lines lack both, and those windows fall back to (H+BB)/(AB+BB). wOBA needs season linear-weights not carried per game."} Cells dim when the sample is below the metric's stabilization point (hover for the threshold). By-level / by-season views index OPS/ISO (or ERA) to that level's average so cohorts stay comparable. No platoon split: no pitch-level handedness at this level.</div>`;
 }
 function renderSplits(key){
   const host=document.getElementById("splits-body"); if(!host) return;
@@ -20680,10 +20680,10 @@ function renderSplits(key){
   const chips=[
     chip("recency","Recency",true),
     chip("by_level","By level",caps.levels.length>0),
-    chip("by_season","By season",caps.seasons.length>1,caps.seasons.length>1?"":"Needs multiple seasons of game logs (current slice has one); repopulates after a multi-season gamelog build."),
-    chip("home_away","Home / Away",caps.hasHome,caps.hasHome?"":"Needs the venue flag in the game-log slice; the builder now keeps it, so this lights up after the next gamelog build."),
+    chip("by_season","By season",caps.seasons.length>1,caps.seasons.length>1?"":"Needs 2+ seasons of game logs; this slice has 1."),
+    chip("home_away","Home / Away",caps.hasHome,caps.hasHome?"":"Needs the venue flag in the game-log slice; the next game-log build writes it."),
     chip("custom","Custom",true),
-    `<button class="split-chip disabled" title="Platoon (vs LHP/RHP) needs pitch-level handedness data, which is not available at this level.">vs L/R</button>`,
+    `<button class="split-chip disabled" title="No platoon split: no pitch-level handedness at this level.">vs L/R</button>`,
   ].join("");
   const multi=(ui.view==="by_level"||ui.view==="by_season"||ui.view==="home_away");
   const controls=`<label class="split-toggle" title="Shrink each rate toward the level average by its stabilization sample (regression to the mean). A MODELED value, not the raw split."><input type="checkbox" ${ui.regressed?"checked":""} onchange="splitToggleRegressed('${escapeHtml(key)}')"> Regressed</label>${multi?`<label class="split-toggle" title="Show each row's difference vs the first row."><input type="checkbox" ${ui.delta?"checked":""} onchange="splitToggleDelta('${escapeHtml(key)}')"> &Delta; vs first</label>`:""}`;
@@ -21271,7 +21271,7 @@ function _lbKeyHTML() {
   const T = window.EephusTiers;
   if (!T || !T.pctColor) return "";
   const lamps = [0, 20, 40, 60, 80, 90, 100].map(n =>
-    `<i class="px-lb-lamp" style="background:${T.pctColor(n)}" title="${n}th percentile"></i>`).join("");
+    `<i class="px-lb-lamp" style="background:${T.pctColor(n)}" title="${_ord(n)} percentile"></i>`).join("");
   return `<span class="px-lb-key">colour = percentile in this pool <span class="px-lb-lamps" aria-hidden="true">${lamps}</span></span>`;
 }
 function _lbCsv() {
@@ -22671,9 +22671,8 @@ function _dtvSecondary(p) {
 function _dtvSurplusCellHTML(p, mm) {
   const sec = _dtvSecondary(p);
   const col = mm >= 50 ? "var(--up)" : mm >= 10 ? "var(--neon-cyan)" : mm < 0 ? "var(--down)" : "var(--text-primary)";
-  const tip = `Trade value ${_taMM(mm)}: the posterior expected surplus of his MLB contract over the club control window, `
-    + "the same number the Trade Machine prints (surplus source: contract projection)."
-    + (sec ? ` ${sec.label} ${fmtSvMM(sec.mm)}, priced as a prospect, not on his contract.` : "");
+  const tip = `Trade value ${_taMM(mm)}: contract surplus over club control (Trade Machine).`
+    + (sec ? ` ${sec.label} ${fmtSvMM(sec.mm)}: a prospect price, not a contract price.` : "");
   return `<div class="surplus-cell" title="${escapeHtml(tip)}">
       <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${col};font-variant-numeric:tabular-nums;line-height:1.05;">${_taMM(mm)}</div>
       <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1.1;">trade value${sec ? ` · ${sec.short} ${fmtSvMM(sec.mm)}` : ""}</div>
@@ -22715,20 +22714,19 @@ function _debutTvSecondary(g) {
 function _debutTvCellHTML(g) {
   const sec = _debutTvSecondary(g);
   const sub = sec ? `<div class="debut-tv-sub">${sec.short} ${fmtSvMM(sec.mm)}</div>` : "";
-  const secTip = sec ? ` ${sec.label} ${fmtSvMM(sec.mm)}, priced as a prospect, not on his contract.` : "";
+  const secTip = sec ? ` ${sec.label} ${fmtSvMM(sec.mm)}: a prospect price, not a contract price.` : "";
   if (!_TA_TV.idx) {
     return `<div class="debut-tv-cell" title="Loading trade values"><div class="debut-tv-lead is-pending">...</div>${sub}</div>`;
   }
   const mm = debutedTradeValueMM(g);
   if (mm == null) {
     const why = _TA_TV.idx.ok
-      ? "No trade value: no MLB contract projection on the Trade Machine for him."
+      ? "No trade value: no MLB contract projection."
       : "Trade values could not be read.";
     return `<div class="debut-tv-cell" title="${escapeHtml(why + secTip)}"><div class="debut-tv-lead is-none">-</div>${sub}</div>`;
   }
   const col = mm >= 50 ? "var(--up)" : mm >= 10 ? "var(--neon-cyan)" : mm < 0 ? "var(--down)" : "var(--text-primary)";
-  const tip = `Trade value ${_taMM(mm)}: the posterior expected surplus of his MLB contract over the club control window, `
-    + "the same number the Trade Machine prints (surplus source: contract projection)." + secTip;
+  const tip = `Trade value ${_taMM(mm)}: contract surplus over club control (Trade Machine).` + secTip;
   return `<div class="debut-tv-cell" title="${escapeHtml(tip)}"><div class="debut-tv-lead" style="color:${col};">${_taMM(mm)}</div>${sub}</div>`;
 }
 
@@ -23522,7 +23520,7 @@ function renderRecentlyTraded() {
           }
           if (split.vet_n > 0 && split.prospect_$ !== 0) {
             const vLabel = split.vet_n === 1 ? "vet" : `${split.vet_n} vets`;
-            parts.push(`<span style="color:var(--text-tertiary);font-size:9px;font-weight:500;" title="The MLB player(s) on this side, at the same trade value the Trade Machine shows. Included in the side total; never in the $/FV ratio.">${split.vet_$ < 0 ? "incl. -" : "incl. "}$${Math.abs(split.vet_$).toFixed(1)}M (${vLabel})</span>`);
+            parts.push(`<span style="color:var(--text-tertiary);font-size:9px;font-weight:500;" title="MLB player(s) on this side, at the Trade Machine's trade value. In the side total, not in the $/FV ratio.">${split.vet_$ < 0 ? "incl. -" : "incl. "}$${Math.abs(split.vet_$).toFixed(1)}M (${vLabel})</span>`);
           }
           return parts.length ? " " + parts.join(" ") : "";
         };
@@ -23577,7 +23575,7 @@ function renderRecentlyTraded() {
         return `<div class="trade-audit-card is-traded" data-ta-verdict="${g.verdict}" data-ta-net="${g.netDeltaA}" style="grid-column:1 / -1;margin:-6px 0 8px 26px;padding:6px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-left:3px solid ${_railColor};border-top:2px solid ${winColor};border-radius:0 0 var(--radius-sm) var(--radius-sm);box-shadow:var(--shadow-card);font-size:10px;display:flex;flex-direction:column;gap:4px;line-height:1.5;">
           <div style="display:flex;align-items:baseline;gap:8px;width:100%;">
             <span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;flex-shrink:0;">↳ Trade Audit</span>
-            <span style="font-size:9px;color:var(--text-tertiary);flex-shrink:0;" title="Each party is priced at today's trade value, the number the Trade Machine shows, not the value on the trade date. Career WAR is context only.">value today${_asOf ? `, ${escapeHtml(_asOf)}` : ""}</span>
+            <span style="font-size:9px;color:var(--text-tertiary);flex-shrink:0;" title="Each party at today's Trade Machine trade value, not the value on the trade date. Career WAR is context only.">value today${_asOf ? `, ${escapeHtml(_asOf)}` : ""}</span>
             <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;white-space:nowrap;margin-left:auto;flex-shrink:0;">${verdictText}</span>
           </div>
           ${orgLine(g.orgA, aTone, g.aReceived, aSplit, g.aUnpriced)}
@@ -24767,8 +24765,8 @@ function _renderDraftLottery(host, cls) {
           <th>Round</th>
           <th>Team</th>
           <th style="text-align:right;" title="Chance of winning the #1 overall pick in the lottery">% at #1</th>
-          <th style="text-align:right;" title="Chance of landing anywhere in the top 6, which is how many picks the lottery actually draws. A club can be a long shot for #1 and still very likely to pick in the top 6.">% top 6</th>
-          <th style="text-align:right;" title="Games back of the third-worst record. The three worst records share the top odds tier under the 2022 CBA, so this is the distance to the best lottery odds available. 'in' means the club is already at or inside that tier. Not the same as a standings GB, which is measured against the worst record in the league.">GB to top 3</th>
+          <th style="text-align:right;" title="P(pick in the top 6), the picks the lottery draws. A long shot for #1 can still be likely top 6.">% top 6</th>
+          <th style="text-align:right;" title="Games back of the third-worst record: the three worst share the top odds tier (2022 CBA). 'in': inside that tier. Not standings GB.">GB to top 3</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -25345,7 +25343,7 @@ function _renderDraftCard(p) {
     : p._fvSortRank != null
       ? (p.consensus_fv != null
           ? `Sequential rank by consensus FV${_rawRank}`
-          : `Sequential position on this board; no source has published an FV for this prospect${_rawRank}`)
+          : `Board position; no source FV published${_rawRank}`)
       : (p.consensus_rank != null
           ? `Consensus sequential rank · raw avg ${p.consensus_rank.toFixed(2)}`
           : "Consensus rank");
@@ -26420,7 +26418,7 @@ function _renderDraftLeaderboard(host, cls) {
   // show the same BA list.
   const _hasBaTail = prospects.some(p => !_draftHasClassRank(p) && _draftBaScope(p));
   const _baSwitch = _hasBaTail ? `<div class="draft-lb-ba-switch" style="display:flex;gap:6px;align-items:center;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">
-      <span title="Baseball America ranks its HS and College lists separately, so the unranked rows show one list at a time. This switch sets the Pool filter the Rankings view uses.">BA list</span>
+      <span title="BA ranks HS and College separately, so unranked rows show one list at a time. Sets the Rankings view's Pool filter.">BA list</span>
       ${[["HS", "HS"], ["COL", "College"]].map(([v, l]) => `<button class="chip${tailHid.shown === l ? " active" : ""}" type="button" data-draft-lb-ba="${v}" aria-pressed="${tailHid.shown === l}">${l}</button>`).join("")}
     </div>` : "";
   host.innerHTML = _draftCaption(`${cls.year} draft leaderboard`, _leadSub)
@@ -26929,7 +26927,7 @@ function _ifaFvProgHTML(s) {
   // Mixed bases: the current grade is eFV and the signing grade is consensus, so
   // cur - sig subtracts two different scales. Print the pair, withhold the number.
   if (curEfv) {
-    return `<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(_sigTip)} → ${escapeHtml(_curTip)}. No delta shown: the two grades are on different scales (consensus FV vs eFV), so the difference is not a movement.">
+    return `<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(_sigTip)} → ${escapeHtml(_curTip)}. No delta: consensus FV and eFV are different scales.">
       ${badge(sigLbl, true)}<span style="color:var(--text-tertiary);font-size:12px;line-height:1;">→</span>${badge(curLbl, false)}
     </span>`;
   }
@@ -28024,7 +28022,7 @@ function _renderProspectScoutingReports(p) {
     for (const pt of (p.points || [])) if (pt && pt.source && !seen.includes(pt.source)) seen.push(pt.source);
     const named = seen.map(s => LBL[s] || s).sort();
     const who = named.length ? `${escapeHtml(named.join(" / "))} ${named.length > 1 ? "publish" : "publishes"}` : "Sources publish";
-    return `<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0;">No scouting reports on file. ${who} writeups on a delay; check back after the next refresh.</div>`;
+    return `<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0;">No scouting reports on file. ${who} writeups on a delay; the next refresh picks them up.</div>`;
   }
   // Each report is an excerpt of the publisher's text (owner answer
   // 2026-09-25): a "View on <source>" link where the export knew the source's
@@ -32168,7 +32166,7 @@ function _mtExport() {
   const sumA = _mockTrade.a.reduce((a,p)=>a+(p.trade_value_mm||0),0);
   const sumB = _mockTrade.b.reduce((a,p)=>a+(p.trade_value_mm||0),0);
   const text = `=== Mock Trade (eephus.io Trade Board) ===\n\nTeam A receives:\n${fmtSide("b")||"  (none)"}\n  Total: ${_tbFmt(sumB)}\n\nTeam B receives:\n${fmtSide("a")||"  (none)"}\n  Total: ${_tbFmt(sumA)}\n\nGap: ${_tbFmt(Math.abs(sumA-sumB))}`;
-  navigator.clipboard ? navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"))
+  navigator.clipboard ? navigator.clipboard.writeText(text).then(() => alert("Copied."))
                       : prompt("Copy this trade:", text);
 }
 // ── GRPO Group Panel ────────────────────────────────────────────────────────
@@ -32300,12 +32298,12 @@ function renderDebuts() {
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
     <span class="debut-date-cell sort-header" data-debut-sort="date" title="Sort by debut date (newest first)">Debut</span>
-    <span class="sort-header" data-debut-sort="fv_close" title="Sort by FV at debut (high to low)" style="text-align:center;">FV</span>
-    <span class="sort-header debut-tv-head" data-debut-sort="trade_value" title="Sort by trade value: the Trade Machine price of his MLB contract projection, highest first; click again for lowest first. A dash means no contract projection; those rows stay at the bottom." style="text-align:center;">Trade value</span>
+    <span class="sort-header" data-debut-sort="fv_close" title="Final eFV, locked at debut, over consensus FV. eFV reads a 6-yr WAR outcome mix; its calibration is measured on the Debuted tab." style="text-align:center;">FV</span>
+    <span class="sort-header debut-tv-head" data-debut-sort="trade_value" title="Trade value: posterior expected surplus of his MLB contract over club control, the Trade Machine's number. Dash: no contract projection." style="text-align:center;">Trade value</span>
     <span class="desktop-only sort-header" data-debut-sort="vs_fv_proj" title="Sort by WAG - WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG / season</span>
-    <span class="desktop-only" style="text-align:center;" title="Raw eWAR per MLB season - hover any bar for the year-by-year value">WAR / season</span>
+    <span class="desktop-only" style="text-align:center;" title="eWAR per MLB season (B-Ref frame, pitching on FIP; hitters match bWAR unless they pitched). Hover a bar for the year.">WAR / season</span>
     <span class="debut-level-cell" title="Level"><span class="debut-lvl-long">Level</span><span class="debut-lvl-short" aria-hidden="true">Lvl</span></span>
-    <span class="sort-header" data-debut-sort="war" title="Sort by current-season eWAR (high to low)">MLB stats</span>
+    <span class="sort-header" data-debut-sort="war" title="Sort by current-season eWAR (B-Ref frame), high to low">MLB stats</span>
   </div>`;
 
   // Build the iteration order based on the active sort.
@@ -33879,10 +33877,9 @@ function _perSourceGradeTip(src, info, label) {
   if (info.dropped_off === true && info.fv_adjusted != null && isFinite(info.fv_adjusted)) {
     bits.push(`dropped off this cycle, shrunk to ${Number(info.fv_adjusted).toFixed(1)} before the vote`);
   }
-  const explain = norm != null
-    ? " Consensus averages the NORMALIZED column, not the published one, so it can land outside the published range."
-    : " Consensus averages each source's quantile-normalized grade, not the published one, so it can land outside the published range.";
-  return `${label}: ${bits.join(" · ")}.${explain}`;
+  // CP-089: the why-consensus-can-sit-outside-the-range line prints once, under the
+  // card's source table, not on every source row.
+  return `${label}: ${bits.join(" · ")}.`;
 }
 // ===== Archetype comps panel (data/archetype_comps.json) ===================
 // Renders the productized archetype strata as COMPS AND CONTEXT: "players who
@@ -34029,10 +34026,10 @@ function archetypeCompPanel(p) {
     let chipCls, chipTxt, chipTip;
     if (rel.state === "flagged") {
       chipCls = "is-neg"; chipTxt = "residual flagged";
-      chipTip = `This stratum's out-of-fold residual against the shipped eFV model is NOT statistically zero (|t| ${tTxt}${rel.basis === "derived" ? ", derived from the reported t because the sidecar carried no flag" : ""}). Read it as a description of who else looked like this, not as a checked or corrected expectation. It does not move his grade.`;
+      chipTip = `This stratum's out-of-fold residual against the shipped eFV model is not statistically zero (|t| ${tTxt}${rel.basis === "derived" ? ", derived from the reported t because the sidecar carried no flag" : ""}). Read it as a description of who else looked like this, not as a checked or corrected expectation. It does not move his grade.`;
     } else if (rel.state === "clean") {
       chipCls = "is-neutral"; chipTxt = "residual clean";
-      chipTip = `This stratum's out-of-fold residual against the shipped eFV model is inside the noise band (|t| ${tTxt}${rel.basis === "derived" ? ", derived from the reported t because the sidecar carried no flag" : ""}). That means no measurable miss here. It is NOT a validation of the comp and it does not move his grade.`;
+      chipTip = `This stratum's out-of-fold residual against the shipped eFV model is inside the noise band (|t| ${tTxt}${rel.basis === "derived" ? ", derived from the reported t because the sidecar carried no flag" : ""}). That means no measurable miss here. It is not a validation of the comp and does not move his grade.`;
     } else {
       chipCls = "is-null"; chipTxt = "reliability unknown";
       chipTip = "The sidecar carried no reliability flag and no out-of-fold residual for this stratum, so its accuracy against the shipped model is unmeasured. Treat it as an unchecked comp.";
@@ -34172,7 +34169,7 @@ function apPacePanel(p) {
     const score = Math.round(r.ap_plus);
     const pct = r.ap_percentile != null ? Math.min(99, r.ap_percentile) : null;
     const word = score > 103 ? "faster than" : (score >= 97 ? "at a typical pace for" : "slower than");
-    const lead = `Advanced through the minor-league ladder ${word} comparable players with a similar starting level, age, position group, entry pathway, and professional experience.`;
+    const lead = `Promoted ${word} matched peers (level, age, position group, entry path, pro years).`;
     const ladder = (r.level_history || []).map(row =>
       `<div style="white-space:nowrap;"><span style="color:var(--text-tertiary);">${row[0]}</span>&nbsp; ${escapeHtml((row[1] || []).map(lv => _AP_LEVEL_LABEL[lv[0]] || lv[0]).join(" → "))}</div>`
     ).join("");
@@ -34411,7 +34408,7 @@ function efvReliabilityDiagram(iso) {
       <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Calibration of the 5-bucket outcome distribution · out-of-fold${nPool != null ? ` · n=${nPool}` : ""}</div>
       ${svg}
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${legend.join("")}</div>
-      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:5px;">Each point bins players by the probability the shipped eFV distribution assigned to that outcome bucket: x = the mean predicted probability in the bin, y = the share that actually landed there (forward-chained out-of-fold, 2020-2023 decision cohorts, hitters + pitchers pooled; hover a point for its n). The dashed diagonal is perfect calibration; ECE is the bin-weighted gap. Mid-probability bust calls land above the diagonal (more busts than predicted), so bust risk on FV 45+ prospects runs understated. Three recalibrations were tested and failed their gates (registry xfv_isotonic_calibration, xfv_grade_recal, xfv_dist_recalibration); the served distribution is uncalibrated.</div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:5px;">Each point bins players by the probability the shipped eFV distribution assigned to that outcome bucket: x = the mean predicted probability in the bin, y = the share that landed there (forward-chained out-of-fold, 2020-2023 decision cohorts, hitters + pitchers pooled; hover a point for its n). The dashed diagonal is y = x; ECE is the bin-weighted gap from it. Mid-probability bust calls land above the diagonal (more busts than predicted), so bust risk on FV 45+ prospects runs understated. Three recalibrations were tested and failed their gates (registry xfv_isotonic_calibration, xfv_grade_recal, xfv_dist_recalibration); the served distribution is uncalibrated.</div>
     </div>`;
 }
 // The Debuted-tab panel: collapsed by default, renders only what the artifacts
@@ -34428,7 +34425,7 @@ function efvTrackRecordSection() {
   return `<details style="margin:0 0 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
       <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">eFV V1 (graduates' locked grade) vs consensus FV · the track record <span style="color:var(--text-tertiary);font-weight:400;">· out-of-sample, resolved cohorts</span></summary>
       <div style="padding:2px 12px 12px;">
-        <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-bottom:10px;">Every number below is out-of-sample: the model graded each cohort using only earlier years, then the realized MLB outcomes were scored against both grades. The full methodology and source-by-source comparison live on the <a href="/glossary/#view=source-comparison" style="color:var(--neon-cyan);">Source Comparison</a> page.</div>
+        <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-bottom:10px;">Out of sample: each cohort graded on earlier years only, then scored against realized MLB outcomes. Method and per-source results: <a href="/glossary/#view=source-comparison" style="color:var(--neon-cyan);">Source Comparison</a>.</div>
         ${bars}${era}${tier}${receipts}${relia}
       </div>
     </details>`;
@@ -34517,11 +34514,9 @@ function efvBoardSortKey(p) {
 // flagship map is the one the rest of the page's copy already describes.
 function efvScaleNote(x) {
   if (!x || x.grade_basis !== "provisional_capped") return "";
-  return "Provisional scale: no source has graded this player, so his grade comes from "
-       + "the production-only provisional map, not the outcome curve the rest of the "
-       + "board is on. The two maps disagree by up to 13 FV, and they swap direction "
-       + "below zero projected WAR, so read this number against other provisional "
-       + "grades rather than against a scouted one.";
+  return "Provisional scale: production-only map, not the outcome curve. "
+       + "Maps differ by up to 13 FV; direction swaps below 0 projected WAR. "
+       + "Compare with other provisional grades, not scouted ones.";
 }
 function efvRankValue(p) {
   const x = getEfv(p);
@@ -34845,7 +34840,7 @@ function efvGradeBand(x) {
 function efvGradeBandHTML(x) {
   const band = efvGradeBand(x);
   if (!band) return "";
-  return `<div class="efv-grade-band" title="Outcome-distribution band on the grade scale: eFV's modeled 6-year outcome runs from about ${band.lo} to ${band.hi} on the 20-80 scale (P10 to P90). This is the spread of how the model thinks this prospect turns out, not scouting-source disagreement." style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;cursor:help;">Outcome band <b style="color:var(--text-secondary);">${band.lo}-${band.hi}</b></div>`;
+  return `<div class="efv-grade-band" title="Outcome band: eFV's modeled 6-year outcome, P10 to P90, about ${band.lo} to ${band.hi} on the 20-80 scale. Model outcome spread, not source disagreement." style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;cursor:help;">Outcome band <b style="color:var(--text-secondary);">${band.lo}-${band.hi}</b></div>`;
 }
 // eFV-minus-consensus delta, computed off the DISPLAYED board number (efvBoardValue) so
 // the colored +/- chip subtracts to exactly what the two numbers next to it show.
@@ -34963,18 +34958,18 @@ function efvTooltip(x) {
   if (!x || x.xfv_grade == null) return "";
   const locked = x.kind === "debuted";
   const parts = [locked
-    ? `eFV ${efvGradeDisplay(x)} - FINAL grade, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR so far)` : ""}`
-    : efvIsV2(x) ? `eFV ${efvGradeDisplay(x)} - the consensus order reordered by admitted drivers`
-    : `eFV ${efvGradeDisplay(x)} - our outcome-grounded grade (provisional)`];
+    ? `eFV ${efvGradeDisplay(x)} final, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR)` : ""}`
+    : efvIsV2(x) ? `eFV ${efvGradeDisplay(x)} (V2)`
+    : `eFV ${efvGradeDisplay(x)} (provisional)`];
   // RPR03: a placeholder consensus is not a source grade, so it is never printed as one.
   if (x.consensus_is_placeholder) {
     parts.push("No source grade published");
   } else if (x.consensus_fv != null) {
     const d = efvMinusConsensusDisplay(x);
-    parts.push(`Consensus FV ${efvConsensusDisplay(x)}${d != null ? ` (${efvDeltaText(d)})` : ""}`);
+    parts.push(`cons. FV ${efvConsensusDisplay(x)}${d != null ? ` (${efvDeltaText(d)})` : ""}`);
   }
   if (x.xfv_provisional && !x.xfv_ungraded && !locked)
-    parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
+    parts.push("Prior-anchored: no pro record; starts at the consensus prior. A small gap to consensus is 20-80 placement, not a penalty");
   // TWO-SCALE DISCLOSURE. This is the row-level surface: the board mixes the flagship
   // and provisional maps in one column, and the tooltip is where a reader asks what a
   // given number means. See efvScaleNote for the measured disagreement.
@@ -34988,26 +34983,16 @@ function efvTooltip(x) {
       && Math.round(x.xfv_grade_quantile) !== efvGradeDisplay(x))
     parts.push(`${Math.round(x.xfv_grade_quantile)} on the population 20-80 scale (the surplus basis)`);
   if (x.p_bust != null) parts.push(`P(bust) ${Math.round(x.p_bust * 100)}%`);
-  if (x.surplus_mm != null) parts.push(`eFV surplus ${fmtSvMM(x.surplus_mm)}`);
+  if (x.surplus_mm != null) parts.push(`surplus ${fmtSvMM(x.surplus_mm)}`);
   if (x.statcast_factor != null) parts.push(`Statcast+ tilt ${x.statcast_factor > 1 ? "+" : ""}${Math.round((x.statcast_factor - 1) * 100)}%`);
   if (x.injury_factor != null)
     parts.push(`injury penalty ${Math.round((1 - x.injury_factor) * 100)}%`
       + (x.xfv_grade_healthy != null ? ` (healthy: ~${Math.round(x.xfv_grade_healthy)})` : ""));
-  // No accuracy CLAIM in a tooltip. This used to end "it out-ranks consensus
-  // out-of-sample", which the eval it refers to does not support: xfv_beats is false
-  // on both sides and the gap is inside the noise floor. A chip explainer has nowhere
-  // to carry a floor or an n, so it states what the number IS and sends the reader to
-  // the methodology page, which derives the standing from the artifact.
-  if (efvIsV2(x)) {
-    parts.push("eFV V2: the consensus FV order inside each side, reordered by the drivers that passed the admission rule; the grade is a consensus value at that rank. Open the player for the drivers.");
-    const _c = efvServedClaim();
-    if (_c) parts.push(_c.text);
-  } else {
-    // QPRC02: no calibration claim here. The Debuted tab measures the outcome mix
-    // (bust ECE) and the registry row xfv_dist_recalibration exists to fix a measured
-    // miscalibration, so the chip states what the number reads and points at the receipt.
-    parts.push("Reads a 6-yr WAR outcome mix from how comparable prospects turned out; its calibration is measured on the Debuted tab. Open the player for the full mix.");
-  }
+  // COPY_3 (P3, lint L11): the row's numbers only. The eFV method sentence and the
+  // served claim used to ride on every badge (1,996 V2 rows, 7,519 V1 rows); they
+  // print once, in the board's eFV column header (V2 method + claim), the Debuted FV
+  // header (V1 read and where its calibration is measured) and the Library entry.
+  // No accuracy claim lives in a row tooltip (QPRC02).
   return parts.join(" · ");
 }
 // Which grade leads the board: follows the eFV/Consensus toggle (state.gradePrimary).
@@ -35097,7 +35082,7 @@ function efvBadgeHTML(p, opts) {
   // Locked: once a prospect debuts, its eFV is frozen at the final pre-debut grade (the grade
   // it carried into the majors) -- our last word on it as a prospect.
   const lock = (x && x.kind === "debuted")
-    ? `<span title="Final eFV - locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR so far)` : ""}" style="color:var(--text-tertiary);font-size:9px;">🔒</span>` : "";
+    ? `<span title="Final eFV, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR)` : ""}" style="color:var(--text-tertiary);font-size:9px;">🔒</span>` : "";
   // eFV ONLY (the default): clean single grade, no consensus subscript or delta. The board's
   // "Rank by" toggle is how a user switches the whole list to consensus FV instead. consNum is
   // unused here by design; full eFV-vs-consensus comparison lives on the player detail page.
@@ -35185,8 +35170,8 @@ function efvRankNumHTML(p) {
     return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner"> - </span></div>`;
   }
   const tip = (_gradePrimary() === "xfv")
-    ? `Board rank #${n} (eFV basis)${(efvDisplaySwaps() && state.sort === "fv") ? ". The rows are ordered by consensus FV, so the ranks read out of order." : ""}`
-    : `Board rank #${n} - still the eFV board ordering. The Consensus toggle changes which GRADE leads the cells${state.sort === "fv" ? " and orders the rows by consensus FV" : ""}; PROSPX does not publish a consensus-FV rank.`;
+    ? `Board rank #${n} (eFV basis)${(efvDisplaySwaps() && state.sort === "fv") ? ". Rows sort by consensus FV, so ranks read out of order." : ""}`
+    : `Board rank #${n}, eFV order. Consensus mode: rows lead with${state.sort === "fv" ? " and sort by" : ""} consensus FV; no consensus rank exists.`;
   return `<div class="rank-num ${rankNumRarityClass(p)}" title="${escapeHtml(tip)}"><span class="rank-num-inner">#${n}</span></div>`;
 }
 // M29 B1 (owner answer M29-2): the in-org rank as a line under the board's rank diamond,
@@ -35198,8 +35183,7 @@ function rankOrgLineHTML(p) {
   const o = (typeof getEfvOrgRank === "function") ? getEfvOrgRank(p) : null;
   if (!o || o.rank == null) return "";
   const pool = provSectionOn() ? "graded prospects" : "prospects, provisional ones included";
-  const tip = `His place inside the ${p.org} system on the eFV board order: #${o.rank} of ${o.total} ${pool}. `
-    + "It stays on the eFV order when the board is switched to Consensus.";
+  const tip = `${p.org} #${o.rank} of ${o.total} ${pool}, eFV order.`;
   return `<div class="rank-org" title="${escapeHtml(tip)}">${escapeHtml(p.org)} #${o.rank}</div>`;
 }
 // Detail-page header: eFV as the primary big grade, consensus FV as the reference line.
@@ -35259,7 +35243,7 @@ function efvDetailHeaderHTML(p, fvBadge, lead) {
         : x.consensus_is_placeholder
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="${escapeHtml("No source published an FV for this player. The consensus point is a last-resort placeholder constant, so there is no industry grade to compare against.")}">no source grade published</div>`
         : gb.priorAnchored
-        ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="No pro track record yet: eFV starts at the consensus prior. Any small gap vs consensus FV is placement on the 20-80 scale when ranked among graded prospects, not a model penalty.">`
+        ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="No pro record yet: eFV starts at the consensus prior. A small gap to consensus FV is 20-80 placement among graded prospects, not a penalty.">`
           + `Consensus FV <b style="color:var(--text-secondary);">${efvConsensusDisplay(x)}</b>`
           + ` · prior-anchored · awaiting pro debut</div>`
         : `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
@@ -35292,7 +35276,7 @@ function efvXlineNoteHTML(x) {
     what = bits.length ? `${bits.join(" · ")} applied` : "expected-stat blend applied, net gap under .001";
   }
   const seas = n.season ? `${n.season} AAA` : "AAA";
-  return `<div class="xline-measure-note" title="S-XLINE measurement layer, gate passed 2026-07-23: AAA seasons 2023+ with 100+ tracked Savant PA get the Statcast expected-vs-actual gap blended into the stat line eFV reads (half weight, capped) before the level-relative conversion. A measurement correction to the input line, not a model factor, so it carries no arrow or bar above." style="margin-top:7px;padding:5px 8px;border-left:2px solid var(--neon-cyan);border-radius:3px;background:var(--bg-tertiary);font-size:10px;color:var(--text-secondary);line-height:1.5;cursor:help;"><strong style="color:var(--neon-cyan);">Measurement</strong>: ${seas} line blended with Statcast expected stats (${what}).</div>`;
+  return `<div class="xline-measure-note" title="AAA seasons 2023+ with 100+ tracked PA blend the Statcast expected-vs-actual gap into eFV's input line (half weight, capped). An input correction, not a driver." style="margin-top:7px;padding:5px 8px;border-left:2px solid var(--neon-cyan);border-radius:3px;background:var(--bg-tertiary);font-size:10px;color:var(--text-secondary);line-height:1.5;cursor:help;"><strong style="color:var(--neon-cyan);">Measurement</strong>: ${seas} line blended with Statcast expected stats (${what}).</div>`;
 }
 // Explainer bar width for one factor magnitude. FIXED log scale, deliberately not
 // linear and deliberately not per-card. The magnitudes are continuous end to end
@@ -35358,7 +35342,7 @@ function efvDetailCard(p) {
   // nothing was cut.
   const fm = x.factors_more;
   const moreHTML = (fm && Number(fm.n) > 0)
-    ? `<div style="margin-top:5px;font-size:10px;color:var(--text-tertiary);font-style:italic;" title="Only the four largest model drivers are listed. ${Number(fm.n)} more cleared the reporting floor and were smaller; their magnitudes total ${Number(fm.mag).toFixed(2)} against the ${Number(((x.factors || [])[0] || {}).mag || 0).toFixed(2)} of the largest one shown. Overlay factors (Statcast+, age, injury, role) are not subject to this cut and are always listed.">and ${Number(fm.n)} smaller factor${Number(fm.n) === 1 ? "" : "s"} (combined ${Number(fm.mag).toFixed(2)})</div>`
+    ? `<div style="margin-top:5px;font-size:10px;color:var(--text-tertiary);font-style:italic;" title="Top four drivers listed. ${Number(fm.n)} smaller ones total ${Number(fm.mag).toFixed(2)} vs ${Number(((x.factors || [])[0] || {}).mag || 0).toFixed(2)} for the largest. Overlays (Statcast+, age, injury, role) always list.">and ${Number(fm.n)} smaller factor${Number(fm.n) === 1 ? "" : "s"} (combined ${Number(fm.mag).toFixed(2)})</div>`
     : "";
   const _v2 = efvIsV2(x);
   const _claim = _v2 ? efvServedClaim() : null;
@@ -35367,7 +35351,7 @@ function efvDetailCard(p) {
   const _vv = _v2 ? (x.efv_v2 || {}) : {};
   const _sideWord = x.side === "P" ? "pitchers" : "hitters";
   const placeHTML = (_v2 && _vv.order_rank != null && _vv.consensus_rank != null)
-    ? `<div class="efv-place-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="The eFV grade is the consensus FV value at this prospect's place in eFV's order among ${_sideWord}. A driver moves him against the average prospect, so he can gain on every driver and still drop a place when others gain more.">#${Number(_vv.order_rank).toLocaleString()} of ${Number(_vv.group_n || 0).toLocaleString()} ${_sideWord} by eFV · #${Number(_vv.consensus_rank).toLocaleString()} by consensus FV</div>`
+    ? `<div class="efv-place-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="eFV grade = consensus FV at his place in eFV's order among ${_sideWord}. Drivers move him vs the average prospect; others can gain more.">#${Number(_vv.order_rank).toLocaleString()} of ${Number(_vv.group_n || 0).toLocaleString()} ${_sideWord} by eFV · #${Number(_vv.consensus_rank).toLocaleString()} by consensus FV</div>`
     : "";
   const claimHTML = _claim
     ? `<div class="efv-claim-line" style="margin:-2px 0 8px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="${escapeHtml(_claim.text + " Source: " + _claim.source + ".")}"><a href="/glossary/#view=source-comparison" style="color:var(--text-secondary);text-decoration:none;border-bottom:1px dotted var(--border);">${escapeHtml(efvClaimShort())}</a> · ${escapeHtml(_claim.frame_label ? _claim.frame_label.toLowerCase() + " frame" : "")}${_claim.n != null ? `, n ${Number(_claim.n).toLocaleString()}` : ""}</div>`
@@ -35409,7 +35393,7 @@ function efvDetailCard(p) {
   // M29-1); one bordered block holds whichever of the two lines renders.
   const _so = (p && p.surplus) ? p.surplus.star_odds : null;
   const _op = (p && p.surplus) ? p.surplus.opt_pct : null;
-  const starLine = _so != null ? `<div style="display:flex;justify-content:space-between;align-items:baseline;" title="Star Odds: FanGraphs 2026 published probability of two or more seasons of four or more WAR during team control, for this player's FV and role. This is the SAME value shown in the board's Star Odds column. It is distinct from the outcome-mix Elite share above.">
+  const starLine = _so != null ? `<div style="display:flex;justify-content:space-between;align-items:baseline;" title="FanGraphs 2026 P(two+ 4+ WAR seasons in team control) at his FV and role. Same value as the board's Star Odds column. Not the Elite share.">
         <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
         <span style="font-family:var(--font-mono);font-weight:700;color:${Number(_so) >= 0.20 ? "var(--up)" : Number(_so) >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;">${fmtStarOdds(_so)}</span>
       </div>` : "";
@@ -35436,7 +35420,7 @@ function efvDetailCard(p) {
       ${healthyHTML}
       ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin:10px 0 4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
       ${tierReadsHTML}
-      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}${_v2 ? "eFV V2 keeps the consensus FV order inside each side and lets a small set of drivers move a prospect up or down it; the grade is the consensus value at his new rank, so the board, the outcome mix, P(bust) and the dollars all read one number. Its standing against consensus is measured out of sample on the Methodology page. The dollar surplus and its range are in the Surplus value card below. Provisional." : "eFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. Its ordering skill is measured against consensus FV out-of-sample on the Methodology page; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. " + ((efvFanHidden(x) && _gradePrimary() === "xfv") ? "The dollar surplus is in the Surplus value card below; graduate and bust cards show no eFV dollar range." : "The dollar surplus + its range are in the Surplus value card below.") + " Provisional."} <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}${_v2 ? "eFV V2 keeps the consensus FV order inside each side and lets a small set of drivers move a prospect up or down it; the grade is the consensus value at his new rank, so the board, the outcome mix, P(bust) and the dollars all read one number. Its standing against consensus is measured out of sample on the Methodology page. The dollar surplus and its range are in the Surplus value card below. Provisional." : "eFV V1 reads a 6-year WAR outcome mix from how comparable prospects turned out; its calibration is measured on the Debuted tab. Its ordering against consensus FV is scored out of sample on the Methodology page. The grade is on the 20-80 scale; the outcome mix uses the lower outcome-implied grade, since scout FV runs optimistic. " + ((efvFanHidden(x) && _gradePrimary() === "xfv") ? "The dollar surplus is in the Surplus value card below; graduate and bust cards show no eFV dollar range." : "The dollar surplus + its range are in the Surplus value card below.") + " Provisional."} <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
     </div>`;
 }
 
@@ -38160,7 +38144,7 @@ function buildGfxBoard() {
   if (!fresh || total === 0) {
     board.style.cssText = base + `min-height:${H}px;padding:64px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;`;
     board.innerHTML = `<div style="font-family:var(--font-retro);font-size:26px;font-weight:700;color:${P.text};margin-bottom:12px;">Nothing to graphic yet</div>
-      <div style="font-size:16px;color:${P.text2};max-width:640px;line-height:1.5;">Open a list - Prospects, Draft, Graduates, Overseas, Farm, Leaderboards, Spotlights, Int'l&nbsp;Amateurs - set your filters, then generate.</div>`;
+      <div style="font-size:16px;color:${P.text2};max-width:640px;line-height:1.5;">Open a list (Prospects, Draft, Graduates, Overseas, Farm, Leaderboards, Spotlights, Int'l&nbsp;Amateurs), set filters, then generate.</div>`;
     return { board, total: 0, w: W, h: H };
   }
   // Show=All used to mean literally all: the unfiltered active pool is 4,526
@@ -39035,7 +39019,7 @@ function makeStarOddsCell(p) {
   const col = (v == null || !isFinite(v)) ? "var(--text-tertiary)"
             : v >= 0.20 ? "var(--up)"
             : v >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)";
-  let tip = "Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.";
+  let tip = `Star Odds ${fmtStarOdds(v)}: FanGraphs 2026 published value for this FV and role.`;
   // Realized disclosure: the resolved cohort's actual star rate for this role +
   // FV tier, shown as a muted second line. The published table is unchanged; this
   // is honest context where the two diverge (mid tiers most).
@@ -39160,12 +39144,9 @@ function makeSurplusCell(p) {
     + (d.risk_adjusted_mm != null ? ` · ${svRiskAdjLabel(d)} ${fmtSvMM(d.risk_adjusted_mm)}` : "")
     + (wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(2)}` : "")
     + (dvm != null ? ` · $DvM+ ${Math.round(dvm)} (surplus-development vs FV-tier peers)` : "")
-    + ". This is an expectation, not a forecast of this player's own return"
     + (s.value_mm < 5
-        ? ": down here the typical outcome really is nothing, and the price is carried by "
-          + "the minority who arrive. Read it as what the tier is worth per head, not as "
-          + "what he is likely to give you. Ordering this far down the board carries little "
-          + "information either."
+        ? ". Under $5M the typical outcome is nothing. The few who arrive carry the price: "
+          + "the tier's value per head. Order this deep carries little information."
         : ".")
     + (isEfv && xf && xf.xfv_grade_quantile != null
          && Math.round(xf.xfv_grade_quantile) !== efvGradeDisplay(xf)
@@ -39184,7 +39165,7 @@ function makeSurplusCell(p) {
   return `<div class="surplus-cell" title="${escapeHtml(tip)}">
       <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${svColor};font-variant-numeric:tabular-nums;line-height:1.05;">${fmtSvMM(s.value_mm)}</div>
       ${buckets ? renderBucketBar(buckets, { height: 7 }) : ""}
-      ${d.p10_mm != null ? renderSvDistribution(d, { height: 13 }) : ""}
+      ${d.p10_mm != null ? renderSvDistribution(d, { height: 13, legend: false }) : ""}
       ${botBits.length ? `<div class="sv-botline" style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1.1;">${botBits.join(" · ")}</div>` : ""}
     </div>`;
 }
@@ -39204,7 +39185,7 @@ function dollarDvmColor(v) {
   return "var(--down)";
 }
 function dollarDvmTooltip(v) {
-  return `$DvM+ ${v == null ? " - " : Math.round(v)} - Surplus-Development index. The player's consensus-FV appreciation rate over time (plus age-for-level standing) indexed against same-FV-tier peers. 100 = tier average, +10 ≈ 1σ faster. Above 100 = developing/appreciating faster than same-grade prospects.`;
+  return `$DvM+ ${v == null ? " - " : Math.round(v)} - Surplus-Development index. The player's consensus-FV appreciation rate over time (plus age-for-level standing) indexed against same-FV-tier peers. 100 = tier average, +10 ≈ 1σ faster. Above 100: grade rising faster than same-grade peers.`;
 }
 function fmtSvMM(m) {
   if (m == null || !isFinite(m)) return " - ";
@@ -39333,7 +39314,9 @@ function renderSvDistribution(dist, opts) {
   const med  = `<div style="position:absolute;left:calc(${X(p50).toFixed(2)}% - 1px);top:8%;height:84%;width:2px;background:var(--text-primary);"></div>`;
   const meanM = mean != null
     ? `<div style="position:absolute;left:calc(${X(mean).toFixed(2)}% - 1px);top:0;height:100%;width:2px;background:var(--up);"></div>` : "";
-  const tip = `Simulated surplus outcomes - P10 ${fmtSvMM(p10)} · P25 ${fmtSvMM(p25)} · median ${fmtSvMM(p50)} · P75 ${fmtSvMM(p75)} · P90 ${fmtSvMM(p90)}${mean != null ? ` · expected ${fmtSvMM(mean)}` : ""}. Light band = P10-P90, inner box = P25-P75, dark line = median, green line = expected (mean).`;
+  // The legend prints once in the board's Surplus header; a row passes legend: false.
+  const tip = `Simulated surplus: P10 ${fmtSvMM(p10)} · P25 ${fmtSvMM(p25)} · median ${fmtSvMM(p50)} · P75 ${fmtSvMM(p75)} · P90 ${fmtSvMM(p90)}${mean != null ? ` · expected ${fmtSvMM(mean)}` : ""}.`
+    + (opts.legend === false ? "" : " Light band = P10-P90, inner box = P25-P75, dark line = median, green line = expected (mean).");
   const axis = opts.axis
     ? `<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:8px;color:var(--text-tertiary);margin-top:2px;"><span>${fmtSvMM(p10)}</span><span>${fmtSvMM(p50)}</span><span>${fmtSvMM(p90)}</span></div>` : "";
   return `<div class="sv-fan" title="${escapeHtml(tip)}" style="position:relative;width:100%;height:${h}px;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:3px;">${band}${iqr}${med}${meanM}</div>${axis}`;
@@ -40421,7 +40404,7 @@ function _buildDetailChipRibbon(p) {
     const _rpsPill = sl.level !== "MLB" ? _rpsPlusValue(p) : null;
     if (_rpsPill != null) {
       const c = _rpsPill >= 110 ? "var(--up)" : _rpsPill <= 90 ? "var(--down)" : "var(--text-secondary)";
-      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="RPS+ (Rate Performance Score) ${_rpsPill} · level-relative production (wRC+ vs level for hitters, ERA- vs level for pitchers) plus the age-vs-level adjustment, re-anchored to the mean prospect in the same age x position-group cohort. 100 = cohort mean.">RPS+ ${_rpsPill}</span>`);
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="RPS+ ${_rpsPill}: level-relative production (wRC+ or ERA- vs level) plus age vs level, against same-age, same-position-group prospects. 100 = cohort mean.">RPS+ ${_rpsPill}</span>`);
     }
     // TWO NUMBERS WERE BOTH CALLED "ERA-" ON ONE MLB PITCHER CARD (audit F05-06,
     // 2026-09-09). This pill is the site's level index; the MLB sabermetrics tile further
@@ -41940,7 +41923,7 @@ function makeFarmReportCard(org) {
   const _dollarDvm = dollarDvmLeaf.dollar_dvm_plus;
   const fmtDvmPlus = v => formatMetric(v, 'plus');
   const dollarDvmTooltip = _dollarDvm != null
-    ? `$DvM+ ${Math.round(_dollarDvm)} - the org's mean prospect SURPLUS-DEVELOPMENT trajectory indexed against the league-average prospect at the SAME FV tier (100 = average, +10 ≈ 1σ better). Built from the rate of FV movement over time + age-relative-to-level standing across ${dollarDvmLeaf.n ?? ' - '} active prospects. Above 100 = this org's prospects are appreciating faster than same-grade peers.`
+    ? `$DvM+ ${Math.round(_dollarDvm)} - the org's mean prospect surplus-development trajectory indexed against the league-average prospect at the same FV tier (100 = average, +10 ≈ 1σ better). Built from the rate of FV movement over time + age-relative-to-level standing across ${dollarDvmLeaf.n ?? ' - '} active prospects. Above 100 = this org's prospects are appreciating faster than same-grade peers.`
     : `Insufficient active-prospect trajectory data on file.`;
   const finSubs =
     subCell('Active Surplus',        'fin_active_surplus',         'fin_active_surplus',         fmtSurplusPerProspect, _surplusPerProspect,                            activeSurplusTooltip) +
@@ -42555,11 +42538,11 @@ function makeFarmReportCard(org) {
   const _winActive = state.formWindow || '7y';
   const _winChip = (lbl, val) => {
     const star = val === '7y' ? ' <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span>' : '';
-    const tip = val === '7y' ? ' title="Default - the empirically-optimal trailing window"' : '';
+    const tip = val === '7y' ? ' title="Default: the trailing window that best predicts graduate output."' : '';
     return `<button class="chip${_winActive === val ? ' active' : ''}" data-form-window="${val}"${tip} style="font-size:10px;padding:2px 7px;letter-spacing:0.04em;">${lbl}${star}</button>`;
   };
   const _windowSelector = `
-    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Trailing window the WHOLE farm grade is computed over - composite letter + farm_score + DvM+ family of sub-leaves all re-grade to the selected window. 7y is the empirically-optimal default.">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Trailing window for the whole farm grade (letter, DvM+, sub-grades); all re-grade to the window. 7y is the default: it best predicts graduate output.">
       <span style="letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">Grade window</span>
       ${_winChip('3y', '3y')}${_winChip('4y', '4y')}${_winChip('5y', '5y')}${_winChip('6y', '6y')}${_winChip('7y', '7y')}${_winChip('8y', '8y')}
     </div>`;
@@ -42645,7 +42628,7 @@ function makeRosterSnapshotTile(org) {
         <div class="rs-stat" title="FV-weighted debuts in trailing 12 months"><span class="rs-stat-label">Debut pipe</span><span class="rs-stat-val">${num(org.grad_pipeline_score)}</span></div>
         <div class="rs-stat" title="Top-10 mean of composite_overall (20-80 power mean)"><span class="rs-stat-label">Tool top10</span><span class="rs-stat-val">${num(tq.top10_mean)}</span></div>
         <div class="rs-stat" title="(very-young − very-old) / total actives"><span class="rs-stat-label">Readiness</span><span class="rs-stat-val">${pct(rdy.pct_signal)}</span></div>
-        <div class="rs-stat rs-stat-health${hb.il_pct_current >= 0.10 ? ' is-warn' : ''}" title="Combined health view. v31.6 - Health Mgmt leaf grade now scores on IL% + avg 12mo IL days only (post-TJ dropped from grading since the surgical grace period often correlates with above-avg outcomes; hitter post-TJ removed entirely). On IL now = ${hb.il_current_count != null ? hb.il_current_count : ' - '} of ${hb.active_count != null ? hb.active_count : ' - '} tracked actives currently sidelined; highlighted red when ≥10%. Avg IL-days context: ${hb.il_days_mean != null ? hb.il_days_mean.toFixed(1) + 'd / active' : ' - '}.">
+        <div class="rs-stat rs-stat-health${hb.il_pct_current >= 0.10 ? ' is-warn' : ''}" title="Health grade: IL% and 12-month IL days (post-TJ not graded). On IL: ${hb.il_current_count != null ? hb.il_current_count : ' - '} of ${hb.active_count != null ? hb.active_count : ' - '} tracked actives; red at 10%+. Avg IL days: ${hb.il_days_mean != null ? hb.il_days_mean.toFixed(1) + 'd / active' : ' - '}.">
           <span class="rs-stat-label">Health</span>
           <span class="rs-stat-val" style="display:flex;flex-direction:column;gap:2px;line-height:1.15;">
             <span style="font-size:14px;">${num(hb.il_days_mean)} <span style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0.04em;text-transform:uppercase;">avg IL d</span></span>
@@ -42829,7 +42812,7 @@ function makeFarmDevCohortSplit(org) {
     if (overall != null) parts.push(`Overall ${overall}`);
     if (tool    != null) parts.push(`Tool ${tool}`);
     const breakdown = parts.length ? parts.join(' · ') : ' - ';
-    return `<div class="tooldev-cell ${tone}" title="${label} DvM+ ${v ?? ' - '} at ${win} · position-bucket mean of the FV / Tool / Statcast blend (baseline FV ${blendCopy.fv}% / Tool ${blendCopy.tool}% / Statcast ${blendCopy.sc}%). Overall = the ${label.toLowerCase()} cohort FV-DvM+; Tool = the ${label.toLowerCase()} Tool DvM+. ${breakdown}.">
+    return `<div class="tooldev-cell ${tone}" title="${label} DvM+ ${v ?? ' - '} at ${win} · position-bucket mean of FV ${blendCopy.fv}% / Tool ${blendCopy.tool}% / Statcast ${blendCopy.sc}%. Overall: cohort FV-DvM+; Tool: Tool DvM+. ${breakdown}.">
       <div class="td-label">${label}</div>
       <div class="td-val">${v ?? " - "}</div>
       <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:2px;letter-spacing:0.02em;">${breakdown}</div>
@@ -45372,8 +45355,8 @@ function makeToolDvmCell(org) {
     </div>`;
   return `<div class="fl-tool-dvm" title="Tool development pace vs league mean (100 = mean, +10 = 1σ)">
     ${row('Tools', composite, `ToolDvM+ ${composite ?? ' - '} · position-weighted blend of per-tool DvM+ values`)}
-    ${row('Hit', hitter, `Hitter Tool DvM+ ${hitter ?? ' - '} · mean of hit/power/speed/field/arm/pitch_sel/bat_ctrl DvM+`)}
-    ${row('Pit', pitcher, `Pitcher Tool DvM+ ${pitcher ?? ' - '} · mean of fb/sl/cb/ch/cmd/ct DvM+`)}
+    ${row('Hit', hitter, `Hitter Tool DvM+ ${hitter ?? ' - '} · mean of hit, power, speed, field, arm, pitch-selection, bat-control DvM+`)}
+    ${row('Pit', pitcher, `Pitcher Tool DvM+ ${pitcher ?? ' - '} · mean of FB, SL, CB, CH, command, CT DvM+`)}
   </div>`;
 }
 
@@ -45702,8 +45685,8 @@ function renderFarmSystems() {
         <div class="metric-cell"><span class="metric-label">${win.toUpperCase()}DvM+</span><span class="metric-value">${dvm != null ? dvm : " - "}</span></div>
         <div class="metric-cell"><span class="metric-label">Top-End</span><span class="metric-value">${org.top_end_points != null ? org.top_end_points.toFixed(0) : " - "}</span></div>
         <div class="metric-cell"><span class="metric-label">Depth</span><span class="metric-value">${org.depth_points != null ? org.depth_points.toFixed(0) : " - "}</span></div>
-        <div class="metric-cell" title="${_wagUnified() ? "Per-org boom %: share of settled graduates with a WAG percentile of 0.80 or higher" : "Per-org debut boom % - % of settled debuts with WAG ≥ +2.5 per season"}"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : " - "}</span></div>
-        <div class="metric-cell" title="${_wagUnified() ? "Per-org bust %: share of settled graduates with a WAG percentile of 0.20 or lower" : "Per-org debut bust % - % of settled debuts with WAG ≤ −1.5 per season"}"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : " - "}</span></div>
+        <div class="metric-cell" title="${_wagUnified() ? "Boom%: settled graduates at WAG percentile 0.80+" : "Boom%: settled debuts with WAG ≥ +2.5 per season"}"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : " - "}</span></div>
+        <div class="metric-cell" title="${_wagUnified() ? "Bust%: settled graduates at WAG percentile 0.20 or lower" : "Bust%: settled debuts with WAG ≤ −1.5 per season"}"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : " - "}</span></div>
       </div>`;
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
@@ -45754,7 +45737,7 @@ function renderFarmSystems() {
             const n = countByOrg[org.org];
             if (s == null || !n) return '<span style="color:var(--text-tertiary);"> - </span>';
             const fmt = s >= 100 ? s.toFixed(0) : s.toFixed(1);
-            return `<span class="g-term farm-surplus-amt" data-term="surplus_value" title="Net surplus across ${n} active prospects: eFV expected surplus minus the acquisition bonuses paid">$${fmt}M</span><div class="farm-surplus-count">${n}p</div>`;
+            return `<span class="g-term farm-surplus-amt" data-term="surplus_value" title="Net surplus over ${n} active prospects">$${fmt}M</span><div class="farm-surplus-count">${n}p</div>`;
           })()}</div>
         <div class="stock-cell fc-stock" style="font-size:12px;">${stockHtml}</div>
         <div class="fc-act" style="text-align:right;display:flex;gap:4px;justify-content:flex-end;align-items:center;">
@@ -46823,7 +46806,7 @@ function makeCareerTable(career, birthDate, player) {
     const head = `<tr>
       ${_sh("season", "Season")}
       ${_sh("age", "Age", 'title="Age at July 1 of season"')}
-      <th title="MLB org affiliation from each season's actual stat lines (never the current org). A season with stats at 2+ orgs (an in-season trade) shows both orgs old → new and expands to the per-org split; an offseason move shows one org per season. Cross-reference the transaction history block for precise dates.">Org</th>
+      <th title="Org from each season's stat lines, not the current org. An in-season trade shows old, new and the per-org split. Dates: transaction history.">Org</th>
       ${_sh("level", "Level")}${warHead}
       ${_sh("g", "G", 'title="Games appeared"')}
       ${_sh("ip", "IP", 'title="Innings pitched"')}
@@ -46880,7 +46863,7 @@ function makeCareerTable(career, birthDate, player) {
   const head = `<tr>
     ${_sh("season", "Season")}
     ${_sh("age", "Age", 'title="Age at July 1 of season"')}
-    <th title="MLB org affiliation from each season's actual stat lines (never the current org). A season with stats at 2+ orgs (an in-season trade) shows both orgs old → new and expands to the per-org split; an offseason move shows one org per season. Cross-reference the transaction history block for precise dates.">Org</th>
+    <th title="Org from each season's stat lines, not the current org. An in-season trade shows old, new and the per-org split. Dates: transaction history.">Org</th>
     ${_sh("level", "Level")}${warHead}
     ${_sh("g", "G", 'title="Games"')}
     ${_sh("ab", "AB", 'title="At-Bats"')}
@@ -46890,7 +46873,7 @@ function makeCareerTable(career, birthDate, player) {
     ${_sh("obp", "OBP", 'title="On-Base Percentage"')}
     ${_sh("slg", "SLG", 'title="Slugging Percentage"')}
     ${_sh("ops", "OPS", 'title="OBP + SLG"')}
-    ${_sh("ops_plus", "OPS+", 'title="OPS relative to the league average at that level: OPS ÷ level-average OPS × 100. 100 = level average, 130 = 30% better. Blank for rows without a level baseline (e.g. MLB seasons)."')}
+    ${_sh("ops_plus", "OPS+", 'title="OPS ÷ level-average OPS × 100: 100 = level average, 130 = 30% better. Blank without a level baseline (MLB seasons)."')}
     ${_sh("iso", "ISO", 'title="Isolated power = SLG − AVG. Pure power signal - strips the batting-average contribution out of slugging."')}
     ${_sh("bb_pct", "BB%", 'title="Walk rate"')}
     ${_sh("k_pct", "K%", 'title="Strikeout rate (lower is better)"')}
@@ -47339,15 +47322,15 @@ function makeZoneMetricsBlock(z) {
       : "below";
     if (!isPitcher) {
       if (key === "zone_rate") {
-        if (band === "excellent") return "Very high zone diet; pitchers are comfortable challenging him.";
+        if (band === "excellent") return "Zone diet in the top 20% of the level: pitchers challenge him.";
         if (band === "above") return "Strong above-average zone diet; gets challenged in-zone.";
         if (band === "below") return "Lower zone diet; pitched around more than peers.";
         return "Typical zone diet for the level.";
       }
       if (key === "z_swing_pct") {
-        if (band === "excellent") return "Very aggressive on strikes.";
+        if (band === "excellent") return "In-zone swing rate in the top 20% of the level.";
         if (band === "above") return "Strong above-average in-zone aggression.";
-        if (band === "below") return "Passive/selective in-zone; may be waiting for his pitch.";
+        if (band === "below") return "Low in-zone swing rate.";
         return "Balanced in-zone swing decisions.";
       }
       if (key === "o_swing_pct") {
@@ -47376,7 +47359,7 @@ function makeZoneMetricsBlock(z) {
       }
     } else {
       if (key === "zone_rate") {
-        if (band === "excellent") return "Very high zone rate; attacks the plate.";
+        if (band === "excellent") return "Zone rate in the top 20% of the level: attacks the plate.";
         if (band === "above") return "Strong above-average strike-zone rate.";
         if (band === "below") return "Lives off the plate more than peers.";
         return "Typical zone rate for the level.";
@@ -48116,7 +48099,7 @@ function makeReleaseTraitsTable(sc, player) {
     const neutral = q == null;
     const marker = neutral ? 50 : q * 100;
     const label = neutral
-      ? "Displayed for release context; VAA trait read is most meaningful for fastball-family pitches."
+      ? "Release context only; the VAA read applies to fastballs."
       : r.pitch_type === "FF"
         ? "Four-seam VAA trait: flatter plots hotter."
         : "Sinker/cutter VAA trait: steeper plots hotter in this provisional read.";
@@ -49449,11 +49432,11 @@ function makeFvTape(points) {
   const momChip = chip("MOM", (momentum > 0 ? "+" : "") + momentum, momCol, "Momentum: net consensus grade change over the last 3 intervals");
   let rsiChip = "";
   if (rsi != null) {
-    const rsiState = rsi >= 70 ? "overbought" : rsi <= 30 ? "oversold" : "neutral";
+    const rsiState = rsi >= 70 ? "70+, high" : rsi <= 30 ? "30 or less, low" : "neutral";
     const rsiCol = rsi >= 70 ? "var(--text-gold)" : rsi <= 30 ? "var(--neon-cyan)" : "var(--text-secondary)";
-    rsiChip = chip("RSI", `${rsi}`, rsiCol, `Relative strength of grade changes (${rsiState}); a momentum gauge, not a projection`);
+    rsiChip = chip("RSI", `${rsi}`, rsiCol, `Momentum of grade changes (RSI-style, ${rsiState}); not a projection.`);
   }
-  const volChip = vol != null ? chip("VOL", vol.toFixed(1), "var(--text-secondary)", "Realized volatility: standard deviation across sources on the latest grade") : "";
+  const volChip = vol != null ? chip("VOL", vol.toFixed(1), "var(--text-secondary)", "Source spread: SD of source grades on the latest snapshot.") : "";
   return `<div class="fv-tape" style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
     <span title="Descriptive market signals on scouting-consensus grade movement, not predictions" style="font-family:var(--font-retro-mono);font-size:10px;letter-spacing:0.08em;color:var(--text-secondary);">FV TAPE</span>
     ${momChip}${rsiChip}${volChip}
@@ -49720,11 +49703,10 @@ function renderPlayerDetail(key) {
         ${tvLine}
         ${birthLine}
         <div style="margin-top:16px;padding:12px 16px;background:var(--bg-secondary);border-radius:7px;border:1px solid var(--border-subtle);font-size:12px;color:var(--text-secondary);line-height:1.6;">
-          <strong style="color:var(--text-primary);">Minimal profile</strong> - this player was
-          discovered via MLBAM ID (recently signed or active without prior scouting coverage)
-          and hasn't yet been through a full grading pipeline run. Full detail page - FV
-          history, tool grades, statlines, statcast - will be available after the next
-          <code>run_monthly.py --daily</code> cycle picks them up.<br><br>
+          <strong style="color:var(--text-primary);">Minimal profile</strong>: found by MLBAM ID
+          (recently signed, or active with no scouting coverage), not yet through a full grading run.
+          FV history, tool grades, stat lines and Statcast not built yet on this deploy; the nightly
+          build writes them.<br><br>
           MLBAM ID: <code>${escapeHtml(key)}</code>
         </div>
         <div style="margin-top:12px;">
@@ -49981,7 +49963,7 @@ function renderPlayerDetail(key) {
             return `<div><span class="detail-stock-chip stock-chip-grad" title="${escapeHtml(tip || "Debuted")}">DEBUT</span></div>`;
           }
           if (s.direction === "flat" || s.delta == null || Math.abs(s.delta) < 1.5) {
-            return `<div><span class="detail-stock-chip stock-chip-flat" title="${escapeHtml(tip || "No meaningful FV movement")}"> - flat</span></div>`;
+            return `<div><span class="detail-stock-chip stock-chip-flat" title="${escapeHtml(tip || "FV moved under 1.5 points")}"> - flat</span></div>`;
           }
           const arrow = s.delta > 0 ? "▲" : "▼";
           const sign = s.delta > 0 ? "+" : "";
@@ -50518,7 +50500,7 @@ function renderPlayerDetail(key) {
          </div>` : "";
     // The fan and P(bust) are on different bases; say so where they visibly disagree.
     const _efvBasisNote = (_useEfv && _efvFan && efvFanBasisConflict(_xf))
-      ? `<div class="efv-basis-note" style="margin:-4px 0 8px;font-size:10px;line-height:1.45;color:var(--text-tertiary);font-style:italic;" title="The bust bucket prices at the surplus calibration's bust floor. If the dollar range used the calibrated P(bust), its low end would sit on that floor.">Two bases: P(bust) ${Math.round(Number(_xf.p_bust) * 100)}% on the grade card is the calibrated outcome odds. This dollar range is priced from the model's uncalibrated outcome mix, which gives bust a smaller share, so its low end sits above the bust floor.</div>`
+      ? `<div class="efv-basis-note" style="margin:-4px 0 8px;font-size:10px;line-height:1.45;color:var(--text-tertiary);font-style:italic;" title="Bust prices at the surplus calibration's bust floor. Priced on the calibrated P(bust), the range's low end would sit on that floor.">Two bases: P(bust) ${Math.round(Number(_xf.p_bust) * 100)}% on the grade card is the calibrated outcome odds. This dollar range is priced from the model's uncalibrated outcome mix, which gives bust a smaller share, so its low end sits above the bust floor.</div>`
       : "";
     const fmtUsd = m => {
       if (m == null) return " - ";
@@ -50659,7 +50641,7 @@ function renderPlayerDetail(key) {
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Realized market AAV</div>
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${warRate.war_per_yr.toFixed(2)} WAR/yr × $${dollarsPerWar(warRate.war_per_yr).toFixed(1)}M · ${warRate.war_seasons_count} season${warRate.war_seasons_count === 1 ? "" : "s"}</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${aavColor};font-variant-numeric:tabular-nums;" title="Market-equivalent Average Annual Value. Multiplies the debuted player's playing-time-weighted WAR/yr by the prevailing $/WAR market rate (~$${dollarsPerWar(warRate.war_per_yr).toFixed(1)}M for this production tier, from the recent free-agent winters). What a comparable free agent would command per year on the open market.">${fmtUsd(aav)}/yr</div>
+           <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${aavColor};font-variant-numeric:tabular-nums;" title="Market AAV: playing-time-weighted WAR/yr × the $/WAR rate (~$${dollarsPerWar(warRate.war_per_yr).toFixed(1)}M at this tier, recent FA winters). A comparable free agent's yearly price.">${fmtUsd(aav)}/yr</div>
          </div>`;
       }
     }
@@ -50706,7 +50688,7 @@ function renderPlayerDetail(key) {
       const roiColor = roi > 0 ? "var(--up)" : roi < 0 ? "var(--down)" : "var(--text-tertiary)";
       const roiSign = roi > 0 ? "+" : "";
       roiRow = `<div style="display:flex;justify-content:space-between;align-items:center;">
-           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="Estimated surplus value − signing bonus. Positive means the org is sitting on more value than it invested.">Implied ROI</div>
+           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="Estimated surplus value − signing bonus. Positive: value held exceeds value spent.">Implied ROI</div>
            <div style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:${roiColor};font-variant-numeric:tabular-nums;">${roiSign}${fmtUsd(Math.abs(roi)).replace("$", roi < 0 ? "−$" : "$")}</div>
          </div>`;
     }
@@ -50855,7 +50837,7 @@ function renderPlayerDetail(key) {
                 : surplusMM < -0.5 ? "var(--down)"
                 : "var(--text-tertiary)";
       const surplusSign = surplusMM > 0 ? "+" : "";
-      aavCompareRow = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--border-light);margin-top:8px;font-size:11px;color:var(--text-secondary);" title="Implied AAV = career WAR/yr × the prevailing $/WAR (tiered by WAR level, ~$7.7M / $9.7M / $15.1M; see Methodology). Surplus = team's gain (positive) or overpay (negative) per year.">
+      aavCompareRow = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--border-light);margin-top:8px;font-size:11px;color:var(--text-secondary);" title="Implied AAV = career WAR/yr × $/WAR (tiered ~$7.7M / $9.7M / $15.1M). Surplus = club's gain (+) or overpay (-) per year.">
         <span>Implied: <strong style="color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">$${impliedMM.toFixed(1)}M</strong></span>
         <span>Surplus: <strong style="color:${cls};font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${surplusSign}$${surplusMM.toFixed(1)}M/yr</strong></span>
       </div>`;
@@ -51081,7 +51063,7 @@ function renderPlayerDetail(key) {
       const overallChip = compositeChip("Tool", t.composite_overall, null,
         "Tool: 65% stuff + 35% command, expressed on the 20-80 scouting scale (50 = average)", true, 'grade');
       const stuffGradeChip = compositeChip("FVStuff+", t.composite_stuff, t.composite_stuff_plus,
-        "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort (renamed from 'Stuff grade+')", false);
+        "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort", false);
       const cmdChip = compositeChip("Command", t.composite_cmd, t.composite_cmd_plus,
         "Control / command grade", false);
       // Peripheral pStuff+ - K%, BB%, HR/9 vs level mean. Lives on the
@@ -51089,7 +51071,7 @@ function renderPlayerDetail(key) {
       const stfPeriph = (p.statline || {}).stf_plus_periph;
       const stfChip = stfPeriph != null
         ? compositeChip("pStuff+", null, stfPeriph,
-            "Peripheral stuff index - z-score composite of K%, BB%, HR/9 vs level mean (20-IP / 30-BF sample gate). Renamed from 'STF+'.", false)
+            "Peripheral stuff index - z-score composite of K%, BB%, HR/9 vs level mean (20-IP / 30-BF sample gate).", false)
         : "";
       compositeBar = (overallChip || stuffGradeChip || stfChip || cmdChip)
         ? `<div class="tools-composite-bar">${overallChip}${stuffGradeChip}${stfChip}${cmdChip}</div>`
@@ -52029,7 +52011,7 @@ function renderPlayerDetail(key) {
       // below. Saying so is the whole point of this pass: an unlabeled
       // "Range" next to a published-grade table is exactly the read that
       // made consensus 51 look wrong under a published 45/50/50.
-      const _rangeTip = escapeHtml("Range of the QUANTILE-NORMALIZED source grades, which is what the consensus vote averages. It can differ from the range of the published grades listed below.");
+      const _rangeTip = escapeHtml("Range of the quantile-normalized source grades (what consensus averages). It can differ from the range of the published grades listed below.");
       // The published-vs-normalized MEAN pair, when the payload lets the two
       // be compared honestly. avg_fv IS the weighted mean of the normalized
       // grades (consensus.py builds it off `explicit_fvs`); the published mean
@@ -52045,7 +52027,7 @@ function renderPlayerDetail(key) {
           && _pubFvs.length >= 2 && latestPt.avg_fv_n === _pubFvs.length) {
         const pubMean = _pubFvs.reduce((a, b) => a + b, 0) / _pubFvs.length;
         const gap = Number(latestPt.avg_fv) - pubMean;
-        const _meanTip = escapeHtml(`Published mean ${pubMean.toFixed(2)} is the plain average of the ${_pubFvs.length} grades listed below. Normalized mean ${Number(latestPt.avg_fv).toFixed(2)} is what consensus actually averages, after each source's grade is quantile-mapped onto the FanGraphs scale to de-bias a chronically hot or cold grader. The ${gap >= 0 ? "+" : ""}${gap.toFixed(2)} difference is that de-biasing, not an arithmetic error, and it is why the consensus can sit outside the published range.`);
+        const _meanTip = escapeHtml(`Published mean ${pubMean.toFixed(2)} is the plain average of the ${_pubFvs.length} grades listed below. Normalized mean ${Number(latestPt.avg_fv).toFixed(2)} is what consensus averages: each source's grade quantile-mapped onto the FanGraphs scale to remove a hot or cold grader's bias. The ${gap >= 0 ? "+" : ""}${gap.toFixed(2)} difference is that de-biasing, not an arithmetic error, and it is why the consensus can sit outside the published range.`);
         meanLine = `<div style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;margin-top:2px;" title="${_meanTip}">
           published mean ${pubMean.toFixed(2)} · normalized mean ${Number(latestPt.avg_fv).toFixed(2)} (${gap >= 0 ? "+" : ""}${gap.toFixed(2)})
         </div>`;
@@ -52080,7 +52062,7 @@ function renderPlayerDetail(key) {
         </tr></thead>
         <tbody>${sourceRows}</tbody>
       </table>
-      <div style="font-size:10px;color:var(--text-tertiary);margin-top:5px;line-height:1.45;">${escapeHtml("Consensus is the weighted mean of each source's QUANTILE-NORMALIZED grade, not of the published grades above, so it can sit outside the published range. Hover a row for the source's weight.")}</div>`;
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:5px;line-height:1.45;">${escapeHtml("Consensus averages each source's quantile-normalized grade, not the published one, so it can sit outside the published range. Hover a row for the source's weight.")}</div>`;
 
     // Tools panel -------------------------------------------------------
     const toolEntries = entries.filter(([, v]) => v && v.tools && Object.keys(v.tools).length);
@@ -57379,7 +57361,7 @@ function stuffPlusPillHTML(p) {
   const v = computeStuffPlus(p);
   if (v == null) return "";
   return _plusPill("pStuff+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `pStuff+ ${v} · weighted z-composite of K% (0.55), BB% (0.30, inverted) and HR/9 (0.15, inverted) vs the ${p.statline.level || "level"} mean, using the level's empirical stdev where one is on file (100 = league-average peripherals; 10 points = 1 std-dev ON EACH INPUT RATE, so the composite's own spread is tighter than any single component). Same formula the server bakes into the detail chip. Renamed from STF+.`,
+    `pStuff+ ${v} · weighted z-composite of K% (0.55), BB% (0.30, inverted) and HR/9 (0.15, inverted) vs the ${p.statline.level || "level"} mean, using the level's empirical stdev where one is on file (100 = league-average peripherals; 10 points = 1 std-dev on each input rate, so the composite's own spread is tighter than any single component). Same formula the server bakes into the detail chip.`,
     "stf_plus");
 }
 function aaaStuffPlusPillHTML(p) {
@@ -57824,7 +57806,7 @@ function makeCompareSideBySide(players) {
     return `<div><span class="csbs-legend-dot" style="background:${color};"></span><strong>${escapeHtml(p.player_name)}</strong> <span style="color:${cls};font-family:var(--font-mono);font-weight:700;">RPS+ ${rp.plus}</span>${driver ? ` <span class="crps-driver">(${escapeHtml(driver)})</span>` : ""}</div>`;
   }).join("");
   const summary = `<div class="compare-rps-row">
-    <div style="font-family:var(--font-sans);font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;margin-bottom:6px;">RPS+ · 100 = mean prospect at the same age, 10 pts = a meaningful gap · MLB-level players show wRC+ (hitters) or xFIP / FIP- (pitchers) instead</div>
+    <div style="font-family:var(--font-sans);font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;margin-bottom:6px;">RPS+ · 100 = mean prospect at the same age; a point is about 1% of the cohort mean · MLB-level players show wRC+ (hitters) or xFIP / FIP- (pitchers) instead</div>
     ${rpsRows}
   </div>`;
   return head + chart + radar + table + summary;
