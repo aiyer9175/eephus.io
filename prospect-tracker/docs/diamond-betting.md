@@ -7941,6 +7941,202 @@ were outside the 36-hour window. No assignment, umpire value or outcome was read
 ---
 
 
+## 5o. Game intensity: stakes, matchup quality and the postseason (pre-registered 2026-10-08)
+
+**Written before any function, column, table, constant or flag below exists in code,
+before any intensity component has been computed for any real game, and before any
+2018-2026 game has been read for it**, in the discipline of 5a, 5c, 5d, 5k, 5l and 5m.
+Nothing served reads any of it and nothing served changes. Every name below that does
+not exist in code today is to be built. Other sections, specs and tests refer to this
+section by its title, "Game intensity: stakes, matchup quality and the postseason", never
+by its letter: betting registrations take their letters in commit order (plan Part 8,
+8.D 'Conflicts between lanes, resolved', row 3).
+
+**Disclosed, because 5c rule 1 turns on it.** Read to write this section: counts, dates,
+game types and build stamps of `.cache/betting/completed_games.json` (2,416 regular-season
+2026 rows, 2026-03-25 to 2026-09-27), `.cache/pbp_corpus/manifest.json`,
+`.cache/lineup_captures/` (the Wild Card clubs and game_pks, no score),
+the file names in `.cache/odds`, the served `data/futures.json` and the `_meta` of
+`data/futures_ledger.json` (probabilities, no outcome), the served starter board's SEM+
+distribution, and the vintage eval's counts (763 graded, 1,068 gradable). One synthetic
+simulation (30 equal clubs, no data) set the scale of `G_REF`. No stake, swing, index value
+or close variant was computed for any real game, and none was related to an outcome or a
+price. The text is the intensity lane's draft of 2026-09-30 (Part 8 bundle,
+`intensity_index.md` section 5). To commit it, this task read the plan (Part 8, P8.9 and
+8.D rows 3 and 8), the owner's recorded answers INT-A1, INT-A2, INT-A4, INT-B1, INT-B2,
+INT-B4 and Q901-1, the section headings of this document, section 8a, and the heading and
+verdict lines of the result and closure blocks named in the next paragraph. It read no
+data file, ran no simulation and computed nothing.
+
+**Neighbouring looks recorded when this section commits.** The construction, its literals
+and its families below are the lane draft's of 2026-09-30, written before any of these was
+recorded; the edits made at this commit (the letter, the schema rule, the owner's answers,
+the overlap list, the artifact home and the postseason cache) rest on no result. Recorded:
+5c-A closed for 2026 without a verdict (2026-10-02, no look); 7i closed for 2026 without a
+verdict (2026-10-02, no look); 7h FAIL (run 2026-10-02; the Poisson total keeps serving);
+5c-B FAIL (run 2026-10-08; `lineup_strength` stays dark); 5c-C INDETERMINATE (run
+2026-10-08, the fit floor, no number computed; `star_out` stays dark). Not recorded at this
+commit: 5d, 5k and 7e-D. None of these results changed a clause here, and no intensity
+member reads any of them.
+
+**The owner ask.** Owner ask 8 of 2026-09-30: an intensity index (playoff games, division
+games, games with playoff implications, games between elite clubs, games where both clubs
+start their ace); does intensity affect games measurably; which players or archetypes shine;
+what types of teams do well in the playoffs and in high-intensity games.
+
+**What this section is not.** The intensity chip on /betting/ and the DFS slate is a
+rendering beside a price. It is not a candidate, not a column and not a look, and it reads
+into no probability, edge, expected value, Kelly figure, slot, badge or record row
+(`test_betting_intensity_fence.py`, the 5l Dugout precedent). A rendered value is not a
+measurement.
+
+**Postseason games, and what is not built here (the owner's answers of 2026-10-01).**
+- INT-A1, answered (c): /betting/ prices postseason games, labelled "never graded on a
+  postseason game", and they may fill the slots and post record rows (section 8a,
+  "Postseason games are priced", task BET_POSTSEASON_PRICING). That pricing reads no
+  intensity value and nothing here changes it. A postseason price, slot or record row is a
+  price under the disqualification paragraph below like any other.
+- INT-A2, answered (b): postseason odds come only from a registered bracket-state
+  simulator with its own registry row and forward record (model id
+  `postseason_bracket_sim`, `docs/betting-2026-10/BRACKET_SIM_GATE.md`; Q901-1 brought it
+  forward to the 2026 postseason). The construction below never reads its odds; it runs its
+  own frozen conditioning.
+- No betting Postseason tab is built: the Scores plan owns the live bracket and series
+  state, with no odds. No Franchise "playoff performance" leaf is built: the F-SCORE plan
+  owns the Franchise postseason record (8.D row 8).
+
+**Why this is a gap.** Every incumbent input is a season-to-date quality rate. Nothing the
+model reads knows the standings: a clinched club and a club one game out enter the same way.
+
+**The construction, `ix_v1`, frozen here.** `dWS_T` and `dPO_T` are the changes in club T's
+World Series and postseason probability between winning and losing the game, from the
+rest-of-season and bracket simulation of `proj_current` run twice with the result forced each
+way under common random numbers; postseason games by exact series recursion times the
+bracket probability of advancing. Talent is the literature Elo (1500, K 4, 24 points of home
+field, flat start each season) after every final dated before the game, combined by log5 with
+a home edge of 0.0345. `G = dWS_h + dWS_a`; `L = G / G_REF`; `S = ln(1 + L) / ln(1 + 2 /
+G_REF)`. `Q` and `A` are the smaller of the two clubs' percentile ranks of projected wins and
+of their probables' SEM+ among qualified starters. `D` is the division flag. `R` is a label
+with weight 0 (INT-A4, answered 2026-10-01: a label only, no weight).
+`II = round(100 x (0.60 S + 0.15 Q + 0.15 A + 0.10 D))`; when `A` is null, `II` is not
+published. Bands: under 30 routine, 30 to 49 raised, 50 to 69 high, 70 and over peak. The
+weights and the bands are policy, never fitted. Literals: `G_REF` (draft value 0.01145, from
+the registered synthetic league: 30 equal clubs at 0-0 on a 162-game schedule of 52
+division, 64 league and 46 interleague games, 300,000 simulations at seed 20260930, no
+data; the gate tool's own commit (Q10_07) recomputes it once from that league and records
+the frozen literal here by a dated amendment, which replaces the draft value; it is never
+computed at a look), the weights, the bands (30, 50, 70), the Elo constants, the home edge,
+20,000 simulations at seed 12345, the IX-A focus threshold `|ds| >= 0.05`. They live in the
+dark builder and a test pins them to this text; no served constant is imported (X4).
+
+**Columns (schema: the next number after the last landed builder, in commit order).** The
+dark builder takes the next schema number after the last landed BUILDER in commit order
+when it commits; it does not wait for 5j's or 5l's builder (5j's number may move by a dated
+correction, and 5l waits only for 5j), and its `### Builder landed` amendment names the
+number. Tests pin this section's title and the column names, never a schema number. Team
+columns per club per vintage: `ix_elo`, `ix_po_pct`, `ix_ws_pct`, `ix_proj_wins`. A game
+block `ix_games`, keyed by `game_pk`, for every game scheduled on the three dates after the
+vintage: date, game type, series state, `dpo_h`, `dpo_a`, `dws_h`, `dws_a`, `G`, its Monte
+Carlo standard error, `S`, `Q`, `A` with the capture-time probable ids, `D`, `R`, `ii`.
+Basis per record: simulations, seed, schedule source (live or fallback), remaining pairs,
+standings games read, postseason format, `G_REF`, the construction hash.
+
+**Rules: 5c verbatim, plus seven.** (1) Old records return None for every `ix_` column. (2)
+`inputs_as_of` never fills one from live files. (3) A game whose `game_pk` is not in its
+pricing vintage's block is a stated null, never computed late (2026-09-11b point 5). (4) N1
+never reconstructs an `ix_` column. Archive-reconstructed values for stage 1 carry
+provenance "archive-reconstruct" per row (O22), live under `.cache/betting/intensity_archive/`
+and never price a stage-2 game. (5) Any change to the construction is recorded here the same
+day (X9); games priced after it go to their own ungraded bucket. (6) Postseason nights accrue
+toward the calendar and postseason games are not graded in stage 2 (INT-B2, answered
+2026-10-01: postseason games are their own descriptive frame, IX-E, never pooled with
+regular-season games and not graded in the pricing read). (7) Postseason winProbability
+feeds are stored in `.cache/win_prob_post/`, never in `.cache/win_prob/`: the play-by-play
+corpus globs every `*.json` in that directory (`tools/build_pbp_corpus.py`, in `build()`)
+and cannot tell a postseason game apart. Only the intensity lab reads them.
+
+**Stage 1, one look: 2018-2025, model-free.** Members and families: IX-ML {IX-A asymmetric
+stakes, IX-A2 home field under symmetric stakes}, m = 2; IX-TOT {IX-B}, m = 1; IX-TYPE
+{rotation quality, bullpen quality, contact, power}, m = 4; IX-ARCH {six archetypes}, m = 6;
+IX-E descriptive, intervals only. Price: the literature Elo; totals: the club-season,
+venue-season and season-month fixed-effects panel. IX-A is fitted on 2018, 2019, 2021 and 2022
+and graded on 2023-2025 under rule 4's two criteria (criterion 1 on its focus set, criterion 2
+on every graded game), sign b > 0; the others read two-sided. Every member carries the B3
+permuted-team twin (club-level values permuted among the clubs playing each date, 200
+replicates, the 95th percentile bar, strict) and a quality re-entry control. Holm within each
+family at 0.05. Stage 1 reads 2018, 2019 and 2021-2025 only: those regular-season finals,
+the play corpus for those seasons, and their postseasons. IX-E reads the 2018, 2019 and
+2021-2025 postseasons and, under INT-B1 (answered 2026-10-01, option (b)), the 2000-2017
+postseasons too (about 600 more games, fetched into `.cache/win_prob_post/` at no credit
+cost; their team types from season team totals, their price the end-of-season Elo walked
+over each season's regular-season finals). 2020 is excluded throughout. No 2026 game,
+regular season or postseason, is in stage 1's sample. The 2026 regular season is reported
+beside stage 1 only after the 5e and 5i-B looks are recorded, and it never decides.
+
+**The overlap list: which 2026 looks stage 1 waits for, and why.** Stage 1 waits for the
+2026 looks whose samples it shares: 5c-B, 5c-C, 5d, 5k and 7e-D, by their records or their
+own kill dates, 2026-10-31 at the latest. It does NOT wait for 5e or 5i-B: those two score
+only 2026 vintage games (5e's postseason games included, its 2026-09-11 amendment), stage 1
+reads no 2026 game, so no game is in both samples. Leaving them off the list removes the
+only reason stage 1 could slip into 2027.
+
+**Where the results live.** Each look writes its own tracked artifact,
+`data/game_intensity_eval.json`, with the registry row `game_intensity_effects` (a stage 1
+block, and later a stage2 block), and this section records a dated result block. Neither
+look writes `data/betting_model_eval.json`: `betting_model.backtest()` builds its result
+fresh and writes the whole file every night (run_monthly step 9e-pre1), so a foreign block
+there would be erased by the next nightly. The one-run guard reads both the artifact and
+this section's result block.
+
+**The 2026 vintage frame is forgone (X7).** On 763 graded games the smallest moneyline
+effect the frame could see is 0.045 per SD. No 2026 vintage-mode look exists and none will
+be taken. Nothing is sealed.
+
+**Stage 2, one look: 2027 vintage, the pricing question.** Only members that resolved in
+stage 1. Parameter fixed at its stage-1 value, never refit. Rule 4's vintage leg (IX-A on its
+focus set; IX-B in 5k's criterion-1 form with the moneyline not worse), the stage-1 sign, the
+twin, the control. A feature-only power precondition in 5f's form: short of 1.645, the look
+records UNDERPOWERED and reads nothing. Contaminated screen once, after the look, only on a
+passing member, disqualify-only. Regular season only (INT-B2).
+
+**When each stage is read.** Stage 1: the later of 2026-11-02 and the day after the 2026
+World Series ends, after the 5c-B, 5c-C, 5d, 5k and 7e-D looks are recorded or closed, in
+one run with every block written before any is opened, never on another look's date. It
+does not wait for 5e or 5i-B (the overlap list above). Stage 2: the first nightly after the
+last scheduled 2027 regular-season game; kill date 2027-11-30. The gate tool refuses an
+earlier date and a second run. A dry run of any fit, score or twin on real data before its
+stage's look is that stage's look, and disqualifies it.
+
+**Disqualification.** Any number relating an `ix_` column, the index, any of its components,
+or a close variant to a game outcome or a price before that stage's look is recorded
+disqualifies the stage's members under 5c rule 1. Close variants: playoff, division or World
+Series odds or their daily change used per game; games behind; magic or elimination numbers;
+clinch and elimination flags; a playoff-odds swing from any simulator; Elo or projected-wins
+asymmetry offered as stakes; a season-phase or calendar term; the chip's values. Not a
+relation: the served Futures board and its ledger (season outcomes are the Futures lane's);
+the bracket-state simulator's board and forward record (their own gate); the chip on a game
+not yet started; counts-only gate-tool runs; registered looks of other sections on their own
+columns.
+
+**What a pass would change.** New flags (to be built, default False, the
+`SERVE_RUN_DISPERSION` idiom): `SERVE_INTENSITY_STAKES` for IX-A and `SERVE_INTENSITY_TOTAL`
+for IX-B, each flipped by the owner in one commit with a `MODEL_VERSION` bump, the parameter
+frozen as a literal, a tripwire test and a `--context` re-run. Slots stay under O15 and
+M28-1. A pass speaks for the vintage refit; the served pricer follows 7e-D and O14. The
+serving rule is unchanged (INT-B4, answered 2026-10-01: keep the rule): no stakes term serves
+unless it passes rule 4's vintage leg within one season, no multi-season combining rule is
+registered, and the index stays a disclosure chip. The arithmetic says a pass is not
+expected at plausible sizes: a 5-point effect on a focused tenth of the schedule needs about
+1,080 focused games for an expected t of 1.645, and one season holds about 240.
+
+**What this section does not claim.** That clutch is a skill; that intensity causes anything;
+that any price reads intensity, postseason prices (8a) included. No per-player "big-game"
+number is published, whatever IX-ARCH reads. **No number has been computed on this
+candidate.**
+
+---
+
+
 ## 6. The backtest: two modes, both labelled
 
 ```
