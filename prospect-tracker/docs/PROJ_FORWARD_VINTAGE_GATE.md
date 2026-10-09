@@ -193,3 +193,129 @@ Entries are appended below, dated, and never edited. A missed freeze, a `no_seas
 entry, an amendment, and each score are recorded here.
 
 - 2026-10-09: registered. No frozen file, producer or score exists.
+- 2026-10-09: amendment A1 (section 10) registered after the owner's OUTLOOK answer (a): the Team Outlook winter frames are frozen monthly from 2026-11-01 to 2027-03-01 and scored once as a separate arm. Sections 2 to 5 are unchanged. No winter-frame code, frozen file or score exists.
+
+## 10. Amendment A1 (2026-10-09): the Team Outlook winter frames
+
+Owner answer **OUTLOOK (a), as of signings** (`_audit_2026-09-09/DECISIONS_FOR_OWNER.md`,
+'Part 8 batch 2 and the ETA multipliers', 2026-09-30); plan Part 8, P8.6 'New
+cross-module wirings' (W03) and 8.D 'Conflicts between lanes, resolved' rows 4 and 5.
+
+Written and committed alone, after that answer and BEFORE the winter frame's code
+(`proj_export.TEAM_OUTLOOK_WINTER_FRAME`) exists, before any winter-frame number is
+computed and before any 2027 game. It adds one separate arm and five dated freezes. It
+changes nothing in sections 2 to 5: the Opening Day freeze (owner answer M15-2) stays the
+primary read, and P1 and T1 keep their forecast fields, comparators, intervals and verdict
+vocabulary.
+
+### 10.1 The two frames
+
+- **Pre-free-agency frame.** Team Outlook as built through 2026-10: every veteran counts
+  on the club that holds him today for the first projected season, including a locked
+  free agent whose contract has ended (`proj_export._last_controlled_season`, the age
+  proxy that never drops the first season).
+- **As-of-signings frame.** The same roll-up after the FA module's class status is
+  applied. An unsigned locked free agent leaves his 2026 club for one labelled
+  unassigned pool line; his WAR stays visible there and is never assigned to a club by
+  fit probability (the Fit's MRR is 0.167). A signed member counts on the club the
+  signing log names, from the night the signing posts. A pending option counts at his
+  club weighted by the FA export's P(exercise), 1 minus `enterProb` where the
+  band-priced option model set it (`enterProbSrc`), with the rest of his WAR in the
+  pool; with no such probability he is held at his club at full weight and labelled. A
+  locked member whose projection row carries a contract, or club control, through 2027
+  or later stays on his club and is named in the payload: the contract table wins over
+  the class list. Club wins plus the pool's WAR sum to the 2,430-win league pin; the
+  uniform remainder is the pre-free-agency frame's, so no pool WAR is spread across the
+  clubs.
+
+**Fields.** While the flag is on, `team_outlook[].byYear[0].wins` carries the
+as-of-signings frame, `team_outlook[].preFa.byYear[0].wins` the pre-free-agency frame,
+and the payload's `team_outlook_frame` block the pool. While the flag is off,
+`byYear[0].wins` is the pre-free-agency frame and no as-of-signings frame exists. T1
+reads `byYear[0].wins` of the Opening Day file as registered; under OUTLOOK (a) that is
+the as-of-signings frame from the flip on, and the same file's `preFa` field is the
+pre-free-agency frame. The FA Fit reads the pre-free-agency frame under every flag
+state and `data/fa_class.json` stays byte-identical; repointing the Fit's WINDOW input
+is a Gate 3 lever that needs its own registration (plan P8.5, findings F-1 and F-2).
+
+### 10.2 The five monthly freezes
+
+| task | not before | what it freezes |
+|---|---|---|
+| Q9_03a | 2026-11-01 | both frames, first winter freeze |
+| Q9_03b | 2026-12-01 | both frames |
+| Q9_03c | 2027-01-01 | both frames |
+| Q9_03d | 2027-02-01 | both frames |
+| Q9_03e | 2027-03-01 | both frames, last winter freeze |
+
+**W1. When.** Each task freezes at the first writer slot on or after its date, never on
+a registered look day of any gate in `docs/*GATE*.md` (such a day is skipped to the
+next free one), and records the date it actually froze. A freeze is never back-dated
+and never re-taken.
+
+**W2. Which bytes.** The served `data/mlb_projections.json` of the last nightly build
+that completed before the freeze (the box copy when the box and a local build
+disagree; the log says which). Preconditions, each refused if it fails: `first_season`
+2027; every `team_outlook` row carries `byYear[0].wins`; with the flag on, every row
+carries `preFa.byYear[0].wins` and the payload carries `team_outlook_frame`.
+
+**W3. The file.** `data/proj_forward_vintage/team_outlook_frames_<YYYY-MM-DD>.json`,
+named by the date it actually froze, WRITE-ONCE, holding `source`,
+`source_generated_at`, the flag state, the pool's year-1 WAR and member count, the
+named reconciled members, and per club `team`, `wins0` (the as-of-signings frame,
+`byYear[0].wins`; null with `not_built` when the flag was off) and `preFaWins0` (the
+pre-free-agency frame: `preFa.byYear[0].wins` with the flag on, `byYear[0].wins` with
+it off). It sits under `data/proj_forward_vintage/`, which ships in neither deploy
+consumer.
+
+**W4. Missed.** A month with no freeze by the next month's date is recorded as MISSED in
+10.5 and is not scored. A later build is never a substitute.
+
+### 10.3 The score: arm W, once, at the 2027 close
+
+**When.** Section 5's rules: after the last 2027 regular-season game and the 2027 fWAR
+vintage freeze, never on a registered look day, one run; a re-run is a new block that
+keeps the first and says why. Section 5's producer writes arm W as its own block,
+`winter_frames`, in `data/proj_forward_vintage_eval.json`, and never changes the P1 or
+T1 block.
+
+**Labels.** Final 2027 standings, pro-rated as in section 5.
+
+**Statistics.** For each frozen month and each frame: team wins MAE over the 30 clubs
+(the registered `forward_gate` metric), and the same comparator as T1 (prior-season
+wins carried forward), each gap with its paired 95% interval clustered by club.
+**The arm's one verdict** compares the two frames: per club, the pre-free-agency
+frame's absolute error minus the as-of-signings frame's, averaged over that club's
+frozen months; the mean over the 30 clubs with its 95% interval from
+`gap_intervals.paired_cluster_interval` at its `SEED` (the club is the unit). The
+vocabulary is closed: `AS_OF_SIGNINGS_CLOSER` (interval wholly above zero),
+`PRE_FA_CLOSER` (wholly below), `NOT_RESOLVED` (straddles zero), `NOT_SCORED` (fewer
+than two frozen months with both frames, or a precondition failed). The per-month
+gaps are descriptive and carry no verdict.
+
+**What the score may say.** Which frame sat closer to final 2027 standings over the
+winter freezes, on one season, or that one season cannot tell them apart. It flips no
+flag and re-fits nothing; a later frame decision needs its own registration or an
+owner answer. The pool is never scored: its players have no club in either frame.
+
+### 10.4 What this amendment does not do
+
+- It moves no served number; the frame flag flips in its own commit.
+- It changes no section 2 to 5 rule, field, comparator or verdict word.
+- It assigns no pool WAR by probability. A probability form is a later upgrade of the
+  pool, only after the FA destination model passes its own gate.
+- It computes no realized-WAR mean, residual, anchor or count by consensus-FV cell, and
+  touches no frame of `docs/PROJ_PATH_SHAPE_GATE.md`; label season 2027 is read once,
+  at the 10.3 score (section 6's disclosure applies to it).
+
+### 10.5 The winter-frame freeze log (append-only)
+
+One row per task, filled by the task that freezes; a row is never edited once filled.
+
+| task | not before | froze on | file | sha256 | source | source generated_at | flag |
+|---|---|---|---|---|---|---|---|
+| Q9_03a | 2026-11-01 | pending | | | | | |
+| Q9_03b | 2026-12-01 | pending | | | | | |
+| Q9_03c | 2027-01-01 | pending | | | | | |
+| Q9_03d | 2027-02-01 | pending | | | | | |
+| Q9_03e | 2027-03-01 | pending | | | | | |
