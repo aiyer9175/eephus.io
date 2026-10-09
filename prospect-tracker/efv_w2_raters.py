@@ -99,7 +99,7 @@ ITEM = "EFV4_RATER_PANEL"
 OUT_PATH = ROOT / "data" / "_labs" / "efv_w2" / "efv_w2_raters.json"
 PANEL_PATH = RP.OUT_PATH
 PRIVATE_LEDGER = ROOT / ".cache" / "efv4_raters" / "progress_ledger.jsonl"
-MODEL_PREFIX = "efv_w2_raters:v4"
+MODEL_PREFIX = "efv_w2_raters:wave4"
 B_DEFAULT = S.B_DEFAULT
 SEED = S.SEED_DEFAULT
 DEV_FRAMES = ("lv_dev", "vm_dev")
@@ -585,7 +585,8 @@ def run_reads(inp, infos: dict, fids, *, B: int, log=print) -> dict:
         for arm in ARMS:
             a = {"name": arm["name"], "sides": list(arm["sides"]), "head": arm["head"],
                  "kind": arm["kind"], "what": arm["what"],
-                 "model_id": f"{MODEL_PREFIX}:{arm['name']}",
+                 "model_id": (f"{MODEL_PREFIX}:{arm['name']}:"
+                              f"{arm['sides'][0] if len(arm['sides']) == 1 else 'both'}"),
                  "columns": {s: column_key(s) for s in arm["sides"]}, "frames": {}}
             t0 = time.time()
             for fid in fids:

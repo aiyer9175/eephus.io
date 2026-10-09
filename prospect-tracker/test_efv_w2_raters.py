@@ -441,7 +441,8 @@ def test_progress_rows_are_development_rows_with_a_screening_block(tmp_path):
     import efv_progress as P
     doc = {"generated_at": "2026-10-09T03:00:00Z", "label": {"id": "x"}, "code": {},
            "dev": {"arms": [{"name": "w2r_panel_hit", "sides": ["hit"], "head": "skill",
-                             "kind": "column", "model_id": "efv_w2_raters:v4:w2r_panel_hit",
+                             "kind": "column",
+                             "model_id": "efv_w2_raters:wave4:w2r_panel_hit:hit",
                              "frames": {"lv_dev": _frame_blk(), "vm_dev": _frame_blk()}}]}}
     docs = W.arm_docs(doc)
     assert len(docs) == 1 and docs[0]["role"] == "development"
