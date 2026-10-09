@@ -212,14 +212,17 @@ def test_the_nightly_step_runs_after_the_vintage_snapshot():
     assert src.count('_step("6b4l.') == 1
 
 
-def test_the_helper_runs_the_four_exporters_in_order():
+def test_the_helper_runs_the_three_exporters_in_order():
+    """The Team Stats payload left the helper for run_daily's own step 6b7h,
+    right after F-SCORE (FS_2A, orchestrator ruling X13)."""
     src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
     i = src.index("def _league_teams_payloads(")
     helper = src[i:src.index(NL + "def ", i + 10)]
-    order = [helper.index(f'("{n}", ') for n in ("league_averages", "team_stats_export",
+    order = [helper.index(f'("{n}", ') for n in ("league_averages",
                                                  "mlbstats_trends_export",
                                                  "mlbstats_rolling_export")]
     assert order == sorted(order)
+    assert '("team_stats_export", ' not in helper
     assert "log.exception(" in helper, "one failed export must not stop the next"
 
 
@@ -245,9 +248,8 @@ def test_one_failed_export_does_not_stop_the_next(monkeypatch):
     monkeypatch.setattr(T, "export", ok("mlbstats_trends_export", {"refused": None}))
     monkeypatch.setattr(R, "export", ok("mlbstats_rolling_export", {"refused": "stale"}))
     out = run_monthly._league_teams_payloads(logging.getLogger("test"), "t")
-    assert calls == ["league_averages", "team_stats_export", "mlbstats_trends_export",
-                     "mlbstats_rolling_export"]
-    assert out == {"league_averages": "failed", "team_stats_export": "ok",
+    assert calls == ["league_averages", "mlbstats_trends_export", "mlbstats_rolling_export"]
+    assert out == {"league_averages": "failed",
                    "mlbstats_trends_export": "ok", "mlbstats_rolling_export": "refused: stale"}
 
 
