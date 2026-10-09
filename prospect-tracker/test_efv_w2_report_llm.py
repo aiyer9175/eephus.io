@@ -390,6 +390,106 @@ def test_writer_minus_stated_is_a_within_group_gap():
     assert np.allclose(d[4:], [0.5, -0.5])
 
 
+def _frames(rows_by_v):
+    """{side: {V: (rows, labels)}} in the efv_v2_assemble shape (labels unused)."""
+    out = {"hit": {}, "pit": {}}
+    for (side, V), rows in rows_by_v.items():
+        out[side][V] = (rows, [{} for _ in rows])
+    return out
+
+
+def _lv_fixture():
+    frames = _frames({
+        ("pit", 2018): [{"player_key": "a", "asof_date": "2018-03-01",
+                         "grades": {R.CONSENSUS_KEY: 50.0}},
+                        {"player_key": "b", "asof_date": "2018-03-01",
+                         "grades": {R.CONSENSUS_KEY: 45.0}},
+                        {"player_key": "c", "asof_date": "2018-03-01",
+                         "grades": {R.CONSENSUS_KEY: 40.0}},
+                        {"player_key": "late", "asof_date": "2018-03-01",
+                         "grades": {R.CONSENSUS_KEY: 40.0}}],
+        ("pit", 2019): [{"player_key": "a", "asof_date": "2019-03-01",
+                         "grades": {R.CONSENSUS_KEY: 55.0}}]})
+    man = [{"side": "pit", "vintage": 2018, "player_key": "a", "source": "mlb_pipeline",
+            "date": "2018-02-01", "doc_id": "da"},
+           {"side": "pit", "vintage": 2018, "player_key": "b", "source": "mlb_pipeline",
+            "date": "2018-02-01", "doc_id": "db"},
+           {"side": "pit", "vintage": 2018, "player_key": "late", "source": "mlb_pipeline",
+            "date": "2018-04-01", "doc_id": "dl"},
+           {"side": "pit", "vintage": 2019, "player_key": "a", "source": "mlb_pipeline",
+            "date": "2019-02-01", "doc_id": "da2"}]
+
+    def rec(did, **kw):
+        return {"doc_id": did, "control_id": None, "prompt_sha256": R.PROMPT_SHA,
+                "model_id": "m-1", "fields": _ok_fields("pit", **kw)}
+    store = [rec("da", writer_level=3, risk=1), rec("db", writer_level=6, risk=5),
+             rec("dl", writer_level=7), rec("da2", writer_level=4, risk=2)]
+    return frames, man, store
+
+
+def test_lv_values_as_of_and_the_writer_gap():
+    frames, man, store = _lv_fixture()
+    rec = {}
+    v = R.lv_values("pit", frames, manifest_rows=man, store=store, model_id="m-1",
+                    receipt=rec)
+    assert v[(2018, "c")] is None
+    assert v[(2018, "late")] is None
+    assert rec["documents_after_asof_dropped"] == 1 and rec["rows_with_document"] == 3
+    assert v[(2018, "a")]["txt_risk"] == 1.0 and v[(2018, "b")]["txt_risk"] == 5.0
+    assert "txt_approach_concern" not in v[(2018, "a")]
+    assert v[(2018, "a")]["txt_writer_minus_stated"] == pytest.approx(0.5 - 1.0)
+    assert v[(2018, "b")]["txt_writer_minus_stated"] == pytest.approx(1.0 - 0.5)
+    assert v[(2019, "a")]["txt_writer_minus_stated"] == pytest.approx(0.0)
+    assert v[(2018, "a")]["_date"] == "2018-02-01"
+
+
+def test_carried_value_takes_the_latest_dated_on_or_before():
+    frames, man, store = _lv_fixture()
+    v = R.lv_values("pit", frames, manifest_rows=man, store=store, model_id="m-1")
+    assert R.carried_value(v, "a", "2018-12-31")["txt_risk"] == 1.0
+    assert R.carried_value(v, "a", "2020-07-01")["txt_risk"] == 2.0
+    assert R.carried_value(v, "a", "2018-01-31") is None
+    assert R.carried_value(v, "a", None) is None
+    assert R.carried_value(v, "zz", "2020-01-01") is None
+
+
+def test_store_model_id_refuses_mixed_extractors():
+    _f, _m, store = _lv_fixture()
+    assert R.store_model_id(store) == "m-1"
+    with pytest.raises(ValueError):
+        R.store_model_id(store + [dict(store[0], model_id="m-2")])
+
+
+def test_screen_column_is_the_lab_hook(monkeypatch):
+    frames, man, store = _lv_fixture()
+    monkeypatch.setattr(R, "load_manifest", lambda path=None: {"rows": man})
+    monkeypatch.setattr(R, "read_store", lambda path=None: store)
+    R._LV_MEMO.clear()
+    col = R.screen_column("txt_risk", "pit", frames)
+    assert col[(2018, "a")] == 1.0 and col[(2018, "c")] is None
+    with pytest.raises(ValueError):
+        R.screen_column("txt_approach_concern", "pit", frames)
+    R._LV_MEMO.clear()
+
+
+def test_control_receipt_pairs_donors_and_twins():
+    _f, _m, store = _lv_fixture()
+    cid1, cid2 = "c" + "1" * 16, "c" + "2" * 16
+    store = store + [
+        {"doc_id": "da", "control_id": cid1, "prompt_sha256": R.PROMPT_SHA,
+         "model_id": "m-1", "fields": _ok_fields("pit", writer_level=3, risk=1)},
+        {"doc_id": "raw", "control_id": cid2, "prompt_sha256": R.PROMPT_SHA,
+         "model_id": "m-1", "fields": _ok_fields("pit", writer_level=7, risk=2)}]
+    man = {"controls": {"shuffle": [{"control_id": cid1, "donor_doc_id": "da",
+                                     "side": "pit"}],
+                        "invariance": [{"control_id": cid2, "paired_doc_id": "db",
+                                        "side": "pit"}]}}
+    r = R.control_receipt(man, store, "m-1")
+    assert r["shuffle"]["n_pairs"] == 1 and r["shuffle"]["fields"]["risk"]["exact_share"] == 1.0
+    inv = r["invariance"]["fields"]
+    assert inv["writer_level"]["mean_diff"] == 1.0 and inv["risk"]["mean_diff"] == -3.0
+
+
 # 9. guards and scans ------------------------------------------------------------------
 
 def test_corpus_vintages_and_reserved_guard():
@@ -403,7 +503,12 @@ def test_corpus_vintages_and_reserved_guard():
 
 def test_the_lab_registers_the_arms():
     import efv_screen_lab as LAB
-    assert LAB.WAVE2_DEV[R.MODULE] == R.ARM_NAMES
+    assert LAB.WAVE2_DEV["efv_w2_report_read"] == R.ARM_NAMES
+    for a in R.ARMS:
+        assert a["kind"] == "column" and a["head"] in LAB.HEADS
+        assert a["column"] == {"source": "module", "module": R.MODULE,
+                               "attr": "screen_column", "arg": a["field_column"]}
+        assert (a["head"] == "timing") == (a["field_column"] in R.TIMING_COLUMNS)
     assert R.STORE_PATH.as_posix().endswith("data/_labs/efv_w2/report_extract.jsonl")
     assert R.MANIFEST_PATH.as_posix().endswith(
         "data/_labs/efv_w2/report_extract_manifest.json")
