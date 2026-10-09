@@ -59,6 +59,16 @@ the timing head, the rest to the skill head; a hitter skill column is offered on
 the DS-03 probe on report_absent reads BALANCED (efv_text_features.offered_columns;
 IMBALANCED today, so hitters enter the timing head only).
 
+THE LAB HOOK (EFV4_REPORT_LLM_EXTRACTION). lv_values() reads the stored extraction of
+one extractor (store_model_id: a read never mixes models) on the frame rows, keeping a
+document only when it is dated on or before the row's list date; screen_column() is the
+screening lab's builder hook (ARMS carry the lab's candidate shape); carried_value()
+is the as-of carry a debut-cohort row or a later list vintage reads; control_receipt()
+is the text-side control (test-retest of the re-extracted shuffle donors, agreement of
+the names-left-in documents with their redacted twins), no outcome. The reads, the
+outcome side of the controls and the ledger rows live in efv_w2_report_read.py, so this
+module never imports a label.
+
 DEFAULTS (named; the owner may choose otherwise): the writer-versus-grade term is the
 within-(side, V) percentile of the extracted writer_level minus the consensus percentile
 u_c, because the stated grade is redacted before the call and the prompt forbids
@@ -201,15 +211,23 @@ def _arms() -> tuple[dict, ...]:
         for col in COLUMNS:
             if SIDE_ONLY.get(col, side) != side:
                 continue
-            out.append({"name": f"rpt_{col[4:]}_{side}", "column": col, "side": side,
-                        "head": column_head(col), "kind": "column_pending_extraction",
-                        "retest": False,
-                        "source": {"module": MODULE, "attr": "row_fields"}})
+            h = column_head(col)
+            out.append({"name": f"rpt_{col[4:]}_{side}", "field_column": col,
+                        "side": side, "head": "timing" if h == "time" else "skill",
+                        "kind": "column", "retest": False,
+                        "skill_gate": (None if h == "time" else
+                                       "report_absent BALANCED on the frozen fWAR label, "
+                                       "else the timing head"),
+                        "column": {"source": "module", "module": MODULE,
+                                   "attr": "screen_column", "arg": col}})
     return tuple(out)
 
 
-#: The arms (one column per side and field). Kind column_pending_extraction: the lab
-#: cannot read them until the store holds the extraction.
+#: The arms (one column per side and field), in the screening lab's candidate shape.
+#: `head` is the head the registration offers the column to when its side's
+#: report_absent probe reads BALANCED on the frozen fWAR label; a grade-side column of
+#: a side whose probe reads otherwise goes to the timing head instead (leakage protocol
+#: step 6), resolved by the read (efv_w2_report_read.resolve_heads).
 ARMS: tuple[dict, ...] = _arms()
 ARM_NAMES: tuple[str, ...] = tuple(a["name"] for a in ARMS)
 
@@ -1237,6 +1255,207 @@ def writer_minus_stated(writer_level, fv, groups) -> np.ndarray:
     if ok.size:
         gg = [g[i] for i in ok]
         out[ok] = T.within_pct(wl[ok], gg) - T.within_pct(cv[ok], gg)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# the lab columns (EFV4_REPORT_LLM_EXTRACTION): fixed functions of the store
+# ---------------------------------------------------------------------------
+
+#: The frame rows' consensus grade key (source_backtest.CONSENSUS_KEY).
+CONSENSUS_KEY = "prospx_consensus"
+
+
+def load_manifest(path: Path = MANIFEST_PATH) -> dict:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def store_model_id(store: list[dict], prompt_sha: str = PROMPT_SHA) -> str:
+    """The one model id the main-corpus extractions carry under the prompt. Several
+    models (or none) raise: a read never mixes extractors."""
+    ids = sorted({r["model_id"] for r in store
+                  if not r.get("control_id") and r["prompt_sha256"] == prompt_sha})
+    if len(ids) != 1:
+        raise ValueError(f"the store holds {len(ids)} extractor ids under the prompt: {ids}")
+    return ids[0]
+
+
+def _column_values(side: str, fields: dict) -> dict:
+    """{column: value} of one row's averaged fields (writer_level stays raw under
+    txt_writer_minus_stated until the group gap is taken)."""
+    out = {}
+    for f in FIELD_ORDER:
+        col = COLUMN_OF[f]
+        if SIDE_ONLY.get(col, side) != side:
+            continue
+        out[col] = fields.get(f)
+    return out
+
+
+def lv_values(side: str, frames: dict, *, manifest_rows: list[dict] | None = None,
+              store: list[dict] | None = None, model_id: str | None = None,
+              receipt: dict | None = None) -> dict:
+    """{(V, player_key): {column: value, "_date": latest document date} | None} on the
+    side's list-vintage frame rows of the corpus vintages. A document counts for a row
+    only when it is the row's own corpus document (the in-window report the row's text
+    attached, efv_text_features) AND its date is on or before the row's asof_date (the
+    list date); the extraction is the stored one of `model_id` under the current
+    prompt. txt_writer_minus_stated is the within-(side, V) percentile of writer_level
+    minus the consensus percentile u_c over the rows that carry both. A row without a
+    document is None."""
+    manifest_rows = load_manifest()["rows"] if manifest_rows is None else manifest_rows
+    store = read_store() if store is None else store
+    model_id = store_model_id(store) if model_id is None else model_id
+    by_v = frames.get(side) or {}
+    frame_rows: dict = {}
+    for V in sorted(by_v):
+        F.guard_score_request(int(V), purpose="w2 report column")
+        if int(V) not in CORPUS_VINTAGES:
+            continue
+        for r in by_v[V][0]:
+            frame_rows[(int(V), r["player_key"])] = r
+    kept, late = [], 0
+    for m in manifest_rows:
+        if m["side"] != side:
+            continue
+        fr = frame_rows.get((int(m["vintage"]), m["player_key"]))
+        if fr is None:
+            continue
+        asof = str(fr.get("asof_date") or "")[:10]
+        if asof and str(m["date"])[:10] > asof:
+            late += 1
+            continue
+        kept.append(m)
+    fields = row_fields(kept, store, model_id=model_id)
+    dates: dict = {}
+    for m in kept:
+        k = (int(m["vintage"]), m["player_key"])
+        dates[k] = max(dates.get(k, ""), str(m["date"])[:10])
+    out: dict = {}
+    for (V, pk), fr in frame_rows.items():
+        f = fields.get((side, V, pk))
+        if f is None:
+            out[(V, pk)] = None
+            continue
+        vals = _column_values(side, f)
+        vals["_date"] = dates.get((V, pk))
+        vals["_cons"] = (fr.get("grades") or {}).get(CONSENSUS_KEY)
+        out[(V, pk)] = vals
+    keys = [k for k, v in out.items() if v is not None]
+    wms = writer_minus_stated([out[k]["txt_writer_minus_stated"] for k in keys],
+                              [out[k]["_cons"] for k in keys], [k[0] for k in keys])
+    for k, w in zip(keys, wms):
+        out[k]["txt_writer_minus_stated"] = None if np.isnan(w) else float(w)
+        out[k].pop("_cons")
+    if receipt is not None:
+        receipt.update({"side": side, "model_id": model_id, "frame_rows": len(frame_rows),
+                        "rows_with_document": len(keys),
+                        "documents_after_asof_dropped": late})
+    return out
+
+
+def carried_value(values: dict, player_key: str, asof, *, max_vintage: int | None = None):
+    """The latest list-vintage value of the player (lv_values output of the side) whose
+    document date is on or before `asof`: the as-of carry a debut-cohort row or a later
+    list vintage reads. None when there is none or asof is unknown."""
+    if not asof:
+        return None
+    a = str(asof)[:10]
+    best = None
+    for (V, pk), v in values.items():
+        if pk != player_key or v is None or not v.get("_date") or v["_date"] > a:
+            continue
+        if max_vintage is not None and V > max_vintage:
+            continue
+        if best is None or (V, v["_date"]) > best[0]:
+            best = ((V, v["_date"]), v)
+    return None if best is None else best[1]
+
+
+_LV_MEMO: dict = {}
+
+
+def screen_column(column: str, side: str, frames: dict) -> dict:
+    """The screening lab's builder hook (column source "module", arg = the column):
+    {(V, player_key): value | None} on the side's list-vintage frame rows."""
+    if column not in COLUMNS:
+        raise ValueError(f"unknown column {column!r}")
+    if SIDE_ONLY.get(column, side) != side:
+        raise ValueError(f"{column} is not a {side} column")
+    key = (side, id(frames))
+    if key not in _LV_MEMO:
+        _LV_MEMO.clear()
+        _LV_MEMO[key] = lv_values(side, frames)
+    out = {}
+    for slot, v in _LV_MEMO[key].items():
+        x = None if v is None else v.get(column)
+        out[slot] = None if x is None else float(x)
+    return out
+
+
+def _rank_corr(a, b) -> float | None:
+    a, b = np.asarray(a, dtype=np.float64), np.asarray(b, dtype=np.float64)
+    if a.size < 3 or np.ptp(a) == 0 or np.ptp(b) == 0:
+        return None
+    ra = T.within_pct(a, [0] * a.size)
+    rb = T.within_pct(b, [0] * b.size)
+    return float(np.corrcoef(ra, rb)[0, 1])
+
+
+def _pair_stats(pairs: list[tuple[dict, dict]]) -> dict:
+    """Per field: n, exact agreement share, mean of (second minus first), mean
+    absolute difference and the rank correlation, over the pairs where both values
+    exist (the injury enum as its 0/1 flag)."""
+    out = {}
+    for f in FIELD_ORDER:
+        a, b, exact = [], [], 0
+        for x, y in pairs:
+            va, vb = field_value(f, x.get(f)), field_value(f, y.get(f))
+            if va is None or vb is None:
+                continue
+            a.append(va)
+            b.append(vb)
+            exact += int(x.get(f) == y.get(f))
+        if not a:
+            out[f] = {"n": 0}
+            continue
+        d = np.asarray(b) - np.asarray(a)
+        rho = _rank_corr(a, b)
+        out[f] = {"n": len(a), "exact_share": round(exact / len(a), 4),
+                  "mean_diff": round(float(d.mean()), 4),
+                  "mean_abs_diff": round(float(np.abs(d).mean()), 4),
+                  "rank_corr": None if rho is None else round(rho, 4)}
+    return out
+
+
+def control_receipt(manifest: dict | None = None, store: list[dict] | None = None,
+                    model_id: str | None = None) -> dict:
+    """The text-side controls, no outcome read. shuffle: each donor document the
+    control set re-extracted against the main extraction of the same document (the
+    extractor's test-retest agreement, the noise a shuffled-document twin carries).
+    invariance: each names-left-in document against the main extraction of its
+    redacted twin (how far the identity redaction moves the reading). The outcome side
+    of the invariance control (partial correlations given u_c) is the read's."""
+    manifest = load_manifest() if manifest is None else manifest
+    store = read_store() if store is None else store
+    model_id = store_model_id(store) if model_id is None else model_id
+    main = {r["doc_id"]: r["fields"] for r in store
+            if not r.get("control_id") and r["model_id"] == model_id
+            and r["prompt_sha256"] == PROMPT_SHA}
+    ctl = {r["control_id"]: r["fields"] for r in store
+           if r.get("control_id") and r["model_id"] == model_id
+           and r["prompt_sha256"] == PROMPT_SHA}
+    out: dict = {"model_id": model_id}
+    for kind, first_key in (("shuffle", "donor_doc_id"), ("invariance", "paired_doc_id")):
+        pairs, missing = [], 0
+        for c in (manifest.get("controls") or {}).get(kind) or ():
+            a, b = main.get(c[first_key]), ctl.get(c["control_id"])
+            if a is None or b is None:
+                missing += 1
+                continue
+            pairs.append((a, b))
+        out[kind] = {"n_pairs": len(pairs), "n_missing": missing,
+                     "fields": _pair_stats(pairs)}
     return out
 
 

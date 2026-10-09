@@ -268,9 +268,10 @@ def w2_candidates(modules=W2_MODULES, kinds=("column",)) -> tuple[dict, ...]:
 WAVE2_DEV: dict[str, tuple[str, ...]] = {
     "efv_w2_anchor": ("an1_rel", "an1_pl", "an2_pos"),
     "efv_w2_raters": ("w2r_panel_hit", "w2r_panel_pit", "w2r_panel_both"),
-    # EFV4 report extraction (EFV4_REPORT_EXTRACT_PREP): registered, pending the
-    # extraction; its main([]) prints the corpus and store status, no statistic.
-    "efv_w2_report_llm": (
+    # EFV4 report extraction: efv_w2_report_llm builds the corpus, store and columns
+    # (EFV4_REPORT_EXTRACT_PREP); efv_w2_report_read runs the controls and the
+    # development and spent reads (EFV4_REPORT_LLM_EXTRACTION).
+    "efv_w2_report_read": (
         "rpt_conviction_hit", "rpt_hedge_count_hit", "rpt_risk_hit",
         "rpt_injury_mention_hit", "rpt_makeup_hit", "rpt_body_projection_hit",
         "rpt_role_ceiling_hit", "rpt_role_floor_hit", "rpt_approach_concern_hit",
