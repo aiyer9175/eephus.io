@@ -10699,7 +10699,7 @@
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
 <script src="/assets/eephus-export.js?v=552e2152" defer></script>
-<script src="/assets/eephus-csv.js?v=4a00e52b" defer></script>
+<script src="/assets/eephus-csv.js?v=796b4f3f" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
      git-ignored and absent on the public/dev tree, so its <script> 404s harmlessly
@@ -10721,7 +10721,7 @@
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
      prospect FV on detail views so the field escalates with the rarity tier. -->
-<script src="/assets/eephus-bg.js?v=9dd26b43" defer></script>
+<script src="/assets/eephus-bg.js?v=426ba8b6" defer></script>
 
 <!-- v32.0 - FV/WAR/$ conversion framework, loaded synchronously so all
      downstream code can call dollarsPerWar() / surplusValueMM() / etc
@@ -22360,6 +22360,7 @@ function _taPriceParty(idx, key, name, orgs) {
   const base = {
     key: row.player_key, src: row.surplus_source || null, status: row.status || null,
     fv: row.fv != null ? Number(row.fv) : null, pos: row.position || null,
+    mlbam: row.mlbam_id != null ? Number(row.mlbam_id) : null,
   };
   const mm = row.trade_value_mm == null ? NaN : Number(row.trade_value_mm);
   if (!isFinite(mm)) return Object.assign(base, { value: null, kind: "unpriced", why: row.surplus_source || "no_price" });
@@ -22376,6 +22377,61 @@ function _taVerdict(netDeltaA, pending, band) {
 // Signed $M: -0.4 -> "-$0.4M".
 function _taMM(v) {
   return `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(1)}M`;
+}
+// REALIZED LEG (owner answer M9, 2026-09-25). What each club actually got after
+// the trade: the WAR a player produced for the club that received him, from
+// data/trade_realized.json (per-stint season WAR on the displayed eWAR v2 basis,
+// written by trade_realized_export.py), priced at the same flat $/WAR the trade
+// value uses. It sits beside the value-today verdict and is never added to it.
+// A stint frame has no calendar dates, so "from the trade date" is resolved at
+// stint resolution: in the trade season only the receiving club's stints AFTER the
+// sending club's stint count (every stint with the receiver when the player has
+// none with the sender that season), and every stint in later seasons counts.
+// Seasons before the trade year are never credited, and a player with no MLB time
+// contributes zero and keeps his value-today figure.
+const _TA_RZ = { doc: null, loading: null };
+function _taRealizedLoad() {
+  if (_TA_RZ.doc) return Promise.resolve(_TA_RZ.doc);
+  if (_TA_RZ.loading) return _TA_RZ.loading;
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  _TA_RZ.loading = fetch(base + "trade_realized.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .catch(() => null)
+    .then(j => {
+      _TA_RZ.doc = (j && j.players) ? j : { players: null, failed: true };
+      _TA_RZ.loading = null;
+      return _TA_RZ.doc;
+    });
+  return _TA_RZ.loading;
+}
+// rows: [season, club, stint, side, war] per player, side 0 batting and 1 pitching.
+// Returns {war, seasons:[{season, war}], mlb} where mlb says some stint was credited.
+function _taRealizedWar(doc, mlbam, date, fromOrg, toOrg) {
+  const none = { war: 0, seasons: [], mlb: false };
+  const rows = (doc && doc.players && mlbam != null) ? doc.players[String(mlbam)] : null;
+  const y0 = parseInt(String(date || "").slice(0, 4), 10);
+  if (!rows || !rows.length || !isFinite(y0) || !toOrg) return none;
+  const by = {};
+  let credited = 0;
+  [0, 1].forEach(side => {
+    const mine = rows.filter(r => r[3] === side);
+    let cutoff = -1;
+    mine.forEach(r => { if (r[0] === y0 && r[1] === fromOrg && r[2] > cutoff) cutoff = r[2]; });
+    mine.forEach(r => {
+      if (r[1] !== toOrg || r[0] < y0) return;
+      if (r[0] === y0 && r[2] <= cutoff) return;
+      by[r[0]] = (by[r[0]] || 0) + Number(r[4]);
+      credited += 1;
+    });
+  });
+  const seasons = Object.keys(by).map(Number).sort((a, b) => a - b)
+    .map(k => ({ season: k, war: Math.round(by[k] * 1000) / 1000 }));
+  const war = Math.round(seasons.reduce((t, x) => t + x.war, 0) * 1000) / 1000;
+  return { war, seasons, mlb: credited > 0 };
+}
+// Signed WAR: 1.2 -> "+1.2 WAR", -0.3 -> "-0.3 WAR".
+function _taWarText(w) {
+  return `${w < 0 ? "-" : "+"}${Math.abs(w).toFixed(1)} WAR`;
 }
 
 // ===========================================================================
@@ -22637,6 +22693,12 @@ function renderRecentlyTraded() {
       if (state.section === "traded") renderRecentlyTraded();
     });
   }
+  // The realized leg rides its own artifact; the cards re-render when it lands.
+  if (!_TA_RZ.doc && !_TA_RZ.loading && filtered.some(r => r.acq && r.acq.method === "trade")) {
+    _taRealizedLoad().then(() => {
+      if (state.section === "traded") renderRecentlyTraded();
+    });
+  }
 
   // Client-side sort over the filtered list. Default "date" preserves
   // the existing newest-first ordering from getFilteredAcquired().
@@ -22764,6 +22826,7 @@ function renderRecentlyTraded() {
     if (!p) return { value: null, kind: "unpriced", why: "no_row" };
     const price = _taPriceParty(_TA_TV.idx, p.player_key || null, p.player_name, orgs);
     return Object.assign(price, {
+      mlbam: price.mlbam != null ? price.mlbam : (p.mlbam_id != null ? Number(p.mlbam_id) : null),
       war: _taCareerWar(p),
       fv: p.fv_close != null ? p.fv_close : price.fv,
       debuted: price.status ? price.status !== "active" : !!(p.debut_date || p.status === "debuted"),
@@ -22979,6 +23042,7 @@ function renderRecentlyTraded() {
           from: side === g.orgA ? g.orgB : g.orgA,
           to:   side,
           val:  Object.assign(price, {
+            mlbam: price.mlbam != null ? price.mlbam : (ident && ident.mlbam_id != null ? Number(ident.mlbam_id) : null),
             war: _taCareerWar(ident),
             pos: price.pos || (ident ? String(ident.position || "").split("/")[0] : null),
             debuted: price.status ? price.status !== "active" : !!ident,
@@ -23052,6 +23116,31 @@ function renderRecentlyTraded() {
     // while the prices are still loading. Unpriced parties are in at $0.
     g.verdict = _taVerdict(g.netDeltaA, pendingCount, BALANCED_THRESHOLD_MM);
     g.winner = g.verdict === "orgA" ? g.orgA : g.verdict === "orgB" ? g.orgB : null;
+    // Realized leg: WAR each party produced for the club that received him since
+    // the trade date, at the trade value's own $/WAR. Computed beside the verdict,
+    // never added to it. rzState: pending until the artifact lands, unavailable if
+    // it could not be read, ready otherwise.
+    const rzDoc = _TA_RZ.doc;
+    g.rzState = !rzDoc ? "pending" : (rzDoc.failed ? "unavailable" : "ready");
+    g.rzDpw = (rzDoc && rzDoc.dollars_per_war_mm != null) ? Number(rzDoc.dollars_per_war_mm) : null;
+    g.rzAsOf = (rzDoc && rzDoc.as_of) ? String(rzDoc.as_of).slice(0, 10) : null;
+    g.rzAWar = 0; g.rzBWar = 0;
+    for (const e of g.players) {
+      e.rz = (g.rzState === "ready")
+        ? _taRealizedWar(rzDoc, e.val && e.val.mlbam, g.date, e.from, e.to)
+        : { war: 0, seasons: [], mlb: false };
+      if (e.to === g.orgA) g.rzAWar += e.rz.war;
+      else if (e.to === g.orgB) g.rzBWar += e.rz.war;
+    }
+    g.rzAWar = Math.round(g.rzAWar * 1000) / 1000;
+    g.rzBWar = Math.round(g.rzBWar * 1000) / 1000;
+    g.rzAMM = g.rzDpw != null ? Math.round(g.rzAWar * g.rzDpw * 10) / 10 : null;
+    g.rzBMM = g.rzDpw != null ? Math.round(g.rzBWar * g.rzDpw * 10) / 10 : null;
+    g.rzNet = (g.rzAMM != null && g.rzBMM != null) ? Math.round((g.rzAMM - g.rzBMM) * 10) / 10 : null;
+    g.rzAny = g.players.some(e => e.rz.mlb);
+    g.rzVerdict = (g.rzState !== "ready" || g.rzNet == null) ? g.rzState
+      : !g.rzAny ? "none"
+      : _taVerdict(g.rzNet, 0, BALANCED_THRESHOLD_MM);
   }
   // v33 - Trade GROUPING. Pull every tracked prospect from the same trade
   // into one contiguous block (members collapse to the first member's slot),
@@ -23267,6 +23356,13 @@ function renderRecentlyTraded() {
             const _warCtx = v.war != null
               ? ` · ${v.war.toFixed(1)} career WAR, context only: not in the total, and it counts seasons before this trade`
               : "";
+            const rzLbl = (g.rzState === "ready")
+              ? (e.rz.mlb
+                ? ` · Realized to date: ${e.rz.war.toFixed(1)} WAR for ${e.to} since the trade (${e.rz.seasons.map(x => x.season + " " + x.war.toFixed(1)).join(", ")}), through ${g.rzAsOf || "the as-of date"}`
+                : ` · Realized to date: no MLB time for ${e.to} since the trade, counted as zero; value today is unchanged`)
+              : "";
+            const rzTxt = (g.rzState === "ready" && e.rz.mlb)
+              ? `<span class="ta-rz-chip" style="color:${e.rz.war < 0 ? "var(--down)" : "var(--text-tertiary)"};font-family:var(--font-mono);font-size:9px;white-space:nowrap;">${_taWarText(e.rz.war)}</span>` : "";
             const kindLbl = v.kind === "tv"
               ? `Value today ${_taMM(v.value)}: the Trade Machine price (${_srcLbl})${v.fv != null && !v.debuted ? ` · FV ${v.fv}` : ""}${tbsHere != null ? ` · TBS ${tbsHere}` : ""}${_warCtx}`
               : v.kind === "pending" ? "Loading trade values"
@@ -23293,7 +23389,7 @@ function renderRecentlyTraded() {
             const _fvBadge = _fvNum != null
               ? `<span class="fv-badge ${fvClass(String(fvCeil(_fvNum)))}" style="font-size:8px;padding:0 3px;line-height:1.5;flex-shrink:0;">${fvCeil(_fvNum)}</span>`
               : "";
-            chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl)}" data-ta-kind="${v.kind}" data-ta-key="${escapeHtml(v.key || "")}" data-ta-mm="${v.value != null ? v.value : (v.kind === "unpriced" ? 0 : "")}">${star}${vetTag}${nameMarkup}${_posLvl}${_fvBadge}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}</span></span>`);
+            chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl + rzLbl)}" data-ta-kind="${v.kind}" data-ta-key="${escapeHtml(v.key || "")}" data-ta-mm="${v.value != null ? v.value : (v.kind === "unpriced" ? 0 : "")}" data-ta-rwar="${g.rzState === "ready" ? e.rz.war : ""}" data-ta-mlbam="${v.mlbam != null ? v.mlbam : ""}">${star}${vetTag}${nameMarkup}${_posLvl}${_fvBadge}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}</span>${rzTxt}</span>`);
           }
           const ibp  = (orgCode === g.orgA) ? g.aIbp  : g.bIbp;
           const cash = (orgCode === g.orgA) ? g.aCash : g.bCash;
@@ -23370,6 +23466,27 @@ function renderRecentlyTraded() {
         const _unpricedFoot = _unpricedParties.length
           ? `<div class="ta-unpriced-foot" style="font-size:9px;color:var(--text-tertiary);line-height:1.4;">Unpriced, valued at $0: ${_unpricedParties.map(e => `${escapeHtml(e.p.player_name || "")} (to ${escapeHtml(e.to || "?")})`).join(", ")}. No trade value on file today; the verdict counts ${_unpricedParties.length === 1 ? "him" : "them"} as zero.</div>`
           : "";
+        const _rzSide = (orgCode, tone, war, mm) => `<span style="display:inline-flex;align-items:baseline;gap:4px;white-space:nowrap;">`
+          + `<span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${tone};">${escapeHtml(orgCode)}</span>`
+          + `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);">${war.toFixed(1)} WAR</span>`
+          + `<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:${tone};">${_taMM(mm)}</span></span>`;
+        const _rzTone = (org) => g.rzVerdict === "orgA" || g.rzVerdict === "orgB"
+          ? (g.rzVerdict === (org === g.orgA ? "orgA" : "orgB") ? "var(--up)" : "var(--down)")
+          : "var(--text-secondary)";
+        const _rzVerdictText = g.rzVerdict === "orgA" || g.rzVerdict === "orgB"
+          ? `<span style="color:var(--up);font-weight:700;">${escapeHtml(g.rzVerdict === "orgA" ? g.orgA : g.orgB)} +$${Math.abs(g.rzNet).toFixed(1)}M</span>`
+          : g.rzVerdict === "balanced" ? `<span style="color:var(--text-secondary);">Balanced so far</span>`
+          : g.rzVerdict === "none" ? `<span style="color:var(--text-tertiary);">No MLB time since the trade</span>`
+          : g.rzVerdict === "unavailable" ? `<span style="color:var(--text-tertiary);">Unavailable</span>`
+          : `<span style="color:var(--text-tertiary);">Loading</span>`;
+        const _rzBody = (g.rzState === "ready" && g.rzNet != null)
+          ? `${_rzSide(g.orgA, _rzTone(g.orgA), g.rzAWar, g.rzAMM)}${_rzSide(g.orgB, _rzTone(g.orgB), g.rzBWar, g.rzBMM)}`
+          : "";
+        const _rzStrip = `<div class="ta-realized" data-ta-rz="${g.rzState}" data-ta-rz-verdict="${g.rzVerdict}" data-ta-rz-net="${g.rzNet != null ? g.rzNet : ""}" data-ta-rz-a="${g.rzState === "ready" ? g.rzAWar : ""}" data-ta-rz-b="${g.rzState === "ready" ? g.rzBWar : ""}" style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;width:100%;border-top:1px dashed var(--border);padding-top:4px;">`
+          + `<span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;flex-shrink:0;">Realized to date</span>`
+          + `<span style="font-size:9px;color:var(--text-tertiary);flex-shrink:0;" title="WAR produced for the receiving club since the trade, at ${g.rzDpw != null ? "$" + g.rzDpw.toFixed(1) + "M" : "the trade value's rate"} per WAR. No MLB time counts as zero. Not added to value today.">${g.rzAsOf ? "through " + escapeHtml(g.rzAsOf) : "as-of date pending"}${g.rzDpw != null ? `, WAR × $${g.rzDpw.toFixed(1)}M` : ""}</span>`
+          + _rzBody
+          + `<span style="font-family:var(--font-mono);font-weight:700;font-size:10px;white-space:nowrap;margin-left:auto;flex-shrink:0;">${_rzVerdictText}</span></div>`;
         return `<div class="trade-audit-card is-traded" data-ta-verdict="${g.verdict}" data-ta-net="${g.netDeltaA}" style="grid-column:1 / -1;margin:-6px 0 8px 26px;padding:6px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-left:3px solid ${_railColor};border-top:2px solid ${winColor};border-radius:0 0 var(--radius-sm) var(--radius-sm);box-shadow:var(--shadow-card);font-size:10px;display:flex;flex-direction:column;gap:4px;line-height:1.5;">
           <div style="display:flex;align-items:baseline;gap:8px;width:100%;">
             <span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;flex-shrink:0;">↳ Trade Audit</span>
@@ -23378,6 +23495,7 @@ function renderRecentlyTraded() {
           </div>
           ${orgLine(g.orgA, aTone, g.aReceived, aSplit, g.aUnpriced)}
           ${orgLine(g.orgB, bTone, g.bReceived, bSplit, g.bUnpriced)}
+          ${_rzStrip}
           ${_unpricedFoot}
         </div>`;
       })()}

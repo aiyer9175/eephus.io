@@ -2353,6 +2353,15 @@ def rebuild_only(out_dir: Path = Path("data"), *,
                 write_slim_sidecar(out_dir / "trade_values.json")
             except Exception:
                 log.exception("trade values slim sidecar failed in rebuild_only - continuing")
+            # The Trade Audit's realized leg (owner answer M9): per-stint season WAR for
+            # every player on the board just written, on the displayed eWAR v2 basis.
+            try:
+                from trade_realized_export import export as _export_trade_realized
+                _export_trade_realized(out_path=out_dir / "trade_realized.json",
+                                       board_path=out_dir / "trade_values.json",
+                                       log=log.info)
+            except Exception:
+                log.exception("trade realized export failed in rebuild_only - continuing")
         except Exception:
             log.exception("trade value export crashed in rebuild_only - continuing")
 

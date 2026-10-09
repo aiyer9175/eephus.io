@@ -339,6 +339,20 @@ ARTIFACTS = (
                  "a nightly rebuild reads the live season's feed and no other."),
     },
     {
+        "file": "trade_realized.json", "group": "mlb",
+        "title": "Trade Audit realized WAR",
+        "what": ("Per-stint season eWAR for every player on the Trade Machine board, "
+                 "so the PROSPX Transactions Trade Audit can show what each club "
+                 "got after a trade, beside the value-today verdict."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_trade_audit_realized.py",
+        "note": ("Rows are [season, club, stint, side, war], on the displayed eWAR v2 "
+                 "basis, with the flat $/WAR the trade value uses stored beside them. "
+                 "A stint frame has no calendar dates, so the page credits a receiving "
+                 "club the stints after the sending club's stint in the trade season "
+                 "and every later stint. No row means no MLB time, counted as zero."),
+    },
+    {
         "file": "mlbstats_windows.json", "group": "mlb",
         "title": "Multi-year windows (index)",
         "what": ("Which multi-season windows the lab built, what each window's "
