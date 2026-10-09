@@ -15,7 +15,8 @@ line, the URL). Pinned here:
     names its own card in og:image and twitter:image, every other page the
     pixel default, and the three hand-kept pages their module's card
     (pixel_brand_hand_og, run by restamp), with nothing else on them moving;
-  - with the flag off every page keeps today's assets/share-default.png;
+  - with the flag off every page names assets/share-default.png, which since
+    PB-10's flip holds the same pixels as the pixel default card;
   - the card keys are the generator's module list, every card file exists at
     1200 x 630, and each card's title is the page's own masthead title;
   - the copy on the cards: each line is cut from its page's own meta
@@ -76,8 +77,17 @@ def _file(url: str) -> Path:
     return ROOT / url[len(B.SITE_ORIGIN) + 1:]
 
 
-def test_the_committed_flag_is_off():
-    assert B.PIXEL_BRAND is False
+def test_the_committed_flag_is_on():
+    # PB-10 flipped it after the fWAR epoch's step Z.
+    assert B.PIXEL_BRAND is True
+
+
+def test_the_old_default_card_path_serves_the_pixel_card():
+    # PB-10 copied the pixel default card over the vector-era file, so a link
+    # unfurled before the flip (or a page that still names it) shows the new art.
+    old = Image.open(ROOT / "assets" / "share-default.png").convert("RGBA")
+    new = Image.open(ROOT / "assets" / "brand" / "share-default.png").convert("RGBA")
+    assert old.size == new.size and old.tobytes() == new.tobytes()
 
 
 def test_card_keys_are_the_generator_modules():
@@ -131,6 +141,9 @@ def test_an_article_card_wins_under_either_flag(monkeypatch, flag):
 @pytest.mark.parametrize("rel", B.HAND_AUTHORED_PAGES)
 def test_hand_page_takes_its_module_card_and_nothing_else_moves(rel):
     text = (ROOT / rel).read_text(encoding="utf-8")
+    # Start from the default card's lines (the page on disk carries its own
+    # card since PB-10's flip), so the sync's one move is measured either way.
+    text = B._HAND_OG_IMAGE_RE.sub(lambda m: m.group(1) + B.DEFAULT_SHARE_IMAGE + m.group(2), text)
     synced = B.pixel_brand_hand_og(text, rel)
     card = _url(f"assets/og/{B.HAND_OG_CARD[rel]}.png")
     assert OG_RE.findall(synced) == [card, card], rel

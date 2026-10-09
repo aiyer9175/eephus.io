@@ -152,7 +152,8 @@ def test_sync_swaps_the_mark_and_keeps_the_handler(synced):
 
 def test_sync_deletes_the_monogram_font_stack(synced):
     for face in FONT_STACK:
-        assert face in PAGE and face not in synced, face
+        # Under the committed PIXEL_BRAND (PB-10) the page on disk is the synced one.
+        assert (B.PIXEL_BRAND or face in PAGE) and face not in synced, face
 
 
 def test_sync_puts_the_title_and_rule_on_the_grid(synced):
@@ -174,6 +175,10 @@ def test_sync_adds_no_hex_to_the_prospx_style(synced):
 
 def test_sync_is_idempotent_and_moves_nothing_else(synced):
     assert B.pixel_brand_hand_prospx(synced) == synced
+    if B.PIXEL_BRAND:
+        # PB-10 flipped the flag: restamp has already synced the committed page.
+        assert synced == PAGE
+        return
     hunks = [ln for ln in difflib.unified_diff(PAGE.splitlines(), synced.splitlines(), lineterm="", n=0)
              if ln.startswith("@@")]
     assert len(hunks) == 2, hunks

@@ -953,16 +953,20 @@ def _footer() -> str:
 # --------------------------------------------------------------------------- #
 EEPHUS_VERSION = "β v1.0"
 # PIXEL_BRAND (owner ask 2, Part 8 pixel_branding lane): the pixel brand swap.
-# Off by default, and off builds byte-identical pages. On, FAVICON_LINKS and the
-# footer mark read the pixel set in assets/brand/ (BR-04), and (PB-07) every
-# page unfurls with the pixel default card or its module's own card. It flips in
-# its own commit (PB-10). The wordmark no longer rides it: every eephus.io wordmark
+# On since PB-10's flip (after the fWAR epoch's step Z, owner answer PB-Q1 B
+# Stepped); False points the pages back at the assets/ icon paths, the one default
+# card and the plain mastheads. On, FAVICON_LINKS and the footer mark read the
+# pixel set in assets/brand/ (BR-04), and (PB-07) every page unfurls with the pixel
+# default card or its module's own card. The flip also copied the pixel app icons
+# and default card over the vector-era files at their old served paths (assets/),
+# so an old link, a hand-kept page or a crawler asking for those files gets the
+# same art. The wordmark does not ride it: every eephus.io wordmark
 # (nav, homepage sidebar, homepage hero, the three hand-kept navs) serves the
 # committed pixel lockup from assets/brand/ whatever the flag says (owner ask
 # 2026-10-02, PX_LOGO_ANIMATION; see eephus_merged_wordmark()). On, (PB-06) every
 # module masthead title goes on the 12 px grid over a 1 u ramp rule
 # (pixel_masthead()) and the CollegeSavant bar title takes its 12 px icon.
-PIXEL_BRAND = False
+PIXEL_BRAND = True
 FAVICON_LINKS = _FAVICON_LINKS_PIXEL if PIXEL_BRAND else _FAVICON_LINKS_LEGACY
 BETA_BADGE = (
     f'<span class="eephus-beta" title="Beta, v1.0">'

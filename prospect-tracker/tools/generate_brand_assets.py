@@ -20,9 +20,11 @@ generator and keeps the two jobs the generator does not do:
 
 The vector-era PIL drawings this file used to make (a share card in capitals
 with a system font, a P/X monogram in whatever serif the machine had, an arc
-drawn with dots) are gone. The served assets/apple-touch-icon.png,
-assets/icon-*.png and assets/share-default.png stay committed as they are
-until the PIXEL_BRAND flip serves assets/brand/ and the pixel share cards.
+drawn with dots) are gone. Since the PIXEL_BRAND flip (PB-10) the old served
+paths assets/apple-touch-icon.png, assets/icon-*.png and
+assets/share-default.png hold copies of the pixel set in assets/brand/, so a
+page, manifest or old link that names them gets the same art; this file
+refreshes those copies (serve_pixel_copies) on every full run.
 
 Usage:  python tools/generate_brand_assets.py              generator, favicon set, copies
         python tools/generate_brand_assets.py --favicons  the favicon set only
@@ -59,6 +61,18 @@ def make_favicons() -> None:
         PB.standalone_svg(PB.ball(16), "light", "eephus.io", 1).encode("utf-8"))
     print("wrote favicon.ico (16/32/48 strikes), assets/favicon-32.png, "
           "assets/favicon-16.png (footer mark), assets/favicon.svg (strike 16)")
+
+
+PIXEL_COPIES = ("apple-touch-icon.png", "icon-192.png", "icon-512.png", "icon-maskable-512.png",
+                "share-default.png")
+
+
+def serve_pixel_copies() -> None:
+    """PB-10: the pixel app icons and default card over the vector-era files at
+    their old served paths (assets/), byte for byte from assets/brand/."""
+    for name in PIXEL_COPIES:
+        shutil.copyfile(ROOT / "assets" / "brand" / name, ROOT / "assets" / name)
+    print(f"copied {len(PIXEL_COPIES)} pixel files from assets/brand/ to their old served paths")
 
 
 def assemble_branding() -> None:
@@ -105,5 +119,6 @@ if __name__ == "__main__":
         sys.exit(0)
     rc = PB.main([])
     make_favicons()
+    serve_pixel_copies()
     assemble_branding()
     sys.exit(rc)

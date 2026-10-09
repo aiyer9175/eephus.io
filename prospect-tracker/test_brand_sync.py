@@ -19,7 +19,7 @@ owner's 2026-10-02 ask (PX_LOGO_ANIMATION), whatever build_site.PIXEL_BRAND says
     (pixel_brand_hand_nav, run by restamp), and nothing else on those pages
     moves;
   - no generated or hand-kept page carries the retired vector mark, and the
-    committed flag is off.
+    committed flag is on (PB-10's flip).
 """
 from __future__ import annotations
 
@@ -52,10 +52,10 @@ def either_flag(request, monkeypatch):
     yield
 
 
-def test_the_committed_flag_is_off():
-    # The rest of the swap (the favicon links, the footer mark) flips in its
-    # own commit (PB-10); a build commit never carries the flag on.
-    assert B.PIXEL_BRAND is False
+def test_the_committed_flag_is_on():
+    # The rest of the swap (the favicon links, the footer mark) flipped in its
+    # own commit (PB-10, after the fWAR epoch's step Z).
+    assert B.PIXEL_BRAND is True
 
 
 def test_nav_and_sidebar_serve_the_s2_fragment_byte_for_byte(either_flag):
