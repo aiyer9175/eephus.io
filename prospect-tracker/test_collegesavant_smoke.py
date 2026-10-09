@@ -148,7 +148,7 @@ def test_new_features_actually_render():
     # state here and only self-heals on the next hashchange, which the
     # per-hash renders below would mask.
     boot = ctx.eval("__html['app']||''")
-    assert "Data failed to load" not in boot, "init() crashed at boot"
+    assert "percentiles did not load" not in boot, "init() crashed at boot"
     ctx.eval("location.hash='#/player/2024/condon-charlie';window.location.hash=location.hash;render();")
     html = ctx.eval("__html['app']||''")
     for needle in ["cs-plus-pill", "Georgia", "Projected Single-A", "23.5%",
@@ -249,8 +249,8 @@ def test_pitcher_app_missing_payload_renders_error_state():
     ctx.eval(_CAP_PRELUDE + (CS / "team_names.js").read_text(encoding="utf-8") + "\n"
              + (CS / "pitcher_app.js").read_text(encoding="utf-8"))
     html = ctx.eval("__html['app'] || ''")
-    assert "Data failed to load" in html
-    assert "nightly build is mid-run" in html
+    assert "percentiles did not load" in html
+    assert "nightly build may be writing them" in html
     assert "Retry" in html
     assert 'role="alert"' in html
 
@@ -263,8 +263,8 @@ def test_hitter_app_missing_payload_renders_error_state():
              + (CS / "team_names.js").read_text(encoding="utf-8")
              + (CS / "app.js").read_text(encoding="utf-8"))
     html = ctx.eval("__html['app'] || ''")
-    assert "Data failed to load" in html
-    assert "nightly build is mid-run" in html
+    assert "percentiles did not load" in html
+    assert "nightly build may be writing them" in html
     assert "Retry" in html
     assert 'role="alert"' in html
 
@@ -275,7 +275,7 @@ def test_hitter_app_missing_payload_renders_error_state():
 # pages as a full document load) evaluates the app with the hash already set,
 # so init() renders that route before the rest of the file has run. A route
 # that reads a top-level const declared below the init() call then paints the
-# "Data failed to load" panel. The tests above boot at '#/' and only change
+# "percentiles did not load" panel. The tests above boot at '#/' and only change
 # the hash after the whole file has run, which hides exactly this.
 # ---------------------------------------------------------------------------
 
@@ -325,4 +325,4 @@ def test_cold_load_on_deep_link_does_not_hit_dead_zone(app, kind, route):
     ctx.eval(prelude + data + chr(10) + shared + (CS / app).read_text(encoding="utf-8"))
     html = ctx.eval("__html['app'] || ''")
     assert "before initialization" not in html, f"{app} {route}: {html[:200]}"
-    assert "Data failed to load" not in html, f"{app} {route}: {html[:200]}"
+    assert "percentiles did not load" not in html, f"{app} {route}: {html[:200]}"

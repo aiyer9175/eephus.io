@@ -144,7 +144,7 @@ function plusPill(value, label, describedBy) {
   if (!Number.isFinite(value)) return "";
   const cls = value >= 110 ? "is-pos" : value <= 90 ? "is-neg" : "";
   if (describedBy) return `<span class="cs-plus-pill ${cls}" aria-describedby="${describedBy}">${escapeHtml(label)} ${value}</span>`;
-  const tip = `${label} ${value} - tracked-skill index, 100 = the ${state.year} pool average (${poolText(state.year)}), +10 = one standard deviation better. College-relative, not a Single-A projection.`;
+  const tip = `${label} ${value}: tracked-skill index, 100 = the ${state.year} pool average (${poolText(state.year)}), +10 = one standard deviation better. College-relative, not a Single-A projection.`;
   return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
@@ -225,9 +225,9 @@ function ensureDraftProspects() {
 // The loading or failed panel a view shows while its sidecar is not on the page.
 function payloadWait(names, what) {
   if (names.some((n) => _payloadState[n] === "failed")) {
-    return `<section class="empty" role="alert"><strong>The ${what} file did not load.</strong> Refresh to retry.</section>`;
+    return `<section class="empty" role="alert"><strong>${what[0].toUpperCase() + what.slice(1)} did not load.</strong> <a class="pill" href="" onclick="location.reload();return false;">Retry</a></section>`;
   }
-  return `<section class="loading-panel"><div class="loader"></div><p>Loading ${what}...</p></section>`;
+  return `<section class="loading-panel"><div class="loader"></div><p>Loading ${what}.</p></section>`;
 }
 
 async function init() {
@@ -257,7 +257,7 @@ async function init() {
     render();
   } catch (error) {
     // Visible error state (F-02): the data payload script or CSV fetch failed.
-    app.innerHTML = `<section class="empty" role="alert"><strong>Data failed to load.</strong> Refresh to retry; if it persists the nightly build is mid-run.<br><span style="color:var(--text-tertiary)">${escapeHtml(error.message)}</span><br><br><a class="pill" href="" onclick="location.reload();return false;">Retry</a></section>`;
+    app.innerHTML = `<section class="empty" role="alert"><strong>Hitter percentiles did not load.</strong> The nightly build may be writing them.<br><span style="color:var(--text-tertiary)">${escapeHtml(error.message)}</span><br><br><a class="pill" href="" onclick="location.reload();return false;">Retry</a></section>`;
   }
 }
 
@@ -912,7 +912,7 @@ const PROSPECT_COLS_HIT = [
 function renderProspects() {
   const haveT = ensureTranslation(), haveP = ensureDraftProspects();
   if (!haveT || !haveP) {
-    app.innerHTML = viewHead("Draft Prospects") + payloadWait(["collegesavant_translation", "collegesavant_draft_prospects"], "draft prospect");
+    app.innerHTML = viewHead("Draft Prospects") + payloadWait(["collegesavant_translation", "collegesavant_draft_prospects"], "draft prospects");
     return;
   }
   const P = (window.CS_DRAFT_PROSPECTS && window.CS_DRAFT_PROSPECTS.hitters) || [];
@@ -1126,7 +1126,7 @@ function offSeasonNote(listed, year, noun) {
 // is this" table from the leave-one-out backtest, then the method, folded.
 function renderProjections() {
   if (!ensureTranslation()) {
-    app.innerHTML = viewHead("MiLB Projections") + payloadWait(["collegesavant_translation"], "projection");
+    app.innerHTML = viewHead("MiLB Projections") + payloadWait(["collegesavant_translation"], "projections");
     return;
   }
   const E = (window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {};
@@ -1195,8 +1195,8 @@ function renderProjections() {
     <p class="trans-note">Rows below r² ${lowSignalR2().toFixed(2)} are flagged and shown for context.</p>
     <details class="cs-how"><summary>How this works</summary>
     <ol class="proj-method">
-      <li><strong>Matched pairs.</strong> College hitters who later reached Single-A: each one's college tracked rate is paired with the Single-A rate he posted, and the fit relates the two.</li>
-      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by a fitted slope, shrunk for sample size, so an extreme college number is moderated, not copied across.</li>
+      <li><strong>Matched pairs.</strong> College hitters who reached Single-A: college tracked rate against posted Single-A rate, fit with a sample-shrunk slope.</li>
+      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by the fitted slope, shrunk for sample size.</li>
       <li><strong>Bands.</strong> The P10-P90 band is the spread of the model's misses on players it was not fit on (leave-one-out). Coverage near 80% in the table above means the band is sized to the data.</li>
       <li><strong>What to trust.</strong> ${trustSentence(E, [["hit_k", "strikeout rate"], ["hit_bb", "walk rate"], ["hit_ops", "OPS"]])}</li>
       <li><strong>What it does not do.</strong> No schedule-strength or park adjustment (no college conference or park table is held). CS+ and the tracked skills describe college performance; they are not a scouting Future Value, which the tracked data does not predict.</li>
@@ -1249,7 +1249,7 @@ function renderTranslation(player, kind) {
       </div>
       <p class="trans-note">${other ? `<span class="trans-flag src-season">from ${src} line</span> Not this ${player.year} line: each hitter projects from one college season, the latest on file. ` : ""}Matched-pair projection from ${src != null ? `the ${src} college line` : "this college line"} to a Single-A
       expectation, fit on our own college-to-Single-A pairs. Not adjusted for schedule
-      strength or park. The band is the P10-P90 range, so a wider band means less certain.
+      strength or park. The band is the P10-P90 range.
       ${trustSentence(E, [["hit_k", "strikeout rate"], ["hit_bb", "walk rate"], ["hit_ops", "OPS"]], { brief: true })}</p>
       ${renderReceipt(t, "hit")}
     </section>`;
@@ -1414,7 +1414,7 @@ function renderBattedBallChart(player) {
     // fills the scatter in. ensureHitterBip also covers a deep link that
     // landed here before any year toggle fired.
     if (!ensureHitterBip(player.year) && bipLoading(player.year)) {
-      return `<div class="chart-empty">Loading ${player.year} batted balls&hellip;</div>`;
+      return `<div class="chart-empty">Loading ${player.year} batted balls.</div>`;
     }
     return `<div class="chart-empty">No batted-ball EV/launch-angle points available.</div>`;
   }

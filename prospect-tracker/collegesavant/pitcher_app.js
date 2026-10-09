@@ -177,7 +177,7 @@ function plusPill(value, label, describedBy) {
   if (!Number.isFinite(value)) return "";
   const cls = value >= 110 ? "is-pos" : value <= 90 ? "is-neg" : "";
   if (describedBy) return `<span class="cs-plus-pill ${cls}" aria-describedby="${describedBy}">${escapeHtml(label)} ${value}</span>`;
-  const tip = `${label} ${value} - tracked-skill index, 100 = the ${state.year} pool average (${poolText(state.year)}), +10 = one standard deviation better. College-relative, not a Single-A projection.`;
+  const tip = `${label} ${value}: tracked-skill index, 100 = the ${state.year} pool average (${poolText(state.year)}), +10 = one standard deviation better. College-relative, not a Single-A projection.`;
   return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
@@ -259,9 +259,9 @@ function ensureDraftProspects() {
 // The loading or failed panel a view shows while its sidecar is not on the page.
 function payloadWait(names, what) {
   if (names.some((n) => _payloadState[n] === "failed")) {
-    return `<section class="empty" role="alert"><strong>The ${what} file did not load.</strong> Refresh to retry.</section>`;
+    return `<section class="empty" role="alert"><strong>${what[0].toUpperCase() + what.slice(1)} did not load.</strong> <a class="pill" href="" onclick="location.reload();return false;">Retry</a></section>`;
   }
-  return `<section class="loading-panel"><div class="loader"></div><p>Loading ${what}...</p></section>`;
+  return `<section class="loading-panel"><div class="loader"></div><p>Loading ${what}.</p></section>`;
 }
 
 function init() {
@@ -283,7 +283,7 @@ function init() {
     render();
   } catch (error) {
     // Visible error state (F-02): the data payload script failed.
-    app.innerHTML = `<section class="empty" role="alert"><strong>Data failed to load.</strong> Refresh to retry; if it persists the nightly build is mid-run.<br><span style="color:var(--text-tertiary)">${escapeHtml(error.message)}</span><br><br><a class="pill" href="" onclick="location.reload();return false;">Retry</a></section>`;
+    app.innerHTML = `<section class="empty" role="alert"><strong>Pitcher percentiles did not load.</strong> The nightly build may be writing them.<br><span style="color:var(--text-tertiary)">${escapeHtml(error.message)}</span><br><br><a class="pill" href="" onclick="location.reload();return false;">Retry</a></section>`;
   }
 }
 
@@ -916,7 +916,7 @@ const PROSPECT_COLS_PIT = [
 
 function renderProspects() {
   if (!ensureDraftProspects()) {
-    app.innerHTML = viewHead("Draft Prospects") + payloadWait(["collegesavant_draft_prospects"], "draft prospect");
+    app.innerHTML = viewHead("Draft Prospects") + payloadWait(["collegesavant_draft_prospects"], "draft prospects");
     return;
   }
   const P = (window.CS_DRAFT_PROSPECTS && window.CS_DRAFT_PROSPECTS.pitchers) || [];
@@ -1087,7 +1087,7 @@ function offSeasonNote(listed, year, noun) {
 // model carries) ranked by CS+, the leave-one-out backtest, and the method.
 function renderProjections() {
   if (!ensureTranslation()) {
-    app.innerHTML = viewHead("MiLB Projections") + payloadWait(["collegesavant_translation"], "projection");
+    app.innerHTML = viewHead("MiLB Projections") + payloadWait(["collegesavant_translation"], "projections");
     return;
   }
   const E = (window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {};
@@ -1152,8 +1152,8 @@ function renderProjections() {
     <p class="trans-note">Rows below r² ${lowSignalR2().toFixed(2)} are flagged and shown for context.</p>
     <details class="cs-how"><summary>How this works</summary>
     <ol class="proj-method">
-      <li><strong>Matched pairs.</strong> College pitchers who later reached Single-A: each one's college rate is paired with the Single-A rate he posted, and the fit relates the two. Strikeout and walk rates are read from K/9 and BB/9 over batters faced.</li>
-      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by a fitted slope, shrunk for sample size, so an extreme college number is moderated, not copied across.</li>
+      <li><strong>Matched pairs.</strong> College pitchers who reached Single-A: college rate against posted Single-A rate, fit with a sample-shrunk slope. Strikeout and walk rates are read from K/9 and BB/9 over batters faced.</li>
+      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by the fitted slope, shrunk for sample size.</li>
       <li><strong>Bands.</strong> The P10-P90 band is the spread of the model's misses on arms it was not fit on (leave-one-out). Coverage near 80% in the table above means the band is sized to the data.</li>
       <li><strong>What to trust.</strong> ${trustSentence(E, [["pit_k", "strikeout rate"], ["pit_bb", "walk rate"]])}</li>
       <li><strong>What it does not do.</strong> No schedule-strength or park adjustment (no college conference or park table is held). Stuff+, CS+, and the tracked pitch shapes describe college stuff; they are not a scouting Future Value, which the tracked data does not predict.</li>
@@ -1353,7 +1353,7 @@ function renderPitchTypeStuff(pitcher) {
 
   if (!rows.length) {
     if (pitchDataLoading(pitcher.year)) {
-      return `<div class="chart-empty">Loading ${pitcher.year} pitch data&hellip;</div>`;
+      return `<div class="chart-empty">Loading ${pitcher.year} pitch data.</div>`;
     }
     return `<div class="chart-empty">No pitch mix values available for this pitcher.</div>`;
   }
@@ -1617,9 +1617,9 @@ function renderSlider(pitcher, metric, percentile) {
 
 function profileSummaryText() {
   if (hasPitchByPitchOutcomes(state.year)) {
-    return `Stuff+ is scored from the saved pitch models. Pitcher sliders use ${state.year} pitch-by-pitch outcomes for xwOBA against, contact quality, plate discipline, and swing-and-miss rates.`;
+    return `Stuff+ from the pitch models; xwOBA against, contact, discipline and whiff sliders from ${state.year} pitch-by-pitch outcomes.`;
   }
-  return "Stuff+ is scored from the saved pitch models. xwOBA/contact metrics are estimated from aggregated EV/LA rows, while pitch-shape sliders use weighted averages from the source pitch groups.";
+  return "Stuff+ from the pitch models; xwOBA and contact estimated from aggregated EV/LA rows; pitch-shape sliders are weighted means of the source pitch groups.";
 }
 
 function hasPitchByPitchOutcomes(year) {
