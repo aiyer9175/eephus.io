@@ -100,6 +100,10 @@ def _load_players(data_dir: Path) -> tuple[list, dict | None]:
     return players, ts.get("level_norms")
 
 
+#: The third output: the Trade Audit deal list trade_audit_export writes (W07).
+DEALS_NAME = "trade_audit_deals.json"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--data-dir", default=str(ROOT / "data"))
@@ -127,6 +131,16 @@ def main(argv: list[str] | None = None) -> int:
 
     log.info("wrote %s", out_path)
     write_slim_sidecar(out_path, data_dir / SLIM_NAME)
+    # The Trade Audit's deal list (wiring W07), repriced on the board just written so
+    # the Trade Machine's Comparable real trades panel and the PROSPX audit print one
+    # value per party. It follows --data-dir like the sidecar; a dir without the
+    # audit's inputs writes nothing.
+    try:
+        import trade_audit_export
+        trade_audit_export.export(out_path=data_dir / DEALS_NAME, data_dir=data_dir,
+                                  log=log.info)
+    except Exception:
+        log.exception("trade audit deals failed; the board and the sidecar are written")
     return 0
 
 
