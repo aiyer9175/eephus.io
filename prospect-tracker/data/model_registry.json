@@ -5063,6 +5063,21 @@
    "artifact_age_days": 1
   },
   {
+   "model_id": "fantasy_prospect_leg_blend",
+   "summary": "Registered, not read: one look on the 2016 and 2017 prospect classes, not before 2026-10-17, decides whether a grade-blended prospect leg beats the consensus FV order. Nothing served moves.",
+   "surface": "None served: the /fantasy/ Dynasty Fantasy Rank prospect leg stays stats-only (fantasy_combined_rank) and keeps printing its loss; the lab tools/fantasy_prospect_leg_gate.py writes data/fantasy_prospect_leg_gate_eval.json at the one look",
+   "predicts": "A listed prospect's dynasty fantasy value over five seasons (FanGraphs Points above replacement, discounted 7%, weighted by arrival) from translated MiLB lines with the eFV grade (arm A) or the consensus FV (arm B) blended into the rates and the playing time",
+   "champion": "none - registered, not read (arm A eFV v1 blend score, arm B vintage consensus FV, each a centred covariate in college_translation._fit2 and a shrunk playing-time slope; arrival unchanged)",
+   "baseline": "the vintage consensus FV order on identical rows (the pass bar); the stats-only leg as served (fantasy_combined_rank) reported beside it, not gated",
+   "metric": "Registered, not computed: pooled Spearman vs realized FanGraphs Points above replacement over Y..Y+4 (2016 and 2017 lists), arm minus consensus order, player-clustered bootstrap B 2000 seed 20261008, one-sided Holm over two arms at 0.05 plus a per-class sign veto",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "notes": "Registered 2026-10-08 (owner answer M21FR-1 (b), 2026-10-01: \"Gate a grade-blended prospect leg\") in docs/fantasy-2026-10-01/FANTASY_PROSPECT_LEG_GATE.md, committed alone before any number of the test was computed. Context: fantasy_combined_rank's prospect leg scored Spearman 0.2162 against 0.3085 for the consensus FV order on the 2018 and 2019 classes (data/fantasy_rank_eval.json, commit 1e88c7bd). Frame: list vintages 2016 and 2017, the only fresh classes (2018 and 2019 scored, 2022 and 2023 read for arrival, 2020 and 2021 reserved R-LV, 2024 on unresolved or R-VM, 2011 to 2015 without a translation input); outcome seasons Y..Y+4, ending by 2021. Every leg reads one protocol: translation and playing time fit on spent debuts with every fresh-class player removed, aging and replacement forward-chained, MiLB inputs, level and ETA through the outcome-blind id (the B4 repair), arrival on spent list vintages. Pass: Holm-level lower bound above zero and a positive difference in each class; arm A is void if any eFV fold cannot fit, leaving B alone at m 1. One look, not before 2026-10-17 (step Z 2026-10-03 plus 14 days) and never on a registered look day; looking at any fresh-class reading earlier disqualifies. Under FAIL or VOID the served leg stays stats-only with its loss printed; a PASS makes one arm eligible and serving it is a separate task. No statistic by consensus-FV cell, no realized-WAR quantity, never backtest.run_backtest. The registry enum has no word registered, so the row reads unvalidated until the look.",
+   "last_checked": "2026-10-08",
+   "stale": false
+  },
+  {
    "model_id": "sdr_mlb",
    "summary": "Registered and waiting, data-blocked: no SDR data exists in the repo; the eval file is a pre-registration stub until a drop passes intake validation.",
    "surface": "No surface yet; intake seam only, display waits on the SDR eval gate",
