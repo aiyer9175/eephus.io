@@ -287,8 +287,10 @@ WAVE2_DEV: dict[str, tuple[str, ...]] = {
 #: them through that module's development read; wave 1 above is unchanged.
 #: efv_w2_nri (EFV4_NRI_ASOF, owner EW2-10 2026-10-08): timing-head columns.
 #: efv_w2_pbp_bb (EFV4_PBP_BATTED_BALL_BUNDLE): batted-ball skill-head columns.
+#: efv_w2_pbp (EFV4_PBP_DISCIPLINE_ARMS, owner EW2-10): twelve pitch-event skill-head
+#: columns, one Holm family read on the has-full-pbp development rows.
 WAVE2_ARM_MODULES: tuple[str, ...] = ("efv_w2_milb", "efv_w2_il_backfill", "efv_w2_nri",
-                                      "efv_w2_pbp_bb")
+                                      "efv_w2_pbp_bb", "efv_w2_pbp")
 
 
 def wave2_candidates() -> tuple[dict, ...]:
