@@ -4065,12 +4065,12 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # --- 9e-pre-wx. Forecast weather capture (DARK; ARMED 2026-09-11) ---
         # docs/diamond-betting.md section 5h. Captures the pregame forecast for
         # today's remaining games and tomorrow's into .cache/weather_forecasts/
-        # (one keyless Open-Meteo request, one immutable snapshot a night), then
-        # runs the 5h-C Previous Runs backfill for completed 2026 regular-season
-        # games not yet in the store (capped at 40 archive requests and 200 feed
-        # fetches a night, stopping at the first failure). Nothing served reads
-        # either. Runs before the export so the capture timestamp precedes the
-        # night's prices. Additive; never aborts.
+        # (the National Weather Service since 2026-10-08: two keyless requests
+        # per fetched venue, one immutable snapshot a night). The 5h-C Previous
+        # Runs backfill is inert since the switch (NWS keeps no archive), so
+        # run() reports it off and makes no archive request. Nothing served
+        # reads either. Runs before the export so the capture timestamp precedes
+        # the night's prices. Additive; never aborts.
         with _step("9e-pre-wx. Forecast weather capture (dark, armed)", log):
             try:
                 import betting_weather

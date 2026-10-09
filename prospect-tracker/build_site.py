@@ -9133,12 +9133,15 @@ SOURCE_ROWS = [
      "terms": "https://the-odds-api.com/terms-and-conditions.html", "terms_label": "Terms",
      "use": ("Sportsbook moneylines, run lines and totals for the /betting/ board, and the "
              "game lines /fantasy/ DFS pricing reads.")},
-    {"name": "Open-Meteo", "url": "https://open-meteo.com/",
+    {"name": "National Weather Service", "url": "https://www.weather.gov/",
      "take": "Game-time weather forecasts (not shown yet)",
-     "cadence": "Nightly",
-     "terms": "https://open-meteo.com/en/terms", "terms_label": "Terms",
-     "use": ("Game-time weather forecasts, captured nightly for a pre-registered betting "
-             "candidate; no page shows them yet. Weather data by Open-Meteo.com (CC BY 4.0).")},
+     "cadence": "Daily",
+     "terms": "https://www.weather.gov/disclaimer", "terms_label": "Use of NWS data",
+     "use": ("Game-time weather forecasts (the hourly forecast at each US park, from "
+             "api.weather.gov), captured daily for a pre-registered betting candidate; no "
+             "page shows them yet. NWS data is a US Government work in the public domain "
+             "and needs no attribution line; we credit it here and claim none of it as "
+             "our own.")},
 ]
 
 

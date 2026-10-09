@@ -53,17 +53,41 @@ def _stub_fetch(calls):
     return fetch
 
 
+def _backfill(**kw):
+    """The retired 5h-C writer, armed explicitly. Its archive arm is gone since
+    the 2026-10-08 switch to NWS, but its rows stay on disk and its mechanics
+    stay pinned, so these tests arm it by argument and never by default."""
+    kw.setdefault("enabled", True)
+    kw.setdefault("source", "open-meteo")
+    return bw.backfill(**kw)
+
+
 # --------------------------------------------------------------- the flag
-def test_the_capture_is_armed_on_open_meteo_and_the_backfill_approved():
-    """The owner armed the capture (Open-Meteo, keyless) and approved the 5h-C
-    backfill on 2026-09-11. Disarming is one commit that changes this pin on
-    purpose. The wind pass-through stays unmeasured: arming is not a look."""
+def test_the_capture_is_armed_on_nws_and_the_backfill_is_gone():
+    """The owner armed the capture on 2026-09-11 (Open-Meteo) and switched it to
+    NWS on 2026-09-25 (FP5-2), landed 2026-10-08, accepting the loss of the
+    5h-C archive backfill. Changing source or disarming is one commit that
+    changes this pin on purpose. The wind pass-through stays unmeasured:
+    arming is not a look."""
     assert bw.FORECAST_CAPTURE_ENABLED is True
-    assert bw.FORECAST_SOURCE == "open-meteo"
-    assert bw.BACKFILL_ENABLED is True
+    assert bw.FORECAST_SOURCE == "nws"
+    assert bw.FORECAST_SOURCE_SINCE == "2026-10-08"
+    assert bw.BACKFILL_ENABLED is False
     assert bw.WIND_PASS_THROUGH is None
-    assert bw.arming_state()["armed"] is True
-    assert bw.backfill_arming_state()["armed"] is True
+    assert bw.arming_state() == {"armed": True, "state": "armed", "source": "nws"}
+    st = bw.backfill_arming_state()
+    assert st["armed"] is False and "BACKFILL_ENABLED" in st["reason"]
+    # even with its own flag on, NWS has no archive to backfill from
+    st = bw.backfill_arming_state(enabled=True)
+    assert st["armed"] is False and "no backfill arm" in st["reason"]
+
+
+def test_the_default_backfill_makes_no_request(tmp_path):
+    calls = []
+    out = bw.backfill(games=[], feed_dir=tmp_path, fetch=lambda *a: calls.append(a),
+                      forecast_dir=tmp_path / "store", now=BF_NOW)
+    assert out["captured"] is False and out["state"] == "inert"
+    assert calls == [] and not (tmp_path / "store").exists()
 
 
 def test_disarmed_makes_no_request_and_writes_nothing(tmp_path):
@@ -126,6 +150,16 @@ def test_wind_component_is_null_when_any_input_is_missing():
     assert bw.wind_out_component(10, 200, None) is None
 
 
+def test_a_calm_hour_is_a_zero_component_not_a_null():
+    """NWS reports a calm hour as '0 mph' with an empty direction."""
+    body = {"properties": {"periods": [{"startTime": "2026-09-11T18:00:00-05:00",
+                                        "temperature": 80, "temperatureUnit": "F",
+                                        "windSpeed": "0 mph", "windDirection": ""}]}}
+    h = bw.parse_nws_hourly(body)["2026-09-11T23:00"]
+    assert h["wind_mph"] == 0.0 and h["wind_from_deg"] is None
+    assert bw.wind_out_component(h["wind_mph"], h["wind_from_deg"], 37.0) == 0.0
+
+
 @pytest.mark.parametrize("roof,applies", [
     ("Open", True), ("Retractable", False), ("Dome", False), (None, False), ("", False)])
 def test_a_closed_or_unknown_roof_zeroes_the_weather_term(roof, applies):
@@ -174,6 +208,126 @@ def test_nws_hourly_parses_to_utc_hours_and_degrees_from():
     assert s["2026-09-11T23:00"]["temp_f"] == 74.0
     assert s["2026-09-12T00:00"]["temp_f"] == pytest.approx(68.0)
     assert s["2026-09-12T00:00"]["wind_from_deg"] == 0.0
+
+
+def _nws_period(start, temp=66, wind="5 to 10 mph", frm="SW", rh=48, pop=10):
+    """One hourly period in the shape the 2026-10-08 probe returned."""
+    return {"number": 1, "name": "", "startTime": start, "isDaytime": False,
+            "temperature": temp, "temperatureUnit": "F", "temperatureTrend": None,
+            "probabilityOfPrecipitation": {"unitCode": "wmoUnit:percent", "value": pop},
+            "dewpoint": {"unitCode": "wmoUnit:degC", "value": 7.2},
+            "relativeHumidity": {"unitCode": "wmoUnit:percent", "value": rh},
+            "windSpeed": wind, "windDirection": frm, "shortForecast": "Mostly Clear"}
+
+
+def _nws_hourly(start="2026-09-11T17:00:00-05:00", hours=12, **kw):
+    t0 = datetime.fromisoformat(start)
+    return {"properties": {"units": "us", "updateTime": "2026-09-11T16:35:49+00:00",
+                           "periods": [_nws_period((t0 + timedelta(hours=k)).isoformat(), **kw)
+                                       for k in range(hours)]}}
+
+
+class _FakeNWS:
+    """A fake api.weather.gov: /points answers with a forecastHourly URL, that
+    URL answers with an hourly forecast. No live call is ever made."""
+
+    def __init__(self, hourly=None, outside=(), flaky=0):
+        self.calls, self.headers = [], []
+        self.hourly = hourly or _nws_hourly()
+        self.outside = set(outside)
+        self.flaky = flaky
+
+    def __call__(self, url, headers=None):
+        self.calls.append(url)
+        self.headers.append(dict(headers or {}))
+        if "/points/" in url:
+            key = url.rsplit("/", 1)[-1]
+            if key in self.outside:
+                raise RuntimeError("404 Not Found: Data Unavailable For Requested Point")
+            return json.dumps({"properties": {
+                "gridId": "LOT",
+                "forecastHourly": f"https://api.weather.gov/gridpoints/LOT/{key}/forecast/hourly"}}
+            ).encode("utf-8")
+        if self.flaky:
+            self.flaky -= 1
+            raise RuntimeError("500 Internal Server Error")
+        return json.dumps(self.hourly).encode("utf-8")
+
+
+def test_nws_parses_the_probed_shape_and_names_what_it_lacks():
+    s = bw.parse_nws_hourly(_nws_hourly(hours=2))
+    h = s["2026-09-11T22:00"]
+    assert h["temp_f"] == 66.0 and h["rh_pct"] == 48 and h["precip_prob_pct"] == 10
+    assert h["wind_mph"] == 7.5 and h["wind_from_deg"] == 225.0
+    # NWS's hourly forecast has no pressure and no gust: stated nulls, named
+    assert h["pressure_hpa"] is None and h["gust_mph"] is None
+    assert set(bw.SOURCES["nws"]["variables_missing"]) == {"pressure_hpa", "gust_mph"}
+
+
+def test_nws_reads_quantitative_value_objects_by_unit():
+    body = {"properties": {"periods": [{
+        "startTime": "2026-09-11T18:00:00-05:00",
+        "temperature": {"unitCode": "wmoUnit:degC", "value": 20},
+        "windSpeed": {"unitCode": "wmoUnit:km_h-1", "value": 16.09344},
+        "windDirection": "N"}]}}
+    h = bw.parse_nws_hourly(body)["2026-09-11T23:00"]
+    assert h["temp_f"] == pytest.approx(68.0)
+    assert h["wind_mph"] == pytest.approx(10.0)
+
+
+def test_fetch_nws_sends_the_site_and_contact_and_makes_two_calls_a_point(monkeypatch):
+    monkeypatch.delenv(bw.NWS_USER_AGENT_ENV, raising=False)
+    fake = _FakeNWS()
+    series, meta = bw.fetch_nws([(41.948171, -87.655503), (39.756, -104.994)], opener=fake)
+    assert fake.calls[0] == "https://api.weather.gov/points/41.9482,-87.6555"
+    assert fake.calls[1].endswith("/forecast/hourly")
+    assert len(fake.calls) == 4 and meta["n_calls"] == 4 and meta["n_points_failed"] == 0
+    ua = fake.headers[0]["User-Agent"]
+    assert ua == bw.NWS_USER_AGENT and "eephus.io" in ua and "https://" in ua
+    assert all(h["User-Agent"] == ua for h in fake.headers)
+    assert meta["source"] == "nws" and meta["variables_missing"] == ["pressure_hpa", "gust_mph"]
+    assert meta["forecast_update_times"] == ["2026-09-11T16:35:49+00:00"] * 2
+    assert series[0]["2026-09-11T23:00"]["temp_f"] == 66.0
+    monkeypatch.setenv(bw.NWS_USER_AGENT_ENV, "(eephus.io, ops@example.com)")
+    fake2 = _FakeNWS()
+    bw.fetch_nws([(41.9, -87.6)], opener=fake2)
+    assert fake2.headers[0]["User-Agent"] == "(eephus.io, ops@example.com)"
+
+
+def test_fetch_nws_retries_once_and_a_point_outside_coverage_is_a_stated_null():
+    fake = _FakeNWS(outside={"43.6414,-79.3894"}, flaky=1)
+    series, meta = bw.fetch_nws([(41.948171, -87.655503), (43.641438, -79.389353)],
+                                opener=fake)
+    assert series[0] and series[1] == {}
+    assert meta["n_points_failed"] == 1
+    # Wrigley: points, a failed hourly, the retried hourly; Toronto: two failed points
+    assert len(fake.calls) == 5 and meta["n_calls"] == 5
+
+
+def test_armed_capture_on_nws_writes_the_same_row_schema(tmp_path):
+    """The default source end to end, with the fake: same store, same row
+    columns as an Open-Meteo capture, source and licence on the snapshot."""
+    fake = _FakeNWS()
+    games = [_game(1, 17, "2026-09-11T23:05:00Z"),
+             _game(2, 32, "2026-09-11T23:45:00Z", home="MIL"),
+             _game(3, 12, "2026-09-11T23:10:00Z", home="TBR")]
+    out = bw.capture("2026-09-11", games=games, venues=VENUES,
+                     fetch=lambda pts: bw.fetch_nws(pts, opener=fake),
+                     forecast_dir=tmp_path, now=NOW)
+    assert out["captured"] is True
+    assert len(fake.calls) == 4            # two venues, two calls each, the dome never asked
+    rec = json.loads(Path(out["path"]).read_text(encoding="utf-8"))
+    assert rec["source"] == "nws" and "public domain" in rec["source_licence"]
+    assert "CC BY" not in rec["source_licence"]
+    om = bw.capture("2026-09-11", enabled=True, source="open-meteo", games=games,
+                    venues=VENUES, fetch=_stub_fetch([]), forecast_dir=tmp_path / "om", now=NOW)
+    om_rec = json.loads(Path(om["path"]).read_text(encoding="utf-8"))
+    assert set(rec) == set(om_rec)
+    assert [sorted(r) for r in rec["rows"]] == [sorted(r) for r in om_rec["rows"]]
+    wr = {r["game_pk"]: r for r in rec["rows"]}[1]
+    assert wr["fc_temp_f"] == 66.0 and wr["fc_pressure_hpa"] is None
+    assert wr["fc_wind_out_mph"] == pytest.approx(7.5 * math.cos(math.radians(45.0 - 37.0)), abs=0.005)
+    assert bw.forecast_for_game(1, "2026-09-11T23:05:00Z", forecast_dir=tmp_path)["snapshot"]
 
 
 # ---------------------------------------------------------------- capture
@@ -306,7 +460,7 @@ def _slate(tmp_path):
 def test_backfill_writes_one_row_per_game_with_its_issue_time(tmp_path):
     fdir, games = _slate(tmp_path)
     store, calls = tmp_path / "store", []
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls),
+    out = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls),
                       forecast_dir=store, now=BF_NOW)
     assert out["captured"] is True
     assert Path(out["path"]).name == "previous-runs-2026-09-11-2100.json"
@@ -340,16 +494,16 @@ def test_backfill_writes_one_row_per_game_with_its_issue_time(tmp_path):
 def test_backfill_first_write_wins_and_only_the_unwritten_game_is_retried(tmp_path):
     fdir, games = _slate(tmp_path)
     store = tmp_path / "store"
-    bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), forecast_dir=store, now=BF_NOW)
+    _backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), forecast_dir=store, now=BF_NOW)
     _feed(fdir, 15, 3313, "Yankee Stadium", 40.829, -73.926, 75.0, "Open",
           "2026-09-09T23:05:00Z", "2026-09-09")
     calls = []
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls), forecast_dir=store,
+    out = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls), forecast_dir=store,
                       now=BF_NOW + timedelta(minutes=5))
     assert out["n_already_in_store"] == 4 and out["n_games"] == 1
     assert len(calls) == 1 and len(calls[0][0]) == 1
     assert bw.backfill_game_pks(store) == {11, 12, 13, 14, 15}
-    again = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls), forecast_dir=store,
+    again = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls), forecast_dir=store,
                         now=BF_NOW + timedelta(minutes=10))
     assert again["captured"] is False and len(calls) == 1        # nothing new, no request
 
@@ -357,7 +511,7 @@ def test_backfill_first_write_wins_and_only_the_unwritten_game_is_retried(tmp_pa
 def test_backfill_retries_rather_than_retires_an_empty_series(tmp_path):
     fdir, games = _slate(tmp_path)
     store = tmp_path / "store"
-    out = bw.backfill(games=games[:2], feed_dir=fdir, fetch=_bf_stub([], empty=True),
+    out = _backfill(games=games[:2], feed_dir=fdir, fetch=_bf_stub([], empty=True),
                       forecast_dir=store, now=BF_NOW)
     assert out["captured"] is False
     assert bw.backfill_game_pks(store) == set()
@@ -369,7 +523,7 @@ def test_backfill_never_writes_a_row_issued_inside_the_lead(tmp_path, monkeypatc
     and the row is refused, not written."""
     fdir, games = _slate(tmp_path)
     monkeypatch.setattr(bw, "BACKFILL_ISSUE_ALLOWANCE_HOURS", 23.5)
-    out = bw.backfill(games=games[:1], feed_dir=fdir, fetch=_bf_stub([]),
+    out = _backfill(games=games[:1], feed_dir=fdir, fetch=_bf_stub([]),
                       forecast_dir=tmp_path / "store", now=BF_NOW)
     assert out["captured"] is False and out["n_skipped"] == 1
     assert bw.backfill_game_pks(tmp_path / "store") == set()
@@ -377,7 +531,7 @@ def test_backfill_never_writes_a_row_issued_inside_the_lead(tmp_path, monkeypatc
 
 def test_backfill_skips_a_game_whose_hours_are_not_past(tmp_path):
     fdir, games = _slate(tmp_path)
-    out = bw.backfill(games=games[:1], feed_dir=fdir, fetch=_bf_stub([]),
+    out = _backfill(games=games[:1], feed_dir=fdir, fetch=_bf_stub([]),
                       forecast_dir=tmp_path / "store",
                       now=datetime(2026, 9, 10, 1, 30, tzinfo=timezone.utc))
     assert out["captured"] is False and out["n_skipped"] == 1
@@ -390,7 +544,7 @@ def test_backfill_batches_a_short_span_and_splits_a_long_one(tmp_path):
     _feed(fdir, 22, 19, "Coors Field", 39.7, -104.9, 4.0, "Open", "2026-05-20T01:10:00Z",
           "2026-05-19")
     calls = []
-    bw.backfill(games=[_result(21, day="2026-04-01"), _result(22, day="2026-05-19", home="COL")],
+    _backfill(games=[_result(21, day="2026-04-01"), _result(22, day="2026-05-19", home="COL")],
                 feed_dir=fdir, fetch=_bf_stub(calls), forecast_dir=tmp_path / "store",
                 now=BF_NOW)
     assert sorted((len(c[0]), c[1], c[2]) for c in calls) == [
@@ -405,7 +559,7 @@ def test_backfill_batches_a_short_span_and_splits_a_long_one(tmp_path):
 def test_backfill_is_inert_unless_everything_is_armed(tmp_path, kw, why):
     fdir, games = _slate(tmp_path)
     calls = []
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls),
+    out = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls),
                       forecast_dir=tmp_path / "store", now=BF_NOW, **kw)
     assert out["captured"] is False and why in out["reason"]
     assert calls == [] and not (tmp_path / "store").exists()
@@ -416,7 +570,7 @@ def test_backfill_is_pinned_to_the_approved_season(tmp_path):
     assert bw.BACKFILL_SEASONS == ("2026",)
     fdir, games = _slate(tmp_path)
     calls = []
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls),
+    out = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls),
                       forecast_dir=tmp_path / "store",
                       now=datetime(2027, 4, 20, 21, 0, tzinfo=timezone.utc))
     assert out["captured"] is False and out["state"] == "inert" and "2027" in out["reason"]
@@ -444,7 +598,7 @@ def test_backfill_stops_its_requests_at_the_first_failure(tmp_path):
         calls.append(d0)
         raise TimeoutError("archive host hung")
 
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=down, forecast_dir=tmp_path / "store",
+    out = _backfill(games=games, feed_dir=fdir, fetch=down, forecast_dir=tmp_path / "store",
                       now=BF_NOW)
     assert len(calls) == 1 and out["n_requests"] == 1            # not one timeout per venue
     assert out["captured"] is False
@@ -457,11 +611,11 @@ def test_backfill_caps_its_requests_per_night(tmp_path, monkeypatch):
     monkeypatch.setattr(bw, "BACKFILL_MAX_REQUESTS_PER_NIGHT", 2)
     calls = []
     store = tmp_path / "store"
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls), forecast_dir=store,
+    out = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls), forecast_dir=store,
                       now=BF_NOW)
     assert len(calls) == 2 and out["n_games"] == 2
     assert out["skipped_by_code"] == {"request_deferred": 1}
-    nxt = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls), forecast_dir=store,
+    nxt = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub(calls), forecast_dir=store,
                       now=BF_NOW + timedelta(days=1))
     assert nxt["n_games"] == 1 and len(calls) == 3               # the deferred one, next night
 
@@ -482,7 +636,7 @@ def test_backfill_fetches_a_missing_feed_through_the_loader(tmp_path):
                                                           "longitude": -73.926}},
                       "fieldInfo": {"roofType": "Open"}}}}
 
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), feed_loader=loader,
+    out = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), feed_loader=loader,
                       forecast_dir=tmp_path / "store", now=BF_NOW)
     assert asked == [(15, "2026-09-09")]                         # only the uncached game
     assert out["n_feed_fetches"] == 1 and out["n_skipped"] == 0
@@ -499,12 +653,12 @@ def test_backfill_feed_fetches_stop_at_the_first_failure_and_at_the_cap(tmp_path
         asked.append(pk)
         raise ConnectionError("statsapi down")
 
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), feed_loader=down,
+    out = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), feed_loader=down,
                       forecast_dir=tmp_path / "s1", now=BF_NOW)
     assert asked == [31]
     assert out["skipped_by_code"] == {"feed_fetch_deferred": 2, "feed_fetch_failed": 1}
     monkeypatch.setattr(bw, "BACKFILL_MAX_FEED_FETCHES_PER_NIGHT", 1)
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]),
+    out = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]),
                       feed_loader=lambda pk, day: {}, forecast_dir=tmp_path / "s2", now=BF_NOW)
     assert out["n_feed_fetches"] == 1
     assert out["skipped_by_code"] == {"feed_fetch_deferred": 2, "feed_not_cached": 1}
@@ -517,7 +671,7 @@ def test_a_test_feed_dir_never_reaches_the_network_loader(tmp_path, monkeypatch)
 
     monkeypatch.setattr(bw, "_default_feed_loader", boom)
     fdir, games = _slate(tmp_path)
-    out = bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]),
+    out = _backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]),
                       forecast_dir=tmp_path / "store", now=BF_NOW)
     assert out["skipped_by_code"] == {"feed_not_cached": 1}
 
@@ -526,7 +680,7 @@ def test_coverage_reports_the_last_run_skips_even_when_nothing_was_written(tmp_p
     fdir = tmp_path / "feeds"
     fdir.mkdir()
     store = tmp_path / "store"
-    out = bw.backfill(games=[_result(41), _result(42)], feed_dir=fdir, fetch=_bf_stub([]),
+    out = _backfill(games=[_result(41), _result(42)], feed_dir=fdir, fetch=_bf_stub([]),
                       forecast_dir=store, now=BF_NOW)
     assert out["captured"] is False
     lr = bw.coverage(store)["backfill"]["last_run"]
@@ -576,7 +730,7 @@ def test_the_live_reader_never_returns_a_backfilled_row(tmp_path):
     its captured_at is after the game anyway."""
     fdir, games = _slate(tmp_path)
     store = tmp_path / "store"
-    bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), forecast_dir=store, now=BF_NOW)
+    _backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), forecast_dir=store, now=BF_NOW)
     assert bw.snapshot_paths(store) == []
     assert bw.forecast_for_game(11, "2026-09-09T23:05:00Z", forecast_dir=store) is None
     r = bw.backfill_forecast_for_game(11, "2026-09-09T23:05:00Z", forecast_dir=store)
@@ -590,7 +744,7 @@ def test_the_live_reader_never_returns_a_backfilled_row(tmp_path):
 def test_backfilled_rows_never_start_the_live_clock(tmp_path):
     fdir, games = _slate(tmp_path)
     store = tmp_path / "store"
-    bw.backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), forecast_dir=store, now=BF_NOW)
+    _backfill(games=games, feed_dir=fdir, fetch=_bf_stub([]), forecast_dir=store, now=BF_NOW)
     c = bw.coverage(store)
     assert c["clock_started"] is None and c["n_snapshots"] == 0
     b = c["backfill"]

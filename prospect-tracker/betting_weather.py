@@ -12,6 +12,15 @@ dependency, and a new dependency is an owner decision. The owner ARMED it on
 from Open-Meteo's Previous Runs API in the same answer. Arming changes no
 served number: it starts the capture, the backfill and the 5h clock.
 
+THE SOURCE CHANGED ON 2026-10-08 (owner answer FP5-2, 2026-09-25, final-pass
+batch 5): the live capture now reads the US National Weather Service
+(api.weather.gov, public domain, no key, a User-Agent naming the site and a
+contact), because Open-Meteo's free endpoint is non-commercial only. The owner
+accepted the cost: NWS keeps no archive, so the 5h-C backfill arm is gone
+(BACKFILL_ENABLED is False; the rows it already wrote stay on disk, read by no
+candidate). Same store, same row schema, same dark contract; section 5h's
+amendment of 2026-10-08 names the change before any look.
+
 THE OWNER ASK (2026-09-11): make the module weather and ballpark aware,
 especially for overs/unders and player props.
 
@@ -98,16 +107,20 @@ FORECAST_DIR = ROOT / ".cache" / "weather_forecasts"
 #: vintage record. Nothing served imports this module and
 #: test_betting_weather.py pins that.
 #:
-#: KEYLESS, as the owner chose. The licence paragraph in 5h still stands: the
-#: free endpoint's terms name subscription sites as commercial. Putting a key
-#: in the environment variable OPEN_METEO_KEY_ENV names moves the capture AND
-#: the backfill to the commercial endpoints with no code change. To disarm:
-#: set this False (the backfill then stops too) and update the pinned test.
+#: SINCE 2026-10-08 the one request a night is NWS's two requests per fetched
+#: venue (points, then the hourly gridpoint forecast), and there is no backfill
+#: (see FORECAST_SOURCE). To disarm: set this False and update the pinned test.
 FORECAST_CAPTURE_ENABLED = True
 
-#: Which source: the owner chose Open-Meteo on 2026-09-11. None would make the
-#: armed flag inert, so that the flag alone can never silently pick a licence.
-FORECAST_SOURCE: str | None = "open-meteo"
+#: Which source. The owner chose Open-Meteo (keyless) on 2026-09-11, and
+#: switched to NWS on 2026-09-25 (FP5-2, "Switch weather to NWS (lose the
+#: Open-Meteo archive backfill)"), landed 2026-10-08: Open-Meteo's free terms
+#: name subscription sites as commercial, NWS data is public domain. None would
+#: make the armed flag inert, so that the flag alone can never pick a licence.
+FORECAST_SOURCE: str | None = "nws"
+#: The date the live capture changed source (docs/diamond-betting.md 5h,
+#: amendment 2026-10-08). Rows carry their own `source` at the snapshot level.
+FORECAST_SOURCE_SINCE = "2026-10-08"
 
 SOURCES = {
     "open-meteo": {
@@ -125,31 +138,44 @@ SOURCES = {
     },
     "nws": {
         "endpoint": "https://api.weather.gov",
-        "key": "none; a User-Agent with contact details is required",
-        "licence": "open data, free to use for any purpose (weather.gov API docs)",
+        "key": "none; a User-Agent naming the site and a contact is required",
+        "licence": ("US National Weather Service data, a US Government work in the public "
+                    "domain (17 U.S.C. 105); open data, free to use for any purpose "
+                    "(weather.gov API docs); no attribution required"),
         "calls_per_night": "2 per open-air or retractable US venue (points, hourly)",
         "archive": "none served by the API; no backfill arm is possible",
         "coverage_gap": "US only: Rogers Centre (TOR, retractable) has no forecast",
+        # The hourly gridpoint forecast carries temperature, relative humidity,
+        # wind speed, wind direction (a 16-point compass string, so 22.5 degree
+        # steps) and precipitation probability. It carries NO surface pressure
+        # and NO wind gust, so those two columns are null on every NWS row.
+        "variables_missing": ("pressure_hpa", "gust_mph"),
     },
 }
 
 #: Environment variable carrying an Open-Meteo COMMERCIAL key. Read from the
 #: environment only, never written to an artifact or a log.
 OPEN_METEO_KEY_ENV = "EEPHUS_OPEN_METEO_KEY"
-#: Environment variable carrying the NWS User-Agent string (contact details).
+#: Environment variable that overrides the NWS User-Agent string.
 NWS_USER_AGENT_ENV = "EEPHUS_NWS_USER_AGENT"
+#: The NWS User-Agent: the site and a contact, in the form the API docs give,
+#: "(myweatherapp.com, contact@myweatherapp.com)". The contact is the site's
+#: /sources/ page, which carries the address sources write to.
+NWS_USER_AGENT = "(eephus.io, https://eephus.io/sources/)"
+#: Attempts per NWS request. The hourly endpoint returns an occasional 5xx
+#: that clears on a second try; a venue that fails twice is a stated null row.
+NWS_ATTEMPTS = 2
 
 # ---------------------------------------------------------------------------
 # the backfill arm (OWNER DECISION 2026-09-11, docs/diamond-betting.md 5h-C)
 # ---------------------------------------------------------------------------
-#: Whether the backfill runs. TRUE: approved by the owner on 2026-09-11 in the
-#: same answer that armed the capture. It also needs the capture armed with
-#: FORECAST_SOURCE "open-meteo", because the archive exists on that source only.
-#: WHAT IT CHANGES: the nightly step adds Previous Runs requests for completed
-#: regular-season games not yet in the store (about one per venue the first
-#: night, then one batched request a night) and writes one immutable
-#: `previous-runs-*.json` snapshot when it has new rows. No served number.
-BACKFILL_ENABLED = True
+#: Whether the backfill runs. FALSE since 2026-10-08: approved by the owner on
+#: 2026-09-11, then given up with the switch to NWS (FP5-2, 2026-09-25), which
+#: keeps no archive. It also needs the capture armed with FORECAST_SOURCE
+#: "open-meteo", so it is inert twice over. The writer and its readers stay,
+#: because the `previous-runs-*.json` snapshots it wrote (2026 regular season)
+#: stay on disk and coverage() still counts them; no candidate reads them.
+BACKFILL_ENABLED = False
 
 #: The seasons the owner approved. 5h-C registered a backfill "over the 2026
 #: season to date", so the arm is pinned to 2026: on a date in another season
@@ -340,6 +366,10 @@ def wind_out_component(speed_mph, wind_from_deg, azimuth_deg) -> float | None:
     4, Oracle 85). Out is positive, the direction that adds carry, matching
     betting_usage.WIND_OUT_COMPONENT's sign on the feed's own strings.
     """
+    if speed_mph is not None and float(speed_mph) == 0.0:
+        # Calm: no component in any direction. NWS gives a calm hour an empty
+        # direction, which must read as zero, not as a missing value.
+        return 0.0
     if speed_mph is None or wind_from_deg is None or azimuth_deg is None:
         return None
     toward = (float(wind_from_deg) + 180.0) % 360.0
@@ -554,32 +584,56 @@ def fetch_previous_runs(points: list[tuple[float, float]], start_date: str, end_
 
 
 def _nws_mph(s) -> float | None:
-    """'10 mph' -> 10.0, '5 to 10 mph' -> 7.5, anything else -> None."""
+    """'10 mph' -> 10.0, '5 to 10 mph' -> 7.5, anything else -> None. A
+    QuantitativeValue object ({'unitCode': 'wmoUnit:km_h-1', 'value': 16}) is
+    read by its unit code."""
+    if isinstance(s, dict):
+        try:
+            v = float(s.get("value"))
+        except (TypeError, ValueError):
+            return None
+        unit = str(s.get("unitCode") or "")
+        if "km_h" in unit:
+            return v / 1.609344
+        if "m_s" in unit:
+            return v * 2.2369363
+        return v
     nums = [float(x) for x in _NUM_RE.findall(str(s or ""))]
     return (sum(nums) / len(nums)) if nums else None
+
+
+def _nws_temp_f(p: dict) -> float | None:
+    """The period's temperature in F, from a number plus temperatureUnit or a
+    QuantitativeValue object ({'unitCode': 'wmoUnit:degC', 'value': 20})."""
+    temp = p.get("temperature")
+    unit = str(p.get("temperatureUnit") or "F").upper()
+    if isinstance(temp, dict):
+        unit = "C" if "degC" in str(temp.get("unitCode") or "") else "F"
+        temp = temp.get("value")
+    try:
+        temp = float(temp)
+    except (TypeError, ValueError):
+        return None
+    return temp * 9.0 / 5.0 + 32.0 if unit == "C" else temp
 
 
 def parse_nws_hourly(body) -> dict:
     """NWS /gridpoints/.../forecast/hourly -> {hour_key: {...}}.
 
-    Documented shape (weather.gov API docs), NOT probed in the lane that wrote
-    this: properties.periods[] with startTime (local offset), temperature and
-    temperatureUnit, windSpeed ('10 mph' or '5 to 10 mph'), windDirection as a
-    16-point compass string (the direction it blows FROM), and value objects
-    for relativeHumidity and probabilityOfPrecipitation. No pressure.
+    Shape confirmed by one probe on 2026-10-08 (Wrigley Field, gridpoint
+    LOT/75,76, HTTP 200, 156 hourly periods): properties.periods[] with
+    startTime (local offset), temperature and temperatureUnit ('F'), windSpeed
+    ('5 mph', or '5 to 10 mph'), windDirection as a 16-point compass string
+    (the direction it blows FROM), and {unitCode, value} objects for
+    relativeHumidity and probabilityOfPrecipitation. No pressure and no gust:
+    those two columns are null on every NWS row (SOURCES['nws']).
     """
     out = {}
     for p in ((body or {}).get("properties") or {}).get("periods") or []:
         t = _utc(p.get("startTime"))
         if t is None:
             continue
-        temp = p.get("temperature")
-        try:
-            temp = float(temp)
-            if str(p.get("temperatureUnit") or "F").upper() == "C":
-                temp = temp * 9.0 / 5.0 + 32.0
-        except (TypeError, ValueError):
-            temp = None
+        temp = _nws_temp_f(p)
         out[_hour_key(t)] = {
             "temp_f": temp,
             "rh_pct": ((p.get("relativeHumidity") or {}).get("value")),
@@ -592,26 +646,52 @@ def parse_nws_hourly(body) -> dict:
     return out
 
 
+def _nws_get(op, url: str, hdr: dict, counter: list) -> dict:
+    """Parsed JSON, in up to NWS_ATTEMPTS tries; the last error is raised.
+    Every request made, failed or not, is counted in counter[0]."""
+    err = None
+    for _ in range(NWS_ATTEMPTS):
+        counter[0] += 1
+        try:
+            raw = op(url, hdr)
+            return json.loads(raw.decode("utf-8") if isinstance(raw, (bytes, bytearray))
+                              else raw)
+        except Exception as exc:                                 # noqa: BLE001
+            err = exc
+    raise err
+
+
 def fetch_nws(points: list[tuple[float, float]], *, opener=None) -> tuple[list[dict], dict]:
-    ua = os.environ.get(NWS_USER_AGENT_ENV) or "eephus-betting-weather"
+    """Two requests per point: /points/{lat},{lon} names the gridpoint, then its
+    `forecastHourly` URL returns the hourly forecast. A point that fails (outside
+    NWS coverage, as Toronto is, or down twice) gets an empty series, so its
+    rows are stated nulls and the night does not abort."""
+    ua = os.environ.get(NWS_USER_AGENT_ENV) or NWS_USER_AGENT
     op = opener or _default_opener
     hdr = {"User-Agent": ua, "Accept": "application/geo+json"}
-    out, n = [], 0
+    out, n, updated, failed = [], [0], [], 0
     for lat, lon in points:
+        upd = None
         try:
-            pt = json.loads(op(f"{SOURCES['nws']['endpoint']}/points/{lat:.4f},{lon:.4f}", hdr))
-            n += 1
+            pt = _nws_get(op, f"{SOURCES['nws']['endpoint']}/points/{lat:.4f},{lon:.4f}", hdr, n)
             url = (pt.get("properties") or {}).get("forecastHourly")
             if not url:
+                failed += 1
                 out.append({})
+                updated.append(None)
                 continue
-            out.append(parse_nws_hourly(json.loads(op(url, hdr))))
-            n += 1
-        except Exception:                                        # noqa: BLE001
-            # Outside NWS coverage (Toronto) or a transient failure: that venue
-            # gets a stated null row, the night does not abort.
+            body = _nws_get(op, url, hdr, n)
+            upd = (body.get("properties") or {}).get("updateTime")
+            out.append(parse_nws_hourly(body))
+        except Exception as exc:                                 # noqa: BLE001
+            log.warning("betting_weather: NWS request for %.4f,%.4f failed: %s", lat, lon, exc)
+            failed += 1
             out.append({})
-    return out, {"source": "nws", "n_calls": n, "endpoint": "api.weather.gov"}
+        updated.append(upd)
+    return out, {"source": "nws", "n_calls": n[0], "endpoint": "api.weather.gov",
+                 "n_points": len(points), "n_points_failed": failed,
+                 "forecast_update_times": updated,
+                 "variables_missing": list(SOURCES["nws"]["variables_missing"])}
 
 
 FETCHERS = {"open-meteo": fetch_open_meteo, "nws": fetch_nws}
