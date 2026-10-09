@@ -97,14 +97,11 @@ Three tokens, and they do NOT share a rule. Live values are in
 The two copy tokens lead with the Windows system faces so a Windows reader
 renders body text from a system font. PixelMplus12 sits behind them for Mac,
 iPhone and Linux, where MS Gothic does not exist. It is self-hosted as a Latin
-subset in both weights (`assets/fonts/pixelmplus12-*.woff2`, mirrored into
-`fonts/` here); the source TTFs and the M+ license live in `fonts/` too.
+subset in both weights (`assets/fonts/pixelmplus12-*.woff2`); the source TTFs
+and the M+ license live in `fonts/` here.
 
-The logo face was DotGothic16 until 2026-08-07. It shipped a single 400 weight
-and the site sets `font-synthesis: none`, so the wordmark rendered at regular
-no matter what weight was asked for. PixelMplus12 has a real 700, so the
-wordmark is now genuinely bold. `fonts/DotGothic16-Regular.ttf` and its OFL
-license stay here for provenance only; nothing serves them.
+The logo face was DotGothic16 until 2026-08-07, when PixelMplus12's real 700
+replaced its single 400 weight so the wordmark renders bold.
 
 Numbers are tabular (`font-variant-numeric: tabular-nums`). Corners are square
 everywhere; radius is `0` by rule.
@@ -346,19 +343,14 @@ say it to someone who knows baseball.
 ```
 branding/
   README.md                     this brand guide
-  site.webmanifest              PWA manifest (name, colors, icon set)
-  fonts/                        PixelMplus12 TTFs (the generator's source), woff2 copies, licenses
+  fonts/                        PixelMplus12 TTFs (the generator's source) and the M+ license
   marks/                        generated: raw hex, letters as paths, no font
     eephus-wordmark.svg         full lockup at s 4 (220 x 84), light
     eephus-wordmark-dark.svg    full lockup, dark
     compact-mark.svg            ball strike 32 (favicon twin), light
     compact-mark-dark.svg       ball strike 32, dark-surface variant
     px-ball-monogram.svg        the PROSPX mark at 2x (44 px), PROSPX only
-  icons/
-    favicon.svg                 SVG favicon, ball strike 16 (crisp edges)
-    favicon.ico                 16/32/48, each its own hand-tuned strike
-    favicon-32.png              32px PNG, ball strike 32
-    favicon-16.png              16px PNG, ball strike 16 (the footer mark)
+  icons/                        (the favicon set and the manifest live in assets/)
     apple-touch-icon.png        180px, clean ball on the dark holo field
     icon-192.png                PWA, clean ball (eephus.io)
     icon-512.png                PWA, clean ball (eephus.io)
@@ -389,6 +381,12 @@ branding/
     og/<module>.png             the per-module share cards (not served yet)
 
 assets/
+  favicon.svg                   SVG favicon, ball strike 16 (crisp edges); the
+                                root favicon.ico holds 16/32/48 strikes
+  favicon-32.png, favicon-16.png
+                                ball strikes 32 and 16 (16 is the footer mark)
+  site.webmanifest              PWA manifest (name, colors, icon set)
+  fonts/pixelmplus12-*.woff2    the served Latin subsets of the brand face
   eephus-icons.svg              the pixel icon sprite (served)
   eephus-icons.json             the same bitmaps for the canvas painters (served)
   brand/                        tools/pixel_brand.py's DOM fragments (the wordmark,
@@ -402,13 +400,12 @@ tools/
   pixel_brand_src.py            every hand decision of the pixel marks, as data
   pixel_brand.py                renders every pixel mark, card and export from it
   generate_brand_assets.py      a shim: runs pixel_brand.py, rewrites the served
-                                favicon set, copies served files into branding/
+                                favicon set, copies the app icons into branding/icons/
 ```
 
 Regenerate every brand image with `python tools/pixel_brand.py`
 (`--check` verifies the committed outputs). `python tools/generate_brand_assets.py`
-runs it too, then rewrites the served favicon set and copies the served files
-into `icons/`, `fonts/` and `site.webmanifest` (`--favicons`: the favicon set
-only). Regenerate the icon set with `python tools/pixel_icons.py`. The SVG marks
-are generated from `tools/pixel_brand_src.py`; the manifest and this guide are
-hand-authored.
+runs it too, then rewrites the served favicon set and copies the four app
+icons into `icons/` (`--favicons`: the favicon set only). Regenerate the icon
+set with `python tools/pixel_icons.py`. The SVG marks are generated from
+`tools/pixel_brand_src.py`; the manifest and this guide are hand-authored.
