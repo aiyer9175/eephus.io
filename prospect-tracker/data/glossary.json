@@ -9915,6 +9915,29 @@
    ],
    "shelf": "ark",
    "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "cots_contracts",
+   "term": "Cot's Contracts",
+   "category": "financial",
+   "section": "Value & Contracts",
+   "module": [
+    "foundations"
+   ],
+   "aliases": [
+    "Cots",
+    "Cot's Baseball Contracts"
+   ],
+   "priority": 40,
+   "definition": "Baseball Prospectus's public contract sheets, one per club, listing each player's contract, its history, option and deferral terms and arbitration results. Used here as a reference to check deferred signings against the deferral ledger and, later, to backfill arbitration cases.",
+   "methodology": "One scripted capture of the 30 club sheets (tools/ingest_cots.py), then manual drops. The deferral check lists deferred signings on the sheets with no ledger entry. It is a coverage check only and moves no valuation. Players no longer on a club sheet are absent.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "surplus_value"
+   ],
+   "shelf": "industry",
+   "origin": "Cot's Contracts (Baseball Prospectus)"
   }
  ]
 }

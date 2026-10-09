@@ -241,6 +241,20 @@ between the sentinels.
   `data/_labs/arb_ledger.json`, which ships in neither deploy consumer, so
   the projection and tracker entries are not republished (owner answer
   M23-3, 2026-09-25). MLBTR keeps its /sources/ credit as a comparator.
+- Cot's Contracts (Baseball Prospectus), `tools/ingest_cots.py`: ONE scripted
+  capture of the 30 club sheets (owner answer X05-20 = b, 2026-09-30, 'one
+  scripted capture with attribution'), cached under the gitignored
+  `.cache/cots/` with a receipts file naming the URL, the fetch time, the terms
+  lines found on the sheet and the attribution text. The tool refuses a second
+  capture without `--force` and a dated `--reason`; updates are manual drops
+  (save the sheet's HTML as `.cache/cots/<club-slug>_<UTC stamp>.html` or run
+  `python tools/ingest_cots.py drop FILE --sheet <club-slug>`, then `build`).
+  Derived outputs: `data/cots_deferral_check.json` (deferred signings with no
+  entry in `data/deferrals.json`; measurement only) and the lab file
+  `data/_labs/cots_arb_cases.json` (arbitration cases for the ARB-CLUB-1
+  backfill; partial, because only players still on a sheet carry history).
+  Attribution wherever used: Cot's Contracts (Baseball Prospectus). Never on the
+  pipeline.
 - The pitcher BMI driver's bio panel (`data/_frozen/arch_bio_panel.json`,
   read by `efv_drivers.load_bio_panel`) is a frozen input with no producer:
   its builder, the archetype lab script `tools/_arch_bio_panel.py`, was
