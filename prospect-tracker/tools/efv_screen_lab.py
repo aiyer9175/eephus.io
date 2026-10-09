@@ -267,6 +267,7 @@ def w2_candidates(modules=W2_MODULES, kinds=("column",)) -> tuple[dict, ...]:
 #: it. Wave 1 (CANDIDATES) and its frozen run are untouched.
 WAVE2_DEV: dict[str, tuple[str, ...]] = {
     "efv_w2_anchor": ("an1_rel", "an1_pl", "an2_pos"),
+    "efv_w2_raters": ("w2r_panel_hit", "w2r_panel_pit", "w2r_panel_both"),
 }
 
 #: WAVE 2 (EFV3_W2, owner EW2-6 2026-10-08): each family keeps its arms in its own
