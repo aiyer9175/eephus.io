@@ -113,7 +113,7 @@ def test_milb_pool_loads_on_the_efv_grade(server):
     with _board(server) as (pg, errors):
         _pool(pg, "milb")
         assert _sort_value(pg) == "trade_desc", "the MiLB pool does not default to eFV grade"
-        ci = _col(pg, "FV")
+        ci = _col(pg, "eFV")      # the column is eFV (owner answer Q-E4)
         fvs = [float(r[ci]) for r in _rows(pg) if re.match(r"^[0-9.]+$", r[ci] or "")]
         assert len(fvs) >= 50
         bad = [(i + 1, a, b) for i, (a, b) in enumerate(zip(fvs, fvs[1:])) if b > a]

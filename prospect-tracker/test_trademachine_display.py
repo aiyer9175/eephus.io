@@ -247,7 +247,8 @@ def test_sorting_by_keyboard_keeps_focus_on_the_header(server):
             "th[data-tb-sortcol] *",
             "els => els.filter(e => e.tabIndex >= 0 || e.matches('a,button,input,select')).length")
         assert nested == 0
-        assert pg.get_attribute('th[data-tb-sortcol="fv"]', "aria-describedby") == "gl-def-fv"
+        # the column is eFV (owner answer Q-E4), so its header carries the eFV term
+        assert pg.get_attribute('th[data-tb-sortcol="fv"]', "aria-describedby") == "gl-def-xfv"
         # the table is named by the board heading, an h2
         lab = pg.get_attribute(".tm-board-table", "aria-labelledby")
         assert pg.evaluate(f"document.getElementById('{lab}').tagName") == "H2"

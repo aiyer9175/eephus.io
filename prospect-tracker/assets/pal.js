@@ -1162,7 +1162,7 @@
          ? ("; " + esc(rule.n_role_unstated) + " list only RHP, LHP or P, no role to compare, so they "
             + "cannot appear"
             + (rule.n_role_unstated_above_fv
-               ? " (" + esc(rule.n_role_unstated_above_fv) + " of those clear the FV floor)" : "")
+               ? " (" + esc(rule.n_role_unstated_above_fv) + " of those clear the consensus FV floor)" : "")
             + ".")
          : ".") + bound);
     function toolBars(tools) {
@@ -1172,21 +1172,22 @@
           + bar((tools[k] - 20) / 60 * 100) + '<span class="pal-ars-meta">' + fInt(tools[k]) + "</span></div>";
       }).join("");
     }
-    // Two grades, two labels. "FV" is the consensus close, which the listing
-    // floor reads and which displays as a ceiling; "eFV" is the model grade,
-    // to nearest. Printing the eFV grade under "FV" put 38 and 39 on a list
-    // gated at FV 40 and printed the scale floor as "FV 20". A floor row
-    // (fvE_is_floor) is the outcome curve's lowest knot for every non-positive
-    // projection, so it is named as the floor, never read as a level, and no
-    // FV-vs-eFV difference is printed on any row.
+    // Two grades, two labels, eFV first (owner ask 5, answer Q-E4, which also
+    // settles W0 item G06). "eFV" is the model grade, to nearest; "Consensus
+    // FV" is the consensus close, which the listing floor reads and which
+    // displays as a ceiling. Printing the eFV grade under "FV" put 38 and 39
+    // on a list gated at FV 40 and printed the scale floor as "FV 20". A floor
+    // row (fvE_is_floor) is the outcome curve's lowest knot for every
+    // non-positive projection, so it is named as the floor, never read as a
+    // level, and no FV-vs-eFV difference is printed on any row.
     var FLOOR_TIP = "The outcome curve returns its lowest knot for every non-positive "
       + "projection, so this is the floor of the 20-80 scale rather than a resolved level.";
     function gradeText(p) {
-      var s = "FV " + fCeil(p.fv);
-      if (p.fvE == null) return s;
-      s += " &middot; " + gloss("eFV", "xfv") + " " + Math.round(p.fvE);
+      var cons = "Consensus FV " + fCeil(p.fv);
+      if (p.fvE == null) return cons;
+      var s = gloss("eFV", "xfv") + " " + Math.round(p.fvE);
       if (p.fvE_is_floor) s += ' <span class="proj-dim" title="' + esc(FLOOR_TIP) + '">scale floor</span>';
-      return s;
+      return s + " &middot; " + cons;
     }
     var cards = rows.map(function (p) {
       // Read the LEAN, not the negation of "SP". Only SP and RP rows can be a

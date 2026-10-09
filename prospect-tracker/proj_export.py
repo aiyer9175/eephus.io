@@ -2317,6 +2317,27 @@ def _record_farm_block_outage(err: Exception) -> None:
         log.debug("could not record the farm-block outage row", exc_info=True)
 
 
+def _top_prospect_cell(top: dict) -> dict:
+    """The Team Outlook top-prospect cell: the org's first board prospect and
+    the grade printed beside him, with the basis that grade is on.
+
+    storage.EFV_DISPLAY_SWAPS off (today): the consensus label (rounded up, as
+    PROSPX prints it), basis "consensus", which the page prints as "Consensus
+    FV". On (owner answer Q-E4, flipped in Q9_15): his eFV grade
+    (org_summary prospects[].xfv_grade) rounded to nearest, basis "efv", with
+    the consensus label as the fallback for a prospect eFV abstains on. The
+    prospect himself does not change: prospects[] is already in board order."""
+    import storage
+    from scores_core import round_half_up
+    cell = {"name": top.get("name"), "key": top.get("player_key"),
+            "fv": top.get("fv_label"), "fvBasis": "consensus"}
+    xg = top.get("xfv_grade")
+    if storage.EFV_DISPLAY_SWAPS and isinstance(xg, (int, float)):
+        cell["fv"] = round_half_up(xg)
+        cell["fvBasis"] = "efv"
+    return cell
+
+
 def _org_farm_blocks() -> dict[str, dict]:
     """Farm-system context joined onto the Team Outlook rows - the org
     dashboard columns the retired /teams/ page carried (merged into the
@@ -2337,10 +2358,7 @@ def _org_farm_blocks() -> dict[str, dict]:
             "farmRank": o.get("farm_rank"),
             "farmScore": o.get("farm_score"),
             "farmSurplusMM": o.get("_active_surplus_net_mm"),
-            "topProspect": ({"name": top.get("name"),
-                             "key": top.get("player_key"),
-                             "fv": top.get("fv_label")}
-                            if top.get("name") else None),
+            "topProspect": (_top_prospect_cell(top) if top.get("name") else None),
         }
 
     # System Duration: surplus-weighted arrival timing per org. etaMean is the

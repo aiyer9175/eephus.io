@@ -156,8 +156,11 @@ def test_module_rows_name_their_numbers_for_screen_readers():
          "fv_close": 45, "overall_rank": 7}
     top = B._row_top(p, 7)
     assert '<span class="visually-hidden">rank </span><span class="row-rank">7</span>' in top
-    assert '<span class="visually-hidden">FV </span><span class="fv-pill">' in top
-    assert '<span class="visually-hidden">change </span><span class="row-delta' in B._row_mover(p, 3)
+    # No eFV for this player: the consensus grade names itself (owner answer Q-E4).
+    assert ('<span class="visually-hidden">Consensus FV </span><span class="fv-pill fv-prod" '
+            'data-grade-basis="consensus"') in top
+    assert ('<span class="visually-hidden">Consensus FV change </span><span class="row-delta'
+            in B._row_mover(p, 3))
     g = {"debuted_value": {"wag": {"regressed_wag": 0.5}}}
     assert "WAG<span class=\"visually-hidden\">, WAR Above Grade </span>" in B._wag_badge(g)
 
