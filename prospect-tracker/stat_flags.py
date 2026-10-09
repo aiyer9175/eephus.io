@@ -197,7 +197,7 @@ PITCHER_RULES: tuple[_PitcherRule, ...] = (
         green_delta=-0.30, green_absolute=0.70,
         red_delta=0.40,    red_absolute=1.50,
         green_note="Keeps the ball in the park - durable shape against MLB hitters.",
-        red_note="HR-prone profile - habitually punished at the level, harder at MLB.",
+        red_note="HR-prone: HR/9 1.50+ and 0.40+ over the level mean; MLB punishes it more.",
     ),
     _PitcherRule(
         stat="WHIP", category="results",

@@ -9446,8 +9446,8 @@
     <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-draft" width="16" height="16"/></svg>MLB Draft/HS</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021-present)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-intl" width="16" height="16"/></svg>International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort with its own performance index, RPS-Intl+ (100+15z within the league cohort) - not the MiLB board's ratio RPS+."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-overseas" width="16" height="16"/></svg>Overseas</button>
-    <button class="section-tab" data-section="timemachine" title="Time-travel the board - view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-timemachine" width="16" height="16"/></svg>Time Machine</button>
-    <button class="section-tab" data-section="charts" title="Build your own scatterplot - pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-scatter" width="16" height="16"/></svg>Scatterplots</button>
+    <button class="section-tab" data-section="timemachine" title="The board at any past snapshot, or a diff of two dates: risers, fallers, adds, graduates."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-timemachine" width="16" height="16"/></svg>Time Machine</button>
+    <button class="section-tab" data-section="charts" title="Scatterplot: any two metrics over one prospect group (MiLB, Debuted, Draft, IFA, Overseas, Farms)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-px-scatter" width="16" height="16"/></svg>Scatterplots</button>
     <!-- The Library lives on its own surface (/glossary/) - a real link styled
          as a section tab, with the site's § module glyph. -->
     <a class="section-tab section-tab-link" href="/glossary/" title="Library - every term, model derivation, and the track record behind the site"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=d87bef7d#i-library" width="16" height="16"/></svg>Library</a>
@@ -9513,7 +9513,7 @@
         </select>
       </div>
       <div class="filter-group">
-        <span class="filter-label" title="Filter by draft year (drafted prospects) or IFA signing year. 'Class of YYYY' equivalent - pick a year to see everyone the league acquired that year.">Class of</span>
+        <span class="filter-label" title="Acquisition class: every player drafted or signed in the chosen year.">Class of</span>
         <select class="chip" id="class-filter">
           <option value="all">All classes</option>
         </select>
@@ -9566,7 +9566,7 @@
       <div class="filter-group">
         <span class="filter-label" title="Toggle one or more FV-badge indicators. Empty = show all. Multiple selected = OR (union).">FV indicators</span>
         <button class="chip is-multi" data-filter-fvind="wide" title="Wide FV spread - ≥2 sources disagree by at least 10 grade points">W spread</button>
-        <button class="chip is-multi" data-filter-fvind="single" title="Thinly sourced - the grade rests on little-to-no published scouting input: a provisional (source-ungraded) prospect OR a single published grade">~ Thinly sourced</button>
+        <button class="chip is-multi" data-filter-fvind="single" title="Thin: zero or one published grade behind this row.">~ Thinly sourced</button>
         <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout - DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 110 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout ★</button>
         <button class="chip is-multi" data-filter-fvind="upside" title="Upside (^) - at least one source published a '+' upside mark on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside). Rendered on the FV chip as a ^ glyph so it doesn't collide with the health '+' pill.">Upside ^</button>
       </div>
@@ -9579,15 +9579,15 @@
            hasn't caught up to yet. -->
       <div class="filter-group">
         <span class="filter-label" title="Statcast composite (100 = pool mean, 10 points per standard deviation). Filter for prospects with elite, above-mean, or below-mean tracked-data signal.">Statcast</span>
-        <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 130 - elite tier (+3 standard deviations). Composite of contact quality + zone discipline for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ elite</button>
+        <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 130 - elite tier (+3 standard deviations). Hitters: contact quality and zone discipline. Pitchers: velo, whiffs, contact allowed.">SC+ elite</button>
         <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 107 - above pool mean. Tracked-data contact quality / pitch quality clears the league baseline.">SC+ above</button>
-        <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 92 - below pool mean. Surfaces prospects whose tracked data lags the surface stats; useful for regression-watch.">SC+ below</button>
+        <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 92 - below pool mean. Tracked data below the surface line: regression candidates.">SC+ below</button>
       </div>
       <div class="filter-group">
-        <span class="filter-label" title="Filter by the shape of the consensus outcome table read at the eFV grade (not its level): the outcome-bucket distribution each graded prospect already carries. Empty = show all. Multiple selected = OR (union). Prior-anchored / provisional grades (no pro track record yet) are excluded since their band is the consensus prior, not a model read.">Risk profile</span>
-        <button class="chip is-multi" data-filter-risk="floor" title="High floor - low bust share in the consensus outcome table at the eFV grade (P(bust) ≤ 40%). Safe, likely to be a real contributor: the win-now trade target.">High floor</button>
-        <button class="chip is-multi" data-filter-risk="lottery" title="Lottery ticket - high bust risk but a real good/star ceiling (P(good-or-better) ≥ 10%). Boom-or-bust upside for a rebuild.">Lottery</button>
-        <button class="chip is-multi" data-filter-risk="balanced" title="Balanced - meaningful floor mass with a modest ceiling; the middle of the risk distribution (neither clearly high-floor nor a lottery ticket).">Balanced</button>
+        <span class="filter-label" title="Filter on the shape of the eFV outcome mix, not its level. Several chips: union. Excludes prior-anchored and provisional grades (their band is the consensus prior).">Risk profile</span>
+        <button class="chip is-multi" data-filter-risk="floor" title="High floor: P(bust) ≤ 40% in the consensus outcome table at the eFV grade.">High floor</button>
+        <button class="chip is-multi" data-filter-risk="lottery" title="Lottery: P(bust) above 40% and P(good or better) ≥ 10%.">Lottery</button>
+        <button class="chip is-multi" data-filter-risk="balanced" title="Balanced: P(bust) 40% to 75% and P(good or better) under 10%.">Balanced</button>
       </div>
       <div class="filter-group">
         <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
@@ -9746,7 +9746,7 @@
            (Expanded view was inferior in every way per user direction). -->
       <div class="filter-group">
         <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, and sort on the prospect list">↺ Reset filters</button>
-        <button class="chip" type="button" id="board-csv-btn" title="Download CSV: every row matching the current filters, in the current sort, not only this page. Grades print as the board prints them (eFV to the nearest point, consensus FV rounded up) with the decimal beside each; the file stamps its as-of date, grade basis and sort on every row.">Download CSV <span class="board-csv-n" style="color:var(--text-tertiary);"></span></button>
+        <button class="chip" type="button" id="board-csv-btn" title="Download CSV: all rows under the current filters and sort. Grades print as the board prints them (eFV to the nearest point, consensus FV rounded up) with the decimal beside each; the file stamps its as-of date, grade basis and sort on every row.">Download CSV <span class="board-csv-n" style="color:var(--text-tertiary);"></span></button>
       </div>
     </div>
   </div>
@@ -9806,7 +9806,7 @@
       <button class="chip" data-spotlight-bucket="rebounders"
               title="Pedigree-comeback narrative: previously hyped (first-round pick / IFA / $1M+ bonus) prospects whose prior season was weak but who have bounced back this year with improved skills.">Rebounders</button>
       <button class="chip" data-spotlight-bucket="fallers"
-              title="Prospects whose 2026 performance has materially deteriorated. Very-young and young+pedigreed prospects are filtered out unless their K-rate has cratered (Bryce Rainer-style).">Fallers</button>
+              title="Prospects whose 2026 performance has materially deteriorated. Excludes very young and young pedigreed prospects unless K% has collapsed past the screen's cut.">Fallers</button>
       <button class="chip reset-chip" type="button" data-reset-page="spotlights" title="Reset spotlight bucket back to default (Risers)" style="margin-left:12px;">↺ Reset</button>
     </div>
     <div id="spotlight-track-record" class="spotlight-track-record" aria-live="polite"></div>
@@ -9929,7 +9929,7 @@
         <button class="chip" data-draft-view="simulate"
                 title="Run the draft yourself: control one team, several, or all thirty, and pick from the real consensus board pick by pick. The CPU drafts best-board-available within bonus-pool budget; every pick is graded against slot value and consensus rank.">Simulate</button>
         <button class="chip" data-draft-view="war-room"
-                title="Live draft board: each pick as it happens, priced against our board (consensus rank + eFV) and the historical pick-value curve, so you see the reach-or-steal in surplus dollars. Opens on draft night.">War Room</button>
+                title="Each pick, live, priced against the board (consensus rank + eFV) and the pick-value curve: reach or steal in surplus dollars. Opens on draft night.">War Room</button>
       </span>
       <span class="draft-subnav-group">
         <span class="draft-subnav-grouplabel">Trends &amp; Tendencies</span>
@@ -10057,7 +10057,7 @@
       <button class="chip" data-overseas-view="posting"
               title="Players currently posted (KBO/NPB posting system) - days remaining in their MLB negotiation window">Posting Tracker</button>
       <button class="chip" data-overseas-view="signed"
-              title="Overseas free agents who have signed with MLB clubs, grouped by arrival year, with how each signing has panned out">Past Signings</button>
+              title="Overseas signings by arrival year, with MLB results.">Past Signings</button>
       <button class="chip" data-overseas-view="leaderboard"
               title="Top by FV + per-position bests + biggest projected bonuses">Leaderboard</button>
       <button class="chip" data-overseas-view="league-context"
@@ -10198,7 +10198,7 @@
         <button class="chip" data-debut-sort="career_war"
                 title="Cumulative career WAR (BBref), highest first. Debuted players with no MLB time sink to the bottom.">Career WAR</button>
         <button class="chip" data-debut-sort="war_per_yr"
-                title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat - favors debuts with a strong sample-size-adjusted track record.">WAR/year</button>
+                title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat, shrunk for sample size.">WAR/year</button>
         <button class="chip" data-debut-sort="fv_close"
                 title="Highest final consensus FV (the FV when the player debuted) first">Final FV</button>
         <button class="chip" data-debut-sort="trade_value"
@@ -10208,7 +10208,7 @@
         <button class="chip" data-debut-sort="vs_fv_proj_low"
                 title="WAG, lowest first: graduates furthest behind their eFV grade at debut surface at the top. Graduates without a WAG sink to the bottom.">WAG (low)</button>
         <button class="chip" data-debut-sort="warwag"
-                title="WARWAG: WAR per season plus WAG. Rewards graduates who are both productive and ahead of their grade. Highest first; graduates without a WAG sink to the bottom.">WARWAG (high)</button>
+                title="WARWAG: WAR per season plus WAG. High when a graduate produces and beats his grade. Highest first; graduates without a WAG sink to the bottom.">WARWAG (high)</button>
         <button class="chip" data-debut-sort="warwag_low"
                 title="WARWAG, lowest first: graduates both unproductive and behind their grade surface at the top. Graduates without a WAG sink to the bottom.">WARWAG (low)</button>
       </div>
@@ -10242,7 +10242,7 @@
          idiom. -->
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">League-wide Farm System Rankings · 30 Organizations</span>
-      <span class="newsprint-eyebrow-meta">v40 composite grade · acquisition, development, financial &amp; MLB-production rollups</span>
+      <span class="newsprint-eyebrow-meta">composite grade · acquisition, development, financial, MLB production</span>
     </div>
     <!-- v29 - Collapsed-by-default filter accordion for farm system. -->
     <div class="filter-toggle-row">
@@ -10278,7 +10278,7 @@
              is selected in the right-hand "Development window" picker, so
              three chips (one per window) would just duplicate that control. -->
         <button class="chip" data-farm-sort="trajectory"
-                title="Sort by DvM+ for the development window selected on the right; the default is the principal window the farm grade anchors on. Acquisitions + debuts are nullified - pure development of prospects already in the system.">Trajectory (DvM+)</button>
+                title="Sort by DvM+ for the development window selected on the right; the default is the principal window the farm grade anchors on. Excludes acquisitions and debuts: development of players already in the system.">Trajectory (DvM+)</button>
         <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted debuts in the trailing 12 months">Grad pipeline</button>
         <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
         <button class="chip" data-farm-sort="draft_spend_pct" title="Draft's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to the draft rise to the top">Draft Spending %</button>
@@ -10308,9 +10308,9 @@
              gates at ≥5 graded prospects per side; orgs below the
              gate sink to the bottom of the sort. -->
         <button class="chip" data-farm-sort="statcast_plus_hit"
-                title="Mean Statcast+ across the farm's HITTERS with tracked data (EV / HH% / Brl% / Z-Con% / Whiff% / Chase% composite). 100 = pool average. Gated at ≥5 graded hitters per org.">SC+ hitters</button>
+                title="Mean Statcast+ of the farm's tracked hitters (EV, HH%, Brl%, Z-Con%, Whiff%, Chase%). 100 = pool average. Gated at ≥5 graded hitters per org.">SC+ hitters</button>
         <button class="chip" data-farm-sort="statcast_plus_pit"
-                title="Mean Statcast+ across the farm's PITCHERS with tracked data (top-pitch velo / Whiff% / Chase% / HH%-allowed / Brl%-allowed composite). 100 = pool average. Gated at ≥5 graded pitchers per org.">SC+ pitchers</button>
+                title="Mean Statcast+ of the farm's tracked pitchers (velo, Whiff%, Chase%, HH% and Brl% allowed). 100 = pool average. Gated at ≥5 graded pitchers per org.">SC+ pitchers</button>
       </div>
       <div class="filter-group">
         <span class="filter-label">Depth at level</span>
@@ -10336,12 +10336,12 @@
         <span id="farm-tendency-chips" class="farm-tendency-chips"></span>
       </div>
       <div class="filter-group" style="margin-left:auto;">
-        <span class="filter-label" title="Trailing window the WHOLE farm grade is computed over (composite letter, DvM+, sub-grades). Excludes incoming acquisitions so only true development counts. 7y is the empirically-optimal default (best predicts realized graduate output); pick any window to re-grade every farm.">Grade window</span>
+        <span class="filter-label" title="Trailing window for the whole farm grade (letter, DvM+, sub-grades); acquisitions excluded. 7y is the default: it best predicts graduate output.">Grade window</span>
         <button class="chip"        data-form-window="3y">3y</button>
         <button class="chip"        data-form-window="4y">4y</button>
         <button class="chip"        data-form-window="5y">5y</button>
         <button class="chip"        data-form-window="6y">6y</button>
-        <button class="chip active" data-form-window="7y" title="Default - the empirically-optimal trailing window (best predicts realized graduate output)">7y <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span></button>
+        <button class="chip active" data-form-window="7y" title="Default: the trailing window that best predicts graduate output.">7y <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span></button>
         <button class="chip"        data-form-window="8y">8y</button>
       </div>
       <div class="filter-group">
@@ -10548,7 +10548,7 @@
         </div>
         <div class="filter-group">
           <button class="chip" id="chart-reset-view" type="button" title="Reset zoom/pan to fit all points" style="display:none;">⤢ Reset view</button>
-          <button class="chip" id="chart-share" type="button" title="Copy a shareable link to this exact chart + filter configuration">🔗 Share</button>
+          <button class="chip" id="chart-share" type="button" title="Copy a link to this chart and its filters.">🔗 Share</button>
           <button class="chip" id="chart-save-png" type="button" title="Export this scatterplot as an on-theme graphic (Generate GFX)">⤴ Generate GFX</button>
           <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, size, ranges, and highlight">↺ Reset</button>
         </div>
@@ -10578,7 +10578,7 @@
       <div id="watchlist-empty" class="state-message" style="display:none;">
         <div style="font-size:32px;margin-bottom:var(--space-2);opacity:0.5;">☆</div>
         <div style="font-size:var(--fs-md);color:var(--text-secondary);margin-bottom:var(--space-1);">No prospects starred yet</div>
-        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Click the ☆ icon on any prospect to track them here. Watchlist + notes are private to this browser.</div>
+        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Star a prospect (☆) to list it here. Watchlist + notes are private to this browser.</div>
       </div>
       <div class="active-grid">
         <div id="watchlist-rows"></div>
@@ -10589,7 +10589,7 @@
       <div id="watchlist-farms-empty" class="state-message" style="display:none;">
         <div style="font-size:32px;margin-bottom:var(--space-2);opacity:0.5;">☆</div>
         <div style="font-size:var(--fs-md);color:var(--text-secondary);margin-bottom:var(--space-1);">No farm systems starred yet</div>
-        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Click the ☆ icon next to any farm to track it here. Watchlist is private to this browser.</div>
+        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Star a farm (☆) to list it here. Watchlist is private to this browser.</div>
       </div>
       <div id="watchlist-farms-rows"></div>
     </div>
@@ -11943,7 +11943,7 @@ function fvBadgeWideMarkHTML(player) {
   const range = (sp.min != null && sp.max != null)
     ? ` (FV ${fvCeil(sp.min)}-${fvCeil(sp.max)} across ${sp.n} sources)`
     : (sp.n ? ` across ${sp.n} sources` : "");
-  return `<span class="fv-wide-mark" title="Wide source disagreement - sources differ by ${gap} grade points${range}. Open the per-source breakdown (now inside the More details accordion) for the per-source FVs.">W</span>`;
+  return `<span class="fv-wide-mark" title="Wide source disagreement: sources differ by ${gap} grade points${range}. Per-source FVs: More details.">W</span>`;
 }
 
 // Returns " is-single-source" when the player has only ONE explicit-FV
@@ -11967,8 +11967,8 @@ function fvBadgeSingleClass(player) {
 function fvBadgeSingleMarkHTML(player) {
   if (!fvBadgeSingleClass(player)) return "";
   const tip = (player && player._is_provisional)
-    ? "Thinly sourced - no scouting source has graded this prospect yet; the grade is a production-only leading indicator from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards)."
-    : "Thinly sourced - only one published grade across this player's history (single observation). Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.";
+    ? "Thin: no source grade yet; production-only grade from translated MiLB stats."
+    : "Thin: one published grade. Shrunk 1/3 toward FV 35 (k = 0.5) until a second update lands, any source.";
   // Inner span so the "~" (which sits high in its em-box) can be optically centered in the chip.
   return `<span class="fv-single-mark" title="${tip}"><span aria-hidden="true">~</span><span class="visually-hidden">thinly sourced</span></span>`;
 }
@@ -16085,7 +16085,7 @@ function _applyFreshnessStamps(root) {
     el.classList.toggle("is-grades", kind === "grades");
     el.innerHTML = `<span class="fresh-dot" aria-hidden="true"></span>${escapeHtml(word)} ${escapeHtml(label)}`;
     el.title = kind === "grades"
-      ? "Grades, tool evaluations and Arkmetrics refresh on a monthly cadence."
+      ? "Grades, tools and Arkmetrics refresh monthly."
       : "Transactions, the Injured List and roster status refresh daily.";
   });
 }
@@ -20616,7 +20616,7 @@ function _rollingPerfChart(games, isP){
   </div>`;
 }
 function _splitFootnote(isP){
-  return `<div class="split-foot">Rates re-aggregated from box-line components over each window (totals summed, then rates derived - never averaged). ${isP?("FIP uses a flat "+_LB_FIP_CONST+" MiLB constant and counts HBP when every game carries it; xFIP / GB% need batted-ball data not in the box line."):"OBP counts HBP and SF and BABIP counts SF when every game in the window carries them (box lines built from 2026-09-25); older box lines lack both, and those windows fall back to (H+BB)/(AB+BB). wOBA needs season linear-weights not carried per game."} Cells dim when the sample is below the metric's stabilization point (hover for the threshold). By-level / by-season views index OPS/ISO (or ERA) to that level's average so cohorts stay comparable. Platoon (vs LHP/RHP) needs pitch-level handedness data, which is not available at this level.</div>`;
+  return `<div class="split-foot">Rates re-aggregated from box-line components over each window (totals summed, then rates derived - never averaged). ${isP?("FIP uses a flat "+_LB_FIP_CONST+" MiLB constant and counts HBP when every game carries it; xFIP / GB% need batted-ball data not in the box line."):"OBP counts HBP and SF and BABIP counts SF when every game in the window carries them (box lines built from 2026-09-25); older box lines lack both, and those windows fall back to (H+BB)/(AB+BB). wOBA needs season linear-weights not carried per game."} Cells dim when the sample is below the metric's stabilization point (hover for the threshold). By-level / by-season views index OPS/ISO (or ERA) to that level's average so cohorts stay comparable. No platoon split: no pitch-level handedness at this level.</div>`;
 }
 function renderSplits(key){
   const host=document.getElementById("splits-body"); if(!host) return;
@@ -20632,10 +20632,10 @@ function renderSplits(key){
   const chips=[
     chip("recency","Recency",true),
     chip("by_level","By level",caps.levels.length>0),
-    chip("by_season","By season",caps.seasons.length>1,caps.seasons.length>1?"":"Needs multiple seasons of game logs (current slice has one); repopulates after a multi-season gamelog build."),
-    chip("home_away","Home / Away",caps.hasHome,caps.hasHome?"":"Needs the venue flag in the game-log slice; the builder now keeps it, so this lights up after the next gamelog build."),
+    chip("by_season","By season",caps.seasons.length>1,caps.seasons.length>1?"":"Needs 2+ seasons of game logs; this slice has 1."),
+    chip("home_away","Home / Away",caps.hasHome,caps.hasHome?"":"Needs the venue flag in the game-log slice; the next game-log build writes it."),
     chip("custom","Custom",true),
-    `<button class="split-chip disabled" title="Platoon (vs LHP/RHP) needs pitch-level handedness data, which is not available at this level.">vs L/R</button>`,
+    `<button class="split-chip disabled" title="No platoon split: no pitch-level handedness at this level.">vs L/R</button>`,
   ].join("");
   const multi=(ui.view==="by_level"||ui.view==="by_season"||ui.view==="home_away");
   const controls=`<label class="split-toggle" title="Shrink each rate toward the level average by its stabilization sample (regression to the mean). A MODELED value, not the raw split."><input type="checkbox" ${ui.regressed?"checked":""} onchange="splitToggleRegressed('${escapeHtml(key)}')"> Regressed</label>${multi?`<label class="split-toggle" title="Show each row's difference vs the first row."><input type="checkbox" ${ui.delta?"checked":""} onchange="splitToggleDelta('${escapeHtml(key)}')"> &Delta; vs first</label>`:""}`;
@@ -33796,10 +33796,9 @@ function _perSourceGradeTip(src, info, label) {
   if (info.dropped_off === true && info.fv_adjusted != null && isFinite(info.fv_adjusted)) {
     bits.push(`dropped off this cycle, shrunk to ${Number(info.fv_adjusted).toFixed(1)} before the vote`);
   }
-  const explain = norm != null
-    ? " Consensus averages the NORMALIZED column, not the published one, so it can land outside the published range."
-    : " Consensus averages each source's quantile-normalized grade, not the published one, so it can land outside the published range.";
-  return `${label}: ${bits.join(" · ")}.${explain}`;
+  // CP-089: the why-consensus-can-sit-outside-the-range line prints once, under the
+  // card's source table, not on every source row.
+  return `${label}: ${bits.join(" · ")}.`;
 }
 // ===== Archetype comps panel (data/archetype_comps.json) ===================
 // Renders the productized archetype strata as COMPS AND CONTEXT: "players who
@@ -34089,7 +34088,7 @@ function apPacePanel(p) {
     const score = Math.round(r.ap_plus);
     const pct = r.ap_percentile != null ? Math.min(99, r.ap_percentile) : null;
     const word = score > 103 ? "faster than" : (score >= 97 ? "at a typical pace for" : "slower than");
-    const lead = `Advanced through the minor-league ladder ${word} comparable players with a similar starting level, age, position group, entry pathway, and professional experience.`;
+    const lead = `Promoted ${word} matched peers (level, age, position group, entry path, pro years).`;
     const ladder = (r.level_history || []).map(row =>
       `<div style="white-space:nowrap;"><span style="color:var(--text-tertiary);">${row[0]}</span>&nbsp; ${escapeHtml((row[1] || []).map(lv => _AP_LEVEL_LABEL[lv[0]] || lv[0]).join(" → "))}</div>`
     ).join("");
@@ -34345,7 +34344,7 @@ function efvTrackRecordSection() {
   return `<details style="margin:0 0 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
       <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">eFV V1 (graduates' locked grade) vs consensus FV · the track record <span style="color:var(--text-tertiary);font-weight:400;">· out-of-sample, resolved cohorts</span></summary>
       <div style="padding:2px 12px 12px;">
-        <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-bottom:10px;">Every number below is out-of-sample: the model graded each cohort using only earlier years, then the realized MLB outcomes were scored against both grades. The full methodology and source-by-source comparison live on the <a href="/glossary/#view=source-comparison" style="color:var(--neon-cyan);">Source Comparison</a> page.</div>
+        <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-bottom:10px;">Out of sample: each cohort graded on earlier years only, then scored against realized MLB outcomes. Method and per-source results: <a href="/glossary/#view=source-comparison" style="color:var(--neon-cyan);">Source Comparison</a>.</div>
         ${bars}${era}${tier}${receipts}${relia}
       </div>
     </details>`;
@@ -34722,7 +34721,7 @@ function efvGradeBand(x) {
 function efvGradeBandHTML(x) {
   const band = efvGradeBand(x);
   if (!band) return "";
-  return `<div class="efv-grade-band" title="Outcome-distribution band on the grade scale: eFV's modeled 6-year outcome runs from about ${band.lo} to ${band.hi} on the 20-80 scale (P10 to P90). This is the spread of how the model thinks this prospect turns out, not scouting-source disagreement." style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;cursor:help;">Outcome band <b style="color:var(--text-secondary);">${band.lo}-${band.hi}</b></div>`;
+  return `<div class="efv-grade-band" title="Outcome band: eFV's modeled 6-year outcome, P10 to P90, about ${band.lo} to ${band.hi} on the 20-80 scale. Model outcome spread, not source disagreement." style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;cursor:help;">Outcome band <b style="color:var(--text-secondary);">${band.lo}-${band.hi}</b></div>`;
 }
 // eFV-minus-consensus delta, computed off the DISPLAYED board number (efvBoardValue) so
 // the colored +/- chip subtracts to exactly what the two numbers next to it show.
@@ -35234,7 +35233,7 @@ function efvDetailCard(p) {
   // M29-1); one bordered block holds whichever of the two lines renders.
   const _so = (p && p.surplus) ? p.surplus.star_odds : null;
   const _op = (p && p.surplus) ? p.surplus.opt_pct : null;
-  const starLine = _so != null ? `<div style="display:flex;justify-content:space-between;align-items:baseline;" title="Star Odds: FanGraphs 2026 published probability of two or more seasons of four or more WAR during team control, for this player's FV and role. This is the SAME value shown in the board's Star Odds column. It is distinct from the outcome-mix Elite share above.">
+  const starLine = _so != null ? `<div style="display:flex;justify-content:space-between;align-items:baseline;" title="FanGraphs 2026 P(two+ 4+ WAR seasons in team control) at his FV and role. Same value as the board's Star Odds column. Not the Elite share.">
         <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
         <span style="font-family:var(--font-mono);font-weight:700;color:${Number(_so) >= 0.20 ? "var(--up)" : Number(_so) >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;">${fmtStarOdds(_so)}</span>
       </div>` : "";
@@ -39026,7 +39025,7 @@ function dollarDvmColor(v) {
   return "var(--down)";
 }
 function dollarDvmTooltip(v) {
-  return `$DvM+ ${v == null ? " - " : Math.round(v)} - Surplus-Development index. The player's consensus-FV appreciation rate over time (plus age-for-level standing) indexed against same-FV-tier peers. 100 = tier average, +10 ≈ 1σ faster. Above 100 = developing/appreciating faster than same-grade prospects.`;
+  return `$DvM+ ${v == null ? " - " : Math.round(v)} - Surplus-Development index. The player's consensus-FV appreciation rate over time (plus age-for-level standing) indexed against same-FV-tier peers. 100 = tier average, +10 ≈ 1σ faster. Above 100: grade rising faster than same-grade peers.`;
 }
 function fmtSvMM(m) {
   if (m == null || !isFinite(m)) return " - ";
@@ -40233,7 +40232,7 @@ function _buildDetailChipRibbon(p) {
     const _rpsPill = sl.level !== "MLB" ? _rpsPlusValue(p) : null;
     if (_rpsPill != null) {
       const c = _rpsPill >= 110 ? "var(--up)" : _rpsPill <= 90 ? "var(--down)" : "var(--text-secondary)";
-      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="RPS+ (Rate Performance Score) ${_rpsPill} · level-relative production (wRC+ vs level for hitters, ERA- vs level for pitchers) plus the age-vs-level adjustment, re-anchored to the mean prospect in the same age x position-group cohort. 100 = cohort mean.">RPS+ ${_rpsPill}</span>`);
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="RPS+ ${_rpsPill}: level-relative production (wRC+ or ERA- vs level) plus age vs level, against same-age, same-position-group prospects. 100 = cohort mean.">RPS+ ${_rpsPill}</span>`);
     }
     // TWO NUMBERS WERE BOTH CALLED "ERA-" ON ONE MLB PITCHER CARD (audit F05-06,
     // 2026-09-09). This pill is the site's level index; the MLB sabermetrics tile further
@@ -42367,11 +42366,11 @@ function makeFarmReportCard(org) {
   const _winActive = state.formWindow || '7y';
   const _winChip = (lbl, val) => {
     const star = val === '7y' ? ' <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span>' : '';
-    const tip = val === '7y' ? ' title="Default - the empirically-optimal trailing window"' : '';
+    const tip = val === '7y' ? ' title="Default: the trailing window that best predicts graduate output."' : '';
     return `<button class="chip${_winActive === val ? ' active' : ''}" data-form-window="${val}"${tip} style="font-size:10px;padding:2px 7px;letter-spacing:0.04em;">${lbl}${star}</button>`;
   };
   const _windowSelector = `
-    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Trailing window the WHOLE farm grade is computed over - composite letter + farm_score + DvM+ family of sub-leaves all re-grade to the selected window. 7y is the empirically-optimal default.">
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Trailing window for the whole farm grade (letter, DvM+, sub-grades); all re-grade to the window. 7y is the default: it best predicts graduate output.">
       <span style="letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">Grade window</span>
       ${_winChip('3y', '3y')}${_winChip('4y', '4y')}${_winChip('5y', '5y')}${_winChip('6y', '6y')}${_winChip('7y', '7y')}${_winChip('8y', '8y')}
     </div>`;
@@ -47097,7 +47096,7 @@ function makeZoneMetricsBlock(z) {
       if (key === "z_swing_pct") {
         if (band === "excellent") return "Very aggressive on strikes.";
         if (band === "above") return "Strong above-average in-zone aggression.";
-        if (band === "below") return "Passive/selective in-zone; may be waiting for his pitch.";
+        if (band === "below") return "Low in-zone swing rate.";
         return "Balanced in-zone swing decisions.";
       }
       if (key === "o_swing_pct") {
@@ -47866,7 +47865,7 @@ function makeReleaseTraitsTable(sc, player) {
     const neutral = q == null;
     const marker = neutral ? 50 : q * 100;
     const label = neutral
-      ? "Displayed for release context; VAA trait read is most meaningful for fastball-family pitches."
+      ? "Release context only; the VAA read applies to fastballs."
       : r.pitch_type === "FF"
         ? "Four-seam VAA trait: flatter plots hotter."
         : "Sinker/cutter VAA trait: steeper plots hotter in this provisional read.";
@@ -49199,11 +49198,11 @@ function makeFvTape(points) {
   const momChip = chip("MOM", (momentum > 0 ? "+" : "") + momentum, momCol, "Momentum: net consensus grade change over the last 3 intervals");
   let rsiChip = "";
   if (rsi != null) {
-    const rsiState = rsi >= 70 ? "overbought" : rsi <= 30 ? "oversold" : "neutral";
+    const rsiState = rsi >= 70 ? "70+, high" : rsi <= 30 ? "30 or less, low" : "neutral";
     const rsiCol = rsi >= 70 ? "var(--text-gold)" : rsi <= 30 ? "var(--neon-cyan)" : "var(--text-secondary)";
-    rsiChip = chip("RSI", `${rsi}`, rsiCol, `Relative strength of grade changes (${rsiState}); a momentum gauge, not a projection`);
+    rsiChip = chip("RSI", `${rsi}`, rsiCol, `Momentum of grade changes (RSI-style, ${rsiState}); not a projection.`);
   }
-  const volChip = vol != null ? chip("VOL", vol.toFixed(1), "var(--text-secondary)", "Realized volatility: standard deviation across sources on the latest grade") : "";
+  const volChip = vol != null ? chip("VOL", vol.toFixed(1), "var(--text-secondary)", "Source spread: SD of source grades on the latest snapshot.") : "";
   return `<div class="fv-tape" style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
     <span title="Descriptive market signals on scouting-consensus grade movement, not predictions" style="font-family:var(--font-retro-mono);font-size:10px;letter-spacing:0.08em;color:var(--text-secondary);">FV TAPE</span>
     ${momChip}${rsiChip}${volChip}
@@ -50456,7 +50455,7 @@ function renderPlayerDetail(key) {
       const roiColor = roi > 0 ? "var(--up)" : roi < 0 ? "var(--down)" : "var(--text-tertiary)";
       const roiSign = roi > 0 ? "+" : "";
       roiRow = `<div style="display:flex;justify-content:space-between;align-items:center;">
-           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="Estimated surplus value − signing bonus. Positive means the org is sitting on more value than it invested.">Implied ROI</div>
+           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="Estimated surplus value − signing bonus. Positive: value held exceeds value spent.">Implied ROI</div>
            <div style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:${roiColor};font-variant-numeric:tabular-nums;">${roiSign}${fmtUsd(Math.abs(roi)).replace("$", roi < 0 ? "−$" : "$")}</div>
          </div>`;
     }
@@ -50831,7 +50830,7 @@ function renderPlayerDetail(key) {
       const overallChip = compositeChip("Tool", t.composite_overall, null,
         "Tool: 65% stuff + 35% command, expressed on the 20-80 scouting scale (50 = average)", true, 'grade');
       const stuffGradeChip = compositeChip("FVStuff+", t.composite_stuff, t.composite_stuff_plus,
-        "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort (renamed from 'Stuff grade+')", false);
+        "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort", false);
       const cmdChip = compositeChip("Command", t.composite_cmd, t.composite_cmd_plus,
         "Control / command grade", false);
       // Peripheral pStuff+ - K%, BB%, HR/9 vs level mean. Lives on the
@@ -51779,7 +51778,7 @@ function renderPlayerDetail(key) {
       // below. Saying so is the whole point of this pass: an unlabeled
       // "Range" next to a published-grade table is exactly the read that
       // made consensus 51 look wrong under a published 45/50/50.
-      const _rangeTip = escapeHtml("Range of the QUANTILE-NORMALIZED source grades, which is what the consensus vote averages. It can differ from the range of the published grades listed below.");
+      const _rangeTip = escapeHtml("Range of the quantile-normalized source grades (what consensus averages). It can differ from the range of the published grades listed below.");
       // The published-vs-normalized MEAN pair, when the payload lets the two
       // be compared honestly. avg_fv IS the weighted mean of the normalized
       // grades (consensus.py builds it off `explicit_fvs`); the published mean
@@ -51830,7 +51829,7 @@ function renderPlayerDetail(key) {
         </tr></thead>
         <tbody>${sourceRows}</tbody>
       </table>
-      <div style="font-size:10px;color:var(--text-tertiary);margin-top:5px;line-height:1.45;">${escapeHtml("Consensus is the weighted mean of each source's QUANTILE-NORMALIZED grade, not of the published grades above, so it can sit outside the published range. Hover a row for the source's weight.")}</div>`;
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:5px;line-height:1.45;">${escapeHtml("Consensus averages each source's quantile-normalized grade, not the published one, so it can sit outside the published range. Hover a row for the source's weight.")}</div>`;
 
     // Tools panel -------------------------------------------------------
     const toolEntries = entries.filter(([, v]) => v && v.tools && Object.keys(v.tools).length);
