@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-02",
+ "generated_at": "2026-10-08",
  "tool": "tools/sc_plus_component_eval.py",
  "method": {
   "basis": "arkmetric_forward_eval cohort construction reused exactly (AAA pool, min 100 PA/BF, debut year = pool season + 1, hitter-pool-first join); composite parity with sc_analog_index asserted value-for-value at runtime",
@@ -67,210 +67,210 @@
  "cohort_n": {
   "2023->2024": 43,
   "2024->2025": 46,
-  "2025->2026": 19
+  "2025->2026": 39
  },
  "per_component": {
   "hitters": {
    "vs_first_mlb_ops": {
     "launch_speed": {
-     "n": 54,
-     "r": 0.1063,
-     "rho": 0.1081,
-     "p_two_sided": 0.4461
+     "n": 62,
+     "r": 0.2058,
+     "rho": 0.1923,
+     "p_two_sided": 0.1088
     },
     "hardhit_percent": {
-     "n": 54,
-     "r": 0.0674,
-     "rho": 0.0792,
-     "p_two_sided": 0.6298
+     "n": 62,
+     "r": 0.1701,
+     "rho": 0.1489,
+     "p_two_sided": 0.187
     },
     "barrels_per_bbe_percent": {
-     "n": 54,
-     "r": 0.2754,
-     "rho": 0.29,
-     "p_two_sided": 0.0435
+     "n": 62,
+     "r": 0.3325,
+     "rho": 0.303,
+     "p_two_sided": 0.0079
     },
     "swing_miss_percent": {
-     "n": 54,
-     "r": -0.1061,
-     "rho": -0.0685,
-     "p_two_sided": 0.4469
+     "n": 62,
+     "r": -0.1019,
+     "rho": -0.0954,
+     "p_two_sided": 0.4322
     },
     "xwoba": {
-     "n": 54,
-     "r": 0.1775,
-     "rho": 0.1349,
-     "p_two_sided": 0.2001
+     "n": 62,
+     "r": 0.2945,
+     "rho": 0.2197,
+     "p_two_sided": 0.0197
     },
     "k_percent": {
-     "n": 54,
-     "r": -0.1002,
-     "rho": -0.0296,
-     "p_two_sided": 0.4728
+     "n": 62,
+     "r": -0.0635,
+     "rho": -0.0165,
+     "p_two_sided": 0.6253
     },
     "bb_percent": {
-     "n": 54,
-     "r": 0.3195,
-     "rho": 0.2619,
-     "p_two_sided": 0.0181
+     "n": 62,
+     "r": 0.2086,
+     "rho": 0.1509,
+     "p_two_sided": 0.1039
     },
     "composite": {
-     "n": 54,
-     "r": 0.1242,
-     "rho": 0.088,
-     "p_two_sided": 0.3726
+     "n": 62,
+     "r": 0.2393,
+     "rho": 0.178,
+     "p_two_sided": 0.0609
     }
    },
    "vs_war_2y": {
     "launch_speed": {
      "n": 100,
-     "r": 0.0412,
-     "rho": -0.0233,
-     "p_two_sided": 0.6847
+     "r": 0.0169,
+     "rho": -0.0551,
+     "p_two_sided": 0.8678
     },
     "hardhit_percent": {
      "n": 100,
-     "r": 0.011,
-     "rho": -0.077,
-     "p_two_sided": 0.9137
+     "r": -0.0132,
+     "rho": -0.0625,
+     "p_two_sided": 0.8966
     },
     "barrels_per_bbe_percent": {
      "n": 100,
-     "r": 0.0489,
-     "rho": 0.0107,
-     "p_two_sided": 0.6298
+     "r": -0.0229,
+     "rho": -0.0771,
+     "p_two_sided": 0.8215
     },
     "swing_miss_percent": {
      "n": 100,
-     "r": 0.1298,
-     "rho": 0.129,
-     "p_two_sided": 0.1986
+     "r": 0.2058,
+     "rho": 0.2079,
+     "p_two_sided": 0.0398
     },
     "xwoba": {
      "n": 100,
-     "r": 0.3139,
-     "rho": 0.1998,
-     "p_two_sided": 0.0014
+     "r": 0.2927,
+     "rho": 0.2173,
+     "p_two_sided": 0.003
     },
     "k_percent": {
      "n": 100,
-     "r": 0.1341,
-     "rho": 0.124,
-     "p_two_sided": 0.1839
+     "r": 0.2065,
+     "rho": 0.1978,
+     "p_two_sided": 0.0391
     },
     "bb_percent": {
      "n": 100,
-     "r": 0.2977,
-     "rho": 0.2305,
-     "p_two_sided": 0.0025
+     "r": 0.3336,
+     "rho": 0.2646,
+     "p_two_sided": 0.0006
     },
     "composite": {
      "n": 100,
-     "r": 0.1048,
-     "rho": -0.0299,
-     "p_two_sided": 0.3002
+     "r": 0.0892,
+     "rho": -0.0475,
+     "p_two_sided": 0.3784
     }
    }
   },
   "pitchers": {
    "vs_first_mlb_era_inv": {
     "launch_speed": {
-     "n": 54,
-     "r": 0.0967,
-     "rho": -0.0194,
-     "p_two_sided": 0.4885
+     "n": 66,
+     "r": -0.0054,
+     "rho": -0.1065,
+     "p_two_sided": 0.9658
     },
     "hardhit_percent": {
-     "n": 54,
-     "r": 0.0044,
-     "rho": 0.0156,
-     "p_two_sided": 0.9749
+     "n": 66,
+     "r": -0.094,
+     "rho": -0.0818,
+     "p_two_sided": 0.4543
     },
     "barrels_per_bbe_percent": {
-     "n": 54,
-     "r": -0.1175,
-     "rho": -0.0316,
-     "p_two_sided": 0.3992
+     "n": 66,
+     "r": -0.1153,
+     "rho": -0.0404,
+     "p_two_sided": 0.358
     },
     "swing_miss_percent": {
-     "n": 54,
-     "r": 0.3572,
-     "rho": 0.3922,
-     "p_two_sided": 0.0076
+     "n": 66,
+     "r": 0.3265,
+     "rho": 0.3478,
+     "p_two_sided": 0.0071
     },
     "xwoba": {
-     "n": 54,
-     "r": 0.1725,
-     "rho": 0.1703,
-     "p_two_sided": 0.2134
+     "n": 66,
+     "r": 0.1015,
+     "rho": 0.0822,
+     "p_two_sided": 0.4189
     },
     "k_percent": {
-     "n": 54,
-     "r": 0.4906,
-     "rho": 0.5121,
-     "p_two_sided": 0.0001
+     "n": 66,
+     "r": 0.4049,
+     "rho": 0.4401,
+     "p_two_sided": 0.0007
     },
     "bb_percent": {
-     "n": 54,
-     "r": -0.026,
-     "rho": 0.0282,
-     "p_two_sided": 0.8527
+     "n": 66,
+     "r": -0.0233,
+     "rho": 0.0207,
+     "p_two_sided": 0.8533
     },
     "composite": {
-     "n": 54,
-     "r": 0.1383,
-     "rho": 0.1659,
-     "p_two_sided": 0.3202
+     "n": 66,
+     "r": 0.0507,
+     "rho": 0.061,
+     "p_two_sided": 0.6871
     }
    },
    "vs_war_2y": {
     "launch_speed": {
      "n": 102,
-     "r": 0.0323,
-     "rho": 0.0184,
-     "p_two_sided": 0.7478
+     "r": 0.2034,
+     "rho": 0.0776,
+     "p_two_sided": 0.0401
     },
     "hardhit_percent": {
      "n": 102,
-     "r": 0.0523,
-     "rho": 0.0587,
-     "p_two_sided": 0.6025
+     "r": 0.1816,
+     "rho": 0.1403,
+     "p_two_sided": 0.0677
     },
     "barrels_per_bbe_percent": {
      "n": 102,
-     "r": 0.0012,
-     "rho": -0.0093,
-     "p_two_sided": 0.9905
+     "r": 0.1074,
+     "rho": 0.1002,
+     "p_two_sided": 0.2834
     },
     "swing_miss_percent": {
      "n": 102,
-     "r": 0.133,
-     "rho": 0.1753,
-     "p_two_sided": 0.1831
+     "r": 0.1612,
+     "rho": 0.2334,
+     "p_two_sided": 0.1057
     },
     "xwoba": {
      "n": 102,
-     "r": 0.2024,
-     "rho": 0.1934,
-     "p_two_sided": 0.0411
+     "r": 0.3668,
+     "rho": 0.2936,
+     "p_two_sided": 0.0001
     },
     "k_percent": {
      "n": 102,
-     "r": 0.162,
-     "rho": 0.1419,
-     "p_two_sided": 0.1039
+     "r": 0.2974,
+     "rho": 0.2475,
+     "p_two_sided": 0.0023
     },
     "bb_percent": {
      "n": 102,
-     "r": 0.1334,
-     "rho": 0.122,
-     "p_two_sided": 0.1818
+     "r": 0.188,
+     "rho": 0.1207,
+     "p_two_sided": 0.0583
     },
     "composite": {
      "n": 102,
-     "r": 0.0792,
-     "rho": 0.0997,
-     "p_two_sided": 0.4297
+     "r": 0.235,
+     "rho": 0.1677,
+     "p_two_sided": 0.0172
     }
    }
   }
@@ -316,7 +316,7 @@
       },
       "r_test_blend_r_weighted": 0.1677,
       "r_test_blend_top2_equal": 0.1575,
-      "r_test_composite": 0.0301
+      "r_test_composite": 0.0325
      },
      {
       "train_seasons": [
@@ -325,7 +325,7 @@
       ],
       "test_season": 2025,
       "train_n": 42,
-      "test_n": 12,
+      "test_n": 20,
       "train_r_by_component": {
        "launch_speed": 0.0145,
        "hardhit_percent": 0.0028,
@@ -340,24 +340,24 @@
        "barrels_per_bbe_percent": 0.6403,
        "swing_miss_percent": -0.3597
       },
-      "r_test_blend_r_weighted": 0.2276,
-      "r_test_blend_top2_equal": 0.2184,
-      "r_test_composite": 0.1476
+      "r_test_blend_r_weighted": 0.2999,
+      "r_test_blend_top2_equal": 0.2585,
+      "r_test_composite": 0.417
      }
     ],
     "pooled_oos": {
-     "n": 35,
-     "r_blend_r_weighted": 0.1959,
-     "rho_blend_r_weighted": 0.1981,
-     "r_blend_top2_equal": 0.1755,
-     "r_composite": 0.1211,
-     "rho_composite": 0.0528
+     "n": 43,
+     "r_blend_r_weighted": 0.2535,
+     "rho_blend_r_weighted": 0.2556,
+     "r_blend_top2_equal": 0.2207,
+     "r_composite": 0.2659,
+     "rho_composite": 0.1826
     },
     "pooled_oos_closed": {
      "n": 23,
      "r_blend_r_weighted": 0.1677,
      "r_blend_top2_equal": 0.1575,
-     "r_composite": 0.0301
+     "r_composite": 0.0325
     }
    },
    "pitchers": {
@@ -385,7 +385,7 @@
       },
       "r_test_blend_r_weighted": 0.4118,
       "r_test_blend_top2_equal": 0.3552,
-      "r_test_composite": 0.133
+      "r_test_composite": 0.134
      },
      {
       "train_seasons": [
@@ -394,7 +394,7 @@
       ],
       "test_season": 2025,
       "train_n": 47,
-      "test_n": 7,
+      "test_n": 19,
       "train_r_by_component": {
        "launch_speed": 0.0274,
        "hardhit_percent": -0.1009,
@@ -409,24 +409,24 @@
        "swing_miss_percent": 0.7355,
        "barrels_per_bbe_percent": -0.2645
       },
-      "r_test_blend_r_weighted": null,
-      "r_test_blend_top2_equal": null,
-      "r_test_composite": null
+      "r_test_blend_r_weighted": 0.2404,
+      "r_test_blend_top2_equal": 0.2074,
+      "r_test_composite": -0.0069
      }
     ],
     "pooled_oos": {
-     "n": 30,
-     "r_blend_r_weighted": 0.3288,
-     "rho_blend_r_weighted": 0.321,
-     "r_blend_top2_equal": 0.2723,
-     "r_composite": 0.2792,
-     "rho_composite": 0.2315
+     "n": 42,
+     "r_blend_r_weighted": 0.3044,
+     "rho_blend_r_weighted": 0.3297,
+     "r_blend_top2_equal": 0.2603,
+     "r_composite": 0.1082,
+     "rho_composite": 0.0633
     },
     "pooled_oos_closed": {
      "n": 23,
      "r_blend_r_weighted": 0.4118,
      "r_blend_top2_equal": 0.3552,
-     "r_composite": 0.133
+     "r_composite": 0.134
     }
    }
   },
@@ -441,37 +441,37 @@
       "train_n": 52,
       "test_n": 48,
       "train_r_by_component": {
-       "launch_speed": 0.0296,
-       "hardhit_percent": 0.0056,
-       "barrels_per_bbe_percent": 0.0679,
-       "swing_miss_percent": -0.0374
+       "launch_speed": 0.0961,
+       "hardhit_percent": 0.0695,
+       "barrels_per_bbe_percent": 0.0446,
+       "swing_miss_percent": 0.0693
       },
       "top2": [
-       "barrels_per_bbe_percent",
-       "swing_miss_percent"
+       "launch_speed",
+       "hardhit_percent"
       ],
       "weights_r_prop": {
-       "barrels_per_bbe_percent": 0.6448,
-       "swing_miss_percent": -0.3552
+       "launch_speed": 0.5803,
+       "hardhit_percent": 0.4197
       },
-      "r_test_blend_r_weighted": -0.0765,
-      "r_test_blend_top2_equal": -0.1251,
-      "r_test_composite": 0.1421
+      "r_test_blend_r_weighted": -0.0659,
+      "r_test_blend_top2_equal": -0.0676,
+      "r_test_composite": 0.0509
      }
     ],
     "pooled_oos": {
      "n": 48,
-     "r_blend_r_weighted": -0.0765,
-     "rho_blend_r_weighted": -0.0882,
-     "r_blend_top2_equal": -0.1251,
-     "r_composite": 0.1421,
-     "rho_composite": 0.0577
+     "r_blend_r_weighted": -0.0659,
+     "rho_blend_r_weighted": -0.0761,
+     "r_blend_top2_equal": -0.0676,
+     "r_composite": 0.0509,
+     "rho_composite": -0.0136
     },
     "pooled_oos_closed": {
      "n": 48,
-     "r_blend_r_weighted": -0.0765,
-     "r_blend_top2_equal": -0.1251,
-     "r_composite": 0.1421
+     "r_blend_r_weighted": -0.0659,
+     "r_blend_top2_equal": -0.0676,
+     "r_composite": 0.0509
     }
    },
    "pitchers": {
@@ -484,66 +484,66 @@
       "train_n": 46,
       "test_n": 56,
       "train_r_by_component": {
-       "launch_speed": -0.0235,
-       "hardhit_percent": -0.0588,
-       "barrels_per_bbe_percent": 0.0968,
-       "swing_miss_percent": 0.0984
+       "launch_speed": 0.1321,
+       "hardhit_percent": 0.0277,
+       "barrels_per_bbe_percent": 0.1323,
+       "swing_miss_percent": 0.1027
       },
       "top2": [
-       "swing_miss_percent",
-       "barrels_per_bbe_percent"
+       "barrels_per_bbe_percent",
+       "launch_speed"
       ],
       "weights_r_prop": {
-       "swing_miss_percent": 0.5041,
-       "barrels_per_bbe_percent": 0.4959
+       "barrels_per_bbe_percent": 0.5004,
+       "launch_speed": 0.4996
       },
-      "r_test_blend_r_weighted": 0.0553,
-      "r_test_blend_top2_equal": 0.0539,
-      "r_test_composite": 0.1006
+      "r_test_blend_r_weighted": 0.2094,
+      "r_test_blend_top2_equal": 0.2095,
+      "r_test_composite": 0.2972
      }
     ],
     "pooled_oos": {
      "n": 56,
-     "r_blend_r_weighted": 0.0553,
-     "rho_blend_r_weighted": 0.1139,
-     "r_blend_top2_equal": 0.0539,
-     "r_composite": 0.1006,
-     "rho_composite": 0.1928
+     "r_blend_r_weighted": 0.2094,
+     "rho_blend_r_weighted": 0.0898,
+     "r_blend_top2_equal": 0.2095,
+     "r_composite": 0.2972,
+     "rho_composite": 0.1095
     },
     "pooled_oos_closed": {
      "n": 56,
-     "r_blend_r_weighted": 0.0553,
-     "r_blend_top2_equal": 0.0539,
-     "r_composite": 0.1006
+     "r_blend_r_weighted": 0.2094,
+     "r_blend_top2_equal": 0.2095,
+     "r_composite": 0.2972
     }
    }
   }
  },
  "findings": {
   "which_component_carries_signal": {
-   "hitters": "Barrel%/BBE is the only core component with a meaningful forward r vs first-MLB OPS (r=0.2754, p=0.0435); avg EV is a weak lean (r=0.1063); HardHit% (r=0.0674) and SwingMiss% (r=-0.1061, sign flips on the WAR join) are noise",
-   "pitchers": "SwingMiss% carries essentially all of it (r=0.3572 vs inverted first-MLB ERA, p=0.0076); all three contact-against components are noise, with Barrel%-against mildly wrong-signed (r=-0.1175)"
+   "hitters": "Barrel%/BBE (r=0.3325, p=0.0079, sign flips on the WAR join) carries the forward signal vs first-MLB OPS (p<0.10); avg EV (r=0.2058) is a weak lean; HardHit% (r=0.1701, sign flips on the WAR join) and SwingMiss% (r=-0.1019, sign flips on the WAR join) are noise at these ns",
+   "pitchers": "SwingMiss% (r=0.3265, p=0.0071) carries the forward signal vs inverted first-MLB ERA (p<0.10); avg EV (r=-0.0054, sign flips on the WAR join), HardHit% (r=-0.094, sign flips on the WAR join) and Barrel%/BBE (r=-0.1153, sign flips on the WAR join) are noise at these ns"
   },
-  "reference_components_outperform": "plain K% beats the whole contact composite for pitchers (r=0.4906 vs composite 0.1383), and BB% does for hitters (r=0.3195 vs composite 0.1242); on the 2y-bWAR join Savant xwOBA beats the composite on both sides (hit 0.3139 vs 0.1048, pit 0.2024 vs 0.0792). The weak part of SC+ is the contact-quality framing, not the Savant source data",
-  "blend_vs_composite_oos": "the forward-chained top-2 reweight is directionally positive on rate outcomes (hitters r 0.1959 vs composite 0.1211, gain 0.0748; pitchers 0.3288 vs 0.2792, gain 0.0496) but misses the pre-registered +0.05 bar on the pitcher side and REVERSES on the hitter 2y-bWAR join (blend -0.0765 vs composite 0.1421), so the reweight is not robust at these ns"
+  "reference_components_outperform": "plain K% beats the whole contact composite for pitchers (r=0.4049 vs composite 0.0507); BB% does not beat it for hitters (r=0.2086 vs composite 0.2393); on the 2y-bWAR join Savant xwOBA beats the composite on both sides (hit 0.2927 vs 0.0892, pit 0.3668 vs 0.235)",
+  "blend_vs_composite_oos": "on all pooled out-of-sample rows (open 2026 season included) the forward-chained top-2 reweight reads hitters r 0.2535 vs composite 0.2659 (gain -0.0124) and pitchers 0.3044 vs 0.1082 (gain 0.1962); it clears the +0.05 bar on the pitcher side but misses the pre-registered +0.05 bar on the hitter side and REVERSES on the hitter 2y-bWAR join (blend -0.0659 vs composite 0.0509), so the reweight is not robust at these ns. The decision reads the closed-season rows (see recommendation)"
  },
  "recommendation": {
   "decision": "reweight-candidate (queued; composite unchanged)",
   "rule": "reweight if the forward-chained 2-component blend beats the composite by >= 0.05 pooled-OOS r on BOTH sides (blend r >= 0.10); demote if the composite's pooled forward r is under 0.05 in absolute value on both sides; otherwise keep as-is. Decision inputs use CLOSED outcome seasons only (debut <= 2025); open-season rows appear in pooled_oos for context but do not move the decision",
   "decision_basis": "pooled_oos_closed (debut <= 2025)",
-  "shipping_note": "a reweight of the published SC+ composite ships only through a dedicated pre-registered gated experiment (see REVIEW_QUEUE.md); this artifact records the candidate signal, it does not authorize the change",
+  "shipping_note": "a reweight of the published SC+ composite ships only through a dedicated pre-registered gated experiment (see docs/archive/REVIEW_QUEUE.md); this artifact records the candidate signal, it does not authorize the change",
   "oos_gain_blend_minus_composite": {
-   "hitters": 0.1376,
-   "pitchers": 0.2788
+   "hitters": 0.1352,
+   "pitchers": 0.2778
   },
   "composite_pooled_r_rate": {
-   "hitters": 0.1242,
-   "pitchers": 0.1383
+   "hitters": 0.2393,
+   "pitchers": 0.0507
   }
  },
  "caveats": [
-  "ns are small (about 50 per side on rate outcomes, about 100 on the 2y-bWAR join); single-component r differences under 0.15 are not individually significant here",
-  "the 2025->2026 test fold is thin (2026 debut season in progress), so pooled OOS leans on the 2024->2025 fold",
+  "ns are small (62 hitters / 66 pitchers on rate outcomes, 100 / 102 on the 2y-bWAR join); single-component r differences under 0.15 are not individually significant here",
+  "the 2025->2026 test fold reads an open outcome season (2026 debuts, test n 20 hitters / 19 pitchers) and moves with every stats refresh; pooled_oos includes it, the decision does not",
   "this scores the 4-component historical analog, not the live 6-component SC+ (Z-Contact/Chase have no historical source)"
  ]
 }

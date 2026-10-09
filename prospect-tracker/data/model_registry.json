@@ -2651,7 +2651,7 @@
   },
   {
    "model_id": "sc_plus_component_diagnostic",
-   "summary": "Validated measurement: Barrel% carries the hitter signal (r 0.254, n 54) and SwingMiss the pitcher signal (r 0.359); the composite stays, a reweight queued.",
+   "summary": "Validated measurement: Barrel%/BBE carries the hitter signal (r 0.333, n 62) and SwingMiss the pitcher signal (r 0.327, n 66); the composite stays, a reweight queued.",
    "surface": "model-dev artifact (rendered nowhere) - SC+ per-component forward-signal isolation",
    "predicts": "n/a - measurement: which SC+ component (EV / HardHit / Barrel / SwingMiss) carries the weak composite forward signal",
    "champion": "equal-weight 4-component SC+ composite (unchanged: keep-as-is per the pre-set rule)",
@@ -2659,10 +2659,10 @@
    "metric": "Pooled per-component forward r vs first-MLB OPS, inverted ERA and 2-year WAR; top-2 blend vs composite out of sample",
    "eval_artifact": "data/sc_plus_component_eval.json",
    "verdict": "validated",
-   "notes": "Holistic pass 3 (2026-07-01). Hitters: Barrel%/BBE carries it (r 0.254 vs first-MLB OPS, n 54); EV weak 0.104; HardHit/SwingMiss noise. Pitchers: SwingMiss carries it (r 0.359 vs inverted ERA); barrels/EV noise. Top-2 blend beat composite +0.053 hit / +0.048 pit pooled OOS r, just under the pre-set both-sides >=0.05 reweight rule, so composite stays. Side finding: reference approach stats (hitter BB% r 0.33, pitcher K% r 0.49) out-signal every contact component but are already priced into consensus FV / eFV features; do not double-count. UPDATE 2026-07-02 (adversarial audit): the decision instrument is now pinned to CLOSED outcome seasons (debut <= 2025); in-progress-season rows drift with every stats refresh and had made the committed numbers irreproducible. On the closed basis the rule fires reweight (blend beats composite +0.14 hit / +0.28 pit pooled OOS r, n=23/side): recorded as a QUEUED candidate (docs/archive/REVIEW_QUEUE.md item 12), composite unchanged; a published-metric change requires its own pre-registered gate and these ns are far below any shippable bar.",
-   "last_checked": "2026-10-02",
-   "stale": true,
-   "artifact_age_days": 92
+   "notes": "Holistic pass 3 (2026-07-01). Hitters: Barrel%/BBE carries it (r 0.254 vs first-MLB OPS, n 54); EV weak 0.104; HardHit/SwingMiss noise. Pitchers: SwingMiss carries it (r 0.359 vs inverted ERA); barrels/EV noise. Top-2 blend beat composite +0.053 hit / +0.048 pit pooled OOS r, just under the pre-set both-sides >=0.05 reweight rule, so composite stays. Side finding: reference approach stats (hitter BB% r 0.33, pitcher K% r 0.49) out-signal every contact component but are already priced into consensus FV / eFV features; do not double-count. UPDATE 2026-07-02 (adversarial audit): the decision instrument is now pinned to CLOSED outcome seasons (debut <= 2025); in-progress-season rows drift with every stats refresh and had made the committed numbers irreproducible. On the closed basis the rule fires reweight (blend beats composite +0.14 hit / +0.28 pit pooled OOS r, n=23/side): recorded as a QUEUED candidate (docs/archive/REVIEW_QUEUE.md item 12), composite unchanged; a published-metric change requires its own pre-registered gate and these ns are far below any shippable bar. UPDATE 2026-10-08 (SC_PLUS_EVAL_REPAIR): the tool had stopped at its own composite parity check (3,537 of 3,588 pool rows) since a953ddc0 (2026-08-07), when arkmetric_forward_eval.sc_analog_index began dividing the composite by the pool's composite sd and the tool's copy kept 100 + 10z, so the 2026-07-02 artifact could not be reproduced. The tool now mirrors the divisor, parity is 0 mismatches (test_sc_plus_component_eval.py) and the artifact is regenerated. The divisor alone moves composite r by at most 0.004; the rest of the move is input drift since July (2025->2026 cohort 19 to 39, career WAR refreshed). Decision unchanged: reweight-candidate on the closed basis (blend minus composite +0.135 hit / +0.278 pit pooled OOS r, n 23/side). Findings prose is now derived from the tables: the July text said BB% beats the hitter composite (now 0.209 vs 0.239, it does not) and the reweight misses the bar on the pitcher side (on all pooled rows it now clears it, +0.196, and misses on the hitter side, -0.012).",
+   "last_checked": "2026-10-08",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "sem_plus",
