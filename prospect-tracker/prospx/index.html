@@ -17174,7 +17174,7 @@ function renderDetailSidebar(cards) {
       const rows = (card.rows || []).map(r => {
         const dk = r.key ? ` data-key="${escapeHtml(r.key)}"` : "";
         const tag = r.tag ? `<span class="ctx-row-tag">${escapeHtml(r.tag)}</span>` : "";
-        const val = r.value != null ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary);font-weight:600;">${escapeHtml(String(r.value))}</span>` : "";
+        const val = r.value != null ? `<span${r.basis ? ` data-grade-basis="${escapeHtml(r.basis)}"` : ""} style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary);font-weight:600;">${escapeHtml(String(r.value))}</span>` : "";
         return `<div class="ctx-row"${dk}>
           <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(r.name || "")}${tag}</span>
           ${val}
@@ -17718,23 +17718,32 @@ function _farmDetailSidebarCards(org, activeTab) {
   if (activeTab === "roster") {
     // Roster tab - top 5 prospects on the org by FV (most-tradeable
     // candidates), plus quick signals on roster depth.
+    // B-F11: EFV_DISPLAY_SWAPS on orders by the board order and prints eFV; off orders by
+    // consensus FV and names it. The org tier count and total are eFV already (org_summary).
+    const swaps = efvDisplaySwaps();
     const orgPlayers = (DATA.players || [])
       .filter(p => p && p.org === orgCode)
-      .sort((a, b) => (b.fv_close ?? 0) - (a.fv_close ?? 0));
-    const rows = orgPlayers.slice(0, 5).map(p => ({
-      key: p.player_key,
-      name: p.player_name,
-      tag: positionBucket(p.position) || "",
-      value: p.fv_close != null ? `FV ${fvCeil(p.fv_close)}` : " - ",
-    }));
+      .sort(swaps ? boardCmp : ((a, b) => (b.fv_close ?? 0) - (a.fv_close ?? 0)));
+    const rows = orgPlayers.slice(0, 5).map(p => {
+      const g = swaps ? gradeBlock(p, { primary: "xfv" }) : null;
+      return {
+        key: p.player_key,
+        name: p.player_name,
+        tag: positionBucket(p.position) || "",
+        value: swaps ? (g.basis === "efv" ? `eFV ${g.efvVal}` : g.basis === "consensus" ? `Cons. FV ${g.label}` : " - ")
+             : p.fv_close != null ? `Cons. FV ${fvCeil(p.fv_close)}` : " - ",
+        basis: swaps ? (g.basis === "efv" || g.basis === "consensus" ? g.basis : null)
+             : p.fv_close != null ? "consensus" : null,
+      };
+    });
     const signals = [
       { key: "Active prospects", value: org.count ?? " - " },
-      { key: "60+ FV", value: org.tier_60_plus ?? 0 },
+      { key: "60+ eFV", value: org.tier_60_plus ?? 0 },
       { key: "Avg age", value: org.avg_age != null ? org.avg_age.toFixed(1) : " - " },
-      { key: "Total FV", value: org.total_fv != null ? Math.round(org.total_fv) : " - " },
+      { key: "Total eFV", value: org.total_fv != null ? Math.round(org.total_fv) : " - " },
     ];
     return [
-      { type: "leaderboard", title: `${orgCode} · top by FV`, rows },
+      { type: "leaderboard", title: `${orgCode} · top by ${swaps ? "eFV" : "consensus FV"}`, rows },
       { type: "signals", title: "Roster summary", signals },
     ];
   }
@@ -34705,6 +34714,43 @@ function consensusChipHTML(gb) {
   const s = escapeHtml(String(c));
   return `<span class="fv-cons-chip" data-grade-basis="consensus" title="Consensus FV ${s}. The list is ordered by consensus FV; the grade printed beside it is eFV." style="font-family:var(--font-mono);font-size:9px;line-height:1;color:var(--text-secondary);border:1px dashed var(--border);border-radius:3px;padding:1px 3px;white-space:nowrap;">C ${s}</span>`;
 }
+// FARM PAGES (owner ask 5, Part 8 lane links_efv_display B.2, task Q9_11). A farm card
+// prints one grade per player. EFV_DISPLAY_SWAPS off: the card's consensus grade, rounded
+// up, with the C mark, a dashed border and data-grade-basis="consensus". On: the eFV
+// (nearest) through gradeBlock, with the labelled consensus fallback where eFV abstains.
+// A numeric v rounds up; a string v (a consensus label off the snapshot) prints as is.
+function consFvBadgeHTML(v, sz, tip) {
+  if (v == null || v === "") return "";
+  const s = (typeof v === "number") ? String(fvCeil(v)) : String(v);
+  return `<span class="fv-badge ${fvClass(s)}${sz ? " " + sz : ""}" data-grade-basis="consensus" style="flex-shrink:0;border-style:dashed;" title="${escapeHtml(tip || ("Consensus FV " + s))}">${escapeHtml(s)}${GRADE_C_MARK}</span>`;
+}
+function farmEfvBadgeHTML(p, sz) {
+  const gb = gradeBlock(p, { primary: "xfv" });
+  if (gb.basis === "efv") {
+    return `<span class="fv-badge ${fvClass(String(gb.efvVal))}${sz ? " " + sz : ""}" data-grade-basis="efv" style="flex-shrink:0;${gb.provisional ? "border-style:dashed;" : ""}" title="${escapeHtml(efvTooltip(gb.x) || ("eFV " + gb.efvVal))}">${gb.efvVal}</span>`;
+  }
+  if (gb.basis === "pending" || gb.basis === "unavailable") return efvWaitingBadgeHTML(gb.basis, sz);
+  if (gb.basis === "consensus") return consFvBadgeHTML(gb.label, sz, gb.consTip);
+  return "";
+}
+// eFV at debut: the grade a graduate carried into the majors (xfv_grade_at_debut, the WAG
+// baseline; the locked grade where the field is absent), rounded to nearest.
+function efvAtDebutValue(g) {
+  const x = (typeof getEfv === "function") ? getEfv(g) : null;
+  if (!x) return null;
+  const v = x.xfv_grade_at_debut != null ? x.xfv_grade_at_debut : x.xfv_grade;
+  return (v != null && isFinite(Number(v))) ? Math.round(Number(v)) : null;
+}
+function efvAtDebutBadgeHTML(g, sz) {
+  const v = efvAtDebutValue(g);
+  if (v != null) {
+    return `<span class="fv-badge ${fvClass(String(v))}${sz ? " " + sz : ""}" data-grade-basis="efv" style="flex-shrink:0;" title="eFV at debut ${v}: the grade he carried into the majors">${v}</span>`;
+  }
+  if (efvDisplaySwaps() && efvLoadState() !== "ready")
+    return efvWaitingBadgeHTML(efvLoadState() === "failed" ? "unavailable" : "pending", sz);
+  return (g && g.fv_close != null)
+    ? consFvBadgeHTML(Number(g.fv_close), sz, "Consensus FV at debut (no eFV for this player)") : "";
+}
 function gradeBlock(p, opts) {
   opts = opts || {};
   const x = (typeof getEfv === "function") ? getEfv(p) : null;
@@ -37508,7 +37554,7 @@ function buildFarmCard(snap) {
   // was missing); detailed adds the surplus-contributors bars below.
   const leftPanel = [sect("Grade canopy", canopy), sect("System pulse", finHTML),
                      sect("Level pipeline", pipelineHTML)].filter(Boolean).join(gap);
-  const rightPanel = [sect("Top 5 prospects", top5HTML), sect("FV distribution", distHTML)].filter(Boolean).join(gap);
+  const rightPanel = [sect("Top 5 prospects", top5HTML), sect(meta.distBasis === "efv" ? "eFV distribution" : "Consensus FV distribution", distHTML)].filter(Boolean).join(gap);
   const twoCol = landscape
     ? `<div style="display:flex;gap:44px;align-items:flex-start;">
          <div style="flex:1;min-width:0;display:flex;flex-direction:column;">${leftPanel}</div>
@@ -43395,6 +43441,7 @@ function makeFarmTransactionsSummary(allEvents, org, orgCode) {
     const rankValue = careerWar != null ? careerWar
                     : projWar != null ? projWar : null;
     return {
+      p,
       name: p.player_name,
       key: p.player_key,
       date: e.date,
@@ -43438,7 +43485,7 @@ function makeFarmTransactionsSummary(allEvents, org, orgCode) {
 
   const summaryTiles = `
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 14px;">
-      ${tile('Trade FV Net',
+      ${tile('Trade consensus FV net',
               tradeNetFv != null ? `${tradeNetFv >= 0 ? '+' : ''}${fmtFv(tradeNetFv)} FV` : ' - ',
               `${trades.in_count ?? 0} in (${fmtFv(trades.fv_in)} FV) · ${trades.out_count ?? 0} out (${fmtFv(trades.fv_out)} FV)`,
               tradeTone)}
@@ -43446,7 +43493,7 @@ function makeFarmTransactionsSummary(allEvents, org, orgCode) {
               tradeWarDelta != null ? `${tradeWarDelta >= 0 ? '+' : ''}${tradeWarDelta.toFixed(1)} WAR` : ' - ',
               `Realized: in ${(trades.war_in ?? 0).toFixed(1)} − out ${(trades.war_out ?? 0).toFixed(1)} · ${grades.tx_trades ? `grade ${grades.tx_trades}` : ''}`,
               tradeTone)}
-      ${tile('Waiver FV Net',
+      ${tile('Waiver consensus FV net',
               waiverNetFv != null ? `${waiverNetFv >= 0 ? '+' : ''}${fmtFv(waiverNetFv)} FV` : ' - ',
               `${waivers.in_count ?? 0} in / ${waivers.out_count ?? 0} out`,
               waiverTone)}
@@ -43467,32 +43514,33 @@ function makeFarmTransactionsSummary(allEvents, org, orgCode) {
       <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(r.key)}');" style="color:var(--text-primary);">${escapeHtml(r.name)}</a></td>
       <td style="text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">${r.date || ' - '}</td>
       <td style="text-align:center;font-family:var(--font-mono);font-size:11px;">${r.otherOrg ? `<a href="#farm-org=${escapeHtml(r.otherOrg)}" style="color:inherit;text-decoration:none;">${escapeHtml(r.otherOrg)}</a>` : ' - '}</td>
-      <td style="text-align:center;"><span class="fv-badge ${fvClass(String(fmtFv(r.fv)))} size-sm">${fmtFv(r.fv)}</span></td>
+      <td style="text-align:center;">${(efvDisplaySwaps() ? farmEfvBadgeHTML(r.p, "size-sm") : consFvBadgeHTML(r.fv != null ? Number(r.fv) : null, "size-sm")) || `<span class="fv-badge size-sm">${fmtFv(r.fv)}</span>`}</td>
       <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${warColor};font-weight:600;">${warDisplay != null ? (warDisplay >= 0 ? '+' : '') + warDisplay.toFixed(1) : ' - '}${tag}</td>
     </tr>`;
   };
   const emptyRow = `<tr><td colspan="5" style="text-align:center;color:var(--text-tertiary);font-size:11px;padding:8px;"> - no trades on file - </td></tr>`;
+  const _txFvHead = efvDisplaySwaps() ? "eFV" : "Cons. FV";
   const tradeHitsHtml = (inboundHits.length || outboundMisses.length)
-    ? `<div class="detail-title" style="margin-top:12px;">Trade outcomes <span class="detail-title-sub">All trades. Debuted players ranked by realized career WAR (<span style="color:var(--up);">real</span>); active prospects ranked by FV-projected career WAR (proj). Realized rows always sort above projected.</span></div>
-       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;">
-         <div>
+    ? `<div class="detail-title" style="margin-top:12px;">Trade outcomes <span class="detail-title-sub">All trades. Debuted players ranked by realized career WAR (<span style="color:var(--up);">real</span>); active prospects ranked by consensus-FV-projected career WAR (proj). Realized rows always sort above projected.</span></div>
+       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px;align-items:start;">
+         <div style="min-width:0;">
            <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Inbound (acquired)</div>
-           <table class="detail-table" style="width:100%;">
-             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">From</th><th style="text-align:center;">FV</th><th style="text-align:right;">WAR</th></tr></thead>
+           <div class="table-scroll-x"><table class="detail-table" style="width:100%;">
+             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">From</th><th style="text-align:center;">${_txFvHead}</th><th style="text-align:right;">WAR</th></tr></thead>
              <tbody>${inboundHits.length ? inboundHits.map(tradeRow).join('') : emptyRow}</tbody>
-           </table>
+           </table></div>
          </div>
-         <div>
+         <div style="min-width:0;">
            <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Outbound (sent away)</div>
-           <table class="detail-table" style="width:100%;">
-             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">To</th><th style="text-align:center;">FV</th><th style="text-align:right;">WAR</th></tr></thead>
+           <div class="table-scroll-x"><table class="detail-table" style="width:100%;">
+             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">To</th><th style="text-align:center;">${_txFvHead}</th><th style="text-align:right;">WAR</th></tr></thead>
              <tbody>${outboundMisses.length ? outboundMisses.map(tradeRow).join('') : emptyRow}</tbody>
-           </table>
+           </table></div>
          </div>
        </div>`
     : '';
 
-  return `<div class="detail-title flush">Trade & waiver scoreboard <span class="detail-title-sub">Aggregate inbound vs outbound talent flow at acquisition time (FV) and realized at the MLB level (WAR). Feeds the Acquisition Strategy branch grade.</span></div>
+  return `<div class="detail-title flush">Trade & waiver scoreboard <span class="detail-title-sub">Aggregate inbound vs outbound talent flow at acquisition time (consensus FV) and realized at the MLB level (WAR). Feeds the Acquisition Strategy branch grade.</span></div>
     ${summaryTiles}
     ${tradeHitsHtml}`;
 }
@@ -44184,7 +44232,7 @@ function makeAgeFvScatter(prospects) {
     if (age == null || fv == null) return null;
     const toolGrade = (p.tools || {}).composite_overall;
     return {
-      age, fv,
+      age, fv, efv: !!(_sx && _sx.xfv_grade != null),
       color: colorFor(p.position),
       tool: toolGrade,
       name: p.player_name || p.player_key,
@@ -44245,7 +44293,9 @@ function makeAgeFvScatter(prospects) {
     const cx = xFor(p.age);
     const cy = yFor(p.fv);
     const r = rFor(p.tool);
-    const tip = `${p.name} · ${p.position} · age ${p.age.toFixed(1)} · FV ${fvCeil(p.fv)}${p.tool != null ? ` · Tool ${fvCeil(p.tool)}` : ""}`;
+    // EFV_DISPLAY_SWAPS on: the eFV prints to nearest and the consensus fallback says so.
+    const _g = !efvDisplaySwaps() ? `FV ${fvCeil(p.fv)}` : p.efv ? `eFV ${Math.round(p.fv)}` : `Consensus FV ${fvCeil(p.fv)}`;
+    const tip = `${p.name} · ${p.position} · age ${p.age.toFixed(1)} · ${_g}${p.tool != null ? ` · Tool ${fvCeil(p.tool)}` : ""}`;
     return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}"
                     fill="${p.color}" opacity="0.65" stroke="${p.color}" stroke-width="0.5">
       <title>${escapeHtml(tip)}</title>
@@ -44256,7 +44306,7 @@ function makeAgeFvScatter(prospects) {
   const axisTitleStyle = `font-family: var(--font-sans); font-size: 10px; fill: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;`;
   const xTitle = `<text x="${PAD_L + chartW / 2}" y="${H - 4}" text-anchor="middle" style="${axisTitleStyle}">Age</text>`;
   const yTitle = `<text x="6" y="${PAD_T + chartH / 2}" text-anchor="middle"
-                        style="${axisTitleStyle}" transform="rotate(-90, 6, ${PAD_T + chartH / 2})">FV</text>`;
+                        style="${axisTitleStyle}" transform="rotate(-90, 6, ${PAD_T + chartH / 2})">eFV</text>`;
 
   // Color-key legend.
   const legendItems = [
@@ -44272,7 +44322,7 @@ function makeAgeFvScatter(prospects) {
   return `<div class="age-fv-scatter" style="margin: var(--space-3) 0;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--space-1);gap:var(--space-3);flex-wrap:wrap;">
       <span style="font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">
-        Age vs FV - pipeline shape · ${points.length} plottable prospect${points.length === 1 ? "" : "s"}
+        Age vs eFV - pipeline shape · ${points.length} plottable prospect${points.length === 1 ? "" : "s"}
       </span>
       <span style="display:inline-flex;gap:var(--space-3);">${legendItems}</span>
     </div>
@@ -44727,9 +44777,13 @@ function makePromotionLadder(rosterPlayersAll, org) {
   // Color helper - pick a fv-tier token based on the level's heaviest
   // prospect FV so the row reads as gold (60+ talent), silver (50-tier),
   // or slate (depth filler).
+  // B-F8: EFV_DISPLAY_SWAPS on colours each row by the level's top printed eFV and names
+  // eFV in the tooltip; off reads consensus FV and says so.
+  const swaps = efvDisplaySwaps();
+  const _gradeOf = p => swaps ? gradeBlock(p, { primary: "xfv" }).efvVal : p.fv_close;
   const rowColor = (players) => {
     if (!players.length) return "var(--bg-tertiary)";
-    const topFv = Math.max(...players.map(p => p.fv_close || 0));
+    const topFv = Math.max(...players.map(p => _gradeOf(p) || 0));
     if (topFv >= 60) return "var(--fv-60-bg)";
     if (topFv >= 55) return "var(--fv-55-bg)";
     if (topFv >= 50) return "var(--fv-50-bg)";
@@ -44745,7 +44799,7 @@ function makePromotionLadder(rosterPlayersAll, org) {
     const titleNames = players
       .sort(fvCmpDesc)
       .slice(0, 6)
-      .map(p => `${p.player_name} (${p.fv_close ?? "?"})`)
+      .map(p => `${p.player_name} (${swaps ? "eFV" : "consensus FV"} ${_gradeOf(p) ?? "?"})`)
       .join(" · ");
     return `<div style="display:grid;grid-template-columns:36px 1fr 28px;align-items:center;gap:8px;margin-top:4px;" title="${escapeHtml(`${lvl}: ${n} tracked prospect${n === 1 ? "" : "s"}${titleNames ? " - " + titleNames : ""}`)}">
       <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);font-weight:600;letter-spacing:0.04em;">${lvl}</span>
@@ -45419,16 +45473,19 @@ function renderFarmSystems() {
       }
     }
   }
+  // B-F15: EFV_DISPLAY_SWAPS on gates the alumni badge on eFV at debut >= 55 and names it;
+  // off gates on consensus FV >= 55 and names that.
+  const _alumEfv = efvDisplaySwaps();
   const alumniByOrg = {};
   for (const g of (DATA.debuts || [])) {
     if (!g.org || !g.debut_date) continue;
     const t = new Date(g.debut_date + "T00:00:00").getTime();
     if (isNaN(t) || t < cutoffMs12mo) continue;
-    const fv = g.fv_close ?? g.fv_close_raw;
+    const fv = _alumEfv ? efvAtDebutValue(g) : (g.fv_close ?? g.fv_close_raw);
     if (fv == null || fv < 55) continue;
     (alumniByOrg[g.org] ||= []).push({
       name: g.player_name,
-      fv: fvCeil(fv),
+      fv: _alumEfv ? fv : fvCeil(fv),
       date: g.debut_date,
     });
   }
@@ -45587,7 +45644,7 @@ function renderFarmSystems() {
     // Recent-grad alumni badge (G22).
     const alumni = alumniByOrg[org.org] || [];
     const alumniBadge = alumni.length
-      ? ` <span class="farm-alumni-badge" title="${escapeHtml(alumni.map(a => `${a.name} · FV ${a.fv} · debuted ${a.date}`).join(" · "))}">✦ ${alumni.length}</span>`
+      ? ` <span class="farm-alumni-badge" title="${escapeHtml(alumni.map(a => `${a.name} · ${_alumEfv ? "eFV at debut" : "consensus FV"} ${a.fv} · debuted ${a.date}`).join(" · "))}">✦ ${alumni.length}</span>`
       : "";
     // Confidence dot (G26) - green/amber/red based on multi-instance share.
     const conf = confByOrg[org.org];
@@ -53121,7 +53178,7 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
       const ageTxt = p.age != null ? `${p.age.toFixed(1)}y` : "?";
       const etaYear = p.eta && p.eta.year != null ? p.eta.year : null;
       const titleEta = etaYear ? ` · ETA ${etaYear}` : "";
-      return `<div class="pos-depth-card${overflow}" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}" title="${escapeHtml(p.player_name)} · ${escapeHtml(p.position || " - ")} · ${escapeHtml(lvl)} · age ${ageTxt} · FV ${fvLabel}${titleEta}">
+      return `<div class="pos-depth-card${overflow}" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}" title="${escapeHtml(p.player_name)} · ${escapeHtml(p.position || " - ")} · ${escapeHtml(lvl)} · age ${ageTxt} · ${_dxg != null ? "eFV" : "Consensus FV"} ${fvLabel}${titleEta}">
         <span class="pdc-fv"><span class="fv-badge ${fvClass(fvLabel)} size-xs">${fvLabel}</span></span>
         <span class="pdc-name">${escapeHtml(shortName(p.player_name))}</span>
         <span class="pdc-sub">${escapeHtml(lvl)}</span>
@@ -53841,6 +53898,7 @@ function makeFarmPositionalNeed(orgCode) {
   const byB = {};
   for (const pl of org) { const g = _farmPosGroup(pl.position); if (g) (byB[g] || (byB[g] = [])).push(pl); }
   const LEVEL_ORD = { MLB: 6, AAA: 5, AA: 4, "A+": 3, A: 2, CPX: 1, DSL: 0 };
+  const swaps = efvDisplaySwaps();
   const rows = BUCKETS.map(([k, lbl]) => {
     const list = byB[k] || []; const n = list.length;
     const avg = leagueCnt[k] ? leagueCnt[k] / nOrgs : 0;
@@ -53850,7 +53908,18 @@ function makeFarmPositionalNeed(orgCode) {
                   : ratio <= 0.4 ? ["Need", "var(--down)"]
                   : ratio <= 0.7 ? ["Thin", "var(--neon-amber)"]
                   : ["OK", "var(--text-secondary)"];
-    const topFv = list.reduce((m, pl) => Math.max(m, pl.fv_close || 0), 0);
+    // B-F9: EFV_DISPLAY_SWAPS on prints the area's top eFV (the highest board value,
+    // printed through efvGradeDisplay); off prints the top consensus FV, labelled.
+    let topCell;
+    if (swaps) {
+      let best = null;
+      for (const pl of list) { const x = getEfv(pl); const v = efvBoardValue(x); if (v != null && (best == null || v > best.v)) best = { v, x }; }
+      const g = best ? efvGradeDisplay(best.x) : null;
+      topCell = g != null ? `<span class="fv-badge ${fvClass(String(g))} size-sm" data-grade-basis="efv" title="${escapeHtml(efvTooltip(best.x) || ("eFV " + g))}">${g}</span>` : "";
+    } else {
+      const topFv = list.reduce((m, pl) => Math.max(m, pl.fv_close || 0), 0);
+      topCell = topFv ? consFvBadgeHTML(Number(topFv), "size-sm", `Top consensus FV ${fvCeil(topFv)}`) : "";
+    }
     let nearest = null, nearOrd = -1;
     for (const pl of list) { const o = LEVEL_ORD[(pl.statline || {}).level]; if (o != null && o > nearOrd) { nearOrd = o; nearest = (pl.statline || {}).level; } }
     return `<tr>
@@ -53858,12 +53927,12 @@ function makeFarmPositionalNeed(orgCode) {
       <td style="text-align:right;font-variant-numeric:tabular-nums;">${n}</td>
       <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--text-tertiary);">${avg.toFixed(1)}</td>
       <td style="text-align:right;color:${verdict[1]};font-weight:700;">${verdict[0]}</td>
-      <td style="text-align:right;">${topFv ? `<span class="fv-badge ${fvClass(String(Math.round(topFv)))} size-sm">${Math.round(topFv)}</span>` : '<span class="split-sub">-</span>'}</td>
+      <td style="text-align:right;">${topCell || '<span class="split-sub">-</span>'}</td>
       <td style="text-align:right;color:var(--text-secondary);">${nearest || "-"}</td>
     </tr>`;
   }).join("");
   return `<div class="detail-title">Positional depth vs league <span class="detail-title-sub">graded prospects per area, the league's per-org average, and a surplus/need read · nearest = highest level with a graded prospect in that area</span></div>
-    <div style="overflow-x:auto;"><table class="split-table"><thead><tr><th>Area</th><th>Graded</th><th>Lg avg</th><th>Read</th><th>Top FV</th><th>Nearest</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    <div style="overflow-x:auto;"><table class="split-table"><thead><tr><th>Area</th><th>Graded</th><th>Lg avg</th><th>Read</th><th>${swaps ? "Top eFV" : "Top cons. FV"}</th><th>Nearest</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 // Graduation outcomes: players who reached MLB with this org, newest first,
 // with their WAG (WAR above/below the FV-implied expectation) so the reader
@@ -53887,7 +53956,10 @@ function makeFarmGraduates(orgCode) {
     const wag = (typeof gradVsFvProjection === "function") ? gradVsFvProjection(g) : null;
     const wagTxt = wag == null ? '<span class="split-sub">-</span>'
       : `<span style="color:${wag >= 0.5 ? "var(--up)" : wag <= -0.5 ? "var(--down)" : "var(--text-secondary)"};font-variant-numeric:tabular-nums;">${wag > 0 ? "+" : ""}${wag.toFixed(1)}</span>`;
-    const fv = g.fv_close != null ? `<span class="fv-badge ${fvClass(String(fvCeil(g.fv_close)))} size-sm">${fvCeil(g.fv_close)}</span>` : '<span class="split-sub">-</span>';
+    // B-F10: eFV at debut with EFV_DISPLAY_SWAPS on; the consensus grade at graduation, labelled, off.
+    const fv = (efvDisplaySwaps() ? efvAtDebutBadgeHTML(g, "size-sm")
+                : consFvBadgeHTML(g.fv_close != null ? Number(g.fv_close) : null, "size-sm", g.fv_close != null ? `Consensus FV at debut ${fvCeil(g.fv_close)}` : ""))
+      || '<span class="split-sub">-</span>';
     const click = g.player_key ? ` onclick="goToPlayer('${escapeHtml(g.player_key)}');" style="cursor:pointer;"` : "";
     const share = gradDevShare(g, orgCode);
     const nowWith = g.org && g.org !== orgCode ? escapeHtml(g.org) : '<span class="split-sub">here</span>';
@@ -53901,7 +53973,7 @@ function makeFarmGraduates(orgCode) {
     </tr>`;
   }).join("");
   return `<div class="detail-title">Recent graduates <span class="detail-title-sub">developed by ${escapeHtml(orgCode)} · Share = this club's development share (value at signing to the signing club, grade growth to the club that held him) · WAG = WAR above/below the FV-implied expectation (graduation outcome)</span></div>
-    <div style="overflow-x:auto;"><table class="split-table"><thead><tr><th>Player</th><th>Debut</th><th title="This club's development share of the graduate">Share</th><th title="The club he is with now">Now with</th><th style="text-align:center;">FV</th><th>WAG</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    <div style="overflow-x:auto;"><table class="split-table"><thead><tr><th>Player</th><th>Debut</th><th title="This club's development share of the graduate">Share</th><th title="The club he is with now">Now with</th><th style="text-align:center;">${efvDisplaySwaps() ? "eFV at debut" : "Cons. FV at debut"}</th><th>WAG</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 function renderFarmDetail(orgCode) {
   _ensureOrgTendencies();   // warm the sidecar for the GFX identity strip
@@ -54123,7 +54195,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Farm System Report · ${escapeHtml(org.org)} · #${farmWindowRank(org) ?? ' - '} of 30</span>
-      <span class="newsprint-eyebrow-meta">${farmPoolCountsText(org, rosterPlayersAll.length)} · ${org.total_fv != null ? org.total_fv.toFixed(0) + " total FV (graded)" : " - "}</span>
+      <span class="newsprint-eyebrow-meta">${farmPoolCountsText(org, rosterPlayersAll.length)} · ${org.total_fv != null ? org.total_fv.toFixed(0) + " total eFV (graded)" : " - "}</span>
     </div>
     <div class="detail-page-header" style="${orgStripe(org.org)}">
       <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0;">
@@ -54132,7 +54204,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
           <div class="player-display-meta">
             <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${orgLinkHTML(org.org, escapeHtml(org.org), { ctx: "franchise", cls: "px-club--text" })}</span>
-            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition">#${farmWindowRank(org)}</strong> of 30 · ${farmPoolCountsText(org, rosterPlayersAll.length)} · Total FV of graded <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : " - "}</strong>
+            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition">#${farmWindowRank(org)}</strong> of 30 · ${farmPoolCountsText(org, rosterPlayersAll.length)} · Total eFV of graded <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : " - "}</strong>
           </div>
         </div>
       </div>
@@ -54216,8 +54288,16 @@ function _renderFarmDetailBody(orgCode, org, root) {
           fv: efvRankValue(p),
         };
       });
-    let _dist = org.fv_distribution;
-    if (!_dist) { _dist = {}; for (const p of rosterPlayersAll) { if (p.fv_close == null) continue; const t = Math.round(p.fv_close); _dist[t] = (_dist[t] || 0) + 1; } }
+    // B-F13: EFV_DISPLAY_SWAPS on bins the printed eFV of the graded rows (the pool the header
+    // counts as graded); off bins consensus FV and the card
+    // names it (org.fv_distribution is never exported, so the fallback always runs).
+    const _distEfv = efvDisplaySwaps();
+    let _dist = _distEfv ? null : org.fv_distribution;
+    if (_distEfv) {
+      _dist = {};
+      for (const p of rosterPlayersAll) { const gb = gradeBlock(p, { primary: "xfv" }); if (gb.efvVal == null || gb.provisional) continue; _dist[gb.efvVal] = (_dist[gb.efvVal] || 0) + 1; }
+    }
+    if (!_dist) { _dist = {}; for (const p of rosterPlayersAll) { if (p.fv_close == null) continue; const t = fvCeil(p.fv_close); _dist[t] = (_dist[t] || 0) + 1; } }
     const _topSurplus = rosterPlayersAll
       .map(p => {
         const mm = playerSurplusMM(p);
@@ -54227,7 +54307,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       .sort((a, b) => b.mm - a.mm)
       .slice(0, 6);
     _gfxSet("farm-detail", "farm-card", [org], {
-      top5: _top5, dist: _dist, farmRank: farmWindowRank(org),
+      top5: _top5, dist: _dist, distBasis: _distEfv ? "efv" : "consensus", farmRank: farmWindowRank(org),
       surplusStr: surplusValue, surplusMM: farmSurplusBreakdown.total,
       dvm: (org.dvm_plus || {}), grades: (org.grades || {}),
       gradedCount: (org.prospects || []).length, topSurplus: _topSurplus,
@@ -54464,6 +54544,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     fv_label: _ypFvNum != null
       ? String((_ypX && _ypX.xfv_grade != null) ? Math.round(_ypFvNum) : fvCeil(_ypFvNum))
       : " - ",
+    fv_word: (_ypX && _ypX.xfv_grade != null) ? "eFV" : "Consensus FV",
   } : null;
   // Top-prospect badge leads with the live eFV (round-to-NEAREST), falling
   // back to the baked consensus fv_label only when the model abstains - so
@@ -54487,7 +54568,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       ${headshotHTML(ypPlayer || {}, 64)}
       <div style="min-width:0;">
         <div style="font-size:14px;font-weight:600;${ypPlayer ? 'color:var(--neon-cyan);' : ''}">${escapeHtml(yp.name)}</div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(yp.pos||'')} · age ${yp.age != null ? yp.age.toFixed(1) : " - "} · FV ${yp.fv_label}</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(yp.pos||'')} · age ${yp.age != null ? yp.age.toFixed(1) : " - "} · ${yp.fv_word} ${yp.fv_label}</div>
       </div>
     </div>` : ' - '}
   </div>`;
@@ -54509,10 +54590,38 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // at least 30 days older than the latest point; if no such point
   // exists the player is skipped. Sorted by absolute movement desc so
   // the loudest swings surface first.
+  // EFV_DISPLAY_SWAPS on (B-F1): the move is the printed eFV now minus the printed eFV at
+  // the latest eFV-history point at least 30 days before the series' last point, and the
+  // badge is the eFV. Off: the consensus move, labelled consensus.
   const moversCard = (() => {
     const cutoffMs = 30 * 24 * 60 * 60 * 1000;
+    const swaps = efvDisplaySwaps();
     const movers = [];
     for (const rp of rosterPlayersAll) {
+      if (swaps) {
+        // A provisional or routed row's inline series is one point per season, not dated
+        // board snapshots, so it has no 30-day move to report.
+        const gx = gradeBlock(rp, { primary: "xfv" });
+        if (gx.provisional || (gx.x && gx.x.grade_basis === "provisional_capped")) continue;
+        const hist = getEfvHistory(rp);
+        if (!(hist && hist.length >= 2)) continue;
+        const now = gx.efvVal;
+        const last = hist[hist.length - 1];
+        const lastMs = Date.parse(last.d);
+        if (now == null || isNaN(lastMs)) continue;
+        let prior = null;
+        for (let i = hist.length - 2; i >= 0; i--) {
+          const ms = Date.parse(hist[i].d);
+          if (!isNaN(ms) && lastMs - ms >= cutoffMs) { prior = hist[i]; break; }
+        }
+        if (!prior || prior.x == null) continue;
+        const priorRaw = _efvHistoryOnBoardBasis() ? Number(prior.x)
+          : efvBoardValue(getEfv(rp)) + (Number(prior.x) - Number(last.x));
+        if (!isFinite(priorRaw)) continue;
+        const delta = now - Math.round(priorRaw);
+        if (Math.abs(delta) >= 5) movers.push({ rp, delta });
+        continue;
+      }
       const pts = rp.points || [];
       if (pts.length < 2) continue;
       const latest = pts[pts.length - 1];
@@ -54530,24 +54639,26 @@ function _renderFarmDetailBody(orgCode, org, root) {
       if (Math.abs(delta) >= 5) movers.push({ rp, delta, latest });
     }
     movers.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+    const unit = swaps ? "eFV" : "consensus FV";
     if (!movers.length) {
       return `<div class="farm-side-card">
-        <div class="side-title">Recent movers <span class="side-count">trailing 30d</span></div>
-        <span style="color:var(--text-tertiary);font-size:var(--fs-sm);">No prospects moved ≥5 FV points in the last 30 days.</span>
+        <div class="side-title">Recent movers <span class="side-count">trailing 30d · ${unit}</span></div>
+        <span style="color:var(--text-tertiary);font-size:var(--fs-sm);">No prospects moved ≥5 ${unit} in the last 30 days.</span>
       </div>`;
     }
     const rows = movers.slice(0, 6).map(({ rp, delta, latest }) => {
       const arrow = delta > 0 ? "▲" : "▼";
       const color = delta > 0 ? "var(--up)" : "var(--down)";
-      const fvL = latest.consensus_fv_label;
+      const badge = (swaps ? farmEfvBadgeHTML(rp, "size-sm") : consFvBadgeHTML(latest.consensus_fv_label, "size-sm"))
+        || `<span style="width:24px;"></span>`;
       return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
-        <span class="fv-badge ${fvClass(fvL)} size-sm">${fvL}</span>
+        ${badge}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
-        <span style="font-family:var(--font-mono);font-size:10px;color:${color};font-variant-numeric:tabular-nums;font-weight:700;">${arrow}${delta > 0 ? "+" : ""}${delta.toFixed(1)}</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:${color};font-variant-numeric:tabular-nums;font-weight:700;" title="${swaps ? "eFV move over 30 days (the two printed grades subtracted)" : "Consensus FV move over 30 days"}">${arrow}${delta > 0 ? "+" : ""}${swaps ? delta : delta.toFixed(1)}</span>
       </div>`;
     }).join("");
     return `<div class="farm-side-card">
-      <div class="side-title">Recent movers <span class="side-count">trailing 30d · ${movers.length}</span></div>
+      <div class="side-title">Recent movers <span class="side-count">trailing 30d · ${unit} · ${movers.length}</span></div>
       ${rows}
     </div>`;
   })();
@@ -54558,9 +54669,13 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // into a composite `promo_score` for ranking so a 50-FV prospect
   // raking at RPS+ 130 surfaces alongside a 55-FV name with
   // average-for-level results. Skipped when the org has none.
+  // EFV_DISPLAY_SWAPS on (B-F2): the gate, the score and the badge read the printed eFV.
+  // Off: consensus FV, labelled.
   const promoCard = (() => {
     const PROMO_LEVELS = new Set(["A+", "AA", "AAA"]);
     const norms = DATA.level_norms || {};
+    const swaps = efvDisplaySwaps();
+    const unit = swaps ? "eFV" : "Consensus FV";
     // Composite ranking: lean on FV but let strong RPS+ overperformance
     // pull a prospect up (and weak RPS+ pull one down). Weight chosen
     // so a +20 RPS+ swing is worth ~8 FV points - roughly one tier.
@@ -54575,7 +54690,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
                      ?? (((norms[sl.level] || {}).age || {}).median_age);
       if (ageCenter == null || rp.age == null) return null;
       if (rp.age > ageCenter) return null;
-      const fv = rp.fv_close;
+      const fv = swaps ? gradeBlock(rp, { primary: "xfv" }).efvVal : rp.fv_close;
       const rpsObj = (typeof getRpsPlus === "function") ? getRpsPlus(rp) : null;
       const rpsPlus = rpsObj ? rpsObj.plus : null;
       // Inclusion gate: scout signal (FV ≥ 50) OR performance signal
@@ -54596,10 +54711,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
       .map(y => `${etaCounts[y]} in ${y}`).join(" · ");
     const rows = candidates.slice(0, 6).map(({ rp, fv, rpsPlus }) => {
       const sl = rp.statline || {};
-      const fvL = fv != null ? fvCeil(fv) : " - ";
-      const fvBadge = fvL !== " - "
-        ? `<span class="fv-badge ${fvClass(String(fvL))} size-sm">${fvL}</span>`
-        : `<span class="fv-badge size-sm" style="opacity:0.4;"> - </span>`;
+      const fvBadge = (swaps ? farmEfvBadgeHTML(rp, "size-sm") : consFvBadgeHTML(fv, "size-sm"))
+        || `<span class="fv-badge size-sm" style="opacity:0.4;"> - </span>`;
       const rpsChip = rpsPlus != null
         ? `<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:${rpsPlus >= 120 ? 'var(--up)' : rpsPlus >= 100 ? 'var(--neon-cyan)' : 'var(--text-tertiary)'};font-variant-numeric:tabular-nums;" title="RPS+ ${rpsPlus} vs same-age peers at ${sl.level}">${rpsPlus}</span>`
         : `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);"> - </span>`;
@@ -54613,7 +54726,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     }).join("");
     return `<div class="farm-side-card">
       <div class="side-title">Promotion candidates <span class="side-count">${candidates.length}</span></div>
-      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;margin-bottom:4px;">Young-for-level at A+/AA/AAA · FV ≥ 50 or RPS+ ≥ 110 · ranked by FV + 0.4·(RPS+ − 100)</div>
+      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;margin-bottom:4px;">Young-for-level at A+/AA/AAA · ${unit} ≥ 50 or RPS+ ≥ 110 · ranked by ${unit} + 0.4·(RPS+ − 100)</div>
       ${etaSummary ? `<div style="font-size:10px;color:var(--neon-cyan);font-family:var(--font-mono);letter-spacing:0.02em;margin-bottom:6px;font-variant-numeric:tabular-nums;">${etaSummary}</div>` : ""}
       ${rows}
     </div>`;
@@ -54706,11 +54819,10 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const gradsCard = `<div class="farm-side-card">
     <div class="side-title">Recent debuts <span class="side-count">${graduates.length}</span></div>
     ${sortedGrads.slice(0, 6).map(g => {
-      const fvAtGrad = g.fv_close != null ? fvCeil(g.fv_close) : null;
-      const fvLbl = fvAtGrad != null ? `${fvAtGrad}` : null;  // v26
-      const fvBadge = fvLbl != null
-        ? `<span class="fv-badge ${fvClass(String(fvAtGrad))} size-xs" style="flex-shrink:0;">${fvLbl}</span>`
-        : `<span style="width:22px;flex-shrink:0;"></span>`;
+      // B-F4: eFV at debut with EFV_DISPLAY_SWAPS on; the consensus grade at graduation, labelled, off.
+      const fvBadge = (efvDisplaySwaps() ? efvAtDebutBadgeHTML(g, "size-xs")
+                       : consFvBadgeHTML(g.fv_close != null ? Number(g.fv_close) : null, "size-xs", g.fv_close != null ? `Consensus FV at debut ${fvCeil(g.fv_close)}` : ""))
+        || `<span style="width:22px;flex-shrink:0;"></span>`;
       // Realized Market AAV - multiply playing-time-weighted WAR/yr by
       // the $/WAR market anchor. Only renders when the graduate has
       // ≥1 full-season equivalent of MLB time.
@@ -54742,11 +54854,10 @@ function _renderFarmDetailBody(orgCode, org, root) {
     ? `<div class="farm-side-card">
         <div class="side-title">Toolsiest <span class="side-count">Tool leaders</span></div>
         ${toolsLeaders.map(p => {
-          const fvL = p.fv_close != null ? fvCeil(p.fv_close) : null;
-          const fvLbl = fvL != null ? `${fvL}` : null;  // v26
-          const fvBadge = fvLbl != null
-            ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvLbl}</span>`
-            : `<span style="width:22px;flex-shrink:0;"></span>`;
+          // B-F5: eFV with EFV_DISPLAY_SWAPS on; consensus FV, labelled, off.
+          const fvBadge = (efvDisplaySwaps() ? farmEfvBadgeHTML(p, "size-xs")
+                           : consFvBadgeHTML(p.fv_close != null ? Number(p.fv_close) : null, "size-xs"))
+            || `<span style="width:22px;flex-shrink:0;"></span>`;
           return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
             ${fvBadge}
             <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.player_name)}</span>
@@ -54773,14 +54884,15 @@ function _renderFarmDetailBody(orgCode, org, root) {
     const versaPlayers = rosterPlayersAll
       .map(rp => ({ rp, versa: _latestFgVersa(rp) }))
       .filter(x => x.versa)
-      .sort((a, b) => (b.rp.fv_close || 0) - (a.rp.fv_close || 0))
+      // B-F5: ordered and badged on eFV with EFV_DISPLAY_SWAPS on; consensus FV, labelled, off.
+      .sort(efvDisplaySwaps() ? ((a, b) => efvRankValue(b.rp) - efvRankValue(a.rp))
+                              : ((a, b) => (b.rp.fv_close || 0) - (a.rp.fv_close || 0)))
       .slice(0, 6);
     if (!versaPlayers.length) return "";
     const rows = versaPlayers.map(({ rp, versa }) => {
-      const fvL = rp.fv_close != null ? fvCeil(rp.fv_close) : null;
-      const fvBadge = fvL != null
-        ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvL}</span>`
-        : `<span style="width:22px;flex-shrink:0;"></span>`;
+      const fvBadge = (efvDisplaySwaps() ? farmEfvBadgeHTML(rp, "size-xs")
+                       : consFvBadgeHTML(rp.fv_close != null ? Number(rp.fv_close) : null, "size-xs"))
+        || `<span style="width:22px;flex-shrink:0;"></span>`;
       return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
         ${fvBadge}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
@@ -54813,13 +54925,22 @@ function _renderFarmDetailBody(orgCode, org, root) {
       if (/^(RHP|LHP|SP|P)$/.test(head)) return "SP";
       return null;
     };
+    // B-F6: EFV_DISPLAY_SWAPS on sums the eFV board value (a row with no eFV adds nothing
+    // and is counted as such); off sums consensus FV with 40 for an ungraded row, labelled.
+    const swaps = efvDisplaySwaps();
     let total = 0;
     for (const p of rosterPlayersAll) {
       const lvl = (p.statline || {}).level;
       const pos = posMap(p);
       if (!lvl || !pos || !heatmap[lvl] || !heatmap[lvl][pos]) continue;
       heatmap[lvl][pos].count++;
-      heatmap[lvl][pos].fv_sum += (p.fv_close || 40);
+      if (swaps) {
+        const ev = efvBoardValue(getEfv(p));
+        if (ev != null) heatmap[lvl][pos].fv_sum += ev;
+        else heatmap[lvl][pos].no_efv = (heatmap[lvl][pos].no_efv || 0) + 1;
+      } else {
+        heatmap[lvl][pos].fv_sum += (p.fv_close || 40);
+      }
       total++;
     }
     if (!total) return "";
@@ -54829,7 +54950,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       const c = heatmap[lvl][pos];
       if (!c.count) return `<span class="heatmap-cell empty" title="${lvl} ${pos}: 0">·</span>`;
       const intensity = maxFvSum > 0 ? Math.min(1, c.fv_sum / maxFvSum) : 0;
-      return `<span class="heatmap-cell" style="background:rgba(143,205,245,${(0.15 + 0.55 * intensity).toFixed(2)});" title="${lvl} ${pos}: ${c.count} prospect${c.count === 1 ? "" : "s"} · total FV ${c.fv_sum.toFixed(0)}">${c.count}</span>`;
+      return `<span class="heatmap-cell" style="background:rgba(143,205,245,${(0.15 + 0.55 * intensity).toFixed(2)});" title="${lvl} ${pos}: ${c.count} prospect${c.count === 1 ? "" : "s"} · ${swaps ? `total eFV ${c.fv_sum.toFixed(0)}${c.no_efv ? ` (${c.no_efv} with no eFV)` : ""}` : `total consensus FV ${c.fv_sum.toFixed(0)} (an ungraded prospect counts 40)`}">${c.count}</span>`;
     };
     const headerRow = `<span class="heatmap-label"></span>${HEATMAP_POS.map(p => `<span class="heatmap-label">${p}</span>`).join("")}`;
     const dataRows = HEATMAP_LEVELS
@@ -54837,7 +54958,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       .map(lvl => `<span class="heatmap-label">${lvl}</span>${HEATMAP_POS.map(p => cellHTML(lvl, p)).join("")}`)
       .join("");
     return `<div class="farm-side-card">
-      <div class="side-title">Depth heatmap <span class="side-count">level × position · FV-shaded</span></div>
+      <div class="side-title">Depth heatmap <span class="side-count">level × position · ${swaps ? "eFV" : "consensus FV"}-shaded</span></div>
       <div class="farm-depth-heatmap">${headerRow}${dataRows}</div>
     </div>`;
   })();
@@ -54853,12 +54974,16 @@ function _renderFarmDetailBody(orgCode, org, root) {
     // pre-normalized into 0-N scales so cosine similarity isn't
     // dominated by any single high-magnitude axis.
     const win = state.formWindow || "7y";
+    const _cmpSwaps = efvDisplaySwaps();
     const featureVec = (o) => {
       const v = [];
-      // FV histogram - 5 buckets, raw counts.
+      // FV histogram - 5 buckets, raw counts. B-F7: EFV_DISPLAY_SWAPS on bins the
+      // prospect's eFV (nearest; consensus where eFV abstains, as org_summary's own
+      // tiers do); off bins consensus FV.
       const fvHist = [0, 0, 0, 0, 0];  // 50, 55, 60, 65, 70+
       for (const pr of (o.prospects || [])) {
-        const fv = Number(pr.fv_label) || Math.round(pr.fv_raw || 0);
+        const fv = (_cmpSwaps && pr.xfv_grade != null) ? Math.round(Number(pr.xfv_grade))
+                 : Number(pr.fv_label) || Math.round(pr.fv_raw || 0);
         if (fv >= 70) fvHist[4]++;
         else if (fv >= 65) fvHist[3]++;
         else if (fv >= 60) fvHist[2]++;
@@ -54917,7 +55042,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       .slice(0, 3);
     if (!comps.length) return "";
     return `<div class="farm-side-card">
-      <div class="side-title">Comparable farms <span class="side-count">composite: FV mix · positions · tiers · momentum · age · spend</span></div>
+      <div class="side-title">Comparable farms <span class="side-count">composite: ${_cmpSwaps ? "eFV" : "consensus FV"} mix · positions · tiers · momentum · age · spend</span></div>
       ${comps.map(({ o, sim }) => `<div data-org="${escapeHtml(o.org)}" style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;">
         ${orgLinkHTML(o.org, pxClubLogoHTML(o.org, "sm"), { mark: true })}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${orgLinkHTML(o.org, escapeHtml(fullOrgName(o.org)), { cls: "px-club--text" })} <span style="color:var(--text-tertiary);font-size:9px;letter-spacing:0.06em;">${escapeHtml(o.org)}</span></span>
@@ -54946,9 +55071,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
           const tj = (rp.health_profile || {}).is_post_tj
             ? ` <span style="font-size:9px;color:var(--neon-violet);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">TJ</span>`
             : "";
-          const fvL = rp.fv_close != null ? fvCeil(rp.fv_close) : null;
+          // B-F3: eFV with EFV_DISPLAY_SWAPS on; consensus FV, labelled, off.
+          const fvB = (efvDisplaySwaps() ? farmEfvBadgeHTML(rp, "size-sm")
+                       : consFvBadgeHTML(rp.fv_close != null ? Number(rp.fv_close) : null, "size-sm"))
+            || `<span style="width:24px;"></span>`;
           return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
-            ${fvL != null ? `<span class="fv-badge ${fvClass(String(fvL))} size-sm">${fvL}</span>` : `<span style="width:24px;"></span>`}
+            ${fvB}
             <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}${tj}</span>
             <span style="font-family:var(--font-mono);font-size:10px;color:var(--neon-amber);font-variant-numeric:tabular-nums;">${days != null ? days + 'd' : ' - '}</span>
           </div>`;
@@ -55394,7 +55522,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       <button class="chip${state.depthSort === "eta" ? " active" : ""}" data-depth-sort="eta" type="button" title="Soonest ETA first, FV as tiebreaker. Prospects without an ETA sink to the bottom.">ETA</button>
     </div>
     ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "level")}
-    <div class="detail-title">Age vs FV scatter <span class="detail-title-sub">Each dot is one prospect - point size scales with composite Tool grade when published, hue encodes position bucket</span></div>
+    <div class="detail-title">Age vs eFV scatter <span class="detail-title-sub">Each dot is one prospect (eFV, consensus FV where eFV abstains) - point size scales with composite Tool grade when published, hue encodes position bucket</span></div>
     ${makeAgeFvScatter(rosterPlayersAll)}
     ${gradedSection}
     ${ungradedStandoutsSection}`;
@@ -55468,15 +55596,15 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const _topN = Math.min(8, _surplusByProspect.length);
   const surplusSection = _surplusByProspect.length
     ? `<div class="detail-title" style="margin-top:18px;">Surplus details <span class="detail-title-sub">baked career-path engine SV across the active roster (the per-player value on the prospect list) · ${_fmtM(_surplusTotal)} total${_orgGrossSub}${_orgDvmSub}</span></div>
-       <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:start;">
-         <div>
+       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;align-items:start;">
+         <div style="min-width:0;">
            <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top surplus contributors</div>
            <div class="table-scroll-x"><table class="detail-table" style="width:100%;">
-             <thead><tr><th>Player</th><th style="text-align:center;">FV</th><th style="text-align:right;">Surplus</th><th style="text-align:right;" title="$DvM+ - surplus-development index (100 = FV-tier average appreciation; >100 = developing faster than same-grade peers).">$DvM+</th><th style="text-align:right;" title="Share of the org's total active-roster surplus.">% org</th></tr></thead>
+             <thead><tr><th>Player</th><th style="text-align:center;" title="The consensus FV this surplus engine reads">Consensus FV</th><th style="text-align:right;">Surplus</th><th style="text-align:right;" title="$DvM+ - surplus-development index (100 = FV-tier average appreciation; >100 = developing faster than same-grade peers).">$DvM+</th><th style="text-align:right;" title="Share of the org's total active-roster surplus.">% org</th></tr></thead>
              <tbody>
                ${_surplusByProspect.slice(0, _topN).map(r => `<tr>
                  <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(r.p.player_key)}');" style="color:var(--text-primary);">${escapeHtml(r.p.player_name)}</a></td>
-                 <td style="text-align:center;"><span class="fv-badge ${fvClass(String(fvCeil(r.fv)))} size-sm">${fvCeil(r.fv)}</span></td>
+                 <td style="text-align:center;">${consFvBadgeHTML(r.fv != null ? Number(r.fv) : null, "size-sm")}</td>
                  <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtM(r.surplus)}</td>
                  <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${r.dvm != null ? dollarDvmColor(r.dvm) : 'var(--text-tertiary)'};" title="${r.dvm != null ? escapeHtml(dollarDvmTooltip(r.dvm)) : ''}">${r.dvm != null ? Math.round(r.dvm) : ' - '}</td>
                  <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--text-tertiary);">${_surplusTotal > 0 ? (100 * r.surplus / _surplusTotal).toFixed(0) + '%' : ' - '}</td>
@@ -55484,13 +55612,13 @@ function _renderFarmDetailBody(orgCode, org, root) {
              </tbody>
            </table></div>
          </div>
-         <div>
-           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Surplus by FV tier</div>
+         <div style="min-width:0;">
+           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Surplus by consensus FV tier</div>
            <table class="detail-table" style="width:100%;">
              <thead><tr><th>Tier</th><th style="text-align:right;">$ Total</th><th style="text-align:right;">% of Org</th></tr></thead>
              <tbody>
                ${Object.entries(_surplusByTier).map(([tier, v]) => v > 0 ? `<tr>
-                 <td>FV ${tier}</td>
+                 <td>Consensus FV ${tier}</td>
                  <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtM(v)}</td>
                  <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--text-tertiary);">${_surplusTotal > 0 ? (100 * v / _surplusTotal).toFixed(0) + '%' : ' - '}</td>
                </tr>` : "").join("")}

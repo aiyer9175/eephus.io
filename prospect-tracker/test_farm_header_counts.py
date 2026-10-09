@@ -47,7 +47,10 @@ def test_no_header_prints_the_pool_length_as_prospects_tracked():
     assert "} prospects tracked</div>" not in src  # the GFX card's old org.count line
     assert src.count("farmPoolCountsText(org, rosterPlayersAll.length)") == 2
     assert "farmPoolCountsText(org.count != null ? org" in src  # GFX card
-    assert "total FV (graded)" in src and "Total FV of graded" in src
+    # Q9_11 (owner ask 5): org.total_fv sums eFV (consensus only where eFV abstains), so
+    # both headers name eFV; the bare "FV" wording is gone.
+    assert "total eFV (graded)" in src and "Total eFV of graded" in src
+    assert "total FV (graded)" not in src and "Total FV of graded" not in src
 
 
 @pytest.fixture(scope="module")
