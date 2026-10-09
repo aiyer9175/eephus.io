@@ -69,8 +69,14 @@ exists in its gate document (a later commit extends it: 2020 to 2024 at the R-LV
 look record, each cohort from R_VM_FIRST_DEBUT_YEAR at its R-VM look record). The
 projection superlatives are dark for PROJ_DARK_SEASONS (2026: no preseason file
 exists and label season 2026 is a reserved frame of three registered looks) and
-for any season whose PROJ_LOOKS entry is missing or not yet recorded; AWARDS_13
-fills PROJ_LOOKS. Nothing here groups any realized number by FV, eFV or consensus
+for any season whose PROJ_LOOKS entry is missing or not yet recorded.
+preseason_read() (AWARDS_13) is the one reader of M15's frozen Opening Day file
+(docs/PROJ_FORWARD_VINTAGE_GATE.md): it asks the look gate FIRST and opens the
+file only when every look on the label season is recorded, then checks the
+file's sha256 against the freeze log, so no projected number is loaded while a
+look is pending. The Manager card's preseason column (W minus the frozen wins)
+reads the same file under the same gate plus the club look; it never replaces
+the score. Nothing here groups any realized number by FV, eFV or consensus
 band and nothing reads the realized FV anchor (docs/PROSPECT_ANCHOR_GATE.md);
 test_awards_guards.py scans this source for both.
 
@@ -82,6 +88,7 @@ the exporter and the tests run over every served string.
 from __future__ import annotations
 
 import copy
+import json
 import math
 import re
 import sys
@@ -187,11 +194,47 @@ OPEN_LATE_COHORTS: dict[int, dict] = {}
 
 #: Seasons whose projection superlatives are dark by decision (AW-Q3, F12).
 PROJ_DARK_SEASONS = frozenset({2026})
-#: Per label season, the registered looks that must all be recorded before
-#: proj_above / proj_below light: {season: ({"gate_doc", "results_heading",
-#: "record"}, ...)}. Empty until AWARDS_13 fills the reader (2027: the forward
-#: gate's season-end score, AG_16, PJ_11; TM_9 for the club column).
-PROJ_LOOKS: dict[int, tuple] = {}
+#: The two readers of the frozen file: the player pair (proj_above, proj_below)
+#: and the Manager card's preseason column.
+PROJ_SCOPES = ("players", "clubs")
+#: Per label season, the registered looks that must all be recorded before the
+#: frozen Opening Day file is read (AWARDS_PLAN 4.2, 4.3, C6): {season: ({...}, ...)}.
+#: Each entry names its gate document, the results heading its record sits under,
+#: `record` (the name blocked_on lists) and `record_re`, the line pattern only the
+#: look's own result row matches (a dated row; an amendment, slip or VOID row never
+#: matches), and `scope`, the readers it holds closed. An entry whose document is
+#: not at HEAD carries `pending` and no heading: it is never recorded, so the card
+#: stays closed, and test_awards_guards.py fails once the document lands, so its
+#: heading is filled from the document. 2027: the forward gate's season-end score
+#: (M15), AG_16, PJ_11, and TM_9 for the club column.
+PROJ_LOOKS: dict[int, tuple] = {
+    2027: (
+        {"gate_doc": "docs/PROJ_FORWARD_VINTAGE_GATE.md",
+         "results_heading": "## 9. The append-only record",
+         "record": "PROJ_FORWARD_VINTAGE 2027 season-end score",
+         "record_re": (r"^(?!.*\b(?:[Aa]mend\w*|[Ss]lip\w*|VOID|MISSED|no_season)\b)"
+                       r"(?=.*\b\d{4}-\d{2}-\d{2}\b)(?=.*\b2027\b)(?=.*\bscore)"
+                       r"(?=.*\b(?:AHEAD|BEHIND|NOT_RESOLVED)\b)"),
+         "scope": PROJ_SCOPES},
+        {"gate_doc": "docs/AGING_V3_ML_FORWARD_GATE.md",
+         "results_heading": None,
+         "record": "AG_16 aging v3 ML forward look, label season 2027",
+         "record_re": None,
+         "pending": "registered by AG_14_ML_V3_FORWARD_REGISTRATION; not at HEAD",
+         "scope": PROJ_SCOPES},
+        {"gate_doc": "docs/PROJ_COMPONENTS_GATE.md",
+         "results_heading": "## 9. The append-only record",
+         "record": "PJ_11 PJ-W result, label season 2027",
+         "record_re": r"^\|\s*\d{4}-\d{2}-\d{2}\s*\|\s*PJ-W\s*\|\s*(?:PASS|FAIL|UNDERPOWERED)\b",
+         "scope": PROJ_SCOPES},
+        {"gate_doc": "docs/TEAM_PROJECTIONS_GATE.md",
+         "results_heading": "## 8. The append-only record",
+         "record": "TM_9 FORWARD result, label season 2027",
+         "record_re": (r"^(?!.*\b(?:[Aa]mend\w*|[Ss]lip\w*|VOID)\b)(?=.*\b\d{4}-\d{2}-\d{2}\b)"
+                       r"(?=.*\b(?:TM_9|TM_9_TEAM_LOOK_2027|forward_2027)\b)"),
+         "scope": ("clubs",)},
+    ),
+}
 
 #: AWARDS_PLAN 5.15: never in served copy or a payload string (whole words).
 VERDICT_WORDS = (
@@ -620,9 +663,11 @@ def manager_scores(standings: list[dict], team_outlook: list[dict], war_earned,
 
 def manager_ballot(standings: list[dict], team_outlook: list[dict], war_earned,
                    league: str, season: int, *, war_provider: str,
-                   n: int | None = None) -> dict:
+                   n: int | None = None, preseason: dict | None = None) -> dict:
     """Manager of the Year in league L on club-seasons, no floor (AW-Q1); ties by
-    unrounded score, W minus Pythagorean W, club code."""
+    unrounded score, W minus Pythagorean W, club code. With `preseason` (the
+    "clubs" read of preseason_read, or {} to ask the gate alone) the result carries
+    `preseason_column` (manager_preseason); the order never reads it."""
     if league not in LEAGUES:
         raise ValueError(f"league must be AL or NL, not {league!r}")
     scores = [r for r in manager_scores(standings, team_outlook, war_earned, season,
@@ -646,13 +691,18 @@ def manager_ballot(standings: list[dict], team_outlook: list[dict], war_earned,
             "links": {"management": f"/management/#team={r['club']}",
                       "franchise": f"/franchise/#team={r['club']}"},
         })
+    column = (manager_preseason(rows, preseason or None, season)
+              if preseason is not None else None)
     top = _ballot("MOY", rows, n)
-    return {"award": "MOY", "league": league, "season": int(season), "top": top,
-            "n_pool": len(pool), "floor": floors("MOY", season), "excluded": [],
-            "unscored": [{"club": r["club"], "missing": r["missing"]} for r in unscored],
-            "war_provider": war_provider,
-            "lead": lead_sentence("MOY", top, war_provider),
-            "tiebreak_sentence": tiebreak_sentence("MOY", top)}
+    out = {"award": "MOY", "league": league, "season": int(season), "top": top,
+           "n_pool": len(pool), "floor": floors("MOY", season), "excluded": [],
+           "unscored": [{"club": r["club"], "missing": r["missing"]} for r in unscored],
+           "war_provider": war_provider,
+           "lead": lead_sentence("MOY", top, war_provider),
+           "tiebreak_sentence": tiebreak_sentence("MOY", top)}
+    if column is not None:
+        out["preseason_column"] = column
+    return out
 
 
 # --- superlatives -------------------------------------------------------------------
@@ -760,7 +810,11 @@ def reserved_frames() -> dict:
 def look_record_exists(entry: dict, root: Path | None = None) -> bool:
     """True when the gate document `entry['gate_doc']` has the section under
     `entry['results_heading']` and that section carries a line naming
-    `entry['record']` that is not the empty placeholder."""
+    `entry['record']` that is not the empty placeholder. With `record_re` the
+    line must match that pattern instead (the look's own result row). A
+    `pending` entry, or one with no heading, is never recorded."""
+    if entry.get("pending") or not entry.get("results_heading"):
+        return False
     root = Path(root) if root is not None else ROOT
     path = root / entry["gate_doc"]
     if not path.exists():
@@ -779,11 +833,13 @@ def look_record_exists(entry: dict, root: Path | None = None) -> bool:
         if s.startswith("#") and (len(s) - len(s.lstrip("#"))) <= level:
             break
         body.append(s)
+    pattern = entry.get("record_re")
+    rx = re.compile(pattern) if pattern else None
     record = str(entry["record"])
     for s in body:
         if not s or s.startswith("(Empty"):
             continue
-        if record in s:
+        if (rx.search(s) if rx is not None else record in s):
             return True
     return False
 
@@ -869,31 +925,126 @@ def prospect_below(rows, season, *, war_provider, top_n=SL_TOP_N, root=None,
 
 # the projection pair (dark until its looks are recorded)
 
+def proj_looks(season: int, scope: str = "players") -> tuple:
+    """The PROJ_LOOKS entries on label season S that hold `scope` closed (an entry
+    with no `scope` holds both readers)."""
+    if scope not in PROJ_SCOPES:
+        raise ValueError(f"scope must be one of {PROJ_SCOPES}, not {scope!r}")
+    return tuple(e for e in PROJ_LOOKS.get(int(season), ())
+                 if scope in (e.get("scope") or PROJ_SCOPES))
+
+
+def proj_looks_pending(season: int, *, scope: str = "players", root: Path | None = None,
+                       record_exists=look_record_exists) -> list[str]:
+    """The `record` names of the looks on label season S not yet recorded for `scope`."""
+    return [str(e.get("record")) for e in proj_looks(season, scope)
+            if not record_exists(e, root)]
+
+
 def proj_blocked_on(season: int, *, root: Path | None = None,
-                    record_exists=look_record_exists) -> str | None:
-    """The sentence that keeps proj_above / proj_below dark for S, or None when
-    every registered look on label season S is recorded."""
+                    record_exists=look_record_exists, scope: str = "players") -> str | None:
+    """The sentence that keeps proj_above / proj_below (scope "players") or the
+    Manager card's preseason column (scope "clubs") dark for S, or None when every
+    registered look on label season S for that scope is recorded."""
     s = int(season)
     if s in PROJ_DARK_SEASONS:
         return (f"No projection was saved before the {s} season. From {s + 1} this card reads "
                 f"the projection frozen the day before Opening Day, once that season's "
                 f"registered checks are recorded.")
-    looks = PROJ_LOOKS.get(s)
-    if not looks:
+    if not proj_looks(s, scope):
         return (f"The {s} preseason projection has no registered check on file. This card "
                 f"reads the projection frozen the day before Opening Day once every "
                 f"registered check on the {s} label season is recorded.")
-    missing = [str(e.get("record")) for e in looks if not record_exists(e, root)]
-    if missing:
-        return (f"The registered checks on the {s} label season are not all recorded "
-                f"({', '.join(missing)}). This card lights once they are.")
+    if proj_looks_pending(s, scope=scope, root=root, record_exists=record_exists):
+        return (f"The frozen projection for {s} is checked against {s}'s results after its "
+                f"registered looks; this card opens when they are recorded.")
     return None
 
 
-def _proj_pair(rows, season, *, war_provider, largest_first, top_n, root, record_exists) -> dict:
+def _first_of(seq):
+    return seq[0] if isinstance(seq, list) and seq else None
+
+
+def preseason_read(season: int, *, scope: str = "players", root: Path | None = None,
+                   vintage_dir: Path | None = None, record_exists=look_record_exists) -> dict:
+    """The one reader of M15's frozen Opening Day file for label season S
+    (docs/PROJ_FORWARD_VINTAGE_GATE.md sections 3 and 7). Never writes, never
+    projects anything of its own.
+
+    Order: the look gate for `scope` first (2026 and any season with a pending
+    look return here, before the freeze log or the file is opened); then the
+    season's one freeze log entry, which must be `frozen` and verify
+    (proj_forward_vintage.entry_problems); then the file's bytes, whose sha256
+    must equal the logged one. Scope "players" returns vets {mlbam: {war, p10,
+    p90, key}} from vets[] war[0], warP10[0], warP90[0] and needs the entry's
+    `label_provider` (the WAR series the frozen file was trained on); scope
+    "clubs" returns clubs {club: wins} from team_outlook[].byYear[0].wins, joined
+    through trades.canonical_org. A closed read carries `blocked_on` and empty maps."""
+    s = int(season)
+    out = {"season": s, "scope": scope, "blocked_on": None, "file": None, "sha256": None,
+           "frozen_at": None, "label_provider": None, "vets": {}, "clubs": {}}
+    blocked = proj_blocked_on(s, root=root, record_exists=record_exists, scope=scope)
+    if blocked:
+        out["blocked_on"] = blocked
+        return out
+    import proj_forward_vintage as pfv
+    vdir = Path(vintage_dir) if vintage_dir is not None else pfv.VINTAGE_DIR
+    closed_hash = (f"The frozen projection file for {s} does not match the hash in its "
+                   f"freeze log, so this card stays closed.")
+    try:
+        entries = [e for e in pfv.load_log(vdir)["entries"] if e.get("season") == s]
+    except ValueError:
+        out["blocked_on"] = closed_hash
+        return out
+    if not entries:
+        out["blocked_on"] = (f"No projection for {s} was frozen before Opening Day, so this "
+                             f"card stays closed.")
+        return out
+    if len(entries) > 1:
+        out["blocked_on"] = closed_hash
+        return out
+    entry = entries[0]
+    if entry.get("status") == "no_season":
+        out["blocked_on"] = (f"No {s} regular-season game was played, so no projection for "
+                             f"{s} was frozen and this card stays closed.")
+        return out
+    if entry.get("status") != "frozen" or pfv.entry_problems(entry, vdir):
+        out["blocked_on"] = closed_hash
+        return out
+    raw = (vdir / str(entry["file"])).read_bytes()
+    if pfv.sha256_bytes(raw) != entry.get("sha256"):
+        out["blocked_on"] = closed_hash
+        return out
+    label = entry.get("label_provider")
+    if scope == "players" and not label:
+        out["blocked_on"] = (f"The freeze log for {s} does not name the WAR series the frozen "
+                             f"projection was trained on, so this card stays closed.")
+        return out
+    payload = json.loads(raw.decode("utf-8"))
+    out.update(file=str(entry["file"]), sha256=entry["sha256"], frozen_at=entry.get("frozen_at"),
+               label_provider=label)
+    if scope == "players":
+        for v in payload.get("vets") or []:
+            m = _num(v.get("mlbam"))
+            war = _num(_first_of(v.get("war")))
+            if m is None or war is None:
+                continue
+            out["vets"][int(m)] = {"war": war, "p10": _num(_first_of(v.get("warP10"))),
+                                   "p90": _num(_first_of(v.get("warP90"))), "key": v.get("key")}
+    else:
+        for t in payload.get("team_outlook") or []:
+            c = _club_code(t.get("team"))
+            wins = _num(((t.get("byYear") or [None])[0] or {}).get("wins"))
+            if c and wins is not None:
+                out["clubs"][c] = wins
+    return out
+
+
+def _proj_pair(rows, season, *, war_provider, largest_first, top_n, root, record_exists,
+               blocked_on=None, displayed_provider=None) -> dict:
     sl_id = "proj_above" if largest_first else "proj_below"
     unit = war_unit_label(war_provider)
-    blocked = proj_blocked_on(season, root=root, record_exists=record_exists)
+    blocked = blocked_on or proj_blocked_on(season, root=root, record_exists=record_exists)
     definition = (f"Season {unit} minus the {unit} projected for the season in the file frozen "
                   f"the day before Opening Day, with that file's P10 to P90 band as context.")
     caption = ("A season lost to injury falls under the floor, not on this list."
@@ -905,35 +1056,76 @@ def _proj_pair(rows, season, *, war_provider, largest_first, top_n, root, record
                   frame_label=(f"Lit only when every registered check on the {int(season)} label "
                                f"season is recorded."), caption=caption)
     if blocked:
-        return _sl_block(sl_id, season, [], n_pool=0, blocked_on=blocked, **common)
-    scored = []
-    for r in rows:
-        if not _sl_player_floor(r):
-            continue
-        real, proj = _num(r.get("war_realized")), _num(r.get("war_proj"))
-        if real is None or proj is None:
-            continue
-        d = real - proj
-        scored.append((d, r, {"from": proj, "to": real, "value_display": _signed(d, 1),
-                              "p10": _num(r.get("p10")), "p90": _num(r.get("p90")),
-                              "realized_display": score_display(real),
-                              "projected_display": score_display(proj)}))
-    return _sl_block(sl_id, season, _sl_rows(scored, largest_first=largest_first, top_n=top_n),
-                     n_pool=len(scored), **common)
+        # No row is scored, so no realized-minus-projected number exists anywhere.
+        block = _sl_block(sl_id, season, [], n_pool=0, blocked_on=blocked, **common)
+    else:
+        scored = []
+        for r in rows:
+            if not _sl_player_floor(r):
+                continue
+            real, proj = _num(r.get("war_realized")), _num(r.get("war_proj"))
+            if real is None or proj is None:
+                continue
+            d = real - proj
+            extra = {"from": proj, "to": real, "value_display": _signed(d, 1),
+                     "p10": _num(r.get("p10")), "p90": _num(r.get("p90")),
+                     "realized_display": score_display(real),
+                     "projected_display": score_display(proj)}
+            if _num(r.get("displayed")) is not None:
+                extra["displayed_display"] = score_display(r["displayed"])
+            scored.append((d, r, extra))
+        block = _sl_block(sl_id, season, _sl_rows(scored, largest_first=largest_first, top_n=top_n),
+                          n_pool=len(scored), **common)
+    if displayed_provider:
+        block["displayed_provider"] = displayed_provider
+    return block
 
 
 def proj_above(rows, season, *, war_provider, top_n=SL_TOP_N, root=None,
-               record_exists=look_record_exists) -> dict:
+               record_exists=look_record_exists, blocked_on=None, displayed_provider=None) -> dict:
     """Furthest above the preseason projection; rows {mlbam, name, club_code,
-    war_realized, war_proj, p10, p90, pa, ip}. Dark while proj_blocked_on(S) is set."""
+    war_realized, war_proj, p10, p90, pa, ip, displayed?} with war_realized on the
+    frozen file's own WAR series (`war_provider`). Dark while proj_blocked_on(S) is
+    set or the caller passes the reader's `blocked_on`."""
     return _proj_pair(rows, season, war_provider=war_provider, largest_first=True,
-                      top_n=top_n, root=root, record_exists=record_exists)
+                      top_n=top_n, root=root, record_exists=record_exists,
+                      blocked_on=blocked_on, displayed_provider=displayed_provider)
 
 
 def proj_below(rows, season, *, war_provider, top_n=SL_TOP_N, root=None,
-               record_exists=look_record_exists) -> dict:
+               record_exists=look_record_exists, blocked_on=None, displayed_provider=None) -> dict:
     return _proj_pair(rows, season, war_provider=war_provider, largest_first=False,
-                      top_n=top_n, root=root, record_exists=record_exists)
+                      top_n=top_n, root=root, record_exists=record_exists,
+                      blocked_on=blocked_on, displayed_provider=displayed_provider)
+
+
+def manager_preseason(rows: list[dict], pre: dict | None, season: int) -> dict:
+    """The Manager card's preseason column (AWARDS_PLAN 4.2, from 2027): W minus the
+    club's wins in the frozen Opening Day file, scaled by GP / 162 as the score's
+    expected wins are, so it reads W minus the frozen wins over a full season. Lit
+    only on an open "clubs" read; otherwise no row gets a value. Adds
+    `vs_preseason`, `vs_preseason_display` and `wins_preseason` to each row in
+    place and returns the column block. It never replaces the score."""
+    s = int(season)
+    if pre is None:
+        pre = {"blocked_on": proj_blocked_on(s, scope="clubs")}
+    col = {"label": "W minus the wins in the projection frozen before Opening Day",
+           "blocked_on": pre.get("blocked_on"), "file": pre.get("file"),
+           "sha256": pre.get("sha256"), "frozen_at": pre.get("frozen_at"), "n_rows": 0}
+    if col["blocked_on"]:
+        return col
+    clubs = pre.get("clubs") or {}
+    for r in rows:
+        wins = clubs.get(r.get("club"))
+        w, gp = _num(r.get("w")), _num(r.get("gp"))
+        if wins is None or w is None or gp is None:
+            continue
+        v = w - wins * gp / FULL_SEASON_GAMES
+        r["wins_preseason"] = wins
+        r["vs_preseason"] = v
+        r["vs_preseason_display"] = _signed(v, 1)
+        col["n_rows"] += 1
+    return col
 
 
 # next season's path
@@ -1129,7 +1321,9 @@ def _sl_context(sid: str, r: dict, S: int, wu, du) -> str | None:
         parts = [part(r.get("projected_display"), f"projected {_f(r.get('projected_display'), '.1f')}, "
                       f"realized {_f(r.get('realized_display'), '.1f')} {wu}"),
                  part(r.get("p10"), f"P10 to P90 {_f(r.get('p10'), '.1f')} to {_f(r.get('p90'), '.1f')}")
-                 if _num(r.get("p90")) is not None else None]
+                 if _num(r.get("p90")) is not None else None,
+                 part(r.get("displayed_display"), f"the page's {du} {_f(r.get('displayed_display'), '.1f')}")
+                 if du else None]
     elif sid.startswith("next_"):
         parts = [part(r.get("realized_display"), f"{S} {_f(r.get('realized_display'), '.1f')}, "
                       f"{S + 1} {_f(r.get('projected_display'), '.1f')} {wu}"),

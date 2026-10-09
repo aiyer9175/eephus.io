@@ -139,6 +139,24 @@ def test_the_freeze_is_byte_identical_and_logs_its_extract(tmp_path):
     assert pfv.check(vd) == []
 
 
+def test_the_freeze_records_the_training_label(tmp_path, monkeypatch):
+    # gate section 5 "The labels": the label the frozen file was trained on is in the log
+    meta = json.loads(pfv.BUNDLE_META.read_text(encoding="utf-8"))
+    vd, entry = _freeze(tmp_path)
+    assert entry["label_provider"] == meta["war_provider"]
+    assert json.loads((vd / pfv.LOG_NAME).read_text(encoding="utf-8"))["entries"][0][
+        "label_provider"] == meta["war_provider"]
+    (tmp_path / "given").mkdir()
+    vd2, entry2 = _freeze(tmp_path / "given", label_provider="ewar_v2")
+    assert entry2["label_provider"] == "ewar_v2" and pfv.check(vd2) == []
+    # no label anywhere: the freeze refuses and writes nothing
+    monkeypatch.setattr(pfv, "BUNDLE_META", tmp_path / "missing_meta.json")
+    (tmp_path / "none").mkdir()
+    with pytest.raises(ValueError, match="no training label"):
+        _freeze(tmp_path / "none")
+    assert not (tmp_path / "none" / "vintage").exists()
+
+
 def test_the_freeze_is_write_once(tmp_path):
     vd, _ = _freeze(tmp_path)
     src = _write(tmp_path, _payload(generated_at="2027-03-24"), "later.json")
