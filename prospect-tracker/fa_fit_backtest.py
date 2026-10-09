@@ -345,9 +345,19 @@ def _park_score(pf: dict, org: str, is_pitcher: bool) -> float:
     return max(0.0, min(1.0, 0.5 + edge / 60.0))
 
 
-def build_rows() -> list[dict]:
+def build_rows(price_override: dict | None = None) -> list[dict]:
     """One row per (signing, candidate org): the reduced ex-ante features
-    + signed flag. Heavy inputs cached per season."""
+    + signed flag. Heavy inputs cached per season.
+
+    ``price_override`` (the FA destination gate, docs/fa-2026-10/
+    FA_DESTINATION_GATE.md section 4.2): None, the default, prices every row
+    from the realized NPV and returns rows byte-identical to the Gate 3 frame
+    (pinned by a row hash in test_fa_destination_byte_identity.py). A mapping
+    {(winter, player_key): (guarantee_usd, aav_usd)} replaces only the
+    signing's OWN price: the guarantee in the band terms, reach and behavior,
+    the AAV in afford. The clubs' behavior priors keep their realized prior
+    guarantees, and the need proxy still reads the whole class. A signing
+    absent from the mapping yields no rows."""
     enriched = fm.enriched_signings(2015, 2026)
     by_winter: dict[int, list] = defaultdict(list)
     for s in enriched:
@@ -410,6 +420,11 @@ def build_rows() -> list[dict]:
         for s in by_winter[Y]:
             npv = fm._npv_of(s)
             aav = npv / max(int(s["years"]), 1)
+            if price_override is not None:
+                price = price_override.get((Y, s["player_key"]))
+                if price is None:
+                    continue
+                npv, aav = float(price[0]), float(price[1])
             grp = fm._pos_group(s.get("position"))
             is_pit = grp in ("SP", "RP")
             # TEAMFIT CONDITIONAL (2026-08-19): band terms per club for THIS
