@@ -7855,6 +7855,16 @@ established without outcomes; a change after that closes the section.
 
 **No number has been computed on this candidate.**
 
+### Capture landed 2026-10-08, not installed
+
+`tools/betting_umpire_job.py` landed in the commit after this section, with
+test_betting_umpire_job.py and test_betting_umpire_registration.py. It is NOT installed:
+the cron entry is a deploy step, deferred under DEPLOY-3 and listed in
+docs/DEPLOY_PENDING.md, so nothing accrues toward the clock yet. One local run on
+2026-10-09T00:13:40Z into a scratch store (never `.cache/umpire_captures/`) made one
+schedule call and wrote no row: of three games in the span, one was in progress and two
+were outside the 36-hour window. No assignment, umpire value or outcome was read.
+
 ---
 
 
