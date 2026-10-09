@@ -129,7 +129,7 @@ def test_game_full_rule_from_cached_record():
     assert st["in_play"] == 1 and st["traj"] == 1 and st["coords"] == 1
 
 
-def test_plan_orders_dev_seasons_first_level_by_level():
+def test_plan_orders_core_then_early_then_rest_level_by_level():
     census = {"probe": {"cells": [
         {"sportId": 12, "season": 2016, "fetch": True},
         {"sportId": 11, "season": 2016, "fetch": True},
@@ -137,8 +137,11 @@ def test_plan_orders_dev_seasons_first_level_by_level():
         {"sportId": 11, "season": 2024, "fetch": True},
         {"sportId": 11, "season": 2008, "fetch": True},
         {"sportId": 13, "season": 2012, "fetch": False},
+        {"sportId": 12, "season": 2010, "fetch": True},
+        {"sportId": 11, "season": 2012, "fetch": True},
     ]}}
-    assert F.plan_cells(census) == [(11, 2018), (11, 2016), (12, 2016), (11, 2024), (11, 2008)]
+    assert F.plan_cells(census) == [(11, 2018), (11, 2016), (12, 2016), (11, 2012), (12, 2010),
+                                    (11, 2024), (11, 2008)]
 
 
 def test_mexican_league_excluded_and_no_outcome_columns_read():
@@ -147,3 +150,19 @@ def test_mexican_league_excluded_and_no_outcome_columns_read():
         src = inspect.getsource(mod).lower()
         for banned in ("war_", "fwar", "debut_year", "prospects.db", "efv_labels", "efv_identity"):
             assert banned not in src, (mod.__name__, banned)
+
+
+def test_cache_census_counts_full_and_result_only_games():
+    full_rec = F.game_record({"gamePk": 1, "league": 117}, 11, 2016, PLAYS, "playByPlay")
+    term = [dict(p, playEvents=p["playEvents"][-1:]) for p in PLAYS]
+    term_rec = F.game_record({"gamePk": 2, "league": 112}, 11, 2016, term, "playByPlay")
+    F._atomic_write_gz(F.game_path(11, 2016, 1), full_rec)
+    F._atomic_write_gz(F.game_path(11, 2016, 2), term_rec)
+    F._atomic_write_gz(F.CACHE_DIR / "schedule" / "11_2016.v2.json.gz",
+                       [{"gamePk": 1}, {"gamePk": 2}, {"gamePk": 3}])
+    cells = C.cache_census({(11, 2016)}, log=lambda *_: None)
+    assert len(cells) == 1
+    c = cells[0]
+    assert c["games_cached"] == 2 and c["scheduled_final"] == 3 and not c["complete"]
+    assert c["games_full"] == 1 and c["games_result_only"] == 1 and c["fetch_planned"]
+    assert c["by_league_games_full"] == {"112": [1, 0], "117": [1, 1]}

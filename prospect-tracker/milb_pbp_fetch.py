@@ -144,10 +144,25 @@ def session() -> requests.Session:
         return _session
 
 
+#: Request telemetry for the progress log: calls, seconds, retried statuses.
+NET_STATS: dict = {"calls": 0, "seconds": 0.0, "slow_2s": 0, "retried": {}}
+_stats_lock = threading.Lock()
+
+
 def _get_json(url: str, params: dict) -> dict:
     _guard()
     time.sleep(_REQUEST_SLEEP)
+    t0 = time.time()
     r = session().get(url, params=params, timeout=60)
+    dt = time.time() - t0
+    hist = getattr(getattr(getattr(r, "raw", None), "retries", None), "history", None) or ()
+    with _stats_lock:
+        NET_STATS["calls"] += 1
+        NET_STATS["seconds"] += dt
+        NET_STATS["slow_2s"] += dt >= 2.0
+        for h in hist:
+            key = str(getattr(h, "status", None) or type(getattr(h, "error", None)).__name__)
+            NET_STATS["retried"][key] = NET_STATS["retried"].get(key, 0) + 1
     r.raise_for_status()
     return r.json()
 
@@ -302,23 +317,32 @@ def fetch_game(sport: int, season: int, g: dict, *,
 
 # ------------------------------------------------------------------------ plan
 
-#: Seasons the development frames read (lv_dev list vintages 2011 to 2019 read 2009 to
-#: 2018; vm_dev debut years 2017 to 2023 read through 2022; R-LV reads 2019). They are
-#: fetched first; the R-VM-only seasons (2023 on) and AAA and AA 2007 to 2008 follow.
-DEV_SEASONS = range(2009, 2023)
+#: Fetch tiers. CORE: the seasons the scored development vintages read (lv_dev V2
+#: folds, list vintages 2017 to 2019, read 2016 to 2018; vm_dev debut years 2017 to 2023
+#: read 2016 to 2022; R-LV reads 2019), from 2015 so the two-season walk is whole.
+#: EARLY: the rest of lv_dev (list vintages 2011 to 2016 read 2009 to 2015). Then the
+#: R-VM-only seasons (2023 on) and AAA and AA 2007 to 2008.
+CORE_SEASONS = range(2015, 2023)
+EARLY_SEASONS = range(2009, 2015)
+
+
+def _tier(season: int) -> int:
+    if season in CORE_SEASONS:
+        return 0
+    return 1 if season in EARLY_SEASONS else 2
 
 
 def plan_cells(census: dict | None = None) -> list[tuple[int, int]]:
-    """(sport, season) cells to fetch: the census probe's `fetch` cells, dev seasons
-    first, then the rest; inside each tier level by level in LEVEL_ORDER, newest
+    """(sport, season) cells to fetch: the census probe's `fetch` cells by tier
+    (CORE, EARLY, the rest); inside each tier level by level in LEVEL_ORDER, newest
     season first."""
     if census is None:
         census = json.loads(CENSUS_PATH.read_text(encoding="utf-8"))
     cells = {(int(c["sportId"]), int(c["season"])) for c in census["probe"]["cells"] if c.get("fetch")}
     out = []
-    for tier in (True, False):
+    for tier in (0, 1, 2):
         for sp in LEVEL_ORDER:
-            ys = sorted((y for s, y in cells if s == sp and (y in DEV_SEASONS) == tier), reverse=True)
+            ys = sorted((y for s, y in cells if s == sp and _tier(y) == tier), reverse=True)
             out += [(sp, y) for y in ys]
     return out
 
@@ -355,6 +379,13 @@ def fetch_cell(sport: int, season: int, *, deadline: float | None = None,
                 elif status == "feed_cache":
                     stat["feed_cache"] += 1
                 stat["pitches_new"] += max(n, 0)
+                done_n = stat["fetched"] + stat["feed_cache"]
+                if done_n % 250 == 0:
+                    el = max(time.time() - t0, 1e-6)
+                    log(f"  {SPORTS[sport]} {season}: {done_n}/{len(todo)} "
+                        f"{done_n / el:.1f} games/s, net mean "
+                        f"{NET_STATS['seconds'] / max(NET_STATS['calls'], 1):.2f}s "
+                        f"slow_2s {NET_STATS['slow_2s']} retried {NET_STATS['retried']}")
             except FetchWindowClosed as e:
                 stat["stopped"] = str(e)
             except Exception as e:  # noqa: BLE001 - a failed game is retried on the next run
@@ -412,7 +443,12 @@ def main(argv=None) -> int:
         log(f"{st['level']:>3} {y}: final {st['scheduled_final']} cached_before "
             f"{st['cached_before']} fetched {st['fetched']} from_feed_cache {st['feed_cache']} "
             f"failed {st['failed']} pitches_new {st['pitches_new']} {st['seconds']}s"
+            f" | net calls {NET_STATS['calls']} mean "
+            f"{NET_STATS['seconds'] / max(NET_STATS['calls'], 1):.2f}s slow_2s "
+            f"{NET_STATS['slow_2s']} retried {NET_STATS['retried']}"
             + (f" STOPPED {st['stopped']}" if st["stopped"] else ""))
+        with _stats_lock:
+            NET_STATS.update(calls=0, seconds=0.0, slow_2s=0, retried={})
         if st["stopped"]:
             return 3
     log("plan complete")

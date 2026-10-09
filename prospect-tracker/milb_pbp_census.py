@@ -143,7 +143,9 @@ def probe(log=print) -> list[dict]:
     return cells
 
 
-def cache_census(log=print) -> list[dict]:
+def cache_census(planned: set | None = None, log=print) -> list[dict]:
+    """Per (level, season) statistics over every cached game. `planned` holds the
+    probe's fetch cells; a cell outside it holds only its probe sample."""
     cells = []
     for sp in F.LEVEL_ORDER:
         for y in PROBE_SEASONS:
@@ -153,12 +155,23 @@ def cache_census(log=print) -> list[dict]:
             scheduled = len(F.read_gz(sched_path)) if sched_path.exists() else None
             if not files:
                 continue
-            agg = _aggregate([_game_stats(F.read_gz(p)) for p in files])
+            stats = []
+            by_league: dict = {}
+            for path in files:
+                rec = F.read_gz(path)
+                st = _game_stats(rec)
+                stats.append(st)
+                lg = by_league.setdefault(str(rec.get("league")), [0, 0])
+                lg[0] += 1
+                lg[1] += st["full"]
+            agg = _aggregate(stats)
             cell = {"sportId": sp, "level": F.SPORTS[sp], "season": y,
+                    "fetch_planned": planned is None or (sp, y) in planned,
                     "scheduled_final": scheduled, "games_cached": len(files),
                     "complete": scheduled is not None and len(files) >= scheduled,
                     **agg,
-                    "games_result_only": agg["games_read"] - agg["games_full"]}
+                    "games_result_only": agg["games_read"] - agg["games_full"],
+                    "by_league_games_full": {k: v for k, v in sorted(by_league.items())}}
             cells.append(cell)
             log(f"{F.SPORTS[sp]:>3} {y}: cached {len(files)}/{scheduled} ppa "
                 f"{agg['pitches_per_pa']} full {agg['games_full']} pitches {agg['pitches']}")
@@ -217,12 +230,18 @@ def main(argv=None) -> int:
                         "result_only_cells": [[c["sportId"], c["season"]] for c in cells
                                               if c["class"] == "result_only"]}
     if a.cache:
-        cells = cache_census()
+        planned = {(int(s), int(y)) for s, y in (doc.get("probe") or {}).get("fetch_cells", [])}
+        cells = cache_census(planned or None)
         tot = sum(c["games_cached"] for c in cells)
         doc["cache"] = {"as_of": date.today().isoformat(), "cells": cells,
                         "games_cached": tot,
                         "pitches": sum(c["pitches"] for c in cells),
-                        "cells_complete": sum(bool(c["complete"]) for c in cells)}
+                        "cells_complete": sum(bool(c["complete"]) for c in cells),
+                        "planned_cells_complete": sum(bool(c["complete"]) for c in cells
+                                                      if c["fetch_planned"]),
+                        "planned_cells": len(planned),
+                        "planned_cells_incomplete": [[c["sportId"], c["season"]] for c in cells
+                                                     if c["fetch_planned"] and not c["complete"]]}
     write(doc)
     print(f"wrote {OUT_PATH}")
     return 0
