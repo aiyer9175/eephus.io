@@ -1590,7 +1590,7 @@
   // `built` is the window file's generated_at; `frozen` is true when the
   // Current board carries a frozen 3yr column over the same span, and `same`
   // when its 3yr column reads this window's own index (owner answer M17-2).
-  function windowIndexCol(c, w, how, stats, built, frozen, same) {
+  function windowIndexCol(c, w, how, stats, built, frozen, same, minInn) {
     var out = cloneCol(c), lbl = winLabel(w);
     var howTxt = (how && typeof how === "object") ? (how.formula || "") : String(how || "");
     out.labelExtra = '<span class="mlbstats-winspan">' + esc(lbl) + "</span>";
@@ -1623,6 +1623,9 @@
         s += '<span class="proj-dim" title="Provisional: fewer contributing seasons or less denominator'
           + ' than this window asks for">*</span>';
       }
+      // The row's own Inn column sits beside it on this board, so the mark
+      // carries the innings in its tooltip only.
+      if (r.below_floor === true) s += belowFloorMark(num(r[c.key + "_denom"]), minInn, false);
       return s;
     };
     return out;
@@ -1632,7 +1635,9 @@
   // Last 3 window file, so the cell prints the way windowIndexCol does: the
   // numeral with no band (the ruler was cut on a one-season pool), the window
   // pool's percentile, and the provisional star with the owning lab's floor.
-  function win3yrCell(r, key, floor) {
+  // `minInn` is the window's innings floor as the payload states it (the
+  // Current board's multiyear.below_floor.floor), for the mark's tooltip.
+  function win3yrCell(r, key, floor, minInn) {
     var v = num(r[key]);
     if (v == null) return "";
     var s = '<span class="mlbstats-winidx">' + fInt(v) + "</span>";
@@ -1641,7 +1646,20 @@
     if (r[key + "_tag"] === "provisional") {
       s += '<span class="proj-dim" title="Provisional: ' + floor + ' in the trailing window">*</span>';
     }
+    if (r[key + "_below_floor"] === true) s += belowFloorMark(num(r[key + "_denom"]), minInn, true);
     return s;
+  }
+  // A window row published UNDER the window's innings floor (owner answer
+  // M17WIN-1: the Defense window publishes every fielder with window innings).
+  // The mark says provisional, and the Current board's 3yr cell prints the
+  // innings beside it because that board's Inn column is one season's.
+  function belowFloorMark(inn, minInn, showInn) {
+    var fl = num(minInn);
+    var t = "Provisional: " + (inn != null ? f1(inn) + " defensive innings in the window, " : "")
+      + "under the window's " + (fl != null ? fInt(fl) + "-inning " : "innings ") + "floor."
+      + " The window publishes every fielder with window innings and ranks its percentile over all of them.";
+    return '<span class="bp-prov mlbstats-floor" title="' + esc(t) + '">prov</span>'
+      + (showInn && inn != null ? '<span class="proj-dim mlbstats-floorinn"> ' + fInt(inn) + " inn</span>" : "");
   }
   // Every column key this window's payload can fill. The board's own column
   // array MINUS this set is exactly what the window drops, which is why the
@@ -1671,7 +1689,8 @@
       if (!allow[c.key]) return;
       var has3 = spans3 && !!keys[c.key + "_3yr"];
       out.push(idx[c.key] ? windowIndexCol(c, w, idx[c.key], pool[c.key], doc.generated_at || null,
-                                           has3 && !same, has3 && same)
+                                           has3 && !same, has3 && same,
+                                           (((doc.qualified_rule_window || {})[LAB_BOARD[sec]]) || {}).min_inn)
                           : windowCountCol(c, w, spec));
     });
     return out;
@@ -1781,8 +1800,12 @@
       bits.push("The min " + esc(MIN_LABEL[mn.key] || mn.key) + " floor applies to the window total,"
         + " not to a season.");
     }
-    var qr = ((doc.qualified_rule_window || {})[LAB_BOARD[sec]] || {}).rule;
+    var qrw = (doc.qualified_rule_window || {})[LAB_BOARD[sec]] || {}, qr = qrw.rule;
     if (qr) bits.push("Qualified: " + esc(qr) + ".");
+    if (qrw.published) {
+      bits.push("Published: " + esc(qrw.published) + "; its row is marked prov, and the"
+        + " percentile ranks every published row. Untick qualified only to see them.");
+    }
     shortSeasons(doc, w.seasons).forEach(function (s) { bits.push(esc(s)); });
     var ends = winEnds(w);
     var ex = (doc.excluded_seasons || []).filter(function (y) {
@@ -1794,13 +1817,26 @@
     }
     var dropped = droppedCols(sec, spec);
     if (dropped) bits.push("<b>Off on this window:</b> " + dropped + ".");
+    // The share is this window's own, off pool_stats, and the top-25 count off
+    // the rows: the typed "40%" was the Last 3 hitter board's share, and the
+    // Defense window reads 59% once it publishes every fielder (M17WIN-1).
+    var pst = idxKey ? ((((doc.pool_stats || {})[LAB_BOARD[sec]]) || {})[idxKey] || {}) : {};
+    var provShare = (pst.n && pst.n_provisional != null)
+      ? " Measured on this window, " + pst.n_provisional + " of " + pst.n + " rows ("
+        + Math.round(100 * pst.n_provisional / pst.n) + "%) are provisional"
+      : "";
+    if (provShare) {
+      var top = shown.filter(function (r) { return num(r[idxKey]) != null; })
+        .sort(function (a, b) { return num(b[idxKey]) - num(a[idxKey]); }).slice(0, 25);
+      var kTop = top.filter(function (r) { return r[idxKey + "_tag"] === "provisional"; }).length;
+      provShare += (kTop ? " and " + kTop + " of them reach the top 25, which is what a denominator-weighted"
+        + " mean does with a partial window." : ".");
+    }
     var est = idxKey
       ? ' <button type="button" class="chip mlbx-est' + (winEstablished ? " active" : "")
         + '" data-mlbest="' + esc(sec) + '" aria-pressed="'
         + winEstablished + '" title="' + esc("A row tagged provisional has fewer contributing seasons"
-          + " or less denominator than this window asks for. Measured on the served window, 40% of the"
-          + " rows are provisional and they reach the top 25, which is what a denominator-weighted mean"
-          + " does with a partial window.") + '">Established only '
+          + " or less denominator than this window asks for." + provShare) + '">Established only '
         + (winEstablished ? "on" : "off") + "</button>"
       : "";
     var head = "<b>" + esc(lbl) + ", " + n + (n === 1 ? " season" : " seasons") + ".</b> Counts summed,"
@@ -5012,7 +5048,9 @@
       vintage: "multiyear",
       get: function (r) { return r.dem_plus_3yr; },
       cell: function (r) {
-        return r.dem_plus_3yr == null ? EM_DASH : win3yrCell(r, "dem_plus_3yr", "under 2 seasons or 1,000 innings");
+        var bf = ((defenseData && defenseData.multiyear) || {}).below_floor || {};
+        return r.dem_plus_3yr == null ? EM_DASH
+          : win3yrCell(r, "dem_plus_3yr", "under 2 seasons or 1,000 innings", bf.floor);
       } },
     { key: "dem_plus_pos_pct", label: "Pos %ile", fmt: fInt, num: true, desc: true,
       title: "DEM+ percentile among fielders at the same primary position." },

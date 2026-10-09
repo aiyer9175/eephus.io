@@ -133,6 +133,15 @@ is a rate on a basis it was not computed on. The qualified rule is applied to
 the WINDOW total, once, at the end, and it filters the rows the artifact
 publishes, never the seasons that feed a row.
 
+THE DEFENSE BOARD IS THE ONE EXCEPTION (owner answer M17WIN-1, 2026-10-01). It
+publishes EVERY fielder with window innings. A row under the window's
+defensive-innings floor (dem_plus.QUALIFY_MIN_INN, 400) is published as
+PROVISIONAL: `qualified` false and `below_floor` true, its innings on the row.
+The DEM+ percentile is ranked over every published row, those included, and the
+rule is stated on the artifact (pool_stats, qualified_rule_window). The Current
+board's DEM+ 3yr column reads this window, so a fielder under the floor gets a
+value there too instead of a blank (DEFENSE_PUBLISH_ALL_SINCE).
+
 THE PANEL, AND WHY IT IS NOT A THIRD SUBSTRATE
 ==============================================
 arb_metrics.py already builds a whole-league per-season Arkmetric panel offline
@@ -233,6 +242,18 @@ MIN_POOL_N = 100
 #: season is a refusal rather than a quietly shorter denominator.
 MIN_SEASON_SHARE = 0.5
 
+#: The date of owner answer M17WIN-1 ("Publish window DEM+ for every
+#: fielder"): from this build on the defense board publishes every fielder
+#: with window innings and flags the rows under the innings floor.
+DEFENSE_PUBLISH_ALL_SINCE = "2026-10-01"
+
+#: The DEM+ percentile pool on the defense board, stated once and served on
+#: the artifact.
+DEFENSE_PCT_POOL = ("every published fielder on this board: the fielders at or "
+                    "over the window's defensive-innings floor and, since owner "
+                    "answer M17WIN-1 (2026-10-01), every fielder under it, "
+                    "published as provisional (below_floor true)")
+
 
 def _i(v):
     n = _num(v)
@@ -314,7 +335,14 @@ def _qualified_rule() -> dict:
                               f"{lev[1]} for a starter, over the whole window")},
         "defense": {"min_inn": dfn_inn,
                     "rule": (f"defensive innings >= {dfn_inn} over the whole "
-                             f"window")},
+                             f"window"),
+                    # Page copy: the field names (qualified false, below_floor
+                    # true) are in pool_stats' pct_pool, not in this sentence.
+                    "published": (f"every fielder with window innings; a "
+                                  f"fielder under {dfn_inn} innings is "
+                                  f"published as provisional, with his innings "
+                                  f"on the row"),
+                    "published_since": DEFENSE_PUBLISH_ALL_SINCE},
     }
 
 
@@ -673,7 +701,8 @@ def window_index(panels: dict, seasons: list, block: str, value_key: str,
     return out
 
 
-def _stamp_index(rows: dict, key: str, vals: dict, published: set) -> dict:
+def _stamp_index(rows: dict, key: str, vals: dict, published: set,
+                 pct_pool: str | None = None) -> dict:
     """Write one index family onto the window rows and return its pool_stats.
 
     Four fields per family and no fifth: the value, its percentile inside this
@@ -706,8 +735,8 @@ def _stamp_index(rows: dict, key: str, vals: dict, published: set) -> dict:
     return {"n": len(live), "mean": _r(mu, 2), "sd": _r(sd, 2),
             "n_established": len(est), "n_provisional": len(live) - len(est),
             "established": {"n": len(est), "mean": _r(emu, 2), "sd": _r(esd, 2)},
-            "pct_pool": ("every published row on this board, provisional rows "
-                         "included"),
+            "pct_pool": pct_pool or ("every published row on this board, "
+                                     "provisional rows included"),
             "note": ("100 is the average of each contributing SEASON'S pool, "
                      "not of this window's pool, because the value is the "
                      "denominator-weighted mean of the per-season index. This "
@@ -1103,18 +1132,28 @@ def _defense_board(panels: dict, seasons: list, war_by: dict, qual: dict,
             row["war"] = war
             row["war_n"] = n
         row["qualified"] = bool(inn >= qual["min_inn"])
+        # EVERY FIELDER WITH WINDOW INNINGS IS PUBLISHED (owner answer
+        # M17WIN-1, 2026-10-01). Under the floor the row is provisional and
+        # says so in its own field, with `inn` beside it; the Current board's
+        # DEM+ 3yr column reads it from here.
+        row["below_floor"] = not row["qualified"]
         rows[mid] = row
-        if row["qualified"]:
+        if inn > 0:
             published.add(mid)
     # `dem_raw`, not `dem`: dem_plus_lab._dem3 weights dem_plus_raw, and this is
     # the one metric of the four whose shipped builder does. Weighting the
     # rounded value instead moved 146 of 400 shared rows by up to 5 points in
-    # the build that did it.
+    # the build that did it. The percentile pool is every published row, the
+    # fielders under the floor included (DEFENSE_PCT_POOL).
     pools = {"dem_plus": _stamp_index(
         rows, "dem_plus",
         window_index(panels, seasons, "dfn", "dem_raw", "inn",
                      tag=tags["dem_plus"]),
-        published)}
+        published, pct_pool=DEFENSE_PCT_POOL)}
+    pools["dem_plus"]["n_below_floor"] = sum(
+        1 for mid in published
+        if rows[mid]["below_floor"] and rows[mid].get("dem_plus") is not None)
+    pools["dem_plus"]["floor_inn"] = qual["min_inn"]
     out = [r for mid, r in rows.items() if mid in published]
     out.sort(key=lambda r: -(r.get("dem_plus_raw") or -999))
     return {"fielders": out}, pools

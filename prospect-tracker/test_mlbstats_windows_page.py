@@ -790,3 +790,49 @@ def test_the_window_header_says_the_current_column_reads_it():
     tag = {k: t for _, k, t in _heads(html)}["hem_plus"]
     assert "reads this index, so the two print one number" in tag, tag
     assert "separate, dated build" not in tag, tag
+
+
+# ---------------------------------------------------------------- M17WIN-1 (owner answer 2026-10-01)
+def test_a_3yr_value_from_under_the_window_floor_is_marked_with_its_innings():
+    """The Defense window publishes every fielder with window innings, so the
+    Current DEM+ 3yr cell can carry a value from under the 400-inning floor. The
+    cell marks it prov and prints the window innings; a row without the flag
+    carries no mark. The cell builder is shared, so it is exercised here on the
+    hitter board's sample."""
+    sample = json.loads(_window_sample())
+    sample["hitters"][0]["hem_plus_3yr_below_floor"] = True
+    sample["hitters"][0]["hem_plus_3yr_denom"] = 352.0
+    html = _hitters_with("#section=hitters&hcols=skill", json.dumps(sample))
+    cells = _cells(html, "hem_plus_3yr")
+    marked = [c for c in cells if "mlbstats-floor" in c]
+    assert len(marked) == 1, cells
+    assert ">prov<" in marked[0] and "352 inn" in marked[0], marked[0]
+    assert "vt-" not in marked[0]
+
+
+def test_the_defense_columns_read_the_floor_off_the_payload():
+    """The floor in the mark's tooltip is the payload's, on both boards: the
+    Current column passes multiyear.below_floor.floor and the window column
+    passes qualified_rule_window's min_inn. No 400 is typed into the mark."""
+    i = JS.index('{ key: "dem_plus_3yr"')
+    body = JS[i:JS.index('{ key: "', i + 10)]
+    assert "below_floor" in body and "bf.floor" in body, body
+    i = JS.index("function belowFloorMark(")
+    mark = JS[i:JS.index("\n  function ", i + 10)]
+    assert "400" not in mark, mark
+    i = JS.index("function windowIndexCol(")
+    col = JS[i:JS.index("\n  function ", i + 10)]
+    assert "r.below_floor === true" in col and "belowFloorMark(" in col, col
+    assert ").min_inn)" in JS[JS.index("function windowCols("):]
+
+
+def test_the_provisional_share_is_read_off_the_window():
+    """The Established-only control used to say 40% of the rows are provisional
+    on every window, a share measured once on the Last 3 hitter board. The
+    Defense window reads 59% once it publishes every fielder, so the share and
+    the top-25 count are read off the window's pool_stats and rows."""
+    i = JS.index("function windowNote(")
+    body = JS[i:JS.index("\n  function ", i + 10)]
+    assert "40% of the" not in body, body
+    assert "n_provisional" in body and "slice(0, 25)" in body, body
+
