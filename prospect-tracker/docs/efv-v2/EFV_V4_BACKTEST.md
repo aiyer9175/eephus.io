@@ -209,3 +209,90 @@ both under their frames' floors against consensus (0.0189 and 0.0240); the hitte
 where V2's gap to consensus lives (-0.0209 and -0.0202), takes nothing from any new
 source. v4 still trails consensus on both frames (-0.0077, -0.0088). Only section 6 can
 say more, and it reads frames that are already spent.
+
+## 6. The spent-frame read (appended by the spent run, 2026-10-09)
+
+Run: `python -u tools/efv_v4_backtest.py --spent --gate-sha e7931ce4e13110eebb53555bff455ff13ca7c502
+--b-refit 200` from commit df7ac703 (artifact `data/_labs/efv_v4/efv_v4_spent.json`, generated
+2026-10-09T07:28:56Z, 1,153.8 s; label `fwar@2026-10-02-0341299c20ec`; the committed configuration
+of `data/efv_v4_spec.json`, sha256 94b11eda...; v4 at base_config() reproduces V2 on all 2,496
+scored reserved rows; E_cond B 2000, E_refit B 200 of 200 usable draws). Every block is labelled
+"spent frame, read after the 10-08 confirmation"; no ledger row was written.
+
+Frames as built, the v3 confirmation's rows exactly: R-LV V 2020 hit 596 (train 2,372), pit 572
+(2,313); V 2021 hit 599 (2,761), pit 583 (2,730; 582 scored); n 2,349 (hit 1,195 / pit 1,154;
+1,473 players; 136 reserved_vm rows kept at W3 = 0). R-VM: the 2025 cohort under the vm2 rule,
+hit 72 scored of 82 pinned, pit 75 of 95, n 147. COLUMN COVERAGE: the writer-minus-stated field
+carries a value on 506 of 1,155 R-LV pitcher test rows and on 3 of 95 R-VM pitcher test rows. The
+extraction corpus ends at list vintage 2019 and a reserved row reads the latest
+development-vintage document dated on or before its own list date, so the V 2020 rows carry
+their 2019 Pipeline document, the V 2021 rows mostly none, and the 2025 cohort almost none. The
+folds: V2's as in the v3 confirmation (R-LV hit 2020 contact and is_college, hit 2021 obp_rel,
+contact and is_college, pit 2020 nothing, pit 2021 k_rel; R-VM hit tool_hit, pit nothing). v4's:
+the column admitted in the R-LV pit 2021 fold beside k_rel; pit 2020 and both R-VM pitcher folds
+the consensus order (no pitcher driver admitted), so v4 equals V2 on every R-VM row; hitters V2
+everywhere.
+
+### 6.1 R-LV, list vintages 2020 and 2021 (n 2,349), spent
+
+Within (side, vintage) Spearman: v4 0.1483, V2 0.1511, consensus 0.1494, Pipeline 0.1988 (own rows
+1,727), FanGraphs 0.1469 (2,242). Pooled after the map 0.1400 / 0.1431 / 0.1384; contributor AUC
+0.7421 / 0.7431 / 0.7279; MAE of the priced grade 0.8983 / 0.8983 / 0.8812.
+
+| comparison, within | delta | E_cond CI95 | E_refit CI95 (mde95) | hitters | pitchers |
+|---|---|---|---|---|---|
+| v4 minus V2 | -0.0027 | -0.0061 to +0.0009 | -0.0105 to 0.0 (0.0054) | 0 (V2) | -0.0056 (E_refit -0.0211 to +0.0001) |
+| v4 minus consensus | -0.0011 | -0.0233 to +0.0209 | -0.0242 to +0.0163 (0.0167) | +0.0057 (-0.0320 to +0.0366) | -0.0082 (-0.0347 to +0.0054) |
+| v4 minus Pipeline | -0.0422 | -0.0793 to -0.0050 | -0.0723 to -0.0034 (0.0293) | -0.0515 | -0.0311 |
+| v4 minus FanGraphs | +0.0075 | -0.0224 to +0.0385 | -0.0243 to +0.0339 (0.0251) | -0.0041 | +0.0195 |
+| V2 minus consensus | +0.0016 | -0.0201 to +0.0226 | -0.0222 to +0.0168 (0.0164) | +0.0057 | -0.0026 |
+
+Pooled, v4 minus V2 -0.0031 (E_refit -0.0118 to +0.0018), v4 minus consensus +0.0016 (-0.0210 to
++0.0209). AUC, v4 minus V2 -0.0010 (-0.0081 to +0.0035), v4 minus consensus +0.0142 (E_cond
+-0.0027 to +0.0322; E_refit -0.0177 to +0.0232). MAE, v4 minus V2 +0.0000, v4 minus consensus
++0.0172 (E_refit -0.0015 to +0.0431). Per fold, v4 minus V2: hit 2020 0, hit 2021 0, pit 2020 0,
+pit 2021 -0.0110 (the one fold the column entered; v3's command grade read -0.0300 on the same
+fold). Position-group cells, v4 minus consensus within: C +0.0592 (n 117, -0.0666 to +0.1877),
+IF +0.0030 (n 575), OF +0.0059 (n 481), pitchers -0.0082 (n 1,154); the hitter cells are V2's.
+
+### 6.2 R-VM, the 2025 debut cohort (n 147), spent
+
+Within: v4 0.3739, V2 0.3739 (identical on every row), consensus 0.3333, Pipeline 0.3142, FanGraphs
+0.3568. Pooled 0.3689 / 0.3689 / 0.3248; AUC 0.8226 / 0.8226 / 0.7695; MAE 2.1180 / 2.1180 / 2.1775.
+
+| comparison, within | delta | E_cond CI95 | E_refit CI95 (mde95) | hitters (n 72) | pitchers (n 75) |
+|---|---|---|---|---|---|
+| v4 minus V2 | 0 | 0 to 0 | 0 to 0 (0) | 0 | 0 |
+| v4 minus consensus | +0.0406 | -0.0259 to +0.1101 | -0.0830 to +0.1251 (0.0926) | +0.0829 (-0.1684 to +0.2473) | 0 (consensus order) |
+| v4 minus Pipeline | +0.0597 | -0.0302 to +0.1533 | -0.0994 to +0.1566 (0.1112) | +0.0875 | +0.0330 |
+| v4 minus FanGraphs | +0.0171 | -0.0732 to +0.1072 | -0.1276 to +0.1001 (0.1096) | +0.0481 | -0.0127 |
+| V2 minus consensus | +0.0406 | -0.0259 to +0.1101 | -0.0830 to +0.1251 (0.0926) | +0.0829 | 0 |
+
+Every v4 row on R-VM is V2's row: the column reached 3 of 95 pitcher rows and no fold admitted it.
+R-VM is therefore not a read of the v4 column at all; it repeats V2's own reserved numbers
+(+0.0406 against consensus, unresolved; cells IF n 35 0.4963 against 0.3345, OF n 26 0.2202
+against 0.0429, C under 20 rows, pitchers the consensus order).
+
+### 6.3 The reading (ship rule, EW2-10)
+
+- Ship rule: eFV v4 ships only if its within Spearman beats served eFV (V2) on lv_dev, vm_dev, R-LV
+  and R-VM. The four point estimates, pooled over sides: +0.0039, +0.0012, -0.0027, 0.0000. It
+  beats V2 on neither spent frame. eFV v4 is NOT shippable; `EFV_V4_ON` stays False; the served
+  fit, export, grade, registry claim, glossary method text and Source Comparison headline do not
+  move. The Source Comparison view carries the two development rows (model `efv_v4`) as hollow
+  markers, which is the honest record of the attempt.
+- Against consensus: a tie on R-LV (-0.0011, E_refit -0.0242 to +0.0163; hitters +0.0057,
+  pitchers -0.0082) and V2's unresolved +0.0406 on R-VM. No CI95 lower bound against consensus is
+  above 0: the copy cannot say eFV v4 beats consensus.
+- What carried and what did not: the development lift on pitchers (+0.0081 lv_dev, +0.0025
+  vm_dev) did not survive; on the one reserved fold where the admission rule took the field it
+  cost -0.0110, the same sign and fold as v3's scouting command grade. The field's coverage falls
+  away on the reserved rows because the extraction corpus ends at V 2019, so a forward read of
+  this family needs the corpus extended to the later vintages first (a fetch-free job: the
+  documents are in `prospects.db`; the extraction is the cost).
+- Pipeline leads every eFV on R-LV within (v4 -0.0422, E_refit CI95 below zero), as it led v3
+  and V2; the consensus-method item (DS-Q4) stands.
+- The 40-column menu, the one admitted step and this read close the v4 new-source frontier on
+  the frames that exist: every family entered the lab, 39 of 40 columns never cleared the
+  development bar and the one that did read against V2 on the reserved fold it entered. Nothing
+  measured today changes the served claim "ties consensus".
