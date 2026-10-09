@@ -806,6 +806,10 @@ def main(argv=None) -> int:
     ap.add_argument("--B", type=int, default=B_DEFAULT)
     ap.add_argument("--b-refit", type=int, default=B_REFIT_DEFAULT)
     ap.add_argument("--no-ledger", action="store_true")
+    ap.add_argument("--ledger", action="store_true",
+                    help="re-append the selection artifact's two development rows to "
+                         "data/efv_progress.json (a row whose run_id is present is skipped); "
+                         "the integration path when the ledger conflicts")
     ap.add_argument("--ledger-path", default=None,
                     help="the durable ledger copy (a worktree with a junctioned .cache "
                          "names its own)")
@@ -814,6 +818,14 @@ def main(argv=None) -> int:
 
     def log(msg):
         print(msg, flush=True)
+    if a.ledger:
+        if not SELECT_PATH.exists():
+            log("refused: the selection artifact does not exist")
+            return 2
+        doc = json.loads(SELECT_PATH.read_text(encoding="utf-8"))
+        r = append_ledger(doc, artifact=SELECT_PATH, ledger_path=ledger_path)
+        log(f"progress ledger: appended {len(r['appended'])} rows, {r['n_rows']} rows")
+        return 0
     if L.provider() != FROZEN_PROVIDER:
         log(f"refused: label provider is {L.provider()!r}, not the frozen {FROZEN_PROVIDER!r}")
         return 2
