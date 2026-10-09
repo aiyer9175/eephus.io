@@ -114,6 +114,52 @@ _OUTCOME_PATTERNS = (
     ("agreed", re.compile(r"\bagreement\b|\bagreed\b|\bsettled\b", re.I)),
 )
 
+# Club headings on a tracker page, closed set, each mapped to the club code
+# trades.canonical_org gives the same name (test_arb_club_process.py pins the
+# agreement). A tracker groups its entries as <p><strong>Club</strong></p>
+# followed by one <ul>; every entry of the 2024, 2025 and 2026 pages sits in
+# such a list (30 headings on each page).
+#
+# ATTRIBUTION RULE (owner ask 3, lane design finance_to_fa_arb section 2.4):
+# a case belongs to the club under whose heading the tracker lists the player
+# on exchange day, never to the season-end club in arb_history. Tarik Skubal's
+# 2026 case is a Detroit case although arb_history credits his 2026 award to
+# LAD, the club of his last 2026 stint.
+TRACKER_CLUB_CODES = {
+    "Angels": "LAA", "Astros": "HOU", "Athletics": "ATH", "Blue Jays": "TOR",
+    "Braves": "ATL", "Brewers": "MIL", "Cardinals": "STL", "Cubs": "CHC",
+    "Diamondbacks": "ARI", "D-backs": "ARI", "Dodgers": "LAD", "Giants": "SFG",
+    "Guardians": "CLE", "Mariners": "SEA", "Marlins": "MIA", "Mets": "NYM",
+    "Nationals": "WSN", "Orioles": "BAL", "Padres": "SDP", "Phillies": "PHI",
+    "Pirates": "PIT", "Rangers": "TEX", "Rays": "TBR", "Red Sox": "BOS",
+    "Reds": "CIN", "Rockies": "COL", "Royals": "KCR", "Tigers": "DET",
+    "Twins": "MIN", "White Sox": "CHW", "Yankees": "NYY",
+}
+
+
+def _heading_text(tag) -> str | None:
+    """The club name when `tag` is a tracker club heading, else None."""
+    if tag is None or getattr(tag, "name", None) != "p":
+        return None
+    text = tag.get_text(" ", strip=True)
+    return text if text in TRACKER_CLUB_CODES else None
+
+
+def club_headings(soup) -> list[str]:
+    """Every club heading on a tracker page, in page order."""
+    return [t for t in (_heading_text(p) for p in soup.find_all("p")) if t]
+
+
+def entry_club(el) -> tuple[str | None, str | None]:
+    """(heading, club code) for one tracker entry, or (None, None).
+
+    The entry's list must be the element right after a club heading. A looser
+    rule (the nearest heading anywhere above) would credit a reader comment or
+    a closing note to the last club on the page."""
+    ul = el.find_parent("ul") if el.name == "li" else None
+    head = _heading_text(ul.find_previous_sibling() if ul is not None else None)
+    return (head, TRACKER_CLUB_CODES[head]) if head else (None, None)
+
 
 def _assert_online(what: str) -> None:
     if _OFFLINE:
@@ -348,6 +394,10 @@ def parse_post(html: str, *, class_year: int, kind: str, source_url: str) -> lis
                 "agreed", "hearing_won", "hearing_lost", "split_deal") else None
             row["split_contract"] = outcome == "split_deal"
             row["figure_usd"] = amount
+            # The club heading the tracker lists the player under: the
+            # attribution rule above. None only when the entry sits in no
+            # club list (none does on the 2024-2026 pages).
+            row["club_heading"], row["club"] = entry_club(li)
         out.append(row)
     return out
 
@@ -419,6 +469,10 @@ def build(*, offline: bool = False) -> dict:
             "kind": kind,
             "n_entries": len(rows),
         }
+        if kind == "tracker":
+            from bs4 import BeautifulSoup
+            src["club_headings"] = len(club_headings(BeautifulSoup(html, "html.parser")))
+            src["n_entries_without_club"] = sum(1 for r in rows if not r.get("club"))
         if not rows:
             # A classified page that yields nothing is a FORMAT gap, not an
             # empty page, and it is recorded rather than passed over. Measured:

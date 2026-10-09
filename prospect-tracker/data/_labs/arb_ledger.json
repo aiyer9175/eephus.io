@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-09",
+ "generated_at": "2026-10-09",
  "produced_by": "python tools/ingest_arbitration_ledger.py build",
  "note": "MLB Trade Rumors arbitration trackers (SETTLED figures) and Matt Swartz projection posts (PRE-SETTLEMENT projections). The two kinds are kept apart: a projection is a comparator, not a label, and scoring a model against its own comparator's input would be circular.",
  "sources": {
@@ -40,7 +40,9 @@
    "bytes": 192413,
    "class_year": 2024,
    "kind": "tracker",
-   "n_entries": 222
+   "n_entries": 222,
+   "club_headings": 30,
+   "n_entries_without_club": 0
   },
   "https://www.mlbtraderumors.com/2024/10/projected-arbitration-salaries-for-2025.html": {
    "sha1": "e21ade4f46ed0bcf73c1c904a375c783aa115f8a",
@@ -54,7 +56,9 @@
    "bytes": 207919,
    "class_year": 2025,
    "kind": "tracker",
-   "n_entries": 202
+   "n_entries": 202,
+   "club_headings": 30,
+   "n_entries_without_club": 0
   },
   "https://www.mlbtraderumors.com/2025/10/projected-arbitration-salaries-for-2026.html": {
    "sha1": "d208aaf9f846b625b0827411e1d88fb01d734057",
@@ -68,7 +72,9 @@
    "bytes": 236472,
    "class_year": 2026,
    "kind": "tracker",
-   "n_entries": 213
+   "n_entries": 213,
+   "club_headings": 30,
+   "n_entries_without_club": 0
   }
  },
  "coverage": {
@@ -8190,6 +8196,8 @@
    "settled_usd": 8700000,
    "split_contract": false,
    "figure_usd": 8700000,
+   "club_heading": "Yankees",
+   "club": "NYY",
    "mlbam": 657077,
    "id_reason": "resolved"
   },
@@ -8224,6 +8232,8 @@
    "settled_usd": 3250000,
    "split_contract": false,
    "figure_usd": 3250000,
+   "club_heading": "White Sox",
+   "club": "CHW",
    "mlbam": 683734,
    "id_reason": "resolved"
   },
@@ -8274,6 +8284,8 @@
    "settled_usd": 1012500,
    "split_contract": false,
    "figure_usd": 1012500,
+   "club_heading": "Royals",
+   "club": "KCR",
    "mlbam": 672578,
    "id_reason": "resolved"
   },
@@ -8308,6 +8320,8 @@
    "settled_usd": 7250000,
    "split_contract": false,
    "figure_usd": 7250000,
+   "club_heading": "Brewers",
+   "club": "MIL",
    "mlbam": 642207,
    "id_reason": "resolved"
   },
@@ -8342,6 +8356,8 @@
    "settled_usd": 2225000,
    "split_contract": false,
    "figure_usd": 2225000,
+   "club_heading": "Mets",
+   "club": "NYM",
    "mlbam": 622098,
    "id_reason": "resolved"
   },
@@ -8376,6 +8392,8 @@
    "settled_usd": null,
    "split_contract": false,
    "figure_usd": null,
+   "club_heading": "Orioles",
+   "club": "BAL",
    "mlbam": 657097,
    "id_reason": "resolved"
   },
@@ -8410,6 +8428,8 @@
    "settled_usd": 1700000,
    "split_contract": false,
    "figure_usd": 1700000,
+   "club_heading": "Tigers",
+   "club": "DET",
    "mlbam": 668670,
    "id_reason": "resolved"
   },
@@ -8444,6 +8464,8 @@
    "settled_usd": 2200000,
    "split_contract": false,
    "figure_usd": 2200000,
+   "club_heading": "Phillies",
+   "club": "PHI",
    "mlbam": 656546,
    "id_reason": "resolved"
   },
@@ -8478,6 +8500,8 @@
    "settled_usd": 2100000,
    "split_contract": false,
    "figure_usd": 2100000,
+   "club_heading": "Marlins",
+   "club": "MIA",
    "mlbam": 660821,
    "id_reason": "resolved"
   },
@@ -8512,6 +8536,8 @@
    "settled_usd": null,
    "split_contract": false,
    "figure_usd": null,
+   "club_heading": "Angels",
+   "club": "LAA",
    "mlbam": 660761,
    "id_reason": "resolved"
   },
@@ -8562,6 +8588,8 @@
    "settled_usd": 1100000,
    "split_contract": false,
    "figure_usd": 1100000,
+   "club_heading": "Royals",
+   "club": "KCR",
    "mlbam": 657031,
    "id_reason": "resolved"
   },
@@ -8596,6 +8624,8 @@
    "settled_usd": 31000000,
    "split_contract": false,
    "figure_usd": 31000000,
+   "club_heading": "Yankees",
+   "club": "NYY",
    "mlbam": 665742,
    "id_reason": "resolved"
   },
@@ -8646,6 +8676,8 @@
    "settled_usd": 5450000,
    "split_contract": false,
    "figure_usd": 5450000,
+   "club_heading": "Nationals",
+   "club": "WSN",
    "mlbam": 657041,
    "id_reason": "resolved"
   },
@@ -8679,6 +8711,8 @@
    "settled_usd": 1875000,
    "split_contract": false,
    "figure_usd": 1875000,
+   "club_heading": "Astros",
+   "club": "HOU",
    "id_reason": "identity_ambiguous"
   },
   {
@@ -8728,6 +8762,8 @@
    "settled_usd": 1575000,
    "split_contract": false,
    "figure_usd": 1575000,
+   "club_heading": "Royals",
+   "club": "KCR",
    "mlbam": 623433,
    "id_reason": "resolved"
   },
@@ -8762,6 +8798,8 @@
    "settled_usd": 2425000,
    "split_contract": false,
    "figure_usd": 2425000,
+   "club_heading": "Twins",
+   "club": "MIN",
    "mlbam": 680777,
    "id_reason": "resolved"
   },
@@ -8796,6 +8834,8 @@
    "settled_usd": 800000,
    "split_contract": false,
    "figure_usd": 800000,
+   "club_heading": "Orioles",
+   "club": "BAL",
    "mlbam": 663630,
    "id_reason": "resolved"
   },
@@ -8830,6 +8870,8 @@
    "settled_usd": 1350000,
    "split_contract": false,
    "figure_usd": 1350000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI",
    "mlbam": 657044,
    "id_reason": "resolved"
   },
@@ -8864,6 +8906,8 @@
    "settled_usd": 2600000,
    "split_contract": false,
    "figure_usd": 2600000,
+   "club_heading": "Athletics",
+   "club": "ATH",
    "mlbam": 664913,
    "id_reason": "resolved"
   },
@@ -8898,6 +8942,8 @@
    "settled_usd": 1530000,
    "split_contract": false,
    "figure_usd": 1530000,
+   "club_heading": "Marlins",
+   "club": "MIA",
    "mlbam": 669432,
    "id_reason": "resolved"
   },
@@ -8932,6 +8978,8 @@
    "settled_usd": 1950000,
    "split_contract": false,
    "figure_usd": 1950000,
+   "club_heading": "Rays",
+   "club": "TBR",
    "mlbam": 641302,
    "id_reason": "resolved"
   },
@@ -8966,6 +9014,8 @@
    "settled_usd": 5850000,
    "split_contract": false,
    "figure_usd": 5850000,
+   "club_heading": "Red Sox",
+   "club": "BOS",
    "mlbam": 641933,
    "id_reason": "resolved"
   },
@@ -9000,6 +9050,8 @@
    "settled_usd": 1962500,
    "split_contract": false,
    "figure_usd": 1962500,
+   "club_heading": "Orioles",
+   "club": "BAL",
    "mlbam": 669330,
    "id_reason": "resolved"
   },
@@ -9034,6 +9086,8 @@
    "settled_usd": 860000,
    "split_contract": false,
    "figure_usd": 860000,
+   "club_heading": "Yankees",
+   "club": "NYY",
    "mlbam": 624647,
    "id_reason": "resolved"
   },
@@ -9067,6 +9121,8 @@
    "settled_usd": 8550000,
    "split_contract": false,
    "figure_usd": 8550000,
+   "club_heading": "Dodgers",
+   "club": "LAD",
    "id_reason": "identity_ambiguous"
   },
   {
@@ -9111,7 +9167,9 @@
    "text": "Bryan Abreu (3.022): $1.75MM agreement today (via Alexander)",
    "settled_usd": 1750000,
    "split_contract": false,
-   "figure_usd": 1750000
+   "figure_usd": 1750000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2024,
@@ -9141,7 +9199,9 @@
    "text": "Willy Adames (5.105): $12.25MM agreement today (via Murray)",
    "settled_usd": 12250000,
    "split_contract": false,
-   "figure_usd": 12250000
+   "figure_usd": 12250000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2024,
@@ -9171,7 +9231,9 @@
    "text": "Jason Adam (3.132): Did not reach agreement, likely to file (via Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -9201,7 +9263,9 @@
    "text": "Keegan Akin (3.079): $825K agreement in November",
    "settled_usd": 825000,
    "split_contract": false,
-   "figure_usd": 825000
+   "figure_usd": 825000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -9231,7 +9295,9 @@
    "text": "Jorge Alcala (4.014): $790K agreement today , including buyout of 2025 mutual option (via Hayes)",
    "settled_usd": 790000,
    "split_contract": false,
-   "figure_usd": 790000
+   "figure_usd": 790000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2024,
@@ -9275,7 +9341,9 @@
    "text": "Yency Almonte (4.143): $1.9MM agreement in November ; acquired in trade with Dodgers today",
    "settled_usd": 1900000,
    "split_contract": false,
-   "figure_usd": 1900000
+   "figure_usd": 1900000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2024,
@@ -9305,7 +9373,9 @@
    "text": "Pete Alonso (5.000): $20.5MM agreement today (per Passan)",
    "settled_usd": 20500000,
    "split_contract": false,
-   "figure_usd": 20500000
+   "figure_usd": 20500000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2024,
@@ -9335,7 +9405,9 @@
    "text": "Adbert Alzolay (3.050): $2.11MM agreement today (via ESPN\u2019s Jesse Rogers)",
    "settled_usd": 2110000,
    "split_contract": false,
-   "figure_usd": 2110000
+   "figure_usd": 2110000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2024,
@@ -9365,7 +9437,9 @@
    "text": "Miguel Andujar (4.053): $1.7MM agreement in November",
    "settled_usd": 1700000,
    "split_contract": false,
-   "figure_usd": 1700000
+   "figure_usd": 1700000,
+   "club_heading": "Athletics",
+   "club": "ATH"
   },
   {
    "class_year": 2024,
@@ -9395,7 +9469,9 @@
    "text": "Tejay Antone (4.000): $830K agreement today (via Wittenmyer)",
    "settled_usd": 830000,
    "split_contract": false,
-   "figure_usd": 830000
+   "figure_usd": 830000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2024,
@@ -9425,7 +9501,9 @@
    "text": "Shawn Armstrong (5.113): $2.05MM agreement today (via Morosi)",
    "settled_usd": 2050000,
    "split_contract": false,
-   "figure_usd": 2050000
+   "figure_usd": 2050000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -9455,7 +9533,9 @@
    "text": "Randy Arozarena (3.129): $8.1MM agreement today (via Francys Romero)",
    "settled_usd": 8100000,
    "split_contract": false,
-   "figure_usd": 8100000
+   "figure_usd": 8100000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -9485,7 +9565,9 @@
    "text": "Luis Arraez (4.121): Did not reach agreement, will exchange figures (via Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2024,
@@ -9515,7 +9597,9 @@
    "text": "Akil Baddoo (2.119): $1.55MM agreement today (via Morosi)",
    "settled_usd": 1550000,
    "split_contract": false,
-   "figure_usd": 1550000
+   "figure_usd": 1550000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2024,
@@ -9545,7 +9629,9 @@
    "text": "Scott Barlow (5.030): $6.7MM agreement today (per Paul Hoynes of Cleveland.com)",
    "settled_usd": 6700000,
    "split_contract": false,
-   "figure_usd": 6700000
+   "figure_usd": 6700000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2024,
@@ -9603,7 +9689,9 @@
    "text": "Jake Bauers (3.084): $1.35MM agreement today (via the Milwaukee Journal-Sentinel\u2019s Curt Hogg)",
    "settled_usd": 1350000,
    "split_contract": false,
-   "figure_usd": 1350000
+   "figure_usd": 1350000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2024,
@@ -9633,7 +9721,9 @@
    "text": "David Bednar (3.076): $4.51MM agreement today (via Mackey)",
    "settled_usd": 4510000,
    "split_contract": false,
-   "figure_usd": 4510000
+   "figure_usd": 4510000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2024,
@@ -9663,7 +9753,9 @@
    "text": "Jalen Beeks (5.003): $1.675MM agreement in November",
    "settled_usd": 1675000,
    "split_contract": false,
-   "figure_usd": 1675000
+   "figure_usd": 1675000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2024,
@@ -9693,7 +9785,9 @@
    "text": "Anthony Bender (2.153): Team announced one-year agreement, terms not known",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2024,
@@ -9723,7 +9817,9 @@
    "text": "Christian Bethancourt (4.038): $2.05MM agreement today (per Feinsand)",
    "settled_usd": 2050000,
    "split_contract": false,
-   "figure_usd": 2050000
+   "figure_usd": 2050000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2024,
@@ -9753,7 +9849,9 @@
    "text": "Phil Bickford (2.134): Did not reach agreement, number filed (per Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2024,
@@ -9783,7 +9881,9 @@
    "text": "Shane Bieber (5.097): $13.125MM agreement today (via McDaniel)",
    "settled_usd": 13125000,
    "split_contract": false,
-   "figure_usd": 13125000
+   "figure_usd": 13125000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2024,
@@ -9813,7 +9913,9 @@
    "text": "Cavan Biggio (4.129): $4.21MM agreement today (via Morosi)",
    "settled_usd": 4210000,
    "split_contract": false,
-   "figure_usd": 4210000
+   "figure_usd": 4210000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -9857,7 +9959,9 @@
    "text": "Paul Blackburn (4.018): $3.45MM agreement today (via the San Francisco Chronicle\u2019s Susan Slusser)",
    "settled_usd": 3450000,
    "split_contract": false,
-   "figure_usd": 3450000
+   "figure_usd": 3450000,
+   "club_heading": "Athletics",
+   "club": "ATH"
   },
   {
    "class_year": 2024,
@@ -9887,7 +9991,9 @@
    "text": "Alec Bohm (3.106): Did not reach agreement, will exchange figures, per club announcement",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2024,
@@ -9917,7 +10023,9 @@
    "text": "Ryan Borucki (5.006): $1.6MM agreement in November",
    "settled_usd": 1600000,
    "split_contract": false,
-   "figure_usd": 1600000
+   "figure_usd": 1600000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2024,
@@ -9975,7 +10083,9 @@
    "text": "JT Brubaker (4.000): $2.275MM agreement yesterday",
    "settled_usd": 2275000,
    "split_contract": false,
-   "figure_usd": 2275000
+   "figure_usd": 2275000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2024,
@@ -10005,7 +10115,9 @@
    "text": "Kris Bubic (3.135): $2.35MM agreement in December",
    "settled_usd": 2350000,
    "split_contract": false,
-   "figure_usd": 2350000
+   "figure_usd": 2350000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2024,
@@ -10035,7 +10147,9 @@
    "text": "Walker Buehler (5.168): $8.025MM agreement today (via Murray)",
    "settled_usd": 8025000,
    "split_contract": false,
-   "figure_usd": 8025000
+   "figure_usd": 8025000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2024,
@@ -10079,7 +10193,9 @@
    "text": "Brock Burke (3.065): $1.035MM agreement today (per Landry)",
    "settled_usd": 1035000,
    "split_contract": false,
-   "figure_usd": 1035000
+   "figure_usd": 1035000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2024,
@@ -10109,7 +10225,9 @@
    "text": "Corbin Burnes (5.049): $15.6375MM agreement today (via Jon Heyman of The New York Post)",
    "settled_usd": 15637500,
    "split_contract": false,
-   "figure_usd": 15637500
+   "figure_usd": 15637500,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2024,
@@ -10153,7 +10271,9 @@
    "text": "Genesis Cabrera (4.011): $1.5125MM agreement today (via MLB.com\u2019s Jon Morosi)",
    "settled_usd": 1512500,
    "split_contract": false,
-   "figure_usd": 1512500
+   "figure_usd": 1512500,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -10183,7 +10303,9 @@
    "text": "Griffin Canning (4.075): $2.6MM agreement today (via MLB.com\u2019s Rhett Bollinger)",
    "settled_usd": 2600000,
    "split_contract": false,
-   "figure_usd": 2600000
+   "figure_usd": 2600000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2024,
@@ -10213,7 +10335,9 @@
    "text": "Dylan Carlson (3.104): $2.35MM agreement today (via Goold)",
    "settled_usd": 2350000,
    "split_contract": false,
-   "figure_usd": 2350000
+   "figure_usd": 2350000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2024,
@@ -10257,7 +10381,9 @@
    "text": "Willi Castro (4.017): $3.3MM agreement today (per Hayes)",
    "settled_usd": 3300000,
    "split_contract": false,
-   "figure_usd": 3300000
+   "figure_usd": 3300000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2024,
@@ -10287,7 +10413,9 @@
    "text": "Jake Cave (4.071): $1MM agreement in November",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2024,
@@ -10317,7 +10445,9 @@
    "text": "Dylan Cease (4.089): $8MM agreement today (via Murray)",
    "settled_usd": 8000000,
    "split_contract": false,
-   "figure_usd": 8000000
+   "figure_usd": 8000000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2024,
@@ -10347,7 +10477,9 @@
    "text": "JT Chargois (4.101): $1.285MM agreement today (via SportsGrid\u2019s Craig Mish)",
    "settled_usd": 1285000,
    "split_contract": false,
-   "figure_usd": 1285000
+   "figure_usd": 1285000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2024,
@@ -10405,7 +10537,9 @@
    "text": "Jazz Chisholm Jr. (3.075): Did not reach agreement, will exchange figures (via Jordan McPherson of the Miami Herald)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2024,
@@ -10449,7 +10583,9 @@
    "text": "Aaron Civale (4.058): $4.9MM agreement today (via Sherman)",
    "settled_usd": 4900000,
    "split_contract": false,
-   "figure_usd": 4900000
+   "figure_usd": 4900000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -10479,7 +10615,9 @@
    "text": "Taylor Clarke (4.120): $1.25MM agreement in November",
    "settled_usd": 1250000,
    "split_contract": false,
-   "figure_usd": 1250000
+   "figure_usd": 1250000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2024,
@@ -10551,7 +10689,9 @@
    "text": "Nestor Cortes (4.094): $3.95MM agreement today (per Sherman)",
    "settled_usd": 3950000,
    "split_contract": false,
-   "figure_usd": 3950000
+   "figure_usd": 3950000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2024,
@@ -10581,7 +10721,9 @@
    "text": "Danny Coulombe (5.008): Did not reach agreement, likely to exchange figures (via MLB.com\u2019s Jake Rill)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -10611,7 +10753,9 @@
    "text": "Dylan Covey (3.138): $850K agreement in November",
    "settled_usd": 850000,
    "split_contract": false,
-   "figure_usd": 850000
+   "figure_usd": 850000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2024,
@@ -10641,7 +10785,9 @@
    "text": "Garrett Crochet (3.028): $800K, per a team announcement",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 800000
+   "figure_usd": 800000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2024,
@@ -10685,7 +10831,9 @@
    "text": "J.D. Davis (5.137): Did not reach agreement, likely to file (via Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2024,
@@ -10743,7 +10891,9 @@
    "text": "Enyel De Los Santos (3.015): $1.16MM agreement today (via Jeff Sanders of the San Diego Union-Tribune)",
    "settled_usd": 1160000,
    "split_contract": false,
-   "figure_usd": 1160000
+   "figure_usd": 1160000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2024,
@@ -10773,7 +10923,9 @@
    "text": "Mauricio Dubon (3.162): Did not reach agreement, will likely exchange figures (via KPRC-2\u2019s Ari Alexander)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2024,
@@ -10803,7 +10955,9 @@
    "text": "Dane Dunning (3.083): $3.325MM agreement today (via Morosi)",
    "settled_usd": 3325000,
    "split_contract": false,
-   "figure_usd": 3325000
+   "figure_usd": 3325000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2024,
@@ -10847,7 +11001,9 @@
    "text": "Tommy Edman (4.114): No agreement reached, will exchange figures, per team announcement",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2024,
@@ -10877,7 +11033,9 @@
    "text": "Santiago Espinal (3.149): $2.725MM agreement today (via Morosi)",
    "settled_usd": 2725000,
    "split_contract": false,
-   "figure_usd": 2725000
+   "figure_usd": 2725000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -10907,7 +11065,9 @@
    "text": "Thairo Estrada (3.169): $4.7MM agreement today (via Slusser)",
    "settled_usd": 4700000,
    "split_contract": false,
-   "figure_usd": 4700000
+   "figure_usd": 4700000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2024,
@@ -10937,7 +11097,9 @@
    "text": "Kyle Farmer (5.129): $6.3MM agreement today , including buyout of 2025 mutual option (via Dan Hayes of The Athletic)",
    "settled_usd": 6300000,
    "split_contract": false,
-   "figure_usd": 6300000
+   "figure_usd": 6300000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2024,
@@ -10967,7 +11129,9 @@
    "text": "Caleb Ferguson (5.093): $2.4MM agreement today (via The Athletic\u2019s Fabian Ardaya)",
    "settled_usd": 2400000,
    "split_contract": false,
-   "figure_usd": 2400000
+   "figure_usd": 2400000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2024,
@@ -10997,7 +11161,9 @@
    "text": "J.P. Feyereisen (3.108): $770K agreement today (via Harris)",
    "settled_usd": 770000,
    "split_contract": false,
-   "figure_usd": 770000
+   "figure_usd": 770000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2024,
@@ -11027,7 +11193,9 @@
    "text": "Kyle Finnegan (4.000): $5.1MM agreement today (per Feinsand)",
    "settled_usd": 5100000,
    "split_contract": false,
-   "figure_usd": 5100000
+   "figure_usd": 5100000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2024,
@@ -11071,7 +11239,9 @@
    "text": "Matt Foster (3.093): $750K agreement in November",
    "settled_usd": 750000,
    "split_contract": false,
-   "figure_usd": 750000
+   "figure_usd": 750000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2024,
@@ -11101,7 +11271,9 @@
    "text": "Jake Fraley (3.097): $2.15MM agreement today (via Wittenmyer)",
    "settled_usd": 2150000,
    "split_contract": false,
-   "figure_usd": 2150000
+   "figure_usd": 2150000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2024,
@@ -11131,7 +11303,9 @@
    "text": "Ty France (4.089): $6.775MM agreement today (via MLB.com\u2019s Daniel Kramer)",
    "settled_usd": 6775000,
    "split_contract": false,
-   "figure_usd": 6775000
+   "figure_usd": 6775000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2024,
@@ -11175,7 +11349,9 @@
    "text": "Max Fried (5.148): $15MM agreement today (via Murray)",
    "settled_usd": 15000000,
    "split_contract": false,
-   "figure_usd": 15000000
+   "figure_usd": 15000000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2024,
@@ -11219,7 +11395,9 @@
    "text": "Zac Gallen (4.100): $10.011MM agreement today (via Feinsand)",
    "settled_usd": 10011000,
    "split_contract": false,
-   "figure_usd": 10011000
+   "figure_usd": 10011000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2024,
@@ -11249,7 +11427,9 @@
    "text": "Adolis Garcia (3.095): Did not reach agreement, will exchange figures (per Sherman)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2024,
@@ -11307,7 +11487,9 @@
    "text": "Logan Gilbert (2.144): $4.05MM agreement today (via Morosi)",
    "settled_usd": 4050000,
    "split_contract": false,
-   "figure_usd": 4050000
+   "figure_usd": 4050000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2024,
@@ -11337,7 +11519,9 @@
    "text": "Lucas Gilbreath (2.148): $760K agreement today (via Feinsand)",
    "settled_usd": 760000,
    "split_contract": false,
-   "figure_usd": 760000
+   "figure_usd": 760000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2024,
@@ -11367,7 +11551,9 @@
    "text": "Kevin Ginkel (3.032): $1.225MM agreement today (via Alexander)",
    "settled_usd": 1225000,
    "split_contract": false,
-   "figure_usd": 1225000
+   "figure_usd": 1225000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2024,
@@ -11397,7 +11583,9 @@
    "text": "Austin Gomber (4.111): $3.15MM agreement today (via MLB.com\u2019s Thomas Harding)",
    "settled_usd": 3150000,
    "split_contract": false,
-   "figure_usd": 3150000
+   "figure_usd": 3150000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2024,
@@ -11427,7 +11615,9 @@
    "text": "Nick Gordon (2.136): No agreement reached, likely headed to hearing (via Bobby Nightengale)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2024,
@@ -11471,7 +11661,9 @@
    "text": "Brusdar Graterol (3.167): $2.7MM agreement today (via Ardaya)",
    "settled_usd": 2700000,
    "split_contract": false,
-   "figure_usd": 2700000
+   "figure_usd": 2700000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2024,
@@ -11501,7 +11693,9 @@
    "text": "Trent Grisham (4.060): $5.5MM agreement today (via Murray)",
    "settled_usd": 5500000,
    "split_contract": false,
-   "figure_usd": 5500000
+   "figure_usd": 5500000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2024,
@@ -11531,7 +11725,9 @@
    "text": "Vladimir Guerrero Jr. (4.157): Did not reach agreement, will file figures (per Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -11589,7 +11785,9 @@
    "text": "Sam Haggerty (3.044): $900K agreement today (via Morosi)",
    "settled_usd": 900000,
    "split_contract": false,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2024,
@@ -11633,7 +11831,9 @@
    "text": "Hunter Harvey (4.047): $2.325MM agreement today (per Feinsand)",
    "settled_usd": 2325000,
    "split_contract": false,
-   "figure_usd": 2325000
+   "figure_usd": 2325000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2024,
@@ -11663,7 +11863,9 @@
    "text": "Austin Hays (4.057): Did not reach agreement, will exchange figures (via the Baltimore Banner\u2019s Andy Kostka)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -11707,7 +11909,9 @@
    "text": "Jonah Heim (3.097): $3.05MM agreement today (per Bob Nightengale)",
    "settled_usd": 3050000,
    "split_contract": false,
-   "figure_usd": 3050000
+   "figure_usd": 3050000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2024,
@@ -11751,7 +11955,9 @@
    "text": "Ryan Helsley (4.105): $3.8MM agreement today (via MLB.com\u2019s John Denton)",
    "settled_usd": 3800000,
    "split_contract": false,
-   "figure_usd": 3800000
+   "figure_usd": 3800000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2024,
@@ -11781,7 +11987,9 @@
    "text": "Sam Hentges (2.157): $1.1625MM agreement today (per Hoynes)",
    "settled_usd": 1162500,
    "split_contract": false,
-   "figure_usd": 1162500
+   "figure_usd": 1162500,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2024,
@@ -11825,7 +12033,9 @@
    "text": "Jonathan Hernandez (3.131): $1.245MM agreement today (per Landry)",
    "settled_usd": 1245000,
    "split_contract": false,
-   "figure_usd": 1245000
+   "figure_usd": 1245000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2024,
@@ -11869,7 +12079,9 @@
    "text": "Kyle Higashioka (5.005): $2.18MM agreement today (via Jeff Sanders of the San Diego Union-Tribune)",
    "settled_usd": 2180000,
    "split_contract": false,
-   "figure_usd": 2180000
+   "figure_usd": 2180000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2024,
@@ -11899,7 +12111,9 @@
    "text": "Sam Hilliard (3.094): $800K agreement in November",
    "settled_usd": 800000,
    "split_contract": false,
-   "figure_usd": 800000
+   "figure_usd": 800000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -11943,7 +12157,9 @@
    "text": "Clay Holmes (5.031): $6MM agreement plus performance bonuses today (per Sherman)",
    "settled_usd": 6000000,
    "split_contract": false,
-   "figure_usd": 6000000
+   "figure_usd": 6000000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2024,
@@ -11973,7 +12189,9 @@
    "text": "Adrian Houser (5.010): $5.05MM agreement today (via Murray)",
    "settled_usd": 5050000,
    "split_contract": false,
-   "figure_usd": 5050000
+   "figure_usd": 5050000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2024,
@@ -12017,7 +12235,9 @@
    "text": "Jonathan India (3.000): Did not reach agreement, likely to exchange figures (via Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2024,
@@ -12047,7 +12267,9 @@
    "text": "Cole Irvin (3.083): $2MM agreement today (via Kostka)",
    "settled_usd": 2000000,
    "split_contract": false,
-   "figure_usd": 2000000
+   "figure_usd": 2000000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -12077,7 +12299,9 @@
    "text": "Danny Jansen (5.050): $5.2MM agreement today (via FanSided\u2019s Robert Murray)",
    "settled_usd": 5200000,
    "split_contract": false,
-   "figure_usd": 5200000
+   "figure_usd": 5200000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -12107,7 +12331,9 @@
    "text": "Connor Joe (2.136): $2.125MM agreement today (via Mackey)",
    "settled_usd": 2125000,
    "split_contract": false,
-   "figure_usd": 2125000
+   "figure_usd": 2125000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2024,
@@ -12151,7 +12377,9 @@
    "text": "James Karinchak (3.099): $1.9MM agreement today (per Hoynes)",
    "settled_usd": 1900000,
    "split_contract": false,
-   "figure_usd": 1900000
+   "figure_usd": 1900000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2024,
@@ -12181,7 +12409,9 @@
    "text": "Mitch Keller (4.026): $5.4425MM agreement today (via the Pittsburgh Post-Gazette\u2019s Jason Mackey)",
    "settled_usd": 5442500,
    "split_contract": false,
-   "figure_usd": 5442500
+   "figure_usd": 5442500,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2024,
@@ -12211,7 +12441,9 @@
    "text": "John King (2.148): $1.005MM agreement today (via Feinsand)",
    "settled_usd": 1005000,
    "split_contract": false,
-   "figure_usd": 1005000
+   "figure_usd": 1005000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2024,
@@ -12241,7 +12473,9 @@
    "text": "Michael King (4.004): $3.15MM agreement today (via Morosi)",
    "settled_usd": 3150000,
    "split_contract": false,
-   "figure_usd": 3150000
+   "figure_usd": 3150000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2024,
@@ -12271,7 +12505,9 @@
    "text": "Alex Kirilloff (2.141): $1.35MM agreement today (via Wolfson)",
    "settled_usd": 1350000,
    "split_contract": false,
-   "figure_usd": 1350000
+   "figure_usd": 1350000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2024,
@@ -12301,7 +12537,9 @@
    "text": "Alejandro Kirk (3.047): $2.8MM agreement today (via Sportsnet\u2019s Shi Davidi)",
    "settled_usd": 2800000,
    "split_contract": false,
-   "figure_usd": 2800000
+   "figure_usd": 2800000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -12331,7 +12569,9 @@
    "text": "Andrew Kittredge (5.070): $2.63MM agreement today (via the St. Louis Post-Dispatch\u2019s Derrick Goold)",
    "settled_usd": 2630000,
    "split_contract": false,
-   "figure_usd": 2630000
+   "figure_usd": 2630000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2024,
@@ -12375,7 +12615,9 @@
    "text": "Michael Kopech (4.041): $3MM agreement today (via Bob Nightengale)",
    "settled_usd": 3000000,
    "split_contract": false,
-   "figure_usd": 3000000
+   "figure_usd": 3000000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2024,
@@ -12405,7 +12647,9 @@
    "text": "Peter Lambert (3.128): $1.25MM agreement today (via Harding)",
    "settled_usd": 1250000,
    "split_contract": false,
-   "figure_usd": 1250000
+   "figure_usd": 1250000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2024,
@@ -12449,7 +12693,9 @@
    "text": "Ramon Laureano (4.165): $5.15MM agreement in November",
    "settled_usd": 5150000,
    "split_contract": false,
-   "figure_usd": 5150000
+   "figure_usd": 5150000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2024,
@@ -12493,7 +12739,9 @@
    "text": "Mark Leiter Jr. (3.031): $1.5MM agreement today (via Rogers)",
    "settled_usd": 1500000,
    "split_contract": false,
-   "figure_usd": 1500000
+   "figure_usd": 1500000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2024,
@@ -12523,7 +12771,9 @@
    "text": "Zack Littell (4.043): $1.85MM agreement today (via Feinsand)",
    "settled_usd": 1850000,
    "split_contract": false,
-   "figure_usd": 1850000
+   "figure_usd": 1850000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -12553,7 +12803,9 @@
    "text": "Jonathan Loaisiga (5.022): $2.5MM agreement today (per Sherman)",
    "settled_usd": 2500000,
    "split_contract": false,
-   "figure_usd": 2500000
+   "figure_usd": 2500000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2024,
@@ -12597,7 +12849,9 @@
    "text": "Nicky Lopez (4.139): $4.3MM agreement today (via Morosi)",
    "settled_usd": 4300000,
    "split_contract": false,
-   "figure_usd": 4300000
+   "figure_usd": 4300000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2024,
@@ -12627,7 +12881,9 @@
    "text": "Nathaniel Lowe (3.145): $7.5MM agreement today (per Kennedi Landry of MLB.com)",
    "settled_usd": 7500000,
    "split_contract": false,
-   "figure_usd": 7500000
+   "figure_usd": 7500000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2024,
@@ -12657,7 +12913,9 @@
    "text": "Joey Lucchesi (4.112): $1.65MM agreement today (via the New York Post\u2019s Joel Sherman)",
    "settled_usd": 1650000,
    "split_contract": false,
-   "figure_usd": 1650000
+   "figure_usd": 1650000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2024,
@@ -12701,7 +12959,9 @@
    "text": "Gavin Lux (3.114): $1.225MM agreement today (via Harris)",
    "settled_usd": 1225000,
    "split_contract": false,
-   "figure_usd": 1225000
+   "figure_usd": 1225000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2024,
@@ -12731,7 +12991,9 @@
    "text": "Jesus Luzardo (3.165): $5.5MM agreement today (via Feinsand)",
    "settled_usd": 5500000,
    "split_contract": false,
-   "figure_usd": 5500000
+   "figure_usd": 5500000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2024,
@@ -12761,7 +13023,9 @@
    "text": "Nick Madrigal (3.163): $1.81MM agreement today (via Morosi)",
    "settled_usd": 1810000,
    "split_contract": false,
-   "figure_usd": 1810000
+   "figure_usd": 1810000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2024,
@@ -12791,7 +13055,9 @@
    "text": "Joe Mantiply (3.029): $925K agreement today (via Feinsand)",
    "settled_usd": 925000,
    "split_contract": false,
-   "figure_usd": 925000
+   "figure_usd": 925000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2024,
@@ -12835,7 +13101,9 @@
    "text": "Jorge Mateo (4.000): $2.7MM agreement in November",
    "settled_usd": 2700000,
    "split_contract": false,
-   "figure_usd": 2700000
+   "figure_usd": 2700000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -12865,7 +13133,9 @@
    "text": "Dustin May (4.059): $2.135MM agreement today (via the L.A. Times\u2019 Jack Harris)",
    "settled_usd": 2135000,
    "split_contract": false,
-   "figure_usd": 2135000
+   "figure_usd": 2135000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2024,
@@ -12895,7 +13165,9 @@
    "text": "Tim Mayza (4.156): $3.59MM agreement today (via Sportsnet\u2019s Ben Nicholson-Smith)",
    "settled_usd": 3590000,
    "split_contract": false,
-   "figure_usd": 3590000
+   "figure_usd": 3590000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -12925,7 +13197,9 @@
    "text": "Shane McClanahan (2.158): Agreed to two-year, $7.2MM deal (via Murray)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 7200000
+   "figure_usd": 7200000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -12955,7 +13229,9 @@
    "text": "Chas McCormick (3.000): $2.85MM agreement today (via Rome)",
    "settled_usd": 2850000,
    "split_contract": false,
-   "figure_usd": 2850000
+   "figure_usd": 2850000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2024,
@@ -12985,7 +13261,9 @@
    "text": "Reese McGuire (4.027): $1.5MM agreement today (via Morosi)",
    "settled_usd": 1500000,
    "split_contract": false,
-   "figure_usd": 1500000
+   "figure_usd": 1500000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2024,
@@ -13015,7 +13293,9 @@
    "text": "Triston McKenzie (3.074): $1.6MM agreement today (per Hoynes)",
    "settled_usd": 1600000,
    "split_contract": false,
-   "figure_usd": 1600000
+   "figure_usd": 1600000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2024,
@@ -13073,7 +13353,9 @@
    "text": "John Means (5.007): $3.325MM agreement today (via Morosi)",
    "settled_usd": 3325000,
    "split_contract": false,
-   "figure_usd": 3325000
+   "figure_usd": 3325000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -13117,7 +13399,9 @@
    "text": "Julian Merryweather (3.109): $1.175MM agreement today (via 670 The Score\u2019s Bruce Levine)",
    "settled_usd": 1175000,
    "split_contract": false,
-   "figure_usd": 1175000
+   "figure_usd": 1175000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2024,
@@ -13147,7 +13431,9 @@
    "text": "Hoby Milner (4.068): $2.05MM agreement yesterday",
    "settled_usd": 2050000,
    "split_contract": false,
-   "figure_usd": 2050000
+   "figure_usd": 2050000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2024,
@@ -13177,7 +13463,9 @@
    "text": "A.J. Minter (5.154): $6.22MM agreement today (via McDaniel)",
    "settled_usd": 6220000,
    "split_contract": false,
-   "figure_usd": 6220000
+   "figure_usd": 6220000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2024,
@@ -13207,7 +13495,9 @@
    "text": "Casey Mize (3.111): Didn\u2019t reach agreement, likely headed to hearing (via the Detroit Free Press\u2019 Evan Petzold)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2024,
@@ -13237,7 +13527,9 @@
    "text": "Adrian Morejon (3.140): $850K agreement today (via Jeff Sanders of the San Diego Union-Tribune)",
    "settled_usd": 850000,
    "split_contract": false,
-   "figure_usd": 850000
+   "figure_usd": 850000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2024,
@@ -13267,7 +13559,9 @@
    "text": "Ryan Mountcastle (3.105): $4.1375MM agreement today (via Morosi)",
    "settled_usd": 4137500,
    "split_contract": false,
-   "figure_usd": 4137500
+   "figure_usd": 4137500,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -13297,7 +13591,9 @@
    "text": "Cedric Mullins (4.078): $6.325MM agreement today (via MASNsports.com\u2019s Roch Kubatko)",
    "settled_usd": 6325000,
    "split_contract": false,
-   "figure_usd": 6325000
+   "figure_usd": 6325000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -13327,7 +13623,9 @@
    "text": "Josh Naylor (4.127): $6.5MM agreement today (per Hoynes)",
    "settled_usd": 6500000,
    "split_contract": false,
-   "figure_usd": 6500000
+   "figure_usd": 6500000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2024,
@@ -13357,7 +13655,9 @@
    "text": "Sean Newcomb (4.113): $1MM agreement in November",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Athletics",
+   "club": "ATH"
   },
   {
    "class_year": 2024,
@@ -13401,7 +13701,9 @@
    "text": "Ryan O\u2019Hearn (5.002): Did not reach agreement, will exchange figures (via the Baltimore Banner\u2019s Andy Kostka)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -13431,7 +13733,9 @@
    "text": "Steven Okert (3.109): $1.0625MM agreement today (via Christina De Nicola of MLB.com)",
    "settled_usd": 1062500,
    "split_contract": false,
-   "figure_usd": 1062500
+   "figure_usd": 1062500,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2024,
@@ -13461,7 +13765,9 @@
    "text": "Edward Olivares (3.049): $1.35MM agreement today (via Mackey)",
    "settled_usd": 1350000,
    "split_contract": false,
-   "figure_usd": 1350000
+   "figure_usd": 1350000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2024,
@@ -13505,7 +13811,9 @@
    "text": "Isaac Paredes (2.160): $3.4MM agreement today (via Feinsand)",
    "settled_usd": 3400000,
    "split_contract": false,
-   "figure_usd": 3400000
+   "figure_usd": 3400000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -13535,7 +13843,9 @@
    "text": "Joel Payamps (3.027): $1.65MM agreement today (via Feinsand)",
    "settled_usd": 1650000,
    "split_contract": false,
-   "figure_usd": 1650000
+   "figure_usd": 1650000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2024,
@@ -13565,7 +13875,9 @@
    "text": "Nate Pearson (3.005): $800K agreement today (per McGrath)",
    "settled_usd": 800000,
    "split_contract": false,
-   "figure_usd": 800000
+   "figure_usd": 800000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -13609,7 +13921,9 @@
    "text": "Cionel Perez (3.085): Did not reach agreement, will exchange figures (per Sherman)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -13639,7 +13953,9 @@
    "text": "David Peterson (3.089): $2.15MM agreement today (via Sherman)",
    "settled_usd": 2150000,
    "split_contract": false,
-   "figure_usd": 2150000
+   "figure_usd": 2150000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2024,
@@ -13683,7 +13999,9 @@
    "text": "Evan Phillips (3.136): $4MM agreement today (via Ardaya)",
    "settled_usd": 4000000,
    "split_contract": false,
-   "figure_usd": 4000000
+   "figure_usd": 4000000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2024,
@@ -13713,7 +14031,9 @@
    "text": "Nick Pivetta (5.166): $7.5MM agreement today (via Alex Speier of the Boston Globe)",
    "settled_usd": 7500000,
    "split_contract": false,
-   "figure_usd": 7500000
+   "figure_usd": 7500000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2024,
@@ -13743,7 +14063,9 @@
    "text": "Colin Poche (4.114): $2.375MM agreement today (via Feinsand)",
    "settled_usd": 2375000,
    "split_contract": false,
-   "figure_usd": 2375000
+   "figure_usd": 2375000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -13787,7 +14109,9 @@
    "text": "A.J. Puk (3.124): $1.8MM agreement today (via Mish)",
    "settled_usd": 1800000,
    "split_contract": false,
-   "figure_usd": 1800000
+   "figure_usd": 1800000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2024,
@@ -13817,7 +14141,9 @@
    "text": "Cal Quantrill (4.132): $6.55MM agreement yesterday",
    "settled_usd": 6550000,
    "split_contract": false,
-   "figure_usd": 6550000
+   "figure_usd": 6550000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2024,
@@ -13847,7 +14173,9 @@
    "text": "Jose Quijada (3.046): $840K agreement today (via Bollinger)",
    "settled_usd": 840000,
    "split_contract": false,
-   "figure_usd": 840000
+   "figure_usd": 840000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2024,
@@ -13877,7 +14205,9 @@
    "text": "Tanner Rainey (4.127): $1.5MM agreement in November",
    "settled_usd": 1500000,
    "split_contract": false,
-   "figure_usd": 1500000
+   "figure_usd": 1500000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2024,
@@ -13907,7 +14237,9 @@
    "text": "Harold Ramirez (4.124): Did not reach agreement, likely to file (via Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -13937,7 +14269,9 @@
    "text": "Drew Rasmussen (3.111): $1.8625MM agreement today (via Feinsand)",
    "settled_usd": 1862500,
    "split_contract": false,
-   "figure_usd": 1862500
+   "figure_usd": 1862500,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2024,
@@ -13967,7 +14301,9 @@
    "text": "Luis Rengifo (4.043): $4.4MM agreement today (via ESPN\u2019s Kiley McDaniel)",
    "settled_usd": 4400000,
    "split_contract": false,
-   "figure_usd": 4400000
+   "figure_usd": 4400000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2024,
@@ -13997,7 +14333,9 @@
    "text": "Trevor Richards (5.084): $2.15MM agreement today (per The Athletic\u2019s Kaitlin McGrath)",
    "settled_usd": 2150000,
    "split_contract": false,
-   "figure_usd": 2150000
+   "figure_usd": 2150000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -14027,7 +14365,9 @@
    "text": "Victor Robles (5.033): $2.65MM agreement in November",
    "settled_usd": 2650000,
    "split_contract": false,
-   "figure_usd": 2650000
+   "figure_usd": 2650000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2024,
@@ -14057,7 +14397,9 @@
    "text": "Brendan Rodgers (4.075): $3.2MM agreement today (via Harding)",
    "settled_usd": 3200000,
    "split_contract": false,
-   "figure_usd": 3200000
+   "figure_usd": 3200000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2024,
@@ -14087,7 +14429,9 @@
    "text": "Tyler Rogers (4.034): $3.2MM agreement today (via Delucchi)",
    "settled_usd": 3200000,
    "split_contract": false,
-   "figure_usd": 3200000
+   "figure_usd": 3200000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2024,
@@ -14117,7 +14461,9 @@
    "text": "Josh Rojas (3.126): $3.1MM agreement today (via Morosi)",
    "settled_usd": 3100000,
    "split_contract": false,
-   "figure_usd": 3100000
+   "figure_usd": 3100000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2024,
@@ -14147,7 +14493,9 @@
    "text": "Jordan Romano (4.051): $7.75MM agreement today (via McDaniel)",
    "settled_usd": 7750000,
    "split_contract": false,
-   "figure_usd": 7750000
+   "figure_usd": 7750000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -14177,7 +14525,9 @@
    "text": "JoJo Romero (3.045): $860K agreement today (via Feinsand)",
    "settled_usd": 860000,
    "split_contract": false,
-   "figure_usd": 860000
+   "figure_usd": 860000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2024,
@@ -14207,7 +14557,9 @@
    "text": "Nick Sandlin (2.157): $1.075MM agreement today (per Hoynes)",
    "settled_usd": 1075000,
    "split_contract": false,
-   "figure_usd": 1075000
+   "figure_usd": 1075000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2024,
@@ -14237,7 +14589,9 @@
    "text": "Patrick Sandoval (3.149): $5.025MM agreement today (via Bollinger)",
    "settled_usd": 5025000,
    "split_contract": false,
-   "figure_usd": 5025000
+   "figure_usd": 5025000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2024,
@@ -14267,7 +14621,9 @@
    "text": "Anthony Santander (5.162): $11.7MM agreement today (via Murray)",
    "settled_usd": 11700000,
    "split_contract": false,
-   "figure_usd": 11700000
+   "figure_usd": 11700000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -14297,7 +14653,9 @@
    "text": "Josh Sborz (3.055): $1.025MM agreement today (per Landry)",
    "settled_usd": 1025000,
    "split_contract": false,
-   "figure_usd": 1025000
+   "figure_usd": 1025000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2024,
@@ -14327,7 +14685,9 @@
    "text": "Clarke Schmidt (2.148): $2.025MM agreement today (via Sherman)",
    "settled_usd": 2025000,
    "split_contract": false,
-   "figure_usd": 2025000
+   "figure_usd": 2025000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2024,
@@ -14357,7 +14717,9 @@
    "text": "John Schreiber (3.027): $1.175MM agreement today (via Rob Bradford of WEEI)",
    "settled_usd": 1175000,
    "split_contract": false,
-   "figure_usd": 1175000
+   "figure_usd": 1175000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2024,
@@ -14387,7 +14749,9 @@
    "text": "Tanner Scott (5.059): Did not reach agreement, will exchange figures (via Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2024,
@@ -14431,7 +14795,9 @@
    "text": "Paul Sewald (5.072): $7.35MM agreement today (via Murray)",
    "settled_usd": 7350000,
    "split_contract": false,
-   "figure_usd": 7350000
+   "figure_usd": 7350000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2024,
@@ -14461,7 +14827,9 @@
    "text": "Lucas Sims (5.014): $2.85MM agreement today (via the Cincinnati Enquirer\u2019s Gordon Wittenmyer)",
    "settled_usd": 2850000,
    "split_contract": false,
-   "figure_usd": 2850000
+   "figure_usd": 2850000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2024,
@@ -14491,7 +14859,9 @@
    "text": "Brady Singer (3.156): $4.85MM agreement today (via MLB.com\u2019s Anne Rogers)",
    "settled_usd": 4850000,
    "split_contract": false,
-   "figure_usd": 4850000
+   "figure_usd": 4850000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2024,
@@ -14521,7 +14891,9 @@
    "text": "Tarik Skubal (3.114): $2.65MM agreement today (via Morosi)",
    "settled_usd": 2650000,
    "split_contract": false,
-   "figure_usd": 2650000
+   "figure_usd": 2650000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2024,
@@ -14551,7 +14923,9 @@
    "text": "Austin Slater (5.147): $4MM agreement in November",
    "settled_usd": 4000000,
    "split_contract": false,
-   "figure_usd": 4000000
+   "figure_usd": 4000000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2024,
@@ -14595,7 +14969,9 @@
    "text": "Michael Soroka (5.009): $3MM agreement, per a team announcement",
    "settled_usd": 3000000,
    "split_contract": false,
-   "figure_usd": 3000000
+   "figure_usd": 3000000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2024,
@@ -14625,7 +15001,9 @@
    "text": "Edmundo Sosa (3.140): $1.7MM agreement today (via the Philadelphia Inquirer\u2019s Scott Lauber)",
    "settled_usd": 1700000,
    "split_contract": false,
-   "figure_usd": 1700000
+   "figure_usd": 1700000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2024,
@@ -14655,7 +15033,9 @@
    "text": "Gregory Soto (4.102): $5MM agreement today (via Alexander)",
    "settled_usd": 5000000,
    "split_contract": false,
-   "figure_usd": 5000000
+   "figure_usd": 5000000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2024,
@@ -14713,7 +15093,9 @@
    "text": "Justin Steele (2.143): $4MM agreement today (via Rogers)",
    "settled_usd": 4000000,
    "split_contract": false,
-   "figure_usd": 4000000
+   "figure_usd": 4000000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2024,
@@ -14743,7 +15125,9 @@
    "text": "Tyler Stephenson (3.056): $2.525MM agreement today (via MLB.com\u2019s Mark Sheldon)",
    "settled_usd": 2525000,
    "split_contract": false,
-   "figure_usd": 2525000
+   "figure_usd": 2525000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2024,
@@ -14773,7 +15157,9 @@
    "text": "DJ Stewart (2.168): $1.38MM agreement in November",
    "settled_usd": 1380000,
    "split_contract": false,
-   "figure_usd": 1380000
+   "figure_usd": 1380000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2024,
@@ -14803,7 +15189,9 @@
    "text": "Garrett Stubbs (3.120): $850K agreement in November",
    "settled_usd": 850000,
    "split_contract": false,
-   "figure_usd": 850000
+   "figure_usd": 850000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2024,
@@ -14833,7 +15221,9 @@
    "text": "Ranger Suarez (4.112): $5.05MM agreement today (via Gelb)",
    "settled_usd": 5050000,
    "split_contract": false,
-   "figure_usd": 5050000
+   "figure_usd": 5050000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2024,
@@ -14891,7 +15281,9 @@
    "text": "Erik Swanson (4.096): $2.75MM agreement today (via Nicholson-Smith)",
    "settled_usd": 2750000,
    "split_contract": false,
-   "figure_usd": 2750000
+   "figure_usd": 2750000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -14935,7 +15327,9 @@
    "text": "Dillon Tate (4.048): $1.5MM agreement today (via Morosi)",
    "settled_usd": 1500000,
    "split_contract": false,
-   "figure_usd": 1500000
+   "figure_usd": 1500000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -14965,7 +15359,9 @@
    "text": "Mike Tauchman (3.143): $1.95MM agreement today (via Morosi)",
    "settled_usd": 1950000,
    "split_contract": false,
-   "figure_usd": 1950000
+   "figure_usd": 1950000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2024,
@@ -14995,7 +15391,9 @@
    "text": "Leody Taveras (2.124): $2.55MM agreement today (via Sherman)",
    "settled_usd": 2550000,
    "split_contract": false,
-   "figure_usd": 2550000
+   "figure_usd": 2550000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2024,
@@ -15025,7 +15423,9 @@
    "text": "Tyrone Taylor (3.093): $2.025MM agrement today (via Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 2025000
+   "figure_usd": 2025000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2024,
@@ -15069,7 +15469,9 @@
    "text": "Caleb Thielbar (5.131): $3.225MM agreement today (via McDaniel)",
    "settled_usd": 3225000,
    "split_contract": false,
-   "figure_usd": 3225000
+   "figure_usd": 3225000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2024,
@@ -15113,7 +15515,9 @@
    "text": "Trent Thornton (3.148): $1.2MM agreement today (via Morosi)",
    "settled_usd": 1200000,
    "split_contract": false,
-   "figure_usd": 1200000
+   "figure_usd": 1200000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2024,
@@ -15157,7 +15561,9 @@
    "text": "Justin Topa (3.044): $1.25MM agreement today (via Kramer)",
    "settled_usd": 1250000,
    "split_contract": false,
-   "figure_usd": 1250000
+   "figure_usd": 1250000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2024,
@@ -15187,7 +15593,9 @@
    "text": "Abraham Toro (3.011): $1.275MM agreement in November",
    "settled_usd": 1275000,
    "split_contract": false,
-   "figure_usd": 1275000
+   "figure_usd": 1275000,
+   "club_heading": "Athletics",
+   "club": "ATH"
   },
   {
    "class_year": 2024,
@@ -15217,7 +15625,9 @@
    "text": "Gleyber Torres (5.162): $14.2MM agreement today (per Sherman)",
    "settled_usd": 14200000,
    "split_contract": false,
-   "figure_usd": 14200000
+   "figure_usd": 14200000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2024,
@@ -15261,7 +15671,9 @@
    "text": "Touki Toussaint (3.071): $1.3MM, per a team announcement",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 1300000
+   "figure_usd": 1300000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2024,
@@ -15291,7 +15703,9 @@
    "text": "Jose Trevino (4.063): $2.73MM agreement today (per Heyman)",
    "settled_usd": 2730000,
    "split_contract": false,
-   "figure_usd": 2730000
+   "figure_usd": 2730000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2024,
@@ -15335,7 +15749,9 @@
    "text": "Kyle Tucker (4.079): $12MM agreement today (via Rome)",
    "settled_usd": 12000000,
    "split_contract": false,
-   "figure_usd": 12000000
+   "figure_usd": 12000000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2024,
@@ -15379,7 +15795,9 @@
    "text": "Luis Urias (4.098): $5MM agreement today (via McDaniel)",
    "settled_usd": 5000000,
    "split_contract": false,
-   "figure_usd": 5000000
+   "figure_usd": 5000000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2024,
@@ -15409,7 +15827,9 @@
    "text": "Ramon Urias (3.025): $2.1MM agreement today (via Feinsand)",
    "settled_usd": 2100000,
    "split_contract": false,
-   "figure_usd": 2100000
+   "figure_usd": 2100000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2024,
@@ -15439,7 +15859,9 @@
    "text": "Jose Urquidy (4.049): $3.75MM agreement today (via Rome)",
    "settled_usd": 3750000,
    "split_contract": false,
-   "figure_usd": 3750000
+   "figure_usd": 3750000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2024,
@@ -15469,7 +15891,9 @@
    "text": "Framber Valdez (4.163): $12.1MM agreement today (via The Athletic\u2019s Chandler Rome)",
    "settled_usd": 12100000,
    "split_contract": false,
-   "figure_usd": 12100000
+   "figure_usd": 12100000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2024,
@@ -15485,7 +15909,9 @@
    "text": "Ildemaro Vargas (4.007): One-year agreement in September",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2024,
@@ -15515,7 +15941,9 @@
    "text": "Daulton Varsho (3.128): $5.65MM agreement today (via Feinsand)",
    "settled_usd": 5650000,
    "split_contract": false,
-   "figure_usd": 5650000
+   "figure_usd": 5650000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2024,
@@ -15559,7 +15987,9 @@
    "text": "Alex Vesia (3.078): $1MM agreement today (via Ardaya)",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2024,
@@ -15603,7 +16033,9 @@
    "text": "LaMonte Wade Jr. (4.035): $3.5MM agreement today (via Slusser)",
    "settled_usd": 3500000,
    "split_contract": false,
-   "figure_usd": 3500000
+   "figure_usd": 3500000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2024,
@@ -15633,7 +16065,9 @@
    "text": "Christian Walker (5.124): $10.9MM agreement today (via Murray)",
    "settled_usd": 10900000,
    "split_contract": false,
-   "figure_usd": 10900000
+   "figure_usd": 10900000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2024,
@@ -15691,7 +16125,9 @@
    "text": "Taylor Ward (3.164): Did not reach agreement, will likely exchange figures (via MLB.com\u2019s Mark Feinsand)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2024,
@@ -15735,7 +16171,9 @@
    "text": "Bryse Wilson (3.036): $1.000025MM agreement today (via MLB.com\u2019s Adam McCalvy)",
    "settled_usd": 1000025,
    "split_contract": false,
-   "figure_usd": 1000025
+   "figure_usd": 1000025,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2024,
@@ -15779,7 +16217,9 @@
    "text": "Patrick Wisdom (3.058): $2.725MM agreement in November",
    "settled_usd": 2725000,
    "split_contract": false,
-   "figure_usd": 2725000
+   "figure_usd": 2725000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2024,
@@ -15837,7 +16277,9 @@
    "text": "Kyle Wright (3.062): $1.8MM agreement today (via Rogers)",
    "settled_usd": 1800000,
    "split_contract": false,
-   "figure_usd": 1800000
+   "figure_usd": 1800000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2024,
@@ -15881,7 +16323,9 @@
    "text": "Ryan Yarbrough (5.117): $3.9MM agreement today (via McDaniel)",
    "settled_usd": 3900000,
    "split_contract": false,
-   "figure_usd": 3900000
+   "figure_usd": 3900000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2024,
@@ -15911,7 +16355,9 @@
    "text": "Mike Yastrzemski (4.128): $7.9MM agreement in November",
    "settled_usd": 7900000,
    "split_contract": false,
-   "figure_usd": 7900000
+   "figure_usd": 7900000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2024,
@@ -15941,7 +16387,9 @@
    "text": "Huascar Ynoa (3.011): $825K agreement last week",
    "settled_usd": 825000,
    "split_contract": false,
-   "figure_usd": 825000
+   "figure_usd": 825000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2024,
@@ -15971,7 +16419,9 @@
    "text": "Alex Young (3.143): $1.16MM agreement today (via Morosi)",
    "settled_usd": 1160000,
    "split_contract": false,
-   "figure_usd": 1160000
+   "figure_usd": 1160000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -16020,6 +16470,8 @@
    "settled_usd": 1160000,
    "split_contract": false,
    "figure_usd": 1160000,
+   "club_heading": "Royals",
+   "club": "KCR",
    "mlbam": 672578,
    "id_reason": "resolved"
   },
@@ -16054,6 +16506,8 @@
    "settled_usd": 8600000,
    "split_contract": false,
    "figure_usd": 8600000,
+   "club_heading": "Yankees",
+   "club": "NYY",
    "mlbam": 642207,
    "id_reason": "resolved"
   },
@@ -16088,6 +16542,8 @@
    "settled_usd": 1025000,
    "split_contract": false,
    "figure_usd": 1025000,
+   "club_heading": "Braves",
+   "club": "ATL",
    "mlbam": 669276,
    "id_reason": "resolved"
   },
@@ -16138,6 +16594,8 @@
    "settled_usd": 4500000,
    "split_contract": false,
    "figure_usd": 4500000,
+   "club_heading": "Marlins",
+   "club": "MIA",
    "mlbam": 660821,
    "id_reason": "resolved"
   },
@@ -16204,6 +16662,8 @@
    "settled_usd": 7825000,
    "split_contract": false,
    "figure_usd": 7825000,
+   "club_heading": "Guardians",
+   "club": "CLE",
    "mlbam": 657041,
    "id_reason": "resolved"
   },
@@ -16238,6 +16698,8 @@
    "settled_usd": 2965000,
    "split_contract": false,
    "figure_usd": 2965000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI",
    "mlbam": 657044,
    "id_reason": "resolved"
   },
@@ -16272,6 +16734,8 @@
    "settled_usd": 1337000,
    "split_contract": false,
    "figure_usd": 1337000,
+   "club_heading": "Guardians",
+   "club": "CLE",
    "mlbam": 656529,
    "id_reason": "resolved"
   },
@@ -16306,6 +16770,8 @@
    "settled_usd": 2700000,
    "split_contract": false,
    "figure_usd": 2700000,
+   "club_heading": "Athletics",
+   "club": "ATH",
    "mlbam": 664913,
    "id_reason": "resolved"
   },
@@ -16340,6 +16806,8 @@
    "settled_usd": 2600000,
    "split_contract": false,
    "figure_usd": 2600000,
+   "club_heading": "Orioles",
+   "club": "BAL",
    "mlbam": 669432,
    "id_reason": "resolved"
   },
@@ -16390,6 +16858,8 @@
    "settled_usd": null,
    "split_contract": false,
    "figure_usd": 900000,
+   "club_heading": "Padres",
+   "club": "SDP",
    "mlbam": 642180,
    "id_reason": "resolved"
   },
@@ -16424,6 +16894,8 @@
    "settled_usd": 2075000,
    "split_contract": false,
    "figure_usd": 2075000,
+   "club_heading": "Orioles",
+   "club": "BAL",
    "mlbam": 669330,
    "id_reason": "resolved"
   },
@@ -16455,7 +16927,9 @@
    "text": "Bryan Abreu (4.022): $3.45MM agreement today (per Chandler Rome of The Athletic)",
    "settled_usd": 3450000,
    "split_contract": false,
-   "figure_usd": 3450000
+   "figure_usd": 3450000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2025,
@@ -16485,7 +16959,9 @@
    "text": "Jason Adam (4.132): $4.8MM agreement today (per Murray)",
    "settled_usd": 4800000,
    "split_contract": false,
-   "figure_usd": 4800000
+   "figure_usd": 4800000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2025,
@@ -16515,7 +16991,9 @@
    "text": "Riley Adams (3.005): $850K agreement today (per FanSided\u2019s Robert Murray)",
    "settled_usd": 850000,
    "split_contract": false,
-   "figure_usd": 850000
+   "figure_usd": 850000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2025,
@@ -16545,7 +17023,9 @@
    "text": "Jo Adell (3.085): $2.1MM agreement today (per Murray)",
    "settled_usd": 2100000,
    "split_contract": false,
-   "figure_usd": 2100000
+   "figure_usd": 2100000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2025,
@@ -16575,7 +17055,9 @@
    "text": "Keegan Akin (4.083): $1.475MM agreement today (per Jake Rill of MLB.com)",
    "settled_usd": 1475000,
    "split_contract": false,
-   "figure_usd": 1475000
+   "figure_usd": 1475000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -16661,7 +17143,9 @@
    "text": "Justin Anderson (3.122): $900K agreement today (club announcement)",
    "settled_usd": 900000,
    "split_contract": false,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2025,
@@ -16691,7 +17175,9 @@
    "text": "Miguel Andujar (5.053): $3MM agreement today (per Murray)",
    "settled_usd": 3000000,
    "split_contract": false,
-   "figure_usd": 3000000
+   "figure_usd": 3000000,
+   "club_heading": "Athletics",
+   "club": "ATH"
   },
   {
    "class_year": 2025,
@@ -16735,7 +17221,9 @@
    "text": "Randy Arozarena (4.129): $11.3MM agreement today (per Francys Romero of Beisbol FR)",
    "settled_usd": 11300000,
    "split_contract": false,
-   "figure_usd": 11300000
+   "figure_usd": 11300000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2025,
@@ -16765,7 +17253,9 @@
    "text": "Luis Arraez (5.121): $14MM agreement today (via Robert Murray of FanSided)",
    "settled_usd": 14000000,
    "split_contract": false,
-   "figure_usd": 14000000
+   "figure_usd": 14000000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2025,
@@ -16809,7 +17299,9 @@
    "text": "Anthony Banda (3.135): $1MM agreement today (per Ardaya)",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2025,
@@ -16839,7 +17331,9 @@
    "text": "Joey Bart (3.020): $1.175MM agreement today (per Andrew Destin of the Pittsburgh Post-Gazette)",
    "settled_usd": 1175000,
    "split_contract": false,
-   "figure_usd": 1175000
+   "figure_usd": 1175000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2025,
@@ -16883,7 +17377,9 @@
    "text": "Shane Baz (2.158): $1.45MM agreement today (per Ari Alexander of KPRC 2)",
    "settled_usd": 1450000,
    "split_contract": false,
-   "figure_usd": 1450000
+   "figure_usd": 1450000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2025,
@@ -16913,7 +17409,9 @@
    "text": "David Bednar (4.076): $5.9MM agreement today (per Andrew Destin of the Pittsburgh Post-Gazette)",
    "settled_usd": 5900000,
    "split_contract": false,
-   "figure_usd": 5900000
+   "figure_usd": 5900000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2025,
@@ -16943,7 +17441,9 @@
    "text": "Anthony Bender (3.153): $1.42MM agreement today (per The Associated Press)",
    "settled_usd": 1420000,
    "split_contract": false,
-   "figure_usd": 1420000
+   "figure_usd": 1420000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2025,
@@ -17015,7 +17515,9 @@
    "text": "Paul Blackburn (5.018): $4.05MM agreement today (per The Associated Press)",
    "settled_usd": 4050000,
    "split_contract": false,
-   "figure_usd": 4050000
+   "figure_usd": 4050000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2025,
@@ -17045,7 +17547,9 @@
    "text": "Alec Bohm (4.106): $7.7MM agreement today (per Murray)",
    "settled_usd": 7700000,
    "split_contract": false,
-   "figure_usd": 7700000
+   "figure_usd": 7700000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2025,
@@ -17089,7 +17593,9 @@
    "text": "Kyle Bradish (2.160): $2.35MM agreement today (per Jon Heyman of The New York Post)",
    "settled_usd": 2350000,
    "split_contract": false,
-   "figure_usd": 2350000
+   "figure_usd": 2350000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -17133,7 +17639,9 @@
    "text": "Beau Brieske (2.134): $1.025MM agreement today (per Petzold)",
    "settled_usd": 1025000,
    "split_contract": false,
-   "figure_usd": 1025000
+   "figure_usd": 1025000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2025,
@@ -17177,7 +17685,9 @@
    "text": "JT Brubaker (5.000): $1.82MM agreement reached in November",
    "settled_usd": 1820000,
    "split_contract": false,
-   "figure_usd": 1820000
+   "figure_usd": 1820000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2025,
@@ -17207,7 +17717,9 @@
    "text": "Kris Bubic (4.135): $3MM agreement today (per Rogers)",
    "settled_usd": 3000000,
    "split_contract": false,
-   "figure_usd": 3000000
+   "figure_usd": 3000000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2025,
@@ -17237,7 +17749,9 @@
    "text": "Brock Burke (4.045): $1.15MM agreement reached yesterday",
    "settled_usd": 1150000,
    "split_contract": false,
-   "figure_usd": 1150000
+   "figure_usd": 1150000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2025,
@@ -17267,7 +17781,9 @@
    "text": "Edward Cabrera (2.147): $1.95MM agreement today (per The Associated Press)",
    "settled_usd": 1950000,
    "split_contract": false,
-   "figure_usd": 1950000
+   "figure_usd": 1950000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2025,
@@ -17311,7 +17827,9 @@
    "text": "Luis Campusano (2.144): $1MM agreement today (per Robert Murray of FanSided)",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2025,
@@ -17369,7 +17887,9 @@
    "text": "Willi Castro (5.017): $6.4MM agreement today (per Darren Wolfson of Skor North)",
    "settled_usd": 6400000,
    "split_contract": false,
-   "figure_usd": 6400000
+   "figure_usd": 6400000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -17413,7 +17933,9 @@
    "text": "Dylan Cease (5.089): $13.75MM agreement today (per Kevin Acee of the San Diego Union-Tribune)",
    "settled_usd": 13750000,
    "split_contract": false,
-   "figure_usd": 13750000
+   "figure_usd": 13750000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2025,
@@ -17457,7 +17979,9 @@
    "text": "Jazz Chisholm Jr. (4.075): $5.85MM agreement today (per Murray)",
    "settled_usd": 5850000,
    "split_contract": false,
-   "figure_usd": 5850000
+   "figure_usd": 5850000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2025,
@@ -17487,7 +18011,9 @@
    "text": "Aaron Civale (5.058): $8MM agreement today (per Murray)",
    "settled_usd": 8000000,
    "split_contract": false,
-   "figure_usd": 8000000
+   "figure_usd": 8000000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2025,
@@ -17517,7 +18043,9 @@
    "text": "Garrett Cleavinger (3.060): $1.2MM agreement today (per Robert Murray of FanSided)",
    "settled_usd": 1200000,
    "split_contract": false,
-   "figure_usd": 1200000
+   "figure_usd": 1200000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2025,
@@ -17547,7 +18075,9 @@
    "text": "Ernie Clement (2.168): $1.97MM agreement today (per the Gate 14 Podcast)",
    "settled_usd": 1970000,
    "split_contract": false,
-   "figure_usd": 1970000
+   "figure_usd": 1970000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2025,
@@ -17563,7 +18093,9 @@
    "text": "William Conteras (3.112): Did not reach agreement, will likely exchange figures (per Jesse Rogers of ESPN)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2025,
@@ -17607,7 +18139,9 @@
    "text": "Nestor Cortes (5.094): $7.6MM agreement today (per Murray)",
    "settled_usd": 7600000,
    "split_contract": false,
-   "figure_usd": 7600000
+   "figure_usd": 7600000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2025,
@@ -17637,7 +18171,9 @@
    "text": "Kutter Crawford (2.136): $2.75MM agreement today (per Feinsand)",
    "settled_usd": 2750000,
    "split_contract": false,
-   "figure_usd": 2750000
+   "figure_usd": 2750000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2025,
@@ -17667,7 +18203,9 @@
    "text": "Garrett Crochet (4.028): $3.8MM agreement today (per Chris Cotillo of MassLive)",
    "settled_usd": 3800000,
    "split_contract": false,
-   "figure_usd": 3800000
+   "figure_usd": 3800000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2025,
@@ -17725,7 +18263,9 @@
    "text": "Reid Detmers (2.159): $1.825MM agreement today (per Murray)",
    "settled_usd": 1825000,
    "split_contract": false,
-   "figure_usd": 1825000
+   "figure_usd": 1825000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2025,
@@ -17755,7 +18295,9 @@
    "text": "Alexis Diaz (3.000): $4.5MM agreement today (per Robert Murray of FanSided)",
    "settled_usd": 4500000,
    "split_contract": false,
-   "figure_usd": 4500000
+   "figure_usd": 4500000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -17785,7 +18327,9 @@
    "text": "Brendan Donovan (3.000): Did not reach agreement, will likely exchange figures (per John Denton of MLB.com)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2025,
@@ -17815,7 +18359,9 @@
    "text": "Camilo Doval (3.071): $4.525MM agreement today (per Slusser)",
    "settled_usd": 4525000,
    "split_contract": false,
-   "figure_usd": 4525000
+   "figure_usd": 4525000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2025,
@@ -17845,7 +18391,9 @@
    "text": "Mauricio Dubon (4.162): $5MM agreement reached today (per Robert Murray of FanSided)",
    "settled_usd": 5000000,
    "split_contract": false,
-   "figure_usd": 5000000
+   "figure_usd": 5000000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2025,
@@ -17875,7 +18423,9 @@
    "text": "Dane Dunning (4.078): $2.66MM agreement reached in November",
    "settled_usd": 2660000,
    "split_contract": false,
-   "figure_usd": 2660000
+   "figure_usd": 2660000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2025,
@@ -17905,7 +18455,9 @@
    "text": "Jarren Duran (2.155): Did not reach agreement, exchanged figures (per Cotillo)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2025,
@@ -17935,7 +18487,9 @@
    "text": "Jhoan Duran (3.000): $4.125MM agreement today (per Wolfson)",
    "settled_usd": 4125000,
    "split_contract": false,
-   "figure_usd": 4125000
+   "figure_usd": 4125000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -17965,7 +18519,9 @@
    "text": "Scott Effross (2.156): $800K agreement reached today (per Murray)",
    "settled_usd": 800000,
    "split_contract": false,
-   "figure_usd": 800000
+   "figure_usd": 800000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2025,
@@ -17995,7 +18551,9 @@
    "text": "Santiago Espinal (4.149): $2.4MM agreement reached in November",
    "settled_usd": 2400000,
    "split_contract": false,
-   "figure_usd": 2400000
+   "figure_usd": 2400000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -18025,7 +18583,9 @@
    "text": "Bailey Falter (2.138): $2.222MM agreement reached today (via Noah Hiles of the Pittsburgh Post-Gazette)",
    "settled_usd": 2222000,
    "split_contract": false,
-   "figure_usd": 2222000
+   "figure_usd": 2222000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2025,
@@ -18055,7 +18615,9 @@
    "text": "Ryan Feltner (2.143): $2.275MM agreement today (per McDaniel)",
    "settled_usd": 2275000,
    "split_contract": false,
-   "figure_usd": 2275000
+   "figure_usd": 2275000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2025,
@@ -18099,7 +18661,9 @@
    "text": "Jason Foley (3.033): $3.15MM agreement today (per Petzold)",
    "settled_usd": 3150000,
    "split_contract": false,
-   "figure_usd": 3150000
+   "figure_usd": 3150000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2025,
@@ -18129,7 +18693,9 @@
    "text": "Nick Fortes (2.149): $1.86MM agreement today (per The Associated Press)",
    "settled_usd": 1860000,
    "split_contract": false,
-   "figure_usd": 1860000
+   "figure_usd": 1860000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2025,
@@ -18173,7 +18739,9 @@
    "text": "Jake Fraley (4.097): $3.125MM agreement today (per Gordon Wittenmyer of the Cincinnati Enquirer)",
    "settled_usd": 3125000,
    "split_contract": false,
-   "figure_usd": 3125000
+   "figure_usd": 3125000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -18231,7 +18799,9 @@
    "text": "Zac Gallen (5.100): $13.5MM agreement today (per Murray)",
    "settled_usd": 13500000,
    "split_contract": false,
-   "figure_usd": 13500000
+   "figure_usd": 13500000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2025,
@@ -18261,7 +18831,9 @@
    "text": "Luis Garcia Jr. (3.142): $4.5MM agreement today (per Alexander)",
    "settled_usd": 4500000,
    "split_contract": false,
-   "figure_usd": 4500000
+   "figure_usd": 4500000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2025,
@@ -18291,7 +18863,9 @@
    "text": "Luis Garcia (4.083): $1.875MM agreement reached yesterday",
    "settled_usd": 1875000,
    "split_contract": false,
-   "figure_usd": 1875000
+   "figure_usd": 1875000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2025,
@@ -18321,7 +18895,9 @@
    "text": "Braxton Garrett (2.168): $1.53MM agreement today (per The Associated Press)",
    "settled_usd": 1530000,
    "split_contract": false,
-   "figure_usd": 1530000
+   "figure_usd": 1530000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2025,
@@ -18365,7 +18941,9 @@
    "text": "Logan Gilbert (3.144): $7.625MM agreement today (per Jon Heyman of The New York Post)",
    "settled_usd": 7625000,
    "split_contract": false,
-   "figure_usd": 7625000
+   "figure_usd": 7625000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2025,
@@ -18395,7 +18973,9 @@
    "text": "Lucas Gilbreath (3.148): $785K agreement reached in November",
    "settled_usd": 785000,
    "split_contract": false,
-   "figure_usd": 785000
+   "figure_usd": 785000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2025,
@@ -18425,7 +19005,9 @@
    "text": "Kevin Ginkel (4.033): $2.425MM agreement reached today (via MLB.com\u2019s Mark Feinsand)",
    "settled_usd": 2425000,
    "split_contract": false,
-   "figure_usd": 2425000
+   "figure_usd": 2425000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2025,
@@ -18455,7 +19037,9 @@
    "text": "Austin Gomber (5.111): $6.35MM agreement today (per Feinsand)",
    "settled_usd": 6350000,
    "split_contract": false,
-   "figure_usd": 6350000
+   "figure_usd": 6350000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2025,
@@ -18485,7 +19069,9 @@
    "text": "Tony Gonsolin (4.152): $5.4MM agreement reached in November",
    "settled_usd": 5400000,
    "split_contract": false,
-   "figure_usd": 5400000
+   "figure_usd": 5400000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2025,
@@ -18515,7 +19101,9 @@
    "text": "MacKenzie Gore (3.000): $2.89MM agreement today (per Golden)",
    "settled_usd": 2890000,
    "split_contract": false,
-   "figure_usd": 2890000
+   "figure_usd": 2890000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2025,
@@ -18545,7 +19133,9 @@
    "text": "Brusdar Graterol (4.167): $2.8MM agreement today (per Fabian Ardaya of The Athletic)",
    "settled_usd": 2800000,
    "split_contract": false,
-   "figure_usd": 2800000
+   "figure_usd": 2800000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2025,
@@ -18575,7 +19165,9 @@
    "text": "Josiah Gray (3.075): $1.35MM agreement today (per Golden)",
    "settled_usd": 1350000,
    "split_contract": false,
-   "figure_usd": 1350000
+   "figure_usd": 1350000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2025,
@@ -18605,7 +19197,9 @@
    "text": "Trent Grisham (5.060): $5MM agreement reached in November",
    "settled_usd": 5000000,
    "split_contract": false,
-   "figure_usd": 5000000
+   "figure_usd": 5000000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2025,
@@ -18635,7 +19229,9 @@
    "text": "Vladimir Guerrero Jr. (5.157): $28.5MM agreement reached today",
    "settled_usd": 28500000,
    "split_contract": false,
-   "figure_usd": 28500000
+   "figure_usd": 28500000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2025,
@@ -18665,7 +19261,9 @@
    "text": "Eric Haase (3.159): $1.35MM agreement reached in November",
    "settled_usd": 1350000,
    "split_contract": false,
-   "figure_usd": 1350000
+   "figure_usd": 1350000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2025,
@@ -18709,7 +19307,9 @@
    "text": "Hunter Harvey (5.047): $3.7MM agreement today (per Anne Rogers of MLB.com)",
    "settled_usd": 3700000,
    "split_contract": false,
-   "figure_usd": 3700000
+   "figure_usd": 3700000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2025,
@@ -18753,7 +19353,9 @@
    "text": "Jonah Heim (4.097): $4.575MM agreement today (per Feinsand)",
    "settled_usd": 4575000,
    "split_contract": false,
-   "figure_usd": 4575000
+   "figure_usd": 4575000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2025,
@@ -18797,7 +19399,9 @@
    "text": "Ryan Helsley (5.105): $8.2MM agreement today (per Murray)",
    "settled_usd": 8200000,
    "split_contract": false,
-   "figure_usd": 8200000
+   "figure_usd": 8200000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2025,
@@ -18827,7 +19431,9 @@
    "text": "Jimmy Herget (3.069): $850K agreement reached in November (per Thomas Harding of MLB.com)",
    "settled_usd": 850000,
    "split_contract": false,
-   "figure_usd": 850000
+   "figure_usd": 850000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2025,
@@ -18857,7 +19463,9 @@
    "text": "Sam Hilliard (4.023): $1MM agreement reached in November",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2025,
@@ -18887,7 +19495,9 @@
    "text": "Colin Holderman (2.144): $1.5MM agreement today (per Alex Stumpf of MLB.com)",
    "settled_usd": 1500000,
    "split_contract": false,
-   "figure_usd": 1500000
+   "figure_usd": 1500000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2025,
@@ -18917,7 +19527,9 @@
    "text": "Tanner Houck (3.100): $3.95MM agreement today (per Cotillo)",
    "settled_usd": 3950000,
    "split_contract": false,
-   "figure_usd": 3950000
+   "figure_usd": 3950000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2025,
@@ -18961,7 +19573,9 @@
    "text": "Andy Ibanez (2.170): $1.4MM agreement reached in November",
    "settled_usd": 1400000,
    "split_contract": false,
-   "figure_usd": 1400000
+   "figure_usd": 1400000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2025,
@@ -18991,7 +19605,9 @@
    "text": "Kyle Isbel (3.043): $1.75MM agreement today (per Feinsand)",
    "settled_usd": 1750000,
    "split_contract": false,
-   "figure_usd": 1750000
+   "figure_usd": 1750000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2025,
@@ -19021,7 +19637,9 @@
    "text": "Griffin Jax (3.091): $2.365MM agreement today (per Mark Feinsand of MLB.com)",
    "settled_usd": 2365000,
    "split_contract": false,
-   "figure_usd": 2365000
+   "figure_usd": 2365000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -19051,7 +19669,9 @@
    "text": "Ryan Jeffers (4.089): $4.55MM agreement today (per Wolfson)",
    "settled_usd": 4550000,
    "split_contract": false,
-   "figure_usd": 4550000
+   "figure_usd": 4550000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -19123,7 +19743,9 @@
    "text": "Jarred Kelenic (2.169): $2.3MM agreement reached today (via FanSided\u2019s Robert Murray)",
    "settled_usd": 2300000,
    "split_contract": false,
-   "figure_usd": 2300000
+   "figure_usd": 2300000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2025,
@@ -19139,7 +19761,9 @@
    "text": "Scott Kingery (3.051): $770K agreement reached in November",
    "settled_usd": 770000,
    "split_contract": false,
-   "figure_usd": 770000
+   "figure_usd": 770000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2025,
@@ -19169,7 +19793,9 @@
    "text": "John King (3.145): $1.605MM agreement today (per Ari Alexander of KPRC 2)",
    "settled_usd": 1605000,
    "split_contract": false,
-   "figure_usd": 1605000
+   "figure_usd": 1605000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2025,
@@ -19199,7 +19825,9 @@
    "text": "Michael King (5.004): Did not reach agreement, will likely exchange figures (per Kevin Acee of the San Diego Union-Tribune)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2025,
@@ -19229,7 +19857,9 @@
    "text": "George Kirby (2.151): $4.3MM agreement today (per Kramer)",
    "settled_usd": 4300000,
    "split_contract": false,
-   "figure_usd": 4300000
+   "figure_usd": 4300000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2025,
@@ -19273,7 +19903,9 @@
    "text": "Alejandro Kirk (4.047): $4.6MM agreement today (per Feinsand)",
    "settled_usd": 4600000,
    "split_contract": false,
-   "figure_usd": 4600000
+   "figure_usd": 4600000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2025,
@@ -19303,7 +19935,9 @@
    "text": "Michael Kopech (5.041): $5.2MM agreement today (per Jon Heyman of The New York Post)",
    "settled_usd": 5200000,
    "split_contract": false,
-   "figure_usd": 5200000
+   "figure_usd": 5200000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2025,
@@ -19333,7 +19967,9 @@
    "text": "Dean Kremer (3.112): $2.95MM agreement today (per Andy Kostka of the Baltimore Banner)",
    "settled_usd": 2950000,
    "split_contract": false,
-   "figure_usd": 2950000
+   "figure_usd": 2950000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -19363,7 +19999,9 @@
    "text": "Steven Kwan (3.000): $4.175MM agreement today (per Ari Alexander of KPRC 2)",
    "settled_usd": 4175000,
    "split_contract": false,
-   "figure_usd": 4175000
+   "figure_usd": 4175000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2025,
@@ -19435,7 +20073,9 @@
    "text": "Trevor Larnach (3.009): $2.1MM agreement today (per Wolfson)",
    "settled_usd": 2100000,
    "split_contract": false,
-   "figure_usd": 2100000
+   "figure_usd": 2100000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -19479,7 +20119,9 @@
    "text": "Derek Law (5.081): $2.75MM agreement today (per Andrew Golden of The Washington Post)",
    "settled_usd": 2750000,
    "split_contract": false,
-   "figure_usd": 2750000
+   "figure_usd": 2750000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2025,
@@ -19509,7 +20151,9 @@
    "text": "Justin Lawrence (2.167): $975K agreement today (per Harding )",
    "settled_usd": 975000,
    "split_contract": false,
-   "figure_usd": 975000
+   "figure_usd": 975000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2025,
@@ -19539,7 +20183,9 @@
    "text": "Mark Leiter Jr. (4.031): Did not reach agreement, will likely exchange figures (per Rogers)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2025,
@@ -19569,7 +20215,9 @@
    "text": "Royce Lewis (2.142): $1.625MM agreement today (per Wolfson)",
    "settled_usd": 1625000,
    "split_contract": false,
-   "figure_usd": 1625000
+   "figure_usd": 1625000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -19599,7 +20247,9 @@
    "text": "Zack Littell (5.043): $5.72MM agreement today (per Robert Murray of FanSided)",
    "settled_usd": 5720000,
    "split_contract": false,
-   "figure_usd": 5720000
+   "figure_usd": 5720000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2025,
@@ -19629,7 +20279,9 @@
    "text": "Ben Lively (2.133): $2.25MM agreement reached in November",
    "settled_usd": 2250000,
    "split_contract": false,
-   "figure_usd": 2250000
+   "figure_usd": 2250000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2025,
@@ -19659,7 +20311,9 @@
    "text": "Nick Lodolo (3.000): $1.975MM agreement today (per Gordon Wittenmyer of the Cincinnati Enquirer)",
    "settled_usd": 1975000,
    "split_contract": false,
-   "figure_usd": 1975000
+   "figure_usd": 1975000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -19717,7 +20371,9 @@
    "text": "Nathaniel Lowe (4.145): Did not reach agreement, exchanged figures",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2025,
@@ -19761,7 +20417,9 @@
    "text": "Gavin Lux (4.114): $3.325MM agreement today (per Murray)",
    "settled_usd": 3325000,
    "split_contract": false,
-   "figure_usd": 3325000
+   "figure_usd": 3325000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -19791,7 +20449,9 @@
    "text": "Jesus Luzardo (4.165): $6.225MM agreement today (per Murray)",
    "settled_usd": 6225000,
    "split_contract": false,
-   "figure_usd": 6225000
+   "figure_usd": 6225000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2025,
@@ -19849,7 +20509,9 @@
    "text": "Alek Manoah (3.063): $2.2MM agreement today (per Davidi)",
    "settled_usd": 2200000,
    "split_contract": false,
-   "figure_usd": 2200000
+   "figure_usd": 2200000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2025,
@@ -19879,7 +20541,9 @@
    "text": "Joe Mantiply (4.029): $1.7MM agreement today (per Kiley McDaniel of ESPN)",
    "settled_usd": 1700000,
    "split_contract": false,
-   "figure_usd": 1700000
+   "figure_usd": 1700000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2025,
@@ -19909,7 +20573,9 @@
    "text": "Brandon Marsh (3.078): $3MM agreement today (per Heyman)",
    "settled_usd": 3000000,
    "split_contract": false,
-   "figure_usd": 3000000
+   "figure_usd": 3000000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2025,
@@ -19939,7 +20605,9 @@
    "text": "Jorge Mateo (5.000): Did not reach agreement, likely to exchange figures (per Roch Kubatko of MASNsports.com)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -19969,7 +20637,9 @@
    "text": "Dustin May (5.059): $2.135MM agreement reached in November",
    "settled_usd": 2135000,
    "split_contract": false,
-   "figure_usd": 2135000
+   "figure_usd": 2135000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2025,
@@ -20013,7 +20683,9 @@
    "text": "Chas McCormick (4.000): $3.4MM agreement today (per Chandler Rome of The Athletic)",
    "settled_usd": 3400000,
    "split_contract": false,
-   "figure_usd": 3400000
+   "figure_usd": 3400000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2025,
@@ -20043,7 +20715,9 @@
    "text": "Triston McKenzie (4.002): $1.95MM agreement reached in November",
    "settled_usd": 1950000,
    "split_contract": false,
-   "figure_usd": 1950000
+   "figure_usd": 1950000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2025,
@@ -20073,7 +20747,9 @@
    "text": "Zach McKinstry (3.099): $1.65MM agreement reached in November",
    "settled_usd": 1650000,
    "split_contract": false,
-   "figure_usd": 1650000
+   "figure_usd": 1650000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2025,
@@ -20103,7 +20779,9 @@
    "text": "Nick Mears (3.022): $963K agreement today (per Adam McCalvy of MLB.com)",
    "settled_usd": 963000,
    "split_contract": false,
-   "figure_usd": 963000
+   "figure_usd": 963000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2025,
@@ -20133,7 +20811,9 @@
    "text": "Trevor Megill (3.002): $1.94MM agreement reached today (per Murray)",
    "settled_usd": 1940000,
    "split_contract": false,
-   "figure_usd": 1940000
+   "figure_usd": 1940000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2025,
@@ -20163,7 +20843,9 @@
    "text": "Tylor Megill (3.031): $1.975MM agreement today (per The Associated Press)",
    "settled_usd": 1975000,
    "split_contract": false,
-   "figure_usd": 1975000
+   "figure_usd": 1975000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2025,
@@ -20193,7 +20875,9 @@
    "text": "MJ Melendez (2.153): $2.65MM agreement today (per Rogers)",
    "settled_usd": 2650000,
    "split_contract": false,
-   "figure_usd": 2650000
+   "figure_usd": 2650000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2025,
@@ -20223,7 +20907,9 @@
    "text": "Julian Merryweather (4.109): $1.225MM agreement reached in November",
    "settled_usd": 1225000,
    "split_contract": false,
-   "figure_usd": 1225000
+   "figure_usd": 1225000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2025,
@@ -20253,7 +20939,9 @@
    "text": "Jake Meyers (3.044): $2.3MM agreement today (per Rome)",
    "settled_usd": 2300000,
    "split_contract": false,
-   "figure_usd": 2300000
+   "figure_usd": 2300000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2025,
@@ -20297,7 +20985,9 @@
    "text": "Casey Mize (4.111): $2.34MM agreement reached today (via Mark Feinsand of MLB.com)",
    "settled_usd": 2340000,
    "split_contract": false,
-   "figure_usd": 2340000
+   "figure_usd": 2340000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2025,
@@ -20327,7 +21017,9 @@
    "text": "Sam Moll (3.075): $1.0075MM agreement today (per Wittenmyer)",
    "settled_usd": 1007500,
    "split_contract": false,
-   "figure_usd": 1007500
+   "figure_usd": 1007500,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -20357,7 +21049,9 @@
    "text": "Mickey Moniak (3.027): Did not reach agreement, figures exchanged (team announcement)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2025,
@@ -20387,7 +21081,9 @@
    "text": "Adrian Morejon (4.140): $2MM agreement today (per Kevin Acee of the San Diego Union-Tribune)",
    "settled_usd": 2000000,
    "split_contract": false,
-   "figure_usd": 2000000
+   "figure_usd": 2000000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2025,
@@ -20417,7 +21113,9 @@
    "text": "Eli Morgan (3.091): $950K agreement today (per Meghan Montemurro of the Chicago Tribune)",
    "settled_usd": 950000,
    "split_contract": false,
-   "figure_usd": 950000
+   "figure_usd": 950000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2025,
@@ -20447,7 +21145,9 @@
    "text": "Ryan Mountcastle (4.105): $6.787MM agreement today (per Murray)",
    "settled_usd": 6787000,
    "split_contract": false,
-   "figure_usd": 6787000
+   "figure_usd": 6787000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -20477,7 +21177,9 @@
    "text": "Cedric Mullins (5.078): $8.725MM agreement today (per Murray)",
    "settled_usd": 8725000,
    "split_contract": false,
-   "figure_usd": 8725000
+   "figure_usd": 8725000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -20507,7 +21209,9 @@
    "text": "Penn Murfee (2.169): $780K agreement today (per Fegan)",
    "settled_usd": 780000,
    "split_contract": false,
-   "figure_usd": 780000
+   "figure_usd": 780000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2025,
@@ -20537,7 +21241,9 @@
    "text": "Josh Naylor (5.127): $10.9MM agreement today (per Murray)",
    "settled_usd": 10900000,
    "split_contract": false,
-   "figure_usd": 10900000
+   "figure_usd": 10900000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2025,
@@ -20567,7 +21273,9 @@
    "text": "Kyle Nelson (3.076): $825K agreement reached today (via Robert Murray of FanSided)",
    "settled_usd": 825000,
    "split_contract": false,
-   "figure_usd": 825000
+   "figure_usd": 825000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2025,
@@ -20597,7 +21305,9 @@
    "text": "Lars Nootbaar (3.076): Did not reach agreement, will likely exchange figures (per Katie Woo of The Athletic)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2025,
@@ -20627,7 +21337,9 @@
    "text": "Bailey Ober (3.093): $3.55MM agreement today (per Dan Hayes of The Athletic)",
    "settled_usd": 3550000,
    "split_contract": false,
-   "figure_usd": 3550000
+   "figure_usd": 3550000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -20657,7 +21369,9 @@
    "text": "Johan Oviedo (3.079): Did not reach agreement, likely to exchange figures (per Andrew Destin of the Pittsburgh Post-Gazette)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2025,
@@ -20687,7 +21401,9 @@
    "text": "Andre Pallante (2.145): Did not reach agreement, will likely exchange figures (per Derrick Goold of the St. Louis Post-Dispatch)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2025,
@@ -20717,7 +21433,9 @@
    "text": "Isaac Paredes (3.160): $6.625MM agreement today (per Chandler Rome of The Athletic)",
    "settled_usd": 6625000,
    "split_contract": false,
-   "figure_usd": 6625000
+   "figure_usd": 6625000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2025,
@@ -20761,7 +21479,9 @@
    "text": "Joel Payamps (4.027): $2.995MM agreement today (per Murray)",
    "settled_usd": 2995000,
    "split_contract": false,
-   "figure_usd": 2995000
+   "figure_usd": 2995000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2025,
@@ -20791,7 +21511,9 @@
    "text": "Nate Pearson (4.005): $1.35MM agreement today (per Mark Feinsand of MLB.com)",
    "settled_usd": 1350000,
    "split_contract": false,
-   "figure_usd": 1350000
+   "figure_usd": 1350000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2025,
@@ -20821,7 +21543,9 @@
    "text": "Jeremy Pena (3.000): $4.1MM agreement today (per Ari Alexander of KPRC 2)",
    "settled_usd": 4100000,
    "split_contract": false,
-   "figure_usd": 4100000
+   "figure_usd": 4100000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2025,
@@ -20851,7 +21575,9 @@
    "text": "Geraldo Perdomo (3.015): $2.55MM agreement today (per Murray)",
    "settled_usd": 2550000,
    "split_contract": false,
-   "figure_usd": 2550000
+   "figure_usd": 2550000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2025,
@@ -20895,7 +21621,9 @@
    "text": "David Peterson (4.089): $4.625MM agreement today (per The Associated Press)",
    "settled_usd": 4625000,
    "split_contract": false,
-   "figure_usd": 4625000
+   "figure_usd": 4625000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2025,
@@ -20925,7 +21653,9 @@
    "text": "Evan Phillips (4.136): $6.1MM agreement today (per Jack Harris of the Los Angeles Times)",
    "settled_usd": 6100000,
    "split_contract": false,
-   "figure_usd": 6100000
+   "figure_usd": 6100000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2025,
@@ -20969,7 +21699,9 @@
    "text": "Zach Pop (2.171): $900K agreement today (per Shi Davidi and Ben Nicholson-Smith of Sportsnet)",
    "settled_usd": 900000,
    "split_contract": false,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2025,
@@ -20999,7 +21731,9 @@
    "text": "A.J. Puk (4.124): $2.95MM agreement today (per Jon Heyman of The New York Post)",
    "settled_usd": 2950000,
    "split_contract": false,
-   "figure_usd": 2950000
+   "figure_usd": 2950000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2025,
@@ -21043,7 +21777,9 @@
    "text": "Jose Quijada (4.046): Did not reach agreement, figures exchanged (team announcement)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2025,
@@ -21087,7 +21823,9 @@
    "text": "Cal Raleigh (3.085): $5.6MM agreement today (per Murray)",
    "settled_usd": 5600000,
    "split_contract": false,
-   "figure_usd": 5600000
+   "figure_usd": 5600000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2025,
@@ -21117,7 +21855,9 @@
    "text": "Drew Rasmussen (4.111): two-year, $8.5MM extension reached earlier this week",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 8500000
+   "figure_usd": 8500000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2025,
@@ -21147,7 +21887,9 @@
    "text": "Sean Reid-Foley (3.133): $800K agreement reached in November",
    "settled_usd": 800000,
    "split_contract": false,
-   "figure_usd": 800000
+   "figure_usd": 800000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2025,
@@ -21177,7 +21919,9 @@
    "text": "Luis Rengifo (5.043): Did not reach agreement, figures exchanged (team announcement)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2025,
@@ -21207,7 +21951,9 @@
    "text": "Emmanuel Rivera (3.026): $1MM agreement reached in November",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -21251,7 +21997,9 @@
    "text": "Jake Rogers (4.040): $2.64MM agreement reached today (via FanSided\u2019s Robert Murray)",
    "settled_usd": 2640000,
    "split_contract": false,
-   "figure_usd": 2640000
+   "figure_usd": 2640000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2025,
@@ -21281,7 +22029,9 @@
    "text": "Tyler Rogers (5.034): $5.25MM agreement today (per Jeff Young of FanSided)",
    "settled_usd": 5250000,
    "split_contract": false,
-   "figure_usd": 5250000
+   "figure_usd": 5250000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2025,
@@ -21325,7 +22075,9 @@
    "text": "JoJo Romero (4.045): $2.26MM agreement today (per Derrick Goold of the St. Louis Post-Dispatch)",
    "settled_usd": 2260000,
    "split_contract": false,
-   "figure_usd": 2260000
+   "figure_usd": 2260000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2025,
@@ -21355,7 +22107,9 @@
    "text": "Brent Rooker (3.059): five-year, $60MM extension earlier this week",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 60000000
+   "figure_usd": 60000000,
+   "club_heading": "Athletics",
+   "club": "ATH"
   },
   {
    "class_year": 2025,
@@ -21385,7 +22139,9 @@
    "text": "Ben Rortvedt (3.043): $1.125MM agreement today (per Marc Topkin of the Tampa Bay Times)",
    "settled_usd": 1125000,
    "split_contract": false,
-   "figure_usd": 1125000
+   "figure_usd": 1125000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2025,
@@ -21415,7 +22171,9 @@
    "text": "Jose Ruiz (4.148): $1.225MM agreement reached in November",
    "settled_usd": 1225000,
    "split_contract": false,
-   "figure_usd": 1225000
+   "figure_usd": 1225000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2025,
@@ -21445,7 +22203,9 @@
    "text": "Adley Rutschman (3.000): $5.5MM agreement today (per Ari Alexander of KPRC 2)",
    "settled_usd": 5500000,
    "split_contract": false,
-   "figure_usd": 5500000
+   "figure_usd": 5500000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -21475,7 +22235,9 @@
    "text": "Joe Ryan (3.033): $3MM agreement today (per Wolfson)",
    "settled_usd": 3000000,
    "split_contract": false,
-   "figure_usd": 3000000
+   "figure_usd": 3000000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -21505,7 +22267,9 @@
    "text": "Nick Sandlin (3.157): $1.63MM agreement today (per Ben Nicholson-Smith and Shi Davidi of Sportsnet)",
    "settled_usd": 1630000,
    "split_contract": false,
-   "figure_usd": 1630000
+   "figure_usd": 1630000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2025,
@@ -21549,7 +22313,9 @@
    "text": "Dennis Santana (4.126): Did not reach agreement, likely to exchange figures (per Andrew Destin of the Pittsburgh Post-Gazette)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2025,
@@ -21579,7 +22345,9 @@
    "text": "Tayler Saucedo (3.112): $937,500 agreement today (per The Associated Press)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2025,
@@ -21609,7 +22377,9 @@
    "text": "Josh Sborz (4.055): $1.1MM agreement reached in November",
    "settled_usd": 1100000,
    "split_contract": false,
-   "figure_usd": 1100000
+   "figure_usd": 1100000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2025,
@@ -21639,7 +22409,9 @@
    "text": "Clarke Schmidt (3.148): $3.6MM agreement today (per Alexander)",
    "settled_usd": 3600000,
    "split_contract": false,
-   "figure_usd": 3600000
+   "figure_usd": 3600000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2025,
@@ -21669,7 +22441,9 @@
    "text": "John Schreiber (4.027): $2.3MM agreement today (per Rogers)",
    "settled_usd": 2300000,
    "split_contract": false,
-   "figure_usd": 2300000
+   "figure_usd": 2300000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2025,
@@ -21713,7 +22487,9 @@
    "text": "Brady Singer (4.156): $8.75MM agreement today (per Feinsand)",
    "settled_usd": 8750000,
    "split_contract": false,
-   "figure_usd": 8750000
+   "figure_usd": 8750000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -21743,7 +22519,9 @@
    "text": "Jose Siri (3.015): $2.4MM agreement today (per Feinsand)",
    "settled_usd": 2400000,
    "split_contract": false,
-   "figure_usd": 2400000
+   "figure_usd": 2400000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2025,
@@ -21773,7 +22551,9 @@
    "text": "Tarik Skubal (4.114): $10.15MM agreement today (per Jon Heyman of the New York Post)",
    "settled_usd": 10150000,
    "split_contract": false,
-   "figure_usd": 10150000
+   "figure_usd": 10150000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2025,
@@ -21803,7 +22583,9 @@
    "text": "Pavin Smith (3.015): $1.5MM agreement reached yesterday",
    "settled_usd": 1500000,
    "split_contract": false,
-   "figure_usd": 1500000
+   "figure_usd": 1500000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2025,
@@ -21833,7 +22615,9 @@
    "text": "Edmundo Sosa (4.140): $3MM agreement today (per Alexander)",
    "settled_usd": 3000000,
    "split_contract": false,
-   "figure_usd": 3000000
+   "figure_usd": 3000000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2025,
@@ -21863,7 +22647,9 @@
    "text": "Gregory Soto (5.102): $5.35MM agreement today (per Andy Kostka of The Baltimore Banner)",
    "settled_usd": 5350000,
    "split_contract": false,
-   "figure_usd": 5350000
+   "figure_usd": 5350000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -21893,7 +22679,9 @@
    "text": "Gabe Speier (2.172): $845K agreement today (per The Associated Press)",
    "settled_usd": 845000,
    "split_contract": false,
-   "figure_usd": 845000
+   "figure_usd": 845000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2025,
@@ -21923,7 +22711,9 @@
    "text": "Justin Steele (3.143): $6.55MM agreement today (per Murray)",
    "settled_usd": 6550000,
    "split_contract": false,
-   "figure_usd": 6550000
+   "figure_usd": 6550000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2025,
@@ -21953,7 +22743,9 @@
    "text": "Tyler Stephenson (4.056): $4.925MM agreement today (per Alexander)",
    "settled_usd": 4925000,
    "split_contract": false,
-   "figure_usd": 4925000
+   "figure_usd": 4925000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -21983,7 +22775,9 @@
    "text": "Brock Stewart (3.093): $870K agreement reached in November",
    "settled_usd": 870000,
    "split_contract": false,
-   "figure_usd": 870000
+   "figure_usd": 870000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -22027,7 +22821,9 @@
    "text": "Bryson Stott (3.000): $3.2MM agreement today (per Feinsand)",
    "settled_usd": 3200000,
    "split_contract": false,
-   "figure_usd": 3200000
+   "figure_usd": 3200000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2025,
@@ -22057,7 +22853,9 @@
    "text": "Garrett Stubbs (4.120): $925K agreement reached in November",
    "settled_usd": 925000,
    "split_contract": false,
-   "figure_usd": 925000
+   "figure_usd": 925000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2025,
@@ -22087,7 +22885,9 @@
    "text": "Jose Suarez (4.022): $1.1MM agreement today (per Ari Alexander of KPRC 2)",
    "settled_usd": 1100000,
    "split_contract": false,
-   "figure_usd": 1100000
+   "figure_usd": 1100000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2025,
@@ -22117,7 +22917,9 @@
    "text": "Ranger Suarez (5.112): $8.8MM agreement today (per Feinsand)",
    "settled_usd": 8800000,
    "split_contract": false,
-   "figure_usd": 8800000
+   "figure_usd": 8800000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2025,
@@ -22147,7 +22949,9 @@
    "text": "Cole Sulser (4.031): $900K agreement in November (per Associated Press)",
    "settled_usd": 900000,
    "split_contract": false,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2025,
@@ -22177,7 +22981,9 @@
    "text": "Erik Swanson (5.059): $3MM agreement reached in November",
    "settled_usd": 3000000,
    "split_contract": false,
-   "figure_usd": 3000000
+   "figure_usd": 3000000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2025,
@@ -22235,7 +23041,9 @@
    "text": "Leody Taveras (3.124): $4.75MM agreement today (per Jon Heyman of The New York Post)",
    "settled_usd": 4750000,
    "split_contract": false,
-   "figure_usd": 4750000
+   "figure_usd": 4750000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2025,
@@ -22265,7 +23073,9 @@
    "text": "Tyrone Taylor (4.093): $3.025MM agreement today (per The Associated Press)",
    "settled_usd": 3025000,
    "split_contract": false,
-   "figure_usd": 3025000
+   "figure_usd": 3025000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2025,
@@ -22295,7 +23105,9 @@
    "text": "Matt Thaiss (3.038): $1MM agreement in November (per Associated Press)",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2025,
@@ -22325,7 +23137,9 @@
    "text": "Keegan Thompson (3.006): $850K agreement reached in November",
    "settled_usd": 850000,
    "split_contract": false,
-   "figure_usd": 850000
+   "figure_usd": 850000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2025,
@@ -22355,7 +23169,9 @@
    "text": "Mason Thompson (3.046): $770K agreement reached in November",
    "settled_usd": 770000,
    "split_contract": false,
-   "figure_usd": 770000
+   "figure_usd": 770000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2025,
@@ -22385,7 +23201,9 @@
    "text": "Trent Thornton (4.148): $2MM agreement today (per Daniel Kramer of MLB.com)",
    "settled_usd": 2000000,
    "split_contract": false,
-   "figure_usd": 2000000
+   "figure_usd": 2000000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2025,
@@ -22415,7 +23233,9 @@
    "text": "Michael Tonkin (4.074): $1MM agreement reached in November",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -22445,7 +23265,9 @@
    "text": "Justin Topa (4.044): $1.225MM agreement (w/ 2026 club option) reached in November",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 1225000
+   "figure_usd": 1225000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2025,
@@ -22475,7 +23297,9 @@
    "text": "Luis Torrens (4.105): $1.5MM agreement today (per The Associated Press)",
    "settled_usd": 1500000,
    "split_contract": false,
-   "figure_usd": 1500000
+   "figure_usd": 1500000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2025,
@@ -22505,7 +23329,9 @@
    "text": "Jose Trevino (5.063): $3.425MM agreement today (per Jon Heyman of The New York Post)",
    "settled_usd": 3425000,
    "split_contract": false,
-   "figure_usd": 3425000
+   "figure_usd": 3425000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2025,
@@ -22535,7 +23361,9 @@
    "text": "Kyle Tucker (5.079): Did not reach agreement, will exchange figures (per Jesse Rogers of ESPN)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2025,
@@ -22579,7 +23407,9 @@
    "text": "Ramon Urias (4.025): $3.15MM agreement today (per Kubatko)",
    "settled_usd": 3150000,
    "split_contract": false,
-   "figure_usd": 3150000
+   "figure_usd": 3150000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2025,
@@ -22623,7 +23453,9 @@
    "text": "Framber Valdez (5.163): $18MM agreement reached today",
    "settled_usd": 18000000,
    "split_contract": false,
-   "figure_usd": 18000000
+   "figure_usd": 18000000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2025,
@@ -22667,7 +23499,9 @@
    "text": "Daulton Varsho (4.128): $8.2MM agreement today (per Murray)",
    "settled_usd": 8200000,
    "split_contract": false,
-   "figure_usd": 8200000
+   "figure_usd": 8200000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2025,
@@ -22697,7 +23531,9 @@
    "text": "Andrew Vaughn (4.000): $5.85MM agreement today (per James Fegan of Sox Machine)",
    "settled_usd": 5850000,
    "split_contract": false,
-   "figure_usd": 5850000
+   "figure_usd": 5850000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2025,
@@ -22727,7 +23563,9 @@
    "text": "Alex Vesia (4.078): Did not reach agreement, exchange figures (per Ardaya)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2025,
@@ -22757,7 +23595,9 @@
    "text": "Will Vest (3.100): $1.4MM agreement today (per Evan Petzold of the Detroit Free Press)",
    "settled_usd": 1400000,
    "split_contract": false,
-   "figure_usd": 1400000
+   "figure_usd": 1400000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2025,
@@ -22787,7 +23627,9 @@
    "text": "Matt Vierling (3.026): $3.005MM agreement today (per Petzold)",
    "settled_usd": 3005000,
    "split_contract": false,
-   "figure_usd": 3005000
+   "figure_usd": 3005000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2025,
@@ -22831,7 +23673,9 @@
    "text": "LaMonte Wade Jr. (5.035): $5MM agreement today (per Susan Slusser of the San Francisco Chronicle)",
    "settled_usd": 5000000,
    "split_contract": false,
-   "figure_usd": 5000000
+   "figure_usd": 5000000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2025,
@@ -22861,7 +23705,9 @@
    "text": "Taylor Walls (3.092): Did not reach agreement, will likely exchange figures (Per Marc Topkin of the Tampa Bay Times)",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2025,
@@ -22891,7 +23737,9 @@
    "text": "Taylor Ward (4.164): $7.825MM agreement today (per Robert Murray of FanSided)",
    "settled_usd": 7825000,
    "split_contract": false,
-   "figure_usd": 7825000
+   "figure_usd": 7825000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2025,
@@ -22949,7 +23797,9 @@
    "text": "Steven Wilson (3.000): $950K agreement reached today (per Murray)",
    "settled_usd": 950000,
    "split_contract": false,
-   "figure_usd": 950000
+   "figure_usd": 950000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2025,
@@ -23007,7 +23857,9 @@
    "text": "Kyle Wright (4.062): $1.8MM agreement reached in December",
    "settled_usd": 1800000,
    "split_contract": false,
-   "figure_usd": 1800000
+   "figure_usd": 1800000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2025,
@@ -23051,7 +23903,9 @@
    "text": "Mike Yastrzemski (5.128): $9.25MM agreement reached in November",
    "settled_usd": 9250000,
    "split_contract": false,
-   "figure_usd": 9250000
+   "figure_usd": 9250000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2025,
@@ -23112,6 +23966,8 @@
    "settled_usd": 1600000,
    "split_contract": false,
    "figure_usd": 1600000,
+   "club_heading": "Dodgers",
+   "club": "LAD",
    "mlbam": 669743,
    "id_reason": "resolved"
   },
@@ -23146,6 +24002,8 @@
    "settled_usd": 1350000,
    "split_contract": false,
    "figure_usd": 1350000,
+   "club_heading": "Twins",
+   "club": "MIN",
    "mlbam": 656577,
    "id_reason": "resolved"
   },
@@ -23180,6 +24038,8 @@
    "settled_usd": null,
    "split_contract": false,
    "figure_usd": null,
+   "club_heading": "Mariners",
+   "club": "SEA",
    "mlbam": 682243,
    "id_reason": "resolved"
   },
@@ -23214,6 +24074,8 @@
    "settled_usd": 1375000,
    "split_contract": false,
    "figure_usd": 1375000,
+   "club_heading": "Red Sox",
+   "club": "BOS",
    "mlbam": 657136,
    "id_reason": "resolved"
   },
@@ -23248,6 +24110,8 @@
    "settled_usd": null,
    "split_contract": false,
    "figure_usd": null,
+   "club_heading": "Braves",
+   "club": "ATL",
    "mlbam": 669276,
    "id_reason": "resolved"
   },
@@ -23282,6 +24146,8 @@
    "settled_usd": 1450000,
    "split_contract": false,
    "figure_usd": 1450000,
+   "club_heading": "Yankees",
+   "club": "NYY",
    "mlbam": 518585,
    "id_reason": "resolved"
   },
@@ -23316,6 +24182,8 @@
    "settled_usd": 5710000,
    "split_contract": false,
    "figure_usd": 5710000,
+   "club_heading": "Astros",
+   "club": "HOU",
    "mlbam": 686613,
    "id_reason": "resolved"
   },
@@ -23366,6 +24234,8 @@
    "settled_usd": 3550000,
    "split_contract": false,
    "figure_usd": 3550000,
+   "club_heading": "Astros",
+   "club": "HOU",
    "mlbam": 676694,
    "id_reason": "resolved"
   },
@@ -23400,6 +24270,8 @@
    "settled_usd": 6800000,
    "split_contract": false,
    "figure_usd": 6800000,
+   "club_heading": "Astros",
+   "club": "HOU",
    "mlbam": 660821,
    "id_reason": "resolved"
   },
@@ -23434,6 +24306,8 @@
    "settled_usd": 1550000,
    "split_contract": false,
    "figure_usd": 1550000,
+   "club_heading": "Rockies",
+   "club": "COL",
    "mlbam": 623474,
    "id_reason": "resolved"
   },
@@ -23484,6 +24358,8 @@
    "settled_usd": 3225000,
    "split_contract": false,
    "figure_usd": 3225000,
+   "club_heading": "Rangers",
+   "club": "TEX",
    "mlbam": 669701,
    "id_reason": "resolved"
   },
@@ -23518,6 +24394,8 @@
    "settled_usd": 925000,
    "split_contract": false,
    "figure_usd": 925000,
+   "club_heading": "Rays",
+   "club": "TBR",
    "mlbam": 687330,
    "id_reason": "resolved"
   },
@@ -23552,6 +24430,8 @@
    "settled_usd": 2162500,
    "split_contract": false,
    "figure_usd": 2162500,
+   "club_heading": "Yankees",
+   "club": "NYY",
    "mlbam": 661563,
    "id_reason": "resolved"
   },
@@ -23586,6 +24466,8 @@
    "settled_usd": 835000,
    "split_contract": false,
    "figure_usd": 835000,
+   "club_heading": "Athletics",
+   "club": "ATH",
    "mlbam": 665622,
    "id_reason": "resolved"
   },
@@ -23620,6 +24502,8 @@
    "settled_usd": 4000000,
    "split_contract": false,
    "figure_usd": 4000000,
+   "club_heading": "Padres",
+   "club": "SDP",
    "mlbam": 695243,
    "id_reason": "resolved"
   },
@@ -23654,6 +24538,8 @@
    "settled_usd": 980000,
    "split_contract": false,
    "figure_usd": 980000,
+   "club_heading": "Marlins",
+   "club": "MIA",
    "mlbam": 676974,
    "id_reason": "resolved"
   },
@@ -23688,6 +24574,8 @@
    "settled_usd": 1570000,
    "split_contract": false,
    "figure_usd": 1570000,
+   "club_heading": "Royals",
+   "club": "KCR",
    "mlbam": 686681,
    "id_reason": "resolved"
   },
@@ -23722,6 +24610,8 @@
    "settled_usd": 1400000,
    "split_contract": false,
    "figure_usd": 1400000,
+   "club_heading": "Astros",
+   "club": "HOU",
    "mlbam": 669397,
    "id_reason": "resolved"
   },
@@ -23804,6 +24694,8 @@
    "settled_usd": 6200000,
    "split_contract": false,
    "figure_usd": 6200000,
+   "club_heading": "Orioles",
+   "club": "BAL",
    "mlbam": 669432,
    "id_reason": "resolved"
   },
@@ -23838,6 +24730,8 @@
    "settled_usd": 1525000,
    "split_contract": false,
    "figure_usd": 1525000,
+   "club_heading": "Rockies",
+   "club": "COL",
    "mlbam": 671289,
    "id_reason": "resolved"
   },
@@ -23872,6 +24766,8 @@
    "settled_usd": 1575000,
    "split_contract": false,
    "figure_usd": 1575000,
+   "club_heading": "Tigers",
+   "club": "DET",
    "mlbam": 663947,
    "id_reason": "resolved"
   },
@@ -23906,6 +24802,8 @@
    "settled_usd": 2445000,
    "split_contract": false,
    "figure_usd": 2445000,
+   "club_heading": "Orioles",
+   "club": "BAL",
    "mlbam": 669330,
    "id_reason": "resolved"
   },
@@ -23937,7 +24835,9 @@
    "text": "CJ Abrams (3.130): $4.2MM agreement today (per Andrew Golden of The Washington Post )",
    "settled_usd": 4200000,
    "split_contract": false,
-   "figure_usd": 4200000
+   "figure_usd": 4200000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2026,
@@ -23967,7 +24867,9 @@
    "text": "Bryan Abreu (5.022): $5.85MM agreement today (per McTaggart )",
    "settled_usd": 5850000,
    "split_contract": false,
-   "figure_usd": 5850000
+   "figure_usd": 5850000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2026,
@@ -23997,7 +24899,9 @@
    "text": "Jason Adam (5.132): $6.675MM agreement today, per Feinsand",
    "settled_usd": 6675000,
    "split_contract": false,
-   "figure_usd": 6675000
+   "figure_usd": 6675000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2026,
@@ -24027,7 +24931,9 @@
    "text": "Riley Adams (3.171): Agreed to split deal in November , $1MM in majors and $500K in minors",
    "settled_usd": 1000000,
    "split_contract": true,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2026,
@@ -24057,7 +24963,9 @@
    "text": "Jo Adell (4.085): Team announced $5.2MM agreement",
    "settled_usd": 5200000,
    "split_contract": false,
-   "figure_usd": 5200000
+   "figure_usd": 5200000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2026,
@@ -24087,7 +24995,9 @@
    "text": "Keegan Akin (5.083): No agreement reached, likely headed to hearing",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -24159,7 +25069,9 @@
    "text": "Francisco Alvarez (2.164): $2.4MM agreement today (per Francys Romero of BeisbolFR )",
    "settled_usd": 2400000,
    "split_contract": false,
-   "figure_usd": 2400000
+   "figure_usd": 2400000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2026,
@@ -24189,7 +25101,9 @@
    "text": "Randy Arozarena (5.129): $15.65MM agreement reached today",
    "settled_usd": 15650000,
    "split_contract": false,
-   "figure_usd": 15650000
+   "figure_usd": 15650000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2026,
@@ -24219,7 +25133,9 @@
    "text": "Graham Ashcraft (3.130): Did not reach agreement, likely headed for hearing (per Feinsand )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -24249,7 +25165,9 @@
    "text": "Javier Assad (3.027): $1.8MM agreement with a $3.3MM option for 2027; Assad would still be arb-eligible in 2027 if option turned down (per the Associated Press )",
    "settled_usd": 1800000,
    "split_contract": false,
-   "figure_usd": 1800000
+   "figure_usd": 1800000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2026,
@@ -24293,7 +25211,9 @@
    "text": "Bryan Baker (3.049): $1.275MM agreement today (per Feinsand )",
    "settled_usd": 1275000,
    "split_contract": false,
-   "figure_usd": 1275000
+   "figure_usd": 1275000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -24323,7 +25243,9 @@
    "text": "Anthony Banda (4.135): $1.625MM agreement today (per Woo )",
    "settled_usd": 1625000,
    "split_contract": false,
-   "figure_usd": 1625000
+   "figure_usd": 1625000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2026,
@@ -24353,7 +25275,9 @@
    "text": "Tanner Banks (3.092): $1.2MM agreement today (per Bob Nightengale of USA Today )",
    "settled_usd": 1200000,
    "split_contract": false,
-   "figure_usd": 1200000
+   "figure_usd": 1200000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2026,
@@ -24383,7 +25307,9 @@
    "text": "Joey Bart (4.020): $2.53MM agreement today (per Stumpf )",
    "settled_usd": 2530000,
    "split_contract": false,
-   "figure_usd": 2530000
+   "figure_usd": 2530000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2026,
@@ -24413,7 +25339,9 @@
    "text": "Jake Bauers (5.084): $2.7MM agreement reached in November",
    "settled_usd": 2700000,
    "split_contract": false,
-   "figure_usd": 2700000
+   "figure_usd": 2700000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2026,
@@ -24443,7 +25371,9 @@
    "text": "F\u00e9lix Bautista (4.000): $2.25MM agreement reached in November",
    "settled_usd": 2250000,
    "split_contract": false,
-   "figure_usd": 2250000
+   "figure_usd": 2250000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -24473,7 +25403,9 @@
    "text": "Shane Baz (3.158): $3.5MM agreement today (per Buster Olney of ESPN )",
    "settled_usd": 3500000,
    "split_contract": false,
-   "figure_usd": 3500000
+   "figure_usd": 3500000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -24503,7 +25435,9 @@
    "text": "David Bednar (5.073): $9MM agreement today (per Jack Curry of The YES Network )",
    "settled_usd": 9000000,
    "split_contract": false,
-   "figure_usd": 9000000
+   "figure_usd": 9000000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2026,
@@ -24533,7 +25467,9 @@
    "text": "Anthony Bender (4.153): $2.81MM agreement today (per Craig Mish of SportsGrid )",
    "settled_usd": 2810000,
    "split_contract": false,
-   "figure_usd": 2810000
+   "figure_usd": 2810000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2026,
@@ -24563,7 +25499,9 @@
    "text": "Will Benson (3.003): $1.725MM agreement today (per Wittenmyer )",
    "settled_usd": 1725000,
    "split_contract": false,
-   "figure_usd": 1725000
+   "figure_usd": 1725000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -24593,7 +25531,9 @@
    "text": "Brennan Bernardino (2.150): $925K agreement today (per Harding )",
    "settled_usd": 925000,
    "split_contract": false,
-   "figure_usd": 925000
+   "figure_usd": 925000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2026,
@@ -24623,7 +25563,9 @@
    "text": "Jake Bird (3.051): $975K agreement today (per Sherman )",
    "settled_usd": 975000,
    "split_contract": false,
-   "figure_usd": 975000
+   "figure_usd": 975000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2026,
@@ -24667,7 +25609,9 @@
    "text": "Alec Bohm (5.106): $10.2MM agreement reached today",
    "settled_usd": 10200000,
    "split_contract": false,
-   "figure_usd": 10200000
+   "figure_usd": 10200000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2026,
@@ -24697,7 +25641,9 @@
    "text": "Kyle Bradish (3.160): No agreement reached, likely headed to hearing",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -24727,7 +25673,9 @@
    "text": "Matt Brash (3.121): $1.55MM agreement (per Daniel Kramer of MLB.com )",
    "settled_usd": 1550000,
    "split_contract": false,
-   "figure_usd": 1550000
+   "figure_usd": 1550000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2026,
@@ -24757,7 +25705,9 @@
    "text": "Huascar Brazob\u00e1n (2.170): $1.05MM agreement today (per Alexander )",
    "settled_usd": 1050000,
    "split_contract": false,
-   "figure_usd": 1050000
+   "figure_usd": 1050000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2026,
@@ -24801,7 +25751,9 @@
    "text": "Beau Brieske (3.056): $1.1575 agreement reached in November",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -24845,7 +25797,9 @@
    "text": "JT Brubaker (5.162): $1.82MM agreement reached in November",
    "settled_usd": 1820000,
    "split_contract": false,
-   "figure_usd": 1820000
+   "figure_usd": 1820000,
+   "club_heading": "Giants",
+   "club": "SFG"
   },
   {
    "class_year": 2026,
@@ -24875,7 +25829,9 @@
    "text": "Vidal Bruj\u00e1n (3.014): Agreed to split deal in November , $850K in majors and $500K in minors; designated for assignment today to open roster spot for claim of Waldichuk",
    "settled_usd": 850000,
    "split_contract": true,
-   "figure_usd": 850000
+   "figure_usd": 850000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2026,
@@ -24905,7 +25861,9 @@
    "text": "Kris Bubic (5.135): No agreement reached, likely heading for hearing (per Rogers )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -24935,7 +25893,9 @@
    "text": "Jake Burger (3.127): $3.2MM agreement today (per Feinsand)",
    "settled_usd": 3200000,
    "split_contract": false,
-   "figure_usd": 3200000
+   "figure_usd": 3200000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2026,
@@ -24965,7 +25925,9 @@
    "text": "Brock Burke (5.045): Team announced $2.325MM agreement",
    "settled_usd": 2325000,
    "split_contract": false,
-   "figure_usd": 2325000
+   "figure_usd": 2325000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2026,
@@ -24995,7 +25957,9 @@
    "text": "Alec Burleson (3.029): $3.3MM agreement today (per Woo )",
    "settled_usd": 3300000,
    "split_contract": false,
-   "figure_usd": 3300000
+   "figure_usd": 3300000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2026,
@@ -25039,7 +26003,9 @@
    "text": "Jos\u00e9 Caballero (2.170): $2MM agreement today (per Alexander )",
    "settled_usd": 2000000,
    "split_contract": false,
-   "figure_usd": 2000000
+   "figure_usd": 2000000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2026,
@@ -25069,7 +26035,9 @@
    "text": "Edward Cabrera (3.147): $4.45MM agreement today (per Jesse Rogers of ESPN )",
    "settled_usd": 4450000,
    "split_contract": false,
-   "figure_usd": 4450000
+   "figure_usd": 4450000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2026,
@@ -25113,7 +26081,9 @@
    "text": "Oswaldo Cabrera (3.050): $1.2MM agreement reached in November",
    "settled_usd": 1200000,
    "split_contract": false,
-   "figure_usd": 1200000
+   "figure_usd": 1200000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2026,
@@ -25143,7 +26113,9 @@
    "text": "Luis Campusano (3.003): $900K agreement reached in November",
    "settled_usd": 900000,
    "split_contract": false,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2026,
@@ -25173,7 +26145,9 @@
    "text": "Yennier Cano (3.065): $1.6MM agreement today (per Roch Kubatko of MASNsports.com )",
    "settled_usd": 1600000,
    "split_contract": false,
-   "figure_usd": 1600000
+   "figure_usd": 1600000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -25217,7 +26191,9 @@
    "text": "Kerry Carpenter (3.057): $3.275MM agreement today (per Petzold )",
    "settled_usd": 3275000,
    "split_contract": false,
-   "figure_usd": 3275000
+   "figure_usd": 3275000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -25247,7 +26223,9 @@
    "text": "Triston Casas (3.032): $1.61MM agreement today (per Cotillo )",
    "settled_usd": 1610000,
    "split_contract": false,
-   "figure_usd": 1610000
+   "figure_usd": 1610000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2026,
@@ -25277,7 +26255,9 @@
    "text": "Cade Cavalli (2.141): No agreement reached, likely headed to hearing (per Spencer Nusbaum of The Washington Post )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2026,
@@ -25307,7 +26287,9 @@
    "text": "Jazz Chisholm Jr. (5.075): $10.2MM agreement today (per Jack Curry of The YES Network )",
    "settled_usd": 10200000,
    "split_contract": false,
-   "figure_usd": 10200000
+   "figure_usd": 10200000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2026,
@@ -25351,7 +26333,9 @@
    "text": "Garrett Cleavinger (4.060): $2.4MM agreement today ( per Marc Topkin of the Tampa Bay Times )",
    "settled_usd": 2400000,
    "split_contract": false,
-   "figure_usd": 2400000
+   "figure_usd": 2400000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -25381,7 +26365,9 @@
    "text": "Ernie Clement (3.168): $4.6MM agreement today (per Mitch Bannon of The Athletic )",
    "settled_usd": 4600000,
    "split_contract": false,
-   "figure_usd": 4600000
+   "figure_usd": 4600000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2026,
@@ -25411,7 +26397,9 @@
    "text": "William Contreras (4.112): No agreement reached, likely heading to hearing (per Feinsand )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2026,
@@ -25455,7 +26443,9 @@
    "text": "Kutter Crawford (3.136): $2.75MM agreement reached earlier this week",
    "settled_usd": 2750000,
    "split_contract": false,
-   "figure_usd": 2750000
+   "figure_usd": 2750000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2026,
@@ -25485,7 +26475,9 @@
    "text": "Oneil Cruz (3.110): $3.3MM agreement today ( per Robert Murray of Fansided )",
    "settled_usd": 3300000,
    "split_contract": false,
-   "figure_usd": 3300000
+   "figure_usd": 3300000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2026,
@@ -25529,7 +26521,9 @@
    "text": "Enyel De Los Santos (5.015): $1.6MM agreement reached in November",
    "settled_usd": 1600000,
    "split_contract": false,
-   "figure_usd": 1600000
+   "figure_usd": 1600000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2026,
@@ -25559,7 +26553,9 @@
    "text": "Reid Detmers (3.159): No agreement reached, likely heading to hearing",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2026,
@@ -25589,7 +26585,9 @@
    "text": "Yainer Diaz (3.035): No agreement reached, likely heading to hearing ( per McTaggart )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2026,
@@ -25619,7 +26617,9 @@
    "text": "Brendan Donovan (4.000): $5.8MM agreement today (per Goold )",
    "settled_usd": 5800000,
    "split_contract": false,
-   "figure_usd": 5800000
+   "figure_usd": 5800000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2026,
@@ -25649,7 +26649,9 @@
    "text": "Camilo Doval (4.071): $6.1MM agreement today (per Jorge Castillo of ESPN )",
    "settled_usd": 6100000,
    "split_contract": false,
-   "figure_usd": 6100000
+   "figure_usd": 6100000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2026,
@@ -25679,7 +26681,9 @@
    "text": "Brenton Doyle (2.161): $3.1MM agreement today (per Katie Woo of The Athletic )",
    "settled_usd": 3100000,
    "split_contract": false,
-   "figure_usd": 3100000
+   "figure_usd": 3100000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2026,
@@ -25709,7 +26713,9 @@
    "text": "Mauricio Dubon (5.162): $6.1MM agreement reached in November",
    "settled_usd": 6100000,
    "split_contract": false,
-   "figure_usd": 6100000
+   "figure_usd": 6100000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2026,
@@ -25739,7 +26745,9 @@
    "text": "Ezequiel Dur\u00e1n (3.050): $1.375MM agreement today (per Nightengale)",
    "settled_usd": 1375000,
    "split_contract": false,
-   "figure_usd": 1375000
+   "figure_usd": 1375000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2026,
@@ -25769,7 +26777,9 @@
    "text": "Jarren Duran (3.155): $7.7MM agreement reached in November",
    "settled_usd": 7700000,
    "split_contract": false,
-   "figure_usd": 7700000
+   "figure_usd": 7700000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2026,
@@ -25799,7 +26809,9 @@
    "text": "Jhoan Duran (4.000): $7.5MM agreement today (per Scott Lauber of The Philadelphia Inquirer )",
    "settled_usd": 7500000,
    "split_contract": false,
-   "figure_usd": 7500000
+   "figure_usd": 7500000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2026,
@@ -25913,7 +26925,9 @@
    "text": "Bailey Falter (3.138): $3.6MM agreement today (per Murray )",
    "settled_usd": 3600000,
    "split_contract": false,
-   "figure_usd": 3600000
+   "figure_usd": 3600000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -25943,7 +26957,9 @@
    "text": "Calvin Faucher (2.156): No agreement reached, likely heading to hearing (per Azout )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2026,
@@ -25973,7 +26989,9 @@
    "text": "Ryan Feltner (3.071): $2.45MM agreement today (per Alexander )",
    "settled_usd": 2450000,
    "split_contract": false,
-   "figure_usd": 2450000
+   "figure_usd": 2450000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2026,
@@ -25989,7 +27007,9 @@
    "text": "Freddy Fermin (2.165): $2.1MM agreement today (per Feinsand)",
    "settled_usd": 2100000,
    "split_contract": false,
-   "figure_usd": 2100000
+   "figure_usd": 2100000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2026,
@@ -26019,7 +27039,9 @@
    "text": "Matt Festa (2.153): $1MM agreement reached in November",
    "settled_usd": 1000000,
    "split_contract": false,
-   "figure_usd": 1000000
+   "figure_usd": 1000000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2026,
@@ -26063,7 +27085,9 @@
    "text": "Nick Fortes (3.149): $2.535MM agreement today (per Topkin )",
    "settled_usd": 2535000,
    "split_contract": false,
-   "figure_usd": 2535000
+   "figure_usd": 2535000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -26107,7 +27131,9 @@
    "text": "TJ Friedl (3.112): $3.8MM agreement today (per Gordon Wittenmyer of the Cincinnati Enquirer )",
    "settled_usd": 3800000,
    "split_contract": false,
-   "figure_usd": 3800000
+   "figure_usd": 3800000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -26137,7 +27163,9 @@
    "text": "David Fry (2.154): $1.375MM agreement reached in November",
    "settled_usd": 1375000,
    "split_contract": false,
-   "figure_usd": 1375000
+   "figure_usd": 1375000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2026,
@@ -26195,7 +27223,9 @@
    "text": "Luis Garc\u00eda Jr. (4.142): $6.875MM agreement today (per Nightengale)",
    "settled_usd": 6875000,
    "split_contract": false,
-   "figure_usd": 6875000
+   "figure_usd": 6875000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2026,
@@ -26239,7 +27269,9 @@
    "text": "Maikel Garcia (2.168): Five-year, $57.5MM extension signed in December",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 57500000
+   "figure_usd": 57500000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -26269,7 +27301,9 @@
    "text": "Braxton Garrett (3.168): $1.53MM agreement reached today (per Fish on First )",
    "settled_usd": 1530000,
    "split_contract": false,
-   "figure_usd": 1530000
+   "figure_usd": 1530000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2026,
@@ -26299,7 +27333,9 @@
    "text": "Reed Garrett (2.143): $1.3MM agreement today (per Alexander )",
    "settled_usd": 1300000,
    "split_contract": false,
-   "figure_usd": 1300000
+   "figure_usd": 1300000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2026,
@@ -26343,7 +27379,9 @@
    "text": "Logan Gilbert (4.144): $10.927MM agreement reached today",
    "settled_usd": 10927000,
    "split_contract": false,
-   "figure_usd": 10927000
+   "figure_usd": 10927000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2026,
@@ -26387,7 +27425,9 @@
    "text": "Kevin Ginkel (5.033): $2.725MM agreement today (per Nick Piecoro of The Arizona Republic )",
    "settled_usd": 2725000,
    "split_contract": false,
-   "figure_usd": 2725000
+   "figure_usd": 2725000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2026,
@@ -26431,7 +27471,9 @@
    "text": "Romy Gonz\u00e1lez (3.083): $1.6MM agreement today (per Cotillo )",
    "settled_usd": 1600000,
    "split_contract": false,
-   "figure_usd": 1600000
+   "figure_usd": 1600000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2026,
@@ -26461,7 +27503,9 @@
    "text": "MacKenzie Gore (4.000): $5.6MM agreement today (per Murray )",
    "settled_usd": 5600000,
    "split_contract": false,
-   "figure_usd": 5600000
+   "figure_usd": 5600000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2026,
@@ -26491,7 +27535,9 @@
    "text": "Nolan Gorman (3.114): $2.655MM agreement today (per Woo )",
    "settled_usd": 2655000,
    "split_contract": false,
-   "figure_usd": 2655000
+   "figure_usd": 2655000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2026,
@@ -26521,7 +27567,9 @@
    "text": "Brusdar Graterol (5.167): $2.8MM agreement reached yesterday",
    "settled_usd": 2800000,
    "split_contract": false,
-   "figure_usd": 2800000
+   "figure_usd": 2800000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2026,
@@ -26551,7 +27599,9 @@
    "text": "Josiah Gray (4.075): $1.35MM agreement reached in December",
    "settled_usd": 1350000,
    "split_contract": false,
-   "figure_usd": 1350000
+   "figure_usd": 1350000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2026,
@@ -26581,7 +27631,9 @@
    "text": "Riley Greene (3.110): $5MM agreement today (per Petzold )",
    "settled_usd": 5000000,
    "split_contract": false,
-   "figure_usd": 5000000
+   "figure_usd": 5000000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -26625,7 +27677,9 @@
    "text": "Sam Haggerty (5.007): $1.25MM agreement reached in November",
    "settled_usd": 1250000,
    "split_contract": false,
-   "figure_usd": 1250000
+   "figure_usd": 1250000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2026,
@@ -26683,7 +27737,9 @@
    "text": "Tyler Heineman (3.066): $1.2375MM agreement reached today (per Ben Nicholson-Smith of Sportsnet )",
    "settled_usd": 1237500,
    "split_contract": false,
-   "figure_usd": 1237500
+   "figure_usd": 1237500,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2026,
@@ -26713,7 +27769,9 @@
    "text": "Gunnar Henderson (3.036): $8.5MM agreement today (per Andy Kostka of The Baltimore Banner )",
    "settled_usd": 8500000,
    "split_contract": false,
-   "figure_usd": 8500000
+   "figure_usd": 8500000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -26743,7 +27801,9 @@
    "text": "Derek Hill (3.040): $900K agreement reached in November",
    "settled_usd": 900000,
    "split_contract": false,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "White Sox",
+   "club": "CHW"
   },
   {
    "class_year": 2026,
@@ -26787,7 +27847,9 @@
    "text": "Tanner Houck (4.100): $4.1MM agreement today (per Chris Cotillo of MassLive )",
    "settled_usd": 4100000,
    "split_contract": false,
-   "figure_usd": 4100000
+   "figure_usd": 4100000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2026,
@@ -26831,7 +27893,9 @@
    "text": "Jonathan India (5.000): $8MM agreement reached in November",
    "settled_usd": 8000000,
    "split_contract": false,
-   "figure_usd": 8000000
+   "figure_usd": 8000000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -26861,7 +27925,9 @@
    "text": "Jake Irvin (2.152): $2.8MM agreement today (per Golden )",
    "settled_usd": 2800000,
    "split_contract": false,
-   "figure_usd": 2800000
+   "figure_usd": 2800000,
+   "club_heading": "Nationals",
+   "club": "WSN"
   },
   {
    "class_year": 2026,
@@ -26891,7 +27957,9 @@
    "text": "Kyle Isbel (4.043): $2.7MM agreement today (per Murray )",
    "settled_usd": 2700000,
    "split_contract": false,
-   "figure_usd": 2700000
+   "figure_usd": 2700000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -26921,7 +27989,9 @@
    "text": "Griffin Jax (4.091): $3.565MM agreement today (per Topkin )",
    "settled_usd": 3565000,
    "split_contract": false,
-   "figure_usd": 3565000
+   "figure_usd": 3565000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -26951,7 +28021,9 @@
    "text": "Ryan Jeffers (5.089): $6.7MM agreement today (per Wolfson )",
    "settled_usd": 6700000,
    "split_contract": false,
-   "figure_usd": 6700000
+   "figure_usd": 6700000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2026,
@@ -26981,7 +28053,9 @@
    "text": "Nolan Jones (3.007): $2MM agreement reached in November",
    "settled_usd": 2000000,
    "split_contract": false,
-   "figure_usd": 2000000
+   "figure_usd": 2000000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2026,
@@ -27011,7 +28085,9 @@
    "text": "Josh Jung (3.023): $2.9MM agreement today (per Nightengale)",
    "settled_usd": 2900000,
    "split_contract": false,
-   "figure_usd": 2900000
+   "figure_usd": 2900000,
+   "club_heading": "Rangers",
+   "club": "TEX"
   },
   {
    "class_year": 2026,
@@ -27069,7 +28145,9 @@
    "text": "George Kirby (3.151): $6.55MM agreement today (per Murray )",
    "settled_usd": 6550000,
    "split_contract": false,
-   "figure_usd": 6550000
+   "figure_usd": 6550000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2026,
@@ -27141,7 +28219,9 @@
    "text": "Dean Kremer (4.112): $5.75MM agreement today (per Kostka )",
    "settled_usd": 5750000,
    "split_contract": false,
-   "figure_usd": 5750000
+   "figure_usd": 5750000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -27171,7 +28251,9 @@
    "text": "Steven Kwan (4.000): $7.725MM agreement today (per Murray )",
    "settled_usd": 7725000,
    "split_contract": false,
-   "figure_usd": 7725000
+   "figure_usd": 7725000,
+   "club_heading": "Guardians",
+   "club": "CLE"
   },
   {
    "class_year": 2026,
@@ -27215,7 +28297,9 @@
    "text": "Shea Langeliers (3.051): $5.25MM agreement today (per Murray )",
    "settled_usd": 5250000,
    "split_contract": false,
-   "figure_usd": 5250000
+   "figure_usd": 5250000,
+   "club_heading": "Athletics",
+   "club": "ATH"
   },
   {
    "class_year": 2026,
@@ -27245,7 +28329,9 @@
    "text": "Trevor Larnach (4.014): $4.475MM agreement today (per Wolfson )",
    "settled_usd": 4475000,
    "split_contract": false,
-   "figure_usd": 4475000
+   "figure_usd": 4475000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2026,
@@ -27275,7 +28361,9 @@
    "text": "Eric Lauer (5.091): No agreement reached, likely heading to hearing (per Ben Nicholson-Smith of Sportsnet )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2026,
@@ -27305,7 +28393,9 @@
    "text": "Justin Lawrence (3.167): $1.225MM agreement today ( according to Stumpf )",
    "settled_usd": 1225000,
    "split_contract": false,
-   "figure_usd": 1225000
+   "figure_usd": 1225000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2026,
@@ -27349,7 +28439,9 @@
    "text": "Royce Lewis (3.142): $2.85MM agreement today (per Wolfson )",
    "settled_usd": 2850000,
    "split_contract": false,
-   "figure_usd": 2850000
+   "figure_usd": 2850000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2026,
@@ -27379,7 +28471,9 @@
    "text": "Matthew Liberatore (2.144): $2.26MM agreement today (per Goold )",
    "settled_usd": 2260000,
    "split_contract": false,
-   "figure_usd": 2260000
+   "figure_usd": 2260000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2026,
@@ -27423,7 +28517,9 @@
    "text": "Nick Lodolo (4.000): $4.725MM agreement today (per Feinsand )",
    "settled_usd": 4725000,
    "split_contract": false,
-   "figure_usd": 4725000
+   "figure_usd": 4725000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -27467,7 +28563,9 @@
    "text": "Josh Lowe (3.093): $2.6MM agreement today (per Topkin )",
    "settled_usd": 2600000,
    "split_contract": false,
-   "figure_usd": 2600000
+   "figure_usd": 2600000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -27525,7 +28623,9 @@
    "text": "Gavin Lux (5.114): $5.525MM agreement today (per Joel Sherman of The New York Post )",
    "settled_usd": 5525000,
    "split_contract": false,
-   "figure_usd": 5525000
+   "figure_usd": 5525000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -27555,7 +28655,9 @@
    "text": "Jes\u00fas Luzardo (5.165): $11MM agreement reached today",
    "settled_usd": 11000000,
    "split_contract": false,
-   "figure_usd": 11000000
+   "figure_usd": 11000000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2026,
@@ -27585,7 +28687,9 @@
    "text": "Daniel Lynch IV (3.136): $1.025MM agreement today (per Anne Rogers of MLB.com )",
    "settled_usd": 1025000,
    "split_contract": false,
-   "figure_usd": 1025000
+   "figure_usd": 1025000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -27629,7 +28733,9 @@
    "text": "Rafael Marchan (3.006): $860K agreement reached in November",
    "settled_usd": 860000,
    "split_contract": false,
-   "figure_usd": 860000
+   "figure_usd": 860000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2026,
@@ -27659,7 +28765,9 @@
    "text": "Brandon Marsh (4.078): $5.2MM agreement today (per Varnes )",
    "settled_usd": 5200000,
    "split_contract": false,
-   "figure_usd": 5200000
+   "figure_usd": 5200000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2026,
@@ -27689,7 +28797,9 @@
    "text": "James McArthur (2.150): $810K agreement reached in November",
    "settled_usd": 810000,
    "split_contract": false,
-   "figure_usd": 810000
+   "figure_usd": 810000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -27719,7 +28829,9 @@
    "text": "Jake McCarthy (3.074): $1.525MM agreement today (per Nick Piecoro of The Arizona Republic )",
    "settled_usd": 1525000,
    "split_contract": false,
-   "figure_usd": 1525000
+   "figure_usd": 1525000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2026,
@@ -27749,7 +28861,9 @@
    "text": "Shane McClanahan (4.158): $3.6MM agreement reached in December",
    "settled_usd": 3600000,
    "split_contract": false,
-   "figure_usd": 3600000
+   "figure_usd": 3600000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -27807,7 +28921,9 @@
    "text": "Zach McKinstry (4.099): $4.2MM agreement today (per Petzold )",
    "settled_usd": 4200000,
    "split_contract": false,
-   "figure_usd": 4200000
+   "figure_usd": 4200000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -27837,7 +28953,9 @@
    "text": "Matt McLain (2.140): $2.3MM agreement today (per Wittenmyer )",
    "settled_usd": 2300000,
    "split_contract": false,
-   "figure_usd": 2300000
+   "figure_usd": 2300000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -27867,7 +28985,9 @@
    "text": "Nick Mears (4.022): $1.9MM agreement today (per Rogers )",
    "settled_usd": 1900000,
    "split_contract": false,
-   "figure_usd": 1900000
+   "figure_usd": 1900000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -27897,7 +29017,9 @@
    "text": "Trevor Megill (4.002): $4.7MM agreement today (per Alexander )",
    "settled_usd": 4700000,
    "split_contract": false,
-   "figure_usd": 4700000
+   "figure_usd": 4700000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2026,
@@ -27927,7 +29049,9 @@
    "text": "Tylor Megill (4.031): $2.5MM agreement today ( per Ari Alexander of 7News )",
    "settled_usd": 2500000,
    "split_contract": false,
-   "figure_usd": 2500000
+   "figure_usd": 2500000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2026,
@@ -27985,7 +29109,9 @@
    "text": "Garrett Mitchell (3.040): $950K agreement today (per Adam McCalvy of MLB.com )",
    "settled_usd": 950000,
    "split_contract": false,
-   "figure_usd": 950000
+   "figure_usd": 950000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2026,
@@ -28015,7 +29141,9 @@
    "text": "Casey Mize (5.111): $6.15MM agreement today (per Petzold )",
    "settled_usd": 6150000,
    "split_contract": false,
-   "figure_usd": 6150000
+   "figure_usd": 6150000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -28045,7 +29173,9 @@
    "text": "Sam Moll (4.023): $875K agreement reached in November",
    "settled_usd": 875000,
    "split_contract": false,
-   "figure_usd": 875000
+   "figure_usd": 875000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -28075,7 +29205,9 @@
    "text": "Mickey Moniak (4.027): $4MM agreement today ( via 7News\u2019 Ari Alexander )",
    "settled_usd": 4000000,
    "split_contract": false,
-   "figure_usd": 4000000
+   "figure_usd": 4000000,
+   "club_heading": "Rockies",
+   "club": "COL"
   },
   {
    "class_year": 2026,
@@ -28105,7 +29237,9 @@
    "text": "Adri\u00e1n Morej\u00f3n (5.140): $3.9MM agreement today (per Feinsand )",
    "settled_usd": 3900000,
    "split_contract": false,
-   "figure_usd": 3900000
+   "figure_usd": 3900000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2026,
@@ -28149,7 +29283,9 @@
    "text": "Gabriel Moreno (3.061): $2.55MM agreement today (per Romero )",
    "settled_usd": 2550000,
    "split_contract": false,
-   "figure_usd": 2550000
+   "figure_usd": 2550000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2026,
@@ -28207,7 +29343,9 @@
    "text": "Ryan Mountcastle (5.105): $6.787MM agreement today on a one-year deal with a $7.5MM club option for 2027",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 6787000
+   "figure_usd": 6787000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -28237,7 +29375,9 @@
    "text": "Andrew Nardi (3.053): $800K agreement reached today (per Associated Press )",
    "settled_usd": 800000,
    "split_contract": false,
-   "figure_usd": 800000
+   "figure_usd": 800000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2026,
@@ -28281,7 +29421,9 @@
    "text": "Ryne Nelson (3.020): $3MM agreement today (per Nick Piecoro of The Arizona Republic )",
    "settled_usd": 3000000,
    "split_contract": false,
-   "figure_usd": 3000000
+   "figure_usd": 3000000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2026,
@@ -28311,7 +29453,9 @@
    "text": "Zach Neto (2.170): $4.15MM agreement today (per Mark Feinsand of MLB.com )",
    "settled_usd": 4150000,
    "split_contract": false,
-   "figure_usd": 4150000
+   "figure_usd": 4150000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2026,
@@ -28341,7 +29485,9 @@
    "text": "Lars Nootbaar (4.076): $5.25MM agreement today (per Murray )",
    "settled_usd": 5250000,
    "split_contract": false,
-   "figure_usd": 5250000
+   "figure_usd": 5250000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2026,
@@ -28371,7 +29517,9 @@
    "text": "Bailey Ober (4.093): $5.2MM agreement today (per Darren Wolfson of KSTP )",
    "settled_usd": 5200000,
    "split_contract": false,
-   "figure_usd": 5200000
+   "figure_usd": 5200000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2026,
@@ -28401,7 +29549,9 @@
    "text": "Logan O\u2019Hoppe (3.008): $2.625MM agreement today (per Romero )",
    "settled_usd": 2625000,
    "split_contract": false,
-   "figure_usd": 2625000
+   "figure_usd": 2625000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2026,
@@ -28431,7 +29581,9 @@
    "text": "Steven Okert (5.089): $2.325MM agreement today ( via MLB.com\u2019s Brian McTaggart )",
    "settled_usd": 2325000,
    "split_contract": false,
-   "figure_usd": 2325000
+   "figure_usd": 2325000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2026,
@@ -28461,7 +29613,9 @@
    "text": "Johan Oviedo (4.078): $1.55MM agreement today (per Alexander )",
    "settled_usd": 1550000,
    "split_contract": false,
-   "figure_usd": 1550000
+   "figure_usd": 1550000,
+   "club_heading": "Red Sox",
+   "club": "BOS"
   },
   {
    "class_year": 2026,
@@ -28491,7 +29645,9 @@
    "text": "Richie Palacios (2.156): $945K agreement today (per Topkin )",
    "settled_usd": 945000,
    "split_contract": false,
-   "figure_usd": 945000
+   "figure_usd": 945000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -28521,7 +29677,9 @@
    "text": "Andre Pallante (3.145): $4MM agreement reached today ( per FanSided\u2019s Robert Murray )",
    "settled_usd": 4000000,
    "split_contract": false,
-   "figure_usd": 4000000
+   "figure_usd": 4000000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2026,
@@ -28551,7 +29709,9 @@
    "text": "Isaac Paredes (4.160): No agreement reached, likely heading to hearing ( per McTaggart )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2026,
@@ -28581,7 +29741,9 @@
    "text": "Vinnie Pasquantino (3.101): No agreement reached, likely heading for hearing (per Rogers )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -28625,7 +29787,9 @@
    "text": "Jeremy Pe\u00f1a (4.000): $9.475MM agreement today (per McTaggart )",
    "settled_usd": 9475000,
    "split_contract": false,
-   "figure_usd": 9475000
+   "figure_usd": 9475000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2026,
@@ -28655,7 +29819,9 @@
    "text": "Ryan Pepiot (3.005): $3.025MM agreement today (per Topkin )",
    "settled_usd": 3025000,
    "split_contract": false,
-   "figure_usd": 3025000
+   "figure_usd": 3025000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -28685,7 +29851,9 @@
    "text": "David Peterson (5.089): $8.1MM agreement today (per Murray )",
    "settled_usd": 8100000,
    "split_contract": false,
-   "figure_usd": 8100000
+   "figure_usd": 8100000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2026,
@@ -28729,7 +29897,9 @@
    "text": "A.J. Puk (5.124): $3.1MM agreement today (per Nick Piecoro of The Arizona Republic )",
    "settled_usd": 3100000,
    "split_contract": false,
-   "figure_usd": 3100000
+   "figure_usd": 3100000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2026,
@@ -28773,7 +29943,9 @@
    "text": "Luke Raley (3.106): $2.05MM agreement today (per Nightengale )",
    "settled_usd": 2050000,
    "split_contract": false,
-   "figure_usd": 2050000
+   "figure_usd": 2050000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2026,
@@ -28803,7 +29975,9 @@
    "text": "Yohan Ramirez (3.135): $825K agreement reached in November",
    "settled_usd": 825000,
    "split_contract": false,
-   "figure_usd": 825000
+   "figure_usd": 825000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2026,
@@ -28847,7 +30021,9 @@
    "text": "Jake Rogers (5.040): $3.05MM agreement reached in November",
    "settled_usd": 3050000,
    "split_contract": false,
-   "figure_usd": 3050000
+   "figure_usd": 3050000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -28877,7 +30053,9 @@
    "text": "JoJo Romero (5.045): $4.26MM agreement today (per Derrick Goold of the St. Louis Post-Dispatch )",
    "settled_usd": 4260000,
    "split_contract": false,
-   "figure_usd": 4260000
+   "figure_usd": 4260000,
+   "club_heading": "Cardinals",
+   "club": "STL"
   },
   {
    "class_year": 2026,
@@ -28907,7 +30085,9 @@
    "text": "Ben Rortvedt (3.135): $1.25MM agreement reached with Dodgers in November before Reds claimed him off waivers",
    "settled_usd": 1250000,
    "split_contract": false,
-   "figure_usd": 1250000
+   "figure_usd": 1250000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -28937,7 +30117,9 @@
    "text": "Adley Rutschman (4.000): $7.25MM agreement today (per Murray )",
    "settled_usd": 7250000,
    "split_contract": false,
-   "figure_usd": 7250000
+   "figure_usd": 7250000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -28967,7 +30149,9 @@
    "text": "Joe Ryan (4.033): No agreement reached (per Dan Hayes of The Athletic )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2026,
@@ -29011,7 +30195,9 @@
    "text": "Cole Sands (3.017): $1.1MM agreement today (per Sherman )",
    "settled_usd": 1100000,
    "split_contract": false,
-   "figure_usd": 1100000
+   "figure_usd": 1100000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2026,
@@ -29041,7 +30227,9 @@
    "text": "Dennis Santana (5.126): $3.5MM agreement today ( via Alex Stumpf of MLB.com )",
    "settled_usd": 3500000,
    "split_contract": false,
-   "figure_usd": 3500000
+   "figure_usd": 3500000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2026,
@@ -29071,7 +30259,9 @@
    "text": "Tony Santillan (3.099): $1.8MM agreement today (per Feinsand )",
    "settled_usd": 1800000,
    "split_contract": false,
-   "figure_usd": 1800000
+   "figure_usd": 1800000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -29143,7 +30333,9 @@
    "text": "Clarke Schmidt (4.148): $4.5MM agreement reached in November",
    "settled_usd": 4500000,
    "split_contract": false,
-   "figure_usd": 4500000
+   "figure_usd": 4500000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2026,
@@ -29173,7 +30365,9 @@
    "text": "John Schreiber (5.027): $3.715M agreement today (per Joel Sherman of the New York Post )",
    "settled_usd": 3715000,
    "split_contract": false,
-   "figure_usd": 3715000
+   "figure_usd": 3715000,
+   "club_heading": "Royals",
+   "club": "KCR"
   },
   {
    "class_year": 2026,
@@ -29203,7 +30397,9 @@
    "text": "JP Sears (3.065): $2.75MM agreement (per Jeff Sanders of the San Diego Union-Tribune )",
    "settled_usd": 2750000,
    "split_contract": false,
-   "figure_usd": 2750000
+   "figure_usd": 2750000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2026,
@@ -29233,7 +30429,9 @@
    "text": "Gavin Sheets (4.076): $4.5MM agreement today (per Woo )",
    "settled_usd": 4500000,
    "split_contract": false,
-   "figure_usd": 4500000
+   "figure_usd": 4500000,
+   "club_heading": "Padres",
+   "club": "SDP"
   },
   {
    "class_year": 2026,
@@ -29263,7 +30461,9 @@
    "text": "Brady Singer (5.156): $12.75MM agreement today (per Feinsand )",
    "settled_usd": 12750000,
    "split_contract": false,
-   "figure_usd": 12750000
+   "figure_usd": 12750000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -29293,7 +30493,9 @@
    "text": "Tarik Skubal (5.114): No agreement reached, likely heading to a hearing (per Nightengale )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -29323,7 +30525,9 @@
    "text": "Pavin Smith (4.015): $2.25MM agreement today (per MLBTR\u2019s Steve Adams )",
    "settled_usd": 2250000,
    "split_contract": false,
-   "figure_usd": 2250000
+   "figure_usd": 2250000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2026,
@@ -29353,7 +30557,9 @@
    "text": "Jos\u00e9 Soriano (3.121): Team announced $2.9MM agreement",
    "settled_usd": 2900000,
    "split_contract": false,
-   "figure_usd": 2900000
+   "figure_usd": 2900000,
+   "club_heading": "Angels",
+   "club": "LAA"
   },
   {
    "class_year": 2026,
@@ -29383,7 +30589,9 @@
    "text": "Edmundo Sosa (5.140): $4.4MM agreement today (per Charlotte Varnes of The Athletic )",
    "settled_usd": 4400000,
    "split_contract": false,
-   "figure_usd": 4400000
+   "figure_usd": 4400000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2026,
@@ -29413,7 +30621,9 @@
    "text": "Bennett Sousa (2.156): $910K agreement today (per McTaggart )",
    "settled_usd": 910000,
    "split_contract": false,
-   "figure_usd": 910000
+   "figure_usd": 910000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2026,
@@ -29443,7 +30653,9 @@
    "text": "Gabe Speier (4.000): $2.125MM agreement today (per Bob Nightengale of USA Today )",
    "settled_usd": 2125000,
    "split_contract": false,
-   "figure_usd": 2125000
+   "figure_usd": 2125000,
+   "club_heading": "Mariners",
+   "club": "SEA"
   },
   {
    "class_year": 2026,
@@ -29473,7 +30685,9 @@
    "text": "Justin Steele (4.143): $6.775MM agreement today (per Patrick Mooney of The Athletic )",
    "settled_usd": 6775000,
    "split_contract": false,
-   "figure_usd": 6775000
+   "figure_usd": 6775000,
+   "club_heading": "Cubs",
+   "club": "CHC"
   },
   {
    "class_year": 2026,
@@ -29503,7 +30717,9 @@
    "text": "Spencer Steer (3.035): $4MM agreement today (per Murray )",
    "settled_usd": 4000000,
    "split_contract": false,
-   "figure_usd": 4000000
+   "figure_usd": 4000000,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -29533,7 +30749,9 @@
    "text": "Tyler Stephenson (5.056): Did not reach agreement, likely headed for hearing (per Feinsand )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Reds",
+   "club": "CIN"
   },
   {
    "class_year": 2026,
@@ -29563,7 +30781,9 @@
    "text": "Brock Stewart (4.093): $1.3MM agreement today (per Jack Harris of the California Post )",
    "settled_usd": 1300000,
    "split_contract": false,
-   "figure_usd": 1300000
+   "figure_usd": 1300000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2026,
@@ -29593,7 +30813,9 @@
    "text": "Bryson Stott (4.000): $5.9MM agreement today (per Murray )",
    "settled_usd": 5900000,
    "split_contract": false,
-   "figure_usd": 5900000
+   "figure_usd": 5900000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2026,
@@ -29623,7 +30845,9 @@
    "text": "Garrett Stubbs (4.148): Agreed to split deal in November , $925K in majors and $575K in minors",
    "settled_usd": 925000,
    "split_contract": true,
-   "figure_usd": 925000
+   "figure_usd": 925000,
+   "club_heading": "Phillies",
+   "club": "PHI"
   },
   {
    "class_year": 2026,
@@ -29667,7 +30891,9 @@
    "text": "Jos\u00e9 Suarez (4.064): $900K agreement reached in November",
    "settled_usd": 900000,
    "split_contract": false,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2026,
@@ -29697,7 +30923,9 @@
    "text": "Cole Sulser (4.096): $1.05MM agreement reached in November",
    "settled_usd": 1050000,
    "split_contract": false,
-   "figure_usd": 1050000
+   "figure_usd": 1050000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -29727,7 +30955,9 @@
    "text": "Jack Suwinski (2.170): $1.25MM agreement reached in November",
    "settled_usd": 1250000,
    "split_contract": false,
-   "figure_usd": 1250000
+   "figure_usd": 1250000,
+   "club_heading": "Pirates",
+   "club": "PIT"
   },
   {
    "class_year": 2026,
@@ -29785,7 +31015,9 @@
    "text": "Tyrone Taylor (5.093): $3.8MM agreement reached in November",
    "settled_usd": 3800000,
    "split_contract": false,
-   "figure_usd": 3800000
+   "figure_usd": 3800000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2026,
@@ -29815,7 +31047,9 @@
    "text": "Alek Thomas (3.103): $1.9625MM agreement today (per Feinsand )",
    "settled_usd": 1962500,
    "split_contract": false,
-   "figure_usd": 1962500
+   "figure_usd": 1962500,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2026,
@@ -29859,7 +31093,9 @@
    "text": "Ryan Thompson (5.095): $3.95MM agreement today ( via Ari Alexander of 7News )",
    "settled_usd": 3950000,
    "split_contract": false,
-   "figure_usd": 3950000
+   "figure_usd": 3950000,
+   "club_heading": "Diamondbacks",
+   "club": "ARI"
   },
   {
    "class_year": 2026,
@@ -29917,7 +31153,9 @@
    "text": "Justin Topa (5.044): $1.225MM agreement reached in November",
    "settled_usd": 1225000,
    "split_contract": false,
-   "figure_usd": 1225000
+   "figure_usd": 1225000,
+   "club_heading": "Twins",
+   "club": "MIN"
   },
   {
    "class_year": 2026,
@@ -29947,7 +31185,9 @@
    "text": "Spencer Torkelson (3.076): $4.075MM agreement today (per Evan Petzold of the Detroit Free Press )",
    "settled_usd": 4075000,
    "split_contract": false,
-   "figure_usd": 4075000
+   "figure_usd": 4075000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -29977,7 +31217,9 @@
    "text": "Luis Torrens (5.105): $2.275MM agreement today (per Will Sammon of The Athletic )",
    "settled_usd": 2275000,
    "split_contract": false,
-   "figure_usd": 2275000
+   "figure_usd": 2275000,
+   "club_heading": "Mets",
+   "club": "NYM"
   },
   {
    "class_year": 2026,
@@ -30007,7 +31249,9 @@
    "text": "Taylor Trammell (2.144): Agreed to split deal in November , $900K in majors and $500K in minors, before being outrighted off the roster in December",
    "settled_usd": 900000,
    "split_contract": true,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2026,
@@ -30037,7 +31281,9 @@
    "text": "Brice Turang (2.165): $4.15MM agreement today (per Murray )",
    "settled_usd": 4150000,
    "split_contract": false,
-   "figure_usd": 4150000
+   "figure_usd": 4150000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2026,
@@ -30067,7 +31313,9 @@
    "text": "Edwin Uceta (2.150): Did not reach agreement, will exchange figures (per Topkin )",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": null
+   "figure_usd": null,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -30125,7 +31373,9 @@
    "text": "Daulton Varsho (5.128): $10.75MM agreement reached today",
    "settled_usd": 10750000,
    "split_contract": false,
-   "figure_usd": 10750000
+   "figure_usd": 10750000,
+   "club_heading": "Blue Jays",
+   "club": "TOR"
   },
   {
    "class_year": 2026,
@@ -30155,7 +31405,9 @@
    "text": "Andrew Vaughn (4.142): $7.65MM agreement today (per Murray )",
    "settled_usd": 7650000,
    "split_contract": false,
-   "figure_usd": 7650000
+   "figure_usd": 7650000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   },
   {
    "class_year": 2026,
@@ -30185,7 +31437,9 @@
    "text": "Alex Vesia (5.078): Dodgers exercised $3.65MM club option in November",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 3650000
+   "figure_usd": 3650000,
+   "club_heading": "Dodgers",
+   "club": "LAD"
   },
   {
    "class_year": 2026,
@@ -30215,7 +31469,9 @@
    "text": "Will Vest (4.100): $3.95MM agreement today (per Petzold )",
    "settled_usd": 3950000,
    "split_contract": false,
-   "figure_usd": 3950000
+   "figure_usd": 3950000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -30245,7 +31501,9 @@
    "text": "Matt Vierling (4.026): $3.225MM agreement reached in November",
    "settled_usd": 3225000,
    "split_contract": false,
-   "figure_usd": 3225000
+   "figure_usd": 3225000,
+   "club_heading": "Tigers",
+   "club": "DET"
   },
   {
    "class_year": 2026,
@@ -30275,7 +31533,9 @@
    "text": "Anthony Volpe (3.000): $3.475MM agreement today (per Jack Curry of The YES Network )",
    "settled_usd": 3475000,
    "split_contract": false,
-   "figure_usd": 3475000
+   "figure_usd": 3475000,
+   "club_heading": "Yankees",
+   "club": "NYY"
   },
   {
    "class_year": 2026,
@@ -30305,7 +31565,9 @@
    "text": "Ken Waldichuk (2.150): $825K agreement reached in November with the Athletics, claimed off waivers by Atlanta today",
    "settled_usd": 825000,
    "split_contract": false,
-   "figure_usd": 825000
+   "figure_usd": 825000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2026,
@@ -30335,7 +31597,9 @@
    "text": "Taylor Walls (4.092): Club exercised $2.45MM option in November and agreed to $3.1MM club option for 2027",
    "settled_usd": null,
    "split_contract": false,
-   "figure_usd": 2450000
+   "figure_usd": 2450000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -30365,7 +31629,9 @@
    "text": "Taylor Ward (5.164): $12.175MM agreement reached today",
    "settled_usd": 12175000,
    "split_contract": false,
-   "figure_usd": 12175000
+   "figure_usd": 12175000,
+   "club_heading": "Orioles",
+   "club": "BAL"
   },
   {
    "class_year": 2026,
@@ -30395,7 +31661,9 @@
    "text": "Ryan Weathers (3.066): $1.35MM agreement reached today (agreement per Isaac Azout of Fish on First ; salary reported by Mish )",
    "settled_usd": 1350000,
    "split_contract": false,
-   "figure_usd": 1350000
+   "figure_usd": 1350000,
+   "club_heading": "Marlins",
+   "club": "MIA"
   },
   {
    "class_year": 2026,
@@ -30425,7 +31693,9 @@
    "text": "Joey Wentz (2.166): $900K agreement reached in November",
    "settled_usd": 900000,
    "split_contract": false,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2026,
@@ -30455,7 +31725,9 @@
    "text": "Hayden Wesneski (2.170): $975K agreement today (per Full Seam Ahead )",
    "settled_usd": 975000,
    "split_contract": false,
-   "figure_usd": 975000
+   "figure_usd": 975000,
+   "club_heading": "Astros",
+   "club": "HOU"
   },
   {
    "class_year": 2026,
@@ -30485,7 +31757,9 @@
    "text": "Eli White (3.140): $900K agreement reached in November",
    "settled_usd": 900000,
    "split_contract": false,
-   "figure_usd": 900000
+   "figure_usd": 900000,
+   "club_heading": "Braves",
+   "club": "ATL"
   },
   {
    "class_year": 2026,
@@ -30529,7 +31803,9 @@
    "text": "Steven Wilson (3.166): $1.52MM agreement today, (per Topkin )",
    "settled_usd": 1520000,
    "split_contract": false,
-   "figure_usd": 1520000
+   "figure_usd": 1520000,
+   "club_heading": "Rays",
+   "club": "TBR"
   },
   {
    "class_year": 2026,
@@ -30587,7 +31863,9 @@
    "text": "Austin Wynns (5.017): $1.1MM agreement reached in November",
    "settled_usd": 1100000,
    "split_contract": false,
-   "figure_usd": 1100000
+   "figure_usd": 1100000,
+   "club_heading": "Athletics",
+   "club": "ATH"
   },
   {
    "class_year": 2026,
@@ -30617,7 +31895,9 @@
    "text": "\u00c1ngel Zerpa (3.082): $1.095MM agreement today (per Feinsand )",
    "settled_usd": 1095000,
    "split_contract": false,
-   "figure_usd": 1095000
+   "figure_usd": 1095000,
+   "club_heading": "Brewers",
+   "club": "MIL"
   }
  ]
 }
