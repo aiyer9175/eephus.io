@@ -6082,9 +6082,13 @@ def build_mlbstats() -> str:
     byte. Live, the root names assets/mlbstats-league.js in data-league-src
     (mlbstats.js injects it the first time the tab opens, so the landing board
     fetches nothing new) and the newest season panel on disk in
-    data-league-live, and a League button and panel follow Leverage."""
+    data-league-live, and a League button and panel follow Leverage.
+
+    THE TEAMS TAB (owner asks 15 and 20 of 2026-09-30; the same plan item, the
+    Teams half) rides the same flag and the same lazy script: live, a Teams
+    button and panel sit between Leverage and League (owner answer LTS-1)."""
     import league_averages
-    league_root = league_btn = league_panel = ""
+    league_root = league_btn = league_panel = teams_btn = teams_panel = ""
     league_live = bool(league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE)
     if league_live:
         ys = sorted(int(p.stem.rsplit("_", 1)[1]) for p in DATA_DIR.glob("mlb_league_panel_*.json")
@@ -6096,6 +6100,11 @@ def build_mlbstats() -> str:
         league_panel = ('<div id="mlbstats-section-league" class="mlbstats-section" role="tabpanel" aria-label="League" hidden>'
                         f'<div id="mlbstats-league-root"{_csv_optin("mlb-league")}></div>'
                         '</div>')
+        teams_btn = ('<button type="button" class="mlbstats-sectionbtn" data-mlbsection="teams" role="tab" '
+                     'aria-selected="false" aria-controls="mlbstats-section-teams">Teams</button>')
+        teams_panel = ('<div id="mlbstats-section-teams" class="mlbstats-section" role="tabpanel" aria-label="Teams" hidden>'
+                       f'<div id="mlbstats-teams-root"{_csv_optin("mlb-teams")}></div>'
+                       '</div>')
     body = (
         # .mlbx is carried by THIS root only: every /mlbstats/ column-view rule in
         # site.css is scoped under it, because .mlbstats-app is shared by ten
@@ -6129,7 +6138,7 @@ def build_mlbstats() -> str:
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="bullpen" role="tab" aria-selected="false" aria-controls="mlbstats-section-bullpen">Bullpen</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="defense" role="tab" aria-selected="false" aria-controls="mlbstats-section-defense">Defense</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="leverage" role="tab" aria-selected="false" aria-controls="mlbstats-section-leverage">Leverage</button>'
-        f'{league_btn}'
+        f'{teams_btn}{league_btn}'
         '</div>'
         # Panel order follows the nav, so tab order and reading order agree.
         '<div id="mlbstats-section-war" class="mlbstats-section" role="tabpanel" aria-label="Overall">'
@@ -6151,7 +6160,7 @@ def build_mlbstats() -> str:
         '<div id="mlbstats-section-leverage" class="mlbstats-section" role="tabpanel" aria-label="Leverage" hidden>'
         f'<div id="mlbstats-leverage-root"{_csv_optin("mlb-leverage")}></div>'
         '</div>'
-        f'{league_panel}'
+        f'{teams_panel}{league_panel}'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
@@ -6161,7 +6170,7 @@ def build_mlbstats() -> str:
     return page("MLB Stats - eephus.io", "mlbstats", body,
                 "MLB leaderboards: every player by eWAR, season or year range; HEM+, SEM+, "
                 "REM+, RIV+ and DEM+ boards; WPA leverage; team Bullpen+, Rotation+, Offense+, "
-                "DEM+" + (f"; league averages since {league_averages.FIRST_SEASON}." if league_live else "."),
+                "DEM+" + (f"; team stats and league averages since {league_averages.FIRST_SEASON}." if league_live else "."),
                 url=f"{SITE_ORIGIN}/mlbstats/", image=module_share_image("mlbstats"))
 
 _PAL_REVERSED_LABEL = {
