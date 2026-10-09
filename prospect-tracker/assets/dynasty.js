@@ -645,9 +645,13 @@
     var rows = shown.map(function (c) {
       // eFV (round to nearest) leads. The consensus FV fallback displays as a
       // ceiling, which is the site-wide grade convention: scouting grades round
-      // up, eFV and plus-stats round to nearest.
+      // up, eFV and plus-stats round to nearest. Under the eFV header the
+      // fallback carries a visible C mark and names itself (owner answer Q-E4).
       var grade = (c.fvE != null) ? String(Math.round(c.fvE))
-        : (c.fv != null ? String(Math.ceil(c.fv)) : "-");
+        : (c.fv != null
+          ? '<span data-grade-basis="consensus" title="Consensus FV ' + Math.ceil(c.fv)
+            + ' (no eFV for this player)">C ' + Math.ceil(c.fv) + "</span>"
+          : "-");
       // The CSV export reads the name alone (data-export-text), not the chip.
       var chips = injuryChips(c);
       return '<tr><td class="dyn-nm"' + (chips ? ' data-export-text="' + esc(c.name) + '"' : "") + ">" +
@@ -656,7 +660,7 @@
         "</td><td>" + esc(c.pos) + "</td><td>" + esc(c.eta) + '</td><td class="dyn-sc">' + grade + "</td></tr>";
     }).join("");
     return filterBar(null, false) +
-      '<div class="dyn-note">ETA this season or next, ordered by eFV. Consensus FV (rounded up) where eFV is missing.</div>' +
+      '<div class="dyn-note">ETA this season or next, ordered by eFV. Consensus FV (rounded up, marked C) where eFV is missing.</div>' +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
       '<thead><tr><th class="dyn-nm">Prospect</th><th>Org</th><th>Pos</th>' +
       "<th>" + glossLbl({ label: "ETA", term: "eta" }) + "</th>" +

@@ -1915,7 +1915,11 @@ def _fv_pill(p: dict) -> str:
     label = _fv_label(p)
     key = p.get("player_key")
     if _EFV_GRADES.get(key) is None:
-        return f'{_sr("FV")}<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
+        # No eFV for this player: the consensus grade (rounded up) is named as
+        # consensus, the dashed pill PROSPX uses for a grade that is not eFV.
+        tip = f"Consensus FV {label}: no eFV for this player"
+        return (f'{_sr("Consensus FV")}<span class="{_fv_tier_class(label)} fv-prod" '
+                f'data-grade-basis="consensus" title="{html.escape(tip)}">{html.escape(label)}</span>')
     m = re.match(r"-?\d+", label.strip())
     if m and int(m.group()) <= _EFV_FLOOR:
         return (f'{_sr("eFV")}<span class="fv-pill fv-floor" '
@@ -2117,16 +2121,77 @@ def _mover_at_floor(p: dict) -> bool:
 
 
 def _mover_unit(p: dict) -> str:
-    """The grade a mover step is measured in: eFV on the xfv basis, FV on the
-    consensus fallback."""
-    return "eFV" if (p.get("stock") or {}).get("basis") == "xfv" else "FV"
+    """The grade a mover step is measured in: eFV on the xfv basis, and on the
+    consensus fallback the words "Consensus FV", so a consensus step is never
+    printed under a bare "FV" (owner ask 5, answer Q-E4)."""
+    return "eFV" if (p.get("stock") or {}).get("basis") == "xfv" else "Consensus FV"
+
+
+def _efv_display_swaps() -> bool:
+    """storage.EFV_DISPLAY_SWAPS, read at call time (the one definition; it
+    flips in its own commit, Q9_15)."""
+    try:
+        import storage
+        return bool(storage.EFV_DISPLAY_SWAPS)
+    except Exception:                                       # pragma: no cover
+        return False
+
+
+_EFV_SERIES_CACHE: dict | None = None
+
+
+def _efv_series(key) -> list:
+    """The player's eFV series, oldest first, from data/xfv_history.json (the
+    series PROSPX draws as its eFV line). Empty when the file or the player is
+    missing."""
+    global _EFV_SERIES_CACHE
+    if _EFV_SERIES_CACHE is None:
+        try:
+            doc = json.loads((DATA_DIR / "xfv_history.json").read_text(encoding="utf-8"))
+            _EFV_SERIES_CACHE = doc.get("by_player") or {}
+        except (OSError, ValueError, AttributeError):
+            _EFV_SERIES_CACHE = {}
+    out = []
+    for pt in (_EFV_SERIES_CACHE.get(key) or []):
+        x = (pt or {}).get("x")
+        if isinstance(x, (int, float)):
+            out.append(float(x))
+    return out
+
+
+def _mover_spark(p: dict, color: str, w: int, h: int) -> tuple[str, str]:
+    """The grade-history step line beside a home mover, and its basis.
+
+    Flag off (storage.EFV_DISPLAY_SWAPS False): the consensus FV history as
+    before, named "Consensus FV history". Flag on: the eFV series where the
+    player has two or more eFV points, named "eFV history", else the named
+    consensus line. The basis rides on the svg as data-grade-basis and its
+    name as an svg title, so the line beside an eFV pill is never an unnamed
+    consensus series. Returns (svg, basis); svg is "" when nothing draws."""
+    spark, basis = "", "consensus"
+    if _efv_display_swaps():
+        vals = _efv_series(p.get("player_key"))
+        if len(vals) >= 2:
+            spark = _fv_sparkline([{"consensus_fv_raw": v} for v in vals], color, w=w, h=h)
+            basis = "efv"
+    if not spark:
+        spark = _fv_sparkline(p.get("points"), color, w=w, h=h)
+        basis = "consensus"
+    if not spark:
+        return "", basis
+    name = "eFV history" if basis == "efv" else "Consensus FV history"
+    spark = spark.replace(' aria-hidden="true">',
+                          f' aria-hidden="true" data-grade-basis="{basis}"><title>{name}</title>', 1)
+    return spark, basis
 
 def _row_mover(p: dict, d: int) -> str:
     up = d > 0
     # Mini FV-history sparkline - reinforces the stock-chart identity. Colored
     # by direction; drawn as the pixel step line (PX-16): 56 x 20, so eight
     # snapshots get 7 px each and no column is resampled.
-    spark = _fv_sparkline(p.get("points"), "var(--accent-green)" if up else "var(--accent-red)", w=56, h=20)
+    # The line names its basis (_mover_spark): consensus until the eFV display
+    # swaps flip, then the eFV series where one exists.
+    spark, _basis = _mover_spark(p, "var(--accent-green)" if up else "var(--accent-red)", w=56, h=20)
     spark_html = f'<span class="row-spark">{spark}</span>' if spark else '<span class="row-spark"></span>'
     # Rank + team logo lead the row (same idiom as Top Prospects); position +
     # FV chip sit before the move delta so a mover reads like a ranked entry
@@ -2138,7 +2203,7 @@ def _row_mover(p: dict, d: int) -> str:
             f'{_sr("rank") if rank else ""}{rank_html}{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>'
-            f'{spark_html}{_fv_pill(p)}{_sr("change")}'
+            f'{spark_html}{_fv_pill(p)}{_sr(_mover_unit(p) + " change")}'
             f'<span class="row-delta {"up" if up else "down"}">{"▲" if up else "▼"} {"+" if up else ""}{d}</span></a>')
 
 def _row_top(p: dict, rank: int) -> str:
@@ -2413,8 +2478,8 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
                     chg = (str(raw[0])[:10], raw[1], raw[2])
         if chg:
             d_first = _wire_fv_first_seen(fv_ledger, key, chg[2], chg[0])
-            # The row names the grade that moved: eFV on the xfv basis, FV on
-            # the consensus fallbacks. A step with an endpoint on the eFV floor
+            # The row names the grade that moved: eFV on the xfv basis,
+            # "Consensus FV" on the consensus fallbacks. A step with an endpoint on the eFV floor
             # is the player reaching or leaving the floor, so it reads as that
             # event and not as a signed grade step.
             fv_items.append((d_first, chg[1], nm, key, org,
@@ -3558,7 +3623,7 @@ def _spotlight_card(label: str, p: dict, chip: str, spark_color: str) -> str:
     photo = f"background-image:url('{url}');" if url else ""
     # 120 x 34: the card's text column is about 123 px wide at the 292 px
     # sidebar, so the pixel step line draws at its own size, never scaled.
-    spark = _fv_sparkline(p.get("points"), spark_color, w=120, h=34)
+    spark, _basis = _mover_spark(p, spark_color, w=120, h=34)
     return (
         f'<div class="sb-group"><div class="sb-group-label">{html.escape(label)}</div>'
         f'<a class="spotlight{holo}" href="{_player_href(p.get("player_key"))}" style="text-decoration:none;color:inherit;">'
@@ -3580,7 +3645,7 @@ def _spotlight_html(players: list, spotlights: dict | None = None) -> str:
 
     Slot 1 (Top Riser) and slot 2 (Top Faller) come from `_genuine_mover_step` -
     the de-noised genuine grade move, the same selector the Top Movers module
-    uses - so the "+N eFV" / "-N eFV" caption (FV on the consensus fallback)
+    uses - so the "+N eFV" / "-N eFV" caption ("Consensus FV" on the consensus fallback)
     names the grade that moved and the hero card never disagrees with the
     movers list or the per-player stock chips. Floor crossings are left out,
     as on Top Movers (_mover_at_floor).

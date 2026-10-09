@@ -203,12 +203,27 @@ function _tmFvNum(xfvGrade, consensusFv) {
   if (consensusFv != null && isFinite(c)) return String(Math.ceil(c));
   return "";
 }
-// The same number, labelled with the basis it came from. The board column has a
-// header saying "FV" and no room; a sub-line has room to be exact.
+// The same number, labelled with the basis it came from: "eFV" or "Consensus
+// FV" (owner answer Q-E4), never a bare "FV" for the consensus fallback.
 function _tmFvText(xfvGrade, consensusFv) {
   const n = _tmFvNum(xfvGrade, consensusFv);
   if (!n) return "";
-  return ((xfvGrade != null && isFinite(Number(xfvGrade))) ? "eFV " : "FV ") + n;
+  return ((xfvGrade != null && isFinite(Number(xfvGrade))) ? "eFV " : "Consensus FV ") + n;
+}
+// The board column's cell. The column is eFV; the consensus fallback (a
+// prospect eFV has not graded) carries a visible C mark and says so in its
+// title, rounded up like every consensus grade.
+function _tmFvCell(xfvGrade, consensusFv) {
+  const n = _tmFvNum(xfvGrade, consensusFv);
+  if (!n || (xfvGrade != null && isFinite(Number(xfvGrade)))) return n;
+  return `<span data-grade-basis="consensus" title="Consensus FV ${n} (no eFV for this player)">C ${n}</span>`;
+}
+// The value the column sorts on: the grade it prints (eFV, else consensus).
+function _tmFvSortNum(p) {
+  const x = Number(p.xfv_grade);
+  if (p.xfv_grade != null && isFinite(x)) return x;
+  const c = Number(p.fv);
+  return (p.fv != null && isFinite(c)) ? c : null;
 }
 
 const _TM = { a: [], b: [], detail: null, detailLoading: false };
@@ -976,7 +991,7 @@ function _tbPhaseWord(phase) {
 function _tbSortVal(p, col) {
   const num = v => (v == null || v === "") ? null : (Number.isFinite(Number(v)) ? Number(v) : null);
   if (col === "age") return { n: num(p.age) };
-  if (col === "fv")  return { n: num(p.fv) };
+  if (col === "fv")  return { n: _tmFvSortNum(p) };
   if (col === "org") return { t: String(p.org || "") };
   if (col === "pos") return { t: _tbPrimaryPos(p.position) };
   if (col === "name") return { t: String(p.player_name || "") };
@@ -1354,7 +1369,7 @@ function _renderTBRows() {
     ${_tbTh("Age", "age", "tm-num", "Current age (decimal years)")}
     ${_tbTh("Pos", "pos")}
     ${_tbTh("Org", "org")}
-    ${_tbTh("FV", "fv", "tm-num", "Prospects only: eFV where graded, else consensus FV", false, "fv")}
+    ${_tbTh("eFV", "fv", "tm-num", "Prospects only: eFV, rounded to nearest. A cell marked C is the consensus FV (rounded up) of a prospect eFV has not graded.", false, "xfv")}
     ${_tbTh("Grade", "surplus", "tm-num tm-col-div", "Trade Value Grade: the letter for the Surplus beside it, A+ to F. Sorts with Surplus.", true)}
     ${_tbTh("Surplus", "surplus", "tm-num", "$M of production above cost; same model as PROSPX and MLB Projections", false, "surplus_value")}
     ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside (higher is safer). Blank on a flat outcome fan; the bust probability still shows.", false, "risk_adjusted_surplus") : ""}
@@ -1378,7 +1393,7 @@ function _renderTBRows() {
     // so a prospect the board grades 60 showed 59 on the trade board while the
     // Grade column beside it was already ranking on xfv_grade. The rule now
     // lives in _tmFvNum, shared with the evaluator's search + seed sub-lines.
-    const fv    = !isProspect ? "" : _tmFvNum(p.xfv_grade, p.fv);
+    const fv    = !isProspect ? "" : _tmFvCell(p.xfv_grade, p.fv);
     // Position: trade_values.json now carries fielding-corrected position
     const pos   = escapeHtml(p.position || "");
     const org   = escapeHtml(p.org || "");   // may be empty for some players
@@ -1741,7 +1756,7 @@ function _tbShowGroup(playerKey) {
         <thead><tr style="font-size:10px;color:var(--text-secondary);">
           <th style="padding:3px 6px;">#</th><th style="padding:3px 6px;">Player</th>
           <th style="padding:3px 6px;">Pos</th><th style="padding:3px 6px;">Org</th>
-          <th style="padding:3px 6px;text-align:right;">FV</th>
+          <th style="padding:3px 6px;text-align:right;" title="The consensus FV the GRPO model reads, rounded up">Consensus FV</th>
           <th style="padding:3px 6px;text-align:right;">Age</th>
           <th style="padding:3px 6px;">Lvl</th>
           <th style="padding:3px 6px;">Age△</th>
@@ -1759,7 +1774,7 @@ function _tbShowGroup(playerKey) {
       const warStr = c.war_per_yr != null ? `${Number(c.war_per_yr).toFixed(2)} WAR/yr` : " - ";
       return `<tr style="font-size:11px;">
         <td style="padding:3px 6px;font-weight:600;">${escapeHtml(c.player_name || "?")}</td>
-        <td style="padding:3px 6px;color:var(--text-secondary);">FV ${c.fv != null ? String(Math.ceil(Number(c.fv))) : " - "}</td>
+        <td style="padding:3px 6px;color:var(--text-secondary);">Consensus FV ${c.fv != null ? String(Math.ceil(Number(c.fv))) : " - "}</td>
         <td style="padding:3px 6px;color:var(--text-secondary);">${warStr}</td>
         <td style="padding:3px 6px;text-align:right;color:var(--text-secondary);">${outcome} outcome</td>
       </tr>`;

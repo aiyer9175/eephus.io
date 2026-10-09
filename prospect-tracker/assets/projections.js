@@ -708,7 +708,7 @@
   // consensus FV displays CEILING (fvCeil).
   function prospectGrade(m) {
     if (m.fv_source === "xfv") return `eFV ${Math.round(m.fv)}`;
-    return `FV ${EEPHUS_HUB.fvCeil(m.fv)}`;
+    return `Consensus FV ${EEPHUS_HUB.fvCeil(m.fv)}`;
   }
   function tagFor(m) {
     if (m.src === "prospect") {
@@ -1138,8 +1138,13 @@
       const surCell = f.farmSurplusMM != null
         ? `<span class="${f.farmSurplusMM >= 0 ? "proj-pos" : "proj-neg"}" title="Net prospect surplus NPV over the org's active prospect pool">$${Math.round(f.farmSurplusMM)}M</span>`
         : EM_DASH;
+      // The grade names its basis (owner answer Q-E4): eFV once the exporter
+      // serves it (fvBasis "efv"), otherwise the consensus label, printed as
+      // "Consensus FV" (a payload without fvBasis predates the field and is
+      // consensus).
+      const topBasisEfv = f.topProspect && f.topProspect.fvBasis === "efv";
       const topCell = f.topProspect
-        ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub">FV ${esc(String(f.topProspect.fv || "?"))}</span>`
+        ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub" style="white-space:nowrap" data-grade-basis="${topBasisEfv ? "efv" : "consensus"}">${topBasisEfv ? "eFV" : "Consensus FV"} ${esc(String(f.topProspect.fv || "?"))}</span>`
         : EM_DASH;
       const frHref = franchiseHref(r.team);
       const openCell = `${fmHref ? `<a href="${esc(fmHref)}">farm</a> · <a href="${esc(fmHref)}&ftab=tendencies" title="Open the Org Tendencies tab">tendencies</a> · ` : ""}<a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>${frHref ? ` · <a href="${esc(frHref)}" title="Open the club on Franchises">franchise</a>` : ""}`;
@@ -1190,7 +1195,7 @@
       : "";
     const header = nowMode
       ? `<thead><tr><th>#</th>${sth("team", "Team")}${sth("nowPct", "Record", `Actual ${curSeason} record + win%`)}${sth("pythag", "Pythag", "Pythagorean win% from run differential (exp 1.83)")}${sth("blend", "Proj W-L", "Bayesian blend of talent prior + actual + Pythag -> projected full-season record")}${sth("playoff", "Playoff odds", "Monte-Carlo division/wildcard/playoff probability")}${sth("sos", "Rem SOS", "Remaining strength of schedule via log5 (rank 1 = hardest)")}</tr></thead>`
-      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR", "Sum of each rostered veteran's year-1 champion mean WAR (the Marcel path /fa/ prices; quantile points never summed) plus arrived prospects. Top projected prints the quantile-head path, so a name there can differ from his share here.")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
+      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR", "Sum of each rostered veteran's year-1 champion mean WAR (the Marcel path /fa/ prices; quantile points never summed) plus arrived prospects. Top projected prints the quantile-head path, so a name there can differ from his share here.")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by the grade printed beside the top prospect (eFV, or Consensus FV where it says so)")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
     // The Current slate keeps its note above the table (it says what changes
     // under the reader); the projected slate's column notes fold under it.
     const noteTop = nowMode ? `<div class="fa-note proj-teams-note">${note}</div>` : "";
