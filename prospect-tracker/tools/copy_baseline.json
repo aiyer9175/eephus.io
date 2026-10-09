@@ -10,9 +10,9 @@
   "L8": 52,
   "L9": 38,
   "L10": 28,
-  "L12": 3,
+  "L12": 2,
   "L4": 0,
-  "L5_density": 2,
+  "L5_density": 1,
   "coverage": 74
  },
  "L1": [
@@ -311,13 +311,11 @@
   "e9ddba42acbeecc1218025e0a6142691c9e98f88"
  ],
  "L12": [
-  "55caec5d14f0c031c5dbc80928bb64ab1d60d0be",
   "b7f0ebb654cb12308c9803f591946f01d8d40834",
   "e8ec8bcfc01b8e59b9e4a4a5d89955693275e7e8"
  ],
  "L4": [],
  "L5_density": [
-  "collegesavant",
   "sources"
  ],
  "coverage": [
