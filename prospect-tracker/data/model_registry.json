@@ -5812,6 +5812,20 @@
    "artifact_age_days": 0
   },
   {
+   "model_id": "steal_runner_split",
+   "summary": "Registered, not read: a runner-aware steal success model as an additive split of the execution residual; one look on 2026-10-20 scores 2025 attempts. DV unchanged.",
+   "surface": "None served: a registered split of the /management/ steal execution residual into ER_runner and ER_other; DV and every served management number unchanged",
+   "predicts": "The success probability of a priced stolen-base attempt from the runner's sprint-speed percentile, the catcher's pop time, the pitcher's hand, the base-out state and the score state",
+   "champion": "none, registered, not read (one look 2026-10-20 on 2025 attempts; no fit exists on the registration date)",
+   "baseline": "The league-average-runner incumbent: management.attempts() league_p by season and target base, the rate DV is priced with",
+   "metric": "Registered, not computed: paired per-attempt log loss and Brier against the incumbent on 2025 attempts, game bootstrap B 2000 seed 20261020, one-sided 95% lower bound above zero",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "owner": "In-Game Management",
+   "notes": "Registered 2026-10-08 (W11_2, owner answer W-OQ3 (b), plan Part 8 8.F P8.6 W11 stage 2) in docs/management-2026-10/STEAL_RUNNER_SPLIT_GATE.md before any fit, score or outcome relation. Candidate: a ridge-penalized logistic model with the incumbent's logit(league_p) as an offset and no free intercept, eleven fixed features (runner sprint-speed percentile, not-listed flag, 2023-rules interaction; catcher pop time and missing flag; left-handed pitcher and its steal-of-second interaction; one out, another runner on, clipped score margin, late and close); pitcher time to plate is not on file and is not in the model. Frame: management.attempts() priced rows, runner from the origin-base column as mgmt_decisions.detect_steals reads in_id, catcher from mgmt_steal_context's attempt map; fit 2018-2023 (no 2020 shards), lambda tuned on 2024, one score on 2025. Pass: n >= 1,000 and one-sided 95% lower bounds above zero for the log-loss and Brier gains over the incumbent and the log-loss gain over a twin without the runner terms. PASS makes ER_runner and ER_other eligible behind STEAL_RUNNER_SPLIT_LIVE (class 2, its own flip); a null keeps the split dark and the stage 1 context columns as served, and this row moves to deprecated. DV is never changed, nothing prices a steal in the Diamond, and no manager figure rides on it. The enum has no word registered, so the row reads unvalidated until the look."
+  },
+  {
    "model_id": "mgmt_bunt_dv",
    "summary": "Measured, league only (2026-09-25): sacrifices with a runner on cost -74.544 wins over 8,365 bunts; selection is unsolved, so this prices the bunt as deployed.",
    "surface": "/management/ Bunt section, summarised into the management board; a league result, no per-club number",
