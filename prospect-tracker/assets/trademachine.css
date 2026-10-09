@@ -218,6 +218,45 @@
 #trade-machine .tm-comp-lbl { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; color: var(--text-tertiary); margin-right: 4px; }
 #trade-machine .tm-comp-foot { margin-top: 2px; font-size: 10px; color: var(--text-tertiary); overflow-wrap: anywhere; }
 
+/* Trade partner screen (wiring W08): drawn only behind TRADE_PARTNER_SCREEN_LIVE.
+   The table scrolls inside its own box, so the page never scrolls sideways. */
+#trade-machine .tm-partner {
+  display: block; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border);
+  font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.5; min-width: 0;
+}
+#trade-machine .tm-partner:empty { display: none; }
+#trade-machine .tm-partner-head { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; margin-bottom: 4px; }
+#trade-machine .tm-partner-h { margin: 0; font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); }
+#trade-machine .tm-partner-tag { font-size: 11px; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm, 4px); padding: 0 6px; }
+#trade-machine .tm-partner-for { margin: 2px 0 4px; }
+#trade-machine .tm-partner-pick { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-tertiary); max-width: 100%; }
+#trade-machine .tm-partner-pick select { max-width: 100%; }
+#trade-machine .tm-partner-note, #trade-machine .tm-partner-method { font-size: 11px; color: var(--text-tertiary); overflow-wrap: anywhere; }
+#trade-machine .tm-partner-method { margin-top: 6px; }
+#trade-machine .tm-partner a { color: var(--accent-cyan); }
+#trade-machine .tm-partner-scroll {
+  margin-top: 6px; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border); border-radius: var(--radius-sm, 4px);
+}
+#trade-machine .tm-partner-table { width: 100%; min-width: 980px; border-collapse: collapse; }
+#trade-machine .tm-partner-table thead th {
+  background: var(--bg-secondary); border-bottom: 2px solid var(--border); text-align: left; vertical-align: bottom;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-tertiary); padding: 6px 8px;
+}
+#trade-machine .tm-partner-sub { display: block; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-tertiary); }
+#trade-machine .tm-partner-table td { padding: 5px 8px; font-size: 12px; vertical-align: top; border-bottom: 1px solid var(--border-light); color: var(--text-secondary); }
+#trade-machine .tm-partner-own td { background: var(--bg-secondary); }
+#trade-machine .tm-partner-ord { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+#trade-machine .tm-partner-club { white-space: nowrap; font-weight: 700; color: var(--text-primary); }
+#trade-machine .tm-partner-club .club-link { color: var(--text-primary); }
+#trade-machine .tm-partner-raw { display: block; color: var(--text-primary); overflow-wrap: anywhere; }
+#trade-machine .tm-partner-fs, #trade-machine .tm-partner-score { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+#trade-machine .tm-partner-fs { display: block; font-size: 10px; color: var(--text-tertiary); }
+#trade-machine .tm-partner-fs::before { content: "score "; }
+#trade-machine .tm-partner-score { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+#trade-machine .tm-partner-nof, #trade-machine .tm-partner-dim { display: block; color: var(--text-tertiary); font-size: 11px; }
+#trade-machine .tm-partner-f:nth-child(5) { min-width: 240px; }
+
 /* Trade Board table: finished column treatment (header band, row dividers, hover,
    right-aligned numerics, and group dividers separating identity | value | signals). */
 .tm-board-table { width: 100%; border-collapse: collapse; }
