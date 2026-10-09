@@ -362,7 +362,7 @@ def test_progress_screening_block_renders(server, browser, n_screen):
     assert out["summary"] == ("Screening lab (development; admits candidates to the "
                               f"registered list, proves nothing), {n_screen} rows")
     assert "efv_v2_screen:" not in out["mainText"] and "txt_skill_hit" not in out["mainText"]
-    assert "reserved read" in out["block"] and "IL stints" in out["block"]
+    assert "reserved read" in out["block"] and "College production" in out["block"] and "IL stints" not in out["block"]
     assert ("admitted candidate (development, not a claim)" in out["text"]) is bool(admitted)
     if n_screen:
         assert "No screening row is on the ledger yet" not in out["block"]
