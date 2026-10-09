@@ -3355,6 +3355,45 @@ def _accountability_block() -> dict:
         "ship_decision": pe.get("ship_decision"),
     } if champ else {}
 
+    # EACH SURFACE SERVES THE ENGINE THAT WON ITS OWN GATE (owner answer M15-1,
+    # 2026-09-25, "use whichever model wins"): /projections/ the ML heads that
+    # beat the champion on the player-level holdout, /fa/ the champion path its
+    # market model passed Gate 2 on (fa_market.enriched_signings, use_ml=False).
+    # Both pages disclose it, and both disclosures read THIS block, which copies
+    # the two committed eval artifacts, so neither verdict is a sentence in code.
+    base_by_h = {r["h"]: r for r in ((vet_horizons.get("baseline") or {}).get("horizons") or [])}
+    proj_rows = [{"h": r["h"], "n": r.get("n"), "mae": r.get("mae"),
+                  "mae_comparator": (base_by_h.get(r["h"]) or {}).get("mae")}
+                 for r in ((vet_horizons.get("champion") or {}).get("horizons") or [])]
+    g2 = _read_data_json("fa_gate2_eval.json")
+    g2_pooled = {k: {"mae_model": v.get("mae_model"), "mae_base": v.get("mae_base"),
+                     "n": v.get("n")}
+                 for k, v in (g2.get("pooled") or {}).items()
+                 if k in ("guarantee", "aav", "years") and isinstance(v, dict)}
+    surface_engines = {
+        "rule": "each surface serves the engine that won its own gate "
+                "(owner answer M15-1, 2026-09-25)",
+        "projections": {
+            "engine": (vet_horizons.get("champion") or {}).get("model"),
+            "comparator": (vet_horizons.get("baseline") or {}).get("model"),
+            "gate": "player-level WAR, row-matched holdout",
+            "frame": "2022-2024 holdout",
+            "artifact": "data/proj_horizon_eval.json",
+            "generated_at": he.get("generated_at"),
+            "by_horizon": proj_rows,
+        } if proj_rows else None,
+        "fa": {
+            "engine": "marcel_decay_v2",
+            "input": "champion paths (fa_market.enriched_signings, use_ml=False)",
+            "gate": "FA Gate 2, market model",
+            "artifact": "data/fa_gate2_eval.json",
+            "generated_at": g2.get("generated_at"),
+            "war_provider": g2.get("war_provider"),
+            "pass": g2.get("pass"),
+            "pooled": g2_pooled,
+        } if g2_pooled else None,
+    }
+
     return {
         "generated_at": date.today().isoformat(),
         "registry_version": reg.get("version"),
@@ -3373,6 +3412,7 @@ def _accountability_block() -> dict:
             "data/proj_horizon_eval.json": vet_horizons,
             "data/prospect_path_eval.json": prospect_paths,
         },
+        "surface_engines": surface_engines,
     }
 
 

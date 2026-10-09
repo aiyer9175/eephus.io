@@ -1704,6 +1704,19 @@
     }));
   }
 
+  // EACH SURFACE SERVES THE ENGINE THAT WON ITS OWN GATE (owner answer M15-1,
+  // 2026-09-25). Contracts here stay on the champion path because the market
+  // model was gated on it; the clause reads that verdict from fa_meta.gate2, the
+  // copy of the committed Gate 2 artifact this page already loads, so it is the
+  // measured result and an absent artifact prints nothing.
+  function championGateClause(meta) {
+    const g2 = (meta || {}).gate2;
+    const g = g2 && g2.pooled && g2.pooled.guarantee;
+    if (!g || g.mae_model == null || g.mae_base == null) return "";
+    const when = g2.generated_at ? `, measured ${esc(String(g2.generated_at).slice(0, 10))}` : "";
+    return ` The market model ${g2.pass ? "passed" : "is failing"} <span data-gl="fa_gates">Gate 2</span> on it (guarantee MAE $${Number(g.mae_model).toFixed(2)}M against $${Number(g.mae_base).toFixed(2)}M for its baseline, n ${String(Math.round(Number(g.n))).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${when}).`;
+  }
+
   function renderPlayer(rows, cls, key) {
     const m = cls.members.find(x => x.key === key);
     if (!m) {
@@ -1786,7 +1799,7 @@
       ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="10th and 90th percentile of the contract's value across simulated careers, where a player's seasons move together but not in lockstep, minus the predicted price">Surplus range, P10 &rarr; P90: ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)}; mean ${surplusSpan(m.surplus)}</p>` : ""}`;
     const seasonPanel = `
       ${yearRows ? `<h3>Season-by-season projection</h3>
-      <p class="fa-note">Mean is the <span data-gl="fa_projection_engine">Marcel champion</span> path this page prices on. /projections/ shows the ML engine's path for the same seasons, which can differ: ML paths failed the <span data-gl="fa_gates">Gate 2</span> market test, so contracts stay priced on the champion.${m.warSource === "mlb_projections" ? " Seasons 6+: the champion aging curve, continued from this page's season-5 value (the same function /projections/ uses)." : ""}</p>
+      <p class="fa-note">Mean is the <span data-gl="fa_projection_engine">Marcel champion</span> path this page prices on.${championGateClause(D.fa_meta)} /projections/ shows the ML engine's path for the same seasons, the engine its own player-level gate chose (its Accountability view carries the figures), so the two can differ.${m.warSource === "mlb_projections" ? " Seasons 6+: the champion aging curve, continued from this page's season-5 value (the same function /projections/ uses)." : ""}</p>
       <table class="detail-table fa-year-table">
       <thead><tr><th>Season</th><th>Age</th><th><span data-gl="proj_buckets" title="This season's own 10th percentile, floored at 0 WAR. The column is not a path: no career sits at its P10 every season">Season P10</span></th><th>Mean</th><th><span data-gl="proj_buckets" title="This season's own 90th percentile, read the same way">Season P90</span></th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
       <tbody>${yearRows}</tbody></table>` : ""}
