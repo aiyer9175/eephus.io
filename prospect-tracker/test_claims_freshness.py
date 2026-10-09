@@ -1411,11 +1411,16 @@ def test_dpw_basis_copy_matches_the_served_bases():
             if abs(float(raw) - float(ev[key]["mape"])) > 0.0005:
                 problems.append(f"m_guarantee {key} MAPE {raw}; artifact {ev[key]['mape']}")
 
+    # CAL_KNOTS_REFIT_17M: the calibration's remeasure label names the level the
+    # held-out figures were read at, the published FanGraphs flat the clemens_2026
+    # set checksums (derived from the set, as the dpw_tier card already allows it).
+    import valuation_sets as vs
+    published_flat = float(vs.load("clemens_2026")["params"]["win_cost"]["flat_musd"])
     for eid in ("value_framework", "surplus_value"):
         text = _all_text(_glossary_entry(eid))
         if re.search(r"\$/WAR_overall", text):
             problems.append(f"{eid} prices realized value at a flat $/WAR_overall")
-        allowed = tiers + [flat]
+        allowed = tiers + [flat, published_flat]
         for v in _money_mm(text):
             if v < 20 and not any(abs(v - a) <= 0.005 for a in allowed):
                 problems.append(f"{eid} quotes ${v}M/WAR, none of the configured rates")

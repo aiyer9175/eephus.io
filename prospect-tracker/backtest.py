@@ -691,7 +691,18 @@ def fit_calibration_knots(records: Sequence[PlayerRecord], *, target_pricing: st
     re-dates each listing to N and prices predictions and targets on the written
     path, so the map corrects the WAR layer and cannot learn the path away.
     Returns {n_players, n_bins, target_pricing, fitted_correction} and nothing
-    else."""
+    else.
+
+    Training frame and rows (CAL_KNOTS_REFIT_17M, owner answer VAL1-Q2): the
+    served map is fit on the records surplus_backtest_real.build_cohorts
+    returns, the pre-debut listings of LISTING_YEARS 2017-2019 on the normalized
+    consensus frame, filtered by surplus_backtest_real._resolved_only (washed-out
+    busts, and debuts whose CONTROL_YEARS seasons end by LAST_FULL_SEASON), and
+    this function keeps the pre_debut rows of what it is given (n=2235 at the
+    2026-10-09 refit, fit at the live level 16,856,777 per WAR). No reserved
+    frame can enter: the R-LV list vintages 2020-2021 are outside LISTING_YEARS
+    and an R-VM 2025+ debut cohort is never resolved by LAST_FULL_SEASON. Nothing
+    is stratified by an FV cell and no held-out figure is produced."""
     if target_pricing not in KNOTS_TARGET_PRICINGS:
         raise ValueError(f"target_pricing must be one of {KNOTS_TARGET_PRICINGS}")
     recs = [r for r in records if r.listing.pre_debut]
