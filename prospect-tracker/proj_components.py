@@ -4,7 +4,8 @@
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
 """The component projection FRAME: lag inputs and component labels per
-(veteran, base season), built point in time. No model, no score, no served key.
+(veteran, base season), built point in time, and the component HEADS
+projected on it (task PJ_4, the section at the end). No score, no served key.
 
 WHY THIS EXISTS. Owner ask 2026-10-01 (message 1): project the components of
 WAR, not just WAR, and feed the projection more data. The plan is Part 9
@@ -644,3 +645,709 @@ def row_counts(frame: dict) -> dict:
                      "labelled_by_h": {h: sum(1 for r in rows if h in r["labels"])
                                        for h in range(1, HORIZONS + 1)}}
     return out
+
+
+# ==========================================================================
+# THE HEADS (task PJ_4_COMPONENT_HEADS_DEV; docs/PROJ_COMPONENTS_GATE.md
+# section 1, LANE_A 2.1 and 2.2)
+# ==========================================================================
+#
+# project_components(...) projects, per veteran and base, the FanGraphs-frame
+# WAR components as MEANS for horizons 1 to 5, exactly the forms the gate
+# registers. Everything a head needs from the incumbent engine is read through
+# the engine itself (fa_projection.project_player, rate_path, curve_delta;
+# fa_market._band_bucket) and everything in runs goes through fwar_frame's
+# pure functions. The one WAR a hitter head returns is H8 (components summed
+# over the season's runs per win) and the one a pitcher head returns is P3
+# (the FIP-based chain) with P5 beside it; no head reads a WAR label, none is
+# fitted on one, and no function here predicts WAR in any other form.
+#
+# WHAT IS HELD. Every league constant is the last completed season's
+# (data/league_constants.json at B - 1, plus the terms derived from that
+# season's frozen vintage: the league batting term, the league adjustment rate,
+# WARIP), held across the horizon as rate_path holds its run environment. Park
+# factor 1.0 on every head; no framing charge on a pitcher.
+#
+# THE AGE TERMS (unifier U5, PLAN 9.7 'One aging service'). H3 and H4 carry no
+# local age fit: their deltas are aging_v3.AgingModel.component_curve('hit',
+# 'bsr' | 'fld'), passed in by the caller point-in-time per base. Framing (the
+# catcher residual inside H4) carries no age term.
+#
+# THE FROZEN CHOICES (model/proj_components/params.json, written once by
+# tools/proj_components_dev.py on the DEV frame): the four shrink constants
+# from their fixed grids, the Savant admissions with their slopes, the
+# residual range quantiles by horizon and exposure tier, the gmLI constant R,
+# and the frame schema the choices were made on.
+
+#: The fixed four-point grids (LANE_A 2.1; never extended after the look).
+K_GRIDS: dict[str, tuple[int, ...]] = {
+    "bsr_pa": (300, 600, 1200, 2400),        # H3, PA
+    "fld_inn": (1000, 2000, 4000, 8000),     # H4, innings (framing shares it)
+    "gmli_g": (20, 40, 80, 160),             # P4, relief games, toward 1.0
+    "ra9gap_ip": (200, 400, 800, 1600),      # P5, IP, toward 0
+}
+#: The Savant terms a DEV decision may admit: term -> (head, lag feature).
+SAVANT_TERMS: dict[str, tuple[str, str]] = {
+    "sprint": ("bsr", "sprint_speed"),
+    "oaa": ("fld", "oaa"),
+    "arm": ("fld", "arm_overall"),
+}
+BF_PER_IP = 4.3                    # the engine's BF-to-IP convention (P-IPAGE)
+NAIVE_WEIGHTS = (5.0, 4.0, 3.0)    # the Gate 1 naive comparator form
+HEADS_VERSION = 1
+
+PARAMS_DIR = ROOT / "model" / "proj_components"
+PARAMS_PATH = PARAMS_DIR / "params.json"
+DEV_RECEIPT_PATH = PARAMS_DIR / "dev_receipt.json"
+
+#: The keys of a hitter season line and of a pitcher season line.
+HIT_LINE_KEYS = ("pa", "k_pct", "bb_pct", "iso", "babip", "hr_pa", "woba", "wrc_plus",
+                 "bat", "bsr", "fld", "pos", "lg", "rep", "war_comp", "fld_pos",
+                 "inn", "dh_inn", "inn_c", "bsr600", "fld1000", "frm1000")
+PIT_LINE_KEYS = ("ip", "bf", "g", "gs", "gs_share", "relief_ip", "k_pct", "bb_pct", "hr_bf",
+                 "fip", "gmli", "war_fip", "war_ra9", "ra9gap_100ip", "fip_runs_100ip",
+                 "raap9", "drpw")
+
+
+class ParamsHashMismatch(AssertionError):
+    """model/proj_components/params.json does not hash to the recorded value."""
+
+
+# --------------------------------------------------------------------------
+# Readers and the held constants
+# --------------------------------------------------------------------------
+
+def read_mlb_games(season: int) -> float | None:
+    """MLB games played in `season` from the cached standings
+    (.cache/statsapi_standings_<season>.json); None when the file is absent."""
+    p = SRC_CACHE / f"statsapi_standings_{int(season)}.json"
+    if not p.exists():
+        return None
+    try:
+        blob = json.loads(p.read_text(encoding="utf-8"))
+    except ValueError:
+        return None
+    gp = 0.0
+    for rec in blob.get("records") or []:
+        for t in rec.get("teamRecords") or []:
+            gp += float(t.get("gamesPlayed") or 0)
+    return gp / 2.0 if gp > 0 else None
+
+
+def realized_pitching(season: int, consts: dict, vintage=None) -> list[dict]:
+    """The pitcher chain on REALIZED inputs for one season: every vintage
+    pitcher with innings in the raw cache, priced on his published FIP and
+    gmLI at PF 1.0 with no framing charge and the single blended line. Used
+    for the WARIP pin of `season_constants` and the DEV receipts; nothing
+    here is a projection."""
+    import fwar_frame as F
+    blob = resolve_vintage(vintage)
+    pit = vintage_group(blob, season, "pitching") or {}
+    exp = read_exposures(season, "pitching") or {}
+    lg9 = consts["lg_fipr9"]
+    out = []
+    for mid, v in pit.items():
+        e = exp.get(mid) or {}
+        ip, g, gs = e.get("ip") or 0.0, e.get("g") or 0.0, e.get("gs") or 0.0
+        fip_v, gm = _num(v.get("fip")), _num(v.get("gmli"))
+        if ip <= 0 or g <= 0 or fip_v is None:
+            continue
+        pfr = F.pfipr9(F.fipr9(fip_v, consts["lg_ra9"], consts["lg_era"]), 1.0)
+        line = F.blended_line(ip, g, gs, lg9, lg9, pfr, gm)
+        out.append({"mlbam": mid, "ip": ip, "g": g, "gs": gs, "fip": fip_v, "gmli": gm,
+                    "raap9": F.raap9(lg9, pfr), "drpw": line["drpw"], "war0": line["war0"],
+                    "reliever": (gs / g) < 0.5})
+    return out
+
+
+def season_constants(season: int, corpus: dict, vintage=None) -> dict:
+    """The constants every head holds at the last completed season `season`:
+    the solved block of data/league_constants.json plus the terms it does not
+    carry, derived from that season's frozen vintage and raw exposures.
+
+      lg_nonp_wrc_pa  league non-pitcher wRC per PA (the league batting term
+                      of fwar_frame.league_batting_runs): lgR/PA plus the
+                      non-pitcher wRAA per PA, non-pitchers being the hitters
+                      the corpus carries (it excludes pitchers batting)
+      lg_adj_rate     fwar_frame.league_adjustment_rate on the vintage's
+                      batting + baserunning + fielding + positional + framing
+                      summed MLB-wide over every MLB plate appearance
+      rep_per_pa      fwar_frame.replacement_per_pa(games, rpw, lg_pa) at the
+                      season's own MLB game count, the count that produced
+                      lg_pa (2430 in a full season, 898 in 2020; the per-PA
+                      rate FanGraphs itself handed out that season)
+      lg_fipr9        the league FIPR9: league FIP equals league ERA by the
+                      FIP constant's construction, so FIPR9 is lgRA9 (MLB,
+                      not the pitcher's own league: a projection has no league)
+      warip           fwar_frame.warip pinning the realized chain's MLB
+                      pitcher total to 430 per 2430 games that season
+      inn_per_pa      lineup-slot innings per MLB plate appearance (2 clubs x
+                      9 slots x 9 innings x games / lgPA), the DH conversion
+      eng_lg_woba     the engine's own league wOBA anchor (corpus league), the
+                      baseline the projected wOBA is measured from
+    """
+    import league_constants as LC
+    import fwar_frame as F
+    season = int(season)
+    blk = LC.load().get(season)
+    if not blk or "rpw" not in blk or "woba_scale" not in blk:
+        raise ValueError(f"data/league_constants.json has no solved block for {season}")
+    blob = resolve_vintage(vintage)
+    hit = vintage_group(blob, season, "hitting") or {}
+    hexp = read_exposures(season, "hitting") or {}
+    nonp = {int(r["mlbam"]) for r in (corpus.get("hit") or [])
+            if r.get("mlbam") and int(r.get("season") or 0) == season}
+    s_wraa = s_pa = s_parts = 0.0
+    n_nonp = n_parts = 0
+    for mid, v in hit.items():
+        parts = _hit_parts(v)
+        if parts and all(parts.get(p) is not None for p in ("batting", "baseRunning",
+                                                              "fielding", "positional")):
+            s_parts += sum(parts[p] for p in ("batting", "baseRunning", "fielding", "positional"))
+            s_parts += parts.get("framing") or 0.0
+            n_parts += 1
+        pa = (hexp.get(mid) or {}).get("pa") or 0.0
+        w = _num(v.get("wRaa"))
+        if mid in nonp and pa > 0 and w is not None:
+            s_wraa += w
+            s_pa += pa
+            n_nonp += 1
+    lg_pa = float(blk["lg_pa"])
+    rpw = float(blk["rpw"])
+    games = read_mlb_games(season)
+    games_src = "statsapi standings cache"
+    if games is None:
+        games, games_src = F.FULL_SEASON_GAMES, "2430 (standings cache absent)"
+    out = {
+        "season": season,
+        "lg_r_pa": float(blk["lg_r_pa"]), "lg_ra9": float(blk["lg_ra9"]),
+        "lg_era": float(blk["lg_era"]), "rpw": rpw, "fip_constant": float(blk["fip_constant"]),
+        "lg_pa": lg_pa, "woba_scale": float(blk["woba_scale"]), "lg_woba_feed": blk.get("lg_woba"),
+        "eng_lg_woba": ((corpus.get("league") or {}).get(season) or {}).get("woba"),
+        "lg_nonp_wrc_pa": float(blk["lg_r_pa"]) + (s_wraa / s_pa if s_pa > 0 else 0.0),
+        "lg_adj_rate": F.league_adjustment_rate(s_parts, lg_pa),
+        "rep_per_pa": F.replacement_per_pa(float(games), rpw, lg_pa),
+        "lg_fipr9": float(blk["lg_ra9"]),
+        "mlb_games": float(games),
+        "inn_per_pa": 2.0 * 9.0 * 9.0 * float(games) / lg_pa,
+        "pf": 1.0,
+    }
+    lines = realized_pitching(season, out, blob)
+    sum_war0 = sum(x["war0"] for x in lines)
+    sum_ip = sum(x["ip"] for x in lines)
+    target = F.replacement_totals(games)[1]
+    out["warip"] = F.warip(target, sum_war0, sum_ip) if sum_ip > 0 else 0.0
+    out["receipt"] = {
+        "n_vintage_hitters": len(hit), "n_nonpitcher_wraa_rows": n_nonp,
+        "nonpitcher_pa": s_pa, "n_parts_rows": n_parts, "league_runs_sum": round(s_parts, 3),
+        "n_pitchers_priced": len(lines), "pitcher_ip": round(sum_ip, 1),
+        "pitcher_war0_sum": round(sum_war0, 3), "pitcher_target_war": round(target, 2),
+        "mlb_games_source": games_src,
+    }
+    return out
+
+
+# --------------------------------------------------------------------------
+# Marcel helpers (5/3/2 with shrink; the 5/4/3 naive form for comparators)
+# --------------------------------------------------------------------------
+
+def _engine_weights() -> list[float]:
+    import fa_projection as fp
+    return list(fp._marcel_weights())
+
+
+def marcel_rate(items, k_shrink: float, target: float = 0.0, weights=None):
+    """(shrunk rate, exposure weight) from [(lag, rate, exposure)]: the
+    engine's 5/3/2 recency weights normalized to the platform season, each
+    multiplied by the lag's exposure (fa_projection.def_rate's form), the
+    exposure-weighted rate shrunk toward `target` by den / (den + K).
+    (None, 0.0) when no lag carries both a rate and an exposure."""
+    w = weights or _engine_weights()
+    num = den = 0.0
+    for lag, v, e in items:
+        if v is None or e is None or e <= 0:
+            continue
+        wl = float(w[int(lag) - 1]) / float(w[0])
+        num += wl * float(e) * float(v)
+        den += wl * float(e)
+    if den <= 0:
+        return None, 0.0
+    rate = num / den
+    k = float(k_shrink or 0.0)
+    return target + (rate - target) * den / (den + k), den
+
+
+def naive_rate(items):
+    """The Gate 1 NAIVE comparator: the 5/4/3 exposure-weighted raw rate over
+    the seasons present (no shrink, no age term); None with no season."""
+    num = den = 0.0
+    for lag, v, e in items:
+        if v is None or e is None or e <= 0:
+            continue
+        w = NAIVE_WEIGHTS[int(lag) - 1]
+        num += w * float(e) * float(v)
+        den += w * float(e)
+    return num / den if den > 0 else None
+
+
+def _curve_at(curve: dict | None, age: float) -> float:
+    """The smoothed delta moving INTO `age` on a {age: slot} curve, nearest
+    supported age (fa_projection.curve_delta's rule); 0 without a curve."""
+    if not curve:
+        return 0.0
+    ages = sorted(int(a) for a in curve)
+    a = min(ages, key=lambda x: abs(x - age))
+    slot = curve.get(a, curve.get(str(a)))
+    return float(slot.get("delta_smooth", slot["delta"]))
+
+
+def age_walk(curve: dict | None, age, horizon: int = HORIZONS) -> list[float]:
+    """Cumulative age deltas by horizon: the delta into `age` at year 1 (the
+    step project_player applies to every component), then into age + t."""
+    a0 = float(age) if age else 30.0
+    out, c = [], 0.0
+    for t in range(horizon):
+        c += _curve_at(curve, a0 + t)
+        out.append(c)
+    return out
+
+
+def component_age_curves(model) -> dict:
+    """{'bsr': {role: curve}, 'fld': {role: curve}} off an aging_v3.AgingModel
+    (unifier U5); {} when the model is None."""
+    if model is None:
+        return {}
+    return {c: model.component_curve("hit", c) for c in ("bsr", "fld")}
+
+
+def _lag_items(feat: dict, rate_key: str, expo_key: str, scale: float = 1.0) -> list:
+    return [(k, (None if feat.get(f"{rate_key}_l{k}") is None
+                 else float(feat[f"{rate_key}_l{k}"]) * scale),
+             feat.get(f"{expo_key}_l{k}")) for k in LAGS]
+
+
+def exposure_walk(pt_y1, side: str, role: str, age, curves: dict,
+                  horizon: int = HORIZONS) -> list[float]:
+    """H0 / P0: the champion's exposure walk. Year 1 is project_player's
+    pt_proj; each later year adds the 'pt' curve delta at the advancing age
+    (fa_projection.curve_delta, the profile role), floored at 0, exactly as
+    fa_market._decay_path walks e. Pitchers walk BF (IP = BF / 4.3)."""
+    import fa_projection as fp
+    a = int(age) if age else 30
+    e = float(pt_y1 or 0.0)
+    out = []
+    for t in range(horizon):
+        if t > 0:
+            a += 1
+            e += fp.curve_delta(curves, side, role, "pt", a)
+            e = max(0.0, e)
+        out.append(e)
+    return out
+
+
+def engine_projection(hist: list[dict], side: str, base: int, age, curves: dict,
+                      league: dict, horizon: int = HORIZONS) -> dict | None:
+    """The incumbent engine's part of a line: project_player at `base`, its
+    rate_path walk (H1 / P1 / P2) and the exposure walk (H0 / P0). None when
+    the engine has no projection for the history."""
+    import fa_projection as fp
+    if not hist:
+        return None
+    proj = fp.project_player(hist, side, int(base), curves, league, age)
+    if proj is None:
+        return None
+    role = proj["role"]
+    drole = fp.profile_role(hist, side, role, league)
+    rates = fp.rate_path(proj, side, curves, league, horizon)
+    if len(rates) < horizon:
+        return None
+    return {"proj": proj, "role": role, "decay_role": drole, "rates": rates,
+            "expo": exposure_walk(proj["pt_proj"], side, drole, age, curves, horizon),
+            "pt_y1": float(proj["pt_proj"] or 0.0), "age": age}
+
+
+# --------------------------------------------------------------------------
+# The Savant terms
+# --------------------------------------------------------------------------
+
+def savant_value(feat: dict, term: str):
+    """The most recent lag's value of a Savant term as the head reads it:
+    sprint speed (ft/s), OAA per 1,000 fielded innings, arm strength; None
+    when no lag carries it."""
+    _head, key = SAVANT_TERMS[term]
+    for k in LAGS:
+        v = feat.get(f"{key}_l{k}")
+        if v is None:
+            continue
+        if term == "oaa":
+            inn = feat.get(f"inn_total_l{k}")
+            if not inn or inn <= 0:
+                continue
+            return float(v) / float(inn) * 1000.0
+        return float(v)
+    return None
+
+
+def _savant_term(feat: dict, term: str, params: dict | None) -> float:
+    """beta x (value - center) when the term is admitted and present, else 0."""
+    spec = ((params or {}).get("savant") or {}).get(term) or {}
+    if not spec.get("admitted") or spec.get("beta") is None:
+        return 0.0
+    v = savant_value(feat, term)
+    if v is None:
+        return 0.0
+    return float(spec["beta"]) * (v - float(spec.get("center") or 0.0))
+
+
+# --------------------------------------------------------------------------
+# The heads
+# --------------------------------------------------------------------------
+
+def _range_for(params: dict | None, comp: str, h: int, tier: str):
+    r = (((params or {}).get("ranges") or {}).get(comp) or {}).get(str(h)) or {}
+    q = r.get(tier)
+    if not q or q.get("q10") is None or q.get("q90") is None:
+        return None
+    return float(q["q10"]), float(q["q90"])
+
+
+def hitter_heads(eng: dict, feat: dict, params: dict | None, consts: dict,
+                 age_curves: dict | None, horizon: int = HORIZONS) -> dict:
+    """H0 to H8 for one hitter from the engine part, his lag inputs and the
+    frozen params. A component with no history returns None on every season
+    and is listed in `not_projected`."""
+    import fwar_frame as F
+    p = params or {}
+    shrink = p.get("shrink") or {}
+    k_bsr = float(shrink.get("bsr_pa", 0.0))
+    k_fld = float(shrink.get("fld_inn", 0.0))
+    role = "C" if eng["role"] == "C" else "H"
+    ac = age_curves or {}
+    bsr_curve = (ac.get("bsr") or {}).get(role) or (ac.get("bsr") or {}).get("H")
+    fld_curve = (ac.get("fld") or {}).get(role) or (ac.get("fld") or {}).get("H")
+    not_projected: list[str] = []
+
+    # H3 ingredients: baserunning runs per 600 PA, shrunk toward 0 by PA
+    bsr0, _ = marcel_rate(_lag_items(feat, "baseRunning_pa", "pa", 600.0), k_bsr, 0.0)
+    if bsr0 is not None:
+        bsr0 += _savant_term(feat, "sprint", p)
+    bsr_age = age_walk(bsr_curve, eng["age"], horizon)
+
+    # H4 / H5 ingredients: fielding per 1,000 innings, framing per 1,000
+    # catcher innings, fielded innings per PA and the position mix
+    fld_items, frm_items, inn_items = [], [], []
+    inn_by_pos = {pos: 0.0 for pos in FIELD_POSITIONS}
+    inn_w = 0.0
+    w = _engine_weights()
+    for k in LAGS:
+        pa, inn = feat.get(f"pa_l{k}"), feat.get(f"inn_total_l{k}")
+        if feat.get(f"fld_missing_l{k}") or inn is None or pa is None or pa <= 0:
+            continue
+        inn_items.append((k, float(inn) / float(pa), pa))
+        fpa = feat.get(f"fielding_pa_l{k}")
+        if fpa is not None and inn > 0:
+            fld_items.append((k, float(fpa) * float(pa) / float(inn) * 1000.0, inn))
+        inn_c = feat.get(f"inn_C_l{k}") or 0.0
+        frm = feat.get(f"framing_pa_l{k}")
+        if frm is not None and inn_c > 0:
+            frm_items.append((k, float(frm) * float(pa) / float(inn_c) * 1000.0, inn_c))
+        wl = float(w[k - 1]) / float(w[0])
+        for pos in FIELD_POSITIONS:
+            inn_by_pos[pos] += wl * float(feat.get(f"inn_{pos}_l{k}") or 0.0)
+        inn_w += wl * float(inn)
+    r_inn, _ = marcel_rate(inn_items, 0.0)
+    shares = ({pos: v / inn_w for pos, v in inn_by_pos.items()} if inn_w > 0
+              else {pos: 0.0 for pos in FIELD_POSITIONS})
+    fld0, _ = marcel_rate(fld_items, k_fld, 0.0)
+    if fld0 is None and inn_items and r_inn == 0.0:
+        fld0 = 0.0                    # a pure DH fields nothing and is projected 0
+    if fld0 is not None:
+        fld0 += _savant_term(feat, "oaa", p) + _savant_term(feat, "arm", p)
+    frm0, _ = marcel_rate(frm_items, k_fld, 0.0)
+    if frm0 is None:
+        frm0 = 0.0                    # no catcher innings: no framing line
+    fld_age = age_walk(fld_curve, eng["age"], horizon)
+
+    if bsr0 is None:
+        not_projected.append("bsr")
+    if r_inn is None:
+        not_projected.extend(["fld", "pos"])
+    elif fld0 is None:
+        not_projected.append("fld")
+
+    import fa_market as fm
+    tier = fm._band_bucket("hit", eng["pt_y1"])
+    lines = {}
+    for t in range(horizon):
+        h = t + 1
+        pa = float(eng["expo"][t])
+        rt = eng["rates"][t]
+        woba = rt["woba"]
+        wraa = F.wraa(woba, consts["eng_lg_woba"], consts["woba_scale"], pa)
+        bat = (wraa + F.park_runs(pa, consts["lg_r_pa"], consts["pf"])
+               + F.league_batting_runs(pa, consts["lg_r_pa"], consts["lg_nonp_wrc_pa"]))
+        bsr600 = None if bsr0 is None else bsr0 + bsr_age[t]
+        bsr = None if bsr600 is None else bsr600 * pa / 600.0
+        if r_inn is None:
+            inn = dh_inn = inn_c = fld = pos = fld1000 = None
+        else:
+            inn = r_inn * pa
+            dh_inn = max(0.0, consts["inn_per_pa"] * pa - inn)
+            inn_c = shares["C"] * inn
+            pos = F.positional({pos_: shares[pos_] * inn for pos_ in FIELD_POSITIONS}, dh_inn)
+            if fld0 is None:
+                fld = fld1000 = None
+            else:
+                fld1000 = fld0 + fld_age[t]
+                fld = fld1000 * inn / 1000.0 + frm0 * inn_c / 1000.0
+        lg = consts["lg_adj_rate"] * pa
+        rep = consts["rep_per_pa"] * pa
+        war_comp = (None if any(v is None for v in (bat, bsr, fld, pos))
+                    else (bat + bsr + fld + pos + lg + rep) / consts["rpw"])
+        line = {"pa": pa, "k_pct": None, "bb_pct": None, "iso": None, "babip": None,
+                "hr_pa": None, "woba": woba, "wrc_plus": rt.get("wrc_plus"),
+                "bat": bat, "bsr": bsr, "fld": fld, "pos": pos, "lg": lg, "rep": rep,
+                "war_comp": war_comp,
+                "fld_pos": (None if fld is None or pos is None else fld + pos),
+                "inn": inn, "dh_inn": dh_inn, "inn_c": inn_c, "bsr600": bsr600,
+                "fld1000": fld1000, "frm1000": frm0}
+        ranges = {}
+        for comp, runs in (("bsr", bsr), ("fld_pos", line["fld_pos"]), ("batting", bat),
+                           ("league", lg), ("replacement", rep), ("pa", pa)):
+            q = _range_for(p, comp, h, tier)
+            if q is not None and runs is not None:
+                ranges[comp] = (runs + q[0], runs + q[1])
+        line["ranges"] = ranges
+        lines[h] = line
+    # the year-1 rates come from the engine's own projection
+    for c in ("k_pct", "bb_pct", "iso", "babip", "hr_pa"):
+        lines[1][c] = eng["proj"].get(c)
+    return {"role": eng["role"], "decay_role": eng["decay_role"], "age": eng["age"],
+            "pt_y1": eng["pt_y1"], "tier": tier, "shares": shares, "lines": lines,
+            "not_projected": sorted(set(not_projected))}
+
+
+def pitcher_heads(eng: dict, feat: dict, params: dict | None, consts: dict,
+                  horizon: int = HORIZONS) -> dict:
+    """P0 to P5 for one pitcher: the IP walk, the role mix, FIP from
+    rate_path, the fwar_frame chain at PF 1.0 with no framing charge and the
+    single blended line (replacement continuous in GS/G, the gmLI multiplier
+    on the relief share), WARIP held, P4 gmLI shrunk toward 1.0 by relief
+    games, P5 the RA9 gap shrunk toward 0 by IP."""
+    import fwar_frame as F
+    p = params or {}
+    shrink = p.get("shrink") or {}
+    k_gm = float(shrink.get("gmli_g", 0.0))
+    k_gap = float(shrink.get("ra9gap_ip", 0.0))
+    not_projected: list[str] = []
+    ipg_items = [(k, (None if not feat.get(f"g_l{k}") else
+                      float(feat.get(f"ip_l{k}") or 0.0) / float(feat[f"g_l{k}"])),
+                  feat.get(f"g_l{k}")) for k in LAGS]
+    ip_per_g, _ = marcel_rate(ipg_items, 0.0)
+    gs_share, _ = marcel_rate(_lag_items(feat, "gs_share", "g"), 0.0)
+    gm_items = [(k, feat.get(f"gmli_l{k}"),
+                 (None if feat.get(f"g_l{k}") is None
+                  else float(feat[f"g_l{k}"]) - float(feat.get(f"gs_l{k}") or 0.0)))
+                for k in LAGS]
+    gmli, _ = marcel_rate(gm_items, k_gm, 1.0)
+    gap100, _ = marcel_rate(_lag_items(feat, "ra9gap_100ip", "ip"), k_gap, 0.0)
+    if gmli is None and eng["role"] == "RP":
+        not_projected.append("gmli")
+    if gap100 is None:
+        not_projected.append("ra9_gap")
+    if ip_per_g is None or gs_share is None:
+        not_projected.append("war_fip")
+    import fa_market as fm
+    tier = fm._band_bucket("pit", eng["pt_y1"])
+    lg9 = consts["lg_fipr9"]
+    lines = {}
+    for t in range(horizon):
+        h = t + 1
+        bf = float(eng["expo"][t])
+        ip = bf / BF_PER_IP
+        fip = eng["rates"][t]["fip"]
+        pfr = F.pfipr9(F.fipr9(fip, consts["lg_ra9"], consts["lg_era"]), consts["pf"])
+        pfr += F.framing_charge_per9(0.0, ip)          # no framing charge
+        raap9 = F.raap9(lg9, pfr)
+        g = gs = relief_ip = war_fip = drpw = None
+        if ip_per_g is not None and gs_share is not None and ip > 0 and ip_per_g > 0:
+            g = ip / ip_per_g
+            gs = gs_share * g
+            relief_ip = ip * (1.0 - gs_share)
+            line = F.blended_line(ip, g, gs, lg9, lg9, pfr, gmli)
+            war_fip, _rar = F.pitcher_war([line], consts["warip"])
+            drpw = line["drpw"]
+        elif ip_per_g is not None and gs_share is not None:
+            g = gs = relief_ip = 0.0
+            war_fip = 0.0
+        war_ra9 = (None if war_fip is None or gap100 is None
+                   else war_fip + gap100 * ip / 100.0)
+        line_out = {"ip": ip, "bf": bf, "g": g, "gs": gs, "gs_share": gs_share,
+                    "relief_ip": relief_ip, "k_pct": None, "bb_pct": None, "hr_bf": None,
+                    "fip": fip, "gmli": gmli, "war_fip": war_fip, "war_ra9": war_ra9,
+                    "ra9gap_100ip": gap100, "fip_runs_100ip": raap9 * 100.0 / 9.0,
+                    "raap9": raap9, "drpw": drpw}
+        ranges = {}
+        gm_rate = None if gmli is None else F.leverage_multiplier(gmli) * float(p.get("R_relief") or 0.0)
+        for comp, runs in (("ra9_gap", None if gap100 is None else gap100 * consts["rpw"] * ip / 100.0),
+                           ("gmli_relief", None if gm_rate is None or relief_ip is None
+                            else gm_rate * relief_ip / 100.0),
+                           ("ip", ip)):
+            q = _range_for(p, comp, h, tier)
+            if q is not None and runs is not None:
+                ranges[comp] = (runs + q[0], runs + q[1])
+        line_out["ranges"] = ranges
+        lines[h] = line_out
+    for c in ("k_pct", "bb_pct", "hr_bf"):
+        lines[1][c] = eng["proj"].get(c)
+    return {"role": eng["role"], "decay_role": eng["decay_role"], "age": eng["age"],
+            "pt_y1": eng["pt_y1"], "tier": tier, "lines": lines,
+            "not_projected": sorted(set(not_projected))}
+
+
+def project_components(hist_by_side: dict, base: int, age, curves: dict, war_map: dict,
+                       league: dict, consts: dict, frame_inputs: dict, params: dict | None,
+                       *, age_curves: dict | None = None, horizon: int = HORIZONS) -> dict:
+    """The component lines of one veteran at `base` for horizons 1..`horizon`.
+
+    hist_by_side  {"hit": [corpus rows B-3..B-1], "pit": [...]}; a two-way
+                  player carries both sides
+    curves        the point-in-time fitted_models(corpus, B - 1) curves
+    war_map       accepted for parity with the engine's call shape; no head
+                  reads it (a WAR map is a WAR-label model)
+    consts        season_constants(B - 1, ...)
+    frame_inputs  {"hit": feat, "pit": feat}: the frame row's lag features
+    params        the frozen params (None: no shrink, no Savant term, no range)
+    age_curves    component_age_curves(aging_v3 model fitted at B - 1)
+
+    Returns {"hit": block | None, "pit": block | None, "two_way": bool}; a
+    block carries `lines` {h: line}, `not_projected` and the exposure tier.
+    A component the player has no history in is None on every season of its
+    line and named in `not_projected`."""
+    out: dict = {"hit": None, "pit": None, "base": int(base)}
+    for side in ("hit", "pit"):
+        hist = (hist_by_side or {}).get(side) or []
+        feat = (frame_inputs or {}).get(side)
+        if not hist or feat is None:
+            continue
+        eng = engine_projection(hist, side, base, age, curves, league, horizon)
+        if eng is None:
+            continue
+        if side == "hit":
+            out[side] = hitter_heads(eng, feat, params, consts, age_curves, horizon)
+        else:
+            out[side] = pitcher_heads(eng, feat, params, consts, horizon)
+    out["two_way"] = out["hit"] is not None and out["pit"] is not None
+    return out
+
+
+# --------------------------------------------------------------------------
+# Comparators and scorer rows (proj_eval.run_components contract)
+# --------------------------------------------------------------------------
+
+def naive_components(side: str, feat: dict) -> dict:
+    """The NAIVE comparator per scored component: the 5/4/3 exposure-weighted
+    raw rate of the lag inputs, in the scorer's units (runs per 600 PA, runs
+    per 100 IP; gmLI and the RA9 gap as their own quantities)."""
+    if side == "hit":
+        fp_items = []
+        for k in LAGS:
+            pa = feat.get(f"pa_l{k}")
+            parts = [feat.get(f"{p}_pa_l{k}") for p in ("fielding", "framing", "positional")]
+            if pa and all(v is not None for v in parts):
+                fp_items.append((k, sum(parts) * 600.0, pa))
+        return {
+            "bsr": naive_rate(_lag_items(feat, "baseRunning_pa", "pa", 600.0)),
+            "fld_pos": naive_rate(fp_items),
+            "batting": naive_rate(_lag_items(feat, "batting_pa", "pa", 600.0)),
+            "league": naive_rate(_lag_items(feat, "wLeague_pa", "pa", 600.0)),
+            "replacement": naive_rate(_lag_items(feat, "replacement_pa", "pa", 600.0)),
+        }
+    gm_items = [(k, feat.get(f"gmli_l{k}"),
+                 (None if feat.get(f"g_l{k}") is None
+                  else float(feat[f"g_l{k}"]) - float(feat.get(f"gs_l{k}") or 0.0)))
+                for k in LAGS]
+    return {"gmli": naive_rate(gm_items),
+            "ra9gap_100ip": naive_rate(_lag_items(feat, "ra9gap_100ip", "ip")),
+            "fip": naive_rate(_lag_items(feat, "fip", "ip"))}
+
+
+def implicit_def_rate(mlbam, base: int) -> float:
+    """IMPLICIT for Fld + Pos: fa_projection.def_rate (the served engine's
+    shrunk defensive plus positional runs per 600 PA, point in time)."""
+    import fa_projection as fp
+    return float(fp.def_rate(mlbam, int(base)))
+
+
+def scorer_rows(frame_row: dict, side: str, cells, consts_by_season: dict,
+                r_relief: float) -> list[dict]:
+    """The proj_eval.run_components rows of one frame row, one per horizon
+    inside `cells`. Labels are the frame's frozen-vintage run parts in runs:
+    bsr = baseRunning; fld_pos = fielding + framing + positional; batting,
+    league (wLeague), replacement; for pitchers ra9_gap = (ra9War - war) x the
+    label season's runs per win, gmli_relief = m(gmli) x R x relief IP / 100
+    with m the relief multiplier and relief IP = IP x (1 - GS / G); pa and ip
+    are the exposure labels. No row carries a key named war."""
+    import fwar_frame as F
+    feat = frame_row["feat"]
+    base = int(frame_row["base"])
+    cell_set = {(int(b), int(h)) for b, h in cells}
+    out = []
+    for h, lab in (frame_row.get("labels") or {}).items():
+        if (base, int(h)) not in cell_set:
+            continue
+        L = int(lab["season"])
+        if side == "hit":
+            pa = lab.get("pa")
+            exposure = float(pa) if pa else 0.0
+            fp_parts = [lab.get("fielding"), lab.get("framing"), lab.get("positional")]
+            labels = {"bsr": lab.get("baseRunning"),
+                      "fld_pos": (sum(fp_parts) if all(v is not None for v in fp_parts) else None),
+                      "batting": lab.get("batting"), "league": lab.get("wLeague"),
+                      "replacement": lab.get("replacement")}
+            hist = {base - k: feat.get(f"pa_l{k}") for k in LAGS if feat.get(f"pa_l{k}") is not None}
+            row = {"mlbam": frame_row["mlbam"], "side": "hit", "base": base, "h": int(h),
+                   "label_season": L, "exposure": exposure,
+                   "exposure_base": feat.get("pa_l1"), "exposure_hist": hist, "labels": labels}
+        else:
+            ip = lab.get("ip")
+            exposure = float(ip) if ip else 0.0
+            g, gs = lab.get("g"), lab.get("gs")
+            relief_ip = (exposure * (1.0 - float(gs or 0.0) / float(g)) if g else 0.0)
+            rpw_l = (consts_by_season.get(L) or {}).get("rpw")
+            gap = lab.get("ra9gap")
+            gm = lab.get("gmli")
+            labels = {"ra9_gap": (None if gap is None or rpw_l is None else float(gap) * float(rpw_l)),
+                      "gmli_relief": (None if gm is None
+                                      else F.leverage_multiplier(gm) * r_relief * relief_ip / 100.0)}
+            hist = {base - k: feat.get(f"ip_l{k}") for k in LAGS if feat.get(f"ip_l{k}") is not None}
+            row = {"mlbam": frame_row["mlbam"], "side": "pit", "base": base, "h": int(h),
+                   "label_season": L, "exposure": exposure,
+                   "exposures": {"gmli_relief": relief_ip},
+                   "exposure_base": feat.get("ip_l1"), "exposure_hist": hist, "labels": labels}
+        out.append(row)
+    return out
+
+
+# --------------------------------------------------------------------------
+# The frozen params
+# --------------------------------------------------------------------------
+
+def params_hash(params: dict) -> str:
+    """sha256 of the canonical JSON of the params (sorted keys, no spaces),
+    so the hash does not depend on the file's line endings or indent."""
+    blob = json.dumps(params, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def load_params(path: Path | None = None) -> dict:
+    p = Path(path) if path else PARAMS_PATH
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def check_params(params: dict, recorded_hash: str) -> dict:
+    """Raise unless the params hash to `recorded_hash` (the gate's record)."""
+    got = params_hash(params)
+    if got != str(recorded_hash).strip().lower():
+        raise ParamsHashMismatch(f"params hash {got} != recorded {recorded_hash}")
+    return params
