@@ -1411,6 +1411,16 @@ select {
   .track {
     grid-column: 1 / -1;
   }
+
+  /* Phone: the Stuff+ driver card stacks and its breakdown runs two wide,
+     so the driver chips stay inside a 390px page. */
+  .stuff-driver-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .driver-breakdown {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ---------------------------------------------------------------------------
