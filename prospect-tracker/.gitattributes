@@ -22,3 +22,7 @@ docs/efv-*/z1_arm_list.json -text
 # The Awards freeze record is write-once and pinned by sha256 in data/_labs/awards/freeze_log.json;
 # awards_export.py refuses a record whose bytes differ, so never let git convert them.
 data/_labs/awards/frozen_*.json -text
+
+# The projections forward vintage (docs/PROJ_FORWARD_VINTAGE_GATE.md) is write-once and pinned by
+# sha256 in its FREEZE_LOG.json and test_proj_forward_vintage.py; never let git convert its bytes.
+data/proj_forward_vintage/** -text

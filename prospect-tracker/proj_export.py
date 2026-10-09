@@ -70,8 +70,37 @@ from scrapers import normalize_key
 log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
-FIRST_SEASON = 2027          # first fully projected season (2026 is in progress)
+FIRST_SEASON = 2027          # first fully projected season; a MANUAL, dated flip
+FIRST_SEASON_SET_ON = "2026-06-10"   # the date of the last flip; moves with it
 HORIZON = 5                  # 2027..2031
+# THE FIRST-SEASON FLIP GUARD (owner answer M15-3, 2026-09-25;
+# docs/PROJ_FORWARD_VINTAGE_GATE.md section 4). FIRST_SEASON never rolls by the
+# calendar: it moves by hand in its own dated commit, with FIRST_SEASON_SET_ON.
+# Before it may move past a season, that season's preseason forecast must be on
+# record (a frozen file whose hash still matches, or a no_season entry), so the
+# forward score always has the forecast it grades. build_payload calls this
+# first, so a premature flip fails the export rather than serving a board whose
+# predecessor was never kept.
+
+
+def assert_first_season_flip_allowed(first_season: int | None = None,
+                                     vintage_dir: Path | None = None) -> None:
+    import proj_forward_vintage as pfv
+    fs = FIRST_SEASON if first_season is None else int(first_season)
+    missing = []
+    for season in range(pfv.FIRST_FROZEN_SEASON, fs):
+        ok, why = pfv.on_record(season, vintage_dir)
+        if not ok:
+            missing.append(f"{season} ({why})")
+    if missing:
+        raise RuntimeError(
+            f"FIRST_SEASON {fs} refused: the preseason forecast of "
+            + ", ".join(missing) + " is not on record. Freeze it with "
+            "tools/freeze_proj_forward_vintage.py before the season's first game "
+            "(docs/PROJ_FORWARD_VINTAGE_GATE.md), or record a no_season entry by "
+            "dated amendment.")
+
+
 # THE CONTRACT TAIL (owner answer 2026-09-25, census M05-01 step 2). A
 # guaranteed contract that runs past the last projected season is priced
 # through its last guaranteed season, not only through FIRST_SEASON+HORIZON-1.
@@ -3424,6 +3453,7 @@ def _team_basis_block(vets: list[dict]) -> dict:
 def build_payload() -> dict:
     """The /projections/ payload. In unified $/WAR path mode (VAL_5 row 10) the
     stamps name P(B), the path by season and the pricing basis."""
+    assert_first_season_flip_allowed()
     payload = _build_payload_body()
     if vf.dpw_path_active():
         _stamp_dpw_path(payload)

@@ -5118,7 +5118,7 @@
    ],
    "priority": 41,
    "definition": "The live scoreboard for a projection whose target has not happened: the number is published now and graded against a stated baseline when the outcome lands.",
-   "methodology": "Team Outlook win totals are the standing case: only the first projected season is gated, scored as MAE against final standings (baseline = prior-season wins carried forward); out-years are a trajectory, not a scored forecast. The gate stays pending until the season ends, then the result is committed whatever it says. The forecast itself is not yet frozen: the served projections file is rewritten every night, so the copy that gets graded has to be written and committed before the first game of the season it predicts.",
+   "methodology": "Team Outlook win totals are the standing case: only the first projected season is gated, scored as MAE against final standings (baseline = prior-season wins carried forward); out-years are a trajectory, not a scored forecast. The gate stays pending until the season ends, then the result is committed whatever it says. The graded forecast is a frozen copy: the served projections file is rewritten every night, so the last nightly before the season's first game is committed by hand and pinned by its hash, and that copy, never a later build, is the one scored (registered in docs/PROJ_FORWARD_VINTAGE_GATE.md; the first freeze is the 2027 preseason).",
    "seeAlso": [
     "backtest",
     "holdout",
