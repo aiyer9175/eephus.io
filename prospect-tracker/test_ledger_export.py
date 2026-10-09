@@ -384,7 +384,8 @@ def test_realized_value_copy_says_not_skill_and_names_the_counterfactual(d):
 def test_realized_fa_value_is_served_from_fa_archive_with_method_and_coverage(d):
     from trades import canonical_org
     arch = json.loads((ROOT / "data" / "fa_archive.json").read_text(encoding="utf-8"))
-    assert d["copy"]["realized_method"] == "level_proration_backcast_dpw_v1"
+    assert d["copy"]["realized_method"] == (arch.get("ledgerMethod")
+                                            or "level_proration_backcast_dpw_v1")
     covered = {}
     for w in arch["winters"]:
         for s in w["signings"]:
@@ -398,7 +399,14 @@ def test_realized_fa_value_is_served_from_fa_archive_with_method_and_coverage(d)
             winter, n, n_cov, _war, paid, sur, realized, _done = row
             assert n_cov <= n and n_cov == covered.get((c, winter), 0), (c, winter)
             assert realized == paid + sur, (c, winter, "value delivered = paid + surplus to date")
-        assert R["by_winter"][-1][2] == 0, "the current winter carries no realized value; no season has elapsed"
+        # A winter carries realized value only once its first season has been
+        # played and the ledger rebuilt after it (owner answer M14-3).
+        last = R["by_winter"][-1]
+        if last[2]:
+            import fa_pipeline
+            from datetime import date
+            built = date.fromisoformat(arch["ledgerBuilt"])
+            assert fa_pipeline.last_completed_season(built)[0] >= last[0], (c, last)
     assert "level_proration" in d["field_key"]["fa.realized.by_winter"] or "realized_usd" in d["field_key"]["fa.realized.by_winter"]
 
 

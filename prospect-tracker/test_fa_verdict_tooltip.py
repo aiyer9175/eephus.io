@@ -66,6 +66,23 @@ def test_the_artifact_edges_match_the_shipped_constants():
     assert pooled.get("value_min") == fm.VERDICT_VALUE_MIN
 
 
+def test_the_glossary_edge_list_is_the_shipped_rule():
+    """deal_plus in data/glossary.json types the per-group edges in its formula
+    and methodology. They were cut again on 2026-10-08 (owner answer M14-2), so
+    the copy is pinned to the constants rather than trusted to follow them."""
+    gl = _json("glossary.json")
+    ent = next(e for e in gl["entries"] if e.get("id") == "deal_plus")
+    for g, (lo, hi) in fm.VERDICT_GROUP_EDGES.items():
+        assert f"{g} {lo}/{hi}" in ent["formula"], (g, ent["formula"])
+    m = re.search(r"SP overpay < (\d+) / value \u2265 (\d+), RP (\d+) / (\d+), "
+                  r"C (\d+) / (\d+), other position players (\d+) / (\d+)",
+                  ent["methodology"])
+    assert m, "deal_plus methodology no longer lists the per-group edges"
+    got = [int(x) for x in m.groups()]
+    want = [v for g in ("SP", "RP", "C", "POS") for v in fm.VERDICT_GROUP_EDGES[g]]
+    assert got == want, (got, want)
+
+
 def test_the_js_position_grouping_matches_pos_group():
     """_faPosGroup in fa.js is a hand copy of fa_market._pos_group. Pin it."""
     assert fm.POS_GROUP_MODE == "v1", (

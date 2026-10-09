@@ -72,16 +72,17 @@ def test_deal_verdict_group_bands():
     sub-1-WAR reliever prices most of its guarantee against very little projected
     value by construction. 150 is a reliever "value" and a hitter "market"."""
     assert fm.VERDICT_BAND_MODE == "group", "owner-decided mode changed; re-read the block in fa_market"
-    # RP (65, 146), SP (86, 182), POS (103, 237), C (101, 243).
-    assert fm.deal_verdict(150, "RP") == "value"      # >= RP hi 146
-    assert fm.deal_verdict(150, "SP") == "market"     # inside SP 86-182
-    assert fm.deal_verdict(150, "CF") == "market"     # inside POS 103-237
-    assert fm.deal_verdict(70, "RP") == "market"      # inside RP 65-146
-    assert fm.deal_verdict(60, "RP") == "overpay"     # < RP lo 65
-    assert fm.deal_verdict(95, "SP") == "market"      # inside SP 86-182
-    assert fm.deal_verdict(80, "SP") == "overpay"     # < SP lo 86
-    # 95 is an SP "market" and a POS "overpay": the whole point of the mode.
-    assert fm.deal_verdict(95, "1B") == "overpay"     # < POS lo 103
+    # Re-cut 2026-10-08 (owner answer M14-2): RP (45, 101), SP (97, 214),
+    # POS (109, 246), C (140, 240).
+    assert fm.deal_verdict(150, "RP") == "value"      # >= RP hi 101
+    assert fm.deal_verdict(150, "SP") == "market"     # inside SP 97-214
+    assert fm.deal_verdict(150, "CF") == "market"     # inside POS 109-246
+    assert fm.deal_verdict(70, "RP") == "market"      # inside RP 45-101
+    assert fm.deal_verdict(40, "RP") == "overpay"     # < RP lo 45
+    assert fm.deal_verdict(100, "SP") == "market"     # inside SP 97-214
+    assert fm.deal_verdict(80, "SP") == "overpay"     # < SP lo 97
+    # 100 is an SP "market" and a POS "overpay": the whole point of the mode.
+    assert fm.deal_verdict(100, "1B") == "overpay"    # < POS lo 109
     # Every group's edges must be ordered, and every group must be reachable.
     for grp, (lo, hi) in fm.VERDICT_GROUP_EDGES.items():
         assert lo < hi, f"{grp} edges inverted"

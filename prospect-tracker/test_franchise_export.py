@@ -549,8 +549,18 @@ def test_park_factors_come_from_fa_meta_not_a_slate(clubs):
 
 def test_realized_fa_value_is_labelled_not_skill_with_method_and_coverage(d, clubs):
     st = d["sections_status"]["market_realized"]
-    assert st["live"] is True and st["method"] == "level_proration_backcast_dpw_v1"
-    assert st["coverage_by_winter"] and st["coverage_by_winter"][-1][1] == 0, "the current winter has no elapsed season"
+    arch = _load("fa_archive.json")
+    assert st["live"] is True
+    assert st["method"] == (arch.get("ledgerMethod") or "level_proration_backcast_dpw_v1")
+    assert st["coverage_by_winter"]
+    # A winter carries realized value only once its first season has been played
+    # and the ledger rebuilt after it (owner answer M14-3).
+    year, n_cov, _n = st["coverage_by_winter"][-1]
+    if n_cov:
+        import fa_pipeline
+        from datetime import date
+        assert fa_pipeline.last_completed_season(
+            date.fromisoformat(arch["ledgerBuilt"]))[0] >= year
     assert "not skill" in d["copy"]["market_realized_sentence"] and "counterfactual" in d["copy"]["market_realized_sentence"]
     for c in clubs.values():
         r = c["sections"]["market"]["realized"]

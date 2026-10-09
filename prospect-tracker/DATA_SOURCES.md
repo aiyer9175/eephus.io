@@ -111,6 +111,7 @@ happen inside the called module, so this file alone cannot split them).
 | 3f. MLB roster-status derivation (debut, 40-man, options ...) (no _step wrapper) | - |
 | 4. Trade detection | - |
 | 5. Export (no _step wrapper) | debuts.json, identity_collisions.json, ifa_timeseries.json, rosters_by_org.json, timeseries.json |
+| 6-pre. FA realized ledger (once after each regular season) | - |
 | 6. FA refresh + export (fa_* sidecars) | timeseries.json |
 | 6b. MLB projections export (mlb_projections.json) | mlb_projections.json, swing_plus.json |
 | 6b2. Swing+ scoring (swing_plus.json) | swing_plus.json |

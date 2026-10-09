@@ -625,6 +625,9 @@ def build() -> dict:
     fa_meta = _j("fa_meta.json") or {}
     fa_class = _j("fa_class.json") or {}
     fa_archive = _j("fa_archive.json") or {}
+    # The method the archive's ledger rows carry (fa_archive.ledgerMethod, M14-3);
+    # the June 2026 build predates the field and was the v1 method.
+    realized_method = fa_archive.get("ledgerMethod") or "level_proration_backcast_dpw_v1"
     org_tend = _j("org_tendencies.json") or {}
     mgmt = _j("management_board.json") or {}
     arb = _j("arbitration.json") or {}
@@ -967,7 +970,7 @@ def build() -> dict:
             "fits": fit_rows, "outgoing": outgoing, "winters": winter_rows,
             "priors": {"max_guar": meta.get("maxGuar"), "n100m": meta.get("n100m"), "recent_spend": meta.get("recentSpend")},
             "realized": {"live": True, "by_winter": realized_rows, "totals": tot,
-                         "method": "level_proration_backcast_dpw_v1", "not_skill": True},
+                         "method": realized_method, "not_skill": True},
             "verdict": verdict_of.get("fa_team_fit"), "cba_banner": True,
             "basis": f"fa_class {fa_class.get('class_year')} fits (fa_team_fit provisional) and fa_archive signings by club",
         }
@@ -1349,8 +1352,9 @@ def build() -> dict:
         "market_realized_sentence": ("realized value, not skill: this is what the contracts returned, not how well the "
                                      "club chose them; the counterfactual, what the same dollars would have bought "
                                      "elsewhere that winter, is not observed, so no club is ranked by it"),
-        "market_realized_coverage": ("covered signings carry the realized block; the current winter carries none "
-                                     "because no season has elapsed"),
+        "market_realized_coverage": ("covered signings carry the realized block; a winter carries none until its "
+                                     "first season is played and the ledger is rebuilt after the regular season "
+                                     "(once a year)"),
         "front_office_note": "descriptive league-relative behavioural profiles; no forward claims (org_tendencies)",
         "zbar_note": "z against the panel's league mean and sd; style, never a ladder",
         "promotion_timing_note": ("The rookie cutoff is 45 days before the final scheduled game (MLB glossary). "
@@ -1451,7 +1455,7 @@ def build() -> dict:
 
     sections_status = {
         "fin": {"live": True, "descriptive": True, "headline": copy["fin_headline_label"], "ledger_live": ledger_live},
-        "market_realized": {"live": True, "method": "level_proration_backcast_dpw_v1",
+        "market_realized": {"live": True, "method": realized_method,
                             "coverage_by_winter": [[w.get("year"), sum(1 for s in (w.get("signings") or []) if s.get("warTd") is not None),
                                                     len(w.get("signings") or [])] for w in winters]},
         "park_attendance": {"live": False, "blocked_on": "omitted in v1 by owner decision D11; a game-feed attendance ingest (2026 only) would light it"},

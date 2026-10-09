@@ -44,6 +44,7 @@ Call it via `python run_monthly.py --dry-run`.
 from __future__ import annotations
 
 import bisect
+import contextlib
 import csv
 import html
 import json
@@ -1064,6 +1065,11 @@ def _cache_ttl_for_key(cache_key: str) -> int:
     # eval scores against) landed a day late (M04-05, 2026-09-25). Current
     # and future classes only: a past winter's page is history and keeps the
     # long cache below.
+    # Spotrac player contract pages (fa_strikes, owner answer M14-4): an option's
+    # strike is fixed by contract, so a week-old copy is current. Ahead of the
+    # year rule below, which would read a Spotrac id like 20008 as a year.
+    if cache_key.startswith("spotrac_player_"):
+        return 7 * 24 * 3600
     if cache_key.startswith(("spotrac_fa_avail_", "spotrac_fa_class_")):
         m_sp = _re_local.search(r"(20\d{2})", cache_key)
         if m_sp and int(m_sp.group(1)) >= _date_local.today().year:
@@ -1079,6 +1085,30 @@ def _cache_ttl_for_key(cache_key: str) -> int:
     return _SCRAPER_CURRENT_YEAR_TTL_SECONDS
 
 
+# CACHE-ONLY READS (owner answer M14-1, 2026-09-25). The FA gate lab re-runs the
+# FA export after it saves a gate, and that re-export must cost no new page
+# request. Inside cache_only() a cached page is served whatever its age (and
+# whatever `force` says), and a page with no cached copy comes back as a failed
+# fetch (status 0) instead of going to the network. Every caller already handles
+# a failed fetch, because the network can fail the same way.
+_CACHE_ONLY_DEPTH = 0
+
+
+@contextlib.contextmanager
+def cache_only():
+    """Serve every _fetch from the disk cache for the duration of the block."""
+    global _CACHE_ONLY_DEPTH
+    _CACHE_ONLY_DEPTH += 1
+    try:
+        yield
+    finally:
+        _CACHE_ONLY_DEPTH -= 1
+
+
+def cache_only_active() -> bool:
+    return _CACHE_ONLY_DEPTH > 0
+
+
 def _fetch(url: str, cache_key: str, force: bool = False,
            accept_json: bool = False,
            headers: dict | None = None) -> FetchResult:
@@ -1088,6 +1118,13 @@ def _fetch(url: str, cache_key: str, force: bool = False,
     filter keys on the User-Agent (see ESPN_FEED_HEADERS); `accept_json`
     still overrides Accept on top of whichever set is in use."""
     cache_path = CACHE_DIR / f"{cache_key}.{'json' if accept_json else 'html'}"
+    if _CACHE_ONLY_DEPTH > 0:
+        if cache_path.exists():
+            body = cache_path.read_text(encoding="utf-8")
+            log.info("cache-only read: %s (%d bytes)", cache_key, len(body))
+            return FetchResult(body=body, status=200, from_cache=True, url=url)
+        log.info("cache-only: no cached copy of %s, not fetched", cache_key)
+        return FetchResult(body="", status=0, from_cache=False, url=url)
     if cache_path.exists() and not force:
         # v23 — Year-aware TTL gate. Prior to v23 these caches were
         # infinite-lived, so mid-season FV / scout updates would sit

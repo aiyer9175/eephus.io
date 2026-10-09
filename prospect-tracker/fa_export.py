@@ -746,6 +746,9 @@ def _build_fa_class_payload_body(class_year: int = CLASS_YEAR) -> dict:
             "from": _contract_orgs().get(row.get("player_key")) or row.get("from_team"), "bt": row.get("bat_throw"),
             "status": row.get("status"), "type": row.get("fa_type"),
             "optPrice": row.get("option_price_usd"),
+            # M14-4: where the strike came from and when (fa_strikes).
+            "optPriceSrc": row.get("strike_src") if row.get("option_price_usd") else None,
+            "optPriceAsOf": row.get("strike_as_of") if row.get("option_price_usd") else None,
             "enterProb": row.get("enter_prob"),
             "prevAav": row.get("prev_aav_usd"), "prevWar": row.get("prev_war"),
             "qoValue": row.get("qo_value_usd"),
@@ -1249,6 +1252,7 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
         dpw_by = {}
     winters = []
     bases: Counter = Counter()
+    methods: Counter = Counter()
     built: set = set()
     for year in range(first, last + 1):
         rows = []
@@ -1257,6 +1261,7 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
             led = s.get("ledger") or {}
             if led:
                 bases[_ledger_war_basis(led)] += 1
+                methods[led.get("method") or "unknown"] += 1
                 if led.get("built"):
                     built.add(led["built"])
             rows.append(_clean({
@@ -1293,6 +1298,11 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
             "warBasis": (next(iter(bases)) if len(bases) == 1 else
                          ("mixed" if bases else None)),
             "warBasisCounts": dict(bases) or None,
+            # M14-3: the ledger method the rows were built with, so a consumer
+            # names it from the archive instead of typing it ("mixed" while a
+            # rebuild is partial).
+            "ledgerMethod": (next(iter(methods)) if len(methods) == 1 else
+                             ("mixed" if methods else None)),
             "ledgerBuilt": max(built) if built else None,
             "winters": winters}
 
