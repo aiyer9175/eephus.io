@@ -199,6 +199,33 @@ FA_PROFILE_COLUMNS = {
 FA_PROFILE_COPY = ("Share of league free-agent dollars, by the winter each deal was signed. "
                    "Realized spending, not a forecast.")
 
+# The club arbitration process chips (FAA-4) and the realized block's basis
+# (FAA-9) ride arb_export.ARB_CLUB_PROCESS_CHIPS, one flag for /arbitration/,
+# this page and Franchise. With it off the board and the shards are
+# byte-identical to the build without them (test_arb_export).
+ARB_PROCESS_COPY = {
+    "arb_process_title": "Arbitration process",
+    "arb_process_none": "the club has no row on the captured trackers",
+    "arb_process_loading": "the process chips load with the club's rows",
+}
+ARB_TRADED_COPY = {
+    "arb_realized_basis": ("Basis: the club that held the player at the end of the award season, the "
+                           "club that paid the salary after any trade. The process chips credit the "
+                           "club that held him on exchange day."),
+    "arb_traded_in_lead": "Negotiated by another club, paid here",
+    "arb_traded_out_lead": "Negotiated here, paid by another club",
+}
+
+
+def _arb_club_process_live() -> bool:
+    """arb_export.ARB_CLUB_PROCESS_CHIPS, False when the module cannot load."""
+    try:
+        import arb_export
+    except Exception:                             # noqa: BLE001
+        return False
+    return bool(arb_export.ARB_CLUB_PROCESS_CHIPS)
+
+
 #: Farm reconciliation (owner decision D3): the leaf is a net figure written by
 #: storage.export_timeseries_json at one point of the nightly and the rows come
 #: from trade_values written later the same night, so the identity holds to a
@@ -1278,6 +1305,20 @@ def build_all() -> tuple:
         if c in clubs:
             hist_by_club[c].append(r)
     hist_fk = arb_hist.get("field_key") or {}
+    # Club arbitration process (FAA-4) and the realized block's basis (FAA-9),
+    # behind arb_export.ARB_CLUB_PROCESS_CHIPS: the chips are read off the
+    # served arbitration.json block, so the Ledger prints what /arbitration/
+    # prints; the cases that changed clubs come from arb_export's one join.
+    arb_proc = arb_traded = None
+    if _arb_club_process_live():
+        import arb_export as _ax
+        arb_proc = arb.get("club_process")
+        arb_traded = _ax.traded_cases(arb_hist.get("rows") or [])
+    traded_in: dict = defaultdict(list)
+    traded_out: dict = defaultdict(list)
+    for t in (arb_traded or {}).get("rows") or []:
+        traded_in[t[4]].append([t[0], t[2], t[3], t[5]])
+        traded_out[t[3]].append([t[0], t[2], t[4], t[5]])
 
     # free agency
     members = fa_class.get("members") or []
@@ -2134,6 +2175,15 @@ def build_all() -> tuple:
             "surplus": {"rows_debuted": rows_debuted, "trajectory": trajectory.get(c) or []},
             "field_key": {}, "columns": {},
         }
+        if arb_proc is not None:
+            pc = (arb_proc.get("clubs") or {}).get(c)
+            shard_docs[c]["arbitration"]["process"] = (
+                {"window": arb_proc.get("window"), "label": pc.get("label"), "chips": pc.get("chips")}
+                if pc else None)
+        if arb_traded is not None:
+            shard_docs[c]["arbitration"]["traded"] = {"window": arb_traded.get("window"),
+                                                      "in": traded_in.get(c) or [],
+                                                      "out": traded_out.get(c) or []}
 
     # ---- Leg A (behind LEDGER_FA_SPEND_PROFILE): the club FA spend profile and
     # the payroll history, written to the shards; the board keeps a receipt ----
@@ -3096,6 +3146,29 @@ def build_all() -> tuple:
         doc["what_this_page_does_not_claim"].append(
             "a free-agent spending forecast: the spend profile is realized spending by the winter each deal "
             "was signed, and the payroll history stops at the last season Spotrac's pages carry")
+    if arb_traded is not None:
+        # FAA-9: the realized block keeps the season-end club and says so; the
+        # cases whose exchange-day club differs are named in the club's file.
+        doc["columns"]["arbitration.traded.in"] = ["season", "name", "exchange_day_club", "actual_usd"]
+        doc["columns"]["arbitration.traded.out"] = ["season", "name", "season_end_club", "actual_usd"]
+        shard_column_keys += ["arbitration.traded.in", "arbitration.traded.out"]
+        doc["copy"].update(ARB_TRADED_COPY)
+        doc["field_key"]["arbitration.traded"] = (
+            f"{{window, in, out}}: arb_history rows {arb_traded['window']} whose tracker exchange-day club "
+            "differs from the season-end club; in = credited here, negotiated elsewhere; out = negotiated "
+            "here, credited elsewhere")
+        doc["sections"]["arb_realized_basis"] = {"live": True, "note": "season-end club, traded cases named",
+                                                 "census": arb_traded["census"]}
+    if arb_proc is not None:
+        doc["copy"].update(ARB_PROCESS_COPY, arb_process_copy=arb_proc.get("copy"))
+        doc["field_key"]["arbitration.process"] = (
+            "{window, label, chips [[key, n, text]]}: the club's chips from arbitration.json club_process; "
+            "every text states its n and the window")
+        tot = arb_proc.get("totals") or {}
+        doc["sections"]["arb_filing"] = {"live": True, "note": (
+            f"process chips per club, {arb_proc.get('window')} trackers, in the club's file; filed figures "
+            "are not printed" + ("; no captured page carries a hearing result"
+                                 if tot.get("hearings") == 0 and tot.get("unresolved") else ""))}
 
     # ---- D5 finalize: previews, per-player trajectories, shard bytes and the
     # board index; the preview guard re-runs the step at the small size if the

@@ -728,7 +728,17 @@
       tile("ou_mkt, all seasons", signedMoney(s.ou_mkt_total_usd), esc(copy("ou_mkt"))) +
       tile("ou_war, all seasons", signedMoney(s.ou_war_total_usd), esc(copy("ou_war"))) + "</div>" +
       '<p class="fr-note">' + esc(copy("never_combine")) + "</p>";
-    return banner() + '<div class="fr-tiles">' + t + "</div>" + rows + '<p class="fr-count">' + esc(copy("arb_flag_key")) + "</p>" + ou;
+    return banner() + '<div class="fr-tiles">' + t + "</div>" + arbProcess(s, d) + rows + '<p class="fr-count">' + esc(copy("arb_flag_key")) + "</p>" + ou;
+  }
+  // The club arbitration process chips (FAA-4), the /arbitration/ chips for
+  // this club as the export copied them; present only while arb_export's
+  // ARB_CLUB_PROCESS_CHIPS is on. Each states its n and window; no colour.
+  function arbProcess(s, d) {
+    var P = s.process;
+    if (!P || !P.chips) return "";
+    return "<h3>" + esc(copy("arb_process_title")) + '</h3><div class="fr-chips" role="list">' + P.chips.map(function (c) {
+      return '<span class="fr-lchip" role="listitem" data-chip="' + esc(c[0]) + '">' + esc(c[2]) + "</span>";
+    }).join("") + '</div><p class="fr-count">' + esc(copy("arb_process_copy")) + ' <a href="' + esc(d.links.arbitration_teams) + '">Club view</a></p>';
   }
   function secPark(d) {
     var s = d.sections.park, f = s.factors, sw = s.short_window, v = s.venue || {};

@@ -58,6 +58,40 @@ MAX_CUT = 0.80
 
 CBA_EXPIRES = "2026-12-01"
 
+# --------------------------------------------------------------------------
+# Club arbitration process (owner ask 3, 2026-09-30; Part 8 lane
+# finance_to_fa_arb, Leg C, plan rows FAA-4 and FAA-9). DESCRIPTIVE: per club,
+# over the captured MLB Trade Rumors trackers, how many arbitration cases it
+# had, how many went to an exchange of figures, and how many to a hearing,
+# credited to the club under whose heading the tracker lists the player on
+# exchange day (never arb_history's season-end club). Every chip carries its n
+# and its window; no chip takes a colour; a label prints only when the data
+# carry it. The point award never reads any of it (docs/ARBITRATION_GATE.md
+# sections 4 and 13c; the banned-key test in test_arb_export.py walks
+# CLUB_PROCESS_KEYS). Behind this flag: off, arbitration.json is byte-identical
+# to the build without it and the block goes to CLUB_PROCESS_PREVIEW only.
+# --------------------------------------------------------------------------
+ARB_CLUB_PROCESS_CHIPS = False
+LAB_LEDGER_PATH = ROOT / "data" / "_labs" / "arb_ledger.json"
+CLUB_PROCESS_PREVIEW = ROOT / ".cache" / "arb_club_process" / "preview" / "club_process.json"
+#: The two labels and their floors, as docs/ARBITRATION_GATE.md 13b fixes them.
+FILE_AND_TRIAL = "File and trial"
+SETTLES_BEFORE = "Settles before the exchange"
+FILE_AND_TRIAL_MIN_EXCHANGED = 2
+SETTLES_BEFORE_MIN_CASES = 10
+CLUB_PROCESS_COPY = ("Process record from the MLB Trade Rumors arbitration trackers, credited to the "
+                     "club that held the player on exchange day. Descriptive; it changes no projected award.")
+#: Tracker classes that count as figures exchanged on exchange day.
+EXCHANGED_CLASSES = ("exchanged", "hearing_won", "hearing_lost")
+#: A later capture that reads one of these on an exchanged case: it settled.
+SETTLED_CLASSES = ("agreed", "extension", "split_deal", "club_option")
+#: Every key the club-process block serves, plus the 13e term's name. None of
+#: them may reach arb_model.CHAMPION_KEYS or the keys arb_model.features()
+#: accepts (test_arb_export.py).
+CLUB_PROCESS_KEYS = ("club_process", "cases", "exchanged", "exchanged_share", "settled_after",
+                     "unresolved", "hearings", "club_won", "player_won", "label", "chips",
+                     "club_file_and_trial", "file_and_trial", "settles_before_exchange")
+
 
 def _k(usd) -> int | None:
     """Whole dollars to the nearest thousand."""
@@ -612,6 +646,215 @@ def build_history(recs, panel_rows, ledger, dpw, projections=None) -> dict:
     }
 
 
+# --------------------------------------------------------------------------- #
+# Club arbitration process (FAA-4) and the cases that changed clubs (FAA-9)
+# --------------------------------------------------------------------------- #
+
+def _lab_ledger(path: Path | None = None) -> dict:
+    """data/_labs/arb_ledger.json (tools/ingest_arbitration_ledger.py), or {}."""
+    try:
+        return json.loads(Path(path or LAB_LEDGER_PATH).read_text("utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _tracker_rows(ledger: dict) -> list:
+    return [e for e in ledger.get("entries") or []
+            if e.get("kind") == "tracker" and e.get("club") and e.get("class_year")]
+
+
+def case_state(e: dict) -> str | None:
+    """What one tracker row says about its exchange. None: no figures were
+    exchanged on exchange day. Otherwise 'club_won' or 'player_won' when a
+    hearing line fires on any capture, 'settled_after' when a later capture
+    reads a settlement, and 'unresolved' when no capture says how it ended
+    (MLB Trade Rumors does not write hearing results into the trackers)."""
+    if e.get("outcome") not in EXCHANGED_CLASSES:
+        return None
+    result = (e.get("hearing") or {}).get("result")
+    if result in ("club_won", "player_won"):
+        return result
+    if (e.get("recaptured") or {}).get("outcome") in SETTLED_CLASSES:
+        return "settled_after"
+    return "unresolved"
+
+
+def club_process_label(cases: int, exchanged: int, settled_after: int, unresolved: int) -> str | None:
+    """The label rule docs/ARBITRATION_GATE.md 13b fixes, one function for the
+    chips and for any later 13b or 13e count. File and trial needs every
+    exchanged case's ending on file, because an unresolved case may have
+    settled after the exchange; with none on file the label is withheld."""
+    if exchanged >= FILE_AND_TRIAL_MIN_EXCHANGED and unresolved == 0 and settled_after == 0:
+        return FILE_AND_TRIAL
+    if exchanged == 0 and cases >= SETTLES_BEFORE_MIN_CASES:
+        return SETTLES_BEFORE
+    return None
+
+
+def club_chips(t: dict, window: str) -> list:
+    """[key, n, text] per chip. Every text states its n and the window; the
+    label chip exists only when club_process_label returns one."""
+    n, x, u = t["cases"], t["exchanged"], t["unresolved"]
+    cw, pw = t["club_won"], t["player_won"]
+    h = cw + pw
+    share = f", {round(100 * x / n)}%" if n else ""
+    out = [["cases", n, f"Cases {n} ({window})"],
+           ["exchanged", x, f"Exchanged {x} of {n}{share} ({window})"]]
+    if x == 0:
+        out.append(["hearings", 0, f"Hearings 0 ({window})"])
+    elif u == 0:
+        out.append(["hearings", h, f"Hearings {h}, club won {cw}, lost {pw} ({window})"])
+    elif h:
+        out.append(["hearings", h, f"Hearings {h} on file, club won {cw}, lost {pw}; "
+                                   f"no result captured for {u} of {x} exchanged ({window})"])
+    else:
+        out.append(["hearings", u, f"Hearings: no result captured for {u} of {x} exchanged ({window})"])
+    label = club_process_label(n, x, t["settled_after"], u)
+    if label == FILE_AND_TRIAL:
+        out.append(["label", x, f"{label}: {x} exchanged, {h} to a hearing ({window})"])
+    elif label == SETTLES_BEFORE:
+        out.append(["label", n, f"{label}: 0 of {n} exchanged ({window})"])
+    return out
+
+
+def build_club_process(ledger: dict | None = None, *, before: int | None = None) -> dict | None:
+    """The per-club process block over the captured tracker winters (strictly
+    before `before` when given, the 13b form). None when no tracker row exists.
+    Credited to the tracker heading's club, canonicalized."""
+    from trades import canonical_org
+
+    led = _lab_ledger() if ledger is None else ledger
+    rows = [e for e in _tracker_rows(led) if before is None or int(e["class_year"]) < int(before)]
+    if not rows:
+        return None
+    years = sorted({int(e["class_year"]) for e in rows})
+    window = f"{years[0]}-{years[-1]}" if len(years) > 1 else str(years[0])
+    by: dict = {}
+    for e in rows:
+        c = canonical_org(e["club"]) or e["club"]
+        t = by.setdefault(c, {"cases": 0, "exchanged": 0, "settled_after": 0, "unresolved": 0,
+                              "club_won": 0, "player_won": 0})
+        t["cases"] += 1
+        st = case_state(e)
+        if st is not None:
+            t["exchanged"] += 1
+            t[st] += 1
+    clubs = {}
+    for c in sorted(by):
+        t = by[c]
+        clubs[c] = {
+            "cases": t["cases"], "exchanged": t["exchanged"],
+            "exchanged_share": round(t["exchanged"] / t["cases"], 3) if t["cases"] else None,
+            "settled_after": t["settled_after"], "unresolved": t["unresolved"],
+            "hearings": t["club_won"] + t["player_won"],
+            "club_won": t["club_won"], "player_won": t["player_won"],
+            "label": club_process_label(t["cases"], t["exchanged"], t["settled_after"], t["unresolved"]),
+            "chips": club_chips(t, window),
+        }
+    tot = {k: sum(v[k] for v in clubs.values())
+           for k in ("cases", "exchanged", "settled_after", "unresolved", "hearings")}
+    return {
+        "source": "MLB Trade Rumors arbitration trackers",
+        "window": window, "seasons": years,
+        "attribution": "the club heading the tracker lists the player under on exchange day",
+        "recaptures": sorted((led.get("recaptures") or {}).keys()),
+        "copy": CLUB_PROCESS_COPY,
+        "labels": {
+            FILE_AND_TRIAL: (f"exchanged >= {FILE_AND_TRIAL_MIN_EXCHANGED} and settled after the exchange "
+                             "= 0, with every exchanged case's ending on file"),
+            SETTLES_BEFORE: f"exchanged = 0 on at least {SETTLES_BEFORE_MIN_CASES} cases",
+        },
+        "totals": tot,
+        "field_key": {
+            "cases": "tracker rows listed under the club, every class",
+            "exchanged": "rows whose exchange-day class is an exchange of figures",
+            "settled_after": "exchanged rows a later capture reads as settled",
+            "unresolved": "exchanged rows no capture says the ending of",
+            "hearings": "exchanged rows a hearing line reads, club_won + player_won",
+            "chips": "[key, n, text]; every text states its n and the window",
+            "label": "File and trial, Settles before the exchange, or null",
+        },
+        "clubs": clubs,
+    }
+
+
+def _name_key(s) -> str:
+    import re
+    import unicodedata
+    s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode().lower()
+    s = re.sub(r"\b(jr|sr|ii|iii|iv)\b\.?", "", s)
+    return re.sub(r"[^a-z]", "", s)
+
+
+def _amount_agrees(e: dict, actual) -> bool | None:
+    """Does the tracker row's figure agree with the season's salary? None when
+    the row carries neither a settled figure nor both filed figures."""
+    if not actual:
+        return None
+    a = float(actual)
+    s = e.get("settled_usd")
+    if s:
+        return abs(float(s) - a) <= max(50_000.0, 0.02 * a)
+    f = e.get("filing") or {}
+    if f.get("player_usd") and f.get("club_usd"):
+        lo, hi = sorted((float(f["club_usd"]), float(f["player_usd"])))
+        return lo - 50_000 <= a <= hi + 50_000
+    return None
+
+
+def traded_cases(history_rows, ledger: dict | None = None) -> dict:
+    """FAA-9: arb_history credits an award to the club of the award season's
+    last stint; the tracker credits the case to the club that held the player
+    on exchange day. A row is named here when the two differ. The join is
+    (season, MLBAM id) where the tracker row carries one, else (season, name)
+    with exactly one candidate; a name join must also agree on the figure
+    (settled within 2% or $50K, or inside the filed pair), so a namesake on
+    another club is never named. `history_rows` are arb_history tuples."""
+    from trades import canonical_org
+
+    led = _lab_ledger() if ledger is None else ledger
+    rows = _tracker_rows(led)
+    years = sorted({int(e["class_year"]) for e in rows})
+    by_id: dict = {}
+    by_name: dict = {}
+    for e in rows:
+        y = int(e["class_year"])
+        if e.get("mlbam"):
+            by_id.setdefault((y, int(e["mlbam"])), []).append(e)
+        by_name.setdefault((y, _name_key(e.get("player_name"))), []).append(e)
+    out = []
+    census = {"in_window": 0, "joined": 0, "not_joined": 0, "moved": 0, "moved_unconfirmed": 0}
+    for r in history_rows or []:
+        season, mlbam, name, team, actual = int(r[0]), r[1], r[2], r[3], r[5]
+        if season not in years:
+            continue
+        census["in_window"] += 1
+        ids = by_id.get((season, int(mlbam))) if mlbam is not None else None
+        if ids and len(ids) == 1:
+            e, confirmed = ids[0], True
+        else:
+            cands = [c for c in by_name.get((season, _name_key(name))) or []
+                     if _amount_agrees(c, actual) is not False]
+            if len(cands) != 1:
+                census["not_joined"] += 1
+                continue
+            e = cands[0]
+            confirmed = _amount_agrees(e, actual) is True
+        census["joined"] += 1
+        ex, end = canonical_org(e["club"]) or e["club"], canonical_org(team) or team
+        if ex == end:
+            continue
+        if not confirmed:
+            census["moved_unconfirmed"] += 1
+            continue
+        census["moved"] += 1
+        out.append([season, int(mlbam) if mlbam is not None else None, name, ex, end, actual])
+    out.sort(key=lambda x: (-x[0], -(x[5] or 0), x[2] or ""))
+    return {"window": f"{years[0]}-{years[-1]}" if years else None, "seasons": years,
+            "field_key": "[season, mlbam, name, exchange_day_club, season_end_club, actual_usd]",
+            "rows": out, "census": census}
+
+
 def _write(path: Path, doc: dict, cap: int, log) -> int:
     body = json.dumps(doc, separators=(",", ":"))
     n = len(body.encode("utf-8"))
@@ -673,10 +916,36 @@ def export(*, write: bool = True, log=print, frame: str | None = None) -> dict:
     board = build_board(rows, eval_doc, metrics, dpw, season=2027,
                         s1=s1, s2=s2, defl=defl, banded=banded, frame=frame)
     history = build_history(recs, sc, None, dpw)
+    process = attach_club_process(board)
     if write:
         _write(BOARD_PATH, board, BOARD_CAP_BYTES, log)
         _write(HISTORY_PATH, history, HISTORY_CAP_BYTES, log)
+        if process is not None and not ARB_CLUB_PROCESS_CHIPS:
+            write_club_process_preview(process, log)
     return {"board": board, "history": history}
+
+
+def attach_club_process(board: dict, ledger: dict | None = None, *, live: bool | None = None) -> dict | None:
+    """Build the club-process block; with the flag on it rides the board as
+    `club_process` (and a field_key line), with it off the board is untouched.
+    Returns the block either way."""
+    live = ARB_CLUB_PROCESS_CHIPS if live is None else live
+    process = build_club_process(ledger)
+    if live and process is not None:
+        board["club_process"] = process
+        board["field_key"]["club_process"] = (
+            "per club over the captured MLB Trade Rumors trackers, credited to the exchange-day club: "
+            "cases, exchanged, hearings, a label only when the data carry it; descriptive, read by no award")
+    return process
+
+
+def write_club_process_preview(process: dict, log=print, path: Path | None = None) -> Path:
+    """The flag-off home of the block: under .cache, never data/."""
+    p = Path(path or CLUB_PROCESS_PREVIEW)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(process, separators=(",", ":")), encoding="utf-8")
+    log(f"  arb_export: club process preview {p.name} ({p.stat().st_size} bytes, flag off)")
+    return p
 
 
 if __name__ == "__main__":
