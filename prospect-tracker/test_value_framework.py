@@ -76,10 +76,13 @@ def test_calibration_layer_is_real_fit_and_monotone() -> None:
     # evidence of a real fit is the provenance plus monotonicity plus the shape pins below.
     assert len(xs) == len(ys) >= 3
     assert xs == sorted(xs) and ys == sorted(ys)
-    assert "REAL-data fit" in cal["fit_provenance"]
-    # v5 records its leave-one-year-out validation as "LOyO"; accept either spelling.
-    assert ("leave-one-year-out" in cal["fit_provenance"]
-            or "LOyO" in cal["fit_provenance"])
+    # The 2026-10-09 refit (docs/ARBITRATION_GATE.md section 20) ran through the
+    # knots-only entry, which computes no held-out statistic before the
+    # PROSPECT_ANCHOR look, so its provenance names the real pool and no
+    # validation; a held-out fit must still name its leave-one-year-out run.
+    prov = cal["fit_provenance"]
+    assert "REAL-data" in prov and "surplus_backtest_real" in prov
+    assert ("knots-only" in prov or "leave-one-year-out" in prov or "LOyO" in prov)
     # v2/v3 decisions stay pinned: the bottom block is POSITIVE (the v1
     # per-player fit zeroed every FV35-40 prospect - never again) and the
     # map is non-degenerate (top >> bottom).
@@ -222,7 +225,12 @@ def test_expected_sv_continuous_no_grade_jumps(is_pit: bool) -> None:
         b = vf.expected_surplus_usd(fine[i + 1], is_pit, None) / 1e6
         diffs.append(b - a)
     # Every half-point step is a small, positive increment (continuous + monotone).
-    assert max(diffs) < 6.0, f"jump too large in fitted region: max step {max(diffs):.2f}M"
+    # Ceiling 6.0 -> 7.0 on 2026-10-09 (docs/ARBITRATION_GATE.md section 20): with a
+    # prospect's arbitration seasons priced through the award model, a star bucket's
+    # arbitration costs less than on the fraction ladder, so the top-of-range half-grade
+    # step rises from a 5.03M plateau to a 6.29M one (hitter, raw) with the same shape,
+    # including the existing step at FV 55. A dollar ceiling, not a shape test.
+    assert max(diffs) < 7.0, f"jump too large in fitted region: max step {max(diffs):.2f}M"
     assert min(diffs) >= -1e-6
 
 
@@ -311,7 +319,10 @@ def test_new_model_raises_audit_worked_example_vs_v1() -> None:
     lifting the band proportionally — WAR-side calibration unchanged."""
     new = vf.surplus_value_mm(58.33, is_pitcher=False, position="SS")
     scale = (vf._config()["dollars_per_war"].get("_fa_reanchor") or {}).get("scale", 1.0)
-    assert 25.0 * scale < new < 60.0 * scale
+    # Upper band 60 -> 70 (x scale) on 2026-10-09: arbitration through the award model
+    # (docs/ARBITRATION_GATE.md section 20) moves this raw price $80.8M -> $92.8M, the
+    # star buckets' arbitration seasons costing less than on the fraction ladder.
+    assert 25.0 * scale < new < 70.0 * scale
 
 
 # =============================================================================
@@ -340,9 +351,10 @@ def test_worked_example_full_trace_58_33_ss() -> None:
     assert total_usd == pytest.approx(vf.expected_surplus_usd(fv, is_pit, pos), rel=1e-9)
     assert round(total_usd / 1e6, 1) == vf.surplus_value_mm(fv, is_pit, pos)
     # sanity: this premium prospect lands in a defensible band (v47 WAR-side
-    # calibration; v3 scales the band by the FA-implied $/WAR re-anchor)
+    # calibration; v3 scales the band by the FA-implied $/WAR re-anchor; the upper
+    # band 60 -> 70 on 2026-10-09 for the award-model arbitration seasons, as above)
     scale = (vf._config()["dollars_per_war"].get("_fa_reanchor") or {}).get("scale", 1.0)
-    assert 25.0 * scale < vf.surplus_value_mm(fv, is_pit, pos) < 60.0 * scale
+    assert 25.0 * scale < vf.surplus_value_mm(fv, is_pit, pos) < 70.0 * scale
 
 
 # =============================================================================

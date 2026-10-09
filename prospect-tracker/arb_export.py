@@ -9,6 +9,10 @@
   data/arb_history.json  - per-season actual vs ours vs Swartz. Lazily fetched
                            on first #history open, so it may be bigger, and it
                            uses flat positional tuples.
+  data/arb_prospect_rungs.json - the board's fitted chain (stage1 coefficients,
+                           banded raise multipliers, deflator) plus a platform
+                           profile, for the prospect surplus engine
+                           (value_framework.arb_rung_usd). No page fetches it.
 
 CONVENTIONS THAT ARE LOAD-BEARING
   * Dollars are WHOLE INTEGERS rounded to the nearest $1,000. Never 4.2.
@@ -39,6 +43,7 @@ _log = logging.getLogger(__name__)
 ROOT = Path(__file__).parent
 BOARD_PATH = ROOT / "data" / "arbitration.json"
 HISTORY_PATH = ROOT / "data" / "arb_history.json"
+PROSPECT_RUNGS_PATH = ROOT / "data" / "arb_prospect_rungs.json"
 
 BOARD_CAP_BYTES = 220_000
 HISTORY_CAP_BYTES = 320_000
@@ -574,6 +579,101 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
     }
 
 
+# --------------------------------------------------------------------------- #
+# The prospect rung model (owner answer 2026-09-25 'more' batch 11, OD-4
+# 2026-09-30; docs/ARBITRATION_GATE.md section 20)
+# --------------------------------------------------------------------------- #
+#: Platform-WAR bin edges for the prospect profile, and the fewest arb-1
+#: training rows a bin may hold before it merges into the bin below it.
+PROFILE_WAR_EDGES = (0.5, 1.5, 2.5, 3.5)
+PROFILE_MIN_ROWS = 8
+
+
+def _row_role(row: dict) -> str:
+    """The role arb_model.features reads off a row: a pitcher has outs and
+    under 50 PA, a reliever is a pitcher with fewer than 5 starts."""
+    pa = _f0(row.get("pa"))
+    ipouts = _f0(row.get("ipouts"))
+    gs = _f0(row.get("gs"))
+    if ipouts > 0 and pa < 50:
+        return "rp" if gs < 5 else "sp"
+    return "hit"
+
+
+def _median(vals: list[float]) -> float:
+    s = sorted(vals)
+    n = len(s)
+    return s[n // 2] if n % 2 else 0.5 * (s[n // 2 - 1] + s[n // 2])
+
+
+def build_prospect_rungs(fr, metrics, defl, s1, banded, *, frame: str) -> dict:
+    """The coefficients the board priced its rungs with, for the prospect
+    engine (value_framework.arb_rung_usd), plus the one input a prospect lacks:
+    a platform season's playing time and skill indices. That `profile` is the
+    median arb-1 training row of each role in each platform-WAR bin, with a
+    bin of fewer than PROFILE_MIN_ROWS rows merged into the bin below it, and
+    metrics imputed at 100 where the panel has none, as features() does."""
+    import arb_model as Mod
+
+    a1 = [r for r in fr if int(r.get("arb_year") or 0) == 1 and r.get("salary")]
+    profile = {}
+    for role in ("hit", "sp", "rp"):
+        rows = [r for r in a1 if _row_role(r) == role]
+        edges = (float("-inf"),) + PROFILE_WAR_EDGES + (float("inf"),)
+        bins = [[r for r in rows if edges[i] <= _f0(r.get("war")) < edges[i + 1]]
+                for i in range(len(edges) - 1)]
+        merged: list[list] = []
+        for b in bins:
+            if merged and len(b) < PROFILE_MIN_ROWS:
+                merged[-1] = merged[-1] + b
+            elif b or not merged:
+                merged.append(list(b))
+        # A thin FIRST bin merges upward instead.
+        while len(merged) > 1 and len(merged[0]) < PROFILE_MIN_ROWS:
+            merged[1] = merged[0] + merged[1]
+            merged.pop(0)
+        merged = [b for b in merged if b]
+        prof = {"war": [], "n": [], "pa": [], "ipouts": [], "gs": [],
+                "hem": [], "sem": [], "rem": []}
+        for b in merged:
+            mx = [Mod._mx(metrics, r) or {} for r in b]
+            prof["war"].append(round(_median([_f0(r.get("war")) for r in b]), 4))
+            prof["n"].append(len(b))
+            for k in ("pa", "ipouts", "gs"):
+                prof[k].append(_median([_f0(r.get(k)) for r in b]))
+            for k in ("hem", "sem", "rem"):
+                prof[k].append(_median([Mod._f(m.get(k), 100.0) for m in mx]))
+        profile[role] = prof
+    mu, sd, ww, b = s1["m"]
+    return {
+        "model": "arb_award_v1",
+        "generated_at": date.today().isoformat(),
+        "produced_by": "arb_export.build_prospect_rungs",
+        "frame": frame,
+        "purpose": ("The /arbitration/ board's own fitted chain, for the prospect "
+                    "surplus engine (value_framework.arb_rung_usd): ARB 1 through "
+                    "stage1 from a league-minimum prior, ARB 2+ through the banded "
+                    "raise multiplier, every rung at the deflator's last level."),
+        "stage1": {"keys": list(s1["keys"]),
+                   "mu": [float(v) for v in mu], "sd": [float(v) for v in sd],
+                   "w": [float(v) for v in ww], "b": float(b),
+                   "smear": float(s1["smear"])},
+        "banded": {"bands_usd": [[lo, None if hi == float("inf") else hi]
+                                 for lo, hi in Mod.SALARY_BANDS],
+                   "cells": [[int(k[0]), int(k[1]), float(v)]
+                             for k, v in sorted(banded["cells"].items())],
+                   "by_band": [[int(k), float(v)] for k, v in sorted(banded["by_band"].items())],
+                   "fallback": 1.4, "max_cut": MAX_CUT},
+        "deflator": {str(k): float(v) for k, v in sorted(defl.items())},
+        "profile": profile,
+        "profile_rule": {"war_edges": list(PROFILE_WAR_EDGES), "min_rows": PROFILE_MIN_ROWS,
+                         "statistic": "median of the arb-1 training rows (platform frame)",
+                         "interpolation": "linear in platform WAR between bin medians, clamped"},
+        "age_arb1_median": _median([_f0(r.get("age")) for r in a1 if r.get("age") is not None]),
+        "n_train_arb1": len(a1),
+    }
+
+
 def build_history(recs, panel_rows, ledger, dpw, projections=None) -> dict:
     """Per-season actual vs ours vs the MLBTR/Swartz projection.
 
@@ -917,12 +1017,25 @@ def export(*, write: bool = True, log=print, frame: str | None = None) -> dict:
                         s1=s1, s2=s2, defl=defl, banded=banded, frame=frame)
     history = build_history(recs, sc, None, dpw)
     process = attach_club_process(board)
+    rungs = build_prospect_rungs(fr, metrics, defl, s1, banded, frame=frame)
     if write:
         _write(BOARD_PATH, board, BOARD_CAP_BYTES, log)
         _write(HISTORY_PATH, history, HISTORY_CAP_BYTES, log)
+        _write_rungs(rungs, log)
         if process is not None and not ARB_CLUB_PROCESS_CHIPS:
             write_club_process_preview(process, log)
-    return {"board": board, "history": history}
+    return {"board": board, "history": history, "prospect_rungs": rungs}
+
+
+def _write_rungs(doc: dict, log) -> None:
+    """The prospect rung model, indented so a coefficient change reads as a
+    line diff. Resolved at call time through PROSPECT_RUNGS_PATH."""
+    path = Path(PROSPECT_RUNGS_PATH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(doc, indent=1) + chr(10), encoding="utf-8")
+    tmp.replace(path)
+    log(f"  arb_export: wrote {path.name} ({doc['n_train_arb1']} arb-1 training rows)")
 
 
 def attach_club_process(board: dict, ledger: dict | None = None, *, live: bool | None = None) -> dict | None:

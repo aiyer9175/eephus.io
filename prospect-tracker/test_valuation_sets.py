@@ -179,7 +179,12 @@ def test_clemens_default_applies_and_context_restores():
         # moved to the fWAR training label, so the 2026 winter reads 16.20M against 16.46M
         # and the 2026-27 level 16.86M against 17.14M (-1.6 percent). The FV50 anchor did not
         # move after step J. The tier grid was re-captured inside this set in the same change.
-        assert vf.surplus_value_mm(50.0, False) == pytest.approx(45.5, abs=0.1)
+        # RESTAMPED 2026-10-09 for M11_PROSPECT_ARB_VIA_MODEL, 45.5 -> 56.6. A CALIBRATION
+        # move: clemens_2026 prices a prospect's arbitration seasons through the award model
+        # (docs/ARBITRATION_GATE.md section 20) and the shared calibration knots were refit
+        # in the same change; this set keeps the fraction ladder, so only the map moves it.
+        # The tier grid was re-captured inside this set in the same change.
+        assert vf.surplus_value_mm(50.0, False) == pytest.approx(56.6, abs=0.1)
     assert vf.active_valuation_set() == "clemens_2026"
     assert vf.surplus_value_mm(50.0, False) == pytest.approx(base_50, abs=0.01)
     assert vf._config()["_valuation_set"] == "clemens_2026"

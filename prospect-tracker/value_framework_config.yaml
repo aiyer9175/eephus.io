@@ -524,30 +524,26 @@ debuted:
 # committed to production -- only a real-data fit should flip enabled: true.
 calibration:
   enabled: true
-  # Renamed 2026-07-29: "linearmap-v5-..." matched neither sanctioned real-fit prefix
-  # ("isotonic-real-", "linear-real-"), so the two synthetic-calibration guards fired on a
-  # NAME while the shipped map is a genuine real-data fit. Worse, the prefix assertion in
-  # test_calibration_layer_is_real_fit_and_monotone runs BEFORE that test's ys[0] > 0 check,
-  # so the naming violation was MASKING the live degeneracy guard: the tripwire never
-  # executed. Conforming the name lets the real check run and fail, which is the point.
-  # The fit is linear (corrected = max(0, 1.382491*raw - 2.318551)) even though it is
-  # expressed through the isotonic knot interpolator, so "linear-real-" is the honest prefix.
-  # v6 EV-FRAME 2026-07-31: objective changed by owner decision, see
-  # docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md. Prefix stays sanctioned and the
-  # map is genuinely isotonic this time (v5 was a floored line wearing knots).
-  version: "isotonic-real-v6-evframe-2026-07-31"
-  # VAL_1 (owner decision FP2-1, 2026-09-25): the $/WAR level the knots below were
-  # fit at (the clemens_2026 FanGraphs flat, in force on 2026-07-31). The knots are
-  # absolute $M, so under the free-agent winter level the map is applied in its own
-  # unit, s * f(x / s), s = live flat / this (value_framework.calibration_level_scale).
-  # A refit stamps the level it fit at here.
-  fit_dpw_flat_usd: 11740000
+  # Refit 2026-10-09 (M11_PROSPECT_ARB_VIA_MODEL, docs/ARBITRATION_GATE.md
+  # section 20): prospect arbitration seasons now price through the award
+  # model, on the prediction side and on the realized side of the pool, so the
+  # map was refit in the same change through the knots-only entry
+  # (backtest.fit_calibration_knots via tools/fit_surplus_calibration.py
+  # --target today_flat), which computes no held-out, error or FV-cell
+  # statistic (docs/PROSPECT_ANCHOR_GATE.md). It replaces
+  # isotonic-real-v6-evframe-2026-07-31, whose history and held-out readings
+  # are in data/model_registry.json (prospect_surplus) and git.
+  # fit_dpw_flat_usd is the level the knots were fit at (VAL_1): the map is
+  # applied as s * f(x / s), s = live flat / this.
+  version: "isotonic-real-v3-todaypriced-2026-10-09"
+  target_pricing: today_flat
+  fit_dpw_flat_usd: 16856777
   method: isotonic            # linear | isotonic
   linear: {slope: 1.0, intercept_mm: 0.0}
   isotonic:
-    x_mm: [0.82, 1.1, 1.42, 1.85, 2.09, 3.34, 5.06, 8.04, 9.59, 19.35, 36.42, 400.0]
-    y_mm: [0.67, 1.59, 2.78, 2.95, 3.48, 5.2, 9.3, 13.76, 20.78, 35.68, 57.56, 523.59]
-  fit_provenance: "REAL-data fit v6 EV-FRAME 2026-07-31. OBJECTIVE CHANGED BY OWNER DECISION (docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md): surplus is now an EXPECTED-VALUE quantity, because bayes_trade_value consumes it as a price and a price is an expectation. THIS MAP LOSES v5s MAE GATE AND THAT IS ACCEPTED, NOT HIDDEN: held-out per-player MAE 13.581 against v5 11.518, losing 3 of 3 leave-one-year-out folds. It wins the EV metrics: held-out bias -0.028 against +2.521 uncalibrated, held-out calibration slope 1.059 against 1.239. The verdicts disagree because MAE is minimised by the conditional MEDIAN and 86-90 percent of the bottom bins realise <=$0.1M so their median is exactly 0 while their MEAN is $1.7M-$5.9M. v5s zero floor was therefore MAE-OPTIMAL and was kept deliberately on that basis (its own provenance says calibration-output 0 floor KEPT accuracy-load-bearing). Under an EV objective it is wrong by $1.7M-$3.9M per bottom-tier player. Fitted by tools/fit_surplus_calibration.py (count-weighted PAVA on equal-count bin MEANS, which targets the conditional mean by construction) on surplus_backtest_real resolved pool 2017-2019 n=2236, today-priced targets, on the NORMALIZED consensus frame production actually serves (the frame P0, closed the same day). ys[0]=0.67 not 0, so the $0 floor is gone. TOP EXTENDED: the isotonic interpolator CLAMPS above its last knot and the fitted top knot ($36.42M raw) is reachable, which would have flattened every prospect above FV55 to one figure; the final fitted segments slope (1.2818) continues to a 400 knot, matching v5s domain. That region is EXTRAPOLATED, not fitted. SUPERSEDED v5 FOLLOWS: REAL-data fit v5 LINEAR-MAP floored at 0, refit 2026-07-24 (LANE B1 accuracy re-fit, independently reconstructed pool; supersedes the v4 isotonic that was live for ~1 hour the same day). Re-fits surplus calibration to the TRUE objective (minimize held-out MAE and drive held-out slope to 1.0) instead of the v4 coverage bar the verifier flagged as rewarding over-dispersion. The v4 method (isotonic_binned via np.interp clip) CLAMPS every prediction above its last fitted knot (raw=44.21) to a flat 59.08, a high-end compression v4 patched with an ad-hoc tail knot 140 to 176.55; that under-corrected the top (held-out slope 1.10, esp. pitchers). A plain LINEAR correction floored at 0 has no clamp and generalizes better: LOyO held-out slope 0.9945 (v4 1.1036), held-out MAE 13.77M (v4 14.21M); player-clustered bootstrap 2000 reps seed 20260724 delta-MAE 95pct CI [-1.18,-0.065] entirely below v4, P(lin0 lower MAE)=0.983, P(lin0 slope closer to 1)=0.803. Both sides improve (hit slope 0.978->0.992 MAE 17.75->16.97; pit slope 0.824->0.981 MAE 11.09->10.32). Fit on surplus_backtest_real resolved pool 2017-2019 n=2236, today-priced targets. Knots encode floored-linear: corrected_mm = max(0, 1.382491*raw_mm - 2.318551), zero-cross raw=1.677M; tail knot 400 continues the line. Cap-removal sweep: isotonic high-end clamp REMOVED (was the compression); convex tier-curve KEPT (accuracy-load-bearing: flat pricing worsens held-out MAE to 14.25); calibration-output 0 floor KEPT (accuracy-load-bearing). Prior v4 line (2026-07-24, superseded): x=[1.42,3.55,5.1,7.66,12.65,14.99,23.75,44.21,140], y=[1.93,3.18,3.85,8.74,11.23,21.83,33.98,59.08,176.55]; original v3 (2026-06-12): x=[1.75,5.31,8.98,9.33,15.33,22.55,27.48,48.43,140], y=[1.44,2.51,4.66,6.59,14.99,17.87,23.99,50.94,168.74]."
+    x_mm: [1.18, 2.01, 2.04, 2.65, 2.82, 2.9, 4.69, 7.01, 11.35, 13.65, 29.0, 58.1, 400.0]
+    y_mm: [1.45, 3.67, 4.04, 4.2, 4.35, 5.06, 12.13, 14.67, 26.52, 30.92, 60.37, 88.94, 424.53]
+  fit_provenance: "REAL-data knots-only fit, BINNED isotonic (count-weighted PAVA on equal-count bin means) on the surplus_backtest_real resolved pool, 2017-2019 listings, n=2235; target pricing today_flat; breakpoints downsampled to 12 knots. The knot at $400M continues the last fitted segment, extrapolated and not fitted, so the map does not clamp above its last fitted knot."
 
 # =============================================================================
 # Source-calibration loop (Prompt N) -- learn per-source bias & reliability

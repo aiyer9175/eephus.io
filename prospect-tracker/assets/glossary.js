@@ -1499,15 +1499,15 @@ function _methProseParts() {
     expected ${gTermLink("war", "WAR")}/year over seven controlled seasons (${gTermLink("fv_to_war_table", "the FV→WAR table")}).
     (2) WAR is priced at a non-linear, tiered <strong>${gTermLink("dpw_tier", "$/WAR")}</strong> (a win on a star is worth more
     than a win on a replacement-level filler). (3) The <strong>cost basis</strong> is the three pre-arbitration
-    years at the league minimum plus four arbitration years at an escalating fraction of free-agent
-    value (${gTermLink("service_time", "service-time")} schedule). (4) Because a prospect is a <em>distribution</em>
+    years at the league minimum plus four arbitration years priced by the award model behind /arbitration/,
+    chained from a league-minimum salary (${gTermLink("service_time", "service-time")} schedule). (4) Because a prospect is a <em>distribution</em>
     of outcomes, not a point, the engine probability-weights the five-bucket outcome set (bust → bench
     → regular → good → star) rather than trusting the FV midpoint, then discounts future years to present value
     at the shipped net 7%/yr (config/valuation_sets/clemens_2026.yaml: control.years 7, discount.net_rate 0.07,
     a 10% discount rate minus 3% annual win-cost growth; the base config's 6 years / 9% are the legacy
     prospx_current values and are overridden in production). The published number is an <strong>expected value</strong>, not a median: since the EV
-    reframe (calibration version isotonic-real-v6-evframe, 2026-07-31) the raw expectation is corrected
-    by a count-weighted isotonic (PAVA) map fit on resolved-cohort bin means, and the old $0 floor on
+    reframe (2026-07-31; refit 2026-10-09) the raw expectation is corrected
+    by a count-weighted isotonic (PAVA) map fit on resolved-cohort bin means. The old $0 floor on
     low-tier prospects is gone - a bottom-tier player's price is his small positive expectation, because
     the trade engine consumes surplus as a price and a price is an expectation. Dollars are priced
     through the production valuation set <code>clemens_2026</code> (Ben Clemens' published 2026
@@ -2596,7 +2596,18 @@ function _gxSurplus() {
   const war6 = warYr * ctrl;
   const gross = war6 * dpw;
   const faPerYr = warYr * dpw;
-  const arbCost = arbFr.reduce((s, f) => s + f * faPerYr, 0);
+  // Under the award model (service_time.arb_pricing) the arbitration years
+  // cost what the /arbitration/ chain prices for a flat path at this WAR, read
+  // from the snapshot's table; the fraction ladder is the fallback.
+  const arbTbl = st.arb_pricing === "arb_model" ? st.arb_model_flat_cost_mm : null;
+  const arbRole = side === "pitcher" ? "sp" : "hit";
+  const arbObj = {};
+  if (arbTbl && Array.isArray(arbTbl.war) && Array.isArray(arbTbl[arbRole])) {
+    arbTbl.war.forEach((w, i) => { arbObj[w] = arbTbl[arbRole][i]; });
+  }
+  const arbModel = Object.keys(arbObj).length ? _vfInterp(arbObj, warYr) : null;
+  const arbCost = arbModel != null ? arbModel : arbFr.reduce((s, f) => s + f * faPerYr, 0);
+  const arbLbl = arbModel != null ? `${arbTbl.arb_years} arb yrs, award model` : `arb ${arbFr.map(f => f).join("/")}`;
   const cost = preArb * lgMin + arbCost;
   const framework = gross - cost;
   const published = _vfInterp((vf.surplus_by_grade_mm || {})[side] || {}, fv);
@@ -2604,9 +2615,9 @@ function _gxSurplus() {
     <div class="gx-step"><span class="gx-step-n">1</span><span class="gx-step-t">FV ${fv} → ${warYr.toFixed(2)} WAR/yr</span><span class="gx-step-v">${gTermLink("fv_to_war_table", "table")}</span></div>
     <div class="gx-step"><span class="gx-step-n">2</span><span class="gx-step-t">× ${ctrl} controlled yrs</span><span class="gx-step-v">${war6.toFixed(1)} WAR</span></div>
     <div class="gx-step"><span class="gx-step-n">3</span><span class="gx-step-t">× $${dpw.toFixed(2)}M / WAR</span><span class="gx-step-v">${_fmtMM2(gross)} gross</span></div>
-    <div class="gx-step"><span class="gx-step-n">4</span><span class="gx-step-t">− cost (3×$${lgMin}M pre-arb + arb ${arbFr.map(f => f).join("/")})</span><span class="gx-step-v">−${_fmtMM2(cost)}</span></div>
+    <div class="gx-step"><span class="gx-step-n">4</span><span class="gx-step-t">− cost (${preArb}×$${lgMin}M pre-arb + ${arbLbl})</span><span class="gx-step-v">−${_fmtMM2(cost)}</span></div>
     <div class="gx-step gx-step-sum"><span class="gx-step-n">=</span><span class="gx-step-t">framework surplus</span><span class="gx-step-v">${_fmtMM2(framework)}</span></div>
-    <div class="gx-surplus-final">Published surplus value <b>${_fmtMM2(published)}</b><div class="gx-surplus-note">The published figure additionally probability-weights the outcome distribution and discounts future years at ${vf.dpw_path ? `${(Number(vf.dpw_path.nominal_rate) * 100).toFixed(2)}%/yr nominal, with each season's win priced on the one written path growing ${(Number(vf.dpw_path.g_ref) * 100).toFixed(2)}%/yr` : (vf.discount_rate != null ? `${(Number(vf.discount_rate) * 100).toFixed(0)}%/yr` : "the platform rate")}, so it differs slightly from the flat framework walk above.</div></div>`);
+    <div class="gx-surplus-final">Published surplus value <b>${_fmtMM2(published)}</b><div class="gx-surplus-note">The published figure additionally probability-weights the outcome distribution and discounts future years at ${vf.dpw_path ? `${(Number(vf.dpw_path.nominal_rate) * 100).toFixed(2)}%/yr nominal, with each season's win priced on the one written path growing ${(Number(vf.dpw_path.g_ref) * 100).toFixed(2)}%/yr` : (vf.discount_rate != null ? `${(Number(vf.discount_rate) * 100).toFixed(0)}%/yr` : "the platform rate")}${arbModel != null ? ", and prices the club's option not to tender an arbitration year that costs more than it returns (the walk above tenders every year)" : ""}, so it differs from the flat framework walk above.</div></div>`);
   if (window.EEPHUS_GL) { const _o = document.getElementById("gx-surplus-out"); if (_o) window.EEPHUS_GL.wire(_o); }
 }
 function _byId(id) { return document.getElementById(id); }

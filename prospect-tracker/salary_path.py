@@ -37,10 +37,12 @@ PRECEDENCE, per season, and rule 1 is absolute:
   4. none          the season carries a projection and no price, as today.
 
 WHAT THIS MODULE DOES NOT DO
-  * It never prices a never-debuted prospect. docs/ARBITRATION_GATE.md section 6
-    keeps the clemens_2026 fraction ladder for that population on purpose: a
-    prospect has no prior salary for the raise model to chain off, and his
-    arbitration years are four to seven seasons out.
+  * It never prices a never-debuted prospect. That population is the prospect
+    surplus engine's: since docs/ARBITRATION_GATE.md section 20 (owner answer
+    2026-09-25) value_framework prices its arbitration seasons under the
+    clemens_2026 set through the same chain the board serves, from a
+    league-minimum start (value_framework.arb_rung_usd), where section 6 had kept
+    the clemens_2026 fraction ladder. The two stay separate paths.
   * It never invents a season past the end of club control. Where the control
     window is not established (a grid that ends on a pre-arbitration token, or a
     grid with no priced step to chain from) the path is SHORT and says so

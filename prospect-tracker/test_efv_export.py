@@ -607,7 +607,13 @@ def test_committed_artifact_headline_alias_contract():
 #   read before pytest touched the tree. BOARD_RANK_BASIS_EPOCH 2026-10-04 and the
 #   fingerprint's served=efv_v2@bcc9b0dd moved with it. A refit on a new label, not an
 #   accuracy claim (gate clause (l)). Rowcount 9515 unchanged.
-_GOLDEN_XFV_SHA256 = "9b21c8977a6ce4fb7dcde25afdc0212b18d9d03b30b2caeeb0d3f8b240e278e2"
+# 2026-10-09 RESTAMP: M11_PROSPECT_ARB_VIA_MODEL (docs/ARBITRATION_GATE.md section 20).
+#   Prospect arbitration seasons price through the award model and the calibration knots
+#   were refit, so surplus_mm moves on 1,756 of 4,691 active rows (1,545 up, 211 down) and
+#   no grade, quantile, p_bust or WAR field moves. The committed file at HEAD already read
+#   65b77ee1... against the 9b21c897... pinned here (stale before this change), and the
+#   file stamped here also carries 63 rows of input churn from the 2026-10-09 regen.
+_GOLDEN_XFV_SHA256 = "ca52da8e487a91df0e99531da6554ad1713d9f61fdd41db51bf35b55e68f6d97"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which
