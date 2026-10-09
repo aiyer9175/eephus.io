@@ -21287,6 +21287,10 @@ function renderLeaderboards() {
   } else {
     rows = _lbTrackRows(B.ix, B.side, B.view, lvl);
   }
+  // Heat pool: the qualified rows of this side, season (or window) and level,
+  // taken before the WHO filters, so a cell's colour is its percentile among
+  // every qualified prospect at the level, not among an org's handful.
+  const heatPool = rows.filter(x => x.r.qual);
   rows = _lbFilter(rows);
   const nAll = rows.length;
   const nQual = rows.filter(x => x.r.qual).length;
@@ -21307,9 +21311,9 @@ function renderLeaderboards() {
     v: cfg ? _lbCellVal(x, B.sortKey) : _lbCellText(x, B.sortKey) })),
     { statLabel: sortLabel, fmt: gfxFmt, level: lvl, season: B.windowMode ? null : String(B.season),
       window: winDates ? winDates.label : null });
-  // Heat: the sorted column's percentile in the qualified pool shown.
+  // Heat: the sorted column's percentile in the heat pool above.
   const hi = cfg ? cfg.hi !== false : true;
-  const qualVals = cfg ? rows.filter(x => x.r.qual).map(x => _lbCellVal(x, B.sortKey))
+  const qualVals = cfg ? heatPool.map(x => _lbCellVal(x, B.sortKey))
     .filter(v => v != null).sort((a, b) => a - b) : [];
   const pctOf = v => _lbPct(qualVals, v, hi);
   // Pool line.

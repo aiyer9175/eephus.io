@@ -421,3 +421,23 @@ def test_phone_keeps_the_sorted_value_on_screen(browser):
     assert m["visible"], m
     assert abs(m["rowH"] - 32) <= 0.5, m
     pg.close()
+
+
+def test_heat_is_the_percentile_in_the_level_pool_not_in_the_filtered_rows(browser):
+    """The sorted cell's tint is its percentile among every qualified row of the
+    side, season and level (LANE_SURFACES 2.2), so an Org filter keeps it."""
+    pg = _open(browser, 1280)
+    out = pg.evaluate("""() => {
+      const tint = k => { const tr = document.querySelector('.px-lb-table tbody tr[data-key="' + k + '"]');
+        const td = tr && tr.querySelector('td.px-lb-sorted'); return td ? td.getAttribute('style') : null; };
+      const k = document.querySelector('.px-lb-table tbody tr:nth-child(5)').dataset.key;
+      const before = tint(k);
+      const org = _lbLast.rows.find(x => x.p.player_key === k).r.org;
+      state.lbOrg = org; renderLeaderboards();
+      const after = tint(k), n = _lbLast.rows.length;
+      state.lbOrg = 'all'; renderLeaderboards();
+      return {k, org, before, after, n};
+    }""")
+    assert out["before"] and out["before"] == out["after"], out
+    assert out["n"] < 100, out
+    pg.close()
