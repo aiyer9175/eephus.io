@@ -1,9 +1,9 @@
 {
  "schema": 1,
  "task": "EFV3_A5",
- "generated_at": "2026-10-09T01:13:25Z",
+ "generated_at": "2026-10-09T01:35:51Z",
  "produced_by": "tools/efv_vm3_frame_read.py",
- "plan": "EFV3_PLAN.md s3 (G2); lane A E3-Q1 = A; vm2 stays the headline",
+ "plan": "EFV3_PLAN.md s3 (G2, G3); lane A E3-Q1 = A; vm2 stays the headline",
  "exploratory": false,
  "label": {
   "provider": "fwar",
@@ -13,9 +13,9 @@
   "exploratory": false
  },
  "code": {
-  "commit": "0f9fb164",
+  "commit": "cbcce615",
   "tool": "tools/efv_vm3_frame_read.py",
-  "source_backtest_sha256": "f911fb17ebef63cf440cee812a45ca836ac53d7bf68e1ee85f6c9b2626ac029c",
+  "source_backtest_sha256": "e499b137ef90def366333c4ac242dff08140fadbbfd21d89ae81940e3958c5f9",
   "efv_v2_stat_sha256": "0a1db56abe2cac3528563b1538291b3dabc994b5694b814c52824d9ce73c07c3"
  },
  "statistic": {
@@ -47,92 +47,173 @@
   ],
   "list_vintages_read": [],
   "grouped_by_consensus_fv": false,
-  "closed_arms_rerun": 0
+  "closed_arms_rerun": 0,
+  "panel_years_read": [
+   2014,
+   2015,
+   2016
+  ],
+  "panel_pooled_with_vm": false
  },
  "census": {
-  "frame_version": "vm3",
-  "role": "development",
-  "basis": "pooled_efv_common_vintage_matched_vm3",
-  "rule": "every debut-cohort row (base year equal to the debut year) with an in-window PROSPX consensus read and a timing-pinned eFV score; FanGraphs and MLB Pipeline are optional columns scored on their own rows, never a membership rule",
-  "window": [
-   2017,
-   2023
-  ],
-  "n_rows": 1022,
-  "n_by_side": {
-   "hit": 481,
-   "pit": 541
-  },
-  "n_consensus_present": 1065,
-  "n_both_sources": 863,
-  "by_debut_year": {
-   "2017": {
-    "debuts": 93,
-    "consensus_present": 85,
-    "both_sources": 50,
-    "vm3_rows": 80
-   },
-   "2018": {
-    "debuts": 114,
-    "consensus_present": 104,
-    "both_sources": 75,
-    "vm3_rows": 101
-   },
-   "2019": {
-    "debuts": 171,
-    "consensus_present": 147,
-    "both_sources": 124,
-    "vm3_rows": 141
-   },
-   "2020": {
-    "debuts": 184,
-    "consensus_present": 160,
-    "both_sources": 136,
-    "vm3_rows": 154
-   },
-   "2021": {
-    "debuts": 208,
-    "consensus_present": 157,
-    "both_sources": 131,
-    "vm3_rows": 151
-   },
-   "2022": {
-    "debuts": 260,
-    "consensus_present": 207,
-    "both_sources": 174,
-    "vm3_rows": 197
-   },
-   "2023": {
-    "debuts": 243,
-    "consensus_present": 205,
-    "both_sources": 173,
-    "vm3_rows": 198
-   }
-  },
-  "receipt": {
+  "vm3": {
    "frame_version": "vm3",
+   "role": "development",
+   "basis": "pooled_efv_common_vintage_matched_vm3",
    "rule": "every debut-cohort row (base year equal to the debut year) with an in-window PROSPX consensus read and a timing-pinned eFV score; FanGraphs and MLB Pipeline are optional columns scored on their own rows, never a membership rule",
-   "n_candidates": 1065,
+   "window": [
+    2017,
+    2023
+   ],
    "n_rows": 1022,
-   "n_without_pin": 40,
-   "n_pin_year_differs": 3,
-   "n_outside_window": 0,
-   "n_both_sources": 830,
-   "n_with_mlb_pipeline": 923,
-   "n_with_fangraphs": 928,
-   "n_input_equals_rater_consensus": 1022,
-   "window_mmdd": [
-    "-01-01",
-    "-05-01"
-   ]
+   "n_by_side": {
+    "hit": 481,
+    "pit": 541
+   },
+   "n_consensus_present": 1065,
+   "n_both_sources": 863,
+   "by_debut_year": {
+    "2017": {
+     "debuts": 93,
+     "consensus_present": 85,
+     "both_sources": 50,
+     "vm3_rows": 80
+    },
+    "2018": {
+     "debuts": 114,
+     "consensus_present": 104,
+     "both_sources": 75,
+     "vm3_rows": 101
+    },
+    "2019": {
+     "debuts": 171,
+     "consensus_present": 147,
+     "both_sources": 124,
+     "vm3_rows": 141
+    },
+    "2020": {
+     "debuts": 184,
+     "consensus_present": 160,
+     "both_sources": 136,
+     "vm3_rows": 154
+    },
+    "2021": {
+     "debuts": 208,
+     "consensus_present": 157,
+     "both_sources": 131,
+     "vm3_rows": 151
+    },
+    "2022": {
+     "debuts": 260,
+     "consensus_present": 207,
+     "both_sources": 174,
+     "vm3_rows": 197
+    },
+    "2023": {
+     "debuts": 243,
+     "consensus_present": 205,
+     "both_sources": 173,
+     "vm3_rows": 198
+    }
+   },
+   "receipt": {
+    "frame_version": "vm3",
+    "rule": "every debut-cohort row (base year equal to the debut year) with an in-window PROSPX consensus read and a timing-pinned eFV score; FanGraphs and MLB Pipeline are optional columns scored on their own rows, never a membership rule",
+    "n_candidates": 1065,
+    "n_rows": 1022,
+    "n_without_pin": 40,
+    "n_pin_year_differs": 3,
+    "n_outside_window": 0,
+    "n_both_sources": 830,
+    "n_with_mlb_pipeline": 923,
+    "n_with_fangraphs": 928,
+    "n_input_equals_rater_consensus": 1022,
+    "window_mmdd": [
+     "-01-01",
+     "-05-01"
+    ]
+   },
+   "scored_by": "tools/efv_vm3_frame_read.py (data/efv_vm3_frame_eval.json)",
+   "note": "counts only, published first; the frame is a development frame beside the vm2 headline and nothing served reads it"
   },
-  "scored_by": "tools/efv_vm3_frame_read.py (data/efv_vm3_frame_eval.json)",
-  "note": "counts only, published first; the frame is a development frame beside the vm2 headline and nothing served reads it"
+  "pipeline_panel": {
+   "frame": "vm_pipeline_2011_2016",
+   "role": "development",
+   "rule": "every debut-cohort row of 2011 to 2016 (base year equal to the debut year) with an in-window MLB Pipeline read and a timing-pinned eFV v1 score; a row with a FanGraphs grade in its window is excluded and counted; consensus on these rows is MLB Pipeline alone; never pooled with vm2 or vm3",
+   "window": [
+    2011,
+    2016
+   ],
+   "n_pipeline_present": 492,
+   "n_with_fangraphs_excluded": 0,
+   "n_scoreable_by_efv_v1": 331,
+   "first_scored_year": 2014,
+   "by_debut_year": {
+    "2011": {
+     "debuts": 97,
+     "pipeline_present": 10,
+     "consensus_sources_pipeline_only": 10,
+     "with_fangraphs": 0,
+     "scoreable_by_efv_v1": 0
+    },
+    "2012": {
+     "debuts": 98,
+     "pipeline_present": 43,
+     "consensus_sources_pipeline_only": 43,
+     "with_fangraphs": 0,
+     "scoreable_by_efv_v1": 0
+    },
+    "2013": {
+     "debuts": 134,
+     "pipeline_present": 108,
+     "consensus_sources_pipeline_only": 108,
+     "with_fangraphs": 0,
+     "scoreable_by_efv_v1": 0
+    },
+    "2014": {
+     "debuts": 132,
+     "pipeline_present": 103,
+     "consensus_sources_pipeline_only": 103,
+     "with_fangraphs": 0,
+     "scoreable_by_efv_v1": 103
+    },
+    "2015": {
+     "debuts": 146,
+     "pipeline_present": 135,
+     "consensus_sources_pipeline_only": 135,
+     "with_fangraphs": 0,
+     "scoreable_by_efv_v1": 135
+    },
+    "2016": {
+     "debuts": 96,
+     "pipeline_present": 93,
+     "consensus_sources_pipeline_only": 93,
+     "with_fangraphs": 0,
+     "scoreable_by_efv_v1": 93
+    }
+   },
+   "consensus": {
+    "n_rows": 492,
+    "n_consensus_sources_pipeline_only": 492,
+    "n_consensus_value_equals_pipeline": 0,
+    "consensus_vs_pipeline_rank_agreement_by_year": {
+     "2011": 0.8496,
+     "2012": 0.9116,
+     "2013": 0.8978,
+     "2014": 0.9435,
+     "2015": 0.9301,
+     "2016": 0.9136
+    },
+    "consensus_is": "MLB Pipeline alone: on every row the consensus read's only contributing source is mlb_pipeline (FanGraphs boards begin at list vintage 2017); its value is the source-calibrated Pipeline grade, not the published one, so the two columns agree in rank, not in value"
+   },
+   "scored_by": "tools/efv_vm3_frame_read.py (data/efv_vm3_frame_eval.json)",
+   "note": "counts only, published first; a development frame of its own, never pooled with vm2 or vm3, and nothing served reads it"
+  }
  },
  "vm3": {
   "item": "EFV3_A5",
   "role": "development",
-  "generated_at": "2026-10-09T01:13:25Z",
+  "generated_at": "2026-10-09T01:35:51Z",
   "model_id": "efv_v2",
   "adjudicates": false,
   "selects": false,
@@ -146,9 +227,9 @@
    "exploratory": false
   },
   "code": {
-   "commit": "0f9fb164",
+   "commit": "cbcce615",
    "tool": "tools/efv_vm3_frame_read.py",
-   "source_backtest_sha256": "f911fb17ebef63cf440cee812a45ca836ac53d7bf68e1ee85f6c9b2626ac029c",
+   "source_backtest_sha256": "e499b137ef90def366333c4ac242dff08140fadbbfd21d89ae81940e3958c5f9",
    "efv_v2_stat_sha256": "0a1db56abe2cac3528563b1538291b3dabc994b5694b814c52824d9ce73c07c3"
   },
   "scored_object": {
@@ -6190,6 +6271,2154 @@
    }
   }
  },
+ "vm_pipeline_2011_2016": {
+  "item": "EFV3_A5",
+  "role": "development",
+  "generated_at": "2026-10-09T01:35:51Z",
+  "model_id": "efv_v1",
+  "adjudicates": false,
+  "selects": false,
+  "exploratory": false,
+  "note": "development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, Pipeline-only panel 2011 to 2016, consensus on these rows is MLB Pipeline alone, eFV v1 only, never pooled with vm2 or vm3; not a claim",
+  "label": {
+   "provider": "fwar",
+   "resolved_through": 2026,
+   "id": "fwar@2026-10-02-0341299c20ec",
+   "vintage": "2026-10-02-0341299c20ec",
+   "exploratory": false
+  },
+  "code": {
+   "commit": "cbcce615",
+   "tool": "tools/efv_vm3_frame_read.py",
+   "source_backtest_sha256": "e499b137ef90def366333c4ac242dff08140fadbbfd21d89ae81940e3958c5f9",
+   "efv_v2_stat_sha256": "0a1db56abe2cac3528563b1538291b3dabc994b5694b814c52824d9ce73c07c3"
+  },
+  "scored_object": {
+   "efv_v1": "efv_model.oos_grades(timing_pin=True); V2 has no out-of-sample score before 2017"
+  },
+  "consensus_is": "MLB Pipeline alone on these rows",
+  "never_pooled_with": [
+   "vm2",
+   "vm3"
+  ],
+  "bootstrap": {
+   "B": 2000,
+   "seed": 20260906,
+   "estimator": "E_cond",
+   "unit": "player cluster"
+  },
+  "frames": {
+   "vm_pipeline_2011_2016": {
+    "frame_version": "vm_pipeline_2011_2016",
+    "basis": "pooled_efv_vm_pipeline_2011_2016",
+    "window": [
+     2011,
+     2016
+    ],
+    "rule": "every debut-cohort row of 2011 to 2016 (base year equal to the debut year) with an in-window MLB Pipeline read and a timing-pinned eFV v1 score; a row with a FanGraphs grade in its window is excluded and counted; consensus on these rows is MLB Pipeline alone; never pooled with vm2 or vm3",
+    "outcome": "career WAR to date",
+    "contributor": "career WAR >= 3.0",
+    "n": 330,
+    "n_by_side": {
+     "hit": 155,
+     "pit": 175
+    },
+    "n_players": 330,
+    "groups": [
+     "hit|2014",
+     "hit|2015",
+     "hit|2016",
+     "pit|2014",
+     "pit|2015",
+     "pit|2016"
+    ],
+    "receipt": {
+     "frame_version": "vm_pipeline_2011_2016",
+     "rule": "every debut-cohort row of 2011 to 2016 (base year equal to the debut year) with an in-window MLB Pipeline read and a timing-pinned eFV v1 score; a row with a FanGraphs grade in its window is excluded and counted; consensus on these rows is MLB Pipeline alone; never pooled with vm2 or vm3",
+     "n_candidates": 492,
+     "n_rows": 330,
+     "n_without_pin": 161,
+     "n_pin_year_differs": 1,
+     "n_outside_window": 0,
+     "n_both_sources": 0,
+     "n_with_mlb_pipeline": 330,
+     "n_with_fangraphs": 0,
+     "n_input_equals_rater_consensus": 330,
+     "window_mmdd": [
+      "-01-01",
+      "-05-01"
+     ],
+     "n_with_fangraphs_excluded": 0,
+     "consensus": {
+      "n_rows": 330,
+      "n_consensus_sources_pipeline_only": 330,
+      "n_consensus_value_equals_pipeline": 0,
+      "consensus_vs_pipeline_rank_agreement_by_year": {
+       "2014": 0.9435,
+       "2015": 0.9292,
+       "2016": 0.9136
+      },
+      "consensus_is": "MLB Pipeline alone: on every row the consensus read's only contributing source is mlb_pipeline (FanGraphs boards begin at list vintage 2017); its value is the source-calibrated Pipeline grade, not the published one, so the two columns agree in rank, not in value"
+     }
+    },
+    "dropped": {
+     "no_side": 0,
+     "fangraphs_in_window": 0
+    },
+    "population_rows": 492,
+    "statistic": "within (side, vintage) Spearman, size-weighted",
+    "raters": {
+     "efv_v1": {
+      "spearman": 0.3944,
+      "auc": 0.7329,
+      "n": 330,
+      "within": 0.3944,
+      "pooled": 0.3994,
+      "within_rows": 330,
+      "within_groups": 6,
+      "own_rows": true
+     },
+     "prospx_consensus": {
+      "spearman": 0.3978,
+      "auc": 0.728,
+      "n": 330,
+      "within": 0.3978,
+      "pooled": 0.4036,
+      "within_rows": 330,
+      "within_groups": 6,
+      "own_rows": true
+     },
+     "mlb_pipeline": {
+      "spearman": 0.4359,
+      "auc": 0.7243,
+      "n": 330,
+      "within": 0.4359,
+      "pooled": 0.3949,
+      "within_rows": 330,
+      "within_groups": 6,
+      "own_rows": true
+     }
+    },
+    "deltas": {
+     "efv_v1_vs_prospx_consensus": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 330,
+       "n_clusters": 330,
+       "groups_kept": [
+        "hit|2014",
+        "hit|2015",
+        "hit|2016",
+        "pit|2014",
+        "pit|2015",
+        "pit|2016"
+       ],
+       "rows_in_kept_groups": 330,
+       "min_group_rows": 20,
+       "a": 0.39438,
+       "b": 0.39783,
+       "delta": -0.00345,
+       "ci95": [
+        -0.0437,
+        0.0361
+       ],
+       "sd": 0.02065,
+       "mde95": 0.034,
+       "p_gt_0": 0.3965,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 330,
+       "n_clusters": 330,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.39936,
+       "b": 0.40357,
+       "delta": -0.00421,
+       "ci95": [
+        -0.0385,
+        0.0324
+       ],
+       "sd": 0.01826,
+       "mde95": 0.03,
+       "p_gt_0": 0.41,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 330,
+       "n_clusters": 330,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.73293,
+       "b": 0.72798,
+       "delta": 0.00496,
+       "ci95": [
+        -0.0145,
+        0.0266
+       ],
+       "sd": 0.01052,
+       "mde95": 0.0173,
+       "p_gt_0": 0.6775,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      }
+     },
+     "efv_v1_vs_mlb_pipeline": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 330,
+       "n_clusters": 330,
+       "groups_kept": [
+        "hit|2014",
+        "hit|2015",
+        "hit|2016",
+        "pit|2014",
+        "pit|2015",
+        "pit|2016"
+       ],
+       "rows_in_kept_groups": 330,
+       "min_group_rows": 20,
+       "a": 0.39438,
+       "b": 0.4359,
+       "delta": -0.04152,
+       "ci95": [
+        -0.0909,
+        0.0009
+       ],
+       "sd": 0.02376,
+       "mde95": 0.0391,
+       "p_gt_0": 0.0275,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 330,
+       "n_clusters": 330,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.39936,
+       "b": 0.39488,
+       "delta": 0.00449,
+       "ci95": [
+        -0.0526,
+        0.0604
+       ],
+       "sd": 0.02909,
+       "mde95": 0.0479,
+       "p_gt_0": 0.576,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 330,
+       "n_clusters": 330,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.73293,
+       "b": 0.72425,
+       "delta": 0.00868,
+       "ci95": [
+        -0.0227,
+        0.0416
+       ],
+       "sd": 0.01639,
+       "mde95": 0.027,
+       "p_gt_0": 0.705,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero",
+       "identical_rows": true
+      }
+     }
+    },
+    "secondary": {
+     "statistic": "pooled Spearman after the identical output map",
+     "raters": {
+      "efv_v1": 0.3994,
+      "prospx_consensus": 0.4036,
+      "mlb_pipeline": 0.3949
+     },
+     "deltas": {
+      "efv_v1_vs_prospx_consensus": {
+       "delta": -0.00421,
+       "ci95": [
+        -0.0385,
+        0.0324
+       ],
+       "mde95": 0.03,
+       "reading": "development only; CI95 spans zero"
+      },
+      "efv_v1_vs_mlb_pipeline": {
+       "delta": 0.00449,
+       "ci95": [
+        -0.0526,
+        0.0604
+       ],
+       "mde95": 0.0479,
+       "reading": "development only; CI95 spans zero"
+      }
+     }
+    },
+    "holm": {
+     "frame": "vm_pipeline_2011_2016",
+     "basis": "pooled_efv_vm_pipeline_2011_2016",
+     "n": 330,
+     "estimator": "E_cond",
+     "resampling_unit": "player cluster",
+     "B": 2000,
+     "seed": 20260906,
+     "convention": "delta = eFV minus the rater on identical rows; ci95 is the 2.5th and 97.5th percentile of the paired player-clustered bootstrap; MDE95 = 1.645 * sd(delta), one-sided",
+     "note": "a cell prints a verdict word only if it clears its floor after a Holm correction across the six cells in `holm.family`; otherwise it is read as its interval only (owner answer FP3-3, 2026-09-25)",
+     "sources": {
+      "prospx_consensus": {
+       "label": "PROSPX consensus",
+       "spearman": {
+        "xfv": 0.3983,
+        "rater": 0.4087,
+        "n": 330,
+        "delta": -0.0104,
+        "point_delta_unrounded": -0.0104,
+        "ci95": [
+         -0.0575,
+         0.0365
+        ],
+        "sd": 0.02355,
+        "mde95": 0.0387,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": false,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.32938,
+         "holm_step": 2,
+         "holm_alpha": 0.01,
+         "holm_z_one_sided": 2.3263,
+         "mde95_holm": 0.0548,
+         "reject_holm": false
+        },
+        "verdict": null,
+        "reading": "interval only"
+       },
+       "auc": {
+        "xfv": 0.7289,
+        "rater": 0.7301,
+        "n": 330,
+        "delta": -0.0012,
+        "point_delta_unrounded": -0.00123,
+        "ci95": [
+         -0.0292,
+         0.0272
+        ],
+        "sd": 0.01445,
+        "mde95": 0.0238,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": false,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.46691,
+         "holm_step": 4,
+         "holm_alpha": 0.016667,
+         "holm_z_one_sided": 2.128,
+         "mde95_holm": 0.0308,
+         "reject_holm": false
+        },
+        "verdict": null,
+        "reading": "interval only"
+       }
+      },
+      "mlb_pipeline": {
+       "label": "MLB Pipeline",
+       "spearman": {
+        "xfv": 0.3983,
+        "rater": 0.4507,
+        "n": 330,
+        "delta": -0.0524,
+        "point_delta_unrounded": -0.05236,
+        "ci95": [
+         -0.1036,
+         -0.0056
+        ],
+        "sd": 0.02479,
+        "mde95": 0.0408,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": true,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.01727,
+         "holm_step": 1,
+         "holm_alpha": 0.008333,
+         "holm_z_one_sided": 2.394,
+         "mde95_holm": 0.0593,
+         "reject_holm": false
+        },
+        "verdict": null,
+        "reading": "interval only"
+       },
+       "auc": {
+        "xfv": 0.7289,
+        "rater": 0.7345,
+        "n": 330,
+        "delta": -0.0056,
+        "point_delta_unrounded": -0.00564,
+        "ci95": [
+         -0.0334,
+         0.0212
+        ],
+        "sd": 0.01403,
+        "mde95": 0.0231,
+        "mde95_estimator": "E_cond",
+        "derived_in_run": true,
+        "status": null,
+        "clears_e_cond_floor": false,
+        "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
+        "holm": {
+         "p_one_sided": 0.34489,
+         "holm_step": 3,
+         "holm_alpha": 0.0125,
+         "holm_z_one_sided": 2.2414,
+         "mde95_holm": 0.0314,
+         "reject_holm": false
+        },
+        "verdict": null,
+        "reading": "interval only"
+       }
+      }
+     },
+     "own_rows": true,
+     "own_rows_note": "each source is scored on the rows it graded; a cell's point values are eFV and the rater on those identical rows and n is their count",
+     "holm": {
+      "family": [
+       "prospx_consensus.spearman",
+       "prospx_consensus.auc",
+       "mlb_pipeline.spearman",
+       "mlb_pipeline.auc",
+       "fangraphs.spearman",
+       "fangraphs.auc"
+      ],
+      "k": 6,
+      "alpha": 0.05,
+      "procedure": "Holm step-down, one-sided on |delta| / sd, sd = the cell's E_cond bootstrap sd",
+      "rule": "a cell carries a verdict word only when it survives Holm; the PROSPX consensus Spearman cell also needs head_to_head_verdict to resolve in the same direction; every other cell is read as its interval only",
+      "registered": "owner answer FP3-3, 2026-09-25, before this block was first read",
+      "n_verdicts": 0
+     },
+     "role": "development",
+     "reading_rule": "development frame: no headline verdict exists for it, so the PROSPX consensus Spearman cell carries no word; every cell is read as its interval"
+    },
+    "e_refit_floor": null,
+    "resolvable": null,
+    "verdict": "development only; CI95 spans zero",
+    "note": "development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, Pipeline-only panel 2011 to 2016, consensus on these rows is MLB Pipeline alone, eFV v1 only, never pooled with vm2 or vm3; not a claim",
+    "rows": [
+     {
+      "key": "manuel_margot",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "rio_ruiz",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "matt_olson",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "renato_nunez",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "german_marquez",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "david_paulino",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "carson_kelly",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "yohander_mendez",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "yoan_moncada",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "raimel_tapia",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "dansby_swanson",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "alex_reyes",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "rob_whalen",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "andrew_benintendi",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "orlando_arcia",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "alex_bregman",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "david_dahl",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "reynaldo_lopez",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "lucas_giolito",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "zach_eflin",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_danish",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "albert_almora_jr",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "edwin_diaz",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "julio_urias",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "jose_berrios",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "nomar_mazara",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "blake_snell",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "jameson_taillon",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "joe_musgrove",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "michael_fulmer",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "mike_clevinger",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "tim_anderson",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "sean_manaea",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "braden_shipley",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "aaron_blair",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "aj_reed",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "destin_hood",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "trevor_story",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "blake_smith",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "tyler_naquin",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "daniel_mengden",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "ryon_healy",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "mallex_smith",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "chad_kuhl",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "willson_contreras",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "danny_barnes",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_white",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "tony_wolters",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "tyrell_jenkins",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "tommy_joseph",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "jed_bradley",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "kevan_smith",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "brett_eibner",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "jabari_blash",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "matt_purke",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "marco_hernandez",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "tyler_anderson",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "pat_light",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_goeddel",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "jake_barrett",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "jayson_aquino",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "ross_stripling",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "patrick_kivlehan",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "jason_hursh",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "nick_wittgren",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "tony_renda",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "derek_law",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "andy_burns",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "taylor_rogers",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "tony_kemp",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "matt_bowman",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "joe_mantiply",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "ji_man_choi",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "joely_rodriguez",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "adrian_sampson",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "mike_mayers",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "pat_valaika",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "chad_girodo",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "joey_rickard",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "andrew_triggs",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "taylor_motter",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "jason_coats",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "chris_devenski",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "greg_mahle",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "seth_lugo",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "edubray_ramos",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "jacob_barnes",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "adam_frazier",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "dean_kiekhefer",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "carlos_estevez",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "luis_perdomo",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "jake_smith",
+      "year": 2016,
+      "side": "pit"
+     },
+     {
+      "key": "spencer_kieboom",
+      "year": 2016,
+      "side": "hit"
+     },
+     {
+      "key": "corey_seager",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "jose_peraza",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "luis_severino",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "carlos_correa",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "addison_russell",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "miguel_castro",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "roberto_osuna",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "byron_buxton",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "kris_bryant",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "miguel_sano",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "francisco_lindor",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "noah_syndergaard",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "blake_swihart",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "joey_gallo",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "steven_matz",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "trea_turner",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "kyle_schwarber",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "gary_sanchez",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "archie_bradley",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "eduardo_rodriguez",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "max_kepler",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "austin_hedges",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "joe_ross",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "vince_velasquez",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "kevin_plawecki",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "stephen_piscotty",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "matt_wisler",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "ketel_marte",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "jon_gray",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "aj_schugel",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "adam_morgan",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "carlos_rodon",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "aaron_nola",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "michael_conforto",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "mychal_givens",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "mikie_mahtook",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "justin_nicolino",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "eddie_rosario",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "sean_gilmartin",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "brandon_drury",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "adam_conley",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "jose_urena",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "ryan_lamarre",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "josh_osich",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "lance_mccullers_jr",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "greg_bird",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "cody_anderson",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "devon_travis",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "michael_feliz",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "chi_chi_gonzalez",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "michael_lorenzen",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "travis_jankowski",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "mac_williamson",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "rob_refsnyder",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "wilmer_difo",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "ramon_cabrera",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "gio_urshela",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "slade_heathcott",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "trayce_thompson",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "daniel_fields",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "mike_montgomery",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "john_lamb",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "delino_deshields",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "kaleb_cowart",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "sammy_solis",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "zach_lee",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "mason_williams",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "asher_wojciechowski",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "oliver_drake",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "mike_wright_jr",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "ryan_brett",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "felipe_vazquez",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_saladino",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "cheslor_cuthbert",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "orlando_calixte",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "ariel_pena",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "jr_graham",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "mark_canha",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "cory_mazzoni",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "taylor_jungmann",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "david_goforth",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "yadiel_rivera",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "alex_dickerson",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "dan_winkler",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "chris_reed",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "keyvius_sampson",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "jarrett_parker",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "ramon_flores",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "deven_marrero",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "travis_shaw",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "zach_davies",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "richie_shaffer",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "carl_edwards_jr",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "cody_martin",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "hansel_robles",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "micah_johnson",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "jose_a_valdez",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "alec_asher",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "keone_kela",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_kubitza",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "severino_gonzalez",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "scott_oberg",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "scott_schebler",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "darnell_sweeney",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "kendry_flores",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_wilson",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "mayckol_guaipe",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "brian_ellington",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "jon_moscot",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_wagner",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "peter_obrien",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "matthew_boyd",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "logan_verrett",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "angel_nesbitt",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_duffey",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "preston_tucker",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "taylor_featherston",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "trevor_gott",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "john_hicks",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "david_rollins",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "jerad_eickhoff",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "hanser_alberto",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "andrew_mckirahan",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "jack_leathersich",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "odubel_herrera",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "nefi_ogando",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "tyler_cravy",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "oscar_hernandez",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "enrique_burgos",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "cody_hall",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "ronald_torreyes",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "arnold_leon",
+      "year": 2015,
+      "side": "pit"
+     },
+     {
+      "key": "jefry_marte",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "jett_bandy",
+      "year": 2015,
+      "side": "hit"
+     },
+     {
+      "key": "dilson_herrera",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "rougned_odor",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "oscar_taveras",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "javier_baez",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "gregory_polanco",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "daniel_norris",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "george_springer",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "donn_roach",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "joc_pederson",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "jorge_soler",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "andrew_heaney",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "mookie_betts",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "aaron_sanchez",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "mike_foltynewicz",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "jon_singleton",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "domingo_santana",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "luis_sardinas",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "jt_realmuto",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "maikel_franco",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "marcus_stroman",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "dalton_pompey",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "jake_lamb",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "eddie_butler",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "jorge_polanco",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "steven_souza_jr",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "arismendy_alcantara",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "anthony_ranaudo",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "matt_szczur",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "matt_barnes",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "nick_tropeano",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "cj_cron",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "roman_mendez",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "rafael_montero",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "robbie_ray",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "evan_marshall",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "jace_peterson",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "joe_panik",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "andrew_susac",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "christian_vazquez",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "eugenio_suarez",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "danny_santana",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "tommy_la_stella",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "corey_knebel",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "carson_smith",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "anthony_desclafani",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "tommy_kahnle",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "eric_fornataro",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "chase_anderson",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "kevin_quackenbush",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "chris_heston",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "kennys_vargas",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "chris_taylor",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "carlos_contreras",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "jesse_hahn",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "christian_colon",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "cam_bedrosian",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "trevor_may",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "aaron_altherr",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "yorman_rodriguez",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "tyler_matzek",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_parker",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "gary_brown",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "rymer_liriano",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "bryce_brentz",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "cory_spangenberg",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "bryan_mitchell",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "garin_cecchini",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "scott_snodgress",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "james_mccann",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "randal_grichuk",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "neil_ramirez",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "nick_ahmed",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "lisalverto_bonilla",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "daniel_corcino",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "andrew_chafin",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "adam_duvall",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "jose_ramirez",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "jesus_aguilar",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "steven_moya",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "drew_verhagen",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "melvin_mercedes",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "rj_alvarez",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "stefen_romero",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "juan_jaime",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "jacob_degrom",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "cristhian_adames",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "yimi_garcia",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "edwin_escobar",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "yolmer_sanchez",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "chris_bassitt",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "billy_burns",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "tucker_barnhart",
+      "year": 2014,
+      "side": "hit"
+     },
+     {
+      "key": "pedro_baez",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_crockett",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "mike_morin",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "dominic_leone",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "nick_martinez",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "ian_thomas",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "shae_simmons",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "blake_treinen",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "kyle_hendricks",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "weichung_wang",
+      "year": 2014,
+      "side": "pit"
+     },
+     {
+      "key": "matt_stites",
+      "year": 2014,
+      "side": "pit"
+     }
+    ]
+   }
+  }
+ },
  "probes": {
   "EFV3_A5:vm3.efv_vs_consensus": {
    "tag": "EFV3_A5:vm3.efv_vs_consensus",
@@ -6199,9 +8428,18 @@
     0.0104
    ],
    "reason": "n 1022; within delta -0.01359, pooled delta -0.01446; one frame read carrying 5 comparisons by within, pooled and AUC; development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, consensus-present rule; vm2 stays the headline; not a claim"
+  },
+  "EFV3_A5:vm_pipeline_2011_2016.efv_vs_consensus": {
+   "tag": "EFV3_A5:vm_pipeline_2011_2016.efv_vs_consensus",
+   "verdict": "READ",
+   "ci95": [
+    -0.0437,
+    0.0361
+   ],
+   "reason": "n 330; within delta -0.00345, pooled delta -0.00421; one frame read carrying 2 comparisons by within, pooled and AUC; development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, Pipeline-only panel 2011 to 2016, consensus on these rows is MLB Pipeline alone, eFV v1 only, never pooled with vm2 or vm3; not a claim"
   }
  },
- "n_probes": 1,
- "not_a_claim": "development frames; vm2 stays the headline; no served number reads this file; copy keeps 'ties consensus'",
- "elapsed_s": 44.5
+ "n_probes": 2,
+ "not_a_claim": "development frames; vm2 stays the headline; the panel is never pooled with vm2 or vm3; no served number reads this file; copy keeps 'ties consensus'",
+ "elapsed_s": 52.3
 }

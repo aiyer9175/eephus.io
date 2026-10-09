@@ -2594,6 +2594,123 @@ def vm3_census(universe, years, xfv_oos_pin, receipts, side_of) -> dict:
     }
 
 
+#: EFV3_A5 (EFV3_PLAN.md s3 G3): the Pipeline-only panel, debut cohorts 2011 to 2016
+#: with an in-window MLB Pipeline read. FanGraphs does not exist there (its boards
+#: begin at list vintage 2017), so the consensus on these rows is Pipeline alone and
+#: the receipt says so. A DEVELOPMENT frame of its own, scored by eFV v1 only (v1's
+#: forward chain scores decision years from efv_model.SCORED_YEARS, 2014; V2 has no
+#: out-of-sample score before 2017) and NEVER pooled with vm2 or vm3 rows: its
+#: cohorts end before the vintage-matched window begins.
+PIPELINE_PANEL_FRAME_KEY = "vm_pipeline_2011_2016"
+PIPELINE_PANEL_YEARS = (2011, 2012, 2013, 2014, 2015, 2016)
+PIPELINE_PANEL_SOURCE = "mlb_pipeline"
+PIPELINE_PANEL_RULE = ("every debut-cohort row of 2011 to 2016 (base year equal to the "
+                       "debut year) with an in-window MLB Pipeline read and a "
+                       "timing-pinned eFV v1 score; a row with a FanGraphs grade in its "
+                       "window is excluded and counted; consensus on these rows is "
+                       "MLB Pipeline alone; never pooled with vm2 or vm3")
+
+
+def _consensus_sources_for_year(p: dict, year: int) -> list[str]:
+    """The sources that contributed to the consensus read `_rater_grades_for_year`
+    takes for `year` (the latest in-window point's `sources_contributing`), sorted;
+    [] when the point does not say."""
+    lo, hi = f"{year}{_WINDOW_START_MMDD}", f"{year}{_WINDOW_END_MMDD}"
+    win = sorted((pt for pt in (p.get("points") or [])
+                  if pt.get("snapshot_date") and lo <= pt["snapshot_date"] < hi),
+                 key=lambda pt: pt["snapshot_date"])
+    if not win:
+        return []
+    return sorted(str(s) for s in (win[-1].get("sources_contributing") or []))
+
+
+def _pipeline_panel_rows(universe, years=PIPELINE_PANEL_YEARS):
+    """The panel's candidate rows: `_consensus_present_rows` with the Pipeline read
+    required beside the consensus, and any row carrying a FanGraphs grade in its
+    window set aside. Each row carries `consensus_sources`, the sources behind its
+    consensus read, so the receipt can say the consensus is Pipeline alone (the
+    consensus VALUE is the source-calibrated Pipeline grade, not the published
+    one). Returns (rows, n_with_fangraphs_excluded)."""
+    cand = _consensus_present_rows(universe, years,
+                                   require=(PIPELINE_PANEL_SOURCE, CONSENSUS_KEY))
+    by_key = {p.get("player_key"): p for p in universe}
+    keep, n_fg = [], 0
+    for c in cand:
+        if c["grades"].get("fangraphs") is not None:
+            n_fg += 1
+            continue
+        c["consensus_sources"] = _consensus_sources_for_year(by_key[c["key"]], c["year"])
+        keep.append(c)
+    return keep, n_fg
+
+
+def _panel_consensus_receipt(rows) -> dict:
+    """What the consensus is on the panel's rows: the contributing-source count, the
+    value equality (expected 0: the consensus is the source-calibrated grade) and
+    the within-cohort rank agreement between the two columns (no outcome read)."""
+    only = sum(1 for c in rows if c.get("consensus_sources") == [PIPELINE_PANEL_SOURCE])
+    equal = sum(1 for c in rows
+                if c["grades"].get(CONSENSUS_KEY) == c["grades"].get(PIPELINE_PANEL_SOURCE))
+    by_year: dict = {}
+    for c in rows:
+        by_year.setdefault(c["year"], []).append(
+            (c["grades"][CONSENSUS_KEY], c["grades"][PIPELINE_PANEL_SOURCE]))
+    agree = {}
+    for y in sorted(by_year):
+        pairs = by_year[y]
+        rho = _spearman([a for a, _b in pairs], [b for _a, b in pairs]) if len(pairs) >= 3 else None
+        agree[str(y)] = None if rho is None else round(rho, 4)
+    return {"n_rows": len(rows),
+            "n_consensus_sources_pipeline_only": only,
+            "n_consensus_value_equals_pipeline": equal,
+            "consensus_vs_pipeline_rank_agreement_by_year": agree,
+            "consensus_is": ("MLB Pipeline alone: on every row the consensus read's only "
+                             "contributing source is mlb_pipeline (FanGraphs boards begin "
+                             "at list vintage 2017); its value is the source-calibrated "
+                             "Pipeline grade, not the published one, so the two columns "
+                             "agree in rank, not in value")}
+
+
+def pipeline_panel_census(universe, years=PIPELINE_PANEL_YEARS) -> dict:
+    """The panel's counts, published before any statistic (EFV3_A5 G3): per debut
+    cohort the debuts, the rows with an in-window Pipeline read, the rows whose
+    consensus equals the Pipeline grade, the rows with a FanGraphs grade (expected
+    0) and the rows eFV v1 can score (decision year in efv_model.SCORED_YEARS).
+    Counts only; the frame is scored by tools/efv_vm3_frame_read.py."""
+    years = list(years)
+    rows, n_fg = _pipeline_panel_rows(universe, years)
+    try:
+        from efv_model import SCORED_YEARS as _scored
+        first_scored = min(_scored)
+    except Exception:                                         # noqa: BLE001
+        first_scored = None
+    by_year = {y: {"debuts": 0, "pipeline_present": 0, "consensus_sources_pipeline_only": 0,
+                   "with_fangraphs": 0, "scoreable_by_efv_v1": 0} for y in years}
+    for p in universe:
+        dy = _outcome(p).get("debut_year")
+        if dy in by_year:
+            by_year[dy]["debuts"] += 1
+    for c in rows:
+        b = by_year[c["year"]]
+        b["pipeline_present"] += 1
+        b["consensus_sources_pipeline_only"] += int(
+            c.get("consensus_sources") == [PIPELINE_PANEL_SOURCE])
+        b["scoreable_by_efv_v1"] += int(first_scored is not None and c["year"] >= first_scored)
+    return {
+        "frame": PIPELINE_PANEL_FRAME_KEY, "role": VM3_ROLE, "rule": PIPELINE_PANEL_RULE,
+        "window": [min(years), max(years)] if years else None,
+        "n_pipeline_present": len(rows),
+        "n_with_fangraphs_excluded": n_fg,
+        "n_scoreable_by_efv_v1": sum(b["scoreable_by_efv_v1"] for b in by_year.values()),
+        "first_scored_year": first_scored,
+        "by_debut_year": {str(y): by_year[y] for y in sorted(by_year)},
+        "consensus": _panel_consensus_receipt(rows),
+        "scored_by": "tools/efv_vm3_frame_read.py (data/efv_vm3_frame_eval.json)",
+        "note": ("counts only, published first; a development frame of its own, never "
+                 "pooled with vm2 or vm3, and nothing served reads it"),
+    }
+
+
 def _own_rows_point(rows, rater, metric):
     """eFV and `rater` on the rows both graded (the own-rows convention of the vm3
     frame): the two point values of a cell and the row count behind them."""
@@ -4245,6 +4362,12 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     except Exception:                                         # noqa: BLE001
         log.exception("vm3 census unavailable - continuing")
         accuracy["vm3_census"] = None
+    # EFV3_A5 (G3): the Pipeline-only panel's counts, the same contract.
+    try:
+        accuracy["pipeline_panel_census"] = pipeline_panel_census(universe)
+    except Exception:                                         # noqa: BLE001
+        log.exception("pipeline panel census unavailable - continuing")
+        accuracy["pipeline_panel_census"] = None
     # M-1 row accounting. Published rather than left in a doc, because the strip
     # changes the population every head-to-head number is computed on and a reader
     # has to be able to see exactly what left.

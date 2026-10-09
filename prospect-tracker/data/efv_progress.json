@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-09T01:26:10Z",
+ "generated_at": "2026-10-09T01:35:53Z",
  "headline_frame": "vm2",
  "frames": {
   "vm": {
@@ -92,6 +92,12 @@
    "tilted": false,
    "label": "Vintage-matched, consensus-present rule (vm3)",
    "note": "development frame, consensus-present rule; vm2 stays the headline; not a claim"
+  },
+  "vm_pipeline_2011_2016": {
+   "role": "development",
+   "tilted": false,
+   "label": "Pipeline-only panel, debut cohorts 2011 to 2016",
+   "note": "development frame; consensus on these rows is MLB Pipeline alone; never pooled with vm2 or vm3; not a claim"
   }
  },
  "chart": {
@@ -22351,7 +22357,7 @@
     }
    ],
    "note": "development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, consensus-present rule; vm2 stays the headline; not a claim",
-   "last_verified_at": "2026-10-09T01:26:10Z",
+   "last_verified_at": "2026-10-09T01:35:53Z",
    "statistic": "within (side, vintage) Spearman, size-weighted",
    "secondary": {
     "statistic": "pooled Spearman after the identical output map",
@@ -22411,6 +22417,149 @@
     }
    },
    "content_hash": "806d8fdbff9d129b866d4b7660f967bbbd80c3983ab3118e64bf1f464aa34a72"
+  },
+  {
+   "run_id": "2026-10-09T01:35:51Z|vm_pipeline_2011_2016|2f0c6faa",
+   "date": "2026-10-09",
+   "trigger": "efv_change",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "cbcce615",
+    "label": "fwar@2026-10-02-0341299c20ec",
+    "resolved_through": 2026,
+    "provider": "fwar"
+   },
+   "frame": "vm_pipeline_2011_2016",
+   "frame_version": "vm_pipeline_2011_2016",
+   "role": "development",
+   "tilted": false,
+   "window": [
+    2011,
+    2016
+   ],
+   "n": 330,
+   "n_by_side": {
+    "hit": 155,
+    "pit": 175
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3944,
+     "auc": 0.7329,
+     "n": 330
+    },
+    "prospx_consensus": {
+     "spearman": 0.3978,
+     "auc": 0.728,
+     "n": 330
+    },
+    "mlb_pipeline": {
+     "spearman": 0.4359,
+     "auc": 0.7243,
+     "n": 330
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.00345,
+      "ci95": [
+       -0.0437,
+       0.0361
+      ],
+      "mde95": 0.034,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_pipeline_2011_2016.deltas.efv_v1_vs_prospx_consensus.spearman"
+     },
+     "auc": {
+      "delta": 0.00496,
+      "ci95": [
+       -0.0145,
+       0.0266
+      ],
+      "mde95": 0.0173,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_pipeline_2011_2016.deltas.efv_v1_vs_prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.04152,
+      "ci95": [
+       -0.0909,
+       0.0009
+      ],
+      "mde95": 0.0391,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_pipeline_2011_2016.deltas.efv_v1_vs_mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.00868,
+      "ci95": [
+       -0.0227,
+       0.0416
+      ],
+      "mde95": 0.027,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, paired, player-clustered",
+      "resolvable": null,
+      "reading": "development only; CI95 spans zero",
+      "key": "frames.vm_pipeline_2011_2016.deltas.efv_v1_vs_mlb_pipeline.auc"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "development only; CI95 spans zero",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/efv_vm3_frame_eval.json",
+     "generated_at": "2026-10-09T01:35:51Z",
+     "sha256": "46ae64bc685d5fcbaebf19f3dd0d0eb0ad8046b0ffcb1cb715c88b6d1e76134f"
+    }
+   ],
+   "note": "development read on the frozen fWAR label (fwar@2026-10-02-0341299c20ec); frame census, Pipeline-only panel 2011 to 2016, consensus on these rows is MLB Pipeline alone, eFV v1 only, never pooled with vm2 or vm3; not a claim",
+   "last_verified_at": "2026-10-09T01:35:53Z",
+   "statistic": "within (side, vintage) Spearman, size-weighted",
+   "secondary": {
+    "statistic": "pooled Spearman after the identical output map",
+    "raters": {
+     "efv": 0.3994,
+     "prospx_consensus": 0.4036,
+     "mlb_pipeline": 0.3949
+    },
+    "deltas": {
+     "vs_prospx_consensus": {
+      "delta": -0.00421,
+      "ci95": [
+       -0.0385,
+       0.0324
+      ],
+      "mde95": 0.03,
+      "reading": "development only; CI95 spans zero"
+     },
+     "vs_mlb_pipeline": {
+      "delta": 0.00449,
+      "ci95": [
+       -0.0526,
+       0.0604
+      ],
+      "mde95": 0.0479,
+      "reading": "development only; CI95 spans zero"
+     }
+    }
+   },
+   "content_hash": "2f0c6faa2bc6b21c5e2719becfa38f18db0c5514f3ae713be571abc94127ce14"
   }
  ],
  "backfill": {

@@ -26,6 +26,13 @@ primary, pooled after the identical map secondary, contributor AUC veto), every
 comparison on identical rows; the per-source Holm family of
 source_backtest.H2H_HOLM_RATERS x H2H_HOLM_METRICS (k 6) unchanged, own rows.
 
+Part (2), the Pipeline-only panel (EFV3_PLAN.md s3 G3): debut cohorts 2011 to 2016
+with an in-window MLB Pipeline read (source_backtest.PIPELINE_PANEL_*), scored by eFV
+v1 only (V2 has no out-of-sample score before 2017; v1 scores decision years from
+efv_model.SCORED_YEARS, 2014), as frame vm_pipeline_2011_2016, role development.
+Consensus on these rows is Pipeline alone and the receipt says so; a row with a
+FanGraphs grade in its window is excluded and counted; never pooled with vm2 or vm3.
+
 The artifact (data/efv_vm3_frame_eval.json) stamps the label the read ran on
 (war_source.DEFAULT_PROVIDER, efv_dataset.RESOLVED_THROUGH): a read on any provider
 but fwar is EXPLORATORY and says so. Its rows land in data/efv_progress.json with
@@ -82,6 +89,17 @@ VM3_COMPARISONS = (("v2_vs_prospx_consensus", V2_KEY, CONS),
                    ("v2_vs_fangraphs", V2_KEY, "fangraphs"))
 PRIMARY_COMPARISON = "v2_vs_prospx_consensus"
 EXPLORATORY_NOTE = "exploratory, eWAR label, frame census; not a claim"
+#: EFV3_A5 (G3): the Pipeline-only panel, debut cohorts 2011 to 2016
+#: (source_backtest.PIPELINE_PANEL_*). Scored by eFV v1 only (its timing-pinned
+#: out-of-sample score under the `xfv` column), against the consensus, which is MLB
+#: Pipeline alone there; FanGraphs has no row and V2 no score. Never pooled with vm2
+#: or vm3 rows: its cohorts end before the vintage-matched window begins.
+PANEL_FRAME = SB.PIPELINE_PANEL_FRAME_KEY
+PANEL_RATERS_OUT = ((V2_KEY, "efv_v1"), (CONS, "prospx_consensus"),
+                    ("mlb_pipeline", "mlb_pipeline"))
+PANEL_COMPARISONS = (("efv_v1_vs_prospx_consensus", V2_KEY, CONS),
+                     ("efv_v1_vs_mlb_pipeline", V2_KEY, "mlb_pipeline"))
+PANEL_PRIMARY_COMPARISON = "efv_v1_vs_prospx_consensus"
 
 
 # ---------------------------------------------------------------------------
@@ -120,9 +138,13 @@ def _label() -> dict:
             "exploratory": provider != "fwar"}
 
 
-def _note(label: dict) -> str:
+def _note(label: dict, frame: str = VM3_FRAME) -> str:
     if label.get("exploratory"):
         return EXPLORATORY_NOTE
+    if frame == PANEL_FRAME:
+        return (f"development read on the frozen fWAR label ({label.get('id')}); frame "
+                "census, Pipeline-only panel 2011 to 2016, consensus on these rows is "
+                "MLB Pipeline alone, eFV v1 only, never pooled with vm2 or vm3; not a claim")
     return (f"development read on the frozen fWAR label ({label.get('id')}); frame "
             "census, consensus-present rule; vm2 stays the headline; not a claim")
 
@@ -179,8 +201,47 @@ def build_vm3(universe: list[dict], years: list[int], side_of: dict) -> tuple[li
             "receipt": receipt, "dropped": dropped,
             "n_candidates": len(cand), "n_pinned_rows": len(rows),
             "v1_pinned_scores": len(v1_pin), "v2_pinned_scores": len(v2_pin),
-            # the pinned maps themselves, for the census (never serialized)
-            "_v2_pin": v2_pin, "_v2_rec": v2_rec}
+            # the pinned maps themselves, for the census and the panel (never serialized)
+            "_v2_pin": v2_pin, "_v2_rec": v2_rec, "_v1_pin": v1_pin, "_v1_rec": v1_rec}
+    return frame, meta
+
+
+def build_panel(universe: list[dict], side_of: dict, v1_pin: dict, v1_rec: dict,
+                vm3_keys: set) -> tuple[list[dict], dict]:
+    """The Pipeline-only panel's rows: source_backtest's panel candidates (an
+    in-window Pipeline read, no FanGraphs grade), kept by _vm3_frame_rows on eFV v1's
+    timing-pinned score and receipt (the `xfv` column is v1 here). Guards: the
+    cohorts are PIPELINE_PANEL_YEARS, below the vintage-matched window, and no panel
+    player is a vm3 row (never pooled)."""
+    years = list(SB.PIPELINE_PANEL_YEARS)
+    if max(years) >= min(SB.CANDIDATE_YEARS) or max(years) >= F.R_VM_FIRST_DEBUT_YEAR:
+        raise ValueError(f"panel years {years} reach the vintage-matched window")
+    cand, n_fg = SB._pipeline_panel_rows(universe, years)
+    rows, receipt = SB._vm3_frame_rows(cand, v1_pin, v1_rec)
+    receipt["frame_version"] = PANEL_FRAME
+    receipt["rule"] = SB.PIPELINE_PANEL_RULE
+    receipt["n_with_fangraphs_excluded"] = n_fg
+    frame, dropped = [], {"no_side": 0, "fangraphs_in_window": 0}
+    for c in rows:
+        k = c["key"]
+        if c["grades"].get("fangraphs") is not None:
+            dropped["fangraphs_in_window"] += 1
+            continue
+        if k in vm3_keys or c["year"] not in years:
+            raise ValueError(f"panel row pooled with vm3 or outside its cohorts: {k} {c['year']}")
+        side = side_of.get(k)
+        if side not in F.SIDES:
+            dropped["no_side"] += 1
+            continue
+        row = dict(c)
+        row["side"] = side
+        row["group"] = f"{side}|{c['year']}"
+        frame.append(row)
+    receipt["n_with_fangraphs"] = sum(1 for c in frame if c["grades"].get("fangraphs") is not None)
+    receipt["consensus"] = SB._panel_consensus_receipt(frame)
+    meta = {"window": [min(years), max(years)], "years": years, "receipt": receipt,
+            "dropped": dropped, "n_candidates": len(cand),
+            "n_with_fangraphs_excluded": n_fg, "n_pinned_rows": len(rows)}
     return frame, meta
 
 
@@ -284,14 +345,19 @@ def _e_refit_floor() -> dict | None:
 
 
 def _frame_doc(rows: list[dict], blk: dict, meta: dict, label: dict, *,
-               holm: dict, e_refit: dict | None) -> dict:
-    prim = blk["deltas"][PRIMARY_COMPARISON]["spearman"]
+               holm: dict, e_refit: dict | None, frame: str = VM3_FRAME,
+               primary: str = PRIMARY_COMPARISON) -> dict:
+    prim = blk["deltas"][primary]["spearman"]
     if e_refit is not None:
         prim["mde95_e_refit"] = e_refit["mde95"]
         prim["mde95_e_refit_estimator"] = "E_refit, pooled Spearman, eFV v1 refit per draw"
         prim["mde95_e_refit_source"] = e_refit["source"]
-    return {"frame_version": SB.VM3_FRAME_VERSION, "basis": SB.VM3_BASIS,
-            "window": meta["window"], "rule": SB.VM3_RULE,
+    if frame == PANEL_FRAME:
+        version, basis, rule = PANEL_FRAME, f"pooled_efv_{PANEL_FRAME}", SB.PIPELINE_PANEL_RULE
+    else:
+        version, basis, rule = SB.VM3_FRAME_VERSION, SB.VM3_BASIS, SB.VM3_RULE
+    return {"frame_version": version, "basis": basis,
+            "window": meta["window"], "rule": rule,
             "outcome": "career WAR to date",
             "contributor": f"career WAR >= {SB.CONTRIBUTOR_WAR}",
             "n": len(rows), "n_by_side": _n_side(rows),
@@ -306,8 +372,18 @@ def _frame_doc(rows: list[dict], blk: dict, meta: dict, label: dict, *,
             "e_refit_floor": e_refit,
             "resolvable": None,
             "verdict": prim["reading"],
-            "note": _note(label),
+            "note": _note(label, frame),
             "rows": [{"key": c["key"], "year": c["year"], "side": c["side"]} for c in rows]}
+
+
+def _probe(frame: str, f: dict, primary: str, n_comparisons: int, label: dict) -> dict:
+    prim = f["deltas"][primary]
+    tag = f"{TASK}:{frame}.efv_vs_consensus"
+    return {tag: {"tag": tag, "verdict": "READ", "ci95": prim["spearman"].get("ci95"),
+                  "reason": (f"n {f['n']}; within delta {prim['spearman'].get('delta')}, "
+                             f"pooled delta {prim['pooled'].get('delta')}; one frame read "
+                             f"carrying {n_comparisons} comparisons by within, pooled and "
+                             f"AUC; {_note(label, frame)}")}}
 
 
 # ---------------------------------------------------------------------------
@@ -327,40 +403,64 @@ def run(*, check: bool = False, write: bool = True) -> dict:
     guards["vm_years_read"] = sorted({c["year"] for c in rows})
     if max(guards["vm_years_read"]) >= F.R_VM_FIRST_DEBUT_YEAR:
         raise F.ReservedFrameError(f"a reserved cohort was reached: {guards}")
+    # the Pipeline-only panel (G3), on v1's pinned maps; never pooled with vm3
+    panel_rows, panel_meta = build_panel(universe, side_of, meta.pop("_v1_pin"),
+                                         meta.pop("_v1_rec"), {c["key"] for c in rows})
+    panel_census = SB.pipeline_panel_census(universe)
+    guards["panel_years_read"] = sorted({c["year"] for c in panel_rows})
+    guards["panel_pooled_with_vm"] = bool({c["key"] for c in panel_rows}
+                                          & {c["key"] for c in rows})
+    if guards["panel_pooled_with_vm"]:
+        raise ValueError("a panel row is also a vm3 row")
     counts = {"n": len(rows), "n_by_side": _n_side(rows), "receipt": meta["receipt"],
-              "dropped": meta["dropped"], "census": census, "guards": guards,
-              "label": label}
+              "dropped": meta["dropped"], "census": census,
+              "panel": {"n": len(panel_rows), "n_by_side": _n_side(panel_rows),
+                        "receipt": panel_meta["receipt"], "dropped": panel_meta["dropped"],
+                        "census": panel_census},
+              "guards": guards, "label": label}
     if check:
         return {"check": True, **counts}
     e_refit = _e_refit_floor()
     blk = _frame_block(rows, VM3_RATERS_OUT, VM3_COMPARISONS)
     holm = _holm_block(rows, frame_key=SB.VM3_FRAME_KEY, basis=SB.VM3_BASIS)
     frame = _frame_doc(rows, blk, meta, label, holm=holm, e_refit=e_refit)
-    prim = frame["deltas"][PRIMARY_COMPARISON]
-    tag = f"{TASK}:{VM3_FRAME}.efv_vs_consensus"
-    probes = {tag: {"tag": tag, "verdict": "READ", "ci95": prim["spearman"].get("ci95"),
-                    "reason": (f"n {frame['n']}; within delta {prim['spearman'].get('delta')}, "
-                               f"pooled delta {prim['pooled'].get('delta')}; one frame read "
-                               f"carrying {len(VM3_COMPARISONS)} comparisons by within, "
-                               f"pooled and AUC; {_note(label)}")}}
+    probes = _probe(VM3_FRAME, frame, PRIMARY_COMPARISON, len(VM3_COMPARISONS), label)
+    pblk = _frame_block(panel_rows, PANEL_RATERS_OUT, PANEL_COMPARISONS)
+    pholm = _holm_block(panel_rows, frame_key=PANEL_FRAME, basis=f"pooled_efv_{PANEL_FRAME}")
+    panel = _frame_doc(panel_rows, pblk, panel_meta, label, holm=pholm, e_refit=None,
+                       frame=PANEL_FRAME, primary=PANEL_PRIMARY_COMPARISON)
+    probes.update(_probe(PANEL_FRAME, panel, PANEL_PRIMARY_COMPARISON,
+                         len(PANEL_COMPARISONS), label))
     code = {"commit": _commit(), "tool": "tools/efv_vm3_frame_read.py",
             "source_backtest_sha256": _sha(ROOT / "source_backtest.py"),
             "efv_v2_stat_sha256": _sha(ROOT / "efv_v2_stat.py")}
-    sub = {"item": TASK, "role": "development",
-           "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    gen = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    bootstrap = {"B": S.B_DEFAULT, "seed": S.SEED_DEFAULT, "estimator": "E_cond",
+                 "unit": "player cluster"}
+    sub = {"item": TASK, "role": "development", "generated_at": gen,
            "model_id": V2S.SERVED_MODEL_ID, "adjudicates": False, "selects": False,
            "exploratory": bool(label.get("exploratory")), "note": _note(label),
            "label": label, "code": code,
            "scored_object": {"efv_v2": ("efv_v2_serve.served_oos_scores(timing_pin=True): "
                                         "the vm2 headline's scored object"),
                              "efv_v1": "efv_model.oos_grades(timing_pin=True)"},
-           "bootstrap": {"B": S.B_DEFAULT, "seed": S.SEED_DEFAULT, "estimator": "E_cond",
-                         "unit": "player cluster"},
+           "bootstrap": bootstrap,
            "frames": {VM3_FRAME: frame}}
+    panel_sub = {"item": TASK, "role": "development", "generated_at": gen,
+                 "model_id": "efv_v1", "adjudicates": False, "selects": False,
+                 "exploratory": bool(label.get("exploratory")),
+                 "note": _note(label, PANEL_FRAME),
+                 "label": label, "code": code,
+                 "scored_object": {"efv_v1": ("efv_model.oos_grades(timing_pin=True); V2 "
+                                              "has no out-of-sample score before 2017")},
+                 "consensus_is": "MLB Pipeline alone on these rows",
+                 "never_pooled_with": ["vm2", "vm3"],
+                 "bootstrap": bootstrap,
+                 "frames": {PANEL_FRAME: panel}}
     doc = {"schema": 1, "task": TASK,
-           "generated_at": sub["generated_at"],
+           "generated_at": gen,
            "produced_by": "tools/efv_vm3_frame_read.py",
-           "plan": "EFV3_PLAN.md s3 (G2); lane A E3-Q1 = A; vm2 stays the headline",
+           "plan": "EFV3_PLAN.md s3 (G2, G3); lane A E3-Q1 = A; vm2 stays the headline",
            "exploratory": bool(label.get("exploratory")),
            "label": label, "code": code,
            "statistic": {"primary": S.STAT_LABEL[S.PRIMARY],
@@ -371,11 +471,13 @@ def run(*, check: bool = False, write: bool = True) -> dict:
                          "own_rows": "each source scored on the rows it graded",
                          "code": "efv_v2_stat.py"},
            "reserved_guard": guards,
-           "census": census,
+           "census": {"vm3": census, "pipeline_panel": panel_census},
            VM3_FRAME: sub,
+           PANEL_FRAME: panel_sub,
            "probes": probes, "n_probes": len(probes),
-           "not_a_claim": ("development frames; vm2 stays the headline; no served "
-                           "number reads this file; copy keeps 'ties consensus'"),
+           "not_a_claim": ("development frames; vm2 stays the headline; the panel is "
+                           "never pooled with vm2 or vm3; no served number reads this "
+                           "file; copy keeps 'ties consensus'"),
            "elapsed_s": round(time.time() - t0, 1)}
     if write:
         tmp = OUT_PATH.with_name(OUT_PATH.name + ".tmp")
@@ -403,6 +505,11 @@ def main(argv=None) -> int:
               f"delta {d['delta']} CI {d['ci95']} ({d['reading']})")
     if f.get("e_refit_floor"):
         print(f"vm3 E_refit floor (lab): mde95 {f['e_refit_floor']['mde95']}")
+    pf = doc[PANEL_FRAME]["frames"][PANEL_FRAME]
+    for slot in ("spearman", "pooled", "auc"):
+        d = pf["deltas"][PANEL_PRIMARY_COMPARISON][slot]
+        print(f"panel {d['label']}: n {pf['n']}, v1 {d['a']}, consensus {d['b']}, "
+              f"delta {d['delta']} CI {d['ci95']} ({d['reading']})")
     if not a.no_ledger:
         import efv_progress
         print(efv_progress.summary_line(efv_progress.update_vm3(trigger="efv_change")))

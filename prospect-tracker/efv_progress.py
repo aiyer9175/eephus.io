@@ -152,6 +152,14 @@ MC_SCREEN_DELTAS = (("vs_efv_v2_base", "arm_vs_efv_v2"),
 #: copied from the artifact (null: a development read adjudicates nothing).
 VM3_NAME = "efv_vm3_frame_eval.json"
 VM3_SUBKEY = "vm3"
+#: EFV3_A5 (G3): the Pipeline-only panel, the second sub-document of the same artifact.
+#: It scores eFV v1 only (V2 has no out-of-sample score before 2017) against the
+#: consensus, which is MLB Pipeline alone there; `efv` on its rows is therefore v1.
+PANEL_SUBKEY = "vm_pipeline_2011_2016"
+PANEL_RATERS = (("efv", "efv_v1"), ("prospx_consensus", "prospx_consensus"),
+                ("mlb_pipeline", "mlb_pipeline"))
+PANEL_DELTAS = (("vs_prospx_consensus", "efv_v1_vs_prospx_consensus"),
+                ("vs_mlb_pipeline", "efv_v1_vs_mlb_pipeline"))
 #: The E_refit floor a development leg may carry beside its E_cond interval (the vm3
 #: frame, EFV3_A5: tools/efv_headtohead_frame_lab.py vm3). Copied when the leg carries
 #: it, so no other row's content or hash moves.
@@ -165,7 +173,9 @@ DEV_ARTIFACTS = ((DEV_NAME, DEV_FRAMES, DEV_RATERS, DEV_DELTAS, None),
                  (DEV_NAME, DEV_FRAMES, V2_RATERS, V2_DELTAS, DS16_SUBKEY),
                  (SCREEN_NAME, ("lv_dev",), SCREEN_RATERS, SCREEN_DELTAS, None),
                  (MC_SCREEN_NAME, DEV_FRAMES, MC_SCREEN_RATERS, MC_SCREEN_DELTAS, None),
-                 (VM3_NAME, ("vm3",), V2_RATERS, V2_DELTAS, VM3_SUBKEY))
+                 (VM3_NAME, ("vm3",), V2_RATERS, V2_DELTAS, VM3_SUBKEY),
+                 (VM3_NAME, ("vm_pipeline_2011_2016",), PANEL_RATERS, PANEL_DELTAS,
+                  PANEL_SUBKEY))
 #: EFV3_D3: the scoreboard matrix (tools/efv_matrix.py), FRAME x CELL x COMPARATOR x
 #: STATISTIC. The headline row points at its vm2 block; the DS-16 development row
 #: (the one read the matrix's lv_dev block repeats, tools/efv_v2_dev_read.v2_lv_dev)
@@ -283,6 +293,15 @@ FRAMES = {
             "label": "Vintage-matched, consensus-present rule (vm3)",
             "note": ("development frame, consensus-present rule; vm2 stays the "
                      "headline; not a claim")},
+    # EFV3_A5 (G3): the Pipeline-only panel, debut cohorts 2011 to 2016 with an
+    # in-window MLB Pipeline read; consensus on these rows is Pipeline alone and
+    # FanGraphs does not exist there. Scored by eFV v1 only, never pooled with vm2
+    # or vm3 rows. Table only, never charted, no basis_key.
+    "vm_pipeline_2011_2016": {"role": "development", "tilted": False,
+                              "label": "Pipeline-only panel, debut cohorts 2011 to 2016",
+                              "note": ("development frame; consensus on these rows is "
+                                       "MLB Pipeline alone; never pooled with vm2 or "
+                                       "vm3; not a claim")},
 }
 
 #: Registered role changes, applied to every stored row of the frame on each
@@ -1091,8 +1110,9 @@ def update_screening(data_dir=None, trigger: str = "efv_change", *, out_path=Non
 
 def update_vm3(data_dir=None, trigger: str = "efv_change", *, out_path=None,
                ledger_path=None, now: datetime | None = None) -> dict:
-    """The vm3 frame's rows alone (EFV3_A5, tools/efv_vm3_frame_read.py): one
-    development row per frame the artifact carries (every DEV_ARTIFACTS entry of it),
+    """The vm3 frame's and the Pipeline panel's rows alone (EFV3_A5,
+    tools/efv_vm3_frame_read.py): one development row per frame the artifact carries
+    (every DEV_ARTIFACTS entry of it),
     appended when it changed, leaving every other frame's candidates (the served rows
     among them) to the nightly update(), which builds the same rows. A post-epoch run
     is a new row, never an edit (append-only)."""

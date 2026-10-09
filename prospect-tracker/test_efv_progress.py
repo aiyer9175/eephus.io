@@ -473,9 +473,9 @@ LV2026 = {
 #: The registry before SG_5, by frame id.
 _PRE_SG5_FRAMES = {"vm", "vm2", "vm_dev", "lv_dev", "vm_oos_dev", "lv_res", "vm_pros",
                    "predebut", "all_vintages", "disagreement"}
-#: EFV3_A5: the vm3 frame, a development frame registered after SG_5
-#: (test_headtohead_frame.py pins its rows).
-_EFV3_A5_FRAMES = {"vm3"}
+#: EFV3_A5: the vm3 frame and the Pipeline-only panel, development frames registered
+#: after SG_5 (test_headtohead_frame.py pins their rows).
+_EFV3_A5_FRAMES = {"vm3", "vm_pipeline_2011_2016"}
 
 
 def test_lv2026_frames_are_registered_as_specified():
