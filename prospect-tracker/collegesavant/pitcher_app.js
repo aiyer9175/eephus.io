@@ -274,7 +274,11 @@ function init() {
     state.allPitches = collectPitchRows().map(normalizePitchRow);
     state.availableYears = [...new Set(state.allPitchers.map((pitcher) => pitcher.year))].sort((a, b) => b - a);
     state.year = state.availableYears[0] || 2026;
-    setActiveYear(yearFromHash(window.location.hash) || state.year);
+    // A season picked earlier this session (on either app) wins over the
+    // newest when this app's files hold it; a URL season wins over both.
+    setActiveYear(yearFromHash(window.location.hash)
+      || (window.CSSeason && window.CSSeason.recall(state.availableYears))
+      || state.year);
     window.addEventListener("hashchange", render);
     render();
   } catch (error) {
@@ -397,6 +401,40 @@ function setActiveYear(year) {
   }
 }
 
+// The header's dataset badge and season picker (cs_season.js, shared with the
+// hitter app). Both print from the loaded season file: the pool's scope from
+// yearPool, the seasons from state.availableYears. Absent cs_season.js the
+// slot stays empty and the views still render.
+function renderSeasonBar() {
+  if (!window.CSSeason) return;
+  window.CSSeason.mount({
+    years: state.availableYears, year: state.year, pool: yearPool(state.year),
+    poolText, received: DATA_RECEIVED,
+    loading: pitchDataLoading(state.year), loadingText: `Loading ${state.year} pitch data`,
+    onPick: pickSeason,
+  });
+}
+
+// A season picked in the header: a player page moves to the same pitcher's
+// line in that season (home when he has none), a leaderboard keeps its stat,
+// and every other view repaints on the new pool.
+function pickSeason(year) {
+  const hash = window.location.hash || "#/";
+  setActiveYear(year);
+  const pm = hash.match(/^#\/player\/\d{4}\/(.+)$/);
+  if (pm) {
+    const next = state.pitchers.find((p) => p.slug === pm[1]);
+    window.location.hash = next ? `#/player/${state.year}/${next.slug}` : "#/";
+    return;
+  }
+  const lm = hash.match(/^#\/leaders\/([^/]+)\/\d{4}$/);
+  if (lm) {
+    window.location.hash = `#/leaders/${lm[1]}/${state.year}`;
+    return;
+  }
+  render();
+}
+
 function yearFromHash(hash) {
   const playerMatch = String(hash || "").match(/^#\/player\/(\d{4})\//);
   if (playerMatch) return Number(playerMatch[1]);
@@ -491,6 +529,7 @@ function render() {
   const requestedYear = yearFromHash(hash);
   if (requestedYear && requestedYear !== state.year) setActiveYear(requestedYear);
   updateNav(hash);
+  renderSeasonBar();
   if (hash.startsWith("#/player/")) {
     const parts = hash.replace("#/player/", "").split("/");
     const slug = parts.length > 1 ? parts.slice(1).join("/") : parts[0];
@@ -564,7 +603,7 @@ function renderHome() {
       <p class="cs-stamp">${escapeHtml(dataStamp())}</p>
     </section>
 
-    <section class="toolbar home-toolbar">${renderYearSelect()}${qualifierControl(q)}</section>
+    <section class="toolbar home-toolbar">${qualifierControl(q)}</section>
 
     <div class="panel-title"><span>Top of the ${state.year} class</span><a href="#/leaders/stuff_plus/${state.year}">Full leaderboard</a></div>
     <p class="note-line">Listed: ${escapeHtml(qualifierText(q))}. CS+ 100 = the ${state.year} pool average.</p>
@@ -573,11 +612,6 @@ function renderHome() {
     </section>
   `;
 
-  app.querySelector(".year-select").addEventListener("change", (event) => {
-    setActiveYear(event.target.value);
-    window.location.hash = "#/";
-    renderHome();
-  });
   const mp = app.querySelector("[data-min-pitch]");
   if (mp) mp.addEventListener("change", (e) => { state.minPitch = Number(e.target.value) || 0; renderHome(); });
 }
@@ -702,9 +736,8 @@ function renderLeaderboard() {
   }).join("");
   app.innerHTML = `
     ${viewHead("Pitcher Leaderboard")}
-    <section class="toolbar">
+    <section class="toolbar cs-tb-flex">
       <input class="search-box" type="search" placeholder="Search pitcher" value="${escapeHtml(state.query)}" aria-label="Search pitcher">
-      ${renderYearSelect()}
       <select class="select-box" data-team-filter data-team-picker="college" aria-label="Filter by team">
         <option value="all">All teams</option>
         ${teams.map((t) => `<option value="${escapeHtml(t)}"${teamLogoUrl(t) ? ` data-logo="${escapeHtml(teamLogoUrl(t))}"` : ""} ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
@@ -737,8 +770,6 @@ function renderLeaderboard() {
   if (tf) tf.addEventListener("change", (e) => { state.teamFilter = e.target.value; renderLeaderboard(); });
   const mp = app.querySelector("[data-min-pitch]");
   if (mp) mp.addEventListener("change", (e) => { state.minPitch = Number(e.target.value) || 0; renderLeaderboard(); });
-  const ys = app.querySelector(".year-select");
-  if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderLeaderboard(); });
   const rb = app.querySelector("[data-reset]");
   if (rb) rb.addEventListener("click", () => {
     state.query = ""; state.minPitch = null; state.teamFilter = "all"; state.sortKey = "stuff_plus"; state.sortDir = null;
@@ -1106,7 +1137,7 @@ function renderProjections() {
   }).join("");
   app.innerHTML = `
     ${viewHead("MiLB Projections", "Each arm's projected Single-A K% and BB% from one college season, with a P10-P90 band.")}
-    <section class="toolbar">${renderYearSelect()}${qualifierControl(qual)}</section>
+    <section class="toolbar cs-tb-flex">${qualifierControl(qual)}</section>
     <div class="panel-title"><span>Projected Single-A board</span><span>${list.length} pitchers listed · ranked by CS+</span></div>
     <p class="note-line">${listed.length.toLocaleString()} of ${projected.length.toLocaleString()} pitcher${projected.length === 1 ? "" : "s"} with a projection listed, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ compares against the whole ${state.year} pool. Each arm projects from one college season, the one with the most pitches among seasons that carry K% and BB%${state.pitchers.some((p) => Number.isFinite(p.k_pct) || Number.isFinite(p.bb_pct)) ? "" : ` (the ${state.year} file carries neither)`}.${offSeasonNote(listed, state.year, "pitchers")}${listed.length > list.length ? ` Showing the top ${list.length}.` : ""} ${csPlusNote("cs-plus-note")}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
@@ -1128,8 +1159,6 @@ function renderProjections() {
       <li><strong>What it does not do.</strong> No schedule-strength or park adjustment (no college conference or park table is held). Stuff+, CS+, and the tracked pitch shapes describe college stuff; they are not a scouting Future Value, which the tracked data does not predict.</li>
     </ol>
     </details>`;
-  const ys = app.querySelector(".year-select");
-  if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderProjections(); });
   const mp = app.querySelector("[data-min-pitch]");
   if (mp) mp.addEventListener("change", (e) => { state.minPitch = Number(e.target.value) || 0; renderProjections(); });
 }
@@ -1158,8 +1187,7 @@ function renderTeams() {
   }).join("");
   app.innerHTML = `
     ${viewHead("Team Tendencies")}
-    <section class="toolbar">
-      ${renderYearSelect()}
+    <section class="toolbar cs-tb-flex">
       <select class="select-box" data-team-sort aria-label="Rank staffs by">
         ${TEAM_TENDENCY_METRICS.map((m) => `<option value="${m.key}" ${m.key === sortKey ? "selected" : ""}>Rank by ${m.label}</option>`).join("")}
       </select>
@@ -1173,8 +1201,6 @@ function renderTeams() {
     </section>`;
   const sel = app.querySelector("[data-team-sort]");
   if (sel) sel.addEventListener("change", (e) => { state.teamSort = e.target.value; renderTeams(); });
-  const ys = app.querySelector(".year-select");
-  if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderTeams(); });
 }
 
 // College -> Single-A projection block. Reads window.CS_TRANSLATION by slug and
@@ -1282,7 +1308,7 @@ function renderPitcher(pitcher) {
           <a class="pill" href="#/">Back to leaderboard</a>
           <button class="pill" id="cs-share" type="button" title="Download this profile as a PNG share card">&#8681; share card</button>
           <h1>${escapeHtml(displayName(pitcher.pitcher_name))}</h1>
-          <div class="profile-team">${teamBadge(pitcher, "mini")}<span>${escapeHtml(formatTeamName(pitcher.team))}</span>${plusPill(state.csPlus && state.csPlus.get(pitcher.slug), "CS+")}${renderYearSelect(availablePlayerYears(pitcher))}</div>
+          <div class="profile-team">${teamBadge(pitcher, "mini")}<span>${escapeHtml(formatTeamName(pitcher.team))}</span>${plusPill(state.csPlus && state.csPlus.get(pitcher.slug), "CS+")}${playerSeasons(pitcher)}</div>
           <p>${escapeHtml(profileSummaryText())}</p>
           <div class="driver-chips" style="margin-top: 12px">${topDriverChips(pitcher, 8)}</div>
         </div>
@@ -1317,11 +1343,7 @@ function renderPitcher(pitcher) {
     </section>
   `;
 
-  app.querySelector(".year-select").addEventListener("change", (event) => {
-    setActiveYear(event.target.value);
-    const nextPitcher = state.pitchers.find((p) => p.slug === pitcher.slug);
-    window.location.hash = nextPitcher ? `#/player/${state.year}/${nextPitcher.slug}` : "#/";
-  });  _wireCsShare(pitcher, pct);
+  _wireCsShare(pitcher, pct);
 }
 
 function renderPitchTypeStuff(pitcher) {
@@ -1645,15 +1667,15 @@ function availablePlayerYears(pitcher) {
   return [...new Set(years)].sort((a, b) => b - a);
 }
 
-function renderYearSelect(years = state.availableYears) {
-  // While a lazily fetched season's pitch table is still in flight the toggle
-  // shows a loading state; the onload repaint clears it.
-  const loading = pitchDataLoading(state.year);
-  return `
-    <select class="select-box year-select${loading ? " is-loading" : ""}" aria-label="Select season"${loading ? ` aria-busy="true" title="Loading ${state.year} pitch data"` : ""}>
-      ${years.map((year) => `<option value="${year}" ${year === state.year ? "selected" : ""}>${year} · ${poolText(year)}</option>`).join("")}
-    </select>
-  `;
+// The seasons on file for this pitcher, as links to each season's page (the
+// current one marked). The header picker (cs_season.js) is the one season
+// control; this line only says which seasons hold this pitcher.
+function playerSeasons(player) {
+  const years = availablePlayerYears(player);
+  if (years.length <= 1) return `<span class="badge">${years[0] ?? player.year}</span>`;
+  return `<span class="cs-prof-seasons">${years.map((y) => (y === player.year
+    ? `<span class="badge" aria-current="true">${y}</span>`
+    : `<a class="badge" href="#/player/${y}/${player.slug}">${y}</a>`)).join(" ")}</span>`;
 }
 
 function teamBadge(pitcher, size = "") {

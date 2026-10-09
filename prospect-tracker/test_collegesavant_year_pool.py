@@ -51,8 +51,14 @@ def _boot(app, data):
     ctx.eval(CAP.replace("__DATA__", data).replace("__T__", TRANS)
              .replace("__E__", EVAL).replace("__P__", PROSPECTS))
     ctx.eval((CS / "team_names.js").read_text(encoding="utf-8"))
+    ctx.eval((CS / "cs_season.js").read_text(encoding="utf-8"))
     ctx.eval((CS / app).read_text(encoding="utf-8"))
     return ctx
+
+
+def _bar(ctx):
+    """The header season slot cs_season.js fills (REDESIGN_collegesavant)."""
+    return ctx.eval("__html['[data-cs-season]']||''")
 
 
 def _go(ctx, route):
@@ -73,8 +79,9 @@ def test_hitter_default_is_newest_and_options_name_the_pool():
     ctx = _boot("app.js", "HITTER_DATA:[" + ",".join(HITTERS) + "]")
     assert ctx.eval("state.year") == 2025
     html = _go(ctx, "#/")
-    assert "2025 · Big Ten only · 2 hitters, 2 teams, no PA column</option>" in html, html[:2000]
-    assert "2024 · national · 3 hitters, 3 teams, median 60 PA</option>" in html
+    bar = _bar(ctx)
+    assert "2025 · Big Ten only · 2 hitters, 2 teams, no PA column</option>" in bar, bar
+    assert "2024 · national · 3 hitters, 3 teams, median 60 PA</option>" in bar
     assert "Data through: the CollegeSavant files received 2026-06-11" in html
 
 
@@ -82,8 +89,9 @@ def test_pitcher_default_is_newest_and_options_name_the_pool():
     ctx = _boot("pitcher_app.js", "PITCHER_DATA:[" + ",".join(PITCHERS) + "]")
     assert ctx.eval("state.year") == 2026
     html = _go(ctx, "#/")
-    assert "2026 · national · 3 arms, 3 teams, median 70 pitches</option>" in html, html[:2000]
-    assert "2024 · national · 3 arms, 3 teams, median 300 pitches</option>" in html
+    bar = _bar(ctx)
+    assert "2026 · national · 3 arms, 3 teams, median 70 pitches</option>" in bar, bar
+    assert "2024 · national · 3 arms, 3 teams, median 300 pitches</option>" in bar
     assert "a cut taken during the 2026 season" in html
 
 

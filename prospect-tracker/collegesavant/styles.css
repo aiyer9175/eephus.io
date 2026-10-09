@@ -56,8 +56,36 @@
 }
 .cs-tabs a:hover { color: var(--ink); background: var(--chip); }
 .cs-tabs a.is-active { color: var(--ink); border-bottom-color: var(--gold); }
-.cs-bar .global-search { margin-left: auto; }
+.cs-bar .global-search { margin-left: auto; width: auto; }
 .cs-bar .global-search input { width: 170px; max-width: 40vw; }
+/* Dataset badge + shared season picker (cs_season.js). The badge takes the
+   .eephus-beta stage chip's geometry in the bar's ink, so the season and its
+   scope read before any number; an archive season draws a dashed edge. */
+.cs-season { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.cs-season:empty { display: none; }
+.cs-dataset {
+  font-family: var(--font-retro-mono, ui-monospace, monospace); font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; line-height: 1; white-space: nowrap;
+  color: var(--ink); background: transparent; border: 1px solid var(--ink); padding: 3px 6px;
+}
+.cs-dataset.is-archive { color: var(--muted); border-color: var(--muted); border-style: dashed; }
+.cs-season-pick { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+.cs-season-lab {
+  font-family: var(--font-retro-mono, ui-monospace, monospace); font-size: 11px; font-weight: 700;
+  letter-spacing: .06em; color: var(--muted);
+}
+.cs-season-select { height: 30px; max-width: min(26rem, 100%); }
+/* The view toolbars no longer hold the season picker, so the leaderboard,
+   team and projection toolbars size to their own controls instead of the
+   four-track grid (which stretched a lone control across the row). */
+.toolbar.cs-tb-flex { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.toolbar.cs-tb-flex .search-box { flex: 1 1 250px; min-width: 0; }
+.toolbar.cs-tb-flex .teampick-trigger { width: auto; flex: 0 1 240px; }
+/* A profile's seasons on file: the shown season marked, the others links. */
+.cs-prof-seasons { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.cs-prof-seasons [aria-current="true"] { border-color: var(--ink); font-weight: 700; }
+.cs-prof-seasons a.badge { text-decoration: underline dotted; text-underline-offset: 2px; }
+.cs-prof-seasons a.badge:hover, .cs-prof-seasons a.badge:focus-visible { text-decoration-style: solid; border-color: var(--ink); }
 
 /* CS+ and component "+" pills - the eephus plus-stat family, on theme.
    100 = cohort average, >=110 reads positive, <=90 below. */
