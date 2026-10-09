@@ -15,8 +15,8 @@ generator and keeps the two jobs the generator does not do:
     assets/favicon-16.png (the footer mark), PX-23's copies of the
     generator's ball strikes, served until build_site.py's PIXEL_BRAND flag
     points the pages at assets/brand/;
-    the branding/ copies of served files (branding/icons/, branding/fonts/,
-    branding/site.webmanifest).
+    the branding/icons/ copies of the four app icons (test_pixel_brand.py
+    checks them against assets/brand/).
 
 The vector-era PIL drawings this file used to make (a share card in capitals
 with a system font, a P/X monogram in whatever serif the machine had, an arc
@@ -76,24 +76,15 @@ def serve_pixel_copies() -> None:
 
 
 def assemble_branding() -> None:
-    """Copy the web-served artifacts into the documented branding/ bundle so the
-    folder is a complete, self-contained export (branding/marks, animated and
-    social come from tools/pixel_brand.py itself)."""
+    """Copy the four app icons into branding/icons/ (branding/marks, animated,
+    social and the transparent balls come from tools/pixel_brand.py itself;
+    the favicon set, manifest and woff2 subsets are documented in assets/)."""
     B = ROOT / "branding"
     pairs = [
-        (ROOT / "assets" / "favicon.svg",            B / "icons" / "favicon.svg"),
-        (ROOT / "favicon.ico",                       B / "icons" / "favicon.ico"),
-        (ROOT / "assets" / "favicon-32.png",         B / "icons" / "favicon-32.png"),
-        (ROOT / "assets" / "favicon-16.png",         B / "icons" / "favicon-16.png"),
         (ROOT / "assets" / "apple-touch-icon.png",   B / "icons" / "apple-touch-icon.png"),
         (ROOT / "assets" / "icon-192.png",           B / "icons" / "icon-192.png"),
         (ROOT / "assets" / "icon-512.png",           B / "icons" / "icon-512.png"),
         (ROOT / "assets" / "icon-maskable-512.png",  B / "icons" / "icon-maskable-512.png"),
-        (ROOT / "assets" / "site.webmanifest",       B / "site.webmanifest"),
-        # The served subsets of the brand face. Both weights ship because the
-        # logo is drawn at 700 and the copy tokens use 400.
-        (ROOT / "assets" / "fonts" / "pixelmplus12-regular.woff2", B / "fonts" / "pixelmplus12-regular.woff2"),
-        (ROOT / "assets" / "fonts" / "pixelmplus12-bold.woff2",    B / "fonts" / "pixelmplus12-bold.woff2"),
     ]
     n = 0
     for src, dst in pairs:
@@ -104,18 +95,11 @@ def assemble_branding() -> None:
     print(f"assembled branding/ bundle ({n} artifacts copied)")
 
 
-FAVICON_BUNDLE = ("favicon.svg", "favicon.ico", "favicon-32.png", "favicon-16.png")
-
-
 if __name__ == "__main__":
     if "--favicons" in sys.argv[1:]:
-        # The PX-23 set only: the hinted favicons and footer mark, plus their
-        # copies in branding/icons/. Leaves every other committed image alone.
+        # The PX-23 set only: the hinted favicons and footer mark. Leaves every
+        # other committed image alone.
         make_favicons()
-        for name in FAVICON_BUNDLE:
-            src = (ROOT / name) if name == "favicon.ico" else (ROOT / "assets" / name)
-            shutil.copy2(src, ROOT / "branding" / "icons" / name)
-        print(f"copied {len(FAVICON_BUNDLE)} favicon artifacts into branding/icons/")
         sys.exit(0)
     rc = PB.main([])
     make_favicons()
