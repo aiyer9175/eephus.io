@@ -10192,7 +10192,7 @@
     </div>
     <div id="debuts-filter-bar" class="filter-bar collapsible-filter-bar">
       <div class="filter-group">
-        <span class="filter-label">Lead grade</span>
+        <span class="filter-label" data-debut-grade-label>Lead grade</span>
         <div class="grade-toggle" role="group" aria-label="Lead the Debuted list with eFV or consensus FV" style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
           <button type="button" class="chip grade-toggle-btn" data-debut-grade-toggle="xfv" title="Lead with the final (locked) eFV grade" style="border:0;border-radius:0;">eFV</button>
           <button type="button" class="chip grade-toggle-btn" data-debut-grade-toggle="fv" title="Lead with the consensus FV at debut" style="border:0;border-radius:0;border-left:1px solid var(--border);">Consensus</button>
@@ -11446,14 +11446,16 @@ const FV_TO_WAR = new Proxy({}, {
 function fvBadgeTooltip(player) {
   if (!player) return "";
   const parts = [];
-  const tier = player.fv_close != null ? Math.round(player.fv_close) : null;
+  // Consensus FV rounds UP (fvCeil), the grade rule. fv_close is already a ceil-snapped
+  // integer (consensus.snap_to_grade), so this prints the digit it always printed.
+  const tier = player.fv_close != null ? fvCeil(player.fv_close) : null;
   // v32.1 - Use the RAW fv_close for the surplus / WAR projection
   // (granular interpolation) - only round to `tier` for the display
   // label. A player with FV 47.3 now shows the true projection at
   // 47.3, not a bucketed FV 45 value.
   const rawFv = player.fv_close != null ? Number(player.fv_close) : null;
   if (tier != null) {
-    let line = `FV ${tier}`;
+    let line = `Consensus FV ${tier}`;
     if (player.fv_close_raw != null && Math.abs(player.fv_close_raw - tier) > 0.05) {
       line += ` · raw ${fvCeil(player.fv_close_raw)}`;
     }
@@ -13495,8 +13497,34 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
   // font (7 → 5) so they read as annotations, not chart furniture.
   // Clamp x toward the chart interior when the extreme sits at an edge
   // so the label text doesn't overflow the SVG.
+  // EFV_DISPLAY_SWAPS: with the flag on the H/L chips read the eFV series (rounded to
+  // nearest) and a row with no eFV series prints "no eFV history" in their place. Off, the
+  // chips stay on the consensus line (rounded up) and their titles name it as consensus.
+  const _efvHist = (typeof getEfvHistory === "function") ? getEfvHistory(player) : null;
+  const _efvSeries = Array.isArray(_efvHist)
+    ? _efvHist.filter(h => h && h.x != null && isFinite(h.x) && isFinite(xScale(h.d))) : [];
+  const _swapHL = efvDisplaySwaps();
   let hlLabels = "";
-  if (points && points.length >= 2 && coords.length) {
+  if (_swapHL && _efvSeries.length >= 2) {
+    let hiI = 0, loI = 0;
+    for (let i = 1; i < _efvSeries.length; i++) {
+      if (_efvSeries[i].x > _efvSeries[hiI].x) hiI = i;
+      if (_efvSeries[i].x < _efvSeries[loI].x) loI = i;
+    }
+    const eh = _efvSeries[hiI], el = _efvSeries[loI];
+    const hiFv = Math.round(eh.x), loFv = Math.round(el.x);   // eFV rounds to nearest
+    if (hiFv !== loFv) {
+      const clamp = (v) => Math.max(X_LEFT + 6, Math.min(W - PAD - 1, v));
+      const hiX = clamp(xScale(eh.d)).toFixed(1);
+      const loX = clamp(xScale(el.d)).toFixed(1);
+      const hiY = Math.max(PAD + 4, yScale(eh.x) - 1.5).toFixed(1);
+      const loY = Math.min(CHART_BOTTOM - 0.5, yScale(el.x) + 5).toFixed(1);
+      hlLabels = `<text x="${hiX}" y="${hiY}" font-size="5" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="middle" font-weight="600"><title>eFV high · ${escapeHtml(String(eh.d))}</title>H:${hiFv}</text>
+       <text x="${loX}" y="${loY}" font-size="5" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="middle" font-weight="600"><title>eFV low · ${escapeHtml(String(el.d))}</title>L:${loFv}</text>`;
+    }
+  } else if (_swapHL) {
+    hlLabels = `<text x="${(W - PAD - 1).toFixed(1)}" y="${(PAD + 5).toFixed(1)}" font-size="5" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="end"><title>No eFV series for this player; the line is the consensus FV.</title>no eFV history</text>`;
+  } else if (points && points.length >= 2 && coords.length) {
     let hiIdx = 0, loIdx = 0;
     for (let i = 1; i < coords.length; i++) {
       if (coords[i].fv > coords[hiIdx].fv) hiIdx = i;
@@ -13515,8 +13543,8 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
       // the low point (font baseline math). Both centered on the point.
       const hiY = Math.max(PAD + 4, hi.y - 1.5).toFixed(1);
       const loY = Math.min(CHART_BOTTOM - 0.5, lo.y + 5).toFixed(1);
-      hlLabels = `<text x="${hiX}" y="${hiY}" font-size="5" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="middle" font-weight="600"><title>FV high · ${hi.pt.snapshot_date}</title>H:${hiFv}</text>
-       <text x="${loX}" y="${loY}" font-size="5" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="middle" font-weight="600"><title>FV low · ${lo.pt.snapshot_date}</title>L:${loFv}</text>`;
+      hlLabels = `<text x="${hiX}" y="${hiY}" font-size="5" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="middle" font-weight="600"><title>Consensus FV high · ${hi.pt.snapshot_date}</title>H:${hiFv}</text>
+       <text x="${loX}" y="${loY}" font-size="5" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="middle" font-weight="600"><title>Consensus FV low · ${lo.pt.snapshot_date}</title>L:${loFv}</text>`;
     }
   }
   const yLabels = `
@@ -13574,7 +13602,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
   // snapshot, on the same FV scale. eFV is the PRIMARY grade, so it draws BOLD and the
   // consensus trajectory fades to a ghost behind it. Big charts get a legend; row
   // sparklines keep both lines but lighter. Falls back to consensus-only when no history.
-  const _efvHist = (typeof getEfvHistory === "function") ? getEfvHistory(player) : null;
+  // (_efvHist is read above, beside the H/L chips.)
   let efvLineSvg = "", consensusOpacity = 1, efvLegend = "";
   if (_efvHist && _efvHist.length >= 2) {
     const xc = _efvHist.map(h => ({ x: xScale(h.d), y: yScale(h.x) }))
@@ -13594,12 +13622,12 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
           <line x1="${(X_LEFT).toFixed(1)}" y1="${(PAD + 3).toFixed(1)}" x2="${(X_LEFT + 9).toFixed(1)}" y2="${(PAD + 3).toFixed(1)}" stroke="var(--neon-cyan)" stroke-width="2.2" vector-effect="non-scaling-stroke"/>
           <text x="${(X_LEFT + 11).toFixed(1)}" y="${(PAD + 5).toFixed(1)}" fill="var(--text-secondary)">eFV</text>
           <line x1="${(X_LEFT + 30).toFixed(1)}" y1="${(PAD + 3).toFixed(1)}" x2="${(X_LEFT + 39).toFixed(1)}" y2="${(PAD + 3).toFixed(1)}" stroke="var(--text-tertiary)" stroke-width="1.2" opacity="0.5" vector-effect="non-scaling-stroke"/>
-          <text x="${(X_LEFT + 41).toFixed(1)}" y="${(PAD + 5).toFixed(1)}" fill="var(--text-tertiary)">consensus</text>
+          <text x="${(X_LEFT + 41).toFixed(1)}" y="${(PAD + 5).toFixed(1)}" fill="var(--text-tertiary)">Consensus FV</text>
         </g>`;
       }
     }
   }
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="none" role="img" aria-label="FV trajectory (eFV + consensus)">
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="none" role="img" aria-label="${efvLineSvg ? "FV trajectory: eFV and the consensus FV line" : "Consensus FV trajectory (no eFV history)"}">
     ${yearSvg.join("")}
     <line x1="${X_LEFT}" y1="${yRef.toFixed(1)}" x2="${W - PAD}" y2="${yRef.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" vector-effect="non-scaling-stroke" />
     ${yLabels}
@@ -13620,10 +13648,17 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
 // H:/L: chip labels are obscured.
 function _ohlcTooltip(p) {
   if (!p) return "";
-  const h = (typeof p.fv_high === "number" && p.fv_high > 0) ? p.fv_high : " - ";
-  const l = (typeof p.fv_low === "number" && p.fv_low > 0) ? p.fv_low : " - ";
+  // EFV_DISPLAY_SWAPS on: the high and low of the eFV series (nearest) where one exists.
+  if (efvDisplaySwaps()) {
+    const hs = ((typeof getEfvHistory === "function" ? getEfvHistory(p) : null) || [])
+      .filter(r => r && r.x != null && isFinite(r.x)).map(r => Number(r.x));
+    if (hs.length >= 2) return `eFV history · High ${Math.round(Math.max(...hs))} · Low ${Math.round(Math.min(...hs))}`;
+  }
+  // Otherwise the consensus extremes, named and rounded up (they are ceil-snapped already).
+  const h = (typeof p.fv_high === "number" && p.fv_high > 0) ? fvCeil(p.fv_high) : " - ";
+  const l = (typeof p.fv_low === "number" && p.fv_low > 0) ? fvCeil(p.fv_low) : " - ";
   if (h === " - " && l === " - ") return "";
-  return `FV history · High ${h} · Low ${l}`;
+  return `Consensus FV history · High ${h} · Low ${l}`;
 }
 
 // makeCandle removed in v27 - the candlestick visualization was
@@ -19248,7 +19283,8 @@ function renderWatchlist() {
     const _wlGb = (_wlTop && typeof gradeBlock === "function") ? gradeBlock(_wlTop) : null;
     const tp = _wlTop
       ? { name: _wlTop.player_name, player_key: _wlTop.player_key,
-          fv_label: (_wlGb && _wlGb.label != null) ? String(_wlGb.label) : " - " }
+          fv_label: (_wlGb && _wlGb.label != null) ? String(_wlGb.label) : " - ",
+          fv_basis: _wlGb ? _wlGb.basis : null }
       : org.top_prospect;
     const overall = ((org.letter_by_window || {})[win]) || (org.grades && org.grades.overall) || " - ";
     const dvm = (org.dvm_plus || {})[win];
@@ -19258,7 +19294,7 @@ function renderWatchlist() {
         ${orgLinkHTML(org.org, pxClubLogoHTML(org.org, "md"), { mark: true })}
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${orgLinkHTML(org.org, escapeHtml(fullOrgName(org.org)), { cls: "px-club--text" })}</div>
-          <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;margin-top:2px;">${escapeHtml(org.org)}${tp ? ` · top: ${tp.player_key ? `<a href="#player=${escapeHtml(tp.player_key)}" onclick="event.stopPropagation();" style="color:var(--text-secondary);text-decoration:none;">${escapeHtml(tp.name)}</a>` : `<span style="color:var(--text-secondary);">${escapeHtml(tp.name)}</span>`} <span class="fv-badge ${fvClass(tp.fv_label)} size-xs">${escapeHtml(tp.fv_label)}</span>` : ""}</div>
+          <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;margin-top:2px;">${escapeHtml(org.org)}${tp ? ` · top: ${tp.player_key ? `<a href="#player=${escapeHtml(tp.player_key)}" onclick="event.stopPropagation();" style="color:var(--text-secondary);text-decoration:none;">${escapeHtml(tp.name)}</a>` : `<span style="color:var(--text-secondary);">${escapeHtml(tp.name)}</span>`} <span class="fv-badge ${fvClass(tp.fv_label)} size-xs"${tp.fv_basis === "consensus" ? ` data-grade-basis="consensus" style="border-style:dashed;" title="${CONS_FALLBACK_TIP}"` : ""}>${escapeHtml(tp.fv_label)}${tp.fv_basis === "consensus" ? GRADE_C_MARK : ""}</span>` : ""}</div>
         </div>
         <div style="font-family:var(--font-serif);font-size:22px;line-height:1;color:${gradeColor(overall)};font-weight:700;min-width:36px;text-align:center;" title="Farm grade">${escapeHtml(overall)}</div>
         <div style="font-family:var(--font-mono);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:${dvm == null ? 'var(--text-tertiary)' : (dvm >= 110 ? 'var(--up)' : dvm <= 90 ? 'var(--down)' : 'var(--neon-violet)')};min-width:42px;text-align:right;" title="${win.toUpperCase()}DvM+">${dvm == null ? " - " : dvm}</div>
@@ -20790,7 +20826,7 @@ function renderToolCompRadar(key){
   const radar = (typeof _gfxRadarOverlay === "function") ? _gfxRadarOverlay(series, P, 300) : "";
   // Chip grade goes through gradeBlock: Math.round(c.fv_close) applied the
   // round-to-NEAREST rule to a CONSENSUS number, which is the ceil rule's job.
-  const chips = cands.map(c => `<button class="split-chip${ui.comp === c.player_key ? " active" : ""}" onclick="toolCompSet('${escapeHtml(key)}','${escapeHtml(c.player_key)}')">${escapeHtml(c.player_name)} ${gradeBlock(c).label != null ? gradeBlock(c).label : " - "}</button>`).join("");
+  const chips = cands.map(c => `<button class="split-chip${ui.comp === c.player_key ? " active" : ""}" onclick="toolCompSet('${escapeHtml(key)}','${escapeHtml(c.player_key)}')">${escapeHtml(c.player_name)} ${(() => { const _g = gradeBlock(c); return _g.label != null ? _g.label + gradeMarkHTML(_g) : " - "; })()}</button>`).join("");
   const clear = ui.comp ? `<button class="split-chip" onclick="toolCompSet('${escapeHtml(key)}','')">clear</button>` : "";
   const legend = `<div style="display:flex;gap:16px;font-size:11px;margin-top:6px;justify-content:center;"><span style="color:var(--neon-cyan);">&#9632; ${escapeHtml(p.player_name)}</span>${comp ? `<span style="color:var(--neon-violet);">&#9632; ${escapeHtml(comp.player_name)}</span>` : ""}</div>`;
   host.innerHTML = `<div class="split-chips">${chips}${clear}</div><div style="display:flex;justify-content:center;">${radar}</div>${legend}`;
@@ -22668,7 +22704,7 @@ function _debutTvSortValue(g) {
 // The second line follows the Debuted list's own Lead grade toggle.
 function _debutTvSecondary(g) {
   const xf = getEfv(g);
-  if (xf && xf.surplus_mm != null && (state.debutGrade || "xfv") === "xfv") {
+  if (xf && xf.surplus_mm != null && _debutGradePrimary() === "xfv") {
     return { label: "eFV prospect valuation", short: "eFV prospect", mm: Number(xf.surplus_mm) };
   }
   if (g && g.surplus && g.surplus.value_mm != null) {
@@ -32331,8 +32367,13 @@ function renderDebuts() {
     if (state.sortRev && state.sortRev.debutSort) priced.reverse();
     orderedGrads = priced.concat(unpriced);
   } else if (sortMode === "fv_close") {
+    // EFV_DISPLAY_SWAPS + owner answer Q-E1: the Debuted toggle on Consensus orders the list
+    // by consensus FV at debut (rows without one last); the printed grade stays eFV.
+    const _byCons = efvDisplaySwaps() && state.debutGrade === "fv";
+    const _cv = g => (g && g.fv_close != null && isFinite(g.fv_close)) ? Number(g.fv_close) : null;
     orderedGrads = filtered.slice().sort((a, b) =>
-      (fvCmpDesc(a, b))
+      (_byCons ? (((_cv(a) == null) - (_cv(b) == null)) || ((_cv(b) ?? 0) - (_cv(a) ?? 0))) : 0)
+      || (fvCmpDesc(a, b))
       || (b.debut_date || "").localeCompare(a.debut_date || "")
     );
   } else if (sortMode === "vs_fv_proj") {
@@ -32462,7 +32503,7 @@ function renderDebuts() {
           <span class="${pillClass}" title="${escapeHtml(`MLB debut on ${g.debut_date}`)}">${g.debut_date}</span>
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
-        <div style="text-align:center;">${efvBadgeHTML(g, { primary: state.debutGrade || "xfv" })}</div>
+        <div style="text-align:center;">${efvBadgeHTML(g, { primary: _debutGradePrimary(), consChip: efvDisplaySwaps() && state.debutGrade === "fv" && sortMode === "fv_close" })}</div>
         ${_debutTvCellHTML(g)}
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
         <div class="desktop-only" style="text-align:center;">${(function(){
@@ -32846,10 +32887,22 @@ let _EFV_RANK = null;     // player_key -> 1-based eFV rank over the active boar
 let _EFV_PREV_RANK = null; // player_key -> eFV rank by PREVIOUS grade (drives the rank-spot delta chip)
 let _EFV_TIE_COUNT = null; // board value -> how many players share it exactly (tie-block guard)
 let _PROV_SECTION_POS = {}; // player_key -> {pos, total} inside the not-yet-graded section (PV-07)
+// The eFV file's load state for the first-paint rule (EFV_DISPLAY_SWAPS): "loading" until
+// the fetch settles, then "ready", or "failed" when no file arrived. With the flag on, a
+// grade waiting on eFV paints a neutral placeholder and a failed fetch prints "eFV
+// unavailable", never an unlabelled consensus grade.
+let _EFV_LOAD = "loading";
+function efvLoadState() { return _EFV_LOAD; }
+// The served display flag (storage.EFV_DISPLAY_SWAPS), read from the boot payload's flags
+// block and nowhere else. A payload from before the flag reads as off.
+function efvDisplaySwaps() {
+  return !!(typeof DATA !== "undefined" && DATA && DATA.flags && DATA.flags.efv_display_swaps === true);
+}
 (function loadEfv() {
   fetch("/data/xfv.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
+      _EFV_LOAD = (j && j.by_player) ? "ready" : "failed";
       _EFV = (j && j.by_player) || {};
       _EFV_SERVED = (j && j.meta && j.meta.served_model) || null;
       _paintEfvClaim();
@@ -32857,7 +32910,7 @@ let _PROV_SECTION_POS = {}; // player_key -> {pos, total} inside the not-yet-gra
       // First paint can beat this fetch - repaint so eFV chips/cards appear.
       scheduleRender();
     })
-    .catch(() => { _EFV = {}; });
+    .catch(() => { _EFV = {}; _EFV_LOAD = "failed"; try { scheduleRender(); } catch (e) { /* page not booted */ } });
 })();
 // MiLB -> first-MLB rate translation (data/milb_translation.json): per-hitter projected
 // first-MLB K% / BB% with bands. Async; repaint on land so chips appear.
@@ -34682,6 +34735,34 @@ function efvGradeDisplay(x) {
 //   lead      : "efv" | "consensus" | "none"
 //   provisional / locked : eFV provisional (source-ungraded) / locked-at-debut flags
 // Consumers pick the field that matches their existing output; adopt only where byte-identical.
+//   basis     : what `label` / `value` carry: "efv"; "consensus" (eFV abstains, so the
+//               number is the consensus FV, rounded up, and wears GRADE_C_MARK and a dashed
+//               border); "pending" / "unavailable" (EFV_DISPLAY_SWAPS on and the eFV file
+//               still loading or failed: no number is printed); or "none"
+//   consTip   : the tooltip a consensus fallback carries (CONS_FALLBACK_TIP)
+// Owner ask 5 (2026-09-30): where a single grade is printed it is eFV, and a consensus grade
+// is printed only where the spot names it. These helpers are how a spot names it.
+const CONS_FALLBACK_TIP = "Consensus FV (no eFV for this player)";
+const GRADE_C_MARK = `<sup class="grade-c-mark" aria-label="consensus FV" style="font-size:7px;font-weight:700;opacity:0.75;margin-left:1px;">C</sup>`;
+function gradeMarkHTML(gb) { return (gb && gb.basis === "consensus") ? GRADE_C_MARK : ""; }
+function gradeDashCSS(gb) { return (gb && gb.basis === "consensus") ? "border-style:dashed;" : ""; }
+// The badge printed where a grade waits on the eFV file (EFV_DISPLAY_SWAPS on): a neutral
+// dot while it loads, "eFV unavailable" once the fetch failed.
+function efvWaitingBadgeHTML(basis, sz) {
+  if (basis === "unavailable")
+    return `<span class="efv-unavailable" data-grade-basis="unavailable" title="The eFV file did not load, so no grade is printed." style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);white-space:nowrap;">eFV unavailable</span>`;
+  return `<span class="fv-badge ${sz || ""}" data-grade-basis="pending" title="eFV loading" style="border-style:dashed;opacity:0.55;background:transparent;color:var(--text-tertiary);">&middot;</span>`;
+}
+// The labelled consensus chip that rides beside the eFV badge while a list is ordered by
+// consensus (EFV_DISPLAY_SWAPS on, owner answer Q-E1). Consensus rounds up; a placeholder
+// consensus (no source published an FV) is not a source grade and prints nothing.
+function consensusChipHTML(gb) {
+  if (!gb || (gb.x && gb.x.consensus_is_placeholder)) return "";
+  const c = gb.consLabel != null ? gb.consLabel : gb.consVal;
+  if (c == null) return "";
+  const s = escapeHtml(String(c));
+  return `<span class="fv-cons-chip" data-grade-basis="consensus" title="Consensus FV ${s}. The list is ordered by consensus FV; the grade printed beside it is eFV." style="font-family:var(--font-mono);font-size:9px;line-height:1;color:var(--text-secondary);border:1px dashed var(--border);border-radius:3px;padding:1px 3px;white-space:nowrap;">C ${s}</span>`;
+}
 function gradeBlock(p, opts) {
   opts = opts || {};
   const x = (typeof getEfv === "function") ? getEfv(p) : null;
@@ -34690,14 +34771,24 @@ function gradeBlock(p, opts) {
   const latest = (p && p.points && p.points.length) ? p.points[p.points.length - 1] : null;
   const consLabel = latest ? latest.consensus_fv_label : null;
   const consVal = (p && p.fv_close != null) ? fvCeil(p.fv_close) : null;
-  const value = efvVal != null ? efvVal : consVal;
+  // EFV_DISPLAY_SWAPS: before the eFV file settles (or after it failed) a row with no inline
+  // eFV entry has no grade to print yet; the consensus number is withheld, never shown bare.
+  const waiting = efvVal == null && !(p && p._xfv_entry) && efvDisplaySwaps()
+                  && efvLoadState() !== "ready";
+  const value = efvVal != null ? efvVal : waiting ? null : consVal;
   const label = efvVal != null ? String(efvVal)
+              : waiting ? null
               : (consLabel != null) ? String(consLabel)
               : (consVal != null) ? String(consVal) : null;
   const lead = (efvVal != null && primary === "xfv") ? "efv"
+             : waiting ? "none"
              : (consLabel != null || consVal != null) ? "consensus"
              : (efvVal != null) ? "efv" : "none";
-  return { x, primary, efvVal, consLabel, consVal, value, label, lead,
+  const basis = efvVal != null ? "efv"
+              : waiting ? (efvLoadState() === "failed" ? "unavailable" : "pending")
+              : (label != null) ? "consensus" : "none";
+  return { x, primary, efvVal, consLabel, consVal, value, label, lead, basis,
+           consTip: CONS_FALLBACK_TIP,
            provisional: !!(x && x.xfv_ungraded),
            // Source-GRADED but no pro track record yet (fresh draftees/signees):
            // eFV is anchored to the consensus prior, not a model read.
@@ -34923,13 +35014,30 @@ function efvTooltip(x) {
 // Default eFV. NOT state.sort - the sort dropdown, the column-click headers and the
 // tool/Statcast overrides all write state.sort, and any of those used to flip the grade
 // lead as a side effect. The lead is its own axis now, exactly like state.debutGrade.
-function _gradePrimary() { return (typeof state !== "undefined" && state.gradePrimary === "fv") ? "fv" : "xfv"; }
-// Highlight the active "Rank by" toggle button to match _gradePrimary().
+// EFV_DISPLAY_SWAPS on (owner answer Q-E1): the toggle orders the board only, so the
+// display lead is always eFV; the order lives in state.sort, and the labelled consensus
+// chip rides beside the eFV badge while state.sort is "fv".
+function _gradePrimary() {
+  if (efvDisplaySwaps()) return "xfv";
+  return (typeof state !== "undefined" && state.gradePrimary === "fv") ? "fv" : "xfv";
+}
+// The Debuted list's display lead: its own toggle, or eFV whenever the flag is on.
+function _debutGradePrimary() {
+  if (efvDisplaySwaps()) return "xfv";
+  return (typeof state !== "undefined" && state.debutGrade === "fv") ? "fv" : "xfv";
+}
+// Highlight the active "Rank by" toggle button: the grade lead, or with the flag on the
+// grade order the board is in (neither button lights for an age, ETA or tool order).
 function _syncGradeToggle() {
   if (typeof _paintEfvClaim === "function") _paintEfvClaim();
-  const pr = _gradePrimary();
+  const swaps = efvDisplaySwaps();
+  const pr = !swaps ? _gradePrimary()
+           : (state.sort === "fv" || state.sort === "xfv") ? state.sort : null;
   document.querySelectorAll("[data-grade-toggle]").forEach(b => {
     const on = b.dataset.gradeToggle === pr;
+    if (swaps) b.title = b.dataset.gradeToggle === "fv"
+      ? "Order the board by consensus FV. Every printed grade stays eFV; the consensus grade sits beside it in a dashed C chip."
+      : "Order the board by eFV";
     b.classList.toggle("active", on);
     b.style.background = on ? "var(--accent-soft, var(--bg-tertiary))" : "transparent";
     b.style.color = on ? "var(--text-primary)" : "var(--text-tertiary)";
@@ -34939,8 +35047,13 @@ function _syncGradeToggle() {
 // Mirror of the board toggle, scoped to the Debuted list (state.debutGrade).
 function _syncDebutGradeToggle() {
   const pr = state.debutGrade || "xfv";
+  const swaps = efvDisplaySwaps();
+  if (swaps) document.querySelectorAll("[data-debut-grade-label]").forEach(el => { el.textContent = "Order by"; });
   document.querySelectorAll("[data-debut-grade-toggle]").forEach(b => {
     const on = b.dataset.debutGradeToggle === pr;
+    if (swaps) b.title = b.dataset.debutGradeToggle === "fv"
+      ? "Order the Debuted list by consensus FV at debut. The printed grade stays the final eFV; the consensus grade sits beside it in a dashed C chip."
+      : "Order the Debuted list by the final (locked) eFV";
     b.classList.toggle("active", on);
     b.style.background = on ? "var(--accent-soft, var(--bg-tertiary))" : "transparent";
     b.style.color = on ? "var(--text-primary)" : "var(--text-tertiary)";
@@ -34995,11 +35108,21 @@ function efvBadgeHTML(p, opts) {
     // chain helpers the consensus badge uses. The provisional (source-ungraded) marker is MERGED
     // into the single-source indicator (the "p" glyph), so a provisional prospect's chip reads
     // like any other active prospect's, just flagged for thin/absent source coverage.
-    return `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span class="fv-badge ${fvClass(String(xg))}${fvBadgeChainClasses(p)}" title="${escapeHtml(efvTooltip(x))}">${xg}${fvBadgeChainMarks(p)}</span>${lock}${inj}</div>`;
+    // EFV_DISPLAY_SWAPS (Q-E1): while the list is ordered by consensus, the consensus grade
+    // rides beside the eFV badge in its own labelled chip. opts.consChip overrides.
+    const _o = opts || {};
+    const cc = (efvDisplaySwaps() && (_o.consChip != null ? _o.consChip
+               : (!_o.primary && typeof state !== "undefined" && state.sort === "fv")))
+      ? consensusChipHTML(gb) : "";
+    return `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span class="fv-badge ${fvClass(String(xg))}${fvBadgeChainClasses(p)}" title="${escapeHtml(efvTooltip(x))}">${xg}${fvBadgeChainMarks(p)}</span>${lock}${inj}${cc}</div>`;
   }
-  // consensus ONLY (toggle = consensus, or eFV abstains and we fall back to consensus)
+  if (gb.basis === "pending" || gb.basis === "unavailable") return efvWaitingBadgeHTML(gb.basis);
+  // consensus ONLY (the toggle on consensus with the flag off, or eFV abstains): the
+  // consensus grade, rounded up (the label is ceil-snapped), with the C mark and a dashed
+  // border so it never reads as eFV.
   if (consLabel != null) {
-    return `<span class="fv-badge ${fvClass(consLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${consLabel}${fvBadgeChainMarks(p)}</span>`;
+    const why = (xg != null) ? `Consensus FV ${consLabel} (the board is set to lead with consensus; eFV ${xg})` : CONS_FALLBACK_TIP;
+    return `<span class="fv-badge ${fvClass(consLabel)}${fvBadgeChainClasses(p)}" data-grade-basis="consensus" style="border-style:dashed;" title="${escapeHtml(why + "\n" + fvBadgeTooltip(p))}">${consLabel}${GRADE_C_MARK}${fvBadgeChainMarks(p)}</span>`;
   }
   return `<span style="color:var(--text-tertiary);"> - </span>`;
 }
@@ -35015,6 +35138,8 @@ function efvCompactBadge(p, opts) {
   if (xg != null) {
     return `<span class="fv-badge ${fvClass(String(xg))} ${sz}"${style} title="${escapeHtml(efvTooltip(x))}">${xg}</span>`;
   }
+  if (efvDisplaySwaps() && !(p && p._xfv_entry) && efvLoadState() !== "ready")
+    return efvWaitingBadgeHTML(efvLoadState() === "failed" ? "unavailable" : "pending", sz);
   let fv = opts.fallback;
   if (fv == null) {
     const l = p && p.points && p.points[p.points.length - 1];
@@ -35022,7 +35147,7 @@ function efvCompactBadge(p, opts) {
   }
   if (fv == null) return "";
   fv = fvCeil(Number(fv));
-  return `<span class="fv-badge ${fvClass(String(fv))} ${sz}"${style} title="Consensus FV ${fv} (eFV not yet rated)">${fv}</span>`;
+  return `<span class="fv-badge ${fvClass(String(fv))} ${sz}" data-grade-basis="consensus" style="border-style:dashed;${opts.style || ""}" title="Consensus FV ${fv} (no eFV for this player)">${fv}${GRADE_C_MARK}</span>`;
 }
 // Board rank cell: the single "#N" diamond.
 //
@@ -35060,7 +35185,7 @@ function efvRankNumHTML(p) {
     return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner"> - </span></div>`;
   }
   const tip = (_gradePrimary() === "xfv")
-    ? `Board rank #${n} (eFV basis)`
+    ? `Board rank #${n} (eFV basis)${(efvDisplaySwaps() && state.sort === "fv") ? ". The rows are ordered by consensus FV, so the ranks read out of order." : ""}`
     : `Board rank #${n} - still the eFV board ordering. The Consensus toggle changes which GRADE leads the cells${state.sort === "fv" ? " and orders the rows by consensus FV" : ""}; PROSPX does not publish a consensus-FV rank.`;
   return `<div class="rank-num ${rankNumRarityClass(p)}" title="${escapeHtml(tip)}"><span class="rank-num-inner">#${n}</span></div>`;
 }
@@ -35091,7 +35216,14 @@ function efvDetailHeaderHTML(p, fvBadge, lead) {
   const gb = gradeBlock(p);
   const x = gb.x;
   if (!(x && x.xfv_grade != null)) {
-    return `<div style="${labelStyle}">${lead}<span>Current FV (consensus)</span></div>${fvBadge}`;
+    // EFV_DISPLAY_SWAPS on and the eFV file not in yet: a placeholder, never consensus.
+    const _wait = gb.basis === "pending" || gb.basis === "unavailable";
+    // eFV abstains: the consensus grade, rounded up, with the C mark and a dashed border.
+    const _cb = _wait ? efvWaitingBadgeHTML(gb.basis, "size-lg")
+      : (gb.consLabel != null)
+      ? `<span class="fv-badge ${fvClass(gb.consLabel)} size-lg${fvBadgeChainClasses(p)}" data-grade-basis="consensus" style="margin-top:4px;border-style:dashed;" title="${escapeHtml(CONS_FALLBACK_TIP + "\n" + fvBadgeTooltip(p))}">${gb.consLabel}${GRADE_C_MARK}${fvBadgeChainMarks(p)}</span>`
+      : fvBadge;
+    return `<div style="${labelStyle}">${lead}<span>${_wait ? "eFV" : "Current FV (consensus)"}</span></div>${_cb}`;
   }
   const g = gb.efvVal;
   const d = efvMinusConsensusDisplay(x);
@@ -36275,7 +36407,7 @@ function _gfxRow(item, kind, meta) {
   // consensus -> consensus FV badge (ceiling). Draft/overseas stay on consensus
   // (eFV does not grade those cohorts). _gfxFooterNote mirrors this choice.
   const _leadEfv = (kind === "graduate")
-    ? ((state.debutGrade || "xfv") === "xfv")
+    ? (_debutGradePrimary() === "xfv")
     : (_gradePrimary() === "xfv");
   const _px = (isDO || !_leadEfv) ? null : getEfv(p);
   const _pxg = (_px && _px.xfv_grade != null) ? efvGradeDisplay(_px) : null;
@@ -36479,7 +36611,7 @@ function _gfxAvatar(r, P) {
 //   draftee / overseas - eFV does not grade those cohorts, so consensus only
 function _gfxBadgeLegend(kind) {
   const _boardEfv = (typeof _gradePrimary === "function") ? _gradePrimary() === "xfv" : true;
-  const _gradEfv = ((state.debutGrade || "xfv") === "xfv");
+  const _gradEfv = (_debutGradePrimary() === "xfv");
   if (kind === "graduate") return _gradEfv ? "final eFV (locked at debut)" : "consensus FV at debut";
   if (kind === "spotlight") return "eFV (consensus FV fallback)";
   if (kind === "ifa")      return "eFV where the signee is graded, else consensus FV";
@@ -39601,12 +39733,19 @@ function headshotURL(mlbamId, sizePx) {
 // Resolve a player's FV to the nearest published tier (80/75/70/65/60/
 // 55/50/45/40/35/30/25/20) so the wrapper picks up the right palette
 // CSS var. Returns null when the player has no FV yet.
-function _playerFvTier(player) {
+// The grade the headshot ring and its rarity class key on. Off: the consensus grade, as
+// before. EFV_DISPLAY_SWAPS on: rarityFvOf, the eFV-first grade the rank border keys on.
+function _ringFv(player) {
   if (!player) return null;
+  if (efvDisplaySwaps()) return rarityFvOf(player);
   const points = player.points || [];
-  const fv = (points.length
+  return (points.length
     ? (points[points.length - 1].consensus_fv_raw ?? points[points.length - 1].consensus_fv)
     : null) ?? player.fv_close ?? player.consensus_fv;
+}
+function _playerFvTier(player) {
+  if (!player) return null;
+  const fv = _ringFv(player);
   if (fv == null || !isFinite(fv)) return null;
   const tiers = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
   for (const t of tiers) {
@@ -39637,10 +39776,7 @@ function _fvHeadshotRingClass(player) {
   if (tier == null) return "";
   // Pull raw FV separately so the holo cutoff is precise. The tier
   // var stays snapped (for the fv-tier-NN palette class).
-  const points = player.points || [];
-  const fv = (points.length
-    ? (points[points.length - 1].consensus_fv_raw ?? points[points.length - 1].consensus_fv)
-    : null) ?? player.fv_close ?? player.consensus_fv;
+  const fv = _ringFv(player);
   let cls = `fv-headshot-ring fv-tier-${tier}`;
   if (fv >= 70) cls += " card-rarity-legendary";
   else if (fv >= 61) cls += " card-rarity-holo";
@@ -45510,10 +45646,11 @@ function renderFarmSystems() {
             ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: gb ? gb.value : null }) : ''}" style="width:18px;height:18px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:8px;">${_topRank}</span></span>`
             : "";
           const _tTitle = gb && gb.lead === "efv" && gb.consVal != null
-            ? ` title="eFV ${tFv} · consensus FV ${gb.consLabel != null ? gb.consLabel : gb.consVal}"` : "";
+            ? ` title="eFV ${tFv} · consensus FV ${gb.consLabel != null ? gb.consLabel : gb.consVal}"`
+            : (gb && gb.basis === "consensus") ? ` title="${CONS_FALLBACK_TIP}"` : "";
           return `<div class="farm-top3-chip">
             ${rankDiamond}${posChip}${nameHtml}
-            <span class="fv-badge ${fvClass(String(tFv))} size-xs" style="flex-shrink:0;"${_tTitle}>${tFv}</span>
+            <span class="fv-badge ${fvClass(String(tFv))} size-xs" style="flex-shrink:0;${gradeDashCSS(gb)}"${_tTitle}>${tFv}${gradeMarkHTML(gb)}</span>
           </div>`;
         }).join("")}</div>`
       : '<span style="color:var(--text-tertiary);"> - </span>';
@@ -52512,7 +52649,7 @@ function renderPlayerDetail(key) {
       return `<div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;" title="${escapeHtml(matchTip)}">
         <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || " - ")} · ${t.age != null ? t.age.toFixed(1) + "y" : " - "} · ${matchLabel}</span>${orgTag}</span>
         ${statChip}
-        <span class="fv-badge ${fvClass(String(tFvLabel))} size-sm">${tFvLabel}</span>
+        <span class="fv-badge ${fvClass(String(tFvLabel))} size-sm"${tGb.basis === "consensus" ? ` data-grade-basis="consensus" style="border-style:dashed;" title="${CONS_FALLBACK_TIP}"` : ""}>${tFvLabel}${gradeMarkHTML(tGb)}</span>
       </div>`;
     }).join("");
     return `<div class="detail-title">Similar prospects <span class="detail-title-sub">composite match · ${refLbl} vs ${escapeHtml(p.player_name)} shown</span></div>
@@ -57645,7 +57782,7 @@ function makeCompareSideBySide(players) {
         <span onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');" style="cursor:pointer;flex-shrink:0;">${headshotHTML(p, 56)}</span>
         <div style="min-width:0;flex:1;">
           <div class="csbs-name" onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}
-            <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}</span>
+            <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;${gradeDashCSS(gbHead)}"${gbHead.basis === "consensus" ? ' data-grade-basis="consensus"' : ""} title="${escapeHtml(gbHead.basis === "efv" ? efvTooltip(gbHead.x) : gbHead.basis === "consensus" ? CONS_FALLBACK_TIP + "\n" + fvBadgeTooltip(p) : "")}">${fvLabel}${gradeMarkHTML(gbHead)}</span>
           </div>
           <div class="csbs-meta">${escapeHtml(ageBits.join(" · ")) || " - "}</div>
           ${rpsPlusPillHTML(p)}
@@ -58618,6 +58755,17 @@ function attachHandlers() {
   document.querySelectorAll("[data-debut-grade-toggle]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.debutGrade = btn.dataset.debutGradeToggle;
+      // EFV_DISPLAY_SWAPS (Q-E1): the toggle orders the list, so it moves the Debuted sort
+      // to the grade order; the printed grade stays eFV.
+      if (efvDisplaySwaps()) {
+        state.debutSort = "fv_close";
+        state.debutStatcastSort = "off";
+        const _dss = document.getElementById("debut-statcast-sort");
+        if (_dss) _dss.value = "off";
+        if (state.sortRev) state.sortRev.debutSort = false;
+        document.querySelectorAll("[data-debut-sort]").forEach(b =>
+          b.classList.toggle("active", b.dataset.debutSort === state.debutSort));
+      }
       _syncDebutGradeToggle();
       render();
     });

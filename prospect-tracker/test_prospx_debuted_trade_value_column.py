@@ -58,7 +58,9 @@ def test_the_header_and_the_row_carry_a_trade_value_cell_after_fv():
     assert ">Trade value" in head and "sort-header" in head
     # The phone row keeps the column: neither the header span nor the cell is desktop-only.
     assert "desktop-only" not in head
-    i_badge = body.index("${efvBadgeHTML(g, { primary: state.debutGrade || \"xfv\" })}</div>")
+    # Q9_10: the badge's lead reads _debutGradePrimary() (the list's own toggle, or eFV
+    # whenever storage.EFV_DISPLAY_SWAPS is on).
+    i_badge = body.index("${efvBadgeHTML(g, { primary: _debutGradePrimary(),")
     i_cell = body.index("${_debutTvCellHTML(g)}")
     i_chart = body.index('<div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>')
     assert i_badge < i_cell < i_chart
@@ -86,7 +88,7 @@ def test_the_cell_prints_the_cards_number_and_a_dash_otherwise():
     band = 'mm >= 50 ? "var(--up)" : mm >= 10 ? "var(--neon-cyan)" : mm < 0 ? "var(--down)" : "var(--text-primary)"'
     assert band in cell and band in _function_source("_tvLeadFill")
     sec = _function_source("_debutTvSecondary")
-    assert '"eFV prospect"' in sec and "state.debutGrade" in sec
+    assert '"eFV prospect"' in sec and "_debutGradePrimary()" in sec
 
 
 # ---------------------------------------------------------------------------
@@ -140,13 +142,15 @@ def js():
     ctx.eval("""
       if (!String.prototype.normalize) String.prototype.normalize = function () { return String(this); };
       var state = { section: "debuts", view: null, debutGrade: "xfv", sortRev: {} };
+      var DATA = { flags: {} };
       var _TA_TV = { idx: null, loading: null };
       var KICKS = 0;
       function _dtvKick() { KICKS++; }
       function escapeHtml(s) { return String(s); }
       function getEfv(p) { return (p && p.efv) || null; }
     """)
-    for fn in ("_taFold", "_taBuildIndex", "_taMM", "fmtSvMM", "_dtvRow",
+    for fn in ("efvDisplaySwaps", "_debutGradePrimary",
+               "_taFold", "_taBuildIndex", "_taMM", "fmtSvMM", "_dtvRow",
                "debutedTradeValueMM", "_debutTvSortValue", "_debutTvSecondary", "_debutTvCellHTML"):
         ctx.eval(_function_source(fn))
     ctx.eval("""
@@ -203,8 +207,12 @@ def test_the_second_line_follows_the_lists_lead_grade(js):
     js.eval("_TA_TV.idx = _taBuildIndex(BOARD); state.debutGrade = 'fv';")
     try:
         assert _sub(js.eval('cell("a")')) == "FV prospect $20M"
+        # Owner answer Q-E1 behind storage.EFV_DISPLAY_SWAPS: the toggle orders the list
+        # only, so the second line stays on eFV.
+        js.eval("DATA.flags = { efv_display_swaps: true };")
+        assert _sub(js.eval('cell("a")')) == "eFV prospect $147M"
     finally:
-        js.eval("state.debutGrade = 'xfv';")
+        js.eval("state.debutGrade = 'xfv'; DATA.flags = {};")
 
 
 def test_a_board_that_could_not_be_read_prints_dashes(js):

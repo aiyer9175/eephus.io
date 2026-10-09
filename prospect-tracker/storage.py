@@ -5720,6 +5720,19 @@ PROV_SECTION_LABEL_SOURCES = ("fangraphs", "mlb_pipeline", "mlb_pipeline_interna
                               "baseballamerica", "espn", "just_baseball")
 PROV_SECTION_TITLE = "Not yet graded by any source"
 
+# EFV_DISPLAY_SWAPS (owner ask 5, 2026-09-30; owner answer Q-E1; Part 8 lane
+# links_efv_display, B.1): the ONE switch for the PROSPX eFV display swaps. Off, PROSPX
+# behaves as before apart from labels: a consensus grade printed where eFV abstains wears
+# a C mark and a dashed border and its tooltip says so. On, the Rank-by and Debuted
+# toggles order the lists only and every printed grade stays eFV, with a labelled
+# consensus chip beside it while a list is ordered by consensus; the FV sparkline's H and
+# L chips and the FV-history tooltip read the eFV series; the headshot ring keys on the
+# eFV rarity grade; a grade waiting on the eFV file paints a neutral placeholder. Served
+# to the page as flags.efv_display_swaps on the boot payload (written below), the only
+# place prospx/index.html reads it. proj_export imports this name; test_efv_display_helpers
+# fails if it is assigned anywhere else. It flips in its own commit (Q9_15).
+EFV_DISPLAY_SWAPS = False
+
 
 def _point_sources(pt) -> set:
     """Every source a consensus point names: its per_source keys plus
@@ -17812,6 +17825,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # data/provisional_track_eval.json; PROSPX reads it to split the board.
         "prov_section": dict(prov_section_state(), n_board_rows=sum(
             1 for _k, _v in _source_graded_by_key.items() if not _v)),
+        # The PROSPX display flags (EFV_DISPLAY_SWAPS above); the page reads them here only.
+        "flags": {"efv_display_swaps": bool(EFV_DISPLAY_SWAPS)},
         "players":    active_payload,
         "spotlights": spotlight_payload,
         # Standout single games of active prospects (see the harvest note above);
