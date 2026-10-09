@@ -48,6 +48,11 @@
   font-family: var(--font-retro-mono, ui-monospace, monospace); font-weight: 700;
   font-size: 15px; letter-spacing: .02em; color: var(--ink); white-space: nowrap;
 }
+/* PB-06 (owner ask 2): build_site.pixel_brand_hand_cs_bar writes .cs-bar-title--px
+   only under PIXEL_BRAND. The 12 px icon crop, then the title on the 12 px grid
+   (PixelMplus12 at its own 12 px, no tracking): one u for icon and letters. */
+.cs-bar-title--px { font-size: 12px; line-height: 12px; letter-spacing: 0; }
+.cs-bar-title--px > .ico { vertical-align: top; margin-right: 6px; }
 .cs-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
 .cs-tabs a {
   font-family: var(--font-retro-mono, ui-monospace, monospace); font-size: 13px; font-weight: 600;

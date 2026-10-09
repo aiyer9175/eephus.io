@@ -862,6 +862,15 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* The 32 px module icon before a masthead title (PX-07), centred on the
    24 px title's line. */
 .section-head h1 > .ico { vertical-align: middle; margin: -4px 10px 0 0; }
+/* PB-06 (owner ask 2): build_site.pixel_masthead writes .mh-px only under
+   PIXEL_BRAND. The title sits on the 12 px grid: 24 px (2 px per font pixel),
+   no tracking, a 36 px line, over a 1 u (2 px) rule in the eight ramp bands as
+   wide as the words on each line. The words stay live text. */
+.section-head h1.mh-px { font-size: 24px; line-height: 36px; letter-spacing: 0; }
+.section-head h1.mh-px > .mh-title {
+  padding-bottom: 6px; background: var(--iridescent-steps) left bottom / 100% 2px no-repeat;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
 .section-head .section-sub { font-size: .85rem; color: var(--text-tertiary); font-style: italic; }
 /* Tap target that expands the phone-clamped module subtitle. Hidden by default
    and at every width above the phone breakpoint, where the subtitle is never

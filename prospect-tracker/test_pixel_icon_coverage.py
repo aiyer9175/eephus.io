@@ -18,6 +18,7 @@ link's key (PX-10).
 """
 from __future__ import annotations
 
+import html
 import inspect
 import re
 from pathlib import Path
@@ -190,6 +191,93 @@ def test_masthead_draws_one_32px_icon_first_in_the_h1(key):
     assert h1.startswith('<svg class="ico" width="32"'), h1[:80]
     if key in B.MODULE_STAGE:
         assert B._stage_chip(key) in h1, "the stage chip is untouched"
+
+
+# PB-06 / BR-06 (owner ask 2): under build_site.PIXEL_BRAND the masthead title
+# sits on the 12 px grid over a 1 u rule in the ramp bands. Off, nothing moves.
+_MH_RE = re.compile(r'<h1 class="mh-px">(<svg class="ico" width="32"[^>]*>.*?</svg>)'
+                    r'<span class="mh-title">([^<]*)</span>(.*?)</h1>', re.S)
+
+
+def _unwrap_masthead(out: str) -> str:
+    """The flag-on page with the PB-06 wrapper taken off again."""
+    return _MH_RE.sub(lambda m: f"<h1>{m.group(1)}{m.group(2)}{m.group(3)}</h1>", out, count=1)
+
+
+@pytest.mark.parametrize("key", sorted(MASTHEADS))
+def test_masthead_is_one_icon_one_grid_title_one_rule_under_the_flag(key, monkeypatch):
+    monkeypatch.setattr(B, "PIXEL_BRAND", False)
+    off = MASTHEADS[key]()
+    assert 'class="mh-title"' not in off and 'class="mh-px"' not in off
+    monkeypatch.setattr(B, "PIXEL_BRAND", True)
+    on = MASTHEADS[key]()
+    assert len(_MH_RE.findall(on)) == 1, "one masthead h1"
+    assert on.count('class="mh-title"') == 1, "one rule per page (it draws under .mh-title)"
+    assert [s for w, s in _icons(on) if w == 32] == [_sym(key)], "one masthead icon"
+    icon, words, rest = _MH_RE.search(on).groups()
+    assert words.strip() == words and words, f"live text, no padding: {words!r}"
+    if key in B.MODULE_STAGE:
+        assert rest == " " + B._stage_chip(key), "the stage chip follows, untouched"
+    # Nothing else on the page moves: unwrapping the title gives the flag-off
+    # page's main back (head and footer carry the flag's favicon, card and mark).
+    main = lambda s: s.split("<main", 1)[1].split("</main>", 1)[0]  # noqa: E731
+    assert main(_unwrap_masthead(on)) == main(off)
+
+
+@pytest.mark.parametrize("active", ["awards", "hof"])
+def test_awards_hof_head_is_one_masthead_site(active, monkeypatch):
+    """_hof_module_head serves /awards/ and /hof/; with AWARDS_LIVE on its title
+    reads 'Awards / HoF' and the strip sits under it, with the grid title."""
+    import awards_core
+    monkeypatch.setattr(awards_core, "AWARDS_LIVE", True)
+    monkeypatch.setattr(B, "PIXEL_BRAND", True)
+    head = B.pixel_masthead(B._hof_module_head(active, live=True))
+    m = _MH_RE.search(head)
+    assert m and m.group(2) == html.escape(awards_core.MODULE_LABEL)
+    assert head.count('class="mh-title"') == 1
+
+
+def _css_rule(css: str, selector: str) -> str:
+    m = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", css)
+    assert m, selector
+    return m.group(1)
+
+
+def test_masthead_grid_rules_are_tokens_only():
+    css = _src("assets/site.css")
+    h1 = _css_rule(css, ".section-head h1.mh-px")
+    assert "font-size: 24px" in h1 and "letter-spacing: 0" in h1 and "line-height: 36px" in h1
+    rule = _css_rule(css, ".section-head h1.mh-px > .mh-title")
+    assert "var(--iridescent-steps)" in rule and "100% 2px" in rule and "no-repeat" in rule
+    for body in (h1, rule):
+        assert not re.search(r"#[0-9a-fA-F]{3,8}\b", body), "colours through tokens only"
+        assert "animation" not in body and "transition" not in body, "the rule does not move"
+
+
+# The CollegeSavant bar (PB-06): the 12 px icon crop and a 12 px grid title.
+CS_PAGES = ("collegesavant/index.html", "collegesavant/pitcher_index.html")
+
+
+@pytest.mark.parametrize("rel", CS_PAGES)
+def test_cs_bar_title_takes_the_12px_icon_under_the_flag(rel):
+    page = _src(rel)
+    if not B.PIXEL_BRAND:
+        assert 'class="cs-bar-title cs-bar-title--px"' not in page, "flag off: the bar is untouched"
+    synced = B.pixel_brand_hand_cs_bar(page)
+    assert B.pixel_brand_hand_cs_bar(synced) == synced, "idempotent"
+    bar = re.search(r'<span class="cs-bar-title cs-bar-title--px">(.*?)</span></span>', synced, re.S).group(1)
+    assert _icons(bar) == [(12, "collegesavant")] and 'viewBox="2 2 12 12"' in bar
+    assert re.sub(r"<svg\b.*?</svg>", "", bar).startswith("CollegeSavant <span class=\"eephus-beta\"")
+    # one hunk: the title line, nothing else on the page
+    a, b = page.splitlines(), synced.splitlines()
+    assert len(a) == len(b) and sum(x != y for x, y in zip(a, b)) == 1
+
+
+def test_cs_bar_grid_rules():
+    rule = _css_rule(_src("collegesavant/styles.css"), ".cs-bar-title--px")
+    assert "font-size: 12px" in rule and "letter-spacing: 0" in rule
+    src = inspect.getsource(B.restamp_hand_authored_pages)
+    assert src.index("pixel_brand_hand_cs_bar(stamped)") > src.index("if PIXEL_BRAND:")
 
 
 def test_team_badges_are_sprite_symbols():
