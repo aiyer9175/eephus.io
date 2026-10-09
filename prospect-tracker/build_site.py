@@ -5855,14 +5855,26 @@ def _arb_model_panel() -> str:
         sp_mode = "?"
     if g2:
         vd = str(g2.get("verdict", "?"))
+        # The failing clauses and the mode their registered responses name,
+        # beside the mode actually served (ARBITRATION_GATE section 16).
+        resp = str(g2.get("registered_response_mode") or "")
+        extra = ""
+        if g2.get("failing_clauses"):
+            extra += ('<dt>failing clauses</dt><dd>%s</dd>'
+                      % html.escape(", ".join(
+                          re.sub(r"^c(\d+)([a-z]?)$", r"C\1'\2", str(c).split("_")[0])
+                          for c in g2["failing_clauses"])))
+        if resp and resp != sp_mode:
+            extra += ('<dt>registered response</dt><dd>%s, not applied: the owner '
+                      'decides</dd>' % html.escape(resp))
         downstream.append(
             '<details class="arb-row"><summary class="arb-sum">'
             '<span class="arb-vd arb-vd--%s">%s</span> GATE C2, the '
             'club-control-window salary path (scored %s)</summary><dl>'
-            '<dt>served mode</dt><dd>%s</dd></dl></details>'
+            '<dt>served mode</dt><dd>%s</dd>%s</dl></details>'
             % ("pass" if vd == "PASS" else "null", html.escape(vd),
                html.escape(str(g2.get("scored_at") or g2.get("generated_at") or "?")),
-               html.escape(sp_mode)))
+               html.escape(sp_mode), extra))
     else:
         downstream.append(
             '<details class="arb-row" open><summary class="arb-sum">'

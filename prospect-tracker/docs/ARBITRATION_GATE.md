@@ -1168,8 +1168,8 @@ model, board vintage 2026-10-08. `tools/arb_path_gate.py --write` writes the
 Three clauses fail. The modes nest (`off` < `ladder` < `closure` < `full`),
 so the registered responses resolve to the lowest one named: **`"off"`**,
 which the block records as `registered_response_mode`. Section 11e: "a
-failure does not withhold a ship. It reverts one." The revert lands in its
-own commit after this receipt, with every served number it moves.
+failure does not withhold a ship. It reverts one." Section 16c records why
+that revert is not applied in this task and goes to the owner.
 
 What the three failures are, read without upgrading or excusing them:
 
@@ -1217,3 +1217,34 @@ framework's market prices moved with the fWAR label epoch.
 `C2_CHAIN_MDAPE_BOUND` (0.171) was read off the History when its Ours column
 was still in deflated dollars (fixed in this task, owner answer M11-4). It is
 a registered constant and is not changed here.
+
+### 16c. The registered response is NOT applied in this task, and why
+
+Section 11e makes the revert mechanical and section 11a says it "needs no
+other edit". Both stopped being true after registration, and applying the
+constant today would break two served things that have nothing to do with
+the failing clauses:
+
+1. **The Club Ledger cannot export an "off" payload.** `ledger_export`
+   (shipped 2026-09-23) reconciles each club's served surplus against its
+   salary-path rows and asserts the match; under `"off"` the projection rows
+   carry no `salPath`, the first club reads $640.5M served against $0.0M of
+   rows, and the export raises. The nightly would keep the last Ledger file
+   and file a red, so the Ledger would go on printing full-mode figures
+   beside an off-mode trade board.
+2. **"off" also switches off the contract tail** (owner answer M05-01,
+   2026-09-25), which rides the same flag (`mode != "off"` in
+   `salary_path`). Measured on today's inputs, "off" moves 286 projection
+   rows and $1,042.8M of veteran surplus ($12,515.5M to $11,472.7M), the
+   trade board from $31,318.9M to $30,276.1M, and the largest single moves
+   are contract-tail rows the gate never scored (Vladimir Guerrero Jr.
+   -$108.0M to +$30.9M, Juan Soto $83.9M to $196.7M), beside the
+   arbitration rows it did (Junior Caminero $295.3M to $175.6M).
+
+So `SALARY_PATH_MODE` stays `"full"` and the decision goes to the owner
+(11e: "Keeping a failed clause serving is the owner's call, and either way
+the failure is published"). The failure is published: the `gate_c2` block
+records `registered_response_mode: "off"`, the /arbitration/ Model tab shows
+the gate as FAIL with the registered response beside the served mode, and
+the registry row stays `provisional`, which C3' and these failures block
+from leaving.

@@ -179,3 +179,24 @@ def test_c3_is_scored_on_both_mlbtr_pools():
     assert c3["pools"]["repaired"]["n"] >= c3["pools"]["frozen"]["n"]
     assert c3["verdict"] == ("PASS" if all(p["verdict"] == "PASS"
                                            for p in c3["pools"].values()) else "FAIL")
+
+
+def test_the_registered_response_is_recorded_and_a_kept_mode_says_why():
+    """The modes nest, so the failing clauses' responses resolve to one mode.
+    When the served constant differs from it, the owner holds the decision
+    (section 11e) and the gate doc and the registry row must say so; the
+    Model tab prints both."""
+    import salary_path as sp
+    g = _block()
+    order = ("off", "ladder", "closure", "full")
+    assert g["registered_response_mode"] in order
+    if not g["failing_clauses"]:
+        return
+    if g["registered_response_mode"] != sp.SALARY_PATH_MODE:
+        doc = (ROOT / "docs" / "ARBITRATION_GATE.md").read_text(encoding="utf-8")
+        assert "### 16c. The registered response is NOT applied in this task, and why" in doc
+        reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+        row = [m for m in reg["models"] if m["model_id"] == "control_window_salary_path"][0]
+        assert "It is NOT applied" in row["notes"]
+        html = (ROOT / "arbitration" / "index.html").read_text(encoding="utf-8")
+        assert "<dt>registered response</dt><dd>%s, not applied" % g["registered_response_mode"] in html
