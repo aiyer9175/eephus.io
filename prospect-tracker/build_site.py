@@ -654,6 +654,26 @@ def _masthead_icon(key: str) -> str:
     return _ico(key, 32)
 
 
+# PB-06 / BR-06 (owner ask 2): the masthead h1 is the one that opens with the
+# 32 px module icon (PX-07), one per page. Its title words, then the stage chip.
+_MASTHEAD_H1_RE = re.compile(
+    r'<h1>(<svg class="ico" width="32" [^>]*>.*?</svg>)(.*?)'
+    r'(\s*<span class="eephus-beta"[^>]*>.*?</span>)?</h1>', re.S)
+
+
+def pixel_masthead(body: str) -> str:
+    """PB-06, read by page() under PIXEL_BRAND only: the masthead title goes on
+    the 12 px grid. The h1 takes .mh-px and its words .mh-title, which site.css
+    sets at 24 px with no tracking over a 1 u (2 px) rule in the eight ramp
+    bands. The words stay live text; the icon and the stage chip are untouched."""
+    def _sub(m: "re.Match[str]") -> str:
+        words = m.group(2).rstrip()
+        gap = m.group(2)[len(words):]
+        return (f'<h1 class="mh-px">{m.group(1)}<span class="mh-title">{words}</span>'
+                f'{gap}{m.group(3) or ""}</h1>')
+    return _MASTHEAD_H1_RE.sub(_sub, body, count=1)
+
+
 def _wire_glyph(typ: str, glyph: str) -> str:
     """The wire pictogram (PX-17): a registry type draws its 12 px icon; an
     unknown type keeps its text glyph. The GFX blob keeps the text glyph for
@@ -939,7 +959,9 @@ EEPHUS_VERSION = "β v1.0"
 # its own commit (PB-10). The wordmark no longer rides it: every eephus.io wordmark
 # (nav, homepage sidebar, homepage hero, the three hand-kept navs) serves the
 # committed pixel lockup from assets/brand/ whatever the flag says (owner ask
-# 2026-10-02, PX_LOGO_ANIMATION; see eephus_merged_wordmark()).
+# 2026-10-02, PX_LOGO_ANIMATION; see eephus_merged_wordmark()). On, (PB-06) every
+# module masthead title goes on the 12 px grid over a 1 u ramp rule
+# (pixel_masthead()) and the CollegeSavant bar title takes its 12 px icon.
 PIXEL_BRAND = False
 FAVICON_LINKS = _FAVICON_LINKS_PIXEL if PIXEL_BRAND else _FAVICON_LINKS_LEGACY
 BETA_BADGE = (
@@ -1502,6 +1524,8 @@ def page(title: str, active: str, body: str, description: str = "",
                           image, url, og_type)
     robots_meta = (f'\n<meta name="robots" content="{html.escape(robots)}">'
                    if robots else "")
+    if PIXEL_BRAND:
+        body = pixel_masthead(body)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10329,12 +10353,29 @@ def pixel_brand_hand_prospx(text: str) -> str:
     return _PROSPX_MARK_SVG_RE.sub(_svg, text, count=1)
 
 
+# PB-06: the CollegeSavant bar title, today's text-only title or the one an
+# earlier PIXEL_BRAND build wrote (so the sync is idempotent).
+_CS_BAR_TITLE_RE = re.compile(
+    r'<span class="cs-bar-title(?: cs-bar-title--px)?">(?:<svg class="ico"[^>]*>.*?</svg>)?CollegeSavant ',
+    re.S)
+
+
+def pixel_brand_hand_cs_bar(text: str) -> str:
+    """PB-06: the CollegeSavant bar title takes the 12 px icon crop and goes on
+    the 12 px grid (.cs-bar-title--px in collegesavant/styles.css). The word
+    stays live text and the stage chip after it is untouched."""
+    return _CS_BAR_TITLE_RE.sub(
+        lambda m: f'<span class="cs-bar-title cs-bar-title--px">{_ico("collegesavant", 12)}CollegeSavant ',
+        text, count=1)
+
+
 def restamp_hand_authored_pages() -> None:
     """Stamp every /assets/ stylesheet, script and <use> ref in the
     hand-authored pages with the asset's current content hash (_restamp_html),
     and sync the nav lockup to the pixel lockup _nav() serves. With PIXEL_BRAND
     on, the og:image and twitter:image are synced to the page's module card too,
-    and the PROSPX masthead to the pixel mark (PB-05)."""
+    the PROSPX masthead to the pixel mark (PB-05) and the CollegeSavant bar
+    title to the grid (PB-06)."""
     for rel in HAND_AUTHORED_PAGES:
         path = ROOT / rel
         if not path.exists():
@@ -10348,6 +10389,8 @@ def restamp_hand_authored_pages() -> None:
             stamped = pixel_brand_hand_og(stamped, rel)
             if rel == "prospx/index.html":
                 stamped = pixel_brand_hand_prospx(stamped)
+            else:
+                stamped = pixel_brand_hand_cs_bar(stamped)
         if stamped != original:
             path.write_text(stamped, encoding="utf-8")
             print(f"  restamped {rel}")
