@@ -785,6 +785,7 @@ def build() -> dict:
     hof_clubs = {r["code"]: r for r in hof_franchises.get("clubs") or []}
     arb_router_narrows = "TEAM_NARROW_RE" in (ROOT / "assets" / "arbitration.js").read_text(encoding="utf-8") \
         if (ROOT / "assets" / "arbitration.js").exists() else False
+    arb_proc = arb.get("club_process") if _lx._arb_club_process_live() else None
 
     # ---- per-club documents -------------------------------------------------------------
     club_docs = []
@@ -1059,6 +1060,13 @@ def build() -> dict:
             "verdict": verdict_of.get("arb_award"), "cba_banner": True,
             "basis": f"arbitration.json rows for the club, pre-arb rows included (arb_award provisional; cost is the sum of the {CLASS_YEAR} ladder steps incl. pre-arb minimums); arb_history by club",
         }
+        # The club arbitration process chips (FAA-4), copied from the served
+        # arbitration.json block and never recounted; only while
+        # arb_export.ARB_CLUB_PROCESS_CHIPS is on (else the key is absent).
+        if arb_proc is not None:
+            pc = (arb_proc.get("clubs") or {}).get(c)
+            arbitration["process"] = ({"window": arb_proc.get("window"), "label": pc.get("label"),
+                                       "chips": pc.get("chips")} if pc else None)
 
         # -- PARK (descriptive, never tiered) ---------------------------------------------------
         venue = venues.get(ident.get("venue_id")) or {}
@@ -1452,6 +1460,12 @@ def build() -> dict:
             "windows {recent|all: [first_winter, last_winter, n_winters]}, league_usd {recent|all}, band_keys, gl, "
             "descriptive}; ledger_export.club_fa_spend_profile on fa_archive winters, the Club Ledger's own figures; "
             "realized spending, not a forecast")
+    if arb_proc is not None:
+        copy.update({"arb_process_title": _lx.ARB_PROCESS_COPY["arb_process_title"],
+                     "arb_process_copy": arb_proc.get("copy")})
+        field_key["arbitration.process"] = (
+            "{window, label, chips [[key, n, text]]}: the club's chips from arbitration.json club_process, "
+            "copied, never recounted; every text states its n and the window")
 
     sections_status = {
         "fin": {"live": True, "descriptive": True, "headline": copy["fin_headline_label"], "ledger_live": ledger_live},

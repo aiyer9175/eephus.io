@@ -188,6 +188,12 @@
     ".arb-app .arb-lede{font-size:12px;line-height:1.6;color:var(--text-secondary);margin:6px 0 8px;max-width:90ch}",
     ".arb-app .arb-more{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}",
     ".arb-app .arb-related{margin:22px 0 0;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--text-secondary)}",
+    /* The club process card and chips (FAA-4): plain bordered cells, no
+       colour on any of them, because a chip states a count, not a verdict. */
+    ".arb-app .arb-process{border:1px solid var(--border);background:var(--bg-secondary);padding:9px 12px;margin:0 0 12px}",
+    ".arb-app .arb-process h3{font:700 10px/1.4 var(--font-retro-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin:0 0 6px}",
+    ".arb-app .arb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}",
+    ".arb-app .arb-chip{border:1px solid var(--border-light);padding:3px 8px;font-size:12px;line-height:1.5;color:var(--text-primary)}",
 
     /* On a phone the question is "how many years, how much total". The
        per-year dollar is deferred into title=, not deleted. Logos come out of
@@ -731,27 +737,50 @@
     var season = board.season ? esc(String(board.season)) : "Next season";
     // A club with no rung of a kind owes $0 there, not "$0K".
     function usd(v) { return v ? money(v) : "$0"; }
+    // The club process columns and card (FAA-4) render only when the board
+    // carries arb_export's club_process block (ARB_CLUB_PROCESS_CHIPS).
+    var CP = board.club_process && board.club_process.clubs ? board.club_process : null;
+    function procCells(code) {
+      if (!CP) return "";
+      var p = CP.clubs[code];
+      if (!p) return "<td></td><td></td><td></td>";
+      return "<td>" + esc(p.cases) + "</td><td>" + esc(p.exchanged) + (p.cases ? " (" + Math.round(100 * p.exchanged / p.cases) + "%)" : "") +
+        '</td><td class="arb-l">' + esc(p.label || "") + "</td>";
+    }
     var body = rows.map(function (t, i) {
       if (narrowed && t.t !== narrowed) return "";
       return '<tr class="' + (narrowed ? "arb-row-narrow" : "") + '"><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="arb-l">' + club(t.t) +
         "</td><td>" + t.n + "</td><td>" + t.cls + "</td><td>" + usd(t.nextArb) + "</td><td>" + usd(t.nextPre) +
-        "</td><td>" + usd(t.remArb) + "</td><td>" + usd(t.remPre) + "</td></tr>";
+        "</td><td>" + usd(t.remArb) + "</td><td>" + usd(t.remPre) + "</td>" + procCells(t.t) + "</tr>";
     }).join("");
     var narrowNote = narrowed
       ? '<p class="arb-narrow-note">Narrowed to ' + esc(narrowed) + ' (league rank kept). <a href="#teams" id="arb-narrow-clear">All clubs</a></p>'
       : "";
+    var proc = CP && narrowed && CP.clubs[narrowed] ? CP.clubs[narrowed] : null;
+    var procCard = proc
+      ? '<section class="arb-process" aria-label="Arbitration process, ' + esc(narrowed) + '"><h3>Arbitration process</h3><div class="arb-chips" role="list">' +
+        (proc.chips || []).map(function (c) { return '<span class="arb-chip" role="listitem" data-chip="' + esc(c[0]) + '">' + esc(c[2]) + "</span>"; }).join("") +
+        '</div><p class="arb-lede">' + esc(CP.copy) + "</p></section>"
+      : "";
+    var win = CP ? esc(CP.window) : "";
+    var procHeads = CP
+      ? '<th scope="col" title="Players the MLB Trade Rumors trackers list under the club.">Cases<small>' + win + "</small></th>" +
+        '<th scope="col" title="Cases that went to an exchange of figures, as a share of all its cases.">Exchanged<small>' + win + "</small></th>" +
+        '<th scope="col" class="arb-l" title="' + esc(Object.keys(CP.labels || {}).map(function (k) { return k + ": " + CP.labels[k]; }).join(". ")) + '">Process label<small>' + win + "</small></th>"
+      : "";
     // COPY PASS 2026-10-03: the sentence that narrated the sort left (the
     // head says "sorted"); the basis, the tender assumption and "not a payroll
     // forecast" stay, one line.
-    root.innerHTML = narrowNote +
+    root.innerHTML = narrowNote + procCard +
       '<p class="arb-lede arb-note">Arbitration seasons are model projections, pre-arb seasons the league ' +
-      "minimum (own columns). Assumes every player is tendered through his ladder. Not a payroll forecast.</p>" +
+      "minimum (own columns). Assumes every player is tendered through his ladder. Not a payroll forecast." +
+      (CP && !procCard ? " Cases and Exchanged: " + esc(CP.copy) : "") + "</p>" +
       '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead><tr>' +
       '<th scope="col" class="mlbstats-col-rank">#</th><th scope="col" class="arb-l">Club</th>' +
       '<th scope="col" title="Players on the club\'s arbitration ladder, pre-arb included.">Players</th>' +
       '<th scope="col" title="Players whose first remaining ladder season is arbitration year 1 to 4.">Arb class 1-4</th>' +
       '<th scope="col">' + season + ' arbitration</th><th scope="col">' + season + " pre-arb min.</th>" +
-      '<th scope="col">Remaining arbitration<small>sorted</small></th><th scope="col">Remaining pre-arb min.</th></tr></thead><tbody>' + body +
+      '<th scope="col">Remaining arbitration<small>sorted</small></th><th scope="col">Remaining pre-arb min.</th>' + procHeads + "</tr></thead><tbody>" + body +
       "</tbody></table></div>";
     var clear = el("arb-narrow-clear");
     if (clear) clear.onclick = function (e) {

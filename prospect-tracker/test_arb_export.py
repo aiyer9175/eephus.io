@@ -42,6 +42,43 @@ def test_the_champion_never_sees_a_counting_stat():
         assert banned in M.CEILING_KEYS
 
 
+def _projectable_keys() -> set:
+    """The keys arb_model.features() accepts: the serve path raises KeyError on
+    any other, so this set is the mechanical projectable_keys of
+    docs/ARBITRATION_GATE.md section 4."""
+    keys = set()
+    for k in M.CEILING_KEYS + X.CLUB_PROCESS_KEYS + ("club", "team", "t"):
+        try:
+            M.features({}, None, keys=(k,))
+        except KeyError:
+            continue
+        keys.add(k)
+    return keys
+
+
+def test_no_club_process_key_reaches_the_award():
+    """docs/ARBITRATION_GATE.md sections 4 and 13c: the point award never reads
+    a club feature. Every key the club-process block serves (and the 13e
+    term's name) stays out of the champion tuple, the ceiling tuple and the
+    keys the serve path accepts, and off every board row."""
+    proj = _projectable_keys()
+    assert set(M.CHAMPION_KEYS) <= proj
+    for k in X.CLUB_PROCESS_KEYS:
+        assert k not in M.CHAMPION_KEYS, k
+        assert k not in M.CEILING_KEYS, k
+        assert k not in proj, f"club-process key {k} reached projectable_keys"
+    block = X.build_club_process()
+    if block is None:
+        pytest.skip("data/_labs/arb_ledger.json absent")
+    served = set(block) | {k for c in block["clubs"].values() for k in c}
+    assert served - {"source", "window", "seasons", "attribution", "recaptures", "copy", "labels",
+                     "totals", "field_key", "clubs"} <= set(X.CLUB_PROCESS_KEYS), served
+    p = ROOT / "data" / "arbitration.json"
+    if p.exists():
+        for r in json.loads(p.read_text("utf-8")).get("rows") or []:
+            assert not set(r) & set(X.CLUB_PROCESS_KEYS), r.get("n")
+
+
 def test_raise_multipliers_fall_as_the_prior_salary_rises():
     """Measured on the scored pool: 1.70 under $2M down to 1.37 above $10M. A
     step-only multiplier ignores that and compounds a small-salary raise onto a

@@ -786,6 +786,35 @@
   // seasons row: Actual, Ours, MLBTR (Swartz) as a THIRD quantity that is never
   // a residual, then ou_mkt and ou_war in their own columns with their own
   // group totals; the Swartz footer stays blank (present on some rows only).
+  // The club arbitration process (FAA-4, behind arb_export's
+  // ARB_CLUB_PROCESS_CHIPS): the /arbitration/ chips for this club, read from
+  // its row file. Each chip states its n and window; none takes a colour. Dark,
+  // with its reason, until the section is live.
+  function arbProcess(d, sh) {
+    var live = (DATA.sections.arb_filing || {}).live;
+    if (!live) return dark("Filing figures and hearings", copy("arb_filing_dark"));
+    if (!sh) return "<h3>" + esc(copy("arb_process_title")) + "</h3>" + shardLine(d.club, copy("arb_process_loading"));
+    var P = sh.arbitration && sh.arbitration.process;
+    if (!P) return "<h3>" + esc(copy("arb_process_title")) + '</h3><p class="ledger-count">' + esc(copy("arb_process_none")) + "</p>";
+    return "<h3>" + esc(copy("arb_process_title")) + '</h3><div class="ledger-chips" role="list">' +
+      (P.chips || []).map(function (c) { return '<span class="ledger-zchip" role="listitem" data-chip="' + esc(c[0]) + '">' + esc(c[2]) + "</span>"; }).join("") +
+      '</div><p class="ledger-count">' + esc(copy("arb_process_copy")) + "</p>";
+  }
+  // FAA-9: the realized block keeps the season-end club and says so, and names
+  // the cases whose exchange-day club differs (both directions).
+  function arbTraded(sh) {
+    if (!copy("arb_realized_basis")) return "";
+    var T = sh && sh.arbitration && sh.arbitration.traded;
+    var out = '<p class="ledger-count">' + esc(copy("arb_realized_basis")) + "</p>";
+    if (!T) return out;
+    function line(lead, rows, key) {
+      if (!rows || !rows.length) return "";
+      return '<p class="ledger-count">' + esc(lead) + " (" + esc(T.window) + "): " + rows.map(function (r) {
+        return esc(cv(key, r, "season")) + " " + esc(cv(key, r, "name")) + " (" + esc(r[2]) + "), " + esc(money(cv(key, r, "actual_usd")));
+      }).join("; ") + ".</p>";
+    }
+    return out + line(copy("arb_traded_in_lead"), T["in"], "arbitration.traded.in") + line(copy("arb_traded_out_lead"), T.out, "arbitration.traded.out");
+  }
   function renderRealizedRows(rows) {
     var by = {};
     rows.forEach(function (r) { var s = cv("arbitration.realized.rows", r, "season"); (by[s] = by[s] || []).push(r); });
@@ -831,12 +860,13 @@
         }).join("") + "</tbody></table></div>";
     }
     out += '<p class="ledger-count">' + gl("Band", "arb_award_band") + ": " + esc(copy("band_note")) + "</p>";
-    out += dark("Award quantiles", copy("arb_quantiles_dark")) + dark("Comps", copy("arb_comps_dark")) + dark("Filing figures and hearings", copy("arb_filing_dark"));
+    out += dark("Award quantiles", copy("arb_quantiles_dark")) + dark("Comps", copy("arb_comps_dark")) + arbProcess(d, sh);
     out += "<h3>" + esc(copy("arb_realized_title")) + "</h3>" +
       '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Season</th><th>n</th><th>Actual</th><th>Ours</th><th>' + gl("ou_mkt", "arb_market_residual") + "</th><th>ou_war</th><th>eWAR</th></tr></thead><tbody>" +
       R.seasons.map(function (s) {
         return "<tr><td>" + esc(s[0]) + "</td><td>" + esc(s[1]) + "</td><td>" + esc(money(s[2])) + "</td><td>" + esc(money(s[3])) + "</td><td>" + signedMoney(s[4]) + "</td><td>" + signedMoney(s[5]) + "</td><td>" + esc(num(s[6], 1)) + "</td></tr>";
       }).join("") + "</tbody><tfoot><tr><td>Total</td><td>" + esc(R.n) + "</td><td></td><td></td><td>" + signedMoney(R.ou_mkt_total_usd) + "</td><td>" + signedMoney(R.ou_war_total_usd) + "</td><td></td></tr></tfoot></table></div>";
+    out += arbTraded(sh);
     if (sh && sh.arbitration && sh.arbitration.realized_rows) out += renderRealizedRows(sh.arbitration.realized_rows);
     out += '<p class="ledger-count">ou_mkt: ' + esc(copy("ou_mkt")) + " ou_war: " + esc(copy("ou_war")) + " " + esc(copy("never_combine")) + "</p>";
     if (DATA.arbitration_eval && copy("swartz_a6")) {

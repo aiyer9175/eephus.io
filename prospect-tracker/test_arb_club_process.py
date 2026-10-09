@@ -392,3 +392,214 @@ def test_cots_backfill_matches_the_cots_lab_file():
     got = {(r["player_name"], r["class_year"], r["process"])
            for r in _ledger()["cots_backfill"]["rows"]}
     assert got == want
+
+
+
+# --------------------------------------------------------------------------- #
+# The chips (task Q9_18, plan rows FAA-4 and FAA-9), behind
+# arb_export.ARB_CLUB_PROCESS_CHIPS
+# --------------------------------------------------------------------------- #
+
+import arb_export as X  # noqa: E402
+
+
+def _row(club, outcome, cy=2025, name=None, **kw):
+    e = {"kind": "tracker", "class_year": cy, "club": club, "outcome": outcome,
+         "player_name": name or f"{club} {outcome} {len(kw)}", "hearing": None}
+    e.update(kw)
+    return e
+
+
+def _fixture_ledger():
+    """Five clubs, one per branch of the chip and label rules."""
+    rows = []
+    # BAL: two exchanged, both to a hearing (club won one, lost one): File and trial
+    rows += [_row("BAL", "agreed") for _ in range(3)]
+    rows += [_row("BAL", "exchanged", hearing={"result": "club_won"}),
+             _row("BAL", "exchanged", hearing={"result": "player_won"})]
+    # two exchanged, one settled after the exchange: no label
+    rows += [_row("NYY", "exchanged", hearing={"result": "club_won"}),
+             _row("NYY", "exchanged", recaptured={"outcome": "agreed"})]
+    # one hearing on file, one exchanged case with no ending captured
+    rows += [_row("SEA", "exchanged", hearing={"result": "player_won"}), _row("SEA", "exchanged")]
+    # two exchanged, no ending captured: the label is withheld
+    rows += [_row("TBR", "exchanged"), _row("TBR", "exchanged")]
+    # zero exchanged on ten cases: Settles before the exchange
+    rows += [_row("CHW", "agreed") for _ in range(10)]
+    # zero exchanged on nine cases: below the floor, no label
+    rows += [_row("COL", "agreed") for _ in range(9)]
+    # one exchanged, to a hearing: below the File and trial floor
+    rows += [_row("MIA", "exchanged", hearing={"result": "club_won"}), _row("MIA", "agreed", cy=2024)]
+    return {"entries": rows, "recaptures": {"2026-10-09": {}}}
+
+
+def _chips_carry_n_and_window(block):
+    w = block["window"]
+    for code, c in block["clubs"].items():
+        assert c["chips"], code
+        for key, n, text in c["chips"]:
+            assert isinstance(n, int) and n >= 0, (code, key)
+            assert str(n) in text, (code, key, text)
+            assert f"({w})" in text, (code, key, text)
+
+
+def test_every_chip_carries_n_and_window_on_the_lab_ledger():
+    block = X.build_club_process()
+    assert block["window"] == "2024-2026" and block["seasons"] == [2024, 2025, 2026]
+    assert len(block["clubs"]) == 30
+    _chips_carry_n_and_window(block)
+    for code, c in block["clubs"].items():
+        keys = [k for k, _n, _t in c["chips"]]
+        assert keys[:3] == ["cases", "exchanged", "hearings"], code
+        assert ("label" in keys) == (c["label"] is not None), code
+
+
+def test_every_chip_carries_n_and_window_on_every_branch():
+    block = X.build_club_process(_fixture_ledger())
+    assert block["window"] == "2024-2025"
+    _chips_carry_n_and_window(block)
+    texts = {c: [t for _k, _n, t in v["chips"]] for c, v in block["clubs"].items()}
+    assert "Hearings 2, club won 1, lost 1 (2024-2025)" in texts["BAL"]
+    assert "Hearings: no result captured for 2 of 2 exchanged (2024-2025)" in texts["TBR"]
+    assert "Hearings 1, club won 1, lost 0 (2024-2025)" in texts["NYY"]
+    assert ("Hearings 1 on file, club won 0, lost 1; no result captured for 1 of 2 exchanged "
+            "(2024-2025)") in texts["SEA"]
+    assert "Hearings 0 (2024-2025)" in texts["CHW"]
+
+
+def test_no_label_renders_below_its_floor():
+    block = X.build_club_process(_fixture_ledger())
+    labels = {c: v["label"] for c, v in block["clubs"].items()}
+    assert labels == {"BAL": X.FILE_AND_TRIAL, "NYY": None, "SEA": None, "TBR": None,
+                      "CHW": X.SETTLES_BEFORE, "COL": None, "MIA": None}
+    # the rule itself, at each floor
+    assert X.club_process_label(30, 1, 0, 0) is None
+    assert X.club_process_label(30, 2, 0, 0) == X.FILE_AND_TRIAL
+    assert X.club_process_label(30, 2, 0, 1) is None
+    assert X.club_process_label(30, 2, 1, 0) is None
+    assert X.club_process_label(9, 0, 0, 0) is None
+    assert X.club_process_label(10, 0, 0, 0) == X.SETTLES_BEFORE
+    # and on the lab ledger: every label sits on or above its floor
+    for code, c in X.build_club_process()["clubs"].items():
+        if c["label"] == X.FILE_AND_TRIAL:
+            assert c["exchanged"] >= 2 and c["settled_after"] == 0 and c["unresolved"] == 0, code
+        elif c["label"] == X.SETTLES_BEFORE:
+            assert c["exchanged"] == 0 and c["cases"] >= 10, code
+        else:
+            assert c["label"] is None
+            assert not any(k == "label" for k, _n, _t in c["chips"]), code
+
+
+def test_the_lab_ledger_counts():
+    """637 tracker rows, 57 exchanged; no capture carries a hearing result,
+    so no club is File and trial and the five clubs that never exchanged
+    on at least ten cases settle before the exchange."""
+    block = X.build_club_process()
+    assert block["totals"] == {"cases": 637, "exchanged": 57, "settled_after": 0,
+                               "unresolved": 57, "hearings": 0}
+    labelled = sorted((c, v["label"]) for c, v in block["clubs"].items() if v["label"])
+    assert labelled == [(c, X.SETTLES_BEFORE) for c in ("ARI", "ATH", "CHW", "CLE", "COL")]
+    assert block["clubs"]["BAL"]["exchanged"] == 8 and block["clubs"]["DET"]["exchanged"] == 2
+
+
+def test_the_13b_form_reads_only_winters_before():
+    block = X.build_club_process(before=2026)
+    assert block["seasons"] == [2024, 2025] and block["window"] == "2024-2025"
+    assert block["totals"]["exchanged"] == EXCHANGED[2024] + EXCHANGED[2025]
+
+
+def test_flag_off_leaves_the_board_untouched_and_writes_only_the_preview(tmp_path):
+    board = {"rows": [], "field_key": {"m": "x"}}
+    before = json.dumps(board, sort_keys=True)
+    proc = X.attach_club_process(board, live=False)
+    assert json.dumps(board, sort_keys=True) == before and proc is not None
+    p = X.write_club_process_preview(proc, log=lambda *a: None, path=tmp_path / "club_process.json")
+    assert json.loads(p.read_text("utf-8"))["window"] == "2024-2026"
+    assert ".cache" in X.CLUB_PROCESS_PREVIEW.parts and "data" not in X.CLUB_PROCESS_PREVIEW.parts
+    on = {"rows": [], "field_key": {"m": "x"}}
+    X.attach_club_process(on, live=True)
+    assert on["club_process"]["clubs"] and "club_process" in on["field_key"]
+
+
+def test_arbitration_json_stays_under_its_cap_with_the_block():
+    board = json.loads((ROOT / "data" / "arbitration.json").read_text("utf-8"))
+    board.pop("club_process", None)
+    board["field_key"].pop("club_process", None)
+    X.attach_club_process(board, live=True)
+    n = len(json.dumps(board, separators=(",", ":")).encode("utf-8"))
+    assert n < X.BOARD_CAP_BYTES, n
+
+
+def test_traded_cases_name_skubal_and_never_a_namesake():
+    hist = json.loads((ROOT / "data" / "arb_history.json").read_text("utf-8"))["rows"]
+    t = X.traded_cases(hist)
+    by = {(r[0], r[2]): r for r in t["rows"]}
+    sk = by[(2026, "Tarik Skubal")]
+    assert (sk[3], sk[4], sk[5]) == ("DET", "LAD", 32_000_000)
+    # Luis Garcia (HOU) and Luis Garcia Jr. (WSN) share a name key in 2024;
+    # the figure check keeps the Washington award off the Houston case.
+    assert not any(r[2].startswith("Luis Garc") and r[0] == 2024 for r in t["rows"])
+    # an OAK history code is the ATH heading, not a trade
+    assert not any({r[3], r[4]} == {"ATH"} or "OAK" in (r[3], r[4]) for r in t["rows"])
+    c = t["census"]
+    assert c["joined"] + c["not_joined"] == c["in_window"]
+    assert c["moved"] == len(t["rows"])
+
+
+def test_traded_cases_join_rules_on_a_fixture():
+    led = {"entries": [
+        _row("DET", "exchanged", cy=2026, name="Tarik Skubal",
+             filing={"player_usd": 32_000_000, "club_usd": 19_000_000}),
+        _row("HOU", "agreed", cy=2026, name="Same Name", settled_usd=1_000_000),
+        _row("KCR", "agreed", cy=2026, name="Kept Home", settled_usd=2_000_000),
+    ]}
+    hist = [[2026, 1, "Tarik Skubal", "LAD", 2, 32_000_000],
+            [2026, 2, "Same Name Jr.", "WSN", 1, 4_000_000],   # namesake, figure disagrees
+            [2026, 3, "Kept Home", "KCR", 1, 2_000_000],
+            [2025, 4, "Out Of Window", "NYY", 1, 1_000_000]]
+    t = X.traded_cases(hist, led)
+    assert [r[2] for r in t["rows"]] == ["Tarik Skubal"]
+    assert t["census"] == {"in_window": 3, "joined": 2, "not_joined": 1, "moved": 1, "moved_unconfirmed": 0}
+
+
+def _ledger_with_flag(monkeypatch, live):
+    import ledger_export as L
+    monkeypatch.setattr(X, "ARB_CLUB_PROCESS_CHIPS", live)
+    real = L._j
+
+    def _j(name):
+        doc = real(name)
+        if name == "arbitration.json" and doc is not None:
+            doc.pop("club_process", None)
+            X.attach_club_process(doc, live=live)
+        return doc
+    monkeypatch.setattr(L, "_j", _j)
+    return L.build_all()
+
+
+def test_the_ledger_lights_the_filing_block_and_names_traded_cases(monkeypatch):
+    doc, shards = _ledger_with_flag(monkeypatch, True)
+    assert doc["sections"]["arb_filing"]["live"] is True
+    assert doc["sections"]["arb_realized_basis"]["live"] is True
+    assert doc["copy"]["arb_process_copy"] == X.CLUB_PROCESS_COPY
+    proc = X.build_club_process()
+    for c, sd in shards.items():
+        p = sd["arbitration"]["process"]
+        assert p["chips"] == proc["clubs"][c]["chips"] and p["window"] == "2024-2026", c
+        assert set(sd["arbitration"]["traded"]) == {"window", "in", "out"}
+    lad_in = {r[1]: r for r in shards["LAD"]["arbitration"]["traded"]["in"]}
+    assert lad_in["Tarik Skubal"][2] == "DET" and lad_in["Tarik Skubal"][3] == 32_000_000
+    det_out = {r[1]: r for r in shards["DET"]["arbitration"]["traded"]["out"]}
+    assert det_out["Tarik Skubal"][2] == "LAD"
+    # the realized block itself keeps the season-end club: LAD 2026 still carries the case
+    lad26 = [s for s in doc["clubs"]["LAD"]["arbitration"]["realized"]["seasons"] if s[0] == 2026][0]
+    assert lad26[2] >= 32_000_000
+    for name in ("arbitration.traded.in", "arbitration.traded.out"):
+        assert shards["LAD"]["columns"][name] == doc["columns"][name]
+
+
+def test_the_ledger_is_unchanged_with_the_flag_off(monkeypatch):
+    doc, shards = _ledger_with_flag(monkeypatch, False)
+    assert doc["sections"]["arb_filing"]["live"] is False
+    assert "arb_realized_basis" not in doc["sections"] and "arb_process_copy" not in doc["copy"]
+    assert all(set(sd["arbitration"]) == {"ladders", "realized_rows"} for sd in shards.values())
