@@ -47,13 +47,18 @@
     return isNaN(d.getTime()) ? "" : MONTHS[d.getUTCMonth()] + " " + d.getUTCDate();
   }
 
-  // A club MLB has decided links to its Franchises page; a placeholder never links.
+  // A club MLB has decided links its Franchises page through the hub's resolver, its chip
+  // inside; a placeholder never links. The art's link is a mouse-only twin (aria-hidden).
+  function link(c, inner, cls, x) {
+    var H = window.EEPHUS_HUB, k = c && c.code && H && H.club ? H.club(c.code) : null;
+    return k ? '<a class="' + cls + '" href="' + H.clubHref(k.code) + '" data-club="' + k.code + '" title="' +
+      esc(k.name) + ': franchise overview"' + x + ">" + inner + "</a>" : inner;
+  }
   function club(c) {
     if (!c || !c.code) {
       return '<span class="scb-club" data-club-nolink="unresolved">' + esc(c && c.name) + "</span>";
     }
-    return '<a class="scb-club" href="/franchise/#team=' + encodeURIComponent(c.code) + '" title="' + esc(c.name) + '">' +
-      esc(c.code) + "</a>";
+    return link(c, chip(c) + esc(c.code), "scb-club club-link", "");
   }
   // SC7-1: the pixel logo chip beside a decided club, from the page's hub when it has one (the code prints
   // beside it, so its alt is empty; it removes itself on error). Without the hub the chunk draws codes only.
@@ -83,7 +88,7 @@
 
   function clubRow(s, c) {
     var won = s.over && s.winner_id != null && c.team_id === s.winner_id;
-    var inner = chip(c) + club(c) + ' <span class="scb-w">' + (isNum(c.wins) ? c.wins : 0) + "</span>";
+    var inner = club(c) + ' <span class="scb-w">' + (isNum(c.wins) ? c.wins : 0) + "</span>";
     return '<li class="scb-c' + (won ? " is-won" : s.over ? " is-out" : "") + '">' + (won ? "<strong>" + inner + '</strong><span class="sr-only"> winner</span>' : inner) + "</li>";
   }
 
@@ -92,8 +97,8 @@
     if (o.compact) {
       // a placeholder already names its league ("AL Lower Seed"), so the label waits for two clubs
       var lg = s.lg && s.clubs.every(function (c) { return c.code; }) ? '<span class="scb-lab">' + esc(s.lg) + "</span> " : "";
-      return '<li class="scb-s scb-line">' + lg + chip(s.clubs[0]) + club(s.clubs[0]) + " vs " +
-        chip(s.clubs[1]) + club(s.clubs[1]) + (s.text ? ': <span class="scb-text">' + esc(s.text) + "</span>" : "") + "</li>";
+      return '<li class="scb-s scb-line">' + lg + club(s.clubs[0]) + " vs " +
+        club(s.clubs[1]) + (s.text ? ': <span class="scb-text">' + esc(s.text) + "</span>" : "") + "</li>";
     }
     var games = (s.games || []).map(function (g) { return gameRow(s, g, href); }).join("");
     return '<li class="scb-s' + (s.over ? " is-over" : "") + '"><p class="scb-lab">' + esc(lab) +
@@ -157,7 +162,7 @@
   function boxHTML(s, k, y) {
     var rows = s.clubs.map(function (c) {
       var won = s.over && s.winner_id != null && c.team_id === s.winner_id;
-      return '<span class="scba-c' + (won ? " is-won" : s.over ? " is-out" : "") + '">' + chip(c) +
+      return '<span class="scba-c' + (won ? " is-won" : s.over ? " is-out" : "") + '">' + link(c, chip(c), "club-link club-link--mark", ' tabindex="-1"') +
         '<b class="scba-code">' + esc(c.code || "TBD") + "</b>" + pips(s, c) + "</span>";
     }).join("");
     return '<div class="scba-box" style="--k:' + k + ";--y:" + y + 'px">' + rows + "</div>";

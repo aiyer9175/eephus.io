@@ -1735,16 +1735,45 @@ def _team_logo_url(slug: str, px: int) -> str:
     return f"https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/{slug}.png&h={px}&w={px}"
 
 
-def _team_logo(org: str | None, cls: str = "row-logo") -> str:
+def _team_logo(org: str | None, cls: str = "row-logo", nolink: str = "", alt: str | None = None) -> str:
     """Clean ESPN CDN team logo (falls back to the ORG abbreviation chip).
-    `cls` lets callers reuse it at other sizes (e.g. the ticker's tk-logo)."""
+    `cls` lets callers reuse it at other sizes (e.g. the ticker's tk-logo).
+    `nolink` marks a logo that stays unlinked with its reason (data-club-nolink:
+    row-anchor inside a whole-row player link, unresolved for a name no club
+    owns); `alt` overrides the alt text (a logo-only club link names the club)."""
     if not org:
         return ""
     o = html.escape(org)
     slug = ESPN_SLUGS.get(org, org.lower())
     src = html.escape(_team_logo_url(slug, _TEAM_LOGO_PX.get(cls) or _club_logo_px()))
-    return (f'<img class="{cls}" src="{src}" alt="{o}" loading="lazy" '
-            f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
+    nl = f' data-club-nolink="{nolink}"' if nolink else ""
+    nl_q = f" data-club-nolink=&quot;{nolink}&quot;" if nolink else ""
+    a = o if alt is None else html.escape(alt)
+    return (f'<img class="{cls}"{nl} src="{src}" alt="{a}" loading="lazy" '
+            f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot;{nl_q} style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
+
+
+def _row_logo(org: str | None, cls: str = "row-logo") -> str:
+    """A club logo inside a whole-row player link (home and news feed rows,
+    history rows, the ticker). Owner answer Q-L1: those rows keep one target,
+    so the logo stays unlinked and says why (no link inside a link)."""
+    return _team_logo(org, cls, nolink="row-anchor")
+
+
+def _club_logo_link(org: str | None, cls: str = "otd-logo") -> str:
+    """A club logo standing outside any row link: a logo-only link to the
+    club's Franchises page through the resolver (_club_code: exact codes,
+    aliases and full names only), its alt the full club name, padded to a
+    24 px hit area by .club-link--logo-only. A mention no club owns keeps its
+    logo, marked unresolved, and never links a guessed club."""
+    if not org:
+        return ""
+    code = _club_code(org)
+    if not code:
+        return _team_logo(org, cls, nolink="unresolved")
+    name = _club_table()["by_code"][code]["name"]
+    return (f'<a class="club-link club-link--logo-only" href="{_club_href(code)}" data-club="{code}" '
+            f'title="{_esc_hub(name)}: franchise overview">{_team_logo(code, cls, alt=name)}</a>')
 
 
 # ---- club links (owner ask 9): the server mirror of EEPHUS_HUB.clubHref ----
@@ -2200,7 +2229,7 @@ def _row_mover(p: dict, d: int) -> str:
     rank = p.get("overall_rank")
     rank_html = f'<span class="row-rank">{rank}</span>' if rank else '<span class="row-rank"></span>'
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'{_sr("rank") if rank else ""}{rank_html}{_team_logo(p.get("org"))}'
+            f'{_sr("rank") if rank else ""}{rank_html}{_row_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>'
             f'{spark_html}{_fv_pill(p)}{_sr(_mover_unit(p) + " change")}'
@@ -2208,7 +2237,7 @@ def _row_mover(p: dict, d: int) -> str:
 
 def _row_top(p: dict, rank: int) -> str:
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'{_sr("rank")}<span class="row-rank">{rank}</span>{_team_logo(p.get("org"))}'
+            f'{_sr("rank")}<span class="row-rank">{rank}</span>{_row_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>{_fv_pill(p)}</a>')
 
@@ -2303,7 +2332,7 @@ def _row_grad(g: dict) -> str:
         except ValueError:
             pass
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
-            f'{_sr("rank") if rank else ""}{rank_html}{date_html}{_team_logo(g.get("org"))}'
+            f'{_sr("rank") if rank else ""}{rank_html}{date_html}{_row_logo(g.get("org"))}'
             f'<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(g.get("position")))}</span>{_fv_pill(g)}</a>')
 
@@ -2334,9 +2363,9 @@ def _recent_trades_html(players: list, n: int = 5) -> str:
         # From -> to as team logos (same idiom as Today in Prospect History's
         # trade rows), replacing the old "FRM ⇄ TO" text.
         logos = (f'<span class="trade-logos" title="Traded {frm} → {to}">'
-                 f'{_team_logo(tr.get("from_org"), "otd-logo")}'
+                 f'{_row_logo(tr.get("from_org"), "otd-logo")}'
                  f'<span class="otd-arrow">→</span>'
-                 f'{_team_logo(tr.get("to_org"), "otd-logo")}</span>')
+                 f'{_row_logo(tr.get("to_org"), "otd-logo")}</span>')
         rows.append(
             f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
             f'{_sr("rank") if rank else ""}{rank_html}{logos}'
@@ -2357,8 +2386,9 @@ def _row_farm(o: dict, rank: int) -> str:
              or (o.get("grades") or {}).get("overall") or " - ")
     gcls = " gold" if str(grade).startswith("A") else ""
     name = ORG_NAMES.get(o.get("org"), o.get("org") or " - ")
-    return (f'<a class="row-link" href="/prospx/#farm-org={html.escape(o.get("org") or "")}">'
-            f'{_sr("rank")}<span class="row-rank">{rank}</span>{_team_logo(o.get("org"))}'
+    href = _club_href(o.get("org"), "farm") or "/prospx/#tab=farm"
+    return (f'<a class="row-link" href="{href}">'
+            f'{_sr("rank")}<span class="row-rank">{rank}</span>{_row_logo(o.get("org"))}'
             f'<span class="row-name">{html.escape(name)}</span>'
             f'<span class="row-meta">{o.get("count", "")} prospects</span>'
             f'{_sr("farm grade")}<span class="fv-pill{gcls}">{html.escape(str(grade))}</span></a>')
@@ -2590,7 +2620,7 @@ def _feed_item_html(typ, glyph, text, key, org, name, val, cat: str = "",
     stylesheet and the filters. `cat` (optional) adds a data-cat tag; `title`
     (optional) is the row's basis tooltip. Shared by the homepage feed + the
     /news/ page."""
-    logo = _team_logo(org, "feed-logo") if org else ""
+    logo = _row_logo(org, "feed-logo") if org else ""
     data_cat = f' data-cat="{html.escape(cat)}"' if cat else ""
     tip = f' title="{html.escape(title)}"' if title else ""
     return (f'<a class="feed-item" href="{_player_href(key)}"{_wire_attrs(typ)}{data_cat}{tip}>'
@@ -2630,7 +2660,7 @@ def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap, title: str
     graduates); rows with no match (FA signings) degrade to the plain layout.
     `mlb` (an MLB StatsAPI row, Q9_22c) puts the StatsAPI description, verbatim,
     in the detail line and the row title."""
-    logo = _team_logo(org, "feed-logo") if org else ""
+    logo = _row_logo(org, "feed-logo") if org else ""
     data_cat = f' data-cat="{html.escape(cat)}"' if cat else ""
     p = pmap.get(key) if pmap else None
     detail = _news_detail(p, typ)
@@ -2669,7 +2699,7 @@ def _ticker_html(events: list, n: int = 14) -> str:
     items = []
     for dt, typ, glyph, text, key, org, name, val in events[:n]:
         href = _player_href(key) if key else "/prospx/#tab=spotlights"
-        logo = _team_logo(org, "tk-logo") if org else ""
+        logo = _row_logo(org, "tk-logo") if org else ""
         title = _wire_row_title(dt, key, val)
         tip = f' title="{html.escape(title)}"' if title else ""
         if typ in _WIRE_TYPES and name:
@@ -3387,7 +3417,7 @@ def _tx_moves(recent: dict, today: date) -> list:
 
 
 def _tx_club(code) -> str:
-    return _team_logo(code, "otd-logo") if code else '<span class="otd-logo">?</span>'
+    return _club_logo_link(code, "otd-logo") if code else '<span class="otd-logo">?</span>'
 
 
 def _tx_deal_html(d: dict) -> str:
@@ -3431,7 +3461,7 @@ def _tx_move_html(r: dict, board: dict) -> str:
     tip = f' title="{html.escape(r["desc"])}"' if r.get("desc") else ""
     dt = r["date"]
     return (f'<{tag} class="tx-row"{ha}{_wire_attrs(typ)}{tip}>{_wire_lead(typ)}'
-            f'<span class="tx-date">{dt[5:7]}/{dt[8:10]}</span>{_team_logo(club, "otd-logo") if club else ""}'
+            f'<span class="tx-date">{dt[5:7]}/{dt[8:10]}</span>{((_row_logo if href else _club_logo_link)(club, "otd-logo")) if club else ""}'
             f'<span class="tx-names">{html.escape(r.get("name") or "")}</span>'
             f'<span class="wire-val">{html.escape(val)}</span></{tag}>')
 
@@ -3828,7 +3858,7 @@ def _otd_debut_row(g: dict, d: "date", data_cat: str = "") -> str:
     every row's FV chip lines up in the same right-hand column."""
     nm = html.escape(g.get("player_name") or "")
     pos = _pos_label(g.get("position"))
-    logo = _team_logo(_debut_org(g), "otd-logo")
+    logo = _row_logo(_debut_org(g), "otd-logo")
     pos_tail = (" · " + html.escape(pos)) if pos else ""
     cat = f' data-cat="{data_cat}"' if data_cat else ""
     return (
@@ -3846,9 +3876,9 @@ def _otd_trade_row(p: dict, tr: dict, d: "date", data_cat: str = "") -> str:
     the trade's from->to org logos, point-in-time."""
     nm = html.escape(p.get("player_name") or "")
     pos = _pos_label(p.get("position"))
-    logos = (f'{_team_logo(tr.get("from_org"), "otd-logo")}'
+    logos = (f'{_row_logo(tr.get("from_org"), "otd-logo")}'
              f'<span class="otd-arrow">→</span>'
-             f'{_team_logo(tr.get("to_org"), "otd-logo")}')
+             f'{_row_logo(tr.get("to_org"), "otd-logo")}')
     pos_tail = (" · " + html.escape(pos)) if pos else ""
     cat = f' data-cat="{data_cat}"' if data_cat else ""
     return (
@@ -4202,7 +4232,12 @@ def build_this_day(data: dict | None = None) -> str:
         pos = _pos_label((p or {}).get("position"))
         d = date.fromisoformat(dt)
         verb = _HIST_TX_VERBS.get(code, "moved")
-        logo = _team_logo(_org_from_team_name(team), "otd-logo")
+        if p:
+            logo = _row_logo(_org_from_team_name(team), "otd-logo")
+        elif _club_code(team):
+            logo = _club_logo_link(team)
+        else:
+            logo = _team_logo(_org_from_team_name(team), "otd-logo", nolink="unresolved")
         wt = _hist_tx_type(code, p, bool(rest and rest[0]))
         pos_tail = (" · " + html.escape(pos)) if pos else ""
         inner = (f'{_wire_lead(wt)}<span class="otd-when">{html.escape(_otd_date(d))}</span>'
@@ -4404,9 +4439,10 @@ def _hist_mlb_rows(today: "date", data: dict, pmap: dict) -> tuple[dict, dict, i
         h = next((href(int(r["mlbam"])) for r in grp if href(int(r["mlbam"]))), None)
         lead = grp[0]
         two_way = len({(r.get("from"), r.get("to")) for r in grp}) > 1
-        logos = (f'{_team_logo(_club_abbr(lead.get("from")), "otd-logo")}'
+        mk = _row_logo if h else _club_logo_link
+        logos = (f'{mk(_club_abbr(lead.get("from")), "otd-logo")}'
                  f'<span class="otd-arrow">{"⇄" if two_way else "→"}</span>'
-                 f'{_team_logo(_club_abbr(lead.get("to")), "otd-logo")}')
+                 f'{mk(_club_abbr(lead.get("to")), "otd-logo")}')
         tip = html.escape(" / ".join(dict.fromkeys(r.get("desc") or "" for r in grp)))
         inner = (f'{_wire_lead("trade")}<span class="otd-when">{html.escape(_otd_date(date.fromisoformat(dt)))}</span>'
                  f'<span class="otd-body" title="{tip}">{logos} <strong>{html.escape(_deal_names(grp))}</strong> '
@@ -4421,7 +4457,7 @@ def _hist_mlb_rows(today: "date", data: dict, pmap: dict) -> tuple[dict, dict, i
         if i >= _HIST_MLB_CAP:
             continue
         mid = int(r["mlbam"])
-        logo = _team_logo(_club_abbr(r.get("to")), "otd-logo")
+        logo = (_row_logo if href(mid) else _club_logo_link)(_club_abbr(r.get("to")), "otd-logo")
         inner = (f'{_wire_lead("fa_sign")}<span class="otd-when">{html.escape(_otd_date(date.fromisoformat(r["date"])))}</span>'
                  f'<span class="otd-body" title="{html.escape(r.get("desc") or "")}">{logo} '
                  f'<strong>{html.escape(r.get("name") or "")}</strong> '
@@ -5209,12 +5245,13 @@ def _home_band(band: str, count_line: str, body: str, extra_head: str = "") -> s
 
 
 def _home_club_logos() -> str:
-    """The 30 club logos (HOME_4), each linking its Franchises club view by the
-    hash assets/franchise.js reads (#view=club&team=<CODE>). The logo is the
-    hub's own small URL (QHOP01), the same bytes every module page caches."""
+    """The 30 club logos (HOME_4), each a club link to its Franchises page
+    through the resolver (_club_href, the #team=<CODE> shape every club link
+    uses). The logo is the hub's own small URL (QHOP01), the same bytes every
+    module page caches."""
     rows = sorted(_club_table()["rows"], key=lambda r: r["code"])
     links = "".join(
-        f'<a class="club-logo-link" href="/franchise/#view=club&amp;team={r["code"]}" '
+        f'<a class="club-logo-link club-link" href="{_club_href(r["code"])}" data-club="{r["code"]}" '
         f'title="{_esc_hub(r["name"])}: franchise overview">'
         f'<img class="club-logo" src="{_esc_hub(r["logo"])}" alt="{_esc_hub(r["name"])}" width="28" height="28" '
         f'loading="lazy" onerror="this.outerHTML=\'<span class=&quot;club-logo&quot;>{r["code"]}</span>\'"></a>'
