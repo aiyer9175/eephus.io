@@ -191,10 +191,13 @@ def test_every_ladder_is_five_strictly_decreasing_cuts(ruler):
     test_the_prospect_ladder_is_the_war_ladder_on_its_own_pool, which measures
     that claim against the served board instead of asserting it in prose. Its
     first cuts were fitted to the war shares as they read on 2026-09-16, which
-    was the IF-HEALTHY display; they were refitted on 2026-09-18b."""
+    was the IF-HEALTHY display; they were refitted on 2026-09-18b. `rdg`
+    (STANDINGS_4, 2026-10-14) colours run differential per game on
+    /standings/; its cuts and their measured shares are in the file's
+    provenance table."""
     lads = _ladders(ruler)
     assert set(lads) == {"war", "warProspect", "rosterWar", "z", "run", "ratio",
-                         "wrc", "woba", "fip", "surplus", "trade"}, sorted(lads)
+                         "wrc", "woba", "fip", "surplus", "trade", "rdg"}, sorted(lads)
     for fam, L in lads.items():
         cuts = L["cuts"]
         assert len(cuts) == 5, (fam, cuts)
@@ -209,7 +212,7 @@ def test_red_is_only_below_zero(ruler):
     of negative numbers. An above-average index can never take it."""
     lads = _ladders(ruler)
     assert {f for f, L in lads.items() if L["neg"]} == {"war", "warProspect",
-                                                       "surplus", "trade"}
+                                                       "surplus", "trade", "rdg"}
     for fam, L in lads.items():
         if L["neg"]:
             assert L["cuts"][-1] >= 0, (fam, L["cuts"])

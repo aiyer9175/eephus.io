@@ -138,6 +138,20 @@ def test_helper_refuses_scores_names_loudly():
             build_site._data_vers_script((name,))
 
 
+def test_helper_refuses_standings_names_loudly():
+    """The same job writes the standings files (STANDINGS_4): a name starting
+    "standings" is refused as a scores name is."""
+    for name in ("standings/2026.json", "standings/2026-race.json", "standings_index.json"):
+        with pytest.raises(ValueError):
+            build_site._data_vers_script((name,))
+
+
+def test_standings_shell_emits_no_stamp_map():
+    assert "EEPHUS_DATA_VERS" not in build_site.build_standings()
+    for fn, names in SHIPPED_LISTS.items():
+        assert not any(n.startswith("standings") for n in names), (fn, names)
+
+
 def test_scores_shell_emits_no_stamp_map():
     assert "EEPHUS_DATA_VERS" not in build_site.build_scores()
     for fn, names in SHIPPED_LISTS.items():
