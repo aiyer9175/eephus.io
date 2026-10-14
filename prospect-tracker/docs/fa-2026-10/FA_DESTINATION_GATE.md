@@ -482,4 +482,121 @@ None.
 
 ## 19. Results
 
-EMPTY AT REGISTRATION.
+### 2026-10-14: the one look (task Q9_04b), verdict SERVE N; the Ledger block is a NULL
+
+Run once, 2026-10-14 11:27 to 11:28 local, worktree lane 208 (branch
+`wt-Q9_04b_FA_DESTINATION_LOOK`), `python -u tools/fa_destination_lab.py --look
+--generated-at 2026-10-14`, stdout and stderr teed to the task's output directory
+before anything else ran; exit 0, no exception, stderr empty. The reporting path
+was first dry-run on the synthetic fixture with nulls (`--dry-run`, every step
+written, exit 0). Artifact `data/fa_destination_eval.json`, sha256
+`d9297e2f4076dec759f9b79d53828ec55f0f643693263b4820efc2d4219b147c`, its
+`protocol_sha256` equal to this document's (`cab64290...`), steps written in the
+registered order: step0, gate2_join, folds, floors, metrics_clauses_verdict,
+reported, industry. `fa_class.json`, `fa_meta.json`, `fa_gate2_eval.json`,
+`fa_dpw_series.json` and `fa_gate3_eval.json` hash the same before and after.
+
+**When.** After Q9_04a (30fb5799, integrated 163553e0), after the epoch's step Z
+entry (2026-10-03) and the M14-2 Gate 2 re-save (168edf30). This gate registers
+no date of its own, so this is not an early read. The PJ-C look of
+`PROJ_COMPONENTS_GATE.md` also ran on 2026-10-14; the rule that no look runs on
+another registered look's day is waived by the owner (EW3-5, 2026-10-14: "Fuck
+the registered look days and waiting, we don't have to wait for anything. Let's
+do everything today"), and this read is recorded as run under that waiver.
+
+**Step 0 (realized-price frame, 35,190 rows, 1,173 signings).** random,
+payroll_only and behavior_only reproduce bit-exact. Drift, disclosed by the rule
+of section 4.1 (the two Arizona lookup repairs of 218560e0, as the build task
+measured): live_analog top-5 0.2327 against 0.2293 and MRR 0.1672 against 0.1669;
+fitted_full top-3 0.2435 against 0.2370, top-5 0.3083 against 0.3065, MRR 0.2690
+against 0.2679; the banded twin top-3 0.1364 against 0.1338 and MRR 0.1630
+against 0.1628. No floor, clause or definition moved.
+
+**Gate 2 join.** 1,199 collected tuples; 1,173 of 1,173 Gate 3 signings matched,
+0 unmatched, 0 duplicate, 0 integrity drops; 26 tuples carry no Gate 3 signing.
+Primary frame: 1,173 signings over winters 2018-2026, scored winters 2019-2026,
+n 1,080; no member dropped; no tax-multiplier default and no missing payroll.
+Every fold of P, N and L_perm converged; no feature had SD 0 in any fold.
+
+**Floors (written before any mean metric).** MRR MDE95 0.0139 (fixed); log-loss
+bootstrap SD 0.02209, floor 0.04330 (seed 7, 2,000 resamples, n 1,080).
+
+**Metrics on the primary frame (n 1,080).**
+
+| arm | top-1 | top-3 | top-5 | MRR | log loss | slope | ECE |
+|---|---|---|---|---|---|---|---|
+| P | 0.1796 | 0.2509 | 0.3120 | 0.2722 | 3.2242 | 1.0191 | 0.0029 |
+| N | 0.1787 | 0.2509 | 0.3065 | 0.2717 | 3.2248 | 1.0148 | 0.0020 |
+| L_perm | 0.1815 | 0.2361 | 0.3046 | 0.2692 | 3.2382 | 0.9435 | 0.0029 |
+| incumbency_only | 0.1798 | 0.2363 | 0.2929 | 0.2645 | 3.2347 | | |
+| random | 0.0333 | 0.1000 | 0.1667 | 0.1332 | 3.4012 | | |
+| payroll_space | 0.0343 | 0.0963 | 0.1778 | 0.1331 | | | |
+| payroll_level | 0.0528 | 0.1407 | 0.2157 | 0.1639 | | | |
+| behavior_only | 0.0500 | 0.1296 | 0.1926 | 0.1533 | | | |
+| live_analog | 0.0537 | 0.1324 | 0.1926 | 0.1602 | | | |
+
+**Clauses for P.** C1 PASS (MRR +0.1391 over payroll_space and +0.1083 over
+payroll_level; top-5 0.3120 above 0.1778 and 0.2157). C2 PASS (MRR +0.1120 over
+live_analog). C3 FAIL: one-sided p for P minus N, MRR 0.4403, log loss 0.4233;
+Holm rejects neither (the first needs 0.025 or less); the point differences favour
+P (MRR +0.0005, log loss 0.0006 lower), and L_perm's share of that lift, reported
+only, is -5.0 on MRR and -22.6 on log loss (L_perm sits below N on both). C4 PASS
+(ln 30 minus log loss 0.1770 against the floor 0.0433; slope 1.0191). C5 PASS (8
+of 8 scored winters at or above payroll_space).
+
+**Clauses for N in P's place.** C1 PASS (MRR +0.1386 and +0.1078; top-5 0.3065),
+C2 PASS (+0.1115), C4 PASS (0.1764 against 0.0433; slope 1.0148), C5 PASS (8 of
+8).
+
+**Verdict by the ship rule (section 11): serve N; nothing serves until the
+owner's flip of `FA_DESTINATION_SERVE`.** The loss ledger records the NULL: "the
+Club Ledger's spending history did not make destinations more predictable than
+the Fit's will-spend term already does". The answer to the owner's ask 3, as this
+gate can give it: on 1,080 forward-chained signings, the Club Ledger's four
+spending terms (FA spend share, payroll level, tax multiplier, QO pick cost)
+added no measurable accuracy to the Fit's reduced twin plus incumbency. As
+section 1 stated before any number, C1 and C2 pass on re-signing: N is
+incumbency_only plus the Fit's twin, and incumbency_only alone scores MRR 0.2645.
+Serving fit (every matched winter, 2018-2026): N fit_analog 0.8567, incumbent
+1.7681, coef_hash `1c0fbaa5c72e97c3673d1811a85f8db9542887c4b78a5c43feb958d3be060149`
+(the artifact's `coef_hash`); P's serving coefficients and hash are in the
+artifact for the record.
+
+**Reported, never gated.**
+
+- Per winter, MRR (P / N / payroll_space / live_analog / incumbency_only): 2019
+  (n 101) 0.1857 / 0.1772 / 0.1297 / 0.1328 / 0.1761; 2020 (123) 0.3318 / 0.3268
+  / 0.1498 / 0.1673 / 0.3239; 2021 (143) 0.3031 / 0.3015 / 0.1135 / 0.1678 /
+  0.2931; 2022 (142) 0.2375 / 0.2408 / 0.1255 / 0.1669 / 0.2252; 2023 (134)
+  0.2306 / 0.2384 / 0.1265 / 0.1611 / 0.2371; 2024 (131) 0.2594 / 0.2518 / 0.1364
+  / 0.1421 / 0.2473; 2025 (161) 0.2976 / 0.2925 / 0.1560 / 0.1718 / 0.2817; 2026
+  (145) 0.3074 / 0.3174 / 0.1256 / 0.1616 / 0.3076. P is above N in 5 of 8
+  winters.
+- N against live_analog (the incumbency lift with the twin): MRR +0.1115.
+- The registered unbanded analog on the primary frame: live_analog MRR 0.1650,
+  behavior_only 0.1507.
+- Same-frame paired MDE95 of P against: N 0.0062, L_perm 0.0081, payroll_space
+  0.0247, payroll_level 0.0225, behavior_only 0.0230, live_analog 0.0227,
+  incumbency_only 0.0064, random 0.0215.
+- The realized-price frame (n 1,080): P MRR 0.2746, log loss 3.2211; N 0.2745,
+  3.2210; L_perm 0.2702, 3.2346; live_analog 0.1635; payroll_space 0.1356.
+- Accepted QOs excluded (14 acceptances, 7 matched signings removed, n 1,073): P
+  MRR 0.2688, log loss 3.2332; N 0.2678, 3.2329; L_perm 0.2654.
+- 2017-agreement third-tier rows (section 5): primary frame 62 in winter 2018 and
+  0 in 2019-2021; realized-price frame 53, 1, 7 and 1.
+- Expected major-league deals per club beside realized, 2019-2026: in the
+  artifact (`reported.expected_mlb_deals_by_club`).
+- First-club concentration on the served class: not available in the artifact
+  (no serving builder existed at the look).
+
+**Industry comparators (section 13), reported last.** Retro, MLB Trade Rumors
+2015-16 to 2025-26 (input sha256 in the artifact): matched 358 players over class
+years 2019-2026 (offseason counts in the artifact; 27 unresolved rows, 1 row with
+no parsed pick). Model top-1 hit rate 0.2123 against MLBTR's 0.1625, paired
+difference +0.0498, player-cluster bootstrap 95% interval 0.0058 to 0.0950,
+identical for P and N; the model's top-3 hit rate 0.3212 (P) and 0.3073 (N), MRR
+0.3201 and 0.3162. MLBTR alone on the class years with no out-of-fold vector:
+2016 0.1364 (n 44), 2017 0.2609 (n 46), 2018 0.1163 (n 43). Context, as
+registered: MLBTR's lists are written in November with information past the
+winter start that the model's inputs do not carry. The forward comparator is
+pending (section 14).
