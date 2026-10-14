@@ -48,6 +48,9 @@ data/rosters_by_org.json
 data/leaderboard_gamelogs.json
 data/prospx_leaderboard.json
 data/mlb_projections.json
+# PJ_8: the component lines proj_export writes nightly; mlb_player_export
+# copies each block into the card shard, which is what ships.
+data/mlb_proj_components.json
 data/player_links.json
 data/mlb_position_games.json
 data/mlb_trade_players.json

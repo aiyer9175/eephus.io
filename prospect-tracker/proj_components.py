@@ -1147,12 +1147,17 @@ def hitter_heads(eng: dict, feat: dict, params: dict | None, consts: dict,
 
 
 def pitcher_heads(eng: dict, feat: dict, params: dict | None, consts: dict,
-                  horizon: int = HORIZONS) -> dict:
+                  horizon: int = HORIZONS, *, price_gmli: bool = True) -> dict:
     """P0 to P5 for one pitcher: the IP walk, the role mix, FIP from
     rate_path, the fwar_frame chain at PF 1.0 with no framing charge and the
     single blended line (replacement continuous in GS/G, the gmLI multiplier
     on the relief share), WARIP held, P4 gmLI shrunk toward 1.0 by relief
-    games, P5 the RA9 gap shrunk toward 0 by IP."""
+    games, P5 the RA9 gap shrunk toward 0 by IP.
+
+    price_gmli False (the served export when the P4 head is not served,
+    task PJ_8) prices the relief share at gmLI 1.0, the value the served
+    engine assumes, so the runs gmLI adds ride in the gap line; the P4 gmLI
+    line itself is still computed. The DEV and holdout frames keep True."""
     import fwar_frame as F
     p = params or {}
     shrink = p.get("shrink") or {}
@@ -1193,7 +1198,7 @@ def pitcher_heads(eng: dict, feat: dict, params: dict | None, consts: dict,
             g = ip / ip_per_g
             gs = gs_share * g
             relief_ip = ip * (1.0 - gs_share)
-            line = F.blended_line(ip, g, gs, lg9, lg9, pfr, gmli)
+            line = F.blended_line(ip, g, gs, lg9, lg9, pfr, gmli if price_gmli else None)
             war_fip, _rar = F.pitcher_war([line], consts["warip"])
             drpw = line["drpw"]
         elif ip_per_g is not None and gs_share is not None:
@@ -1227,7 +1232,8 @@ def pitcher_heads(eng: dict, feat: dict, params: dict | None, consts: dict,
 def project_components(hist_by_side: dict, base: int, age, curves: dict, war_map: dict,
                        league: dict, consts: dict, frame_inputs: dict, params: dict | None,
                        *, age_curves: dict | None = None, horizon: int = HORIZONS,
-                       in_progress: tuple[int, float] | None = None) -> dict:
+                       in_progress: tuple[int, float] | None = None,
+                       price_gmli: bool = True) -> dict:
     """The component lines of one veteran at `base` for horizons 1..`horizon`.
 
     hist_by_side  {"hit": [corpus rows B-3..B-1], "pit": [...]}; a two-way
@@ -1241,6 +1247,7 @@ def project_components(hist_by_side: dict, base: int, age, curves: dict, war_map
     age_curves    component_age_curves(aging_v3 model fitted at B - 1)
     in_progress   the served export's (season, fraction) (engine_projection);
                   None on the DEV frame
+    price_gmli    passed to pitcher_heads (False: relief priced at gmLI 1.0)
 
     Returns {"hit": block | None, "pit": block | None, "two_way": bool}; a
     block carries `lines` {h: line}, `not_projected` and the exposure tier.
@@ -1259,7 +1266,8 @@ def project_components(hist_by_side: dict, base: int, age, curves: dict, war_map
         if side == "hit":
             out[side] = hitter_heads(eng, feat, params, consts, age_curves, horizon)
         else:
-            out[side] = pitcher_heads(eng, feat, params, consts, horizon)
+            out[side] = pitcher_heads(eng, feat, params, consts, horizon,
+                                      price_gmli=price_gmli)
     out["two_way"] = out["hit"] is not None and out["pit"] is not None
     return out
 

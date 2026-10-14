@@ -886,7 +886,23 @@ def _winter_dpw(first_season: int) -> float:
 # a `gap` line (served war minus component WAR) so the components plus the gap
 # equal the served WAR by construction (PJ-Q1). Component ranges are each
 # component's own 80% range; no WAR range is ever built from them.
-PROJ_COMPONENTS_LIVE = False
+#
+# FLIPPED by task PJ_8_COMPONENT_FLIP (class 2; owner answers PJ-Q1 (a),
+# PJ-Q2 (a), PJ-Q3 (a)). A head under the PJ-C gate serves only where
+# COMPONENTS_EVAL_PATH records PASS for it (_served_heads). Every other head
+# is emitted null in every block, named in the block's `notServed` and
+# printed "not projected", and its runs ride in the gap line: a hitter run
+# part leaves warComp, and while the P4 gmLI head is not served the pitcher
+# is priced at gmLI 1.0 (the value the served engine assumes). PA and IP
+# serve only on a PASS of the H0 / P0 exposure test (round 4); without one
+# the board row gains no `pa` / `ip` scalar.
+PROJ_COMPONENTS_LIVE = True
+COMPONENTS_EVAL_PATH = DATA_DIR / "proj_components_eval.json"
+#: gate head -> (artifact block, key) holding its recorded verdict
+_GATED_HEADS = {"bsr": ("verdicts", "bsr"), "fld_pos": ("verdicts", "fld_pos"),
+                "gmli_relief": ("verdicts", "gmli_relief"),
+                "ra9_gap": ("verdicts", "ra9_gap"),
+                "pa": ("exposure_test", "pa"), "ip": ("exposure_test", "ip")}
 COMPONENTS_PREVIEW_PATH = (DATA_DIR.parent / ".cache" / "proj_components" / "preview"
                            / "components.json")
 COMPONENTS_LIVE_PATH = DATA_DIR / "mlb_proj_components.json"
@@ -912,6 +928,18 @@ def _ri(v):
     return None if v is None else int(round(float(v)))
 
 
+def _served_heads(path: Path | None = None) -> dict[str, bool]:
+    """{gate head: served} from the PJ-C look's recorded verdicts. A head
+    serves only on a recorded PASS; a missing or unreadable artifact, or a
+    head it does not name, serves nothing (fail closed)."""
+    try:
+        doc = json.loads((path or COMPONENTS_EVAL_PATH).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        doc = {}
+    return {head: ((doc.get(blk) or {}).get(key) or {}).get("verdict") == "PASS"
+            for head, (blk, key) in _GATED_HEADS.items()}
+
+
 def _components_context(corpus: dict) -> dict | None:
     """What every veteran's component lines share: the frozen params, the
     constants held at the last completed season (FIRST_SEASON - 1), the aging
@@ -928,9 +956,12 @@ def _components_context(corpus: dict) -> dict | None:
         consts = PC.season_constants(FIRST_SEASON - 1, corpus, src.blob)
         model = aging_v3.fitted(corpus, FIRST_SEASON - 1, None,
                                 sidecar=aging_v3_sidecar.load(corpus))
-        return {"params": params, "consts": consts, "src": src,
+        served = _served_heads()
+        return {"params": params, "consts": consts, "src": src, "served": served,
                 "age_curves": PC.component_age_curves(model),
-                "meta": {"params_hash": PC.params_hash(params),
+                "meta": {"heads_served": sorted(h for h, ok in served.items() if ok),
+                         "heads_not_served": sorted(h for h, ok in served.items() if not ok),
+                         "params_hash": PC.params_hash(params),
                          "params_task": params.get("task"),
                          "params_vintage_id": params.get("vintage_id"),
                          "vintage_id": src.blob.get("vintage_id"),
@@ -941,12 +972,18 @@ def _components_context(corpus: dict) -> dict | None:
         return None
 
 
-def _hit_block(hb: dict, m: dict) -> dict:
+def _hit_block(hb: dict, m: dict, served: dict | None = None,
+               rpw: float | None = None) -> dict:
     """The hitter half of a component block from proj_components.hitter_heads.
     wOBA and wRC+ are COPIED from the row's served arrays, never recomputed;
     K%, BB%, ISO and BABIP are the engine's year-1 projection (the heads walk
-    no per-component rate past year 1, so seasons 2-5 are null)."""
+    no per-component rate past year 1, so seasons 2-5 are null). `served`
+    (_served_heads; None serves every head) nulls each head the PJ-C look did
+    not pass, with its range, and takes its runs out of warComp (over `rpw`)
+    so they ride in the gap line."""
     lines = [hb["lines"][h] for h in sorted(hb["lines"])][:HORIZON]
+    ok = served or {}
+    off = {h: served is not None and not ok.get(h) for h in ("bsr", "fld_pos", "pa")}
     out = {"pa": [_ri(ln["pa"]) for ln in lines]}
     for key, src_key in (("k", "k_pct"), ("bb", "bb_pct"), ("iso", "iso"), ("babip", "babip")):
         out[key] = [_r(ln.get(src_key), 3) for ln in lines]
@@ -954,22 +991,43 @@ def _hit_block(hb: dict, m: dict) -> dict:
     out["wrc"] = m.get("wrc")
     for key, src_key in _COMP_HIT_RUNS:
         out[key] = [_r(ln.get(src_key), 1) for ln in lines]
-    out["warComp"] = [_r(ln.get("war_comp"), 2) for ln in lines]
+    gated = (["bsr"] if off["bsr"] else []) + (["fld", "pos"] if off["fld_pos"] else [])
+    war_comp = []
+    for ln in lines:
+        wc = ln.get("war_comp")
+        if wc is not None and gated:
+            wc = float(wc) - sum(float(ln.get(k) or 0.0) for k in gated) / float(rpw)
+        war_comp.append(_r(wc, 2))
+    out["warComp"] = war_comp
     for q, i in (("p10", 0), ("p90", 1)):
         out[q] = {key: [(_ri if rk == "pa" else lambda v: _r(v, 1))(
                             (ln["ranges"].get(rk) or (None, None))[i]) for ln in lines]
                   for rk, key in _COMP_HIT_RANGES}
+    nulls = gated + (["pa"] if off["pa"] else [])
+    rng_off = ((["bsr"] if off["bsr"] else []) + (["fldPos"] if off["fld_pos"] else [])
+               + (["pa"] if off["pa"] else []))
+    for key in nulls:
+        out[key] = [None] * len(lines)
+    for q in ("p10", "p90"):
+        for key in rng_off:
+            out[q][key] = [None] * len(lines)
     out["tier"] = hb.get("tier")
     out["notProjected"] = list(hb.get("not_projected") or [])
+    if served is not None:
+        out["notServed"] = nulls
     return out
 
 
-def _pit_block(pb: dict, m: dict, consts: dict, params: dict) -> dict:
+def _pit_block(pb: dict, m: dict, consts: dict, params: dict,
+               served: dict | None = None) -> dict:
     """The pitcher half: IP, the year-1 K%, BB% and HR/9 of the engine's
     projection (HR/9 = HR/BF x 4.3 x 9, the engine's BF-per-IP convention),
     FIP COPIED from the row's served array, FIP-based WAR (P3), RA9-based WAR
     (P5), gmLI for relievers only, and the ranged run quantities (the RA9 gap
-    and the relief gmLI runs) as their means beside their ranges."""
+    and the relief gmLI runs) as their means beside their ranges. `served`
+    (_served_heads; None serves every head) nulls each head the PJ-C look did
+    not pass, with its range: P4 (gmli, gmliRelief; project_components then
+    priced the block at gmLI 1.0), P5 (warRa9, ra9Gap), P0 (ip)."""
     import fwar_frame as F
     import proj_components as PC
     lines = [pb["lines"][h] for h in sorted(pb["lines"])][:HORIZON]
@@ -995,6 +1053,26 @@ def _pit_block(pb: dict, m: dict, consts: dict, params: dict) -> dict:
     for q, i in (("p10", 0), ("p90", 1)):
         out[q] = {key: [_r((ln["ranges"].get(rk) or (None, None))[i], 1) for ln in lines]
                   for rk, key in _COMP_PIT_RANGES}
+    if served is not None:
+        names, keys, rng_off = [], [], []
+        if not served.get("gmli_relief"):
+            names.append("gmli")
+            keys += ["gmliRelief"] + (["gmli"] if out["gmli"] is not None else [])
+            rng_off.append("gmliRelief")
+        if not served.get("ra9_gap"):
+            names.append("ra9_gap")
+            keys += ["warRa9", "ra9Gap"]
+            rng_off.append("ra9Gap")
+        if not served.get("ip"):
+            names.append("ip")
+            keys.append("ip")
+            rng_off.append("ip")
+        for key in keys:
+            out[key] = [None] * len(lines)
+        for q in ("p10", "p90"):
+            for key in rng_off:
+                out[q][key] = [None] * len(lines)
+        out["notServed"] = names
     out["tier"] = pb.get("tier")
     out["notProjected"] = list(pb.get("not_projected") or [])
     return out
@@ -1012,6 +1090,7 @@ def _component_lines(mlbam: int, sides: dict, paths: dict, ages: dict, m: dict,
     if ctx is None:
         return None
     import proj_components as PC
+    served = ctx.get("served")
     out: dict = {"mlbam": mlbam, "frame": COMPONENTS_FRAME, "base": FIRST_SEASON,
                  "hit": None, "pit": None}
     for side in ("hit", "pit"):
@@ -1021,12 +1100,13 @@ def _component_lines(mlbam: int, sides: dict, paths: dict, ages: dict, m: dict,
         res = PC.project_components({side: sides[side]}, FIRST_SEASON, ages[side], curves,
                                     war_map, league, ctx["consts"], {side: feat},
                                     ctx["params"], age_curves=ctx["age_curves"],
-                                    horizon=HORIZON, in_progress=in_prog)
+                                    horizon=HORIZON, in_progress=in_prog,
+                                    price_gmli=served is None or bool(served.get("gmli_relief")))
         blk = res.get(side)
         if blk is None:
             continue
-        out[side] = (_hit_block(blk, m) if side == "hit"
-                     else _pit_block(blk, m, ctx["consts"], ctx["params"]))
+        out[side] = (_hit_block(blk, m, served, ctx["consts"]["rpw"]) if side == "hit"
+                     else _pit_block(blk, m, ctx["consts"], ctx["params"], served))
     if out["hit"] is None and out["pit"] is None:
         return None
     out["twoWay"] = out["hit"] is not None and out["pit"] is not None
@@ -1082,6 +1162,9 @@ def _write_components(vets: list[dict]) -> Path | None:
             "quantiles by horizon and exposure tier; they are never summed",
             "a component whose head has no history for the player is null and named "
             "in notProjected",
+            "a head the PJ-C look did not pass (docs/PROJ_COMPONENTS_GATE.md) is null "
+            "in every block and named in notServed; its runs ride in the gap line, and "
+            "while gmLI is not served the pitcher is priced at gmLI 1.0",
         ],
         "rows": rows,
     }
@@ -1544,9 +1627,10 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         if _blk is not None:
             _COMPONENT_BLOCKS[mlbam] = _blk
             if PROJ_COMPONENTS_LIVE:
-                if _blk.get("hit"):
+                # PA / IP only where the exposure test passed (round 4).
+                if _blk.get("hit") and _blk["hit"]["pa"][0] is not None:
                     m["pa"] = _blk["hit"]["pa"][0]
-                if _blk.get("pit"):
+                if _blk.get("pit") and _blk["pit"]["ip"][0] is not None:
                     m["ip"] = _blk["pit"]["ip"][0]
         if two_way:
             m["warHit"] = [round(w, 2) for w in paths["hit"]["war_by_year"][:HORIZON]]

@@ -93,3 +93,7 @@ arb_prospect_rungs.json
 # Gate inputs for the surrogate draft; no page fetches either.
 efv_surrogate_pins_2026.json
 milb_norms_2026_pure.json
+# mlb_proj_components.json: the MLB Projections component lines (PJ_8),
+# an exporter hand-off; mlb_player_export copies each block into the
+# per-card shard under mlb_player_detail/, which is what a page fetches.
+mlb_proj_components.json

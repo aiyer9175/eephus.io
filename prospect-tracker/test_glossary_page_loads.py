@@ -741,6 +741,42 @@ def test_deep_link_expands_and_highlights_term(server, browser):
     assert opened, "#g=wag arrived without its full read; direct anchors must open it"
 
 
+# PJ_8_COMPONENT_FLIP (round 4, R4r): every new served number of the MLB
+# Projections component lines carries a receipt read from the registry row's
+# eval artifact, data/proj_components_eval.json.
+_PJC_RECEIPTS = {
+    "projected_component_runs": "H3 BsR",
+    "projected_playing_time": "H0 PA",
+    "war_from_components": "tripwire at",
+    "projection_gap": "tripwire at",
+    "fip_based_war": "FIP runs leg",
+    "ra9_based_war": "P5 RA9 gap",
+}
+
+
+@pytest.mark.parametrize("slug", sorted(_PJC_RECEIPTS))
+def test_component_line_entries_render_their_receipt(server, browser, slug):
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    row = next(m for m in reg["models"] if m["model_id"] == "proj_components")
+    assert row["eval_artifact"] == "data/proj_components_eval.json"
+    page_errors: list[str] = []
+    page = _browser_page(browser, page_errors)
+    try:
+        page.goto(server + f"glossary/index.html#g={slug}", wait_until="load", timeout=15_000)
+        page.wait_for_selector(f'#gl-entry .gl-entry-card[data-slug="{slug}"]', timeout=10_000)
+        page.wait_for_function(
+            "s => { const el = document.querySelector('#gl-entry .gl-receipt-slot[data-receipt=\"' + s + '\"]');"
+            " return !!el && el.textContent.includes('Receipt'); }", arg=slug, timeout=10_000)
+        text = page.evaluate(
+            "s => document.querySelector('#gl-entry .gl-receipt-slot[data-receipt=\"' + s + '\"]').textContent",
+            slug)
+    finally:
+        page.close()
+    assert not page_errors, "JS errors:\n  " + "\n  ".join(page_errors)
+    assert _PJC_RECEIPTS[slug] in text, text[:400]
+    assert "proj_components_eval.json" in text
+
+
 def test_quick_search_palette_finds_terms(server, browser):
     page_errors: list[str] = []
     page = _browser_page(browser, page_errors)
