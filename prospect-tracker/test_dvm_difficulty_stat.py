@@ -669,9 +669,16 @@ class LookRefusals(unittest.TestCase):
         self.assertEqual(L.tenure_source(self.root), L.TENURE_VAL4)
         self.assertEqual(L.tenure_source(), L.TENURE_VAL4)  # VAL_4 is committed
 
-    def test_no_artifact_at_head(self):
-        self.assertFalse((L.DATA_DIR / L.TABLE_ARTIFACT).exists())
-        self.assertFalse((L.DATA_DIR / L.EVAL_ARTIFACT).exists())
+    def test_the_one_look_is_stored(self):
+        # DVM-4 (2026-10-14): the look ran once and wrote both artifacts; a later run
+        # re-prints the stored result instead of scoring again (gate section 14).
+        self.assertTrue((L.DATA_DIR / L.TABLE_ARTIFACT).exists())
+        stored = L.stored_look()
+        self.assertIsNotNone(stored)
+        self.assertEqual(stored["frame"], "FULL")
+        self.assertTrue(stored["receipt"]["owner_waived_early_read"])
+        self.assertEqual(stored["decision"]["verdict"], "NO SHIP")
+        self.assertEqual(set(stored["failed_arms"]), {"DV", "D0"})
 
 
 class DryRun(unittest.TestCase):
@@ -679,6 +686,8 @@ class DryRun(unittest.TestCase):
     written only where it is told."""
 
     def test_dry_run_reporting_path(self):
+        stored = {n: (L.DATA_DIR / n).read_bytes() if (L.DATA_DIR / n).exists() else None
+                  for n in (L.TABLE_ARTIFACT, L.EVAL_ARTIFACT)}
         with tempfile.TemporaryDirectory() as tmp:
             r = L.run_dry(Path(tmp), B=8, perms=3, players=160)
             names = sorted(p.name for p in Path(tmp).iterdir())
@@ -702,8 +711,14 @@ class DryRun(unittest.TestCase):
         for key in ("12m|hit", "12m|pit"):
             self.assertAlmostEqual(table["ratio"][key]["today"]["ratio"], 5.2)
         self.assertTrue(5.0 <= table["k_org"]["DV"]["k_org"] <= 50.0)
-        self.assertFalse((L.DATA_DIR / L.TABLE_ARTIFACT).exists())
-        self.assertFalse((L.DATA_DIR / L.EVAL_ARTIFACT).exists())
+        # the dry run writes only where it is told: the stored look is untouched
+        for n, before in stored.items():
+            p = L.DATA_DIR / n
+            self.assertEqual(p.read_bytes() if p.exists() else None, before, n)
+
+    def test_receipt_paths_are_relative(self):
+        self.assertEqual(L._rel(L.CACHE_DIR / L.FROZEN_DB),
+                         ".cache/dvm_difficulty/" + L.FROZEN_DB)
 
     def test_fixture_carries_nulls(self):
         pairs = L.fixture_pairs(players=200)

@@ -126,6 +126,15 @@ FROZEN_DB = "prospects_frozen.db"
 FROZEN_RECEIPT = "prospects_frozen.json"
 DATA_DIR = ROOT / "data"
 
+
+def _rel(p) -> str:
+    """A receipt path relative to the module root when it sits under it, so a published
+    artifact names no build-machine path (test_published_payload_hygiene.py)."""
+    try:
+        return Path(p).absolute().relative_to(ROOT).as_posix()
+    except ValueError:
+        return Path(p).name
+
 ETA_GATE_DOC = "docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md"
 DVM_GATE_DOC = "docs/dvm-difficulty-2026-09-30/DVM_DIFFICULTY_GATE.md"
 
@@ -3617,7 +3626,7 @@ def _look(task_dir: Path, *, today: str | None, data_dir: Path, B: int,
                 or units_end != units_sha):
             raise RuntimeError("an input moved during the look (section 15)")
         receipt = {"generated_at": _now(), "today": today, "frame": frame_name,
-                   "frozen_db": str(db), "frozen_db_sha256": db_sha,
+                   "frozen_db": _rel(db), "frozen_db_sha256": db_sha,
                    "tenure_source": tenure, "frame_counts": _counts_of(frame),
                    "dvm1_counts_clustering": counts["clustering"],
                    "pair_census": dict(census),
@@ -3673,7 +3682,7 @@ def run_counts(out_dir: Path, db: Path | None = None) -> dict:
     pins_end = input_pins()
     sha_end = sha256_file(db)
     counts["receipt"] = {
-        "generated_at": _now(), "frozen_db": str(db), "frozen_db_sha256": sha_start,
+        "generated_at": _now(), "frozen_db": _rel(db), "frozen_db_sha256": sha_start,
         "frozen_db_sha256_end": sha_end, "frozen_at": receipt.get("frozen_at"),
         "input_pins_start": pins_start, "input_pins_end": pins_end,
         "pins_held": sha_start == sha_end and pins_start == pins_end,

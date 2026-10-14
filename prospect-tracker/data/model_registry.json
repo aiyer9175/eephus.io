@@ -6467,6 +6467,22 @@
    "last_checked": "2026-10-14",
    "stale": false,
    "provisional_kind": "measurement_only"
+  },
+  {
+   "model_id": "dvm_difficulty",
+   "summary": "Read once 2026-10-14, NO SHIP: DV ties C0 on prediction but tracks origin mix (V-C 0.362 vs 0.377); served DvM+ unchanged, the flag stays off.",
+   "surface": "None served: the DvM+ difficulty arm (dvm_difficulty_serve.py, storage.DVM_DIFFICULTY_ARM None) reads data/dvm_difficulty.json only after an owner flip; no page reads it",
+   "predicts": "Nothing about MLB outcomes: a descriptive expectation table of how a prospect's grade on one source's list moves in 12 and 24 months by origin (high school, college, international), start rung, age and level, and the club development index built on growth above it",
+   "champion": "none - read once, not adopted: arm DV (value above expected, the owner's choice) and arm D0 (difficulty only) both fail section 13's composition check; the served DvM+ (C0) stays",
+   "baseline": "C0, the DvM+ logic served on 2026-10-14, rebuilt on the same same-source frame; club-clustered bootstrap B 2000 seed 20261201, paired deltas",
+   "metric": "Computed once at the look (FULL frame, list years 2012 to 2025): V-P1 Spearman to next-year club growth DV -0.0050 vs C0 -0.0209 (non-inferior, lower bound -0.0347); V-P2 DV 0.0500 vs C0 -0.0019 (p_holm 0.280); V-C composition max DV 0.3624 vs C0 0.3768 (fails: needs at most 0.20 or 0.10 below C0); H2 pitchers' 60+ against 40 contrast resolved at 12 and 24 months, no hitter test resolved",
+   "eval_artifact": "data/dvm_difficulty_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "registration_status": "read once: the owner-waived early read of 2026-10-14 (gate section 18); NO SHIP on DV and D0, no flip",
+   "last_checked": "2026-10-14",
+   "stale": false,
+   "notes": "2026-10-14 (DVM-4, Q10_15): registered by docs/dvm-difficulty-2026-09-30/DVM_DIFFICULTY_GATE.md (f4742b6a, amended twice before the look); producer tools/dvm_difficulty_lab.py --look, run once at 1d63190e on the FULL frame under owner decision EW3-5 as an owner-waived early read (registered date 2026-12-01). Artifacts: data/dvm_difficulty.json (frozen table, coefficients, shrunk cells, spreads, k values, frame receipt, input pins; deploy-excluded, read only by dvm_difficulty_serve.py behind storage.DVM_DIFFICULTY_ARM, None) and data/dvm_difficulty_eval.json (H1, H2, validation, the decision and the failed_arms blocks for DV and D0). Refit once a year after the preseason lists only under a new registration. Predicts no MLB outcome; no statistic here is a realized outcome by consensus-FV cell. The DvM+ rows dvm_plus_org, dvm_plus_tools and dvm_plus_dollar stay unvalidated and unchanged: a flip would name the arm here."
   }
  ],
  "problems": []
