@@ -24,7 +24,19 @@ link back to the module that owns each one. It computes exactly two new things:
 
 Both are DESCRIPTIVE rank indexes with registry rows marked unvalidated on the
 org_sur_plus precedent. Thirty percent of the index rests on a provisional
-projection (team_win_projections) and the root card says so. Nothing here
+projection (team_win_projections) and the root card says so.
+
+THE INDEX LEAVES AT THE F-SCORE FLIP (owner answer FS-Q4 (b), 2026-10-01,
+FS_2C_INDEX_REPLACEMENT). While index_replaced() is True (fscore_export
+.FSCORE_LIVE and .FSCORE_REPLACES_INDEX) replace_index() makes F-SCORE the
+root score: the club page's lead card and letter, the board's default sort
+and letter column. The Index's score, rank, letter, weights and pools leave
+the payload (asserted), and each graded branch names the F-SCORE pillar it
+counts in instead of an Index weight. All three are carried, none dropped:
+ROSTER and OUTLOOK inside STRENGTH, FARM inside PIPELINE. The branch scores,
+every section and every input stay as they are; OUTLOOK and FIN's Cost+ keep
+reading their own served values and never read F-SCORE. Flag off, the
+document is byte for byte what it was. Nothing here
 recomputes a model, opens a socket or lends a verdict chip to a surface that
 has no registry row (futures.json has none, so the ODDS section quotes the
 artifact's own interval sentence instead).
@@ -226,6 +238,11 @@ NOT_CLAIMED_PENNANTS_DARK = ("pennants and titles as a served field: only clinch
                              "for the cached season")
 NOT_CLAIMED_PENNANTS_LIVE = ("postseason skill: pennants, titles and rounds are served as results, not "
                              "as evidence a club is built for October")
+#: The not-claimed forecast line, Index and F-SCORE root (FS-Q4 (b)).
+NOT_CLAIMED_FORECAST_INDEX = ("a forecast: the Franchise Index is a descriptive rank of realized standing plus "
+                              "one provisional projection, re-standardised across 30 clubs")
+NOT_CLAIMED_FORECAST_FSCORE = ("a forecast: F-SCORE is a descriptive score of the last seven seasons and today, "
+                               "re-standardised across 30 clubs; one leg, 2027 wins, is a provisional projection")
 
 
 def fscore_live() -> bool:
@@ -235,6 +252,18 @@ def fscore_live() -> bool:
     except Exception:                                          # noqa: BLE001
         return False
     return bool(fscore_export.FSCORE_LIVE)
+
+
+def index_replaced() -> bool:
+    """True while F-SCORE is live AND replaces the Franchise Index (owner
+    answer FS-Q4 (b): fscore_export.FSCORE_LIVE and FSCORE_REPLACES_INDEX);
+    False when either is off or the module cannot be imported. The page shell
+    copy in build_site, data_catalog and tools/gen_audit_docs keys on it too."""
+    try:
+        import fscore_export
+    except Exception:                                          # noqa: BLE001
+        return False
+    return bool(fscore_export.FSCORE_LIVE and getattr(fscore_export, "FSCORE_REPLACES_INDEX", False))
 
 
 def forbidden_keys(live: bool | None = None) -> set:
@@ -1535,7 +1564,7 @@ def build() -> dict:
             "index_formula": "weighted mean of the three graded branch scores, re-standardised by the same formula",
         },
         "what_this_page_does_not_claim": [
-            "a forecast: the Franchise Index is a descriptive rank of realized standing plus one provisional projection, re-standardised across 30 clubs",
+            NOT_CLAIMED_FORECAST_INDEX,
             "revenue, operating income or a franchise valuation: no source in the tree carries them",
             "attendance before 2026, ticket prices, local or national TV money, revenue-sharing status: not sourced",
             "minor-league payroll, front-office salaries, actual CBT bills paid: not sourced",
@@ -1555,7 +1584,16 @@ def build() -> dict:
         raise FranchiseRefusal(f"odds: {len(settled_bad)} ODDS fields contradict the final standings "
                                f"after regular_season_end {futures.get('regular_season_end')}: {settled_bad[:8]}")
     if fscore_live():
-        embed_fscore(doc, fscore_payload())
+        fs = fscore_payload()
+        embed_fscore(doc, fs)
+        if index_replaced():
+            if fs is None:
+                # F-SCORE is the root score (FS-Q4 (b)): a board without it has
+                # no root, so the previous board, whose F-SCORE is the last
+                # good one, stands and the export files a red.
+                raise FranchiseRefusal("fscore: F-SCORE is the root score and data/fscore.json is absent "
+                                       "or not today's")
+            replace_index(doc, fs)
     _assert_document(doc)
     return doc
 
@@ -1631,6 +1669,98 @@ def embed_fscore(doc: dict, fs: dict | None) -> dict:
 
 
 # --------------------------------------------------------------------------
+# F-SCORE replaces the Franchise Index (owner answer FS-Q4 (b), 2026-10-01;
+# FS_2C_INDEX_REPLACEMENT). Live only, after embed_fscore.
+# --------------------------------------------------------------------------
+
+#: Keys that leave the payload once F-SCORE is the root (asserted).
+INDEX_KEYS = frozenset({"index", "index_score", "index_rank", "index_letter", "raw_weighted_mean"})
+#: Where each graded branch counts inside F-SCORE: (pillar, leg key in the
+#: scheme's legs). All three of the Index's branches are carried; none drops.
+FSCORE_FEEDS = {"roster": ("strength", "roster"), "outlook": ("strength", "outlook"),
+                "farm": ("pipeline", "farm")}
+#: The copy that named the Index, rewritten for the F-SCORE root. Every
+#: sentence the page prints still comes from the payload.
+ROOT_COPY_FSCORE = {
+    "root_eyebrow": "F-SCORE",
+    "score_basis": ("branch score = 100 + 10z of the served value across the 30 clubs (population sd); "
+                    "F-SCORE, the root, is the weighted mean of its four pillar z-scores re-standardised "
+                    "to 100 + 10z before any rank or letter is taken from it"),
+    "board_lede": "Every club by F-SCORE, seven seasons and today; a club code opens its page.",
+    "board_lede_branches": "The branch scores beneath F-SCORE and the club columns beside them; a club code opens its page.",
+    "board_foot": ("F-SCORE and the branch scores are 100 + 10z across the 30 clubs and take the z ladder; "
+                   "every other column prints on its own scale, plain."),
+}
+ROOT_FORMULA_FSCORE = ("F-SCORE, copied from fscore.json and never recomputed here; the Franchise Index (the "
+                       "weighted mean of the three graded branch scores) was retired by owner answer FS-Q4 "
+                       "(2026-10-01) and is not served")
+
+
+def _pct_text(x) -> str:
+    v = round(100.0 * float(x), 1)
+    return (f"{v:.0f}" if v == int(v) else f"{v:.1f}") + " percent"
+
+
+def replace_index(doc: dict, fs: dict) -> dict:
+    """Make F-SCORE the root score and take the Franchise Index off the page.
+    Called by build() after embed_fscore, only while index_replaced() is True
+    and fscore.json is today's; refuses if the scheme names no leg weight.
+
+    Leaves the payload: every club's `index` block, the board's index_score,
+    index_rank and index_letter, the Index weights and its two league pools.
+    Arrives: `root` "fscore", `fscore_feeds` (where each graded branch counts:
+    its pillar, its leg weight inside the pillar, and its share of F-SCORE as
+    the scheme's applied pillar weight times the leg weight), a `fscore_leg`
+    on each graded branch in place of its Index weight, the board sorted on
+    fscore_score, and the copy that named the Index rewritten. Stays: the
+    branch scores, ranks and letters, every section and every input."""
+    sch = fs.get("scheme") or {}
+    applied = sch.get("applied") or sch.get("pillars") or {}
+    legs = sch.get("legs") or {}
+    feeds = {}
+    for key, (pillar, leg) in FSCORE_FEEDS.items():
+        lw, pw = (legs.get(pillar) or {}).get(leg), applied.get(pillar)
+        if lw is None or pw is None:
+            raise FranchiseRefusal(f"fscore: the scheme names no {pillar} weight or {leg} leg")
+        feeds[key] = {"pillar": pillar, "label": pillar.upper(), "leg_weight": lw,
+                      "share": round(float(pw) * float(lw), 4)}
+    doc["root"] = "fscore"
+    doc["fscore_feeds"] = feeds
+    doc.pop("weights", None)
+    doc["board_default_sort"] = ["fscore_score", "desc"]
+    league = doc.get("league") or {}
+    (league.get("pools") or {}).pop("raw_weighted_mean", None)
+    (league.get("scores") or {}).pop("index", None)
+    for d in doc["clubs"]:
+        d.pop("index", None)
+        for b in (d.get("tree") or {}).get("branches") or []:
+            if b.get("kind") == "graded":
+                b["weight"] = None
+                b["fscore_leg"] = dict(feeds[b["key"]])
+    for row in doc["board"]:
+        for k in ("index_score", "index_rank", "index_letter"):
+            row.pop(k, None)
+    cp = doc["copy"]
+    fsc = cp.get("fscore") or {}
+    fsc.pop("fscore_vs_index", None)
+    cp.update(ROOT_COPY_FSCORE)
+    cp["root_sentence"] = fsc.get("fscore_sentence") or ""
+    cp["root_feeds_note"] = (f"ROSTER and OUTLOOK count inside STRENGTH ({_pct_text(feeds['roster']['leg_weight'])} "
+                             f"and {_pct_text(feeds['outlook']['leg_weight'])} of it) and FARM inside PIPELINE "
+                             f"({_pct_text(feeds['farm']['leg_weight'])} of it); the branch scores below are the "
+                             "numbers F-SCORE reads.")
+    doc["what_this_page_does_not_claim"] = [NOT_CLAIMED_FORECAST_FSCORE if s == NOT_CLAIMED_FORECAST_INDEX else s
+                                            for s in doc["what_this_page_does_not_claim"]]
+    acc = doc.get("accountability") or {}
+    acc.pop("index_formula", None)
+    acc["root_formula"] = ROOT_FORMULA_FSCORE
+    doc["field_key"]["tree.branches[].fscore_leg"] = ("{pillar, label, leg_weight, share}: the F-SCORE pillar the "
+                                                      "graded branch counts in, its weight inside the pillar and its "
+                                                      "share of F-SCORE")
+    return doc
+
+
+# --------------------------------------------------------------------------
 # document-level assertions (run before every write)
 # --------------------------------------------------------------------------
 
@@ -1645,9 +1775,47 @@ def _walk_keys(obj, path=""):
             yield from _walk_keys(v, f"{path}[{i}]")
 
 
+def _texts(obj):
+    if isinstance(obj, str):
+        yield obj
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            yield from _texts(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from _texts(v)
+
+
+def _assert_fscore_root(doc: dict) -> None:
+    """F-SCORE is the root (FS-Q4 (b)): every club and board row carries it,
+    the board sorts on it, each graded branch names its pillar instead of an
+    Index weight, and no copy line names the Index. The Index keys themselves
+    are refused by the key walk in _assert_document."""
+    assert "weights" not in doc and doc.get("extra_sections") == ["fscore"], "root fscore without the embed"
+    assert doc["board_default_sort"] == ["fscore_score", "desc"]
+    feeds = doc["fscore_feeds"]
+    assert set(feeds) == set(GRADED)
+    for k, f in feeds.items():
+        assert f["pillar"] in FSCORE_PILLARS and 0 < f["leg_weight"] <= 1 and 0 < f["share"] <= 1, k
+    for d in doc["clubs"]:
+        f = d.get("fscore") or {}
+        assert f.get("score") is not None and f.get("rank") and f.get("letter"), d["code"]
+        for b in (d.get("tree") or {}).get("branches") or []:
+            if b["kind"] == "graded":
+                assert b["weight"] is None and b["fscore_leg"] == feeds[b["key"]], (d["code"], b["key"])
+    for row in doc["board"]:
+        assert row.get("fscore_score") is not None and row.get("fscore_letter"), row["code"]
+    for t in list(_texts(doc["copy"])) + list(doc["what_this_page_does_not_claim"]):
+        assert "Franchise Index" not in t, t
+
+
 def _assert_document(doc: dict) -> None:
     assert len(doc["clubs"]) == N_CLUBS and len(doc["board"]) == N_CLUBS
-    assert abs(sum(doc["weights"].values()) - 1.0) < 1e-9
+    root_fs = doc.get("root") == "fscore"
+    if root_fs:
+        _assert_fscore_root(doc)
+    else:
+        assert abs(sum(doc["weights"].values()) - 1.0) < 1e-9
     verdict_of = {r["model_id"]: r["verdict"] for r in doc["accountability"]["registry_verdicts"]}
     for d in doc["clubs"]:
         assert d["statsapi_code"], d["code"]
@@ -1669,6 +1837,8 @@ def _assert_document(doc: dict) -> None:
             assert br["label"] == "implied, no market" and br["as_of"], d["code"]
         assert d["sections"]["dugout"]["plus_metric"] is False and d["sections"]["dugout"]["letter"] is None
     forbidden = forbidden_keys()
+    if root_fs:
+        forbidden = forbidden | INDEX_KEYS
     for path, k in _walk_keys(doc):
         ks = str(k).lower()
         assert ks not in forbidden, path
@@ -1758,10 +1928,11 @@ def main(argv=None) -> int:
         return 2
     n = write(doc)
     print(f"wrote {OUT.name} ({n / 1e3:.0f} KB) and {N_CLUBS} files under {SHARD_DIRNAME}/")
-    top = sorted(doc["clubs"], key=lambda d: d["index"]["rank"])[:3]
+    root = "fscore" if doc.get("root") == "fscore" else "index"
+    top = sorted(doc["clubs"], key=lambda d: d[root]["rank"])[:3]
     for d in top:
-        b = d["tree"]["branches"]
-        print(f"  #{d['index']['rank']} {d['code']} index {d['index']['score']} ({d['index']['letter']}); "
+        b, r = d["tree"]["branches"], d[root]
+        print(f"  #{r['rank']} {d['code']} {root} {r['score']} ({r['letter']}); "
               f"roster {b[0]['score']} outlook {b[1]['score']} farm {b[2]['score']}")
     print(f"  league: {doc['league']['scores']}")
     print(f"  dark: {sorted(k for k, v in doc['sections_status'].items() if v.get('live') is False)}")

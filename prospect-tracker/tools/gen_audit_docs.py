@@ -215,6 +215,26 @@ _ROUTE_NOTES = {
     "robots.txt": "crawler policy",
     "sitemap.xml": "crawler sitemap (articles included)",
 }
+# The Franchises note once F-SCORE is the root score (owner answer FS-Q4 (b));
+# used only while franchise_export.index_replaced() is True.
+_FRANCHISE_NOTE_FSCORE = (
+    "Franchises: the org-level grade tree per club under F-SCORE, the root score (seven seasons and "
+    "today, re-standardised across 30 clubs, descriptive; the Franchise Index was retired by owner "
+    "answer FS-Q4), the ROSTER / OUTLOOK / FARM branch scores beneath it and twelve sections that "
+    "re-serve every module's numbers for the club on their own scales; postseason rounds served as "
+    "results, no decision-quality grade.")
+
+
+def _route_note(rel: str) -> str:
+    if rel == "franchise/index.html":
+        try:
+            import franchise_export
+            if franchise_export.index_replaced():
+                return _FRANCHISE_NOTE_FSCORE
+        except Exception:  # noqa: BLE001
+            pass
+    return _ROUTE_NOTES.get(rel, "")
+
 
 _WRITE_CALL = re.compile(r'_write\(\s*f?"([^"]+)"\s*,\s*(\w+)\(')
 _ASSET_REF = re.compile(r"assets/([a-z0-9-]+\.js)")
@@ -308,7 +328,7 @@ def render_site_map() -> str:
             f"`build_site.{fn_name}()`",
             (", ".join(f"`assets/{a}`" for a in apps) if apps else "server-rendered"),
             (", ".join(f"`{p}`" for p in payloads) if payloads else "-"),
-            _clean(_ROUTE_NOTES.get(rel, "")),
+            _clean(_route_note(rel)),
         ]) + " |")
 
     # ---- hand-maintained surfaces -----------------------------------------
