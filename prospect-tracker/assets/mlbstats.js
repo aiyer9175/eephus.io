@@ -248,6 +248,7 @@
   function wireGlossary(el) {
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { /* glossary optional */ }
     mountPagers(el);
+    fillDrawers();
     // One measure per frame, after the write (QMLP05): markFit reads
     // offsetWidth, and reading it straight after an innerHTML swap forced a
     // synchronous style and layout of the whole board on every render.
@@ -1949,7 +1950,7 @@
     var note = windowNote(sec, w, doc, spec, all, rows, idxKey);
     if (!rows.length) return note + noRowsNote(sectionTeam(sec), "No rows match these filters.");
     return note + '<div class="mlbstats-scroll">'
-      + renderTable(rows, cols, sort, doc, winColBoard(sec)) + "</div>";
+      + renderTable(rows, cols, sort, doc, winColBoard(sec), drawerOpts(winColBoard(sec))) + "</div>";
   }
 
   // The rows a shareable card gets on a window board: the SAME fold, the same
@@ -2151,6 +2152,9 @@
   function toggleSeasonRow(id) {
     if (!id) return;
     var was = !!warOpen[id];
+    // With the drawer live, this caret opens Overall's drawer, and one drawer
+    // is open at a time on the whole page.
+    if (drawerSrc()) { warOpen = {}; drawerAt = was ? null : { board: "war", id: id }; drawerPending = null; }
     if (was) delete warOpen[id]; else warOpen[id] = 1;
     warCaretFrom = { id: id, open: was };
     try { renderWar(); } finally { warCaretFrom = null; }
@@ -2169,19 +2173,29 @@
     // <body> and the next Tab went to Download CSV above the board (QMLA05).
     // Put it back on the same row's caret, as bindSortKeys does for a header.
     if (back) { try { back.focus({ preventScroll: true }); } catch (e) { back.focus(); } }
+    if (drawerSrc()) writeHash();
   }
   function warTableOpts() {
+    var live = !!drawerSrc();
     return {
       nameExtra: function (r) {
         if (!r.seasons || !r.seasons.length) return "";
+        if (live && drawerPending === String(r.mlbam) && section === "war") {
+          drawerPending = null; drawerScroll = true;
+          warOpen = {}; warOpen[String(r.mlbam)] = 1;
+          drawerAt = { board: "war", id: String(r.mlbam) };
+        }
         var open = !!warOpen[String(r.mlbam)];
         var drawn = (warCaretFrom && warCaretFrom.id === String(r.mlbam)) ? warCaretFrom.open : open;
         return '<button type="button" class="mlbx-caret' + (drawn ? " is-open" : "")
           + '" data-mlbexpand="' + esc(String(r.mlbam)) + '" aria-expanded="' + open
+          + (live ? '" aria-controls="' + drawerDomId("war", r.mlbam) : "")
           + '" aria-label="Season by season" title="Season by season" data-export-skip></button>';
       },
+      pageTo: live ? function (rows) { return section === "war" ? drawerPageTo(rows) : -1; } : null,
       child: function (r, n) {
         if (!r.seasons || !warOpen[String(r.mlbam)]) return "";
+        if (live) drawerAt = { board: "war", id: String(r.mlbam), row: r };
         // What the lines PRINT, added up. Each one rounds to a tenth and the
         // total rounds once over the whole window, so on a long window they
         // genuinely do not add up, and the cell says what they add to rather
@@ -2200,16 +2214,187 @@
             + (s.team ? clubA(s.team, esc(s.team)) : EM_DASH) + "</span> <b>" + f1(s.war) + '</b> <span class="proj-dim">'
             + esc(side.join(" · ")) + "</span></span>";
         }).join("");
-        return '<tr class="mlbx-seasonrow" data-export-skip><td colspan="' + n
+        return '<tr class="mlbx-seasonrow' + (live ? " mlbx-drawer" : "") + '"'
+          + (live ? ' id="' + drawerDomId("war", r.mlbam) + '"' : "") + ' data-export-skip><td colspan="' + n
           + '" data-export-skip><span class="mlbx-seasons">' + cells
           + '<span class="mlbx-season mlbx-season-total" title="'
           + esc("Each season line rounds to a tenth; the total sums the two unrounded sides over the"
                 + " whole window and rounds once, so the lines need not add to it exactly. These lines"
                 + " add to " + f1(printed) + ".")
-          + '"><b>Total</b> <b>' + f1(r.war) + "</b></span></span></td></tr>";
+          + '"><b>Total</b> <b>' + f1(r.war) + "</b></span></span>"
+          + (live ? drawerMount("war", r.mlbam) : "") + "</td></tr>";
       }
     };
   }
+
+  // ---- the player drawer (assets/mlbstats-drawer.js, lazy) -------------------
+  // Owner ask 18 of 2026-09-30, "Show stat visualizations for each player when
+  // clicked on in the MLB Stats module" (plan Part 8 P8.2, task LT-09; owner
+  // answer LTS-3: a caret opens a drawer in place and the name keeps opening
+  // the player card). Built dark: the shell names the script in
+  // data-drawer-src only while mlbstats_trends_export.MLBSTATS_DRAWER_LIVE is
+  // on, and without it every function here returns nothing, so a dark build
+  // renders exactly what it did before.
+  //   * A caret leads every player row of Hitters, Starters, Bullpen, Defense
+  //     and Leverage, through renderTable's nameExtra and child hooks, so no
+  //     board's table code forks. Overall's own caret keeps its season line and
+  //     gains the charts under it.
+  //   * ONE drawer is open at a time, anywhere on the page: a tr.mlbx-drawer
+  //     with one full-width cell, which takes no rank (site.css).
+  //   * #player=<mlbam> on any section opens that board, pages to the row,
+  //     highlights it and opens its drawer (census M06-16).
+  //   * The script is injected on the first open, never by the landing board.
+  //     It draws from the board rows already loaded, the trends file and one
+  //     small per-player game file.
+  var drawerAt = null;            // {board, id, row}: the one open drawer
+  var drawerPending = null;       // an mlbam from #player=, until its row renders
+  var drawerScroll = false;       // bring the deep-linked row into view once
+  var drawerAsked = false;
+  var DRAWER_SEC = { hit: "hitters", sp: "starters", rel: "bullpen", def: "defense",
+                     levbat: "leverage", levsp: "leverage", war: "war" };
+  function drawerSrc() {
+    var r = document.querySelector(".mlbx");
+    return (r && r.getAttribute && r.getAttribute("data-drawer-src")) || "";
+  }
+  function drawerDomId(board, id) { return "mlbx-drawer-" + board + "-" + String(id).replace(/[^0-9A-Za-z_-]/g, ""); }
+  function drawerMount(board, id) {
+    return '<div class="mlbx-drawer-box" data-mlbdrawer-mount="' + esc(board + ":" + id) + '">'
+      + pxState("loading", "Loading the charts.") + "</div>";
+  }
+  function drawerIsOpen(board, id) { return !!(drawerAt && drawerAt.board === board && drawerAt.id === String(id)); }
+  // A deep link pages its board to the row before the rows are written.
+  function drawerPageTo(rows) {
+    if (!drawerPending) return -1;
+    for (var i = 0; i < rows.length; i++) if (String(rows[i].mlbam) === drawerPending) return i;
+    return -1;
+  }
+  // renderTable's hooks for one player board; null while the drawer is dark,
+  // and for the team boards, which carry no player.
+  function drawerOpts(board) {
+    if (!drawerSrc() || !DRAWER_SEC[board] || board === "war") return null;
+    return {
+      pageTo: function (rows) { return DRAWER_SEC[board] === section ? drawerPageTo(rows) : -1; },
+      nameExtra: function (r) {
+        if (r.mlbam == null) return "";
+        var id = String(r.mlbam);
+        if (drawerPending === id && DRAWER_SEC[board] === section) {
+          drawerPending = null; drawerScroll = true; warOpen = {};
+          drawerAt = { board: board, id: id };
+        }
+        var open = drawerIsOpen(board, id), nm = rowName(r) || ("#" + id);
+        return '<button type="button" class="mlbx-caret mlbx-dcaret' + (open ? " is-open" : "")
+          + '" data-mlbdrawer="' + esc(board + ":" + id) + '" aria-expanded="' + open
+          + '" aria-controls="' + drawerDomId(board, id) + '" aria-label="' + esc("Charts for " + nm)
+          + '" title="Charts for this player" data-export-skip></button>';
+      },
+      child: function (r, n) {
+        if (r.mlbam == null || !drawerIsOpen(board, r.mlbam)) return "";
+        drawerAt.row = r;
+        return '<tr class="mlbx-drawer" id="' + drawerDomId(board, r.mlbam) + '" data-export-skip>'
+          + '<td colspan="' + n + '" data-export-skip>' + drawerMount(board, r.mlbam) + "</td></tr>";
+      }
+    };
+  }
+  function drawerCols(board) {
+    return board === "hit" ? HITTER_COLS : board === "sp" ? STARTER_COLS : board === "rel" ? REL_COLS
+         : board === "def" ? DEFENSE_COLS : board === "levbat" ? BAT_LEV_COLS
+         : board === "levsp" ? STARTER_LEV_COLS : [];
+  }
+  // The rows a percentile ranks against: the board's own season before any
+  // filter, so a team pick or a search never moves a player's percentile.
+  function drawerPool(board) {
+    var sec = DRAWER_SEC[board];
+    if (sec === "war") return null;
+    if (isWindow(sec)) return { window: WIN[sec].lo + "-" + WIN[sec].hi };
+    var cur = { hitters: hitterSeason, starters: starterSeason, bullpen: relSeason,
+                defense: defenseSeason, leverage: leverageSeason }[sec];
+    var rows = board === "hit" ? hitterSourceRows() : board === "sp" ? starterSourceRows()
+             : board === "rel" ? relSourceRows() : board === "def" ? defenseSourceRows() : leverageSourceRows();
+    var live = cur === "current";
+    return { rows: rows, live: live, season: live ? sectionLiveSeason(sec) : num(cur) };
+  }
+  function drawerCell(board, key, r) {
+    var cols = drawerCols(board), c = null;
+    for (var i = 0; i < cols.length; i++) if (cols[i].key === key) { c = cols[i]; break; }
+    if (!c || !r) return null;
+    var v = getVal(c, r);
+    return { label: c.label, v: num(v),
+             html: c.cell ? c.cell(r) : c.fmt ? c.fmt(v, c.term) : (v == null || v === "" ? EM_DASH : esc(v)) };
+  }
+  // eWAR by season, only when the per-season payload is already in memory
+  // (the Overall landing loads it): the drawer never fetches it itself.
+  function drawerEwar(id) {
+    var p = SEASONS && SEASONS.players && SEASONS.players[String(id)];
+    var F = (SEASONS && SEASONS.fields) || [];
+    var iy = F.indexOf("season"), ib = F.indexOf("war_bat"), ip = F.indexOf("war_pit");
+    if (!p || !p[1] || iy < 0) return null;
+    return p[1].map(function (a) {
+      var b = ib >= 0 ? a[ib] : null, q = ip >= 0 ? a[ip] : null;
+      return { season: a[iy], war_bat: b, war_pit: q, war: (b == null && q == null) ? null : (b || 0) + (q || 0) };
+    });
+  }
+  function drawerCtx(at) {
+    return { board: at.board, id: at.id, row: at.row || null, pool: drawerPool(at.board),
+             cell: function (key, r) { return drawerCell(at.board, key, r || at.row); },
+             ewar: function () { return drawerEwar(at.id); },
+             name: at.row ? rowName(at.row) : "", esc: esc, pxState: pxState, emDash: EM_DASH,
+             wireGlossary: function (el) {
+               try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { /* optional */ }
+             } };
+  }
+  function askDrawerScript() {
+    var src = drawerSrc();
+    if (!src || drawerAsked) return;
+    drawerAsked = true;
+    window.MLBX_DRAWER_READY = fillDrawers;
+    var el = document.createElement("script");
+    el.src = src;
+    el.defer = true;
+    el.onerror = function () {
+      drawerAsked = false;
+      var m = document.querySelector("[data-mlbdrawer-mount]");
+      if (m) m.innerHTML = pxState("failed", "The charts did not load. "
+        + '<button type="button" class="chip" data-mlbdrawerretry="1">Retry</button>', "mlbstats-load-error");
+    };
+    (document.head || document.body).appendChild(el);
+  }
+  // Every render path ends in wireGlossary, which calls this, so an open
+  // drawer's mount is filled once its row is in the page.
+  function fillDrawers() {
+    if (!drawerAt || !drawerSrc()) return;
+    try {
+      var tr = document.getElementById(drawerDomId(drawerAt.board, drawerAt.id));
+      var mount = tr && tr.querySelector ? tr.querySelector("[data-mlbdrawer-mount]") : null;
+      if (!mount || !mount.getAttribute || !mount.getAttribute("data-mlbdrawer-mount")
+          || mount.getAttribute("data-mlbdrawer-done")) return;
+      var row = tr.previousElementSibling;
+      if (row && row.classList) row.classList.add("mlbx-hl");
+      if (drawerScroll && row && row.scrollIntoView) {
+        drawerScroll = false;
+        try { row.scrollIntoView({ block: "center" }); } catch (e) { row.scrollIntoView(); }
+      }
+      if (window.MLBX_DRAWER && window.MLBX_DRAWER.fill) window.MLBX_DRAWER.fill(mount, drawerCtx(drawerAt));
+      else askDrawerScript();
+    } catch (e) { /* the board stands without its drawer */ }
+  }
+  function toggleDrawer(spec) {
+    var p = String(spec || "").split(":"), board = p[0], id = p[1];
+    if (!DRAWER_SEC[board] || board === "war" || !id) return;
+    drawerAt = drawerIsOpen(board, id) ? null : { board: board, id: id };
+    drawerPending = null;
+    warOpen = {};
+    renderSection(DRAWER_SEC[board]);
+    writeHash();
+    var b = document.querySelector('[data-mlbdrawer="' + board + ":" + id + '"]');
+    if (b) { try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); } }
+  }
+  try { document.addEventListener("click", function (e) {
+    var t = e.target && e.target.closest ? e.target : null;
+    if (!t) return;
+    var b = t.closest("[data-mlbdrawer]");
+    if (b) { toggleDrawer(b.getAttribute("data-mlbdrawer")); return; }
+    if (t.closest("[data-mlbdrawerretry]")) askDrawerScript();
+  }); } catch (e) { /* no document events */ }
 
   // ---- frozen-vintage disclosure --------------------------------------------
   // Several columns are NOT computed by the run that built the board: the
@@ -2455,7 +2640,9 @@
   // `opts` is how a board adds something the shared table has no opinion
   // about: `nameExtra(row)` rides inside the identity cell (the Overall board's
   // expander caret) and `child(row, nCols)` emits one extra row under it (the
-  // per-season line). Both are optional and every other board passes neither.
+  // per-season line). Both are optional. The player drawer passes both on the
+  // player boards while it is live (drawerOpts), plus `pageTo(rows)`, a row
+  // index the pager opens on, for its #player= deep link.
   function renderTable(rows, cols, sort, meta, board, opts) {
     cols = prCols(cols, rows);
     var plan = viewPlan(cols, sort, board);
@@ -2495,6 +2682,8 @@
       var sig = total + "|" + sort.key + "|" + sort.asc + "|" + rowId(rows[0]) + "|" + rowId(rows[total - 1]);
       var st = pageState(key);
       if (st.sig !== sig) { st.sig = sig; st.start = 0; }
+      var to = (opts && opts.pageTo) ? opts.pageTo(rows) : -1;
+      if (to >= 0 && pageSize) st.start = Math.floor(to / pageSize) * pageSize;
       span = pageSpan(key, total);
     }
     // The rank is a CSS counter over the shown rows (site.css mlbx-rank), so a
@@ -2859,7 +3048,7 @@
               + vintageNote(DATA, [["multiyear", "REM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]],
                   " gmLI 3yr: frozen the same way, no date shipped."))
             + relieverViz()
-            + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort, DATA, "rel") + "</div>";
+            + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort, DATA, "rel", drawerOpts("rel")) + "</div>";
         })()
       : noRowsNote(relTeam, "No relievers match these filters.");
     return yearsRow("bullpen") + body;
@@ -2895,7 +3084,7 @@
       + gloss("RIV+", "riv_plus") + ": realized leverage-weighted value, a record and not a forecast.</div>");
     var relHistCols = coveredCols(REL_HISTORY_COLS, rows);
     var table = rows.length
-      ? '<div class="mlbstats-scroll">' + renderTable(rows, relHistCols, sort, null, "rel") + "</div>"
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, relHistCols, sort, null, "rel", drawerOpts("rel")) + "</div>"
       : noRowsNote(relTeam, "No relievers match these filters.");
     return pills + cap + table;
   }
@@ -3391,6 +3580,9 @@
     }
     var gr = GRAD_HASH_RE.exec(h);
     if (gr) gradSel = gr[1];
+    // The player drawer's deep link, honoured only while the drawer is live.
+    var pl = /(?:^#|[#&])player=([0-9]{1,9})(?=&|$)/.exec(h);
+    if (pl && drawerSrc()) drawerPending = pl[1];
     // Season pills. readHash runs from init(), after every one of these vars
     // and column arrays has been assigned, so the forward references are safe.
     readWindow(h, "bullpen", "rseason", "ryears");
@@ -3470,6 +3662,9 @@
     var tm = activeTeam();
     if (tm) parts.push("team=" + tm);
     if (gradSel) parts.push("grad=" + gradSel);
+    // The open drawer rides the URL while its board is on screen.
+    if (drawerAt && DRAWER_SEC[drawerAt.board] === section) parts.push("player=" + drawerAt.id);
+    else if (drawerPending) parts.push("player=" + drawerPending);
     try { history.replaceState(null, "", "#" + parts.join("&")); } catch (e) { /* hash optional */ }
   }
 
@@ -3766,7 +3961,7 @@
           return proseFold("sp-about", rows.length + " starters",
               semExplainer() + starterScorecard() + note
               + vintageNote(starterData, [["multiyear", "SEM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]]))
-            + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_COLS, starterSort, starterData, "sp") + "</div>";
+            + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_COLS, starterSort, starterData, "sp", drawerOpts("sp")) + "</div>";
         })()
       : noRowsNote(starterTeam, "No starters match these filters.");
     return yearsRow("starters") + body;
@@ -3801,7 +3996,7 @@
       '<div class="mlbstats-note">' + gloss("SEM+", "sem_plus") + ": skill. IP, GS and IP/GS: context.</div>");
     var spHistCols = coveredCols(STARTER_HISTORY_COLS, rows);
     var table = rows.length
-      ? '<div class="mlbstats-scroll">' + renderTable(rows, spHistCols, sort, null, "sp") + "</div>"
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, spHistCols, sort, null, "sp", drawerOpts("sp")) + "</div>"
       : noRowsNote(starterTeam, "No starters match these filters.");
     return pills + cap + table;
   }
@@ -4338,7 +4533,7 @@
           return proseFold("hit-about", rows.length + " hitters",
               hemExplainer() + hitterScorecard() + note
               + vintageNote(hitterData, [["multiyear", "HEM+ 3yr"], ["multiyear_war_rate", "WAR/PA+ 3yr"]]))
-            + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_COLS, hitterSort, hitterData, "hit") + "</div>";
+            + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_COLS, hitterSort, hitterData, "hit", drawerOpts("hit")) + "</div>";
         })()
       : noRowsNote(hitterTeam, "No hitters match these filters.");
     return yearsRow("hitters") + body;
@@ -4370,7 +4565,7 @@
       '<div class="mlbstats-note">' + gloss("HEM+", "hem_plus") + ": skill. Slash and volume: context.</div>");
     var hitHistCols = coveredCols(HITTER_HISTORY_COLS, rows);
     var table = rows.length
-      ? '<div class="mlbstats-scroll">' + renderTable(rows, hitHistCols, sort, null, "hit") + "</div>"
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, hitHistCols, sort, null, "hit", drawerOpts("hit")) + "</div>"
       : noRowsNote(hitterTeam, "No hitters match these filters.");
     return pills + cap + table;
   }
@@ -5068,7 +5263,8 @@
     return yearsRow("leverage") + proseFold("lev-about",
         seasonLbl + rows.length + (isStart ? " starters" : " batters") + leverageCoverage(),
         levExplainer())
-      + leverageViz() + '<div class="mlbstats-scroll">' + renderTable(rows, cols, sort, leverageData, leverageView === "starters" ? "levsp" : "levbat") + "</div>";
+      + leverageViz() + '<div class="mlbstats-scroll">' + renderTable(rows, cols, sort, leverageData, leverageView === "starters" ? "levsp" : "levbat",
+          drawerOpts(leverageView === "starters" ? "levsp" : "levbat")) + "</div>";
   }
 
   function renderLeverage() {
@@ -5463,7 +5659,7 @@
       ? proseFold("def-about", rows.length + " fielders",
           defenseExplainer() + defenseScorecard()
           + vintageNote(defenseData, [["multiyear", "DEM+ 3yr"]]))
-        + '<div class="mlbstats-scroll">' + renderTable(rows, DEFENSE_COLS, defenseSort, defenseData, "def") + "</div>"
+        + '<div class="mlbstats-scroll">' + renderTable(rows, DEFENSE_COLS, defenseSort, defenseData, "def", drawerOpts("def")) + "</div>"
       : noRowsNote(defenseTeam, "No fielders match these filters.");
     return yearsRow("defense") + body;
   }
@@ -5494,7 +5690,7 @@
     var defHistCols = coveredCols(DEFENSE_HISTORY_COLS, rows);
     var defHistMeta = { frame: (defenseData && defenseData.frame) || null };
     var table = rows.length
-      ? '<div class="mlbstats-scroll">' + renderTable(rows, defHistCols, sort, defHistMeta, "def") + "</div>"
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, defHistCols, sort, defHistMeta, "def", drawerOpts("def")) + "</div>"
       : noRowsNote(defenseTeam, "No fielders match these filters.");
     return pills + cap + table;
   }

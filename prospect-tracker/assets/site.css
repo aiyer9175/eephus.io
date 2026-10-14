@@ -2789,6 +2789,49 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .mlbx .mlbstats-range-fromto { width: 100%; margin-top: 4px; }
   .mlbx .mlbx-season { flex-basis: 100%; }
 }
+/* ---- the player drawer (assets/mlbstats-drawer.js) --------------------------
+   One tr.mlbx-drawer under the row its caret opened. It is not a player, so it
+   takes no rank (the season line's rule). Its box is width 0 and min-width
+   100%, so the drawer fills the table's width and can never widen it: the
+   fit rule at 390 px holds with a drawer open. Panels sit side by side where
+   280 px each fit and stack below 700 px. */
+.mlbx .mlbstats-table tbody tr.mlbx-drawer { counter-increment: none; }
+.mlbx .mlbstats-table tbody tr.mlbx-drawer:hover { background: transparent; }
+.mlbx .mlbstats-table tbody tr.mlbx-hl { background: var(--bg-tertiary); }
+.mlbx .mlbstats-table tbody tr.mlbx-hl > td:first-child { box-shadow: inset 3px 0 0 var(--viz-1); }
+.mlbx .mlbstats-table tr.mlbx-drawer > td { padding: 4px 8px 12px; white-space: normal; text-align: left;
+  font-family: var(--font-sans); background: var(--bg-secondary); }
+.mlbx .mlbx-drawer-box { width: 0; min-width: 100%; }
+/* Below 1024 px the identity cell is two lines with the row number floated
+   left; the caret floats beside it, so it costs no third line. */
+@media (max-width: 1023px) {
+  .mlbx .mlbstats-table td.mlbstats-name > button.mlbx-dcaret { float: left; padding: 0 4px 0 0;
+    font-size: inherit; line-height: inherit; }
+}
+.mlbx .mlbx-dgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 10px; margin-top: 6px; }
+.mlbx .mlbx-dgrid.is-one { grid-template-columns: minmax(0, 1fr); max-width: 760px; }
+@media (max-width: 700px) {
+  .mlbx .mlbx-dgrid { grid-template-columns: minmax(0, 1fr); }
+}
+.mlbx .mlbx-dpanel { min-width: 0; padding: 8px 10px; border: 1px solid var(--border-light); background: var(--bg-primary); }
+.mlbx .mlbx-dpanel-h { margin-bottom: 6px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); }
+.mlbx .mlbx-dsub { margin: 8px 0 2px; font-size: 11px; color: var(--text-secondary); }
+.mlbx .mlbx-dnote { margin: 6px 0 0; font-size: 11px; line-height: 1.5; color: var(--text-tertiary); white-space: normal; }
+.mlbx .mlbx-dfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 8px; }
+.mlbx .mlbx-dfoot .mlbx-dnote { margin: 0; }
+.mlbx .mlbx-dtoggle { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.mlbx .mlbx-dlegend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0 0 2px; font-size: 11px; color: var(--text-secondary); }
+.mlbx .mlbx-dlegend i { display: inline-block; width: 10px; height: 3px; margin-right: 5px; vertical-align: middle; }
+.mlbx .mlbx-dlegend .mlbx-dkey-1 { background: var(--viz-1); }
+.mlbx .mlbx-dlegend .mlbx-dkey-2 { background: var(--viz-2); }
+.mlbx .mlbx-dlegend .mlbx-dkey-a { background: var(--accent-cyan); }
+.mlbx .mlbx-dlegend .mlbx-dkey-b { background: var(--accent-gold); }
+.mlbx .mlbx-drawer .mlbp-slider { grid-template-columns: minmax(56px, 92px) minmax(0, 1fr) minmax(44px, auto);
+  gap: 8px; margin: 10px 0; }
+.mlbx .mlbx-drawer .mlbp-slider-label { font-size: 11px; }
+.mlbx .mlbx-drawer .mlbp-slider-val { font-size: 12px; }
 /* ---- the League tab (assets/mlbstats-league.js) ------------------------------
    Rows are statistics, so each row header is a th that must not take the
    sticky, upper-case column-header look. "vs all" stays in text ink: whether

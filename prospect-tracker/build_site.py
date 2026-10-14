@@ -6353,10 +6353,19 @@ def build_mlbstats() -> str:
 
     THE TEAMS TAB (owner asks 15 and 20 of 2026-09-30; the same plan item, the
     Teams half) rides the same flag and the same lazy script: live, a Teams
-    button and panel sit between Leverage and League (owner answer LTS-1)."""
+    button and panel sit between Leverage and League (owner answer LTS-1).
+
+    THE PLAYER DRAWER (owner ask 18 of 2026-09-30; plan Part 8 P8.2, task
+    LT-09) is built dark behind mlbstats_trends_export.MLBSTATS_DRAWER_LIVE:
+    while it is False the root carries no data-drawer-src and the boards draw
+    no caret. Live, the root names assets/mlbstats-drawer.js there and
+    mlbstats.js injects it on the first drawer open (owner answer LTS-3)."""
     import league_averages
+    import mlbstats_trends_export
     league_root = league_btn = league_panel = teams_btn = teams_panel = ""
     league_live = bool(league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE)
+    drawer_root = (f' data-drawer-src="/assets/mlbstats-drawer.js?v={_asset_ver("assets/mlbstats-drawer.js")}"'
+                   if mlbstats_trends_export.MLBSTATS_DRAWER_LIVE else "")
     if league_live:
         ys = sorted(int(p.stem.rsplit("_", 1)[1]) for p in DATA_DIR.glob("mlb_league_panel_*.json")
                     if p.stem.rsplit("_", 1)[1].isdigit())
@@ -6377,7 +6386,7 @@ def build_mlbstats() -> str:
         # site.css is scoped under it, because .mlbstats-app is shared by ten
         # module roots (test_mlbx_css_scope.py pins the scope).
         '<div class="fa-app mlbstats-app mlbx"'
-        f'{league_root}>'
+        f'{league_root}{drawer_root}>'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("mlbstats")}MLB Stats {_stage_chip("mlbstats")}</h1></div>'
         # One line: each board's number once, and the scale. The tabs under it

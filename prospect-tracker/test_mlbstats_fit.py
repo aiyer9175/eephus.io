@@ -111,6 +111,11 @@ PAGES = [
     ("teams earned", "teams", "section=teams", None),
     ("teams club today", "teams", "section=teams&tbasis=today", None),
     ("teams 2025", "teams", "section=teams&tseason=2025", None),
+    # The player drawer (P8.2, LT-09; task Q8_14): a deep link opens the
+    # board with one drawer under the player's row. Dark, the key is ignored
+    # and this is the Hitters board; live, every named view must still fit
+    # with the drawer open, because its box never widens the table.
+    ("hitters drawer", "hitters", "section=hitters&player=665742", "mlbstats-hitter-qual"),
 ]
 # The five sections that carry a methodology fold and a Team note, which is what
 # the vertical-budget case below measures. Overall carries neither (spec 4.7
