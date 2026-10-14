@@ -24,6 +24,12 @@
 .st-app .st-chip-btn:disabled { cursor: default; opacity: 1; }
 .st-app button:focus-visible, .st-app a:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 .st-app .st-mine-btn { margin-left: 8px; }
+/* Season and As of (STANDINGS_6): native controls on the chip metrics */
+.st-app .st-season label { font: 700 11px var(--font-retro-mono); letter-spacing: .04em; color: var(--text-secondary); }
+.st-app .st-season label + select, .st-app .st-season label + input { margin-right: 6px; }
+.st-app .st-season select, .st-app .st-season input { min-height: 32px; padding: 0 6px; border: 1px solid var(--border);
+  background: var(--bg-secondary); color: var(--text-primary); font: 12px var(--font-retro-mono); }
+.st-app .st-season select:focus-visible, .st-app .st-season input:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 
 /* ---- the stamp, the legend, the notes */
 .st-app .st-stamp em { font-style: normal; }
@@ -135,6 +141,8 @@
   .st-app .st-groups { overflow-x: auto; scrollbar-width: none; }
   .st-app .st-chip-btn, .st-app .st-btn { min-height: 44px; padding: 0 9px; }
   .st-app .st-mine-btn { margin-left: 0; }
+  .st-app .st-season select, .st-app .st-season input { min-height: 44px; }
+  .st-app .st-season input { width: 140px; }
   .st-app .st-club { max-width: 100px; }
 }
 

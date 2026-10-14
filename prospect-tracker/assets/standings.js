@@ -17,7 +17,8 @@
    stamp is Eastern and says so. Fetch: latest.json and index.json once per
    load and on becoming visible, then the season file; never the race or the
    odds history files (charts only), never a poll. The Playoffs view mounts
-   the SCORES_4b bracket chunk unchanged with the season index's bracket. */
+   the SCORES_4b bracket chunk unchanged with the season index's bracket.
+   STANDINGS_6: Season and As of; ODDS only on the newest latest file. */
 (function () {
   "use strict";
 
@@ -257,7 +258,7 @@
   function boot(root) {
     var CH = root.getAttribute("data-charts-src"), VW = CH ? VIEWS.concat([["charts", "Charts"]]) : VIEWS;
     var app = { route: parse(location.hash), L: null, IX: null, S: null, serverAt: null, clientAt: null,
-      open: null, focus: null, bk: null, bkDoc: null, meta: {}, races: {} };
+      open: null, focus: null, bk: null, bkDoc: null, meta: {}, races: {}, seq: 0, miss: null };
     var St = window.EephusState;
     if (St) St.render(root, "loading", "Loading standings.");
 
@@ -271,6 +272,7 @@
       if (/^(race|wc|odds|runs|xwl)$/.test(q.chart || "")) r.chart = q.chart;
       if (/^[AN]L[ECW]$/.test(q.div || "")) r.div = q.div;
       if (/^\d{4}$/.test(q.season || "")) r.season = +q.season;
+      if (/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(q.date || "")) r.date = q.date;
       if (q.cols != null) r.cols = String(q.cols).split(",").filter(function (c) {
         return GROUPS.some(function (g) { return g[0] === c; });
       });
@@ -283,6 +285,7 @@
       var p = [];
       if (r.view) p.push("view=" + r.view);
       if (r.season) p.push("season=" + r.season);
+      if (r.date) p.push("date=" + r.date);
       if (r.cols) p.push("cols=" + r.cols.join(","));
       if (r.sort) p.push("sort=" + r.sort.k + "." + r.sort.dir);
       if (r.team) p.push("team=" + r.team);
@@ -290,14 +293,15 @@
       if (r.div) p.push("div=" + r.div);
       return p.length ? "#" + p.join("&") : "";
     }
-    function go(r) {
+    function go(r, rep) {
       var h = hashOf(r);
       app.route = r;
       if (h !== location.hash) {
-        try { history.pushState(null, "", h || location.pathname + location.search); } catch (e) { /* the view still renders */ }
+        try { history[rep ? "replaceState" : "pushState"](null, "", h || location.pathname + location.search); } catch (e) { /* the view still renders */ }
       }
-      render();
+      if (!rep) sync();
     }
+    function sync() { app.miss = null; choose().catch(fail); }
     function get(path) {
       return fetch(BASE + path, { cache: "no-cache" }).then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
@@ -314,36 +318,48 @@
         if (!L || L.schema !== 1 || !L.standings) throw new Error("schema");
         app.L = L;
         return get("index.json?v=" + encodeURIComponent(L.index_rev || "")).then(function (r) { return r.json(); });
-      }).then(function (IX) {
-        app.IX = IX;
-        var ss = IX.standings_seasons || [], y = app.L.standings.season, e = null;
-        if (app.route.season && ss.some(function (s) { return s.season === app.route.season; })) y = app.route.season;
-        else delete app.route.season;
-        ss.forEach(function (s) { if (s.season === y) e = s; });
-        if (!e) throw new Error("season");
-        if (app.S && app.S.season === y && app.rev === e.rev) return app.S;
-        return get("standings/" + y + ".json?v=" + encodeURIComponent(e.rev)).then(function (r) { return r.json(); })
-          .then(function (S) {
-            if (!S || S.schema !== 1 || S.season !== y || !Array.isArray(S.rows) || !S.rows.length) throw new Error("schema");
-            app.rev = e.rev;
-            app.entry = e;
-            return S;
-          });
-      }).then(function (S) { app.S = S; render(); });
+      }).then(function (IX) { app.IX = IX; return choose(); });
+    }
+    // season and date checked against the index; unknown values dropped
+    function choose() {
+      var ss = app.IX.standings_seasons || [], r = app.route, y = app.L.standings.season, e = null, n = ++app.seq;
+      if (r.season && ss.some(function (s) { return s.season === r.season; })) y = r.season;
+      else delete r.season;
+      ss.forEach(function (s) { if (s.season === y) e = s; });
+      if (!e) return Promise.reject(new Error("season"));
+      if (r.date && !(e.by_date && +r.date.slice(0, 4) === y)) delete r.date;
+      if (hashOf(r) !== location.hash) go(r, 1);
+      var d = r.date, key = y + "|" + (d || e.rev);
+      if (app.S && app.key === key) { app.entry = e; render(); return Promise.resolve(); }
+      return get("standings/" + y + (d ? "/" + d + ".json" : ".json?v=" + encodeURIComponent(e.rev))).then(function (q) { return q.json(); })
+        .then(function (S) {
+          if (!S || S.schema !== 1 || S.season !== y || !Array.isArray(S.rows) || !S.rows.length || d && S.as_of !== d) throw new Error("schema");
+          return S;
+        }).then(function (S) {
+          if (n !== app.seq) return;
+          app.key = key; app.entry = e; app.S = S; render();
+        }, function (err) {
+          if (n !== app.seq) return;
+          if (!d) throw err;
+          delete r.date; app.miss = d; return choose();
+        });
+    }
+    function fail() {
+      if (St) St.render(root, "failed", 'Standings could not load. <button type="button" class="st-btn st-retry">Retry</button>');
+      else root.textContent = "Standings could not load.";
     }
     function start() {
-      load().catch(function () {
-        if (app.S) return;
-        if (St) St.render(root, "failed", 'Standings could not load. <button type="button" class="st-btn st-retry">Retry</button>');
-        else root.textContent = "Standings could not load.";
-      });
+      load().catch(function () { if (!app.S) fail(); });
     }
 
     // ---- defaults that read the payload
-    function view() { return app.route.view || (app.S.ours && app.S.ours.phase === "postseason" ? "playoffs" : "division"); }
+    function oddsWin() { return !app.route.date && app.S.season === app.L.standings.season; }
+    function ours() { return oddsWin() ? app.S.ours || null : null; }
+    function view() { var O = ours(); return app.route.view || (O && O.phase === "postseason" ? "playoffs" : "division"); }
     function cols() {
       var c = app.route.cols, narrow = width() < 768;
-      if (!c) c = narrow ? [] : (app.S.ours ? ["runs", "odds"] : ["runs"]);
+      if (!c) c = narrow ? [] : (ours() ? ["runs", "odds"] : ["runs"]);
+      if (!oddsWin()) c = c.filter(function (g) { return g !== "odds"; });
       return narrow ? c.slice(0, 1) : c;
     }
     function serverNow() { return app.serverAt == null ? Date.now() : app.serverAt + (Date.now() - app.clientAt); }
@@ -469,17 +485,32 @@
     }
 
     function controls(v, cs) {
+      var S = app.S;
       return '<div class="st-ctl"><div class="st-row st-views" role="group" aria-label="Views">' + VW.map(function (w) {
         return '<button type="button" class="st-chip-btn" data-view="' + w[0] + '" aria-pressed="' + (w[0] === v) + '">' + w[1] + "</button>";
       }).join("") + '</div><div class="st-row st-groups" role="group" aria-label="Column groups">' +
-        '<button type="button" class="st-chip-btn" aria-pressed="true" disabled>Record</button>' + GROUPS.map(function (g) {
+        '<button type="button" class="st-chip-btn" aria-pressed="true" disabled>Record</button>' + GROUPS.filter(function (g) {
+          return g[0] !== "odds" || oddsWin();
+        }).map(function (g) {
           return '<button type="button" class="st-chip-btn" data-group="' + g[0] + '" aria-pressed="' + (cs.indexOf(g[0]) >= 0) + '">' + g[1] + "</button>";
         }).join("") + '<button type="button" class="st-chip-btn st-mine-btn" aria-pressed="' + !!app.route.mine + '">My teams</button>' +
-        (app.route.sort ? '<button type="button" class="st-btn st-reset">Standings order</button>' : "") + "</div></div>";
+        (app.route.sort ? '<button type="button" class="st-btn st-reset">Standings order</button>' : "") + "</div>" + seasonRow() + "</div>" +
+        (S.format && S.format.notes && S.format.notes.length ? '<p class="st-fmt">' + esc(S.format.notes.join(" ")) + "</p>" : "");
+    }
+    function seasonRow() {
+      var S = app.S, y = S.season, d = app.route.date || "", L = app.L.standings;
+      var ss = (app.IX.standings_seasons || []).map(function (s) { return s.season; }).sort(function (a, b) { return b - a; });
+      var mx = y === L.season ? L.as_of : S.as_of;
+      return '<div class="st-row st-season"><label for="st-season">Season</label><select id="st-season">' + ss.map(function (s) {
+        return '<option value="' + s + '"' + (s === y ? " selected" : "") + ">" + s + "</option>";
+      }).join("") + "</select>" + ((app.entry || {}).by_date ? '<label for="st-date">As of</label><input type="date" id="st-date" value="' +
+        esc(d) + '"' + (S.opening_day ? ' min="' + esc(S.opening_day) + '"' : "") + (mx ? ' max="' + esc(mx) + '"' : "") + ">" +
+        (d ? '<button type="button" class="st-btn st-latest">Latest</button>' : "") : "") + "</div>";
     }
     function stamp() {
       var S = app.S, o, stale = "";
-      if (S.final) o = "Final standings, " + S.season + " regular season.";
+      if (app.route.date) o = "Standings as of " + ymd(S.as_of, true) + ".";
+      else if (S.final) o = "Final standings, " + S.season + " regular season.";
       else {
         var up = eastern(S.generated_at, true);
         o = "Standings through " + ymd(S.as_of) + "." + (up ? " Updated " + up + "." : "");
@@ -506,14 +537,17 @@
         o += stateHTML("unmeasured", esc(from ? "The daily odds record starts " + ymd(from, true) + "."
           : "The odds group has no record for this season."), "st-note st-odds-note");
       }
-      if (S.format && S.format.notes && S.format.notes.length) o += '<p class="st-fmt">' + esc(S.format.notes.join(" ")) + "</p>";
+      if (app.entry && !app.entry.race_rev) {
+        o += stateHTML("unmeasured", esc("Game-by-game results for " + S.season + " are not on file."), "st-note st-race-note");
+      }
+      if (app.miss) o += stateHTML("unmeasured", esc("No standings file for " + ymd(app.miss, true) + "."), "st-note st-miss");
       return o;
     }
     function credit() {
       var c = String(app.S.copyright || ""), i = c.search(/https?:\/\//), url = i >= 0 ? c.slice(i).split(/\s/)[0] : "";
       var text = url ? esc(c.slice(0, i)) + '<a href="' + esc(url) + '" rel="noopener">' + esc(url) + "</a>" + esc(c.slice(i + url.length)) : esc(c);
       return '<footer class="st-credit"><p>Standings, records and splits come from MLB\'s public StatsAPI feed. <span class="st-copy">' + text +
-        "</span></p>" + (app.S.ours ? "<p>Odds: the site's season and bracket simulators, implied, no market.</p>" : "") + "</footer>";
+        "</span></p>" + (ours() ? "<p>Odds: the site's season and bracket simulators, implied, no market.</p>" : "") + "</footer>";
     }
     function tiesHTML() {
       var tb = app.S.tiebreak;
@@ -559,7 +593,7 @@
     // the Playoffs seeds tables: the served seed and how-qualified text, and
     // the bracket simulator's Pennant and World Series chances in their own labelled group
     function seedsHTML(x) {
-      var O = app.S.ours, model = O && O.models && O.models.p_pennant === O.models.p_ws ? O.models.p_pennant : null;
+      var O = x.ours, model = O && O.models && O.models.p_pennant === O.models.p_ws ? O.models.p_pennant : null;
       var xs = { view: "seeds", cols: [], sort: x.sort, mine: x.mine, mineOnly: x.mineOnly, team: x.team, ours: O, model: model };
       var cs = [SEED, { k: "wl", g: "record", a: "W-L", t: "Record", d: "desc", w: [56, 60, 60], v: function (r) { return { s: r.w + "-" + r.l, n: r.w }; } },
         { k: "how", g: "record", a: "HOW", t: "How qualified", d: "asc", w: [150, 170, 190], v: function (r) { return { s: r.qualified_text || "-", n: r.seed }; } }];
@@ -573,19 +607,19 @@
 
     function render() {
       if (!app.S) return;
-      var v = view(), cs = cols(), O = app.S.ours;
+      var v = view(), cs = cols(), O = ours();
       var x = { view: v, cols: cs, sort: app.route.sort || null, mine: mine(), mineOnly: !!app.route.mine, team: app.route.team,
         ours: O, model: O && O.regular ? O.regular.model_id : null };
       app.meta = {};
       var body = v === "charts" ? '<div class="st-cm st-charts"></div>' : viewHTML(v, x);
       if (O && cs.indexOf("odds") >= 0 && /<table/.test(body)) body = '<section class="st-mw" data-model-id="' + esc(x.model) + '">' + oddsLabel(x.model) + body + "</section>";
-      if (v === "playoffs") body = seedsHTML(x) + '<div class="st-bracket" id="st-bracket"></div><h3 class="st-final-h">' +
+      if (v === "playoffs") body = seedsHTML(x) + (app.route.date ? "" : '<div class="st-bracket" id="st-bracket"></div>') + '<h3 class="st-final-h">' +
         (app.S.final ? "Final regular-season standings" : "Standings") + "</h3>" + body;
       if (x.mineOnly && v !== "charts" && !/<table/.test(body)) body = stateHTML("empty", "No followed clubs in this view. Follow a club from its row's details.", "st-note");
       if (v === "wildcard") body += tiesHTML();
       root.innerHTML = '<div class="st-wrap">' + controls(v, cs) + stamp() + legend() + notes(cs) + '<div class="st-body">' + body + "</div>" + credit() +
         '<p class="st-sr" role="status" aria-live="polite" id="st-announce"></p></div>';
-      if (v === "playoffs") mountBracket();
+      if (v === "playoffs" && !app.route.date) mountBracket();
       mountCharts(root.querySelectorAll(".st-charts, .st-race[open] .st-cm"));
       shadows();
       var f = app.focus;
@@ -672,6 +706,7 @@
         go(r); return;
       }
       if (t.classList.contains("st-mine-btn")) { r.mine = !r.mine; app.route = r; app.focus = { sel: ".st-mine-btn" }; render(); return; }
+      if (t.classList.contains("st-latest")) { delete r.date; app.focus = { sel: "#st-date" }; go(r); return; }
       if (t.classList.contains("st-reset")) {
         delete r.sort;
         app.focus = { sel: '.st-views [aria-pressed="true"]', say: "Standings order restored." };
@@ -704,8 +739,17 @@
       var f = ev.target;
       if (f && f.classList && f.classList.contains("st-frame")) f.parentNode.lastChild.hidden = !(f.scrollWidth - f.clientWidth - f.scrollLeft > 1);
     }, true);
-    window.addEventListener("popstate", function () { app.route = parse(location.hash); render(); });
-    window.addEventListener("hashchange", function () { app.route = parse(location.hash); app.scrolled = false; render(); });
+    root.addEventListener("change", function (ev) {
+      var t = ev.target, r = Object.assign({}, app.route);
+      if (!app.S || (t.id !== "st-season" && t.id !== "st-date")) return;
+      if (t.id === "st-season") { r.season = +t.value; delete r.date; delete r.team; app.open = null; }
+      else if (t.value) r.date = t.value;
+      else delete r.date;
+      app.focus = { sel: "#" + t.id };
+      go(r);
+    });
+    window.addEventListener("popstate", function () { app.route = parse(location.hash); if (app.IX) sync(); });
+    window.addEventListener("hashchange", function () { app.route = parse(location.hash); app.scrolled = false; if (app.IX) sync(); });
     var band = null;
     window.addEventListener("resize", function () {
       var w = width(), b = w >= 1024 ? 2 : w >= 768 ? 1 : 0;
