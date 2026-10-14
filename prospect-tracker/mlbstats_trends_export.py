@@ -58,7 +58,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Optional
 
-MLBSTATS_DRAWER_LIVE = False
+MLBSTATS_DRAWER_LIVE = True
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"

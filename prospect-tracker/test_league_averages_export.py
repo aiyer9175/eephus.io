@@ -7,9 +7,9 @@
 item P8.2, task LT-04; the lane design's section 10).
 
 The artifacts pinned here are mlb_league_panel_*.json (one panel per season)
-and mlb_league_series.json (the over-time series). While
-MLBSTATS_LEAGUE_TEAMS_LIVE is False they are written only under
-.cache/league_teams/preview/; nothing here writes under data/.
+and mlb_league_series.json (the over-time series). Since the flip (Q8_15,
+MLBSTATS_LEAGUE_TEAMS_LIVE True) the exporter writes them under data/; every
+test here writes under tmp_path, never data/.
 
 What is pinned:
   * every pooled group equals a direct recompute from the panel's own rows,
@@ -437,9 +437,9 @@ def test_known_league_values_reproduce(panels):
 # --------------------------------------------------------------------------- #
 # 6. the flag and the refusals
 # --------------------------------------------------------------------------- #
-def test_dark_by_default_and_the_preview_is_off_the_webroot():
-    assert L.MLBSTATS_LEAGUE_TEAMS_LIVE is False
-    assert L.out_dir() == L.PREVIEW_DIR
+def test_live_since_the_flip_and_the_preview_stays_off_the_webroot():
+    assert L.MLBSTATS_LEAGUE_TEAMS_LIVE is True
+    assert L.out_dir() == L.DATA_DIR
     assert L.PREVIEW_DIR.relative_to(L.ROOT / ".cache")
     assert L.DATA_DIR not in L.PREVIEW_DIR.parents
 

@@ -8,8 +8,9 @@
 Pins the file mlbstats_trends.json: the lab panel, live board and history
 order of the sources; plus stats rounded to the nearest whole number; the
 refusal when a lab panel and a history payload disagree on a shared (player,
-season) index; the thinner-file guard; and the dark flag (the preview directory
-under .cache/league_teams/preview/, never data/). Fixtures live under tmp_path.
+season) index; the thinner-file guard; and the flag, live since the flip
+(Q8_15: data/, the preview directory kept off the webroot). Fixtures live
+under tmp_path.
 """
 from __future__ import annotations
 
@@ -125,12 +126,11 @@ def test_a_thinner_file_is_not_written(fx):
     assert fx["out"].read_bytes() == before
 
 
-def test_the_flag_is_dark_and_writes_only_the_preview_directory():
-    assert T.MLBSTATS_DRAWER_LIVE is False
-    assert T.out_dir() == T.PREVIEW_DIR
+def test_the_flag_is_live_and_writes_the_served_directory():
+    assert T.MLBSTATS_DRAWER_LIVE is True
+    assert T.out_dir() == T.DATA_DIR
     assert T.PREVIEW_DIR.relative_to(T.ROOT / ".cache") == Path("league_teams") / "preview"
     assert T.DATA_DIR not in T.PREVIEW_DIR.parents
-    assert not (T.DATA_DIR / T.OUT_NAME).exists(), "mlbstats_trends.json shipped before the flip"
 
 
 def test_the_served_lab_panels_agree_with_the_history_payloads():

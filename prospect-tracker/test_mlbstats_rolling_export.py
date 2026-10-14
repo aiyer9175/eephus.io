@@ -11,7 +11,8 @@ games; the stale rule compares GAME dates and refuses a frame that stops five
 days before the boards' last game; the OFF-SEASON case (boards built
 2026-11-15, last game 2026-09-27, a corpus built 2026-10-02 covering
 2026-09-27) builds; the reconciliation gate; a player who left the boards
-loses his file; and the dark flag. Fixtures live under tmp_path.
+loses his file; and the flag, live since the flip (Q8_15). Fixtures live
+under tmp_path.
 """
 from __future__ import annotations
 
@@ -172,12 +173,10 @@ def test_a_player_who_left_the_boards_loses_his_file(fx):
     assert 402 not in idx["players"]["hit"]
 
 
-def test_the_flag_is_dark_and_writes_only_the_preview_directory():
-    assert T.MLBSTATS_DRAWER_LIVE is False
-    assert R.out_dir() == T.PREVIEW_DIR
+def test_the_flag_is_live_and_writes_the_served_directory():
+    assert T.MLBSTATS_DRAWER_LIVE is True
+    assert R.out_dir() == R.DATA_DIR
     assert R.SERVED_DIR == R.DATA_DIR / R.SHARD_DIR_NAME
-    assert not (R.DATA_DIR / R.INDEX_NAME).exists(), "mlbstats_player_index.json shipped early"
-    assert not any(R.SERVED_DIR.glob("*.json")), "mlbstats_player/*.json shipped early"
 
 
 # --------------------------------------------------------------------------- #

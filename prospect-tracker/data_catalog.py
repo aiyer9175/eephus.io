@@ -410,9 +410,7 @@ ARTIFACTS = (
                  "player distribution of every group the League tab filters by."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_league_averages_export.py",
-        "note": ("Served once league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE is True; until "
-                 "then league_averages.py writes it under .cache/league_teams/preview/. "
-                 "Completed seasons are written once; the live season nightly."),
+        "note": ("Completed seasons are written once; the live season nightly."),
     },
     {
         "file": "mlb_league_series.json", "group": "mlb",
@@ -422,8 +420,8 @@ ARTIFACTS = (
                  "role-innings cells and the club mean and SD)."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_league_averages_export.py",
-        "note": ("Served with the season panels under the same flag. League Trends reads "
-                 "it by series_ref and never re-pools it."),
+        "note": ("Rebuilt with the season panels. League Trends reads it by series_ref "
+                 "and never re-pools it."),
     },
     {
         "file": "mlb_team_stats.json", "group": "mlb",
@@ -434,8 +432,8 @@ ARTIFACTS = (
                  "management club tendencies, plus the completed seasons since 2000."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_team_stats_export.py",
-        "note": ("Served once the League and Teams flag is on; until then it is "
-                 "written to a preview directory off the webroot."),
+        "note": ("Written nightly right after the F-SCORE step; the completed seasons "
+                 "carry the earned basis only."),
     },
     {
         "file": "mlbstats_trends.json", "group": "mlb",
@@ -447,9 +445,7 @@ ARTIFACTS = (
         "pinned_by": "test_mlbstats_trends_export.py",
         "note": ("Read from the window lab's season panels, the live boards and the "
                  "qualified history files; refused when a lab panel and a history file "
-                 "disagree on a shared player-season. Served once "
-                 "mlbstats_trends_export.MLBSTATS_DRAWER_LIVE is True; until then it is "
-                 "written under .cache/league_teams/preview/."),
+                 "disagree on a shared player-season."),
     },
     {
         "file": "mlbstats_player_index.json", "group": "mlb",
@@ -461,8 +457,7 @@ ARTIFACTS = (
         "pinned_by": "test_mlbstats_rolling_export.py",
         "note": ("The game files are refused, keeping the last good ones, only when "
                  "the frame's last game date is more than two days behind the boards' "
-                 "last game date: game dates, never build stamps. Served with the "
-                 "drawer flag."),
+                 "last game date: game dates, never build stamps."),
     },
     {
         "file": "mlbstats_player/*.json", "group": "mlb",
@@ -475,7 +470,7 @@ ARTIFACTS = (
         "pinned_by": "test_mlbstats_rolling_export.py",
         "note": ("Built from mlbstats_games.player_game_frame, with the plate "
                  "appearance charged as the official scorer charged it. Gitignored; "
-                 "shipped by both deploy consumers once the drawer flag is on."),
+                 "shipped by both deploy consumers."),
     },
     {
         "file": "pal.json", "group": "mlb",

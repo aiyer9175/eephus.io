@@ -1010,9 +1010,9 @@
          get: function (r) { return pct(r.w, r.l); }, show: function (r) { return isN(r.w) ? r.w + "-" + r.l : DASH; } });
   tdef({ key: "rd", label: "RD", kind: "signed", title: "Run differential: runs scored minus runs allowed.",
          get: function (r) { return r.rd; } });
-  tdef({ key: "xwl", label: "xW-L", kind: "rec", copy: "xwl",
+  tdef({ key: "xwl", label: "xW-L", term: "xwl", kind: "rec", copy: "xwl",
          get: function (r) { return pct(r.xw, r.xl); }, show: function (r) { return isN(r.xw) ? r.xw + "-" + r.xl : DASH; } });
-  tdef({ key: "wx", label: "W - xW", kind: "signed", copy: "w_minus_xw", get: function (r) { return r.wx; } });
+  tdef({ key: "wx", label: "W - xW", term: "w_minus_xw", kind: "signed", copy: "w_minus_xw", get: function (r) { return r.wx; } });
   tdef({ key: "rs", label: "RS", kind: "int", title: "Runs scored.", get: function (r) { return r.rs; } });
   tdef({ key: "ra", label: "RA", kind: "int", title: "Runs allowed.", get: function (r) { return r.ra; } });
   tdef({ key: "rs_g", label: "RS/G", kind: "d2", title: "Runs scored per game.", get: function (r) { return safeDiv(r.rs, r.g); } });
@@ -1074,7 +1074,7 @@
    ["relief_share", "Relief IP %", "relief_ip_share", "", "pct", "The share of the club's innings thrown in relief."]
   ].forEach(function (p) {
     tdef({ key: p[0], label: p[1], kind: p[4], basis: "pitch", todayKey: p[3], title: p[5],
-           term: p[0].indexOf("p_ip") >= 0 ? "pitches_per_ip" : "",
+           term: p[0].indexOf("p_ip") >= 0 ? "pitches_per_ip" : (p[0] === "relief_share" ? "relief_ip_share" : ""),
            get: function (r, b) {
              if (b === "today" && p[3] && T_PIT_TODAY[p[3]]) return r.today ? r.today[p[3]] : null;
              return r.pit ? r.pit[p[2]] : null;
@@ -1085,7 +1085,7 @@
    ["pa100", "PA at 100+", "pct", "The share of the club's plate appearances taken by hitters at HEM+ 100 or better."]
   ].forEach(function (p) {
     var src = p[0] === "pa100" ? "pa_share_hem_100" : p[0];
-    tdef({ key: p[0], label: p[1], kind: p[2], basis: "today", live: true, title: p[3],
+    tdef({ key: p[0], label: p[1], term: "lineup_depth", kind: p[2], basis: "today", live: true, title: p[3],
            get: function (r) { return r.depth ? r.depth[src] : null; } });
   });
   // Depth's Heart 3 is the same served value as the EM+ view's; one column.

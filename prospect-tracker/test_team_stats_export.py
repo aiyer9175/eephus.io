@@ -7,9 +7,9 @@
 P8.2, task LT-05, queue Q8_10; the lane design's section 10 with the 8.D row 2
 pins).
 
-The artifact pinned here is mlb_team_stats.json. While
-league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE is False it is written only under
-.cache/league_teams/preview/; nothing here writes under data/.
+The artifact pinned here is mlb_team_stats.json. Since the flip (Q8_15,
+league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE True) it is written under data/;
+every test here writes under tmp_path, never data/.
 
 What is pinned:
   * the club-today block equals the four boards and war_leaderboards.json value
@@ -381,11 +381,10 @@ def test_the_six_boards_are_byte_identical_with_and_without_the_exporter(frames,
     assert sorted(x.name for x in tmp_path.iterdir()) == [T.OUT_NAME]
 
 
-def test_dark_by_default_and_the_preview_is_off_the_webroot():
-    assert league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE is False
-    assert T.out_path() == league_averages.PREVIEW_DIR / T.OUT_NAME
-    assert T.DATA_DIR not in T.out_path().parents
-    assert not (DATA / T.OUT_NAME).exists()
+def test_live_since_the_flip_and_writes_the_served_file():
+    assert league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE is True
+    assert T.out_path() == T.DATA_DIR / T.OUT_NAME
+    assert T.DATA_DIR not in league_averages.PREVIEW_DIR.parents
 
 
 def test_a_thinner_payload_does_not_overwrite_the_last_good_file(frames, tmp_path):
@@ -486,6 +485,13 @@ def test_the_registry_describes_the_five_served_rollups():
         assert m["eval_artifact"] is None
         assert m["predicts"].startswith("nothing; a descriptive weighted mean of ")
         assert "inherits" in m["baseline"] and "inherits" in m["metric"]
-        assert "earned" not in json.dumps(m).lower()
-        assert "teams tab" not in json.dumps(m).lower()
+        # The flip (Q8_15): the Teams tab joins every surface; the four rollups
+        # team_stats_export recomputes by stint carry the earned basis, and Lev
+        # Deploy+ (club today only on the tab) says it has none.
+        assert "/mlbstats/ teams tab" in m["surface"].lower(), mid
+        if mid == "leverage_deploy_plus":
+            assert "earned" not in m["surface"].lower()
+            assert "no earned basis is computed" in m["notes"]
+        else:
+            assert "earned" in m["surface"] and "earned basis by stint" in m["predicts"], mid
     assert model_registry.validate(reg) == []
