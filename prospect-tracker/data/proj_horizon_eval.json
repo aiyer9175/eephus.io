@@ -1010,6 +1010,208 @@
     }
    ],
    "verdict": "FAIL 2026-07-24 (W-STAR, one attempt, frozen thresholds in tools/mean_head_backtest.py header): star-slice-only mean-head recenter (target swap, shipped lambdas, all horizons; non-star rows untouched). Clause A |star bias| improves: dev 0.0649 -> 0.2755 (FAIL), holdout -0.6351 -> -0.2956 (ok). Clause B pooled MAE within +0.005: dev 0.466 -> 0.4682 (ok), holdout 0.5069 -> 0.5086 (ok). Prior art: distinct from challenger_blocks.star_mean_head (additional fitted-lambda top-up, 2026-06-29); this arm is the target-swap variant that ledger named unexplored. Live seam: proj_ml.predict_path EEPHUS_STAR_MEAN_HEAD (default OFF, OFF path byte-identical, inert on quantile-only bundles)."
+  },
+  "component_stack_tier2_veto": {
+   "label": "READ",
+   "task": "PJ_9_STACK_ARM_DARK",
+   "generated_at": "2026-10-14T18:06:43Z",
+   "gate": "docs/PROJ_COMPONENTS_GATE.md section 6, the W2 veto read (round 4, leakage 9)",
+   "basis": "forward-chained point-in-time twin and incumbent bundles (labels <= B - 1, full quantiles, no blend lambdas, raw monotone q50), identical rows, h1, absent season 0 WAR; twin minus incumbent MAE; veto only, never cited for a pass",
+   "candidate": "proj_lgbm_components_v1",
+   "incumbent": "proj_lgbm_v1 point-in-time (proj_ml.train_cached)",
+   "bases": [
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "horizon": 1,
+   "bootstrap": {
+    "B": 1000,
+    "seed": 20261119,
+    "vif": 1.8,
+    "clustered_on": "player",
+    "upper_bound": "one-sided 95%, delta + 1.645 x sd x VIF"
+   },
+   "veto_bar": 0.0065,
+   "pooled": {
+    "n_rows": 8866,
+    "n_players": 2824,
+    "mae_twin": 0.439,
+    "mae_incumbent": 0.4393,
+    "delta": -0.0003,
+    "sd": 0.001877,
+    "ub95": 0.0027,
+    "mde95": 0.0031
+   },
+   "survived_only": {
+    "n_rows": 5021,
+    "n_players": 1933,
+    "mae_twin": 0.7491,
+    "mae_incumbent": 0.7506,
+    "delta": -0.0015,
+    "sd": 0.003304,
+    "ub95": 0.0039,
+    "mde95": 0.0054
+   },
+   "star_slice": {
+    "n_rows": 227,
+    "n_players": 134,
+    "mae_twin": 1.7454,
+    "mae_incumbent": 1.7391,
+    "delta": 0.0064,
+    "sd": 0.029178,
+    "ub95": 0.0544,
+    "mde95": 0.048
+   },
+   "per_base": {
+    "2022": {
+     "n": 2103,
+     "mae_twin": 0.4795,
+     "mae_incumbent": 0.4728,
+     "delta": 0.0067
+    },
+    "2023": {
+     "n": 2182,
+     "mae_twin": 0.4313,
+     "mae_incumbent": 0.4361,
+     "delta": -0.0048
+    },
+    "2024": {
+     "n": 2326,
+     "mae_twin": 0.4253,
+     "mae_incumbent": 0.4285,
+     "delta": -0.0032
+    },
+    "2025": {
+     "n": 2255,
+     "mae_twin": 0.4227,
+     "mae_incumbent": 0.4223,
+     "delta": 0.0004
+    }
+   },
+   "per_side": {
+    "hit": {
+     "n": 3624,
+     "mae_twin": 0.5645,
+     "mae_incumbent": 0.5652,
+     "delta": -0.0006
+    },
+    "pit": {
+     "n": 5242,
+     "mae_twin": 0.3522,
+     "mae_incumbent": 0.3523,
+     "delta": -0.0001
+    }
+   },
+   "vetoed": false,
+   "verdict": "not vetoed; no number here is cited for a pass (the 2027 look decides)",
+   "never_cited_for_a_pass": true,
+   "schema": {
+    "hit": [
+     "age",
+     "age_sq",
+     "war_l1",
+     "war_l2",
+     "war_l3",
+     "war_l1_missing",
+     "war_l2_missing",
+     "war_l3_missing",
+     "age_x_war",
+     "war_max3",
+     "star_l1",
+     "established",
+     "expo_l1",
+     "expo_l2",
+     "expo_l3",
+     "expo_trend",
+     "season_idx",
+     "role_flag",
+     "profile_pwr",
+     "profile_fin",
+     "m_k_pct",
+     "rel_k_pct",
+     "m_bb_pct",
+     "rel_bb_pct",
+     "m_iso",
+     "rel_iso",
+     "m_babip",
+     "rel_babip",
+     "m_hr_pa",
+     "rel_hr_pa",
+     "xiso_l1",
+     "xiso_gap_l1",
+     "xiso_missing",
+     "pos_adj_prior",
+     "champ_h1",
+     "champ_h2",
+     "champ_h3",
+     "champ_h4",
+     "champ_h5",
+     "bsr_rate_proj",
+     "fld_rate_proj",
+     "pos_rate_proj",
+     "sprint_l1",
+     "sprint_missing"
+    ],
+    "pit": [
+     "age",
+     "age_sq",
+     "war_l1",
+     "war_l2",
+     "war_l3",
+     "war_l1_missing",
+     "war_l2_missing",
+     "war_l3_missing",
+     "age_x_war",
+     "war_max3",
+     "star_l1",
+     "established",
+     "expo_l1",
+     "expo_l2",
+     "expo_l3",
+     "expo_trend",
+     "season_idx",
+     "role_flag",
+     "profile_pwr",
+     "profile_fin",
+     "m_k_pct",
+     "rel_k_pct",
+     "m_bb_pct",
+     "rel_bb_pct",
+     "m_hr_bf",
+     "rel_hr_bf",
+     "champ_h1",
+     "champ_h2",
+     "champ_h3",
+     "champ_h4",
+     "champ_h5",
+     "gmli_proj",
+     "ra9_gap_proj"
+    ]
+   },
+   "schema_tag": "6fe8bc02",
+   "component_params_sha256": "da2d5114fe2c05a1cceed883a625ddb63060e45c8fc848c385860694b02cf9b6",
+   "vintage_id": "2026-10-02-0341299c20ec",
+   "serving_bundle": {
+    "version": "proj_lgbm_v1",
+    "train_hash": "248baa38d8b7144a",
+    "max_label_season": 2025,
+    "war_provider": "fwar"
+   },
+   "corpus": {
+    "first": 2000,
+    "last": 2026,
+    "war_provider": "fwar",
+    "label_shape": "side_keyed_v1"
+   },
+   "twin_bundles": {
+    "2022": "pit_proj_lgbm_components_v1_6fe8bc02_da2d5114fe2c_2021_1025507590_fwar_side_keyed_v1.joblib",
+    "2023": "pit_proj_lgbm_components_v1_6fe8bc02_da2d5114fe2c_2022_1025507590_fwar_side_keyed_v1.joblib",
+    "2024": "pit_proj_lgbm_components_v1_6fe8bc02_da2d5114fe2c_2023_1025507590_fwar_side_keyed_v1.joblib",
+    "2025": "pit_proj_lgbm_components_v1_6fe8bc02_da2d5114fe2c_2024_1025507590_fwar_side_keyed_v1.joblib"
+   },
+   "wall_seconds": 884.0
   }
  },
  "rowmatch_champion_vs_challenger": {
