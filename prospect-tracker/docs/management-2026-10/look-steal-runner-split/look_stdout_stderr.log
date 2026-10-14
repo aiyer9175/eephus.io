@@ -1,0 +1,61 @@
+kind: OWNER-WAIVED EARLY READ (EW3-5, owner 2026-10-14)
+run_date: 2026-10-14
+registered_date: 2026-10-20
+code_commit: 91a43a596b051f0cd1d767c4e7a6023d14164233
+lab_blob: 23d4994518dab17a839291c13ae1b20cdd6de1b4
+context_payload: data/management_steal_context.json
+context_sha256: 980cfc83899b39dd0c5a3d178952ce9f4c24c70ced2ba3fd741540ad7452f961
+versions: {'python': '3.13.9', 'numpy': '2.3.5', 'scipy': '1.16.3', 'pandas': '2.3.3'}
+context_generated_at: 2026-10-03T21:29:50+00:00
+context_rows_by_season: {'2018': 1606, '2019': 1399, '2021': 1354, '2022': 1522, '2023': 2081, '2024': 2081, '2025': 2122}
+fit rows by season: {'2018': 1606, '2019': 1399, '2021': 1354, '2022': 1522, '2023': 2081}; tune rows 2081
+fit frame: 7,962 rows, tune frame: 2,081 rows
+frozen: candidate lambda 0.0001, twin lambda 0.0001; written C:\Users\noah\baseball-projects\wt\s208\prospect-tracker\docs\management-2026-10\look-steal-runner-split\frozen_fit.json
+  candidate R1 +0.858033
+  candidate R2 +0.344923
+  candidate R3 +0.105154
+  candidate C1 +2.032669
+  candidate C2 +0.556049
+  candidate P1 -0.041592
+  candidate P2 -0.248839
+  candidate S1 -0.113526
+  candidate S2 +0.434293
+  candidate S3 -0.051827
+  candidate S4 +0.007880
+  twin      C1 +1.433668
+  twin      C2 +0.645866
+  twin      P1 -0.000953
+  twin      P2 -0.208221
+  twin      S1 -0.005076
+  twin      S2 +0.459050
+  twin      S3 -0.036274
+  twin      S4 +0.085329
+  tune LL candidate lambda 0.0001: 0.52990449
+  tune LL candidate lambda 0.001: 0.53002310
+  tune LL candidate lambda 0.01: 0.53082714
+  tune LL candidate lambda 0.1: 0.53291722
+  tune LL candidate lambda 1.0: 0.53437135
+  tune LL twin      lambda 0.0001: 0.53030328
+  tune LL twin      lambda 0.001: 0.53059664
+  tune LL twin      lambda 0.01: 0.53162962
+  tune LL twin      lambda 0.1: 0.53329621
+  tune LL twin      lambda 1.0: 0.53441340
+  tune LL incumbent: 0.5346346860544391
+reading the score frame now
+score frame: 2,122 rows, sha256 d43c43ed689ee672bb1caa18fff2ea40ab79c61945d3a1e801f10f83f115ee57
+wrote C:\Users\noah\baseball-projects\wt\s208\prospect-tracker\data\steal_runner_split_eval.json and C:\Users\noah\baseball-projects\wt\s208\prospect-tracker\docs\management-2026-10\look-steal-runner-split\look_record.json
+n scored 2,122; games 1350
+  dLL        point +0.00789765  lower95 +0.00250792  90% [+0.00250792, +0.01290291]  resolves True
+  dBrier     point +0.00241531  lower95 +0.00027496  90% [+0.00027496, +0.00435752]  resolves True
+  dLL_runner point +0.00009852  lower95 -0.00364545  90% [-0.00364545, +0.00362200]  resolves False
+  log_loss_incumbent: 0.5444636222395436
+  log_loss_candidate: 0.5365659754843684
+  log_loss_twin: 0.5366645002726091
+  brier_incumbent: 0.17949758568703622
+  brier_candidate: 0.1770822790157534
+  ER split 2B: {'n': 1841, 'sum_er_wins': 1.687, 'sum_er_runner_wins': 4.2617, 'sum_er_other_wins': -2.5747}
+  ER split 3B: {'n': 279, 'sum_er_wins': 0.1654, 'sum_er_runner_wins': 0.7509, 'sum_er_other_wins': -0.5855}
+  ER split HOME: {'n': 2, 'sum_er_wins': 0.0, 'sum_er_runner_wins': 0.0, 'sum_er_other_wins': -0.0}
+  ER split identity max abs error: 6.938893903907228e-18
+VERDICT NULL; conditions {'1_n_scored_at_least_1000': True, '2_dLL_lower_bound_above_0': True, '3_dBrier_lower_bound_above_0': True, '4_dLL_runner_lower_bound_above_0': False}
+EXIT 0
