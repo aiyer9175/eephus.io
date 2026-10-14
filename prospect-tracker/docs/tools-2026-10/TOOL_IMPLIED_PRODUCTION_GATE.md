@@ -436,7 +436,30 @@ the survivorship sentence; the input sha256 list; the gate sha and the `--rlv-re
 
 ## Part 4. The k_m stabilization constants
 
-PENDING: written by TL_4_TOOL_LAB_BUILD as one dated amendment committed alone, before either look.
+**Amendment of 2026-10-14 (TL_4_TOOL_LAB_BUILD, item 1 of the list at the top; committed alone, before either look).** Measured by `python tools/tool_accuracy_lab.py --k-m` on MLB player-seasons with no prospect join, no grade read and no debut read, from the per-event caches on disk: `.cache/pbp_corpus/plays/<season>/plays-<season>.parquet` and `pitches-<season>.parquet`, `.cache/pbp_runners/plays/<season>/pa-<season>.parquet` (launch speed) and `runners-<season>.parquet` (stolen bases). Receipt `data/_labs/tool_accuracy/k_m.json`, sha256 9384ca02ec17ae4469e86dfb27d0c0fc12a18d79e461ffe0f872dc29bf0bd4b8.
+
+Seasons: of the 2015 to 2019 window, the per-event caches on disk hold [2018, 2019] only (no 2015, 2016 or 2017 MLB feed is cached), so every constant below is measured on those two seasons (default D-k1, recorded in the task report; the alternative is a fetch of the 2015 to 2017 feeds, about 7,300 games, before a look). The split is odd and even plate appearances (events) for every rate, odd and even batted balls for exit velocity, odd and even out-of-zone pitches for chase rate, odd and even in-zone swings for zone contact, odd and even fastballs for velocity, and odd and even games for stolen bases (a runner event, not a plate appearance). With r the split-half Pearson correlation across player-seasons at mean half exposure n_h, R = 2r / (1 + r) and k_m = 2 n_h (1 - R) / R, in the stat's own exposure unit. Player-season floors on total exposure (default D-k2): k_pct 300, hr_pa 300, avg 240, iso 240, babip 180, sb_per600 300, ev_avg 100, chase_pct 400, z_contact_pct 150, k_pct_pit 100, bb_pct_pit 100, fb_velo 200. Swing codes S, F, X, D, E, T, W, L, M, Q, R, O; contact codes F, X, D, E, T, L, O; zones 1 to 9 in, 11 to 14 out.
+
+| stat | exposure unit | player-seasons | split-half r | R (full) | k_m |
+|---|---|---|---|---|---|
+| k_pct | pa | 552 | 0.8435 | 0.9151 | 46.7354 |
+| hr_pa | pa | 552 | 0.5611 | 0.7188 | 197.0406 |
+| avg | ab | 605 | 0.3159 | 0.4801 | 468.3212 |
+| iso | ab | 605 | 0.5492 | 0.709 | 177.5259 |
+| babip | ab (less SO and HR, plus SF) | 584 | 0.2861 | 0.4449 | 401.5923 |
+| sb_per600 | pa (odd and even games) | 552 | 0.7689 | 0.8694 | 75.7105 |
+| ev_avg | attempts (batted balls) | 764 | 0.7562 | 0.8612 | 43.6082 |
+| chase_pct | oz_pitches | 726 | 0.8719 | 0.9316 | 68.3172 |
+| z_contact_pct | iz_swings | 858 | 0.8036 | 0.8911 | 59.3017 |
+| k_pct_pit | bf | 1040 | 0.6863 | 0.814 | 76.5133 |
+| bb_pct_pit | bf | 1040 | 0.4258 | 0.5973 | 225.8052 |
+| fb_velo | fastballs (FF, SI, FC) | 1080 | 0.9993 | 0.9997 | 0.2552 |
+| sprint | competitive_runs | n/a | n/a | n/a | NOT COMPUTABLE: no per-run sprint data for 2015-2019 on disk (.cache/savant_sprint/ is a season leaderboard) |
+| oaa_per1000 | innings | n/a | n/a | n/a | NOT COMPUTABLE: no per-play OAA for 2015-2019 on disk (.cache/savant_oaa/ is a season leaderboard) |
+| arm_z | throws | n/a | n/a | n/a | NOT COMPUTABLE: arm strength is cached from 2020 (.cache/savant_arm/) |
+| brl_pa | pa | n/a | n/a | n/a | NOT COMPUTABLE: no per-event barrel flag for 2015-2019 on disk |
+
+The regressed TAG of a NOT COMPUTABLE stat is not computed; its gap and percentile are, and no other frame substitutes. The lab carries these values as `K_M` in `tools/tool_accuracy_lab.py`, pinned to this table by `test_tool_accuracy_lab.py`.
 
 Method, fixed here: for each TAG stat, split-half reliability on MLB player-seasons 2015 to 2019,
 with no prospect join and no grade read. The split uses per-game or per-event data for those
