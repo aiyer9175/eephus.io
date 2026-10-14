@@ -9035,6 +9035,14 @@ def _glossary_bodies(active: str = "terms") -> str:
     return "".join(out) + last
 
 
+# The Source Accuracy "Tools" tab (TL_14, Class 2, built dark 2026-10-14). Off,
+# the app root carries no data-sacc-tools-src and assets/glossary.js renders
+# the six tabs it always has; on, the root names the payload and the tab and
+# the one Source Comparison link appear. TL_15 flips it with the payload.
+SOURCE_ACCURACY_TOOLS_TAB = False
+SOURCE_ACCURACY_TOOLS_SRC = "/data/tool_source_accuracy.json"
+
+
 def build_glossary() -> str:
     """The /glossary/ unified Glossary & Methodology module - the canonical
     definition layer's page. Static shell + assets/glossary.js; definitions
@@ -9054,7 +9062,10 @@ def build_glossary() -> str:
     _gl_name = next(lbl for key, lbl, _ in nav_leaves() if key == "glossary")
     body = (
         f'<div class="gl-app" data-module-name="{html.escape(_gl_name)}"'
-        f' data-display-name="{html.escape(GLOSSARY_DISPLAY_NAME)}">'
+        f' data-display-name="{html.escape(GLOSSARY_DISPLAY_NAME)}"'
+        + (f' data-sacc-tools-src="{html.escape(SOURCE_ACCURACY_TOOLS_SRC)}"'
+           if SOURCE_ACCURACY_TOOLS_TAB else "")
+        + '>'
         f'<div class="section-head"><h1>{_masthead_icon("glossary")}{GLOSSARY_DISPLAY_NAME}</h1>'
         '<span class="section-sub">terms, derivations, and each model\'s track record</span></div>'
         f"{intro}"
