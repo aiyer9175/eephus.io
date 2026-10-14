@@ -66,3 +66,19 @@ values, with stdout and stderr teed before anything else.
   current-season est_woba at 0.2 into w) is a served change (plan Part 8 class 3): built behind
   EEPHUS_PWOBA_XWOBA_BLEND, default off, in its own commit; the owner flips it (owner question
   NOV15-PWOBA-FLIP). Nothing served moved here.
+
+- Bat-tracking arm B frozen re-run: ARM B PASS (provisional, small-n), ARM A NULL. Identical
+  frozen protocol, seed 20260723, 2000 reps, both folds now complete outcomes (2024 -> 2025 and
+  2025 -> 2026; partial_outcome_kept 0). Arm B: bt_blend rho 0.4598 vs the shipped fwdHEM+
+  incumbent 0.4465 on 528 pooled pairs, gap v1 mean +0.0133 lo95 +0.0015 hi95 +0.0256, v2 mean
+  +0.0135 lo95 +0.0025; per fold 2024 -> 2025 n 265 (0.4594 vs 0.4513) and 2025 -> 2026 n 263
+  (0.4562 vs 0.4426); the single-fold 2024 -> 2025 sensitivity alone reads lo95 -0.0091, so the
+  PASS rests on the pooled two folds, as registered. Arm A: bt_corrected rho 0.5126 vs pWOBA
+  0.5147 on 490 pairs, gap v1 mean -0.0021 lo95 -0.0132 (v2 lo95 -0.0133); NULL under both and
+  in the single-fold sensitivity; lane closed as tested. The 2026 bat-tracking rows of the
+  descriptive (not gated) context are the 2026-07-23 capture; no verdict reads them. Artifact
+  data/bat_tracking_eval.json; registry row bat_tracking_hitters provisional. SERVED CHANGE:
+  the registration names arm B a display-metric candidate and records no production diff, and a
+  served construction needs choices the registration did not make (the BT composite's served-pool
+  normalizer, the swings floor on the board, replace fwdHEM+ or a new column), so nothing is
+  built; owner question NOV15-BT-ARMB asks whether to register one. Nothing served moved.

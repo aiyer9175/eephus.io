@@ -1,6 +1,6 @@
 {
  "experiment": "BT-1 bat-tracking lane (hitters): pWOBA residual arm + xHEM-style blend arm",
- "generated_at": "2026-07-23",
+ "generated_at": "2026-10-14",
  "seed": 20260723,
  "boot": 2000,
  "harness": {
@@ -17,6 +17,17 @@
    "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
   },
   "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "season_complete_override": {
+   "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+   "seasons": {
+    "2026": "2026-10-01"
+   },
+   "default_month_day": [
+    11,
+    15
+   ],
+   "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+  },
   "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
   "interpretation_rules": [
    "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
@@ -24,6 +35,19 @@
    "X-R2 / X-S2 flips are not promised"
   ]
  },
+ "season_complete_override": {
+  "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+  "seasons": {
+   "2026": "2026-10-01"
+  },
+  "default_month_day": [
+   11,
+   15
+  ],
+  "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+ },
+ "owner_waived_early_read": "registered date 2026-11-15 (docs/efv-2026-07-23/RECHECKS.md, docs/wills-2026-07-23/GATES.md W-NOV); run on 2026-10-14 under the owner's 2026-10-14 waiver of look days (EW3-5) and the explicit season-complete override (EW3-6)",
+ "registration": null,
  "data_source": {
   "endpoint": "https://baseballsavant.mlb.com/leaderboard/bat-tracking?seasonStart={y}&seasonEnd={y}&gameType=Regular&minSwings=25&type=batter",
   "extraction": "embedded `const data = [...]` JSON (the csv=true export omits the swing-path fields); the bare `season` param is ignored by the endpoint, seasonStart/seasonEnd required",
@@ -64,7 +88,7 @@
   "pre_registered": "2026-07-23, frozen before any results were computed",
   "folds": [
    "2024->2025 (complete outcome)",
-   "2025->2026 (PARTIAL outcome through 2026-07-23; kept by pre-registered deviation from harness rule 4, flagged; complete-only sensitivity reported)"
+   "2025->2026 (complete outcome under the logged owner-waived season-complete override)"
   ],
   "ledger_position": "distinct from the CLOSED pwoba_ev_arm (EV/barrel residual), xwOBA-allowed and CSW-xK lanes; bat tracking is swing-measured, not batted-ball-outcome",
   "small_n_honesty": "exactly two transition folds exist for this lane (bat tracking begins 2024); one fold has a partial outcome season; a PASS would still be provisional and would queue re-confirmation after 2026 completes"
@@ -72,10 +96,10 @@
  "arm_a_pwoba_residual": {
   "candidate": "bt_corrected = woba_proj + cross-fitted OLS(residual ~ z(bat_speed) + z(squared_up_rate) + z(attack_angle))",
   "incumbent": "fa_projection woba_proj (validated pWOBA)",
-  "n_pairs": 468,
+  "n_pairs": 490,
   "drops": {
-   "partial_outcome_kept": 264,
-   "window": 101,
+   "partial_outcome_kept": 0,
+   "window": 113,
    "age_missing": 0,
    "fa_proj_missing": 0,
    "bt_missing": 0
@@ -85,21 +109,21 @@
     "n": 248,
     "outcome_partial": false,
     "rho_fa": 0.5172,
-    "rho_bt_corrected": 0.5099
+    "rho_bt_corrected": 0.5089
    },
    "2025->2026": {
-    "n": 220,
-    "outcome_partial": true,
-    "rho_fa": 0.4202,
-    "rho_bt_corrected": 0.4204
+    "n": 242,
+    "outcome_partial": false,
+    "rho_fa": 0.5149,
+    "rho_bt_corrected": 0.5141
    }
   },
   "cross_fit_coefs": {
    "applied_to_2024_fold(fit_on_2025)": {
-    "intercept": 0.00109,
-    "bat_speed": 0.00341,
-    "squared_up_rate": 0.00374,
-    "attack_angle": -0.00291
+    "intercept": -1e-05,
+    "bat_speed": 0.00127,
+    "squared_up_rate": 0.00096,
+    "attack_angle": -0.00277
    },
    "applied_to_2025_fold(fit_on_2024)": {
     "intercept": 0.00106,
@@ -109,37 +133,37 @@
    }
   },
   "residual_spearman_pooled": {
-   "bat_speed": 0.0151,
-   "squared_up_rate": 0.0372,
-   "attack_angle": 0.0033
+   "bat_speed": 0.0225,
+   "squared_up_rate": 0.0202,
+   "attack_angle": -0.0082
   },
   "results_by_convention": {
    "v1": {
     "rhos": {
-     "fa_projection": 0.4725,
-     "bt_corrected": 0.4698
+     "fa_projection": 0.5147,
+     "bt_corrected": 0.5126
     },
     "gap_ci_bt_minus_fa": {
-     "mean": -0.0027,
-     "lo95": -0.0164,
-     "hi95": 0.0121
+     "mean": -0.0021,
+     "lo95": -0.0132,
+     "hi95": 0.01
     }
    },
    "v2": {
     "rhos": {
-     "fa_projection": 0.4696,
-     "bt_corrected": 0.4675
+     "fa_projection": 0.5155,
+     "bt_corrected": 0.5136
     },
     "gap_ci_bt_minus_fa": {
      "mean": -0.002,
-     "lo95": -0.0162,
-     "hi95": 0.0122
+     "lo95": -0.0133,
+     "hi95": 0.0089
     },
     "cluster": {
-     "n_pairs": 468,
-     "n_players": 292,
+     "n_pairs": 490,
+     "n_players": 297,
      "max_pairs_per_player": 2,
-     "mean_pairs_per_player": 1.6,
+     "mean_pairs_per_player": 1.65,
      "n_strata_first_pred_season": 2
     }
    }
@@ -148,17 +172,17 @@
    "fold": "2024->2025",
    "n": 248,
    "gap_ci_bt_minus_fa_v1": {
-    "mean": -0.007,
-    "lo95": -0.0338,
-    "hi95": 0.0193
+    "mean": -0.0082,
+    "lo95": -0.0287,
+    "hi95": 0.0117
    }
   },
   "gate": {
    "bar": "pooled two-fold iid paired bootstrap lo95(rho(bt_corrected) - rho(woba_proj)) > 0; v1, seed 20260723, 2000 reps",
    "gap_ci_v1": {
-    "mean": -0.0027,
-    "lo95": -0.0164,
-    "hi95": 0.0121
+    "mean": -0.0021,
+    "lo95": -0.0132,
+    "hi95": 0.01
    },
    "pass": false,
    "pass_under_v2": false
@@ -167,9 +191,9 @@
  "arm_b_descriptive_blend": {
   "candidate": "bt_blend = 0.595*z(est_woba) + 0.255*z(hem_plus_raw) + 0.15*z(bt_composite); composite = mean z(bat_speed, squared_up_rate, blast_rate); weights frozen a priori",
   "incumbent": "fwdHEM+ blend 0.7*z(est_woba) + 0.3*z(hem_plus_raw) (X-H5, shipped)",
-  "n_pairs": 482,
+  "n_pairs": 528,
   "drops": {
-   "partial_outcome_kept": 217,
+   "partial_outcome_kept": 0,
    "hem_missing": 0,
    "bt_missing": 0
   },
@@ -181,67 +205,67 @@
     "rho_bt_blend": 0.4594
    },
    "2025->2026": {
-    "n": 217,
-    "outcome_partial": true,
-    "rho_fwdhem": 0.3604,
-    "rho_bt_blend": 0.3705
+    "n": 263,
+    "outcome_partial": false,
+    "rho_fwdhem": 0.4426,
+    "rho_bt_blend": 0.4562
    }
   },
   "results_by_convention": {
    "v1": {
     "rhos": {
-     "fwdhem_incumbent": 0.4076,
-     "bt_blend_candidate": 0.4184,
-     "xwoba_z_alone": 0.4012,
-     "bt_composite_alone": 0.3456
+     "fwdhem_incumbent": 0.4465,
+     "bt_blend_candidate": 0.4598,
+     "xwoba_z_alone": 0.4485,
+     "bt_composite_alone": 0.3698
     },
     "gap_ci_candidate_minus": {
      "fwdhem_incumbent": {
-      "mean": 0.0109,
-      "lo95": -0.0009,
-      "hi95": 0.024
+      "mean": 0.0133,
+      "lo95": 0.0015,
+      "hi95": 0.0256
      },
      "xwoba_z_alone": {
-      "mean": 0.0173,
-      "lo95": 0.0007,
-      "hi95": 0.0337
+      "mean": 0.0113,
+      "lo95": -0.0039,
+      "hi95": 0.0271
      },
      "bt_composite_alone": {
-      "mean": 0.0722,
-      "lo95": 0.009,
-      "hi95": 0.1361
+      "mean": 0.0891,
+      "lo95": 0.0263,
+      "hi95": 0.1512
      }
     }
    },
    "v2": {
     "rhos": {
-     "fwdhem_incumbent": 0.4089,
-     "bt_blend_candidate": 0.4193,
-     "xwoba_z_alone": 0.4031,
-     "bt_composite_alone": 0.3467
+     "fwdhem_incumbent": 0.4465,
+     "bt_blend_candidate": 0.4599,
+     "xwoba_z_alone": 0.4487,
+     "bt_composite_alone": 0.3704
     },
     "gap_ci_candidate_minus": {
      "fwdhem_incumbent": {
-      "mean": 0.0105,
-      "lo95": -0.0007,
-      "hi95": 0.0218
+      "mean": 0.0135,
+      "lo95": 0.0025,
+      "hi95": 0.0254
      },
      "xwoba_z_alone": {
-      "mean": 0.0161,
-      "lo95": 0.0006,
-      "hi95": 0.0323
+      "mean": 0.0114,
+      "lo95": -0.0028,
+      "hi95": 0.0255
      },
      "bt_composite_alone": {
-      "mean": 0.0723,
-      "lo95": 0.0077,
-      "hi95": 0.1391
+      "mean": 0.0883,
+      "lo95": 0.0188,
+      "hi95": 0.1577
      }
     },
     "cluster": {
-     "n_pairs": 482,
-     "n_players": 308,
+     "n_pairs": 528,
+     "n_players": 324,
      "max_pairs_per_player": 2,
-     "mean_pairs_per_player": 1.56,
+     "mean_pairs_per_player": 1.63,
      "n_strata_first_pred_season": 2
     }
    }
@@ -256,7 +280,7 @@
    }
   },
   "descriptive_context_not_gated": {
-   "question": "same-season Spearman vs the wOBA - xwOBA luck gap: BT contact-quality composite vs EV composite (mean z of avg_hit_speed, brl_pa, ev95percent)",
+   "question": "same-season Spearman vs the wOBA - xwOBA luck gap: BT leg (mean z(bat_speed, squared_up_rate, blast_rate)) vs EV composite (mean z of avg_hit_speed, brl_pa, ev95percent)",
    "by_season": {
     "2024": {
      "n": 365,
@@ -269,29 +293,29 @@
      "rho_ev_composite_vs_gap": -0.2104
     },
     "2026": {
-     "n": 260,
-     "rho_bt_composite_vs_gap": -0.2799,
-     "rho_ev_composite_vs_gap": -0.2735
+     "n": 356,
+     "rho_bt_composite_vs_gap": -0.2422,
+     "rho_ev_composite_vs_gap": -0.2895
     }
    }
   },
   "gate": {
    "bar": "pooled two-fold iid paired bootstrap lo95(rho(bt_blend) - rho(fwdhem_incumbent)) > 0 vs next-season wOBA; v1, seed 20260723, 2000 reps",
    "gap_ci_v1": {
-    "mean": 0.0109,
-    "lo95": -0.0009,
-    "hi95": 0.024
+    "mean": 0.0133,
+    "lo95": 0.0015,
+    "hi95": 0.0256
    },
-   "pass": false,
-   "pass_under_v2": false
+   "pass": true,
+   "pass_under_v2": true
   }
  },
  "verdicts": {
   "arm_a": "NULL",
-  "arm_b": "NULL",
-  "arm_a_summary": "rho(bt_corrected)=0.4698 vs rho(woba_proj)=0.4725 on 468 pooled pairs; gap CI {'mean': -0.0027, 'lo95': -0.0164, 'hi95': 0.0121}. Gate FAILED under v1 and v2 and in the complete-outcome-only sensitivity; the cross-fitted residual correction does not add forward signal beyond the incumbent pWOBA. Lane CLOSED as tested.",
-  "arm_b_summary": "rho(bt_blend)=0.4184 vs rho(fwdhem_incumbent)=0.4076 on 482 pooled pairs; gap CI {'mean': 0.0109, 'lo95': -0.0009, 'hi95': 0.024}. Gate FAILED (directionally positive mean gap, lo95 below zero under both conventions and in the complete-outcome-only sensitivity). The candidate DOES beat xwoba_z_alone and the BT composite alone at lo95 > 0, but the pre-registered bar is the shipped fwdHEM+ incumbent, and it is not cleared. NULL; the one honest keep-alive is a re-test on the identical frozen protocol after the 2026 season completes (Nov 15), which adds no new researcher degrees of freedom.",
-  "descriptive_note": "Same-season luck-gap context (not gated): BT composite vs EV composite Spearman with the wOBA - xwOBA gap: 2024 BT -0.1794 vs EV -0.1814; 2025 BT -0.2188 vs EV -0.2104; 2026 BT -0.2799 vs EV -0.2735."
+  "arm_b": "PASS (provisional, small-n)",
+  "arm_a_summary": "rho(bt_corrected)=0.5126 vs rho(woba_proj)=0.5147 on 490 pooled pairs; gap CI {'mean': -0.0021, 'lo95': -0.0132, 'hi95': 0.01}. Gate FAILED under v1 and v2 and in the complete-outcome-only sensitivity; the cross-fitted residual correction does not add forward signal beyond the incumbent pWOBA. Lane CLOSED as tested.",
+  "arm_b_summary": "rho(bt_blend)=0.4598 vs rho(fwdhem_incumbent)=0.4465 on 528 pooled pairs; gap CI {'mean': 0.0133, 'lo95': 0.0015, 'hi95': 0.0256}. Gate PASSED (provisional).",
+  "descriptive_note": "Same-season luck-gap context (not gated): BT composite vs EV composite Spearman with the wOBA - xwOBA gap: 2024 BT -0.1794 vs EV -0.1814; 2025 BT -0.2188 vs EV -0.2104; 2026 BT -0.2422 vs EV -0.2895."
  },
- "runtime_seconds": 12.0
+ "runtime_seconds": 45.7
 }
