@@ -80,6 +80,27 @@ DATA_DIR = ROOT / "data"
 OUT_PATH = DATA_DIR / "mlb_player_detail.json"
 SHARD_DIRNAME = "mlb_player_detail"   # data/mlb_player_detail/<key>.json
 CACHE_DIR = ROOT / ".cache" / "savant_mlb"
+# The component lines proj_export writes once PROJ_COMPONENTS_LIVE is True
+# (task PJ_6; proj_export.COMPONENTS_LIVE_PATH). Read only when the board
+# payload says components_live, and copied verbatim into proj.comp of the
+# PER-CARD SHARD only (owner answer PJ6-SIZE (a), 2026-10-14): the whole-set
+# payload the Trade Machine and the Python readers load never carries it.
+COMPONENTS_PATH = DATA_DIR / "mlb_proj_components.json"
+#: {card key: component block} of the last build_payload, for _export_shards.
+_SHARD_COMP: dict[str, dict] = {}
+
+
+def _component_rows(proj: dict) -> dict | None:
+    """{board key: component block} when the board payload carries
+    components_live, else None (the dark default: no card gains a key)."""
+    if not proj.get("components_live"):
+        return None
+    try:
+        doc = json.loads(COMPONENTS_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("mlb player export: components_live but %s unreadable", COMPONENTS_PATH.name)
+        return {}
+    return doc.get("rows") or {}
 
 CAREER_FROM = 2014
 LB = {
@@ -842,6 +863,8 @@ def _card_skills(sk: dict | None, is_pit: bool, two_way: bool) -> dict:
 def build_payload() -> dict:
     proj = json.loads((DATA_DIR / "mlb_projections.json").read_text(encoding="utf-8"))
     frame = {"first_season": proj.get("first_season"), "horizon": proj.get("horizon")}
+    comp_rows = _component_rows(proj)
+    _SHARD_COMP.clear()
     fa = json.loads((DATA_DIR / "fa_class.json").read_text(encoding="utf-8"))
     members = {m["key"]: m for m in fa.get("members") or []}
     swing = {}
@@ -919,6 +942,11 @@ def build_payload() -> dict:
                                             "warTail", "warP10Tail", "warP90Tail")},
              "twoWay": bool(v.get("twoWay")) or None,
              "isPit": is_pit and not v.get("twoWay")}
+        # The component lines (PJ_6), a verbatim copy of proj_export's block
+        # for this board row, held for the card's shard (never this payload);
+        # absent while the lines are dark.
+        if comp_rows and comp_rows.get(v["key"]) is not None:
+            _SHARD_COMP[key] = comp_rows[v["key"]]
         players[key] = p
     # FA members (some overlap vets; FA fields attach either way)
     for key, m in members.items():
@@ -1261,11 +1289,13 @@ def _shard_dir() -> Path:
     return DATA_DIR / SHARD_DIRNAME
 
 
-def _export_shards(payload: dict) -> int:
+def _export_shards(payload: dict, comp: dict | None = None) -> int:
     """data/mlb_player_detail/<key>.json: one card per player, carrying the
     payload's generated_at, first_season and horizon beside it. Shards of
     players no longer in the payload are removed, so the directory is always
-    exactly the payload's players. Returns the number written."""
+    exactly the payload's players. `comp` ({card key: component block}, the
+    live component lines) lands in that card's proj.comp in the shard alone.
+    Returns the number written."""
     out_dir = _shard_dir()
     out_dir.mkdir(parents=True, exist_ok=True)
     head = {k: payload.get(k) for k in ("generated_at", "first_season", "horizon")}
@@ -1273,6 +1303,8 @@ def _export_shards(payload: dict) -> int:
     for key, p in payload["players"].items():
         name = f"{key}.json"
         names.add(name)
+        if comp and comp.get(key) is not None:
+            p = {**p, "proj": {**(p.get("proj") or {}), "comp": comp[key]}}
         (out_dir / name).write_text(
             json.dumps({**head, "key": key, "player": p}, separators=(",", ":")),
             encoding="utf-8")
@@ -1286,7 +1318,7 @@ def export() -> int:
     payload = build_payload()
     raw = json.dumps(payload, separators=(",", ":"))
     OUT_PATH.write_text(raw, encoding="utf-8")
-    n_shards = _export_shards(payload)
+    n_shards = _export_shards(payload, _SHARD_COMP)
     log.info("mlb player detail: %d per-player shards under data/%s/", n_shards, SHARD_DIRNAME)
     _export_links(payload)
     _export_position_games()

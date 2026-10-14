@@ -867,6 +867,230 @@ def _winter_dpw(first_season: int) -> float:
 # Veterans - the FA engine over the whole league
 # ============================================================================
 
+# THE COMPONENT LINES (task PJ_6_COMPONENT_EXPORT_DARK; plan Part 9 section 9.2
+# 'Component projections', LANE_A sections 2.2, 2.7 and 2.8). Every veteran row
+# also gets its WAR components projected by proj_components.project_components
+# on FanGraphs' frame (batting, baserunning, fielding, positional, league and
+# replacement runs and the WAR they sum to for hitters; FIP-based and RA9-based
+# WAR and gmLI for pitchers), from the same history, age, curves, league and
+# in-progress season the row used, with the params frozen in
+# model/proj_components/params.json (docs/PROJ_COMPONENTS_GATE.md).
+#
+# CLASS 2, DARK. While PROJ_COMPONENTS_LIVE is False the blocks are written only
+# to COMPONENTS_PREVIEW_PATH under .cache and no served file changes. True (the
+# PJ_8 flip, after the PJ-C look) adds the year-1 `pa` / `ip` scalar to the
+# board row and `components_live` to the payload, and writes the blocks to
+# COMPONENTS_LIVE_PATH, which mlb_player_export copies into each card's
+# proj.comp. No existing key of any row moves either way: the served `war`,
+# `warChamp` and `warY1Champ` stay the incumbent heads, and each block carries
+# a `gap` line (served war minus component WAR) so the components plus the gap
+# equal the served WAR by construction (PJ-Q1). Component ranges are each
+# component's own 80% range; no WAR range is ever built from them.
+PROJ_COMPONENTS_LIVE = False
+COMPONENTS_PREVIEW_PATH = (DATA_DIR.parent / ".cache" / "proj_components" / "preview"
+                           / "components.json")
+COMPONENTS_LIVE_PATH = DATA_DIR / "mlb_proj_components.json"
+COMPONENTS_FRAME = "FanGraphs frame"
+#: {mlbam: component block} of the last _veteran_rows build, and its context
+#: receipt; written by `_write_components` from export().
+_COMPONENT_BLOCKS: dict[int, dict] = {}
+_COMPONENT_META: dict = {}
+
+# hitter head key -> block key (runs and rates), and the range names
+_COMP_HIT_RUNS = (("bat", "bat"), ("bsr", "bsr"), ("fld", "fld"), ("pos", "pos"),
+                  ("lg", "lg"), ("rep", "rep"))
+_COMP_HIT_RANGES = (("pa", "pa"), ("batting", "bat"), ("bsr", "bsr"),
+                    ("fld_pos", "fldPos"), ("league", "lg"), ("replacement", "rep"))
+_COMP_PIT_RANGES = (("ip", "ip"), ("ra9_gap", "ra9Gap"), ("gmli_relief", "gmliRelief"))
+
+
+def _r(v, nd: int):
+    return None if v is None else round(float(v), nd)
+
+
+def _ri(v):
+    return None if v is None else int(round(float(v)))
+
+
+def _components_context(corpus: dict) -> dict | None:
+    """What every veteran's component lines share: the frozen params, the
+    constants held at the last completed season (FIRST_SEASON - 1), the aging
+    v3 bsr / fld component curves fitted at FIRST_SEASON - 1 (unifier U5, as
+    the DEV fit read them) and the frozen-vintage memo for the lag inputs.
+    None, logged, when any of them cannot be built: the component lines are
+    dark and must never fail the served export."""
+    try:
+        import aging_v3
+        import aging_v3_sidecar
+        import proj_components as PC
+        params = PC.load_params()
+        src = PC.make_sources()
+        consts = PC.season_constants(FIRST_SEASON - 1, corpus, src.blob)
+        model = aging_v3.fitted(corpus, FIRST_SEASON - 1, None,
+                                sidecar=aging_v3_sidecar.load(corpus))
+        return {"params": params, "consts": consts, "src": src,
+                "age_curves": PC.component_age_curves(model),
+                "meta": {"params_hash": PC.params_hash(params),
+                         "params_task": params.get("task"),
+                         "params_vintage_id": params.get("vintage_id"),
+                         "vintage_id": src.blob.get("vintage_id"),
+                         "constants_season": FIRST_SEASON - 1,
+                         "aging_v3_version": getattr(aging_v3, "AGING_V3_VERSION", None)}}
+    except Exception:                                          # noqa: BLE001
+        log.warning("component lines skipped: context unavailable", exc_info=True)
+        return None
+
+
+def _hit_block(hb: dict, m: dict) -> dict:
+    """The hitter half of a component block from proj_components.hitter_heads.
+    wOBA and wRC+ are COPIED from the row's served arrays, never recomputed;
+    K%, BB%, ISO and BABIP are the engine's year-1 projection (the heads walk
+    no per-component rate past year 1, so seasons 2-5 are null)."""
+    lines = [hb["lines"][h] for h in sorted(hb["lines"])][:HORIZON]
+    out = {"pa": [_ri(ln["pa"]) for ln in lines]}
+    for key, src_key in (("k", "k_pct"), ("bb", "bb_pct"), ("iso", "iso"), ("babip", "babip")):
+        out[key] = [_r(ln.get(src_key), 3) for ln in lines]
+    out["woba"] = m.get("woba")
+    out["wrc"] = m.get("wrc")
+    for key, src_key in _COMP_HIT_RUNS:
+        out[key] = [_r(ln.get(src_key), 1) for ln in lines]
+    out["warComp"] = [_r(ln.get("war_comp"), 2) for ln in lines]
+    for q, i in (("p10", 0), ("p90", 1)):
+        out[q] = {key: [(_ri if rk == "pa" else lambda v: _r(v, 1))(
+                            (ln["ranges"].get(rk) or (None, None))[i]) for ln in lines]
+                  for rk, key in _COMP_HIT_RANGES}
+    out["tier"] = hb.get("tier")
+    out["notProjected"] = list(hb.get("not_projected") or [])
+    return out
+
+
+def _pit_block(pb: dict, m: dict, consts: dict, params: dict) -> dict:
+    """The pitcher half: IP, the year-1 K%, BB% and HR/9 of the engine's
+    projection (HR/9 = HR/BF x 4.3 x 9, the engine's BF-per-IP convention),
+    FIP COPIED from the row's served array, FIP-based WAR (P3), RA9-based WAR
+    (P5), gmLI for relievers only, and the ranged run quantities (the RA9 gap
+    and the relief gmLI runs) as their means beside their ranges."""
+    import fwar_frame as F
+    import proj_components as PC
+    lines = [pb["lines"][h] for h in sorted(pb["lines"])][:HORIZON]
+    out = {"ip": [_r(ln["ip"], 1) for ln in lines]}
+    out["k"] = [_r(ln.get("k_pct"), 3) for ln in lines]
+    out["bb"] = [_r(ln.get("bb_pct"), 3) for ln in lines]
+    out["hr9"] = [None if ln.get("hr_bf") is None else round(ln["hr_bf"] * PC.BF_PER_IP * 9.0, 2)
+                  for ln in lines]
+    out["fip"] = m.get("fip")
+    out["warFip"] = [_r(ln.get("war_fip"), 2) for ln in lines]
+    out["warRa9"] = [_r(ln.get("war_ra9"), 2) for ln in lines]
+    out["gmli"] = ([_r(ln.get("gmli"), 2) for ln in lines] if pb.get("role") == "RP" else None)
+    rpw = float(consts["rpw"])
+    r_relief = float(params.get("R_relief") or 0.0)
+    gap, gm = [], []
+    for ln in lines:
+        g100, ip, gmli, rip = ln.get("ra9gap_100ip"), ln.get("ip"), ln.get("gmli"), ln.get("relief_ip")
+        gap.append(None if g100 is None or ip is None else round(g100 * rpw * ip / 100.0, 1))
+        gm.append(None if gmli is None or rip is None
+                  else round(F.leverage_multiplier(gmli) * r_relief * rip / 100.0, 1))
+    out["ra9Gap"] = gap
+    out["gmliRelief"] = gm
+    for q, i in (("p10", 0), ("p90", 1)):
+        out[q] = {key: [_r((ln["ranges"].get(rk) or (None, None))[i], 1) for ln in lines]
+                  for rk, key in _COMP_PIT_RANGES}
+    out["tier"] = pb.get("tier")
+    out["notProjected"] = list(pb.get("not_projected") or [])
+    return out
+
+
+def _component_lines(mlbam: int, sides: dict, paths: dict, ages: dict, m: dict,
+                     in_prog, curves: dict, war_map: dict, league: dict,
+                     ctx: dict | None) -> dict | None:
+    """One veteran's component block: proj_components.project_components per
+    projected side, on that side's history and age, the row's curves, league
+    and in-progress season, horizons 1 to HORIZON. Two-way rows carry both
+    sides and their component WAR is summed. `gap` is the served war minus the
+    component WAR per season (rounded so warComp + gap == war). None when the
+    context is missing or neither side projects."""
+    if ctx is None:
+        return None
+    import proj_components as PC
+    out: dict = {"mlbam": mlbam, "frame": COMPONENTS_FRAME, "base": FIRST_SEASON,
+                 "hit": None, "pit": None}
+    for side in ("hit", "pit"):
+        if side not in paths or side not in sides:
+            continue
+        feat = PC.lag_inputs(ctx["src"], side, mlbam, FIRST_SEASON)
+        res = PC.project_components({side: sides[side]}, FIRST_SEASON, ages[side], curves,
+                                    war_map, league, ctx["consts"], {side: feat},
+                                    ctx["params"], age_curves=ctx["age_curves"],
+                                    horizon=HORIZON, in_progress=in_prog)
+        blk = res.get(side)
+        if blk is None:
+            continue
+        out[side] = (_hit_block(blk, m) if side == "hit"
+                     else _pit_block(blk, m, ctx["consts"], ctx["params"]))
+    if out["hit"] is None and out["pit"] is None:
+        return None
+    out["twoWay"] = out["hit"] is not None and out["pit"] is not None
+    war = m.get("war") or []
+    comp, gap = [], []
+    for t in range(HORIZON):
+        parts = []
+        if out["hit"] is not None:
+            parts.append(out["hit"]["warComp"][t])
+        if out["pit"] is not None:
+            parts.append(out["pit"]["warFip"][t])
+        wc = None if any(p is None for p in parts) else round(sum(parts), 2)
+        comp.append(wc)
+        w = war[t] if t < len(war) else None
+        gap.append(None if wc is None or w is None else round(float(w) - wc, 2))
+    out["warComp"] = comp
+    out["gap"] = gap
+    return out
+
+
+def _write_components(vets: list[dict]) -> Path | None:
+    """Write the component blocks of the last build, keyed by the FINAL row key
+    (the collision award may move a key after the loop): to
+    COMPONENTS_PREVIEW_PATH while PROJ_COMPONENTS_LIVE is False, to
+    COMPONENTS_LIVE_PATH when it is True. Returns the path written."""
+    if not _COMPONENT_BLOCKS:
+        return None
+    key_by = {v["mlbam"]: v["key"] for v in vets if v.get("mlbam") is not None}
+    rows = {}
+    for mid, blk in _COMPONENT_BLOCKS.items():
+        key = key_by.get(mid)
+        if key is not None:
+            rows[key] = {"key": key, **blk}
+    path = COMPONENTS_LIVE_PATH if PROJ_COMPONENTS_LIVE else COMPONENTS_PREVIEW_PATH
+    doc = {
+        "generated_at": date.today().isoformat(),
+        "components_live": bool(PROJ_COMPONENTS_LIVE),
+        "frame": COMPONENTS_FRAME,
+        "first_season": FIRST_SEASON, "horizon": HORIZON,
+        **_COMPONENT_META,
+        "n_rows": len(rows),
+        "n_hit": sum(1 for b in rows.values() if b.get("hit")),
+        "n_pit": sum(1 for b in rows.values() if b.get("pit")),
+        "n_two_way": sum(1 for b in rows.values() if b.get("twoWay")),
+        "notes": [
+            "component lines on FanGraphs' frame (frozen fWAR vintage run parts), "
+            "means per season; the served WAR is the incumbent head and is not rebuilt "
+            "from these lines",
+            "gap = served war minus component WAR (hitters: batting + baserunning + "
+            "fielding + positional + league + replacement runs over runs per win; "
+            "pitchers: FIP-based WAR); two-way rows sum both sides",
+            "p10 / p90 are each component's own 80% range from the DEV residual "
+            "quantiles by horizon and exposure tier; they are never summed",
+            "a component whose head has no history for the player is null and named "
+            "in notProjected",
+        ],
+        "rows": rows,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
+    log.info("component lines: %d rows -> %s", len(rows), path)
+    return path
+
+
 def _veteran_rows(corpus: dict, names: dict[int, str],
                   contracts: dict[str, dict], dpw: float) -> list[dict]:
     league = corpus["league"]
@@ -874,6 +1098,12 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
     frac = fp.season_fraction(league, FIRST_SEASON - 1)
     in_prog = (FIRST_SEASON - 1, frac)
     _LEDGER_META["curves"] = curves
+    _COMPONENT_BLOCKS.clear()
+    _COMPONENT_META.clear()
+    _comp_ctx = _components_context(corpus)
+    _comp_fail = 0
+    if _comp_ctx is not None:
+        _COMPONENT_META.update(_comp_ctx["meta"])
     r = float(vf._config()["discount_rate"])
     _unified = vf.dpw_path_active()
     if _unified:
@@ -1301,6 +1531,23 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             m["wrc"] = [r.get("wrc_plus") for r in _rh[:HORIZON]]
         if _rp:
             m["fip"] = [r.get("fip") for r in _rp[:HORIZON]]
+        # Component lines (PJ_6, dark): see PROJ_COMPONENTS_LIVE. Off, the
+        # block goes to the preview only and `m` is untouched.
+        try:
+            _blk = _component_lines(mlbam, sides, paths, ages, m, in_prog, curves,
+                                    war_map, league, _comp_ctx)
+        except Exception:                                      # noqa: BLE001
+            _blk = None
+            _comp_fail += 1
+            if _comp_fail == 1:
+                log.warning("component lines failed for %s", mlbam, exc_info=True)
+        if _blk is not None:
+            _COMPONENT_BLOCKS[mlbam] = _blk
+            if PROJ_COMPONENTS_LIVE:
+                if _blk.get("hit"):
+                    m["pa"] = _blk["hit"]["pa"][0]
+                if _blk.get("pit"):
+                    m["ip"] = _blk["pit"]["ip"][0]
         if two_way:
             m["warHit"] = [round(w, 2) for w in paths["hit"]["war_by_year"][:HORIZON]]
             m["warPit"] = [round(w, 2) for w in paths["pit"]["war_by_year"][:HORIZON]]
@@ -1352,6 +1599,8 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
     # longer skipped wholesale because some season of it is contracted.
     _apply_salary_paths(out, dpw, r, _ct_final)
     out.sort(key=lambda m: -(m.get("warTotal") or 0))
+    if _comp_ctx is not None:
+        _COMPONENT_META["n_failed"] = _comp_fail
     return out
 
 
@@ -3950,6 +4199,9 @@ def _build_payload_body() -> dict:
         "current_season": (FIRST_SEASON - 1) if mc_schedule_source else None,
         "mc_schedule_source": mc_schedule_source,
         "accountability": _accountability_block(),
+        # PJ_6: present only when the component lines are live (see
+        # PROJ_COMPONENTS_LIVE); absent, the payload is unchanged.
+        **({"components_live": True} if PROJ_COMPONENTS_LIVE else {}),
         "notes": [
             "veterans: proj_lgbm_v1 quantile heads (horizons 1-5) stacked on the FA module's Marcel champion; war = the median head lifted toward the quantile-implied mean where it sits below it, bands = the P10/P90 heads; warChamp = the champion mean path (the FA pricing path and the Team Outlook sum basis); rows the heads cannot score fall back to the champion with Gate-1 residual-quantile bands",
             "prospects: P(bucket|FV) x calibrated per-bucket WAR trajectories from projected debut age, starting at the PROSPX ETA; floor/ceiling = 10th/90th-percentile OUTCOME buckets; surNpv = the eFV surplus (the eFV export's surplus_mm, the figure the Trade Machine board serves), copied and not repriced here",
@@ -3987,6 +4239,12 @@ def export() -> int:
     (DATA_DIR / "mlb_projections.json").write_text(raw, encoding="utf-8")
     log.info("mlb projections export: %dKB, %d vets + %d prospects",
              len(raw) // 1024, payload["n_vets"], payload["n_prospects"])
+    # The component lines (PJ_6): the preview under .cache while dark, the
+    # card source mlb_player_export reads once live. Never fails the export.
+    try:
+        _write_components(payload.get("vets") or [])
+    except Exception:                                          # noqa: BLE001
+        log.warning("component lines not written", exc_info=True)
     # THE FUTURES BOARD RIDES THE SAME PAYLOAD, from export() rather than from
     # inside _attach_current_season. The overlay is called directly by tests on
     # two-club synthetic universes, and writing an untracked artifact from there

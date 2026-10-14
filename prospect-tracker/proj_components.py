@@ -519,6 +519,19 @@ def _pit_lags(src: _Sources, mlbam: int, base: int) -> dict:
     return f
 
 
+def make_sources(vintage=None) -> _Sources:
+    """The per-build vintage memo for `lag_inputs` (the frozen vintage only;
+    a live sabermetrics payload is refused by resolve_vintage)."""
+    return _Sources(resolve_vintage(vintage))
+
+
+def lag_inputs(src: _Sources, side: str, mlbam: int, base: int) -> dict:
+    """One veteran's lag features at `base` exactly as the frame builds
+    them (seasons B-1..B-3 only, through the _lag guard). No label is read.
+    The served export (task PJ_6) calls this for the forward base."""
+    return (_hit_lags if side == "hit" else _pit_lags)(src, int(mlbam), int(base))
+
+
 def _hit_label(src: _Sources, mlbam: int, season: int) -> dict:
     exp = (read_exposures(season, "hitting") or {}).get(mlbam) or {}
     parts = _hit_parts((src.vintage(season, "hitting") or {}).get(mlbam))
@@ -946,14 +959,20 @@ def exposure_walk(pt_y1, side: str, role: str, age, curves: dict,
 
 
 def engine_projection(hist: list[dict], side: str, base: int, age, curves: dict,
-                      league: dict, horizon: int = HORIZONS) -> dict | None:
+                      league: dict, horizon: int = HORIZONS,
+                      in_progress: tuple[int, float] | None = None) -> dict | None:
     """The incumbent engine's part of a line: project_player at `base`, its
     rate_path walk (H1 / P1 / P2) and the exposure walk (H0 / P0). None when
-    the engine has no projection for the history."""
+    the engine has no projection for the history. `in_progress` is the
+    served export's (season, fraction) for the season under way, passed to
+    project_player exactly as fa_market.contract_war_path passes it, so the
+    served component lines walk the same projection the served row does
+    (task PJ_6); the DEV frame passes None."""
     import fa_projection as fp
     if not hist:
         return None
-    proj = fp.project_player(hist, side, int(base), curves, league, age)
+    proj = fp.project_player(hist, side, int(base), curves, league, age,
+                             in_progress=in_progress)
     if proj is None:
         return None
     role = proj["role"]
@@ -1207,7 +1226,8 @@ def pitcher_heads(eng: dict, feat: dict, params: dict | None, consts: dict,
 
 def project_components(hist_by_side: dict, base: int, age, curves: dict, war_map: dict,
                        league: dict, consts: dict, frame_inputs: dict, params: dict | None,
-                       *, age_curves: dict | None = None, horizon: int = HORIZONS) -> dict:
+                       *, age_curves: dict | None = None, horizon: int = HORIZONS,
+                       in_progress: tuple[int, float] | None = None) -> dict:
     """The component lines of one veteran at `base` for horizons 1..`horizon`.
 
     hist_by_side  {"hit": [corpus rows B-3..B-1], "pit": [...]}; a two-way
@@ -1219,6 +1239,8 @@ def project_components(hist_by_side: dict, base: int, age, curves: dict, war_map
     frame_inputs  {"hit": feat, "pit": feat}: the frame row's lag features
     params        the frozen params (None: no shrink, no Savant term, no range)
     age_curves    component_age_curves(aging_v3 model fitted at B - 1)
+    in_progress   the served export's (season, fraction) (engine_projection);
+                  None on the DEV frame
 
     Returns {"hit": block | None, "pit": block | None, "two_way": bool}; a
     block carries `lines` {h: line}, `not_projected` and the exposure tier.
@@ -1230,7 +1252,8 @@ def project_components(hist_by_side: dict, base: int, age, curves: dict, war_map
         feat = (frame_inputs or {}).get(side)
         if not hist or feat is None:
             continue
-        eng = engine_projection(hist, side, base, age, curves, league, horizon)
+        eng = engine_projection(hist, side, base, age, curves, league, horizon,
+                                in_progress=in_progress)
         if eng is None:
             continue
         if side == "hit":
