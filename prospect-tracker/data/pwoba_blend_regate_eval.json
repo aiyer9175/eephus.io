@@ -1,6 +1,6 @@
 {
  "experiment": "pwoba_xwoba_blend keep-alive RE-GATE (frozen arm b=0.2, original protocol, extended vintage)",
- "generated_at": "2026-07-23",
+ "generated_at": "2026-10-14",
  "seed": 20260715,
  "boot": 2000,
  "seed_note": "original recorded convention reused (seed 20260715, 2000 reps, v1 iid paired bootstrap); the fallback seed 20260723 was not needed",
@@ -18,6 +18,17 @@
    "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
   },
   "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "season_complete_override": {
+   "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+   "seasons": {
+    "2026": "2026-10-01"
+   },
+   "default_month_day": [
+    11,
+    15
+   ],
+   "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+  },
   "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
   "interpretation_rules": [
    "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
@@ -25,6 +36,18 @@
    "X-R2 / X-S2 flips are not promised"
   ]
  },
+ "season_complete_override": {
+  "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+  "seasons": {
+   "2026": "2026-10-01"
+  },
+  "default_month_day": [
+   11,
+   15
+  ],
+  "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+ },
+ "owner_waived_early_read": "registered date 2026-11-15 (docs/efv-2026-07-23/RECHECKS.md); run on 2026-10-14 under the owner's 2026-10-14 waiver of look days (EW3-5) and the explicit season-complete override (EW3-6)",
  "ledger_reference": {
   "registry_row": "pwoba_xwoba_blend",
   "original_lab": "tools/xwoba_projection_blend_lab.py",
@@ -64,12 +87,12 @@
   "gate_rule": "frozen output_blend vs incumbent fa_projection: iid paired bootstrap lo95 >= 0 (v1)",
   "pair_set": "phem_marcel_lite_lab construction (MIN_PA 150/150, 3yr window su>=2 & PA>=600, complete outcomes) + Savant est_woba present at PA >= 100.0"
  },
- "n_pairs": 934,
+ "n_pairs": 1176,
  "n_train": 223,
- "n_gate": 711,
+ "n_gate": 953,
  "drops": {
-  "partial_outcome": 264,
-  "window": 914,
+  "partial_outcome": 0,
+  "window": 970,
   "age_missing": 0,
   "fa_proj_missing": 0,
   "savant_missing": 0
@@ -125,8 +148,8 @@
    "savant_missing": 0
   },
   "2025": {
-   "partial_outcome": 264,
-   "window": 0,
+   "partial_outcome": 0,
+   "window": 56,
    "age_missing": 0,
    "fa_proj_missing": 0,
    "savant_missing": 0
@@ -157,14 +180,14 @@
  },
  "vintage_reproduction": {
   "original_n_gate": 711,
-  "n_gate_now": 711,
+  "n_gate_now": 953,
   "original_rhos": {
    "fa_projection": 0.5182,
    "output_blend": 0.5274
   },
   "rhos_now": {
-   "fa_projection": 0.5182,
-   "output_blend": 0.5274
+   "fa_projection": 0.5166,
+   "output_blend": 0.5271
   },
   "original_gap_ci_v1": {
    "mean": 0.0095,
@@ -172,114 +195,116 @@
    "hi95": 0.0201
   },
   "gap_ci_v1_now": {
-   "mean": 0.0095,
-   "lo95": -0.0014,
+   "mean": 0.0108,
+   "lo95": 0.0019,
    "hi95": 0.0201
   },
-  "reproduces_original": true
+  "reproduces_original": false
  },
  "new_pair_accounting": {
   "new_pred_years_added": [
    2025
   ],
-  "new_resolved_pairs_entering_gate": 0,
+  "new_resolved_pairs_entering_gate": 242,
   "partial_outcome_drops_by_new_year": {
-   "2025": 264
+   "2025": 0
   },
-  "season_complete_2026": false,
+  "season_complete_2026": true,
   "harness_pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
-  "explanation": "The keep-alive's ~650 pairs/season arrive as predictor-2025 -> outcome-2026 pairs. The registered pair rule keeps a pair only when the OUTCOME season is complete (past Nov 15). On 2026-07-23 the 2026 season is in progress, so every 2025->2026 pair is dropped as partial_outcome under the registered protocol. The registered gate set therefore extends by 0 pairs at this vintage."
+  "explanation": "The keep-alive's ~650 pairs/season arrive as predictor-2025 -> outcome-2026 pairs. The registered pair rule keeps a pair only when the OUTCOME season is complete (past Nov 15). On 2026-10-14 the 2026 season counts as complete under the logged owner-waived override, so the 2025->2026 cohort enters the registered gate set. The registered gate set therefore extends by 242 pairs at this vintage."
  },
  "registered_regate": {
   "label": "registered (complete outcomes only)",
-  "n": 711,
+  "n": 953,
   "pred_years": [
    2022,
-   2023,
-   2024
-  ],
-  "outcome_years": [
    2023,
    2024,
    2025
   ],
+  "outcome_years": [
+   2023,
+   2024,
+   2025,
+   2026
+  ],
   "rhos_v1": {
-   "fa_projection": 0.5182,
-   "xwoba_alone": 0.4942,
-   "output_blend": 0.5274,
-   "gap_corrected": 0.5215
+   "fa_projection": 0.5166,
+   "xwoba_alone": 0.4948,
+   "output_blend": 0.5271,
+   "gap_corrected": 0.5214
   },
   "results": {
    "v1": {
     "rhos": {
-     "fa_projection": 0.5182,
-     "xwoba_alone": 0.4942,
-     "output_blend": 0.5274,
-     "gap_corrected": 0.5215
+     "fa_projection": 0.5166,
+     "xwoba_alone": 0.4948,
+     "output_blend": 0.5271,
+     "gap_corrected": 0.5214
     },
     "gap_ci_primary_minus": {
      "fa_projection": {
-      "mean": 0.0095,
-      "lo95": -0.0014,
+      "mean": 0.0108,
+      "lo95": 0.0019,
       "hi95": 0.0201
      },
      "xwoba_alone": {
-      "mean": 0.0322,
-      "lo95": 0.0041,
-      "hi95": 0.0615
+      "mean": 0.0316,
+      "lo95": 0.0068,
+      "hi95": 0.0556
      },
      "gap_corrected": {
-      "mean": 0.0062,
-      "lo95": -0.0032,
-      "hi95": 0.0156
+      "mean": 0.006,
+      "lo95": -0.0021,
+      "hi95": 0.0143
      }
     }
    },
    "v2": {
     "rhos": {
-     "fa_projection": 0.5247,
-     "xwoba_alone": 0.5027,
-     "output_blend": 0.5347,
-     "gap_corrected": 0.5279
+     "fa_projection": 0.5218,
+     "xwoba_alone": 0.5013,
+     "output_blend": 0.5329,
+     "gap_corrected": 0.5266
     },
     "gap_ci_primary_minus": {
      "fa_projection": {
-      "mean": 0.0099,
-      "lo95": -0.0001,
-      "hi95": 0.0196
+      "mean": 0.011,
+      "lo95": 0.0024,
+      "hi95": 0.0198
      },
      "xwoba_alone": {
-      "mean": 0.0322,
-      "lo95": 0.0047,
-      "hi95": 0.061
+      "mean": 0.0317,
+      "lo95": 0.0082,
+      "hi95": 0.0555
      },
      "gap_corrected": {
-      "mean": 0.0067,
-      "lo95": -0.0024,
-      "hi95": 0.0156
+      "mean": 0.0061,
+      "lo95": -0.0016,
+      "hi95": 0.0141
      }
     },
     "cluster": {
-     "n_pairs": 711,
-     "n_players": 344,
-     "max_pairs_per_player": 3,
-     "mean_pairs_per_player": 2.07,
-     "n_strata_first_pred_season": 3
+     "n_pairs": 953,
+     "n_players": 390,
+     "max_pairs_per_player": 4,
+     "mean_pairs_per_player": 2.44,
+     "n_strata_first_pred_season": 4
     }
    }
   },
   "gap_ci_blend_minus_incumbent_v1": {
-   "mean": 0.0095,
-   "lo95": -0.0014,
+   "mean": 0.0108,
+   "lo95": 0.0019,
    "hi95": 0.0201
   },
   "gap_ci_blend_minus_incumbent_v2": {
-   "mean": 0.0099,
-   "lo95": -0.0001,
-   "hi95": 0.0196
+   "mean": 0.011,
+   "lo95": 0.0024,
+   "hi95": 0.0198
   },
-  "pass_v1": false,
-  "pass_under_v2": false
+  "pass_v1": true,
+  "pass_under_v2": true
  },
  "unregistered_sensitivity": {
   "status": "UNREGISTERED - reported for information only; the verdict comes from the frozen arm on the registered pair set",
@@ -287,68 +312,68 @@
    "note": "frozen arm is b=0.2; other b values are sensitivity only, never verdict-bearing",
    "grid": {
     "0.1": {
-     "rho": 0.5251,
+     "rho": 0.5238,
      "gap_ci_v1_vs_incumbent": {
-      "mean": 0.0071,
-      "lo95": 0.0014,
-      "hi95": 0.0128
+      "mean": 0.0073,
+      "lo95": 0.0026,
+      "hi95": 0.0122
      }
     },
     "0.15": {
-     "rho": 0.5269,
+     "rho": 0.526,
      "gap_ci_v1_vs_incumbent": {
-      "mean": 0.009,
-      "lo95": 0.0006,
-      "hi95": 0.0174
+      "mean": 0.0096,
+      "lo95": 0.0028,
+      "hi95": 0.0168
      }
     },
     "0.2": {
-     "rho": 0.5274,
+     "rho": 0.5271,
      "gap_ci_v1_vs_incumbent": {
-      "mean": 0.0095,
-      "lo95": -0.0014,
+      "mean": 0.0108,
+      "lo95": 0.0019,
       "hi95": 0.0201
      }
     },
     "0.25": {
-     "rho": 0.5284,
+     "rho": 0.5286,
      "gap_ci_v1_vs_incumbent": {
-      "mean": 0.0106,
-      "lo95": -0.0027,
-      "hi95": 0.0234
+      "mean": 0.0122,
+      "lo95": 0.0012,
+      "hi95": 0.0235
      }
     },
     "0.3": {
-     "rho": 0.5286,
+     "rho": 0.529,
      "gap_ci_v1_vs_incumbent": {
-      "mean": 0.0108,
-      "lo95": -0.0048,
-      "hi95": 0.0256
+      "mean": 0.0127,
+      "lo95": -0.0001,
+      "hi95": 0.0257
      }
     },
     "0.4": {
-     "rho": 0.5267,
+     "rho": 0.5272,
      "gap_ci_v1_vs_incumbent": {
-      "mean": 0.0091,
-      "lo95": -0.0105,
-      "hi95": 0.0278
+      "mean": 0.011,
+      "lo95": -0.0052,
+      "hi95": 0.0276
      }
     }
    }
   },
   "partial_2026_preview": {
    "defect_warning": "harness pair_rule calls partial-year targets a DEFECT; this block exists only to preview the November 2026 re-gate. Mid-2026 wOBA targets are PA-truncated and era-shifted; preview n is also a LOWER bound on the November cohort (players below 150 PA today can still cross the floor by season end).",
-   "n_preview_pairs": 220,
+   "n_preview_pairs": 242,
    "preview_drops": {
     "partial_outcome": 0,
-    "window": 44,
+    "window": 56,
     "age_missing": 0,
     "fa_proj_missing": 0,
     "savant_missing": 0
    },
    "preview_gate": {
     "label": "UNREGISTERED preview: 2025 -> partial 2026",
-    "n": 220,
+    "n": 242,
     "pred_years": [
      2025
     ],
@@ -356,64 +381,64 @@
      2026
     ],
     "rhos_v1": {
-     "fa_projection": 0.4202,
-     "xwoba_alone": 0.4096,
-     "output_blend": 0.4374,
-     "gap_corrected": 0.4253
+     "fa_projection": 0.5149,
+     "xwoba_alone": 0.4961,
+     "output_blend": 0.5318,
+     "gap_corrected": 0.5259
     },
     "results": {
      "v1": {
       "rhos": {
-       "fa_projection": 0.4202,
-       "xwoba_alone": 0.4096,
-       "output_blend": 0.4374,
-       "gap_corrected": 0.4253
+       "fa_projection": 0.5149,
+       "xwoba_alone": 0.4961,
+       "output_blend": 0.5318,
+       "gap_corrected": 0.5259
       },
       "gap_ci_primary_minus": {
        "fa_projection": {
-        "mean": 0.0173,
-        "lo95": -0.0066,
-        "hi95": 0.0413
+        "mean": 0.0168,
+        "lo95": -0.0026,
+        "hi95": 0.0369
        },
        "xwoba_alone": {
-        "mean": 0.0278,
-        "lo95": -0.0263,
-        "hi95": 0.0824
+        "mean": 0.0358,
+        "lo95": -0.0158,
+        "hi95": 0.0915
        },
        "gap_corrected": {
-        "mean": 0.0121,
-        "lo95": -0.0082,
-        "hi95": 0.0326
+        "mean": 0.0059,
+        "lo95": -0.0109,
+        "hi95": 0.0223
        }
       }
      },
      "v2": {
       "rhos": {
-       "fa_projection": 0.4202,
-       "xwoba_alone": 0.4096,
-       "output_blend": 0.4374,
-       "gap_corrected": 0.4253
+       "fa_projection": 0.5149,
+       "xwoba_alone": 0.4961,
+       "output_blend": 0.5318,
+       "gap_corrected": 0.5259
       },
       "gap_ci_primary_minus": {
        "fa_projection": {
-        "mean": 0.017,
-        "lo95": -0.0051,
-        "hi95": 0.0416
+        "mean": 0.0169,
+        "lo95": -0.0028,
+        "hi95": 0.0372
        },
        "xwoba_alone": {
-        "mean": 0.0275,
-        "lo95": -0.0262,
-        "hi95": 0.0817
+        "mean": 0.0352,
+        "lo95": -0.0194,
+        "hi95": 0.0904
        },
        "gap_corrected": {
-        "mean": 0.0118,
-        "lo95": -0.0077,
-        "hi95": 0.0312
+        "mean": 0.0059,
+        "lo95": -0.0108,
+        "hi95": 0.0227
        }
       },
       "cluster": {
-       "n_pairs": 220,
-       "n_players": 220,
+       "n_pairs": 242,
+       "n_players": 242,
        "max_pairs_per_player": 1,
        "mean_pairs_per_player": 1.0,
        "n_strata_first_pred_season": 1
@@ -421,21 +446,21 @@
      }
     },
     "gap_ci_blend_minus_incumbent_v1": {
-     "mean": 0.0173,
-     "lo95": -0.0066,
-     "hi95": 0.0413
+     "mean": 0.0168,
+     "lo95": -0.0026,
+     "hi95": 0.0369
     },
     "gap_ci_blend_minus_incumbent_v2": {
-     "mean": 0.017,
-     "lo95": -0.0051,
-     "hi95": 0.0416
+     "mean": 0.0169,
+     "lo95": -0.0028,
+     "hi95": 0.0372
     },
     "pass_v1": false,
     "pass_under_v2": false
    },
    "pooled_gate": {
     "label": "UNREGISTERED pooled: registered + partial-2026",
-    "n": 931,
+    "n": 1195,
     "pred_years": [
      2022,
      2023,
@@ -449,79 +474,79 @@
      2026
     ],
     "rhos_v1": {
-     "fa_projection": 0.4948,
-     "xwoba_alone": 0.4746,
-     "output_blend": 0.5054,
-     "gap_corrected": 0.4982
+     "fa_projection": 0.5159,
+     "xwoba_alone": 0.4952,
+     "output_blend": 0.5274,
+     "gap_corrected": 0.5217
     },
     "results": {
      "v1": {
       "rhos": {
-       "fa_projection": 0.4948,
-       "xwoba_alone": 0.4746,
-       "output_blend": 0.5054,
-       "gap_corrected": 0.4982
+       "fa_projection": 0.5159,
+       "xwoba_alone": 0.4952,
+       "output_blend": 0.5274,
+       "gap_corrected": 0.5217
       },
       "gap_ci_primary_minus": {
        "fa_projection": {
-        "mean": 0.0107,
-        "lo95": 0.0016,
-        "hi95": 0.0201
+        "mean": 0.0115,
+        "lo95": 0.0031,
+        "hi95": 0.0198
        },
        "xwoba_alone": {
-        "mean": 0.03,
-        "lo95": 0.005,
-        "hi95": 0.0542
+        "mean": 0.0323,
+        "lo95": 0.0106,
+        "hi95": 0.0551
        },
        "gap_corrected": {
-        "mean": 0.0074,
-        "lo95": -0.0007,
-        "hi95": 0.0159
+        "mean": 0.0056,
+        "lo95": -0.0016,
+        "hi95": 0.0131
        }
       }
      },
      "v2": {
       "rhos": {
-       "fa_projection": 0.4989,
-       "xwoba_alone": 0.4797,
-       "output_blend": 0.5098,
-       "gap_corrected": 0.5021
+       "fa_projection": 0.5203,
+       "xwoba_alone": 0.5004,
+       "output_blend": 0.5322,
+       "gap_corrected": 0.5261
       },
       "gap_ci_primary_minus": {
        "fa_projection": {
-        "mean": 0.0108,
-        "lo95": 0.0016,
-        "hi95": 0.02
+        "mean": 0.0118,
+        "lo95": 0.0023,
+        "hi95": 0.0217
        },
        "xwoba_alone": {
-        "mean": 0.0303,
-        "lo95": 0.0069,
-        "hi95": 0.0546
+        "mean": 0.0319,
+        "lo95": 0.006,
+        "hi95": 0.0588
        },
        "gap_corrected": {
-        "mean": 0.0075,
-        "lo95": -0.0009,
-        "hi95": 0.0159
+        "mean": 0.0059,
+        "lo95": -0.0024,
+        "hi95": 0.0147
        }
       },
       "cluster": {
-       "n_pairs": 931,
-       "n_players": 385,
-       "max_pairs_per_player": 4,
-       "mean_pairs_per_player": 2.42,
+       "n_pairs": 1195,
+       "n_players": 390,
+       "max_pairs_per_player": 5,
+       "mean_pairs_per_player": 3.06,
        "n_strata_first_pred_season": 4
       }
      }
     },
     "gap_ci_blend_minus_incumbent_v1": {
-     "mean": 0.0107,
-     "lo95": 0.0016,
-     "hi95": 0.0201
+     "mean": 0.0115,
+     "lo95": 0.0031,
+     "hi95": 0.0198
     },
     "gap_ci_blend_minus_incumbent_v2": {
-     "mean": 0.0108,
-     "lo95": 0.0016,
-     "hi95": 0.02
+     "mean": 0.0118,
+     "lo95": 0.0023,
+     "hi95": 0.0217
     },
     "pass_v1": true,
     "pass_under_v2": true
@@ -529,11 +554,17 @@
   }
  },
  "verdict": {
-  "status": "FAIL",
+  "status": "PASS",
   "criterion": "output_blend (frozen b=0.2) minus fa_projection, paired iid bootstrap lo95 >= 0, v1 convention, seed 20260715, 2000 reps (original recorded convention)",
-  "reason": "no new resolved pairs at this vintage: the 2025->2026 cohort is excluded by the registered complete-outcome pair rule until 2026-11-15, so the gate set is the original one and the knife-edge refusal stands (lo95 < 0). The keep-alive re-gate becomes decidable after Nov 15, 2026.",
-  "next_regate": "re-run this lab after 2026-11-15: season_complete(2026) flips true and the 2025->2026 cohort (preview n 220+, keep-alive estimate ~650) enters the registered gate set"
+  "reason": "frozen arm clears the registered criterion (v1 lo95 >= 0) on the registered pair set",
+  "next_regate": "this run IS the registered 2026-11-15 re-gate, taken as an owner-waived early read: the 2025->2026 cohort (242 resolved pairs) is in the registered gate set; the keep-alive is spent by this verdict"
  },
- "proposed_production_diff": null,
- "runtime_seconds": 42.2
+ "proposed_production_diff": {
+  "file": "hitter_export.py",
+  "function": "_join_pwoba",
+  "anchor_lines": "291-294 (at HEAD 2026-07-23)",
+  "change": "after `w = (proj or {}).get(\"woba_proj\")` and the None guard, blend the current-season Savant est_woba at the frozen weight before stamping: load est_woba(season) from .cache/savant_mlb/expected_batter_{season}.csv via fa_sources/savant fetcher with PA >= 100; when present, w = 0.8 * w + 0.2 * est_woba; else keep w unchanged. pwoba_pctile recomputes over the blended pool unchanged.",
+  "not_applied": true
+ },
+ "runtime_seconds": 92.0
 }

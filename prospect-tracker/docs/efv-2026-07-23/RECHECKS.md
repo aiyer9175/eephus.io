@@ -44,3 +44,25 @@ cohorts (2023+) resolve into the training matrix. Signal sidecar + frozen
 coefficients preserved: statcast_alevel_export.py /
 data/statcast_alevel_signals.json / efv_statcast_overlay.py (default-OFF).
 Do NOT revive the grade overlay with a loosened ceiling (gate-tuning).
+
+## 2026-10-14 - RESULTS of the 2026-11-15 re-gates (OWNER-WAIVED EARLY READS, appended by NOV15_REGATES)
+Registered date 2026-11-15; run on 2026-10-14 under the owner's waiver of look days (EW3-5,
+'we don't have to wait for anything') and the explicit season-complete override treating 2026
+as complete as of 2026-10-01 (EW3-6; tools/plus_lab_harness.py PLUS_LAB_SEASON_COMPLETE_ASOF,
+logged, written into each artifact; the Nov 15 default is unchanged). The 2026 regular season
+ended in late September and these labs read regular-season outcomes, so the 2025 -> 2026
+pairs existed. Each lab ran once, after a dry run of its reporting path on fixtures with None
+values, with stdout and stderr teed before anything else.
+
+- pWOBA xwOBA-blend re-gate: PASS. Frozen arm b=0.2, original criterion, seed 20260715, 2000
+  reps, registered pair set n 953 (the original 711 on predictor years 2022-2024, unchanged,
+  plus 242 resolved 2025 -> 2026 pairs). output_blend rho 0.5271 vs fa_projection 0.5166
+  (xwoba_alone 0.4948, gap_corrected 0.5214); gap v1 mean +0.0108 lo95 +0.0019 hi95 +0.0201;
+  v2 companion mean +0.0110 lo95 +0.0024 (pass under both). Train stability check argmax
+  matches the frozen b=0.2 / g=0.1. The unregistered 'partial-2026 preview' block of the
+  artifact now holds the same 242 complete pairs (its pooled gate double-counts them) and is
+  not verdict-bearing. Artifact data/pwoba_blend_regate_eval.json; registry row
+  pwoba_blend_regate validated. The recorded production diff (hitter_export._join_pwoba: blend
+  current-season est_woba at 0.2 into w) is a served change (plan Part 8 class 3): built behind
+  EEPHUS_PWOBA_XWOBA_BLEND, default off, in its own commit; the owner flips it (owner question
+  NOV15-PWOBA-FLIP). Nothing served moved here.
