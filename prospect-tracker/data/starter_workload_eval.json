@@ -1,0 +1,1933 @@
+{
+ "artifact": "starter_workload_eval",
+ "section": "Starter workload: expected outs and pitches per start",
+ "registry_row": "starter_workload_xouts",
+ "mode": "run",
+ "generated_at": "2026-10-14T15:59:45+00:00",
+ "stage1": {
+  "status": "complete",
+  "clock": {
+   "today": "2026-10-14",
+   "earliest_run": "2026-10-11",
+   "step_z_entry": "2026-10-03"
+  },
+  "source": {
+   "source": "corpus",
+   "corpus_built_at": "2026-10-02T12:59:41+00:00",
+   "corpus_schema_version": 1,
+   "dates": "first play startTime on the US Eastern calendar (.cache/mlbstats_games/win_prob_index.json, a head sniff of the payload when the index lacks the game)",
+   "clubs": "the modal club of each half's batters, weighted by each batter's plate-appearance share per club that season (.cache/war_daily/bat.parquet), through trades.canonical_org",
+   "game_type": "the corpus is built from the payload cache, which the season walk fills with gameType R games",
+   "pitch_attribution": "a pitch belongs to the pitcher of its play (matchup), the rule of the disclosed parity read"
+  },
+  "definitions": {
+   "unit": "a start: the first pitcher of each fielding half (archive-reconstruct provenance, owner decision O22)",
+   "estimand": "outs recorded by the starter in the start (primary), pitches he threw (secondary)",
+   "candidate": "xouts = min(27, budget / (ppo x r_L)); budget = (pitches over the n starts in the 365 days before D + k_b L_pgs) / (n + k_b); ppo = (those pitches + k_o L_ppo) / (those outs + k_o); r_L = [(pitches seen by the opposing club's hitters over its games in the 30 days before D + k_l L_ppa) / (their PA + k_l)] / L_ppa; xIP = xouts / 3; xPitches = budget",
+   "a0": "3 x clip(season-to-date IP / GS over all appearances before D, 2.0, 7.5); 15.6 with no start yet that season",
+   "d1": "A0's form on starts only (reported, never tested)",
+   "d2": "the candidate with r_L = 1 (tested, T1)",
+   "c1": "(outs over the 365-day starts + k_c L_opg) / (n + k_c) (tested, T2)",
+   "season_mean": "criterion 4's comparator: season-to-date pitches per start before D, L_pgs with no start yet that season",
+   "windows": "365 days: dates D - 365 to D - 1; 30 days: dates D - 30 to D - 1",
+   "anchors": "the prior complete corpus season, pooled sum over sum (2019 for 2021)",
+   "april_may": "starts dated Opening Day through May 31",
+   "openers": "starts whose trailing 365-day mean is under 6 outs per start (n > 0)",
+   "scored_set": "starts with a resolved opposing club and anchors; the rest are counted under counts"
+  },
+  "registered": {
+   "grid_k_b": [
+    2,
+    4,
+    8,
+    16,
+    32
+   ],
+   "grid_k_o": [
+    15,
+    30,
+    60,
+    120,
+    240
+   ],
+   "grid_k_l": [
+    100,
+    300,
+    1000,
+    3000
+   ],
+   "grid_k_c": [
+    2,
+    4,
+    8,
+    16,
+    32
+   ],
+   "B": 2000,
+   "seed": 20260930,
+   "lower_bound_percentile": 5.0,
+   "floor_share": 0.01,
+   "holm_alphas": [
+    0.025,
+    0.05
+   ]
+  },
+  "corpus_seasons": {
+   "2018": {
+    "games": 2431,
+    "complete": true
+   },
+   "2019": {
+    "games": 2429,
+    "complete": true
+   },
+   "2021": {
+    "games": 2429,
+    "complete": true
+   },
+   "2022": {
+    "games": 2430,
+    "complete": true
+   },
+   "2023": {
+    "games": 2430,
+    "complete": true
+   },
+   "2024": {
+    "games": 2429,
+    "complete": true
+   },
+   "2025": {
+    "games": 2430,
+    "complete": true
+   }
+  },
+  "preflight": {
+   "schemas": "ok",
+   "seasons": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+   ]
+  },
+  "burn_in": {
+   "scored_season": [
+    2019
+   ],
+   "history_seasons": [
+    2018
+   ],
+   "starts": 4858,
+   "scored": 4858,
+   "excluded": {},
+   "anchors": {
+    "2019": {
+     "season": 2018,
+     "starts": 4862,
+     "L_pgs": 88.0855614973262,
+     "L_ppo": 5.476624040920716,
+     "L_opg": 16.083916083916083,
+     "L_ppa": 3.8953975121395277
+    }
+   },
+   "priors": {
+    "k_b": 2,
+    "k_o": 120,
+    "k_l": 300,
+    "k_c": 2
+   },
+   "grid": [
+    {
+     "k_b": 2,
+     "k_o": 15,
+     "k_l": 100,
+     "mae_outs": 3.220815
+    },
+    {
+     "k_b": 2,
+     "k_o": 15,
+     "k_l": 300,
+     "mae_outs": 3.219914
+    },
+    {
+     "k_b": 2,
+     "k_o": 15,
+     "k_l": 1000,
+     "mae_outs": 3.21994
+    },
+    {
+     "k_b": 2,
+     "k_o": 15,
+     "k_l": 3000,
+     "mae_outs": 3.22189
+    },
+    {
+     "k_b": 2,
+     "k_o": 30,
+     "k_l": 100,
+     "mae_outs": 3.218364
+    },
+    {
+     "k_b": 2,
+     "k_o": 30,
+     "k_l": 300,
+     "mae_outs": 3.217481
+    },
+    {
+     "k_b": 2,
+     "k_o": 30,
+     "k_l": 1000,
+     "mae_outs": 3.217378
+    },
+    {
+     "k_b": 2,
+     "k_o": 30,
+     "k_l": 3000,
+     "mae_outs": 3.219445
+    },
+    {
+     "k_b": 2,
+     "k_o": 60,
+     "k_l": 100,
+     "mae_outs": 3.216081
+    },
+    {
+     "k_b": 2,
+     "k_o": 60,
+     "k_l": 300,
+     "mae_outs": 3.21514
+    },
+    {
+     "k_b": 2,
+     "k_o": 60,
+     "k_l": 1000,
+     "mae_outs": 3.215071
+    },
+    {
+     "k_b": 2,
+     "k_o": 60,
+     "k_l": 3000,
+     "mae_outs": 3.217156
+    },
+    {
+     "k_b": 2,
+     "k_o": 120,
+     "k_l": 100,
+     "mae_outs": 3.214339
+    },
+    {
+     "k_b": 2,
+     "k_o": 120,
+     "k_l": 300,
+     "mae_outs": 3.213746
+    },
+    {
+     "k_b": 2,
+     "k_o": 120,
+     "k_l": 1000,
+     "mae_outs": 3.213857
+    },
+    {
+     "k_b": 2,
+     "k_o": 120,
+     "k_l": 3000,
+     "mae_outs": 3.215945
+    },
+    {
+     "k_b": 2,
+     "k_o": 240,
+     "k_l": 100,
+     "mae_outs": 3.215865
+    },
+    {
+     "k_b": 2,
+     "k_o": 240,
+     "k_l": 300,
+     "mae_outs": 3.215417
+    },
+    {
+     "k_b": 2,
+     "k_o": 240,
+     "k_l": 1000,
+     "mae_outs": 3.215706
+    },
+    {
+     "k_b": 2,
+     "k_o": 240,
+     "k_l": 3000,
+     "mae_outs": 3.217865
+    },
+    {
+     "k_b": 4,
+     "k_o": 15,
+     "k_l": 100,
+     "mae_outs": 3.255966
+    },
+    {
+     "k_b": 4,
+     "k_o": 15,
+     "k_l": 300,
+     "mae_outs": 3.255159
+    },
+    {
+     "k_b": 4,
+     "k_o": 15,
+     "k_l": 1000,
+     "mae_outs": 3.254904
+    },
+    {
+     "k_b": 4,
+     "k_o": 15,
+     "k_l": 3000,
+     "mae_outs": 3.256739
+    },
+    {
+     "k_b": 4,
+     "k_o": 30,
+     "k_l": 100,
+     "mae_outs": 3.25324
+    },
+    {
+     "k_b": 4,
+     "k_o": 30,
+     "k_l": 300,
+     "mae_outs": 3.252553
+    },
+    {
+     "k_b": 4,
+     "k_o": 30,
+     "k_l": 1000,
+     "mae_outs": 3.252539
+    },
+    {
+     "k_b": 4,
+     "k_o": 30,
+     "k_l": 3000,
+     "mae_outs": 3.25453
+    },
+    {
+     "k_b": 4,
+     "k_o": 60,
+     "k_l": 100,
+     "mae_outs": 3.250995
+    },
+    {
+     "k_b": 4,
+     "k_o": 60,
+     "k_l": 300,
+     "mae_outs": 3.250198
+    },
+    {
+     "k_b": 4,
+     "k_o": 60,
+     "k_l": 1000,
+     "mae_outs": 3.24996
+    },
+    {
+     "k_b": 4,
+     "k_o": 60,
+     "k_l": 3000,
+     "mae_outs": 3.252018
+    },
+    {
+     "k_b": 4,
+     "k_o": 120,
+     "k_l": 100,
+     "mae_outs": 3.250091
+    },
+    {
+     "k_b": 4,
+     "k_o": 120,
+     "k_l": 300,
+     "mae_outs": 3.249362
+    },
+    {
+     "k_b": 4,
+     "k_o": 120,
+     "k_l": 1000,
+     "mae_outs": 3.249546
+    },
+    {
+     "k_b": 4,
+     "k_o": 120,
+     "k_l": 3000,
+     "mae_outs": 3.251677
+    },
+    {
+     "k_b": 4,
+     "k_o": 240,
+     "k_l": 100,
+     "mae_outs": 3.252395
+    },
+    {
+     "k_b": 4,
+     "k_o": 240,
+     "k_l": 300,
+     "mae_outs": 3.251874
+    },
+    {
+     "k_b": 4,
+     "k_o": 240,
+     "k_l": 1000,
+     "mae_outs": 3.252261
+    },
+    {
+     "k_b": 4,
+     "k_o": 240,
+     "k_l": 3000,
+     "mae_outs": 3.254403
+    },
+    {
+     "k_b": 8,
+     "k_o": 15,
+     "k_l": 100,
+     "mae_outs": 3.295667
+    },
+    {
+     "k_b": 8,
+     "k_o": 15,
+     "k_l": 300,
+     "mae_outs": 3.294864
+    },
+    {
+     "k_b": 8,
+     "k_o": 15,
+     "k_l": 1000,
+     "mae_outs": 3.294695
+    },
+    {
+     "k_b": 8,
+     "k_o": 15,
+     "k_l": 3000,
+     "mae_outs": 3.296444
+    },
+    {
+     "k_b": 8,
+     "k_o": 30,
+     "k_l": 100,
+     "mae_outs": 3.293362
+    },
+    {
+     "k_b": 8,
+     "k_o": 30,
+     "k_l": 300,
+     "mae_outs": 3.292685
+    },
+    {
+     "k_b": 8,
+     "k_o": 30,
+     "k_l": 1000,
+     "mae_outs": 3.292763
+    },
+    {
+     "k_b": 8,
+     "k_o": 30,
+     "k_l": 3000,
+     "mae_outs": 3.294646
+    },
+    {
+     "k_b": 8,
+     "k_o": 60,
+     "k_l": 100,
+     "mae_outs": 3.291724
+    },
+    {
+     "k_b": 8,
+     "k_o": 60,
+     "k_l": 300,
+     "mae_outs": 3.291052
+    },
+    {
+     "k_b": 8,
+     "k_o": 60,
+     "k_l": 1000,
+     "mae_outs": 3.29112
+    },
+    {
+     "k_b": 8,
+     "k_o": 60,
+     "k_l": 3000,
+     "mae_outs": 3.29324
+    },
+    {
+     "k_b": 8,
+     "k_o": 120,
+     "k_l": 100,
+     "mae_outs": 3.291824
+    },
+    {
+     "k_b": 8,
+     "k_o": 120,
+     "k_l": 300,
+     "mae_outs": 3.291235
+    },
+    {
+     "k_b": 8,
+     "k_o": 120,
+     "k_l": 1000,
+     "mae_outs": 3.291844
+    },
+    {
+     "k_b": 8,
+     "k_o": 120,
+     "k_l": 3000,
+     "mae_outs": 3.294203
+    },
+    {
+     "k_b": 8,
+     "k_o": 240,
+     "k_l": 100,
+     "mae_outs": 3.295201
+    },
+    {
+     "k_b": 8,
+     "k_o": 240,
+     "k_l": 300,
+     "mae_outs": 3.29501
+    },
+    {
+     "k_b": 8,
+     "k_o": 240,
+     "k_l": 1000,
+     "mae_outs": 3.295917
+    },
+    {
+     "k_b": 8,
+     "k_o": 240,
+     "k_l": 3000,
+     "mae_outs": 3.298448
+    },
+    {
+     "k_b": 16,
+     "k_o": 15,
+     "k_l": 100,
+     "mae_outs": 3.344592
+    },
+    {
+     "k_b": 16,
+     "k_o": 15,
+     "k_l": 300,
+     "mae_outs": 3.343546
+    },
+    {
+     "k_b": 16,
+     "k_o": 15,
+     "k_l": 1000,
+     "mae_outs": 3.343088
+    },
+    {
+     "k_b": 16,
+     "k_o": 15,
+     "k_l": 3000,
+     "mae_outs": 3.344903
+    },
+    {
+     "k_b": 16,
+     "k_o": 30,
+     "k_l": 100,
+     "mae_outs": 3.342591
+    },
+    {
+     "k_b": 16,
+     "k_o": 30,
+     "k_l": 300,
+     "mae_outs": 3.34171
+    },
+    {
+     "k_b": 16,
+     "k_o": 30,
+     "k_l": 1000,
+     "mae_outs": 3.341377
+    },
+    {
+     "k_b": 16,
+     "k_o": 30,
+     "k_l": 3000,
+     "mae_outs": 3.343235
+    },
+    {
+     "k_b": 16,
+     "k_o": 60,
+     "k_l": 100,
+     "mae_outs": 3.341686
+    },
+    {
+     "k_b": 16,
+     "k_o": 60,
+     "k_l": 300,
+     "mae_outs": 3.340983
+    },
+    {
+     "k_b": 16,
+     "k_o": 60,
+     "k_l": 1000,
+     "mae_outs": 3.340888
+    },
+    {
+     "k_b": 16,
+     "k_o": 60,
+     "k_l": 3000,
+     "mae_outs": 3.342956
+    },
+    {
+     "k_b": 16,
+     "k_o": 120,
+     "k_l": 100,
+     "mae_outs": 3.343037
+    },
+    {
+     "k_b": 16,
+     "k_o": 120,
+     "k_l": 300,
+     "mae_outs": 3.342725
+    },
+    {
+     "k_b": 16,
+     "k_o": 120,
+     "k_l": 1000,
+     "mae_outs": 3.343315
+    },
+    {
+     "k_b": 16,
+     "k_o": 120,
+     "k_l": 3000,
+     "mae_outs": 3.345734
+    },
+    {
+     "k_b": 16,
+     "k_o": 240,
+     "k_l": 100,
+     "mae_outs": 3.34777
+    },
+    {
+     "k_b": 16,
+     "k_o": 240,
+     "k_l": 300,
+     "mae_outs": 3.348012
+    },
+    {
+     "k_b": 16,
+     "k_o": 240,
+     "k_l": 1000,
+     "mae_outs": 3.34938
+    },
+    {
+     "k_b": 16,
+     "k_o": 240,
+     "k_l": 3000,
+     "mae_outs": 3.352202
+    },
+    {
+     "k_b": 32,
+     "k_o": 15,
+     "k_l": 100,
+     "mae_outs": 3.400044
+    },
+    {
+     "k_b": 32,
+     "k_o": 15,
+     "k_l": 300,
+     "mae_outs": 3.398752
+    },
+    {
+     "k_b": 32,
+     "k_o": 15,
+     "k_l": 1000,
+     "mae_outs": 3.398162
+    },
+    {
+     "k_b": 32,
+     "k_o": 15,
+     "k_l": 3000,
+     "mae_outs": 3.399759
+    },
+    {
+     "k_b": 32,
+     "k_o": 30,
+     "k_l": 100,
+     "mae_outs": 3.398154
+    },
+    {
+     "k_b": 32,
+     "k_o": 30,
+     "k_l": 300,
+     "mae_outs": 3.397057
+    },
+    {
+     "k_b": 32,
+     "k_o": 30,
+     "k_l": 1000,
+     "mae_outs": 3.396536
+    },
+    {
+     "k_b": 32,
+     "k_o": 30,
+     "k_l": 3000,
+     "mae_outs": 3.398252
+    },
+    {
+     "k_b": 32,
+     "k_o": 60,
+     "k_l": 100,
+     "mae_outs": 3.39783
+    },
+    {
+     "k_b": 32,
+     "k_o": 60,
+     "k_l": 300,
+     "mae_outs": 3.397046
+    },
+    {
+     "k_b": 32,
+     "k_o": 60,
+     "k_l": 1000,
+     "mae_outs": 3.396851
+    },
+    {
+     "k_b": 32,
+     "k_o": 60,
+     "k_l": 3000,
+     "mae_outs": 3.398958
+    },
+    {
+     "k_b": 32,
+     "k_o": 120,
+     "k_l": 100,
+     "mae_outs": 3.400153
+    },
+    {
+     "k_b": 32,
+     "k_o": 120,
+     "k_l": 300,
+     "mae_outs": 3.399873
+    },
+    {
+     "k_b": 32,
+     "k_o": 120,
+     "k_l": 1000,
+     "mae_outs": 3.400384
+    },
+    {
+     "k_b": 32,
+     "k_o": 120,
+     "k_l": 3000,
+     "mae_outs": 3.402807
+    },
+    {
+     "k_b": 32,
+     "k_o": 240,
+     "k_l": 100,
+     "mae_outs": 3.406021
+    },
+    {
+     "k_b": 32,
+     "k_o": 240,
+     "k_l": 300,
+     "mae_outs": 3.406461
+    },
+    {
+     "k_b": 32,
+     "k_o": 240,
+     "k_l": 1000,
+     "mae_outs": 3.408052
+    },
+    {
+     "k_b": 32,
+     "k_o": 240,
+     "k_l": 3000,
+     "mae_outs": 3.411312
+    }
+   ],
+   "grid_c1": [
+    {
+     "k_c": 2,
+     "mae_outs": 3.22311
+    },
+    {
+     "k_c": 4,
+     "mae_outs": 3.256321
+    },
+    {
+     "k_c": 8,
+     "mae_outs": 3.298943
+    },
+    {
+     "k_c": 16,
+     "mae_outs": 3.357971
+    },
+    {
+     "k_c": 32,
+     "mae_outs": 3.430456
+    }
+   ],
+   "in_sample_2019": {
+    "n": 4858,
+    "outs": {
+     "a0": {
+      "n": 4858,
+      "mae": 3.905067,
+      "rmse": 5.398507,
+      "bias": 1.464516
+     },
+     "candidate": {
+      "n": 4858,
+      "mae": 3.213746,
+      "rmse": 4.275284,
+      "bias": 0.521188
+     },
+     "d1": {
+      "n": 4858,
+      "mae": 3.264308,
+      "rmse": 4.353587,
+      "bias": 0.434727
+     },
+     "d2": {
+      "n": 4858,
+      "mae": 3.220037,
+      "rmse": 4.292548,
+      "bias": 0.603683
+     },
+     "c1": {
+      "n": 4858,
+      "mae": 3.22311,
+      "rmse": 4.289711,
+      "bias": 0.57626
+     }
+    },
+    "pitches": {
+     "budget": {
+      "n": 4858,
+      "mae": 11.711677,
+      "rmse": 16.790331,
+      "bias": 2.020729
+     },
+     "season_mean": {
+      "n": 4858,
+      "mae": 11.650434,
+      "rmse": 16.858199,
+      "bias": 1.4211
+     }
+    },
+    "improvement_a0_minus_candidate": 0.691321
+   },
+   "frozen_at": "2026-10-14T15:59:46+00:00"
+  },
+  "floor": {
+   "seasons": [
+    2021,
+    2022,
+    2023
+   ],
+   "scored": 14578,
+   "excluded": {},
+   "a0_outs_mae": 3.771644,
+   "floor": 0.037716,
+   "fixed_at": "2026-10-14T15:59:47+00:00"
+  },
+  "parity_2025": {
+   "starts": 4860,
+   "pitches_per_start": 85.0,
+   "pitches_per_start_raw": 85.035,
+   "expected": {
+    "starts": 4860,
+    "pitches_per_start": 85.0
+   },
+   "ok": true
+  },
+  "anchors": {
+   "2019": {
+    "season": 2018,
+    "starts": 4862,
+    "L_pgs": 88.0855614973262,
+    "L_ppo": 5.476624040920716,
+    "L_opg": 16.083916083916083,
+    "L_ppa": 3.8953975121395277
+   },
+   "2021": {
+    "season": 2019,
+    "starts": 4858,
+    "L_pgs": 86.36475916014821,
+    "L_ppo": 5.559074105971672,
+    "L_opg": 15.535817208727872,
+    "L_ppa": 3.927111201659902
+   },
+   "2022": {
+    "season": 2021,
+    "starts": 4858,
+    "L_pgs": 82.6794977356937,
+    "L_ppo": 5.486592812162772,
+    "L_opg": 15.069370111156855,
+    "L_ppa": 3.904189904189904
+   },
+   "2023": {
+    "season": 2022,
+    "starts": 4860,
+    "L_pgs": 84.91502057613168,
+    "L_ppo": 5.436315255621567,
+    "L_opg": 15.619958847736626,
+    "L_ppa": 3.8919649330960384
+   },
+   "2024": {
+    "season": 2023,
+    "starts": 4860,
+    "L_pgs": 85.08395061728395,
+    "L_ppo": 5.516970861351265,
+    "L_opg": 15.422222222222222,
+    "L_ppa": 3.8996708382218745
+   },
+   "2025": {
+    "season": 2024,
+    "starts": 4858,
+    "L_pgs": 85.4738575545492,
+    "L_ppo": 5.460776706689988,
+    "L_opg": 15.65232606010704,
+    "L_ppa": 3.8888182450986304
+   }
+  },
+  "results": {
+   "scored_seasons": [
+    2024,
+    2025
+   ],
+   "scored": 9718,
+   "excluded": {},
+   "pooled_2024_2025": {
+    "n": 9718,
+    "outs": {
+     "a0": {
+      "n": 9718,
+      "mae": 3.442445,
+      "rmse": 4.788913,
+      "bias": 0.998374
+     },
+     "candidate": {
+      "n": 9718,
+      "mae": 2.917873,
+      "rmse": 3.878771,
+      "bias": 0.284869
+     },
+     "d1": {
+      "n": 9718,
+      "mae": 2.99348,
+      "rmse": 3.983349,
+      "bias": 0.225039
+     },
+     "d2": {
+      "n": 9718,
+      "mae": 2.919813,
+      "rmse": 3.875653,
+      "bias": 0.247484
+     },
+     "c1": {
+      "n": 9718,
+      "mae": 2.931535,
+      "rmse": 3.889259,
+      "bias": 0.262919
+     }
+    },
+    "pitches": {
+     "budget": {
+      "n": 9718,
+      "mae": 9.92218,
+      "rmse": 14.348856,
+      "bias": 1.152676
+     },
+     "season_mean": {
+      "n": 9718,
+      "mae": 9.934056,
+      "rmse": 14.431033,
+      "bias": 0.574144
+     }
+    },
+    "improvement_a0_minus_candidate": 0.524572
+   },
+   "by_season": {
+    "2021": {
+     "n": 4858,
+     "outs": {
+      "a0": {
+       "n": 4858,
+       "mae": 3.937713,
+       "rmse": 5.326359,
+       "bias": 1.357386
+      },
+      "candidate": {
+       "n": 4858,
+       "mae": 3.319876,
+       "rmse": 4.403344,
+       "bias": 0.469441
+      },
+      "d1": {
+       "n": 4858,
+       "mae": 3.402015,
+       "rmse": 4.487214,
+       "bias": 0.260993
+      },
+      "d2": {
+       "n": 4858,
+       "mae": 3.312338,
+       "rmse": 4.38801,
+       "bias": 0.400896
+      },
+      "c1": {
+       "n": 4858,
+       "mae": 3.330119,
+       "rmse": 4.409982,
+       "bias": 0.456711
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 4858,
+       "mae": 12.348419,
+       "rmse": 17.561083,
+       "bias": 2.413075
+      },
+      "season_mean": {
+       "n": 4858,
+       "mae": 12.574466,
+       "rmse": 17.663409,
+       "bias": 1.009325
+      }
+     },
+     "improvement_a0_minus_candidate": 0.617836
+    },
+    "2022": {
+     "n": 4860,
+     "outs": {
+      "a0": {
+       "n": 4860,
+       "mae": 3.61675,
+       "rmse": 4.930919,
+       "bias": 0.705111
+      },
+      "candidate": {
+       "n": 4860,
+       "mae": 3.066933,
+       "rmse": 4.053951,
+       "bias": -0.053958
+      },
+      "d1": {
+       "n": 4860,
+       "mae": 3.19015,
+       "rmse": 4.187154,
+       "bias": -0.168862
+      },
+      "d2": {
+       "n": 4860,
+       "mae": 3.078917,
+       "rmse": 4.062812,
+       "bias": -0.093653
+      },
+      "c1": {
+       "n": 4860,
+       "mae": 3.088252,
+       "rmse": 4.070511,
+       "bias": -0.085753
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 4860,
+       "mae": 11.259537,
+       "rmse": 15.513823,
+       "bias": -0.408008
+      },
+      "season_mean": {
+       "n": 4860,
+       "mae": 11.291884,
+       "rmse": 15.497918,
+       "bias": -1.310342
+      }
+     },
+     "improvement_a0_minus_candidate": 0.549817
+    },
+    "2023": {
+     "n": 4860,
+     "outs": {
+      "a0": {
+       "n": 4860,
+       "mae": 3.760539,
+       "rmse": 5.226393,
+       "bias": 1.283974
+      },
+      "candidate": {
+       "n": 4860,
+       "mae": 3.070111,
+       "rmse": 4.075167,
+       "bias": 0.462106
+      },
+      "d1": {
+       "n": 4860,
+       "mae": 3.129964,
+       "rmse": 4.145373,
+       "bias": 0.271746
+      },
+      "d2": {
+       "n": 4860,
+       "mae": 3.066911,
+       "rmse": 4.075404,
+       "bias": 0.47138
+      },
+      "c1": {
+       "n": 4860,
+       "mae": 3.079709,
+       "rmse": 4.084363,
+       "bias": 0.445522
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 4860,
+       "mae": 10.806757,
+       "rmse": 15.840461,
+       "bias": 1.359307
+      },
+      "season_mean": {
+       "n": 4860,
+       "mae": 10.578328,
+       "rmse": 15.794618,
+       "bias": 1.017112
+      }
+     },
+     "improvement_a0_minus_candidate": 0.690427
+    },
+    "2024": {
+     "n": 4858,
+     "outs": {
+      "a0": {
+       "n": 4858,
+       "mae": 3.46521,
+       "rmse": 4.830659,
+       "bias": 0.968872
+      },
+      "candidate": {
+       "n": 4858,
+       "mae": 2.927135,
+       "rmse": 3.874479,
+       "bias": 0.220033
+      },
+      "d1": {
+       "n": 4858,
+       "mae": 3.001525,
+       "rmse": 3.989352,
+       "bias": 0.220079
+      },
+      "d2": {
+       "n": 4858,
+       "mae": 2.926432,
+       "rmse": 3.870805,
+       "bias": 0.179682
+      },
+      "c1": {
+       "n": 4858,
+       "mae": 2.93719,
+       "rmse": 3.885787,
+       "bias": 0.205187
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 4858,
+       "mae": 9.868654,
+       "rmse": 14.191315,
+       "bias": 1.040252
+      },
+      "season_mean": {
+       "n": 4858,
+       "mae": 9.823316,
+       "rmse": 14.298757,
+       "bias": 0.510297
+      }
+     },
+     "improvement_a0_minus_candidate": 0.538075
+    },
+    "2025": {
+     "n": 4860,
+     "outs": {
+      "a0": {
+       "n": 4860,
+       "mae": 3.41969,
+       "rmse": 4.746818,
+       "bias": 1.027865
+      },
+      "candidate": {
+       "n": 4860,
+       "mae": 2.908615,
+       "rmse": 3.883057,
+       "bias": 0.349678
+      },
+      "d1": {
+       "n": 4860,
+       "mae": 2.985438,
+       "rmse": 3.977339,
+       "bias": 0.229996
+      },
+      "d2": {
+       "n": 4860,
+       "mae": 2.913197,
+       "rmse": 3.880492,
+       "bias": 0.315259
+      },
+      "c1": {
+       "n": 4860,
+       "mae": 2.925882,
+       "rmse": 3.892727,
+       "bias": 0.320627
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 4860,
+       "mae": 9.975684,
+       "rmse": 14.504622,
+       "bias": 1.265054
+      },
+      "season_mean": {
+       "n": 4860,
+       "mae": 10.04475,
+       "rmse": 14.562054,
+       "bias": 0.637966
+      }
+     },
+     "improvement_a0_minus_candidate": 0.511075
+    }
+   },
+   "april_may": {
+    "2021": {
+     "n": 1600,
+     "outs": {
+      "a0": {
+       "n": 1600,
+       "mae": 3.751102,
+       "rmse": 5.032103,
+       "bias": 0.574352
+      },
+      "candidate": {
+       "n": 1600,
+       "mae": 3.271627,
+       "rmse": 4.335489,
+       "bias": 0.131744
+      },
+      "d1": {
+       "n": 1600,
+       "mae": 3.436832,
+       "rmse": 4.531512,
+       "bias": 0.043421
+      },
+      "d2": {
+       "n": 1600,
+       "mae": 3.265886,
+       "rmse": 4.330871,
+       "bias": 0.122538
+      },
+      "c1": {
+       "n": 1600,
+       "mae": 3.293397,
+       "rmse": 4.356278,
+       "bias": 0.187719
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 1600,
+       "mae": 11.658357,
+       "rmse": 16.674832,
+       "bias": 1.840776
+      },
+      "season_mean": {
+       "n": 1600,
+       "mae": 12.116717,
+       "rmse": 17.058292,
+       "bias": 0.622025
+      }
+     },
+     "improvement_a0_minus_candidate": 0.479475
+    },
+    "2022": {
+     "n": 1474,
+     "outs": {
+      "a0": {
+       "n": 1474,
+       "mae": 3.721422,
+       "rmse": 4.90581,
+       "bias": 0.164881
+      },
+      "candidate": {
+       "n": 1474,
+       "mae": 3.158617,
+       "rmse": 4.187053,
+       "bias": 0.190271
+      },
+      "d1": {
+       "n": 1474,
+       "mae": 3.462505,
+       "rmse": 4.470115,
+       "bias": -0.343346
+      },
+      "d2": {
+       "n": 1474,
+       "mae": 3.160589,
+       "rmse": 4.187517,
+       "bias": 0.199343
+      },
+      "c1": {
+       "n": 1474,
+       "mae": 3.176678,
+       "rmse": 4.19827,
+       "bias": 0.212915
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 1474,
+       "mae": 11.264623,
+       "rmse": 15.81941,
+       "bias": 1.140121
+      },
+      "season_mean": {
+       "n": 1474,
+       "mae": 12.008038,
+       "rmse": 16.085346,
+       "bias": -2.311094
+      }
+     },
+     "improvement_a0_minus_candidate": 0.562806
+    },
+    "2023": {
+     "n": 1680,
+     "outs": {
+      "a0": {
+       "n": 1680,
+       "mae": 3.344914,
+       "rmse": 4.506014,
+       "bias": 0.357449
+      },
+      "candidate": {
+       "n": 1680,
+       "mae": 2.935384,
+       "rmse": 3.911651,
+       "bias": 0.332468
+      },
+      "d1": {
+       "n": 1680,
+       "mae": 3.113547,
+       "rmse": 4.087972,
+       "bias": 0.026959
+      },
+      "d2": {
+       "n": 1680,
+       "mae": 2.926168,
+       "rmse": 3.911708,
+       "bias": 0.360568
+      },
+      "c1": {
+       "n": 1680,
+       "mae": 2.948608,
+       "rmse": 3.935006,
+       "bias": 0.339051
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 1680,
+       "mae": 9.969786,
+       "rmse": 14.393251,
+       "bias": 0.097015
+      },
+      "season_mean": {
+       "n": 1680,
+       "mae": 10.064188,
+       "rmse": 14.785628,
+       "bias": -0.156752
+      }
+     },
+     "improvement_a0_minus_candidate": 0.40953
+    },
+    "2024": {
+     "n": 1722,
+     "outs": {
+      "a0": {
+       "n": 1722,
+       "mae": 3.196588,
+       "rmse": 4.347005,
+       "bias": 0.247269
+      },
+      "candidate": {
+       "n": 1722,
+       "mae": 2.796908,
+       "rmse": 3.70982,
+       "bias": -0.108919
+      },
+      "d1": {
+       "n": 1722,
+       "mae": 2.98725,
+       "rmse": 3.960167,
+       "bias": -0.147616
+      },
+      "d2": {
+       "n": 1722,
+       "mae": 2.789843,
+       "rmse": 3.702116,
+       "bias": -0.126107
+      },
+      "c1": {
+       "n": 1722,
+       "mae": 2.80343,
+       "rmse": 3.723755,
+       "bias": -0.112234
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 1722,
+       "mae": 9.108423,
+       "rmse": 12.924262,
+       "bias": 0.140796
+      },
+      "season_mean": {
+       "n": 1722,
+       "mae": 9.495665,
+       "rmse": 13.744956,
+       "bias": -0.535554
+      }
+     },
+     "improvement_a0_minus_candidate": 0.399681
+    },
+    "2025": {
+     "n": 1738,
+     "outs": {
+      "a0": {
+       "n": 1738,
+       "mae": 3.107221,
+       "rmse": 4.248424,
+       "bias": 0.334186
+      },
+      "candidate": {
+       "n": 1738,
+       "mae": 2.748447,
+       "rmse": 3.710683,
+       "bias": 0.128374
+      },
+      "d1": {
+       "n": 1738,
+       "mae": 2.950416,
+       "rmse": 3.946231,
+       "bias": -0.015393
+      },
+      "d2": {
+       "n": 1738,
+       "mae": 2.761876,
+       "rmse": 3.718624,
+       "bias": 0.131596
+      },
+      "c1": {
+       "n": 1738,
+       "mae": 2.774089,
+       "rmse": 3.728214,
+       "bias": 0.134835
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 1738,
+       "mae": 9.307779,
+       "rmse": 13.551569,
+       "bias": 0.388303
+      },
+      "season_mean": {
+       "n": 1738,
+       "mae": 9.625803,
+       "rmse": 13.858772,
+       "bias": -0.246123
+      }
+     },
+     "improvement_a0_minus_candidate": 0.358774
+    }
+   },
+   "april_may_pooled_2024_2025": {
+    "n": 3460,
+    "outs": {
+     "a0": {
+      "n": 3460,
+      "mae": 3.151698,
+      "rmse": 4.297769,
+      "bias": 0.290929
+     },
+     "candidate": {
+      "n": 3460,
+      "mae": 2.772565,
+      "rmse": 3.710254,
+      "bias": 0.010276
+     },
+     "d1": {
+      "n": 3460,
+      "mae": 2.968748,
+      "rmse": 3.953173,
+      "bias": -0.081199
+     },
+     "d2": {
+      "n": 3460,
+      "mae": 2.775795,
+      "rmse": 3.710417,
+      "bias": 0.003341
+     },
+     "c1": {
+      "n": 3460,
+      "mae": 2.788692,
+      "rmse": 3.725995,
+      "bias": 0.011872
+     }
+    },
+    "pitches": {
+     "budget": {
+      "n": 3460,
+      "mae": 9.208562,
+      "rmse": 13.243081,
+      "bias": 0.265121
+     },
+     "season_mean": {
+      "n": 3460,
+      "mae": 9.561035,
+      "rmse": 13.802245,
+      "bias": -0.390169
+     }
+    },
+    "improvement_a0_minus_candidate": 0.379133
+   },
+   "openers_pooled_2024_2025": {
+    "n": 125,
+    "outs": {
+     "a0": {
+      "n": 125,
+      "mae": 15.019273,
+      "rmse": 15.920344,
+      "bias": 14.628873
+     },
+     "candidate": {
+      "n": 125,
+      "mae": 4.98483,
+      "rmse": 5.607377,
+      "bias": 4.661168
+     },
+     "d1": {
+      "n": 125,
+      "mae": 3.6128,
+      "rmse": 5.149664,
+      "bias": 3.1264
+     },
+     "d2": {
+      "n": 125,
+      "mae": 4.970488,
+      "rmse": 5.58557,
+      "bias": 4.637997
+     },
+     "c1": {
+      "n": 125,
+      "mae": 4.940952,
+      "rmse": 5.562321,
+      "bias": 4.568025
+     }
+    },
+    "pitches": {
+     "budget": {
+      "n": 125,
+      "mae": 27.652845,
+      "rmse": 31.058468,
+      "bias": 26.29122
+     },
+     "season_mean": {
+      "n": 125,
+      "mae": 15.718316,
+      "rmse": 26.337837,
+      "bias": 8.896134
+     }
+    },
+    "improvement_a0_minus_candidate": 10.034443
+   },
+   "openers_by_season": {
+    "2021": {
+     "n": 45,
+     "outs": {
+      "a0": {
+       "n": 45,
+       "mae": 13.796296,
+       "rmse": 15.027896,
+       "bias": 11.462963
+      },
+      "candidate": {
+       "n": 45,
+       "mae": 4.85356,
+       "rmse": 5.748755,
+       "bias": 4.081071
+      },
+      "d1": {
+       "n": 45,
+       "mae": 3.333333,
+       "rmse": 4.422166,
+       "bias": -0.888889
+      },
+      "d2": {
+       "n": 45,
+       "mae": 4.756435,
+       "rmse": 5.658212,
+       "bias": 4.000509
+      },
+      "c1": {
+       "n": 45,
+       "mae": 4.830723,
+       "rmse": 5.666979,
+       "bias": 3.713287
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 45,
+       "mae": 25.870726,
+       "rmse": 30.414949,
+       "bias": 22.659798
+      },
+      "season_mean": {
+       "n": 45,
+       "mae": 14.634074,
+       "rmse": 19.385357,
+       "bias": -8.88963
+      }
+     },
+     "improvement_a0_minus_candidate": 8.942736
+    },
+    "2022": {
+     "n": 48,
+     "outs": {
+      "a0": {
+       "n": 48,
+       "mae": 14.600694,
+       "rmse": 15.868239,
+       "bias": 14.125694
+      },
+      "candidate": {
+       "n": 48,
+       "mae": 4.367421,
+       "rmse": 4.86341,
+       "bias": 3.486299
+      },
+      "d1": {
+       "n": 48,
+       "mae": 3.445833,
+       "rmse": 4.445878,
+       "bias": 1.345833
+      },
+      "d2": {
+       "n": 48,
+       "mae": 4.358459,
+       "rmse": 4.845395,
+       "bias": 3.447682
+      },
+      "c1": {
+       "n": 48,
+       "mae": 4.431856,
+       "rmse": 4.937498,
+       "bias": 3.368956
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 48,
+       "mae": 22.816061,
+       "rmse": 26.092738,
+       "bias": 18.937502
+      },
+      "season_mean": {
+       "n": 48,
+       "mae": 11.969535,
+       "rmse": 19.260282,
+       "bias": -1.296784
+      }
+     },
+     "improvement_a0_minus_candidate": 10.233274
+    },
+    "2023": {
+     "n": 88,
+     "outs": {
+      "a0": {
+       "n": 88,
+       "mae": 15.435194,
+       "rmse": 16.079182,
+       "bias": 15.435194
+      },
+      "candidate": {
+       "n": 88,
+       "mae": 4.483432,
+       "rmse": 5.238971,
+       "bias": 4.27576
+      },
+      "d1": {
+       "n": 88,
+       "mae": 3.381629,
+       "rmse": 4.537959,
+       "bias": 3.04072
+      },
+      "d2": {
+       "n": 88,
+       "mae": 4.488832,
+       "rmse": 5.246904,
+       "bias": 4.293509
+      },
+      "c1": {
+       "n": 88,
+       "mae": 4.484756,
+       "rmse": 5.206457,
+       "bias": 4.232619
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 88,
+       "mae": 23.907842,
+       "rmse": 28.224732,
+       "bias": 22.133047
+      },
+      "season_mean": {
+       "n": 88,
+       "mae": 12.902665,
+       "rmse": 22.970504,
+       "bias": 5.541208
+      }
+     },
+     "improvement_a0_minus_candidate": 10.951763
+    },
+    "2024": {
+     "n": 72,
+     "outs": {
+      "a0": {
+       "n": 72,
+       "mae": 15.212626,
+       "rmse": 15.85545,
+       "bias": 14.951515
+      },
+      "candidate": {
+       "n": 72,
+       "mae": 4.554374,
+       "rmse": 5.104864,
+       "bias": 4.372796
+      },
+      "d1": {
+       "n": 72,
+       "mae": 3.430556,
+       "rmse": 4.931362,
+       "bias": 3.002778
+      },
+      "d2": {
+       "n": 72,
+       "mae": 4.543527,
+       "rmse": 5.088048,
+       "bias": 4.361533
+      },
+      "c1": {
+       "n": 72,
+       "mae": 4.468225,
+       "rmse": 5.034965,
+       "bias": 4.244558
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 72,
+       "mae": 25.604043,
+       "rmse": 28.825534,
+       "bias": 25.179672
+      },
+      "season_mean": {
+       "n": 72,
+       "mae": 14.294821,
+       "rmse": 25.375106,
+       "bias": 8.289181
+      }
+     },
+     "improvement_a0_minus_candidate": 10.658252
+    },
+    "2025": {
+     "n": 53,
+     "outs": {
+      "a0": {
+       "n": 53,
+       "mae": 14.756604,
+       "rmse": 16.008082,
+       "bias": 14.190566
+      },
+      "candidate": {
+       "n": 53,
+       "mae": 5.5696,
+       "rmse": 6.225391,
+       "bias": 5.05292
+      },
+      "d1": {
+       "n": 53,
+       "mae": 3.860377,
+       "rmse": 5.432189,
+       "bias": 3.29434
+      },
+      "d2": {
+       "n": 53,
+       "mae": 5.550512,
+       "rmse": 6.197795,
+       "bias": 5.013572
+      },
+      "c1": {
+       "n": 53,
+       "mae": 5.583148,
+       "rmse": 6.207366,
+       "bias": 5.007451
+      }
+     },
+     "pitches": {
+      "budget": {
+       "n": 53,
+       "mae": 30.436123,
+       "rmse": 33.856783,
+       "bias": 27.801248
+      },
+      "season_mean": {
+       "n": 53,
+       "mae": 17.652121,
+       "rmse": 27.591938,
+       "bias": 9.720675
+      }
+     },
+     "improvement_a0_minus_candidate": 9.187003
+    }
+   },
+   "counts": {
+    "starts_n0_by_season": {
+     "2021": 396,
+     "2022": 146,
+     "2023": 167,
+     "2024": 151,
+     "2025": 157
+    },
+    "starts_2021_window_reaches_absent_2020": 4682,
+    "walk": {},
+    "per_season": {
+     "2018": {
+      "play_rows_other_season": 0,
+      "games": 2431,
+      "games_unresolved_clubs": 0,
+      "halves_without_starter": 0,
+      "clubs": {
+       "season": 2018,
+       "games": 2431,
+       "resolved": 2431
+      }
+     },
+     "2019": {
+      "play_rows_other_season": 0,
+      "games": 2429,
+      "games_unresolved_clubs": 0,
+      "halves_without_starter": 0,
+      "clubs": {
+       "season": 2019,
+       "games": 2429,
+       "resolved": 2429
+      }
+     },
+     "2021": {
+      "play_rows_other_season": 0,
+      "games": 2429,
+      "games_unresolved_clubs": 0,
+      "halves_without_starter": 0,
+      "clubs": {
+       "season": 2021,
+       "games": 2429,
+       "resolved": 2429
+      }
+     },
+     "2022": {
+      "play_rows_other_season": 0,
+      "games": 2430,
+      "games_unresolved_clubs": 0,
+      "halves_without_starter": 0,
+      "clubs": {
+       "season": 2022,
+       "games": 2430,
+       "resolved": 2430
+      }
+     },
+     "2023": {
+      "play_rows_other_season": 0,
+      "games": 2430,
+      "games_unresolved_clubs": 0,
+      "halves_without_starter": 0,
+      "clubs": {
+       "season": 2023,
+       "games": 2430,
+       "resolved": 2430
+      }
+     },
+     "2024": {
+      "play_rows_other_season": 0,
+      "games": 2429,
+      "games_unresolved_clubs": 0,
+      "halves_without_starter": 0,
+      "clubs": {
+       "season": 2024,
+       "games": 2429,
+       "resolved": 2429
+      }
+     },
+     "2025": {
+      "play_rows_other_season": 0,
+      "games": 2430,
+      "games_unresolved_clubs": 0,
+      "halves_without_starter": 0,
+      "clubs": {
+       "season": 2025,
+       "games": 2430,
+       "resolved": 2430
+      }
+     }
+    }
+   }
+  },
+  "criteria": {
+   "improvement_pooled": 0.524572,
+   "improvement_2024": 0.538075,
+   "improvement_2025": 0.511075,
+   "bootstrap_lower_bound": 0.485501,
+   "floor": 0.037716,
+   "pitches_mae_budget": 9.92218,
+   "pitches_mae_season_mean": 9.934056,
+   "bootstrap": {
+    "games": 4859,
+    "B": 2000,
+    "seed": 20260930
+   },
+   "1_bootstrap_lower_bound_above_0": true,
+   "2_positive_in_2024_and_2025": true,
+   "3_at_or_above_floor": true,
+   "4_pitches_budget_no_worse": true
+  },
+  "attribution": {
+   "family": "T1 (candidate against D2) and T2 (candidate against C1), Holm m = 2, one-sided 0.05; they decide wording only, never the verdict",
+   "T1_p": 0.276362,
+   "T2_p": 0.001499,
+   "T1_improvement": 0.00194,
+   "T2_improvement": 0.013662,
+   "holm": {
+    "T1": false,
+    "T2": true
+   },
+   "wording": {
+    "T1_pass": false,
+    "T2_pass": true,
+    "credit": "pitch rates",
+    "lineup": "nothing credits the opposing lineup's P/PA"
+   }
+  },
+  "verdict": "PASS",
+  "completed_at": "2026-10-14T15:59:48+00:00"
+ }
+}
