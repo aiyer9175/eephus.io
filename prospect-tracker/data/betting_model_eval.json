@@ -4902,5 +4902,39 @@
   "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
  },
  "status": "ran",
- "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 777 games. A pick threshold is set from the vintage mode or from nothing."
+ "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 777 games. A pick threshold is set from the vintage mode or from nothing.",
+ "run_environment": {
+  "read_date": "2026-10-14",
+  "record": "data/_labs/run_env/re_look_record.json",
+  "m": 5,
+  "holm_stopped_at_step": 1,
+  "members": {
+   "5k-A14": {
+    "label": "FAIL",
+    "family_p": 1.0,
+    "computed_p": 0.33108273216143136
+   },
+   "5k-A30": {
+    "label": "FAIL",
+    "family_p": 1.0,
+    "computed_p": 0.5898783638830728
+   },
+   "5k-B": {
+    "label": "FAIL",
+    "family_p": 1.0,
+    "computed_p": 0.7693767575006056
+   },
+   "5d-C": {
+    "label": "FAIL (decided at p = 1, never read)",
+    "family_p": 1.0,
+    "computed_p": null
+   },
+   "5h-A": {
+    "label": "not decided today (p = 1 on record until the live arm reads, expected 2027)",
+    "family_p": 1.0,
+    "computed_p": null
+   }
+  },
+  "served": false
+ }
 }

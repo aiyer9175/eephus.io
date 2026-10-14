@@ -4313,6 +4313,44 @@ Everything else in 5d-C stands: its estimand, split, criterion 2, and the screen
 first. 5d-A, 5d-B, 5d-D and 5d-E are moneyline-calibration candidates, not members, and
 their gates and dates are untouched.
 
+### Decisions recorded 2026-10-14: 5d-C at p = 1 without a read, and 5d-A, 5d-B, 5d-D and 5d-E not read
+
+The sections above are left as written. Nothing in this block was measured against a game
+result: no 5d column was related to any outcome, total or price, and the only counts read
+are the vintage store's (the first record carrying `wx_temp_climo` is `2026-09-09.json`, as
+the 2026-09-11 correction says).
+
+**5d-C, decided at p = 1 and never read.** Family RE member (the amendment above). Its gate
+fixes the estimand (the total), criterion 1 (paired absolute error, now at its Holm bar),
+criterion 2 and the screen's place (first, disqualify only). It does not fix how
+`wx_temp_climo` and `wx_wind_out_climo` enter the run rows, or how their coefficients are
+fitted. And its split, the existing vintage fit/eval split (anchored at 2026-08-01, 305 fit
+games), has no climatology value on any fit game: the columns start with the 2026-09-09
+vintage, and N1 (the 2026-09-11 plan, 7.1 item 14) forbids reconstructing a schema-4
+column. So 5d-C's harness cannot be built as registered, and no data still to come can
+change that for 2026 (the regular season ended 2026-09-27). Under 5k's "If 5d-C's harness
+is not ready by 2026-10-31, 5d-C is decided that day at p = 1 and never read", 5d-C is
+decided at p = 1, on 2026-10-14 rather than 2026-10-31 under the owner's 2026-10-14 waiver
+of registered dates (EW3-5; the dated note at the end of this document). It entered family
+RE at p = 1 in the 5k read the same day (5k, "Result (run 2026-10-14, once)"). Label: FAIL,
+never read. Any later 5d-C read is a new candidate. Not read, so its correlation with the 5k
+terms (5k, "Reported whichever way it lands") was not computed.
+
+**5d-A, 5d-B, 5d-D and 5d-E: not read.** These are moneyline-calibration candidates, not RE
+members; 5d gives them an earliest look (2026-10-07) and no last day. Each gate leaves items
+a read would have to choose after seeing the data, so none was read and no number on any of
+them exists:
+
+| Candidate | Not read: what the text does not fix |
+|---|---|
+| 5d-A `pen_plus_avail` | the bootstrap's replicate count and seed, and what "player-clustered" means for a game-level Brier (a game row carries no player unit); the twin's replicate count, seed and pass bar; how a game whose vintage carries no `pen_plus_avail` is treated (the column starts with the 2026-09-09 vintage, so the registered split's 305-game fit half holds no value) |
+| 5d-B `rest_days`, `games_in_l7`, `sp_rest_days` | how the three columns enter run prevention (one term or three, their scale) and how the coefficient is fitted; the rule for `sp_rest_days` null on a season debut; the bootstrap and twin constants; the same fit-half coverage gap |
+| 5d-D `catch_frame_rate` | how the rate enters run prevention and how its coefficient is fitted (the rate has no runs constant, 5d-D says so); the bootstrap and twin constants; the same fit-half coverage gap |
+| 5d-E `sp_tto3_bf` | how the exposure enters and how its coefficient is fitted; the form of the variance-inflation read; the bootstrap and twin constants; the same fit-half coverage gap |
+
+A read of any of the four needs a dated amendment that fixes these items before any number
+on it exists. The columns keep accruing and stay dark.
+
 ---
 
 ## 5e. The handedness gate (pre-registered 2026-09-07, columns accruing since 2026-08-18)
@@ -7167,6 +7205,131 @@ and the three RMS_T above, rounded to 8 places (6 for the power figures), with d
 `test_betting_run_env.py` pins the literal to this block and to a re-run of the prefit, and
 pins every choice in "Choices pinned". Re-fitting any constant after this commit
 disqualifies the member.
+
+### Result (run 2026-10-14, once): 5k-A14, 5k-A30 and 5k-B FAIL at p = 1, and nothing serves
+
+**The run.** Once, on 2026-10-14 from 15:41:24Z to 15:42:06Z, in the main tree on host
+NOAH-PC: `python betting_model.py --run-environment --harness-ready 2026-10-14` at
+6c7e0db9 (`betting_model.py` blob c26ded2f), Python 3.13.9, numpy 2.3.5, scipy 1.16.3.
+`MODEL_VERSION` `betting_runs_v2`; `SERVE_ATH_PARK` and `SERVE_RUNLINE_TIE_SPLIT` True;
+`SERVE_TOTAL_CALIBRATION`, `SERVE_RIDGE_FIT`, `SERVE_RUN_DISPERSION`, `SERVE_TOTAL_LEVEL`,
+`SERVE_TOTAL_DISPERSION`, `SERVE_PROB_CALIBRATION` and `VINTAGE_FIT_WINDOW_GROWS` False;
+served run dispersion and Platt map both None. Before it, the reporting path was dry-run on
+a fixture of None values, and stdout and stderr were teed to disk. Every member's result
+was written (`data/_labs/run_env/re_look_record.json`, then `data/betting_model_eval.json ->
+run_environment`) before anything was printed. Exit 0. The full record, with every number
+below and each twin's 200 means, is the record file, committed with this block.
+
+**The read day.** R is "the first day on or after 2026-10-07 on which both harnesses are
+ready and the run completes". 5d-C's harness cannot be built as registered (5d, "Decisions
+recorded 2026-10-14"), so R in that sense never comes, and the rule left is "The 5k members
+read on 2026-10-31". They read on 2026-10-14 instead, under the owner's 2026-10-14 waiver
+of registered dates (EW3-5): an OWNER-WAIVED EARLY READ, with a dated note at the end of
+this document. It is inside 5d's admissible span (on or after 2026-10-07), not 2026-10-23,
+and no other betting look is recorded for the day. The sample stopped growing on
+2026-09-27, so the date moves no game.
+
+**The look record: none.** No commit since 2026-09-11 ran a 5k criterion, twin or screen, or
+set a 2026 value of either term beside a 2026 outcome or price (`git log --since=2026-09-11`
+on run environment, 5d-C, climatology, `lg_rpg`, trailing league and month offset; the eval
+artifact held no `run_environment` key; the 2026 coverage run printed counts only). The
+/mlbstats/ League tab (19143352, 2026-10-08) pools season panels and relates nothing to a
+game. The printouts that preceded the Fitted block are named there. Nothing was forfeited.
+
+**m and readiness, from commit history.** m = 5 (both amendment blocks in d79067a5, before
+2026-09-28). The 5k harness was first ready 2026-10-14 (6c7e0db9), on or after 2026-09-28,
+so its three members compute, are reported and enter RE at p = 1. 5d-C enters at p = 1
+(never read). 5h-A enters at p = 1 (its governing live arm reads in 2027).
+
+**The sample.** `n_window` 2,429, `n_gradable` 1,082, last date 2026-09-27; the cuts are the
+7h re-read's, unchanged. The 2026 row rules for the windows: 2,427 qualifying finals (1
+under 9 innings, 1 resumed; the resume lookup is one 2026 schedule request, 2,430 listings
+over 2,429 game_pks). No graded game fell below a window floor at any split.
+
+**Criterion 1, criterion 2, the twin and the screen,** per split (d is |incumbent error| minus
+|challenger error| on the total, so positive favours the member; the Brier difference is
+incumbent minus challenger):
+
+| Split | cut | fit / eval | member | mean d | t | G | p, t_(G-1) | Brier diff | twin bar | twin beaten | screen mean d (t) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| anchored | 2026-08-01 | 305 / 777 | 5k-A14 | 0.00341 | 1.957 | 58 | 0.0276 | 0.000007 | 0.00329 | yes | 0.02105 (4.593) |
+| anchored | | | 5k-A30 | 0.00466 | 1.135 | 58 | 0.1306 | 0.000038 | 0.00577 | no | 0.03795 (4.485) |
+| anchored | | | 5k-B | -0.00408 | -0.602 | 58 | 0.7252 | 0.000060 | 0.01058 | no | 0.01333 (2.089) |
+| 0.6 | 2026-08-26 | 642 / 440 | 5k-A14 | 0.00090 | 0.446 | 33 | 0.3295 | -0.000012 | 0.00272 | no | 0.02760 (3.880) |
+| 0.6 | | | 5k-A30 | -0.00039 | -0.201 | 33 | 0.5789 | 0.000011 | 0.00298 | no | 0.05021 (3.916) |
+| 0.6 | | | 5k-B | -0.00730 | -0.746 | 33 | 0.7694 | 0.000092 | 0.00118 | no | -0.00014 (-0.012) |
+| 0.7 | 2026-09-03 | 752 / 330 | 5k-A14 | 0.00117 | 0.442 | 25 | 0.3311 | -0.000025 | 0.00249 | no | 0.02789 (3.372) |
+| 0.7 | | | 5k-A30 | -0.00037 | -0.191 | 25 | 0.5751 | -0.000012 | 0.00197 | no | 0.05080 (3.383) |
+| 0.7 | | | 5k-B | -0.00069 | -0.067 | 25 | 0.5264 | 0.000119 | 0.00018 | no | -0.01098 (-0.829) |
+| 0.8 | 2026-09-11 | 853 / 229 | 5k-A14 | 0.00304 | 0.910 | 17 | 0.1880 | -0.000024 | 0.00437 | no | 0.03003 (3.124) |
+| 0.8 | | | 5k-A30 | -0.00066 | -0.231 | 17 | 0.5899 | -0.000022 | 0.00261 | no | 0.05640 (3.208) |
+| 0.8 | | | 5k-B | -0.00442 | -0.376 | 17 | 0.6440 | 0.000102 | 0.00123 | no | -0.00123 (-0.077) |
+
+**The screens.** 5k-A14's and 5k-A30's contaminated versions (the league's own scoring on
+D at the frozen k) improve criterion 1 at every split, so neither is disqualified. 5k-B's
+(2026's own month offsets) does not improve at the 0.6, 0.7 and 0.8 splits, so **5k-B is
+disqualified by its screen** and enters at p = 1 on that ground too.
+
+**Family RE on 2026-10-14.**
+
+| Member | computed p (largest split p) | p on record | Holm rank | bar | Holm | label |
+|---|---|---|---|---|---|---|
+| 5d-C | not read | 1 | 1 | 0.0100 | stops here | FAIL (decided at p = 1, never read) |
+| 5h-A | not read | 1 | 2 | 0.0125 | not reached | not decided today (p = 1 until the live arm reads) |
+| 5k-A14 | 0.3311 | 1 (first ready after 2026-09-28) | 3 | 0.0167 | not reached | FAIL |
+| 5k-A30 | 0.5899 | 1 (first ready after 2026-09-28) | 4 | 0.0250 | not reached | FAIL |
+| 5k-B | 0.7694 | 1 (first ready after 2026-09-28; screen) | 5 | 0.0500 | not reached | FAIL |
+
+Ties at p = 1 rank in member order. Holm stops at step 1. Each 5k member clears its bar at
+no split on the p on record, so each is FAIL, not INDETERMINATE. On the computed split p
+values the reading is the same: 5k-A14's smallest split p (0.0276, anchored) is above its
+rank-3 bar (0.0167), and 5k-A30 and 5k-B clear no bar. Criterion 2 held at every split only
+for 5k-B; the twin was beaten only by 5k-A14 at the anchored split.
+
+**Reported, never qualifying.**
+- The incumbent refit per split (the 7f/7g/7h recipe): b1 -0.0372 / -0.0424 / 0.0016 /
+  0.0109, diff_shrink 1.28 / 1.10 / 1.14 / 1.22, at the anchored / 0.6 / 0.7 / 0.8 splits.
+- The de-meaning centres: Rbar_14 4.5691 / 4.4288 / 4.4189 / 4.4359; Rbar_30 4.6402 /
+  4.4874 / 4.4641 / 4.4615; obar 0.0928 / 0.0755 / 0.0692 / 0.0563.
+- The terms on the eval halves (per side; RMS_T is on the total): 5k-A14 mean -0.0193 /
+  0.0138 / 0.0230 / 0.0220, RMS_T 0.0588 / 0.0487 / 0.0570 / 0.0592; 5k-A30 mean -0.0607 /
+  -0.0060 / 0.0126 / 0.0214, RMS_T 0.1320 / 0.0521 / 0.0381 / 0.0461; 5k-B mean -0.0791 /
+  -0.0971 / -0.1089 / -0.0960, RMS_T 0.1867 / 0.2088 / 0.2178 / 0.1920. Fit-half terms
+  average 0 by construction.
+- The power ceiling t* at each split's n_eval (Fitted RMS_T and sigma_T): 5k-A14 0.120 /
+  0.090 / 0.078 / 0.065; 5k-A30 0.181 / 0.136 / 0.118 / 0.098; 5k-B 0.316 / 0.238 / 0.206 /
+  0.172.
+- Paired squared error on the total, t: 5k-A14 -0.354 / 0.121 / 0.089 / 0.135; 5k-A30 -1.196
+  / -1.970 / -0.945 / -0.847; 5k-B -1.453 / -1.703 / -0.681 / -0.490.
+- The 7f grid log loss at 7.5 to 10.5 (incumbent minus member, t): 5k-A14 0.913 / 0.473 /
+  0.104 / 0.444; 5k-A30 0.067 / -1.056 / -0.495 / -0.526; 5k-B -1.376 / -2.048 / -0.703 /
+  -0.928.
+- Clamp hits at 1.5 and 9.5: 0 for the incumbent and every member at every split.
+- Criterion 1 by roof type (home club's park, newest three cached feeds; anchored split, n
+  open / retractable / dome 543 / 183 / 51): mean d 5k-A14 0.0022 / 0.0131 / -0.0180, 5k-A30
+  -0.0003 / 0.0280 / -0.0256, 5k-B -0.0141 / 0.0101 / 0.0520; the other splits are in the
+  record.
+- Market diagnostics on eval games with an open capture (anchored, n 454, realised Over
+  0.5286): model P(over) minus realised, incumbent 0.0331, 5k-A14 0.0285, 5k-A30 0.0181, 5k-B
+  0.0114; positive-edge Over / Under, incumbent 342 / 112, 5k-A14 337 / 117, 5k-A30 311 /
+  143, 5k-B 307 / 147.
+- The twin distributions (200 means each) and both screens: in the record.
+- Each member's correlation with 5d-C's climatology term on shared games: not computed,
+  because 5d-C has no term (5d, "Decisions recorded 2026-10-14").
+
+**The 7h rates.** The 7h re-read printed its per-line Over rates on 2026-10-02 (the
+amendment texts were committed first), so nothing is withheld and nothing is released here.
+
+**What follows.**
+- Nothing served moves. No member passed, so no serving flag is added (What a 5k pass would
+  change) and no owner question is raised.
+- 5k-A14, 5k-A30 and 5k-B are decided once, today, and never revisited; 5d-C likewise. A
+  read on 2027 games, from a live nightly record of the window, is a new candidate with its
+  own section and family.
+- 5h-A keeps p = 1 on record; its decision, when its live arm reads, is Holm over its p and
+  the four p values recorded here (all 1), unchanged.
+- The `env_runs` keyword and `run_environment_term` stay dark; the guard refuses any second
+  run of `--run-environment`.
 
 ---
 
@@ -12013,3 +12176,21 @@ before then.
 | `n_vintages_backfilled` is climbing and `n_vintages_live` is not | the nightly snapshot is dead and the reconstruction is masking it | the two counts are separate for this reason. A backfill is not a substitute for the clock |
 | `min_edge` still null with a big vintage sample | gate 2 or gate 3 | `python betting_model.py --gate` names the closed one |
 | Vintage store empty after a box rebuild | `.cache/` was not restored | the clock restarts. Back up `.cache/leaderboard_vintages/` with `prospects.db` |
+
+---
+
+## Dated note (2026-10-14): OWNER-WAIVED EARLY READ of family RE
+
+The owner waived registered dates and look days on 2026-10-14 (EW3-5, verbatim: "Fuck the
+registered look days and waiting, we don't have to wait for anything. Let's do everything
+today"). Two family-RE decisions registered for 2026-10-31 were taken on 2026-10-14 under
+it, and nothing else in this document moved:
+- 5d-C was decided at p = 1 and never read (5d, "Decisions recorded 2026-10-14"), the
+  2026-10-31 rule for a 5d-C harness that is not ready. It cannot be built as registered,
+  and no data still to come would change that.
+- 5k-A14, 5k-A30 and 5k-B were read once (5k, "Result (run 2026-10-14, once)"), the
+  2026-10-31 rule "The 5k members read on 2026-10-31" for a read day R that never comes.
+  The read fell inside 5d's admissible span (on or after 2026-10-07); the sample has been
+  fixed since 2026-09-27, so the date moved no game.
+No criterion, threshold, seed, window or member was changed, and no result was opened before
+all were written.
