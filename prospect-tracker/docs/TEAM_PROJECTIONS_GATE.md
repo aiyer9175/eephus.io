@@ -1,6 +1,6 @@
-# Team projections gate (registered 2026-10-08, NOT READ)
+# Team projections gate (registered 2026-10-08, GATE read once 2026-10-14)
 
-Status: **registered, not read.** Gate document for the team family of the
+Status: **GATE read once 2026-10-14 (an owner-waived early read, EW3-5): TM-A FAIL, TM-B FAIL, TM-C RS FAIL and RA PASS; no flag eligible; FORWARD (2027) unread.** Gate document for the team family of the
 projections program (Part 9 section 9.5 'Team projections'; LANE_A sections 2.6
 'Team expansion options' and 3.3 'TM gates'). Registration task
 TM_1_TEAM_GATE_REGISTRATION. Owner ask of 2026-10-01 (message 1, verbatim):
@@ -509,3 +509,44 @@ the 2026 season, which remains unread.
 
 Written by TM_3_TEAM_CANDIDATES_DARK. The tables, the per-club accounting and the residuals are in
 `model/team_projection/dev_receipt.json` (params_sha256 as above).
+
+### 2026-10-14: the GATE look (TM_4_TEAM_LOOK_2026), verdicts TM-A FAIL, TM-B FAIL, TM-C RS FAIL RA PASS
+
+Run once on 2026-10-14 at 95102285 (branch wt-TM_4_TEAM_LOOK_2026), `PYTHONHASHSEED=0 python tools/team_projection_look.py --out <dir> --write`, stdout and stderr teed to the task's output directory before anything else ran, the reporting path dry-run first on fixtures with nulls. An OWNER-WAIVED EARLY READ (EW3-5, owner 2026-10-14): registered for 2026-12-08 and for the first day after the DEV freeze landed on which no other look is recorded; both waived, the frame itself complete (the 2026 regular season is final).
+
+**Preconditions.** The DEV params hashed to the freeze entry above (8d20d629c79d4996b5c8db266f721eacb3de0be771eb90c749b69705dad7a929); gate_2026 was absent from the artifact; the 2026 frame was complete (30 clubs with wins, RS and RA through franchise_export._standings, games played [161, 162]).
+
+**The frame (section 2.2).** proj_backtest.team_frame(2026, look=True, aging="v2"): 2201 point-in-time rows (inputs 2023 to 2025; curves and the WAR map refit on data through 2025), 1276 assigned to 30 clubs by the primary-stint rule on the 2026 stints (exposure only), 925 unassigned (50.8 WAR); no row carries a 2026 actual WAR. Roster WAR sum 865.0; served_recentered recenters to 2,430. Schedule: 2429 played regular-season games (statsapi), n_sims 20000, seed 12345, home edge 0.0, bracket off, both arms on the same stream. Actual 2026 wins, RS and RA read once from `.cache/statsapi_standings_2026.json`; the prior season for TM-C is 2025 (carry-forward per club; league mean RS 720.5, RA 720.5 per club).
+
+**Bootstrap.** Paired over clubs, B 2000, seed 20261208, candidate minus comparator, ub95 the 95th percentile of the resampled mean delta; pass is ub95 < 0.
+
+| gate | statistic | 2026 |
+|---|---|---|
+| TM-A incumbent (schedule only) | mean CRPS | 5.916 (win sd 6.308) |
+| TM-A candidate (sigma_T 7.6751) | mean CRPS | 5.694 (win sd 9.929) |
+| TM-A | CRPS delta mean -0.222 / ub95 0.068 (n 30, dropped 0) | **FAIL** |
+| TM-A incumbent | 80% coverage | 0.600 (18 of 30; Wilson 0.423 to 0.754) |
+| TM-A candidate | 80% coverage | 0.800 (24 of 30; Wilson 0.627 to 0.905) |
+| TM-A DEV coverage beside (section 3.1) | incumbent / candidate (in-sample) | 0.550 (66 of 120; Wilson 0.461 to 0.636) / 0.800 (96 of 120; Wilson 0.720 to 0.862) |
+| TM-B served_recentered | wins MAE | 7.804 (bias 0.033, r 0.438) |
+| TM-B budgeted (PA 6096.7, IP 1436.4; after the 2,430 pin) | wins MAE | 7.437 (bias 0.033, r 0.498) |
+| TM-B | abs-error delta mean -0.368 / ub95 0.001 (n 30, dropped 0) | **FAIL** |
+| TM-B | clubs over the PA / IP budget | 8 / 21 |
+| TM-C | RS MAE (runs) | 42.6 (n 30) |
+| TM-C | RS vs carry-forward: comparator MAE / delta / ub95 | 61.9 / -19.30 / -3.49 |
+| TM-C | RS vs league average: comparator MAE / delta / ub95 | 39.2 / 3.37 / 13.59 |
+| TM-C | RS verdict (ub95 < 0 against both) | **FAIL** |
+| TM-C | RA MAE (runs) | 47.7 (n 30) |
+| TM-C | RA vs carry-forward: comparator MAE / delta / ub95 | 66.4 / -18.70 / -6.01 |
+| TM-C | RA vs league average: comparator MAE / delta / ub95 | 62.2 / -14.50 / -1.37 |
+| TM-C | RA verdict (ub95 < 0 against both) | **PASS** |
+| TM-C | Pythag wins MAE (served wins MAE beside, same clubs; no verdict) | 7.54 (7.80; n 30) |
+| TM-C | league identity, sum RS minus sum RA (runs; 1% tolerance, reported only) | -856.5 (RS minus 30 x league -480.2, RA minus 30 x league 376.3; outside tolerance) |
+
+**Clubs scored nowhere (named, never imputed):** none.
+
+**Verdicts by the registered rules only (section 3; a null is a finding).** TM-A FAIL; TM-B FAIL; TM-C RS FAIL, RA PASS. TEAM_TALENT_RANGE_LIVE not eligible; TEAM_PT_BUDGET_LIVE not eligible; TEAM_RUNS_LIVE not eligible. A pass makes its flag eligible and flips nothing (section 5.1); the class 3 flips also need owner answer TM-Q1 (answered: serve each that passes) and land as TM_8's own commits; a null or a fail keeps the incumbent. Nothing served moves at this look.
+
+**Bans kept (section 7).** No player-level 2026 residual, cohort or MAE (the frame rows carry no actual WAR, asserted by team_frame); no team statistic by consensus-FV cell; both arms aging v2; the labels and run parts are the frozen fWAR vintage (FanGraphs frame); no cohort intercept and no team-level recalibration (the T3 league identity is reported, not corrected); no second look.
+
+The block is `team_projection_gate.gate_2026` in `data/team_outlook_eval.json` (per-club table, both arms' CRPS, the T2 accounting, the bootstraps); the registry rows team_win_distribution and team_run_projection point at it and stay provisional whatever the outcome (section 5.2); team_win_projections carries TM-B's dated note. Elapsed 62.4 s.
