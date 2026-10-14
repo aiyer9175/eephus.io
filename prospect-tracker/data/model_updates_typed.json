@@ -67,6 +67,16 @@
    }
   },
   {
+   "date": "2026-08-11",
+   "model_id": "efv_v1",
+   "text": "eFV v1, B-L6 denoised baseline fairness control (gate docs/efv-2026-08-09/DENOISED_BASELINE_GATE.md), measured 2026-08-11 on identical head to head rows: eFV v1 against the consensus as served read +0.03138 in Spearman rho (0.35027 against 0.31889). The floor it had to clear was 0.0327 under E_cond and 0.0353 under E_refit; the gap reached 0.960 and 0.889 of those floors and did not clear either, so it is recorded as unresolved. The same control rebuilt the consensus from measured per source precision; that arm is block primary_corrected_amendment_2 of the same artifact.",
+   "origin": "model upgrades panel",
+   "source": {
+    "path": "data/xfv_denoised_baseline_eval.json",
+    "key": "incumbent_rederived_today"
+   }
+  },
+  {
    "date": "2026-07-31",
    "model_id": "prospect_surplus",
    "text": "Surplus moved to an EXPECTED-VALUE objective (calibration isotonic-real-v6-evframe): the correction map is now a count-weighted isotonic (PAVA) fit on resolved-cohort bin means, targeting the conditional mean instead of the median. The zero-dollar floor on bottom-tier prospects is gone; the board total moved up while the ordering did not. The map deliberately loses the old median-objective MAE gate and that loss is committed, not hidden.",
@@ -102,6 +112,26 @@
     "path": "data/source_weights.json",
     "key": "note",
     "commit": "ad8b1041"
+   }
+  },
+  {
+   "date": "2026-07-23",
+   "model_id": "efv_v1",
+   "text": "eFV v1, S-XLINE Statcast measurement layer (gate docs/efv-2026-07-23/GATES.md): AAA stat lines from 2023 on were blended toward Statcast expected stats before eFV v1 read them, hitters through capped xBA, xOBP and xSLG gap deltas and pitchers through a bounded ERA correction from the xwOBA against gap. Measured as the next season prediction change in Spearman rho: hitters +0.0253 (95% CI +0.0046 to +0.0449, 776 AAA season pairs), pitchers on the xSLG against arm +0.0511 (95% CI +0.0115 to +0.0907, 491 pairs); both sides passed the gate. eFV V2, served since 2026-09-25, reads no AAA stat line.",
+   "origin": "model upgrades panel",
+   "source": {
+    "path": "data/xfv_statcast_line_eval.json",
+    "key": "clause_m_measurement"
+   }
+  },
+  {
+   "date": "2026-07-23",
+   "model_id": "efv_v1",
+   "text": "eFV v1, P1 V3 slot trust, a train and serve correctness fix for provisional grades (drafted, no pro track record yet): an unsigned current class pick with no recorded bonus priced its pedigree at slot value instead of losing that credit. Arm A passed its no harm backtest bar; in its gate battery 10 of 264 served provisional grades moved, all upward, the largest by 2.3 FV. Once a class's bonuses are recorded the branch changes nothing.",
+   "origin": "model upgrades panel",
+   "source": {
+    "path": "data/xfv_provisional_prior_eval.json",
+    "key": "v3.arms.ARM-A.a2_battery"
    }
   },
   {

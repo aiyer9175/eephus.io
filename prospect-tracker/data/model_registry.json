@@ -4926,7 +4926,7 @@
   {
    "model_id": "efv_denoised_baseline_control",
    "summary": "Provisional: eFV's head-to-head margin no longer clears its floor (+0.03138 at 0.960x E_cond); denoising the consensus buys only +0.00103 rho.",
-   "surface": "Library Source Comparison, Model upgrades panel; the head-to-head conviction copy above it follows this result",
+   "surface": "Model Updates (/models/updates/), a dated note row labelled eFV v1 (2026-08-11); the head-to-head conviction copy on Library Source Comparison follows this result",
    "predicts": "Whether eFV's head-to-head lead survives a consensus rebuilt from measured per-source precision",
    "champion": "GLS precision-weighted consensus, w_s proportional to b_s/sigma_s^2 with a global per-source intercept (arm S3), weights read live from data/source_cohort_accuracy.json",
    "baseline": "the consensus exactly as served (prospx_consensus), on the identical head-to-head common-set rows",

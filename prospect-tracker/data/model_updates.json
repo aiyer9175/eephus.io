@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-09T09:50:53Z",
+ "generated_at": "2026-10-14T11:50:25Z",
  "rule": "append-only; an event is added when a model's registry state, its card legs, an eFV progress ledger row or a dated note changes; every number is copied from the artifact key named in the event; the edge is printed by edge() v1; events sit in append order, each run's batch ordered by date",
  "edge_rule_version": 1,
  "result_form": "Result ({stat}): {body}",
@@ -8,16 +8,16 @@
  "sources": [
   {
    "path": "data/model_registry.json",
-   "sha256": "64b22d348f38bf5cb253cede11c7426818cf4836182eed88ab73d84706737e6a"
+   "sha256": "fb261fd7b97afdba71c918879c7605152c5387c0c5f6f127e354f072d8997f06"
   },
   {
    "path": "data/efv_progress.json",
-   "sha256": "0bec5901f0cc4ff1824076886dabeb818d36f44c8a20bb24801081bd33ed6bc2",
-   "generated_at": "2026-10-09T07:09:02Z"
+   "sha256": "d792fd3151cb55d2e1af5faf3423ed634c812d540b3f387815535d5146b98b0b",
+   "generated_at": "2026-10-10T23:58:26Z"
   },
   {
    "path": "data/model_updates_typed.json",
-   "sha256": "18cfc1c7020811ec0013f1019a382f1aaf76b9b75ed112d0995e4bb546f5272b"
+   "sha256": "0014c6cb10a8fb85f93d5fdbd305385f8b513d9048731525cc5f7a374e7984e8"
   },
   {
    "path": "data/arbitration_eval.json",
@@ -31,8 +31,8 @@
   },
   {
    "path": "data/source_backtest.json",
-   "sha256": "18e40410625b2af157e843a548c840c7ed45d6171cda448906fae5607dd56016",
-   "generated_at": "2026-10-09T03:43:43Z"
+   "sha256": "f44a589654839b96484d62811d9ee9e4672b09a0cd5f32c9cd7fdf393e262b5e",
+   "generated_at": "2026-10-14T11:46:15Z"
   },
   {
    "path": "data/draft_slot_curve.json",
@@ -66,7 +66,7 @@
   },
   {
    "path": "data/xhem_served_regate_eval.json",
-   "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959",
+   "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9",
    "generated_at": "2026-09-18"
   },
   {
@@ -1019,13 +1019,77 @@
    {
     "run_id": "2026-10-09T07:09:02Z|vm_dev|c00a1394",
     "ledger_model_id": "efv_v4"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|lv_dev|06d23c6a",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c1_linear_hit:hit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|vm_dev|0c6d79aa",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c1_linear_hit:hit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|lv_dev|7660363f",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c2_graded_hit:hit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|vm_dev|11c309f0",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c2_graded_hit:hit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|lv_dev|2446954e",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c3_tails_hit:hit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|vm_dev|9745449e",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c3_tails_hit:hit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|lv_dev|e6f48472",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c4_graded_level_hit:hit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|vm_dev|1c349d25",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c4_graded_level_hit:hit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|lv_dev|7bb4b844",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c1_linear_pit:pit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|vm_dev|ab89d699",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c1_linear_pit:pit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|lv_dev|4c00008b",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c2_graded_pit:pit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|vm_dev|e2057fe8",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c2_graded_pit:pit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|lv_dev|010a0655",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c3_tails_pit:pit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|vm_dev|48c3b544",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c3_tails_pit:pit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|lv_dev|f221e73b",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c4_graded_level_pit:pit"
+   },
+   {
+    "run_id": "2026-10-10T23:53:05Z|vm_dev|785f17be",
+    "ledger_model_id": "efv_v2_screen:wave2:w2a_c4_graded_level_pit:pit"
    }
   ]
  },
  "note_problems": [],
  "counts": {
-  "events": 533,
-  "default_view": 112,
+  "events": 537,
+  "default_view": 115,
   "by_kind": {
    "artifact_change": 26,
    "backfill": 4,
@@ -1033,8 +1097,8 @@
    "first_scored": 21,
    "frame_change": 1,
    "model_change": 14,
-   "note": 18,
-   "registered": 361,
+   "note": 21,
+   "registered": 362,
    "removed": 2,
    "rescored": 47,
    "scoring_correction": 2,
@@ -1043,20 +1107,20 @@
   "by_layer": {
    "development": 9,
    "headline": 96,
-   "note": 18,
-   "registration": 389,
+   "note": 21,
+   "registration": 390,
    "typed": 21
   },
   "verdict_changes": 33,
-  "registry_models": 359,
-  "served_models": 262,
+  "registry_models": 360,
+  "served_models": 263,
   "scored_models": 22,
   "scored_legs": 42,
   "model_states": {
    "lead": 13,
    "no_benchmark": 74,
    "no_contest": 1,
-   "no_eval": 36,
+   "no_eval": 37,
    "tie": 5,
    "trails": 1,
    "unresolved": 2,
@@ -1065,7 +1129,7 @@
   "registry_verdicts": {
    "deprecated": 88,
    "provisional": 159,
-   "unvalidated": 58,
+   "unvalidated": 59,
    "validated": 54
   },
   "by_family": {
@@ -1082,7 +1146,7 @@
    "MLB Projections": 8,
    "MLB Stats": 26,
    "Management": 10,
-   "Other": 17,
+   "Other": 18,
    "PROSPX and eFV": 110,
    "Sources and Consensus": 11,
    "Trade Machine": 6,
@@ -1111,7 +1175,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1137,7 +1201,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1163,7 +1227,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 100,
+    "artifact_age_days": 105,
     "age_is_evidence": true,
     "stale": true
    }
@@ -1189,7 +1253,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1215,7 +1279,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 63,
+    "artifact_age_days": 68,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1331,7 +1395,7 @@
    "last_update": "2026-10-08",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1357,7 +1421,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1383,7 +1447,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1409,7 +1473,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1461,7 +1525,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1487,7 +1551,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1513,7 +1577,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1539,7 +1603,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1565,7 +1629,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1652,7 +1716,7 @@
    "last_update": "2026-10-07",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1678,7 +1742,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1704,7 +1768,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1730,7 +1794,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1756,7 +1820,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1808,7 +1872,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1834,7 +1898,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -1886,7 +1950,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1938,7 +2002,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1964,7 +2028,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1990,7 +2054,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2037,7 +2101,7 @@
      },
      "source": {
       "path": "data/source_backtest.json",
-      "sha256": "18e40410625b2af157e843a548c840c7ed45d6171cda448906fae5607dd56016"
+      "sha256": "f44a589654839b96484d62811d9ee9e4672b09a0cd5f32c9cd7fdf393e262b5e"
      }
     }
    ],
@@ -2071,7 +2135,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2097,7 +2161,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 63,
+    "artifact_age_days": 68,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2123,7 +2187,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2149,7 +2213,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2227,7 +2291,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2280,7 +2344,7 @@
    "last_update": "2026-10-03",
    "events": 6,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2436,7 +2500,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 72,
+    "artifact_age_days": 77,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2462,7 +2526,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 63,
+    "artifact_age_days": 68,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2488,7 +2552,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2514,7 +2578,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2540,7 +2604,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2566,7 +2630,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2592,7 +2656,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": true
    }
@@ -2685,7 +2749,7 @@
    "last_update": "2026-10-07",
    "events": 10,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2711,7 +2775,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 72,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2804,7 +2868,7 @@
    "last_update": "2026-09-30",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2830,7 +2894,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2923,7 +2987,7 @@
    "last_update": "2026-10-07",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 35,
+    "artifact_age_days": 40,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2949,7 +3013,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2975,7 +3039,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3027,7 +3091,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 63,
+    "artifact_age_days": 68,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3081,7 +3145,7 @@
    "last_update": "2026-10-08",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3107,7 +3171,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 85,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3133,9 +3197,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -3159,7 +3223,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 85,
+    "artifact_age_days": 90,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3185,7 +3249,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3239,7 +3303,7 @@
    "last_update": "2026-09-24",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 15,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -3265,7 +3329,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3291,7 +3355,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3317,7 +3381,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3343,7 +3407,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 66,
+    "artifact_age_days": 71,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3369,7 +3433,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 50,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3395,7 +3459,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3447,7 +3511,7 @@
    "last_update": "2026-08-19",
    "events": 7,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3473,7 +3537,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3499,9 +3563,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -3525,7 +3589,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3551,7 +3615,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3682,7 +3746,7 @@
      },
      "source": {
       "path": "data/xhem_served_regate_eval.json",
-      "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959"
+      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
      }
     }
    ],
@@ -3690,7 +3754,7 @@
    "last_update": "2026-09-18",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 21,
+    "artifact_age_days": 26,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3716,7 +3780,7 @@
    "last_update": "2026-07-01",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3742,9 +3806,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -3877,7 +3941,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 40,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3940,7 +4004,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 40,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4037,7 +4101,7 @@
    "last_update": "2026-09-11",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4063,7 +4127,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4089,7 +4153,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 27,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4141,7 +4205,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4167,7 +4231,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4219,9 +4283,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -4297,7 +4361,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 54,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4323,7 +4387,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": true
    }
@@ -4402,7 +4466,7 @@
    "last_update": "2026-08-19",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4428,7 +4492,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 50,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4454,7 +4518,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4480,7 +4544,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4506,9 +4570,9 @@
    "last_update": "2026-07-15",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -4532,9 +4596,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -4558,7 +4622,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4584,9 +4648,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -4636,9 +4700,9 @@
    "last_update": "2026-07-15",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -4688,7 +4752,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4740,7 +4804,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4792,7 +4856,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4818,7 +4882,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 101,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4896,7 +4960,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 101,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4948,7 +5012,7 @@
    "last_update": "2026-07-31",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4974,7 +5038,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5000,7 +5064,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5026,7 +5090,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 9,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5052,7 +5116,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5078,9 +5142,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -5104,9 +5168,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -5229,7 +5293,7 @@
    "last_update": "2026-07-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 101,
+    "artifact_age_days": 106,
     "age_is_evidence": true,
     "stale": true
    }
@@ -5255,7 +5319,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 40,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5281,7 +5345,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 40,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5307,9 +5371,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -5333,7 +5397,7 @@
    "last_update": "2026-09-18",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 21,
+    "artifact_age_days": 26,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5411,7 +5475,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5437,7 +5501,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5536,7 +5600,7 @@
    "last_update": "2026-07-15",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 40,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5562,7 +5626,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 40,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5588,7 +5652,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5614,7 +5678,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5661,7 +5725,7 @@
      },
      "source": {
       "path": "data/source_backtest.json",
-      "sha256": "18e40410625b2af157e843a548c840c7ed45d6171cda448906fae5607dd56016"
+      "sha256": "f44a589654839b96484d62811d9ee9e4672b09a0cd5f32c9cd7fdf393e262b5e"
      }
     },
     {
@@ -5689,7 +5753,7 @@
      },
      "source": {
       "path": "data/source_backtest.json",
-      "sha256": "18e40410625b2af157e843a548c840c7ed45d6171cda448906fae5607dd56016"
+      "sha256": "f44a589654839b96484d62811d9ee9e4672b09a0cd5f32c9cd7fdf393e262b5e"
      }
     }
    ],
@@ -5832,7 +5896,7 @@
    "last_update": "2026-10-02",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5858,7 +5922,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5884,7 +5948,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5910,7 +5974,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5962,7 +6026,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6014,7 +6078,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6066,7 +6130,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 7,
+    "artifact_age_days": 12,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6203,7 +6267,7 @@
    "last_update": "2026-10-09",
    "events": 5,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6229,7 +6293,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6281,7 +6345,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6333,7 +6397,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 97,
+    "artifact_age_days": 102,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6359,9 +6423,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -6411,7 +6475,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 72,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6541,7 +6605,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6567,9 +6631,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 87,
+    "artifact_age_days": 92,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -6593,7 +6657,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 94,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6619,9 +6683,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -6645,7 +6709,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 65,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6697,9 +6761,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -6723,7 +6787,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6749,7 +6813,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6775,7 +6839,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6801,7 +6865,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6827,9 +6891,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -6853,7 +6917,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 96,
+    "artifact_age_days": 101,
     "age_is_evidence": true,
     "stale": true
    }
@@ -6879,9 +6943,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -6905,7 +6969,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6931,7 +6995,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6957,7 +7021,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6983,9 +7047,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7009,7 +7073,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7035,7 +7099,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7061,7 +7125,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 75,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7087,7 +7151,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7113,7 +7177,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 99,
+    "artifact_age_days": 104,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7139,9 +7203,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7165,7 +7229,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7191,7 +7255,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7215,9 +7279,9 @@
    "today": [],
    "registered": "2026-06-22",
    "last_update": "2026-09-25",
-   "events": 14,
+   "events": 17,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7243,7 +7307,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 83,
+    "artifact_age_days": 88,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7269,7 +7333,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7295,7 +7359,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 100,
+    "artifact_age_days": 105,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7321,9 +7385,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7347,7 +7411,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7373,7 +7437,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7399,9 +7463,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7425,9 +7489,9 @@
    "last_update": "2026-07-14",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 87,
+    "artifact_age_days": 92,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7451,7 +7515,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 94,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7477,9 +7541,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7503,7 +7567,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7529,7 +7593,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 96,
+    "artifact_age_days": 101,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7555,7 +7619,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7581,7 +7645,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 72,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7607,7 +7671,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7633,9 +7697,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7659,9 +7723,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7685,7 +7749,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 69,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7711,7 +7775,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7737,7 +7801,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7763,7 +7827,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7789,7 +7853,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7815,7 +7879,7 @@
    "last_update": "2026-07-30",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7841,7 +7905,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 4,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7867,7 +7931,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 94,
+    "artifact_age_days": 99,
     "age_is_evidence": true,
     "stale": true
    }
@@ -7893,7 +7957,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 67,
+    "artifact_age_days": 72,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7919,7 +7983,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7945,7 +8009,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7971,9 +8035,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -7995,9 +8059,9 @@
    "today": [],
    "registered": "2026-06-22",
    "last_update": "2026-09-25",
-   "events": 14,
+   "events": 17,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8023,9 +8087,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8049,7 +8113,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8075,7 +8139,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8101,7 +8165,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8127,9 +8191,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8153,7 +8217,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 70,
+    "artifact_age_days": 75,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8179,7 +8243,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8205,7 +8269,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8231,7 +8295,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 61,
+    "artifact_age_days": 66,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8257,7 +8321,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8283,9 +8347,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8309,7 +8373,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 76,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8335,7 +8399,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8361,9 +8425,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8387,7 +8451,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 65,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8413,7 +8477,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8439,7 +8503,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8465,7 +8529,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 60,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8491,7 +8555,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8517,7 +8581,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8543,9 +8607,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 87,
+    "artifact_age_days": 92,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8569,7 +8633,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8595,7 +8659,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8621,7 +8685,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8647,7 +8711,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 78,
+    "artifact_age_days": 83,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8673,7 +8737,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8699,7 +8763,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8725,7 +8789,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8751,7 +8815,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8777,7 +8841,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 76,
+    "artifact_age_days": 81,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8829,7 +8893,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8855,9 +8919,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -8881,7 +8945,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 62,
+    "artifact_age_days": 67,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8907,7 +8971,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8933,7 +8997,7 @@
    "last_update": "2026-09-25",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8959,7 +9023,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 5,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8985,7 +9049,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 77,
+    "artifact_age_days": 82,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9011,9 +9075,9 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 86,
+    "artifact_age_days": 91,
     "age_is_evidence": true,
-    "stale": false
+    "stale": true
    }
   },
   {
@@ -9064,7 +9128,7 @@
      },
      "source": {
       "path": "data/xhem_served_regate_eval.json",
-      "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959"
+      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
      }
     }
    ],
@@ -9072,7 +9136,7 @@
    "last_update": "2026-09-18",
    "events": 4,
    "freshness": {
-    "artifact_age_days": 21,
+    "artifact_age_days": 26,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9150,7 +9214,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 59,
+    "artifact_age_days": 64,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9176,7 +9240,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 57,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9202,7 +9266,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 57,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9228,7 +9292,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 57,
+    "artifact_age_days": 62,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9254,7 +9318,7 @@
    "last_update": "2026-09-25",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9280,7 +9344,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9306,7 +9370,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9332,7 +9396,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9358,7 +9422,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 61,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9514,7 +9578,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 13,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9566,7 +9630,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 52,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9592,7 +9656,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 52,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9618,7 +9682,7 @@
    "last_update": "2026-08-19",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 50,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9878,7 +9942,7 @@
    "last_update": "2026-10-02",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9956,7 +10020,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 50,
+    "artifact_age_days": 55,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10008,7 +10072,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 34,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10034,7 +10098,7 @@
    "last_update": "2026-10-03",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10060,7 +10124,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 34,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10086,7 +10150,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 34,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10112,7 +10176,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 34,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10138,7 +10202,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 34,
+    "artifact_age_days": 39,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10164,7 +10228,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10216,7 +10280,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10242,7 +10306,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10268,7 +10332,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 38,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10294,7 +10358,7 @@
    "last_update": "2026-09-06",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 37,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10320,7 +10384,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10346,7 +10410,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10398,7 +10462,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 38,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10424,7 +10488,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10450,7 +10514,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 33,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10528,7 +10592,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10554,7 +10618,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 38,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10580,7 +10644,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 38,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10606,7 +10670,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 27,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10632,7 +10696,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 37,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10658,7 +10722,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 37,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10762,7 +10826,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10788,7 +10852,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10814,7 +10878,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10866,7 +10930,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10892,7 +10956,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 27,
+    "artifact_age_days": 32,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10918,7 +10982,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10944,7 +11008,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 33,
+    "artifact_age_days": 38,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10970,7 +11034,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 32,
+    "artifact_age_days": 37,
     "age_is_evidence": true,
     "stale": false
    }
@@ -10996,7 +11060,7 @@
    "last_update": "2026-10-08",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 5,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11022,7 +11086,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11048,7 +11112,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 6,
+    "artifact_age_days": 11,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11152,7 +11216,7 @@
    "last_update": "2026-09-25",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11377,7 +11441,7 @@
    "last_update": "2026-10-08",
    "events": 11,
    "freshness": {
-    "artifact_age_days": 14,
+    "artifact_age_days": 19,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11429,7 +11493,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 5,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11689,7 +11753,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 6,
     "age_is_evidence": true,
     "stale": false
    }
@@ -11790,6 +11854,32 @@
    },
    "today": [],
    "registered": "2026-10-09",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": null,
+    "age_is_evidence": null,
+    "stale": null
+   }
+  },
+  {
+   "model_id": "game_intensity_effects",
+   "label": "Game Intensity Effects",
+   "family": "Other",
+   "served": true,
+   "verdict": "unvalidated",
+   "provisional_kind": null,
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": null,
+   "headline_source": null,
+   "state": "no_eval",
+   "edge": {
+    "state": "no_eval",
+    "text": "no eval artifact on record"
+   },
+   "today": [],
+   "registered": "2026-10-14",
    "last_update": null,
    "events": 1,
    "freshness": {
@@ -40684,6 +40774,137 @@
    "event_id": "2026-10-09|team_run_projection|registered|70b1a0e6",
    "family": "Other",
    "label": "Team Run Projection",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-07-23",
+   "sort_date": "2026-07-23",
+   "model_id": "efv_v1",
+   "registry_ids": [
+    "xfv_hitter",
+    "xfv_pitcher"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "eFV v1, S-XLINE Statcast measurement layer (gate docs/efv-2026-07-23/GATES.md): AAA stat lines from 2023 on were blended toward Statcast expected stats before eFV v1 read them, hitters through capped xBA, xOBP and xSLG gap deltas and pitchers through a bounded ERA correction from the xwOBA against gap. Measured as the next season prediction change in Spearman rho: hitters +0.0253 (95% CI +0.0046 to +0.0449, 776 AAA season pairs), pitchers on the xSLG against arm +0.0511 (95% CI +0.0115 to +0.0907, 491 pairs); both sides passed the gate. eFV V2, served since 2026-09-25, reads no AAA stat line.",
+   "origin": "model upgrades panel",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/xfv_statcast_line_eval.json",
+    "key": "clause_m_measurement",
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "760fda41913d45a0576b4eb9ad1ede112928f099886780092eae513ae6fb54b7",
+   "event_id": "2026-07-23|efv_v1|note|760fda41",
+   "family": "PROSPX and eFV",
+   "label": "eFV v1",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-07-23",
+   "sort_date": "2026-07-23",
+   "model_id": "efv_v1",
+   "registry_ids": [
+    "xfv_hitter",
+    "xfv_pitcher"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "eFV v1, P1 V3 slot trust, a train and serve correctness fix for provisional grades (drafted, no pro track record yet): an unsigned current class pick with no recorded bonus priced its pedigree at slot value instead of losing that credit. Arm A passed its no harm backtest bar; in its gate battery 10 of 264 served provisional grades moved, all upward, the largest by 2.3 FV. Once a class's bonuses are recorded the branch changes nothing.",
+   "origin": "model upgrades panel",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/xfv_provisional_prior_eval.json",
+    "key": "v3.arms.ARM-A.a2_battery",
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "353aca38f9edf5c4d0847cc42ca48693196752715f32b65914b189e72b819ba3",
+   "event_id": "2026-07-23|efv_v1|note|353aca38",
+   "family": "PROSPX and eFV",
+   "label": "eFV v1",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-08-11",
+   "sort_date": "2026-08-11",
+   "model_id": "efv_v1",
+   "registry_ids": [
+    "xfv_hitter",
+    "xfv_pitcher"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "eFV v1, B-L6 denoised baseline fairness control (gate docs/efv-2026-08-09/DENOISED_BASELINE_GATE.md), measured 2026-08-11 on identical head to head rows: eFV v1 against the consensus as served read +0.03138 in Spearman rho (0.35027 against 0.31889). The floor it had to clear was 0.0327 under E_cond and 0.0353 under E_refit; the gap reached 0.960 and 0.889 of those floors and did not clear either, so it is recorded as unresolved. The same control rebuilt the consensus from measured per source precision; that arm is block primary_corrected_amendment_2 of the same artifact.",
+   "origin": "model upgrades panel",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/xfv_denoised_baseline_eval.json",
+    "key": "incumbent_rederived_today",
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "164016e3af5b3e9f672e9a6cdcdadce0b5f7281b1cc85741be78389b06822227",
+   "event_id": "2026-08-11|efv_v1|note|164016e3",
+   "family": "PROSPX and eFV",
+   "label": "eFV v1",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-14",
+   "sort_date": "2026-10-14",
+   "model_id": "game_intensity_effects",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as unvalidated",
+   "verdict": {
+    "before": null,
+    "after": "unvalidated"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "0e560052"
+   },
+   "state": {
+    "verdict": "unvalidated",
+    "eval_artifact": null,
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "810050a63c0f5aeb7e506020806ff33f8c867dd721ce10c6f4c5b7d7974fe28f",
+   "event_id": "2026-10-14|game_intensity_effects|registered|810050a6",
+   "family": "Other",
+   "label": "Game Intensity Effects",
    "served": true,
    "default_view": false
   }
