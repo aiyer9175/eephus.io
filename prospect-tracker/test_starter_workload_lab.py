@@ -43,6 +43,25 @@ def _load():
 lab = _load()
 
 
+def _pre_run_doc_bytes() -> bytes:
+    """docs/diamond-betting.md as it stood before the one run: the section's stage-1
+    result block (the heading through the paragraphs above the rule that closes the
+    section) taken out, in the file's own line endings. The doc-copy tests append a
+    fixture result to this text, never to the recorded one."""
+    raw = GATE_DOC.read_bytes()
+    crlf = b"\r\n" in raw
+    text = raw.decode("utf-8").replace("\r\n", "\n")
+    sec = lab.section_text(text)
+    start = text.index(sec)
+    m = re.search(r"^### Stage 1 result\b.*?(?=\n---\n)", sec, flags=re.M | re.S)
+    if m is not None:
+        a, b = start + m.start(), start + m.end()
+        text = text[:a].rstrip("\n") + "\n\n" + text[b:].lstrip("\n")
+    if crlf:
+        text = text.replace("\n", "\r\n")
+    return text.encode("utf-8")
+
+
 @pytest.fixture(scope="module")
 def synth():
     return lab.synthetic_tables()
@@ -243,8 +262,8 @@ def test_the_repo_epoch_gate_carries_its_step_z_entry():
 
 def test_a_second_run_is_refused_by_the_artifact_or_the_section(tmp_path, dry_art):
     art, out = dry_art
-    doc = GATE_DOC.read_text(encoding="utf-8")
-    lab.check_one_run(tmp_path / "absent.json", doc)          # the repo state passes
+    doc = _pre_run_doc_bytes().decode("utf-8")
+    lab.check_one_run(tmp_path / "absent.json", doc)          # the pre-run state passes
     with pytest.raises(lab.LabRefused, match="stage-1 block"):
         lab.check_one_run(out, doc)
     partial = tmp_path / "partial.json"
@@ -257,7 +276,7 @@ def test_a_second_run_is_refused_by_the_artifact_or_the_section(tmp_path, dry_ar
         lab.check_one_run(broken, doc)
     # the section's result heading alone also refuses
     copy_doc = tmp_path / "diamond-betting.md"
-    copy_doc.write_bytes(GATE_DOC.read_bytes())
+    copy_doc.write_bytes(_pre_run_doc_bytes())
     lab.append_result(copy_doc, art)
     text = copy_doc.read_text(encoding="utf-8")
     with pytest.raises(lab.LabRefused, match="Stage 1 result"):
@@ -270,7 +289,7 @@ def test_the_result_heading_lands_inside_the_section_with_the_files_endings(tmp_
                                                                            dry_art):
     art, _out = dry_art
     copy_doc = tmp_path / "diamond-betting.md"
-    raw = GATE_DOC.read_bytes()
+    raw = _pre_run_doc_bytes()
     copy_doc.write_bytes(raw)
     lab.append_result(copy_doc, art)
     new = copy_doc.read_bytes()
@@ -285,6 +304,35 @@ def test_the_result_heading_lands_inside_the_section_with_the_files_endings(tmp_
     old_len = len(raw.decode("utf-8").replace("\r\n", "\n"))
     assert len(new.decode("utf-8").replace("\r\n", "\n")) > old_len
     assert "\n## 6. The backtest" in new.decode("utf-8").replace("\r\n", "\n")
+
+
+def test_the_pre_run_doc_carries_no_stage_1_heading():
+    sec = lab.section_text(_pre_run_doc_bytes().decode("utf-8"))
+    assert not lab.STAGE1_HEADING_RE.search(sec)
+    assert "No number has been computed on this candidate." in sec
+
+
+def test_the_recorded_run_refuses_a_second_and_agrees_with_its_section_and_row():
+    """Once the one run is recorded, the repo itself refuses another, and the artifact,
+    the section's heading and the registry row say the same thing."""
+    if not lab.ARTIFACT.exists():
+        pytest.skip("stage 1 has not run")
+    art = json.loads(lab.ARTIFACT.read_text(encoding="utf-8"))
+    st = art["stage1"]
+    assert st["status"] == "complete" and st["verdict"] in lab.VERDICTS
+    with pytest.raises(lab.LabRefused):
+        lab.check_one_run(lab.ARTIFACT)
+    sec = lab.section_text()
+    heads = lab.STAGE1_HEADING_RE.findall(sec)
+    assert len(heads) == 1
+    assert lab.result_heading(art) in sec
+    assert lab.result_text(art) in sec.replace("\r\n", "\n")
+    assert st["parity_2025"]["ok"] is True
+    assert set(st["corpus_seasons"]) == {str(s) for s in lab.SEASONS}
+    import model_registry as mr
+    row = {m["model_id"]: m for m in mr.load()["models"]}[lab.REGISTRY_ROW]
+    assert row["eval_artifact"] == "data/starter_workload_eval.json"
+    assert row["verdict"] == ("provisional" if st["verdict"] == "PASS" else "deprecated")
 
 
 def test_a_dry_run_never_writes_under_data(tmp_path):

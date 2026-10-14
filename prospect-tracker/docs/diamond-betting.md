@@ -7968,6 +7968,53 @@ without outcomes; a change after that closes the section.
 
 **No number has been computed on this candidate.**
 
+### Stage 1 result (run 2026-10-14, once): PASS
+
+Written by tools/starter_workload_lab.py into data/starter_workload_eval.json. Priors frozen on the 2019 starts: k_b 2, k_o 120, k_l 300, k_c 2. Floor 0.037716 outs. Pooled 2024-2025 improvement MAE(A0) minus MAE(candidate) 0.524572 outs (2024 0.538075, 2025 0.511075), bootstrap lower bound 0.485501; pitches MAE of budget 9.92218 against 9.934056. T1 p 0.276362, T2 p 0.001499: credit reads "pitch rates"; nothing credits the opposing lineup's P/PA.
+
+**The attribution family and the wording it selects.** Holm, m = 2, one-sided: T2 (the
+candidate against C1) has the smaller p, 0.001499, read at 0.025, and passes; T1 (the
+candidate against D2) has p 0.276362, read at 0.05, and fails. The pooled 2024-2025
+improvements are 0.013662 outs against C1 and 0.00194 outs against D2. Under the
+pre-committed wording, with T2 passed, results copy and later references may credit
+pitch rates rather than "starts-only length over a 365-day window"; with T1 failed,
+nothing credits the opposing lineup's P/PA. Neither changes the verdict, and the stage-2
+candidate stays the one registered above, lineup term included.
+
+**Recorded with the result (2026-10-14, task Q10_04b).**
+
+- The run: once, on 2026-10-14, `python -u tools/starter_workload_lab.py --run`, its
+  stdout and stderr teed to the task's output directory before anything else ran. Before
+  it, the dry run on the synthetic fixture with nulls passed, as did a coverage preflight
+  that read game ids, dates and batter clubs only (no out, pitch or other label value):
+  every corpus game of the seven seasons was dated and had both clubs resolved. The 2025
+  parity reproduced the disclosed read (4,860 starts, 85.0 pitches per start) before any
+  2024 or 2025 start was scored.
+- Pooled 2024-2025 outs MAE on 9,718 starts over 4,859 games: A0 3.442445, the candidate
+  2.917873, D1 2.99348, D2 2.919813, C1 2.931535. Bias in outs: A0 +0.998374, the
+  candidate +0.284869. Per-season, April-May and opener blocks, the n = 0 counts and the
+  grid table are in the artifact.
+- The date: after 2026-10-11 and after the owner's PM-Q3 answer ("Run from 10-11",
+  DECISIONS_FOR_OWNER.md), so not an early read. Other sections recorded reads on
+  2026-10-14 (5k's result and the 5d decisions); the owner's 2026-10-14 instruction
+  waiving registered look days (EW3-5) covers this section's "never on another registered
+  look's date" clause, and it is recorded here so.
+- Neighbouring results recorded after this section committed, disclosed by verdict: 5c-B
+  `lineup_strength` FAIL and 5c-C `star_out` INDETERMINATE (both run 2026-10-08); 5d-C
+  decided at p = 1 without a read and 5d-A, 5d-B, 5d-D and 5d-E not read (2026-10-14);
+  5k-A14, 5k-A30 and 5k-B FAIL (2026-10-14). The run read none of them, and none reads a
+  starter's outs or pitches.
+- One read disclosed: the lab loads the daily WAR batting frame
+  (`.cache/war_daily/bat.parquet`) whole and keeps only each registered season's rows
+  for the club vote; that frame's 2026 season rows were loaded and discarded unused. No
+  2026 game, play or pitch was read, and nothing named in the stage-1 never-read list.
+- Registry row `starter_workload_xouts`: provisional (dark), eval artifact
+  data/starter_workload_eval.json. A stage-1 PASS licenses nothing served: no props or
+  price change, no `SERVE_WORKLOAD_PROPS` (it is added only with its flip, after 5l's
+  block and the stage-2 look), and no serving flag. The dark capture builder may now land
+  before Opening Day 2027 on the priors frozen here (k_b 2, k_o 120, k_l 300); the only
+  registered earlier display form is the fence, which is the owner's call.
+
 ---
 
 
