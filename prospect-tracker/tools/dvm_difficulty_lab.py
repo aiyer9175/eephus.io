@@ -50,8 +50,10 @@ grade rung (that would be a completion rate by rung, F-R4).
 THE FRAME RULES, ENFORCED HERE.
   F-R1  no read in list year 2020 or 2021 is loaded (EFV_V2_GATE R-LV) until the R-LV
         look record exists: excluded_list_years() is the switch, and RLV_LOOK_RECORD
-        (the commit that records that look) is None, so a pair with an endpoint in
-        either year cannot exist (Q-DVM-1 A).
+        (the commit that records that look) lifts it. Amendment A-2 of the gate
+        (2026-10-14) sets it to the R-LV read of 2026-10-08 (EFV_V2_GATE section 11,
+        data/_labs/efv_v3/efv_v3_confirm.json); a caller that passes rlv_record=None
+        still gets the exclusion (Q-DVM-1 A).
   F-R2  a debut-year preseason read of a player who debuted in 2025 or later (an R-VM
         input grade) is never loaded, and a slot whose end read would be one leaves the
         frame.
@@ -143,8 +145,14 @@ HORIZONS: tuple[int, ...] = (1, 2)
 #: R-LV (efv_vintage_frame.RESERVED_LV; parity pinned in the tests).
 RESERVED_LV: frozenset[int] = frozenset({2020, 2021})
 #: The 40-hex sha of the commit that records the R-LV look in EFV_V2_GATE.md. None until
-#: that look is recorded; while None, F-R1 holds (Q-DVM-1 A).
-RLV_LOOK_RECORD: str | None = None
+#: that look is recorded; while None, F-R1 holds (Q-DVM-1 A). Gate amendment A-2
+#: (2026-10-14): the R-LV read of 2026-10-08 under decision EW2-6, recorded in
+#: EFV_V2_GATE.md section 11 and data/_labs/efv_v3/efv_v3_confirm.json by this commit.
+RLV_LOOK_RECORD: str | None = "1c73c420ad68bc6a8061859c6e82757589ef20c6"
+#: Where amendment A-2 reads that record: EFV_V2_GATE.md section 11 names the artifact
+#: (its section 9 stays empty by section 11.2's own words), and the artifact exists.
+RLV_RECORD_SECTION = "11"
+RLV_RECORD_ARTIFACT = "data/_labs/efv_v3/efv_v3_confirm.json"
 #: R-VM (efv_vintage_frame.R_VM_FIRST_DEBUT_YEAR; parity pinned in the tests).
 R_VM_FIRST_DEBUT_YEAR = 2025
 #: The debut day a placeholder moves back to (efv_dataset.SEASON_START_MMDD).
@@ -1559,6 +1567,12 @@ VALIDATION_YEARS = {"FULL": tuple(range(2012, 2026)),
 #: Section 14: the clock.
 LOOK_EARLIEST_FULL = "2026-12-01"
 LOOK_EARLIEST_COMPLEMENT = "2027-01-31"
+#: Gate amendment A-1 (2026-10-14): the owner's decision EW3-5 waives registered look
+#: dates. From its date the FULL-frame look runs before LOOK_EARLIEST_FULL and is
+#: recorded as an OWNER-WAIVED EARLY READ. The COMPLEMENT date, the look days and every
+#: record precondition stand.
+OWNER_WAIVER: dict | None = {"decision": "EW3-5", "from": "2026-10-14",
+                             "waives": "LOOK_EARLIEST_FULL"}
 #: Registered look days (gate section 14, plan Part 8 8.B and Part 9): never a look here.
 #: 2026-12-01 is the eFV reserved read.
 LOOK_DAYS: frozenset[str] = frozenset({
@@ -2921,7 +2935,22 @@ def run_analysis(pairs: list[dict], *, frame_name: str, B: int = BOOT_B,
         B=B, seed=seed, log=log)
     ev["ratio"] = table["ratio"]
     ev["decision"] = ev["validation"]["decision"]["DV"]
+    ev["failed_arms"] = failed_arm_blocks(ev["validation"])
     return table, ev
+
+
+def failed_arm_blocks(validation: dict) -> dict:
+    """Section 13: every arm the decision rule does not pass, as a block of this eval
+    artifact (never a new eval file): its decision, point statistics and deltas."""
+    out = {}
+    for arm, d in sorted((validation.get("decision") or {}).items()):
+        if (d or {}).get("verdict") == "SHIP CANDIDATE":
+            continue
+        out[arm] = {"decision": d,
+                    "point": (validation.get("point") or {}).get(arm),
+                    "deltas": {k: v for k, v in (validation.get("deltas") or {}).items()
+                               if str(k).split("|")[0] == arm}}
+    return out
 
 
 def clean_json(obj):
@@ -3086,14 +3115,31 @@ def results_recorded(text: str | None, number: str) -> bool:
     return any(_DATED_ENTRY_RE.match(ln) for ln in body.splitlines())
 
 
+def rlv_record_in_doc(text: str | None, root: Path = ROOT) -> bool:
+    """The R-LV look record in EFV_V2_GATE.md: a dated entry in part 9, or (amendment
+    A-2) its section 11 naming the confirmation artifact, which exists on disk."""
+    if results_recorded(text, "9"):
+        return True
+    body = _section(text or "", RLV_RECORD_SECTION)
+    return (Path(RLV_RECORD_ARTIFACT).name in body
+            and (Path(root) / RLV_RECORD_ARTIFACT).exists())
+
+
+def early_read_waived(today: str, waiver: dict | None = OWNER_WAIVER) -> bool:
+    """Amendment A-1: True when the owner's waiver covers a FULL-frame look on `today`."""
+    return bool(waiver) and str(today)[:10] >= str(waiver.get("from") or "9999")
+
+
 def look_frame(today: str, *, eta_text: str | None, dvm_text: str | None,
                anchor_text: str | None, efv_v2_text: str | None,
-               rlv_record: str | None = RLV_LOOK_RECORD) -> str:
+               rlv_record: str | None = RLV_LOOK_RECORD,
+               waiver: dict | None = OWNER_WAIVER, root: Path = ROOT) -> str:
     """The clock of section 14: "FULL" or "COMPLEMENT", or ClockError. Never on a
     registered look day; only after the ETA record, this gate's registration and the
     PROSPECT_ANCHOR look record; FULL on or after 2026-12-01 when the R-LV record exists
-    (in EFV_V2_GATE part 9 AND as RLV_LOOK_RECORD, which lifts F-R1 in the frame);
-    COMPLEMENT on or after 2027-01-31 when it does not."""
+    (in EFV_V2_GATE AND as RLV_LOOK_RECORD, which lifts F-R1 in the frame), or earlier
+    under the owner's waiver (amendment A-1, an OWNER-WAIVED EARLY READ); COMPLEMENT on
+    or after 2027-01-31 when it does not."""
     today = str(today)[:10]
     if today in LOOK_DAYS:
         raise ClockError(f"{today} is a registered look day; no other look runs on it")
@@ -3101,13 +3147,13 @@ def look_frame(today: str, *, eta_text: str | None, dvm_text: str | None,
     if not results_recorded(anchor_text, "18"):
         raise ClockError(f"{ANCHOR_GATE_DOC} section 18 holds no look record; this look "
                          "waits for it on every path (gate section 14)")
-    rec_doc = results_recorded(efv_v2_text, "9")
+    rec_doc = rlv_record_in_doc(efv_v2_text, root)
     rec_code = excluded_list_years(rlv_record) != RESERVED_LV
     if rec_doc != rec_code:
-        raise ClockError("the R-LV look record in EFV_V2_GATE part 9 and RLV_LOOK_RECORD "
+        raise ClockError("the R-LV look record in EFV_V2_GATE and RLV_LOOK_RECORD "
                          "disagree; set the constant by a dated amendment first")
     if rec_doc:
-        if today < LOOK_EARLIEST_FULL:
+        if today < LOOK_EARLIEST_FULL and not early_read_waived(today, waiver):
             raise ClockError(f"the FULL-frame look opens {LOOK_EARLIEST_FULL}")
         return "FULL"
     if today < LOOK_EARLIEST_COMPLEMENT:
@@ -3116,13 +3162,16 @@ def look_frame(today: str, *, eta_text: str | None, dvm_text: str | None,
     return "COMPLEMENT"
 
 
+TENURE_VAL4 = "VAL_4 org calendar (dev_attribution, gate amendment A-3)"
+TENURE_FALLBACK = "fallback (gate section 7)"
+
+
 def tenure_source(root: Path = ROOT) -> str:
-    """P-1: the registered fallback, unless VAL_4's table exists (then this lab has no
-    reader for it yet, and the look stops for an amendment)."""
+    """P-1: VAL_4's org calendar when VAL_4 is committed (its design directory exists;
+    amendment A-3 adds the reader, val4_club_events), else the registered fallback."""
     if (Path(root) / VAL4_DIR).exists():
-        raise ClockError(f"{VAL4_DIR} exists: VAL_4's tenure table must be read (gate "
-                         "section 7); add its reader by a dated amendment before the look")
-    return "fallback (gate section 7)"
+        return TENURE_VAL4
+    return TENURE_FALLBACK
 
 
 def _process_lines() -> list[tuple[int, str]] | None:
@@ -3299,6 +3348,129 @@ def load_club_events(con: sqlite3.Connection, players: set, debut: dict, *,
     return dict(out)
 
 
+# ---------------------------------------------------------------------------
+# VAL_4's org calendar as the tenure split (gate section 7, P-1; amendment A-3)
+# ---------------------------------------------------------------------------
+
+#: The club code of an unaffiliated stretch in the tenure events. Its share is dropped
+#: after the split without renormalizing, so growth while unaffiliated credits nobody
+#: (dev_attribution step 3; the same rule as dvm_difficulty_serve.UNAFFILIATED).
+UNAFFILIATED = "__unaffiliated__"
+#: The store the season affiliation map (staff_units) is read from. The frozen store
+#: predates that table; it holds no grade, and its rows are pinned by a content hash at
+#: the look's start and end.
+LIVE_DB = ROOT / "prospects.db"
+
+
+def staff_units_map(db: Path = LIVE_DB) -> tuple[dict, str | None]:
+    """((team_id, season) -> club, sha256 of the rows read) through VAL_4's own loader;
+    ({}, None) when the table or the store is absent (VAL_4 then resolves by name)."""
+    import dev_attribution as DA  # noqa: PLC0415
+    if not Path(db).exists():
+        return {}, None
+    con = sqlite3.connect(f"file:{Path(db).as_posix()}?mode=ro", uri=True)
+    try:
+        try:
+            rows = sorted(con.execute(
+                "SELECT team_id, season, org_code FROM staff_units WHERE team_id IS NOT "
+                "NULL AND org_code IS NOT NULL").fetchall())
+        except sqlite3.OperationalError:
+            return {}, None
+        team_org = DA.load_team_org_map(con)
+    finally:
+        con.close()
+    digest = hashlib.sha256(json.dumps(rows).encode("utf-8")).hexdigest()
+    return team_org, digest
+
+
+def val4_club_events(con: sqlite3.Connection, players: set, debut: dict, *,
+                     excluded: frozenset[int], today: str, team_org: dict) -> tuple[dict, dict]:
+    """({player_key: [(day, club, "read")]}, diagnostics) from VAL_4's org calendar,
+    dev_attribution.build on the store `con` reads: each tenure opens with its club on
+    its start day, an unaffiliated tenure with UNAFFILIATED. The build's inputs are the
+    store's own rows: the observations skip every read this lab never loads (F-R1 while
+    it holds, F-R2 always); the current club is the club on the player's latest list
+    read, the listed club the latest one on or before his debut; trades rows are
+    de-duplicated on (date, from, to). A player VAL_4 gives no calendar keeps the
+    fallback events of pairs_from_frame."""
+    import dev_attribution as DA  # noqa: PLC0415
+    obs: dict = defaultdict(lambda: defaultdict(dict))
+    last_any: dict = {}
+    last_before: dict = {}
+    for pk, src, d, fv, org, status, label in con.execute(
+            "SELECT player_key, source, snapshot_date, fv, org, status, interval_label "
+            "FROM snapshots WHERE snapshot_date IS NOT NULL ORDER BY snapshot_date, id"):
+        if pk not in players or not d:
+            continue
+        day = str(d)[:10]
+        V = int(day[:4])
+        lo, hi = window_bounds(V, None)
+        if lo <= day < hi and (V in excluded or is_rvm_input(V, debut.get(pk))):
+            continue
+        if src in DA.GROWTH_SOURCES and status == "active" and fv is not None:
+            obs[pk][src][day] = (day, float(fv), None)
+        if org and _is_list_label(label):
+            last_any[pk] = (day, org, status)
+            dd = debut.get(pk)
+            if not dd or day <= str(dd)[:10]:
+                last_before[pk] = org
+    observations = {pk: {s: [by_d[k] for k in sorted(by_d)] for s, by_d in srcs.items()}
+                    for pk, srcs in obs.items()}
+    trades: dict = defaultdict(list)
+    seen: set = set()
+    for pk, d, f, to in con.execute(
+            "SELECT player_key, trade_date, from_org, to_org FROM trades "
+            "ORDER BY trade_date, id"):
+        if pk not in players or not d:
+            continue
+        key = (pk, str(d)[:10], f, to)
+        if key in seen:
+            continue
+        seen.add(key)
+        trades[pk].append({"trade_date": str(d)[:10], "from_org": f, "to_org": to})
+    year_open = f"{str(today)[:4]}-01-01"
+    infos = []
+    for pk in sorted(players):
+        dd = debut.get(pk)
+        la = last_any.get(pk)
+        if dd and str(dd)[:10] <= str(today)[:10]:
+            status = "debuted"
+        elif la and la[2] == "active" and la[0] >= year_open:
+            status = "active"
+        else:
+            status = "inactive"
+        infos.append(DA.PlayerInfo(pk, la[1] if la else None, status,
+                                   str(dd)[:10] if dd else None, last_before.get(pk)))
+    attr = DA.build(infos, trades_by_player=dict(trades), acquisitions={},
+                    observations=observations,
+                    transactions=DA.load_transactions(con, set(players)),
+                    team_org=team_org, today=str(today)[:10], value_fn=value_of)
+    out: dict = {}
+    for pk in players:
+        evs = [(str(t.start)[:10], t.org or UNAFFILIATED, "read")
+               for t in attr.calendar(pk) or []]
+        if evs:
+            out[pk] = evs
+    diag = dict(attr.diagnostics)
+    diag["players_with_calendar"] = len(out)
+    return out, diag
+
+
+def val4_clean_tau(pairs: list[dict], clubs: set) -> Counter:
+    """Drop the unaffiliated share and any code outside the 30 clubs from every pair's
+    tau, without renormalizing (amendment A-3); returns a census of what was dropped."""
+    census: Counter = Counter()
+    for p in pairs:
+        tau = p.get("tau") or {}
+        kept = {c: float(s) for c, s in tau.items() if c in clubs and s > 0}
+        if len(kept) != len(tau):
+            census["pairs_with_dropped_share"] += 1
+        if not kept:
+            census["pairs_with_no_club"] += 1
+        p["tau"] = kept
+    return census
+
+
 def _counts_of(frame: dict) -> dict:
     s = summarize(frame)
     return {"start_reads": s["clustering"]["start_reads"],
@@ -3348,7 +3520,11 @@ def _look(task_dir: Path, *, today: str | None, data_dir: Path, B: int,
     if busy:
         raise ClockError("a pipeline, nightly job or test session is running: "
                          + "; ".join(busy))
+    early = frame_name == "FULL" and today < LOOK_EARLIEST_FULL
     print(f"FRAME: {frame_name}")
+    if early:
+        print(f"OWNER-WAIVED EARLY READ ({OWNER_WAIVER['decision']}): the look runs {today}, "
+              f"before its registered {LOOK_EARLIEST_FULL} (gate amendment A-1)")
     log = _probe_logger(task_dir)
     pins_start = input_pins(data_dir)
     db = CACHE_DIR / FROZEN_DB
@@ -3375,6 +3551,13 @@ def _look(task_dir: Path, *, today: str | None, data_dir: Path, B: int,
             print("STOPPED: counts differ by more than 1 percent; OWNER_QUESTION.md written")
             return 3
     db_sha = sha256_file(db)
+    frozen_day = None
+    receipt_p = db.parent / FROZEN_RECEIPT
+    if db.name == FROZEN_DB and receipt_p.exists():
+        frozen_day = (json.loads(receipt_p.read_text(encoding="utf-8")).get("frozen_at")
+                      or "")[:10] or None
+    team_org, units_sha = (staff_units_map() if tenure == TENURE_VAL4 else ({}, None))
+    print(f"tenure source: {tenure}; staff_units sha256 {units_sha}")
     marker.parent.mkdir(parents=True, exist_ok=True)
     marker.write_text(json.dumps({"started": _now(), "frame": frame_name}), encoding="utf-8")
     try:
@@ -3386,8 +3569,15 @@ def _look(task_dir: Path, *, today: str | None, data_dir: Path, B: int,
             frame = build_frame(con, debut=debut)
             counts = summarize(frame)
             players = {k[1] for k in frame["starts"]}
-            events = load_club_events(con, players, debut, excluded=frame["excluded"],
-                                      canon=canonical_org)
+            val4_diag = None
+            if tenure == TENURE_VAL4:
+                events, val4_diag = val4_club_events(
+                    con, players, debut, excluded=frame["excluded"],
+                    today=frozen_day or today, team_org=team_org)
+                log("val4_calendar", **val4_diag)
+            else:
+                events = load_club_events(con, players, debut, excluded=frame["excluded"],
+                                          canon=canonical_org)
         finally:
             con.close()
         ids = {st["person"] for st in frame["starts"].values() if st.get("person")}
@@ -3402,17 +3592,29 @@ def _look(task_dir: Path, *, today: str | None, data_dir: Path, B: int,
 
         pairs, census = pairs_from_frame(frame, debut=debut, club_events=events,
                                          canon=canonical_org, active_in=active_in)
-        log("pairs", n=len(pairs), census=dict(census))
+        tau_census = None
+        if tenure == TENURE_VAL4:
+            import dev_attribution as DA  # noqa: PLC0415
+            tau_census = dict(val4_clean_tau(pairs, set(DA._mlb30())))
+        log("pairs", n=len(pairs), census=dict(census), tau_census=tau_census)
         table, ev = run_analysis(pairs, frame_name=frame_name, B=B, perms=perms, log=log)
         pins_end = input_pins(data_dir)
-        if pins_end != pins_start or sha256_file(db) != db_sha:
+        units_end = staff_units_map()[1] if tenure == TENURE_VAL4 else None
+        if (pins_end != pins_start or sha256_file(db) != db_sha
+                or units_end != units_sha):
             raise RuntimeError("an input moved during the look (section 15)")
         receipt = {"generated_at": _now(), "today": today, "frame": frame_name,
                    "frozen_db": str(db), "frozen_db_sha256": db_sha,
                    "tenure_source": tenure, "frame_counts": _counts_of(frame),
                    "dvm1_counts_clustering": counts["clustering"],
                    "pair_census": dict(census),
-                   "excluded_list_years": sorted(frame["excluded"])}
+                   "excluded_list_years": sorted(frame["excluded"]),
+                   "owner_waived_early_read": early,
+                   "rlv_look_record": RLV_LOOK_RECORD if frame_name == "FULL" else None,
+                   "val4": ({"calendar": val4_diag, "tau_census": tau_census,
+                             "calendar_as_of": frozen_day or today,
+                             "staff_units_sha256": units_sha}
+                            if tenure == TENURE_VAL4 else None)}
         table["frame_receipt"] = receipt
         table["input_pins"] = {"start": pins_start, "end": pins_end}
         ev["receipt"] = receipt

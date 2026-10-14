@@ -102,6 +102,9 @@ def fixture_db(path: Path) -> sqlite3.Connection:
 
 
 def build(con, **kw):
+    # The reserved-list rule is tested with no R-LV record (gate amendment A-2 set the
+    # module's record; a caller passing None still gets the exclusion).
+    kw.setdefault("rlv_record", None)
     with mock.patch.object(L, "MIN_LIST_READS", 1):
         return L.build_frame(con, debut={"beta": "2025-06-10"},
                              eta_text=kw.pop("eta_text", VERDICT_TEXT),
@@ -121,9 +124,10 @@ class FixtureCase(unittest.TestCase):
 class ReservedListVintages(FixtureCase):
     """F-R1, Q-DVM-1 A: no 2020 or 2021 endpoint before the R-LV look record."""
 
-    def test_record_absent_at_head(self):
-        self.assertIsNone(L.RLV_LOOK_RECORD)
-        self.assertEqual(L.excluded_list_years(), frozenset({2020, 2021}))
+    def test_record_set_by_amendment_a2(self):
+        self.assertEqual(L.RLV_LOOK_RECORD, "1c73c420ad68bc6a8061859c6e82757589ef20c6")
+        self.assertEqual(L.excluded_list_years(), frozenset())
+        self.assertEqual(L.excluded_list_years(None), frozenset({2020, 2021}))
         self.assertEqual(L.excluded_list_years("not-a-sha"), frozenset({2020, 2021}))
 
     def test_no_reserved_read_or_endpoint(self):

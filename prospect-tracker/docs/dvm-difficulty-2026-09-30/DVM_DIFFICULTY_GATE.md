@@ -422,8 +422,83 @@ served build (DVM-5), with the blast radius published and "farm letters move" sa
 
 ## 17. Amendments
 
-None. An amendment is dated, filed before the look, names what moved on disk since this
+An amendment is dated, filed before the look, names what moved on disk since this
 commit, and changes no threshold, frame, family, seed, margin or criterion.
+
+### 2026-10-14: amendment before the look (DVM-4, Q10_15)
+
+Filed before the look, in its own commit; no grade difference, growth statistic or rate
+had been computed on real data. It changes no threshold, frame rule, family, seed, margin
+or criterion of sections 0 to 16.
+
+What moved on disk since the registration (`f4742b6a`): the DVM-3 lab (`b91cc49f`, fixtures
+only); VAL_4, the development attribution (`dev_attribution.py` and
+`docs/farm-attribution-2026-09-25/`, `6cb6af6b`); the DVM-5 served build behind
+`storage.DVM_DIFFICULTY_ARM = None` (`028c15f2`); the R-LV read of 2026-10-08 under owner
+decision EW2-6 (`1c73c420`); the PROSPECT_ANCHOR look, recorded 2026-10-14 under section 18
+of `docs/PROSPECT_ANCHOR_GATE.md` (`61d87873`); and owner decision EW3-5 of 2026-10-14.
+
+**A-1, the clock.** Owner decision EW3-5 (2026-10-14, verbatim): "Fuck the registered look
+days and waiting, we don't have to wait for anything. Let's do everything today". The look
+runs on 2026-10-14, before section 14's 2026-12-01, and is recorded as an OWNER-WAIVED EARLY
+READ. The lab carries the waiver as `OWNER_WAIVER` (decision EW3-5, from 2026-10-14) and it
+lifts only the FULL frame's earliest date. The registered look days, the COMPLEMENT date,
+the one-look rule and every record precondition (the ETA record, this registration, the
+PROSPECT_ANCHOR record on every path) stand.
+
+**A-2, the R-LV record.** The R-LV read ran once on 2026-10-08 (`tools/efv_v3_backtest.py
+--confirm`, commit `1c73c420ad68bc6a8061859c6e82757589ef20c6`). `docs/efv-v2/EFV_V2_GATE.md`
+section 11.2 keeps its part 9 empty by its own words and names
+`data/_labs/efv_v3/efv_v3_confirm.json` as where the reserved numbers live. That record is
+this gate's R-LV look record (the orchestrator's re-arm of 2026-10-14 says so). The lab sets
+`RLV_LOOK_RECORD` to that commit and reads the record as a dated entry in part 9 or as
+section 11 naming the artifact while the artifact exists; the two must agree, as before.
+The look therefore reads the FULL frame (list years 2020 and 2021 included; the validation
+years of section 13's FULL row). F-R2 holds unchanged; F-R4 and F-R5 are untouched.
+
+**A-3, the tenure source (section 7, P-1).** VAL_4 is committed, so section 7 reads VAL_4's
+table, not the fallback. The reader (`val4_club_events`) runs `dev_attribution.build` on the
+frozen store with inputs taken from that store: the observations skip every read this lab
+never loads (F-R1 while it holds, F-R2 always); a player's current club is the club on his
+latest list read and his listed club the latest one on or before his debut; trades rows are
+de-duplicated on (date, from, to); acquisitions are not read (the signing hint moves VAL_4's
+shares, never its calendar). The calendar is taken as of the freeze date, 2026-10-03. The
+frozen store predates the season affiliation table (`staff_units`), which holds no grade;
+it is read from the lane's own store and pinned by a sha256 of its rows at the look's start
+and end. Each tenure opens its club as an event on its start day. The share of an
+unaffiliated stretch, and of any code outside the 30 clubs, is dropped after the split
+without renormalizing, so growth while unaffiliated credits nobody (VAL_4 step 3, the rule
+`dvm_difficulty_serve.clean_tau` serves). A player VAL_4 places nowhere keeps the fallback
+events. The receipt names the source and carries the calendar's diagnostics and a census
+of the dropped shares.
+
+**A-4, readings of open phrases (the DVM-3 build, `b91cc49f`), recorded before the read.**
+1. A graduate's end grade is his last same-source preseason read before the debut (the
+   start read when there is none); a graduate whose last read is an R-VM input leaves the
+   frame (F-R2).
+2. "His club" in the drop rule is the club on the day the end window closes, read from the
+   tenure events; if the source printed no grade for that club, the lowest grade on that
+   source's list is used.
+3. Exited means no affiliated season in both V+h-1 and V+h; an unresolved identity is coded
+   dropped, which gives the same grade.
+4. Cell means and spreads are weighted by omega; tau2_u and tau2_org use the sample
+   variance across cells or clubs.
+5. A source-year the fit never saw takes that source's mean a.
+6. A missing age_rel enters as 0 with the agemiss flag; a missing level band is
+   "unresolved".
+7. H2's penalty is lam/2 x the sum of squared coefficients, lam = 1.0.
+8. V-P1's raw target is the club's tenure- and omega-weighted MEAN value growth (C0 itself
+   stays a sum; owner question DVM-LAB-1, default A).
+9. Leave-three-years-out drops any row with an endpoint in Y-1, Y or Y+1.
+10. V-S at Y+1 is scored by the Y+1 expectation.
+11. V-C "pairs" is the sum of tenure x omega.
+12. A resolved V-P1 win needs a two-sided bootstrap p below 0.05 and a positive delta.
+13. Theta_total averages over the rungs both groups hold.
+14. The permutation is per row, within (source, year, rung).
+
+**A-5, the failed-arm blocks.** `data/dvm_difficulty_eval.json` carries `failed_arms`: every
+validation arm (DV, D0) the section 13 rule does not pass, with its decision, point
+statistics and deltas against C0. No other eval file is written.
 
 ---
 
