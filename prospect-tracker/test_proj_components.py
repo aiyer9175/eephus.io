@@ -750,3 +750,49 @@ def test_params_json_loads_and_its_hash_matches_the_gate_record():
     assert params["R_relief"] > 0
     receipt = json.loads((PC.PARAMS_DIR / "dev_receipt.json").read_text(encoding="utf-8"))
     assert receipt["params_sha256"] == recorded[-1]
+
+
+VERDICT_HEADS = ("bsr", "fld_pos", "gmli_relief", "ra9_gap")
+EXPOSURE_HEADS = ("pa", "ip")
+
+
+def test_the_look_artifact_is_the_one_holdout_read_under_the_frozen_params():
+    """PJ_5_COMPONENT_LOOK: data/proj_components_eval.json carries the one
+    holdout block, on the registered cells, under the params the gate
+    records, with a verdict per head from the registered enum, one section 9
+    row per head, no WAR key among its components, and the registry row
+    pointed at it as provisional (gate section 5)."""
+    art_path = ROOT / "data" / "proj_components_eval.json"
+    assert art_path.exists(), "the PJ-C look artifact is missing"
+    art = json.loads(art_path.read_text(encoding="utf-8"))
+    doc = (ROOT / "docs" / "PROJ_COMPONENTS_GATE.md").read_text(encoding="utf-8")
+    recorded = re.findall(r"DEV frozen \d{4}-\d{2}-\d{2} at [0-9a-f]{7,40}, params sha256 ([0-9a-f]{64})", doc)
+    assert art["params_sha256"] == recorded[-1]
+    assert art["params_sha256"] == PC.params_hash(PC.load_params())
+    assert art["dry_run"] is False and art.get("generated_at")
+    hold = art["holdout"]
+    assert hold["bases"] == [2022, 2023, 2024]
+    assert hold["cells"] == [[2022, 1], [2022, 2], [2022, 3], [2022, 4],
+                             [2023, 1], [2023, 2], [2023, 3], [2024, 1], [2024, 2]]
+    assert hold["label_seasons"] == [2022, 2023, 2024, 2025]
+    assert "war" not in {str(k).lower() for k in hold["components"]}
+    for head in VERDICT_HEADS:
+        v = art["verdicts"][head]
+        assert v["verdict"] in {"PASS", "FAIL", "UNDERPOWERED"}
+        assert f"| {v['verdict']} ({v['label']}) |" in doc, head
+    for head in EXPOSURE_HEADS:
+        v = art["exposure_test"][head]
+        assert v["verdict"] in {"PASS", "FAIL"}
+        assert f"| {v['verdict']} ({v['label']}) |" in doc, head
+    t = art["gap_tripwire"]
+    assert t["threshold_abs_war"] == 0.30
+    assert t["blocks_flip"] == (abs(t["pooled_mean_gap_war"]) > 0.30)
+    # the DEV block is PJ_4's receipt, carried in unchanged
+    receipt = json.loads((PC.PARAMS_DIR / "dev_receipt.json").read_text(encoding="utf-8"))
+    assert art["dev"]["params_sha256"] == receipt["params_sha256"]
+    assert art["dev"]["mde95"] == receipt["mde95"]
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    row = next(m for m in reg["models"] if m["model_id"] == "proj_components")
+    assert row["eval_artifact"] == "data/proj_components_eval.json"
+    assert row["verdict"] == "provisional"
+    assert f"LOOK {art['look_date']} (PJ_5_COMPONENT_LOOK)" in row["notes"]
