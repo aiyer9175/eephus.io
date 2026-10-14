@@ -500,6 +500,22 @@ of the dropped shares.
 validation arm (DV, D0) the section 13 rule does not pass, with its decision, point
 statistics and deltas against C0. No other eval file is written.
 
+### 2026-10-14: second amendment before the look (DVM-4, Q10_15)
+
+Filed before the look, after the first amendment; still no growth computed on real data.
+It changes no threshold, frame rule, family, seed, margin or criterion.
+
+**A-6, the idle check.** Section 14 keeps the look away from a running pipeline, nightly
+job or test session. The lab read that as any process whose command line holds "pytest",
+"nightly" or "run_monthly", which also caught other sessions' shell wrappers (`bash -c`,
+`powershell -Command`) whose text only mentions the word, for example a process listing
+that greps for "pytest" before a fetch. A wrapper's real work shows in the listing as its
+own process, so a wrapper is no longer counted; a real test session, pipeline or a script
+run by a shell without `-c` still is.
+
+**A-7, artifact dates.** Both artifacts carry a top-level `generated_at` (the receipt's),
+so the model registry ages the eval artifact by its own stamp.
+
 ---
 
 ## 18. Results

@@ -651,6 +651,18 @@ class LookRefusals(unittest.TestCase):
         with mock.patch.object(L, "_process_lines", return_value=None):
             self.assertEqual(L.busy_processes(), ["the process listing failed"])
 
+    def test_shell_wrappers_are_not_busy(self):
+        """Amendment A-6: a wrapper that only mentions a token is not a session."""
+        lines = [(11, '"C:\\Program Files\\Git\\bin\\bash.exe" -c "tasklist | grep -i pytest; '
+                      'python tools/fetch_x.py"'),
+                 (12, "powershell -NoProfile -Command \"Get-Process | ? pytest\""),
+                 (13, "/usr/bin/bash -c 'python -m pytest -q'"),
+                 (14, "C:\\py\\python.exe -m pytest -q t.py"),
+                 (15, '"C:\\Program Files\\Git\\usr\\bin\\timeout.exe" 1800 python -m pytest'),
+                 (16, "bash deploy/nightly-build.sh")]
+        self.assertEqual([b.split(":")[0] for b in L.busy_processes(lines)],
+                         ["14", "15", "16"])
+
     def test_tenure_source(self):
         self.assertEqual(L.tenure_source(self.root), "fallback (gate section 7)")
         (self.root / L.VAL4_DIR).mkdir(parents=True)
@@ -679,6 +691,7 @@ class DryRun(unittest.TestCase):
         self.assertEqual(ev["h1"]["families"]["12m|direct"]["size"], 39)
         self.assertEqual(ev["h2"]["family_size"], 8)
         self.assertIn(ev["decision"]["verdict"], ("SHIP CANDIDATE", "NO SHIP"))
+        self.assertTrue(ev["generated_at"] and table["generated_at"])  # A-7
         # section 13: a failed arm is a block of the eval artifact, never a new file
         self.assertEqual(set(ev["failed_arms"]),
                          {a for a, d in ev["validation"]["decision"].items()

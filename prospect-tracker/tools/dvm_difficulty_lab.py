@@ -3091,6 +3091,8 @@ def run_dry(out_dir: Path, *, B: int = 40, perms: int = 10, players: int = 400) 
     table, ev = run_analysis(pairs, frame_name="COMPLEMENT", B=B, perms=perms, log=log)
     table["receipt"] = {"generated_at": _now(), "fixture": True, "pairs": len(pairs)}
     ev["receipt"] = {"generated_at": _now(), "fixture": True}
+    table = {"generated_at": table["receipt"]["generated_at"], **table}
+    ev = {"generated_at": ev["receipt"]["generated_at"], **ev}
     (out_dir / TABLE_ARTIFACT).write_text(
         json.dumps(clean_json(table), indent=1, allow_nan=False), encoding="utf-8")
     (out_dir / EVAL_ARTIFACT).write_text(
@@ -3207,7 +3209,18 @@ def busy_processes(lines: list[tuple[int, str]] | None = None) -> list[str]:
         return ["the process listing failed"]
     skip = {os.getpid(), os.getppid()}
     return [f"{pid}: {cmd[:120]}" for pid, cmd in lines
-            if pid not in skip and any(t in cmd.lower() for t in BUSY_TOKENS)]
+            if pid not in skip and not _SHELL_WRAPPER_RE.match(cmd or "")
+            and any(t in cmd.lower() for t in BUSY_TOKENS)]
+
+
+#: Gate amendment A-6 (2026-10-14): a shell wrapper (bash -c, sh -c, powershell
+#: -Command) only names the command it runs, which shows in the listing as its own
+#: process; a wrapper whose text merely mentions a token (a tasklist grep for "pytest")
+#: is not a pipeline or a test session. A script run by a shell without -c still counts.
+_SHELL_WRAPPER_RE = re.compile(
+    r'^\s*(?:"(?:[^"]*[\\/])?(?:bash|sh|powershell|pwsh)(?:\.exe)?"'
+    r'|(?:[^"\s]*[\\/])?(?:bash|sh|powershell|pwsh)(?:\.exe)?)'
+    r'\s+(?:-NoProfile\s+)?-(?:c|Command)\b', re.I)
 
 
 def stored_look(data_dir: Path = DATA_DIR) -> dict | None:
@@ -3618,6 +3631,9 @@ def _look(task_dir: Path, *, today: str | None, data_dir: Path, B: int,
         table["frame_receipt"] = receipt
         table["input_pins"] = {"start": pins_start, "end": pins_end}
         ev["receipt"] = receipt
+        # A-7: each artifact dates itself at the top level (model_registry freshness).
+        table = {"generated_at": receipt["generated_at"], **table}
+        ev = {"generated_at": receipt["generated_at"], **ev}
         (Path(data_dir) / TABLE_ARTIFACT).write_text(
             json.dumps(clean_json(table), indent=1, allow_nan=False), encoding="utf-8")
         (Path(data_dir) / EVAL_ARTIFACT).write_text(
