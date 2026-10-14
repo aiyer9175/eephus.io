@@ -1725,7 +1725,7 @@
       chip("Model", pct(p.model_prob)) + chip("Market fair", pct(p.market_fair_prob)) +
       chip("Edge", signed(p.edge * 100, 1) + "%") +
       chip("EV / unit", signed(p.ev_per_unit, 3)) + "</div>" +
-      watchBits + caveat + unitLine(p, m) + dugoutBlock(p.game_pk) + "</div>";
+      watchBits + caveat + unitLine(p, m) + ixBlock(pastGame) + dugoutBlock(p.game_pk) + "</div>";
   }
 
   // AN EMPTY BOARD IS A MEASUREMENT, NOT AN OUTAGE, and it has to read as one.
@@ -3510,6 +3510,35 @@
     return (mins % 60 === 0) ? (mins / 60) + "h" : mins + " min";
   }
 
+  // ---- Game intensity, beside the price and in none of it ----
+  // Rendered from S.data.intensity only, a block the server builds behind its own
+  // flag (off until the fWAR epoch step Z; no payload carries it before then).
+  // Every sentence comes from the payload. Games not yet started only: the chip is
+  // never drawn on a game whose first pitch has passed on the reader clock, whose
+  // status is not a pregame status, or that has no card on this board to read a
+  // clock from. Neutral ink, no tier class, no sign colour: beside a price the band
+  // is a description, not a signal. A closed <details> beside the Dugout block.
+  var IX_PREGAME = { Preview: 1, Scheduled: 1, "Pre-Game": 1 };
+  function ixPregame(b) {
+    if (!b || gameStarted(b)) return false;
+    return b.status == null || IX_PREGAME[b.status] === 1;
+  }
+  function ixBlock(b) {
+    var ctx = S.data && S.data.intensity;
+    if (!ctx || ctx.status !== "built" || !ixPregame(b)) return "";
+    var g = ctx.games && ctx.games[String(b.game_pk)];
+    if (!g) return "";
+    var labels = (g.labels || []).map(esc).join(" &middot; ");
+    return '<details class="bt-ix"><summary class="bt-details-sum bt-ix-sum">' +
+      '<span class="bt-ix-chip">' + esc(g.chip) + "</span> " + esc(ctx.summary) +
+      "</summary>" + '<div class="bt-ix-body">' +
+      '<p class="bt-ix-np">' + esc(ctx.body) + " " + esc(ctx.not_priced_sentence || "") + "</p>" +
+      '<p class="bt-ix-line">' + esc(g.stakes_line) + "</p>" +
+      (labels ? '<p class="bt-ix-labels">' + labels + "</p>" : "") +
+      '<p class="bt-dugout-fine">' + esc(ctx.talent_note || "") + "</p>" +
+      "</div></details>";
+  }
+
   // The postseason label, read off a card, a slot or a record row. Empty for a
   // regular-season row, which carries no game_type at all.
   function postseasonLabel(r) {
@@ -3577,7 +3606,7 @@
 
     return '<div class="bt-game">' + hd + probs + sp +
       '<div class="bt-markets">' + blocks.join("") + "</div>" + devigPanel(b) +
-      dugoutBlock(b.game_pk) + "</div>";
+      ixBlock(b) + dugoutBlock(b.game_pk) + "</div>";
   }
 
   // WHICH BOOK SET THE DENOMINATOR OF EVERY EDGE IN THIS GAME. One book's
@@ -4862,6 +4891,14 @@
     ".bt-dugout-src{font-size:11px;color:var(--text-tertiary);margin-top:6px}",
     ".bt-dugout-link{display:inline-block;margin-top:6px;font-size:12px}",
     ".bt-dugout-dark{border-left-color:var(--border,#333)}",
+    // ---- Game intensity: the same rule, site tokens only, no signal colour ----
+    ".bt-ix{border-top:1px dashed var(--border-light,#222);margin-top:8px;padding-top:4px}",
+    ".bt-ix-sum{font:700 11px/1.3 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;padding:6px 0}",
+    ".bt-ix-chip{display:inline-block;border:1px solid var(--border,#333);padding:1px 6px;margin-right:4px;color:var(--text-primary);text-transform:none;letter-spacing:0;white-space:nowrap}",
+    ".bt-ix-body{padding:4px 2px 6px;font-size:12px;color:var(--text-secondary)}",
+    ".bt-ix-np{color:var(--text-primary);margin:4px 0 8px}",
+    ".bt-ix-line{margin:4px 0;color:var(--text-primary)}",
+    ".bt-ix-labels{margin:4px 0;color:var(--text-secondary);overflow-wrap:anywhere}",
     // ---- display pass 2026-10-07 -------------------------------------------
     // QREA07: a focused tag shows its own sentence under itself (tab or tap).
     ".bt-tipped{position:relative;cursor:help}",

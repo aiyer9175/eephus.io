@@ -97,6 +97,7 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+import betting_intensity as bix
 import fantasy_export as fe
 import fantasy_schedule as fsched
 
@@ -1666,6 +1667,12 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                     "hit_matchup_clamp": list(_HIT_MULT_CLAMP),
                     "allow_matchup_clamp": list(fe.MATCHUP_CLAMP)},
     })
+    # GAME INTENSITY on the slate cards (owner answer INT-A3): the betting chip's
+    # own function on the draftable games, with the DFS copy (clinched and
+    # eliminated labels as lineup context). Behind SHOW_INTENSITY_CHIP (off, so no
+    # key is added); a description of the game that no projection reads.
+    if bix.SHOW_INTENSITY_CHIP:
+        payload["intensity"] = bix.build_block(slate_games, day, surface="dfs")
     if not priced_rows:
         # Nothing PRICED. A board that priced rows and then lost every one of
         # them to the roster filter is not this sentence (they all had a
