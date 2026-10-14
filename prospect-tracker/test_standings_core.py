@@ -811,7 +811,13 @@ def test_validator_reconciles_to_the_saved_response():
 
 def test_validator_t12_on_a_copied_odds_block():
     f = season_file("2026")
-    f["ours"] = {"clubs": {"TBR": {"p_div": 1.0, "p_post": 1.0, "p_bye": 1.0, "p_pennant": 0.3, "p_ws": 0.1}}}
+    pcts = {"divisionPct": 0.0, "playoffPct": 0.0, "byePct": 0.0, "pennantPct": 0.0, "wsPct": 0.0}
+    tbr = {"divisionPct": 1.0, "playoffPct": 1.0, "byePct": 1.0, "pennantPct": 0.3, "wsPct": 0.1}
+    fut = {"season": f["season"], "generated_at": "2026-10-02T05:31:18+00:00", "regular_season_end": "2026-09-27",
+           "clubs": [dict({"team": r["code"]}, **(tbr if r["code"] == "TBR" else pcts)) for r in f["rows"]]}
+    reg = [{"model_id": "playoff_odds_sim", "verdict": "provisional", "last_checked": None}]
+    f["ours"], f["registry"] = st.build_ours(f, futures=fut, registry=reg)
+    assert f["ours"]["clubs"]["TBR"]["p_ws"] == 0.1
     assert st.validate_standings(st.KIND_SEASON, f)["ok"]
     f["ours"]["clubs"]["TBR"]["p_ws"] = 0.4
     assert any(r == "T12" for r, m in st.validate_standings(st.KIND_SEASON, f)["refused"])
