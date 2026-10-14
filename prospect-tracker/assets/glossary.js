@@ -1125,6 +1125,25 @@
         },
         note: () => "Two legs, two answers: blending buys discrimination; the ordering gap sits inside the floor.",
       },
+      // /scouting/ (TL_22): a reference, not a forecaster. Dormant until a
+      // glossary entry carries this id and the payload is published (TL_23's
+      // flip); the receipt counts what the page prints and claims no accuracy.
+      scouting_reference: {
+        art: "/data/scouting_reference.json",
+        estimand: "No accuracy claim: published 20-80 tables transcribed with their section and source, plus our served value tables read at grades 20 to 80.",
+        baseline: "none; the measured tool cells carry the 2026 test's own verdicts",
+        read: j => {
+          const fv = (j.fv_tiers || {}).headline, tt = j.tool_tiers || {};
+          if (!fv || !Array.isArray(fv.rows) || !Array.isArray(tt.tables)) return null;
+          const v = tt.verdicts || {}, ids = Object.keys(v);
+          const pass = ids.filter(k => (v[k] || {}).verdict === "PASS").length;
+          return [
+            { label: "FV tiers printed, 20 to 80 by 5", mv: _rn(fv.rows.length, 0) },
+            { label: "Tool cells printed as measured (2026 test passes)", mv: _rn(pass, 0) + " of " + _rn(ids.length, 0) },
+            { label: "Number sources, each mapped to a registry row", mv: _rn((j.sources || []).length, 0) },
+          ];
+        },
+      },
       // ---- LOSSES, rendered honestly ---------------------------------------
       war_pa_plus: wrSpec("hit", "hitter (WAR/PA+)"),
       war_ip_plus_sp: wrSpec("SP", "starter (WAR/IP+)"),

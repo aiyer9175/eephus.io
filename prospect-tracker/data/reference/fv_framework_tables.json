@@ -1,0 +1,4668 @@
+{
+ "schema": 1,
+ "what": "A transcription of the published 20-80 framework tables the /scouting/ page cites, each cell exactly as docs/reference/FANGRAPHS_FV_FRAMEWORK.md prints it, with its framework section id and source id. A reference, not a model output: nothing here is fitted, scored or computed.",
+ "transcribed_from": "docs/reference/FANGRAPHS_FV_FRAMEWORK.md",
+ "transcribed_from_commit": "07abfc82",
+ "transcribed_by": "TL_22_SCOUTING_PAGE_BUILD_DARK",
+ "conventions": {
+  "blank": "A cell the framework marks (no term) or (blank) is blank in the source and is the empty string here.",
+  "n/a": "n/a stands for a dash placeholder in the source, as the framework records it.",
+  "values": "Strings exactly as printed, never re-rounded or re-typed."
+ },
+ "sources": {
+  "S1": {
+   "title": "The Details of Our New Prospect Valuation Methodology",
+   "author": "Ben Clemens",
+   "url": "https://blogs.fangraphs.com/the-details-of-our-new-prospect-valuation-methodology/",
+   "era": "2026"
+  },
+  "S2": {
+   "title": "The New FanGraphs Scouting Primer",
+   "author": "Eric Longenhagen and Kiley McDaniel",
+   "url": "https://blogs.fangraphs.com/the-new-fangraphs-scouting-primer/",
+   "era": "2018"
+  },
+  "S3": {
+   "title": "Scouting Explained: The 20-80 Scouting Scale",
+   "author": "Kiley McDaniel",
+   "url": "https://blogs.fangraphs.com/scouting-explained-the-20-80-scouting-scale/",
+   "era": "2014"
+  },
+  "W1": {
+   "title": "The 20-80 Scouting Scale, Translated to Wins",
+   "author": "Carson Cistulli",
+   "url": "https://blogs.fangraphs.com/the-20-80-scouting-scale-translated-to-wins/",
+   "era": "2013"
+  },
+  "W2": {
+   "title": "The 20-80 Scale, SABR Style",
+   "author": "Mark Smith",
+   "url": "https://blogs.fangraphs.com/the-20-80-scale-sabr-style/",
+   "era": "Feb 2013"
+  },
+  "W3": {
+   "title": "The 20-80 Scale, Saber Style (Again Yet Different)",
+   "author": "Mark Smith",
+   "url": "https://blogs.fangraphs.com/the-20-80-scale-saber-style-again-yet-different/",
+   "era": "Feb 2013"
+  },
+  "L1": {
+   "title": "Introducing an Updated Method for Prospect Valuation",
+   "author": "Ben Clemens",
+   "url": "https://blogs.fangraphs.com/introducing-an-updated-method-for-prospect-valuation/",
+   "era": "2026"
+  },
+  "L2": {
+   "title": "An Update to Prospect Valuation",
+   "author": "Craig Edwards",
+   "url": "https://blogs.fangraphs.com/an-update-to-prospect-valuation/",
+   "era": "2019"
+  },
+  "L3": {
+   "title": "Putting a Dollar Value on Prospects Outside the Top 100",
+   "author": "Craig Edwards",
+   "url": "https://blogs.fangraphs.com/putting-a-dollar-value-on-prospects-outside-the-top-100/",
+   "era": "2019"
+  },
+  "L4": {
+   "title": "What Are Teams Paying For A Win In Free Agency? 2026 Edition",
+   "author": "Ben Clemens",
+   "url": "https://blogs.fangraphs.com/what-are-teams-paying-for-a-win-in-free-agency-2026-edition/",
+   "era": "2026"
+  },
+  "L5": {
+   "title": "How Do Baseball Teams Discount the Future?",
+   "author": "Matt Swartz",
+   "url": "https://blogs.fangraphs.com/how-do-baseball-teams-discount-the-future/",
+   "era": "2017"
+  },
+  "L6": {
+   "title": "How Do Prospect Grades Translate to Future Outcomes?",
+   "author": "Ben Clemens",
+   "url": "https://blogs.fangraphs.com/how-do-prospect-grades-translate-to-future-outcomes/",
+   "era": "2025"
+  },
+  "L7": {
+   "title": "Prospect Week Primer",
+   "author": "Eric Longenhagen",
+   "url": "https://blogs.fangraphs.com/prospect-week-primer/",
+   "era": "2022"
+  },
+  "L8": {
+   "title": "How To Use The Board: A Tutorial",
+   "author": "Eric Longenhagen",
+   "url": "https://blogs.fangraphs.com/how-to-use-the-board-a-tutorial/",
+   "era": "2021"
+  },
+  "L9": {
+   "title": "Valuing Prospects: The Pros and Cons of a Single Number",
+   "author": "Eric Longenhagen",
+   "url": "https://blogs.fangraphs.com/valuing-prospects-the-pros-and-cons-of-a-single-number/",
+   "era": "2017"
+  },
+  "L10": {
+   "title": "Top 200 Prospects: The Process and Introduction",
+   "author": "Kiley McDaniel",
+   "url": "https://blogs.fangraphs.com/top-200-prospects-the-process-and-introduction/",
+   "era": "2015"
+  },
+  "L11": {
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 1",
+   "author": "Kiley McDaniel",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-1/",
+   "era": "2014"
+  },
+  "L12": {
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 2",
+   "author": "Kiley McDaniel",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-2/",
+   "era": "2014"
+  },
+  "L13": {
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 3",
+   "author": "Kiley McDaniel",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-3/",
+   "era": "2014"
+  },
+  "L14": {
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 4",
+   "author": "Kiley McDaniel",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-4/",
+   "era": "2014"
+  },
+  "L15": {
+   "title": "Scouting Explained: The Mysterious Hit Tool Mailbag (Pt. 5)",
+   "author": "Kiley McDaniel",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-5/",
+   "era": "2014"
+  },
+  "L16": {
+   "title": "Scouting Explained: The Mysterious Hit Tool, Pt. 6",
+   "author": "Kiley McDaniel",
+   "url": "https://blogs.fangraphs.com/scouting-the-hit-tool-pt-6/",
+   "era": "2014"
+  },
+  "P1": {
+   "title": "Scouting Grades (glossary entry)",
+   "author": "MLB.com / MLB Pipeline, unsigned",
+   "url": "https://www.mlb.com/glossary/miscellaneous/scouting-grades",
+   "era": "undated, live"
+  },
+  "B1": {
+   "title": "Explaining The 20-80 Baseball Scouting Scale",
+   "author": "Kyle Glaser, Baseball America",
+   "url": "https://www.baseballamerica.com/stories/explaining-the-20-80-baseball-scouting-scale/",
+   "era": "undated, live"
+  },
+  "B2": {
+   "title": "Explaining Baseball America's Updated MLB Prospect Grades & Risk System",
+   "author": "J.J. Cooper, Baseball America",
+   "url": "https://www.baseballamerica.com/stories/explaining-baseball-americas-updated-mlb-prospect-grades-risk-system/",
+   "era": "2026"
+  }
+ },
+ "tables": {
+  "adjective_ladder": {
+   "section": "1.3",
+   "source": "S3",
+   "heading": "1.3 The adjective ladder",
+   "published_columns": [
+    "Grade",
+    "Tool Is Called"
+   ],
+   "columns": [
+    "grade",
+    "called"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "called": {
+       "v": "80",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "75",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "called": {
+       "v": "Plus Plus",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "65",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "called": {
+       "v": "Plus",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "called": {
+       "v": "Above Avg",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "called": {
+       "v": "Avg",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "called": {
+       "v": "Below Avg",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "35",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "1.3",
+       "source": "S3"
+      }
+     }
+    }
+   ]
+  },
+  "objective_tools": {
+   "section": "2.1",
+   "source": "S3",
+   "heading": "2.1 The industry-consensus objective table (S3, 2014)",
+   "published_columns": [
+    "Grade",
+    "Tool Is Called",
+    "Fastball Velo",
+    "Batting Avg",
+    "Homers",
+    "RHH to 1B",
+    "LHH to 1B",
+    "60 Yd Run"
+   ],
+   "columns": [
+    "grade",
+    "called",
+    "fastball_velo",
+    "batting_avg",
+    "homers",
+    "rhh_to_1b",
+    "lhh_to_1b",
+    "run_60yd"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "called": {
+       "v": "80",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "97",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".320",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "40+",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.00",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "3.90",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "6.3",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "75",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "96",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".310",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "35-40",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.05",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "3.95",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "6.4",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "called": {
+       "v": "Plus Plus",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "95",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".300",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "30-35",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.10",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "4.00",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "6.5",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "65",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "94",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".290",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "27-30",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.15",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "4.05",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "6.6",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "called": {
+       "v": "Plus",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "93",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".280",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "23-27",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.20",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "4.10",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "6.7",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "called": {
+       "v": "Above Avg",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "92",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".270",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "19-22",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.25",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "4.15",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "6.8",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "called": {
+       "v": "Avg",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "90-91",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".260",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "15-18",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.30",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "4.20",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "6.9-7.0",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "called": {
+       "v": "Below Avg",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "89",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".250",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "12-15",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.35",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "4.25",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "7.1",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "88",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".240",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "8-12",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.40",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "4.30",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "7.2",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "35",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "87",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".230",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "5-8",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.45",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "4.35",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "7.3",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "called": {
+       "v": "",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "fastball_velo": {
+       "v": "86",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "batting_avg": {
+       "v": ".220",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "homers": {
+       "v": "3-5",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "rhh_to_1b": {
+       "v": "4.50",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "lhh_to_1b": {
+       "v": "4.40",
+       "section": "2.1",
+       "source": "S3"
+      },
+      "run_60yd": {
+       "v": "7.4",
+       "section": "2.1",
+       "source": "S3"
+      }
+     }
+    }
+   ]
+  },
+  "smith_hit": {
+   "section": "2.2",
+   "source": "W2",
+   "heading": "Hit tool",
+   "published_columns": [
+    "Hit Tool",
+    "z",
+    "BA",
+    "Player",
+    "BABiP",
+    "Player"
+   ],
+   "columns": [
+    "grade",
+    "z",
+    "ba",
+    "ba_player",
+    "babip",
+    "babip_player"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "z": {
+       "v": "3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba": {
+       "v": ".336",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba_player": {
+       "v": "Miguel Cabrera",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip": {
+       "v": ".383",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "z": {
+       "v": "2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba": {
+       "v": ".313",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba_player": {
+       "v": "Josh Hamilton",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip": {
+       "v": ".357",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip_player": {
+       "v": "Dexter Fowler",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "z": {
+       "v": "1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba": {
+       "v": ".290",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba_player": {
+       "v": "Martin Prado",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip": {
+       "v": ".332",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip_player": {
+       "v": "David Wright",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "z": {
+       "v": "0",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba": {
+       "v": ".267",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba_player": {
+       "v": "Rafael Furcal",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip": {
+       "v": ".306",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip_player": {
+       "v": "Asdrubal Cabrera",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "z": {
+       "v": "-1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba": {
+       "v": ".244",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba_player": {
+       "v": "Vernon Wells",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip": {
+       "v": ".280",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip_player": {
+       "v": "Shane Victorino",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "z": {
+       "v": "-2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba": {
+       "v": ".221",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba_player": {
+       "v": "Brendan Ryan",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip": {
+       "v": ".254",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip_player": {
+       "v": "Mark Teixeira",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "20",
+     "cells": {
+      "z": {
+       "v": "-3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba": {
+       "v": ".199",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "ba_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip": {
+       "v": ".228",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "babip_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    }
+   ]
+  },
+  "smith_power": {
+   "section": "2.2",
+   "source": "W2",
+   "heading": "Power tool",
+   "published_columns": [
+    "Power Tool",
+    "z",
+    "ISO",
+    "Player",
+    "HR/PA",
+    "Player"
+   ],
+   "columns": [
+    "grade",
+    "z",
+    "iso",
+    "iso_player",
+    "hr_pa",
+    "hr_pa_player"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "z": {
+       "v": "3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso": {
+       "v": ".294",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso_player": {
+       "v": "Jose Bautista",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa": {
+       "v": "6.6%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa_player": {
+       "v": "Jose Bautista",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "z": {
+       "v": "2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso": {
+       "v": ".242",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso_player": {
+       "v": "Joey Votto",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa": {
+       "v": "5.2%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa_player": {
+       "v": "Edwin Encarnacion",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "z": {
+       "v": "1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso": {
+       "v": ".191",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso_player": {
+       "v": "Buster Posey",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa": {
+       "v": "3.8%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa_player": {
+       "v": "Kevin Youkilis",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "z": {
+       "v": "",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso": {
+       "v": ".140",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso_player": {
+       "v": "Nick Markakis",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa": {
+       "v": "2.4%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa_player": {
+       "v": "Shane Victorino",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "z": {
+       "v": "-1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso": {
+       "v": ".089",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso_player": {
+       "v": "Ryan Hanigan",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa": {
+       "v": "1.0%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa_player": {
+       "v": "Jose Altuve",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "z": {
+       "v": "-2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso": {
+       "v": ".038",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso_player": {
+       "v": "Ramiro Pena",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa": {
+       "v": "-0.4%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "20",
+     "cells": {
+      "z": {
+       "v": "-3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso": {
+       "v": "-.013",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "iso_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa": {
+       "v": "-1.8%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "hr_pa_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    }
+   ]
+  },
+  "smith_speed": {
+   "section": "2.2",
+   "source": "W2",
+   "heading": "Speed tool",
+   "published_columns": [
+    "Speed Tool",
+    "z",
+    "SB/3",
+    "Player",
+    "BsR/3",
+    "Player"
+   ],
+   "columns": [
+    "grade",
+    "z",
+    "sb_per_season",
+    "sb_player",
+    "bsr_per_season",
+    "bsr_player"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "z": {
+       "v": "3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_per_season": {
+       "v": "38",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_player": {
+       "v": "Ichiro Suzuki",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_per_season": {
+       "v": "9",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_player": {
+       "v": "Michael Bourn",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "z": {
+       "v": "2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_per_season": {
+       "v": "29",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_player": {
+       "v": "Elvis Andrus",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_per_season": {
+       "v": "6",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_player": {
+       "v": "Rajai Davis",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "z": {
+       "v": "1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_per_season": {
+       "v": "19",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_player": {
+       "v": "Chris Young",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_per_season": {
+       "v": "3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_player": {
+       "v": "Andrew McCutchen",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "z": {
+       "v": "",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_per_season": {
+       "v": "9",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_player": {
+       "v": "Jon Jay",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_per_season": {
+       "v": "",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_player": {
+       "v": "Yunel Escobar",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "z": {
+       "v": "-1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_per_season": {
+       "v": "",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_per_season": {
+       "v": "-3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_player": {
+       "v": "Jason Kubel",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "z": {
+       "v": "-2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_per_season": {
+       "v": "-10",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_per_season": {
+       "v": "-5",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_player": {
+       "v": "Adrian Gonzalez",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "20",
+     "cells": {
+      "z": {
+       "v": "-3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_per_season": {
+       "v": "-20",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sb_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_per_season": {
+       "v": "-8",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "bsr_player": {
+       "v": "Ryan Howard",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    }
+   ]
+  },
+  "smith_defense": {
+   "section": "2.2",
+   "source": "W2",
+   "heading": "Defense tool",
+   "published_columns": [
+    "Defense",
+    "z-Score",
+    "UZR/150",
+    "Player",
+    "Fld/3",
+    "Player"
+   ],
+   "columns": [
+    "grade",
+    "z",
+    "uzr_150",
+    "uzr_player",
+    "fld_per_season",
+    "fld_player"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "z": {
+       "v": "3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_150": {
+       "v": "22.8",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_per_season": {
+       "v": "17.9",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_player": {
+       "v": "Brett Gardner",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "z": {
+       "v": "2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_150": {
+       "v": "15.7",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_player": {
+       "v": "Adrian Beltre",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_per_season": {
+       "v": "12.4",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_player": {
+       "v": "Michael Bourn",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "z": {
+       "v": "1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_150": {
+       "v": "8.7",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_player": {
+       "v": "Giancarlo Stanton",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_per_season": {
+       "v": "6.9",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_player": {
+       "v": "Carlos Gomez",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "z": {
+       "v": "",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_150": {
+       "v": "1.6",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_player": {
+       "v": "Casey McGehee",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_per_season": {
+       "v": "1.5",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_player": {
+       "v": "Drew Stubbs",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "z": {
+       "v": "-1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_150": {
+       "v": "-5.4",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_player": {
+       "v": "Dan Uggla",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_per_season": {
+       "v": "-4.0",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_player": {
+       "v": "Rickie Weeks",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "z": {
+       "v": "-2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_150": {
+       "v": "-12.5",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_player": {
+       "v": "Asdrubal Cabrera",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_per_season": {
+       "v": "-9.5",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_player": {
+       "v": "Michael Morse",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "20",
+     "cells": {
+      "z": {
+       "v": "-3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_150": {
+       "v": "-19.6",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "uzr_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_per_season": {
+       "v": "-14.9",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "fld_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    }
+   ]
+  },
+  "smith_arm": {
+   "section": "2.2",
+   "source": "W2",
+   "heading": "Arm tool",
+   "published_columns": [
+    "Arm Tool",
+    "z",
+    "rARM/3",
+    "Player",
+    "ARM/3",
+    "Player"
+   ],
+   "columns": [
+    "grade",
+    "z",
+    "rarm_per_season",
+    "rarm_player",
+    "arm_per_season",
+    "arm_player"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "z": {
+       "v": "3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_per_season": {
+       "v": "8.8",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_player": {
+       "v": "Alex Gordon",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_per_season": {
+       "v": "8.5",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_player": {
+       "v": "Jeff Francoeur",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "z": {
+       "v": "2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_per_season": {
+       "v": "5.9",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_player": {
+       "v": "Jose Bautista",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_per_season": {
+       "v": "5.7",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_player": {
+       "v": "Alex Gordon",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "z": {
+       "v": "1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_per_season": {
+       "v": "3.0",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_player": {
+       "v": "Jayson Werth",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_per_season": {
+       "v": "3.0",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_player": {
+       "v": "Jayson Werth",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "z": {
+       "v": "",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_per_season": {
+       "v": "0.2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_player": {
+       "v": "Austin Jackson",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_per_season": {
+       "v": "0.2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_player": {
+       "v": "Matt Kemp",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "z": {
+       "v": "-1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_per_season": {
+       "v": "-2.7",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_player": {
+       "v": "Ichiro Suzuki",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_per_season": {
+       "v": "-2.5",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_player": {
+       "v": "Matt Holliday",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "z": {
+       "v": "-2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_per_season": {
+       "v": "-5.6",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_per_season": {
+       "v": "-5.3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_player": {
+       "v": "Ryan Braun",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "20",
+     "cells": {
+      "z": {
+       "v": "-3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_per_season": {
+       "v": "-8.4",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rarm_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_per_season": {
+       "v": "-8.1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "arm_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    }
+   ]
+  },
+  "smith_fastball": {
+   "section": "2.2",
+   "source": "W2",
+   "heading": "Fastball velocity, split by role",
+   "published_columns": [
+    "FB Velo",
+    "z",
+    "SP Velo",
+    "Player",
+    "RP Velo",
+    "Player"
+   ],
+   "columns": [
+    "grade",
+    "z",
+    "sp_velo",
+    "sp_player",
+    "rp_velo",
+    "rp_player"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "z": {
+       "v": "3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_velo": {
+       "v": "97",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_velo": {
+       "v": "100",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "z": {
+       "v": "2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_velo": {
+       "v": "95",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Stephen Strasburg",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_velo": {
+       "v": "97",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Daniel Bard",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "z": {
+       "v": "1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_velo": {
+       "v": "93",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Mat Latos",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_velo": {
+       "v": "95",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Drew Storen",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "z": {
+       "v": "",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_velo": {
+       "v": "91",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Adam Wainwright",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_velo": {
+       "v": "92",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Ramon Ramirez",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "z": {
+       "v": "-1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_velo": {
+       "v": "88",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Mike Fiers",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_velo": {
+       "v": "89",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Michael Wuertz",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "z": {
+       "v": "-2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_velo": {
+       "v": "86",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Mark Buerhle [sic]",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_velo": {
+       "v": "86",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Pat Neshek",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "20",
+     "cells": {
+      "z": {
+       "v": "-3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_velo": {
+       "v": "84",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Jamie Moyer",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_velo": {
+       "v": "84",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Livan Hernandez",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    }
+   ]
+  },
+  "smith_control": {
+   "section": "2.2",
+   "source": "W2",
+   "heading": "Control",
+   "published_columns": [
+    "Control",
+    "z",
+    "SP BB%",
+    "Player",
+    "RP BB%",
+    "Player"
+   ],
+   "columns": [
+    "grade",
+    "z",
+    "sp_bb_pct",
+    "sp_player",
+    "rp_bb_pct",
+    "rp_player"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "z": {
+       "v": "-3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_bb_pct": {
+       "v": "1.7%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_bb_pct": {
+       "v": "2.0%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "n/a",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "z": {
+       "v": "-2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_bb_pct": {
+       "v": "3.7%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Roy Halladay",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_bb_pct": {
+       "v": "4.4%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Sergio Romo",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "z": {
+       "v": "-1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_bb_pct": {
+       "v": "5.7%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Rick Porcello",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_bb_pct": {
+       "v": "6.8%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Jason Motte",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "z": {
+       "v": "",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_bb_pct": {
+       "v": "7.8%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Derek Holland",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_bb_pct": {
+       "v": "9.2%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Guillermo Mota",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "z": {
+       "v": "1",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_bb_pct": {
+       "v": "9.8%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "C.J. Wilson",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_bb_pct": {
+       "v": "11.6%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Manny Parra",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "z": {
+       "v": "2",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_bb_pct": {
+       "v": "11.8%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Danny Duffy",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_bb_pct": {
+       "v": "13.9%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Tim Collins",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    },
+    {
+     "row": "20",
+     "cells": {
+      "z": {
+       "v": "3",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_bb_pct": {
+       "v": "13.9%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "sp_player": {
+       "v": "Jonathan Sanchez",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_bb_pct": {
+       "v": "16.3%",
+       "section": "2.2",
+       "source": "W2"
+      },
+      "rp_player": {
+       "v": "Carlos Marmol",
+       "section": "2.2",
+       "source": "W2"
+      }
+     }
+    }
+   ]
+  },
+  "overall_grade_2014": {
+   "section": "3.1",
+   "source": "S3",
+   "heading": "3.1 McDaniel's combined overall-grade table (S3, 2014)",
+   "published_columns": [
+    "Grade",
+    "Hitter",
+    "Starting Pitcher",
+    "Relief Pitcher",
+    "WAR"
+   ],
+   "columns": [
+    "grade",
+    "hitter",
+    "starter",
+    "reliever",
+    "war"
+   ],
+   "rows": [
+    {
+     "row": "80",
+     "cells": {
+      "hitter": {
+       "v": "Top 1-2",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "#1 Starter",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "n/a",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "7.0",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "75",
+     "cells": {
+      "hitter": {
+       "v": "Top 2-3",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "#1",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "n/a",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "6.0",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "hitter": {
+       "v": "Top 5",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "#1/2",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "n/a",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "5.0",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "65",
+     "cells": {
+      "hitter": {
+       "v": "All-Star",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "#2/3",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "n/a",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "4.0",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "hitter": {
+       "v": "Plus",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "#3",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "High Closer",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "3.0",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "hitter": {
+       "v": "Above Avg",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "#3/4",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "Mid Closer",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "2.5",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "hitter": {
+       "v": "Avg Regular",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "#4",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "Low CL/High SU",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "2.0",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "hitter": {
+       "v": "Platoon/Util",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "#5",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "Low Setup",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "1.5",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "hitter": {
+       "v": "Bench",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "Swing/Spot SP",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "Middle RP",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "1.0",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "35",
+     "cells": {
+      "hitter": {
+       "v": "Emergency Call-Up",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "Emergency Call-Up",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "Emergency Call-Up",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "0.0",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "hitter": {
+       "v": "*Organizational",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "starter": {
+       "v": "*Organizational",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "reliever": {
+       "v": "*Organizational",
+       "section": "3.1",
+       "source": "S3"
+      },
+      "war": {
+       "v": "-1.0",
+       "section": "3.1",
+       "source": "S3"
+      }
+     }
+    }
+   ]
+  },
+  "primer_hitters_2018": {
+   "section": "3.2",
+   "source": "S2",
+   "heading": "3.2 The 2018 primer: hitters (S2)",
+   "published_columns": [
+    "Scouting Scale",
+    "Role",
+    "WAR"
+   ],
+   "columns": [
+    "grade",
+    "role",
+    "war"
+   ],
+   "rows": [
+    {
+     "row": "20",
+     "cells": {
+      "role": {
+       "v": "Org guy",
+       "section": "3.2",
+       "source": "S2"
+      },
+      "war": {
+       "v": "n/a",
+       "section": "3.2",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "role": {
+       "v": "Up & Down",
+       "section": "3.2",
+       "source": "S2"
+      },
+      "war": {
+       "v": "<-0.1",
+       "section": "3.2",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "role": {
+       "v": "Bench Player",
+       "section": "3.2",
+       "source": "S2"
+      },
+      "war": {
+       "v": "0.0 to 0.7",
+       "section": "3.2",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "role": {
+       "v": "Low End Reg/Platoon",
+       "section": "3.2",
+       "source": "S2"
+      },
+      "war": {
+       "v": "0.8 to 1.5",
+       "section": "3.2",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "role": {
+       "v": "Avg Everyday Player",
+       "section": "3.2",
+       "source": "S2"
+      },
+      "war": {
+       "v": "1.6 to 2.4",
+       "section": "3.2",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "role": {
+       "v": "Above Avg Reg",
+       "section": "3.2",
+       "source": "S2"
+      },
+      "war": {
+       "v": "2.5 to 3.3",
+       "section": "3.2",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "role": {
+       "v": "All Star",
+       "section": "3.2",
+       "source": "S2"
+      },
+      "war": {
+       "v": "3.4 to 4.9",
+       "section": "3.2",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "role": {
+       "v": "Top 10 overall",
+       "section": "3.2",
+       "source": "S2"
+      },
+      "war": {
+       "v": "5.0 to 7.0",
+       "section": "3.2",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "80",
+     "cells": {
+      "role": {
+       "v": "Top 5 overall",
+       "section": "3.2",
+       "source": "S2"
+      },
+      "war": {
+       "v": "> 7.0",
+       "section": "3.2",
+       "source": "S2"
+      }
+     }
+    }
+   ]
+  },
+  "primer_starters_2018": {
+   "section": "3.3",
+   "source": "S2",
+   "heading": "3.3 The 2018 primer: starting pitchers (S2)",
+   "published_columns": [
+    "Scouting Scale",
+    "Role",
+    "WAR"
+   ],
+   "columns": [
+    "grade",
+    "role",
+    "war"
+   ],
+   "rows": [
+    {
+     "row": "20",
+     "cells": {
+      "role": {
+       "v": "Org Guy",
+       "section": "3.3",
+       "source": "S2"
+      },
+      "war": {
+       "v": "n/a",
+       "section": "3.3",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "role": {
+       "v": "Up & Down",
+       "section": "3.3",
+       "source": "S2"
+      },
+      "war": {
+       "v": "< -0.1",
+       "section": "3.3",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "role": {
+       "v": "Backend starters, FIP typically close to 5.00",
+       "section": "3.3",
+       "source": "S2"
+      },
+      "war": {
+       "v": "0.0 to 0.9",
+       "section": "3.3",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "role": {
+       "v": "#4/5 starters, FIP approx 4.20",
+       "section": "3.3",
+       "source": "S2"
+      },
+      "war": {
+       "v": "1.0 to 1.7",
+       "section": "3.3",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "role": {
+       "v": "#4 starters. Approx 4.00 FIP, at times worse but then with lots of innings",
+       "section": "3.3",
+       "source": "S2"
+      },
+      "war": {
+       "v": "1.8 to 2.5",
+       "section": "3.3",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "role": {
+       "v": "#3/4 starters. Approx 3.70 FIP along with about 160 IP",
+       "section": "3.3",
+       "source": "S2"
+      },
+      "war": {
+       "v": "2.6 to 3.4",
+       "section": "3.3",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "role": {
+       "v": "#3 starters, 3.30 FIP, volume approaching 200 innings",
+       "section": "3.3",
+       "source": "S2"
+      },
+      "war": {
+       "v": "3.5 to 4.9",
+       "section": "3.3",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "role": {
+       "v": "#2 starters, FIP under 3, about 200 IP",
+       "section": "3.3",
+       "source": "S2"
+      },
+      "war": {
+       "v": "5.0 to 7.0",
+       "section": "3.3",
+       "source": "S2"
+      }
+     }
+    },
+    {
+     "row": "80",
+     "cells": {
+      "role": {
+       "v": "#1s. Top 1-3 arms in baseball. 'Ace' if they do it several years in a row.",
+       "section": "3.3",
+       "source": "S2"
+      },
+      "war": {
+       "v": ">7.0",
+       "section": "3.3",
+       "source": "S2"
+      }
+     }
+    }
+   ]
+  },
+  "primer_starters_2022": {
+   "section": "3.4",
+   "source": "L7",
+   "heading": "3.4 The 2022 restatement (L7)",
+   "published_columns": [
+    "Scouting Scale",
+    "Role",
+    "WAR"
+   ],
+   "columns": [
+    "grade",
+    "role",
+    "war"
+   ],
+   "rows": [
+    {
+     "row": "20",
+     "cells": {
+      "role": {
+       "v": "Org guy",
+       "section": "3.4",
+       "source": "L7"
+      },
+      "war": {
+       "v": "n/a",
+       "section": "3.4",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "35/35+",
+     "cells": {
+      "role": {
+       "v": "Depth/spot starters, typically SP6 through SP8-10 in a given org",
+       "section": "3.4",
+       "source": "L7"
+      },
+      "war": {
+       "v": "< -0.1",
+       "section": "3.4",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "role": {
+       "v": "Fifth starters who eat innings, FIP typically close to 5.00",
+       "section": "3.4",
+       "source": "L7"
+      },
+      "war": {
+       "v": "0.0 to 0.9",
+       "section": "3.4",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "role": {
+       "v": "No. 4/5 starters, approx 4.20 FIP, on the fringe of playoff rotation",
+       "section": "3.4",
+       "source": "L7"
+      },
+      "war": {
+       "v": "1.0 to 1.7",
+       "section": "3.4",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "role": {
+       "v": "No. 4 starters, approx 4.00 FIP, sometimes worse w/lots of IP",
+       "section": "3.4",
+       "source": "L7"
+      },
+      "war": {
+       "v": "1.8 to 2.5",
+       "section": "3.4",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "role": {
+       "v": "\"Mid-rotation\" starters, lock for playoff rotation. Approx 3.70 FIP along w/about 160 IP",
+       "section": "3.4",
+       "source": "L7"
+      },
+      "war": {
+       "v": "2.6 to 3.4",
+       "section": "3.4",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "role": {
+       "v": "All-Star candidates, 3.30 FIP, volume approaching 200 innings",
+       "section": "3.4",
+       "source": "L7"
+      },
+      "war": {
+       "v": "3.5 to 4.9",
+       "section": "3.4",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "role": {
+       "v": "Top-of-the-rotation types, FIP under 3.00, about 200 IP",
+       "section": "3.4",
+       "source": "L7"
+      },
+      "war": {
+       "v": "5.0 to 7.0",
+       "section": "3.4",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "80",
+     "cells": {
+      "role": {
+       "v": "No. 1s. Top 1-3 arms in baseball. 'Ace' if they do it several years in a row.",
+       "section": "3.4",
+       "source": "L7"
+      },
+      "war": {
+       "v": ">7.0",
+       "section": "3.4",
+       "source": "L7"
+      }
+     }
+    }
+   ]
+  },
+  "hitter_roles_2022": {
+   "section": "3.5",
+   "source": "L7",
+   "heading": "3.5 The 2022 hitter role table, with the \"+\" tiers (L7)",
+   "published_columns": [
+    "FV",
+    "Role",
+    "Recent/Current Example"
+   ],
+   "columns": [
+    "fv",
+    "role",
+    "examples"
+   ],
+   "rows": [
+    {
+     "row": "30",
+     "cells": {
+      "role": {
+       "v": "Org guy",
+       "section": "3.5",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Darick Hall",
+       "section": "3.5",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "35+",
+     "cells": {
+      "role": {
+       "v": "One-tool bench guy, limited utility",
+       "section": "3.5",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Terrance Gore",
+       "section": "3.5",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "role": {
+       "v": "RHH corner role, 5th OF, light-hitting utility, low-end 1B regular, backup C",
+       "section": "3.5",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Jordan Luplow, Guillermo Heredia, Sergio Alcantara, Christian Walker",
+       "section": "3.5",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "40+",
+     "cells": {
+      "role": {
+       "v": "40 role w/ premium tool or two",
+       "section": "3.5",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Adam Duvall, Edwin Rios, Adam Engel, Yandy Diaz",
+       "section": "3.5",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "role": {
+       "v": "LHH platoon, luxury utility types, low-end MIF/CF regulars",
+       "section": "3.5",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Freddy Galvis, Seth Smith, Matt Joyce, Jackie Bradley Jr.",
+       "section": "3.5",
+       "source": "L7"
+      }
+     }
+    }
+   ]
+  },
+  "reliever_roles_2022": {
+   "section": "3.6",
+   "source": "L7",
+   "heading": "3.6 The 2022 reliever role table (L7)",
+   "published_columns": [
+    "FV",
+    "Role",
+    "Recent/Current Example"
+   ],
+   "columns": [
+    "fv",
+    "role",
+    "examples"
+   ],
+   "rows": [
+    {
+     "row": "30",
+     "cells": {
+      "role": {
+       "v": "Org guy",
+       "section": "3.6",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "C.J. Carter",
+       "section": "3.6",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "35+",
+     "cells": {
+      "role": {
+       "v": "Up/down RP, optioned often",
+       "section": "3.6",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Cole Uvila",
+       "section": "3.6",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "role": {
+       "v": "Single-inning middle reliever",
+       "section": "3.6",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Caleb Thielbar",
+       "section": "3.6",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "40+",
+     "cells": {
+      "role": {
+       "v": "Multi-inning reliever, once-through-the-order types",
+       "section": "3.6",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Ryan Yarbrough",
+       "section": "3.6",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "role": {
+       "v": "Traditional set-up type, high-leverage guys start here",
+       "section": "3.6",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Alex Colome",
+       "section": "3.6",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "45+",
+     "cells": {
+      "role": {
+       "v": "Likely late-inning RPs with a shot to start",
+       "section": "3.6",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "Ryne Nelson",
+       "section": "3.6",
+       "source": "L7"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "role": {
+       "v": "No-doubt closers",
+       "section": "3.6",
+       "source": "L7"
+      },
+      "examples": {
+       "v": "James Karinchak",
+       "section": "3.6",
+       "source": "L7"
+      }
+     }
+    }
+   ]
+  },
+  "expected_value_2026": {
+   "section": "7.2",
+   "source": "L1",
+   "heading": "7.2 The 2026 headline table (L1)",
+   "published_columns": [
+    "FV",
+    "Type",
+    "Expected Surplus Value",
+    "Expected WAR",
+    "Star Odds"
+   ],
+   "columns": [
+    "fv",
+    "type",
+    "expected_surplus_value",
+    "expected_war",
+    "star_odds"
+   ],
+   "rows": [
+    {
+     "row": "70",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$195,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "27.5",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "87.5%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$195,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "27",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "87.5%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "65",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$95,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "13.5",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "40.0%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "65",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$95,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "13.5",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "40.0%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$82,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "12.5",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "33.0%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$70,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "11",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "21.0%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$55,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "8",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "17.5%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$45,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "7",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "7.0%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$45,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "7",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "13.5%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$33,500,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "5",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "7.0%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "45+",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$18,500,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "3.2",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "6.0%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "45+",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$15,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "2.6",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "3.0%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$14,500,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "2.5",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "3.5%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$9,500,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "1.6",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "1.5%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "40+",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$8,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "1.2",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "1.8%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "40+",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$7,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "1",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "1.0%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$5,500,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "0.75",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "0.8%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$4,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "0.55",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "0.4%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "35+",
+     "cells": {
+      "type": {
+       "v": "Hitter",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$2,000,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "0.3",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "0.4%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    },
+    {
+     "row": "35+",
+     "cells": {
+      "type": {
+       "v": "Pitcher",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_surplus_value": {
+       "v": "$1,500,000",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "expected_war": {
+       "v": "0.25",
+       "section": "7.2",
+       "source": "L1"
+      },
+      "star_odds": {
+       "v": "0.4%",
+       "section": "7.2",
+       "source": "L1"
+      }
+     }
+    }
+   ]
+  },
+  "shares_2025_hitters": {
+   "section": "7.7",
+   "source": "L6",
+   "heading": "Hitters",
+   "published_columns": [
+    "FV",
+    "Washed Out",
+    "Backup",
+    "Regular",
+    "Above Average",
+    "Star",
+    "Count"
+   ],
+   "columns": [
+    "fv",
+    "washed_out",
+    "backup",
+    "regular",
+    "above_average",
+    "star",
+    "count"
+   ],
+   "rows": [
+    {
+     "row": "45",
+     "cells": {
+      "washed_out": {
+       "v": "51%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "25%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "17%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "6%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "1%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "295",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "45+",
+     "cells": {
+      "washed_out": {
+       "v": "52%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "18%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "19%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "11%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "1%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "91",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "washed_out": {
+       "v": "23%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "24%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "30%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "21%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "2%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "197",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "washed_out": {
+       "v": "17%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "17%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "30%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "31%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "6%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "54",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "washed_out": {
+       "v": "14%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "12%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "19%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "38%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "17%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "42",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "65",
+     "cells": {
+      "washed_out": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "33%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "33%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "33%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "3",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "washed_out": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "100%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "2",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "80",
+     "cells": {
+      "washed_out": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "100%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "1",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    }
+   ]
+  },
+  "shares_2025_pitchers": {
+   "section": "7.7",
+   "source": "L6",
+   "heading": "Pitchers",
+   "published_columns": [
+    "FV",
+    "Washed Out",
+    "Backup",
+    "Regular",
+    "Above Average",
+    "Star",
+    "Count"
+   ],
+   "columns": [
+    "fv",
+    "washed_out",
+    "backup",
+    "regular",
+    "above_average",
+    "star",
+    "count"
+   ],
+   "rows": [
+    {
+     "row": "45",
+     "cells": {
+      "washed_out": {
+       "v": "53%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "26%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "16%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "5%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "230",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "45+",
+     "cells": {
+      "washed_out": {
+       "v": "38%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "24%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "25%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "13%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "68",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "washed_out": {
+       "v": "27%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "27%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "24%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "20%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "2%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "96",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "washed_out": {
+       "v": "17%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "20%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "37%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "27%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "30",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "washed_out": {
+       "v": "17%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "33%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "25%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "25%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "12",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "65",
+     "cells": {
+      "washed_out": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "100%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "1",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "washed_out": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "backup": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "regular": {
+       "v": "100%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "above_average": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "star": {
+       "v": "0%",
+       "section": "7.7",
+       "source": "L6"
+      },
+      "count": {
+       "v": "1",
+       "section": "7.7",
+       "source": "L6"
+      }
+     }
+    }
+   ]
+  },
+  "pipeline_ladder": {
+   "section": "11.1",
+   "source": "P1",
+   "heading": "11.1 MLB Pipeline's published definition, in full",
+   "published_columns": [
+    "Grade",
+    "Pipeline's term"
+   ],
+   "columns": [
+    "grade",
+    "term"
+   ],
+   "rows": [
+    {
+     "row": "20-30",
+     "cells": {
+      "term": {
+       "v": "well below average",
+       "section": "11.1",
+       "source": "P1"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "term": {
+       "v": "below average",
+       "section": "11.1",
+       "source": "P1"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "term": {
+       "v": "average",
+       "section": "11.1",
+       "source": "P1"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "term": {
+       "v": "above average",
+       "section": "11.1",
+       "source": "P1"
+      }
+     }
+    },
+    {
+     "row": "70-80",
+     "cells": {
+      "term": {
+       "v": "well above average",
+       "section": "11.1",
+       "source": "P1"
+      }
+     }
+    }
+   ]
+  },
+  "ba_ladder": {
+   "section": "11.2",
+   "source": "B1",
+   "heading": "BA's adjective ladder, with its own named examples",
+   "published_columns": [
+    "Grade",
+    "BA's term",
+    "BA's named examples"
+   ],
+   "columns": [
+    "grade",
+    "term",
+    "examples"
+   ],
+   "rows": [
+    {
+     "row": "20",
+     "cells": {
+      "term": {
+       "v": "As bad as it gets for a big leaguer",
+       "section": "11.2",
+       "source": "B1"
+      },
+      "examples": {
+       "v": "Myles Straw's power, Daniel Vogelbach's speed",
+       "section": "11.2",
+       "source": "B1"
+      }
+     }
+    },
+    {
+     "row": "30",
+     "cells": {
+      "term": {
+       "v": "Well below-average, but not unplayable",
+       "section": "11.2",
+       "source": "B1"
+      },
+      "examples": {
+       "v": "Kyle Hendricks' fastball",
+       "section": "11.2",
+       "source": "B1"
+      }
+     }
+    },
+    {
+     "row": "40",
+     "cells": {
+      "term": {
+       "v": "Below-average",
+       "section": "11.2",
+       "source": "B1"
+      },
+      "examples": {
+       "v": "Rafael Devers' defense, Dylan Cease's control",
+       "section": "11.2",
+       "source": "B1"
+      }
+     }
+    },
+    {
+     "row": "45",
+     "cells": {
+      "term": {
+       "v": "Fringe-average",
+       "section": "11.2",
+       "source": "B1"
+      },
+      "examples": {
+       "v": "Matt Chapman's hitting ability, Mike Zunino's arm",
+       "section": "11.2",
+       "source": "B1"
+      }
+     }
+    },
+    {
+     "row": "50",
+     "cells": {
+      "term": {
+       "v": "Major league average",
+       "section": "11.2",
+       "source": "B1"
+      },
+      "examples": {
+       "v": "Jeff McNeil's speed",
+       "section": "11.2",
+       "source": "B1"
+      }
+     }
+    },
+    {
+     "row": "55",
+     "cells": {
+      "term": {
+       "v": "Above-average",
+       "section": "11.2",
+       "source": "B1"
+      },
+      "examples": {
+       "v": "Randy Arozarena's power",
+       "section": "11.2",
+       "source": "B1"
+      }
+     }
+    },
+    {
+     "row": "60",
+     "cells": {
+      "term": {
+       "v": "Plus",
+       "section": "11.2",
+       "source": "B1"
+      },
+      "examples": {
+       "v": "Marcus Semien's defense, Zac Gallen's control",
+       "section": "11.2",
+       "source": "B1"
+      }
+     }
+    },
+    {
+     "row": "70",
+     "cells": {
+      "term": {
+       "v": "Plus-Plus. Among the best tools in the game",
+       "section": "11.2",
+       "source": "B1"
+      },
+      "examples": {
+       "v": "Freddie Freeman's hitting ability, Blake Snell's curveball, Ronald Acuna Jr.'s arm",
+       "section": "11.2",
+       "source": "B1"
+      }
+     }
+    },
+    {
+     "row": "80",
+     "cells": {
+      "term": {
+       "v": "Top of the scale",
+       "section": "11.2",
+       "source": "B1"
+      },
+      "examples": {
+       "v": "Shohei Ohtani's power, Corbin Carroll's speed, Devin Williams' changeup",
+       "section": "11.2",
+       "source": "B1"
+      }
+     }
+    }
+   ]
+  }
+ }
+}

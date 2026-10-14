@@ -657,6 +657,11 @@ _SIDECAR_GLOBS = (
     # .cache while dark, the card source under data/ once live).
     ".cache/proj_components/preview/**/*",
     "data/mlb_proj_components.json",
+    # TL_22: tools/scouting_export.py's two outputs, the preview under .cache
+    # while SCOUTING_PAGE_LIVE is False and the payload under data/ once live,
+    # plus the preview page build_site writes beside it.
+    ".cache/scouting/preview/**/*",
+    "data/scouting_reference.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -1066,6 +1071,11 @@ _SIDECAR_WRITE_TARGETS = (
      ".cache/proj_components/preview/components.json"),
     ("proj_export", "COMPONENTS_LIVE_PATH", "data/mlb_proj_components.json"),
     ("mlb_player_export", "COMPONENTS_PATH", "data/mlb_proj_components.json"),
+    # TL_22: tools/scouting_export.py's preview and its live payload, resolved
+    # at call time by output_path() and write_payload().
+    ("tools.scouting_export", "PREVIEW_PATH",
+     ".cache/scouting/preview/scouting_reference.json"),
+    ("tools.scouting_export", "OUT_PATH", "data/scouting_reference.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
