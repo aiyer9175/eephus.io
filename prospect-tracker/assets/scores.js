@@ -284,7 +284,7 @@
     var a = hub.clubLinkHTML(c.code), i = a.indexOf(">") + 1;
     return mark ? a.slice(0, i) + mark + a.slice(i) : a;
   }
-  // SC7-1: a club mark from the hub; px 16 is the pixel chip (sp-logo), a big fetch the clean header mark. alt ""
+  // SC7-1: a club mark from the hub; px 40 is the small chip (sp-logo, drawn at 20), a big fetch the clean header mark. alt ""
   // beside the printed code, removed on error so the code stands alone.
   function logo(side, cls, px) {
     var hub = window.EEPHUS_HUB, c = hub && hub.club ? hub.club(side.team_id) : null;
@@ -326,7 +326,7 @@
     var t = c[side], o = c[side === "away" ? "home" : "away"];
     var won = c.state === "final" && isNum(t.r) && isNum(o.r) && t.r > o.r;
     var rec = t.wl && isNum(t.wl.w) ? t.wl.w + "-" + t.wl.l : "";
-    var cells = '<th scope="row" class="sc-tm">' + clubLink(t, logo(t, "sp-logo", 16)) + ' <span class="sc-short">' + esc(t.short || "") +
+    var cells = '<th scope="row" class="sc-tm">' + clubLink(t, logo(t, "sp-logo", 40)) + ' <span class="sc-short">' + esc(t.short || "") +
       "</span>" + (won ? ' <span class="sr-only">winner</span>' : "") +
       (rec ? ' <span class="sc-rec">' + esc(rec) + "</span>" : "") + "</th>";
     if (showScore) {

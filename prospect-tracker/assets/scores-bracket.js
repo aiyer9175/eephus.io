@@ -60,11 +60,11 @@
     }
     return link(c, chip(c) + esc(c.code), "scb-club club-link", "");
   }
-  // SC7-1: the pixel logo chip beside a decided club, from the page's hub when it has one (the code prints
+  // SC7-1: the logo chip beside a decided club, from the page's hub when it has one (the code prints
   // beside it, so its alt is empty; it removes itself on error). Without the hub the chunk draws codes only.
   function chip(c) {
     var H = window.EEPHUS_HUB;
-    return c && c.code && H && H.club && H.club(c.code) ? H.teamLogo(c.code, "sp-logo", { size: 16, decorative: true }) : "";
+    return c && c.code && H && H.club && H.club(c.code) ? H.teamLogo(c.code, "sp-logo", { size: 40, decorative: true }) : "";
   }
   function short(s, id) {
     for (var i = 0; i < s.clubs.length; i++) {
