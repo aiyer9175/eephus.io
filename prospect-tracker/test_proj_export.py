@@ -548,3 +548,35 @@ def test_team_outlook_eval_says_whether_the_vector_serves():
     cal = ev.get("calibration") or {}
     assert cal.get("cohort_intercepts_applied") is on
     assert ("not applied" in cal.get("kind", "")) is (not on)
+
+
+def test_prospect_statline_flag_defaults_off_and_off_is_byte_identical(tmp_path, monkeypatch):
+    """TL_11 (docs/proj-prospect-2026-10/PROSPECT_STATLINE_GATE.md Part 12):
+    SERVE_PROSPECT_STATLINE defaults False; off, the exporter never calls the
+    statline writer and its output bytes equal the output with the flag on; on,
+    the writer runs and may write only under .cache/prospect_statline/preview/."""
+    import inspect
+    assert pe.SERVE_PROSPECT_STATLINE is False
+    src = inspect.getsource(pe.export)
+    assert "if SERVE_PROSPECT_STATLINE:" in src
+    assert "import prospect_statline" not in inspect.getsource(pe.build_payload)
+    payload = {"vets": [], "prospects": [{"key": "a_prospect"}], "n_vets": 0, "n_prospects": 1,
+               "team_outlook": []}
+    monkeypatch.setattr(pe, "build_payload", lambda: payload)
+    monkeypatch.setattr(pe, "_write_components", lambda vets: None)
+    monkeypatch.setattr(pe, "write_futures", lambda rows: 0)
+    monkeypatch.setattr(pe, "DATA_DIR", tmp_path)
+    calls: list = []
+    monkeypatch.setattr(pe, "_write_prospect_statline", lambda rows: calls.append(list(rows)))
+    monkeypatch.setattr(pe, "SERVE_PROSPECT_STATLINE", False)
+    pe.export()
+    off = (tmp_path / "mlb_projections.json").read_bytes()
+    assert calls == []
+    monkeypatch.setattr(pe, "SERVE_PROSPECT_STATLINE", True)
+    pe.export()
+    on = (tmp_path / "mlb_projections.json").read_bytes()
+    assert on == off
+    assert calls == [[{"key": "a_prospect"}]]
+    import prospect_statline as PSL
+    rel = str(PSL.PREVIEW_PATH).replace("\\", "/")
+    assert "/.cache/prospect_statline/preview/" in rel and "/data/" not in rel

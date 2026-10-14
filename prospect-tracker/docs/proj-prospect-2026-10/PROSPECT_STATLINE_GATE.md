@@ -450,3 +450,103 @@ overlap counts of 0.2 and 0.3; the survivorship sentence; the row accounting; th
 list; the gate sha and the INC sha. Artifact `data/prospect_statline_eval.json` (a registry eval
 artifact that ships); registry row `mlb_projections_prospects_statline`. Nothing above this part
 is edited once anything is written below it, except by the amendments listed at the top.
+
+---
+
+## Amendment 1 (2026-10-14): the development-read freeze (1.7), TL_11_STATLINE_BUILD_DARK
+
+Item 1 of the list at the top, written with the dev-read commit. This section freezes the
+candidate's specification for TL_17's look; it carries no holdout number. The ONE development
+read (gate 1.7, frame 3.1) was run on 2026-10-14 by `python prospect_statline.py --dev` and
+written to `data/_labs/prospect_statline_dev.json` (role development, sha256 6ccc3d9b247573a558583ecb692a66fc0596e58c7b1738ad226041a2355254ff),
+off the webroot (data/_labs/ ships in neither deploy consumer). It re-reads the spent cohorts
+of 0.1 and decides nothing. Under the owner's instruction of 2026-10-14 (EW3-5) look days are
+waived; this read is a build's development read, not a registered look, and it ran on a day
+other gates recorded looks (PROJ_COMPONENTS_GATE.md, STEAL_RUNNER_SPLIT_GATE.md).
+
+**Inputs (1.1) and each input's code sha256 at the read.**
+
+| input | code | sha256 |
+|---|---|---|
+| the model, the frame, the baselines, the assembly call | `prospect_statline.py` | 8c9f8d69754cc13413463530438f80eff6277f82fbe8fbc6115375b0fe9e51fc |
+| TIP_first and TIP_now (tables fit inside each fold on the training cohorts; tip_first's aging hook) | `tool_implied.py` | 536d88f42cc1bedbadfb3d31f730abdede6dc564a661ceacc88f9b2d65beca1d |
+| the aging service (AgingModel.component_curve, aging v2, fitted point in time at T - 1) | `aging_v3.py` | 4a547052b3cf0620096012c878bfc585e9189e6d1dca3e2f0ccb3387fdc414e1 |
+| the translation estimator (milb_translation's _fit, refit inside each fold) | `college_translation.py` | 9da8ce0404758d44c48dcf097c58c37cd1feca6447283e189d11ad38874807ec |
+| the translation's exposure gates (MIN_MLB_GAMES, MIN_MLB_IP) | `milb_translation.py` | e606313137c377accd67580683e8872b9bdd52586f5bda87b73b29ca00926ff0 |
+| the proxy estimator (StandardScaler + Ridge alpha 3.0, _pull_targets at MIN_PA), refit inside each fold | `efv_proxy.py` | 0c3103b72b9a821ab1ea7f44d0af09ca5f0e23e04bd6fa4b6e152ac2dc509277 |
+| the as-of point, the debut date, the prior and MiLB features | `efv_dataset.py` | e9039786454f5b53f6344539c9461c1f196154633b89d07ccb2447fde1fb76d2 |
+| the proxy's feature vector (_vec, _feature_spec) | `efv_model.py` | 01dacb910a2f92729105092f89830aab3dbc6891e32fa7b8319df55cada5853f |
+| the ladder cache (level rows, level norms for K%, BB%, ISO) | `milb_history.py` | aad8e61284b01255b42b71fb074b3ea4d284df5d1de655ff7833056a6e30afa2 |
+| LANE A's assembly (hitter_heads, pitcher_heads, season_constants) | `proj_components.py` | 68bdeb8b82d11c54bfc8cc66a2b5e125fe7243698ee74174fcfe16099b0177c3 |
+| the FanGraphs frame arithmetic | `fwar_frame.py` | ea4aa4c74cd4244dee519785345cb08f39f1e03590cfd3c108b43cbef4ce41a3 |
+| INC (_baseline_first3) and the Spearman and calibration helpers | `prospect_path.py` | 98c36f82e8e8584ebb9f4cc501186b0873c796249480a2b780133b2b585d6479 |
+| the label (frozen vintage 2026-10-02-0341299c20ec) | `data/fwar_vintage.json` | 7d388e8510df1033252720713afd5b570a7f8a3b96058647d2da509d4ac27917 |
+| the debut records | `data/debuts.json` | 83bf4c5f00499a9f23413e41f3497f526ef68d4d33a5229b3e8c21ead6006eec |
+| the wOBA weights and league constants | `data/league_constants.json` | c83180e6f1477a975dc3fef07631128865a8e2f17b78629948ccf1e592b8a191 |
+
+The StatsAPI season caches (`.cache/fa_statsapi_hitting_*.json`, `_pitching_*.json`, 2017 to 2023)
+and the Savant expected-stats files (`.cache/savant_mlb/expected_batter_*.csv`, `expected_pitcher_*.csv`,
+2017 to 2023) are listed with their sha256 in the artifact's `inputs_sha256`.
+
+**The penalty grid and the chosen penalties per fold (1.2).** Grid 10 to the power k for k in
+-3, -2.5, ..., 3 (13 values), nested forward-chained inside the training cohorts (the earliest
+training cohort is never an inner test year), pooled exposure-weighted MAE, ties to the larger penalty.
+
+| fold (test year) | training cohorts | penalties per side:stat |
+|---|---|---|
+| 2019 | 2017, 2018 (n 199) | hit:k_pct 316.228, hit:bb_pct 1000, hit:iso 0.001, hit:avg 1000, hit:babip 1000, hit:woba 316.228, hit:xwoba 1000, pit:k_pct 1000, pit:bb_pct 1000, pit:hr_bf 1000, pit:babip 1000, pit:xwoba 1000 |
+| 2020 | 2017, 2018, 2019 (n 356) | hit:k_pct 316.228, hit:bb_pct 1000, hit:iso 0.001, hit:avg 0.001, hit:babip 0.001, hit:woba 0.001, hit:xwoba 0.001, pit:k_pct 1000, pit:bb_pct 1000, pit:hr_bf 0.001, pit:babip 1000, pit:xwoba 1000 |
+| 2021 | 2017, 2018, 2019, 2020 (n 533) | hit:k_pct 1000, hit:bb_pct 1000, hit:iso 1000, hit:avg 1000, hit:babip 1000, hit:woba 0.001, hit:xwoba 1000, pit:k_pct 1000, pit:bb_pct 1000, pit:hr_bf 1000, pit:babip 1000, pit:xwoba 1000 |
+
+**Level-0 inputs per stat (1.2), as fitted.** Hitters: K% (TIP_first and TIP_now from hit, the
+translation, the age delta), BB% (the translation, the age delta), ISO (TIP_first and TIP_now from
+game power, the level-relative ISO, the age delta), AVG (TIP_first and TIP_now from hit), BABIP
+(TIP_first and TIP_now from hit, the level-relative BABIP, the age delta), wOBA and xwOBA (the
+proxy). Pitchers: K% (TIP_first and TIP_now from fb, the translation, the age delta), BB% (TIP_first
+and TIP_now from cmd, the translation, the age delta), HR per BF (the age delta), BABIP against
+(intercept only), xwOBA against (the proxy). Bands: the point plus the 10th and 90th percentiles of
+the inner chain's out-of-fold residuals at the chosen penalty (1.3).
+
+**TIP table frames per fold.** The maturity frame (window seasons at age 26 and over) never carried
+two non-thin bins on these cohorts, so every table fell back to the full-season frame (the training
+cohorts' pooled first-three-season line); non-thin knots per fold: 2019: hit:k_pct 2, hit:avg 2, hit:babip 2, hit:iso 1, pit:k_pct 2, pit:bb_pct 1; 2020: hit:k_pct 4, hit:avg 4, hit:babip 4, hit:iso 3, pit:k_pct 3, pit:bb_pct 4; 2021: hit:k_pct 5, hit:avg 5, hit:babip 5, hit:iso 5, pit:k_pct 5, pit:bb_pct 5.
+
+**The aging mode (U3).** `aging_v3.AgingModel.component_curve(side, comp, bucket)` with aging v2 on a
+model fitted point in time at T - 1 (`aging_v3.fitted(corpus, T - 1)`, the default config); no served
+curves file exists at this read (`data/aging_v3_curves.json` is written by the flip after a pass), so
+the point-in-time fit stands in for 'as served'. Components: hitters k_pct, bb_pct, iso, babip;
+pitchers k_pct, bb_pct, hr_bf; AVG, wOBA and xwOBA carry no curve and the row says so.
+
+**The playing-time rule (1.5).** LANE A's heads are veterans only, so the exposure a player at arrival
+takes is the training cohorts' mean pooled first-three-season PA (hitters) or BF and games (pitchers
+by SP and RP), spread evenly over the three seasons; the scored player's own PA, BF or innings are
+never read. Per fold (per season): 2019: hit:H 145.6 (42.6 G), pit:SP 130.4 (13.1 G); 2020: hit:H 158.4 (45.3 G), pit:SP 128.7 (13.3 G); 2021: hit:H 153.7 (44.1 G), pit:SP 124.1 (12.3 G), pit:RP 48.7 (11.7 G).
+
+**The assembly constants (1.4).** `proj_components.season_constants(T - 1, corpus)` per fold, PF 1.0, no
+framing charge, the wOBA anchor set to the feed's lgwOBA (`lg_woba_feed`, the scale the realized and
+projected wOBA are on); baserunning and fielding at 0 runs (the heads list them as not projected for a
+player with no MLB history); positional runs from the as-of position (a compound position takes its
+first token, OF prices as RF, INF and UTIL as 2B, DH as DH innings); pitcher FIP from the projected K%,
+BB% and HR per BF with HBP at 0, SP at a start share of 1 and RP at 0, gmLI at the heads' default.
+Per fold: 2019: season 2018, rpw 9.7145, lgwOBA 0.3147, woba_scale 1.2258, lg_adj_rate 0.00245, rep_per_pa 0.02992, inn_per_pa 2.1272, fip_constant 3.1604, lg_fipr9 4.4763, warip -0.000044, mlb_games 2431; 2020: season 2019, rpw 10.2957, lgwOBA 0.3199, woba_scale 1.1569, lg_adj_rate 0.00259, rep_per_pa 0.03145, inn_per_pa 2.1097, fip_constant 3.2140, lg_fipr9 4.8638, warip 0.000175, mlb_games 2429; 2021: season 2020, rpw 10.2821, lgwOBA 0.3198, woba_scale 1.1853, lg_adj_rate 0.00333, rep_per_pa 0.03257, inn_per_pa 2.1874, fip_constant 3.1914, lg_fipr9 4.8547, warip 0.000196, mlb_games 898.
+
+**The missing-input rule (1.2).** A missing level-0 input enters at the training mean (0 after
+standardization) with a 0/1 missing indicator column; a baseline whose own input the row lacks prices
+that row at B0 and the artifact counts those rows per baseline (`baseline_rows_priced_at_b0`).
+
+**Defaults taken at the build (named in the commit).** D-TL11-1 the TIP maturity frame is the training
+players' window seasons at age 26 and over, falling back to the full-season frame when fewer than two
+bins survive. D-TL11-2 the level-relative ISO is the ladder's level-season norm `milb_history.league_norms`
+(the norm `efv_dataset._milb_features` reads) and the level-relative BABIP the level-season median on the
+same ladder cache at 100 PA, because `level_norms.compute_level_norms` carries no BABIP and no
+season-keyed norm. D-TL11-3 the proxy enters wOBA as well as xwOBA (est_woba is the expected form of
+wOBA). D-TL11-4 the arrival age is whole years at the debut date, else the ladder's age in the final
+pre-debut season carried forward. D-TL11-5 the playing-time rule and D-TL11-6 the assembly conventions
+above. D-TL11-7 the as-of position is the debut record's position (the points carry none).
+
+**Row accounting at the read.** debuts_in_cohorts 770, no_side 11, no_mlbam 0, no_asof_point 37, no_tool_grades 8, no_feature_vector 0, placeholder_debut_date 0, profiles 722; scored rows 523 (2019: 157, 2020: 177, 2021: 189).
+Survivorship: every number in the artifact is accuracy among debuts, conditional on reaching MLB.
+The 2020 season (60 games) sits inside the windows of the 2018 to 2020 cohorts and is flagged on the
+2020 and 2021 folds. Any change to this specification after this commit is an amendment in the 5c form
+committed alone before the look; a change after any holdout row has been read voids the look.
+
