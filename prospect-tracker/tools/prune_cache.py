@@ -90,7 +90,12 @@ VERSIONED_CACHES: tuple[str, ...] = ("statcast_metrics", "zone_metrics")
 # limited network. The corpus is also small enough that pruning it buys almost
 # nothing: about 17.2 KB per game measured over 600 games, so roughly 330 MB for
 # the full cache against the 19 GB it was derived from.
-EXCLUDED = ("efv_backup", "bref_register", "draft_history", "pbp_corpus")
+#
+# ``pbp_runners`` is the eBR runner record (tools/build_runner_moves.py), the same
+# case: derived from ``win_prob`` and ``game_feeds``, both of which are in
+# SAFE_CACHES, and its minor-league copy is the only one left once feed_cache's
+# monthly prune reaches the 2023 to 2026 feeds (EBR_GATE.md part 2.2).
+EXCLUDED = ("efv_backup", "bref_register", "draft_history", "pbp_corpus", "pbp_runners")
 
 
 def free_gb(path: Path | None = None) -> float:

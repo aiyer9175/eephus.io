@@ -1184,6 +1184,28 @@ read (SWAR-Q0 to SWAR-Q3, EWV3-Q1 to EWV3-Q3). Frames, statistics, thresholds, m
 families, twins, guards, the dates and the claims never change. After a look, nothing it read
 changes; after both looks, nothing above part 12 changes.
 
+### 11.1 2026-10-14: the SB-runs bug band compares like with like (clause (ii))
+
+- **Defect.** Part 4's band "r(SB runs, wSB)" compares SB runs, which part 2.7 defines as eSB +
+  ePK, with FanGraphs' wSB, whose scope is steals and caught stealing (pickoff caught stealing
+  included). ePK, the pickoffs of runners who were not attempting, has no wSB counterpart, so the
+  band compares two scopes. The defect is in the band's comparison, not in eBR.
+- **Evidence** (task EBR_2A_CORE_DARK's preview build of 2026-10-09, kept under `.cache/ebr/preview/`;
+  same-season aggregates only; no year-to-year, split-half or forward number was computed): at PA 300+
+  r(eSB + ePK, wSB) read 0.745 to 0.815 over the eight seasons, under 0.80 in 2018, 2019, 2022, 2024
+  and 2026, while r(eSB, wSB) read 0.855 to 0.919 in every season. wSB recomputed with FanGraphs' own
+  linear weights on the record's steal and caught-stealing counts equals the feed's `wSb` at r 1.000
+  (mean absolute difference at most 0.0006 runs) and I1 and I2 hold exactly, so the counts are right.
+  ePK's sd among those runners is 0.38 to 0.51 runs a season. The sibling prototype of part 10 item 1
+  had already read this comparison at 0.776 and 0.758 (2025 and 2026), under the band.
+- **Fix** (owner answer EBR-2A (a), 2026-10-14, the recommended option under the standing
+  instruction, `DECISIONS_FOR_OWNER.md`): part 4's "SB runs against wSB" comparison and its bug band
+  read eSB against wSB, at the same 0.80 and the same PA cuts; ePK's sd and r(ePK, wSB) are reported
+  beside it every build. Nothing else changes: eBR, its five parts, the display parts and sub-totals of
+  part 2.7 (SB runs stays eSB + ePK), Leg E's E = (eSB + ePK + eXB) / PA, the other bands, the frames,
+  statistics, thresholds, guards and dates.
+- Committed alone, before the outcome look (part 12.1 is empty at this commit).
+
 ## 12. Results
 
 **EMPTY AT REGISTRATION.**
