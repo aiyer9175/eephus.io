@@ -620,6 +620,10 @@ _SIDECAR_GLOBS = (
     "data/dpw_path_ledger.json",
     # QPRP08: eta_backtest's served P(debut) curves (redirected below).
     "data/eta_curves.json",
+    # PJ_6: proj_export's second output, the component lines (the preview under
+    # .cache while dark, the card source under data/ once live).
+    ".cache/proj_components/preview/**/*",
+    "data/mlb_proj_components.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -1023,6 +1027,12 @@ _SIDECAR_WRITE_TARGETS = (
     # model, and its one reader; both resolved at call time.
     ("arb_export", "PROSPECT_RUNGS_PATH", "data/arb_prospect_rungs.json"),
     ("value_framework", "_ARB_PROSPECT_PATH", "data/arb_prospect_rungs.json"),
+    # PJ_6: proj_export's second output, the component lines, and their one
+    # reader; _write_components and _component_rows resolve them at call time.
+    ("proj_export", "COMPONENTS_PREVIEW_PATH",
+     ".cache/proj_components/preview/components.json"),
+    ("proj_export", "COMPONENTS_LIVE_PATH", "data/mlb_proj_components.json"),
+    ("mlb_player_export", "COMPONENTS_PATH", "data/mlb_proj_components.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
