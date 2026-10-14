@@ -19,6 +19,12 @@ Modes:
                                                           section 18 is not empty, when the
                                                           artifact exists, or on any label but
                                                           fwar.
+  python -u tools/prospect_anchor_gate.py --owner-waived-early-read
+                                                          THE LOOK before its floor under the
+                                                          owner's waiver EW3-5 (2026-10-14),
+                                                          recorded as an owner-waived early
+                                                          read; step Z and the other gates'
+                                                          look days still refuse.
   python tools/prospect_anchor_gate.py --fixture F --out O  the whole reporting path on a
                                                           fixture frame (tests only). Refuses to
                                                           write the real artifact path.
@@ -94,6 +100,11 @@ LOOK_SLIP_DATE = _dt.date(2026, 12, 31)  # section 14: the look slips with the e
 # epoch calendar): the PROJ_PATH looks and the eFV reserved read.
 BLOCKED_DAYS = (_dt.date(2026, 10, 23), _dt.date(2026, 11, 6), _dt.date(2026, 11, 13),
                 _dt.date(2026, 12, 1))
+# The owner's waiver of registered look dates (DECISIONS_FOR_OWNER.md EW3-5, 2026-10-14). It
+# is carried only by the explicit --owner-waived-early-read switch, never by default, and it
+# waives the floor alone: the step Z condition and the other gates' look days still refuse.
+OWNER_WAIVER = ("EW3-5 (owner 2026-10-14): registered look days and dates waived; the look "
+                "before its floor is recorded as an OWNER-WAIVED EARLY READ")
 # 5.4 design-day illustration, arithmetic on the served 2026-09-04 table.
 DESIGN_DAY = {"45": {"anchor_lo": 0.196, "anchor_hi": 0.500, "m": 0.152},
               "50": {"anchor_lo": 0.500, "anchor_hi": 0.830, "m": 0.165},
@@ -866,7 +877,12 @@ def section_18_is_empty(text: str | None = None) -> bool:
     return not re.search(r"^###\s", body, flags=re.M)
 
 
-def check_clock(today: _dt.date | None = None, step_z: str | None = None) -> dict:
+def check_clock(today: _dt.date | None = None, step_z: str | None = None,
+                owner_waiver: str | None = None) -> dict:
+    """Section 14's clock. `owner_waiver` names an owner decision that waives the registered
+    look date (EW3-5, 2026-10-14); with it a look before the floor proceeds and is RECORDED
+    as an owner-waived early read in the clock block. Without it the floor refuses as
+    registered. The step Z entry and the other gates' look days are never waived."""
     today = today or _dt.date.today()
     if step_z is None:
         step_z = step_z_entry()
@@ -876,10 +892,18 @@ def check_clock(today: _dt.date | None = None, step_z: str | None = None) -> dic
     floor = look_floor(step_z)
     if today in BLOCKED_DAYS:
         raise LabRefused(f"refused: {today} is another gate's registered look day")
+    out = {"today": today.isoformat(), "step_z_entry": step_z, "look_floor": floor.isoformat(),
+           "early_read": None}
     if today < floor:
-        raise LabRefused(f"refused: today {today} is before the look floor {floor} "
-                         f"(max of {LOOK_FLOOR} and step Z {step_z} + {STEP_Z_LAG_DAYS} days)")
-    return {"today": today.isoformat(), "step_z_entry": step_z, "look_floor": floor.isoformat()}
+        if not owner_waiver:
+            raise LabRefused(f"refused: today {today} is before the look floor {floor} "
+                             f"(max of {LOOK_FLOOR} and step Z {step_z} + {STEP_Z_LAG_DAYS} days)")
+        out["early_read"] = {"owner_waived": True, "waiver": owner_waiver,
+                             "registered_floor": floor.isoformat(),
+                             "days_before_floor": (floor - today).days,
+                             "note": ("OWNER-WAIVED EARLY READ: the registered look date was "
+                                      "waived by the owner; the step Z condition held.")}
+    return out
 
 
 def check_one_look(artifact_path: Path = ARTIFACT, gate_text: str | None = None) -> None:
@@ -1403,9 +1427,9 @@ def run_fixture(fixture_path: Path, out_path: Path, detect: bool = True) -> dict
     return art
 
 
-def run_look(today: _dt.date | None = None) -> dict:
+def run_look(today: _dt.date | None = None, owner_waiver: str | None = None) -> dict:
     """THE LOOK. Every guard, in order, before a single row is read."""
-    clock = check_clock(today)
+    clock = check_clock(today, owner_waiver=owner_waiver)
     check_one_look()
     if _dt.date.fromisoformat(clock["today"]) > LOOK_SLIP_DATE:
         raise LabRefused(f"refused: after {LOOK_SLIP_DATE} the look slips with the epoch and "
@@ -1419,9 +1443,12 @@ def run_look(today: _dt.date | None = None) -> dict:
         if abs(float(fitted_anchor(k)) - float(f_check(k))) > 1e-9:
             raise LabRefused("refused: value_framework.fv_to_6yr_avg_war does not read the "
                              "fitted empirical_anchors table (the flag must be off)")
+    command = "python -u tools/prospect_anchor_gate.py"
+    if clock.get("early_read"):
+        command += " --owner-waived-early-read"
     art = build_artifact(frame, fitted_anchor, stamps=stamps, identity=identity,
                          named_row=named_row_block(vf, fitted_anchor),
-                         run_meta={"mode": "look", **clock, "command": "python -u tools/prospect_anchor_gate.py"})
+                         run_meta={"mode": "look", **clock, "command": command})
     write_artifact(art, ARTIFACT)
     return art
 
@@ -1444,6 +1471,10 @@ def main(argv=None) -> int:
     ap.add_argument("--out", help="where the fixture run writes (never the real artifact)")
     ap.add_argument("--no-detect", action="store_true", help="fixture mode: skip the detection and coverage simulations")
     ap.add_argument("--fit-v2", action="store_true", help="section 11; refused unless the verdict reads MISCALIBRATED")
+    ap.add_argument("--owner-waived-early-read", action="store_true",
+                    help=("the look before its registered floor under the owner's waiver "
+                          "EW3-5 (2026-10-14); recorded in the artifact as an owner-waived "
+                          "early read. Never waives step Z or another gate's look day"))
     args = ap.parse_args(argv)
     try:
         if args.fit_v2:
@@ -1458,7 +1489,7 @@ def main(argv=None) -> int:
             art = run_fixture(Path(args.fixture), Path(args.out), detect=not args.no_detect)
             _report(art)
             return 0
-        art = run_look()
+        art = run_look(owner_waiver=OWNER_WAIVER if args.owner_waived_early_read else None)
         _report(art)
         return 0
     except LabRefused as exc:

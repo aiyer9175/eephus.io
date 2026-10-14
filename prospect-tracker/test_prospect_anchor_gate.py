@@ -427,7 +427,40 @@ def test_the_clock_refuses_before_the_floor_and_on_look_days():
     with pytest.raises(L.LabRefused, match="no step Z entry"):
         _no_step_z(L)
     ok = L.check_clock(dt.date(2026, 11, 20), step_z="2026-10-03")
-    assert ok == {"today": "2026-11-20", "step_z_entry": "2026-10-03", "look_floor": "2026-11-20"}
+    assert ok == {"today": "2026-11-20", "step_z_entry": "2026-10-03", "look_floor": "2026-11-20",
+                  "early_read": None}
+
+
+def test_the_owner_waiver_records_an_early_read_and_waives_only_the_floor():
+    """EW3-5 (owner 2026-10-14): the registered look date is waived. The waiver is carried
+    only by the explicit switch; with it a look before the floor proceeds and the clock
+    block records an OWNER-WAIVED EARLY READ. It never waives step Z or a blocked day."""
+    L = lab()
+    assert "EW3-5" in L.OWNER_WAIVER
+    ok = L.check_clock(dt.date(2026, 10, 14), step_z="2026-10-03", owner_waiver=L.OWNER_WAIVER)
+    assert ok["today"] == "2026-10-14" and ok["look_floor"] == "2026-11-20"
+    er = ok["early_read"]
+    assert er["owner_waived"] is True and er["waiver"] == L.OWNER_WAIVER
+    assert er["registered_floor"] == "2026-11-20" and er["days_before_floor"] == 37
+    assert er["note"].startswith("OWNER-WAIVED EARLY READ")
+    # on or after the floor the waiver changes nothing
+    assert L.check_clock(dt.date(2026, 11, 20), step_z="2026-10-03", owner_waiver=L.OWNER_WAIVER)["early_read"] is None
+    # without the switch the floor refuses as registered
+    with pytest.raises(L.LabRefused, match="before the look floor"):
+        L.check_clock(dt.date(2026, 10, 14), step_z="2026-10-03")
+    # a blocked day and a missing step Z entry are never waived
+    with pytest.raises(L.LabRefused, match="registered look day"):
+        L.check_clock(dt.date(2026, 10, 23), step_z="2026-10-03", owner_waiver=L.OWNER_WAIVER)
+    orig = L.step_z_entry
+    L.step_z_entry = lambda text=None: None
+    try:
+        with pytest.raises(L.LabRefused, match="no step Z entry"):
+            L.check_clock(dt.date(2026, 10, 14), owner_waiver=L.OWNER_WAIVER)
+    finally:
+        L.step_z_entry = orig
+    # the switch is a flag, not a value: it takes no argument of its own
+    with pytest.raises(SystemExit):
+        L.main(["--owner-waived-early-read", "x"])
 
 
 def _no_step_z(L):
