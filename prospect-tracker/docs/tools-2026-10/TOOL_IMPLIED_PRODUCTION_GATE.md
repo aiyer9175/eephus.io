@@ -1503,3 +1503,16 @@ and the 'looking early disqualifies' clause are waived by EW3-5, not met. The W.
 (MLB seasons through 2026 in every input, each frozen by sha256 in the Part 8 record and unchanged from the
 start to the end of the run). The look ran once; its record is the Part 8 'Look W' entry; it is VOID under
 W.7, and nothing above Part 8 was edited.
+
+### 2026-10-14: Part 7 outcome of look W (TL_13_TOOL_WEIGHTS_DARK, not built)
+
+Dated note appended by TL_13_TOOL_WEIGHTS_DARK below the last section. Its precondition reads the Part 8
+'Look W' entry: no tool PASSED (hit NULL, speed VOID, field NULL, throw LOSS; the look is VOID under W.7).
+Part 7's look W clause ('A NULL serves the tab's evidence and equal weight') therefore applies, and the
+Part 7 outcome line is recorded here rather than inside Part 7, because 'What may be added to this file
+after this commit' allows no edit above Part 8:
+
+equal weights retain on every tool (look W)
+
+Nothing is built: `consensus.TOOL_SOURCE_WEIGHTS` and the key `tools_consensus_w` do not exist, no file
+under data/ is written and no served number moves. Nothing above Part 8 was edited.
