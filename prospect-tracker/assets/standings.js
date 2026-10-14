@@ -8,7 +8,10 @@
 
    SERVED NUMBERS ONLY. Every number prints as the job served it; the page
    joins, sorts and formats (rounding, signs, W-L joins, a served date written
-   out) and makes the stale comparison, nothing else. Seeds, how a club
+   out) and makes the stale comparison, nothing else. STANDINGS_5: only when the
+   mount root names the chart chunk (data-charts-src, standings_core.STANDINGS_CHARTS)
+   the page adds the Charts view and a Race disclosure under each division table,
+   and loads the chunk on the first of them. Seeds, how a club
    qualified, league records, RD/G, W - xW, games left and the projected record
    (two integers) are served by standings_core. A date written from a UTC
    stamp is Eastern and says so. Fetch: latest.json and index.json once per
@@ -252,8 +255,9 @@
 
   // ---- the app
   function boot(root) {
+    var CH = root.getAttribute("data-charts-src"), VW = CH ? VIEWS.concat([["charts", "Charts"]]) : VIEWS;
     var app = { route: parse(location.hash), L: null, IX: null, S: null, serverAt: null, clientAt: null,
-      open: null, focus: null, bk: null, bkDoc: null, meta: {} };
+      open: null, focus: null, bk: null, bkDoc: null, meta: {}, races: {} };
     var St = window.EephusState;
     if (St) St.render(root, "loading", "Loading standings.");
 
@@ -263,7 +267,9 @@
         var i = kv.indexOf("=");
         if (i > 0) try { q[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1)); } catch (e) { /* dropped */ }
       });
-      if (VIEWS.some(function (v) { return v[0] === q.view; })) r.view = q.view;
+      if (VW.some(function (v) { return v[0] === q.view; })) r.view = q.view;
+      if (/^(race|wc|odds|runs|xwl)$/.test(q.chart || "")) r.chart = q.chart;
+      if (/^[AN]L[ECW]$/.test(q.div || "")) r.div = q.div;
       if (/^\d{4}$/.test(q.season || "")) r.season = +q.season;
       if (q.cols != null) r.cols = String(q.cols).split(",").filter(function (c) {
         return GROUPS.some(function (g) { return g[0] === c; });
@@ -280,6 +286,8 @@
       if (r.cols) p.push("cols=" + r.cols.join(","));
       if (r.sort) p.push("sort=" + r.sort.k + "." + r.sort.dir);
       if (r.team) p.push("team=" + r.team);
+      if (r.chart) p.push("chart=" + r.chart);
+      if (r.div) p.push("div=" + r.div);
       return p.length ? "#" + p.join("&") : "";
     }
     function go(r) {
@@ -461,7 +469,7 @@
     }
 
     function controls(v, cs) {
-      return '<div class="st-ctl"><div class="st-row st-views" role="group" aria-label="Views">' + VIEWS.map(function (w) {
+      return '<div class="st-ctl"><div class="st-row st-views" role="group" aria-label="Views">' + VW.map(function (w) {
         return '<button type="button" class="st-chip-btn" data-view="' + w[0] + '" aria-pressed="' + (w[0] === v) + '">' + w[1] + "</button>";
       }).join("") + '</div><div class="st-row st-groups" role="group" aria-label="Column groups">' +
         '<button type="button" class="st-chip-btn" aria-pressed="true" disabled>Record</button>' + GROUPS.map(function (g) {
@@ -525,6 +533,8 @@
           var l = d[0].slice(0, 2);
           if (l !== lg) { lg = l; o += '<h3 class="sp-boxhead">' + LEAGUE[l] + "</h3>"; }
           o += tableHTML(rowsBy(function (r) { return r.div === d[0]; }), cs, x, d[1] + ", " + y + ", " + thru);
+          if (CH && v === "division") o += '<details class="st-race" data-div="' + d[0] + '"' + (app.races[d[0]] ? " open" : "") +
+            '><summary>Race</summary><div class="st-cm"></div></details>';
         });
       } else if (v === "wildcard") {
         ["AL", "NL"].forEach(function (l) {
@@ -567,15 +577,16 @@
       var x = { view: v, cols: cs, sort: app.route.sort || null, mine: mine(), mineOnly: !!app.route.mine, team: app.route.team,
         ours: O, model: O && O.regular ? O.regular.model_id : null };
       app.meta = {};
-      var body = viewHTML(v, x);
+      var body = v === "charts" ? '<div class="st-cm st-charts"></div>' : viewHTML(v, x);
       if (O && cs.indexOf("odds") >= 0 && /<table/.test(body)) body = '<section class="st-mw" data-model-id="' + esc(x.model) + '">' + oddsLabel(x.model) + body + "</section>";
       if (v === "playoffs") body = seedsHTML(x) + '<div class="st-bracket" id="st-bracket"></div><h3 class="st-final-h">' +
         (app.S.final ? "Final regular-season standings" : "Standings") + "</h3>" + body;
-      if (x.mineOnly && !/<table/.test(body)) body = stateHTML("empty", "No followed clubs in this view. Follow a club from its row's details.", "st-note");
+      if (x.mineOnly && v !== "charts" && !/<table/.test(body)) body = stateHTML("empty", "No followed clubs in this view. Follow a club from its row's details.", "st-note");
       if (v === "wildcard") body += tiesHTML();
       root.innerHTML = '<div class="st-wrap">' + controls(v, cs) + stamp() + legend() + notes(cs) + '<div class="st-body">' + body + "</div>" + credit() +
         '<p class="st-sr" role="status" aria-live="polite" id="st-announce"></p></div>';
       if (v === "playoffs") mountBracket();
+      mountCharts(root.querySelectorAll(".st-charts, .st-race[open] .st-cm"));
       shadows();
       var f = app.focus;
       app.focus = null;
@@ -616,6 +627,36 @@
         if (el && a[0] && a[0].mount) a[0].mount(el, (a[1] || {}).bracket || null);
       }).catch(function () { /* the seeds stand without the bracket */ });
     }
+
+    // the lazy chart chunk: loaded once, on the first Race disclosure or the Charts view
+    function mountCharts(els) {
+      if (!els.length) return;
+      Array.prototype.forEach.call(els, function (el) { el.innerHTML = stateHTML("loading", "Loading the race."); });
+      app.ch = app.ch || new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        s.src = CH;
+        s.onload = function () { ok(window.EephusStandingsCharts); };
+        s.onerror = no;
+        document.head.appendChild(s);
+      });
+      app.ch.then(function (C) {
+        Array.prototype.forEach.call(els, function (el) {
+          if (root.contains(el)) C.mount(el, { S: app.S, entry: app.entry, get: get, mine: mine(), route: app.route,
+            div: el.parentNode.getAttribute("data-div"), setRoute: function (k, val) {
+              app.route[k] = val;
+              try { history.replaceState(null, "", hashOf(app.route)); } catch (e) { /* the chart still redraws */ }
+            } });
+        });
+      }, function () {
+        Array.prototype.forEach.call(els, function (el) { el.innerHTML = stateHTML("failed", "The charts could not load."); });
+      });
+    }
+    root.addEventListener("toggle", function (ev) {
+      var d = ev.target, div = d.getAttribute && d.getAttribute("data-div");
+      if (!div || !d.classList.contains("st-race") || !!app.races[div] === d.open) return;
+      app.races[div] = d.open;
+      if (d.open) mountCharts([d.querySelector(".st-cm")]);
+    }, true);
 
     // ---- events
     root.addEventListener("click", function (ev) {
