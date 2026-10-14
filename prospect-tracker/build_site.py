@@ -9505,11 +9505,6 @@ SOURCE_ROWS = [
      "use": ("Prospect rankings and scouting reports (consensus input); the club logo images "
              "on team pickers and boards load from ESPN's image server (the logos are the "
              "clubs' trademarks).")},
-    {"name": "The Athletic", "url": "https://www.nytimes.com/athletic/",
-     "take": "Rankings",
-     "cadence": "Each published list",
-     "terms": None, "terms_label": None,
-     "use": ("Prospect rankings (consensus input).")},
     {"name": "Just Baseball", "url": "https://www.justbaseball.com/",
      "take": "Rankings, reports",
      "cadence": "Daily",

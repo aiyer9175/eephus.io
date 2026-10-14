@@ -1362,6 +1362,15 @@ function _methCaptureCurve(bt) {
     <p class="meth-note">eFV concentrates <strong>${t20x}%</strong> of all realized career WAR in the top 20% of its board, against ${t20c}% for the consensus. ${capCmp} Full graded pool (n=${cc.pool_n.toLocaleString()}, debuted + busts); the public sources don't grade the lower-minors busts, so this lift curve is eFV against the consensus it is built to upgrade.</p>
   </div>`;
 }
+// The one $/WAR level every surplus prices at (owner answer FP2-1, 2026-09-30),
+// read from the framework snapshot's dollars_per_war.level_basis.level_usd and
+// never typed; "" when the snapshot carries no applied level.
+function _dpwLevelTxt() {
+  const lb = (((window.VALUE_FRAMEWORK || {}).dollars_per_war) || {}).level_basis || {};
+  const usd = Number(lb.level_usd);
+  if (!lb.applied || !(usd > 0)) return "";
+  return "$" + (usd / 1e6).toFixed(2) + "M per WAR";
+}
 // The Methodology prose, one part per piece the chapters assemble
 // (renderMethodology). Text moves verbatim from the one-scroll view; the
 // section headings sit one level under each chapter's h2.
@@ -1375,47 +1384,24 @@ function _methProseParts() {
   const _dpwTxt = (_dpwF(_dpwT.lt_1) && _dpwF(_dpwT["1_to_2"]) && _dpwF(_dpwT["2plus"]))
     ? ` (about ${_dpwF(_dpwT.lt_1)} / ${_dpwF(_dpwT["1_to_2"])} / ${_dpwF(_dpwT["2plus"])} by WAR level)`
     : "";
+  const _dpwLvl = _dpwLevelTxt();
   return {
     efv: `
     <h3 class="meth-h">How eFV is built <span class="meth-sub">the site's primary grade</span></h3>
-    <p><strong>eFV (eephusFV)</strong> is our outcome-grounded Future Value grade, and the
-    primary grade and ranking signal site-wide. A scout FV grades the tool profile; eFV predicts
-    the career it produces: <em>given everything known before a prospect debuts, his distribution
-    of first-6-MLB-season WAR</em>, summarized back onto the familiar 20-80 scale.</p>
-    <p><strong>The model.</strong> eFV starts from the consensus FV as a regularized prior (see
-    below), then adds a small set of outcome-validated adjustments: the signals that carry WAR
-    information <em>beyond</em> the grade and are under-priced by scouts. Hitters: on-base vs level,
-    contact (K%) vs level, a multi-season peak K-rate, age-for-level, MiLB track-record length, the
-    hit and speed tools. Pitchers: a multi-season peak K-rate, final-season K-rate, walk rate (the
-    K-BB% completion), age-for-level, fastball. Game power is <em>omitted</em> for hitters on
-    purpose: the data shows scouts over-price it and it predicts ISO, not incremental WAR, so
-    leaving it out is eFV's power-overpricing correction. It is a regularized ridge on 3,961
-    labeled prospects (debut classes 2011-2024 plus the never-debuted bust pool; 1,917 hitter and
-    2,044 pitcher frames per the committed dataset reports), rate features sample-shrunk so a cup
-    of coffee does not read as a track record.</p>
-    <p><strong>The guarded blend.</strong> The headline ranking is a guarded blend,
-    rank = (1-λ)·(consensus→WAR) + λ·(model→WAR). λ is <em>pinned</em>, hitters 0.70 and pitchers
-    0.57, and the pins are stability decisions rather than accuracy claims: across the whole
-    selection band the pooled result moves by about a fifth of what this eval can even resolve, so
-    re-picking λ every rebuild was chasing noise and moving published grades for no measured gain.
-    The blend cannot fall far below the consensus prior, and leans on eFV where its edge is real.</p>
-    <p><strong>Two grades, one model.</strong> The <em>headline</em> eFV is the model's own
-    outcome-grounded grade: predicted first-six-year WAR read back through a curve fit on what
-    prospects at each grade actually went on to do. It is not pinned to the consensus
-    distribution, so it can and does disagree with the industry, and on the current board it
-    disagrees by a full 5-point rung or more on most of the hitters. A separate grade on the older
-    consensus-anchored scale still prices the surplus dollars and the 5-bucket outcome mix, because
-    those value curves were fitted on that scale. Live prospects also get two bounded tilts: a
-    Statcast+ quality tilt on upper-level prospects, and an injury penalty that applies to
-    <em>pitchers only</em> (current IL status, deepened by recent IL load). The penalty is
-    pitcher-only because that is what the outcomes support: holding the scouting grade, age and
-    rostered time equal, a pitcher carrying an active injury goes on to produce less, while a
-    hitter does not. Post-TJ status by itself is not treated as an injury.</p>
-    <p><strong>Everywhere, frozen at debut.</strong> Every graded prospect carries an eFV: the
-    active boards, graduates (backgraded at their final pre-debut snapshot, then <em>locked</em>),
-    and the farm-system rankings, surplus, DvM+, and movement engine all run on it. Players with no
-    pro track record (recent draftees, int'l signs) fall back to the consensus prior until they
-    play.</p>
+    <p><strong>eFV (eephusFV)</strong> is our Future Value grade and the site's primary prospect
+    ranking. Since September 25, 2026 the board serves eFV V2.</p>
+    <p><strong>The rule.</strong> eFV V2 keeps the consensus FV order inside hitters and inside
+    pitchers. A small set of drivers moves a prospect up or down that order, and he takes the
+    consensus grade of the prospect ranked where he lands. Consensus sets the level; the model only
+    reorders. A driver enters only if its effect held its sign in every training year and its mean
+    strength cleared a fixed bar. The admitted drivers are listed in the ${gTermLink("xfv", "eFV")}
+    entry and on each card. When no pitcher driver passes, pitchers follow the consensus order
+    exactly.</p>
+    <p><strong>Graduates keep their earlier grade.</strong> Graduates and busts keep the eFV v1
+    grade, scored at the final pre-debut snapshot and locked. Injury, age,
+    a reliever role and Statcast show on each card as labelled notes and do not move the grade.
+    Prospects no source has graded carry the production-only provisional grade, listed in their own
+    board section until a source grades them.</p>
 <!-- NO ACCURACY CLAIM HERE, BY DESIGN (2026-08-19). This paragraph used to
     assert, in is-good styling, that eFV led every public source while the
     artifact's own head_to_head_verdict said not resolvable (xfv_beats:false)
@@ -1431,7 +1417,7 @@ function _methProseParts() {
     we showed at the time.</p>
 `,
     consensus: `
-    <h3 class="meth-h">How the consensus FV (eFV's prior) is built</h3>
+    <h3 class="meth-h">How the consensus FV (the order eFV starts from) is built</h3>
     <p>The consensus FV is the scout-grade aggregate eFV anchors on, and the reference shown
     alongside eFV everywhere. Every source that publishes an explicit 20-80 Future Value grade
     feeds an <strong>equal-weight</strong> consensus: every source votes at exactly 1.0. An
@@ -1440,18 +1426,15 @@ function _methProseParts() {
     showed the weights were unearned: the weighted blend's edge measured d&rho; -0.0012 against
     a minimum detectable effect of 0.0068, inside the noise floor, and only two of eight outlets
     even have resolvable outcome history. The consensus FV is the equal-weight mean of the
-    published grades (FanGraphs, ESPN, Just Baseball, TJStats, MLB Pipeline,
-    and MLB Pipeline International). Two rank-only sources (Baseball America, The Athletic)
-    contribute a rank→implied-FV <em>only</em> when no source has graded a player yet; once
-    any explicit FV exists, the grade mean wins and ranks become informational (the
-    <code>avg_rank</code> field).</p>
-    <p>Grades are <strong>forward-filled</strong>: because sources publish on different dates,
-    the consensus at any date uses the latest snapshot from <em>every</em> source up to that
-    date, so a player isn't reduced to a single most-recent list. It is then
-    <strong>Bayesian-shrunk</strong> - a thin-evidence grade (graded by few sources, or only
-    just added) is pulled toward a prior, so one aggressive outlier source can't swing the
-    number until corroborating grades arrive. The chart you see on every prospect page is this
-    point-in-time consensus history; the per-source overlay shows the inputs it blends.</p>
+    explicit grades from FanGraphs, MLB Pipeline, MLB Pipeline International, Baseball America,
+    ESPN, Just Baseball and TJStats, each first mapped onto the FanGraphs scale. A rank turns into
+    an implied FV only when no source has graded the player yet; once one has, the grade mean wins
+    and ranks stay informational (the <code>avg_rank</code> field).</p>
+    <p>Grades are <strong>forward-filled</strong>: sources publish on different dates, so the
+    consensus on any date uses the latest grade from every source up to that date. A player only
+    one source has ever graded is pulled one third of the way toward FV 35 until a second grade
+    lands. The chart on every prospect page is this point-in-time consensus; the per-source
+    overlay shows the grades it averages.</p>
 `,
     arkmetrics: `
     <h3 class="meth-h">How the Arkmetrics are derived</h3>
@@ -1464,25 +1447,27 @@ function _methProseParts() {
       leans on.</dd>
 
       <dt>DvM+ - Development vs Mean <span class="meth-tag">farm system</span></dt>
-      <dd>A wRC+-style index of organizational development: an org's cumulative <strong>eFV</strong>
-      growth over a 1 / 3 / 6-year window scored against the league-mean farm (100 = mean, +10 =
-      one standard deviation). Acquisitions are nullified and graduations don't subtract, so it
-      measures only development of prospects already in the system. The farm grade weights
-      6y / 3y / 1y at 60 / 30 / 10%. ($DvM+, the per-prospect surplus-development index, is also
+      <dd>An org's development credit over trailing windows of one to eight years, scored against
+      the league-mean farm (100 = mean, 10 points = one standard deviation across the 30 orgs).
+      Each grade step a prospect takes in the org is credited at its value on a fixed
+      FV-to-career-WAR table, so a step near the top counts for more. Acquisitions are nullified
+      and graduations do not subtract. The blend weights the 7-year window 60%, the 3-year 30% and
+      the 1-year 10%. ($DvM+, the per-prospect surplus-development index, is also
       eFV-based; ToolDvM+ stays on per-tool scout-grade growth, since the tool grades have no
       separate eFV time series.)</dd>
 
       <dt>RPS+ - Rate Performance Score <span class="meth-tag">prospect</span></dt>
-      <dd>A level-anchored rate index (OPS+ for hitters, ERA- for pitchers) normalized against
-      the player's <em>own</em> age × position-group cohort, then nudged by a small position
-      multiplier (C ×1.08 … 1B ×0.95). 100 = the same-age, same-position-group mean. MLB-level
-      prospects substitute canonical wRC+ / xFIP.</dd>
+      <dd>Hitters' wRC+ against their level and pitchers' ERA- against theirs, each with an
+      age-for-level term, indexed against the player's own age and position-group cohort (100 =
+      cohort mean, a point is about one percent), then a small position multiplier from C 1.08
+      down to DH 0.92. MLB players show wRC+ or xFIP instead.</dd>
 
       <dt>SC+ - Statcast+ <span class="meth-tag">prospect</span></dt>
       <dd>A side-aware composite of tracked Statcast / zone signals - contact quality + zone
       discipline for hitters; stuff + induced whiff/chase + suppressed contact for pitchers.
       Each component is z-scored against the side-matched active pool, averaged, and rescaled so
-      100 = pool mean and one standard deviation moves it 15 points (the wRC+/OPS+ family).</dd>
+      100 = pool mean and 10 points = one standard deviation, the scale CS+, DvM+, KRP+ and
+      pStuff+ share.</dd>
 
       <dt>ToolDvM+ - Tool Development vs Mean <span class="meth-tag">farm system</span></dt>
       <dd>A position-weighted blend of an org's per-tool DvM+ values (Hit, Power, Field, Arm,
@@ -1522,10 +1507,10 @@ function _methProseParts() {
     reframe (2026-07-31; refit 2026-10-09) the raw expectation is corrected
     by a count-weighted isotonic (PAVA) map fit on resolved-cohort bin means. The old $0 floor on
     low-tier prospects is gone - a bottom-tier player's price is his small positive expectation, because
-    the trade engine consumes surplus as a price and a price is an expectation. Dollars are priced
+    the trade engine consumes surplus as a price and a price is an expectation. Dollars price
     through the production valuation set <code>clemens_2026</code> (Ben Clemens' published 2026
-    FanGraphs framework, checksummed anchors) with the FA signings-implied $/WAR re-anchor
-    <em>disabled</em> under that set. The published per-prospect figure is ${gTermLink("surplus_value", "Surplus value")}; the per-FV-point
+    FanGraphs framework, checksummed anchors), its tier shape rescaled to one $/WAR level: the
+    free-agent winter level${_dpwLvl ? ` of ${_dpwLvl}` : ""} that /fa/ and /projections/ price at. The published per-prospect figure is ${gTermLink("surplus_value", "Surplus value")}; the per-FV-point
     and per-dollar efficiency cuts are ${gTermLink("surplus_per_fv_pt", "Surplus / FV-pt")} and ${gTermLink("dollars_per_fv", "$/FV-pt")}.
     The <em>Interactive</em> tab below walks an FV through every step.</p>
 `,
@@ -1536,8 +1521,9 @@ function _methProseParts() {
     list, the detail Surplus tile, and the Finances tab all read that one number. DvM+ / ToolDvM+
     aggregate per-tool development across the org's actives with acquisitions nullified (so a trade
     doesn't read as development) and graduations not subtracted (so promoting a star doesn't read
-    as a loss). The "+" indices (DvM+, RPS+, SC+, OrgSur+) are all built to the wRC+/OPS+ convention - 
-    100 = the relevant mean, ±10 ≈ one standard deviation - so they share one mental scale.</p>
+    as a loss). The plus indices share 100 as the mean but not one spread: SC+, DvM+ and ToolDvM+
+    move 10 points per standard deviation, and the board's RPS+ is a ratio where a point is about
+    one percent of its cohort mean.</p>
 `,
     analogue: `
     <h3 class="meth-h">Where the Arkmetrics sit vs public metrics</h3>
@@ -1545,10 +1531,10 @@ function _methProseParts() {
       <thead><tr><th>Arkmetric</th><th>Closest public analogue</th><th>What's different</th></tr></thead>
       <tbody>
         <tr><td>${gTermLink("wag", "WAG")}</td><td>WAR vs draft-pick / FV expectation</td><td>Measures realized career WAR against the WAR a player's FV grade <em>implied</em> - a grade-calibration residual, not raw production.</td></tr>
-        <tr><td>${gTermLink("dvm_plus", "DvM+ / $DvM+")}</td><td>Farm-system surplus-value rankings (e.g. public prospect-value tables)</td><td>Indexed wRC+-style (100 = mean) and scoped to in-system <em>development</em> with acquisitions removed, so it isolates org skill rather than hoarded talent.</td></tr>
+        <tr><td>${gTermLink("dvm_plus", "DvM+ / $DvM+")}</td><td>Farm-system surplus-value rankings (e.g. public prospect-value tables)</td><td>Indexed on the 100 + 10z scale (100 = mean) and scoped to in-system <em>development</em> with acquisitions removed, so it isolates org skill rather than hoarded talent.</td></tr>
         <tr><td>${gTermLink("surplus_value", "Surplus value")}</td><td>Surplus-value frameworks (FV→WAR→$ minus cost)</td><td>Same skeleton, but probability-weighted over a bucketed outcome distribution and discounted, rather than applying a single FV-tier dollar constant.</td></tr>
         <tr><td>${gTermLink("rps_plus", "RPS+")}</td><td>wRC+ / ERA-</td><td>Re-anchored to the player's own age × position-group cohort and level, so a young hitter at a hard level isn't penalized against older peers.</td></tr>
-        <tr><td>${gTermLink("statcast_plus", "SC+")}</td><td>Statcast percentile dashboards</td><td>Collapses the tracked-data panel into one side-aware, pool-anchored composite on the wRC+ scale.</td></tr>
+        <tr><td>${gTermLink("statcast_plus", "SC+")}</td><td>Statcast percentile dashboards</td><td>Collapses the tracked-data panel into one side-aware, pool-anchored composite on the 100 + 10z scale.</td></tr>
       </tbody>
     </table>
 `,
@@ -1576,7 +1562,7 @@ function _methProseParts() {
       <dt>How are sources weighted?</dt>
       <dd>Equally: every source votes at exactly 1.0. An accuracy-weighted blend (per-source weights from measured track records, shrunk toward equal and clamped) shipped in June 2026 and was reverted on 2026-07-25, when a hardened forward-chained re-measurement showed its edge was smaller than the test could resolve (d&rho; -0.0012 vs a minimum detectable effect of 0.0068) - the weights were unearned, so they came off. Only two of eight outlets even have resolvable outcome history. The interactive in Value and surplus lets you test any weighting yourself.</dd>
       <dt>How often does it update?</dt>
-      <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board stamps its own cadence.</dd>
+      <dd>The full pipeline runs on the first of each month and a daily refresh runs on the remaining nights. eFV and the Source Comparison ledger update with the daily run. Each board stamps its own date.</dd>
       <dt>What's the track record - and its limits?</dt>
       <dd>The evaluation window spans seven preseason base years (2017-2023): the 2017-2020 cohorts are fully resolved while 2021-2023 are still accruing WAR, and cumulative WAR is censored at today. Top FV tiers stay thin (n≈40-70), so their rates move on a few outcomes. The Source Comparison area lists sample sizes and these caveats in full rather than headlining an inflated number.</dd>
     </dl>
@@ -2370,8 +2356,10 @@ function renderGuide() {
   const archNode = (slug, label, sub) => `<div class="arch-node">${gTermLink(slug, label)}${sub ? `<span class="arch-node-sub">${escapeHtml(sub)}</span>` : ""}</div>`;
 
   const cardAnatomy = [
-    anat(`<span class="fv-badge fv-60" style="padding:3px 9px;">60</span>`, "fv",
-      "The headline grade - a single 20-80 number summarizing the prospect's projected MLB future, blended across every source that grades them."),
+    anat(`<span class="fv-badge fv-60" style="padding:3px 9px;">60</span>`, "xfv",
+      "The headline grade: eFV, our 20-80 grade. It keeps the consensus order inside hitters and inside pitchers and moves a prospect up or down where the drivers support it."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">FV 55</span>`, "consensus_fv",
+      "The consensus FV: the equal-weight mean of every source's grade, shown beside eFV."),
     anat(`<span style="display:inline-flex;gap:3px;"><span class="fv-badge fv-55 card-rarity-holo" style="padding:2px 7px;font-size:11px;">photo</span></span>`, "fv_rarity",
       "The photo's border/effect tier (shine → foil → chrome → holo → legendary) is keyed to FV, so rarity reads at a glance and matches the prospect list."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">HIT 60 · PWR 65 · …</span>`, "twenty_eighty",
@@ -2392,7 +2380,7 @@ function renderGuide() {
 
   const chartAnatomy = [
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">━━ line</span>`, "consensus_fv",
-      "The solid line is the point-in-time consensus FV - the forward-filled, Bayesian-shrunk mean of every source's grade as of each date."),
+      "The solid line is the point-in-time consensus FV: the equal-weight mean of every source's latest grade as of each date."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary);">┈┈ overlay</span>`, "fv",
       "Toggling the per-source overlay shows each outlet's individual grade history - the inputs the consensus blends."),
     anat(`<svg width="42" height="12" style="vertical-align:middle;" aria-hidden="true"><line x1="2" y1="6" x2="40" y2="6" stroke="var(--neon-violet)" stroke-width="1.4" stroke-dasharray="3,2"/></svg>`, "tools_dvm_plus",
@@ -2428,7 +2416,7 @@ function renderGuide() {
     <div class="guide-anat">${farmAnatomy}</div>
 
     <h2 class="meth-h">How the metrics build on each other</h2>
-    <p class="meth-note">Each stage consumes the one before it. Scouting grades aggregate into a per-source FV; per-source FVs blend into the consensus; the consensus plus performance and tracked data drive the player indices; player indices roll up to the org grade.</p>
+    <p class="meth-note">Each stage reads the one before it. Tool grades roll into each source's FV; the sources average into the consensus FV; eFV reorders the consensus inside each side; the eFV grade prices surplus and the outcome odds; player figures roll up to the org grade.</p>
     <div class="arch-flow">
       <div class="arch-stage">
         <div class="arch-stage-label">Inputs</div>
@@ -2442,7 +2430,12 @@ function renderGuide() {
       <div class="arch-arrow">→</div>
       <div class="arch-stage">
         <div class="arch-stage-label">Blend</div>
-        ${archNode("consensus_fv", "Consensus FV", "forward-fill + shrink")}
+        ${archNode("consensus_fv", "Consensus FV", "forward-fill, equal weight")}
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-stage">
+        <div class="arch-stage-label">Reorder</div>
+        ${archNode("xfv", "eFV", "reordered consensus")}
       </div>
       <div class="arch-arrow">→</div>
       <div class="arch-stage">
@@ -2670,7 +2663,7 @@ function _methInteractivesHTML() {
     <div class="gx-card-title">How source weighting works - adjustable consensus</div>
     <div class="gx-card-body">
       <div id="gx-consensus" class="gx-srcs">
-        ${[["FanGraphs", 60], ["MLB Pipeline", 55], ["ESPN", 60], ["Just Baseball", 50], ["TJStats", 55]].map(([nm, fv]) => `
+        ${[["FanGraphs", 60], ["MLB Pipeline", 55], ["Baseball America", 55], ["ESPN", 60], ["Just Baseball", 50], ["TJStats", 55]].map(([nm, fv]) => `
         <div class="gx-src-row">
           <span class="gx-src-name">${nm}</span>
           <label class="gx-src-lab">FV <input class="gx-src-fv gx-num" type="number" min="20" max="80" step="1" value="${fv}" oninput="_gxConsensus()"></label>
@@ -2800,9 +2793,9 @@ function _methAdGfxSpec() {
     module: "Sources & Methodology",
     accentToken: "--accent-lilac",
     format: "twitter",
-    title: "eFV: the prospect grade trained on outcomes",
-    subtitle: "Equal-weight scout consensus as the prior + outcome-validated signals, "
-      + "summarized back onto the 20-80 scale"
+    title: "eFV: the consensus order, reordered where outcomes support it",
+    subtitle: "Equal-weight scout consensus sets the level inside hitters and pitchers; "
+      + "drivers that held their sign in every training year move a prospect up or down"
       + (nH2h ? " · scored on " + Number(nH2h).toLocaleString() + " common resolved players" : ""),
     url: "eephus.io",
     filenameBase: "eephus-efv-methodology",
@@ -2902,7 +2895,7 @@ function _methIndustryHTML() {
     <div class="meth-table-title">One table, two sides <span class="meth-sub">a grade does not buy the same WAR from a pitcher</span></div>
     <p class="meth-note">The industry publishes one FV-to-WAR mapping and hands it to both sides. Measured against what graded prospects actually produced, the top consensus band pays out very differently by side.</p>
     ${blockCNum}
-    <p class="meth-note">Our engine spends that difference: the per-side forecast and the position multiplier price a pitcher's grade off pitcher outcomes. The full band-by-band table, unresolved cells included, renders in Source Comparison; artifact: <a href="/data/xfv_side_calibration_eval.json" target="_blank" rel="noopener">xfv_side_calibration_eval.json</a>.</p>
+    <p class="meth-note">eFV keeps pitchers ranked against pitchers, so this gap sits in the consensus grade eFV reads, not in a separate eFV forecast. The full band-by-band table, unresolved cells included, renders in Source Comparison; artifact: <a href="/data/xfv_side_calibration_eval.json" target="_blank" rel="noopener">xfv_side_calibration_eval.json</a>.</p>
   </div>`;
 
   // (d) The BA era break: a source re-scaled itself and a single flat offset
@@ -2931,13 +2924,14 @@ function _methIndustryHTML() {
     const w = winters[winters.length - 1];
     if (w && byW[w] != null) dpwLine = ` The signings-implied series reads $${_rn(Number(byW[w]) / 1e6, 1)}M per WAR for the ${escapeHtml(w)} winter (<a href="${_IND_DPW}" target="_blank" rel="noopener">fa_dpw_series.json</a>).`;
   }
+  const dpwLvl = _dpwLevelTxt();
   const drate = vf.dpw_path ? `${_rn(Number(vf.dpw_path.nominal_rate) * 100, 2)}%/yr nominal`
     : ((vf.discount_rate != null) ? `${_rn(Number(vf.discount_rate) * 100, 0)}%/yr` : "the platform rate");
   const blockE = `<div class="meth-table-wrap">
     <div class="meth-table-title">The economics layer <span class="meth-sub">expectations, NPV, and a moving $/WAR</span></div>
     <p class="meth-note"><strong>A price is an expectation, not a median.</strong> The median outcome of a low-tier prospect is a bust worth nothing, so a median-target price floors at $0 and calls every lottery ticket free. The trade engine consumes surplus as a price, and a price is a mean: since the EV reframe the correction map targets the conditional mean and the $0 floor is gone. The calibration receipt is <a href="/data/surplus_backtest_real.json" target="_blank" rel="noopener">surplus_backtest_real.json</a>, also rendered on the Surplus value entry in Terms.</p>
     <p class="meth-note"><strong>A deferred dollar is not a dollar.</strong> Contract legs are compared on NPV at ${drate}, so a heavily deferred sticker deflates to the liability it actually is before any comparison runs. The schedules live in the deferral ledger (<a href="/data/deferrals.json" target="_blank" rel="noopener">deferrals.json</a>); the Ohtani contract is its canonical entry.</p>
-    <p class="meth-note"><strong>The market re-prices a win every winter.</strong>${dpwLine} Served prospect dollars ride the checksummed <code>clemens_2026</code> valuation set with the FA-implied re-anchor disabled, so a single hot winter cannot silently reflate every board.</p>
+    <p class="meth-note"><strong>One price of a win.</strong>${dpwLine} Since September 30, 2026 every surplus on the site, prospect and veteran, prices at one free-agent winter level${dpwLvl ? `, ${dpwLvl}` : ""}, so a prospect win and a veteran win cost the same inside one total.</p>
   </div>`;
 
   return `<div class="source-comp-wrap">
@@ -3244,11 +3238,11 @@ function _methReliabilityHTML() {
   return `<div class="source-comp-wrap">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Live calibration monitor · the model grading itself</div>
     <h2 class="meth-h">Is eFV still calibrated?</h2>
-    <p class="meth-note">Every night the shipped eFV five-bucket outcome distribution is re-scored forward-chained out-of-fold against resolved outcomes${nPool}${gen}. This is the model's own self-monitoring: a widening bust-bucket calibration gap trips a review flag. Diagnostic only - no grade, WAR, or dollar figure depends on these curves; they only measure them.</p>
+    <p class="meth-note">Every night eFV v1's five-bucket outcome distribution, the odds the board served until September 25, 2026, is re-scored forward-chained out of fold against resolved outcomes${nPool}${gen}. A widening bust-bucket calibration gap trips a review flag. The board's eFV V2 odds are the consensus outcome table read at the eFV grade, and this monitor does not score them. Diagnostic only: no grade, WAR or dollar figure depends on these curves.</p>
     ${tripHTML}
     <div class="meth-tables">${bucketTable}${tierTable}</div>
     <p class="meth-note">ECE (expected calibration error) is the bin-weighted gap between the probability the model assigned an outcome and how often it actually happened; lower is better. ${isServed
-      ? "These are the odds the site serves, after the dispersion correction that rescales the bust curve from the consensus-grade scale it was fitted on to the wider eFV scale it is read at. Honest read: bust still lands above the diagonal in every bin, so more prospects bust than the model says and bust risk stays understated - but by materially less than the uncorrected curve, and the tripwire trips if it ever drifts back toward it."
+      ? "These are eFV v1's odds after the dispersion correction that rescales the bust curve from the consensus-grade scale it was fitted on to the wider eFV scale it is read at. Honest read: bust still lands above the diagonal in every bin, so more prospects bust than the model says and bust risk stays understated - but by materially less than the uncorrected curve, and the tripwire trips if it ever drifts back toward it."
       : "This vintage predates the dispersion correction, so it reports the uncorrected curve rather than the odds now served. Honest read: low-probability bust calls land well above the diagonal, meaning far more prospects bust than the model predicts."}</p>
   </div>`;
 }
