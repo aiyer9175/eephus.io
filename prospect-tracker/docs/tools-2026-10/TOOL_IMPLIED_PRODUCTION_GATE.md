@@ -528,6 +528,546 @@ EMPTY AT REGISTRATION. The look P and look W entries are written here by TL_5 an
 verbatim from its runner and dated, and nothing above this part is edited once anything is written
 below it, except by the amendments listed at the top.
 
+**Look W entry, written 2026-10-14 by TL_12_TOOL_WEIGHTS_LOOK; the runner's record is pasted verbatim
+below the next heading.** Run once from HEAD 01593da7 (the runner's record extension, committed before the
+run) by `python -u tools/tool_accuracy_lab.py --look W --gate-sha 77bd4302 --rlv-record 1c73c420`, teed to
+the task's output directory before anything else ran; the dry run on fixtures carrying None values completed
+first (Part 5 clause 2). An OWNER-WAIVED EARLY READ under EW3-5 (owner 2026-10-14; the dated note at the end
+of this file). Artifact `data/tool_accuracy_eval.json`, sha256 211b7b9914efd6ec4e7a13583bc6a720299c38f04e6f0dc3563cdc356aca9ccd, spent marker set, inputs unchanged
+from the start to the end of the run (36 inputs); display copy only at
+`.cache/tool_accuracy/preview/tool_source_accuracy.json`; no served file written.
+
+Reading under W.6 and W.7: THE LOOK IS VOID. The C6.3 shuffled-outcome control of the speed cell did not
+collapse (weighted blend Spearman 0.1005 on the within-board-year permuted outcome at
+n 679, equal 0.1021, against the runner's chance band 2.5 / sqrt(n) = 0.0959),
+and W.7 says a shuffled-outcome result that does not collapse voids the look. The per-tool lines below
+(hit NULL, speed VOID, field NULL, throw LOSS) are printed as the runner wrote them and are credited to nothing: equal weight retains for every
+tool (a NULL retains; a void look serves nothing). The secondary rows adjudicate nothing (W.4); the hit to AVG
+row's G1 to G5 line is descriptive, and BA2's verdicts and TL-Q2 stand. The record is read against the forking
+paths of Part 0.4. No second run, seed, frame or estimator (Part 5 clause 5): a re-read of look W needs a new
+registration. Nothing above Part 8 was edited.
+
+### Look W (2026-10-14)
+
+Gate sha 77bd4302; --rlv-record 1c73c420; runner HEAD 01593da7.
+Frame (W.8): board years [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024], debut year at most 2024, MLB seasons through 2026; universe counts {'debuted_before_board_year': 795, 'no_debut_record': 4705, 'identity_disagrees_with_record': 16, 'identity_no_candidate': 34, 'identity_ambiguous': 55, 'debut_after_frame': 820, 'rows': 3516}.
+Constants (W.1): MIN_LAG_YEARS 3, WEIGHT_SHRINK_K 150, WEIGHT_CLAMP [0.6, 1.5], SPEARMAN_FLOOR 0.05, B 2000, permutation draws 1000, seeds 8641 and 1337; Holm m = the computable primaries at 0.05; look void True.
+
+Primaries (W.2, W.6), arm A FanGraphs against MLB Pipeline:
+- hit (k_pct): verdict NULL; Holm step 4 p 0.863137 rejected False (m 4); flat-weight disclosure (W.9): board years [2017, 2018, 2019] carry flat weights and are skipped, so the informative rows are BA2's own board years; a hit PASS is read on BA2's rows and is not independent of BA2 (W.9); arm B: NULL by construction: Baseball America's earliest tool vintage is 2023
+  common set by year {'2017': 102, '2018': 118, '2019': 145, '2020': 141, '2021': 123, '2022': 125, '2023': 74, '2024': 29}; pooled n 857; thin years (under 20) []; evaluable years [2020, 2021, 2022, 2023, 2024]
+  n 492: equal rho 0.4058 AUC 0.696; weighted rho 0.405 AUC 0.6982; d_rho -0.000812; d_auc 0.002124
+  floors (C6.1, 1000 draws): F_rho 0.009548, F_auc 0.004875, margin over F_rho -0.085; permutation p_rho 0.863137, p_auc 0.418581
+  bootstrap (B 2000, seed 8641): d_rho lo95 -0.010334 hi95 0.008395 sd 0.005876; d_auc lo95 -0.003091 hi95 0.00726
+  G1 rho resolvable False, G2 AUC resolvable False, G3 rho lo95 above 0 False, G4 AUC lo95 above 0 False, G5 not knife edge False; G1 to G5 False; loss clause False
+  weights by year: 2017 (n 102, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2018 (n 118, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2019 (n 145, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2020 (n 141, weight base n 102): fangraphs 1.067, mlb_pipeline 0.933; 2021 (n 123, weight base n 220): fangraphs 1.0887, mlb_pipeline 0.9113; 2022 (n 125, weight base n 365): fangraphs 1.0596, mlb_pipeline 0.9404; 2023 (n 74, weight base n 506): fangraphs 1.0638, mlb_pipeline 0.9362; 2024 (n 29, weight base n 629): fangraphs 1.0614, mlb_pipeline 0.9386
+  C6.1 permuted source label: draws 1000, non-flat 1000, abs d_rho p95 0.009548 max 0.016996, abs d_auc p95 0.004875 max 0.009378, weight spread median 0.0498 p95 0.1312
+  C6.3 shuffled outcome: n 492, equal rho -0.0455, weighted rho -0.043, collapsed True
+  C6.4 forced equal identity: n 857, d_rho 0.0, d_auc 0.0, passes True
+  C6.5 seed stability (seed 1337): d_rho lo95 -0.011328 hi95 0.009003, d_auc lo95 -0.003283; permutation (200 draws) F_rho 0.009256 p_rho 0.875622; verdict moves between seeds False
+  C6.7 player-disjoint weights: n 492, equal rho 0.4058, weighted rho 0.4034, d_rho -0.002437, d_auc 0.000488; weights by year: 2017 (n 102, weight base n 0): no weights, skipped: flat weights; 2018 (n 118, weight base n 0): no weights, skipped: flat weights; 2019 (n 145, weight base n 0): no weights, skipped: flat weights; 2020 (n 141, weight base n 77): fangraphs 1.0633, mlb_pipeline 0.9367; 2021 (n 123, weight base n 189): fangraphs 1.0554, mlb_pipeline 0.9446; 2022 (n 125, weight base n 320): fangraphs 1.0573, mlb_pipeline 0.9427; 2023 (n 74, weight base n 479): fangraphs 1.0595, mlb_pipeline 0.9405; 2024 (n 29, weight base n 613): fangraphs 1.0584, mlb_pipeline 0.9416
+  single-source context: pooled n 492, years [2020, 2021, 2022, 2023, 2024]; fangraphs rho 0.3746; mlb_pipeline rho 0.3562; equal_mean rho 0.4058
+  C0 estimator equivalence: numpy True, array A/B True
+  arm B (FanGraphs, MLB Pipeline, Baseball America): pooled n 97, gate NOT COMPUTABLE (pool under 100 players)
+- speed (sprint): verdict VOID; Holm step 2 p 0.055944 rejected False (m 4); flat-weight disclosure (W.9): board years [2017, 2018, 2019] carry flat weights and are skipped, so the informative rows are BA2's own board years; arm B: NULL by construction: Baseball America's earliest tool vintage is 2023
+  common set by year {'2017': 140, '2018': 161, '2019': 196, '2020': 193, '2021': 165, '2022': 162, '2023': 107, '2024': 52}; pooled n 1176; thin years (under 20) []; evaluable years [2020, 2021, 2022, 2023, 2024]
+  n 679: equal rho 0.7255 AUC 0.8389; weighted rho 0.7293 AUC 0.8414; d_rho 0.003857; d_auc 0.002473
+  floors (C6.1, 1000 draws): F_rho 0.003945, F_auc 0.002386, margin over F_rho 0.9777; permutation p_rho 0.055944, p_auc 0.043956
+  bootstrap (B 2000, seed 8641): d_rho lo95 -0.000456 hi95 0.007578 sd 0.002472; d_auc lo95 -0.000413 hi95 0.005262
+  G1 rho resolvable False, G2 AUC resolvable True, G3 rho lo95 above 0 False, G4 AUC lo95 above 0 False, G5 not knife edge False; G1 to G5 False; loss clause False
+  weights by year: 2017 (n 140, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2018 (n 161, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2019 (n 196, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2020 (n 193, weight base n 140): fangraphs 0.9974, mlb_pipeline 1.0026; 2021 (n 165, weight base n 301): fangraphs 0.986, mlb_pipeline 1.014; 2022 (n 162, weight base n 497): fangraphs 0.9814, mlb_pipeline 1.0186; 2023 (n 107, weight base n 690): fangraphs 0.9763, mlb_pipeline 1.0237; 2024 (n 52, weight base n 855): fangraphs 0.9753, mlb_pipeline 1.0247
+  C6.1 permuted source label: draws 1000, non-flat 1000, abs d_rho p95 0.003945 max 0.007148, abs d_auc p95 0.002386 max 0.003952, weight spread median 0.0109 p95 0.032
+  C6.3 shuffled outcome: n 679, equal rho 0.1021, weighted rho 0.1005, collapsed False
+  C6.4 forced equal identity: n 1176, d_rho 0.0, d_auc 0.0, passes True
+  C6.5 seed stability (seed 1337): d_rho lo95 -0.00047 hi95 0.00784, d_auc lo95 -0.000455; permutation (200 draws) F_rho 0.004105 p_rho 0.069652; verdict moves between seeds False
+  C6.7 player-disjoint weights: n 679, equal rho 0.7255, weighted rho 0.7293, d_rho 0.003865, d_auc 0.002542; weights by year: 2017 (n 140, weight base n 0): no weights, skipped: flat weights; 2018 (n 161, weight base n 0): no weights, skipped: flat weights; 2019 (n 196, weight base n 0): no weights, skipped: flat weights; 2020 (n 193, weight base n 107): fangraphs 0.9957, mlb_pipeline 1.0043; 2021 (n 165, weight base n 260): fangraphs 0.9915, mlb_pipeline 1.0085; 2022 (n 162, weight base n 443): fangraphs 0.9823, mlb_pipeline 1.0177; 2023 (n 107, weight base n 640): fangraphs 0.9784, mlb_pipeline 1.0216; 2024 (n 52, weight base n 830): fangraphs 0.9769, mlb_pipeline 1.0231
+  single-source context: pooled n 679, years [2020, 2021, 2022, 2023, 2024]; fangraphs rho 0.6804; mlb_pipeline rho 0.7278; equal_mean rho 0.7255
+  C0 estimator equivalence: numpy True, array A/B True
+  arm B (FanGraphs, MLB Pipeline, Baseball America): pooled n 147, gate NULL (no board year has both a non-flat weight vintage and resolvable outcomes at lag 3)
+- field (oaa_per1000): verdict NULL; Holm step 3 p 0.63037 rejected False (m 4); flat-weight disclosure (W.9): board years [2017, 2018, 2019] carry flat weights and are skipped, so the informative rows are BA2's own board years; arm B: NULL by construction: Baseball America's earliest tool vintage is 2023
+  common set by year {'2017': 87, '2018': 101, '2019': 123, '2020': 117, '2021': 102, '2022': 105, '2023': 63, '2024': 27}; pooled n 725; thin years (under 20) []; evaluable years [2020, 2021, 2022, 2023, 2024]
+  n 414: equal rho 0.4031 AUC 0.706; weighted rho 0.4061 AUC 0.7095; d_rho 0.003034; d_auc 0.003454
+  floors (C6.1, 1000 draws): F_rho 0.011283, F_auc 0.006208, margin over F_rho 0.2689; permutation p_rho 0.63037, p_auc 0.288711
+  bootstrap (B 2000, seed 8641): d_rho lo95 -0.008125 hi95 0.01395 sd 0.00657; d_auc lo95 -0.002985 hi95 0.010204
+  G1 rho resolvable False, G2 AUC resolvable False, G3 rho lo95 above 0 False, G4 AUC lo95 above 0 False, G5 not knife edge False; G1 to G5 False; loss clause False
+  weights by year: 2017 (n 87, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2018 (n 101, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2019 (n 123, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2020 (n 117, weight base n 87): fangraphs 0.9074, mlb_pipeline 1.0926; 2021 (n 102, weight base n 188): fangraphs 0.9176, mlb_pipeline 1.0824; 2022 (n 105, weight base n 311): fangraphs 0.9382, mlb_pipeline 1.0618; 2023 (n 63, weight base n 428): fangraphs 0.9767, mlb_pipeline 1.0233; 2024 (n 27, weight base n 530): fangraphs 0.9829, mlb_pipeline 1.0171
+  C6.1 permuted source label: draws 1000, non-flat 1000, abs d_rho p95 0.011283 max 0.021227, abs d_auc p95 0.006208 max 0.012604, weight spread median 0.0435 p95 0.1346
+  C6.3 shuffled outcome: n 414, equal rho 0.0134, weighted rho 0.0054, collapsed True
+  C6.4 forced equal identity: n 725, d_rho 0.0, d_auc 0.0, passes True
+  C6.5 seed stability (seed 1337): d_rho lo95 -0.008141 hi95 0.013877, d_auc lo95 -0.003119; permutation (200 draws) F_rho 0.010278 p_rho 0.59204; verdict moves between seeds False
+  C6.7 player-disjoint weights: n 414, equal rho 0.4031, weighted rho 0.4062, d_rho 0.003151, d_auc 0.003291; weights by year: 2017 (n 87, weight base n 0): no weights, skipped: flat weights; 2018 (n 101, weight base n 0): no weights, skipped: flat weights; 2019 (n 123, weight base n 0): no weights, skipped: flat weights; 2020 (n 117, weight base n 67): fangraphs 0.8634, mlb_pipeline 1.1366; 2021 (n 102, weight base n 163): fangraphs 0.8991, mlb_pipeline 1.1009; 2022 (n 105, weight base n 273): fangraphs 0.9331, mlb_pipeline 1.0669; 2023 (n 63, weight base n 404): fangraphs 0.9538, mlb_pipeline 1.0462; 2024 (n 27, weight base n 515): fangraphs 0.9745, mlb_pipeline 1.0255
+  single-source context: pooled n 414, years [2020, 2021, 2022, 2023, 2024]; fangraphs rho 0.363; mlb_pipeline rho 0.3908; equal_mean rho 0.4031
+  C0 estimator equivalence: numpy True, array A/B True
+  arm B (FanGraphs, MLB Pipeline, Baseball America): pooled n 84, gate NOT COMPUTABLE (pool under 100 players)
+- throw (arm_z): verdict LOSS; Holm step 1 p 0.042957 rejected False (m 4); flat-weight disclosure (W.9): board years [2017, 2018, 2019] carry flat weights and are skipped, so the informative rows are BA2's own board years; arm B: NULL by construction: Baseball America's earliest tool vintage is 2023
+  common set by year {'2017': 101, '2018': 118, '2019': 148, '2020': 138}; pooled n 505; thin years (under 20) []; evaluable years [2020]
+  n 138: equal rho 0.5342 AUC 0.7408; weighted rho 0.5197 AUC 0.7353; d_rho -0.014547; d_auc -0.005461
+  floors (C6.1, 1000 draws): F_rho 0.013851, F_auc 0.009137, margin over F_rho -1.0502; permutation p_rho 0.042957, p_auc 0.281718
+  bootstrap (B 2000, seed 8641): d_rho lo95 -0.028233 hi95 -0.002275 sd 0.00784; d_auc lo95 -0.01383 hi95 0.002817
+  G1 rho resolvable False, G2 AUC resolvable False, G3 rho lo95 above 0 False, G4 AUC lo95 above 0 False, G5 not knife edge False; G1 to G5 False; loss clause True
+  weights by year: 2017 (n 101, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2018 (n 118, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2019 (n 148, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2020 (n 138, weight base n 101): fangraphs 1.0257, mlb_pipeline 0.9743
+  C6.1 permuted source label: draws 1000, non-flat 1000, abs d_rho p95 0.013851 max 0.022573, abs d_auc p95 0.009137 max 0.016278, weight spread median 0.0304 p95 0.0862
+  C6.3 shuffled outcome: n 138, equal rho -0.0274, weighted rho -0.0296, collapsed True
+  C6.4 forced equal identity: n 505, d_rho 0.0, d_auc 0.0, passes True
+  C6.5 seed stability (seed 1337): d_rho lo95 -0.027982 hi95 -0.001841, d_auc lo95 -0.014373; permutation (200 draws) F_rho 0.014635 p_rho 0.064677; verdict moves between seeds False
+  C6.7 player-disjoint weights: n 138, equal rho 0.5342, weighted rho 0.5197, d_rho -0.014547, d_auc -0.005461; weights by year: 2017 (n 101, weight base n 0): no weights, skipped: flat weights; 2018 (n 118, weight base n 0): no weights, skipped: flat weights; 2019 (n 148, weight base n 0): no weights, skipped: flat weights; 2020 (n 138, weight base n 77): fangraphs 1.0296, mlb_pipeline 0.9704
+  single-source context: pooled n 138, years [2020]; fangraphs rho 0.438; mlb_pipeline rho 0.5256; equal_mean rho 0.5342
+  C0 estimator equivalence: numpy True, array A/B True
+  arm B (FanGraphs, MLB Pipeline, Baseball America): pooled n 0, gate NOT COMPUTABLE (pool under 100 players)
+
+Secondary rows (W.4), descriptive, adjudicating nothing; BA2's verdicts stand:
+- game_pwr (game_pwr to iso): secondary: no verdict; BA2 NO SHIP; arm B pooled n 97 NOT COMPUTABLE
+  common set by year {'2017': 102, '2018': 118, '2019': 145, '2020': 141, '2021': 123, '2022': 124, '2023': 74, '2024': 29}; pooled n 856; thin years (under 20) []; evaluable years [2020, 2021, 2022, 2023, 2024]
+  n 491: equal rho 0.5771 AUC 0.7558; weighted rho 0.5802 AUC 0.7571; d_rho 0.003093; d_auc 0.001344
+  floors (C6.1, 1000 draws): F_rho 0.007148, F_auc 0.003966, margin over F_rho 0.4327; permutation p_rho 0.405594, p_auc 0.529471
+  bootstrap (B 2000, seed 8641): d_rho lo95 -0.003372 hi95 0.009681 sd 0.003971; d_auc lo95 -0.00254 hi95 0.005415
+  G1 rho resolvable False, G2 AUC resolvable False, G3 rho lo95 above 0 False, G4 AUC lo95 above 0 False, G5 not knife edge False; G1 to G5 False; loss clause False
+  weights by year: 2017 (n 102, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2018 (n 118, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2019 (n 145, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2020 (n 141, weight base n 102): fangraphs 0.9621, mlb_pipeline 1.0379; 2021 (n 123, weight base n 220): fangraphs 0.9556, mlb_pipeline 1.0444; 2022 (n 124, weight base n 365): fangraphs 0.9793, mlb_pipeline 1.0207; 2023 (n 74, weight base n 506): fangraphs 0.9869, mlb_pipeline 1.0131; 2024 (n 29, weight base n 629): fangraphs 0.9936, mlb_pipeline 1.0064
+  C6.1 permuted source label: draws 1000, non-flat 1000, abs d_rho p95 0.007148 max 0.012351, abs d_auc p95 0.003966 max 0.006396, weight spread median 0.02 p95 0.059
+  C0 estimator equivalence: numpy True, array A/B True
+- fb (fb to k_pct_pit): secondary: no verdict; BA2 resolved LOSS; arm B pooled n 143 NULL
+  common set by year {'2017': 94, '2018': 140, '2019': 166, '2020': 154, '2021': 127, '2022': 126, '2023': 104, '2024': 55}; pooled n 966; thin years (under 20) []; evaluable years [2020, 2021, 2022, 2023, 2024]
+  n 566: equal rho 0.3481 AUC 0.6672; weighted rho 0.346 AUC 0.6664; d_rho -0.002125; d_auc -0.00073
+  floors (C6.1, 1000 draws): F_rho 0.00945, F_auc 0.004951, margin over F_rho -0.2249; permutation p_rho 0.655345, p_auc 0.761239
+  bootstrap (B 2000, seed 8641): d_rho lo95 -0.008652 hi95 0.004504 sd 0.003969; d_auc lo95 -0.004626 hi95 0.003395
+  G1 rho resolvable False, G2 AUC resolvable False, G3 rho lo95 above 0 False, G4 AUC lo95 above 0 False, G5 not knife edge False; G1 to G5 False; loss clause False
+  weights by year: 2017 (n 94, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2018 (n 140, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2019 (n 166, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2020 (n 154, weight base n 94): fangraphs 1.0181, mlb_pipeline 0.9819; 2021 (n 127, weight base n 234): fangraphs 0.9334, mlb_pipeline 1.0666; 2022 (n 126, weight base n 400): fangraphs 0.976, mlb_pipeline 1.024; 2023 (n 104, weight base n 554): fangraphs 1.0024, mlb_pipeline 0.9976; 2024 (n 55, weight base n 681): fangraphs 1.0248, mlb_pipeline 0.9752
+  C6.1 permuted source label: draws 1000, non-flat 1000, abs d_rho p95 0.00945 max 0.015939, abs d_auc p95 0.004951 max 0.008179, weight spread median 0.0613 p95 0.1744
+  C0 estimator equivalence: numpy True, array A/B True
+- cmd (cmd to bb_pct_pit): secondary: no verdict; BA2 NO SHIP; arm B pooled n 143 NULL
+  common set by year {'2017': 94, '2018': 139, '2019': 166, '2020': 154, '2021': 128, '2022': 126, '2023': 104, '2024': 55}; pooled n 966; thin years (under 20) []; evaluable years [2020, 2021, 2022, 2023, 2024]
+  n 567: equal rho 0.3164 AUC 0.6381; weighted rho 0.3204 AUC 0.6421; d_rho 0.004064; d_auc 0.004031
+  floors (C6.1, 1000 draws): F_rho 0.009998, F_auc 0.005151, margin over F_rho 0.4065; permutation p_rho 0.43956, p_auc 0.155844
+  bootstrap (B 2000, seed 8641): d_rho lo95 -0.004863 hi95 0.012371 sd 0.005277; d_auc lo95 -0.001203 hi95 0.009341
+  G1 rho resolvable False, G2 AUC resolvable False, G3 rho lo95 above 0 False, G4 AUC lo95 above 0 False, G5 not knife edge False; G1 to G5 False; loss clause False
+  weights by year: 2017 (n 94, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2018 (n 139, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2019 (n 166, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2020 (n 154, weight base n 94): fangraphs 0.9713, mlb_pipeline 1.0287; 2021 (n 128, weight base n 233): fangraphs 0.989, mlb_pipeline 1.011; 2022 (n 126, weight base n 399): fangraphs 0.9677, mlb_pipeline 1.0323; 2023 (n 104, weight base n 553): fangraphs 0.9151, mlb_pipeline 1.0849; 2024 (n 55, weight base n 681): fangraphs 0.881, mlb_pipeline 1.119
+  C6.1 permuted source label: draws 1000, non-flat 1000, abs d_rho p95 0.009998 max 0.019543, abs d_auc p95 0.005151 max 0.008927, weight spread median 0.0468 p95 0.1468
+  C0 estimator equivalence: numpy True, array A/B True
+- hit_avg (hit to avg): secondary: no verdict; BA2 TL-Q2 beside; arm B pooled n 97 NOT COMPUTABLE
+  common set by year {'2017': 102, '2018': 118, '2019': 145, '2020': 141, '2021': 123, '2022': 125, '2023': 74, '2024': 29}; pooled n 857; thin years (under 20) []; evaluable years [2020, 2021, 2022, 2023, 2024]
+  n 492: equal rho 0.1773 AUC 0.5743; weighted rho 0.1985 AUC 0.5847; d_rho 0.02126; d_auc 0.010452
+  floors (C6.1, 1000 draws): F_rho 0.009147, F_auc 0.004925, margin over F_rho 2.3243; permutation p_rho 0.000999, p_auc 0.000999
+  bootstrap (B 2000, seed 8641): d_rho lo95 0.010559 hi95 0.031006 sd 0.006166; d_auc lo95 0.003854 hi95 0.016388
+  G1 rho resolvable True, G2 AUC resolvable True, G3 rho lo95 above 0 True, G4 AUC lo95 above 0 True, G5 not knife edge True; G1 to G5 True; loss clause False
+  weights by year: 2017 (n 102, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2018 (n 118, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2019 (n 145, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2020 (n 141, weight base n 102): fangraphs 0.9959, mlb_pipeline 1.0041; 2021 (n 123, weight base n 220): fangraphs 0.8431, mlb_pipeline 1.1569; 2022 (n 125, weight base n 365): fangraphs 0.7756, mlb_pipeline 1.2244; 2023 (n 74, weight base n 506): fangraphs 0.7074, mlb_pipeline 1.2926; 2024 (n 29, weight base n 629): fangraphs 0.6503, mlb_pipeline 1.3497
+  C6.1 permuted source label: draws 1000, non-flat 1000, abs d_rho p95 0.009147 max 0.016877, abs d_auc p95 0.004925 max 0.009626, weight spread median 0.0875 p95 0.2776
+  C0 estimator equivalence: numpy True, array A/B True
+- speed_sb (speed to sb_per600): secondary: no verdict; BA2 secondary; arm B pooled n 97 NOT COMPUTABLE
+  common set by year {'2017': 102, '2018': 118, '2019': 145, '2020': 141, '2021': 123, '2022': 125, '2023': 74, '2024': 29}; pooled n 857; thin years (under 20) []; evaluable years [2020, 2021, 2022, 2023, 2024]
+  n 492: equal rho 0.7595 AUC 0.888; weighted rho 0.7624 AUC 0.8907; d_rho 0.002887; d_auc 0.002727
+  floors (C6.1, 1000 draws): F_rho 0.004802, F_auc 0.002727, margin over F_rho 0.6012; permutation p_rho 0.267732, p_auc 0.050949
+  bootstrap (B 2000, seed 8641): d_rho lo95 -0.000705 hi95 0.006385 sd 0.002157; d_auc lo95 0.00061 hi95 0.004947
+  G1 rho resolvable False, G2 AUC resolvable True, G3 rho lo95 above 0 False, G4 AUC lo95 above 0 True, G5 not knife edge False; G1 to G5 False; loss clause False
+  weights by year: 2017 (n 102, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2018 (n 118, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2019 (n 145, weight base n 0): fangraphs 1.0, mlb_pipeline 1.0, skipped: flat weights; 2020 (n 141, weight base n 102): fangraphs 1.0003, mlb_pipeline 0.9997; 2021 (n 123, weight base n 220): fangraphs 0.9922, mlb_pipeline 1.0078; 2022 (n 125, weight base n 365): fangraphs 0.9997, mlb_pipeline 1.0003; 2023 (n 74, weight base n 506): fangraphs 0.9985, mlb_pipeline 1.0015; 2024 (n 29, weight base n 629): fangraphs 0.997, mlb_pipeline 1.003
+  C6.1 permuted source label: draws 1000, non-flat 1000, abs d_rho p95 0.004802 max 0.008972, abs d_auc p95 0.002727 max 0.005371, weight spread median 0.0128 p95 0.0362
+  C0 estimator equivalence: numpy True, array A/B True
+
+TAG tables (W.5), per source, tool and board year, thin cells flagged:
+- TAG hit / k_pct: frame 1001; k_m 46.7354 (pa); regressed TAG computed
+  baseballamerica: n 101, computable True; ordering 0.1707; bias regressed 1.1413, bias PIT minus 0.5 0.0598; error abs regressed 4.1304
+    2017: n 0
+    2018: n 0
+    2019: n 0
+    2020: n 0
+    2021: n 0
+    2022: n 0
+    2023: n 72, mean gap 1.171, regressed 1.1138, PIT minus 0.5 0.068, abs regressed 4.0999, ordering rho 0.1535
+    2024: n 29, mean gap 1.2783, regressed 1.2093, PIT minus 0.5 0.0401, abs regressed 4.2062, ordering rho 0.2134
+  fangraphs: n 949, computable True; ordering 0.39; bias regressed 0.3979, bias PIT minus 0.5 0.0083; error abs regressed 4.0524
+    2017: n 107, mean gap -0.7305, regressed -0.6487, PIT minus 0.5 -0.0403, abs regressed 3.6656, ordering rho 0.4021
+    2018: n 121, mean gap -1.8673, regressed -1.6919, PIT minus 0.5 -0.0995, abs regressed 4.0835, ordering rho 0.3355
+    2019: n 151, mean gap -0.1858, regressed -0.1232, PIT minus 0.5 -0.0215, abs regressed 4.059, ordering rho 0.3764
+    2020: n 167, mean gap 0.1916, regressed 0.2244, PIT minus 0.5 -0.0014, abs regressed 3.9359, ordering rho 0.502
+    2021: n 146, mean gap 1.1544, regressed 1.1112, PIT minus 0.5 0.0432, abs regressed 3.9056, ordering rho 0.3746
+    2022: n 142, mean gap 1.5708, regressed 1.5204, PIT minus 0.5 0.0793, abs regressed 4.4577, ordering rho 0.3836
+    2023: n 83, mean gap 2.2906, regressed 2.1901, PIT minus 0.5 0.1231, abs regressed 4.2792, ordering rho 0.3345
+    2024: n 32, mean gap 2.4256, regressed 2.2807, PIT minus 0.5 0.1034, abs regressed 4.0889, ordering rho 0.2783
+  mlb_pipeline: n 909, computable True; ordering 0.3394; bias regressed -0.3107, bias PIT minus 0.5 -0.0227; error abs regressed 4.0334
+    2017: n 116, mean gap -1.3185, regressed -1.1899, PIT minus 0.5 -0.0683, abs regressed 4.1645, ordering rho 0.3199
+    2018: n 133, mean gap -1.3628, regressed -1.2216, PIT minus 0.5 -0.0793, abs regressed 4.5056, ordering rho 0.2536
+    2019: n 154, mean gap -0.4799, regressed -0.407, PIT minus 0.5 -0.0341, abs regressed 4.2372, ordering rho 0.3935
+    2020: n 142, mean gap -0.5567, regressed -0.493, PIT minus 0.5 -0.0456, abs regressed 4.0167, ordering rho 0.3947
+    2021: n 125, mean gap 0.1479, regressed 0.1581, PIT minus 0.5 0.0089, abs regressed 3.6148, ordering rho 0.3385
+    2022: n 130, mean gap 0.2439, regressed 0.2578, PIT minus 0.5 0.0253, abs regressed 3.8294, ordering rho 0.4137
+    2023: n 77, mean gap 0.568, regressed 0.5517, PIT minus 0.5 0.0309, abs regressed 3.7284, ordering rho 0.2165
+    2024: n 32, mean gap 1.8693, regressed 1.7188, PIT minus 0.5 0.0904, abs regressed 3.8873, ordering rho 0.2598
+  TIP_f3 for 2017 (fit on the other board years, 675 rows): knots [40.8036, 45.0732, 50.2557, 54.8974, 59.0479, 65.0833], values [28.5117, 26.0365, 24.1636, 21.8841, 21.8841, 21.3621], thin bins [30, 35, 70]
+  TIP_f3 for 2018 (fit on the other board years, 564 rows): knots [40.8793, 45.0833, 50.3684, 54.8857, 59.191, 65.0882], values [27.9309, 25.984, 24.1636, 21.8713, 21.8713, 21.5172], thin bins [30, 35, 70]
+  TIP_f3 for 2019 (fit on the other board years, 448 rows): knots [41.1735, 45.123, 50.2938, 54.85, 59.2727, 65.075], values [28.4424, 26.88, 23.7435, 22.8581, 22.8581, 21.9251], thin bins [30, 35, 70]
+  TIP_f3 for 2020 (fit on the other board years, 397 rows): knots [41.3382, 45.0763, 50.2986, 54.8581, 59.0526, 65.1765], values [30.6682, 27.1457, 23.9831, 22.4913, 22.4913, 22.4913], thin bins [30, 35, 70, 75]
+  TIP_f3 for 2021 (fit on the other board years, 455 rows): knots [41.0667, 45.0423, 50.328, 54.9643, 58.6765, 65.1765], values [32.1937, 27.1457, 24.0125, 23.5021, 21.9051, 21.9051], thin bins [30, 35, 70, 75]
+  TIP_f3 for 2022 (fit on the other board years, 512 rows): knots [41.0833, 44.9786, 50.3265, 55.0, 58.7361], values [31.6357, 27.4806, 24.2812, 22.7394, 21.5795], thin bins [30, 35, 65, 70, 75]
+  TIP_f3 for 2023 (fit on the other board years, 736 rows): knots [40.9596, 45.0, 50.3204, 55.0, 58.8553], values [29.7189, 27.6623, 24.8063, 22.2494, 21.6842], thin bins [30, 35, 65, 70, 75]
+  TIP_f3 for 2024 (fit on the other board years, 898 rows): knots [40.9386, 45.0126, 50.2735, 54.961, 58.9154, 65.0], values [29.6602, 26.8924, 24.5499, 22.2828, 21.6842, 21.5172], thin bins [30, 35, 70, 75]
+- TAG speed / sprint: frame 1432; k_m None (competitive_runs); regressed TAG NOT COMPUTABLE
+  baseballamerica: n 161, computable True; ordering 0.7243; bias regressed None, bias PIT minus 0.5 0.0223; error abs regressed None
+    2017: n 0
+    2018: n 0
+    2019: n 0
+    2020: n 0
+    2021: n 0
+    2022: n 0
+    2023: n 108, mean gap 0.0587, regressed None, PIT minus 0.5 0.0147, abs regressed None, ordering rho 0.7481
+    2024: n 53, mean gap 0.1092, regressed None, PIT minus 0.5 0.0377, abs regressed None, ordering rho 0.6759
+  fangraphs: n 1328, computable True; ordering 0.6877; bias regressed None, bias PIT minus 0.5 0.0369; error abs regressed None
+    2017: n 146, mean gap 0.164, regressed None, PIT minus 0.5 0.0655, abs regressed None, ordering rho 0.7445
+    2018: n 169, mean gap -0.0175, regressed None, PIT minus 0.5 -0.0, abs regressed None, ordering rho 0.6899
+    2019: n 209, mean gap -0.1884, regressed None, PIT minus 0.5 -0.0588, abs regressed None, ordering rho 0.6983
+    2020: n 234, mean gap 0.0898, regressed None, PIT minus 0.5 0.0316, abs regressed None, ordering rho 0.6644
+    2021: n 198, mean gap 0.1567, regressed None, PIT minus 0.5 0.0489, abs regressed None, ordering rho 0.6271
+    2022: n 193, mean gap 0.3534, regressed None, PIT minus 0.5 0.1091, abs regressed None, ordering rho 0.6816
+    2023: n 123, mean gap 0.2179, regressed None, PIT minus 0.5 0.0708, abs regressed None, ordering rho 0.7175
+    2024: n 56, mean gap 0.2845, regressed None, PIT minus 0.5 0.0856, abs regressed None, ordering rho 0.7605
+  mlb_pipeline: n 1278, computable True; ordering 0.7348; bias regressed None, bias PIT minus 0.5 -0.0472; error abs regressed None
+    2017: n 164, mean gap -0.2057, regressed None, PIT minus 0.5 -0.0799, abs regressed None, ordering rho 0.7679
+    2018: n 186, mean gap -0.2722, regressed None, PIT minus 0.5 -0.0891, abs regressed None, ordering rho 0.7336
+    2019: n 218, mean gap -0.3595, regressed None, PIT minus 0.5 -0.1204, abs regressed None, ordering rho 0.7339
+    2020: n 198, mean gap -0.114, regressed None, PIT minus 0.5 -0.0493, abs regressed None, ordering rho 0.7546
+    2021: n 168, mean gap -0.0342, regressed None, PIT minus 0.5 -0.0077, abs regressed None, ordering rho 0.7073
+    2022: n 173, mean gap 0.0921, regressed None, PIT minus 0.5 0.0279, abs regressed None, ordering rho 0.7249
+    2023: n 114, mean gap 0.0192, regressed None, PIT minus 0.5 0.003, abs regressed None, ordering rho 0.7254
+    2024: n 57, mean gap 0.084, regressed None, PIT minus 0.5 0.0232, abs regressed None, ordering rho 0.7073
+  TIP_f3 for 2017 (fit on the other board years, 979 rows): knots [30.4653, 35.1596, 40.288, 44.9511, 50.1193, 54.8585, 59.4146, 65.1286, 69.4595], values [26.0614, 26.5546, 27.1316, 27.6737, 27.9214, 28.1353, 28.7501, 29.0014, 29.3684], thin bins [20, 25, 75, 80]
+  TIP_f3 for 2018 (fit on the other board years, 809 rows): knots [30.319, 35.2093, 40.211, 44.94, 50.1688, 54.8295, 59.4078, 65.1552, 69.7321], values [26.0259, 26.5721, 27.1685, 27.8508, 27.9136, 28.2318, 28.8213, 29.0321, 29.3692], thin bins [20, 25, 75, 80]
+  TIP_f3 for 2019 (fit on the other board years, 638 rows): knots [30.2037, 35.2812, 40.2438, 44.9438, 50.0775, 54.8478, 59.3571, 65.375, 69.875], values [26.0549, 26.6035, 27.2, 27.6419, 28.0195, 28.4344, 28.9317, 29.3074, 29.4755], thin bins [20, 25, 75, 80]
+  TIP_f3 for 2020 (fit on the other board years, 553 rows): knots [30.25, 35.3, 40.1591, 44.9262, 50.0223, 54.8986, 59.1222], values [25.9196, 26.6472, 27.2791, 27.4638, 27.75, 28.2575, 28.8581], thin bins [20, 25, 65, 70, 80]
+  TIP_f3 for 2021 (fit on the other board years, 670 rows): knots [30.3175, 35.1304, 40.15, 45.0, 49.9346, 54.9659, 59.1624, 65.0833, 69.4048], values [26.0, 26.6031, 26.9288, 27.3193, 27.7023, 28.4576, 28.8389, 28.9424, 29.2], thin bins [20, 25, 75, 80]
+  TIP_f3 for 2022 (fit on the other board years, 735 rows): knots [30.4643, 35.0714, 40.1937, 45.0306, 50.0621, 54.961, 58.9624, 65.0, 69.3056], values [26.0, 26.2477, 26.8, 27.3912, 27.7381, 28.2522, 28.7287, 28.7287, 28.7287], thin bins [20, 25, 75, 80]
+  TIP_f3 for 2023 (fit on the other board years, 1004 rows): knots [20.0, 25.0, 30.4598, 34.9746, 40.2565, 45.0, 50.0112, 55.0, 59.0879, 65.0, 69.3], values [25.3943, 25.3943, 26.0405, 26.6341, 26.9604, 27.5795, 27.8, 28.2522, 28.7137, 28.7137, 29.1], thin bins [75, 80]
+  TIP_f3 for 2024 (fit on the other board years, 1242 rows): knots [20.0, 25.0, 30.5294, 35.0448, 40.281, 45.0156, 50.0977, 54.8983, 59.213, 64.9643, 69.386], values [25.5203, 25.5203, 26.0016, 26.5721, 27.0131, 27.4921, 27.8435, 28.2213, 28.8217, 28.8217, 29.2], thin bins [75, 80]
+- TAG field / oaa_per1000: frame 847; k_m None (innings); regressed TAG NOT COMPUTABLE
+  baseballamerica: n 87, computable False; ordering 0.3886; bias regressed None, bias PIT minus 0.5 0.0374; error abs regressed None; NOT COMPUTABLE: pool under 100 players
+    2017: n 0
+    2018: n 0
+    2019: n 0
+    2020: n 0
+    2021: n 0
+    2022: n 0
+    2023: n 61, mean gap 0.9548, regressed None, PIT minus 0.5 0.0559, abs regressed None, ordering rho 0.4266
+    2024: n 26, mean gap 0.2518, regressed None, PIT minus 0.5 -0.0048, abs regressed None, ordering rho 0.2996
+  fangraphs: n 805, computable True; ordering 0.3316; bias regressed None, bias PIT minus 0.5 0.0017; error abs regressed None
+    2017: n 92, mean gap 0.2634, regressed None, PIT minus 0.5 0.0208, abs regressed None, ordering rho 0.2289
+    2018: n 104, mean gap -0.5283, regressed None, PIT minus 0.5 -0.005, abs regressed None, ordering rho 0.3006
+    2019: n 129, mean gap -0.2094, regressed None, PIT minus 0.5 -0.0181, abs regressed None, ordering rho 0.2796
+    2020: n 140, mean gap -0.0386, regressed None, PIT minus 0.5 -0.0217, abs regressed None, ordering rho 0.3896
+    2021: n 124, mean gap -0.5642, regressed None, PIT minus 0.5 -0.0386, abs regressed None, ordering rho 0.4098
+    2022: n 120, mean gap 1.1416, regressed None, PIT minus 0.5 0.0406, abs regressed None, ordering rho 0.3274
+    2023: n 69, mean gap 1.6099, regressed None, PIT minus 0.5 0.0784, abs regressed None, ordering rho 0.4067
+    2024: n 27, mean gap 1.5003, regressed None, PIT minus 0.5 0.0164, abs regressed None, ordering rho 0.2162
+  mlb_pipeline: n 767, computable True; ordering 0.3551; bias regressed None, bias PIT minus 0.5 -0.0265; error abs regressed None
+    2017: n 97, mean gap -0.8082, regressed None, PIT minus 0.5 -0.0199, abs regressed None, ordering rho 0.3422
+    2018: n 115, mean gap -1.0478, regressed None, PIT minus 0.5 -0.037, abs regressed None, ordering rho 0.302
+    2019: n 130, mean gap -0.9635, regressed None, PIT minus 0.5 -0.0425, abs regressed None, ordering rho 0.3026
+    2020: n 117, mean gap -0.7095, regressed None, PIT minus 0.5 -0.0526, abs regressed None, ordering rho 0.3527
+    2021: n 103, mean gap -1.0063, regressed None, PIT minus 0.5 -0.0643, abs regressed None, ordering rho 0.3882
+    2022: n 110, mean gap 0.3472, regressed None, PIT minus 0.5 0.0286, abs regressed None, ordering rho 0.4558
+    2023: n 66, mean gap 0.7269, regressed None, PIT minus 0.5 0.0197, abs regressed None, ordering rho 0.4665
+    2024: n 29, mean gap 0.2494, regressed None, PIT minus 0.5 0.0067, abs regressed None, ordering rho 0.101
+  TIP_f3 for 2017 (fit on the other board years, 574 rows): knots [41.1897, 45.0952, 50.1269, 54.9691, 59.1379], values [-3.1144, -3.1144, -1.8888, 1.9614, 2.2348], thin bins [30, 35, 65, 70, 75]
+  TIP_f3 for 2018 (fit on the other board years, 472 rows): knots [41.0926, 45.1017, 50.2488, 54.963, 59.2905], values [-3.166, -3.166, -1.4324, 1.967, 3.1555], thin bins [30, 35, 65, 70, 75]
+  TIP_f3 for 2019 (fit on the other board years, 376 rows): knots [40.8864, 45.1224, 50.2395, 54.9538, 59.5673], values [-3.1501, -3.1501, -0.9062, 1.967, 4.1371], thin bins [30, 35, 65, 70, 75]
+  TIP_f3 for 2020 (fit on the other board years, 335 rows): knots [41.025, 45.1667, 50.2105, 54.9712, 59.1667], values [-2.5939, -2.5939, -1.2471, 0.6045, 1.7187], thin bins [30, 65, 70, 75]
+  TIP_f3 for 2021 (fit on the other board years, 384 rows): knots [41.42, 45.1125, 50.3421, 54.9769, 59.2157], values [-2.4205, -2.1906, -1.1002, -0.4653, 3.3953], thin bins [30, 65, 70, 75]
+  TIP_f3 for 2022 (fit on the other board years, 430 rows): knots [41.6111, 45.0811, 50.1382, 54.9805, 58.9286], values [-4.4666, -4.4666, -1.7899, -0.6105, 3.3803], thin bins [65, 70, 75]
+  TIP_f3 for 2023 (fit on the other board years, 618 rows): knots [41.5741, 45.0, 50.119, 55.0, 59.0802], values [-4.6705, -4.6705, -1.9501, 0.336, 3.2583], thin bins [30, 65, 70, 75]
+  TIP_f3 for 2024 (fit on the other board years, 756 rows): knots [41.5571, 45.0217, 50.1973, 55.0118, 59.1473], values [-3.5117, -3.5117, -1.9501, 0.895, 3.3653], thin bins [30, 35, 65, 70, 75]
+- TAG throw / arm_z: frame 964; k_m None (throws); regressed TAG NOT COMPUTABLE
+  baseballamerica: n 113, computable True; ordering 0.6483; bias regressed None, bias PIT minus 0.5 0.0684; error abs regressed None
+    2017: n 0
+    2018: n 0
+    2019: n 0
+    2020: n 0
+    2021: n 0
+    2022: n 0
+    2023: n 80, mean gap 0.1943, regressed None, PIT minus 0.5 0.0933, abs regressed None, ordering rho 0.6415
+    2024: n 33, mean gap -0.0176, regressed None, PIT minus 0.5 0.0096, abs regressed None, ordering rho 0.665
+  fangraphs: n 551, computable True; ordering 0.4995; bias regressed None, bias PIT minus 0.5 -0.0148; error abs regressed None
+    2017: n 106, mean gap -0.1853, regressed None, PIT minus 0.5 -0.0375, abs regressed None, ordering rho 0.5365
+    2018: n 122, mean gap -0.1231, regressed None, PIT minus 0.5 -0.0266, abs regressed None, ordering rho 0.4995
+    2019: n 156, mean gap -0.1984, regressed None, PIT minus 0.5 -0.0458, abs regressed None, ordering rho 0.4948
+    2020: n 167, mean gap 0.0419, regressed None, PIT minus 0.5 0.0382, abs regressed None, ordering rho 0.4804
+    2021: n 0
+    2022: n 0
+    2023: n 0
+    2024: n 0
+  mlb_pipeline: n 916, computable True; ordering 0.5757; bias regressed None, bias PIT minus 0.5 -0.0066; error abs regressed None
+    2017: n 116, mean gap -0.1708, regressed None, PIT minus 0.5 -0.0483, abs regressed None, ordering rho 0.5408
+    2018: n 134, mean gap -0.149, regressed None, PIT minus 0.5 -0.0485, abs regressed None, ordering rho 0.5561
+    2019: n 159, mean gap -0.2537, regressed None, PIT minus 0.5 -0.0983, abs regressed None, ordering rho 0.595
+    2020: n 141, mean gap -0.001, regressed None, PIT minus 0.5 0.0138, abs regressed None, ordering rho 0.5241
+    2021: n 123, mean gap 0.1972, regressed None, PIT minus 0.5 0.0557, abs regressed None, ordering rho 0.5799
+    2022: n 120, mean gap 0.176, regressed None, PIT minus 0.5 0.0581, abs regressed None, ordering rho 0.6083
+    2023: n 85, mean gap 0.153, regressed None, PIT minus 0.5 0.0669, abs regressed None, ordering rho 0.6501
+    2024: n 38, mean gap -0.0241, regressed None, PIT minus 0.5 0.0148, abs regressed None, ordering rho 0.5786
+  TIP_f3 for 2017 (fit on the other board years, 638 rows): knots [40.8929, 45.0, 50.1832, 55.0, 59.3571, 65.0, 69.8333], values [-0.6252, -0.6193, -0.1686, 0.3455, 0.6661, 1.607, 1.607], thin bins [75, 80]
+  TIP_f3 for 2018 (fit on the other board years, 520 rows): knots [40.7, 45.0, 50.2667, 55.0, 59.3952, 65.0, 69.7059], values [-0.5629, -0.5629, -0.1339, 0.3224, 0.5856, 1.5882, 1.5882], thin bins [35, 75, 80]
+  TIP_f3 for 2019 (fit on the other board years, 393 rows): knots [40.7353, 45.0, 50.2212, 55.0, 59.375, 65.0], values [-0.7757, -0.5912, -0.068, 0.4844, 0.6116, 1.6353], thin bins [35, 70, 75, 80]
+  TIP_f3 for 2020 (fit on the other board years, 360 rows): knots [40.6522, 45.0, 50.2434, 55.0, 59.2089, 65.0], values [-0.6668, -0.6668, -0.1434, 0.1477, 0.568, 1.6612], thin bins [35, 70, 75, 80]
+  TIP_f3 for 2021 (fit on the other board years, 498 rows): knots [40.7258, 45.0, 50.1212, 55.0, 59.1667, 70.0], values [-0.6996, -0.6996, -0.2562, 0.1513, 0.4114, 1.156], thin bins [35, 65, 75]
+  TIP_f3 for 2022 (fit on the other board years, 555 rows): knots [40.9615, 45.0, 50.2232, 55.0, 59.1443, 70.0], values [-0.8402, -0.6979, -0.1427, -0.0521, 0.509, 1.4174], thin bins [35, 65, 75]
+  TIP_f3 for 2023 (fit on the other board years, 696 rows): knots [40.8333, 45.0, 50.2934, 55.0, 59.3919, 65.0, 70.0], values [-0.8402, -0.6979, -0.1418, 0.1078, 0.5827, 1.7317, 1.7317], thin bins [35, 75]
+  TIP_f3 for 2024 (fit on the other board years, 852 rows): knots [40.7979, 45.0, 50.3571, 55.0, 59.3574, 65.0, 70.0], values [-0.8402, -0.7068, -0.1427, 0.2434, 0.6489, 1.6156, 1.6156], thin bins [35, 75, 80]
+- TAG game_pwr / iso: frame 1001; k_m 177.5259 (ab); regressed TAG computed
+  baseballamerica: n 101, computable True; ordering 0.5973; bias regressed -0.0114, bias PIT minus 0.5 -0.1322; error abs regressed 0.0253
+    2017: n 0
+    2018: n 0
+    2019: n 0
+    2020: n 0
+    2021: n 0
+    2022: n 0
+    2023: n 72, mean gap -0.0174, regressed -0.0131, PIT minus 0.5 -0.1469, abs regressed 0.0255, ordering rho 0.5882
+    2024: n 29, mean gap -0.0108, regressed -0.0069, PIT minus 0.5 -0.0965, abs regressed 0.0249, ordering rho 0.6201
+  fangraphs: n 949, computable True; ordering 0.5223; bias regressed 0.0024, bias PIT minus 0.5 0.0088; error abs regressed 0.0259
+    2017: n 107, mean gap 0.0252, regressed 0.0205, PIT minus 0.5 0.1598, abs regressed 0.0332, ordering rho 0.4002
+    2018: n 121, mean gap 0.0163, regressed 0.0137, PIT minus 0.5 0.1044, abs regressed 0.0286, ordering rho 0.4848
+    2019: n 151, mean gap -0.0071, regressed -0.0044, PIT minus 0.5 -0.0384, abs regressed 0.0243, ordering rho 0.595
+    2020: n 167, mean gap -0.0028, regressed -0.0011, PIT minus 0.5 -0.0126, abs regressed 0.0233, ordering rho 0.5412
+    2021: n 146, mean gap -0.005, regressed -0.0031, PIT minus 0.5 -0.0501, abs regressed 0.0237, ordering rho 0.5611
+    2022: n 142, mean gap -0.0003, regressed 0.0006, PIT minus 0.5 -0.0014, abs regressed 0.0253, ordering rho 0.4938
+    2023: n 83, mean gap -0.0057, regressed -0.0039, PIT minus 0.5 -0.0615, abs regressed 0.0251, ordering rho 0.5203
+    2024: n 32, mean gap -0.0021, regressed 0.0002, PIT minus 0.5 -0.0403, abs regressed 0.026, ordering rho 0.5835
+  mlb_pipeline: n 908, computable True; ordering 0.561; bias regressed -0.0016, bias PIT minus 0.5 -0.0328; error abs regressed 0.0254
+    2017: n 116, mean gap 0.0162, regressed 0.0136, PIT minus 0.5 0.092, abs regressed 0.0292, ordering rho 0.4963
+    2018: n 133, mean gap 0.0144, regressed 0.0123, PIT minus 0.5 0.0823, abs regressed 0.0281, ordering rho 0.5872
+    2019: n 154, mean gap -0.0075, regressed -0.0045, PIT minus 0.5 -0.0412, abs regressed 0.0247, ordering rho 0.5634
+    2020: n 142, mean gap -0.0069, regressed -0.0042, PIT minus 0.5 -0.0524, abs regressed 0.0247, ordering rho 0.5343
+    2021: n 125, mean gap -0.0132, regressed -0.0094, PIT minus 0.5 -0.106, abs regressed 0.0235, ordering rho 0.5516
+    2022: n 129, mean gap -0.0112, regressed -0.0081, PIT minus 0.5 -0.0928, abs regressed 0.0226, ordering rho 0.591
+    2023: n 77, mean gap -0.0158, regressed -0.012, PIT minus 0.5 -0.1141, abs regressed 0.0249, ordering rho 0.5979
+    2024: n 32, mean gap -0.0117, regressed -0.0077, PIT minus 0.5 -0.1221, abs regressed 0.0256, ordering rho 0.621
+  TIP_f3 for 2017 (fit on the other board years, 675 rows): knots [30.1667, 35.0, 40.5984, 45.0759, 49.7548, 55.04, 59.2644], values [0.079, 0.1167, 0.1218, 0.1442, 0.1562, 0.1844, 0.1851], thin bins [20, 25, 65, 70]
+  TIP_f3 for 2018 (fit on the other board years, 564 rows): knots [30.431, 35.0, 40.5593, 45.08, 49.7713, 55.0556, 59.4359], values [0.0963, 0.1167, 0.1251, 0.1435, 0.1586, 0.1708, 0.1886], thin bins [25, 65, 70]
+  TIP_f3 for 2019 (fit on the other board years, 448 rows): knots [30.0, 34.925, 40.5597, 45.0672, 49.9022, 55.0612, 59.4603], values [0.0998, 0.1188, 0.1367, 0.1567, 0.1666, 0.1791, 0.1896], thin bins [20, 25, 65, 70]
+  TIP_f3 for 2020 (fit on the other board years, 397 rows): knots [30.1667, 34.9, 40.3788, 45.1364, 49.9409, 55.0652, 59.3469], values [0.0998, 0.1072, 0.1342, 0.1535, 0.1708, 0.1708, 0.1916], thin bins [20, 65, 70]
+  TIP_f3 for 2021 (fit on the other board years, 455 rows): knots [30.0806, 35.0, 40.3353, 45.0357, 49.9252, 55.0263, 59.0268], values [0.0929, 0.1184, 0.1352, 0.1426, 0.1726, 0.1825, 0.1907], thin bins [20, 25, 65, 70]
+  TIP_f3 for 2022 (fit on the other board years, 512 rows): knots [30.0806, 35.0, 40.3866, 44.9706, 49.764, 55.075, 58.8942], values [0.0819, 0.1167, 0.1338, 0.1417, 0.164, 0.1849, 0.1907], thin bins [20, 25, 65, 70]
+  TIP_f3 for 2023 (fit on the other board years, 736 rows): knots [30.2326, 35.0, 40.3889, 45.0, 49.866, 55.0, 59.0], values [0.081, 0.1175, 0.1342, 0.1447, 0.1659, 0.1851, 0.1922], thin bins [20, 25, 65, 70]
+  TIP_f3 for 2024 (fit on the other board years, 898 rows): knots [30.2451, 35.0429, 40.4386, 45.0625, 49.7956, 54.9567, 59.0678], values [0.0819, 0.1184, 0.1308, 0.1426, 0.1607, 0.1845, 0.1899], thin bins [20, 25, 65, 70]
+- TAG fb / k_pct_pit: frame 1358; k_m 76.5133 (bf); regressed TAG computed
+  baseballamerica: n 162, computable True; ordering 0.4174; bias regressed 0.4592, bias PIT minus 0.5 0.0232; error abs regressed 2.6709
+    2017: n 0
+    2018: n 0
+    2019: n 0
+    2020: n 0
+    2021: n 0
+    2022: n 0
+    2023: n 111, mean gap 0.3415, regressed 0.3517, PIT minus 0.5 0.0111, abs regressed 2.6159, ordering rho 0.3547
+    2024: n 51, mean gap 0.7882, regressed 0.6932, PIT minus 0.5 0.0489, abs regressed 2.7904, ordering rho 0.5538
+  fangraphs: n 1220, computable True; ordering 0.2448; bias regressed 0.5183, bias PIT minus 0.5 0.0179; error abs regressed 2.9008
+    2017: n 101, mean gap -0.0007, regressed 0.1331, PIT minus 0.5 -0.0257, abs regressed 3.4249, ordering rho 0.1771
+    2018: n 156, mean gap 0.2487, regressed 0.3321, PIT minus 0.5 0.002, abs regressed 2.9776, ordering rho 0.1435
+    2019: n 191, mean gap 0.1124, regressed 0.2735, PIT minus 0.5 -0.003, abs regressed 2.806, ordering rho 0.1888
+    2020: n 201, mean gap 0.2479, regressed 0.3122, PIT minus 0.5 0.0039, abs regressed 2.7862, ordering rho 0.1629
+    2021: n 178, mean gap 1.1982, regressed 1.0432, PIT minus 0.5 0.0534, abs regressed 3.0119, ordering rho 0.2467
+    2022: n 186, mean gap 0.8313, regressed 0.7446, PIT minus 0.5 0.0374, abs regressed 2.8479, ordering rho 0.3253
+    2023: n 138, mean gap 0.5404, regressed 0.5098, PIT minus 0.5 0.0153, abs regressed 2.671, ordering rho 0.357
+    2024: n 69, mean gap 0.9767, regressed 0.8344, PIT minus 0.5 0.0811, abs regressed 2.8718, ordering rho 0.5212
+  mlb_pipeline: n 1103, computable True; ordering 0.2722; bias regressed -0.1157, bias PIT minus 0.5 -0.0315; error abs regressed 2.7878
+    2017: n 131, mean gap -0.5916, regressed -0.3629, PIT minus 0.5 -0.0761, abs regressed 3.3064, ordering rho 0.2088
+    2018: n 171, mean gap -0.6602, regressed -0.4161, PIT minus 0.5 -0.0574, abs regressed 2.8804, ordering rho 0.2059
+    2019: n 190, mean gap -0.8899, regressed -0.5926, PIT minus 0.5 -0.0558, abs regressed 2.6505, ordering rho 0.2808
+    2020: n 173, mean gap -0.6356, regressed -0.4381, PIT minus 0.5 -0.0478, abs regressed 2.5949, ordering rho 0.2321
+    2021: n 138, mean gap 0.6462, regressed 0.5849, PIT minus 0.5 0.0208, abs regressed 2.8344, ordering rho 0.224
+    2022: n 133, mean gap 0.3641, regressed 0.3679, PIT minus 0.5 0.0074, abs regressed 2.5975, ordering rho 0.4085
+    2023: n 111, mean gap 0.118, regressed 0.1743, PIT minus 0.5 -0.0123, abs regressed 2.6577, ordering rho 0.3412
+    2024: n 56, mean gap 0.598, regressed 0.5433, PIT minus 0.5 0.0269, abs regressed 2.9489, ordering rho 0.3763
+  TIP_f3 for 2017 (fit on the other board years, 981 rows): knots [45.0349, 50.4952, 54.9689, 59.6806, 65.0, 69.4667], values [20.4066, 20.4066, 21.4099, 22.1094, 22.9958, 24.3289], thin bins [30, 35, 40, 75, 80]
+  TIP_f3 for 2018 (fit on the other board years, 798 rows): knots [45.0417, 50.5056, 54.9645, 59.6557, 65.0, 69.5196], values [20.1246, 20.1246, 21.1796, 22.3195, 23.8755, 24.5342], thin bins [30, 35, 40, 75, 80]
+  TIP_f3 for 2019 (fit on the other board years, 669 rows): knots [45.0, 50.5767, 54.946, 59.8141, 64.9706, 69.5111], values [19.6356, 19.8328, 21.3759, 22.7399, 23.253, 24.8952], thin bins [30, 35, 40, 75, 80]
+  TIP_f3 for 2020 (fit on the other board years, 620 rows): knots [45.0429, 50.6538, 54.9873, 59.7241, 64.9268, 69.41], values [19.6356, 20.1754, 21.2682, 22.4857, 22.5032, 25.2396], thin bins [30, 35, 40, 75, 80]
+  TIP_f3 for 2021 (fit on the other board years, 711 rows): knots [44.95, 50.8182, 55.0248, 59.6545, 64.9667, 69.4286], values [19.1394, 20.3347, 20.3347, 21.5457, 22.449, 24.6433], thin bins [30, 35, 40, 75, 80]
+  TIP_f3 for 2022 (fit on the other board years, 770 rows): knots [45.0, 50.7653, 54.9659, 59.6638, 65.0341, 69.4388], values [20.7751, 20.7751, 20.992, 21.1207, 22.9607, 24.1237], thin bins [35, 40, 75, 80]
+  TIP_f3 for 2023 (fit on the other board years, 939 rows): knots [45.0, 50.5483, 55.0, 59.6432, 65.0, 69.4915], values [20.7578, 20.7578, 21.3004, 21.3115, 22.9958, 24.94], thin bins [30, 40, 75, 80]
+  TIP_f3 for 2024 (fit on the other board years, 1152 rows): knots [45.0375, 50.5798, 54.9548, 59.6649, 65.0205, 69.4941, 79.6875], values [20.3325, 20.3325, 21.1783, 21.4017, 22.9401, 24.5342, 27.2945], thin bins [30, 35, 40, 75]
+- TAG cmd / bb_pct_pit: frame 1358; k_m 225.8052 (bf); regressed TAG computed
+  baseballamerica: n 162, computable True; ordering 0.4149; bias regressed 0.268, bias PIT minus 0.5 0.0367; error abs regressed 1.3217
+    2017: n 0
+    2018: n 0
+    2019: n 0
+    2020: n 0
+    2021: n 0
+    2022: n 0
+    2023: n 111, mean gap 0.185, regressed 0.2861, PIT minus 0.5 0.0407, abs regressed 1.375, ordering rho 0.45
+    2024: n 51, mean gap 0.2091, regressed 0.2288, PIT minus 0.5 0.0283, abs regressed 1.2057, ordering rho 0.3387
+  fangraphs: n 1219, computable True; ordering 0.3033; bias regressed 0.0888, bias PIT minus 0.5 -0.005; error abs regressed 1.3672
+    2017: n 101, mean gap -0.4626, regressed -0.2001, PIT minus 0.5 -0.0446, abs regressed 1.0957, ordering rho 0.4739
+    2018: n 154, mean gap -0.716, regressed -0.3358, PIT minus 0.5 -0.0704, abs regressed 1.2245, ordering rho 0.4348
+    2019: n 191, mean gap -1.032, regressed -0.4621, PIT minus 0.5 -0.0899, abs regressed 1.3613, ordering rho 0.2915
+    2020: n 201, mean gap -0.5953, regressed -0.1996, PIT minus 0.5 -0.0627, abs regressed 1.3806, ordering rho 0.2273
+    2021: n 179, mean gap 0.5729, regressed 0.4928, PIT minus 0.5 0.0709, abs regressed 1.5066, ordering rho 0.2077
+    2022: n 186, mean gap 0.8653, regressed 0.721, PIT minus 0.5 0.0901, abs regressed 1.508, ordering rho 0.2446
+    2023: n 138, mean gap 0.5314, regressed 0.4836, PIT minus 0.5 0.0796, abs regressed 1.4047, ordering rho 0.4061
+    2024: n 69, mean gap 0.2627, regressed 0.2826, PIT minus 0.5 0.0286, abs regressed 1.2434, ordering rho 0.2145
+  mlb_pipeline: n 1104, computable True; ordering 0.3711; bias regressed -0.0552, bias PIT minus 0.5 -0.0255; error abs regressed 1.2747
+    2017: n 131, mean gap -0.416, regressed -0.1458, PIT minus 0.5 -0.035, abs regressed 1.1379, ordering rho 0.4173
+    2018: n 171, mean gap -0.864, regressed -0.4364, PIT minus 0.5 -0.0893, abs regressed 1.2257, ordering rho 0.3857
+    2019: n 190, mean gap -0.9511, regressed -0.4325, PIT minus 0.5 -0.0796, abs regressed 1.2462, ordering rho 0.4002
+    2020: n 174, mean gap -0.8124, regressed -0.3555, PIT minus 0.5 -0.0811, abs regressed 1.2704, ordering rho 0.3382
+    2021: n 138, mean gap 0.0362, regressed 0.1854, PIT minus 0.5 0.0124, abs regressed 1.3122, ordering rho 0.3132
+    2022: n 133, mean gap 0.5803, regressed 0.5796, PIT minus 0.5 0.0715, abs regressed 1.3992, ordering rho 0.3062
+    2023: n 111, mean gap 0.477, regressed 0.493, PIT minus 0.5 0.0589, abs regressed 1.383, ordering rho 0.454
+    2024: n 56, mean gap 0.409, regressed 0.3478, PIT minus 0.5 0.0679, abs regressed 1.2512, ordering rho 0.3552
+  TIP_f3 for 2017 (fit on the other board years, 981 rows): knots [35.12, 40.8937, 44.9536, 49.9779, 54.9767, 58.8987], values [11.3365, 10.6028, 10.2207, 9.2885, 8.3726, 8.3726], thin bins [30, 65, 70]
+  TIP_f3 for 2018 (fit on the other board years, 799 rows): knots [35.125, 40.837, 44.9444, 50.0138, 54.9737, 59.0515], values [11.3629, 10.8911, 10.1443, 9.0491, 8.1444, 8.1444], thin bins [30, 65, 70]
+  TIP_f3 for 2019 (fit on the other board years, 669 rows): knots [35.0652, 40.8659, 44.9308, 49.9017, 54.9341, 59.1698], values [11.3924, 10.6061, 9.8427, 9.2664, 7.6779, 7.4856], thin bins [30, 65, 70]
+  TIP_f3 for 2020 (fit on the other board years, 619 rows): knots [35.0938, 40.8472, 44.8981, 50.0391, 54.9703, 59.0463], values [10.8059, 10.8059, 10.7143, 9.1206, 7.9188, 7.4618], thin bins [30, 65, 70]
+  TIP_f3 for 2021 (fit on the other board years, 711 rows): knots [40.9847, 44.9211, 50.0768, 54.9864, 58.8766], values [11.2999, 10.9462, 9.6317, 8.2248, 7.5117], thin bins [30, 35, 65, 70]
+  TIP_f3 for 2022 (fit on the other board years, 770 rows): knots [41.0316, 45.0103, 49.926, 55.0583, 58.6728], values [11.9048, 10.8545, 9.9567, 8.2505, 7.8125], thin bins [30, 35, 65, 70]
+  TIP_f3 for 2023 (fit on the other board years, 939 rows): knots [41.0047, 44.9726, 50.026, 54.9871, 58.6068], values [10.9034, 10.6267, 9.4911, 8.6937, 8.1081], thin bins [30, 35, 65, 70]
+  TIP_f3 for 2024 (fit on the other board years, 1152 rows): knots [35.075, 40.956, 45.0152, 49.9734, 55.0441, 58.7161], values [11.0586, 10.9077, 10.491, 9.4595, 8.272, 8.126], thin bins [30, 65, 70]
+- TAG hit_avg / avg: frame 1001; k_m 468.3212 (ab); regressed TAG computed
+  baseballamerica: n 101, computable True; ordering 0.0733; bias regressed 0.0007, bias PIT minus 0.5 -0.0013; error abs regressed 0.0118
+    2017: n 0
+    2018: n 0
+    2019: n 0
+    2020: n 0
+    2021: n 0
+    2022: n 0
+    2023: n 72, mean gap -0.0013, regressed 0.0003, PIT minus 0.5 0.0031, abs regressed 0.0124, ordering rho 0.0827
+    2024: n 29, mean gap 0.0009, regressed 0.0018, PIT minus 0.5 -0.0119, abs regressed 0.0102, ordering rho 0.0499
+  fangraphs: n 949, computable True; ordering 0.1086; bias regressed 0.0009, bias PIT minus 0.5 -0.0039; error abs regressed 0.0127
+    2017: n 107, mean gap 0.0058, regressed 0.0052, PIT minus 0.5 0.0713, abs regressed 0.014, ordering rho 0.212
+    2018: n 121, mean gap 0.0013, regressed 0.0026, PIT minus 0.5 0.02, abs regressed 0.0131, ordering rho 0.0831
+    2019: n 151, mean gap -0.0046, regressed -0.0009, PIT minus 0.5 -0.0369, abs regressed 0.0137, ordering rho 0.0699
+    2020: n 167, mean gap -0.0044, regressed -0.0012, PIT minus 0.5 -0.0494, abs regressed 0.012, ordering rho 0.119
+    2021: n 146, mean gap -0.0062, regressed -0.0028, PIT minus 0.5 -0.0576, abs regressed 0.0116, ordering rho 0.1037
+    2022: n 142, mean gap 0.0025, regressed 0.0027, PIT minus 0.5 0.0572, abs regressed 0.0118, ordering rho 0.1899
+    2023: n 83, mean gap 0.0019, regressed 0.0026, PIT minus 0.5 0.0201, abs regressed 0.0135, ordering rho -0.0794
+    2024: n 32, mean gap 0.0037, regressed 0.0036, PIT minus 0.5 -0.005, abs regressed 0.0116, ordering rho 0.1352
+  mlb_pipeline: n 909, computable True; ordering 0.2961; bias regressed 0.0002, bias PIT minus 0.5 -0.0134; error abs regressed 0.0122
+    2017: n 116, mean gap 0.0058, regressed 0.0051, PIT minus 0.5 0.0589, abs regressed 0.014, ordering rho 0.3007
+    2018: n 133, mean gap 0.0026, regressed 0.0033, PIT minus 0.5 0.0148, abs regressed 0.0134, ordering rho 0.3522
+    2019: n 154, mean gap -0.005, regressed -0.0013, PIT minus 0.5 -0.0456, abs regressed 0.013, ordering rho 0.2866
+    2020: n 142, mean gap -0.0056, regressed -0.0022, PIT minus 0.5 -0.0625, abs regressed 0.0119, ordering rho 0.289
+    2021: n 125, mean gap -0.0066, regressed -0.003, PIT minus 0.5 -0.0484, abs regressed 0.0112, ordering rho 0.2521
+    2022: n 130, mean gap 0.0003, regressed 0.0012, PIT minus 0.5 0.0203, abs regressed 0.0105, ordering rho 0.4022
+    2023: n 77, mean gap -0.0052, regressed -0.0019, PIT minus 0.5 -0.0245, abs regressed 0.0117, ordering rho 0.1268
+    2024: n 32, mean gap 0.0013, regressed 0.002, PIT minus 0.5 0.0118, abs regressed 0.0102, ordering rho 0.2707
+  TIP_f3 for 2017 (fit on the other board years, 675 rows): knots [40.8036, 45.0732, 50.2557, 54.8974, 59.0479, 65.0833], values [0.2315, 0.2334, 0.2354, 0.2421, 0.2421, 0.2442], thin bins [30, 35, 70]
+  TIP_f3 for 2018 (fit on the other board years, 564 rows): knots [40.8793, 45.0833, 50.3684, 54.8857, 59.191, 65.0882], values [0.2319, 0.2333, 0.2349, 0.2445, 0.2455, 0.2457], thin bins [30, 35, 70]
+  TIP_f3 for 2019 (fit on the other board years, 448 rows): knots [41.1735, 45.123, 50.2938, 54.85, 59.2727, 65.075], values [0.231, 0.2354, 0.2379, 0.2486, 0.2507, 0.2507], thin bins [30, 35, 70]
+  TIP_f3 for 2020 (fit on the other board years, 397 rows): knots [41.3382, 45.0763, 50.2986, 54.8581, 59.0526, 65.1765], values [0.2236, 0.2334, 0.2434, 0.2507, 0.2511, 0.2511], thin bins [30, 35, 70, 75]
+  TIP_f3 for 2021 (fit on the other board years, 455 rows): knots [41.0667, 45.0423, 50.328, 54.9643, 58.6765, 65.1765], values [0.2249, 0.2335, 0.243, 0.2534, 0.2551, 0.2551], thin bins [30, 35, 70, 75]
+  TIP_f3 for 2022 (fit on the other board years, 512 rows): knots [41.0833, 44.9786, 50.3265, 55.0, 58.7361], values [0.2234, 0.2308, 0.2408, 0.2464, 0.2509], thin bins [30, 35, 65, 70, 75]
+  TIP_f3 for 2023 (fit on the other board years, 736 rows): knots [40.9596, 45.0, 50.3204, 55.0, 58.8553], values [0.2234, 0.2333, 0.2427, 0.2463, 0.2555], thin bins [30, 35, 65, 70, 75]
+  TIP_f3 for 2024 (fit on the other board years, 898 rows): knots [40.9386, 45.0126, 50.2735, 54.961, 58.9154, 65.0], values [0.2246, 0.2333, 0.2392, 0.2463, 0.2487, 0.2487], thin bins [30, 35, 70, 75]
+- TAG speed_sb / sb_per600: frame 1001; k_m 75.7105 (pa); regressed TAG computed
+  baseballamerica: n 101, computable True; ordering 0.7617; bias regressed 2.1713, bias PIT minus 0.5 0.0482; error abs regressed 5.238
+    2017: n 0
+    2018: n 0
+    2019: n 0
+    2020: n 0
+    2021: n 0
+    2022: n 0
+    2023: n 72, mean gap 1.9199, regressed 1.8256, PIT minus 0.5 0.0325, abs regressed 5.3371, ordering rho 0.7359
+    2024: n 29, mean gap 3.4447, regressed 3.0294, PIT minus 0.5 0.0877, abs regressed 4.9918, ordering rho 0.8257
+  fangraphs: n 949, computable True; ordering 0.6851; bias regressed 2.3566, bias PIT minus 0.5 0.044; error abs regressed 6.2002
+    2017: n 107, mean gap -0.1664, regressed -0.0618, PIT minus 0.5 -0.0289, abs regressed 5.208, ordering rho 0.636
+    2018: n 121, mean gap -1.2044, regressed -0.9775, PIT minus 0.5 -0.1061, abs regressed 5.7068, ordering rho 0.6199
+    2019: n 151, mean gap -0.8118, regressed -0.642, PIT minus 0.5 -0.0806, abs regressed 5.9171, ordering rho 0.647
+    2020: n 167, mean gap 4.3529, regressed 3.9793, PIT minus 0.5 0.1016, abs regressed 6.3636, ordering rho 0.7023
+    2021: n 146, mean gap 4.5016, regressed 4.1237, PIT minus 0.5 0.1154, abs regressed 6.392, ordering rho 0.7141
+    2022: n 142, mean gap 5.9022, regressed 5.378, PIT minus 0.5 0.1613, abs regressed 7.3245, ordering rho 0.7232
+    2023: n 83, mean gap 4.0789, regressed 3.7706, PIT minus 0.5 0.1171, abs regressed 6.2042, ordering rho 0.7232
+    2024: n 32, mean gap 4.1143, regressed 3.5941, PIT minus 0.5 0.1096, abs regressed 5.993, ordering rho 0.7852
+  mlb_pipeline: n 909, computable True; ordering 0.7043; bias regressed 0.6298, bias PIT minus 0.5 -0.0347; error abs regressed 5.9052
+    2017: n 116, mean gap -2.4571, regressed -2.1139, PIT minus 0.5 -0.1484, abs regressed 5.4184, ordering rho 0.6774
+    2018: n 133, mean gap -3.4668, regressed -3.023, PIT minus 0.5 -0.1617, abs regressed 6.2914, ordering rho 0.6272
+    2019: n 154, mean gap -1.8384, regressed -1.5724, PIT minus 0.5 -0.1024, abs regressed 6.1029, ordering rho 0.6091
+    2020: n 142, mean gap 2.7267, regressed 2.5103, PIT minus 0.5 0.006, abs regressed 5.8732, ordering rho 0.7151
+    2021: n 125, mean gap 2.9148, regressed 2.6674, PIT minus 0.5 0.0306, abs regressed 5.9927, ordering rho 0.7442
+    2022: n 130, mean gap 3.909, regressed 3.5893, PIT minus 0.5 0.0882, abs regressed 5.8922, ordering rho 0.7735
+    2023: n 77, mean gap 3.1544, regressed 2.9406, PIT minus 0.5 0.0574, abs regressed 5.801, ordering rho 0.814
+    2024: n 32, mean gap 2.8313, regressed 2.4688, PIT minus 0.5 0.0667, abs regressed 5.2169, ordering rho 0.8321
+  TIP_f3 for 2017 (fit on the other board years, 675 rows): knots [30.6932, 35.1364, 40.2338, 44.9224, 50.1963, 54.82, 59.3238, 65.1111, 69.8913], values [1.41, 2.7624, 4.7138, 6.8293, 11.2711, 14.6771, 17.1443, 22.8242, 32.8767], thin bins [20, 25, 75, 80]
+  TIP_f3 for 2018 (fit on the other board years, 564 rows): knots [30.4429, 35.1622, 40.3448, 44.9043, 50.2972, 54.7923, 59.4, 65.15, 70.0], values [1.6854, 2.7624, 5.2764, 7.1429, 12.0, 14.9341, 19.2073, 27.0034, 33.5968], thin bins [20, 25, 75, 80]
+  TIP_f3 for 2019 (fit on the other board years, 448 rows): knots [30.2424, 35.2143, 40.3563, 44.9082, 50.2097, 54.7818, 59.306, 69.8611], values [1.3857, 2.4039, 5.2897, 6.2547, 12.0, 15.08, 19.3772, 33.2368], thin bins [20, 25, 65, 80]
+  TIP_f3 for 2020 (fit on the other board years, 397 rows): knots [30.2903, 35.2609, 40.4, 44.9362, 50.0946, 54.8393, 58.9855], values [1.884, 1.884, 4.5455, 4.9107, 8.5229, 14.0179, 15.6863], thin bins [20, 25, 65, 70, 80]
+  TIP_f3 for 2021 (fit on the other board years, 455 rows): knots [30.2778, 35.1, 40.2388, 45.0349, 50.0227, 54.9048, 59.0584, 69.2188], values [1.8225, 1.8225, 3.0501, 4.2654, 8.251, 16.2601, 16.2601, 16.2601], thin bins [20, 25, 65, 75, 80]
+  TIP_f3 for 2022 (fit on the other board years, 512 rows): knots [30.5488, 35.0, 40.0823, 45.0385, 50.1727, 54.9262, 58.8229, 65.0, 69.3421], values [1.1881, 1.4711, 2.1016, 4.2654, 9.919, 13.6674, 15.7068, 16.9506, 16.9506], thin bins [20, 25, 75, 80]
+  TIP_f3 for 2023 (fit on the other board years, 736 rows): knots [30.5357, 34.9674, 40.2282, 45.0, 50.0875, 55.0, 58.9918, 65.0, 69.537], values [1.5312, 2.1273, 3.4202, 6.4748, 10.4953, 13.9998, 16.1568, 19.1304, 24.0], thin bins [20, 25, 75, 80]
+  TIP_f3 for 2024 (fit on the other board years, 898 rows): knots [30.6615, 35.1071, 40.2429, 44.9786, 50.1757, 54.9176, 59.1235, 65.0, 69.6094], values [1.1881, 1.9905, 3.7879, 4.9169, 10.7482, 14.3322, 17.9539, 20.5897, 26.2037], thin bins [20, 25, 75, 80]
+- TAG raw_pwr / ev_avg: frame 949; k_m 43.6082 (attempts); regressed TAG computed
+  fangraphs: n 949, computable True; ordering 0.507; bias regressed 0.0376, bias PIT minus 0.5 -0.004; error abs regressed 1.2183
+    2017: n 107, mean gap 0.0128, regressed 0.0294, PIT minus 0.5 -0.0127, abs regressed 1.2621, ordering rho 0.4608
+    2018: n 121, mean gap -0.1672, regressed -0.133, PIT minus 0.5 -0.0251, abs regressed 1.1523, ordering rho 0.5331
+    2019: n 151, mean gap -0.2595, regressed -0.2219, PIT minus 0.5 -0.063, abs regressed 1.212, ordering rho 0.57
+    2020: n 167, mean gap -0.1818, regressed -0.1547, PIT minus 0.5 -0.0303, abs regressed 1.1887, ordering rho 0.4849
+    2021: n 146, mean gap 0.1033, regressed 0.1046, PIT minus 0.5 0.0164, abs regressed 1.193, ordering rho 0.5078
+    2022: n 142, mean gap 0.504, regressed 0.4867, PIT minus 0.5 0.0724, abs regressed 1.3276, ordering rho 0.4726
+    2023: n 83, mean gap 0.0904, regressed 0.0967, PIT minus 0.5 -0.0029, abs regressed 1.1117, ordering rho 0.5333
+    2024: n 32, mean gap 0.5223, regressed 0.485, PIT minus 0.5 0.0722, abs regressed 1.411, ordering rho 0.4619
+  TIP_f3 for 2017 (fit on the other board years, 674 rows): knots [30.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0], values [86.252, 86.8366, 87.564, 88.3108, 88.9186, 89.119, 90.058, 90.1591], thin bins [35, 80]
+  TIP_f3 for 2018 (fit on the other board years, 566 rows): knots [40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0], values [86.8991, 87.5607, 88.4087, 89.0699, 89.119, 90.2355, 90.3053], thin bins [30, 35, 80]
+  TIP_f3 for 2019 (fit on the other board years, 438 rows): knots [40.0, 45.0, 50.0, 55.0, 60.0, 70.0], values [87.4431, 87.5006, 88.5434, 88.7263, 89.2297, 90.3381], thin bins [30, 35, 65, 80]
+  TIP_f3 for 2020 (fit on the other board years, 365 rows): knots [40.0, 45.0, 50.0, 55.0, 60.0, 70.0], values [87.2357, 87.2357, 88.7425, 88.934, 89.2075, 90.4518], thin bins [30, 35, 65, 80]
+  TIP_f3 for 2021 (fit on the other board years, 420 rows): knots [40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0], values [87.4589, 87.4589, 88.0103, 88.6547, 89.0705, 89.6614, 90.4175], thin bins [30, 35, 80]
+  TIP_f3 for 2022 (fit on the other board years, 481 rows): knots [40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0], values [86.9183, 87.3689, 87.7935, 88.1703, 89.5027, 90.0335, 90.1855], thin bins [30, 35, 80]
+  TIP_f3 for 2023 (fit on the other board years, 697 rows): knots [30.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0], values [86.155, 87.284, 87.5674, 88.0892, 88.624, 89.3165, 90.0457, 90.44], thin bins [35, 80]
+  TIP_f3 for 2024 (fit on the other board years, 856 rows): knots [30.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0], values [86.155, 86.8467, 87.5005, 88.1132, 88.6582, 89.2297, 89.7823, 90.4175], thin bins [35, 80]
+- TAG pitch_sel / chase_pct: frame 438; k_m 68.3172 (oz_pitches); regressed TAG computed
+  fangraphs: n 438, computable True; ordering 0.4644; bias regressed -0.0068, bias PIT minus 0.5 -0.0037; error abs regressed 0.0307
+    2021: n 133, mean gap -0.0144, regressed -0.0081, PIT minus 0.5 -0.0584, abs regressed 0.0336, ordering rho 0.4336
+    2022: n 145, mean gap -0.0193, regressed -0.0122, PIT minus 0.5 0.0549, abs regressed 0.0328, ordering rho 0.4852
+    2023: n 105, mean gap -0.0044, regressed -0.0013, PIT minus 0.5 0.0228, abs regressed 0.0282, ordering rho 0.4828
+    2024: n 55, mean gap 0.0015, regressed -0.0, PIT minus 0.5 0.0176, abs regressed 0.0229, ordering rho 0.4487
+  TIP_f3 for 2021 (fit on the other board years, 141 rows): knots [40.0, 45.0, 50.0, 55.0, 60.0], values [0.343, 0.318, 0.2848, 0.2848, 0.268], thin bins [20, 30, 35, 70]
+  TIP_f3 for 2022 (fit on the other board years, 86 rows): knots [55.0, 60.0], values [0.299, 0.271], thin bins [30, 35, 40, 45, 50, 70]
+  TIP_f3 for 2023 (fit on the other board years, 167 rows): knots [30.0, 40.0, 45.0, 50.0, 55.0, 60.0], values [0.3475, 0.3475, 0.313, 0.304, 0.291, 0.26], thin bins [35, 70]
+  TIP_f3 for 2024 (fit on the other board years, 298 rows): knots [30.0, 40.0, 45.0, 50.0, 55.0, 60.0], values [0.348, 0.348, 0.323, 0.312, 0.288, 0.257], thin bins [20, 35, 70, 80]
+- TAG bat_ctrl / z_contact_pct: frame 446; k_m 59.3017 (iz_swings); regressed TAG computed
+  fangraphs: n 446, computable True; ordering 0.4016; bias regressed 0.0074, bias PIT minus 0.5 -0.0057; error abs regressed 0.03
+    2021: n 139, mean gap -0.0019, regressed 0.0022, PIT minus 0.5 -0.0459, abs regressed 0.0314, ordering rho 0.387
+    2022: n 147, mean gap 0.0094, regressed 0.0084, PIT minus 0.5 -0.0331, abs regressed 0.03, ordering rho 0.4627
+    2023: n 105, mean gap 0.0205, regressed 0.0166, PIT minus 0.5 0.0826, abs regressed 0.0305, ordering rho 0.3767
+    2024: n 55, mean gap -0.0047, regressed 0.0006, PIT minus 0.5 -0.0226, abs regressed 0.0256, ordering rho 0.3232
+  TIP_f3 for 2021 (fit on the other board years, 127 rows): knots [40.0, 45.0, 50.0, 55.0, 60.0], values [0.788, 0.836, 0.8395, 0.8395, 0.8395], thin bins [20, 30, 35, 70]
+  TIP_f3 for 2022 (fit on the other board years, 82 rows): knots [40.0, 50.0, 60.0], values [0.774, 0.8422, 0.8422], thin bins [20, 30, 35, 45, 55, 70]
+  TIP_f3 for 2023 (fit on the other board years, 165 rows): knots [40.0, 45.0, 50.0, 55.0, 60.0], values [0.7495, 0.8205, 0.8235, 0.8508, 0.8508], thin bins [20, 30, 35, 65, 70, 80]
+  TIP_f3 for 2024 (fit on the other board years, 302 rows): knots [40.0, 45.0, 50.0, 55.0, 60.0], values [0.79, 0.835, 0.84, 0.849, 0.863], thin bins [20, 30, 65, 70, 80]
+
+Controls (W.7): C6.1 the permuted-source-label floor, C6.3 the shuffled outcome, C6.4 the forced-equal identity, C6.5 seed stability at 1337, C6.7 the player-disjoint weight arm and the single-source context are printed per cell above. C6.2 (pooled-tool) is not computed by this runner (gate Part 6: no tool pooling; it would be a control only, never a result). C6.6 (the survivorship boundary) is the sentence below with the universe counts above.
+
+Inputs sha256 at start (unchanged through the run: True):
+  .cache/fa_statsapi_hitting_2018.json 0ed27cb23043ba42c748622f855ee676222aff4700656e93183d465bafbd1e97
+  .cache/fa_statsapi_hitting_2019.json 66af1f1fa1869f5e22a3e20760d7f7929635b2600781c816822c7e7401142036
+  .cache/fa_statsapi_hitting_2020.json 60a5ab0cc36c99bbbe322e1f0479bc5049a51b8eea4a2344eb0fb6c4c9869f5a
+  .cache/fa_statsapi_hitting_2021.json ec737cc5087fb03ae3cc2d3db1a7a5dc46d2d68e661c3d53639d76bd3b1dda02
+  .cache/fa_statsapi_hitting_2022.json 44ac1610bfda4cb594effa32a728aba9e756fecd163408b2525c1c6bd98c9599
+  .cache/fa_statsapi_hitting_2023.json 1434de28fbc752eabb57804b184823fdf521f731169c22b71c7ad098c5986c5c
+  .cache/fa_statsapi_hitting_2024.json 8bb44c15db16a8f8cfe2bccc08e5ad304be72ca38960a101de2454175dabd8c8
+  .cache/fa_statsapi_hitting_2025.json a1e6455e8758ea0350b07bbcfe0126d1f5e71b56616ff819211677e7a1094935
+  .cache/fa_statsapi_hitting_2026.json 1c7b86415b27d2fa6724d69ab88c947d5b839583e429f33a475d8a2fa375aabf
+  .cache/fa_statsapi_pitching_2018.json 6c2f6dc7623cb7cdea905b739ab50b85f018c28c35ad09ae66e092f537da677e
+  .cache/fa_statsapi_pitching_2019.json f7059a367d50d6ed41d40ddc1bb59ba0fbc7e82f1407983f0cb526c4ae1b9864
+  .cache/fa_statsapi_pitching_2020.json 6f6e128c1f0f55f4445d9ec10ddb175f0a89475db94e931dddc7a97252c1ac62
+  .cache/fa_statsapi_pitching_2021.json 6063e2ffac8f8f883ce9e88f823863d107b77cb6066a9b8d56aa43cdfe519c70
+  .cache/fa_statsapi_pitching_2022.json fd7fb55b0a903cbe74885cfab53142b23a73f629e6140b83809eba183c7baad8
+  .cache/fa_statsapi_pitching_2023.json 8fb532797c229434c33a165506232cfac116071cf3e3322df9ab3eb5b116df75
+  .cache/fa_statsapi_pitching_2024.json f00d025220bb6ccacc24784de50c42f4a8135d7690af6026aeace9172dcdb225
+  .cache/fa_statsapi_pitching_2025.json 18085f1ff299af1724d677928fae14166429658971bd62a14dc59e6cb2be5392
+  .cache/fa_statsapi_pitching_2026.json b81b02f8f44ca543d5cc77d260f83feea5ef2c2baf77c96a0b62965bc3adbe0c
+  .cache/savant_sprint/sprint_2018.csv a48305018976f4cd5255c4fb03d877ad9d6a1d54aaa546f8fd2bdc147762e452
+  .cache/savant_sprint/sprint_2019.csv 63a9a5ae8b40ad52161a4f707c357d2ef70d16b656472a22bbb88e67a56724e7
+  .cache/savant_sprint/sprint_2020.csv 3e738ef9c260c454e4ec76b41b681918115a919fb6a58355d9d51f046aa89c30
+  .cache/savant_sprint/sprint_2021.csv b37712650abe963431530953039a8fb15f331d9a54ba8b43dcadfab36734fcbb
+  .cache/savant_sprint/sprint_2022.csv 0705e947a0a183dcfc79545a83c668d8ecf1750a3fa2a6022fc17564a50768a4
+  .cache/savant_sprint/sprint_2023.csv 1d6ce0c818c1ec18e84a83b934e26e229c1001c5f66cca3d69049978df05c265
+  .cache/savant_sprint/sprint_2024.csv 270fdc5232eef62f8c74b376d0dfc670c79aa4e69bb0d575debfe220f1865855
+  .cache/savant_sprint/sprint_2025.csv c72bce2fad5c6c708796d4133d2da3b6bb5f010b0635896bcc32cacd28d76f66
+  .cache/savant_sprint/sprint_2026.csv 6457586d8a675540a38774e509ea6159fedab07690ca6ef6dd6f0af1617d1502
+  .cache/savant_arm/arm_2020.csv 05cd36b211236825b56bbc42d61090679db47a0d2ce9ca4ba34960e11b19fbe5
+  .cache/savant_arm/arm_2021.csv 16bb297fa631349ec94f7e663ad9e88cd1dd90b3961c023a0aa9535fe7017a60
+  .cache/savant_arm/arm_2022.csv 06115a3f6b6c6c43f19407d2ed2508097f33dbbbfbe4b0498bdcad8969ad5093
+  .cache/savant_arm/arm_2023.csv 23aa59669768c3e7408da22021bde717c2a43d6768f892f8259e41a77b7f4263
+  .cache/savant_arm/arm_2024.csv c6b96226c5c6b9cd5b4eae5d2b68093860f0a41b33570bd55c9fba4ae7a3fbf1
+  .cache/savant_arm/arm_2025.csv c959b2533a7e0c4e6b6436a33c770010e76688ad922e2ff51a13707d2fd5caf8
+  .cache/savant_arm/arm_2026.csv 3913cbdba6a21fb590138c5945aceb202b101b116161a68afb81207e6799ebe8
+  data/fielding_innings.json d572e2c1dd02f8f26ea5b835a0b55e092bd68251fb8c3be058f4991d36ac5e31
+  data/hitter_leaderboards.json c5b7442f8523432ef7fae933705dcef2b6f9645e79928ab5b7c991e7bd20caf6
+
+Accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6).
+
 ---
 
 ## Part T. Re-derived tool-to-stat tables against the published estimates
@@ -949,3 +1489,17 @@ sha256 of the frozen grade rows and of every FIT input, and the sha256 of
 
 EMPTY AT REGISTRATION. Look T's record is written here by TL_21, pasted verbatim from the runner and
 dated.
+
+### 2026-10-14: look W taken as an OWNER-WAIVED EARLY READ (EW3-5)
+
+Dated note appended by TL_12_TOOL_WEIGHTS_LOOK below the last section, as the owner's instruction of
+2026-10-14 directs (EW3-5, `_audit_2026-09-09/DECISIONS_FOR_OWNER.md`: registered dates and look days are
+waived for every task; an early look is recorded as an owner-waived early read). W.11's day rule named the
+first day after TL_4_TOOL_LAB_BUILD landed (ccec9eb7, 9d351dc3 and 77bd4302, all 2026-10-14) and after the
+R-LV record (1c73c420, 2026-10-08) on which the W.8 frame is complete and no other registered look is
+recorded; the plan's floor of 2026-12-03 had already been replaced by that condition. Other gate documents
+carry look entries dated 2026-10-14 under the same waiver, so W.11's 'no other look recorded that day' clause
+and the 'looking early disqualifies' clause are waived by EW3-5, not met. The W.8 frame was complete on disk
+(MLB seasons through 2026 in every input, each frozen by sha256 in the Part 8 record and unchanged from the
+start to the end of the run). The look ran once; its record is the Part 8 'Look W' entry; it is VOID under
+W.7, and nothing above Part 8 was edited.
