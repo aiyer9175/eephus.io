@@ -1,0 +1,171 @@
+{
+ "frozen_at": "2026-10-14T15:52:05+00:00",
+ "features": [
+  "R1",
+  "R2",
+  "R3",
+  "C1",
+  "C2",
+  "P1",
+  "P2",
+  "S1",
+  "S2",
+  "S3",
+  "S4"
+ ],
+ "twin_features": [
+  "C1",
+  "C2",
+  "P1",
+  "P2",
+  "S1",
+  "S2",
+  "S3",
+  "S4"
+ ],
+ "lambda_grid": [
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0
+ ],
+ "candidate": {
+  "lambda": 0.0001,
+  "beta": {
+   "R1": 0.8580331621667474,
+   "R2": 0.3449232475907332,
+   "R3": 0.10515449735560241,
+   "C1": 2.032669461295046,
+   "C2": 0.5560490242764804,
+   "P1": -0.04159162965277706,
+   "P2": -0.24883861986004677,
+   "S1": -0.11352567441660848,
+   "S2": 0.4342928224424748,
+   "S3": -0.051826874235023766,
+   "S4": 0.007879643957564941
+  },
+  "converged": true,
+  "nit": 34,
+  "tune_log_loss_by_lambda": [
+   {
+    "lambda": 0.0001,
+    "tune_log_loss": 0.529904492124414,
+    "converged": true
+   },
+   {
+    "lambda": 0.001,
+    "tune_log_loss": 0.5300231030310971,
+    "converged": true
+   },
+   {
+    "lambda": 0.01,
+    "tune_log_loss": 0.5308271375636321,
+    "converged": true
+   },
+   {
+    "lambda": 0.1,
+    "tune_log_loss": 0.5329172176048854,
+    "converged": true
+   },
+   {
+    "lambda": 1.0,
+    "tune_log_loss": 0.534371350100699,
+    "converged": true
+   }
+  ]
+ },
+ "twin": {
+  "lambda": 0.0001,
+  "beta": {
+   "C1": 1.433667926355008,
+   "C2": 0.6458660422182063,
+   "P1": -0.0009528122244182946,
+   "P2": -0.20822113383148635,
+   "S1": -0.00507604836169197,
+   "S2": 0.4590496581138062,
+   "S3": -0.03627425348055169,
+   "S4": 0.08532890213370334
+  },
+  "converged": true,
+  "nit": 27,
+  "tune_log_loss_by_lambda": [
+   {
+    "lambda": 0.0001,
+    "tune_log_loss": 0.5303032806513981,
+    "converged": true
+   },
+   {
+    "lambda": 0.001,
+    "tune_log_loss": 0.5305966398300631,
+    "converged": true
+   },
+   {
+    "lambda": 0.01,
+    "tune_log_loss": 0.5316296217936117,
+    "converged": true
+   },
+   {
+    "lambda": 0.1,
+    "tune_log_loss": 0.5332962081829322,
+    "converged": true
+   },
+   {
+    "lambda": 1.0,
+    "tune_log_loss": 0.534413395865246,
+    "converged": true
+   }
+  ]
+ },
+ "incumbent_tune_log_loss": 0.5346346860544391,
+ "frames": {
+  "fit": {
+   "seasons": [
+    "2018",
+    "2019",
+    "2021",
+    "2022",
+    "2023"
+   ],
+   "rows": 7962,
+   "rows_by_season": {
+    "2018": 1606,
+    "2019": 1399,
+    "2021": 1354,
+    "2022": 1522,
+    "2023": 2081
+   },
+   "sha256": "6f45006947c1c059e66984c3f09d31b5a6a67fdac79a488fe1b4b2bbab6c70b9",
+   "coverage": {
+    "attempts": 7962,
+    "runner_listed": 7901,
+    "catcher_named": 7962,
+    "pop_on_file": 7951,
+    "pitch_hand_known": 7962,
+    "lefty_pitcher": 2014,
+    "one_out": 5091,
+    "another_runner_on": 1269,
+    "late_and_close": 1339
+   }
+  },
+  "tune": {
+   "seasons": [
+    "2024"
+   ],
+   "rows": 2081,
+   "sha256": "cb878be47e3baaa1e26a8e1a7c132cedf107fd98c94fcde37e608a0fc6163d35",
+   "coverage": {
+    "attempts": 2081,
+    "runner_listed": 2069,
+    "catcher_named": 2081,
+    "pop_on_file": 2078,
+    "pitch_hand_known": 2081,
+    "lefty_pitcher": 551,
+    "one_out": 1373,
+    "another_runner_on": 353,
+    "late_and_close": 359
+   }
+  }
+ },
+ "offset_probabilities_clipped": 8
+}
