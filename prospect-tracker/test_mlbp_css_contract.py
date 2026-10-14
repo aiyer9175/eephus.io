@@ -96,4 +96,11 @@ def test_player_page_glossary_slugs_exist():
             "hem_plus", "war_pa_plus", "wpa"} <= slugs, sorted(slugs)
     gl = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
     known = {e["id"] for e in gl.get("entries") or []}
+    # The component table (PJ_7) renders only once proj_export's
+    # PROJ_COMPONENTS_LIVE flips, and its three entries land in that flip
+    # commit (PJ_8). While the flag is off they may be missing; once it is on,
+    # they must resolve like every other slug.
+    import proj_export
+    if not proj_export.PROJ_COMPONENTS_LIVE:
+        known |= {"projected_component_runs", "war_from_components", "projection_gap"}
     assert not sorted(slugs - known), f"unknown glossary slugs: {sorted(slugs - known)}"
