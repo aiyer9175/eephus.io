@@ -400,7 +400,8 @@ def test_schema5_columns_are_registered():
     # Later schemas append after the schema-5 block (the game-intensity columns
     # since 2026-10-14), so the block is pinned as the tail of the columns
     # through schema 5, never by a literal schema number.
-    through5 = tuple(c for c in lv.TEAM_COLUMNS if c not in lv.IX_TEAM_COLUMNS)
+    through5 = tuple(c for c in lv.TEAM_COLUMNS
+                     if c not in lv.IX_TEAM_COLUMNS + lv.SW_TEAM_COLUMNS)
     assert through5[-len(lv.SCHEMA5_TEAM_COLUMNS):] == lv.SCHEMA5_TEAM_COLUMNS
     assert lv.SCHEMA5_TEAM_COLUMNS[:2] == lv.SCHEMA5_PARK_TEAM_COLUMNS
     assert lv.SCHEMA5_PARK_TEAM_COLUMNS == ("lhb_share_vr", "lhb_share_vl")

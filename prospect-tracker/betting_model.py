@@ -1018,10 +1018,20 @@ DARK5_TEAM_COLUMNS = ("lhb_share_vr", "lhb_share_vl",                     # 5i-B
 # they read None there (inputs_as_of never fills one from live files), and nothing
 # served reads them (test_intensity_vintage.py, by AST and by string).
 DARK_IX_TEAM_COLUMNS = ("ix_elo", "ix_po_pct", "ix_ws_pct", "ix_proj_wins")
+# The starter-workload columns (schema 7, 2026-10-14, the section "Starter workload:
+# expected outs and pitches per start"), pinned equal to leaderboard_vintages'
+# SW_TEAM_COLUMNS and SW_PITCHER_COLUMNS. The team column rides the standardization
+# like every dark column and reads None on the live path (no live builder, so
+# inputs_as_of never fills it from live files); the pitcher tuple is named here
+# only, so the eval artifact's DARK_PITCHER_COLUMNS block is unchanged. Nothing
+# served reads either (test_schema7_builders.py, by AST and by string).
+DARK7_TEAM_COLUMNS = ("bat_ppa_l30",)
+DARK7_PITCHER_COLUMNS = ("sp_n365", "sp_budget", "sp_ppo", "sp_xouts")
 DARK_TEAM_COLUMNS_BY_SCHEMA = {3: DARK3_TEAM_COLUMNS, 4: DARK4_TEAM_COLUMNS,
-                               5: DARK5_TEAM_COLUMNS, 6: DARK_IX_TEAM_COLUMNS}
+                               5: DARK5_TEAM_COLUMNS, 6: DARK_IX_TEAM_COLUMNS,
+                               7: DARK7_TEAM_COLUMNS}
 DARK_TEAM_COLUMNS = (DARK3_TEAM_COLUMNS + DARK4_TEAM_COLUMNS + DARK5_TEAM_COLUMNS
-                     + DARK_IX_TEAM_COLUMNS)
+                     + DARK_IX_TEAM_COLUMNS + DARK7_TEAM_COLUMNS)
 DARK_PITCHER_COLUMNS = ("throws",)
 
 

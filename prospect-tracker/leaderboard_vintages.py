@@ -187,8 +187,22 @@ VINTAGE_DIR = ROOT / ".cache" / "leaderboard_vintages"
 # its own try/except and ONLY on tonight's live snapshot: N1 never reconstructs an
 # ix_ column, so a backfill, a forced rewrite of another date and a direct
 # reduce_current call store stated nulls. Same governing rules as schemas 3 to 5.
-SCHEMA = 6
+#
+# SCHEMA 7 (2026-10-14) added the starter-workload dark capture, registered in
+# docs/diamond-betting.md in the section "Starter workload: expected outs and
+# pitches per start" BEFORE this bump existed, and built only after that section's
+# stage 1 recorded a PASS (the builder reads the priors frozen there and builds no
+# column without it). It takes the next number after the last landed builder in
+# commit order, schema 6 (plan Part 8, 8.D row 3), and the section's "### Builder
+# landed" amendment names it. Four pitcher columns (SW_PITCHER_COLUMNS), one team
+# column (SW_TEAM_COLUMNS) and one record block (SW_BASIS_KEY: the priors, the
+# anchors, the windows, the feed counts and every raw count behind a value), built
+# by betting_usage.build_schema7_workload_columns inside its own try/except off
+# `.cache/game_feeds` for games dated strictly before the vintage date. Same
+# governing rules as schemas 3 to 6.
+SCHEMA = 7
 IX_SCHEMA = 6
+SW_SCHEMA = 7
 
 # The reduced record keeps only what betting_model actually consumes (plus the
 # schema-3 dark capture). Column order is part of the on-disk contract; a
@@ -206,9 +220,11 @@ TEAM_COLUMNS = ("offense_plus", "rotation_plus", "bullpen_plus",
                 "bench_adv_vs_lhp", "bench_adv_vs_rhp",
                 "ph_share", "pen_lhp_share",
                 "team_fld_runs",
-                "ix_elo", "ix_po_pct", "ix_ws_pct", "ix_proj_wins")
+                "ix_elo", "ix_po_pct", "ix_ws_pct", "ix_proj_wins",
+                "bat_ppa_l30")
 PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role", "throws",
-                   "sp_rest_days", "sp_tto3_bf")
+                   "sp_rest_days", "sp_tto3_bf",
+                   "sp_n365", "sp_budget", "sp_ppo", "sp_xouts")
 
 # The schema-3 additions by name, so a reader can ask "which columns might an
 # older record lack" without diffing tuples by hand.
@@ -245,6 +261,14 @@ IX_ADDED = "2026-10-14"
 IX_NOT_LIVE = ("ABSENT: not tonight's live capture; N1 never reconstructs an ix_ "
                "column (the game-intensity section, rule 4), so a backfill, a forced "
                "rewrite of another date and a direct reduction store a stated null")
+
+# The starter-workload additions (schema SW_SCHEMA, 2026-10-14), named by section
+# rather than by number. betting_usage.SW_PITCHER_COLUMNS and SW_TEAM_COLUMNS and
+# betting_model's DARK7 tuples are pinned equal to these.
+SW_PITCHER_COLUMNS = ("sp_n365", "sp_budget", "sp_ppo", "sp_xouts")
+SW_TEAM_COLUMNS = ("bat_ppa_l30",)
+SW_BASIS_KEY = "sw_basis"
+SW_ADDED = "2026-10-14"
 
 # Expected plate appearances by lineup slot, the weight each slot's bat side
 # carries in a club's handedness mix. FROZEN at these nine values, and no
@@ -350,6 +374,19 @@ FEATURE_SOURCES = {
                   "World Series; exact from the bracket once the regular season is over"),
     "ix_proj_wins": ("intensity_vintage: the same simulations' mean final wins; final "
                      "wins once the regular season is over"),
+    # Schema 7 (2026-10-14, the starter-workload section). Bases are DYNAMIC at
+    # capture; these are the registry descriptions.
+    "sp_n365": ("betting_usage: the pitcher's starts (first pitcher of a fielding half) "
+                "in the 365 days before the vintage date, off .cache/game_feeds"),
+    "sp_budget": ("betting_usage: (pitches over those starts + k_b L_pgs) / (n + k_b), "
+                  "the priors stage 1 froze, L_pgs the prior complete season's pooled "
+                  "pitches per start"),
+    "sp_ppo": ("betting_usage: (pitches over those starts + k_o L_ppo) / (outs + k_o), "
+               "L_ppo the prior complete season's pooled pitches per out in starts"),
+    "sp_xouts": "betting_usage: min(27, sp_budget / sp_ppo), the lineup-neutral value",
+    "bat_ppa_l30": ("betting_usage: the club's shrunk pitches per PA seen over its "
+                    "games in the 30 days before the vintage date, (pitches + k_l "
+                    "L_ppa) / (PA + k_l)"),
 }
 
 SOURCES = ("hitter_leaderboards.json", "starter_leaderboards.json",
@@ -1070,6 +1107,7 @@ _COLUMN_ADDED = {
     **{c: (4, "2026-09-07") for c in SCHEMA4_TEAM_COLUMNS + SCHEMA4_PITCHER_COLUMNS},
     **{c: (5, "2026-09-11") for c in SCHEMA5_TEAM_COLUMNS},
     **{c: (IX_SCHEMA, IX_ADDED) for c in IX_TEAM_COLUMNS + (IX_GAMES_KEY,)},
+    **{c: (SW_SCHEMA, SW_ADDED) for c in SW_PITCHER_COLUMNS + SW_TEAM_COLUMNS},
 }
 
 
@@ -1083,7 +1121,8 @@ def _mark_later_columns(out: dict, rec: dict) -> dict:
         cols.add(IX_GAMES_KEY)
     schema = rec.get("schema")
     for c in (SCHEMA4_TEAM_COLUMNS + SCHEMA4_PITCHER_COLUMNS + SCHEMA5_TEAM_COLUMNS
-              + IX_TEAM_COLUMNS + (IX_GAMES_KEY,)):
+              + IX_TEAM_COLUMNS + (IX_GAMES_KEY,)
+              + SW_PITCHER_COLUMNS + SW_TEAM_COLUMNS):
         if c in out:
             continue
         n_schema, added = _COLUMN_ADDED[c]
@@ -1811,6 +1850,7 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None,
             None,                     # throws, filled by the bulk join below
             None,                     # sp_rest_days, filled below
             None,                     # sp_tto3_bf, filled below
+            None, None, None, None,   # sp_n365, sp_budget, sp_ppo, sp_xouts, below
         ]
     for r in pen.get("relievers") or []:
         mid, plus = r.get("mlbam"), r.get("rem_plus")
@@ -1822,8 +1862,9 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None,
         # then sp_rest_days. Building this row a slot short is what made the
         # rest builder raise IndexError on the 171st pitcher, having silently
         # filled the first 170.
-        pitchers[str(int(mid))] = [round(float(plus), 3), None,
-                                   _org(r.get("team")), "RP", None, None, None]
+        pitchers[str(int(mid))] = ([round(float(plus), 3), None,
+                                    _org(r.get("team")), "RP"]
+                                   + [None] * (len(PITCHER_COLUMNS) - 4))
 
     # Schema 3 dark capture: throwing hand, ONE bulk call at assembly, never a
     # per-game lookup. `load_pitch_hand` is lru-cached per season and returns
@@ -1906,6 +1947,40 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None,
                 n_col += 1
         fb[col] = {"basis": blk.get("basis") or FEATURE_SOURCES.get(col, ""),
                    "n": n_col}
+    # Schema 7 (2026-10-14): the starter-workload capture, off the same feeds,
+    # dated strictly before the vintage date, isolated like every builder above:
+    # a failure costs its five columns a stated null and never the snapshot. The
+    # builder itself builds nothing without a stage-1 PASS on disk.
+    try:
+        import betting_usage
+        sw = betting_usage.build_schema7_workload_columns(
+            pitchers, on_date=vintage_date, orgs=sorted(teams))
+    except Exception as exc:                                     # noqa: BLE001
+        why = f"ABSENT: the starter-workload builder raised {type(exc).__name__}: {exc}"
+        sw = {c: {"values": {}, "basis": why}
+              for c in SW_PITCHER_COLUMNS + SW_TEAM_COLUMNS}
+        sw["basis"] = {"status": "unavailable", "reason": why}
+    sw_basis = sw.get("basis") if isinstance(sw.get("basis"), dict) else {
+        "status": "unavailable", "reason": "ABSENT: the builder returned no basis"}
+    for col in SW_PITCHER_COLUMNS:
+        i_col = PITCHER_COLUMNS.index(col)
+        blk = sw.get(col) or {"values": {}, "basis": "ABSENT: builder returned nothing"}
+        n_col = 0
+        for mid, v in (blk.get("values") or {}).items():
+            if v is not None and mid in pitchers:
+                pitchers[mid][i_col] = v
+                n_col += 1
+        fb[col] = {"basis": blk.get("basis") or FEATURE_SOURCES.get(col, ""),
+                   "n": n_col}
+    for col in SW_TEAM_COLUMNS:
+        i_col = TEAM_COLUMNS.index(col)
+        blk = sw.get(col) or {"values": {}, "basis": "ABSENT: builder returned nothing"}
+        for org, row in teams.items():
+            v = (blk.get("values") or {}).get(org)
+            if v is not None:
+                row[i_col] = v
+        fb[col] = {"basis": blk.get("basis") or FEATURE_SOURCES.get(col, ""),
+                   "n": _n_teams_with(col)}
     fb["throws"] = {
         "basis": (FEATURE_SOURCES["throws"] if n_throws else
                   "ABSENT: the bulk pitchHand call returned nothing tonight; "
@@ -1964,6 +2039,7 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None,
         "parks_short_window": parks_short,
         IX_GAMES_KEY: ix_games,
         IX_BASIS_KEY: ix_basis,
+        SW_BASIS_KEY: sw_basis,
         "cutoff_note": ("covers_through is the max of the source leaderboards' as_of "
                         "dates and the date this file was written; a record may price "
                         "only games dated strictly after it"),
@@ -2501,7 +2577,8 @@ def dark_capture_dry_run(*, on_date: str | None = None,
     # than inside it so the schema-3 rehearsal reads exactly as it always has.
     later = {}
     for schema_n, group in (("4", SCHEMA4_TEAM_COLUMNS), ("5", SCHEMA5_TEAM_COLUMNS),
-                            (str(IX_SCHEMA), IX_TEAM_COLUMNS)):
+                            (str(IX_SCHEMA), IX_TEAM_COLUMNS),
+                            (str(SW_SCHEMA), SW_TEAM_COLUMNS)):
         later[schema_n] = {}
         for c in group:
             i = cols.index(c)

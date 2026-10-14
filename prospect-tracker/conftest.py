@@ -340,6 +340,24 @@ def _isolate_game_intensity_capture(monkeypatch):
     yield
 
 
+@pytest.fixture(autouse=True)
+def _isolate_starter_workload_capture(tmp_path_factory, monkeypatch):
+    """No test writes the real starter-workload tally memo or scans a season of
+    feeds through the schema-7 capture (the section "Starter workload: expected
+    outs and pitches per start"). The memo goes to a temp file and the stage-1
+    record path to an absent file, so a reduce_current call inside an unrelated
+    test opens no feed and stores the five columns as stated nulls; a test of the
+    builder passes its own record, memo and feeds."""
+    try:
+        import betting_usage
+        d = tmp_path_factory.mktemp("schema7")
+        monkeypatch.setattr(betting_usage, "SW_TALLY_PATH", d / "workload_tally.json")
+        monkeypatch.setattr(betting_usage, "SW_ARTIFACT", d / "absent_stage1.json")
+    except Exception:                                     # noqa: BLE001
+        pass
+    yield
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _restore_committed_build_artifacts():
     """Test-hygiene guard for committed BUILD ARTIFACTS (data/ sidecars +

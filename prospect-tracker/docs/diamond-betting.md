@@ -7968,6 +7968,85 @@ without outcomes; a change after that closes the section.
 
 **No number has been computed on this candidate.**
 
+### Builder landed 2026-10-14
+
+The dark builder landed on 2026-10-14 (task Q10_19, plan Part 8 pitch_metrics 6.3 item
+9, checklist PM-10) and rides **schema 7**: the next number after the last landed builder
+in commit order, schema 6 (the game-intensity bump of 2026-10-14). It did not wait for
+the posted-lineup or dugout builders (plan Part 8, 8.D row 3); a later builder takes the
+number after this one. `leaderboard_vintages.SCHEMA` and `leaderboard_vintages.SW_SCHEMA`
+read 7.
+
+- **The gate it reads.** Stage 1 ran once on 2026-10-14 (task Q10_04b) and recorded PASS
+  in data/starter_workload_eval.json with the burn-in priors k_b 2, k_o 120, k_l 300.
+  `betting_usage.SW_PRIORS` carries those three values, and the builder builds a column
+  only when that artifact records a complete stage-1 run with verdict PASS and burn-in
+  priors equal to them (`sw_stage1_gate`). Without it no feed is opened and every column
+  is a stated null naming why.
+- **What it writes.** `betting_usage.build_schema7_workload_columns` builds, and
+  `leaderboard_vintages` stores, the pitcher columns `sp_n365`, `sp_budget`, `sp_ppo` and
+  `sp_xouts` (appended to `PITCHER_COLUMNS` in that order) for every pitcher in the
+  record, and the team column `bat_ppa_l30` (appended to `TEAM_COLUMNS`) for every club
+  in the record, by the formulas above. `betting_model.DARK7_TEAM_COLUMNS` and
+  `DARK7_PITCHER_COLUMNS` are the DARK tuples; the team tuple enters the two DARK team
+  maps and the pitcher tuple is named there only, so nothing else in `betting_model`
+  changed. The record block `sw_basis` carries the priors, the anchors with their raw
+  sums, the anchor floor, both windows, the feed counts (games, complete, missing,
+  incomplete, newly tallied) for the window and the anchor season, the latest feed stamp
+  overall and per club, and the raw counts behind every value (starts, pitches and outs
+  per pitcher; pitches seen, PA and games per club). Each column carries its own dynamic
+  basis in `feature_basis`.
+- **The definitions are the stage-1 lab's.** A start is the first pitcher of each
+  fielding half; a pitch belongs to its play's matchup pitcher; a play's outs are the
+  out count after it minus the count before it, reset each half inning; a club's pitches
+  seen and PA are its batting half's sums, PA by the corpus's non-PA prefix list. The
+  anchors are the prior complete season (2019 for a 2021 date), pooled sum over sum, off
+  the same feeds.
+- **Vintage safety, the 5d and 5l rule.** Only completed regular-season games dated
+  strictly before the vintage date are read (365 days for the starter, 30 for the club).
+  A feed is complete when gameData.status.abstractGameState is "Final" and
+  liveData.plays.allPlays is not empty; a missing or incomplete feed is excluded and
+  counted in the basis and retried the next night. The per-game tally is memoized in
+  `.cache/betting/workload_tally.json`, keyed by game_pk and the feed file's size and
+  modification time, so a re-fetched feed is tallied again; the date and clubs always
+  come off the completed-games row of the night. No score, run or result field is read.
+- **Defaults applied (policy, none measured).** The anchor floor: the prior season
+  anchors the shrink only when at least 2,000 of its games have a complete cached feed
+  (`SW_MIN_ANCHOR_GAMES`); under it `sp_budget`, `sp_ppo`, `sp_xouts` and `bat_ppa_l30`
+  are stated nulls and `sp_n365` still counts. A club with no game in its 30-day window
+  sits on L_ppa, the registered formula at zero counts, its raw counts zero in the basis.
+  Stored values are rounded to 4 decimals (`sp_budget`, `sp_xouts`) and 5 (`sp_ppo`,
+  `bat_ppa_l30`); the raw counts in the basis are exact.
+- **The rules, where each lives.** First-write-wins: the store never rewrites a dated
+  record. None never zero: a column without a value is null with its basis, and an
+  `sp_n365` of 0 is a real count. Old records return None: `team_row`, `pitcher_row` and
+  `team_inputs_from_vintage` read the record's own column lists, and `feature_basis` marks
+  the five columns "predates the column (added in schema 7, 2026-10-14)". `inputs_as_of`
+  never fills: the live path has no builder, so `bat_ppa_l30` reads None there and no live
+  starter row carries a pitcher column. The game's xOuts is
+  `betting_usage.starter_workload_xouts_candidate`, which nothing served calls.
+- **Tests.** `test_schema7_builders.py` (new) pins this section by its title and the
+  column names, never a literal schema number: the stage-1 gate, the formulas, the floors,
+  the strictly-before rule at both window edges, incomplete and missing feeds excluded and
+  counted, parity with the play corpus on one 2025 game (778563, through its payload) and
+  one 2026 game (822722, through its cached feed), the basis stamp, the seam in
+  `reduce_current`, old records, `inputs_as_of`, the clock, and that no served path reads
+  a column, by AST and by string.
+- **What it computed to land.** The synthetic fixtures; the two parity games, which
+  compare two derivations of the same counts; and two timing runs of the builder over the
+  cached 2026 feeds (a cold pass over 2,069 feeds took 43 seconds, a memoized night 0.3
+  seconds), which printed the 2026 league anchors and one pitcher's values and kept
+  nothing. No value was joined to a game result, a price, an edge, a slot or a ledger row.
+- **First vintage night carrying the columns.** The first nightly snapshot (run_daily
+  step 9e-pre) after this commit is merged into the main branch and the stage-1 artifact
+  is on disk there. On that night `sp_n365` is populated; the four anchored columns stay
+  stated nulls through the 2026 nights, because the 2025 season has no complete cached
+  feed (its anchors would read 0 games, under the floor), and they populate from the first
+  nightly dated 2027 or later, when 2026's 2,429 cached feeds anchor them. Each record's own
+  column lists and `sw_basis` say what it carries. The only served field that moves is the
+  vintage store's schema number in the coverage block of `data/betting_model_eval.json`
+  and `data/betting.json` (6 to 7 at that nightly), which no page prints.
+
 ---
 
 

@@ -1,5 +1,7 @@
 """Schema-4 dark-capture builders: bullpen availability, schedule rest, weather.
 Also the schema-5 pinch-hit and relief-hand tally (section 5f, at the bottom).
+Also the schema-7 starter-workload capture (the section "Starter workload: expected
+outs and pitches per start"), after the schema-4 pitcher builder.
 
 Pre-registered in docs/diamond-betting.md section 5d BEFORE this file existed
 and before any number here was related to any outcome. Nothing served reads any
@@ -561,6 +563,442 @@ def build_pitcher_schema4(pitchers: dict, *, on_date: str,
     except Exception as exc:                                     # noqa: BLE001
         out["sp_tto3_bf"] = {"values": {},
                              "basis": f"ABSENT: sp_tto3_bf raised {type(exc).__name__}: {exc}"}
+    return out
+
+
+# ---------------------------------------------------------------------------
+# schema 7: the starter-workload dark capture (docs/diamond-betting.md, the
+# section "Starter workload: expected outs and pitches per start")
+# ---------------------------------------------------------------------------
+# Four pitcher columns (`sp_n365`, `sp_budget`, `sp_ppo`, `sp_xouts`) and one team
+# column (`bat_ppa_l30`), built off `.cache/game_feeds` for games dated STRICTLY
+# BEFORE the vintage date, on the priors stage 1 froze. DARK: nothing served reads
+# any of them, and nothing here relates one to a game result or a price. The game's
+# xOuts lives in `starter_workload_xouts_candidate`, which nothing served calls.
+#
+# WHAT A TALLY READS, AND WHAT IT NEVER READS. Per play: the half inning, the
+# matchup pitcher, the out count after the play (`count.outs`), the isPitch flag of
+# each play event, and `result.eventType` ONLY to tell a plate appearance from a
+# non-PA terminal event. The score fields beside them are never read, and the
+# completed-games rows are read for game_pk, date and the two orgs only.
+#
+# THE DEFINITIONS ARE THE STAGE-1 LAB'S, so the capture and the corpus count one
+# thing (test_schema7_builders.py holds the parity): a start is the first pitcher
+# of each fielding half; a pitch belongs to the pitcher of its play (matchup); the
+# outs on a play are the out count after it minus the count before it, reset each
+# half inning; a club's pitches seen and PA are its batting half's sums.
+
+#: The starter's own trailing window, in days: dates D - 365 to D - 1.
+SW_WINDOW_DAYS = 365
+#: The batting club's trailing window, in days: dates D - 30 to D - 1.
+SW_LINEUP_DAYS = 30
+#: xOuts is capped at a complete game.
+SW_OUTS_CAP = 27
+#: The priors stage 1 froze on the 2019 starts (data/starter_workload_eval.json,
+#: stage1.burn_in.priors). Not a choice here: the builder refuses to build unless
+#: the artifact records a stage-1 PASS with exactly these priors.
+SW_PRIORS = {"k_b": 2, "k_o": 120, "k_l": 300}
+#: The stage-1 artifact the builder reads its gate and priors from.
+SW_ARTIFACT = ROOT / "data" / "starter_workload_eval.json"
+#: The anchor floor: the prior complete season anchors the shrink only when this
+#: many of its regular-season games have a complete cached feed (a full season is
+#: about 2,430). Below it the anchors are None and so are the four anchored
+#: columns, a stated absence, never a partial-season league rate. POLICY, a
+#: data-completeness guard, not a measurement.
+SW_MIN_ANCHOR_GAMES = 2000
+#: One small memo keyed by game_pk, the ph_tally idiom: a night opens only the
+#: feeds it has not tallied, plus any whose file changed since.
+SW_TALLY_PATH = ROOT / ".cache" / "betting" / "workload_tally.json"
+#: Bumped whenever the per-game rule changes, which discards every memoized tally.
+SW_TALLY_VERSION = 1
+SW_PITCHER_COLUMNS = ("sp_n365", "sp_budget", "sp_ppo", "sp_xouts")
+SW_TEAM_COLUMNS = ("bat_ppa_l30",)
+
+_SW_MEMO: dict = {}
+
+
+def workload_from_plays(plays) -> dict:
+    """One game's workload tally off its play list. Pure.
+
+        {"sp":  {"home": [mlbam, pitches, outs] | None, "away": ...},
+         "bat": {"home": [pitches seen, PA], "away": [pitches seen, PA]}}
+
+    "home" under "sp" is the home club's starter, the first pitcher of the TOP
+    half; "home" under "bat" is the home club batting, the BOTTOM half. A half
+    whose first play names no pitcher has no start (None)."""
+    rows = [p for p in (plays or ()) if isinstance(p, dict)]
+    rows.sort(key=lambda p: (p.get("atBatIndex") is None, p.get("atBatIndex") or 0))
+    first: dict = {}
+    lines: dict = {"top": {}, "bottom": {}}
+    bat = {"top": [0, 0], "bottom": [0, 0]}
+    cur, prev_outs = None, 0
+    for play in rows:
+        about = play.get("about") or {}
+        key = (about.get("inning"), about.get("halfInning"))
+        if key != cur:
+            cur, prev_outs = key, 0
+        before = prev_outs
+        after = (play.get("count") or {}).get("outs")
+        if after is None:
+            # the corpus rule: the walk's own count when the play carries none
+            out_ids = {((r.get("details") or {}).get("runner") or {}).get("id")
+                       for r in play.get("runners") or ()
+                       if (r.get("movement") or {}).get("isOut")}
+            after = before + len(out_ids)
+        try:
+            after = int(after)
+        except (TypeError, ValueError):
+            after = before
+        prev_outs = after
+        half = str(about.get("halfInning") or "").lower()
+        if half not in ("top", "bottom"):
+            continue
+        n_pitch = sum(1 for e in play.get("playEvents") or () if e.get("isPitch"))
+        outs = max(0, after - before)
+        pid = ((play.get("matchup") or {}).get("pitcher") or {}).get("id")
+        pid = int(pid) if pid is not None else None
+        if half not in first:
+            first[half] = pid
+        if pid is not None:
+            ln = lines[half].setdefault(pid, [0, 0])
+            ln[0] += n_pitch
+            ln[1] += outs
+        bat[half][0] += n_pitch
+        bat[half][1] += 1 if is_pa_event((play.get("result") or {}).get("eventType")) else 0
+
+    def _start(half):
+        pid = first.get(half)
+        if pid is None or pid not in lines[half]:
+            return None
+        return [pid, lines[half][pid][0], lines[half][pid][1]]
+
+    return {"sp": {"home": _start("top"), "away": _start("bottom")},
+            "bat": {"home": list(bat["bottom"]), "away": list(bat["top"])}}
+
+
+def game_workload_tally(game_pk, feed_dir: Path | None = None) -> dict | None:
+    """One cached feed's tally, or None when the feed is missing or unreadable.
+
+    {"complete": False} when the feed is not complete (5d and 5l vintage safety:
+    gameData.status.abstractGameState "Final" and a non-empty
+    liveData.plays.allPlays), which the builder excludes and counts. A complete
+    feed's tally carries the feed's own last-update stamp (metaData.timeStamp)."""
+    d = _feed(game_pk, feed_dir)
+    if not isinstance(d, dict):
+        return None
+    state = ((d.get("gameData") or {}).get("status") or {}).get("abstractGameState")
+    plays = ((d.get("liveData") or {}).get("plays") or {}).get("allPlays")
+    if state != "Final" or not isinstance(plays, list) or not plays:
+        return {"complete": False}
+    t = workload_from_plays(plays)
+    t["complete"] = True
+    t["stamp"] = (d.get("metaData") or {}).get("timeStamp")
+    return t
+
+
+def _load_sw_memo(path: Path) -> dict:
+    key = str(path)
+    if key in _SW_MEMO:
+        return _SW_MEMO[key]
+    games: dict = {}
+    try:
+        blob = json.loads(Path(path).read_text(encoding="utf-8"))
+        if isinstance(blob, dict) and blob.get("version") == SW_TALLY_VERSION:
+            g = blob.get("games")
+            games = g if isinstance(g, dict) else {}
+    except Exception:                                            # noqa: BLE001
+        games = {}
+    _SW_MEMO[key] = games
+    return games
+
+
+def _save_sw_memo(path: Path, games: dict) -> str | None:
+    try:
+        import os
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_name(p.name + ".tmp")
+        tmp.write_text(json.dumps({
+            "version": SW_TALLY_VERSION,
+            "rule": ("per complete feed: each side's starter (first pitcher of the "
+                     "fielding half) with his pitches and outs, each batting side's "
+                     "pitches seen and PA; a pitch belongs to its play's matchup "
+                     "pitcher; no score field is read"),
+            "games": games}, separators=(",", ":")), encoding="utf-8")
+        os.replace(tmp, p)
+        return None
+    except Exception as exc:                                     # noqa: BLE001
+        return f"{type(exc).__name__}: {exc}"
+
+
+def sw_tallies(games: list[dict], *, since: str, on_date: str,
+               feed_dir: Path | None = None,
+               tally_path: Path | None = None) -> tuple[list[dict], dict]:
+    """(entries, counts) for every completed game dated in [since, on_date), the
+    end STRICTLY BEFORE the vintage date. Memoized by game_pk and keyed on the
+    feed file's size and mtime, so a re-fetched feed is tallied again. Only a
+    complete feed is memoized: a missing or incomplete one is excluded, counted,
+    and retried the next night."""
+    import os
+    path = Path(tally_path) if tally_path else SW_TALLY_PATH
+    memo = _load_sw_memo(path)
+    fdir = feed_dir or FEED_DIR
+    entries: list[dict] = []
+    c = {"n_games": 0, "n_complete": 0, "n_missing_feed": 0, "n_incomplete": 0,
+         "n_new": 0}
+    for g in games or []:
+        d, pk = g.get("date"), g.get("game_pk")
+        if not d or pk is None or d < since or d >= on_date:
+            continue
+        c["n_games"] += 1
+        key = str(int(pk))
+        try:
+            st = os.stat(Path(fdir) / f"{int(pk)}.json")
+            sig = [st.st_size, int(st.st_mtime_ns)]
+        except OSError:
+            c["n_missing_feed"] += 1
+            memo.pop(key, None)
+            continue
+        ent = memo.get(key)
+        if not (isinstance(ent, dict) and ent.get("sig") == sig):
+            t = game_workload_tally(pk, feed_dir)
+            if t is None:
+                c["n_missing_feed"] += 1
+                continue
+            if not t.get("complete"):
+                c["n_incomplete"] += 1
+                continue
+            ent = {"date": d, "home_org": _org(g.get("home_org")),
+                   "away_org": _org(g.get("away_org")), "sig": sig,
+                   "stamp": t.get("stamp"), "sp": t["sp"], "bat": t["bat"]}
+            memo[key] = ent
+            c["n_new"] += 1
+        # the date and clubs come off the completed-games row of THIS call, so a
+        # memo entry can never move a game across the strictly-before line
+        entries.append({**ent, "date": d, "home_org": _org(g.get("home_org")),
+                        "away_org": _org(g.get("away_org"))})
+        c["n_complete"] += 1
+    c["memo_error"] = _save_sw_memo(path, memo) if c["n_new"] else None
+    return entries, c
+
+
+def sw_anchor_season(on_date: str) -> int:
+    """The prior complete season of a date: the season before its own, skipping
+    2020, which the corpus and the stage-1 lab do not carry (a 2021 date anchors
+    on 2019)."""
+    s = int(on_date[:4]) - 1
+    return 2019 if s == 2020 else s
+
+
+def sw_anchors(entries: list[dict]) -> dict:
+    """The league anchors over one season's tallies, pooled sum over sum:
+    L_pgs pitches per start, L_ppo pitches per out in starts, L_opg outs per
+    start, L_ppa pitches per PA. Raw counts ride along."""
+    starts = sp = so = bp = bpa = 0
+    for e in entries:
+        for side in ("home", "away"):
+            s = (e.get("sp") or {}).get(side)
+            if s:
+                starts += 1
+                sp += int(s[1])
+                so += int(s[2])
+            b = (e.get("bat") or {}).get(side)
+            if b:
+                bp += int(b[0])
+                bpa += int(b[1])
+    out = {"games": len(entries), "starts": starts, "pitches": sp, "outs": so,
+           "bat_pitches": bp, "bat_pa": bpa, "L_pgs": None, "L_ppo": None,
+           "L_opg": None, "L_ppa": None}
+    if starts and so and bpa:
+        out.update(L_pgs=sp / starts, L_ppo=sp / so, L_opg=so / starts, L_ppa=bp / bpa)
+    return out
+
+
+def sw_stage1_gate(artifact_path: Path | None = None) -> tuple[dict | None, str]:
+    """(priors, why). The priors only when the stage-1 artifact records a complete
+    run with verdict PASS and burn-in priors equal to SW_PRIORS; otherwise None
+    and the reason, because the section builds no column without a stage-1 PASS."""
+    p = Path(artifact_path) if artifact_path else SW_ARTIFACT
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None, f"ABSENT: no stage-1 record on disk ({p.name}); no column is built"
+    except Exception as exc:                                     # noqa: BLE001
+        return None, f"ABSENT: the stage-1 record is unreadable ({type(exc).__name__})"
+    s1 = (doc or {}).get("stage1") if isinstance(doc, dict) else None
+    if not isinstance(s1, dict) or s1.get("status") != "complete":
+        return None, "ABSENT: the stage-1 record is not complete; no column is built"
+    if s1.get("verdict") != "PASS":
+        return None, (f"ABSENT: stage 1 recorded {s1.get('verdict')!r}, not PASS; the "
+                      "section builds no column")
+    pri = ((s1.get("burn_in") or {}).get("priors") or {})
+    got = {k: pri.get(k) for k in SW_PRIORS}
+    if got != SW_PRIORS:
+        return None, (f"ABSENT: the stage-1 priors {got} differ from the frozen "
+                      f"{SW_PRIORS}; no column is built")
+    return dict(SW_PRIORS), "stage-1 PASS on disk"
+
+
+def starter_workload_xouts_candidate(sp_budget, sp_ppo, opp_bat_ppa_l30, l_ppa):
+    """The game's xOuts for a probable: min(27, budget / (ppo x r_L)), with
+    r_L = the opposing club's bat_ppa_l30 / L_ppa. NOTHING SERVED CALLS THIS
+    (test_schema7_builders.py, by AST and by string); it exists for the section's
+    stage-2 look. None when any input is None, never a fill."""
+    if None in (sp_budget, sp_ppo, opp_bat_ppa_l30, l_ppa):
+        return None
+    r_l = float(opp_bat_ppa_l30) / float(l_ppa)
+    den = float(sp_ppo) * r_l
+    if den <= 0:
+        return None
+    return min(float(SW_OUTS_CAP), float(sp_budget) / den)
+
+
+def build_schema7_workload_columns(pitchers: dict, *, on_date: str,
+                                   orgs=None, games: list[dict] | None = None,
+                                   feed_dir: Path | None = None,
+                                   tally_path: Path | None = None,
+                                   artifact_path: Path | None = None) -> dict:
+    """{column: {"values": {...}, "basis": str}} for the four pitcher columns
+    (keyed by mlbam str) and `bat_ppa_l30` (keyed by org), plus "basis": the
+    record block with the priors, the anchors, the windows, the feed counts and
+    every raw count behind a value.
+
+        sp_n365     n, P's starts dated D - 365 to D - 1 (0 is a real count)
+        sp_budget   (pitches over those n starts + k_b L_pgs) / (n + k_b)
+        sp_ppo      (pitches over those n starts + k_o L_ppo) / (outs + k_o)
+        sp_xouts    min(27, sp_budget / sp_ppo), the lineup-neutral value
+        bat_ppa_l30 (pitches the club's hitters saw over its games dated D - 30
+                    to D - 1 + k_l L_ppa) / (their PA + k_l)
+
+    The anchors come from the prior complete season, pooled. Without a stage-1
+    PASS on disk no feed is opened and every column is a stated null; without
+    the anchors (under the floor) the four anchored columns are stated nulls and
+    `sp_n365` still counts."""
+    priors, why = sw_stage1_gate(artifact_path)
+    cols = SW_PITCHER_COLUMNS + SW_TEAM_COLUMNS
+    if priors is None:
+        out = {c: {"values": {}, "basis": why} for c in cols}
+        out["basis"] = {"status": "not built", "reason": why}
+        return out
+    d0 = date.fromisoformat(on_date)
+    lo_p = (d0 - timedelta(days=SW_WINDOW_DAYS)).isoformat()
+    lo_c = (d0 - timedelta(days=SW_LINEUP_DAYS)).isoformat()
+    a_season = sw_anchor_season(on_date)
+    a_lo, a_hi = f"{a_season}-01-01", f"{a_season + 1}-01-01"
+    if games is None:
+        try:
+            import betting_model as bm
+            games = bm.completed_games(refresh=False)
+        except Exception:                                        # noqa: BLE001
+            games = []
+    games = [g for g in (games or []) if g.get("date")]
+
+    win, cw = sw_tallies(games, since=lo_p, on_date=on_date, feed_dir=feed_dir,
+                         tally_path=tally_path)
+    a_games = [g for g in games if a_lo <= g["date"] < a_hi]
+    a_ent, aw = sw_tallies(a_games, since=a_lo, on_date=min(a_hi, on_date),
+                           feed_dir=feed_dir, tally_path=tally_path)
+    anc = sw_anchors(a_ent)
+    anc["season"] = a_season
+    anchored = anc["L_pgs"] is not None and anc["games"] >= SW_MIN_ANCHOR_GAMES
+    if anchored:
+        anc_why = None
+    else:
+        anc_why = (f"ABSENT: the prior complete season {a_season} has {anc['games']} "
+                   f"complete cached feed(s), under the {SW_MIN_ANCHOR_GAMES}-game "
+                   f"anchor floor; the anchored columns are null, never a partial "
+                   f"league rate")
+
+    # the starter's window: his starts dated D - 365 to D - 1
+    p_raw: dict = {}
+    for e in win:
+        for side in ("home", "away"):
+            s = (e.get("sp") or {}).get(side)
+            if s:
+                r = p_raw.setdefault(str(int(s[0])), [0, 0, 0])
+                r[0] += 1
+                r[1] += int(s[1])
+                r[2] += int(s[2])
+    # the batting club's window: dates D - 30 to D - 1
+    c_raw: dict = {}
+    c_stamp: dict = {}
+    for e in win:
+        if e["date"] < lo_c:
+            continue
+        for side in ("home", "away"):
+            org = e.get(f"{side}_org")
+            b = (e.get("bat") or {}).get(side)
+            if not org or not b:
+                continue
+            r = c_raw.setdefault(org, [0, 0, 0])
+            r[0] += int(b[0])
+            r[1] += int(b[1])
+            r[2] += 1
+            st = e.get("stamp")
+            if st and (c_stamp.get(org) is None or str(st) > str(c_stamp[org])):
+                c_stamp[org] = st
+
+    k_b, k_o, k_l = priors["k_b"], priors["k_o"], priors["k_l"]
+    vals = {c: {} for c in cols}
+    raw_p: dict = {}
+    for mid in pitchers or {}:
+        key = str(mid)
+        n, pit, outs = p_raw.get(key, [0, 0, 0])
+        raw_p[key] = [n, pit, outs]
+        vals["sp_n365"][key] = n
+        if anchored:
+            b = (pit + k_b * anc["L_pgs"]) / (n + k_b)
+            q = (pit + k_o * anc["L_ppo"]) / (outs + k_o)
+            vals["sp_budget"][key] = round(b, 4)
+            vals["sp_ppo"][key] = round(q, 5)
+            vals["sp_xouts"][key] = round(min(float(SW_OUTS_CAP), b / q), 4)
+    raw_c: dict = {}
+    for org in sorted({o for o in (orgs or ()) if o} | set(c_raw)):
+        pit, pa, ng = c_raw.get(org, [0, 0, 0])
+        raw_c[org] = [pit, pa, ng]
+        if anchored:
+            vals["bat_ppa_l30"][org] = round((pit + k_l * anc["L_ppa"]) / (pa + k_l), 5)
+
+    span_p = (f"{cw['n_complete']} complete feed(s) of {cw['n_games']} completed "
+              f"game(s) dated {lo_p} to the day before {on_date} "
+              f"({cw['n_missing_feed']} without a cached feed and "
+              f"{cw['n_incomplete']} incomplete, excluded)")
+    fmt = lambda x: "n/a" if x is None else f"{x:.4f}"       # noqa: E731
+    a_txt = (f"anchors {a_season} pooled: L_pgs {fmt(anc['L_pgs'])}, L_ppo "
+             f"{fmt(anc['L_ppo'])}, L_ppa {fmt(anc['L_ppa'])} over {anc['games']} "
+             f"game(s), {anc['starts']} start(s)")
+    pri_txt = f"priors frozen by stage 1: k_b {k_b}, k_o {k_o}, k_l {k_l}"
+    basis = {
+        "sp_n365": (f"betting_usage: the pitcher's starts (first pitcher of a fielding "
+                    f"half) over {span_p}; 0 is a real count"),
+        "sp_budget": (anc_why or f"(window pitches + k_b L_pgs) / (n + k_b); {span_p}; "
+                                 f"{a_txt}; {pri_txt}"),
+        "sp_ppo": (anc_why or f"(window pitches + k_o L_ppo) / (window outs + k_o); "
+                              f"{span_p}; {a_txt}; {pri_txt}"),
+        "sp_xouts": (anc_why or f"min({SW_OUTS_CAP}, sp_budget / sp_ppo), lineup "
+                                f"neutral; {span_p}; {a_txt}; {pri_txt}"),
+        "bat_ppa_l30": (anc_why or f"(pitches seen + k_l L_ppa) / (PA + k_l) over the "
+                                   f"club's games dated {lo_c} to the day before "
+                                   f"{on_date}; {a_txt}; {pri_txt}"),
+    }
+    out = {c: {"values": vals[c], "basis": basis[c]} for c in cols}
+    stamps = [str(e["stamp"]) for e in win if e.get("stamp")]
+    out["basis"] = {
+        "status": "built",
+        "rule": "the section 'Starter workload: expected outs and pitches per start'",
+        "priors": dict(priors),
+        "anchors": anc,
+        "anchor_floor_games": SW_MIN_ANCHOR_GAMES,
+        "anchored": anchored,
+        "window_pitcher": [lo_p, on_date],
+        "window_club": [lo_c, on_date],
+        "feeds_window": cw,
+        "feeds_anchor": aw,
+        "latest_feed_stamp": max(stamps) if stamps else None,
+        "club_latest_feed_stamp": c_stamp,
+        "pitchers_raw": {"fields": ["starts", "pitches", "outs"], "values": raw_p},
+        "clubs_raw": {"fields": ["pitches_seen", "pa", "games"], "values": raw_c},
+    }
     return out
 
 
