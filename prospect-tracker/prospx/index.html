@@ -14739,6 +14739,10 @@ function levelNormTooltip(sl) {
       lines.push(`BB/9 ${sl.bb_per_9} vs ${perf.avg_bb_per_9} mean`);
     }
   }
+  // Pitch rate against the same level-season (and role) mean, only where the
+  // statline carries one (pitch_rates flag on, a logged pitch count).
+  const prLine = _prStatlineLine(sl);
+  if (prLine) lines.push(prLine);
   if (lines.length === 1) return "";
   return lines.join("\n");
 }
@@ -40553,7 +40557,14 @@ function _buildDetailChipRibbon(p) {
       if (sl.hr_per_9 != null) bits.push(seg("HR/9", sl.hr_per_9.toFixed(2)));
     }
     if (!bits.length) return "";
-    return `<span class="ribbon-row ribbon-row-stats">${bits.join("")}</span>`;
+    // Pitch-rate sub-line ("P/IP 15.8 · PAR 94"), only where the statline carries
+    // a rate (pitch_rates flag on, a logged pitch count). Uncoloured.
+    const prTip = _prStatlineLine(sl);
+    const prRate = prTip ? _prRateText(isPit ? sl.p_ip : sl.p_pa, isPit) : null;
+    const prSub = prRate != null
+      ? `<span class="ribbon-row ribbon-row-stats" title="${escapeHtml(prTip + "; 100 = average, a description, not a rating")}">${seg(isPit ? "P/IP" : "P/PA", prRate)}${seg("PAR", sl.par)}</span>`
+      : "";
+    return `<span class="ribbon-row ribbon-row-stats">${bits.join("")}</span>${prSub}`;
   })();
 
   // Row 4: Statcast contact + zone chips. Mirrors the list-row's
@@ -46711,6 +46722,105 @@ document.addEventListener("keydown", e => {
   if (cell) { e.preventDefault(); _toggleSeasonRows(cell); }
 });
 
+// Pitch rates on the career tables, the header sub-line and the level tooltip
+// (owner ask 19). storage.py pitch_rate_fields writes the keys (career rows ride
+// the player_detail shard, the statline the boot file) only while
+// pitch_rates.SERVE_PITCH_RATES is on, so with it off no row carries par_basis and
+// nothing here renders. PAR = 100 x the rate / the same level and season average
+// (for a pitcher, of his majority role there). A description: uncoloured, with no
+// better or worse direction. A row the feed did not log pitch by pitch carries
+// par_basis alone and prints a blank with its reason.
+const _PR_BLANK_TIP = {
+  untracked: "No pitch count in this league and season",
+  partial: "Pitch counts incomplete in this league and season",
+  below_floor: "Too few plate appearances or innings at this level and season to print a rate",
+  no_line: "No pitch-count line matched this season and level",
+};
+function _prHas(rows) {
+  return Array.isArray(rows) && rows.some(r => r && r.par_basis != null);
+}
+function _prRoleWord(s) {
+  return s && s.par_role === "SP" ? "starter" : s && s.par_role === "RP" ? "reliever" : "";
+}
+function _prNum(v) {
+  return v == null || v === "" || !isFinite(Number(v)) ? null : Number(v);
+}
+function _prRateText(v, isP) {
+  const n = _prNum(v);
+  return n == null ? null : n.toFixed(isP ? 1 : 2);
+}
+function _prAvgLabel(level, season, role) {
+  return `${level} ${season}${role ? " " + role : ""} average`;
+}
+function _prGapText(rate, anchor, isP) {
+  const r = _prNum(rate), a = _prNum(anchor);
+  if (r == null || a == null) return "";
+  const unit = isP ? "an inning" : "a plate appearance";
+  const mag = Math.abs(r - a).toFixed(isP ? 1 : 2);
+  if (Number(mag) === 0) return "level with that average";
+  return `${mag} ${r < a ? "fewer" : "more"} pitches ${unit}`;
+}
+function _prBlankTd(tip) {
+  return `<td style="color:var(--text-tertiary);"${tip ? ` title="${escapeHtml(tip)}"` : ""}> - </td>`;
+}
+// Two cells (rate, PAR) for one career row or stint. A stint carries no keys and
+// prints two plain blanks: its season line above holds the rate.
+function _prCareerCells(s, isP) {
+  if (!s || s.par_basis == null) return _prBlankTd("") + _prBlankTd("");
+  const rateRaw = isP ? s.p_ip : s.p_pa;
+  const rate = _prRateText(rateRaw, isP);
+  if (rate == null || _prNum(s.par) == null || _prNum(s.par_anchor) == null) {
+    const tip = _PR_BLANK_TIP[s.par_basis] || _PR_BLANK_TIP.no_line;
+    return _prBlankTd(tip) + _prBlankTd(tip);
+  }
+  const lbl = isP ? "P/IP" : "P/PA";
+  const role = isP ? _prRoleWord(s) : "";
+  const avg = _prAvgLabel(s.level, s.season, role);
+  const fb = s.par_basis === "season_line_fallback"
+    ? " (his whole season line: this league and season has no starter and reliever split)" : "";
+  const bf = isP && _prNum(s.p_bf) != null ? `; P/BF ${_prNum(s.p_bf).toFixed(2)}` : "";
+  const rateTip = isP ? `P/IP ${rate} as a ${role}${fb}${bf}` : `P/PA ${rate}: pitches seen per plate appearance`;
+  const parTip = `PAR ${s.par} = 100 x ${lbl} / ${_prRateText(s.par_anchor, isP)}, the ${avg}: `
+    + `${_prGapText(rateRaw, s.par_anchor, isP)}. 100 = average, not a rating.`;
+  return `<td style="font-variant-numeric:tabular-nums;" title="${escapeHtml(rateTip)}">${rate}</td>`
+    + `<td style="font-variant-numeric:tabular-nums;" title="${escapeHtml(parTip)}">${s.par}</td>`;
+}
+// Two cells for a by-level row: the rate pooled over the level's seasons with a
+// logged pitch count (rate x its own PA or outs, over their sum), against the
+// exposure-weighted mean of those seasons' averages.
+function _prLevelCells(rows, isP, level) {
+  let rn = 0, an = 0, n = 0, seasons = 0;
+  for (const r of rows) {
+    const v = _prNum(isP ? r.p_ip : r.p_pa), a = _prNum(r.par_anchor), w = _prNum(r.par_n);
+    if (v == null || a == null || w == null || w <= 0 || _prNum(r.par) == null) continue;
+    rn += v * w; an += a * w; n += w; seasons += 1;
+  }
+  if (!(n > 0)) {
+    const basis = (rows.find(r => r && r.par_basis != null) || {}).par_basis;
+    const tip = basis ? (_PR_BLANK_TIP[basis] || _PR_BLANK_TIP.no_line) : "";
+    return _prBlankTd(tip) + _prBlankTd(tip);
+  }
+  const rate = rn / n, anchor = an / n;
+  const par = Math.round(100 * rate / anchor);
+  const lbl = isP ? "P/IP" : "P/PA";
+  const skipped = rows.length - seasons;
+  const note = skipped > 0 ? ` (${seasons} of ${rows.length} seasons here carry a logged pitch count)` : "";
+  const rateTip = `${lbl} ${rate.toFixed(isP ? 1 : 2)} pooled over his ${level} seasons${note}`;
+  const parTip = `PAR ${par} = 100 x ${lbl} / ${anchor.toFixed(isP ? 1 : 2)}, the ${level} average over his seasons there, weighted by his ${isP ? "innings" : "plate appearances"}. Not a rating.`;
+  return `<td style="font-variant-numeric:tabular-nums;" title="${escapeHtml(rateTip)}">${rate.toFixed(isP ? 1 : 2)}</td>`
+    + `<td style="font-variant-numeric:tabular-nums;" title="${escapeHtml(parTip)}">${par}</td>`;
+}
+// One line of text for the statline ("P/IP 15.8 vs 16.9 AA 2026 starter mean (PAR 94)"),
+// or "" when the statline carries no rate.
+function _prStatlineLine(sl) {
+  if (!sl || sl.par_basis == null) return "";
+  const isP = !!sl.is_pitcher;
+  const rate = _prRateText(isP ? sl.p_ip : sl.p_pa, isP);
+  if (rate == null || _prNum(sl.par) == null || _prNum(sl.par_anchor) == null) return "";
+  const role = isP ? _prRoleWord(sl) : "";
+  return `${isP ? "P/IP" : "P/PA"} ${rate} vs ${_prRateText(sl.par_anchor, isP)} ${sl.level} ${sl.season}${role ? " " + role : ""} mean (PAR ${sl.par})`;
+}
+
 function makeCareerTable(career, birthDate, player) {
   if (!career || !career.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No multi-season stats available.</div>`;
@@ -46752,7 +46862,13 @@ function makeCareerTable(career, birthDate, player) {
     k9:   s => s.k_per_9,
     bb9:  s => s.bb_per_9,
     hr9:  s => s.hr_per_9,
+    p_ip: s => _prNum(s.p_ip),
+    p_pa: s => _prNum(s.p_pa),
+    par:  s => _prNum(s.par),
   };
+  // Pitch-rate columns render only when a row carries the keys (pitch_rates flag on).
+  const hasPR = _prHas(career);
+  const PITCH_COLOR = "#3D5A5C";  // muted teal, pitch rates (P/IP or P/PA, PAR)
   const baseKey = sortMode.endsWith("_asc") ? sortMode.slice(0, -4)
                 : sortMode.endsWith("_desc") ? sortMode.slice(0, -5)
                 : sortMode;
@@ -46878,6 +46994,7 @@ function makeCareerTable(career, birthDate, player) {
       <th colspan="3" style="${stripStyle(COUNT_COLOR)}">Counting</th>
       <th colspan="2" style="${stripStyle(SLASH_COLOR)}">Run prevention</th>
       <th colspan="3" style="${stripStyle(PERIPH_COLOR)}">Peripherals</th>
+      ${hasPR ? `<th colspan="2" style="${stripStyle(PITCH_COLOR)}">Pitches</th>` : ""}
     </tr>`;
     const head = `<tr>
       ${_sh("season", "Season")}
@@ -46892,6 +47009,8 @@ function makeCareerTable(career, birthDate, player) {
       ${_sh("k_pct", "K%", 'title="Strikeout rate (per batter faced) - preferred over K/9 because per-batter rate doesn\'t depend on starter vs reliever IP-per-appearance. Falls back to K/9 ÷ 0.387 when batters-faced isn\'t on file."')}
       ${_sh("bb_pct", "BB%", 'title="Walk rate (per batter faced) - preferred over BB/9 for the same reason as K%. Lower is better. Falls back to BB/9 ÷ 0.387 when batters-faced isn\'t on file."')}
       ${_sh("hr9", "HR/9", 'title="Home runs allowed per 9 innings - pitcher\'s contact-quality red-flag stat (one of the three FIP inputs); lower is better"')}
+      ${hasPR ? _sh("p_ip", "P/IP", 'title="Pitches per inning (innings counted as outs / 3) in his majority role, starter or reliever, at that level and season. Not a rating."') : ""}
+      ${hasPR ? _sh("par", "PAR", 'title="P/IP against the same level, season and role average: 100 = average, 110 = 10 percent more pitches. No better or worse direction."') : ""}
     </tr>`;
     // v30 - K/9 + BB/9 columns swapped for K% + BB%. Per-batter rate
     // is the canonical pitcher walk/strikeout metric site-wide (see
@@ -46916,7 +47035,7 @@ function makeCareerTable(career, birthDate, player) {
         <td>${s.whip ?? " - "}</td>
         <td>${_kPctOrFallback(s)}</td>
         <td>${_bbPctOrFallback(s)}</td>
-        <td>${s.hr_per_9 != null ? s.hr_per_9.toFixed(2) : " - "}</td>`;
+        <td>${s.hr_per_9 != null ? s.hr_per_9.toFixed(2) : " - "}</td>${hasPR ? _prCareerCells(s, true) : ""}`;
     const rows = buildSeasonRows(pitcherCells);
     return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
   }
@@ -46935,6 +47054,7 @@ function makeCareerTable(career, birthDate, player) {
     <th colspan="5" style="${stripStyle(SLASH_COLOR)}">Slash</th>
     <th colspan="1" style="${stripStyle(POWER_COLOR)}">Power</th>
     <th colspan="2" style="${stripStyle(DISC_COLOR)}">Plate discipline</th>
+    ${hasPR ? `<th colspan="2" style="${stripStyle(PITCH_COLOR)}">Pitches</th>` : ""}
   </tr>`;
   const head = `<tr>
     ${_sh("season", "Season")}
@@ -46953,6 +47073,8 @@ function makeCareerTable(career, birthDate, player) {
     ${_sh("iso", "ISO", 'title="Isolated power = SLG − AVG. Pure power signal - strips the batting-average contribution out of slugging."')}
     ${_sh("bb_pct", "BB%", 'title="Walk rate"')}
     ${_sh("k_pct", "K%", 'title="Strikeout rate (lower is better)"')}
+    ${hasPR ? _sh("p_pa", "P/PA", 'title="Pitches seen per plate appearance at that level and season. A record, not a rating."') : ""}
+    ${hasPR ? _sh("par", "PAR", 'title="P/PA against the same level and season average: 100 = average, 110 = 10 percent more pitches seen. No better or worse direction."') : ""}
   </tr>`;
   const isoCell = (s) => {
     // Prefer the precomputed ISO from the fetcher; recompute on the fly
@@ -46975,7 +47097,7 @@ function makeCareerTable(career, birthDate, player) {
       <td>${(() => { const v = _rowOpsPlus(s); return v == null ? " - " : `<span style="color:${v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : "inherit"};">${v}</span>`; })()}</td>
       <td>${isoCell(s)}</td>
       <td>${s.bb_pct != null ? s.bb_pct.toFixed(1) + "%" : " - "}</td>
-      <td>${s.k_pct != null ? s.k_pct.toFixed(1) + "%" : " - "}</td>`;
+      <td>${s.k_pct != null ? s.k_pct.toFixed(1) + "%" : " - "}</td>${hasPR ? _prCareerCells(s, false) : ""}`;
   const rows = buildSeasonRows(hitterCells);
   return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
 }
@@ -46990,6 +47112,7 @@ const _LEVEL_SORT = ["MLB","AAA","AA","A+","A","CPX","DSL","ROK"];
 function makeCareerByLevelTable(career, birthDate) {
   if (!career || !career.length) return "";
   const isP = career[0].is_pitcher;
+  const hasPR = _prHas(career);   // pitch-rate columns (pitch_rates flag on)
   const byLevel = {};
   for (const s of career) {
     const lv = s.level || "?";
@@ -47065,12 +47188,12 @@ function makeCareerByLevelTable(career, birthDate) {
         <td>${whip != null ? whip.toFixed(2) : " - "}</td>
         <td>${kp != null ? kp.toFixed(1) + "%" : " - "}</td>
         <td>${bbp != null ? bbp.toFixed(1) + "%" : " - "}</td>
-        <td>${hr9 != null ? hr9.toFixed(2) : " - "}</td>
+        <td>${hr9 != null ? hr9.toFixed(2) : " - "}</td>${hasPR ? _prLevelCells(rs, true, lv) : ""}
       </tr>`;
     }).join("");
     return `<table class="detail-table"><thead><tr>
       <th>Years</th><th title="Age range during seasons at this level (July 1 of each season)">Age</th><th>Level</th><th>G</th><th>IP</th><th>W-L</th>
-      <th>ERA</th><th>WHIP</th><th title="Strikeout rate per batter faced (preferred over K/9)">K%</th><th title="Walk rate per batter faced (preferred over BB/9; lower is better)">BB%</th><th>HR/9</th>
+      <th>ERA</th><th>WHIP</th><th title="Strikeout rate per batter faced (preferred over K/9)">K%</th><th title="Walk rate per batter faced (preferred over BB/9; lower is better)">BB%</th><th>HR/9</th>${hasPR ? '<th title="Pitches per inning pooled over his seasons at this level that carry a logged pitch count">P/IP</th><th title="Pooled P/IP against the level average for his seasons there, weighted by his innings: 100 = average">PAR</th>' : ""}
     </tr></thead><tbody>${rows}</tbody></table>`;
   }
   const rows = levels.map(lv => {
@@ -47098,12 +47221,12 @@ function makeCareerByLevelTable(career, birthDate) {
       <td>${fmt3(ops)}</td>
       <td>${fmt3(iso)}</td>
       <td>${bbp != null ? bbp.toFixed(1) + "%" : " - "}</td>
-      <td>${kp != null ? kp.toFixed(1) + "%" : " - "}</td>
+      <td>${kp != null ? kp.toFixed(1) + "%" : " - "}</td>${hasPR ? _prLevelCells(rs, false, lv) : ""}
     </tr>`;
   }).join("");
   return `<table class="detail-table"><thead><tr>
     <th>Years</th><th title="Age range during seasons at this level (July 1 of each season)">Age</th><th>Level</th><th>G</th><th>AB</th><th>HR</th><th>SB</th>
-    <th>AVG</th><th>OBP</th><th>SLG</th><th>OPS</th><th>ISO</th><th>BB%</th><th>K%</th>
+    <th>AVG</th><th>OBP</th><th>SLG</th><th>OPS</th><th>ISO</th><th>BB%</th><th>K%</th>${hasPR ? '<th title="Pitches seen per plate appearance pooled over his seasons at this level that carry a logged pitch count">P/PA</th><th title="Pooled P/PA against the level average for his seasons there, weighted by his plate appearances: 100 = average">PAR</th>' : ""}
   </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -47742,6 +47865,20 @@ function _mergePlayerDetail(p, det) {
       // them for the per-source history table. Legacy shards without the
       // key skip harmlessly.
       if (moved.scalars) Object.assign(ps[src], moved.scalars);
+    }
+  }
+  // Pitch rates per career row (storage.py career_pitch_rate_shard; present only
+  // while pitch_rates.SERVE_PITCH_RATES is on). Merged onto the row with the same
+  // season and level; a shard without the block skips harmlessly.
+  const prc = (det.pitch_rates || {}).career;
+  if (Array.isArray(prc) && Array.isArray(p.career_stats)) {
+    const byKey = new Map(prc.filter(Boolean).map(r => [`${r.season}|${r.level}`, r]));
+    for (const row of p.career_stats) {
+      const m = row && byKey.get(`${row.season}|${row.level}`);
+      if (!m) continue;
+      for (const [k, v] of Object.entries(m)) {
+        if (k !== "season" && k !== "level") row[k] = v;
+      }
     }
   }
   p.__detailMerged = true;
