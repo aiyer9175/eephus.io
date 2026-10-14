@@ -381,7 +381,8 @@ def test_check_board_catches_a_key_without_its_block_and_a_wrong_par():
     assert B.check_board(doc, "sp")
 
 
-def test_the_flag_ships_off():
-    """TRIPWIRE. The flip is its own commit after the fWAR epoch's step Z (Q8_06)."""
-    assert PR.SERVE_PITCH_RATES is False
-    assert B.serving() is False
+def test_the_flag_is_on_after_the_flip():
+    """TRIPWIRE. The flip landed in its own commit after the fWAR epoch's step Z
+    (Q8_06); turning it back off is its own decision, not a side effect."""
+    assert PR.SERVE_PITCH_RATES is True
+    assert B.serving() is True

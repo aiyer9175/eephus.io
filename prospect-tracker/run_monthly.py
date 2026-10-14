@@ -7112,6 +7112,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             # stale eFV vs the PROSPX board for up to a month.
             log.info("6b3 SKIP: chained d9b2 re-bakes mlb_player_detail post-regen")
 
+        # --- 6b4-pr. Pitch rates (P/IP, P/BF, P/PA, PAR anchors) ---------
+        # pitch_rates.build writes the league anchors, the tracking table and
+        # the team units the glossary points readers to (served since Q8_06;
+        # the preview cache only while SERVE_PITCH_RATES is False). Past
+        # seasons read the cache; the current season refreshes on its TTL.
+        # The boards below join the same module. Additive; never aborts.
+        with _step("6b4-pr. Pitch rates (pitch_rates.json)", log):
+            try:
+                import pitch_rates as _pitch_rates
+                _pitch_rates.build(write=True, fetch=True)
+            except Exception:
+                log.exception("pitch rates build failed - continuing")
+
         # --- 6b4. Bullpen Leaderboards (the /mlbstats/ surface) ---------
         # REM+ (FIP-based, pool-relative reliever skill; 100 = average) + team
         # Bullpen+ + gmLI role depth charts. Skill core from the StatsAPI season

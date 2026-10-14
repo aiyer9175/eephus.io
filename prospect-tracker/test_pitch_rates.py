@@ -15,7 +15,8 @@ What these pin:
   * a role split that misses the season line falls back and says so
     (season_line_fallback), and one that misses by more than 5 percent is excluded
     (role_split_mismatch);
-  * nothing is written under data/ while SERVE_PITCH_RATES is False.
+  * nothing is written under data/ while SERVE_PITCH_RATES is False (the flag is
+    on since Q8_06; the test sets it off to hold the routing).
 No test reaches the network: every cache path points at tmp_path and the HTTP
 helper raises.
 """
@@ -343,7 +344,7 @@ def _mlb_raw(mlb_dir, season):
 def test_build_writes_nothing_under_data_while_the_flag_is_false(sandbox, monkeypatch):
     _mlb_raw(sandbox["mlb"], 2025)
     _aaa_2025(sandbox["cache"])
-    assert P.SERVE_PITCH_RATES is False
+    monkeypatch.setattr(P, "SERVE_PITCH_RATES", False)
     out = P.build(write=True)
     assert P.PREVIEW_PATH.exists()
     assert not P.DATA_PATH.exists()
@@ -366,3 +367,7 @@ def test_the_real_data_path_is_untouched_by_the_flag_off_module():
     real = pathlib.Path(P.__file__).resolve().parent / "data" / "pitch_rates.json"
     if not P.SERVE_PITCH_RATES:
         assert not real.exists()
+    else:
+        # served since the flip: the artifact the glossary points readers to
+        doc = json.loads(real.read_text(encoding="utf-8"))
+        assert doc["serve_flag"] is True and doc["mlb"] and doc["milb"]

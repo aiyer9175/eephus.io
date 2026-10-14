@@ -1709,3 +1709,49 @@ def test_teams_tab_copy_types_no_figure():
     for key in ("offense_plus_pa_weighted", "rotation_plus_ip_weighted", "bullpen_plus_ip_weighted",
                 "team_dem_plus_inn_weighted", "coverage", "offense_pa", "league_ip", "past_seasons"):
         assert key in src, key
+
+
+def test_pitch_rate_copy_figures_are_derived_or_worked():
+    """Q8_06 (owner asks 10 to 12 and 17 of 2026-09-30, the flip of P/IP, P/BF,
+    P/PA and PAR). Every figure the new copy prints is either a worked example
+    whose arithmetic holds, or the club count read off the served artifact."""
+    pip = _glossary_entry("p_ip")
+    assert "96 pitches over 18 outs (6 innings) = 16.0 P/IP" in pip["example"]
+    assert round(96 / (18 / 3), 1) == 16.0
+    assert "a line of 6.1 is 19 outs, 6.33 innings" in pip["methodology"]
+    assert round(19 / 3, 2) == 6.33
+    pbf = _glossary_entry("p_bf")
+    assert "96 pitches to 25 batters = 3.84 P/BF" in pbf["example"]
+    assert round(96 / 25, 2) == 3.84
+    ppa = _glossary_entry("p_pa")
+    assert "2,550 pitches in 650 PA = 3.92 P/PA" in ppa["example"]
+    assert round(2550 / 650, 2) == 3.92
+    par = _glossary_entry("par")
+    m = re.search(r"at ([\d.]+) P/IP in a season when starts averaged ([\d.]+): "
+                  r"PAR = 100 x \1 / \2 = (\d+), or ([\d.]+) fewer", par["example"])
+    assert m, par["example"]
+    rate, anchor, idx, gap = float(m.group(1)), float(m.group(2)), int(m.group(3)), float(m.group(4))
+    assert int(100 * rate / anchor + 0.5) == idx
+    assert round(anchor - rate, 1) == gap
+    # 100 is average and 110 is 10 percent more: the ratio definition itself
+    assert "100 is average, 110 is 10 percent more pitches" in par["definition"]
+
+
+def test_pitch_rate_copy_thirty_clubs_is_the_served_club_count():
+    """The glossary, the registry row and the /mlbstats/ team title say Team PAR
+    compares a club with "the average of the 30 clubs". Pinned to the served
+    artifacts: every unit of the latest season carries 30 clubs whose exact team
+    PAR averages 100, and each board's team table stamps 30 clubs."""
+    assert "the average of the 30 clubs" in _glossary_entry("par")["methodology"]
+    assert "the mean of the 30 club values" in _registry_row("par")["predicts"]
+    assert "the average of the 30 clubs" in _read_text("assets/mlbstats.js")
+    pr = _read_json("data/pitch_rates.json")
+    latest = max(pr["teams"]["mlb"], key=int)
+    for unit, clubs in pr["teams"]["mlb"][latest].items():
+        exact = [c["par_exact"] for c in clubs.values() if c["par_exact"] is not None]
+        assert len(exact) == 30, (unit, len(exact))
+        assert abs(sum(exact) / 30 - 100.0) < 1e-2, unit
+    for board, key in (("starter_leaderboards", "rot_par"), ("bullpen_leaderboards", "pen_par"),
+                       ("hitter_leaderboards", "lineup_par")):
+        teams = _read_json(f"data/{board}.json")["teams"]
+        assert sum(t.get(key) is not None for t in teams) == 30, board
