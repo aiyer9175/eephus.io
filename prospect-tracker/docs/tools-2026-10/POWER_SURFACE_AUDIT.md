@@ -294,3 +294,5 @@ with `test_*.py` and `tools/` excluded and each hit read in place.
 
 Left empty for TL_6_POWER_COMPOSITE_DARK, which measures it flag on against flag off on every
 served artifact.
+
+look P: C0 retains; nothing built
