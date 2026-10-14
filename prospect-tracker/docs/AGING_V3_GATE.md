@@ -582,6 +582,7 @@ dated section after section 19, and never loosens a threshold.
 |---|---|---|---|---|
 | 2026-10-08 | - | registered | - | registration committed alone; no candidate computed, no look spent |
 | 2026-10-09 | ladder (DEV only) | DEV selection and power: lambda 1.0, smoother pen (penalty 16), k_P 400, k_R 800; T UNDERPOWERED (MDE95 0.0428), S, P and R powered (MDE95 0.0057, 0.0079, 0.0007) | data/aging_v3_mde.json sha256 6d8976929d69 | AG_6_AGING_V3_DEV_AND_POWER, tools/aging_v3_lab.py dev then mde on the DEV frame (26,249 rows, 3,018 players, label seasons 2008 to 2010), wall 316.7 s and 181.3 s; no GATE, TIER-2 or CONFIRM row scored; the look and health paths dry-run on fixtures with nulls only; committed 2026-10-14 |
+| 2026-10-14 | ladder + PS (THE LOOK) | ladder FAILED: T UNDERPOWERED (not run), S FAIL (D +0.00095, p 0.3938), P FAIL (D +0.00730, p 0.1554), R FAIL (D -0.00003, p 0.9520), guards G1 to G4 held for each; PS FAIL (n 554, mean +0.00445, lo95 -0.01418); TIER-2 and CONFIRM nothing to read (no passed arm; CONFIRM opened, n 9,372); final composition none | data/aging_v3_eval.json sha256 0fd7d3a5f798 | AG_7_AGING_V3_LOOK, an OWNER-WAIVED EARLY READ (EW3-5, owner 2026-10-14): run 2026-10-14 although the section 13 rule's first free day is 2026-10-15 (AG_6 landed 2026-10-14 at 4dd0fd0c) and docs/PROJ_COMPONENTS_GATE.md records PJ-C's look today; the fixture dry run first (exit 0); one session, no exception, no rerun; wall 176.3 s; section 19 carries the results |
 
 ---
 
@@ -589,3 +590,110 @@ dated section after section 19, and never loosens a threshold.
 
 Empty at registration. Entries are appended only by AG_7_AGING_V3_LOOK (the ladder, PS, the
 TIER-2 veto and CONFIRM) and AG_13_HEALTH_LOOK (H).
+
+### 2026-10-14: the ladder, PS, the TIER-2 veto and CONFIRM (AG_7_AGING_V3_LOOK): NO ARM SHIPS; PS FAIL
+
+An OWNER-WAIVED EARLY READ (owner decision EW3-5, 2026-10-14; the dated note after this section).
+Artifact `data/aging_v3_eval.json`, sha256 `0fd7d3a5f79851cc0fdfcc7be8d4ea6afa877fbe5571c2fc70d014ba6f4ee3e9`, generated 2026-10-14T17:52:19Z;
+protocol hash `d42c0c37a4438b933d17ef4853ca5064253368550b3635614dd2e8c716300986` (sections G-0 to 17 unchanged); aging_v3 version
+v3-73a5bfa3; corpus war_provider fwar, sig 5b3b9a75, seasons
+2000 to 2026; one session, the fixture dry run first (exit 0), no exception, no rerun; wall
+176.3 s. The DEV selections were read from `data/aging_v3_mde.json` (generated 2026-10-09T10:47:36Z) and never
+re-selected: lambda 1.0, smoother pen (penalty 16), k_P 400,
+k_R 800. Comparator cfg8 0987ddcd (section 4: the v2 curves with the PT cap call-scoped).
+
+**Frames (section 6).** GATE: label seasons [2011, 2012, 2013], bases 2007 to 2013,
+26,620 rows, 3,088 players; census {'two_sided_rows': 331, 'rvm_rows': 0, 'no_age': 0, 'masked_2020': 0, 'no_path': 0}.
+TIER-2: label seasons 2014 to 2025 (2020 masked), bases 2010 to 2025, 100,120 rows;
+census {'two_sided_rows': 3658, 'rvm_rows': 0, 'no_age': 0, 'masked_2020': 0, 'no_path': 0}. CONFIRM: label season 2026, bases 2022 to 2026,
+9,372 rows, 2,712 players; census {'two_sided_rows': 1447, 'rvm_rows': 248, 'no_age': 0, 'masked_2020': 0, 'no_path': 0} (the R-VM rows dropped before scoring).
+
+**The ladder on GATE (section 7; player-cluster bootstrap B 2,000, seed 20261124; PASS iff p < 0.0125 and G1 to G4 hold).**
+Each arm was read against the comparator, since no earlier arm passed.
+
+| arm | predecessor | n rows / players | ACAL pred -> arm | D | sd(D) | p (< 0.0125) | G1 MAE diff hi95 (<= +0.003) | G2 star bias pred -> arm (n) | G3 h5 tail ratio pred -> arm (n act >= 3) | G4 (buckets n >= 200 worse by > 0.02) | verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| T | comparator | - | - | - | - | - | - | - | - | - | UNDERPOWERED on DEV (MDE95 0.0428 > 0.03), not run |
+| S | comparator (0987ddcd) | 26,620 / 3,088 | 0.07769 -> 0.07675 | +0.00095 | 0.00199 | 0.3938 | -0.00186 | -0.1705 -> -0.1888 (991) | 0.2212 -> 0.2019 (208) | 10 read, none worse | FAIL |
+| P | comparator (0987ddcd) | 26,620 / 3,088 | 0.07769 -> 0.07039 | +0.00730 | 0.00429 | 0.1554 | -0.00472 | -0.1705 -> -0.0919 (991) | 0.2212 -> 0.2356 (208) | 10 read, none worse | FAIL |
+| R | comparator (0987ddcd) | 26,620 / 3,088 | 0.07769 -> 0.07772 | -0.00003 | 0.00006 | 0.9520 | -0.00002 | -0.1705 -> -0.1722 (991) | 0.2212 -> 0.2163 (208) | 10 read, none worse | FAIL |
+
+Passed: none. Final composition: none (`final_cfg8` b5dc2f9f is the no-arm composition at the DEV selections; it
+prices every row exactly as the comparator, the S, P and R knobs being inert with no arm on: max abs difference 0.0 on the
+fixture DEV frame, 2,261 rows). ARM P's D of +0.0073 is the largest gain read and sits at 1.7 sd (p 0.155); a null is a
+finding (section 5 ARM H's phrasing applies to the whole ladder).
+
+**PS, the prospect shape gate (section 9), on the v2 curves through `shape()` (no arm accepted).** Population
+554 debutants of cohorts [2014, 2015, 2016, 2017, 2018] (first corpus season with exposure; at least 2 seasons of 150 PA / 30 IP in
+d..d+6; 2020 masked; two-sided players excluded; no FV, grade, list vintage or prospect row read). PRIMARY: mean paired
+SSE_inc minus SSE_v3 +0.00445, lo95 -0.01418 (B 2000, seed 20261124) -> **FAIL** (lo95 is not above 0).
+Guards all held:
+
+| stratum | n | mean SSE incumbent | mean SSE v3 | guard (v3 <= 1.10 x incumbent) |
+|---|---|---|---|---|
+| band:21- | 50 | 1.9390 | 1.8768 | held |
+| band:22-23 | 191 | 1.0025 | 0.9586 | held |
+| band:24-25 | 216 | 0.6466 | 0.6652 | held |
+| band:26+ | 97 | 0.5847 | 0.6362 | held |
+| bucket:LF/RF | 53 | 1.3955 | 1.4199 | held |
+| bucket:RP | 208 | 0.4306 | 0.3891 | held |
+| bucket:SP | 152 | 0.8046 | 0.8375 | held |
+
+**The TIER-2 veto and CONFIRM (section 7).** No arm passed, so nothing was read on TIER-2 (100,120 rows) and
+nothing on CONFIRM (9,372 rows, opened at n >= 1,000). No TIER-2 or CONFIRM number exists for any candidate.
+
+**Verdicts and the ship rule.** Ladder: FAILED (T UNDERPOWERED; S, P and R FAIL at GATE). PS: FAIL. No composition is
+accepted, so `data/aging_v3_curves.json` is not written, every `fa_config.yaml aging_v3.consumers` flag stays false, every
+consumer door keeps `aging="v2"`, and the v2 champion curves and the incumbent prospect tent stay the served engine.
+Registry (commit 3 of this task): `aging_v3` and `aging_v3_prospect_shape` carry `data/aging_v3_eval.json` with the
+verdict `deprecated` (the registry's vocabulary for a candidate that failed its one read and is never served) and a
+`registration_status` naming FAILED and UNDERPOWERED arm by arm. The health family H (section 10) is unread and its look
+(AG_13) still owes its own read, applied on top of the comparator since no ladder arm is accepted. A return of any ladder arm
+or of PS needs a new registration.
+
+**Reported, never adjudicated (section 7).** ACAL and MAE by age band x bucket and by age band x archetype are in the
+artifact under `ladder.arms.<arm>.report`. No cell is accepted, so no accepted cell's `level()` peak age or slopes is
+reported here (the DEV fit's are in `data/aging_v3_mde.json` `cells.level`). The GATE strata under ARM P (bias / MAE
+(n) by age band, bucket assigned at season B-1; `pooled` is IF, UT, TWP, X and missing):
+
+| side : bucket | 24- | 25-27 | 28-30 | 31-33 | 34+ |
+|---|---|---|---|---|---|
+| hit : C | -0.031 / 1.075 (32) | -0.417 / 1.254 (201) | -0.140 / 0.865 (415) | +0.100 / 0.640 (303) | +0.018 / 0.396 (520) |
+| hit : SS | +0.399 / 1.112 (38) | -0.065 / 1.032 (155) | -0.381 / 0.967 (246) | +0.203 / 0.854 (181) | +0.155 / 0.677 (225) |
+| hit : 2B/3B | +0.281 / 0.897 (60) | -0.087 / 1.138 (320) | -0.481 / 1.103 (499) | +0.003 / 0.820 (324) | +0.070 / 0.575 (531) |
+| hit : CF | -1.518 / 2.257 (25) | -1.232 / 1.738 (191) | -0.121 / 1.310 (235) | -0.169 / 0.860 (183) | -0.151 / 0.731 (163) |
+| hit : LF/RF | -0.182 / 1.108 (76) | -0.318 / 0.960 (322) | -0.401 / 0.935 (521) | -0.075 / 0.742 (425) | +0.081 / 0.460 (514) |
+| hit : 1B | -0.913 / 1.443 (27) | -0.539 / 1.220 (135) | -0.543 / 1.098 (211) | +0.183 / 0.772 (206) | +0.150 / 0.499 (256) |
+| hit : DH | +1.876 / 1.876 (4) | -0.253 / 0.731 (19) | -0.329 / 0.468 (56) | +0.039 / 0.524 (53) | -0.086 / 0.444 (200) |
+| hit : pooled | +0.454 / 0.714 (30) | -0.015 / 0.446 (356) | -0.074 / 0.213 (966) | -0.001 / 0.073 (1,101) | +0.011 / 0.023 (2,176) |
+| pit : SP | +0.258 / 1.144 (190) | +0.128 / 1.036 (861) | +0.139 / 0.848 (1,301) | +0.158 / 0.646 (867) | -0.008 / 0.506 (1,251) |
+| pit : RP | -0.264 / 0.689 (148) | -0.104 / 0.416 (1,231) | -0.052 / 0.234 (2,810) | -0.039 / 0.130 (2,207) | -0.050 / 0.119 (3,253) |
+
+The GATE strata under ARM R (bias / MAE (n) by age band and the out-of-window archetype of the row's pair start):
+
+| side : archetype | 24- | 25-27 | 28-30 | 31-33 | 34+ |
+|---|---|---|---|---|---|
+| hit : OLD_SKILLS | - | -0.797 / 1.576 (30) | -0.994 / 1.675 (134) | +0.140 / 0.985 (142) | +0.059 / 0.650 (399) |
+| hit : YOUNG_SKILLS | -0.097 / 1.533 (33) | -0.752 / 1.779 (284) | -0.338 / 1.531 (611) | +0.060 / 0.971 (635) | +0.054 / 0.517 (1,167) |
+| hit : NEUTRAL | -0.100 / 1.113 (259) | -0.228 / 0.866 (1,385) | -0.201 / 0.521 (2,404) | -0.010 / 0.301 (1,999) | +0.029 / 0.153 (3,019) |
+| pit : POWER | -0.692 / 1.334 (15) | +0.008 / 1.346 (153) | +0.147 / 1.076 (320) | +0.101 / 0.614 (274) | -0.019 / 0.580 (471) |
+| pit : COMMAND | +0.189 / 0.944 (21) | +0.137 / 1.178 (70) | +0.137 / 0.924 (294) | +0.051 / 0.936 (270) | -0.184 / 0.615 (509) |
+| pit : NEUTRAL | +0.038 / 0.933 (302) | +0.012 / 0.618 (1,869) | +0.023 / 0.348 (3,497) | +0.009 / 0.169 (2,530) | -0.022 / 0.129 (3,524) |
+
+---
+
+## Note 2026-10-14: an owner-waived early read (EW3-5)
+
+The one look of the ladder and of PS (sections 7 and 9) was taken on 2026-10-14 under the owner's instruction of 2026-10-14
+(decision EW3-5, `_audit_2026-09-09/DECISIONS_FOR_OWNER.md`: registered look days and dates are waived; a look before its
+day is recorded as an owner-waived early read). It is recorded as such in section 18, in section 19 and in the artifact
+(`owner_waived_early_read`). What the gate's own rule gave: section 13 names the first day after AG_6_AGING_V3_DEV_AND_POWER
+lands on which no other registered look is recorded; AG_6 was committed 2026-10-14 (4dd0fd0c), so the earliest such day was
+2026-10-15, and 2026-10-14 itself carries PJ-C's look record (`docs/PROJ_COMPONENTS_GATE.md`) and the steal-runner read
+(`docs/management-2026-10/STEAL_RUNNER_SPLIT_GATE.md`), both owner-waived early reads of the same instruction. The lab's
+calendar check (`tools/aging_v3_lab.py calendar_blockers`) refused the day; it was passed with the explicit switch
+`--owner-waived-early-read --rule-day 2026-10-15` (commit cd26ba46), never by default. Nothing in sections G-0 to 17 moved
+(the protocol hash the lab and `test_aging_v3_gate.py` pin is unchanged); the DEV selections were read, not re-selected; the
+fixture dry run ran first; one session, no rerun. The clause 'looking early disqualifies' (G-0 and section 13) is set aside
+by the owner's instruction, not by this writer, and the verdicts stand as recorded. The health look (section 10, AG_13) was
+not taken and is untouched by this note.
