@@ -549,6 +549,15 @@ SCHEDULED_EXPORTS = (
     # is printed on the night it is missed (gate 3.2: it can never be written
     # later). Appended at the end, so nothing above mgmt_export moves.
     "trade_partner_screen",
+    # The Baserunning section (daily 9e-pre0b2, monthly 6b4m; baserunning_export,
+    # the eWAR v3 plan's EBR_2_BUILD_DARK). The exporter REFUSES
+    # (BaserunningRefusal) on an identity miss, a league sum off zero, an
+    # empty club block or a payload over its budget and leaves the previous
+    # files on disk, so without this row a refusal never reaches INGEST RED.
+    # While MLBSTATS_BASERUNNING_LIVE is False it writes previews under
+    # .cache/baserunning/preview/ only. Appended BELOW franchise_export, at the
+    # end, so nothing above mgmt_export moves.
+    "baserunning_export",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -1627,6 +1636,85 @@ def _lab_should_skip(artifact: Path, label: str, log: logging.Logger,
                  f"{age}d" if age is not None else "recently", max_age_days)
         return True
     return False
+
+
+def _baserunning_nightly(log: logging.Logger, label: str, *, history: bool = False) -> dict:
+    """The Baserunning section's refresh (the eWAR v3 plan's EBR_2_BUILD_DARK;
+    daily step 9e-pre0b2, monthly 6b4m): four parts in order, each best-effort
+    so a failed refresh never stops the export that follows it.
+
+      1. the runner record for the live season's new games
+         (tools/build_runner_moves.py, incremental by game_pk; completed
+         seasons frozen; it writes only .cache/pbp_runners/, never the corpus);
+      2. Baseball Savant's two run-value boards and the live sprint CSV
+         (savant_running; three requests at most, a day's TTL, fail-soft;
+         data/savant_sprint.json is never written);
+      3. the eBR substrate (tools/build_ebr.py, previews only; every completed
+         season is checked against its frozen digest and the live season is
+         the one that moves);
+      4. baserunning_export, which while MLBSTATS_BASERUNNING_LIVE is False
+         writes only .cache/baserunning/preview/ (the history file monthly).
+
+    Display only: no model, no priced cell and no vintage snapshot reads any
+    of it, so it sits after the 9e-pre snapshot. Files `baserunning_export`
+    into the ingest ledger (ok=False on a raise) and a heartbeat per part."""
+    import job_heartbeat as _hb
+    out: dict = {"label": label}
+    try:
+        import savant_sprint as _ss
+        season = int(_ss.current_season())
+    except Exception:  # noqa: BLE001
+        season = date.today().year
+    out["season"] = season
+    # 1. the runner record
+    try:
+        from tools import build_runner_moves as _brm
+        man = _brm.build([season], workers=4)
+        blk = (man.get("seasons") or {}).get(str(season)) or {}
+        out["runner_moves"] = {"games": blk.get("games_present"), "scheduled": blk.get("games_scheduled"),
+                               "added": blk.get("games_added_this_run")}
+        _hb.record("baserunning_runner_moves", ok=True,
+                   result=f"{season}: {blk.get('games_present')}/{blk.get('games_scheduled')} games")
+    except Exception as _e:  # noqa: BLE001
+        log.exception("%s: runner record refresh failed - the record on disk stands", label)
+        _hb.record("baserunning_runner_moves", ok=False, result=str(_e)[:120])
+    # 2. Savant (three requests at most; a failed one keeps the cache)
+    try:
+        import savant_running as _sr
+        _sv = _sr.load(season)
+        _csv = _ss._cache_path(season)
+        _stale = (not _csv.exists()) or (time.time() - _csv.stat().st_mtime) > 24 * 3600
+        _n_sprint = len(_sr.sprint_rows(season, force=_stale))
+        _hb.record("baserunning_savant", ok=True,
+                   result=f"{season}: brv {len(_sv.get('brv') or {})}, steal {len(_sv.get('steal') or {})}, sprint {_n_sprint}")
+    except Exception as _e:  # noqa: BLE001
+        log.exception("%s: Savant baserunning refresh failed - the caches stand", label)
+        _hb.record("baserunning_savant", ok=False, result=str(_e)[:120])
+    # 3. the eBR substrate (previews only)
+    try:
+        from tools import build_ebr as _bebr
+        _sub, _ev = _bebr.build()
+        _bebr.write(_sub, _ev)
+        _ok = all(((_ev.get("identity") or {}).get(str(season)) or {}).get(k, {}).get("pass") is True
+                  for k in ("I4", "I5", "I6"))
+        _hb.record("baserunning_ebr", ok=True,
+                   result=f"{len(_sub.get('rows') or [])} rows, {season} I4-I6 {'pass' if _ok else 'MISS'}")
+    except Exception as _e:  # noqa: BLE001
+        log.exception("%s: eBR build failed - the previous substrate stands", label)
+        _hb.record("baserunning_ebr", ok=False, result=str(_e)[:120])
+    # 4. the section's payloads
+    try:
+        import baserunning_export as _bre
+        n = _bre.export(season, log=log.info, with_history=history)
+        where = "data/" if _bre.MLBSTATS_BASERUNNING_LIVE else ".cache/baserunning/preview/"
+        _hb.record("baserunning_export", ok=True, result=f"{season}: {n} runners -> {where}")
+        _record_ingest("baserunning_export", True, int(n), f"{season}: {n} runners -> {where}", "mlb", log)
+        out["runners"] = n
+    except Exception as _e:  # noqa: BLE001
+        log.exception("%s: baserunning export failed - the previous payloads stand", label)
+        _hb.record("baserunning_export", ok=False, result=str(_e)[:120])
+        _record_ingest("baserunning_export", False, 0, f"baserunning export raised: {_e}"[:200], "mlb", log)
+    return out
 
 
 def _league_teams_payloads(log: logging.Logger, label: str) -> dict:
@@ -4000,6 +4088,27 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                              _export_defense_daily(log=log.info))
                 except Exception:
                     log.exception("daily: defense leaderboard refresh failed - continuing")
+
+        # --- 9e-pre0b2. Baserunning section (dark; the eWAR v3 plan) -------
+        # EBR_2_BUILD_DARK (owner ask 2026-09-30, a Baserunning section on MLB
+        # Stats and eBR). Runner moves for last night's games, the Savant
+        # run-value and sprint refresh, tools/build_ebr.py for the live season
+        # and baserunning_export, which writes only .cache/baserunning/preview/
+        # while MLBSTATS_BASERUNNING_LIVE is False. Placed AFTER 9e-pre0b and
+        # BEFORE 9e-pre0c (ebr/PLAN.md row C23), after the 9e-pre vintage
+        # snapshot like 9e-pre0b (no model, no priced cell and no snapshot
+        # reads any of it), so the Overall board and the League tab can read
+        # the same night's baserunning block. The label is a suffix on
+        # 9e-pre0b rather than the plan's 9e-pre0e, which the In-Game
+        # Management nightly took first. Never aborts.
+        with _step("9e-pre0b2. Baserunning section (baserunning preview)", log):
+            if chained:
+                log.info("daily: SKIP 9e-pre0b2: monthly 6b4m just built the baserunning board (chained)")
+            else:
+                try:
+                    _baserunning_nightly(log, "daily 9e-pre0b2", history=False)
+                except Exception:
+                    log.exception("daily: baserunning refresh failed - the previous payloads stand - continuing")
 
         # --- 9e-pre0c. Refresh the eWAR board (display only) ----------------
         # After the four boards above, which it reads for the `boards` field,
@@ -7319,6 +7428,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     _export_def_history(log=log.info)
             except Exception:
                 log.exception("defense leaderboards export failed - continuing")
+
+        # --- 6b4m. Baserunning section (dark; the eWAR v3 plan) ---------------
+        # The monthly copy of the daily 9e-pre0b2 (EBR_2_BUILD_DARK): the
+        # runner record, the Savant refresh, the eBR substrate and the
+        # Baserunning payloads, plus the history file for every completed
+        # season. After 6b4i and before 6b4j (ebr/PLAN.md row C23), so the
+        # Overall board reads the same night's baserunning block. Previews
+        # only while MLBSTATS_BASERUNNING_LIVE is False. Never aborts.
+        with _step("6b4m. Baserunning section (baserunning preview + history)", log):
+            try:
+                _baserunning_nightly(log, "monthly 6b4m", history=True)
+            except Exception:
+                log.exception("baserunning section export failed - continuing")
 
         # --- 6b4j. eWAR Leaderboard (war_leaderboards.json) -------------------
         # The whole-player board the other five cannot draw: batting plus

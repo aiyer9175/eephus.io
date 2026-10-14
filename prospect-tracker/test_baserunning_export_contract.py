@@ -422,3 +422,57 @@ def test_the_eval_carries_the_ewar_link_and_the_board_receipts_and_no_runs_corre
     assert bb and all("reproduction" in v for v in bb.values())
     txt = json.dumps(ev)
     assert not re.search(r"r_off_[A-Za-z_]*runs|runs_scored|wins", txt), "no correlation against runs or wins is served"
+
+
+# --------------------------------------------------------------------------- #
+# the pipeline wiring (run_monthly daily 9e-pre0b2 and monthly 6b4m)
+# --------------------------------------------------------------------------- #
+NL = chr(10)
+
+
+def test_the_daily_step_sits_after_the_defense_board_and_before_the_overall_board():
+    """ebr/PLAN.md row C23: after 9e-pre0b and before 9e-pre0c, after the 9e-pre
+    vintage snapshot, skipped when the monthly 6b4m just ran. The plan's label
+    9e-pre0e was taken first by the In-Game Management nightly, so the step is
+    the suffix 9e-pre0b2 in the plan's slot."""
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    start = src.index("def run_daily(")
+    daily = src[start:src.index(NL + "def ", start + 10)]
+    i_snap = daily.index('_step("9e-pre. Leaderboard vintage snapshot')
+    i_def = daily.index('_step("9e-pre0b. Refresh Defense Leaderboards')
+    i_new = daily.index('_step("9e-pre0b2. Baserunning section')
+    i_war = daily.index('_step("9e-pre0c. Refresh eWAR Leaderboard')
+    assert i_snap < i_def < i_new < i_war
+    body = daily[i_new:i_war]
+    assert "if chained:" in body and "SKIP 9e-pre0b2" in body
+    assert "_baserunning_nightly(log, " in body and "history=False" in body
+    assert src.count('_step("9e-pre0b2.') == 1
+    mon = src[src.index(NL + "def main("):]
+    i_i = mon.index('_step("6b4i. Defense Leaderboards')
+    i_m = mon.index('_step("6b4m. Baserunning section')
+    i_j = mon.index('_step("6b4j. eWAR Leaderboard')
+    assert i_i < i_m < i_j
+    assert "history=True" in mon[i_m:i_j]
+    assert src.count('_step("6b4m.') == 1
+
+
+def test_the_export_is_a_watched_export_below_franchise_and_no_betting_column_reads_it():
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i = src.index("SCHEDULED_EXPORTS = (")
+    block = src[i:src.index(NL + ")", i)]
+    assert '"baserunning_export"' in block
+    assert block.index('"franchise_export"') < block.index('"baserunning_export"')
+    assert block.index('"mgmt_export"') < block.index('"baserunning_export"')
+    import leaderboard_vintages as lv
+    cols = json.dumps(getattr(lv, "TEAM_COLUMNS", {}))
+    assert "baserunning" not in cols and not re.search(r"ebr", cols), "no betting vintage column reads eBR"
+
+
+def test_the_nightly_helper_writes_previews_only_and_never_the_corpus():
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i = src.index("def _baserunning_nightly(")
+    body = src[i:src.index(NL + "def ", i + 10)]
+    assert ".cache/baserunning/preview/" in body and "pbp_corpus" not in body.replace("never the corpus", "")
+    assert "_record_ingest(\"baserunning_export\"" in body
+    for part in ("build_runner_moves", "savant_running", "build_ebr", "baserunning_export"):
+        assert part in body, part
