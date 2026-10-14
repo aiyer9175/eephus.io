@@ -253,7 +253,9 @@ def test_the_columns_are_the_registered_names_in_every_copy():
     cols = ("ix_elo", "ix_po_pct", "ix_ws_pct", "ix_proj_wins")
     assert lv.IX_TEAM_COLUMNS == cols == iv.TEAM_COLUMNS == bm.DARK_IX_TEAM_COLUMNS
     assert lv.IX_GAMES_KEY == iv.GAMES_KEY == "ix_games"
-    assert lv.TEAM_COLUMNS[-len(cols):] == cols
+    # the starter-workload team column is appended after the intensity block
+    through6 = tuple(c for c in lv.TEAM_COLUMNS if c not in lv.SW_TEAM_COLUMNS)
+    assert through6[-len(cols):] == cols
     assert bm.DARK_TEAM_COLUMNS_BY_SCHEMA[lv.IX_SCHEMA] == cols
     sec = _section()
     for c in cols + ("ix_games",):
@@ -502,7 +504,8 @@ def test_a_live_snapshot_tonight_captures_the_columns_and_the_block(quiet, tmp_p
     res = lv.snapshot(data_dir=quiet, vintage_dir=tmp_path / "store")
     rec = res["record"]
     assert res["written"] and rec["schema"] == lv.SCHEMA
-    assert rec["team_columns"][-4:] == list(lv.IX_TEAM_COLUMNS)
+    assert [c for c in rec["team_columns"]
+            if c not in lv.SW_TEAM_COLUMNS][-4:] == list(lv.IX_TEAM_COLUMNS)
     row = lv.team_row(rec, "NYY")
     for c in lv.IX_TEAM_COLUMNS:
         assert row[c] is not None, c
