@@ -1,0 +1,167 @@
+{
+ "generated_at": "2026-10-14T15:46:39Z",
+ "gate": "docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md",
+ "part": "4",
+ "window": [
+  2015,
+  2016,
+  2017,
+  2018,
+  2019
+ ],
+ "seasons_on_disk": [
+  2018,
+  2019
+ ],
+ "method": "split-half (odd and even events; odd and even games for stolen bases) on MLB player-seasons; r at mean half exposure n_h; R = 2r / (1 + r); k_m = 2 n_h (1 - R) / R",
+ "floors": {
+  "k_pct": 300,
+  "hr_pa": 300,
+  "avg": 240.0,
+  "iso": 240.0,
+  "babip": 180.0,
+  "sb_per600": 300,
+  "ev_avg": 100.0,
+  "chase_pct": 400.0,
+  "z_contact_pct": 150.0,
+  "k_pct_pit": 100,
+  "bb_pct_pit": 100,
+  "fb_velo": 200.0
+ },
+ "stats": {
+  "k_pct": {
+   "unit": "pa",
+   "n_player_seasons": 552,
+   "split_half_r": 0.8435,
+   "mean_half_exposure": 251.8986,
+   "R_full": 0.9151,
+   "k_m": 46.7354,
+   "floor": 300
+  },
+  "hr_pa": {
+   "unit": "pa",
+   "n_player_seasons": 552,
+   "split_half_r": 0.5611,
+   "mean_half_exposure": 251.8986,
+   "R_full": 0.7188,
+   "k_m": 197.0406,
+   "floor": 300
+  },
+  "avg": {
+   "unit": "ab",
+   "n_player_seasons": 605,
+   "split_half_r": 0.3159,
+   "mean_half_exposure": 216.2711,
+   "R_full": 0.4801,
+   "k_m": 468.3212,
+   "floor": 240.0
+  },
+  "iso": {
+   "unit": "ab",
+   "n_player_seasons": 605,
+   "split_half_r": 0.5492,
+   "mean_half_exposure": 216.2711,
+   "R_full": 0.709,
+   "k_m": 177.5259,
+   "floor": 240.0
+  },
+  "babip": {
+   "unit": "ab (less SO and HR, plus SF)",
+   "n_player_seasons": 584,
+   "split_half_r": 0.2861,
+   "mean_half_exposure": 160.9298,
+   "R_full": 0.4449,
+   "k_m": 401.5923,
+   "floor": 180.0
+  },
+  "sb_per600": {
+   "unit": "pa (odd and even games)",
+   "n_player_seasons": 552,
+   "split_half_r": 0.7689,
+   "mean_half_exposure": 251.8986,
+   "R_full": 0.8694,
+   "k_m": 75.7105,
+   "floor": 300
+  },
+  "ev_avg": {
+   "unit": "attempts (batted balls)",
+   "n_player_seasons": 764,
+   "split_half_r": 0.7562,
+   "mean_half_exposure": 135.267,
+   "R_full": 0.8612,
+   "k_m": 43.6082,
+   "floor": 100.0
+  },
+  "chase_pct": {
+   "unit": "oz_pitches",
+   "n_player_seasons": 726,
+   "split_half_r": 0.8719,
+   "mean_half_exposure": 464.9373,
+   "R_full": 0.9316,
+   "k_m": 68.3172,
+   "floor": 400.0
+  },
+  "z_contact_pct": {
+   "unit": "iz_swings",
+   "n_player_seasons": 858,
+   "split_half_r": 0.8036,
+   "mean_half_exposure": 242.5845,
+   "R_full": 0.8911,
+   "k_m": 59.3017,
+   "floor": 150.0
+  },
+  "k_pct_pit": {
+   "unit": "bf",
+   "n_player_seasons": 1040,
+   "split_half_r": 0.6863,
+   "mean_half_exposure": 167.4269,
+   "R_full": 0.814,
+   "k_m": 76.5133,
+   "floor": 100
+  },
+  "bb_pct_pit": {
+   "unit": "bf",
+   "n_player_seasons": 1040,
+   "split_half_r": 0.4258,
+   "mean_half_exposure": 167.4269,
+   "R_full": 0.5973,
+   "k_m": 225.8052,
+   "floor": 100
+  },
+  "fb_velo": {
+   "unit": "fastballs (FF, SI, FC)",
+   "n_player_seasons": 1080,
+   "split_half_r": 0.9993,
+   "mean_half_exposure": 380.8019,
+   "R_full": 0.9997,
+   "k_m": 0.2552,
+   "floor": 200.0
+  },
+  "sprint": {
+   "unit": "competitive_runs",
+   "k_m": null,
+   "note": "no per-run sprint data for 2015-2019 on disk (.cache/savant_sprint/ is a season leaderboard)"
+  },
+  "oaa_per1000": {
+   "unit": "innings",
+   "k_m": null,
+   "note": "no per-play OAA for 2015-2019 on disk (.cache/savant_oaa/ is a season leaderboard)"
+  },
+  "arm_z": {
+   "unit": "throws",
+   "k_m": null,
+   "note": "arm strength is cached from 2020 (.cache/savant_arm/)"
+  },
+  "brl_pa": {
+   "unit": "pa",
+   "k_m": null,
+   "note": "no per-event barrel flag for 2015-2019 on disk"
+  }
+ },
+ "not_computable": {
+  "sprint": "no per-run sprint data for 2015-2019 on disk (.cache/savant_sprint/ is a season leaderboard)",
+  "oaa_per1000": "no per-play OAA for 2015-2019 on disk (.cache/savant_oaa/ is a season leaderboard)",
+  "arm_z": "arm strength is cached from 2020 (.cache/savant_arm/)",
+  "brl_pa": "no per-event barrel flag for 2015-2019 on disk"
+ }
+}

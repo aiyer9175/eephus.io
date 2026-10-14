@@ -436,7 +436,30 @@ the survivorship sentence; the input sha256 list; the gate sha and the `--rlv-re
 
 ## Part 4. The k_m stabilization constants
 
-PENDING: written by TL_4_TOOL_LAB_BUILD as one dated amendment committed alone, before either look.
+**Amendment of 2026-10-14 (TL_4_TOOL_LAB_BUILD, item 1 of the list at the top; committed alone, before either look).** Measured by `python tools/tool_accuracy_lab.py --k-m` on MLB player-seasons with no prospect join, no grade read and no debut read, from the per-event caches on disk: `.cache/pbp_corpus/plays/<season>/plays-<season>.parquet` and `pitches-<season>.parquet`, `.cache/pbp_runners/plays/<season>/pa-<season>.parquet` (launch speed) and `runners-<season>.parquet` (stolen bases). Receipt `data/_labs/tool_accuracy/k_m.json`, sha256 9384ca02ec17ae4469e86dfb27d0c0fc12a18d79e461ffe0f872dc29bf0bd4b8.
+
+Seasons: of the 2015 to 2019 window, the per-event caches on disk hold [2018, 2019] only (no 2015, 2016 or 2017 MLB feed is cached), so every constant below is measured on those two seasons (default D-k1, recorded in the task report; the alternative is a fetch of the 2015 to 2017 feeds, about 7,300 games, before a look). The split is odd and even plate appearances (events) for every rate, odd and even batted balls for exit velocity, odd and even out-of-zone pitches for chase rate, odd and even in-zone swings for zone contact, odd and even fastballs for velocity, and odd and even games for stolen bases (a runner event, not a plate appearance). With r the split-half Pearson correlation across player-seasons at mean half exposure n_h, R = 2r / (1 + r) and k_m = 2 n_h (1 - R) / R, in the stat's own exposure unit. Player-season floors on total exposure (default D-k2): k_pct 300, hr_pa 300, avg 240, iso 240, babip 180, sb_per600 300, ev_avg 100, chase_pct 400, z_contact_pct 150, k_pct_pit 100, bb_pct_pit 100, fb_velo 200. Swing codes S, F, X, D, E, T, W, L, M, Q, R, O; contact codes F, X, D, E, T, L, O; zones 1 to 9 in, 11 to 14 out.
+
+| stat | exposure unit | player-seasons | split-half r | R (full) | k_m |
+|---|---|---|---|---|---|
+| k_pct | pa | 552 | 0.8435 | 0.9151 | 46.7354 |
+| hr_pa | pa | 552 | 0.5611 | 0.7188 | 197.0406 |
+| avg | ab | 605 | 0.3159 | 0.4801 | 468.3212 |
+| iso | ab | 605 | 0.5492 | 0.709 | 177.5259 |
+| babip | ab (less SO and HR, plus SF) | 584 | 0.2861 | 0.4449 | 401.5923 |
+| sb_per600 | pa (odd and even games) | 552 | 0.7689 | 0.8694 | 75.7105 |
+| ev_avg | attempts (batted balls) | 764 | 0.7562 | 0.8612 | 43.6082 |
+| chase_pct | oz_pitches | 726 | 0.8719 | 0.9316 | 68.3172 |
+| z_contact_pct | iz_swings | 858 | 0.8036 | 0.8911 | 59.3017 |
+| k_pct_pit | bf | 1040 | 0.6863 | 0.814 | 76.5133 |
+| bb_pct_pit | bf | 1040 | 0.4258 | 0.5973 | 225.8052 |
+| fb_velo | fastballs (FF, SI, FC) | 1080 | 0.9993 | 0.9997 | 0.2552 |
+| sprint | competitive_runs | n/a | n/a | n/a | NOT COMPUTABLE: no per-run sprint data for 2015-2019 on disk (.cache/savant_sprint/ is a season leaderboard) |
+| oaa_per1000 | innings | n/a | n/a | n/a | NOT COMPUTABLE: no per-play OAA for 2015-2019 on disk (.cache/savant_oaa/ is a season leaderboard) |
+| arm_z | throws | n/a | n/a | n/a | NOT COMPUTABLE: arm strength is cached from 2020 (.cache/savant_arm/) |
+| brl_pa | pa | n/a | n/a | n/a | NOT COMPUTABLE: no per-event barrel flag for 2015-2019 on disk |
+
+The regressed TAG of a NOT COMPUTABLE stat is not computed; its gap and percentile are, and no other frame substitutes. The lab carries these values as `K_M` in `tools/tool_accuracy_lab.py`, pinned to this table by `test_tool_accuracy_lab.py`.
 
 Method, fixed here: for each TAG stat, split-half reliability on MLB player-seasons 2015 to 2019,
 with no prospect join and no grade read. The split uses per-game or per-event data for those
@@ -836,8 +859,51 @@ survivorship sentence.
 
 ### T.10 MDE95 per primary cell
 
-PENDING: written by TL_4_TOOL_LAB_BUILD (`--look T --mde-only`) as one dated amendment committed
-alone, on a calendar day before the look.
+**Amendment of 2026-10-14 (TL_4_TOOL_LAB_BUILD, item 2 of the list at the top; committed alone, on a calendar day before the look).** Computed by `python tools/tool_accuracy_lab.py --look T --mde-only` on FIT rows only: MLB seasons [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025] (velocity [2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]); no HOLDOUT row and no 2026 line was loaded (asserted by the runner). The fold deltas are in `data/_labs/tool_tables_rederived/mde95_folds.json` (sha256 fc989b2ed453ace41900321e83345c633e4b4d6e7fc3a55c7395e03120f9d308). Frozen grade rows `data/_labs/tool_tables_rederived/grade_rows_frozen.json`: 1379 rows, sha256 eb7f31c1033de8afef9db868dc2c25c3982a5febe056536c3f60118034ff206c.
+
+| cell | MDE95 | folds used | rows per fold (season: n) | skipped folds |
+|---|---|---|---|---|
+| game_pwr__hr_per600 | 0.771543 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| game_pwr__iso | 0.011502 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| hit__avg | 0.004357 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| hit__k_pct | 0.310511 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| speed__sb_per600 | 0.42331 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| cmd__bb_pct_sp | 0.138746 | 8 | {'2016': 65, '2018': 67, '2019': 78, '2021': 76, '2022': 98, '2023': 112, '2024': 131, '2025': 121} | 2015: under 60 rows; 2017: under 60 rows |
+| fb__velo_sp | 0.493917 | 7 | {'2018': 67, '2019': 78, '2021': 76, '2022': 98, '2023': 112, '2024': 131, '2025': 121} | 2017: under 60 rows |
+
+MDE95 is 1.645 times the sample standard deviation (ddof 1) of d_s over the folds used; a fold with fewer than 60 rows leaves (the hitter cells' 2015 and 2016 folds, the SP cells' 2015 to 2017 folds as listed). Every primary cell holds at least 5 folds, so none is NOT COMPUTABLE for want of an MDE95.
+
+FIT inputs, sha256:
+- `.cache/fa_statsapi_hitting_2015.json`: 22afbc2b209e26c6a23cd1fdda51125756a1998b2d1d713c63b3be7cd5c3afc2
+- `.cache/fa_statsapi_hitting_2016.json`: b04598774abf37ad482bd17cc95b42972fa3837e364706ec404faa36b3c18817
+- `.cache/fa_statsapi_hitting_2017.json`: bb14f2a006eece205a1f1dc17a734c7eaa441eb2b9468e3f9c42dbff47577d39
+- `.cache/fa_statsapi_hitting_2018.json`: 0ed27cb23043ba42c748622f855ee676222aff4700656e93183d465bafbd1e97
+- `.cache/fa_statsapi_hitting_2019.json`: 66af1f1fa1869f5e22a3e20760d7f7929635b2600781c816822c7e7401142036
+- `.cache/fa_statsapi_hitting_2021.json`: ec737cc5087fb03ae3cc2d3db1a7a5dc46d2d68e661c3d53639d76bd3b1dda02
+- `.cache/fa_statsapi_hitting_2022.json`: 44ac1610bfda4cb594effa32a728aba9e756fecd163408b2525c1c6bd98c9599
+- `.cache/fa_statsapi_hitting_2023.json`: 1434de28fbc752eabb57804b184823fdf521f731169c22b71c7ad098c5986c5c
+- `.cache/fa_statsapi_hitting_2024.json`: 8bb44c15db16a8f8cfe2bccc08e5ad304be72ca38960a101de2454175dabd8c8
+- `.cache/fa_statsapi_hitting_2025.json`: a1e6455e8758ea0350b07bbcfe0126d1f5e71b56616ff819211677e7a1094935
+- `.cache/fa_statsapi_pitching_2015.json`: 64f223e3f62297abc922ebc2952cabfba462f1788e74fd8ae11a811f8e7e0ddb
+- `.cache/fa_statsapi_pitching_2016.json`: 1e8cdd99e1ce92b443dcfc373ffc185a9a94f4bf25a65a381deb07f8be0825f0
+- `.cache/fa_statsapi_pitching_2017.json`: 3ffab5e561f0cf194a4c51dea8d6638c223d83a1827af446b320da7fedb76369
+- `.cache/fa_statsapi_pitching_2018.json`: 6c2f6dc7623cb7cdea905b739ab50b85f018c28c35ad09ae66e092f537da677e
+- `.cache/fa_statsapi_pitching_2019.json`: f7059a367d50d6ed41d40ddc1bb59ba0fbc7e82f1407983f0cb526c4ae1b9864
+- `.cache/fa_statsapi_pitching_2021.json`: 6063e2ffac8f8f883ce9e88f823863d107b77cb6066a9b8d56aa43cdfe519c70
+- `.cache/fa_statsapi_pitching_2022.json`: fd7fb55b0a903cbe74885cfab53142b23a73f629e6140b83809eba183c7baad8
+- `.cache/fa_statsapi_pitching_2023.json`: 8fb532797c229434c33a165506232cfac116071cf3e3322df9ab3eb5b116df75
+- `.cache/fa_statsapi_pitching_2024.json`: f00d025220bb6ccacc24784de50c42f4a8135d7690af6026aeace9172dcdb225
+- `.cache/fa_statsapi_pitching_2025.json`: 18085f1ff299af1724d677928fae14166429658971bd62a14dc59e6cb2be5392
+- `.cache/velo_arsenal_2017.json`: 1de85c5aefb22511e8eebb60cfe784154f5d13039605b2f7b265e261e4d875dc
+- `.cache/velo_arsenal_2018.json`: 4f04b07237aae015ee39a4adb77fdff46396cc7ead774cf9d297a37ab28e2465
+- `.cache/velo_arsenal_2019.json`: 8fd4e1186bc7ccf1a26b067f3099bc26d8066eedbb3b2a86d32fc11ae4463a07
+- `.cache/velo_arsenal_2021.json`: 10715f92e81d188c154d3d96b99926ddc40b2aebad928656e6c1bef6d2f7329a
+- `.cache/velo_arsenal_2022.json`: d64131221e64de9300f284543e9c4e364bc23096a54b1644033a1783476396ef
+- `.cache/velo_arsenal_2023.json`: a03e160ef5390256cda682dc413432271bb572a5d03736ec7dc03b1b835549f6
+- `.cache/velo_arsenal_2024.json`: fb5cb50451407c7247503473285ca32dc4042b85b5addb8b1e3d25df4870178d
+- `.cache/velo_arsenal_2025.json`: 827868119115d06f811e17620656c255074a640b6c81cba00f7ab1e16df11736
+
+`.cache/velo_arsenal_2026.json`: present True, sha256 fadbb7483c682e582e63e76867c31cd7a4de2f20ea00fd884e41d78eb665f71d, written 2026-10-14T15:48:07.298070+00:00 through `pal_export.load_velo(2026)` (602 rows) after the 2026 regular season ended; no value in it was read.
 
 Method, fixed here. FIT rows only: MLB seasons 2015 to 2025 with 2020 excluded (velocity 2017 to
 2025); no HOLDOUT row and no 2026 line loaded, asserted. For each primary cell and each of its FIT
