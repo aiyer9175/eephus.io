@@ -83,6 +83,8 @@ def js():
     ctx = mr.MiniRacer()
     ctx.eval(_STUBS)
     ctx.eval(js_const(src, "_IFA_FLOOR_TIP"))
+    # Q9_13: the IFA cell marks a consensus grade with the C mark.
+    ctx.eval(js_const(src, "GRADE_C_MARK"))
     for f in _FUNCS:
         ctx.eval(js_function(src, f))
     return ctx

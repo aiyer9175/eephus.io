@@ -9578,7 +9578,7 @@
             <option value="statcast_plus">Statcast+ (highest)</option>
             <option value="source_confidence">Source confidence (most sources first)</option>
             <option value="tool">Tool grade (toolsiest)</option>
-            <option value="stock_movers">Biggest movers (|ΔFV|)</option>
+            <option value="stock_movers">Biggest movers</option>
           </optgroup>
           <optgroup label="Age &amp; ETA">
             <option value="age_asc">Youngest first</option>
@@ -9781,7 +9781,7 @@
         <button class="chip" data-il-sort="days"
                 title="Longest current IL stints first">Days on IL (longest)</button>
         <button class="chip" data-il-sort="fv"
-                title="Highest-FV injured prospects first">FV</button>
+                title="Highest-eFV injured prospects first">eFV</button>
         <button class="chip" data-il-sort="since"
                 title="Most recently placed on IL first">Since (newest)</button>
       </div>
@@ -16506,7 +16506,14 @@ function getFilteredActives() {
     // |fv_close - fv_open| picks up both risers and fallers without
     // requiring the reader to pre-select a direction (the Stock chip
     // narrows by direction if they want).
+    // EFV_DISPLAY_SWAPS on: the movement is the eFV series' (efvSeriesMove); a row with no
+    // eFV history sinks. Off: the consensus open-to-close move.
+    const _efvMv = efvDisplaySwaps();
     pool.sort((a, b) => {
+      if (_efvMv) {
+        const ma = efvSeriesMove(a), mb = efvSeriesMove(b);
+        return (mb ? Math.abs(mb.raw) : -1) - (ma ? Math.abs(ma.raw) : -1);
+      }
       const da = (a.fv_close != null && a.fv_open != null) ? Math.abs(a.fv_close - a.fv_open) : -1;
       const db = (b.fv_close != null && b.fv_open != null) ? Math.abs(b.fv_close - b.fv_open) : -1;
       return db - da;
@@ -19329,7 +19336,7 @@ const CHART_AXES = {
     { key: "barrel_pct",     label: "Barrel %",           getter: p => _scOf(p, "barrel_pct"),              fmt: _fmtPct },
   ],
   debuted: [
-    { key: "fv",            label: "Prospect FV",        getter: g => { const f = g.fv_close_raw ?? g.fv_close; return f != null ? fvCeil(f) : null; }, fmt: v => v.toString() },
+    { key: "fv",            label: "Consensus FV at debut", getter: g => { const f = g.fv_close_raw ?? g.fv_close; return f != null ? fvCeil(f) : null; }, fmt: v => v.toString() },
     { key: "career_war",    label: "Career WAR",         getter: g => (g.career_war || {}).career_war,      fmt: v => v.toFixed(1) },
     { key: "warwag",        label: "WARWAG",             getter: g => gradWarWag(g),                        fmt: v => (v >= 0 ? "+" : "") + v.toFixed(2) },
     { key: "war_per_yr",    label: "WAR / season",       getter: g => { const o = gradWarPerYr(g); return o ? o.war_per_yr : null; }, fmt: v => v.toFixed(2) },
@@ -19477,6 +19484,48 @@ function _chartEntities(mode) {
   return [];
 }
 
+// The axes a chart group offers. EFV_DISPLAY_SWAPS on, the Debuted group gains "eFV at
+// debut" (the grade a graduate carried into the majors) as its default Y over Career WAR on
+// X; chartRvmHeld decides which rows such a pairing may show.
+const _CHART_EFV_DEBUT_AXIS = { key: "efv_debut", label: "eFV at debut", getter: g => efvAtDebutRaw(g), fmt: v => String(Math.round(v)) };
+function chartAxesFor(mode) {
+  const axes = CHART_AXES[mode] || [];
+  if (mode === "debuted" && efvDisplaySwaps()) {
+    const war = axes.find(a => a.key === "career_war");
+    return [war, _CHART_EFV_DEBUT_AXIS].concat(axes.filter(a => a !== war));
+  }
+  return axes;
+}
+// R-VM (docs/efv-v2/EFV_V2_GATE.md, plan 8.B): eFV at debut is never set against an MLB
+// outcome for a debut cohort from efv_vintage_frame.R_VM_FIRST_DEBUT_YEAR on until that
+// cohort's R-VM look is recorded in the gate's part 9. A debuted chart that encodes eFV at
+// debut (an axis, the size, or the eFV colour) next to an outcome drops those rows and its
+// meta line says how many. test_prospx_efv_sentinel pins both constants to the repo.
+const _RVM_FIRST_DEBUT_YEAR = 2025;
+const _RVM_OPEN_COHORTS = [];
+const _CHART_OUTCOME_KEYS = ["career_war", "warwag", "war_per_yr", "wag"];
+function chartRvmHeld(mode, x, y, size, color) {
+  if (mode !== "debuted") return false;
+  const enc = [x, y, size];
+  const efvIn = enc.includes("efv_debut") || (color === "fv" && efvDisplaySwaps());
+  return efvIn && enc.some(k => _CHART_OUTCOME_KEYS.includes(k));
+}
+// A debut with no readable year is held too: its cohort cannot be shown to be open.
+function rvmReservedDebut(g) {
+  const y = (g && g.debut_date) ? parseInt(String(g.debut_date).slice(0, 4), 10) : NaN;
+  if (!Number.isFinite(y)) return true;
+  return y >= _RVM_FIRST_DEBUT_YEAR && !_RVM_OPEN_COHORTS.includes(y);
+}
+// The grade the chart's FV filter and FV colour read, named. EFV_DISPLAY_SWAPS on: eFV
+// (prospects) and eFV at debut (debuted); off, the consensus FV. Draft and overseas read
+// consensus; IFA reads the current grade (eFV where graded).
+function chartFvDimLabel(mode) {
+  if (mode === "prospects") return efvDisplaySwaps() ? "eFV" : "Cons. FV";
+  if (mode === "debuted") return efvDisplaySwaps() ? "eFV at debut" : "Cons. FV at debut";
+  if (mode === "ifa") return "Current grade";
+  return "Cons. FV";
+}
+
 // Per-entity categorical/numeric dimensions used by the color encoder +
 // population filters. Returns {org, level, pos, fv} with nulls where a
 // group doesn't carry that dimension (e.g. draft has no org/level).
@@ -19484,10 +19533,11 @@ function _chartDims(mode, e) {
   const _fvTier = v => (v == null ? null : fvCeil(v));
   if (mode === "prospects")
     return { org: e.org || null, level: (e.statline && e.statline.level) || e.level || null,
-             pos: _draftPosBucket(e.position), fv: (e.fv_close_raw ?? e.fv_close ?? null) };
+             pos: _draftPosBucket(e.position),
+             fv: efvDisplaySwaps() ? efvBoardValue(getEfv(e)) : (e.fv_close_raw ?? e.fv_close ?? null) };
   if (mode === "debuted")
     return { org: e.org || null, level: null, pos: _draftPosBucket(e.position),
-             fv: (e.fv_close_raw ?? e.fv_close ?? null) };
+             fv: efvDisplaySwaps() ? efvAtDebutRaw(e) : (e.fv_close_raw ?? e.fv_close ?? null) };
   if (mode === "draft")
     return { org: null, level: null, pos: _draftPosBucket(e.position), fv: e.consensus_fv ?? null };
   if (mode === "ifa")
@@ -19531,7 +19581,7 @@ function _chartWireControls(mode, distinct, anyFv, anyAge) {
   const colorSel = document.getElementById("chart-color");
   if (colorSel) {
     const opts = [`<option value="none">None</option>`];
-    if (anyFv)                opts.push(`<option value="fv">FV tier</option>`);
+    if (anyFv)                opts.push(`<option value="fv">${escapeHtml(chartFvDimLabel(mode))} tier</option>`);
     if (distinct.pos.size)    opts.push(`<option value="pos">Position</option>`);
     if (distinct.level.size)  opts.push(`<option value="level">Level</option>`);
     if (distinct.org.size)    opts.push(`<option value="org">Org</option>`);
@@ -19567,7 +19617,7 @@ function _chartWireControls(mode, distinct, anyFv, anyAge) {
   const fvLbl = document.querySelector(`[data-chart-filter-label="fv"]`);
   if (fvIn) {
     fvIn.style.display = anyFv ? "" : "none";
-    if (fvLbl) fvLbl.style.display = anyFv ? "" : "none";
+    if (fvLbl) { fvLbl.style.display = anyFv ? "" : "none"; fvLbl.textContent = chartFvDimLabel(mode) + " ≥"; }
     if (document.activeElement !== fvIn) fvIn.value = (state.chartFvMin != null ? state.chartFvMin : "");
     fvIn.onchange = () => { state.chartFvMin = fvIn.value === "" ? null : fvIn.value; renderCharts(); };
   }
@@ -19618,7 +19668,7 @@ function _chartWireControls(mode, distinct, anyFv, anyAge) {
 function renderCharts() {
   const mode = state.chartMode || "prospects";
   const grp = _CHART_GROUPS[mode] || _CHART_GROUPS.prospects;
-  const axes = CHART_AXES[mode];
+  const axes = chartAxesFor(mode);
   // Default axes
   if (!state.chartX || !axes.find(a => a.key === state.chartX)) state.chartX = axes[0].key;
   if (!state.chartY || !axes.find(a => a.key === state.chartY)) state.chartY = axes[1].key;
@@ -19728,6 +19778,16 @@ function renderCharts() {
     return true;
   });
   const nFiltered = allEntities.length - entities.length;
+  // R-VM: rows from a reserved debut cohort leave a pairing of eFV at debut with an outcome.
+  let nRvm = 0;
+  if (chartRvmHeld(mode, state.chartX, state.chartY, state.chartSizeBy, state.chartColorBy)) {
+    for (let i = entities.length - 1; i >= 0; i--) {
+      if (rvmReservedDebut(entities[i])) { entities.splice(i, 1); nRvm++; }
+    }
+  }
+  const _rvmNote = nRvm
+    ? `<div class="chart-rvm-note" style="color:var(--text-tertiary);">${nRvm} debut${nRvm === 1 ? "" : "s"} from ${_RVM_FIRST_DEBUT_YEAR} on left out: eFV at debut is not set against an MLB outcome for those cohorts before their registered look.</div>`
+    : "";
 
   // Color encoder - categorical (org/level/pos) or FV-tier continuous.
   const colorBy = state.chartColorBy || "none";
@@ -19796,7 +19856,7 @@ function renderCharts() {
     svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--text-tertiary)">${why}</text>`;
     svg.setAttribute("aria-label", `Scatterplot: no points plotted. ${why}`);
     document.getElementById("chart-meta").innerHTML =
-      `0 of ${entities.length} ${grp.noun} plotted${nFiltered ? ` · ${nFiltered} filtered out` : ""}`;
+      `0 of ${entities.length} ${grp.noun} plotted${nFiltered ? ` · ${nFiltered} filtered out` : ""}${_rvmNote}`;
     const _lg = document.getElementById("chart-legend"); if (_lg) _lg.innerHTML = "";
     document.getElementById("chart-stats").innerHTML = "";
     return;
@@ -20076,7 +20136,7 @@ function renderCharts() {
       `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block;border:0.5px solid var(--border);"></span>${escapeHtml(lbl)}</span>`;
     let colorHtml = "";
     if (colorBy === "fv") {
-      colorHtml = `<span style="color:var(--text-tertiary);">Color = FV tier:</span>` +
+      colorHtml = `<span style="color:var(--text-tertiary);">Color = ${escapeHtml(chartFvDimLabel(mode))} tier:</span>` +
         [70, 60, 55, 50, 45, 40].map(t => swatch(`var(--fv-${t}-bd)`, String(t))).join("");
     } else if (colorCats.length) {
       const shown = colorCats.slice(0, 16);
@@ -20116,7 +20176,7 @@ function renderCharts() {
   if (fOrg !== "all")   addChip("org", `Org: ${fOrg}`);
   if (fLevel !== "all") addChip("level", `Level: ${fLevel}`);
   if (fPos !== "all")   addChip("pos", `Pos: ${fPos}`);
-  if (fFv != null)      addChip("fv", `FV ≥ ${fFv}`);
+  if (fFv != null)      addChip("fv", `${chartFvDimLabel(mode)} ≥ ${fFv}`);
   if (fAge != null)     addChip("age", `Age ≤ ${fAge}`);
   if (xMinF != null)    addChip("xmin", `${xLbl} ≥ ${xMinF}`);
   if (xMaxF != null)    addChip("xmax", `${xLbl} ≤ ${xMaxF}`);
@@ -20127,7 +20187,7 @@ function renderCharts() {
   const chipStrip = activeChips.length
     ? `<div class="chart-active-filters"><span class="chart-af-label">Filters:</span>${activeChips.join("")}</div>` : "";
   document.getElementById("chart-meta").innerHTML =
-    `<div>${dots.length} of ${entities.length} ${grp.noun} plotted · ${escapeHtml(xLbl)} vs ${escapeHtml(yLbl)}${_coverageNote}${_filterNote}</div>${chipStrip}`;
+    `<div>${dots.length} of ${entities.length} ${grp.noun} plotted · ${escapeHtml(xLbl)} vs ${escapeHtml(yLbl)}${_coverageNote}${_filterNote}</div>${_rvmNote}${chipStrip}`;
   // a11y - keep the flagship scatter's accessible name in sync with what it
   // plots so a screen reader announces the axes + sample (and trend, when
   // drawn) instead of a bare "Scatterplot". Mirrors the visible meta line.
@@ -21471,12 +21531,17 @@ function _tmDates() {
   return DATA._tmDates;
 }
 
-// FV pill themed by tier (reuses the --fv-NN-* tokens → correct in both modes).
+// Point-in-time CONSENSUS FV pill themed by tier (reuses the --fv-NN-* tokens → correct in
+// both modes). It is named as consensus: the C mark, a dashed border, data-grade-basis and a
+// title. EFV_DISPLAY_SWAPS on, it rounds UP (fvCeil, the consensus rule); off, it keeps the
+// nearest round it always had, so no printed digit moves before the flip.
 function _tmFvPill(fv, plus) {
   if (fv == null) return "";
-  const tier = Math.max(20, Math.min(80, Math.round(fv / 5) * 5));
-  const lab = (Number.isInteger(fv) ? fv : fv.toFixed(0)) + (plus ? "+" : "");
-  return `<span class="tm-fv" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);">${escapeHtml(String(lab))}</span>`;
+  const up = efvDisplaySwaps();
+  const shown = up ? fvCeil(fv) : (Number.isInteger(fv) ? fv : fv.toFixed(0));
+  const tier = Math.max(20, Math.min(80, Math.round((up ? shown : fv) / 5) * 5));
+  const lab = shown + (plus ? "+" : "");
+  return `<span class="tm-fv" data-grade-basis="consensus" title="Point-in-time consensus FV ${escapeHtml(String(lab))} (no eFV history for this date)" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);border-style:dashed;">${escapeHtml(String(lab))}${GRADE_C_MARK}</span>`;
 }
 
 // Point-in-time eFV as of `dateStr`: the model grade (xfv_history `x`) at the
@@ -21504,7 +21569,7 @@ function _tmGradePill(r) {
     const efv = Math.round(r.efv);   // eFV rounds to NEAREST (not ceiling)
     const tier = Math.max(20, Math.min(80, Math.round(efv / 5) * 5));
     const asOf = r.efvAsOf ? _tmFmtDate(r.efvAsOf) : "this snapshot";
-    return `<span class="tm-fv tm-fv-efv" title="Point-in-time eFV (model grade) as of ${escapeHtml(asOf)}" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);">${efv}<sup>eFV</sup></span>`;
+    return `<span class="tm-fv tm-fv-efv" data-grade-basis="efv" title="Point-in-time eFV (model grade) as of ${escapeHtml(asOf)}" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);">${efv}<sup>eFV</sup></span>`;
   }
   return _tmFvPill(r.fv, r.fvPlus);
 }
@@ -21581,7 +21646,11 @@ function _boardAsOf(dateStr) {
   // Rank on the SAME value the row's pill displays: point-in-time eFV first,
   // point-in-time consensus FV where the model's history abstains - so the
   // board order can never disagree with the grades it shows.
-  rows.sort((a, b) => (_tmGradeVal(b) - _tmGradeVal(a))
+  // EFV_DISPLAY_SWAPS on: rows with a point-in-time eFV rank first and the consensus-only
+  // rows follow as a labelled tail (_tmRowsWithTail), so one order never mixes the scales.
+  const _efvFirst = efvDisplaySwaps();
+  rows.sort((a, b) => (_efvFirst ? ((b.efv != null) - (a.efv != null)) : 0)
+    || (_tmGradeVal(b) - _tmGradeVal(a))
     || ((a.avgRank ?? 9e9) - (b.avgRank ?? 9e9))
     || a.name.localeCompare(b.name));
   rows.forEach((r, i) => { r.rank = i + 1; });
@@ -21613,11 +21682,16 @@ function _boardDiff(dateA, dateB, topN) {
     // eFV carries decimals -> round to 1dp for display and gate gainers/
     // sliders on the site's 0.5-grade eFV dead-band so day-to-day model
     // drift doesn't flood the grade buckets.
-    const fvDelta = Math.round((_tmGradeVal(b) - _tmGradeVal(a)) * 10) / 10;
-    if (rankDelta > 0) risers.push({ a, b, rankDelta, fvDelta });
-    else if (rankDelta < 0) fallers.push({ a, b, rankDelta, fvDelta });
-    if (fvDelta >= _EFV_STEP_EPS) gainers.push({ a, b, fvDelta, rankDelta });
-    else if (fvDelta <= -_EFV_STEP_EPS) sliders.push({ a, b, fvDelta, rankDelta });
+    // The scale the two grades sit on. EFV_DISPLAY_SWAPS on, a pair on two scales (eFV
+    // on one date, consensus on the other) has no grade delta.
+    const fvBasis = (a.efv != null && b.efv != null) ? "efv"
+                  : (a.efv == null && b.efv == null) ? "consensus" : "mixed";
+    const fvDelta = (fvBasis === "mixed" && efvDisplaySwaps()) ? null
+                  : Math.round((_tmGradeVal(b) - _tmGradeVal(a)) * 10) / 10;
+    if (rankDelta > 0) risers.push({ a, b, rankDelta, fvDelta, fvBasis });
+    else if (rankDelta < 0) fallers.push({ a, b, rankDelta, fvDelta, fvBasis });
+    if (fvDelta != null && fvDelta >= _EFV_STEP_EPS) gainers.push({ a, b, fvDelta, rankDelta, fvBasis });
+    else if (fvDelta != null && fvDelta <= -_EFV_STEP_EPS) sliders.push({ a, b, fvDelta, rankDelta, fvBasis });
   }
   for (const [key, a] of aTop) {
     if (bTop.has(key)) continue;
@@ -21714,7 +21788,7 @@ function _tmHitMissHTML(board) {
   const busts = byWag.slice(-5).reverse();
   const chip = (r) => `<a class="tm-hm-chip" href="#player=${escapeHtml(r.key)}"
       onclick="event.preventDefault();state.section='timemachine';state.view={type:'player',key:'${escapeHtml(r.key)}'};render();syncToURL();"
-      title="Graded ${r.fv} FV as of this date · ${(+r.war).toFixed(1)} WAR since · ${r.wag >= 0 ? "+" : ""}${(+r.wag).toFixed(1)} WAG">
+      title="Graded consensus FV ${r.fv} as of this date · ${(+r.war).toFixed(1)} WAR since · ${r.wag >= 0 ? "+" : ""}${(+r.wag).toFixed(1)} WAG">
       <span class="tm-hm-name">${escapeHtml(r.name)}</span>
       ${_tmFvPill(r.fv, r.fvPlus)}
       <span class="tm-hm-wag ${r.wag >= 0 ? "is-pos" : "is-neg"}">${r.wag >= 0 ? "+" : ""}${(+r.wag).toFixed(1)} WAG</span>
@@ -21726,6 +21800,21 @@ function _tmHitMissHTML(board) {
         <div class="tm-hm-col"><div class="tm-hm-h is-bad">✗ Underperformed grade</div>${busts.map(chip).join("")}</div>
       </div>
     </details>`;
+}
+
+// The as-of board's rows. EFV_DISPLAY_SWAPS on, a one-line label sits above the first
+// consensus-only row (no eFV history covers him on that date), which _boardAsOf orders last.
+function _tmRowsWithTail(board, rowFn) {
+  const tail = efvDisplaySwaps();
+  let marked = false;
+  return board.map(r => {
+    let pre = "";
+    if (tail && !marked && r.efv == null) {
+      marked = true;
+      pre = `<div class="tm-tail-note" data-grade-basis="consensus" style="padding:6px 8px;font-family:var(--font-retro-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);background:var(--bg-secondary);border-bottom:1px solid var(--border-light);">No eFV history on this date: ordered and graded by consensus FV (marked C)</div>`;
+    }
+    return pre + rowFn(r);
+  }).join("");
 }
 
 function _tmBoardHeadHTML(slotLabel) {
@@ -21876,7 +21965,8 @@ function _tmChangeGroup(title, glyph, items, kind) {
       delta = `<span class="tm-delta ${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"} ${Math.abs(d)}</span>`;
     } else if (kind === "fv") {
       const d = it.fvDelta;
-      delta = `<span class="tm-delta ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : ""}${d} FV</span>`;
+      const dUnit = it.fvBasis === "efv" ? "eFV" : it.fvBasis === "consensus" ? "cons. FV" : "FV";
+      delta = `<span class="tm-delta ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : ""}${d} ${dUnit}</span>`;
     } else if (kind === "new") {
       delta = `<span class="tm-delta up">✦ new</span>`;
     } else if (kind === "drop") {
@@ -21937,8 +22027,8 @@ function _tmRenderBody() {
       </div>
       ${hind ? _tmHitMissHTML(board) : ""}
       ${hind
-        ? `<div class="tm-board tm-board--hind">${_tmHindHeadHTML()}${board.map(_tmHindRowHTML).join("")}</div>`
-        : `<div class="tm-board">${_tmBoardHeadHTML("")}${board.map(r => _tmBoardRowHTML(r, {})).join("")}</div>`}`;
+        ? `<div class="tm-board tm-board--hind">${_tmHindHeadHTML()}${_tmRowsWithTail(board, _tmHindRowHTML)}</div>`
+        : `<div class="tm-board">${_tmBoardHeadHTML("")}${_tmRowsWithTail(board, r => _tmBoardRowHTML(r, {}))}</div>`}`;
     const hb = document.getElementById("tm-hindsight");
     if (hb) hb.onchange = () => { state.tmHindsight = hb.checked; _tmRenderBody(); syncToURL(); };
     _tmWirePhotoLog(el);
@@ -22250,7 +22340,7 @@ function renderInjured() {
     <span>IL type</span>
     <span class="sort-header" data-il-sort="since" title="Sort by IL placement date">Since</span>
     <span class="sort-header" data-il-sort="days_asc" title="Sort by IL days - click to toggle asc/desc" style="text-align:right;">Days</span>
-    <span class="sort-header" data-il-sort="fv" title="Sort by FV (high to low)" style="text-align:center;">FV</span>
+    <span class="sort-header" data-il-sort="fv" title="Sort by eFV (high to low); consensus FV where eFV abstains" style="text-align:center;">eFV</span>
     <span>Reason</span>
   </div>`;
 
@@ -22744,10 +22834,12 @@ function renderRecentlyTraded() {
     const v = last ? (last.consensus_fv_raw ?? parseFloat(last.consensus_fv_label)) : null;
     return Number.isFinite(v) ? v : 0;
   };
+  // EFV_DISPLAY_SWAPS on: the column sorts on the grade it prints (efvRankValue).
+  const _gradeSortNum = efvDisplaySwaps() ? (row => efvRankValue(row.p)) : _fvNum;
   if (tradedMode === "name") {
     filtered.sort((a, b) => (a.p.player_name || "").localeCompare(b.p.player_name || ""));
   } else if (tradedMode === "fv") {
-    filtered.sort((a, b) => _fvNum(b) - _fvNum(a));
+    filtered.sort((a, b) => _gradeSortNum(b) - _gradeSortNum(a));
   }
   // "date" (default) leaves the upstream order intact - getFilteredAcquired
   // already returns newest-first.
@@ -22762,7 +22854,7 @@ function renderRecentlyTraded() {
     <span class="sort-header" data-traded-sort="name" title="Sort by player name (A-Z)">Player · pos · org · age</span>
     <span class="sort-header" data-traded-sort="date" title="Sort by acquisition date (newest first)">Acquisition date</span>
     <span>Method · context</span>
-    <span class="sort-header" data-traded-sort="fv" style="text-align:center;" title="Sort by Consensus Future Value (high to low) · stock delta + direction below">FV · stock</span>
+    <span class="sort-header" data-traded-sort="fv" style="text-align:center;" title="${efvDisplaySwaps() ? "Sort by eFV (high to low)" : "Sort by consensus FV (high to low); the grade printed is eFV"} · stock delta + direction below">eFV · stock</span>
     <span class="desktop-only" style="text-align:center;">FV history</span>
   </div>`;
 
@@ -22845,6 +22937,24 @@ function renderRecentlyTraded() {
       ibp_mm:  Math.round(ibp_mm * 100) / 100,
       cash_mm: Math.round(cash_mm * 100) / 100,
     };
+  };
+  // A traded prospect's eFV (the board value, unrounded), or null for a debuted party or
+  // one eFV does not grade. Read only with EFV_DISPLAY_SWAPS on.
+  const _taEfvRaw = (e, v) => {
+    if (!e || !v || v.debuted) return null;
+    const k = (e.p && e.p.player_key) || v.key || null;
+    if (!k) return null;
+    const x = getEfv({ player_key: k });
+    if (!x || (x.kind && x.kind !== "active")) return null;
+    const g = efvBoardValue(x);
+    return (g != null && isFinite(g)) ? g : null;
+  };
+  // The grade clause of a priced party's tooltip, named.
+  const _taGradeTip = (e, v) => {
+    if (v.debuted) return "";
+    const g = efvDisplaySwaps() ? _taEfvRaw(e, v) : null;
+    if (g != null) return ` · eFV ${Math.round(g)}`;
+    return v.fv != null ? ` · Consensus FV ${efvDisplaySwaps() ? fvCeil(v.fv) : v.fv}` : "";
   };
   // Career WAR, shown in a chip's tooltip as context only. It never enters
   // a total: it counts seasons before the trade and at other clubs.
@@ -23397,7 +23507,7 @@ function renderRecentlyTraded() {
             const rzTxt = (g.rzState === "ready" && e.rz.mlb)
               ? `<span class="ta-rz-chip" style="color:${e.rz.war < 0 ? "var(--down)" : "var(--text-tertiary)"};font-family:var(--font-mono);font-size:9px;white-space:nowrap;">${_taWarText(e.rz.war)}</span>` : "";
             const kindLbl = v.kind === "tv"
-              ? `Value today ${_taMM(v.value)}: the Trade Machine price (${_srcLbl})${v.fv != null && !v.debuted ? ` · FV ${v.fv}` : ""}${tbsHere != null ? ` · TBS ${tbsHere}` : ""}${_warCtx}`
+              ? `Value today ${_taMM(v.value)}: the Trade Machine price (${_srcLbl})${_taGradeTip(e, v)}${tbsHere != null ? ` · TBS ${tbsHere}` : ""}${_warCtx}`
               : v.kind === "pending" ? "Loading trade values"
               : `Unpriced (${_whyLbl}); valued at $0 in this side's total${_warCtx}`;
             const vetTag = (v.debuted || (e.p._mlb_vet && v.kind !== "tv" && v.status == null))
@@ -23419,8 +23529,13 @@ function renderRecentlyTraded() {
               : "";
             const _fvNum = e.p.fv_close != null ? e.p.fv_close
                          : (!v.debuted && v.fv != null ? v.fv : null);
-            const _fvBadge = _fvNum != null
-              ? `<span class="fv-badge ${fvClass(String(fvCeil(_fvNum)))}" style="font-size:8px;padding:0 3px;line-height:1.5;flex-shrink:0;">${fvCeil(_fvNum)}</span>`
+            // EFV_DISPLAY_SWAPS on: a prospect's eFV (nearest); else, and where eFV
+            // abstains, the consensus FV named (C mark, dashed, rounded up).
+            const _efvP = efvDisplaySwaps() ? _taEfvRaw(e, v) : null;
+            const _fvBadge = _efvP != null
+              ? `<span class="fv-badge ${fvClass(String(Math.round(_efvP)))}" data-grade-basis="efv" title="eFV ${Math.round(_efvP)}" style="font-size:8px;padding:0 3px;line-height:1.5;flex-shrink:0;">${Math.round(_efvP)}</span>`
+              : _fvNum != null
+              ? `<span class="fv-badge ${fvClass(String(fvCeil(_fvNum)))}" data-grade-basis="consensus" title="Consensus FV ${fvCeil(_fvNum)}" style="font-size:8px;padding:0 3px;line-height:1.5;flex-shrink:0;border-style:dashed;">${fvCeil(_fvNum)}${GRADE_C_MARK}</span>`
               : "";
             chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl + rzLbl)}" data-ta-kind="${v.kind}" data-ta-key="${escapeHtml(v.key || "")}" data-ta-mm="${v.value != null ? v.value : (v.kind === "unpriced" ? 0 : "")}" data-ta-rwar="${g.rzState === "ready" ? e.rz.war : ""}" data-ta-mlbam="${v.mlbam != null ? v.mlbam : ""}">${star}${vetTag}${nameMarkup}${_posLvl}${_fvBadge}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}</span>${rzTxt}</span>`);
           }
@@ -23448,7 +23563,9 @@ function renderRecentlyTraded() {
             const v = e.val;
             if (v.kind !== "tv" || v.value == null) continue;
             if (!v.debuted) {
-              if (v.fv != null) { fv += Number(v.fv); prospect_$ += Number(v.value); }
+              // EFV_DISPLAY_SWAPS on: the prospect side counts eFV points; off, consensus.
+              const g = efvDisplaySwaps() ? _taEfvRaw(e, v) : (v.fv != null ? Number(v.fv) : null);
+              if (g != null) { fv += g; prospect_$ += Number(v.value); }
             } else {
               vet_$ += Number(v.value);
               vet_n += 1;
@@ -23463,7 +23580,8 @@ function renderRecentlyTraded() {
           const parts = [];
           if (split.fv > 0 && split.prospect_$ > 0) {
             const perFv = (split.prospect_$ / split.fv).toFixed(1);
-            parts.push(`<span class="g-term" data-term="dollars_per_fv" style="color:var(--text-tertiary);font-size:9px;font-weight:500;cursor:help;" title="Prospect-side FV-pts received and the per-FV-pt $ implied by FV→WAR→$ projection (click for the Library entry)">(${split.fv.toFixed(0)} FV · $${perFv}M/FV)</span>`);
+            const _u = efvDisplaySwaps() ? "eFV" : "cons. FV";
+            parts.push(`<span class="g-term" data-term="dollars_per_fv" data-grade-basis="${efvDisplaySwaps() ? "efv" : "consensus"}" style="color:var(--text-tertiary);font-size:9px;font-weight:500;cursor:help;" title="Prospect-side ${_u} points received and the dollars per point implied by the FV to WAR to $ projection (click for the Library entry)">(${split.fv.toFixed(0)} ${_u} · $${perFv}M/${efvDisplaySwaps() ? "eFV" : "FV"})</span>`);
           }
           if (split.vet_n > 0 && split.prospect_$ !== 0) {
             const vLabel = split.vet_n === 1 ? "vet" : `${split.vet_n} vets`;
@@ -25313,9 +25431,10 @@ function _renderDraftCard(p) {
       <span class="fv-badge${fvBadgeChainClasses(p)}" style="font-size:var(--fs-xs);padding:2px 5px;border-radius:3px;
             border:none;min-width:0;font-family:inherit;letter-spacing:0;
             background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;position:relative;overflow:visible;"
-            title="Consensus future value${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
+            data-grade-basis="consensus"
+            title="${escapeHtml(DRAFT_FV_TIP)}${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
               ? ` (raw avg ${fvCeil(p.consensus_fv_raw)})` : ''}">
-        FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}${fvBadgeChainMarks(p)}
+        Cons. FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}${fvBadgeChainMarks(p)}
       </span>
     </div>
     <!-- v19 - Single wrap-flex meta strip: no middot separators, chip
@@ -25323,7 +25442,7 @@ function _renderDraftCard(p) {
          truncates with ellipsis when the card is at min-width. -->
     <div class="draft-card-meta" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:var(--fs-xs);color:var(--text-secondary);margin-top:4px;min-width:0;">
       <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;"><b>${escapeHtml(p.position || "?")}</b></span>${scopeChip}
-      <span style="display:inline-flex;align-items:center;gap:3px;min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${schoolLine}</span>
+      <span style="display:inline-flex;align-items:center;gap:3px;min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${schoolLine}</span>${_draftEfvNowChipHTML(p)}
       <span style="margin-left:auto;display:inline-flex;gap:4px;flex-shrink:0;">
         <span style="padding:1px 5px;border-radius:3px;background:${spColor}22;
               color:${spColor};font-weight:700;"
@@ -25497,7 +25616,7 @@ function _renderWarRoom(host) {
       const tagCol = tag === "steal" ? "var(--neon-green)" : tag === "reach" ? "var(--neon-red)" : "var(--text-tertiary)";
       const deltaStr = bd == null ? "" : `<span style="color:${tagCol};">${bd > 0 ? "+" + bd : bd}</span>`;
       const our = p.player_key
-        ? `<a class="fa-player-link" href="#player=${encodeURIComponent(p.player_key)}">${p.consensus_fv != null ? "FV " + fvCeil(p.consensus_fv) : "on board"}</a>`
+        ? `<a class="fa-player-link" href="#player=${encodeURIComponent(p.player_key)}">${p.consensus_fv != null ? "Cons. FV " + fvCeil(p.consensus_fv) : "on board"}</a>`
         : `<span class="tm-dim">off board</span>`;
       const surCol = (p.exp_surplus_usd || 0) >= 0 ? "var(--neon-green)" : "var(--neon-red)";
       const bvs = p.bonus_vs_slot_usd;
@@ -25597,7 +25716,7 @@ function _renderMockDraft(host, cls) {
       <td><span class="draft-cell-ico">${orgLinkHTML(p.team, `${pxClubLogoHTML(p.team, "sm")}<strong>${escapeHtml(p.team || "?")}</strong>`, { cls: "px-club" })}</span></td>
       <td><span class="draft-cell-ico">${logo}${nameCell}</span></td>
       <td style="white-space:nowrap;">${escapeHtml(p.position || "")} ${_poolChip(p)}</td>
-      <td style="text-align:center;font-weight:700;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}${p.consensus_fv_plus ? "<span style='font-size:9px;'>+</span>" : ""}</td>
+      <td data-grade-basis="consensus" style="text-align:center;font-weight:700;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}${p.consensus_fv_plus ? "<span style='font-size:9px;'>+</span>" : ""}</td>
       <td style="text-align:center;font-weight:700;color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus != null ? p.draft_stock_plus : "-"}</td>
       <td style="text-align:center;font-size:11px;">${_valueCell(p)}</td>
       <td style="font-size:10px;">${_fitChips(p)}</td>
@@ -25617,7 +25736,7 @@ function _renderMockDraft(host, cls) {
     <table class="draft-table">
       <thead><tr>
         <th style="text-align:center;">#</th><th>Team</th><th>Player</th><th>Pos</th>
-        <th style="text-align:center;">FV</th><th style="text-align:center;" title="Draft Stock+ - class-normalized rank index, 100 = median">DS+</th>
+        <th style="text-align:center;" title="${escapeHtml(DRAFT_FV_TIP)}">Cons. FV</th><th style="text-align:center;" title="Draft Stock+ - class-normalized rank index, 100 = median">DS+</th>
         <th style="text-align:center;">Value</th><th>Why</th>
       </tr></thead>
       <tbody>${rows}</tbody>
@@ -25997,7 +26116,7 @@ function _simBoardHTML() {
         <td style="text-align:center;font-weight:600;">${p.consensus_pick}</td>
         <td><span class="draft-cell-ico">${logo}${escapeHtml(p.player_name)}</span></td>
         <td>${escapeHtml(p.position || "")} ${_simPoolChip(p)}</td>
-        <td style="text-align:center;font-weight:700;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
+        <td data-grade-basis="consensus" style="text-align:center;font-weight:700;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
         <td style="text-align:right;">${_simMoney(ask)}</td>
         <td style="text-align:center;">
           <button class="chip ${controlled && affordable ? "" : "reset-chip"}" ${controlled && affordable ? "" : "disabled"}
@@ -26019,7 +26138,7 @@ function _simBoardHTML() {
       </div>
       <table class="draft-table">
         <thead><tr><th style="text-align:center;">Board #</th><th>Player</th><th>Pos</th>
-          <th style="text-align:center;">FV</th><th style="text-align:right;">Ask</th><th style="text-align:center;">Pick</th></tr></thead>
+          <th style="text-align:center;" title="${escapeHtml(DRAFT_FV_TIP)}">Cons. FV</th><th style="text-align:right;">Ask</th><th style="text-align:center;">Pick</th></tr></thead>
         <tbody>${rows || `<tr><td colspan="6">No players match these filters.</td></tr>`}</tbody>
       </table>
     </div>`;
@@ -26038,7 +26157,7 @@ function _simResultsHTML() {
         <td><span class="draft-cell-ico">${orgLinkHTML(pick.team, pxClubLogoHTML(pick.team, "sm") + escapeHtml(pick.team), { cls: "px-club" })}</span></td>
         <td>${escapeHtml(player ? player.player_name : "Unknown")}</td>
         <td>${escapeHtml(player ? player.position : "-")}</td>
-        <td style="text-align:center;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
+        <td data-grade-basis="consensus" style="text-align:center;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
         <td style="text-align:right;">${_simMoney(pick.bonus)}</td>
         <td style="text-align:center;color:${delta > 0 ? "var(--neon-cyan)" : delta < 0 ? "var(--neon-orange)" : "var(--text-tertiary)"};">${delta > 0 ? "+" + delta : delta}</td>
         <td style="text-align:center;font-weight:700;color:${_simGradeColor(pick.grade)};">${pick.grade}</td>
@@ -26050,7 +26169,7 @@ function _simResultsHTML() {
       <div class="filter-label" style="margin-bottom:6px;">Recent picks</div>
       <table class="draft-table">
         <thead><tr><th style="text-align:center;">#</th><th>Team</th><th>Player</th><th>Pos</th>
-          <th style="text-align:center;">FV</th><th style="text-align:right;">Bonus</th>
+          <th style="text-align:center;" title="${escapeHtml(DRAFT_FV_TIP)}">Cons. FV</th><th style="text-align:right;">Bonus</th>
           <th style="text-align:center;">vs board</th><th style="text-align:center;">Grade</th><th>Who</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -26337,6 +26456,8 @@ function _renderDraftLeaderboard(host, cls) {
         ${restPills}</li>`;
     }).join("");
 
+  // EFV_DISPLAY_SWAPS: an "eFV now" column when a signed player on the list joins a pro eFV.
+  const _lbEfvCol = efvDisplaySwaps() && top.some(p => _draftEfvNow(p));
   const topRows = top.map((p, i) => {
     const _sc = _draftHasClassRank(p) ? null : _draftBaScope(p);
     const ord = _draftHasClassRank(p) ? String(i + 1)
@@ -26347,7 +26468,7 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${p.school ? _draftSchoolLinkHTML(p) : "?"}</span></td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || " - "}</td>
-    <td>${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</td>
+    <td data-grade-basis="consensus" title="${escapeHtml(DRAFT_FV_TIP)}">${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</td>${_lbEfvCol ? `<td>${_draftEfvNowHTML(p)}</td>` : ""}
     <td>${p.projected_round ? "R" + p.projected_round : " - "}</td>
   </tr>`;
   }).join("");
@@ -26376,7 +26497,7 @@ function _renderDraftLeaderboard(host, cls) {
         ${_baSwitch}
         <table class="draft-table">
           <thead><tr><th>#</th><th>Name</th><th>Pos</th><th>School</th>
-            <th>DS+</th><th>FV</th><th>Round</th></tr></thead>
+            <th>DS+</th><th title="${escapeHtml(DRAFT_FV_TIP)}">Cons. FV</th>${_lbEfvCol ? `<th title="${escapeHtml(EFV_NOW_TIP)}">eFV now</th>` : ""}<th>Round</th></tr></thead>
           <tbody>${topRows}</tbody>
         </table>
         ${(!leaderShowAll && leaderHidden > 0)
@@ -26461,7 +26582,7 @@ function _renderClassStrength(host, classes) {
       <table class="draft-table" style="margin-top:6px;">
         <thead><tr>
           <th>Year</th><th>Prospects</th><th>Hit / Pit</th>
-          <th>55+ FV</th><th>Mean FV</th>
+          <th title="Prospects with a draft FV (consensus) of 55 or more">Cons. FV 55+</th><th title="Mean draft FV (consensus) over the graded prospects">Mean cons. FV</th>
         </tr></thead>
         <tbody>
           ${summary.map(r => {
@@ -26472,7 +26593,7 @@ function _renderClassStrength(host, classes) {
               <td><span style="color:var(--text-secondary);">${r.hit}</span>
                   / <span style="color:var(--neon-orange);">${r.pit}</span></td>
               <td style="${r.elite === m_elite && m_elite > 0 ? "color:var(--neon-cyan);font-weight:600;" : ""}">${r.elite}</td>
-              <td style="${(+r.meanFv) === m_meanFv && m_meanFv > 0 ? "color:var(--neon-cyan);font-weight:600;" : ""}">${r.meanFv}</td>
+              <td data-grade-basis="consensus" style="${(+r.meanFv) === m_meanFv && m_meanFv > 0 ? "color:var(--neon-cyan);font-weight:600;" : ""}">${r.meanFv}</td>
             </tr>`;
           }).join("")}
         </tbody>
@@ -26490,7 +26611,7 @@ function _renderClassStrength(host, classes) {
       return `<g transform="translate(${i * (barW + gap)},0)">
         <rect x="0" y="${barH - h}" width="${barW}" height="${h}"
               fill="${_draftFvBucketColor(parseFloat(k))}" fill-opacity="${k.includes("+") ? 0.6 : 1}">
-          <title>${k} FV - ${v} prospects</title></rect>
+          <title>${k} consensus FV - ${v} prospects</title></rect>
         <text x="${barW/2}" y="${barH - h - 4}" text-anchor="middle"
               font-size="9" fill="var(--text-secondary)">${v || ""}</text>
         <text x="${barW/2}" y="${barH + 10}" text-anchor="middle"
@@ -26509,7 +26630,7 @@ function _renderClassStrength(host, classes) {
   }).join("");
 
   host.innerHTML = _draftCaption("Class strength",
-      `${drawn.length} scouted classes · FV distribution + hitter/pitcher split, year over year · click any class to open its board`)
+      `${drawn.length} scouted classes · consensus FV distribution + hitter/pitcher split, year over year · click any class to open its board`)
     + `
     <div class="draft-results-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));">
       ${summaryStrip}
@@ -26857,25 +26978,27 @@ function _ifaFvProgHTML(s) {
   // Tier color keys off the LABEL that is actually printed, not off fvCeil(v).
   // Keying it off the ceiling mis-tiered every eFV row whose value rounds DOWN
   // (44.2 prints "44" but ceil'd to 45, so it wore the 45-tier chrome).
-  const badge = (label, muted) => {
+  // A consensus grade (the signing grade always, the current grade on the consensus basis)
+  // wears the C mark and data-grade-basis "consensus"; an eFV grade, data-grade-basis "efv".
+  const badge = (label, muted, cons) => {
     const style = muted ? `font-size:9px;padding:0 4px;opacity:0.5;filter:saturate(0.4);`
                         : `font-size:10px;padding:1px 5px;`;
-    return `<span class="fv-badge ${fvClass(String(label))}" style="${style}">${escapeHtml(String(label))}</span>`;
+    return `<span class="fv-badge ${fvClass(String(label))}" data-grade-basis="${cons ? "consensus" : "efv"}" style="${style}">${escapeHtml(String(label))}${cons ? GRADE_C_MARK : ""}</span>`;
   };
   if (_ifaIsFloor(s)) {
     const fl = `<span class="fv-badge fv-20" style="font-size:10px;padding:0 4px;background:transparent;border:1px dashed var(--text-tertiary);color:var(--text-tertiary);" title="${escapeHtml(_IFA_FLOOR_TIP)}">${escapeHtml(curLbl)} floor</span>`;
     return sig == null ? fl
-      : `<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(`consensus FV at signing ${sigLbl}. ` + _IFA_FLOOR_TIP)}">${badge(sigLbl, true)}${fl}</span>`;
+      : `<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(`consensus FV at signing ${sigLbl}. ` + _IFA_FLOOR_TIP)}">${badge(sigLbl, true, true)}${fl}</span>`;
   }
-  if (sig == null) return badge(curLbl, false);
-  if (cur == null) return badge(sigLbl, true);
+  if (sig == null) return badge(curLbl, false, !curEfv);
+  if (cur == null) return badge(sigLbl, true, true);
   const _sigTip = `consensus FV at signing ${sigLbl}`;
   const _curTip = `current ${curEfv ? "eFV" : "consensus FV"} ${curLbl}`;
   // Mixed bases: the current grade is eFV and the signing grade is consensus, so
   // cur - sig subtracts two different scales. Print the pair, withhold the number.
   if (curEfv) {
     return `<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(_sigTip)} → ${escapeHtml(_curTip)}. No delta: consensus FV and eFV are different scales.">
-      ${badge(sigLbl, true)}<span style="color:var(--text-tertiary);font-size:12px;line-height:1;">→</span>${badge(curLbl, false)}
+      ${badge(sigLbl, true, true)}<span style="color:var(--text-tertiary);font-size:12px;line-height:1;">→</span>${badge(curLbl, false, !curEfv)}
     </span>`;
   }
   const delta = cur - sig;
@@ -26883,7 +27006,7 @@ function _ifaFvProgHTML(s) {
   const arrow = delta > 0 ? "↗" : delta < 0 ? "↘" : "→";
   const dTxt = delta ? `${delta > 0 ? "+" : ""}${delta % 1 ? delta.toFixed(1) : delta.toFixed(0)}` : "";
   return `<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(_sigTip)} → ${escapeHtml(_curTip)}">
-    ${badge(sigLbl, true)}<span style="color:${dColor};font-size:12px;line-height:1;">${arrow}</span>${badge(curLbl, false)}${dTxt ? `<span style="color:${dColor};font-size:9px;font-family:var(--font-mono);">${dTxt}</span>` : ""}
+    ${badge(sigLbl, true, true)}<span style="color:${dColor};font-size:12px;line-height:1;">${arrow}</span>${badge(curLbl, false, !curEfv)}${dTxt ? `<span style="color:${dColor};font-size:9px;font-family:var(--font-mono);">${dTxt}</span>` : ""}
   </span>`;
 }
 
@@ -27001,7 +27124,7 @@ function _renderIFAAllTime(host, classes, usd) {
         <table class="detail-table" style="width:100%;margin-bottom:14px;"><thead><tr><th>#</th><th style="text-align:left;">Class</th><th style="text-align:right;">Total $</th><th style="text-align:right;" title="Signings">#</th><th style="text-align:right;" title="Tracked prospects">Trk</th><th style="text-align:left;">Top signing</th></tr></thead><tbody>${classRows}</tbody></table>
         <div class="ifa-side-title" style="margin-bottom:4px;">Biggest signings · all-time <span style="color:var(--text-tertiary);font-weight:400;text-transform:none;letter-spacing:0;">· ${bigList.length} match${bigList.length === 1 ? "" : "es"}</span></div>
         ${bigControls}
-        <table class="detail-table" style="width:100%;"><thead><tr><th>#</th><th style="text-align:left;">Player</th><th style="text-align:left;" title="Future Value at signing → current">FV</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Year</th><th style="text-align:right;">Bonus</th></tr></thead><tbody>${bigRows}</tbody></table>
+        <table class="detail-table" style="width:100%;"><thead><tr><th>#</th><th style="text-align:left;">Player</th><th style="text-align:left;" title="Consensus FV at signing → eFV now">Cons. at signing → eFV now</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Year</th><th style="text-align:right;">Bonus</th></tr></thead><tbody>${bigRows}</tbody></table>
         ${bigExpander}
       </div>
       <div class="ifa-side"><div class="ifa-side-card"><div class="ifa-side-title">Org spending · all-time</div>
@@ -27193,7 +27316,7 @@ async function renderIFA() {
     </tr>`;
   };
   const tableHTML = `<table class="detail-table" style="width:100%;">
-    <thead><tr><th style="text-align:left;">Player · pos · country</th><th style="text-align:left;" title="FV at signing (earliest grade on file) → current FV">FV · signing → now</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Bonus</th><th style="text-align:right;" title="Share of the signing team's international bonus pool this signing used">Pool %</th></tr></thead>
+    <thead><tr><th style="text-align:left;">Player · pos · country</th><th style="text-align:left;" title="Consensus FV at signing (earliest grade on file, rounded up) → eFV now (rounded to nearest)">Cons. at signing → eFV now</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Bonus</th><th style="text-align:right;" title="Share of the signing team's international bonus pool this signing used">Pool %</th></tr></thead>
     <tbody>${pageSlice(shown, _ifaPage, _ifaSize).map(sigRow).join("") || `<tr><td colspan="5" style="color:var(--text-tertiary);padding:10px;">No signings.</td></tr>`}</tbody></table>`;
   const expandBtn = (!showAll && hiddenCount > 0)
     ? `<button class="chip" id="ifa-show-all" style="margin-top:8px;">Show all ${signings.length} signings (+${hiddenCount} more)</button>` : "";
@@ -27793,8 +27916,8 @@ function _renderOverseasCard(p) {
       <span class="fv-badge${fvBadgeChainClasses(p)}" style="font-size:var(--fs-xs);padding:2px 5px;border-radius:3px;
             border:none;min-width:0;font-family:inherit;letter-spacing:0;
             background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;position:relative;overflow:visible;"
-            title="Consensus future value">
-        FV ${fvLbl != null ? fvLbl : " - "}${fvBadgeChainMarks(p)}
+            data-grade-basis="consensus" title="${escapeHtml(OVERSEAS_FV_TIP)}">
+        Cons. FV ${fvLbl != null ? fvLbl : " - "}${fvBadgeChainMarks(p)}
       </span>
     </div>
     <!-- v19 - Tightened meta strip: no middot separators, chip-style
@@ -28195,8 +28318,19 @@ function _renderDraftOverperformers(host, classes, year) {
   }
   const mode = _draftOverperfMode;
 
+  // The "now" grade's basis is the served one (_draftNowIsEfv: eFV once
+  // draft_export.DRAFT_CURRENT_FV_EFV is on, else the consensus FV now), and the chip says so.
+  const _nowEfv = _draftNowIsEfv();
+  const _nowLbl = _nowEfv ? "eFV" : "Cons. FV";
   const _fvChip = fv => fv == null ? "<span style='color:var(--text-tertiary);'> - </span>"
-    : `<span style="font-family:var(--font-mono);font-weight:700;padding:1px 6px;border-radius:3px;background:${_draftFvBucketColor(fv)}22;color:${_draftFvBucketColor(fv)};">${fvCeil(fv)}</span>`;
+    : _nowEfv
+    ? `<span data-grade-basis="efv" style="font-family:var(--font-mono);font-weight:700;padding:1px 6px;border-radius:3px;background:${_draftFvBucketColor(fv)}22;color:${_draftFvBucketColor(fv)};">${Math.round(fv)}</span>`
+    : `<span data-grade-basis="consensus" style="font-family:var(--font-mono);font-weight:700;padding:1px 6px;border-radius:3px;background:${_draftFvBucketColor(fv)}22;color:${_draftFvBucketColor(fv)};">${fvCeil(fv)}${GRADE_C_MARK}</span>`;
+  const _expPrint = v => v == null ? null : (_nowEfv ? Math.round(v) : fvCeil(v));
+  // EFV_DISPLAY_SWAPS on: the delta is the two printed grades subtracted (owner rule).
+  const _opDelta = p => (efvDisplaySwaps() && p.current_fv != null && p.expected_fv_for_pick != null)
+    ? (_nowEfv ? Math.round(p.current_fv) : fvCeil(p.current_fv)) - _expPrint(p.expected_fv_for_pick)
+    : p.overperf_fv;
   const _consPick = p => p.consensus_pick != null ? p.consensus_pick
     : (p.consensus_rank != null ? Math.round(p.consensus_rank) : null);
 
@@ -28232,8 +28366,8 @@ function _renderDraftOverperformers(host, classes, year) {
         <td style="color:var(--text-tertiary);">${p._year}</td>
         <td style="text-align:right;"><span class="draft-cell-ico" style="justify-content:flex-end;">${orgLinkHTML(p.drafted_team, pxClubLogoHTML(p.drafted_team, "sm", true), { cls: "px-club" })}#${p.drafted_pick}</span></td>
         <td style="text-align:center;">${_fvChip(p.current_fv)}</td>
-        <td style="text-align:center;color:var(--text-tertiary);">${p.expected_fv_for_pick != null ? fvCeil(p.expected_fv_for_pick) : " - "}</td>
-        <td style="text-align:right;color:var(--neon-cyan);font-family:var(--font-mono);font-weight:700;">+${p.overperf_fv}</td>
+        <td style="text-align:center;color:var(--text-tertiary);" data-grade-basis="${_nowEfv ? "efv" : "consensus"}">${p.expected_fv_for_pick != null ? _expPrint(p.expected_fv_for_pick) : " - "}</td>
+        <td style="text-align:right;color:var(--neon-cyan);font-family:var(--font-mono);font-weight:700;">+${_opDelta(p)}</td>
         <td style="text-align:right;color:${warColor};font-family:var(--font-mono);">${war == null ? " - " : (war > 0 ? "+" : "") + war.toFixed(1)}</td>
       </tr>`;
     }).join("");
@@ -28241,9 +28375,9 @@ function _renderDraftOverperformers(host, classes, year) {
       <thead><tr><th>#</th><th>Player</th><th>Pos</th>
         ${_sortableOP("year", "Class", "left", "Draft class")}
         ${_sortableOP("pick", "Drafted", "right", "Overall pick number")}
-        <th style="text-align:center;" title="Latest prospect FV (current grade)">FV now</th>
-        <th style="text-align:center;" title="Median FV for that pick band">Exp</th>
-        ${_sortableOP("delta", "ΔFV", "right", "FV now minus expected-for-pick")}
+        <th style="text-align:center;" title="${_nowEfv ? "eFV now (rounded to nearest)" : "Consensus FV now (latest grade, rounded up)"}">${_nowLbl} now</th>
+        <th style="text-align:center;" title="${_nowEfv ? "Median eFV now for that pick band" : "Median consensus FV now for that pick band"}">Exp</th>
+        ${_sortableOP("delta", "Δ " + _nowLbl, "right", _draftVsSlotTip())}
         ${_sortableOP("war", "WAR", "right", "Career MLB eWAR (where they've reached the majors)")}</tr></thead>
       <tbody>${rows}</tbody></table>` : _emptyLens("No qualifying players for the realized-outcome lens yet.");
   } else {
@@ -28269,7 +28403,7 @@ function _renderDraftOverperformers(host, classes, year) {
         <td style="text-align:right;" title="Pre-draft consensus rank">#${_consPick(p)}</td>
         <td style="text-align:right;"><span class="draft-cell-ico" style="justify-content:flex-end;">${orgLinkHTML(p.drafted_team, pxClubLogoHTML(p.drafted_team, "sm", true), { cls: "px-club" })}#${p.drafted_pick}</span></td>
         <td style="text-align:right;color:var(--neon-orange);font-family:var(--font-mono);font-weight:700;" title="Picks past where the consensus ranked them">+${x.slide}</td>
-        <td style="text-align:center;">${_fvChip(p.current_fv != null ? p.current_fv : p.consensus_fv)}</td>
+        <td style="text-align:center;">${_fvChip(_nowEfv ? p.current_fv : (p.current_fv != null ? p.current_fv : p.consensus_fv))}</td>
       </tr>`;
     }).join("");
     table = ranked.length ? `<table class="draft-table">
@@ -28278,7 +28412,7 @@ function _renderDraftOverperformers(host, classes, year) {
         ${_sortableOP("cons", "Cons. rank", "right", "Where the consensus ranked them pre-draft")}
         ${_sortableOP("pick", "Drafted", "right", "Overall pick number")}
         ${_sortableOP("slide", "Slide", "right", "How far past their consensus rank they slid")}
-        <th style="text-align:center;">FV</th></tr></thead>
+        <th style="text-align:center;" title="${_nowEfv ? "eFV now (rounded to nearest)" : "Consensus FV now, else the draft FV (consensus)"}">${_nowLbl}</th></tr></thead>
       <tbody>${rows}</tbody></table>` : _emptyLens("No qualifying players for the draft-day value lens yet.");
   }
 
@@ -28288,13 +28422,13 @@ function _renderDraftOverperformers(host, classes, year) {
     <div style="padding:12px 14px;background:var(--bg-secondary);border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
       <strong style="color:var(--text-primary);">Draft overperformers</strong>
       · ${mode === "outcome"
-          ? "players whose CURRENT prospect FV most exceeds the median for their draft slot (career WAR shown where they've reached MLB)"
+          ? `players whose ${_nowEfv ? "eFV now" : "consensus FV now"} most exceeds the median for their draft slot (career WAR shown where they've reached MLB)`
           : "players who slid furthest past their pre-draft consensus rank - value on draft day"}
       · signed picks ${year != null ? `from the ${year} class` : "across all completed classes"}, deduped by player
     </div>
     <div class="filter-bar" id="overperf-mode-bar" style="gap:6px;margin-bottom:10px;">
       <span class="filter-label">Lens</span>
-      ${_modeChip("outcome", "Realized outcome", "Current FV vs the median FV for that draft slot")}
+      ${_modeChip("outcome", "Realized outcome", _nowEfv ? "eFV now vs the median eFV now for that draft slot" : "Consensus FV now vs the median consensus FV now for that draft slot")}
       ${_modeChip("value", "Draft-day value", "Pre-draft consensus rank vs actual pick")}
     </div>
     ${table}`;
@@ -28523,6 +28657,16 @@ function _draftEfvNow(p) {
     return { key: k, x, raw: Number(raw), val: efvGradeDisplay(x), debuted: x.kind === "debuted" };
   }
   return null;
+}
+// The draft card's "eFV now" chip for a signed player: EFV_DISPLAY_SWAPS on and a pro eFV
+// joined, else "".
+function _draftEfvNowChipHTML(p) {
+  if (!efvDisplaySwaps()) return "";
+  const e = _draftEfvNow(p);
+  if (!e) return "";
+  const lbl = e.debuted ? "eFV at debut" : "eFV now";
+  const tip = e.debuted ? "eFV " + e.val + ", locked at his MLB debut" : "eFV now " + e.val;
+  return '<span data-grade-basis="efv" title="' + escapeHtml(tip) + '" style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;white-space:nowrap;">' + lbl + ' ' + e.val + '</span>';
 }
 function _draftEfvNowHTML(p) {
   const e = _draftEfvNow(p);
@@ -29937,7 +30081,7 @@ function _renderIFAEfficiency(host, classes, usd) {
     + (yr === "all" ? " (all classes)" : " (" + yr + " class)") + ", minimum " + MIN_N + " graded signees to rank.")
     + '<table class="draft-table"><thead><tr><th>#</th><th style="text-align:left;">Org</th>'
     + '<th class="g-term" data-gl="ifa_dollars_per_fv" style="text-align:right;cursor:help;" title="Bonus dollars per projected FV point, graded signees only. Lower is more efficient. A projected proxy, not realized value.">$/FV pt</th>'
-    + '<th style="text-align:right;">Covered $</th><th style="text-align:right;">FV pts</th>'
+    + '<th style="text-align:right;">Covered $</th><th style="text-align:right;" title="Sum of the graded signees eFV grades">eFV pts</th>'
     + '<th style="text-align:right;" title="Graded (tracked) signees / total signees">Graded</th>'
     + '<th style="text-align:right;" title="Graded subset share of the org class spending">Coverage</th>'
     + '<th style="text-align:right;">Total spend</th>'
@@ -31419,8 +31563,8 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     const p = byPos[pos];
     return `<li><strong>${escapeHtml(pos)}</strong> - 
       ${escapeHtml(p.player_name)} <small>${_flagImg(p.country_flag_svg, p.country_flag, p.country)} ${escapeHtml(p.league)}</small>
-      <span style="float:right;color:${_draftFvBucketColor(p.consensus_fv)};">
-        FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</span></li>`;
+      <span data-grade-basis="consensus" style="float:right;color:${_draftFvBucketColor(p.consensus_fv)};">
+        Cons. FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</span></li>`;
   }).join("");
 
   // Biggest projected bonuses
@@ -31490,7 +31634,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td><span style="color:${_leagueBadgeColor(p.league)};font-weight:600;">${escapeHtml(p.league)}</span></td>
     <td>${escapeHtml(p.current_team || "?")}</td>
-    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</td>
+    <td data-grade-basis="consensus" style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">Cons. FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</td>
     <td>${p.eta_year || " - "}</td>
   </tr>`).join("");
 
@@ -31520,10 +31664,10 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
   host.innerHTML = `
     <div class="draft-results-grid">
       <div class="draft-panel" style="grid-column:1/-1;">
-        <h3>Top by FV (across all leagues)</h3>
+        <h3>Top by consensus FV (across all leagues)</h3>
         <table class="draft-table">
           <thead><tr><th>#</th><th></th><th>Name</th><th>Pos</th>
-            <th>Lg</th><th>Team</th><th>FV</th><th>ETA</th></tr></thead>
+            <th>Lg</th><th>Team</th><th title="${escapeHtml(OVERSEAS_FV_TIP)}">Consensus FV</th><th>ETA</th></tr></thead>
           <tbody>${topRows}</tbody>
         </table>
       </div>
@@ -32325,7 +32469,7 @@ function renderDebuts() {
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
     <span class="debut-date-cell sort-header" data-debut-sort="date" title="Sort by debut date (newest first)">Debut</span>
-    <span class="sort-header" data-debut-sort="fv_close" title="Final eFV, locked at debut, over consensus FV. eFV reads a 6-yr WAR outcome mix; its calibration is measured on the Debuted tab." style="text-align:center;">FV</span>
+    <span class="sort-header" data-debut-sort="fv_close" title="Final eFV, locked at debut, over consensus FV. eFV reads a 6-yr WAR outcome mix; its calibration is measured on the Debuted tab." style="text-align:center;">eFV</span>
     <span class="sort-header debut-tv-head" data-debut-sort="trade_value" title="Trade value: posterior expected surplus of his MLB contract over club control, the Trade Machine's number. Dash: no contract projection." style="text-align:center;">Trade value</span>
     <span class="desktop-only sort-header" data-debut-sort="vs_fv_proj" title="Sort by WAG - WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG / season</span>
     <span class="desktop-only" style="text-align:center;" title="eWAR per MLB season (B-Ref frame, pitching on FIP; hitters match bWAR unless they pitched). Hover a bar for the year.">WAR / season</span>
@@ -32605,69 +32749,6 @@ function renderDebuts() {
   // from the UNFILTERED graduates pool so the chart isn't deceptive
   // when the user has narrowed the table.
   const cohortChart = makeDebutCohortChart(DATA.debuts || [], { years: 6 });
-
-  // Phase B4 - Class Strength Index. For each graduation year, compute
-  // median FV-at-graduation across all that year's grads; rank against
-  // the all-time median. Surfaces "good draft classes" vs "weak" ones.
-  // Strip appears ABOVE the cohort chart.
-  const classStrengthStrip = (() => {
-    const all = DATA.debuts || [];
-    if (all.length < 30) return "";  // not enough cross-year data
-    // Bucket all grads by year + collect FV-at-grad
-    const byYear = {};
-    const allFvs = [];
-    for (const g of all) {
-      // Graduate payloads carry fv_close (numeric) - fv_label is null.
-      // Fall back through both for resilience.
-      const rawFv = g.fv_close != null ? g.fv_close : g.fv_label;
-      const fv = Math.round(parseFloat(rawFv));
-      if (!g.debut_date || isNaN(fv)) continue;
-      const y = parseInt(g.debut_date.slice(0, 4), 10);
-      if (isNaN(y)) continue;
-      (byYear[y] = byYear[y] || []).push(fv);
-      allFvs.push(fv);
-    }
-    if (allFvs.length < 30) return "";
-    // All-time median for percentile anchor.
-    const sortedAll = allFvs.slice().sort((a, b) => a - b);
-    const allTimeMedian = sortedAll[Math.floor(sortedAll.length / 2)];
-    // Compute per-year median + percentile.
-    const yearStats = Object.entries(byYear)
-      .map(([y, fvs]) => {
-        const sorted = fvs.slice().sort((a, b) => a - b);
-        const med = sorted[Math.floor(sorted.length / 2)];
-        // Percentile: where this year's median sits in ALL grads' FV
-        // distribution. 50 = average year, 75+ = strong class.
-        const below = sortedAll.filter(v => v < med).length;
-        const pct = Math.round((below / sortedAll.length) * 100);
-        return { year: parseInt(y, 10), median: med, n: fvs.length, percentile: pct };
-      })
-      .sort((a, b) => b.year - a.year)
-      .slice(0, 6);  // most recent 6 years
-    const cells = yearStats.map(s => {
-      const tone = s.percentile >= 70 ? "var(--up)"
-                 : s.percentile <= 30 ? "var(--down)"
-                 : "var(--text-secondary)";
-      const label = s.percentile >= 70 ? "STRONG"
-                  : s.percentile <= 30 ? "WEAK"
-                  : "AVG";
-      return `<div style="flex:1;min-width:90px;padding:var(--space-2) var(--space-3);border-right:1px solid var(--border-light);">
-        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;font-weight:600;">${s.year}</div>
-        <div style="display:flex;align-items:baseline;gap:6px;margin-top:2px;">
-          <span style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;">FV ${s.median}</span>
-          <span style="font-family:var(--font-mono);font-size:10px;color:${tone};font-weight:700;">${label}</span>
-        </div>
-        <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${_ord(s.percentile)} pct · n=${s.n}</div>
-      </div>`;
-    }).join("");
-    return `<div class="class-strength-strip" style="display:flex;flex-wrap:wrap;border:1px solid var(--border-light);border-radius:var(--radius-md);background:var(--bg-secondary);margin-bottom:var(--space-3);overflow:hidden;">
-      <div style="padding:var(--space-2) var(--space-3);border-right:1px solid var(--border-light);background:var(--bg-tertiary);">
-        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Class strength</div>
-        <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">All-time median: FV ${allTimeMedian}</div>
-      </div>
-      ${cells}
-    </div>`;
-  })();
 
   // v17 - Graduate classes bar chart + class strength strip removed
   // (both were redundant with the per-row data and the existing date-
@@ -33060,6 +33141,15 @@ function provSingleEfvPoint(p) {
 // Falls back to the baked p.stock.direction (itself eFV-overridden in storage.py) when there's no
 // usable eFV series. Returns "up" | "down" | "flat" | null.
 const _EFV_STEP_EPS = 0.5;
+// The eFV series' movement, first point to last: raw (for ordering) and printed (the two
+// printed grades, each rounded to nearest, subtracted). null with no eFV series.
+function efvSeriesMove(p) {
+  const h = (typeof getEfvHistory === "function") ? getEfvHistory(p) : null;
+  if (!h || h.length < 2) return null;
+  const a = Number(h[0].x), b = Number(h[h.length - 1].x);
+  if (!isFinite(a) || !isFinite(b)) return null;
+  return { raw: b - a, printed: Math.round(b) - Math.round(a) };
+}
 function efvStockDir(p) {
   const hist = (typeof getEfvHistory === "function") ? getEfvHistory(p) : null;
   if (hist && hist.length >= 2) {
@@ -34804,6 +34894,13 @@ function farmEfvBadgeHTML(p, sz) {
   if (gb.basis === "consensus") return consFvBadgeHTML(gb.label, sz, gb.consTip);
   return "";
 }
+// eFV at debut, unrounded (the chart axis and the debuted FV dimension read it).
+function efvAtDebutRaw(g) {
+  const x = (typeof getEfv === "function") ? getEfv(g) : null;
+  if (!x) return null;
+  const v = x.xfv_grade_at_debut != null ? x.xfv_grade_at_debut : x.xfv_grade;
+  return (v != null && isFinite(Number(v))) ? Number(v) : null;
+}
 // eFV at debut: the grade a graduate carried into the majors (xfv_grade_at_debut, the WAG
 // baseline; the locked grade where the field is absent), rounded to nearest.
 function efvAtDebutValue(g) {
@@ -36035,17 +36132,17 @@ async function downloadElementAsPng(el, filename) {
 // Build the human-readable config description for the scatterplot GFX export.
 function _scatterGfxCaption() {
   const mode = state.chartMode || "prospects";
-  const axes = (typeof CHART_AXES !== "undefined" && CHART_AXES[mode]) || [];
+  const axes = (typeof chartAxesFor === "function") ? chartAxesFor(mode) : [];
   const lbl = k => (axes.find(a => a.key === k) || {}).label || k;
   const grp = (typeof _CHART_GROUPS !== "undefined" && _CHART_GROUPS[mode]) || { label: mode };
   const title = `${lbl(state.chartX)} vs ${lbl(state.chartY)}`;
   const bits = [grp.label];
-  if (state.chartColorBy && state.chartColorBy !== "none") bits.push(`color: ${state.chartColorBy === "fv" ? "FV tier" : state.chartColorBy}`);
+  if (state.chartColorBy && state.chartColorBy !== "none") bits.push(`color: ${state.chartColorBy === "fv" ? chartFvDimLabel(mode) + " tier" : state.chartColorBy}`);
   if (state.chartSizeBy && state.chartSizeBy !== "none") bits.push(`size: ${lbl(state.chartSizeBy)}`);
   if (state.chartFilterOrg && state.chartFilterOrg !== "all") bits.push(`org ${state.chartFilterOrg}`);
   if (state.chartFilterLevel && state.chartFilterLevel !== "all") bits.push(`level ${state.chartFilterLevel}`);
   if (state.chartFilterPos && state.chartFilterPos !== "all") bits.push(`pos ${state.chartFilterPos}`);
-  if (state.chartFvMin) bits.push(`FV ≥ ${state.chartFvMin}`);
+  if (state.chartFvMin) bits.push(`${chartFvDimLabel(mode)} ≥ ${state.chartFvMin}`);
   if (state.chartAgeMax) bits.push(`age ≤ ${state.chartAgeMax}`);
   if (state.chartXMin) bits.push(`${lbl(state.chartX)} ≥ ${state.chartXMin}`);
   if (state.chartXMax) bits.push(`${lbl(state.chartX)} ≤ ${state.chartXMax}`);
@@ -36238,7 +36335,7 @@ function _gfxSubtitle(total, cap) {
   const SORT = {
     xfv: "by eFV", fv: "by consensus FV", upside: "upside first", statcast_plus: "by Statcast+",
     xfv_delta: "by eFV − consensus gap", conviction: "conviction (boldest bets vs consensus)",
-    tool: "by tool grade", stock_movers: "biggest FV movers", source_confidence: "most-corroborated FV",
+    tool: "by tool grade", stock_movers: (efvDisplaySwaps() ? "biggest eFV movers" : "biggest consensus FV movers"), source_confidence: "most-corroborated FV",
     surplus_sv: "by expected surplus value", surplus_risk: "by simulated mean SV",
     surplus_p90: "by ceiling (P90)", surplus_p10: "by floor (P10)", surplus_pbust: "lowest bust risk",
     wag: "by WAR-above-grade", age_asc: "youngest first", age_desc: "oldest first",
@@ -40219,6 +40316,29 @@ function currentLevelForSummary(p) {
 // quick-read card and the list-row summary line. Factored out so the
 // two callers don't drift in what they show - the only difference is
 // the wrapper element each one renders around the joined parts.
+// The player card's header range line on the eFV series (EFV_DISPLAY_SWAPS on): low and
+// high of the series with the date each was first hit, O = the first eFV on file, C = the
+// eFV now, every grade rounded to nearest. "" with no eFV series (the caller then prints the
+// named consensus range).
+function efvRangeLine(p, fmtDate) {
+  const h = (typeof getEfvHistory === "function") ? getEfvHistory(p) : null;
+  if (!h || h.length < 2) return "";
+  let lo = null, hi = null;
+  for (const pt of h) {
+    const v = Number(pt && pt.x);
+    if (!isFinite(v)) continue;
+    const r = Math.round(v);
+    if (!lo || r < lo.v) lo = { v: r, d: pt.d };
+    if (!hi || r > hi.v) hi = { v: r, d: pt.d };
+  }
+  if (!lo || !hi) return "";
+  const gb = gradeBlock(p, { primary: "xfv" });
+  const open = Math.round(Number(h[0].x));
+  const close = gb.basis === "efv" ? gb.efvVal : Math.round(Number(h[h.length - 1].x));
+  const df = d => (d && fmtDate) ? fmtDate(d) : "";
+  const tip = "eFV high / low across its history (rounded to nearest) · O = first eFV on file · C = eFV now";
+  return `<div data-grade-basis="efv" style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">eFV range ${lo.v}${df(lo.d) ? ` (${df(lo.d)})` : ""}-${hi.v}${df(hi.d) ? ` (${df(hi.d)})` : ""} · O ${isFinite(open) ? open : " - "} · C ${close != null ? close : " - "}</div>`;
+}
 function makeQuickReadSummaryParts(p, opts = {}) {
   // listMode=true: caller is the prospect-list row (where age/pos/org/B-T,
   // FV badge + stock arrow, and ETA cell already live elsewhere on the
@@ -40294,9 +40414,18 @@ function makeQuickReadSummaryParts(p, opts = {}) {
 
   // FV consensus - skipped on list rows (FV badge cell already shows it).
   // RPR03: never for a placeholder consensus (no source published an FV).
-  if (!listMode && latest && latest.consensus_fv_label
-      && !(typeof getEfv === "function" && (getEfv(p) || {}).consensus_is_placeholder)) {
-    parts.push(`<span style="font-weight:600;color:var(--text-primary);">${escapeHtml(latest.consensus_fv_label)} FV</span>`);
+  // Owner ask 5: the grade here is named. EFV_DISPLAY_SWAPS on, it is the eFV through
+  // gradeBlock ("eFV 61", "Provisional eFV 27"), the consensus FV only where eFV abstains.
+  const _qrPlaceholder = !!(typeof getEfv === "function" && (getEfv(p) || {}).consensus_is_placeholder);
+  if (!listMode && efvDisplaySwaps()) {
+    const _qgb = gradeBlock(p, { primary: "xfv" });
+    if (_qgb.basis === "efv") {
+      parts.push(`<span data-grade-basis="efv" style="font-weight:600;color:var(--text-primary);">${_qgb.provisional ? "Provisional eFV" : "eFV"} ${_qgb.efvVal}</span>`);
+    } else if (_qgb.basis === "consensus" && !_qrPlaceholder) {
+      parts.push(`<span data-grade-basis="consensus" style="font-weight:600;color:var(--text-primary);">Consensus FV ${escapeHtml(_qgb.label)}</span>`);
+    }
+  } else if (!listMode && latest && latest.consensus_fv_label && !_qrPlaceholder) {
+    parts.push(`<span data-grade-basis="consensus" style="font-weight:600;color:var(--text-primary);">Consensus FV ${escapeHtml(latest.consensus_fv_label)}</span>`);
   }
 
   // Stock direction - skipped on list rows (fvTrendHTML beside the
@@ -41026,7 +41155,10 @@ function _sortStatPill(p) {
   if (s === "wag") { const v = _wagUnified() ? wagBaked(p) : (p.debuted_value && p.debuted_value.wag && p.debuted_value.wag.regressed_wag); return _pillHTML("WAG", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
   if (s === "age_vs_level") { const v = p.age_vs_level && p.age_vs_level.diff; return _pillHTML("Age vs level", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
   if (s === "eta") { const v = (etaServed(p) || {}).year; return _pillHTML("ETA", v == null ? null : String(v)); }
-  if (s === "stock_movers") { const v = (p.fv_close != null && p.fv_open != null) ? (p.fv_close - p.fv_open) : null; return _pillHTML("FV move", v == null ? null : (v > 0 ? "+" : "") + v); }
+  if (s === "stock_movers") {
+    if (efvDisplaySwaps()) { const m = efvSeriesMove(p); return _pillHTML("eFV move", m == null ? null : (m.printed > 0 ? "+" : "") + m.printed); }
+    const v = (p.fv_close != null && p.fv_open != null) ? (p.fv_close - p.fv_open) : null; return _pillHTML("Cons. FV move", v == null ? null : (v > 0 ? "+" : "") + v);
+  }
   return "";
 }
 
@@ -50074,6 +50206,20 @@ function renderPlayerDetail(key) {
     return `fv-tier-${pick}${rarity ? " " + rarity : ""}`;
   })();
   const _fvForEyebrow = p.fv_close;
+  // The eyebrow's grade line. EFV_DISPLAY_SWAPS on: "eFV N · consensus M" (eFV nearest,
+  // consensus up); off, the consensus line it always printed.
+  const _eyebrowGradeText = (pp, fc, placeholder) => {
+    if (efvDisplaySwaps()) {
+      const gb = gradeBlock(pp, { primary: "xfv" });
+      if (gb.basis === "efv") {
+        const cons = (!placeholder && fc != null) ? ` · consensus ${fvCeil(fc)}` : "";
+        return `${gb.provisional ? "Provisional eFV" : "eFV"} ${gb.efvVal}${cons}`;
+      }
+      if (placeholder) return "No source grade";
+      return fc != null ? `Consensus FV ${fvCeil(fc)}` : "Consensus FV unavailable";
+    }
+    return placeholder ? "No source grade" : fc != null ? `Consensus FV ${fc}` : "Consensus FV unavailable";
+  };
   // RPR03 rule: a consensus_is_placeholder row has NO consensus FV (no source published a
   // grade; the 35 is a fixed anchor), so no surface prints it as "Consensus FV N" or
   // differences an eFV chip against it. Pending eyebrow and board-section work keeps this.
@@ -50082,7 +50228,7 @@ function renderPlayerDetail(key) {
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Prospect Card · ${escapeHtml(p.org || ' - ')} · ${escapeHtml(p.position || ' - ')}${_efvOverall != null ? ` · #${_efvOverall}` : (p.overall_rank != null ? ` · #${p.overall_rank}` : '')}</span>
-      <span class="newsprint-eyebrow-meta">${_consPlaceholder ? 'No source grade' : _fvForEyebrow != null ? `Consensus FV ${_fvForEyebrow}` : 'Consensus FV unavailable'}</span>
+      <span class="newsprint-eyebrow-meta">${_eyebrowGradeText(p, _fvForEyebrow, _consPlaceholder)}</span>
     </div>
     <div id="px-hub"></div>
     <div class="detail-page-header ${_fvTierClass}" style="${orgStripe(p.org)}">
@@ -50147,15 +50293,21 @@ function renderPlayerDetail(key) {
           };
           const hDate = fmtFvDate(p.fv_high_date);
           const lDate = fmtFvDate(p.fv_low_date);
-          const lowText = p.fv_low_label ?? p.fv_low ?? " - ";
-          const highText = p.fv_high_label ?? p.fv_high ?? " - ";
+          // EFV_DISPLAY_SWAPS on: the eFV series' range (nearest) where one exists.
+          const _rangeEfv = efvDisplaySwaps() ? efvRangeLine(p, fmtFvDate) : "";
+          if (_rangeEfv) return _rangeEfv;
+          // The consensus range, named and rounded up (the labels and values are whole
+          // grades today, so the round-up moves no printed digit).
+          const _cu = v => (typeof v === "number" ? fvCeil(v) : v);
+          const lowText = p.fv_low_label ?? _cu(p.fv_low) ?? " - ";
+          const highText = p.fv_high_label ?? _cu(p.fv_high) ?? " - ";
           const lowFull = p.fv_low_date ? ` (${lDate})` : "";
           const highFull = p.fv_high_date ? ` (${hDate})` : "";
-          const tipParts = ["High / Low across history · Open at start of current month · Close = latest"];
+          const tipParts = ["Consensus FV high / low across history · Open at start of current month · Close = latest"];
           if (p.fv_high_date) tipParts.push(`High first hit: ${p.fv_high_date}`);
           if (p.fv_low_date) tipParts.push(`Low first hit: ${p.fv_low_date}`);
           const tip = tipParts.join(" · ");
-          return `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">Range ${lowText}${lowFull}-${highText}${highFull} · O ${p.fv_open ?? " - "} · C ${p.fv_close ?? " - "}</div>`;
+          return `<div data-grade-basis="consensus" style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">Consensus range ${lowText}${lowFull}-${highText}${highFull} · O ${_cu(p.fv_open) ?? " - "} · C ${_cu(p.fv_close) ?? " - "}</div>`;
         })()}
         ${(() => {
           const s = p.stock;
@@ -50751,13 +50903,13 @@ function renderPlayerDetail(key) {
     const _winWords = `${_ctrlYrs}-season valuation window`;
     const _winNote = ` A different window from the club control window on the MLB Projections board, which prices only the seasons a salary is known or projected for.`;
     const surplusTip = _baked
-      ? `Estimated MLB surplus over the ${_winWords}, from the eephus value framework (a career-path mixture model) on FV ${fvCeil(fv)}, with the position-scarcity multiplier applied.${_winNote} Real surplus depends on health, performance variance, and the $/WAR market.`
-      : `FV-implied estimate of MLB surplus over the ${_winWords} (FV ${fvCeil(fv)}, hitter/pitcher split), shown only until the engine value lands.${_winNote} Real surplus depends on health, performance variance, and the $/WAR market.`;
+      ? `Estimated MLB surplus over the ${_winWords}, from the eephus value framework (a career-path mixture model) on consensus FV ${fvCeil(fv)}, with the position-scarcity multiplier applied.${_winNote} Real surplus depends on health, performance variance, and the $/WAR market.`
+      : `FV-implied estimate of MLB surplus over the ${_winWords} (consensus FV ${fvCeil(fv)}, hitter/pitcher split), shown only until the engine value lands.${_winNote} Real surplus depends on health, performance variance, and the $/WAR market.`;
     const _surpLabel = _useEfv ? (p.status === "debuted" ? "eFV prospect valuation" : "eFV surplus")
                      : (p.status === "debuted" ? "Expected surplus (FV)" : "Surplus value");
     const _surpSub = _useEfv
       ? `eFV ${efvGradeDisplay(_xf)} · ${_winWords}${efvIsV2(_xf) ? "" : " (outcome-grounded)"}${p.status === "debuted" ? " · priced as a prospect, not on his contract" : ""}`
-      : `FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · ${_winWords}`;
+      : `Consensus FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · ${_winWords}`;
     const surplusRow = surplus != null
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
@@ -50782,7 +50934,7 @@ function renderPlayerDetail(key) {
         expectedAavRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Expected market AAV</div>
-             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${fvCeil(fv)} → ${expectedWar.toFixed(2)} WAR/yr × $${dollarsPerWar(expectedWar).toFixed(1)}M</div>
+             <div data-grade-basis="consensus" style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">Consensus FV ${fvCeil(fv)} → ${expectedWar.toFixed(2)} WAR/yr × $${dollarsPerWar(expectedWar).toFixed(1)}M</div>
            </div>
            <div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${eaColor};font-variant-numeric:tabular-nums;" title="If the player hits their FV projection, this is what a comparable free agent would command per year at the prevailing $/WAR rate.">${fmtUsd(expectedAav)}/yr</div>
          </div>`;
@@ -51689,7 +51841,7 @@ function renderPlayerDetail(key) {
       summary = `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
         <strong style="color:${color};">${verb} projection by ${sign}${delta.toFixed(1)} WAR/yr</strong>
         over ${r.war_seasons_count} MLB season${r.war_seasons_count === 1 ? "" : "s"}.
-        <span style="color:var(--text-tertiary);">Actual ${r.war_per_yr.toFixed(2)} vs FV ${fvCeil(fv)} baseline ${expected.toFixed(2)} WAR/yr.</span>
+        <span style="color:var(--text-tertiary);">Actual ${r.war_per_yr.toFixed(2)} vs consensus FV ${fvCeil(fv)} baseline ${expected.toFixed(2)} WAR/yr.</span>
       </div>`;
     }
     return `<div class="detail-title"><span class="g-term" data-term="wag">Projection vs reality</span> <span class="detail-title-sub">per-season WAR vs FV-implied baseline</span></div>
