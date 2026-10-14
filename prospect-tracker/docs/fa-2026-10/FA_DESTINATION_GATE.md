@@ -478,7 +478,51 @@ change after this commit goes in section 18 as a dated amendment, before the loo
 
 ## 18. Amendments
 
-None.
+No amendment: no rule above changed after registration. Section 14's dated freeze
+entry follows.
+
+### 2026-10-14: the forward-read freeze (section 14), not an amendment
+
+The look passed (section 19, arm N) on 2026-10-14, before the 2026-27
+qualifying-offer acceptance deadline, so every class member's vector and the
+Fit's `teamFits` were frozen the same day by `tools/fa_destination_freeze.py
+--frozen-on 2026-10-14` (cached pages only), under `data/_labs/` (which ships in
+neither deploy consumer):
+
+- `data/_labs/fa_destination/frozen_2026_27/fa_destination_vectors.json`, sha256
+  `71ffe198b98a250e284b15a303642002b3c23216c9f7a93da5e72319d764f5dc`: arm N, the
+  serving fit's `coef_hash` `1c0fbaa5c72e97c3673d1811a85f8db9542887c4b78a5c43feb958d3be060149`,
+  232 vectors of the 236 class members of `data/fa_class.json` (generated
+  2026-10-08, sha256 `9a039bc3...`); 4 members carry no projGuar or projAav and
+  get no vector; 44 vectors belong to pending-option members. Inputs: season 2026
+  tax payroll (30 clubs), wins (30 clubs) and Savant park factors (29 clubs; ATH
+  has no 2026 row and reads neutral, as `build_rows` treats a miss), threshold
+  $244M, behavior priors from winters 2015-2026, the member's projGuar and
+  projAav; the need proxy reads every class member's club and position group.
+  The restated F arithmetic (`fa_destination.winter_context`, `member_comps`)
+  reproduces `build_rows` on all 35,190 Gate 3 rows bit-exact
+  (`test_fa_destination_freeze.py`). Reported, never gated: every member's first
+  club is his own club where he has one (incumbent coefficient 1.7681); 30
+  distinct first clubs, max share 0.0733.
+- `data/_labs/fa_destination/frozen_2026_27/fa_fit_teamfits.json`, sha256
+  `6ee585cbde282a5d736c24cedde876abf608f2912a328a8a9fdcb8dc79f39ffa`: the served
+  Fit verbatim from `data/fa_class.json` (its `teamFits`, each club's top 12, and
+  each member's top 3), on the pre-free-agency frame. Beside it, labelled as not
+  served, the 30-club Fit recomputed that day by `fa_fit.fit_scores` through
+  `fa_fit_backtest.class_component_matrix` for all 236 members, because the served
+  blocks cannot rank all 30 clubs for MRR and top-5. Against the served blocks
+  every served fit value agrees within 0.002 (the served three-decimal rounding);
+  the order differs only among near ties, in the top 3 of 8 of 236 members and
+  the top 12 of 27 of 30 clubs.
+
+**The qualifying-offer acceptance deadline.** MLB has not published the 2026-27
+date on 2026-10-14 (the 2026 World Series has not been played). Under the 2022
+agreement, which governs this offseason (it expires 2026-12-01), clubs make
+qualifying offers at the end of the five-day period after the World Series and
+players have about ten days to accept; the 2025-26 deadline was 2025-11-18, 4 p.m.
+ET. Any 2026 World Series end puts the 2026-27 deadline in November 2026, after
+2026-10-14, so this freeze precedes it. The forward read scores these files after
+the class closes (the day before 2027 Opening Day), by section 14's rules.
 
 ## 19. Results
 
