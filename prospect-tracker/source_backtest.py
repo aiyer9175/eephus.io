@@ -973,14 +973,20 @@ def _archetype_accuracy(common_rows: list[dict], raters: list[str]) -> list[dict
 
 
 def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
-    """eFV (our outcome-grounded model) vs consensus FV, lifted from the eFV eval
-    artifacts. Reported SEPARATELY from the per-source bars because it is the
-    model's OWN out-of-sample protocol (forward-chained, leakage-clean), not the
-    in-sample common-set backtest the sources share -- OOS is the HARDER bar, so a
-    win here is conservative. This is the honest 'eFV beats consensus on rank' record."""
-    out = {"protocol": ("forward-chained out-of-sample; debuted cohort; first-6-season "
-                        "bWAR (KM-censored). The shipped headline rank is the guarded "
-                        "blend (consensus prior + the model edge that survives OOS)."),
+    """eFV v1 vs consensus FV, lifted from the eFV v1 eval artifacts read below
+    (their model reads "eFV hitter v1 (lean + guarded blend)"). eFV v1 was the
+    board's grade until 2026-09-25 and is the graduates' locked grade; the served
+    eFV V2 is scored in the head-to-head block (accuracy.efv_scored_object).
+    Reported SEPARATELY from the per-source bars because it is the model's OWN
+    out-of-sample protocol (forward-chained, leakage-clean), not the in-sample
+    common-set backtest the sources share. The label is first-six-season eWAR
+    since the eWAR label epoch (69fe0fca, 2026-09-04); the hitter artifact's
+    conventions.target still reads bWAR, a stale string.
+    """
+    out = {"protocol": ("forward-chained out of sample; debuted cohort; first-six-season "
+                        "eWAR (KM-censored). This panel scores eFV v1, the board's grade "
+                        "until September 25, 2026 and the graduates' locked grade; the "
+                        "served eFV V2 is scored in the head-to-head above."),
            "sides": {}}
     found = False
     block = None

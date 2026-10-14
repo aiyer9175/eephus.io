@@ -1307,6 +1307,16 @@ const _TIER_ORDER = ["<45", "45", "50", "55", "60+"];
 function _raterMeta(r) {
   return _RATER_META[r] || { label: String(r), color: "var(--text-tertiary)" };
 }
+// The capture-curve comparison sentence, derived from the sign of the two printed
+// top-20% shares (t20x for eFV, t20c for the consensus).
+function _captureCompareSentence(t20x, t20c) {
+  const d = Number(t20x) - Number(t20c);
+  const cmp = d > 0 ? "eFV concentrates more of it."
+    : d < 0 ? "The consensus concentrates more of it."
+      : "The two boards concentrate the same share.";
+  return cmp + " No floor is computed for this curve, so the gap is a description, not a claim.";
+}
+
 // WAR-capture (lift) curve: share of all realized career WAR sitting in the top N% of each
 // board. A sharper-ordering grade concentrates WAR earlier -> a higher curve. Replaces the
 // confounded mean-WAR-by-tier chart (where BETTER ordering paradoxically lowers the middle mean).
@@ -1331,6 +1341,9 @@ function _methCaptureCurve(bt) {
   };
   const efvCol = "var(--accent-lilac)", consCol = _raterMeta("prospx_consensus").color;
   const t20x = Math.round((cc.xfv.top20 || 0) * 100), t20c = Math.round((cc.consensus.top20 || 0) * 100);
+  // The comparison sentence follows the sign of the two printed shares, never a
+  // typed claim (S9, 2026-10-14): the curve carries no floor, so it describes.
+  const capCmp = _captureCompareSentence(t20x, t20c);
   return `<div class="meth-chart">
     <div class="meth-chart-title">Career WAR captured by the top of the board <span class="meth-sub">share of all realized WAR sitting in each board's top N%, higher = sharper ordering</span></div>
     <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="WAR capture curve">
@@ -1346,7 +1359,7 @@ function _methCaptureCurve(bt) {
       <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${consCol};"></span>PROSPX consensus</span>
       <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);"></span>random</span>
     </div>
-    <p class="meth-note">eFV concentrates <strong>${t20x}%</strong> of all realized career WAR in the top 20% of its board, against ${t20c}% for the consensus. It sorts the eventual contributors toward the top more sharply. Full graded pool (n=${cc.pool_n.toLocaleString()}, debuted + busts); the public sources don't grade the lower-minors busts, so this lift curve is eFV against the consensus it is built to upgrade.</p>
+    <p class="meth-note">eFV concentrates <strong>${t20x}%</strong> of all realized career WAR in the top 20% of its board, against ${t20c}% for the consensus. ${capCmp} Full graded pool (n=${cc.pool_n.toLocaleString()}, debuted + busts); the public sources don't grade the lower-minors busts, so this lift curve is eFV against the consensus it is built to upgrade.</p>
   </div>`;
 }
 // The Methodology prose, one part per piece the chapters assemble
@@ -1885,8 +1898,10 @@ function _methEfvVerdict(xc) {
   return `<p class="meth-verdict${all ? " is-good" : ""}">${head}${eraClause} eFV is the primary grade; consensus FV remains a reference input. (This is eFV's own out-of-sample protocol, a more conservative test than the in-sample common-set bars above.)</p>`;
 }
 
-// eFV vs consensus FV - our outcome-grounded model, shown SEPARATELY from the per-source
-// bars because it runs on its own out-of-sample protocol (the harder, conservative bar).
+// eFV v1 vs consensus FV, shown SEPARATELY from the per-source bars because it runs on
+// its own out-of-sample protocol. It reads source_backtest's xfv_vs_consensus block,
+// which is lifted from the eFV v1 evals; eFV v1 was the board's grade until 2026-09-25
+// and is the graduates' locked grade. The served eFV V2 is scored in the head-to-head.
 function _methEfvPanel(bt) {
   const xc = bt.xfv_vs_consensus;
   if (!xc || !xc.sides) return "";
@@ -1964,7 +1979,7 @@ function _methEfvPanel(bt) {
       <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Player</th><th>Consensus FV</th><th>eFV said</th><th>Career WAR</th><th>Closer</th></tr></thead><tbody>${rr}</tbody></table></div></div>`;
   }
   return `<div class="meth-chart meth-accuracy">
-    <div class="meth-chart-title">eFV vs consensus FV <span class="meth-sub">our model · out-of-sample</span></div>
+    <div class="meth-chart-title">eFV v1 vs consensus FV <span class="meth-sub">the board's grade until September 25, 2026 and the graduates' locked grade</span></div>
     <p class="meth-note">${escapeHtml(xc.protocol || "")}</p>
     ${sideBlock("hitters", "Hitters - ordering skill (Spearman ρ, grade vs realized WAR)")}
     ${sideBlock("pitchers", "Pitchers - ordering skill (Spearman ρ, grade vs realized WAR)")}
@@ -3528,7 +3543,7 @@ function _methHeroBanner(bt) {
   const tile = (lbl, v, isEfv) => `<div class="meth-find-card${isEfv ? " scx-hero-efv" : ""}">
     <div class="meth-find-stat">${f3(v)}</div>
     <div class="meth-find-label">${escapeHtml(lbl)}</div>
-    <div class="meth-find-sub">${isEfv ? "outcome-grounded model" : "public scouting grade"}</div>
+    <div class="meth-find-sub">${isEfv ? "our grade (eFV V2)" : "public scouting grade"}</div>
   </div>`;
   const tiles = tile("eFV", x.spearman, true) + pubs.map(pr => tile(pr[0], pr[1].spearman, false)).join("");
   // THE HEADLINE IS DERIVED, NEVER ASSERTED (M-1, 2026-08-13). It used to state
@@ -3544,12 +3559,12 @@ function _methHeroBanner(bt) {
   const ahead = (lead != null && lead > 0);
   const resolvable = !!(bestFloor && bestFloor.resolvable);
   const headline = (lead == null)
-    ? "eFV grades prospects on what they actually <em>became</em>."
+    ? "eFV reorders the consensus where outcomes support it."
     : (ahead && resolvable)
-      ? "eFV grades prospects on what they actually <em>became</em>, and out of sample it ranks ahead of every public source by a margin that clears our noise floor."
+      ? "eFV reorders the consensus where outcomes support it, and out of sample it ranks ahead of every public source by a margin that clears our noise floor."
       : ahead
-        ? "eFV grades prospects on what they actually <em>became</em>, and out of sample it ranks ahead of every public source - by a margin we still cannot call a win."
-        : "eFV grades prospects on what they actually <em>became</em>, and out of sample it is statistically indistinguishable from the best public scouting grade.";
+        ? "eFV reorders the consensus where outcomes support it, and out of sample it ranks ahead of every public source - by a margin we still cannot call a win."
+        : "eFV reorders the consensus where outcomes support it, and out of sample it is statistically indistinguishable from the best public scouting grade.";
   const leadClause = (lead != null && bestPub)
     ? `, ${f3(x.spearman)} against ${f3(bestPub[1].spearman)} for the best public source (${escapeHtml(bestPub[0])}), a ${lead >= 0 ? "+" : ""}${lead.toFixed(3)} point estimate${_hhFloorClause(bt, bestKey)}`
     : _hhFloorClause(bt);
@@ -3568,164 +3583,19 @@ function _methHeroBanner(bt) {
     ? " We report a gap that does not clear its floor as unresolved, not as a win." : "";
   const verbPhrase = ahead ? "it grades ahead of every one of them" : "it lands level with the best of them";
   return `<div class="source-comp-hero">
-    <div class="source-comp-hero-kicker">A different kind of Future Value</div>
+    <div class="source-comp-hero-kicker">Our grade against theirs</div>
     <h2 class="source-comp-hero-title">${headline}</h2>
-    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV is a model trained on resolved outcomes and scored the honest way: leakage-free, forward-chained, on the same players, the same window AND the same vintage as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - ${verbPhrase}${leadClause}${consClause}${unresolvedTail}</p>
+    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV starts from the consensus of those opinions and reorders it inside hitters and inside pitchers with drivers fitted on resolved outcomes. It is scored leakage-free and forward-chained, on the same players, the same window and the same vintage as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - ${verbPhrase}${leadClause}${consClause}${unresolvedTail}</p>
     <div class="meth-findings source-comp-hero-tiles">${tiles}</div>
     <p class="source-comp-hero-foot">Ordering skill = Spearman correlation between the preseason grade and realized MLB WAR (higher is better). The full method, per-FV-tier and per-archetype breakdowns, and the honest limits are all below - nothing cherry-picked.${_hhPopulationClause(bt)}</p>
-  </div>`;
-}
-
-// Model upgrades (owner ask 2026-07-23): the gate-checked ships that changed
-// how eFV reads its inputs, cited from their committed eval artifacts, plus
-// the lanes from the same program that FAILED their gates. Same lazy-load /
-// graceful-degrade idiom as the reliability monitor: numbers are read from
-// the artifacts at render time so the panel can never drift from the evals
-// it cites; an absent artifact simply drops its card. The failed-lanes line
-// is the credibility feature - the misses stay named next to the ships.
-function _loadUpgrades() {
-  const rerender = () => { if (_S.view === "source-comparison") renderSourceComparison(); };
-  if (!_S.xlineEval && !_S.xlineLoading) {
-    _S.xlineLoading = true;
-    fetch("/data/xfv_statcast_line_eval.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.xlineEval = j || { __error: true }; rerender(); })
-      .catch(() => { _S.xlineEval = { __error: true }; rerender(); });
-  }
-  if (!_S.p1Eval && !_S.p1Loading) {
-    _S.p1Loading = true;
-    fetch("/data/xfv_provisional_prior_eval.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.p1Eval = j || { __error: true }; rerender(); })
-      .catch(() => { _S.p1Eval = { __error: true }; rerender(); });
-  }
-  if (!_S.denoisedEval && !_S.denoisedLoading) {
-    _S.denoisedLoading = true;
-    fetch("/data/xfv_denoised_baseline_eval.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.denoisedEval = j || { __error: true }; rerender(); })
-      .catch(() => { _S.denoisedEval = { __error: true }; rerender(); });
-  }
-}
-
-// B-L6, the denoised-baseline fairness control. This panel exists because of a
-// PRE-COMMITMENT written before the control ran (docs/efv-2026-08-09/
-// DENOISED_BASELINE_GATE.md section 6): if eFV's edge failed to survive a
-// consensus rebuilt from measured per-source precision, the conviction copy had
-// to get harder to clear and the gap-closure share had to be PRINTED. The edge
-// did not survive, so this renders.
-//
-// It is deliberately the least flattering panel on the page, and it is also the
-// one that most supports the model: the control found the margin is NOT an
-// artifact of a badly built consensus. Both halves ship together or neither is
-// honest. Numbers are read from the artifact, never restated, so the copy tracks
-// the measurement the day it moves. Local formatters only - `f3` is declared
-// const INSIDE other functions here and is not module scope.
-function _methDenoisedControlHTML() {
-  const j = _S.denoisedEval;
-  if (!j || j.__error || typeof j !== "object") return "";
-  const cor = j.primary_corrected_amendment_2 || {};
-  const inc = j.incumbent_rederived_today || {};
-  const att = j.attribution || {};
-  const c2 = (j.controls || {}).C2_random_admissible_weights || {};
-  const arms = j.arms || {};
-  const s3 = arms.S3_global_centering || {};
-  if (cor.delta == null || inc.delta == null) return "";
-  const f3 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
-  const f4 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(4));
-  const sgn = v => (Number(v) > 0 ? "+" : "") + f3(v);
-  // The share of the head-to-head gap that a precision-weighted consensus closes.
-  // The pre-commitment names this number specifically and requires it printed.
-  const closed = (att.moved_by_denoising != null && inc.delta)
-    ? Math.abs(Number(att.moved_by_denoising) / Number(inc.delta)) * 100 : null;
-  const tile = (stat, label, sub) => `<div class="meth-find-card">
-      <div class="meth-find-stat">${stat}</div>
-      <div class="meth-find-label">${label}</div>
-      <div class="meth-find-sub">${sub}</div>
-    </div>`;
-  // The artifact's verdict tokens are the formal ones and stay in the ledger. On a
-  // public page they read as jargon, so they are mapped to plain language here rather
-  // than the artifact being softened to suit the page.
-  const say = v => ({
-    "NULL": "does not clear it",
-    "COLLAPSES": "does not clear it",
-    "SURVIVES": "clears it",
-    "UNINFORMATIVE": "no answer",
-    "NO_OP": "no answer",
-    "REVERSAL": "reversed",
-  }[String(v || "")] || String(v || ""));
-  return `<div class="meth-table-wrap">
-    <div class="meth-table-title">B-L6 · denoised-baseline fairness control <span class="meth-sub">run ${escapeHtml(String(j.generated_at || "").slice(0, 10))} · pre-registered · did NOT clear</span></div>
-    <p class="meth-note">The head-to-head above compares eFV against the consensus <strong>as served</strong>. That consensus is itself a blend of noisy graders, so part of eFV's lead could have been eFV beating the <em>blending</em> rather than beating the scouts. This control rebuilt the consensus from measured per-source precision and re-ran the comparison on identical rows. Baseball America is what made it possible: with only two scored sources the precision of each is mathematically unidentifiable, and BA is the third instrument that identifies it.</p>
-    <div class="meth-findings">
-      ${tile(sgn(inc.delta), "eFV lead over the consensus as served", `floor ${f4(inc.MDE95_E_cond)} and ${f4(inc.MDE95_E_refit)} · ${escapeHtml(say(inc.verdict_E_cond))} under both estimators`)}
-      ${tile(sgn(cor.delta), "eFV lead over the precision-weighted consensus", `floor ${f4(cor.MDE95_E_cond)} · ${f3(cor.margin_over_E_cond)}x · ${escapeHtml(say(cor.verdict))}`)}
-      ${tile(closed == null ? "-" : closed.toFixed(1) + "%", "share of the gap a better-built consensus closes", `rebuilding the blend moved the lead by only ${sgn(att.moved_by_denoising)}`)}
-    </div>
-    <p class="meth-note"><strong>What this found, in both directions.</strong> Against us: eFV's lead over the served consensus is ${sgn(inc.delta)} and <strong>does not clear its detection floor under either registered estimator</strong> (${f3(inc.margin_over_E_cond)}x and ${f3(inc.margin_over_E_refit)}x). We report that as unresolved, not as a win, and the headline above says so. For us: rebuilding the consensus by measured precision bought only ${sgn(s3.delta_vs_published_baseline)} of ordering skill, so <strong>the lead is not an artifact of a badly built consensus</strong> - the thing eFV is ahead of is the scouts, not the arithmetic. ${c2.draws ? `And the blend we ship survived its own audit: <strong>0 of ${c2.draws}</strong> randomly reweighted consensus variants beat it.` : ""}</p>
-    <p class="meth-note">Honest limits, stated because they cut both ways. The precision estimate cannot be made vintage-clean before 2027, so the rebuilt baseline is <em>defined</em> using rows it also scores - an advantage handed to the baseline, not to eFV. And ${att.drift_share_of_total_move != null ? `${Math.round(Number(att.drift_share_of_total_move) * 100)}% of the drop from the previously published lead is not this control at all` : "part of the drop is not this control at all"}: it is our own Baseball America backfill and identity repairs changing which players the comparison covers. Gate ledger: <a href="/data/xfv_denoised_baseline_eval.json" target="_blank" rel="noopener">xfv_denoised_baseline_eval.json</a>.</p>
-  </div>`;
-}
-
-function _methUpgradeXlineHTML() {
-  const j = _S.xlineEval;
-  if (!j || j.__error || typeof j !== "object") return "";
-  const m = j.clause_m_measurement || {};
-  const hit = m.hit, pit = m.pit;
-  if (!hit || !pit || hit.delta_rho == null || pit.delta_rho_xslg_arm == null) return "";
-  const sgn = v => (Number(v) > 0 ? "+" : "") + Number(v).toFixed(3);
-  const ci = a => (Array.isArray(a) && a.length === 2) ? `95% CI ${sgn(a[0])} to ${sgn(a[1])}` : "";
-  const tile = (stat, label, sub) => `<div class="meth-find-card">
-      <div class="meth-find-stat">${stat}</div>
-      <div class="meth-find-label">${label}</div>
-      <div class="meth-find-sub">${sub}</div>
-    </div>`;
-  return `<div class="meth-table-wrap">
-    <div class="meth-table-title">S-XLINE · Statcast measurement layer <span class="meth-sub">shipped ${escapeHtml(String(j.generated_at || "2026-07-23"))} · live, both sides</span></div>
-    <p class="meth-note">AAA stat lines from 2023 on, for players with 100+ tracked Savant PA, are blended toward Statcast expected stats before eFV reads them: hitters get capped xBA/xOBP/xSLG gap deltas, pitchers a bounded ERA correction from the xwOBA-against gap. The line the model grades is the measured line, not the luck-inflated one.</p>
-    <div class="meth-findings">
-      ${tile(sgn(hit.delta_rho), "hitter blend, next-season prediction gain (delta Spearman ρ)", `${ci(hit.ci95)} · n=${hit.n_pairs} AAA season pairs`)}
-      ${tile(sgn(pit.delta_rho_xslg_arm), "pitcher blend, xSLG-against arm (delta Spearman ρ)", `${ci(pit.ci95)} · n=${pit.n_pairs} AAA season pairs`)}
-    </div>
-    <p class="meth-note">Served impact at the flip: 97 active grades moved, max move 2.7 FV. Covered players now carry a Measurement note inside "How eFV graded this prospect" on their PROSPX card; uncovered players are untouched, byte for byte. Gate ledger: <a href="/data/xfv_statcast_line_eval.json" target="_blank" rel="noopener">xfv_statcast_line_eval.json</a>.</p>
-  </div>`;
-}
-
-function _methUpgradeP1HTML() {
-  const j = _S.p1Eval;
-  if (!j || j.__error || typeof j !== "object") return "";
-  const v3 = j.v3;
-  const arm = v3 && v3.arms && v3.arms["ARM-A"];
-  if (!arm || !v3.verdict || v3.verdict["ARM-A"] !== "PASS") return "";
-  const bat = arm.a2_battery || {};
-  const ex = (v3.named_example_grady_emerson || {})["ARM-A"] || {};
-  const movers = (bat.n_movers != null && bat.n_scored != null && bat.max_delta_fv != null)
-    ? ` ${bat.n_movers} of ${bat.n_scored} served provisional grades moved, all upward, max +${Number(bat.max_delta_fv).toFixed(1)} FV.`
-    : "";
-  const exLine = (ex.grade_off != null && ex.grade_on != null)
-    ? ` Named example from the gate run: Grady Emerson, 2026 pick 2 with no recorded bonus, ${Number(ex.grade_off).toFixed(1)} to ${Number(ex.grade_on).toFixed(1)}.`
-    : "";
-  return `<div class="meth-table-wrap">
-    <div class="meth-table-title">P1 V3 slot trust · provisional prior fix <span class="meth-sub">shipped ${escapeHtml(String(v3.generated_at || "2026-07-23"))} · self-expiring</span></div>
-    <p class="meth-note">A train/serve correctness fix for provisional grades (drafted, no pro track record yet): an unsigned current-class pick with no recorded bonus now prices its pedigree at slot value instead of silently losing the credit. The backtest bar was no-harm and it held.${movers}${exLine} Self-expiring by construction: once the class's bonuses are recorded, the branch changes nothing. Gate ledger: <a href="/data/xfv_provisional_prior_eval.json" target="_blank" rel="noopener">xfv_provisional_prior_eval.json</a>.</p>
-  </div>`;
-}
-
-function _methModelUpgrades() {
-  return `<div class="source-comp-wrap" id="model-upgrades">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Model upgrades · gate-checked ships, misses included</div>
-    <h2 class="meth-h">What recently changed under the hood</h2>
-    <p class="meth-note">Every upgrade ships through a pre-registered gate. The numbers below are read live from the committed eval artifacts, and the lanes that failed their gates are listed right next to the ones that passed.</p>
-    <div class="meth-tables">${_methUpgradeXlineHTML()}${_methUpgradeP1HTML()}${_methDenoisedControlHTML()}</div>
-    <p class="meth-note"><strong>What did not ship:</strong> the same 2026-07-23 program ran four more gated lanes - playing-time IL risk for projections, MiLB park neutralization, per-pitch-type stuff into PAL conversions, and college stuff into the college-to-pro translation - and none cleared its gate. Nothing from those lanes touches a served number. Every failure is ledgered with its committed eval artifact in <a href="/models/">the model ledger</a>; that ledger is the point.</p>
   </div>`;
 }
 
 // eFV Scoreboard (G-SCORE, 2026-07-24 program): the model's record cell by
 // cell, read live from data/xfv_scoreboard_eval.json (regenerated by
 // tools/efv_scoreboard.py; every cell carries eFV vs the consensus baseline
-// on identical rows plus a win flag). Same lazy-load / graceful-degrade
-// idiom as _loadUpgrades: an absent artifact simply drops the panel.
+// on identical rows plus a win flag). It scores eFV v1, the graduates' locked
+// grade. Lazy-load / graceful-degrade: an absent artifact simply drops the panel.
 function _loadScoreboard() {
   if (!_S.scoreEval && !_S.scoreEvalLoading) {
     _S.scoreEvalLoading = true;
@@ -3903,8 +3773,8 @@ function _methScoreboardHTML() {
     ? `<p class="meth-note">Also on the card: ${escapeHtml(extras.join("; "))}. Full detail, receipts included, in <a href="/data/xfv_scoreboard_eval.json" target="_blank" rel="noopener">xfv_scoreboard_eval.json</a>.</p>`
     : `<p class="meth-note">Full detail in <a href="/data/xfv_scoreboard_eval.json" target="_blank" rel="noopener">xfv_scoreboard_eval.json</a>.</p>`;
   return `<div class="source-comp-wrap" id="efv-scoreboard">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>eFV Scoreboard &middot; the record, cell by cell</div>
-    <h2 class="meth-h">Where eFV wins, and where it does not</h2>
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>eFV v1 scoreboard &middot; the graduates' locked grade, cell by cell</div>
+    <h2 class="meth-h">Where eFV v1 wins, and where it does not</h2>
     <p class="meth-note">Every cell is the same forward-chained out-of-sample read the evals use: eFV against the consensus baseline on identical players, era by era, FV tier by FV tier, cohort by cohort. A check is a win and a red cross is a loss, and the losses are left exactly as measured${nWeak ? ` (${nWeak} weak cells right now)` : ""}.${floor != null ? ` Most cells are neither: this board resolves a margin of ${floor.toFixed(3)} at 95 percent, so any cell inside that reads <em>not resolvable</em> rather than being counted for either side. That is most of them, and saying so is the point of publishing the board.` : ""}</p>
     <div class="meth-tables">${hit}${pit}</div>
     ${extraLine}
@@ -5198,8 +5068,6 @@ function renderSourceComparison() {
   // archetype table below. Same lazy idiom; the table degrades to "not
   // measured" while it is in flight or absent.
   _loadSourceAccuracy();
-  // Model upgrades panel artifacts (same lazy idiom).
-  _loadUpgrades();
   // Scoreboard artifact (same lazy idiom).
   _loadScoreboard();
   if (!_S.backtest && !_S.btLoading) {
@@ -5229,7 +5097,7 @@ function renderSourceComparison() {
       ${_methLabelPoolSection()}
       ${_scxGfxBarHTML()}
       <h2 class="meth-h">The full head-to-head</h2>
-      <p class="meth-window">eFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of eFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} ${_excludedSourcesClause(bt)}</p>
+      <p class="meth-window">eFV is the primary grade: the consensus order, reordered by drivers fitted on resolved outcomes. The test: a leakage-free, forward-chained backtest of eFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} ${_excludedSourcesClause(bt)}</p>
       ${_methEfvFindings(bt)}
       ${_methPerYearChart(bt)}
       <h3 class="meth-h3">Head-to-head: ranking skill + contributor AUC</h3>
@@ -5263,7 +5131,7 @@ function renderSourceComparison() {
           <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40-60 across all years - a handful of hits or misses moves its rates a lot.</li>
           <li><strong>Censoring.</strong> Outcomes are cumulative WAR as of ${escapeHtml(bt.as_of_date || "today")}; the 2023 cohort has had ~3 seasons, the 2021 cohort ~5. Rate metrics mitigate but don't erase this.</li>
           <li>${_methCaveatHeadToHead(bt)}${_methCaveatArchetypeClause(bt)}</li>
-          <li><strong>eFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior, and where richer data exists (Statcast, Stuff+) it is only a live overlay, not yet historical.</li>
+          <li><strong>eFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior. Statcast, injury, age and a reliever role show on each card as labelled notes; on the board today none of them moves the grade.</li>
         </ul>
       </div>`;
   }
@@ -5272,7 +5140,7 @@ function renderSourceComparison() {
   el.innerHTML = `<div class="source-comp-wrap">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Empirical backtest · resolved cohorts only</div>
     ${backtestHTML}
-  </div>` + _methProvTrackSection() + _methScoreboardHTML() + _methModelUpgrades();
+  </div>` + _methProvTrackSection() + _methScoreboardHTML();
   _mxBind();
   // Generate GFX: spec built at click time from the loaded artifacts; a click
   // before the data resolves (or with the engine absent) is a clean no-op.

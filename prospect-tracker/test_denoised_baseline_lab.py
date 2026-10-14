@@ -3,8 +3,10 @@
 WHAT THESE TESTS ARE FOR. The lab's numbers are a measurement and will move. What must
 NOT move without someone noticing is (a) the registered decision rule, (b) the identity
 that defines the GLS weight, (c) the agreement between the artifact's stored verdict and
-its own stored numbers, and (d) the page's ability to render every verdict the
-adjudicator can emit.
+its own stored numbers, and (d) that no reader surface prints a raw adjudicator token.
+Since LIBRARY_6 (2026-10-14) the B-L6 record reaches readers as a dated Model Updates
+note row labelled eFV v1 (data/model_updates_typed.json); the Library's Model upgrades
+panel that rendered it is retired.
 
 Every test here was mutation-proved: the mutation table is in the docstring of each
 test, and each mutation was confirmed to turn the test red. A test that passes with the
@@ -222,26 +224,39 @@ def test_the_artifact_is_labelled_not_vintage_disciplined():
     assert "2027" in GATE_DOC.read_text(encoding="utf-8")
 
 
-# ------------------------------------------------------ the page can render the rule
-def test_every_verdict_the_adjudicator_emits_has_plain_language_on_the_page():
+# ------------------------------------------------------ the record a reader sees
+TYPED = ROOT / "data" / "model_updates_typed.json"
+
+
+def _b_l6_note():
+    doc = json.loads(TYPED.read_text(encoding="utf-8"))
+    rows = [n for n in doc["notes"]
+            if (n.get("source") or {}).get("path") == "data/xfv_denoised_baseline_eval.json"]
+    assert len(rows) == 1, f"expected one B-L6 note row, found {len(rows)}"
+    return rows[0]
+
+
+def test_no_reader_surface_prints_a_raw_adjudicator_token():
     """A cross-file coupling that has no other guard: `adjudicate` emits formal tokens
-    and the glossary panel maps them to plain language. Add a sixth verdict without
-    touching the map and the page renders a raw token like COLLAPSES to a reader.
+    (COLLAPSES, NULL, ...). The B-L6 record now reaches readers as a Model Updates note
+    row, and the Library no longer fetches the artifact, so neither may carry a raw token.
 
-    MUTATION: drop any key from the `say` map in glossary.js -> red.
+    MUTATION: write COLLAPSES into the note row's text -> red.
+    MUTATION: fetch xfv_denoised_baseline_eval.json from glossary.js again -> red.
     """
-    src = GLOSSARY.read_text(encoding="utf-8")
-    i = src.index("const say = v => ({")
-    mapped = set(re.findall(r'"([A-Z_]+)":', src[i:i + 400]))
-
     lab_src = (ROOT / "tools" / "efv_denoised_baseline_lab.py").read_text(encoding="utf-8")
     body = lab_src[lab_src.index("def adjudicate("):]
     body = body[:body.index("\ndef ")]
     emitted = set(re.findall(r'return "([A-Z_]+)"', body))
-
     assert emitted, "no verdict literals found; the parse target moved"
-    missing = emitted - mapped
-    assert not missing, f"glossary.js renders these verdicts as raw tokens: {sorted(missing)}"
+
+    text = _b_l6_note()["text"]
+    raw = sorted(t for t in emitted if re.search(r"\b" + t + r"\b", text))
+    assert not raw, f"the B-L6 note row prints raw verdict tokens: {raw}"
+    src = GLOSSARY.read_text(encoding="utf-8")
+    assert "xfv_denoised_baseline_eval.json" not in src, (
+        "glossary.js reads the B-L6 artifact again; map every adjudicator token to plain "
+        "language before rendering it")
 
 
 def test_the_retired_conviction_claim_is_gone_from_the_hero():
@@ -258,16 +273,25 @@ def test_the_retired_conviction_claim_is_gone_from_the_hero():
     assert "cannot call a win" in src
 
 
-def test_the_panel_prints_the_gap_closure_share_the_precommitment_named():
-    """The pre-commitment names one number specifically: the share of the gap a
-    precision-weighted consensus closes, printed. It is computed in the panel from the
-    artifact rather than typed in, so it cannot drift.
+def test_the_b_l6_note_row_states_the_measurement_from_its_artifact_key():
+    """The panel that printed B-L6 retired with the Library's Model upgrades panel
+    (LIBRARY_6, 2026-10-14). The pre-commitment's printed gap-closure share binds a
+    surface that asserts eFV beats the consensus; none does (the hero reads "cannot
+    call a win" or "statistically indistinguishable", and the served claim is a tie), and
+    the share stays derivable from block `attribution` of the artifact. What must survive
+    is the measurement itself, stated as a dated fact whose figures are the artifact's:
+    the gap, both floors, and that it cleared neither.
 
-    MUTATION: delete the `closed` tile -> red.
+    MUTATION: change +0.03138 in the note row -> red.
+    MUTATION: point the row's source key at another block -> red.
     """
-    src = GLOSSARY.read_text(encoding="utf-8")
-    i = src.index("function _methDenoisedControlHTML")
-    body = src[i:src.index("\nfunction ", i + 10)]
-    assert "moved_by_denoising" in body
-    assert "share of the gap" in body
-    assert "closed.toFixed(1)" in body
+    a = _artifact()
+    n = _b_l6_note()
+    assert n["date"] == "2026-08-11" and n["model_id"] == "efv_v1"
+    assert n["source"]["key"] == "incumbent_rederived_today"
+    inc = a["incumbent_rederived_today"]
+    for fig in (f"+{inc['delta']:.5f}", f"{inc['MDE95_E_cond']:.4f}",
+                f"{inc['MDE95_E_refit']:.4f}"):
+        assert fig in n["text"], (fig, n["text"])
+    assert inc["delta"] < min(inc["MDE95_E_cond"], inc["MDE95_E_refit"])
+    assert "did not clear either" in n["text"]

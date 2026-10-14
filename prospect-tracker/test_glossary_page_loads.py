@@ -116,7 +116,7 @@ def test_all_four_views_render(server, browser):
     ready = {
         "source-comparison": (
             " && (el.innerHTML.indexOf('The full head-to-head') !== -1"
-            " || el.innerHTML.indexOf('A different kind of Future Value') !== -1"
+            " || el.innerHTML.indexOf('Our grade against theirs') !== -1"
             " || el.innerHTML.indexOf('no resolved cohorts') !== -1)"),
         # Source Accuracy lazy-fetches source_cohort_accuracy.json; it is ready
         # once the sub-tab bar and the read-first tiles have rendered, never on
@@ -163,7 +163,8 @@ def test_all_four_views_render(server, browser):
     assert not empty, f"views rendered (near-)empty: {empty} — {results}"
     assert "Loading backtest" not in sc_html, "source comparison stranded on its loading state"
     # 2026-07-06: the data-state header is "The full head-to-head", led by the hero
-    # verdict banner ("A different kind of Future Value"); the empty-state text is unchanged.
+    # verdict banner (kicker "Our grade against theirs" since LIBRARY_6, 2026-10-14);
+    # the empty-state text is unchanged.
     # COVERAGE GAP CLOSED 2026-08-10. This used to accept the EMPTY-STATE string
     # as a pass, which is how a genuinely broken view shipped green: a
     # ReferenceError inside _hhFloorClause took out _methHeroBanner and blanked
@@ -176,7 +177,7 @@ def test_all_four_views_render(server, browser):
         _acc = (json.loads(_sb.read_text(encoding="utf-8")) or {}).get("accuracy") or {}
         _has_data = bool((_acc.get("pooled") or {}).get("xfv"))
     if _has_data:
-        assert "A different kind of Future Value" in sc_html, (
+        assert "Our grade against theirs" in sc_html, (
             "source_backtest.json carries pooled accuracy, so the hero banner MUST "
             "render; a blank or empty-state view here is the 2026-08-10 failure")
         assert "no resolved cohorts" not in sc_html, (
