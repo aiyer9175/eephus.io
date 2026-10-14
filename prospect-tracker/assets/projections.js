@@ -255,15 +255,25 @@
             tip: "projected wOBA (Marcel components aged along the engine's curves)" },
     fip:  { label: "FIP", fmt: v => v.toFixed(2),
             tip: "projected FIP (lower is better)" },
+    // PA/IP (PJ_7, dark): the year-1 playing time of the component lines,
+    // offered only while the board payload carries components_live. It has no
+    // ruler family, so its cells carry no tier colour and the board no key.
+    pa:   { label: "PA/IP", fmt: v => String(Math.round(v)), noLadder: true,
+            tip: "projected playing time, the component lines' year-1 PA or IP (FanGraphs frame)" },
   };
+  // The PA/IP cell exists only when the board says the component lines are
+  // live; a #cells=pa link on a dark board falls back to WAR.
+  const compLive = () => !!(DATA && DATA.components_live);
   function rateAt(m, t) {
+    if (state.cells === "pa") return t === 0 ? (m.pa ?? m.ip ?? null) : null;
     const arr = state.cells === "wrc" ? m.wrc
       : state.cells === "woba" ? m.woba
       : state.cells === "fip" ? m.fip : null;
     return arr ? (arr[t] ?? null) : null;
   }
   function rateClass(v) {
-    return RATE_META[state.cells] ? EephusTiers.cls(v, state.cells) : "";
+    const mm = RATE_META[state.cells];
+    return mm && !mm.noLadder ? EephusTiers.cls(v, state.cells) : "";
   }
 
   const state = { src: "all", pos: "all", team: "all", contract: "all", age: "all", q: "", sort: "warTotal",
@@ -341,7 +351,7 @@
     // Whitelist like view above: an arbitrary #cells= value (typo, truncated
     // share link) would crash renderTable's header template on
     // RATE_META[state.cells].label - fall back to the WAR default instead.
-    if (p.has("cells") && ["war", "wrc", "woba", "fip"].includes(p.get("cells"))) state.cells = p.get("cells");
+    if (p.has("cells") && ["war", "wrc", "woba", "fip", "pa"].includes(p.get("cells"))) state.cells = p.get("cells");
     if (p.has("sx")) state.sx = p.get("sx");
     if (p.has("sy")) state.sy = p.get("sy");
     if (p.has("q")) state.q = p.get("q");
@@ -824,6 +834,7 @@
     if (state.cmp.length === 2) { renderCompare(); return; }
     if (state.view === "teams") { renderTeams(); return; }
     if (state.view === "accountability") { renderAccountability(); return; }
+    if (state.cells === "pa" && !compLive()) state.cells = "war";
     const first = DATA.first_season;
     const teams = [...new Set((DATA.vets || []).map(m => m.team).filter(Boolean))].sort();
 
@@ -859,7 +870,7 @@
         ${teams.map(t => `<option value="${t}"${state.team === t ? " selected" : ""}>${t}</option>`).join("")}
       </select>
       <span class="filter-label proj-fgroup" title="Per-season cell metric; rate lines are veterans only">Cells</span>
-      ${[["WAR", "war"], ["wRC+", "wrc"], ["wOBA", "woba"], ["FIP", "fip"]].map(([l, k]) => chip(l, k, "cells")).join("")}
+      ${[["WAR", "war"], ["wRC+", "wrc"], ["wOBA", "woba"], ["FIP", "fip"]].concat(compLive() ? [["PA/IP", "pa"]] : []).map(([l, k]) => chip(l, k, "cells")).join("")}
       <input id="proj-q" class="proj-search" type="search" placeholder="Search players…" value="${esc(state.q)}" aria-label="Search players">`;
     bar.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
       state.view = b.dataset.pv; syncToURL(); render();
@@ -1802,6 +1813,7 @@
     const list = sortRows(rows());
     const seasons = Array.from({ length: H }, (_, t) => first + t);
     const pros = prospectView();
+    if (state.cells === "pa" && !compLive()) state.cells = "war";
     const cellLbl = state.cells === "war" ? "WAR" : RATE_META[state.cells].label;
 
     // Header cell: a real <th scope=col> carrying aria-sort (valid on a
@@ -1865,6 +1877,11 @@
           const v = rateAt(m, t);
           if (v == null) return gap();
           const mm = RATE_META[state.cells];
+          if (state.cells === "pa") {
+            // A two-way row prints his PA and names the IP beside it.
+            const pt = [m.pa != null ? `${Math.round(m.pa)} PA` : "", m.ip != null ? `${Math.round(m.ip)} IP` : ""].filter(Boolean).join(" and ");
+            return td(`<span class="proj-war" title="${s}: ${pt} projected, the component lines' playing time (FanGraphs frame). Display only; WAR and pricing are unaffected.">${mm.fmt(v)}</span>`);
+          }
           return td(`<span class="proj-war ${rateClass(v)}" title="${s}: ${esc(mm.tip)}. Display only; WAR and pricing are unaffected.">${mm.fmt(v)}</span>`);
         }
         const w = warAt(m, t);
@@ -2044,9 +2061,10 @@
     const keyFam = state.cells === "war" ? (pros ? "warProspect" : "war") : state.cells;
     const keyLbl = state.cells === "war" ? (pros ? "WAR heat (ranked in the prospect pool)" : "WAR heat")
                                          : `${RATE_META[state.cells].label} heat`;
+    // PA/IP cells carry no tier colour, so they get no key.
     const keyLad = EephusTiers.LADDERS[keyFam];
-    const keyTail = keyLad.dir === "lo" ? "&gt;" : "&lt;";
-    const tierKey = `<div class="tier-key"><b data-gl="value_ruler">${keyLbl}</b>`
+    const keyTail = keyLad && keyLad.dir === "lo" ? "&gt;" : "&lt;";
+    const tierKey = !keyLad ? "" : `<div class="tier-key"><b data-gl="value_ruler">${keyLbl}</b>`
       + keyLad.cuts.map((c, i) => `<span class="tk-${EephusTiers.TIERS[i]}">${keyFmt(c)}</span>`).join("<i>/</i>")
       + `<i>/</i><span class="tk-${EephusTiers.TIERS[5]}">${keyTail}${keyFmt(keyLad.cuts[4])}</span></div>`;
     const table = `<div class="proj-board-wrap"><table class="proj-board-table${pros ? " is-pros" : ""}" data-export data-export-title="MLB Projections">${head}<tbody>${body}</tbody></table>`
@@ -2617,11 +2635,123 @@
     const verdict = f.pass ? "passed" : "is failing";
     return ` /fa/ keeps the champion path, the input its market model ${verdict} <span data-gl="fa_gates">Gate 2</span> on (guarantee MAE $${g.mae_model.toFixed(2)}M against $${g.mae_base.toFixed(2)}M for its baseline, n ${String(Math.round(Number(g.n))).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${measuredOn(f.generated_at)}).${pendingNote(f)}`;
   }
+  // ---- projected components (PJ_7, class 2, dark) ---------------------------
+  // proj_export writes the component lines behind PROJ_COMPONENTS_LIVE and
+  // mlb_player_export copies them into the card shard as proj.comp. Absent,
+  // componentBlock returns "" and the tab is what it was. The lines sit on
+  // FanGraphs' WAR frame while the realized seasons are eWAR, so the frame line
+  // says which is which. Each runs or WAR cell carries its own 80% range (P10
+  // to P90) in its title and aria-label where the block publishes one; no
+  // range is ever built by adding component ranges, and the served WAR row
+  // keeps the WAR head's own warP10 / warP90. The glossary ids
+  // projected_component_runs, war_from_components and projection_gap land with
+  // the PJ_8 flip.
+  const COMP_NP = "not projected";
+  const COMP_NP_NAMES = { bsr: "baserunning runs", fld: "fielding runs", pos: "positional runs",
+                          gmli: "reliever gmLI", ra9_gap: "the RA9 adjustment", war_fip: "FIP-based WAR" };
+  const compInt = v => String(Math.round(v));
+  const compPct = v => formatMetric(v * 100, "pct");
+  const compRuns = v => signed(v, 1);
+  // A range read for one season: "80% range a to b runs", or "" where the block
+  // publishes no range for that season. A playing-time floor is zero.
+  function compRange(lo, hi, fmt, unit, opt) {
+    const o = opt || {};
+    return t => {
+      const a = lo ? lo[t] : null, b = hi ? hi[t] : null;
+      if (a == null || b == null) return "";
+      return `${o.lead ? o.lead(t) : ""}${o.name || "80% range"} ${fmt(o.floor0 ? Math.max(0, a) : a)} to ${fmt(b)}${unit}`;
+    };
+  }
+  // One row: the label, then one cell per season. A run of null seasons prints
+  // once, across those seasons, as "not projected".
+  function compRow(id, label, plain, vals, fmt, seasons, rng) {
+    const n = seasons.length;
+    const at = t => (vals ? (vals[t] ?? null) : null);
+    let cells = "", t = 0;
+    while (t < n) {
+      if (at(t) == null) {
+        let k = t;
+        while (k < n && at(k) == null) k++;
+        const when = k - t > 1 ? `${seasons[t]}-${seasons[k - 1]}` : String(seasons[t]);
+        cells += `<td${k - t > 1 ? ` colspan="${k - t}"` : ""} class="fa-dim" style="text-align:center" aria-label="${esc(`${when} ${plain}: ${COMP_NP}`)}">${COMP_NP}</td>`;
+        t = k;
+        continue;
+      }
+      const txt = fmt(at(t));
+      const tip = rng ? rng(t) : "";
+      cells += `<td style="text-align:center"${tip ? ` title="${esc(tip)}"` : ""} aria-label="${esc(`${seasons[t]} ${plain}: ${txt}${tip ? `, ${tip}` : ""}`)}">${txt}</td>`;
+      t++;
+    }
+    return `<tr data-proj-comp-row="${id}"><th scope="row">${label}</th>${cells}</tr>`;
+  }
+  function componentBlock(p) {
+    const pr = p.proj || {};
+    const c = pr.comp;
+    if (!c || (!c.hit && !c.pit)) return "";
+    const H = c.hit, P = c.pit;
+    const base = c.base != null ? c.base : (DATA ? DATA.first_season : null);
+    const n = (c.warComp || pr.war || []).length || (DATA && DATA.horizon) || 5;
+    const seasons = Array.from({ length: n }, (_, t) => base + t);
+    const grp = label => `<tr data-proj-comp-group><th scope="colgroup" colspan="${n + 1}">${label}</th></tr>`;
+    const runs = (lo, hi, opt) => compRange(lo, hi, compRuns, " runs", opt);
+    const rows = [];
+    if (H) {
+      const lo = H.p10 || {}, hi = H.p90 || {};
+      const fp = { name: "80% range of fielding plus positional runs together" };
+      rows.push(grp("Hitting"),
+        compRow("pa", "PA", "PA", H.pa, compInt, seasons, compRange(lo.pa, hi.pa, compInt, " PA", { floor0: true })),
+        compRow("k", term("k_pct", "K%"), "K%", H.k, compPct, seasons),
+        compRow("bb", term("bb_pct", "BB%"), "BB%", H.bb, compPct, seasons),
+        compRow("iso", term("iso", "ISO"), "ISO", H.iso, rate3, seasons),
+        compRow("babip", term("babip", "BABIP"), "BABIP", H.babip, rate3, seasons),
+        compRow("woba", term("woba", "wOBA"), "wOBA", H.woba, rate3, seasons),
+        compRow("wrc", term("wrc_plus", "wRC+"), "wRC+", H.wrc, compInt, seasons),
+        compRow("bat", term("projected_component_runs", "Batting runs"), "Batting runs", H.bat, compRuns, seasons, runs(lo.bat, hi.bat)),
+        compRow("bsr", term("projected_component_runs", "Baserunning runs"), "Baserunning runs", H.bsr, compRuns, seasons, runs(lo.bsr, hi.bsr)),
+        compRow("fld", term("projected_component_runs", "Fielding runs"), "Fielding runs", H.fld, compRuns, seasons, runs(lo.fldPos, hi.fldPos, fp)),
+        compRow("pos", term("projected_component_runs", "Positional runs"), "Positional runs", H.pos, compRuns, seasons, runs(lo.fldPos, hi.fldPos, fp)),
+        compRow("lg", term("projected_component_runs", "League runs"), "League runs", H.lg, compRuns, seasons, runs(lo.lg, hi.lg)),
+        compRow("rep", term("projected_component_runs", "Replacement runs"), "Replacement runs", H.rep, compRuns, seasons, runs(lo.rep, hi.rep)));
+      if (P) rows.push(compRow("war-hit", term("war_from_components", "Hitting WAR from components"), "Hitting WAR from components", H.warComp, fmtWar, seasons));
+    }
+    if (P) {
+      const lo = P.p10 || {}, hi = P.p90 || {};
+      const ra9 = runs(lo.ra9Gap, hi.ra9Gap, {
+        lead: t => (P.ra9Gap && P.ra9Gap[t] != null ? `RA9 adjustment ${compRuns(P.ra9Gap[t])} runs; its ` : "RA9 adjustment "),
+      });
+      rows.push(grp("Pitching"),
+        compRow("ip", "IP", "IP", P.ip, compInt, seasons, compRange(lo.ip, hi.ip, compInt, " IP", { floor0: true })),
+        compRow("k-pit", term("k_pct_pitcher", "K%"), "K%", P.k, compPct, seasons),
+        compRow("bb-pit", term("bb_pct_pitcher", "BB%"), "BB%", P.bb, compPct, seasons),
+        compRow("hr9", "HR/9", "HR/9", P.hr9, v => Number(v).toFixed(2), seasons),
+        compRow("fip", term("fip", "FIP"), "FIP", P.fip, v => Number(v).toFixed(2), seasons),
+        compRow("war-fip", term("war_from_components", "FIP-based WAR"), "FIP-based WAR", P.warFip, fmtWar, seasons),
+        // PJ-Q3 (owner answer 2026-10-01): both lines, FIP first.
+        compRow("war-ra9", term("war_from_components", "RA9-based WAR"), "RA9-based WAR", P.warRa9, fmtWar, seasons, ra9));
+    }
+    rows.push(grp(H && P ? "WAR, both sides" : "WAR"),
+      compRow("war-comp", term("war_from_components", "WAR from components"), "WAR from components", c.warComp, fmtWar, seasons),
+      compRow("gap", term("projection_gap", "Rest of the served projection"), "Rest of the served projection", c.gap, v => signed(v, 1), seasons),
+      compRow("war", term("war", "Served WAR"), "Served WAR", pr.war, fmtWar, seasons, compRange(pr.warP10, pr.warP90, fmtWar, " WAR")));
+    const where = H && P ? "the Hitting and Pitching tabs" : H ? "the Hitting tab" : "the Pitching tab";
+    const np = [...((H && H.notProjected) || []), ...((P && P.notProjected) || [])]
+      .map(k => COMP_NP_NAMES[k] || String(k).replace(/_/g, " "));
+    const npNote = np.length
+      ? ` Not projected for him: ${esc([...new Set(np)].join(", "))}; those runs sit in the rest of the served projection.` : "";
+    const head = `<thead><tr><th scope="col">Component</th>${seasons.map(s => `<th scope="col">${s}</th>`).join("")}</tr></thead>`;
+    return section("projection-components", "Projected components", "means per season · FanGraphs frame",
+      `<div class="fa-sub mlbp-block-foot" data-proj-comp-frame>Components on FanGraphs' WAR frame; the season history on ${where} shows ${term("ewar", "eWAR")}.</div>`
+      + `<div class="mlbp-table-wrap"><table class="detail-table" data-proj-comp-table>${head}<tbody>${rows.join("")}</tbody></table></div>`
+      + `<div class="fa-sub mlbp-block-foot">Each row is rounded on its own; before rounding, WAR from components plus the rest of the served projection equals the served WAR. Hover a cell for its 80% range where the line publishes one; no range is a sum of other ranges.${npNote}</div>`);
+  }
+  // The Projection tab, in order: the WAR path (fan chart, upside, two-way
+  // note), then the components (PJ_7), then the contract and FA blocks. The
+  // aging explainer (AG_17) appends its block right after componentBlock.
   function projectionPanel(p) {
     const pr = p.proj || {};
     const twoWayNote = (p.twoWay && pr.warHit && pr.warPit)
       ? `<div class="fa-note">Two-way: the path sums hitting (${pr.warHit.map(fmtWar).join(" / ")}) and pitching (${pr.warPit.map(fmtWar).join(" / ")}).</div>` : "";
-    return fanChart(p) + upsidePath(p) + twoWayNote + contractBlock(p) + faBlock(p);
+    return fanChart(p) + upsidePath(p) + twoWayNote + componentBlock(p) + contractBlock(p) + faBlock(p);
   }
 
   // A tab named "Projection & Contract" showed no contract for every player who

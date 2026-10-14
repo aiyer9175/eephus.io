@@ -974,3 +974,158 @@ def test_a_guarantee_priced_past_the_horizon_names_its_whole_span():
         assert "only, not the whole club control window" not in board
     finally:
         DETAIL, BOARD = base_d, base_b
+
+
+# ---------------------------------------------------------------------------
+# PJ_7 (dark): the component table on the Projection tab and the PA/IP cell.
+# proj.comp reaches a card only through the shard once proj_export's
+# PROJ_COMPONENTS_LIVE flips; the board says so with components_live. Both
+# fixtures below are the block shape proj_export._component_lines writes.
+# ---------------------------------------------------------------------------
+
+_N4 = [None, None, None, None]
+COMP_HIT = {
+    "mlbam": 545361, "frame": "FanGraphs frame", "base": 2026, "twoWay": False, "pit": None,
+    "hit": {"pa": [600, 560, 520, 480, 440], "k": [0.181] + _N4, "bb": [0.112] + _N4,
+            "iso": [0.201] + _N4, "babip": [0.305] + _N4,
+            "woba": [0.371, 0.365, 0.358, 0.351, 0.344], "wrc": [131.4, 127.0, 122.6, 118.2, 113.8],
+            "bat": [20.1, 17.2, 14.4, 11.6, 9.0], "bsr": [1.4, None, 0.9, 0.6, 0.4],
+            "fld": [3.2, 2.6, 2.0, 1.4, 0.9], "pos": [4.8, 4.5, 4.2, 3.9, 3.6],
+            "lg": [1.9, 1.8, 1.6, 1.5, 1.4], "rep": [20.2, 18.8, 17.5, 16.1, 14.8],
+            "warComp": [5.1, None, 4.1, 3.5, 2.9],
+            "p10": {"pa": [380, 250, 140, -10, -60], "bat": [7.7, 5.5, 3.4, 1.2, -0.5],
+                    "bsr": [-1.2, -1.4, -1.6, -1.8, -1.9], "fldPos": [-1.5, -2.1, -2.8, -3.4, -3.9],
+                    "lg": [1.1, 0.9, 0.8, 0.6, 0.5], "rep": [12.6, 9.8, 7.4, 5.0, 3.1]},
+            "p90": {"pa": [700, 690, 670, 650, 620], "bat": [33.4, 29.8, 26.1, 22.7, 19.6],
+                    "bsr": [3.9, 3.6, 3.3, 3.0, 2.7], "fldPos": [13.9, 12.8, 11.6, 10.4, 9.2],
+                    "lg": [2.7, 2.6, 2.5, 2.4, 2.3], "rep": [24.0, 23.4, 22.6, 21.8, 20.6]},
+            "tier": "hit:hi", "notProjected": []},
+    "warComp": [5.1, None, 4.1, 3.5, 2.9],
+    "gap": [-2.1, None, -1.5, -1.1, -0.7],
+}
+COMP_PIT = {
+    "mlbam": 669373, "frame": "FanGraphs frame", "base": 2026, "twoWay": False, "hit": None,
+    "pit": {"ip": [180.4, 170.2, 160.0, 150.3, 140.6], "k": [0.302] + _N4, "bb": [0.051] + _N4,
+            "hr9": [0.92] + _N4, "fip": [2.95, 3.10, 3.25, 3.40, 3.55],
+            "warFip": [4.6, 4.1, 3.6, 3.1, 2.6], "warRa9": [4.8, 4.3, 3.8, 3.2, 2.7],
+            "gmli": None, "ra9Gap": [1.9, 1.6, 1.4, 1.2, 1.0], "gmliRelief": [None] * 5,
+            "p10": {"ip": [110.0, 90.0, 70.0, 50.0, 30.0], "ra9Gap": [-8.0, -7.1, -6.4, -5.8, -5.2],
+                    "gmliRelief": [None] * 5},
+            "p90": {"ip": [210.0, 205.0, 198.0, 190.0, 180.0], "ra9Gap": [11.2, 10.0, 9.1, 8.2, 7.3],
+                    "gmliRelief": [None] * 5},
+            "tier": "pit:hi", "notProjected": []},
+    "warComp": [4.6, 4.1, 3.6, 3.1, 2.6],
+    "gap": [-0.6, -0.3, -0.1, 0.0, 0.2],
+}
+
+
+def _with_comp(players=None, live=True):
+    """(DETAIL, BOARD) JSON with proj.comp on the named cards and, when live,
+    the board's components_live plus the year-1 pa scalar on its veteran."""
+    d = json.loads(DETAIL)
+    for key, blk in (players or {}).items():
+        d["players"][key]["proj"]["comp"] = blk
+    b = json.loads(BOARD)
+    if live:
+        b["components_live"] = True
+        b["vets"][0]["pa"] = 600
+    return json.dumps(d), json.dumps(b)
+
+
+def _render_fixture(hash_, detail, board, all_=False):
+    global DETAIL, BOARD
+    base_d, base_b = DETAIL, BOARD
+    try:
+        DETAIL, BOARD = detail, board
+        return _render_all(hash_) if all_ else _render(hash_)
+    finally:
+        DETAIL, BOARD = base_d, base_b
+
+
+def _comp_rows(sec):
+    return re.findall(r'data-proj-comp-row="([a-z0-9-]+)"', sec)
+
+
+def _comp_row(sec, rid):
+    return sec.split(f'data-proj-comp-row="{rid}"', 1)[1].split("</tr>", 1)[0]
+
+
+def test_component_table_renders_five_seasons_and_the_gap_row():
+    d, b = _with_comp({"vet_guy": COMP_HIT})
+    html = _render_fixture("#player=vet_guy&ptab=projection", d, b)
+    sec = _section(html, "projection-components")
+    head = sec.split("<thead>", 1)[1].split("</thead>", 1)[0]
+    assert re.findall(r'<th scope="col">([0-9]{4})</th>', head) == ["2026", "2027", "2028", "2029", "2030"]
+    assert _comp_rows(sec) == ["pa", "k", "bb", "iso", "babip", "woba", "wrc", "bat", "bsr", "fld",
+                               "pos", "lg", "rep", "war-comp", "gap", "war"]
+    assert "Components on FanGraphs' WAR frame; the season history on the Hitting tab shows" in sec
+    # formats: PA integer, K% one decimal, wOBA / ISO / BABIP three, runs and WAR one
+    assert ">600<" in sec and ">18.1%<" in sec and ">.371<" in sec and ">.201<" in sec
+    assert ">131<" in sec and ">+20.1<" in sec and ">5.1<" in sec and ">-2.1<" in sec
+    # each range rides in the title AND the aria-label; PA floors at zero
+    assert 'title="80% range +7.7 to +33.4 runs"' in sec
+    assert 'aria-label="2026 Batting runs: +20.1, 80% range +7.7 to +33.4 runs"' in sec
+    assert "80% range 0 to 650 PA" in sec and "-10 to" not in sec
+    assert "80% range of fielding plus positional runs together" in _comp_row(sec, "pos")
+    # the served WAR row keeps the WAR head's own P10 / P90
+    war_row = _comp_row(sec, "war")
+    assert 'title="80% range 1.2 to 4.8 WAR"' in war_row and ">3.0<" in war_row
+    # the gap row is the served WAR minus the component WAR, and no range rides on it
+    gap_row = _comp_row(sec, "gap")
+    assert ">-2.1<" in gap_row and "80% range" not in gap_row
+    # a null component prints "not projected", a run of them once across its seasons
+    k_row = _comp_row(sec, "k")
+    assert 'colspan="4"' in k_row and k_row.count("not projected") == 2  # text and aria-label
+    bsr_row = _comp_row(sec, "bsr")
+    assert 'aria-label="2027 Baserunning runs: not projected"' in bsr_row
+    # no accuracy claim on the block (owner answer PJ-Q2)
+    assert "accura" not in sec.lower()
+    # tab order: the WAR path, then the components, then the contract
+    panel = html.split('data-mlbp-panel="projection"', 1)[1]
+    assert panel.index('data-mlbp-section="projection-fan"') < panel.index(
+        'data-mlbp-section="projection-components"') < panel.index('data-mlbp-section="contract-ctrl"')
+
+
+def test_component_table_pitcher_carries_fip_then_ra9_war():
+    d, b = _with_comp({"ace_arm": COMP_PIT})
+    sec = _section(_render_fixture("#player=ace_arm&ptab=projection", d, b), "projection-components")
+    assert _comp_rows(sec) == ["ip", "k-pit", "bb-pit", "hr9", "fip", "war-fip", "war-ra9",
+                               "war-comp", "gap", "war"]
+    assert ">180<" in sec and ">30.2%<" in sec and ">0.92<" in sec and ">2.95<" in sec
+    assert "RA9 adjustment +1.9 runs; its 80% range -8.0 to +11.2 runs" in _comp_row(sec, "war-ra9")
+    assert "the season history on the Pitching tab shows" in sec
+
+
+def test_component_table_two_way_carries_both_sides():
+    two = dict(COMP_HIT, pit=COMP_PIT["pit"], twoWay=True, warComp=[9.7, None], gap=[-0.5, None])
+    d, b = _with_comp({"two_way": two})
+    sec = _section(_render_fixture("#player=two_way&ptab=projection", d, b), "projection-components")
+    rows = _comp_rows(sec)
+    assert rows.index("rep") < rows.index("war-hit") < rows.index("ip") < rows.index("war-ra9") < rows.index("war-comp")
+    assert "WAR, both sides" in sec
+    assert "the Hitting and Pitching tabs" in sec
+
+
+def test_without_comp_the_projection_tab_is_unchanged():
+    base = _render_all("#player=vet_guy&ptab=projection")
+    d, b = _with_comp({}, live=False)
+    assert _render_fixture("#player=vet_guy&ptab=projection", d, b, all_=True) == base
+    for key in ("vet_guy", "ace_arm", "two_way", "backstop"):
+        html = _render(f"#player={key}&ptab=projection")
+        assert "data-proj-comp" not in html and "projection-components" not in html
+
+
+def test_pa_ip_chip_only_when_components_live():
+    dark = _render_all("")
+    assert "PA/IP" not in dark.get("proj-filters", "") and "PA/IP" not in dark.get("proj-rows", "")
+    # a #cells=pa link on a dark board falls back to WAR
+    fallback = _head(_render("#cells=pa"))
+    assert "PA/IP" not in fallback and 'data-export-text="2026 WAR"' in fallback
+    d, b = _with_comp({})
+    live = _render_fixture("#cells=pa", d, b, all_=True)
+    assert 'data-pf="cells:pa"' in live.get("proj-filters", "")
+    vet = _body(live["proj-rows"]).split('data-key="vet_guy"', 1)[1].split("</tr>", 1)[0]
+    assert "600 PA projected" in vet
+    assert "PA/IP" in _head(live["proj-rows"])
+    # playing time has no ruler family: no tier key on the board
+    assert 'class="tier-key"' not in live["proj-rows"]
