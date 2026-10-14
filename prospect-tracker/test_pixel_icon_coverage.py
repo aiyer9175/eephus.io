@@ -172,7 +172,15 @@ MASTHEADS = {
     "parks": B.build_parks, "management": B.build_management, "ledger": B.build_ledger,
     "franchise": B.build_franchise, "hof": B.build_hof, "models": B.build_models,
     "glossary": B.build_glossary, "team": B.build_team, "scores": B.build_scores,
+    # /scouting/ (TL_22) is built dark; its masthead icon arrives with the flip
+    # (TL_23 draws i-scouting), so the two masthead tests bind once the flag is on.
+    "scouting": B.build_scouting_page,
 }
+
+
+def _dark_without_icon(key: str) -> None:
+    if key == "scouting" and not B.SCOUTING_PAGE_LIVE:
+        pytest.skip("/scouting/ is dark (SCOUTING_PAGE_LIVE False); TL_23 adds its icon")
 
 
 def test_every_module_page_key_has_a_masthead_case():
@@ -187,6 +195,7 @@ def test_every_module_page_key_has_a_masthead_case():
 
 @pytest.mark.parametrize("key", sorted(MASTHEADS))
 def test_masthead_draws_one_32px_icon_first_in_the_h1(key):
+    _dark_without_icon(key)
     out = MASTHEADS[key]()
     icons32 = [s for w, s in _icons(out) if w == 32]
     assert icons32 == [_sym(key)], icons32
@@ -210,6 +219,7 @@ def _unwrap_masthead(out: str) -> str:
 
 @pytest.mark.parametrize("key", sorted(MASTHEADS))
 def test_masthead_is_one_icon_one_grid_title_one_rule_under_the_flag(key, monkeypatch):
+    _dark_without_icon(key)
     monkeypatch.setattr(B, "PIXEL_BRAND", False)
     off = MASTHEADS[key]()
     assert 'class="mh-title"' not in off and 'class="mh-px"' not in off

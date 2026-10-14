@@ -428,6 +428,14 @@ def _headshot_url(mlbam, box_w: int = 84, box_h: int | None = None) -> str | Non
 # reads this constant, never a literal.
 GLOSSARY_DISPLAY_NAME = "Library"
 
+# /scouting/, the public 20-80 explainer (TL_22_SCOUTING_PAGE_BUILD_DARK; spec
+# docs/scouting-2026-10/SCOUTING_PAGE.md section 7). Default False: the page and
+# its payload render only under .cache/scouting/preview/, and the nav entry and
+# the sitemap row below are emitted only while it is True. The three hand-kept
+# static navs cannot read a flag and change in TL_23's flip commit, with the
+# ICON_FOR entry. tools/scouting_export.py reads this literal from the source.
+SCOUTING_PAGE_LIVE = False
+
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("prospx",   "PROSPX",           "/prospx/"),
@@ -487,6 +495,9 @@ NAV_ITEMS = [
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
     ("glossary", GLOSSARY_DISPLAY_NAME, "/glossary/"),
+    # Scouting (TL-Q8: in the nav, right after the Library), only while
+    # SCOUTING_PAGE_LIVE is True.
+    *((("scouting", "Scouting", "/scouting/"),) if SCOUTING_PAGE_LIVE else ()),
     # The Masthead (owner decision TEAM-5, 2026-10-02): the staff page, with
     # the Developers and the Writers and Analysts groups. Key and URL kept.
     ("team",     "Masthead",          "/team/"),
@@ -9744,6 +9755,584 @@ def build_sources() -> str:
                 url=f"{SITE_ORIGIN}/sources/")
 
 
+# --------------------------------------------------------------------------- #
+# /scouting/ (TL_22_SCOUTING_PAGE_BUILD_DARK): the 20-80 scale, WAR by FV tier
+# and the stat line each tool grade implies, built dark behind
+# SCOUTING_PAGE_LIVE. Spec and every reader-facing string:
+# docs/scouting-2026-10/SCOUTING_PAGE.md (copy keys of section 8 below). The
+# page renders the payload of tools/scouting_export.py at build time and fetches
+# nothing at run time.
+# --------------------------------------------------------------------------- #
+SCOUTING_PREVIEW_SITE = ROOT / ".cache" / "scouting" / "preview"
+SCOUTING_TITLE = "Scouting - eephus.io"
+SCOUTING_DESC = ("How the 20-80 scouting scale works: what each FV tier means in WAR and "
+                 "each tool grade in stats, sourced.")
+
+#: The provenance sentence under the expected column (SCOUTING_PAGE.md 3.1,
+#: round 4 ruling R1). It is COPY: TL_20's template, filled once at TL_22's build
+#: (2026-10-14) from the post-step-J fit file (cohort_window [2014, 2020],
+#: n_cohort 3463, blend_weight_public 0.5, the 35 and 40 knots re-measured on
+#: published FanGraphs WAR). test_scouting_page.py pins it against the file; on a
+#: mismatch the only remedy is to change this copy.
+SCOUTING_PROV_TEMPLATE = (
+    "45 and up: the {Y0}-{Y1} average ({N} players), blended half and half with the "
+    "public Edwards scale, more public weight where a tier is thin, the top tier the "
+    "public scale alone; 35 and 40: re-measured on {LABEL} without a blend; below 35: a "
+    "floor, not a measurement.")
+SCOUTING_PROV = (
+    "45 and up: the 2014-2020 average (3,463 players), blended half and half with the "
+    "public Edwards scale, more public weight where a tier is thin, the top tier the "
+    "public scale alone; 35 and 40: re-measured on FanGraphs WAR without a blend; below "
+    "35: a floor, not a measurement.")
+
+SCOUTING_COPY = {
+    "H1": "Scouting",
+    "LEDE": "The 20-80 scale, WAR by FV tier and the stat line each tool grade implies, with sources",
+    "A-HEAD": "The 20-80 scale",
+    "A-1": "50 is major league average, and each 10 points is one standard deviation from it (McDaniel 2014; Longenhagen and McDaniel 2018).",
+    "A-2": "Three deviations each way hold 99.7% of a normal population, so the scale runs from 20 to 80 (McDaniel 2014).",
+    "A-3": "The population is major league players, not all of baseball (Longenhagen 2022).",
+    "A-4": "Both ends are censored: an 80 means three deviations above average or more, and a 20 means three below or less (Longenhagen 2022).",
+    "A-5": "At three deviations, an 80 is about 1 player in 1,000; about 750 players open a season on major league rosters (Smith 2013).",
+    "A-6": "Scouts grade in 45 and 55 around average, where players cluster; 35 and 65 come mostly from analysts reading measured data (Longenhagen and McDaniel 2018).",
+    "A-7": "Where 50 sits depends on the population counted: a league-average hitter over 550 plate appearances is worth 2.0 WAR (Cistulli 2013).",
+    "A-8": "FanGraphs defines the scale by standard deviations; Baseball America and MLB Pipeline publish adjectives without that claim (Glaser; MLB.com glossary).",
+    "A-9": "Some clubs grade on a 2-8 scale with no half grades, and all three outlets say so.",
+    "A-TBL-CAP": "Adjectives by grade, as each outlet publishes them",
+    "A-TBL-COLS": ("Grade", "SD from average", "FanGraphs (McDaniel 2014)",
+                   "Baseball America (Glaser)", "MLB Pipeline (MLB.com glossary)"),
+    "A-TBL-NOTE": "A blank cell is blank in the source. FanGraphs names no grade below 45, and MLB Pipeline bands 20 to 30 and 70 to 80.",
+    "A-10": "Each tool carries a present and a future grade, written present/future: 20/50 is a present 20 and a future 50 (McDaniel 2014).",
+    "A-11": "Hit: 30/45, Game Power: 60/70, Raw Power: 80/80, Speed: 40/40, Field: 45/50, Throw: 70/70",
+    "A-12": "FV, Future Value, is one 20-80 grade for the whole player, with risk and distance from the majors inside it (Longenhagen and McDaniel 2018).",
+    "A-13": "Hitters carry five tools: hit, power, run, field and throw. Pitchers carry a grade per pitch plus command (McDaniel 2014).",
+    "A-14": "Power splits into game power, home runs per full season at maturity, and raw power, the deepest batting-practice shot (McDaniel 2014).",
+    "B-HEAD": "WAR by FV tier",
+    "B-1": "FanGraphs maps FV to average annual WAR over a player's first six major league seasons, not a peak season (Longenhagen and McDaniel 2018).",
+    "B-TRAP": ("'If he arrives' is WAR for a player who reaches his projected role; 'Expected, "
+               "bust-inclusive' averages every prospect at the grade, busts at zero. Reading one "
+               "as the other overprices a 50 FV about two times and a 40 or 45 FV about three "
+               "times (Longenhagen and McDaniel 2018; Clemens 2026)."),
+    "B-HARD": ("No number in this section is computed here from player outcomes by FV tier. The "
+               "expected column prints our valuation table as served, in part a realized "
+               "average, with its provenance."),
+    "B-TBL-CAP": "WAR by FV tier: two quantities, never mixed",
+    "B-TBL-COLS": ("FV", "Role: hitter / starter / reliever (McDaniel 2014)",
+                   "If he arrives: prime-season WAR (our table)",
+                   "Expected, bust-inclusive: WAR per season, first six seasons (our valuation table)"),
+    "B-A-NOTE": ("Our prime-season table gives WAR in a full prime season for a player who sticks, "
+                 "from FV 35 up. The FanGraphs primers read FV as a six-season average, and a "
+                 "player's peak season grades one to two grades above that (Longenhagen 2022)."),
+    "B-PROV": SCOUTING_PROV,
+    "B-CAL": ("This column is the table our valuations use today. It is under a registered "
+              "calibration test, the Prospect Anchor gate, and it is not a measured result until "
+              "that test reads."),
+    "B-REC": ("The glossary's methodology table prints the configuration's starting values for "
+              "this table until the Prospect Anchor gate moves that table to what serves; this "
+              "page prints what serves."),
+    "B-NO-TABLE": "no table",
+    "B-NOT-PUBLISHED": "not published",
+    "B-PA-CAP": "Published: if he arrives",
+    "B-PA-COLS": ("Grade", "McDaniel 2014: WAR per season, true talent",
+                  "FanGraphs primer, hitters: WAR per season over the first six (2018, 2022)",
+                  "FanGraphs primer, starters (2018, 2022)"),
+    "B-PA-NOTE-1": ("McDaniel's 2014 table stops at 30. The primers publish no 25, 35, 65 or 75 "
+                    "row, and the 2022 starter table relabels its 30 row as 35/35+."),
+    "B-PA-NOTE-2": ("In 2015 McDaniel read the 2014 column as a peak season; the 2018 and 2022 "
+                    "primers read FV as a six-season average (McDaniel 2015; Longenhagen 2022)."),
+    "B-ROLE-CAP": "Roles at the low end, with the plus tiers (Longenhagen 2022)",
+    "B-ROLE-NOTE": ("The 2022 reliever table stops at 50, no-doubt closers; McDaniel's 2014 table "
+                    "stopped relievers at 60."),
+    "B-PB-CAP": "Published: expected, bust-inclusive (Clemens 2026)",
+    "B-PB-COLS": ("FV", "Hitters: expected WAR, team-control total", "Hitters: star odds",
+                  "Pitchers: expected WAR, team-control total", "Pitchers: star odds"),
+    "B-PB-NOTE-1": ("Expected WAR is the total, undiscounted WAR over team control, averaged over "
+                    "every prospect at the grade, including those who never reached the majors."),
+    "B-PB-NOTE-2": ("A star posts two or more seasons of 4+ WAR in team control. The table has no "
+                    "75 or 80 row (Clemens 2026)."),
+    "B-PB-NOTE-3": ("Our column is per season and this one is a team-control total, so the two sit "
+                    "on different scales."),
+    "B-PO-CAP-H": "Chance of each outcome by FV, hitters",
+    "B-PO-CAP-P": "Chance of each outcome by FV, pitchers",
+    "B-PO-COLS": ("FV", "Washed out (under 0.5 WAR)", "Backup (0.5 to 1.5)", "Regular (1.5 to 2.5)",
+                  "Above average (2.5 to 4)", "Star (4+)"),
+    "B-PO-NOTE-1": ("Each outcome is WAR in one projected season three years after the grade, per "
+                    "600 PA or 200 IP (Clemens 2025)."),
+    "B-PO-NOTE-2": ("The curve is fit to Clemens's published rows from 45 to 60. Outside that range "
+                    "it extends the fit, with no published row under it."),
+    "B-PO-NOTE-3": ("These are our valuation's outcome weights at a consensus FV. PROSPX odds apply "
+                    "a further calibration at the eFV grade, so they differ."),
+    "B-PO-NOTE-4": "Shares are rounded to the nearest point, so a row can sum to 99 or 101.",
+    "B-PL6-CAP": "Published: outcome shares by FV (Clemens 2025)",
+    "B-PL6-NOTE": "Counts are graded prospects. The rows above 60 rest on one to three prospects each.",
+    "C-HEAD": "Stat lines by tool grade",
+    "C-1": ("Each tool grade implies a stat line. The published scales are estimates, labelled "
+            "FanGraphs framework estimate with author and year."),
+    "C-2": ("A measured column appears only where our re-derived table beat the estimate on the "
+            "2026 season in a registered test."),
+    "C-SURV": ("Only players who reached the majors have an MLB stat line, so a measured value "
+               "describes debuted players' MLB seasons, not every graded prospect."),
+    "C-EST-LABEL": "FanGraphs framework estimate ({author}, {year})",
+    "C-MEAS-LABEL": "measured on debuted players",
+    "C-PASS": ("Measured on debuted players' MLB seasons, 2015 to 2025, 2020 excluded. On the 2026 "
+               "season it beat the estimate: MAE {cand} against {inc}, n {n}."),
+    "C-FAIL": "Our re-derived table did not beat this estimate on the 2026 season, so the estimate stands.",
+    "C-NC": "Too few 2026 seasons to test our re-derived table, so the estimate stands.",
+    "C-K-NONE": ("No outlet publishes a strikeout rate by hit grade, and our re-derived table did "
+                 "not clear the 2026 test, so no number prints."),
+    "C-VOID": "The 2026 test of our re-derived tables did not report, so the estimates stand.",
+    "C-BLANK": "blank in source",
+    "C-HIT-HEAD": "Hit",
+    "C-HIT-NOTE": ("Batting average at maturity (McDaniel 2014), with Smith's 2010 to 2012 averages "
+                   "beside it. The hit grade covers batting average, so patient hitters rank above "
+                   "their hit grade (McDaniel 2015)."),
+    "C-GP-HEAD": "Game power",
+    "C-GP-NOTE-1": "Home runs per full season at maturity; an 80 is 40 or more (McDaniel 2014).",
+    "C-GP-NOTE-2": "Smith's 20 row reads -.013, which he calls a glitch; it prints as .000.",
+    "C-RP-HEAD": "Raw power",
+    "C-RP-NOTE": ("No outlet publishes a raw power scale in exit velocity or distance. Scouts grade "
+                  "it on the deepest batting-practice shot (McDaniel 2014)."),
+    "C-SP-HEAD": "Speed",
+    "C-SP-NOTE-1": ("Run times are seconds, lower is faster, and the left-handed column sits 0.10 "
+                    "seconds faster at every grade (McDaniel 2014)."),
+    "C-SP-NOTE-2": ("Smith's stolen-base column reads -20 and -10 at 20 and 30, which no player "
+                    "posts; those rows print as 0, and his 40 row is blank."),
+    "C-FD-HEAD": "Field",
+    "C-FD-NOTE": ("Smith pooled every position into one table, and his 50 row sits at +1.6, the "
+                  "qualified-player mean rather than zero (Smith 2013)."),
+    "C-FB-HEAD": "Fastball",
+    "C-FB-NOTE": ("Average fastball velocity in mph, with Smith's starter and reliever columns "
+                  "beside it. Baseball America's current scale sits about 2 mph higher (Glaser)."),
+    "C-CM-HEAD": "Command",
+    "C-CM-NOTE": ("Walk rate in percent; lower is better, so the rate falls as the grade rises "
+                  "(Smith 2013)."),
+    "C-NOGT": ("No measured scale exists here for arm strength, pitch selection, bat control, "
+               "delivery, athleticism or frame. Slider, curveball and changeup grades have only "
+               "whole-arsenal outcomes to read against, so no scale prints for them."),
+    "C-ARM": ("FanGraphs' one arm table counts outfield arm runs, and Smith says it measures the "
+              "wrong thing (Smith 2013)."),
+    "D-HEAD": "How eephus uses grades",
+    "D-1": "Consensus FV and tool grades print rounded up to the whole grade: 62.1 prints as 63.",
+    "D-2": "eFV, our model grade, rounds to the nearest whole grade, as do plus stats.",
+    # D-3 holds at this HEAD: consensus.ADOPT_NORMALIZED_CONSENSUS is True and
+    # grade_normalization quantile-maps every source's FV onto the FanGraphs FV
+    # distribution before consensus.build_timeseries aggregates (checked by TL_22).
+    "D-3": ("Our consensus maps MLB Pipeline and Baseball America grades onto the FanGraphs "
+            "scale before combining sources."),
+    "D-4": ("Definitions live in the Library, player grades on PROSPX, and Source Accuracy "
+            "compares each outlet's grades by cohort."),
+    "FOOT": ("Sources: FanGraphs (McDaniel 2014 and 2015; Smith 2013; Cistulli 2013; Longenhagen "
+             "and McDaniel 2018; Longenhagen 2022; Clemens 2025 and 2026), Baseball America "
+             "(Glaser) and the MLB.com glossary, linked per table."),
+}
+
+# Author and year per framework source id, the citation form copy uses (section 8).
+_SC_CITE = {"S2": "Longenhagen and McDaniel 2018", "S3": "McDaniel 2014", "L1": "Clemens 2026",
+            "L6": "Clemens 2025", "L7": "Longenhagen 2022", "L10": "McDaniel 2015",
+            "L14": "McDaniel 2014", "W1": "Cistulli 2013", "W2": "Smith 2013", "W3": "Smith 2013",
+            "B1": "Glaser", "P1": "MLB.com glossary"}
+
+# Section C, in page order: (heading key, the payload tables it prints, note keys).
+_SC_TOOLS = (
+    ("C-HIT-HEAD", ("hit_avg", "hit_k"), ("C-HIT-NOTE",)),
+    ("C-GP-HEAD", ("game_pwr_hr", "game_pwr_iso"), ("C-GP-NOTE-1", "C-GP-NOTE-2")),
+    ("C-RP-HEAD", (), ("C-RP-NOTE",)),
+    ("C-SP-HEAD", ("speed",), ("C-SP-NOTE-1", "C-SP-NOTE-2")),
+    ("C-FD-HEAD", ("field",), ("C-FD-NOTE",)),
+    ("C-FB-HEAD", ("fastball",), ("C-FB-NOTE",)),
+    ("C-CM-HEAD", ("command",), ("C-CM-NOTE",)),
+)
+
+_SCOUTING_STYLE = (
+    '<style>'
+    '.sc-app{max-width:1100px;}'
+    '.sc-app p{max-width:72ch;line-height:1.55;}'
+    '.sc-app h2{font-family:var(--font-retro-mono);font-size:1.15rem;margin:28px 0 8px;'
+    'padding-top:10px;border-top:1px solid var(--border);}'
+    '.sc-app h3{font-family:var(--font-retro-mono);font-size:.95rem;margin:20px 0 6px;}'
+    '.sc-toc{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0 0 8px;font-size:13px;}'
+    '.sc-toc a{color:var(--accent-navy);}'
+    '.sc-fig{margin:10px 0 6px;}'
+    '.sc-wrap{overflow:auto;max-height:80vh;border:1px solid var(--border);'
+    'background:var(--bg-secondary);}'
+    '.sc-wrap:focus-visible{outline:2px solid var(--accent-navy);outline-offset:2px;}'
+    '.sc-table{border-collapse:separate;border-spacing:0;font-size:13px;line-height:1.4;'
+    'min-width:100%;}'
+    '.sc-table caption{caption-side:top;text-align:left;padding:8px 10px;font-weight:700;'
+    'font-family:var(--font-retro-mono);font-size:12px;color:var(--text-secondary);}'
+    '.sc-table th,.sc-table td{padding:6px 10px;border-bottom:1px solid var(--border-light);'
+    'text-align:left;vertical-align:top;}'
+    '.sc-table thead th{position:sticky;top:0;z-index:2;background:var(--bg-tertiary);'
+    'font-family:var(--font-retro-mono);font-size:10px;font-weight:700;letter-spacing:.04em;'
+    'text-transform:uppercase;color:var(--text-secondary);border-bottom:1px solid var(--border);'
+    'min-width:6ch;}'
+    '.sc-table thead th[data-quantity="A"]{box-shadow:inset 0 3px 0 var(--accent-navy);}'
+    '.sc-table thead th[data-quantity="B"]{box-shadow:inset 0 3px 0 var(--accent-lilac);}'
+    '.sc-table tbody th{position:sticky;left:0;z-index:1;background:var(--bg-secondary);'
+    'font-family:var(--font-retro-mono);font-weight:700;text-align:right;'
+    'font-variant-numeric:tabular-nums;white-space:nowrap;}'
+    '.sc-table thead th:first-child{left:0;z-index:3;}'
+    '.sc-table td.num{text-align:right;font-family:var(--font-retro-mono);'
+    'font-variant-numeric:tabular-nums;white-space:nowrap;}'
+    '.sc-table td.na{color:var(--text-tertiary);font-style:italic;}'
+    '.sc-table td.meas{font-weight:700;}'
+    '.sc-role{display:block;}'
+    '.sc-role{white-space:nowrap;}.sc-role b{display:inline-block;min-width:9ch;margin-right:6px;font-weight:400;color:var(--text-tertiary);}'
+    '.sc-src,.sc-note{font-size:12px;color:var(--text-secondary);margin:6px 0;}'
+    '.sc-src a{color:var(--accent-navy);}'
+    '.sc-callout{border-left:3px solid var(--accent-lilac);padding:4px 0 4px 12px;margin:12px 0;}'
+    '.sc-quote{margin:8px 0;padding:6px 12px;border-left:3px solid var(--border);'
+    'font-family:var(--font-retro-mono);font-size:13px;}'
+    '.sc-key{font-size:12px;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:4px 14px;}'
+    '.sc-key span[data-quantity="A"]{box-shadow:inset 0 -3px 0 var(--accent-navy);}'
+    '.sc-key span[data-quantity="B"]{box-shadow:inset 0 -3px 0 var(--accent-lilac);}'
+    '.sc-foot{margin:28px 0 8px;padding-top:10px;border-top:1px solid var(--border);'
+    'font-size:12px;color:var(--text-secondary);}'
+    '@media (max-width:640px){.sc-table{font-size:12px;}.sc-table th,.sc-table td{padding:6px 6px;}}'
+    '</style>'
+)
+
+
+def _sc_e(s) -> str:
+    return html.escape("" if s is None else str(s))
+
+
+def _sc_grade(g) -> str:
+    """FV and tool grades round UP to the whole grade (ceiling) at the display
+    boundary; every grade on this page is already whole, so nothing moves."""
+    return str(math.ceil(float(g)))
+
+
+def _sc_war(v) -> str:
+    """Served WAR at one decimal."""
+    return f"{float(v):.1f}"
+
+
+def _sc_pct(v) -> str:
+    """A served share in percent, nearest integer (half up)."""
+    return f"{int(math.floor(float(v) * 100 + 0.5))}%"
+
+
+def _sc_meas(v, fmt: str) -> str:
+    v = float(v)
+    if fmt == "avg":
+        s = f"{v:.3f}"
+        return s[1:] if s.startswith("0.") else s
+    if fmt == "pct":
+        return f"{v:.1f}%"
+    return f"{v:.1f}"
+
+
+def _sc_cite_link(cites: dict, sid: str) -> str:
+    c = cites.get(sid) or {}
+    label = _SC_CITE.get(sid, sid)
+    url = c.get("url")
+    if not url:
+        return _sc_e(label)
+    return f'<a href="{_sc_e(url)}" target="_blank" rel="noopener noreferrer">{_sc_e(label)}</a>'
+
+
+def _sc_src_line(cites: dict, sids) -> str:
+    seen = []
+    for s in sids:
+        if s and s not in seen:
+            seen.append(s)
+    return ('<p class="sc-src">Source: '
+            + ", ".join(_sc_cite_link(cites, s) for s in seen) + '</p>')
+
+
+def _sc_table(caption: str, heads, rows: list, quantities=None) -> str:
+    """One scroll-wrapped table: sticky header, sticky first column, the
+    caption read as the region's name. `heads` are column labels; `quantities`
+    tags each column 'A', 'B' or None (data-quantity on the header and cells)."""
+    quantities = quantities or [None] * len(heads)
+    ths = "".join(
+        '<th scope="col"' + (' data-quantity="%s"' % q if q else "") + f'>{_sc_e(h)}</th>'
+        for h, q in zip(heads, quantities))
+    body = []
+    for cells in rows:
+        tds = []
+        for i, (text, cls) in enumerate(cells):
+            q = quantities[i]
+            qa = f' data-quantity="{q}"' if q else ""
+            if i == 0:
+                tds.append(f'<th scope="row"{qa}>{text}</th>')
+            else:
+                ca = f' class="{cls}"' if cls else ""
+                tds.append(f'<td{ca}{qa}>{text}</td>')
+        body.append("<tr>" + "".join(tds) + "</tr>")
+    return (f'<figure class="sc-fig"><div class="sc-wrap" tabindex="0" role="region" '
+            f'aria-label="{_sc_e(caption)}"><table class="sc-table"><caption>{_sc_e(caption)}</caption>'
+            f'<thead><tr>{ths}</tr></thead><tbody>{"".join(body)}</tbody></table></div></figure>')
+
+
+def _sc_tcell(c: dict | None, cls: str = "") -> tuple:
+    """A transcribed cell exactly as the transcription carries it."""
+    if not c or c.get("status") == "not_published":
+        return (_sc_e(SCOUTING_COPY["B-NOT-PUBLISHED"]), "na")
+    if c.get("status") == "blank_in_source":
+        return (_sc_e(SCOUTING_COPY["C-BLANK"]), "na")
+    if c.get("status") == "floored":
+        return (f'<span title="source value {_sc_e(c.get("source_value"))}">{_sc_e(c["v"])}</span>',
+                cls)
+    return (_sc_e(c.get("v")), cls)
+
+
+def _sc_quant(table: dict) -> list:
+    return [c.get("quantity") for c in table["columns"]]
+
+
+def _scouting_scale_html(p: dict) -> str:
+    C, cites = SCOUTING_COPY, p.get("citations") or {}
+    rows = []
+    for r in p["scale"]["rows"]:
+        sd = r["sd"]["v"]
+        sd_s = "0.0" if sd == 0 else f"{sd:+.1f}"
+        pl = r["pipeline"]
+        pl_s = _sc_e(pl["v"]) + (f' ({_sc_e(pl["band"])})' if pl.get("band") and pl["v"] else "")
+        rows.append([(_sc_e(_sc_grade(r["grade"])), ""), (_sc_e(sd_s), "num"),
+                     (_sc_e(r["fangraphs"]["v"]), ""), (_sc_e(r["baseball_america"]["v"]), ""),
+                     (pl_s, "")])
+    quote_src = _sc_cite_link(cites, "L14")
+    return (
+        f'<section id="scale" aria-labelledby="sc-a"><h2 id="sc-a">{_sc_e(C["A-HEAD"])}</h2>'
+        + "".join(f'<p>{_sc_e(C[k])}</p>' for k in ("A-1", "A-2", "A-3", "A-4", "A-5", "A-6",
+                                                      "A-7", "A-8", "A-9"))
+        + _sc_table(C["A-TBL-CAP"], C["A-TBL-COLS"], rows)
+        + f'<p class="sc-note">{_sc_e(C["A-TBL-NOTE"])}</p>'
+        + _sc_src_line(cites, ("S3", "B1", "P1"))
+        + f'<p>{_sc_e(C["A-10"])}</p>'
+        + f'<blockquote class="sc-quote"><p>&quot;{_sc_e(C["A-11"])}&quot;</p>'
+          f'<p class="sc-src">McDaniel 2014, on Joey Gallo: {quote_src}</p></blockquote>'
+        + "".join(f'<p>{_sc_e(C[k])}</p>' for k in ("A-12", "A-13", "A-14"))
+        + '</section>')
+
+
+def _scouting_fv_html(p: dict) -> str:
+    C, cites, fv = SCOUTING_COPY, p.get("citations") or {}, p["fv_tiers"]
+    head = fv["headline"]
+    rows = []
+    for r in head["rows"]:
+        role = r["role"]
+        if all(role[k].get("status") == "not_published" for k in ("hitter", "starter", "reliever")):
+            role_html = (_sc_e(C["B-NOT-PUBLISHED"]), "na")
+        else:
+            role_html = ("".join(
+                f'<span class="sc-role"><b>{lab}</b>{_sc_e(role[k]["v"])}</span>'
+                for k, lab in (("hitter", "hitter"), ("starter", "starter"), ("reliever", "reliever"))), "")
+        pr = r["prime_war"]
+        prime = ((_sc_e(C["B-NO-TABLE"]), "na") if pr.get("status") == "no_table" or pr["v"] is None
+                 else (_sc_e(_sc_war(pr["v"])), "num"))
+        rows.append([(_sc_e(_sc_grade(r["fv"])), ""), role_html, prime,
+                     (_sc_e(_sc_war(r["six_yr_avg_war"]["v"])), "num")])
+    key = ('<p class="sc-key"><span data-quantity="A">If he arrives</span>'
+           '<span data-quantity="B">Expected, bust-inclusive</span></p>')
+    out = [f'<section id="fv-tiers" aria-labelledby="sc-b"><h2 id="sc-b">{_sc_e(C["B-HEAD"])}</h2>',
+           f'<p>{_sc_e(C["B-1"])}</p>',
+           f'<p class="sc-callout">{_sc_e(C["B-TRAP"])}</p>',
+           key,
+           _sc_table(C["B-TBL-CAP"], C["B-TBL-COLS"], rows, _sc_quant(head)),
+           f'<p class="sc-note">{_sc_e(C["B-A-NOTE"])}</p>',
+           f'<div class="sc-expected-notes" data-quantity="B">'
+           f'<p class="sc-note" id="sc-prov">{_sc_e(C["B-PROV"])}</p>'
+           f'<p class="sc-note" id="sc-cal">{_sc_e(C["B-CAL"])}</p>'
+           f'<p class="sc-note" id="sc-rec">{_sc_e(C["B-REC"])}</p></div>',
+           f'<p class="sc-note">{_sc_e(C["B-HARD"])}</p>',
+           _sc_src_line(cites, ("S3",))]
+
+    pa = fv["published_arrives"]
+    rows = [[(_sc_e(_sc_grade(r["grade"])), "")] + [_sc_tcell(r[k], "num") for k in
+                                                   ("mcdaniel_2014", "primer_hitters", "primer_starters")]
+            for r in pa["rows"]]
+    out += [f'<h3>{_sc_e(C["B-PA-CAP"])}</h3>',
+            _sc_table(C["B-PA-CAP"], C["B-PA-COLS"], rows, _sc_quant(pa)),
+            f'<p class="sc-note">{_sc_e(C["B-PA-NOTE-1"])}</p>',
+            f'<p class="sc-note">{_sc_e(C["B-PA-NOTE-2"])}</p>',
+            _sc_src_line(cites, ("S3", "S2", "L7", "L10"))]
+
+    out.append(f'<h3>{_sc_e(C["B-ROLE-CAP"])}</h3>')
+    for side, label in (("hitters", "Hitters"), ("relievers", "Relievers")):
+        t = fv["low_end_roles"][side]
+        rows = [[(_sc_e(r["fv"]), ""), _sc_tcell(r["role"]), _sc_tcell(r["examples"])]
+                for r in t["rows"]]
+        out.append(_sc_table(f'{C["B-ROLE-CAP"]}: {label.lower()}', ("FV", label, "Example"),
+                             rows, _sc_quant(t)))
+    out += [f'<p class="sc-note">{_sc_e(C["B-ROLE-NOTE"])}</p>', _sc_src_line(cites, ("L7", "S3"))]
+
+    pb = fv["published_expected"]
+    rows = [[(_sc_e(r["fv"]), "")] + [_sc_tcell(r[k], "num") for k in
+                                       ("hitter_war", "hitter_star_odds", "pitcher_war", "pitcher_star_odds")]
+            for r in pb["rows"]]
+    out += [f'<h3>{_sc_e(C["B-PB-CAP"])}</h3>',
+            _sc_table(C["B-PB-CAP"], C["B-PB-COLS"], rows, _sc_quant(pb)),
+            "".join(f'<p class="sc-note">{_sc_e(C[k])}</p>' for k in
+                    ("B-PB-NOTE-1", "B-PB-NOTE-2", "B-PB-NOTE-3")),
+            _sc_src_line(cites, ("L1",))]
+
+    odds = fv["bucket_odds"]
+    keys = [b["key"] for b in odds["buckets"]]
+    out.append(f'<h3>{_sc_e(C["B-PO-CAP-H"])}</h3>')
+    for side, cap in (("hitter", "B-PO-CAP-H"), ("pitcher", "B-PO-CAP-P")):
+        t = odds[side]
+        rows = [[(_sc_e(_sc_grade(r["fv"])), "")] +
+                [((_sc_e(_sc_pct(r[k]["v"])), "num") if r[k]["v"] is not None
+                  else (_sc_e(C["B-NOT-PUBLISHED"]), "na")) for k in keys]
+                for r in t["rows"]]
+        out.append(_sc_table(C[cap], C["B-PO-COLS"], rows, _sc_quant(t)))
+    out += ["".join(f'<p class="sc-note">{_sc_e(C[k])}</p>' for k in
+                    ("B-PO-NOTE-1", "B-PO-NOTE-2", "B-PO-NOTE-3", "B-PO-NOTE-4")),
+            _sc_src_line(cites, ("L6",))]
+
+    out.append(f'<h3>{_sc_e(C["B-PL6-CAP"])}</h3>')
+    for side, label in (("hitter", "hitters"), ("pitcher", "pitchers")):
+        t = fv["published_shares"][side]
+        cols = ("washed_out", "backup", "regular", "above_average", "star", "count")
+        rows = [[(_sc_e(r["fv"]), "")] + [_sc_tcell(r[c], "num") for c in cols] for r in t["rows"]]
+        out.append(_sc_table(f'{C["B-PL6-CAP"]}, {label}',
+                             ("FV", "Washed out", "Backup", "Regular", "Above average", "Star", "Count"),
+                             rows, _sc_quant(t)))
+    out += [f'<p class="sc-note">{_sc_e(C["B-PL6-NOTE"])}</p>', _sc_src_line(cites, ("L6",)),
+            '</section>']
+    return "".join(out)
+
+
+def _scouting_tool_table_html(t: dict, cites: dict, verdicts: dict) -> str:
+    C = SCOUTING_COPY
+    if not t["columns"] or not t["rows"]:
+        return ""
+    heads, sids = ["Grade"], []
+    for c in t["columns"]:
+        if c["kind"] == "estimate":
+            heads.append(f'{c["label"]}: ' + C["C-EST-LABEL"].format(author=c["author"], year=c["year"]))
+            sids.append(c["sid"])
+        elif c["kind"] == "measured":
+            heads.append(f'{c["unit"]}: {C["C-MEAS-LABEL"]}')
+        else:
+            heads.append("n")
+    rows = []
+    for r in t["rows"]:
+        cells = [(_sc_e(_sc_grade(r["grade"])), "")]
+        for c in t["columns"]:
+            v = r.get(c["key"])
+            if c["kind"] == "estimate":
+                cells.append(_sc_tcell(v, "num"))
+            elif v is None or v.get("v") is None:
+                cells.append(("", "num"))
+            elif c["kind"] == "measured":
+                cells.append((_sc_e(_sc_meas(v["v"], t["fmt"])), "num meas"))
+            else:
+                cells.append((_sc_e(int(v["v"])), "num"))
+        rows.append(cells)
+    tool = {"game_pwr": "game power", "fb": "fastball", "cmd": "command"}.get(t["tool"], t["tool"])
+    cap = f'{t["stat"]} by {tool} grade'
+    out = [_sc_table(cap, heads, rows)]
+    v = verdicts.get(t["cell"]) if t.get("cell") else None
+    if v and v.get("verdict") == "PASS":
+        f = _sc_meas
+        out.append('<p class="sc-note">' + _sc_e(C["C-PASS"].format(
+            cand=f(v["mae_candidate"]["v"], t["fmt"]), inc=f(v["mae_incumbent"]["v"], t["fmt"]),
+            n=v["n_holdout"]["v"])) + '</p>')
+        out.append(f'<p class="sc-note">{_sc_e(C["C-SURV"])}</p>')
+    elif t.get("cell"):
+        key = {"FAIL": "C-FAIL", "NOT COMPUTABLE": "C-NC"}.get((v or {}).get("verdict"), "C-VOID")
+        out.append(f'<p class="sc-note">{_sc_e(C[key])}</p>')
+    if sids:
+        out.append(_sc_src_line(cites, sids))
+    return "".join(out)
+
+
+def _scouting_tools_html(p: dict) -> str:
+    C, cites, tt = SCOUTING_COPY, p.get("citations") or {}, p["tool_tiers"]
+    by_key = {t["key"]: t for t in tt["tables"]}
+    verdicts = tt.get("verdicts") or {}
+    out = [f'<section id="tools" aria-labelledby="sc-c"><h2 id="sc-c">{_sc_e(C["C-HEAD"])}</h2>',
+           f'<p>{_sc_e(C["C-1"])}</p>', f'<p>{_sc_e(C["C-2"])}</p>']
+    if not verdicts:
+        out.append(f'<p class="sc-note">{_sc_e(C["C-VOID"])}</p>')
+    for head, tkeys, notes in _SC_TOOLS:
+        out.append(f'<h3>{_sc_e(C[head])}</h3>')
+        for k in tkeys:
+            if k == "hit_k" and (verdicts.get("hit__k_pct") or {}).get("verdict") != "PASS":
+                # No estimate exists for K%: it prints a number only on PASS.
+                out.append(f'<p class="sc-note">{_sc_e(C["C-K-NONE"])}</p>')
+                continue
+            if k in by_key:
+                out.append(_scouting_tool_table_html(by_key[k], cites, verdicts))
+        out += [f'<p class="sc-note">{_sc_e(C[n])}</p>' for n in notes]
+    out += [f'<p>{_sc_e(C["C-NOGT"])}</p>', f'<p class="sc-note">{_sc_e(C["C-ARM"])}</p>',
+            _sc_src_line(cites, ("W2",)), '</section>']
+    return "".join(out)
+
+
+def _scouting_d_html() -> str:
+    C = SCOUTING_COPY
+    d4 = (_sc_e(C["D-4"])
+          .replace("the Library", f'the <a href="/glossary/">{_sc_e(GLOSSARY_DISPLAY_NAME)}</a>', 1)
+          .replace("on PROSPX", 'on <a href="/prospx/">PROSPX</a>', 1)
+          .replace("Source Accuracy", '<a href="/glossary/#view=source-accuracy">Source Accuracy</a>', 1))
+    return (f'<section id="eephus" aria-labelledby="sc-d"><h2 id="sc-d">{_sc_e(C["D-HEAD"])}</h2>'
+            + "".join(f'<p>{_sc_e(C[k])}</p>' for k in ("D-1", "D-2", "D-3"))
+            + f'<p>{d4}</p></section>')
+
+
+def scouting_payload(live: bool | None = None) -> dict:
+    """The payload the page embeds: data/scouting_reference.json while the
+    flag is True, the preview copy while it is False, else built in process by
+    the exporter (the same function, so the bytes agree)."""
+    import tools.scouting_export as SX
+    live = SCOUTING_PAGE_LIVE if live is None else live
+    path = SX.OUT_PATH if live else SX.PREVIEW_PATH
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return SX.build_payload()
+
+
+def build_scouting_page(payload: dict | None = None) -> str:
+    """/scouting/ on the shared shell (TL_22). Sections A to D and the sources
+    footer, every number from the exporter's payload."""
+    p = payload if payload is not None else scouting_payload()
+    C = SCOUTING_COPY
+    sym = ICON_FOR.get("scouting", "scouting")
+    icon = _masthead_icon("scouting") if sym in ICON_KEYS else ""
+    toc = ('<nav class="sc-toc" aria-label="On this page">'
+           + "".join(f'<a href="#{a}">{_sc_e(C[k])}</a>' for a, k in
+                     (("scale", "A-HEAD"), ("fv-tiers", "B-HEAD"), ("tools", "C-HEAD"),
+                      ("eephus", "D-HEAD")))
+           + '</nav>')
+    body = (
+        _SCOUTING_STYLE
+        + '<div class="sc-app">'
+        + '<div class="section-head section-head--byline"><div class="section-head-titles">'
+        + f'<h1>{icon}{_sc_e(C["H1"])}</h1></div>'
+        + f'<span class="section-sub">{_sc_e(C["LEDE"])}</span></div>'
+        + toc
+        + _scouting_scale_html(p)
+        + _scouting_fv_html(p)
+        + _scouting_tools_html(p)
+        + _scouting_d_html()
+        + f'<p class="sc-foot">{_sc_e(C["FOOT"])}</p>'
+        + '</div>')
+    return page(SCOUTING_TITLE, "scouting", body, SCOUTING_DESC, url=f"{SITE_ORIGIN}/scouting/")
+
+
+def write_scouting_page(preview_root=None) -> str:
+    """Write /scouting/ where the flag allows and return the path. A
+    preview_root always gets the preview copy. With none: SCOUTING_PAGE_LIVE
+    True writes the published scouting/index.html; False writes only
+    .cache/scouting/preview/scouting/index.html (nothing in the served tree)."""
+    rel = "scouting/index.html"
+    if preview_root is None and SCOUTING_PAGE_LIVE:
+        _write(rel, build_scouting_page())
+        return str(ROOT / rel)
+    root = Path(preview_root) if preview_root is not None else SCOUTING_PREVIEW_SITE
+    path = root / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(build_scouting_page(), encoding="utf-8")
+    print(f"  wrote {path.as_posix()} (the preview copy, not the published tree)")
+    return str(path)
+
+
 def build_bug_report() -> str:
     """/report/ - the "Report a bug" destination linked from every footer.
 
@@ -9881,6 +10470,8 @@ def sitemap_pages() -> list[tuple]:
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
         ("/glossary/", "weekly", "0.7"),
+        # /scouting/ (TL_22), only while SCOUTING_PAGE_LIVE is True.
+        *((("/scouting/", "monthly", "0.6"),) if SCOUTING_PAGE_LIVE else ()),
         ("/sources/", "monthly", "0.3"),
         ("/team/", "monthly", "0.3"),
         ("/report/", "monthly", "0.2"),
@@ -10881,6 +11472,9 @@ def main() -> None:
     _write("library/index.html", build_library_redirect())
     _write("team/index.html", build_team())
     _write("sources/index.html", build_sources())
+    # /scouting/ ships behind SCOUTING_PAGE_LIVE (TL_22): the preview copy only
+    # while it is False; TL_23's flip names the published route.
+    write_scouting_page()
     _write("report/index.html", build_bug_report())
     _write("404.html", build_404())
     _write("robots.txt", build_robots())
