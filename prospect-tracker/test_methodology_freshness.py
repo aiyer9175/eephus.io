@@ -549,6 +549,9 @@ MODEL_GLOSSARY = {
     # with its own glossary entry.
     "sem_plus": ["sem_plus"],
     "sem_plus_3yr": ["sem_plus_3yr"],
+    # PAR (Q8_06, owner asks 10 to 12 and 17 of 2026-09-30): a descriptive pitch
+    # rate index on the three boards and PROSPX, documented by its own entry.
+    "par": ["par"],
     "hem_plus": ["hem_plus"],
     "hem_plus_3yr": ["hem_plus_3yr"],
     "dem_plus": ["dem_plus", "team_dem_plus"],

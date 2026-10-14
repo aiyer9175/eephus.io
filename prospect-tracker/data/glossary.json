@@ -1356,6 +1356,34 @@
    "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
+   "id": "p_pa",
+   "term": "P/PA (Pitches per plate appearance)",
+   "category": "hitter-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "prospx"
+   ],
+   "aliases": [
+    "P/PA",
+    "pitches per plate appearance",
+    "pitches seen per PA"
+   ],
+   "priority": 99,
+   "definition": "Pitches a batter sees per plate appearance.",
+   "methodology": "MLB's count of pitches seen divided by plate appearances. An intentional walk issued without a pitch adds a plate appearance and no pitches, as MLB counts it. A record of how long his plate appearances run, not a skill rating: long plate appearances bring both walks and strikeouts.",
+   "formula": "P/PA = pitches seen / plate appearances",
+   "example": "2,550 pitches in 650 PA = 3.92 P/PA.",
+   "seeAlso": [
+    "par",
+    "p_bf",
+    "bb_pct",
+    "k_pct"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
+  },
+  {
    "id": "era",
    "term": "ERA",
    "category": "pitcher-stat",
@@ -1415,6 +1443,60 @@
    "formula": "WHIP = (BB + H) / IP",
    "seeAlso": [
     "era"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
+  },
+  {
+   "id": "p_ip",
+   "term": "P/IP (Pitches per inning)",
+   "category": "pitcher-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "prospx"
+   ],
+   "aliases": [
+    "P/IP",
+    "pitches per inning",
+    "pitches per inning pitched"
+   ],
+   "priority": 99,
+   "definition": "Pitches thrown per inning pitched.",
+   "methodology": "MLB's pitch count divided by innings, with innings counted as outs / 3 (a line of 6.1 is 19 outs, 6.33 innings). On the Starters board it is the line from his starts; on the Relievers board, his relief outings. P/IP = P/BF x batters per inning: pitches per batter is the steadier part, and batters per inning moves with the hits and walks he allows. A record of what happened, not a rating.",
+   "formula": "P/IP = pitches / (outs / 3)",
+   "example": "96 pitches over 18 outs (6 innings) = 16.0 P/IP.",
+   "seeAlso": [
+    "p_bf",
+    "par",
+    "p_pa"
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
+  },
+  {
+   "id": "p_bf",
+   "term": "P/BF (Pitches per batter faced)",
+   "category": "pitcher-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "prospx"
+   ],
+   "aliases": [
+    "P/BF",
+    "pitches per batter faced",
+    "pitches per batter"
+   ],
+   "priority": 99,
+   "definition": "Pitches thrown per batter faced.",
+   "methodology": "The pitcher's side of P/PA: across the league the two are the same number. Longer at-bats come from strikeouts and walks alike, so a high P/BF is not a flaw on its own.",
+   "formula": "P/BF = pitches / batters faced",
+   "example": "96 pitches to 25 batters = 3.84 P/BF.",
+   "seeAlso": [
+    "p_ip",
+    "par",
+    "p_pa"
    ],
    "shelf": "foundation",
    "origin": "Standard baseball statistic (no single creator); defined here for reference."
@@ -5764,6 +5846,36 @@
     "sem_plus_3yr",
     "fip",
     "skill_fip"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "par",
+   "term": "PAR (P/IP and P/PA Average Rate)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats",
+    "prospx"
+   ],
+   "aliases": [
+    "PAR",
+    "P/IP Average Rate",
+    "P/PA Average Rate",
+    "Team PAR"
+   ],
+   "priority": 23,
+   "definition": "A pitch rate against the average for the same role: 100 is average, 110 is 10 percent more pitches, 90 is 10 percent fewer. Pitchers compare on P/IP with starters and relievers kept apart; hitters on P/PA. It describes how a player uses pitches. It is not a forecast and carries no good or bad colour.",
+   "methodology": "PAR = 100 x the player's rate / the league rate for the same role and season. League rates are pooled (all pitches over all innings, or over all plate appearances), never an average of player rates. MLB starters compare with every start in the league, relievers with every relief outing. Prospects compare with their own level in the same season, and only in league-seasons where MLB's feed logged every pitch (the list is in data/pitch_rates.json); older lines show no PAR. Team PAR compares a club's lineup, rotation or bullpen with the average of the 30 clubs. The tooltip gives the gap in pitches. The scale is a plain ratio like FIP-, so a point is one percent on every board; it is not the 100 + 10z ruler of DEM+.",
+   "formula": "PAR = 100 x player rate / league rate for the role (P/IP for pitchers, P/PA for hitters), rounded to the nearest point",
+   "example": "A starter at 15.6 P/IP in a season when starts averaged 16.4: PAR = 100 x 15.6 / 16.4 = 95, or 0.8 fewer pitches an inning.",
+   "seeAlso": [
+    "p_ip",
+    "p_pa",
+    "p_bf",
+    "sem_plus",
+    "hem_plus"
    ],
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."

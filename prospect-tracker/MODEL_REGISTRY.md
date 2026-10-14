@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**364 models.** Verdicts: validated: 55, provisional: 163, unvalidated: 56, deprecated: 90.
+**365 models.** Verdicts: validated: 55, provisional: 164, unvalidated: 56, deprecated: 90.
 
 ## Instrument boundary
 
@@ -383,6 +383,7 @@ can be measured.
 | `team_win_distribution` | Registered, not read: each club's win-total distribution with talent and schedule uncertainty, scored once on the 2026 season against the schedule-only incumbent. | none yet (registered, not served); on a pass, the win ran... | each club season win-total distribution with talent and schedule uncertainty | none | the schedule-only distribution of playoff_odds_sim | TM-A, docs/TEAM_PROJECTIONS_GATE.md section 3 | **unvalidated** | - | - | - |
 | `team_run_projection` | Registered, not read: club runs scored and allowed for the first projected season, scored once on 2026 against carry-forward and league average. | none yet (registered, not served); on a pass, RS, RA, run... | club runs scored and allowed for the first projected season | none | prior-season carry-forward and league average | TM-C | **unvalidated** | - | - | - |
 | `game_intensity_effects` | Registered, not run: whether game intensity moves moneylines and totals beyond a quality-only price, which team types and archetypes differ in high-stakes games, and what wins in October. | No surface: nothing served reads it; the stage-1 lab tool... | Stage 1, model-free on the 2018, 2019 and 2021-2025 regular seasons: IX-A the home result against the literature Elo price give... | the members of docs/diamond-betting.md section 'Game intensity: stakes, match... | the literature Elo (1500, K 4, 24 points of home field, flat start each seaso... | Registered, not computed: IX-A paired Brier improvement on the focus set \|ds... | **unvalidated** | - | - | no |
+| `par` | Descriptive display index: a pitch rate against the league rate for the same role and season, 100 = average; no forward claim. | /mlbstats/ Starters, Relievers and Hitters boards (Pitche... | nothing forward; DESCRIPTIVE DISPLAY INDEX. A pitch rate against the league rate for the same role and season: pitchers 100 x P... | pitch_rates.par (ratio, unshrunk, nearest) | n/a: a DESCRIPTIVE ratio index (FIP- shape), not a predictive model | descriptive; no forward gate by design | **provisional** | - | - | no |
 
 Stored problems at last refresh: none.
 

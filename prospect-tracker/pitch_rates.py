@@ -46,10 +46,11 @@ Sources:
   are cached for good. Every fetch outcome files through
   bullpen_export.record_ingest, so a failure reaches data/ingest_health.json.
 
-Serving: SERVE_PITCH_RATES is False. While it is False, build() writes only
-.cache/pitch_rates/preview.json and no payload key, page column, glossary hook or
-public file changes. The flip is its own commit after the fWAR label epoch's
-step Z (plan PM-07).
+Serving: SERVE_PITCH_RATES is True since the flip (Q8_06, plan PM-07, after the
+fWAR label epoch's step Z): build() writes data/pitch_rates.json and the board,
+PROSPX and glossary keys are served. Set it False and build() writes only
+.cache/pitch_rates/preview.json, with no payload key, page column, glossary hook
+or public file change. run_monthly's step 6b4-pr runs build() before the boards.
 
 Run:
   python pitch_rates.py --warm 2011 2026   one-time cache warm, then the preview
@@ -75,7 +76,7 @@ log = logging.getLogger(__name__)
 # --------------------------------------------------------------------------- #
 # Flag, constants, paths
 # --------------------------------------------------------------------------- #
-SERVE_PITCH_RATES = False
+SERVE_PITCH_RATES = True
 
 TRACK_MIN_TEAM_P_PA = 3.3
 TRACK_MIN_TEAM_PA = 200

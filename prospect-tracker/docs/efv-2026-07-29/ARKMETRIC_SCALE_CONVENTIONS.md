@@ -38,6 +38,8 @@ different units.
 | SEM+ 3yr | 1 (ratio) | starters, 3-season blend | none | `sem_plus.py` via `starter_export.py` |
 | xSEM+ | 1 (ratio, inverted input) | starters, xwOBA-allowed | none | `starter_export.py` |
 | Bullpen+ | 1 (ratio, inherited) | IP-weighted mean of a staff's REM+ | none | `rem_plus.py` (staff roll-up) |
+| PAR | 1 (ratio, not inverted, uncoloured, unshrunk) | MLB: the league role line for the season (every start, every relief outing, every non-pitcher PA), pooled; MiLB: the level-season-role line, tracked level-seasons only | none | `pitch_rates.py` (`par`), joined by `pitch_rates_boards.py` and `storage.py` |
+| Team PAR | 1 (ratio) | the unweighted mean of the 30 club unit rates (lineup, rotation, bullpen), so the clubs average 100 | none | `pitch_rates.py` (`team_par`) via the three board exporters |
 | OPS+ (vs level) | 1 (ratio) | the player's MiLB level | none | `storage.py` |
 | ISO+ | 1 (ratio, EB-shrunk by AB) | the player's MiLB level | 0-250 | `prospx/index.html` (`computeIsoPlus`) |
 | RPS+ (ACTIVE cohort) | 1 (ratio) | age x position-group cohort, position multiplier applied outside | 0-250 | `prospx/index.html` (`_buildRpsPlusCache`) |

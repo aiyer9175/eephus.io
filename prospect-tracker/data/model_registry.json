@@ -6421,6 +6421,21 @@
    "notes": "Registered 2026-10-09 (Q10_07, plan Part 8 P8.9 item IX-H3) with the lab code, per docs/diamond-betting.md section 'Game intensity: stakes, matchup quality and the postseason' (pre-registered 2026-10-08, owner ask 8 of 2026-09-30). The lab tools/intensity_lab.py and its test test_intensity_lab.py are built and tested on fixtures only; no real game was featurized, fitted, scored or twinned. G_REF was recomputed in that commit from the registered synthetic league (30 equal clubs, 300,000 simulations at seed 20260930, no data) and frozen at 0.01158 (draft 0.01145), recorded in the section by a dated amendment. Stage 1 runs once (task Q10_08), not before the later of 2026-11-02 and the day after the 2026 World Series, after the 5c-B, 5c-C, 5d, 5k and 7e-D looks are recorded or closed, never on another look's date. The run commit sets eval_artifact to data/game_intensity_eval.json. Stage 1 licenses no price; a serving flag can exist only after a stage-2 pass on the 2027 vintage.",
    "last_checked": "2026-10-09",
    "stale": false
+  },
+  {
+   "model_id": "par",
+   "summary": "Descriptive display index: a pitch rate against the league rate for the same role and season, 100 = average; no forward claim.",
+   "surface": "/mlbstats/ Starters, Relievers and Hitters boards (Pitches view, All, team tables, chart chips); PROSPX career tables and detail header",
+   "predicts": "nothing forward; DESCRIPTIVE DISPLAY INDEX. A pitch rate against the league rate for the same role and season: pitchers 100 x P/IP / league P/IP (starters against every start, relievers against every relief outing); hitters 100 x P/PA / league P/PA; prospects against their level-season (tracked seasons only); teams against the mean of the 30 club values",
+   "champion": "pitch_rates.par (ratio, unshrunk, nearest)",
+   "baseline": "n/a: a DESCRIPTIVE ratio index (FIP- shape), not a predictive model",
+   "metric": "descriptive; no forward gate by design",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "notes": "Owner asks 10, 11, 12, 17, 19 and 20 of 2026-09-30; lane design part8/pitch_metrics.md sections 3 to 5; owner answer PM-Q1 (ratio index, uncoloured, the pitch delta in the tooltip). Served since Q8_06 (pitch_rates.SERVE_PITCH_RATES True, after the fWAR label epoch's step Z). Definitions, the MiLB tracking table (usable, partial or untracked per level-season), the pooled anchors, the team units and the year-over-year stability receipts are all in data/pitch_rates.json (keys definitions, tracking, mlb, milb, teams, stability, parity), written by pitch_rates.build in run_monthly step 6b4-pr. Convention 1 (ratio) in docs/efv-2026-07-29/ARKMETRIC_SCALE_CONVENTIONS.md. P/IP, P/BF and P/PA are standard statistics with glossary rows and no registry rows (the K-BB% precedent).",
+   "last_checked": "2026-10-14",
+   "stale": false,
+   "provisional_kind": "measurement_only"
   }
  ],
  "problems": []

@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-10-03",
+ "generated_at": "2026-10-14",
  "season": 2026,
- "as_of": "2026-10-03",
+ "as_of": "2026-10-14",
  "coverage": {
   "games": 2429,
   "expected": 2430,
@@ -69,7 +69,7 @@
  "ewar_vintage": {
   "artifact_generated_at": "2026-10-02T11:06:57",
   "label_build_at": "2026-09-03T12:35:09",
-  "as_of": "2026-10-03",
+  "as_of": "2026-10-14",
   "bwar_revised": {
    "bat": 0,
    "pit": 0
@@ -116,7 +116,7 @@
   "source_url": "https://baseballsavant.mlb.com/leaderboard/custom?year=2026&type=pitcher&filter=&min=1&selections=pa,whiff_percent,swing_percent,oz_swing_percent,iz_contact_percent,f_strike_percent,sweet_spot_percent,pull_percent,fastball_avg_speed&chart=false&x=pa&y=pa&r=no&chartType=beeswarm&sort=pa&sortDir=desc&csv=true",
   "season": 2026,
   "side": "pitcher",
-  "fetched_at": "2026-10-03T10:45:01",
+  "fetched_at": "2026-10-14T11:08:53",
   "n_source_rows": 814,
   "n_board": 514,
   "n_joined": 506,
@@ -232,7 +232,13 @@
    "war_ip_plus_pct": 99,
    "war_ip_plus_3yr": 125,
    "war_ip_plus_3yr_pct": 100,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.41,
+   "p_bf": 4.224,
+   "par": 98,
+   "par_delta": -0.3,
+   "pit_per_g": 17.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "661395",
@@ -284,7 +290,13 @@
    "war_ip_plus_pct": 100,
    "war_ip_plus_3yr": 123,
    "war_ip_plus_3yr_pct": 100,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.96,
+   "p_bf": 4.013,
+   "par": 95,
+   "par_delta": -0.76,
+   "pit_per_g": 15.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686973",
@@ -336,7 +348,13 @@
    "war_ip_plus_pct": 99,
    "war_ip_plus_3yr": 113,
    "war_ip_plus_3yr_pct": 94,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.85,
+   "p_bf": 4.026,
+   "par": 95,
+   "par_delta": -0.87,
+   "pit_per_g": 17.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "671922",
@@ -388,7 +406,13 @@
    "war_ip_plus_pct": 98,
    "war_ip_plus_3yr": 122,
    "war_ip_plus_3yr_pct": 99,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.73,
+   "p_bf": 4.197,
+   "par": 100,
+   "par_delta": 0.01,
+   "pit_per_g": 17.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682254",
@@ -440,7 +464,13 @@
    "war_ip_plus_pct": 97,
    "war_ip_plus_3yr": 112,
    "war_ip_plus_3yr_pct": 93,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.25,
+   "p_bf": 4.272,
+   "par": 103,
+   "par_delta": 0.53,
+   "pit_per_g": 16.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656945",
@@ -492,7 +522,13 @@
    "war_ip_plus_pct": 97,
    "war_ip_plus_3yr": 111,
    "war_ip_plus_3yr_pct": 91,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.13,
+   "p_bf": 3.837,
+   "par": 90,
+   "par_delta": -1.59,
+   "pit_per_g": 14.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656730",
@@ -544,7 +580,13 @@
    "war_ip_plus_pct": 98,
    "war_ip_plus_3yr": 118,
    "war_ip_plus_3yr_pct": 98,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.17,
+   "p_bf": 3.612,
+   "par": 85,
+   "par_delta": -2.54,
+   "pit_per_g": 13.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669276",
@@ -596,7 +638,13 @@
    "war_ip_plus_pct": 95,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 83,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.73,
+   "p_bf": 4.023,
+   "par": 94,
+   "par_delta": -0.99,
+   "pit_per_g": 14.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676477",
@@ -648,7 +696,13 @@
    "war_ip_plus_pct": 97,
    "war_ip_plus_3yr": 120,
    "war_ip_plus_3yr_pct": 99,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.2,
+   "p_bf": 3.753,
+   "par": 85,
+   "par_delta": -2.52,
+   "pit_per_g": 13.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670970",
@@ -700,7 +754,13 @@
    "war_ip_plus_pct": 92,
    "war_ip_plus_3yr": 115,
    "war_ip_plus_3yr_pct": 96,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.33,
+   "p_bf": 3.744,
+   "par": 92,
+   "par_delta": -1.39,
+   "pit_per_g": 17.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "623352",
@@ -752,7 +812,13 @@
    "war_ip_plus_pct": 98,
    "war_ip_plus_3yr": 113,
    "war_ip_plus_3yr_pct": 95,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.13,
+   "p_bf": 4.048,
+   "par": 91,
+   "par_delta": -1.58,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687396",
@@ -804,7 +870,13 @@
    "war_ip_plus_pct": 94,
    "war_ip_plus_3yr": 116,
    "war_ip_plus_3yr_pct": 97,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.37,
+   "p_bf": 3.933,
+   "par": 98,
+   "par_delta": -0.35,
+   "pit_per_g": 15.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "696519",
@@ -856,7 +928,13 @@
    "war_ip_plus_pct": 96,
    "war_ip_plus_3yr": 119,
    "war_ip_plus_3yr_pct": 98,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.32,
+   "p_bf": 4.427,
+   "par": 110,
+   "par_delta": 1.6,
+   "pit_per_g": 20.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656546",
@@ -908,7 +986,13 @@
    "war_ip_plus_pct": 91,
    "war_ip_plus_3yr": 108,
    "war_ip_plus_3yr_pct": 84,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.35,
+   "p_bf": 4.147,
+   "par": 110,
+   "par_delta": 1.63,
+   "pit_per_g": 17.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "800311",
@@ -960,7 +1044,13 @@
    "war_ip_plus_pct": 92,
    "war_ip_plus_3yr": 116,
    "war_ip_plus_3yr_pct": 97,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.45,
+   "p_bf": 4.147,
+   "par": 98,
+   "par_delta": -0.27,
+   "pit_per_g": 20.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "805427",
@@ -1012,7 +1102,13 @@
    "war_ip_plus_pct": 88,
    "war_ip_plus_3yr": 112,
    "war_ip_plus_3yr_pct": 93,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.18,
+   "p_bf": 3.799,
+   "par": 97,
+   "par_delta": -0.53,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "691799",
@@ -1064,7 +1160,13 @@
    "war_ip_plus_pct": 92,
    "war_ip_plus_3yr": 118,
    "war_ip_plus_3yr_pct": 98,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.1,
+   "p_bf": 3.975,
+   "par": 96,
+   "par_delta": -0.62,
+   "pit_per_g": 22.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "547973",
@@ -1116,7 +1218,13 @@
    "war_ip_plus_pct": 96,
    "war_ip_plus_3yr": 119,
    "war_ip_plus_3yr_pct": 98,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.28,
+   "p_bf": 3.948,
+   "par": 97,
+   "par_delta": -0.44,
+   "pit_per_g": 15.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681320",
@@ -1154,7 +1262,13 @@
    "z_contact_pct": 0.76,
    "f_strike_pct": 0.608,
    "fb_velo": 92.4,
-   "war": 0.9
+   "war": 0.9,
+   "p_ip": 13.57,
+   "p_bf": 3.722,
+   "par": 81,
+   "par_delta": -3.15,
+   "pit_per_g": 14.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "805299",
@@ -1206,7 +1320,13 @@
    "war_ip_plus_pct": 92,
    "war_ip_plus_3yr": 116,
    "war_ip_plus_3yr_pct": 97,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 13.75,
+   "p_bf": 3.677,
+   "par": 82,
+   "par_delta": -2.96,
+   "pit_per_g": 12.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656641",
@@ -1258,7 +1378,13 @@
    "war_ip_plus_pct": 88,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 62,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.59,
+   "p_bf": 4.125,
+   "par": 93,
+   "par_delta": -1.13,
+   "pit_per_g": 18.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670280",
@@ -1310,7 +1436,13 @@
    "war_ip_plus_pct": 92,
    "war_ip_plus_3yr": 110,
    "war_ip_plus_3yr_pct": 89,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.64,
+   "p_bf": 4.121,
+   "par": 100,
+   "par_delta": -0.07,
+   "pit_per_g": 18.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "696146",
@@ -1351,7 +1483,13 @@
    "z_contact_pct": 0.778,
    "f_strike_pct": 0.545,
    "fb_velo": 92.2,
-   "war": 0.9
+   "war": 0.9,
+   "p_ip": 16.77,
+   "p_bf": 4.275,
+   "par": 100,
+   "par_delta": 0.05,
+   "pit_per_g": 25.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "699134",
@@ -1403,7 +1541,13 @@
    "war_ip_plus_pct": 86,
    "war_ip_plus_3yr": 110,
    "war_ip_plus_3yr_pct": 90,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.21,
+   "p_bf": 3.941,
+   "par": 97,
+   "par_delta": -0.5,
+   "pit_per_g": 17.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681870",
@@ -1455,7 +1599,13 @@
    "war_ip_plus_pct": 88,
    "war_ip_plus_3yr": 113,
    "war_ip_plus_3yr_pct": 94,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.07,
+   "p_bf": 4.064,
+   "par": 102,
+   "par_delta": 0.35,
+   "pit_per_g": 13.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "683618",
@@ -1507,7 +1657,13 @@
    "war_ip_plus_pct": 88,
    "war_ip_plus_3yr": 113,
    "war_ip_plus_3yr_pct": 94,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.05,
+   "p_bf": 3.979,
+   "par": 96,
+   "par_delta": -0.67,
+   "pit_per_g": 15.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "662253",
@@ -1559,7 +1715,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 111,
    "war_ip_plus_3yr_pct": 92,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.62,
+   "p_bf": 3.971,
+   "par": 99,
+   "par_delta": -0.1,
+   "pit_per_g": 15.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "592155",
@@ -1611,7 +1773,13 @@
    "war_ip_plus_pct": 84,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 38,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 13.98,
+   "p_bf": 3.77,
+   "par": 84,
+   "par_delta": -2.74,
+   "pit_per_g": 13.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666661",
@@ -1663,7 +1831,13 @@
    "war_ip_plus_pct": 90,
    "war_ip_plus_3yr": 110,
    "war_ip_plus_3yr_pct": 89,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.18,
+   "p_bf": 3.943,
+   "par": 97,
+   "par_delta": -0.54,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682842",
@@ -1715,7 +1889,13 @@
    "war_ip_plus_pct": 94,
    "war_ip_plus_3yr": 115,
    "war_ip_plus_3yr_pct": 96,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.47,
+   "p_bf": 3.923,
+   "par": 93,
+   "par_delta": -1.25,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664991",
@@ -1767,7 +1947,13 @@
    "war_ip_plus_pct": 84,
    "war_ip_plus_3yr": 110,
    "war_ip_plus_3yr_pct": 90,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.22,
+   "p_bf": 3.987,
+   "par": 103,
+   "par_delta": 0.5,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669622",
@@ -1819,7 +2005,13 @@
    "war_ip_plus_pct": 90,
    "war_ip_plus_3yr": 110,
    "war_ip_plus_3yr_pct": 90,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.7,
+   "p_bf": 3.85,
+   "par": 94,
+   "par_delta": -1.02,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "594027",
@@ -1871,7 +2063,13 @@
    "war_ip_plus_pct": 88,
    "war_ip_plus_3yr": 112,
    "war_ip_plus_3yr_pct": 93,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 14.93,
+   "p_bf": 3.657,
+   "par": 89,
+   "par_delta": -1.79,
+   "pit_per_g": 15.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676879",
@@ -1923,7 +2121,13 @@
    "war_ip_plus_pct": 78,
    "war_ip_plus_3yr": 109,
    "war_ip_plus_3yr_pct": 88,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.68,
+   "p_bf": 4.123,
+   "par": 106,
+   "par_delta": 0.96,
+   "pit_per_g": 20.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "596133",
@@ -1975,7 +2179,13 @@
    "war_ip_plus_pct": 88,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 78,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.97,
+   "p_bf": 3.794,
+   "par": 90,
+   "par_delta": -1.75,
+   "pit_per_g": 15.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "805345",
@@ -2016,7 +2226,13 @@
    "z_contact_pct": 0.829,
    "f_strike_pct": 0.596,
    "fb_velo": 94.0,
-   "war": 0.6
+   "war": 0.6,
+   "p_ip": 15.77,
+   "p_bf": 3.915,
+   "par": 94,
+   "par_delta": -0.95,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668831",
@@ -2051,7 +2267,13 @@
    "z_contact_pct": 0.804,
    "f_strike_pct": 0.725,
    "fb_velo": 90.0,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 13.86,
+   "p_bf": 3.804,
+   "par": 83,
+   "par_delta": -2.86,
+   "pit_per_g": 32.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680742",
@@ -2103,7 +2325,13 @@
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 72,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.15,
+   "p_bf": 4.218,
+   "par": 103,
+   "par_delta": 0.43,
+   "pit_per_g": 16.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687330",
@@ -2155,7 +2383,13 @@
    "war_ip_plus_pct": 86,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 68,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 13.4,
+   "p_bf": 3.538,
+   "par": 80,
+   "par_delta": -3.32,
+   "pit_per_g": 13.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656848",
@@ -2207,7 +2441,13 @@
    "war_ip_plus_pct": 78,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 81,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.19,
+   "p_bf": 4.197,
+   "par": 103,
+   "par_delta": 0.48,
+   "pit_per_g": 17.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681911",
@@ -2259,7 +2499,13 @@
    "war_ip_plus_pct": 84,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 75,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.43,
+   "p_bf": 4.266,
+   "par": 104,
+   "par_delta": 0.71,
+   "pit_per_g": 14.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676454",
@@ -2294,7 +2540,13 @@
    "z_contact_pct": 0.867,
    "f_strike_pct": 0.621,
    "fb_velo": 93.6,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 12.92,
+   "p_bf": 3.733,
+   "par": 77,
+   "par_delta": -3.79,
+   "pit_per_g": 18.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "628452",
@@ -2346,7 +2598,13 @@
    "war_ip_plus_pct": 84,
    "war_ip_plus_3yr": 111,
    "war_ip_plus_3yr_pct": 91,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.18,
+   "p_bf": 3.812,
+   "par": 91,
+   "par_delta": -1.53,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686580",
@@ -2398,7 +2656,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 80,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.21,
+   "p_bf": 3.708,
+   "par": 97,
+   "par_delta": -0.5,
+   "pit_per_g": 14.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "595345",
@@ -2450,7 +2714,13 @@
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 76,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.37,
+   "p_bf": 4.039,
+   "par": 92,
+   "par_delta": -1.34,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641329",
@@ -2502,7 +2772,13 @@
    "war_ip_plus_pct": 92,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 81,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.67,
+   "p_bf": 4.004,
+   "par": 94,
+   "par_delta": -1.04,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663158",
@@ -2554,7 +2830,13 @@
    "war_ip_plus_pct": 94,
    "war_ip_plus_3yr": 112,
    "war_ip_plus_3yr_pct": 94,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.32,
+   "p_bf": 3.746,
+   "par": 86,
+   "par_delta": -2.39,
+   "pit_per_g": 14.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642528",
@@ -2606,7 +2888,13 @@
    "war_ip_plus_pct": 84,
    "war_ip_plus_3yr": 109,
    "war_ip_plus_3yr_pct": 88,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 14.36,
+   "p_bf": 3.686,
+   "par": 86,
+   "par_delta": -2.36,
+   "pit_per_g": 14.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669330",
@@ -2658,7 +2946,13 @@
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 108,
    "war_ip_plus_3yr_pct": 85,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 14.83,
+   "p_bf": 3.856,
+   "par": 89,
+   "par_delta": -1.88,
+   "pit_per_g": 18.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666974",
@@ -2710,7 +3004,13 @@
    "war_ip_plus_pct": 84,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 58,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.99,
+   "p_bf": 3.892,
+   "par": 96,
+   "par_delta": -0.73,
+   "pit_per_g": 11.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642048",
@@ -2754,7 +3054,13 @@
    "war": 0.6,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 39,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.08,
+   "p_bf": 3.943,
+   "par": 96,
+   "par_delta": -0.64,
+   "pit_per_g": 12.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "674073",
@@ -2789,7 +3095,13 @@
    "z_contact_pct": 0.869,
    "f_strike_pct": 0.66,
    "fb_velo": 93.3,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 16.18,
+   "p_bf": 4.1,
+   "par": 97,
+   "par_delta": -0.53,
+   "pit_per_g": 29.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669093",
@@ -2841,7 +3153,13 @@
    "war_ip_plus_pct": 76,
    "war_ip_plus_3yr": 109,
    "war_ip_plus_3yr_pct": 87,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.52,
+   "p_bf": 4.063,
+   "par": 99,
+   "par_delta": -0.2,
+   "pit_per_g": 15.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676263",
@@ -2893,7 +3211,13 @@
    "war_ip_plus_pct": 73,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 83,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.99,
+   "p_bf": 3.943,
+   "par": 96,
+   "par_delta": -0.73,
+   "pit_per_g": 15.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "665645",
@@ -2928,7 +3252,13 @@
    "z_contact_pct": 0.774,
    "f_strike_pct": 0.609,
    "fb_velo": 93.5,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 14.84,
+   "p_bf": 4.087,
+   "par": 89,
+   "par_delta": -1.88,
+   "pit_per_g": 18.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "650960",
@@ -2969,7 +3299,13 @@
    "z_contact_pct": 0.82,
    "f_strike_pct": 0.67,
    "fb_velo": 91.9,
-   "war": 0.6
+   "war": 0.6,
+   "p_ip": 15.61,
+   "p_bf": 4.134,
+   "par": 93,
+   "par_delta": -1.11,
+   "pit_per_g": 19.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642207",
@@ -3021,7 +3357,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 83,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.66,
+   "p_bf": 4.125,
+   "par": 112,
+   "par_delta": 1.95,
+   "pit_per_g": 17.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656464",
@@ -3073,7 +3415,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 79,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.24,
+   "p_bf": 3.996,
+   "par": 97,
+   "par_delta": -0.48,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "673380",
@@ -3114,7 +3462,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 113,
    "war_ip_plus_3yr_pct": 95,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 11.21,
+   "p_bf": 2.958,
+   "par": 67,
+   "par_delta": -5.51,
+   "pit_per_g": 11.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "692064",
@@ -3149,7 +3503,13 @@
    "z_contact_pct": 0.875,
    "f_strike_pct": 0.438,
    "fb_velo": 97.3,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 14.57,
+   "p_bf": 4.25,
+   "par": 87,
+   "par_delta": -2.15,
+   "pit_per_g": 17.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676534",
@@ -3201,7 +3561,13 @@
    "war_ip_plus_pct": 76,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 78,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.06,
+   "p_bf": 3.966,
+   "par": 102,
+   "par_delta": 0.35,
+   "pit_per_g": 16.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669062",
@@ -3253,7 +3619,13 @@
    "war_ip_plus_pct": 73,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 61,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.93,
+   "p_bf": 4.293,
+   "par": 113,
+   "par_delta": 2.22,
+   "pit_per_g": 17.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "623465",
@@ -3297,7 +3669,13 @@
    "war": 0.2,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 49,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.27,
+   "p_bf": 3.991,
+   "par": 97,
+   "par_delta": -0.45,
+   "pit_per_g": 13.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "643410",
@@ -3349,7 +3727,13 @@
    "war_ip_plus_pct": 86,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 69,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.37,
+   "p_bf": 3.826,
+   "par": 98,
+   "par_delta": -0.35,
+   "pit_per_g": 15.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641835",
@@ -3401,7 +3785,13 @@
    "war_ip_plus_pct": 76,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 55,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.94,
+   "p_bf": 3.978,
+   "par": 95,
+   "par_delta": -0.78,
+   "pit_per_g": 17.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642397",
@@ -3453,7 +3843,13 @@
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 72,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.21,
+   "p_bf": 4.046,
+   "par": 103,
+   "par_delta": 0.49,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "489446",
@@ -3505,7 +3901,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 82,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.16,
+   "p_bf": 4.058,
+   "par": 103,
+   "par_delta": 0.45,
+   "pit_per_g": 15.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "605441",
@@ -3540,7 +3942,13 @@
    "z_contact_pct": 0.8,
    "f_strike_pct": 0.8,
    "fb_velo": 98.3,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 7.8,
+   "p_bf": 2.6,
+   "par": 47,
+   "par_delta": -8.92,
+   "pit_per_g": 13.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656794",
@@ -3592,7 +4000,13 @@
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 110,
    "war_ip_plus_3yr_pct": 90,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.21,
+   "p_bf": 3.865,
+   "par": 97,
+   "par_delta": -0.51,
+   "pit_per_g": 23.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "605218",
@@ -3627,7 +4041,13 @@
    "z_contact_pct": 0.552,
    "f_strike_pct": 0.56,
    "fb_velo": 92.5,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 16.5,
+   "p_bf": 3.96,
+   "par": 99,
+   "par_delta": -0.22,
+   "pit_per_g": 49.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681973",
@@ -3662,7 +4082,13 @@
    "z_contact_pct": 0.667,
    "f_strike_pct": 0.444,
    "fb_velo": 88.5,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 13.12,
+   "p_bf": 3.889,
+   "par": 79,
+   "par_delta": -3.59,
+   "pit_per_g": 17.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621389",
@@ -3697,7 +4123,13 @@
    "z_contact_pct": 0.9,
    "f_strike_pct": 0.778,
    "fb_velo": 89.3,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 10.0,
+   "p_bf": 3.333,
+   "par": 60,
+   "par_delta": -6.72,
+   "pit_per_g": 30.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641302",
@@ -3749,7 +4181,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 46,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.43,
+   "p_bf": 3.797,
+   "par": 98,
+   "par_delta": -0.28,
+   "pit_per_g": 15.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670990",
@@ -3801,7 +4239,13 @@
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 75,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.53,
+   "p_bf": 3.876,
+   "par": 99,
+   "par_delta": -0.19,
+   "pit_per_g": 21.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669165",
@@ -3853,7 +4297,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 70,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.05,
+   "p_bf": 3.735,
+   "par": 96,
+   "par_delta": -0.67,
+   "pit_per_g": 16.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "665622",
@@ -3905,7 +4355,13 @@
    "war_ip_plus_pct": 76,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 81,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.47,
+   "p_bf": 4.013,
+   "par": 105,
+   "par_delta": 0.75,
+   "pit_per_g": 21.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681676",
@@ -3949,7 +4405,13 @@
    "war": 0.3,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 43,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.83,
+   "p_bf": 3.87,
+   "par": 101,
+   "par_delta": 0.11,
+   "pit_per_g": 22.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "702193",
@@ -3985,9 +4447,9 @@
    "rem_plus_3yr": 107,
    "rem_plus_3yr_pct": 81,
    "rem_plus_3yr_tag": "provisional",
-   "xrem_plus": 108,
-   "xwoba_against": 0.282,
-   "luck": 0.02,
+   "xrem_plus": 107,
+   "xwoba_against": 0.283,
+   "luck": 0.019,
    "whiff_pct": 0.23,
    "chase_pct": 0.281,
    "z_contact_pct": 0.822,
@@ -4001,7 +4463,13 @@
    "war_ip_plus_pct": 73,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 76,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.4,
+   "p_bf": 4.027,
+   "par": 104,
+   "par_delta": 0.68,
+   "pit_per_g": 19.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689266",
@@ -4053,7 +4521,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 56,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.68,
+   "p_bf": 4.015,
+   "par": 94,
+   "par_delta": -1.03,
+   "pit_per_g": 16.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "695049",
@@ -4088,7 +4562,13 @@
    "z_contact_pct": 0.785,
    "f_strike_pct": 0.667,
    "fb_velo": 91.6,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 15.51,
+   "p_bf": 3.926,
+   "par": 93,
+   "par_delta": -1.2,
+   "pit_per_g": 70.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681252",
@@ -4123,7 +4603,13 @@
    "z_contact_pct": 0.77,
    "f_strike_pct": 0.625,
    "fb_velo": 90.8,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 14.59,
+   "p_bf": 3.75,
+   "par": 87,
+   "par_delta": -2.12,
+   "pit_per_g": 25.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680744",
@@ -4175,7 +4661,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 63,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.19,
+   "p_bf": 4.063,
+   "par": 97,
+   "par_delta": -0.53,
+   "pit_per_g": 37.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "685126",
@@ -4224,7 +4716,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 40,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.52,
+   "p_bf": 4.101,
+   "par": 105,
+   "par_delta": 0.8,
+   "pit_per_g": 19.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "679885",
@@ -4265,7 +4763,13 @@
    "war": 0.3,
    "war_ip_plus_3yr": 113,
    "war_ip_plus_3yr_pct": 95,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.4,
+   "p_bf": 4.218,
+   "par": 104,
+   "par_delta": 0.68,
+   "pit_per_g": 15.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "696062",
@@ -4317,7 +4821,13 @@
    "war_ip_plus_pct": 78,
    "war_ip_plus_3yr": 108,
    "war_ip_plus_3yr_pct": 84,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.64,
+   "p_bf": 3.938,
+   "par": 100,
+   "par_delta": -0.07,
+   "pit_per_g": 31.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "608718",
@@ -4369,7 +4879,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 43,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.47,
+   "p_bf": 4.0,
+   "par": 99,
+   "par_delta": -0.25,
+   "pit_per_g": 27.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687721",
@@ -4404,7 +4920,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.667,
    "fb_velo": 91.8,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 17.0,
+   "p_bf": 5.667,
+   "par": 102,
+   "par_delta": 0.28,
+   "pit_per_g": 17.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689296",
@@ -4456,7 +4978,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 64,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.64,
+   "p_bf": 3.894,
+   "par": 100,
+   "par_delta": -0.07,
+   "pit_per_g": 19.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "703725",
@@ -4505,7 +5033,13 @@
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 31,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.34,
+   "p_bf": 3.941,
+   "par": 98,
+   "par_delta": -0.38,
+   "pit_per_g": 17.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642121",
@@ -4557,7 +5091,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 67,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.72,
+   "p_bf": 3.977,
+   "par": 100,
+   "par_delta": 0.0,
+   "pit_per_g": 17.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "701121",
@@ -4592,7 +5132,13 @@
    "z_contact_pct": 0.797,
    "f_strike_pct": 0.652,
    "fb_velo": 92.7,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 15.32,
+   "p_bf": 4.217,
+   "par": 92,
+   "par_delta": -1.4,
+   "pit_per_g": 19.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681520",
@@ -4627,7 +5173,13 @@
    "z_contact_pct": 0.8,
    "f_strike_pct": 0.0,
    "fb_velo": 95.9,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 13.5,
+   "p_bf": 4.5,
+   "par": 81,
+   "par_delta": -3.22,
+   "pit_per_g": 18.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "592866",
@@ -4668,7 +5220,13 @@
    "z_contact_pct": 0.814,
    "f_strike_pct": 0.583,
    "fb_velo": 89.4,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 17.89,
+   "p_bf": 4.231,
+   "par": 107,
+   "par_delta": 1.17,
+   "pit_per_g": 35.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "643361",
@@ -4706,7 +5264,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.667,
    "fb_velo": 87.9,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 11.0,
+   "p_bf": 3.667,
+   "par": 66,
+   "par_delta": -5.72,
+   "pit_per_g": 11.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "697811",
@@ -4741,7 +5305,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.333,
    "fb_velo": 99.0,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 11.0,
+   "p_bf": 3.667,
+   "par": 66,
+   "par_delta": -5.72,
+   "pit_per_g": 11.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676742",
@@ -4782,7 +5352,13 @@
    "z_contact_pct": 0.769,
    "f_strike_pct": 0.531,
    "fb_velo": 95.9,
-   "war": 0.7
+   "war": 0.7,
+   "p_ip": 18.65,
+   "p_bf": 4.176,
+   "par": 112,
+   "par_delta": 1.93,
+   "pit_per_g": 19.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "572143",
@@ -4823,7 +5399,13 @@
    "war": 0.2,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 65,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.56,
+   "p_bf": 4.0,
+   "par": 99,
+   "par_delta": -0.16,
+   "pit_per_g": 23.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670036",
@@ -4875,7 +5457,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 71,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.53,
+   "p_bf": 3.813,
+   "par": 99,
+   "par_delta": -0.19,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687531",
@@ -4910,7 +5498,13 @@
    "z_contact_pct": 0.741,
    "f_strike_pct": 0.62,
    "fb_velo": 93.8,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 16.14,
+   "p_bf": 3.98,
+   "par": 97,
+   "par_delta": -0.58,
+   "pit_per_g": 22.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670103",
@@ -4948,7 +5542,13 @@
    "z_contact_pct": 0.912,
    "f_strike_pct": 0.646,
    "fb_velo": 89.6,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 13.69,
+   "p_bf": 3.561,
+   "par": 82,
+   "par_delta": -3.03,
+   "pit_per_g": 32.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670059",
@@ -5000,7 +5600,13 @@
    "war_ip_plus_pct": 78,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 59,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.33,
+   "p_bf": 3.874,
+   "par": 98,
+   "par_delta": -0.39,
+   "pit_per_g": 15.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686934",
@@ -5035,7 +5641,13 @@
    "z_contact_pct": 0.76,
    "f_strike_pct": 0.506,
    "fb_velo": 99.3,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 16.42,
+   "p_bf": 3.949,
+   "par": 98,
+   "par_delta": -0.3,
+   "pit_per_g": 16.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682989",
@@ -5084,7 +5696,13 @@
    "war_ip_plus_pct": 78,
    "war_ip_plus_3yr": 108,
    "war_ip_plus_3yr_pct": 84,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.07,
+   "p_bf": 3.959,
+   "par": 102,
+   "par_delta": 0.35,
+   "pit_per_g": 19.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670329",
@@ -5136,7 +5754,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 63,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.88,
+   "p_bf": 3.762,
+   "par": 89,
+   "par_delta": -1.84,
+   "pit_per_g": 13.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669060",
@@ -5188,7 +5812,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 92,
    "war_ip_plus_3yr_pct": 16,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.79,
+   "p_bf": 3.695,
+   "par": 94,
+   "par_delta": -0.92,
+   "pit_per_g": 34.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "667297",
@@ -5240,7 +5870,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 109,
    "war_ip_plus_3yr_pct": 87,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.44,
+   "p_bf": 3.802,
+   "par": 98,
+   "par_delta": -0.28,
+   "pit_per_g": 17.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694494",
@@ -5275,7 +5911,13 @@
    "z_contact_pct": 0.827,
    "f_strike_pct": 0.618,
    "fb_velo": 93.2,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 21.0,
+   "p_bf": 4.735,
+   "par": 126,
+   "par_delta": 4.28,
+   "pit_per_g": 20.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694361",
@@ -5327,7 +5969,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 72,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.89,
+   "p_bf": 3.988,
+   "par": 107,
+   "par_delta": 1.18,
+   "pit_per_g": 20.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "702021",
@@ -5379,7 +6027,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 69,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.18,
+   "p_bf": 3.932,
+   "par": 97,
+   "par_delta": -0.54,
+   "pit_per_g": 29.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "690829",
@@ -5420,7 +6074,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 115,
    "war_ip_plus_3yr_pct": 97,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.89,
+   "p_bf": 4.246,
+   "par": 101,
+   "par_delta": 0.17,
+   "pit_per_g": 16.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663855",
@@ -5472,7 +6132,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 52,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.45,
+   "p_bf": 4.111,
+   "par": 110,
+   "par_delta": 1.74,
+   "pit_per_g": 16.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689254",
@@ -5524,7 +6190,13 @@
    "war_ip_plus_pct": 73,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 65,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.41,
+   "p_bf": 3.955,
+   "par": 98,
+   "par_delta": -0.31,
+   "pit_per_g": 12.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "646241",
@@ -5576,7 +6248,13 @@
    "war_ip_plus_pct": 76,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 78,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.8,
+   "p_bf": 3.758,
+   "par": 95,
+   "par_delta": -0.91,
+   "pit_per_g": 22.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "677020",
@@ -5625,7 +6303,13 @@
    "war_ip_plus_pct": 73,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 77,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.65,
+   "p_bf": 4.008,
+   "par": 100,
+   "par_delta": -0.07,
+   "pit_per_g": 16.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682825",
@@ -5674,7 +6358,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 70,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 19.18,
+   "p_bf": 4.03,
+   "par": 115,
+   "par_delta": 2.47,
+   "pit_per_g": 22.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666374",
@@ -5715,7 +6405,13 @@
    "war": 0.5,
    "war_ip_plus_3yr": 108,
    "war_ip_plus_3yr_pct": 86,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.72,
+   "p_bf": 4.094,
+   "par": 94,
+   "par_delta": -1.0,
+   "pit_per_g": 13.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666171",
@@ -5767,7 +6463,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 21,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.36,
+   "p_bf": 4.207,
+   "par": 110,
+   "par_delta": 1.64,
+   "pit_per_g": 19.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621074",
@@ -5819,7 +6521,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 66,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.34,
+   "p_bf": 4.07,
+   "par": 104,
+   "par_delta": 0.62,
+   "pit_per_g": 20.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "592826",
@@ -5854,7 +6562,13 @@
    "z_contact_pct": 0.929,
    "f_strike_pct": 0.727,
    "fb_velo": 91.6,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 12.9,
+   "p_bf": 3.909,
+   "par": 77,
+   "par_delta": -3.82,
+   "pit_per_g": 21.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "695380",
@@ -5906,7 +6620,13 @@
    "war_ip_plus_pct": 76,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 79,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.18,
+   "p_bf": 3.818,
+   "par": 103,
+   "par_delta": 0.46,
+   "pit_per_g": 17.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668873",
@@ -5958,7 +6678,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 37,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.49,
+   "p_bf": 3.761,
+   "par": 99,
+   "par_delta": -0.23,
+   "pit_per_g": 16.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "592779",
@@ -6002,7 +6728,13 @@
    "war": 0.3,
    "war_ip_plus_3yr": 111,
    "war_ip_plus_3yr_pct": 91,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 14.53,
+   "p_bf": 3.768,
+   "par": 87,
+   "par_delta": -2.18,
+   "pit_per_g": 13.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "662144",
@@ -6037,7 +6769,13 @@
    "z_contact_pct": 0.938,
    "f_strike_pct": 0.818,
    "fb_velo": 89.8,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 13.0,
+   "p_bf": 3.545,
+   "par": 78,
+   "par_delta": -3.72,
+   "pit_per_g": 39.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656240",
@@ -6086,7 +6824,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 22,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.64,
+   "p_bf": 3.65,
+   "par": 94,
+   "par_delta": -1.07,
+   "pit_per_g": 22.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "690978",
@@ -6127,7 +6871,13 @@
    "z_contact_pct": 0.793,
    "f_strike_pct": 0.623,
    "fb_velo": 95.0,
-   "war": 0.4
+   "war": 0.4,
+   "p_ip": 16.71,
+   "p_bf": 3.926,
+   "par": 100,
+   "par_delta": -0.01,
+   "pit_per_g": 29.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "622088",
@@ -6179,7 +6929,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 62,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.49,
+   "p_bf": 3.876,
+   "par": 99,
+   "par_delta": -0.23,
+   "pit_per_g": 15.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676684",
@@ -6226,7 +6982,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 113,
    "war_ip_plus_3yr_pct": 96,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.15,
+   "p_bf": 4.172,
+   "par": 109,
+   "par_delta": 1.43,
+   "pit_per_g": 17.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657514",
@@ -6278,7 +7040,13 @@
    "war_ip_plus_pct": 88,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 76,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.27,
+   "p_bf": 3.724,
+   "par": 91,
+   "par_delta": -1.45,
+   "pit_per_g": 13.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "804926",
@@ -6313,7 +7081,13 @@
    "z_contact_pct": 0.889,
    "f_strike_pct": 0.556,
    "fb_velo": 90.5,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 15.0,
+   "p_bf": 3.889,
+   "par": 90,
+   "par_delta": -1.72,
+   "pit_per_g": 52.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "573009",
@@ -6357,7 +7131,13 @@
    "war": 0.3,
    "war_ip_plus_3yr": 112,
    "war_ip_plus_3yr_pct": 93,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 14.78,
+   "p_bf": 3.595,
+   "par": 88,
+   "par_delta": -1.94,
+   "pit_per_g": 16.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664076",
@@ -6409,7 +7189,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 56,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.76,
+   "p_bf": 4.055,
+   "par": 106,
+   "par_delta": 1.04,
+   "pit_per_g": 14.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657097",
@@ -6461,7 +7247,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 37,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.0,
+   "p_bf": 4.011,
+   "par": 102,
+   "par_delta": 0.28,
+   "pit_per_g": 16.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "606996",
@@ -6510,7 +7302,13 @@
    "war_ip_plus_pct": 50,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 41,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.11,
+   "p_bf": 4.03,
+   "par": 102,
+   "par_delta": 0.4,
+   "pit_per_g": 22.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641941",
@@ -6562,7 +7360,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 73,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.82,
+   "p_bf": 3.879,
+   "par": 95,
+   "par_delta": -0.9,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "685464",
@@ -6597,7 +7401,13 @@
    "z_contact_pct": 0.84,
    "f_strike_pct": 0.526,
    "fb_velo": 94.4,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 17.93,
+   "p_bf": 4.298,
+   "par": 107,
+   "par_delta": 1.21,
+   "pit_per_g": 22.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621016",
@@ -6638,7 +7448,13 @@
    "z_contact_pct": 0.803,
    "f_strike_pct": 0.561,
    "fb_velo": 91.7,
-   "war": 0.4
+   "war": 0.4,
+   "p_ip": 20.27,
+   "p_bf": 4.38,
+   "par": 121,
+   "par_delta": 3.55,
+   "pit_per_g": 19.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681916",
@@ -6690,7 +7506,13 @@
    "war_ip_plus_pct": 50,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 54,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.72,
+   "p_bf": 3.972,
+   "par": 106,
+   "par_delta": 1.01,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "820862",
@@ -6742,7 +7564,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 92,
    "war_ip_plus_3yr_pct": 15,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.28,
+   "p_bf": 4.122,
+   "par": 109,
+   "par_delta": 1.56,
+   "pit_per_g": 18.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621112",
@@ -6794,7 +7622,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 63,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.38,
+   "p_bf": 3.65,
+   "par": 86,
+   "par_delta": -2.34,
+   "pit_per_g": 19.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642100",
@@ -6846,7 +7680,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 109,
    "war_ip_plus_3yr_pct": 87,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.17,
+   "p_bf": 3.674,
+   "par": 91,
+   "par_delta": -1.54,
+   "pit_per_g": 12.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681544",
@@ -6881,7 +7721,13 @@
    "z_contact_pct": 0.763,
    "f_strike_pct": 0.515,
    "fb_velo": 95.1,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 18.38,
+   "p_bf": 4.235,
+   "par": 110,
+   "par_delta": 1.67,
+   "pit_per_g": 20.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642232",
@@ -6933,7 +7779,13 @@
    "war_ip_plus_pct": 73,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 31,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.73,
+   "p_bf": 3.967,
+   "par": 100,
+   "par_delta": 0.01,
+   "pit_per_g": 27.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669084",
@@ -6976,7 +7828,7 @@
    "chase_pct": 0.26,
    "z_contact_pct": 0.808,
    "f_strike_pct": 0.61,
-   "fb_velo": 95.3,
+   "fb_velo": 95.4,
    "war": 0.4,
    "war_ip_plus": 99,
    "war_ip_plus_raw": 98.8,
@@ -6985,7 +7837,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 48,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.26,
+   "p_bf": 4.124,
+   "par": 97,
+   "par_delta": -0.45,
+   "pit_per_g": 21.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "701519",
@@ -7037,7 +7895,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 30,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.1,
+   "p_bf": 3.846,
+   "par": 96,
+   "par_delta": -0.62,
+   "pit_per_g": 23.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676702",
@@ -7078,7 +7942,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 77,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.8,
+   "p_bf": 3.733,
+   "par": 100,
+   "par_delta": 0.08,
+   "pit_per_g": 18.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669711",
@@ -7130,7 +8000,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 54,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.34,
+   "p_bf": 3.886,
+   "par": 98,
+   "par_delta": -0.38,
+   "pit_per_g": 15.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687377",
@@ -7182,7 +8058,13 @@
    "war_ip_plus_pct": 50,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 57,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.44,
+   "p_bf": 4.213,
+   "par": 104,
+   "par_delta": 0.72,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670245",
@@ -7234,7 +8116,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 63,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.81,
+   "p_bf": 3.707,
+   "par": 95,
+   "par_delta": -0.91,
+   "pit_per_g": 21.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680899",
@@ -7269,7 +8157,13 @@
    "z_contact_pct": 0.762,
    "f_strike_pct": 0.493,
    "fb_velo": 96.8,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 18.91,
+   "p_bf": 4.328,
+   "par": 113,
+   "par_delta": 2.2,
+   "pit_per_g": 19.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694037",
@@ -7313,7 +8207,13 @@
    "war": 0.2,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 74,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.08,
+   "p_bf": 3.878,
+   "par": 96,
+   "par_delta": -0.64,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "595014",
@@ -7360,7 +8260,13 @@
    "war": 0.3,
    "war_ip_plus_3yr": 110,
    "war_ip_plus_3yr_pct": 90,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.65,
+   "p_bf": 3.8,
+   "par": 100,
+   "par_delta": -0.07,
+   "pit_per_g": 13.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "622608",
@@ -7412,7 +8318,13 @@
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 109,
    "war_ip_plus_3yr_pct": 86,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.89,
+   "p_bf": 3.746,
+   "par": 95,
+   "par_delta": -0.83,
+   "pit_per_g": 20.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "624522",
@@ -7453,7 +8365,13 @@
    "war": 0.5,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 46,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.25,
+   "p_bf": 3.421,
+   "par": 97,
+   "par_delta": -0.47,
+   "pit_per_g": 39.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664854",
@@ -7494,7 +8412,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 111,
    "war_ip_plus_3yr_pct": 92,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.8,
+   "p_bf": 4.015,
+   "par": 107,
+   "par_delta": 1.09,
+   "pit_per_g": 16.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680686",
@@ -7529,7 +8453,13 @@
    "z_contact_pct": 0.938,
    "f_strike_pct": 0.667,
    "fb_velo": 92.3,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 14.5,
+   "p_bf": 3.867,
+   "par": 87,
+   "par_delta": -2.22,
+   "pit_per_g": 19.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "552640",
@@ -7581,7 +8511,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 57,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.71,
+   "p_bf": 3.322,
+   "par": 88,
+   "par_delta": -2.01,
+   "pit_per_g": 12.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "623211",
@@ -7630,7 +8566,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 58,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.03,
+   "p_bf": 3.838,
+   "par": 90,
+   "par_delta": -1.68,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668933",
@@ -7682,7 +8624,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 110,
    "war_ip_plus_3yr_pct": 88,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.32,
+   "p_bf": 4.053,
+   "par": 104,
+   "par_delta": 0.6,
+   "pit_per_g": 17.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "643511",
@@ -7734,7 +8682,13 @@
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 82,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.34,
+   "p_bf": 3.463,
+   "par": 86,
+   "par_delta": -2.38,
+   "pit_per_g": 13.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682769",
@@ -7769,7 +8723,13 @@
    "z_contact_pct": 0.818,
    "f_strike_pct": 0.667,
    "fb_velo": 95.6,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 11.67,
+   "p_bf": 2.917,
+   "par": 70,
+   "par_delta": -5.05,
+   "pit_per_g": 35.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682608",
@@ -7821,7 +8781,13 @@
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 30,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.86,
+   "p_bf": 3.791,
+   "par": 101,
+   "par_delta": 0.14,
+   "pit_per_g": 19.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668941",
@@ -7873,7 +8839,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 57,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.37,
+   "p_bf": 3.874,
+   "par": 98,
+   "par_delta": -0.35,
+   "pit_per_g": 16.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670871",
@@ -7908,7 +8880,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.75,
    "fb_velo": 97.4,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 18.0,
+   "p_bf": 4.5,
+   "par": 108,
+   "par_delta": 1.28,
+   "pit_per_g": 18.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680723",
@@ -7946,7 +8924,13 @@
    "z_contact_pct": 0.833,
    "f_strike_pct": 0.573,
    "fb_velo": 91.7,
-   "war": 0.4
+   "war": 0.4,
+   "p_ip": 16.98,
+   "p_bf": 3.614,
+   "par": 102,
+   "par_delta": 0.26,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "605242",
@@ -7981,7 +8965,13 @@
    "z_contact_pct": 0.8,
    "f_strike_pct": 0.7,
    "fb_velo": 90.1,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 19.32,
+   "p_bf": 4.328,
+   "par": 116,
+   "par_delta": 2.6,
+   "pit_per_g": 17.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656271",
@@ -8033,7 +9023,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 58,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.87,
+   "p_bf": 3.758,
+   "par": 95,
+   "par_delta": -0.84,
+   "pit_per_g": 15.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664353",
@@ -8082,7 +9078,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 73,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.42,
+   "p_bf": 3.594,
+   "par": 92,
+   "par_delta": -1.3,
+   "pit_per_g": 42.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "543238",
@@ -8117,7 +9119,13 @@
    "z_contact_pct": 0.85,
    "f_strike_pct": 0.529,
    "fb_velo": 95.7,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 14.63,
+   "p_bf": 3.922,
+   "par": 88,
+   "par_delta": -2.08,
+   "pit_per_g": 14.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656756",
@@ -8158,7 +9166,13 @@
    "z_contact_pct": 0.874,
    "f_strike_pct": 0.592,
    "fb_velo": 90.5,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 15.92,
+   "p_bf": 3.981,
+   "par": 95,
+   "par_delta": -0.79,
+   "pit_per_g": 31.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668390",
@@ -8210,7 +9224,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 27,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.49,
+   "p_bf": 3.656,
+   "par": 99,
+   "par_delta": -0.23,
+   "pit_per_g": 15.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "660853",
@@ -8262,7 +9282,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 19,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.16,
+   "p_bf": 3.831,
+   "par": 97,
+   "par_delta": -0.55,
+   "pit_per_g": 17.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681217",
@@ -8314,7 +9340,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 47,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.15,
+   "p_bf": 4.018,
+   "par": 109,
+   "par_delta": 1.43,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621139",
@@ -8349,7 +9381,13 @@
    "z_contact_pct": 0.9,
    "f_strike_pct": 0.6,
    "fb_velo": 89.6,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 14.25,
+   "p_bf": 3.455,
+   "par": 85,
+   "par_delta": -2.47,
+   "pit_per_g": 19.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680702",
@@ -8384,7 +9422,13 @@
    "z_contact_pct": 0.833,
    "f_strike_pct": 0.559,
    "fb_velo": 91.4,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 15.48,
+   "p_bf": 3.794,
+   "par": 93,
+   "par_delta": -1.24,
+   "pit_per_g": 18.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "801725",
@@ -8419,7 +9463,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.694,
    "fb_velo": 95.9,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 13.5,
+   "p_bf": 3.5,
+   "par": 81,
+   "par_delta": -3.22,
+   "pit_per_g": 15.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "518585",
@@ -8471,7 +9521,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 73,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.27,
+   "p_bf": 4.034,
+   "par": 103,
+   "par_delta": 0.55,
+   "pit_per_g": 15.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "548384",
@@ -8523,7 +9579,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 61,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.99,
+   "p_bf": 3.759,
+   "par": 96,
+   "par_delta": -0.73,
+   "pit_per_g": 13.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664126",
@@ -8575,7 +9637,13 @@
    "war_ip_plus_pct": 10,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 52,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.32,
+   "p_bf": 4.199,
+   "par": 110,
+   "par_delta": 1.61,
+   "pit_per_g": 16.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656529",
@@ -8627,7 +9695,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 74,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.74,
+   "p_bf": 3.971,
+   "par": 112,
+   "par_delta": 2.02,
+   "pit_per_g": 15.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681892",
@@ -8679,7 +9753,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 60,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.18,
+   "p_bf": 3.946,
+   "par": 103,
+   "par_delta": 0.46,
+   "pit_per_g": 15.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "801434",
@@ -8714,7 +9794,13 @@
    "z_contact_pct": 0.781,
    "f_strike_pct": 0.471,
    "fb_velo": 92.1,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 16.17,
+   "p_bf": 3.647,
+   "par": 97,
+   "par_delta": -0.54,
+   "pit_per_g": 31.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676620",
@@ -8749,7 +9835,13 @@
    "z_contact_pct": 0.856,
    "f_strike_pct": 0.645,
    "fb_velo": 90.3,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 16.08,
+   "p_bf": 3.595,
+   "par": 96,
+   "par_delta": -0.64,
+   "pit_per_g": 15.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689225",
@@ -8793,7 +9885,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 72,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.28,
+   "p_bf": 3.794,
+   "par": 91,
+   "par_delta": -1.44,
+   "pit_per_g": 21.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "683769",
@@ -8845,7 +9943,13 @@
    "war_ip_plus_pct": 50,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 82,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.29,
+   "p_bf": 3.825,
+   "par": 97,
+   "par_delta": -0.42,
+   "pit_per_g": 14.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687309",
@@ -8880,7 +9984,13 @@
    "z_contact_pct": 0.821,
    "f_strike_pct": 0.527,
    "fb_velo": 89.8,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 20.59,
+   "p_bf": 4.618,
+   "par": 123,
+   "par_delta": 3.88,
+   "pit_per_g": 63.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621237",
@@ -8932,7 +10042,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 59,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 19.35,
+   "p_bf": 4.136,
+   "par": 116,
+   "par_delta": 2.64,
+   "pit_per_g": 16.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689149",
@@ -8967,7 +10083,13 @@
    "z_contact_pct": 0.877,
    "f_strike_pct": 0.5,
    "fb_velo": 93.1,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 18.14,
+   "p_bf": 4.062,
+   "par": 109,
+   "par_delta": 1.42,
+   "pit_per_g": 43.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "700327",
@@ -9002,7 +10124,13 @@
    "z_contact_pct": 0.875,
    "f_strike_pct": 0.6,
    "fb_velo": 94.5,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 19.29,
+   "p_bf": 4.5,
+   "par": 115,
+   "par_delta": 2.57,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681810",
@@ -9054,7 +10182,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 38,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.19,
+   "p_bf": 4.288,
+   "par": 109,
+   "par_delta": 1.47,
+   "pit_per_g": 22.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "445276",
@@ -9106,7 +10240,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 78,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.11,
+   "p_bf": 4.028,
+   "par": 96,
+   "par_delta": -0.61,
+   "pit_per_g": 14.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664744",
@@ -9141,7 +10281,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.75,
    "fb_velo": 93.8,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 15.0,
+   "p_bf": 3.75,
+   "par": 90,
+   "par_delta": -1.72,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663687",
@@ -9193,7 +10339,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 67,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.95,
+   "p_bf": 4.286,
+   "par": 113,
+   "par_delta": 2.24,
+   "pit_per_g": 18.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669020",
@@ -9245,7 +10397,13 @@
    "war_ip_plus_pct": 50,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 20,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.24,
+   "p_bf": 3.955,
+   "par": 97,
+   "par_delta": -0.48,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "815081",
@@ -9280,7 +10438,13 @@
    "z_contact_pct": 0.839,
    "f_strike_pct": 0.547,
    "fb_velo": 94.2,
-   "war": 0.4
+   "war": 0.4,
+   "p_ip": 16.87,
+   "p_bf": 3.973,
+   "par": 101,
+   "par_delta": 0.15,
+   "pit_per_g": 21.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "675916",
@@ -9315,7 +10479,13 @@
    "z_contact_pct": 0.818,
    "f_strike_pct": 0.432,
    "fb_velo": 95.0,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 16.76,
+   "p_bf": 4.378,
+   "par": 100,
+   "par_delta": 0.04,
+   "pit_per_g": 18.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621345",
@@ -9367,7 +10537,13 @@
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 31,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.82,
+   "p_bf": 3.64,
+   "par": 89,
+   "par_delta": -1.89,
+   "pit_per_g": 14.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "660761",
@@ -9419,7 +10595,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 53,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.52,
+   "p_bf": 3.871,
+   "par": 105,
+   "par_delta": 0.8,
+   "pit_per_g": 23.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "573204",
@@ -9471,7 +10653,13 @@
    "war_ip_plus_pct": 16,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 47,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.96,
+   "p_bf": 4.0,
+   "par": 101,
+   "par_delta": 0.24,
+   "pit_per_g": 14.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670183",
@@ -9506,7 +10694,13 @@
    "z_contact_pct": 0.806,
    "f_strike_pct": 0.62,
    "fb_velo": 94.5,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 18.45,
+   "p_bf": 3.98,
+   "par": 110,
+   "par_delta": 1.74,
+   "pit_per_g": 29.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664199",
@@ -9558,7 +10752,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 45,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.5,
+   "p_bf": 3.714,
+   "par": 87,
+   "par_delta": -2.21,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "671109",
@@ -9596,7 +10796,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.467,
    "fb_velo": 95.0,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 14.0,
+   "p_bf": 3.733,
+   "par": 84,
+   "par_delta": -2.72,
+   "pit_per_g": 14.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694350",
@@ -9634,7 +10840,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.583,
    "fb_velo": 94.0,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 16.0,
+   "p_bf": 4.0,
+   "par": 96,
+   "par_delta": -0.72,
+   "pit_per_g": 24.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "700669",
@@ -9671,8 +10883,8 @@
    "rem_plus_3yr_pct": 64,
    "rem_plus_3yr_tag": "established",
    "xrem_plus": 93,
-   "xwoba_against": 0.327,
-   "luck": -0.065,
+   "xwoba_against": 0.328,
+   "luck": -0.066,
    "whiff_pct": 0.212,
    "chase_pct": 0.289,
    "z_contact_pct": 0.877,
@@ -9686,7 +10898,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 71,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.18,
+   "p_bf": 3.735,
+   "par": 91,
+   "par_delta": -1.54,
+   "pit_per_g": 19.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663558",
@@ -9738,7 +10956,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 28,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.75,
+   "p_bf": 3.886,
+   "par": 94,
+   "par_delta": -0.97,
+   "pit_per_g": 21.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "679358",
@@ -9790,7 +11014,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 54,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.38,
+   "p_bf": 3.582,
+   "par": 98,
+   "par_delta": -0.34,
+   "pit_per_g": 18.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "677053",
@@ -9837,7 +11067,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 71,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.68,
+   "p_bf": 3.818,
+   "par": 100,
+   "par_delta": -0.04,
+   "pit_per_g": 15.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681895",
@@ -9889,7 +11125,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 62,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.65,
+   "p_bf": 4.228,
+   "par": 112,
+   "par_delta": 1.93,
+   "pit_per_g": 20.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681084",
@@ -9924,7 +11166,13 @@
    "z_contact_pct": 0.917,
    "f_strike_pct": 0.273,
    "fb_velo": 95.0,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 14.33,
+   "p_bf": 3.909,
+   "par": 86,
+   "par_delta": -2.38,
+   "pit_per_g": 21.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641745",
@@ -9976,7 +11224,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 52,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.01,
+   "p_bf": 3.948,
+   "par": 102,
+   "par_delta": 0.29,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668716",
@@ -10014,7 +11268,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.6,
    "fb_velo": 93.2,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 19.2,
+   "p_bf": 4.267,
+   "par": 115,
+   "par_delta": 2.48,
+   "pit_per_g": 21.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "672841",
@@ -10058,7 +11318,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 90,
    "war_ip_plus_3yr_pct": 11,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 14.84,
+   "p_bf": 3.481,
+   "par": 89,
+   "par_delta": -1.88,
+   "pit_per_g": 17.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666745",
@@ -10099,7 +11365,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 53,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 13.67,
+   "p_bf": 3.514,
+   "par": 82,
+   "par_delta": -3.05,
+   "pit_per_g": 24.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "665660",
@@ -10151,7 +11423,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 39,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.19,
+   "p_bf": 4.153,
+   "par": 103,
+   "par_delta": 0.47,
+   "pit_per_g": 17.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676428",
@@ -10203,7 +11481,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 80,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.35,
+   "p_bf": 3.545,
+   "par": 86,
+   "par_delta": -2.37,
+   "pit_per_g": 17.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "605447",
@@ -10255,7 +11539,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 93,
    "war_ip_plus_3yr_pct": 18,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 19.1,
+   "p_bf": 4.203,
+   "par": 114,
+   "par_delta": 2.38,
+   "pit_per_g": 16.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "673513",
@@ -10307,7 +11597,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 95,
    "war_ip_plus_3yr_pct": 26,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.97,
+   "p_bf": 4.177,
+   "par": 102,
+   "par_delta": 0.25,
+   "pit_per_g": 20.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "702047",
@@ -10342,7 +11638,13 @@
    "z_contact_pct": 0.742,
    "f_strike_pct": 0.5,
    "fb_velo": 95.4,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 17.29,
+   "p_bf": 4.083,
+   "par": 103,
+   "par_delta": 0.58,
+   "pit_per_g": 24.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "672578",
@@ -10383,7 +11685,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 74,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.0,
+   "p_bf": 3.643,
+   "par": 102,
+   "par_delta": 0.28,
+   "pit_per_g": 25.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "685112",
@@ -10418,7 +11726,13 @@
    "z_contact_pct": 0.864,
    "f_strike_pct": 0.567,
    "fb_velo": 90.9,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 17.93,
+   "p_bf": 3.983,
+   "par": 107,
+   "par_delta": 1.21,
+   "pit_per_g": 21.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676755",
@@ -10470,7 +11784,13 @@
    "war_ip_plus_pct": 62,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 74,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.83,
+   "p_bf": 4.136,
+   "par": 113,
+   "par_delta": 2.11,
+   "pit_per_g": 19.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670950",
@@ -10522,7 +11842,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 36,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.69,
+   "p_bf": 3.774,
+   "par": 94,
+   "par_delta": -1.03,
+   "pit_per_g": 24.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "693308",
@@ -10563,7 +11889,13 @@
    "z_contact_pct": 0.869,
    "f_strike_pct": 0.616,
    "fb_velo": 94.7,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 18.0,
+   "p_bf": 3.939,
+   "par": 108,
+   "par_delta": 1.28,
+   "pit_per_g": 19.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "675627",
@@ -10604,7 +11936,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 37,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 12.71,
+   "p_bf": 3.179,
+   "par": 76,
+   "par_delta": -4.0,
+   "pit_per_g": 29.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676617",
@@ -10656,7 +11994,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 43,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.62,
+   "p_bf": 3.855,
+   "par": 99,
+   "par_delta": -0.09,
+   "pit_per_g": 16.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "677161",
@@ -10697,7 +12041,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 29,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.33,
+   "p_bf": 3.986,
+   "par": 104,
+   "par_delta": 0.61,
+   "pit_per_g": 16.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681867",
@@ -10749,7 +12099,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 44,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.79,
+   "p_bf": 3.733,
+   "par": 94,
+   "par_delta": -0.93,
+   "pit_per_g": 17.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669145",
@@ -10784,7 +12140,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.524,
    "fb_velo": 88.8,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 14.4,
+   "p_bf": 3.429,
+   "par": 86,
+   "par_delta": -2.32,
+   "pit_per_g": 72.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689690",
@@ -10825,7 +12187,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 82,
    "war_ip_plus_3yr_pct": 2,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.4,
+   "p_bf": 3.783,
+   "par": 104,
+   "par_delta": 0.68,
+   "pit_per_g": 29.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621242",
@@ -10869,7 +12237,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 115,
    "war_ip_plus_3yr_pct": 96,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 21.16,
+   "p_bf": 4.115,
+   "par": 127,
+   "par_delta": 4.44,
+   "pit_per_g": 18.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "701719",
@@ -10913,7 +12287,13 @@
    "z_contact_pct": 0.867,
    "f_strike_pct": 0.633,
    "fb_velo": 92.8,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 15.1,
+   "p_bf": 3.605,
+   "par": 90,
+   "par_delta": -1.61,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "699823",
@@ -10965,7 +12345,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 40,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.25,
+   "p_bf": 3.812,
+   "par": 91,
+   "par_delta": -1.47,
+   "pit_per_g": 15.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "702153",
@@ -11000,7 +12386,13 @@
    "z_contact_pct": 0.733,
    "f_strike_pct": 0.667,
    "fb_velo": 93.7,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 16.35,
+   "p_bf": 3.633,
+   "par": 98,
+   "par_delta": -0.37,
+   "pit_per_g": 21.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676775",
@@ -11052,7 +12444,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 48,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 14.98,
+   "p_bf": 3.659,
+   "par": 90,
+   "par_delta": -1.74,
+   "pit_per_g": 14.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681982",
@@ -11104,7 +12502,13 @@
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 41,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.51,
+   "p_bf": 3.894,
+   "par": 93,
+   "par_delta": -1.21,
+   "pit_per_g": 17.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "700413",
@@ -11139,7 +12543,13 @@
    "z_contact_pct": 0.7,
    "f_strike_pct": 0.818,
    "fb_velo": 90.8,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 16.88,
+   "p_bf": 4.091,
+   "par": 101,
+   "par_delta": 0.16,
+   "pit_per_g": 45.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663947",
@@ -11191,7 +12601,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 56,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.61,
+   "p_bf": 3.744,
+   "par": 93,
+   "par_delta": -1.1,
+   "pit_per_g": 16.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "695001",
@@ -11226,7 +12642,13 @@
    "z_contact_pct": 0.885,
    "f_strike_pct": 0.525,
    "fb_velo": 94.3,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 15.52,
+   "p_bf": 4.034,
+   "par": 93,
+   "par_delta": -1.2,
+   "pit_per_g": 23.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656234",
@@ -11278,7 +12700,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 40,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.53,
+   "p_bf": 3.942,
+   "par": 105,
+   "par_delta": 0.82,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663767",
@@ -11330,7 +12758,13 @@
    "war_ip_plus_pct": 20,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 20,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.16,
+   "p_bf": 3.888,
+   "par": 97,
+   "par_delta": -0.56,
+   "pit_per_g": 18.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657376",
@@ -11360,7 +12794,13 @@
    "md": 0,
    "saves": 0,
    "holds": 0,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 36.0,
+   "p_bf": 6.0,
+   "par": 215,
+   "par_delta": 19.28,
+   "pit_per_g": 24.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "702352",
@@ -11401,7 +12841,13 @@
    "war": 0.3,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 28,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 23.74,
+   "p_bf": 4.333,
+   "par": 142,
+   "par_delta": 7.02,
+   "pit_per_g": 30.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663893",
@@ -11445,7 +12891,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 68,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 19.48,
+   "p_bf": 4.182,
+   "par": 117,
+   "par_delta": 2.77,
+   "pit_per_g": 18.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687924",
@@ -11480,7 +12932,13 @@
    "z_contact_pct": 0.944,
    "f_strike_pct": 0.286,
    "fb_velo": 93.3,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 18.0,
+   "p_bf": 3.857,
+   "par": 108,
+   "par_delta": 1.28,
+   "pit_per_g": 54.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682120",
@@ -11532,7 +12990,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 49,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.35,
+   "p_bf": 4.096,
+   "par": 104,
+   "par_delta": 0.63,
+   "pit_per_g": 14.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "672629",
@@ -11570,7 +13034,13 @@
    "z_contact_pct": 0.831,
    "f_strike_pct": 0.488,
    "fb_velo": 95.0,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 18.23,
+   "p_bf": 3.901,
+   "par": 109,
+   "par_delta": 1.51,
+   "pit_per_g": 24.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "679775",
@@ -11614,7 +13084,13 @@
    "z_contact_pct": 0.892,
    "f_strike_pct": 0.606,
    "fb_velo": 90.7,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 17.84,
+   "p_bf": 3.809,
+   "par": 107,
+   "par_delta": 1.12,
+   "pit_per_g": 16.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "692230",
@@ -11649,7 +13125,13 @@
    "z_contact_pct": 0.828,
    "f_strike_pct": 0.738,
    "fb_velo": 92.1,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 19.5,
+   "p_bf": 4.333,
+   "par": 117,
+   "par_delta": 2.78,
+   "pit_per_g": 45.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "695378",
@@ -11684,7 +13166,13 @@
    "z_contact_pct": 0.875,
    "f_strike_pct": 0.478,
    "fb_velo": 96.6,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 15.18,
+   "p_bf": 3.63,
+   "par": 91,
+   "par_delta": -1.54,
+   "pit_per_g": 15.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680916",
@@ -11725,7 +13213,13 @@
    "z_contact_pct": 0.827,
    "f_strike_pct": 0.534,
    "fb_velo": 96.1,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 19.12,
+   "p_bf": 4.146,
+   "par": 114,
+   "par_delta": 2.4,
+   "pit_per_g": 20.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666808",
@@ -11777,7 +13271,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 49,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.11,
+   "p_bf": 3.802,
+   "par": 102,
+   "par_delta": 0.39,
+   "pit_per_g": 15.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676510",
@@ -11812,7 +13312,13 @@
    "z_contact_pct": 0.901,
    "f_strike_pct": 0.567,
    "fb_velo": 91.4,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 15.27,
+   "p_bf": 3.418,
+   "par": 91,
+   "par_delta": -1.45,
+   "pit_per_g": 15.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "684665",
@@ -11853,7 +13359,13 @@
    "z_contact_pct": 0.888,
    "f_strike_pct": 0.539,
    "fb_velo": 94.2,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 19.05,
+   "p_bf": 4.281,
+   "par": 114,
+   "par_delta": 2.33,
+   "pit_per_g": 17.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670062",
@@ -11905,7 +13417,13 @@
    "war_ip_plus_pct": 20,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 21,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.48,
+   "p_bf": 3.978,
+   "par": 93,
+   "par_delta": -1.24,
+   "pit_per_g": 21.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "805123",
@@ -11957,7 +13475,13 @@
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 34,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.08,
+   "p_bf": 4.09,
+   "par": 102,
+   "par_delta": 0.37,
+   "pit_per_g": 25.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "593974",
@@ -12009,7 +13533,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 33,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.06,
+   "p_bf": 3.848,
+   "par": 96,
+   "par_delta": -0.65,
+   "pit_per_g": 19.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "672335",
@@ -12061,7 +13591,13 @@
    "war_ip_plus_pct": 20,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 44,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.7,
+   "p_bf": 4.037,
+   "par": 106,
+   "par_delta": 0.98,
+   "pit_per_g": 20.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686730",
@@ -12099,7 +13635,13 @@
    "war": -0.3,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 19,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 14.17,
+   "p_bf": 3.542,
+   "par": 85,
+   "par_delta": -2.55,
+   "pit_per_g": 42.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664129",
@@ -12140,7 +13682,13 @@
    "z_contact_pct": 0.833,
    "f_strike_pct": 0.629,
    "fb_velo": 94.0,
-   "war": 0.4
+   "war": 0.4,
+   "p_ip": 15.54,
+   "p_bf": 3.508,
+   "par": 93,
+   "par_delta": -1.18,
+   "pit_per_g": 24.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694357",
@@ -12175,7 +13723,13 @@
    "z_contact_pct": 0.885,
    "f_strike_pct": 0.552,
    "fb_velo": 95.7,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 20.5,
+   "p_bf": 4.241,
+   "par": 123,
+   "par_delta": 3.78,
+   "pit_per_g": 24.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "646242",
@@ -12210,7 +13764,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.333,
    "fb_velo": 88.7,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 18.75,
+   "p_bf": 4.167,
+   "par": 112,
+   "par_delta": 2.03,
+   "pit_per_g": 25.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676395",
@@ -12251,7 +13811,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 70,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.37,
+   "p_bf": 4.042,
+   "par": 92,
+   "par_delta": -1.34,
+   "pit_per_g": 14.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "806188",
@@ -12303,7 +13869,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 51,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.43,
+   "p_bf": 3.991,
+   "par": 104,
+   "par_delta": 0.71,
+   "pit_per_g": 18.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "688158",
@@ -12355,7 +13927,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 46,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.91,
+   "p_bf": 3.685,
+   "par": 107,
+   "par_delta": 1.19,
+   "pit_per_g": 18.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686228",
@@ -12390,7 +13968,13 @@
    "z_contact_pct": 0.952,
    "f_strike_pct": 0.588,
    "fb_velo": 94.2,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 12.23,
+   "p_bf": 3.118,
+   "par": 73,
+   "par_delta": -4.49,
+   "pit_per_g": 13.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "684974",
@@ -12442,7 +14026,13 @@
    "war_ip_plus_pct": 20,
    "war_ip_plus_3yr": 95,
    "war_ip_plus_3yr_pct": 24,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.57,
+   "p_bf": 3.872,
+   "par": 99,
+   "par_delta": -0.15,
+   "pit_per_g": 18.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "690155",
@@ -12477,7 +14067,13 @@
    "z_contact_pct": 0.939,
    "f_strike_pct": 0.563,
    "fb_velo": 95.0,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 17.14,
+   "p_bf": 3.75,
+   "par": 103,
+   "par_delta": 0.43,
+   "pit_per_g": 20.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "606303",
@@ -12518,7 +14114,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 59,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 19.7,
+   "p_bf": 4.194,
+   "par": 118,
+   "par_delta": 2.98,
+   "pit_per_g": 12.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686796",
@@ -12553,7 +14155,13 @@
    "z_contact_pct": 0.583,
    "f_strike_pct": 0.417,
    "fb_velo": 90.2,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 14.0,
+   "p_bf": 3.231,
+   "par": 84,
+   "par_delta": -2.72,
+   "pit_per_g": 21.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "608650",
@@ -12591,7 +14199,13 @@
    "war": 0.2,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 79,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.19,
+   "p_bf": 4.157,
+   "par": 109,
+   "par_delta": 1.47,
+   "pit_per_g": 22.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "544150",
@@ -12643,7 +14257,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 39,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.4,
+   "p_bf": 3.702,
+   "par": 92,
+   "par_delta": -1.32,
+   "pit_per_g": 34.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669684",
@@ -12695,7 +14315,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 91,
    "war_ip_plus_3yr_pct": 14,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.19,
+   "p_bf": 3.948,
+   "par": 103,
+   "par_delta": 0.48,
+   "pit_per_g": 17.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687606",
@@ -12747,7 +14373,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 49,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.64,
+   "p_bf": 3.973,
+   "par": 111,
+   "par_delta": 1.92,
+   "pit_per_g": 22.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621053",
@@ -12788,7 +14420,13 @@
    "war": -0.2,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 61,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.7,
+   "p_bf": 3.756,
+   "par": 94,
+   "par_delta": -1.02,
+   "pit_per_g": 16.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "518886",
@@ -12840,7 +14478,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 95,
    "war_ip_plus_3yr_pct": 24,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.87,
+   "p_bf": 3.959,
+   "par": 101,
+   "par_delta": 0.15,
+   "pit_per_g": 16.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686628",
@@ -12875,7 +14519,13 @@
    "z_contact_pct": 0.75,
    "f_strike_pct": 0.6,
    "fb_velo": 92.1,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 23.0,
+   "p_bf": 4.6,
+   "par": 138,
+   "par_delta": 6.28,
+   "pit_per_g": 23.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "596001",
@@ -12927,7 +14577,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 60,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.75,
+   "p_bf": 3.634,
+   "par": 94,
+   "par_delta": -0.96,
+   "pit_per_g": 15.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "677955",
@@ -12979,7 +14635,13 @@
    "war_ip_plus_pct": 73,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 77,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.45,
+   "p_bf": 3.823,
+   "par": 104,
+   "par_delta": 0.73,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687134",
@@ -13014,7 +14676,13 @@
    "z_contact_pct": 0.878,
    "f_strike_pct": 0.667,
    "fb_velo": 95.5,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 17.65,
+   "p_bf": 4.167,
+   "par": 106,
+   "par_delta": 0.93,
+   "pit_per_g": 50.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "811315",
@@ -13049,7 +14717,13 @@
    "z_contact_pct": 0.862,
    "f_strike_pct": 0.708,
    "fb_velo": 99.4,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 19.31,
+   "p_bf": 4.292,
+   "par": 116,
+   "par_delta": 2.6,
+   "pit_per_g": 17.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694397",
@@ -13084,7 +14758,13 @@
    "z_contact_pct": 0.875,
    "f_strike_pct": 0.52,
    "fb_velo": 94.4,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 16.67,
+   "p_bf": 4.0,
+   "par": 100,
+   "par_delta": -0.05,
+   "pit_per_g": 33.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "650556",
@@ -13136,7 +14816,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 81,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.44,
+   "p_bf": 4.078,
+   "par": 104,
+   "par_delta": 0.72,
+   "pit_per_g": 16.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "678606",
@@ -13188,7 +14874,13 @@
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 65,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.86,
+   "p_bf": 3.695,
+   "par": 101,
+   "par_delta": 0.14,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "691008",
@@ -13223,7 +14915,13 @@
    "z_contact_pct": 0.854,
    "f_strike_pct": 0.487,
    "fb_velo": 95.4,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 18.11,
+   "p_bf": 4.179,
+   "par": 108,
+   "par_delta": 1.39,
+   "pit_per_g": 27.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "677961",
@@ -13267,7 +14965,13 @@
    "z_contact_pct": 0.801,
    "f_strike_pct": 0.639,
    "fb_velo": 96.6,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 18.07,
+   "p_bf": 3.967,
+   "par": 108,
+   "par_delta": 1.36,
+   "pit_per_g": 21.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "622554",
@@ -13319,7 +15023,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 34,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.94,
+   "p_bf": 4.277,
+   "par": 107,
+   "par_delta": 1.22,
+   "pit_per_g": 16.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657044",
@@ -13371,7 +15081,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 65,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.08,
+   "p_bf": 3.516,
+   "par": 96,
+   "par_delta": -0.64,
+   "pit_per_g": 14.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "640451",
@@ -13412,7 +15128,13 @@
    "war": -0.2,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 51,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 19.0,
+   "p_bf": 4.222,
+   "par": 114,
+   "par_delta": 2.28,
+   "pit_per_g": 19.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680951",
@@ -13447,7 +15169,13 @@
    "z_contact_pct": 0.727,
    "f_strike_pct": 0.444,
    "fb_velo": 87.1,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 19.5,
+   "p_bf": 4.333,
+   "par": 117,
+   "par_delta": 2.78,
+   "pit_per_g": 39.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "804619",
@@ -13482,7 +15210,13 @@
    "z_contact_pct": 0.86,
    "f_strike_pct": 0.571,
    "fb_velo": 93.4,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 17.76,
+   "p_bf": 4.229,
+   "par": 106,
+   "par_delta": 1.04,
+   "pit_per_g": 37.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "688497",
@@ -13517,7 +15251,13 @@
    "z_contact_pct": 0.75,
    "f_strike_pct": 0.731,
    "fb_velo": 90.1,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 15.53,
+   "p_bf": 3.385,
+   "par": 93,
+   "par_delta": -1.19,
+   "pit_per_g": 22.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "665665",
@@ -13558,7 +15298,13 @@
    "z_contact_pct": 0.901,
    "f_strike_pct": 0.674,
    "fb_velo": 91.8,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 16.17,
+   "p_bf": 3.71,
+   "par": 97,
+   "par_delta": -0.55,
+   "pit_per_g": 14.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "592773",
@@ -13610,7 +15356,13 @@
    "war_ip_plus_pct": 16,
    "war_ip_plus_3yr": 93,
    "war_ip_plus_3yr_pct": 19,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.22,
+   "p_bf": 4.041,
+   "par": 103,
+   "par_delta": 0.5,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641656",
@@ -13651,7 +15403,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 56,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 19.71,
+   "p_bf": 4.0,
+   "par": 118,
+   "par_delta": 3.0,
+   "pit_per_g": 23.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680604",
@@ -13692,7 +15450,13 @@
    "z_contact_pct": 0.872,
    "f_strike_pct": 0.649,
    "fb_velo": 93.4,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 16.83,
+   "p_bf": 4.144,
+   "par": 101,
+   "par_delta": 0.11,
+   "pit_per_g": 30.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642376",
@@ -13730,7 +15494,13 @@
    "z_contact_pct": 0.794,
    "f_strike_pct": 0.531,
    "fb_velo": 97.5,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 17.68,
+   "p_bf": 3.837,
+   "par": 106,
+   "par_delta": 0.96,
+   "pit_per_g": 19.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689147",
@@ -13782,7 +15552,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 78,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.84,
+   "p_bf": 4.078,
+   "par": 113,
+   "par_delta": 2.13,
+   "pit_per_g": 17.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663878",
@@ -13834,7 +15610,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 34,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.78,
+   "p_bf": 3.86,
+   "par": 100,
+   "par_delta": 0.07,
+   "pit_per_g": 18.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642759",
@@ -13869,7 +15651,13 @@
    "z_contact_pct": 0.85,
    "f_strike_pct": 0.611,
    "fb_velo": 96.3,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 17.75,
+   "p_bf": 3.944,
+   "par": 106,
+   "par_delta": 1.03,
+   "pit_per_g": 23.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686751",
@@ -13921,7 +15709,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 42,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.78,
+   "p_bf": 3.793,
+   "par": 106,
+   "par_delta": 1.06,
+   "pit_per_g": 21.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "542888",
@@ -13973,7 +15767,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 58,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.77,
+   "p_bf": 4.078,
+   "par": 106,
+   "par_delta": 1.06,
+   "pit_per_g": 15.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "815083",
@@ -14025,7 +15825,13 @@
    "war_ip_plus_pct": 16,
    "war_ip_plus_3yr": 93,
    "war_ip_plus_3yr_pct": 17,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.53,
+   "p_bf": 3.845,
+   "par": 99,
+   "par_delta": -0.18,
+   "pit_per_g": 30.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621097",
@@ -14077,7 +15883,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 95,
    "war_ip_plus_3yr_pct": 25,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 14.06,
+   "p_bf": 3.627,
+   "par": 84,
+   "par_delta": -2.66,
+   "pit_per_g": 18.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "594580",
@@ -14129,7 +15941,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 53,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 19.05,
+   "p_bf": 4.175,
+   "par": 114,
+   "par_delta": 2.33,
+   "pit_per_g": 16.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "622694",
@@ -14164,7 +15982,13 @@
    "z_contact_pct": 0.813,
    "f_strike_pct": 0.604,
    "fb_velo": 91.5,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 18.08,
+   "p_bf": 4.094,
+   "par": 108,
+   "par_delta": 1.37,
+   "pit_per_g": 43.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676272",
@@ -14199,7 +16023,13 @@
    "z_contact_pct": 0.806,
    "f_strike_pct": 0.531,
    "fb_velo": 96.9,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 19.36,
+   "p_bf": 4.303,
+   "par": 116,
+   "par_delta": 2.65,
+   "pit_per_g": 47.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663765",
@@ -14246,7 +16076,13 @@
    "war": 0.5,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 22,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.53,
+   "p_bf": 3.619,
+   "par": 105,
+   "par_delta": 0.81,
+   "pit_per_g": 25.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681432",
@@ -14284,7 +16120,13 @@
    "z_contact_pct": 0.75,
    "f_strike_pct": 1.0,
    "fb_velo": 95.8,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 19.0,
+   "p_bf": 3.8,
+   "par": 114,
+   "par_delta": 2.28,
+   "pit_per_g": 19.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "660825",
@@ -14336,7 +16178,13 @@
    "war_ip_plus_pct": 14,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 27,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.83,
+   "p_bf": 3.815,
+   "par": 101,
+   "par_delta": 0.11,
+   "pit_per_g": 15.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687287",
@@ -14371,7 +16219,13 @@
    "z_contact_pct": 0.931,
    "f_strike_pct": 0.5,
    "fb_velo": 88.1,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 16.25,
+   "p_bf": 3.611,
+   "par": 97,
+   "par_delta": -0.47,
+   "pit_per_g": 65.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "677865",
@@ -14423,7 +16277,13 @@
    "war_ip_plus_pct": 32,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 37,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.92,
+   "p_bf": 3.798,
+   "par": 101,
+   "par_delta": 0.2,
+   "pit_per_g": 18.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676604",
@@ -14475,7 +16335,13 @@
    "war_ip_plus_pct": 6,
    "war_ip_plus_3yr": 85,
    "war_ip_plus_3yr_pct": 4,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.5,
+   "p_bf": 3.966,
+   "par": 105,
+   "par_delta": 0.78,
+   "pit_per_g": 15.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641401",
@@ -14516,7 +16382,13 @@
    "war": -0.4,
    "war_ip_plus_3yr": 87,
    "war_ip_plus_3yr_pct": 6,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.56,
+   "p_bf": 4.014,
+   "par": 105,
+   "par_delta": 0.85,
+   "pit_per_g": 17.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "692437",
@@ -14551,7 +16423,13 @@
    "z_contact_pct": 0.909,
    "f_strike_pct": 0.667,
    "fb_velo": 97.7,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 16.5,
+   "p_bf": 3.667,
+   "par": 99,
+   "par_delta": -0.22,
+   "pit_per_g": 33.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "608371",
@@ -14592,7 +16470,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 89,
    "war_ip_plus_3yr_pct": 10,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.1,
+   "p_bf": 3.717,
+   "par": 102,
+   "par_delta": 0.38,
+   "pit_per_g": 19.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "675848",
@@ -14644,7 +16528,13 @@
    "war_ip_plus_pct": 68,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 75,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.36,
+   "p_bf": 4.016,
+   "par": 110,
+   "par_delta": 1.64,
+   "pit_per_g": 19.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694820",
@@ -14679,7 +16569,13 @@
    "z_contact_pct": 0.737,
    "f_strike_pct": 0.56,
    "fb_velo": 93.7,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 19.5,
+   "p_bf": 4.16,
+   "par": 117,
+   "par_delta": 2.78,
+   "pit_per_g": 26.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "674444",
@@ -14731,7 +16627,13 @@
    "war_ip_plus_pct": 12,
    "war_ip_plus_3yr": 93,
    "war_ip_plus_3yr_pct": 18,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.76,
+   "p_bf": 3.747,
+   "par": 94,
+   "par_delta": -0.95,
+   "pit_per_g": 16.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689520",
@@ -14769,7 +16671,13 @@
    "z_contact_pct": 0.845,
    "f_strike_pct": 0.641,
    "fb_velo": 90.9,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 17.76,
+   "p_bf": 3.795,
+   "par": 106,
+   "par_delta": 1.04,
+   "pit_per_g": 19.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "594835",
@@ -14804,7 +16712,13 @@
    "z_contact_pct": 0.813,
    "f_strike_pct": 0.69,
    "fb_velo": 89.1,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 17.7,
+   "p_bf": 4.069,
+   "par": 106,
+   "par_delta": 0.98,
+   "pit_per_g": 39.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "672442",
@@ -14839,7 +16753,13 @@
    "z_contact_pct": 0.838,
    "f_strike_pct": 0.557,
    "fb_velo": 99.9,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 16.0,
+   "p_bf": 3.657,
+   "par": 96,
+   "par_delta": -0.72,
+   "pit_per_g": 15.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686678",
@@ -14874,7 +16794,13 @@
    "z_contact_pct": 0.905,
    "f_strike_pct": 0.706,
    "fb_velo": 91.8,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 19.33,
+   "p_bf": 3.412,
+   "par": 116,
+   "par_delta": 2.62,
+   "pit_per_g": 58.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "623149",
@@ -14926,7 +16852,13 @@
    "war_ip_plus_pct": 5,
    "war_ip_plus_3yr": 90,
    "war_ip_plus_3yr_pct": 13,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.01,
+   "p_bf": 3.9,
+   "par": 96,
+   "par_delta": -0.7,
+   "pit_per_g": 13.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "573124",
@@ -14978,7 +16910,13 @@
    "war_ip_plus_pct": 36,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 37,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.83,
+   "p_bf": 3.899,
+   "par": 107,
+   "par_delta": 1.12,
+   "pit_per_g": 16.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664062",
@@ -15013,7 +16951,13 @@
    "z_contact_pct": 0.846,
    "f_strike_pct": 0.533,
    "fb_velo": 91.9,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 23.62,
+   "p_bf": 4.2,
+   "par": 141,
+   "par_delta": 6.91,
+   "pit_per_g": 63.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "660787",
@@ -15057,7 +17001,13 @@
    "war": -0.2,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 66,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.27,
+   "p_bf": 3.809,
+   "par": 97,
+   "par_delta": -0.44,
+   "pit_per_g": 22.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "572955",
@@ -15109,7 +17059,13 @@
    "war_ip_plus_pct": 18,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 42,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.26,
+   "p_bf": 3.981,
+   "par": 103,
+   "par_delta": 0.54,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694335",
@@ -15161,7 +17117,13 @@
    "war_ip_plus_pct": 47,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 76,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.28,
+   "p_bf": 3.813,
+   "par": 109,
+   "par_delta": 1.57,
+   "pit_per_g": 19.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "607455",
@@ -15213,7 +17175,13 @@
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 31,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.71,
+   "p_bf": 3.897,
+   "par": 106,
+   "par_delta": 0.99,
+   "pit_per_g": 15.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "675920",
@@ -15248,7 +17216,13 @@
    "z_contact_pct": 0.75,
    "f_strike_pct": 0.429,
    "fb_velo": 91.2,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 17.14,
+   "p_bf": 2.857,
+   "par": 103,
+   "par_delta": 0.43,
+   "pit_per_g": 20.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "683232",
@@ -15292,7 +17266,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 70,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.64,
+   "p_bf": 4.108,
+   "par": 106,
+   "par_delta": 0.92,
+   "pit_per_g": 16.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668964",
@@ -15341,7 +17321,13 @@
    "war_ip_plus_pct": 16,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 29,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.2,
+   "p_bf": 3.617,
+   "par": 91,
+   "par_delta": -1.51,
+   "pit_per_g": 25.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666711",
@@ -15379,7 +17365,13 @@
    "z_contact_pct": 0.846,
    "f_strike_pct": 0.708,
    "fb_velo": 99.6,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 14.91,
+   "p_bf": 3.521,
+   "par": 89,
+   "par_delta": -1.81,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "672782",
@@ -15431,7 +17423,13 @@
    "war_ip_plus_pct": 42,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 35,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.19,
+   "p_bf": 3.879,
+   "par": 103,
+   "par_delta": 0.48,
+   "pit_per_g": 17.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "683409",
@@ -15472,7 +17470,13 @@
    "war": -0.3,
    "war_ip_plus_3yr": 90,
    "war_ip_plus_3yr_pct": 11,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.1,
+   "p_bf": 3.904,
+   "par": 102,
+   "par_delta": 0.38,
+   "pit_per_g": 19.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "805326",
@@ -15524,7 +17528,13 @@
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 30,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.16,
+   "p_bf": 3.675,
+   "par": 91,
+   "par_delta": -1.56,
+   "pit_per_g": 31.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "571948",
@@ -15576,7 +17586,13 @@
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 51,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.05,
+   "p_bf": 3.808,
+   "par": 96,
+   "par_delta": -0.67,
+   "pit_per_g": 15.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642546",
@@ -15623,7 +17639,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 88,
    "war_ip_plus_3yr_pct": 7,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.3,
+   "p_bf": 3.789,
+   "par": 98,
+   "par_delta": -0.41,
+   "pit_per_g": 25.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694360",
@@ -15667,7 +17689,13 @@
    "z_contact_pct": 0.877,
    "f_strike_pct": 0.61,
    "fb_velo": 94.1,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 16.3,
+   "p_bf": 3.714,
+   "par": 97,
+   "par_delta": -0.42,
+   "pit_per_g": 20.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669211",
@@ -15714,7 +17742,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 44,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.66,
+   "p_bf": 3.85,
+   "par": 106,
+   "par_delta": 0.94,
+   "pit_per_g": 18.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668970",
@@ -15752,7 +17786,13 @@
    "z_contact_pct": 0.803,
    "f_strike_pct": 0.563,
    "fb_velo": 94.7,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 17.66,
+   "p_bf": 4.047,
+   "par": 106,
+   "par_delta": 0.94,
+   "pit_per_g": 17.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664141",
@@ -15804,7 +17844,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 29,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.58,
+   "p_bf": 4.016,
+   "par": 99,
+   "par_delta": -0.13,
+   "pit_per_g": 24.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676661",
@@ -15845,7 +17891,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 91,
    "war_ip_plus_3yr_pct": 13,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.6,
+   "p_bf": 3.467,
+   "par": 93,
+   "par_delta": -1.12,
+   "pit_per_g": 19.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669298",
@@ -15880,7 +17932,13 @@
    "z_contact_pct": 0.833,
    "f_strike_pct": 0.611,
    "fb_velo": 91.8,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 17.48,
+   "p_bf": 3.722,
+   "par": 105,
+   "par_delta": 0.76,
+   "pit_per_g": 26.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686753",
@@ -15918,7 +17976,13 @@
    "z_contact_pct": 0.823,
    "f_strike_pct": 0.628,
    "fb_velo": 96.3,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 15.83,
+   "p_bf": 3.558,
+   "par": 95,
+   "par_delta": -0.89,
+   "pit_per_g": 25.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "702752",
@@ -15967,7 +18031,13 @@
    "war_ip_plus_pct": 8,
    "war_ip_plus_3yr": 88,
    "war_ip_plus_3yr_pct": 7,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.09,
+   "p_bf": 4.031,
+   "par": 102,
+   "par_delta": 0.37,
+   "pit_per_g": 23.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694753",
@@ -16005,7 +18075,13 @@
    "z_contact_pct": 0.842,
    "f_strike_pct": 0.563,
    "fb_velo": 93.6,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 16.62,
+   "p_bf": 4.011,
+   "par": 99,
+   "par_delta": -0.1,
+   "pit_per_g": 58.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676680",
@@ -16043,7 +18119,13 @@
    "z_contact_pct": 0.863,
    "f_strike_pct": 0.622,
    "fb_velo": 88.5,
-   "war": -0.4
+   "war": -0.4,
+   "p_ip": 16.41,
+   "p_bf": 3.622,
+   "par": 98,
+   "par_delta": -0.31,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663465",
@@ -16084,7 +18166,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 59,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 20.42,
+   "p_bf": 3.933,
+   "par": 122,
+   "par_delta": 3.71,
+   "pit_per_g": 44.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676051",
@@ -16119,7 +18207,13 @@
    "z_contact_pct": 0.855,
    "f_strike_pct": 0.587,
    "fb_velo": 95.4,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 19.55,
+   "p_bf": 4.109,
+   "par": 117,
+   "par_delta": 2.83,
+   "pit_per_g": 23.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666619",
@@ -16154,7 +18248,13 @@
    "z_contact_pct": 0.938,
    "f_strike_pct": 0.682,
    "fb_velo": 96.9,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 17.2,
+   "p_bf": 3.909,
+   "par": 103,
+   "par_delta": 0.48,
+   "pit_per_g": 28.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "671936",
@@ -16206,7 +18306,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 29,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.68,
+   "p_bf": 3.971,
+   "par": 112,
+   "par_delta": 1.96,
+   "pit_per_g": 18.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656986",
@@ -16255,7 +18361,13 @@
    "war_ip_plus_pct": 12,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 71,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.42,
+   "p_bf": 3.757,
+   "par": 104,
+   "par_delta": 0.7,
+   "pit_per_g": 15.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642585",
@@ -16296,7 +18408,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 108,
    "war_ip_plus_3yr_pct": 85,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 22.2,
+   "p_bf": 3.7,
+   "par": 133,
+   "par_delta": 5.48,
+   "pit_per_g": 18.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680767",
@@ -16348,7 +18466,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 71,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.51,
+   "p_bf": 3.861,
+   "par": 105,
+   "par_delta": 0.79,
+   "pit_per_g": 19.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656222",
@@ -16395,7 +18519,13 @@
    "war": -0.4,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 51,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.65,
+   "p_bf": 3.602,
+   "par": 94,
+   "par_delta": -1.06,
+   "pit_per_g": 14.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663432",
@@ -16436,7 +18566,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 87,
    "war_ip_plus_3yr_pct": 6,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.14,
+   "p_bf": 4.097,
+   "par": 109,
+   "par_delta": 1.43,
+   "pit_per_g": 21.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "690440",
@@ -16471,7 +18607,13 @@
    "z_contact_pct": 0.889,
    "f_strike_pct": 0.647,
    "fb_velo": 91.9,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 17.45,
+   "p_bf": 3.765,
+   "par": 104,
+   "par_delta": 0.74,
+   "pit_per_g": 25.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657756",
@@ -16515,7 +18657,13 @@
    "z_contact_pct": 0.838,
    "f_strike_pct": 0.602,
    "fb_velo": 92.5,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 19.83,
+   "p_bf": 4.139,
+   "par": 119,
+   "par_delta": 3.12,
+   "pit_per_g": 22.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "673929",
@@ -16556,7 +18704,13 @@
    "war": -0.5,
    "war_ip_plus_3yr": 91,
    "war_ip_plus_3yr_pct": 14,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.85,
+   "p_bf": 4.0,
+   "par": 101,
+   "par_delta": 0.13,
+   "pit_per_g": 17.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "667652",
@@ -16591,7 +18745,13 @@
    "z_contact_pct": 0.844,
    "f_strike_pct": 0.519,
    "fb_velo": 93.6,
-   "war": -0.5
+   "war": -0.5,
+   "p_ip": 17.38,
+   "p_bf": 4.029,
+   "par": 104,
+   "par_delta": 0.66,
+   "pit_per_g": 18.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "672582",
@@ -16632,7 +18792,13 @@
    "war": -0.4,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 47,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.05,
+   "p_bf": 3.927,
+   "par": 102,
+   "par_delta": 0.34,
+   "pit_per_g": 18.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669169",
@@ -16667,7 +18833,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.632,
    "fb_velo": 91.4,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 16.0,
+   "p_bf": 3.368,
+   "par": 96,
+   "par_delta": -0.72,
+   "pit_per_g": 64.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "592094",
@@ -16719,7 +18891,13 @@
    "war_ip_plus_pct": 18,
    "war_ip_plus_3yr": 108,
    "war_ip_plus_3yr_pct": 85,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.98,
+   "p_bf": 4.106,
+   "par": 102,
+   "par_delta": 0.26,
+   "pit_per_g": 15.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663941",
@@ -16763,7 +18941,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 95,
    "war_ip_plus_3yr_pct": 26,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.47,
+   "p_bf": 3.771,
+   "par": 99,
+   "par_delta": -0.24,
+   "pit_per_g": 22.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "671345",
@@ -16807,7 +18991,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 61,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.23,
+   "p_bf": 3.829,
+   "par": 103,
+   "par_delta": 0.51,
+   "pit_per_g": 18.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663485",
@@ -16848,7 +19038,13 @@
    "war": -0.2,
    "war_ip_plus_3yr": 109,
    "war_ip_plus_3yr_pct": 86,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.42,
+   "p_bf": 3.732,
+   "par": 104,
+   "par_delta": 0.7,
+   "pit_per_g": 16.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "655889",
@@ -16889,7 +19085,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 83,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 20.7,
+   "p_bf": 3.943,
+   "par": 124,
+   "par_delta": 3.98,
+   "pit_per_g": 23.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "661527",
@@ -16930,7 +19132,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 91,
    "war_ip_plus_3yr_pct": 14,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 22.0,
+   "p_bf": 3.667,
+   "par": 132,
+   "par_delta": 5.28,
+   "pit_per_g": 22.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "691548",
@@ -16965,7 +19173,13 @@
    "z_contact_pct": 0.688,
    "f_strike_pct": 0.75,
    "fb_velo": 95.7,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 24.5,
+   "p_bf": 4.083,
+   "par": 147,
+   "par_delta": 7.78,
+   "pit_per_g": 49.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657265",
@@ -17003,7 +19217,13 @@
    "z_contact_pct": 0.903,
    "f_strike_pct": 0.525,
    "fb_velo": 92.3,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 17.93,
+   "p_bf": 4.115,
+   "par": 107,
+   "par_delta": 1.21,
+   "pit_per_g": 31.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686993",
@@ -17055,7 +19275,13 @@
    "war_ip_plus_pct": 8,
    "war_ip_plus_3yr": 96,
    "war_ip_plus_3yr_pct": 28,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.02,
+   "p_bf": 3.946,
+   "par": 102,
+   "par_delta": 0.3,
+   "pit_per_g": 15.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666277",
@@ -17107,7 +19333,13 @@
    "war_ip_plus_pct": 12,
    "war_ip_plus_3yr": 88,
    "war_ip_plus_3yr_pct": 8,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.55,
+   "p_bf": 3.993,
+   "par": 105,
+   "par_delta": 0.83,
+   "pit_per_g": 16.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686747",
@@ -17140,7 +19372,13 @@
    "rem_plus_3yr": 87,
    "rem_plus_3yr_pct": 12,
    "rem_plus_3yr_tag": "provisional",
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 24.0,
+   "p_bf": 4.0,
+   "par": 144,
+   "par_delta": 7.28,
+   "pit_per_g": 8.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "608344",
@@ -17175,7 +19413,13 @@
    "z_contact_pct": 0.872,
    "f_strike_pct": 0.7,
    "fb_velo": 88.2,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 17.0,
+   "p_bf": 3.4,
+   "par": 102,
+   "par_delta": 0.28,
+   "pit_per_g": 102.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657571",
@@ -17227,7 +19471,13 @@
    "war_ip_plus_pct": 15,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 52,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.84,
+   "p_bf": 3.909,
+   "par": 107,
+   "par_delta": 1.12,
+   "pit_per_g": 16.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670167",
@@ -17279,7 +19529,13 @@
    "war_ip_plus_pct": 18,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 44,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.52,
+   "p_bf": 4.053,
+   "par": 99,
+   "par_delta": -0.19,
+   "pit_per_g": 15.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "685801",
@@ -17320,7 +19576,13 @@
    "z_contact_pct": 0.889,
    "f_strike_pct": 0.595,
    "fb_velo": 96.5,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 16.5,
+   "p_bf": 3.753,
+   "par": 99,
+   "par_delta": -0.22,
+   "pit_per_g": 17.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689017",
@@ -17355,7 +19617,13 @@
    "z_contact_pct": 0.806,
    "f_strike_pct": 0.56,
    "fb_velo": 93.7,
-   "war": -0.4
+   "war": -0.4,
+   "p_ip": 16.03,
+   "p_bf": 3.74,
+   "par": 96,
+   "par_delta": -0.69,
+   "pit_per_g": 46.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694646",
@@ -17390,7 +19658,13 @@
    "z_contact_pct": 0.804,
    "f_strike_pct": 0.472,
    "fb_velo": 92.4,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 20.22,
+   "p_bf": 4.306,
+   "par": 121,
+   "par_delta": 3.5,
+   "pit_per_g": 31.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "700187",
@@ -17428,7 +19702,13 @@
    "z_contact_pct": 0.833,
    "f_strike_pct": 0.467,
    "fb_velo": 95.5,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 17.0,
+   "p_bf": 3.4,
+   "par": 102,
+   "par_delta": 0.28,
+   "pit_per_g": 25.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "667463",
@@ -17480,7 +19760,13 @@
    "war_ip_plus_pct": 14,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 21,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.25,
+   "p_bf": 3.6,
+   "par": 85,
+   "par_delta": -2.47,
+   "pit_per_g": 14.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676508",
@@ -17521,7 +19807,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 55,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 21.21,
+   "p_bf": 4.304,
+   "par": 127,
+   "par_delta": 4.5,
+   "pit_per_g": 19.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "671111",
@@ -17562,7 +19854,13 @@
    "z_contact_pct": 0.84,
    "f_strike_pct": 0.705,
    "fb_velo": 88.6,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 16.88,
+   "p_bf": 3.59,
+   "par": 101,
+   "par_delta": 0.16,
+   "pit_per_g": 25.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676105",
@@ -17600,7 +19898,13 @@
    "z_contact_pct": 0.75,
    "f_strike_pct": 0.5,
    "fb_velo": 95.4,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 19.75,
+   "p_bf": 4.389,
+   "par": 118,
+   "par_delta": 3.03,
+   "pit_per_g": 26.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621383",
@@ -17652,7 +19956,13 @@
    "war_ip_plus_pct": 23,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 63,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.14,
+   "p_bf": 3.771,
+   "par": 109,
+   "par_delta": 1.42,
+   "pit_per_g": 20.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "695239",
@@ -17704,7 +20014,13 @@
    "war_ip_plus_pct": 8,
    "war_ip_plus_3yr": 88,
    "war_ip_plus_3yr_pct": 8,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.51,
+   "p_bf": 3.951,
+   "par": 105,
+   "par_delta": 0.8,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "691945",
@@ -17739,7 +20055,13 @@
    "z_contact_pct": 0.742,
    "f_strike_pct": 0.593,
    "fb_velo": 94.9,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 20.65,
+   "p_bf": 4.333,
+   "par": 124,
+   "par_delta": 3.93,
+   "pit_per_g": 29.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682445",
@@ -17774,7 +20096,13 @@
    "z_contact_pct": 0.875,
    "f_strike_pct": 0.583,
    "fb_velo": 92.9,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 16.83,
+   "p_bf": 3.583,
+   "par": 101,
+   "par_delta": 0.11,
+   "pit_per_g": 25.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "605154",
@@ -17815,7 +20143,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 92,
    "war_ip_plus_3yr_pct": 15,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 21.69,
+   "p_bf": 4.476,
+   "par": 130,
+   "par_delta": 4.98,
+   "pit_per_g": 31.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668834",
@@ -17853,7 +20187,13 @@
    "z_contact_pct": 0.855,
    "f_strike_pct": 0.692,
    "fb_velo": 91.0,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 16.24,
+   "p_bf": 3.538,
+   "par": 97,
+   "par_delta": -0.48,
+   "pit_per_g": 20.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "808970",
@@ -17888,7 +20228,13 @@
    "z_contact_pct": 0.806,
    "f_strike_pct": 0.545,
    "fb_velo": 94.5,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 21.5,
+   "p_bf": 3.909,
+   "par": 129,
+   "par_delta": 4.78,
+   "pit_per_g": 21.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694795",
@@ -17937,7 +20283,13 @@
    "war_ip_plus_pct": 18,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 20,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.9,
+   "p_bf": 4.097,
+   "par": 107,
+   "par_delta": 1.19,
+   "pit_per_g": 18.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681402",
@@ -17989,7 +20341,13 @@
    "war_ip_plus_pct": 5,
    "war_ip_plus_3yr": 85,
    "war_ip_plus_3yr_pct": 3,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.55,
+   "p_bf": 3.735,
+   "par": 105,
+   "par_delta": 0.83,
+   "pit_per_g": 17.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "688883",
@@ -18027,7 +20385,13 @@
    "z_contact_pct": 0.816,
    "f_strike_pct": 0.505,
    "fb_velo": 95.4,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 21.39,
+   "p_bf": 4.557,
+   "par": 128,
+   "par_delta": 4.67,
+   "pit_per_g": 27.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621366",
@@ -18074,7 +20438,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 36,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.06,
+   "p_bf": 3.654,
+   "par": 96,
+   "par_delta": -0.66,
+   "pit_per_g": 18.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670912",
@@ -18109,7 +20479,13 @@
    "z_contact_pct": 0.917,
    "f_strike_pct": 0.611,
    "fb_velo": 92.6,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 19.64,
+   "p_bf": 4.0,
+   "par": 117,
+   "par_delta": 2.92,
+   "pit_per_g": 72.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "699008",
@@ -18147,7 +20523,13 @@
    "z_contact_pct": 0.861,
    "f_strike_pct": 0.642,
    "fb_velo": 98.5,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 15.7,
+   "p_bf": 3.617,
+   "par": 94,
+   "par_delta": -1.02,
+   "pit_per_g": 36.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "696147",
@@ -18199,7 +20581,13 @@
    "war_ip_plus_pct": 8,
    "war_ip_plus_3yr": 88,
    "war_ip_plus_3yr_pct": 7,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.05,
+   "p_bf": 3.825,
+   "par": 102,
+   "par_delta": 0.34,
+   "pit_per_g": 18.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687911",
@@ -18251,7 +20639,13 @@
    "war_ip_plus_pct": 12,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 33,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.47,
+   "p_bf": 3.825,
+   "par": 104,
+   "par_delta": 0.75,
+   "pit_per_g": 17.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663884",
@@ -18286,7 +20680,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.667,
    "fb_velo": 95.2,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 22.0,
+   "p_bf": 3.667,
+   "par": 132,
+   "par_delta": 5.28,
+   "pit_per_g": 22.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682274",
@@ -18324,7 +20724,13 @@
    "z_contact_pct": 0.73,
    "f_strike_pct": 0.625,
    "fb_velo": 95.7,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 20.68,
+   "p_bf": 4.021,
+   "par": 124,
+   "par_delta": 3.96,
+   "pit_per_g": 24.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "671162",
@@ -18365,7 +20771,13 @@
    "z_contact_pct": 0.856,
    "f_strike_pct": 0.703,
    "fb_velo": 90.3,
-   "war": 0.6
+   "war": 0.6,
+   "p_ip": 16.29,
+   "p_bf": 3.542,
+   "par": 97,
+   "par_delta": -0.43,
+   "pit_per_g": 22.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681151",
@@ -18400,7 +20812,13 @@
    "z_contact_pct": 0.784,
    "f_strike_pct": 0.62,
    "fb_velo": 95.0,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 18.61,
+   "p_bf": 3.848,
+   "par": 111,
+   "par_delta": 1.9,
+   "pit_per_g": 30.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641755",
@@ -18452,7 +20870,13 @@
    "war_ip_plus_pct": 12,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 36,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 15.85,
+   "p_bf": 3.918,
+   "par": 95,
+   "par_delta": -0.86,
+   "pit_per_g": 14.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687239",
@@ -18487,7 +20911,13 @@
    "z_contact_pct": 0.789,
    "f_strike_pct": 0.603,
    "fb_velo": 96.0,
-   "war": -0.4
+   "war": -0.4,
+   "p_ip": 17.27,
+   "p_bf": 4.147,
+   "par": 103,
+   "par_delta": 0.55,
+   "pit_per_g": 17.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "675919",
@@ -18522,7 +20952,13 @@
    "z_contact_pct": 0.913,
    "f_strike_pct": 0.471,
    "fb_velo": 91.3,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 20.45,
+   "p_bf": 4.412,
+   "par": 122,
+   "par_delta": 3.74,
+   "pit_per_g": 18.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "684516",
@@ -18557,7 +20993,13 @@
    "z_contact_pct": 0.833,
    "f_strike_pct": 0.5,
    "fb_velo": 95.8,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 25.29,
+   "p_bf": 4.214,
+   "par": 151,
+   "par_delta": 8.57,
+   "pit_per_g": 19.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "688642",
@@ -18609,7 +21051,13 @@
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 43,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.58,
+   "p_bf": 3.659,
+   "par": 99,
+   "par_delta": -0.14,
+   "pit_per_g": 35.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687849",
@@ -18647,7 +21095,13 @@
    "z_contact_pct": 0.915,
    "f_strike_pct": 0.571,
    "fb_velo": 92.9,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 18.0,
+   "p_bf": 3.818,
+   "par": 108,
+   "par_delta": 1.28,
+   "pit_per_g": 26.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680730",
@@ -18699,7 +21153,13 @@
    "war_ip_plus_pct": 7,
    "war_ip_plus_3yr": 87,
    "war_ip_plus_3yr_pct": 5,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.74,
+   "p_bf": 3.73,
+   "par": 100,
+   "par_delta": 0.02,
+   "pit_per_g": 30.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641312",
@@ -18740,7 +21200,13 @@
    "z_contact_pct": 0.811,
    "f_strike_pct": 0.602,
    "fb_velo": 93.3,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 17.55,
+   "p_bf": 3.774,
+   "par": 105,
+   "par_delta": 0.83,
+   "pit_per_g": 29.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "455119",
@@ -18781,7 +21247,13 @@
    "war": -0.3,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 69,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.71,
+   "p_bf": 3.758,
+   "par": 106,
+   "par_delta": 1.0,
+   "pit_per_g": 15.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641585",
@@ -18816,7 +21288,13 @@
    "z_contact_pct": 0.854,
    "f_strike_pct": 0.581,
    "fb_velo": 89.9,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 17.55,
+   "p_bf": 3.774,
+   "par": 105,
+   "par_delta": 0.83,
+   "pit_per_g": 39.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686563",
@@ -18851,7 +21329,13 @@
    "z_contact_pct": 0.69,
    "f_strike_pct": 0.5,
    "fb_velo": 94.4,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 26.67,
+   "p_bf": 4.444,
+   "par": 160,
+   "par_delta": 9.95,
+   "pit_per_g": 40.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642701",
@@ -18903,7 +21387,13 @@
    "war_ip_plus_pct": 15,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 75,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.39,
+   "p_bf": 3.716,
+   "par": 98,
+   "par_delta": -0.32,
+   "pit_per_g": 16.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663423",
@@ -18955,7 +21445,13 @@
    "war_ip_plus_pct": 14,
    "war_ip_plus_3yr": 95,
    "war_ip_plus_3yr_pct": 23,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 14.75,
+   "p_bf": 3.638,
+   "par": 88,
+   "par_delta": -1.97,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "693713",
@@ -18990,7 +21486,13 @@
    "z_contact_pct": 0.786,
    "f_strike_pct": 0.5,
    "fb_velo": 99.4,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 25.8,
+   "p_bf": 4.3,
+   "par": 154,
+   "par_delta": 9.08,
+   "pit_per_g": 43.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "471911",
@@ -19025,7 +21527,13 @@
    "z_contact_pct": 0.917,
    "f_strike_pct": 0.575,
    "fb_velo": 90.7,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 14.76,
+   "p_bf": 3.37,
+   "par": 88,
+   "par_delta": -1.96,
+   "pit_per_g": 30.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681006",
@@ -19066,7 +21574,13 @@
    "war": -0.5,
    "war_ip_plus_3yr": 84,
    "war_ip_plus_3yr_pct": 3,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 20.86,
+   "p_bf": 4.026,
+   "par": 125,
+   "par_delta": 4.15,
+   "pit_per_g": 19.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "671382",
@@ -19101,7 +21615,13 @@
    "z_contact_pct": 0.8,
    "f_strike_pct": 0.551,
    "fb_velo": 94.5,
-   "war": 0.2
+   "war": 0.2,
+   "p_ip": 21.0,
+   "p_bf": 3.857,
+   "par": 126,
+   "par_delta": 4.28,
+   "pit_per_g": 31.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664208",
@@ -19148,7 +21668,13 @@
    "war": -0.3,
    "war_ip_plus_3yr": 104,
    "war_ip_plus_3yr_pct": 69,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 19.73,
+   "p_bf": 4.015,
+   "par": 118,
+   "par_delta": 3.02,
+   "pit_per_g": 17.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "606965",
@@ -19186,7 +21712,13 @@
    "z_contact_pct": 0.878,
    "f_strike_pct": 0.605,
    "fb_velo": 92.3,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 17.48,
+   "p_bf": 3.526,
+   "par": 105,
+   "par_delta": 0.76,
+   "pit_per_g": 14.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681799",
@@ -19230,7 +21762,13 @@
    "z_contact_pct": 0.856,
    "f_strike_pct": 0.618,
    "fb_velo": 93.1,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 16.99,
+   "p_bf": 3.964,
+   "par": 102,
+   "par_delta": 0.27,
+   "pit_per_g": 19.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681751",
@@ -19265,7 +21803,13 @@
    "z_contact_pct": 0.803,
    "f_strike_pct": 0.571,
    "fb_velo": 90.5,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 17.54,
+   "p_bf": 4.0,
+   "par": 105,
+   "par_delta": 0.82,
+   "pit_per_g": 28.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "701474",
@@ -19300,7 +21844,13 @@
    "z_contact_pct": 0.9,
    "f_strike_pct": 0.528,
    "fb_velo": 93.0,
-   "war": -0.5
+   "war": -0.5,
+   "p_ip": 15.12,
+   "p_bf": 3.27,
+   "par": 90,
+   "par_delta": -1.59,
+   "pit_per_g": 20.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694851",
@@ -19338,7 +21888,13 @@
    "z_contact_pct": 0.9,
    "f_strike_pct": 0.542,
    "fb_velo": 94.5,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 19.71,
+   "p_bf": 3.898,
+   "par": 118,
+   "par_delta": 3.0,
+   "pit_per_g": 28.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "690925",
@@ -19390,7 +21946,13 @@
    "war_ip_plus_pct": 8,
    "war_ip_plus_3yr": 87,
    "war_ip_plus_3yr_pct": 7,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.58,
+   "p_bf": 3.809,
+   "par": 99,
+   "par_delta": -0.13,
+   "pit_per_g": 15.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686610",
@@ -19425,7 +21987,13 @@
    "z_contact_pct": 0.878,
    "f_strike_pct": 0.6,
    "fb_velo": 91.2,
-   "war": -0.5
+   "war": -0.5,
+   "p_ip": 15.96,
+   "p_bf": 3.634,
+   "par": 95,
+   "par_delta": -0.75,
+   "pit_per_g": 29.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "623474",
@@ -19477,7 +22045,13 @@
    "war_ip_plus_pct": 18,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 66,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.72,
+   "p_bf": 3.991,
+   "par": 106,
+   "par_delta": 1.01,
+   "pit_per_g": 18.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "686560",
@@ -19521,7 +22095,13 @@
    "z_contact_pct": 0.841,
    "f_strike_pct": 0.509,
    "fb_velo": 94.0,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 19.2,
+   "p_bf": 4.248,
+   "par": 115,
+   "par_delta": 2.48,
+   "pit_per_g": 20.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "529017",
@@ -19556,7 +22136,13 @@
    "z_contact_pct": 0.857,
    "f_strike_pct": 0.429,
    "fb_velo": 92.6,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 34.0,
+   "p_bf": 4.857,
+   "par": 203,
+   "par_delta": 17.28,
+   "pit_per_g": 34.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "605335",
@@ -19591,7 +22177,13 @@
    "z_contact_pct": 0.913,
    "f_strike_pct": 0.433,
    "fb_velo": 87.9,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 16.5,
+   "p_bf": 3.3,
+   "par": 99,
+   "par_delta": -0.22,
+   "pit_per_g": 99.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680704",
@@ -19632,7 +22224,13 @@
    "war": -0.3,
    "war_ip_plus_3yr": 87,
    "war_ip_plus_3yr_pct": 6,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.12,
+   "p_bf": 3.925,
+   "par": 108,
+   "par_delta": 1.4,
+   "pit_per_g": 19.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694363",
@@ -19670,7 +22268,13 @@
    "war": 0.1,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 20,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.44,
+   "p_bf": 3.773,
+   "par": 110,
+   "par_delta": 1.73,
+   "pit_per_g": 33.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669704",
@@ -19708,7 +22312,13 @@
    "z_contact_pct": 1.0,
    "f_strike_pct": 0.214,
    "fb_velo": 91.5,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 22.12,
+   "p_bf": 4.214,
+   "par": 132,
+   "par_delta": 5.41,
+   "pit_per_g": 29.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656686",
@@ -19746,7 +22356,13 @@
    "z_contact_pct": 0.844,
    "f_strike_pct": 0.56,
    "fb_velo": 94.9,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 22.2,
+   "p_bf": 4.44,
+   "par": 133,
+   "par_delta": 5.48,
+   "pit_per_g": 15.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669371",
@@ -19787,7 +22403,13 @@
    "war": -0.4,
    "war_ip_plus_3yr": 86,
    "war_ip_plus_3yr_pct": 4,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 20.63,
+   "p_bf": 4.029,
+   "par": 123,
+   "par_delta": 3.92,
+   "pit_per_g": 25.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "592454",
@@ -19828,7 +22450,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 22,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.67,
+   "p_bf": 3.907,
+   "par": 112,
+   "par_delta": 1.95,
+   "pit_per_g": 21.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "697812",
@@ -19863,7 +22491,13 @@
    "z_contact_pct": 0.818,
    "f_strike_pct": 0.625,
    "fb_velo": 93.4,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 20.42,
+   "p_bf": 3.768,
+   "par": 122,
+   "par_delta": 3.7,
+   "pit_per_g": 42.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "684049",
@@ -19901,7 +22535,13 @@
    "z_contact_pct": 0.724,
    "f_strike_pct": 0.512,
    "fb_velo": 96.9,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 20.74,
+   "p_bf": 4.062,
+   "par": 124,
+   "par_delta": 4.03,
+   "pit_per_g": 21.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "696522",
@@ -19939,7 +22579,13 @@
    "z_contact_pct": 0.9,
    "f_strike_pct": 0.506,
    "fb_velo": 93.2,
-   "war": 0.4
+   "war": 0.4,
+   "p_ip": 18.25,
+   "p_bf": 3.605,
+   "par": 109,
+   "par_delta": 1.53,
+   "pit_per_g": 19.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "689546",
@@ -19983,7 +22629,13 @@
    "z_contact_pct": 0.913,
    "f_strike_pct": 0.613,
    "fb_velo": 94.8,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 16.32,
+   "p_bf": 3.748,
+   "par": 98,
+   "par_delta": -0.4,
+   "pit_per_g": 18.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "693313",
@@ -20032,7 +22684,13 @@
    "war_ip_plus_pct": 4,
    "war_ip_plus_3yr": 81,
    "war_ip_plus_3yr_pct": 1,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 16.96,
+   "p_bf": 3.796,
+   "par": 101,
+   "par_delta": 0.24,
+   "pit_per_g": 21.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "543056",
@@ -20079,7 +22737,13 @@
    "war": -0.2,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 81,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.55,
+   "p_bf": 4.021,
+   "par": 105,
+   "par_delta": 0.83,
+   "pit_per_g": 13.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669212",
@@ -20123,7 +22787,13 @@
    "war": -0.4,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 57,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.53,
+   "p_bf": 3.725,
+   "par": 105,
+   "par_delta": 0.82,
+   "pit_per_g": 21.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "700270",
@@ -20158,7 +22828,13 @@
    "z_contact_pct": 0.878,
    "f_strike_pct": 0.559,
    "fb_velo": 97.0,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 24.33,
+   "p_bf": 4.294,
+   "par": 146,
+   "par_delta": 7.62,
+   "pit_per_g": 29.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "605452",
@@ -20199,7 +22875,13 @@
    "war": -0.2,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 46,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.57,
+   "p_bf": 3.596,
+   "par": 105,
+   "par_delta": 0.85,
+   "pit_per_g": 25.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687209",
@@ -20237,7 +22919,13 @@
    "z_contact_pct": 0.926,
    "f_strike_pct": 0.627,
    "fb_velo": 97.3,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 22.54,
+   "p_bf": 4.373,
+   "par": 135,
+   "par_delta": 5.82,
+   "pit_per_g": 24.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "683742",
@@ -20275,7 +22963,13 @@
    "z_contact_pct": 0.865,
    "f_strike_pct": 0.533,
    "fb_velo": 95.1,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 17.11,
+   "p_bf": 3.742,
+   "par": 102,
+   "par_delta": 0.4,
+   "pit_per_g": 34.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "684320",
@@ -20316,7 +23010,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 32,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.43,
+   "p_bf": 3.822,
+   "par": 110,
+   "par_delta": 1.71,
+   "pit_per_g": 17.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669724",
@@ -20363,7 +23063,13 @@
    "war": -0.5,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 82,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.1,
+   "p_bf": 3.494,
+   "par": 90,
+   "par_delta": -1.62,
+   "pit_per_g": 14.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "669270",
@@ -20415,7 +23121,13 @@
    "war_ip_plus_pct": 10,
    "war_ip_plus_3yr": 88,
    "war_ip_plus_3yr_pct": 9,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.62,
+   "p_bf": 3.703,
+   "par": 99,
+   "par_delta": -0.09,
+   "pit_per_g": 16.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "672021",
@@ -20450,7 +23162,13 @@
    "z_contact_pct": 0.826,
    "f_strike_pct": 0.25,
    "fb_velo": 92.9,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 22.88,
+   "p_bf": 4.519,
+   "par": 137,
+   "par_delta": 6.16,
+   "pit_per_g": 30.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "674370",
@@ -20491,7 +23209,13 @@
    "war": -0.2,
    "war_ip_plus_3yr": 89,
    "war_ip_plus_3yr_pct": 9,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.98,
+   "p_bf": 3.914,
+   "par": 102,
+   "par_delta": 0.26,
+   "pit_per_g": 28.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "695445",
@@ -20532,7 +23256,13 @@
    "war": -0.5,
    "war_ip_plus_3yr": 94,
    "war_ip_plus_3yr_pct": 21,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.1,
+   "p_bf": 3.476,
+   "par": 90,
+   "par_delta": -1.61,
+   "pit_per_g": 18.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "472610",
@@ -20573,7 +23303,13 @@
    "war": -0.2,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 65,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.67,
+   "p_bf": 3.581,
+   "par": 106,
+   "par_delta": 0.95,
+   "pit_per_g": 17.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "685005",
@@ -20608,7 +23344,13 @@
    "z_contact_pct": 0.825,
    "f_strike_pct": 0.488,
    "fb_velo": 95.9,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 20.54,
+   "p_bf": 4.14,
+   "par": 123,
+   "par_delta": 3.82,
+   "pit_per_g": 25.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "640448",
@@ -20660,7 +23402,13 @@
    "war_ip_plus_pct": 8,
    "war_ip_plus_3yr": 98,
    "war_ip_plus_3yr_pct": 38,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.51,
+   "p_bf": 3.933,
+   "par": 105,
+   "par_delta": 0.79,
+   "pit_per_g": 16.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657649",
@@ -20701,7 +23449,13 @@
    "war": 0.0,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 80,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 23.0,
+   "p_bf": 3.927,
+   "par": 138,
+   "par_delta": 6.28,
+   "pit_per_g": 17.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "642152",
@@ -20742,7 +23496,13 @@
    "war": 0.2,
    "war_ip_plus_3yr": 91,
    "war_ip_plus_3yr_pct": 14,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 24.0,
+   "p_bf": 4.0,
+   "par": 144,
+   "par_delta": 7.28,
+   "pit_per_g": 28.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "679922",
@@ -20777,7 +23537,13 @@
    "z_contact_pct": 0.833,
    "f_strike_pct": 0.556,
    "fb_velo": 95.0,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 26.25,
+   "p_bf": 3.889,
+   "par": 157,
+   "par_delta": 9.53,
+   "pit_per_g": 17.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676254",
@@ -20829,7 +23595,13 @@
    "war_ip_plus_pct": 6,
    "war_ip_plus_3yr": 105,
    "war_ip_plus_3yr_pct": 72,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.64,
+   "p_bf": 3.929,
+   "par": 112,
+   "par_delta": 1.93,
+   "pit_per_g": 18.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "547184",
@@ -20870,7 +23642,13 @@
    "war": -0.4,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 33,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 24.2,
+   "p_bf": 3.781,
+   "par": 145,
+   "par_delta": 7.48,
+   "pit_per_g": 24.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "666201",
@@ -20905,7 +23683,13 @@
    "z_contact_pct": 0.814,
    "f_strike_pct": 0.513,
    "fb_velo": 87.9,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 21.95,
+   "p_bf": 4.128,
+   "par": 131,
+   "par_delta": 5.24,
+   "pit_per_g": 53.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656786",
@@ -20940,7 +23724,13 @@
    "z_contact_pct": 0.975,
    "f_strike_pct": 0.618,
    "fb_velo": 90.9,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 20.85,
+   "p_bf": 4.088,
+   "par": 125,
+   "par_delta": 4.13,
+   "pit_per_g": 17.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657424",
@@ -20987,7 +23777,13 @@
    "war": -0.8,
    "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 80,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 19.24,
+   "p_bf": 4.175,
+   "par": 115,
+   "par_delta": 2.53,
+   "pit_per_g": 15.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676760",
@@ -21039,7 +23835,13 @@
    "war_ip_plus_pct": 14,
    "war_ip_plus_3yr": 90,
    "war_ip_plus_3yr_pct": 12,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.07,
+   "p_bf": 4.008,
+   "par": 108,
+   "par_delta": 1.35,
+   "pit_per_g": 25.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "678368",
@@ -21077,7 +23879,13 @@
    "war": -0.6,
    "war_ip_plus_3yr": 90,
    "war_ip_plus_3yr_pct": 11,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 15.94,
+   "p_bf": 3.542,
+   "par": 95,
+   "par_delta": -0.78,
+   "pit_per_g": 56.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656638",
@@ -21129,7 +23937,13 @@
    "war_ip_plus_pct": 3,
    "war_ip_plus_3yr": 83,
    "war_ip_plus_3yr_pct": 2,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.92,
+   "p_bf": 4.127,
+   "par": 113,
+   "par_delta": 2.2,
+   "pit_per_g": 19.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "623437",
@@ -21173,7 +23987,13 @@
    "war": -0.4,
    "war_ip_plus_3yr": 109,
    "war_ip_plus_3yr_pct": 88,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.82,
+   "p_bf": 3.833,
+   "par": 113,
+   "par_delta": 2.1,
+   "pit_per_g": 16.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "694680",
@@ -21208,7 +24028,13 @@
    "z_contact_pct": 0.844,
    "f_strike_pct": 0.671,
    "fb_velo": 93.0,
-   "war": -0.2
+   "war": -0.2,
+   "p_ip": 17.28,
+   "p_bf": 3.63,
+   "par": 103,
+   "par_delta": 0.57,
+   "pit_per_g": 33.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676596",
@@ -21246,7 +24072,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 92,
    "war_ip_plus_3yr_pct": 15,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 25.67,
+   "p_bf": 4.278,
+   "par": 154,
+   "par_delta": 8.95,
+   "pit_per_g": 77.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "656212",
@@ -21281,7 +24113,13 @@
    "z_contact_pct": 0.946,
    "f_strike_pct": 0.603,
    "fb_velo": 89.3,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 15.46,
+   "p_bf": 3.19,
+   "par": 92,
+   "par_delta": -1.26,
+   "pit_per_g": 40.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664849",
@@ -21322,7 +24160,13 @@
    "war": -0.5,
    "war_ip_plus_3yr": 101,
    "war_ip_plus_3yr_pct": 54,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 20.57,
+   "p_bf": 4.0,
+   "par": 123,
+   "par_delta": 3.85,
+   "pit_per_g": 16.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "678020",
@@ -21369,7 +24213,13 @@
    "war": -0.3,
    "war_ip_plus_3yr": 93,
    "war_ip_plus_3yr_pct": 17,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.0,
+   "p_bf": 3.702,
+   "par": 108,
+   "par_delta": 1.28,
+   "pit_per_g": 16.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681806",
@@ -21404,7 +24254,13 @@
    "z_contact_pct": 0.875,
    "f_strike_pct": 0.55,
    "fb_velo": 92.5,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 22.09,
+   "p_bf": 4.05,
+   "par": 132,
+   "par_delta": 5.37,
+   "pit_per_g": 40.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "605130",
@@ -21456,7 +24312,13 @@
    "war_ip_plus_pct": 1,
    "war_ip_plus_3yr": 93,
    "war_ip_plus_3yr_pct": 17,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.43,
+   "p_bf": 3.822,
+   "par": 104,
+   "par_delta": 0.71,
+   "pit_per_g": 16.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668674",
@@ -21508,7 +24370,13 @@
    "war_ip_plus_pct": 6,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 66,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.64,
+   "p_bf": 3.952,
+   "par": 112,
+   "par_delta": 1.92,
+   "pit_per_g": 17.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "657612",
@@ -21560,7 +24428,13 @@
    "war_ip_plus_pct": 3,
    "war_ip_plus_3yr": 95,
    "war_ip_plus_3yr_pct": 23,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 13.91,
+   "p_bf": 3.386,
+   "par": 83,
+   "par_delta": -2.81,
+   "pit_per_g": 12.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682995",
@@ -21598,7 +24472,13 @@
    "z_contact_pct": 0.907,
    "f_strike_pct": 0.54,
    "fb_velo": 93.9,
-   "war": -0.5
+   "war": -0.5,
+   "p_ip": 19.87,
+   "p_bf": 4.034,
+   "par": 119,
+   "par_delta": 3.15,
+   "pit_per_g": 50.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "683175",
@@ -21650,7 +24530,13 @@
    "war_ip_plus_pct": 4,
    "war_ip_plus_3yr": 83,
    "war_ip_plus_3yr_pct": 2,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 19.67,
+   "p_bf": 4.069,
+   "par": 118,
+   "par_delta": 2.95,
+   "pit_per_g": 21.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "670090",
@@ -21685,7 +24571,13 @@
    "z_contact_pct": 0.761,
    "f_strike_pct": 0.611,
    "fb_velo": 90.3,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 23.53,
+   "p_bf": 4.139,
+   "par": 141,
+   "par_delta": 6.81,
+   "pit_per_g": 24.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "640454",
@@ -21720,7 +24612,13 @@
    "z_contact_pct": 0.886,
    "f_strike_pct": 0.522,
    "fb_velo": 89.4,
-   "war": -0.5
+   "war": -0.5,
+   "p_ip": 21.48,
+   "p_bf": 3.891,
+   "par": 128,
+   "par_delta": 4.76,
+   "pit_per_g": 16.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "621381",
@@ -21772,7 +24670,13 @@
    "war_ip_plus_pct": 0,
    "war_ip_plus_3yr": 106,
    "war_ip_plus_3yr_pct": 77,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.75,
+   "p_bf": 3.932,
+   "par": 106,
+   "par_delta": 1.03,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "692030",
@@ -21807,7 +24711,13 @@
    "z_contact_pct": 0.805,
    "f_strike_pct": 0.593,
    "fb_velo": 93.0,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 24.0,
+   "p_bf": 3.714,
+   "par": 144,
+   "par_delta": 7.28,
+   "pit_per_g": 52.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "682610",
@@ -21842,7 +24752,13 @@
    "z_contact_pct": 0.84,
    "f_strike_pct": 0.6,
    "fb_velo": 93.8,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 28.0,
+   "p_bf": 4.48,
+   "par": 167,
+   "par_delta": 11.28,
+   "pit_per_g": 37.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "691769",
@@ -21883,7 +24799,13 @@
    "z_contact_pct": 0.879,
    "f_strike_pct": 0.593,
    "fb_velo": 90.6,
-   "war": -0.6
+   "war": -0.6,
+   "p_ip": 16.47,
+   "p_bf": 3.64,
+   "par": 99,
+   "par_delta": -0.24,
+   "pit_per_g": 24.1,
+   "role_line_basis": "role_split"
   },
   {
    "key": "671131",
@@ -21924,7 +24846,13 @@
    "war": 0.4,
    "war_ip_plus_3yr": 87,
    "war_ip_plus_3yr_pct": 5,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 33.0,
+   "p_bf": 3.667,
+   "par": 197,
+   "par_delta": 16.28,
+   "pit_per_g": 44.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "696131",
@@ -21976,7 +24904,13 @@
    "war_ip_plus_pct": 1,
    "war_ip_plus_3yr": 79,
    "war_ip_plus_3yr_pct": 1,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 17.74,
+   "p_bf": 3.915,
+   "par": 106,
+   "par_delta": 1.03,
+   "pit_per_g": 32.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676130",
@@ -22017,7 +24951,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 103,
    "war_ip_plus_3yr_pct": 64,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 31.5,
+   "p_bf": 3.938,
+   "par": 188,
+   "par_delta": 14.78,
+   "pit_per_g": 21.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "693312",
@@ -22058,7 +24998,13 @@
    "war": -0.2,
    "war_ip_plus_3yr": 100,
    "war_ip_plus_3yr_pct": 45,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 27.0,
+   "p_bf": 4.714,
+   "par": 162,
+   "par_delta": 10.28,
+   "pit_per_g": 28.3,
+   "role_line_basis": "role_split"
   },
   {
    "key": "681168",
@@ -22096,7 +25042,13 @@
    "z_contact_pct": 0.802,
    "f_strike_pct": 0.623,
    "fb_velo": 95.2,
-   "war": -0.3
+   "war": -0.3,
+   "p_ip": 18.1,
+   "p_bf": 3.4,
+   "par": 108,
+   "par_delta": 1.38,
+   "pit_per_g": 20.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664875",
@@ -22148,7 +25100,13 @@
    "war_ip_plus_pct": 2,
    "war_ip_plus_3yr": 84,
    "war_ip_plus_3yr_pct": 3,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 19.92,
+   "p_bf": 3.864,
+   "par": 119,
+   "par_delta": 3.21,
+   "pit_per_g": 18.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "519141",
@@ -22195,7 +25153,13 @@
    "war": -0.9,
    "war_ip_plus_3yr": 102,
    "war_ip_plus_3yr_pct": 60,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 16.48,
+   "p_bf": 3.541,
+   "par": 99,
+   "par_delta": -0.23,
+   "pit_per_g": 15.4,
+   "role_line_basis": "role_split"
   },
   {
    "key": "668820",
@@ -22239,7 +25203,13 @@
    "war": -0.3,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 43,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 18.55,
+   "p_bf": 3.617,
+   "par": 111,
+   "par_delta": 1.83,
+   "pit_per_g": 20.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "678576",
@@ -22274,7 +25244,13 @@
    "z_contact_pct": 0.875,
    "f_strike_pct": 0.467,
    "fb_velo": 94.7,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 30.5,
+   "p_bf": 4.067,
+   "par": 182,
+   "par_delta": 13.78,
+   "pit_per_g": 30.5,
+   "role_line_basis": "role_split"
   },
   {
    "key": "691384",
@@ -22309,7 +25285,13 @@
    "z_contact_pct": 0.761,
    "f_strike_pct": 0.567,
    "fb_velo": 95.7,
-   "war": -0.4
+   "war": -0.4,
+   "p_ip": 22.73,
+   "p_bf": 4.167,
+   "par": 136,
+   "par_delta": 6.01,
+   "pit_per_g": 41.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676568",
@@ -22344,7 +25326,13 @@
    "z_contact_pct": 0.854,
    "f_strike_pct": 0.525,
    "fb_velo": 93.7,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 26.84,
+   "p_bf": 4.25,
+   "par": 161,
+   "par_delta": 10.12,
+   "pit_per_g": 34.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "701552",
@@ -22382,7 +25370,13 @@
    "z_contact_pct": 0.925,
    "f_strike_pct": 0.5,
    "fb_velo": 94.2,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 21.21,
+   "p_bf": 3.96,
+   "par": 127,
+   "par_delta": 4.5,
+   "pit_per_g": 24.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "663574",
@@ -22434,7 +25428,13 @@
    "war_ip_plus_pct": 1,
    "war_ip_plus_3yr": 99,
    "war_ip_plus_3yr_pct": 45,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 17.16,
+   "p_bf": 3.654,
+   "par": 103,
+   "par_delta": 0.45,
+   "pit_per_g": 15.9,
+   "role_line_basis": "role_split"
   },
   {
    "key": "676910",
@@ -22469,7 +25469,13 @@
    "z_contact_pct": 0.846,
    "f_strike_pct": 0.867,
    "fb_velo": 89.6,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 26.0,
+   "p_bf": 3.467,
+   "par": 156,
+   "par_delta": 9.28,
+   "pit_per_g": 52.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "688297",
@@ -22521,7 +25527,13 @@
    "war_ip_plus_pct": 2,
    "war_ip_plus_3yr": 90,
    "war_ip_plus_3yr_pct": 12,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 18.13,
+   "p_bf": 3.677,
+   "par": 108,
+   "par_delta": 1.41,
+   "pit_per_g": 25.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "641386",
@@ -22556,7 +25568,13 @@
    "z_contact_pct": 0.818,
    "f_strike_pct": 0.5,
    "fb_velo": 93.9,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 40.0,
+   "p_bf": 5.0,
+   "par": 239,
+   "par_delta": 23.28,
+   "pit_per_g": 40.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "608723",
@@ -22597,7 +25615,13 @@
    "war": -0.3,
    "war_ip_plus_3yr": 95,
    "war_ip_plus_3yr_pct": 24,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 21.5,
+   "p_bf": 3.839,
+   "par": 129,
+   "par_delta": 4.78,
+   "pit_per_g": 71.7,
+   "role_line_basis": "role_split"
   },
   {
    "key": "664192",
@@ -22638,7 +25662,13 @@
    "war": -0.3,
    "war_ip_plus_3yr": 97,
    "war_ip_plus_3yr_pct": 34,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr_tag": "provisional",
+   "p_ip": 33.3,
+   "p_bf": 4.625,
+   "par": 199,
+   "par_delta": 16.58,
+   "pit_per_g": 22.2,
+   "role_line_basis": "role_split"
   },
   {
    "key": "607481",
@@ -22682,7 +25712,13 @@
    "war": -0.9,
    "war_ip_plus_3yr": 108,
    "war_ip_plus_3yr_pct": 85,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 19.68,
+   "p_bf": 3.727,
+   "par": 118,
+   "par_delta": 2.96,
+   "pit_per_g": 15.6,
+   "role_line_basis": "role_split"
   },
   {
    "key": "814305",
@@ -22717,7 +25753,13 @@
    "z_contact_pct": 0.816,
    "f_strike_pct": 0.526,
    "fb_velo": 92.4,
-   "war": 0.3
+   "war": 0.3,
+   "p_ip": 23.21,
+   "p_bf": 3.769,
+   "par": 139,
+   "par_delta": 6.49,
+   "pit_per_g": 36.8,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687060",
@@ -22752,7 +25794,13 @@
    "z_contact_pct": 0.917,
    "f_strike_pct": 0.778,
    "fb_velo": 89.8,
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 37.0,
+   "p_bf": 4.111,
+   "par": 221,
+   "par_delta": 20.28,
+   "pit_per_g": 37.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "605156",
@@ -22782,7 +25830,13 @@
    "md": 1,
    "saves": 0,
    "holds": 0,
-   "war": -0.4
+   "war": -0.4,
+   "p_ip": 51.0,
+   "p_bf": 4.25,
+   "par": 305,
+   "par_delta": 34.28,
+   "pit_per_g": 17.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "687985",
@@ -22812,7 +25866,13 @@
    "md": 0,
    "saves": 0,
    "holds": 0,
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 64.5,
+   "p_bf": 5.375,
+   "par": 386,
+   "par_delta": 47.78,
+   "pit_per_g": 43.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "628708",
@@ -22845,7 +25905,13 @@
    "rem_plus_3yr": 82,
    "rem_plus_3yr_pct": 3,
    "rem_plus_3yr_tag": "provisional",
-   "war": 0.1
+   "war": 0.1,
+   "p_ip": 63.0,
+   "p_bf": 3.5,
+   "par": 377,
+   "par_delta": 46.28,
+   "pit_per_g": 21.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "701780",
@@ -22875,7 +25941,13 @@
    "md": 1,
    "saves": 0,
    "holds": 0,
-   "war": -0.1
+   "war": -0.1,
+   "p_ip": 75.0,
+   "p_bf": 5.0,
+   "par": 449,
+   "par_delta": 58.28,
+   "pit_per_g": 25.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "680880",
@@ -22908,7 +25980,13 @@
    "rem_plus_3yr": 91,
    "rem_plus_3yr_pct": 25,
    "rem_plus_3yr_tag": "provisional",
-   "war": 0.0
+   "war": 0.0,
+   "p_ip": 102.0,
+   "p_bf": 4.857,
+   "par": 610,
+   "par_delta": 85.28,
+   "pit_per_g": 34.0,
+   "role_line_basis": "role_split"
   },
   {
    "key": "608032",
@@ -22944,7 +26022,13 @@
    "war": -0.1,
    "war_ip_plus_3yr": 110,
    "war_ip_plus_3yr_pct": 89,
-   "war_ip_plus_3yr_tag": "established"
+   "war_ip_plus_3yr_tag": "established",
+   "p_ip": 81.0,
+   "p_bf": 3.857,
+   "par": 485,
+   "par_delta": 64.28,
+   "pit_per_g": 27.0,
+   "role_line_basis": "role_split"
   }
  ],
  "teams": [
@@ -22989,11 +26073,35 @@
     },
     {
      "role": "Setup",
+     "key": "669093",
+     "name": "Jeremiah Estrada",
+     "rem_plus": 112,
+     "gmli": 1.3,
+     "ip": 31.0
+    },
+    {
+     "role": "Setup",
      "key": "699134",
      "name": "Bradgley Rodriguez",
      "rem_plus": 123,
      "gmli": 1.26,
      "ip": 74.0
+    },
+    {
+     "role": "Middle",
+     "key": "666745",
+     "name": "Jhony Brito",
+     "rem_plus": 98,
+     "gmli": 1.13,
+     "ip": 9.0
+    },
+    {
+     "role": "Middle",
+     "key": "606996",
+     "name": "Kyle Hart",
+     "rem_plus": 102,
+     "gmli": 1.03,
+     "ip": 64.0
     },
     {
      "role": "Middle",
@@ -23010,10 +26118,28 @@
      "rem_plus": 95,
      "gmli": 0.86,
      "ip": 33.3
+    },
+    {
+     "role": "Mop-up",
+     "key": "593974",
+     "name": "Wandy Peralta",
+     "rem_plus": 95,
+     "gmli": 0.74,
+     "ip": 77.3
+    },
+    {
+     "role": "Mop-up",
+     "key": "676702",
+     "name": "Hunter Stratton",
+     "rem_plus": 101,
+     "gmli": 0.27,
+     "ip": 3.3
     }
    ],
    "team_war": 9.9,
-   "team_war_n": 13
+   "team_war_n": 13,
+   "pen_p_ip": 16.42,
+   "pen_par": 98
   },
   {
    "team": "ATL",
@@ -23071,6 +26197,14 @@
      "ip": 49.7
     },
     {
+     "role": "Setup",
+     "key": "664849",
+     "name": "Danny Young",
+     "rem_plus": 79,
+     "gmli": 1.21,
+     "ip": 12.3
+    },
+    {
      "role": "Middle",
      "key": "682989",
      "name": "Victor Mederos",
@@ -23080,15 +26214,57 @@
     },
     {
      "role": "Long",
+     "key": "700413",
+     "name": "Tyler Uberstine",
+     "rem_plus": 97,
+     "gmli": 0.67,
+     "ip": 2.7
+    },
+    {
+     "role": "Long",
+     "key": "691548",
+     "name": "Rolddy Mu\u00f1oz",
+     "rem_plus": 89,
+     "gmli": 0.67,
+     "ip": 2.0
+    },
+    {
+     "role": "Long",
      "key": "608718",
      "name": "Brent Suter",
      "rem_plus": 106,
      "gmli": 0.59,
      "ip": 91.0
+    },
+    {
+     "role": "Long",
+     "key": "675627",
+     "name": "Michael Grove",
+     "rem_plus": 97,
+     "gmli": 0.41,
+     "ip": 7.0
+    },
+    {
+     "role": "Mop-up",
+     "key": "675916",
+     "name": "James Karinchak",
+     "rem_plus": 99,
+     "gmli": 0.8,
+     "ip": 9.7
+    },
+    {
+     "role": "Mop-up",
+     "key": "686628",
+     "name": "Blake Burkhalter",
+     "rem_plus": 95,
+     "gmli": 0.3,
+     "ip": 1.0
     }
    ],
    "team_war": 7.9,
-   "team_war_n": 18
+   "team_war_n": 18,
+   "pen_p_ip": 16.31,
+   "pen_par": 97
   },
   {
    "team": "PIT",
@@ -23211,7 +26387,9 @@
     }
    ],
    "team_war": 9.4,
-   "team_war_n": 13
+   "team_war_n": 13,
+   "pen_p_ip": 17.1,
+   "pen_par": 102
   },
   {
    "team": "TB",
@@ -23246,14 +26424,6 @@
     },
     {
      "role": "Setup",
-     "key": "664076",
-     "name": "Garrett Cleavinger",
-     "rem_plus": 102,
-     "gmli": 1.48,
-     "ip": 41.3
-    },
-    {
-     "role": "Setup",
      "key": "669330",
      "name": "Tyler Wells",
      "rem_plus": 113,
@@ -23275,10 +26445,20 @@
      "rem_plus": 106,
      "gmli": 1.01,
      "ip": 56.3
+    },
+    {
+     "role": "Mop-up",
+     "key": "811315",
+     "name": "Brody Hopkins",
+     "rem_plus": 94,
+     "gmli": 0.51,
+     "ip": 5.3
     }
    ],
    "team_war": 6.7,
-   "team_war_n": 13
+   "team_war_n": 13,
+   "pen_p_ip": 15.7,
+   "pen_par": 94
   },
   {
    "team": "MIL",
@@ -23345,7 +26525,9 @@
     }
    ],
    "team_war": 8.6,
-   "team_war_n": 13
+   "team_war_n": 13,
+   "pen_p_ip": 16.11,
+   "pen_par": 96
   },
   {
    "team": "BOS",
@@ -23436,7 +26618,9 @@
     }
    ],
    "team_war": 6.5,
-   "team_war_n": 16
+   "team_war_n": 16,
+   "pen_p_ip": 16.23,
+   "pen_par": 97
   },
   {
    "team": "LAD",
@@ -23503,7 +26687,9 @@
     }
    ],
    "team_war": 7.1,
-   "team_war_n": 19
+   "team_war_n": 19,
+   "pen_p_ip": 16.56,
+   "pen_par": 99
   },
   {
    "team": "TOR",
@@ -23610,7 +26796,9 @@
     }
    ],
    "team_war": 5.3,
-   "team_war_n": 15
+   "team_war_n": 15,
+   "pen_p_ip": 16.07,
+   "pen_par": 96
   },
   {
    "team": "CLE",
@@ -23677,7 +26865,9 @@
     }
    ],
    "team_war": 6.0,
-   "team_war_n": 13
+   "team_war_n": 13,
+   "pen_p_ip": 16.85,
+   "pen_par": 100
   },
   {
    "team": "PHI",
@@ -23703,6 +26893,22 @@
      "ip": 59.3
     },
     {
+     "role": "High-leverage",
+     "key": "680880",
+     "name": "Grant Holman",
+     "rem_plus": 47,
+     "gmli": 2.3,
+     "ip": 0.3
+    },
+    {
+     "role": "High-leverage",
+     "key": "548384",
+     "name": "Brooks Raley",
+     "rem_plus": 100,
+     "gmli": 1.61,
+     "ip": 52.7
+    },
+    {
      "role": "Setup",
      "key": "680742",
      "name": "Jonathan Bowlan",
@@ -23717,6 +26923,14 @@
      "rem_plus": 105,
      "gmli": 1.13,
      "ip": 19.0
+    },
+    {
+     "role": "Middle",
+     "key": "689147",
+     "name": "Orion Kerkering",
+     "rem_plus": 94,
+     "gmli": 1.13,
+     "ip": 58.0
     },
     {
      "role": "Middle",
@@ -23736,6 +26950,14 @@
     },
     {
      "role": "Mop-up",
+     "key": "679775",
+     "name": "Kyle Backhus",
+     "rem_plus": 96,
+     "gmli": 0.7,
+     "ip": 20.0
+    },
+    {
+     "role": "Mop-up",
      "key": "621383",
      "name": "Tanner Banks",
      "rem_plus": 89,
@@ -23749,10 +26971,28 @@
      "rem_plus": 96,
      "gmli": 0.51,
      "ip": 53.7
+    },
+    {
+     "role": "Mop-up",
+     "key": "694851",
+     "name": "Andrew Hoffmann",
+     "rem_plus": 85,
+     "gmli": 0.39,
+     "ip": 11.7
+    },
+    {
+     "role": "Mop-up",
+     "key": "676661",
+     "name": "Max Lazar",
+     "rem_plus": 91,
+     "gmli": 0.07,
+     "ip": 10.0
     }
    ],
    "team_war": 9.4,
-   "team_war_n": 20
+   "team_war_n": 20,
+   "pen_p_ip": 17.2,
+   "pen_par": 103
   },
   {
    "team": "AZ",
@@ -23867,7 +27107,9 @@
     }
    ],
    "team_war": 6.5,
-   "team_war_n": 13
+   "team_war_n": 13,
+   "pen_p_ip": 15.52,
+   "pen_par": 93
   },
   {
    "team": "CWS",
@@ -23926,7 +27168,9 @@
     }
    ],
    "team_war": 6.0,
-   "team_war_n": 15
+   "team_war_n": 15,
+   "pen_p_ip": 16.48,
+   "pen_par": 98
   },
   {
    "team": "BAL",
@@ -24057,7 +27301,9 @@
     }
    ],
    "team_war": 6.2,
-   "team_war_n": 19
+   "team_war_n": 19,
+   "pen_p_ip": 16.56,
+   "pen_par": 99
   },
   {
    "team": "NYY",
@@ -24107,16 +27353,66 @@
      "ip": 85.0
     },
     {
+     "role": "Setup",
+     "key": "657612",
+     "name": "Tim Hill",
+     "rem_plus": 78,
+     "gmli": 1.18,
+     "ip": 58.7
+    },
+    {
+     "role": "Middle",
+     "key": "683409",
+     "name": "Angel Chivilli",
+     "rem_plus": 91,
+     "gmli": 0.94,
+     "ip": 16.7
+    },
+    {
      "role": "Long",
      "key": "642232",
      "name": "Ryan Yarbrough",
      "rem_plus": 101,
      "gmli": 0.56,
      "ip": 63.3
+    },
+    {
+     "role": "Mop-up",
+     "key": "605242",
+     "name": "Michael Fulmer",
+     "rem_plus": 100,
+     "gmli": 0.78,
+     "ip": 13.7
+    },
+    {
+     "role": "Mop-up",
+     "key": "660787",
+     "name": "Yerry De los Santos",
+     "rem_plus": 92,
+     "gmli": 0.71,
+     "ip": 22.0
+    },
+    {
+     "role": "Mop-up",
+     "key": "690440",
+     "name": "Bradley Hanner",
+     "rem_plus": 90,
+     "gmli": 0.71,
+     "ip": 7.3
+    },
+    {
+     "role": "Mop-up",
+     "key": "657376",
+     "name": "Clarke Schmidt",
+     "rem_plus": 96,
+     "gmli": 0.41,
+     "ip": 0.7
     }
    ],
    "team_war": 4.4,
-   "team_war_n": 16
+   "team_war_n": 16,
+   "pen_p_ip": 16.28,
+   "pen_par": 97
   },
   {
    "team": "HOU",
@@ -24215,7 +27511,9 @@
     }
    ],
    "team_war": 3.0,
-   "team_war_n": 12
+   "team_war_n": 12,
+   "pen_p_ip": 16.67,
+   "pen_par": 99
   },
   {
    "team": "NYM",
@@ -24346,7 +27644,9 @@
     }
    ],
    "team_war": 1.0,
-   "team_war_n": 20
+   "team_war_n": 20,
+   "pen_p_ip": 16.61,
+   "pen_par": 99
   },
   {
    "team": "MIA",
@@ -24485,7 +27785,9 @@
     }
    ],
    "team_war": 2.3,
-   "team_war_n": 19
+   "team_war_n": 19,
+   "pen_p_ip": 17.12,
+   "pen_par": 102
   },
   {
    "team": "TEX",
@@ -24616,7 +27918,9 @@
     }
    ],
    "team_war": 1.6,
-   "team_war_n": 22
+   "team_war_n": 22,
+   "pen_p_ip": 16.99,
+   "pen_par": 101
   },
   {
    "team": "MIN",
@@ -24731,7 +28035,9 @@
     }
    ],
    "team_war": 5.3,
-   "team_war_n": 19
+   "team_war_n": 19,
+   "pen_p_ip": 17.2,
+   "pen_par": 103
   },
   {
    "team": "SEA",
@@ -24846,7 +28152,9 @@
     }
    ],
    "team_war": 1.2,
-   "team_war_n": 17
+   "team_war_n": 17,
+   "pen_p_ip": 16.7,
+   "pen_par": 100
   },
   {
    "team": "LAA",
@@ -24961,7 +28269,9 @@
     }
    ],
    "team_war": 1.9,
-   "team_war_n": 15
+   "team_war_n": 15,
+   "pen_p_ip": 17.2,
+   "pen_par": 103
   },
   {
    "team": "DET",
@@ -25076,7 +28386,9 @@
     }
    ],
    "team_war": 2.1,
-   "team_war_n": 17
+   "team_war_n": 17,
+   "pen_p_ip": 16.15,
+   "pen_par": 96
   },
   {
    "team": "CHC",
@@ -25183,7 +28495,9 @@
     }
    ],
    "team_war": -0.5,
-   "team_war_n": 21
+   "team_war_n": 21,
+   "pen_p_ip": 16.98,
+   "pen_par": 101
   },
   {
    "team": "ATH",
@@ -25298,7 +28612,9 @@
     }
    ],
    "team_war": 3.7,
-   "team_war_n": 20
+   "team_war_n": 20,
+   "pen_p_ip": 17.59,
+   "pen_par": 105
   },
   {
    "team": "STL",
@@ -25405,7 +28721,9 @@
     }
    ],
    "team_war": 1.2,
-   "team_war_n": 17
+   "team_war_n": 17,
+   "pen_p_ip": 17.1,
+   "pen_par": 102
   },
   {
    "team": "CIN",
@@ -25536,7 +28854,9 @@
     }
    ],
    "team_war": -0.3,
-   "team_war_n": 17
+   "team_war_n": 17,
+   "pen_p_ip": 17.3,
+   "pen_par": 103
   },
   {
    "team": "COL",
@@ -25659,7 +28979,9 @@
     }
    ],
    "team_war": 5.0,
-   "team_war_n": 18
+   "team_war_n": 18,
+   "pen_p_ip": 17.31,
+   "pen_par": 103
   },
   {
    "team": "SF",
@@ -25790,7 +29112,9 @@
     }
    ],
    "team_war": -0.4,
-   "team_war_n": 21
+   "team_war_n": 21,
+   "pen_p_ip": 17.19,
+   "pen_par": 103
   },
   {
    "team": "WSH",
@@ -25913,7 +29237,9 @@
     }
    ],
    "team_war": -3.4,
-   "team_war_n": 22
+   "team_war_n": 22,
+   "pen_p_ip": 17.88,
+   "pen_par": 107
   },
   {
    "team": "KC",
@@ -26044,7 +29370,35 @@
     }
    ],
    "team_war": -3.0,
-   "team_war_n": 21
+   "team_war_n": 21,
+   "pen_p_ip": 17.72,
+   "pen_par": 106
   }
- ]
+ ],
+ "pitch_rates": {
+  "as_of": "2026-10-14",
+  "season": 2026,
+  "role": "rp",
+  "anchors": {
+   "p_ip": 16.7172,
+   "p_bf": 3.8886,
+   "pit_per_g": 19.46
+  },
+  "anchor_n": 741,
+  "status": "usable",
+  "basis": "role_split",
+  "n": {
+   "rows": 514,
+   "stamped": 514,
+   "season_line_fallback": 0,
+   "teams_stamped": 30
+  },
+  "definitions": {
+   "innings": "outs / 3; a line of 6.1 is 19 outs",
+   "par": "round(100 x rate / league rate for the role and season), nearest; 100 = average, not inverted, uncoloured",
+   "par_delta": "rate minus the league rate, in pitches",
+   "team_par": "Team PAR: 100 x the club's rate / the unweighted mean of the club rates on this board, so the clubs average 100",
+   "team_basis": "club today: the board rows that name the club, the membership of Offense+, Rotation+ and Bullpen+"
+  }
+ }
 }
