@@ -1,0 +1,737 @@
+{
+ "schema": "efv_pitch_rate_admission/1",
+ "generated_at": "2026-10-14T17:28:45+00:00",
+ "produced_by": "tools/efv_pitch_rate_admission.py",
+ "task": "Q10_11_EFV_PITCH_RATE_ADMISSION",
+ "code_commit": "9f4ab867",
+ "owner_ask": "19 (2026-09-30): calculate P/IP, P/PA and PAR relative to each level for prospects, and check if any can be used as a driver for eFV",
+ "why_this_may_run": "The eFV feature frontier is closed (plan Part 2.2; the 2026-08-14 frontier closure), and for pitchers DS-Q2 keeps pitcher eFV in consensus order until pitch-quality or K-rate data passes the sign-stability admission rule; these arms are reopened only by a new data field (MiLB pitch counts, never before a model input) plus the owner's ask 19 of 2026-09-30, and pbf_rel goes beyond DS-Q2 on that authority alone. Each arm's correlation with the closed bb_rel arm (Q10_10 step d) is stated beside it so a reader can see whether it is the closed walk-rate arm again.",
+ "registration_path": "PM-Q4 default (a), taken 2026-10-14 on the 2026-10-08 re-ask under EW3-5: the candidates do not enter V2's 2026 registration (REGISTERED 2026-10-08, EW2-6, before any amendment could land, so answer (b) could not be executed); the DS-06 rule runs on lv_dev inside folds 2017, 2018 and 2019 on each fold's own training vintages; nothing is adjudicated; admitted in all three folds on both sides, the pair is pre-declared for the NEXT registration (V3 or the prospective cohort, docs/efv-v2/PROGRAM.md Q4) before its first read.",
+ "role": "development diagnostic on a spent frame; adjudicates nothing; no served number",
+ "adjudicates": "nothing",
+ "frame": "lv_dev",
+ "folds": [
+  2017,
+  2018,
+  2019
+ ],
+ "head": "skill",
+ "target": "u_y",
+ "guards": {
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "r_vm_first_debut_year": 2025,
+  "reserved_vm_pins": [],
+  "lv_folds": [
+   2017,
+   2018,
+   2019
+  ],
+  "rule_last_year": 2016,
+  "gate_registered": true,
+  "vm_dev_read": false,
+  "closed_arms_rerun": false,
+  "order_index_fitted": false,
+  "delta_read": false
+ },
+ "label": {
+  "provider": "fwar",
+  "label_id": "fwar@2026-10-02-0341299c20ec",
+  "target": "W3",
+  "target_percentile": "within (side, list vintage), ties averaged"
+ },
+ "rule": {
+  "statement": "a driver enters only if its coefficient's sign held in every training vintage that gives a t (at least 60 rows, at least 2 such vintages) and its mean |t| is at least 1.0 (docs/efv-v2/EFV_V2_GATE.md s4.2, DS-06)",
+  "min_rows": 60,
+  "min_vintages": 2,
+  "min_mean_abs_t": 1.0,
+  "rows": "has-block rows (the skill head's, DS-04)",
+  "imputation": "absent value at the fold's observed training mean, no flag",
+  "training": "efv_v2_model.lv_training_rows at list vintages below V, every V-frame player excluded (gate s4.5)",
+  "function": "efv_v2_model.admission_for_key(target=u_y, has_block_only=True)"
+ },
+ "inputs": {
+  "sidecar": "data/_labs/efv_pitch_rate_features.json",
+  "sidecar_sha256": "274ea001a3cfa5661c2e229659dfab79205b5755745171fef52c765ceb5dacd9",
+  "sidecar_generated_at": "2026-10-07T16:43:10+00:00",
+  "efv_v2_model.py": "0b785f4c614a74d0b3811a02a4ec13a541ff4235a53e0d72a3cc69eab034a28f",
+  "efv_pitch_rate_features.py": "30abd3a01c9bc0189ea9f8bb094c9264557233ceb0b7b422b19a328cf60e619b",
+  "efv_vintage_frame.py": "c9aee4fc129d82f705d2bf8f0e30c32ebaf94364eac2a7b9fa57b3116f0389d7",
+  "milb_floor": {
+   "hit": 2005,
+   "pit": 2014
+  }
+ },
+ "counts": {
+  "hit": {
+   "training_rows": 3053,
+   "has_block": 2871,
+   "observed": 1065,
+   "reserved_vm_kept_w3_zero": 17,
+   "by_vintage": {
+    "2011": {
+     "rows": 69,
+     "has_block": 65,
+     "observed": 0
+    },
+    "2012": {
+     "rows": 189,
+     "has_block": 175,
+     "observed": 7
+    },
+    "2013": {
+     "rows": 268,
+     "has_block": 259,
+     "observed": 19
+    },
+    "2014": {
+     "rows": 260,
+     "has_block": 249,
+     "observed": 11
+    },
+    "2015": {
+     "rows": 397,
+     "has_block": 383,
+     "observed": 115
+    },
+    "2016": {
+     "rows": 405,
+     "has_block": 380,
+     "observed": 122
+    },
+    "2017": {
+     "rows": 472,
+     "has_block": 441,
+     "observed": 150
+    },
+    "2018": {
+     "rows": 450,
+     "has_block": 418,
+     "observed": 284
+    },
+    "2019": {
+     "rows": 543,
+     "has_block": 501,
+     "observed": 357
+    }
+   }
+  },
+  "pit": {
+   "training_rows": 2909,
+   "has_block": 2056,
+   "observed": 1153,
+   "reserved_vm_kept_w3_zero": 15,
+   "by_vintage": {
+    "2011": {
+     "rows": 58,
+     "has_block": 0,
+     "observed": 0
+    },
+    "2012": {
+     "rows": 170,
+     "has_block": 0,
+     "observed": 0
+    },
+    "2013": {
+     "rows": 246,
+     "has_block": 0,
+     "observed": 0
+    },
+    "2014": {
+     "rows": 245,
+     "has_block": 0,
+     "observed": 0
+    },
+    "2015": {
+     "rows": 388,
+     "has_block": 360,
+     "observed": 114
+    },
+    "2016": {
+     "rows": 405,
+     "has_block": 386,
+     "observed": 142
+    },
+    "2017": {
+     "rows": 469,
+     "has_block": 444,
+     "observed": 195
+    },
+    "2018": {
+     "rows": 439,
+     "has_block": 416,
+     "observed": 300
+    },
+    "2019": {
+     "rows": 489,
+     "has_block": 450,
+     "observed": 349
+    }
+   }
+  }
+ },
+ "arms": {
+  "PM19:hit.skill.ppa_rel": {
+   "tag": "PM19:hit.skill.ppa_rel",
+   "side": "hit",
+   "head": "skill",
+   "driver": "ppa_rel",
+   "column_key": "scr_ppa_rel",
+   "target": "u_y",
+   "rows": "has_block",
+   "item": "DS-06",
+   "frame": "lv_dev, folds 2017 to 2019, each on its own training vintages",
+   "verdict": "REFUSED",
+   "verdict_scope": "the DS-06 rule inside every fold; ADMITTED only when all three folds admit; a development reading that adjudicates nothing",
+   "admitted": false,
+   "admitted_folds": [],
+   "n_admitted_folds": 0,
+   "n_folds": 3,
+   "fold_signs_agree": false,
+   "reason": "2017: mean |t| 0.914 below 1.0; 2018: sign flipped between training vintages; 2019: sign flipped between training vintages",
+   "per_vintage_signs": {
+    "2017": {
+     "2015": -1,
+     "2016": -1
+    },
+    "2018": {
+     "2015": -1,
+     "2016": -1,
+     "2017": 1
+    },
+    "2019": {
+     "2015": -1,
+     "2016": -1,
+     "2017": 1,
+     "2018": 1
+    }
+   },
+   "mean_abs_t": {
+    "2017": 0.9137,
+    "2018": 1.4329,
+    "2019": 1.1396
+   },
+   "n_valid_vintages": {
+    "2017": 2,
+    "2018": 3,
+    "2019": 4
+   },
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "reason": "mean |t| 0.914 below 1.0",
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1
+     },
+     "t_by_vintage": {
+      "2015": -0.7046,
+      "2016": -1.1228
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014
+     ],
+     "n_valid_vintages": 2,
+     "mean_abs_t": 0.9137,
+     "sign": -1,
+     "n_train": 1038,
+     "n_train_has_block": 1005,
+     "n_train_observed": 189,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 178,
+       "has_block": 166,
+       "observed": 6
+      },
+      "2013": {
+       "rows": 241,
+       "has_block": 236,
+       "observed": 19
+      },
+      "2014": {
+       "rows": 182,
+       "has_block": 180,
+       "observed": 11
+      },
+      "2015": {
+       "rows": 229,
+       "has_block": 222,
+       "observed": 91
+      },
+      "2016": {
+       "rows": 139,
+       "has_block": 136,
+       "observed": 62
+      }
+     }
+    },
+    "2018": {
+     "admitted": false,
+     "reason": "sign flipped between training vintages",
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1,
+      "2017": 1
+     },
+     "t_by_vintage": {
+      "2015": -0.6917,
+      "2016": -0.8464,
+      "2017": 2.7607
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014
+     ],
+     "n_valid_vintages": 3,
+     "mean_abs_t": 1.4329,
+     "sign": 0,
+     "n_train": 1474,
+     "n_train_has_block": 1412,
+     "n_train_observed": 331,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 68,
+       "has_block": 64,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 181,
+       "has_block": 169,
+       "observed": 7
+      },
+      "2013": {
+       "rows": 255,
+       "has_block": 246,
+       "observed": 19
+      },
+      "2014": {
+       "rows": 224,
+       "has_block": 217,
+       "observed": 11
+      },
+      "2015": {
+       "rows": 304,
+       "has_block": 292,
+       "observed": 104
+      },
+      "2016": {
+       "rows": 251,
+       "has_block": 242,
+       "observed": 98
+      },
+      "2017": {
+       "rows": 191,
+       "has_block": 182,
+       "observed": 92
+      }
+     }
+    },
+    "2019": {
+     "admitted": false,
+     "reason": "sign flipped between training vintages",
+     "per_vintage_signs": {
+      "2015": -1,
+      "2016": -1,
+      "2017": 1,
+      "2018": 1
+     },
+     "t_by_vintage": {
+      "2015": -0.7128,
+      "2016": -0.4903,
+      "2017": 3.0415,
+      "2018": 0.3138
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014
+     ],
+     "n_valid_vintages": 4,
+     "mean_abs_t": 1.1396,
+     "sign": 0,
+     "n_train": 1922,
+     "n_train_has_block": 1842,
+     "n_train_observed": 536,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 188,
+       "has_block": 174,
+       "observed": 7
+      },
+      "2013": {
+       "rows": 265,
+       "has_block": 256,
+       "observed": 19
+      },
+      "2014": {
+       "rows": 251,
+       "has_block": 242,
+       "observed": 11
+      },
+      "2015": {
+       "rows": 368,
+       "has_block": 355,
+       "observed": 115
+      },
+      "2016": {
+       "rows": 323,
+       "has_block": 311,
+       "observed": 118
+      },
+      "2017": {
+       "rows": 295,
+       "has_block": 283,
+       "observed": 141
+      },
+      "2018": {
+       "rows": 163,
+       "has_block": 156,
+       "observed": 125
+      }
+     }
+    }
+   },
+   "sign_predicted": null,
+   "closed_arm_comparison": {
+    "closed_arm": "D-1:bb_rel:hit",
+    "spearman_vs_bb_rel": 0.6045,
+    "n": 1065,
+    "source": "data/_labs/efv_pitch_rate_features.json probes (step d, no outcome)"
+   },
+   "delta": null,
+   "floor_rho": null,
+   "reads": "the W3 percentile and the consensus percentile on training rows only; no order index, no delta, no served number"
+  },
+  "PM19:pit.skill.pbf_rel": {
+   "tag": "PM19:pit.skill.pbf_rel",
+   "side": "pit",
+   "head": "skill",
+   "driver": "pbf_rel",
+   "column_key": "scr_pbf_rel",
+   "target": "u_y",
+   "rows": "has_block",
+   "item": "DS-06",
+   "frame": "lv_dev, folds 2017 to 2019, each on its own training vintages",
+   "verdict": "REFUSED",
+   "verdict_scope": "the DS-06 rule inside every fold; ADMITTED only when all three folds admit; a development reading that adjudicates nothing",
+   "admitted": false,
+   "admitted_folds": [
+    "2018"
+   ],
+   "n_admitted_folds": 1,
+   "n_folds": 3,
+   "fold_signs_agree": false,
+   "reason": "2017: fewer than 2 vintages give a t; 2019: sign flipped between training vintages",
+   "per_vintage_signs": {
+    "2017": {
+     "2015": 1
+    },
+    "2018": {
+     "2015": 1,
+     "2016": 1,
+     "2017": 1
+    },
+    "2019": {
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": -1
+    }
+   },
+   "mean_abs_t": {
+    "2017": 3.0973,
+    "2018": 2.0448,
+    "2019": 1.3678
+   },
+   "n_valid_vintages": {
+    "2017": 1,
+    "2018": 3,
+    "2019": 4
+   },
+   "by_fold": {
+    "2017": {
+     "admitted": false,
+     "reason": "fewer than 2 vintages give a t",
+     "per_vintage_signs": {
+      "2015": 1
+     },
+     "t_by_vintage": {
+      "2015": 3.0973
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2016
+     ],
+     "n_valid_vintages": 1,
+     "mean_abs_t": 3.0973,
+     "sign": 1,
+     "n_train": 965,
+     "n_train_has_block": 339,
+     "n_train_observed": 140,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 153,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 207,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 178,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 228,
+       "has_block": 207,
+       "observed": 83
+      },
+      "2016": {
+       "rows": 143,
+       "has_block": 132,
+       "observed": 57
+      }
+     }
+    },
+    "2018": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "t_by_vintage": {
+      "2015": 3.3207,
+      "2016": 1.2502,
+      "2017": 1.5634
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014
+     ],
+     "n_valid_vintages": 3,
+     "mean_abs_t": 2.0448,
+     "sign": 1,
+     "n_train": 1468,
+     "n_train_has_block": 749,
+     "n_train_observed": 358,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 58,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 163,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 234,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 222,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 311,
+       "has_block": 293,
+       "observed": 109
+      },
+      "2016": {
+       "rows": 263,
+       "has_block": 249,
+       "observed": 118
+      },
+      "2017": {
+       "rows": 217,
+       "has_block": 207,
+       "observed": 131
+      }
+     }
+    },
+    "2019": {
+     "admitted": false,
+     "reason": "sign flipped between training vintages",
+     "per_vintage_signs": {
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": -1
+     },
+     "t_by_vintage": {
+      "2015": 3.0651,
+      "2016": 1.0781,
+      "2017": 0.145,
+      "2018": -1.1831
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014
+     ],
+     "n_valid_vintages": 4,
+     "mean_abs_t": 1.3678,
+     "sign": 0,
+     "n_train": 1882,
+     "n_train_has_block": 1118,
+     "n_train_observed": 559,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 58,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 169,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 243,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 237,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 351,
+       "has_block": 330,
+       "observed": 113
+      },
+      "2016": {
+       "rows": 334,
+       "has_block": 317,
+       "observed": 135
+      },
+      "2017": {
+       "rows": 318,
+       "has_block": 306,
+       "observed": 176
+      },
+      "2018": {
+       "rows": 172,
+       "has_block": 165,
+       "observed": 135
+      }
+     }
+    }
+   },
+   "sign_predicted": null,
+   "closed_arm_comparison": {
+    "closed_arm": "D-1:bb_rel:hit",
+    "spearman_vs_bb_rel": 0.4194,
+    "n": 1100,
+    "source": "data/_labs/efv_pitch_rate_features.json probes (step d, no outcome)"
+   },
+   "delta": null,
+   "floor_rho": null,
+   "reads": "the W3 percentile and the consensus percentile on training rows only; no order index, no delta, no served number"
+  }
+ },
+ "n_arms": 2,
+ "admitted_all_folds_both_sides": false,
+ "pre_declaration": "not owed: at least one arm is refused in at least one fold; the pair is not pre-declared and enters no candidate list",
+ "balance_probe": "step (b) of pitch_metrics.md s7 is Q10_10's re-arm (tools/efv_pitch_rate_sidecar.py), not this tool's",
+ "never": [
+  "list vintages 2020 and 2021 (R-LV)",
+  "debut cohorts 2025+ (R-VM)",
+  "any grouping by consensus-FV level",
+  "any order index or delta",
+  "any served eFV change"
+ ],
+ "elapsed_s": 82.7
+}

@@ -67,6 +67,13 @@ SOURCES: tuple[tuple[str, str, str], ...] = (
     # this registration as a new lane). The two `fv` liveness controls sit in the
     # artifact's `liveness` block, outside `arms`, so they are not counted as arms.
     ("xfv_driver_retest.json", "arms", "Z1 driver re-test (fWAR label)"),
+    # Q10_11 (owner ask 19, PM-Q4 default (a)): the DS-06 admission rule on the
+    # pitch-rate sidecar columns (ppa_rel, pbf_rel) inside the lv_dev folds, one arm
+    # per side with its per-fold, per-vintage signs; a development reading that
+    # adjudicates nothing. Reopened past the closed frontier only by a new data field
+    # (MiLB pitch counts) plus the owner's 2026-09-30 ask; pbf_rel goes beyond DS-Q2
+    # on that authority alone.
+    ("_labs/efv_pitch_rate_admission.json", "arms", "pitch-rate admission (PM19, DS-06)"),
 )
 
 #: Sources registered before their producer's registered run. Absent, they are listed
