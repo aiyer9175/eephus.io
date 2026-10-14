@@ -370,11 +370,15 @@ def test_dark_column_names_are_pinned_between_the_two_modules():
     assert bm.DARK3_TEAM_COLUMNS == lv.SCHEMA3_TEAM_COLUMNS
     assert bm.DARK4_TEAM_COLUMNS == lv.SCHEMA4_TEAM_COLUMNS
     assert bm.DARK5_TEAM_COLUMNS == lv.SCHEMA5_TEAM_COLUMNS
+    # The game-intensity tuple is pinned by name, never by a literal schema
+    # number (the section's builder takes its number in commit order).
+    assert bm.DARK_IX_TEAM_COLUMNS == lv.IX_TEAM_COLUMNS
     assert bm.DARK_TEAM_COLUMNS_BY_SCHEMA == {3: lv.SCHEMA3_TEAM_COLUMNS,
                                               4: lv.SCHEMA4_TEAM_COLUMNS,
-                                              5: lv.SCHEMA5_TEAM_COLUMNS}
+                                              5: lv.SCHEMA5_TEAM_COLUMNS,
+                                              lv.IX_SCHEMA: lv.IX_TEAM_COLUMNS}
     assert bm.DARK_TEAM_COLUMNS == (lv.SCHEMA3_TEAM_COLUMNS + lv.SCHEMA4_TEAM_COLUMNS
-                                    + lv.SCHEMA5_TEAM_COLUMNS)
+                                    + lv.SCHEMA5_TEAM_COLUMNS + lv.IX_TEAM_COLUMNS)
     assert bm.DARK_PITCHER_COLUMNS == lv.SCHEMA3_PITCHER_COLUMNS
     assert set(lv.SCHEMA3_TEAM_COLUMNS) < set(lv.TEAM_COLUMNS)
     assert set(lv.SCHEMA3_PITCHER_COLUMNS) < set(lv.PITCHER_COLUMNS)
@@ -622,7 +626,10 @@ def test_raising_schema5_builders_cost_only_their_own_columns(store, tmp_path,
     bad = lv.reduce_current(on_date="2026-09-12", data_dir=data)
     assert bad is not None and bad["schema"] == lv.SCHEMA
 
-    keep = [i for i, c in enumerate(lv.TEAM_COLUMNS) if c not in lv.SCHEMA5_TEAM_COLUMNS]
+    # schema 1 to schema 4: every column before the schema-5 block (the game-intensity
+    # columns appended after it are stated nulls on a direct reduction)
+    keep = [i for i, c in enumerate(lv.TEAM_COLUMNS)
+            if c not in lv.SCHEMA5_TEAM_COLUMNS + lv.IX_TEAM_COLUMNS]
     assert len(keep) == 20
     for org in ORGS:
         assert (json.dumps([bad["teams"][org][i] for i in keep])

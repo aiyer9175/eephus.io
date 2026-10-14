@@ -8197,6 +8197,73 @@ a family, a member, a split, a threshold, the twin or Holm.
   `.cache/intensity_lab/season_totals_<year>.json` when present), and the 2000 to 2017
   regular-season finals behind the IX-E price for the INT-B1 postseasons.
 
+### Builder landed 2026-10-14
+
+The dark builder landed on 2026-10-14 (task Q10_20, plan Part 8 item IX-D1) and rides
+**schema 6**: the next number after the last landed builder in commit order, schema 5
+(the 5i, 5f and 5g bump of 2026-09-11). No posted-lineup or dugout builder had landed, and
+this builder did not wait for either (plan Part 8, 8.D row 3); the posted-lineup section's
+assumed "schema 6" moves by its own dated correction when its builder lands.
+`leaderboard_vintages.SCHEMA` and `leaderboard_vintages.IX_SCHEMA` read 6.
+
+- **What it writes.** `intensity_vintage.py` (new) builds, and `leaderboard_vintages`
+  stores, the team columns `ix_elo`, `ix_po_pct`, `ix_ws_pct` and `ix_proj_wins` (appended
+  to `TEAM_COLUMNS` in that order; `betting_model.DARK_IX_TEAM_COLUMNS` is the DARK tuple,
+  and nothing else in `betting_model` changed), the game block `ix_games` keyed by game_pk
+  for every game scheduled on the three dates after the vintage date (date, game type,
+  series state, `dpo_h`, `dpo_a`, `dws_h`, `dws_a`, `G` and its Monte Carlo standard error
+  `G_se`, `S`, `Q`, `A` with the capture-time probable ids `home_sp` and `away_sp`, `D`, `R`,
+  `ii`, and the reason a component or the whole entry is null), and the record block
+  `ix_basis` (simulations, seed, schedule source, the window, remaining pairs, results not
+  yet booked before the vintage date, standings games read, postseason format, `G_REF`,
+  the construction hash, the mode and the build time). Each team column carries its own
+  dynamic basis in `feature_basis`, and `ix_games` carries one with its count.
+- **The construction.** `intensity_core` unchanged, at construction hash
+  `5e938d0d8f186241` (the first 16 hex digits of the sha256 of `intensity_core.py` with LF line
+  endings): 20,000 simulations at seed 12345, home edge 0.0345, `G_REF` 0.01158, the
+  frozen weights and bands. Regular season: Elo talent after every regular-season final
+  dated strictly before the vintage date, the remaining schedule as every scheduled
+  regular-season game not among those finals (a listing postponed or cancelled at capture
+  skipped), one unforced run for the team columns and one conditioning pass for the
+  listed games, under common random numbers at the same seed. After the last regular-season
+  game: the exact bracket, seeds from the final standings, series states from the
+  postseason finals dated strictly before the vintage date; `ix_po_pct` is 1 for a seeded
+  club and 0 for the rest, `ix_proj_wins` the final wins, `dpo_h` and `dpo_a` null.
+- **Inputs.** The results cache (`.cache/betting/completed_games.json`), the season's
+  regular-season schedule through `proj_current`'s cached read, one StatsAPI schedule
+  request for the three dates with `hydrate=probablePitcher` (schedule source "live"; when
+  it fails, the season schedule's listings for those dates with no probables, "fallback"),
+  one StatsAPI request for the postseason finals when the window or the calendar calls for
+  it, the standings cache, and the vintage's own starter board for `A`. No score of a game
+  dated on or after the vintage date is read.
+- **The rules, where each lives.** (1) `team_row`, `ix_games_block` and `ix_game` in
+  `leaderboard_vintages` read the record's own column list and keys, so an older record
+  returns None. (2) `betting_model`'s live path has no builder for these columns, so
+  `inputs_as_of` reads None there. (3) `leaderboard_vintages.ix_game` returns a stated null
+  for a game not in its pricing vintage's block. (4) `snapshot` asks for the capture only
+  on the live clock and only for today's date; a backfill, a forced rewrite of another
+  date and a direct `reduce_current` call store the stated null "not tonight's live
+  capture". (5) `test_intensity_vintage.py` fails until this section names the
+  construction hash the code carries. (6) The builder runs through the postseason on the
+  exact bracket. (7) Unchanged: only the intensity lab reads `.cache/win_prob_post/`.
+- **Tests.** `test_intensity_vintage.py` (new) pins this section by its title and the
+  column names, never a schema number: the strictly-before rule (no final dated on or
+  after the vintage date moves a value, an entry or a count), the three-date window, the
+  stated nulls, the live-only capture, the old-record and live-file rules, and that no
+  served path reads an `ix_` key, by AST and by string. Every fixture is a synthetic
+  league; the conftest returns no inputs to any other test, which the builder records as a
+  stated null.
+- **What it computed to land.** Nothing for a real game: no stake, swing, index value or
+  close variant was computed for any real game, and none was related to an outcome or a
+  price. A synthetic timing (30 clubs, 1,200 remaining games, 45 listed games, 20,000
+  simulations) took 36 seconds, the order of the nightly cost in midseason.
+- **First vintage night carrying the columns.** The first live nightly snapshot (run_daily
+  step 9e-pre) after this commit is merged into the main branch; each record's own
+  `team_columns` list and `ix_basis` say whether it carries them. The only served field
+  that moves is the vintage store's schema number in the coverage block of
+  `data/betting_model_eval.json` and `data/betting.json` (5 to 6 at that nightly), which
+  no page prints.
+
 ---
 
 

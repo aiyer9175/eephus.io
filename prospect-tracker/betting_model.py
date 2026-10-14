@@ -1012,9 +1012,16 @@ DARK5_TEAM_COLUMNS = ("lhb_share_vr", "lhb_share_vl",                     # 5i-B
                       "bench_adv_vs_lhp", "bench_adv_vs_rhp",
                       "ph_share", "pen_lhp_share",
                       "team_fld_runs")                                    # 5g
+# The game-intensity columns (2026-10-14, the section "Game intensity: stakes,
+# matchup quality and the postseason"), named by section, pinned equal to
+# leaderboard_vintages.IX_TEAM_COLUMNS. The live path has no builder for them, so
+# they read None there (inputs_as_of never fills one from live files), and nothing
+# served reads them (test_intensity_vintage.py, by AST and by string).
+DARK_IX_TEAM_COLUMNS = ("ix_elo", "ix_po_pct", "ix_ws_pct", "ix_proj_wins")
 DARK_TEAM_COLUMNS_BY_SCHEMA = {3: DARK3_TEAM_COLUMNS, 4: DARK4_TEAM_COLUMNS,
-                               5: DARK5_TEAM_COLUMNS}
-DARK_TEAM_COLUMNS = DARK3_TEAM_COLUMNS + DARK4_TEAM_COLUMNS + DARK5_TEAM_COLUMNS
+                               5: DARK5_TEAM_COLUMNS, 6: DARK_IX_TEAM_COLUMNS}
+DARK_TEAM_COLUMNS = (DARK3_TEAM_COLUMNS + DARK4_TEAM_COLUMNS + DARK5_TEAM_COLUMNS
+                     + DARK_IX_TEAM_COLUMNS)
 DARK_PITCHER_COLUMNS = ("throws",)
 
 
