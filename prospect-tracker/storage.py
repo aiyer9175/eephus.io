@@ -9858,6 +9858,118 @@ def _normalize_statcast_contact_percentiles_for_export(scm_by_key: dict[str, dic
     return out
 
 
+# --------------------------------------------------------------------------- #
+# PROSPX pitch rates: P/PA (hitters), P/IP and P/BF (pitchers) and PAR against the
+# same level and season (owner ask 19 of 2026-09-30; plan Part 8, lane design
+# pitch_metrics.md section 5.4). Every number comes from pitch_rates, the one
+# definition: the rate from pitch_rates.player_lines joined on (mlbam, season,
+# level), the anchor from pitch_rates.league_rates for the same level-season (and,
+# for a pitcher, his majority role there, the rate and the anchor both from that
+# role's line). A DISPLAY index: no eFV, ETA or value input reads these keys.
+#
+# Written only while pitch_rates.SERVE_PITCH_RATES is True; off, nothing is added
+# and the statline passes through as the very same object, so every file is
+# byte-identical. On, the headline statline carries the keys in the boot file and
+# the career rows' keys ride the player_detail shard (the boot budget). A row in a
+# usable level-season at or above the display floor gets the rate keys; every
+# other row gets par_basis alone (untracked, partial, below_floor, no_line), so a
+# consumer prints a blank with its reason and never a rate the feed did not log.
+# --------------------------------------------------------------------------- #
+PITCH_RATE_MIN_PA = 50      # hitter rows: PA on the joined line
+PITCH_RATE_MIN_OUTS = 30    # pitcher rows: outs on the joined role line (10 innings)
+
+
+def make_pitch_rate_lookup():
+    """(season, level) -> (league_rates, player_lines) or None, cache-only (no
+    network) and memoized for one export. None when the flag is off."""
+    import pitch_rates as _pr
+    if not _pr.SERVE_PITCH_RATES:
+        return None
+    memo: dict = {}
+
+    def lookup(season, level):
+        try:
+            key = (int(season), str(level or ""))
+        except (TypeError, ValueError):
+            return None
+        if key not in memo:
+            try:
+                memo[key] = (_pr.league_rates(key[1], key[0], fetch=False),
+                             _pr.player_lines(key[0], key[1], fetch=False))
+            except Exception:                                # noqa: BLE001
+                log.exception("pitch rates: lookup failed for %s %s", key[1], key[0])
+                memo[key] = None
+        return memo[key]
+    return lookup
+
+
+def pitch_rate_fields(row: dict, mlbam, lookup) -> dict:
+    """The pitch-rate keys for one career row or statline (see the block above)."""
+    import pitch_rates as _pr
+    got = lookup(row.get("season"), row.get("level")) if lookup else None
+    if not got:
+        return {"par_basis": "untracked"}
+    lr, lines = got
+    is_p = bool(row.get("is_pitcher"))
+    status = lr.get("pitching_status") if is_p else lr.get("tracking")
+    if status != "usable":
+        return {"par_basis": status if status in ("partial", "untracked") else "untracked"}
+    try:
+        line = (lines or {}).get(int(mlbam)) if mlbam is not None else None
+    except (TypeError, ValueError):
+        line = None
+    if not is_p:
+        h = (line or {}).get("hit") or {}
+        rate, anchor = h.get("p_pa"), (lr.get("hit") or {}).get("p_pa")
+        if rate is None or anchor is None:
+            return {"par_basis": "no_line"}
+        pa = int(h.get("pa") or 0)
+        if pa < PITCH_RATE_MIN_PA:
+            return {"par_basis": "below_floor"}
+        return {"p_pa": round(rate, 3), "par": _pr.par(rate, anchor),
+                "par_anchor": round(anchor, 3), "par_basis": "season_line", "par_n": pa}
+    pit = (line or {}).get("pit") or {}
+    role, basis = pit.get("role"), pit.get("basis")
+    if basis == _pr.BASIS_ROLE:
+        src = pit.get("sp" if role == "SP" else "rp") or {}
+    else:
+        src = pit.get("season_line") or {}
+    rate = pit.get("p_ip")
+    anchor = (lr.get("sp" if role == "SP" else "rp") or {}).get("p_ip")
+    if rate is None or anchor is None or role not in ("SP", "RP"):
+        return {"par_basis": "no_line"}
+    outs = int(src.get("outs") or 0)
+    if outs < PITCH_RATE_MIN_OUTS:
+        return {"par_basis": "below_floor"}
+    out = {"p_ip": round(rate, 2)}
+    if pit.get("p_bf") is not None:
+        out["p_bf"] = round(pit["p_bf"], 2)
+    out.update({"par": _pr.par(rate, anchor), "par_anchor": round(anchor, 2),
+                "par_basis": basis, "par_role": role, "par_n": outs})
+    return out
+
+
+def career_pitch_rate_shard(rows, mlbam, lookup) -> list:
+    """One {season, level, ...keys} entry per career row, in row order, for the
+    player_detail shard (the card merges it onto the row with the same season
+    and level). [] while the flag is off (lookup None) or without rows."""
+    if lookup is None or not rows:
+        return []
+    return [{"season": r.get("season"), "level": r.get("level"),
+             **pitch_rate_fields(r, mlbam, lookup)}
+            for r in rows if isinstance(r, dict)]
+
+
+def attach_pitch_rate_statline(sl, mlbam, lookup):
+    """The headline statline with its row's keys (par_n aside, which only the
+    card's by-level pooling reads). lookup None returns `sl` itself."""
+    if lookup is None or not isinstance(sl, dict) or not sl.get("level"):
+        return sl
+    keys = pitch_rate_fields(sl, mlbam or sl.get("mlbam_id"), lookup)
+    keys.pop("par_n", None)
+    return {**sl, **keys}
+
+
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statlines: dict[str, dict] | None = None,
                           pitch_arsenals: dict[str, dict] | None = None,
@@ -9927,6 +10039,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     trades_by_player = trades_by_player or {}
     transactions_by_player = transactions_by_player or {}
     career_stats = career_stats or {}
+    # Pitch rates on the served career rows and statline (None while
+    # pitch_rates.SERVE_PITCH_RATES is False: the rows pass through untouched).
+    _pitch_rate_lookup = make_pitch_rate_lookup()
     career_war = career_war or {}
     acquisitions = acquisitions or {}
     il_status = il_status or {}
@@ -12260,7 +12375,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "live_signal": _live_signal,
             "source_events": _source_events_export,
             "player_news": player_news_by_key.get(p.player_key, []),
-            "statline": sl_out,
+            "statline": attach_pitch_rate_statline(sl_out, _mlbam, _pitch_rate_lookup),
             "current_season_statlines": _current_season_statlines,
             "stat_flags": flags,
             # Scouting tool grades — consensus per-tool 20-80 grades,
@@ -17842,6 +17957,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     moved_ps.setdefault(pt_key, {})[src] = moved
         if moved_ps:
             detail["points_per_source"] = moved_ps
+        # Pitch rates per career row ride this shard, not the boot rows: on the
+        # 2026-10-09 export they cost 345 KB of boot gzip against the lane's
+        # 150 KB budget (pitch_metrics.md STOP S15). The card merges them back
+        # by (season, level). Absent while SERVE_PITCH_RATES is False.
+        _pr_rows = career_pitch_rate_shard(player_payload.get("career_stats"),
+                                           player_payload.get("mlbam_id"),
+                                           _pitch_rate_lookup)
+        if _pr_rows:
+            detail["pitch_rates"] = {"career": _pr_rows}
         if detail:
             player_detail_sidecar[pkey] = detail
 
