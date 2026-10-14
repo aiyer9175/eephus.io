@@ -1,0 +1,3776 @@
+{
+ "generated_at": "2026-10-14T15:47:35Z",
+ "dry_run": true,
+ "look": "W",
+ "reads_real_rows": false,
+ "fixture_seed": 7,
+ "boot": 40,
+ "perm": 30,
+ "result": {
+  "primaries": {
+   "hit": {
+    "stat": "k_pct",
+    "arms": {
+     "A_fg_vs_pipeline": {
+      "common_set_by_year": {
+       "2017": 37,
+       "2018": 38,
+       "2019": 38,
+       "2022": 38,
+       "2023": 38,
+       "2024": 28
+      },
+      "pooled_n": 217,
+      "thin_years": [],
+      "primary": {
+       "n": 104,
+       "equal": {
+        "spearman": 0.5364,
+        "auc": 0.7437
+       },
+       "weighted": {
+        "spearman": 0.5382,
+        "auc": 0.7448
+       },
+       "d_rho": 0.001846,
+       "d_auc": 0.001109
+      },
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 37,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2022,
+        "n": 38,
+        "weights_vintage_max_base": 2019,
+        "weights": {
+         "fangraphs": 1.0165,
+         "mlb_pipeline": 0.9835
+        },
+        "weight_base_n": 113,
+        "weight_source_rho": {
+         "fangraphs": 0.4094,
+         "mlb_pipeline": 0.3792
+        },
+        "equal_spearman": 0.6109,
+        "weighted_spearman": 0.6094
+       },
+       {
+        "year": 2023,
+        "n": 38,
+        "weights_vintage_max_base": 2020,
+        "weights": {
+         "fangraphs": 1.0165,
+         "mlb_pipeline": 0.9835
+        },
+        "weight_base_n": 113,
+        "weight_source_rho": {
+         "fangraphs": 0.4094,
+         "mlb_pipeline": 0.3792
+        },
+        "equal_spearman": 0.3829,
+        "weighted_spearman": 0.3857
+       },
+       {
+        "year": 2024,
+        "n": 28,
+        "weights_vintage_max_base": 2021,
+        "weights": {
+         "fangraphs": 1.0165,
+         "mlb_pipeline": 0.9835
+        },
+        "weight_base_n": 113,
+        "weight_source_rho": {
+         "fangraphs": 0.4094,
+         "mlb_pipeline": 0.3792
+        },
+        "equal_spearman": 0.5599,
+        "weighted_spearman": 0.5649
+       }
+      ],
+      "evaluable_years": [
+       2022,
+       2023,
+       2024
+      ],
+      "C61_permuted_source_null": {
+       "draws": 30,
+       "n_nonflat_rho": 30,
+       "n_nonflat_auc": 30,
+       "abs_d_rho_p95": 0.002219,
+       "abs_d_auc_p95": 0.001849,
+       "abs_d_rho_max": 0.003723,
+       "abs_d_auc_max": 0.002219,
+       "perm_weight_spread_median": 0.0297,
+       "perm_weight_spread_p95": 0.0814,
+       "p_rho": 0.193548,
+       "p_auc": 0.419355
+      },
+      "bootstrap": {
+       "draws": 40,
+       "seed": 8641,
+       "d_rho_lo95": 0.0,
+       "d_rho_hi95": 0.006617,
+       "d_auc_lo95": -0.000381,
+       "d_auc_hi95": 0.004453,
+       "d_rho_sd": 0.001991
+      },
+      "C0_numpy_equivalence_check": {
+       "d_rho_pure": 0.001846,
+       "d_rho_numpy": 0.001846,
+       "d_auc_pure": 0.001109,
+       "d_auc_numpy": 0.001109,
+       "max_abs_diff": 0.0,
+       "identical_to_1e12": true
+      },
+      "C0_array_ab_equivalence": {
+       "d_rho_pure": 0.001846,
+       "d_rho_array": 0.001846,
+       "d_auc_pure": 0.001109,
+       "d_auc_array": 0.001109,
+       "identical_to_1e12": true
+      },
+      "C65_seed_stability": {
+       "boot_seed_alt": {
+        "draws": 40,
+        "seed": 1337,
+        "d_rho_lo95": -0.000843,
+        "d_rho_hi95": 0.005731,
+        "d_auc_lo95": -0.000762,
+        "d_auc_hi95": 0.004815,
+        "d_rho_sd": 0.001961
+       },
+       "perm_seed_alt": {
+        "draws": 20,
+        "n_nonflat_rho": 20,
+        "n_nonflat_auc": 20,
+        "abs_d_rho_p95": 0.003201,
+        "abs_d_auc_p95": 0.002959,
+        "abs_d_rho_max": 0.005196,
+        "abs_d_auc_max": 0.003328,
+        "perm_weight_spread_median": 0.0182,
+        "perm_weight_spread_p95": 0.0388,
+        "p_rho": 0.238095,
+        "p_auc": 0.380952
+       }
+      },
+      "C63_shuffled_outcome_null": {
+       "n": 104,
+       "equal": {
+        "spearman": 0.0738,
+        "auc": 0.4819
+       },
+       "weighted": {
+        "spearman": 0.0752,
+        "auc": 0.4826
+       }
+      },
+      "C64_forced_equal_identity": {
+       "n": 217,
+       "d_rho": 0.0,
+       "d_auc": 0.0,
+       "passes": true
+      },
+      "C67_player_disjoint_weights": {
+       "n": 104,
+       "equal": {
+        "spearman": 0.5364,
+        "auc": 0.7437
+       },
+       "weighted": {
+        "spearman": 0.5382,
+        "auc": 0.7448
+       },
+       "d_rho": 0.001846,
+       "d_auc": 0.001109,
+       "per_year": [
+        {
+         "year": 2017,
+         "n": 37,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2018,
+         "n": 38,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2019,
+         "n": 38,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2022,
+         "n": 38,
+         "weights": {
+          "fangraphs": 1.0165,
+          "mlb_pipeline": 0.9835
+         },
+         "weight_base_n": 113
+        },
+        {
+         "year": 2023,
+         "n": 38,
+         "weights": {
+          "fangraphs": 1.0165,
+          "mlb_pipeline": 0.9835
+         },
+         "weight_base_n": 113
+        },
+        {
+         "year": 2024,
+         "n": 28,
+         "weights": {
+          "fangraphs": 1.0165,
+          "mlb_pipeline": 0.9835
+         },
+         "weight_base_n": 113
+        }
+       ],
+       "bootstrap": {
+        "draws": 1000,
+        "d_rho_lo95": -0.001014,
+        "d_auc_lo95": -0.000744,
+        "d_rho_sd": 0.002184,
+        "d_auc_sd": 0.001446
+       }
+      },
+      "context_single_source": {
+       "pooled_n": 104,
+       "years": [
+        2022,
+        2023,
+        2024
+       ],
+       "fangraphs": {
+        "spearman": 0.5271
+       },
+       "mlb_pipeline": {
+        "spearman": 0.4886
+       },
+       "equal_mean": {
+        "spearman": 0.5364
+       }
+      },
+      "gate": {
+       "F_rho": 0.002219,
+       "F_auc": 0.001849,
+       "margin_over_F_rho": 0.8319,
+       "G1_rho_resolvable": false,
+       "G2_auc_resolvable": false,
+       "G3_rho_lo95_pos": false,
+       "G4_auc_lo95_pos": false,
+       "G5_not_knife_edge": false,
+       "G1_to_G5": false,
+       "p_rho": 0.193548,
+       "loss_clause": false,
+       "verdict_moves_between_seeds": false,
+       "shuffled_outcome_collapsed": true
+      }
+     },
+     "B_fg_pipeline_ba": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     }
+    },
+    "holm": {
+     "p": 0.193548,
+     "step": 4,
+     "rejected": false,
+     "m": 4,
+     "threshold": 0.05
+    },
+    "verdict": "NULL",
+    "arm_B": "NULL by construction: Baseball America's earliest tool vintage is 2023"
+   },
+   "speed": {
+    "stat": "sprint",
+    "arms": {
+     "A_fg_vs_pipeline": {
+      "common_set_by_year": {
+       "2017": 29,
+       "2018": 30,
+       "2019": 30,
+       "2022": 30,
+       "2023": 30,
+       "2024": 30
+      },
+      "pooled_n": 179,
+      "thin_years": [],
+      "primary": {
+       "n": 90,
+       "equal": {
+        "spearman": 0.9573,
+        "auc": 0.958
+       },
+       "weighted": {
+        "spearman": 0.9647,
+        "auc": 0.9635
+       },
+       "d_rho": 0.007375,
+       "d_auc": 0.005432
+      },
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 29,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 30,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 30,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2022,
+        "n": 30,
+        "weights_vintage_max_base": 2019,
+        "weights": {
+         "fangraphs": 1.0594,
+         "mlb_pipeline": 0.9406
+        },
+        "weight_base_n": 89,
+        "weight_source_rho": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 0.7249
+        },
+        "equal_spearman": 0.9257,
+        "weighted_spearman": 0.9315
+       },
+       {
+        "year": 2023,
+        "n": 30,
+        "weights_vintage_max_base": 2020,
+        "weights": {
+         "fangraphs": 1.0594,
+         "mlb_pipeline": 0.9406
+        },
+        "weight_base_n": 89,
+        "weight_source_rho": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 0.7249
+        },
+        "equal_spearman": 0.9737,
+        "weighted_spearman": 0.976
+       },
+       {
+        "year": 2024,
+        "n": 30,
+        "weights_vintage_max_base": 2021,
+        "weights": {
+         "fangraphs": 1.0594,
+         "mlb_pipeline": 0.9406
+        },
+        "weight_base_n": 89,
+        "weight_source_rho": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 0.7249
+        },
+        "equal_spearman": 0.956,
+        "weighted_spearman": 0.9617
+       }
+      ],
+      "evaluable_years": [
+       2022,
+       2023,
+       2024
+      ],
+      "C61_permuted_source_null": {
+       "draws": 30,
+       "n_nonflat_rho": 30,
+       "n_nonflat_auc": 30,
+       "abs_d_rho_p95": 0.00079,
+       "abs_d_auc_p95": 0.000988,
+       "abs_d_rho_max": 0.001202,
+       "abs_d_auc_max": 0.000988,
+       "perm_weight_spread_median": 0.0147,
+       "perm_weight_spread_p95": 0.0414,
+       "p_rho": 0.032258,
+       "p_auc": 0.032258
+      },
+      "bootstrap": {
+       "draws": 40,
+       "seed": 8641,
+       "d_rho_lo95": 0.002174,
+       "d_rho_hi95": 0.013638,
+       "d_auc_lo95": 0.000498,
+       "d_auc_hi95": 0.013506,
+       "d_rho_sd": 0.003186
+      },
+      "C0_numpy_equivalence_check": {
+       "d_rho_pure": 0.007375,
+       "d_rho_numpy": 0.007375,
+       "d_auc_pure": 0.005432,
+       "d_auc_numpy": 0.005432,
+       "max_abs_diff": 0.0,
+       "identical_to_1e12": true
+      },
+      "C0_array_ab_equivalence": {
+       "d_rho_pure": 0.007375,
+       "d_rho_array": 0.007375,
+       "d_auc_pure": 0.005432,
+       "d_auc_array": 0.005432,
+       "identical_to_1e12": true
+      },
+      "C65_seed_stability": {
+       "boot_seed_alt": {
+        "draws": 40,
+        "seed": 1337,
+        "d_rho_lo95": 0.002784,
+        "d_rho_hi95": 0.016061,
+        "d_auc_lo95": 0.001482,
+        "d_auc_hi95": 0.013259,
+        "d_rho_sd": 0.003205
+       },
+       "perm_seed_alt": {
+        "draws": 20,
+        "n_nonflat_rho": 20,
+        "n_nonflat_auc": 20,
+        "abs_d_rho_p95": 0.000659,
+        "abs_d_auc_p95": 0.000988,
+        "abs_d_rho_max": 0.00079,
+        "abs_d_auc_max": 0.000988,
+        "perm_weight_spread_median": 0.016,
+        "perm_weight_spread_p95": 0.032,
+        "p_rho": 0.047619,
+        "p_auc": 0.047619
+       }
+      },
+      "C63_shuffled_outcome_null": {
+       "n": 90,
+       "equal": {
+        "spearman": -0.1584,
+        "auc": 0.4188
+       },
+       "weighted": {
+        "spearman": -0.1639,
+        "auc": 0.4168
+       }
+      },
+      "C64_forced_equal_identity": {
+       "n": 179,
+       "d_rho": 0.0,
+       "d_auc": 0.0,
+       "passes": true
+      },
+      "C67_player_disjoint_weights": {
+       "n": 90,
+       "equal": {
+        "spearman": 0.9573,
+        "auc": 0.958
+       },
+       "weighted": {
+        "spearman": 0.9647,
+        "auc": 0.9635
+       },
+       "d_rho": 0.007375,
+       "d_auc": 0.005432,
+       "per_year": [
+        {
+         "year": 2017,
+         "n": 29,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2018,
+         "n": 30,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2019,
+         "n": 30,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2022,
+         "n": 30,
+         "weights": {
+          "fangraphs": 1.0594,
+          "mlb_pipeline": 0.9406
+         },
+         "weight_base_n": 89
+        },
+        {
+         "year": 2023,
+         "n": 30,
+         "weights": {
+          "fangraphs": 1.0594,
+          "mlb_pipeline": 0.9406
+         },
+         "weight_base_n": 89
+        },
+        {
+         "year": 2024,
+         "n": 30,
+         "weights": {
+          "fangraphs": 1.0594,
+          "mlb_pipeline": 0.9406
+         },
+         "weight_base_n": 89
+        }
+       ],
+       "bootstrap": {
+        "draws": 1000,
+        "d_rho_lo95": 0.003278,
+        "d_auc_lo95": 0.000988,
+        "d_rho_sd": 0.003345,
+        "d_auc_sd": 0.003509
+       }
+      },
+      "context_single_source": {
+       "pooled_n": 90,
+       "years": [
+        2022,
+        2023,
+        2024
+       ],
+       "fangraphs": {
+        "spearman": 1.0
+       },
+       "mlb_pipeline": {
+        "spearman": 0.8426
+       },
+       "equal_mean": {
+        "spearman": 0.9573
+       }
+      },
+      "gate": {
+       "F_rho": 0.00079,
+       "F_auc": 0.000988,
+       "margin_over_F_rho": 9.3354,
+       "G1_rho_resolvable": true,
+       "G2_auc_resolvable": true,
+       "G3_rho_lo95_pos": true,
+       "G4_auc_lo95_pos": true,
+       "G5_not_knife_edge": true,
+       "G1_to_G5": true,
+       "p_rho": 0.032258,
+       "loss_clause": false,
+       "verdict_moves_between_seeds": false,
+       "shuffled_outcome_collapsed": true
+      }
+     },
+     "B_fg_pipeline_ba": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     }
+    },
+    "holm": {
+     "p": 0.032258,
+     "step": 1,
+     "rejected": false,
+     "m": 4,
+     "threshold": 0.0125
+    },
+    "verdict": "NULL",
+    "arm_B": "NULL by construction: Baseball America's earliest tool vintage is 2023"
+   },
+   "field": {
+    "stat": "oaa_per1000",
+    "arms": {
+     "A_fg_vs_pipeline": {
+      "common_set_by_year": {
+       "2017": 36,
+       "2018": 37,
+       "2019": 37,
+       "2022": 37,
+       "2023": 37,
+       "2024": 26
+      },
+      "pooled_n": 210,
+      "thin_years": [],
+      "primary": {
+       "n": 100,
+       "equal": {
+        "spearman": 0.9306,
+        "auc": 0.9644
+       },
+       "weighted": {
+        "spearman": 0.9375,
+        "auc": 0.968
+       },
+       "d_rho": 0.006877,
+       "d_auc": 0.003601
+      },
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 36,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 37,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 37,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2022,
+        "n": 37,
+        "weights_vintage_max_base": 2019,
+        "weights": {
+         "fangraphs": 0.9421,
+         "mlb_pipeline": 1.0579
+        },
+        "weight_base_n": 110,
+        "weight_source_rho": {
+         "fangraphs": 0.7442,
+         "mlb_pipeline": 0.9804
+        },
+        "equal_spearman": 0.9106,
+        "weighted_spearman": 0.9192
+       },
+       {
+        "year": 2023,
+        "n": 37,
+        "weights_vintage_max_base": 2020,
+        "weights": {
+         "fangraphs": 0.9421,
+         "mlb_pipeline": 1.0579
+        },
+        "weight_base_n": 110,
+        "weight_source_rho": {
+         "fangraphs": 0.7442,
+         "mlb_pipeline": 0.9804
+        },
+        "equal_spearman": 0.9071,
+        "weighted_spearman": 0.9158
+       },
+       {
+        "year": 2024,
+        "n": 26,
+        "weights_vintage_max_base": 2021,
+        "weights": {
+         "fangraphs": 0.9421,
+         "mlb_pipeline": 1.0579
+        },
+        "weight_base_n": 110,
+        "weight_source_rho": {
+         "fangraphs": 0.7442,
+         "mlb_pipeline": 0.9804
+        },
+        "equal_spearman": 0.946,
+        "weighted_spearman": 0.946
+       }
+      ],
+      "evaluable_years": [
+       2022,
+       2023,
+       2024
+      ],
+      "C61_permuted_source_null": {
+       "draws": 30,
+       "n_nonflat_rho": 30,
+       "n_nonflat_auc": 30,
+       "abs_d_rho_p95": 0.000684,
+       "abs_d_auc_p95": 0.0008,
+       "abs_d_rho_max": 0.00132,
+       "abs_d_auc_max": 0.0012,
+       "perm_weight_spread_median": 0.0078,
+       "perm_weight_spread_p95": 0.0276,
+       "p_rho": 0.032258,
+       "p_auc": 0.032258
+      },
+      "bootstrap": {
+       "draws": 40,
+       "seed": 8641,
+       "d_rho_lo95": 0.002521,
+       "d_rho_hi95": 0.010961,
+       "d_auc_lo95": 0.000803,
+       "d_auc_hi95": 0.006441,
+       "d_rho_sd": 0.002405
+      },
+      "C0_numpy_equivalence_check": {
+       "d_rho_pure": 0.006877,
+       "d_rho_numpy": 0.006877,
+       "d_auc_pure": 0.003601,
+       "d_auc_numpy": 0.003601,
+       "max_abs_diff": 0.0,
+       "identical_to_1e12": true
+      },
+      "C0_array_ab_equivalence": {
+       "d_rho_pure": 0.006877,
+       "d_rho_array": 0.006877,
+       "d_auc_pure": 0.003601,
+       "d_auc_array": 0.003601,
+       "identical_to_1e12": true
+      },
+      "C65_seed_stability": {
+       "boot_seed_alt": {
+        "draws": 40,
+        "seed": 1337,
+        "d_rho_lo95": 0.003326,
+        "d_rho_hi95": 0.012317,
+        "d_auc_lo95": 0.000406,
+        "d_auc_hi95": 0.008485,
+        "d_rho_sd": 0.002695
+       },
+       "perm_seed_alt": {
+        "draws": 20,
+        "n_nonflat_rho": 20,
+        "n_nonflat_auc": 20,
+        "abs_d_rho_p95": 0.000936,
+        "abs_d_auc_p95": 0.0008,
+        "abs_d_rho_max": 0.00096,
+        "abs_d_auc_max": 0.0012,
+        "perm_weight_spread_median": 0.0161,
+        "perm_weight_spread_p95": 0.0336,
+        "p_rho": 0.047619,
+        "p_auc": 0.047619
+       }
+      },
+      "C63_shuffled_outcome_null": {
+       "n": 100,
+       "equal": {
+        "spearman": -0.115,
+        "auc": 0.4182
+       },
+       "weighted": {
+        "spearman": -0.1171,
+        "auc": 0.4178
+       }
+      },
+      "C64_forced_equal_identity": {
+       "n": 210,
+       "d_rho": 0.0,
+       "d_auc": 0.0,
+       "passes": true
+      },
+      "C67_player_disjoint_weights": {
+       "n": 100,
+       "equal": {
+        "spearman": 0.9306,
+        "auc": 0.9644
+       },
+       "weighted": {
+        "spearman": 0.9375,
+        "auc": 0.968
+       },
+       "d_rho": 0.006877,
+       "d_auc": 0.003601,
+       "per_year": [
+        {
+         "year": 2017,
+         "n": 36,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2018,
+         "n": 37,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2019,
+         "n": 37,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2022,
+         "n": 37,
+         "weights": {
+          "fangraphs": 0.9421,
+          "mlb_pipeline": 1.0579
+         },
+         "weight_base_n": 110
+        },
+        {
+         "year": 2023,
+         "n": 37,
+         "weights": {
+          "fangraphs": 0.9421,
+          "mlb_pipeline": 1.0579
+         },
+         "weight_base_n": 110
+        },
+        {
+         "year": 2024,
+         "n": 26,
+         "weights": {
+          "fangraphs": 0.9421,
+          "mlb_pipeline": 1.0579
+         },
+         "weight_base_n": 110
+        }
+       ],
+       "bootstrap": {
+        "draws": 1000,
+        "d_rho_lo95": 0.002678,
+        "d_auc_lo95": 0.000403,
+        "d_rho_sd": 0.003301,
+        "d_auc_sd": 0.002523
+       }
+      },
+      "context_single_source": {
+       "pooled_n": 100,
+       "years": [
+        2022,
+        2023,
+        2024
+       ],
+       "fangraphs": {
+        "spearman": 0.8042
+       },
+       "mlb_pipeline": {
+        "spearman": 0.9797
+       },
+       "equal_mean": {
+        "spearman": 0.9306
+       }
+      },
+      "gate": {
+       "F_rho": 0.000684,
+       "F_auc": 0.0008,
+       "margin_over_F_rho": 10.0541,
+       "G1_rho_resolvable": true,
+       "G2_auc_resolvable": true,
+       "G3_rho_lo95_pos": true,
+       "G4_auc_lo95_pos": true,
+       "G5_not_knife_edge": true,
+       "G1_to_G5": true,
+       "p_rho": 0.032258,
+       "loss_clause": false,
+       "verdict_moves_between_seeds": false,
+       "shuffled_outcome_collapsed": true
+      }
+     },
+     "B_fg_pipeline_ba": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     }
+    },
+    "holm": {
+     "p": 0.032258,
+     "step": 2,
+     "rejected": false,
+     "m": 4,
+     "threshold": 0.016667
+    },
+    "verdict": "NULL",
+    "arm_B": "NULL by construction: Baseball America's earliest tool vintage is 2023"
+   },
+   "throw": {
+    "stat": "arm_z",
+    "arms": {
+     "A_fg_vs_pipeline": {
+      "common_set_by_year": {
+       "2017": 32,
+       "2018": 38,
+       "2019": 38,
+       "2022": 38,
+       "2023": 38,
+       "2024": 38
+      },
+      "pooled_n": 222,
+      "thin_years": [],
+      "primary": {
+       "n": 114,
+       "equal": {
+        "spearman": 0.9516,
+        "auc": 0.9621
+       },
+       "weighted": {
+        "spearman": 0.9588,
+        "auc": 0.9674
+       },
+       "d_rho": 0.007217,
+       "d_auc": 0.005232
+      },
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 32,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2022,
+        "n": 38,
+        "weights_vintage_max_base": 2019,
+        "weights": {
+         "fangraphs": 1.055,
+         "mlb_pipeline": 0.945
+        },
+        "weight_base_n": 108,
+        "weight_source_rho": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 0.7677
+        },
+        "equal_spearman": 0.93,
+        "weighted_spearman": 0.94
+       },
+       {
+        "year": 2023,
+        "n": 38,
+        "weights_vintage_max_base": 2020,
+        "weights": {
+         "fangraphs": 1.055,
+         "mlb_pipeline": 0.945
+        },
+        "weight_base_n": 108,
+        "weight_source_rho": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 0.7677
+        },
+        "equal_spearman": 0.967,
+        "weighted_spearman": 0.9694
+       },
+       {
+        "year": 2024,
+        "n": 38,
+        "weights_vintage_max_base": 2021,
+        "weights": {
+         "fangraphs": 1.055,
+         "mlb_pipeline": 0.945
+        },
+        "weight_base_n": 108,
+        "weight_source_rho": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 0.7677
+        },
+        "equal_spearman": 0.9389,
+        "weighted_spearman": 0.9462
+       }
+      ],
+      "evaluable_years": [
+       2022,
+       2023,
+       2024
+      ],
+      "C61_permuted_source_null": {
+       "draws": 30,
+       "n_nonflat_rho": 30,
+       "n_nonflat_auc": 30,
+       "abs_d_rho_p95": 0.000543,
+       "abs_d_auc_p95": 0.000616,
+       "abs_d_rho_max": 0.000721,
+       "abs_d_auc_max": 0.000923,
+       "perm_weight_spread_median": 0.0128,
+       "perm_weight_spread_p95": 0.0278,
+       "p_rho": 0.032258,
+       "p_auc": 0.032258
+      },
+      "bootstrap": {
+       "draws": 40,
+       "seed": 8641,
+       "d_rho_lo95": 0.003719,
+       "d_rho_hi95": 0.012389,
+       "d_auc_lo95": 0.001562,
+       "d_auc_hi95": 0.00996,
+       "d_rho_sd": 0.002572
+      },
+      "C0_numpy_equivalence_check": {
+       "d_rho_pure": 0.007217,
+       "d_rho_numpy": 0.007217,
+       "d_auc_pure": 0.005232,
+       "d_auc_numpy": 0.005232,
+       "max_abs_diff": 0.0,
+       "identical_to_1e12": true
+      },
+      "C0_array_ab_equivalence": {
+       "d_rho_pure": 0.007217,
+       "d_rho_array": 0.007217,
+       "d_auc_pure": 0.005232,
+       "d_auc_array": 0.005232,
+       "identical_to_1e12": true
+      },
+      "C65_seed_stability": {
+       "boot_seed_alt": {
+        "draws": 40,
+        "seed": 1337,
+        "d_rho_lo95": 0.004821,
+        "d_rho_hi95": 0.012796,
+        "d_auc_lo95": 0.001847,
+        "d_auc_hi95": 0.010546,
+        "d_rho_sd": 0.002199
+       },
+       "perm_seed_alt": {
+        "draws": 20,
+        "n_nonflat_rho": 20,
+        "n_nonflat_auc": 20,
+        "abs_d_rho_p95": 0.000454,
+        "abs_d_auc_p95": 0.000616,
+        "abs_d_rho_max": 0.000648,
+        "abs_d_auc_max": 0.000616,
+        "perm_weight_spread_median": 0.0149,
+        "perm_weight_spread_p95": 0.0298,
+        "p_rho": 0.047619,
+        "p_auc": 0.047619
+       }
+      },
+      "C63_shuffled_outcome_null": {
+       "n": 114,
+       "equal": {
+        "spearman": 0.1421,
+        "auc": 0.5503
+       },
+       "weighted": {
+        "spearman": 0.1463,
+        "auc": 0.5522
+       }
+      },
+      "C64_forced_equal_identity": {
+       "n": 222,
+       "d_rho": 0.0,
+       "d_auc": 0.0,
+       "passes": true
+      },
+      "C67_player_disjoint_weights": {
+       "n": 114,
+       "equal": {
+        "spearman": 0.9516,
+        "auc": 0.9621
+       },
+       "weighted": {
+        "spearman": 0.9588,
+        "auc": 0.9674
+       },
+       "d_rho": 0.007217,
+       "d_auc": 0.005232,
+       "per_year": [
+        {
+         "year": 2017,
+         "n": 32,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2018,
+         "n": 38,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2019,
+         "n": 38,
+         "skipped": "flat weights",
+         "weight_base_n": 0
+        },
+        {
+         "year": 2022,
+         "n": 38,
+         "weights": {
+          "fangraphs": 1.055,
+          "mlb_pipeline": 0.945
+         },
+         "weight_base_n": 108
+        },
+        {
+         "year": 2023,
+         "n": 38,
+         "weights": {
+          "fangraphs": 1.055,
+          "mlb_pipeline": 0.945
+         },
+         "weight_base_n": 108
+        },
+        {
+         "year": 2024,
+         "n": 38,
+         "weights": {
+          "fangraphs": 1.055,
+          "mlb_pipeline": 0.945
+         },
+         "weight_base_n": 108
+        }
+       ],
+       "bootstrap": {
+        "draws": 1000,
+        "d_rho_lo95": 0.003776,
+        "d_auc_lo95": 0.001256,
+        "d_rho_sd": 0.002859,
+        "d_auc_sd": 0.002842
+       }
+      },
+      "context_single_source": {
+       "pooled_n": 114,
+       "years": [
+        2022,
+        2023,
+        2024
+       ],
+       "fangraphs": {
+        "spearman": 1.0
+       },
+       "mlb_pipeline": {
+        "spearman": 0.8248
+       },
+       "equal_mean": {
+        "spearman": 0.9516
+       }
+      },
+      "gate": {
+       "F_rho": 0.000543,
+       "F_auc": 0.000616,
+       "margin_over_F_rho": 13.291,
+       "G1_rho_resolvable": true,
+       "G2_auc_resolvable": true,
+       "G3_rho_lo95_pos": true,
+       "G4_auc_lo95_pos": true,
+       "G5_not_knife_edge": true,
+       "G1_to_G5": true,
+       "p_rho": 0.032258,
+       "loss_clause": false,
+       "verdict_moves_between_seeds": false,
+       "shuffled_outcome_collapsed": true
+      }
+     },
+     "B_fg_pipeline_ba": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     }
+    },
+    "holm": {
+     "p": 0.032258,
+     "step": 3,
+     "rejected": false,
+     "m": 4,
+     "threshold": 0.025
+    },
+    "verdict": "NULL",
+    "arm_B": "NULL by construction: Baseball America's earliest tool vintage is 2023"
+   }
+  },
+  "secondaries": {
+   "game_pwr": {
+    "tool": "game_pwr",
+    "stat": "iso",
+    "arms": {
+     "A_fg_vs_pipeline": {
+      "common_set_by_year": {
+       "2017": 37,
+       "2018": 38,
+       "2019": 38,
+       "2022": 38,
+       "2023": 38,
+       "2024": 28
+      },
+      "pooled_n": 217,
+      "thin_years": [],
+      "primary": {
+       "n": 0,
+       "equal": {},
+       "weighted": {},
+       "d_rho": null,
+       "d_auc": null
+      },
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 37,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2022,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 113
+       },
+       {
+        "year": 2023,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 113
+       },
+       {
+        "year": 2024,
+        "n": 28,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 113
+       }
+      ],
+      "evaluable_years": [],
+      "gate": {
+       "verdict": "NULL",
+       "reason": "no board year has both a non-flat weight vintage and resolvable outcomes at lag 3"
+      }
+     },
+     "B_fg_pipeline_ba": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     }
+    },
+    "ba2": "NO SHIP",
+    "verdict": "secondary: no verdict"
+   },
+   "fb": {
+    "tool": "fb",
+    "stat": "k_pct_pit",
+    "arms": {
+     "A_fg_vs_pipeline": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     },
+     "B_fg_pipeline_ba": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     }
+    },
+    "ba2": "resolved LOSS",
+    "verdict": "secondary: no verdict"
+   },
+   "cmd": {
+    "tool": "cmd",
+    "stat": "bb_pct_pit",
+    "arms": {
+     "A_fg_vs_pipeline": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     },
+     "B_fg_pipeline_ba": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     }
+    },
+    "ba2": "NO SHIP",
+    "verdict": "secondary: no verdict"
+   },
+   "hit_avg": {
+    "tool": "hit",
+    "stat": "avg",
+    "arms": {
+     "A_fg_vs_pipeline": {
+      "common_set_by_year": {
+       "2017": 37,
+       "2018": 38,
+       "2019": 38,
+       "2022": 38,
+       "2023": 38,
+       "2024": 28
+      },
+      "pooled_n": 217,
+      "thin_years": [],
+      "primary": {
+       "n": 104,
+       "equal": {
+        "spearman": -0.0157,
+        "auc": 0.4908
+       },
+       "weighted": {
+        "spearman": -0.015,
+        "auc": 0.4912
+       },
+       "d_rho": 0.000653,
+       "d_auc": 0.000384
+      },
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 37,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2022,
+        "n": 38,
+        "weights_vintage_max_base": 2019,
+        "weights": {
+         "fangraphs": 1.0405,
+         "mlb_pipeline": 0.9595
+        },
+        "weight_base_n": 113,
+        "weight_source_rho": {
+         "fangraphs": 0.0604,
+         "mlb_pipeline": 0.05
+        },
+        "equal_spearman": -0.1056,
+        "weighted_spearman": -0.1105
+       },
+       {
+        "year": 2023,
+        "n": 38,
+        "weights_vintage_max_base": 2020,
+        "weights": {
+         "fangraphs": 1.0405,
+         "mlb_pipeline": 0.9595
+        },
+        "weight_base_n": 113,
+        "weight_source_rho": {
+         "fangraphs": 0.0604,
+         "mlb_pipeline": 0.05
+        },
+        "equal_spearman": 0.2872,
+        "weighted_spearman": 0.2921
+       },
+       {
+        "year": 2024,
+        "n": 28,
+        "weights_vintage_max_base": 2021,
+        "weights": {
+         "fangraphs": 1.0405,
+         "mlb_pipeline": 0.9595
+        },
+        "weight_base_n": 113,
+        "weight_source_rho": {
+         "fangraphs": 0.0604,
+         "mlb_pipeline": 0.05
+        },
+        "equal_spearman": -0.2502,
+        "weighted_spearman": -0.268
+       }
+      ],
+      "evaluable_years": [
+       2022,
+       2023,
+       2024
+      ],
+      "C61_permuted_source_null": {
+       "draws": 30,
+       "n_nonflat_rho": 14,
+       "n_nonflat_auc": 14,
+       "abs_d_rho_p95": 0.009791,
+       "abs_d_auc_p95": 0.00576,
+       "abs_d_rho_max": 0.010444,
+       "abs_d_auc_max": 0.006144,
+       "perm_weight_spread_median": 0.0,
+       "perm_weight_spread_p95": 0.0508,
+       "p_rho": 0.733333,
+       "p_auc": 0.8
+      },
+      "bootstrap": {
+       "draws": 40,
+       "seed": 8641,
+       "d_rho_lo95": -0.008996,
+       "d_rho_hi95": 0.006529,
+       "d_auc_lo95": -0.005208,
+       "d_auc_hi95": 0.00384,
+       "d_rho_sd": 0.00509
+      },
+      "C0_numpy_equivalence_check": {
+       "d_rho_pure": 0.000653,
+       "d_rho_numpy": 0.000653,
+       "d_auc_pure": 0.000384,
+       "d_auc_numpy": 0.000384,
+       "max_abs_diff": 0.0,
+       "identical_to_1e12": true
+      },
+      "C0_array_ab_equivalence": {
+       "d_rho_pure": 0.000653,
+       "d_rho_array": 0.000653,
+       "d_auc_pure": 0.000384,
+       "d_auc_array": 0.000384,
+       "identical_to_1e12": true
+      },
+      "gate": {
+       "F_rho": 0.009791,
+       "F_auc": 0.00576,
+       "margin_over_F_rho": 0.0667,
+       "G1_rho_resolvable": false,
+       "G2_auc_resolvable": false,
+       "G3_rho_lo95_pos": false,
+       "G4_auc_lo95_pos": false,
+       "G5_not_knife_edge": false,
+       "G1_to_G5": false,
+       "p_rho": 0.733333,
+       "loss_clause": false,
+       "verdict_moves_between_seeds": null,
+       "shuffled_outcome_collapsed": null
+      }
+     },
+     "B_fg_pipeline_ba": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     }
+    },
+    "ba2": "TL-Q2 beside",
+    "verdict": "secondary: no verdict"
+   },
+   "speed_sb": {
+    "tool": "speed",
+    "stat": "sb_per600",
+    "arms": {
+     "A_fg_vs_pipeline": {
+      "common_set_by_year": {
+       "2017": 37,
+       "2018": 38,
+       "2019": 38,
+       "2022": 38,
+       "2023": 38,
+       "2024": 28
+      },
+      "pooled_n": 217,
+      "thin_years": [],
+      "primary": {
+       "n": 0,
+       "equal": {},
+       "weighted": {},
+       "d_rho": null,
+       "d_auc": null
+      },
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 37,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 0
+       },
+       {
+        "year": 2022,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 113
+       },
+       {
+        "year": 2023,
+        "n": 38,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 113
+       },
+       {
+        "year": 2024,
+        "n": 28,
+        "skipped": "flat weights",
+        "weights": {
+         "fangraphs": 1.0,
+         "mlb_pipeline": 1.0
+        },
+        "weight_base_n": 113
+       }
+      ],
+      "evaluable_years": [],
+      "gate": {
+       "verdict": "NULL",
+       "reason": "no board year has both a non-flat weight vintage and resolvable outcomes at lag 3"
+      }
+     },
+     "B_fg_pipeline_ba": {
+      "common_set_by_year": {},
+      "pooled_n": 0,
+      "thin_years": [],
+      "gate": {
+       "verdict": "NOT COMPUTABLE",
+       "reason": "pool under 100 players"
+      }
+     }
+    },
+    "ba2": "secondary",
+    "verdict": "secondary: no verdict"
+   }
+  },
+  "tag": {
+   "hit": {
+    "tool": "hit",
+    "stat": "k_pct",
+    "n_frame": 217,
+    "k_m": 46.7354,
+    "k_m_unit": "pa",
+    "regressed": true,
+    "by_source": {
+     "fangraphs": {
+      "per_year": {
+       "2017": {
+        "n": 37,
+        "mean_gap": 0.051,
+        "mean_regressed_gap": 0.0496,
+        "mean_pit_minus_half": 0.0626,
+        "mean_abs_regressed_gap": 0.7972,
+        "ordering_rho": 0.4962
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": 0.1453,
+        "mean_regressed_gap": 0.136,
+        "mean_pit_minus_half": -0.0069,
+        "mean_abs_regressed_gap": 1.0322,
+        "ordering_rho": 0.2741
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": 0.1386,
+        "mean_regressed_gap": 0.1288,
+        "mean_pit_minus_half": 0.0192,
+        "mean_abs_regressed_gap": 0.7828,
+        "ordering_rho": 0.41
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": -0.2328,
+        "mean_regressed_gap": -0.2186,
+        "mean_pit_minus_half": -0.1134,
+        "mean_abs_regressed_gap": 0.667,
+        "ordering_rho": 0.6251
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": 0.0809,
+        "mean_regressed_gap": 0.0734,
+        "mean_pit_minus_half": 0.0669,
+        "mean_abs_regressed_gap": 0.7955,
+        "ordering_rho": 0.3868
+       },
+       "2024": {
+        "n": 28,
+        "mean_gap": -0.1412,
+        "mean_regressed_gap": -0.1258,
+        "mean_pit_minus_half": 0.0291,
+        "mean_abs_regressed_gap": 0.6923,
+        "ordering_rho": 0.5665
+       }
+      },
+      "n": 217,
+      "computable": true,
+      "ordering": 0.4547,
+      "bias_regressed": 0.0132,
+      "bias_pit": 0.0066,
+      "error_abs_regressed": 0.7992,
+      "note": null
+     },
+     "mlb_pipeline": {
+      "per_year": {
+       "2017": {
+        "n": 37,
+        "mean_gap": 0.047,
+        "mean_regressed_gap": 0.0463,
+        "mean_pit_minus_half": 0.0942,
+        "mean_abs_regressed_gap": 0.8277,
+        "ordering_rho": 0.4045
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": 0.1432,
+        "mean_regressed_gap": 0.135,
+        "mean_pit_minus_half": -0.0284,
+        "mean_abs_regressed_gap": 1.0171,
+        "ordering_rho": 0.2986
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": 0.2928,
+        "mean_regressed_gap": 0.2759,
+        "mean_pit_minus_half": 0.0813,
+        "mean_abs_regressed_gap": 0.7988,
+        "ordering_rho": 0.3391
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": -0.1776,
+        "mean_regressed_gap": -0.1682,
+        "mean_pit_minus_half": -0.0507,
+        "mean_abs_regressed_gap": 0.7237,
+        "ordering_rho": 0.5216
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": -0.0549,
+        "mean_regressed_gap": -0.0482,
+        "mean_pit_minus_half": 0.0037,
+        "mean_abs_regressed_gap": 0.796,
+        "ordering_rho": 0.2699
+       },
+       "2024": {
+        "n": 28,
+        "mean_gap": -0.2232,
+        "mean_regressed_gap": -0.1989,
+        "mean_pit_minus_half": -0.1816,
+        "mean_abs_regressed_gap": 0.6802,
+        "ordering_rho": 0.5802
+       }
+      },
+      "n": 217,
+      "computable": true,
+      "ordering": 0.3941,
+      "bias_regressed": 0.0163,
+      "bias_pit": 0.0008,
+      "error_abs_regressed": 0.813,
+      "note": null
+     }
+    },
+    "tables": {
+     "2017": {
+      "n_rows": 180,
+      "knots": [
+       39.5185,
+       45.1591,
+       50.1528,
+       54.525,
+       60.0345
+      ],
+      "values": [
+       25.7471,
+       25.3546,
+       24.9361,
+       24.9361,
+       24.4234
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2018": {
+      "n_rows": 179,
+      "knots": [
+       39.5,
+       45.1944,
+       50.1622,
+       54.125,
+       60.1333
+      ],
+      "values": [
+       25.6913,
+       25.6849,
+       24.8912,
+       24.8912,
+       24.3944
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2019": {
+      "n_rows": 179,
+      "knots": [
+       39.6,
+       45.0476,
+       50.1324,
+       54.4286,
+       60.1774
+      ],
+      "values": [
+       25.8395,
+       25.8083,
+       24.9726,
+       24.9726,
+       24.196
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2022": {
+      "n_rows": 179,
+      "knots": [
+       39.75,
+       45.2083,
+       50.3088,
+       54.5789,
+       59.85
+      ],
+      "values": [
+       25.6913,
+       25.3546,
+       24.9343,
+       24.9343,
+       24.3097
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2023": {
+      "n_rows": 179,
+      "knots": [
+       35.3333,
+       39.6296,
+       45.1136,
+       50.0294,
+       54.5227,
+       60.1429
+      ],
+      "values": [
+       26.044,
+       25.7012,
+       25.6849,
+       25.0274,
+       25.0274,
+       24.0829
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       65,
+       70,
+       75
+      ]
+     },
+     "2024": {
+      "n_rows": 189,
+      "knots": [
+       39.7381,
+       45.1957,
+       50.3125,
+       54.5652,
+       60.0
+      ],
+      "values": [
+       25.7471,
+       25.3865,
+       24.8954,
+       24.8954,
+       24.2807
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     }
+    }
+   },
+   "speed": {
+    "tool": "speed",
+    "stat": "sprint",
+    "n_frame": 179,
+    "k_m": null,
+    "k_m_unit": "competitive_runs",
+    "regressed": false,
+    "by_source": {
+     "fangraphs": {
+      "per_year": {
+       "2017": {
+        "n": 29,
+        "mean_gap": -0.0007,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0531,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2018": {
+        "n": 30,
+        "mean_gap": -0.036,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.1514,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2019": {
+        "n": 30,
+        "mean_gap": -0.0492,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0635,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2022": {
+        "n": 30,
+        "mean_gap": 0.0034,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0183,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2023": {
+        "n": 30,
+        "mean_gap": -0.028,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0027,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2024": {
+        "n": 30,
+        "mean_gap": -0.0401,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0284,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       }
+      },
+      "n": 179,
+      "computable": true,
+      "ordering": 1.0,
+      "bias_regressed": null,
+      "bias_pit": 0.0457,
+      "error_abs_regressed": null,
+      "note": null
+     },
+     "mlb_pipeline": {
+      "per_year": {
+       "2017": {
+        "n": 29,
+        "mean_gap": -0.004,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0315,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.8227
+       },
+       "2018": {
+        "n": 30,
+        "mean_gap": -0.0166,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0026,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.7059
+       },
+       "2019": {
+        "n": 30,
+        "mean_gap": 0.0754,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0872,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.6832
+       },
+       "2022": {
+        "n": 30,
+        "mean_gap": 0.0028,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0653,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.806
+       },
+       "2023": {
+        "n": 30,
+        "mean_gap": -0.1018,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.1109,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.7971
+       },
+       "2024": {
+        "n": 30,
+        "mean_gap": -0.093,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.1454,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.8834
+       }
+      },
+      "n": 179,
+      "computable": true,
+      "ordering": 0.7828,
+      "bias_regressed": null,
+      "bias_pit": -0.0275,
+      "error_abs_regressed": null,
+      "note": null
+     }
+    },
+    "tables": {
+     "2017": {
+      "n_rows": 150,
+      "knots": [
+       39.4286,
+       45.1176,
+       50.2321,
+       54.5,
+       60.1538
+      ],
+      "values": [
+       26.5145,
+       26.779,
+       27.0502,
+       27.1877,
+       27.5226
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2018": {
+      "n_rows": 149,
+      "knots": [
+       39.2895,
+       50.2,
+       54.1111,
+       60.3571
+      ],
+      "values": [
+       26.4993,
+       26.9338,
+       27.1677,
+       27.5547
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       45,
+       65,
+       70,
+       75
+      ]
+     },
+     "2019": {
+      "n_rows": 149,
+      "knots": [
+       39.4167,
+       45.1111,
+       50.2241,
+       54.4474,
+       60.5
+      ],
+      "values": [
+       26.5195,
+       26.7831,
+       26.9293,
+       27.1476,
+       27.5683
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2022": {
+      "n_rows": 149,
+      "knots": [
+       39.575,
+       45.1842,
+       50.3929,
+       54.6389,
+       60.1154
+      ],
+      "values": [
+       26.5119,
+       26.779,
+       27.0502,
+       27.2507,
+       27.5631
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2023": {
+      "n_rows": 149,
+      "knots": [
+       39.5714,
+       45.1316,
+       50.0536,
+       54.5714,
+       60.5
+      ],
+      "values": [
+       26.5245,
+       26.7871,
+       27.0587,
+       27.1877,
+       27.5601
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2024": {
+      "n_rows": 149,
+      "knots": [
+       39.5938,
+       45.1111,
+       50.4219,
+       54.575,
+       60.2308
+      ],
+      "values": [
+       26.5069,
+       26.7831,
+       27.0531,
+       27.1677,
+       27.5631
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     }
+    }
+   },
+   "field": {
+    "tool": "field",
+    "stat": "oaa_per1000",
+    "n_frame": 210,
+    "k_m": null,
+    "k_m_unit": "innings",
+    "regressed": false,
+    "by_source": {
+     "fangraphs": {
+      "per_year": {
+       "2017": {
+        "n": 36,
+        "mean_gap": -0.0357,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0475,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.8214
+       },
+       "2018": {
+        "n": 37,
+        "mean_gap": 0.2221,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.1384,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.7719
+       },
+       "2019": {
+        "n": 37,
+        "mean_gap": -0.7455,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.115,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.6892
+       },
+       "2022": {
+        "n": 37,
+        "mean_gap": -0.0601,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0469,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.7359
+       },
+       "2023": {
+        "n": 37,
+        "mean_gap": 0.2985,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.112,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.8046
+       },
+       "2024": {
+        "n": 26,
+        "mean_gap": 0.4322,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0085,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.8564
+       }
+      },
+      "n": 210,
+      "computable": true,
+      "ordering": 0.7757,
+      "bias_regressed": null,
+      "bias_pit": 0.0234,
+      "error_abs_regressed": null,
+      "note": null
+     },
+     "mlb_pipeline": {
+      "per_year": {
+       "2017": {
+        "n": 36,
+        "mean_gap": -0.0918,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0274,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.9655
+       },
+       "2018": {
+        "n": 37,
+        "mean_gap": 0.233,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.046,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.9851
+       },
+       "2019": {
+        "n": 37,
+        "mean_gap": -0.4723,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0957,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.973
+       },
+       "2022": {
+        "n": 37,
+        "mean_gap": 0.0798,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0904,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.9687
+       },
+       "2023": {
+        "n": 37,
+        "mean_gap": -0.0179,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0099,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.9765
+       },
+       "2024": {
+        "n": 26,
+        "mean_gap": 0.3256,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0096,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.9795
+       }
+      },
+      "n": 210,
+      "computable": true,
+      "ordering": 0.9745,
+      "bias_regressed": null,
+      "bias_pit": -0.0306,
+      "error_abs_regressed": null,
+      "note": null
+     }
+    },
+    "tables": {
+     "2017": {
+      "n_rows": 174,
+      "knots": [
+       39.5192,
+       45.2381,
+       50.1714,
+       54.5476,
+       60.0556
+      ],
+      "values": [
+       -1.9658,
+       -0.8882,
+       0.2473,
+       1.01,
+       1.7587
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2018": {
+      "n_rows": 173,
+      "knots": [
+       39.5,
+       45.2941,
+       50.1806,
+       54.1667,
+       60.1607
+      ],
+      "values": [
+       -2.1991,
+       -0.8882,
+       0.2885,
+       0.9726,
+       1.6606
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2019": {
+      "n_rows": 173,
+      "knots": [
+       39.6042,
+       45.125,
+       50.1515,
+       54.4545,
+       60.3036
+      ],
+      "values": [
+       -1.8978,
+       -0.8033,
+       0.1182,
+       1.0489,
+       1.8305
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2022": {
+      "n_rows": 173,
+      "knots": [
+       39.7609,
+       45.2826,
+       50.3333,
+       54.6,
+       59.9444
+      ],
+      "values": [
+       -1.9776,
+       -0.8228,
+       0.2758,
+       1.0506,
+       1.7587
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2023": {
+      "n_rows": 173,
+      "knots": [
+       39.6346,
+       45.1591,
+       50.0455,
+       54.5435,
+       60.28
+      ],
+      "values": [
+       -1.9852,
+       -0.8578,
+       0.0753,
+       1.01,
+       1.7842
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2024": {
+      "n_rows": 184,
+      "knots": [
+       39.7381,
+       45.2273,
+       50.3125,
+       54.5652,
+       60.1667
+      ],
+      "values": [
+       -1.9389,
+       -0.8251,
+       0.2543,
+       1.0168,
+       1.7165
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     }
+    }
+   },
+   "throw": {
+    "tool": "throw",
+    "stat": "arm_z",
+    "n_frame": 222,
+    "k_m": null,
+    "k_m_unit": "throws",
+    "regressed": false,
+    "by_source": {
+     "fangraphs": {
+      "per_year": {
+       "2017": {
+        "n": 32,
+        "mean_gap": 0.0306,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.056,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": -0.0968,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.1095,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": -0.0967,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0699,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": 0.0279,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0138,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": -0.0342,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0022,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       },
+       "2024": {
+        "n": 38,
+        "mean_gap": -0.0127,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0244,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 1.0
+       }
+      },
+      "n": 222,
+      "computable": true,
+      "ordering": 1.0,
+      "bias_regressed": null,
+      "bias_pit": 0.0466,
+      "error_abs_regressed": null,
+      "note": null
+     },
+     "mlb_pipeline": {
+      "per_year": {
+       "2017": {
+        "n": 32,
+        "mean_gap": 0.0135,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0149,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.919
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": -0.1115,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0237,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.7685
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": 0.0767,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": 0.0649,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.6805
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": 0.0952,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.0255,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.7862
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": -0.224,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.1036,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.8009
+       },
+       "2024": {
+        "n": 38,
+        "mean_gap": -0.0751,
+        "mean_regressed_gap": null,
+        "mean_pit_minus_half": -0.1138,
+        "mean_abs_regressed_gap": null,
+        "ordering_rho": 0.8507
+       }
+      },
+      "n": 222,
+      "computable": true,
+      "ordering": 0.7978,
+      "bias_regressed": null,
+      "bias_pit": -0.0335,
+      "error_abs_regressed": null,
+      "note": null
+     }
+    },
+    "tables": {
+     "2017": {
+      "n_rows": 190,
+      "knots": [
+       39.4464,
+       45.1087,
+       50.1711,
+       54.5476,
+       60.0833
+      ],
+      "values": [
+       -0.961,
+       -0.4421,
+       0.1003,
+       0.3755,
+       1.0271
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2018": {
+      "n_rows": 184,
+      "knots": [
+       39.4259,
+       45.1316,
+       50.1806,
+       54.1667,
+       60.1
+      ],
+      "values": [
+       -0.971,
+       -0.4484,
+       -0.1323,
+       0.359,
+       1.0808
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2019": {
+      "n_rows": 184,
+      "knots": [
+       39.5192,
+       45.0,
+       50.1515,
+       54.4545,
+       60.1452
+      ],
+      "values": [
+       -0.9397,
+       -0.4477,
+       -0.1409,
+       0.3271,
+       1.0627
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2022": {
+      "n_rows": 184,
+      "knots": [
+       39.66,
+       45.16,
+       50.3333,
+       54.6,
+       59.8167
+      ],
+      "values": [
+       -0.9284,
+       -0.4421,
+       0.0957,
+       0.4863,
+       1.0452
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2023": {
+      "n_rows": 184,
+      "knots": [
+       35.4333,
+       39.5536,
+       45.0652,
+       50.0455,
+       54.5435,
+       60.1071
+      ],
+      "values": [
+       -1.4214,
+       -0.9397,
+       -0.4257,
+       0.1076,
+       0.3755,
+       1.0271
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       65,
+       70,
+       75,
+       80
+      ]
+     },
+     "2024": {
+      "n_rows": 184,
+      "knots": [
+       39.7381,
+       45.1957,
+       50.3243,
+       54.5652,
+       59.9194
+      ],
+      "values": [
+       -0.971,
+       -0.4257,
+       0.0957,
+       0.359,
+       1.0627
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     }
+    }
+   },
+   "game_pwr": {
+    "tool": "game_pwr",
+    "stat": "iso",
+    "n_frame": 217,
+    "k_m": 177.5259,
+    "k_m_unit": "ab",
+    "regressed": true,
+    "by_source": {
+     "fangraphs": {
+      "per_year": {
+       "2017": {
+        "n": 37,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": -0.0438,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.1062
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.047,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.1024
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0553,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.0655
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": -0.0226,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.078
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": -0.0016,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.095
+       },
+       "2024": {
+        "n": 28,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0017,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.4006
+       }
+      },
+      "n": 217,
+      "computable": true,
+      "ordering": 0.0097,
+      "bias_regressed": -0.0,
+      "bias_pit": 0.0072,
+      "error_abs_regressed": 0.0,
+      "note": null
+     },
+     "mlb_pipeline": {
+      "per_year": {
+       "2017": {
+        "n": 37,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": -0.0544,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.1783
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0363,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.2788
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0426,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.0382
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0323,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.0575
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0081,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.1675
+       },
+       "2024": {
+        "n": 28,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": -0.0227,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.2512
+       }
+      },
+      "n": 217,
+      "computable": true,
+      "ordering": 0.0048,
+      "bias_regressed": -0.0,
+      "bias_pit": 0.0095,
+      "error_abs_regressed": 0.0,
+      "note": null
+     }
+    },
+    "tables": {
+     "2017": {
+      "n_rows": 180,
+      "knots": [
+       39.5185,
+       45.1591,
+       50.1528,
+       54.525,
+       60.0345
+      ],
+      "values": [
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2018": {
+      "n_rows": 179,
+      "knots": [
+       39.5,
+       45.1944,
+       50.1622,
+       54.125,
+       60.1333
+      ],
+      "values": [
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2019": {
+      "n_rows": 179,
+      "knots": [
+       39.6,
+       45.0476,
+       50.1324,
+       54.4286,
+       60.1774
+      ],
+      "values": [
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2022": {
+      "n_rows": 179,
+      "knots": [
+       39.75,
+       45.2083,
+       50.3088,
+       54.5789,
+       59.85
+      ],
+      "values": [
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2023": {
+      "n_rows": 179,
+      "knots": [
+       35.3333,
+       39.6296,
+       45.1136,
+       50.0294,
+       54.5227,
+       60.1429
+      ],
+      "values": [
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       65,
+       70,
+       75
+      ]
+     },
+     "2024": {
+      "n_rows": 189,
+      "knots": [
+       39.7381,
+       45.1957,
+       50.3125,
+       54.5652,
+       60.0
+      ],
+      "values": [
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556,
+       0.1556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     }
+    }
+   },
+   "fb": {
+    "tool": "fb",
+    "stat": "k_pct_pit",
+    "n_frame": 0,
+    "k_m": 76.5133,
+    "k_m_unit": "bf",
+    "regressed": true,
+    "by_source": {},
+    "tables": {}
+   },
+   "cmd": {
+    "tool": "cmd",
+    "stat": "bb_pct_pit",
+    "n_frame": 0,
+    "k_m": 225.8052,
+    "k_m_unit": "bf",
+    "regressed": true,
+    "by_source": {},
+    "tables": {}
+   },
+   "hit_avg": {
+    "tool": "hit",
+    "stat": "avg",
+    "n_frame": 217,
+    "k_m": 468.3212,
+    "k_m_unit": "ab",
+    "regressed": true,
+    "by_source": {
+     "fangraphs": {
+      "per_year": {
+       "2017": {
+        "n": 37,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0184,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.165
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0023,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.0859
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": -0.056,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.1006
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0356,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.1105
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0001,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.2479
+       },
+       "2024": {
+        "n": 28,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": -0.0244,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.2591
+       }
+      },
+      "n": 217,
+      "computable": true,
+      "ordering": 0.0214,
+      "bias_regressed": -0.0,
+      "bias_pit": -0.0027,
+      "error_abs_regressed": 0.0,
+      "note": null
+     },
+     "mlb_pipeline": {
+      "per_year": {
+       "2017": {
+        "n": 37,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0353,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.0567
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0154,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.1743
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": -0.0088,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.0712
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": -0.0309,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.0908
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0282,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.3118
+       },
+       "2024": {
+        "n": 28,
+        "mean_gap": -0.0,
+        "mean_regressed_gap": -0.0,
+        "mean_pit_minus_half": 0.0264,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.1608
+       }
+      },
+      "n": 217,
+      "computable": true,
+      "ordering": 0.0096,
+      "bias_regressed": -0.0,
+      "bias_pit": 0.01,
+      "error_abs_regressed": 0.0,
+      "note": null
+     }
+    },
+    "tables": {
+     "2017": {
+      "n_rows": 180,
+      "knots": [
+       39.5185,
+       45.1591,
+       50.1528,
+       54.525,
+       60.0345
+      ],
+      "values": [
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2018": {
+      "n_rows": 179,
+      "knots": [
+       39.5,
+       45.1944,
+       50.1622,
+       54.125,
+       60.1333
+      ],
+      "values": [
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2019": {
+      "n_rows": 179,
+      "knots": [
+       39.6,
+       45.0476,
+       50.1324,
+       54.4286,
+       60.1774
+      ],
+      "values": [
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2022": {
+      "n_rows": 179,
+      "knots": [
+       39.75,
+       45.2083,
+       50.3088,
+       54.5789,
+       59.85
+      ],
+      "values": [
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2023": {
+      "n_rows": 179,
+      "knots": [
+       35.3333,
+       39.6296,
+       45.1136,
+       50.0294,
+       54.5227,
+       60.1429
+      ],
+      "values": [
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       65,
+       70,
+       75
+      ]
+     },
+     "2024": {
+      "n_rows": 189,
+      "knots": [
+       39.7381,
+       45.1957,
+       50.3125,
+       54.5652,
+       60.0
+      ],
+      "values": [
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556,
+       0.2556
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     }
+    }
+   },
+   "speed_sb": {
+    "tool": "speed",
+    "stat": "sb_per600",
+    "n_frame": 217,
+    "k_m": 75.7105,
+    "k_m_unit": "pa",
+    "regressed": true,
+    "by_source": {
+     "fangraphs": {
+      "per_year": {
+       "2017": {
+        "n": 37,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": -0.0006,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.0481
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": 0.022,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.226
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": 0.0048,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.0464
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": -0.0063,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.0093
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": -0.0084,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.2755
+       },
+       "2024": {
+        "n": 28,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": -0.0298,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.0929
+       }
+      },
+      "n": 217,
+      "computable": true,
+      "ordering": 0.0851,
+      "bias_regressed": 0.0,
+      "bias_pit": -0.0012,
+      "error_abs_regressed": 0.0,
+      "note": null
+     },
+     "mlb_pipeline": {
+      "per_year": {
+       "2017": {
+        "n": 37,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": -0.0195,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.2129
+       },
+       "2018": {
+        "n": 38,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": 0.0108,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.1826
+       },
+       "2019": {
+        "n": 38,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": 0.0306,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.1331
+       },
+       "2022": {
+        "n": 38,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": 0.009,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": -0.0526
+       },
+       "2023": {
+        "n": 38,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": 0.0149,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.2074
+       },
+       "2024": {
+        "n": 28,
+        "mean_gap": 0.0,
+        "mean_regressed_gap": 0.0,
+        "mean_pit_minus_half": -0.0295,
+        "mean_abs_regressed_gap": 0.0,
+        "ordering_rho": 0.1644
+       }
+      },
+      "n": 217,
+      "computable": true,
+      "ordering": 0.0673,
+      "bias_regressed": 0.0,
+      "bias_pit": 0.0055,
+      "error_abs_regressed": 0.0,
+      "note": null
+     }
+    },
+    "tables": {
+     "2017": {
+      "n_rows": 180,
+      "knots": [
+       39.5185,
+       45.1591,
+       50.1528,
+       54.525,
+       60.0345
+      ],
+      "values": [
+       6.0,
+       6.0,
+       6.0,
+       6.0,
+       6.0
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2018": {
+      "n_rows": 179,
+      "knots": [
+       39.5,
+       45.1944,
+       50.1622,
+       54.125,
+       60.1333
+      ],
+      "values": [
+       6.0,
+       6.0,
+       6.0,
+       6.0,
+       6.0
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2019": {
+      "n_rows": 179,
+      "knots": [
+       39.6,
+       45.0476,
+       50.1324,
+       54.4286,
+       60.1774
+      ],
+      "values": [
+       6.0,
+       6.0,
+       6.0,
+       6.0,
+       6.0
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2022": {
+      "n_rows": 179,
+      "knots": [
+       39.75,
+       45.2083,
+       50.3088,
+       54.5789,
+       59.85
+      ],
+      "values": [
+       6.0,
+       6.0,
+       6.0,
+       6.0,
+       6.0
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     },
+     "2023": {
+      "n_rows": 179,
+      "knots": [
+       35.3333,
+       39.6296,
+       45.1136,
+       50.0294,
+       54.5227,
+       60.1429
+      ],
+      "values": [
+       6.0,
+       6.0,
+       6.0,
+       6.0,
+       6.0,
+       6.0
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       65,
+       70,
+       75
+      ]
+     },
+     "2024": {
+      "n_rows": 189,
+      "knots": [
+       39.7381,
+       45.1957,
+       50.3125,
+       54.5652,
+       60.0
+      ],
+      "values": [
+       6.0,
+       6.0,
+       6.0,
+       6.0,
+       6.0
+      ],
+      "thin_bins": [
+       20,
+       25,
+       30,
+       35,
+       65,
+       70,
+       75
+      ]
+     }
+    }
+   },
+   "raw_pwr": {
+    "tool": "raw_pwr",
+    "stat": "ev_avg",
+    "n_frame": 0,
+    "k_m": 43.6082,
+    "k_m_unit": "attempts",
+    "regressed": true,
+    "by_source": {},
+    "tables": {}
+   },
+   "pitch_sel": {
+    "tool": "pitch_sel",
+    "stat": "chase_pct",
+    "n_frame": 0,
+    "k_m": 68.3172,
+    "k_m_unit": "oz_pitches",
+    "regressed": true,
+    "by_source": {},
+    "tables": {}
+   },
+   "bat_ctrl": {
+    "tool": "bat_ctrl",
+    "stat": "z_contact_pct",
+    "n_frame": 0,
+    "k_m": 59.3017,
+    "k_m_unit": "iz_swings",
+    "regressed": true,
+    "by_source": {},
+    "tables": {}
+   }
+  },
+  "survivorship": "Accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6).",
+  "constants": {
+   "MIN_LAG_YEARS": 3,
+   "WEIGHT_SHRINK_K": 150,
+   "WEIGHT_CLAMP": [
+    0.6,
+    1.5
+   ],
+   "SPEARMAN_FLOOR": 0.05,
+   "BOOT": 40,
+   "PERM": 30,
+   "SEED": 8641,
+   "SEED_ALT": 1337
+  },
+  "look_void": false
+ },
+ "record_text": "### Look W (dry run on fixtures)\n\n- hit (k_pct): n 104, equal rho 0.5364, weighted rho 0.5382, d 0.001846, F 0.002219, lo95 0.0, p 0.193548, Holm 4, verdict NULL; arm B NULL by construction: Baseball America's earliest tool vintage is 2023\n- speed (sprint): n 90, equal rho 0.9573, weighted rho 0.9647, d 0.007375, F 0.00079, lo95 0.002174, p 0.032258, Holm 1, verdict NULL; arm B NULL by construction: Baseball America's earliest tool vintage is 2023\n- field (oaa_per1000): n 100, equal rho 0.9306, weighted rho 0.9375, d 0.006877, F 0.000684, lo95 0.002521, p 0.032258, Holm 2, verdict NULL; arm B NULL by construction: Baseball America's earliest tool vintage is 2023\n- throw (arm_z): n 114, equal rho 0.9516, weighted rho 0.9588, d 0.007217, F 0.000543, lo95 0.003719, p 0.032258, Holm 3, verdict NULL; arm B NULL by construction: Baseball America's earliest tool vintage is 2023\n- game_pwr (iso): n 0, d None; secondary: no verdict; BA2 NO SHIP\n- fb (k_pct_pit): n None, d None; secondary: no verdict; BA2 resolved LOSS\n- cmd (bb_pct_pit): n None, d None; secondary: no verdict; BA2 NO SHIP\n- hit_avg (avg): n 104, d 0.000653; secondary: no verdict; BA2 TL-Q2 beside\n- speed_sb (sb_per600): n 0, d None; secondary: no verdict; BA2 secondary\n- TAG hit/k_pct: frame 217, k_m 46.7354; fangraphs: ordering 0.4547, bias 0.0132, error 0.7992; mlb_pipeline: ordering 0.3941, bias 0.0163, error 0.813\n- TAG speed/sprint: frame 179, k_m None; fangraphs: ordering 1.0, bias None, error None; mlb_pipeline: ordering 0.7828, bias None, error None\n- TAG field/oaa_per1000: frame 210, k_m None; fangraphs: ordering 0.7757, bias None, error None; mlb_pipeline: ordering 0.9745, bias None, error None\n- TAG throw/arm_z: frame 222, k_m None; fangraphs: ordering 1.0, bias None, error None; mlb_pipeline: ordering 0.7978, bias None, error None\n- TAG game_pwr/iso: frame 217, k_m 177.5259; fangraphs: ordering 0.0097, bias -0.0, error 0.0; mlb_pipeline: ordering 0.0048, bias -0.0, error 0.0\n- TAG fb/k_pct_pit: frame 0, k_m 76.5133; \n- TAG cmd/bb_pct_pit: frame 0, k_m 225.8052; \n- TAG hit_avg/avg: frame 217, k_m 468.3212; fangraphs: ordering 0.0214, bias -0.0, error 0.0; mlb_pipeline: ordering 0.0096, bias -0.0, error 0.0\n- TAG speed_sb/sb_per600: frame 217, k_m 75.7105; fangraphs: ordering 0.0851, bias 0.0, error 0.0; mlb_pipeline: ordering 0.0673, bias 0.0, error 0.0\n- TAG raw_pwr/ev_avg: frame 0, k_m 43.6082; \n- TAG pitch_sel/chase_pct: frame 0, k_m 68.3172; \n- TAG bat_ctrl/z_contact_pct: frame 0, k_m 59.3017; \n\nAccuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6)."
+}

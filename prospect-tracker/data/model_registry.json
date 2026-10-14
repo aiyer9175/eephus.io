@@ -3220,6 +3220,45 @@
    "provisional_kind": "measurement_only"
   },
   {
+   "model_id": "tool_implied_production",
+   "summary": "Provisional and not read: grade-to-stat tables (TIP) for the tool framework, fit per use on declared rows; nothing served reads them.",
+   "surface": "None served: tool_implied.py (fit_tables, tip_mat, tip_f3, tip_now, tip_level, tip_first) read by tools/tool_accuracy_lab.py and the stat-line model's registration; no page, exporter or scoring path reads a table",
+   "predicts": "The MLB stat a tool grade implies (hit to K% and AVG, game power to ISO, raw power to exit velocity, speed to sprint speed and SB, field to OAA, throw to arm strength, fb to K%, cmd to BB%): per-grade-bin medians, thin bins dropped, PAVA-smoothed, interpolated, flat beyond the last non-thin bin",
+   "champion": "none - a measurement table, a pure function of the rows it is fit on; a table never scores a row of its own fit set, and no table in data/tool_grade_tables.json scores a row here",
+   "baseline": "The published FanGraphs-framework estimates (docs/reference/FANGRAPHS_FV_FRAMEWORK.md Part 2), read at look T (gate Part T)",
+   "metric": "Registered, not computed: tool above grade (TAG) per debuted player, source and tool: the gap to TIP_f3, the mid-rank percentile in the grade bin and the regressed gap with k_m from the gate's Part 4 (split-half reliability on MLB 2018 and 2019 player-seasons, the window's seasons on disk)",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "registration_status": "registered, not read",
+   "notes": "Registered 2026-10-09 in docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md Part 1.2 (owner asks 2026-10-01, PLAN Part 9 section 9.4.2; owner answers TL-Q2 K% primary for hit, TL-Q4 PWR means production power). Row written 2026-10-14 by TL_4_TOOL_LAB_BUILD with the build: tool_implied.py (bins round(g / 5) * 5, THIN_N 15, weighted PAVA oriented by the stat's sign, no extrapolation), tip_level built point in time per vintage V (level norms with an explicit as-of date of December 31 of V - 1, the within-player AAA-minus-MLB offset on seasons up to V - 1, never the artifact's concurrent offset; raises on any input season at or after V or 2026 or later), tip_first a hook on aging_v3.AgingModel.component_curve with aging v2 (raises ServiceMissing without the service). Part 4's k_m constants were measured by tools/tool_accuracy_lab.py --k-m on the per-event caches (.cache/pbp_corpus, .cache/pbp_runners) for 2018 and 2019, the only seasons of the 2015 to 2019 window on disk; sprint speed, OAA, arm strength and barrels are NOT COMPUTABLE (no per-event data for the window), so their regressed TAG is not computed. No FV cell is read, grouped or labelled anywhere (docs/PROSPECT_ANCHOR_GATE.md); the bins are tool grade bins. Nothing served moves."
+  },
+  {
+   "model_id": "tool_source_accuracy",
+   "summary": "Registered, not read: per-source tool grade accuracy (ordering, bias, error) and whether an accuracy-weighted tool consensus beats the equal mean, one look. Equal weight retains until then.",
+   "surface": "None served: tools/tool_accuracy_lab.py --look W; a passing tool's weighted grade would live on the separate key tools_consensus_w (TL_13) and the Source Accuracy Tools tab (TL_14), both dark until the look",
+   "predicts": "Whether the within-board-year ordering of a tool's realized MLB stat (hit to K%, speed to sprint speed, field to OAA per 1,000 innings, throw to arm strength) by an accuracy-weighted consensus beats the equal mean by more than the test resolves",
+   "champion": "none - registered, not read: BA2's estimator imported by name (MIN_LAG_YEARS 3, WEIGHT_SHRINK_K 150, WEIGHT_CLAMP 0.6 to 1.5, SPEARMAN_FLOOR 0.05), gate G1 to G5, Holm m = 4 on the permutation p",
+   "baseline": "The equal (unweighted) tool consensus of consensus.py on the common set; the permuted-source-label floor (1,000 draws); the player-clustered paired bootstrap B 2000 at seeds 8641 and 1337",
+   "metric": "Registered, not computed: d = weighted minus equal within-board-year Spearman per tool on board years 2017 to 2024 (debut year at most 2024, outcomes through 2026), PASS when G1 to G5 hold on arm A and Holm survives; secondaries (game_pwr to ISO, fb to K%, cmd to BB%, hit to AVG, speed to SB) descriptive only, BA2's verdicts stand",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "notes": "Registered 2026-10-09 in docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md Part W (PLAN Part 9 section 9.4.3; owner answers TL-Q2 and TL-Q5). Row written 2026-10-14 by TL_4_TOOL_LAB_BUILD with the build; the look is TL_12_TOOL_WEIGHTS_LOOK, once, under the gate's W.11 day rule, with --gate-sha (the REGISTERED commit) and --rlv-record (the R-LV record of Part 0.3, commit 1c73c420). SUPERSEDES ba_tool_grade_weight at look W: BA2's lane read board years 2020 to 2025 before the R-LV and R-VM reservations (gate Part 0.1), so its hit result may not be credited to any eFV V2 candidate; look W reads BA2's own board years again, and a hit PASS is not independent of BA2 (W.9). Artifact at the look: data/tool_accuracy_eval.json (a registry eval artifact that ships, never listed in deploy/data_exclude.txt); display copy only at .cache/tool_accuracy/preview/tool_source_accuracy.json. The dry run on fixtures with None values completed on 2026-10-14 (data/_labs/tool_accuracy/dryrun/). Arm B (adding Baseball America) is NULL by construction (earliest BA tool vintage 2023). A NULL is a finding: equal weight retains."
+  },
+  {
+   "model_id": "power_composite_v2",
+   "summary": "Registered, not read: the PWR composite candidates (game only; a weighted game and raw blend) against the served mean on realized ISO, one look. C0 retains until then.",
+   "surface": "None served: tools/tool_accuracy_lab.py --look P; the winner would be built behind POWER_COMPOSITE_MODE (TL_6, default off) and served by TL_7 under TL-Q4",
+   "predicts": "Realized MLB ISO over the first three seasons after the board year (300 PA pooled), ordered within board year by C0 round-half(mean(game, raw)), C1 the game consensus, C2 round-half(a game + (1 - a) raw) with a cross-fit player-disjoint on the grid 0.0 to 1.0",
+   "champion": "none - registered, not read: the served v12 formula (consensus.py) is C0 and retains unless C1 or C2 passes",
+   "baseline": "C0; the swap floor (game and raw swapped with probability 0.5 per row, 1,000 draws, the whole pipeline rerun); the player-clustered paired bootstrap B 2000 seed 20261021; the top-tercile AUC veto",
+   "metric": "Registered, not computed: d = within-board-year Spearman of the candidate minus C0 on identical rows (board years 2017 to 2019 and 2022 to 2024, debut year at most 2024); PASS needs lo95 above 0, d at least 2 times the floor, no AUC veto and Holm across C1 and C2; secondaries HR per PA, barrels per PA and exit velocity never decide",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "notes": "Registered 2026-10-09 in docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md Part P (owner message 1 of 2026-10-01, PLAN Part 9 section 9.4.4; owner answer TL-Q4 production power). Row written 2026-10-14 by TL_4_TOOL_LAB_BUILD with the build; the look is TL_5_POWER_COMPOSITE_LOOK, once, under the gate's P.10 day rule, with --gate-sha the REGISTERED commit. Board years 2020 and 2021 are out of look P by its own frame definition (owner question TL2-Q2). Prediction written before any number (P.9): C1 and C2 ahead of C0 by +0.01 to +0.03 rho on ISO, a near 0.7 to 1.0. Artifact at the look: data/power_composite_eval.json (a registry eval artifact that ships, never listed in deploy/data_exclude.txt). The dry run on fixtures with None values completed on 2026-10-14 (data/_labs/tool_accuracy/dryrun/). Neither verdict moves an eFV input (gate Part 7)."
+  },
+  {
    "model_id": "tool_plus",
    "summary": "Unvalidated, descriptive: 100 + 15z of the tool composite vs the draft class or overseas cohort, clamped 60 to 140; feeds only TBS.",
    "surface": "not rendered directly; an input term to the draft and overseas TBS (PROSPX)",
@@ -6320,40 +6359,40 @@
    "registration_status": "void (owner 2026-09-30, frame substituted)",
    "notes": "Owner answer VAL3-Q3 (b), 2026-09-30 (DECISIONS_FOR_OWNER.md): the one read of docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md (registration fc90703d, build 79a637e3, read 27ee25f9, FAIL on G2 coverage 0.7401 against 0.7544) is VOID because its frame was substituted: the task named surplus_backtest_real's resolved listing cohorts and the read ran on the eFV resolved matrix forward-chained over decision years 2016-2019. The void read adjudicates nothing; its block stays in data/surplus_backtest_real.json as a record with void true, and that frame is spent for this candidate. efv_score.SURPLUS_FROM_SERVED_ODDS_DEFAULT stays False; nothing served moves. VAL_3 created no registry row, so this row is new (2026-10-08); its verdict is unvalidated because the verdict enum has no void value and a void read leaves no measurement, and eval_artifact stays null until a valid read. A new registration on another frame follows in its own commit (docs/efv-2026-09-25/SURPLUS_ODDS_GATE_2.md)."
   },
- {
-  "model_id": "team_win_distribution",
-  "summary": "Registered, not read: each club's win-total distribution with talent and schedule uncertainty, scored once on the 2026 season against the schedule-only incumbent.",
-  "surface": "none yet (registered, not served); on a pass, the win range and odds on /betting/ Futures, the Franchise ODDS section and Team Outlook",
-  "predicts": "each club season win-total distribution with talent and schedule uncertainty",
-  "champion": "none",
-  "baseline": "the schedule-only distribution of playoff_odds_sim",
-  "metric": "TM-A, docs/TEAM_PROJECTIONS_GATE.md section 3",
-  "eval_artifact": null,
-  "verdict": "unvalidated",
-  "registration_status": "registered, not read",
-  "depends_on": [
-   "playoff_odds_sim",
-   "team_win_projections"
-  ],
-  "notes": "Registered 2026-10-08 by TM_1_TEAM_GATE_REGISTRATION (docs/TEAM_PROJECTIONS_GATE.md section 1.1, candidate T1), row written 2026-10-09 by TM_2_TEAM_SCORER with the scorer (proj_backtest.team_frame, score_win_distribution, _club_bootstrap). Statistic TM-A: mean CRPS of the win-total distribution against actual 2026 wins, candidate minus the schedule-only incumbent, paired over 30 clubs, bootstrap B 2000, seed 20261208, pass ub95 < 0; 80% coverage with a Wilson interval reported beside. The GATE look (TM_4) runs once; no 2026 team quantity is related to a 2026 outcome before it. Flag TEAM_TALENT_RANGE_LIVE (class 3) needs the pass and owner answer TM-Q1."
- },
- {
-  "model_id": "team_run_projection",
-  "summary": "Registered, not read: club runs scored and allowed for the first projected season, scored once on 2026 against carry-forward and league average.",
-  "surface": "none yet (registered, not served); on a pass, RS, RA, run differential and Pythag wins on Team Outlook",
-  "predicts": "club runs scored and allowed for the first projected season",
-  "champion": "none",
-  "baseline": "prior-season carry-forward and league average",
-  "metric": "TM-C",
-  "eval_artifact": null,
-  "verdict": "unvalidated",
-  "registration_status": "registered, not read",
-  "depends_on": [
-   "proj_components",
-   "team_win_projections"
-  ],
-  "notes": "Registered 2026-10-08 by TM_1_TEAM_GATE_REGISTRATION (docs/TEAM_PROJECTIONS_GATE.md section 1.3, candidate T3), row written 2026-10-09 by TM_2_TEAM_SCORER with the scorer (proj_backtest.score_team_runs). Statistic TM-C: RS MAE and RA MAE against actual 2026 RS and RA, each side paired against both comparators (the club's 2025 actuals carried forward; the 2025 league mean per club), bootstrap B 2000, seed 20261208, pass per side ub95 < 0 against both; Pythagenpat wins MAE reported beside served wins, no verdict. The GATE look (TM_4) runs once. Flag TEAM_RUNS_LIVE (class 2); a failed side keeps RS or RA off the page."
- },
+  {
+   "model_id": "team_win_distribution",
+   "summary": "Registered, not read: each club's win-total distribution with talent and schedule uncertainty, scored once on the 2026 season against the schedule-only incumbent.",
+   "surface": "none yet (registered, not served); on a pass, the win range and odds on /betting/ Futures, the Franchise ODDS section and Team Outlook",
+   "predicts": "each club season win-total distribution with talent and schedule uncertainty",
+   "champion": "none",
+   "baseline": "the schedule-only distribution of playoff_odds_sim",
+   "metric": "TM-A, docs/TEAM_PROJECTIONS_GATE.md section 3",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "depends_on": [
+    "playoff_odds_sim",
+    "team_win_projections"
+   ],
+   "notes": "Registered 2026-10-08 by TM_1_TEAM_GATE_REGISTRATION (docs/TEAM_PROJECTIONS_GATE.md section 1.1, candidate T1), row written 2026-10-09 by TM_2_TEAM_SCORER with the scorer (proj_backtest.team_frame, score_win_distribution, _club_bootstrap). Statistic TM-A: mean CRPS of the win-total distribution against actual 2026 wins, candidate minus the schedule-only incumbent, paired over 30 clubs, bootstrap B 2000, seed 20261208, pass ub95 < 0; 80% coverage with a Wilson interval reported beside. The GATE look (TM_4) runs once; no 2026 team quantity is related to a 2026 outcome before it. Flag TEAM_TALENT_RANGE_LIVE (class 3) needs the pass and owner answer TM-Q1."
+  },
+  {
+   "model_id": "team_run_projection",
+   "summary": "Registered, not read: club runs scored and allowed for the first projected season, scored once on 2026 against carry-forward and league average.",
+   "surface": "none yet (registered, not served); on a pass, RS, RA, run differential and Pythag wins on Team Outlook",
+   "predicts": "club runs scored and allowed for the first projected season",
+   "champion": "none",
+   "baseline": "prior-season carry-forward and league average",
+   "metric": "TM-C",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, not read",
+   "depends_on": [
+    "proj_components",
+    "team_win_projections"
+   ],
+   "notes": "Registered 2026-10-08 by TM_1_TEAM_GATE_REGISTRATION (docs/TEAM_PROJECTIONS_GATE.md section 1.3, candidate T3), row written 2026-10-09 by TM_2_TEAM_SCORER with the scorer (proj_backtest.score_team_runs). Statistic TM-C: RS MAE and RA MAE against actual 2026 RS and RA, each side paired against both comparators (the club's 2025 actuals carried forward; the 2025 league mean per club), bootstrap B 2000, seed 20261208, pass per side ub95 < 0 against both; Pythagenpat wins MAE reported beside served wins, no verdict. The GATE look (TM_4) runs once. Flag TEAM_RUNS_LIVE (class 2); a failed side keeps RS or RA off the page."
+  },
   {
    "model_id": "game_intensity_effects",
    "summary": "Registered, not run: whether game intensity moves moneylines and totals beyond a quality-only price, which team types and archetypes differ in high-stakes games, and what wins in October.",

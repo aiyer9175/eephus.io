@@ -1,0 +1,346 @@
+{
+ "generated_at": "2026-10-14T15:47:09Z",
+ "dry_run": true,
+ "look": "P",
+ "reads_real_rows": false,
+ "fixture_seed": 7,
+ "boot": 40,
+ "perm": 30,
+ "result": {
+  "n": 215,
+  "rows_by_year": {
+   "2017": 36,
+   "2018": 37,
+   "2019": 36,
+   "2022": 36,
+   "2023": 35,
+   "2024": 35
+  },
+  "rows_used_in_rho": 215,
+  "a_by_year": {
+   "2017": 0.5,
+   "2018": 0.6,
+   "2019": 0.5,
+   "2022": 0.6,
+   "2023": 0.5,
+   "2024": 0.5
+  },
+  "served_a": 0.5,
+  "served_as": "C2",
+  "candidates": {
+   "C0": {
+    "rho": 0.607635,
+    "auc": 0.758065
+   },
+   "C1": {
+    "rho": 0.563963,
+    "auc": 0.731883,
+    "d": -0.043672,
+    "d_auc": -0.026181
+   },
+   "C2": {
+    "rho": 0.600428,
+    "auc": 0.757006,
+    "d": -0.007207,
+    "d_auc": -0.001058
+   }
+  },
+  "per_year": {
+   "C0": {
+    "2017": {
+     "n": 36,
+     "rho": 0.7509
+    },
+    "2018": {
+     "n": 37,
+     "rho": 0.5411
+    },
+    "2019": {
+     "n": 36,
+     "rho": 0.62
+    },
+    "2022": {
+     "n": 36,
+     "rho": 0.6657
+    },
+    "2023": {
+     "n": 35,
+     "rho": 0.4559
+    },
+    "2024": {
+     "n": 35,
+     "rho": 0.6099
+    }
+   },
+   "C1": {
+    "2017": {
+     "n": 36,
+     "rho": 0.6907
+    },
+    "2018": {
+     "n": 37,
+     "rho": 0.3858
+    },
+    "2019": {
+     "n": 36,
+     "rho": 0.636
+    },
+    "2022": {
+     "n": 36,
+     "rho": 0.6039
+    },
+    "2023": {
+     "n": 35,
+     "rho": 0.4885
+    },
+    "2024": {
+     "n": 35,
+     "rho": 0.5822
+    }
+   },
+   "C2": {
+    "2017": {
+     "n": 36,
+     "rho": 0.7509
+    },
+    "2018": {
+     "n": 37,
+     "rho": 0.5092
+    },
+    "2019": {
+     "n": 36,
+     "rho": 0.62
+    },
+    "2022": {
+     "n": 36,
+     "rho": 0.6554
+    },
+    "2023": {
+     "n": 35,
+     "rho": 0.4559
+    },
+    "2024": {
+     "n": 35,
+     "rho": 0.6099
+    }
+   }
+  },
+  "bootstrap": {
+   "draws": 40,
+   "seed": 20261021,
+   "C1": {
+    "n_draws": 40,
+    "d_lo95": -0.088461,
+    "d_sd": 0.028595,
+    "d_auc_lo95": -0.059388
+   },
+   "C2": {
+    "n_draws": 40,
+    "d_lo95": -0.017665,
+    "d_sd": 0.00633,
+    "d_auc_lo95": -0.005371
+   }
+  },
+  "floor": {
+   "draws": 30,
+   "seed": 20261021,
+   "C1": {
+    "n_draws": 30,
+    "F": 0.076969,
+    "F_auc": 0.050402,
+    "p_perm": 0.516129
+   },
+   "C2": {
+    "n_draws": 30,
+    "F": 0.016824,
+    "F_auc": 0.009789,
+    "p_perm": 0.548387
+   }
+  },
+  "verdict": {
+   "C1": {
+    "d": -0.043672,
+    "lo95": -0.088461,
+    "F": 0.076969,
+    "ratio_to_floor": -0.5674,
+    "d_auc": -0.026181,
+    "F_auc": 0.050402,
+    "auc_veto": false,
+    "p_perm": 0.516129,
+    "holm_step": 1,
+    "holm_threshold": 0.025,
+    "holm_rejected": false,
+    "clauses": {
+     "1_lo95_above_0": false,
+     "2_d_at_least_2F": false,
+     "3_not_vetoed": true,
+     "4_holm": false
+    },
+    "pass": false
+   },
+   "C2": {
+    "d": -0.007207,
+    "lo95": -0.017665,
+    "F": 0.016824,
+    "ratio_to_floor": -0.4284,
+    "d_auc": -0.001058,
+    "F_auc": 0.009789,
+    "auc_veto": false,
+    "p_perm": 0.548387,
+    "holm_step": 2,
+    "holm_threshold": 0.05,
+    "holm_rejected": false,
+    "clauses": {
+     "1_lo95_above_0": false,
+     "2_d_at_least_2F": false,
+     "3_not_vetoed": true,
+     "4_holm": false
+    },
+    "pass": false
+   },
+   "serve": "C0"
+  },
+  "survivorship": "Accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6).",
+  "secondary": {
+   "hr_pa": {
+    "n": 198,
+    "verdict": "secondary: no verdict",
+    "candidates": {
+     "C0": {
+      "rho": 0.667699,
+      "d": null
+     },
+     "C1": {
+      "rho": 0.652926,
+      "d": -0.014774
+     },
+     "C2": {
+      "rho": 0.665625,
+      "d": -0.002074
+     }
+    },
+    "bootstrap": {
+     "C1": {
+      "n_draws": 40,
+      "d_lo95": -0.0674,
+      "d_sd": 0.027828,
+      "d_auc_lo95": -0.03684
+     },
+     "C2": {
+      "n_draws": 40,
+      "d_lo95": -0.027208,
+      "d_sd": 0.012885,
+      "d_auc_lo95": -0.025119
+     }
+    },
+    "floor": {
+     "C1": {
+      "n_draws": 30,
+      "F": 0.063701,
+      "F_auc": 0.03569,
+      "p_perm": 0.096774
+     },
+     "C2": {
+      "n_draws": 30,
+      "F": 0.014491,
+      "F_auc": 0.009986,
+      "p_perm": 0.096774
+     }
+    }
+   },
+   "brl_pa": {
+    "n": 172,
+    "verdict": "secondary: no verdict",
+    "candidates": {
+     "C0": {
+      "rho": -0.007535,
+      "d": null
+     },
+     "C1": {
+      "rho": -0.011795,
+      "d": -0.00426
+     },
+     "C2": {
+      "rho": -0.019786,
+      "d": -0.012251
+     }
+    },
+    "bootstrap": {
+     "C1": {
+      "n_draws": 40,
+      "d_lo95": -0.065718,
+      "d_sd": 0.039795,
+      "d_auc_lo95": -0.045985
+     },
+     "C2": {
+      "n_draws": 40,
+      "d_lo95": -0.048208,
+      "d_sd": 0.03048,
+      "d_auc_lo95": -0.03954
+     }
+    },
+    "floor": {
+     "C1": {
+      "n_draws": 30,
+      "F": 0.050317,
+      "F_auc": 0.036383,
+      "p_perm": 0.645161
+     },
+     "C2": {
+      "n_draws": 30,
+      "F": 0.065019,
+      "F_auc": 0.03216,
+      "p_perm": 0.612903
+     }
+    }
+   },
+   "ev_avg": {
+    "n": 184,
+    "verdict": "secondary: no verdict",
+    "candidates": {
+     "C0": {
+      "rho": 0.427675,
+      "d": null
+     },
+     "C1": {
+      "rho": 0.434264,
+      "d": 0.006589
+     },
+     "C2": {
+      "rho": 0.425685,
+      "d": -0.00199
+     }
+    },
+    "bootstrap": {
+     "C1": {
+      "n_draws": 40,
+      "d_lo95": -0.031577,
+      "d_sd": 0.032294,
+      "d_auc_lo95": -0.069384
+     },
+     "C2": {
+      "n_draws": 40,
+      "d_lo95": -0.040992,
+      "d_sd": 0.026146,
+      "d_auc_lo95": -0.047812
+     }
+    },
+    "floor": {
+     "C1": {
+      "n_draws": 30,
+      "F": 0.050962,
+      "F_auc": 0.036194,
+      "p_perm": 0.129032
+     },
+     "C2": {
+      "n_draws": 30,
+      "F": 0.040008,
+      "F_auc": 0.026136,
+      "p_perm": 0.225806
+     }
+    }
+   }
+  }
+ },
+ "record_text": "### Look P (dry run on fixtures)\n\nrows 215 by board year {'2017': 36, '2018': 37, '2019': 36, '2022': 36, '2023': 35, '2024': 35}; a by year {2017: 0.5, 2018: 0.6, 2019: 0.5, 2022: 0.6, 2023: 0.5, 2024: 0.5}; served a 0.5 (C2)\n- C1: d -0.043672, lo95 -0.088461, F 0.076969, ratio -0.5674, d_auc -0.026181 (floor 0.050402, veto False), p 0.516129, Holm step 1, pass False\n- C2: d -0.007207, lo95 -0.017665, F 0.016824, ratio -0.4284, d_auc -0.001058 (floor 0.009789, veto False), p 0.548387, Holm step 2, pass False\n- serve: C0\n- secondary hr_pa: n 198 {'C0': {'rho': 0.667699, 'd': None}, 'C1': {'rho': 0.652926, 'd': -0.014774}, 'C2': {'rho': 0.665625, 'd': -0.002074}} (secondary: no verdict)\n- secondary brl_pa: n 172 {'C0': {'rho': -0.007535, 'd': None}, 'C1': {'rho': -0.011795, 'd': -0.00426}, 'C2': {'rho': -0.019786, 'd': -0.012251}} (secondary: no verdict)\n- secondary ev_avg: n 184 {'C0': {'rho': 0.427675, 'd': None}, 'C1': {'rho': 0.434264, 'd': 0.006589}, 'C2': {'rho': 0.425685, 'd': -0.00199}} (secondary: no verdict)\n\nAccuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6)."
+}
