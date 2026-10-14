@@ -756,3 +756,231 @@ def test_the_credit_prints_the_copyright_verbatim(oct_site, pw, oct_doc):
         assert words.findall(text) == [] and "for real" not in text.lower()
         assert "—" not in text and "–" not in text
         no_errors(page)
+
+
+# --------------------------------------------------------------------------- #
+# STANDINGS_6: the Season select, past seasons and As of
+# --------------------------------------------------------------------------- #
+#: Past season fixtures (the tracked copy's shape) and the as_of each season
+#: file carries; under ST-Q3 (a) races exist from 2015, by-date files for the
+#: newest season only.
+PAST = {2020: ("standings_2020.json", "2020-09-27"), 2016: ("standings_2016.json", "2016-10-02"),
+        2012: ("standings_2012.json", None), 2009: ("standings_2009.json", None)}
+RACE_FROM = 2015
+SNAP_DATE = "2026-06-01"
+
+
+def past_file(y):
+    name, as_of = PAST[y]
+    return st.build_season_file(fx(name), as_of=as_of, final=True, generated_at="2026-10-14T12:00:00Z")
+
+
+def multi_payloads(cur, past, snaps):
+    """payloads() for the newest season plus past season files in the index
+    and by-date files for the newest season."""
+    pay = payloads(cur)
+    ix = pay["index.json"]
+    ix["standings_seasons"][0].update(n_dates=len(snaps), by_date=bool(snaps))
+    for y, doc in past.items():
+        ix["standings_seasons"].append({"season": y, "rev": sc.rev_of(doc), "race_rev": f"r{y}" if y >= RACE_FROM else None,
+                                        "phist_rev": None, "phist_from": None, "n_dates": 0, "by_date": False, "final": True})
+        pay[f"standings/{y}.json"] = doc
+    for d, doc in snaps.items():
+        pay[f"standings/{cur['season']}/{d}.json"] = doc
+    pay["latest.json"]["index_rev"] = sc.rev_of(ix)
+    return pay
+
+
+@pytest.fixture(scope="module")
+def sel_docs(oct_doc):
+    docs = {y: past_file(y) for y in PAST}
+    docs["snap"] = st.build_snapshot_file(fx("p4_2026-06-01.json"), as_of=SNAP_DATE, final=False,
+                                          generated_at="2026-06-02T04:00:00Z")
+    docs["snap"]["opening_day"] = "2026-03-25"
+    return docs
+
+
+@pytest.fixture(scope="module")
+def sel_site(tmp_path_factory, oct_doc, sel_docs):
+    past = {y: d for y, d in sel_docs.items() if y != "snap"}
+    return make_site(tmp_path_factory.mktemp("st_sel"), multi_payloads(oct_doc, past, {SNAP_DATE: sel_docs["snap"]}))
+
+
+def stamp_is(page, text):
+    page.wait_for_function("t => (document.querySelector('.st-stamp em') || {}).textContent === t", arg=text, timeout=8000)
+
+
+def _hash(page):
+    return page.evaluate("() => location.hash")
+
+
+def test_the_season_select_lists_every_indexed_season(sel_site, pw):
+    with serve_site(sel_site) as base, standings_page(base, pw, width=390) as page:
+        ix = json.loads((sel_site / "data" / "scores" / "index.json").read_text(encoding="utf-8"))
+        want = sorted((e["season"] for e in ix["standings_seasons"]), reverse=True)
+        opts = page.evaluate("() => [...document.querySelectorAll('#st-season option')].map(o => [+o.value, o.textContent, o.selected])")
+        assert [o[0] for o in opts] == want == [2026, 2020, 2016, 2012, 2009]
+        assert [o[1] for o in opts] == [str(y) for y in want] and [o[0] for o in opts if o[2]] == [2026]
+        assert page.locator("label[for=st-season]").inner_text() == "Season"
+        assert page.locator("label[for=st-date]").inner_text() == "As of"
+        # bounded by the season's by-date files: Opening Day to the newest file's as_of
+        assert page.locator("#st-date").get_attribute("min") == "2026-03-25"
+        assert page.locator("#st-date").get_attribute("max") == "2026-09-27"
+        assert page.locator("#st-date").get_attribute("value") == ""
+        no_errors(page)
+
+
+@pytest.mark.parametrize("width", [390, 1280])
+def test_2020_cuts_at_its_format_with_its_note_and_served_seeds(sel_site, pw, sel_docs, width):
+    doc = sel_docs[2020]
+    rows = rows_of(doc)
+    with serve_site(sel_site) as base, standings_page(base, pw, width=width, hash_="#view=wildcard&season=2020") as page:
+        stamp_is(page, "Final standings, 2020 regular season.")
+        note = page.evaluate("() => { const n = document.querySelector('.st-ctl + .st-fmt'); return n && n.textContent; }")
+        assert note == doc["format"]["notes"][0] == "2020: a 60-game season; eight clubs per league reached the postseason."
+        assert page.evaluate("() => +document.querySelector('#st-season').value") == 2020
+        got = _cells(page)
+        assert len(got) == 30
+        for code, cells in got.items():
+            assert cells["SEED"][0] == (str(rows[code]["seed"]) if rows[code]["seed"] else "-"), code
+        for lg in ("AL", "NL"):
+            seeds = sorted(int(c["SEED"][0]) for k, c in got.items() if rows[k]["lg"] == lg and c["SEED"][0] != "-")
+            assert seeds == list(range(1, 9)), (lg, seeds)
+        groups = page.evaluate("() => [...document.querySelectorAll('.st-sub')].map(h => h.textContent)")
+        assert groups == ["Division leaders", "Division second place", "Wild card"] * 2
+        cut = page.evaluate("() => [...document.querySelectorAll('tr.st-cut')].map(r => r.dataset.code)")
+        assert [rows[c]["seed"] for c in cut] == [doc["format"]["per_league"]] * 2 == [8, 8]
+        assert all(rows[c]["qualified"] == "wild_card" for c in cut)
+        # no ODDS group outside its window: no chip, no column, no model label
+        assert page.locator('.st-odds, [data-model-id], [data-group="odds"], .st-odds-note').count() == 0
+        assert page.evaluate(_OVERFLOW) <= 0
+        no_errors(page)
+
+
+def test_2009_race_is_unmeasured_and_a_raced_season_is_not(sel_site, pw):
+    with serve_site(sel_site) as base, standings_page(base, pw, width=1280, hash_="#season=2009") as page:
+        stamp_is(page, "Final standings, 2009 regular season.")
+        note = page.locator(".st-race-note")
+        assert note.inner_text().strip() == "Game-by-game results for 2009 are not on file."
+        assert "is-unmeasured" in note.get_attribute("class")
+        assert page.locator("#st-date").count() == 0, "no As of for a season with no by-date file"
+        assert page.locator(".st-table").count() == 6
+        page.select_option("#st-season", "2016")
+        stamp_is(page, "Final standings, 2016 regular season.")
+        assert page.locator(".st-race-note").count() == 0
+        assert not any("-race.json" in u or "-phist.json" in u for u in page._requests)
+        no_errors(page)
+
+
+def test_2012_marks_after_the_rule_and_its_cut(sel_site, pw, sel_docs):
+    doc = sel_docs[2012]
+    rows = rows_of(doc)
+    with serve_site(sel_site) as base, standings_page(base, pw, width=1280, hash_="#view=mlb&season=2012") as page:
+        stamp_is(page, "Final standings, 2012 regular season.")
+        got = page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.st-table tbody tr[data-code]')].map(r =>
+            [r.dataset.code, [(r.querySelector('.st-letter abbr') || {}).textContent || '',
+              (r.querySelector('.st-mk use') || {getAttribute: () => ''}).getAttribute('href')]]))""")
+        assert len(got) == 30
+        marked = {c for c, r in rows.items() if r["mark"]}
+        assert marked == {c for c, r in rows.items() if r["seed"]} and len(marked) == 10
+        assert {c for c, r in rows.items() if r["e"]} == set(rows) - marked
+        for code, (letter, href) in got.items():
+            assert letter == (rows[code]["mark"] or "e"), code
+            assert href.endswith("#i-st-clinch" if rows[code]["mark"] else "#i-st-elim"), code
+        set_hash(page, "#view=wildcard&season=2012")
+        cut = page.evaluate("() => [...document.querySelectorAll('tr.st-cut')].map(r => r.dataset.code)")
+        assert [rows[c]["seed"] for c in cut] == [3 + doc["format"]["wc_spots"]] * 2 == [5, 5]
+        no_errors(page)
+
+
+@pytest.mark.parametrize("width", [390, 1280])
+def test_as_of_rerenders_from_the_date_file_and_hides_odds(sel_site, pw, sel_docs, oct_doc, width):
+    snap = rows_of(sel_docs["snap"])
+    with serve_site(sel_site) as base, standings_page(base, pw, width=width, hash_="#view=mlb&cols=runs,odds") as page:
+        stamp_is(page, "Final standings, 2026 regular season.")
+        if width >= 768:
+            assert page.locator("td.st-odds").count() > 0
+        page.fill("#st-date", SNAP_DATE)
+        stamp_is(page, "Standings as of June 1, 2026.")
+        assert "date=2026-06-01" in _hash(page)
+        assert any(u.split("?")[0].endswith("/data/scores/standings/2026/2026-06-01.json") for u in page._requests)
+        got = _cells(page)
+        assert len(got) == 30
+        for code, cells in got.items():
+            r = snap[code]
+            assert (cells["W"][0], cells["L"][0]) == (str(r["w"]), str(r["l"])), code
+            assert cells["RD"][0] == _signed(r["rd"]), code
+        assert any(rows_of(oct_doc)[c]["w"] != snap[c]["w"] for c in snap)
+        assert page.locator('.st-odds, [data-model-id], [data-group="odds"], .st-odds-note').count() == 0
+        assert page.locator("#st-date").input_value() == SNAP_DATE
+        assert page.evaluate(_OVERFLOW) <= 0
+        page.click(".st-latest")
+        stamp_is(page, "Final standings, 2026 regular season.")
+        assert "date=" not in _hash(page)
+    with serve_site(sel_site) as base, standings_page(base, pw, width=width, hash_="#season=2026&date=2026-06-01") as page:
+        stamp_is(page, "Standings as of June 1, 2026.")
+        assert page.locator("[data-model-id]").count() == 0 and page.locator("#st-bracket").count() == 0
+        no_errors(page)
+
+
+@pytest.mark.parametrize("h, want, note", [
+    ("#season=1999", "", None),
+    ("#view=league&season=1999", "#view=league", None),
+    ("#season=2009&date=2009-06-01", "#season=2009", None),
+    ("#season=2026&date=2026-07-14", "#season=2026", "No standings file for July 14, 2026."),
+    ("#date=2026-13-45", "", None),
+])
+def test_an_unknown_season_or_date_is_dropped(sel_site, pw, h, want, note):
+    with serve_site(sel_site) as base, standings_page(base, pw, width=1280, hash_=h) as page:
+        page.wait_for_function("w => location.hash === w", arg=want, timeout=8000)
+        y = 2009 if "2009" in h else 2026
+        stamp_is(page, f"Final standings, {y} regular season.")
+        assert page.evaluate("() => +document.querySelector('#st-season').value") == y
+        assert not any("/standings/2009/" in u for u in page._requests)
+        miss = page.locator(".st-miss")
+        if note:
+            assert miss.inner_text().strip() == note
+        else:
+            assert miss.count() == 0
+        no_errors(page)
+
+
+def test_back_and_forward_restore_the_season_and_the_view(sel_site, pw):
+    def state(page):
+        return page.evaluate("""() => [+document.querySelector('#st-season').value,
+            document.querySelector('.st-views [aria-pressed="true"]').dataset.view]""")
+    with serve_site(sel_site) as base, standings_page(base, pw, width=1280, hash_="#view=division") as page:
+        stamp_is(page, "Final standings, 2026 regular season.")
+        page.select_option("#st-season", "2020")
+        stamp_is(page, "Final standings, 2020 regular season.")
+        page.click('[data-view="wildcard"]')
+        page.wait_for_selector(".st-sub")
+        assert state(page) == [2020, "wildcard"]
+        page.go_back()
+        page.wait_for_function("() => !document.querySelector('.st-sub')")
+        assert state(page) == [2020, "division"]
+        page.go_back()
+        stamp_is(page, "Final standings, 2026 regular season.")
+        assert state(page) == [2026, "division"]
+        page.go_forward()
+        stamp_is(page, "Final standings, 2020 regular season.")
+        assert state(page) == [2020, "division"]
+        page.go_forward()
+        page.wait_for_selector(".st-sub")
+        assert state(page) == [2020, "wildcard"]
+        no_errors(page)
+
+
+def test_ties_print_as_w_l_t_in_the_detail_row(sel_site, pw, sel_docs):
+    rows = rows_of(sel_docs[2016])
+    tied = sorted(c for c, r in rows.items() if r["t"])
+    assert tied == ["CHC", "PIT"]
+    with serve_site(sel_site) as base, standings_page(base, pw, width=390, hash_="#view=mlb&season=2016") as page:
+        stamp_is(page, "Final standings, 2016 regular season.")
+        for code in ("CHC", "NYY"):
+            page.click(f'.st-more[data-code="{code}"]')
+            page.wait_for_selector(f"#st-d-{code}")
+            rec = page.evaluate("c => document.querySelector('#st-d-' + c + ' .st-dl dd').textContent", code)
+            r = rows[code]
+            assert rec == (f"{r['w']}-{r['l']}-{r['t']}" if r["t"] else f"{r['w']}-{r['l']}"), (code, rec)
+        no_errors(page)
