@@ -155,7 +155,7 @@ MODULES = (
     ("collegesavant", "CollegeSavant", "/collegesavant/",
      "Percentile profiles for college hitters and pitchers."),
     ("franchise", "Franchises", "/franchise/",
-     "One page per club: the Franchise Index and its three branches."),
+     "One page per club: F-SCORE and the three branches beneath it."),
     ("fa", "MLB Free Agency", "/fa/",
      "The free-agent class: projected contracts with floor, mean and ceiling bands."),
     ("projections", "MLB Projections", "/projections/",

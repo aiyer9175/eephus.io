@@ -8538,17 +8538,97 @@
     "org grade tree"
    ],
    "priority": 40,
-   "definition": "A descriptive rank of a club's realized standing plus one provisional projection: the weighted mean of the ROSTER, OUTLOOK and FARM branch scores, re-standardised to 100 + 10z across the 30 clubs.",
-   "methodology": "franchise_export.py: branch scores (100 + 10z of team eWAR, projected 2027 wins and the PROSPX farm composite) are combined at ROSTER 0.40 / OUTLOOK 0.30 / FARM 0.30, and the weighted mean is re-standardised by the same formula before any rank or letter is taken, because a weighted mean of z-scores has sd below 10 unless the branches are perfectly correlated. Letters follow rank (storage._letter_grade) and print in neutral ink; only the score takes the z ladder. Thirty percent rests on the provisional team_win_projections row.",
+   "definition": "Retired 2026 by owner answer FS-Q4: F-SCORE (franchise_score) replaced the Franchise Index as the root score on /franchise/, and the Index is no longer served. What it was: A descriptive rank of a club's realized standing plus one provisional projection: the weighted mean of the ROSTER, OUTLOOK and FARM branch scores, re-standardised to 100 + 10z across the 30 clubs.",
+   "methodology": "franchise_export.py: branch scores (100 + 10z of team eWAR, projected 2027 wins and the PROSPX farm composite) are combined at ROSTER 0.40 / OUTLOOK 0.30 / FARM 0.30, and the weighted mean is re-standardised by the same formula before any rank or letter is taken, because a weighted mean of z-scores has sd below 10 unless the branches are perfectly correlated. Letters follow rank (storage._letter_grade) and print in neutral ink; only the score takes the z ladder. Thirty percent rests on the provisional team_win_projections row. Retired 2026 by owner answer FS-Q4 (2026-10-01): its three branches count inside F-SCORE, ROSTER and OUTLOOK in STRENGTH and FARM in PIPELINE; the method above is kept as the record.",
    "example": "",
    "formula": "index = 100 + 10 * (w - mean(w)) / sd(w), w = 0.40 * roster + 0.30 * outlook + 0.30 * farm",
    "seeAlso": [
+    "franchise_score",
     "franchise_branch_score",
     "ewar",
     "sur_plus"
    ],
    "shelf": "ark",
-   "origin": "original to eephus.io (Franchise, franchise_export.py); registry row franchise_index, unvalidated (descriptive)"
+   "origin": "original to eephus.io (Franchise, franchise_export.py); registry row franchise_index, unvalidated (descriptive); retired 2026 by owner answer FS-Q4 (the registry row is now deprecated), replaced by F-SCORE (franchise_score)"
+  },
+  {
+   "id": "franchise_score",
+   "term": "F-SCORE",
+   "category": "custom-index",
+   "section": "Clubs",
+   "module": [
+    "franchise",
+    "mlbstats"
+   ],
+   "aliases": [
+    "F-SCORE",
+    "franchise score",
+    "FSCORE"
+   ],
+   "priority": 40,
+   "definition": "A descriptive score of each club over the last seven seasons and today: what it won (regular-season wins, division titles, postseason rounds, titles), how strong it was and is (run differential, the current roster, projected 2027 wins), what is coming (the farm and its development) and what its payroll bought. 100 is the league average and 10 points is one standard deviation across the 30 clubs. Not a forecast.",
+   "methodology": "fscore_export.py. RESULTS: each season a club earns its wins above .500, plus 8 wins for a division title and 8 for each postseason step reached (a berth 8, the division series or a bye 16, the LCS 24, the World Series 32, a title 40), centred on the season's league average. STRENGTH: run differential per 162 games over the same seasons (half), the Franchise ROSTER score of team WAR on the current roster (three tenths; its WAR label is the one the served provider stamp names, payload copy.roster_leg) and projected 2027 wins (a fifth, a provisional projection). PIPELINE: the PROSPX farm composite (six tenths) and 7yDvM+ (four tenths). OPERATIONS: wins above replacement per million dollars of payroll above a minimum roster, ranked within each season. The seasons are averaged with a three-season half-life; 2020 counts as played, 60 games. Each pillar is standardised across the 30 clubs, weighted RESULTS 50, STRENGTH 25, PIPELINE 20, OPERATIONS 5, and the weighted mean is re-standardised before any rank or letter is taken. In-game management is shown and not scored: the one decision family the site has gated, the running game, did not repeat between halves of a club's own season (per-agent decision value).",
+   "example": "",
+   "formula": "F-SCORE = 100 + 10 * (s - mean(s)) / sd(s), s = 0.50 RESULTS + 0.25 STRENGTH + 0.20 PIPELINE + 0.05 OPERATIONS, each pillar a z across the 30 clubs",
+   "seeAlso": [
+    "franchise_index",
+    "franchise_branch_score",
+    "season_record",
+    "dvm_plus",
+    "cost_plus",
+    "realized_mwpa",
+    "postseason_ladder",
+    "payroll_efficiency"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Franchise, fscore_export.py); registry row franchise_score, provisional (descriptive)"
+  },
+  {
+   "id": "postseason_ladder",
+   "term": "Postseason ladder",
+   "category": "custom-index",
+   "section": "Clubs",
+   "module": [
+    "franchise"
+   ],
+   "aliases": [
+    "postseason ladder",
+    "F-SCORE ladder"
+   ],
+   "priority": 30,
+   "definition": "How F-SCORE counts October: each step a club reaches is worth a stated number of regular-season wins. A berth 8, the division series or a bye 16, the LCS 24, the World Series 32, a title 40; a division title adds 8.",
+   "methodology": "Read from the StatsAPI postseason series by season, joined by team id. A bye counts as reaching the division series. The values are a published choice, not an estimate: no scale was fitted. Steps not yet played count nothing until they are.",
+   "example": "",
+   "formula": "ladder(step) = 8 * step, step 0 missed to 5 title; division title + 8",
+   "seeAlso": [
+    "franchise_score"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (fscore_export.LADDER, owner answer FS-Q1 of 2026-10-01)"
+  },
+  {
+   "id": "payroll_efficiency",
+   "term": "Payroll efficiency",
+   "category": "custom-index",
+   "section": "Clubs",
+   "module": [
+    "franchise"
+   ],
+   "aliases": [
+    "payroll efficiency",
+    "F-SCORE OPERATIONS"
+   ],
+   "priority": 30,
+   "definition": "Wins above a replacement-level club per million dollars of payroll above a minimum roster, in the season the money was spent. Realized, not a forecast; the forward-looking ratio is Cost+ on the Club Ledger.",
+   "methodology": "Payroll is Spotrac's total payroll allocations for the season (prorated to 60 games in 2020, and the floor with it), read from the cached pages only; the floor is 26 league-minimum salaries; replacement is 47.7 wins per 162 games (the Team Outlook league accounting). Ranked within each season and read as a normal score, because the ratio is skewed: a club a few million above the floor would otherwise dominate its season.",
+   "example": "",
+   "formula": "eff = (W - 0.2944 * G) / ((payroll - 26 * league minimum) in $M), then Phi^-1(rank / 31) within the season",
+   "seeAlso": [
+    "franchise_score",
+    "cost_plus"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (fscore_export.py OPERATIONS pillar)"
   },
   {
    "id": "franchise_branch_score",
@@ -8570,6 +8650,7 @@
    "example": "",
    "formula": "score = 100 + 10 * (v - mean(v)) / sd(v) over the 30 clubs",
    "seeAlso": [
+    "franchise_score",
     "franchise_index",
     "ewar",
     "farm_grade_financial"
@@ -8596,6 +8677,7 @@
    "example": "",
    "formula": "",
    "seeAlso": [
+    "franchise_score",
     "pythag_pct",
     "franchise_index"
    ],

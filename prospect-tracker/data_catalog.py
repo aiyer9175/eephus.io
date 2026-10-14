@@ -651,6 +651,24 @@ ARTIFACTS = (
                  "directory."),
     },
     {
+        "file": "fscore.json", "group": "mlb",
+        "title": "F-SCORE (seven-season franchise score)",
+        "what": ("Thirty clubs' F-SCORE: four pillar z-scores (RESULTS in wins with the "
+                 "published postseason ladder, STRENGTH, PIPELINE, OPERATIONS) over the "
+                 "seven completed seasons 2020-2026 with a three-season half-life, weighted "
+                 "50 / 25 / 20 / 5 and re-standardised to 100 + 10z, with each club's "
+                 "season table, counts and the season facts (champion, pennants, division "
+                 "champions, byes) the Franchise page and the Teams tab copy."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_fscore_export.py",
+        "note": ("Descriptive, not a forecast: registry row franchise_score, provisional, "
+                 "measurement only. Written by fscore_export (run_daily 6b7g) before the "
+                 "Franchise board (6b7d) that embeds it and the Teams payload (6b7h) that "
+                 "copies score, letter and rank. In-game management is shown, not scored. "
+                 "The writer refuses on a missing club, a missing completed season, a "
+                 "broken bracket or a failed identity and leaves the previous file on disk."),
+    },
+    {
         "file": "management_decisions.json", "group": "mlb",
         "title": "In-Game Management decision ledger (summary)",
         "what": ("Nine decision families the play corpus can name (pitching change, pinch "
