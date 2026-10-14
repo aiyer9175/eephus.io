@@ -97,3 +97,7 @@ milb_norms_2026_pure.json
 # an exporter hand-off; mlb_player_export copies each block into the
 # per-card shard under mlb_player_detail/, which is what a page fetches.
 mlb_proj_components.json
+# dvm_difficulty.json: the DvM+ difficulty gate's frozen expectation table
+# (docs/dvm-difficulty-2026-09-30/DVM_DIFFICULTY_GATE.md section 15), a model
+# internal no page reads before the flip.
+dvm_difficulty.json

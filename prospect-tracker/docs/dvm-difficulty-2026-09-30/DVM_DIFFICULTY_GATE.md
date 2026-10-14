@@ -422,8 +422,99 @@ served build (DVM-5), with the blast radius published and "farm letters move" sa
 
 ## 17. Amendments
 
-None. An amendment is dated, filed before the look, names what moved on disk since this
+An amendment is dated, filed before the look, names what moved on disk since this
 commit, and changes no threshold, frame, family, seed, margin or criterion.
+
+### 2026-10-14: amendment before the look (DVM-4, Q10_15)
+
+Filed before the look, in its own commit; no grade difference, growth statistic or rate
+had been computed on real data. It changes no threshold, frame rule, family, seed, margin
+or criterion of sections 0 to 16.
+
+What moved on disk since the registration (`f4742b6a`): the DVM-3 lab (`b91cc49f`, fixtures
+only); VAL_4, the development attribution (`dev_attribution.py` and
+`docs/farm-attribution-2026-09-25/`, `6cb6af6b`); the DVM-5 served build behind
+`storage.DVM_DIFFICULTY_ARM = None` (`028c15f2`); the R-LV read of 2026-10-08 under owner
+decision EW2-6 (`1c73c420`); the PROSPECT_ANCHOR look, recorded 2026-10-14 under section 18
+of `docs/PROSPECT_ANCHOR_GATE.md` (`61d87873`); and owner decision EW3-5 of 2026-10-14.
+
+**A-1, the clock.** Owner decision EW3-5 (2026-10-14, verbatim): "Fuck the registered look
+days and waiting, we don't have to wait for anything. Let's do everything today". The look
+runs on 2026-10-14, before section 14's 2026-12-01, and is recorded as an OWNER-WAIVED EARLY
+READ. The lab carries the waiver as `OWNER_WAIVER` (decision EW3-5, from 2026-10-14) and it
+lifts only the FULL frame's earliest date. The registered look days, the COMPLEMENT date,
+the one-look rule and every record precondition (the ETA record, this registration, the
+PROSPECT_ANCHOR record on every path) stand.
+
+**A-2, the R-LV record.** The R-LV read ran once on 2026-10-08 (`tools/efv_v3_backtest.py
+--confirm`, commit `1c73c420ad68bc6a8061859c6e82757589ef20c6`). `docs/efv-v2/EFV_V2_GATE.md`
+section 11.2 keeps its part 9 empty by its own words and names
+`data/_labs/efv_v3/efv_v3_confirm.json` as where the reserved numbers live. That record is
+this gate's R-LV look record (the orchestrator's re-arm of 2026-10-14 says so). The lab sets
+`RLV_LOOK_RECORD` to that commit and reads the record as a dated entry in part 9 or as
+section 11 naming the artifact while the artifact exists; the two must agree, as before.
+The look therefore reads the FULL frame (list years 2020 and 2021 included; the validation
+years of section 13's FULL row). F-R2 holds unchanged; F-R4 and F-R5 are untouched.
+
+**A-3, the tenure source (section 7, P-1).** VAL_4 is committed, so section 7 reads VAL_4's
+table, not the fallback. The reader (`val4_club_events`) runs `dev_attribution.build` on the
+frozen store with inputs taken from that store: the observations skip every read this lab
+never loads (F-R1 while it holds, F-R2 always); a player's current club is the club on his
+latest list read and his listed club the latest one on or before his debut; trades rows are
+de-duplicated on (date, from, to); acquisitions are not read (the signing hint moves VAL_4's
+shares, never its calendar). The calendar is taken as of the freeze date, 2026-10-03. The
+frozen store predates the season affiliation table (`staff_units`), which holds no grade;
+it is read from the lane's own store and pinned by a sha256 of its rows at the look's start
+and end. Each tenure opens its club as an event on its start day. The share of an
+unaffiliated stretch, and of any code outside the 30 clubs, is dropped after the split
+without renormalizing, so growth while unaffiliated credits nobody (VAL_4 step 3, the rule
+`dvm_difficulty_serve.clean_tau` serves). A player VAL_4 places nowhere keeps the fallback
+events. The receipt names the source and carries the calendar's diagnostics and a census
+of the dropped shares.
+
+**A-4, readings of open phrases (the DVM-3 build, `b91cc49f`), recorded before the read.**
+1. A graduate's end grade is his last same-source preseason read before the debut (the
+   start read when there is none); a graduate whose last read is an R-VM input leaves the
+   frame (F-R2).
+2. "His club" in the drop rule is the club on the day the end window closes, read from the
+   tenure events; if the source printed no grade for that club, the lowest grade on that
+   source's list is used.
+3. Exited means no affiliated season in both V+h-1 and V+h; an unresolved identity is coded
+   dropped, which gives the same grade.
+4. Cell means and spreads are weighted by omega; tau2_u and tau2_org use the sample
+   variance across cells or clubs.
+5. A source-year the fit never saw takes that source's mean a.
+6. A missing age_rel enters as 0 with the agemiss flag; a missing level band is
+   "unresolved".
+7. H2's penalty is lam/2 x the sum of squared coefficients, lam = 1.0.
+8. V-P1's raw target is the club's tenure- and omega-weighted MEAN value growth (C0 itself
+   stays a sum; owner question DVM-LAB-1, default A).
+9. Leave-three-years-out drops any row with an endpoint in Y-1, Y or Y+1.
+10. V-S at Y+1 is scored by the Y+1 expectation.
+11. V-C "pairs" is the sum of tenure x omega.
+12. A resolved V-P1 win needs a two-sided bootstrap p below 0.05 and a positive delta.
+13. Theta_total averages over the rungs both groups hold.
+14. The permutation is per row, within (source, year, rung).
+
+**A-5, the failed-arm blocks.** `data/dvm_difficulty_eval.json` carries `failed_arms`: every
+validation arm (DV, D0) the section 13 rule does not pass, with its decision, point
+statistics and deltas against C0. No other eval file is written.
+
+### 2026-10-14: second amendment before the look (DVM-4, Q10_15)
+
+Filed before the look, after the first amendment; still no growth computed on real data.
+It changes no threshold, frame rule, family, seed, margin or criterion.
+
+**A-6, the idle check.** Section 14 keeps the look away from a running pipeline, nightly
+job or test session. The lab read that as any process whose command line holds "pytest",
+"nightly" or "run_monthly", which also caught other sessions' shell wrappers (`bash -c`,
+`powershell -Command`) whose text only mentions the word, for example a process listing
+that greps for "pytest" before a fetch. A wrapper's real work shows in the listing as its
+own process, so a wrapper is no longer counted; a real test session, pipeline or a script
+run by a shell without `-c` still is.
+
+**A-7, artifact dates.** Both artifacts carry a top-level `generated_at` (the receipt's),
+so the model registry ages the eval artifact by its own stamp.
 
 ---
 
@@ -433,3 +524,84 @@ commit, and changes no threshold, frame, family, seed, margin or criterion.
 
 Nothing is written here before the look. The first entry is dated, names the commit and the
 frame (FULL or COMPLEMENT), and carries the look's verbatim output.
+
+### 2026-10-14: the look (DVM-4, Q10_15), FULL frame, an OWNER-WAIVED EARLY READ
+
+Run once: `python tools/dvm_difficulty_lab.py --look` at commit `1d63190e` (this
+registration as amended by A-1 to A-7), in the lane worktree, started 2026-10-14 22:30 UTC
+once the process listing was idle, finished 23:03:53 UTC, exit code 0, stderr empty. Frame:
+FULL (the R-LV record of amendment A-2, `1c73c420`). The look ran before section 14's
+2026-12-01 under owner decision EW3-5 (amendment A-1), so it is recorded as an OWNER-WAIVED
+EARLY READ. The PROSPECT_ANCHOR record (`61d87873`) and the ETA record (`be53132d`) existed
+when it started. Every input pin matched at the start and at the end (frozen store sha256
+`7d7e56533e6c62ef3ec3d8400e079974779ea59ca533dbc0e43939f596d6a56e`; `debuts.json`, `inactive.json`, `timeseries.json`,
+`debut_redates.json`, 288 minor league season cache files and 21 draft history cache files;
+the `staff_units` rows sha256 `88da276d64ee6c98af0072f6ec3650dd7e7594ca993dc9dbbc8286a1af58bc40`). Artifacts:
+`data/dvm_difficulty.json` (listed in `deploy/data_exclude.txt` by this commit) and
+`data/dvm_difficulty_eval.json`, both stamped `2026-10-14T23:03:52Z`; the failed arms DV and
+D0 are blocks under `failed_arms` in the eval artifact (amendment A-5). No other eval file
+was written.
+
+The look's stdout, verbatim (teed to the task directory before anything else ran):
+
+```
+FRAME: FULL
+OWNER-WAIVED EARLY READ (EW3-5): the look runs 2026-10-14, before its registered 2026-12-01 (gate amendment A-1)
+frozen store C:\Users\noah\baseball-projects\wt\s201\prospect-tracker\.cache\dvm_difficulty\prospects_frozen.db sha256 7d7e56533e6c62ef3ec3d8400e079974779ea59ca533dbc0e43939f596d6a56e (registered 7d7e56533e6c62ef3ec3d8400e079974779ea59ca533dbc0e43939f596d6a56e)
+tenure source: VAL_4 org calendar (dev_attribution, gate amendment A-3); staff_units sha256 88da276d64ee6c98af0072f6ec3650dd7e7594ca993dc9dbbc8286a1af58bc40
+FRAME: FULL
+censoring 12m (pooled over side and rung): completed 11432, graduated 2898, dropped 5427, exited 193
+censoring 24m (pooled over side and rung): completed 5651, graduated 4932, dropped 6374, exited 486
+60 to 70 over 40 to 50, 12m|hit: today 5.2 (13.0000 / 2.5000); DV 5.712 (14.6432 / 2.5637); D0 0.786 (2.3312 / 2.9645)
+60 to 70 over 40 to 50, 12m|pit: today 5.2 (13.0000 / 2.5000); DV 6.556 (16.4890 / 2.5153); D0 0.799 (2.4986 / 3.1288)
+60 to 70 over 40 to 50, 24m|hit: today 5.2 (13.0000 / 2.5000); DV 5.532 (14.4804 / 2.6177); D0 0.768 (2.0864 / 2.7181)
+60 to 70 over 40 to 50, 24m|pit: today 5.2 (13.0000 / 2.5000); DV 6.726 (17.4575 / 2.5956); D0 0.874 (2.5095 / 2.8712)
+H1 12m|total (39 cells): hit speed HS-IFA: easier for HS than IFA; hit arm IFA-COL: easier for IFA than COL; hit arm HS-IFA: harder for HS than IFA; pit fb IFA-COL: easier for IFA than COL; pit fb HS-IFA: harder for HS than IFA; pit cmd IFA-COL: harder for IFA than COL; pit cmd HS-IFA: easier for HS than IFA
+H1 12m|direct (39 cells): hit FV HS-COL: harder for HS than COL; hit FV IFA-COL: harder for IFA than COL; hit speed HS-IFA: easier for HS than IFA; hit arm IFA-COL: easier for IFA than COL; hit arm HS-IFA: harder for HS than IFA; pit FV IFA-COL: harder for IFA than COL; pit fb IFA-COL: easier for IFA than COL; pit fb HS-IFA: harder for HS than IFA; pit cmd IFA-COL: harder for IFA than COL; pit cmd HS-IFA: easier for HS than IFA
+H1 24m|total (39 cells): none resolved
+H1 24m|direct (39 cells): none resolved
+H2 hit 12m trend: estimate 0.0012, p_holm 1.0000; not resolved
+H2 hit 12m contrast: estimate -0.0077, p_holm 0.4760; not resolved
+H2 hit 24m trend: estimate 0.0418, p_holm 1.0000; not resolved
+H2 hit 24m contrast: estimate 0.0003, p_holm 1.0000; not resolved
+H2 pit 12m trend: estimate -0.3331, p_holm 0.0040; not resolved
+H2 pit 12m contrast: estimate -0.0191, p_holm 0.0040; list grades rise less often from higher rungs
+H2 pit 24m trend: estimate -0.2714, p_holm 0.0040; not resolved
+H2 pit 24m contrast: estimate -0.0157, p_holm 0.0050; list grades rise less often from higher rungs
+validation C0: VP1 -0.0209, VP2 -0.0019, VS -0.0350, VC 0.3768
+validation C0_mean: VP1 -0.0113, VP2 0.0061, VS -0.0470, VC 0.3680
+validation DV: VP1 -0.0050, VP2 0.0500, VS 0.0319, VC 0.3624
+validation D0: VP1 0.0084, VP2 0.0269, VS 0.0410, VC 0.4178
+DECISION (DV): NO SHIP; composition max 0.3624 (C0 0.3768); copy: difficulty-adjusted; ties the previous index on prediction
+```
+
+**What the record says (read off the artifact; no statistic was computed after the look).**
+
+- Decision (section 13): DV is NO SHIP. Condition 1 fails: its composition maximum V-C is
+  0.3624 against C0's 0.3768, neither at most
+  0.20 nor 0.10 below C0. Conditions 2 and 3 hold: V-P1 is non-inferior (delta
+  0.0159, one-sided lower bound -0.0347
+  against the margin -0.05) and no Holm-resolved loss on V-P2 or V-S. D0 is NO SHIP the same
+  way (V-C 0.4178). The served DvM+ stays as it is;
+  `storage.DVM_DIFFICULTY_ARM` stays None.
+- H2 (section 11): for pitchers the owner's contrast (P_2 from 60+ below P_2 from 40) is
+  Holm-resolved at 12 and 24 months and reads "list grades rise less often from higher
+  rungs"; the pitcher trend tests are not resolved (the three frames do not all agree after
+  Holm). No hitter test is resolved. Section 11's caveats bind the reading: it describes list
+  grades, not how hard development is.
+- H1 (section 10): at 12 months, 7 of 39 Theta_total cells and 10 of 39 Theta_direct cells
+  carry a verdict word (listed above); at 24 months none do.
+- The 60 to 70 against 40 to 50 credit ratio (section 6): today's table 5.2; DV 5.712
+  (hitters, 12 months) and 6.556 (pitchers, 12 months); D0 0.786 and 0.799.
+- The section 16 priors: H2 reads "rise less often from higher rungs" for pitchers only;
+  Theta_direct is not small (it resolves more cells than Theta_total); the validation ties
+  on prediction and V-C carries the decision, as expected.
+
+The flip stays an owner action after DVM-5 and step Z; with NO SHIP on both arms, nothing
+here licenses it.
+
+### 2026-10-14: note, owner-waived early read
+
+The look above ran on 2026-10-14, before its registered date of 2026-12-01, under owner
+decision EW3-5 (2026-10-14). It is the one look; the lab refuses a second scored look and
+may only re-print the stored result.

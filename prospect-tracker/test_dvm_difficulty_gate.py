@@ -128,7 +128,7 @@ def test_frame_constants_match_the_frame_module():
     assert L.MIN_LIST_READS == 100
     assert L.HORIZONS == (1, 2)
     assert L.SOURCES == ("mlb_pipeline", "fangraphs", "baseballamerica")
-    assert L.RLV_LOOK_RECORD is None
+    assert L.RLV_LOOK_RECORD == "1c73c420ad68bc6a8061859c6e82757589ef20c6"  # amendment A-2
     assert L.PIPELINE_2026_PRESEASON_DECLARED_ABSENT is True
     assert (L.P2_MAX_UNKNOWN_OVERALL, L.P2_MAX_UNKNOWN_CELL) == (0.05, 0.10)
     assert L.RUNGS == ("<=35", "40", "45", "50", "55", "60", "65+")

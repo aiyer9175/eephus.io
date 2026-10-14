@@ -77,7 +77,14 @@ PATTERNS = {
 # healed within the hour, in the writers (betting_market_blend_lab,
 # leaderboard_vintages._relative_or_verbatim) and in the stored artifacts.
 # A new leak has no grace period: it fails the clean assertion outright.
-BURN_DOWN: dict[str, str] = {}
+BURN_DOWN: dict[str, str] = {
+    # 2026-10-14 (DVM-4, Q10_15): the one scored look of
+    # docs/dvm-difficulty-2026-09-30/DVM_DIFFICULTY_GATE.md wrote receipt.frozen_db as
+    # an absolute path. The look cannot run twice and the artifact is not hand-edited;
+    # the writer is fixed (dvm_difficulty_lab._rel), so the next registered refit heals it.
+    "dvm_difficulty_eval.json": ("2026-10-14: receipt.frozen_db from the one look; "
+                                 "writer fixed, artifact frozen until the next refit"),
+}
 
 
 def publish_set() -> list[Path]:

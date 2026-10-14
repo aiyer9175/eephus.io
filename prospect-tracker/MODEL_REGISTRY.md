@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**368 models.** Verdicts: validated: 56, provisional: 171, unvalidated: 50, deprecated: 91.
+**369 models.** Verdicts: validated: 56, provisional: 172, unvalidated: 50, deprecated: 91.
 
 ## Instrument boundary
 
@@ -387,6 +387,7 @@ can be measured.
 | `team_run_projection` | Read once on 2026, not served: TM-C RS FAIL (MAE 42.6), RA PASS (MAE 47.7); Pythag wins MAE 7.54. | none yet (registered, not served); on a pass, RS, RA, run... | club runs scored and allowed for the first projected season | none | prior-season carry-forward and league average | TM-C | **provisional** | `data/team_outlook_eval.json` | - | - |
 | `game_intensity_effects` | Registered, not run: whether game intensity moves moneylines and totals beyond a quality-only price, which team types and archetypes differ in high-stakes games, and what wins in October. | No surface: nothing served reads it; the stage-1 lab tool... | Stage 1, model-free on the 2018, 2019 and 2021-2025 regular seasons: IX-A the home result against the literature Elo price give... | the members of docs/diamond-betting.md section 'Game intensity: stakes, match... | the literature Elo (1500, K 4, 24 points of home field, flat start each seaso... | Registered, not computed: IX-A paired Brier improvement on the focus set \|ds... | **unvalidated** | - | - | no |
 | `par` | Descriptive display index: a pitch rate against the league rate for the same role and season, 100 = average; no forward claim. | /mlbstats/ Starters, Relievers and Hitters boards (Pitche... | nothing forward; DESCRIPTIVE DISPLAY INDEX. A pitch rate against the league rate for the same role and season: pitchers 100 x P... | pitch_rates.par (ratio, unshrunk, nearest) | n/a: a DESCRIPTIVE ratio index (FIP- shape), not a predictive model | descriptive; no forward gate by design | **provisional** | - | - | no |
+| `dvm_difficulty` | Read once 2026-10-14, NO SHIP: DV ties C0 on prediction but tracks origin mix (V-C 0.362 vs 0.377); served DvM+ unchanged, the flag stays off. | None served: the DvM+ difficulty arm (dvm_difficulty_serv... | Nothing about MLB outcomes: a descriptive expectation table of how a prospect's grade on one source's list moves in 12 and 24 m... | none - read once, not adopted: arm DV (value above expected, the owner's choi... | C0, the DvM+ logic served on 2026-10-14, rebuilt on the same same-source fram... | Computed once at the look (FULL frame, list years 2012 to 2025): V-P1 Spearma... | **provisional** | `data/dvm_difficulty_eval.json` | - | no |
 
 Stored problems at last refresh: none.
 

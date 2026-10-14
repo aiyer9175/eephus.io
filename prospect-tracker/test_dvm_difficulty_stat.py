@@ -501,7 +501,7 @@ class Clock(unittest.TestCase):
 
     def kw(self, **over):
         k = {"eta_text": VERDICT_TEXT, "dvm_text": REGISTERED, "anchor_text": ANCHOR_DONE,
-             "efv_v2_text": V2_EMPTY, "rlv_record": None}
+             "efv_v2_text": V2_EMPTY, "rlv_record": None, "waiver": None}
         k.update(over)
         return k
 
@@ -538,13 +538,56 @@ class Clock(unittest.TestCase):
         with self.assertRaises(L.ClockError):
             L.look_frame("2027-02-01", **self.kw(eta_text="## 8. Results\n\nnone\n"))
 
-    def test_committed_documents_refuse_today(self):
+    def test_committed_documents(self):
+        """At HEAD the anchor look is recorded (2026-10-14) and the R-LV record is
+        EFV_V2_GATE section 11 with its artifact (amendment A-2): FULL from the waiver's
+        date (amendment A-1), refused before it."""
         anchor = (HERE / L.ANCHOR_GATE_DOC).read_text(encoding="utf-8")
-        self.assertFalse(L.results_recorded(anchor, "18"))
+        v2 = (HERE / L.EFV_V2_GATE_DOC).read_text(encoding="utf-8")
+        self.assertTrue(L.results_recorded(anchor, "18"))
+        self.assertTrue(L.rlv_record_in_doc(v2))
+        kw = {"eta_text": None, "dvm_text": None, "anchor_text": anchor, "efv_v2_text": v2}
         with self.assertRaises(L.ClockError):
-            L.look_frame("2026-10-08", eta_text=None, dvm_text=None,
-                         anchor_text=anchor,
-                         efv_v2_text=(HERE / L.EFV_V2_GATE_DOC).read_text(encoding="utf-8"))
+            L.look_frame("2026-10-08", **kw)
+        self.assertEqual(L.look_frame("2026-10-14", **kw), "FULL")
+        with self.assertRaises(L.ClockError):
+            L.look_frame("2026-10-14", **kw, waiver=None)
+        with self.assertRaises(L.ClockError):
+            L.look_frame("2026-10-14", **kw, rlv_record=None)
+
+    def test_rlv_record_in_section_11(self):
+        """Amendment A-2: section 11 counts only when it names the artifact AND the
+        artifact exists; a dated part 9 entry counts as before."""
+        s11 = ("## 9. Results\n\n(Empty.)\n\n## 11. Registration by EW2-6\n\n"
+               "the numbers live in `data/_labs/efv_v3/efv_v3_confirm.json`\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.assertFalse(L.rlv_record_in_doc(s11, root))
+            art = root / L.RLV_RECORD_ARTIFACT
+            art.parent.mkdir(parents=True)
+            art.write_text("{}", encoding="utf-8")
+            self.assertTrue(L.rlv_record_in_doc(s11, root))
+            self.assertFalse(L.rlv_record_in_doc(V2_EMPTY, root))
+            self.assertTrue(L.rlv_record_in_doc(V2_DONE, root))
+            self.assertEqual(L.look_frame("2026-10-15", **self.kw(
+                efv_v2_text=s11, rlv_record=SHA, waiver=L.OWNER_WAIVER, root=root)), "FULL")
+
+    def test_owner_waiver_a1(self):
+        """Amendment A-1: EW3-5 opens the FULL look from 2026-10-14; the look days, the
+        COMPLEMENT date and the anchor record stand."""
+        w = L.OWNER_WAIVER
+        self.assertEqual((w["decision"], w["from"]), ("EW3-5", "2026-10-14"))
+        full = {"efv_v2_text": V2_DONE, "rlv_record": SHA, "waiver": w}
+        self.assertEqual(L.look_frame("2026-10-14", **self.kw(**full)), "FULL")
+        with self.assertRaises(L.ClockError):
+            L.look_frame("2026-10-13", **self.kw(**full))
+        for d in ("2026-10-21", "2026-10-23", "2026-11-20"):
+            with self.assertRaises(L.ClockError):
+                L.look_frame(d, **self.kw(**full))
+        with self.assertRaises(L.ClockError):
+            L.look_frame("2026-10-14", **self.kw(waiver=w))
+        with self.assertRaises(L.ClockError):
+            L.look_frame("2026-10-14", **self.kw(anchor_text=ANCHOR_EMPTY, **full))
 
     def test_lab_constants(self):
         self.assertEqual((L.SEED, L.BOOT_B, L.PERM_DRAWS), (20261201, 2000, 500))
@@ -608,15 +651,34 @@ class LookRefusals(unittest.TestCase):
         with mock.patch.object(L, "_process_lines", return_value=None):
             self.assertEqual(L.busy_processes(), ["the process listing failed"])
 
+    def test_shell_wrappers_are_not_busy(self):
+        """Amendment A-6: a wrapper that only mentions a token is not a session."""
+        lines = [(11, '"C:\\Program Files\\Git\\bin\\bash.exe" -c "tasklist | grep -i pytest; '
+                      'python tools/fetch_x.py"'),
+                 (12, "powershell -NoProfile -Command \"Get-Process | ? pytest\""),
+                 (13, "/usr/bin/bash -c 'python -m pytest -q'"),
+                 (14, "C:\\py\\python.exe -m pytest -q t.py"),
+                 (15, '"C:\\Program Files\\Git\\usr\\bin\\timeout.exe" 1800 python -m pytest'),
+                 (16, "bash deploy/nightly-build.sh")]
+        self.assertEqual([b.split(":")[0] for b in L.busy_processes(lines)],
+                         ["14", "15", "16"])
+
     def test_tenure_source(self):
         self.assertEqual(L.tenure_source(self.root), "fallback (gate section 7)")
         (self.root / L.VAL4_DIR).mkdir(parents=True)
-        with self.assertRaises(L.ClockError):
-            L.tenure_source(self.root)
+        self.assertEqual(L.tenure_source(self.root), L.TENURE_VAL4)
+        self.assertEqual(L.tenure_source(), L.TENURE_VAL4)  # VAL_4 is committed
 
-    def test_no_artifact_at_head(self):
-        self.assertFalse((L.DATA_DIR / L.TABLE_ARTIFACT).exists())
-        self.assertFalse((L.DATA_DIR / L.EVAL_ARTIFACT).exists())
+    def test_the_one_look_is_stored(self):
+        # DVM-4 (2026-10-14): the look ran once and wrote both artifacts; a later run
+        # re-prints the stored result instead of scoring again (gate section 14).
+        self.assertTrue((L.DATA_DIR / L.TABLE_ARTIFACT).exists())
+        stored = L.stored_look()
+        self.assertIsNotNone(stored)
+        self.assertEqual(stored["frame"], "FULL")
+        self.assertTrue(stored["receipt"]["owner_waived_early_read"])
+        self.assertEqual(stored["decision"]["verdict"], "NO SHIP")
+        self.assertEqual(set(stored["failed_arms"]), {"DV", "D0"})
 
 
 class DryRun(unittest.TestCase):
@@ -624,6 +686,8 @@ class DryRun(unittest.TestCase):
     written only where it is told."""
 
     def test_dry_run_reporting_path(self):
+        stored = {n: (L.DATA_DIR / n).read_bytes() if (L.DATA_DIR / n).exists() else None
+                  for n in (L.TABLE_ARTIFACT, L.EVAL_ARTIFACT)}
         with tempfile.TemporaryDirectory() as tmp:
             r = L.run_dry(Path(tmp), B=8, perms=3, players=160)
             names = sorted(p.name for p in Path(tmp).iterdir())
@@ -636,12 +700,25 @@ class DryRun(unittest.TestCase):
         self.assertEqual(ev["h1"]["families"]["12m|direct"]["size"], 39)
         self.assertEqual(ev["h2"]["family_size"], 8)
         self.assertIn(ev["decision"]["verdict"], ("SHIP CANDIDATE", "NO SHIP"))
+        self.assertTrue(ev["generated_at"] and table["generated_at"])  # A-7
+        # section 13: a failed arm is a block of the eval artifact, never a new file
+        self.assertEqual(set(ev["failed_arms"]),
+                         {a for a, d in ev["validation"]["decision"].items()
+                          if d["verdict"] != "SHIP CANDIDATE"})
+        for blk in ev["failed_arms"].values():
+            self.assertEqual(set(blk), {"decision", "point", "deltas"})
         self.assertEqual(set(table["models"]), {"12m|hit", "12m|pit", "24m|hit", "24m|pit"})
         for key in ("12m|hit", "12m|pit"):
             self.assertAlmostEqual(table["ratio"][key]["today"]["ratio"], 5.2)
         self.assertTrue(5.0 <= table["k_org"]["DV"]["k_org"] <= 50.0)
-        self.assertFalse((L.DATA_DIR / L.TABLE_ARTIFACT).exists())
-        self.assertFalse((L.DATA_DIR / L.EVAL_ARTIFACT).exists())
+        # the dry run writes only where it is told: the stored look is untouched
+        for n, before in stored.items():
+            p = L.DATA_DIR / n
+            self.assertEqual(p.read_bytes() if p.exists() else None, before, n)
+
+    def test_receipt_paths_are_relative(self):
+        self.assertEqual(L._rel(L.CACHE_DIR / L.FROZEN_DB),
+                         ".cache/dvm_difficulty/" + L.FROZEN_DB)
 
     def test_fixture_carries_nulls(self):
         pairs = L.fixture_pairs(players=200)
@@ -652,6 +729,101 @@ class DryRun(unittest.TestCase):
         self.assertEqual({p["status"] for p in pairs}, set(L.STATUSES))
         self.assertFalse({p["V"] for p in pairs} & {2020, 2021})
         self.assertFalse({p["V"] + p["h"] for p in pairs} & {2020, 2021})
+
+
+class Val4Calendar(unittest.TestCase):
+    """Amendment A-3: VAL_4's org calendar as the tenure split, on a fixture store with
+    nulls (a null org, a duplicated and a null trades row, an unresolvable signing, an
+    R-VM input read, a player with nothing to place him)."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.con = sqlite3.connect(str(Path(self._tmp.name) / "v.db"))
+        self.con.executescript(
+            "CREATE TABLE snapshots (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT, "
+            "snapshot_date TEXT, interval_label TEXT, player_key TEXT, fv REAL, org TEXT, "
+            "status TEXT);"
+            "CREATE TABLE trades (id INTEGER PRIMARY KEY AUTOINCREMENT, player_key TEXT, "
+            "trade_date TEXT, from_org TEXT, to_org TEXT);"
+            "CREATE TABLE player_transactions (player_key TEXT PRIMARY KEY, "
+            "payload_json TEXT, fetched_at TEXT);")
+        snaps = [("fangraphs", "2019-02-15", "p1", 45, "NYY"),
+                 ("fangraphs", "2022-02-15", "p1", 50, "LAD"),
+                 ("mlb_pipeline", "2019-03-01", "p2", 40, "NYY"),
+                 ("mlb_pipeline", "2021-03-01", "p2", 45, "BOS"),
+                 ("fangraphs", "2019-02-15", "p3", 40, "SEA"),
+                 ("fangraphs", "2024-02-15", "p4", 50, "TBR"),
+                 ("fangraphs", "2025-02-15", "p4", 77.5, "TBR"),
+                 ("fangraphs", "2019-02-15", "p5", None, None)]
+        for src, d, pk, fv, org in snaps:
+            self.con.execute(
+                "INSERT INTO snapshots (source, snapshot_date, interval_label, player_key, "
+                "fv, org, status) VALUES (?,?,?,?,?,?,?)",
+                (src, d, f"{d[:4]}report", pk, fv, org, "active"))
+        for row in (("p2", "2020-08-01", "NYY", "BOS"), ("p2", "2020-08-01", "NYY", "BOS"),
+                    ("p2", "2020-09-01", "BOS", None)):
+            self.con.execute("INSERT INTO trades (player_key, trade_date, from_org, to_org) "
+                             "VALUES (?,?,?,?)", row)
+        txs = {"p1": [{"id": 1, "type_code": "DR", "date": "2018-06-10",
+                       "to_team_name": "New York Yankees"},
+                      {"id": 2, "type_code": "TR", "date": "2021-07-30",
+                       "to_team_name": "Los Angeles Dodgers"}],
+               "p3": [{"id": 3, "type_code": "SGN", "date": "2017-07-02",
+                       "to_team_name": "Seattle Mariners"},
+                      {"id": 4, "type_code": "REL", "date": "2020-05-28"},
+                      {"id": 5, "type_code": "SFA", "date": "2021-03-01",
+                       "to_team_name": "Sugar Land Skeeters"}]}
+        for pk, t in txs.items():
+            self.con.execute("INSERT INTO player_transactions VALUES (?,?,?)",
+                             (pk, json.dumps(t), "2026-10-01"))
+        self.con.commit()
+
+    def tearDown(self):
+        self.con.close()
+        self._tmp.cleanup()
+
+    def events(self, excluded=frozenset()):
+        return L.val4_club_events(self.con, {"p1", "p2", "p3", "p4", "p5"},
+                                  {"p4": "2025-06-10"}, excluded=excluded,
+                                  today="2026-10-03", team_org={})
+
+    def test_calendar_events(self):
+        ev, diag = self.events()
+        self.assertEqual([c for _, c, _ in ev["p1"]], ["NYY", "LAD"])
+        self.assertEqual(ev["p1"][1][0], "2021-07-30")
+        self.assertEqual([c for _, c, _ in ev["p2"]], ["NYY", "BOS"])
+        self.assertEqual([c for _, c, _ in ev["p3"]], ["SEA", L.UNAFFILIATED])
+        self.assertEqual([c for _, c, _ in ev["p4"]], ["TBR"])
+        self.assertNotIn("p5", ev)
+        self.assertEqual(diag["n_players"], 5)
+        self.assertEqual(diag["players_with_calendar"], 4)
+        self.assertTrue(all(k == "read" for e in ev.values() for _, _, k in e))
+
+    def test_reserved_reads_never_open_a_calendar(self):
+        # with list years 2019 and 2021 excluded p2 has no read the lab loads, so VAL_4
+        # opens no calendar for him; p1 keeps his from the 2022 read and his transactions
+        ev, _ = self.events(excluded=frozenset({2019, 2021}))
+        self.assertNotIn("p2", ev)
+        self.assertEqual([c for _, c, _ in ev["p1"]], ["NYY", "LAD"])
+
+    def test_tenure_split_and_clean(self):
+        ev, _ = self.events()
+        tau = L.tenure_shares("2020-03-01", "2021-05-01", ev["p3"])
+        self.assertAlmostEqual(sum(tau.values()), 1.0)
+        self.assertIn(L.UNAFFILIATED, tau)
+        pairs = [{"tau": dict(tau)}, {"tau": {L.UNAFFILIATED: 1.0}},
+                 {"tau": {"NYY": 0.5, "XXX": 0.5}}, {"tau": {}}]
+        census = L.val4_clean_tau(pairs, {"NYY", "SEA"})
+        self.assertEqual(set(pairs[0]["tau"]), {"SEA"})
+        self.assertLess(pairs[0]["tau"]["SEA"], 1.0)  # no renormalizing
+        self.assertEqual(pairs[1]["tau"], {})
+        self.assertEqual(pairs[2]["tau"], {"NYY": 0.5})
+        self.assertEqual(census["pairs_with_dropped_share"], 3)
+        self.assertEqual(census["pairs_with_no_club"], 2)
+
+    def test_staff_units_map_absent(self):
+        self.assertEqual(L.staff_units_map(Path(self._tmp.name) / "none.db"), ({}, None))
+        self.assertEqual(L.staff_units_map(Path(self._tmp.name) / "v.db"), ({}, None))
 
 
 if __name__ == "__main__":
