@@ -5730,8 +5730,9 @@ PROV_SECTION_TITLE = "Not yet graded by any source"
 # eFV rarity grade; a grade waiting on the eFV file paints a neutral placeholder. Served
 # to the page as flags.efv_display_swaps on the boot payload (written below), the only
 # place prospx/index.html reads it. proj_export imports this name; test_efv_display_helpers
-# fails if it is assigned anywhere else. It flips in its own commit (Q9_15).
-EFV_DISPLAY_SWAPS = False
+# fails if it is assigned anywhere else. Flipped on in its own commit (Q9_15, 2026-10-14,
+# after the fWAR label epoch's step Z entry).
+EFV_DISPLAY_SWAPS = True
 
 
 def _point_sources(pt) -> set:

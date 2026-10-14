@@ -129,11 +129,11 @@ _EFV_ROW = ('{player_key: "e1", fv_close: 55, points: [{consensus_fv_label: "55"
 # 1. The flag: one constant, one payload key, one reader
 # ---------------------------------------------------------------------------
 
-def test_the_flag_is_one_constant_in_storage_and_off():
+def test_the_flag_is_one_constant_in_storage_and_on():
     import storage
     assert isinstance(storage.EFV_DISPLAY_SWAPS, bool)
-    # Default off until Q9_15 flips it in its own commit.
-    assert storage.EFV_DISPLAY_SWAPS is False
+    # Flipped on by Q9_15 in its own commit (2026-10-14).
+    assert storage.EFV_DISPLAY_SWAPS is True
 
 
 def test_the_flag_is_assigned_nowhere_else():
