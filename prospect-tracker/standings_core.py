@@ -926,14 +926,351 @@ def build_race_file(games, season, snapshots=None, *, copyright=None, generated_
 def build_phist_file(season, *, generated_at, copyright=None, regular=None, post=None,
                      switch_as_of=None, closed: bool = False) -> dict:
     """`OUT/standings/<Y>-phist.json`, packed by column (plan 4.2 and 4.7):
-    `regular` and `post` always present; empty, `switch_as_of` null and
-    `closed` false until STANDINGS_3 fills them."""
+    `regular` and `post` always present (empty, `switch_as_of` null and
+    `closed` false by default); `phist_blocks` fills them."""
     reg = {"source": None, "missing": [], "fields": list(PHIST_REGULAR_FIELDS), "as_of": [], "clubs": {}}
     reg.update(regular or {})
     pst = {"fields": list(PHIST_POST_FIELDS), "as_of": [], "sha256": [], "clubs": {}}
     pst.update(post or {})
     return {"schema": SCHEMA, "season": int(season), "generated_at": generated_at, "copyright": copyright,
             "switch_as_of": switch_as_of, "closed": bool(closed), "regular": reg, "post": pst}
+
+
+# --------------------------------------------------------------------------- #
+# 4.7 Our columns: copied, never recomputed (STANDINGS_3_OURS_JOIN)
+# --------------------------------------------------------------------------- #
+MODEL_REGULAR = "playoff_odds_sim"
+MODEL_POST = "postseason_bracket_sim"
+#: The caption label of each odds model; no registry field holds one, so the
+#: page builds its caption from this label and the copied verdict.
+MODEL_LABEL = {MODEL_REGULAR: "Eephus season simulator", MODEL_POST: "Eephus bracket simulator"}
+#: frame_from where the job's state has none (plan 4.7 "The frame bound"):
+#: FIRST_SEASON has read 2027 since 427a6484 (2026-06-10), before the futures
+#: ledger's first entry (2026-09-06), so every season-2026 entry on disk came
+#: from the 2026 frame. No later season is seeded.
+FRAME_FROM_SEED = {2026: "2026-09-06"}
+PHIST_REGULAR_SOURCE = "futures ledger on this machine"
+#: futures.json clubs[] keys and their `ours` names (plan 4.7). The club's
+#: `record` and `impliedAmerican*` are never copied (the American numbers are
+#: prices); `record` is read by proj_basis for the comparison only.
+FUTURES_KEYS = (("divisionPct", "p_div"), ("playoffPct", "p_post"), ("byePct", "p_bye"),
+                ("pennantPct", "p_pennant"), ("wsPct", "p_ws"), ("projWins", "proj_w"),
+                ("winTotalP10", "proj_p10"), ("winTotalP90", "proj_p90"))
+#: futures_ledger.json entries[].clubs[] keys, in PHIST_REGULAR_FIELDS order.
+LEDGER_KEYS = FUTURES_KEYS[:5]
+#: bracket_sim.json clubs[] (and the record's outputs.clubs) keys, in
+#: PHIST_POST_FIELDS order.
+BRACKET_KEYS = (("pennant_pct", "p_pennant"), ("ws_pct", "p_ws"))
+#: mlb_projections.json team_outlook[].current keys, inside the SOS window only.
+SOS_KEYS = (("sos", "sos"), ("sosRank", "sos_rank"))
+#: Every key of one club's `ours` entry, in written order.
+OURS_CLUB_KEYS = tuple(k for _s, k in FUTURES_KEYS) + (
+    "proj_w_int", "proj_l", "proj_basis_ok", "proj_basis_w", "proj_basis_l", "sos", "sos_rank")
+#: Postseason game types (Wild Card Series, Division Series, LCS, World Series).
+POST_GAME_TYPES = ("F", "D", "L", "W")
+_WL_RE = re.compile(r"^(\d+)-(\d+)$")
+
+
+def _num(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+def parse_wl(text) -> tuple:
+    """(w, l) from a "W-L" string such as futures.json's club `record`, else
+    (None, None)."""
+    m = _WL_RE.match(text) if isinstance(text, str) else None
+    return (int(m.group(1)), int(m.group(2))) if m else (None, None)
+
+
+def proj_w_int(proj_w):
+    """`proj_w` rounded half up, math.floor(proj_w + 0.5): never Python's
+    round, which gives 92 for 92.5. None when `proj_w` is not a number."""
+    return math.floor(proj_w + 0.5) if _num(proj_w) else None
+
+
+def proj_basis(futures_club, row) -> dict:
+    """The projection's basis (plan 4.7): futures.json's club `record`, read
+    for this comparison only and never copied, parsed into two integers and
+    compared with the row's `w` and `l`. No time order is claimed either way."""
+    bw, bl = parse_wl((futures_club or {}).get("record"))
+    ok = bw is not None and bw == row.get("w") and bl == row.get("l")
+    return {"proj_basis_ok": ok, "proj_basis_w": bw, "proj_basis_l": bl}
+
+
+def sos_window_open(as_of, opening_day, regular_season_end) -> bool:
+    """The SOS window of plan 4.7: the season file's `as_of` from
+    `opening_day` to futures.json's `regular_season_end`, both inclusive."""
+    if not (as_of and opening_day and regular_season_end):
+        return False
+    return str(opening_day) <= str(as_of) <= str(regular_season_end)
+
+
+def registry_block(models, ids) -> list[dict]:
+    """[{model_id, verdict, last_checked, label}] for `ids`, copied from the
+    served registry's rows (`last_checked` may be null) plus MODEL_LABEL."""
+    by = {m.get("model_id"): m for m in (models or []) if isinstance(m, dict)}
+    out = []
+    for mid in ids:
+        m = by.get(mid)
+        if m is None or not m.get("verdict"):
+            continue
+        out.append({"model_id": mid, "verdict": m.get("verdict"), "last_checked": m.get("last_checked"),
+                    "label": MODEL_LABEL[mid]})
+    return out
+
+
+def bracket_serves(bracket, season) -> bool:
+    """bracket_sim.json is this season's and says it serves."""
+    return (isinstance(bracket, dict) and bracket.get("season") == season
+            and (bracket.get("serve") or {}).get("on") is True and isinstance(bracket.get("clubs"), list))
+
+
+def build_ours(obj: dict, *, futures, bracket=None, october: bool = False, sos=None, registry=None) -> tuple:
+    """(`ours`, `registry`) for the season file `obj` (plan 4.7), every value
+    copied from its source and never recomputed, except the two derived
+    integers `proj_w_int` and `proj_l` (4.6 item 11). `futures` is
+    futures.json (or the job's extract of it), `bracket` bracket_sim.json,
+    `sos` mlb_projections.json, `registry` the served registry's `models`.
+
+    (None, []) under the season guard (futures.json's top-level `season` is
+    not the file's) or when the served registry has no `playoff_odds_sim` row
+    (an odds cell is never served without its verdict). With `october` true
+    (from the season's first postseason game to its last) `p_pennant` and
+    `p_ws` come from bracket_sim.json when it serves this season, and are
+    null otherwise; the other three chances, PROJ and its band stay
+    futures.json's. SOS is copied only inside the SOS window and for a club
+    with `left` above 0, never in October."""
+    y = obj.get("season")
+    if not isinstance(futures, dict) or futures.get("season") != y or not isinstance(futures.get("clubs"), list):
+        return None, []
+    reg_all = registry_block(registry, (MODEL_REGULAR, MODEL_POST))
+    if not any(r["model_id"] == MODEL_REGULAR for r in reg_all):
+        return None, []
+    post_ok = bool(october) and bracket_serves(bracket, y) and any(r["model_id"] == MODEL_POST for r in reg_all)
+    fut_by = {c.get("team"): c for c in futures["clubs"] if isinstance(c, dict)}
+    br_by = {c.get("team"): c for c in bracket["clubs"] if isinstance(c, dict)} if post_ok else {}
+    sos_rows = (sos or {}).get("team_outlook") if isinstance(sos, dict) else None
+    sos_by = {r.get("team"): (r.get("current") or {}) for r in (sos_rows or []) if isinstance(r, dict)}
+    sos_open = (not october) and sos_window_open(obj.get("as_of"), obj.get("opening_day"),
+                                                 futures.get("regular_season_end"))
+    clubs = {}
+    for row in obj.get("rows") or []:
+        code = row.get("code")
+        fc = fut_by.get(code)
+        c = {k: (fc.get(s) if fc else None) for s, k in FUTURES_KEYS}
+        if october:
+            bc = br_by.get(code)
+            for s, k in BRACKET_KEYS:
+                c[k] = bc.get(s) if bc else None
+        c.update(proj_basis(fc, row))
+        left = row.get("left")
+        wi = proj_w_int(c["proj_w"]) if c["proj_basis_ok"] and isinstance(left, int) else None
+        c["proj_w_int"] = wi
+        c["proj_l"] = row["w"] + row["l"] + left - wi if wi is not None else None
+        cur = sos_by.get(code) if sos_open and isinstance(left, int) and left > 0 else None
+        for s, k in SOS_KEYS:
+            c[k] = cur.get(s) if cur else None
+        clubs[code] = {k: c[k] for k in OURS_CLUB_KEYS}
+    pw_model = MODEL_POST if post_ok else (None if october else MODEL_REGULAR)
+    ours = {
+        "proj_made_at": futures.get("generated_at"),
+        "phase": "postseason" if october else "regular",
+        "regular": {"model_id": MODEL_REGULAR, "generated_at": futures.get("generated_at"),
+                    "regular_season_end": futures.get("regular_season_end")},
+        "postseason": ({"model_id": MODEL_POST, "as_of": bracket.get("as_of"),
+                        "generated_at": bracket.get("generated_at"), "label": bracket.get("label"),
+                        "method_version": bracket.get("method_version")} if post_ok else None),
+        "models": {"p_div": MODEL_REGULAR, "p_post": MODEL_REGULAR, "p_bye": MODEL_REGULAR,
+                   "p_pennant": pw_model, "p_ws": pw_model, "proj": MODEL_REGULAR, "sos": MODEL_REGULAR},
+        "sos_window": {"open": sos_open, "from": obj.get("opening_day"), "to": futures.get("regular_season_end"),
+                       "generated_at": (sos or {}).get("generated_at") if isinstance(sos, dict) else None},
+        "clubs": clubs,
+    }
+    used = (MODEL_REGULAR, MODEL_POST) if post_ok else (MODEL_REGULAR,)
+    return ours, [r for r in reg_all if r["model_id"] in used]
+
+
+def ours_copy_mismatches(obj: dict, *, futures, bracket=None, sos=None) -> list[tuple[str, str]]:
+    """T11 on the `ours` block: every copied value byte-equal (as written by
+    `encode`) to its source key at the stamped `generated_at`."""
+    ours = obj.get("ours")
+    if not isinstance(ours, dict):
+        return []
+    out = []
+    if ours.get("proj_made_at") != (futures or {}).get("generated_at"):
+        out.append(("T11", "proj_made_at is not futures.json's generated_at"))
+    fut_by = {c.get("team"): c for c in (futures or {}).get("clubs") or [] if isinstance(c, dict)}
+    post = ours.get("postseason")
+    br_by = {c.get("team"): c for c in (bracket or {}).get("clubs") or [] if isinstance(c, dict)} if post else {}
+    if post and post.get("as_of") != (bracket or {}).get("as_of"):
+        out.append(("T11", "the postseason block's as_of is not bracket_sim.json's"))
+    sos_by = {r.get("team"): (r.get("current") or {}) for r in ((sos or {}).get("team_outlook") or [])
+              if isinstance(r, dict)}
+    october = ours.get("phase") == "postseason"
+    for code, c in (ours.get("clubs") or {}).items():
+        fc = fut_by.get(code) or {}
+        for s, k in FUTURES_KEYS:
+            if october and k in ("p_pennant", "p_ws"):
+                src = (br_by.get(code) or {}).get(dict((b, a) for a, b in BRACKET_KEYS)[k])
+            else:
+                src = fc.get(s)
+            if encode(c.get(k)) != encode(src):
+                out.append(("T11", f"{code}: {k} {c.get(k)!r} is not its source's {src!r}"))
+        for s, k in SOS_KEYS:
+            if c.get(k) is not None and encode(c.get(k)) != encode(sos_by.get(code, {}).get(s)):
+                out.append(("T11", f"{code}: {k} {c.get(k)!r} is not mlb_projections.json's"))
+    return out
+
+
+def seed_mismatches(obj: dict, bracket) -> list[tuple[str, str]]:
+    """T19 against bracket_sim.json for the season file's own season: its
+    clubs[].seed, joined by team, equals the served `seed`, and the seeded
+    clubs are exactly the bracket's. Empty when the bracket is another
+    season's or absent."""
+    if not isinstance(bracket, dict) or bracket.get("season") != obj.get("season"):
+        return []
+    want = {c.get("team"): c.get("seed") for c in bracket.get("clubs") or [] if isinstance(c, dict)}
+    if not want:
+        return []
+    got = {r["code"]: r.get("seed") for r in obj.get("rows") or [] if r.get("seed") is not None}
+    out = []
+    for code in sorted(set(want) | set(got)):
+        if want.get(code) != got.get(code):
+            out.append(("T19", f"{code}: served seed {got.get(code)!r} differs from bracket_sim.json's "
+                               f"{want.get(code)!r}"))
+    return out
+
+
+def postseason_span(dated_cards) -> dict:
+    """{first, last} from the job's own date files: `first` the first date
+    holding a postseason card (gameType F, D, L or W), `last` the date of the
+    World Series game that gives a club its fourth win (state final), None
+    while that game is unplayed. `dated_cards` is [(officialDate, card)]."""
+    first, last = None, None
+    wins: dict = {}
+    for d, c in sorted(dated_cards or [], key=lambda t: (str(t[0]), str((t[1] or {}).get("start") or ""))):
+        if not isinstance(c, dict) or c.get("type") not in POST_GAME_TYPES:
+            continue
+        first = first or str(d)
+        if c.get("type") != "W" or c.get("state") != "final" or last is not None:
+            continue
+        a, h = c.get("away") or {}, c.get("home") or {}
+        if not (_num(a.get("r")) and _num(h.get("r"))) or a.get("r") == h.get("r"):
+            continue
+        win = (h if h["r"] > a["r"] else a).get("code") or (h if h["r"] > a["r"] else a).get("team_id")
+        wins[win] = wins.get(win, 0) + 1
+        if wins[win] == 4:
+            last = str(d)
+    return {"first": first, "last": last}
+
+
+def _dates_between(a: str, b: str) -> list[str]:
+    d0, d1 = _dt.date.fromisoformat(a), _dt.date.fromisoformat(b)
+    return [(d0 + _dt.timedelta(days=i)).isoformat() for i in range((d1 - d0).days + 1)]
+
+
+def _one_per_date(entries) -> list[tuple[str, dict]]:
+    by = {}
+    for e in entries:
+        by[str(e["as_of"])] = e
+    return sorted(by.items())
+
+
+def phist_blocks(ledger, record, season, opening_day, last_post_date, frame_from) -> dict:
+    """The two odds blocks of `<Y>-phist.json` (plan 4.7 "The two odds blocks"
+    and "The frame bound"), packed by column, every value copied as its
+    source holds it.
+
+    `post`: the record's good entries (top-level `entries[]`; each entry's
+    `as_of`, its `sha256` and `outputs.clubs`, a dict by club code) whose
+    `season` is Y and whose `as_of` is on or before `last_post_date` (every
+    one while it is None). `switch_as_of` = post.as_of[0], None while post is
+    empty. `regular`: the ledger's entries (top-level `entries[]`; `as_of` and
+    `clubs`, a list keyed by `team`) whose `season` is Y, dated on or after
+    the later of `opening_day` and `frame_from` (none while either is unset)
+    and before `switch_as_of`. `frame_from` is a date or the job's
+    {"<Y>": date} map. `regular.missing` lists the calendar dates between the
+    first and the last regular entry with no ledger entry, plus every
+    season-Y ledger entry on or after `opening_day` (and before the switch)
+    that the frame bound skips."""
+    y = int(season)
+    ff = frame_from.get(str(y)) if isinstance(frame_from, dict) else frame_from
+    post_src = [e for e in (record or []) if isinstance(e, dict) and e.get("season") == y and e.get("as_of")
+                and e.get("kind", "good") == "good"
+                and isinstance((e.get("outputs") or {}).get("clubs"), dict)
+                and (last_post_date is None or str(e["as_of"]) <= str(last_post_date))]
+    post_e = _one_per_date(post_src)
+    switch = post_e[0][0] if post_e else None
+    bound = max(str(opening_day), str(ff)) if (opening_day and ff) else None
+    reg_e, skipped = [], []
+    for d, e in _one_per_date(e for e in (ledger or []) if isinstance(e, dict) and e.get("season") == y
+                               and e.get("as_of") and isinstance(e.get("clubs"), list)):
+        if not opening_day or d < str(opening_day) or (switch is not None and d >= switch):
+            continue
+        if bound is None or d < bound:
+            skipped.append(d)
+            continue
+        reg_e.append((d, e))
+    reg_as = [d for d, _e in reg_e]
+    have = set(reg_as)
+    gaps = [d for d in _dates_between(reg_as[0], reg_as[-1]) if d not in have] if reg_as else []
+    rclubs: dict = {}
+    for i, (_d, e) in enumerate(reg_e):
+        for item in e["clubs"]:
+            if isinstance(item, dict) and item.get("team"):
+                rclubs.setdefault(item["team"], [None] * len(reg_e))[i] = [item.get(s) for s, _k in LEDGER_KEYS]
+    pclubs: dict = {}
+    for i, (_d, e) in enumerate(post_e):
+        for code, v in e["outputs"]["clubs"].items():
+            if isinstance(v, dict):
+                pclubs.setdefault(code, [None] * len(post_e))[i] = [v.get(s) for s, _k in BRACKET_KEYS]
+    regular = {"source": PHIST_REGULAR_SOURCE, "missing": sorted(set(gaps) | set(skipped)),
+               "fields": list(PHIST_REGULAR_FIELDS), "as_of": reg_as,
+               "clubs": {k: rclubs[k] for k in sorted(rclubs)}}
+    post = {"fields": list(PHIST_POST_FIELDS), "as_of": [d for d, _e in post_e],
+            "sha256": [e.get("sha256") for _d, e in post_e], "clubs": {k: pclubs[k] for k in sorted(pclubs)}}
+    return {"regular": regular, "post": post, "switch_as_of": switch}
+
+
+def phist_copy_mismatches(ph: dict, ledger, record) -> list[tuple[str, str]]:
+    """T11 on a phist file: every packed value byte-equal (as written by
+    `encode`) to its ledger or record entry, a club missing from an entry
+    stored as null, and every post sha256 the entry's own."""
+    out = []
+    led = {}
+    for e in ledger or []:
+        if isinstance(e, dict) and e.get("season") == ph.get("season"):
+            led[str(e.get("as_of"))] = {c.get("team"): c for c in e.get("clubs") or [] if isinstance(c, dict)}
+    reg = ph.get("regular") or {}
+    for i, d in enumerate(reg.get("as_of") or []):
+        src = led.get(d)
+        if src is None:
+            out.append(("T11", f"regular {d}: no ledger entry of this season"))
+            continue
+        for code, col in (reg.get("clubs") or {}).items():
+            want = [src[code].get(s) for s, _k in LEDGER_KEYS] if code in src else None
+            if encode(col[i]) != encode(want):
+                out.append(("T11", f"regular {d} {code}: {col[i]!r} is not the ledger's {want!r}"))
+        if set(src) - set(reg.get("clubs") or {}):
+            out.append(("T11", f"regular {d}: a ledger club is not packed"))
+    rec = {}
+    for e in record or []:
+        if isinstance(e, dict) and e.get("season") == ph.get("season") and e.get("kind", "good") == "good":
+            rec[str(e.get("as_of"))] = e
+    pst = ph.get("post") or {}
+    for i, d in enumerate(pst.get("as_of") or []):
+        e = rec.get(d)
+        if e is None:
+            out.append(("T11", f"post {d}: no record entry of this season"))
+            continue
+        if (pst.get("sha256") or [None] * (i + 1))[i] != e.get("sha256"):
+            out.append(("T11", f"post {d}: sha256 is not the entry's"))
+        src = (e.get("outputs") or {}).get("clubs") or {}
+        for code, col in (pst.get("clubs") or {}).items():
+            want = [src[code].get(s) for s, _k in BRACKET_KEYS] if code in src else None
+            if encode(col[i]) != encode(want):
+                out.append(("T11", f"post {d} {code}: {col[i]!r} is not the record's {want!r}"))
+    return out
 
 
 def encode(obj) -> bytes:
@@ -1191,6 +1528,57 @@ def check_rows(obj: dict, *, games=None, race=None, source=None, logged: list | 
             if not (ge("p_post", "p_div") and ge("p_post", "p_bye") and ge("p_post", "p_pennant")
                     and ge("p_pennant", "p_ws")):
                 out.append(("T12", f"{code}: the probability order fails"))
+        out += check_ours(obj)
+    elif ours is not None:
+        out.append(("1", "ours is neither an object nor null"))
+    return out
+
+
+def check_ours(obj: dict) -> list[tuple[str, str]]:
+    """T10 and T18 on a season file's `ours` block, plus its registry block.
+    T10 applies only where the projection's basis agrees with the row: there
+    `proj_w_int` = floor(`proj_w` + 0.5), `proj_w_int` + `proj_l` = W + L +
+    LEFT and W <= `proj_w_int` <= W + LEFT (a failure refuses the file);
+    elsewhere both integers are null and a mismatch never refuses. T18: SOS
+    is null outside the window and for a club with LEFT 0."""
+    out: list = []
+    ours = obj.get("ours") or {}
+    rows = {r.get("code"): r for r in obj.get("rows") or []}
+    clubs = ours.get("clubs") or {}
+    if set(clubs) != set(rows):
+        out.append(("T11", "ours clubs are not the file's 30 rows"))
+    sos_open = bool((ours.get("sos_window") or {}).get("open"))
+    for code, c in clubs.items():
+        r = rows.get(code)
+        if r is None:
+            continue
+        if list(c) != list(OURS_CLUB_KEYS):
+            out.append(("1", f"{code}: ours keys {sorted(c)} are not the plan's"))
+            continue
+        bw, bl = c["proj_basis_w"], c["proj_basis_l"]
+        if (bw is None) != (bl is None) or c["proj_basis_ok"] is not (bw is not None and bw == r["w"] and bl == r["l"]):
+            out.append(("T10", f"{code}: proj_basis_ok {c['proj_basis_ok']} is not the basis {bw}-{bl} "
+                               f"against {r['w']}-{r['l']}"))
+        left, wi, pl = r.get("left"), c["proj_w_int"], c["proj_l"]
+        if c["proj_basis_ok"] and _num(c["proj_w"]) and isinstance(left, int):
+            if wi != math.floor(c["proj_w"] + 0.5):
+                out.append(("T10", f"{code}: proj_w_int {wi} is not proj_w {c['proj_w']} rounded half up"))
+            elif pl is None or wi + pl != r["w"] + r["l"] + left:
+                out.append(("T10", f"{code}: PROJ {wi}-{pl} does not sum to W + L + LEFT"))
+            elif not r["w"] <= wi <= r["w"] + left:
+                out.append(("T10", f"{code}: proj_w_int {wi} outside W {r['w']} to W + LEFT {r['w'] + left}"))
+        elif wi is not None or pl is not None:
+            out.append(("T10", f"{code}: PROJ served where the basis disagrees or is unread"))
+        if (c["sos"] is not None or c["sos_rank"] is not None) and (not sos_open or not left):
+            out.append(("T18", f"{code}: SOS served outside the window or with LEFT {left}"))
+    want_ids = {"playoff_odds_sim"} | ({"postseason_bracket_sim"} if ours.get("postseason") else set())
+    reg = obj.get("registry") or []
+    if {x.get("model_id") for x in reg} != want_ids:
+        out.append(("T11", f"registry models {[x.get('model_id') for x in reg]} are not the block's {sorted(want_ids)}"))
+    for x in reg:
+        if x.get("label") != MODEL_LABEL.get(x.get("model_id")) or not x.get("verdict") or set(x) != {
+                "model_id", "verdict", "last_checked", "label"}:
+            out.append(("T11", f"registry row {x.get('model_id')!r} is not copied plus MODEL_LABEL"))
     return out
 
 
@@ -1239,6 +1627,14 @@ def _check_phist(obj: dict) -> list[tuple[str, str]]:
         out.append(("T11", "as_of lists are not in date order"))
     if len(pst.get("sha256") or []) != len(pa):
         out.append(("T11", "post sha256 list length differs from its as_of list"))
+    miss = reg.get("missing") or []
+    if miss != sorted(set(miss)) or set(miss) & set(ra):
+        out.append(("T11", "regular.missing is not a sorted list of dates outside regular.as_of"))
+    if ra and reg.get("source") != PHIST_REGULAR_SOURCE:
+        out.append(("T11", f"regular.source {reg.get('source')!r} is not {PHIST_REGULAR_SOURCE!r}"))
+    if list(reg.get("fields") or []) != list(PHIST_REGULAR_FIELDS) or \
+            list(pst.get("fields") or []) != list(PHIST_POST_FIELDS):
+        out.append(("T11", "a block's fields are not the plan's"))
     for blk, n_fields, n in ((reg, len(reg.get("fields") or []), len(ra)), (pst, len(pst.get("fields") or []), len(pa))):
         for code, vals in (blk.get("clubs") or {}).items():
             if len(vals) != n or any(v is not None and len(v) != n_fields for v in vals):
@@ -1249,13 +1645,18 @@ def _check_phist(obj: dict) -> list[tuple[str, str]]:
 
 
 def validate_standings(kind: str, obj, *, name: str | None = None, games=None, race=None, source=None,
-                       disk_generated_at: str | None = None) -> dict:
+                       disk_generated_at: str | None = None, copied_from: dict | None = None) -> dict:
     """Validate one standings payload: scores_core's file-independent rules (1
     names, 5 NaN, 6 budgets and ceilings, 7 disk age when `disk_generated_at`
     is given, 9 forbidden keys, 10 dashes; rule 11 is `revs_match`), rule 4 as
     amended (a top-level `copyright` key holding StatsAPI's line verbatim is
     exempt; MLB's terms URL anywhere else is refused), and the laws of plan 6
-    for the kind. Returns `{ok, refused, logged, bytes}`."""
+    for the kind. `copied_from` (STANDINGS_3) holds the served sources a
+    season file's `ours` or a phist file was copied from ({futures, bracket,
+    sos} or {ledger, record, opening_day, last_post_date}): every copied
+    value is then checked byte-equal (T11), and a season file's seeds
+    against bracket_sim.json's for the same season (T19). Returns
+    `{ok, refused, logged, bytes}`."""
     if kind not in STANDINGS_KINDS:
         return {"ok": False, "refused": [("0", f"not a standings kind {kind!r}")], "logged": [], "bytes": 0}
     res = sc.validate_payload(kind, obj, name=name, disk_generated_at=disk_generated_at)
@@ -1286,10 +1687,21 @@ def validate_standings(kind: str, obj, *, name: str | None = None, games=None, r
         if kind == KIND_SNAPSHOT and "ours" in obj:
             refused.append(("1", "a snapshot carries no ours block"))
         refused += check_rows(obj, games=games, race=race, source=source, logged=logged)
+        if kind == KIND_SEASON and copied_from is not None:
+            refused += ours_copy_mismatches(obj, futures=copied_from.get("futures"),
+                                            bracket=copied_from.get("bracket"), sos=copied_from.get("sos"))
+            refused += seed_mismatches(obj, copied_from.get("bracket"))
     elif kind == KIND_RACE:
         refused += _check_race(obj)
     else:
         refused += _check_phist(obj)
+        if copied_from is not None:
+            refused += phist_copy_mismatches(obj, copied_from.get("ledger"), copied_from.get("record"))
+            od, lp = copied_from.get("opening_day"), copied_from.get("last_post_date")
+            if any(not od or d < od for d in (obj.get("regular") or {}).get("as_of") or []):
+                refused.append(("T11", f"a regular as_of before opening_day {od}"))
+            if lp and any(d > lp for d in (obj.get("post") or {}).get("as_of") or []):
+                refused.append(("T11", f"a post as_of after the last postseason game {lp}"))
     return {"ok": not refused, "refused": refused, "logged": logged, "bytes": res["bytes"]}
 
 

@@ -770,3 +770,697 @@ def test_why_prints_the_standings_decision(env, capsys):
     text = capsys.readouterr().out
     assert re.search(r"^standings: (call|no call)", text, re.M), text
     assert "stale_since 2026-06-10T03:00:00Z" in text and "owed 2026-06-09" in text
+
+
+# --------------------------------------------------------------------------- #
+# STANDINGS_3_OURS_JOIN: our columns copied from the served files (plan 4.7)
+# --------------------------------------------------------------------------- #
+from test_served_invariants import _is_prob  # noqa: E402  (the unit-interval law of :71)
+from test_standings_core import rows_by_code  # noqa: E402
+
+REG_ROWS = [{"model_id": "playoff_odds_sim", "verdict": "provisional", "last_checked": "2026-10-02",
+             "surface": "not copied"},
+            {"model_id": "postseason_bracket_sim", "verdict": "unvalidated", "last_checked": None}]
+FORBIDDEN_TEXT = (b'"record', b"impliedAmerican", b'"odds"', b'"price', b'"implied_prob"', b'"market')
+
+
+def fx(name):
+    return json.loads((FIX / name).read_text(encoding="utf-8"))
+
+
+def final_2026(opening_day="2026-03-25"):
+    """The 2026 final season file (161-game NYY and BAL) and its response."""
+    pay = fx("standings_2026.json")
+    obj = st.build_season_file(pay, as_of="2026-09-27", final=True, generated_at=GEN)
+    obj["opening_day"] = opening_day
+    return obj, pay
+
+
+def futures_for(obj, *, season=None, gen="2026-04-20T09:00:00+00:00", rse="2026-09-27", proj=None, drop=()):
+    """A futures.json whose club records agree with the file's rows, with
+    prices present so a test can prove they are never copied."""
+    clubs = []
+    for r in obj["rows"]:
+        if r["code"] in drop:
+            continue
+        left = r.get("left") or 0
+        clubs.append({"team": r["code"], "record": f"{r['w']}-{r['l']}",
+                      "projWins": (proj or {}).get(r["code"], r["w"] + left / 2),
+                      "winTotalP10": r["w"], "winTotalP90": r["w"] + left, "winTotalSd": 1.5,
+                      "divisionPct": 0.2, "playoffPct": 0.5, "byePct": 0.1, "pennantPct": 0.07, "wsPct": 0.03,
+                      "impliedAmericanWS": 3233, "impliedAmericanPennant": 1329, "impliedAmericanDivision": 400})
+    return {"generated_at": gen, "season": obj["season"] if season is None else season, "regular_season_end": rse,
+            "clubs": clubs}
+
+
+def bracket_for(obj, *, season=None, on=True, swap=None):
+    """A bracket_sim.json whose seeds are the file's (two swapped when asked)."""
+    seeded = [r for r in obj["rows"] if r.get("seed") is not None]
+    seeds = {r["code"]: r["seed"] for r in seeded}
+    if swap:
+        a, b = swap
+        seeds[a], seeds[b] = seeds[b], seeds[a]
+    clubs = [{"team": r["code"], "league": r["lg"], "seed": seeds[r["code"]], "pennant_pct": 0.123456,
+              "ws_pct": 0.061728, "p_round_now": 0.5} for r in seeded]
+    return {"season": obj["season"] if season is None else season, "as_of": "2026-10-01",
+            "generated_at": "2026-10-01T18:59:11+00:00", "label": "implied, no market", "method_version": "bracket_v1",
+            "entry_sha256": "0" * 64, "serve": {"on": on}, "clubs": clubs}
+
+
+def check_t12(ours):
+    """T12 on the copied block: test_served_invariants' unit-interval law (:71)
+    and the order laws of plan 6 (:86 and :118 are the identity and the
+    whole-season laws of the overlay; the copied block carries no wildcardPct,
+    so its identity is the order p_div <= p_post)."""
+    for code, c in ours["clubs"].items():
+        for k in st.PHIST_REGULAR_FIELDS:
+            assert c[k] is None or _is_prob(c[k]), (code, k, c[k])
+        ps = {k: c[k] for k in st.PHIST_REGULAR_FIELDS}
+        if None not in ps.values():
+            assert ps["p_div"] <= ps["p_post"] and ps["p_bye"] <= ps["p_post"], code
+            assert ps["p_pennant"] <= ps["p_post"] and ps["p_ws"] <= ps["p_pennant"], code
+
+
+def test_t10_basis_fixture_the_0927_morning_futures_against_the_final_rows():
+    obj, pay = final_2026()
+    fut = fx("futures_2026-09-27.json")
+    obj["ours"], obj["registry"] = st.build_ours(obj, futures=fut, registry=REG_ROWS)
+    ours = obj["ours"]
+    res = st.validate_standings(st.KIND_SEASON, obj, source=pay, copied_from={"futures": fut})
+    assert res["ok"], res["refused"][:5]                   # a basis mismatch never refuses the file
+    bad = sorted(c for c, x in ours["clubs"].items() if not x["proj_basis_ok"])
+    assert len(bad) == 28, bad
+    assert {"CLE", "KCR", "TBR", "BOS", "ATL", "TEX", "ARI", "DET", "NYM", "ATH"} <= set(bad)
+    assert all(ours["clubs"][c]["proj_w_int"] is None and ours["clubs"][c]["proj_l"] is None for c in bad)
+    nyy, bal = ours["clubs"]["NYY"], ours["clubs"]["BAL"]
+    assert (nyy["proj_w_int"], nyy["proj_l"]) == (93, 68) and (bal["proj_w_int"], bal["proj_l"]) == (79, 82)
+    assert ours["proj_made_at"] == fut["generated_at"] == "2026-09-27T09:00:00+00:00"
+    rows = rows_by_code(obj)
+    cle = ours["clubs"]["CLE"]
+    assert (cle["proj_basis_w"], cle["proj_basis_l"]) == (85, 76) and (rows["CLE"]["w"], rows["CLE"]["l"]) == (85, 77)
+    # without the basis rule 10 of the 28 would break the bound law after their last final
+    by = {c["team"]: c for c in fut["clubs"]}
+    broke = sorted(c for c in bad if st.proj_w_int(by[c]["projWins"]) != rows[c]["w"])
+    assert len(broke) == 10 and {"CLE", "KCR"} <= set(broke), broke
+    # every printed PROJ sums to W + L + LEFT; proj_w stays byte-equal to projWins
+    for code, c in ours["clubs"].items():
+        assert st.encode(c["proj_w"]) == st.encode(by[code]["projWins"])
+        if c["proj_basis_ok"]:
+            r = rows[code]
+            assert c["proj_w_int"] + c["proj_l"] == r["w"] + r["l"] + r["left"]
+            assert r["w"] <= c["proj_w_int"] <= r["w"] + r["left"]
+    check_t12(ours)
+    for t in FORBIDDEN_TEXT:
+        assert t not in st.encode(obj), t
+    assert sc.find_forbidden_keys(obj) == []
+
+
+def test_t10_on_a_161_game_final_file_prints_the_actual_w_l():
+    obj, pay = final_2026()
+    fut = futures_for(obj, proj={r["code"]: r["w"] for r in obj["rows"]})
+    obj["ours"], obj["registry"] = st.build_ours(obj, futures=fut, registry=REG_ROWS)
+    assert st.validate_standings(st.KIND_SEASON, obj, source=pay, copied_from={"futures": fut})["ok"]
+    for r in obj["rows"]:
+        c = obj["ours"]["clubs"][r["code"]]
+        assert c["proj_basis_ok"] and (c["proj_w_int"], c["proj_l"]) == (r["w"], r["l"]), r["code"]
+    nyy, bal = obj["ours"]["clubs"]["NYY"], obj["ours"]["clubs"]["BAL"]
+    assert f"{nyy['proj_w_int']}-{nyy['proj_l']}" == "93-68" and f"{bal['proj_w_int']}-{bal['proj_l']}" == "79-82"
+
+
+def _half(pw, *, w=85, l=65, left=12):
+    obj = {"season": 2026, "as_of": "2026-09-14", "opening_day": "2026-03-25",
+           "rows": [{"code": "NYY", "w": w, "l": l, "left": left}]}
+    fut = {"season": 2026, "generated_at": "2026-09-14T09:00:00+00:00", "regular_season_end": "2026-09-27",
+           "clubs": [{"team": "NYY", "record": f"{w}-{l}", "projWins": pw}]}
+    obj["ours"], obj["registry"] = st.build_ours(obj, futures=fut, registry=REG_ROWS)
+    return obj
+
+
+@pytest.mark.parametrize("pw, printed", [(92.5, "93-69"), (91.5, "92-70"), (92.4, "92-70")])
+def test_t10_on_the_printed_integers_with_a_half_projection(pw, printed):
+    obj = _half(pw)
+    c = obj["ours"]["clubs"]["NYY"]
+    assert f"{c['proj_w_int']}-{c['proj_l']}" == printed
+    assert c["proj_w_int"] + c["proj_l"] == 85 + 65 + 12 == 162
+    assert st.encode(c["proj_w"]) == st.encode(pw)
+    assert st.check_ours(obj) == []
+    assert round(92.5) == 92                               # why the half-up rule is math.floor(x + 0.5)
+
+
+def test_an_agreeing_row_that_breaks_the_bound_is_refused():
+    obj, pay = final_2026()
+    fut = futures_for(obj, proj=dict({r["code"]: r["w"] for r in obj["rows"]}, NYY=95))
+    obj["ours"], obj["registry"] = st.build_ours(obj, futures=fut, registry=REG_ROWS)
+    res = st.validate_standings(st.KIND_SEASON, obj, source=pay, copied_from={"futures": fut})
+    assert not res["ok"] and any(r == "T10" and "NYY" in m for r, m in res["refused"]), res["refused"]
+    assert any(r == "T10" for r, _m in st.check_ours(_half(98.0)))   # 98 > W + LEFT 97
+
+
+def test_the_lag_fixture_lad_0907_against_86_57():
+    obj, _pay = final_2026()
+    lad = next(r for r in obj["rows"] if r["code"] == "LAD")
+    lad.update(w=86, l=57, left=19)
+    fut = fx("futures_2026-09-07.json")
+    obj["ours"], obj["registry"] = st.build_ours(obj, futures=fut, registry=REG_ROWS)
+    c = obj["ours"]["clubs"]["LAD"]
+    assert c["proj_basis_ok"] is False and (c["proj_basis_w"], c["proj_basis_l"]) == (85, 57)
+    assert c["proj_w_int"] is None and c["proj_l"] is None and c["proj_w"] == 96.7
+    assert [x for x in st.check_ours(obj) if x[0] == "T10"] == []
+
+
+def test_a_missing_or_unreadable_record_gives_null_never_a_refusal():
+    obj, pay = final_2026()
+    fut = futures_for(obj, drop=("SEA",))
+    by = {c["team"]: c for c in fut["clubs"]}
+    del by["NYY"]["record"]
+    by["BAL"]["record"] = "79/82"
+    by["CLE"]["record"] = "W-L"
+    obj["ours"], obj["registry"] = st.build_ours(obj, futures=fut, registry=REG_ROWS)
+    for code in ("NYY", "BAL", "CLE", "SEA"):
+        c = obj["ours"]["clubs"][code]
+        assert c["proj_basis_ok"] is False and c["proj_basis_w"] is None and c["proj_basis_l"] is None, code
+        assert c["proj_w_int"] is None and c["proj_l"] is None, code
+    assert all(v is None for k, v in obj["ours"]["clubs"]["SEA"].items() if k != "proj_basis_ok")
+    assert st.validate_standings(st.KIND_SEASON, obj, source=pay, copied_from={"futures": fut})["ok"]
+    assert st.parse_wl("93-68") == (93, 68) and st.parse_wl(None) == (None, None) and st.parse_wl("93") == (None, None)
+
+
+def test_the_season_guard_writes_no_odds_and_no_proj():
+    obj, _pay = final_2026()
+    assert st.build_ours(obj, futures=futures_for(obj, season=2025), registry=REG_ROWS) == (None, [])
+    assert st.build_ours(obj, futures=None, registry=REG_ROWS) == (None, [])
+    # no playoff_odds_sim row in the served registry: no odds cell without its verdict
+    assert st.build_ours(obj, futures=futures_for(obj), registry=REG_ROWS[1:]) == (None, [])
+
+
+def test_t18_the_sos_window():
+    obj, pay = final_2026()
+    fut = futures_for(obj, rse="2026-09-27")
+    overlay = {"generated_at": "2026-10-02", "team_outlook": [
+        {"team": r["code"], "current": {"sos": 0.5642, "sosRank": 3}} for r in obj["rows"]]}
+    ours, _reg = st.build_ours(obj, futures=fut, sos=overlay, registry=REG_ROWS)
+    assert all(c["sos"] is None and c["sos_rank"] is None for c in ours["clubs"].values())   # left 0 for all 30
+    # in season: copied byte-equal inside the window; a club with left 0 gets null
+    p1 = st.build_season_file(fx("p1_2026-09-20.json"), as_of="2026-09-20", final=False, generated_at=GEN)
+    p1["opening_day"] = "2026-03-25"
+    for r in p1["rows"]:
+        r["left"] = 0 if r["code"] == "NYY" else 7
+    overlay = {"generated_at": "2026-09-20", "team_outlook": [
+        {"team": r["code"], "current": {"sos": 0.4987 + i / 10000, "sosRank": i + 1}}
+        for i, r in enumerate(p1["rows"])]}
+    fut = futures_for(p1)
+    p1["ours"], p1["registry"] = st.build_ours(p1, futures=fut, sos=overlay, registry=REG_ROWS)
+    src = {x["team"]: x["current"] for x in overlay["team_outlook"]}
+    for code, c in p1["ours"]["clubs"].items():
+        if code == "NYY":
+            assert c["sos"] is None and c["sos_rank"] is None
+        else:
+            assert st.encode([c["sos"], c["sos_rank"]]) == st.encode([src[code]["sos"], src[code]["sosRank"]])
+    assert p1["ours"]["sos_window"]["open"] is True
+    assert st.ours_copy_mismatches(p1, futures=fut, sos=overlay) == []
+    assert [x for x in st.check_ours(p1) if x[0] == "T18"] == []
+    p1["ours"]["clubs"]["NYY"]["sos"] = 0.5
+    assert any(r == "T18" for r, _m in st.check_ours(p1))
+    # after regular_season_end the window is shut whatever left says
+    p1["ours"]["clubs"]["NYY"]["sos"] = None
+    ours2, _ = st.build_ours(p1, futures=futures_for(p1, rse="2026-09-19"), sos=overlay, registry=REG_ROWS)
+    assert all(c["sos"] is None for c in ours2["clubs"].values())
+
+
+def test_the_october_switch_with_its_verdict_and_t19():
+    obj, pay = final_2026()
+    seeds = {c["team"]: c["seed"] for c in fx("seeds_2026.json")["clubs"]}
+    assert {r["code"]: r["seed"] for r in obj["rows"] if r["seed"]} == seeds       # 12 of 12
+    fut = futures_for(obj, proj={r["code"]: r["w"] for r in obj["rows"]})
+    br = bracket_for(obj)
+    obj["ours"], obj["registry"] = st.build_ours(obj, futures=fut, bracket=br, october=True, registry=REG_ROWS)
+    ours = obj["ours"]
+    assert ours["phase"] == "postseason" and ours["postseason"]["as_of"] == "2026-10-01"
+    assert ours["postseason"]["label"] == "implied, no market" and ours["postseason"]["method_version"] == "bracket_v1"
+    assert ours["models"]["p_pennant"] == ours["models"]["p_ws"] == "postseason_bracket_sim"
+    assert ours["models"]["p_div"] == "playoff_odds_sim"
+    assert obj["registry"] == [
+        {"model_id": "playoff_odds_sim", "verdict": "provisional", "last_checked": "2026-10-02",
+         "label": "Eephus season simulator"},
+        {"model_id": "postseason_bracket_sim", "verdict": "unvalidated", "last_checked": None,
+         "label": "Eephus bracket simulator"}]
+    for code, c in ours["clubs"].items():
+        if code in seeds:
+            assert (c["p_pennant"], c["p_ws"]) == (0.123456, 0.061728)
+        else:
+            assert c["p_pennant"] is None and c["p_ws"] is None
+        assert c["p_div"] == 0.2 and c["sos"] is None
+    cf = {"futures": fut, "bracket": br}
+    assert st.validate_standings(st.KIND_SEASON, obj, source=pay, copied_from=cf)["ok"]
+    # T19: two seeds swapped in bracket_sim.json refuse the file
+    bad = bracket_for(obj, swap=("NYY", "CLE"))
+    res = st.validate_standings(st.KIND_SEASON, obj, source=pay, copied_from={"futures": fut, "bracket": bad})
+    assert not res["ok"] and {m.split(":")[0] for r, m in res["refused"] if r == "T19"} >= {"NYY", "CLE"}
+    # another season's bracket is not compared, and is never copied
+    assert st.seed_mismatches(obj, bracket_for(obj, season=2025, swap=("NYY", "CLE"))) == []
+    o2, r2 = st.build_ours(obj, futures=fut, bracket=bracket_for(obj, season=2025), october=True, registry=REG_ROWS)
+    assert o2["postseason"] is None and [x["model_id"] for x in r2] == ["playoff_odds_sim"]
+    assert all(c["p_pennant"] is None for c in o2["clubs"].values())
+    # a bracket that does not serve is never copied either
+    o3, _ = st.build_ours(obj, futures=fut, bracket=bracket_for(obj, on=False), october=True, registry=REG_ROWS)
+    assert o3["postseason"] is None and o3["models"]["p_pennant"] is None
+    # before the first postseason game the pair stays futures.json's
+    o4, r4 = st.build_ours(obj, futures=fut, bracket=br, october=False, registry=REG_ROWS)
+    assert o4["phase"] == "regular" and all(c["p_pennant"] == 0.07 for c in o4["clubs"].values())
+    assert [x["model_id"] for x in r4] == ["playoff_odds_sim"]
+
+
+def _blocks(ledger=None, record=None, **kw):
+    led = fx("futures_ledger_2026.json")["entries"] if ledger is None else ledger
+    rec = fx("bracket_sim_record_2026.json")["entries"] if record is None else record
+    args = {"season": 2026, "opening_day": "2026-03-25", "last_post_date": None,
+            "frame_from": {"2026": st.FRAME_FROM_SEED[2026]}}
+    args.update(kw)
+    return st.phist_blocks(led, rec, args["season"], args["opening_day"], args["last_post_date"], args["frame_from"])
+
+
+def _phist_file(blocks, season=2026, closed=False):
+    return st.build_phist_file(season, generated_at=GEN, regular=blocks["regular"], post=blocks["post"],
+                               switch_as_of=blocks["switch_as_of"], closed=closed)
+
+
+def test_the_two_blocks_from_heads_ledger_and_record():
+    led, rec = fx("futures_ledger_2026.json")["entries"], fx("bracket_sim_record_2026.json")["entries"]
+    assert len(led) == 20 and led[0]["as_of"] == "2026-09-06" and led[-1]["as_of"] == "2026-10-02"
+    b = _blocks()
+    reg, post = b["regular"], b["post"]
+    assert len(reg["as_of"]) == 18 and reg["as_of"][0] == "2026-09-06" and reg["as_of"][-1] == "2026-09-30"
+    assert reg["missing"] == ["2026-09-08", "2026-09-12", "2026-09-15", "2026-09-20", "2026-09-22",
+                              "2026-09-28", "2026-09-29"]
+    assert reg["source"] == "futures ledger on this machine"
+    assert post["as_of"] == ["2026-10-01"] and post["sha256"] == [rec[0]["sha256"]]
+    assert b["switch_as_of"] == "2026-10-01" and not set(reg["as_of"]) & set(post["as_of"])
+    ph = _phist_file(b)
+    cf = {"ledger": led, "record": rec, "opening_day": "2026-03-25", "last_post_date": None}
+    res = st.validate_standings(st.KIND_PHIST, ph, name="standings/2026-phist.json", copied_from=cf)
+    assert res["ok"], res["refused"][:4]
+    # every packed number is the source's, byte-equal; record and projWins are never packed
+    e0 = led[0]
+    lad = next(c for c in e0["clubs"] if c["team"] == "LAD")
+    assert reg["clubs"]["LAD"][0] == [lad["divisionPct"], lad["playoffPct"], lad["byePct"], lad["pennantPct"],
+                                      lad["wsPct"]]
+    atl = rec[0]["outputs"]["clubs"]["ATL"]
+    assert post["clubs"]["ATL"] == [[atl["pennant_pct"], atl["ws_pct"]]]
+    data = st.encode(ph)
+    assert b'"record' not in data and b"projWins" not in data and b"proj_w" not in data
+    assert len(data) < 16 * 1024, len(data)
+    # with the record emptied, regular holds all 20 and the switch is null
+    b2 = _blocks(record=[])
+    assert len(b2["regular"]["as_of"]) == 20 and b2["switch_as_of"] is None and b2["post"]["as_of"] == []
+    assert b2["regular"]["missing"] == ["2026-09-08", "2026-09-12", "2026-09-15", "2026-09-20", "2026-09-22",
+                                        "2026-09-28", "2026-09-29"]
+    # the seed skips nothing at HEAD
+    assert _blocks(frame_from={})["regular"]["as_of"] == []
+    assert _blocks(frame_from="2026-09-06")["regular"] == reg
+
+
+def test_the_packed_shape_stores_a_missing_club_as_null_and_skips_foreign_entries():
+    led = copy.deepcopy(fx("futures_ledger_2026.json")["entries"])
+    led[3]["clubs"] = [c for c in led[3]["clubs"] if c["team"] != "NYY"]
+    early = copy.deepcopy(led[0])
+    early.update(as_of="2026-03-20")                      # before opening_day
+    jan = copy.deepcopy(led[0])
+    jan.update(as_of="2027-01-15", season=2027)            # next calendar year, 2026's settled odds
+    b = _blocks(ledger=[early] + led + [jan], record=[])
+    col = b["regular"]["clubs"]["NYY"]
+    assert len(col) == 20 and col[3] is None and col[2] is not None
+    assert "2026-03-20" not in b["regular"]["as_of"] + b["regular"]["missing"]
+    assert "2027-01-15" not in b["regular"]["as_of"] + b["regular"]["missing"]
+    ph = _phist_file(b)
+    cf = {"ledger": led, "record": [], "opening_day": "2026-03-25", "last_post_date": None}
+    assert st.validate_standings(st.KIND_PHIST, ph, copied_from=cf)["ok"]
+    nyy = next(c for c in led[0]["clubs"] if c["team"] == "NYY")
+    ph["regular"]["clubs"]["NYY"][0][0] = nyy["divisionPct"] + 0.001
+    assert any(r == "T11" for r, _m in st.validate_standings(st.KIND_PHIST, ph, copied_from=cf)["refused"])
+
+
+def test_the_validator_refuses_a_shared_date_a_late_regular_entry_and_a_wrong_switch():
+    ph = _phist_file(_blocks())
+    a = copy.deepcopy(ph)
+    a["regular"]["as_of"][-1] = "2026-10-01"
+    assert any(r == "T11" for r, _m in st.validate_standings(st.KIND_PHIST, a)["refused"])
+    b = copy.deepcopy(ph)
+    b["switch_as_of"] = "2026-09-29"
+    assert any(r == "T11" for r, _m in st.validate_standings(st.KIND_PHIST, b)["refused"])
+    c = copy.deepcopy(ph)
+    c["post"]["as_of"] = ["2026-09-30"]
+    c["switch_as_of"] = "2026-09-30"
+    assert any(r == "T11" for r, _m in st.validate_standings(st.KIND_PHIST, c)["refused"])
+
+
+def test_a_240_entry_season_through_the_copy_code_stays_under_the_budget():
+    codes = sorted(r["code"] for r in final_2026()[0]["rows"])
+    d0 = date(2026, 3, 25)
+    led = [{"as_of": (d0 + timedelta(days=i)).isoformat(), "season": 2026,
+            "clubs": [{"team": c, "record": "1-1", "projWins": 81.5, "divisionPct": 0.123, "playoffPct": 0.456,
+                       "byePct": 0.101, "pennantPct": 0.0987, "wsPct": 0.0456} for c in codes]} for i in range(240)]
+    rec = [{"kind": "good", "as_of": (d0 + timedelta(days=240 + i)).isoformat(), "season": 2026, "sha256": "a" * 64,
+            "outputs": {"clubs": {c: {"pennant_pct": 0.12345, "ws_pct": 0.06789} for c in codes[:12]}}}
+           for i in range(35)]
+    b = _blocks(ledger=led, record=rec, frame_from="2026-03-25")
+    assert len(b["regular"]["as_of"]) == 240 and len(b["post"]["as_of"]) == 35
+    data = st.encode(_phist_file(b))
+    assert len(data) < 256 * 1024, len(data)
+
+
+def test_postseason_span_reads_the_world_series_fourth_win():
+    def card(t, st_, aw, ar, hm, hr, start):
+        return {"type": t, "state": st_, "start": start, "away": {"code": aw, "r": ar}, "home": {"code": hm, "r": hr}}
+    cards = [("2026-09-27", card("R", "final", "NYY", 3, "BAL", 2, "2026-09-27T17:05:00Z")),
+             ("2026-09-29", card("F", "final", "BOS", 1, "NYY", 2, "2026-09-29T17:05:00Z"))]
+    assert st.postseason_span(cards) == {"first": "2026-09-29", "last": None}
+    for i, (aw, ar, hm, hr) in enumerate([("LAD", 2, "NYY", 5), ("LAD", 6, "NYY", 1), ("NYY", 4, "LAD", 3),
+                                          ("NYY", 7, "LAD", 2), ("NYY", 1, "LAD", 0)]):
+        d = (date(2026, 10, 24) + timedelta(days=i)).isoformat()
+        cards.append((d, card("W", "final", aw, ar, hm, hr, f"{d}T00:08:00Z")))
+    cards.append(("2026-10-29", card("W", "scheduled", "NYY", None, "LAD", None, "2026-10-29T00:08:00Z")))
+    assert st.postseason_span(cards) == {"first": "2026-09-29", "last": "2026-10-28"}
+
+
+# --- the job: served reads, the window, the frame bound, the closed file ---
+def serve(env, name, doc, *, bump=[0]):
+    """Write one served file under the env's webroot with a fresh mtime."""
+    p = env["web"] / "data" / name
+    if doc is None:
+        p.unlink(missing_ok=True)
+        return p
+    p.write_text(json.dumps(doc), encoding="utf-8")
+    bump[0] += 10
+    t = 1_900_000_000 + bump[0]
+    os.utime(p, (t, t))
+    return p
+
+
+def serve_registry(env):
+    serve(env, "model_registry.json", {"models": [{"model_id": "scores_mlb_wp", "verdict": "provisional"}] + REG_ROWS})
+
+
+def season_doc(env, y=2026):
+    return json.loads((sdir(env) / f"{y}.json").read_text(encoding="utf-8"))
+
+
+def test_the_job_copies_ours_byte_equal_from_the_served_files(env):
+    clock = FakeClock()
+    res, _ = race_and_snapshots(env, clock)
+    assert res["exit"] == 0
+    assert season_doc(env)["ours"] is None                 # nothing served yet: the unmeasured state
+    f0 = season_doc(env)
+    fut = futures_for(f0)
+    serve(env, "futures.json", fut)
+    serve_registry(env)
+    overlay = {"generated_at": "2026-04-20", "team_outlook": [
+        {"team": r["code"], "current": {"sos": 0.5123, "sosRank": 4, "projWinsMean": 1.0, "playoffPct": 0.9}}
+        for r in f0["rows"]]}
+    serve(env, "mlb_projections.json", overlay)
+    out = job.build_standings(2026, 2026, paths=env["paths"], now_fn=lambda: LATER)
+    assert out["exit"] == 0, out
+    f = season_doc(env)
+    raw = (sdir(env) / "2026.json").read_bytes()
+    by = {c["team"]: c for c in fut["clubs"]}
+    for code, c in f["ours"]["clubs"].items():
+        for s, k in st.FUTURES_KEYS:
+            assert st.encode(c[k]) == st.encode(by[code][s]), (code, k)
+        assert c["sos"] == 0.5123 and c["sos_rank"] == 4
+        assert c["proj_basis_ok"] and c["proj_w_int"] is not None
+    assert f["ours"]["proj_made_at"] == fut["generated_at"]
+    assert f["registry"] == [{"model_id": "playoff_odds_sim", "verdict": "provisional", "last_checked": "2026-10-02",
+                              "label": "Eephus season simulator"}]
+    for t in FORBIDDEN_TEXT:
+        assert t not in raw, t
+    assert sc.find_forbidden_keys(f) == [] and st.encode(f) == raw
+    check_t12(f["ours"])
+    # PROJ reads futures.json only: without mlb_projections.json it is unchanged,
+    # without futures.json there is no PROJ at all
+    serve(env, "mlb_projections.json", None)
+    sst = job.load_sstate(env["paths"])
+    sst.pop("ours_src", None)
+    job.publish_season(env["paths"], sst, 2026, lambda: LATER)
+    g = season_doc(env)
+    assert [c["proj_w"] for c in g["ours"]["clubs"].values()] == [c["proj_w"] for c in f["ours"]["clubs"].values()]
+    serve(env, "futures.json", None)
+    sst.pop("ours_src", None)
+    job.publish_season(env["paths"], sst, 2026, lambda: LATER)
+    assert season_doc(env)["ours"] is None
+
+
+def test_the_job_season_guard_leaves_ours_absent(env):
+    clock = FakeClock()
+    race_and_snapshots(env, clock)
+    serve(env, "futures.json", futures_for(season_doc(env), season=2025))
+    serve_registry(env)
+    assert job.build_standings(2026, 2026, paths=env["paths"], now_fn=lambda: LATER)["exit"] == 0
+    f = season_doc(env)
+    assert f["ours"] is None and f["registry"] == []
+
+
+def test_each_source_is_reread_only_when_its_mtime_changes_and_the_last_good_copy_stands_in(env, monkeypatch):
+    fut = {"generated_at": "2026-04-20T09:00:00+00:00", "season": 2026, "regular_season_end": "2026-09-27",
+           "clubs": [{"team": "NYY", "record": "5-3", "projWins": 90.1, "divisionPct": 0.4}]}
+    p = serve(env, "futures.json", fut)
+    sst: dict = {}
+    reads = []
+    real = job.read_json
+    monkeypatch.setattr(job, "read_json", lambda path: reads.append(Path(path).name) or real(path))
+    a = job.ours_sources(sst)
+    assert a["futures"]["clubs"][0]["projWins"] == 90.1 and "record" in a["futures"]["clubs"][0]
+    assert "impliedAmericanWS" not in json.dumps(a)
+    n = reads.count("futures.json")
+    job.ours_sources(sst)
+    assert reads.count("futures.json") == n                # same mtime: no re-read
+    p.write_text("{not json", encoding="utf-8")
+    os.utime(p, (1_950_000_000, 1_950_000_000))
+    b = job.ours_sources(sst)
+    assert reads.count("futures.json") == n + 1 and b["futures"] == a["futures"]   # the last good copy
+    fut["generated_at"] = "2026-04-21T09:00:00+00:00"
+    serve(env, "futures.json", fut)
+    assert job.ours_sources(sst)["futures"]["generated_at"] == "2026-04-21T09:00:00+00:00"
+    serve(env, "futures.json", {})
+    assert job.ours_sources(sst)["futures"]["generated_at"] == "2026-04-21T09:00:00+00:00"   # parsed empty
+
+
+def _date_file_cards(env, d, cards):
+    p = env["paths"]["out"] / f"{d}.json"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"schema": 1, "date": d, "games": cards}), encoding="utf-8")
+
+
+def _ws_card(aw, ar, hm, hr, d, state="final"):
+    return {"pk": int(d.replace("-", "")), "type": "W", "state": state, "start": f"{d}T00:08:00Z",
+            "away": {"code": aw, "r": ar}, "home": {"code": hm, "r": hr}}
+
+
+def test_the_job_october_switch_and_the_t19_refusal(env):
+    clock = FakeClock()
+    race_and_snapshots(env, clock)
+    f0 = season_doc(env)
+    fut = futures_for(f0)
+    serve(env, "futures.json", fut)
+    serve_registry(env)
+    serve(env, "bracket_sim.json", bracket_for(f0))
+    _date_file_cards(env, "2026-04-10", [dict(_ws_card("NYY", 2, "BOS", 1, "2026-04-10"), type="F")])
+    assert job.build_standings(2026, 2026, paths=env["paths"], now_fn=lambda: LATER)["exit"] == 0
+    f = season_doc(env)
+    assert f["ours"]["phase"] == "postseason" and f["ours"]["postseason"]["as_of"] == "2026-10-01"
+    assert [r["verdict"] for r in f["registry"]] == ["provisional", "unvalidated"]
+    seeded = {r["code"] for r in f["rows"] if r["seed"]}
+    assert all((c["p_pennant"] == 0.123456) == (code in seeded) for code, c in f["ours"]["clubs"].items())
+    assert all(c["sos"] is None for c in f["ours"]["clubs"].values())
+    before = (sdir(env) / "2026.json").read_bytes()
+    a, b = sorted(seeded)[:2]
+    serve(env, "bracket_sim.json", bracket_for(f0, swap=(a, b)))
+    out = job.build_standings(2026, 2026, paths=env["paths"], now_fn=lambda: LATER)
+    assert out["exit"] == 2
+    refused = out["seasons"][2026]["files"]["season"]["refused"]
+    assert any(r == "T19" for r, _m in refused), refused
+    assert (sdir(env) / "2026.json").read_bytes() == before        # the last good copy stays
+
+
+def test_the_availability_window_ends_with_the_world_series(env):
+    clock = FakeClock()
+    race_and_snapshots(env, clock)
+    serve(env, "futures.json", futures_for(season_doc(env)))
+    serve_registry(env)
+    led = [{"as_of": d, "season": 2026, "clubs": [{"team": "NYY", "divisionPct": 0.5, "playoffPct": 0.7,
+                                                    "byePct": 0.2, "pennantPct": 0.1, "wsPct": 0.05}]}
+           for d in ("2026-03-30", "2026-04-01")]
+    serve(env, "futures_ledger.json", {"entries": led})
+    serve(env, "bracket_sim_record.json", {"entries": [
+        {"kind": "good", "as_of": "2026-04-11", "season": 2026, "sha256": "d" * 64,
+         "outputs": {"clubs": {"NYY": {"pennant_pct": 0.5, "ws_pct": 0.3}}}}]})
+    p = env["paths"]
+    assert job.build_standings(2026, 2026, paths=p, now_fn=lambda: LATER)["exit"] == 0
+    assert season_doc(env)["ours"] is not None
+    ph = json.loads((sdir(env) / "2026-phist.json").read_text(encoding="utf-8"))
+    assert ph["closed"] is False and ph["regular"]["as_of"] == []           # before the seed's 2026-09-06
+    assert ph["regular"]["missing"] == ["2026-03-30", "2026-04-01"]
+    # the World Series' fourth win ends the window and closes the phist file
+    sst = job.load_sstate(p)
+    for i, d in enumerate(("2026-04-11", "2026-04-12", "2026-04-13", "2026-04-14")):
+        _date_file_cards(env, d, [_ws_card("NYY", 5, "LAD", i, d)])
+    job.publish_season(p, sst, 2026, lambda: LATER + timedelta(hours=1))
+    assert season_doc(env)["ours"] is None
+    ph = json.loads((sdir(env) / "2026-phist.json").read_text(encoding="utf-8"))
+    assert ph["closed"] is True and ph["post"]["as_of"] == ["2026-04-11"]
+    # another calendar season: the 2026 file carries no ours whatever the date files say
+    for d in ("2026-04-11", "2026-04-12", "2026-04-13", "2026-04-14"):
+        (p["out"] / f"{d}.json").unlink()
+    job.publish_season(p, sst, 2026, lambda: LATER + timedelta(hours=2))
+    assert season_doc(env)["ours"] is not None
+    job.publish_season(p, sst, 2026, lambda: datetime(2027, 2, 1, 15, 0, tzinfo=UTC))
+    assert season_doc(env)["ours"] is None
+
+
+T2027 = datetime(2027, 4, 2, 15, 0, tzinfo=UTC)
+
+
+def season_2027(env):
+    """A 2027 season through the job's own backfill at T2027 (opening_day
+    2027-03-26, snapshots through 2027-04-01, finals through 2027-04-02)."""
+    p = env["paths"]
+    sched = season_schedule(start="2027-03-26")
+    games = st.games_from_schedule(sched)
+    fins = sorted({g["date"] for g in st.final_games(games)})
+    clock = FakeClock()
+
+    def api():
+        return StandingsAPI(clock, games=games, sched=sched, tamper=lambda d, pay: synth_standings(games, d, season=2027))
+    assert job.backfill_race(2027, 2027, paths=p, adapter=api(), **kw(clock, T2027))["exit"] == 0
+    r = job.backfill_standings(fins[0], "2027-04-01", paths=p, adapter=api(), **kw(clock, T2027))
+    assert r["exit"] == 0, r
+    return fins
+
+
+def ledger_2027(*dates):
+    codes = ("NYY", "BOS", "LAD")
+    return {"entries": [{"as_of": d, "season": 2027, "clubs": [
+        {"team": c, "record": "1-0", "projWins": 88.8, "divisionPct": 0.31, "playoffPct": 0.62, "byePct": 0.11,
+         "pennantPct": 0.09, "wsPct": 0.04} for c in codes]} for d in dates]}
+
+
+def futures_2027_like(env, season):
+    f = season_doc(env, 2027) if (sdir(env) / "2027.json").exists() else None
+    clubs = [{"team": r["code"], "record": f"{r['w']}-{r['l']}", "projWins": r["w"] + 1.0, "divisionPct": 0.2,
+              "playoffPct": 0.4, "byePct": 0.1, "pennantPct": 0.05, "wsPct": 0.02} for r in (f or {}).get("rows") or []]
+    return {"generated_at": "2027-04-02T09:00:00+00:00", "season": season, "regular_season_end": "2027-09-26",
+            "clubs": clubs or [{"team": "NYY", "record": "0-0", "projWins": 81.0}]}
+
+
+def test_the_frame_bound_across_the_manual_rollover(env):
+    p = env["paths"]
+    fins = season_2027(env)
+    assert fins[0] == "2027-03-26" and fins[-1] == "2027-04-02"
+    serve_registry(env)
+    serve(env, "futures_ledger.json", ledger_2027("2027-03-26", "2027-04-01", "2027-04-02"))
+    serve(env, "futures.json", futures_2027_like(env, 2026))       # the rollover not yet made
+    for minute in (10, 20):
+        sst = job.load_sstate(p)
+        job.publish_season(p, sst, 2027, lambda m=minute: T2027 + timedelta(minutes=m))
+        job.save_sstate(p, sst)
+        assert season_doc(env, 2027)["ours"] is None
+        assert not (sdir(env) / "2027-phist.json").exists()
+        assert "2027" not in (sst.get("frame_from") or {})
+    run = T2027 + timedelta(minutes=30)
+    assert job.local_date(run) == "2027-04-02"
+    serve(env, "futures.json", futures_2027_like(env, 2027))       # the first read of a season-2027 frame
+    sst = job.load_sstate(p)
+    job.publish_season(p, sst, 2027, lambda: run)
+    job.save_sstate(p, sst)
+    assert sst["frame_from"]["2027"] == "2027-04-02"
+    assert season_doc(env, 2027)["ours"] is not None
+    ph = json.loads((sdir(env) / "2027-phist.json").read_text(encoding="utf-8"))
+    assert ph["regular"]["as_of"] == ["2027-04-02"] and ph["regular"]["missing"] == ["2027-03-26", "2027-04-01"]
+    # a later run never moves frame_from
+    serve(env, "futures_ledger.json", ledger_2027("2027-03-26", "2027-04-01", "2027-04-02", "2027-04-05"))
+    job.publish_season(p, sst, 2027, lambda: datetime(2027, 4, 5, 17, 0, tzinfo=UTC))
+    job.save_sstate(p, sst)
+    assert sst["frame_from"]["2027"] == "2027-04-02"
+    block = json.loads((sdir(env) / "2027-phist.json").read_text(encoding="utf-8"))["regular"]
+    assert block["as_of"] == ["2027-04-02", "2027-04-05"] and block["missing"] == [
+        "2027-03-26", "2027-04-01", "2027-04-03", "2027-04-04"]
+    # an empty state for 2027 recovers frame_from from the phist file and rewrites nothing
+    raw = (sdir(env) / "2027-phist.json").read_bytes()
+    sst.pop("frame_from")
+    sst.pop("ours_src", None)
+    job.publish_season(p, sst, 2027, lambda: datetime(2027, 4, 6, 17, 0, tzinfo=UTC))
+    assert sst["frame_from"] == {"2027": "2027-04-02"}
+    assert (sdir(env) / "2027-phist.json").read_bytes() == raw
+
+
+def test_the_2026_seed_keeps_heads_18_regular_entries(env):
+    clock = FakeClock()
+    race_and_snapshots(env, clock)
+    serve_registry(env)
+    serve(env, "futures_ledger.json", {"entries": fx("futures_ledger_2026.json")["entries"]})
+    serve(env, "bracket_sim_record.json", {"entries": fx("bracket_sim_record_2026.json")["entries"]})
+    p = env["paths"]
+    sst = job.load_sstate(p)
+    sst.pop("frame_from", None)
+    job.save_sstate(p, sst)
+    assert job.build_standings(2026, 2026, paths=p, now_fn=lambda: LATER)["exit"] == 0
+    assert job.load_sstate(p)["frame_from"] == {"2026": "2026-09-06"}
+    ph = json.loads((sdir(env) / "2026-phist.json").read_text(encoding="utf-8"))
+    assert len(ph["regular"]["as_of"]) == 18 and ph["post"]["as_of"] == ["2026-10-01"]
+    assert ph["switch_as_of"] == "2026-10-01" and ph["closed"] is False
+    idx = json.loads((p["out"] / "index.json").read_text(encoding="utf-8"))
+    e = next(x for x in idx["standings_seasons"] if x["season"] == 2026)
+    assert e["phist_from"] == ph["regular"]["as_of"][0] == "2026-09-06"
+    assert e["phist_rev"] == sc.rev_of((sdir(env) / "2026-phist.json").read_bytes())
+
+
+def test_the_post_only_file_and_the_closed_file(env):
+    p = env["paths"]
+    season_2027(env)
+    serve_registry(env)
+    serve(env, "futures_ledger.json", ledger_2027("2027-03-26", "2027-04-01", "2027-04-02"))
+    serve(env, "futures.json", futures_2027_like(env, 2026))       # never reads 2027
+    rec = [{"kind": "good", "as_of": d, "season": 2027, "sha256": h * 64,
+            "outputs": {"clubs": {"NYY": {"pennant_pct": 0.31, "ws_pct": 0.17}, "LAD": {"pennant_pct": 0.42,
+                                                                                       "ws_pct": 0.22}}}}
+           for d, h in (("2027-10-05", "a"), ("2027-10-06", "b"))]
+    serve(env, "bracket_sim_record.json", {"entries": rec})
+    oct6 = datetime(2027, 10, 6, 20, 0, tzinfo=UTC)
+    out = job.build_standings(2027, 2027, paths=p, now_fn=lambda: oct6)
+    assert out["exit"] == 0, out
+    ph = json.loads((sdir(env) / "2027-phist.json").read_text(encoding="utf-8"))
+    assert ph["regular"]["as_of"] == [] and ph["regular"]["missing"] == ["2027-03-26", "2027-04-01", "2027-04-02"]
+    assert ph["post"]["as_of"] == ["2027-10-05", "2027-10-06"] and ph["switch_as_of"] == "2027-10-05"
+    assert ph["post"]["clubs"]["LAD"] == [[0.42, 0.22], [0.42, 0.22]]
+    assert st.validate_standings(st.KIND_PHIST, ph, name="standings/2027-phist.json")["ok"]
+    idx = json.loads((p["out"] / "index.json").read_text(encoding="utf-8"))
+    assert next(x for x in idx["standings_seasons"] if x["season"] == 2027)["phist_from"] == "2027-10-05"
+    assert season_doc(env, 2027)["ours"] is None
+    # the World Series clinching game final: written once more with closed true
+    for i, d in enumerate(("2027-10-27", "2027-10-28", "2027-10-29", "2027-10-30")):
+        _date_file_cards(env, d, [_ws_card("LAD", 6, "NYY", i, d)])
+    nov = datetime(2027, 10, 31, 15, 0, tzinfo=UTC)
+    assert job.build_standings(2027, 2027, paths=p, now_fn=lambda: nov)["exit"] == 0
+    raw = (sdir(env) / "2027-phist.json").read_bytes()
+    assert json.loads(raw)["closed"] is True
+    # later runs with more ledger and record entries leave it byte-identical
+    serve(env, "futures_ledger.json", ledger_2027("2027-03-26", "2027-04-01", "2027-04-02", "2027-10-31"))
+    serve(env, "bracket_sim_record.json", {"entries": rec + [dict(rec[0], as_of="2027-10-07", sha256="c" * 64)]})
+    serve(env, "futures.json", futures_2027_like(env, 2027))
+    assert job.build_standings(2027, 2027, paths=p, now_fn=lambda: nov + timedelta(days=3))["exit"] == 0
+    assert (sdir(env) / "2027-phist.json").read_bytes() == raw
+
+
+def test_an_idle_cycle_refreshes_ours_only_when_a_source_moved(env):
+    clock = FakeClock()
+    race_and_snapshots(env, clock)
+    p = env["paths"]
+    sst = job.load_sstate(p)
+    assert job.ours_refresh(p, sst, LATER) == []           # the backfill's publish is current
+    serve(env, "futures.json", futures_for(season_doc(env)))
+    serve_registry(env)
+    pubs = job.ours_refresh(p, sst, LATER)
+    assert [x["season"] for x in pubs] == [2026] and season_doc(env)["ours"] is not None
+    assert job.ours_refresh(p, sst, LATER) == []
+    job.reset_calls()
+    serve(env, "futures.json", futures_for(season_doc(env), gen="2026-04-21T09:00:00+00:00"))
+    assert len(job.ours_refresh(p, sst, LATER)) == 1 and job.CALLS["n"] == 0
+    assert season_doc(env)["ours"]["proj_made_at"] == "2026-04-21T09:00:00+00:00"

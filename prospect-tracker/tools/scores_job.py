@@ -47,6 +47,19 @@ a season, 2015 on under ST-Q3 (a)) and the by-date snapshots
 are hand runs with --backfill's refusals; `--build-standings` writes the
 season files from disk with zero calls (2000 to 2025 from the tracked copy).
 
+OUR COLUMNS (STANDINGS_3, plan 4.7). The live season's file carries `ours`
+and the season's odds record sits in `OUT/standings/<Y>-phist.json`, both
+COPIED from the served files (futures.json, bracket_sim.json,
+mlb_projections.json, futures_ledger.json, bracket_sim_record.json and
+model_registry.json), each re-read only when its mtime changes, the last good
+copy kept in the standings state when a read fails or parses empty. An
+acting cycle that makes no standings call still republishes the live season
+with zero calls when a source's mtime, the postseason span or the phase
+moved. `ours` exists only for the current season from Opening Day to the
+last postseason game, and only while futures.json's season is the file's
+(the season guard); the phist writer stops after the World Series' last
+game (`closed` true, never rewritten).
+
 THE NETWORK. One host, `statsapi.mlb.com`, through a job-local urllib session
 with no retries (never `feed_cache.SESSION`, whose Retry sleeps Retry-After
 inside a call). Every request gets a deadline of min(15 s, the invocation's
@@ -160,9 +173,14 @@ RACE_FIELDS = ("dates,date,games,gamePk,officialDate,status,codedGameState,teams
                "doubleHeader,gameNumber")
 #: the tracked, unpublished copy of the 2000 to 2025 final tables (STANDINGS_1); read only
 LABS_STANDINGS_DIR = DATA_DIR / "_labs" / "standings"
-#: STANDINGS_3's hook for <Y>-phist.json: a callable (season=, paths=,
-#: standings_state=, generated_at=) returning the file or None. None here.
+#: An override of the <Y>-phist.json builder for tests: a callable (season=,
+#: paths=, standings_state=, generated_at=) returning the file or None. None
+#: runs STANDINGS_3's own builder (`build_phist`).
 PHIST_BUILDER = None
+#: The served files `ours` and the phist file copy from (plan 4.7), by role.
+OURS_SOURCES = {"futures": "futures.json", "bracket": "bracket_sim.json", "sos": "mlb_projections.json",
+                "ledger": "futures_ledger.json", "record": "bracket_sim_record.json",
+                "registry": "model_registry.json"}
 _TERMINAL = ("final", "postponed", "cancelled", "suspended")
 _DATE_JSON = re.compile(r"^\d{4}-\d{2}-\d{2}\.json$")
 
@@ -2505,7 +2523,7 @@ class StandingsWriter:
             return None
 
     def write(self, rel: str, kind: str, obj, *, games=None, race=None, source=None, extra_refusals=(),
-              volatile=("generated_at", "fetched_at")) -> dict:
+              volatile=("generated_at", "fetched_at"), copied_from=None) -> dict:
         prev = self.read(rel)
         out = {"rel": rel, "kind": kind, "ok": True, "refused": [], "logged": [], "written": False,
                "rev": self.disk_rev(rel)}
@@ -2514,8 +2532,8 @@ class StandingsWriter:
             return out
         disk_gen = prev.get("generated_at") if isinstance(prev, dict) else None
         res = st.validate_standings(kind, obj, name=rel, games=games, race=race, source=source,
-                                    disk_generated_at=disk_gen)
-        refused = list(res.get("refused") or []) + list(extra_refusals)
+                                    disk_generated_at=disk_gen, copied_from=copied_from)
+        refused = list(dict.fromkeys(list(res.get("refused") or []) + list(extra_refusals)))
         out.update(ok=not refused, refused=refused, logged=list(res.get("logged") or []), bytes=res.get("bytes"))
         if refused:
             log.warning("scores_job: refused %s: %s", rel, "; ".join(f"{r}: {m}" for r, m in refused[:3]))
@@ -2556,9 +2574,190 @@ def season_source(paths: dict, sst: dict, season) -> dict | None:
             "fetched_at": (sst.get("fetched") or {}).get(p.stem)}
 
 
+# --------------------------------------------------------------------------- #
+# Our columns (STANDINGS_3, plan 4.7): copied from the served files
+# --------------------------------------------------------------------------- #
+def _ours_extract(role: str, doc):
+    """The part of one served source `ours` or the phist file reads, as the
+    source holds it (values untouched), or None when the read failed or
+    parsed empty. futures.json's club `record` is kept for proj_basis's
+    comparison only (state.json is never served); no price is kept."""
+    if not isinstance(doc, dict) or not doc:
+        return None
+    if role == "futures":
+        clubs = [dict({"team": c.get("team"), "record": c.get("record")},
+                      **{s: c.get(s) for s, _k in st.FUTURES_KEYS})
+                 for c in doc.get("clubs") or [] if isinstance(c, dict) and c.get("team")]
+        if not clubs:
+            return None
+        return {"season": doc.get("season"), "generated_at": doc.get("generated_at"),
+                "regular_season_end": doc.get("regular_season_end"), "clubs": clubs}
+    if role == "bracket":
+        clubs = [{"team": c.get("team"), "seed": c.get("seed"), "pennant_pct": c.get("pennant_pct"),
+                  "ws_pct": c.get("ws_pct")} for c in doc.get("clubs") or [] if isinstance(c, dict) and c.get("team")]
+        if not clubs:
+            return None
+        return {"season": doc.get("season"), "as_of": doc.get("as_of"), "generated_at": doc.get("generated_at"),
+                "label": doc.get("label"), "method_version": doc.get("method_version"),
+                "serve": {"on": (doc.get("serve") or {}).get("on") is True}, "clubs": clubs}
+    if role == "sos":
+        rows = [{"team": r.get("team"), "current": {s: (r.get("current") or {}).get(s) for s, _k in st.SOS_KEYS}}
+                for r in doc.get("team_outlook") or [] if isinstance(r, dict) and r.get("team")]
+        return {"generated_at": doc.get("generated_at"), "team_outlook": rows} if rows else None
+    if role == "ledger":
+        ents = [{"as_of": e.get("as_of"), "season": e.get("season"),
+                 "clubs": [dict({"team": c.get("team")}, **{s: c.get(s) for s, _k in st.LEDGER_KEYS})
+                           for c in e.get("clubs") or [] if isinstance(c, dict) and c.get("team")]}
+                for e in doc.get("entries") or [] if isinstance(e, dict) and e.get("as_of")]
+        return {"entries": ents} if ents else None
+    if role == "record":
+        ents = []
+        for e in doc.get("entries") or []:
+            cl = (e.get("outputs") or {}).get("clubs") if isinstance(e, dict) else None
+            if not isinstance(cl, dict) or not e.get("as_of"):
+                continue
+            ents.append({"as_of": e.get("as_of"), "season": e.get("season"), "kind": e.get("kind", "good"),
+                         "sha256": e.get("sha256"),
+                         "outputs": {"clubs": {k: {s: v.get(s) for s, _k in st.BRACKET_KEYS}
+                                               for k, v in cl.items() if isinstance(v, dict)}}})
+        return {"entries": ents} if ents else None
+    if role == "registry":
+        rows = [{"model_id": m.get("model_id"), "verdict": m.get("verdict"), "last_checked": m.get("last_checked")}
+                for m in doc.get("models") or [] if isinstance(m, dict) and m.get("model_id") in st.MODEL_LABEL]
+        return {"models": rows} if rows else None
+    return None
+
+
+def ours_sources(sst: dict) -> dict:
+    """{role: extract} of OURS_SOURCES from the SERVED data/, each re-read
+    only when its mtime changes; the last good extract, kept in the standings
+    state, stands in when a read fails or parses empty."""
+    keep = sst.setdefault("ours_src", {})
+    out = {}
+    for role, name in OURS_SOURCES.items():
+        p = served_data_dir() / name
+        try:
+            m = p.stat().st_mtime
+        except OSError:
+            m = None
+        have = keep.get(role) or {}
+        if m is not None and have.get("mtime") == m and have.get("data") is not None:
+            out[role] = have["data"]
+            continue
+        data = _ours_extract(role, read_json(p)) if m is not None else None
+        if data:
+            keep[role] = {"mtime": m, "data": data}
+        out[role] = data or have.get("data")
+    return out
+
+
+def _source_mtimes() -> dict:
+    out = {}
+    for role, name in OURS_SOURCES.items():
+        try:
+            out[role] = (served_data_dir() / name).stat().st_mtime
+        except OSError:
+            out[role] = None
+    return out
+
+
+def local_date(now: datetime) -> str:
+    """The job machine's local calendar date at `now`: datetime.date.today()
+    where it runs, the clock append_futures_ledger stamps `as_of` with
+    (plan 4.7 "The frame bound")."""
+    return now.astimezone().date().isoformat()
+
+
+def season_postseason_span(paths: dict, season, after: str | None = None) -> dict:
+    """standings_core.postseason_span over this job's own date files of the
+    season (only those dated after `after`, the season file's as_of, when
+    given: a postseason date always follows it)."""
+    y = int(season)
+    out = paths["out"]
+    cards = []
+    for p in sorted(out.glob(f"{y}-??-??.json")) if out.exists() else []:
+        if after and p.stem <= after:
+            continue
+        doc = read_json(p)
+        for c in (doc.get("games") or []) if isinstance(doc, dict) else []:
+            cards.append((p.stem, c))
+    return st.postseason_span(cards)
+
+
+def ours_live(season, now: datetime, span: dict) -> bool:
+    """The availability window: the current season, until its last
+    postseason game is final."""
+    return int(season) == utc_date(now).year and not span.get("last")
+
+
+def frame_from_for(sst: dict, season, futures, phist_doc, now: datetime) -> str | None:
+    """frame_from[Y] (plan 4.7 "The frame bound"): the state's value, set once
+    and never moved; where the state has none, FRAME_FROM_SEED, then the
+    existing phist file's regular.as_of[0], then the local date of this run
+    when it reads a futures.json of season Y; else unset."""
+    y = int(season)
+    ff = sst.setdefault("frame_from", {})
+    if ff.get(str(y)):
+        return ff[str(y)]
+    val = st.FRAME_FROM_SEED.get(y)
+    if val is None and isinstance(phist_doc, dict):
+        ra = (phist_doc.get("regular") or {}).get("as_of") or []
+        val = ra[0] if ra else None
+    if val is None and isinstance(futures, dict) and futures.get("season") == y:
+        val = local_date(now)
+    if val is not None:
+        ff[str(y)] = val
+    return val
+
+
+def build_phist(season, *, paths: dict, standings_state: dict, generated_at: str, now: datetime,
+                opening_day, span: dict, srcs: dict):
+    """`<Y>-phist.json` from the ledger and the record (standings_core.
+    phist_blocks), or None: when the file on disk is closed (never
+    rewritten), or when both blocks are empty (no file, so index.json's
+    phist_rev and phist_from stay null). The run that sees the season's last
+    postseason game final writes it with `closed` true."""
+    y = int(season)
+    prev = read_json(paths["standings_out"] / "standings" / f"{y}-phist.json")
+    if isinstance(prev, dict) and prev.get("closed"):
+        return None
+    ff = frame_from_for(standings_state, y, srcs.get("futures"), prev, now)
+    blocks = st.phist_blocks((srcs.get("ledger") or {}).get("entries"), (srcs.get("record") or {}).get("entries"),
+                             y, opening_day, span.get("last"), ff)
+    if not blocks["regular"]["as_of"] and not blocks["post"]["as_of"]:
+        return None
+    return st.build_phist_file(y, generated_at=generated_at, regular=blocks["regular"], post=blocks["post"],
+                               switch_as_of=blocks["switch_as_of"], closed=bool(span.get("last")))
+
+
+def ours_refresh(paths: dict, sst: dict, now: datetime, *, writer: StandingsWriter | None = None) -> list[dict]:
+    """With no standings call this cycle, republish (zero calls) the current
+    season, and last season while its file still carries `ours`, when a
+    served source's mtime, the postseason span or the phase moved since the
+    last publish (the October switch, the registry copy and the closing
+    phist write ride on this). Returns the publish results."""
+    y = utc_date(now).year
+    seasons = [y]
+    prev = read_json(paths["standings_out"] / "standings" / f"{y - 1}.json")
+    if isinstance(prev, dict) and prev.get("ours") is not None:
+        seasons.insert(0, y - 1)
+    res = []
+    for s in seasons:
+        if season_source(paths, sst, s) is None:
+            continue
+        span = season_postseason_span(paths, s, (sst.get("as_of") or {}).get(str(s)))
+        fp = {"mtimes": _source_mtimes(), "span": span, "live": ours_live(s, now, span),
+              "october": bool(span["first"] and span["first"] <= utc_date(now).isoformat())}
+        if (sst.get("ours_fp") or {}).get(str(s)) == fp:
+            continue
+        res.append(publish_season(paths, sst, s, lambda: now, writer=writer))
+    return res
+
+
 def publish_season(paths: dict, sst: dict, season, now_fn, *, writer: StandingsWriter | None = None) -> dict:
     """Write one season's files in the plan's order: the season file, the race
-    file, then the phist file (STANDINGS_3's hook). The race is rebuilt from
+    file (with `ours` for the live season, STANDINGS_3), then the phist file.
+    The race is rebuilt from
     the game list with every by-date snapshot on disk (wc_gap takes each
     date's leaders from MLB's divisionRank); a past season with no by-date
     snapshot uses its final table for the last date only and carries no
@@ -2589,13 +2788,29 @@ def publish_season(paths: dict, sst: dict, season, now_fn, *, writer: StandingsW
         res["t13"] = {"dates": len(snaps), "clubs": len({c for s in snaps.values() for c in
                                                          (r.get("code") for r in s.get("rows") or [])}),
                       "mismatches": [list(m) for m in mism]}
+    now = now_fn()
+    span = season_postseason_span(paths, y, src["as_of"] if src else None)
+    live = src is not None and src["kind"] == "snapshot" and ours_live(y, now, span)
+    srcs = ours_sources(sst) if live or PHIST_BUILDER is None else {}
+    october = bool(span["first"] and span["first"] <= utc_date(now).isoformat())
+    opening_day = race["dates"][0] if race and race.get("dates") else None
     if src is not None:
         as_of = src["as_of"] or (race["dates"][-1] if race and race["dates"] else None)
         final = True if src["kind"] == "labs" else season_complete(games, as_of)
         obj = st.build_season_file(src["payload"], as_of=as_of, final=final, generated_at=gen,
                                    fetched_at=src["fetched_at"], games=games, race=race)
+        copied, t19 = None, []
+        if live:
+            obj["ours"], obj["registry"] = st.build_ours(
+                obj, futures=srcs.get("futures"), bracket=srcs.get("bracket"), october=october, sos=srcs.get("sos"),
+                registry=(srcs.get("registry") or {}).get("models"))
+            copied = {"futures": srcs.get("futures"), "bracket": srcs.get("bracket"), "sos": srcs.get("sos")}
+            # T19 refuses even a file whose content did not move (the writer
+            # skips validating an unchanged file otherwise)
+            t19 = st.seed_mismatches(obj, srcs.get("bracket"))
         res["files"]["season"] = w.write(f"standings/{y}.json", st.KIND_SEASON, obj, games=games, race=race,
-                                         source=src["payload"])
+                                         source=src["payload"], copied_from=copied, extra_refusals=t19)
+        res["ours"] = obj.get("ours") is not None
         if src["kind"] == "snapshot":
             sst.setdefault("as_of", {})[str(y)] = as_of
     if race is not None:
@@ -2603,8 +2818,17 @@ def publish_season(paths: dict, sst: dict, season, now_fn, *, writer: StandingsW
         res["files"]["race"] = w.write(f"standings/{y}-race.json", st.KIND_RACE, race, extra_refusals=extra)
     if PHIST_BUILDER is not None:
         ph = PHIST_BUILDER(season=y, paths=paths, standings_state=sst, generated_at=gen)
-        if ph is not None:
-            res["files"]["phist"] = w.write(f"standings/{y}-phist.json", st.KIND_PHIST, ph)
+        copied_ph = None
+    else:
+        ph = build_phist(y, paths=paths, standings_state=sst, generated_at=gen, now=now, opening_day=opening_day,
+                         span=span, srcs=srcs)
+        copied_ph = {"ledger": (srcs.get("ledger") or {}).get("entries"),
+                     "record": (srcs.get("record") or {}).get("entries"),
+                     "opening_day": opening_day, "last_post_date": span.get("last")}
+    if ph is not None:
+        res["files"]["phist"] = w.write(f"standings/{y}-phist.json", st.KIND_PHIST, ph, copied_from=copied_ph)
+    sst.setdefault("ours_fp", {})[str(y)] = {"mtimes": _source_mtimes(), "span": span,
+                                             "live": ours_live(y, now, span), "october": october}
     return res
 
 
@@ -2658,6 +2882,18 @@ def standings_step(cyc, slate: dict, fetcher: Fetcher, now: datetime, cycle: str
     sd = standings_due(now, slate, sst, cycle=cycle)
     out: dict = {"decision": sd, "called": False}
     if not sd["due"]:
+        try:
+            w = StandingsWriter(paths["standings_out"])
+            pubs = ours_refresh(paths, sst, now, writer=w)
+        except Exception as e:  # noqa: BLE001 - a bad served file never stops the scores
+            log.warning("scores_job: the ours refresh failed: %s", e)
+            return out
+        if pubs:
+            out["ours_refresh"] = [{"season": p["season"], "ours": p.get("ours")} for p in pubs]
+            save_sstate(paths, sst)
+            for r in w.results.values():
+                cyc.counts["files_written"] += 1 if r.get("written") else 0
+                cyc.counts["files_refused"] += 0 if r.get("ok") else 1
         return out
     if float(state.get("backoff_until") or 0) > now.timestamp():
         out["skipped"] = "job-level backoff"
