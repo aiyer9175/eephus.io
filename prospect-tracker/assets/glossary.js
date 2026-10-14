@@ -41,6 +41,8 @@
   let _SACC = null;            // cached source_cohort_accuracy.json (or {__error:true})
   let _SACC_LOADING = false;   // in-flight guard against a double fetch
   let _SACC_TAB = "read-first"; // active sub-tab in the Source Accuracy view
+  let _SACC_TOOLS = null;       // the dark Tools tab payload (or {__error:true})
+  let _SACC_TOOLS_LOADING = false;
   // Source Updates view state (owner ask 2026-10-02). Module scope for the
   // same TDZ reason as _SACC: the renderer is hoisted and boot can run first.
   let _SU = null;              // cached source updates payload (or {__error:true})
@@ -5210,10 +5212,12 @@ function renderSourceComparison() {
   // Framed as a distinct analytical area (eyebrow + bordered panel) so it reads
   // as the empirical evidence, not more prose.
   el.innerHTML = `<div class="source-comp-wrap">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Empirical backtest · resolved cohorts only</div>
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Empirical backtest · resolved cohorts only</div>${_saccToolsLinkHTML()}
     ${backtestHTML}
   </div>` + _methProvTrackSection() + _methScoreboardHTML();
   _mxBind();
+  const toolsLink = el.querySelector("[data-sacc-goto]");
+  if (toolsLink) toolsLink.onclick = () => { _SACC_TAB = toolsLink.dataset.saccGoto; };
   // Generate GFX: spec built at click time from the loaded artifacts; a click
   // before the data resolves (or with the engine absent) is a clean no-op.
   const gfxBtn = document.getElementById("gl-scx-gfx");
@@ -5741,6 +5745,258 @@ function _saccCoverage(d) {
     ${clsBlock}`;
 }
 
+// ---- Source Accuracy, "Tools" tab (TL_14, built dark 2026-10-14) -----------
+// The owner ask of 2026-10-01 message 2: check each debuted player's
+// production against what his tool grades imply, per source, and weight the
+// tool grades only if that earns it. The measurement is look W of
+// docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md and this tab prints its
+// display copy. DARK: build_site writes data-sacc-tools-src on the app root
+// only while build_site.SOURCE_ACCURACY_TOOLS_TAB is on; without it the tab
+// list, the Source Comparison link and every fetch below are absent, so the
+// served page renders exactly what it did before. Every number is read from
+// the payload at render time. The interval beside each ordering rho is
+// computed here from the recorded rho and n (Fisher z with the Bonett and
+// Wright standard error) because the look records none, and it says so.
+function _saccToolsSrc() {
+  const r = document.querySelector(".gl-app");
+  return (r && r.getAttribute("data-sacc-tools-src")) || "";
+}
+function _saccTabs() {
+  return _saccToolsSrc() ? _SACC_TABS.concat([["tools", "Tools"]]) : _SACC_TABS;
+}
+function _loadSaccTools() {
+  const src = _saccToolsSrc();
+  if (!src || _SACC_TOOLS || _SACC_TOOLS_LOADING) return;
+  _SACC_TOOLS_LOADING = true;
+  const rerender = () => { if (_S.view === "source-accuracy") renderSourceAccuracy(); };
+  fetch(src, { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _SACC_TOOLS = j || { __error: true }; _SACC_TOOLS_LOADING = false; rerender(); })
+    .catch(() => { _SACC_TOOLS = { __error: true }; _SACC_TOOLS_LOADING = false; rerender(); });
+}
+// The one link line on Source Comparison. Empty while the flag is off.
+function _saccToolsLinkHTML() {
+  if (!_saccToolsSrc()) return "";
+  return `<p class="meth-note sacc-tools-link">How each source's tool grades matched what players went on to produce: <a href="#view=source-accuracy" data-sacc-goto="tools">Source Accuracy, Tools</a>.</p>`;
+}
+const _SACCT_SURV = "Accuracy among players who reached the majors.";
+const _SACCT_TOOL = { hit: "Hit", game_pwr: "Game power", raw_pwr: "Raw power", speed: "Speed",
+  field: "Field", throw: "Arm", fb: "Fastball", cmd: "Command", pitch_sel: "Pitch selection",
+  bat_ctrl: "Bat control" };
+// Stat key: label, the unit a TAG is written in, decimals (nearest).
+const _SACCT_STAT = {
+  k_pct: ["MLB K%", "K% points", 2], sprint: ["sprint speed (ft/s)", "ft/s", 2],
+  oaa_per1000: ["OAA per 1,000 innings", "OAA per 1,000 innings", 2],
+  arm_z: ["arm strength (z score)", "z", 3],
+  iso: ["ISO", "ISO", 3], k_pct_pit: ["MLB K% (pitchers)", "K% points", 2],
+  bb_pct_pit: ["MLB BB% (pitchers)", "BB% points", 2], avg: ["AVG", "AVG", 3],
+  sb_per600: ["SB per 600 PA", "SB per 600 PA", 2], ev_avg: ["average exit velocity", "mph", 2],
+  chase_pct: ["chase rate", "chase rate", 3], z_contact_pct: ["zone contact rate", "zone contact rate", 3],
+};
+function _sacctStat(k) { return _SACCT_STAT[k] || [String(k), String(k), 3]; }
+// The secondary rows are keyed by pair; their tool is the key's stem.
+const _SACCT_KEY_TOOL = { hit_avg: "hit", speed_sb: "speed" };
+function _sacctToolName(key, row) {
+  const t = (row && row.tool) || _SACCT_KEY_TOOL[key] || key;
+  return _SACCT_TOOL[t] || String(t);
+}
+const _SACCT_SOURCES = ["fangraphs", "mlb_pipeline", "baseballamerica"];
+function _sacctFixed(v, dp) { return v == null ? " - " : Number(v).toFixed(dp); }
+function _sacctSigned(v, dp) {
+  if (v == null) return " - ";
+  const s = Number(v).toFixed(dp);
+  return (Number(s) > 0 ? "+" : "") + s;
+}
+// Approximate 95 percent interval for a Spearman rho from rho and n alone.
+function _sacctRhoCI(r, n) {
+  if (r == null || !(Number(n) > 3)) return null;
+  const x = Math.max(-0.9999, Math.min(0.9999, Number(r)));
+  const se = Math.sqrt((1 + x * x / 2) / (Number(n) - 3));
+  const z = Math.atanh(x);
+  return [Math.tanh(z - 1.96 * se), Math.tanh(z + 1.96 * se)];
+}
+// TAG is oriented so that positive means the players produced more than the
+// grade implied: a negative mean is a source that grades hot.
+function _sacctBias(v, statKey) {
+  if (v == null) return " - ";
+  const st = _sacctStat(statKey);
+  const mag = Math.abs(Number(v)).toFixed(st[2]);
+  if (Number(mag) === 0) return "on grade";
+  return `${Number(v) < 0 ? "runs hot" : "runs cold"} by ${mag} ${escapeHtml(st[1])}`;
+}
+function _sacctVerdictSpan(v) {
+  const s = String(v || " - ");
+  const cls = s === "PASS" ? "sacc-verdict-win" : (s === "LOSS" ? "sacc-verdict-loss" : "sacc-verdict-null");
+  return `<span class="${cls}">${escapeHtml(s)}</span>`;
+}
+function _sacctConsequence(v, lookVoid) {
+  if (v === "PASS" && !lookVoid) return "a weighted grade is a candidate";
+  return "equal weight retains";
+}
+function _sacctSurvSpan() { return `<span class="meth-sub sacc-surv">${_SACCT_SURV}</span>`; }
+
+// Weight verdicts: one row per primary tool.
+function _sacctVerdictTable(rows, lookVoid) {
+  if (!rows.length) return "";
+  const body = rows.map(([k, r]) => {
+    const st = _sacctStat(r.stat), h = r.holm || {}, eq = r.equal || {}, w = r.weighted || {};
+    return `<tr>
+      <td class="meth-td-tier">${escapeHtml(_sacctToolName(k, r))}</td>
+      <td>${escapeHtml(st[0])}</td>
+      <td>${_saccN(r.n)}</td>
+      <td>${_sacctFixed(eq.spearman, 3)}</td>
+      <td>${_sacctFixed(w.spearman, 3)}</td>
+      <td>${_sacctSigned(r.d_rho, 4)}</td>
+      <td>${_sacctFixed(h.p, 3)}${h.threshold != null ? `<span class="sacc-holm-off">Holm step ${escapeHtml(String(h.step))}, threshold ${_sacctFixed(h.threshold, 4)}</span>` : ""}</td>
+      <td class="sacc-verdict">${_sacctVerdictSpan(r.verdict)}<span class="sacc-holm-off">${escapeHtml(_sacctConsequence(r.verdict, lookVoid))}</span></td>
+    </tr>`;
+  }).join("");
+  return `<div class="meth-table-wrap">
+    <div class="meth-table-title">Weight verdict per tool<span class="meth-sub">FanGraphs against MLB Pipeline, equal weight against the accuracy-weighted blend, within-board-year Spearman rho on the same rows. ${_SACCT_SURV}</span></div>
+    <div class="table-scroll-x"><table class="meth-table sacc-table sacc-tools-verdicts">
+      <thead><tr><th>Tool</th><th>Measured against</th><th>n</th><th>Equal rho</th><th>Weighted rho</th><th>Difference</th><th>Permutation p</th><th class="sacc-verdict">Verdict</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table></div>
+  </div>`;
+}
+// Secondary rows: descriptive, no verdict.
+function _sacctSecondaryTable(rows) {
+  if (!rows.length) return "";
+  const body = rows.map(([k, r]) => `<tr>
+      <td class="meth-td-tier">${escapeHtml(_sacctToolName(k, r))}</td>
+      <td>${escapeHtml(_sacctStat(r.stat)[0])}</td>
+      <td>${_saccN(r.n)}</td>
+      <td>${_sacctSigned(r.d_rho, 4)}</td>
+      <td>${escapeHtml(r.ba2 || " - ")}</td>
+      <td class="sacc-verdict"><span class="sacc-verdict-null">${escapeHtml(r.verdict || "secondary: no verdict")}</span></td>
+    </tr>`).join("");
+  return `<div class="meth-table-wrap">
+    <div class="meth-table-title">Secondary rows<span class="meth-sub">Descriptive only; they decide nothing, and the 2026-08-08 verdicts on these pairs stand. ${_SACCT_SURV}</span></div>
+    <div class="table-scroll-x"><table class="meth-table sacc-table">
+      <thead><tr><th>Tool</th><th>Measured against</th><th>n</th><th>Weighted minus equal rho</th><th>2026-08-08 read</th><th class="sacc-verdict">Verdict</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table></div>
+  </div>`;
+}
+// One source's row in a TAG table. A pool under the gate's minimum shows n
+// and its note only; a thin board-year cell shows n and its range only.
+function _sacctSourceRow(src, c, statKey, regressed) {
+  const name = escapeHtml(_saccOutlet(src));
+  if (c.computable === false) {
+    return `<tr class="sacc-row-unscored"><td class="meth-td-tier">${name}</td><td>${_saccN(c.n)}</td>
+      <td colspan="4" class="sacc-unscored-note">${escapeHtml(c.note || "not computable")}</td></tr>`;
+  }
+  const ci = _sacctRhoCI(c.ordering, c.n);
+  const ciTxt = ci ? `<span class="sacc-holm-off">approx. 95% interval ${ci[0].toFixed(3)} to ${ci[1].toFixed(3)}</span>` : "";
+  const st = _sacctStat(statKey);
+  const years = c.per_year && typeof c.per_year === "object"
+    ? Object.keys(c.per_year).sort().map(y => {
+        const v = c.per_year[y] || {};
+        if (!v.n) return "";
+        if (v.thin) {
+          const rg = Array.isArray(v.range_gap) && v.range_gap.length === 2
+            ? `, range ${_sacctSigned(v.range_gap[0], st[2])} to ${_sacctSigned(v.range_gap[1], st[2])} ${escapeHtml(st[1])}` : "";
+          return `<li>${escapeHtml(y)}: n ${_saccN(v.n)}, thin${rg}</li>`;
+        }
+        return `<li>${escapeHtml(y)}: n ${_saccN(v.n)}, ordering ${_sacctFixed(v.ordering_rho, 3)}</li>`;
+      }).join("")
+    : "";
+  const yearsHTML = years ? `<details class="sacc-tools-years"><summary>By board year</summary><ul>${years}</ul></details>` : "";
+  return `<tr>
+    <td class="meth-td-tier">${name}${yearsHTML}</td>
+    <td>${_saccN(c.n)}</td>
+    <td>${_sacctFixed(c.ordering, 3)}${ciTxt}</td>
+    <td>${regressed ? _sacctBias(c.bias_regressed, statKey) : "not regressed"}</td>
+    <td>${_sacctSigned(c.bias_pit, 3)}</td>
+    <td>${regressed && c.error_abs_regressed != null ? `${_sacctFixed(c.error_abs_regressed, st[2])} ${escapeHtml(st[1])}` : " - "}</td>
+  </tr>`;
+}
+function _sacctTagTable(key, t) {
+  const bs = t.by_source || {};
+  const srcs = _SACCT_SOURCES.filter(s => bs[s]).concat(Object.keys(bs).filter(s => !_SACCT_SOURCES.includes(s)));
+  if (!srcs.length) return "";
+  const st = _sacctStat(t.stat);
+  const rows = srcs.map(s => _sacctSourceRow(s, bs[s], t.stat, t.regressed !== false)).join("");
+  const reg = t.regressed === false
+    ? "No stabilization constant exists for this unit, so the bias reads off the percentile only."
+    : `Regressed with k ${_sacctFixed(t.k_m, 1)}.`;
+  return `<div class="meth-table-wrap">
+    <div class="meth-table-title">${escapeHtml(_sacctToolName(key, t))} against ${escapeHtml(st[0])}<span class="meth-sub">n ${_saccN(t.n_frame)} in the frame. ${reg} ${_SACCT_SURV}</span></div>
+    <div class="table-scroll-x"><table class="meth-table sacc-table sacc-tools-tag">
+      <thead><tr><th>Source</th><th>n</th><th>Ordering rho</th><th>Bias (mean regressed TAG)</th><th>TAG percentile minus 0.5</th><th>Error (mean absolute regressed TAG)</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>`;
+}
+// The tool to stat framework (gate Part 1.1). Copy, no measured number.
+const _SACCT_FRAMEWORK = [
+  ["Hit", "AVG", "MLB K% (lower is better)", "AVG on the same rows, BABIP", "FanGraphs 2017+, MLB Pipeline 2011+, Baseball America 2023+", "primary"],
+  ["Game power", "ISO, HR per PA", "MLB ISO", "HR per PA, barrels per PA", "every outlet", "secondary"],
+  ["Raw power", "exit velocity", "MLB average exit velocity", "ev50, max EV, hard-hit rate", "FanGraphs only", "TAG table only"],
+  ["Speed", "SB, sprint speed", "Savant sprint speed (ft/s)", "SB per 600 PA, triples", "FanGraphs, MLB Pipeline, Baseball America", "primary"],
+  ["Field", "OAA or DRS by position", "OAA per 1,000 innings, catchers excluded", "by position group", "FanGraphs, MLB Pipeline, Baseball America", "primary"],
+  ["Arm", "arm runs", "Savant arm strength, by position group", "none", "MLB Pipeline, Baseball America, FanGraphs where present", "primary"],
+  ["Fastball", "velocity, K%", "MLB K% (pitchers)", "first-season velocity", "FanGraphs, MLB Pipeline, Baseball America", "secondary"],
+  ["Command", "BB%, zone rate", "MLB BB% (pitchers, lower is better)", "none", "FanGraphs, MLB Pipeline, Baseball America", "secondary"],
+  ["Pitch selection, bat control", "chase rate, zone contact", "chase rate, zone contact rate", "bat tracking 2024+", "FanGraphs only", "TAG table only"],
+  ["Slider, curveball, changeup", "pitch whiff and run value", "none adjudicated", "per-pitch whiff rate", "FanGraphs, MLB Pipeline, Baseball America", "descriptive only"],
+  ["Frame, athleticism, delivery", "none", "no measurement", "none", "FanGraphs only", "none"],
+];
+function _sacctFrameworkTable() {
+  const rows = _SACCT_FRAMEWORK.map(r => `<tr><td class="meth-td-tier">${escapeHtml(r[0])}</td>${r.slice(1).map(c => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`).join("");
+  return `<div class="meth-table-wrap">
+    <div class="meth-table-title">The framework: tool to stat<span class="meth-sub">Each tool's FanGraphs-framework stat, the unit measured here, and the sources with grade history.</span></div>
+    <div class="table-scroll-x"><table class="meth-table sacc-table sacc-tools-framework">
+      <thead><tr><th>Tool</th><th>Framework stat</th><th>Measured here</th><th>Secondary units</th><th>Sources with history</th><th>Role</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>`;
+}
+function _saccTools() {
+  const d = _SACC_TOOLS;
+  if (!d) return `<div class="state-message">Loading the tool accuracy measurement...</div>`;
+  if (d.__error || !d.tools || typeof d.tools !== "object") {
+    return `<div class="state-message sacc-empty">The tool accuracy measurement is not published yet.
+      <div style="margin-top:12px;"><button class="chip" type="button" id="gl-sacct-retry">Retry</button></div></div>`;
+  }
+  const tools = Object.entries(d.tools);
+  const prim = tools.filter(([, r]) => r && r.role === "primary");
+  const sec = tools.filter(([, r]) => r && r.role !== "primary");
+  const lookVoid = d.look_void === true || prim.some(([, r]) => r.verdict === "VOID");
+  const passes = prim.filter(([, r]) => r.verdict === "PASS").length;
+  const tiles = prim.map(([k, r]) => _saccTile(_sacctVerdictSpan(r.verdict),
+    `${escapeHtml(_sacctToolName(k, r))} against ${escapeHtml(_sacctStat(r.stat)[0])}`,
+    `${escapeHtml(_sacctConsequence(r.verdict, lookVoid))} &middot; n ${_saccN(r.n)} &middot; ${_SACCT_SURV}`)).join("");
+  const fr = d.frame || {};
+  const status = lookVoid
+    ? `The look is void: a shuffled-outcome control did not collapse, and the gate says that voids the look. The per-tool verdicts below are printed as the runner wrote them and are credited to nothing, so equal weight retains for every tool.`
+    : (passes
+      ? `${passes} of ${prim.length} tools passed; every other tool keeps equal weight.`
+      : `No tool passed, so equal weight retains for every tool.`);
+  const tag = d.tag && typeof d.tag === "object" ? Object.entries(d.tag) : [];
+  return `
+    <p class="meth-window">Each debuted player's production in his first three MLB seasons after a board year, set against what his tool grade implied (tool-implied production), source by source. Tool above grade (TAG) is that gap in the stat's own units. Ordering is how well a source's grades put players in order; bias is whether its grades ran hot or cold on average; error is the typical miss. Only ordering can earn a source a weight.</p>
+    <div class="meth-findings">${tiles}</div>
+    <p class="meth-note sacc-headline">${escapeHtml(status)} ${_SACCT_SURV}</p>
+    ${_sacctVerdictTable(prim, lookVoid)}
+    ${_sacctSecondaryTable(sec)}
+    <h3 class="meth-h3">Per source and tool</h3>
+    <p class="meth-note">Bias is written as "runs hot by" when the source's grades implied more than the players produced, and "runs cold by" when they implied less. A pool under 100 players shows n and its note only; a board-year cell under 20 players shows n and its range only. ${_SACCT_SURV}</p>
+    ${tag.map(([k, t]) => _sacctTagTable(k, t || {})).join("")}
+    <h3 class="meth-h3">The framework</h3>
+    ${_sacctFrameworkTable()}
+    <div class="meth-caveats">
+      <div class="meth-caveats-title">${window.EephusIco ? window.EephusIco("warn", 12) : ""} Caveats</div>
+      <ul>
+        <li><strong>Survivorship.</strong> ${escapeHtml(d.survivorship || _SACCT_SURV)}</li>
+        <li><strong>History.</strong> 2026-08-08: the first read of tool weights cleared one tool, hit, and equal weight was kept on every tool.</li>
+        <li><strong>Frame.</strong> Board years ${escapeHtml((fr.board_years || []).join(", ") || " - ")}, debut year at most ${escapeHtml(String(fr.max_debut_year ?? " - "))}, MLB seasons through ${escapeHtml(String(fr.last_outcome_season ?? " - "))}.</li>
+        <li><strong>Intervals.</strong> The interval beside each ordering rho is approximate: it is computed on this page from the rho and n the look recorded (Fisher z), not resampled.</li>
+        <li><strong>Bias is shown, never applied.</strong> No source's grades are shifted by its bias.</li>
+      </ul>
+    </div>`;
+}
+
 function renderSourceAccuracy() {
   const el = document.getElementById("source-accuracy-body");
   if (!el) return;
@@ -5757,8 +6013,9 @@ function renderSourceAccuracy() {
       .catch(() => { _S.backtest = { __error: true };
         if (_S.view === "source-accuracy") renderSourceAccuracy(); });
   }
+  _loadSaccTools();
   const shell = inner => {
-    const chips = _SACC_TABS.map(([k, lbl]) =>
+    const chips = _saccTabs().map(([k, lbl]) =>
       `<button class="chip${_SACC_TAB === k ? " active" : ""}" type="button" aria-pressed="${_SACC_TAB === k ? "true" : "false"}" data-sacc-tab="${escapeHtml(k)}">${escapeHtml(lbl)}</button>`).join("");
     return `<div class="source-comp-wrap sacc-wrap">
       <div class="source-comp-eyebrow"><span class="scx-dot"></span>Diagnostic &middot; zero weights ship</div>
@@ -5769,7 +6026,8 @@ function renderSourceAccuracy() {
   };
   const d = _SACC;
   let inner;
-  if (!d) {
+  if (_SACC_TAB === "tools" && _saccToolsSrc()) inner = _saccTools();
+  else if (!d) {
     inner = `<div class="state-message">Loading the cohort accuracy measurement...</div>`;
   } else if (d.__error || !d.accuracy) {
     inner = `<div class="state-message">The cohort accuracy measurement could not be loaded.
@@ -5786,6 +6044,8 @@ function renderSourceAccuracy() {
   });
   const rb = document.getElementById("gl-sacc-retry");
   if (rb) rb.onclick = () => { _SACC = null; _SACC_LOADING = false; renderSourceAccuracy(); };
+  const tb = document.getElementById("gl-sacct-retry");
+  if (tb) tb.onclick = () => { _SACC_TOOLS = null; _SACC_TOOLS_LOADING = false; renderSourceAccuracy(); };
 }
 
 // ---- Library view ----------------------------------------------------------
