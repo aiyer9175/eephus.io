@@ -1,0 +1,52 @@
+{
+ "aging": "v2",
+ "bootstrap": {
+  "B": 2000,
+  "seed": 20261014
+ },
+ "budget": {
+  "ip": 1436.4,
+  "pa": 6096.7
+ },
+ "dev_seasons": [
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "frozen_on": "2026-10-14",
+ "gate": "docs/TEAM_PROJECTIONS_GATE.md",
+ "head": "1444d9f9",
+ "k_pseudo_games": 40,
+ "python_hash_seed": "0",
+ "retro_run": {
+  "engine": "proj_backtest.team_frame on the retro engine at HEAD 1444d9f9 (curves and WAR map refit per target on data through target - 1)",
+  "retro_backtest_generated_at": "2026-10-09",
+  "served_recentered_mae_published": {
+   "2022": 9.03,
+   "2023": 9.59,
+   "2024": 6.77,
+   "2025": 7.12
+  }
+ },
+ "runs": {
+  "bf_per_ip": 4.3,
+  "park_factor_column": "Basic (5yr)",
+  "pj_params_sha256": "da2d5114fe2c05a1cceed883a625ddb63060e45c8fc848c385860694b02cf9b6",
+  "pythagenpat_exp": 0.287
+ },
+ "s_res": 9.9379,
+ "s_sched": 6.3131,
+ "sigma_T": 7.6751,
+ "sim": {
+  "bracket": false,
+  "home_edge": 0.0,
+  "n_sims": 20000,
+  "seed": 12345
+ },
+ "talent_clip": [
+  0.2,
+  0.8
+ ],
+ "task": "TM_3_TEAM_CANDIDATES_DARK"
+}

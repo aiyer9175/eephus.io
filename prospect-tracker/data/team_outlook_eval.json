@@ -1,10 +1,10 @@
 {
- "generated_at": "2026-10-09",
+ "generated_at": "2026-10-14",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 954.1,
+  "roster_war_sum": 954.2,
   "remainder_recenter_wins_per_team": -0.38,
-  "roster_war_sum_y1": 954.1,
+  "roster_war_sum_y1": 954.2,
   "league_war_benchmark": 1000,
   "benchmark_basis": "a league WAR pool of 1000 per season: bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily), and the projections' training label since the 2026-10 epoch, published fWAR, fixes its own league pool at 1000 per season by construction (57/43 split)",
   "raw_wins_sum": 2385.0,
@@ -21,8 +21,8 @@
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 954.1,
-    "wins_sum": 2430.1,
+    "roster_war_sum": 954.2,
+    "wins_sum": 2429.9,
     "remainder_recenter_wins_per_team": -0.38
    },
    {
@@ -47,7 +47,7 @@
     "season": 2031,
     "roster_war_sum": 310.2,
     "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 22.05
+    "remainder_recenter_wins_per_team": 22.06
    }
   ],
   "coverage_decomposition_2025": {
@@ -329,15 +329,15 @@
   "eta_coverage_orgs": 30,
   "align_coverage_orgs": 30,
   "eta_mean_range": [
-   2027.86,
-   2029.37
+   2027.94,
+   2029.39
   ],
-  "align_median": 0.02,
+  "align_median": 0.09,
   "align_range": [
-   -0.67,
-   1.12
+   -0.59,
+   1.16
   ],
-  "aligned_org_count": 13,
+  "aligned_org_count": 11,
   "limitations": [
    "etaMean is surplus-weighted by the platform surplus model (its uncertainty flows through); coreCenter is the controlled-core trajectory, not a scored contention forecast",
    "orgs whose farm carries no positive-surplus prospect fall back to a count-weighted center and report no arrival curve"

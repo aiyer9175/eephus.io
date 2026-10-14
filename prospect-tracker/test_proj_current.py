@@ -518,3 +518,102 @@ def test_the_home_edge_form_is_an_odds_ratio_and_keeps_the_rails():
         v = pc.apply_home_edge(i / 100.0, m)
         assert v > prev
         prev = v
+
+
+# --------------------------------------------------------------------------- #
+# T1 (TM_3_TEAM_CANDIDATES_DARK): the talent draw and the identity at sigma 0
+# --------------------------------------------------------------------------- #
+
+#: sha256 of simulate_playoffs(_talent_fixture(), n_sims=300, seed=7) under the
+#: code BEFORE talent_sd_wins existed (HEAD 1444d9f9, computed 2026-10-14 in a
+#: process started with PYTHONHASHSEED=0): with the parameter at its default,
+#: and at 0.0 explicitly, the simulator must consume exactly the random draws
+#: it consumed then. The hash seed is part of the pin because the simulator's
+#: tie-break draws are taken while iterating a set of division names, so two
+#: processes with different string hash seeds take them in a different order
+#: (pre-existing; measured 2026-10-14, not changed by TM_3).
+_TALENT_IDENTITY_SHA256 = "d2a018baf39b2fa413d0b70edc013e90d8cfd9e1c54ada3838b73a77cd53582b"
+
+
+def _talent_fixture():
+    import random
+    teams = {}
+    rng = random.Random(3)
+    for dv, members in pc._DIVISIONS.items():
+        lg = 103 if dv.startswith("AL") else 104
+        for org in members:
+            teams[org] = {"wins": rng.randint(40, 70), "losses": rng.randint(40, 70),
+                          "p": round(rng.uniform(0.35, 0.65), 3), "league": lg, "div": dv}
+    orgs = sorted(teams)
+    pairs = [(orgs[i], orgs[(i * 7 + j) % 30]) for j in range(1, 6) for i in range(30)
+             if orgs[i] != orgs[(i * 7 + j) % 30]]
+    return teams, pairs
+
+
+def _digest(odds) -> str:
+    import hashlib
+    return hashlib.sha256(json.dumps(odds, sort_keys=True).encode("utf-8")).hexdigest()
+
+
+def test_simulate_playoffs_at_talent_sd_zero_consumes_exactly_the_old_draws():
+    """In this process: the default and an explicit 0.0 (with and without
+    games played) are one output. In a PYTHONHASHSEED=0 subprocess: that
+    output is the digest the code before T1 produced on the same fixture."""
+    t, p = _talent_fixture()
+    plain = pc.simulate_playoffs(t, p, n_sims=300, seed=7)
+    assert _digest(pc.simulate_playoffs(t, p, n_sims=300, seed=7,
+                                        talent_sd_wins=0.0, games_played=0)) == _digest(plain)
+    assert _digest(pc.simulate_playoffs(t, p, n_sims=300, seed=7, talent_sd_wins=0.0,
+                                        games_played={o: 100 for o in t})) == _digest(plain)
+    import os
+    import subprocess
+    import sys
+    code = "; ".join([
+        "import test_proj_current as T, proj_current as pc",
+        "t, p = T._talent_fixture()",
+        "print(T._digest(pc.simulate_playoffs(t, p, n_sims=300, seed=7)))",
+        "print(T._digest(pc.simulate_playoffs(t, p, n_sims=300, seed=7, talent_sd_wins=0.0, games_played=0)))",
+    ])
+    env = dict(os.environ, PYTHONHASHSEED="0")
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env,
+                         cwd=os.path.dirname(os.path.abspath(__file__)), timeout=300)
+    assert out.returncode == 0, out.stderr[-2000:]
+    lines = out.stdout.strip().splitlines()[-2:]
+    assert lines == [_TALENT_IDENTITY_SHA256, _TALENT_IDENTITY_SHA256], lines
+
+
+def test_a_positive_talent_sd_draws_once_per_club_on_its_own_stream():
+    """The talent draw changes the win totals (so the band is wider) but the
+    regular-season stream is untouched: the same seed with and without the
+    draw plays the same games from the same generator, which shows as the
+    club means staying within noise while the spread grows."""
+    t, p = _talent_fixture()
+    long_pairs = p * 30                                  # ~150 games a club
+    base = pc.simulate_playoffs(t, long_pairs, n_sims=400, seed=11, bracket=False, samples=True)
+    cand = pc.simulate_playoffs(t, long_pairs, n_sims=400, seed=11, bracket=False, samples=True,
+                                talent_sd_wins=8.0, games_played=0)
+    assert _digest(base) != _digest(cand)
+    import statistics
+    sd_b = statistics.mean(statistics.pstdev(v["winSamples"]) for v in base.values())
+    sd_c = statistics.mean(statistics.pstdev(v["winSamples"]) for v in cand.values())
+    assert sd_c > sd_b * 1.2, (sd_b, sd_c)
+    mean_shift = statistics.mean(abs(cand[o]["projWinsMean"] - base[o]["projWinsMean"]) for o in t)
+    assert mean_shift < 2.0, mean_shift
+    # the draw shrinks with games played: at G = 400 (k = 40) it is a tenth of the preseason sd
+    late = pc.simulate_playoffs(t, long_pairs, n_sims=400, seed=11, bracket=False, samples=True,
+                                talent_sd_wins=8.0, games_played=400)
+    sd_l = statistics.mean(statistics.pstdev(v["winSamples"]) for v in late.values())
+    assert sd_b <= sd_l < sd_c
+    assert pc.TALENT_PSEUDO_GAMES == pe.CURRENT_PRIOR_PSEUDO_GAMES == 40
+    assert pc.TALENT_CLIP == (0.20, 0.80)
+    assert pc.TALENT_SEED_OFFSET != pc.POSTSEASON_SEED_OFFSET
+
+
+def test_samples_adds_the_sorted_win_totals_and_nothing_else():
+    t, p = _talent_fixture()
+    plain = pc.simulate_playoffs(t, p, n_sims=50, seed=3)
+    with_s = pc.simulate_playoffs(t, p, n_sims=50, seed=3, samples=True)
+    for o in t:
+        s = with_s[o].pop("winSamples")
+        assert len(s) == 50 and s == sorted(s)
+        assert with_s[o] == plain[o]

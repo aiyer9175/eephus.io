@@ -212,3 +212,18 @@ def test_team_outlook_first_season_matches_byyear():
             continue
         assert r["wins"] == r["byYear"][0]["wins"], r["team"]
         assert r["war"] == r["byYear"][0]["war"], r["team"]
+
+
+def test_the_served_rows_carry_no_candidate_key_while_the_flags_are_off():
+    """TM_3_TEAM_CANDIDATES_DARK: with TEAM_TALENT_RANGE_LIVE, TEAM_PT_BUDGET_LIVE
+    and TEAM_RUNS_LIVE False no Team Outlook row carries a candidate key
+    (winsFaFit, ptBudget, runs); the candidates live under
+    .cache/team_projection/preview/ only."""
+    import proj_export as pe
+    assert not (pe.TEAM_TALENT_RANGE_LIVE or pe.TEAM_PT_BUDGET_LIVE or pe.TEAM_RUNS_LIVE)
+    rows = _load("mlb_projections.json")["team_outlook"]
+    for r in rows:
+        for k in ("winsFaFit", "ptBudget", "runs"):
+            assert k not in r, (r["team"], k)
+        for b in r.get("byYear") or []:
+            assert "winsFaFit" not in b, r["team"]
