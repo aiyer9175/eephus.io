@@ -134,3 +134,28 @@ what was known before the registration and what happened once.
   betting program's `catch_frame_rate` read is recorded: Team DEM+ and the club run
   totals roll over non-catchers, while each catcher's own DEM+ keeps his framing. A
   display choice, not a change to the metric or the gate.
+
+## 8. Confirmatory holdout, run 2026-10-14 (an OWNER-WAIVED EARLY READ; section 7 registered it for after 2026-11-15)
+
+Run once by NOV15_REGATES under the owner's waiver of look days (EW3-5) and the logged
+season-complete override treating 2026 as complete as of 2026-10-01 (EW3-6; the 2026 regular
+season ended in late September and this lab reads regular-season fielding; the Nov 15 default
+of `tools/plus_lab_harness.py` is unchanged and the override is written into the block):
+`python tools/dem_plus_lab.py --holdout --season-complete-asof 2026:2026-10-01`, after a dry
+run of the reporting path on fixtures with None values. X-D1's estimator, floors, baselines,
+seed and permuted twin, unchanged, on the 2025 to 2026 pairs alone; written as the block
+`confirmatory_holdout_2025_to_2026` of `data/dem_plus_eval.json` BESIDE the verdict, which is
+untouched.
+
+- 301 pairs. DEM+ rho 0.4082 against the raw rate 0.4045, fielding percentage 0.0624 and
+  innings 0.1845; the permuted twin reads 0.0220 and fails as required.
+- Gap CIs (v1): vs fielding percentage +0.3452 (lo95 +0.2060); vs innings +0.2236 (lo95
+  +0.0831); vs the raw rate +0.0037 (lo95 -0.0165, hi95 +0.0234).
+- Clauses: beats fielding percentage and beats innings hold under both conventions; the
+  raw-rate non-inferiority margin (lo95 >= -0.01) does NOT hold on this one-season set under
+  either convention. The interval is about 0.04 wide at n 301 against 1,255 pairs in X-D1, so
+  the holdout neither confirms nor contradicts the parent's tie with its raw-rate parent; it is
+  what one season resolves.
+- Consequence, as section 7 fixed in advance: none. X-D1 stays validated on 2021 to 2024 and
+  X-D2 stays provisional; the registry row's notes carry the holdout numbers beside the verdict.
+  Nothing served moved.

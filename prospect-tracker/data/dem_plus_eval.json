@@ -337,5 +337,168 @@
  "verdict": {
   "status": "validated",
   "summary": "Forward-chained over predictor seasons 2021 to 2024 (1255 Y to Y+1 pairs): DEM+ rho 0.4597 against the raw rate 0.4531, fielding percentage 0.0111 and innings 0.089; the permuted twin reads 0.0228. Gap CIs: vs fielding percentage {'mean': 0.4491, 'lo95': 0.3815, 'hi95': 0.5176}, vs innings {'mean': 0.3713, 'lo95': 0.3057, 'hi95': 0.4401}, vs the raw rate {'mean': 0.0067, 'lo95': -0.0039, 'hi95': 0.0172}. VALIDATED: every pre-registered clause holds and the twin fails."
+ },
+ "confirmatory_holdout_2025_to_2026": {
+  "generated_at": "2026-10-14",
+  "seasons": [
+   2025
+  ],
+  "seed": 20260911,
+  "experiment": "X-D1 confirmatory holdout",
+  "preregistration": "docs/dem-plus-2026-09-11/DEM_PLUS_GATE.md section 7, 'Confirmatory holdout'",
+  "estimator": "X-D1 unchanged: _pairs floors (predictor innings >= 200, outcome innings >= 300), the same three baselines, v1 primary and v2 beside, the permuted twin",
+  "harness": {
+   "harness_version": 2,
+   "primary_convention": "v1",
+   "v1": {
+    "target": "published fielding rate (fielding + framing per 1,000 innings) in Y+1, raw pooled",
+    "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+    "note": "legacy convention; the shipped gate verdicts were established here"
+   },
+   "v2": {
+    "target": "published fielding rate in Y+1 (within-OUTCOME-season z-score removes the era term)",
+    "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+    "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+   },
+   "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+   "season_complete_override": {
+    "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+    "seasons": {
+     "2026": "2026-10-01"
+    },
+    "default_month_day": [
+     11,
+     15
+    ],
+    "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+   },
+   "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+   "interpretation_rules": [
+    "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+    "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+    "X-R2 / X-S2 flips are not promised"
+   ]
+  },
+  "season_complete_override": {
+   "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+   "seasons": {
+    "2026": "2026-10-01"
+   },
+   "default_month_day": [
+    11,
+    15
+   ],
+   "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+  },
+  "n_pairs": 301,
+  "n_partial_outcome_pairs_dropped": 0,
+  "reported_beside_the_verdict": true,
+  "merged_into_the_verdict": false,
+  "status": "SCORED",
+  "forward_spearman_vs_rate_next": {
+   "dem_plus": 0.4082,
+   "raw_rate": 0.4045,
+   "fld_pct": 0.0624,
+   "innings": 0.1845,
+   "twin": 0.022
+  },
+  "gap_ci_vs_fld_pct": {
+   "mean": 0.3452,
+   "lo95": 0.206,
+   "hi95": 0.4851
+  },
+  "gap_ci_vs_innings": {
+   "mean": 0.2236,
+   "lo95": 0.0831,
+   "hi95": 0.3682
+  },
+  "gap_ci_vs_raw_rate": {
+   "mean": 0.0037,
+   "lo95": -0.0165,
+   "hi95": 0.0234
+  },
+  "twin": {
+   "rho": 0.022,
+   "gap_ci_vs_fld_pct": {
+    "mean": -0.0435,
+    "lo95": -0.1933,
+    "hi95": 0.102
+   },
+   "fails_as_required": true
+  },
+  "results_by_convention": {
+   "v1": {
+    "rho_primary": 0.4082,
+    "rho_baselines": {
+     "vs_fld_pct": 0.0624,
+     "vs_innings": 0.1845,
+     "vs_raw_rate": 0.4045
+    },
+    "gap_ci": {
+     "vs_fld_pct": {
+      "mean": 0.3452,
+      "lo95": 0.206,
+      "hi95": 0.4851
+     },
+     "vs_innings": {
+      "mean": 0.2236,
+      "lo95": 0.0831,
+      "hi95": 0.3682
+     },
+     "vs_raw_rate": {
+      "mean": 0.0037,
+      "lo95": -0.0165,
+      "hi95": 0.0234
+     }
+    }
+   },
+   "v2": {
+    "rho_primary": 0.4082,
+    "rho_baselines": {
+     "vs_fld_pct": 0.0624,
+     "vs_innings": 0.1845,
+     "vs_raw_rate": 0.4045
+    },
+    "gap_ci": {
+     "vs_fld_pct": {
+      "mean": 0.3452,
+      "lo95": 0.206,
+      "hi95": 0.4851
+     },
+     "vs_innings": {
+      "mean": 0.2236,
+      "lo95": 0.0831,
+      "hi95": 0.3682
+     },
+     "vs_raw_rate": {
+      "mean": 0.0037,
+      "lo95": -0.0165,
+      "hi95": 0.0234
+     }
+    },
+    "cluster": {
+     "n_pairs": 301,
+     "n_players": 301,
+     "max_pairs_per_player": 1,
+     "mean_pairs_per_player": 1.0,
+     "n_strata_first_pred_season": 1
+    }
+   }
+  },
+  "clauses_v1": {
+   "beats_fld_pct": true,
+   "beats_innings": true,
+   "not_worse_than_raw": false,
+   "all": false
+  },
+  "clauses_v2": {
+   "beats_fld_pct": true,
+   "beats_innings": true,
+   "not_worse_than_raw": false,
+   "all": false
+  },
+  "all_clauses_hold_v1": false,
+  "all_clauses_hold_v2": false,
+  "runtime_seconds": 15.3
  }
 }
