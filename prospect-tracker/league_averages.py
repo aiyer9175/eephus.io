@@ -71,7 +71,7 @@ from typing import Callable, Optional
 import mlbstats_rates
 import pitch_rates
 
-MLBSTATS_LEAGUE_TEAMS_LIVE = False
+MLBSTATS_LEAGUE_TEAMS_LIVE = True
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"

@@ -344,12 +344,12 @@ def test_no_forecast_word_in_the_copy():
 # Part 8 P8.2, task LT-08, the Teams half). The same script as League, its own
 # host and its own t keys. A synthetic thirty-club payload in the shape
 # team_stats_export.py writes drives every test, so nothing here needs a cache;
-# one smoke test reads the exporter's real preview payload when it exists.
+# one smoke test reads the exporter's real served payload when it exists.
 # =============================================================================
 CLUBS = ["ARI", "ATH", "ATL", "BAL", "BOS", "CHC", "CHW", "CIN", "CLE", "COL", "DET", "HOU", "KCR", "LAA",
          "LAD", "MIA", "MIL", "MIN", "NYM", "NYY", "PHI", "PIT", "SDP", "SEA", "SFG", "STL", "TBR", "TEX",
          "TOR", "WSN"]
-TEAMS_PREVIEW = CACHE / "league_teams" / "preview" / "mlb_team_stats.json"
+TEAMS_SERVED = ROOT / "data" / "mlb_team_stats.json"
 HIST_COLS = ["club", "g", "w", "l", "rs", "ra", "xw", "xl", "p_per_pa", "p_per_ip", "sp_p_per_ip", "rp_p_per_ip",
              "sp_ip_per_gs", "relief_ip_share", "lineup_par", "rotation_par", "bullpen_par", "offense_plus",
              "rotation_plus", "bullpen_plus", "team_dem_plus"]
@@ -623,10 +623,10 @@ def test_the_landing_section_never_asks_for_team_stats():
     assert ctx.eval("__scripts.length") == 0
 
 
-def test_the_real_preview_payload_renders_every_view():
-    if not TEAMS_PREVIEW.exists():
-        pytest.skip("the Team Stats preview payload is not built on this machine")
-    doc = json.loads(TEAMS_PREVIEW.read_text(encoding="utf-8"))
+def test_the_real_served_payload_renders_every_view():
+    if not TEAMS_SERVED.exists():
+        pytest.skip("the Team Stats payload is not built on this machine")
+    doc = json.loads(TEAMS_SERVED.read_text(encoding="utf-8"))
     for view in VIEWS:
         html = _teams_html(_teams_ctx("#section=teams&tcols=" + view, doc))
         assert len(_body_rows(html)) == len(doc["teams"]), view

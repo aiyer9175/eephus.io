@@ -1,5 +1,5 @@
 {
- "version": "2026-10-09",
+ "version": "2026-10-14",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -10374,6 +10374,184 @@
     "sl_preseason_projection"
    ],
    "shelf": "foundation"
+  },
+  {
+   "id": "league_average",
+   "term": "League average",
+   "category": "general-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "League Averages",
+    "league mean",
+    "pooled league value",
+    "league average"
+   ],
+   "priority": 66,
+   "definition": "The League tab's League column: every counted event in the pool is summed and run through the formula the boards use, so a league AVG is total hits over total at bats, not the mean of player averages. Beside it sit the player mean, median and standard deviation over the players with at least 100 PA or 20 IP.",
+   "methodology": "One row per player-season from MLB's season lines, 2000 to the live season. A traded player's season sits under his last club, which is why the tab has no club filter: Teams is the club view. AVG, OBP, ERA, K% and the other rates come back through the boards' own derivations; P/PA, P/IP and P/BF are pitches over plate appearances, innings (outs / 3) or batters faced; FIP uses the season constant from the league totals. The HEM+, SEM+, REM+ and DEM+ rows are PA-, IP- or innings-weighted means of the served per-player values, so nothing is rescored. Every number is a count or a pooled rate of what happened, not a forecast.",
+   "formula": "League rate = the stat's formula over the summed counts of every player in the pool",
+   "seeAlso": [
+    "hem_plus",
+    "sem_plus",
+    "rem_plus",
+    "dem_plus"
+   ],
+   "shelf": "foundation",
+   "origin": ""
+  },
+  {
+   "id": "team_basis_earned",
+   "term": "Earned basis (team stats)",
+   "category": "general-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "earned basis",
+    "club today basis",
+    "team basis",
+    "earned"
+   ],
+   "priority": 67,
+   "definition": "The Teams tab's default club basis: each player's season index weighted by the plate appearances or innings he took for each club, so a traded player counts for every club he played for, in proportion. Club today, labelled beside it, is the boards' basis: a traded player's whole season counts for the club that holds him now.",
+   "methodology": "Earned splits a player's season exposure (the PA, IP or fielding innings his board row carries) across his clubs by his Baseball-Reference stint rows: PA for hitters, outs for pitchers, innings for fielders. A player with one club keeps his whole weight, so the two bases differ only by who holds a traded player. It re-weights the served per-player values and scores nothing new. Club today copies the rollups the Hitters, Starters, Bullpen and Defense team tabs serve, unchanged. Past seasons show the earned basis only.",
+   "formula": "Earned rollup = sum(index x exposure at the club) / sum(exposure at the club)",
+   "seeAlso": [
+    "offense_plus",
+    "rotation_plus",
+    "bullpen_plus",
+    "team_dem_plus"
+   ],
+   "shelf": "foundation",
+   "origin": ""
+  },
+  {
+   "id": "xwl",
+   "term": "xW-L (expected record)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "xW-L",
+    "expected record",
+    "expected wins",
+    "xWinLoss"
+   ],
+   "priority": 68,
+   "definition": "MLB's published expected won-lost record over the games a club has played: the record its runs scored and allowed imply. The Teams tab prints it as MLB publishes it.",
+   "methodology": "Read from the StatsAPI standings' expected records (xWinLoss) through the site's one standings parser. A club whose expected wins plus losses differ from its games played is refused rather than printed.",
+   "formula": "",
+   "seeAlso": [
+    "w_minus_xw",
+    "season_record"
+   ],
+   "shelf": "industry",
+   "origin": "MLB, the StatsAPI standings' expected records (xWinLoss)."
+  },
+  {
+   "id": "w_minus_xw",
+   "term": "W - xW",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "W - xW",
+    "wins minus expected wins",
+    "W-xW"
+   ],
+   "priority": 69,
+   "definition": "Wins minus MLB's expected wins over the same games: the gap between a club's record and the record its runs imply. Printed signed and never coloured; it describes the games played and nothing else.",
+   "methodology": "Both terms come from the same standings read, so the gap covers exactly the games played. No fit, correlation or slope against it is computed anywhere on the tab.",
+   "formula": "W - xW = wins - expected wins (xW-L)",
+   "seeAlso": [
+    "xwl",
+    "season_record"
+   ],
+   "shelf": "foundation",
+   "origin": ""
+  },
+  {
+   "id": "lineup_depth",
+   "term": "Lineup depth (Heart 3, Rest, Gap)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "lineup depth",
+    "Heart 3",
+    "Rest",
+    "Gap",
+    "PA at 100+"
+   ],
+   "priority": 70,
+   "definition": "How a lineup's HEM+ is spread: Heart 3 is the mean HEM+ of the club's top three qualified hitters, Rest is the PA-weighted HEM+ of its other hitters, Gap is Heart 3 minus Rest, and PA at 100+ is the share of the club's plate appearances taken by hitters at HEM+ 100 or better.",
+   "methodology": "Same rows and club basis as Offense+ (club today), so the columns read beside it. Gap prints signed and is never coloured. Descriptive: the spread of the season's served HEM+ values, not a rating of the lineup.",
+   "formula": "Gap = Heart 3 - Rest; PA at 100+ = PA of hitters at HEM+ 100 or better / team PA",
+   "seeAlso": [
+    "offense_plus",
+    "hem_plus"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "relief_ip_share",
+   "term": "Relief IP %",
+   "category": "pitcher-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Relief IP %",
+    "relief innings share",
+    "bullpen innings share"
+   ],
+   "priority": 71,
+   "definition": "The share of a club's innings thrown in relief: the outs its relievers recorded over every out its staff recorded.",
+   "methodology": "Earned by the club, from MLB's reliever split of the club pitching line; the league row pools the thirty clubs the same way. A usage share, drawn without a value colour.",
+   "formula": "Relief IP % = relief outs / staff outs",
+   "seeAlso": [
+    "bullpen_plus",
+    "rotation_plus"
+   ],
+   "shelf": "foundation",
+   "origin": ""
+  },
+  {
+   "id": "rolling_window",
+   "term": "Rolling window (player drawer)",
+   "category": "general-stat",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "rolling window",
+    "last 15 games",
+    "rolling line"
+   ],
+   "priority": 72,
+   "definition": "The player drawer's game-by-game line for the live season: each point pools the last 15 games for a hitter, 5 starts for a starter or 10 appearances for a reliever, and a toggle doubles the window to 30, 10 or 20. A point is drawn only once its window is full, so no line opens on a one-game rate.",
+   "methodology": "Read from the player's own game file: raw counts per game from the play-by-play frame in first-pitch order. Each window sums the counts and computes the rate once; it never averages per-game rates. Defense and Leverage draw no rolling window, because fielding runs and per-game WPA are not in the game logs the drawer reads. Descriptive: each point is what happened over that stretch, nothing projected.",
+   "formula": "Window rate = the stat's formula over the counts of the last N games, starts or appearances",
+   "seeAlso": [
+    "hem_plus",
+    "sem_plus",
+    "rem_plus"
+   ],
+   "shelf": "foundation",
+   "origin": ""
   }
  ]
 }
