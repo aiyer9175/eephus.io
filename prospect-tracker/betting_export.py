@@ -76,6 +76,7 @@ from pathlib import Path
 import betting_ingest as bi
 import betting_model as bm
 import betting_dugout as bd
+import betting_intensity as bix
 import betting_settle as bset
 
 log = logging.getLogger("betting_export")
@@ -7583,6 +7584,16 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
                         "fall back to the git-tracked board and the rewrite check "
                         "will be unarmed for one night", PUBLISHED_CHAIN_PATH.name)
 
+    # GAME INTENSITY (plan Part 8, IX-S1): a descriptive chip beside the price and
+    # in none of it, behind betting_intensity.SHOW_INTENSITY_CHIP (off, so no key is
+    # added and the payload is byte-identical). The dugout seam's shape: built from
+    # the PAYLOAD's list and date, added just before the dugout block (which stays
+    # the last key), carried whole by the preview, and passed to nothing:
+    # test_betting_intensity_fence.py pins one Store and two Loads by AST.
+    if bix.SHOW_INTENSITY_CHIP:
+        intensity = bix.build_block(payload["team_bets"], payload["slate_date"])
+        payload["intensity"] = intensity
+
     # DUGOUT CONTEXT (D4, 2026-09-23): In-Game Management club-season figures
     # beside the price and in none of it. Built from the PAYLOAD's list and date
     # (a carried night replaced both above, and the client renders the payload's
@@ -7641,6 +7652,8 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         "gating_note": ("Preview slice. Everything is public during the Diamond preview; "
                         "this file is the seam a future gate would read."),
     }
+    if bix.SHOW_INTENSITY_CHIP:
+        preview["intensity"] = intensity
 
     if write:
         _write(OUT_PATH, payload)

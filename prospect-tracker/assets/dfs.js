@@ -1441,9 +1441,32 @@
         ? " · no total: the odds we hold were taken after first pitch" : "";
       return '<div class="dfs-slate-card">' + sideLine(g.away) + sideLine(g.home) +
         '<div class="dfs-slate-meta">' + esc(g.venue || "") + parkMark(g) +
-        (v ? " · total " + num(v.total, 1) : "") + refused + "</div></div>";
+        (v ? " · total " + num(v.total, 1) : "") + refused + "</div>" + ixCard(g) + "</div>";
     }).join("");
     return '<div class="dfs-slate">' + cards + "</div>" + offBoardNote() + vegasNote();
+  }
+  // Game intensity on an open game only (owner answer INT-A3): how much rides on
+  // the game for both clubs, with the clinched and eliminated labels as lineup
+  // context. Every sentence comes from the payload's own block, which the server
+  // builds behind its flag; no payload carries it before the fWAR epoch's step Z.
+  // A game past its first pitch has already left the cards (lockStarted); the
+  // status check keeps a finished or postponed game off as well.
+  var IX_PREGAME = { Preview: 1, Scheduled: 1, "Pre-Game": 1 };
+  function ixCard(g) {
+    var ctx = (S.data || {}).intensity;
+    if (!ctx || ctx.status !== "built" || !g) return "";
+    var t = firstPitchMs(g);
+    if (t !== null && t <= Date.now()) return "";
+    if (g.status != null && IX_PREGAME[g.status] !== 1) return "";
+    var r = ctx.games && ctx.games[String(g.game_pk)];
+    if (!r) return "";
+    var labels = (r.labels || []).map(esc).join(" · ");
+    return '<details class="dfs-ix"><summary class="dfs-ix-sum"><span class="dfs-ix-chip">' +
+      esc(r.chip) + "</span> " + esc(ctx.summary) + "</summary>" +
+      '<div class="dfs-ix-body">' + esc(ctx.body) + "</div>" +
+      '<div class="dfs-ix-body">' + esc(r.stakes_line) + "</div>" +
+      (labels ? '<div class="dfs-ix-body">' + labels + "</div>" : "") +
+      '<div class="dfs-ix-body dfs-ix-fine">' + esc(ctx.talent_note || "") + "</div></details>";
   }
   // Every park source is a different claim and the card says which one it is.
   // "neutral" alone used to cover all of them, which meant an average park, a
@@ -1962,7 +1985,12 @@
     ".dfs-slate-row{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:1px 0}",
     ".dfs-slate-team{font-weight:700;color:var(--text-primary)}",
     ".dfs-slate-sp{color:var(--text-secondary);text-align:right}",
-    ".dfs-slate-meta{margin-top:4px;font-size:11px;color:var(--text-tertiary)}"
+    ".dfs-slate-meta{margin-top:4px;font-size:11px;color:var(--text-tertiary)}",
+    ".dfs-ix{margin-top:4px;font-size:11px;color:var(--text-secondary)}",
+    ".dfs-ix-sum{cursor:pointer;color:var(--text-tertiary)}",
+    ".dfs-ix-chip{font:600 10px/1.4 var(--font-retro,monospace);color:var(--text-primary);border:1px solid var(--border);padding:0 4px;white-space:nowrap}",
+    ".dfs-ix-body{margin-top:3px;overflow-wrap:anywhere}",
+    ".dfs-ix-fine{color:var(--text-tertiary)}"
   ].join("");
   document.head.appendChild(css);
 })();
