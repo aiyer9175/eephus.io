@@ -239,18 +239,48 @@
   //   xRefLabel,yRefLabel,diag,aria}). Axes carry numeric tick values and the
   //   xRef/yRef reference lines are labeled with their values; diag:true draws
   //   the y = x identity line (only meaningful when both axes share units).
+  // Generic options (all opt-in; without them it draws what it always drew):
+  //   nice     snap each axis to round 1-2-5 ticks (niceTicks) and tick on them
+  //            ("x": the x axis only)
+  //   yInvert  the y axis runs downward (the smallest value at the top)
+  //   yTicks   [{v, label, id, right}] labelled y ticks in place of the numeric
+  //            ones (right: true prints the label past the plot's right edge)
+  //   lines    [{pts: [[x, y], ...], label, id, dash}] reference polylines in
+  //            data units, clipped to the plot, labelled where they leave it
+  //   padL, padR  the left and right pads; geo {} receives the two scales
+  //   a point  shape "sq" (a square of size px; hollow leaves it unfilled; ring
+  //            sets it on a --bg-secondary underlay), tag (a direct label in
+  //            text ink, strong in --text-primary), id (data-id on the mark)
+  // Text is never drawn in a point colour.
+  function _clipSeg(a, b, x0, y0, x1, y1) {
+    var t0 = 0, t1 = 1, dx = b[0] - a[0], dy = b[1] - a[1];
+    var pq = [[-dx, a[0] - x0], [dx, x1 - a[0]], [-dy, a[1] - y0], [dy, y1 - a[1]]];
+    for (var i = 0; i < 4; i++) {
+      var pp = pq[i][0], q = pq[i][1];
+      if (pp === 0) { if (q < 0) return null; continue; }
+      var r = q / pp;
+      if (pp < 0) { if (r > t1) return null; if (r > t0) t0 = r; } else { if (r < t0) return null; if (r < t1) t1 = r; }
+    }
+    return [[a[0] + t0 * dx, a[1] + t0 * dy], [a[0] + t1 * dx, a[1] + t1 * dy]];
+  }
   function scatter(points, o) {
     o = o || {};
     var pts = (points || []).filter(function (p) { return p && !isNaN(p.x) && !isNaN(p.y); });
     if (pts.length < 3) return "";
-    var W = o.width || 640, H = o.height || 300, padL = 34, padB = 34, padT = 16, padR = 10;
+    var W = o.width || 640, H = o.height || 300, padL = o.padL || 34, padB = 34, padT = 16, padR = o.padR || 10;
     var xs = pts.map(function (p) { return p.x; }), ys = pts.map(function (p) { return p.y; });
     var x0 = o.xMin != null ? o.xMin : Math.min.apply(null, xs), x1 = o.xMax != null ? o.xMax : Math.max.apply(null, xs);
     var y0 = o.yMin != null ? o.yMin : Math.min.apply(null, ys), y1 = o.yMax != null ? o.yMax : Math.max.apply(null, ys);
     if (x1 <= x0) x1 = x0 + 1; if (y1 <= y0) y1 = y0 + 1;
+    var ntx = null, nty = null;
+    if (o.nice) {
+      ntx = niceTicks(x0, x1, { target: 4, pad: 0 }); x0 = ntx.lo; x1 = ntx.hi;
+      if (o.nice !== "x") { nty = niceTicks(y0, y1, { target: 4, pad: 0 }); y0 = nty.lo; y1 = nty.hi; }
+    }
     var t = _chartTokens(), iw = W - padL - padR, ih = H - padB - padT;
     var sx = function (x) { return padL + (x - x0) / (x1 - x0) * iw; };
-    var sy = function (y) { return padT + (1 - (y - y0) / (y1 - y0)) * ih; };
+    var sy = o.yInvert ? function (y) { return padT + (y - y0) / (y1 - y0) * ih; }
+      : function (y) { return padT + (1 - (y - y0) / (y1 - y0)) * ih; };
     var refs = "";
     if (o.xRef != null) {
       refs += '<line x1="' + sx(o.xRef).toFixed(1) + '" y1="' + padT + '" x2="' + sx(o.xRef).toFixed(1) + '" y2="' + (H - padB) + '" stroke="' + t.grid + '" stroke-dasharray="3 3"/>'
@@ -270,22 +300,54 @@
           + '<text x="' + (sx(d1) - 4).toFixed(1) + '" y="' + (sy(d1) + 12).toFixed(1) + '" fill="' + t.axis + '" font-size="9" font-style="italic" font-family="monospace" text-anchor="end">y = x</text>';
       }
     }
+    (o.lines || []).forEach(function (l) {
+      var q = (l.pts || []).map(function (v) { return [sx(v[0]), sy(v[1])]; }), segs = [];
+      for (var i = 1; i < q.length; i++) {
+        var c = _clipSeg(q[i - 1], q[i], padL, padT, W - padR, H - padB);
+        if (c) segs.push(c);
+      }
+      if (!segs.length) return;
+      var id = l.id ? ' data-id="' + esc(l.id) + '"' : "";
+      refs += segs.map(function (g) {
+        return "<line" + id + ' x1="' + g[0][0].toFixed(1) + '" y1="' + g[0][1].toFixed(1) + '" x2="' + g[1][0].toFixed(1) + '" y2="' + g[1][1].toFixed(1)
+          + '" stroke="var(--text-tertiary)" stroke-width="1"' + (l.dash ? ' stroke-dasharray="' + esc(l.dash) + '"' : "") + "/>";
+      }).join("");
+      var e = segs[segs.length - 1][1];
+      if (l.label) refs += "<text" + id + ' x="' + (e[0] - 3).toFixed(1) + '" y="' + Math.min(Math.max(e[1] + (e[1] < padT + 10 ? 10 : -3), padT + 9), H - padB - 3).toFixed(1)
+        + '" fill="var(--text-tertiary)" font-size="9" text-anchor="end">' + esc(l.label) + "</text>";
+    });
     var dots = pts.map(function (p) {
-      return '<circle cx="' + sx(p.x).toFixed(1) + '" cy="' + sy(p.y).toFixed(1) + '" r="' + (p.r || 3) + '" fill="' + (p.color || t.hi) + '" opacity="0.7"><title>' + esc(p.label || "") + "</title></circle>";
+      var cx = sx(p.x), cy = sy(p.y), id = p.id ? ' data-id="' + esc(p.id) + '"' : "", col = p.color || t.hi;
+      if (p.shape === "sq") {
+        var z = p.size || 8, h = z / 2;
+        return (p.ring ? '<rect x="' + (cx - h - 2).toFixed(1) + '" y="' + (cy - h - 2).toFixed(1) + '" width="' + (z + 4) + '" height="' + (z + 4) + '" fill="var(--bg-secondary)"/>' : "")
+          + "<rect" + id + ' x="' + (cx - h).toFixed(1) + '" y="' + (cy - h).toFixed(1) + '" width="' + z + '" height="' + z + '" fill="' + (p.hollow ? "var(--bg-secondary)" : col)
+          + '" stroke="' + col + '" stroke-width="1.5"><title>' + esc(p.label || "") + "</title></rect>";
+      }
+      return "<circle" + id + ' cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (p.r || 3) + '" fill="' + col + '" opacity="0.7"><title>' + esc(p.label || "") + "</title></circle>";
+    }).join("") + pts.filter(function (p) { return p.tag != null; }).map(function (p) {
+      return "<text" + (p.id ? ' data-tag="' + esc(p.id) + '"' : "") + ' x="' + (sx(p.x) + 7).toFixed(1) + '" y="' + (sy(p.y) + 3).toFixed(1) + '" font-size="9"'
+        + (p.strong ? ' font-weight="700" fill="var(--text-primary)"' : ' fill="var(--text-secondary)"') + ">" + esc(p.tag) + "</text>";
     }).join("");
-    // numeric tick values (4 per axis) so magnitudes read without hovering dots
+    // numeric tick values (4 per axis, or the round ticks under nice) so
+    // magnitudes read without hovering dots
     var ticks = "";
-    for (var i = 0; i <= 3; i++) {
-      var vx = x0 + (x1 - x0) * i / 3, vy = y0 + (y1 - y0) * i / 3;
-      var anch = i === 0 ? "start" : (i === 3 ? "end" : "middle");
-      ticks += '<text x="' + sx(vx).toFixed(1) + '" y="' + (H - padB + 12) + '" fill="' + t.axis + '" font-size="9" font-family="monospace" text-anchor="' + anch + '">' + esc(_fmtN(vx)) + "</text>"
-        + '<text x="' + (padL - 5) + '" y="' + (sy(vy) + 3).toFixed(1) + '" fill="' + t.axis + '" font-size="9" font-family="monospace" text-anchor="end">' + esc(_fmtN(vy)) + "</text>";
-    }
+    var tx = ntx ? ntx.ticks : [0, 1, 2, 3].map(function (k) { return x0 + (x1 - x0) * k / 3; });
+    var ty = nty ? nty.ticks : [0, 1, 2, 3].map(function (k) { return y0 + (y1 - y0) * k / 3; });
+    tx.forEach(function (v, i) {
+      var anch = i === 0 ? "start" : (i === tx.length - 1 ? "end" : "middle");
+      ticks += '<text x="' + sx(v).toFixed(1) + '" y="' + (H - padB + 12) + '" fill="' + t.axis + '" font-size="9" font-family="monospace" text-anchor="' + anch + '">' + esc(_fmtN(v)) + "</text>";
+    });
+    (o.yTicks || ty.map(function (v) { return { v: v, label: _fmtN(v) }; })).forEach(function (k) {
+      ticks += "<text" + (k.id ? ' data-tick="' + esc(k.id) + '"' : "") + ' x="' + (k.right ? W - padR + 4 : padL - 5) + '" y="' + (sy(k.v) + 3).toFixed(1) + '" fill="' + t.axis
+        + '" font-size="9" font-family="monospace" text-anchor="' + (k.right ? "start" : "end") + '">' + esc(k.label) + "</text>";
+    });
     var ax = '<line x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - padR) + '" y2="' + (H - padB) + '" stroke="' + t.grid + '"/>'
       + '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (H - padB) + '" stroke="' + t.grid + '"/>'
       + ticks
       + (o.xLabel ? '<text x="' + (W - padR) + '" y="' + (H - 6) + '" fill="' + t.axis + '" font-size="10" font-family="monospace" text-anchor="end">' + esc(o.xLabel) + "</text>" : "")
       + (o.yLabel ? '<text x="4" y="10" fill="' + t.axis + '" font-size="10" font-family="monospace">' + esc(o.yLabel) + "</text>" : "");
+    if (o.geo) { o.geo.x = sx; o.geo.y = sy; o.geo.W = W; o.geo.H = H; }
     return '<svg class="eephus-chart" viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + esc(o.aria || "scatter") + '">' + refs + dots + ax + "</svg>";
   }
 
@@ -344,8 +406,25 @@
   //           aria    the accessible name (default: the labels and the span)
   //           table   false when the page already prints every charted number
   //                   in its own table; caption names the table's fold
-  //           refs    [{v, label}] reference rules (an index's 100, a zero),
-  //                   dashed, inside the y domain, labelled at the left edge
+  //           refs    [{v, label, solid}] reference rules (an index's 100, a
+  //                   zero), dashed (solid: a --border hairline), inside the
+  //                   y domain, labelled at the left edge
+  //   Generic options (opt-in; without them it draws what it always drew):
+  //           vrefs   [{x, label}] labelled vertical hairlines at an x key
+  //           dom     values the y domain must include (a shared domain)
+  //           yticks  explicit y ticks (the domain runs first to last)
+  //           xticks  x keys to tick besides the first and last, each
+  //                   skipped where its label would crowd another
+  //           gap     every end label at least gap px from the next, with a
+  //                   1 px leader to a label that moved
+  //           hits    false: no hit circles (the caller draws a crosshair)
+  //           geo     {} receives the scales and the pads
+  //   series  sw stroke width; step: held flat to the next point; sq: a
+  //           square marker on every point (data-x its key); breaks: a
+  //           new polyline where an x key between two points has no value
+  //           (a gap stays a gap); nomark; id
+  //           (data-id on its marks); end the end label's text; strong: the
+  //           end label in --text-primary (false: regular weight)
   // Past 30 points a series marks only its last point; every point keeps its
   // hit circle. No trend line, fit or forecast point is ever drawn.
   function lineChart(series, opts) {
@@ -363,19 +442,22 @@
       list.forEach(function (e) { e.pts.forEach(function (p) { seen[String(p.y)] = 1; }); });
       xs = Object.keys(seen).sort(function (a, b) { return (+a - +b) || (a < b ? -1 : a > b ? 1 : 0); });
     }
+    var xi = {};
+    xs.forEach(function (k, i) { if (!(k in xi)) xi[k] = i; });
+    var at = function (y) { var i = xi[String(y)]; return i == null ? -1 : i; };
     var all = [];
     list.forEach(function (e) {
-      e.pts = e.pts.filter(function (p) { return xs.indexOf(String(p.y)) >= 0; })
-        .sort(function (a, b) { return xs.indexOf(String(a.y)) - xs.indexOf(String(b.y)); });
+      e.pts = e.pts.filter(function (p) { return at(p.y) >= 0; })
+        .sort(function (a, b) { return at(a.y) - at(b.y); });
       e.pts.forEach(function (p) { all.push(Number(p.v)); });
     });
     if (all.length < 2) return "";
     var refs = (o.refs || []).filter(function (r) { return r && _num(r.v); });
-    var dom = all.concat(refs.map(function (r) { return Number(r.v); }));
-    var nt = niceTicks(Math.min.apply(null, dom), Math.max.apply(null, dom),
-      { target: o.ticks || 4, floor: o.floor });
+    var dom = all.concat(refs.map(function (r) { return Number(r.v); }), (o.dom || []).filter(_num).map(Number));
+    var nt = o.yticks ? { ticks: o.yticks.slice(), lo: o.yticks[0], hi: o.yticks[o.yticks.length - 1] }
+      : niceTicks(Math.min.apply(null, dom), Math.max.apply(null, dom), { target: o.ticks || 4, floor: o.floor });
     var lo = nt.lo, hi = nt.hi;
-    var x = function (y) { return PL + xs.indexOf(String(y)) * (W - PL - PR) / Math.max(1, xs.length - 1); };
+    var x = function (y) { return PL + at(y) * (W - PL - PR) / Math.max(1, xs.length - 1); };
     var yy = function (v) { return PT + (hi - v) * (H - PT - PB) / ((hi - lo) || 1); };
     // Recessive gridlines and a value axis on the round ticks.
     var grid = nt.ticks.map(function (v) {
@@ -387,50 +469,86 @@
     grid += refs.map(function (r) {
       var ry = yy(Number(r.v)).toFixed(1);
       return '<line x1="' + PL + '" y1="' + ry + '" x2="' + (W - PR) + '" y2="' + ry
-        + '" stroke="var(--text-tertiary)" stroke-width="1" stroke-dasharray="4 3"/>'
+        + '" stroke="' + (r.solid ? "var(--border)" : "var(--text-tertiary)") + '" stroke-width="1"' + (r.solid ? "" : ' stroke-dasharray="4 3"') + "/>"
         + (r.label ? '<text x="' + (PL + 4) + '" y="' + (Number(ry) - 3).toFixed(1)
           + '" font-size="9" fill="var(--text-tertiary)">' + esc(r.label) + "</text>" : "");
     }).join("");
-    // End labels: two that would overlap are pushed apart, never recoloured.
-    var ends = list.map(function (e) { return { e: e, y: yy(Number(e.pts[e.pts.length - 1].v)) + (e.s.dy || 0) }; });
-    if (ends.length === 2 && Math.abs(ends[0].y - ends[1].y) < 11) {
+    grid += (o.vrefs || []).filter(function (r) { return r && at(r.x) >= 0; }).map(function (r) {
+      var vx = x(r.x), right = vx > W - PR - 60;
+      return '<line data-vref="' + esc(r.x) + '" x1="' + vx.toFixed(1) + '" y1="' + PT + '" x2="' + vx.toFixed(1) + '" y2="' + (H - PB)
+        + '" stroke="var(--border)" stroke-width="1"/>' + (r.label ? '<text x="' + (vx + (right ? -3 : 3)).toFixed(1) + '" y="' + (PT + 8)
+        + '"' + (right ? ' text-anchor="end"' : "") + ' font-size="9" fill="var(--text-tertiary)">' + esc(r.label) + "</text>" : "");
+    }).join("");
+    // End labels: two that would overlap are pushed apart, never recoloured;
+    // under opts.gap every label keeps that distance from the next.
+    var ends = list.map(function (e) { var y0 = yy(Number(e.pts[e.pts.length - 1].v)); return { e: e, y0: y0, y: y0 + (e.s.dy || 0) }; });
+    if (o.gap) {
+      var srt = ends.slice().sort(function (a, b) { return a.y - b.y; }), gi;
+      for (gi = 1; gi < srt.length; gi++) srt[gi].y = Math.max(srt[gi].y, srt[gi - 1].y + o.gap);
+      if (srt.length && srt[srt.length - 1].y > H - PB) srt[srt.length - 1].y = H - PB;
+      for (gi = srt.length - 2; gi >= 0; gi--) srt[gi].y = Math.min(srt[gi].y, srt[gi + 1].y - o.gap);
+    } else if (ends.length === 2 && Math.abs(ends[0].y - ends[1].y) < 11) {
       var up = ends[0].y <= ends[1].y ? ends[0] : ends[1], dn = up === ends[0] ? ends[1] : ends[0];
       var mid = (up.y + dn.y) / 2;
       up.y = mid - 5.5; dn.y = mid + 5.5;
     }
     var body = "";
     list.forEach(function (e, ei) {
-      var s = e.s, pts = e.pts, dense = pts.length > 30;
-      body += '<polyline points="' + pts.map(function (p) { return x(p.y).toFixed(1) + "," + yy(Number(p.v)).toFixed(1); }).join(" ")
-        + '" fill="none" stroke="' + s.color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"'
-        + (s.dash ? ' stroke-dasharray="' + s.dash + '"' : "") + "/>";
+      var s = e.s, pts = e.pts, dense = pts.length > 30, id = s.id ? ' data-id="' + esc(s.id) + '"' : "", segs = [[]];
+      pts.forEach(function (p, pi) {
+        var px = x(p.y).toFixed(1), py = yy(Number(p.v)).toFixed(1);
+        if (s.breaks && pi && at(p.y) - at(pts[pi - 1].y) > 1) segs.push([]);
+        else if (s.step && pi) segs[segs.length - 1].push(px + "," + yy(Number(pts[pi - 1].v)).toFixed(1));
+        segs[segs.length - 1].push(px + "," + py);
+      });
+      segs.forEach(function (line) {
+        body += "<polyline" + id + ' points="' + line.join(" ")
+          + '" fill="none" stroke="' + s.color + '" stroke-width="' + (s.sw || 2) + '" stroke-linejoin="round" stroke-linecap="round"'
+          + (s.dash ? ' stroke-dasharray="' + s.dash + '"' : "") + "/>";
+      });
       pts.forEach(function (p, pi) {
         var cx = x(p.y).toFixed(1), cy = yy(Number(p.v)).toFixed(1);
-        if (!dense || pi === pts.length - 1) {
+        if (s.sq) {
+          body += "<rect" + id + ' data-x="' + esc(p.y) + '" x="' + (cx - 3).toFixed(1) + '" y="' + (cy - 3).toFixed(1) + '" width="6" height="6" fill="' + s.color + '"/>';
+        } else if (!s.nomark && (!dense || pi === pts.length - 1)) {
           body += p.partial
             ? '<circle cx="' + cx + '" cy="' + cy + '" r="3.2" fill="var(--bg-secondary)" stroke="' + s.color + '" stroke-width="1.6"/>'
             : '<circle cx="' + cx + '" cy="' + cy + '" r="3.2" fill="' + s.color + '"/>';
         }
+        if (o.hits === false) return;
         var tip = o.tip ? o.tip(s, p) : (s.label + " " + xfmt(p.y) + ": " + fmt(Number(p.v)) + (p.hint ? " " + p.hint : ""));
         body += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (dense ? 6 : 10) + '" fill="transparent"><title>' + esc(tip) + "</title></circle>";
       });
-      body += '<text x="' + (W - PR + 5) + '" y="' + (ends[ei].y + 3).toFixed(1)
-        + '" font-size="10" font-weight="700" fill="var(--text-secondary)">' + esc(fmt(Number(pts[pts.length - 1].v))) + "</text>";
+      var en = ends[ei];
+      if (o.gap && Math.abs(en.y - en.y0) > 1) {
+        body += '<line x1="' + (W - PR + 1) + '" y1="' + en.y0.toFixed(1) + '" x2="' + (W - PR + 4) + '" y2="' + en.y.toFixed(1) + '" stroke="var(--text-tertiary)" stroke-width="1"/>';
+      }
+      body += "<text" + (s.id ? ' data-end="' + esc(s.id) + '"' : "") + ' x="' + (W - PR + 5) + '" y="' + (en.y + 3).toFixed(1)
+        + '" font-size="10" font-weight="' + (s.strong === false ? 400 : 700) + '" fill="var(--text-' + (s.strong ? "primary" : "secondary") + ')">'
+        + esc(s.end != null ? s.end : fmt(Number(pts[pts.length - 1].v))) + "</text>";
     });
-    // x ticks: first and last always; a periodic one only where its label
-    // clears both of theirs (the prototype once printed "20252026").
+    // x ticks: first and last always; a periodic or chosen one only where its
+    // label clears both of theirs and the one before it (the prototype once
+    // printed "20252026").
     var xl = W - PR, xf = PL, firstL = xfmt(xs[0]), lastL = xfmt(xs[xs.length - 1]);
     var xt = '<text x="' + xf + '" y="' + (H - 5) + '" font-size="9" fill="var(--text-tertiary)">' + esc(firstL) + "</text>";
     if (xs.length > 1) {
-      if (o.every) {
+      var want = o.xticks ? o.xticks.map(String) : null, edge = xf + _labW(firstL) + 6;
+      if (o.every || want) {
         xs.forEach(function (y, i) {
-          if (i === 0 || i === xs.length - 1 || !isFinite(+y) || (+y) % o.every !== 0) return;
+          if (i === 0 || i === xs.length - 1) return;
+          if (want ? want.indexOf(y) < 0 : (!isFinite(+y) || (+y) % o.every !== 0)) return;
           var cx = x(y), half = _labW(xfmt(y)) / 2;
-          if (cx - half < xf + _labW(firstL) + 6 || cx + half > xl - _labW(lastL) - 6) return;
+          if (cx - half < edge || cx + half > xl - _labW(lastL) - 6) return;
+          if (want) edge = cx + half + 6;
           xt += '<text x="' + cx.toFixed(1) + '" y="' + (H - 5) + '" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">' + esc(xfmt(y)) + "</text>";
         });
       }
       xt += '<text x="' + xl + '" y="' + (H - 5) + '" text-anchor="end" font-size="9" fill="var(--text-tertiary)">' + esc(lastL) + "</text>";
+    }
+    if (o.geo) {
+      o.geo.x = x; o.geo.y = yy; o.geo.xs = xs; o.geo.W = W; o.geo.H = H;
+      o.geo.PL = PL; o.geo.PR = PR; o.geo.PT = PT; o.geo.PB = PB; o.geo.lo = lo; o.geo.hi = hi;
     }
     var aria = o.aria || (list.map(function (e) { return e.s.label; }).join(" and ") + ", " + firstL + " to " + lastL);
     var svg = '<svg class="eephus-chart eephus-line" viewBox="0 0 ' + W + " " + H

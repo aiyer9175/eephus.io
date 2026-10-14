@@ -289,3 +289,142 @@ def test_the_hub_exports_the_chart_helpers():
     m = re.search(r"window\.EEPHUS_HUB = \{([^}]*)\}", HUB)
     names = {n.strip() for n in m.group(1).split(",")}
     assert {"histogram", "scatter", "lineChart", "spark", "niceTicks"} <= names
+
+
+# ---------------------------------------------------------------------------
+# The generic options STANDINGS_5 added (all opt-in; the defaults above are
+# unchanged): vertical hairlines, a shared domain, explicit ticks, labels kept
+# a gap apart with leaders, step lines, square markers, gaps that stay gaps,
+# chosen end labels, the geo out-param; and on scatter, round ticks, an
+# inverted y axis, labelled reference polylines clipped to the plot, squares,
+# direct labels and labelled y ticks.
+# ---------------------------------------------------------------------------
+
+_DRAW = """([kind, data, opts]) => {
+  const o = Object.assign({}, opts, {geo: {}});
+  const html = window.EEPHUS_HUB[kind](data, o);
+  const c = document.getElementById('c');
+  c.innerHTML = html;
+  const svg = c.querySelector('svg');
+  const g = o.geo;
+  const at = (q, a) => Array.from(svg.querySelectorAll(q)).map(e => a.map(k => e.getAttribute(k)));
+  return {texts: at('text', ['data-end', 'data-tag', 'data-tick', 'data-id', 'fill', 'x', 'y']).map((t, i) =>
+            t.concat([svg.querySelectorAll('text')[i].textContent])),
+          lines: at('polyline', ['data-id', 'points', 'stroke', 'stroke-width']),
+          rects: at('rect', ['data-id', 'data-x', 'x', 'y', 'width', 'fill', 'stroke']),
+          segs: at('line', ['data-id', 'data-vref', 'x1', 'y1', 'x2', 'y2', 'stroke', 'stroke-dasharray']),
+          hits: svg.querySelectorAll('circle[fill="transparent"]').length,
+          geo: kind === 'lineChart' ? {lo: g.lo, hi: g.hi, xs: g.xs, PL: g.PL, PR: g.PR, PT: g.PT, PB: g.PB, W: g.W, H: g.H,
+                                       x0: g.x(g.xs[0]), y0: g.y(0), y10: g.y(10)}
+                                    : {x0: g.x(0), x1: g.x(1), y0: g.y(0), y1: g.y(1), W: g.W, H: g.H}};
+}"""
+
+DAYS = ["2026-09-%02d" % d for d in range(1, 11)]
+
+
+def _series(vals, **kw):
+    s = {"label": kw.pop("label", "A"), "color": kw.pop("color", "var(--viz-1)"),
+         "pts": [{"y": d, "v": v} for d, v in zip(DAYS, vals)]}
+    s.update(kw)
+    return s
+
+
+def test_vrefs_dom_yticks_and_geo(page):
+    r = page.evaluate(_DRAW, ["lineChart", [_series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])],
+                              {"xs": DAYS, "width": 400, "table": False, "dom": [-30, 30],
+                               "vrefs": [{"x": DAYS[6], "label": "Postseason"}, {"x": "2026-12-01", "label": "never"}]}])
+    assert r["geo"]["lo"] <= -30 and r["geo"]["hi"] >= 30 and r["geo"]["lo"] == -r["geo"]["hi"]
+    vref = [s for s in r["segs"] if s[1]]
+    assert [s[1] for s in vref] == [DAYS[6]], "a key outside xs draws nothing"
+    assert vref[0][6] == "var(--border)" and float(vref[0][2]) == float(vref[0][4])
+    assert "Postseason" in [t[-1] for t in r["texts"]] and "never" not in [t[-1] for t in r["texts"]]
+    r = page.evaluate(_DRAW, ["lineChart", [_series([10, 20, 30, 40, 50, 60, 70, 80, 90, 95])],
+                              {"xs": DAYS, "width": 400, "table": False, "yticks": [0, 25, 50, 75, 100]}])
+    assert (r["geo"]["lo"], r["geo"]["hi"]) == (0, 100)
+    ylab = [t[-1] for t in r["texts"] if t[5] is not None and float(t[5]) < r["geo"]["PL"]]
+    assert ylab == ["0", "25", "50", "75", "100"]
+
+
+def test_gap_keeps_every_end_label_apart_with_a_leader(page):
+    ser = [_series([5] * 10, label=c, id=c, color="var(--text-tertiary)", end=c + " +5", strong=False) for c in "ABCDE"]
+    ser[0]["color"], ser[0]["strong"] = "var(--viz-1)", True
+    r = page.evaluate(_DRAW, ["lineChart", ser, {"xs": DAYS, "width": 360, "height": 220, "table": False, "gap": 11}])
+    ends = sorted((float(t[6]), t[0], t[4], t[-1]) for t in r["texts"] if t[0])
+    assert [e[1] for e in sorted(ends, key=lambda e: e[1])] == list("ABCDE")
+    ys = [e[0] for e in ends]
+    assert all(b - a >= 11 - 1e-6 for a, b in zip(ys, ys[1:])), ys
+    fills = {e[1]: e[2] for e in ends}
+    assert fills["A"] == "var(--text-primary)" and set(fills[c] for c in "BCDE") == {"var(--text-secondary)"}
+    assert not [t for t in r["texts"] if t[4] in ("var(--viz-1)", "var(--viz-2)")], "no text in a series colour"
+    leaders = [s for s in r["segs"] if s[6] == "var(--text-tertiary)" and not s[7]]
+    assert len(leaders) >= 4, "the moved labels carry a 1 px leader"
+
+
+def test_step_square_markers_and_breaks(page):
+    vals = [10, None, None, 30, None, 20, 20, None, None, 40]
+    r = page.evaluate(_DRAW, ["lineChart", [_series(vals, id="A", step=True, sq=True, sw=2.5)],
+                              {"xs": DAYS, "width": 400, "table": False, "hits": False}])
+    assert r["hits"] == 0
+    assert [x[1] for x in r["rects"]] == [d for d, v in zip(DAYS, vals) if v is not None]
+    pts = [tuple(map(float, q.split(","))) for q in r["lines"][0][1].split()]
+    assert r["lines"][0][3] == "2.5"
+    for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+        assert x1 == x2 or y1 == y2, "a step line only runs flat or straight up and down"
+    assert pts[-1][0] == max(p[0] for p in pts), "nothing past the last point"
+    r = page.evaluate(_DRAW, ["lineChart", [_series(vals, id="A", breaks=True, nomark=True)],
+                              {"xs": DAYS, "width": 400, "table": False}])
+    assert len(r["lines"]) == 4, "a gap between values starts a new polyline"
+    assert not r["rects"]
+
+
+def test_xticks_never_crowd(page):
+    xs = ["2026-%02d-%02d" % (m, d) for m in (3, 4, 5) for d in range(1, 29)]
+    r = page.evaluate(_DRAW, ["lineChart", [{"label": "A", "color": "var(--viz-1)", "pts": [{"y": d, "v": i} for i, d in enumerate(xs)]}],
+                              {"xs": xs, "width": 300, "table": False, "xticks": ["2026-03-02", "2026-04-01", "2026-05-01"]}])
+    H = r["geo"]["H"]
+    labs = [t[-1] for t in r["texts"] if t[6] is not None and float(t[6]) == H - 5]
+    assert labs[0] == xs[0] and labs[-1] == xs[-1] and "2026-03-02" not in labs
+
+
+def test_scatter_inverted_nice_lines_squares_tags_and_ticks(page):
+    pts = [{"x": 4.0 + i * 0.1, "y": 3.9 + i * 0.12, "id": "C%d" % i, "shape": "sq", "hollow": i % 2 == 1,
+            "color": "var(--viz-1)" if i == 0 else "var(--text-tertiary)", "tag": "C%d" % i if i < 2 else None, "strong": i == 0}
+           for i in range(12)]
+    lines = [{"pts": [[0, 0], [10, 10]], "label": ".500", "dash": "4 3", "id": "iso"},
+             {"pts": [[0, 0], [10, 8.85]], "label": "90-win pace", "dash": "4 3", "id": "k"}]
+    r = page.evaluate(_DRAW, ["scatter", pts, {"width": 360, "height": 300, "xMin": 3.5, "xMax": 5.5, "yMin": 3.5, "yMax": 5.5,
+                                               "nice": True, "yInvert": True, "lines": lines}])
+    g = r["geo"]
+    assert g["y1"] > g["y0"], "the inverted axis puts the smallest value at the top"
+    rect = {x[0]: x for x in r["rects"] if x[0]}
+    assert rect["C1"][5] == "var(--bg-secondary)" and rect["C0"][5] == "var(--viz-1)" and rect["C1"][6] == "var(--text-tertiary)"
+    for x in r["rects"]:
+        if x[0]:
+            assert 34 <= float(x[2]) + 4 <= 350 and 16 <= float(x[3]) + 4 <= 266
+    segs = [s for s in r["segs"] if s[0] in ("iso", "k")]
+    assert {s[0] for s in segs} == {"iso", "k"}
+    for s in segs:
+        x1, y1, x2, y2 = map(float, s[2:6])
+        assert 34 - 0.1 <= min(x1, x2) and max(x1, x2) <= 350 + 0.1 and 16 - 0.1 <= min(y1, y2) and max(y1, y2) <= 266 + 0.1
+        assert s[7] == "4 3"
+    labels = {t[-1]: t for t in r["texts"]}
+    assert ".500" in labels and "90-win pace" in labels
+    tags = [t for t in r["texts"] if t[1]]
+    assert [t[-1] for t in tags] == ["C0", "C1"] and tags[0][4] == "var(--text-primary)" and tags[1][4] == "var(--text-secondary)"
+    assert not [t for t in r["texts"] if t[4] in ("var(--viz-1)", "var(--viz-2)")]
+    xt = [float(t[-1]) for t in r["texts"] if t[6] is not None and float(t[6]) == 300 - 34 + 12]
+    steps = {round(b - a, 6) for a, b in zip(xt, xt[1:])}
+    assert len(steps) == 1 and round(steps.pop(), 6) in (0.5, 1.0, 0.2, 0.25)
+    r = page.evaluate(_DRAW, ["scatter", [{"x": 80 + i, "y": i, "shape": "sq"} for i in range(4)],
+                              {"width": 300, "height": 120, "yMin": -0.6, "yMax": 3.6, "nice": "x", "yInvert": True, "padR": 36,
+                               "yTicks": [{"v": i, "label": "R%d" % i} for i in range(4)] + [{"v": 0, "label": "+6", "right": 1, "id": "R0"}]}])
+    right = [t for t in r["texts"] if t[2]]
+    assert [(t[2], t[-1]) for t in right] == [("R0", "+6")] and float(right[0][5]) == 300 - 36 + 4
+    assert [t[-1] for t in r["texts"] if t[-1].startswith("R")] == ["R0", "R1", "R2", "R3"]
+
+
+def test_scatter_defaults_are_unchanged(page):
+    r = page.evaluate(_DRAW, ["scatter", [{"x": i, "y": i * 2, "label": "p"} for i in range(5)], {"width": 320, "height": 200}])
+    assert r["rects"] == [] and r["geo"]["y1"] < r["geo"]["y0"]
+    vals = sorted({t[-1] for t in r["texts"]})
+    assert "0" in vals and "4" in vals and "8" in vals

@@ -181,6 +181,9 @@ _SCORES_GFX_VER = _asset_ver("assets/scores-gfx.js")   # the lazy share cards (S
 # standings_core.STANDINGS_LIVE): its module script and its stylesheet.
 _STANDINGS_VER = _asset_ver("assets/standings.js")
 _STANDINGS_CSS_VER = _asset_ver("assets/standings.css")
+# The lazy chart chunk (STANDINGS_5, behind standings_core.STANDINGS_CHARTS):
+# standings.js loads it from the mount root's data-charts-src on the first chart open.
+_STANDINGS_CHARTS_VER = _asset_ver("assets/standings-charts.js")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
 _AWARDS_VER = _asset_ver("assets/awards.js")
@@ -7481,12 +7484,18 @@ def build_standings() -> str:
     the shell does not load them a second time. The mount root names the lazy
     bracket chunk (SCORES_4b), which standings.js mounts unchanged in the
     Playoffs view. The shell types no number; no EEPHUS_DATA_VERS (the job
-    rewrites its files between builds)."""
+    rewrites its files between builds). STANDINGS_5: only while
+    standings_core.STANDINGS_CHARTS is True the mount root names the lazy
+    chart chunk (data-charts-src), which turns on the Charts view and the
+    Race disclosures; while it is False the page shows neither."""
+    import standings_core
+    charts = (f' data-charts-src="/assets/standings-charts.js?v={_STANDINGS_CHARTS_VER}"'
+              if standings_core.STANDINGS_CHARTS else "")
     body = (
         '<div class="fa-app mlbstats-app st-app">'
         + _scores_module_head("standings")
         + f'<div id="standings-app-root"{_csv_optin("standings")}'
-        f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"></div>'
+        f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"{charts}></div>'
         '</div>'
         f'<link rel="stylesheet" href="/assets/sports-page.css?v={_SPORTS_PAGE_CSS_VER}">'
         f'<link rel="stylesheet" href="/assets/standings.css?v={_STANDINGS_CSS_VER}">'

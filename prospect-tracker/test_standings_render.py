@@ -756,3 +756,380 @@ def test_the_credit_prints_the_copyright_verbatim(oct_site, pw, oct_doc):
         assert words.findall(text) == [] and "for real" not in text.lower()
         assert "—" not in text and "–" not in text
         no_errors(page)
+
+
+# --------------------------------------------------------------------------- #
+# Charts (STANDINGS_5, behind standings_core.STANDINGS_CHARTS)
+# --------------------------------------------------------------------------- #
+# THE CHART FIXTURES. A synthetic 184-date season (test_standings_core's
+# synth_season and synth_standings) whose season file and race file agree, so
+# C2's last date reconciles to the served signed WCGB; the odds record packed
+# from the ledger and record fixtures by standings_core.phist_blocks (18
+# regular entries 2026-09-06 to 2026-09-30, one post entry on 2026-10-01); and
+# STANDINGS_3's post-only 2027 file (regular empty, post 2027-10-05 and
+# 2027-10-06). The shell is built with STANDINGS_LIVE and STANDINGS_CHARTS set
+# True inside the fixture only.
+from test_standings_core import synth_season, synth_standings  # noqa: E402
+
+CH_GEN = "2026-10-02T06:00:00Z"
+CHART_RAW = 20 * KB
+VIZ = ("var(--viz-1)", "var(--viz-2)")
+
+
+def chart_docs():
+    games = synth_season(n_dates=184)
+    last = st.final_games(games)[-1]["date"]
+    pay = synth_standings(games, last)
+    race = st.build_race_file(games, 2026, {last: pay}, copyright=pay["copyright"], generated_at=CH_GEN)
+    doc = st.build_season_file(pay, as_of=last, final=False, generated_at=CH_GEN, games=games, race=race)
+    doc["registry"] = st.registry_block(REG, (st.MODEL_REGULAR, st.MODEL_POST))
+    blocks = st.phist_blocks(fx("futures_ledger_2026.json")["entries"], fx("bracket_sim_record_2026.json")["entries"],
+                             2026, "2026-03-25", None, st.FRAME_FROM_SEED[2026])
+    ph = st.build_phist_file(2026, generated_at=CH_GEN, copyright=doc["copyright"], regular=blocks["regular"],
+                             post=blocks["post"], switch_as_of=blocks["switch_as_of"])
+    return doc, race, ph
+
+
+def post_only_docs(doc, race):
+    d27, r27 = copy.deepcopy(doc), copy.deepcopy(race)
+    d27["season"] = r27["season"] = 2027
+    post = {"as_of": ["2027-10-05", "2027-10-06"], "sha256": ["a" * 64, "b" * 64],
+            "clubs": {"NYY": [[0.31, 0.17], [0.33, 0.18]], "LAD": [[0.42, 0.22], [0.42, 0.22]]}}
+    regular = {"source": st.PHIST_REGULAR_SOURCE, "missing": ["2027-03-26", "2027-04-01", "2027-04-02"]}
+    ph = st.build_phist_file(2027, generated_at=CH_GEN, copyright=doc["copyright"], regular=regular, post=post,
+                             switch_as_of="2027-10-05")
+    return d27, r27, ph
+
+
+def chart_payloads(doc, race, ph, phist_from):
+    pay = payloads(doc, phist_from=phist_from)
+    y = doc["season"]
+    e = pay["index.json"]["standings_seasons"][0]
+    e["race_rev"], e["phist_rev"] = sc.rev_of(race), sc.rev_of(ph)
+    pay["latest.json"]["index_rev"] = sc.rev_of(pay["index.json"])
+    pay[f"standings/{y}-race.json"] = race
+    pay[f"standings/{y}-phist.json"] = ph
+    return pay
+
+
+def make_chart_site(dest, pay):
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(st, "STANDINGS_LIVE", True)
+        mp.setattr(st, "STANDINGS_CHARTS", True)
+        return make_site(dest, pay)
+
+
+@pytest.fixture(scope="module")
+def ch_docs():
+    return chart_docs()
+
+
+@pytest.fixture(scope="module")
+def ch_site(tmp_path_factory, ch_docs):
+    doc, race, ph = ch_docs
+    return make_chart_site(tmp_path_factory.mktemp("st_ch"), chart_payloads(doc, race, ph, ph["regular"]["as_of"][0]))
+
+
+@pytest.fixture(scope="module")
+def ch27_site(tmp_path_factory, ch_docs):
+    d27, r27, ph = post_only_docs(*ch_docs[:2])
+    return make_chart_site(tmp_path_factory.mktemp("st_ch27"), chart_payloads(d27, r27, ph, ph["switch_as_of"]))
+
+
+def jsg(v):
+    """The chunk's signed format (a JS number as text): +2.5, 0, -3, '-' for null."""
+    if v is None:
+        return "-"
+    t = str(int(v)) if float(v).is_integer() else repr(float(v))
+    return ("+" if v > 0 else "") + t
+
+
+def chart_page(base, pw, **kw):
+    kw.setdefault("hash_", "#view=charts")
+    kw.setdefault("wait", False)
+    return standings_page(base, pw, **kw)
+
+
+def wait_charts(page, c3=True):
+    page.wait_for_selector(".stc-fig svg", timeout=15000)
+    if c3:
+        page.wait_for_selector('.stc-fig[data-k="c3"] svg', timeout=15000)
+
+
+#: Every polyline vertex of a club, and the figure's own scales (fig._geo,
+#: the hub's geo out-param) applied to served values, read in the page.
+_VERTS = """([k, id]) => { const f = document.querySelector('.stc-fig[data-k="' + k + '"]');
+    return [...f.querySelectorAll('polyline[data-id="' + id + '"]')].map(pl => pl.getAttribute('points').trim().split(/\\s+/)
+      .map(q => q.split(',').map(Number))); }"""
+_GEO = """([k, xs, vs]) => { const g = document.querySelector('.stc-fig[data-k="' + k + '"]')._geo;
+    return xs.map((x, i) => [g.x(x), vs[i] == null ? null : g.y(vs[i])]); }"""
+_TABLE = """async k => { const f = document.querySelector('.stc-fig[data-k="' + k + '"]'), d = f.querySelector('.stc-num');
+    if (!d.open) { d.querySelector('summary').click(); await new Promise(r => setTimeout(r, 60)); }
+    return [...d.querySelectorAll('tr')].map(r => [...r.cells].map(c => c.textContent)); }"""
+_MARKS = """([k, c]) => [...document.querySelectorAll('.stc-fig[data-k="' + k + '"] rect[data-x][data-id="' + c + '"]')].map(r => r.dataset.x)"""
+_STROKES = """k => Object.fromEntries([...document.querySelectorAll('.stc-fig[data-k="' + k + '"] polyline')].map(p =>
+    [p.dataset.id, p.getAttribute('stroke')]))"""
+_VREFS = """k => [...document.querySelectorAll('.stc-fig[data-k="' + k + '"] [data-vref]')].map(l => l.dataset.vref)"""
+
+
+def test_charts_are_off_by_default(oct_site, pw):
+    assert "data-charts-src" not in build_site.build_standings()
+    with serve_site(oct_site) as base, standings_page(base, pw, width=1280, hash_="#view=division") as page:
+        assert page.locator('[data-view="charts"]').count() == 0 and page.locator(".st-race").count() == 0
+        assert not any("standings-charts.js" in u for u in page._requests)
+
+
+def test_the_chart_chunk_is_stamped_and_within_its_budget(monkeypatch):
+    monkeypatch.setattr(st, "STANDINGS_LIVE", True)
+    monkeypatch.setattr(st, "STANDINGS_CHARTS", True)
+    html = build_site.build_standings()
+    ver = build_site._asset_ver("assets/standings-charts.js")
+    assert f'data-charts-src="/assets/standings-charts.js?v={ver}"' in html
+    js = _lf(ROOT / "assets" / "standings-charts.js")
+    assert len(js) <= CHART_RAW, len(js)
+    text = js.decode("utf-8")
+    assert not re.findall(r"#[0-9a-fA-F]{3,8}\b", text) and not re.search(r"\brgba?\(|<canvas|getContext", text)
+    assert not re.search(r"\b(luck|lucky|unlucky|trend|forecast|regress)\b", text, re.I)
+
+
+def test_race_disclosure_c1_reconciles_to_the_race_file(ch_site, pw, ch_docs):
+    doc, race, _ph = ch_docs
+    with serve_site(ch_site) as base, standings_page(base, pw, width=1280, hash_="#view=division") as page:
+        assert not any("-race.json" in u for u in page._requests), "the tables never fetch the race"
+        page.locator('.st-race[data-div="ALE"] summary').click()
+        page.wait_for_selector('.st-race .stc-fig[data-k="c1-ALE"] svg', timeout=10000)
+        assert sum("-race.json" in u for u in page._requests) == 1
+        assert not any("-phist.json" in u for u in page._requests)
+        clubs = [r["code"] for r in sorted((r for r in doc["rows"] if r["div"] == "ALE"), key=lambda r: r["ranks"]["div"])]
+        dates = race["dates"]
+        for code in clubs:
+            want = [t[0] - t[1] for t in race["clubs"][code]]
+            verts = page.evaluate(_VERTS, ["c1-ALE", code])
+            assert len(verts) == 1 and len(verts[0]) == len(dates)
+            geo = page.evaluate(_GEO, ["c1-ALE", dates, want])
+            for (vx, vy), (gx, gy) in zip(verts[0], geo):
+                assert abs(vx - gx) < 0.06 and abs(vy - gy) < 0.06, code
+        tab = page.evaluate(_TABLE, "c1-ALE")
+        assert tab[0] == ["Date"] + clubs and len(tab) == len(dates) + 1
+        for row in tab[1:]:
+            i = dates.index(row[0])
+            assert row[1:] == [jsg(race["clubs"][c][i][0] - race["clubs"][c][i][1]) for c in clubs], row[0]
+        no_errors(page)
+
+
+def test_charts_view_reconciles_every_chart(ch_site, pw, ch_docs):
+    doc, race, ph = ch_docs
+    rows = rows_of(doc)
+    with serve_site(ch_site) as base, chart_page(base, pw, width=1280) as page:
+        wait_charts(page)
+        assert sum("-phist.json" in u for u in page._requests) == 1
+        # C1: six panels on one shared, symmetric y domain
+        doms = page.evaluate("() => [...document.querySelectorAll('.stc-fig[data-k^=c1]')].map(f => [f._geo.lo, f._geo.hi])")
+        assert len(doms) == 6 and len({tuple(d) for d in doms}) == 1 and doms[0][0] == -doms[0][1]
+        # C2, whole season and every club: wc_gap on every date, the signed WCGB on the last
+        n = len(race["dates"])
+        for lg in ("AL", "NL"):
+            k = "c2-" + lg
+            for tg in ("whole", "all"):
+                page.locator(f'.stc-fig[data-k="{k}"] .stc-tg[data-v="{tg}"]').click()
+                page.wait_for_timeout(80)
+            tab = page.evaluate(_TABLE, k)
+            head, body = tab[0][1:], tab[1:]
+            assert len(body) == n and body[0][0] == race["dates"][-1]
+            for j, code in enumerate(head, start=1):
+                r = rows[code]
+                assert body[0][j] == ("-" if r["wcgb"] is None else jsg(r["wcgb"] if r["wc_ahead"] else -r["wcgb"])), code
+                for row in body:
+                    assert row[j] == jsg(race["wc_gap"][code][race["dates"].index(row[0])]), (code, row[0])
+                pts = [(d, v) for d, v in zip(race["dates"], race["wc_gap"][code]) if v is not None]
+                verts = [q for seg in page.evaluate(_VERTS, [k, code]) for q in seg]
+                geo = page.evaluate(_GEO, [k, [d for d, _v in pts], [v for _d, v in pts]])
+                assert len(verts) == len(geo)
+                for (vx, vy), (gx, gy) in zip(verts, geo):
+                    assert abs(vx - gx) < 0.06 and abs(vy - gy) < 0.06, code
+            assert len([r for r in doc["rows"] if r["lg"] == lg and r["wcgb"] is None]) == 3
+        # C3: 18 regular markers and 1 post marker, the hairline at the served switch, nothing past the last entry
+        reg, post = ph["regular"]["as_of"], ph["post"]["as_of"]
+        assert len(reg) == 18 and reg[0] == "2026-09-06" and reg[-1] == "2026-09-30" and post == ["2026-10-01"]
+        hl = page.evaluate("() => [...document.querySelectorAll('.stc-fig[data-k=c3] .stc-chip[aria-pressed=true]')].map(b => b.dataset.c)")
+        assert len(hl) == 2
+        for code in hl:
+            marks = page.evaluate(_MARKS, ["c3", code])
+            assert marks == reg + post, (code, marks)
+        assert page.evaluate(_VREFS, "c3") == ["2026-10-01"] == [ph["switch_as_of"]]
+        xs = page.evaluate("() => document.querySelector('.stc-fig[data-k=c3]')._geo.xs")
+        assert xs[0] == "2026-09-06" and xs[-1] == "2026-10-01"
+        assert page.locator(".stc-odds .is-unmeasured").inner_text().strip() == "The daily odds record starts September 6, 2026."
+        cap = page.locator('.stc-fig[data-k="c3"] figcaption').inner_text()
+        assert "Implied, no market. Eephus season simulator, provisional. Eephus bracket simulator, unvalidated." in cap
+        assert "2026-phist.json" in cap and "futures ledger on this machine" in cap
+        tab = page.evaluate(_TABLE, "c3")   # every value as copied (x 100, one decimal)
+        for row in tab[1:]:
+            d = row[0]
+            for j, code in enumerate(tab[0][1:], start=1):
+                if d in reg:
+                    q = (ph["regular"]["clubs"].get(code) or [None] * 18)[reg.index(d)]
+                    v = q[3] if q else None
+                else:
+                    q = (ph["post"]["clubs"].get(code) or [None])[post.index(d)]
+                    v = q[0] if q else None
+                assert row[j] == ("-" if v is None else f"{v * 100:.1f}"), (d, code)
+        for _ in range(3):   # the market chips redraw from the one fetched file
+            page.locator('.stc-mk[data-v="post"]').click()
+            page.locator('.stc-mk[data-v="pen"]').click()
+        assert sum("-phist.json" in u for u in page._requests) == 1
+        # C4: points at rs_g and ra_g, the RA axis inverted, the two isolines
+        marks, (x0, x1, y0, y1) = page.evaluate("""() => { const f = document.querySelector('.stc-fig[data-k=c4]'), g = f._geo;
+            return [[...f.querySelectorAll('rect[data-id]')].map(r => [r.dataset.id, +r.getAttribute('x') + 4, +r.getAttribute('y') + 4]),
+                    [g.x(0), g.x(1), g.y(0), g.y(1)]]; }""")
+        assert len(marks) == 30
+        for code, cx, cy in marks:
+            r = rows[code]
+            assert abs(cx - (x0 + (x1 - x0) * r["rs_g"])) < 0.06 and abs(cy - (y0 + (y1 - y0) * r["ra_g"])) < 0.06, code
+        assert y1 > y0, "fewer runs allowed sit higher"
+        iso = page.evaluate("""() => [...document.querySelectorAll('.stc-fig[data-k=c4] line[data-id^=iso]')].map(l =>
+            [l.dataset.id, +l.getAttribute('x1'), +l.getAttribute('y1'), +l.getAttribute('x2'), +l.getAttribute('y2')])""")
+        assert {i[0] for i in iso} == {"iso500", "iso90"} and doc["k90"] == 0.885
+        for lid, ax, ay, bx, by in iso:
+            kk = 1.0 if lid == "iso500" else doc["k90"]
+            for px, py in ((ax, ay), (bx, by)):
+                assert abs(py - (y0 + (y1 - y0) * kk * (px - x0) / (x1 - x0))) < 0.2, lid
+        labels = page.evaluate("() => [...document.querySelectorAll('.stc-fig[data-k=c4] text[data-id^=iso]')].map(t => t.textContent)")
+        assert sorted(labels) == [".500", "90-win pace"]
+        # C5: ends at w and the wins of x_wl, its text w_xw, never coloured
+        rects, ticks, (a0, a1) = page.evaluate("""() => { const f = document.querySelector('.stc-fig[data-k=c5]'), g = f._geo;
+            return [[...f.querySelectorAll('rect[data-id]')].map(r => [r.dataset.id, +r.getAttribute('x') + 4, r.getAttribute('fill'), r.getAttribute('stroke')]),
+                    Object.fromEntries([...f.querySelectorAll('text[data-tick]')].map(t => [t.dataset.tick, t.textContent])), [g.x(0), g.x(1)]]; }""")
+        assert len(rects) == 60
+        for rid, cx, fill, stroke in rects:
+            code, which = rid.split(".")
+            want = rows[code]["w"] if which == "w" else rows[code]["x_wl"][0]
+            assert abs(cx - (a0 + (a1 - a0) * want)) < 0.06, rid
+            assert fill in ("var(--text-primary)", "var(--bg-secondary)") and stroke == "var(--text-primary)"
+        assert ticks == {r["code"]: jsg(r["w_xw"]) for r in doc["rows"]}
+        # every chart: role, a field-built aria-label, a numbers table
+        figs = page.evaluate("""() => [...document.querySelectorAll('.stc-fig')].map(f => { const s = f.querySelector('svg');
+            return [f.dataset.k, s.getAttribute('role'), s.getAttribute('aria-label')]; })""")
+        assert len(figs) == 6 + 2 + 1 + 2
+        for k, role, aria in figs:
+            assert role == "img" and "2026" in aria and len(aria) > 40, k
+            assert len(page.evaluate(_TABLE, k)) > 1, k
+        assert page.evaluate("() => /\\bluck/i.test(document.body.textContent)") is False
+        no_errors(page)
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+def test_no_text_in_a_series_colour_and_end_labels_apart(ch_site, pw, theme):
+    with serve_site(ch_site) as base, chart_page(base, pw, width=1280, theme=theme) as page:
+        wait_charts(page)
+        fills = page.evaluate("() => [...document.querySelectorAll('.stc-fig svg text')].map(t => t.getAttribute('fill'))")
+        assert fills and not [f for f in fills if f in VIZ]
+        used, v1, v2 = page.evaluate("""() => { const p = document.createElement('span'); document.body.appendChild(p);
+            const tok = v => { p.style.color = 'var(' + v + ')'; return getComputedStyle(p).color; };
+            const used = [...document.querySelectorAll('.stc-fig, .stc-fig *')].filter(e => !(e instanceof SVGElement)).map(e => getComputedStyle(e).color);
+            return [used, tok('--viz-1'), tok('--viz-2')]; }""")
+        assert not set(used) & {v1, v2}
+        tops = page.evaluate("""() => [...document.querySelectorAll('.stc-fig')].filter(f => f.querySelector('[data-end]')).map(f =>
+            [...f.querySelectorAll('text[data-end]')].map(t => t.getBoundingClientRect().top).sort((a, b) => a - b))""")
+        assert len(tops) == 9
+        for t in tops:
+            assert all(b - a >= 10.9 for a, b in zip(t, t[1:])), t
+        no_errors(page)
+
+
+def test_chips_keys_tap_and_escape(ch_site, pw, ch_docs):
+    doc = ch_docs[0]
+    k = "c1-ALE"
+    sel = f'.stc-fig[data-k="{k}"]'
+    with serve_site(ch_site) as base, chart_page(base, pw, width=1280) as page:
+        wait_charts(page, c3=False)
+        before = page.evaluate(_STROKES, k)
+        one = [c for c, v in before.items() if v == VIZ[0]]
+        two = [c for c, v in before.items() if v == VIZ[1]]
+        ale = [r["code"] for r in sorted((r for r in doc["rows"] if r["div"] == "ALE"), key=lambda r: r["ranks"]["div"])]
+        assert one + two == ale[:2], "defaults: the view's first two (no followed club)"
+        other = [c for c in before if c not in one + two][0]
+        page.locator(f'{sel} .stc-chip[data-c="{other}"]').click()
+        after = page.evaluate(_STROKES, k)
+        assert after[other] == VIZ[0] and after[two[0]] == VIZ[1] and after[one[0]] == "var(--text-tertiary)"
+        assert {c: v for c, v in after.items() if c not in (other, one[0])} == {c: v for c, v in before.items() if c not in (other, one[0])}
+        n = page.evaluate("k => document.querySelector('.stc-fig[data-k=\"' + k + '\"]')._geo.xs.length", k)
+        page.locator(sel).focus()
+
+        def di():
+            return page.locator(sel).get_attribute("data-i")
+        page.keyboard.press("End")
+        assert di() == str(n - 1) and page.locator(f"{sel} .stc-x").count() == 1
+        page.keyboard.press("ArrowLeft")
+        assert di() == str(n - 2)
+        page.keyboard.press("ArrowRight")
+        assert di() == str(n - 1)
+        page.keyboard.press("Home")
+        assert di() == "0" and page.locator(f"{sel} .stc-read").inner_text().startswith("Mar 26: ")
+        page.keyboard.press("Escape")
+        assert di() == "" and page.locator(f"{sel} .stc-read").inner_text() == "" and page.locator(f"{sel} .stc-x").count() == 0
+        hl0 = [c for c, v in page.evaluate(_STROKES, k).items() if v == VIZ[0]]
+        page.keyboard.press("ArrowDown")
+        assert [c for c, v in page.evaluate(_STROKES, k).items() if v == VIZ[0]] != hl0
+        box = page.locator(f"{sel} svg").bounding_box()
+        mid = (box["x"] + box["width"] * 0.5, box["y"] + box["height"] * 0.5)
+        page.mouse.click(*mid)
+        pinned = di()
+        assert pinned not in ("", None)
+        page.mouse.move(box["x"] + box["width"] * 0.2, mid[1])
+        assert di() == pinned, "a pinned crosshair stays under a moving pointer"
+        page.mouse.click(*mid)
+        assert di() == "", "a second tap clears"
+        page.mouse.click(*mid)
+        page.locator(sel).focus()
+        page.keyboard.press("Escape")
+        assert di() == ""
+        cx, cy, code = page.evaluate("""() => { const e = document.querySelector('.stc-fig[data-k=c4] rect[data-id]'); e.scrollIntoView({block: 'center'}); const r = e.getBoundingClientRect();
+            return [r.x + r.width / 2, r.y + r.height / 2, e.dataset.id]; }""")
+        page.mouse.click(cx, cy)
+        assert page.locator('.stc-fig[data-k="c4"] .stc-read').inner_text().startswith(code + ": ")
+        no_errors(page)
+
+
+def test_phone_draws_one_division_at_a_time(ch_site, pw):
+    with serve_site(ch_site) as base, chart_page(base, pw, width=390) as page:
+        wait_charts(page)
+        assert page.evaluate("() => [...document.querySelectorAll('.stc-fig[data-k^=c1]')].map(f => f.dataset.k)") == ["c1-ALE"]
+        page.locator('.stc-dv[data-v="NLW"]').click()
+        page.wait_for_selector('.stc-fig[data-k="c1-NLW"] svg', timeout=5000)
+        assert "div=NLW" in page.evaluate("() => location.hash")
+        small = page.evaluate("""() => [...document.querySelectorAll('.stc-row button, .stc-chips button')].filter(b =>
+            b.getBoundingClientRect().height < 44).length""")
+        assert small == 0
+        assert page.evaluate("() => document.querySelector('.stc-fig svg').getBoundingClientRect().width") <= 358
+        assert sum("-race.json" in u for u in page._requests) == 1
+        no_errors(page)
+
+
+def test_the_post_only_2027_file(ch27_site, pw):
+    with serve_site(ch27_site) as base, chart_page(base, pw, width=1280) as page:
+        wait_charts(page)
+        assert page.evaluate("() => [...document.querySelectorAll('.stc-mk')].map(b => b.textContent)") == ["Pennant", "World Series"]
+        for code in ("LAD", "NYY"):
+            assert page.evaluate(_MARKS, ["c3", code]) == ["2027-10-05", "2027-10-06"], code
+        assert page.evaluate(_VREFS, "c3") == ["2027-10-05"]
+        assert page.locator(".stc-odds .is-unmeasured").inner_text().strip() == "The daily odds record starts October 5, 2027."
+        cap = page.locator('.stc-fig[data-k="c3"] figcaption').inner_text()
+        assert "Eephus bracket simulator, unvalidated." in cap and "season simulator" not in cap
+        no_errors(page)
+
+
+@pytest.mark.parametrize("width, theme", [(390, "light"), (390, "dark"), (768, "dark"), (1024, "light"),
+                                          (1280, "light"), (1280, "dark"), (1440, "dark")])
+def test_charts_never_overflow_the_page(ch_site, pw, width, theme):
+    with serve_site(ch_site) as base, chart_page(base, pw, width=width, theme=theme) as page:
+        wait_charts(page)
+        assert page.evaluate(_OVERFLOW) <= 0
+        page.evaluate("() => document.querySelectorAll('.stc-num summary').forEach(s => s.click())")
+        page.wait_for_timeout(100)
+        assert page.evaluate(_OVERFLOW) <= 0
+        set_hash(page, "#view=division")
+        page.locator(".st-race summary").first.click()
+        page.wait_for_selector(".st-race .stc-fig svg", timeout=10000)
+        assert page.evaluate(_OVERFLOW) <= 0
+        no_errors(page)

@@ -137,3 +137,40 @@
   .st-app .st-mine-btn { margin-left: 0; }
   .st-app .st-club { max-width: 100px; }
 }
+
+/* Charts (STANDINGS_5, behind standings_core.STANDINGS_CHARTS): the Race
+   disclosures and the Charts view, drawn by the lazy assets/standings-charts.js. */
+.st-app .st-race { margin: 2px 0 14px; font-size: 12.5px; }
+.st-app .st-race > summary { cursor: pointer; min-height: 24px; color: var(--text-secondary); }
+.st-app .stc-sec { margin: 14px 0; min-width: 0; }
+.st-app .stc-fig { margin: 0 0 14px; padding: 10px; min-width: 0; background: var(--bg-secondary); border: 1px solid var(--border-light); }
+.st-app .stc-fig:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+.st-app .stc-fig figcaption { font-size: 12px; line-height: 1.45; color: var(--text-secondary); }
+.st-app .stc-fig figcaption b { display: block; color: var(--text-primary); font: 700 12px var(--font-retro-mono); }
+.st-app .stc-src { display: block; color: var(--text-tertiary); font-size: 11px; }
+.st-app .stc-row, .st-app .stc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.st-app .stc-row button, .st-app .stc-chips button { min-height: 32px; padding: 0 10px; cursor: pointer; border: 1px solid var(--border);
+  background: var(--bg-primary); color: var(--text-secondary); font: 700 11px var(--font-retro-mono); }
+.st-app .stc-row button[aria-pressed="true"], .st-app .stc-chips button[aria-pressed="true"] { color: var(--text-primary);
+  box-shadow: inset 0 -2px 0 var(--accent-gold); }
+.st-app .stc-sw { display: inline-block; width: 8px; height: 8px; margin-right: 5px; vertical-align: 0; }
+.st-app .stc-sw1 { background: var(--viz-1); }
+.st-app .stc-sw2 { background: var(--viz-2); }
+.st-app .stc-plot { min-height: 120px; }
+.st-app .stc-plot svg { cursor: crosshair; touch-action: manipulation; }
+.st-app .stc-read { min-height: 1.45em; margin: 6px 0; font-size: 12px; color: var(--text-primary); }
+.st-app .stc-num summary { cursor: pointer; min-height: 24px; font-size: 12px; color: var(--text-secondary); }
+.st-app .stc-tbl { border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+.st-app .stc-tbl th, .st-app .stc-tbl td { padding: 2px 6px; text-align: right; border-bottom: 1px solid var(--border-light); font-weight: 400; }
+.st-app .stc-tbl th[scope="row"], .st-app .stc-tbl thead th:first-child { text-align: left; }
+.st-app .stc-tnote { margin: 6px 0; font-size: 11px; color: var(--text-tertiary); }
+.st-app .stc-grid2 > *, .st-app .stc-grid3 > * { min-width: 0; }
+@media (min-width: 768px) {
+  .st-app .stc-grid2, .st-app .stc-grid3 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+}
+@media (min-width: 1024px) {
+  .st-app .stc-grid3 { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 767px) {
+  .st-app .stc-row button, .st-app .stc-chips button { min-height: 44px; }
+}
