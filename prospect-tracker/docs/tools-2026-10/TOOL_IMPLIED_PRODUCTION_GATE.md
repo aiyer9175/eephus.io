@@ -859,8 +859,51 @@ survivorship sentence.
 
 ### T.10 MDE95 per primary cell
 
-PENDING: written by TL_4_TOOL_LAB_BUILD (`--look T --mde-only`) as one dated amendment committed
-alone, on a calendar day before the look.
+**Amendment of 2026-10-14 (TL_4_TOOL_LAB_BUILD, item 2 of the list at the top; committed alone, on a calendar day before the look).** Computed by `python tools/tool_accuracy_lab.py --look T --mde-only` on FIT rows only: MLB seasons [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025] (velocity [2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]); no HOLDOUT row and no 2026 line was loaded (asserted by the runner). The fold deltas are in `data/_labs/tool_tables_rederived/mde95_folds.json` (sha256 fc989b2ed453ace41900321e83345c633e4b4d6e7fc3a55c7395e03120f9d308). Frozen grade rows `data/_labs/tool_tables_rederived/grade_rows_frozen.json`: 1379 rows, sha256 eb7f31c1033de8afef9db868dc2c25c3982a5febe056536c3f60118034ff206c.
+
+| cell | MDE95 | folds used | rows per fold (season: n) | skipped folds |
+|---|---|---|---|---|
+| game_pwr__hr_per600 | 0.771543 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| game_pwr__iso | 0.011502 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| hit__avg | 0.004357 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| hit__k_pct | 0.310511 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| speed__sb_per600 | 0.42331 | 8 | {'2017': 74, '2018': 93, '2019': 120, '2021': 122, '2022': 135, '2023': 155, '2024': 170, '2025': 170} | 2015: under 60 rows; 2016: under 60 rows |
+| cmd__bb_pct_sp | 0.138746 | 8 | {'2016': 65, '2018': 67, '2019': 78, '2021': 76, '2022': 98, '2023': 112, '2024': 131, '2025': 121} | 2015: under 60 rows; 2017: under 60 rows |
+| fb__velo_sp | 0.493917 | 7 | {'2018': 67, '2019': 78, '2021': 76, '2022': 98, '2023': 112, '2024': 131, '2025': 121} | 2017: under 60 rows |
+
+MDE95 is 1.645 times the sample standard deviation (ddof 1) of d_s over the folds used; a fold with fewer than 60 rows leaves (the hitter cells' 2015 and 2016 folds, the SP cells' 2015 to 2017 folds as listed). Every primary cell holds at least 5 folds, so none is NOT COMPUTABLE for want of an MDE95.
+
+FIT inputs, sha256:
+- `.cache/fa_statsapi_hitting_2015.json`: 22afbc2b209e26c6a23cd1fdda51125756a1998b2d1d713c63b3be7cd5c3afc2
+- `.cache/fa_statsapi_hitting_2016.json`: b04598774abf37ad482bd17cc95b42972fa3837e364706ec404faa36b3c18817
+- `.cache/fa_statsapi_hitting_2017.json`: bb14f2a006eece205a1f1dc17a734c7eaa441eb2b9468e3f9c42dbff47577d39
+- `.cache/fa_statsapi_hitting_2018.json`: 0ed27cb23043ba42c748622f855ee676222aff4700656e93183d465bafbd1e97
+- `.cache/fa_statsapi_hitting_2019.json`: 66af1f1fa1869f5e22a3e20760d7f7929635b2600781c816822c7e7401142036
+- `.cache/fa_statsapi_hitting_2021.json`: ec737cc5087fb03ae3cc2d3db1a7a5dc46d2d68e661c3d53639d76bd3b1dda02
+- `.cache/fa_statsapi_hitting_2022.json`: 44ac1610bfda4cb594effa32a728aba9e756fecd163408b2525c1c6bd98c9599
+- `.cache/fa_statsapi_hitting_2023.json`: 1434de28fbc752eabb57804b184823fdf521f731169c22b71c7ad098c5986c5c
+- `.cache/fa_statsapi_hitting_2024.json`: 8bb44c15db16a8f8cfe2bccc08e5ad304be72ca38960a101de2454175dabd8c8
+- `.cache/fa_statsapi_hitting_2025.json`: a1e6455e8758ea0350b07bbcfe0126d1f5e71b56616ff819211677e7a1094935
+- `.cache/fa_statsapi_pitching_2015.json`: 64f223e3f62297abc922ebc2952cabfba462f1788e74fd8ae11a811f8e7e0ddb
+- `.cache/fa_statsapi_pitching_2016.json`: 1e8cdd99e1ce92b443dcfc373ffc185a9a94f4bf25a65a381deb07f8be0825f0
+- `.cache/fa_statsapi_pitching_2017.json`: 3ffab5e561f0cf194a4c51dea8d6638c223d83a1827af446b320da7fedb76369
+- `.cache/fa_statsapi_pitching_2018.json`: 6c2f6dc7623cb7cdea905b739ab50b85f018c28c35ad09ae66e092f537da677e
+- `.cache/fa_statsapi_pitching_2019.json`: f7059a367d50d6ed41d40ddc1bb59ba0fbc7e82f1407983f0cb526c4ae1b9864
+- `.cache/fa_statsapi_pitching_2021.json`: 6063e2ffac8f8f883ce9e88f823863d107b77cb6066a9b8d56aa43cdfe519c70
+- `.cache/fa_statsapi_pitching_2022.json`: fd7fb55b0a903cbe74885cfab53142b23a73f629e6140b83809eba183c7baad8
+- `.cache/fa_statsapi_pitching_2023.json`: 8fb532797c229434c33a165506232cfac116071cf3e3322df9ab3eb5b116df75
+- `.cache/fa_statsapi_pitching_2024.json`: f00d025220bb6ccacc24784de50c42f4a8135d7690af6026aeace9172dcdb225
+- `.cache/fa_statsapi_pitching_2025.json`: 18085f1ff299af1724d677928fae14166429658971bd62a14dc59e6cb2be5392
+- `.cache/velo_arsenal_2017.json`: 1de85c5aefb22511e8eebb60cfe784154f5d13039605b2f7b265e261e4d875dc
+- `.cache/velo_arsenal_2018.json`: 4f04b07237aae015ee39a4adb77fdff46396cc7ead774cf9d297a37ab28e2465
+- `.cache/velo_arsenal_2019.json`: 8fd4e1186bc7ccf1a26b067f3099bc26d8066eedbb3b2a86d32fc11ae4463a07
+- `.cache/velo_arsenal_2021.json`: 10715f92e81d188c154d3d96b99926ddc40b2aebad928656e6c1bef6d2f7329a
+- `.cache/velo_arsenal_2022.json`: d64131221e64de9300f284543e9c4e364bc23096a54b1644033a1783476396ef
+- `.cache/velo_arsenal_2023.json`: a03e160ef5390256cda682dc413432271bb572a5d03736ec7dc03b1b835549f6
+- `.cache/velo_arsenal_2024.json`: fb5cb50451407c7247503473285ca32dc4042b85b5addb8b1e3d25df4870178d
+- `.cache/velo_arsenal_2025.json`: 827868119115d06f811e17620656c255074a640b6c81cba00f7ab1e16df11736
+
+`.cache/velo_arsenal_2026.json`: present True, sha256 fadbb7483c682e582e63e76867c31cd7a4de2f20ea00fd884e41d78eb665f71d, written 2026-10-14T15:48:07.298070+00:00 through `pal_export.load_velo(2026)` (602 rows) after the 2026 regular season ended; no value in it was read.
 
 Method, fixed here. FIT rows only: MLB seasons 2015 to 2025 with 2020 excluded (velocity 2017 to
 2025); no HOLDOUT row and no 2026 line loaded, asserted. For each primary cell and each of its FIT
