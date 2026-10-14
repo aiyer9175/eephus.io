@@ -528,6 +528,60 @@ EMPTY AT REGISTRATION. The look P and look W entries are written here by TL_5 an
 verbatim from its runner and dated, and nothing above this part is edited once anything is written
 below it, except by the amendments listed at the top.
 
+### Look P (2026-10-14)
+
+rows 636 by board year {'2017': 107, '2018': 121, '2019': 151, '2022': 142, '2023': 83, '2024': 32}; a by year {2017: 0.9, 2018: 1.0, 2019: 1.0, 2022: 1.0, 2023: 0.9, 2024: 0.9}; served a 1.0 (C1)
+- C1: d 0.03116, lo95 0.011596, F 0.062869, ratio 0.4956, d_auc 0.018154 (floor 0.032838, veto False), p 0.000999, Holm step 1, pass False
+- C2: d 0.028046, lo95 0.009531, F 0.015434, ratio 1.8171, d_auc 0.015418 (floor 0.008967, veto False), p 0.000999, Holm step 2, pass False
+- serve: C0
+- secondary hr_pa: n 636 {'C0': {'rho': 0.560647, 'd': None}, 'C1': {'rho': 0.595387, 'd': 0.034741}, 'C2': {'rho': 0.59397, 'd': 0.033324}} (secondary: no verdict)
+- secondary brl_pa: n 636 {'C0': {'rho': 0.635995, 'd': None}, 'C1': {'rho': 0.6577, 'd': 0.021705}, 'C2': {'rho': 0.656274, 'd': 0.020279}} (secondary: no verdict)
+- secondary ev_avg: n 636 {'C0': {'rho': 0.547053, 'd': None}, 'C1': {'rho': 0.55247, 'd': 0.005417}, 'C2': {'rho': 0.54381, 'd': -0.003243}} (secondary: no verdict)
+
+Accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6).
+
+Run once on 2026-10-14 by TL_5_POWER_COMPOSITE_LOOK (worktree lane 208, branch wt-TL_5_POWER_COMPOSITE_LOOK, code at 9f4ab867), as `python -u tools/tool_accuracy_lab.py --look P --gate-sha c94f3353ec141a19e88c9fe026372aa8eaa03eb7`, stdout and stderr teed before it ran; the dry run on fixtures with None values completed first (`--look P --dry-run`). The block above is the runner's record, pasted verbatim. An OWNER-WAIVED EARLY READ (see the note of 2026-10-14 at the end of this file).
+
+**Verdict: C0 retains** (serve rule P.7: serve C0). C1 fails clause 2: d 0.03116 is below 2F = 0.125738 (ratio 0.4956). C2 fails clause 2: d 0.028046 is below 2F = 0.030868 (ratio 1.8171; marginal is FAIL). Both clear clause 1 (lo95 0.011596 and 0.009531), clause 3 (no AUC veto: d_auc 0.018154 against floor 0.032838, 0.015418 against 0.008967) and clause 4 (Holm at 0.05 on permutation p 0.000999 and 0.000999, steps 1 and 2, thresholds 0.025 and 0.05).
+
+Within-board-year Spearman with pooled ISO, n-weighted over years (636 rows): C0 0.526517, C1 0.557677, C2 0.554563; top-tercile AUC C0 0.741936, C1 0.76009, C2 0.757354. Bootstrap B 2000 seed 20261021 (paired, player-clustered); swap floor 1000 draws seed 20261021.
+
+Per board year (n, rho C0 / C1 / C2): 2017 n 107, 0.4575 / 0.4743 / 0.4701; 2018 n 121, 0.5045 / 0.5376 / 0.5376; 2019 n 151, 0.5857 / 0.5914 / 0.5914; 2022 n 142, 0.5323 / 0.5503 / 0.5503; 2023 n 83, 0.5102 / 0.5895 / 0.5776; 2024 n 32, 0.5779 / 0.7038 / 0.6864.
+
+The fitted a: fold-wise (leave one board year out, player-disjoint) {'2017': 0.9, '2018': 1.0, '2019': 1.0, '2022': 1.0, '2023': 0.9, '2024': 0.9}; served a 1.0 on all six board years, so C2 would serve as C1 (P.1). The served a is reported and is not what the test scored.
+
+Secondary reads (P.8, never deciding; d, lo95, F): hr_pa n 636: C1 0.034741, 0.015509, 0.066214; C2 0.033324, 0.01464, 0.015486; brl_pa n 636: C1 0.021705, 0.003521, 0.072729; C2 0.020279, 0.002825, 0.014427; ev_avg n 636: C1 0.005417, -0.014472, 0.068511; C2 -0.003243, -0.016402, 0.013867.
+
+Against the prediction of P.9 (written before any number): C1 and C2 lead C0 on ISO by 0.03116 and 0.028046 (predicted +0.01 to +0.03) and the fitted a sits at 0.9 to 1.0 (predicted 0.7 to 1.0); on average exit velocity C1 leads C0 by 0.005417 and C2 trails it (d -0.003243) (predicted: C0 ahead of C1). The lead on ISO is real in sign (both lower bounds above 0) but does not reach twice the swap floor, the registered bar, so it is not a pass.
+
+Universe (gate 3.1, 3.2; board years 2017 to 2019 and 2022 to 2024, debut year at most 2024): debut_after_frame 683, debuted_before_board_year 540, identity_ambiguous 37, identity_disagrees_with_record 11, identity_no_candidate 26, no_debut_record 3575, rows 2418; look P frame rows 636 (hitters with both a game and a raw consensus and at least 300 MLB PA pooled over the window).
+
+Inputs, sha256 at start (identical at end: True):
+- `.cache/fa_statsapi_hitting_2018.json`: 0ed27cb23043ba42c748622f855ee676222aff4700656e93183d465bafbd1e97
+- `.cache/fa_statsapi_hitting_2019.json`: 66af1f1fa1869f5e22a3e20760d7f7929635b2600781c816822c7e7401142036
+- `.cache/fa_statsapi_hitting_2020.json`: 60a5ab0cc36c99bbbe322e1f0479bc5049a51b8eea4a2344eb0fb6c4c9869f5a
+- `.cache/fa_statsapi_hitting_2021.json`: ec737cc5087fb03ae3cc2d3db1a7a5dc46d2d68e661c3d53639d76bd3b1dda02
+- `.cache/fa_statsapi_hitting_2022.json`: 44ac1610bfda4cb594effa32a728aba9e756fecd163408b2525c1c6bd98c9599
+- `.cache/fa_statsapi_hitting_2023.json`: 1434de28fbc752eabb57804b184823fdf521f731169c22b71c7ad098c5986c5c
+- `.cache/fa_statsapi_hitting_2024.json`: 8bb44c15db16a8f8cfe2bccc08e5ad304be72ca38960a101de2454175dabd8c8
+- `.cache/fa_statsapi_hitting_2025.json`: a1e6455e8758ea0350b07bbcfe0126d1f5e71b56616ff819211677e7a1094935
+- `.cache/fa_statsapi_hitting_2026.json`: 1c7b86415b27d2fa6724d69ab88c947d5b839583e429f33a475d8a2fa375aabf
+- `.cache/savant_mlb/statcast_batter_2016.csv`: 085bacd13e2e4041f076e5fdc6bd3f2ba052c26d1bd14a68371778aa2d2f7151
+- `.cache/savant_mlb/statcast_batter_2017.csv`: 35943644d887da8bc917644172ce7e47e6b75dcbf4d048c9c19dc75d3bf4e7ff
+- `.cache/savant_mlb/statcast_batter_2018.csv`: 1d6a2af7ef27a47a60252d1e07a446ab00afc9399108e36a21db9eab9c572836
+- `.cache/savant_mlb/statcast_batter_2019.csv`: 79034588184cd776155f7f613bb24884d2f5522ea7102b2e0ff0d20081c9c5f6
+- `.cache/savant_mlb/statcast_batter_2020.csv`: e86df8859146852ce7c565e26c8d34ff5746695ea8a8f21bbd23ed116e5c4ff1
+- `.cache/savant_mlb/statcast_batter_2021.csv`: c14570652f0af469cf8900c2347c5ba77eae3462a560e4cfc1b678a55fd34985
+- `.cache/savant_mlb/statcast_batter_2022.csv`: b06e5ec95cb6c1e6d7731472612f779b224ca7f9cdc51a1176389bfa7eebef59
+- `.cache/savant_mlb/statcast_batter_2023.csv`: e063941897589d32b6f628e3693ca77907072b9109c0efd1f9ffa7dbd619027a
+- `.cache/savant_mlb/statcast_batter_2024.csv`: 9960827bc5b000c1b9b5d63c1a2c44779cbb0821cf8ddd2135abc3e92fcba556
+- `.cache/savant_mlb/statcast_batter_2025.csv`: dc070045cdee4b303e784c76e1635d101b378733af070e1b24cd1c9fdb4446a2
+- `.cache/savant_mlb/statcast_batter_2026.csv`: 8c5127338d61d1d3abf7f48ccc20b4f200b4a24e83a07d798146d6a458fb8192
+
+Gate sha c94f3353ec141a19e88c9fe026372aa8eaa03eb7 (the REGISTERED commit). Artifact `data/power_composite_eval.json`, spent: True, generated 2026-10-14T17:27:08Z, sha256 9f5f16bfd1a016525541ead163113b2a793dd9e46e7a4ad17e535c946e885da9.
+
+What it serves (Part 7): nothing new. C0, the served v12 formula, stays the power composite everywhere; TL_6 and TL_7 have no winner to build or serve. `pwr_comp` is not an eFV candidate (Part 7: only a C2 serve with a below 1 makes it one), and no eFV input moves.
+
 ---
 
 ## Part T. Re-derived tool-to-stat tables against the published estimates
@@ -949,3 +1003,19 @@ sha256 of the frozen grade rows and of every FIT input, and the sha256 of
 
 EMPTY AT REGISTRATION. Look T's record is written here by TL_21, pasted verbatim from the runner and
 dated.
+
+---
+
+## Note 2026-10-14: look P, an owner-waived early read
+
+Look P was taken once on 2026-10-14 under the owner's instruction of 2026-10-14 (EW3-5) that
+waives registered look days and dates. P.10's day rule was not met that day: TL_4_TOOL_LAB_BUILD
+landed the same day (its build ccec9eb7 and its Part 4 amendment 9d351dc3), and other registered
+looks carry records dated 2026-10-14 (the PJ-C look in `docs/PROJ_COMPONENTS_GATE.md` and the
+steal runner split read in `docs/management-2026-10/STEAL_RUNNER_SPLIT_GATE.md`). P.10 names an
+earlier day as voiding the look; under EW3-5 that clause does not stop the read, and it is
+recorded as an OWNER-WAIVED EARLY READ. The frame condition of P.10 held: every
+`.cache/fa_statsapi_hitting_<season>.json` the runner read for 2023 to 2026, and
+`.cache/savant_mlb/statcast_batter_2026.csv`, was written on 2026-10-14, after the 2026 regular
+season ended. Nothing else about the look changed: the candidates, frame, outcome, statistic,
+seeds, floors and pass rule are the ones registered above, and the look ran once.
