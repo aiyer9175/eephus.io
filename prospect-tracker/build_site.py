@@ -1030,11 +1030,13 @@ MODULE_NAME = {
 STAGE_CHIP_TEXT = {"β": "β beta"}
 
 
-def _stage_chip(key: str) -> str:
+def _stage_chip(key: str, title: str | None = None) -> str:
     """The lifecycle chip on a module masthead: MODULE_STAGE[key] = (sigil or
     visible text, hover title). Reuses the existing .eephus-beta chip so the
-    Diamond modules inherit the same sharp-cornered treatment as the beta chips."""
-    label, title = MODULE_STAGE[key]
+    Diamond modules inherit the same sharp-cornered treatment as the beta chips.
+    `title` replaces the hover title for a shell whose claim moves with a flag."""
+    label, title0 = MODULE_STAGE[key]
+    title = title0 if title is None else title
     label = STAGE_CHIP_TEXT.get(label, label)
     return (f'<span class="eephus-beta" title="{html.escape(title)}">'
             f'{html.escape(label)}</span>')
@@ -7284,9 +7286,31 @@ def write_scores_page(preview_root=None) -> str:
     return str(path)
 
 
+def _franchise_root_is_fscore() -> bool:
+    """franchise_export.index_replaced(): F-SCORE is live and the root score on
+    /franchise/ (owner answer FS-Q4 (b), FS_2C_INDEX_REPLACEMENT). The shell's
+    Index lines switch with it; while it is False they are what they were."""
+    try:
+        import franchise_export
+        return franchise_export.index_replaced()
+    except Exception:  # noqa: BLE001
+        return False
+
+
+#: The /franchise/ shell lines once F-SCORE is the root (FS-Q4 (b)).
+FRANCHISE_STAGE_FSCORE = "Beta. F-SCORE is a descriptive score, not a forecast"
+FRANCHISE_DESC_FSCORE = ("One page per club: F-SCORE, seven seasons and today, and the three branches "
+                         "beneath it (roster eWAR, provisional 2027 projection, PROSPX farm), "
+                         "re-standardised across 30 clubs.")
+FRANCHISE_PURPOSE_FSCORE = "one page per club: F-SCORE, seven seasons and today, and the branches beneath it"
+
+
 def build_franchise() -> str:
     """The /franchise/ Franchises module (2026-09-23, D3; named Franchise
-    Overview until the owner's TEAM-1 rename on 2026-10-02).
+    Overview until the owner's TEAM-1 rename on 2026-10-02). At the F-SCORE
+    flip F-SCORE replaces the Franchise Index as the root score (owner answer
+    FS-Q4 (b)); the masthead, stage chip and description below switch with
+    _franchise_root_is_fscore().
 
     A HUB, NOT A MODEL. One page per club re-serving what every module already
     publishes, on the scale each was computed on, with a labelled basis and a
@@ -7314,11 +7338,14 @@ def build_franchise() -> str:
     export goes through the shared header helper) + module js deferred. Hash
     grammar: #team=CODE (validated against the payload's 30 codes),
     #view=board|club, #tree=hidden|canopy|full, #sec=<branch key>."""
+    fs_root = _franchise_root_is_fscore()
+    root = (f'The {_gl("franchise_score", "F-SCORE")} of every club, seven seasons and today, ' if fs_root
+            else f'The {_gl("franchise_index", "Franchise Index")} of every club ')
     body = (
         '<div class="fa-app mlbstats-app fr-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
-        f'<h1>{_masthead_icon("franchise")}Franchises {_stage_chip("franchise")}</h1></div>'
-        f'<span class="section-sub" id="franchise-masthead">The {_gl("franchise_index", "Franchise Index")} of every club '
+        f'<h1>{_masthead_icon("franchise")}Franchises {_stage_chip("franchise", FRANCHISE_STAGE_FSCORE if fs_root else None)}</h1></div>'
+        f'<span class="section-sub" id="franchise-masthead">{root}'
         f'and the {_gl("franchise_branch_score", "branch scores")} beneath it, re-standardised across 30 clubs, '
         'with every number on the scale it was computed on.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Franchises sections">'
@@ -7336,6 +7363,7 @@ def build_franchise() -> str:
         f'<script src="/assets/franchise.js?v={_FRANCHISE_VER}" defer></script>'
     )
     return page("Franchises - eephus.io", "franchise", body,
+                FRANCHISE_DESC_FSCORE if fs_root else
                 "One page per club: the Franchise Index and its three branches (roster eWAR, "
                 "provisional 2027 projection, PROSPX farm), re-standardised across 30 clubs.",
                 url=f"{SITE_ORIGIN}/franchise/", image=module_share_image("franchise"))
@@ -9748,7 +9776,8 @@ def page_index_groups() -> list[dict]:
     Each row is [href, name, purpose]."""
     nav = [(href, label) for key, label, href in nav_leaves()]
     nav_hrefs = {h for h, _ in nav}
-    modules = [[h, label, PAGE_INDEX_PURPOSE.get(h, "")] for h, label in nav]
+    modules = [[h, label, FRANCHISE_PURPOSE_FSCORE if h == "/franchise/" and _franchise_root_is_fscore()
+                else PAGE_INDEX_PURPOSE.get(h, "")] for h, label in nav]
     reference = [[p, PAGE_INDEX_NAMES.get(p, ""), PAGE_INDEX_PURPOSE.get(p, "")]
                  for p, _f, _p in sitemap_pages() if p not in nav_hrefs]
     gviews = {v["id"]: v for v in GLOSSARY_VIEWS}

@@ -984,6 +984,33 @@ def _pin_receipt(test_name: str, artifact: str) -> str:
     return test_name if artifact in src else ""
 
 
+#: The franchise_board.json row's text once F-SCORE is the root score (owner
+#: answer FS-Q4 (b), FS_2C_INDEX_REPLACEMENT); catalog_rows() swaps it in only
+#: while franchise_export.index_replaced() is True.
+FRANCHISE_BOARD_FSCORE = {
+    "what": ("Thirty clubs' org-level grade tree under F-SCORE, the root score: seven seasons "
+             "and today, re-standardised to 100 + 10z across the 30 and copied from fscore.json. "
+             "Beneath it sit the three branch scores (ROSTER and OUTLOOK inside STRENGTH, FARM "
+             "inside PIPELINE) and twelve sections that re-serve each module's numbers for the "
+             "club on their own scales, with the deep link back."),
+    "note": ("Descriptive, not a forecast: one F-SCORE leg, 2027 wins, is a provisional "
+             "projection. The Franchise Index was retired by owner answer FS-Q4 and is not "
+             "served. Pennants, titles and postseason rounds are served as results; no club "
+             "decision-quality grade, no manager skill claim, no revenue or valuation. The ODDS "
+             "section quotes the playoff_odds_sim registry verdict (provisional). The writer "
+             "refuses to publish on fewer than 30 clubs or without that night's F-SCORE and "
+             "leaves the previous file on disk."),
+}
+
+
+def _franchise_root_is_fscore() -> bool:
+    try:
+        import franchise_export
+        return franchise_export.index_replaced()
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def catalog_rows() -> list:
     """The catalog, verified against the tree and the deploy exclude list.
 
@@ -1004,6 +1031,8 @@ def catalog_rows() -> list:
         except OSError:
             size = 0
         row = dict(a)
+        if name == "franchise_board.json" and _franchise_root_is_fscore():
+            row.update(FRANCHISE_BOARD_FSCORE)
         row["url"] = DATA_BASE_URL + name
         row["bytes"] = size
         row["size_label"] = human_size(size)

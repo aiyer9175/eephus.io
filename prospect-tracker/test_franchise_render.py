@@ -58,6 +58,24 @@ def _served():
     return fe.load(ART)      # the board joined with its 30 club files (QCLP10)
 
 
+def _n_sections(d):
+    """The twelve branch sections, plus the F-SCORE section once the payload
+    carries it (extra_sections)."""
+    return 12 + len(d.get("extra_sections") or [])
+
+
+def _root_fs(d):
+    """True when the payload names F-SCORE the root (owner answer FS-Q4 (b)):
+    the Index is off the page and the board's default view is F-SCORE's."""
+    return d.get("root") == "fscore"
+
+
+def _index_board_hash(d):
+    """The board view that holds the eleven sortable branch columns: the
+    default under the Index, the Branches mode once F-SCORE is the root."""
+    return "#view=board&bview=branches" if _root_fs(d) else ""
+
+
 def _render(view="club", team="", hash_="", payload=None, tiers=True, tree="canopy", hub="", with_hash=False):
     js = JS.replace('state = { view: "club", team: "", tree: "canopy", sec: "", treeSet: false',
                     'state = { view: "%s", team: "%s", tree: "%s", sec: "", treeSet: %s'
@@ -94,7 +112,7 @@ def test_no_figure_is_typed_into_the_page_html():
     h = PAGE.read_text(encoding="utf-8")
     d = _served()
     lad = next(c for c in d["clubs"] if c["code"] == "LAD")
-    for n in (lad["index"]["score"], lad["sections"]["roster"]["war"], lad["sections"]["fin"]["tax_payroll_2027"],
+    for n in ((lad.get("index") or lad.get("fscore"))["score"], lad["sections"]["roster"]["war"], lad["sections"]["fin"]["tax_payroll_2027"],
               lad["sections"]["outlook"]["wins"]):
         assert str(n) not in h, f"{n} is typed into the page and will go stale"
     assert 'id="franchise-app-root"' in h and 'data-csv-export="franchise"' in h
@@ -176,7 +194,7 @@ def test_an_alias_in_the_hash_lands_on_its_own_club():
 def test_tree_branch_specs_come_from_the_payload_not_the_js():
     assert "d.tree.branches" in JS
     assert not re.search(r'key:\s*["\'](roster|outlook|farm)["\']', JS), "branchSpecs typed into the JS"
-    assert "DATA.weights[" in JS and "DATA.branch_order" in JS
+    assert "DATA.weights" in JS and "DATA.fscore_feeds" in JS and "DATA.branch_order" in JS
     d = _served()
     html, _ = _render("club", team="LAD", tree="full")
     lad = next(c for c in d["clubs"] if c["code"] == "LAD")
@@ -253,7 +271,7 @@ def test_every_section_header_has_basis_verdict_and_open_links():
             assert 'class="eephus-beta fr-verdict"' in sec and "playoff_odds_sim" in sec
             assert "no registry row" not in sec
             assert d["copy"]["odds_interval"] in sec
-    assert html.count('<section class="fr-block"') == 12
+    assert html.count('<section class="fr-block"') == _n_sections(d)
     for href in ("mlbstats_hitters", "ledger", "management_club", "fa_fits", "betting_futures"):
         if lad["links"][href]:
             assert lad["links"][href].replace("&", "&amp;") in html, href
@@ -303,18 +321,21 @@ def test_the_served_board_renders_every_club_without_throwing():
         html, masthead = _render("club", team=code)
         assert len(html) > 5000 and "could not be loaded" not in html, code
         assert masthead == d["copy"]["masthead"]
-        assert html.count('<section class="fr-block"') == 12, code
+        assert html.count('<section class="fr-block"') == _n_sections(d), code
         assert "team=" + next(c for c in d["clubs"] if c["code"] == code)["statsapi_code"] in html
     board, _ = _render("board")
     assert board.count("<tr>") >= 31 and 'class="fr-board"' in board
 
 
-def test_board_default_sort_is_the_franchise_index():
+def test_board_default_sort_is_the_root_score():
+    """The board sorts on the root score: the Franchise Index, or F-SCORE
+    once it replaces the Index (owner answer FS-Q4 (b))."""
     d = _served()
-    assert d["board_default_sort"] == ["index_score", "desc"]
-    board, _ = _render("board")
-    order = re.findall(r'data-frlink="1" title="[^"]*">([A-Z]{2,3})</a>', board)
-    ranked = [r["code"] for r in sorted(d["board"], key=lambda r: r["index_rank"])]
+    key = "fscore" if _root_fs(d) else "index"
+    assert d["board_default_sort"] == [key + "_score", "desc"]
+    board, _ = _render("board", hub=HUB)
+    order = re.findall(r'data-fr(?:link|go)="1" title="[^"]*">([A-Z]{2,3})</a>', board)
+    ranked = [r["code"] for r in sorted(d["board"], key=lambda r: r[key + "_rank"])]
     assert order == ranked
 
 
@@ -326,7 +347,8 @@ def test_provisional_chip_rides_the_outlook_bubble():
     assert canopy.count('class="fr-svg-chip"') == 1, "the chip rides OUTLOOK alone"
     assert "OUTLOOK" in canopy and "SEASON" in canopy
     full, _ = _render("club", team="LAD", tree="full")
-    assert "OUTLOOK (" + d["copy"]["outlook_chip"] + ")" in full
+    pillar = " in " + d["fscore_feeds"]["outlook"]["label"] if _root_fs(d) else ""
+    assert "OUTLOOK" + pillar + " (" + d["copy"]["outlook_chip"] + ")" in full
 
 
 def test_arbitration_router_accepts_the_team_narrowing():
@@ -547,8 +569,10 @@ def test_the_pennant_tile_reads_the_bracket_simulator_while_it_serves():
 def test_board_sort_heads_are_buttons_in_scoped_th_with_aria_sort():
     """QCLA12: every sortable head is <th scope=col aria-sort> holding one
     <button>; the glossary term inside is a span out of the tab order (an <a>
-    inside a <button> is not valid); one head says descending, on the index."""
-    board, _ = _render("board")
+    inside a <button> is not valid); one head says descending, on the root
+    score (the Index, or F-SCORE in the Branches mode once it is the root)."""
+    d = _served()
+    board, _ = _render("board", hash_=_index_board_hash(d), hub=HUB)
     heads = re.findall(r"<th [^>]*>.*?</th>", board.split("<thead>")[1].split("</thead>")[0])
     assert len(heads) == 11
     for h in heads:
@@ -557,7 +581,8 @@ def test_board_sort_heads_are_buttons_in_scoped_th_with_aria_sort():
         assert "<a " not in h and 'tabindex="0"' not in h, h
         for term in re.findall(r'<span class="g-term"[^>]*>', h):
             assert 'tabindex="-1"' in term, term
-    assert [h for h in heads if 'aria-sort="descending"' in h] == [h for h in heads if 'data-frsort="index_score"' in h]
+    root_key = "fscore_score" if _root_fs(d) else "index_score"
+    assert [h for h in heads if 'aria-sort="descending"' in h] == [h for h in heads if 'data-frsort="%s"' % root_key in h]
     assert sum('aria-sort="none"' in h for h in heads) == 10
     i = JS.index('btn.addEventListener("click"')
     assert "nb.focus()" in JS[i:i + 700], "focus returns to the sorted head after the re-render"
@@ -583,7 +608,7 @@ def test_club_charts_toggles_headings_and_tables_carry_names_and_scope():
     assert all("aria-pressed=" in c for c in chips)
     for h2 in re.findall(r"<h2 [^>]*>.*?</h2>", html):
         assert "fr-verdict" not in h2 and "eephus-beta" not in h2, h2
-    assert html.count('<div class="fr-sec-head">') == 12
+    assert html.count('<div class="fr-sec-head">') == _n_sections(_served())
     assert '<table class="fr-mini"><tr><td>' not in html and '<th scope="row">' in html
     assert re.search(r'<table class="fr-table"><thead><tr><th scope="col"', html)
     assert '<table class="fr-table"><thead><tr><th class=' not in html
@@ -628,7 +653,7 @@ def test_the_playoff_head_names_its_model_and_verdict():
     title = d["copy"]["board_playoff_title"]
     verdict = {r["model_id"]: r["verdict"] for r in d["accountability"]["registry_verdicts"]}["playoff_odds_sim"]
     assert "playoff_odds_sim " + verdict in title and "settled outcome" in title
-    board, _ = _render("board")
+    board, _ = _render("board", hash_=_index_board_hash(d), hub=HUB)
     head = re.search(r'<th [^>]*data-export-text="Playoff"[^>]*>', board).group(0)
     assert 'title="' + title + '"' in head
 
@@ -645,14 +670,19 @@ def test_method_copy_sits_in_one_collapsed_block_and_the_banner_rides_its_dollar
     assert html.count(d["copy"]["weights_note"]) == 1
     assert html.count('class="fr-banner"') == 3
     assert html.index('class="fr-banner"') > html.index('data-frsec="fin"')
-    board, _ = _render("board")
+    board, _ = _render("board", hash_=_index_board_hash(d), hub=HUB)
     bhow = board.split('<details class="fr-how">')[1].split("</details>")[0]
     assert d["copy"]["board_foot"] in bhow and d["copy"]["score_basis"][1:] in bhow
     # the trimmed lines stay short: masthead and board lede under 25 words,
     # root sentence under 30, and the root keeps its thirty-percent disclosure
     for k, cap in (("masthead", 25), ("board_lede", 25), ("root_sentence", 30), ("weights_note", 25)):
         assert len(d["copy"][k].split()) < cap, (k, len(d["copy"][k].split()))
-    assert "Thirty percent of the index rests on a provisional projection" in d["copy"]["root_sentence"]
+    if _root_fs(d):
+        # F-SCORE's own sentence, and its one provisional leg in its honesty line
+        assert d["copy"]["root_sentence"] == d["copy"]["fscore"]["fscore_sentence"]
+        assert "provisional projection" in d["copy"]["fscore"]["fscore_honesty"]
+    else:
+        assert "Thirty percent of the index rests on a provisional projection" in d["copy"]["root_sentence"]
 
 
 def test_joined_copy_fragments_read_as_sentences():
@@ -827,11 +857,31 @@ def _fs_payload(codes):
 
 def _fs_doc():
     """The served document with the synthetic F-SCORE embedded exactly as
-    franchise_export.embed_fscore embeds a live payload."""
+    franchise_export.embed_fscore embeds a live payload: the 'serve both'
+    shape (fscore_export.FSCORE_REPLACES_INDEX False), which needs the Index,
+    so it is skipped once the served board is the F-SCORE root shape."""
     import copy
     import franchise_export as fe
     d = copy.deepcopy(_served())
+    if _root_fs(d):
+        pytest.skip("the served board is the F-SCORE root shape; it carries no Index to serve beside F-SCORE")
     return fe.embed_fscore(d, _fs_payload(d["codes"]))
+
+
+def _fs_root_doc():
+    """The F-SCORE root shape (owner answer FS-Q4 (b), FS_2C_INDEX_REPLACEMENT):
+    the synthetic F-SCORE embedded and the Index replaced exactly as
+    franchise_export.build does once index_replaced() is True."""
+    import copy
+    import franchise_export as fe
+    d = copy.deepcopy(_served())
+    fs = _fs_payload(d["codes"])
+    return fe.replace_index(fe.embed_fscore(d, fs), fs)
+
+
+def _fs_any_doc():
+    """F-SCORE in whichever shape the served board can carry."""
+    return _fs_root_doc() if _root_fs(_served()) else _fs_doc()
 
 
 def _heads(board_html):
@@ -843,7 +893,9 @@ def test_fscore_renders_nothing_while_the_payload_carries_none():
     page, the board and the hash are what they were (no card, section, mode
     switch, column or mark), and sec=fscore and bview=fscore are dropped."""
     d = _served()
-    assert "fscore_meta" not in d and "fscore" not in (d.get("extra_sections") or [])
+    if "fscore_meta" in d:
+        pytest.skip("F-SCORE is live on the served board; its shapes are pinned on the fixtures below")
+    assert "fscore" not in (d.get("extra_sections") or [])
     html, _ = _render("club", team="LAD", hub=HUB)
     for bad in ("F-SCORE", "fr-fs", "fr-topcol", "fr-post", 'data-frsec="fscore"', "data-frgo"):
         assert bad not in html, bad
@@ -909,7 +961,7 @@ def test_fscore_sparkline_is_named_and_carries_a_details_table():
     the club and the span), the hollow dot on the season still in its
     postseason, every label at 9 units or more, and every value in a details
     table."""
-    doc = _fs_doc()
+    doc = _fs_any_doc()
     html, _ = _render("club", team="LAD", payload=doc, hub=HUB)
     box = html.split('<div class="fr-fs-spark"')[1].split("</details>")[0]
     svg = re.search(r'<svg class="eephus-chart eephus-line"[^>]*>', box).group(0)
@@ -929,7 +981,7 @@ def test_history_marks_name_every_glyph_and_print_a_phone_legend():
     """Orchestrator ruling X19: every postseason glyph is its own role=img with
     an aria-label naming the season and the result (never only a title), and a
     text legend prints under the strip, shown at 640px and below."""
-    doc = _fs_doc()
+    doc = _fs_any_doc()
     lad = next(c for c in doc["clubs"] if c["code"] == "LAD")
     html, _ = _render("club", team="LAD", payload=doc, hub=HUB)
     sec = html.split('data-frsec="history"')[1].split("</section>")[0]
@@ -957,7 +1009,7 @@ def test_fscore_sec_and_bview_round_trip_through_the_hash():
     board, _, h = _render("board", hash_="#view=board&team=CWS&bview=fscore", payload=doc, hub=HUB, with_hash=True)
     assert h == "#view=board&bview=fscore", h
     assert 'data-frbview="fscore" aria-pressed="true"' in board
-    assert 'BVIEW_RE = /(?:^#|[#&])bview=(index|fscore)\\b/' in JS
+    assert 'BVIEW_RE = /(?:^#|[#&])bview=(index|fscore|branches)\\b/' in JS
     assert 'parts.push("bview=fscore")' in JS
 
 
@@ -974,3 +1026,113 @@ def test_fscore_letters_carry_no_tier_class():
         board, _ = _render("board", payload=doc, hub=HUB, hash_=mode)
         letters = re.findall(r'<span class="([^"]*)">[A-F][+-]?</span>', board)
         assert letters and all(c == "fr-board-letter" for c in letters), set(letters)
+
+
+# ---------------------------------------------------------------- F-SCORE as the root (FS_2C_INDEX_REPLACEMENT)
+# Owner answer FS-Q4 (b), 2026-10-01: F-SCORE replaces the Franchise Index as
+# the root score; the Index leaves the page. The payload names the root
+# (franchise_export.replace_index, live only); these render the synthetic
+# F-SCORE through that shape. The runner rule that forbids pennants on
+# Franchise is overridden for pennants, titles and postseason rounds as served
+# facts by the owner's F-SCORE ask of 2026-09-30; the decision-quality and
+# manager-skill bans stay.
+
+def test_fscore_root_is_the_club_page_lead_card_and_letter():
+    doc = _fs_root_doc()
+    lad = next(c for c in doc["clubs"] if c["code"] == "LAD")
+    fs = lad["fscore"]
+    html, _ = _render("club", team="LAD", payload=doc, hub=HUB)
+    assert "Franchise Index" not in html and 'data-gl="franchise_index"' not in html
+    # one root card, the F-SCORE card itself, beside the canopy
+    top = html.split('<div class="fr-top">')[1].split('<div class="fr-canopy">')[0]
+    assert top.startswith('<div class="fr-root"') and "fr-topcol" not in top and '<div class="fr-fs"' not in top
+    assert 'data-gl="franchise_score"' in top and "#" + str(fs["rank"]) + " of 30" in top
+    assert '<span class="fr-root-letter">' + fs["letter"] + "</span>" in top
+    assert doc["copy"]["root_feeds_note"] in top and doc["copy"]["root_foot_descriptive"] in top
+    assert 'data-frfs-spark="LAD"' in top and "FS sentence." in top
+    # the canopy root is F-SCORE; each graded bubble names its pillar, no Index weight
+    canopy = html.split('<div class="fr-canopy">')[1].split("</svg>")[0]
+    assert 'franchise canopy: F-SCORE, three graded branches' in canopy
+    assert ">" + fs["letter"] + "</text>" in canopy and doc["copy"]["root_eyebrow"] in canopy
+    assert "of STRENGTH" in canopy and "of PIPELINE" in canopy and " weight &middot;" not in canopy
+    # the accordion meta and the section lede
+    acc = html.split('<div class="fr-tree-fallback">')[1]
+    assert "30% of STRENGTH" in acc and "20% of STRENGTH" in acc and "60% of PIPELINE" in acc
+    assert html.count('<section class="fr-block"') == 13
+    assert html.index('data-frsec="fscore"') < html.index('data-frsec="roster"')
+    sec = html.split('data-frsec="fscore"')[1].split("</section>")[0]
+    assert doc["copy"]["root_feeds_note"] in sec
+    assert 'href="#view=board" data-frlink="1">F-SCORE board</a>' in sec
+    assert 'href="#view=board&amp;bview=branches" data-frlink="1">Branches board</a>' in sec
+    # the full tree: the root box is F-SCORE and each graded label names its pillar
+    full, _ = _render("club", team="LAD", payload=doc, hub=HUB, tree="full")
+    tree = full.split('<div class="fr-tree-svg">')[1].split("</svg>")[0]
+    assert "ROSTER in STRENGTH" in tree and "FARM in PIPELINE" in tree
+    assert "#" + str(fs["rank"]) + " of 30 &middot; " in tree
+
+
+def test_fscore_root_board_defaults_to_fscore_and_the_branches_mode_carries_no_index():
+    doc = _fs_root_doc()
+    board, _ = _render("board", payload=doc, hub=HUB)
+    assert "Franchise Index" not in board and "index_score" not in board
+    heads = _heads(board)
+    assert [re.search(r'data-export-text="([^"]*)"', h).group(1) for h in heads][:3] == ["Club", "F-SCORE", "RESULTS"]
+    assert 'aria-sort="descending"' in heads[1] and 'data-frsort="fscore_score"' in heads[1]
+    sw = board.split('<div class="fr-bview"')[1].split("</div>")[0]
+    assert sw.index('data-frbview="fscore" aria-pressed="true"') < sw.index('data-frbview="branches" aria-pressed="false"')
+    assert doc["copy"]["board_lede"] in board
+    trs = re.findall(r"<tr>(.*?)</tr>", board.split("<tbody>")[1])
+    assert len(trs) == 30 and ">#1<" in trs[0]
+    # the Branches mode: the Index mode's columns with F-SCORE in the Index's
+    # place, kept on a phone, sorted on F-SCORE
+    br, _ = _render("board", payload=doc, hub=HUB, hash_="#view=board&bview=branches")
+    heads = _heads(br)
+    names = [re.search(r'data-export-text="([^"]*)"', h).group(1) for h in heads]
+    assert len(heads) == 11 and names[:5] == ["Club", "F-SCORE", "ROSTER", "OUTLOOK", "FARM"]
+    assert "fr-bcol-hide" not in heads[1] and 'aria-sort="descending"' in heads[1]
+    assert "Franchise Index" not in br and "index_score" not in br
+    assert doc["copy"]["board_lede_branches"] in br and doc["copy"]["board_foot"] in br
+    order = re.findall(r'data-frlink="1" title="[^"]*">([A-Z]{2,3})</a>', br)
+    assert order == [r["code"] for r in sorted(doc["board"], key=lambda r: r["fscore_rank"])]
+    sw = br.split('<div class="fr-bview"')[1].split("</div>")[0]
+    assert 'data-frbview="branches" aria-pressed="true"' in sw
+
+
+def test_fscore_root_hash_round_trips_and_an_index_link_lands_on_fscore():
+    doc = _fs_root_doc()
+    _, _, h = _render("board", hash_="#view=board&bview=branches", payload=doc, hub=HUB, with_hash=True)
+    assert h == "#view=board&bview=branches", h
+    for old in ("#view=board&bview=fscore", "#view=board&bview=index", "#view=board"):
+        board, _, h = _render("board", hash_=old, payload=doc, hub=HUB, with_hash=True)
+        assert 'data-frbview="fscore" aria-pressed="true"' in board, old
+    _, _, h = _render("board", hash_="#view=board&team=CWS&bview=index", payload=doc, hub=HUB, with_hash=True)
+    assert h == "#view=board", h
+    html, _, h = _render("club", hash_="#view=club&team=CWS&sec=fscore", payload=doc, hub=HUB, with_hash=True)
+    assert h == "#view=club&team=CHW&sec=fscore" and 'data-frsec="fscore"' in html
+    assert 'parts.push("bview=branches")' in JS
+
+
+def test_fscore_root_letters_carry_no_tier_class():
+    doc = _fs_root_doc()
+    html, _ = _render("club", team="LAD", payload=doc, hub=HUB)
+    card = html.split('<div class="fr-root"')[1].split('<div class="fr-fs-pillars">')[0]
+    assert re.search(r'<span class="fr-root-letter">[A-F][+-]?</span>', card)
+    assert "vt-" not in re.sub(r'<span class="vt-fam-z vt-avg">[^<]*</span>', "", card)
+    for mode in ("", "#view=board&bview=branches"):
+        board, _ = _render("board", payload=doc, hub=HUB, hash_=mode)
+        letters = re.findall(r'<span class="([^"]*)">[A-F][+-]?</span>', board)
+        assert letters and all(c == "fr-board-letter" for c in letters), set(letters)
+
+
+def test_fscore_root_without_the_flag_renders_the_index_page_unchanged():
+    """Flag off the payload carries no root key, so the page is the Index page
+    byte for byte: the same club and board HTML as before the replacement
+    code, which this pins by its markers."""
+    d = _served()
+    if _root_fs(d) or "fscore_meta" in d:
+        pytest.skip("F-SCORE is live on the served board")
+    html, _ = _render("club", team="LAD", hub=HUB)
+    assert 'data-gl="franchise_index"' in html and "franchise canopy: the index," in html
+    assert " weight &middot; #" in html and " of STRENGTH" not in html
+    board, _ = _render("board", hub=HUB)
+    assert 'data-frsort="index_score"' in board and "fr-bview" not in board

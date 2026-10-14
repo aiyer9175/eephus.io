@@ -74,7 +74,16 @@ THE FLAG (plan X9, Part 8 class 2). FSCORE_LIVE = False: main() writes
 .cache/fscore/preview/fscore.json and nothing under data/; franchise_export
 embeds nothing and keeps pennants and titles forbidden; team_stats_export adds
 no column. FS_2F_FLIP turns it on in one commit with the registry row, the
-glossary entries and the catalog row.
+glossary entries and the catalog row. FSCORE_REPLACES_INDEX (FS-Q4 (b)) rides
+the same flag: once FSCORE_LIVE is True, F-SCORE is the root score on
+/franchise/ and the Franchise Index leaves the page (franchise_export
+.replace_index; tools/fscore_index_retirement.py retires its glossary entry
+and registry row in the flip commit). The flip commit also rewrites the
+Franchises share-card line in tools/pixel_brand_src.MODULES (it names the
+Index; test_share_cards holds each card line to its page's meta description,
+which names F-SCORE once the flag is on), for example "One page per club:
+F-SCORE and the three branches beneath it.", and regenerates
+assets/og/franchise.png with tools/pixel_brand.py.
 
 build() returns the document and never writes; main() writes it and exits 2
 on FscoreRefusal, leaving the previous file standing (the franchise_export
@@ -135,6 +144,13 @@ ROSTER_FLOOR = 26
 OPERATIONS_LIVE = True
 #: FS-Q3 (owner, 2026-10-01): management shown beside F-SCORE, not scored.
 FSCORE_DUGOUT_LINK = True
+#: FS-Q4 (owner, 2026-10-01, answer (b)): F-SCORE REPLACES the Franchise Index
+#: as the root score on /franchise/ (the club page's lead card and letter, the
+#: board's default sort and letter column) and the Index leaves the page
+#: (FS_2C_INDEX_REPLACEMENT). It binds only while FSCORE_LIVE is True, so the
+#: one flip turns F-SCORE and the replacement on together; False keeps the two
+#: side by side (the 'serve both' build of FS_2B).
+FSCORE_REPLACES_INDEX = True
 #: The admission rule's weight and its donor pillar (docstring above).
 MGMT_ADMISSION = {"weight": 0.05, "taken_from": "results"}
 
@@ -550,8 +566,6 @@ def compute(inp: dict, seasons: list, *, today: date) -> dict:
     copy = {
         "fscore_sentence": ("Seven seasons and today, re-standardised across 30 clubs. "
                             "Descriptive, not a forecast."),
-        "fscore_vs_index": ("Franchise Index: the club today (roster, 2027 outlook, farm). "
-                            "F-SCORE: the last seven seasons plus today."),
         "fscore_teams_past": "F-SCORE is a seven-season score as of today; it prints on the current season only.",
         "fscore_overlap": ("RESULTS and STRENGTH overlap by design: wins and run differential come "
                            "from the same seasons."),
@@ -585,6 +599,11 @@ def compute(inp: dict, seasons: list, *, today: date) -> dict:
                                       "once it is played.")
     if FSCORE_DUGOUT_LINK:
         copy["fscore_dugout"] = DUGOUT_SENTENCE
+    if not FSCORE_REPLACES_INDEX:
+        # 'Serve both' only: once F-SCORE replaces the Index (FS-Q4 (b)) the
+        # page carries no Index to set it against.
+        copy["fscore_vs_index"] = ("Franchise Index: the club today (roster, 2027 outlook, farm). "
+                                   "F-SCORE: the last seven seasons plus today.")
 
     reg_rows = {m.get("model_id"): m for m in (inp.get("registry") or {}).get("models") or []}
     # [{model_id, verdict}] rows, not keys: a model id is a name, never a grouping.

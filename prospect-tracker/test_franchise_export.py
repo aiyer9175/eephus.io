@@ -162,7 +162,20 @@ def test_branch_score_is_100_plus_10z_of_the_served_value(clubs):
             assert abs(ours[k] - served) <= 0.15, (k, ours[k], served)
 
 
+def _index_served(d):
+    """The three Index tests below pin the Index shape; once the served board
+    names F-SCORE the root (owner answer FS-Q4 (b)) the Index is off the
+    payload and test_the_served_root_shape_is_one_of_the_two pins that shape."""
+    if d.get("root") == "fscore":
+        pytest.skip("F-SCORE is the root score: the Franchise Index is retired (FS-Q4 (b))")
+
+
+def _root(d, c):
+    return c["fscore"] if d.get("root") == "fscore" else c["index"]
+
+
 def test_index_is_mean_100_sd_10_after_re_standardising(d, clubs):
+    _index_served(d)
     W = d["weights"]
     raw, scores = [], []
     for c in clubs.values():
@@ -177,6 +190,7 @@ def test_index_is_mean_100_sd_10_after_re_standardising(d, clubs):
 
 
 def test_weights_sum_to_one_over_graded_branches_only(d, clubs):
+    _index_served(d)
     assert abs(sum(d["weights"].values()) - 1.0) < 1e-9
     assert set(d["weights"]) == set(GRADED)
     assert d["weights"] == {"roster": 0.40, "outlook": 0.30, "farm": 0.30}
@@ -188,25 +202,26 @@ def test_weights_sum_to_one_over_graded_branches_only(d, clubs):
                 assert not b["weight"]
 
 
-def test_index_rank_is_monotone_in_index_score(clubs):
-    rows = sorted(clubs.values(), key=lambda c: c["index"]["rank"])
-    assert [c["index"]["rank"] for c in rows] == list(range(1, 31))
+def test_index_rank_is_monotone_in_index_score(d, clubs):
+    # the root score, the Index or (FS-Q4 (b)) F-SCORE: rank monotone in score
+    rows = sorted(clubs.values(), key=lambda c: _root(d, c)["rank"])
+    assert [_root(d, c)["rank"] for c in rows] == list(range(1, 31))
     for a, b in zip(rows, rows[1:]):
-        assert a["index"]["score"] >= b["index"]["score"]
+        assert _root(d, a)["score"] >= _root(d, b)["score"]
 
 
 # --------------------------------------------------------------------------
 # Mistake 3: letters and the sentinel
 # --------------------------------------------------------------------------
 
-def test_letter_matches_rank_by_storage_letter_grade(clubs):
+def test_letter_matches_rank_by_storage_letter_grade(d, clubs):
     import storage
     for c in clubs.values():
-        assert c["index"]["letter"] == storage._letter_grade(c["index"]["rank"], 30)
+        assert _root(d, c)["letter"] == storage._letter_grade(_root(d, c)["rank"], 30)
         for key in ("roster", "outlook"):
             b = _branch(c, key)
             assert b["letter"] == storage._letter_grade(b["rank"], 30), (c["code"], key)
-    letters = sorted({c["index"]["letter"] for c in clubs.values()})
+    letters = sorted({_root(d, c)["letter"] for c in clubs.values()})
     assert "A+" in letters and "F" in letters
 
 
@@ -907,7 +922,13 @@ def test_registry_rows_exist_and_are_descriptive():
     rows = {m["model_id"]: m for m in reg["models"]}
     for mid in ("franchise_index", "franchise_branch_score"):
         m = rows[mid]
-        assert m["verdict"] == "unvalidated" and m["eval_artifact"] is None
+        if mid == "franchise_index" and m["verdict"] == "deprecated":
+            # FS-Q4 (b): retired at the F-SCORE flip, never deleted
+            # (tools/fscore_index_retirement.py); F-SCORE's row is its successor.
+            assert m["summary"].startswith("Retired 2026 by owner answer FS-Q4") and "franchise_score" in rows
+            assert m["eval_artifact"] is None
+        else:
+            assert m["verdict"] == "unvalidated" and m["eval_artifact"] is None
         # Plain case since COPY_11 (2026-10-04): no caps emphasis in reader fields.
         assert m["predicts"].lower().startswith("nothing") and "descriptive" in m["predicts"].lower()
         assert "100 + 10z" in m["predicts"]
@@ -1165,3 +1186,261 @@ def test_pennants_and_titles_pass_only_live_and_the_quality_bans_stay(d, monkeyp
     monkeypatch.setattr(fe, "fscore_live", lambda: False)
     with pytest.raises(AssertionError, match="pennants"):
         fe._assert_document(doc)
+
+
+# --------------------------------------------------------------------------
+# FS_2C_INDEX_REPLACEMENT (owner answer FS-Q4 (b), 2026-10-01): F-SCORE
+# replaces the Franchise Index as the root score and the Index leaves the
+# page. Keyed on fscore_export.FSCORE_LIVE with FSCORE_REPLACES_INDEX: flag
+# off, nothing moves and the served board keeps the Index; flag on, checked on
+# FIXTURES, the Index is off the payload and F-SCORE is the root. The runner
+# rule that forbids pennants on Franchise is overridden for pennants, titles
+# and postseason rounds as served facts by the owner's F-SCORE ask of
+# 2026-09-30; the decision-quality and manager-skill bans stay.
+# --------------------------------------------------------------------------
+
+def _root_doc(d):
+    """The served document with the fixture F-SCORE embedded and the Index
+    replaced, exactly as build() does once index_replaced() is True."""
+    import copy
+    import franchise_export as fe
+    fs = _fscore_fixture()
+    doc = fe.embed_fscore(copy.deepcopy(d), fs)
+    return fe.replace_index(doc, fs), fs
+
+
+def test_the_replacement_rides_the_fscore_flag(monkeypatch):
+    import fscore_export
+    import franchise_export as fe
+    assert fscore_export.FSCORE_REPLACES_INDEX is True, "owner answer FS-Q4 (b)"
+    assert fscore_export.FSCORE_LIVE is False and fe.index_replaced() is False
+    monkeypatch.setattr(fscore_export, "FSCORE_LIVE", True)
+    assert fe.index_replaced() is True
+    monkeypatch.setattr(fscore_export, "FSCORE_REPLACES_INDEX", False)
+    assert fe.index_replaced() is False
+
+
+def test_the_served_root_shape_is_one_of_the_two(d, clubs):
+    """The served board is the Index shape or the F-SCORE root shape, never a
+    mix of the two."""
+    if d.get("root") == "fscore":
+        assert d["board_default_sort"] == ["fscore_score", "desc"] and "weights" not in d
+        for c in clubs.values():
+            assert "index" not in c and c["fscore"]["letter"], c["code"]
+            for b in c["tree"]["branches"]:
+                if b["kind"] == "graded":
+                    assert b["weight"] is None and b["fscore_leg"]["pillar"] in ("strength", "pipeline")
+        assert not [k for r in d["board"] for k in r if k.startswith("index_")]
+    else:
+        assert "fscore_feeds" not in d and d["board_default_sort"] == ["index_score", "desc"]
+        for c in clubs.values():
+            assert c["index"]["letter"] and all("fscore_leg" not in b for b in c["tree"]["branches"]), c["code"]
+
+
+def test_flag_on_fscore_replaces_the_index_on_fixtures(d, monkeypatch):
+    import franchise_export as fe
+    doc, fs = _root_doc(d)
+    assert doc["root"] == "fscore" and doc["board_default_sort"] == ["fscore_score", "desc"]
+    # the Index is off the payload: no key, no weight, no copy line names it
+    for path, k in fe._walk_keys(doc):
+        assert str(k) not in fe.INDEX_KEYS, path
+    assert "weights" not in doc and "index_formula" not in doc["accountability"]
+    for t in list(fe._texts(doc["copy"])) + doc["what_this_page_does_not_claim"]:
+        assert "Franchise Index" not in t, t
+    assert fe.NOT_CLAIMED_FORECAST_FSCORE in doc["what_this_page_does_not_claim"]
+    # every club's root is its F-SCORE, copied from fscore.json, never recomputed
+    for c in doc["clubs"]:
+        f = fs["clubs"][c["code"]]
+        assert (c["fscore"]["score"], c["fscore"]["rank"], c["fscore"]["letter"]) == (f["score"], f["rank"], f["letter"])
+    for r in doc["board"]:
+        assert r["fscore_letter"] == fs["clubs"][r["code"]]["letter"]
+    # all three graded branches are carried, none dropped: ROSTER and OUTLOOK
+    # inside STRENGTH, FARM inside PIPELINE, at the scheme's own leg weights
+    legs, applied = fs["scheme"]["legs"], fs["scheme"]["applied"]
+    want = {"roster": ("strength", "roster"), "outlook": ("strength", "outlook"), "farm": ("pipeline", "farm")}
+    assert set(doc["fscore_feeds"]) == set(GRADED)
+    for key, (p, leg) in want.items():
+        f = doc["fscore_feeds"][key]
+        assert (f["pillar"], f["label"], f["leg_weight"]) == (p, p.upper(), legs[p][leg])
+        assert abs(f["share"] - applied[p] * legs[p][leg]) < 1e-9
+    assert doc["copy"]["root_eyebrow"] == "F-SCORE" and doc["copy"]["root_sentence"] == fs["copy"]["fscore_sentence"]
+    assert "ROSTER and OUTLOOK count inside STRENGTH (30 percent and 20 percent of it)" in doc["copy"]["root_feeds_note"]
+    # the branch scores, ranks, letters and leaves stay; only the Index weight
+    # gives way to the pillar. Every section stays, so the OUTLOOK leg and FIN's
+    # Cost+ keep reading their own inputs and never F-SCORE.
+    before = {c["code"]: c for c in d["clubs"]}
+    for c in doc["clubs"]:
+        b0s = before[c["code"]]["tree"]["branches"]
+        for b, b0 in zip(c["tree"]["branches"], b0s):
+            assert {k: v for k, v in b.items() if k not in ("weight", "fscore_leg")} == \
+                   {k: v for k, v in b0.items() if k != "weight"}, (c["code"], b["key"])
+            if b["kind"] == "graded":
+                assert b["weight"] is None and b["fscore_leg"] == doc["fscore_feeds"][b["key"]]
+        assert {k: v for k, v in c["sections"].items() if k != "fscore"} == before[c["code"]]["sections"]
+    monkeypatch.setattr(fe, "fscore_live", lambda: True)
+    fe._assert_document(doc)
+    # the NEVER list holds on the root shape too
+    doc["clubs"][0]["fscore"]["decision_quality"] = 1
+    with pytest.raises(AssertionError, match="decision_quality"):
+        fe._assert_document(doc)
+    doc["clubs"][0]["fscore"].pop("decision_quality")
+    doc["clubs"][0]["fscore"]["manager_skill"] = 1
+    with pytest.raises(AssertionError, match="manager_skill"):
+        fe._assert_document(doc)
+
+
+def test_flag_on_a_mixed_root_is_refused(d, monkeypatch):
+    import copy
+    import franchise_export as fe
+    monkeypatch.setattr(fe, "fscore_live", lambda: True)
+    doc, _fs = _root_doc(d)
+    bad = copy.deepcopy(doc)
+    bad["board"][0]["index_score"] = 100.0
+    with pytest.raises(AssertionError, match="index_score"):
+        fe._assert_document(bad)
+    bad = copy.deepcopy(doc)
+    bad["copy"]["board_lede"] = "Every club on the Franchise Index."
+    with pytest.raises(AssertionError, match="Franchise Index"):
+        fe._assert_document(bad)
+    bad = copy.deepcopy(doc)
+    bad["clubs"][0].pop("fscore")
+    with pytest.raises(AssertionError):
+        fe._assert_document(bad)
+    bad = copy.deepcopy(doc)
+    bad["weights"] = {"roster": 0.4, "outlook": 0.3, "farm": 0.3}
+    with pytest.raises(AssertionError):
+        fe._assert_document(bad)
+
+
+def test_flag_on_without_tonight_s_fscore_the_board_is_refused(monkeypatch):
+    """F-SCORE is the root: a board without it has none, so the previous board
+    (whose F-SCORE is the last good one) stands."""
+    import fscore_export
+    import franchise_export as fe
+    monkeypatch.setattr(fscore_export, "FSCORE_LIVE", True)
+    monkeypatch.setattr(fe, "fscore_payload", lambda today=None: None)
+    with pytest.raises(fe.FranchiseRefusal, match="F-SCORE is the root score"):
+        fe.build()
+
+
+def test_the_outlook_and_cost_plus_consumers_never_read_fscore():
+    for rel in ("ledger_export.py", "proj_export.py"):
+        p = ROOT / rel
+        if p.exists():
+            txt = p.read_text(encoding="utf-8")
+            assert "fscore" not in txt.lower(), rel
+
+
+def test_the_shell_copy_switches_with_the_flag(monkeypatch):
+    """The page shell, the data catalog row and the site map line name the
+    Index while the flag is off and F-SCORE once it replaces the Index."""
+    import build_site as B
+    import data_catalog
+    import fscore_export
+    sys.path.insert(0, str(ROOT / "tools"))
+    import gen_audit_docs as G
+    off = B.build_franchise()
+    assert 'data-gl="franchise_index"' in off and "Franchise Index is a descriptive rank" in off
+    row_off = next(r for r in data_catalog.catalog_rows() if r["file"] == "franchise_board.json")
+    assert "Franchise Index" in row_off["what"]
+    assert "Franchise Index" in G._route_note("franchise/index.html")
+    purpose = {r[0]: r[2] for g in B.page_index_groups() for r in g["rows"]}
+    assert "Franchise Index" in purpose["/franchise/"]
+    monkeypatch.setattr(fscore_export, "FSCORE_LIVE", True)
+    on = B.build_franchise()
+    assert "Franchise Index" not in on and 'data-gl="franchise_score"' in on
+    assert B.FRANCHISE_STAGE_FSCORE in on and B.FRANCHISE_DESC_FSCORE in on
+    row_on = next(r for r in data_catalog.catalog_rows() if r["file"] == "franchise_board.json")
+    assert row_on["what"] == data_catalog.FRANCHISE_BOARD_FSCORE["what"]
+    assert "retired by owner answer FS-Q4" in row_on["note"]
+    assert G._route_note("franchise/index.html") == G._FRANCHISE_NOTE_FSCORE
+    purpose = {r[0]: r[2] for g in B.page_index_groups() for r in g["rows"]}
+    assert purpose["/franchise/"] == B.FRANCHISE_PURPOSE_FSCORE
+    import copy_lint
+    for t in (B.FRANCHISE_STAGE_FSCORE, B.FRANCHISE_DESC_FSCORE, B.FRANCHISE_PURPOSE_FSCORE,
+              G._FRANCHISE_NOTE_FSCORE, *data_catalog.FRANCHISE_BOARD_FSCORE.values()):
+        assert EM not in t and EN not in t and not copy_lint.BAN_RE.search(t), t
+
+
+# ---- the glossary and registry step of the flip (tools/fscore_index_retirement.py)
+
+def _retirement():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import fscore_index_retirement as R
+    return R
+
+
+def _stage_flip_rows(tmp_path):
+    """Copies of the served glossary and registry with a stand-in F-SCORE
+    entry and row, as FS_2F_FLIP adds them before the retirement step."""
+    R = _retirement()
+    graw = (ROOT / "data" / "glossary.json").read_bytes().decode("utf-8")
+    rraw = (ROOT / "data" / "model_registry.json").read_bytes().decode("utf-8")
+    g = json.loads(graw)
+    if not any(e["id"] == "franchise_score" for e in g["entries"]):
+        g["entries"].append({"id": "franchise_score", "term": "F-SCORE", "category": "custom-index",
+                             "section": "Clubs", "module": ["franchise"], "aliases": ["F-SCORE"],
+                             "priority": 39, "definition": "Stand-in.", "shelf": "ark"})
+    if '"model_id": "franchise_score"' not in rraw:
+        a, b = R._row_span(rraw, "franchise_branch_score")
+        row = {"model_id": "franchise_score", "summary": "Provisional, descriptive stand-in.",
+               "surface": "stand-in", "predicts": "Nothing: a descriptive stand-in", "champion": "stand-in",
+               "baseline": "descriptive", "metric": "descriptive", "eval_artifact": None,
+               "verdict": "provisional", "provisional_kind": "measurement_only", "notes": "Stand-in."}
+        nl = "\r\n" if "\r\n" in rraw else "\n"
+        txt = json.dumps(row, indent=1, ensure_ascii=False).replace("\n", nl + "  ")
+        rraw = rraw[:b] + "," + nl + "  " + txt + rraw[b:]
+    gp, rp = tmp_path / "glossary.json", tmp_path / "model_registry.json"
+    gp.write_bytes(R._dump_like(g, graw).encode("utf-8"))
+    rp.write_bytes(rraw.encode("utf-8"))
+    return gp, rp
+
+
+def test_the_index_retirement_retires_the_rows_and_keeps_the_receipts(tmp_path):
+    R = _retirement()
+    gp, rp = _stage_flip_rows(tmp_path)
+    g0 = {e["id"]: e for e in json.loads(gp.read_text(encoding="utf-8"))["entries"]}
+    r0 = {m["model_id"]: m for m in json.loads(rp.read_text(encoding="utf-8"))["models"]}
+    assert sorted(R.apply(gp, rp)) == ["glossary.json", "model_registry.json"]
+    assert R.apply(gp, rp) == [], "idempotent"
+    for p in (gp, rp):
+        raw = p.read_bytes()
+        assert raw.count(b"\n") == raw.count(b"\r\n") or b"\r\n" not in raw, p.name
+    g1 = {e["id"]: e for e in json.loads(gp.read_text(encoding="utf-8"))["entries"]}
+    reg = json.loads(rp.read_text(encoding="utf-8"))
+    r1 = {m["model_id"]: m for m in reg["models"]}
+    e0, e1 = g0["franchise_index"], g1["franchise_index"]
+    assert e1["definition"].startswith("Retired 2026 by owner answer FS-Q4") and e0["definition"] in e1["definition"]
+    assert e1["methodology"].startswith(e0["methodology"]) and "STRENGTH" in e1["methodology"]
+    assert e1["seeAlso"][0] == "franchise_score" and e1["id"] == "franchise_index" and e1["module"] == e0["module"]
+    for eid in ("franchise_branch_score", "season_record"):
+        assert g1[eid]["seeAlso"][0] == "franchise_score", eid
+    assert {k: v for k, v in g1.items() if k not in R.GL_SEE_ALSO_FRONT} == \
+           {k: v for k, v in g0.items() if k not in R.GL_SEE_ALSO_FRONT}
+    m0, m1 = r0["franchise_index"], r1["franchise_index"]
+    assert m1["verdict"] == "deprecated" and m1["summary"].startswith("Retired 2026 by owner answer FS-Q4")
+    assert m1["notes"].startswith(m0["notes"]) and "not because a test failed" in m1["notes"]
+    for k in ("predicts", "champion", "baseline", "metric", "eval_artifact"):
+        assert m1[k] == m0[k], k
+    assert "franchise_index" in r1["franchise_score"]["notes"] and "root card" in r1["franchise_score"]["surface"]
+    assert r1["franchise_branch_score"]["notes"].startswith(r0["franchise_branch_score"]["notes"])
+    touched = {"franchise_index", "franchise_branch_score", "franchise_score"}
+    assert {k: v for k, v in r1.items() if k not in touched} == {k: v for k, v in r0.items() if k not in touched}
+    import model_registry
+    assert not [p for p in model_registry.validate(reg) if "franchise" in p]
+
+
+def test_the_index_retirement_refuses_out_of_order(tmp_path):
+    R = _retirement()
+    for name in ("glossary.json", "model_registry.json"):
+        (tmp_path / name).write_bytes((ROOT / "data" / name).read_bytes())
+    import fscore_export
+    if not fscore_export.FSCORE_LIVE:
+        # the flip step: refused while the flag is off, and the served files keep the live Index
+        assert R.main(["--glossary", str(tmp_path / "glossary.json"),
+                       "--registry", str(tmp_path / "model_registry.json")]) == 2
+        g = {e["id"]: e for e in _load("glossary.json")["entries"]}
+        assert not g["franchise_index"]["definition"].startswith("Retired")
+    if not any(e["id"] == "franchise_score" for e in _load("glossary.json")["entries"]):
+        with pytest.raises(R.RetirementRefusal, match="franchise_score"):
+            R.apply(tmp_path / "glossary.json", tmp_path / "model_registry.json", write=False)
