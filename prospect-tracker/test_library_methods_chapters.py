@@ -240,7 +240,7 @@ def test_the_calibration_leaf_renders_both_tables(server, browser):
         html = page.evaluate("document.getElementById('calibration-body').innerHTML")
         rel = json.loads((ROOT / "data" / "xfv_reliability.json").read_text(encoding="utf-8"))
         if (rel.get("tripwire") or {}).get("threshold"):
-            assert "Is eFV still calibrated?" in html
+            assert "Calibration monitor: eFV v1 reliability by bin" in html
             tw = rel["tripwire"]
             lit = round(tw["bust_ece"] / tw["threshold"] * 10)
             got = page.evaluate("document.querySelectorAll('.meth-trip-lamp rect.lt, .meth-trip-lamp rect.lb').length")

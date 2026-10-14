@@ -7719,8 +7719,7 @@ _ACCT_VERDICTS = (
      "Partly measured: a backtest on synthetic data only, a short window, or a descriptive "
      "correlation instead of a forward test."),
     ("unvalidated", "Unvalidated",
-     "Registered and serving, with no measurement yet. Its gate has not been run, "
-     "which is not the same thing as a model that is wrong."),
+     "Serving, not yet measured. Unmeasured is not wrong."),
     ("deprecated", "Deprecated",
      "Measured, failed its gate, retired or demoted. Kept on the ledger."),
 )
@@ -9340,17 +9339,16 @@ def _artifact_card(row: dict) -> str:
         meta.append("as of " + _fmt_iso_date(row["vintage"]))
     meta_line = " · ".join(html.escape(m) for m in meta if m)
     tier = row["stability"]
-    tier_note = ("field names hold, new fields can appear at any time"
-                 if tier == data_catalog.STABLE
-                 else "shape can change or the file can disappear on any run")
+    if tier == data_catalog.STABLE:
+        tier_note = " (shape pinned by a test)." if row.get("pinned_by") else "."
+    else:
+        tier_note = (": shape can change or the file can disappear on any run"
+                     + ("; current shape pinned by a test." if row.get("pinned_by") else "."))
     fine = ("margin-top:8px;font-family:var(--font-retro-mono);font-size:11px;"
             "line-height:1.5;color:var(--text-tertiary);")
-    tail = [f'<strong>{html.escape(tier)}</strong>: {html.escape(tier_note)}']
+    tail = [f'<strong>{html.escape(tier)}</strong>{html.escape(tier_note)}']
     if row.get("note"):
         tail.append(html.escape(row["note"]))
-    if row.get("pinned_by"):
-        tail.append("Shape pinned by <code>"
-                    + html.escape(row["pinned_by"]) + "</code>")
     return (
         '<div class="card source-card">'
         f'<h3>{html.escape(row["title"])}</h3>'
@@ -9413,7 +9411,7 @@ def _sources_api_section() -> str:
         '</div>'
         '<div class="card">'
         '<h3>eFV movement alerts: feed only, no delivery</h3>'
-        '<p>Each rebuild publishes the biggest genuine eFV moves, with drivers, to '
+        '<p>Each rebuild publishes the biggest eFV moves, with drivers, to '
         '<a href="/data/efv_alerts.json"><code>/data/efv_alerts.json</code></a>. Nothing is '
         'emailed or pushed; the artifact\'s <code>delivery</code> field says so.</p>'
         '<p>A move with an endpoint at the eFV 20 floor is a player entering or leaving the graded '
@@ -9633,9 +9631,8 @@ def build_sources() -> str:
         'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",o);else o();})();</script>'
     )
     return page("Data Sources, Attribution & the Public Data - eephus.io", "", body,
-                "Every data source behind eephus.io - prospect ranking inputs, Statcast and "
-                "league data, contracts - plus the catalog of public JSON artifacts the site "
-                "publishes, their update cadence and how stable each one is.",
+                "Every upstream source (prospect rankings, Statcast and league data, contracts) "
+                "and every artifact the site publishes, with cadence and stability.",
                 url=f"{SITE_ORIGIN}/sources/")
 
 

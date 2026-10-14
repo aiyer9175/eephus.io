@@ -730,7 +730,7 @@
 
     const wrSpec = (pool, poolLabel) => ({
       art: "/data/war_rate_plus_eval.json",
-      estimand: "Does the " + poolLabel + " rate index forward-predict the next season's WAR rate better than the season WAR total it re-expresses?",
+      estimand: "Claim: the " + poolLabel + " rate index predicts next-season WAR rate better than the season WAR total it re-expresses (forward-chained).",
       baseline: "plain season WAR total, the simplest baseline in the set",
       read: j => {
         const p = (j.pools || {})[pool] || {};
@@ -767,7 +767,7 @@
       // ---- WINS -----------------------------------------------------------
       hem_plus: {
         art: "/data/hem_plus_eval.json",
-        estimand: "Does HEM+ predict a hitter's next-season wOBA, forward-chained and out of sample?",
+        estimand: "Claim: HEM+ predicts a hitter's next-season wOBA (forward-chained, out of sample).",
         baseline: "batting average, with raw wOBA as the no-worse check",
         read: j => rateRows(j.forward_spearman_vs_wOBA_next, "hem_plus", "HEM+", [
           { label: "Spearman rho, next-season wOBA", bk: "avg", bname: "AVG", ci: j.gap_ci_vs_avg },
@@ -776,7 +776,7 @@
       },
       sem_plus: {
         art: "/data/sem_plus_eval.json",
-        estimand: "Does SEM+ predict a starter's next-season run prevention (RA9)?",
+        estimand: "Claim: SEM+ predicts a starter's next-season run prevention (RA9).",
         baseline: "ERA, with raw FIP as the harder check",
         read: j => rateRows(j.forward_spearman_vs_RA9_next, "sem_plus", "SEM+", [
           { label: "Spearman rho, next-season RA9", bk: "era", bname: "ERA", ci: j.gap_ci_vs_era },
@@ -785,7 +785,7 @@
       },
       rem_plus: {
         art: "/data/rem_plus_eval.json",
-        estimand: "Does REM+ predict a reliever's next-season run prevention (RA9)?",
+        estimand: "Claim: REM+ predicts a reliever's next-season run prevention (RA9).",
         baseline: "raw FIP; ERA as the softer check",
         read: j => {
           const g = j.gap_ci_vs_RA9_next || {};
@@ -797,7 +797,7 @@
       },
       xhem_plus: {
         art: "/data/xhem_plus_eval.json",
-        estimand: "Does the deserved (xwOBA-based) read predict next-season wOBA better than the actual line?",
+        estimand: "Claim: the deserved (xwOBA-based) read predicts next-season wOBA better than the actual line.",
         baseline: "actual wOBA, same forward pairs",
         read: j => rateRows(j.forward_spearman_vs_wOBA_next, "xwoba", "xwOBA", [
           { label: "Spearman rho, next-season wOBA", bk: "actual_woba", bname: "actual wOBA", ci: j.gap_ci_xwoba_minus_woba },
@@ -808,7 +808,7 @@
       // demoted the row to provisional on exactly these two cells.
       fwdhem_plus: {
         art: "/data/xhem_served_regate_eval.json",
-        estimand: "Does the xHEM+ Blend, as the board serves it, predict next-season wOBA better than xwOBA alone?",
+        estimand: "Claim: the xHEM+ Blend, as served, predicts next-season wOBA better than xwOBA alone.",
         baseline: "Savant xwOBA alone, same forward pairs",
         read: j => {
           const d4 = ((((j.arms || {}).A2_fwdhem_plus || {}).ladder) || {}).D4 || {};
@@ -830,7 +830,7 @@
       },
       pwoba: {
         art: "/data/phem_marcel_lite_eval.json",
-        estimand: "Does the served projected wOBA order hitters' next-season wOBA better than the best flat multiyear read?",
+        estimand: "Claim: the served projected wOBA orders hitters' next-season wOBA better than the best flat multiyear read.",
         baseline: "flat 3-year HEM+, the best incumbent at the gate",
         read: j => {
           const h = j.hitters || {};
@@ -850,7 +850,7 @@
       },
       eta: {
         art: "/data/eta_eval.json",
-        estimand: "Does the served ETA call the year a prospect debuts better than a naive level table would?",
+        estimand: "Claim: the served ETA calls a prospect's debut year better than a naive level table.",
         baseline: "a naive years-per-level table, scored on identical rows",
         read: j => {
           const c = j.champion_on_baseline_rows || {}, b = j.baseline_naive_level_table || {};
@@ -873,7 +873,7 @@
       },
       farm_report_card: {
         art: "/data/farm_grade_eval.json",
-        estimand: "Does the farm grade's financial core (surplus mass over the vintage board) rank orgs by the graduate WAR they went on to produce?",
+        estimand: "Claim: the farm grade's financial core (surplus mass over the vintage board) ranks orgs by the graduate WAR they went on to produce.",
         baseline: "a plain prospect-count ranking on the same vintage boards",
         read: j => {
           const m = j.mean_spearman || {};
@@ -897,7 +897,7 @@
       },
       spotlights: {
         art: "/data/editorial_eval.json",
-        estimand: "Do the editorial flags predict real consensus movement, or just narrate it?",
+        estimand: "Claim: the editorial flags predict consensus movement rather than narrate it.",
         baseline: "unflagged board players drawn at random from the flag's own FV band x level x age band on the emit night, scored over the same window on the same board history",
         read: j => {
           const v2 = j.v2 || {}, t = v2.by_flag_type || {}, ba = j.before_after || {};
@@ -931,7 +931,7 @@
       },
       fa_projection_engine: {
         art: "/data/fa_gate1_eval.json",
-        estimand: "Does the FA projection engine forecast next-season WAR better than carrying a player's own recent record forward?",
+        estimand: "Claim: the FA projection engine forecasts next-season WAR better than carrying a player's own recent record forward.",
         baseline: "a 5/4/3 weighted average of actual finals, no regression, no aging",
         read: j => {
           const p = (j.pooled || {}).war;
@@ -948,19 +948,19 @@
       },
       rational_value: {
         art: "/data/fa_gate2_eval.json",
-        estimand: "The pricing legs under rational value are gate-checked through the market backtest: predicted guarantee, AAV, and years against what free agents then signed for.",
+        estimand: "Claim: the pricing legs under rational value predict the guarantee, AAV and years free agents then signed for (scored through the market backtest).",
         baseline: "the median of the 5 nearest comps from prior winters, $/WAR-trend inflated, NPV basis",
         read: g2Read,
       },
       m_guarantee: {
         art: "/data/fa_gate2_eval.json",
-        estimand: "Does the market model predict the contract a free agent actually signs?",
+        estimand: "Claim: the market model predicts the contract a free agent signs.",
         baseline: "the median of the 5 nearest comps from prior winters, $/WAR-trend inflated, NPV basis",
         read: g2Read,
       },
       fit_components: {
         art: "/data/fa_gate3_eval.json",
-        estimand: "Does the team-fit score put a free agent's actual signing club near the top of its 30-team ranking?",
+        estimand: "Claim: the team-fit score ranks a free agent's signing club near the top of its 30 teams.",
         baseline: "random team, payroll-only, and behavior-only rankings on the same signings",
         read: j => {
           const r = j.results || {}, v = j.verdicts || {};
@@ -983,23 +983,23 @@
       },
       surplus_value: {
         art: "/data/surplus_backtest_real.json",
-        estimand: "Do predicted surplus dollars track the dollars prospects actually returned?",
+        estimand: "Claim: predicted surplus dollars track the dollars prospects returned.",
         baseline: "a flat pricing with no player information (slope 0)",
         read: surplusRead,
         note: j => {
           const sp = (((j.full_pool || {}).raw_errors) || {}).spearman;
-          return sp == null ? "" : "Honest limit: per-player ordering inside the pool is far weaker (Spearman " + _rn(sp, 2) + "); the calibration holds at the bin level, where prices are set.";
+          return sp == null ? "" : "Limit: per-player ordering inside the pool is weaker (Spearman " + _rn(sp, 2) + "); the calibration holds at the bin level, where prices are set.";
         },
       },
       tvi: {
         art: "/data/surplus_backtest_real.json",
-        estimand: "TVI prices off the same engine: do its predicted dollars track realized dollars?",
+        estimand: "Claim: TVI, priced off the same engine, predicts dollars that track realized dollars.",
         baseline: "a flat pricing with no player information (slope 0)",
         read: surplusRead,
       },
       ifa: {
         art: "/data/ifa_step_prior_eval.json",
-        estimand: "Do IFA signees at or above the $1M bonus step go on to produce more than signees below it (the step prior eFV consumes)?",
+        estimand: "Claim: IFA signees at or above the $1M bonus step produce more than signees below it (the step prior eFV consumes).",
         baseline: "signees below the $1M step, same matched classes",
         read: j => {
           const s = j.step_boundary_first6 || {};
@@ -1017,7 +1017,7 @@
       xfv: {
         art: "/data/source_backtest.json",
         cache: () => (_S.backtest && !_S.backtest.__error ? _S.backtest : null),
-        estimand: "Does eFV order realized 6-year WAR better than the consensus it is built to upgrade, vintage-matched so neither side holds a timing edge?",
+        estimand: "Test: eFV against the consensus it upgrades, on ordering realized 6-year WAR (vintage-matched, so neither side holds a timing edge).",
         baseline: "the PROSPX consensus, identical rows and identical vintages",
         read: j => {
           const hh = (j.accuracy || {}).head_to_head_verdict;
@@ -1035,14 +1035,14 @@
           const hh = ((j && j.accuracy) || {}).head_to_head_verdict;
           if (!hh || hh.resolvable == null) return "";
           return hh.resolvable === true
-            ? "The gap clears the floor this backtest can resolve. The full derived verdict renders in Source Comparison."
-            : "The honest reading is a tie: the gap sits inside the floor this backtest can resolve, so eFV and the consensus are statistically indistinguishable on ordering. The full derived verdict renders in Source Comparison.";
+            ? "The gap clears the resolvable floor. Full verdict: Source Comparison."
+            : "Read: a tie. The gap sits inside the resolvable floor; on ordering, eFV and consensus are indistinguishable at this power. Full verdict: Source Comparison.";
         },
       },
       consensus_fv: {
         art: "/data/source_backtest.json",
         cache: () => (_S.backtest && !_S.backtest.__error ? _S.backtest : null),
-        estimand: "Is the equal-weight blend better than its best single input?",
+        estimand: "Claim: the equal-weight blend beats its best single input.",
         baseline: "the best single input, re-picked inside every bootstrap draw",
         read: j => {
           const c = (j.accuracy || {}).consensus_vs_inputs;
@@ -1056,7 +1056,7 @@
           return [leg(c.spearman, "Ordering realized WAR (Spearman rho)"),
                   leg(c.auc, "Separating future contributors (AUC)")].filter(Boolean);
         },
-        note: () => "Two legs, two answers: blending buys discrimination, and the ordering gap sits inside the floor. Both are printed rather than the better one.",
+        note: () => "Two legs, two answers: blending buys discrimination; the ordering gap sits inside the floor.",
       },
       // ---- LOSSES, rendered honestly ---------------------------------------
       war_pa_plus: wrSpec("hit", "hitter (WAR/PA+)"),
@@ -1064,7 +1064,7 @@
       war_ip_plus_rp: wrSpec("RP", "reliever (WAR/IP+)"),
       statcast_plus: {
         art: "/data/statcast_plus_eval.json",
-        estimand: "Does a prospect's final-AAA Statcast composite forward-predict his first MLB season?",
+        estimand: "Claim: a prospect's final-AAA Statcast composite predicts his first MLB season (forward).",
         baseline: "none: a forward correlation published as measured, per the publish-the-r rule",
         read: j => {
           const h = j.hitters || {}, p = j.pitchers || {};
@@ -1085,7 +1085,7 @@
       },
       arb_award_model: {
         art: "/data/arbitration_eval.json",
-        estimand: "Does the arbitration award model price the salary a tendered player actually receives?",
+        estimand: "Claim: the arbitration award model prices the salary a tendered player receives.",
         baseline: "its class-appropriate naive bar, and the published MLBTR / Matt Swartz projection",
         read: j => {
           const r1 = ((j.results || {}).arb1) || {}, a6 = j.a6_swartz || {};
@@ -1560,7 +1560,7 @@ function _methProseParts() {
       <dt>Why a consensus instead of one source?</dt>
       <dd>Averaging cancels idiosyncratic source error, and the measured edge is two-legged: on resolved cohorts the blend separates future contributors from non-contributors better than any single input (the AUC leg clears its floor), while on ordering realized WAR the gap to its best input sits inside the noise floor the backtest can resolve. Blending buys discrimination, not ordering; the live legs and floors render in Source Comparison. Per-source edges are small and unstable year to year, which is why the blend stays at equal weights rather than chasing them.</dd>
       <dt>How are sources weighted?</dt>
-      <dd>Equally: every source votes at exactly 1.0. An accuracy-weighted blend (per-source weights from measured track records, shrunk toward equal and clamped) shipped in June 2026 and was reverted on 2026-07-25, when a hardened forward-chained re-measurement showed its edge was smaller than the test could resolve (d&rho; -0.0012 vs a minimum detectable effect of 0.0068) - the weights were unearned, so they came off. Only two of eight outlets even have resolvable outcome history. The interactive in Value and surplus lets you test any weighting yourself.</dd>
+      <dd>Equally: every source votes at exactly 1.0. An accuracy-weighted blend (per-source weights from measured track records, shrunk toward equal and clamped) shipped in June 2026 and was reverted on 2026-07-25, when a hardened forward-chained re-measurement showed its edge was smaller than the test could resolve (d&rho; -0.0012 vs a minimum detectable effect of 0.0068), so the weights came off. Two of eight outlets have resolvable outcome history. The Value and surplus widget tests any weighting.</dd>
       <dt>How often does it update?</dt>
       <dd>The full pipeline runs on the first of each month and a daily refresh runs on the remaining nights. eFV and the Source Comparison ledger update with the daily run. Each board stamps its own date.</dd>
       <dt>What's the track record - and its limits?</dt>
@@ -1771,7 +1771,7 @@ function _methAccuracyChart(bt) {
     const rowTxt = pubs.map(pr => `${f3(pr[1].spearman)} ${escapeHtml(pr[0])}`).join(", ");
     verdict = `<p class="meth-verdict ${cls}">Out of sample and leakage-free, on the ${n} players eFV and the boards both grade, ${head}. The full row: eFV ${f3(x.spearman)}, ${rowTxt}. A wider gap you may have seen quoted compares eFV on its own rows against the boards on all of theirs, and about half of that one is the row difference rather than the ordering.</p>`;
   } else {
-    verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric (reported as measured, not cherry-picked).</p>`;
+    verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric.</p>`;
   }
   const nRows = (hh && hh.n) || (acc.xfv && acc.xfv.n) || null;
   return `<div class="meth-chart meth-accuracy">
@@ -2143,7 +2143,7 @@ function _methConsensusVsInputsNote(bt) {
                  leg(cvi.auc, "Contributor discrimination (AUC)")].filter(Boolean);
   if (!items.length) return "";
   return `<div class="sacc-legs">
-    <div class="meth-table-title">Does blending beat the best single input?</div>
+    <div class="meth-table-title">Blend against its best single input</div>
     <ul class="sacc-leg-list">${items.join("")}</ul>
     ${cvi.reading ? `<p class="meth-note">${escapeHtml(cvi.reading)}</p>` : ""}
     ${cvi.basis ? `<p class="meth-note sacc-basis-line">Basis: ${escapeHtml(cvi.basis)}</p>` : ""}
@@ -2361,7 +2361,7 @@ function renderGuide() {
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">FV 55</span>`, "consensus_fv",
       "The consensus FV: the equal-weight mean of every source's grade, shown beside eFV."),
     anat(`<span style="display:inline-flex;gap:3px;"><span class="fv-badge fv-55 card-rarity-holo" style="padding:2px 7px;font-size:11px;">photo</span></span>`, "fv_rarity",
-      "The photo's border/effect tier (shine → foil → chrome → holo → legendary) is keyed to FV, so rarity reads at a glance and matches the prospect list."),
+      "Border tier (shine, foil, chrome, holo, legendary) is set by FV, on the prospect list's tiers."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">HIT 60 · PWR 65 · …</span>`, "twenty_eighty",
       "Per-tool 20-80 scouting grades. 50 is MLB-average; each ±10 is roughly one standard deviation. These feed the composite and, ultimately, FV."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-violet);">$DvM+ 110</span>`, "dvm_plus",
@@ -2404,7 +2404,7 @@ function renderGuide() {
 
   el.innerHTML = `
   <div class="guide-wrap">
-    <p class="guide-intro">Every number on the site resolves to a ${escapeHtml(LIB_NAME)} entry. This page labels the elements you'll see on a player card, the FV history chart, and a farm-system page, then shows how the metrics build on one another. Click any underlined term for its definition.</p>
+    <p class="guide-intro">Every number on the site resolves to a ${escapeHtml(LIB_NAME)} entry. Labels for the player card, the FV history chart and the farm page, and how the metrics stack. Underlined terms open their definition.</p>
 
     <h2 class="meth-h">Anatomy of a player card</h2>
     <div class="guide-anat">${cardAnatomy}</div>
@@ -2674,7 +2674,7 @@ function _methInteractivesHTML() {
         <button class="chip" type="button" onclick="_gxConsensusReset()">Reset to equal weights</button>
         <div id="gx-consensus-out" class="gx-out gx-out-inline"></div>
       </div>
-      <p class="meth-note" style="margin-top:8px;">The live board uses EQUAL WEIGHTS (the accuracy-weighted scheme shipped in June 2026 was reverted on 2026-07-25 after a hardened re-measurement showed its edge was inside the noise floor). This widget starts from equal weights - the served configuration - so you can feel how any weighting would move a consensus.</p>
+      <p class="meth-note" style="margin-top:8px;">The live board uses equal weights; the accuracy-weighted scheme shipped in June 2026 was reverted on 2026-07-25, when a hardened re-measurement put its edge inside the noise floor. Starts at equal weights (the served setting); change a weight to see the consensus move.</p>
     </div>
   </div>
 
@@ -2845,7 +2845,7 @@ function _methIndustryHTML() {
     <div class="meth-table-title">One grade, five tables <span class="meth-sub">the per-year-if-he-arrives trap</span></div>
     <p class="meth-note">Every public FV-to-WAR table answers a different question. Some price a single season if the prospect arrives. Some price a prime season. Some price the whole six controlled years with the busts folded in. They all get published under the same name, so reading one as another is a silent unit error, and it is the most common way a prospect gets mispriced in public trade math.</p>
     ${fiveMath}
-    <p class="meth-note">Our fix is a hard two-table split: a conditional shape inside the outcome mixture (what a hit looks like) and a bust-inclusive per-year table that the dollars actually ride. The served snapshot is <a href="/data/value_framework.js" target="_blank" rel="noopener">value_framework.js</a>; the industry anchor it is checked against is the FanGraphs outcome-buckets study${srcs.outcome_buckets ? ` (<a href="${escapeHtml(srcs.outcome_buckets)}" target="_blank" rel="noopener noreferrer">source</a>)` : ""}.</p>
+    <p class="meth-note">Our fix is a hard two-table split: a conditional shape inside the outcome mixture (what a hit looks like) and a bust-inclusive per-year table that the dollars ride. The served snapshot is <a href="/data/value_framework.js" target="_blank" rel="noopener">value_framework.js</a>; the industry anchor it is checked against is the FanGraphs outcome-buckets study${srcs.outcome_buckets ? ` (<a href="${escapeHtml(srcs.outcome_buckets)}" target="_blank" rel="noopener noreferrer">source</a>)` : ""}.</p>
   </div>`;
 
   // (b) Sub-45 anchors: fitted vs published constants, derived from the
@@ -2893,7 +2893,7 @@ function _methIndustryHTML() {
   }
   const blockC = `<div class="meth-table-wrap">
     <div class="meth-table-title">One table, two sides <span class="meth-sub">a grade does not buy the same WAR from a pitcher</span></div>
-    <p class="meth-note">The industry publishes one FV-to-WAR mapping and hands it to both sides. Measured against what graded prospects actually produced, the top consensus band pays out very differently by side.</p>
+    <p class="meth-note">The industry publishes one FV-to-WAR mapping and hands it to both sides. Measured against what graded prospects produced, the top consensus band pays out differently by side.</p>
     ${blockCNum}
     <p class="meth-note">eFV keeps pitchers ranked against pitchers, so this gap sits in the consensus grade eFV reads, not in a separate eFV forecast. The full band-by-band table, unresolved cells included, renders in Source Comparison; artifact: <a href="/data/xfv_side_calibration_eval.json" target="_blank" rel="noopener">xfv_side_calibration_eval.json</a>.</p>
   </div>`;
@@ -2930,7 +2930,7 @@ function _methIndustryHTML() {
   const blockE = `<div class="meth-table-wrap">
     <div class="meth-table-title">The economics layer <span class="meth-sub">expectations, NPV, and a moving $/WAR</span></div>
     <p class="meth-note"><strong>A price is an expectation, not a median.</strong> The median outcome of a low-tier prospect is a bust worth nothing, so a median-target price floors at $0 and calls every lottery ticket free. The trade engine consumes surplus as a price, and a price is a mean: since the EV reframe the correction map targets the conditional mean and the $0 floor is gone. The calibration receipt is <a href="/data/surplus_backtest_real.json" target="_blank" rel="noopener">surplus_backtest_real.json</a>, also rendered on the Surplus value entry in Terms.</p>
-    <p class="meth-note"><strong>A deferred dollar is not a dollar.</strong> Contract legs are compared on NPV at ${drate}, so a heavily deferred sticker deflates to the liability it actually is before any comparison runs. The schedules live in the deferral ledger (<a href="/data/deferrals.json" target="_blank" rel="noopener">deferrals.json</a>); the Ohtani contract is its canonical entry.</p>
+    <p class="meth-note"><strong>A deferred dollar is not a dollar.</strong> Contract legs are compared on NPV at ${drate}, so a heavily deferred sticker deflates to its present-value liability before any comparison runs. The schedules live in the deferral ledger (<a href="/data/deferrals.json" target="_blank" rel="noopener">deferrals.json</a>); the Ohtani contract is its canonical entry.</p>
     <p class="meth-note"><strong>One price of a win.</strong>${dpwLine} Since September 30, 2026 every surplus on the site, prospect and veteran, prices at one free-agent winter level${dpwLvl ? `, ${dpwLvl}` : ""}, so a prospect win and a veteran win cost the same inside one total.</p>
   </div>`;
 
@@ -3236,14 +3236,14 @@ function _methReliabilityHTML() {
   const nPool = rel.pooled_n != null ? ` · n=${rel.pooled_n}` : "";
   const gen = rel.generated_at ? ` · regenerated ${escapeHtml(String(rel.generated_at))}` : "";
   return `<div class="source-comp-wrap">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Live calibration monitor · the model grading itself</div>
-    <h2 class="meth-h">Is eFV still calibrated?</h2>
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Live calibration monitor · re-scored nightly</div>
+    <h2 class="meth-h">Calibration monitor: eFV v1 reliability by bin</h2>
     <p class="meth-note">Every night eFV v1's five-bucket outcome distribution, the odds the board served until September 25, 2026, is re-scored forward-chained out of fold against resolved outcomes${nPool}${gen}. A widening bust-bucket calibration gap trips a review flag. The board's eFV V2 odds are the consensus outcome table read at the eFV grade, and this monitor does not score them. Diagnostic only: no grade, WAR or dollar figure depends on these curves.</p>
     ${tripHTML}
     <div class="meth-tables">${bucketTable}${tierTable}</div>
-    <p class="meth-note">ECE (expected calibration error) is the bin-weighted gap between the probability the model assigned an outcome and how often it actually happened; lower is better. ${isServed
-      ? "These are eFV v1's odds after the dispersion correction that rescales the bust curve from the consensus-grade scale it was fitted on to the wider eFV scale it is read at. Honest read: bust still lands above the diagonal in every bin, so more prospects bust than the model says and bust risk stays understated - but by materially less than the uncorrected curve, and the tripwire trips if it ever drifts back toward it."
-      : "This vintage predates the dispersion correction, so it reports the uncorrected curve rather than the odds now served. Honest read: low-probability bust calls land well above the diagonal, meaning far more prospects bust than the model predicts."}</p>
+    <p class="meth-note">ECE (expected calibration error) is the bin-weighted gap between the probability the model assigned an outcome and how often it happened; lower is better. ${isServed
+      ? "These are eFV v1's odds after the dispersion correction that rescales the bust curve from the consensus-grade scale it was fitted on to the wider eFV scale it is read at. Read: bust lands above the diagonal in every bin; bust risk is understated, by less than on the uncorrected curve."
+      : "This vintage predates the dispersion correction, so it reports the uncorrected curve rather than the odds now served. Read: low-probability bust calls land well above the diagonal; far more prospects bust than the model predicts."}</p>
   </div>`;
 }
 
@@ -3491,7 +3491,7 @@ function _hhFloorClause(bt, key) {
   if (fl.clearsUncorrected && holm) {
     return ` that clears its${est} noise floor of ${fmt(fl.mde95)} but not the ${fmt(fl.holmFloor)} floor after the correction for testing several sources at once.`;
   }
-  return ` that does NOT clear its${est} noise floor of ${fmt(fl.mde95)}${carried}.`;
+  return ` that does not clear its${est} noise floor of ${fmt(fl.mde95)}${carried}.`;
 }
 
 function _methHeroBanner(bt) {
@@ -3579,9 +3579,9 @@ function _methHeroBanner(bt) {
   return `<div class="source-comp-hero">
     <div class="source-comp-hero-kicker">Our grade against theirs</div>
     <h2 class="source-comp-hero-title">${headline}</h2>
-    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV starts from the consensus of those opinions and reorders it inside hitters and inside pitchers with drivers fitted on resolved outcomes. It is scored leakage-free and forward-chained, on the same players, the same window and the same vintage as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - ${verbPhrase}${leadClause}${consClause}${unresolvedTail}</p>
+    <p class="source-comp-hero-lede">Public FV grades are scouting opinions. eFV starts from their consensus and reorders it within hitters and within pitchers, with drivers fit on resolved outcomes. It is scored leakage-free and forward-chained, on the same players, window and vintage as each source. On ordering skill, ${verbPhrase}${leadClause}${consClause}${unresolvedTail}</p>
     <div class="meth-findings source-comp-hero-tiles">${tiles}</div>
-    <p class="source-comp-hero-foot">Ordering skill = Spearman correlation between the preseason grade and realized MLB WAR (higher is better). The full method, per-FV-tier and per-archetype breakdowns, and the honest limits are all below - nothing cherry-picked.${_hhPopulationClause(bt)}</p>
+    <p class="source-comp-hero-foot">Ordering skill = Spearman correlation between the preseason grade and realized MLB WAR (higher is better).${_hhPopulationClause(bt)}</p>
   </div>`;
 }
 
@@ -3724,7 +3724,7 @@ function _methSideCalibration() {
   const basis = j.basis || {};
   return `<div class="source-comp-wrap" id="side-calibration">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Pitchers and hitters &middot; graded against what they became</div>
-    <h2 class="meth-h">Does a grade mean the same thing for a pitcher as for a hitter?</h2>
+    <h2 class="meth-h">Pitcher and hitter grades at equal FV</h2>
     <p class="meth-note">Each row reads <strong>what each side produced at the same grade</strong>. Nothing here compares one source's grade to another's. The reference throughout is realized first-six-year WAR on ${_saccN(basis.n)} resolved prospects, with players who never reached the majors carried at zero so survivors are not the only thing being scored.</p>
     <div class="table-scroll-x"><table class="meth-table">
       <thead><tr><th>Grade band</th><th>Hitters n</th><th>Their WAR</th><th>Pitchers n</th><th>Their WAR</th><th>Gap</th><th>95% interval</th></tr></thead>
@@ -3878,7 +3878,7 @@ function _scxGfxSpec() {
     module: "Source Comparison",
     accentToken: "--accent-lilac",
     format: "twitter",
-    title: "Does eFV outperform its sources?",
+    title: "eFV against its sources",
     subtitle: "Same players, same outcome, same window, same vintage"
       + (nCommon ? " · n=" + Number(nCommon).toLocaleString() : "")
       + (span ? " · preseason cohorts " + span : ""),
@@ -5116,10 +5116,10 @@ function renderSourceComparison() {
         ${_methCalibrationChart(bt, "contributor_rate", "Contributor rate (career WAR ≥ " + (od.contributor_war ?? 3) + ")", { pct: true, yMax: 1 })}
       </div>
       <h3 class="meth-h3">Cohort outcomes by FV tier</h3>
-      <p class="meth-note">Every prospect a source graded that preseason is in its cohort - players who never debuted stay in at 0 WAR (no survivorship cherry-picking). Cumulative WAR is censored at today, so younger cohorts (2023) have had less time to accrue it; the rate columns (WAR/yr, Reg pace) are less sensitive to that. <strong>eFV note:</strong> eFV is shown on its out-of-sample resolved cohort, which is debuted-heavy (its grades come from the labeled training pool), so its absolute WAR/contributor levels run a touch higher than the sources' full cohorts - compare the <em>shape</em> of the tier separation, not the absolute height.</p>
+      <p class="meth-note">Every prospect a source graded that preseason is in its cohort; players who never debuted stay in at 0 WAR (no survivorship filter). Cumulative WAR is censored at today, so younger cohorts (2023) have had less time to accrue it; the rate columns (WAR/yr, Reg pace) less so. <strong>Note on eFV:</strong> it is shown on its out-of-sample resolved cohort, which is debuted-heavy (its grades come from the labeled training pool), so its absolute WAR/contributor levels run a touch higher than the sources' full cohorts. Compare the <em>shape</em> of the tier separation, not the absolute height.</p>
       <div class="meth-tables">${bt.raters.concat(bt.cohorts.xfv ? ["xfv"] : []).map(r => _methTierTable(bt, r)).join("")}</div>
       <div class="meth-caveats">
-        <div class="meth-caveats-title">${window.EephusIco ? window.EephusIco("warn", 12) : ""} Read this honestly</div>
+        <div class="meth-caveats-title">${window.EephusIco ? window.EephusIco("warn", 12) : ""} Caveats</div>
         <ul>
           <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
           <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40-60 across all years - a handful of hits or misses moves its rates a lot.</li>
@@ -5361,7 +5361,7 @@ function _saccReadFirst(d) {
     <h3 class="meth-h3">The ${_saccN(m.cells_flagged_answerable)} cells that cleared their floor</h3>
     <p class="meth-note">${holm.length ? `After a Holm correction inside each partition, ${holm.length} survive: ${holm.map(h => `<code>${escapeHtml(h)}</code>`).join(", ")}. ` : ""}${escapeHtml(m.survivors_overlap_note || "")}</p>
     <div class="meth-caveats">
-      <div class="meth-caveats-title">${window.EephusIco ? window.EephusIco("warn", 12) : ""} Read this honestly</div>
+      <div class="meth-caveats-title">${window.EephusIco ? window.EephusIco("warn", 12) : ""} Caveats</div>
       <ul>
         <li><strong>The global head-to-head does not resolve.</strong> Pooled difference ${_s4((d.accuracy || {}).pooled && d.accuracy.pooled.d_rho)} against a minimum detectable effect of ${_f4((d.accuracy || {}).pooled && d.accuracy.pooled.mde95)}, bootstrap two-sided p ${_f4((d.accuracy || {}).pooled && d.accuracy.pooled.boot_p_two_sided)}. Every cohort claim on the tabs below sits inside that.</li>
         <li><strong>A survivor count is not a family test.</strong> ${_saccN(m.cells_tested)} cells at alpha 0.05 produce about ${_f2(m.expected_false_positives_at_alpha_05)} flags with no signal at all.</li>
@@ -5429,7 +5429,7 @@ function _saccByArchetype(d) {
     <td>${_f4(y.rho_mlb_pipeline)}</td>
     <td>${_s4(y.d_rho)}</td>
   </tr>`).join("");
-  return `<p class="meth-window">Six archetypes, the finest cut this data supports. This is the most valuable block on the page and it is a negative result: the spread across the six is inside the band that randomly shuffled archetype labels produce.</p>
+  return `<p class="meth-window">Six archetypes, the finest cut this data supports. The result is negative: the spread across the six is inside the band that randomly shuffled archetype labels produce.</p>
     ${_saccEffectTable(a.by_archetype, "FanGraphs minus MLB Pipeline, by archetype", "difference in Spearman rho against each cell's own floor", order)}
     <h3 class="meth-h3">The family test</h3>
     <div class="meth-findings">${fam}</div>
@@ -5640,8 +5640,8 @@ function _saccCoverage(d) {
         <thead><tr><th>Outlet</th><th class="sacc-verdict">Status</th><th>Blocked by</th><th>Resolvable rows</th><th>Common-set retention</th></tr></thead>
         <tbody>${clsRows}</tbody>
       </table></div></div>${clsRuleNote}`
-    : `<p class="meth-note">The source classification table is loading.</p>`;
-  return `<p class="meth-window">What the common set threw away, whether the scale itself moved under the measurement, and which outlets could not be scored at all. Naming the exclusion and publishing its size is the honest form of this evidence: the cut rows carry zero paired contrast, so no model recovers them.</p>
+    : `<p class="meth-note">Loading the source classification table.</p>`;
+  return `<p class="meth-window">What the common set threw away, whether the scale itself moved under the measurement, and which outlets could not be scored at all. Excluded rows, with their count: they carry zero paired contrast, so no model recovers them.</p>
     <div class="meth-table-wrap">
       <div class="meth-table-title">Coverage and selection <span class="meth-sub">own rows against the two-source common set</span></div>
       <div class="table-scroll-x"><table class="meth-table sacc-table">
@@ -5683,8 +5683,8 @@ function renderSourceAccuracy() {
     const chips = _SACC_TABS.map(([k, lbl]) =>
       `<button class="chip${_SACC_TAB === k ? " active" : ""}" type="button" aria-pressed="${_SACC_TAB === k ? "true" : "false"}" data-sacc-tab="${escapeHtml(k)}">${escapeHtml(lbl)}</button>`).join("");
     return `<div class="source-comp-wrap sacc-wrap">
-      <div class="source-comp-eyebrow"><span class="scx-dot"></span>Source accuracy by cohort &middot; zero weights ship</div>
-      <h2 class="meth-h">Who is better on which kind of prospect?</h2>
+      <div class="source-comp-eyebrow"><span class="scx-dot"></span>Diagnostic &middot; zero weights ship</div>
+      <h2 class="meth-h">Source accuracy by prospect type</h2>
       <div class="filter-bar sacc-tabs"><span class="gl-microlabel">Section</span>${chips}</div>
       ${inner}
     </div>`;
@@ -5753,7 +5753,7 @@ function renderLibrary() {
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Page Index · every page with its own address</div>
     <h2 class="meth-h">The page index</h2>
     <p class="meth-note">Every page on eephus.io with its own address: the modules, the reference pages, the views inside each module you can link to, and the player cards.</p>
-    <div class="meth-tables">${groups.length ? groups.map(group).join("") : '<p class="meth-note">The page list did not load with this page. Reload to try again.</p>'}</div>
+    <div class="meth-tables">${groups.length ? groups.map(group).join("") : '<p class="meth-note">The page list did not load. Reload to retry.</p>'}</div>
   </div>`;
 }
 
