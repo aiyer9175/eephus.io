@@ -34,6 +34,7 @@ from __future__ import annotations
 import functools
 import json
 import logging
+import os
 import sys
 from datetime import date
 from pathlib import Path
@@ -524,6 +525,55 @@ def _join_fwdhem_plus(hitters: list[dict], hem_raw: dict, season: int) -> int:
     return n
 
 
+# The pWOBA xwOBA blend (registry row pwoba_blend_regate, artifact
+# data/pwoba_blend_regate_eval.json). The frozen arm b=0.2 PASSED its registered
+# re-gate on 2026-10-14 (an owner-waived early read of the 2026-11-15 re-gate:
+# n 953, gap v1 lo95 +0.0019, v2 lo95 +0.0024), and the artifact's recorded
+# production diff is this: w = (1 - b) * woba_proj + b * est_woba(season) when the
+# current-season Savant est_woba is present at PA >= 100, else w unchanged;
+# pwoba_pctile recomputes over the blended pool. A served number moves (plan
+# Part 8 class 3), so it ships behind EEPHUS_PWOBA_XWOBA_BLEND, DEFAULT OFF, and
+# only the owner flips it (owner question NOV15-PWOBA-FLIP). Off, this path reads
+# nothing and the column is byte-identical to before.
+PWOBA_XWOBA_BLEND_ENV = "EEPHUS_PWOBA_XWOBA_BLEND"
+PWOBA_XWOBA_BLEND_B = 0.2          # the frozen arm; never re-tuned here
+PWOBA_XWOBA_MIN_PA = 100.0         # the lab's SAVANT_MIN_PA
+
+
+def pwoba_xwoba_blend_on() -> bool:
+    """True only when the owner has flipped EEPHUS_PWOBA_XWOBA_BLEND."""
+    env = (os.environ.get(PWOBA_XWOBA_BLEND_ENV) or "").strip().lower()
+    return env in ("1", "on", "true", "yes")
+
+
+def blend_pwoba_xwoba(w: float, est_woba, b: float = PWOBA_XWOBA_BLEND_B) -> float:
+    """The frozen output blend; a missing est_woba leaves w unchanged."""
+    if est_woba is None:
+        return w
+    return (1.0 - b) * float(w) + b * float(est_woba)
+
+
+def _pwoba_xwoba_map(season: int) -> dict[int, float]:
+    """{mlbam: est_woba} off the season's Savant expected leaderboard at
+    PA >= PWOBA_XWOBA_MIN_PA (the lab's pair-set floor). Best-effort: {} on
+    any failure, and the column then ships unblended for the run."""
+    try:
+        import mlb_player_export as mpe
+        rows = mpe._savant("expected", int(season), "batter")
+    except Exception as e:   # noqa: BLE001 - best-effort join, never aborts the board
+        _log.warning("pwoba xwOBA blend: Savant expected unavailable (%s)", e)
+        return {}
+    out: dict[int, float] = {}
+    for r in rows:
+        try:
+            mid = int(r["player_id"]); ew = float(r["est_woba"]); pa = float(r["pa"])
+        except (TypeError, ValueError, KeyError):
+            continue
+        if pa >= PWOBA_XWOBA_MIN_PA and ew > 0:
+            out[mid] = ew
+    return out
+
+
 def _join_pwoba(hitters: list[dict], season: int) -> int:
     """Stamp pwoba (projected NEXT-season wOBA) + pwoba_pctile onto tracked
     hitters, straight from the FA engine (fa_projection.project_player
@@ -562,6 +612,10 @@ def _join_pwoba(hitters: list[dict], season: int) -> int:
     for r in corpus["hit"]:
         if r.get("mlbam") and r["season"] >= target - 3:
             by_player.setdefault(int(r["mlbam"]), {})[r["season"]] = r
+    # The flagged xwOBA blend (see PWOBA_XWOBA_BLEND_ENV above): off by default,
+    # and off it reads nothing.
+    xw_blend = _pwoba_xwoba_map(season) if pwoba_xwoba_blend_on() else {}
+    n_blended = 0
     stamped: list[dict] = []
     for h in hitters:
         mid = h.get("mlbam")
@@ -583,8 +637,16 @@ def _join_pwoba(hitters: list[dict], season: int) -> int:
         w = (proj or {}).get("woba_proj")
         if w is None:
             continue
+        if xw_blend:
+            est = xw_blend.get(int(mid))
+            if est is not None:
+                w = blend_pwoba_xwoba(w, est)
+                n_blended += 1
         h["pwoba"] = round(float(w), 3)
         stamped.append(h)
+    if xw_blend:
+        _log.info("pwoba xwOBA blend ON (%s): b=%s, %d of %d stamped hitters blended",
+                  PWOBA_XWOBA_BLEND_ENV, PWOBA_XWOBA_BLEND_B, n_blended, len(stamped))
     # Percentile within the joined pool (mid-rank, 0-100) for the color ramp.
     if len(stamped) >= 2:
         import bisect
