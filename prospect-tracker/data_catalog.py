@@ -189,6 +189,20 @@ ARTIFACTS = (
                  "say so in `answerable`. No source weight ships from this file."),
     },
     {
+        "file": "tool_source_accuracy.json", "group": "prospects",
+        "title": "Tool grade accuracy by source",
+        "what": ("Look W of the tool-implied production gate, as the Source Accuracy Tools tab "
+                 "prints it: per primary tool the equal and accuracy-weighted Spearman rho, "
+                 "their difference, the permutation p and the runner's verdict; per source and "
+                 "tool the ordering rho, bias (mean regressed tool above grade and mean "
+                 "percentile minus 0.5) and error, with n and the not-computable notes."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_source_accuracy_tools_tab.py",
+        "note": ("A display copy of the spent look record tool_accuracy_eval.json, written by "
+                 "tools/tool_accuracy_lab.py --export-display without a re-run. Accuracy among "
+                 "players who reached the majors. No source weight ships from this file."),
+    },
+    {
         "file": "xfv_side_calibration_eval.json", "group": "prospects",
         "title": "Pitcher and hitter grades at equal FV",
         "what": ("Why eFV ranks few pitchers near the top: the pitcher grade audit. "

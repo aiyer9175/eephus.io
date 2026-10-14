@@ -19,6 +19,11 @@ Modes:
                                                     MLB player-seasons (no prospect
                                                     join, no grade read)
     --freeze-grade-rows                             Part T.3's frozen grade rows
+    --export-display                                look W's display copy from the
+                                                    spent record, never a re-run:
+                                                    data/tool_source_accuracy.json
+                                                    with the Source Accuracy Tools
+                                                    tab on (TL_15), else the preview
 
 Everything the gate imports by name is imported here by name, never retyped:
 BA2's estimator and gate constants (tools/ba_tool_grade_lab.py, source_backtest),
@@ -88,6 +93,7 @@ ARTIFACT = {"P": DATA / "power_composite_eval.json",
             "T": DATA / "tool_tables_rederived_eval.json"}
 FROZEN_ROWS = T_LABS / "grade_rows_frozen.json"
 PREVIEW_W = CACHE / "tool_accuracy" / "preview" / "tool_source_accuracy.json"
+SERVED_W = DATA / "tool_source_accuracy.json"
 MDE_FOLDS = T_LABS / "mde95_folds.json"
 K_M_RECEIPT = LABS / "k_m.json"
 
@@ -2392,6 +2398,7 @@ def main(argv=None) -> int:
     ap.add_argument("--mde-only", action="store_true")
     ap.add_argument("--k-m", action="store_true")
     ap.add_argument("--freeze-grade-rows", action="store_true")
+    ap.add_argument("--export-display", action="store_true")
     ap.add_argument("--gate-sha")
     ap.add_argument("--rlv-record")
     ap.add_argument("--registration")
@@ -2416,8 +2423,12 @@ def main(argv=None) -> int:
         print("frozen grade rows:", doc["n_rows"], "dropped:", doc["dropped"])
         print("wrote", _rel(FROZEN_ROWS), "sha256", sha256_of(FROZEN_ROWS))
         return 0
+    if args.export_display:
+        path = export_display_w()
+        print("wrote display copy", _rel(path), "sha256", sha256_of(path))
+        return 0
     if not args.look:
-        ap.error("--look P|W|T, --k-m or --freeze-grade-rows is required")
+        ap.error("--look P|W|T, --k-m, --freeze-grade-rows or --export-display is required")
     if args.dry_run:
         rec = dry_run(args.look, out_dir / "dryrun", boot=args.boot or 40, perm=args.perm or 30)
         print(rec["record_text"])
@@ -2457,10 +2468,11 @@ def main(argv=None) -> int:
     return 0
 
 
-def preview_w(rec: dict) -> dict:
+def preview_w(rec: dict, served: bool = False) -> dict:
     """The display copy of look W (gate W.13): per tool the verdict, the derived
-    weights by year and the three source metrics per source; written only under
-    .cache/tool_accuracy/preview/, never served."""
+    weights by year and the three source metrics per source. The look writes it
+    under .cache/tool_accuracy/preview/ (served False); export_display_w writes
+    the same copy to data/ once the Source Accuracy Tools tab is on."""
     res = rec.get("result") or {}
     tools = {}
     for tool, blk in (res.get("primaries") or {}).items():
@@ -2485,11 +2497,37 @@ def preview_w(rec: dict) -> dict:
                      "by_source": {s: {k: b.get(k) for k in ("n", "computable", "ordering", "bias_regressed",
                                                               "bias_pit", "error_abs_regressed", "note")}
                                    for s, b in (t.get("by_source") or {}).items()}}
-    return {"generated_at": rec.get("generated_at"), "look": "W", "display_copy": True, "served": False,
+    return {"generated_at": rec.get("generated_at"), "look": "W", "display_copy": True, "served": bool(served),
             "gate": rec.get("gate"), "gate_sha": rec.get("gate_sha"), "rlv_record": rec.get("rlv_record"),
             "eval_artifact": _rel(ARTIFACT["W"]), "frame": rec.get("frame"),
             "equal_weight_retains_unless_pass": True, "tools": tools, "tag": tag,
             "survivorship": res.get("survivorship")}
+
+
+def tools_tab_on() -> bool:
+    """build_site.SOURCE_ACCURACY_TOOLS_TAB, the flag that names the payload."""
+    import build_site
+    return bool(build_site.SOURCE_ACCURACY_TOOLS_TAB)
+
+
+def export_display_w(served: bool | None = None) -> Path:
+    """Write look W's display copy from the spent look record (ARTIFACT["W"]); no
+    row is read and nothing is scored. With the Source Accuracy Tools tab on the
+    copy goes to SERVED_W (served True), otherwise to PREVIEW_W. Paths resolve at
+    call time. Refuses a missing record, a record of another look, a stopped
+    look and a record without a result."""
+    art = ARTIFACT["W"]
+    if not art.exists():
+        raise GuardError(f"no look W record at {_rel(art)}")
+    rec = json.loads(art.read_text(encoding="utf-8"))
+    if rec.get("look") != "W" or rec.get("stopped") or not isinstance(rec.get("result"), dict):
+        raise GuardError(f"{_rel(art)} is not a completed look W record")
+    if served is None:
+        served = tools_tab_on()
+    out = SERVED_W if served else PREVIEW_W
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(preview_w(rec, served=served), indent=1, default=str), encoding="utf-8")
+    return out
 
 
 if __name__ == "__main__":

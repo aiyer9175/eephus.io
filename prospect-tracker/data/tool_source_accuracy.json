@@ -1,0 +1,802 @@
+{
+ "generated_at": "2026-10-14T18:15:04Z",
+ "look": "W",
+ "display_copy": true,
+ "served": true,
+ "gate": "docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md",
+ "gate_sha": "77bd4302",
+ "rlv_record": "1c73c420",
+ "eval_artifact": "data/tool_accuracy_eval.json",
+ "frame": {
+  "board_years": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "max_debut_year": 2024,
+  "last_outcome_season": 2026
+ },
+ "equal_weight_retains_unless_pass": true,
+ "tools": {
+  "hit": {
+   "stat": "k_pct",
+   "role": "primary",
+   "verdict": "NULL",
+   "n": 492,
+   "d_rho": -0.000812,
+   "d_auc": 0.002124,
+   "equal": {
+    "spearman": 0.4058,
+    "auc": 0.696
+   },
+   "weighted": {
+    "spearman": 0.405,
+    "auc": 0.6982
+   },
+   "holm": {
+    "p": 0.863137,
+    "step": 4,
+    "rejected": false,
+    "m": 4,
+    "threshold": 0.05
+   },
+   "arm_B": "NULL by construction: Baseball America's earliest tool vintage is 2023",
+   "weights_by_year": [
+    {
+     "year": 2017,
+     "n": 102,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2018,
+     "n": 118,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2019,
+     "n": 145,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2020,
+     "n": 141,
+     "weights": {
+      "fangraphs": 1.067,
+      "mlb_pipeline": 0.933
+     },
+     "skipped": null
+    },
+    {
+     "year": 2021,
+     "n": 123,
+     "weights": {
+      "fangraphs": 1.0887,
+      "mlb_pipeline": 0.9113
+     },
+     "skipped": null
+    },
+    {
+     "year": 2022,
+     "n": 125,
+     "weights": {
+      "fangraphs": 1.0596,
+      "mlb_pipeline": 0.9404
+     },
+     "skipped": null
+    },
+    {
+     "year": 2023,
+     "n": 74,
+     "weights": {
+      "fangraphs": 1.0638,
+      "mlb_pipeline": 0.9362
+     },
+     "skipped": null
+    },
+    {
+     "year": 2024,
+     "n": 29,
+     "weights": {
+      "fangraphs": 1.0614,
+      "mlb_pipeline": 0.9386
+     },
+     "skipped": null
+    }
+   ]
+  },
+  "speed": {
+   "stat": "sprint",
+   "role": "primary",
+   "verdict": "VOID",
+   "n": 679,
+   "d_rho": 0.003857,
+   "d_auc": 0.002473,
+   "equal": {
+    "spearman": 0.7255,
+    "auc": 0.8389
+   },
+   "weighted": {
+    "spearman": 0.7293,
+    "auc": 0.8414
+   },
+   "holm": {
+    "p": 0.055944,
+    "step": 2,
+    "rejected": false,
+    "m": 4,
+    "threshold": 0.016667
+   },
+   "arm_B": "NULL by construction: Baseball America's earliest tool vintage is 2023",
+   "weights_by_year": [
+    {
+     "year": 2017,
+     "n": 140,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2018,
+     "n": 161,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2019,
+     "n": 196,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2020,
+     "n": 193,
+     "weights": {
+      "fangraphs": 0.9974,
+      "mlb_pipeline": 1.0026
+     },
+     "skipped": null
+    },
+    {
+     "year": 2021,
+     "n": 165,
+     "weights": {
+      "fangraphs": 0.986,
+      "mlb_pipeline": 1.014
+     },
+     "skipped": null
+    },
+    {
+     "year": 2022,
+     "n": 162,
+     "weights": {
+      "fangraphs": 0.9814,
+      "mlb_pipeline": 1.0186
+     },
+     "skipped": null
+    },
+    {
+     "year": 2023,
+     "n": 107,
+     "weights": {
+      "fangraphs": 0.9763,
+      "mlb_pipeline": 1.0237
+     },
+     "skipped": null
+    },
+    {
+     "year": 2024,
+     "n": 52,
+     "weights": {
+      "fangraphs": 0.9753,
+      "mlb_pipeline": 1.0247
+     },
+     "skipped": null
+    }
+   ]
+  },
+  "field": {
+   "stat": "oaa_per1000",
+   "role": "primary",
+   "verdict": "NULL",
+   "n": 414,
+   "d_rho": 0.003034,
+   "d_auc": 0.003454,
+   "equal": {
+    "spearman": 0.4031,
+    "auc": 0.706
+   },
+   "weighted": {
+    "spearman": 0.4061,
+    "auc": 0.7095
+   },
+   "holm": {
+    "p": 0.63037,
+    "step": 3,
+    "rejected": false,
+    "m": 4,
+    "threshold": 0.025
+   },
+   "arm_B": "NULL by construction: Baseball America's earliest tool vintage is 2023",
+   "weights_by_year": [
+    {
+     "year": 2017,
+     "n": 87,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2018,
+     "n": 101,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2019,
+     "n": 123,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2020,
+     "n": 117,
+     "weights": {
+      "fangraphs": 0.9074,
+      "mlb_pipeline": 1.0926
+     },
+     "skipped": null
+    },
+    {
+     "year": 2021,
+     "n": 102,
+     "weights": {
+      "fangraphs": 0.9176,
+      "mlb_pipeline": 1.0824
+     },
+     "skipped": null
+    },
+    {
+     "year": 2022,
+     "n": 105,
+     "weights": {
+      "fangraphs": 0.9382,
+      "mlb_pipeline": 1.0618
+     },
+     "skipped": null
+    },
+    {
+     "year": 2023,
+     "n": 63,
+     "weights": {
+      "fangraphs": 0.9767,
+      "mlb_pipeline": 1.0233
+     },
+     "skipped": null
+    },
+    {
+     "year": 2024,
+     "n": 27,
+     "weights": {
+      "fangraphs": 0.9829,
+      "mlb_pipeline": 1.0171
+     },
+     "skipped": null
+    }
+   ]
+  },
+  "throw": {
+   "stat": "arm_z",
+   "role": "primary",
+   "verdict": "LOSS",
+   "n": 138,
+   "d_rho": -0.014547,
+   "d_auc": -0.005461,
+   "equal": {
+    "spearman": 0.5342,
+    "auc": 0.7408
+   },
+   "weighted": {
+    "spearman": 0.5197,
+    "auc": 0.7353
+   },
+   "holm": {
+    "p": 0.042957,
+    "step": 1,
+    "rejected": false,
+    "m": 4,
+    "threshold": 0.0125
+   },
+   "arm_B": "NULL by construction: Baseball America's earliest tool vintage is 2023",
+   "weights_by_year": [
+    {
+     "year": 2017,
+     "n": 101,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2018,
+     "n": 118,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2019,
+     "n": 148,
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "skipped": "flat weights"
+    },
+    {
+     "year": 2020,
+     "n": 138,
+     "weights": {
+      "fangraphs": 1.0257,
+      "mlb_pipeline": 0.9743
+     },
+     "skipped": null
+    }
+   ]
+  },
+  "game_pwr": {
+   "tool": "game_pwr",
+   "stat": "iso",
+   "role": "secondary",
+   "verdict": "secondary: no verdict",
+   "ba2": "NO SHIP",
+   "n": 491,
+   "d_rho": 0.003093,
+   "d_auc": 0.001344
+  },
+  "fb": {
+   "tool": "fb",
+   "stat": "k_pct_pit",
+   "role": "secondary",
+   "verdict": "secondary: no verdict",
+   "ba2": "resolved LOSS",
+   "n": 566,
+   "d_rho": -0.002125,
+   "d_auc": -0.00073
+  },
+  "cmd": {
+   "tool": "cmd",
+   "stat": "bb_pct_pit",
+   "role": "secondary",
+   "verdict": "secondary: no verdict",
+   "ba2": "NO SHIP",
+   "n": 567,
+   "d_rho": 0.004064,
+   "d_auc": 0.004031
+  },
+  "hit_avg": {
+   "tool": "hit",
+   "stat": "avg",
+   "role": "secondary",
+   "verdict": "secondary: no verdict",
+   "ba2": "TL-Q2 beside",
+   "n": 492,
+   "d_rho": 0.02126,
+   "d_auc": 0.010452
+  },
+  "speed_sb": {
+   "tool": "speed",
+   "stat": "sb_per600",
+   "role": "secondary",
+   "verdict": "secondary: no verdict",
+   "ba2": "secondary",
+   "n": 492,
+   "d_rho": 0.002887,
+   "d_auc": 0.002727
+  }
+ },
+ "tag": {
+  "hit": {
+   "stat": "k_pct",
+   "n_frame": 1001,
+   "k_m": 46.7354,
+   "regressed": true,
+   "by_source": {
+    "baseballamerica": {
+     "n": 101,
+     "computable": true,
+     "ordering": 0.1707,
+     "bias_regressed": 1.1413,
+     "bias_pit": 0.0598,
+     "error_abs_regressed": 4.1304,
+     "note": null
+    },
+    "fangraphs": {
+     "n": 949,
+     "computable": true,
+     "ordering": 0.39,
+     "bias_regressed": 0.3979,
+     "bias_pit": 0.0083,
+     "error_abs_regressed": 4.0524,
+     "note": null
+    },
+    "mlb_pipeline": {
+     "n": 909,
+     "computable": true,
+     "ordering": 0.3394,
+     "bias_regressed": -0.3107,
+     "bias_pit": -0.0227,
+     "error_abs_regressed": 4.0334,
+     "note": null
+    }
+   }
+  },
+  "speed": {
+   "stat": "sprint",
+   "n_frame": 1432,
+   "k_m": null,
+   "regressed": false,
+   "by_source": {
+    "baseballamerica": {
+     "n": 161,
+     "computable": true,
+     "ordering": 0.7243,
+     "bias_regressed": null,
+     "bias_pit": 0.0223,
+     "error_abs_regressed": null,
+     "note": null
+    },
+    "fangraphs": {
+     "n": 1328,
+     "computable": true,
+     "ordering": 0.6877,
+     "bias_regressed": null,
+     "bias_pit": 0.0369,
+     "error_abs_regressed": null,
+     "note": null
+    },
+    "mlb_pipeline": {
+     "n": 1278,
+     "computable": true,
+     "ordering": 0.7348,
+     "bias_regressed": null,
+     "bias_pit": -0.0472,
+     "error_abs_regressed": null,
+     "note": null
+    }
+   }
+  },
+  "field": {
+   "stat": "oaa_per1000",
+   "n_frame": 847,
+   "k_m": null,
+   "regressed": false,
+   "by_source": {
+    "baseballamerica": {
+     "n": 87,
+     "computable": false,
+     "ordering": 0.3886,
+     "bias_regressed": null,
+     "bias_pit": 0.0374,
+     "error_abs_regressed": null,
+     "note": "NOT COMPUTABLE: pool under 100 players"
+    },
+    "fangraphs": {
+     "n": 805,
+     "computable": true,
+     "ordering": 0.3316,
+     "bias_regressed": null,
+     "bias_pit": 0.0017,
+     "error_abs_regressed": null,
+     "note": null
+    },
+    "mlb_pipeline": {
+     "n": 767,
+     "computable": true,
+     "ordering": 0.3551,
+     "bias_regressed": null,
+     "bias_pit": -0.0265,
+     "error_abs_regressed": null,
+     "note": null
+    }
+   }
+  },
+  "throw": {
+   "stat": "arm_z",
+   "n_frame": 964,
+   "k_m": null,
+   "regressed": false,
+   "by_source": {
+    "baseballamerica": {
+     "n": 113,
+     "computable": true,
+     "ordering": 0.6483,
+     "bias_regressed": null,
+     "bias_pit": 0.0684,
+     "error_abs_regressed": null,
+     "note": null
+    },
+    "fangraphs": {
+     "n": 551,
+     "computable": true,
+     "ordering": 0.4995,
+     "bias_regressed": null,
+     "bias_pit": -0.0148,
+     "error_abs_regressed": null,
+     "note": null
+    },
+    "mlb_pipeline": {
+     "n": 916,
+     "computable": true,
+     "ordering": 0.5757,
+     "bias_regressed": null,
+     "bias_pit": -0.0066,
+     "error_abs_regressed": null,
+     "note": null
+    }
+   }
+  },
+  "game_pwr": {
+   "stat": "iso",
+   "n_frame": 1001,
+   "k_m": 177.5259,
+   "regressed": true,
+   "by_source": {
+    "baseballamerica": {
+     "n": 101,
+     "computable": true,
+     "ordering": 0.5973,
+     "bias_regressed": -0.0114,
+     "bias_pit": -0.1322,
+     "error_abs_regressed": 0.0253,
+     "note": null
+    },
+    "fangraphs": {
+     "n": 949,
+     "computable": true,
+     "ordering": 0.5223,
+     "bias_regressed": 0.0024,
+     "bias_pit": 0.0088,
+     "error_abs_regressed": 0.0259,
+     "note": null
+    },
+    "mlb_pipeline": {
+     "n": 908,
+     "computable": true,
+     "ordering": 0.561,
+     "bias_regressed": -0.0016,
+     "bias_pit": -0.0328,
+     "error_abs_regressed": 0.0254,
+     "note": null
+    }
+   }
+  },
+  "fb": {
+   "stat": "k_pct_pit",
+   "n_frame": 1358,
+   "k_m": 76.5133,
+   "regressed": true,
+   "by_source": {
+    "baseballamerica": {
+     "n": 162,
+     "computable": true,
+     "ordering": 0.4174,
+     "bias_regressed": 0.4592,
+     "bias_pit": 0.0232,
+     "error_abs_regressed": 2.6709,
+     "note": null
+    },
+    "fangraphs": {
+     "n": 1220,
+     "computable": true,
+     "ordering": 0.2448,
+     "bias_regressed": 0.5183,
+     "bias_pit": 0.0179,
+     "error_abs_regressed": 2.9008,
+     "note": null
+    },
+    "mlb_pipeline": {
+     "n": 1103,
+     "computable": true,
+     "ordering": 0.2722,
+     "bias_regressed": -0.1157,
+     "bias_pit": -0.0315,
+     "error_abs_regressed": 2.7878,
+     "note": null
+    }
+   }
+  },
+  "cmd": {
+   "stat": "bb_pct_pit",
+   "n_frame": 1358,
+   "k_m": 225.8052,
+   "regressed": true,
+   "by_source": {
+    "baseballamerica": {
+     "n": 162,
+     "computable": true,
+     "ordering": 0.4149,
+     "bias_regressed": 0.268,
+     "bias_pit": 0.0367,
+     "error_abs_regressed": 1.3217,
+     "note": null
+    },
+    "fangraphs": {
+     "n": 1219,
+     "computable": true,
+     "ordering": 0.3033,
+     "bias_regressed": 0.0888,
+     "bias_pit": -0.005,
+     "error_abs_regressed": 1.3672,
+     "note": null
+    },
+    "mlb_pipeline": {
+     "n": 1104,
+     "computable": true,
+     "ordering": 0.3711,
+     "bias_regressed": -0.0552,
+     "bias_pit": -0.0255,
+     "error_abs_regressed": 1.2747,
+     "note": null
+    }
+   }
+  },
+  "hit_avg": {
+   "stat": "avg",
+   "n_frame": 1001,
+   "k_m": 468.3212,
+   "regressed": true,
+   "by_source": {
+    "baseballamerica": {
+     "n": 101,
+     "computable": true,
+     "ordering": 0.0733,
+     "bias_regressed": 0.0007,
+     "bias_pit": -0.0013,
+     "error_abs_regressed": 0.0118,
+     "note": null
+    },
+    "fangraphs": {
+     "n": 949,
+     "computable": true,
+     "ordering": 0.1086,
+     "bias_regressed": 0.0009,
+     "bias_pit": -0.0039,
+     "error_abs_regressed": 0.0127,
+     "note": null
+    },
+    "mlb_pipeline": {
+     "n": 909,
+     "computable": true,
+     "ordering": 0.2961,
+     "bias_regressed": 0.0002,
+     "bias_pit": -0.0134,
+     "error_abs_regressed": 0.0122,
+     "note": null
+    }
+   }
+  },
+  "speed_sb": {
+   "stat": "sb_per600",
+   "n_frame": 1001,
+   "k_m": 75.7105,
+   "regressed": true,
+   "by_source": {
+    "baseballamerica": {
+     "n": 101,
+     "computable": true,
+     "ordering": 0.7617,
+     "bias_regressed": 2.1713,
+     "bias_pit": 0.0482,
+     "error_abs_regressed": 5.238,
+     "note": null
+    },
+    "fangraphs": {
+     "n": 949,
+     "computable": true,
+     "ordering": 0.6851,
+     "bias_regressed": 2.3566,
+     "bias_pit": 0.044,
+     "error_abs_regressed": 6.2002,
+     "note": null
+    },
+    "mlb_pipeline": {
+     "n": 909,
+     "computable": true,
+     "ordering": 0.7043,
+     "bias_regressed": 0.6298,
+     "bias_pit": -0.0347,
+     "error_abs_regressed": 5.9052,
+     "note": null
+    }
+   }
+  },
+  "raw_pwr": {
+   "stat": "ev_avg",
+   "n_frame": 949,
+   "k_m": 43.6082,
+   "regressed": true,
+   "by_source": {
+    "fangraphs": {
+     "n": 949,
+     "computable": true,
+     "ordering": 0.507,
+     "bias_regressed": 0.0376,
+     "bias_pit": -0.004,
+     "error_abs_regressed": 1.2183,
+     "note": null
+    }
+   }
+  },
+  "pitch_sel": {
+   "stat": "chase_pct",
+   "n_frame": 438,
+   "k_m": 68.3172,
+   "regressed": true,
+   "by_source": {
+    "fangraphs": {
+     "n": 438,
+     "computable": true,
+     "ordering": 0.4644,
+     "bias_regressed": -0.0068,
+     "bias_pit": -0.0037,
+     "error_abs_regressed": 0.0307,
+     "note": null
+    }
+   }
+  },
+  "bat_ctrl": {
+   "stat": "z_contact_pct",
+   "n_frame": 446,
+   "k_m": 59.3017,
+   "regressed": true,
+   "by_source": {
+    "fangraphs": {
+     "n": 446,
+     "computable": true,
+     "ordering": 0.4016,
+     "bias_regressed": 0.0074,
+     "bias_pit": -0.0057,
+     "error_abs_regressed": 0.03,
+     "note": null
+    }
+   }
+  }
+ },
+ "survivorship": "Accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6)."
+}

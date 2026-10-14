@@ -202,6 +202,10 @@ MODEL_GLOSSARY = {
     "prospect_surplus": ["surplus_value"],
     "fv_to_war_anchors": ["fv_to_war_table"],
     "wag": ["wag", "warwag"],
+    # TL_15: the Source Accuracy Tools tab prints look W; both rows are documented by the
+    # two terms the tab defines.
+    "tool_implied_production": ["tool_implied_production", "tool_above_grade"],
+    "tool_source_accuracy": ["tool_above_grade", "tool_implied_production"],
     "consensus_fv": ["consensus_fv", "normalized_source_grade"],
     "draft_consensus_weight": "internal",
     "source_track_record": ["single_source_mark"],

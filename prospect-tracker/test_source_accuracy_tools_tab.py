@@ -3,18 +3,20 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""The Source Accuracy "Tools" tab (TL_14, Class 2, built dark).
+"""The Source Accuracy "Tools" tab (TL_14 built it dark; TL_15 flipped it on).
 
-Off (build_site.SOURCE_ACCURACY_TOOLS_TAB False, the served state) the shell
-carries no data-sacc-tools-src, the tab list is the six tabs it always had and
-Source Comparison carries no link line. On, through a local override of the
-shell, the tab renders the look W display copy: the weight verdict per tool,
-the three source metrics per tool with thin and not-computable cells shown as
-n only, the survivorship sentence beside every headline, and an empty state
-when the payload is absent. Playwright is optional; the browser tests skip
-without it."""
+On (build_site.SOURCE_ACCURACY_TOOLS_TAB True, the served state since TL_15)
+the shell names data/tool_source_accuracy.json, the served copy of look W's
+display copy written from the spent record by tools/tool_accuracy_lab.py
+--export-display, and the tab renders it: the weight verdict per tool, the
+three source metrics per tool with thin and not-computable cells shown as n
+only, the survivorship sentence beside every headline, and an empty state when
+the payload is absent. Off, the shell carries no data-sacc-tools-src, the tab
+list is the six tabs it always had and Source Comparison carries no link line.
+Playwright is optional; the browser tests skip without it."""
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
 
@@ -24,6 +26,8 @@ from conftest import serve_site
 import build_site as B
 
 ROOT = Path(__file__).parent
+PAYLOAD = ROOT / "data" / "tool_source_accuracy.json"
+EVAL = ROOT / "data" / "tool_accuracy_eval.json"
 ATTR = ' data-sacc-tools-src="/data/tool_source_accuracy.json"'
 SIX = ["read-first", "side", "archetype", "cuts", "precision", "coverage"]
 SURV = "Accuracy among players who reached the majors."
@@ -57,25 +61,72 @@ FIXTURE = {
 }
 
 
-def test_flag_defaults_off_and_shell_differs_only_by_the_attribute(monkeypatch):
-    assert B.SOURCE_ACCURACY_TOOLS_TAB is False
-    off = B.build_glossary()
-    assert "data-sacc-tools-src" not in off
-    monkeypatch.setattr(B, "SOURCE_ACCURACY_TOOLS_TAB", True)
+def test_flag_is_on_and_shell_differs_only_by_the_attribute(monkeypatch):
+    assert B.SOURCE_ACCURACY_TOOLS_TAB is True
     on = B.build_glossary()
     assert on.count(ATTR) == 1
+    monkeypatch.setattr(B, "SOURCE_ACCURACY_TOOLS_TAB", False)
+    off = B.build_glossary()
+    assert "data-sacc-tools-src" not in off
     assert on.replace(ATTR, "") == off
 
 
-def test_served_shell_is_dark():
+def test_served_shell_names_the_payload():
     page = (ROOT / "glossary" / "index.html").read_text(encoding="utf-8")
-    assert "data-sacc-tools-src" not in page
+    assert page.count(ATTR) == 1
 
 
-def test_no_glossary_terms_written_in_the_dark_build():
-    terms = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))["entries"]
-    names = {(e.get("term") or "").lower() for e in terms} | {e["id"] for e in terms}
-    assert "tool above grade (tag)" not in names and "tool_above_grade" not in names
+def test_the_flip_writes_the_two_terms():
+    terms = {e["id"]: e for e in json.loads((ROOT / "data" / "glossary.json")
+                                            .read_text(encoding="utf-8"))["entries"]}
+    assert terms["tool_implied_production"]["term"] == "Tool-implied production"
+    assert terms["tool_above_grade"]["term"] == "Tool above grade (TAG)"
+    for gid in ("tool_implied_production", "tool_above_grade"):
+        text = json.dumps(terms[gid], ensure_ascii=False)
+        assert chr(0x2014) not in text and chr(0x2013) not in text
+
+
+@pytest.fixture(scope="module")
+def lab():
+    spec = importlib.util.spec_from_file_location("tool_accuracy_lab_tl15",
+                                                  ROOT / "tools" / "tool_accuracy_lab.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_served_payload_is_the_display_copy_of_the_spent_record(lab):
+    rec = json.loads(EVAL.read_text(encoding="utf-8"))
+    served = json.loads(PAYLOAD.read_text(encoding="utf-8"))
+    assert rec["look"] == "W" and rec.get("spent") is True
+    assert served == json.loads(json.dumps(lab.preview_w(rec, served=True), default=str))
+    assert served["served"] is True and served["display_copy"] is True
+    assert served["eval_artifact"] == "data/tool_accuracy_eval.json"
+    prim = {k for k, v in served["tools"].items() if v["role"] == "primary"}
+    assert prim == set(rec["result"]["primaries"]) == {"hit", "speed", "field", "throw"}
+    assert set(served["tag"]) == set(rec["result"]["tag"])
+    # no weighted grade ships: tools_consensus_w was not built (no tool passed)
+    assert "tools_consensus_w" not in PAYLOAD.read_text(encoding="utf-8")
+
+
+def test_export_display_follows_the_flag_and_refuses_a_bad_record(lab, tmp_path, monkeypatch):
+    art = tmp_path / "eval.json"
+    art.write_text(EVAL.read_text(encoding="utf-8"), encoding="utf-8")
+    monkeypatch.setitem(lab.ARTIFACT, "W", art)
+    monkeypatch.setattr(lab, "SERVED_W", tmp_path / "served.json")
+    monkeypatch.setattr(lab, "PREVIEW_W", tmp_path / "preview" / "copy.json")
+    assert lab.export_display_w(served=True) == tmp_path / "served.json"
+    assert json.loads((tmp_path / "served.json").read_text(encoding="utf-8"))["served"] is True
+    assert lab.export_display_w(served=False) == tmp_path / "preview" / "copy.json"
+    assert json.loads((tmp_path / "preview" / "copy.json").read_text(encoding="utf-8"))["served"] is False
+    monkeypatch.setattr(lab, "tools_tab_on", lambda: True)
+    assert lab.export_display_w() == tmp_path / "served.json"
+    art.write_text(json.dumps({"look": "W", "spent": True, "stopped": True}), encoding="utf-8")
+    with pytest.raises(lab.GuardError):
+        lab.export_display_w(served=True)
+    art.unlink()
+    with pytest.raises(lab.GuardError):
+        lab.export_display_w(served=True)
 
 
 @pytest.fixture(scope="module")
@@ -126,8 +177,13 @@ def _on_shell(monkeypatch):
     return B.build_glossary()
 
 
-def test_off_tab_list_unchanged(server, browser):
-    page, errs = _open(browser, server)
+def _off_shell(monkeypatch):
+    monkeypatch.setattr(B, "SOURCE_ACCURACY_TOOLS_TAB", False)
+    return B.build_glossary()
+
+
+def test_off_tab_list_unchanged(server, browser, monkeypatch):
+    page, errs = _open(browser, server, _off_shell(monkeypatch), FIXTURE)
     try:
         assert page.evaluate(TABS) == SIX
         assert "sacc-tools" not in page.evaluate("document.getElementById('source-accuracy-body').innerHTML")
@@ -161,6 +217,25 @@ def test_on_populated(server, browser, monkeypatch):
     # beside every headline: the tiles, the status line, each table title
     assert html.count(SURV) >= 2 + 1 + 2 + 1 + 1
     assert "—" not in html and "–" not in html
+
+
+def test_served_page_renders_the_served_payload(server, browser):
+    page, errs = _open(browser, server)
+    try:
+        assert page.evaluate(TABS) == SIX + ["tools"]
+        page.click('[data-sacc-tab="tools"]')
+        page.wait_for_function("() => document.getElementById('source-accuracy-body')"
+                               ".innerHTML.indexOf('Loading the tool accuracy') === -1", timeout=10_000)
+        html = page.evaluate("document.getElementById('source-accuracy-body').innerHTML")
+    finally:
+        page.close()
+    assert not errs, errs
+    assert "not published yet" not in html
+    assert "The look is void" in html and "equal weight retains" in html
+    assert html.count("sacc-tools-tag") == len(json.loads(PAYLOAD.read_text(encoding="utf-8"))["tag"])
+    assert "NOT COMPUTABLE: pool under 100 players" in html
+    assert html.count(SURV) >= 8
+    assert chr(0x2014) not in html and chr(0x2013) not in html
 
 
 def test_on_empty_state(server, browser, monkeypatch):

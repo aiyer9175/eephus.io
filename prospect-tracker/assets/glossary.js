@@ -830,6 +830,49 @@
       }] : [];
     };
 
+    // Source Accuracy, Tools (TL_15): look W of the tool-implied production
+    // gate, read from the registry rows' eval artifact. A void look credits no
+    // verdict, so its rows carry the runner's verdict in words and no chip.
+    const TOOL_ART = "/data/tool_accuracy_eval.json";
+    const toolVoid = j => ((j.result || {}).look_void === true);
+    const toolNote = j => (toolVoid(j)
+      ? "The look is void under the gate's rule W.7 (a shuffled-outcome control did not collapse), so no verdict is credited and equal weight retains for every tool. "
+      : "") + "Every figure is among players who reached the majors.";
+    const toolPrimaries = j => {
+      const pr = (j.result || {}).primaries || {}, v = toolVoid(j), rows = [];
+      Object.keys(pr).forEach(t => {
+        const b = pr[t] || {}, a = (((b.arms || {}).A_fg_vs_pipeline) || {}).primary || {};
+        const eq = a.equal || {}, w = a.weighted || {}, h = b.holm || {};
+        if (eq.spearman == null || w.spearman == null) return;
+        const call = b.verdict === "PASS" ? "clears" : (b.verdict === "LOSS" ? "trails" : "inside");
+        rows.push({
+          label: _sacctToolName(t, b) + " against " + _sacctStat(b.stat)[0] + ", within-board-year Spearman rho (n=" + _rn(a.n, 0) + " players)",
+          mv: _rn(w.spearman), bname: "equal weight", bv: _rn(eq.spearman),
+          band: "difference " + _rns(a.d_rho, 4) + ", permutation p " + _rn(h.p) + (h.step != null ? ", Holm step " + _rn(h.step, 0) : "")
+            + (v ? "; runner verdict " + String(b.verdict) + ", credited to nothing" : ""),
+          verdict: v ? null : call,
+          title: "verdict as recorded in the artifact: " + String(b.verdict),
+        });
+      });
+      return rows.length ? rows : null;
+    };
+    const toolTag = j => {
+      const r = j.result || {}, tag = r.tag || {}, rows = [];
+      Object.keys(r.primaries || {}).forEach(t => {
+        const tb = tag[t] || {}, bs = tb.by_source || {};
+        Object.keys(bs).sort().forEach(s => {
+          const c = bs[s] || {};
+          if (c.bias_pit == null) return;
+          rows.push({
+            label: _sacctToolName(t, tb) + " against " + _sacctStat(tb.stat)[0] + ", " + _saccOutlet(s) + " (n=" + _rn(c.n, 0) + " players)",
+            mv: _rns(c.bias_pit), bname: "on grade", bv: _rn(0),
+            band: c.computable === false ? String(c.note || "not computable") : "ordering rho " + _rn(c.ordering),
+          });
+        });
+      });
+      return rows.length ? rows : null;
+    };
+
     _RCPT_SPECS = {
       // ---- WINS -----------------------------------------------------------
       hem_plus: {
@@ -1186,6 +1229,21 @@
         j => pjcFip(j).concat(pjcHeads(j, ["gmli_relief"]))),
       ra9_based_war: pjc("Claim: the shrunk RA9 adjustment predicts the RA9 gap better than a naive three-season rate and the zero the served engine assumes.",
         j => pjcHeads(j, ["ra9_gap"])),
+      // ---- Source Accuracy, Tools (TL_15), look W ---------------------------
+      tool_implied_production: {
+        art: TOOL_ART,
+        estimand: "Claim: a source's tool grades order what players went on to produce in the stat the framework maps each tool to; look W asked whether weighting FanGraphs and MLB Pipeline by their past accuracy orders it better than the equal mean.",
+        baseline: "the equal-weight consensus on the same rows, within board year",
+        read: toolPrimaries,
+        note: toolNote,
+      },
+      tool_above_grade: {
+        art: TOOL_ART,
+        estimand: "No accuracy claim: TAG is descriptive. Each row is a source's mean TAG percentile minus 0.5 on a primary tool (0 is on grade, a negative mean is grades that ran hot), with the source's ordering rho.",
+        baseline: "on grade",
+        read: toolTag,
+        note: toolNote,
+      },
     };
     return _RCPT_SPECS;
   }

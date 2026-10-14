@@ -1066,6 +1066,9 @@ _SIDECAR_WRITE_TARGETS = (
      ".cache/proj_components/preview/components.json"),
     ("proj_export", "COMPONENTS_LIVE_PATH", "data/mlb_proj_components.json"),
     ("mlb_player_export", "COMPONENTS_PATH", "data/mlb_proj_components.json"),
+    # TL_15: the tool accuracy lab's second output, the served display copy of
+    # look W; export_display_w resolves SERVED_W at call time.
+    ("tools.tool_accuracy_lab", "SERVED_W", "data/tool_source_accuracy.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

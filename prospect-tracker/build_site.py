@@ -9038,8 +9038,9 @@ def _glossary_bodies(active: str = "terms") -> str:
 # The Source Accuracy "Tools" tab (TL_14, Class 2, built dark 2026-10-14). Off,
 # the app root carries no data-sacc-tools-src and assets/glossary.js renders
 # the six tabs it always has; on, the root names the payload and the tab and
-# the one Source Comparison link appear. TL_15 flips it with the payload.
-SOURCE_ACCURACY_TOOLS_TAB = False
+# the one Source Comparison link appear. TL_15 flipped it on 2026-10-14 with the
+# payload, written by tools/tool_accuracy_lab.py --export-display.
+SOURCE_ACCURACY_TOOLS_TAB = True
 SOURCE_ACCURACY_TOOLS_SRC = "/data/tool_source_accuracy.json"
 
 
