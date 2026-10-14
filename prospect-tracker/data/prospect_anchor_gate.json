@@ -1,0 +1,1765 @@
+{
+ "line": "docs/PROSPECT_ANCHOR_GATE.md: the realized anchor's one look",
+ "generated_at": "2026-10-14T13:33:34",
+ "registration": "docs/PROSPECT_ANCHOR_GATE.md (pre-registered 2026-09-23)",
+ "estimand": "D_i = label_i / 6 - fv_to_6yr_avg_war(fv_i), WAR per season, over the resolved rows of cell C; the gate asks whether |E[D_C]| lies inside a tolerance fixed in section 5.4. Positive D_C is realized ABOVE the anchor.",
+ "label_stamps": {
+  "war_basis": {
+   "provider": "fwar",
+   "matrix_report_target": {
+    "hit": "first-6-season summed WAR (fwar); resolved<= 2026",
+    "pit": "first-6-season summed WAR (fwar); resolved<= 2026"
+   },
+   "board_label_term": "label=fwar@2026-10-02-0341299c20ec"
+  },
+  "RESOLVED_THROUGH": 2026,
+  "label_window_rule": {
+   "SERVICE_ALIGNED_WINDOW": false,
+   "_SERVICE_YEAR_CUT_MMDD": "04-15"
+  },
+  "empirical_anchors_generated_at": "2026-10-03T16:35:15",
+  "empirical_anchors_cohort_window": [
+   2014,
+   2020
+  ],
+  "empirical_anchors_n_cohort": 3463,
+  "served_anchors": {
+   "20": 0.0091,
+   "25": 0.0106,
+   "30": 0.012,
+   "35": 0.0143,
+   "40": 0.0703,
+   "45": 0.31,
+   "50": 0.68,
+   "55": 0.98,
+   "60": 1.5,
+   "65": 1.99,
+   "70": 2.47,
+   "80": 3.5
+  },
+  "anchors_provenance": "SUB-45 KNOTS RE-AMENDED 2026-10-03 for the fWAR LABEL EPOCH (docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md, runbook step J), by the same construction as the 2026-07-29 and 2026-09-04 amendments and for the same reason. `value_framework --fit` cannot emit these knots (its tier list starts at 40, its public-reference fallback hands 20/25/30 the FV35 reference, its flat 0.50 public blend keeps FV40 half-prior, and its round(v, 2) collapses every sub-45 value), so the epoch's routine refit reverted the table to a single constant across FV20..40 again, one declared production value for most served rows. test_empirical_anchors.test_low_end_anchors_are_present_and_measured is the tripwire.\nRE-MEASURED ON THE fWAR LABEL (published FanGraphs WAR, frozen vintage, RESOLVED_THROUGH 2026), resolved matrix pool, both sides, target_censored over 6, knot cell |FV - knot| <= 1.25, seed 20260807, B 2000: FV35 0.0143 WAR/yr CI95 [0.0061, 0.0237] n=721; FV40 0.0703 CI95 [0.0535, 0.0891] n=1263. The eWAR v2 measurements they replace: FV35 0.0069 n=704, FV40 0.071 n=1201. A different label is a different definition, not a gain in accuracy (gate clause (l)).\nThe 20/25/30 knots remain EXTRAPOLATION, not measurement: the resolved pool has no rows below FV32.5, so they are the minimal monotone ramp under the measured FV35, holding the 2026-07-29 ramp SHAPE and rescaling it to the new knot. Treat them as a floor, not a finding. 45 through 80 are the epoch refit's own output and are not touched here.\nSTANDING TRAP: any future `value_framework --fit` reverts this again. Re-apply after every fit; docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md step J says so.",
+  "use_empirical": true,
+  "min_n_robust": 40
+ },
+ "identity_checks": {
+  "lab": "tools/fv_outcome_curves_lab.load_pool, unchanged",
+  "checks": {
+   "hit": {
+    "scored_rows": 1985,
+    "unique_player_keys": 1985,
+    "unmatched_in_matrix": 0,
+    "target_censored_mismatches": 0,
+    "consensus_fv_raw_mismatches": 0,
+    "censored_flag_mismatches": 0,
+    "uncensored": 1577,
+    "censored": 408
+   },
+   "pit": {
+    "scored_rows": 2100,
+    "unique_player_keys": 2100,
+    "unmatched_in_matrix": 0,
+    "target_censored_mismatches": 0,
+    "consensus_fv_raw_mismatches": 0,
+    "censored_flag_mismatches": 0,
+    "uncensored": 1636,
+    "censored": 464
+   },
+   "cross_side_key_overlap": 0,
+   "player_clustered_bootstrap_is_row_bootstrap": true
+  },
+  "published": {
+   "hit": {
+    "scored_rows": 1985,
+    "unique_player_keys": 1985,
+    "unmatched_in_matrix": 0,
+    "target_censored_mismatches": 0,
+    "consensus_fv_raw_mismatches": 0,
+    "censored_flag_mismatches": 0,
+    "uncensored": 1577,
+    "censored": 408
+   },
+   "pit": {
+    "scored_rows": 2100,
+    "unique_player_keys": 2100,
+    "unmatched_in_matrix": 0,
+    "target_censored_mismatches": 0,
+    "consensus_fv_raw_mismatches": 0,
+    "censored_flag_mismatches": 0,
+    "uncensored": 1636,
+    "censored": 464
+   },
+   "cross_side_key_overlap": 0,
+   "player_clustered_bootstrap_is_row_bootstrap": true
+  },
+  "vintage": {
+   "asof_point_uses_strict_inequality": true,
+   "debuted_branch_cutoff_is_debut_date": true,
+   "source": "efv_dataset._asof_point / _decision_rows"
+  },
+  "L6": {
+   "cohort_window": [
+    2014,
+    2020
+   ],
+   "n_cohort_fitted": 3463,
+   "n_cohort_reproduced": 3463,
+   "within_1pct": true
+  }
+ },
+ "frame_integrity": {
+  "L3": "Only rows with censored == False enter any cell. No tail-projected label enters.",
+  "L4": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+  "L7": "The artifact carries no field read from data/mlb_projections.json, no proj_ml output and no warChamp.",
+  "forbidden_input": "data/mlb_projections.json",
+  "dropped": {
+   "no_player_key": 0,
+   "fv_missing": 0,
+   "label_missing": 0,
+   "censored": 872,
+   "below_cells": 2491
+  },
+  "rows_in_cells": 722,
+  "rows_below_cells": 2491
+ },
+ "frames": {
+  "H": {
+   "rows": 610,
+   "in_cells": 155,
+   "definition": "resolved rows whose player_key is NOT in the anchor's fit cohort",
+   "may_carry_verdict": true,
+   "decision_year_census": {
+    "2011": 11,
+    "2012": 32,
+    "2013": 105,
+    "2015": 1,
+    "2021": 2,
+    "2022": 2,
+    "2023": 2
+   },
+   "source_census": {
+    "n": 155,
+    "mean_n_sources": 0.8903,
+    "n_sources_known": 155,
+    "share_single_source": 0.8452,
+    "share_pipeline_only": 0.8323
+   }
+  },
+  "S": {
+   "rows": 2603,
+   "in_cells": 567,
+   "definition": "resolved rows whose player_key IS in the anchor's fit cohort",
+   "may_carry_verdict": "veto only",
+   "source_census": {
+    "n": 567,
+    "mean_n_sources": 1.6808,
+    "n_sources_known": 567,
+    "share_single_source": 0.3192,
+    "share_pipeline_only": 0.3122
+   }
+  },
+  "cohort_keys": 3463,
+  "no_key_in_both": true
+ },
+ "method": {
+  "statistic": "D_C = mean over rows of label_i / 6 - anchor(fv_i). R_C = mean(label_i / 6) / mean(anchor(fv_i)), reported, never adjudicated. Interval: percentile bootstrap over rows, B = 2000, seed 20260923, two-sided 90 percent.",
+  "floor": "A cell carries a verdict only with n >= 40 resolved rows on the frame being read. 40 is anchor_calibration.min_n_robust. Below 40 the cell reads UNPOWERED and publishes its n and its point estimate without an interval.",
+  "b": 2000,
+  "seed": 20260923,
+  "ci": [
+   0.05,
+   0.95
+  ],
+  "quantile": "numpy.quantile, linear",
+  "bootstrap_unit": "rows (players; cross-side key overlap is 0 by L2)"
+ },
+ "power": {
+  "criterion_mde95": "MDE95 = 1.645 times the bootstrap standard error of D_C, the standard deviation of the B bootstrap draws of D_C, and NOT the residual sd of the rows.",
+  "criterion_detection": "A design-matched simulation planting a residual of exactly +m_C at each powered cell with the cell's own residual sd and n, B = 1000, seed 20260923; the fraction of simulated runs returning MISCALIBRATED is published, and a cell below 0.80 is labelled as one where a MISCALIBRATED verdict would be a lucky read, without changing its disposition rule.",
+  "criterion_coverage": "A two-sided coverage check on the bootstrap interval itself, n_check >= 200, at the cell's n: a too-NARROW interval manufactures CONFIRMED, the direction the check exists to catch.",
+  "margin_pin": "A look-day m_C outside 0.75x to 1.25x of the design-day figure at any cell requires an amendment filed BEFORE the look; without that amendment the look is not taken.",
+  "margin_pin_bounds": [
+   0.75,
+   1.25
+  ],
+  "margin_pin_holds": true,
+  "margins": {
+   "45": {
+    "knot": 45.0,
+    "anchor_at_k_minus_2_5": 0.19015,
+    "anchor_at_k_plus_2_5": 0.495,
+    "m_c": 0.152425,
+    "design_day_anchor_lo": 0.196,
+    "design_day_anchor_hi": 0.5,
+    "design_day_m_c": 0.152,
+    "ratio_to_design_day": 1.0028,
+    "ratio_inside_pin": true,
+    "criterion": "m_C = ( anchor(k_C + 2.5) - anchor(k_C - 2.5) ) / 2, on the served table at the look (for the 65+ cell, at k = 65)."
+   },
+   "50": {
+    "knot": 50.0,
+    "anchor_at_k_minus_2_5": 0.495,
+    "anchor_at_k_plus_2_5": 0.83,
+    "m_c": 0.1675,
+    "design_day_anchor_lo": 0.5,
+    "design_day_anchor_hi": 0.83,
+    "design_day_m_c": 0.165,
+    "ratio_to_design_day": 1.0152,
+    "ratio_inside_pin": true,
+    "criterion": "m_C = ( anchor(k_C + 2.5) - anchor(k_C - 2.5) ) / 2, on the served table at the look (for the 65+ cell, at k = 65)."
+   },
+   "55": {
+    "knot": 55.0,
+    "anchor_at_k_minus_2_5": 0.83,
+    "anchor_at_k_plus_2_5": 1.24,
+    "m_c": 0.205,
+    "design_day_anchor_lo": 0.83,
+    "design_day_anchor_hi": 1.21,
+    "design_day_m_c": 0.19,
+    "ratio_to_design_day": 1.0789,
+    "ratio_inside_pin": true,
+    "criterion": "m_C = ( anchor(k_C + 2.5) - anchor(k_C - 2.5) ) / 2, on the served table at the look (for the 65+ cell, at k = 65)."
+   },
+   "60": {
+    "knot": 60.0,
+    "anchor_at_k_minus_2_5": 1.24,
+    "anchor_at_k_plus_2_5": 1.745,
+    "m_c": 0.2525,
+    "design_day_anchor_lo": 1.21,
+    "design_day_anchor_hi": 1.725,
+    "design_day_m_c": 0.258,
+    "ratio_to_design_day": 0.9787,
+    "ratio_inside_pin": true,
+    "criterion": "m_C = ( anchor(k_C + 2.5) - anchor(k_C - 2.5) ) / 2, on the served table at the look (for the 65+ cell, at k = 65)."
+   },
+   "65+": {
+    "knot": 65.0,
+    "anchor_at_k_minus_2_5": 1.745,
+    "anchor_at_k_plus_2_5": 2.23,
+    "m_c": 0.2425,
+    "design_day_anchor_lo": 1.725,
+    "design_day_anchor_hi": 2.25,
+    "design_day_m_c": 0.263,
+    "ratio_to_design_day": 0.9221,
+    "ratio_inside_pin": true,
+    "criterion": "m_C = ( anchor(k_C + 2.5) - anchor(k_C - 2.5) ) / 2, on the served table at the look (for the 65+ cell, at k = 65)."
+   }
+  },
+  "frames": {
+   "H": {
+    "45": {
+     "n": 91,
+     "residual_sd": 0.462484,
+     "se": 0.048481,
+     "boot_se": 0.048486,
+     "mde95": 0.079759,
+     "m_c": 0.152425,
+     "two_m_c": 0.30485,
+     "design_day_m_c": 0.152,
+     "ratio_to_design_day": 1.0028,
+     "powered_by_n": true,
+     "underpowered_by_mde": false,
+     "detection": {
+      "b": 1000,
+      "seed": 20260923,
+      "planted": 0.152425,
+      "fraction_miscalibrated": 0.054,
+      "lucky_read_label": true,
+      "floor": 0.8
+     },
+     "coverage": {
+      "n_check": 200,
+      "coverage": 0.865,
+      "miss_interval_above_truth": 0.03,
+      "miss_interval_below_truth": 0.105,
+      "nominal": 0.9,
+      "too_narrow": true
+     }
+    },
+    "50": {
+     "n": 25,
+     "residual_sd": 1.139537,
+     "se": 0.227907,
+     "boot_se": null,
+     "mde95": null,
+     "m_c": 0.1675,
+     "two_m_c": 0.335,
+     "design_day_m_c": 0.165,
+     "ratio_to_design_day": 1.0152,
+     "powered_by_n": false,
+     "underpowered_by_mde": false,
+     "detection": null,
+     "coverage": null
+    },
+    "55": {
+     "n": 30,
+     "residual_sd": 1.352551,
+     "se": 0.246941,
+     "boot_se": null,
+     "mde95": null,
+     "m_c": 0.205,
+     "two_m_c": 0.41,
+     "design_day_m_c": 0.19,
+     "ratio_to_design_day": 1.0789,
+     "powered_by_n": false,
+     "underpowered_by_mde": false,
+     "detection": null,
+     "coverage": null
+    },
+    "60": {
+     "n": 5,
+     "residual_sd": 2.105333,
+     "se": 0.941533,
+     "boot_se": null,
+     "mde95": null,
+     "m_c": 0.2525,
+     "two_m_c": 0.505,
+     "design_day_m_c": 0.258,
+     "ratio_to_design_day": 0.9787,
+     "powered_by_n": false,
+     "underpowered_by_mde": false,
+     "detection": null,
+     "coverage": null
+    },
+    "65+": {
+     "n": 4,
+     "residual_sd": 3.266326,
+     "se": 1.633163,
+     "boot_se": null,
+     "mde95": null,
+     "m_c": 0.2425,
+     "two_m_c": 0.485,
+     "design_day_m_c": 0.263,
+     "ratio_to_design_day": 0.9221,
+     "powered_by_n": false,
+     "underpowered_by_mde": false,
+     "detection": null,
+     "coverage": null
+    }
+   },
+   "S": {
+    "45": {
+     "n": 289,
+     "residual_sd": 0.731677,
+     "se": 0.04304,
+     "boot_se": 0.043307,
+     "mde95": 0.07124,
+     "m_c": 0.152425,
+     "two_m_c": 0.30485,
+     "design_day_m_c": 0.152,
+     "ratio_to_design_day": 1.0028,
+     "powered_by_n": true,
+     "underpowered_by_mde": false,
+     "detection": {
+      "b": 1000,
+      "seed": 20260923,
+      "planted": 0.152425,
+      "fraction_miscalibrated": 0.051,
+      "lucky_read_label": true,
+      "floor": 0.8
+     },
+     "coverage": {
+      "n_check": 200,
+      "coverage": 0.89,
+      "miss_interval_above_truth": 0.045,
+      "miss_interval_below_truth": 0.065,
+      "nominal": 0.9,
+      "too_narrow": true
+     }
+    },
+    "50": {
+     "n": 157,
+     "residual_sd": 1.088462,
+     "se": 0.086869,
+     "boot_se": 0.087386,
+     "mde95": 0.14375,
+     "m_c": 0.1675,
+     "two_m_c": 0.335,
+     "design_day_m_c": 0.165,
+     "ratio_to_design_day": 1.0152,
+     "powered_by_n": true,
+     "underpowered_by_mde": false,
+     "detection": {
+      "b": 1000,
+      "seed": 20260923,
+      "planted": 0.1675,
+      "fraction_miscalibrated": 0.041,
+      "lucky_read_label": true,
+      "floor": 0.8
+     },
+     "coverage": {
+      "n_check": 200,
+      "coverage": 0.92,
+      "miss_interval_above_truth": 0.025,
+      "miss_interval_below_truth": 0.055,
+      "nominal": 0.9,
+      "too_narrow": false
+     }
+    },
+    "55": {
+     "n": 82,
+     "residual_sd": 1.181779,
+     "se": 0.130506,
+     "boot_se": 0.129127,
+     "mde95": 0.212414,
+     "m_c": 0.205,
+     "two_m_c": 0.41,
+     "design_day_m_c": 0.19,
+     "ratio_to_design_day": 1.0789,
+     "powered_by_n": true,
+     "underpowered_by_mde": false,
+     "detection": {
+      "b": 1000,
+      "seed": 20260923,
+      "planted": 0.205,
+      "fraction_miscalibrated": 0.061,
+      "lucky_read_label": true,
+      "floor": 0.8
+     },
+     "coverage": {
+      "n_check": 200,
+      "coverage": 0.92,
+      "miss_interval_above_truth": 0.025,
+      "miss_interval_below_truth": 0.055,
+      "nominal": 0.9,
+      "too_narrow": false
+     }
+    },
+    "60": {
+     "n": 26,
+     "residual_sd": 1.287999,
+     "se": 0.252597,
+     "boot_se": null,
+     "mde95": null,
+     "m_c": 0.2525,
+     "two_m_c": 0.505,
+     "design_day_m_c": 0.258,
+     "ratio_to_design_day": 0.9787,
+     "powered_by_n": false,
+     "underpowered_by_mde": false,
+     "detection": null,
+     "coverage": null
+    },
+    "65+": {
+     "n": 13,
+     "residual_sd": 1.665369,
+     "se": 0.46189,
+     "boot_se": null,
+     "mde95": null,
+     "m_c": 0.2425,
+     "two_m_c": 0.485,
+     "design_day_m_c": 0.263,
+     "ratio_to_design_day": 0.9221,
+     "powered_by_n": false,
+     "underpowered_by_mde": false,
+     "detection": null,
+     "coverage": null
+    }
+   }
+  }
+ },
+ "cells": {
+  "45": {
+   "range": "45 [42.5, 47.5); 50 [47.5, 52.5); 55 [52.5, 57.5); 60 [57.5, 62.5); 65+ [62.5, 80]. Each row's assigned level is the anchor at ITS OWN FV, never the knot value.",
+   "knot": 45.0,
+   "m_c": 0.152425,
+   "anchor_values_for_m_c": [
+    0.19015,
+    0.495
+   ],
+   "criteria": {
+    "CONFIRMED": "n >= 40 and the 90 percent interval on D_C lies entirely inside [-m_C, +m_C]",
+    "MISCALIBRATED": "n >= 40 and the interval lies entirely outside the band on one side, after the Holm step in 6.3; the sign is published",
+    "UNDECIDED": "n >= 40 and neither",
+    "UNPOWERED": "n < 40, or the cell's MDE95 (1.645 times the bootstrap standard error of D_C, the sd of the B draws, never the residual sd of the rows) exceeds 2 * m_C, in which case the cell is labelled UNDECIDED_UNDERPOWERED and counts as unpowered for 6.2",
+    "holm": "Family H: the powered cells on frame H, at most five. Family S: the powered cells on frame S, at most five. Two families, each under Holm at family alpha 0.10. p_C: if d_C > +m_C, p_C = 2 * (fraction of bootstrap draws with D*_C <= +m_C); if d_C < -m_C, p_C = 2 * (fraction with D*_C >= -m_C); otherwise p_C = 1. A cell with d_C on the wrong side of the band reads UNDECIDED whatever its p_C.",
+    "concordance": "A cell that reads MISCALIBRATED on H, where S is ALSO powered at that cell and S's 90 percent interval on D_C lies entirely on the opposite side of zero from H's point estimate d_C, reads UNDECIDED at that cell, with both frames' numbers published and the cell labelled SOURCE_SCALE_SUSPECT."
+   },
+   "H": {
+    "n": 91,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": -0.229006,
+    "r_c": 0.367147,
+    "mean_label_per_season": 0.132857,
+    "mean_assigned_anchor": 0.361863,
+    "knot_anchor": 0.31,
+    "residual_sd": 0.462484,
+    "se": 0.048481,
+    "boot_se": 0.048486,
+    "mde95": 0.079759,
+    "ci90": [
+     -0.303316,
+     -0.142321
+    ],
+    "r_ci90": [
+     0.163097,
+     0.60548
+    ],
+    "p_c": 0.134,
+    "disposition": "UNDECIDED",
+    "sign": null,
+    "family": "family_H",
+    "holm_step": 1,
+    "annotation": null,
+    "source_census": {
+     "n": 91,
+     "mean_n_sources": 1.044,
+     "n_sources_known": 91,
+     "share_single_source": 0.967,
+     "share_pipeline_only": 0.9451
+    },
+    "per_side": {
+     "hit": {
+      "n": 50,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": -0.198431,
+      "r_c": 0.449971,
+      "mean_label_per_season": 0.162333,
+      "mean_assigned_anchor": 0.360764,
+      "knot_anchor": 0.31,
+      "residual_sd": 0.492643,
+      "se": 0.06967,
+      "boot_se": 0.069494,
+      "mde95": 0.114317,
+      "ci90": [
+       -0.301945,
+       -0.075565
+      ],
+      "r_ci90": [
+       0.165437,
+       0.790078
+      ],
+      "p_c": 0.485,
+      "interval_published": true
+     },
+     "pit": {
+      "n": 41,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": -0.266293,
+      "r_c": 0.266821,
+      "mean_label_per_season": 0.096911,
+      "mean_assigned_anchor": 0.363204,
+      "knot_anchor": 0.31,
+      "residual_sd": 0.425861,
+      "se": 0.066508,
+      "boot_se": 0.066664,
+      "mde95": 0.109663,
+      "ci90": [
+       -0.360616,
+       -0.141893
+      ],
+      "r_ci90": [
+       0.009526,
+       0.606499
+      ],
+      "p_c": 0.126,
+      "interval_published": true
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   },
+   "S": {
+    "n": 289,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.103374,
+    "r_c": 1.348948,
+    "mean_label_per_season": 0.399619,
+    "mean_assigned_anchor": 0.296245,
+    "knot_anchor": 0.31,
+    "residual_sd": 0.731677,
+    "se": 0.04304,
+    "boot_se": 0.043307,
+    "mde95": 0.07124,
+    "ci90": [
+     0.034399,
+     0.177108
+    ],
+    "r_ci90": [
+     1.115541,
+     1.597343
+    ],
+    "p_c": 1.0,
+    "disposition": "UNDECIDED",
+    "sign": null,
+    "family": "family_S",
+    "holm_step": 2,
+    "annotation": null,
+    "source_census": {
+     "n": 289,
+     "mean_n_sources": 1.7232,
+     "n_sources_known": 289,
+     "share_single_source": 0.2768,
+     "share_pipeline_only": 0.2664
+    },
+    "per_side": {
+     "hit": {
+      "n": 157,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.09919,
+      "r_c": 1.339459,
+      "mean_label_per_season": 0.391391,
+      "mean_assigned_anchor": 0.292201,
+      "knot_anchor": 0.31,
+      "residual_sd": 0.752689,
+      "se": 0.060071,
+      "boot_se": 0.06133,
+      "mde95": 0.100887,
+      "ci90": [
+       0.000722,
+       0.204825
+      ],
+      "r_ci90": [
+       1.002516,
+       1.694932
+      ],
+      "p_c": 1.0,
+      "interval_published": true
+     },
+     "pit": {
+      "n": 132,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.10835,
+      "r_c": 1.359901,
+      "mean_label_per_season": 0.409407,
+      "mean_assigned_anchor": 0.301056,
+      "knot_anchor": 0.31,
+      "residual_sd": 0.708697,
+      "se": 0.061684,
+      "boot_se": 0.059953,
+      "mde95": 0.098623,
+      "ci90": [
+       0.01536,
+       0.210828
+      ],
+      "r_ci90": [
+       1.050806,
+       1.702284
+      ],
+      "p_c": 1.0,
+      "interval_published": true
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   },
+   "H+S": {
+    "n": 380,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.023778,
+    "r_c": 1.076221,
+    "mean_label_per_season": 0.335737,
+    "mean_assigned_anchor": 0.311959,
+    "knot_anchor": 0.31,
+    "residual_sd": 0.691214,
+    "se": 0.035459,
+    "boot_se": 0.035699,
+    "mde95": 0.058724,
+    "ci90": [
+     -0.032064,
+     0.084203
+    ],
+    "r_ci90": [
+     0.896421,
+     1.271268
+    ],
+    "p_c": 1.0,
+    "label": "READ",
+    "criterion": "H + S (pooled, read): reported per cell as a descriptive, labelled READ. Carries no verdict.",
+    "per_side": {
+     "hit": {
+      "n": 207,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.027301,
+      "r_c": 1.088421,
+      "mean_label_per_season": 0.336063,
+      "mean_assigned_anchor": 0.308762,
+      "knot_anchor": 0.31,
+      "residual_sd": 0.709271,
+      "se": 0.049298,
+      "boot_se": 0.049395,
+      "mde95": 0.081255,
+      "ci90": [
+       -0.049554,
+       0.110171
+      ],
+      "r_ci90": [
+       0.837661,
+       1.35612
+      ],
+      "p_c": 1.0,
+      "interval_published": true
+     },
+     "pit": {
+      "n": 173,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.019562,
+      "r_c": 1.061947,
+      "mean_label_per_season": 0.335347,
+      "mean_assigned_anchor": 0.315785,
+      "knot_anchor": 0.31,
+      "residual_sd": 0.670994,
+      "se": 0.051015,
+      "boot_se": 0.050175,
+      "mde95": 0.082538,
+      "ci90": [
+       -0.060362,
+       0.104227
+      ],
+      "r_ci90": [
+       0.805814,
+       1.329836
+      ],
+      "p_c": 1.0,
+      "interval_published": true
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   }
+  },
+  "50": {
+   "range": "45 [42.5, 47.5); 50 [47.5, 52.5); 55 [52.5, 57.5); 60 [57.5, 62.5); 65+ [62.5, 80]. Each row's assigned level is the anchor at ITS OWN FV, never the knot value.",
+   "knot": 50.0,
+   "m_c": 0.1675,
+   "anchor_values_for_m_c": [
+    0.495,
+    0.83
+   ],
+   "criteria": {
+    "CONFIRMED": "n >= 40 and the 90 percent interval on D_C lies entirely inside [-m_C, +m_C]",
+    "MISCALIBRATED": "n >= 40 and the interval lies entirely outside the band on one side, after the Holm step in 6.3; the sign is published",
+    "UNDECIDED": "n >= 40 and neither",
+    "UNPOWERED": "n < 40, or the cell's MDE95 (1.645 times the bootstrap standard error of D_C, the sd of the B draws, never the residual sd of the rows) exceeds 2 * m_C, in which case the cell is labelled UNDECIDED_UNDERPOWERED and counts as unpowered for 6.2",
+    "holm": "Family H: the powered cells on frame H, at most five. Family S: the powered cells on frame S, at most five. Two families, each under Holm at family alpha 0.10. p_C: if d_C > +m_C, p_C = 2 * (fraction of bootstrap draws with D*_C <= +m_C); if d_C < -m_C, p_C = 2 * (fraction with D*_C >= -m_C); otherwise p_C = 1. A cell with d_C on the wrong side of the band reads UNDECIDED whatever its p_C.",
+    "concordance": "A cell that reads MISCALIBRATED on H, where S is ALSO powered at that cell and S's 90 percent interval on D_C lies entirely on the opposite side of zero from H's point estimate d_C, reads UNDECIDED at that cell, with both frames' numbers published and the cell labelled SOURCE_SCALE_SUSPECT."
+   },
+   "H": {
+    "n": 25,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.401808,
+    "r_c": 1.629209,
+    "mean_label_per_season": 1.0404,
+    "mean_assigned_anchor": 0.638592,
+    "knot_anchor": 0.68,
+    "residual_sd": 1.139537,
+    "se": 0.227907,
+    "boot_se": null,
+    "mde95": null,
+    "ci90": null,
+    "r_ci90": null,
+    "p_c": null,
+    "disposition": "UNPOWERED",
+    "sign": null,
+    "family": null,
+    "holm_step": null,
+    "annotation": null,
+    "source_census": {
+     "n": 25,
+     "mean_n_sources": 0.6,
+     "n_sources_known": 25,
+     "share_single_source": 0.6,
+     "share_pipeline_only": 0.6
+    },
+    "per_side": {
+     "hit": {
+      "n": 12,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.760294,
+      "r_c": 2.160046,
+      "mean_label_per_season": 1.415694,
+      "mean_assigned_anchor": 0.6554,
+      "knot_anchor": 0.68,
+      "residual_sd": 1.398409,
+      "se": 0.403686,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "pit": {
+      "n": 13,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.070897,
+      "r_c": 1.113786,
+      "mean_label_per_season": 0.693974,
+      "mean_assigned_anchor": 0.623077,
+      "knot_anchor": 0.68,
+      "residual_sd": 0.74657,
+      "se": 0.207061,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    },
+    "sentence": "The resolved holdout carries 25 prospects at FV 50, below the 40-row floor the anchor itself declares for trusting a tier. The anchor is not adjudicated there. The shared frame reads UNDECIDED.",
+    "sentence_10_4": "the resolved holdout carries too few prospects at this FV to adjudicate the anchor there; the shared frame's reading is UNDECIDED, which can fail the anchor and cannot confirm it"
+   },
+   "S": {
+    "n": 157,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.252282,
+    "r_c": 1.381166,
+    "mean_label_per_season": 0.914151,
+    "mean_assigned_anchor": 0.661869,
+    "knot_anchor": 0.68,
+    "residual_sd": 1.088462,
+    "se": 0.086869,
+    "boot_se": 0.087386,
+    "mde95": 0.14375,
+    "ci90": [
+     0.109001,
+     0.400676
+    ],
+    "r_ci90": [
+     1.165209,
+     1.607091
+    ],
+    "p_c": 0.322,
+    "disposition": "UNDECIDED",
+    "sign": null,
+    "family": "family_S",
+    "holm_step": 1,
+    "annotation": null,
+    "source_census": {
+     "n": 157,
+     "mean_n_sources": 1.6433,
+     "n_sources_known": 157,
+     "share_single_source": 0.3567,
+     "share_pipeline_only": 0.3503
+    },
+    "per_side": {
+     "hit": {
+      "n": 83,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.310778,
+      "r_c": 1.469899,
+      "mean_label_per_season": 0.972149,
+      "mean_assigned_anchor": 0.661371,
+      "knot_anchor": 0.68,
+      "residual_sd": 1.204583,
+      "se": 0.13222,
+      "boot_se": 0.130737,
+      "mde95": 0.215063,
+      "ci90": [
+       0.100707,
+       0.519765
+      ],
+      "r_ci90": [
+       1.153788,
+       1.785175
+      ],
+      "p_c": 0.271,
+      "interval_published": true
+     },
+     "pit": {
+      "n": 74,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.186672,
+      "r_c": 1.2818,
+      "mean_label_per_season": 0.849099,
+      "mean_assigned_anchor": 0.662427,
+      "knot_anchor": 0.68,
+      "residual_sd": 0.945319,
+      "se": 0.109891,
+      "boot_se": 0.109901,
+      "mde95": 0.180788,
+      "ci90": [
+       0.011641,
+       0.374485
+      ],
+      "r_ci90": [
+       1.017776,
+       1.565166
+      ],
+      "p_c": 0.87,
+      "interval_published": true
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   },
+   "H+S": {
+    "n": 182,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.272821,
+    "r_c": 1.414199,
+    "mean_label_per_season": 0.931493,
+    "mean_assigned_anchor": 0.658671,
+    "knot_anchor": 0.68,
+    "residual_sd": 1.093598,
+    "se": 0.081063,
+    "boot_se": 0.083178,
+    "mde95": 0.136827,
+    "ci90": [
+     0.141975,
+     0.413724
+    ],
+    "r_ci90": [
+     1.215443,
+     1.629105
+    ],
+    "p_c": 0.18,
+    "label": "READ",
+    "criterion": "H + S (pooled, read): reported per cell as a descriptive, labelled READ. Carries no verdict.",
+    "per_side": {
+     "hit": {
+      "n": 95,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.367559,
+      "r_c": 1.556387,
+      "mean_label_per_season": 1.028175,
+      "mean_assigned_anchor": 0.660617,
+      "knot_anchor": 0.68,
+      "residual_sd": 1.231731,
+      "se": 0.126373,
+      "boot_se": 0.122735,
+      "mde95": 0.201899,
+      "ci90": [
+       0.169599,
+       0.573171
+      ],
+      "r_ci90": [
+       1.258677,
+       1.867128
+      ],
+      "p_c": 0.096,
+      "interval_published": true
+     },
+     "pit": {
+      "n": 87,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.169372,
+      "r_c": 1.257974,
+      "mean_label_per_season": 0.82592,
+      "mean_assigned_anchor": 0.656547,
+      "knot_anchor": 0.68,
+      "residual_sd": 0.915446,
+      "se": 0.098146,
+      "boot_se": 0.095206,
+      "mde95": 0.156614,
+      "ci90": [
+       0.014205,
+       0.330274
+      ],
+      "r_ci90": [
+       1.021844,
+       1.500052
+      ],
+      "p_c": 1.0,
+      "interval_published": true
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   }
+  },
+  "55": {
+   "range": "45 [42.5, 47.5); 50 [47.5, 52.5); 55 [52.5, 57.5); 60 [57.5, 62.5); 65+ [62.5, 80]. Each row's assigned level is the anchor at ITS OWN FV, never the knot value.",
+   "knot": 55.0,
+   "m_c": 0.205,
+   "anchor_values_for_m_c": [
+    0.83,
+    1.24
+   ],
+   "criteria": {
+    "CONFIRMED": "n >= 40 and the 90 percent interval on D_C lies entirely inside [-m_C, +m_C]",
+    "MISCALIBRATED": "n >= 40 and the interval lies entirely outside the band on one side, after the Holm step in 6.3; the sign is published",
+    "UNDECIDED": "n >= 40 and neither",
+    "UNPOWERED": "n < 40, or the cell's MDE95 (1.645 times the bootstrap standard error of D_C, the sd of the B draws, never the residual sd of the rows) exceeds 2 * m_C, in which case the cell is labelled UNDECIDED_UNDERPOWERED and counts as unpowered for 6.2",
+    "holm": "Family H: the powered cells on frame H, at most five. Family S: the powered cells on frame S, at most five. Two families, each under Holm at family alpha 0.10. p_C: if d_C > +m_C, p_C = 2 * (fraction of bootstrap draws with D*_C <= +m_C); if d_C < -m_C, p_C = 2 * (fraction with D*_C >= -m_C); otherwise p_C = 1. A cell with d_C on the wrong side of the band reads UNDECIDED whatever its p_C.",
+    "concordance": "A cell that reads MISCALIBRATED on H, where S is ALSO powered at that cell and S's 90 percent interval on D_C lies entirely on the opposite side of zero from H's point estimate d_C, reads UNDECIDED at that cell, with both frames' numbers published and the cell labelled SOURCE_SCALE_SUSPECT."
+   },
+   "H": {
+    "n": 30,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.249804,
+    "r_c": 1.238218,
+    "mean_label_per_season": 1.298444,
+    "mean_assigned_anchor": 1.04864,
+    "knot_anchor": 0.98,
+    "residual_sd": 1.352551,
+    "se": 0.246941,
+    "boot_se": null,
+    "mde95": null,
+    "ci90": null,
+    "r_ci90": null,
+    "p_c": null,
+    "disposition": "UNPOWERED",
+    "sign": null,
+    "family": null,
+    "holm_step": null,
+    "annotation": null,
+    "source_census": {
+     "n": 30,
+     "mean_n_sources": 0.8333,
+     "n_sources_known": 30,
+     "share_single_source": 0.8333,
+     "share_pipeline_only": 0.8333
+    },
+    "per_side": {
+     "hit": {
+      "n": 13,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.787159,
+      "r_c": 1.75168,
+      "mean_label_per_season": 1.834359,
+      "mean_assigned_anchor": 1.0472,
+      "knot_anchor": 0.98,
+      "residual_sd": 1.676332,
+      "se": 0.464931,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "pit": {
+      "n": 17,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": -0.161114,
+      "r_c": 0.846521,
+      "mean_label_per_season": 0.888627,
+      "mean_assigned_anchor": 1.049741,
+      "knot_anchor": 0.98,
+      "residual_sd": 0.891175,
+      "se": 0.216142,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    },
+    "sentence": "The resolved holdout carries 30 prospects at FV 55, below the 40-row floor the anchor itself declares for trusting a tier. The anchor is not adjudicated there. The shared frame reads UNDECIDED.",
+    "sentence_10_4": "the resolved holdout carries too few prospects at this FV to adjudicate the anchor there; the shared frame's reading is UNDECIDED, which can fail the anchor and cannot confirm it"
+   },
+   "S": {
+    "n": 82,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.032899,
+    "r_c": 1.033961,
+    "mean_label_per_season": 1.001626,
+    "mean_assigned_anchor": 0.968727,
+    "knot_anchor": 0.98,
+    "residual_sd": 1.181779,
+    "se": 0.130506,
+    "boot_se": 0.129127,
+    "mde95": 0.212414,
+    "ci90": [
+     -0.176137,
+     0.24389
+    ],
+    "r_ci90": [
+     0.819459,
+     1.251382
+    ],
+    "p_c": 1.0,
+    "disposition": "UNDECIDED",
+    "sign": null,
+    "family": "family_S",
+    "holm_step": 3,
+    "annotation": null,
+    "source_census": {
+     "n": 82,
+     "mean_n_sources": 1.6463,
+     "n_sources_known": 82,
+     "share_single_source": 0.3537,
+     "share_pipeline_only": 0.3537
+    },
+    "per_side": {
+     "hit": {
+      "n": 45,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.239184,
+      "r_c": 1.247954,
+      "mean_label_per_season": 1.203815,
+      "mean_assigned_anchor": 0.964631,
+      "knot_anchor": 0.98,
+      "residual_sd": 1.337887,
+      "se": 0.19944,
+      "boot_se": 0.198672,
+      "mde95": 0.326816,
+      "ci90": [
+       -0.072665,
+       0.581982
+      ],
+      "r_ci90": [
+       0.925837,
+       1.605837
+      ],
+      "p_c": 0.848,
+      "interval_published": true
+     },
+     "pit": {
+      "n": 37,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": -0.217987,
+      "r_c": 0.776127,
+      "mean_label_per_season": 0.755721,
+      "mean_assigned_anchor": 0.973708,
+      "knot_anchor": 0.98,
+      "residual_sd": 0.914747,
+      "se": 0.150384,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   },
+   "H+S": {
+    "n": 112,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.090999,
+    "r_c": 1.091906,
+    "mean_label_per_season": 1.081131,
+    "mean_assigned_anchor": 0.990132,
+    "knot_anchor": 0.98,
+    "residual_sd": 1.227355,
+    "se": 0.115974,
+    "boot_se": 0.114623,
+    "mde95": 0.188555,
+    "ci90": [
+     -0.093527,
+     0.281089
+    ],
+    "r_ci90": [
+     0.904744,
+     1.283983
+    ],
+    "p_c": 1.0,
+    "label": "READ",
+    "criterion": "H + S (pooled, read): reported per cell as a descriptive, labelled READ. Carries no verdict.",
+    "per_side": {
+     "hit": {
+      "n": 58,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.362006,
+      "r_c": 1.368215,
+      "mean_label_per_season": 1.345144,
+      "mean_assigned_anchor": 0.983138,
+      "knot_anchor": 0.98,
+      "residual_sd": 1.423531,
+      "se": 0.186919,
+      "boot_se": 0.184399,
+      "mde95": 0.303336,
+      "ci90": [
+       0.062585,
+       0.671505
+      ],
+      "r_ci90": [
+       1.063926,
+       1.680197
+      ],
+      "p_c": 0.384,
+      "interval_published": true
+     },
+     "pit": {
+      "n": 54,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": -0.200083,
+      "r_c": 0.799445,
+      "mean_label_per_season": 0.797562,
+      "mean_assigned_anchor": 0.997644,
+      "knot_anchor": 0.98,
+      "residual_sd": 0.899352,
+      "se": 0.122386,
+      "boot_se": 0.118039,
+      "mde95": 0.194174,
+      "ci90": [
+       -0.393669,
+       -0.009321
+      ],
+      "r_ci90": [
+       0.605961,
+       0.990604
+      ],
+      "p_c": 1.0,
+      "interval_published": true
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   }
+  },
+  "60": {
+   "range": "45 [42.5, 47.5); 50 [47.5, 52.5); 55 [52.5, 57.5); 60 [57.5, 62.5); 65+ [62.5, 80]. Each row's assigned level is the anchor at ITS OWN FV, never the knot value.",
+   "knot": 60.0,
+   "m_c": 0.2525,
+   "anchor_values_for_m_c": [
+    1.24,
+    1.745
+   ],
+   "criteria": {
+    "CONFIRMED": "n >= 40 and the 90 percent interval on D_C lies entirely inside [-m_C, +m_C]",
+    "MISCALIBRATED": "n >= 40 and the interval lies entirely outside the band on one side, after the Holm step in 6.3; the sign is published",
+    "UNDECIDED": "n >= 40 and neither",
+    "UNPOWERED": "n < 40, or the cell's MDE95 (1.645 times the bootstrap standard error of D_C, the sd of the B draws, never the residual sd of the rows) exceeds 2 * m_C, in which case the cell is labelled UNDECIDED_UNDERPOWERED and counts as unpowered for 6.2",
+    "holm": "Family H: the powered cells on frame H, at most five. Family S: the powered cells on frame S, at most five. Two families, each under Holm at family alpha 0.10. p_C: if d_C > +m_C, p_C = 2 * (fraction of bootstrap draws with D*_C <= +m_C); if d_C < -m_C, p_C = 2 * (fraction with D*_C >= -m_C); otherwise p_C = 1. A cell with d_C on the wrong side of the band reads UNDECIDED whatever its p_C.",
+    "concordance": "A cell that reads MISCALIBRATED on H, where S is ALSO powered at that cell and S's 90 percent interval on D_C lies entirely on the opposite side of zero from H's point estimate d_C, reads UNDECIDED at that cell, with both frames' numbers published and the cell labelled SOURCE_SCALE_SUSPECT."
+   },
+   "H": {
+    "n": 5,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.322333,
+    "r_c": 1.214889,
+    "mean_label_per_season": 1.822333,
+    "mean_assigned_anchor": 1.5,
+    "knot_anchor": 1.5,
+    "residual_sd": 2.105333,
+    "se": 0.941533,
+    "boot_se": null,
+    "mde95": null,
+    "ci90": null,
+    "r_ci90": null,
+    "p_c": null,
+    "disposition": "UNPOWERED",
+    "sign": null,
+    "family": null,
+    "holm_step": null,
+    "annotation": null,
+    "source_census": {
+     "n": 5,
+     "mean_n_sources": 0.0,
+     "n_sources_known": 5,
+     "share_single_source": 0.0,
+     "share_pipeline_only": 0.0
+    },
+    "per_side": {
+     "hit": {
+      "n": 4,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.769167,
+      "r_c": 1.512778,
+      "mean_label_per_season": 2.269167,
+      "mean_assigned_anchor": 1.5,
+      "knot_anchor": 1.5,
+      "residual_sd": 2.139821,
+      "se": 1.069911,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "pit": {
+      "n": 1,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": -1.465,
+      "r_c": 0.023333,
+      "mean_label_per_season": 0.035,
+      "mean_assigned_anchor": 1.5,
+      "knot_anchor": 1.5,
+      "residual_sd": 0.0,
+      "se": null,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    },
+    "sentence": "The resolved holdout carries 5 prospects at FV 60, below the 40-row floor the anchor itself declares for trusting a tier. The anchor is not adjudicated there. The shared frame reads UNPOWERED.",
+    "sentence_10_4": "the resolved holdout carries too few prospects at this FV to adjudicate the anchor there; the shared frame's reading is UNPOWERED, which can fail the anchor and cannot confirm it"
+   },
+   "S": {
+    "n": 26,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": -0.036879,
+    "r_c": 0.974591,
+    "mean_label_per_season": 1.414551,
+    "mean_assigned_anchor": 1.451431,
+    "knot_anchor": 1.5,
+    "residual_sd": 1.287999,
+    "se": 0.252597,
+    "boot_se": null,
+    "mde95": null,
+    "ci90": null,
+    "r_ci90": null,
+    "p_c": null,
+    "disposition": "UNPOWERED",
+    "sign": null,
+    "family": null,
+    "holm_step": null,
+    "annotation": null,
+    "source_census": {
+     "n": 26,
+     "mean_n_sources": 1.6154,
+     "n_sources_known": 26,
+     "share_single_source": 0.3846,
+     "share_pipeline_only": 0.3846
+    },
+    "per_side": {
+     "hit": {
+      "n": 20,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.01466,
+      "r_c": 1.010223,
+      "mean_label_per_season": 1.44875,
+      "mean_assigned_anchor": 1.43409,
+      "knot_anchor": 1.5,
+      "residual_sd": 1.339239,
+      "se": 0.299463,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "pit": {
+      "n": 6,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": -0.208678,
+      "r_c": 0.861733,
+      "mean_label_per_season": 1.300556,
+      "mean_assigned_anchor": 1.509233,
+      "knot_anchor": 1.5,
+      "residual_sd": 1.197135,
+      "se": 0.488728,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   },
+   "H+S": {
+    "n": 31,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.021058,
+    "r_c": 1.014431,
+    "mean_label_per_season": 1.480323,
+    "mean_assigned_anchor": 1.459265,
+    "knot_anchor": 1.5,
+    "residual_sd": 1.411197,
+    "se": 0.253459,
+    "boot_se": null,
+    "mde95": null,
+    "ci90": null,
+    "r_ci90": null,
+    "p_c": null,
+    "label": "READ",
+    "criterion": "H + S (pooled, read): reported per cell as a descriptive, labelled READ. Carries no verdict.",
+    "per_side": {
+     "hit": {
+      "n": 24,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.140411,
+      "r_c": 1.097165,
+      "mean_label_per_season": 1.585486,
+      "mean_assigned_anchor": 1.445075,
+      "knot_anchor": 1.5,
+      "residual_sd": 1.470163,
+      "se": 0.300096,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "pit": {
+      "n": 7,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": -0.388152,
+      "r_c": 0.74259,
+      "mean_label_per_season": 1.119762,
+      "mean_assigned_anchor": 1.507914,
+      "knot_anchor": 1.5,
+      "residual_sd": 1.191535,
+      "se": 0.450358,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   }
+  },
+  "65+": {
+   "range": "45 [42.5, 47.5); 50 [47.5, 52.5); 55 [52.5, 57.5); 60 [57.5, 62.5); 65+ [62.5, 80]. Each row's assigned level is the anchor at ITS OWN FV, never the knot value.",
+   "knot": 65.0,
+   "m_c": 0.2425,
+   "anchor_values_for_m_c": [
+    1.745,
+    2.23
+   ],
+   "criteria": {
+    "CONFIRMED": "n >= 40 and the 90 percent interval on D_C lies entirely inside [-m_C, +m_C]",
+    "MISCALIBRATED": "n >= 40 and the interval lies entirely outside the band on one side, after the Holm step in 6.3; the sign is published",
+    "UNDECIDED": "n >= 40 and neither",
+    "UNPOWERED": "n < 40, or the cell's MDE95 (1.645 times the bootstrap standard error of D_C, the sd of the B draws, never the residual sd of the rows) exceeds 2 * m_C, in which case the cell is labelled UNDECIDED_UNDERPOWERED and counts as unpowered for 6.2",
+    "holm": "Family H: the powered cells on frame H, at most five. Family S: the powered cells on frame S, at most five. Two families, each under Holm at family alpha 0.10. p_C: if d_C > +m_C, p_C = 2 * (fraction of bootstrap draws with D*_C <= +m_C); if d_C < -m_C, p_C = 2 * (fraction with D*_C >= -m_C); otherwise p_C = 1. A cell with d_C on the wrong side of the band reads UNDECIDED whatever its p_C.",
+    "concordance": "A cell that reads MISCALIBRATED on H, where S is ALSO powered at that cell and S's 90 percent interval on D_C lies entirely on the opposite side of zero from H's point estimate d_C, reads UNDECIDED at that cell, with both frames' numbers published and the cell labelled SOURCE_SCALE_SUSPECT."
+   },
+   "H": {
+    "n": 4,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 1.044583,
+    "r_c": 1.481375,
+    "mean_label_per_season": 3.214583,
+    "mean_assigned_anchor": 2.17,
+    "knot_anchor": 1.99,
+    "residual_sd": 3.266326,
+    "se": 1.633163,
+    "boot_se": null,
+    "mde95": null,
+    "ci90": null,
+    "r_ci90": null,
+    "p_c": null,
+    "disposition": "UNPOWERED",
+    "sign": null,
+    "family": null,
+    "holm_step": null,
+    "annotation": null,
+    "source_census": {
+     "n": 4,
+     "mean_n_sources": 0.75,
+     "n_sources_known": 4,
+     "share_single_source": 0.75,
+     "share_pipeline_only": 0.75
+    },
+    "per_side": {
+     "hit": {
+      "n": 2,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 1.6764,
+      "r_c": 1.74059,
+      "mean_label_per_season": 3.94,
+      "mean_assigned_anchor": 2.2636,
+      "knot_anchor": 1.99,
+      "residual_sd": 5.251823,
+      "se": 3.7136,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "pit": {
+      "n": 2,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.412767,
+      "r_c": 1.19879,
+      "mean_label_per_season": 2.489167,
+      "mean_assigned_anchor": 2.0764,
+      "knot_anchor": 1.99,
+      "residual_sd": 1.681736,
+      "se": 1.189167,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    },
+    "sentence": "The resolved holdout carries 4 prospects at FV 65+, below the 40-row floor the anchor itself declares for trusting a tier. The anchor is not adjudicated there. The shared frame reads UNPOWERED.",
+    "sentence_10_4": "the resolved holdout carries too few prospects at this FV to adjudicate the anchor there; the shared frame's reading is UNPOWERED, which can fail the anchor and cannot confirm it"
+   },
+   "S": {
+    "n": 13,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.469572,
+    "r_c": 1.22382,
+    "mean_label_per_season": 2.567564,
+    "mean_assigned_anchor": 2.097992,
+    "knot_anchor": 1.99,
+    "residual_sd": 1.665369,
+    "se": 0.46189,
+    "boot_se": null,
+    "mde95": null,
+    "ci90": null,
+    "r_ci90": null,
+    "p_c": null,
+    "disposition": "UNPOWERED",
+    "sign": null,
+    "family": null,
+    "holm_step": null,
+    "annotation": null,
+    "source_census": {
+     "n": 13,
+     "mean_n_sources": 1.5385,
+     "n_sources_known": 13,
+     "share_single_source": 0.4615,
+     "share_pipeline_only": 0.4615
+    },
+    "per_side": {
+     "hit": {
+      "n": 11,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.379815,
+      "r_c": 1.182136,
+      "mean_label_per_season": 2.465152,
+      "mean_assigned_anchor": 2.085336,
+      "knot_anchor": 1.99,
+      "residual_sd": 1.572313,
+      "se": 0.47407,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "pit": {
+      "n": 2,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.963233,
+      "r_c": 1.444378,
+      "mean_label_per_season": 3.130833,
+      "mean_assigned_anchor": 2.1676,
+      "knot_anchor": 1.99,
+      "residual_sd": 2.825552,
+      "se": 1.997967,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   },
+   "H+S": {
+    "n": 17,
+    "floor": 40,
+    "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+    "d_c": 0.604869,
+    "r_c": 1.285999,
+    "mean_label_per_season": 2.719804,
+    "mean_assigned_anchor": 2.114935,
+    "knot_anchor": 1.99,
+    "residual_sd": 2.035612,
+    "se": 0.493708,
+    "boot_se": null,
+    "mde95": null,
+    "ci90": null,
+    "r_ci90": null,
+    "p_c": null,
+    "label": "READ",
+    "criterion": "H + S (pooled, read): reported per cell as a descriptive, labelled READ. Carries no verdict.",
+    "per_side": {
+     "hit": {
+      "n": 13,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.57929,
+      "r_c": 1.274186,
+      "mean_label_per_season": 2.692051,
+      "mean_assigned_anchor": 2.112762,
+      "knot_anchor": 1.99,
+      "residual_sd": 2.143757,
+      "se": 0.594571,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "pit": {
+      "n": 4,
+      "floor": 40,
+      "zero_convention": "A never-debuted prospect is a 0, not a missing value, and a debuted prospect's absent season inside his window is a 0.",
+      "d_c": 0.688,
+      "r_c": 1.324222,
+      "mean_label_per_season": 2.81,
+      "mean_assigned_anchor": 2.122,
+      "knot_anchor": 1.99,
+      "residual_sd": 1.924837,
+      "se": 0.962418,
+      "boot_se": null,
+      "mde95": null,
+      "ci90": null,
+      "r_ci90": null,
+      "p_c": null,
+      "interval_published": false
+     },
+     "resolver": "efv_dataset._side_match and the matrix's own side",
+     "criterion": "Per side: reported, never adjudicated. No copy may cite a per-side number from this artifact as evidence about the anchor."
+    }
+   }
+  }
+ },
+ "verdict": "UNDECIDED",
+ "verdict_vocabulary": [
+  "CONFIRMED",
+  "MISCALIBRATED",
+  "UNDECIDED",
+  "UNPOWERED",
+  "UNDECIDED_UNDERPOWERED",
+  "NOT_AVAILABLE",
+  "VOID",
+  "REFUSED",
+  "NULL"
+ ],
+ "verdict_criteria": {
+  "verdict_MISCALIBRATED": "MISCALIBRATED if ANY powered cell on H is MISCALIBRATED under the Holm family and survives the concordance rule, OR any powered cell on S is MISCALIBRATED under its own Holm family.",
+  "concordance": "A cell that reads MISCALIBRATED on H, where S is ALSO powered at that cell and S's 90 percent interval on D_C lies entirely on the opposite side of zero from H's point estimate d_C, reads UNDECIDED at that cell, with both frames' numbers published and the cell labelled SOURCE_SCALE_SUSPECT.",
+  "verdict_CONFIRMED": "CONFIRMED if EVERY powered cell on H is CONFIRMED, no powered cell on S is MISCALIBRATED, AND the powered cells on H include at least 45, 50 and 55.",
+  "verdict_UNDECIDED": "UNDECIDED otherwise, with every cell's disposition published."
+ },
+ "families": {
+  "H": {
+   "alpha": 0.1,
+   "k": 1,
+   "ordered": [
+    {
+     "step": 1,
+     "cell": "45",
+     "p_c": 0.134,
+     "threshold": 0.1,
+     "rejected": false
+    }
+   ],
+   "rejected": [],
+   "stopped_at_step": 1
+  },
+  "S": {
+   "alpha": 0.1,
+   "k": 3,
+   "ordered": [
+    {
+     "step": 1,
+     "cell": "50",
+     "p_c": 0.322,
+     "threshold": 0.033333,
+     "rejected": false
+    },
+    {
+     "step": 2,
+     "cell": "45",
+     "p_c": 1.0,
+     "threshold": 0.05,
+     "rejected": false
+    },
+    {
+     "step": 3,
+     "cell": "55",
+     "p_c": 1.0,
+     "threshold": 0.1,
+     "rejected": false
+    }
+   ],
+   "rejected": [],
+   "stopped_at_step": 1
+  },
+  "combined_false_miscalibrated_rate_at_most": 0.19
+ },
+ "concordance_fired": [],
+ "one_parameter_reading": null,
+ "sentence": "The realized anchor is UNDECIDED at FV cells ['45']: the interval on the realized-minus-assigned level crosses the tolerance band. Nothing served moves. The question re-arms when RESOLVED_THROUGH reaches 2027 under a new registration that discloses this read. UNDECIDED is not a confirmation and no copy may treat it as one.",
+ "unconditional_sentence": "Every number here is on the published fWAR label frozen per season. It is a statement about that definition of WAR. The anchor's agreement or disagreement with it is not evidence that the label is more or less accurate than any other.",
+ "named_row": {
+  "player_key": "jesus_made",
+  "commit": "c5167587",
+  "efv_in_commit": 61.9,
+  "expected_five_year_in_commit": 7.5,
+  "prime_in_commit": 15.4,
+  "available": true,
+  "served_xfv_grade": 56.5,
+  "served_xfv_grade_quantile": 56.5,
+  "served_consensus_fv": 61.5,
+  "anchor_at_efv_in_commit": 1.6862,
+  "anchor_at_served_grade": 1.136,
+  "expected_five_year_per_season_in_commit": 1.5,
+  "served_path_mean_per_season_at_pricing_grade": 1.1694,
+  "served_path_basis": "value_framework.p_bucket_given_fv x _bucket_season_wars at xfv_grade_quantile, five-season mean, no calibration shift, no age",
+  "disposition": null,
+  "note": "published beside the anchor so the reconciliation is done by code; nothing about the row is adjudicated"
+ },
+ "lever": null,
+ "run": {
+  "mode": "look",
+  "today": "2026-10-14",
+  "step_z_entry": "2026-10-03",
+  "look_floor": "2026-11-20",
+  "early_read": {
+   "owner_waived": true,
+   "waiver": "EW3-5 (owner 2026-10-14): registered look days and dates waived; the look before its floor is recorded as an OWNER-WAIVED EARLY READ",
+   "registered_floor": "2026-11-20",
+   "days_before_floor": 37,
+   "note": "OWNER-WAIVED EARLY READ: the registered look date was waived by the owner; the step Z condition held."
+  },
+  "command": "python -u tools/prospect_anchor_gate.py --owner-waived-early-read",
+  "seed": 20260923,
+  "b": 2000,
+  "wall_time_s": 10.88
+ }
+}

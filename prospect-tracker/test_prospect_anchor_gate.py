@@ -751,12 +751,121 @@ def test_empirical_anchors_v2_exists_only_under_a_miscalibrated_verdict():
         assert "empirical_anchors_v2" not in fitted
 
 
-def test_the_registry_row_points_at_the_gate_with_no_artifact_yet():
+def test_the_registry_row_points_at_the_gate_and_at_the_look_artifact():
+    """Before the look (f036e6f7) the row read unvalidated with no artifact; the look of
+    2026-10-14 pointed it at data/prospect_anchor_gate.json as provisional."""
     import model_registry as mr
     rows = {m["model_id"]: m for m in mr.load()["models"]}
     row = rows["prospect_anchor"]
     assert "docs/PROSPECT_ANCHOR_GATE.md" in row["notes"]
-    assert row["verdict"] == "unvalidated" and row["eval_artifact"] in (None, "")
+    assert row["verdict"] == "provisional" and row["eval_artifact"] == "data/prospect_anchor_gate.json"
+    assert row["provisional_kind"] == "shipped_partial_measurement"
     prose = f"{row['baseline']} {row['metric']} {row['notes']}".lower()
     assert "registered" in prose and "2026-11-20" in prose and "separately gated" in prose
+    assert "look 2026-10-14 (prospect_anchor_look)" in prose and "owner-waived early read" in prose
+    assert "undecided" in row["summary"].lower() and "2026-10-14" in row["summary"]
+    assert "verdict on the anchor: undecided" in prose
     assert rows["prospect_surplus"]["verdict"] == "validated", "prospect_surplus is untouched"
+    assert not mr.validate(), mr.validate()
+
+
+# ---------------------------------------------------------------------------
+# The look's verdict pins (added by PROSPECT_ANCHOR_LOOK on 2026-10-14, beside the criteria
+# pins above). The artifact is read, never recomputed; the look ran once.
+# ---------------------------------------------------------------------------
+LOOK_SHA256 = "8032046e5a4de2609bfe96d8c6c9757ffe07fb3b0c8bf768d88e1523a9eec86a"
+LOOK_H = {"45": "UNDECIDED", "50": "UNPOWERED", "55": "UNPOWERED", "60": "UNPOWERED", "65+": "UNPOWERED"}
+LOOK_S = {"45": "UNDECIDED", "50": "UNDECIDED", "55": "UNDECIDED", "60": "UNPOWERED", "65+": "UNPOWERED"}
+LOOK_N = {"H": {"45": 91, "50": 25, "55": 30, "60": 5, "65+": 4},
+          "S": {"45": 289, "50": 157, "55": 82, "60": 26, "65+": 13}}
+
+
+@pytest.fixture(scope="module")
+def look():
+    L = lab()
+    assert L.ARTIFACT.exists(), "the look's artifact is missing"
+    return json.loads(L.ARTIFACT.read_text(encoding="utf-8"))
+
+
+def test_look_artifact_is_the_one_written_on_2026_10_14(look):
+    import hashlib
+    L = lab()
+    assert hashlib.sha256(L.ARTIFACT.read_bytes()).hexdigest() == LOOK_SHA256
+    assert look["generated_at"] == "2026-10-14T13:33:34"
+    run = look["run"]
+    assert run["mode"] == "look" and run["today"] == "2026-10-14"
+    assert run["step_z_entry"] == "2026-10-03" and run["look_floor"] == "2026-11-20"
+    assert run["early_read"]["owner_waived"] is True and run["early_read"]["days_before_floor"] == 37
+    assert run["early_read"]["waiver"] == L.OWNER_WAIVER
+    assert run["command"] == "python -u tools/prospect_anchor_gate.py --owner-waived-early-read"
+    assert (run["seed"], run["b"]) == (20260923, 2000)
+    assert not L.section_18_is_empty(), "section 18 carries the look's entry"
+
+
+def test_look_verdict_is_undecided_with_these_dispositions(look):
+    L = lab()
+    assert look["verdict"] == "UNDECIDED"
+    for c in L.CELL_NAMES:
+        assert look["cells"][c]["H"]["disposition"] == LOOK_H[c], c
+        assert look["cells"][c]["S"]["disposition"] == LOOK_S[c], c
+        assert look["cells"][c]["H"]["n"] == LOOK_N["H"][c] and look["cells"][c]["S"]["n"] == LOOK_N["S"][c]
+        assert look["cells"][c]["H"]["annotation"] is None
+    assert look["concordance_fired"] == [] and look["lever"] is None
+    assert look["one_parameter_reading"] is None
+    assert look["sentence"] == L.SENTENCES["UNDECIDED"].format(cells=["45"])
+    # the powered cells' headline numbers, as the artifact stores them
+    h45, s45, s50, s55 = (look["cells"]["45"]["H"], look["cells"]["45"]["S"],
+                          look["cells"]["50"]["S"], look["cells"]["55"]["S"])
+    assert h45["d_c"] == -0.229006 and h45["ci90"] == [-0.303316, -0.142321] and h45["p_c"] == 0.134
+    assert s45["d_c"] == 0.103374 and s45["ci90"] == [0.034399, 0.177108]
+    assert s50["d_c"] == 0.252282 and s50["ci90"] == [0.109001, 0.400676] and s50["p_c"] == 0.322
+    assert s55["d_c"] == 0.032899 and s55["ci90"] == [-0.176137, 0.24389]
+    assert look["families"]["H"]["k"] == 1 and look["families"]["H"]["rejected"] == []
+    assert look["families"]["S"]["k"] == 3 and look["families"]["S"]["rejected"] == []
+    # 10.1: H unpowered at 50 and 55, so CONFIRMED was structurally unreachable
+    assert look["cells"]["50"]["H"]["ci90"] is None and look["cells"]["55"]["H"]["ci90"] is None
+
+
+def test_look_l1_stamps_l2_identity_and_the_margin_pin(look):
+    st = look["label_stamps"]
+    assert st["war_basis"]["provider"] == "fwar"
+    assert st["war_basis"]["board_label_term"] == "label=fwar@2026-10-02-0341299c20ec"
+    for side in ("hit", "pit"):
+        assert st["war_basis"]["matrix_report_target"][side] == "first-6-season summed WAR (fwar); resolved<= 2026"
+    assert st["RESOLVED_THROUGH"] == 2026
+    assert st["label_window_rule"] == {"SERVICE_ALIGNED_WINDOW": False, "_SERVICE_YEAR_CUT_MMDD": "04-15"}
+    assert st["empirical_anchors_generated_at"] == "2026-10-03T16:35:15"
+    assert st["empirical_anchors_cohort_window"] == [2014, 2020] and st["empirical_anchors_n_cohort"] == 3463
+    assert st["served_anchors"] == FIXTURE_TABLE, "the table scored is the step J table"
+    idn = look["identity_checks"]
+    for side in ("hit", "pit"):
+        for key in ("target_censored_mismatches", "consensus_fv_raw_mismatches", "censored_flag_mismatches"):
+            assert idn["checks"][side][key] == 0 and idn["published"][side][key] == 0
+    assert idn["checks"]["cross_side_key_overlap"] == 0
+    assert idn["L6"] == {"cohort_window": [2014, 2020], "n_cohort_fitted": 3463,
+                         "n_cohort_reproduced": 3463, "within_1pct": True}
+    assert look["frames"]["H"]["in_cells"] == 155 and look["frames"]["S"]["in_cells"] == 567
+    assert look["frames"]["no_key_in_both"] is True and look["frames"]["cohort_keys"] == 3463
+    pw = look["power"]
+    assert pw["margin_pin_holds"] is True
+    ratios = {c: pw["margins"][c]["ratio_to_design_day"] for c in pw["margins"]}
+    assert ratios == {"45": 1.0028, "50": 1.0152, "55": 1.0789, "60": 0.9787, "65+": 0.9221}
+    assert pw["frames"]["H"]["45"]["mde95"] == 0.079759 and pw["frames"]["H"]["45"]["underpowered_by_mde"] is False
+    # the registered detection check plants +m_C at the criterion's own edge, so it returns
+    # about the one-sided size there; every powered cell carries the lucky-read label
+    for fr, c in (("H", "45"), ("S", "45"), ("S", "50"), ("S", "55")):
+        det = pw["frames"][fr][c]["detection"]
+        assert det["lucky_read_label"] is True and det["fraction_miscalibrated"] < 0.10
+    assert pw["frames"]["H"]["45"]["coverage"]["too_narrow"] is True
+    assert pw["frames"]["S"]["50"]["coverage"]["too_narrow"] is False
+
+
+def test_look_moved_nothing_served(look):
+    """10.3: nothing moves on UNDECIDED. The flag is off, no v2 key, no lever."""
+    L = lab()
+    assert vf.SERVE_PROSPECT_ANCHOR_V2 is False
+    fitted = json.loads(L.FITTED_PATH.read_text(encoding="utf-8"))
+    assert "empirical_anchors_v2" not in fitted
+    assert fitted["empirical_anchors"]["generated_at"] == "2026-10-03T16:35:15"
+    assert fitted["empirical_anchors"]["anchors"] == look["label_stamps"]["served_anchors"]
+    assert look["named_row"]["disposition"] is None and look["named_row"]["player_key"] == "jesus_made"

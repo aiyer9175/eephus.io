@@ -1137,3 +1137,192 @@ config or fitted file, a figure already published in a committed artifact, docum
 or commit message, or arithmetic on such a figure labelled as such. The direction of
 the answer has a published prior, recorded in G-0.1, and this gate is written as a
 confirmatory registration that can fail in either direction.
+
+### 2026-10-14: the look, taken once, as an OWNER-WAIVED EARLY READ (EW3-5)
+
+This entry records the one look of section 14. It was taken on 2026-10-14, 37 days before
+the registered floor of 2026-11-20, under the owner's waiver of registered look days and dates
+(DECISIONS_FOR_OWNER.md EW3-5, owner 2026-10-14, verbatim: "Fuck the registered look days and
+waiting, we don't have to wait for anything. Let's do everything today"). It is therefore an
+OWNER-WAIVED EARLY READ, recorded in that word, and the "looking early disqualifies" clause of
+G-0 and section 14 is set aside by the owner's decision and by nothing else. The step Z
+condition held: `FWAR_LABEL_EPOCH_GATE.md` part 9 records its step Z entry dated 2026-10-03
+(commit `73850ecc`), and the look-day margins of 5.4 sat inside the 0.75x to 1.25x pin at every
+cell, so no 5c amendment was required and none was filed. The closing note below section 18's
+registration text describes the document before this entry. Clause (l) of the epoch gate binds
+every line: the numbers are statements about the published fWAR label and draw no accuracy
+conclusion from the basis.
+
+**The commit that produced it.** The numbers were produced from HEAD `a82bc17e` by
+`python -u tools/prospect_anchor_gate.py --owner-waived-early-read` (rc 0, B 2000, seed
+20260923, two-sided 90 percent, wall time 10.88 s, `generated_at` 2026-10-14T13:33:34), its
+stdout and stderr tee'd before anything else ran, after a step 2 dry run of the whole reporting
+path on a fixture frame with None values and an unpowered cell (35 tests passed, the fixture
+artifact written only to the task's output directory). The artifact is
+`data/prospect_anchor_gate.json`, sha256
+`8032046e5a4de2609bfe96d8c6c9757ffe07fb3b0c8bf768d88e1523a9eec86a`, 62,160 bytes, with the
+`power` block written before `cells` and `cells` before `verdict`. The commit that carries this
+entry also carries the artifact, the `prospect_anchor` registry row pointed at it, and the
+verdict pins in `test_prospect_anchor_gate.py`.
+
+**The five stamps of L1.** `war_basis.provider` `fwar`, both matrix reports' target
+`first-6-season summed WAR (fwar); resolved<= 2026`, the board label term
+`label=fwar@2026-10-02-0341299c20ec`; `RESOLVED_THROUGH` 2026; the label-window rule
+`SERVICE_ALIGNED_WINDOW` False with `_SERVICE_YEAR_CUT_MMDD` 04-15 (the calendar window, so no
+post-cut 2021 debut was censored on that account); `empirical_anchors.generated_at`
+2026-10-03T16:35:15 (step J, commit `70ae6f9d`, and `git log 70ae6f9d..HEAD` touches the fitted
+file nowhere, so no `--fit` ran between step Z and the look); `cohort_window` [2014, 2020] with
+`n_cohort` 3463. The served table scored: 45 0.31, 50 0.68, 55 0.98, 60 1.5, 65 1.99, 70 2.47,
+80 3.5, with the sub-45 knots 20 0.0091, 25 0.0106, 30 0.012, 35 0.0143, 40 0.0703 (out of this
+gate, 5.1). Fitted file sha256 `a36d22cefe5ff6eb479b5563144eb9c55d241d196cf61e23a7326b4c5dfdf8ee`.
+`use_empirical` True, `min_n_robust` 40. `SERVE_PROSPECT_ANCHOR_V2` False, and
+`fv_to_6yr_avg_war` reproduced the fitted table at every checked knot.
+
+**L2 and L6.** The pooled curve lab's loader and identity checks, unchanged: hit 1,985 scored
+rows (1,577 uncensored, 408 censored), pit 2,100 (1,636 uncensored, 464 censored),
+`target_censored_mismatches` 0, `consensus_fv_raw_mismatches` 0, `censored_flag_mismatches` 0
+on both sides, `unmatched_in_matrix` 0, `cross_side_key_overlap` 0, every count equal to the
+pooled curve's own published counts on the same label. L6: `empirical_anchors._cohort` at
+[2014, 2020] reproduced 3,463 keys against the fitted file's 3,463. L3 dropped 872 censored rows;
+2,491 resolved rows sat below the 45 cell (sub-45, out); 722 resolved rows entered the five
+cells. No row was dropped for a missing key, FV or label.
+
+**The frames.** H (holdout, verdict-bearing): 610 resolved rows, 155 in cells; decision-year
+census of the in-cell rows 2011: 11, 2012: 32, 2013: 105, 2015: 1, 2021: 2, 2022: 2, 2023: 2;
+source census mean `n_sources` 0.89, share single-source 0.845, share Pipeline-only 0.832. S
+(shared, veto only): 2,603 rows, 567 in cells; mean `n_sources` 1.68, single-source 0.319,
+Pipeline-only 0.312. No key in both. H is what 4.1 said it would be: the 2011 to 2013 decision
+cohorts on a largely Pipeline-scale FV, plus a handful of later rows resolved by inactivity.
+
+**Power, written before any criterion was read.** Margin pin holds at every cell: m_C 45
+0.152425 (ratio to design day 1.0028), 50 0.1675 (1.0152), 55 0.205 (1.0789), 60 0.2525
+(0.9787), 65+ 0.2425 (0.9221). Powered by n: H at 45 only (n 91); S at 45 (289), 50 (157) and
+55 (82). MDE95 (1.645 times the bootstrap se): H45 0.0798, S45 0.0712, S50 0.1438, S55 0.2124,
+none above 2 m_C, so no cell read UNDECIDED_UNDERPOWERED. Residual sd: H45 0.462, S45 0.732,
+S50 1.088, S55 1.182. Detection check (planting exactly +m_C, B 1000): H45 0.054, S45 0.051, S50
+0.041, S55 0.061, every powered cell labelled a lucky read (below 0.80), disposition rules
+unchanged. Recorded as measured and read for what it is: the registered check plants the
+residual AT the band edge that the MISCALIBRATED criterion tests against, so the fraction it
+returns is the criterion's own one-sided size at the edge, about 0.05 by construction, and not
+a detection rate for any effect beyond the edge. That is a property of the registered design,
+disclosed here, and not edited above this line. Coverage check (n_check 200): H45 0.865 (too
+narrow; misses 0.03 above, 0.105 below), S45 0.89 (too narrow; 0.045, 0.065), S50 0.92, S55
+0.92. The narrow direction manufactures CONFIRMED; no cell read CONFIRMED, so the two flags
+cost nothing to the verdict and are recorded.
+
+**The cells.** D_C in WAR per season, positive meaning realized above the anchor; the interval
+is the two-sided 90 percent percentile bootstrap; the pooled H + S row is a READ with no
+verdict.
+
+| cell | frame | n | D_C | 90 percent interval | R_C | p_C | Holm step | disposition |
+|---|---|---|---|---|---|---|---|---|
+| 45 | H | 91 | -0.229006 | [-0.303316, -0.142321] | 0.367 | 0.134 | 1 of 1 (threshold 0.10) | UNDECIDED |
+| 45 | S | 289 | +0.103374 | [0.034399, 0.177108] | 1.349 | 1.0 | 2 of 3 | UNDECIDED |
+| 45 | H + S | 380 | +0.023778 | [-0.032064, 0.084203] | 1.076 | - | - | READ |
+| 50 | H | 25 | +0.401808 | none (n below 40) | 1.629 | - | - | UNPOWERED |
+| 50 | S | 157 | +0.252282 | [0.109001, 0.400676] | 1.381 | 0.322 | 1 of 3 (threshold 0.0333) | UNDECIDED |
+| 50 | H + S | 182 | +0.272821 | [0.141975, 0.413724] | 1.414 | - | - | READ |
+| 55 | H | 30 | +0.249804 | none | 1.238 | - | - | UNPOWERED |
+| 55 | S | 82 | +0.032899 | [-0.176137, 0.24389] | 1.034 | 1.0 | 3 of 3 | UNDECIDED |
+| 55 | H + S | 112 | +0.090999 | [-0.093527, 0.281089] | 1.092 | - | - | READ |
+| 60 | H | 5 | +0.322333 | none | 1.215 | - | - | UNPOWERED |
+| 60 | S | 26 | -0.036879 | none | 0.975 | - | - | UNPOWERED |
+| 60 | H + S | 31 | +0.021058 | none | 1.014 | - | - | READ |
+| 65+ | H | 4 | +1.044583 | none | 1.481 | - | - | UNPOWERED |
+| 65+ | S | 13 | +0.469572 | none | 1.224 | - | - | UNPOWERED |
+| 65+ | H + S | 17 | +0.604869 | none | 1.286 | - | - | READ |
+
+Mean assigned anchor beside the knot value, so the within-cell FV spread is visible: H45 0.3619
+(knot 0.31), S45 0.2962, S50 0.6619 (0.68), S55 0.9687 (0.98). Family H: k 1, p 0.134 against
+0.10, Holm stopped at step 1, nothing rejected. Family S: k 3, ordered p 0.322 (50), 1.0 (45),
+1.0 (55), stopped at step 1, nothing rejected. The concordance rule did not fire (it acts only
+on a MISCALIBRATED H cell); no cell carries `SOURCE_SCALE_SUSPECT`. The one-parameter reading
+of 6.4 is not published (it exists only under MISCALIBRATED). Per-side numbers, reported and
+never adjudicated (section 7): H45 hit n 50 D -0.198 [-0.302, -0.076], pit n 41 D -0.266
+[-0.361, -0.142]; S45 hit n 157 D +0.099 [0.001, 0.205], pit n 132 D +0.108 [0.015, 0.211];
+S50 hit n 83 D +0.311 [0.101, 0.520], pit n 74 D +0.187 [0.012, 0.374]; S55 hit n 45 D +0.239
+[-0.073, 0.582], pit n 37 (counts only) D -0.218. No copy may cite any of them as evidence about
+the anchor.
+
+**Dispositions by frame, in the gate's words.** H: 45 UNDECIDED, 50 UNPOWERED, 55 UNPOWERED,
+60 UNPOWERED, 65+ UNPOWERED. S: 45 UNDECIDED, 50 UNDECIDED, 55 UNDECIDED, 60 UNPOWERED, 65+
+UNPOWERED. H was UNPOWERED at 50 and 55, so by 10.1's reachability note CONFIRMED was
+structurally unreachable at this look and the reachable set was {MISCALIBRATED, UNDECIDED}. No
+powered cell on H or S read MISCALIBRATED. **The verdict on the anchor is UNDECIDED** (6.2).
+
+**Section 17's sentence for the outcome, verbatim from the artifact.** "The realized anchor is
+UNDECIDED at FV cells ['45']: the interval on the realized-minus-assigned level crosses the
+tolerance band. Nothing served moves. The question re-arms when RESOLVED_THROUGH reaches 2027
+under a new registration that discloses this read. UNDECIDED is not a confirmation and no copy
+may treat it as one."
+
+Section 17's UNPOWERED sentences, verbatim from the artifact: "The resolved holdout carries 25
+prospects at FV 50, below the 40-row floor the anchor itself declares for trusting a tier. The
+anchor is not adjudicated there. The shared frame reads UNDECIDED." "The resolved holdout
+carries 30 prospects at FV 55, below the 40-row floor the anchor itself declares for trusting a
+tier. The anchor is not adjudicated there. The shared frame reads UNDECIDED." "The resolved
+holdout carries 5 prospects at FV 60, below the 40-row floor the anchor itself declares for
+trusting a tier. The anchor is not adjudicated there. The shared frame reads UNPOWERED." "The
+resolved holdout carries 4 prospects at FV 65+, below the 40-row floor the anchor itself
+declares for trusting a tier. The anchor is not adjudicated there. The shared frame reads
+UNPOWERED." And 10.4's sentence at 60 and 65+: "the resolved holdout carries too few prospects
+at this FV to adjudicate the anchor there; the shared frame's reading is UNPOWERED, which can
+fail the anchor and cannot confirm it".
+
+Unconditionally: "Every number here is on the published fWAR label frozen per season. It is a
+statement about that definition of WAR. The anchor's agreement or disagreement with it is not
+evidence that the label is more or less accurate than any other."
+
+**What the read showed and did not adjudicate, said once.** At 45 the two frames' point
+estimates sit on opposite sides of zero: the holdout (83 percent Pipeline-only rows) reads below
+the anchor, the shared frame (consensus-era rows, the anchor's own fit cohort re-binned) reads
+above it, and the pooled read sits inside the band. That is the signature 4.1 pre-registered
+for a source-scale offset between the two frames, and this gate adjudicates nothing from it: the
+concordance rule exists to remove a MISCALIBRATED, and there was none. On S, the 45 and 50
+intervals lie above zero and cross +m_C; they are UNDECIDED in that word and are not rounded
+into a finding about the owner's suspicion. Section 9's falsification list: claim 2 is neither
+confirmed nor falsified; claim 3 (the direction prior "up at every knot 45-65") is contradicted
+on H at 45 (point estimate negative) and not contradicted on S at 45 and 50; claim 7 holds
+mechanically (L6 within 1 percent, no key in both frames).
+
+**The named row (section 0 row 6, section 15), published beside the anchor with no
+disposition.** `jesus_made`: served `xfv_grade` 56.5 (pricing grade 56.5), served consensus FV
+61.5; the served anchor at the commit's eFV 61.9 is 1.6862 WAR per season and at the served
+grade 1.136; the commit's 7.5 over five years is 1.5 per season; the served path mean at the
+pricing grade (P(bucket given FV) times the bucket season paths, five-season mean, no
+calibration shift, no age) is 1.1694 per season. Nothing about the row is adjudicated.
+
+**What happens now (10.3).** Nothing moves. `SERVE_PROSPECT_ANCHOR_V2` stays False;
+`empirical_anchors_v2` does not exist; no lever was fitted, no twin, no out-of-fold check; the
+2022 decision cohort was not touched; `value_framework.py --fit` was not called;
+`prospect_surplus` keeps its verdict. The display debt of commit `c5167587` stays open. The
+question re-arms as a NEW registration disclosing this read when `RESOLVED_THROUGH` reaches 2027
+(the 2022 debut cohort resolves) and, if `--fit` runs with `reference_year` 2027, the window
+slides to [2015, 2021] and moves the 2014 decision cohort from S into H, which is what is expected
+to power H at 50 and 55. The re-registration may not narrow the tolerance or drop a cell that
+read UNDECIDED here. Frame H is spent on this read. The registry row `prospect_anchor` now
+points at the artifact and carries the verdict, the frame and the fitted-file hash scored.
+
+**The run's output, verbatim** (the tee'd stdout and stderr, `anchor_look.txt`):
+
+```
+verdict: UNDECIDED
+  cell  45  H n=   91 d=-0.229006 ci=[-0.303316, -0.142321] UNDECIDED  |  S n=  289 d=0.103374 ci=[0.034399, 0.177108] UNDECIDED  m_C=0.152425
+  cell  50  H n=   25 d=0.401808 ci=None UNPOWERED  |  S n=  157 d=0.252282 ci=[0.109001, 0.400676] UNDECIDED  m_C=0.1675
+  cell  55  H n=   30 d=0.249804 ci=None UNPOWERED  |  S n=   82 d=0.032899 ci=[-0.176137, 0.24389] UNDECIDED  m_C=0.205
+  cell  60  H n=    5 d=0.322333 ci=None UNPOWERED  |  S n=   26 d=-0.036879 ci=None UNPOWERED  m_C=0.2525
+  cell 65+  H n=    4 d=1.044583 ci=None UNPOWERED  |  S n=   13 d=0.469572 ci=None UNPOWERED  m_C=0.2425
+margin pin holds: True
+The realized anchor is UNDECIDED at FV cells ['45']: the interval on the realized-minus-assigned level crosses the tolerance band. Nothing served moves. The question re-arms when RESOLVED_THROUGH reaches 2027 under a new registration that discloses this read. UNDECIDED is not a confirmation and no copy may treat it as one.
+Every number here is on the published fWAR label frozen per season. It is a statement about that definition of WAR. The anchor's agreement or disagreement with it is not evidence that the label is more or less accurate than any other.
+```
+
+### 2026-10-14: owner-waived early read, the dated note EW3-5 asks for
+
+The look above ran 37 days before its registered floor (2026-11-20, the later of 2026-11-20 and
+step Z 2026-10-03 plus 14 days) under owner decision EW3-5 of 2026-10-14, which waives registered
+look days and dates for every task. It is recorded as an OWNER-WAIVED EARLY READ. The only other
+condition of section 14, the step Z entry, held. The waiver was carried by an explicit switch of
+the lab (`--owner-waived-early-read`, commit `a82bc17e`), never by default; without it the lab
+still refuses before the floor, and neither the step Z condition nor another gate's look day is
+waived by it. Nothing above section 18 was edited.
