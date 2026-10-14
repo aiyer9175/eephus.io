@@ -254,6 +254,12 @@ def _taint_player(p):
     for k in _EFV_KEYS:
         if _num(p.get(k)):
             p[k] = E
+    # draft_export.DRAFT_CURRENT_FV_EFV on (Q9_15): a draft row's current_fv and
+    # expected_fv_for_pick are eFV grades (current_fv_basis "efv"), so they carry the eFV mark.
+    if p.get("current_fv_basis") == "efv":
+        for k in ("current_fv", "expected_fv_for_pick"):
+            if _num(p.get(k)):
+                p[k] = E
     if _num(p.get("overperf_fv")):
         p["overperf_fv"] = 0.0
 

@@ -14,7 +14,7 @@ Pinned here:
     off (so the flag-off page is unchanged in digits);
   * "eFV now" joins promoted_key, then milb_key, to a graded active or debuted eFV entry and
     rounds to nearest;
-  * draft_export.DRAFT_CURRENT_FV_EFV is off, assigned only in draft_export.py; off, the
+  * draft_export.DRAFT_CURRENT_FV_EFV is on (Q9_15), assigned only in draft_export.py; off, the
     overperformance fields are what they were (basis "board_fv"); on, current_fv is the eFV
     grade with current_fv_basis "efv" and expected_fv_for_pick / overperf_fv recompute on it;
   * the sentinel regression: with every consensus grade set to 76.4 and every eFV grade to
@@ -194,9 +194,10 @@ def test_drilldown_value_swaps_ride_the_display_flag():
 # 3. draft_export: DRAFT_CURRENT_FV_EFV (B-DD6)
 # ---------------------------------------------------------------------------
 
-def test_draft_current_fv_flag_is_one_constant_and_off():
+def test_draft_current_fv_flag_is_one_constant_and_on():
     import draft_export
-    assert draft_export.DRAFT_CURRENT_FV_EFV is False
+    # Flipped on by Q9_15 in its own commit (2026-10-14, owner answer Q-E3).
+    assert draft_export.DRAFT_CURRENT_FV_EFV is True
     pat = re.compile(r"^\s*(?:[\w.]+\.)?DRAFT_CURRENT_FV_EFV\s*(?::[^=\n]*)?=(?!=)", re.M)
     skip = {".cache", "data", "node_modules", "__pycache__", ".git", "_labs", ".venv", "venv"}
     hits = []
