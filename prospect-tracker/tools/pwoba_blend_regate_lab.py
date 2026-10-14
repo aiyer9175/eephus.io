@@ -222,7 +222,22 @@ def gate_block(subset, label):
     }
 
 
-def main():
+def _parse_args(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--season-complete-asof", default=None,
+                    help=("OWNER-WAIVED EARLY READ override, 'YYYY:YYYY-MM-DD': treat "
+                          "season YYYY as complete once today reaches the date "
+                          "(plus_lab_harness.set_season_complete_asof; logged and "
+                          "written into the artifact). The Nov 15 default stays."))
+    return ap.parse_args(argv)
+
+
+def main(argv=None):
+    args = _parse_args(argv)
+    override = plh.set_season_complete_asof(args.season_complete_asof)
+    if override:
+        print(f"season-complete override in force: {plh.season_complete_override_meta()}")
     t0 = time.time()
     eng = FaEngine()
     print(f"fa corpus: hit={len(eng.hist_hit)} players")
@@ -311,9 +326,15 @@ def main():
             "The keep-alive's ~650 pairs/season arrive as predictor-2025 -> "
             "outcome-2026 pairs. The registered pair rule keeps a pair only "
             "when the OUTCOME season is complete (past Nov 15). On "
-            f"{date.today().isoformat()} the 2026 season is in progress, so "
-            "every 2025->2026 pair is dropped as partial_outcome under the "
-            "registered protocol. The registered gate set therefore extends "
+            f"{date.today().isoformat()} "
+            + ("the 2026 season counts as complete"
+               + (" under the logged owner-waived override"
+                  if plh.season_complete_override_meta() else "")
+               + ", so the 2025->2026 cohort enters the registered gate set"
+               if plh.season_complete(2026) else
+               "the 2026 season is in progress, so every 2025->2026 pair is "
+               "dropped as partial_outcome under the registered protocol")
+            + ". The registered gate set therefore extends "
             f"by {len(new_resolved)} pairs at this vintage."),
     }
 
@@ -385,10 +406,16 @@ def main():
                       "paired iid bootstrap lo95 >= 0, v1 convention, "
                       f"seed {SEED}, {BOOT} reps (original recorded convention)"),
         "reason": reason,
-        "next_regate": ("re-run this lab after 2026-11-15: season_complete(2026) "
-                        "flips true and the 2025->2026 cohort (preview n "
-                        f"{len(preview_pairs)}+, keep-alive estimate ~650) "
-                        "enters the registered gate set"),
+        "next_regate": (
+            ("this run IS the registered 2026-11-15 re-gate, taken as an "
+             "owner-waived early read: the 2025->2026 cohort "
+             f"({n_new} resolved pairs) is in the registered gate set; the "
+             "keep-alive is spent by this verdict")
+            if n_new else
+            ("re-run this lab after 2026-11-15: season_complete(2026) "
+             "flips true and the 2025->2026 cohort (preview n "
+             f"{len(preview_pairs)}+, keep-alive estimate ~650) "
+             "enters the registered gate set")),
     }
 
     # ---- proposed production diff (only materialized on PASS) --------------- #
@@ -418,6 +445,12 @@ def main():
                       "2000 reps, v1 iid paired bootstrap); the fallback seed "
                       f"{ALT_SEED_UNUSED} was not needed"),
         "harness": plh.convention_meta("wOBA(Y+1) raw pooled", "wOBA(Y+1)"),
+        "season_complete_override": plh.season_complete_override_meta(),
+        "owner_waived_early_read": (
+            ("registered date 2026-11-15 (docs/efv-2026-07-23/RECHECKS.md); run on "
+             f"{date.today().isoformat()} under the owner's 2026-10-14 waiver of "
+             "look days (EW3-5) and the explicit season-complete override (EW3-6)")
+            if plh.season_complete_override_meta() else None),
         "ledger_reference": {
             "registry_row": "pwoba_xwoba_blend",
             "original_lab": "tools/xwoba_projection_blend_lab.py",

@@ -45,7 +45,9 @@ the caller.
 """
 from __future__ import annotations
 
+import os
 import random
+import sys
 from datetime import date
 
 HARNESS_VERSION = 2
@@ -54,14 +56,83 @@ HARNESS_VERSION = 2
 # make-up games are long over; mirrors the split-half end date convention)
 SEASON_COMPLETE_MONTH_DAY = (11, 15)
 
+# OWNER-WAIVED EARLY READ OVERRIDE (owner 2026-10-14, EW3-5 and EW3-6). The
+# (11, 15) default above is a CONVENTION and it never changes. A lab that the
+# owner re-armed early passes an explicit as-of override, by environment
+# variable or by its own --season-complete-asof flag (which sets the same
+# variable), of the form "YYYY:YYYY-MM-DD[,YYYY:YYYY-MM-DD...]": season YYYY
+# counts complete once today reaches the named date. Every use is LOGGED to
+# stderr once per season and is written into convention_meta() so the
+# artifact carries it; a read taken under it is recorded as an owner-waived
+# early read in its registration, never as the registered date's read.
+SEASON_COMPLETE_ASOF_ENV = "PLUS_LAB_SEASON_COMPLETE_ASOF"
+_OVERRIDE_LOGGED: set = set()
+
+
+def parse_season_complete_asof(spec: str | None) -> dict[int, date]:
+    """{season: as-of date} from the override spec; {} when unset or blank.
+    A malformed entry raises, so a typo never silently widens a pair set."""
+    out: dict[int, date] = {}
+    for part in (spec or "").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        season, _, asof = part.partition(":")
+        out[int(season)] = date.fromisoformat(asof.strip())
+    return out
+
+
+def set_season_complete_asof(spec: str | None) -> dict[int, date]:
+    """Install `spec` as the process-wide override (the labs' flag path) and
+    return the parsed map. An empty spec clears it."""
+    parsed = parse_season_complete_asof(spec)
+    if parsed:
+        os.environ[SEASON_COMPLETE_ASOF_ENV] = spec.strip()
+    else:
+        os.environ.pop(SEASON_COMPLETE_ASOF_ENV, None)
+    return parsed
+
+
+def season_complete_override() -> dict[int, date]:
+    """The override in force, read from the environment at call time."""
+    return parse_season_complete_asof(os.environ.get(SEASON_COMPLETE_ASOF_ENV))
+
+
+def season_complete_override_meta() -> dict | None:
+    """The override block an artifact carries, or None when the default
+    convention (Nov 15) was the only rule in force."""
+    ov = season_complete_override()
+    if not ov:
+        return None
+    return {
+        "env": SEASON_COMPLETE_ASOF_ENV,
+        "seasons": {str(y): d.isoformat() for y, d in sorted(ov.items())},
+        "default_month_day": list(SEASON_COMPLETE_MONTH_DAY),
+        "authority": ("owner 2026-10-14 (EW3-5, EW3-6): registered look days are "
+                      "waived; the 2026 regular season ended in late September and "
+                      "the labs read regular-season outcomes; reads taken under this "
+                      "override are OWNER-WAIVED EARLY READS"),
+    }
+
 
 # --------------------------------------------------------------------------- #
 # (4) complete-season gating
 # --------------------------------------------------------------------------- #
 def season_complete(year: int, today: date | None = None) -> bool:
     """True when season `year` is fully in the books (past Nov 15 of `year`).
-    Used to drop Y->Y+1 pairs whose OUTCOME season is still being played."""
+    Used to drop Y->Y+1 pairs whose OUTCOME season is still being played.
+    An explicit override (see SEASON_COMPLETE_ASOF_ENV) replaces the Nov 15
+    rule for the seasons it names and is logged once per season."""
     t = today or date.today()
+    asof = season_complete_override().get(int(year))
+    if asof is not None:
+        if int(year) not in _OVERRIDE_LOGGED:
+            _OVERRIDE_LOGGED.add(int(year))
+            print(f"season_complete OVERRIDE: season {int(year)} treated as complete "
+                  f"as of {asof.isoformat()} ({SEASON_COMPLETE_ASOF_ENV}; the "
+                  f"default stays {SEASON_COMPLETE_MONTH_DAY}); owner-waived early "
+                  "read (owner 2026-10-14)", file=sys.stderr)
+        return t >= asof
     m, d = SEASON_COMPLETE_MONTH_DAY
     return t >= date(int(year), m, d)
 
@@ -250,6 +321,7 @@ def convention_meta(target_v1: str, target_v2: str,
         "pair_rule": ("Y->Y+1 pairs kept only when the OUTCOME season is complete "
                       "(past Nov 15). Partial-year targets (e.g. mid-2026) are a "
                       "defect, dropped under BOTH conventions."),
+        "season_complete_override": season_complete_override_meta(),
         "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
         "interpretation_rules": [
             "existing VALIDATED ships STAND even if v2 weakens them; a reversal is "

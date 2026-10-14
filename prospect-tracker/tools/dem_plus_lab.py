@@ -20,8 +20,19 @@ fixed in docs/dem-plus-2026-09-11/DEM_PLUS_GATE.md before this file existed.
 
   X-D2   Innings-weighted 3-year DEM+ against 1-year on the same pairs.
 
+  HOLDOUT  The confirmatory holdout of section 7 ("The 2025 to 2026 pairs run
+         once, after 2026-11-15, and are reported beside the verdict, never
+         merged into it"): X-D1's estimator, floors, baselines, seeds and twin,
+         unchanged, on the 2025 to 2026 pairs alone, written as the block
+         `confirmatory_holdout_2025_to_2026` of data/dem_plus_eval.json. The
+         X-D1 verdict and X-D2's status are untouched by it.
+
 Runs offline against the caches the exporter warms. All stochastic steps seeded.
-Run: python tools/dem_plus_lab.py [--no-write]
+Run: python tools/dem_plus_lab.py [--no-write] [--holdout]
+                                  [--season-complete-asof YYYY:YYYY-MM-DD]
+The last flag is the owner-waived early-read override of plus_lab_harness
+(owner 2026-10-14), logged and written into the block; the Nov 15 default
+never changes.
 """
 from __future__ import annotations
 
@@ -49,6 +60,8 @@ MULTI_EVAL = DATA / "dem_plus_multiyear_eval.json"
 
 FIT_SEASONS = [2016, 2017, 2018]            # k-fit predictor seasons (outcomes to 2019)
 SEASONS = [2021, 2022, 2023, 2024]          # X-D1 primary predictor seasons
+HOLDOUT_SEASONS = [2025]                    # the confirmatory holdout (outcome 2026)
+HOLDOUT_KEY = "confirmatory_holdout_2025_to_2026"
 SENS_SEASONS = [2016, 2017, 2018, 2019]     # in-sample sensitivity (inside the fit window)
 MIN_INN_Y = 200.0
 MIN_INN_NEXT = 300.0
@@ -375,5 +388,96 @@ def run(write: bool = True) -> dict:
     return {EVAL: payload, MULTI_EVAL: multi}
 
 
+def holdout_block(by_season: dict, seasons: list = HOLDOUT_SEASONS) -> dict:
+    """X-D1's code path (_pairs -> _dual -> _gate, the permuted twin at SEED + 1)
+    on the holdout predictor seasons. Pure: no file is read or written here."""
+    cols, dropped = _pairs(by_season, seasons)
+    n = len(cols["dem"])
+    block = {
+        "generated_at": date.today().isoformat(), "seasons": list(seasons), "seed": SEED,
+        "experiment": "X-D1 confirmatory holdout",
+        "preregistration": ("docs/dem-plus-2026-09-11/DEM_PLUS_GATE.md section 7, "
+                            "'Confirmatory holdout'"),
+        "estimator": ("X-D1 unchanged: _pairs floors (predictor innings >= "
+                      f"{int(MIN_INN_Y)}, outcome innings >= {int(MIN_INN_NEXT)}), the same "
+                      "three baselines, v1 primary and v2 beside, the permuted twin"),
+        "harness": plh.convention_meta(TARGET_V1, TARGET_V2),
+        "season_complete_override": plh.season_complete_override_meta(),
+        "n_pairs": n, "n_partial_outcome_pairs_dropped": dropped,
+        "reported_beside_the_verdict": True,
+        "merged_into_the_verdict": False,
+    }
+    if n < 30:
+        block["status"] = "NOT_SCORED"
+        block["reason"] = f"{n} pairs (under 30); nothing is read from a set this small"
+        return block
+    base = {"vs_fld_pct": cols["pct"], "vs_innings": cols["inn"], "vs_raw_rate": cols["raw"]}
+    res = _dual(cols["dem"], base, cols)
+    twin = _twin(cols, SEED + 1)
+    xtw = _dual(twin, {"vs_fld_pct": cols["pct"]}, cols)
+    twin_fails = not bool(xtw["v1"]["gap_ci"]["vs_fld_pct"]
+                          and xtw["v1"]["gap_ci"]["vs_fld_pct"]["lo95"] > 0)
+    g1, g2 = _gate(res, "v1"), _gate(res, "v2")
+    block.update({
+        "status": "SCORED",
+        "forward_spearman_vs_rate_next": {
+            "dem_plus": res["v1"]["rho_primary"],
+            "raw_rate": res["v1"]["rho_baselines"]["vs_raw_rate"],
+            "fld_pct": res["v1"]["rho_baselines"]["vs_fld_pct"],
+            "innings": res["v1"]["rho_baselines"]["vs_innings"],
+            "twin": xtw["v1"]["rho_primary"]},
+        "gap_ci_vs_fld_pct": res["v1"]["gap_ci"]["vs_fld_pct"],
+        "gap_ci_vs_innings": res["v1"]["gap_ci"]["vs_innings"],
+        "gap_ci_vs_raw_rate": res["v1"]["gap_ci"]["vs_raw_rate"],
+        "twin": {"rho": xtw["v1"]["rho_primary"],
+                 "gap_ci_vs_fld_pct": xtw["v1"]["gap_ci"]["vs_fld_pct"],
+                 "fails_as_required": twin_fails},
+        "results_by_convention": res,
+        "clauses_v1": g1, "clauses_v2": g2,
+        "all_clauses_hold_v1": bool(g1["all"] and twin_fails),
+        "all_clauses_hold_v2": bool(g2["all"] and twin_fails),
+    })
+    return block
+
+
+def run_holdout(write: bool = True) -> dict:
+    """Score the holdout and write it BESIDE the X-D1 verdict in EVAL: every
+    other key of the artifact is left exactly as it was."""
+    t0 = time.time()
+    need = sorted({y for s in HOLDOUT_SEASONS for y in (s, s + 1)})
+    by_season = {}
+    for y in need:
+        s = load_season(y)
+        if s:
+            by_season[y] = s
+    block = holdout_block(by_season)
+    block["runtime_seconds"] = round(time.time() - t0, 1)
+    print(json.dumps({k: block.get(k) for k in (
+        "status", "n_pairs", "forward_spearman_vs_rate_next", "gap_ci_vs_fld_pct",
+        "gap_ci_vs_innings", "gap_ci_vs_raw_rate", "twin", "clauses_v1", "clauses_v2",
+        "season_complete_override")}, indent=1))
+    if write:
+        doc = json.loads(EVAL.read_text(encoding="utf-8"))
+        doc[HOLDOUT_KEY] = block
+        tmp = EVAL.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+        tmp.replace(EVAL)
+        print(f"wrote {EVAL.relative_to(ROOT)} ({HOLDOUT_KEY}; verdict untouched)")
+    return block
+
+
+def _main(argv: list) -> None:
+    asof = None
+    if "--season-complete-asof" in argv:
+        asof = argv[argv.index("--season-complete-asof") + 1]
+    if plh.set_season_complete_asof(asof):
+        print(f"season-complete override in force: {plh.season_complete_override_meta()}")
+    write = "--no-write" not in argv
+    if "--holdout" in argv:
+        run_holdout(write=write)
+    else:
+        run(write=write)
+
+
 if __name__ == "__main__":
-    run(write="--no-write" not in sys.argv[1:])
+    _main(sys.argv[1:])

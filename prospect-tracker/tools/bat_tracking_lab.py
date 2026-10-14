@@ -77,6 +77,24 @@
 #   avg_hit_speed, brl_pa, ev95percent) vs the same gap, per season.
 #
 # No production module is touched. Artifact -> data/bat_tracking_eval.json.
+#
+# NOV-A (registered 2026-07-23 in docs/wills-2026-07-23/GATES.md W-NOV and
+# docs/efv-2026-07-23/RECHECKS.md, run with --nov-a): the vendored Swing+
+# composite's PER-SEASON variant (data/swing_plus.json seasons slices, W6)
+# replaces the raw bat-tracking z-aggregates as the BT leg in BOTH arms.
+# Everything else is the parent protocol above, unchanged: the pair sets
+# (BT row present at >= 100 competitive swings stays, and the Swing+ season
+# slice must be present or the pair drops as leg_missing), the cross-fit, the
+# frozen 0.595/0.255/0.15 weights, the v1 gate lo95 > 0 vs the same
+# incumbents, seed 20260723, 2000 reps. Arm A's OLS has one regressor,
+# z(Swing+); the z-scoring population is immaterial there (OLS with an
+# intercept is affine-invariant) and arm B re-z's its legs within predictor
+# season over the pair set per the X-H5 convention, so no normalizer choice
+# enters. Artifact -> data/bat_tracking_nov_a_eval.json.
+#
+# --season-complete-asof 'YYYY:YYYY-MM-DD' is the owner-waived early-read
+# override of plus_lab_harness (owner 2026-10-14); it is logged and written
+# into the artifact. The Nov 15 default never changes.
 # =========================================================================== #
 from __future__ import annotations
 
@@ -113,6 +131,9 @@ ARM_A_FEATS = ("bat_speed", "squared_up_rate", "attack_angle")
 ARM_B_COMPOSITE_FEATS = ("bat_speed", "squared_up_rate", "blast_rate")
 FWDHEM_W = (0.7, 0.3)                      # shipped incumbent (X-H5)
 CAND_W = (0.595, 0.255, 0.15)              # frozen a priori: 0.85 scale + 0.15 BT
+
+SWING_PLUS_PATH = ROOT / "data" / "swing_plus.json"
+SWING_PLUS_LEG = ("swing_plus",)             # NOV-A: the one-feature BT leg
 
 BT_CACHE = ROOT / ".cache" / "bat_tracking"
 BT_URL = ("https://baseballsavant.mlb.com/leaderboard/bat-tracking"
@@ -213,6 +234,38 @@ def load_bt(year: int) -> tuple[dict[int, dict], dict]:
     return out, report
 
 
+def load_swing_plus_seasons(path: Path = SWING_PLUS_PATH) -> tuple[dict[int, dict], dict]:
+    """NOV-A leg: {season: {mlbam: {"swing_plus": float, "n_swings": int,
+    "low_n": bool}}} from the vendored artifact's per-season slices, taken
+    AS THE ARTIFACT GIVES THEM (a slice under the model's min_swings floor is
+    flagged low_n there and is kept here, flagged and counted; nothing is
+    re-shrunk or re-floored). Returns None-safe coverage meta beside it."""
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    out: dict[int, dict] = {}
+    low_n = {}
+    for mid, rec in (doc.get("players") or {}).items():
+        for season, sl in (rec.get("seasons") or {}).items():
+            v = sl.get("swing_plus") if isinstance(sl, dict) else None
+            if v is None:
+                continue
+            y = int(season)
+            out.setdefault(y, {})[int(mid)] = {
+                "swing_plus": float(v), "n_swings": int(sl.get("n_swings") or 0),
+                "low_n": bool(sl.get("low_n"))}
+            if sl.get("low_n"):
+                low_n[y] = low_n.get(y, 0) + 1
+    meta = {
+        "path": str(path.relative_to(ROOT)).replace("\\", "/"),
+        "generated_at": doc.get("generated_at"), "model": doc.get("model"),
+        "min_swings": doc.get("min_swings"), "reliability_k": doc.get("reliability_k"),
+        "n_scored_pooled": doc.get("n_scored"),
+        "per_season_coverage": {str(y): len(v) for y, v in sorted(out.items())},
+        "per_season_low_n": {str(y): low_n.get(y, 0) for y in sorted(out)},
+        "variant": "per-season slices (W6), the registered NOV-A leg",
+    }
+    return out, meta
+
+
 def zmap(pop: dict[int, dict], feats: tuple[str, ...]) -> dict[int, dict]:
     """Within-season z-scores of `feats` over the population `pop`."""
     out: dict[int, dict] = {}
@@ -228,10 +281,17 @@ def zmap(pop: dict[int, dict], feats: tuple[str, ...]) -> dict[int, dict]:
 # --------------------------------------------------------------------------- #
 # arm A: predictive residual read vs the incumbent woba_proj
 # --------------------------------------------------------------------------- #
-def run_arm_a(eng: FaEngine, by_season: dict, bt_z: dict) -> dict:
+def run_arm_a(eng: FaEngine, by_season: dict, bt_z: dict, *,
+              feats: tuple[str, ...] = ARM_A_FEATS, leg_z: dict | None = None,
+              leg_label: str = "z(bat_speed) + z(squared_up_rate) + z(attack_angle)") -> dict:
+    """Parent protocol when `leg_z` is None (the BT z-aggregates are the leg).
+    NOV-A passes leg_z (the per-season Swing+ z) and feats=SWING_PLUS_LEG: the
+    BT row gate stays, and the pair also needs the Swing+ slice."""
     pairs = []
     drops = {"partial_outcome_kept": 0, "window": 0, "age_missing": 0,
              "fa_proj_missing": 0, "bt_missing": 0}
+    if leg_z is not None:
+        drops["leg_missing"] = 0
     for y in PRED_SEASONS:
         cur, nxt = by_season.get(y), by_season.get(y + 1)
         if not cur or not nxt:
@@ -261,6 +321,11 @@ def run_arm_a(eng: FaEngine, by_season: dict, bt_z: dict) -> dict:
             if not z:
                 drops["bt_missing"] += 1
                 continue
+            if leg_z is not None:
+                z = leg_z.get(y, {}).get(int(mid))
+                if not z:
+                    drops["leg_missing"] += 1
+                    continue
             pairs.append({"mid": mid, "y": y, "oy": y + 1,
                           "tgt": b["woba_raw"], "fa": fa_val, "z": z})
 
@@ -272,7 +337,7 @@ def run_arm_a(eng: FaEngine, by_season: dict, bt_z: dict) -> dict:
     # cross-fitted residual OLS (fit on the OTHER fold, never on its own)
     def _fit(fold):
         X = np.column_stack([np.ones(len(fold))]
-                            + [[p["z"][k] for p in fold] for k in ARM_A_FEATS])
+                            + [[p["z"][k] for p in fold] for k in feats])
         resid = np.array([p["tgt"] - p["fa"] for p in fold])
         coef, *_ = np.linalg.lstsq(X, resid, rcond=None)
         return coef
@@ -283,7 +348,7 @@ def run_arm_a(eng: FaEngine, by_season: dict, bt_z: dict) -> dict:
     def _bt_val(p):
         c = coefs[p["y"]]
         return p["fa"] + float(c[0]) + sum(
-            float(cc) * p["z"][k] for k, cc in zip(ARM_A_FEATS, c[1:]))
+            float(cc) * p["z"][k] for k, cc in zip(feats, c[1:]))
 
     arms = {"fa_projection": [p["fa"] for p in pairs],
             "bt_corrected": [_bt_val(p) for p in pairs]}
@@ -321,11 +386,11 @@ def run_arm_a(eng: FaEngine, by_season: dict, bt_z: dict) -> dict:
     # diagnostics: how each BT z relates to the incumbent residual (pooled)
     resid_all = [p["tgt"] - p["fa"] for p in pairs]
     resid_rhos = {k: _r4(_spearman([p["z"][k] for p in pairs], resid_all))
-                  for k in ARM_A_FEATS}
+                  for k in feats}
 
     return {
         "candidate": ("bt_corrected = woba_proj + cross-fitted "
-                      "OLS(residual ~ z(bat_speed) + z(squared_up_rate) + z(attack_angle))"),
+                      f"OLS(residual ~ {leg_label})"),
         "incumbent": "fa_projection woba_proj (validated pWOBA)",
         "n_pairs": len(pairs), "drops": drops,
         "folds": per_fold,
@@ -333,7 +398,7 @@ def run_arm_a(eng: FaEngine, by_season: dict, bt_z: dict) -> dict:
             f"applied_to_{y}_fold(fit_on_{other[y]})": {
                 "intercept": round(float(coefs[y][0]), 5),
                 **{k: round(float(c), 5)
-                   for k, c in zip(ARM_A_FEATS, coefs[y][1:])}}
+                   for k, c in zip(feats, coefs[y][1:])}}
             for y in PRED_SEASONS},
         "residual_spearman_pooled": resid_rhos,
         "results_by_convention": {
@@ -355,7 +420,13 @@ def run_arm_a(eng: FaEngine, by_season: dict, bt_z: dict) -> dict:
 # --------------------------------------------------------------------------- #
 # arm B: descriptive xHEM-style blend (display-metric candidate)
 # --------------------------------------------------------------------------- #
-def run_arm_b(by_season: dict, bt_pop: dict, bt_z: dict) -> dict:
+def run_arm_b(by_season: dict, bt_pop: dict, bt_z: dict, *,
+              comp_feats: tuple[str, ...] = ARM_B_COMPOSITE_FEATS,
+              leg_z: dict | None = None,
+              leg_label: str = "mean z(bat_speed, squared_up_rate, blast_rate)") -> dict:
+    """Parent protocol when `leg_z` is None. NOV-A passes leg_z (per-season
+    Swing+ z) and comp_feats=SWING_PLUS_LEG: the BT row gate stays, the Swing+
+    slice must be present, and the composite is that one z."""
     sav = {y: load_xwoba(y) for y in PRED_SEASONS + [max(PRED_SEASONS) + 1]}
     ev_raw = {y: load_ev(y) for y in PRED_SEASONS + [max(PRED_SEASONS) + 1]}
     ev_z = {y: zmap({m: v for m, v in ev_raw[y].items()
@@ -366,11 +437,17 @@ def run_arm_b(by_season: dict, bt_pop: dict, bt_z: dict) -> dict:
         z = bt_z.get(y, {}).get(mid)
         if not z:
             return None
-        return sum(z[k] for k in ARM_B_COMPOSITE_FEATS) / len(ARM_B_COMPOSITE_FEATS)
+        if leg_z is not None:
+            z = leg_z.get(y, {}).get(mid)
+            if not z:
+                return "leg_missing"
+        return sum(z[k] for k in comp_feats) / len(comp_feats)
 
     # ---- forward pair set (X-H3/X-H5 construction + BT joined) ------------- #
     pairs = []
     drops = {"partial_outcome_kept": 0, "hem_missing": 0, "bt_missing": 0}
+    if leg_z is not None:
+        drops["leg_missing"] = 0
     for y in PRED_SEASONS:
         cur, nxt = sav.get(y), sav.get(y + 1)
         if not cur or not nxt:
@@ -388,6 +465,9 @@ def run_arm_b(by_season: dict, bt_pop: dict, bt_z: dict) -> dict:
             comp = _bt_comp(y, mid)
             if comp is None:
                 drops["bt_missing"] += 1
+                continue
+            if comp == "leg_missing":
+                drops["leg_missing"] += 1
                 continue
             pairs.append({"mid": mid, "y": y, "oy": y + 1, "tgt": nn["woba"],
                           "xw": s["est_woba"], "hem": hem, "bt": comp})
@@ -451,7 +531,7 @@ def run_arm_b(by_season: dict, bt_pop: dict, bt_z: dict) -> dict:
                 continue
             comp = _bt_comp(y, mid)
             ez = ev_z.get(y, {}).get(mid)
-            if comp is None or not ez:
+            if comp is None or comp == "leg_missing" or not ez:
                 continue
             evc = sum(ez[k] for k in EV_FEATS) / len(EV_FEATS)
             rows.append((s["woba"] - s["est_woba"], comp, evc))
@@ -465,8 +545,8 @@ def run_arm_b(by_season: dict, bt_pop: dict, bt_z: dict) -> dict:
 
     return {
         "candidate": ("bt_blend = 0.595*z(est_woba) + 0.255*z(hem_plus_raw) + "
-                      "0.15*z(bt_composite); composite = mean z(bat_speed, "
-                      "squared_up_rate, blast_rate); weights frozen a priori"),
+                      f"0.15*z(bt_composite); composite = {leg_label}; "
+                      "weights frozen a priori"),
         "incumbent": "fwdHEM+ blend 0.7*z(est_woba) + 0.3*z(hem_plus_raw) (X-H5, shipped)",
         "n_pairs": len(pairs), "drops": drops,
         "folds": per_fold,
@@ -481,7 +561,7 @@ def run_arm_b(by_season: dict, bt_pop: dict, bt_z: dict) -> dict:
         },
         "descriptive_context_not_gated": {
             "question": ("same-season Spearman vs the wOBA - xwOBA luck gap: "
-                         "BT contact-quality composite vs EV composite "
+                         f"BT leg ({leg_label}) vs EV composite "
                          "(mean z of avg_hit_speed, brl_pa, ev95percent)"),
             "by_season": desc,
         },
@@ -493,7 +573,26 @@ def run_arm_b(by_season: dict, bt_pop: dict, bt_z: dict) -> dict:
 
 
 # --------------------------------------------------------------------------- #
-def main():
+def _parse_args(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--nov-a", action="store_true",
+                    help=("run the registered NOV-A arm: per-season Swing+ "
+                          "(data/swing_plus.json) as the BT leg in both arms; "
+                          "artifact data/bat_tracking_nov_a_eval.json"))
+    ap.add_argument("--season-complete-asof", default=None,
+                    help=("OWNER-WAIVED EARLY READ override, 'YYYY:YYYY-MM-DD' "
+                          "(plus_lab_harness.set_season_complete_asof; logged and "
+                          "written into the artifact). The Nov 15 default stays."))
+    return ap.parse_args(argv)
+
+
+def main(argv=None):
+    args = _parse_args(argv)
+    override = plh.set_season_complete_asof(args.season_complete_asof)
+    if override:
+        print(f"season-complete override in force: {plh.season_complete_override_meta()}")
+    nov_a = bool(args.nov_a)
     t0 = time.time()
     eng = FaEngine()
     print(f"fa corpus: hit={len(eng.hist_hit)} players")
@@ -514,15 +613,72 @@ def main():
     all_feats = tuple(dict.fromkeys(ARM_A_FEATS + ARM_B_COMPOSITE_FEATS))
     bt_z = {y: zmap(bt_pop[y], all_feats) for y in bt_pop}
 
+    leg_kw_a: dict = {}
+    leg_kw_b: dict = {}
+    swing_meta = None
+    if nov_a:
+        sp_seasons, swing_meta = load_swing_plus_seasons()
+        print(f"  swing+ per-season slices: {swing_meta['per_season_coverage']} "
+              f"low_n {swing_meta['per_season_low_n']}")
+        sp_z = {y: zmap(sp_seasons[y], SWING_PLUS_LEG) for y in sp_seasons}
+        leg_kw_a = {"feats": SWING_PLUS_LEG, "leg_z": sp_z,
+                    "leg_label": "z(swing_plus per season)"}
+        leg_kw_b = {"comp_feats": SWING_PLUS_LEG, "leg_z": sp_z,
+                    "leg_label": "z(swing_plus per season)"}
+
     print("arm A (predictive residual read):")
-    arm_a = run_arm_a(eng, by_season, bt_z)
+    arm_a = run_arm_a(eng, by_season, bt_z, **leg_kw_a)
     print("arm B (descriptive blend):")
-    arm_b = run_arm_b(by_season, bt_pop, bt_z)
+    arm_b = run_arm_b(by_season, bt_pop, bt_z, **leg_kw_b)
+
+    complete_2026 = plh.season_complete(max(PRED_SEASONS) + 1)
+    override_meta = plh.season_complete_override_meta()
+    fold_2026 = (
+        "2025->2026 (complete outcome"
+        + (" under the logged owner-waived season-complete override" if override_meta else "")
+        + ")" if complete_2026 else
+        "2025->2026 (PARTIAL outcome through today; kept by pre-registered deviation "
+        "from harness rule 4, flagged; complete-only sensitivity reported)")
+    keep_alive_text = (
+        ("This run IS the frozen re-run after the 2026 completion (an owner-waived early "
+         "read, owner 2026-10-14); the registered keep-alive is spent and NULL stands.")
+        if complete_2026 else
+        ("NULL; the one honest keep-alive is a re-test on the identical frozen protocol "
+         "after the 2026 season completes (Nov 15), which adds no new researcher "
+         "degrees of freedom."))
 
     payload = {
-        "experiment": "BT-1 bat-tracking lane (hitters): pWOBA residual arm + xHEM-style blend arm",
+        "experiment": (
+            "NOV-A (registered 2026-07-23): per-season Swing+ as the BT leg in the pWOBA "
+            "residual arm and the fwdHEM+ blend arm, parent protocol otherwise unchanged"
+            if nov_a else
+            "BT-1 bat-tracking lane (hitters): pWOBA residual arm + xHEM-style blend arm"),
         "generated_at": date.today().isoformat(), "seed": SEED, "boot": BOOT,
         "harness": plh.convention_meta("wOBA(Y+1) raw pooled", "wOBA(Y+1)"),
+        "season_complete_override": override_meta,
+        "owner_waived_early_read": (
+            ("registered date 2026-11-15 (docs/efv-2026-07-23/RECHECKS.md, "
+             "docs/wills-2026-07-23/GATES.md W-NOV); run on "
+             f"{date.today().isoformat()} under the owner's 2026-10-14 waiver of look "
+             "days (EW3-5) and the explicit season-complete override (EW3-6)")
+            if override_meta else None),
+        "registration": (
+            {"arm": "NOV-A", "where": ["docs/wills-2026-07-23/GATES.md W-NOV",
+                                        "docs/efv-2026-07-23/RECHECKS.md"],
+             "substitution": ("the vendored Swing+ per-season slice replaces the raw "
+                              "bat-tracking z-aggregates as the BT leg in both arms; "
+                              "bars inherit the parent registrations"),
+             "parent": "data/bat_tracking_eval.json (this file's default run)",
+             "swing_plus_source": swing_meta,
+             "pair_set_note": ("the parent BT row gate (>= 100 competitive swings) "
+                               "stays; a pair without a Swing+ season slice drops as "
+                               "leg_missing; low_n slices are kept as the artifact "
+                               "gives them and counted above"),
+             "normalizer_note": ("arm A: OLS with an intercept on one regressor is "
+                                 "affine-invariant, so the z population is immaterial; "
+                                 "arm B: legs are re-z'd within predictor season over "
+                                 "the pair set (X-H5 convention)")}
+            if nov_a else None),
         "data_source": {
             "endpoint": BT_URL,
             "extraction": ("embedded `const data = [...]` JSON (the csv=true export "
@@ -535,10 +691,7 @@ def main():
         },
         "protocol": {
             "pre_registered": "2026-07-23, frozen before any results were computed",
-            "folds": ["2024->2025 (complete outcome)",
-                      "2025->2026 (PARTIAL outcome through 2026-07-23; kept by "
-                      "pre-registered deviation from harness rule 4, flagged; "
-                      "complete-only sensitivity reported)"],
+            "folds": ["2024->2025 (complete outcome)", fold_2026],
             "ledger_position": ("distinct from the CLOSED pwoba_ev_arm (EV/barrel "
                                 "residual), xwOBA-allowed and CSW-xK lanes; bat "
                                 "tracking is swing-measured, not batted-ball-outcome"),
@@ -569,10 +722,7 @@ def main():
                    "under both conventions and in the complete-outcome-only "
                    "sensitivity). The candidate DOES beat xwoba_z_alone and the BT "
                    "composite alone at lo95 > 0, but the pre-registered bar is the "
-                   "shipped fwdHEM+ incumbent, and it is not cleared. NULL; the one "
-                   "honest keep-alive is a re-test on the identical frozen protocol "
-                   "after the 2026 season completes (Nov 15), which adds no new "
-                   "researcher degrees of freedom.")),
+                   "shipped fwdHEM+ incumbent, and it is not cleared. " + keep_alive_text)),
             "descriptive_note": (
                 "Same-season luck-gap context (not gated): BT composite vs EV "
                 "composite Spearman with the wOBA - xwOBA gap: "
@@ -584,7 +734,7 @@ def main():
         },
         "runtime_seconds": round(time.time() - t0, 1),
     }
-    out = ROOT / "data" / "bat_tracking_eval.json"
+    out = ROOT / "data" / ("bat_tracking_nov_a_eval.json" if nov_a else "bat_tracking_eval.json")
     out.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8")
     print(f"wrote {out}")
     print(json.dumps({
