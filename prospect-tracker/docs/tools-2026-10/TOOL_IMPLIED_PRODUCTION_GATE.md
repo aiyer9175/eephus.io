@@ -1487,8 +1487,75 @@ sha256 of the frozen grade rows and of every FIT input, and the sha256 of
 
 ### T.12 Results
 
-EMPTY AT REGISTRATION. Look T's record is written here by TL_21, pasted verbatim from the runner and
-dated.
+**Look T record, 2026-10-14 (TL_21_TOOL_TABLE_REDERIVE_LOOK; an OWNER-WAIVED EARLY READ).** Run once at
+HEAD 9f4ab867 on branch wt-TL_21_TOOL_TABLE_REDERIVE_LOOK as `python tools/tool_accuracy_lab.py --look T
+--registration e79b8f5582f89e57ef48520a4e5e0ed87c787607 --mde 77bd430254b9b8e60e1da23790485a93f6ed4156`, after
+`--look T --dry-run` on fixtures carrying None values completed (both logs teed to the task's output
+directory before anything else ran). The runner's guards held before any score: the registration sha
+carries Part T with its status line REGISTERED, the `--mde` sha carries T.10, no grade point dated 2020
+or 2021, no debut in 2025 or later, no 2026 line in any FIT row, no grouping key naming an FV cell. Wall
+1 s. Artifact `data/tool_tables_rederived_eval.json`, sha256 27c94e4d0eb32b214b6638e9569112c8fd2d0e41849d291d015a342ebd540758.
+
+Inputs (sha256 identical at start and end): HOLDOUT `.cache/fa_statsapi_hitting_2026.json`
+1c7b86415b27d2fa6724d69ab88c947d5b839583e429f33a475d8a2fa375aabf and `.cache/fa_statsapi_pitching_2026.json`
+b81b02f8f44ca543d5cc77d260f83feea5ef2c2baf77c96a0b62965bc3adbe0c, both written 2026-10-14 07:47 local after the 2026
+regular season ended (751 hitter and 868 pitcher rows, max gamesPlayed 162); `.cache/velo_arsenal_2026.json`
+fadbb7483c682e582e63e76867c31cd7a4de2f20ea00fd884e41d78eb665f71d (as T.10 records it); frozen grade rows
+eb7f31c1033de8afef9db868dc2c25c3982a5febe056536c3f60118034ff206c (as T.10 records it); the FIT inputs' sha256
+match T.10's list. MDE95 per cell is copied from T.10. B 2000, seed 20261028, Holm m 7 at alpha 0.05.
+
+Runner record, verbatim:
+
+### Look T (2026-10-14)
+
+- game_pwr__hr_per600: n 149, MAE candidate 6.0599, incumbent 7.063142, delta -1.003241, UB95 -0.550499, p 0.0005, MDE95 0.771543, Holm 1, verdict PASS
+- game_pwr__iso: n 149, MAE candidate 0.037273, incumbent 0.050327, delta -0.013054, UB95 -0.009038, p 0.0005, MDE95 0.011502, Holm 2, verdict PASS
+- hit__avg: n 149, MAE candidate 0.022078, incumbent 0.026921, delta -0.004843, UB95 -0.002887, p 0.0005, MDE95 0.004357, Holm 3, verdict PASS
+- hit__k_pct: n 149, MAE candidate 4.588576, incumbent 4.715046, delta -0.12647, UB95 0.162361, p 0.22089, MDE95 0.310511, Holm 7, verdict FAIL
+- speed__sb_per600: n 149, MAE candidate 5.903885, incumbent 6.272383, delta -0.368498, UB95 -0.05615, p 0.023488, MDE95 0.42331, Holm 6, verdict FAIL
+- cmd__bb_pct_sp: n 106, MAE candidate 1.55856, incumbent 1.846598, delta -0.288039, UB95 -0.149257, p 0.0005, MDE95 0.138746, Holm 4, verdict PASS
+- fb__velo_sp: n 106, MAE candidate 1.25742, incumbent 2.089699, delta -0.832279, UB95 -0.646106, p 0.0005, MDE95 0.493917, Holm 5, verdict PASS
+- raw_pwr__ev_avg: n None, delta None; NOT COMPUTABLE
+- speed__sprint: n None, delta None; NOT COMPUTABLE
+- field__oaa_per1000: n None, delta None; NOT COMPUTABLE
+- cmd__bb_pct_rp: n 110, delta -0.051975; secondary: no verdict
+- fb__velo_rp: n 110, delta -0.245242; secondary: no verdict
+
+Accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6).
+
+Reading, by T.5 only. Five primary cells PASS all three clauses: game_pwr to HR per 600 PA, game_pwr to
+ISO, hit to AVG, cmd to BB% (SP) and fb to velocity (SP). hit to K% FAILS every clause (UB95
+0.162361 above 0, p 0.22089). speed to SB per 600 PA FAILS clause 2 alone: UB95 -0.05615 is
+below 0 and Holm rejects at step 6 (p 0.023488, threshold 0.025), but the point
+improvement 0.368498 is short of the margin 0.42331 (its MDE95). The prediction of
+T.5 held on power, hit to AVG and velocity and did not hold on K%, where the grade-blind league line kept
+the cell. A FAIL is a finding: the incumbent keeps every cell it is not beaten on. Beside columns, no
+verdict: W2 BA MAE 0.031535 on the hit to AVG rows; W2 SP Velo MAE
+1.991915 on the velocity rows. Sensitivity T.11 (b), the candidate refit on FIT players
+holding no HOLDOUT row, no verdict: deltas game_pwr__hr_per600 -0.966683, game_pwr__iso -0.013184, hit__avg -0.00554, hit__k_pct 0.096269, speed__sb_per600 -0.298322, cmd__bb_pct_sp -0.194978, fb__velo_sp -0.611366.
+Secondary cells, no verdict: cmd to BB% (RP) n 110 delta -0.051975;
+fb to velocity (RP) n 110 delta -0.245242; raw_pwr to exit velocity, speed to
+sprint speed and field to OAA are NOT COMPUTABLE at this look because the real look path loads no
+Statcast, sprint or innings line (a TL_4 build gap in the reported-only cells; the look is spent and is
+not rerun; recorded for the owner).
+
+What this licenses (T.6): the five PASSING cells may print on the /scouting/ tool-tier column (TL_23) as
+"measured on debuted players' MLB seasons" beside the FanGraphs estimate, each with its n and the
+candidate bins' intervals from the artifact and the survivorship sentence of Part 0.6; hit to K% and
+speed to SB per 600 PA print the FanGraphs framework estimate (hit to K%: nothing, no table exists).
+Copy never says our table is more accurate for a cell that did not pass. No served grade, consensus
+weight, eFV input or TIP table of look P or look W moves; nothing served moves at this commit.
+
+Registry: row `tool_tables_rederived` (provisional, `measured_not_adopted`, eval artifact
+`data/tool_tables_rederived_eval.json`) written by `tools/register_tool_tables_rederived_row.py`.
+
+Dated note, 2026-10-14: the registered date of T.7 (the first free day after TL_4, with T.10 on a calendar
+day before the look) was not reached, T.10 having landed earlier on 2026-10-14 at
+77bd4302; the owner's EW3-5 waiver of 2026-10-14 ("we don't have to wait for anything") covers that
+wait, so this look is recorded as an OWNER-WAIVED EARLY READ (default D7). MDE95 was still copied from
+the committed T.10 and never computed here (round 4, leakage 6 holds). Default D8: the dry run and the
+look wrote their logs and the dry-run fixture record to the task's output directory (`--out-dir`), so
+TL_4's committed dry-run record under `data/_labs/tool_accuracy/dryrun/` was not rewritten.
 
 ### 2026-10-14: look W taken as an OWNER-WAIVED EARLY READ (EW3-5)
 

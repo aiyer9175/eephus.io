@@ -1,0 +1,1280 @@
+{
+ "generated_at": "2026-10-14T17:22:40Z",
+ "look": "T",
+ "spent": true,
+ "gate": "docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md",
+ "registration_sha": "e79b8f5582f89e57ef48520a4e5e0ed87c787607",
+ "mde_sha": "77bd430254b9b8e60e1da23790485a93f6ed4156",
+ "inputs_sha256_start": {
+  ".cache/fa_statsapi_hitting_2015.json": "22afbc2b209e26c6a23cd1fdda51125756a1998b2d1d713c63b3be7cd5c3afc2",
+  ".cache/fa_statsapi_hitting_2016.json": "b04598774abf37ad482bd17cc95b42972fa3837e364706ec404faa36b3c18817",
+  ".cache/fa_statsapi_hitting_2017.json": "bb14f2a006eece205a1f1dc17a734c7eaa441eb2b9468e3f9c42dbff47577d39",
+  ".cache/fa_statsapi_hitting_2018.json": "0ed27cb23043ba42c748622f855ee676222aff4700656e93183d465bafbd1e97",
+  ".cache/fa_statsapi_hitting_2019.json": "66af1f1fa1869f5e22a3e20760d7f7929635b2600781c816822c7e7401142036",
+  ".cache/fa_statsapi_hitting_2021.json": "ec737cc5087fb03ae3cc2d3db1a7a5dc46d2d68e661c3d53639d76bd3b1dda02",
+  ".cache/fa_statsapi_hitting_2022.json": "44ac1610bfda4cb594effa32a728aba9e756fecd163408b2525c1c6bd98c9599",
+  ".cache/fa_statsapi_hitting_2023.json": "1434de28fbc752eabb57804b184823fdf521f731169c22b71c7ad098c5986c5c",
+  ".cache/fa_statsapi_hitting_2024.json": "8bb44c15db16a8f8cfe2bccc08e5ad304be72ca38960a101de2454175dabd8c8",
+  ".cache/fa_statsapi_hitting_2025.json": "a1e6455e8758ea0350b07bbcfe0126d1f5e71b56616ff819211677e7a1094935",
+  ".cache/fa_statsapi_pitching_2015.json": "64f223e3f62297abc922ebc2952cabfba462f1788e74fd8ae11a811f8e7e0ddb",
+  ".cache/fa_statsapi_pitching_2016.json": "1e8cdd99e1ce92b443dcfc373ffc185a9a94f4bf25a65a381deb07f8be0825f0",
+  ".cache/fa_statsapi_pitching_2017.json": "3ffab5e561f0cf194a4c51dea8d6638c223d83a1827af446b320da7fedb76369",
+  ".cache/fa_statsapi_pitching_2018.json": "6c2f6dc7623cb7cdea905b739ab50b85f018c28c35ad09ae66e092f537da677e",
+  ".cache/fa_statsapi_pitching_2019.json": "f7059a367d50d6ed41d40ddc1bb59ba0fbc7e82f1407983f0cb526c4ae1b9864",
+  ".cache/fa_statsapi_pitching_2021.json": "6063e2ffac8f8f883ce9e88f823863d107b77cb6066a9b8d56aa43cdfe519c70",
+  ".cache/fa_statsapi_pitching_2022.json": "fd7fb55b0a903cbe74885cfab53142b23a73f629e6140b83809eba183c7baad8",
+  ".cache/fa_statsapi_pitching_2023.json": "8fb532797c229434c33a165506232cfac116071cf3e3322df9ab3eb5b116df75",
+  ".cache/fa_statsapi_pitching_2024.json": "f00d025220bb6ccacc24784de50c42f4a8135d7690af6026aeace9172dcdb225",
+  ".cache/fa_statsapi_pitching_2025.json": "18085f1ff299af1724d677928fae14166429658971bd62a14dc59e6cb2be5392",
+  ".cache/velo_arsenal_2017.json": "1de85c5aefb22511e8eebb60cfe784154f5d13039605b2f7b265e261e4d875dc",
+  ".cache/velo_arsenal_2018.json": "4f04b07237aae015ee39a4adb77fdff46396cc7ead774cf9d297a37ab28e2465",
+  ".cache/velo_arsenal_2019.json": "8fd4e1186bc7ccf1a26b067f3099bc26d8066eedbb3b2a86d32fc11ae4463a07",
+  ".cache/velo_arsenal_2021.json": "10715f92e81d188c154d3d96b99926ddc40b2aebad928656e6c1bef6d2f7329a",
+  ".cache/velo_arsenal_2022.json": "d64131221e64de9300f284543e9c4e364bc23096a54b1644033a1783476396ef",
+  ".cache/velo_arsenal_2023.json": "a03e160ef5390256cda682dc413432271bb572a5d03736ec7dc03b1b835549f6",
+  ".cache/velo_arsenal_2024.json": "fb5cb50451407c7247503473285ca32dc4042b85b5addb8b1e3d25df4870178d",
+  ".cache/velo_arsenal_2025.json": "827868119115d06f811e17620656c255074a640b6c81cba00f7ab1e16df11736",
+  ".cache/fa_statsapi_hitting_2026.json": "1c7b86415b27d2fa6724d69ab88c947d5b839583e429f33a475d8a2fa375aabf",
+  ".cache/fa_statsapi_pitching_2026.json": "b81b02f8f44ca543d5cc77d260f83feea5ef2c2baf77c96a0b62965bc3adbe0c",
+  ".cache/velo_arsenal_2026.json": "fadbb7483c682e582e63e76867c31cd7a4de2f20ea00fd884e41d78eb665f71d",
+  "data/_labs/tool_tables_rederived/grade_rows_frozen.json": "eb7f31c1033de8afef9db868dc2c25c3982a5febe056536c3f60118034ff206c"
+ },
+ "inputs_sha256_end": {
+  ".cache/fa_statsapi_hitting_2015.json": "22afbc2b209e26c6a23cd1fdda51125756a1998b2d1d713c63b3be7cd5c3afc2",
+  ".cache/fa_statsapi_hitting_2016.json": "b04598774abf37ad482bd17cc95b42972fa3837e364706ec404faa36b3c18817",
+  ".cache/fa_statsapi_hitting_2017.json": "bb14f2a006eece205a1f1dc17a734c7eaa441eb2b9468e3f9c42dbff47577d39",
+  ".cache/fa_statsapi_hitting_2018.json": "0ed27cb23043ba42c748622f855ee676222aff4700656e93183d465bafbd1e97",
+  ".cache/fa_statsapi_hitting_2019.json": "66af1f1fa1869f5e22a3e20760d7f7929635b2600781c816822c7e7401142036",
+  ".cache/fa_statsapi_hitting_2021.json": "ec737cc5087fb03ae3cc2d3db1a7a5dc46d2d68e661c3d53639d76bd3b1dda02",
+  ".cache/fa_statsapi_hitting_2022.json": "44ac1610bfda4cb594effa32a728aba9e756fecd163408b2525c1c6bd98c9599",
+  ".cache/fa_statsapi_hitting_2023.json": "1434de28fbc752eabb57804b184823fdf521f731169c22b71c7ad098c5986c5c",
+  ".cache/fa_statsapi_hitting_2024.json": "8bb44c15db16a8f8cfe2bccc08e5ad304be72ca38960a101de2454175dabd8c8",
+  ".cache/fa_statsapi_hitting_2025.json": "a1e6455e8758ea0350b07bbcfe0126d1f5e71b56616ff819211677e7a1094935",
+  ".cache/fa_statsapi_pitching_2015.json": "64f223e3f62297abc922ebc2952cabfba462f1788e74fd8ae11a811f8e7e0ddb",
+  ".cache/fa_statsapi_pitching_2016.json": "1e8cdd99e1ce92b443dcfc373ffc185a9a94f4bf25a65a381deb07f8be0825f0",
+  ".cache/fa_statsapi_pitching_2017.json": "3ffab5e561f0cf194a4c51dea8d6638c223d83a1827af446b320da7fedb76369",
+  ".cache/fa_statsapi_pitching_2018.json": "6c2f6dc7623cb7cdea905b739ab50b85f018c28c35ad09ae66e092f537da677e",
+  ".cache/fa_statsapi_pitching_2019.json": "f7059a367d50d6ed41d40ddc1bb59ba0fbc7e82f1407983f0cb526c4ae1b9864",
+  ".cache/fa_statsapi_pitching_2021.json": "6063e2ffac8f8f883ce9e88f823863d107b77cb6066a9b8d56aa43cdfe519c70",
+  ".cache/fa_statsapi_pitching_2022.json": "fd7fb55b0a903cbe74885cfab53142b23a73f629e6140b83809eba183c7baad8",
+  ".cache/fa_statsapi_pitching_2023.json": "8fb532797c229434c33a165506232cfac116071cf3e3322df9ab3eb5b116df75",
+  ".cache/fa_statsapi_pitching_2024.json": "f00d025220bb6ccacc24784de50c42f4a8135d7690af6026aeace9172dcdb225",
+  ".cache/fa_statsapi_pitching_2025.json": "18085f1ff299af1724d677928fae14166429658971bd62a14dc59e6cb2be5392",
+  ".cache/velo_arsenal_2017.json": "1de85c5aefb22511e8eebb60cfe784154f5d13039605b2f7b265e261e4d875dc",
+  ".cache/velo_arsenal_2018.json": "4f04b07237aae015ee39a4adb77fdff46396cc7ead774cf9d297a37ab28e2465",
+  ".cache/velo_arsenal_2019.json": "8fd4e1186bc7ccf1a26b067f3099bc26d8066eedbb3b2a86d32fc11ae4463a07",
+  ".cache/velo_arsenal_2021.json": "10715f92e81d188c154d3d96b99926ddc40b2aebad928656e6c1bef6d2f7329a",
+  ".cache/velo_arsenal_2022.json": "d64131221e64de9300f284543e9c4e364bc23096a54b1644033a1783476396ef",
+  ".cache/velo_arsenal_2023.json": "a03e160ef5390256cda682dc413432271bb572a5d03736ec7dc03b1b835549f6",
+  ".cache/velo_arsenal_2024.json": "fb5cb50451407c7247503473285ca32dc4042b85b5addb8b1e3d25df4870178d",
+  ".cache/velo_arsenal_2025.json": "827868119115d06f811e17620656c255074a640b6c81cba00f7ab1e16df11736",
+  ".cache/fa_statsapi_hitting_2026.json": "1c7b86415b27d2fa6724d69ab88c947d5b839583e429f33a475d8a2fa375aabf",
+  ".cache/fa_statsapi_pitching_2026.json": "b81b02f8f44ca543d5cc77d260f83feea5ef2c2baf77c96a0b62965bc3adbe0c",
+  ".cache/velo_arsenal_2026.json": "fadbb7483c682e582e63e76867c31cd7a4de2f20ea00fd884e41d78eb665f71d",
+  "data/_labs/tool_tables_rederived/grade_rows_frozen.json": "eb7f31c1033de8afef9db868dc2c25c3982a5febe056536c3f60118034ff206c"
+ },
+ "result": {
+  "primary": {
+   "game_pwr__hr_per600": {
+    "cell": "game_pwr__hr_per600",
+    "n_fit": 337,
+    "mde95": 0.771543,
+    "candidate_bins": [
+     {
+      "bin": 20,
+      "n": 7,
+      "median": 4.324324324324325,
+      "grade_mean": 20.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 25,
+      "n": 1,
+      "median": 2.6030368763557483,
+      "grade_mean": 23.5,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 30,
+      "n": 29,
+      "median": 9.588377723970945,
+      "grade_mean": 30.086206896551722,
+      "thin": false,
+      "smoothed": 9.588377723970945
+     },
+     {
+      "bin": 35,
+      "n": 13,
+      "median": 9.15032679738562,
+      "grade_mean": 34.88461538461539,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 40,
+      "n": 47,
+      "median": 16.336633663366335,
+      "grade_mean": 39.93617021276596,
+      "thin": false,
+      "smoothed": 15.923529934700106
+     },
+     {
+      "bin": 45,
+      "n": 42,
+      "median": 15.461247190716467,
+      "grade_mean": 45.083333333333336,
+      "thin": false,
+      "smoothed": 15.923529934700106
+     },
+     {
+      "bin": 50,
+      "n": 87,
+      "median": 21.192052980132452,
+      "grade_mean": 49.97126436781609,
+      "thin": false,
+      "smoothed": 21.192052980132452
+     },
+     {
+      "bin": 55,
+      "n": 37,
+      "median": 21.791767554479417,
+      "grade_mean": 54.87837837837838,
+      "thin": false,
+      "smoothed": 21.791767554479417
+     },
+     {
+      "bin": 60,
+      "n": 47,
+      "median": 24.698795180722893,
+      "grade_mean": 59.734042553191486,
+      "thin": false,
+      "smoothed": 24.698795180722893
+     },
+     {
+      "bin": 65,
+      "n": 15,
+      "median": 26.250942921800352,
+      "grade_mean": 65.0,
+      "thin": false,
+      "smoothed": 26.250942921800352
+     },
+     {
+      "bin": 70,
+      "n": 9,
+      "median": 22.662889518413596,
+      "grade_mean": 70.11111111111111,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 80,
+      "n": 3,
+      "median": 35.464098073555164,
+      "grade_mean": 80.0,
+      "thin": true,
+      "smoothed": null
+     }
+    ],
+    "knots": [
+     30.086206896551722,
+     39.93617021276596,
+     45.083333333333336,
+     49.97126436781609,
+     54.87837837837838,
+     59.734042553191486,
+     65.0
+    ],
+    "values": [
+     9.588377723970945,
+     15.923529934700106,
+     15.923529934700106,
+     21.192052980132452,
+     21.791767554479417,
+     24.698795180722893,
+     26.250942921800352
+    ],
+    "n": 149,
+    "mae_candidate": 6.0599,
+    "mae_incumbent": 7.063142,
+    "delta": -1.003241,
+    "ub95": -0.550499,
+    "p": 0.0005,
+    "boot": 2000,
+    "seed": 20261028,
+    "margin_required": 0.771543,
+    "sensitivity": {
+     "delta": -0.966683,
+     "n_fit_disjoint": 200,
+     "verdict": "sensitivity: no verdict"
+    },
+    "holm": {
+     "p": 0.0005,
+     "step": 1,
+     "rejected": true,
+     "m": 7,
+     "threshold": 0.007143
+    },
+    "clauses": {
+     "1_ub95_below_0": true,
+     "2_margin": true,
+     "3_holm": true
+    },
+    "verdict": "PASS"
+   },
+   "game_pwr__iso": {
+    "cell": "game_pwr__iso",
+    "n_fit": 337,
+    "mde95": 0.011502,
+    "candidate_bins": [
+     {
+      "bin": 20,
+      "n": 7,
+      "median": 0.0842358604091456,
+      "grade_mean": 20.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 25,
+      "n": 1,
+      "median": 0.0774818401937046,
+      "grade_mean": 23.5,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 30,
+      "n": 29,
+      "median": 0.11641221374045801,
+      "grade_mean": 30.086206896551722,
+      "thin": false,
+      "smoothed": 0.11641221374045801
+     },
+     {
+      "bin": 35,
+      "n": 13,
+      "median": 0.11081081081081082,
+      "grade_mean": 34.88461538461539,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 40,
+      "n": 47,
+      "median": 0.15206185567010308,
+      "grade_mean": 39.93617021276596,
+      "thin": false,
+      "smoothed": 0.14834735727970047
+     },
+     {
+      "bin": 45,
+      "n": 42,
+      "median": 0.14419065669996423,
+      "grade_mean": 45.083333333333336,
+      "thin": false,
+      "smoothed": 0.14834735727970047
+     },
+     {
+      "bin": 50,
+      "n": 87,
+      "median": 0.17715736040609137,
+      "grade_mean": 49.97126436781609,
+      "thin": false,
+      "smoothed": 0.17715736040609137
+     },
+     {
+      "bin": 55,
+      "n": 37,
+      "median": 0.18113772455089822,
+      "grade_mean": 54.87837837837838,
+      "thin": false,
+      "smoothed": 0.18113772455089822
+     },
+     {
+      "bin": 60,
+      "n": 47,
+      "median": 0.19786096256684493,
+      "grade_mean": 59.734042553191486,
+      "thin": false,
+      "smoothed": 0.19786096256684493
+     },
+     {
+      "bin": 65,
+      "n": 15,
+      "median": 0.2072302875035582,
+      "grade_mean": 65.0,
+      "thin": false,
+      "smoothed": 0.2072302875035582
+     },
+     {
+      "bin": 70,
+      "n": 9,
+      "median": 0.18441558441558442,
+      "grade_mean": 70.11111111111111,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 80,
+      "n": 3,
+      "median": 0.25829145728643216,
+      "grade_mean": 80.0,
+      "thin": true,
+      "smoothed": null
+     }
+    ],
+    "knots": [
+     30.086206896551722,
+     39.93617021276596,
+     45.083333333333336,
+     49.97126436781609,
+     54.87837837837838,
+     59.734042553191486,
+     65.0
+    ],
+    "values": [
+     0.11641221374045801,
+     0.14834735727970047,
+     0.14834735727970047,
+     0.17715736040609137,
+     0.18113772455089822,
+     0.19786096256684493,
+     0.2072302875035582
+    ],
+    "n": 149,
+    "mae_candidate": 0.037273,
+    "mae_incumbent": 0.050327,
+    "delta": -0.013054,
+    "ub95": -0.009038,
+    "p": 0.0005,
+    "boot": 2000,
+    "seed": 20261028,
+    "margin_required": 0.011502,
+    "sensitivity": {
+     "delta": -0.013184,
+     "n_fit_disjoint": 200,
+     "verdict": "sensitivity: no verdict"
+    },
+    "holm": {
+     "p": 0.0005,
+     "step": 2,
+     "rejected": true,
+     "m": 7,
+     "threshold": 0.008333
+    },
+    "clauses": {
+     "1_ub95_below_0": true,
+     "2_margin": true,
+     "3_holm": true
+    },
+    "verdict": "PASS"
+   },
+   "hit__avg": {
+    "cell": "hit__avg",
+    "n_fit": 337,
+    "mde95": 0.004357,
+    "candidate_bins": [
+     {
+      "bin": 30,
+      "n": 1,
+      "median": 0.24069478908188585,
+      "grade_mean": 30.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 35,
+      "n": 3,
+      "median": 0.2777777777777778,
+      "grade_mean": 35.5,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 40,
+      "n": 31,
+      "median": 0.2329262777023971,
+      "grade_mean": 40.46774193548387,
+      "thin": false,
+      "smoothed": 0.2329262777023971
+     },
+     {
+      "bin": 45,
+      "n": 53,
+      "median": 0.24084595959595959,
+      "grade_mean": 45.06603773584906,
+      "thin": false,
+      "smoothed": 0.24084595959595959
+     },
+     {
+      "bin": 50,
+      "n": 94,
+      "median": 0.24921782178217822,
+      "grade_mean": 49.98936170212766,
+      "thin": false,
+      "smoothed": 0.24921782178217822
+     },
+     {
+      "bin": 55,
+      "n": 72,
+      "median": 0.25758863898250084,
+      "grade_mean": 55.041666666666664,
+      "thin": false,
+      "smoothed": 0.25758863898250084
+     },
+     {
+      "bin": 60,
+      "n": 59,
+      "median": 0.25958378970427165,
+      "grade_mean": 59.355932203389834,
+      "thin": false,
+      "smoothed": 0.25958378970427165
+     },
+     {
+      "bin": 65,
+      "n": 16,
+      "median": 0.2696940143619975,
+      "grade_mean": 64.78125,
+      "thin": false,
+      "smoothed": 0.2696940143619975
+     },
+     {
+      "bin": 70,
+      "n": 7,
+      "median": 0.27467659046606413,
+      "grade_mean": 69.07142857142857,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 75,
+      "n": 1,
+      "median": 0.2900654711073157,
+      "grade_mean": 76.5,
+      "thin": true,
+      "smoothed": null
+     }
+    ],
+    "knots": [
+     40.46774193548387,
+     45.06603773584906,
+     49.98936170212766,
+     55.041666666666664,
+     59.355932203389834,
+     64.78125
+    ],
+    "values": [
+     0.2329262777023971,
+     0.24084595959595959,
+     0.24921782178217822,
+     0.25758863898250084,
+     0.25958378970427165,
+     0.2696940143619975
+    ],
+    "n": 149,
+    "mae_candidate": 0.022078,
+    "mae_incumbent": 0.026921,
+    "delta": -0.004843,
+    "ub95": -0.002887,
+    "p": 0.0005,
+    "boot": 2000,
+    "seed": 20261028,
+    "margin_required": 0.004357,
+    "beside": {
+     "source": "W2 BA column (2.2 Hit tool)",
+     "mae": 0.031535,
+     "verdict": "secondary: no verdict"
+    },
+    "sensitivity": {
+     "delta": -0.00554,
+     "n_fit_disjoint": 200,
+     "verdict": "sensitivity: no verdict"
+    },
+    "holm": {
+     "p": 0.0005,
+     "step": 3,
+     "rejected": true,
+     "m": 7,
+     "threshold": 0.01
+    },
+    "clauses": {
+     "1_ub95_below_0": true,
+     "2_margin": true,
+     "3_holm": true
+    },
+    "verdict": "PASS"
+   },
+   "hit__k_pct": {
+    "cell": "hit__k_pct",
+    "n_fit": 337,
+    "mde95": 0.310511,
+    "candidate_bins": [
+     {
+      "bin": 30,
+      "n": 1,
+      "median": 24.887892376681613,
+      "grade_mean": 30.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 35,
+      "n": 3,
+      "median": 26.25215889464594,
+      "grade_mean": 35.5,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 40,
+      "n": 31,
+      "median": 27.35229759299781,
+      "grade_mean": 40.46774193548387,
+      "thin": false,
+      "smoothed": 27.35229759299781
+     },
+     {
+      "bin": 45,
+      "n": 53,
+      "median": 26.549491211840888,
+      "grade_mean": 45.06603773584906,
+      "thin": false,
+      "smoothed": 26.549491211840888
+     },
+     {
+      "bin": 50,
+      "n": 94,
+      "median": 22.683234107075165,
+      "grade_mean": 49.98936170212766,
+      "thin": false,
+      "smoothed": 22.683234107075165
+     },
+     {
+      "bin": 55,
+      "n": 72,
+      "median": 20.997698609725543,
+      "grade_mean": 55.041666666666664,
+      "thin": false,
+      "smoothed": 20.997698609725543
+     },
+     {
+      "bin": 60,
+      "n": 59,
+      "median": 20.651465798045603,
+      "grade_mean": 59.355932203389834,
+      "thin": false,
+      "smoothed": 20.651465798045603
+     },
+     {
+      "bin": 65,
+      "n": 16,
+      "median": 19.488951182494556,
+      "grade_mean": 64.78125,
+      "thin": false,
+      "smoothed": 19.488951182494556
+     },
+     {
+      "bin": 70,
+      "n": 7,
+      "median": 18.950437317784257,
+      "grade_mean": 69.07142857142857,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 75,
+      "n": 1,
+      "median": 15.26276087503143,
+      "grade_mean": 76.5,
+      "thin": true,
+      "smoothed": null
+     }
+    ],
+    "knots": [
+     40.46774193548387,
+     45.06603773584906,
+     49.98936170212766,
+     55.041666666666664,
+     59.355932203389834,
+     64.78125
+    ],
+    "values": [
+     27.35229759299781,
+     26.549491211840888,
+     22.683234107075165,
+     20.997698609725543,
+     20.651465798045603,
+     19.488951182494556
+    ],
+    "n": 149,
+    "mae_candidate": 4.588576,
+    "mae_incumbent": 4.715046,
+    "delta": -0.12647,
+    "ub95": 0.162361,
+    "p": 0.22089,
+    "boot": 2000,
+    "seed": 20261028,
+    "margin_required": 0.310511,
+    "sensitivity": {
+     "delta": 0.096269,
+     "n_fit_disjoint": 200,
+     "verdict": "sensitivity: no verdict"
+    },
+    "holm": {
+     "p": 0.22089,
+     "step": 7,
+     "rejected": false,
+     "m": 7,
+     "threshold": 0.05
+    },
+    "clauses": {
+     "1_ub95_below_0": false,
+     "2_margin": false,
+     "3_holm": false
+    },
+    "verdict": "FAIL"
+   },
+   "speed__sb_per600": {
+    "cell": "speed__sb_per600",
+    "n_fit": 337,
+    "mde95": 0.42331,
+    "candidate_bins": [
+     {
+      "bin": 20,
+      "n": 4,
+      "median": 1.334897395539453,
+      "grade_mean": 20.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 25,
+      "n": 5,
+      "median": 0.0,
+      "grade_mean": 25.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 30,
+      "n": 29,
+      "median": 1.3636363636363635,
+      "grade_mean": 30.137931034482758,
+      "thin": false,
+      "smoothed": 1.3636363636363635
+     },
+     {
+      "bin": 35,
+      "n": 24,
+      "median": 2.058270676691729,
+      "grade_mean": 35.1875,
+      "thin": false,
+      "smoothed": 2.058270676691729
+     },
+     {
+      "bin": 40,
+      "n": 49,
+      "median": 4.176334106728539,
+      "grade_mean": 39.94897959183673,
+      "thin": false,
+      "smoothed": 4.176334106728539
+     },
+     {
+      "bin": 45,
+      "n": 30,
+      "median": 4.41648745106405,
+      "grade_mean": 45.1,
+      "thin": false,
+      "smoothed": 4.41648745106405
+     },
+     {
+      "bin": 50,
+      "n": 72,
+      "median": 8.895669991093147,
+      "grade_mean": 49.923611111111114,
+      "thin": false,
+      "smoothed": 8.895669991093147
+     },
+     {
+      "bin": 55,
+      "n": 37,
+      "median": 14.98371335504886,
+      "grade_mean": 54.82432432432432,
+      "thin": false,
+      "smoothed": 14.98371335504886
+     },
+     {
+      "bin": 60,
+      "n": 52,
+      "median": 16.74973983169969,
+      "grade_mean": 59.41346153846154,
+      "thin": false,
+      "smoothed": 16.74973983169969
+     },
+     {
+      "bin": 65,
+      "n": 11,
+      "median": 18.021201413427562,
+      "grade_mean": 64.86363636363636,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 70,
+      "n": 15,
+      "median": 23.38611449451888,
+      "grade_mean": 69.66666666666667,
+      "thin": false,
+      "smoothed": 23.38611449451888
+     },
+     {
+      "bin": 75,
+      "n": 3,
+      "median": 34.056194606826324,
+      "grade_mean": 74.5,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 80,
+      "n": 6,
+      "median": 38.19373038173667,
+      "grade_mean": 80.0,
+      "thin": true,
+      "smoothed": null
+     }
+    ],
+    "knots": [
+     30.137931034482758,
+     35.1875,
+     39.94897959183673,
+     45.1,
+     49.923611111111114,
+     54.82432432432432,
+     59.41346153846154,
+     69.66666666666667
+    ],
+    "values": [
+     1.3636363636363635,
+     2.058270676691729,
+     4.176334106728539,
+     4.41648745106405,
+     8.895669991093147,
+     14.98371335504886,
+     16.74973983169969,
+     23.38611449451888
+    ],
+    "n": 149,
+    "mae_candidate": 5.903885,
+    "mae_incumbent": 6.272383,
+    "delta": -0.368498,
+    "ub95": -0.05615,
+    "p": 0.023488,
+    "boot": 2000,
+    "seed": 20261028,
+    "margin_required": 0.42331,
+    "sensitivity": {
+     "delta": -0.298322,
+     "n_fit_disjoint": 200,
+     "verdict": "sensitivity: no verdict"
+    },
+    "holm": {
+     "p": 0.023488,
+     "step": 6,
+     "rejected": true,
+     "m": 7,
+     "threshold": 0.025
+    },
+    "clauses": {
+     "1_ub95_below_0": true,
+     "2_margin": false,
+     "3_holm": true
+    },
+    "verdict": "FAIL"
+   },
+   "cmd__bb_pct_sp": {
+    "cell": "cmd__bb_pct_sp",
+    "n_fit": 282,
+    "mde95": 0.138746,
+    "candidate_bins": [
+     {
+      "bin": 35,
+      "n": 1,
+      "median": 15.044247787610619,
+      "grade_mean": 33.5,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 40,
+      "n": 19,
+      "median": 10.280678851174935,
+      "grade_mean": 40.60526315789474,
+      "thin": false,
+      "smoothed": 10.280678851174935
+     },
+     {
+      "bin": 45,
+      "n": 44,
+      "median": 8.965249466123083,
+      "grade_mean": 44.88636363636363,
+      "thin": false,
+      "smoothed": 8.965249466123083
+     },
+     {
+      "bin": 50,
+      "n": 111,
+      "median": 8.544303797468354,
+      "grade_mean": 50.090090090090094,
+      "thin": false,
+      "smoothed": 8.544303797468354
+     },
+     {
+      "bin": 55,
+      "n": 58,
+      "median": 7.638679433877804,
+      "grade_mean": 55.025862068965516,
+      "thin": false,
+      "smoothed": 7.638679433877804
+     },
+     {
+      "bin": 60,
+      "n": 41,
+      "median": 7.197827071072884,
+      "grade_mean": 59.41463414634146,
+      "thin": false,
+      "smoothed": 7.197827071072884
+     },
+     {
+      "bin": 65,
+      "n": 5,
+      "median": 5.838528204348487,
+      "grade_mean": 64.8,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 70,
+      "n": 3,
+      "median": 5.802501996273622,
+      "grade_mean": 70.0,
+      "thin": true,
+      "smoothed": null
+     }
+    ],
+    "knots": [
+     40.60526315789474,
+     44.88636363636363,
+     50.090090090090094,
+     55.025862068965516,
+     59.41463414634146
+    ],
+    "values": [
+     10.280678851174935,
+     8.965249466123083,
+     8.544303797468354,
+     7.638679433877804,
+     7.197827071072884
+    ],
+    "n": 106,
+    "mae_candidate": 1.55856,
+    "mae_incumbent": 1.846598,
+    "delta": -0.288039,
+    "ub95": -0.149257,
+    "p": 0.0005,
+    "boot": 2000,
+    "seed": 20261028,
+    "margin_required": 0.138746,
+    "sensitivity": {
+     "delta": -0.194978,
+     "n_fit_disjoint": 181,
+     "verdict": "sensitivity: no verdict"
+    },
+    "holm": {
+     "p": 0.0005,
+     "step": 4,
+     "rejected": true,
+     "m": 7,
+     "threshold": 0.0125
+    },
+    "clauses": {
+     "1_ub95_below_0": true,
+     "2_margin": true,
+     "3_holm": true
+    },
+    "verdict": "PASS"
+   },
+   "fb__velo_sp": {
+    "cell": "fb__velo_sp",
+    "n_fit": 257,
+    "mde95": 0.493917,
+    "candidate_bins": [
+     {
+      "bin": 40,
+      "n": 4,
+      "median": 91.0506169527897,
+      "grade_mean": 41.25,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 45,
+      "n": 15,
+      "median": 91.4,
+      "grade_mean": 44.96666666666667,
+      "thin": false,
+      "smoothed": 91.4
+     },
+     {
+      "bin": 50,
+      "n": 57,
+      "median": 92.85345268542198,
+      "grade_mean": 50.6578947368421,
+      "thin": false,
+      "smoothed": 92.85345268542198
+     },
+     {
+      "bin": 55,
+      "n": 46,
+      "median": 93.68853790613719,
+      "grade_mean": 54.67391304347826,
+      "thin": false,
+      "smoothed": 93.68853790613719
+     },
+     {
+      "bin": 60,
+      "n": 77,
+      "median": 93.96581272084806,
+      "grade_mean": 59.77922077922078,
+      "thin": false,
+      "smoothed": 93.96581272084806
+     },
+     {
+      "bin": 65,
+      "n": 32,
+      "median": 94.75684484051867,
+      "grade_mean": 64.78125,
+      "thin": false,
+      "smoothed": 94.75684484051867
+     },
+     {
+      "bin": 70,
+      "n": 19,
+      "median": 96.04666666666667,
+      "grade_mean": 69.6842105263158,
+      "thin": false,
+      "smoothed": 96.04666666666667
+     },
+     {
+      "bin": 75,
+      "n": 4,
+      "median": 96.62723502304146,
+      "grade_mean": 75.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 80,
+      "n": 3,
+      "median": 95.24687624353362,
+      "grade_mean": 80.0,
+      "thin": true,
+      "smoothed": null
+     }
+    ],
+    "knots": [
+     44.96666666666667,
+     50.6578947368421,
+     54.67391304347826,
+     59.77922077922078,
+     64.78125,
+     69.6842105263158
+    ],
+    "values": [
+     91.4,
+     92.85345268542198,
+     93.68853790613719,
+     93.96581272084806,
+     94.75684484051867,
+     96.04666666666667
+    ],
+    "n": 106,
+    "mae_candidate": 1.25742,
+    "mae_incumbent": 2.089699,
+    "delta": -0.832279,
+    "ub95": -0.646106,
+    "p": 0.0005,
+    "boot": 2000,
+    "seed": 20261028,
+    "margin_required": 0.493917,
+    "beside": {
+     "source": "W2 SP Velo column",
+     "mae": 1.991915,
+     "verdict": "secondary: no verdict"
+    },
+    "sensitivity": {
+     "delta": -0.611366,
+     "n_fit_disjoint": 156,
+     "verdict": "sensitivity: no verdict"
+    },
+    "holm": {
+     "p": 0.0005,
+     "step": 5,
+     "rejected": true,
+     "m": 7,
+     "threshold": 0.016667
+    },
+    "clauses": {
+     "1_ub95_below_0": true,
+     "2_margin": true,
+     "3_holm": true
+    },
+    "verdict": "PASS"
+   }
+  },
+  "survivorship": "Accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6).",
+  "secondary": {
+   "raw_pwr__ev_avg": {
+    "cell": "raw_pwr__ev_avg",
+    "n_fit": 0,
+    "mde95": null,
+    "candidate_bins": [],
+    "knots": [],
+    "values": [],
+    "verdict": "NOT COMPUTABLE",
+    "reason": "no non-thin FIT bin"
+   },
+   "speed__sprint": {
+    "cell": "speed__sprint",
+    "verdict": "NOT COMPUTABLE",
+    "reason": "no lines: 'runs'"
+   },
+   "field__oaa_per1000": {
+    "cell": "field__oaa_per1000",
+    "verdict": "NOT COMPUTABLE",
+    "reason": "no lines: 'inn'"
+   },
+   "cmd__bb_pct_rp": {
+    "cell": "cmd__bb_pct_rp",
+    "n_fit": 369,
+    "mde95": null,
+    "candidate_bins": [
+     {
+      "bin": 35,
+      "n": 9,
+      "median": 11.058823529411764,
+      "grade_mean": 35.333333333333336,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 40,
+      "n": 63,
+      "median": 10.909090909090908,
+      "grade_mean": 40.333333333333336,
+      "thin": false,
+      "smoothed": 10.909090909090908
+     },
+     {
+      "bin": 45,
+      "n": 85,
+      "median": 10.277777777777779,
+      "grade_mean": 44.9,
+      "thin": false,
+      "smoothed": 10.277777777777779
+     },
+     {
+      "bin": 50,
+      "n": 134,
+      "median": 8.828008360704688,
+      "grade_mean": 50.05223880597015,
+      "thin": false,
+      "smoothed": 8.828008360704688
+     },
+     {
+      "bin": 55,
+      "n": 54,
+      "median": 8.119004846964716,
+      "grade_mean": 55.138888888888886,
+      "thin": false,
+      "smoothed": 8.119004846964716
+     },
+     {
+      "bin": 60,
+      "n": 21,
+      "median": 7.744874715261959,
+      "grade_mean": 59.214285714285715,
+      "thin": false,
+      "smoothed": 7.744874715261959
+     },
+     {
+      "bin": 65,
+      "n": 1,
+      "median": 8.733624454148472,
+      "grade_mean": 65.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 70,
+      "n": 2,
+      "median": 6.383961566888396,
+      "grade_mean": 70.0,
+      "thin": true,
+      "smoothed": null
+     }
+    ],
+    "knots": [
+     40.333333333333336,
+     44.9,
+     50.05223880597015,
+     55.138888888888886,
+     59.214285714285715
+    ],
+    "values": [
+     10.909090909090908,
+     10.277777777777779,
+     8.828008360704688,
+     8.119004846964716,
+     7.744874715261959
+    ],
+    "n": 110,
+    "mae_candidate": 2.309651,
+    "mae_incumbent": 2.361625,
+    "delta": -0.051975,
+    "ub95": 0.035078,
+    "p": 0.166917,
+    "boot": 2000,
+    "seed": 20261028,
+    "margin_required": null,
+    "verdict": "secondary: no verdict",
+    "reason": "no T.10 MDE95"
+   },
+   "fb__velo_rp": {
+    "cell": "fb__velo_rp",
+    "n_fit": 348,
+    "mde95": null,
+    "candidate_bins": [
+     {
+      "bin": 30,
+      "n": 1,
+      "median": 89.0,
+      "grade_mean": 30.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 35,
+      "n": 1,
+      "median": 85.3,
+      "grade_mean": 36.5,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 40,
+      "n": 5,
+      "median": 92.8,
+      "grade_mean": 40.5,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 45,
+      "n": 15,
+      "median": 92.28264840182649,
+      "grade_mean": 45.1,
+      "thin": false,
+      "smoothed": 92.28264840182649
+     },
+     {
+      "bin": 50,
+      "n": 67,
+      "median": 93.66876090750436,
+      "grade_mean": 50.201492537313435,
+      "thin": false,
+      "smoothed": 93.66876090750436
+     },
+     {
+      "bin": 55,
+      "n": 61,
+      "median": 94.40000000000002,
+      "grade_mean": 54.97540983606557,
+      "thin": false,
+      "smoothed": 94.40000000000002
+     },
+     {
+      "bin": 60,
+      "n": 114,
+      "median": 94.78120045300113,
+      "grade_mean": 59.81140350877193,
+      "thin": false,
+      "smoothed": 94.78120045300113
+     },
+     {
+      "bin": 65,
+      "n": 39,
+      "median": 95.43600368324125,
+      "grade_mean": 65.07692307692308,
+      "thin": false,
+      "smoothed": 95.43600368324125
+     },
+     {
+      "bin": 70,
+      "n": 33,
+      "median": 96.67122128174124,
+      "grade_mean": 69.75757575757575,
+      "thin": false,
+      "smoothed": 96.67122128174124
+     },
+     {
+      "bin": 75,
+      "n": 7,
+      "median": 97.06409512761022,
+      "grade_mean": 75.0,
+      "thin": true,
+      "smoothed": null
+     },
+     {
+      "bin": 80,
+      "n": 5,
+      "median": 99.0510052910053,
+      "grade_mean": 80.0,
+      "thin": true,
+      "smoothed": null
+     }
+    ],
+    "knots": [
+     45.1,
+     50.201492537313435,
+     54.97540983606557,
+     59.81140350877193,
+     65.07692307692308,
+     69.75757575757575
+    ],
+    "values": [
+     92.28264840182649,
+     93.66876090750436,
+     94.40000000000002,
+     94.78120045300113,
+     95.43600368324125,
+     96.67122128174124
+    ],
+    "n": 110,
+    "mae_candidate": 1.71091,
+    "mae_incumbent": 1.956152,
+    "delta": -0.245242,
+    "ub95": -0.089259,
+    "p": 0.005997,
+    "boot": 2000,
+    "seed": 20261028,
+    "margin_required": null,
+    "verdict": "secondary: no verdict",
+    "reason": "no T.10 MDE95"
+   }
+  }
+ },
+ "record_text": "### Look T (2026-10-14)\n\n- game_pwr__hr_per600: n 149, MAE candidate 6.0599, incumbent 7.063142, delta -1.003241, UB95 -0.550499, p 0.0005, MDE95 0.771543, Holm 1, verdict PASS\n- game_pwr__iso: n 149, MAE candidate 0.037273, incumbent 0.050327, delta -0.013054, UB95 -0.009038, p 0.0005, MDE95 0.011502, Holm 2, verdict PASS\n- hit__avg: n 149, MAE candidate 0.022078, incumbent 0.026921, delta -0.004843, UB95 -0.002887, p 0.0005, MDE95 0.004357, Holm 3, verdict PASS\n- hit__k_pct: n 149, MAE candidate 4.588576, incumbent 4.715046, delta -0.12647, UB95 0.162361, p 0.22089, MDE95 0.310511, Holm 7, verdict FAIL\n- speed__sb_per600: n 149, MAE candidate 5.903885, incumbent 6.272383, delta -0.368498, UB95 -0.05615, p 0.023488, MDE95 0.42331, Holm 6, verdict FAIL\n- cmd__bb_pct_sp: n 106, MAE candidate 1.55856, incumbent 1.846598, delta -0.288039, UB95 -0.149257, p 0.0005, MDE95 0.138746, Holm 4, verdict PASS\n- fb__velo_sp: n 106, MAE candidate 1.25742, incumbent 2.089699, delta -0.832279, UB95 -0.646106, p 0.0005, MDE95 0.493917, Holm 5, verdict PASS\n- raw_pwr__ev_avg: n None, delta None; NOT COMPUTABLE\n- speed__sprint: n None, delta None; NOT COMPUTABLE\n- field__oaa_per1000: n None, delta None; NOT COMPUTABLE\n- cmd__bb_pct_rp: n 110, delta -0.051975; secondary: no verdict\n- fb__velo_rp: n 110, delta -0.245242; secondary: no verdict\n\nAccuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity, so this is not accuracy over all graded prospects (gate Part 0.6)."
+}
