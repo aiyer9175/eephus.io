@@ -104,6 +104,11 @@ data/futures_ledger.json
 # `git checkout -- .` would revert every day's entry (gate 7.2, BS-1 (a)).
 data/bracket_sim.json
 data/bracket_sim_record.json
+# The TRADE PARTNER SCREEN's public chain index (docs/trademachine-2026-10/
+# TRADE_PARTNER_SCREEN_GATE.md 3.2): hashes only, re-rendered every night
+# from .cache/trade_partner_screen/record/chain.json, the source of truth,
+# and published by rsync. Untracked for the bracket record's reason.
+data/trade_partner_screen_chain.json
 # The LEARNING SERIES, derived the same way from the eval, the two ledgers and
 # its own append-only history. Rewritten by run_monthly step 9e every night.
 data/betting_learning.json

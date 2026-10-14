@@ -400,3 +400,29 @@ def test_the_awards_page_ships_with_its_payloads():
     assert not any(r.startswith(("awards", "data/awards")) for r in rules)
     for p in (ROOT / "data").glob("awards*.json"):
         assert p.parent == ROOT / "data", p
+
+
+def test_the_trade_partner_screen_files_ship_in_both_deploy_consumers():
+    """W08_2_PARTNER_SCREEN_FLIP (2026-10-09): the /trademachine/ partner screen
+    fetches data/trade_partner_slice.json, and the gate (TRADE_PARTNER_SCREEN_GATE.md
+    3.2) publishes each day's hash in data/trade_partner_screen_chain.json. Both sit
+    at data/ depth one, which both consumers ship, and no exclusion names them; the
+    chain is gitignored (re-rendered nightly from .cache/trade_partner_screen/record/)."""
+    import trade_partner_screen as T
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert "--include='/data/*.json'" in nightly
+    wf_path = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf_path.exists():
+        assert "find data -maxdepth 1" in wf_path.read_text(encoding="utf-8")
+    excl = (ROOT / "deploy" / "data_exclude.txt").read_text(encoding="utf-8")
+    rules = [ln.strip() for ln in excl.splitlines() if ln.strip() and not ln.startswith("#")]
+    for name in ("trade_partner_slice.json", "trade_partner_screen_chain.json"):
+        assert not any(r.startswith(("trade_partner", "data/trade_partner")) for r in rules), name
+        assert name in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
+    assert T.SLICE_NAME == "trade_partner_slice.json"
+    assert T.CHAIN_PUBLIC_NAME == "trade_partner_screen_chain.json"
+    live = T.paths(True)
+    assert live["slice"].parent == ROOT / "data" and live["public_chain"].parent == ROOT / "data"
+    assert "data/trade_partner_screen_chain.json" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    js = (ROOT / "assets" / "trademachine.js").read_text(encoding="utf-8")
+    assert 'fetch(DATA_BASE + "trade_partner_slice.json"' in js

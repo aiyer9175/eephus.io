@@ -541,6 +541,14 @@ SCHEDULED_EXPORTS = (
     # .cache/scores/ and only on a machine meant to run the job, so a stopped
     # job prints "!!! INGEST RED: scores_job" where it should be running.
     "scores_job",
+    # The Trade Machine partner screen (step 6b7d, right after the Franchise
+    # board; W08_2_PARTNER_SCREEN_FLIP): the served slice and the day's frozen
+    # record entry. A refusal (a club that does not resolve, a rule text
+    # changed under partner_v1, an entry that does not replay) or a raise
+    # leaves the previous files and files a red here, so a missed frozen day
+    # is printed on the night it is missed (gate 3.2: it can never be written
+    # later). Appended at the end, so nothing above mgmt_export moves.
+    "trade_partner_screen",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -2843,8 +2851,9 @@ def _export_franchise_board(log) -> bool:
         # W08 (owner answer W-OQ4 (a)): the Trade Machine partner screen's slim
         # slice and the day's frozen record entry, written from the board just
         # written and the CBT sidecar d10e wrote before it. While
-        # trade_partner_screen.TRADE_PARTNER_SCREEN_LIVE is False both go to
-        # .cache/trade_partner_screen/preview/ and nothing served moves.
+        # trade_partner_screen.TRADE_PARTNER_SCREEN_LIVE is True (since
+        # 2026-10-09) the slice is data/trade_partner_slice.json and the entry
+        # is frozen under .cache/trade_partner_screen/record/.
         _export_trade_partner_screen(log)
         return True
     except Exception as e:                # noqa: BLE001
@@ -2867,14 +2876,26 @@ def _export_trade_partner_screen(log) -> bool:
     entry (trade_partner_screen.run; docs/trademachine-2026-10/
     TRADE_PARTNER_SCREEN_GATE.md section 3). True on a run. First write wins,
     so a same-day re-run writes nothing; a refusal or a raise is logged and
-    the files on disk stand. Nothing is filed in the ingest ledger while the
-    screen is dark (W08_2 adds its watched row with the flip)."""
+    the files on disk stand. Filed under "trade_partner_screen" (the watched
+    row W08_2 added with the flip): True with the day's player count, or 0 and
+    the reason on a same-day re-run; False on a refusal or a raise."""
     try:
         import trade_partner_screen as _tps
-        _tps.run(log_fn=log.info)
+        _res = _tps.run(log_fn=log.info)
+        _where = "served" if _res.get("live") else "preview"
+        _record_ingest("trade_partner_screen", True, int(_res.get("n_players") or 0),
+                       f"partner screen ({_where}): day {_res.get('as_of')} {_res.get('status')}",
+                       "mlb", log)
         return True
-    except Exception:                     # noqa: BLE001
-        log.exception("trade partner screen failed - continuing")
+    except Exception as e:                # noqa: BLE001
+        if type(e).__name__ == "ScreenRefusal":
+            log.warning("trade partner screen REFUSED: %s; the previous files stand", e)
+            _record_ingest("trade_partner_screen", False, 0,
+                           f"partner screen refused: {e}", "mlb", log)
+        else:
+            log.exception("trade partner screen failed - continuing")
+            _record_ingest("trade_partner_screen", False, 0,
+                           f"partner screen raised: {e}", "mlb", log)
         return False
 
 

@@ -109,6 +109,9 @@ TARGETS: list[str] = [
     "awards/index.html",
     "awards_core.py",
     "awards_export.py",
+    # Trade Machine partner screen (W08_2_PARTNER_SCREEN_FLIP, 2026-10-09): the
+    # writer of the slice the /trademachine/ panel reads, whose labels land in it.
+    "trade_partner_screen.py",
     # /models/ renders registry `notes` prose verbatim, so its copy is only ever
     # as clean as the registry's, and it inherits any dash a future row carries.
     "models/index.html",

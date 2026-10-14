@@ -119,3 +119,39 @@ OF 132, INF 8, INF/OF 1, TWP 7, none 3). The gate's missing-input rule is read
 literally: the candidates that carry a value are ranked among themselves and
 scored (29 - rank) / 28, and a candidate with no value scores 0.5. Any change
 to either must be registered in the gate before the first frozen day.
+
+## 6. Applied (W08_2_PARTNER_SCREEN_FLIP, 2026-10-09)
+
+- `TRADE_PARTNER_SCREEN_LIVE = True`; `/trademachine/` rebuilt (the shell gains
+  `data-tm-partner="live"` and the glossary data stamp, nothing else).
+- Served files: `data/trade_partner_slice.json` (tracked, beside the board,
+  29,455 bytes, 30 clubs) and `data/trade_partner_screen_chain.json`
+  (gitignored, one chain row). Both ship at data/ depth one; pinned by
+  `test_the_trade_partner_screen_files_ship_in_both_deploy_consumers`.
+- Record: the first frozen day is 2026-10-09, machine `local`, written by one
+  local run of the nightly helper `run_monthly._export_trade_partner_screen`:
+  `.cache/trade_partner_screen/record/2026-10-09.json.gz`, 421,707 bytes, 6,162
+  players (151 skipped with no slot: OF 132, INF 8, INF/OF 1, TWP 7, none 3),
+  content hash `04b373f17faff2af27382f05ab8752c272599000d3395c915d9260030412778a`,
+  row hash `943ea668179781ea3579ef6a5f87f01dc247b7365acedcba99ce2380e19776ad`,
+  rule_sha256 `f7976bd5946fb3e98483c83db1fc7069f72b47cc960e3635a8832968955a88b9`,
+  rule_py_sha256 `7f677c805bbfa356acc1707c72354a4be7eda2cc7b1d2f964c8dcf90c3810f7c`.
+  From this day the two rule regions may not change without a dated
+  re-registration in the gate.
+- `run_monthly`: `"trade_partner_screen"` appended to `SCHEDULED_EXPORTS`; the
+  helper files `_record_ingest` (True with the player count; False on a
+  refusal or a raise). A same-day re-run now re-renders the public chain from
+  the record (gate 3.2, "each run"), so a fresh checkout gets its copy back.
+- Glossary entry `trade_partner_screen` and the registry row update applied by
+  `tools/flip_trade_partner_screen_text.py` (idempotent). Two departures from
+  section 3, both forced by the copy gates: the methodology leaves out the
+  gate's docs path and the slice's file name (copy rule L8), and the origin
+  line reads "Arkmetric rule, original to eephus.io, over numbers the site
+  already serves." (`test_glossary_provenance`).
+- `trade_partner_screen.py` joined the dash gate's producers
+  (`tools/strip_emdashes.py` TARGETS), so the slice's labels are linted.
+- Not done: the optional "How this works" line of section 2 step 6 (the panel
+  prints its own label and method); the box backup list (DEPLOY_PENDING.md).
+- Open: OQ-W08-1 (section 5), the slot mapping for OF, INF and TWP. Default
+  (a) is what the first frozen day carries; (b) or (c) is a rule change that a
+  dated amendment may still make before the 2027 season's first game (gate 3.4).

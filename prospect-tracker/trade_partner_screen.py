@@ -21,8 +21,8 @@ partner screen flag; build_site reads it for the page switch
     directory (gate 3.2: preview files are never scored), so the record
     mechanism runs every night without a frozen day being written;
   * the page shell carries no switch and assets/trademachine.js draws nothing.
-W08_2_PARTNER_SCREEN_FLIP turns it on in one commit (docs/trademachine-2026-10/
-FLIP_NOTES.md). While True the slice is data/trade_partner_slice.json, beside
+W08_2_PARTNER_SCREEN_FLIP turned it on in one commit on 2026-10-09 (docs/
+trademachine-2026-10/FLIP_NOTES.md). While True the slice is data/trade_partner_slice.json, beside
 data/franchise_board.json, the record is .cache/trade_partner_screen/record/
 and the chain index is re-rendered to data/trade_partner_screen_chain.json.
 
@@ -67,11 +67,13 @@ JS_PATH = ROOT / "assets" / "trademachine.js"
 GATE_PATH = ROOT / "docs" / "trademachine-2026-10" / "TRADE_PARTNER_SCREEN_GATE.md"
 
 #: The flag (Part 8 class 2). False: the preview directory only, nothing served moves.
-TRADE_PARTNER_SCREEN_LIVE = False
+#: True since W08_2_PARTNER_SCREEN_FLIP (2026-10-09): the served slice, the
+#: frozen record under .cache/trade_partner_screen/record/ and its public chain.
+TRADE_PARTNER_SCREEN_LIVE = True
 
 SCHEMA = 1
 RULE_VERSION = "partner_v1"
-SLICE_NAME = "trade_partner_slice.json"
+SLICE_NAME = "trade_partner_slice.json"  # the served output, beside the board
 CHAIN_PUBLIC_NAME = "trade_partner_screen_chain.json"
 SCREEN_DIR = "trade_partner_screen"
 
@@ -709,6 +711,10 @@ def write_day(entry: dict, rec_dir: Path, public_chain: Path) -> dict:
     ch = load_chain(rec_dir)
     rows = ch["rows"]
     if day.exists() or any(r["as_of"] == as_of for r in rows):
+        # Gate 3.2: every run re-renders the public chain, a same-day re-run
+        # included, so a fresh checkout's copy under data/ comes back from the record.
+        if (rec_dir / "chain.json").is_file():
+            _write_atomic(Path(public_chain), (rec_dir / "chain.json").read_bytes())
         return {"status": "exists", "as_of": as_of, "path": str(day)}
     if rows and as_of < rows[-1]["as_of"]:
         raise ScreenRefusal(f"{as_of} is earlier than the chain's last day {rows[-1]['as_of']}")
