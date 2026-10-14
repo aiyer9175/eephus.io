@@ -112,12 +112,16 @@ PROBES: tuple[tuple[str, str, str], ...] = (
     # read, each carrying the V2-minus-consensus within interval; a development frame
     # census, never a verdict on a driver.
     ("efv_vm3_frame_eval.json", "probes", "vm3 frame read (EFV3_A5)"),
+    # TL_9 (owner asks of 2026-10-01, messages 1 and 2; TL-Q1 (a)): the tool-feature
+    # sidecar's no-outcome steps, coverage by (V, side) of the per-source grades,
+    # pwr_comp inputs, tip_iso_resid and the tool_hit_w inputs; role development.
+    ("_labs/efv_tool_features.json", "probes", "tool-feature sidecar probes (TL_9)"),
 )
 
 #: Fields an arm may carry that the ledger copies through unchanged, so a driver's
 #: per-vintage signs sit next to its gate (DS-06).
 PASS_THROUGH = ("per_vintage_signs", "mean_abs_t", "n_valid_vintages", "admitted",
-                "head", "reason", "delta_vs_consensus", "ci95", "partial")
+                "head", "reason", "delta_vs_consensus", "ci95", "partial", "role")
 
 #: Lanes whose artifact holds sweeps rather than arms. Counted separately and
 #: NEVER pooled with the arm count: a sweep over a continuous knob is not the
