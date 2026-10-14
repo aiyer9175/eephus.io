@@ -87,6 +87,7 @@ ARTIFACT = {"P": DATA / "power_composite_eval.json",
             "W": DATA / "tool_accuracy_eval.json",
             "T": DATA / "tool_tables_rederived_eval.json"}
 FROZEN_ROWS = T_LABS / "grade_rows_frozen.json"
+PREVIEW_W = CACHE / "tool_accuracy" / "preview" / "tool_source_accuracy.json"
 MDE_FOLDS = T_LABS / "mde95_folds.json"
 K_M_RECEIPT = LABS / "k_m.json"
 
@@ -2048,6 +2049,158 @@ def dry_run(look: str, out_dir: Path, *, seed: int = 7, boot: int = 40, perm: in
 # ---------------------------------------------------------------------------
 # the record (gate P.11, W.13, T.12)
 # ---------------------------------------------------------------------------
+def _w_weights_by_year(per_year) -> str:
+    """The derived weights by board year; a skipped year says why (flat weights)."""
+    parts = []
+    for p in per_year or []:
+        w = p.get("weights") or {}
+        ws = ", ".join(f"{s} {v}" for s, v in w.items()) or "no weights"
+        tag = f", skipped: {p['skipped']}" if p.get("skipped") else ""
+        base = p.get("weight_base_n")
+        parts.append(f"{p.get('year')} (n {p.get('n')}, weight base n {base}): {ws}{tag}")
+    return "; ".join(parts) if parts else "none"
+
+
+def _w_cell_lines(a: dict, ind: str) -> list[str]:
+    """One (arm, tool) cell in full: the A/B with rho and AUC, the floors, both bounds,
+    G1 to G5, the derived weights by year, and every control the runner computed."""
+    g = a.get("gate") or {}
+    pr = a.get("primary") or {}
+    bt = a.get("bootstrap") or {}
+    eq, wt = pr.get("equal") or {}, pr.get("weighted") or {}
+    c61 = a.get("C61_permuted_source_null") or {}
+    out = [f"{ind}common set by year {a.get('common_set_by_year')}; pooled n {a.get('pooled_n')}; "
+           f"thin years (under {THIN_CELL}) {a.get('thin_years')}; evaluable years {a.get('evaluable_years')}"]
+    if not pr or not pr.get("n"):
+        out.append(f"{ind}gate: {g.get('verdict')} ({g.get('reason')})")
+        if a.get("per_year"):
+            out.append(f"{ind}weights by year: {_w_weights_by_year(a.get('per_year'))}")
+        return out
+    out.append(f"{ind}n {pr.get('n')}: equal rho {eq.get('spearman')} AUC {eq.get('auc')}; "
+               f"weighted rho {wt.get('spearman')} AUC {wt.get('auc')}; d_rho {pr.get('d_rho')}; d_auc {pr.get('d_auc')}")
+    out.append(f"{ind}floors (C6.1, {c61.get('draws')} draws): F_rho {g.get('F_rho')}, F_auc {g.get('F_auc')}, "
+               f"margin over F_rho {g.get('margin_over_F_rho')}; permutation p_rho {g.get('p_rho')}, p_auc {c61.get('p_auc')}")
+    out.append(f"{ind}bootstrap (B {bt.get('draws')}, seed {bt.get('seed')}): d_rho lo95 {bt.get('d_rho_lo95')} hi95 {bt.get('d_rho_hi95')} "
+               f"sd {bt.get('d_rho_sd')}; d_auc lo95 {bt.get('d_auc_lo95')} hi95 {bt.get('d_auc_hi95')}")
+    out.append(f"{ind}G1 rho resolvable {g.get('G1_rho_resolvable')}, G2 AUC resolvable {g.get('G2_auc_resolvable')}, "
+               f"G3 rho lo95 above 0 {g.get('G3_rho_lo95_pos')}, G4 AUC lo95 above 0 {g.get('G4_auc_lo95_pos')}, "
+               f"G5 not knife edge {g.get('G5_not_knife_edge')}; G1 to G5 {g.get('G1_to_G5')}; loss clause {g.get('loss_clause')}")
+    out.append(f"{ind}weights by year: {_w_weights_by_year(a.get('per_year'))}")
+    if c61:
+        out.append(f"{ind}C6.1 permuted source label: draws {c61.get('draws')}, non-flat {c61.get('n_nonflat_rho')}, "
+                   f"abs d_rho p95 {c61.get('abs_d_rho_p95')} max {c61.get('abs_d_rho_max')}, abs d_auc p95 {c61.get('abs_d_auc_p95')} "
+                   f"max {c61.get('abs_d_auc_max')}, weight spread median {c61.get('perm_weight_spread_median')} p95 {c61.get('perm_weight_spread_p95')}")
+    c63 = a.get("C63_shuffled_outcome_null")
+    if c63 is not None:
+        out.append(f"{ind}C6.3 shuffled outcome: n {c63.get('n')}, equal rho {(c63.get('equal') or {}).get('spearman')}, "
+                   f"weighted rho {(c63.get('weighted') or {}).get('spearman')}, collapsed {g.get('shuffled_outcome_collapsed')}")
+    c64 = a.get("C64_forced_equal_identity")
+    if c64 is not None:
+        out.append(f"{ind}C6.4 forced equal identity: n {c64.get('n')}, d_rho {c64.get('d_rho')}, d_auc {c64.get('d_auc')}, passes {c64.get('passes')}")
+    c65 = a.get("C65_seed_stability")
+    if c65 is not None:
+        ab, ap = c65.get("boot_seed_alt") or {}, c65.get("perm_seed_alt") or {}
+        out.append(f"{ind}C6.5 seed stability (seed {ab.get('seed')}): d_rho lo95 {ab.get('d_rho_lo95')} hi95 {ab.get('d_rho_hi95')}, "
+                   f"d_auc lo95 {ab.get('d_auc_lo95')}; permutation ({ap.get('draws')} draws) F_rho {ap.get('abs_d_rho_p95')} "
+                   f"p_rho {ap.get('p_rho')}; verdict moves between seeds {g.get('verdict_moves_between_seeds')}")
+    c67 = a.get("C67_player_disjoint_weights")
+    if c67 is not None:
+        out.append(f"{ind}C6.7 player-disjoint weights: n {c67.get('n')}, equal rho {(c67.get('equal') or {}).get('spearman')}, "
+                   f"weighted rho {(c67.get('weighted') or {}).get('spearman')}, d_rho {c67.get('d_rho')}, d_auc {c67.get('d_auc')}; "
+                   f"weights by year: {_w_weights_by_year(c67.get('per_year'))}")
+    ctx = a.get("context_single_source")
+    if ctx is not None:
+        srcs = {k: v for k, v in ctx.items() if isinstance(v, dict)}
+        out.append(f"{ind}single-source context: pooled n {ctx.get('pooled_n')}, years {ctx.get('years')}; "
+                   + "; ".join(f"{k} rho {v.get('spearman')}" for k, v in srcs.items()))
+    c0a, c0b = a.get("C0_numpy_equivalence_check") or {}, a.get("C0_array_ab_equivalence") or {}
+    if c0a or c0b:
+        out.append(f"{ind}C0 estimator equivalence: numpy {c0a.get('identical_to_1e12')}, array A/B {c0b.get('identical_to_1e12')}")
+    return out
+
+
+def _w_tag_lines(tool: str, t: dict, ind: str) -> list[str]:
+    """W.5: per source and board year, the TAG triple and the three source metrics,
+    thin cells flagged; the leave-one-board-year-out TIP_f3 tables beneath."""
+    out = [f"- TAG {tool} / {t.get('stat')}: frame {t.get('n_frame')}; k_m {t.get('k_m')} "
+           f"{'(' + str(t.get('k_m_unit')) + ')' if t.get('k_m_unit') else ''}; regressed TAG {'computed' if t.get('regressed') else 'NOT COMPUTABLE'}"]
+    for src, b in (t.get("by_source") or {}).items():
+        out.append(f"{ind}{src}: n {b.get('n')}, computable {b.get('computable')}; ordering {b.get('ordering')}; "
+                   f"bias regressed {b.get('bias_regressed')}, bias PIT minus 0.5 {b.get('bias_pit')}; "
+                   f"error abs regressed {b.get('error_abs_regressed')}"
+                   + (f"; {b.get('note')}" if b.get("note") else ""))
+        for y, c in (b.get("per_year") or {}).items():
+            if c.get("thin"):
+                out.append(f"{ind}{ind}{y}: n {c.get('n')} THIN, gap range {c.get('range_gap')}")
+            elif c.get("n"):
+                out.append(f"{ind}{ind}{y}: n {c.get('n')}, mean gap {c.get('mean_gap')}, regressed {c.get('mean_regressed_gap')}, "
+                           f"PIT minus 0.5 {c.get('mean_pit_minus_half')}, abs regressed {c.get('mean_abs_regressed_gap')}, "
+                           f"ordering rho {c.get('ordering_rho')}")
+            else:
+                out.append(f"{ind}{ind}{y}: n 0")
+    for y, tb in (t.get("tables") or {}).items():
+        out.append(f"{ind}TIP_f3 for {y} (fit on the other board years, {tb.get('n_rows')} rows): "
+                   f"knots {tb.get('knots')}, values {tb.get('values')}, thin bins {tb.get('thin_bins')}")
+    return out
+
+
+def _w_record_lines(res: dict, meta: dict) -> list[str]:
+    """Gate W.13: the whole look W record from the runner's result."""
+    ind = "  "
+    c = res.get("constants") or {}
+    fr = meta.get("frame") or {}
+    lines = []
+    if not meta.get("dry_run"):
+        lines.append(f"Gate sha {meta.get('gate_sha')}; --rlv-record {meta.get('rlv_record')}; runner HEAD {meta.get('runner_head')}.")
+        lines.append(f"Frame (W.8): board years {fr.get('board_years')}, debut year at most {fr.get('max_debut_year')}, "
+                     f"MLB seasons through {fr.get('last_outcome_season')}; universe counts {meta.get('universe_counts')}.")
+    lines.append(f"Constants (W.1): MIN_LAG_YEARS {c.get('MIN_LAG_YEARS')}, WEIGHT_SHRINK_K {c.get('WEIGHT_SHRINK_K')}, "
+                 f"WEIGHT_CLAMP {c.get('WEIGHT_CLAMP')}, SPEARMAN_FLOOR {c.get('SPEARMAN_FLOOR')}, B {c.get('BOOT')}, "
+                 f"permutation draws {c.get('PERM')}, seeds {c.get('SEED')} and {c.get('SEED_ALT')}; Holm m = the computable "
+                 f"primaries at {HOLM_ALPHA}; look void {res.get('look_void')}.")
+    lines.append("")
+    lines.append("Primaries (W.2, W.6), arm A FanGraphs against MLB Pipeline:")
+    for tool, blk in (res.get("primaries") or {}).items():
+        a = (blk.get("arms") or {}).get("A_fg_vs_pipeline") or {}
+        hz = blk.get("holm") or {}
+        flat = [p.get("year") for p in (a.get("per_year") or []) if p.get("skipped")]
+        lines.append(f"- {tool} ({blk.get('stat')}): verdict {blk.get('verdict')}"
+                     + (f" ({blk.get('reason')})" if blk.get("reason") else "")
+                     + f"; Holm step {hz.get('step')} p {hz.get('p')} rejected {hz.get('rejected')} (m {hz.get('m')}); "
+                     f"flat-weight disclosure (W.9): board years {flat or 'none'} carry flat weights and are skipped, so the "
+                     f"informative rows are BA2's own board years"
+                     + ("; a hit PASS is read on BA2's rows and is not independent of BA2 (W.9)" if tool == "hit" else "")
+                     + f"; arm B: {blk.get('arm_B')}")
+        lines += _w_cell_lines(a, ind)
+        b = (blk.get("arms") or {}).get("B_fg_pipeline_ba") or {}
+        lines.append(f"{ind}arm B (FanGraphs, MLB Pipeline, Baseball America): pooled n {b.get('pooled_n')}, "
+                     f"gate {(b.get('gate') or {}).get('verdict')} ({(b.get('gate') or {}).get('reason')})")
+    lines.append("")
+    lines.append("Secondary rows (W.4), descriptive, adjudicating nothing; BA2's verdicts stand:")
+    for key, blk in (res.get("secondaries") or {}).items():
+        a = (blk.get("arms") or {}).get("A_fg_vs_pipeline") or {}
+        b = (blk.get("arms") or {}).get("B_fg_pipeline_ba") or {}
+        lines.append(f"- {key} ({blk.get('tool')} to {blk.get('stat')}): {blk.get('verdict')}; BA2 {blk.get('ba2')}; "
+                     f"arm B pooled n {b.get('pooled_n')} {(b.get('gate') or {}).get('verdict')}")
+        lines += _w_cell_lines(a, ind)
+    lines.append("")
+    lines.append("TAG tables (W.5), per source, tool and board year, thin cells flagged:")
+    for tool, t in (res.get("tag") or {}).items():
+        lines += _w_tag_lines(tool, t, ind)
+    lines.append("")
+    lines.append("Controls (W.7): C6.1 the permuted-source-label floor, C6.3 the shuffled outcome, C6.4 the forced-equal "
+                 "identity, C6.5 seed stability at 1337, C6.7 the player-disjoint weight arm and the single-source context "
+                 "are printed per cell above. C6.2 (pooled-tool) is not computed by this runner (gate Part 6: no tool "
+                 "pooling; it would be a control only, never a result). C6.6 (the survivorship boundary) is the sentence "
+                 "below with the universe counts above.")
+    if not meta.get("dry_run"):
+        lines.append("")
+        lines.append(f"Inputs sha256 at start (unchanged through the run: {meta.get('inputs_unchanged_during_run')}):")
+        for p, h in (meta.get("inputs_sha256_start") or {}).items():
+            lines.append(f"{ind}{p} {h}")
+    return lines
+
+
 def render_record(look: str, res: dict, meta: dict) -> str:
     lines = [f"### Look {look} ({'dry run on fixtures' if meta.get('dry_run') else meta.get('date', '')})",
              ""]
@@ -2064,22 +2217,7 @@ def render_record(look: str, res: dict, meta: dict) -> str:
         for k, s in (res.get("secondary") or {}).items():
             lines.append(f"- secondary {k}: n {s.get('n')} {s.get('candidates')} ({s.get('verdict')})")
     elif look == "W":
-        for tool, blk in (res.get("primaries") or {}).items():
-            a = (blk.get("arms") or {}).get("A_fg_vs_pipeline") or {}
-            g = a.get("gate") or {}
-            pr = a.get("primary") or {}
-            lines.append(f"- {tool} ({blk.get('stat')}): n {pr.get('n')}, equal rho {(pr.get('equal') or {}).get('spearman')}, "
-                         f"weighted rho {(pr.get('weighted') or {}).get('spearman')}, d {pr.get('d_rho')}, "
-                         f"F {g.get('F_rho')}, lo95 {(a.get('bootstrap') or {}).get('d_rho_lo95')}, p {g.get('p_rho')}, "
-                         f"Holm {(blk.get('holm') or {}).get('step')}, verdict {blk.get('verdict')}; arm B {blk.get('arm_B')}")
-        for key, blk in (res.get("secondaries") or {}).items():
-            a = (blk.get("arms") or {}).get("A_fg_vs_pipeline") or {}
-            lines.append(f"- {key} ({blk.get('stat')}): n {(a.get('primary') or {}).get('n')}, d {(a.get('primary') or {}).get('d_rho')}; "
-                         f"{blk.get('verdict')}; BA2 {blk.get('ba2')}")
-        for tool, t in (res.get("tag") or {}).items():
-            lines.append(f"- TAG {tool}/{t.get('stat')}: frame {t.get('n_frame')}, k_m {t.get('k_m')}; "
-                         + "; ".join(f"{s}: ordering {b.get('ordering')}, bias {b.get('bias_regressed')}, "
-                                     f"error {b.get('error_abs_regressed')}" for s, b in (t.get('by_source') or {}).items()))
+        lines += _w_record_lines(res, meta)
     else:
         for k, c in (res.get("primary") or {}).items():
             lines.append(f"- {k}: n {c.get('n')}, MAE candidate {c.get('mae_candidate')}, incumbent {c.get('mae_incumbent')}, "
@@ -2146,9 +2284,16 @@ def real_look_w(args) -> dict:
     sha_start = _inputs_sha(inputs)
     res = run_look_w(uni, data, boot=args.boot or W_BOOT, perm=args.perm or W_PERM)
     rec = {"generated_at": _now(), "look": "W", "spent": True, "gate": GATE_DOC, "gate_sha": args.gate_sha,
-           "rlv_record": args.rlv_record, "universe_counts": dict(uni.counts),
+           "rlv_record": args.rlv_record, "runner_head": (_git("rev-parse", "--short=8", "HEAD") or "").strip(),
+           "frame": {"board_years": list(W_YEARS), "max_debut_year": MAX_DEBUT_YEAR,
+                     "last_outcome_season": LAST_OUTCOME_SEASON},
+           "universe_counts": dict(uni.counts),
            "inputs_sha256_start": sha_start, "inputs_sha256_end": _inputs_sha(inputs), "result": res}
-    rec["record_text"] = render_record("W", res, {"date": date.today().isoformat()})
+    rec["inputs_unchanged_during_run"] = bool(rec["inputs_sha256_start"] == rec["inputs_sha256_end"])
+    meta = {k: rec[k] for k in ("gate_sha", "rlv_record", "runner_head", "frame", "universe_counts",
+                                "inputs_sha256_start", "inputs_unchanged_during_run")}
+    meta["date"] = date.today().isoformat()
+    rec["record_text"] = render_record("W", res, meta)
     return rec
 
 
@@ -2305,7 +2450,46 @@ def main(argv=None) -> int:
     art.write_text(json.dumps(rec, indent=1, default=str), encoding="utf-8")
     print(rec["record_text"])
     print("wrote", _rel(art), "sha256", sha256_of(art))
+    if args.look == "W":
+        PREVIEW_W.parent.mkdir(parents=True, exist_ok=True)
+        PREVIEW_W.write_text(json.dumps(preview_w(rec), indent=1, default=str), encoding="utf-8")
+        print("wrote display copy", PREVIEW_W)
     return 0
+
+
+def preview_w(rec: dict) -> dict:
+    """The display copy of look W (gate W.13): per tool the verdict, the derived
+    weights by year and the three source metrics per source; written only under
+    .cache/tool_accuracy/preview/, never served."""
+    res = rec.get("result") or {}
+    tools = {}
+    for tool, blk in (res.get("primaries") or {}).items():
+        a = (blk.get("arms") or {}).get("A_fg_vs_pipeline") or {}
+        pr = a.get("primary") or {}
+        tools[tool] = {"stat": blk.get("stat"), "role": "primary", "verdict": blk.get("verdict"),
+                       "n": pr.get("n"), "d_rho": pr.get("d_rho"), "d_auc": pr.get("d_auc"),
+                       "equal": pr.get("equal"), "weighted": pr.get("weighted"),
+                       "holm": blk.get("holm"), "arm_B": blk.get("arm_B"),
+                       "weights_by_year": [{"year": p.get("year"), "n": p.get("n"), "weights": p.get("weights"),
+                                            "skipped": p.get("skipped")} for p in (a.get("per_year") or [])]}
+    for key, blk in (res.get("secondaries") or {}).items():
+        a = (blk.get("arms") or {}).get("A_fg_vs_pipeline") or {}
+        pr = a.get("primary") or {}
+        tools[key] = {"tool": blk.get("tool"), "stat": blk.get("stat"), "role": "secondary",
+                      "verdict": blk.get("verdict"), "ba2": blk.get("ba2"), "n": pr.get("n"),
+                      "d_rho": pr.get("d_rho"), "d_auc": pr.get("d_auc")}
+    tag = {}
+    for tool, t in (res.get("tag") or {}).items():
+        tag[tool] = {"stat": t.get("stat"), "n_frame": t.get("n_frame"), "k_m": t.get("k_m"),
+                     "regressed": t.get("regressed"),
+                     "by_source": {s: {k: b.get(k) for k in ("n", "computable", "ordering", "bias_regressed",
+                                                              "bias_pit", "error_abs_regressed", "note")}
+                                   for s, b in (t.get("by_source") or {}).items()}}
+    return {"generated_at": rec.get("generated_at"), "look": "W", "display_copy": True, "served": False,
+            "gate": rec.get("gate"), "gate_sha": rec.get("gate_sha"), "rlv_record": rec.get("rlv_record"),
+            "eval_artifact": _rel(ARTIFACT["W"]), "frame": rec.get("frame"),
+            "equal_weight_retains_unless_pass": True, "tools": tools, "tag": tag,
+            "survivorship": res.get("survivorship")}
 
 
 if __name__ == "__main__":
