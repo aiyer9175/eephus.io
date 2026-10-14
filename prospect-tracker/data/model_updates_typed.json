@@ -215,6 +215,44 @@
    "source": {
     "commit": "5780af31"
    }
+  },
+  {
+   "date": "2026-09-25",
+   "model_id": "efv_v1",
+   "text": "eFV v1's guarded blend left the active board when eFV V2 began serving. It ranked on a mix of the consensus WAR and the model WAR at a pinned weight per side, hitters 0.70 and pitchers 0.57, set for stability rather than accuracy. It remains the rule behind the graduates' locked grade.",
+   "origin": "other",
+   "source": {
+    "path": "data/xfv.json",
+    "key": "meta.live_lambda"
+   }
+  },
+  {
+   "date": "2026-09-25",
+   "model_id": "efv_v1",
+   "text": "eFV v1's board overlays left the active board when eFV V2 began serving: injury, prospect age, stale list coverage and a reliever ceiling dial had tilted the model's WAR leg. Under V2 those signals show on each card as labelled notes and do not move the grade.",
+   "origin": "xfv entry v1 history",
+   "source": {
+    "path": "data/xfv.json",
+    "key": "meta.grade_scale"
+   }
+  },
+  {
+   "date": "2026-08-14",
+   "model_id": "efv_v1",
+   "text": "eFV v1's level calibration retired: an affine dispersion correction shipped that morning was reverted to identity the same day by owner decision, so nothing rescales the model leg at the grade seam. The corrected arm had measured more accurate against realized WAR on the full pool, so the revert traded outcome accuracy for agreement with the industry at the top of the board and widened the abstention floor. Figures: gate docs/efv-2026-08-13/DISPERSION_REVERT_GATE.md. The retired coefficients stay in the code and are not live.",
+   "origin": "xfv entry v1 history",
+   "source": {
+    "commit": "455f7684"
+   }
+  },
+  {
+   "date": "2026-07-25/30",
+   "model_id": "efv_v1",
+   "text": "eFV v1's displayed grade left the per side quantile map, a rank map onto the consensus distribution, and moved to the inverse of the pooled outcome curve fit on resolved cohorts. Surplus dollars and the star and bust odds stayed on the retired maps, so the move changed no dollar.",
+   "origin": "xfv entry v1 history",
+   "source": {
+    "commit": "297d7eb6"
+   }
   }
  ]
 }

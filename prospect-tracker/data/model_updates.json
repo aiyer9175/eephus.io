@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-14T11:50:25Z",
+ "generated_at": "2026-10-14T12:18:18Z",
  "rule": "append-only; an event is added when a model's registry state, its card legs, an eFV progress ledger row or a dated note changes; every number is copied from the artifact key named in the event; the edge is printed by edge() v1; events sit in append order, each run's batch ordered by date",
  "edge_rule_version": 1,
  "result_form": "Result ({stat}): {body}",
@@ -8,7 +8,7 @@
  "sources": [
   {
    "path": "data/model_registry.json",
-   "sha256": "fb261fd7b97afdba71c918879c7605152c5387c0c5f6f127e354f072d8997f06"
+   "sha256": "b45e5714b122f46afd03191b70f6bc323650b37c16dacbd782ce0794338bac73"
   },
   {
    "path": "data/efv_progress.json",
@@ -17,7 +17,7 @@
   },
   {
    "path": "data/model_updates_typed.json",
-   "sha256": "0014c6cb10a8fb85f93d5fdbd305385f8b513d9048731525cc5f7a374e7984e8"
+   "sha256": "3327d62b4fcab6fcacd4d9a040726c7239123526dc4c248cd9186a412f57caa6"
   },
   {
    "path": "data/arbitration_eval.json",
@@ -31,8 +31,8 @@
   },
   {
    "path": "data/source_backtest.json",
-   "sha256": "f44a589654839b96484d62811d9ee9e4672b09a0cd5f32c9cd7fdf393e262b5e",
-   "generated_at": "2026-10-14T11:46:15Z"
+   "sha256": "0413e618d6261834cde63dd15d35cdbf64481c16d052cd70ec6fe4fae0051a0b",
+   "generated_at": "2026-10-14T12:06:31Z"
   },
   {
    "path": "data/draft_slot_curve.json",
@@ -1088,8 +1088,8 @@
  },
  "note_problems": [],
  "counts": {
-  "events": 537,
-  "default_view": 115,
+  "events": 541,
+  "default_view": 119,
   "by_kind": {
    "artifact_change": 26,
    "backfill": 4,
@@ -1097,7 +1097,7 @@
    "first_scored": 21,
    "frame_change": 1,
    "model_change": 14,
-   "note": 21,
+   "note": 25,
    "registered": 362,
    "removed": 2,
    "rescored": 47,
@@ -1107,7 +1107,7 @@
   "by_layer": {
    "development": 9,
    "headline": 96,
-   "note": 21,
+   "note": 25,
    "registration": 390,
    "typed": 21
   },
@@ -2101,7 +2101,7 @@
      },
      "source": {
       "path": "data/source_backtest.json",
-      "sha256": "f44a589654839b96484d62811d9ee9e4672b09a0cd5f32c9cd7fdf393e262b5e"
+      "sha256": "0413e618d6261834cde63dd15d35cdbf64481c16d052cd70ec6fe4fae0051a0b"
      }
     }
    ],
@@ -5090,7 +5090,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 9,
+    "artifact_age_days": 10,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5725,7 +5725,7 @@
      },
      "source": {
       "path": "data/source_backtest.json",
-      "sha256": "f44a589654839b96484d62811d9ee9e4672b09a0cd5f32c9cd7fdf393e262b5e"
+      "sha256": "0413e618d6261834cde63dd15d35cdbf64481c16d052cd70ec6fe4fae0051a0b"
      }
     },
     {
@@ -5753,7 +5753,7 @@
      },
      "source": {
       "path": "data/source_backtest.json",
-      "sha256": "f44a589654839b96484d62811d9ee9e4672b09a0cd5f32c9cd7fdf393e262b5e"
+      "sha256": "0413e618d6261834cde63dd15d35cdbf64481c16d052cd70ec6fe4fae0051a0b"
      }
     }
    ],
@@ -7279,7 +7279,7 @@
    "today": [],
    "registered": "2026-06-22",
    "last_update": "2026-09-25",
-   "events": 17,
+   "events": 21,
    "freshness": {
     "artifact_age_days": 11,
     "age_is_evidence": true,
@@ -8059,7 +8059,7 @@
    "today": [],
    "registered": "2026-06-22",
    "last_update": "2026-09-25",
-   "events": 17,
+   "events": 21,
    "freshness": {
     "artifact_age_days": 11,
     "age_is_evidence": true,
@@ -40907,6 +40907,134 @@
    "label": "Game Intensity Effects",
    "served": true,
    "default_view": false
+  },
+  {
+   "date": "2026-07-25/30",
+   "sort_date": "2026-07-25",
+   "model_id": "efv_v1",
+   "registry_ids": [
+    "xfv_hitter",
+    "xfv_pitcher"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "eFV v1's displayed grade left the per side quantile map, a rank map onto the consensus distribution, and moved to the inverse of the pooled outcome curve fit on resolved cohorts. Surplus dollars and the star and bust odds stayed on the retired maps, so the move changed no dollar.",
+   "origin": "xfv entry v1 history",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "297d7eb6",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "cb9750422342553981c4e10c3cc21adfbf951325ac58ef8000414bbffc6ae42f",
+   "event_id": "2026-07-25/30|efv_v1|note|cb975042",
+   "family": "PROSPX and eFV",
+   "label": "eFV v1",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-08-14",
+   "sort_date": "2026-08-14",
+   "model_id": "efv_v1",
+   "registry_ids": [
+    "xfv_hitter",
+    "xfv_pitcher"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "eFV v1's level calibration retired: an affine dispersion correction shipped that morning was reverted to identity the same day by owner decision, so nothing rescales the model leg at the grade seam. The corrected arm had measured more accurate against realized WAR on the full pool, so the revert traded outcome accuracy for agreement with the industry at the top of the board and widened the abstention floor. Figures: gate docs/efv-2026-08-13/DISPERSION_REVERT_GATE.md. The retired coefficients stay in the code and are not live.",
+   "origin": "xfv entry v1 history",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "commit": "455f7684",
+    "path": null,
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "62a4bb7ac28922bf41a63c068bad2d65915215256784f6ac65501ee73c486c27",
+   "event_id": "2026-08-14|efv_v1|note|62a4bb7a",
+   "family": "PROSPX and eFV",
+   "label": "eFV v1",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-09-25",
+   "sort_date": "2026-09-25",
+   "model_id": "efv_v1",
+   "registry_ids": [
+    "xfv_hitter",
+    "xfv_pitcher"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "eFV v1's guarded blend left the active board when eFV V2 began serving. It ranked on a mix of the consensus WAR and the model WAR at a pinned weight per side, hitters 0.70 and pitchers 0.57, set for stability rather than accuracy. It remains the rule behind the graduates' locked grade.",
+   "origin": "other",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/xfv.json",
+    "key": "meta.live_lambda",
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "61f24e384b623c2cb3feb45126a64e150da6ef112a567107d637c7afb93306d8",
+   "event_id": "2026-09-25|efv_v1|note|61f24e38",
+   "family": "PROSPX and eFV",
+   "label": "eFV v1",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-09-25",
+   "sort_date": "2026-09-25",
+   "model_id": "efv_v1",
+   "registry_ids": [
+    "xfv_hitter",
+    "xfv_pitcher"
+   ],
+   "kind": "note",
+   "layer": "note",
+   "change": "eFV v1's board overlays left the active board when eFV V2 began serving: injury, prospect age, stale list coverage and a reliever ceiling dial had tilted the model's WAR leg. Under V2 those signals show on each card as labelled notes and do not move the grade.",
+   "origin": "xfv entry v1 history",
+   "verdict": null,
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "note",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/xfv.json",
+    "key": "meta.grade_scale",
+    "typed_input": "data/model_updates_typed.json"
+   },
+   "content_hash": "51d362b29182c03899f7c3dd3a4559d2c3723e6545fec18dd1379717b5436133",
+   "event_id": "2026-09-25|efv_v1|note|51d362b2",
+   "family": "PROSPX and eFV",
+   "label": "eFV v1",
+   "served": true,
+   "default_view": true
   }
  ],
  "backfill": {
