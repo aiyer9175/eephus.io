@@ -825,14 +825,22 @@ def test_revs_match():
     assert st.revs_match(entries, files.get) == [("11", "rev of 2026 does not hash the bytes on disk")]
 
 
-def test_final_t7_band_miss_is_logged_not_refused():
+def test_t7_band_miss_is_logged_not_refused():
     # 2020's Reds read a division elimination number of 2 after the last game
     f = season_file("2020")
     res = st.validate_standings(st.KIND_SEASON, f)
     assert res["ok"] and any(r == "T7" and "CIN" in m for r, m in res["logged"])
+    assert any(d["field"] == "division_elimination" and d["code"] == "CIN"
+               for d in f["accountability"]["feed_disagreements"])
+    # in season too (STANDINGS_2's 2026 backfill: early-season numbers sit far
+    # below the band), MLB's number is served, logged and listed, never refused
     inseason = copy.deepcopy(season_file("p1"))
+    assert not any(d["field"] in ("magic", "division_elimination", "wild_card_elimination")
+                   and "G + 1" in d["why"] for d in inseason["accountability"]["feed_disagreements"])
     next(r for r in inseason["rows"] if r["code"] == "CHW")["elim_div"] = 9
-    assert any(r == "T7" for r, m in st.validate_standings(st.KIND_SEASON, inseason)["refused"])
+    res = st.validate_standings(st.KIND_SEASON, inseason)
+    assert res["ok"] and any(r == "T7" and "CHW" in m for r, m in res["logged"])
+    assert st.t7_misses(inseason["rows"], inseason["format"])[0][:3] == ("CHW", "division elimination", 9)
 
 
 # --------------------------------------------------------------------------- #

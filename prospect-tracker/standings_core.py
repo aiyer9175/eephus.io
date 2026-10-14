@@ -478,10 +478,15 @@ def parse_standings(payload, as_of, *, final: bool = False) -> dict:
     # ---- 11. Seeds -----------------------------------------------------
     _assign_seeds(rows, by_div, by_lg, fmt, order, final, dis)
 
+    # ---- 3. T7: MLB's magic and elimination numbers outside the band ---
+    for code, label, value, want in t7_misses(rows, fmt):
+        _disagree(dis, label.replace(" ", "_"), code, value, value,
+                  f"MLB's number is served; G + 1 - W - L gives {want} (or one less)")
+
     for r in rows:
         for k in ("_div_id", "_lg_id", "_magic_feed"):
             r.pop(k, None)
-    return {"season": season, "as_of": str(as_of), "final": bool(final),
+    return {"season": season, "as_of": str(as_of) if as_of is not None else None, "final": bool(final),
             "copyright": (payload or {}).get("copyright"), "rows": rows, "feed_disagreements": dis}
 
 
@@ -534,11 +539,12 @@ def _assign_seeds(rows, by_div, by_lg, fmt, order, final, dis) -> None:
 # --------------------------------------------------------------------------- #
 def games_from_schedule(payload) -> list[dict]:
     """A StatsAPI /api/v1/schedule payload (gameType R) as the normalised game
-    list: `{pk, date, start, gn, away, home, away_r, home_r, state}` in the
-    schedule's order, one item per schedule entry. `date` is the date bucket
-    the entry sits under (a suspended game appears under the date it was
-    suspended and again under the date it became final), falling back to
-    `officialDate`; `state` is scores_core's state rule."""
+    list: `{pk, date, official, start, gn, away, home, away_r, home_r,
+    state}` in the schedule's order, one item per schedule entry. `date` is
+    the date bucket the entry sits under (a suspended game appears under the
+    date it was suspended and again under the date it became final), falling
+    back to `officialDate`; `official` is the entry's `officialDate`; `state`
+    is scores_core's state rule."""
     out = []
     for d in (payload or {}).get("dates") or []:
         for g in d.get("games") or []:
@@ -548,7 +554,7 @@ def games_from_schedule(payload) -> list[dict]:
             a, h = teams.get("away") or {}, teams.get("home") or {}
             state, _reason = sc.game_state(g.get("status"))
             out.append({"pk": _int(g.get("gamePk")), "date": d.get("date") or g.get("officialDate"),
-                        "start": g.get("gameDate"), "gn": _int(g.get("gameNumber")) or 1,
+                        "official": g.get("officialDate"), "start": g.get("gameDate"), "gn": _int(g.get("gameNumber")) or 1,
                         "away": _int((a.get("team") or {}).get("id")),
                         "home": _int((h.get("team") or {}).get("id")),
                         "away_r": _int(a.get("score")), "home_r": _int(h.get("score")), "state": state})
@@ -558,14 +564,22 @@ def games_from_schedule(payload) -> list[dict]:
 def final_games(games) -> list[dict]:
     """Each game once, counted on the date it became final, ordered by date,
     then game number, then start time, then pk (doubleheaders kept in order).
-    A suspended entry is never counted; a pk with a final entry counts once."""
+    A suspended entry is never counted; a pk with a final entry counts once.
+    When the schedule lists one game as final under two dates, the entry under
+    its own officialDate wins (StatsAPI's 2026 schedule lists 824912 final
+    under 2026-06-16 and 2026-06-17, officialDate 2026-06-16, and MLB's
+    standings count it through 2026-06-16); otherwise the later date."""
+    def rank(g):
+        own = g.get("official") is not None and str(g.get("date")) == str(g.get("official"))
+        return (own, str(g.get("date")))
+
     finals: dict = {}
     for g in games or []:
         if g.get("state") != "final" or g.get("away_r") is None or g.get("home_r") is None:
             continue
         pk = g.get("pk")
         prev = finals.get(pk)
-        if prev is None or str(g.get("date")) > str(prev.get("date")):
+        if prev is None or rank(g) > rank(prev):
             finals[pk] = g
     return sorted(finals.values(), key=lambda g: (str(g.get("date")), g.get("gn") or 1,
                                                    str(g.get("start") or ""), g.get("pk") or 0))
@@ -621,6 +635,53 @@ def last_results(games, team, as_of=None, n: int = 10) -> str:
         if mine != theirs:
             seq.append("W" if mine > theirs else "L")
     return "".join(seq[-n:])
+
+
+def streak_code(games, team, as_of=None) -> str | None:
+    """MLB's streak code ("W4", "L2") of `team` from the final games through
+    `as_of`: the run of the latest result (a tie, rare, is skipped); None
+    before the club's first decision."""
+    seq = last_results(games, team, as_of, n=10 ** 6)
+    if not seq:
+        return None
+    n = len(seq) - len(seq.rstrip(seq[-1]))
+    return f"{seq[-1]}{n}"
+
+
+def last_and_next(games, team, as_of=None) -> dict:
+    """{last, next} of `team`, each `{pk, d}` or None: the last final game
+    through `as_of`, and the first game of the list with no final entry that is
+    still to be played (scheduled, pregame, live or delayed), by date, game
+    number, start time and pk. A postponed, cancelled or suspended entry is
+    never the next game."""
+    tid = _team_id(team)
+    last = None
+    for g in final_games(games):
+        if as_of is not None and str(g["date"]) > str(as_of):
+            break
+        if tid in (g["away"], g["home"]):
+            last = {"pk": g["pk"], "d": str(g["date"])}
+    done = {g.get("pk") for g in games or [] if g.get("state") == "final"}
+    todo = sorted((g for g in games or [] if tid in (g.get("away"), g.get("home")) and g.get("pk") not in done
+                   and g.get("state") in ("scheduled", "pregame", "live", "delayed")),
+                  key=lambda g: (str(g.get("date")), g.get("gn") or 1, str(g.get("start") or ""), g.get("pk") or 0))
+    nxt = {"pk": todo[0]["pk"], "d": str(todo[0]["date"])} if todo else None
+    return {"last": last, "next": nxt}
+
+
+def race_extras(games, season, *, last_next: bool = True) -> dict:
+    """The per-club sequences the race file carries beside `last10` (plan 4.1:
+    streaks, last and next game), from the same game list: `streak {code:
+    "W4" or None}` and, with `last_next`, `last_game` and `next_game {code:
+    {pk, d} or None}` (the live seasons only, whose games have pages on
+    /scores/)."""
+    ids = sorted(sc.CLUB_BY_ID)
+    out = {"streak": {sc.CLUB_BY_ID[t]: streak_code(games, t) for t in ids}}
+    if last_next:
+        ln = {sc.CLUB_BY_ID[t]: last_and_next(games, t) for t in ids}
+        out["last_game"] = {c: v["last"] for c, v in ln.items()}
+        out["next_game"] = {c: v["next"] for c, v in ln.items()}
+    return out
 
 
 def head_to_head(games, a, b, as_of=None) -> dict:
@@ -913,14 +974,53 @@ def _band(value, formula) -> bool:
     return isinstance(value, int) and value in (formula, formula - 1)
 
 
+def t7_misses(rows, fmt) -> list[tuple]:
+    """(code, label, value, band top) for every magic or elimination number
+    outside G + 1 - W_ref - L or one less (T7): the leader's magic against the
+    runner-up's losses, a division elimination number against the leader's
+    wins, a wild card elimination number against the wins of the club holding
+    the last spot."""
+    G = fmt["scheduled"]
+    by_div: dict = {}
+    by_lg: dict = {}
+    for r in rows:
+        by_div.setdefault(r.get("div"), []).append(r)
+        by_lg.setdefault(r.get("lg"), []).append(r)
+    out = []
+    for div_rows in by_div.values():
+        lead = next((r for r in div_rows if r["ranks"]["div"] == 1), None)
+        runner = next((r for r in div_rows if r["ranks"]["div"] == 2), None)
+        for r in div_rows:
+            if isinstance(r.get("magic"), int) and runner is not None:
+                want = G + 1 - r["w"] - runner["l"]
+                if not _band(r["magic"], want):
+                    out.append((r["code"], "magic", r["magic"], want))
+            if isinstance(r.get("elim_div"), int) and lead is not None and r is not lead:
+                want = G + 1 - lead["w"] - r["l"]
+                if not _band(r["elim_div"], want):
+                    out.append((r["code"], "division elimination", r["elim_div"], want))
+    for lg_rows in by_lg.values():
+        ref = next((r for r in lg_rows if r["ranks"]["wc"] == fmt["wc_spots"]), None)
+        for r in lg_rows:
+            if isinstance(r.get("elim_wc"), int) and ref is not None and r is not ref and r["ranks"]["wc"] is not None:
+                want = G + 1 - ref["w"] - r["l"]
+                if not _band(r["elim_wc"], want):
+                    out.append((r["code"], "wild card elimination", r["elim_wc"], want))
+    return out
+
+
 def check_rows(obj: dict, *, games=None, race=None, source=None, logged: list | None = None) -> list[tuple[str, str]]:
     """The laws of plan 6 over a season or snapshot file (T1 to T9, T11, T13,
     T15, T17, T19, T20; T12 on an `ours` block when one is present). A T7 band
-    miss in a final file is appended to `logged`, not refused: once the season
-    is over MLB's numbers are leftovers (2020's Reds read a division
-    elimination number of 2 after the last game)."""
+    miss is appended to `logged`, never refused: once the season is over
+    MLB's numbers are leftovers (2020's Reds read a division elimination
+    number of 2 after the last game), and early in a season MLB's own magic
+    and elimination numbers sit far below the band (STANDINGS_2's 2026
+    by-date backfill: NYY magic 129 on 2026-04-04 where G + 1 - W - L gives
+    152), so the served value stays MLB's and the parser lists every miss in
+    `accountability.feed_disagreements`."""
     out: list = []
-    t7 = out if not obj.get("final") else (logged if logged is not None else [])
+    t7 = logged if logged is not None else []
     rows = obj.get("rows") or []
     season = obj.get("season")
     try:
@@ -979,24 +1079,9 @@ def check_rows(obj: dict, *, games=None, race=None, source=None, logged: list | 
                 signed = (r["wcgb"] if r.get("wc_ahead") else -r["wcgb"]) if r.get("wcgb") is not None else None
                 if signed is None or signed != want or (got is not None and got < 0):
                     out.append(("T6", f"{r['code']}: WCGB {r.get('wcgb')} ahead {r.get('wc_ahead')} != {want}"))
-    # T7: magic and elimination bands
-    G = fmt["scheduled"]
-    for div_rows in by_div.values():
-        lead = next((r for r in div_rows if r["ranks"]["div"] == 1), None)
-        runner = next((r for r in div_rows if r["ranks"]["div"] == 2), None)
-        for r in div_rows:
-            if isinstance(r.get("magic"), int) and runner is not None:
-                if not _band(r["magic"], G + 1 - r["w"] - runner["l"]):
-                    t7.append(("T7", f"{r['code']}: magic {r['magic']} outside its band"))
-            if isinstance(r.get("elim_div"), int) and lead is not None and r is not lead:
-                if not _band(r["elim_div"], G + 1 - lead["w"] - r["l"]):
-                    t7.append(("T7", f"{r['code']}: division elimination {r['elim_div']} outside its band"))
-    for lg_rows in by_lg.values():
-        ref = next((r for r in lg_rows if r["ranks"]["wc"] == fmt["wc_spots"]), None)
-        for r in lg_rows:
-            if isinstance(r.get("elim_wc"), int) and ref is not None and r is not ref and r["ranks"]["wc"] is not None:
-                if not _band(r["elim_wc"], G + 1 - ref["w"] - r["l"]):
-                    t7.append(("T7", f"{r['code']}: wild card elimination {r['elim_wc']} outside its band"))
+    # T7: magic and elimination bands (logged, never refused: see t7_misses)
+    for code, label, value, _want in t7_misses(rows, fmt):
+        t7.append(("T7", f"{code}: {label} {value} outside its band"))
     # T8: marks
     for r in rows:
         if r.get("mark") and r.get("e"):
@@ -1127,6 +1212,16 @@ def _check_race(obj: dict) -> list[tuple[str, str]]:
     for code, s in (obj.get("last10") or {}).items():
         if len(s) > 10 or set(s) - {"W", "L"}:
             out.append(("T15", f"{code}: last10 {s!r} malformed"))
+    for code, s in (obj.get("streak") or {}).items():
+        if s is not None and not re.match(r"^[WL][1-9]\d*$", str(s)):
+            out.append(("T15", f"{code}: streak {s!r} malformed"))
+        elif s is not None and not (obj.get("last10") or {}).get(code, "").endswith(s[0]):
+            out.append(("T15", f"{code}: streak {s!r} disagrees with last10"))
+    for key in ("last_game", "next_game"):
+        for code, g in (obj.get(key) or {}).items():
+            if g is not None and (not isinstance(g.get("pk"), int)
+                                  or not re.match(r"^\d{4}-\d{2}-\d{2}$", str(g.get("d")))):
+                out.append(("T15", f"{code}: {key} {g!r} malformed"))
     return out
 
 
@@ -1292,7 +1387,7 @@ __all__ = [
     "TIEBREAK_BY_RULE", "TIEBREAK_2020", "TIEBREAK_EXTRA_GAME", "tiebreak_text", "QUALIFIED_TEXT",
     "X_EXPONENT", "division_of", "division_champions", "parse_standings", "games_from_schedule",
     "final_games", "games_left", "last_results", "head_to_head", "build_race", "race_value_at",
-    "race_matches_snapshots", "build_season_file", "build_snapshot_file", "build_race_file",
+    "race_matches_snapshots", "t7_misses", "streak_code", "last_and_next", "race_extras", "build_season_file", "build_snapshot_file", "build_race_file",
     "build_phist_file", "encode", "write_file", "check_rows", "validate_standings", "revs_match",
     "trim_payload", "write_labs_copy", "MissingCache", "KIND_SEASON", "KIND_RACE", "KIND_PHIST",
     "KIND_SNAPSHOT", "round2",
