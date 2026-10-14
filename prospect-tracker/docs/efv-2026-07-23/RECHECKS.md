@@ -82,3 +82,21 @@ values, with stdout and stderr teed before anything else.
   served construction needs choices the registration did not make (the BT composite's served-pool
   normalizer, the swings floor on the board, replace fwdHEM+ or a new column), so nothing is
   built; owner question NOV15-BT-ARMB asks whether to register one. Nothing served moved.
+
+- NOV-A (per-season Swing+ as the BT leg, registered 2026-07-23): NULL on both arms. Run inside
+  the parent lab's frozen protocol (tools/bat_tracking_lab.py --nov-a) with exactly the registered
+  substitution: data/swing_plus.json seasons slices (W6, generated 2026-10-02, 173 / 244 / 277
+  bats scored in 2024 / 2025 / 2026, low_n slices kept as the artifact gives them) replace the
+  raw bat-tracking z-aggregates in both arms; the parent BT row gate stays and a pair without a
+  Swing+ slice drops (leg_missing 341 arm A, 344 arm B). Arm A: bt_corrected rho 0.4512 vs pWOBA
+  0.4405 on 149 pooled pairs, gap v1 mean +0.0105 lo95 -0.0152 (v2 lo95 -0.0140). Arm B: bt_blend
+  rho 0.4169 vs fwdHEM+ 0.4040 on 184 pairs, gap v1 mean +0.0130 lo95 -0.0088 (v2 lo95 -0.0093);
+  vs xwoba_z_alone lo95 -0.0249. Neither inherited bar is cleared. Artifact
+  data/bat_tracking_nov_a_eval.json; registry row bat_tracking_nov_a (deprecated, a null).
+- NOV-B (pa_value-style k-blend of observed and swing-model xwOBA as the est_woba leg): NOT
+  AVAILABLE, not run, nothing substituted. The platform has no per-player-season swing-model
+  xwOBA: the vendored artifact model/swing_plus/swing_plus_model_v1.joblib carries no xwOBA
+  model and its reliability_k is 360; the registered k 250 belongs to the un-vendored research
+  file swing-plus/pa_value_models.joblib and its per-PA feature pipeline. Recorded in the
+  bat_tracking_nov_a row's notes; 'BLOCKER: other NOV-B swing-model xwOBA per player-season is
+  not vendored' in the task return.

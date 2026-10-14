@@ -275,3 +275,21 @@ have never run and run once under this amendment.
   zero downward; regen determinism verified 0 diffs). ARM-B DSplus and ARM-C FAIL B1 (DSplus
   adds nothing over pick tier + bonus on 294 resolved 2018-2019 draftees); flags stay OFF.
   Emerson: 48.6 -> 50.2 served (war 4.51 -> 4.99).
+
+### W-NOV (run 2026-10-14 as OWNER-WAIVED EARLY READS; registered date was 2026-11-15)
+
+Run by NOV15_REGATES under the owner's waiver of look days (EW3-5) and the logged
+season-complete override treating 2026 as complete as of 2026-10-01 (EW3-6,
+tools/plus_lab_harness.py PLUS_LAB_SEASON_COMPLETE_ASOF; the Nov 15 default is unchanged), with
+the parents' frozen protocols and bars inherited. Full numbers in docs/efv-2026-07-23/RECHECKS.md
+'2026-10-14 - RESULTS'.
+- NOV-A: NULL on both arms (arm A gap v1 lo95 -0.0152 on 149 pairs; arm B lo95 -0.0088 on 184
+  pairs). The per-season Swing+ variant exists (W6) but covers 173 / 244 bats in 2024 / 2025, so
+  the pair sets are a third of the parent's. Artifact data/bat_tracking_nov_a_eval.json, registry
+  row bat_tracking_nov_a.
+- NOV-B: NOT AVAILABLE, not run: no per-player-season swing-model xwOBA exists on the platform
+  (the vendored Swing+ artifact carries none; the registered k 250 lives in the un-vendored
+  research file swing-plus/pa_value_models.joblib). Nothing was substituted.
+- The parents at the same sitting: pWOBA xwOBA-blend re-gate PASS (n 953, gap v1 lo95 +0.0019;
+  production diff built behind EEPHUS_PWOBA_XWOBA_BLEND, default off, owner flips); bat-tracking
+  arm B PASS provisional small-n (lo95 +0.0015 on 528 pairs), arm A NULL.

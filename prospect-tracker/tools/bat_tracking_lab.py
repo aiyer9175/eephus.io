@@ -572,6 +572,28 @@ def run_arm_b(by_season: dict, bt_pop: dict, bt_z: dict, *,
     }
 
 
+def _arm_b_fail_text(arm_b: dict) -> str:
+    """Arm B's FAIL sentence, every clause READ from the arm's own numbers
+    (the 2026-07-23 run's wording had the baseline claims typed in)."""
+    g1 = arm_b["gate"]["gap_ci_v1"] or {}
+    v1 = arm_b["results_by_convention"]["v1"]["gap_ci_candidate_minus"]
+    comp = arm_b["sensitivity_complete_outcome_only"]["gap_ci_candidate_minus_fwdhem_v1"] or {}
+    direction = ("directionally positive mean gap" if (g1.get("mean") or 0) > 0
+                 else "mean gap at or below zero")
+    convs = ("lo95 below zero under both conventions"
+             if not arm_b["gate"]["pass_under_v2"] else "lo95 below zero under v1 only")
+    single = ("and in the single-fold sensitivity" if (comp.get("lo95") or 0) <= 0
+              else "though the single-fold sensitivity alone clears zero")
+    beats = [k for k in ("xwoba_z_alone", "bt_composite_alone")
+             if v1.get(k) and v1[k]["lo95"] > 0]
+    beats_txt = (("The candidate beats " + " and ".join(beats) + " at lo95 > 0, but the "
+                  "pre-registered bar is the shipped fwdHEM+ incumbent, and it is not cleared.")
+                 if beats else
+                 "The candidate separates from none of its baselines at lo95 > 0, and the "
+                 "pre-registered bar, the shipped fwdHEM+ incumbent, is not cleared.")
+    return f"Gate FAILED ({direction}, {convs} {single}). {beats_txt}"
+
+
 # --------------------------------------------------------------------------- #
 def _parse_args(argv=None):
     import argparse
@@ -718,11 +740,7 @@ def main(argv=None):
                 f"rho(fwdhem_incumbent)={arm_b['results_by_convention']['v1']['rhos']['fwdhem_incumbent']} on "
                 f"{arm_b['n_pairs']} pooled pairs; gap CI {arm_b['gate']['gap_ci_v1']}. "
                 + ("Gate PASSED (provisional)." if arm_b["gate"]["pass"] else
-                   "Gate FAILED (directionally positive mean gap, lo95 below zero "
-                   "under both conventions and in the complete-outcome-only "
-                   "sensitivity). The candidate DOES beat xwoba_z_alone and the BT "
-                   "composite alone at lo95 > 0, but the pre-registered bar is the "
-                   "shipped fwdHEM+ incumbent, and it is not cleared. " + keep_alive_text)),
+                   _arm_b_fail_text(arm_b) + " " + keep_alive_text)),
             "descriptive_note": (
                 "Same-season luck-gap context (not gated): BT composite vs EV "
                 "composite Spearman with the wOBA - xwOBA gap: "

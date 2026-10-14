@@ -308,6 +308,18 @@
    "artifact_age_days": 71
   },
   {
+   "model_id": "bat_tracking_nov_a",
+   "summary": "NOV-A null: per-season Swing+ as the BT leg reads 0.4512 vs 0.4405 (n 149, lo95 -0.0152) and 0.4169 vs 0.404 (n 184, lo95 -0.0088).",
+   "surface": "Lab artifact, rendered nowhere: the registered NOV-A arm of the bat-tracking lane (tools/bat_tracking_lab.py --nov-a)",
+   "predicts": "Whether the vendored Swing+ composite, per season, improves next-season wOBA as the BT leg of the pWOBA residual arm and of the fwdHEM+ blend arm",
+   "champion": "incumbents unchanged: fa_projection pWOBA (arm A) and fwdhem_plus (arm B)",
+   "baseline": "same incumbents and pair sets as data/bat_tracking_eval.json with the Swing+ season slice required; folds 2024->2025 + 2025->2026, complete outcomes",
+   "metric": "Pooled paired bootstrap lo95 > 0 vs the incumbent, 2000 reps, seed 20260723 (bars inherited)",
+   "eval_artifact": "data/bat_tracking_nov_a_eval.json",
+   "verdict": "deprecated",
+   "notes": "NOV-A RUN ONCE (2026-10-14; OWNER-WAIVED EARLY READ (2026-10-14; owner 2026-10-14, EW3-5 look days waived and EW3-6 the explicit season-complete override treating 2026 as complete as of 2026-10-01; the registered date was 2026-11-15). Registered 2026-07-23 in docs/wills-2026-07-23/GATES.md W-NOV and docs/efv-2026-07-23/RECHECKS.md before any 2026 outcome was seen: the vendored Swing+ per-season variant (data/swing_plus.json seasons slices, W6, generated 2026-10-02, swing_plus v1.0.0 (Will Cahoon, vendored inference), reliability_k 360, coverage {\"2024\": 173, \"2025\": 244, \"2026\": 277}, low_n slices kept as given {\"2024\": 48, \"2025\": 57, \"2026\": 46}) replaces the raw bat-tracking z-aggregates as the BT leg in both arms; the parent BT row gate stays and a pair without a Swing+ slice drops as leg_missing (arm A 341, arm B 344). ARM A NULL: rho(bt_corrected) 0.4512 vs incumbent 0.4405 on 149 pooled pairs, gap CI v1 mean +0.0105 lo95 -0.0152 hi95 +0.0362, pass_under_v2 False. ARM B NULL: rho(bt_blend) 0.4169 vs fwdHEM+ incumbent 0.404 on 184 pooled pairs, gap CI v1 mean +0.0130 lo95 -0.0088 hi95 +0.0349, pass_under_v2 False. Neither arm clears its inherited bar; NOV-A is NULL and closed as tested. NOV-B (the pa_value-style k-blend of observed and swing-model xwOBA as the est_woba leg) is NOT_AVAILABLE: no per-player-season swing-model xwOBA exists on the platform (the vendored artifact model/swing_plus/swing_plus_model_v1.joblib carries no xwOBA model and its reliability_k is 360; the registered k 250 belongs to the un-vendored research file swing-plus/pa_value_models.joblib), so the arm was not run and nothing substituted. Season-complete override: {\"2026\": \"2026-10-01\"}."
+  },
+  {
    "model_id": "betting_game_prob",
    "summary": "Provisional: beats the home-field constant on Brier (2026-10-01 reading: n 777, delta +0.005474, t 3.371). Regular-season evidence only; no CLV-graded season yet.",
    "surface": "/betting/; /scores/ pregame cards and game view from the 2027 regular season, copied verbatim by game_pk from the served board, pregame only",
