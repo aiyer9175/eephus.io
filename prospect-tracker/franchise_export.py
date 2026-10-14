@@ -245,6 +245,16 @@ NOT_CLAIMED_FORECAST_FSCORE = ("a forecast: F-SCORE is a descriptive score of th
                                "re-standardised across 30 clubs; one leg, 2027 wins, is a provisional projection")
 
 
+def dev_leaf_basis(os_: dict, grades: dict, cranks: dict) -> str:
+    """The FARM branch's DEV leaf basis. The leaf reads development_score unchanged; while
+    the DvM+ difficulty arm serves the org's DvM+ (org_summary carries dev_expectation,
+    storage.DVM_DIFFICULTY_ARM on), the note says the DvM+ inside it is difficulty-adjusted."""
+    base = f"PROSPX letter {grades.get('development')}, rank {cranks.get('development')}"
+    if (os_ or {}).get("dev_expectation"):
+        return base + "; DvM+ difficulty-adjusted (growth against the farm's origin, grade, age and level mix)"
+    return base
+
+
 def fscore_live() -> bool:
     """fscore_export.FSCORE_LIVE, False when the module cannot be imported."""
     try:
@@ -1194,7 +1204,7 @@ def build() -> dict:
              "basis": farm_doc["basis"], "verdict": verdict_of.get("farm_grades"), "verdict_model": "farm_grades", "provisional": False,
              "leaves": [
                  leaf("acq", "ACQ (acquisition)", os_.get("acquisition_strategy_score"), "idx", "z", f"PROSPX letter {grades.get('acquisition_strategy')}, rank {cranks.get('acquisition_strategy')}", None, links["farm"]),
-                 leaf("dev", "DEV (development)", os_.get("development_score"), "idx", "z", f"PROSPX letter {grades.get('development')}, rank {cranks.get('development')}", None, links["farm"]),
+                 leaf("dev", "DEV (development)", os_.get("development_score"), "idx", "z", dev_leaf_basis(os_, grades, cranks), None, links["farm"]),
                  leaf("fin", "FIN (OrgSur+)", os_.get("financial_score"), "idx", "z", f"PROSPX letter {grades.get('financial')}, rank {cranks.get('financial')}; descriptive index, org_sur_plus unvalidated", "sur_plus", links["farm"]),
                  leaf("prod", "PROD (MLB production)", os_.get("mlb_production_score"), "idx", "z", f"PROSPX letter {grades.get('mlb_production')}, rank {cranks.get('mlb_production')}", None, links["farm"]),
                  leaf("farm_surplus_mm", "Farm surplus", farm_doc["farm_surplus_mm"], "usdm", None, "team_outlook.farm.farmSurplusMM, a sum of expected values", "surplus_value", links["farm"]),
