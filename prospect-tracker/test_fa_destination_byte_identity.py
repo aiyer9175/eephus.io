@@ -105,11 +105,15 @@ def _rows_hash(rows) -> str:
 def test_the_lab_leaves_the_frozen_fa_files_byte_identical(forbidden, tmp_path):
     before = _stamps()
     assert set(before) == set(FROZEN)
+    # The look wrote data/fa_destination_eval.json once (2026-10-14); a fixture
+    # run must leave it as the look wrote it.
+    art = DATA / "fa_destination_eval.json"
+    art_before = art.read_bytes() if art.exists() else None
     doc = lab.run(lab.fixture_inputs(), tmp_path / "eval.json", "2026-10-09")
     assert doc["order"][-1] == "industry"
     assert _stamps() == before
     assert not forbidden.exists()
-    assert not (DATA / "fa_destination_eval.json").exists()
+    assert (art.read_bytes() if art.exists() else None) == art_before
 
 
 def test_the_collection_hook_is_read_without_persisting(monkeypatch):

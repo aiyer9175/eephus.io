@@ -1,0 +1,4072 @@
+{
+ "model_id": "fa_destination",
+ "gate_doc": "docs/fa-2026-10/FA_DESTINATION_GATE.md",
+ "protocol_sha256": "cab64290169c7577c74db3181fae35ffffd505389010113d836749818155bda8",
+ "generated_at": "2026-10-14",
+ "dry_run": false,
+ "fit_weights": {
+  "need": 0.4,
+  "window": 0.05,
+  "afford": 0.05,
+  "park": 0.05,
+  "behavior": 0.45
+ },
+ "serve_flag": "FA_DESTINATION_SERVE",
+ "inputs": {
+  "duplicate_gate3_keys": 0,
+  "enriched_signings": 1528,
+  "club_states": {
+   "2018": {
+    "counts": {
+     "fa_share_3": {
+      "rows": 344,
+      "remapped_club_code": 11,
+      "not_a_club": 0,
+      "league_npv_usd": 5319478160.0
+     },
+     "payroll_level": {
+      "clubs_with_value": 30,
+      "clubs_without_value": 0
+     },
+     "payroll_remapped_club_code": 1
+    },
+    "threshold_usd": 197000000,
+    "threshold_prev_usd": 195000000,
+    "threshold_regime": "cba_2017"
+   },
+   "2019": {
+    "counts": {
+     "fa_share_3": {
+      "rows": 342,
+      "remapped_club_code": 12,
+      "not_a_club": 0,
+      "league_npv_usd": 5007863399.0
+     },
+     "payroll_level": {
+      "clubs_with_value": 30,
+      "clubs_without_value": 0
+     },
+     "payroll_remapped_club_code": 1
+    },
+    "threshold_usd": 206000000,
+    "threshold_prev_usd": 197000000,
+    "threshold_regime": "cba_2017"
+   },
+   "2020": {
+    "counts": {
+     "fa_share_3": {
+      "rows": 312,
+      "remapped_club_code": 14,
+      "not_a_club": 0,
+      "league_npv_usd": 4706601527.0
+     },
+     "payroll_level": {
+      "clubs_with_value": 30,
+      "clubs_without_value": 0
+     },
+     "payroll_remapped_club_code": 1
+    },
+    "threshold_usd": 208000000,
+    "threshold_prev_usd": 206000000,
+    "threshold_regime": "cba_2017"
+   },
+   "2021": {
+    "counts": {
+     "fa_share_3": {
+      "rows": 342,
+      "remapped_club_code": 11,
+      "not_a_club": 0,
+      "league_npv_usd": 5412647907.0
+     },
+     "payroll_level": {
+      "clubs_with_value": 30,
+      "clubs_without_value": 0
+     },
+     "payroll_remapped_club_code": 1
+    },
+    "threshold_usd": 210000000,
+    "threshold_prev_usd": 208000000,
+    "threshold_regime": "cba_2017"
+   },
+   "2022": {
+    "counts": {
+     "fa_share_3": {
+      "rows": 398,
+      "remapped_club_code": 13,
+      "not_a_club": 0,
+      "league_npv_usd": 5480086407.0
+     },
+     "payroll_level": {
+      "clubs_with_value": 30,
+      "clubs_without_value": 0
+     },
+     "payroll_remapped_club_code": 1
+    },
+    "threshold_usd": 230000000,
+    "threshold_prev_usd": 210000000,
+    "threshold_regime": "cba_2022"
+   },
+   "2023": {
+    "counts": {
+     "fa_share_3": {
+      "rows": 440,
+      "remapped_club_code": 9,
+      "not_a_club": 0,
+      "league_npv_usd": 6908032774.0
+     },
+     "payroll_level": {
+      "clubs_with_value": 30,
+      "clubs_without_value": 0
+     },
+     "payroll_remapped_club_code": 1
+    },
+    "threshold_usd": 233000000,
+    "threshold_prev_usd": 230000000,
+    "threshold_regime": "cba_2022"
+   },
+   "2024": {
+    "counts": {
+     "fa_share_3": {
+      "rows": 456,
+      "remapped_club_code": 14,
+      "not_a_club": 0,
+      "league_npv_usd": 8665593060.0
+     },
+     "payroll_level": {
+      "clubs_with_value": 30,
+      "clubs_without_value": 0
+     },
+     "payroll_remapped_club_code": 1
+    },
+    "threshold_usd": 237000000,
+    "threshold_prev_usd": 233000000,
+    "threshold_regime": "cba_2022"
+   },
+   "2025": {
+    "counts": {
+     "fa_share_3": {
+      "rows": 446,
+      "remapped_club_code": 14,
+      "not_a_club": 0,
+      "league_npv_usd": 9750064708.0
+     },
+     "payroll_level": {
+      "clubs_with_value": 30,
+      "clubs_without_value": 0
+     },
+     "payroll_remapped_club_code": 1
+    },
+    "threshold_usd": 241000000,
+    "threshold_prev_usd": 237000000,
+    "threshold_regime": "cba_2022"
+   },
+   "2026": {
+    "counts": {
+     "fa_share_3": {
+      "rows": 463,
+      "remapped_club_code": 12,
+      "not_a_club": 0,
+      "league_npv_usd": 9819596221.0
+     },
+     "payroll_level": {
+      "clubs_with_value": 30,
+      "clubs_without_value": 0
+     },
+     "payroll_remapped_club_code": 0
+    },
+    "threshold_usd": 244000000,
+    "threshold_prev_usd": 241000000,
+    "threshold_regime": "cba_2022"
+   }
+  }
+ },
+ "step0": {
+  "registered_source": {
+   "artifact": "data/fa_gate3_eval.json",
+   "generated_at": "2026-08-04"
+  },
+  "arms": {
+   "random": {
+    "registered": {
+     "n": 1173,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "today": {
+     "n": 1173,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "bit_exact": true
+   },
+   "payroll_only": {
+    "registered": {
+     "n": 1173,
+     "top1": 0.0384,
+     "top3": 0.0955,
+     "top5": 0.1722,
+     "mrr": 0.135
+    },
+    "today": {
+     "n": 1173,
+     "top1": 0.0384,
+     "top3": 0.0955,
+     "top5": 0.1722,
+     "mrr": 0.135
+    },
+    "bit_exact": true
+   },
+   "behavior_only": {
+    "registered": {
+     "n": 1173,
+     "top1": 0.0418,
+     "top3": 0.1313,
+     "top5": 0.208,
+     "mrr": 0.1515
+    },
+    "today": {
+     "n": 1173,
+     "top1": 0.0418,
+     "top3": 0.1313,
+     "top5": 0.208,
+     "mrr": 0.1515
+    },
+    "bit_exact": true
+   },
+   "live_analog": {
+    "registered": {
+     "n": 1173,
+     "top1": 0.052,
+     "top3": 0.1449,
+     "top5": 0.2293,
+     "mrr": 0.1669
+    },
+    "today": {
+     "n": 1173,
+     "top1": 0.052,
+     "top3": 0.1449,
+     "top5": 0.2327,
+     "mrr": 0.1672
+    },
+    "bit_exact": false
+   },
+   "fitted_full": {
+    "registered": {
+     "n": 1080,
+     "top1": 0.1787,
+     "top3": 0.237,
+     "top5": 0.3065,
+     "mrr": 0.2679
+    },
+    "today": {
+     "n": 1080,
+     "top1": 0.1787,
+     "top3": 0.2435,
+     "top5": 0.3083,
+     "mrr": 0.269
+    },
+    "bit_exact": false
+   },
+   "banded_twin": {
+    "registered": {
+     "n": 1173,
+     "top1": 0.0546,
+     "top3": 0.1338,
+     "top5": 0.2097,
+     "mrr": 0.1628
+    },
+    "today": {
+     "n": 1173,
+     "top1": 0.0546,
+     "top3": 0.1364,
+     "top5": 0.2097,
+     "mrr": 0.163
+    },
+    "bit_exact": false
+   }
+  },
+  "drift": [
+   "live_analog",
+   "fitted_full",
+   "banded_twin"
+  ],
+  "drift_rule": "disclosed, registered value beside today's; the run proceeds on the current frame; no floor, clause or definition moves",
+  "rows": 35190,
+  "signings": 1173,
+  "rows_sha256": "e583b8611e91af9405fa63f6ccbd96da5196cb65ee64a370a9bfe85eed658a0f"
+ },
+ "order": [
+  "step0",
+  "gate2_join",
+  "folds",
+  "floors",
+  "metrics_clauses_verdict",
+  "reported",
+  "industry"
+ ],
+ "gate2_join": {
+  "collected_tuples": 1199,
+  "by_winter": {
+   "2018": {
+    "gate3_signings": 93,
+    "matched": 93,
+    "unmatched": 0,
+    "duplicate": 0,
+    "integrity_drop": 0,
+    "tuples_without_gate3_signing": 3
+   },
+   "2019": {
+    "gate3_signings": 101,
+    "matched": 101,
+    "unmatched": 0,
+    "duplicate": 0,
+    "integrity_drop": 0,
+    "tuples_without_gate3_signing": 5
+   },
+   "2020": {
+    "gate3_signings": 123,
+    "matched": 123,
+    "unmatched": 0,
+    "duplicate": 0,
+    "integrity_drop": 0,
+    "tuples_without_gate3_signing": 2
+   },
+   "2021": {
+    "gate3_signings": 143,
+    "matched": 143,
+    "unmatched": 0,
+    "duplicate": 0,
+    "integrity_drop": 0,
+    "tuples_without_gate3_signing": 4
+   },
+   "2022": {
+    "gate3_signings": 142,
+    "matched": 142,
+    "unmatched": 0,
+    "duplicate": 0,
+    "integrity_drop": 0,
+    "tuples_without_gate3_signing": 2
+   },
+   "2023": {
+    "gate3_signings": 134,
+    "matched": 134,
+    "unmatched": 0,
+    "duplicate": 0,
+    "integrity_drop": 0,
+    "tuples_without_gate3_signing": 5
+   },
+   "2024": {
+    "gate3_signings": 131,
+    "matched": 131,
+    "unmatched": 0,
+    "duplicate": 0,
+    "integrity_drop": 0,
+    "tuples_without_gate3_signing": 5
+   },
+   "2025": {
+    "gate3_signings": 161,
+    "matched": 161,
+    "unmatched": 0,
+    "duplicate": 0,
+    "integrity_drop": 0,
+    "tuples_without_gate3_signing": 0
+   },
+   "2026": {
+    "gate3_signings": 145,
+    "matched": 145,
+    "unmatched": 0,
+    "duplicate": 0,
+    "integrity_drop": 0,
+    "tuples_without_gate3_signing": 0
+   }
+  },
+  "total": {
+   "gate3_signings": 1173,
+   "matched": 1173,
+   "unmatched": 0,
+   "duplicate": 0,
+   "integrity_drop": 0,
+   "tuples_without_gate3_signing": 26
+  }
+ },
+ "primary_frame": {
+  "signings": 1173,
+  "winters": [
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025,
+   2026
+  ],
+  "scored_winters": [
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025,
+   2026
+  ],
+  "n_scored": 1080,
+  "dropped": {
+   "no_single_signed_club": 0,
+   "no_signing_record": 0,
+   "excluded": 0
+  },
+  "feature_flags": {
+   "tax_multiplier_default": 0,
+   "payroll_level_missing": 0
+  }
+ },
+ "folds": {
+  "P": {
+   "features": [
+    "fit_analog",
+    "fa_share_3",
+    "payroll_level",
+    "tax_multiplier",
+    "qo_cost",
+    "incumbent"
+   ],
+   "folds": {
+    "2019": {
+     "coefs": {
+      "fit_analog": 0.9652310826874974,
+      "fa_share_3": 0.09132874835960836,
+      "payroll_level": 0.012192902742670313,
+      "tax_multiplier": -0.18775471150039275,
+      "qo_cost": -0.02005896675576356,
+      "incumbent": 1.7476051281986344
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.021114399061419004,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0997729766114075,
+       "sd": 0.23728643151971088,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.08530465949820788,
+       "sd": 0.3211189503920155,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 15,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 294.7405042169336,
+     "n_signings": 93,
+     "zero_sd_features": [],
+     "coef_hash": "21471e764335ef3672403b15b4e7e79ba9a43f74b59c3c621d3068fb27b0af74"
+    },
+    "2020": {
+     "coefs": {
+      "fit_analog": 0.6218045883030334,
+      "fa_share_3": 0.038872647026649144,
+      "payroll_level": 0.05965272894210968,
+      "tax_multiplier": -0.12363099660720273,
+      "qo_cost": 0.0829475266630879,
+      "incumbent": 1.4287429284942446
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.021538082320763624,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.061350412908014,
+       "sd": 0.18305887919289118,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.0725085910652921,
+       "sd": 0.2876021780390259,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 15,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 638.2303047752239,
+     "n_signings": 194,
+     "zero_sd_features": [],
+     "coef_hash": "9c891b49f7939b726445862841243c46ad5174f5c13224b1f839cca699a666d9"
+    },
+    "2021": {
+     "coefs": {
+      "fit_analog": 0.7377483090126876,
+      "fa_share_3": -0.013087784054128611,
+      "payroll_level": 0.056860468962986375,
+      "tax_multiplier": -0.08363674131054805,
+      "qo_cost": 0.06750379454043477,
+      "incumbent": 1.7628786726740227
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.024479388488159233,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0581009659105134,
+       "sd": 0.1728820706665759,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.07129337539432176,
+       "sd": 0.28411559448342466,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 13,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 1019.7073876889835,
+     "n_signings": 317,
+     "zero_sd_features": [],
+     "coef_hash": "1be5ecbb97a3cf2e153c2e3d704825aa14c865d8bd74957cd47daefb87d8a951"
+    },
+    "2022": {
+     "coefs": {
+      "fit_analog": 0.6850617869147354,
+      "fa_share_3": -0.006982910492594817,
+      "payroll_level": 0.08065513074083605,
+      "tax_multiplier": -0.059417620648732905,
+      "qo_cost": -0.05257062305746607,
+      "incumbent": 1.8173569536686665
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.026611999468492305,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0480360173297316,
+       "sd": 0.1503106007320254,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.06173913043478261,
+       "sd": 0.2606288744708451,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 15,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 1470.6478734744535,
+     "n_signings": 460,
+     "zero_sd_features": [],
+     "coef_hash": "aac1b78523f7a778886cd7354b55c7492b326fe3c42d692e1b66287c3a53fa7e"
+    },
+    "2023": {
+     "coefs": {
+      "fit_analog": 0.8922149287191511,
+      "fa_share_3": -0.008105354237800781,
+      "payroll_level": 0.09130451859151205,
+      "tax_multiplier": -0.029512560636132227,
+      "qo_cost": -0.09445903443204856,
+      "incumbent": 1.6931922223193674
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.027756749833700373,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0431029851208273,
+       "sd": 0.14840249503574018,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.0693798449612403,
+       "sd": 0.27361521411766143,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 15,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 1933.906585019092,
+     "n_signings": 602,
+     "zero_sd_features": [],
+     "coef_hash": "4a5efe7dbe51c3b1bd65dbedfa48e0c9fe39bfff575c41fdbbcc6181ed5032f9"
+    },
+    "2024": {
+     "coefs": {
+      "fit_analog": 0.7892323710883461,
+      "fa_share_3": 0.00796603095165371,
+      "payroll_level": 0.06989533531247838,
+      "tax_multiplier": 0.01427880913630649,
+      "qo_cost": -0.12144160977299534,
+      "incumbent": 1.6453465515216703
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.027027852068455656,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0578040932861303,
+       "sd": 0.18186388856354074,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.07853260869565218,
+       "sd": 0.2959436253266077,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 16,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 2373.323108849416,
+     "n_signings": 736,
+     "zero_sd_features": [],
+     "coef_hash": "fb626eca0a22823bcb5b80f694fe48b96aec598a3d3d970e45ac4bd8516a2725"
+    },
+    "2025": {
+     "coefs": {
+      "fit_analog": 0.7486010419518722,
+      "fa_share_3": -0.01428233910267274,
+      "payroll_level": 0.09077529530668604,
+      "tax_multiplier": 0.007620940618084461,
+      "qo_cost": -0.12828227528221608,
+      "incumbent": 1.6367016374500187
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.027312510370972935,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0772302681513097,
+       "sd": 0.21839315242491764,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.07647058823529412,
+       "sd": 0.2958705931991734,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 15,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 2799.5747949075226,
+     "n_signings": 867,
+     "zero_sd_features": [],
+     "coef_hash": "0a72dbbce50c7d14daa7a866cef4c7d2c4e342f2aed2121e2a3b3e372b9f6553"
+    },
+    "2026": {
+     "coefs": {
+      "fit_analog": 0.7827462653356634,
+      "fa_share_3": 0.0027323167142002114,
+      "payroll_level": 0.05502644839586305,
+      "tax_multiplier": 0.04612272934310499,
+      "qo_cost": -0.11724383305553228,
+      "incumbent": 1.6681847791223943
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.02739477558978492,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0981696969110115,
+       "sd": 0.25173714324198465,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.08028534370946823,
+       "sd": 0.30861041055842153,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 19,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 3310.6382823397025,
+     "n_signings": 1028,
+     "zero_sd_features": [],
+     "coef_hash": "cc4d504e9e3f7b6e62e75d706811c0a58e9c4cc8e39091c7d3d533e810df3417"
+    }
+   }
+  },
+  "N": {
+   "features": [
+    "fit_analog",
+    "incumbent"
+   ],
+   "folds": {
+    "2019": {
+     "coefs": {
+      "fit_analog": 1.1041843395421311,
+      "incumbent": 1.7379551500965673
+     },
+     "standardization": {},
+     "converged": true,
+     "nit": 7,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 296.05011337386026,
+     "n_signings": 93,
+     "zero_sd_features": [],
+     "coef_hash": "8e9a13920aa940ae7ee6859df2764f7a0d94f3272da1b181cf8a41917f7cf643"
+    },
+    "2020": {
+     "coefs": {
+      "fit_analog": 0.7443646304803672,
+      "incumbent": 1.3975907738916273
+     },
+     "standardization": {},
+     "converged": true,
+     "nit": 7,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 639.2696719624983,
+     "n_signings": 194,
+     "zero_sd_features": [],
+     "coef_hash": "c9116488019452bb349af10a5cb3c0505aa352232bd7c79db58acee42061e824"
+    },
+    "2021": {
+     "coefs": {
+      "fit_analog": 0.7937493777772718,
+      "incumbent": 1.7430833390520488
+     },
+     "standardization": {},
+     "converged": true,
+     "nit": 7,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 1020.4206207386688,
+     "n_signings": 317,
+     "zero_sd_features": [],
+     "coef_hash": "28dc820183fe2f5a6a11a5e3812c7691f6af3bf8c1f7d91a1db0352a4e4ece3f"
+    },
+    "2022": {
+     "coefs": {
+      "fit_analog": 0.7912163936738696,
+      "incumbent": 1.8317603592656417
+     },
+     "standardization": {},
+     "converged": true,
+     "nit": 7,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 1471.68256520588,
+     "n_signings": 460,
+     "zero_sd_features": [],
+     "coef_hash": "6ca382ef86a17cd86c3089b86978590e996a934a58d899007f4650ec8523ba2a"
+    },
+    "2023": {
+     "coefs": {
+      "fit_analog": 1.0249696470810494,
+      "incumbent": 1.7261348641564582
+     },
+     "standardization": {},
+     "converged": true,
+     "nit": 7,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 1935.8889229447063,
+     "n_signings": 602,
+     "zero_sd_features": [],
+     "coef_hash": "0ddf3072a4faadb26717ee6266770ef88eaae3c93464460310ec4a11e7e583a4"
+    },
+    "2024": {
+     "coefs": {
+      "fit_analog": 0.9186643243538318,
+      "incumbent": 1.6969128747045545
+     },
+     "standardization": {},
+     "converged": true,
+     "nit": 7,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 2376.763017694334,
+     "n_signings": 736,
+     "zero_sd_features": [],
+     "coef_hash": "730fbcf50544af559be4474ed6fb9c9e5a7fa792ab49021ce8df03407c0a734a"
+    },
+    "2025": {
+     "coefs": {
+      "fit_analog": 0.8792886902047284,
+      "incumbent": 1.688771216915708
+     },
+     "standardization": {},
+     "converged": true,
+     "nit": 7,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 2804.051149646283,
+     "n_signings": 867,
+     "zero_sd_features": [],
+     "coef_hash": "43da13b4d03dc6c5131977baee13b5fa09c51b34dd61971721cd3c0fde838445"
+    },
+    "2026": {
+     "coefs": {
+      "fit_analog": 0.8998336690622999,
+      "incumbent": 1.7190514904646859
+     },
+     "standardization": {},
+     "converged": true,
+     "nit": 7,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 3316.468797403033,
+     "n_signings": 1028,
+     "zero_sd_features": [],
+     "coef_hash": "e6533590fb4adee632a89101ea95c28c8a4d1b7d27b1c99e4fc2459a28634e15"
+    }
+   }
+  },
+  "L_perm": {
+   "features": [
+    "fit_analog",
+    "fa_share_3",
+    "payroll_level",
+    "tax_multiplier",
+    "qo_cost",
+    "incumbent"
+   ],
+   "folds": {
+    "2019": {
+     "coefs": {
+      "fit_analog": 1.109580738328828,
+      "fa_share_3": 0.0585886129372781,
+      "payroll_level": -0.35492758371055066,
+      "tax_multiplier": 0.4725759827401034,
+      "qo_cost": -0.026639249539139417,
+      "incumbent": 1.775880616363481
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.021114399061419004,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0997729766114073,
+       "sd": 0.23728643151971088,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.08530465949820788,
+       "sd": 0.32111895039201555,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 13,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 290.20477080962314,
+     "n_signings": 93,
+     "zero_sd_features": [],
+     "coef_hash": "2e100158444bbdb98f3a8c5375a112d1c2a0ff1429efe4d28af56102ac1a9508"
+    },
+    "2020": {
+     "coefs": {
+      "fit_analog": 0.8085430699627062,
+      "fa_share_3": -0.06186537378392452,
+      "payroll_level": -0.08528601044863598,
+      "tax_multiplier": 0.2213535969406454,
+      "qo_cost": -0.0074905888324577,
+      "incumbent": 1.3991792429866863
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.021538082320763624,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.061350412908014,
+       "sd": 0.18305887919289118,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.0725085910652921,
+       "sd": 0.2876021780390259,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 14,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 635.5885732403485,
+     "n_signings": 194,
+     "zero_sd_features": [],
+     "coef_hash": "ee7ee1feedcf47f2f6a9128dc4579cb685a8bf14160888c20e7e9550bc39b0ee"
+    },
+    "2021": {
+     "coefs": {
+      "fit_analog": 0.8446708761358571,
+      "fa_share_3": -0.08747123003090028,
+      "payroll_level": -0.047112090795896566,
+      "tax_multiplier": 0.15356241235068846,
+      "qo_cost": -0.0384084787998351,
+      "incumbent": 1.7588035983029495
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.024479388488159233,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0581009659105134,
+       "sd": 0.17288207066657588,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.07129337539432176,
+       "sd": 0.28411559448342466,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 15,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 1016.9733130089379,
+     "n_signings": 317,
+     "zero_sd_features": [],
+     "coef_hash": "3fb062f5f4d87d14f972d7db6c4936fb0f5b635a21c699d0a450a6f0cd9f890b"
+    },
+    "2022": {
+     "coefs": {
+      "fit_analog": 0.8144111952218477,
+      "fa_share_3": -0.1240812585649649,
+      "payroll_level": 0.011640765666997325,
+      "tax_multiplier": 0.1118306424806026,
+      "qo_cost": -0.02015171101274285,
+      "incumbent": 1.84470830316224
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.026611999468492305,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0480360173297316,
+       "sd": 0.15031060073202537,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.06173913043478261,
+       "sd": 0.2606288744708451,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 16,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 1467.0895936948714,
+     "n_signings": 460,
+     "zero_sd_features": [],
+     "coef_hash": "e0b07ac678f6edad166c6d6d8374fdc608d2bbcf42c6c29ea36953b55528c31c"
+    },
+    "2023": {
+     "coefs": {
+      "fit_analog": 1.0633277728538668,
+      "fa_share_3": -0.08762035432677222,
+      "payroll_level": 0.023351667170286167,
+      "tax_multiplier": 0.09590366371147557,
+      "qo_cost": -0.02778736443171161,
+      "incumbent": 1.7323197196934335
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.033333333333333326,
+       "sd": 0.027756749833700373,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0431029851208273,
+       "sd": 0.1484024950357402,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.0693798449612403,
+       "sd": 0.27361521411766143,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 14,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 1931.8398345660294,
+     "n_signings": 602,
+     "zero_sd_features": [],
+     "coef_hash": "cbf0ea358a9b8ddba9d381f444b50e53e88edd30850ac4645ce657a831df8a0b"
+    },
+    "2024": {
+     "coefs": {
+      "fit_analog": 0.9353463600512095,
+      "fa_share_3": -0.09799258686275197,
+      "payroll_level": 0.035207797222267675,
+      "tax_multiplier": 0.036188678091015156,
+      "qo_cost": 0.05715529033841406,
+      "incumbent": 1.6960350357614493
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.027027852068455656,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0578040932861303,
+       "sd": 0.18186388856354074,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.07853260869565218,
+       "sd": 0.2959436253266077,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 14,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 2373.8420328930606,
+     "n_signings": 736,
+     "zero_sd_features": [],
+     "coef_hash": "1a66532286f57949944dcc36b8782967bca95ed5bfa13e3e7d583f9c1f6a2734"
+    },
+    "2025": {
+     "coefs": {
+      "fit_analog": 0.9018285041613325,
+      "fa_share_3": -0.11025972113082688,
+      "payroll_level": 0.0867917962586402,
+      "tax_multiplier": -0.031525275207773554,
+      "qo_cost": 0.05904146073602194,
+      "incumbent": 1.6892460861629373
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.027312510370972935,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.07723026815131,
+       "sd": 0.2183931524249176,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.07647058823529412,
+       "sd": 0.2958705931991734,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 13,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 2800.6954919896234,
+     "n_signings": 867,
+     "zero_sd_features": [],
+     "coef_hash": "844811dd66a8ab8238beeb08658ed644c36e7fa7a3e8def71070f67033772874"
+    },
+    "2026": {
+     "coefs": {
+      "fit_analog": 0.9275996306754858,
+      "fa_share_3": -0.08576548358279554,
+      "payroll_level": 0.056541396501919874,
+      "tax_multiplier": -0.019990678223518885,
+      "qo_cost": 0.08549814798895894,
+      "incumbent": 1.7180159388899892
+     },
+     "standardization": {
+      "fa_share_3": {
+       "mean": 0.03333333333333333,
+       "sd": 0.027394775589784922,
+       "zero_sd": false
+      },
+      "tax_multiplier": {
+       "mean": 1.0981696969110115,
+       "sd": 0.25173714324198465,
+       "zero_sd": false
+      },
+      "qo_cost": {
+       "mean": 0.08028534370946823,
+       "sd": 0.30861041055842153,
+       "zero_sd": false
+      }
+     },
+     "converged": true,
+     "nit": 14,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "objective": 3313.877973068089,
+     "n_signings": 1028,
+     "zero_sd_features": [],
+     "coef_hash": "ecd352629d7d9aecdea8de3d4c83031869c60c9f60e092fbb435f40a0c5ccfb5"
+    }
+   }
+  },
+  "incumbency_only": {
+   "fold_resign_share": {
+    "2019": {
+     "n": 93,
+     "resign": 18,
+     "share": 0.1935483870967742
+    },
+    "2020": {
+     "n": 188,
+     "resign": 26,
+     "share": 0.13829787234042554
+    },
+    "2021": {
+     "n": 303,
+     "resign": 56,
+     "share": 0.1848184818481848
+    },
+    "2022": {
+     "n": 438,
+     "resign": 86,
+     "share": 0.1963470319634703
+    },
+    "2023": {
+     "n": 571,
+     "resign": 105,
+     "share": 0.18388791593695272
+    },
+    "2024": {
+     "n": 705,
+     "resign": 125,
+     "share": 0.1773049645390071
+    },
+    "2025": {
+     "n": 835,
+     "resign": 146,
+     "share": 0.17485029940119762
+    },
+    "2026": {
+     "n": 995,
+     "resign": 178,
+     "share": 0.17889447236180905
+    }
+   }
+  }
+ },
+ "floors": {
+  "mrr_mde95": 0.0139,
+  "log_loss_boot_sd": 0.022093140033006217,
+  "log_loss_floor": 0.04330255446469218,
+  "resample_seed": 7,
+  "resample_count": 2000,
+  "resample_unit": "one signing with its 30 rows",
+  "n_scored": 1080
+ },
+ "metrics": {
+  "P": {
+   "n": 1080,
+   "top1": 0.1796,
+   "top3": 0.2509,
+   "top5": 0.312,
+   "mrr": 0.2722,
+   "log_loss": 3.224164397694587,
+   "reliability": {
+    "slope": 1.0190816513022731,
+    "ece": 0.002875387483215388,
+    "rows": 32400
+   }
+  },
+  "N": {
+   "n": 1080,
+   "top1": 0.1787,
+   "top3": 0.2509,
+   "top5": 0.3065,
+   "mrr": 0.2717,
+   "log_loss": 3.224756390771319,
+   "reliability": {
+    "slope": 1.0148109619885604,
+    "ece": 0.002022788817690867,
+    "rows": 32400
+   }
+  },
+  "L_perm": {
+   "n": 1080,
+   "top1": 0.1815,
+   "top3": 0.2361,
+   "top5": 0.3046,
+   "mrr": 0.2692,
+   "log_loss": 3.2381517470678256,
+   "reliability": {
+    "slope": 0.943517260021325,
+    "ece": 0.002915314731769166,
+    "rows": 32400
+   }
+  },
+  "random": {
+   "n": 1080,
+   "top1": 0.0333,
+   "top3": 0.1,
+   "top5": 0.1667,
+   "mrr": 0.1332,
+   "log_loss": 3.4011973816621555
+  },
+  "incumbency_only": {
+   "n": 1080,
+   "top1": 0.1798,
+   "top3": 0.2363,
+   "top5": 0.2929,
+   "mrr": 0.2645,
+   "log_loss": 3.234687739178538
+  },
+  "payroll_space": {
+   "n": 1080,
+   "top1": 0.0343,
+   "top3": 0.0963,
+   "top5": 0.1778,
+   "mrr": 0.1331
+  },
+  "payroll_level": {
+   "n": 1080,
+   "top1": 0.0528,
+   "top3": 0.1407,
+   "top5": 0.2157,
+   "mrr": 0.1639
+  },
+  "behavior_only": {
+   "n": 1080,
+   "top1": 0.05,
+   "top3": 0.1296,
+   "top5": 0.1926,
+   "mrr": 0.1533
+  },
+  "live_analog": {
+   "n": 1080,
+   "top1": 0.0537,
+   "top3": 0.1324,
+   "top5": 0.1926,
+   "mrr": 0.1602
+  },
+  "registered_unbanded_live_analog": {
+   "n": 1080,
+   "top1": 0.0528,
+   "top3": 0.1398,
+   "top5": 0.2231,
+   "mrr": 0.165
+  },
+  "registered_unbanded_behavior_only": {
+   "n": 1080,
+   "top1": 0.038,
+   "top3": 0.1324,
+   "top5": 0.212,
+   "mrr": 0.1507
+  }
+ },
+ "clauses": {
+  "P": {
+   "C1": true,
+   "C2": true,
+   "C4": true,
+   "C5": true,
+   "C5_winters_at_or_above": 8,
+   "C5_scored_winters": 8,
+   "C3": false,
+   "C3_p": {
+    "mrr": 0.440279860069965,
+    "log_loss": 0.42328835582208896
+   },
+   "C3_holm_rejected": [],
+   "C3_point_favours_P": {
+    "mrr": true,
+    "log_loss": true
+   },
+   "C3_lperm_share": {
+    "mrr": -5.0,
+    "log_loss": -22.627555664086756
+   }
+  },
+  "N_in_P_place": {
+   "C1": true,
+   "C2": true,
+   "C4": true,
+   "C5": true,
+   "C5_winters_at_or_above": 8,
+   "C5_scored_winters": 8
+  }
+ },
+ "verdict": {
+  "serve": "N",
+  "loss": "the Club Ledger's spending history did not make destinations more predictable than the Fit's will-spend term already does"
+ },
+ "loss_ledger": [
+  "the Club Ledger's spending history did not make destinations more predictable than the Fit's will-spend term already does"
+ ],
+ "coef_hash": "1c0fbaa5c72e97c3673d1811a85f8db9542887c4b78a5c43feb958d3be060149",
+ "reported": {
+  "per_winter": {
+   "2019": {
+    "n": 101,
+    "P": {
+     "n": 101,
+     "top1": 0.0891,
+     "top3": 0.1782,
+     "top5": 0.1782,
+     "mrr": 0.1857,
+     "log_loss": 3.430288942561274
+    },
+    "N": {
+     "n": 101,
+     "top1": 0.0792,
+     "top3": 0.1386,
+     "top5": 0.2178,
+     "mrr": 0.1772,
+     "log_loss": 3.4226380068963915
+    },
+    "L_perm": {
+     "n": 101,
+     "top1": 0.0891,
+     "top3": 0.1386,
+     "top5": 0.2178,
+     "mrr": 0.1771,
+     "log_loss": 3.4878215380485376
+    },
+    "payroll_space": {
+     "n": 101,
+     "top1": 0.0396,
+     "top3": 0.0891,
+     "top5": 0.1386,
+     "mrr": 0.1297
+    },
+    "payroll_level": {
+     "n": 101,
+     "top1": 0.0099,
+     "top3": 0.1188,
+     "top5": 0.1881,
+     "mrr": 0.1336
+    },
+    "behavior_only": {
+     "n": 101,
+     "top1": 0.0297,
+     "top3": 0.1287,
+     "top5": 0.198,
+     "mrr": 0.1432
+    },
+    "live_analog": {
+     "n": 101,
+     "top1": 0.0297,
+     "top3": 0.0891,
+     "top5": 0.1881,
+     "mrr": 0.1328
+    },
+    "random": {
+     "n": 101,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "incumbency_only": {
+     "n": 101,
+     "top1": 0.0812,
+     "top3": 0.1446,
+     "top5": 0.2079,
+     "mrr": 0.1761
+    }
+   },
+   "2020": {
+    "n": 123,
+    "P": {
+     "n": 123,
+     "top1": 0.2439,
+     "top3": 0.3089,
+     "top5": 0.374,
+     "mrr": 0.3318,
+     "log_loss": 3.1276307874666696
+    },
+    "N": {
+     "n": 123,
+     "top1": 0.2439,
+     "top3": 0.2927,
+     "top5": 0.3821,
+     "mrr": 0.3268,
+     "log_loss": 3.1203887204785854
+    },
+    "L_perm": {
+     "n": 123,
+     "top1": 0.252,
+     "top3": 0.3008,
+     "top5": 0.3659,
+     "mrr": 0.3316,
+     "log_loss": 3.1278629755813747
+    },
+    "payroll_space": {
+     "n": 123,
+     "top1": 0.0407,
+     "top3": 0.122,
+     "top5": 0.2033,
+     "mrr": 0.1498
+    },
+    "payroll_level": {
+     "n": 123,
+     "top1": 0.065,
+     "top3": 0.1057,
+     "top5": 0.1626,
+     "mrr": 0.1591
+    },
+    "behavior_only": {
+     "n": 123,
+     "top1": 0.0488,
+     "top3": 0.1138,
+     "top5": 0.2033,
+     "mrr": 0.1464
+    },
+    "live_analog": {
+     "n": 123,
+     "top1": 0.0488,
+     "top3": 0.1545,
+     "top5": 0.2276,
+     "mrr": 0.1673
+    },
+    "random": {
+     "n": 123,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "incumbency_only": {
+     "n": 123,
+     "top1": 0.2461,
+     "top3": 0.2981,
+     "top5": 0.3501,
+     "mrr": 0.3239
+    }
+   },
+   "2021": {
+    "n": 143,
+    "P": {
+     "n": 143,
+     "top1": 0.2098,
+     "top3": 0.2867,
+     "top5": 0.3357,
+     "mrr": 0.3031,
+     "log_loss": 3.161151027417379
+    },
+    "N": {
+     "n": 143,
+     "top1": 0.2098,
+     "top3": 0.2797,
+     "top5": 0.3427,
+     "mrr": 0.3015,
+     "log_loss": 3.157527952924695
+    },
+    "L_perm": {
+     "n": 143,
+     "top1": 0.2098,
+     "top3": 0.2657,
+     "top5": 0.3427,
+     "mrr": 0.2988,
+     "log_loss": 3.1521651948022593
+    },
+    "payroll_space": {
+     "n": 143,
+     "top1": 0.028,
+     "top3": 0.0769,
+     "top5": 0.1329,
+     "mrr": 0.1135
+    },
+    "payroll_level": {
+     "n": 143,
+     "top1": 0.035,
+     "top3": 0.1469,
+     "top5": 0.2378,
+     "mrr": 0.1555
+    },
+    "behavior_only": {
+     "n": 143,
+     "top1": 0.0559,
+     "top3": 0.1399,
+     "top5": 0.1748,
+     "mrr": 0.1563
+    },
+    "live_analog": {
+     "n": 143,
+     "top1": 0.0629,
+     "top3": 0.1538,
+     "top5": 0.2098,
+     "mrr": 0.1678
+    },
+    "random": {
+     "n": 143,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "incumbency_only": {
+     "n": 143,
+     "top1": 0.2117,
+     "top3": 0.266,
+     "top5": 0.3204,
+     "mrr": 0.2931
+    }
+   },
+   "2022": {
+    "n": 142,
+    "P": {
+     "n": 142,
+     "top1": 0.1338,
+     "top3": 0.1901,
+     "top5": 0.3099,
+     "mrr": 0.2375,
+     "log_loss": 3.271230332975513
+    },
+    "N": {
+     "n": 142,
+     "top1": 0.1338,
+     "top3": 0.2394,
+     "top5": 0.2817,
+     "mrr": 0.2408,
+     "log_loss": 3.274700988186867
+    },
+    "L_perm": {
+     "n": 142,
+     "top1": 0.1408,
+     "top3": 0.2183,
+     "top5": 0.3099,
+     "mrr": 0.2476,
+     "log_loss": 3.28355955851953
+    },
+    "payroll_space": {
+     "n": 142,
+     "top1": 0.0211,
+     "top3": 0.0775,
+     "top5": 0.1901,
+     "mrr": 0.1255
+    },
+    "payroll_level": {
+     "n": 142,
+     "top1": 0.0634,
+     "top3": 0.1197,
+     "top5": 0.1972,
+     "mrr": 0.1623
+    },
+    "behavior_only": {
+     "n": 142,
+     "top1": 0.0493,
+     "top3": 0.1197,
+     "top5": 0.1761,
+     "mrr": 0.1475
+    },
+    "live_analog": {
+     "n": 142,
+     "top1": 0.0493,
+     "top3": 0.1408,
+     "top5": 0.1972,
+     "mrr": 0.1669
+    },
+    "random": {
+     "n": 142,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "incumbency_only": {
+     "n": 142,
+     "top1": 0.1359,
+     "top3": 0.1955,
+     "top5": 0.2551,
+     "mrr": 0.2252
+    }
+   },
+   "2023": {
+    "n": 134,
+    "P": {
+     "n": 134,
+     "top1": 0.1493,
+     "top3": 0.194,
+     "top5": 0.2388,
+     "mrr": 0.2306,
+     "log_loss": 3.2874495701023054
+    },
+    "N": {
+     "n": 134,
+     "top1": 0.1493,
+     "top3": 0.2239,
+     "top5": 0.2388,
+     "mrr": 0.2384,
+     "log_loss": 3.291867670004028
+    },
+    "L_perm": {
+     "n": 134,
+     "top1": 0.1493,
+     "top3": 0.209,
+     "top5": 0.2463,
+     "mrr": 0.2346,
+     "log_loss": 3.3186903936916603
+    },
+    "payroll_space": {
+     "n": 134,
+     "top1": 0.0299,
+     "top3": 0.097,
+     "top5": 0.1642,
+     "mrr": 0.1265
+    },
+    "payroll_level": {
+     "n": 134,
+     "top1": 0.0672,
+     "top3": 0.1642,
+     "top5": 0.2463,
+     "mrr": 0.182
+    },
+    "behavior_only": {
+     "n": 134,
+     "top1": 0.0448,
+     "top3": 0.1493,
+     "top5": 0.194,
+     "mrr": 0.1566
+    },
+    "live_analog": {
+     "n": 134,
+     "top1": 0.0597,
+     "top3": 0.1269,
+     "top5": 0.1791,
+     "mrr": 0.1611
+    },
+    "random": {
+     "n": 134,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "incumbency_only": {
+     "n": 134,
+     "top1": 0.1493,
+     "top3": 0.2079,
+     "top5": 0.2666,
+     "mrr": 0.2371
+    }
+   },
+   "2024": {
+    "n": 131,
+    "P": {
+     "n": 131,
+     "top1": 0.1603,
+     "top3": 0.2519,
+     "top5": 0.313,
+     "mrr": 0.2594,
+     "log_loss": 3.2553130771916177
+    },
+    "N": {
+     "n": 131,
+     "top1": 0.1603,
+     "top3": 0.2137,
+     "top5": 0.2824,
+     "mrr": 0.2518,
+     "log_loss": 3.261993595528473
+    },
+    "L_perm": {
+     "n": 131,
+     "top1": 0.1603,
+     "top3": 0.1985,
+     "top5": 0.2824,
+     "mrr": 0.2453,
+     "log_loss": 3.2697215270973614
+    },
+    "payroll_space": {
+     "n": 131,
+     "top1": 0.0382,
+     "top3": 0.0916,
+     "top5": 0.1985,
+     "mrr": 0.1364
+    },
+    "payroll_level": {
+     "n": 131,
+     "top1": 0.0763,
+     "top3": 0.1298,
+     "top5": 0.1985,
+     "mrr": 0.172
+    },
+    "behavior_only": {
+     "n": 131,
+     "top1": 0.0458,
+     "top3": 0.1221,
+     "top5": 0.1832,
+     "mrr": 0.1454
+    },
+    "live_analog": {
+     "n": 131,
+     "top1": 0.0458,
+     "top3": 0.1069,
+     "top5": 0.1603,
+     "mrr": 0.1421
+    },
+    "random": {
+     "n": 131,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "incumbency_only": {
+     "n": 131,
+     "top1": 0.1606,
+     "top3": 0.2185,
+     "top5": 0.2763,
+     "mrr": 0.2473
+    }
+   },
+   "2025": {
+    "n": 161,
+    "P": {
+     "n": 161,
+     "top1": 0.1988,
+     "top3": 0.2919,
+     "top5": 0.3602,
+     "mrr": 0.2976,
+     "log_loss": 3.178356527603834
+    },
+    "N": {
+     "n": 161,
+     "top1": 0.1988,
+     "top3": 0.2733,
+     "top5": 0.3292,
+     "mrr": 0.2925,
+     "log_loss": 3.183246404074989
+    },
+    "L_perm": {
+     "n": 161,
+     "top1": 0.1988,
+     "top3": 0.236,
+     "top5": 0.2981,
+     "mrr": 0.2796,
+     "log_loss": 3.1900617920391072
+    },
+    "payroll_space": {
+     "n": 161,
+     "top1": 0.0497,
+     "top3": 0.1304,
+     "top5": 0.205,
+     "mrr": 0.156
+    },
+    "payroll_level": {
+     "n": 161,
+     "top1": 0.0497,
+     "top3": 0.1925,
+     "top5": 0.2733,
+     "mrr": 0.1798
+    },
+    "behavior_only": {
+     "n": 161,
+     "top1": 0.0559,
+     "top3": 0.1491,
+     "top5": 0.236,
+     "mrr": 0.1714
+    },
+    "live_analog": {
+     "n": 161,
+     "top1": 0.0683,
+     "top3": 0.1304,
+     "top5": 0.1863,
+     "mrr": 0.1718
+    },
+    "random": {
+     "n": 161,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "incumbency_only": {
+     "n": 161,
+     "top1": 0.199,
+     "top3": 0.2542,
+     "top5": 0.3095,
+     "mrr": 0.2817
+    }
+   },
+   "2026": {
+    "n": 145,
+    "P": {
+     "n": 145,
+     "top1": 0.2276,
+     "top3": 0.2828,
+     "top5": 0.3448,
+     "mrr": 0.3074,
+     "log_loss": 3.1427642675850236
+    },
+    "N": {
+     "n": 145,
+     "top1": 0.2276,
+     "top3": 0.3103,
+     "top5": 0.3517,
+     "mrr": 0.3174,
+     "log_loss": 3.1432725053518196
+    },
+    "L_perm": {
+     "n": 145,
+     "top1": 0.2276,
+     "top3": 0.2966,
+     "top5": 0.3517,
+     "mrr": 0.3146,
+     "log_loss": 3.1485772689973177
+    },
+    "payroll_space": {
+     "n": 145,
+     "top1": 0.0276,
+     "top3": 0.0828,
+     "top5": 0.1793,
+     "mrr": 0.1256
+    },
+    "payroll_level": {
+     "n": 145,
+     "top1": 0.0483,
+     "top3": 0.131,
+     "top5": 0.2,
+     "mrr": 0.1572
+    },
+    "behavior_only": {
+     "n": 145,
+     "top1": 0.0621,
+     "top3": 0.1103,
+     "top5": 0.1724,
+     "mrr": 0.1529
+    },
+    "live_analog": {
+     "n": 145,
+     "top1": 0.0552,
+     "top3": 0.1448,
+     "top5": 0.1931,
+     "mrr": 0.1616
+    },
+    "random": {
+     "n": 145,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332
+    },
+    "incumbency_only": {
+     "n": 145,
+     "top1": 0.2278,
+     "top3": 0.2811,
+     "top5": 0.3343,
+     "mrr": 0.3076
+    }
+   }
+  },
+  "N_vs_live_analog": {
+   "N": {
+    "n": 1080,
+    "top1": 0.1787,
+    "top3": 0.2509,
+    "top5": 0.3065,
+    "mrr": 0.2717,
+    "log_loss": 3.224756390771319,
+    "reliability": {
+     "slope": 1.0148109619885604,
+     "ece": 0.002022788817690867,
+     "rows": 32400
+    }
+   },
+   "live_analog": {
+    "n": 1080,
+    "top1": 0.0537,
+    "top3": 0.1324,
+    "top5": 0.1926,
+    "mrr": 0.1602
+   },
+   "mrr_diff": 0.11149999999999999
+  },
+  "registered_unbanded_on_primary": {
+   "live_analog": {
+    "n": 1080,
+    "top1": 0.0528,
+    "top3": 0.1398,
+    "top5": 0.2231,
+    "mrr": 0.165
+   },
+   "behavior_only": {
+    "n": 1080,
+    "top1": 0.038,
+    "top3": 0.1324,
+    "top5": 0.212,
+    "mrr": 0.1507
+   }
+  },
+  "same_frame_paired_mde95": {
+   "N": 0.006165010796748901,
+   "L_perm": 0.00807825575947378,
+   "payroll_space": 0.02472178445592902,
+   "payroll_level": 0.022535809597443595,
+   "behavior_only": 0.023032945812320942,
+   "live_analog": 0.022747636696219747,
+   "incumbency_only": 0.006411543260563917,
+   "random": 0.021497613824897358
+  },
+  "realized_price_frame": {
+   "signings": 1173,
+   "scored_winters": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+   ],
+   "metrics": {
+    "P": {
+     "n": 1080,
+     "top1": 0.1796,
+     "top3": 0.2556,
+     "top5": 0.3194,
+     "mrr": 0.2746,
+     "log_loss": 3.2210913225804587,
+     "reliability": {
+      "slope": 1.0194946889198477,
+      "ece": 0.002196967333320395,
+      "rows": 32400
+     }
+    },
+    "N": {
+     "n": 1080,
+     "top1": 0.1787,
+     "top3": 0.2556,
+     "top5": 0.312,
+     "mrr": 0.2745,
+     "log_loss": 3.220992851419623,
+     "reliability": {
+      "slope": 1.0166122916303413,
+      "ece": 0.0025954129262476247,
+      "rows": 32400
+     }
+    },
+    "L_perm": {
+     "n": 1080,
+     "top1": 0.1806,
+     "top3": 0.2417,
+     "top5": 0.2944,
+     "mrr": 0.2702,
+     "log_loss": 3.2345514039079712,
+     "reliability": {
+      "slope": 0.9443282442336097,
+      "ece": 0.002807568994254719,
+      "rows": 32400
+     }
+    },
+    "random": {
+     "n": 1080,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332,
+     "log_loss": 3.4011973816621555
+    },
+    "incumbency_only": {
+     "n": 1080,
+     "top1": 0.1798,
+     "top3": 0.2363,
+     "top5": 0.2929,
+     "mrr": 0.2645,
+     "log_loss": 3.234687739178538
+    },
+    "payroll_space": {
+     "n": 1080,
+     "top1": 0.0389,
+     "top3": 0.0981,
+     "top5": 0.1769,
+     "mrr": 0.1356
+    },
+    "payroll_level": {
+     "n": 1080,
+     "top1": 0.0528,
+     "top3": 0.1407,
+     "top5": 0.2157,
+     "mrr": 0.1639
+    },
+    "behavior_only": {
+     "n": 1080,
+     "top1": 0.0481,
+     "top3": 0.1444,
+     "top5": 0.2111,
+     "mrr": 0.1588
+    },
+    "live_analog": {
+     "n": 1080,
+     "top1": 0.0556,
+     "top3": 0.1361,
+     "top5": 0.2111,
+     "mrr": 0.1635
+    },
+    "registered_unbanded_live_analog": {
+     "n": 1080,
+     "top1": 0.05,
+     "top3": 0.1398,
+     "top5": 0.2241,
+     "mrr": 0.1642
+    },
+    "registered_unbanded_behavior_only": {
+     "n": 1080,
+     "top1": 0.0389,
+     "top3": 0.1269,
+     "top5": 0.2037,
+     "mrr": 0.1491
+    }
+   },
+   "folds": {
+    "P": {
+     "features": [
+      "fit_analog",
+      "fa_share_3",
+      "payroll_level",
+      "tax_multiplier",
+      "qo_cost",
+      "incumbent"
+     ],
+     "folds": {
+      "2019": {
+       "coefs": {
+        "fit_analog": 0.5702860422377528,
+        "fa_share_3": 0.10645985175714746,
+        "payroll_level": 0.04904087279914588,
+        "tax_multiplier": -0.22291842992111294,
+        "qo_cost": -0.010270671682744724,
+        "incumbent": 1.8132560909356334
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.021114399061419004,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0998488680013434,
+         "sd": 0.23724767874431565,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.08530465949820788,
+         "sd": 0.3211189503920155,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 15,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 295.58839209705206,
+       "n_signings": 93,
+       "zero_sd_features": [],
+       "coef_hash": "135174ed35a496470aa1b0fd304a3bc7fb73bab9bf25d49f8436e069f18be871"
+      },
+      "2020": {
+       "coefs": {
+        "fit_analog": 0.583955035718367,
+        "fa_share_3": 0.040681735813587694,
+        "payroll_level": 0.06796160792797375,
+        "tax_multiplier": -0.1302199836742081,
+        "qo_cost": 0.0850300508198088,
+        "incumbent": 1.4384656992408713
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.021538082320763624,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0622254800711994,
+         "sd": 0.18451361901700217,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.0725085910652921,
+         "sd": 0.2876021780390259,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 15,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 638.3234065949421,
+       "n_signings": 194,
+       "zero_sd_features": [],
+       "coef_hash": "28ea953a8413ec5cb5ec0697d275f4f56cd4a1a0d9d25c531b74222f67451e31"
+      },
+      "2021": {
+       "coefs": {
+        "fit_analog": 0.7078724793709387,
+        "fa_share_3": -0.012348922444106809,
+        "payroll_level": 0.06365511437729779,
+        "tax_multiplier": -0.08876449790913653,
+        "qo_cost": 0.07003186202982198,
+        "incumbent": 1.7691276230703663
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.024479388488159233,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.060157311560902,
+         "sd": 0.17610426873721277,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.07129337539432176,
+         "sd": 0.28411559448342466,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 14,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 1019.8815594331157,
+       "n_signings": 317,
+       "zero_sd_features": [],
+       "coef_hash": "d05ade87a7152be843bb1e19a6db7eeab03570debd72c3be9143f0d55020439f"
+      },
+      "2022": {
+       "coefs": {
+        "fit_analog": 0.7509994750587617,
+        "fa_share_3": -0.008002185914158447,
+        "payroll_level": 0.07478291698614296,
+        "tax_multiplier": -0.05303255496086961,
+        "qo_cost": -0.05397050401495111,
+        "incumbent": 1.8112942814670694
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.026611999468492305,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0501921078291978,
+         "sd": 0.1534644727374342,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.06173913043478261,
+         "sd": 0.2606288744708451,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 15,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 1470.1088543953654,
+       "n_signings": 460,
+       "zero_sd_features": [],
+       "coef_hash": "f1a7d0dc5cc0c0f421aa0c7523effe906af02a8f2a4f5dd8c41534efac01185b"
+      },
+      "2023": {
+       "coefs": {
+        "fit_analog": 0.9329403759570067,
+        "fa_share_3": -0.008922650057221591,
+        "payroll_level": 0.08875786832257644,
+        "tax_multiplier": -0.027038281800915418,
+        "qo_cost": -0.09583289401731304,
+        "incumbent": 1.6892920551742756
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.027756749833700373,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0448267583232798,
+         "sd": 0.15123671050641874,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.0693798449612403,
+         "sd": 0.27361521411766143,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 15,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 1933.3195555793166,
+       "n_signings": 602,
+       "zero_sd_features": [],
+       "coef_hash": "c7bbcc29c7c910c2b1949e69ed37552ac3ec0b381f0d163a6c439ac0ffc87fae"
+      },
+      "2024": {
+       "coefs": {
+        "fit_analog": 0.8747406675408289,
+        "fa_share_3": 0.007452694444090576,
+        "payroll_level": 0.06366546472962523,
+        "tax_multiplier": 0.01780574023631117,
+        "qo_cost": -0.12313314694194509,
+        "incumbent": 1.6362155857049552
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.027027852068455656,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0589138504674493,
+         "sd": 0.18327426153368714,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.07853260869565218,
+         "sd": 0.2959436253266077,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 16,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 2371.8013522765095,
+       "n_signings": 736,
+       "zero_sd_features": [],
+       "coef_hash": "42d72999a28d5ea1e547208f14e764b9a242cd29928fe60c2f1806d34f540cce"
+      },
+      "2025": {
+       "coefs": {
+        "fit_analog": 0.8353786326640619,
+        "fa_share_3": -0.014813093295867646,
+        "payroll_level": 0.08661336834765242,
+        "tax_multiplier": 0.009053427389387428,
+        "qo_cost": -0.13002934588787687,
+        "incumbent": 1.626432286863333
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.027312510370972935,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0777991105010756,
+         "sd": 0.21839348928933255,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.07647058823529412,
+         "sd": 0.2958705931991734,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 14,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 2797.804707791362,
+       "n_signings": 867,
+       "zero_sd_features": [],
+       "coef_hash": "eabdff8dfaed81cfb213f584a3fb8f2070622fa00d82f8004b4872ed03f50e09"
+      },
+      "2026": {
+       "coefs": {
+        "fit_analog": 0.8585622693805124,
+        "fa_share_3": 0.0031130615274481016,
+        "payroll_level": 0.04968465043723727,
+        "tax_multiplier": 0.04924279074389756,
+        "qo_cost": -0.11835445322086187,
+        "incumbent": 1.6591338549065553
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.02739477558978492,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0982373223212683,
+         "sd": 0.2514884863189473,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.08028534370946823,
+         "sd": 0.30861041055842153,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 18,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 3308.7568414461416,
+       "n_signings": 1028,
+       "zero_sd_features": [],
+       "coef_hash": "9e8ff3a72e055ecb9e8eafd7eeea6e1fa0a9ec415ccd2af87e612dbe12bdb09e"
+      }
+     }
+    },
+    "N": {
+     "features": [
+      "fit_analog",
+      "incumbent"
+     ],
+     "folds": {
+      "2019": {
+       "coefs": {
+        "fit_analog": 0.7504848689682883,
+        "incumbent": 1.8012549201255275
+       },
+       "standardization": {},
+       "converged": true,
+       "nit": 6,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 297.2218366893152,
+       "n_signings": 93,
+       "zero_sd_features": [],
+       "coef_hash": "d7b04a6e190edc921ecc799dc77b5da603c236b84fce746db65e28f6427bed9c"
+      },
+      "2020": {
+       "coefs": {
+        "fit_analog": 0.7115434703339417,
+        "incumbent": 1.4070422787225134
+       },
+       "standardization": {},
+       "converged": true,
+       "nit": 7,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 639.4837111617512,
+       "n_signings": 194,
+       "zero_sd_features": [],
+       "coef_hash": "0bb8b866ac0c66184c061c010572af3b4958ad11e0b5b4fe2a09c03cdf475661"
+      },
+      "2021": {
+       "coefs": {
+        "fit_analog": 0.769522922161672,
+        "incumbent": 1.7487280978438675
+       },
+       "standardization": {},
+       "converged": true,
+       "nit": 6,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 1020.6729874230527,
+       "n_signings": 317,
+       "zero_sd_features": [],
+       "coef_hash": "048d05f7a51e9ad633f950f8441d0542037f91658b1dd0fbc3f9b622a3ee8dc6"
+      },
+      "2022": {
+       "coefs": {
+        "fit_analog": 0.844974382468067,
+        "incumbent": 1.826441453685166
+       },
+       "standardization": {},
+       "converged": true,
+       "nit": 7,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 1470.9943990110664,
+       "n_signings": 460,
+       "zero_sd_features": [],
+       "coef_hash": "8568d3ca6c9a560670fc886476ed507a04cea2fe7b92f9b53739eebf9d5715b1"
+      },
+      "2023": {
+       "coefs": {
+        "fit_analog": 1.0580986764338802,
+        "incumbent": 1.7229534902927668
+       },
+       "standardization": {},
+       "converged": true,
+       "nit": 7,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 1935.2375798618793,
+       "n_signings": 602,
+       "zero_sd_features": [],
+       "coef_hash": "adf3bf55b8b145d795c0bf23a80ad635d9d503b829c8eb310bac06907a9f7549"
+      },
+      "2024": {
+       "coefs": {
+        "fit_analog": 0.9918870121398845,
+        "incumbent": 1.6888475600217414
+       },
+       "standardization": {},
+       "converged": true,
+       "nit": 7,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 2375.1052695862945,
+       "n_signings": 736,
+       "zero_sd_features": [],
+       "coef_hash": "bd90b4308c6f8b34db1d5374c8f12d2cb348c4c877f480e9a167087b46262867"
+      },
+      "2025": {
+       "coefs": {
+        "fit_analog": 0.9541490794605357,
+        "incumbent": 1.6794882314334263
+       },
+       "standardization": {},
+       "converged": true,
+       "nit": 7,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 2802.1297447776333,
+       "n_signings": 867,
+       "zero_sd_features": [],
+       "coef_hash": "136eace713af057ed8faea3dfeca9cc3d0cecd4d9490daf254e360929a3bac26"
+      },
+      "2026": {
+       "coefs": {
+        "fit_analog": 0.9639614152460065,
+        "incumbent": 1.7107875223072937
+       },
+       "standardization": {},
+       "converged": true,
+       "nit": 7,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 3314.529144857013,
+       "n_signings": 1028,
+       "zero_sd_features": [],
+       "coef_hash": "6de91e2156c8f903818eb01fa042ebcc4a286746421e0ee1990a24e48a5152f2"
+      }
+     }
+    },
+    "L_perm": {
+     "features": [
+      "fit_analog",
+      "fa_share_3",
+      "payroll_level",
+      "tax_multiplier",
+      "qo_cost",
+      "incumbent"
+     ],
+     "folds": {
+      "2019": {
+       "coefs": {
+        "fit_analog": 0.7280714365574076,
+        "fa_share_3": 0.055090245652251034,
+        "payroll_level": -0.37522631152856784,
+        "tax_multiplier": 0.4687793068060045,
+        "qo_cost": -0.016936243529758685,
+        "incumbent": 1.840942880511779
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.021114399061419004,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.099848868001343,
+         "sd": 0.23724767874431565,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.08530465949820788,
+         "sd": 0.32111895039201555,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 15,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 291.39417073828884,
+       "n_signings": 93,
+       "zero_sd_features": [],
+       "coef_hash": "37d22901f2b43b0beeccbf0bf0bb5a6c73767a4f6253b03f7c2d608e9358e72c"
+      },
+      "2020": {
+       "coefs": {
+        "fit_analog": 0.7669088909449976,
+        "fa_share_3": -0.06095874210872922,
+        "payroll_level": -0.08653889375118914,
+        "tax_multiplier": 0.21699938172435174,
+        "qo_cost": -0.0050032877731899725,
+        "incumbent": 1.4100549324713847
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.021538082320763624,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0622254800711997,
+         "sd": 0.18451361901700217,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.0725085910652921,
+         "sd": 0.2876021780390259,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 14,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 635.9413142813413,
+       "n_signings": 194,
+       "zero_sd_features": [],
+       "coef_hash": "34ff8526f9e7a73d0aec0317da88f43a80ba2ab60f1ac55a10e17c09a38c315e"
+      },
+      "2021": {
+       "coefs": {
+        "fit_analog": 0.8238749922181849,
+        "fa_share_3": -0.08735159739642437,
+        "payroll_level": -0.04488168738704882,
+        "tax_multiplier": 0.1484640281276974,
+        "qo_cost": -0.039432995521715315,
+        "incumbent": 1.7646176145450392
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.024479388488159233,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.060157311560902,
+         "sd": 0.17610426873721277,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.07129337539432176,
+         "sd": 0.28411559448342466,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 13,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 1017.426514142707,
+       "n_signings": 317,
+       "zero_sd_features": [],
+       "coef_hash": "f3a5c77311c33fce96f9f1207eb8ca7b64712c75777aeaf02c77c39059d9e59d"
+      },
+      "2022": {
+       "coefs": {
+        "fit_analog": 0.8654276727094007,
+        "fa_share_3": -0.12380581582137593,
+        "payroll_level": 0.015363495710342201,
+        "tax_multiplier": 0.10286598272397675,
+        "qo_cost": -0.017337990847863673,
+        "incumbent": 1.839716807537056
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.026611999468492305,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0501921078291978,
+         "sd": 0.1534644727374342,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.06173913043478261,
+         "sd": 0.2606288744708451,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 15,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 1466.7865421620043,
+       "n_signings": 460,
+       "zero_sd_features": [],
+       "coef_hash": "44f589ca3e9d5f171420a1d41c58b86aa286b23ad668fb5fe0c5939b6ee8f93d"
+      },
+      "2023": {
+       "coefs": {
+        "fit_analog": 1.0926886894736392,
+        "fa_share_3": -0.08729370582460143,
+        "payroll_level": 0.026443013516269594,
+        "tax_multiplier": 0.08996622348791788,
+        "qo_cost": -0.0263164548777639,
+        "incumbent": 1.7296744530058379
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.033333333333333326,
+         "sd": 0.027756749833700373,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0448267583232798,
+         "sd": 0.15123671050641874,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.0693798449612403,
+         "sd": 0.27361521411766143,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 16,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 1931.4913080631527,
+       "n_signings": 602,
+       "zero_sd_features": [],
+       "coef_hash": "056d6f3e040627196d5c3fe25a467b89fe44c32d2933960a9d78851ff2d1bd8b"
+      },
+      "2024": {
+       "coefs": {
+        "fit_analog": 1.00783471780212,
+        "fa_share_3": -0.09818369206693793,
+        "payroll_level": 0.037686085263660137,
+        "tax_multiplier": 0.03189433619871408,
+        "qo_cost": 0.05899831379139555,
+        "incumbent": 1.688461967367471
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.027027852068455656,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0589138504674493,
+         "sd": 0.18327426153368714,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.07853260869565218,
+         "sd": 0.2959436253266077,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 16,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 2372.2711996802386,
+       "n_signings": 736,
+       "zero_sd_features": [],
+       "coef_hash": "5ac43dbc7021475fa6caebce2a8d51accbf7acf58acfe065be3d015a2b708d2b"
+      },
+      "2025": {
+       "coefs": {
+        "fit_analog": 0.9720341594750168,
+        "fa_share_3": -0.10926348895266866,
+        "payroll_level": 0.08818174219627041,
+        "tax_multiplier": -0.035193655831773425,
+        "qo_cost": 0.06010681969499159,
+        "incumbent": 1.6805738976857962
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.027312510370972935,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0777991105010756,
+         "sd": 0.21839348928933255,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.07647058823529412,
+         "sd": 0.2958705931991734,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 15,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 2798.779136202432,
+       "n_signings": 867,
+       "zero_sd_features": [],
+       "coef_hash": "3e804c14f78da2211c91536c6445898c7775f8c6fabef5308a4b90f904c2e7be"
+      },
+      "2026": {
+       "coefs": {
+        "fit_analog": 0.9864774957089746,
+        "fa_share_3": -0.08485813491129063,
+        "payroll_level": 0.05603636252512502,
+        "tax_multiplier": -0.018350044104967225,
+        "qo_cost": 0.08334926491439808,
+        "incumbent": 1.7103155290055763
+       },
+       "standardization": {
+        "fa_share_3": {
+         "mean": 0.03333333333333333,
+         "sd": 0.027394775589784922,
+         "zero_sd": false
+        },
+        "tax_multiplier": {
+         "mean": 1.0982373223212683,
+         "sd": 0.2514884863189473,
+         "zero_sd": false
+        },
+        "qo_cost": {
+         "mean": 0.08028534370946823,
+         "sd": 0.30861041055842153,
+         "zero_sd": false
+        }
+       },
+       "converged": true,
+       "nit": 14,
+       "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+       "objective": 3312.0235494340654,
+       "n_signings": 1028,
+       "zero_sd_features": [],
+       "coef_hash": "af9dbabb292b81c6cfdba246ad4d2e8ba84316a2de209ea7b53636052ac78bc7"
+      }
+     }
+    },
+    "incumbency_only": {
+     "fold_resign_share": {
+      "2019": {
+       "n": 93,
+       "resign": 18,
+       "share": 0.1935483870967742
+      },
+      "2020": {
+       "n": 188,
+       "resign": 26,
+       "share": 0.13829787234042554
+      },
+      "2021": {
+       "n": 303,
+       "resign": 56,
+       "share": 0.1848184818481848
+      },
+      "2022": {
+       "n": 438,
+       "resign": 86,
+       "share": 0.1963470319634703
+      },
+      "2023": {
+       "n": 571,
+       "resign": 105,
+       "share": 0.18388791593695272
+      },
+      "2024": {
+       "n": 705,
+       "resign": 125,
+       "share": 0.1773049645390071
+      },
+      "2025": {
+       "n": 835,
+       "resign": 146,
+       "share": 0.17485029940119762
+      },
+      "2026": {
+       "n": 995,
+       "resign": 178,
+       "share": 0.17889447236180905
+      }
+     }
+    }
+   },
+   "third_tier_rows_2017_agreement": {
+    "2018": 53,
+    "2019": 1,
+    "2020": 7,
+    "2021": 1
+   }
+  },
+  "accepted_qo_excluded": {
+   "acceptances": 14,
+   "matched_signings": 7,
+   "rule": "removed from the frame, refit",
+   "metrics": {
+    "P": {
+     "n": 1073,
+     "top1": 0.1752,
+     "top3": 0.2507,
+     "top5": 0.3029,
+     "mrr": 0.2688,
+     "log_loss": 3.2332055968927444,
+     "reliability": {
+      "slope": 1.0115076132206702,
+      "ece": 0.002570653157107613,
+      "rows": 32190
+     }
+    },
+    "N": {
+     "n": 1073,
+     "top1": 0.1743,
+     "top3": 0.247,
+     "top5": 0.3029,
+     "mrr": 0.2678,
+     "log_loss": 3.2328837693864014,
+     "reliability": {
+      "slope": 1.0127068570918867,
+      "ece": 0.0022463507364140984,
+      "rows": 32190
+     }
+    },
+    "L_perm": {
+     "n": 1073,
+     "top1": 0.1771,
+     "top3": 0.2321,
+     "top5": 0.302,
+     "mrr": 0.2654,
+     "log_loss": 3.245400668175219,
+     "reliability": {
+      "slope": 0.9396501090147394,
+      "ece": 0.0028492007270264786,
+      "rows": 32190
+     }
+    },
+    "random": {
+     "n": 1073,
+     "top1": 0.0333,
+     "top3": 0.1,
+     "top5": 0.1667,
+     "mrr": 0.1332,
+     "log_loss": 3.4011973816621555
+    },
+    "incumbency_only": {
+     "n": 1073,
+     "top1": 0.1753,
+     "top3": 0.2322,
+     "top5": 0.2891,
+     "mrr": 0.2605,
+     "log_loss": 3.242749566667667
+    },
+    "payroll_space": {
+     "n": 1073,
+     "top1": 0.0345,
+     "top3": 0.0969,
+     "top5": 0.178,
+     "mrr": 0.1334
+    },
+    "payroll_level": {
+     "n": 1073,
+     "top1": 0.0531,
+     "top3": 0.1417,
+     "top5": 0.2171,
+     "mrr": 0.1645
+    },
+    "behavior_only": {
+     "n": 1073,
+     "top1": 0.0494,
+     "top3": 0.1286,
+     "top5": 0.192,
+     "mrr": 0.1526
+    },
+    "live_analog": {
+     "n": 1073,
+     "top1": 0.0531,
+     "top3": 0.1314,
+     "top5": 0.192,
+     "mrr": 0.1594
+    },
+    "registered_unbanded_live_analog": {
+     "n": 1073,
+     "top1": 0.0531,
+     "top3": 0.1398,
+     "top5": 0.2218,
+     "mrr": 0.1647
+    },
+    "registered_unbanded_behavior_only": {
+     "n": 1073,
+     "top1": 0.0382,
+     "top3": 0.1323,
+     "top5": 0.2125,
+     "mrr": 0.1507
+    }
+   }
+  },
+  "third_tier_rows_2017_agreement": {
+   "2018": 62,
+   "2019": 0,
+   "2020": 0,
+   "2021": 0
+  },
+  "expected_mlb_deals_by_club": {
+   "2019": {
+    "ARI": {
+     "expected": 5.3848,
+     "realized": 4
+    },
+    "ATH": {
+     "expected": 1.6435,
+     "realized": 0
+    },
+    "ATL": {
+     "expected": 2.714,
+     "realized": 4
+    },
+    "BAL": {
+     "expected": 3.5495,
+     "realized": 1
+    },
+    "BOS": {
+     "expected": 2.6994,
+     "realized": 1
+    },
+    "CHC": {
+     "expected": 5.1026,
+     "realized": 5
+    },
+    "CHW": {
+     "expected": 2.503,
+     "realized": 3
+    },
+    "CIN": {
+     "expected": 2.3383,
+     "realized": 1
+    },
+    "CLE": {
+     "expected": 3.9323,
+     "realized": 2
+    },
+    "COL": {
+     "expected": 3.9386,
+     "realized": 1
+    },
+    "DET": {
+     "expected": 2.7764,
+     "realized": 4
+    },
+    "HOU": {
+     "expected": 4.467,
+     "realized": 3
+    },
+    "KCR": {
+     "expected": 3.0486,
+     "realized": 5
+    },
+    "LAA": {
+     "expected": 3.4716,
+     "realized": 3
+    },
+    "LAD": {
+     "expected": 4.8159,
+     "realized": 2
+    },
+    "MIA": {
+     "expected": 2.2315,
+     "realized": 2
+    },
+    "MIL": {
+     "expected": 3.1101,
+     "realized": 6
+    },
+    "MIN": {
+     "expected": 2.2318,
+     "realized": 5
+    },
+    "NYM": {
+     "expected": 3.5165,
+     "realized": 5
+    },
+    "NYY": {
+     "expected": 4.3001,
+     "realized": 6
+    },
+    "PHI": {
+     "expected": 4.0794,
+     "realized": 3
+    },
+    "PIT": {
+     "expected": 3.0052,
+     "realized": 2
+    },
+    "SDP": {
+     "expected": 2.7438,
+     "realized": 5
+    },
+    "SEA": {
+     "expected": 3.4121,
+     "realized": 4
+    },
+    "SFG": {
+     "expected": 3.6374,
+     "realized": 3
+    },
+    "STL": {
+     "expected": 4.2079,
+     "realized": 1
+    },
+    "TBR": {
+     "expected": 2.4252,
+     "realized": 2
+    },
+    "TEX": {
+     "expected": 3.3909,
+     "realized": 6
+    },
+    "TOR": {
+     "expected": 3.4083,
+     "realized": 4
+    },
+    "WSN": {
+     "expected": 2.9141,
+     "realized": 8
+    }
+   },
+   "2020": {
+    "ARI": {
+     "expected": 4.5311,
+     "realized": 5
+    },
+    "ATH": {
+     "expected": 2.5159,
+     "realized": 0
+    },
+    "ATL": {
+     "expected": 5.0494,
+     "realized": 8
+    },
+    "BAL": {
+     "expected": 2.8635,
+     "realized": 2
+    },
+    "BOS": {
+     "expected": 3.317,
+     "realized": 8
+    },
+    "CHC": {
+     "expected": 4.3974,
+     "realized": 3
+    },
+    "CHW": {
+     "expected": 3.5925,
+     "realized": 6
+    },
+    "CIN": {
+     "expected": 3.8228,
+     "realized": 4
+    },
+    "CLE": {
+     "expected": 3.6524,
+     "realized": 3
+    },
+    "COL": {
+     "expected": 3.9152,
+     "realized": 0
+    },
+    "DET": {
+     "expected": 2.9721,
+     "realized": 5
+    },
+    "HOU": {
+     "expected": 5.0128,
+     "realized": 3
+    },
+    "KCR": {
+     "expected": 3.9001,
+     "realized": 3
+    },
+    "LAA": {
+     "expected": 3.6942,
+     "realized": 3
+    },
+    "LAD": {
+     "expected": 4.7364,
+     "realized": 4
+    },
+    "MIA": {
+     "expected": 3.229,
+     "realized": 5
+    },
+    "MIL": {
+     "expected": 5.2997,
+     "realized": 9
+    },
+    "MIN": {
+     "expected": 5.0702,
+     "realized": 7
+    },
+    "NYM": {
+     "expected": 5.0522,
+     "realized": 5
+    },
+    "NYY": {
+     "expected": 3.9856,
+     "realized": 2
+    },
+    "PHI": {
+     "expected": 5.997,
+     "realized": 4
+    },
+    "PIT": {
+     "expected": 2.7558,
+     "realized": 3
+    },
+    "SDP": {
+     "expected": 3.9877,
+     "realized": 3
+    },
+    "SEA": {
+     "expected": 3.4991,
+     "realized": 3
+    },
+    "SFG": {
+     "expected": 4.7607,
+     "realized": 5
+    },
+    "STL": {
+     "expected": 4.5965,
+     "realized": 3
+    },
+    "TBR": {
+     "expected": 3.568,
+     "realized": 0
+    },
+    "TEX": {
+     "expected": 3.5889,
+     "realized": 5
+    },
+    "TOR": {
+     "expected": 4.1235,
+     "realized": 2
+    },
+    "WSN": {
+     "expected": 5.5133,
+     "realized": 10
+    }
+   },
+   "2021": {
+    "ARI": {
+     "expected": 3.3258,
+     "realized": 4
+    },
+    "ATH": {
+     "expected": 2.5934,
+     "realized": 0
+    },
+    "ATL": {
+     "expected": 5.8365,
+     "realized": 5
+    },
+    "BAL": {
+     "expected": 3.405,
+     "realized": 3
+    },
+    "BOS": {
+     "expected": 4.7093,
+     "realized": 6
+    },
+    "CHC": {
+     "expected": 5.0935,
+     "realized": 11
+    },
+    "CHW": {
+     "expected": 5.6612,
+     "realized": 2
+    },
+    "CIN": {
+     "expected": 5.2275,
+     "realized": 1
+    },
+    "CLE": {
+     "expected": 4.453,
+     "realized": 2
+    },
+    "COL": {
+     "expected": 4.1439,
+     "realized": 1
+    },
+    "DET": {
+     "expected": 4.1004,
+     "realized": 5
+    },
+    "HOU": {
+     "expected": 4.9918,
+     "realized": 5
+    },
+    "KCR": {
+     "expected": 4.4,
+     "realized": 5
+    },
+    "LAA": {
+     "expected": 4.9195,
+     "realized": 6
+    },
+    "LAD": {
+     "expected": 5.6801,
+     "realized": 7
+    },
+    "MIA": {
+     "expected": 4.1744,
+     "realized": 2
+    },
+    "MIL": {
+     "expected": 4.1572,
+     "realized": 4
+    },
+    "MIN": {
+     "expected": 6.3419,
+     "realized": 6
+    },
+    "NYM": {
+     "expected": 5.578,
+     "realized": 8
+    },
+    "NYY": {
+     "expected": 5.0078,
+     "realized": 5
+    },
+    "PHI": {
+     "expected": 5.3321,
+     "realized": 6
+    },
+    "PIT": {
+     "expected": 4.212,
+     "realized": 2
+    },
+    "SDP": {
+     "expected": 5.1146,
+     "realized": 5
+    },
+    "SEA": {
+     "expected": 3.0657,
+     "realized": 5
+    },
+    "SFG": {
+     "expected": 4.6743,
+     "realized": 11
+    },
+    "STL": {
+     "expected": 5.5228,
+     "realized": 3
+    },
+    "TBR": {
+     "expected": 5.0319,
+     "realized": 7
+    },
+    "TEX": {
+     "expected": 5.456,
+     "realized": 4
+    },
+    "TOR": {
+     "expected": 5.4602,
+     "realized": 6
+    },
+    "WSN": {
+     "expected": 5.33,
+     "realized": 6
+    }
+   },
+   "2022": {
+    "ARI": {
+     "expected": 4.1219,
+     "realized": 3
+    },
+    "ATH": {
+     "expected": 2.6967,
+     "realized": 0
+    },
+    "ATL": {
+     "expected": 5.9268,
+     "realized": 6
+    },
+    "BAL": {
+     "expected": 3.095,
+     "realized": 2
+    },
+    "BOS": {
+     "expected": 6.3393,
+     "realized": 6
+    },
+    "CHC": {
+     "expected": 5.4598,
+     "realized": 10
+    },
+    "CHW": {
+     "expected": 5.2954,
+     "realized": 6
+    },
+    "CIN": {
+     "expected": 4.8897,
+     "realized": 4
+    },
+    "CLE": {
+     "expected": 3.6804,
+     "realized": 2
+    },
+    "COL": {
+     "expected": 4.2615,
+     "realized": 5
+    },
+    "DET": {
+     "expected": 4.0616,
+     "realized": 4
+    },
+    "HOU": {
+     "expected": 5.8654,
+     "realized": 3
+    },
+    "KCR": {
+     "expected": 3.707,
+     "realized": 2
+    },
+    "LAA": {
+     "expected": 5.6089,
+     "realized": 9
+    },
+    "LAD": {
+     "expected": 5.2838,
+     "realized": 9
+    },
+    "MIA": {
+     "expected": 2.9997,
+     "realized": 2
+    },
+    "MIL": {
+     "expected": 5.1194,
+     "realized": 5
+    },
+    "MIN": {
+     "expected": 4.9725,
+     "realized": 4
+    },
+    "NYM": {
+     "expected": 6.3427,
+     "realized": 6
+    },
+    "NYY": {
+     "expected": 5.5745,
+     "realized": 5
+    },
+    "PHI": {
+     "expected": 5.364,
+     "realized": 7
+    },
+    "PIT": {
+     "expected": 3.7179,
+     "realized": 4
+    },
+    "SDP": {
+     "expected": 5.2249,
+     "realized": 1
+    },
+    "SEA": {
+     "expected": 4.6893,
+     "realized": 2
+    },
+    "SFG": {
+     "expected": 6.2621,
+     "realized": 8
+    },
+    "STL": {
+     "expected": 3.649,
+     "realized": 5
+    },
+    "TBR": {
+     "expected": 4.5566,
+     "realized": 3
+    },
+    "TEX": {
+     "expected": 4.2169,
+     "realized": 8
+    },
+    "TOR": {
+     "expected": 5.4707,
+     "realized": 6
+    },
+    "WSN": {
+     "expected": 3.5463,
+     "realized": 5
+    }
+   },
+   "2023": {
+    "ARI": {
+     "expected": 4.1693,
+     "realized": 4
+    },
+    "ATH": {
+     "expected": 2.1067,
+     "realized": 0
+    },
+    "ATL": {
+     "expected": 5.1467,
+     "realized": 3
+    },
+    "BAL": {
+     "expected": 3.7441,
+     "realized": 4
+    },
+    "BOS": {
+     "expected": 5.6967,
+     "realized": 6
+    },
+    "CHC": {
+     "expected": 4.0716,
+     "realized": 9
+    },
+    "CHW": {
+     "expected": 6.141,
+     "realized": 3
+    },
+    "CIN": {
+     "expected": 4.1554,
+     "realized": 3
+    },
+    "CLE": {
+     "expected": 2.9966,
+     "realized": 2
+    },
+    "COL": {
+     "expected": 3.5236,
+     "realized": 3
+    },
+    "DET": {
+     "expected": 4.1098,
+     "realized": 3
+    },
+    "HOU": {
+     "expected": 5.5728,
+     "realized": 3
+    },
+    "KCR": {
+     "expected": 3.6514,
+     "realized": 5
+    },
+    "LAA": {
+     "expected": 4.0687,
+     "realized": 5
+    },
+    "LAD": {
+     "expected": 5.7052,
+     "realized": 8
+    },
+    "MIA": {
+     "expected": 3.3557,
+     "realized": 2
+    },
+    "MIL": {
+     "expected": 4.8977,
+     "realized": 6
+    },
+    "MIN": {
+     "expected": 4.4149,
+     "realized": 4
+    },
+    "NYM": {
+     "expected": 6.1544,
+     "realized": 9
+    },
+    "NYY": {
+     "expected": 5.6492,
+     "realized": 5
+    },
+    "PHI": {
+     "expected": 5.3712,
+     "realized": 5
+    },
+    "PIT": {
+     "expected": 2.4694,
+     "realized": 6
+    },
+    "SDP": {
+     "expected": 4.994,
+     "realized": 7
+    },
+    "SEA": {
+     "expected": 4.4705,
+     "realized": 4
+    },
+    "SFG": {
+     "expected": 6.2168,
+     "realized": 7
+    },
+    "STL": {
+     "expected": 4.7851,
+     "realized": 1
+    },
+    "TBR": {
+     "expected": 4.8677,
+     "realized": 3
+    },
+    "TEX": {
+     "expected": 4.0204,
+     "realized": 5
+    },
+    "TOR": {
+     "expected": 3.7122,
+     "realized": 4
+    },
+    "WSN": {
+     "expected": 3.7613,
+     "realized": 5
+    }
+   },
+   "2024": {
+    "ARI": {
+     "expected": 3.779,
+     "realized": 6
+    },
+    "ATH": {
+     "expected": 2.1362,
+     "realized": 0
+    },
+    "ATL": {
+     "expected": 4.6389,
+     "realized": 5
+    },
+    "BAL": {
+     "expected": 4.3186,
+     "realized": 2
+    },
+    "BOS": {
+     "expected": 4.4233,
+     "realized": 5
+    },
+    "CHC": {
+     "expected": 5.2057,
+     "realized": 1
+    },
+    "CHW": {
+     "expected": 5.0356,
+     "realized": 7
+    },
+    "CIN": {
+     "expected": 4.2158,
+     "realized": 9
+    },
+    "CLE": {
+     "expected": 3.8793,
+     "realized": 2
+    },
+    "COL": {
+     "expected": 3.838,
+     "realized": 2
+    },
+    "DET": {
+     "expected": 3.8575,
+     "realized": 4
+    },
+    "HOU": {
+     "expected": 4.1178,
+     "realized": 3
+    },
+    "KCR": {
+     "expected": 3.5644,
+     "realized": 7
+    },
+    "LAA": {
+     "expected": 4.1036,
+     "realized": 8
+    },
+    "LAD": {
+     "expected": 5.3945,
+     "realized": 6
+    },
+    "MIA": {
+     "expected": 4.0523,
+     "realized": 1
+    },
+    "MIL": {
+     "expected": 4.6244,
+     "realized": 6
+    },
+    "MIN": {
+     "expected": 5.1801,
+     "realized": 3
+    },
+    "NYM": {
+     "expected": 5.1576,
+     "realized": 10
+    },
+    "NYY": {
+     "expected": 5.8652,
+     "realized": 5
+    },
+    "PHI": {
+     "expected": 5.4053,
+     "realized": 3
+    },
+    "PIT": {
+     "expected": 3.3878,
+     "realized": 7
+    },
+    "SDP": {
+     "expected": 5.8242,
+     "realized": 2
+    },
+    "SEA": {
+     "expected": 3.5716,
+     "realized": 3
+    },
+    "SFG": {
+     "expected": 5.1352,
+     "realized": 6
+    },
+    "STL": {
+     "expected": 3.6343,
+     "realized": 6
+    },
+    "TBR": {
+     "expected": 3.2999,
+     "realized": 3
+    },
+    "TEX": {
+     "expected": 5.3465,
+     "realized": 4
+    },
+    "TOR": {
+     "expected": 4.792,
+     "realized": 3
+    },
+    "WSN": {
+     "expected": 3.2159,
+     "realized": 2
+    }
+   },
+   "2025": {
+    "ARI": {
+     "expected": 6.0659,
+     "realized": 7
+    },
+    "ATH": {
+     "expected": 3.1666,
+     "realized": 4
+    },
+    "ATL": {
+     "expected": 6.4137,
+     "realized": 5
+    },
+    "BAL": {
+     "expected": 5.6558,
+     "realized": 9
+    },
+    "BOS": {
+     "expected": 6.3597,
+     "realized": 5
+    },
+    "CHC": {
+     "expected": 5.9504,
+     "realized": 6
+    },
+    "CHW": {
+     "expected": 5.0343,
+     "realized": 9
+    },
+    "CIN": {
+     "expected": 5.1376,
+     "realized": 5
+    },
+    "CLE": {
+     "expected": 4.8938,
+     "realized": 4
+    },
+    "COL": {
+     "expected": 4.2622,
+     "realized": 5
+    },
+    "DET": {
+     "expected": 3.4412,
+     "realized": 7
+    },
+    "HOU": {
+     "expected": 6.7633,
+     "realized": 3
+    },
+    "KCR": {
+     "expected": 5.1677,
+     "realized": 2
+    },
+    "LAA": {
+     "expected": 4.7253,
+     "realized": 7
+    },
+    "LAD": {
+     "expected": 6.9237,
+     "realized": 8
+    },
+    "MIA": {
+     "expected": 3.3118,
+     "realized": 1
+    },
+    "MIL": {
+     "expected": 5.8513,
+     "realized": 3
+    },
+    "MIN": {
+     "expected": 4.9593,
+     "realized": 3
+    },
+    "NYM": {
+     "expected": 8.1909,
+     "realized": 16
+    },
+    "NYY": {
+     "expected": 7.2082,
+     "realized": 7
+    },
+    "PHI": {
+     "expected": 5.8084,
+     "realized": 4
+    },
+    "PIT": {
+     "expected": 4.984,
+     "realized": 6
+    },
+    "SDP": {
+     "expected": 6.0545,
+     "realized": 4
+    },
+    "SEA": {
+     "expected": 5.1051,
+     "realized": 2
+    },
+    "SFG": {
+     "expected": 5.0714,
+     "realized": 3
+    },
+    "STL": {
+     "expected": 5.6867,
+     "realized": 1
+    },
+    "TBR": {
+     "expected": 3.729,
+     "realized": 2
+    },
+    "TEX": {
+     "expected": 5.8809,
+     "realized": 8
+    },
+    "TOR": {
+     "expected": 4.6497,
+     "realized": 7
+    },
+    "WSN": {
+     "expected": 4.5477,
+     "realized": 8
+    }
+   },
+   "2026": {
+    "ARI": {
+     "expected": 4.5267,
+     "realized": 7
+    },
+    "ATH": {
+     "expected": 3.722,
+     "realized": 3
+    },
+    "ATL": {
+     "expected": 5.1052,
+     "realized": 10
+    },
+    "BAL": {
+     "expected": 4.2074,
+     "realized": 5
+    },
+    "BOS": {
+     "expected": 4.7869,
+     "realized": 3
+    },
+    "CHC": {
+     "expected": 6.3552,
+     "realized": 8
+    },
+    "CHW": {
+     "expected": 3.4963,
+     "realized": 6
+    },
+    "CIN": {
+     "expected": 5.013,
+     "realized": 6
+    },
+    "CLE": {
+     "expected": 4.1996,
+     "realized": 3
+    },
+    "COL": {
+     "expected": 3.3799,
+     "realized": 4
+    },
+    "DET": {
+     "expected": 5.5626,
+     "realized": 5
+    },
+    "HOU": {
+     "expected": 4.8571,
+     "realized": 1
+    },
+    "KCR": {
+     "expected": 5.0119,
+     "realized": 3
+    },
+    "LAA": {
+     "expected": 4.5667,
+     "realized": 6
+    },
+    "LAD": {
+     "expected": 6.42,
+     "realized": 7
+    },
+    "MIA": {
+     "expected": 2.8787,
+     "realized": 3
+    },
+    "MIL": {
+     "expected": 4.6287,
+     "realized": 4
+    },
+    "MIN": {
+     "expected": 3.0221,
+     "realized": 3
+    },
+    "NYM": {
+     "expected": 8.0257,
+     "realized": 6
+    },
+    "NYY": {
+     "expected": 6.9854,
+     "realized": 6
+    },
+    "PHI": {
+     "expected": 6.8973,
+     "realized": 6
+    },
+    "PIT": {
+     "expected": 3.5554,
+     "realized": 4
+    },
+    "SDP": {
+     "expected": 5.6165,
+     "realized": 7
+    },
+    "SEA": {
+     "expected": 4.5361,
+     "realized": 3
+    },
+    "SFG": {
+     "expected": 4.0085,
+     "realized": 7
+    },
+    "STL": {
+     "expected": 4.0121,
+     "realized": 3
+    },
+    "TBR": {
+     "expected": 4.2814,
+     "realized": 4
+    },
+    "TEX": {
+     "expected": 5.974,
+     "realized": 6
+    },
+    "TOR": {
+     "expected": 5.846,
+     "realized": 4
+    },
+    "WSN": {
+     "expected": 3.5217,
+     "realized": 2
+    }
+   }
+  },
+  "first_club_concentration_served_class": {
+   "available": false,
+   "reason": "the serving builder (plan item FAA-6) does not exist yet"
+  },
+  "serving_fit": {
+   "P": {
+    "features": [
+     "fit_analog",
+     "fa_share_3",
+     "payroll_level",
+     "tax_multiplier",
+     "qo_cost",
+     "incumbent"
+    ],
+    "coefs": {
+     "fit_analog": 0.7148697589179117,
+     "fa_share_3": 0.005422737927809662,
+     "payroll_level": 0.07932879001735473,
+     "tax_multiplier": 0.012762108970539962,
+     "qo_cost": -0.12228567011848666,
+     "incumbent": 1.7173695112384415
+    },
+    "standardization": {
+     "fa_share_3": {
+      "mean": 0.03333333333333333,
+      "sd": 0.028443301264776684,
+      "zero_sd": false
+     },
+     "tax_multiplier": {
+      "mean": 1.1137446110969476,
+      "sd": 0.2757231222431379,
+      "zero_sd": false
+     },
+     "qo_cost": {
+      "mean": 0.0841716396703609,
+      "sd": 0.3194323789295968,
+      "zero_sd": false
+     }
+    },
+    "winters": [
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024,
+     2025,
+     2026
+    ],
+    "converged": true,
+    "nit": 18,
+    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+    "objective": 3765.6950736818503,
+    "n_signings": 1173,
+    "coef_hash": "c2eaaf71bbff5749dccc16767f29ce8e07e2078db92e49e7dc783c50e6a2de88"
+   },
+   "N": {
+    "features": [
+     "fit_analog",
+     "incumbent"
+    ],
+    "coefs": {
+     "fit_analog": 0.8566741738562793,
+     "incumbent": 1.7680516357342626
+    },
+    "standardization": {},
+    "winters": [
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024,
+     2025,
+     2026
+    ],
+    "converged": true,
+    "nit": 7,
+    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+    "objective": 3772.0460280816787,
+    "n_signings": 1173,
+    "coef_hash": "1c0fbaa5c72e97c3673d1811a85f8db9542887c4b78a5c43feb958d3be060149"
+   }
+  }
+ },
+ "industry": {
+  "retro": {
+   "source_sha256": "9bb2827280608a5a4356c1f989e25943f8ec94c0ed80392304830641863d4c84",
+   "counts_by_offseason": {
+    "2015-16": {
+     "rows": 50,
+     "unresolved": 3,
+     "not_a_scored_signing": 47,
+     "no_parsed_pick": 0,
+     "matched": 0
+    },
+    "2016-17": {
+     "rows": 50,
+     "unresolved": 1,
+     "not_a_scored_signing": 49,
+     "no_parsed_pick": 0,
+     "matched": 0
+    },
+    "2017-18": {
+     "rows": 50,
+     "unresolved": 0,
+     "not_a_scored_signing": 50,
+     "no_parsed_pick": 0,
+     "matched": 0
+    },
+    "2018-19": {
+     "rows": 50,
+     "unresolved": 3,
+     "not_a_scored_signing": 6,
+     "no_parsed_pick": 1,
+     "matched": 40
+    },
+    "2019-20": {
+     "rows": 50,
+     "unresolved": 4,
+     "not_a_scored_signing": 2,
+     "no_parsed_pick": 0,
+     "matched": 44
+    },
+    "2020-21": {
+     "rows": 50,
+     "unresolved": 1,
+     "not_a_scored_signing": 3,
+     "no_parsed_pick": 0,
+     "matched": 46
+    },
+    "2021-22": {
+     "rows": 50,
+     "unresolved": 1,
+     "not_a_scored_signing": 2,
+     "no_parsed_pick": 0,
+     "matched": 47
+    },
+    "2022-23": {
+     "rows": 50,
+     "unresolved": 2,
+     "not_a_scored_signing": 0,
+     "no_parsed_pick": 0,
+     "matched": 48
+    },
+    "2023-24": {
+     "rows": 50,
+     "unresolved": 5,
+     "not_a_scored_signing": 5,
+     "no_parsed_pick": 0,
+     "matched": 40
+    },
+    "2024-25": {
+     "rows": 50,
+     "unresolved": 3,
+     "not_a_scored_signing": 0,
+     "no_parsed_pick": 0,
+     "matched": 47
+    },
+    "2025-26": {
+     "rows": 50,
+     "unresolved": 4,
+     "not_a_scored_signing": 0,
+     "no_parsed_pick": 0,
+     "matched": 46
+    }
+   },
+   "mlbtr_alone_unscored_class_years": {
+    "2016": {
+     "n": 44,
+     "hit_rate": 0.13636363636363635
+    },
+    "2017": {
+     "n": 46,
+     "hit_rate": 0.2608695652173913
+    },
+    "2018": {
+     "n": 43,
+     "hit_rate": 0.11627906976744186
+    }
+   },
+   "head_to_head": {
+    "P": {
+     "n": 358,
+     "model_hit_rate": 0.2122905027932961,
+     "mlbtr_hit_rate": 0.16247672253258844,
+     "paired_diff": 0.04981378026070765,
+     "paired_diff_ci95": [
+      0.005813547486033507,
+      0.09497206703910613
+     ],
+     "model_top3_hit_rate": 0.32122905027932963,
+     "model_mrr": 0.3201030590167994
+    },
+    "N": {
+     "n": 358,
+     "model_hit_rate": 0.2122905027932961,
+     "mlbtr_hit_rate": 0.16247672253258844,
+     "paired_diff": 0.04981378026070765,
+     "paired_diff_ci95": [
+      0.005813547486033507,
+      0.09497206703910613
+     ],
+     "model_top3_hit_rate": 0.30726256983240224,
+     "model_mrr": 0.31624547865892877
+    }
+   },
+   "pick_rule": "the club the post names; where it prints each writer's pick, the club most writers name, a k-way tie crediting 1/k each; a row with no parsed club is counted, not scored"
+  },
+  "forward": {
+   "status": "pending",
+   "reason": "scored against the frozen vector after the 2026-27 class closes (gate section 13)"
+  }
+ }
+}

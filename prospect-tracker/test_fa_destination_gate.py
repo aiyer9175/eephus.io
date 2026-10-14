@@ -15,10 +15,10 @@ Prose assertions run against a whitespace-flattened copy of the document, so a
 re-wrapped paragraph is not a failure; an edited criterion is, and so is any
 change to the hashed sections (file a dated amendment in section 18 instead).
 
-When the look fills section 19, its result pins go in their own file and the
-empty-results test below is retired in that same commit, for the reason
-test_dpw_path_gate_registration.py gives: a result pin beside a criterion pin
-invites editing the criterion to match the result.
+The look filled section 19 on 2026-10-14 (task Q9_04b); its result pins are in
+test_fa_destination_results.py and the empty-results test was retired in that
+commit, for the reason test_dpw_path_gate_registration.py gives: a result pin
+beside a criterion pin invites editing the criterion to match the result.
 """
 
 from __future__ import annotations
@@ -247,10 +247,3 @@ def test_read_to_write_this_section_discloses_the_reads():
         "**The 2024-2026 league dollar shares**",
         "None of these reads was joined to a destination model's output, because none exists.",
     ])
-
-
-def test_results_section_is_empty():
-    d = _doc()
-    body = d[d.index(RESULTS_HEADING) + len(RESULTS_HEADING):]
-    assert _flat(body) == "EMPTY AT REGISTRATION."
-    assert not re.search(r"\d", body)

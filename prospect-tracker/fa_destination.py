@@ -440,3 +440,149 @@ def comps_from_rows(rows: list[dict]) -> dict[tuple, dict]:
     for r in rows:
         out[(r["winter"], r["signing"])][r["org"]] = r
     return dict(out)
+
+
+# --------------------------------------------------------------------------
+# the class vector (gate section 14's freeze; section 5's serving column)
+# --------------------------------------------------------------------------
+# F on the serving class is "the same definitions on 2026 inputs and projGuar /
+# projAav". build_rows computes those definitions inline for realized signings
+# only, so winter_context() and member_comps() restate its per-winter state
+# and per-club arithmetic for any priced member. test_fa_destination_freeze.py
+# pins the restatement: fed the realized signings of every Gate 3 winter, it
+# returns build_rows' rows field for field, bit-exact.
+
+def winter_context(Y: int, enriched: list | None = None) -> dict:
+    """Every club-side input of the Fit's reduced twin for winter Y, as
+    build_rows reads it at the winter start: the behavior priors from
+    signings of winters before Y, season Y-1 tax payroll, wins and park
+    factors, and the threshold of season Y-1."""
+    import fa_market as fm
+    import fa_sources
+    from trades import canonical_org
+    if enriched is None:
+        enriched = fm.enriched_signings(2015, Y - 1)
+    prior = [s for s in enriched if s["class_year"] < Y]
+    beh: dict[str, dict] = defaultdict(lambda: {"max": 0, "n100": 0, "recent": 0,
+                                               "guars": [], "events": []})
+    for s in prior:
+        t = s.get("to_team")
+        if t not in ORGS:
+            continue
+        g = fm._npv_of(s)
+        beh[t]["max"] = max(beh[t]["max"], g)
+        beh[t]["guars"].append(g)
+        beh[t]["events"].append((s["class_year"], g))
+        if g >= 100_000_000:
+            beh[t]["n100"] += 1
+        if s["class_year"] >= Y - 3:
+            beh[t]["recent"] += g
+    for v in beh.values():
+        v["guars"].sort()
+    max_recent = max((b["recent"] for b in beh.values()), default=1) or 1
+    park: dict[str, dict] = {}
+    try:
+        import fa_fit as _ff
+        for r in fa_sources.fetch_savant_park_factors(Y - 1):
+            club = r.get("name_display_club") or ""
+            org = _ff._SAVANT_CLUB_OVERRIDES.get(club) or canonical_org(club)
+            park[org or "?"] = {"woba": int(r.get("index_woba") or 100),
+                                "hr": int(r.get("index_hr") or 100)}
+    except Exception:                                       # noqa: BLE001
+        park = {}
+    return {"winter": Y, "beh": dict(beh), "max_recent": max_recent,
+            "pay": fb.team_payroll_state(Y - 1), "wins": fb.standings_wins(Y - 1),
+            "park": park, "threshold_prev_usd": fm._cbt_threshold_or_earliest(Y - 1),
+            "prior_class_years": len({s["class_year"] for s in prior})}
+
+
+def outgoing_groups(entries) -> dict[str, set]:
+    """{club: position groups with an outgoing free agent} from (from_team,
+    position) pairs, the build_rows need proxy."""
+    import fa_market as fm
+    out: dict[str, set] = defaultdict(set)
+    for frm, pos in entries:
+        if frm in ORGS:
+            out[frm].add(fm._pos_group(pos))
+    return dict(out)
+
+
+def member_comps(ctx: dict, *, position, from_team, npv_usd: float, aav_usd: float,
+                 outgoing: dict) -> dict:
+    """{club: {need, window, afford, park, behavior, behavior_cond,
+    incumbent}} for one priced free agent, build_rows' arithmetic."""
+    import fa_market as fm
+    Y = ctx["winter"]
+    beh = ctx["beh"]
+    npv, aav = npv_usd, aav_usd
+    grp = fm._pos_group(position)
+    is_pit = grp in ("SP", "RP")
+    cond = {org: fb._cond_terms((beh.get(org) or {}).get("events") or [], npv, Y - 3)
+            for org in ORGS}
+    max_band_outlay = max(v[0] for v in cond.values())
+    out = {}
+    for org in ORGS:
+        b = beh.get(org) or {"max": 0, "n100": 0, "recent": 0, "guars": []}
+        tax = (ctx["pay"].get(org) or {}).get("tax_payroll_usd")
+        space = (ctx["threshold_prev_usd"] - tax) if tax else None
+        afford = (max(0.0, min(1.0, space / (aav * 2.0))) if space is not None else 0.5)
+        out[org] = {
+            "need": 1.0 if grp in outgoing.get(org, ()) else 0.0,
+            "window": fb._leverage(ctx["wins"].get(org)),
+            "afford": afford,
+            "park": fb._park_score(ctx["park"], org, is_pit),
+            "behavior": (0.5 * fb._reach(b, npv)
+                         + 0.3 * min(1.0, b["recent"] / ctx["max_recent"])
+                         + 0.2 * min(1.0, b["n100"] / 5.0)),
+            "behavior_cond": (
+                0.5 * fb._reach(b, npv)
+                + 0.3 * (cond[org][0] / max_band_outlay if max_band_outlay > 0 else 0.0)
+                + 0.2 * min(1.0, cond[org][1] / 5.0)),
+            "incumbent": 1.0 if from_team == org else 0.0,
+        }
+    return out
+
+
+def apply_standardization(X: np.ndarray, names: tuple, stats: dict) -> np.ndarray:
+    """A fitted record's standardization applied to new rows (a zero-SD
+    feature enters as 0, as in the fold)."""
+    X = X.copy()
+    for i, f in enumerate(names):
+        s = stats.get(f)
+        if not s:
+            continue
+        X[:, :, i] = 0.0 if s["zero_sd"] else (X[:, :, i] - s["mean"]) / s["sd"]
+    return X
+
+
+def class_vectors(members: list[dict], fit_record: dict, ctx: dict, *,
+                  state: dict | None = None) -> dict:
+    """{key: [30 probabilities in ORGS order]} for the priced members of a
+    class under one fitted arm (its features, coefs and standardization).
+
+    members: [{key, pos, from, projGuar, projAav, qo}]; the need proxy reads
+    every member's (from, pos). A member without projGuar or projAav gets no
+    vector (counted by the caller). ``state`` (club_state) is needed only when
+    the arm carries a Club Ledger term."""
+    names = tuple(fit_record["features"])
+    if any(f in L_FEATS for f in names) and state is None:
+        raise ValueError("this arm reads Club Ledger terms: pass club_state(Y)")
+    outgoing = outgoing_groups((m.get("from"), m.get("pos")) for m in members)
+    keys, feats = [], []
+    for m in members:
+        if not m.get("projGuar") or not m.get("projAav"):
+            continue
+        comps = member_comps(ctx, position=m.get("pos"), from_team=m.get("from"),
+                             npv_usd=float(m["projGuar"]), aav_usd=float(m["projAav"]),
+                             outgoing=outgoing)
+        if state is not None:
+            f = member_features(state, comps, aav_usd=float(m["projAav"]),
+                                qo=bool(m.get("qo")), from_team=m.get("from"))
+        else:
+            f = {"fit_analog": [fit_analog(comps[o]) for o in ORGS],
+                 "incumbent": [float(comps[o]["incumbent"]) for o in ORGS]}
+        keys.append(m["key"])
+        feats.append(f)
+    X = apply_standardization(stack(feats, names), names, fit_record.get("standardization") or {})
+    P = predict_proba(X, fit_record["coefs"], names)
+    return {k: [float(p) for p in P[i]] for i, k in enumerate(keys)}
