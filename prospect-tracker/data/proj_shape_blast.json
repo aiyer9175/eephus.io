@@ -1,0 +1,95 @@
+{
+ "generated_at": "2026-10-14T22:03:55Z",
+ "gate": "docs/PROJ_PATH_SHAPE_GATE.md section 0a (GATE 0.1), produced under amendment A-2 23.2 (f) after the fWAR epoch's step Z entry",
+ "read": "OWNER-WAIVED EARLY READ (owner EW3-5, 2026-10-14): the registered 2026-09-25 date was missed under A-2 and the artifact is produced now, on the served payload of this day",
+ "producer": "tools/proj_shape_blast_lab.py",
+ "fits_anything": false,
+ "served_artifact": {
+  "path": "data/mlb_projections.json",
+  "generated_at": "2026-10-14",
+  "sha256": "7e5db34d1545f28d9989da522fa26524ed150688efc2f854ce9a85f351742930",
+  "first_season": 2027,
+  "n_vets": 1400,
+  "dpw_usd": 16856777
+ },
+ "pool": "veteran rows carrying surNpv and a salary path with a five-season `war` (registered at 895 on 2026-09-18; recounted here)",
+ "n_pool": 877,
+ "repricer": {
+  "method": "served legacy pricing per row: proj_export._season_value_usd on the served salPath dollars, salary_path.club_option_floor, salary_path.apply_cliff (mode full), rate 0.070; contract tail chained by fa_market.chain_aging_tail on warChamp + warChampTail",
+  "default_ros_held": "the rest-of-season leg (surTotal - surNpv) is held at its served value under every reshape",
+  "identity_reproduces_served_surNpv": {
+   "within_1_usd": 877,
+   "within_1000_usd": 877,
+   "n": 877,
+   "max_abs_error_usd": 0,
+   "median_abs_error_usd": 0
+  },
+  "identity_reproduction_reads": "the served warTail for the seasons past 2031; every reshape (IDENTITY included) re-chains its tail from its own 2031 value, which is the seam a refit would move",
+  "moves_are": "reshape minus IDENTITY, both on this repricer with the tail re-chained"
+ },
+ "reshapes": {
+  "identity": "the served `war` path",
+  "maxsmooth": "warChamp rescaled to the served 5-year `war` total",
+  "ramp": "straight line with slope (war[4]-war[0])/4, shifted so the 5-year total is preserved (both endpoints cannot be kept and the total preserved at once; the slope and total are kept)"
+ },
+ "results": {
+  "identity": {
+   "n_rows": 877,
+   "rows_without_reshape_kept_identity": 0,
+   "surNpv_abs_move_usd": {
+    "mean": 0,
+    "median": 0,
+    "max": 0
+   },
+   "surTotal_abs_move_usd": {
+    "mean": 0,
+    "median": 0,
+    "max": 0
+   },
+   "surTotal_mean_relative_move": 0.0,
+   "n_rows_relative_basis": 666,
+   "spearman_surTotal_pre_post": 1.0
+  },
+  "maxsmooth": {
+   "n_rows": 877,
+   "rows_without_reshape_kept_identity": 84,
+   "surNpv_abs_move_usd": {
+    "mean": 2500390,
+    "median": 974145,
+    "max": 44018215
+   },
+   "surTotal_abs_move_usd": {
+    "mean": 2500390,
+    "median": 974145,
+    "max": 44018215
+   },
+   "surTotal_mean_relative_move": 0.2642,
+   "n_rows_relative_basis": 666,
+   "spearman_surTotal_pre_post": 0.976489
+  },
+  "ramp": {
+   "n_rows": 877,
+   "rows_without_reshape_kept_identity": 0,
+   "surNpv_abs_move_usd": {
+    "mean": 1276667,
+    "median": 387218,
+    "max": 20459558
+   },
+   "surTotal_abs_move_usd": {
+    "mean": 1276667,
+    "median": 387218,
+    "max": 20459558
+   },
+   "surTotal_mean_relative_move": 0.1151,
+   "n_rows_relative_basis": 666,
+   "spearman_surTotal_pre_post": 0.994451
+  }
+ },
+ "spearman_demotion_threshold": 0.999,
+ "reordering_criterion": "NOT demoted: an extreme reshape reorders surTotal below Spearman 0.9990, so the order is recorded beside any flip (9.1 records it, gates nothing)",
+ "reading": [
+  "This is a SHAPE-ONLY bound and says nothing about the level. A refit moves the level too; the level move is bounded by S3 (4.8) and by the dollar bands in section 9, not by this artifact.",
+  "Landing inside every band is not evidence that an arm worked."
+ ],
+ "wall_time_s": 0.5
+}

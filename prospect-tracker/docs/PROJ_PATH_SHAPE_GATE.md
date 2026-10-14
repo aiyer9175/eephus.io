@@ -1753,6 +1753,8 @@ the 5c amendment form and it is the only way this document changes.
 | 2026-09-30 | - | amended | - | AMENDMENT A-2 (section 23): owner answer EPOCH-Q2 (a), the battery runs on war_provider = fwar after the fWAR epoch's step M; the blast, power, S2 pre-flight and B0-COMPARE artifacts move after step Z; ARM A 2026-10-23, B0-GATE 2026-11-06 and ARM B 2026-11-13 keep their dates if their producers are ready, else a further amendment before 2026-10-23. No candidate scored, no look spent, no threshold moved |
 | 2026-09-30 | - | noted | - | TAIL SEAM (owner answer VAL2-Q1): the contract tail now prices on `fa_market.chain_aging_tail`, the champion's relative decay chained from the served 2031 `war` (the h5 seam that 9.1 already names as horizons 6-15), no longer on `warChamp` at its own level. The CONTRACT TAIL row's statement that neither SERVE flag moves the tail is superseded: a flip now moves the tail seasons of the 39 rows through the h5 anchor, so a flip's pre and post are both read on the chained payload. Served baselines on the same inputs: sum of `surNpv` $13,385.9M to $13,229.2M on the same 904 rows (36 rows move), Ohtani `surNpv` $155.3M to $157.4M. No candidate scored, no look spent, no threshold moved |
 | 2026-09-30 | - | noted | - | TAIL BAND (owner answers VAL2-Q3 and VAL2-Q3-REVIEW (b)): the trade value's P10-P90 range now spans the contract tail, each tail season on the served 2031 `warP10` / `warP90` chained with `fa_market.chain_aging_tail` (the P10 unfloored), shipped as `warP10Tail` / `warP90Tail`. A SERVE flip moves them through the h5 P10/P90 heads, as it moves the tail point. No served point value moves (sum of `surNpv` unchanged on the same 904 rows); 37 of the 39 tail rows' trade ranges widen. No candidate scored, no look spent, no threshold moved |
+| 2026-10-14 | - | produced | `data/proj_shape_blast.json` `bb56bd29...23365`, wall 0.5 s | GATE 0.1 (24.2), OWNER-WAIVED EARLY READ (owner EW3-5): 877 rows, IDENTITY reprice exact on 877; Spearman MAXSMOOTH 0.976489, RAMP 0.994451, the reordering criterion is not demoted. Nothing fitted |
+| 2026-10-14 | - | restated | - | 23.4 groups A to D on the `fwar` corpus (24.3): two-sided 671, frame counts identical, served `war` RS2 0.4687 / UAF 0.1678, A-SHAPE stays binding; measurements only, no candidate scored |
 
 ---
 
@@ -2768,3 +2770,153 @@ epoch rather than asserted here.
 
 Filed 2026-09-30. No candidate scored, no arm run, no look spent, no threshold moved.
 The row is appended to section 19.
+
+---
+
+## 24. RESULTS, 2026-10-14: the owner-waived early reads, in the registered order
+
+This section records every run the owner's 2026-10-14 instruction moved forward. It
+is appended below section 23 and edits no line above it apart from the section 19
+rows each subsection appends, which is how this document has always recorded a run.
+
+### 24.1 Standing: why these reads ran on 2026-10-14
+
+Owner instruction EW3-5, 2026-10-14, verbatim: "Fuck the registered look days and
+waiting, we don't have to wait for anything. Let's do everything today". Under it
+there are no look days, and a registered look or read run before its registered date
+is recorded as an **OWNER-WAIVED EARLY READ**. Section 13's sentence "Looking early
+disqualifies the arm for this battery" and G-0's identical clause are waived by the
+owner for these reads and for nothing else: every threshold, frame, estimator, seed,
+order and pre-committed sentence of sections 1 to 23 stands exactly as registered.
+
+What each registered item needed, checked before it ran:
+
+| item | registered date | precondition | state on 2026-10-14 |
+|---|---|---|---|
+| blast artifact (0a) | 2026-09-25, moved by A-2 after step Z | the step Z entry in part 9 of `FWAR_LABEL_EPOCH_GATE.md` | met: step Z recorded 2026-10-03 (21:11) |
+| restatement of groups A to D (23.4) | after step M, before the power artifact | the `fwar` corpus and the step M bundle | met: step M `a4bd70e8`, `model/proj_lgbm/meta.json` reads `war_provider` `fwar`, `train_hash` `248baa38d8b7144a` |
+| power artifact (3) | 2026-10-02, moved by A-2 | the blast artifact | met by 24.2 |
+| S2 pre-flight and B0-COMPARE (4.4a, 5.1) | 2026-10-09, moved by A-2 | the power artifact | met by 24.4 |
+| ARM A look (13) | 2026-10-23 | the pre-flight | met by 24.5 |
+| B0-GATE (5.1) | 2026-11-06 | ARM A's verdict | met by 24.6 |
+| ARM B look (13) | 2026-11-13 | ARM A's verdict and B0-GATE | met by 24.7 |
+| CONFIRM (4.6b) | opened at the ARM A look | `corpus["last"] >= 2027` | NOT met: the pinned corpus reads `last` 2026, so CONFIRM reads NOT_AVAILABLE by its own rule (24.6) |
+
+No item needed data that does not exist yet. The 2027-02-15 re-read is a NEW
+registration by section 13 and is not part of this battery.
+
+**The producers.** `tools/proj_shape_blast_lab.py` (0a), `tools/proj_shape_mde_lab.py`
+(3) and `tools/proj_shape_gate.py` (everything else, and the engine the power lab
+imports), pinned by `test_proj_shape_gate.py`. All three were written on 2026-10-14,
+after this document and every amendment to it, and none of them changes a registered
+clause.
+
+**One pinned input.** Every fitted number below reads one copy of the `fwar` corpus,
+`.cache/fa_corpus.pkl` as it stood at 2026-10-14 17:40 local, copied into the run's
+private work directory before anything ran: sha256
+`8786673a802dc5ed14baec22ab9e303e7f23555bd42f10717d05df65119acd9d`, `first` 2000,
+`last` 2026, `war_provider` `fwar`, `label_shape` `side_keyed_v1`, 17,094 hitter and
+19,417 pitcher rows. The fitted-model cache, the frame and every bundle live in that
+directory; the production `.cache` was read once (the copy) and written never (4.7
+leak 2).
+
+### 24.2 GATE 0.1, the blast-radius bound (0a). OWNER-WAIVED EARLY READ
+
+`data/proj_shape_blast.json` (sha256
+`bb56bd2916e1f48f27c2a9a2f3b529b450ed55416567b04868a554622ff23365`), produced by
+`python tools/proj_shape_blast_lab.py` on the served payload of the day
+(`data/mlb_projections.json`, generated 2026-10-14, sha256 `7e5db34d...42930`), wall
+time 0.5 s. Nothing was fitted.
+
+The pool is the veteran rows carrying `surNpv` and a salary path: **877** (registered
+895 on 2026-09-18). The repricer re-runs the served legacy pricing per row
+(`proj_export._season_value_usd` on the served `salPath` dollars, the club option
+floor, the tender cliff, rate 0.07, the contract tail chained by
+`fa_market.chain_aging_tail`) and reproduces the served `surNpv` **to the dollar on
+877 of 877 rows**. Default, named in the artifact: the rest-of-season leg is held at
+its served value, because a reshape of the 2027 to 2031 path does not reach the
+season being sold, so every `surTotal` move equals its `surNpv` move.
+
+| reshape | mean abs move in surNpv | median | max | mean relative move in surTotal | Spearman(pre, post) over surTotal |
+|---|---|---|---|---|---|
+| IDENTITY | $0 | $0 | $0 | 0.0000 | 1.000000 |
+| MAXSMOOTH | $2,500,390 | $974,145 | $44,018,215 | 0.2642 | **0.976489** |
+| RAMP | $1,276,667 | $387,218 | $20,459,558 | 0.1151 | **0.994451** |
+
+The relative move is over the 666 rows whose `surTotal` is at least $1M in absolute
+value. MAXSMOOTH leaves 84 rows on IDENTITY because their five-season champion total
+is zero, so no rescale exists; the artifact counts them. RAMP keeps the path's
+end-to-end slope and its five-season total, because a straight line through both
+endpoints cannot also keep the total.
+
+**Consequence 1 (0a): the reordering criterion is NOT demoted.** Both extreme
+reshapes reorder `surTotal` below Spearman 0.9990, so an unchanged order is not
+automatic and 9.1 records the Spearman beside any flip, as registered. It gates
+nothing. **Consequence 2, verbatim from the artifact's reading:** this is a
+SHAPE-ONLY bound and says nothing about the level; the level move is bounded by S3
+and by the section 9 bands.
+
+### 24.3 The restatement on the `fwar` corpus (23.4 groups A to D). Measurements only
+
+This subsection adds no clause, criterion, tripwire or verdict, moves no threshold
+and spends no look. The only estimators run are the champion and the shipped live
+bundle (step M), both the incumbent, by section 22's method.
+
+**Group A, the corpus census.**
+
+| as restated on `ewar_v2` in 22.2 | restated on `fwar` |
+|---|---|
+| 671 of 35,825 player-seasons carry rows on both sides | **671 of 35,840** (1.87 percent); 614 of 34,370 through 2025 |
+| 6 of 671 hold identical `war` | **0 of 671** |
+| 7 above the magnitude floor | **7** |
+| corpus label sum 26,269.7 | **26,362.9** over every season in the corpus, **25,363.3** through 2025 (the 2026 season is complete in this corpus and was in progress in 22.2's, so the two totals do not compare) |
+
+Ohtani, label / hitter row / pitcher row: 2021 7.98 / 5.02 / 2.96; 2022 9.20 / 3.60 /
+5.59; 2023 8.87 / 6.58 / 2.29; 2024 8.93 / 8.93 / (no pitcher row); 2025 9.37 / 7.45 /
+1.92; 2026 6.63 / 3.69 / 2.94.
+
+**Group B, the frame descriptives.** `build_training_frame(corpus, 2003, 2025,
+use_cache=False)` on the pinned corpus, wall 66.0 s:
+
+| as registered | restated on `fwar` |
+|---|---|
+| hit per-horizon 19,965 / 19,038 / 18,092 / 17,187 / 16,341 | **identical** |
+| pit per-horizon 24,325 / 22,997 / 21,617 / 20,340 / 19,083 | **identical** |
+| 0.8185 / 0.7845 of base rows carry all five horizons | **0.8185 / 0.7845** |
+| 90,623 + 108,362 = 198,985 long rows | **identical** |
+| hit label sums 12,661.5 / 11,040.9 / 9,164.9 / 7,282.1 / 5,655.5 | **12,284.6 / 10,739.1 / 8,951.7 / 7,161.4 / 5,600.3** |
+| pit label sums 8,819.0 / 7,533.7 / 6,192.1 / 4,914.3 / 3,773.7 | **9,290.2 / 7,914.7 / 6,530.5 / 5,195.5 / 4,012.5** |
+
+The battery's own frame (`tools/proj_shape_gate.py frame`, built per base in parallel
+processes) is checked against that call: its feature matrix is **identical element
+for element** on both sides and its labels are identical on every (row, horizon), so
+every fitted number below trains and scores on the frame this document registers.
+
+**Group C, the served descriptives**, counted by 4.5's rule on the served
+`data/mlb_projections.json` of 2026-10-14:
+
+| series | pool | RS2 mean | RS2 median | UAF | RAF |
+|---|---|---|---|---|---|
+| `war` | **301** | **0.4687** | **0.3701** | **202 / 1,204 = 0.1678** | **167** |
+| `warPTH` | 436 | 0.5445 | 0.4783 | 285 / 1,744 = 0.1634 | 240 |
+| `warChamp` | 331 | 0.0623 | 0.0424 | 0 / 1,324 = 0.0000 | 0 |
+
+Section 0's rows restated: the champion path wobbles on **0 of 331** rows and the ML
+central path on **167 of 301**; vets 5-year `warPTH` **4,740.1** against `war`
+**3,003.0**, 57.8 percent high; Ohtani `warTotalPTH` **28.2** against `warTotal`
+**25.6**. 22.5's incumbent pre-view, repeated on the `fwar` corpus: the battery's
+serving replica (`serving_inputs`, `serve_live_war`) rebuilds every served veteran's
+path inputs from the pinned corpus and runs them through the live bundle, and it
+reproduces the served `war` on **1,400 of 1,400 rows to the cent**, so the pre-view
+and the served recount are the same numbers. **A-SHAPE's contingency does not fire:**
+RS2 mean 0.4687 against the frozen 0.2617 and UAF 0.1678 against the frozen 0.1192,
+so both legs stay binding and neither bar is touched.
+
+**Group D, the design-day baselines** of 9.1 and 9.2 on the same payload, the bands
+frozen and only the baselines restated: 1,400 vets, 181 prospects, `dpw_usd`
+16,856,777; vets 5-year `war` sum **3,003.0** (band 2,852.9 to 3,153.2); vets year-1
+`war` sum **856.8**; median year-1 `war` **0.24**; rows carrying `surNpv` **877**; sum
+of `surNpv` **$12,505,957,789** (band $11.568B to $13.444B); Ohtani `warTotal`
+**25.6**, `surNpv` / `surTotal` **$203,222,380 / $203,222,380**. 9.2's insulated
+numbers on the same payload: `warChamp` 5-year sum 3,272.9, `warY1Champ` sum 915.2,
+the 181 prospect rows' 5-year WAR sum 491.5.
