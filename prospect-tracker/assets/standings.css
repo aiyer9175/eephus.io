@@ -1,0 +1,139 @@
+/* Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Noah J. Dengler (@ARKNDJL), 2026 */
+
+/* /standings/ (STANDINGS_4): every standings style lives here, scoped to
+   .st-app; the agate, the dateline and the bracket come from the shared
+   sports-page classes (assets/sports-page.css, SCORES_7a). Tokens only, both
+   themes; no new animation (STANDINGS_PLAN 5.9). Widths follow plan 5.8: the
+   Record group is 352 px at 390 (club 100, W 28, L 28, PCT 40, GB 36, L10 36,
+   STRK 40, RD 44), set by standings.js on each table's shared <colgroup>. */
+.st-app .st-sr { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.st-app .st-wrap { min-width: 0; }
+
+/* ---- controls */
+.st-app .st-ctl { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin: 8px 0 6px; }
+.st-app .st-row { display: flex; gap: 4px; align-items: center; min-width: 0; }
+.st-app .st-chip-btn, .st-app .st-btn {
+  min-height: 32px; padding: 0 10px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary);
+  font: 700 11.5px/1 var(--font-retro-mono); letter-spacing: .04em; cursor: pointer; white-space: nowrap; }
+.st-app .st-chip-btn:hover, .st-app .st-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.st-app .st-chip-btn[aria-pressed="true"] { color: var(--text-primary); box-shadow: inset 0 -2px 0 var(--accent-gold); }
+.st-app .st-chip-btn:disabled { cursor: default; opacity: 1; }
+.st-app button:focus-visible, .st-app a:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+.st-app .st-mine-btn { margin-left: 8px; }
+
+/* ---- the stamp, the legend, the notes */
+.st-app .st-stamp em { font-style: normal; }
+.st-app .st-stale { margin: 6px 0; padding: 4px 8px; border-left: 3px solid var(--accent-gold); background: var(--bg-secondary);
+  font-size: 12.5px; color: var(--text-primary); }
+.st-app .st-legend { margin: 4px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--text-secondary); }
+.st-app .st-legend .ico { vertical-align: -3px; }
+.st-app .st-fmt { margin: 4px 0; font-size: 12px; color: var(--text-secondary); }
+.st-app .st-note { margin: 8px 0; }
+.st-app .st-oddslab { margin: 10px 0 2px; font: 11.5px/1.4 var(--font-retro-mono); color: var(--text-secondary); }
+.st-app .st-chip { padding: 0 4px; border: 1px solid var(--border); color: var(--text-primary); text-decoration: none; }
+.st-app .st-chip:hover { border-color: var(--accent-lilac); }
+.st-app .st-sub { margin: 8px 0 2px; font: 700 11px var(--font-retro-mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-secondary); }
+.st-app .st-final-h { margin: 18px 0 0; font: 700 12px var(--font-retro-mono); letter-spacing: .1em; text-transform: uppercase; }
+.st-app .st-bracket { margin: 14px 0 6px; }
+
+/* ---- the table frame: a scroll box per table, a shadow while columns sit off screen */
+.st-app .st-tw { position: relative; margin: 2px 0 10px; }
+.st-app .st-frame { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.st-app .st-shadow { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; pointer-events: none;
+  background: linear-gradient(to left, var(--border), transparent); }
+.st-app .st-shadow[hidden] { display: none; }
+
+/* ---- the table: agate, fixed layout, the club cell frozen */
+.st-app .st-table { table-layout: fixed; background: var(--bg-secondary); }
+.st-app .st-table caption { caption-side: top; text-align: left; padding: 2px 0; font-size: 11px; color: var(--text-tertiary); }
+.st-app .st-table th, .st-app .st-table td { height: 30px; padding: 0 4px; overflow: hidden; text-overflow: clip; }
+.st-app .st-table td { color: var(--text-primary); }
+.st-app .st-table tbody tr { border-bottom: 1px solid var(--border-light); }
+.st-app .st-table .st-ghr th { height: 18px; font: 700 9.5px/1 var(--font-retro-mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-tertiary); text-align: center; border-bottom: 1px solid var(--border); }
+.st-app .st-table .st-ghr .st-gh { box-shadow: inset 1px 0 0 var(--border); }
+.st-app .st-table thead th { position: relative; padding: 0 2px; }
+.st-app .st-table th[scope="row"], .st-app .st-table .st-club-h, .st-app .st-table .st-g0 {
+  position: sticky; left: 0; z-index: 1; background: var(--bg-secondary); box-shadow: 1px 0 0 var(--border-light); text-align: left; }
+.st-app .st-table tbody tr:hover > *, .st-app .st-table tr.st-hl > *, .st-app .st-table tr.st-isopen > * { background: var(--bg-tertiary); }
+.st-app .st-table tr.st-mine > th[scope="row"] { box-shadow: inset 2px 0 0 var(--accent-lilac), 1px 0 0 var(--border-light); }
+.st-app .st-table tr.st-cut > * { border-bottom: 1px dashed var(--text-tertiary); }
+.st-app .st-dim { color: var(--text-dim) !important; }
+
+/* sort buttons: the abbreviation, a fixed indicator slot, the gold rule when sorted */
+.st-app .st-sort { display: inline-flex; justify-content: flex-end; align-items: center; width: 100%; min-height: 24px; padding: 0;
+  border: 0; background: none; color: var(--text-secondary); font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.st-app .st-sort:hover, .st-app th.st-sorted .st-sort { color: var(--text-primary); }
+.st-app .st-sort:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: -2px; }
+.st-app .st-sort abbr { text-decoration: none; }
+.st-app .st-sort-ind { display: inline-block; width: 8px; font-size: 8px; text-align: right; }
+.st-app th.st-sorted { box-shadow: inset 0 -2px 0 var(--accent-gold); }
+
+/* the club cell: mark slot, code, MLB's letter, the detail chevron */
+.st-app .st-club { white-space: nowrap; padding-right: 26px !important; font-weight: 400; }
+.st-app .st-mk { display: inline-block; width: 12px; height: 12px; margin-right: 4px; vertical-align: -2px; }
+.st-app .st-mk .ico, .st-app .st-legend .ico { --ico-accent: currentColor; }
+.st-app .st-mk-c { color: var(--text-primary); }
+.st-app .st-mk-e { color: var(--text-tertiary); }
+.st-app .st-code .club-link, .st-app .st-code > * { font: 700 12px var(--font-retro-mono); color: var(--accent-navy); text-decoration: none; }
+.st-app .st-code .club-link:hover { text-decoration: underline; }
+.st-app .st-letter { margin-left: 1px; font-size: 10px; color: var(--text-secondary); }
+.st-app .st-letter abbr { text-decoration: none; }
+.st-app .st-nick { display: none; margin-left: 6px; font-size: 11.5px; color: var(--text-secondary); }
+.st-app .st-logo { margin-right: 4px; }
+.st-app .st-more { position: absolute; top: 50%; right: 2px; width: 24px; height: 24px; margin-top: -12px; padding: 0; border: 0;
+  background: none; color: var(--text-tertiary); fill: currentColor; cursor: pointer; }
+.st-app .st-more:hover { color: var(--text-primary); }
+.st-app .st-club { position: sticky; }
+
+/* L10 lamps (ten 4 x 8 px cells, 1 px apart: 49 px) and the streak pictograms */
+.st-app .st-lamps { display: none; gap: 1px; margin-right: 5px; vertical-align: -1px; }
+.st-app .st-lamps i { display: block; width: 4px; height: 8px; box-shadow: inset 0 0 0 1px var(--border); }
+.st-app .st-lamps i.on { background: var(--text-primary); box-shadow: none; }
+.st-app .st-up { color: var(--up); margin-right: 2px; vertical-align: -1px; }
+.st-app .st-down { color: var(--down); margin-right: 2px; vertical-align: -1px; }
+
+/* the detail row */
+.st-app .st-detail td { height: auto; padding: 8px 10px 10px; text-align: left; white-space: normal; background: var(--bg-tertiary); }
+.st-app .st-dgrid { display: grid; gap: 8px 24px; position: sticky; left: 0; max-width: calc(100vw - 48px); }
+.st-app .st-dl { display: grid; grid-template-columns: auto auto; gap: 1px 12px; margin: 0; justify-content: start; }
+.st-app .st-dl dt { color: var(--text-secondary); }
+.st-app .st-dl dd { margin: 0; text-align: right; }
+.st-app .st-detail p { margin: 0 0 6px; }
+.st-app .st-l10 .st-lamps { display: inline-flex; }
+.st-app .st-links { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.st-app .st-links a { color: var(--accent-navy); }
+
+/* the footer credit and the tiebreak note */
+.st-app .st-credit { margin: 14px 0 4px; padding-top: 6px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--text-secondary); }
+.st-app .st-credit p { margin: 0 0 4px; }
+.st-app .st-copy { white-space: pre-wrap; overflow-wrap: anywhere; }
+.st-app .st-tie { margin: 8px 0; font-size: 12.5px; }
+.st-app .st-tie summary { cursor: pointer; min-height: 24px; }
+
+@media (min-width: 768px) {
+  .st-app .st-lamps { display: inline-flex; }
+  .st-app .st-dgrid { grid-template-columns: minmax(0, 320px) minmax(0, 1fr); }
+}
+@media (min-width: 1024px) {
+  .st-app .st-nick { display: inline; }
+}
+@media (pointer: coarse) {
+  .st-app .st-table th, .st-app .st-table td { height: 40px; }
+  .st-app .st-table .st-ghr th { height: 20px; }
+}
+@media (max-width: 640px) {
+  .st-app .st-ctl { display: block; }
+  .st-app .st-row { margin-bottom: 4px; }
+  .st-app .st-views { overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; }
+  .st-app .st-views .st-chip-btn { scroll-snap-align: start; }
+  .st-app .st-groups { overflow-x: auto; scrollbar-width: none; }
+  .st-app .st-chip-btn, .st-app .st-btn { min-height: 44px; padding: 0 9px; }
+  .st-app .st-mine-btn { margin-left: 0; }
+  .st-app .st-club { max-width: 100px; }
+}

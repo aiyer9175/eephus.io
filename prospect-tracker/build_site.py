@@ -177,6 +177,10 @@ _SCORES_PREGAME_VER = _asset_ver("assets/scores-pregame.js")   # the pregame con
 _SCORES_PIXEL_VER = _asset_ver("assets/scores-pixel.js")   # the pixel art (SCORES_7b), eager
 _SCORES_PIXEL_CSS_VER = _asset_ver("assets/scores-pixel.css")
 _SCORES_GFX_VER = _asset_ver("assets/scores-gfx.js")   # the lazy share cards (SCORES_7c)
+# /standings/ - the Standings page of Scores / Standings (STANDINGS_4, behind
+# standings_core.STANDINGS_LIVE): its module script and its stylesheet.
+_STANDINGS_VER = _asset_ver("assets/standings.js")
+_STANDINGS_CSS_VER = _asset_ver("assets/standings.css")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
 _AWARDS_VER = _asset_ver("assets/awards.js")
@@ -263,7 +267,8 @@ def _data_vers_script(names: tuple[str, ...]) -> str:
 
     The scores files (/data/scores/, written by tools/scores_job.py between
     builds) are refused for the same reason: a build-time stamp would pin a
-    stale scoreboard."""
+    stale scoreboard. So are the standings files the same job writes under
+    /data/scores/standings/ (STANDINGS_4), by any name starting "standings"."""
     stamps: dict[str, str] = {}
     for name in names:
         if name.startswith("betting"):
@@ -271,7 +276,7 @@ def _data_vers_script(names: tuple[str, ...]) -> str:
                 f"{name} is a close-job payload and must never be content-stamped: "
                 "it mutates intra-day without a rebuild, and a build-time stamp "
                 "would serve a week-stale copy under the /data/ max-age.")
-        if name.startswith("scores"):
+        if name.startswith("scores") or name.startswith("standings"):
             raise ValueError(
                 f"{name} is a scores job payload and must never be content-stamped: "
                 "the job rewrites it between builds, and a build-time stamp would "
@@ -629,6 +634,8 @@ ICON_FOR = _merge_icon_maps(
     # The Awards symbols (AWARDS_7): the podium on the module strip and the award
     # cards, the ballot card on the My Ballot tab.
     {k: k for k in ("aw-podium", "aw-ballot")},
+    # The standings scorebook marks (STANDINGS_4): clinch and elimination.
+    {k: k for k in ("st-clinch", "st-elim")},
 )
 
 
@@ -7322,12 +7329,22 @@ def build_ledger() -> str:
                 url=f"{SITE_ORIGIN}/ledger/", image=module_share_image("ledger"))
 
 
+#: The two sub lines of the shared Scores / Standings head.
+SCORES_SUB = ("MLB games by date: the score, MLB's win probability, the plays that moved it with MLB's "
+              "video, box scores, and three stars chosen by a published rule.")
+STANDINGS_SUB = ("MLB standings by division, wild card, league and the majors, with MLB's records and "
+                 "splits, run differential, an expected record, and the site's simulator chances "
+                 "labelled as such.")
+
+
 def _scores_module_head(active: str) -> str:
     """The Scores / Standings masthead (STANDINGS_PLAN 3, the rename): the 32 px
     icon, the h1 with the stage chip, the sub line and, only once
     standings_core.STANDINGS_LIVE is True, a two-link strip with aria-current
     on the page shown. /scores/ calls it with active="scores"; STANDINGS_4
-    reuses it with "standings"."""
+    reuses it with "standings", which swaps the sub line for the standings
+    page's (STANDINGS_PLAN 5.11). One masthead site for both pages: the module
+    mastheads task (Q11_06_MODULE_MASTHEADS) treats this helper as one."""
     try:
         import standings_core
         strip = bool(getattr(standings_core, "STANDINGS_LIVE", False))
@@ -7343,8 +7360,7 @@ def _scores_module_head(active: str) -> str:
     return (
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("scores")}Scores / Standings {_stage_chip("scores")}</h1></div>'
-        '<span class="section-sub">MLB games by date: the score, MLB\'s win probability, the plays that '
-        'moved it with MLB\'s video, box scores, and three stars chosen by a published rule.</span></div>'
+        f'<span class="section-sub">{STANDINGS_SUB if active == "standings" else SCORES_SUB}</span></div>'
         + nav
     )
 
@@ -7428,6 +7444,67 @@ def write_scores_page(preview_root=None) -> str:
     path = root / rel
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(build_scores(), encoding="utf-8")
+    print(f"  wrote {path.as_posix()} (the preview copy, not the published tree)")
+    return str(path)
+
+
+#: The /standings/ title and meta description (STANDINGS_PLAN 5.11).
+STANDINGS_TITLE = "MLB Standings - eephus.io"
+STANDINGS_DESC = ("MLB standings by division, wild card and league: records, splits, run differential and "
+                  "expected record from MLB, races over the season, and the site's simulator chances, "
+                  "implied with no market.")
+
+
+def build_standings() -> str:
+    """The /standings/ shell (STANDINGS_4), a pure reader of /data/scores/standings/.
+
+    BEHIND THE FLAG. main() writes standings/index.html only while
+    standings_core.STANDINGS_LIVE is True (STANDINGS_7_FLIP); while it is
+    False write_standings_page() renders this shell into
+    .cache/scores/preview/site/standings/index.html and nothing public changes.
+
+    Shell on the build_franchise pattern: the shared Scores / Standings head
+    (_scores_module_head, one masthead site for both pages), one mount root
+    with the CSV opt-in, then the shared sports-page classes (SCORES_7a: the
+    agate and the bracket styles), the module css, eephus-hub.js,
+    eephus-teampick.js and assets/standings.js, deferred and stamped.
+    eephus-state.js and eephus-tiers.js ride every page's head (page()), so
+    the shell does not load them a second time. The mount root names the lazy
+    bracket chunk (SCORES_4b), which standings.js mounts unchanged in the
+    Playoffs view. The shell types no number; no EEPHUS_DATA_VERS (the job
+    rewrites its files between builds)."""
+    body = (
+        '<div class="fa-app mlbstats-app st-app">'
+        + _scores_module_head("standings")
+        + f'<div id="standings-app-root"{_csv_optin("standings")}'
+        f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"></div>'
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/sports-page.css?v={_SPORTS_PAGE_CSS_VER}">'
+        f'<link rel="stylesheet" href="/assets/standings.css?v={_STANDINGS_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
+        f'<script src="/assets/standings.js?v={_STANDINGS_VER}" defer></script>'
+    )
+    return page(STANDINGS_TITLE, "scores", body, STANDINGS_DESC, url=f"{SITE_ORIGIN}/standings/")
+
+
+def write_standings_page(preview_root=None) -> str:
+    """Write the /standings/ shell where the flag allows, and return the path.
+
+    A preview_root always gets the preview copy, whatever the flag says (the
+    render tests build their temporary site this way). With no preview_root:
+    STANDINGS_LIVE True writes the published standings/index.html, False only
+    the preview copy under SCORES_PREVIEW_SITE (plan 4.4: nothing under the
+    published tree while the flag is off)."""
+    import standings_core
+    rel = "standings/index.html"
+    if preview_root is None and standings_core.STANDINGS_LIVE:
+        _write(rel, build_standings())
+        return str(ROOT / rel)
+    root = Path(preview_root) if preview_root is not None else SCORES_PREVIEW_SITE
+    path = root / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(build_standings(), encoding="utf-8")
     print(f"  wrote {path.as_posix()} (the preview copy, not the published tree)")
     return str(path)
 
@@ -10767,6 +10844,9 @@ def main() -> None:
         _write("scores/index.html", build_scores())
     else:
         write_scores_page()
+    # /standings/ ships behind standings_core.STANDINGS_LIVE (STANDINGS_4): the
+    # preview copy only, until STANDINGS_7_FLIP turns it on.
+    write_standings_page()
     _write("models/index.html", build_models())
     _write("models/updates/index.html", build_model_updates())
     _write("glossary/index.html", build_glossary())

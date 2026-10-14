@@ -141,6 +141,14 @@ def test_awards_assets_type_no_colour(rel):
     assert not re.search(r"\brgba?\(|\bhsla?\(|gradient\(", text)
 
 
+# STANDINGS_4 (STANDINGS_PLAN 5.9): the /standings/ stylesheet and client type no colour.
+@pytest.mark.parametrize("rel", ["assets/standings.css", "assets/standings.js"])
+def test_standings_assets_type_no_colour(rel):
+    text = (Path(__file__).parent / rel).read_text(encoding="utf-8")
+    assert not re.findall(r"#[0-9a-fA-F]{3,8}\b", text)
+    assert not re.search(r"\brgba?\(|\bhsla?\(", text)
+
+
 def test_the_awards_gfx_painter_reads_tokens_only():
     """AWARDS_10: the kind:"awards" painter in eephus-gfx.js types no colour; every paint
     is palette() or tok() of a site.css token (AWARDS_PLAN 5.16)."""

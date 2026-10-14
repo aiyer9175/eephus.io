@@ -110,6 +110,16 @@
      fip        3.00/3.50/3.90/4.30/4.80   projections default view (85) 17.6/44.7/31.8/5.9/0/0
      surplus    100/50/20/5/1   default view (99) 23.2/31.3/6.1/3.0/35.4/1.0/0
      trade      100/40/15/8/3   trade_values.json (6,426) 0.4/1.2/3.0/2.7/5.0/83.1/4.7
+     rdg        1.00/0.60/0.35/0.15/0.00   run differential per game (STANDINGS_4,
+                                STANDINGS_PLAN 5.9), re-measured 2026-10-14 on
+                                the tracked data/_labs/standings/ copy: 750
+                                club-seasons 2000 to 2025 without 2020, RD / G
+                                rounded to the 0.01 the column prints
+                                (standings_core rdg) 7.6/13.2/14.8/9.3/6.0/0.0/49.1
+                                (SD 0.715, median 0.02). neg true: run
+                                differential goes below zero, so every club
+                                under zero reads poor and no club reads below.
+                                The page paints no colour before 20 games.
 
    SERVED CONSTANTS THIS FILE MUST STAY A SUPERSET OF (pinned by
    test_value_ruler.py::test_the_served_constants_are_a_subset)
@@ -149,7 +159,8 @@
     woba:      { cuts: [0.400, 0.370, 0.340, 0.320, 0.300], dir: "hi", neg: false, round: r3 },
     fip:       { cuts: [3.00, 3.50, 3.90, 4.30, 4.80], dir: "lo", neg: false, round: r2 },
     surplus:   { cuts: [100, 50, 20, 5, 1],            dir: "hi", neg: true,  round: r1 },
-    trade:     { cuts: [100, 40, 15, 8, 3],            dir: "hi", neg: true,  round: r1 }
+    trade:     { cuts: [100, 40, 15, 8, 3],            dir: "hi", neg: true,  round: r1 },
+    rdg:       { cuts: [1.00, 0.60, 0.35, 0.15, 0.00], dir: "hi", neg: true,  round: r2 }
   };
 
   // "good" | "" - the empty string for a missing or non-finite value, so a call
