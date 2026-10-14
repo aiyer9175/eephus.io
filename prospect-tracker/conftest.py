@@ -1066,6 +1066,11 @@ _SIDECAR_WRITE_TARGETS = (
      ".cache/proj_components/preview/components.json"),
     ("proj_export", "COMPONENTS_LIVE_PATH", "data/mlb_proj_components.json"),
     ("mlb_player_export", "COMPONENTS_PATH", "data/mlb_proj_components.json"),
+    # TM_7: proj_export's Team Outlook display preview (the T3 runs and the T7
+    # drill-down while their flags are off); _write_team_display_preview
+    # resolves it at call time.
+    ("proj_export", "TEAM_DISPLAY_PREVIEW_PATH",
+     ".cache/team_projection/preview/team_outlook_display.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

@@ -562,7 +562,7 @@
   var OPEN_LINKS = {
     roster: [["Hitters", "mlbstats_hitters"], ["Starters", "mlbstats_starters"], ["Bullpen", "mlbstats_bullpen"], ["Defense", "mlbstats_defense"], ["eWAR", "mlbstats_war"], ["Leverage", "mlbstats_leverage"]],
     season: [["Team board", "betting_teams"], ["Team Outlook", "team_outlook"]],
-    outlook: [["Team Outlook", "team_outlook"], ["Roster board", "roster_board"]],
+    outlook: [["Team Outlook", "team_outlook"], ["Club breakdown", "team_drilldown"], ["Roster board", "roster_board"]],
     farm: [["Farm page", "farm"], ["Tendencies", "tendencies"], ["Tree", "farm_tree"]],
     fin: [["Club Ledger", "ledger"], ["Trade board", "trade_board"]],
     market: [["FA fits", "fa_fits"], ["Archive", "fa_archive"]],

@@ -300,6 +300,9 @@
                   // Team Outlook slate: "proj" = the 2027 projection (default),
                   // "now" = the dark-launched Current (2026) view (#now=1 soak).
                   teamMode: "proj", teamModeTouched: false,
+                  // Team Outlook drill-down (T7): the club whose player breakdown
+                  // is open (#view=teams&club=XXX), or null.
+                  club: null,
                   // Player-page tab (#ptab=, the key PROSPX uses). Held here so an
                   // async fill or a re-render never snaps the reader back to the
                   // first tab; PTAB_FOR scopes it to the player it was chosen on.
@@ -350,6 +353,7 @@
     state.ptab = PTABS.includes(p.get("ptab")) ? p.get("ptab") : null;
     PTAB_FOR = state.player;
     state.view = ["teams", "accountability"].includes(p.get("view")) ? p.get("view") : "players";
+    state.club = p.get("club") || null;
     state.cmp = (p.get("cmp") || "").split(",").filter(Boolean).slice(0, 2);
     if (p.has("src")) state.src = p.get("src");
     if (p.has("pos")) state.pos = p.get("pos");
@@ -377,6 +381,7 @@
     if (state.player) p.set("player", state.player);
     if (state.player && state.ptab && PTAB_FOR === state.player) p.set("ptab", state.ptab);
     if (state.view !== "players") p.set("view", state.view);
+    if (state.view === "teams" && state.club) p.set("club", state.club);
     if (state.cmp.length) p.set("cmp", state.cmp.join(","));
     if (state.src !== "all") p.set("src", state.src);
     if (state.pos !== "all") p.set("pos", state.pos);
@@ -1004,6 +1009,82 @@
     const curSeason = DATA.current_season || (DATA.first_season ? DATA.first_season - 1 : "");
     const pctStr = (p) => p == null ? EM_DASH : (p * 100).toFixed(1) + "%";
     const wlOf = (w, l) => `${Math.round(w)}-${Math.round(l)}`;
+    // T3 runs (TM_7, class 2, dark): the exporter puts only the sides that
+    // passed TM-C on the rows, so each column renders only when its key is on
+    // a row. They are the first projected season on the Team Outlook frame
+    // (Q9_03): the pre-free-agency frame unless the payload carries the
+    // as-of-signings frame block.
+    const outlookFrame = DATA.team_outlook_frame ? "as-of-signings frame" : "pre-free-agency frame";
+    const runCols = [["rs", "RS", "Projected runs scored"], ["ra", "RA", "Projected runs allowed"],
+                     ["runDiff", "Run diff", "Projected run differential, RS minus RA"],
+                     ["pythW", "Pythag W", "Pythagenpat wins from the projected RS and RA"]]
+      .filter(c => rows.some(r => r.runs && r.runs[c[0]] != null));
+    const runTxt = (k, v) => {
+      if (v == null || !Number.isFinite(Number(v))) return EM_DASH;
+      const n = Math.round(Number(v));
+      return k === "runDiff" && n > 0 ? `+${n}` : String(n);
+    };
+    const runCell = (r, k) => `<td class="proj-tm-run proj-cell-mono">${runTxt(k, (r.runs || {})[k])}</td>`;
+    // T7 drill-down (TM_7, owner answer TM-Q4 (a), class 2, dark): a club's
+    // players exactly as the roll-up counts them; renders only when the rows
+    // carry `drill`.
+    const hasDrill = rows.some(r => r.drill && Array.isArray(r.drill.players));
+    const drillTeam = (hasDrill && state.club && rows.some(r => r.team === state.club && r.drill)) ? state.club : null;
+    const drillRow = (r, ncols) => {
+      const d = r.drill, f = d.foot || {};
+      const np = `<span class="fa-sub">not projected</span>`;
+      const sg = (v) => v == null || !Number.isFinite(Number(v)) ? np : (Number(v) > 0 ? "+" : "") + Number(v).toFixed(1);
+      const w1 = (v) => v == null || !Number.isFinite(Number(v)) ? np : Number(v).toFixed(1);
+      const isHit = (p) => p.side === "hit" || p.side === "two";
+      const isPit = (p) => p.side === "pit" || p.side === "two";
+      const ptCell = (p) => {
+        const parts = [];
+        if (isHit(p)) parts.push(p.pa != null ? `${Math.round(p.pa)} PA` : "PA not projected");
+        if (isPit(p)) parts.push(p.ip != null ? `${Math.round(p.ip)} IP` : "IP not projected");
+        return parts.join(" &middot; ");
+      };
+      const runsSub = (p) => {
+        const bits = [];
+        if (isHit(p)) bits.push(`Bat ${sg(p.bat)}`, `BsR ${sg(p.bsr)}`, `Fld ${sg(p.fld)}`, `Pos ${sg(p.posRuns)}`);
+        if (isPit(p)) bits.push(`Pitching ${w1(p.pitRuns)}`);
+        return bits.join(" &middot; ");
+      };
+      // PA and IP print only where the exposure heads serve (PJ-C's exposure
+      // test); with none served the column leaves and one line says why.
+      const hasPt = (d.players || []).some(p => p.pa != null || p.ip != null);
+      const body = (d.players || []).map(p => `<tr>
+          <td class="pd-player"><a class="fa-player-link" href="#player=${encodeURIComponent(p.key || "")}">${esc(p.name || p.key || "")}</a> <span class="fa-sub">${esc(p.pos || "")}</span><div class="pd-runs-sub fa-sub">${runsSub(p)}</div></td>
+          ${hasPt ? `<td class="pd-pt fa-sub">${ptCell(p)}</td>` : ""}
+          <td class="pd-run">${isHit(p) ? sg(p.bat) : ""}</td>
+          <td class="pd-run">${isHit(p) ? sg(p.bsr) : ""}</td>
+          <td class="pd-run">${isHit(p) ? sg(p.fld) : ""}</td>
+          <td class="pd-run">${isHit(p) ? sg(p.posRuns) : ""}</td>
+          <td class="pd-run">${isPit(p) ? w1(p.pitRuns) : ""}</td>
+          <td>${w1(p.warComp)}</td>
+          <td><strong>${w1(p.war)}</strong></td>
+          <td>${sg(p.gap)}</td>
+        </tr>`).join("");
+      const line = (label, v, cls) => `<tr${cls ? ` class="${cls}"` : ""}><th scope="row">${label}</th><td>${v}</td></tr>`;
+      const nComp = (f.nPlayers || 0) - (f.nNoComp || 0);
+      const foot = `<table class="proj-drill-foot" data-proj-drill-foot><tbody>
+          ${line(`Component WAR, ${nComp} players with component lines`, w1(f.warComp))}
+          ${line("Gap line, served minus component", sg(f.gap))}
+          ${f.nNoComp ? line(`Served WAR, ${f.nNoComp} players without component lines`, w1(f.warNoComp)) : ""}
+          ${line(`Served WAR, ${f.nPlayers || 0} listed players`, w1(f.warServed), "pd-sub")}
+          ${line("Champion mean minus served head (the roll-up sums the champion mean)", sg(f.champMinusServed))}
+          ${line(`Arrived prospects, ${f.nProspects || 0} at their ETA`, w1(f.prospects))}
+          ${line("Roster WAR", w1(f.rosterWar), "pd-total")}
+        </tbody></table>`;
+      const runs = (r.runs && runCols.length)
+        ? `<div class="fa-sub pd-runs-line">Projected ${d.season} runs, ${outlookFrame}: ${runCols.map(c => `${c[1]} ${runTxt(c[0], r.runs[c[0]])}`).join(" &middot; ")}</div>` : "";
+      const frHref = franchiseHref(r.team);
+      return `<tr class="proj-detail proj-drill" data-export-skip data-drill-for="${esc(r.team)}"><td colspan="${ncols}"><div class="proj-drill-inner">
+        <div class="pd-head"><strong>${esc(r.team)} ${d.season} roster, player by player</strong>${frHref ? ` &middot; <a href="${esc(frHref)}">franchise page</a>` : ""}</div>
+        <div class="fa-sub">WAR is the served projection; Comp WAR and the runs are the component lines (${esc(d.frame || "FanGraphs frame")}), and the gap line is the difference. Bat, BsR, Fld and Pos are runs above average; Pitching is FIP WAR in runs above replacement.${hasPt ? "" : " PA and IP are not projected: the playing-time heads have not passed their gate."}</div>
+        ${runs}
+        <table class="detail-table proj-drill-table"><thead><tr><th scope="col">Player</th>${hasPt ? `<th scope="col">PA / IP</th>` : ""}<th scope="col" class="pd-run">Bat</th><th scope="col" class="pd-run">BsR</th><th scope="col" class="pd-run">Fld</th><th scope="col" class="pd-run">Pos</th><th scope="col" class="pd-run" title="FIP-based WAR in runs (FIP WAR x runs per win)">Pitching</th><th scope="col">Comp WAR</th><th scope="col">WAR</th><th scope="col">Gap</th></tr></thead>
+        <tbody>${body}</tbody></table>${foot}</div></td></tr>`;
+    };
     // Window cell: an arrival-curve sparkline (share of farm surplus landing
     // each 2027-31 season + a later bucket) plus etaAlignYears, colored by
     // whether the farm lands inside the controlled-core window (<= 0 aligned).
@@ -1127,6 +1208,11 @@
       blend:     { get: r => (r.current || {}).curPct, natural: "desc" },
       playoff:   { get: r => (r.current || {}).playoffPct, natural: "desc" },
       sos:       { get: r => (r.current || {}).sos, natural: "desc" },
+      // T3 runs (projected slate only; present only when the rows carry them).
+      rs:        { get: r => (r.runs || {}).rs, natural: "desc" },
+      ra:        { get: r => (r.runs || {}).ra, natural: "asc" },
+      runDiff:   { get: r => (r.runs || {}).runDiff, natural: "desc" },
+      pythW:     { get: r => (r.runs || {}).pythW, natural: "desc" },
     };
     const _sortAsc = (key) => {
       const col = TEAM_SORTS[key];
@@ -1188,17 +1274,20 @@
       <td>${sosCell(r)}</td>
     </tr>`;
       }
+      const drillBtn = (hasDrill && r.drill)
+        ? ` <button type="button" class="proj-drill-btn" data-export-skip data-drill="${esc(r.team)}" aria-expanded="${drillTeam === r.team ? "true" : "false"}" aria-label="${esc(`${drillTeam === r.team ? "Hide" : "Show"} the ${r.team} roster breakdown`)}" title="Player by player">&#9662;</button>`
+        : "";
       return `<tr>
       <td>${i + 1}</td>
-      <td class="proj-player">${clubA(r.team, `${logoMark(r.team)}<strong>${esc(r.team)}</strong>`)}</td>
+      <td class="proj-player">${clubA(r.team, `${logoMark(r.team)}<strong>${esc(r.team)}</strong>`)}${drillBtn}</td>
       <td class="proj-war ${EephusTiers.cls(r.war, "rosterWar")}">${r.war.toFixed(1)}</td>
-      <td title="${esc(wlTip)}"><strong>${wl}</strong></td>
+      <td title="${esc(wlTip)}"><strong>${wl}</strong></td>${runCols.map(c => runCell(r, c[0])).join("")}
       ${hasControl ? `<td>${controlCell(r)}</td>` : ""}
       ${showWindow ? `<td>${windowCell(r)}</td>` : ""}
       ${hasFarm ? `<td>${farmCell}</td><td>${surCell}</td><td>${topCell}</td>` : ""}
       <td class="fa-sub">${(r.top || []).map(p => `<a class="fa-player-link" href="#player=${encodeURIComponent(p.key)}">${esc(p.name)}</a> ${p.war.toFixed(1)}`).join(" · ")}</td>
       ${hasFarm ? `<td class="fa-sub proj-cell-nowrap">${openCell}</td>` : ""}
-    </tr>`;
+    </tr>${drillTeam === r.team ? drillRow(r, "__PROJ_NCOLS__") : ""}`;
     }).join("");
     const note = nowMode
       ? `Current (${curSeason}) slate <span class="eephus-beta">β beta</span>: Bayesian blend of the roster-talent prior, actual record and Pythagorean record (RS/RA); the prior fades as games are played. Playoff odds: Monte Carlo over ${DATA.mc_schedule_source === "balanced_fallback" ? "a balanced-schedule estimate (live schedule unavailable)" : "the live remaining schedule"}. SOS: log5 opponent talent over unplayed games (1 = hardest). Does not change the projection board.`
@@ -1217,16 +1306,19 @@
       : "";
     const header = nowMode
       ? `<thead><tr><th>#</th>${sth("team", "Team")}${sth("nowPct", "Record", `Actual ${curSeason} record + win%`)}${sth("pythag", "Pythag", "Pythagorean win% from run differential (exp 1.83)")}${sth("blend", "Proj W-L", "Bayesian blend of talent prior + actual + Pythag -> projected full-season record")}${sth("playoff", "Playoff odds", "Monte-Carlo division/wildcard/playoff probability")}${sth("sos", "Rem SOS", "Remaining strength of schedule via log5 (rank 1 = hardest)")}</tr></thead>`
-      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR", "Sum of each rostered veteran's year-1 champion mean WAR (the Marcel path /fa/ prices; quantile points never summed) plus arrived prospects. Top projected prints the quantile-head path, so a name there can differ from his share here.")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by the grade printed beside the top prospect (eFV, or Consensus FV where it says so)")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
+      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR", "Sum of each rostered veteran's year-1 champion mean WAR (the Marcel path /fa/ prices; quantile points never summed) plus arrived prospects. Top projected prints the quantile-head path, so a name there can differ from his share here.")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${runCols.map(c => sth(c[0], c[1], `${c[2]}, ${DATA.first_season}, ${outlookFrame}; component runs on FanGraphs' frame`).replace('class="proj-sortable"', 'class="proj-sortable proj-tm-run"')).join("")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by the grade printed beside the top prospect (eFV, or Consensus FV where it says so)")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
     // The Current slate keeps its note above the table (it says what changes
     // under the reader); the projected slate's column notes fold under it.
     const noteTop = nowMode ? `<div class="fa-note proj-teams-note">${note}</div>` : "";
     const noteFold = (!nowMode && note.trim())
       ? `<details class="proj-how"><summary class="fa-sub">How this works</summary><div class="fa-note proj-teams-note">${note}</div></details>` : "";
-    root.innerHTML = `${modeChips}${noteTop}
+    const nCols = (header.match(/<th[\s>]/g) || []).length;
+    const runsNote = (!nowMode && runCols.length)
+      ? `<div class="fa-sub proj-runs-frame">${runCols.map(c => c[1]).join(", ")}: ${DATA.first_season}, ${outlookFrame}; component runs on FanGraphs' frame.</div>` : "";
+    root.innerHTML = `${modeChips}${noteTop}${runsNote}
       <table class="detail-table proj-table">
       ${header}
-      <tbody>${body}</tbody></table>${noteFold}`;
+      <tbody>${body.split('"__PROJ_NCOLS__"').join(`"${nCols}"`)}</tbody></table>${noteFold}`;
     root.querySelectorAll("[data-team-sort]").forEach(h => h.onclick = () => {
       const k = h.dataset.teamSort;
       if (state.teamSort === k) state.teamDir = state.teamDir === -1 ? 1 : -1;
@@ -1242,6 +1334,12 @@
       state.teamMode = m; state.teamModeTouched = true;
       state.teamSort = null; state.teamDir = 1;
       renderTeams();
+    });
+    root.querySelectorAll("[data-drill]").forEach(b => b.onclick = (ev) => {
+      ev.preventDefault();
+      const t = b.dataset.drill;
+      state.club = state.club === t ? null : t;
+      syncToURL(); renderTeams();
     });
     root.querySelectorAll("[data-team-filter]").forEach(a => a.onclick = (ev) => {
       ev.preventDefault();

@@ -22,6 +22,8 @@ than its column is the first thing that would scroll the page sideways.
 from __future__ import annotations
 
 import contextlib
+import json
+from pathlib import Path
 
 import pytest
 
@@ -143,3 +145,85 @@ def test_detail_line_paints_exactly_the_header_columns(server, w, h):
         assert d["span"] == d["cols"], f"{w}px: detail spans {d['span']} of {d['cols']} columns"
         assert d["same"], f"{w}px: opening a detail line moved the columns"
         assert d["pageScroll"] <= 0
+
+
+# ---------------------------------------------------------------------------
+# Team Outlook (#view=teams): the T3 runs columns and the T7 drill-down
+# (TM_7, dark) must not add a sideways scroll. The served rows are read as
+# they are, then the same rows carry a runs block (the side TM-C passed) and
+# a drill-down, served through a route so no file under data/ moves.
+# ---------------------------------------------------------------------------
+
+_TEAMS_FIT = """() => {
+  const de = document.documentElement, vis = el => el && getComputedStyle(el).display !== 'none';
+  const t = document.querySelector('#proj-rows table.proj-table');
+  const drill = document.querySelector('tr.proj-drill');
+  const inner = document.querySelector('.proj-drill-inner');
+  const ir = inner && inner.getBoundingClientRect();
+  return {pageScroll: de.scrollWidth - de.clientWidth, tableScroll: t.scrollWidth,
+          heads: t.querySelectorAll(':scope > thead th').length,
+          span: drill ? [...drill.children].reduce((a, c) => a + c.colSpan, 0) : null,
+          innerLeft: ir ? ir.left : null, innerRight: ir ? ir.right : null, vw: de.clientWidth,
+          runCells: [...t.querySelectorAll('td.proj-tm-run')].filter(vis).length,
+          btnH: drill ? drill.previousElementSibling.querySelector('.proj-drill-btn').getBoundingClientRect().height : null};
+}"""
+
+
+def _teams_fixture_body():
+    doc = json.loads((Path(__file__).parent / "data" / "mlb_projections.json").read_text(encoding="utf-8"))
+    rows = doc.get("team_outlook") or []
+    if not rows:
+        pytest.skip("no Team Outlook rows in the served payload")
+    for r in rows:
+        r["runs"] = {"ra": 700.0, "pf": 1.0}
+        r["drill"] = {"season": doc.get("first_season"), "frame": "FanGraphs frame",
+                      "players": [{"key": "a", "name": "Long Hyphenated-Surname Player", "pos": "SS",
+                                   "side": "two", "pa": None, "ip": None, "bat": 12.4, "bsr": 1.1,
+                                   "fld": -2.0, "posRuns": 6.8, "pitRuns": 24.8, "warComp": 3.4,
+                                   "gap": -0.4, "war": 3.0, "warChamp": 3.2}],
+                      "foot": {"nPlayers": 1, "warComp": 3.4, "gap": -0.4, "warNoComp": 0, "nNoComp": 0,
+                               "warServed": 3.0, "champMinusServed": 0.2, "prospects": 0.0,
+                               "nProspects": 0, "rosterWar": r.get("war"), "residual": 0.0}}
+    return json.dumps(doc), rows[0]["team"]
+
+
+@contextlib.contextmanager
+def _teams_page(server, w, h, hash_, body=None):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            page = _new_page(browser, w, h)
+            errors = []
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            if body is not None:
+                page.route("**/data/mlb_projections.json*", lambda r: r.fulfill(
+                    status=200, content_type="application/json", body=body))
+            page.goto(server + "projections/" + hash_, wait_until="networkidle", timeout=60_000)
+            page.wait_for_selector("#proj-rows table.proj-table tbody tr", timeout=30_000)
+            page.wait_for_timeout(400)
+            yield page, errors
+        finally:
+            browser.close()
+
+
+@pytest.mark.parametrize("w,h", VIEWPORTS)
+def test_team_outlook_blocks_add_no_sideways_scroll(server, w, h):
+    body, club = _teams_fixture_body()
+    with _teams_page(server, w, h, "#view=teams") as (page, errors):
+        base = page.evaluate(_TEAMS_FIT)
+        assert not errors, errors
+    with _teams_page(server, w, h, f"#view=teams&club={club}", body) as (page, errors):
+        fit = page.evaluate(_TEAMS_FIT)
+        assert not errors, errors
+    assert fit["pageScroll"] <= 0, f"{w}px: the page scrolls sideways by {fit['pageScroll']}px"
+    # the table's own scroll (marked on a phone) grows by nothing
+    assert fit["tableScroll"] <= base["tableScroll"] + 0.5, (w, base["tableScroll"], fit["tableScroll"])
+    assert fit["heads"] == base["heads"] + 1, "the RA column joins the header"
+    assert fit["span"] == fit["heads"], f"{w}px: the drill-down spans {fit['span']} of {fit['heads']}"
+    # the open panel sits inside the visible box, and its toggle is a 24px target
+    assert fit["innerLeft"] >= 0 and fit["innerRight"] <= fit["vw"] + 0.5, fit
+    assert fit["btnH"] >= 24, fit
+    # on a phone the run columns leave (the drill-down prints the same line)
+    assert (fit["runCells"] == 0) == (w < 640), fit

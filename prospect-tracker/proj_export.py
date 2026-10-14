@@ -243,6 +243,15 @@ ROS_TALENT_BASES = ("de_aged", "first_season")
 TEAM_TALENT_RANGE_LIVE = False   # T1: sigma_T into simulate_playoffs (class 3, gate TM-A)
 TEAM_PT_BUDGET_LIVE = False      # T2: the club PA and IP budget on the served wins (class 3, TM-B)
 TEAM_RUNS_LIVE = False           # T3: RS, RA, run differential and Pythag wins (class 2, TM-C)
+#: T7 (TM_7_TEAM_DISPLAY_DARK; owner answer TM-Q4 (a)): the per-club drill-down
+#: (each club's players with the component runs, served WAR and the gap line,
+#: footed by the reconciliation to Roster WAR) as `team_outlook[].drill`. Class
+#: 2, descriptive, no gate. False: the rows Team Outlook would carry (drill-down
+#: and the T3 runs that passed TM-C, per side) go to TEAM_DISPLAY_PREVIEW_PATH
+#: only, and no served file moves.
+TEAM_DRILLDOWN_LIVE = False
+TEAM_DISPLAY_PREVIEW_PATH = (DATA_DIR.parent / ".cache" / "team_projection" / "preview"
+                             / "team_outlook_display.json")
 #: The playing-time ledger the candidates read, filled by _veteran_rows and
 #: _depth_pool during one build: {(mlbam, side): {team, pt[], war[], last_ctrl,
 #: hist, age, role, src}}; never serialized.
@@ -1187,6 +1196,9 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
     _comp_fail = 0
     if _comp_ctx is not None:
         _COMPONENT_META.update(_comp_ctx["meta"])
+        # Runs per win of the held constants: the T7 drill-down prints a
+        # pitcher's FIP WAR in runs (never serialized here).
+        _LEDGER_META["rpw"] = (_comp_ctx.get("consts") or {}).get("rpw")
     r = float(vf._config()["discount_rate"])
     _unified = vf.dpw_path_active()
     if _unified:
@@ -3189,12 +3201,169 @@ def _team_runs(rows: list[dict], corpus: dict, *, pt_ledger: dict | None = None,
                      "scales": "T2 budget factors" if scales else "none (1.0)"}}
 
 
-def _attach_team_runs(rows: list[dict], runs: dict) -> None:
-    """TEAM_RUNS_LIVE only: the T3 keys onto the Team Outlook rows (class 2)."""
+def _team_runs_sides() -> dict:
+    """Which T3 sides passed TM-C (docs/TEAM_PROJECTIONS_GATE.md, the 2026
+    look recorded in data/team_outlook_eval.json team_projection_gate.gate_2026
+    tm_c.verdict): {"rs": bool, "ra": bool}. A side with no PASS on record
+    stays off the page (LANE_A 3.3: a fail keeps RS and RA off)."""
+    try:
+        d = json.loads((DATA_DIR / "team_outlook_eval.json").read_text(encoding="utf-8"))
+        v = ((((d.get("team_projection_gate") or {}).get("gate_2026") or {})
+              .get("tm_c") or {}).get("verdict") or {})
+    except (OSError, ValueError, AttributeError):
+        v = {}
+    return {s: (v.get(s) if isinstance(v, dict) else None) == "PASS" for s in ("rs", "ra")}
+
+
+def _runs_keys(sides: dict) -> tuple:
+    """The T3 row keys a TM-C record admits: RS and RA per passing side; run
+    differential and Pythag wins need both sides; the park factor rides with
+    either."""
+    keys = [s for s in ("rs", "ra") if sides.get(s)]
+    if sides.get("rs") and sides.get("ra"):
+        keys += ["runDiff", "pythW", "pythL"]
+    if keys:
+        keys.append("pf")
+    return tuple(keys)
+
+
+def _attach_team_runs(rows: list[dict], runs: dict, sides: dict | None = None) -> None:
+    """TEAM_RUNS_LIVE only: the T3 keys onto the Team Outlook rows (class 2),
+    only the sides that passed TM-C (`sides`, default _team_runs_sides())."""
+    keys = _runs_keys(_team_runs_sides() if sides is None else sides)
+    if not keys:
+        return
     for r in rows:
         line = (runs.get("clubs") or {}).get(r.get("team"))
         if line:
-            r["runs"] = {k: line[k] for k in ("rs", "ra", "runDiff", "pythW", "pythL", "pf")}
+            r["runs"] = {k: line[k] for k in keys}
+
+
+def _team_drilldown(rows: list[dict], vets: list[dict], prospects: list[dict],
+                    blocks: dict | None = None, rpw: float | None = None) -> dict:
+    """T7 (TM_7_TEAM_DISPLAY_DARK; LANE_A 2.6): per club, the first projected
+    season's players exactly as the Team Outlook roll-up counts them, each with
+    the component lines' year-1 PA or IP (null where the exposure head is not
+    served), Bat, BsR, Fld and Pos runs, a pitcher's FIP WAR in runs (FIP WAR x
+    runs per win), the component WAR, the served WAR (war[0]) and the gap line
+    (served minus component), footed by the reconciliation to Roster WAR:
+    served WAR of the listed veterans + (champion mean - served head) + the
+    arrived prospects' ETA-aligned WAR = Roster WAR (the roll-up sums the
+    champion mean; quantile points are never summed). Descriptive, no gate.
+    {team: drill block}; empty without rows."""
+    blocks = _COMPONENT_BLOCKS if blocks is None else blocks
+    rpw = _LEDGER_META.get("rpw") if rpw is None else rpw
+    by_team: dict[str, dict] = {r["team"]: {"players": [], "pros": [], "row": r}
+                                for r in rows if r.get("team")}
+    for m in vets:
+        tm = m.get("team")
+        champ = m.get("warChamp") or []
+        if tm not in by_team or not champ or champ[0] is None:
+            continue
+        if FIRST_SEASON > _last_controlled_season(m):
+            continue
+        blk = blocks.get(m.get("mlbam")) or {}
+        hit, pit = blk.get("hit") or {}, blk.get("pit") or {}
+        y0 = lambda b, k: (b.get(k) or [None])[0] if b else None   # noqa: E731
+        wfip = y0(pit, "warFip")
+        war0 = (m.get("war") or [None])[0]
+        side = ("two" if hit and pit else "hit" if hit else "pit" if pit
+                else ("pit" if (m.get("pos") or "").upper() in ("SP", "RP", "P") else "hit"))
+        by_team[tm]["players"].append({
+            "key": m.get("key"), "name": m.get("name"), "pos": m.get("pos"), "side": side,
+            "pa": y0(hit, "pa"), "ip": y0(pit, "ip"),
+            "bat": y0(hit, "bat"), "bsr": y0(hit, "bsr"), "fld": y0(hit, "fld"),
+            "posRuns": y0(hit, "pos"),
+            "pitRuns": (None if wfip is None or not rpw else round(float(wfip) * float(rpw), 1)),
+            "warComp": (blk.get("warComp") or [None])[0] if blk else None,
+            "gap": (blk.get("gap") or [None])[0] if blk else None,
+            "war": None if war0 is None else round(float(war0), 2),
+            "warChamp": round(float(champ[0]), 2)})
+    for m in prospects:
+        tm, eta, war = m.get("team"), m.get("eta"), m.get("war") or []
+        if tm not in by_team or eta is None or not war:
+            continue
+        idx = FIRST_SEASON - int(eta)
+        if idx < 0 or idx >= len(war) or war[idx] is None:
+            continue
+        by_team[tm]["pros"].append(float(war[idx]))
+    out = {}
+    for tm, b in by_team.items():
+        ps = sorted(b["players"], key=lambda p: -(p["war"] if p["war"] is not None else p["warChamp"]))
+        served = sum(p["war"] or 0.0 for p in ps)
+        champ_gap = sum(p["warChamp"] - (p["war"] or 0.0) for p in ps)
+        comp = sum(p["warComp"] for p in ps if p["warComp"] is not None)
+        gap = sum(p["gap"] for p in ps if p["gap"] is not None)
+        no_comp = sum(p["war"] or 0.0 for p in ps if p["warComp"] is None)
+        pros = sum(b["pros"])
+        roster = b["row"].get("war")
+        out[tm] = {
+            "season": FIRST_SEASON, "frame": COMPONENTS_FRAME,
+            "players": ps,
+            "foot": {"nPlayers": len(ps), "warComp": round(comp, 1), "gap": round(gap, 1),
+                     "warNoComp": round(no_comp, 1), "nNoComp": sum(1 for p in ps if p["warComp"] is None),
+                     "warServed": round(served, 1), "champMinusServed": round(champ_gap, 1),
+                     "prospects": round(pros, 1), "nProspects": len(b["pros"]),
+                     "rosterWar": roster,
+                     "residual": (None if roster is None
+                                  else round(float(roster) - (served + champ_gap + pros), 2))}}
+    return out
+
+
+def _attach_team_drilldown(rows: list[dict], drill: dict) -> None:
+    """TEAM_DRILLDOWN_LIVE only: the T7 block onto each Team Outlook row."""
+    for r in rows:
+        blk = drill.get(r.get("team"))
+        if blk:
+            r["drill"] = blk
+
+
+def _write_team_display_preview(rows: list[dict], runs: dict | None, drill: dict | None,
+                                sides: dict) -> Path | None:
+    """While TEAM_DRILLDOWN_LIVE or TEAM_RUNS_LIVE is False: the Team Outlook
+    rows as they would serve with both flags on (the T3 sides TM-C passed and
+    the T7 drill-down), at TEAM_DISPLAY_PREVIEW_PATH and nothing under data/.
+    The display render check reads it as its fixture. Best-effort."""
+    try:
+        keys = _runs_keys(sides)
+        out_rows = []
+        for r in rows:
+            row = dict(r)
+            line = ((runs or {}).get("clubs") or {}).get(r.get("team"))
+            if line and keys:
+                row["runs"] = {k: line[k] for k in keys}
+            if drill and drill.get(r.get("team")):
+                row["drill"] = drill[r["team"]]
+            out_rows.append(row)
+        doc = {"task": "TM_7_TEAM_DISPLAY_DARK", "status": "preview",
+               "first_season": FIRST_SEASON,
+               "flags": {"TEAM_RUNS_LIVE": TEAM_RUNS_LIVE, "TEAM_DRILLDOWN_LIVE": TEAM_DRILLDOWN_LIVE},
+               "tm_c_sides": sides, "runs_keys": list(keys),
+               "team_outlook": out_rows}
+        p = Path(TEAM_DISPLAY_PREVIEW_PATH)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+        tmp.replace(p)
+        log.info("team outlook display preview: %s (flags off)", p)
+        return p
+    except Exception:                                          # noqa: BLE001
+        log.warning("team outlook display preview not written (best-effort)", exc_info=True)
+        return None
+
+
+def _team_display_blocks(rows: list[dict], runs: dict | None, drill: dict | None,
+                         sides: dict) -> None:
+    """The Team Outlook display blocks by flag: the preview (both blocks)
+    while either flag is False, then the T3 runs under TEAM_RUNS_LIVE and the
+    T7 drill-down under TEAM_DRILLDOWN_LIVE. With both False no row gains a
+    key."""
+    if not (TEAM_RUNS_LIVE and TEAM_DRILLDOWN_LIVE):
+        _write_team_display_preview(rows, runs, drill, sides)
+    if runs and TEAM_RUNS_LIVE:
+        _attach_team_runs(rows, runs, sides)
+    if drill and TEAM_DRILLDOWN_LIVE:
+        _attach_team_drilldown(rows, drill)
 
 
 def _write_team_projection_preview(rows: list[dict], runs: dict | None) -> None:
@@ -4234,8 +4403,14 @@ def _build_payload_body() -> dict:
         runs = _team_runs(team_outlook, corpus, scales=_TEAM_PREVIEW.get("budget_scales"))
     except Exception:                                          # noqa: BLE001
         log.warning("team runs (T3) skipped (best-effort)", exc_info=True)
-    if runs and TEAM_RUNS_LIVE:
-        _attach_team_runs(team_outlook, runs)
+    # T7 (TM_7): the per-club drill-down, and the display preview of the rows
+    # with both class-2 blocks while either flag is off. Best-effort.
+    drill = None
+    try:
+        drill = _team_drilldown(team_outlook, vets, prospects)
+    except Exception:                                          # noqa: BLE001
+        log.warning("team drill-down (T7) skipped (best-effort)", exc_info=True)
+    _team_display_blocks(team_outlook, runs, drill, _team_runs_sides())
     _write_team_projection_preview(team_outlook, runs)
     # Audit-only payer field (M23-2): after every consumer above has read the
     # rows, so nothing in this build can price or roll up on it.
