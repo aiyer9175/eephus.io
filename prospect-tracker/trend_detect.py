@@ -153,6 +153,18 @@ _POOL = "all tracked"              # owner answer TR-Q3 (a): every tracked hitte
 FAMILIES = {f.key: f for f in (
     Family("sp_velo", "Fastball velocity, last 3 starts", "mph", "game_mean", "start_speed",
            ("SP",), {"SP": ("count", 3)}, 3, 5, 15, 1.0, True, two_component=True),
+    # starter physics beside velocity (plan 3.9's left-off families, measured
+    # by the lab for the record and listed only where its policy admits them):
+    # the same statistic on another physics column, the reliever families'
+    # floors, no extension floor (plan 3.1)
+    Family("sp_ivb", "Fastball induced vertical break, last 3 starts", "in", "game_mean", "ivb",
+           ("SP",), {"SP": ("count", 3)}, 3, 5, 15, 1.5, True, two_component=True),
+    Family("sp_hb", "Fastball horizontal break, last 3 starts", "in", "game_mean", "hb",
+           ("SP",), {"SP": ("count", 3)}, 3, 5, 15, 1.5, True, two_component=True),
+    Family("sp_spin", "Fastball spin, last 3 starts", "rpm", "game_mean", "spin",
+           ("SP",), {"SP": ("count", 3)}, 3, 5, 15, 100.0, True, two_component=True),
+    Family("sp_ext", "Fastball extension, last 3 starts", "ft", "game_mean", "ext",
+           ("SP",), {"SP": ("count", 3)}, 3, 5, 15, None, True, two_component=True),
     Family("rp_velo", "Fastball velocity, last 6 outings", "mph", "game_mean", "start_speed",
            ("RP",), {"RP": ("count", 6)}, 6, 5, 5, 1.0, True),
     Family("rp_ivb", "Fastball induced vertical break, last 6 outings", "in", "game_mean", "ivb",
@@ -176,25 +188,48 @@ FAMILIES = {f.key: f for f in (
            ("H",), {"H": ("days", 30)}, 8, 15, 3, 2.0, True, pool=_POOL),
 )}
 
-# Provisional bars (plan 3.3), pinned to the eval artifact by TR_2B's test.
-# strict: TR-Q1 (a), the owner's answer; the swing bars at the production pool
-# of TR-Q3 (a). looser: TR-Q1 (b), the same pool.
+# The bars measured by the calibration lab (tools/league_trends_calibrate.py,
+# plan 3.2 and 3.3), equal to the eval artifact's `bars` and pinned to it by
+# test_league_trends_eval.py. strict: TR-Q1 (a), the owner's answer; the swing
+# bars at the production pool of TR-Q3 (a). looser: TR-Q1 (b), the same pool.
 BAR_POLICY = "strict"
-BARS_PROVISIONAL = True
+BARS_PROVISIONAL = False
 BARS = {
-    "strict": {"sp_velo": 4.5, "rp_velo": 4.5, "rp_ivb": 5.0, "rp_hb": 4.5, "mix": 6.0,
-               "rp_entry_li": 4.0, "bat_speed": 4.25, "swing_length": 4.25,
-               "attack_angle": 4.25},
-    "looser": {"sp_velo": 4.0, "rp_velo": 4.25, "rp_ivb": 4.5, "rp_hb": 4.25,
-               "rp_spin": 4.75, "rp_ext": 4.5, "mix": 5.5, "rp_entry_li": 3.75,
-               "bat_speed": 4.0, "swing_length": 4.0, "attack_angle": 4.0},
+    "strict": {"attack_angle": 4.25, "bat_speed": 4, "mix": 6, "rp_entry_li": 4.25, "rp_ext": 5,
+               "rp_hb": 4.25, "rp_spin": 5, "rp_velo": 4.25, "sp_velo": 4.5},
+    "looser": {"attack_angle": 4, "bat_speed": 3.75, "mix": 5.5, "rp_entry_li": 4, "rp_ext": 4.75,
+               "rp_hb": 4, "rp_ivb": 4.5, "rp_spin": 4.5, "rp_velo": 2.5, "sp_ext": 4.5,
+               "sp_ivb": 4.5, "sp_spin": 2.5, "sp_velo": 4, "swing_length": 3.5},
 }
 PRIOR_EXCLUDED = frozenset({"mix"})          # and the new-pitch rule
+# The placebo SD of z per listed family (the artifact's `placebo_sd`, pooled
+# over shrink.seasons): the scale the bar applies to, z / phi.
+PLACEBO_SD = {
+    "attack_angle": 0.9921,
+    "bat_speed": 1.0024,
+    "mix": 0.9206,
+    "rp_entry_li": 0.9966,
+    "rp_ext": 0.9924,
+    "rp_hb": 0.9901,
+    "rp_ivb": 0.9998,
+    "rp_spin": 0.9752,
+    "rp_velo": 0.9905,
+    "sp_ext": 0.9891,
+    "sp_ivb": 0.9983,
+    "sp_spin": 0.9836,
+    "sp_velo": 0.9754,
+    "swing_length": 0.9969,
+}
 
 
 def bar_for(key: str, policy: str = BAR_POLICY) -> Optional[float]:
     """The family's bar under a policy, or None when the family is off that list."""
     return BARS[policy].get(key)
+
+
+def phi_for(key: str) -> float:
+    """The family's measured placebo SD of z, 1.0 while unmeasured."""
+    return float(PLACEBO_SD.get(key, 1.0))
 
 
 # --------------------------------------------------------------------------- #
@@ -1176,7 +1211,7 @@ def placebo_prior(frame, prior, D, family, R: int = PLACEBO_R, seed: int = PLACE
 
 
 __all__ = ["FAMILIES", "Family", "BARS", "BAR_POLICY", "BAR_GRID", "PRIOR_SEASON_BAR",
-           "bar_for", "eval_dates", "detect", "placebo", "sigma", "game_values",
+           "PLACEBO_SD", "bar_for", "phi_for", "eval_dates", "detect", "placebo", "sigma", "game_values",
            "mix_values", "competitive_cut_as_of", "roles_as_of", "two_group_fit",
            "shrink_fit", "shrink_fit_mix", "mix_null", "shrink_apply", "flag", "episodes",
            "rotation_switch", "new_pitch", "playing_time", "available", "detect_prior",
