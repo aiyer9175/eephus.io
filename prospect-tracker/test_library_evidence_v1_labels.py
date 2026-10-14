@@ -245,10 +245,9 @@ def test_hero_window_and_caveat_carry_the_od_rewrites():
                      ", and out of sample it ranks ahead of every public source - by a margin we still cannot call a win.",
                      ", and out of sample it is statistically indistinguishable from the best public scouting grade."}
     assert "what they actually <em>became</em>" not in js
-    assert ("eFV starts from the consensus of those opinions and reorders it inside hitters and "
-            "inside pitchers with drivers fitted on resolved outcomes. It is scored leakage-free and "
-            "forward-chained, on the same players, the same window and the same vintage as the "
-            "sources it is measured against.") in hero
+    assert ("eFV starts from their consensus and reorders it within hitters and within pitchers, "
+            "with drivers fit on resolved outcomes. It is scored leakage-free and forward-chained, "
+            "on the same players, window and vintage as each source.") in hero
     assert '"our grade (eFV V2)"' in hero and "outcome-grounded model" not in js
     render = _fn_src(js, "renderSourceComparison")
     assert ("eFV is the primary grade: the consensus order, reordered by drivers fitted on "

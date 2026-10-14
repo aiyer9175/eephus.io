@@ -735,8 +735,8 @@ def test_unvalidated_is_defined_as_ungated_not_as_broken():
     not been run. A reader who assumes it means defective has been misled by
     the page, not by the registry."""
     page = _models_page()
-    assert "Registered and serving, with no measurement yet" in page
-    assert "not the same thing as a model that is wrong" in page
+    assert "Serving, not yet measured." in page
+    assert "Unmeasured is not wrong." in page
 
 
 def test_no_verdict_string_on_the_page_is_hand_written():

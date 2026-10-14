@@ -2085,8 +2085,8 @@ def _served_population(universe: list[dict], common_rows: list[dict]) -> dict:
         "why_the_two_views_differ": (
             "a row reaches the common set only if every scored rater graded it, "
             "so the common set is filtered toward well-covered players by "
-            "construction. The board-wide view is the honest description of the "
-            "product; the common-set view is the honest description of the claim."),
+            "construction. Board-wide view: the product as served. Common-set view: "
+            "the claim."),
     }
 
 

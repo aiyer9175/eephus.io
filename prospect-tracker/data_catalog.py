@@ -94,7 +94,7 @@ ARTIFACTS = (
                  "current statline and org rollups. This is the file the PROSPX board runs on."),
         "cadence": "daily", "stability": STABLE,
         "pinned_by": "test_storage_export.py",
-        "note": ("Large. Prefer a slimmer artifact below if you only need grades or movement."),
+        "note": ("Large. For grades or movement only, use a smaller artifact below."),
     },
     {
         "file": "xfv.json", "group": "prospects",
@@ -105,7 +105,7 @@ ARTIFACTS = (
         "cadence": "daily", "stability": STABLE,
         "pinned_by": "test_efv_export.py",
         "note": ("Read `xfv_grade`. The older per-side quantile and realized fields are kept "
-                 "for compatibility and are NOT what the board serves."),
+                 "for compatibility and are not what the board serves."),
     },
     {
         "file": "xfv_history.json", "group": "prospects",
@@ -120,7 +120,7 @@ ARTIFACTS = (
     {
         "file": "efv_alerts.json", "group": "prospects",
         "title": "eFV movement alerts feed",
-        "what": ("The biggest genuine board eFV moves on the latest rebuild, with the driving "
+        "what": ("The biggest board eFV moves on the latest rebuild, with the driving "
                  "explainer where the movement engine has one, each row flagged for whether an "
                  "endpoint sits on the model floor."),
         "cadence": "daily", "stability": EXPERIMENTAL,
@@ -178,7 +178,7 @@ ARTIFACTS = (
     {
         "file": "source_cohort_accuracy.json", "group": "prospects",
         "title": "Source accuracy by cohort",
-        "what": ("Is one prospect source more accurate than another for a given kind of player? "
+        "what": ("Per-source accuracy by player type. "
                  "FanGraphs minus MLB Pipeline rank correlation against realized WAR, per "
                  "archetype, side, acquisition path, position group, FV tier and age at grading, "
                  "each cell carrying its own 95 percent minimum detectable effect, plus the "
@@ -190,9 +190,9 @@ ARTIFACTS = (
     },
     {
         "file": "xfv_side_calibration_eval.json", "group": "prospects",
-        "title": "Do pitchers and hitters mean the same thing at the same grade?",
-        "what": ("The audit behind the question people actually ask about eFV: why does it "
-                 "carry so few pitchers near the top? It answers with outcomes rather than "
+        "title": "Pitcher and hitter grades at equal FV",
+        "what": ("Why eFV ranks few pitchers near the top: the pitcher grade audit. "
+                 "It answers with outcomes rather than "
                  "with a comparison to another board, because a source is not over-grading "
                  "pitchers by disagreeing with us, only by disagreeing with what those "
                  "pitchers produced. Mean realized first-six-year WAR by side within each "
@@ -234,7 +234,7 @@ ARTIFACTS = (
         "cadence": "on change", "stability": EXPERIMENTAL,
         "pinned_by": "test_headtohead_frame.py",
         "note": ("The middle frame is the only one that clears a floor and it is deliberately "
-                 "NOT the headline: it removes the rows where the consensus is advantaged "
+                 "not the headline: it removes the rows where the consensus is advantaged "
                  "while keeping those where eFV is, so its margin is partly an artifact of "
                  "that asymmetry. Read `vintage_matched`, which is the symmetric contest and "
                  "reads a tie at the smallest floor of the three."),
@@ -317,7 +317,7 @@ ARTIFACTS = (
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_war_board_export_contract.py",
         "note": ("`war` is the only summed value we publish: the five player "
-                 "boards each carry ONE side, because the rate columns beside "
+                 "boards each carry one side, because the rate columns beside "
                  "them divide by that side's denominator."),
     },
     {
@@ -329,14 +329,10 @@ ARTIFACTS = (
                  "file folded at the live season."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_mlbstats_windows.py",
-        "note": ("Written by war_board_export in the SAME process, from the same "
-                 "side map, as war_leaderboards.json: a year range and the "
-                 "Current view cannot disagree. Rows are positional, by the "
-                 "payload's own `fields`; a window sums the two sides UNROUNDED "
-                 "and rounds once. COST: about 1 MB of tracked payload rewritten "
-                 "on every eWAR build (compact, no indent), and the per-season "
-                 "denominators are memoised under .cache/war_seasons_lines/, so "
-                 "a nightly rebuild reads the live season's feed and no other."),
+        "note": ("Built in the same run as war_leaderboards.json, so a year "
+                 "range and the Current view agree. Rows are positional, by the "
+                 "payload's own `fields`; a window sums the two sides unrounded "
+                 "and rounds once."),
     },
     {
         "file": "trade_realized.json", "group": "mlb",
@@ -369,7 +365,7 @@ ARTIFACTS = (
         "file": "mlbstats_windows.json", "group": "mlb",
         "title": "Multi-year windows (index)",
         "what": ("Which multi-season windows the lab built, what each window's "
-                 "index pool actually is (n, mean, sd), the qualified rule per "
+                 "index pool is (n, mean, sd), the qualified rule per "
                  "board, and every column's treatment: summed, pooled over a "
                  "named denominator, recomputed as an index, or hidden with its "
                  "reason."),
@@ -531,14 +527,11 @@ ARTIFACTS = (
                  "and simulation count that produced them."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_futures_ledger.py",
-        "note": ("A RECORD, NOT A RESULT. Nothing in it is scored: that needs a "
+        "note": ("A record, not a result. Nothing in it is scored: that needs a "
                  "completed season joined back onto the entries that were live "
                  "through it, and the payload reports n_resolved so the distinction "
-                 "cannot be read past. This file is a DERIVED re-render published by "
-                 "rsync; the source of truth is .cache/futures/ledger.json, outside "
-                 "data/ because the nightly `git checkout -- .` reverts anything "
-                 "accruing inside it (the defect that destroyed the public betting "
-                 "record)."),
+                 "cannot be read past. Derived copy; the source of truth sits "
+                 "outside /data/."),
     },
     {
         "file": "bracket_sim.json", "group": "diamond",
@@ -563,11 +556,9 @@ ARTIFACTS = (
                  "probabilities and the consistency checks, chain-hashed."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_bracket_sim.py",
-        "note": ("A RECORD, NOT A RESULT. Nothing in it is scored before the one "
-                 "look after the World Series. This file is a DERIVED re-render "
-                 "published by rsync; the source of truth is "
-                 ".cache/bracket_sim/record.json, outside data/ for the reason the "
-                 "futures record gives."),
+        "note": ("A record, not a result. Nothing in it is scored before the one "
+                 "look after the World Series. Derived copy; the source of truth "
+                 "sits outside /data/."),
     },
     {
         "file": "management_board.json", "group": "mlb",
@@ -601,8 +592,8 @@ ARTIFACTS = (
         "pinned_by": "test_ledger_export.py",
         "note": ("Descriptive ledger. Carries NO single projected payroll: contract "
                  "dollars on file and projected arbitration steps are two keys and the "
-                 "page never sums them. No revenue, attendance, TV or valuation key "
-                 "exists; the writer refuses them."),
+                 "page never sums them. No revenue, attendance, TV or valuation field "
+                 "exists."),
     },
     {
         "file": "ledger_clubs/*.json", "group": "mlb",
@@ -718,7 +709,7 @@ ARTIFACTS = (
                  "templates the page prints beside a blank cell."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_mgmt_steal_context.py",
-        "note": ("CONTEXT ONLY: the steal's decision value is priced with a league-average "
+        "note": ("Context only: the steal's decision value is priced with a league-average "
                  "runner (management.py) and neither DV nor the execution residual reads "
                  "this file. Written by mgmt_steal_context.py at nightly step 9e-pre0f."),
     },
@@ -839,7 +830,7 @@ ARTIFACTS = (
     {
         "file": "betting_shadow.json", "group": "diamond",
         "title": "Betting paper-bet ledger",
-        "what": ("Paper bets: what the model WOULD have bet, at the price actually on the "
+        "what": ("Paper bets: what the model would have bet, at the price on the "
                  "board, tagged with the selection rule that chose each row and settled "
                  "against the final score. No money and no recommendation."),
         "cadence": "daily", "stability": EXPERIMENTAL, "pinned_by": "test_betting_shadow.py",
@@ -881,12 +872,11 @@ ARTIFACTS = (
         "file": "betting_model_eval.json", "group": "diamond",
         "title": "Betting model eval",
         "what": ("The run-scoring model graded in every mode it has - in-sample, forward split, "
-                 "and the vintage mode that is actually out of sample - with the three-gate "
+                 "and the vintage mode, the one out of sample; with the three-gate "
                  "table that decides whether a min-edge threshold may exist at all."),
         "cadence": "daily", "stability": EXPERIMENTAL, "pinned_by": "test_betting.py",
-        "note": ("Only the `vintage` block is honest out of sample, and it says so in its own "
-                 "`honest` field. The other two leak and ship anyway, because hiding them "
-                 "would leave the flattering numbers unlabelled."),
+        "note": ("Only the `vintage` block is out of sample (its `honest` field says so). "
+                 "The other two frames leak; they ship labelled in-sample."),
     },
     {
         "file": "betting_model_context.json", "group": "diamond",
@@ -894,7 +884,7 @@ ARTIFACTS = (
         "what": ("The fitted run-scoring coefficients, the home-field adjustment, the shrink "
                  "and the extra-inning rate the live board prices with."),
         "cadence": "daily", "stability": EXPERIMENTAL, "pinned_by": "",
-        "note": "Model internals. No test pins this shape, so treat the field names as habit.",
+        "note": "Model internals. Unpinned: field names can change.",
     },
     # ---- reference -------------------------------------------------------
     {
