@@ -175,7 +175,20 @@ VINTAGE_DIR = ROOT / ".cache" / "leaderboard_vintages"
 # plus the season to date. Every one of them is built by its own builder inside
 # its own try/except in reduce_current, so a failure costs its columns a stated
 # null and never the snapshot or the schema-4 stream.
-SCHEMA = 5
+#
+# SCHEMA 6 (2026-10-14) added the game-intensity dark capture, registered in
+# docs/diamond-betting.md in the section "Game intensity: stakes, matchup quality
+# and the postseason" BEFORE this bump existed. It takes the next number after the
+# last landed builder in commit order (plan Part 8, 8.D row 3: it does not wait for
+# the posted-lineup or dugout builders), and the section's "### Builder landed"
+# amendment names it. Four team columns (IX_TEAM_COLUMNS) and two record blocks
+# (IX_GAMES_KEY, keyed by game_pk, for the games on the three dates after the
+# vintage; IX_BASIS_KEY, the capture's basis), built by intensity_vintage inside
+# its own try/except and ONLY on tonight's live snapshot: N1 never reconstructs an
+# ix_ column, so a backfill, a forced rewrite of another date and a direct
+# reduce_current call store stated nulls. Same governing rules as schemas 3 to 5.
+SCHEMA = 6
+IX_SCHEMA = 6
 
 # The reduced record keeps only what betting_model actually consumes (plus the
 # schema-3 dark capture). Column order is part of the on-disk contract; a
@@ -192,7 +205,8 @@ TEAM_COLUMNS = ("offense_plus", "rotation_plus", "bullpen_plus",
                 "lineup_dis_vs_lhp", "lineup_dis_vs_rhp",
                 "bench_adv_vs_lhp", "bench_adv_vs_rhp",
                 "ph_share", "pen_lhp_share",
-                "team_fld_runs")
+                "team_fld_runs",
+                "ix_elo", "ix_po_pct", "ix_ws_pct", "ix_proj_wins")
 PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role", "throws",
                    "sp_rest_days", "sp_tto3_bf")
 
@@ -220,6 +234,17 @@ SCHEMA5_PH_TEAM_COLUMNS = SCHEMA5_PH_HITTER_COLUMNS + SCHEMA5_PH_TALLY_COLUMNS
 SCHEMA5_FLD_TEAM_COLUMNS = ("team_fld_runs",)                         # 5g
 SCHEMA5_TEAM_COLUMNS = (SCHEMA5_PARK_TEAM_COLUMNS + SCHEMA5_PH_TEAM_COLUMNS
                         + SCHEMA5_FLD_TEAM_COLUMNS)
+
+# The game-intensity additions (schema IX_SCHEMA, 2026-10-14), named by section
+# rather than by number. intensity_vintage.TEAM_COLUMNS and
+# betting_model.DARK_IX_TEAM_COLUMNS are pinned equal to this tuple.
+IX_TEAM_COLUMNS = ("ix_elo", "ix_po_pct", "ix_ws_pct", "ix_proj_wins")
+IX_GAMES_KEY = "ix_games"
+IX_BASIS_KEY = "ix_basis"
+IX_ADDED = "2026-10-14"
+IX_NOT_LIVE = ("ABSENT: not tonight's live capture; N1 never reconstructs an ix_ "
+               "column (the game-intensity section, rule 4), so a backfill, a forced "
+               "rewrite of another date and a direct reduction store a stated null")
 
 # Expected plate appearances by lineup slot, the weight each slot's bat side
 # carries in a club's handedness mix. FROZEN at these nine values, and no
@@ -313,6 +338,18 @@ FEATURE_SOURCES = {
                       "fielding, framing excluded), prior full season plus the "
                       "season to date, summed over the club's current position "
                       "players whose primary position is not C, P or DH"),
+    # Schema 6 (2026-10-14, the game-intensity section). Bases are DYNAMIC at
+    # capture; these are the registry descriptions.
+    "ix_elo": ("intensity_vintage: the literature Elo (1500, K 4, 24 points of home "
+               "field, flat start each season) after every regular-season final dated "
+               "strictly before the vintage date"),
+    "ix_po_pct": ("intensity_vintage: the share of the rest-of-season and bracket "
+                  "simulations (ix_v1, 20,000 at seed 12345) reaching the postseason; "
+                  "1 or 0 once the regular season is over"),
+    "ix_ws_pct": ("intensity_vintage: the share of the same simulations winning the "
+                  "World Series; exact from the bracket once the regular season is over"),
+    "ix_proj_wins": ("intensity_vintage: the same simulations' mean final wins; final "
+                     "wins once the regular season is over"),
 }
 
 SOURCES = ("hitter_leaderboards.json", "starter_leaderboards.json",
@@ -1032,16 +1069,21 @@ _COLUMN_ADDED = {
     **{c: (3, "2026-08-16") for c in SCHEMA3_TEAM_COLUMNS + SCHEMA3_PITCHER_COLUMNS},
     **{c: (4, "2026-09-07") for c in SCHEMA4_TEAM_COLUMNS + SCHEMA4_PITCHER_COLUMNS},
     **{c: (5, "2026-09-11") for c in SCHEMA5_TEAM_COLUMNS},
+    **{c: (IX_SCHEMA, IX_ADDED) for c in IX_TEAM_COLUMNS + (IX_GAMES_KEY,)},
 }
 
 
 def _mark_later_columns(out: dict, rec: dict) -> dict:
-    """Add a stated entry for every schema-4 and schema-5 dark column the block
-    lacks, so 'predates the column' is a basis a reader can count and never a
-    missing key. Entries the record carries are never touched."""
+    """Add a stated entry for every schema-4-and-later dark column (and the
+    game-intensity game block) the block lacks, so 'predates the column' is a basis
+    a reader can count and never a missing key. Entries the record carries are
+    never touched."""
     cols = set(rec.get("team_columns") or ()) | set(rec.get("pitcher_columns") or ())
+    if IX_GAMES_KEY in rec:
+        cols.add(IX_GAMES_KEY)
     schema = rec.get("schema")
-    for c in SCHEMA4_TEAM_COLUMNS + SCHEMA4_PITCHER_COLUMNS + SCHEMA5_TEAM_COLUMNS:
+    for c in (SCHEMA4_TEAM_COLUMNS + SCHEMA4_PITCHER_COLUMNS + SCHEMA5_TEAM_COLUMNS
+              + IX_TEAM_COLUMNS + (IX_GAMES_KEY,)):
         if c in out:
             continue
         n_schema, added = _COLUMN_ADDED[c]
@@ -1052,6 +1094,46 @@ def _mark_later_columns(out: dict, rec: dict) -> dict:
             out[c] = {"basis": (f"ABSENT: schema {schema} record predates the column "
                                 f"(added in schema {n_schema}, {added})"), "n": 0}
     return out
+
+
+# ---------------------------------------------------------------------------
+# the game-intensity game block (docs/diamond-betting.md, the section "Game
+# intensity: stakes, matchup quality and the postseason"). DARK: nothing served
+# calls these two readers.
+# ---------------------------------------------------------------------------
+IX_MISSING_GAME = ("the game is not in its pricing vintage's game block (scheduled "
+                   "outside the three dates after the vintage, or not listed at "
+                   "capture); a stated null, never computed late (rule 3)")
+
+
+def ix_games_block(rec: dict | None) -> dict | None:
+    """The record's game-intensity block {game_pk: entry}, or None: None for a
+    record written before the block existed (rule 1) and for a night the capture
+    did not run, whose basis says why."""
+    blk = (rec or {}).get(IX_GAMES_KEY)
+    return blk if isinstance(blk, dict) else None
+
+
+def ix_game(rec: dict | None, game_pk) -> dict | None:
+    """One game's entry from its pricing vintage, read off the record alone.
+
+    None when the record predates the block (rule 1). A STATED NULL, an entry whose
+    every component is None and whose `null_reason` says why, when the record
+    carries the key but tonight's capture did not run, or when the game is not in
+    the block (rule 3). A game is never computed late, and the live files are never
+    read here (rule 2)."""
+    if not isinstance(rec, dict) or IX_GAMES_KEY not in rec:
+        return None
+    blk = rec.get(IX_GAMES_KEY)
+    if isinstance(blk, dict) and str(game_pk) in blk:
+        return blk[str(game_pk)]
+    if isinstance(blk, dict):
+        why = IX_MISSING_GAME
+    else:
+        why = ((rec.get(IX_BASIS_KEY) or {}).get("reason")
+               or "ABSENT: the game-intensity capture did not run for this record")
+    return {"game_pk": game_pk, "ii": None, "S": None, "Q": None, "A": None,
+            "D": None, "G": None, "null_reason": why}
 
 
 def park_snapshot(data_dir: Path | None = None) -> dict | None:
@@ -1555,13 +1637,18 @@ def build_team_fld_runs(hit_blob: dict | None, *, on_date: str, season,
 # ---------------------------------------------------------------------------
 # reduce the live leaderboards to a record
 # ---------------------------------------------------------------------------
-def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) -> dict | None:
+def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None,
+                   ix_live: bool = False) -> dict | None:
     """The live leaderboards, reduced to the fields the betting model reads.
 
     None when the leaderboards are absent or do not cover all three sides,
     because a half-populated vintage is worse than no vintage: it would be
     silently eligible to price games and would price them on a broken
-    prevention blend."""
+    prevention blend.
+
+    `ix_live` asks for the game-intensity capture. Only `snapshot` passes it, and
+    only for tonight's date on the live clock; every other caller stores the
+    game-intensity columns as stated nulls (N1 never reconstructs an ix_ column)."""
     dd = Path(data_dir) if data_dir else DATA_DIR
     vintage_date = on_date or _today()
 
@@ -1682,6 +1769,25 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     _isolated(SCHEMA5_FLD_TEAM_COLUMNS,
               lambda: build_team_fld_runs(hit, on_date=vintage_date, season=season_str),
               "team-fielding")
+    # Schema 6 (2026-10-14): the game-intensity capture, on tonight's live snapshot
+    # only, isolated like every builder above. Any other caller stores the four
+    # columns and the game block as stated nulls (N1 never reconstructs them).
+    ix_games, ix_basis = None, {"status": "not captured", "reason": IX_NOT_LIVE}
+    if ix_live:
+        try:
+            import intensity_vintage
+            got = intensity_vintage.build_columns(on_date=vintage_date, starter_blob=rot)
+            ix_games = got.get("games") if isinstance(got.get("games"), dict) else None
+            ix_basis = dict(got.get("basis") or {})
+            _isolated(IX_TEAM_COLUMNS, lambda: got.get("columns") or {}, "game-intensity")
+        except Exception as exc:                                 # noqa: BLE001
+            why = f"ABSENT: the game-intensity builder raised {type(exc).__name__}: {exc}"
+            ix_games, ix_basis = None, {"status": "unavailable", "reason": why}
+            for c in IX_TEAM_COLUMNS:
+                dark[c] = {"values": {}, "basis": why}
+    else:
+        for c in IX_TEAM_COLUMNS:
+            dark[c] = {"values": {}, "basis": IX_NOT_LIVE}
     for col, blk in dark.items():
         if col not in TEAM_COLUMNS:
             continue                     # a builder key the record has no column for
@@ -1769,7 +1875,17 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     # the marking cannot claim more fills than the record holds.
     fb = {c: {"basis": (dark[c]["basis"] if c in dark else FEATURE_SOURCES[c]),
               "n": _n_teams_with(c)}
-          for c in SCHEMA3_TEAM_COLUMNS + SCHEMA4_TEAM_COLUMNS + SCHEMA5_TEAM_COLUMNS}
+          for c in (SCHEMA3_TEAM_COLUMNS + SCHEMA4_TEAM_COLUMNS + SCHEMA5_TEAM_COLUMNS
+                    + IX_TEAM_COLUMNS)}
+    fb[IX_GAMES_KEY] = {
+        "basis": ((f"intensity_vintage: every game scheduled on the three dates after "
+                   f"the vintage date, keyed by game_pk; schedule source "
+                   f"{ix_basis.get('schedule_source')}, {ix_basis.get('mode')}")
+                  if ix_games is not None else
+                  (ix_basis.get("reason") or "ABSENT: the game-intensity capture did not run")),
+        "n": (sum(1 for e in ix_games.values() if e.get("null_reason") is None)
+              if ix_games is not None else 0),
+    }
     # sp_rest_days: days since this arm's previous appearance in any cached
     # feed. None on a season debut, which is a stated absence and not a large
     # rest number, because a silent zero-or-999 is exactly what a downstream
@@ -1846,6 +1962,8 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         "park_units": PARK_UNITS,
         "parks_by_hand": parks_by_hand,
         "parks_short_window": parks_short,
+        IX_GAMES_KEY: ix_games,
+        IX_BASIS_KEY: ix_basis,
         "cutoff_note": ("covers_through is the max of the source leaderboards' as_of "
                         "dates and the date this file was written; a record may price "
                         "only games dated strictly after it"),
@@ -1895,7 +2013,13 @@ def snapshot(*, on_date: str | None = None, force: bool = False,
         if log_fn:
             log_fn(f"leaderboard_vintages: {path.name} is unreadable, rewriting")
 
-    rec = reduce_current(on_date=d, data_dir=data_dir)
+    # The game-intensity capture runs only on the live clock and only for today's
+    # date: N1 never reconstructs an ix_ column, so a backfill (a git blob's date)
+    # and a forced rewrite of any other date store its stated nulls.
+    _live_clock = (not (isinstance(provenance, dict) and provenance)
+                   or provenance.get("source") == PROVENANCE_LIVE)
+    rec = reduce_current(on_date=d, data_dir=data_dir,
+                         ix_live=bool(_live_clock and d == _today()))
     if not rec:
         if log_fn:
             log_fn("leaderboard_vintages: leaderboards absent or incomplete, "
@@ -2376,7 +2500,8 @@ def dark_capture_dry_run(*, on_date: str | None = None,
     # The later schemas' team columns, reported beside the schema-3 block rather
     # than inside it so the schema-3 rehearsal reads exactly as it always has.
     later = {}
-    for schema_n, group in (("4", SCHEMA4_TEAM_COLUMNS), ("5", SCHEMA5_TEAM_COLUMNS)):
+    for schema_n, group in (("4", SCHEMA4_TEAM_COLUMNS), ("5", SCHEMA5_TEAM_COLUMNS),
+                            (str(IX_SCHEMA), IX_TEAM_COLUMNS)):
         later[schema_n] = {}
         for c in group:
             i = cols.index(c)

@@ -395,9 +395,13 @@ def test_the_hand_mix_weights_are_the_frozen_literal():
 def test_schema5_columns_are_registered():
     """The 5i pair leads the schema-5 block; 5f and 5g ride the same bump
     (docs/diamond-betting.md 5f, "Shared bump") and are appended after it."""
-    assert lv.SCHEMA == 5
+    assert lv.SCHEMA >= 5
     assert set(lv.SCHEMA5_TEAM_COLUMNS) < set(lv.TEAM_COLUMNS)
-    assert lv.TEAM_COLUMNS[-len(lv.SCHEMA5_TEAM_COLUMNS):] == lv.SCHEMA5_TEAM_COLUMNS
+    # Later schemas append after the schema-5 block (the game-intensity columns
+    # since 2026-10-14), so the block is pinned as the tail of the columns
+    # through schema 5, never by a literal schema number.
+    through5 = tuple(c for c in lv.TEAM_COLUMNS if c not in lv.IX_TEAM_COLUMNS)
+    assert through5[-len(lv.SCHEMA5_TEAM_COLUMNS):] == lv.SCHEMA5_TEAM_COLUMNS
     assert lv.SCHEMA5_TEAM_COLUMNS[:2] == lv.SCHEMA5_PARK_TEAM_COLUMNS
     assert lv.SCHEMA5_PARK_TEAM_COLUMNS == ("lhb_share_vr", "lhb_share_vl")
     for c in lv.SCHEMA5_TEAM_COLUMNS:
@@ -449,7 +453,7 @@ def test_the_snapshot_captures_the_schema5_block(tmp_path, _quiet_builders):
                           "R": {"NYY": {"runs": 100, "hr": 117, "n_pa": 28601}}})
     _fake_boards(data)
     rec = lv.reduce_current(on_date="2026-09-11", data_dir=data)
-    assert rec["schema"] == 5
+    assert rec["schema"] == lv.SCHEMA
     row = lv.team_row(rec, "NYY")
     assert row["lhb_share_vr"] is not None and row["lhb_share_vl"] is not None
     assert row["lhb_share_vr"] > row["lhb_share_vl"], (

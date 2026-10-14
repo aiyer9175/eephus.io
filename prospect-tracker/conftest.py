@@ -325,6 +325,21 @@ def _isolate_schema5_capture(_schema5_tally_path, monkeypatch):
     yield
 
 
+@pytest.fixture(autouse=True)
+def _isolate_game_intensity_capture(monkeypatch):
+    """No test reaches StatsAPI or the results cache through the game-intensity
+    capture (the section "Game intensity: stakes, matchup quality and the
+    postseason"): a live snapshot written today by a test would otherwise fetch
+    two schedules and run 20,000 simulations. The read returns nothing, which the
+    builder records as a stated null; a test of the builder passes its own inputs."""
+    try:
+        import intensity_vintage
+        monkeypatch.setattr(intensity_vintage, "load_inputs", lambda *a, **k: None)
+    except Exception:                                     # noqa: BLE001
+        pass
+    yield
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _restore_committed_build_artifacts():
     """Test-hygiene guard for committed BUILD ARTIFACTS (data/ sidecars +
