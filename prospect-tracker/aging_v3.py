@@ -1054,16 +1054,32 @@ def fit(corpus: dict, max_season: int | None, cfg: dict | None = None, *,
         lg_rate = _league_rates(rows, side)
         parent = PARENT[side]
 
-        # --- the bucket of every fit row (ARM P), from the sidecar ------------
+        # The serve rule (gate section 5): a path projected from base
+        # B = max_season + 1 reads the bucket of the base season B-1 and the
+        # archetype of the window B-3..B-1. The pair rows above stop at
+        # max_season - 1 (a row's pair must land at or before max_season), so
+        # the base season's row and the base's pair start are assigned from
+        # every row at or before max_season here (no lookahead: the window is
+        # still strictly before its start). Found by AG_6: without this every
+        # served hitter walked the pooled parent and every path read NEUTRAL,
+        # so k_P and k_R selected nothing.
+        serve_t = (max_season if max_season is not None else int(corpus.get("last") or 0)) + 1
+        full: dict[int, dict[int, dict]] = {}
+        for r in corpus[side]:
+            if r.get("mlbam") is not None and r["season"] < serve_t:
+                full.setdefault(r["mlbam"], {})[r["season"]] = r
+        # --- the bucket of every row at or before the base season (ARM P) -----
         if cfg["arms"]["P"]:
-            for r in rows:
-                sc = sc_rows.get((r.get("mlbam"), r["season"])) or {}
-                if side == "hit":
-                    b = bucket_from_position(sc.get("pos"), False, two_way_hitting=bool(sc.get("two_way")))
-                else:
-                    b = base_role("pit", None, r.get("role"))
-                assign[side]["bucket"][(r.get("mlbam"), r["season"])] = b
-        # --- the archetype of every pair start (ARM R), out of window --------
+            for mlbam, seasons in full.items():
+                for s, r in seasons.items():
+                    sc = sc_rows.get((mlbam, s)) or {}
+                    if side == "hit":
+                        b = bucket_from_position(sc.get("pos"), False, two_way_hitting=bool(sc.get("two_way")))
+                    else:
+                        b = base_role("pit", None, r.get("role"))
+                    assign[side]["bucket"][(mlbam, s)] = b
+        # --- the archetype of every pair start (ARM R), out of window, the
+        #     serve base included ---------------------------------------------
         if cfg["arms"]["R"]:
             for mlbam, seasons in by_player.items():
                 for t in seasons:
@@ -1072,6 +1088,15 @@ def fit(corpus: dict, max_season: int | None, cfg: dict | None = None, *,
                     if any(s >= t for s in window):
                         raise ValueError("a fit row's archetype window contains its start season")
                     assign[side]["archetype"][(mlbam, t)] = arch
+            serve_window = window_seasons(serve_t, cfg)
+            for mlbam, seasons in full.items():
+                if (mlbam, serve_t) in assign[side]["archetype"] or not any(s in seasons for s in serve_window):
+                    continue
+                arch, window = assign_archetype(side, serve_t, seasons, sc_rows, ztab, cfg,
+                                                league, strict_parts=True)
+                if any(s >= serve_t for s in window):
+                    raise ValueError("the serve base's archetype window contains the base season")
+                assign[side]["archetype"][(mlbam, serve_t)] = arch
 
         def cells_of(r, _side=side, _parent=parent):
             if cfg["arms"]["P"]:

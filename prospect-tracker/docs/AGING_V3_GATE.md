@@ -581,6 +581,7 @@ dated section after section 19, and never loosens a threshold.
 | date | family | verdict | artifact | notes |
 |---|---|---|---|---|
 | 2026-10-08 | - | registered | - | registration committed alone; no candidate computed, no look spent |
+| 2026-10-09 | ladder (DEV only) | DEV selection and power: lambda 1.0, smoother pen (penalty 16), k_P 400, k_R 800; T UNDERPOWERED (MDE95 0.0428), S, P and R powered (MDE95 0.0057, 0.0079, 0.0007) | data/aging_v3_mde.json sha256 6d8976929d69 | AG_6_AGING_V3_DEV_AND_POWER, tools/aging_v3_lab.py dev then mde on the DEV frame (26,249 rows, 3,018 players, label seasons 2008 to 2010), wall 316.7 s and 181.3 s; no GATE, TIER-2 or CONFIRM row scored; the look and health paths dry-run on fixtures with nulls only; committed 2026-10-14 |
 
 ---
 
