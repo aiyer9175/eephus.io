@@ -1444,3 +1444,22 @@ def test_the_index_retirement_refuses_out_of_order(tmp_path):
     if not any(e["id"] == "franchise_score" for e in _load("glossary.json")["entries"]):
         with pytest.raises(R.RetirementRefusal, match="franchise_score"):
             R.apply(tmp_path / "glossary.json", tmp_path / "model_registry.json", write=False)
+
+
+# --------------------------------------------------------------------------
+# The DvM+ difficulty arm (DVM-5): the FARM branch's DEV leaf note
+# --------------------------------------------------------------------------
+
+def test_the_dev_leaf_names_difficulty_adjustment_only_when_org_summary_carries_dev_expectation(clubs):
+    import franchise_export as fe
+    import storage
+    assert storage.DVM_DIFFICULTY_ARM is None
+    for c in clubs.values():
+        lf = next(l for l in _branch(c, "farm")["leaves"] if l["key"] == "dev")
+        assert lf["basis"].startswith("PROSPX letter") and "difficulty" not in lf["basis"], c["code"]
+    grades, cranks = {"development": "B+"}, {"development": 7}
+    assert fe.dev_leaf_basis({}, grades, cranks) == "PROSPX letter B+, rank 7"
+    assert fe.dev_leaf_basis({"dev_expectation": None}, grades, cranks) == "PROSPX letter B+, rank 7"
+    on = fe.dev_leaf_basis({"dev_expectation": {"arm": "value", "windows": {}}}, grades, cranks)
+    assert on.startswith("PROSPX letter B+, rank 7; DvM+ difficulty-adjusted")
+    assert EM not in on and EN not in on

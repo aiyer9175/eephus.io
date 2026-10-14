@@ -36778,8 +36778,8 @@ function _gfxChipFooterNote(kind) {
 function _gfxFooterNote(kind) {
   const _badge = _gfxBadgeLegend(kind);
   return {
-    prospect: `$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = ${_badge}`,
-    graduate: `WAR = career MLB WAR since debut (eWAR) · $DvM+ = surplus-development index · badge = ${_badge}`,
+    prospect: `$M = engine expected surplus value · ${dvmPlayerLabel()} = ${dvmPlayerNote("surplus-development index (100 = FV-tier avg)")} · badge = ${_badge}`,
+    graduate: `WAR = career MLB WAR since debut (eWAR) · ${dvmPlayerLabel()} = ${dvmPlayerNote("surplus-development index")} · badge = ${_badge}`,
     draftee: `Stk+ = Draft Stock+ (100 = class median) · badge = ${_badge}`,
     overseas: `badge = ${_badge}`,
     leader: `value = the selected stat · badge = ${_badge}`,
@@ -37439,7 +37439,7 @@ function buildProspectCard(snap) {
     }
     if (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) {
       const v = Math.round(p.dollar_dvm_plus);
-      tile("$DvM+", String(v), v >= 105 ? "var(--up)" : v <= 95 ? "var(--down)" : P.text);
+      tile(dvmPlayerLabel(), String(v), v >= 105 ? "var(--up)" : v <= 95 ? "var(--down)" : P.text);
     }
     if (eta.year != null) tile("ETA", String(eta.year), P.text);
     return tiles.length ? `<div style="display:flex;flex-direction:column;gap:8px;">${tiles.join("")}</div>` : "";
@@ -37872,7 +37872,7 @@ function buildCompareCard(snap) {
     ["eFV", d => d.fvNum, "high", v => v != null ? Math.round(v) : " - "],
     ["Statcast+", d => d.sc, "high", v => v != null ? v : " - "],
     ["RPS+", d => d.rps, "high", v => v != null ? v : " - "],
-    ["$DvM+", d => d.dvm, "high", v => v != null ? v : " - "],
+    [dvmPlayerLabel(), d => d.dvm, "high", v => v != null ? v : " - "],
     // A debuted player's figure is his Trade Machine value (B4_BOARD_SURPLUS); with
     // a prospect beside him the two are different prices, so the row names both and
     // marks no best.
@@ -39309,7 +39309,7 @@ function makeSurplusCell(p) {
     + (pb != null ? ` · P(bust) ${pb}%` : "")
     + (d.risk_adjusted_mm != null ? ` · ${svRiskAdjLabel(d)} ${fmtSvMM(d.risk_adjusted_mm)}` : "")
     + (wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(2)}` : "")
-    + (dvm != null ? ` · $DvM+ ${Math.round(dvm)} (surplus-development vs FV-tier peers)` : "")
+    + (dvm != null ? ` · ${dvmPlayerLabel()} ${Math.round(dvm)} (${dvmPlayerNote("surplus-development vs FV-tier peers")})` : "")
     + (s.value_mm < 5
         ? ". Under $5M the typical outcome is nothing. The few who arrive carry the price: "
           + "the tier's value per head. Order this deep carries little information."
@@ -39325,7 +39325,7 @@ function makeSurplusCell(p) {
   const botBits = [];
   if (pb != null)  botBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-tertiary)'};">bust ${pb}%</span>`);
   if (wag != null) botBits.push(`<span>WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(1)}</span>`);
-  if (dvm != null) botBits.push(`<span style="color:${dollarDvmColor(dvm)};">$DvM+ ${Math.round(dvm)}</span>`);
+  if (dvm != null) botBits.push(`<span style="color:${dollarDvmColor(dvm)};">${dvmPlayerLabel()} ${Math.round(dvm)}</span>`);
   // M29 S6: each bit is a nowrap span (.sv-botline > span), so "bust N%" and "$DvM+ N"
   // never split across lines.
   return `<div class="surplus-cell" title="${escapeHtml(tip)}">
@@ -39351,6 +39351,7 @@ function dollarDvmColor(v) {
   return "var(--down)";
 }
 function dollarDvmTooltip(v) {
+  if (farmDvmDifficulty()) return `DvM+ (player) ${v == null ? " - " : Math.round(v)} - the prospect's own grade growth over his last three annual list steps against what prospects with the same origin, starting grade, age and level usually gain, shrunk toward the mean, scaled so 100 is the active average and 10 points one standard deviation.`;
   return `$DvM+ ${v == null ? " - " : Math.round(v)} - Surplus-Development index. The player's consensus-FV appreciation rate over time (plus age-for-level standing) indexed against same-FV-tier peers. 100 = tier average, +10 ≈ 1σ faster. Above 100: grade rising faster than same-grade peers.`;
 }
 function fmtSvMM(m) {
@@ -42131,11 +42132,11 @@ function makeFarmReportCard(org) {
   const _dollarDvm = dollarDvmLeaf.dollar_dvm_plus;
   const fmtDvmPlus = v => formatMetric(v, 'plus');
   const dollarDvmTooltip = _dollarDvm != null
-    ? `$DvM+ ${Math.round(_dollarDvm)} - the org's mean prospect surplus-development trajectory indexed against the league-average prospect at the same FV tier (100 = average, +10 ≈ 1σ better). Built from the rate of FV movement over time + age-relative-to-level standing across ${dollarDvmLeaf.n ?? ' - '} active prospects. Above 100 = this org's prospects are appreciating faster than same-grade peers.`
+    ? farmDvmDifficulty() ? `Org DvM+ (player) ${Math.round(_dollarDvm)} - the mean DvM+ (player) of the org's ${dollarDvmLeaf.n ?? ' - '} active prospects: each one's grade growth against what prospects with the same origin, starting grade, age and level usually gain.` : `$DvM+ ${Math.round(_dollarDvm)} - the org's mean prospect surplus-development trajectory indexed against the league-average prospect at the same FV tier (100 = average, +10 ≈ 1σ better). Built from the rate of FV movement over time + age-relative-to-level standing across ${dollarDvmLeaf.n ?? ' - '} active prospects. Above 100 = this org's prospects are appreciating faster than same-grade peers.`
     : `Insufficient active-prospect trajectory data on file.`;
   const finSubs =
     subCell('Active Surplus',        'fin_active_surplus',         'fin_active_surplus',         fmtSurplusPerProspect, _surplusPerProspect,                            activeSurplusTooltip) +
-    subCell('$DvM+ (Surplus Dev)',   'fin_dollar_dvm',             'fin_dollar_dvm',             fmtDvmPlus,            _dollarDvm,                                     dollarDvmTooltip) +
+    subCell(dvmPlayerLabel('$DvM+ (Surplus Dev)', 'Org DvM+ (player)'),   'fin_dollar_dvm',             'fin_dollar_dvm',             fmtDvmPlus,            _dollarDvm,                                     dollarDvmTooltip) +
     subCell('Grad-Contract Surplus', 'fin_contract_surplus',       'fin_contract_surplus',       fmtUsdPerYr,           (t.fin_contract_surplus || {}).mean_usd_per_yr, finContractTooltip) +
     subCell('WAR per $M',            'fin_war_per_m',              'fin_war_per_m',              fmtWarPerM,            finWarLeaf.value,                               finWarTooltip) +
     subCell('Draft Pool Efficiency', 'fin_draft_pool_efficiency',  'fin_draft_pool_efficiency',  fmtWarPerM,            draftEffLeaf.war_per_m_pool,                    draftEffTooltip) +
@@ -42922,6 +42923,80 @@ function farmDevSpec() {
     dvm_blend: Object.assign({}, FALLBACK.dvm_blend, s.dvm_blend || {}),
   };
 }
+// The DvM+ difficulty arm (storage.DVM_DIFFICULTY_ARM): null on every build until the
+// owner's flip, so each helper below returns today's copy; with the arm on, the payload's
+// farm_dev_spec.dvm_difficulty block (the frozen table's explainer) is returned.
+function farmDvmDifficulty() {
+  const s = (typeof DATA !== "undefined" && DATA && DATA.farm_dev_spec) || {};
+  return s.dvm_difficulty || null;
+}
+// The per-prospect index label: "DvM+ (player)" with the arm on (owner answer Q-DVM-6),
+// the given label otherwise. `on` names the org roll-up's label.
+function dvmPlayerLabel(today, on) {
+  return farmDvmDifficulty() ? (on || "DvM+ (player)") : (today || "$DvM+");
+}
+// The per-prospect index's short description, by the same switch.
+function dvmPlayerNote(today) {
+  return farmDvmDifficulty() ? "growth above expected for his origin, starting grade, age and level" : today;
+}
+// Labels set once at boot from static tables (the leaderboard column).
+function _applyDvmDifficultyLabels() {
+  if (!farmDvmDifficulty() || typeof LB_STATS === "undefined" || !LB_STATS.dvm_plus) return;
+  LB_STATS.dvm_plus.label = dvmPlayerLabel();
+  LB_STATS.dvm_plus.title = "Grade growth above expected for origin, starting grade, age and level, last three annual steps";
+}
+// The farm's actual grade growth against the growth expected for its mix (origin,
+// starting grade, age, level), per window, from org.dev_expectation. Empty with the arm off.
+function makeFarmDevExpectationStrip(org) {
+  const dd = farmDvmDifficulty();
+  const de = org && org.dev_expectation;
+  if (!dd || !de || !de.windows) return "";
+  const pw = dd.principal_window || farmDevSpec().principal_window;
+  const wins = ["1y", "3y", pw].filter((w, i, a) => a.indexOf(w) === i && de.windows[w]);
+  const unit = dd.credit_units === "expected WAR" ? "expected WAR per step" : "grade points per step";
+  const f = v => (v == null || !isFinite(v)) ? " - " : (v >= 0 ? "+" : "") + Number(v).toFixed(2);
+  const cell = w => {
+    const x = de.windows[w] || {};
+    const shown = x.publish !== false;
+    const tone = !shown || x.residual == null ? "is-empty" : x.residual > 0 ? "is-pos" : "is-neg";
+    const mix = x.mix || {};
+    const og = Object.entries(mix.origin || {}).map(([k, v]) => `${k} ${Math.round(v * 100)}%`).join(", ");
+    const tip = shown
+      ? `${w}: actual ${f(x.actual)}, expected ${f(x.expected)} for this farm's mix (${og || "no origin mix"}), gap ${f(x.residual)} ${unit}; ${x.pairs ?? 0} steps, effective n ${x.n_eff ?? " - "}`
+      : `${w}: fewer than ${dd.min_publish_n || 10} effective steps; not shown`;
+    return `<div class="tooldev-cell ${tone}" title="${escapeHtml(tip)}">
+      <div class="td-label">${w}</div>
+      <div class="td-val">${shown ? f(x.residual) : " - "}</div>
+      <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:2px;letter-spacing:0.02em;">${shown ? `${f(x.actual)} vs ${f(x.expected)} · n ${x.n_eff ?? " - "}` : "n under " + (dd.min_publish_n || 10)}</div>
+    </div>`;
+  };
+  return `<div class="detail-title">Expected vs actual <span class="detail-title-sub">the farm's grade growth against what prospects with the same origin, starting grade, age and level usually gain on the same source's lists, ${unit}; the gap is what DvM+ indexes. Grades shown elsewhere stay eFV; this reads each source's own grades.</span></div>
+    <div class="tooldev-card">
+      <div class="tooldev-grid" style="grid-template-columns:repeat(${wins.length},1fr);">${wins.map(cell).join("")}</div>
+    </div>`;
+}
+// How often a list grade rises one or two rungs in a year, by starting grade, from the
+// frozen table's descriptive read. Verdict words only where the registered read resolved.
+function makeFarmDevDifficultyExplainer() {
+  const dd = farmDvmDifficulty();
+  if (!dd || !dd.difficulty_table) return "";
+  const pct = v => (v == null || !isFinite(v)) ? " - " : Math.round(v * 100) + "%";
+  const pts = v => (v == null || !isFinite(v)) ? " - " : (v >= 0 ? "+" : "") + Number(v).toFixed(1);
+  const side = (label, rows) => (rows && rows.length) ? `<div style="min-width:0;">
+      <div class="tooldev-section-label">${label}</div>
+      <div class="table-scroll-x"><table class="detail-table" style="width:100%;">
+        <thead><tr><th>Start</th><th style="text-align:right;">Up 1 rung</th><th style="text-align:right;">Up 2 rungs</th><th style="text-align:right;">Mean move</th></tr></thead>
+        <tbody>${rows.map(r => `<tr><td>${escapeHtml(String(r.rung))}</td><td style="text-align:right;font-variant-numeric:tabular-nums;">${pct(r.P1)}</td><td style="text-align:right;font-variant-numeric:tabular-nums;">${pct(r.P2)}</td><td style="text-align:right;font-variant-numeric:tabular-nums;">${pts(r.m)}</td></tr>`).join("")}</tbody>
+      </table></div></div>` : "";
+  const words = [...(dd.h2_verdicts || []).map(v => `${v.side === "hit" ? "Hitters" : "Pitchers"}, ${v.horizon} ${v.test}: ${v.verdict}`),
+                 ...(dd.h1_verdicts || []).map(v => `${v.side === "hit" ? "Hitters" : "Pitchers"} ${v.trait} (${v.contrast}, ${v.estimand}): ${v.verdict}`)];
+  const dec = dd.decision || {};
+  const decCopy = (dec.verdict && /^SHIP/.test(dec.verdict) && (dec.copy || []).length) ? dec.copy.join("; ") : "";
+  return `<div class="detail-title">Development difficulty <span class="detail-title-sub">league rates on the same source's preseason lists one year apart, by starting grade (one rung = 5 grade points). ${words.length ? "Resolved by the registered read: " + escapeHtml(words.join("; ")) + "." : "No difference by origin or starting grade resolved in the registered read; the rates are descriptive."}${decCopy ? " " + escapeHtml(decCopy) + "." : ""} A higher start can rise less often because the scale tops out and graduates leave the lists.</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px;align-items:start;">
+      ${side("Hitters", dd.difficulty_table.hit)}${side("Pitchers", dd.difficulty_table.pit)}
+    </div>`;
+}
 // A share (0-1) as a percent string: 0.225 -> "22.5", 0.25 -> "25".
 function _farmPct(x) {
   return String(Math.round(x * 1000) / 10);
@@ -42970,7 +43045,7 @@ function makeFarmDvmMultiWindowPanel(org) {
                  v >= 110 ? "is-strong" :
                  v >= 100 ? "is-pos" :
                  v >= 90  ? "is-neg" : "is-weak";
-    const deltaStr = d != null ? `${d >= 0 ? '+' : ''}${d.toFixed(2)} vs mean` : " - ";
+    const deltaStr = d != null ? `${d >= 0 ? '+' : ''}${d.toFixed(2)} ${farmDvmDifficulty() ? "above expected, vs mean" : "vs mean"}` : " - ";
     return `<div class="tooldev-cell ${tone}" title="${label} DvM+ ${v ?? ' - '} · ${deltaStr} · 100 = league mean dev pace, +10 = 1σ">
       <div class="td-label">${label}</div>
       <div class="td-val">${v ?? " - "}</div>
@@ -43221,7 +43296,7 @@ function makeFarmCompareBlock(currentOrg) {
       { key: "fin_war_per_m",             label: "WAR/$M" },
       { key: "fin_contract_surplus",      label: "Grad Surplus" },
       { key: "fin_active_surplus",        label: "Active Surplus" },
-      { key: "fin_dollar_dvm",            label: "$DvM+" },
+      { key: "fin_dollar_dvm",            label: dvmPlayerLabel() },
       { key: "fin_draft_pool_efficiency", label: "Draft Pool" },
       { key: "fin_ifa_roi",               label: "IFA ROI" },
     ],
@@ -43315,7 +43390,7 @@ function makeFarmCompareBlock(currentOrg) {
       { lbl: "Surplus / yr (grads)", fmt: _fmtUsd, g: n => n.mean_usd_per_yr },
     ],
     fin_dollar_dvm: [
-      { lbl: "$DvM+ (vs FV-tier mean)", fmt: _fmtInt, g: n => n.dollar_dvm_plus },
+      { lbl: dvmPlayerLabel("$DvM+ (vs FV-tier mean)", "DvM+ (player, vs expected)"), fmt: _fmtInt, g: n => n.dollar_dvm_plus },
     ],
     fin_active_surplus: [
       { lbl: "Surplus / prospect", fmt: v => v == null ? " - " : `$${v.toFixed(2)}M`,
@@ -43810,7 +43885,7 @@ function makeFarmFinancialComposite(org) {
   };
   const LEAF_LABELS_FIN = {
     fin_active_surplus:        'Active Surplus',
-    fin_dollar_dvm:            '$DvM+ (Surplus Dev)',
+    fin_dollar_dvm:            dvmPlayerLabel('$DvM+ (Surplus Dev)', 'Org DvM+ (player)'),
     fin_contract_surplus:      'Grad-Contract Surplus',
     fin_war_per_m:             'WAR per $M',
     fin_draft_pool_efficiency: 'Draft Pool Efficiency',
@@ -45735,7 +45810,7 @@ function renderFarmSystems() {
     <span class="fc-logo"></span>
     <span class="fc-org">Organization</span>
     <span class="sort-header fc-grade" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade (v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition). Click to sort.">Grade</span>
-    <span class="sort-header fc-dvm" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ - wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract - pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
+    <span class="sort-header fc-dvm" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ - wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev.${farmDvmDifficulty() ? " Difficulty-adjusted: each step counts against what prospects with the same origin, starting grade, age and level usually gain." : ""} Acquisitions contribute zero on arrival; debuts don't subtract - pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
     <span class="sort-header fc-tool" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
     <span class="sort-header fc-traj" style="text-align:center;" data-farm-sort="trajectory" title="${escapeHtml(winLabel)} trajectory chart. Click to sort by ${escapeHtml(winLabel)} DvM+.">${escapeHtml(winLabel)} trajectory</span>
     <span class="sort-header fc-top" data-farm-sort="top_end" title="Top prospects in the org. Click to sort by top-end talent (tiered FV sum of the top 5 prospects).">Top prospects</span>
@@ -45928,7 +46003,7 @@ function renderFarmSystems() {
           const v = (org.dvm_plus || {})[win];
           if (v == null) return `<span class="fdh-value" style="color:var(--text-tertiary);"> - </span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
           const color = v >= 110 ? 'var(--up)' : v <= 90 ? 'var(--down)' : 'var(--neon-violet)';
-          return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
+          return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · ${farmDvmDifficulty() ? "difficulty-adjusted: growth above what the farm's mix usually gains" : "debuts + acquisitions nullified"}">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
         })()}</div>
         <div class="fc-tool">${makeToolDvmCell(org)}</div>
         <div class="fc-traj" title="${escapeHtml(pulseTooltip)}">${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win, org.org)}${pulseHtml}</div>
@@ -51118,8 +51193,8 @@ function renderPlayerDetail(key) {
       const dc = dollarDvmColor(dv);
       dvmRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;" title="${escapeHtml(dollarDvmTooltip(dv))}">
            <div>
-             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">$DvM+ <span style="text-transform:none;letter-spacing:0;font-style:italic;color:var(--text-tertiary);">surplus-dev index</span></div>
-             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">vs same-FV-tier peers · 100 = avg, +10 ≈ 1σ faster</div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${dvmPlayerLabel()} <span style="text-transform:none;letter-spacing:0;font-style:italic;color:var(--text-tertiary);">${farmDvmDifficulty() ? "growth vs expected" : "surplus-dev index"}</span></div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${farmDvmDifficulty() ? "vs prospects with the same origin, starting grade, age and level · 100 = active average, +10 = 1σ" : "vs same-FV-tier peers · 100 = avg, +10 ≈ 1σ faster"}</div>
            </div>
            <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${dc};font-variant-numeric:tabular-nums;">${Math.round(dv)}</div>
          </div>`;
@@ -53104,7 +53179,7 @@ function renderPlayerDetail(key) {
     return {
       label: _useX ? "eFV surplus" : "Surplus value",
       value: sv >= 1 ? `$${sv.toFixed(1)}M` : `$${(sv * 1000).toFixed(0)}k`,
-      sub: (dvm != null && isFinite(dvm)) ? `$DvM+ ${Math.round(dvm)}` : "",
+      sub: (dvm != null && isFinite(dvm)) ? `${dvmPlayerLabel()} ${Math.round(dvm)}` : "",
     };
   })();
   const _ovStock = (() => {
@@ -55897,6 +55972,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const _pw = farmDevSpec().principal_window;
   const devTabHtml = `
     ${makeFarmDvmMultiWindowPanel(org)}
+    ${makeFarmDevExpectationStrip(org)}
+    ${makeFarmDevDifficultyExplainer()}
     ${makeFarmDevCohortSplit(org)}
     ${makeFarmPosBucketGrades(org)}
     <div class="detail-title">${(state.formWindow || _pw)} development vs mean farm <span class="detail-title-sub">pure-development metric - debuts + acquisitions (trades, draft, IFA) nullified, so only the grade gained while a prospect was in the org counts, each step valued on the FV-to-expected-WAR table. ${_pw} is the principal (default) signal.</span></div>
@@ -55944,7 +56021,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // Org-average $DvM+ (the same value that feeds the financial grade leaf).
   const _orgDvm = (org.tree && org.tree.fin_dollar_dvm) ? org.tree.fin_dollar_dvm.dollar_dvm_plus : null;
   const _orgDvmSub = (_orgDvm != null)
-    ? ` · org $DvM+ <span style="color:${dollarDvmColor(_orgDvm)};font-weight:700;">${Math.round(_orgDvm)}</span>`
+    ? ` · ${dvmPlayerLabel("org $DvM+", "org DvM+ (player)")} <span style="color:${dollarDvmColor(_orgDvm)};font-weight:700;">${Math.round(_orgDvm)}</span>`
     : "";
   // The Financial composite above sums a different per-player basis (the eFV
   // expected surplus the farm grade reads), so the two totals differ; say so.
@@ -55961,7 +56038,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
          <div style="min-width:0;">
            <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top surplus contributors</div>
            <div class="table-scroll-x"><table class="detail-table" style="width:100%;">
-             <thead><tr><th>Player</th><th style="text-align:center;" title="The consensus FV this surplus engine reads">Consensus FV</th><th style="text-align:right;">Surplus</th><th style="text-align:right;" title="$DvM+ - surplus-development index (100 = FV-tier average appreciation; >100 = developing faster than same-grade peers).">$DvM+</th><th style="text-align:right;" title="Share of the org's total active-roster surplus.">% org</th></tr></thead>
+             <thead><tr><th>Player</th><th style="text-align:center;" title="The consensus FV this surplus engine reads">Consensus FV</th><th style="text-align:right;">Surplus</th><th style="text-align:right;" title="${farmDvmDifficulty() ? "DvM+ (player) - grade growth above expected for origin, starting grade, age and level (100 = active average)." : "$DvM+ - surplus-development index (100 = FV-tier average appreciation; >100 = developing faster than same-grade peers)."}">${dvmPlayerLabel()}</th><th style="text-align:right;" title="Share of the org's total active-roster surplus.">% org</th></tr></thead>
              <tbody>
                ${_surplusByProspect.slice(0, _topN).map(r => `<tr>
                  <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(r.p.player_key)}');" style="color:var(--text-primary);">${escapeHtml(r.p.player_name)}</a></td>
@@ -59647,6 +59724,7 @@ function _renderBootFailure(content, detail) {
 // =============================================================================
 async function _bootProspx() {
   DATA = await loadData();
+  if (DATA && !DATA.__error) _applyDvmDifficultyLabels();
   // The deferred shell scripts (the season state among them) run when parsing
   // ends; a cached boot payload can resolve before that, so the first render
   // waits for them rather than painting the pre-state defaults.

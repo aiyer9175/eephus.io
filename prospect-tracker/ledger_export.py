@@ -313,6 +313,35 @@ LEAF_VALUE = {
     "fin_ifa_roi": ("war_per_m_ifa", "grad_count", "WAR per $M of IFA bonus, eight-season window"),
 }
 
+#: The DvM+ difficulty arm's Ledger copy (storage.DVM_DIFFICULTY_ARM; owner answer
+#: Q-DVM-6 A): the per-prospect figure reads "DvM+ (player)". Served only while the arm
+#: is on; with it None (every build until the owner's flip) nothing below is read.
+DVM_DIFFICULTY_LEAF_BASIS = ("DvM+ (player) org mean: grade growth above expected for origin, "
+                             "starting grade, age and level")
+DVM_DIFFICULTY_COPY = {
+    "dvm_player_label": "DvM+ (player)",
+    "dvm_org_label": "Org DvM+ (player)",
+    "dvm_within_tier": ("DvM+ (player) is 100 + 10 x the prospect's own grade growth over his last "
+                        "three annual steps on each source's preseason lists, against what prospects "
+                        "with the same origin, starting grade, age and level usually gain, shrunk "
+                        "toward the mean and scaled by the spread across actives, with no clamp: not a "
+                        "dollar figure."),
+}
+
+
+def _dvm_difficulty_arm() -> str | None:
+    """storage.DVM_DIFFICULTY_ARM, read at export time (None when storage has none)."""
+    import storage
+    return getattr(storage, "DVM_DIFFICULTY_ARM", None)
+
+
+def _leaf_basis(key: str) -> str:
+    """A fin_* leaf's basis copy; fin_dollar_dvm names the player index with the arm on."""
+    if key == "fin_dollar_dvm" and _dvm_difficulty_arm() is not None:
+        return DVM_DIFFICULTY_LEAF_BASIS
+    return LEAF_VALUE[key][2]
+
+
 PAYOR_NEXT = {"Non-Tax": "1st-Time", "1st-Time": "2nd-Time", "2nd-Time": "3+-Time",
               "3+-Time": "3+-Time"}
 PAYOR_SEASONS = {"Non-Tax": 0, "1st-Time": 1, "2nd-Time": 2, "3+-Time": 3}
@@ -2502,7 +2531,7 @@ def build_all() -> tuple:
                                  "left out of the arbitration parts, since the guaranteed part carries it"),
         "cost_plus_registry": "no registry row: Cost+ predicts nothing; a skill claim would need an eval first",
         "orgsur_chip": "descriptive, unvalidated",
-        "farm_leaves": {k: {"basis": LEAF_VALUE[k][2], "weight": leaf_weights.get(k)} for k in FIN_LEAVES},
+        "farm_leaves": {k: {"basis": _leaf_basis(k), "weight": leaf_weights.get(k)} for k in FIN_LEAVES},
         "farm_letters_note": "letters come from org_summary.grades (rank across 30 orgs) and are never recomputed; a sparse leaf prints a dash",
         "pools_note": "2021 holds nine clubs (parser miss on the MLB.com article); 2027 pools are not published",
         "slot_coverage_basis": "share of the league's draft_results rows for that year carrying slot_usd",
@@ -2684,6 +2713,8 @@ def build_all() -> tuple:
         "registry_sentence": ("Provisional rows carry the registry verdict (Method tab); this page "
                               "scores nothing itself."),
     })
+    if _dvm_difficulty_arm() is not None:
+        copy.update(DVM_DIFFICULTY_COPY)
     # ---- the option and opt-out calendar (M13_OPTIONS_CALENDAR) ----------------
     penter = verdict_of.get("fa_penter") or "no registry row"
     copy.update({

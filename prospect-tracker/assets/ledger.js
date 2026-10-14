@@ -930,6 +930,7 @@
   // the data-gl hook still names the entry, and each value prints in its unit.
   // fin_active_surplus has no entry of its own: its hook is the financial
   // branch and its label says what the leaf holds.
+  // fin_dollar_dvm reads copy dvm_org_label when the DvM+ difficulty arm serves it.
   var LEAF_LABEL = { fin_active_surplus: "Active surplus", fin_dollar_dvm: "Org $DvM+", fin_contract_surplus: "Grad-Contract Surplus",
                      fin_war_per_m: "WAR per $M", fin_draft_pool_efficiency: "Draft Pool Efficiency", fin_ifa_roi: "IFA ROI" };
   function leafValue(k, v) {
@@ -940,6 +941,7 @@
     return num(v, 2);
   }
   function renderFarm(d) {
+    if (copy("dvm_org_label")) LEAF_LABEL.fin_dollar_dvm = copy("dvm_org_label");
     var F = d.farm, L = F.leaves, meta = copy("farm_leaves") || {}, basis = "";
     var out = '<div class="ledger-tiles ledger-tiles--2">' +
       tile(gl("OrgSur+", "sur_plus"), zCell(F.orgsur_plus.financial_score), esc(copy("orgsur_chip")) + "; tree " + esc(LEAF_LABEL.fin_war_per_m) + " score " + esc(num(F.orgsur_plus.tree_fin_war_per_m_score_100, 1))) +
@@ -1257,7 +1259,7 @@
     var shown = rows.filter(function (r) { return f === "all" || cv("farm.prospects", r, "acq_method") === f; });
     var head = "<tr><th>Player</th><th>" + gl("Expected surplus", "tvi") + "</th><th>" + gl("Band", "surplus_value") + '</th><th class="lc-col-hide">' + gl("eFV", "xfv") + '</th><th class="lc-col-hide">' + gl("Bonus", "signing_bonus") +
       '</th><th class="lc-col-hide">' + gl("Slot", "slot_value") + '</th><th class="lc-col-hide">' + gl("Net", "acquisition_cost_basis") + '</th><th class="lc-col-hide">Acquired</th><th class="lc-col-hide">' + gl("ETA", "eta") +
-      ' / phase</th><th class="lc-col-hide">' + gl("Crunch", "roster_crunch") + '</th><th class="lc-col-hide">' + gl("$DvM+", "fin_dollar_dvm") + '</th><th class="lc-xp"></th></tr>';
+      ' / phase</th><th class="lc-col-hide">' + gl("Crunch", "roster_crunch") + '</th><th class="lc-col-hide">' + gl(copy("dvm_player_label") || "$DvM+", "fin_dollar_dvm") + '</th><th class="lc-xp"></th></tr>';
     var sums = { s: 0, b: 0, n: 0 };
     var body = shown.map(function (r) {
       var key = cv("farm.prospects", r, "key"), s = cv("farm.prospects", r, "surplus_mm"), bonus = cv("farm.prospects", r, "bonus_usd"), slot = cv("farm.prospects", r, "slot_usd"), net = cv("farm.prospects", r, "net_mm"), method = cv("farm.prospects", r, "acq_method"), pick = cv("farm.prospects", r, "pick_overall"), dvm = cv("farm.prospects", r, "dollar_dvm_plus");

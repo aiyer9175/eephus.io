@@ -1,0 +1,6497 @@
+{
+ "_note": "DvM+ fields of org_summary from a pre-change export of 2026-10-09 (storage.DVM_DIFFICULTY_ARM None); test_dvm_flag_identity.py holds the arm-None path to these bytes.",
+ "farm_dev_spec": {
+  "dvm_blend": {
+   "fv_tool_share": 0.75,
+   "penalty_gap_cap": 35,
+   "penalty_gap_start": 15,
+   "statcast_share": 0.25,
+   "tool_share_in_slice": 0.3,
+   "tool_share_penalty_cap": 0.6,
+   "tool_share_penalty_start": 0.4
+  },
+  "principal_window": "7y"
+ },
+ "org_summary": [
+  {
+   "delta_above_mean": {
+    "1y": 3.64,
+    "2y": -4.42,
+    "3y": -12.4,
+    "4y": -13.01,
+    "5y": -4.36,
+    "6y": -5.06,
+    "7y": -1.79,
+    "8y": 1.59
+   },
+   "dvm_plus": {
+    "1y": 106,
+    "2y": 96,
+    "3y": 91,
+    "4y": 91,
+    "5y": 98,
+    "6y": 97,
+    "7y": 99,
+    "8y": 101
+   },
+   "hitter_delta_above_mean": {
+    "1y": 3.15,
+    "2y": 0.72,
+    "3y": -4.92,
+    "4y": -2.9,
+    "5y": 4.4,
+    "6y": 1.99,
+    "7y": 3.29,
+    "8y": 7.06
+   },
+   "hitter_dvm_plus": {
+    "1y": 108,
+    "2y": 101,
+    "3y": 94,
+    "4y": 97,
+    "5y": 103,
+    "6y": 101,
+    "7y": 102,
+    "8y": 104
+   },
+   "org": "ARI",
+   "pitcher_delta_above_mean": {
+    "1y": 0.54,
+    "2y": -5.26,
+    "3y": -6.68,
+    "4y": -9.81,
+    "5y": -8.76,
+    "6y": -6.66,
+    "7y": -4.52,
+    "8y": -5.72
+   },
+   "pitcher_dvm_plus": {
+    "1y": 101,
+    "2y": 91,
+    "3y": 91,
+    "4y": 88,
+    "5y": 90,
+    "6y": 93,
+    "7y": 96,
+    "8y": 95
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 92,
+     "bat_ctrl": 80,
+     "cb": 98,
+     "ch": 89,
+     "cmd": 95,
+     "ct": null,
+     "fb": 98,
+     "field": 132,
+     "hit": 73,
+     "pitch_sel": 89,
+     "pwr": null,
+     "sl": 102,
+     "speed": 102
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 116,
+      "bat_ctrl": 73,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 107,
+      "hit": 87,
+      "pitch_sel": 88,
+      "pwr": null,
+      "sl": null,
+      "speed": 110
+     },
+     "INF": {
+      "arm": 91,
+      "bat_ctrl": 81,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 114,
+      "hit": 83,
+      "pitch_sel": 110,
+      "pwr": null,
+      "sl": null,
+      "speed": 111
+     },
+     "OF": {
+      "arm": 86,
+      "bat_ctrl": 97,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 129,
+      "hit": 84,
+      "pitch_sel": 92,
+      "pwr": null,
+      "sl": null,
+      "speed": 97
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 90,
+      "ch": 102,
+      "cmd": 106,
+      "ct": null,
+      "fb": 99,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 105,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 111,
+      "ch": 84,
+      "cmd": 90,
+      "ct": null,
+      "fb": 98,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 87,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 99,
+    "tools_dvm_plus_rank": 14
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 100,
+     "dvm_plus_by_window": {
+      "1y": 101,
+      "2y": 99,
+      "3y": 97,
+      "4y": 98,
+      "5y": 100,
+      "6y": 99,
+      "7y": 100,
+      "8y": 100
+     },
+     "overall_dvm_plus": {
+      "1y": 108,
+      "2y": 101,
+      "3y": 94,
+      "4y": 97,
+      "5y": 103,
+      "6y": 101,
+      "7y": 102,
+      "8y": 104
+     },
+     "statcast_dvm_plus": 88,
+     "tool_dvm_plus": 95
+    },
+    "dev_pitcher": {
+     "dvm_plus": 99,
+     "dvm_plus_by_window": {
+      "1y": 102,
+      "2y": 98,
+      "3y": 98,
+      "4y": 97,
+      "5y": 97,
+      "6y": 98,
+      "7y": 99,
+      "8y": 99
+     },
+     "overall_dvm_plus": {
+      "1y": 101,
+      "2y": 91,
+      "3y": 91,
+      "4y": 88,
+      "5y": 90,
+      "6y": 93,
+      "7y": 96,
+      "8y": 95
+     },
+     "statcast_dvm_plus": 109,
+     "tool_dvm_plus": 98
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 100.1,
+     "n": 162,
+     "score_100": 100.8
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 1.44,
+    "2y": 1.08,
+    "3y": 2.6,
+    "4y": -6.11,
+    "5y": -9.56,
+    "6y": -14.06,
+    "7y": -16.99,
+    "8y": -26.11
+   },
+   "dvm_plus": {
+    "1y": 102,
+    "2y": 101,
+    "3y": 102,
+    "4y": 96,
+    "5y": 95,
+    "6y": 93,
+    "7y": 92,
+    "8y": 90
+   },
+   "hitter_delta_above_mean": {
+    "1y": -0.55,
+    "2y": 0.62,
+    "3y": -0.82,
+    "4y": -2.0,
+    "5y": -2.8,
+    "6y": -6.31,
+    "7y": -8.31,
+    "8y": -14.04
+   },
+   "hitter_dvm_plus": {
+    "1y": 99,
+    "2y": 101,
+    "3y": 99,
+    "4y": 98,
+    "5y": 98,
+    "6y": 96,
+    "7y": 95,
+    "8y": 92
+   },
+   "org": "ATH",
+   "pitcher_delta_above_mean": {
+    "1y": 1.44,
+    "2y": 0.24,
+    "3y": 3.02,
+    "4y": -4.51,
+    "5y": -7.16,
+    "6y": -7.66,
+    "7y": -10.42,
+    "8y": -13.42
+   },
+   "pitcher_dvm_plus": {
+    "1y": 104,
+    "2y": 100,
+    "3y": 104,
+    "4y": 95,
+    "5y": 92,
+    "6y": 92,
+    "7y": 90,
+    "8y": 87
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 82,
+     "bat_ctrl": 115,
+     "cb": 100,
+     "ch": 94,
+     "cmd": 101,
+     "ct": 98,
+     "fb": 92,
+     "field": 86,
+     "hit": 105,
+     "pitch_sel": 98,
+     "pwr": null,
+     "sl": 110,
+     "speed": 101
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": null,
+      "speed": null
+     },
+     "INF": {
+      "arm": 104,
+      "bat_ctrl": 108,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 91,
+      "hit": 109,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 94
+     },
+     "OF": {
+      "arm": 75,
+      "bat_ctrl": 111,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 92,
+      "hit": 98,
+      "pitch_sel": 97,
+      "pwr": null,
+      "sl": null,
+      "speed": 105
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 101,
+      "ch": 113,
+      "cmd": 107,
+      "ct": null,
+      "fb": 87,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 106,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 97,
+      "ch": 74,
+      "cmd": 96,
+      "ct": 99,
+      "fb": 103,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 105,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 98,
+    "tools_dvm_plus_rank": 19
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 99,
+     "dvm_plus_by_window": {
+      "1y": 100,
+      "2y": 100,
+      "3y": 99,
+      "4y": 100,
+      "5y": 99,
+      "6y": 100,
+      "7y": 99,
+      "8y": 99
+     },
+     "overall_dvm_plus": {
+      "1y": 99,
+      "2y": 101,
+      "3y": 99,
+      "4y": 98,
+      "5y": 98,
+      "6y": 96,
+      "7y": 95,
+      "8y": 92
+     },
+     "statcast_dvm_plus": 106,
+     "tool_dvm_plus": 98
+    },
+    "dev_pitcher": {
+     "dvm_plus": 90,
+     "dvm_plus_by_window": {
+      "1y": 97,
+      "2y": 95,
+      "3y": 97,
+      "4y": 93,
+      "5y": 91,
+      "6y": 91,
+      "7y": 90,
+      "8y": 89
+     },
+     "overall_dvm_plus": {
+      "1y": 104,
+      "2y": 100,
+      "3y": 104,
+      "4y": 95,
+      "5y": 92,
+      "6y": 92,
+      "7y": 90,
+      "8y": 87
+     },
+     "statcast_dvm_plus": 87,
+     "tool_dvm_plus": 98
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 99.5,
+     "n": 138,
+     "score_100": 96.6
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -2.16,
+    "2y": -5.02,
+    "3y": -6.2,
+    "4y": -9.51,
+    "5y": -12.46,
+    "6y": -13.66,
+    "7y": -20.19,
+    "8y": -22.71
+   },
+   "dvm_plus": {
+    "1y": 97,
+    "2y": 95,
+    "3y": 95,
+    "4y": 94,
+    "5y": 93,
+    "6y": 93,
+    "7y": 91,
+    "8y": 91
+   },
+   "hitter_delta_above_mean": {
+    "1y": -1.65,
+    "2y": -5.28,
+    "3y": -6.92,
+    "4y": -11.6,
+    "5y": -17.6,
+    "6y": -22.91,
+    "7y": -25.31,
+    "8y": -24.84
+   },
+   "hitter_dvm_plus": {
+    "1y": 96,
+    "2y": 92,
+    "3y": 92,
+    "4y": 89,
+    "5y": 87,
+    "6y": 85,
+    "7y": 85,
+    "8y": 87
+   },
+   "org": "ATL",
+   "pitcher_delta_above_mean": {
+    "1y": -0.86,
+    "2y": -0.36,
+    "3y": 0.62,
+    "4y": 1.79,
+    "5y": 4.14,
+    "6y": 4.14,
+    "7y": 5.08,
+    "8y": 3.88
+   },
+   "pitcher_dvm_plus": {
+    "1y": 98,
+    "2y": 99,
+    "3y": 101,
+    "4y": 102,
+    "5y": 105,
+    "6y": 104,
+    "7y": 105,
+    "8y": 104
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 88,
+     "bat_ctrl": 106,
+     "cb": 100,
+     "ch": 109,
+     "cmd": 100,
+     "ct": null,
+     "fb": 104,
+     "field": 94,
+     "hit": 101,
+     "pitch_sel": 95,
+     "pwr": null,
+     "sl": 69,
+     "speed": 83
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 96,
+      "hit": 102,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 102
+     },
+     "INF": {
+      "arm": 82,
+      "bat_ctrl": 110,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 99,
+      "hit": 90,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 95
+     },
+     "OF": {
+      "arm": 112,
+      "bat_ctrl": 100,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 93,
+      "hit": 112,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 85
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 100,
+      "ch": 100,
+      "cmd": 100,
+      "ct": null,
+      "fb": 110,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 83,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 100,
+      "ch": 112,
+      "cmd": 99,
+      "ct": null,
+      "fb": 96,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 73,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 97,
+    "tools_dvm_plus_rank": 24
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 95,
+     "dvm_plus_by_window": {
+      "1y": 98,
+      "2y": 97,
+      "3y": 97,
+      "4y": 96,
+      "5y": 96,
+      "6y": 95,
+      "7y": 95,
+      "8y": 95
+     },
+     "overall_dvm_plus": {
+      "1y": 96,
+      "2y": 92,
+      "3y": 92,
+      "4y": 89,
+      "5y": 87,
+      "6y": 85,
+      "7y": 85,
+      "8y": 87
+     },
+     "statcast_dvm_plus": 101,
+     "tool_dvm_plus": 94
+    },
+    "dev_pitcher": {
+     "dvm_plus": 102,
+     "dvm_plus_by_window": {
+      "1y": 98,
+      "2y": 99,
+      "3y": 99,
+      "4y": 100,
+      "5y": 101,
+      "6y": 101,
+      "7y": 102,
+      "8y": 100
+     },
+     "overall_dvm_plus": {
+      "1y": 98,
+      "2y": 99,
+      "3y": 101,
+      "4y": 102,
+      "5y": 105,
+      "6y": 104,
+      "7y": 105,
+      "8y": 104
+     },
+     "statcast_dvm_plus": 102,
+     "tool_dvm_plus": 96
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 100.9,
+     "n": 145,
+     "score_100": 106.4
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 2.44,
+    "2y": 5.58,
+    "3y": 17.4,
+    "4y": 25.19,
+    "5y": 41.44,
+    "6y": 49.54,
+    "7y": 55.71,
+    "8y": 57.89
+   },
+   "dvm_plus": {
+    "1y": 104,
+    "2y": 105,
+    "3y": 113,
+    "4y": 117,
+    "5y": 124,
+    "6y": 125,
+    "7y": 125,
+    "8y": 123
+   },
+   "hitter_delta_above_mean": {
+    "1y": -0.15,
+    "2y": 3.62,
+    "3y": 13.08,
+    "4y": 25.5,
+    "5y": 43.7,
+    "6y": 46.69,
+    "7y": 52.19,
+    "8y": 49.16
+   },
+   "hitter_dvm_plus": {
+    "1y": 100,
+    "2y": 105,
+    "3y": 115,
+    "4y": 124,
+    "5y": 132,
+    "6y": 131,
+    "7y": 131,
+    "8y": 127
+   },
+   "org": "BAL",
+   "pitcher_delta_above_mean": {
+    "1y": 3.94,
+    "2y": 1.64,
+    "3y": 4.12,
+    "4y": 0.59,
+    "5y": -1.56,
+    "6y": 3.14,
+    "7y": 3.38,
+    "8y": 8.58
+   },
+   "pitcher_dvm_plus": {
+    "1y": 110,
+    "2y": 103,
+    "3y": 105,
+    "4y": 101,
+    "5y": 98,
+    "6y": 103,
+    "7y": 103,
+    "8y": 108
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 108,
+     "bat_ctrl": 82,
+     "cb": 98,
+     "ch": 116,
+     "cmd": 98,
+     "ct": 102,
+     "fb": 77,
+     "field": 88,
+     "hit": 102,
+     "pitch_sel": 116,
+     "pwr": null,
+     "sl": 102,
+     "speed": 94
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 118,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 104,
+      "hit": 128,
+      "pitch_sel": 115,
+      "pwr": null,
+      "sl": null,
+      "speed": 101
+     },
+     "INF": {
+      "arm": 101,
+      "bat_ctrl": 70,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 95,
+      "hit": 82,
+      "pitch_sel": 95,
+      "pwr": null,
+      "sl": null,
+      "speed": 98
+     },
+     "OF": {
+      "arm": 110,
+      "bat_ctrl": 93,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 85,
+      "hit": 106,
+      "pitch_sel": 113,
+      "pwr": null,
+      "sl": null,
+      "speed": 96
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 89,
+      "ch": 104,
+      "cmd": 99,
+      "ct": null,
+      "fb": 93,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 106,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 108,
+      "ch": 121,
+      "cmd": 99,
+      "ct": 104,
+      "fb": 69,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 90,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 97,
+    "tools_dvm_plus_rank": 24
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 109,
+     "dvm_plus_by_window": {
+      "1y": 102,
+      "2y": 104,
+      "3y": 106,
+      "4y": 108,
+      "5y": 109,
+      "6y": 109,
+      "7y": 109,
+      "8y": 108
+     },
+     "overall_dvm_plus": {
+      "1y": 100,
+      "2y": 105,
+      "3y": 115,
+      "4y": 124,
+      "5y": 132,
+      "6y": 131,
+      "7y": 131,
+      "8y": 127
+     },
+     "statcast_dvm_plus": 98,
+     "tool_dvm_plus": 98
+    },
+    "dev_pitcher": {
+     "dvm_plus": 102,
+     "dvm_plus_by_window": {
+      "1y": 103,
+      "2y": 102,
+      "3y": 102,
+      "4y": 101,
+      "5y": 99,
+      "6y": 102,
+      "7y": 102,
+      "8y": 104
+     },
+     "overall_dvm_plus": {
+      "1y": 110,
+      "2y": 103,
+      "3y": 105,
+      "4y": 101,
+      "5y": 98,
+      "6y": 103,
+      "7y": 103,
+      "8y": 108
+     },
+     "statcast_dvm_plus": 107,
+     "tool_dvm_plus": 92
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 100.3,
+     "n": 163,
+     "score_100": 102.2
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 9.14,
+    "2y": 30.08,
+    "3y": 31.4,
+    "4y": 34.39,
+    "5y": 32.54,
+    "6y": 31.64,
+    "7y": 33.11,
+    "8y": 28.69
+   },
+   "dvm_plus": {
+    "1y": 115,
+    "2y": 127,
+    "3y": 123,
+    "4y": 123,
+    "5y": 119,
+    "6y": 116,
+    "7y": 115,
+    "8y": 111
+   },
+   "hitter_delta_above_mean": {
+    "1y": 4.35,
+    "2y": 17.02,
+    "3y": 19.08,
+    "4y": 20.7,
+    "5y": 19.2,
+    "6y": 18.49,
+    "7y": 17.29,
+    "8y": 17.26
+   },
+   "hitter_dvm_plus": {
+    "1y": 111,
+    "2y": 124,
+    "3y": 122,
+    "4y": 120,
+    "5y": 114,
+    "6y": 112,
+    "7y": 110,
+    "8y": 109
+   },
+   "org": "BOS",
+   "pitcher_delta_above_mean": {
+    "1y": 5.84,
+    "2y": 14.24,
+    "3y": 12.32,
+    "4y": 13.39,
+    "5y": 14.24,
+    "6y": 13.24,
+    "7y": 14.98,
+    "8y": 11.18
+   },
+   "pitcher_dvm_plus": {
+    "1y": 115,
+    "2y": 124,
+    "3y": 116,
+    "4y": 116,
+    "5y": 116,
+    "6y": 113,
+    "7y": 114,
+    "8y": 110
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 94,
+     "bat_ctrl": 92,
+     "cb": 99,
+     "ch": 95,
+     "cmd": 88,
+     "ct": null,
+     "fb": 110,
+     "field": 101,
+     "hit": 78,
+     "pitch_sel": 78,
+     "pwr": null,
+     "sl": 116,
+     "speed": 102
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 92,
+      "bat_ctrl": 88,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 97,
+      "hit": 88,
+      "pitch_sel": 75,
+      "pwr": null,
+      "sl": null,
+      "speed": 101
+     },
+     "INF": {
+      "arm": 94,
+      "bat_ctrl": 85,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 100,
+      "hit": 77,
+      "pitch_sel": 90,
+      "pwr": null,
+      "sl": null,
+      "speed": 101
+     },
+     "OF": {
+      "arm": 103,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 104,
+      "hit": 101,
+      "pitch_sel": 94,
+      "pwr": null,
+      "sl": null,
+      "speed": 103
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 94,
+      "ch": 103,
+      "cmd": 94,
+      "ct": null,
+      "fb": 95,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 130,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 106,
+      "ch": 94,
+      "cmd": 88,
+      "ct": null,
+      "fb": 119,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 91,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 98,
+    "tools_dvm_plus_rank": 19
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 102,
+     "dvm_plus_by_window": {
+      "1y": 101,
+      "2y": 103,
+      "3y": 104,
+      "4y": 103,
+      "5y": 103,
+      "6y": 102,
+      "7y": 102,
+      "8y": 102
+     },
+     "overall_dvm_plus": {
+      "1y": 111,
+      "2y": 124,
+      "3y": 122,
+      "4y": 120,
+      "5y": 114,
+      "6y": 112,
+      "7y": 110,
+      "8y": 109
+     },
+     "statcast_dvm_plus": 107,
+     "tool_dvm_plus": 91
+    },
+    "dev_pitcher": {
+     "dvm_plus": 107,
+     "dvm_plus_by_window": {
+      "1y": 109,
+      "2y": 110,
+      "3y": 108,
+      "4y": 108,
+      "5y": 108,
+      "6y": 107,
+      "7y": 107,
+      "8y": 106
+     },
+     "overall_dvm_plus": {
+      "1y": 115,
+      "2y": 124,
+      "3y": 116,
+      "4y": 116,
+      "5y": 116,
+      "6y": 113,
+      "7y": 114,
+      "8y": 110
+     },
+     "statcast_dvm_plus": 101,
+     "tool_dvm_plus": 105
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 101.6,
+     "n": 149,
+     "score_100": 111.3
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 4.14,
+    "2y": -3.62,
+    "3y": -4.3,
+    "4y": -7.81,
+    "5y": -14.36,
+    "6y": -13.96,
+    "7y": -15.89,
+    "8y": -20.71
+   },
+   "dvm_plus": {
+    "1y": 107,
+    "2y": 97,
+    "3y": 97,
+    "4y": 95,
+    "5y": 92,
+    "6y": 93,
+    "7y": 93,
+    "8y": 92
+   },
+   "hitter_delta_above_mean": {
+    "1y": 5.25,
+    "2y": 1.02,
+    "3y": 0.98,
+    "4y": -4.4,
+    "5y": -9.9,
+    "6y": -7.31,
+    "7y": -9.91,
+    "8y": -9.44
+   },
+   "hitter_dvm_plus": {
+    "1y": 113,
+    "2y": 101,
+    "3y": 101,
+    "4y": 96,
+    "5y": 93,
+    "6y": 95,
+    "7y": 94,
+    "8y": 95
+   },
+   "org": "CHC",
+   "pitcher_delta_above_mean": {
+    "1y": -0.96,
+    "2y": -4.96,
+    "3y": -5.18,
+    "4y": -2.51,
+    "5y": -4.76,
+    "6y": -6.36,
+    "7y": -6.12,
+    "8y": -11.22
+   },
+   "pitcher_dvm_plus": {
+    "1y": 97,
+    "2y": 92,
+    "3y": 93,
+    "4y": 97,
+    "5y": 95,
+    "6y": 94,
+    "7y": 94,
+    "8y": 90
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 108,
+     "bat_ctrl": 103,
+     "cb": 81,
+     "ch": 95,
+     "cmd": 112,
+     "ct": null,
+     "fb": 85,
+     "field": 90,
+     "hit": 99,
+     "pitch_sel": 105,
+     "pwr": null,
+     "sl": 119,
+     "speed": 94
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 91,
+      "hit": 100,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 92
+     },
+     "INF": {
+      "arm": 98,
+      "bat_ctrl": 102,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 97,
+      "hit": 108,
+      "pitch_sel": 112,
+      "pwr": null,
+      "sl": null,
+      "speed": 90
+     },
+     "OF": {
+      "arm": 98,
+      "bat_ctrl": 101,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 89,
+      "hit": 85,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 102
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 100,
+      "ch": 85,
+      "cmd": 92,
+      "ct": null,
+      "fb": 94,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 110,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 80,
+      "ch": 105,
+      "cmd": 114,
+      "ct": null,
+      "fb": 84,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 116,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 99,
+    "tools_dvm_plus_rank": 14
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 102,
+     "dvm_plus_by_window": {
+      "1y": 105,
+      "2y": 103,
+      "3y": 104,
+      "4y": 102,
+      "5y": 101,
+      "6y": 102,
+      "7y": 102,
+      "8y": 102
+     },
+     "overall_dvm_plus": {
+      "1y": 113,
+      "2y": 101,
+      "3y": 101,
+      "4y": 96,
+      "5y": 93,
+      "6y": 95,
+      "7y": 94,
+      "8y": 95
+     },
+     "statcast_dvm_plus": 117,
+     "tool_dvm_plus": 100
+    },
+    "dev_pitcher": {
+     "dvm_plus": 96,
+     "dvm_plus_by_window": {
+      "1y": 99,
+      "2y": 97,
+      "3y": 98,
+      "4y": 98,
+      "5y": 97,
+      "6y": 97,
+      "7y": 96,
+      "8y": 95
+     },
+     "overall_dvm_plus": {
+      "1y": 97,
+      "2y": 92,
+      "3y": 93,
+      "4y": 97,
+      "5y": 95,
+      "6y": 94,
+      "7y": 94,
+      "8y": 90
+     },
+     "statcast_dvm_plus": 98,
+     "tool_dvm_plus": 98
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 99.7,
+     "n": 153,
+     "score_100": 98.0
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -7.16,
+    "2y": -14.32,
+    "3y": -21.6,
+    "4y": -20.71,
+    "5y": -21.96,
+    "6y": -24.56,
+    "7y": -19.19,
+    "8y": -33.91
+   },
+   "dvm_plus": {
+    "1y": 89,
+    "2y": 87,
+    "3y": 84,
+    "4y": 86,
+    "5y": 87,
+    "6y": 88,
+    "7y": 91,
+    "8y": 87
+   },
+   "hitter_delta_above_mean": {
+    "1y": -1.45,
+    "2y": -5.48,
+    "3y": -8.82,
+    "4y": -10.7,
+    "5y": -9.7,
+    "6y": -9.71,
+    "7y": -5.81,
+    "8y": -13.54
+   },
+   "hitter_dvm_plus": {
+    "1y": 96,
+    "2y": 92,
+    "3y": 90,
+    "4y": 90,
+    "5y": 93,
+    "6y": 94,
+    "7y": 97,
+    "8y": 93
+   },
+   "org": "CHW",
+   "pitcher_delta_above_mean": {
+    "1y": -5.56,
+    "2y": -8.46,
+    "3y": -12.28,
+    "4y": -9.61,
+    "5y": -11.96,
+    "6y": -13.26,
+    "7y": -13.62,
+    "8y": -18.12
+   },
+   "pitcher_dvm_plus": {
+    "1y": 85,
+    "2y": 86,
+    "3y": 84,
+    "4y": 89,
+    "5y": 87,
+    "6y": 87,
+    "7y": 87,
+    "8y": 83
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 101,
+     "bat_ctrl": 98,
+     "cb": 118,
+     "ch": 129,
+     "cmd": 101,
+     "ct": null,
+     "fb": 104,
+     "field": 103,
+     "hit": 112,
+     "pitch_sel": 98,
+     "pwr": null,
+     "sl": 78,
+     "speed": 113
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 96,
+      "hit": 94,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": null,
+      "speed": 103
+     },
+     "INF": {
+      "arm": 96,
+      "bat_ctrl": 86,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 98,
+      "hit": 110,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 128
+     },
+     "OF": {
+      "arm": 113,
+      "bat_ctrl": 105,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 113,
+      "hit": 111,
+      "pitch_sel": 102,
+      "pwr": null,
+      "sl": null,
+      "speed": 100
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 110,
+      "ch": 126,
+      "cmd": 104,
+      "ct": null,
+      "fb": 99,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 81,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 104,
+      "ch": 113,
+      "cmd": 100,
+      "ct": null,
+      "fb": 109,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 97,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 103,
+    "tools_dvm_plus_rank": 6
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 94,
+     "dvm_plus_by_window": {
+      "1y": 96,
+      "2y": 93,
+      "3y": 93,
+      "4y": 92,
+      "5y": 94,
+      "6y": 94,
+      "7y": 94,
+      "8y": 93
+     },
+     "overall_dvm_plus": {
+      "1y": 96,
+      "2y": 92,
+      "3y": 90,
+      "4y": 90,
+      "5y": 93,
+      "6y": 94,
+      "7y": 97,
+      "8y": 93
+     },
+     "statcast_dvm_plus": 71,
+     "tool_dvm_plus": 104
+    },
+    "dev_pitcher": {
+     "dvm_plus": 92,
+     "dvm_plus_by_window": {
+      "1y": 92,
+      "2y": 93,
+      "3y": 93,
+      "4y": 94,
+      "5y": 93,
+      "6y": 93,
+      "7y": 92,
+      "8y": 91
+     },
+     "overall_dvm_plus": {
+      "1y": 85,
+      "2y": 86,
+      "3y": 84,
+      "4y": 89,
+      "5y": 87,
+      "6y": 87,
+      "7y": 87,
+      "8y": 83
+     },
+     "statcast_dvm_plus": 91,
+     "tool_dvm_plus": 101
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 99.7,
+     "n": 154,
+     "score_100": 98.0
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -2.46,
+    "2y": -1.92,
+    "3y": -2.5,
+    "4y": -0.21,
+    "5y": 3.64,
+    "6y": 1.24,
+    "7y": 0.41,
+    "8y": -0.21
+   },
+   "dvm_plus": {
+    "1y": 96,
+    "2y": 98,
+    "3y": 98,
+    "4y": 100,
+    "5y": 102,
+    "6y": 101,
+    "7y": 100,
+    "8y": 100
+   },
+   "hitter_delta_above_mean": {
+    "1y": -1.25,
+    "2y": -3.08,
+    "3y": -6.62,
+    "4y": -3.8,
+    "5y": -1.8,
+    "6y": -2.01,
+    "7y": -5.41,
+    "8y": -4.84
+   },
+   "hitter_dvm_plus": {
+    "1y": 97,
+    "2y": 96,
+    "3y": 93,
+    "4y": 96,
+    "5y": 99,
+    "6y": 99,
+    "7y": 97,
+    "8y": 97
+   },
+   "org": "CIN",
+   "pitcher_delta_above_mean": {
+    "1y": -1.56,
+    "2y": 1.34,
+    "3y": 4.02,
+    "4y": 4.09,
+    "5y": 5.14,
+    "6y": 4.44,
+    "7y": 4.88,
+    "8y": 4.38
+   },
+   "pitcher_dvm_plus": {
+    "1y": 96,
+    "2y": 102,
+    "3y": 105,
+    "4y": 105,
+    "5y": 106,
+    "6y": 104,
+    "7y": 105,
+    "8y": 104
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 86,
+     "bat_ctrl": 91,
+     "cb": 79,
+     "ch": 94,
+     "cmd": 93,
+     "ct": null,
+     "fb": 97,
+     "field": 82,
+     "hit": 90,
+     "pitch_sel": 114,
+     "pwr": null,
+     "sl": 95,
+     "speed": 100
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 86,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 89,
+      "hit": 99,
+      "pitch_sel": 109,
+      "pwr": null,
+      "sl": null,
+      "speed": 100
+     },
+     "INF": {
+      "arm": 93,
+      "bat_ctrl": 92,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 86,
+      "hit": 88,
+      "pitch_sel": 94,
+      "pwr": null,
+      "sl": null,
+      "speed": 94
+     },
+     "OF": {
+      "arm": 99,
+      "bat_ctrl": 102,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 102,
+      "hit": 102,
+      "pitch_sel": 124,
+      "pwr": null,
+      "sl": null,
+      "speed": 106
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 77,
+      "ch": 100,
+      "cmd": 107,
+      "ct": null,
+      "fb": 95,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 103,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 103,
+      "ch": 94,
+      "cmd": 89,
+      "ct": null,
+      "fb": 100,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 92,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 95,
+    "tools_dvm_plus_rank": 28
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 96,
+     "dvm_plus_by_window": {
+      "1y": 97,
+      "2y": 96,
+      "3y": 95,
+      "4y": 96,
+      "5y": 96,
+      "6y": 97,
+      "7y": 96,
+      "8y": 96
+     },
+     "overall_dvm_plus": {
+      "1y": 97,
+      "2y": 96,
+      "3y": 93,
+      "4y": 96,
+      "5y": 99,
+      "6y": 99,
+      "7y": 97,
+      "8y": 97
+     },
+     "statcast_dvm_plus": 89,
+     "tool_dvm_plus": 94
+    },
+    "dev_pitcher": {
+     "dvm_plus": 100,
+     "dvm_plus_by_window": {
+      "1y": 97,
+      "2y": 99,
+      "3y": 101,
+      "4y": 101,
+      "5y": 101,
+      "6y": 101,
+      "7y": 100,
+      "8y": 100
+     },
+     "overall_dvm_plus": {
+      "1y": 96,
+      "2y": 102,
+      "3y": 105,
+      "4y": 105,
+      "5y": 106,
+      "6y": 104,
+      "7y": 105,
+      "8y": 104
+     },
+     "statcast_dvm_plus": 90,
+     "tool_dvm_plus": 94
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 100.5,
+     "n": 157,
+     "score_100": 103.6
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 6.14,
+    "2y": 9.08,
+    "3y": 0.3,
+    "4y": -0.71,
+    "5y": -4.06,
+    "6y": -3.46,
+    "7y": -5.59,
+    "8y": -6.71
+   },
+   "dvm_plus": {
+    "1y": 110,
+    "2y": 108,
+    "3y": 100,
+    "4y": 100,
+    "5y": 98,
+    "6y": 98,
+    "7y": 97,
+    "8y": 97
+   },
+   "hitter_delta_above_mean": {
+    "1y": 5.35,
+    "2y": 9.82,
+    "3y": 8.58,
+    "4y": 6.6,
+    "5y": 0.1,
+    "6y": 1.49,
+    "7y": -0.81,
+    "8y": -1.54
+   },
+   "hitter_dvm_plus": {
+    "1y": 113,
+    "2y": 114,
+    "3y": 110,
+    "4y": 106,
+    "5y": 100,
+    "6y": 101,
+    "7y": 100,
+    "8y": 99
+   },
+   "org": "CLE",
+   "pitcher_delta_above_mean": {
+    "1y": 1.94,
+    "2y": -0.76,
+    "3y": -8.38,
+    "4y": -8.51,
+    "5y": -4.36,
+    "6y": -4.56,
+    "7y": -4.72,
+    "8y": -5.12
+   },
+   "pitcher_dvm_plus": {
+    "1y": 105,
+    "2y": 99,
+    "3y": 89,
+    "4y": 90,
+    "5y": 95,
+    "6y": 96,
+    "7y": 95,
+    "8y": 95
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 104,
+     "bat_ctrl": 94,
+     "cb": 84,
+     "ch": 104,
+     "cmd": 118,
+     "ct": 102,
+     "fb": 118,
+     "field": 118,
+     "hit": 89,
+     "pitch_sel": 80,
+     "pwr": null,
+     "sl": 126,
+     "speed": 139
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": null,
+      "speed": null
+     },
+     "INF": {
+      "arm": 102,
+      "bat_ctrl": 97,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 108,
+      "hit": 94,
+      "pitch_sel": 74,
+      "pwr": null,
+      "sl": null,
+      "speed": 118
+     },
+     "OF": {
+      "arm": 94,
+      "bat_ctrl": 96,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 117,
+      "hit": 95,
+      "pitch_sel": 95,
+      "pwr": null,
+      "sl": null,
+      "speed": 129
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": null,
+      "ch": 100,
+      "cmd": 139,
+      "ct": null,
+      "fb": 114,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 121,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 85,
+      "ch": 108,
+      "cmd": 103,
+      "ct": 103,
+      "fb": 114,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 112,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 106,
+    "tools_dvm_plus_rank": 1
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 103,
+     "dvm_plus_by_window": {
+      "1y": 106,
+      "2y": 108,
+      "3y": 107,
+      "4y": 105,
+      "5y": 104,
+      "6y": 103,
+      "7y": 103,
+      "8y": 103
+     },
+     "overall_dvm_plus": {
+      "1y": 113,
+      "2y": 114,
+      "3y": 110,
+      "4y": 106,
+      "5y": 100,
+      "6y": 101,
+      "7y": 100,
+      "8y": 99
+     },
+     "statcast_dvm_plus": 114,
+     "tool_dvm_plus": 104
+    },
+    "dev_pitcher": {
+     "dvm_plus": 99,
+     "dvm_plus_by_window": {
+      "1y": 103,
+      "2y": 100,
+      "3y": 95,
+      "4y": 96,
+      "5y": 98,
+      "6y": 99,
+      "7y": 99,
+      "8y": 98
+     },
+     "overall_dvm_plus": {
+      "1y": 105,
+      "2y": 99,
+      "3y": 89,
+      "4y": 90,
+      "5y": 95,
+      "6y": 96,
+      "7y": 95,
+      "8y": 95
+     },
+     "statcast_dvm_plus": 90,
+     "tool_dvm_plus": 115
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 100.7,
+     "n": 161,
+     "score_100": 105.0
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -10.66,
+    "2y": -14.72,
+    "3y": -21.9,
+    "4y": -22.61,
+    "5y": -25.06,
+    "6y": -29.26,
+    "7y": -31.49,
+    "8y": -38.91
+   },
+   "dvm_plus": {
+    "1y": 83,
+    "2y": 87,
+    "3y": 84,
+    "4y": 85,
+    "5y": 86,
+    "6y": 85,
+    "7y": 86,
+    "8y": 85
+   },
+   "hitter_delta_above_mean": {
+    "1y": -6.35,
+    "2y": -9.48,
+    "3y": -15.82,
+    "4y": -16.0,
+    "5y": -16.5,
+    "6y": -18.01,
+    "7y": -20.81,
+    "8y": -27.34
+   },
+   "hitter_dvm_plus": {
+    "1y": 84,
+    "2y": 86,
+    "3y": 82,
+    "4y": 85,
+    "5y": 88,
+    "6y": 88,
+    "7y": 88,
+    "8y": 85
+   },
+   "org": "COL",
+   "pitcher_delta_above_mean": {
+    "1y": -4.56,
+    "2y": -5.26,
+    "3y": -6.08,
+    "4y": -6.31,
+    "5y": -8.76,
+    "6y": -11.16,
+    "7y": -10.82,
+    "8y": -11.82
+   },
+   "pitcher_dvm_plus": {
+    "1y": 88,
+    "2y": 91,
+    "3y": 92,
+    "4y": 93,
+    "5y": 90,
+    "6y": 89,
+    "7y": 90,
+    "8y": 89
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 101,
+     "bat_ctrl": 102,
+     "cb": 81,
+     "ch": 107,
+     "cmd": 96,
+     "ct": 114,
+     "fb": 110,
+     "field": 90,
+     "hit": 102,
+     "pitch_sel": 99,
+     "pwr": null,
+     "sl": 87,
+     "speed": 91
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 100,
+      "hit": 95,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 105
+     },
+     "INF": {
+      "arm": 98,
+      "bat_ctrl": 114,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 89,
+      "hit": 108,
+      "pitch_sel": 86,
+      "pwr": null,
+      "sl": null,
+      "speed": 96
+     },
+     "OF": {
+      "arm": 101,
+      "bat_ctrl": 90,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 98,
+      "hit": 95,
+      "pitch_sel": 109,
+      "pwr": null,
+      "sl": null,
+      "speed": 90
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 96,
+      "ch": 102,
+      "cmd": 104,
+      "ct": null,
+      "fb": 97,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 90,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 80,
+      "ch": 110,
+      "cmd": 93,
+      "ct": 114,
+      "fb": 119,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 94,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 99,
+    "tools_dvm_plus_rank": 14
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 96,
+     "dvm_plus_by_window": {
+      "1y": 95,
+      "2y": 95,
+      "3y": 93,
+      "4y": 94,
+      "5y": 95,
+      "6y": 96,
+      "7y": 96,
+      "8y": 94
+     },
+     "overall_dvm_plus": {
+      "1y": 84,
+      "2y": 86,
+      "3y": 82,
+      "4y": 85,
+      "5y": 88,
+      "6y": 88,
+      "7y": 88,
+      "8y": 85
+     },
+     "statcast_dvm_plus": 97,
+     "tool_dvm_plus": 98
+    },
+    "dev_pitcher": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 97,
+      "2y": 99,
+      "3y": 99,
+      "4y": 100,
+      "5y": 98,
+      "6y": 97,
+      "7y": 97,
+      "8y": 97
+     },
+     "overall_dvm_plus": {
+      "1y": 88,
+      "2y": 91,
+      "3y": 92,
+      "4y": 93,
+      "5y": 90,
+      "6y": 89,
+      "7y": 90,
+      "8y": 89
+     },
+     "statcast_dvm_plus": 107,
+     "tool_dvm_plus": 101
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 99.2,
+     "n": 162,
+     "score_100": 94.5
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -1.56,
+    "2y": 7.78,
+    "3y": 13.6,
+    "4y": 8.79,
+    "5y": 10.94,
+    "6y": 16.54,
+    "7y": 19.71,
+    "8y": 19.09
+   },
+   "dvm_plus": {
+    "1y": 98,
+    "2y": 107,
+    "3y": 110,
+    "4y": 106,
+    "5y": 106,
+    "6y": 108,
+    "7y": 109,
+    "8y": 108
+   },
+   "hitter_delta_above_mean": {
+    "1y": 1.65,
+    "2y": 8.72,
+    "3y": 11.08,
+    "4y": 7.8,
+    "5y": 9.3,
+    "6y": 19.49,
+    "7y": 18.09,
+    "8y": 13.66
+   },
+   "hitter_dvm_plus": {
+    "1y": 104,
+    "2y": 112,
+    "3y": 113,
+    "4y": 107,
+    "5y": 107,
+    "6y": 113,
+    "7y": 111,
+    "8y": 107
+   },
+   "org": "DET",
+   "pitcher_delta_above_mean": {
+    "1y": -3.36,
+    "2y": -1.06,
+    "3y": 2.72,
+    "4y": 1.19,
+    "5y": 3.24,
+    "6y": -3.36,
+    "7y": 2.68,
+    "8y": 6.08
+   },
+   "pitcher_dvm_plus": {
+    "1y": 91,
+    "2y": 98,
+    "3y": 103,
+    "4y": 101,
+    "5y": 104,
+    "6y": 97,
+    "7y": 103,
+    "8y": 106
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 115,
+     "bat_ctrl": 92,
+     "cb": 102,
+     "ch": 107,
+     "cmd": 96,
+     "ct": null,
+     "fb": 95,
+     "field": 90,
+     "hit": 108,
+     "pitch_sel": 97,
+     "pwr": null,
+     "sl": 90,
+     "speed": 100
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 100,
+      "bat_ctrl": 87,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 97,
+      "hit": 88,
+      "pitch_sel": 118,
+      "pwr": null,
+      "sl": null,
+      "speed": 94
+     },
+     "INF": {
+      "arm": 108,
+      "bat_ctrl": 96,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 90,
+      "hit": 111,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 97
+     },
+     "OF": {
+      "arm": 112,
+      "bat_ctrl": 96,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 101,
+      "hit": 108,
+      "pitch_sel": 84,
+      "pwr": null,
+      "sl": null,
+      "speed": 104
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 99,
+      "ch": 107,
+      "cmd": 103,
+      "ct": null,
+      "fb": 95,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 99,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 105,
+      "ch": 105,
+      "cmd": 93,
+      "ct": null,
+      "fb": 98,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 84,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 99,
+    "tools_dvm_plus_rank": 14
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 105,
+     "dvm_plus_by_window": {
+      "1y": 103,
+      "2y": 105,
+      "3y": 105,
+      "4y": 103,
+      "5y": 105,
+      "6y": 106,
+      "7y": 105,
+      "8y": 105
+     },
+     "overall_dvm_plus": {
+      "1y": 104,
+      "2y": 112,
+      "3y": 113,
+      "4y": 107,
+      "5y": 107,
+      "6y": 113,
+      "7y": 111,
+      "8y": 107
+     },
+     "statcast_dvm_plus": 117,
+     "tool_dvm_plus": 100
+    },
+    "dev_pitcher": {
+     "dvm_plus": 100,
+     "dvm_plus_by_window": {
+      "1y": 95,
+      "2y": 98,
+      "3y": 101,
+      "4y": 100,
+      "5y": 100,
+      "6y": 97,
+      "7y": 100,
+      "8y": 102
+     },
+     "overall_dvm_plus": {
+      "1y": 91,
+      "2y": 98,
+      "3y": 103,
+      "4y": 101,
+      "5y": 104,
+      "6y": 97,
+      "7y": 103,
+      "8y": 106
+     },
+     "statcast_dvm_plus": 92,
+     "tool_dvm_plus": 96
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 97.4,
+     "n": 173,
+     "score_100": 81.8
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -4.36,
+    "2y": -11.82,
+    "3y": -8.7,
+    "4y": -10.61,
+    "5y": -13.96,
+    "6y": -21.96,
+    "7y": -25.59,
+    "8y": -16.21
+   },
+   "dvm_plus": {
+    "1y": 93,
+    "2y": 89,
+    "3y": 94,
+    "4y": 93,
+    "5y": 92,
+    "6y": 89,
+    "7y": 88,
+    "8y": 94
+   },
+   "hitter_delta_above_mean": {
+    "1y": -3.05,
+    "2y": -8.38,
+    "3y": -7.22,
+    "4y": -8.4,
+    "5y": -10.5,
+    "6y": -11.91,
+    "7y": -12.81,
+    "8y": -11.84
+   },
+   "hitter_dvm_plus": {
+    "1y": 92,
+    "2y": 88,
+    "3y": 92,
+    "4y": 92,
+    "5y": 92,
+    "6y": 92,
+    "7y": 92,
+    "8y": 94
+   },
+   "org": "HOU",
+   "pitcher_delta_above_mean": {
+    "1y": -1.56,
+    "2y": -3.36,
+    "3y": -1.58,
+    "4y": -2.01,
+    "5y": -3.46,
+    "6y": -9.66,
+    "7y": -13.12,
+    "8y": -4.62
+   },
+   "pitcher_dvm_plus": {
+    "1y": 96,
+    "2y": 94,
+    "3y": 98,
+    "4y": 98,
+    "5y": 96,
+    "6y": 90,
+    "7y": 87,
+    "8y": 96
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 95,
+     "bat_ctrl": 110,
+     "cb": 97,
+     "ch": 92,
+     "cmd": 79,
+     "ct": 104,
+     "fb": 90,
+     "field": 108,
+     "hit": 103,
+     "pitch_sel": 94,
+     "pwr": null,
+     "sl": 94,
+     "speed": 84
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 83,
+      "bat_ctrl": 100,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 96,
+      "hit": 101,
+      "pitch_sel": 98,
+      "pwr": null,
+      "sl": null,
+      "speed": 95
+     },
+     "INF": {
+      "arm": 99,
+      "bat_ctrl": 110,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 112,
+      "hit": 100,
+      "pitch_sel": 98,
+      "pwr": null,
+      "sl": null,
+      "speed": 88
+     },
+     "OF": {
+      "arm": 104,
+      "bat_ctrl": 106,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 101,
+      "hit": 102,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 90
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 93,
+      "ch": 96,
+      "cmd": 90,
+      "ct": null,
+      "fb": 94,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 95,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 105,
+      "ch": 95,
+      "cmd": 80,
+      "ct": 103,
+      "fb": 91,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 96,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 97,
+    "tools_dvm_plus_rank": 24
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 98,
+      "2y": 96,
+      "3y": 97,
+      "4y": 98,
+      "5y": 98,
+      "6y": 97,
+      "7y": 97,
+      "8y": 98
+     },
+     "overall_dvm_plus": {
+      "1y": 92,
+      "2y": 88,
+      "3y": 92,
+      "4y": 92,
+      "5y": 92,
+      "6y": 92,
+      "7y": 92,
+      "8y": 94
+     },
+     "statcast_dvm_plus": 103,
+     "tool_dvm_plus": 99
+    },
+    "dev_pitcher": {
+     "dvm_plus": 92,
+     "dvm_plus_by_window": {
+      "1y": 95,
+      "2y": 94,
+      "3y": 96,
+      "4y": 96,
+      "5y": 95,
+      "6y": 93,
+      "7y": 92,
+      "8y": 95
+     },
+     "overall_dvm_plus": {
+      "1y": 96,
+      "2y": 94,
+      "3y": 98,
+      "4y": 98,
+      "5y": 96,
+      "6y": 90,
+      "7y": 87,
+      "8y": 96
+     },
+     "statcast_dvm_plus": 87,
+     "tool_dvm_plus": 91
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 100.9,
+     "n": 160,
+     "score_100": 106.4
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -7.06,
+    "2y": -4.52,
+    "3y": -16.8,
+    "4y": -20.31,
+    "5y": -17.86,
+    "6y": -13.36,
+    "7y": -6.79,
+    "8y": -6.11
+   },
+   "dvm_plus": {
+    "1y": 89,
+    "2y": 96,
+    "3y": 88,
+    "4y": 87,
+    "5y": 90,
+    "6y": 93,
+    "7y": 97,
+    "8y": 98
+   },
+   "hitter_delta_above_mean": {
+    "1y": -5.25,
+    "2y": -2.38,
+    "3y": -14.32,
+    "4y": -14.8,
+    "5y": -7.0,
+    "6y": -5.61,
+    "7y": -2.01,
+    "8y": -5.74
+   },
+   "hitter_dvm_plus": {
+    "1y": 87,
+    "2y": 97,
+    "3y": 84,
+    "4y": 86,
+    "5y": 95,
+    "6y": 96,
+    "7y": 99,
+    "8y": 97
+   },
+   "org": "KCR",
+   "pitcher_delta_above_mean": {
+    "1y": -1.96,
+    "2y": -2.16,
+    "3y": -2.88,
+    "4y": -6.21,
+    "5y": -10.36,
+    "6y": -7.66,
+    "7y": -4.92,
+    "8y": -0.72
+   },
+   "pitcher_dvm_plus": {
+    "1y": 95,
+    "2y": 96,
+    "3y": 96,
+    "4y": 93,
+    "5y": 89,
+    "6y": 92,
+    "7y": 95,
+    "8y": 99
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 67,
+     "bat_ctrl": 95,
+     "cb": 84,
+     "ch": 91,
+     "cmd": 94,
+     "ct": null,
+     "fb": 89,
+     "field": 109,
+     "hit": 89,
+     "pitch_sel": 93,
+     "pwr": null,
+     "sl": 94,
+     "speed": 97
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 97,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 97,
+      "hit": 95,
+      "pitch_sel": 104,
+      "pwr": null,
+      "sl": null,
+      "speed": 101
+     },
+     "INF": {
+      "arm": 79,
+      "bat_ctrl": 109,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 100,
+      "hit": 96,
+      "pitch_sel": 93,
+      "pwr": null,
+      "sl": null,
+      "speed": 99
+     },
+     "OF": {
+      "arm": 113,
+      "bat_ctrl": 90,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 118,
+      "hit": 90,
+      "pitch_sel": 92,
+      "pwr": null,
+      "sl": null,
+      "speed": 97
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 87,
+      "ch": 99,
+      "cmd": 94,
+      "ct": null,
+      "fb": 97,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 90,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 93,
+      "ch": 91,
+      "cmd": 96,
+      "ct": null,
+      "fb": 84,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 107,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 95,
+    "tools_dvm_plus_rank": 28
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 94,
+      "2y": 97,
+      "3y": 93,
+      "4y": 94,
+      "5y": 97,
+      "6y": 97,
+      "7y": 97,
+      "8y": 97
+     },
+     "overall_dvm_plus": {
+      "1y": 87,
+      "2y": 97,
+      "3y": 84,
+      "4y": 86,
+      "5y": 95,
+      "6y": 96,
+      "7y": 99,
+      "8y": 97
+     },
+     "statcast_dvm_plus": 87,
+     "tool_dvm_plus": 92
+    },
+    "dev_pitcher": {
+     "dvm_plus": 92,
+     "dvm_plus_by_window": {
+      "1y": 92,
+      "2y": 93,
+      "3y": 93,
+      "4y": 91,
+      "5y": 90,
+      "6y": 91,
+      "7y": 92,
+      "8y": 95
+     },
+     "overall_dvm_plus": {
+      "1y": 95,
+      "2y": 96,
+      "3y": 96,
+      "4y": 93,
+      "5y": 89,
+      "6y": 92,
+      "7y": 95,
+      "8y": 99
+     },
+     "statcast_dvm_plus": 84,
+     "tool_dvm_plus": 91
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 100.1,
+     "n": 158,
+     "score_100": 100.8
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 3.64,
+    "2y": 0.58,
+    "3y": -4.1,
+    "4y": -6.11,
+    "5y": -12.26,
+    "6y": -13.46,
+    "7y": -14.99,
+    "8y": -8.71
+   },
+   "dvm_plus": {
+    "1y": 106,
+    "2y": 101,
+    "3y": 97,
+    "4y": 96,
+    "5y": 93,
+    "6y": 93,
+    "7y": 93,
+    "8y": 97
+   },
+   "hitter_delta_above_mean": {
+    "1y": 0.55,
+    "2y": -2.38,
+    "3y": -5.32,
+    "4y": -5.3,
+    "5y": -13.5,
+    "6y": -16.01,
+    "7y": -16.01,
+    "8y": -11.34
+   },
+   "hitter_dvm_plus": {
+    "1y": 101,
+    "2y": 97,
+    "3y": 94,
+    "4y": 95,
+    "5y": 90,
+    "6y": 89,
+    "7y": 90,
+    "8y": 94
+   },
+   "org": "LAA",
+   "pitcher_delta_above_mean": {
+    "1y": 2.34,
+    "2y": 1.94,
+    "3y": 0.92,
+    "4y": -1.51,
+    "5y": -0.16,
+    "6y": 1.94,
+    "7y": 0.78,
+    "8y": 1.38
+   },
+   "pitcher_dvm_plus": {
+    "1y": 106,
+    "2y": 103,
+    "3y": 101,
+    "4y": 98,
+    "5y": 100,
+    "6y": 102,
+    "7y": 101,
+    "8y": 101
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 110,
+     "bat_ctrl": 108,
+     "cb": 103,
+     "ch": 107,
+     "cmd": 106,
+     "ct": null,
+     "fb": 101,
+     "field": 116,
+     "hit": 128,
+     "pitch_sel": 100,
+     "pwr": null,
+     "sl": 102,
+     "speed": 83
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 99,
+      "bat_ctrl": 102,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 112,
+      "hit": 101,
+      "pitch_sel": 94,
+      "pwr": null,
+      "sl": null,
+      "speed": 101
+     },
+     "INF": {
+      "arm": 105,
+      "bat_ctrl": 103,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 103,
+      "hit": 120,
+      "pitch_sel": 97,
+      "pwr": null,
+      "sl": null,
+      "speed": 70
+     },
+     "OF": {
+      "arm": 111,
+      "bat_ctrl": 107,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 111,
+      "hit": 119,
+      "pitch_sel": 105,
+      "pwr": null,
+      "sl": null,
+      "speed": 97
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 100,
+      "ch": 110,
+      "cmd": 87,
+      "ct": null,
+      "fb": 103,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 92,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 104,
+      "ch": 104,
+      "cmd": 110,
+      "ct": null,
+      "fb": 99,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 113,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 104,
+    "tools_dvm_plus_rank": 4
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 101,
+      "2y": 99,
+      "3y": 99,
+      "4y": 99,
+      "5y": 98,
+      "6y": 97,
+      "7y": 97,
+      "8y": 99
+     },
+     "overall_dvm_plus": {
+      "1y": 101,
+      "2y": 97,
+      "3y": 94,
+      "4y": 95,
+      "5y": 90,
+      "6y": 89,
+      "7y": 90,
+      "8y": 94
+     },
+     "statcast_dvm_plus": 97,
+     "tool_dvm_plus": 108
+    },
+    "dev_pitcher": {
+     "dvm_plus": 102,
+     "dvm_plus_by_window": {
+      "1y": 105,
+      "2y": 103,
+      "3y": 102,
+      "4y": 101,
+      "5y": 101,
+      "6y": 102,
+      "7y": 102,
+      "8y": 102
+     },
+     "overall_dvm_plus": {
+      "1y": 106,
+      "2y": 103,
+      "3y": 101,
+      "4y": 98,
+      "5y": 100,
+      "6y": 102,
+      "7y": 101,
+      "8y": 101
+     },
+     "statcast_dvm_plus": 110,
+     "tool_dvm_plus": 103
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 98.8,
+     "n": 146,
+     "score_100": 91.7
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 5.84,
+    "2y": 17.18,
+    "3y": 19.5,
+    "4y": 19.29,
+    "5y": 24.54,
+    "6y": 32.54,
+    "7y": 34.71,
+    "8y": 50.89
+   },
+   "dvm_plus": {
+    "1y": 109,
+    "2y": 116,
+    "3y": 114,
+    "4y": 113,
+    "5y": 114,
+    "6y": 116,
+    "7y": 116,
+    "8y": 120
+   },
+   "hitter_delta_above_mean": {
+    "1y": 5.55,
+    "2y": 6.82,
+    "3y": 5.78,
+    "4y": 1.5,
+    "5y": 2.1,
+    "6y": 6.19,
+    "7y": 9.49,
+    "8y": 19.16
+   },
+   "hitter_dvm_plus": {
+    "1y": 114,
+    "2y": 110,
+    "3y": 107,
+    "4y": 101,
+    "5y": 102,
+    "6y": 104,
+    "7y": 106,
+    "8y": 110
+   },
+   "org": "LAD",
+   "pitcher_delta_above_mean": {
+    "1y": 0.04,
+    "2y": 9.74,
+    "3y": 13.72,
+    "4y": 18.59,
+    "5y": 22.24,
+    "6y": 27.04,
+    "7y": 27.38,
+    "8y": 31.48
+   },
+   "pitcher_dvm_plus": {
+    "1y": 100,
+    "2y": 117,
+    "3y": 118,
+    "4y": 122,
+    "5y": 125,
+    "6y": 127,
+    "7y": 126,
+    "8y": 129
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 108,
+     "bat_ctrl": 79,
+     "cb": 108,
+     "ch": 85,
+     "cmd": 114,
+     "ct": 99,
+     "fb": 103,
+     "field": 104,
+     "hit": 96,
+     "pitch_sel": 105,
+     "pwr": null,
+     "sl": 81,
+     "speed": 75
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 114,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 88,
+      "hit": 104,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 108
+     },
+     "INF": {
+      "arm": 106,
+      "bat_ctrl": 92,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 133,
+      "hit": 92,
+      "pitch_sel": 94,
+      "pwr": null,
+      "sl": null,
+      "speed": 83
+     },
+     "OF": {
+      "arm": 94,
+      "bat_ctrl": 78,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 74,
+      "hit": 100,
+      "pitch_sel": 110,
+      "pwr": null,
+      "sl": null,
+      "speed": 83
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 126,
+      "ch": 93,
+      "cmd": 100,
+      "ct": null,
+      "fb": 115,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 82,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 89,
+      "ch": 87,
+      "cmd": 115,
+      "ct": 99,
+      "fb": 89,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 93,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 98,
+    "tools_dvm_plus_rank": 19
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 102,
+     "dvm_plus_by_window": {
+      "1y": 101,
+      "2y": 104,
+      "3y": 101,
+      "4y": 101,
+      "5y": 101,
+      "6y": 101,
+      "7y": 102,
+      "8y": 105
+     },
+     "overall_dvm_plus": {
+      "1y": 114,
+      "2y": 110,
+      "3y": 107,
+      "4y": 101,
+      "5y": 102,
+      "6y": 104,
+      "7y": 106,
+      "8y": 110
+     },
+     "statcast_dvm_plus": 106,
+     "tool_dvm_plus": 94
+    },
+    "dev_pitcher": {
+     "dvm_plus": 107,
+     "dvm_plus_by_window": {
+      "1y": 101,
+      "2y": 106,
+      "3y": 106,
+      "4y": 107,
+      "5y": 108,
+      "6y": 108,
+      "7y": 107,
+      "8y": 107
+     },
+     "overall_dvm_plus": {
+      "1y": 100,
+      "2y": 117,
+      "3y": 118,
+      "4y": 122,
+      "5y": 125,
+      "6y": 127,
+      "7y": 126,
+      "8y": 129
+     },
+     "statcast_dvm_plus": 106,
+     "tool_dvm_plus": 99
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 100.0,
+     "n": 156,
+     "score_100": 100.1
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -7.66,
+    "2y": -9.22,
+    "3y": -12.2,
+    "4y": -17.51,
+    "5y": -14.76,
+    "6y": -18.66,
+    "7y": -26.39,
+    "8y": -33.81
+   },
+   "dvm_plus": {
+    "1y": 88,
+    "2y": 92,
+    "3y": 91,
+    "4y": 88,
+    "5y": 92,
+    "6y": 91,
+    "7y": 88,
+    "8y": 87
+   },
+   "hitter_delta_above_mean": {
+    "1y": -2.65,
+    "2y": -5.18,
+    "3y": -10.12,
+    "4y": -14.9,
+    "5y": -20.2,
+    "6y": -26.31,
+    "7y": -29.01,
+    "8y": -34.14
+   },
+   "hitter_dvm_plus": {
+    "1y": 93,
+    "2y": 93,
+    "3y": 89,
+    "4y": 86,
+    "5y": 85,
+    "6y": 83,
+    "7y": 83,
+    "8y": 82
+   },
+   "org": "MIA",
+   "pitcher_delta_above_mean": {
+    "1y": -5.06,
+    "2y": -3.86,
+    "3y": -2.28,
+    "4y": -2.61,
+    "5y": 5.24,
+    "6y": 7.54,
+    "7y": 2.58,
+    "8y": -0.02
+   },
+   "pitcher_dvm_plus": {
+    "1y": 87,
+    "2y": 93,
+    "3y": 97,
+    "4y": 97,
+    "5y": 106,
+    "6y": 107,
+    "7y": 102,
+    "8y": 100
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 91,
+     "bat_ctrl": 113,
+     "cb": 95,
+     "ch": 106,
+     "cmd": 108,
+     "ct": null,
+     "fb": 104,
+     "field": 83,
+     "hit": 105,
+     "pitch_sel": 81,
+     "pwr": null,
+     "sl": 98,
+     "speed": 103
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 105,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 105,
+      "hit": 92,
+      "pitch_sel": 97,
+      "pwr": null,
+      "sl": null,
+      "speed": 103
+     },
+     "INF": {
+      "arm": 101,
+      "bat_ctrl": 105,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 80,
+      "hit": 113,
+      "pitch_sel": 80,
+      "pwr": null,
+      "sl": null,
+      "speed": 99
+     },
+     "OF": {
+      "arm": 85,
+      "bat_ctrl": 112,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 93,
+      "hit": 96,
+      "pitch_sel": 94,
+      "pwr": null,
+      "sl": null,
+      "speed": 105
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 108,
+      "ch": 95,
+      "cmd": 105,
+      "ct": null,
+      "fb": 109,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 98,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 82,
+      "ch": 110,
+      "cmd": 106,
+      "ct": null,
+      "fb": 99,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 101,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 98,
+    "tools_dvm_plus_rank": 19
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 100,
+      "2y": 101,
+      "3y": 99,
+      "4y": 98,
+      "5y": 98,
+      "6y": 97,
+      "7y": 97,
+      "8y": 97
+     },
+     "overall_dvm_plus": {
+      "1y": 93,
+      "2y": 93,
+      "3y": 89,
+      "4y": 86,
+      "5y": 85,
+      "6y": 83,
+      "7y": 83,
+      "8y": 82
+     },
+     "statcast_dvm_plus": 115,
+     "tool_dvm_plus": 96
+    },
+    "dev_pitcher": {
+     "dvm_plus": 103,
+     "dvm_plus_by_window": {
+      "1y": 97,
+      "2y": 100,
+      "3y": 101,
+      "4y": 102,
+      "5y": 105,
+      "6y": 105,
+      "7y": 103,
+      "8y": 102
+     },
+     "overall_dvm_plus": {
+      "1y": 87,
+      "2y": 93,
+      "3y": 97,
+      "4y": 97,
+      "5y": 106,
+      "6y": 107,
+      "7y": 102,
+      "8y": 100
+     },
+     "statcast_dvm_plus": 104,
+     "tool_dvm_plus": 103
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 99.4,
+     "n": 175,
+     "score_100": 95.9
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 1.64,
+    "2y": 9.08,
+    "3y": 11.8,
+    "4y": 15.19,
+    "5y": 19.24,
+    "6y": 18.24,
+    "7y": 16.21,
+    "8y": 18.79
+   },
+   "dvm_plus": {
+    "1y": 103,
+    "2y": 108,
+    "3y": 109,
+    "4y": 110,
+    "5y": 111,
+    "6y": 109,
+    "7y": 107,
+    "8y": 107
+   },
+   "hitter_delta_above_mean": {
+    "1y": 3.25,
+    "2y": 8.32,
+    "3y": 12.08,
+    "4y": 13.2,
+    "5y": 22.0,
+    "6y": 19.49,
+    "7y": 15.29,
+    "8y": 18.06
+   },
+   "hitter_dvm_plus": {
+    "1y": 108,
+    "2y": 112,
+    "3y": 114,
+    "4y": 113,
+    "5y": 116,
+    "6y": 113,
+    "7y": 109,
+    "8y": 110
+   },
+   "org": "MIL",
+   "pitcher_delta_above_mean": {
+    "1y": -1.36,
+    "2y": 1.14,
+    "3y": -0.28,
+    "4y": 1.69,
+    "5y": -2.96,
+    "6y": -1.06,
+    "7y": 0.38,
+    "8y": 0.48
+   },
+   "pitcher_dvm_plus": {
+    "1y": 96,
+    "2y": 102,
+    "3y": 100,
+    "4y": 102,
+    "5y": 97,
+    "6y": 99,
+    "7y": 100,
+    "8y": 100
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 107,
+     "bat_ctrl": 103,
+     "cb": 106,
+     "ch": 85,
+     "cmd": 88,
+     "ct": 99,
+     "fb": 108,
+     "field": 92,
+     "hit": 93,
+     "pitch_sel": 107,
+     "pwr": null,
+     "sl": 111,
+     "speed": 103
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": null,
+      "speed": null
+     },
+     "INF": {
+      "arm": 105,
+      "bat_ctrl": 110,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 94,
+      "hit": 99,
+      "pitch_sel": 102,
+      "pwr": null,
+      "sl": null,
+      "speed": 109
+     },
+     "OF": {
+      "arm": 100,
+      "bat_ctrl": 98,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 101,
+      "hit": 98,
+      "pitch_sel": 98,
+      "pwr": null,
+      "sl": null,
+      "speed": 99
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 116,
+      "ch": 81,
+      "cmd": 102,
+      "ct": null,
+      "fb": 101,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 110,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 75,
+      "ch": 94,
+      "cmd": 85,
+      "ct": 99,
+      "fb": 112,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 102,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 100,
+    "tools_dvm_plus_rank": 12
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 103,
+     "dvm_plus_by_window": {
+      "1y": 102,
+      "2y": 102,
+      "3y": 102,
+      "4y": 103,
+      "5y": 104,
+      "6y": 103,
+      "7y": 103,
+      "8y": 103
+     },
+     "overall_dvm_plus": {
+      "1y": 108,
+      "2y": 112,
+      "3y": 114,
+      "4y": 113,
+      "5y": 116,
+      "6y": 113,
+      "7y": 109,
+      "8y": 110
+     },
+     "statcast_dvm_plus": 99,
+     "tool_dvm_plus": 101
+    },
+    "dev_pitcher": {
+     "dvm_plus": 96,
+     "dvm_plus_by_window": {
+      "1y": 95,
+      "2y": 97,
+      "3y": 96,
+      "4y": 97,
+      "5y": 96,
+      "6y": 96,
+      "7y": 96,
+      "8y": 96
+     },
+     "overall_dvm_plus": {
+      "1y": 96,
+      "2y": 102,
+      "3y": 100,
+      "4y": 102,
+      "5y": 97,
+      "6y": 99,
+      "7y": 100,
+      "8y": 100
+     },
+     "statcast_dvm_plus": 88,
+     "tool_dvm_plus": 103
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 104.0,
+     "n": 158,
+     "score_100": 128.2
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -3.16,
+    "2y": -1.12,
+    "3y": 2.4,
+    "4y": 4.99,
+    "5y": -5.36,
+    "6y": -2.76,
+    "7y": -9.29,
+    "8y": -12.51
+   },
+   "dvm_plus": {
+    "1y": 95,
+    "2y": 99,
+    "3y": 102,
+    "4y": 103,
+    "5y": 97,
+    "6y": 99,
+    "7y": 96,
+    "8y": 95
+   },
+   "hitter_delta_above_mean": {
+    "1y": -0.25,
+    "2y": 2.72,
+    "3y": 4.28,
+    "4y": 6.5,
+    "5y": 4.0,
+    "6y": 5.59,
+    "7y": -4.91,
+    "8y": -5.54
+   },
+   "hitter_dvm_plus": {
+    "1y": 99,
+    "2y": 104,
+    "3y": 105,
+    "4y": 106,
+    "5y": 103,
+    "6y": 104,
+    "7y": 97,
+    "8y": 97
+   },
+   "org": "MIN",
+   "pitcher_delta_above_mean": {
+    "1y": -3.16,
+    "2y": -3.96,
+    "3y": -2.28,
+    "4y": -1.61,
+    "5y": -10.16,
+    "6y": -8.06,
+    "7y": -7.32,
+    "8y": -3.02
+   },
+   "pitcher_dvm_plus": {
+    "1y": 92,
+    "2y": 93,
+    "3y": 97,
+    "4y": 98,
+    "5y": 89,
+    "6y": 92,
+    "7y": 93,
+    "8y": 97
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 100,
+     "bat_ctrl": 101,
+     "cb": 111,
+     "ch": 111,
+     "cmd": 100,
+     "ct": 98,
+     "fb": 99,
+     "field": 92,
+     "hit": 98,
+     "pitch_sel": 107,
+     "pwr": null,
+     "sl": 100,
+     "speed": 106
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 98,
+      "bat_ctrl": 105,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 88,
+      "hit": 98,
+      "pitch_sel": 103,
+      "pwr": null,
+      "sl": null,
+      "speed": 101
+     },
+     "INF": {
+      "arm": 102,
+      "bat_ctrl": 93,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 103,
+      "hit": 98,
+      "pitch_sel": 112,
+      "pwr": null,
+      "sl": null,
+      "speed": 107
+     },
+     "OF": {
+      "arm": 92,
+      "bat_ctrl": 106,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 93,
+      "hit": 97,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 104
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 99,
+      "ch": 109,
+      "cmd": 108,
+      "ct": null,
+      "fb": 97,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 96,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 117,
+      "ch": 108,
+      "cmd": 96,
+      "ct": 101,
+      "fb": 102,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 106,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 101,
+    "tools_dvm_plus_rank": 10
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 98,
+     "dvm_plus_by_window": {
+      "1y": 97,
+      "2y": 99,
+      "3y": 99,
+      "4y": 99,
+      "5y": 99,
+      "6y": 98,
+      "7y": 98,
+      "8y": 97
+     },
+     "overall_dvm_plus": {
+      "1y": 99,
+      "2y": 104,
+      "3y": 105,
+      "4y": 106,
+      "5y": 103,
+      "6y": 104,
+      "7y": 97,
+      "8y": 97
+     },
+     "statcast_dvm_plus": 103,
+     "tool_dvm_plus": 101
+    },
+    "dev_pitcher": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 97,
+      "2y": 97,
+      "3y": 99,
+      "4y": 99,
+      "5y": 96,
+      "6y": 97,
+      "7y": 97,
+      "8y": 99
+     },
+     "overall_dvm_plus": {
+      "1y": 92,
+      "2y": 93,
+      "3y": 97,
+      "4y": 98,
+      "5y": 89,
+      "6y": 92,
+      "7y": 93,
+      "8y": 97
+     },
+     "statcast_dvm_plus": 104,
+     "tool_dvm_plus": 101
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 98.5,
+     "n": 149,
+     "score_100": 89.5
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -1.26,
+    "2y": 11.28,
+    "3y": 11.4,
+    "4y": 12.39,
+    "5y": 10.34,
+    "6y": 12.14,
+    "7y": 12.91,
+    "8y": 16.69
+   },
+   "dvm_plus": {
+    "1y": 98,
+    "2y": 110,
+    "3y": 108,
+    "4y": 108,
+    "5y": 106,
+    "6y": 106,
+    "7y": 106,
+    "8y": 107
+   },
+   "hitter_delta_above_mean": {
+    "1y": -0.85,
+    "2y": 0.92,
+    "3y": -2.22,
+    "4y": -2.9,
+    "5y": -3.5,
+    "6y": -0.01,
+    "7y": -0.81,
+    "8y": 2.46
+   },
+   "hitter_dvm_plus": {
+    "1y": 98,
+    "2y": 101,
+    "3y": 97,
+    "4y": 97,
+    "5y": 97,
+    "6y": 100,
+    "7y": 100,
+    "8y": 101
+   },
+   "org": "NYM",
+   "pitcher_delta_above_mean": {
+    "1y": -0.76,
+    "2y": 10.74,
+    "3y": 13.52,
+    "4y": 15.09,
+    "5y": 13.44,
+    "6y": 12.24,
+    "7y": 13.08,
+    "8y": 13.98
+   },
+   "pitcher_dvm_plus": {
+    "1y": 98,
+    "2y": 118,
+    "3y": 117,
+    "4y": 118,
+    "5y": 115,
+    "6y": 112,
+    "7y": 113,
+    "8y": 113
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 106,
+     "bat_ctrl": 69,
+     "cb": 101,
+     "ch": 106,
+     "cmd": 101,
+     "ct": 100,
+     "fb": 144,
+     "field": 102,
+     "hit": 81,
+     "pitch_sel": 142,
+     "pwr": null,
+     "sl": 95,
+     "speed": 102
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 106,
+      "bat_ctrl": 81,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 91,
+      "hit": 89,
+      "pitch_sel": 102,
+      "pwr": null,
+      "sl": null,
+      "speed": 63
+     },
+     "INF": {
+      "arm": 99,
+      "bat_ctrl": 75,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 103,
+      "hit": 102,
+      "pitch_sel": 122,
+      "pwr": null,
+      "sl": null,
+      "speed": 108
+     },
+     "OF": {
+      "arm": 111,
+      "bat_ctrl": 83,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 109,
+      "hit": 70,
+      "pitch_sel": 140,
+      "pwr": null,
+      "sl": null,
+      "speed": 106
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 96,
+      "ch": 100,
+      "cmd": 103,
+      "ct": null,
+      "fb": 150,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 95,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 107,
+      "ch": 91,
+      "cmd": 103,
+      "ct": null,
+      "fb": 104,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 107,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 103,
+    "tools_dvm_plus_rank": 6
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 98,
+      "2y": 99,
+      "3y": 98,
+      "4y": 98,
+      "5y": 98,
+      "6y": 98,
+      "7y": 97,
+      "8y": 98
+     },
+     "overall_dvm_plus": {
+      "1y": 98,
+      "2y": 101,
+      "3y": 97,
+      "4y": 97,
+      "5y": 97,
+      "6y": 100,
+      "7y": 100,
+      "8y": 101
+     },
+     "statcast_dvm_plus": 105,
+     "tool_dvm_plus": 100
+    },
+    "dev_pitcher": {
+     "dvm_plus": 106,
+     "dvm_plus_by_window": {
+      "1y": 98,
+      "2y": 104,
+      "3y": 104,
+      "4y": 104,
+      "5y": 106,
+      "6y": 106,
+      "7y": 106,
+      "8y": 107
+     },
+     "overall_dvm_plus": {
+      "1y": 98,
+      "2y": 118,
+      "3y": 117,
+      "4y": 118,
+      "5y": 115,
+      "6y": 112,
+      "7y": 113,
+      "8y": 113
+     },
+     "statcast_dvm_plus": 94,
+     "tool_dvm_plus": 118
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 101.7,
+     "n": 166,
+     "score_100": 112.0
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -2.96,
+    "2y": -11.32,
+    "3y": -5.4,
+    "4y": -11.21,
+    "5y": -8.26,
+    "6y": -3.06,
+    "7y": -8.89,
+    "8y": -9.81
+   },
+   "dvm_plus": {
+    "1y": 95,
+    "2y": 90,
+    "3y": 96,
+    "4y": 93,
+    "5y": 95,
+    "6y": 98,
+    "7y": 96,
+    "8y": 96
+   },
+   "hitter_delta_above_mean": {
+    "1y": -1.65,
+    "2y": -5.68,
+    "3y": -1.22,
+    "4y": -4.2,
+    "5y": -0.4,
+    "6y": 1.19,
+    "7y": -0.31,
+    "8y": -0.94
+   },
+   "hitter_dvm_plus": {
+    "1y": 96,
+    "2y": 92,
+    "3y": 99,
+    "4y": 96,
+    "5y": 100,
+    "6y": 101,
+    "7y": 100,
+    "8y": 99
+   },
+   "org": "NYY",
+   "pitcher_delta_above_mean": {
+    "1y": -1.56,
+    "2y": -5.76,
+    "3y": -3.68,
+    "4y": -6.81,
+    "5y": -6.96,
+    "6y": -4.66,
+    "7y": -8.82,
+    "8y": -9.22
+   },
+   "pitcher_dvm_plus": {
+    "1y": 96,
+    "2y": 90,
+    "3y": 95,
+    "4y": 92,
+    "5y": 92,
+    "6y": 95,
+    "7y": 92,
+    "8y": 91
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 82,
+     "bat_ctrl": 99,
+     "cb": 92,
+     "ch": 92,
+     "cmd": 96,
+     "ct": 109,
+     "fb": 86,
+     "field": 87,
+     "hit": 93,
+     "pitch_sel": 108,
+     "pwr": null,
+     "sl": 94,
+     "speed": 89
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 99,
+      "bat_ctrl": 102,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 102,
+      "hit": 91,
+      "pitch_sel": 114,
+      "pwr": null,
+      "sl": null,
+      "speed": 105
+     },
+     "INF": {
+      "arm": 89,
+      "bat_ctrl": 110,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 85,
+      "hit": 99,
+      "pitch_sel": 100,
+      "pwr": null,
+      "sl": null,
+      "speed": 111
+     },
+     "OF": {
+      "arm": 86,
+      "bat_ctrl": 86,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 100,
+      "hit": 98,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 72
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 95,
+      "ch": 96,
+      "cmd": 111,
+      "ct": null,
+      "fb": 95,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 94,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 96,
+      "ch": 93,
+      "cmd": 90,
+      "ct": 99,
+      "fb": 84,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 99,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 94,
+    "tools_dvm_plus_rank": 30
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 100,
+     "dvm_plus_by_window": {
+      "1y": 98,
+      "2y": 97,
+      "3y": 99,
+      "4y": 98,
+      "5y": 100,
+      "6y": 100,
+      "7y": 100,
+      "8y": 99
+     },
+     "overall_dvm_plus": {
+      "1y": 96,
+      "2y": 92,
+      "3y": 99,
+      "4y": 96,
+      "5y": 100,
+      "6y": 101,
+      "7y": 100,
+      "8y": 99
+     },
+     "statcast_dvm_plus": 105,
+     "tool_dvm_plus": 93
+    },
+    "dev_pitcher": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 98,
+      "2y": 96,
+      "3y": 99,
+      "4y": 97,
+      "5y": 97,
+      "6y": 98,
+      "7y": 97,
+      "8y": 97
+     },
+     "overall_dvm_plus": {
+      "1y": 96,
+      "2y": 90,
+      "3y": 95,
+      "4y": 92,
+      "5y": 92,
+      "6y": 95,
+      "7y": 92,
+      "8y": 91
+     },
+     "statcast_dvm_plus": 118,
+     "tool_dvm_plus": 92
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 98.7,
+     "n": 155,
+     "score_100": 91.0
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -7.46,
+    "2y": -10.72,
+    "3y": -13.0,
+    "4y": -8.21,
+    "5y": -5.96,
+    "6y": -7.56,
+    "7y": -13.59,
+    "8y": -19.31
+   },
+   "dvm_plus": {
+    "1y": 88,
+    "2y": 90,
+    "3y": 91,
+    "4y": 95,
+    "5y": 97,
+    "6y": 96,
+    "7y": 94,
+    "8y": 92
+   },
+   "hitter_delta_above_mean": {
+    "1y": -5.15,
+    "2y": -5.58,
+    "3y": -3.72,
+    "4y": -3.7,
+    "5y": -4.9,
+    "6y": -7.51,
+    "7y": -9.21,
+    "8y": -13.54
+   },
+   "hitter_dvm_plus": {
+    "1y": 87,
+    "2y": 92,
+    "3y": 96,
+    "4y": 96,
+    "5y": 96,
+    "6y": 95,
+    "7y": 94,
+    "8y": 93
+   },
+   "org": "PHI",
+   "pitcher_delta_above_mean": {
+    "1y": -2.46,
+    "2y": -5.06,
+    "3y": -9.48,
+    "4y": -4.31,
+    "5y": -0.86,
+    "6y": -0.36,
+    "7y": -4.52,
+    "8y": -6.02
+   },
+   "pitcher_dvm_plus": {
+    "1y": 94,
+    "2y": 91,
+    "3y": 88,
+    "4y": 95,
+    "5y": 99,
+    "6y": 100,
+    "7y": 96,
+    "8y": 94
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 90,
+     "bat_ctrl": 120,
+     "cb": 85,
+     "ch": 99,
+     "cmd": 102,
+     "ct": null,
+     "fb": 100,
+     "field": 118,
+     "hit": 121,
+     "pitch_sel": 106,
+     "pwr": null,
+     "sl": 107,
+     "speed": 119
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 102,
+      "bat_ctrl": 112,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 120,
+      "hit": 99,
+      "pitch_sel": 98,
+      "pwr": null,
+      "sl": null,
+      "speed": 118
+     },
+     "INF": {
+      "arm": 99,
+      "bat_ctrl": 112,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 126,
+      "hit": 118,
+      "pitch_sel": 106,
+      "pwr": null,
+      "sl": null,
+      "speed": 111
+     },
+     "OF": {
+      "arm": 79,
+      "bat_ctrl": 114,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 74,
+      "hit": 112,
+      "pitch_sel": 104,
+      "pwr": null,
+      "sl": null,
+      "speed": 115
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 86,
+      "ch": 89,
+      "cmd": 98,
+      "ct": null,
+      "fb": 93,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 99,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 105,
+      "ch": 112,
+      "cmd": 105,
+      "ct": null,
+      "fb": 110,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 112,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 105,
+    "tools_dvm_plus_rank": 2
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 101,
+     "dvm_plus_by_window": {
+      "1y": 100,
+      "2y": 101,
+      "3y": 102,
+      "4y": 102,
+      "5y": 101,
+      "6y": 101,
+      "7y": 101,
+      "8y": 100
+     },
+     "overall_dvm_plus": {
+      "1y": 87,
+      "2y": 92,
+      "3y": 96,
+      "4y": 96,
+      "5y": 96,
+      "6y": 95,
+      "7y": 94,
+      "8y": 93
+     },
+     "statcast_dvm_plus": 104,
+     "tool_dvm_plus": 112
+    },
+    "dev_pitcher": {
+     "dvm_plus": 101,
+     "dvm_plus_by_window": {
+      "1y": 100,
+      "2y": 99,
+      "3y": 97,
+      "4y": 101,
+      "5y": 103,
+      "6y": 103,
+      "7y": 101,
+      "8y": 101
+     },
+     "overall_dvm_plus": {
+      "1y": 94,
+      "2y": 91,
+      "3y": 88,
+      "4y": 95,
+      "5y": 99,
+      "6y": 100,
+      "7y": 96,
+      "8y": 94
+     },
+     "statcast_dvm_plus": 106,
+     "tool_dvm_plus": 101
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 100.3,
+     "n": 139,
+     "score_100": 102.2
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 17.74,
+    "2y": 22.68,
+    "3y": 29.0,
+    "4y": 26.59,
+    "5y": 26.44,
+    "6y": 26.34,
+    "7y": 27.41,
+    "8y": 25.69
+   },
+   "dvm_plus": {
+    "1y": 128,
+    "2y": 121,
+    "3y": 121,
+    "4y": 118,
+    "5y": 115,
+    "6y": 113,
+    "7y": 112,
+    "8y": 110
+   },
+   "hitter_delta_above_mean": {
+    "1y": 9.85,
+    "2y": 15.02,
+    "3y": 9.78,
+    "4y": 9.9,
+    "5y": 9.0,
+    "6y": 6.79,
+    "7y": 7.29,
+    "8y": 7.36
+   },
+   "hitter_dvm_plus": {
+    "1y": 124,
+    "2y": 122,
+    "3y": 111,
+    "4y": 109,
+    "5y": 106,
+    "6y": 104,
+    "7y": 104,
+    "8y": 104
+   },
+   "org": "PIT",
+   "pitcher_delta_above_mean": {
+    "1y": 6.84,
+    "2y": 7.44,
+    "3y": 18.92,
+    "4y": 17.79,
+    "5y": 17.44,
+    "6y": 19.44,
+    "7y": 21.38,
+    "8y": 16.88
+   },
+   "pitcher_dvm_plus": {
+    "1y": 118,
+    "2y": 113,
+    "3y": 124,
+    "4y": 121,
+    "5y": 119,
+    "6y": 119,
+    "7y": 121,
+    "8y": 116
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 105,
+     "bat_ctrl": 96,
+     "cb": 104,
+     "ch": 98,
+     "cmd": 106,
+     "ct": null,
+     "fb": 101,
+     "field": 99,
+     "hit": 88,
+     "pitch_sel": 102,
+     "pwr": null,
+     "sl": 92,
+     "speed": 80
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 101,
+      "bat_ctrl": 105,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 113,
+      "hit": 93,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 100
+     },
+     "INF": {
+      "arm": 98,
+      "bat_ctrl": 81,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 92,
+      "hit": 78,
+      "pitch_sel": 112,
+      "pwr": null,
+      "sl": null,
+      "speed": 97
+     },
+     "OF": {
+      "arm": 110,
+      "bat_ctrl": 112,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 92,
+      "hit": 123,
+      "pitch_sel": 93,
+      "pwr": null,
+      "sl": null,
+      "speed": 74
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 104,
+      "ch": 100,
+      "cmd": 103,
+      "ct": null,
+      "fb": 95,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 92,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 100,
+      "ch": 100,
+      "cmd": 107,
+      "ct": null,
+      "fb": 110,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 100,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 98,
+    "tools_dvm_plus_rank": 19
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 98,
+     "dvm_plus_by_window": {
+      "1y": 102,
+      "2y": 100,
+      "3y": 100,
+      "4y": 99,
+      "5y": 98,
+      "6y": 98,
+      "7y": 98,
+      "8y": 97
+     },
+     "overall_dvm_plus": {
+      "1y": 124,
+      "2y": 122,
+      "3y": 111,
+      "4y": 109,
+      "5y": 106,
+      "6y": 104,
+      "7y": 104,
+      "8y": 104
+     },
+     "statcast_dvm_plus": 89,
+     "tool_dvm_plus": 95
+    },
+    "dev_pitcher": {
+     "dvm_plus": 109,
+     "dvm_plus_by_window": {
+      "1y": 108,
+      "2y": 106,
+      "3y": 110,
+      "4y": 109,
+      "5y": 109,
+      "6y": 109,
+      "7y": 109,
+      "8y": 108
+     },
+     "overall_dvm_plus": {
+      "1y": 118,
+      "2y": 113,
+      "3y": 124,
+      "4y": 121,
+      "5y": 119,
+      "6y": 119,
+      "7y": 121,
+      "8y": 116
+     },
+     "statcast_dvm_plus": 86,
+     "tool_dvm_plus": 100
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 101.8,
+     "n": 154,
+     "score_100": 112.7
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -6.06,
+    "2y": -11.42,
+    "3y": -13.3,
+    "4y": 4.19,
+    "5y": 6.84,
+    "6y": -4.66,
+    "7y": 3.91,
+    "8y": 9.29
+   },
+   "dvm_plus": {
+    "1y": 90,
+    "2y": 90,
+    "3y": 90,
+    "4y": 103,
+    "5y": 104,
+    "6y": 98,
+    "7y": 102,
+    "8y": 104
+   },
+   "hitter_delta_above_mean": {
+    "1y": -4.05,
+    "2y": -9.78,
+    "3y": -7.22,
+    "4y": 0.1,
+    "5y": 4.4,
+    "6y": 5.99,
+    "7y": 9.29,
+    "8y": 12.06
+   },
+   "hitter_dvm_plus": {
+    "1y": 90,
+    "2y": 86,
+    "3y": 92,
+    "4y": 100,
+    "5y": 103,
+    "6y": 104,
+    "7y": 106,
+    "8y": 107
+   },
+   "org": "SDP",
+   "pitcher_delta_above_mean": {
+    "1y": -1.76,
+    "2y": -1.86,
+    "3y": -5.08,
+    "4y": 3.79,
+    "5y": 2.04,
+    "6y": -11.76,
+    "7y": -4.62,
+    "8y": -1.52
+   },
+   "pitcher_dvm_plus": {
+    "1y": 95,
+    "2y": 97,
+    "3y": 93,
+    "4y": 104,
+    "5y": 102,
+    "6y": 88,
+    "7y": 96,
+    "8y": 99
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 93,
+     "bat_ctrl": 93,
+     "cb": 122,
+     "ch": 83,
+     "cmd": 83,
+     "ct": null,
+     "fb": 101,
+     "field": 99,
+     "hit": 95,
+     "pitch_sel": 95,
+     "pwr": null,
+     "sl": 98,
+     "speed": 99
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 91,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 96,
+      "hit": 102,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 108
+     },
+     "INF": {
+      "arm": 94,
+      "bat_ctrl": 112,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 97,
+      "hit": 99,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 86
+     },
+     "OF": {
+      "arm": 103,
+      "bat_ctrl": 77,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 104,
+      "hit": 91,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 107
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 109,
+      "ch": 96,
+      "cmd": 86,
+      "ct": null,
+      "fb": 98,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 95,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 118,
+      "ch": 80,
+      "cmd": 87,
+      "ct": null,
+      "fb": 106,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 104,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 97,
+    "tools_dvm_plus_rank": 24
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 99,
+     "dvm_plus_by_window": {
+      "1y": 95,
+      "2y": 92,
+      "3y": 95,
+      "4y": 99,
+      "5y": 99,
+      "6y": 99,
+      "7y": 99,
+      "8y": 100
+     },
+     "overall_dvm_plus": {
+      "1y": 90,
+      "2y": 86,
+      "3y": 92,
+      "4y": 100,
+      "5y": 103,
+      "6y": 104,
+      "7y": 106,
+      "8y": 107
+     },
+     "statcast_dvm_plus": 88,
+     "tool_dvm_plus": 96
+    },
+    "dev_pitcher": {
+     "dvm_plus": 95,
+     "dvm_plus_by_window": {
+      "1y": 95,
+      "2y": 95,
+      "3y": 93,
+      "4y": 98,
+      "5y": 96,
+      "6y": 90,
+      "7y": 95,
+      "8y": 96
+     },
+     "overall_dvm_plus": {
+      "1y": 95,
+      "2y": 97,
+      "3y": 93,
+      "4y": 104,
+      "5y": 102,
+      "6y": 88,
+      "7y": 96,
+      "8y": 99
+     },
+     "statcast_dvm_plus": 85,
+     "tool_dvm_plus": 97
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 101.1,
+     "n": 164,
+     "score_100": 107.8
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 10.44,
+    "2y": 15.28,
+    "3y": 12.6,
+    "4y": 17.69,
+    "5y": 18.84,
+    "6y": 28.64,
+    "7y": 38.11,
+    "8y": 39.29
+   },
+   "dvm_plus": {
+    "1y": 117,
+    "2y": 114,
+    "3y": 109,
+    "4y": 112,
+    "5y": 111,
+    "6y": 114,
+    "7y": 117,
+    "8y": 116
+   },
+   "hitter_delta_above_mean": {
+    "1y": -0.85,
+    "2y": 1.22,
+    "3y": 0.18,
+    "4y": 2.2,
+    "5y": 4.1,
+    "6y": 10.29,
+    "7y": 19.49,
+    "8y": 19.66
+   },
+   "hitter_dvm_plus": {
+    "1y": 98,
+    "2y": 102,
+    "3y": 100,
+    "4y": 102,
+    "5y": 103,
+    "6y": 107,
+    "7y": 112,
+    "8y": 111
+   },
+   "org": "SEA",
+   "pitcher_delta_above_mean": {
+    "1y": 12.04,
+    "2y": 13.94,
+    "3y": 12.42,
+    "4y": 15.29,
+    "5y": 14.54,
+    "6y": 18.44,
+    "7y": 18.78,
+    "8y": 19.38
+   },
+   "pitcher_dvm_plus": {
+    "1y": 132,
+    "2y": 124,
+    "3y": 116,
+    "4y": 118,
+    "5y": 116,
+    "6y": 118,
+    "7y": 118,
+    "8y": 118
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 103,
+     "bat_ctrl": 111,
+     "cb": 97,
+     "ch": 88,
+     "cmd": 84,
+     "ct": null,
+     "fb": 97,
+     "field": 84,
+     "hit": 123,
+     "pitch_sel": 102,
+     "pwr": null,
+     "sl": 112,
+     "speed": 113
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": null,
+      "speed": null
+     },
+     "INF": {
+      "arm": 100,
+      "bat_ctrl": 102,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 94,
+      "hit": 114,
+      "pitch_sel": 115,
+      "pwr": null,
+      "sl": null,
+      "speed": 100
+     },
+     "OF": {
+      "arm": 103,
+      "bat_ctrl": 107,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 91,
+      "hit": 113,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 111
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 100,
+      "ch": 90,
+      "cmd": 76,
+      "ct": null,
+      "fb": 93,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 96,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 95,
+      "ch": 100,
+      "cmd": 97,
+      "ct": null,
+      "fb": 106,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 130,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 100,
+    "tools_dvm_plus_rank": 12
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 104,
+     "dvm_plus_by_window": {
+      "1y": 101,
+      "2y": 101,
+      "3y": 100,
+      "4y": 101,
+      "5y": 102,
+      "6y": 102,
+      "7y": 104,
+      "8y": 104
+     },
+     "overall_dvm_plus": {
+      "1y": 98,
+      "2y": 102,
+      "3y": 100,
+      "4y": 102,
+      "5y": 103,
+      "6y": 107,
+      "7y": 112,
+      "8y": 111
+     },
+     "statcast_dvm_plus": 100,
+     "tool_dvm_plus": 106
+    },
+    "dev_pitcher": {
+     "dvm_plus": 110,
+     "dvm_plus_by_window": {
+      "1y": 112,
+      "2y": 111,
+      "3y": 110,
+      "4y": 110,
+      "5y": 109,
+      "6y": 110,
+      "7y": 110,
+      "8y": 110
+     },
+     "overall_dvm_plus": {
+      "1y": 132,
+      "2y": 124,
+      "3y": 116,
+      "4y": 118,
+      "5y": 116,
+      "6y": 118,
+      "7y": 118,
+      "8y": 118
+     },
+     "statcast_dvm_plus": 114,
+     "tool_dvm_plus": 97
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 96.4,
+     "n": 134,
+     "score_100": 74.8
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 1.84,
+    "2y": -6.52,
+    "3y": -7.1,
+    "4y": -8.31,
+    "5y": -26.66,
+    "6y": -26.66,
+    "7y": -24.09,
+    "8y": -20.61
+   },
+   "dvm_plus": {
+    "1y": 103,
+    "2y": 94,
+    "3y": 95,
+    "4y": 94,
+    "5y": 85,
+    "6y": 87,
+    "7y": 89,
+    "8y": 92
+   },
+   "hitter_delta_above_mean": {
+    "1y": 0.55,
+    "2y": -0.68,
+    "3y": -0.72,
+    "4y": -4.1,
+    "5y": -21.5,
+    "6y": -21.91,
+    "7y": -17.31,
+    "8y": -16.94
+   },
+   "hitter_dvm_plus": {
+    "1y": 101,
+    "2y": 99,
+    "3y": 99,
+    "4y": 96,
+    "5y": 84,
+    "6y": 86,
+    "7y": 90,
+    "8y": 91
+   },
+   "org": "SFG",
+   "pitcher_delta_above_mean": {
+    "1y": 1.24,
+    "2y": -5.76,
+    "3y": -6.48,
+    "4y": -3.51,
+    "5y": -5.16,
+    "6y": -4.36,
+    "7y": -4.92,
+    "8y": -4.32
+   },
+   "pitcher_dvm_plus": {
+    "1y": 103,
+    "2y": 90,
+    "3y": 92,
+    "4y": 96,
+    "5y": 94,
+    "6y": 96,
+    "7y": 95,
+    "8y": 96
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 98,
+     "bat_ctrl": 93,
+     "cb": 121,
+     "ch": 131,
+     "cmd": 92,
+     "ct": null,
+     "fb": 112,
+     "field": 93,
+     "hit": 111,
+     "pitch_sel": 90,
+     "pwr": null,
+     "sl": 92,
+     "speed": 90
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 94,
+      "hit": 117,
+      "pitch_sel": 93,
+      "pwr": null,
+      "sl": null,
+      "speed": 95
+     },
+     "INF": {
+      "arm": 101,
+      "bat_ctrl": 102,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 97,
+      "hit": 111,
+      "pitch_sel": 97,
+      "pwr": null,
+      "sl": null,
+      "speed": 83
+     },
+     "OF": {
+      "arm": 92,
+      "bat_ctrl": 89,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 95,
+      "hit": 89,
+      "pitch_sel": 94,
+      "pwr": null,
+      "sl": null,
+      "speed": 100
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 116,
+      "ch": 117,
+      "cmd": 88,
+      "ct": null,
+      "fb": 112,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 89,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 99,
+      "ch": 128,
+      "cmd": 99,
+      "ct": null,
+      "fb": 103,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 106,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 101,
+    "tools_dvm_plus_rank": 10
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 100,
+      "2y": 99,
+      "3y": 99,
+      "4y": 98,
+      "5y": 94,
+      "6y": 95,
+      "7y": 97,
+      "8y": 97
+     },
+     "overall_dvm_plus": {
+      "1y": 101,
+      "2y": 99,
+      "3y": 99,
+      "4y": 96,
+      "5y": 84,
+      "6y": 86,
+      "7y": 90,
+      "8y": 91
+     },
+     "statcast_dvm_plus": 93,
+     "tool_dvm_plus": 96
+    },
+    "dev_pitcher": {
+     "dvm_plus": 100,
+     "dvm_plus_by_window": {
+      "1y": 103,
+      "2y": 98,
+      "3y": 98,
+      "4y": 100,
+      "5y": 99,
+      "6y": 100,
+      "7y": 100,
+      "8y": 100
+     },
+     "overall_dvm_plus": {
+      "1y": 103,
+      "2y": 90,
+      "3y": 92,
+      "4y": 96,
+      "5y": 94,
+      "6y": 96,
+      "7y": 95,
+      "8y": 96
+     },
+     "statcast_dvm_plus": 100,
+     "tool_dvm_plus": 106
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 98.2,
+     "n": 160,
+     "score_100": 87.4
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -0.26,
+    "2y": -1.32,
+    "3y": -8.2,
+    "4y": -9.41,
+    "5y": -4.46,
+    "6y": -5.36,
+    "7y": -3.99,
+    "8y": -0.61
+   },
+   "dvm_plus": {
+    "1y": 100,
+    "2y": 99,
+    "3y": 94,
+    "4y": 94,
+    "5y": 97,
+    "6y": 97,
+    "7y": 98,
+    "8y": 100
+   },
+   "hitter_delta_above_mean": {
+    "1y": 3.15,
+    "2y": 5.72,
+    "3y": 6.48,
+    "4y": 5.1,
+    "5y": 8.2,
+    "6y": 7.99,
+    "7y": 10.79,
+    "8y": 13.56
+   },
+   "hitter_dvm_plus": {
+    "1y": 108,
+    "2y": 108,
+    "3y": 107,
+    "4y": 105,
+    "5y": 106,
+    "6y": 105,
+    "7y": 106,
+    "8y": 107
+   },
+   "org": "STL",
+   "pitcher_delta_above_mean": {
+    "1y": -3.06,
+    "2y": -6.76,
+    "3y": -14.48,
+    "4y": -14.91,
+    "5y": -12.36,
+    "6y": -13.36,
+    "7y": -14.52,
+    "8y": -14.72
+   },
+   "pitcher_dvm_plus": {
+    "1y": 92,
+    "2y": 88,
+    "3y": 81,
+    "4y": 82,
+    "5y": 86,
+    "6y": 87,
+    "7y": 86,
+    "8y": 86
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 118,
+     "bat_ctrl": 110,
+     "cb": 102,
+     "ch": 92,
+     "cmd": 81,
+     "ct": 102,
+     "fb": 99,
+     "field": 104,
+     "hit": 101,
+     "pitch_sel": 87,
+     "pwr": null,
+     "sl": 116,
+     "speed": 102
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 97,
+      "hit": 111,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 102
+     },
+     "INF": {
+      "arm": 100,
+      "bat_ctrl": 109,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 106,
+      "hit": 82,
+      "pitch_sel": 82,
+      "pwr": null,
+      "sl": null,
+      "speed": 98
+     },
+     "OF": {
+      "arm": 102,
+      "bat_ctrl": 104,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 102,
+      "hit": 109,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 104
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 104,
+      "ch": 98,
+      "cmd": 83,
+      "ct": null,
+      "fb": 89,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 115,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 100,
+      "ch": 94,
+      "cmd": 85,
+      "ct": 103,
+      "fb": 111,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 101,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 99,
+    "tools_dvm_plus_rank": 14
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 103,
+     "dvm_plus_by_window": {
+      "1y": 104,
+      "2y": 104,
+      "3y": 104,
+      "4y": 103,
+      "5y": 103,
+      "6y": 103,
+      "7y": 103,
+      "8y": 103
+     },
+     "overall_dvm_plus": {
+      "1y": 108,
+      "2y": 108,
+      "3y": 107,
+      "4y": 105,
+      "5y": 106,
+      "6y": 105,
+      "7y": 106,
+      "8y": 107
+     },
+     "statcast_dvm_plus": 103,
+     "tool_dvm_plus": 104
+    },
+    "dev_pitcher": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 99,
+      "2y": 96,
+      "3y": 94,
+      "4y": 95,
+      "5y": 97,
+      "6y": 97,
+      "7y": 97,
+      "8y": 97
+     },
+     "overall_dvm_plus": {
+      "1y": 92,
+      "2y": 88,
+      "3y": 81,
+      "4y": 82,
+      "5y": 86,
+      "6y": 87,
+      "7y": 86,
+      "8y": 86
+     },
+     "statcast_dvm_plus": 108,
+     "tool_dvm_plus": 99
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 101.4,
+     "n": 158,
+     "score_100": 109.9
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": 8.54,
+    "2y": 1.68,
+    "3y": 17.3,
+    "4y": 20.79,
+    "5y": 21.04,
+    "6y": 21.44,
+    "7y": 30.51,
+    "8y": 39.99
+   },
+   "dvm_plus": {
+    "1y": 114,
+    "2y": 102,
+    "3y": 113,
+    "4y": 114,
+    "5y": 112,
+    "6y": 111,
+    "7y": 114,
+    "8y": 116
+   },
+   "hitter_delta_above_mean": {
+    "1y": 6.35,
+    "2y": 3.22,
+    "3y": 16.88,
+    "4y": 22.2,
+    "5y": 20.7,
+    "6y": 16.89,
+    "7y": 26.29,
+    "8y": 40.36
+   },
+   "hitter_dvm_plus": {
+    "1y": 116,
+    "2y": 105,
+    "3y": 119,
+    "4y": 121,
+    "5y": 115,
+    "6y": 111,
+    "7y": 116,
+    "8y": 122
+   },
+   "org": "TBR",
+   "pitcher_delta_above_mean": {
+    "1y": 2.24,
+    "2y": -0.46,
+    "3y": 0.72,
+    "4y": 0.19,
+    "5y": 1.54,
+    "6y": 5.44,
+    "7y": 4.98,
+    "8y": -0.62
+   },
+   "pitcher_dvm_plus": {
+    "1y": 106,
+    "2y": 99,
+    "3y": 101,
+    "4y": 100,
+    "5y": 102,
+    "6y": 105,
+    "7y": 105,
+    "8y": 99
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 110,
+     "bat_ctrl": 105,
+     "cb": 97,
+     "ch": 76,
+     "cmd": 118,
+     "ct": 74,
+     "fb": 99,
+     "field": 122,
+     "hit": 100,
+     "pitch_sel": 86,
+     "pwr": null,
+     "sl": 108,
+     "speed": 107
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": 99,
+      "bat_ctrl": 101,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 103,
+      "hit": 106,
+      "pitch_sel": 98,
+      "pwr": null,
+      "sl": null,
+      "speed": 102
+     },
+     "INF": {
+      "arm": 104,
+      "bat_ctrl": 109,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 122,
+      "hit": 104,
+      "pitch_sel": 95,
+      "pwr": null,
+      "sl": null,
+      "speed": 106
+     },
+     "OF": {
+      "arm": 110,
+      "bat_ctrl": 100,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 103,
+      "hit": 90,
+      "pitch_sel": 88,
+      "pwr": null,
+      "sl": null,
+      "speed": 106
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 96,
+      "ch": 78,
+      "cmd": 101,
+      "ct": null,
+      "fb": 93,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 112,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 101,
+      "ch": 87,
+      "cmd": 123,
+      "ct": 74,
+      "fb": 108,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 88,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 103,
+    "tools_dvm_plus_rank": 6
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 104,
+     "dvm_plus_by_window": {
+      "1y": 103,
+      "2y": 102,
+      "3y": 106,
+      "4y": 106,
+      "5y": 105,
+      "6y": 104,
+      "7y": 104,
+      "8y": 105
+     },
+     "overall_dvm_plus": {
+      "1y": 116,
+      "2y": 105,
+      "3y": 119,
+      "4y": 121,
+      "5y": 115,
+      "6y": 111,
+      "7y": 116,
+      "8y": 122
+     },
+     "statcast_dvm_plus": 99,
+     "tool_dvm_plus": 105
+    },
+    "dev_pitcher": {
+     "dvm_plus": 101,
+     "dvm_plus_by_window": {
+      "1y": 104,
+      "2y": 101,
+      "3y": 102,
+      "4y": 103,
+      "5y": 101,
+      "6y": 103,
+      "7y": 101,
+      "8y": 100
+     },
+     "overall_dvm_plus": {
+      "1y": 106,
+      "2y": 99,
+      "3y": 101,
+      "4y": 100,
+      "5y": 102,
+      "6y": 105,
+      "7y": 105,
+      "8y": 99
+     },
+     "statcast_dvm_plus": 112,
+     "tool_dvm_plus": 100
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 99.7,
+     "n": 165,
+     "score_100": 98.0
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -2.76,
+    "2y": -8.12,
+    "3y": 0.5,
+    "4y": -1.21,
+    "5y": 5.04,
+    "6y": 6.24,
+    "7y": 2.51,
+    "8y": -2.41
+   },
+   "dvm_plus": {
+    "1y": 96,
+    "2y": 93,
+    "3y": 100,
+    "4y": 99,
+    "5y": 103,
+    "6y": 103,
+    "7y": 101,
+    "8y": 99
+   },
+   "hitter_delta_above_mean": {
+    "1y": -5.75,
+    "2y": -7.68,
+    "3y": 0.88,
+    "4y": 4.5,
+    "5y": 7.3,
+    "6y": 8.59,
+    "7y": 4.89,
+    "8y": 1.46
+   },
+   "hitter_dvm_plus": {
+    "1y": 86,
+    "2y": 89,
+    "3y": 101,
+    "4y": 104,
+    "5y": 105,
+    "6y": 106,
+    "7y": 103,
+    "8y": 101
+   },
+   "org": "TEX",
+   "pitcher_delta_above_mean": {
+    "1y": 2.74,
+    "2y": -0.56,
+    "3y": -0.38,
+    "4y": -7.01,
+    "5y": -2.26,
+    "6y": -2.16,
+    "7y": -3.12,
+    "8y": -4.12
+   },
+   "pitcher_dvm_plus": {
+    "1y": 107,
+    "2y": 99,
+    "3y": 100,
+    "4y": 92,
+    "5y": 98,
+    "6y": 98,
+    "7y": 97,
+    "8y": 96
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 130,
+     "bat_ctrl": 123,
+     "cb": 124,
+     "ch": 111,
+     "cmd": 98,
+     "ct": null,
+     "fb": 104,
+     "field": 93,
+     "hit": 88,
+     "pitch_sel": 106,
+     "pwr": null,
+     "sl": 106,
+     "speed": 108
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": null,
+      "speed": null
+     },
+     "INF": {
+      "arm": 142,
+      "bat_ctrl": 109,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 83,
+      "hit": 97,
+      "pitch_sel": 104,
+      "pwr": null,
+      "sl": null,
+      "speed": 106
+     },
+     "OF": {
+      "arm": 96,
+      "bat_ctrl": 117,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 108,
+      "hit": 95,
+      "pitch_sel": 103,
+      "pwr": null,
+      "sl": null,
+      "speed": 106
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 110,
+      "ch": 115,
+      "cmd": 88,
+      "ct": null,
+      "fb": 102,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 99,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 118,
+      "ch": 103,
+      "cmd": 106,
+      "ct": null,
+      "fb": 103,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 108,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 104,
+    "tools_dvm_plus_rank": 4
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 101,
+     "dvm_plus_by_window": {
+      "1y": 97,
+      "2y": 97,
+      "3y": 100,
+      "4y": 101,
+      "5y": 101,
+      "6y": 101,
+      "7y": 101,
+      "8y": 101
+     },
+     "overall_dvm_plus": {
+      "1y": 86,
+      "2y": 89,
+      "3y": 101,
+      "4y": 104,
+      "5y": 105,
+      "6y": 106,
+      "7y": 103,
+      "8y": 101
+     },
+     "statcast_dvm_plus": 103,
+     "tool_dvm_plus": 108
+    },
+    "dev_pitcher": {
+     "dvm_plus": 100,
+     "dvm_plus_by_window": {
+      "1y": 105,
+      "2y": 102,
+      "3y": 102,
+      "4y": 98,
+      "5y": 101,
+      "6y": 101,
+      "7y": 100,
+      "8y": 100
+     },
+     "overall_dvm_plus": {
+      "1y": 107,
+      "2y": 99,
+      "3y": 100,
+      "4y": 92,
+      "5y": 98,
+      "6y": 98,
+      "7y": 97,
+      "8y": 96
+     },
+     "statcast_dvm_plus": 110,
+     "tool_dvm_plus": 105
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 99.8,
+     "n": 170,
+     "score_100": 98.7
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -2.76,
+    "2y": -3.12,
+    "3y": -4.8,
+    "4y": -4.71,
+    "5y": -4.56,
+    "6y": -3.96,
+    "7y": -8.29,
+    "8y": -5.31
+   },
+   "dvm_plus": {
+    "1y": 96,
+    "2y": 97,
+    "3y": 97,
+    "4y": 97,
+    "5y": 97,
+    "6y": 98,
+    "7y": 96,
+    "8y": 98
+   },
+   "hitter_delta_above_mean": {
+    "1y": -5.75,
+    "2y": -7.88,
+    "3y": -7.62,
+    "4y": -11.1,
+    "5y": -11.6,
+    "6y": -11.31,
+    "7y": -10.61,
+    "8y": -10.34
+   },
+   "hitter_dvm_plus": {
+    "1y": 86,
+    "2y": 89,
+    "3y": 91,
+    "4y": 89,
+    "5y": 92,
+    "6y": 93,
+    "7y": 94,
+    "8y": 94
+   },
+   "org": "TOR",
+   "pitcher_delta_above_mean": {
+    "1y": 2.94,
+    "2y": 4.54,
+    "3y": 2.52,
+    "4y": 6.09,
+    "5y": 7.04,
+    "6y": 7.54,
+    "7y": 3.68,
+    "8y": 4.78
+   },
+   "pitcher_dvm_plus": {
+    "1y": 108,
+    "2y": 108,
+    "3y": 103,
+    "4y": 107,
+    "5y": 108,
+    "6y": 107,
+    "7y": 104,
+    "8y": 104
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 102,
+     "bat_ctrl": 120,
+     "cb": 102,
+     "ch": 99,
+     "cmd": 110,
+     "ct": null,
+     "fb": 98,
+     "field": 103,
+     "hit": 115,
+     "pitch_sel": 105,
+     "pwr": null,
+     "sl": 92,
+     "speed": 103
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 105,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 97,
+      "hit": 109,
+      "pitch_sel": 99,
+      "pwr": null,
+      "sl": null,
+      "speed": 103
+     },
+     "INF": {
+      "arm": 102,
+      "bat_ctrl": 109,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 102,
+      "hit": 102,
+      "pitch_sel": 114,
+      "pwr": null,
+      "sl": null,
+      "speed": 100
+     },
+     "OF": {
+      "arm": 98,
+      "bat_ctrl": 124,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 103,
+      "hit": 117,
+      "pitch_sel": 96,
+      "pwr": null,
+      "sl": null,
+      "speed": 105
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 100,
+      "ch": 105,
+      "cmd": 112,
+      "ct": null,
+      "fb": 99,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 103,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 104,
+      "ch": 94,
+      "cmd": 106,
+      "ct": null,
+      "fb": 98,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 75,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 102,
+    "tools_dvm_plus_rank": 9
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 98,
+     "dvm_plus_by_window": {
+      "1y": 98,
+      "2y": 99,
+      "3y": 99,
+      "4y": 98,
+      "5y": 97,
+      "6y": 98,
+      "7y": 98,
+      "8y": 99
+     },
+     "overall_dvm_plus": {
+      "1y": 86,
+      "2y": 89,
+      "3y": 91,
+      "4y": 89,
+      "5y": 92,
+      "6y": 93,
+      "7y": 94,
+      "8y": 94
+     },
+     "statcast_dvm_plus": 108,
+     "tool_dvm_plus": 108
+    },
+    "dev_pitcher": {
+     "dvm_plus": 103,
+     "dvm_plus_by_window": {
+      "1y": 103,
+      "2y": 102,
+      "3y": 101,
+      "4y": 102,
+      "5y": 105,
+      "6y": 104,
+      "7y": 103,
+      "8y": 104
+     },
+     "overall_dvm_plus": {
+      "1y": 108,
+      "2y": 108,
+      "3y": 103,
+      "4y": 107,
+      "5y": 108,
+      "6y": 107,
+      "7y": 104,
+      "8y": 104
+     },
+     "statcast_dvm_plus": 95,
+     "tool_dvm_plus": 99
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 99.8,
+     "n": 163,
+     "score_100": 98.7
+    }
+   }
+  },
+  {
+   "delta_above_mean": {
+    "1y": -6.76,
+    "2y": -8.02,
+    "3y": -7.4,
+    "4y": -11.31,
+    "5y": -14.96,
+    "6y": -19.06,
+    "7y": -22.09,
+    "8y": -23.21
+   },
+   "dvm_plus": {
+    "1y": 89,
+    "2y": 93,
+    "3y": 95,
+    "4y": 92,
+    "5y": 91,
+    "6y": 90,
+    "7y": 90,
+    "8y": 91
+   },
+   "hitter_delta_above_mean": {
+    "1y": -2.35,
+    "2y": -6.68,
+    "3y": -5.42,
+    "4y": -4.9,
+    "5y": -7.0,
+    "6y": -10.21,
+    "7y": -14.41,
+    "8y": -15.34
+   },
+   "hitter_dvm_plus": {
+    "1y": 94,
+    "2y": 90,
+    "3y": 94,
+    "4y": 95,
+    "5y": 95,
+    "6y": 93,
+    "7y": 91,
+    "8y": 92
+   },
+   "org": "WSN",
+   "pitcher_delta_above_mean": {
+    "1y": -4.66,
+    "2y": -1.36,
+    "3y": -2.18,
+    "4y": -7.71,
+    "5y": -8.16,
+    "6y": -8.56,
+    "7y": -7.92,
+    "8y": -8.02
+   },
+   "pitcher_dvm_plus": {
+    "1y": 88,
+    "2y": 98,
+    "3y": 97,
+    "4y": 91,
+    "5y": 91,
+    "6y": 92,
+    "7y": 92,
+    "8y": 93
+   },
+   "tool_dev": {
+    "per_tool_dvm_plus": {
+     "arm": 104,
+     "bat_ctrl": 95,
+     "cb": 106,
+     "ch": 108,
+     "cmd": 141,
+     "ct": 99,
+     "fb": 73,
+     "field": 117,
+     "hit": 113,
+     "pitch_sel": 116,
+     "pwr": null,
+     "sl": 113,
+     "speed": 112
+    },
+    "per_tool_dvm_plus_by_bucket": {
+     "C": {
+      "arm": null,
+      "bat_ctrl": 94,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 125,
+      "hit": 106,
+      "pitch_sel": 100,
+      "pwr": null,
+      "sl": null,
+      "speed": 83
+     },
+     "INF": {
+      "arm": 102,
+      "bat_ctrl": 102,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 103,
+      "hit": 116,
+      "pitch_sel": 121,
+      "pwr": null,
+      "sl": null,
+      "speed": 119
+     },
+     "OF": {
+      "arm": 103,
+      "bat_ctrl": 94,
+      "cb": null,
+      "ch": null,
+      "cmd": null,
+      "ct": null,
+      "fb": null,
+      "field": 102,
+      "hit": 97,
+      "pitch_sel": 103,
+      "pwr": null,
+      "sl": null,
+      "speed": 105
+     },
+     "RP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": null,
+      "ch": 100,
+      "cmd": 105,
+      "ct": null,
+      "fb": 91,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 110,
+      "speed": null
+     },
+     "SP": {
+      "arm": null,
+      "bat_ctrl": null,
+      "cb": 107,
+      "ch": 110,
+      "cmd": 139,
+      "ct": 99,
+      "fb": 70,
+      "field": null,
+      "hit": null,
+      "pitch_sel": null,
+      "pwr": null,
+      "sl": 108,
+      "speed": null
+     }
+    },
+    "tools_dvm_plus": 105,
+    "tools_dvm_plus_rank": 2
+   },
+   "tree": {
+    "dev_hitter": {
+     "dvm_plus": 97,
+     "dvm_plus_by_window": {
+      "1y": 99,
+      "2y": 97,
+      "3y": 98,
+      "4y": 98,
+      "5y": 98,
+      "6y": 98,
+      "7y": 97,
+      "8y": 98
+     },
+     "overall_dvm_plus": {
+      "1y": 94,
+      "2y": 90,
+      "3y": 94,
+      "4y": 95,
+      "5y": 95,
+      "6y": 93,
+      "7y": 91,
+      "8y": 92
+     },
+     "statcast_dvm_plus": 91,
+     "tool_dvm_plus": 110
+    },
+    "dev_pitcher": {
+     "dvm_plus": 99,
+     "dvm_plus_by_window": {
+      "1y": 98,
+      "2y": 101,
+      "3y": 101,
+      "4y": 98,
+      "5y": 98,
+      "6y": 99,
+      "7y": 99,
+      "8y": 99
+     },
+     "overall_dvm_plus": {
+      "1y": 88,
+      "2y": 98,
+      "3y": 97,
+      "4y": 91,
+      "5y": 91,
+      "6y": 92,
+      "7y": 92,
+      "8y": 93
+     },
+     "statcast_dvm_plus": 114,
+     "tool_dvm_plus": 99
+    },
+    "fin_dollar_dvm": {
+     "dollar_dvm_plus": 99.4,
+     "n": 144,
+     "score_100": 95.9
+    }
+   }
+  }
+ ]
+}

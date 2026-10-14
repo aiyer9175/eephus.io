@@ -4987,6 +4987,311 @@ FARM_PRINCIPAL_WINDOW = "7y"
 # Windows offered in the frontend selector (subset of FARM_TRAJECTORY_WINDOWS).
 FARM_SELECTABLE_WINDOWS = ["3y", "4y", "5y", "6y", "7y", "8y"]
 
+# DvM+ weighted by development difficulty (owner ask 6, 2026-09-30; DVM-5 of the Part 8
+# dvm_difficulty lane; gate docs/dvm-difficulty-2026-09-30/DVM_DIFFICULTY_GATE.md).
+# None (every build until the owner's flip, DVM-6) leaves every DvM+ field byte-identical
+# to the FV-trajectory method above: nothing below runs, nothing is imported and
+# data/dvm_difficulty.json is never read. "value" serves DV (each step's expected-WAR value
+# growth minus what players with the same origin, starting grade, age, level and source
+# usually gain; owner answer Q-DVM-2 A) and "difficulty" serves D0 (the same growth in
+# units of its starting rung's spread). The flip needs the look's pass, the fWAR epoch's
+# step Z and the owner; test_dvm_flag_identity.py pins None.
+DVM_DIFFICULTY_ARM: str | None = None
+DVM_DIFFICULTY_ARMS = ("value", "difficulty")
+# Gate section 7: a club-window cell is shown only with a Kish effective n of 10 or more;
+# below that the page prints " - " (the value still enters the farm grade, shrunk).
+DVM_DIFFICULTY_MIN_PUBLISH_N = 10.0
+# Gate section 9: the player index reads the last 3 annual steps, shrunk n / (n + 2).
+DVM_DIFFICULTY_PLAYER_STEPS = 3
+DVM_DIFFICULTY_PLAYER_SHRINK_K = 2.0
+_DVM_DIFF_BUCKETS = ("C", "INF", "OF", "SP", "RP")
+
+
+def _dvm_round_nearest(x: float) -> int:
+    """Plus stats round to nearest, halves up (the lab's round_nearest)."""
+    import math as _m
+    return int(_m.floor(float(x) + 0.5))
+
+
+def _dvm_window_end_years(as_of: str, windows: dict) -> dict[str, list[int]]:
+    """The preseason step years each trailing window holds (Q-DVM-5 A, annual steps): a
+    step ends with its end list's preseason window, which closes May 1, so the last
+    closed step is this year's on or after May 1 and last year's before it. A W-year
+    window holds the last W closed steps."""
+    d = date.fromisoformat(str(as_of)[:10])
+    last = d.year if d >= date(d.year, 5, 1) else d.year - 1
+    out = {}
+    for key, days in windows.items():
+        n = max(1, int(round(int(days) / 365)))
+        out[key] = list(range(last - n + 1, last + 1))
+    return out
+
+
+def _dvm_club_aggregate(rows: list[dict], credit: str, k_org: float,
+                        clubs: Iterable[str]) -> dict[str, dict]:
+    """Gate section 7 per club: D_o, the tau x omega weighted mean credit; N_o, its Kish
+    effective n; D~_o = D_o N_o / (N_o + k_org). A club with no step enters at 0, N 0."""
+    acc: dict[str, list[tuple[float, float, dict]]] = {}
+    for r in rows:
+        for club, t in (r.get("tau") or {}).items():
+            if t and t > 0:
+                acc.setdefault(club, []).append((float(t) * float(r["omega"]),
+                                                 float(r[credit]), r))
+    out: dict[str, dict] = {}
+    for club in sorted(set(clubs) | set(acc)):
+        items = acc.get(club) or []
+        sa = sum(a for a, _x, _r in items)
+        sa2 = sum(a * a for a, _x, _r in items)
+        D = (sum(a * x for a, x, _r in items) / sa) if sa > 0 else 0.0
+        N = (sa * sa / sa2) if sa2 > 0 else 0.0
+        out[club] = {"D": D, "N": N, "D_shrunk": (D * N / (N + k_org)) if N > 0 else 0.0,
+                     "sum_a": sa, "items": items}
+    return out
+
+
+def _dvm_plus_of(values: dict[str, float]) -> dict[str, int]:
+    """100 + 10 (x - mean) / sd across the given clubs (population sd, as the served
+    DvM+), unclamped, rounded to nearest; a flat field reads 100."""
+    if not values:
+        return {}
+    xs = list(values.values())
+    mu = sum(xs) / len(xs)
+    sd = (sum((x - mu) ** 2 for x in xs) / len(xs)) ** 0.5
+    return {k: _dvm_round_nearest(100 + 10 * ((v - mu) / sd if sd > 1e-12 else 0.0))
+            for k, v in values.items()}
+
+
+def _dvm_mix(items: list[tuple[float, float, dict]]) -> dict:
+    """The farm's mix in a window, weighted tau x omega: origin, starting rung and level
+    shares and the mean age for level (the inputs the expectation conditions on)."""
+    tot = sum(a for a, _x, _r in items)
+    if tot <= 0:
+        return {"origin": {}, "rung": {}, "level": {}, "mean_age_rel": None}
+    shares: dict[str, dict[str, float]] = {"origin": {}, "rung": {}, "level": {}}
+    age_num = age_den = 0.0
+    for a, _x, r in items:
+        for k in shares:
+            lab = str(r.get(k) or "unknown")
+            shares[k][lab] = shares[k].get(lab, 0.0) + a
+        if r.get("age_rel") is not None:
+            age_num += a * float(r["age_rel"])
+            age_den += a
+    return {k: {lab: round(v / tot, 3) for lab, v in sorted(m.items())}
+            for k, m in shares.items()} | {
+        "mean_age_rel": round(age_num / age_den, 2) if age_den > 0 else None}
+
+
+def _build_org_dev_residuals(fv_rows: list[dict], tool_rows: dict[str, list[dict]], *,
+                             table: dict, arm: str, as_of: str, clubs: Iterable[str],
+                             bucket_of: dict[str, str | None], actives: Iterable[str],
+                             windows: dict | None = None,
+                             tool_group_traits: dict | None = None) -> dict:
+    """The difficulty-adjusted DvM+ family from the scored steps (dvm_difficulty_serve.
+    score) and the frozen table: per club and window dvm_plus, delta_above_mean (now
+    growth above expected), the hitter and pitcher and C / INF / OF / SP / RP versions,
+    a dev_expectation block (actual, expected for this farm's mix, the gap, n, the mix);
+    per club the per-tool DvM+ and its bucket cells (principal window, tool residuals in
+    spread units, no FV-to-WAR transform, no level weight, no stretch: gate section 8);
+    and the player index that replaces $DvM+ (section 9). Pure: reads only its inputs."""
+    if arm not in DVM_DIFFICULTY_ARMS:
+        raise ValueError(f"unknown DVM_DIFFICULTY_ARM {arm!r}")
+    windows = windows or FARM_TRAJECTORY_WINDOWS
+    clubs = sorted(clubs)
+    credit = "v" if arm == "value" else "z"
+    k_tab = (table.get("k_org") or {})
+    k_org = float(((k_tab.get("DV" if arm == "value" else "D0")) or {}).get("k_org") or 50.0)
+    end_years = _dvm_window_end_years(as_of, windows)
+    by_org: dict[str, dict] = {c: {"dvm_plus": {}, "delta_above_mean": {},
+                                   "hitter_dvm_plus": {}, "pitcher_dvm_plus": {},
+                                   "hitter_delta_above_mean": {},
+                                   "pitcher_delta_above_mean": {},
+                                   "pos_bucket_fv_dvm_plus": {b: {} for b in _DVM_DIFF_BUCKETS},
+                                   "dev_expectation": {}} for c in clubs}
+
+    def _stamp(rows, val_key, delta_key):
+        agg = _dvm_club_aggregate(rows, credit, k_org, clubs)
+        vals = {c: agg[c]["D_shrunk"] for c in clubs}
+        plus = _dvm_plus_of(vals)
+        mu = sum(vals.values()) / len(vals) if vals else 0.0
+        for c in clubs:
+            by_org[c][val_key][win] = plus.get(c, 100)
+            if delta_key:
+                by_org[c][delta_key][win] = round(vals[c] - mu, 4)
+        return agg
+
+    for win in windows:
+        yrs = set(end_years[win])
+        rows_w = [r for r in fv_rows if int(r["step_end"]) in yrs]
+        agg = _stamp(rows_w, "dvm_plus", "delta_above_mean")
+        _stamp([r for r in rows_w if r["side"] == "hit"], "hitter_dvm_plus",
+               "hitter_delta_above_mean")
+        _stamp([r for r in rows_w if r["side"] == "pit"], "pitcher_dvm_plus",
+               "pitcher_delta_above_mean")
+        for b in _DVM_DIFF_BUCKETS:
+            sub = [r for r in rows_w if bucket_of.get(r["pk"]) == b]
+            ab = _dvm_club_aggregate(sub, credit, k_org, ())
+            present = {c: ab[c]["D_shrunk"] for c in clubs if c in ab and ab[c]["N"] > 0}
+            plus = _dvm_plus_of(present)
+            for c in clubs:
+                by_org[c]["pos_bucket_fv_dvm_plus"][b][win] = plus.get(c)
+        for c in clubs:
+            a = agg[c]
+            items = a["items"]
+            sa = a["sum_a"]
+            if arm == "value":
+                actual = (sum(t * float(r["w"]) for t, _x, r in items) / sa) if sa > 0 else None
+                gap = a["D"] if sa > 0 else None
+            else:
+                actual = (sum(t * float(r["y"]) for t, _x, r in items) / sa) if sa > 0 else None
+                gap = ((sum(t * float(r["z"]) * float(r["s_hat"]) for t, _x, r in items) / sa)
+                       if sa > 0 else None)
+            by_org[c]["dev_expectation"][win] = {
+                "actual": None if actual is None else round(actual, 3),
+                "expected": None if actual is None else round(actual - gap, 3),
+                "residual": None if gap is None else round(gap, 3),
+                "credit": round(a["D"], 4), "credit_shrunk": round(a["D_shrunk"], 4),
+                "n_eff": round(a["N"], 1), "pairs": len(items),
+                "publish": a["N"] >= DVM_DIFFICULTY_MIN_PUBLISH_N,
+                "step_years": sorted(yrs),
+                "mix": _dvm_mix(items),
+            }
+
+    # Per-tool pass: the principal window's tool residuals (gate section 8).
+    groups = tool_group_traits or {}
+    pyrs = set(end_years[FARM_PRINCIPAL_WINDOW])
+    per_tool: dict[str, dict] = {c: {} for c in clubs}
+    per_tool_b: dict[str, dict] = {c: {b: {} for b in _DVM_DIFF_BUCKETS} for c in clubs}
+
+    def _tool_plus(rows, k):
+        ag = _dvm_club_aggregate(rows, "z", k, ())
+        present = {c: ag[c]["D_shrunk"] for c in clubs if c in ag and ag[c]["N"] > 0}
+        return _dvm_plus_of(present) if len(present) >= 2 else {}
+
+    for grp in TOOL_GROUPS:
+        traits = groups.get(grp) or ()
+        rows = [r for t in traits for r in (tool_rows.get(t) or [])
+                if int(r["step_end"]) in pyrs]
+        ks = [float(((k_tab.get(f"tool|{r_side}|{t}")) or {}).get("k_org") or 50.0)
+              for t in traits for r_side in ("hit", "pit")
+              if f"tool|{r_side}|{t}" in k_tab]
+        k = sum(ks) / len(ks) if ks else 50.0
+        plus = _tool_plus(rows, k) if rows else {}
+        for c in clubs:
+            per_tool[c][grp] = plus.get(c)
+        for b in _DVM_DIFF_BUCKETS:
+            pb = _tool_plus([r for r in rows if bucket_of.get(r["pk"]) == b], k) if rows else {}
+            for c in clubs:
+                per_tool_b[c][b][grp] = pb.get(c)
+
+    # The player index (gate section 9): the player's own credits over his last 3 annual
+    # steps, each step's sources weighted by omega, shrunk n / (n + 2), 100 + 10 x value
+    # / sd across actives.
+    steps: dict[str, dict[int, list[tuple[float, float]]]] = {}
+    for r in fv_rows:
+        steps.setdefault(r["pk"], {}).setdefault(int(r["step_end"]), []).append(
+            (float(r["omega"]), float(r[credit])))
+    shrunk = {}
+    for pk, by_year in steps.items():
+        last = sorted(by_year)[-DVM_DIFFICULTY_PLAYER_STEPS:]
+        vals = []
+        for yr in last:
+            om = sum(o for o, _x in by_year[yr])
+            vals.append(sum(o * x for o, x in by_year[yr]) / om if om > 0 else 0.0)
+        n = len(vals)
+        shrunk[pk] = (sum(vals) / n) * n / (n + DVM_DIFFICULTY_PLAYER_SHRINK_K) if n else 0.0
+    act = [k for k in dict.fromkeys(actives) if k in shrunk]
+    sd = 0.0
+    if act:
+        mu0 = sum(shrunk[k] for k in act) / len(act)
+        sd = (sum((shrunk[k] - mu0) ** 2 for k in act) / len(act)) ** 0.5
+    player_index = {k: _dvm_round_nearest(100 + 10 * (shrunk[k] / sd if sd > 0 else 0.0))
+                    for k in act}
+
+    for c in clubs:
+        by_org[c]["per_tool_dvm_plus"] = per_tool[c]
+        by_org[c]["per_tool_dvm_plus_by_bucket"] = per_tool_b[c]
+    return {"arm": arm, "credit": credit, "k_org": k_org, "window_step_years": end_years,
+            "by_org": by_org, "player_index": player_index,
+            "n_steps": len(fv_rows), "n_tool_steps": {t: len(v) for t, v in tool_rows.items()}}
+
+
+def _dvm_difficulty_result(*, attribution, as_of: str,
+                           bucket_of: dict[str, str | None], actives: Iterable[str],
+                           arm: str | None = None, con=None) -> dict | None:
+    """The served arm's result, or None while DVM_DIFFICULTY_ARM is None (then nothing
+    is imported and no artifact is read). With the arm on, the look's frozen table is
+    required; a failure is logged and the FV-trajectory DvM+ stays served."""
+    arm = DVM_DIFFICULTY_ARM if arm is None else arm
+    if arm is None:
+        return None
+    try:
+        import dvm_difficulty_serve as _dds
+        table, ev = _dds.load_table()
+        _dds.require_look_table(table)
+
+        def _cal(pk):
+            return attribution.calendar(pk) if attribution is not None else []
+        own = con is None
+        if own:
+            con = sqlite3.connect(f"file:{Path(DB_PATH).as_posix()}?mode=ro", uri=True,
+                                  timeout=30.0)
+        try:
+            pairs, census = _dds.serve_pairs(con, calendar_of=_cal, clubs=MLB_30_ORGS,
+                                             player_keys=list(actives))
+        finally:
+            if own:
+                con.close()
+        fv_rows, tool_rows = _dds.score(pairs, table, arm)
+        res = _build_org_dev_residuals(
+            fv_rows, tool_rows, table=table, arm=arm, as_of=as_of, clubs=MLB_30_ORGS,
+            bucket_of=bucket_of, actives=actives,
+            tool_group_traits=_dds.TOOL_GROUP_TRAITS)
+        res["census"] = census
+        res["spec"] = _dds.spec_block(table, ev, arm, FARM_PRINCIPAL_WINDOW)
+        log.info("DvM+ difficulty arm %s: %d steps, %d clubs", arm, len(fv_rows),
+                 len(res["by_org"]))
+        return res
+    except Exception:
+        log.exception("DvM+ difficulty arm %s failed; the FV-trajectory DvM+ stays served",
+                      arm)
+        return None
+
+
+def _apply_dvm_difficulty_fv(org_summary: list[dict], res: dict | None) -> None:
+    """Writes the arm's FV family over the trajectory method's, key for key, so the
+    Development leaves, the 3-way blend, the tiebreaker and the windowed composite read it
+    through their unchanged wiring; adds dev_expectation (the arm's own block). With no
+    result (the arm None) it touches nothing."""
+    if res is None:
+        return
+    for entry in org_summary:
+        o = (res.get("by_org") or {}).get(entry.get("org"))
+        if not o:
+            continue
+        for key in ("dvm_plus", "delta_above_mean", "hitter_dvm_plus", "pitcher_dvm_plus",
+                    "hitter_delta_above_mean", "pitcher_delta_above_mean"):
+            entry[key] = dict(o[key])
+        entry["_pos_bucket_fv_dvm_plus"] = {b: dict(v) for b, v in o["pos_bucket_fv_dvm_plus"].items()}
+        entry["dev_expectation"] = {"arm": res["arm"], "windows": o["dev_expectation"]}
+
+
+def _apply_dvm_difficulty_tools(org_summary: list[dict], res: dict | None) -> None:
+    """Writes the arm's per-tool DvM+ and its bucket cells over the league pass's, keys
+    kept (per_tool_dvm_plus, per_tool_dvm_plus_by_bucket), before the composite
+    ToolDvM+ (tools_dvm_plus) is formed from them as today. With no result it touches
+    nothing."""
+    if res is None:
+        return
+    for entry in org_summary:
+        o = (res.get("by_org") or {}).get(entry.get("org"))
+        if not o:
+            continue
+        td = entry.setdefault("tool_dev", {})
+        td["per_tool_dvm_plus"] = {g: o["per_tool_dvm_plus"].get(g) for g in TOOL_GROUPS}
+        td["per_tool_dvm_plus_by_bucket"] = {
+            b: {g: cell.get(g) for g in TOOL_GROUPS}
+            for b, cell in o["per_tool_dvm_plus_by_bucket"].items()}
+
 # The per-bucket DvM+ development blend (_blend_dvm_3way inside
 # export_timeseries_json). FV-DvM+ and Tool-DvM+ share one slice, Statcast
 # DvM+ takes the rest. Inside the slice Tool takes the baseline share; when
@@ -5003,12 +5308,14 @@ FARM_DVM_TOOL_SHARE_PENALTY_START = 0.40
 FARM_DVM_TOOL_SHARE_PENALTY_CAP   = 0.60
 
 
-def farm_dev_spec() -> dict:
+def farm_dev_spec(dvm_difficulty: dict | None = None) -> dict:
     """The constants behind the farm Development copy, served in the PROSPX boot
     payload as `farm_dev_spec` so the Development tab names the principal window
     and the blend weights from the code instead of typing them. Nothing here is a
-    measured number; changing a constant above changes the copy with it."""
-    return {
+    measured number; changing a constant above changes the copy with it.
+    `dvm_difficulty` is the arm's explainer block (dvm_difficulty_serve.spec_block),
+    added only while DVM_DIFFICULTY_ARM is on; with None the payload is unchanged."""
+    spec = {
         "principal_window": FARM_PRINCIPAL_WINDOW,
         "dvm_blend": {
             "fv_tool_share":            FARM_DVM_FV_TOOL_SHARE,
@@ -5020,6 +5327,9 @@ def farm_dev_spec() -> dict:
             "tool_share_penalty_cap":   FARM_DVM_TOOL_SHARE_PENALTY_CAP,
         },
     }
+    if dvm_difficulty:
+        spec["dvm_difficulty"] = dvm_difficulty
+    return spec
 
 FARM_TOP_END_COUNT  = 5             # top N prospects feeding the "stars" score
 FARM_DEPTH_START    = 5             # prospects #6 ...
@@ -13365,6 +13675,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _mu, _sd = _tier_stats.get(_ddvm_tier_by_key[_k], (_g_mu, _g_sd))
         _z = (_traj - _mu) / (_sd or 1.0)
         _dollar_dvm_by_key[_k] = round(100.0 + 10.0 * _z, 1)
+    # DvM+ difficulty arm (DVM_DIFFICULTY_ARM; None until the owner's flip, and then this
+    # pass is skipped entirely). The result feeds three points: the player index here,
+    # the per-tool pass and the FV-DvM+ family below (_apply_dvm_difficulty_*).
+    _dvm_diff = (_dvm_difficulty_result(
+        attribution=_dev_attr, as_of=date.today().isoformat(),
+        bucket_of={_p.player_key: _pos_bucket_v2(_p.position)
+                   for _p in actives + grads + inactives},
+        actives=[_p.player_key for _p in actives])
+        if DVM_DIFFICULTY_ARM is not None else None)
+    if _dvm_diff is not None:
+        # Gate section 9 (Q-DVM-6 A): the player index replaces the tier z; key kept.
+        _dollar_dvm_by_key = {_k: float(_v) for _k, _v in _dvm_diff["player_index"].items()}
 
     org_map: dict[str, dict] = {}
     for idx, p in enumerate(actives):
@@ -15078,6 +15400,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # the way the farm tiebreaker now is would move every displayed ToolDvM+
     # number and its rank ordering is already correct, so it is a presentation
     # decision for the owner, not a correctness fix. See also _stretch_composite.
+    _apply_dvm_difficulty_tools(org_summary, _dvm_diff)     # no-op while the arm is None
     _composite_vals: list[tuple[str, int | None]] = []
     for entry in org_summary:
         td = entry["tool_dev"]
@@ -15854,6 +16177,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 else:
                     delta = raw - _bucket_traj_mean[bucket][win]
                     entry["_pos_bucket_fv_dvm_plus"][bucket][win] = int(round(100 + 10 * (delta / sd)))
+
+    _apply_dvm_difficulty_fv(org_summary, _dvm_diff)        # no-op while the arm is None
 
     # v28 — Final blend pass. 70% cohort-restricted Overall DvM+ +
     # 30% tool-grade-based DvM+. Missing-signal: if one side is
@@ -18191,7 +18516,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "farm_pitcher_trajectory_means":  pitcher_traj_means,
         # The principal window and the DvM+ blend constants, so the farm
         # Development tab copy reads them instead of typing them (farm_dev_spec).
-        "farm_dev_spec": farm_dev_spec(),
+        "farm_dev_spec": farm_dev_spec(_dvm_diff["spec"] if _dvm_diff is not None else None),
         "level_norms": level_norms,
         # MLB Draft bonus-pool ceilings + per-pick slot values, scraped
         # from MLB.com per year. Keyed by year (int). Drives the

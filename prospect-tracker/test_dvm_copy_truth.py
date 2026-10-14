@@ -134,7 +134,9 @@ def test_payload_spec_carries_the_code_constants():
 
 
 def test_boot_payload_serializes_the_spec():
-    assert re.search(r'"farm_dev_spec":\s*farm_dev_spec\(\)', STORAGE_SRC), \
+    # farm_dev_spec() takes the DvM+ difficulty arm's explainer block (None while the
+    # arm is None, DVM-5), so the call may carry an argument.
+    assert re.search(r'"farm_dev_spec":\s*farm_dev_spec\(', STORAGE_SRC), \
         "export_timeseries_json no longer writes farm_dev_spec into the boot payload"
 
 

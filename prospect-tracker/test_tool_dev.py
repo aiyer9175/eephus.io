@@ -260,3 +260,44 @@ class TestExportedFields:
         assert ranks, "no populated ranks"
         assert min(ranks) == 1
         assert max(ranks) <= len(orgs)
+
+
+# ---------------------------------------------------------------------------
+# The DvM+ difficulty arm (DVM-5): the per-tool pass behind storage.DVM_DIFFICULTY_ARM
+# ---------------------------------------------------------------------------
+
+class TestDvmDifficultyToolPass:
+    def test_the_arm_is_off_and_the_pass_is_inert_on_none(self):
+        import copy
+        import storage
+        assert storage.DVM_DIFFICULTY_ARM is None
+        entry = {"org": "LAD", "tool_dev": {"per_tool_dvm_plus": {"hit": 104},
+                                            "per_tool_dvm_plus_by_bucket": {"C": {"hit": 101}},
+                                            "tools_dvm_plus": 103}}
+        before = copy.deepcopy(entry)
+        storage._apply_dvm_difficulty_tools([entry], None)
+        assert entry == before
+
+    def test_with_a_result_every_tool_group_key_is_written_and_the_composite_is_left_to_the_league_pass(self):
+        import storage
+        res = {"arm": "value", "by_org": {"LAD": {
+            "per_tool_dvm_plus": {"hit": 112, "fb": 95},
+            "per_tool_dvm_plus_by_bucket": {b: {"hit": 108} for b in storage._DVM_DIFF_BUCKETS}}}}
+        entry = {"org": "LAD", "tool_dev": {"per_tool_dvm_plus": {"hit": 104, "pwr": 99},
+                                            "per_tool_dvm_plus_by_bucket": {}, "tools_dvm_plus": 103}}
+        other = {"org": "NYY", "tool_dev": {"tools_dvm_plus": 90}}
+        storage._apply_dvm_difficulty_tools([entry, other], res)
+        td = entry["tool_dev"]
+        assert set(td["per_tool_dvm_plus"]) == set(TOOL_GROUPS)
+        assert td["per_tool_dvm_plus"]["hit"] == 112 and td["per_tool_dvm_plus"]["fb"] == 95
+        assert td["per_tool_dvm_plus"]["pwr"] is None, "a group the arm did not model prints a dash"
+        assert set(td["per_tool_dvm_plus_by_bucket"]) == set(storage._DVM_DIFF_BUCKETS)
+        assert td["per_tool_dvm_plus_by_bucket"]["C"]["hit"] == 108
+        assert td["per_tool_dvm_plus_by_bucket"]["C"]["fb"] is None
+        assert td["tools_dvm_plus"] == 103, "the composite ToolDvM+ is formed after the pass, as today"
+        assert other == {"org": "NYY", "tool_dev": {"tools_dvm_plus": 90}}, "an org the arm did not score is left alone"
+
+    def test_the_tool_group_trait_map_names_the_lab_traits(self):
+        import dvm_difficulty_serve as dds
+        assert set(dds.TOOL_GROUP_TRAITS) <= set(TOOL_GROUPS)
+        assert dds.TOOL_GROUP_TRAITS["pwr"] == ("game_pwr", "raw_pwr") and dds.TOOL_GROUP_TRAITS["arm"] == ("arm",)

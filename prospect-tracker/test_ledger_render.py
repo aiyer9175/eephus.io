@@ -1482,3 +1482,32 @@ def test_qclc10_a_value_that_rounds_to_zero_prints_without_a_minus():
     ctx = MiniRacer()
     ctx.eval("function isNum(v){return v!==null&&v!==undefined&&v===v&&v!==''};" + body)
     assert ctx.eval("n1(-0.02)") == "0.0" and ctx.eval("n1(-0.06)") == "-0.1" and ctx.eval("n1(2.26)") == "2.3"
+
+
+# --------------------------------------------------------------------------
+# The DvM+ difficulty arm (DVM-5): the farm table header and the fin_dollar_dvm
+# leaf relabel only when the payload carries the arm's copy keys.
+# --------------------------------------------------------------------------
+
+def _sample_with_dvm_leaf(arm_copy=False):
+    s = _sample2()
+    s["clubs"]["LAD"]["farm"]["leaves"]["fin_dollar_dvm"] = dict(LEAF, letter="B", score_100=104.0, value=103.2, n=140)
+    s["copy"]["farm_leaves"]["fin_dollar_dvm"] = {"basis": "b", "weight": 0.1}
+    if arm_copy:
+        s["copy"]["dvm_player_label"] = "DvM+ (player)"
+        s["copy"]["dvm_org_label"] = "Org DvM+ (player)"
+    return s
+
+
+def test_the_farm_surfaces_keep_todays_dvm_labels_without_the_arm_copy():
+    html = _render2(payload=_sample_with_dvm_leaf(False), shards={SHARD_URL_LAD: SHARD_LAD})
+    farm, prospects = _block(html, "farm"), _block(html, "prospects")
+    assert "Org $DvM+" in farm and ">$DvM+<" in prospects
+    assert "DvM+ (player)" not in farm and "DvM+ (player)" not in prospects
+
+
+def test_the_farm_surfaces_relabel_when_the_arm_copy_is_served():
+    html = _render2(payload=_sample_with_dvm_leaf(True), shards={SHARD_URL_LAD: SHARD_LAD})
+    farm, prospects = _block(html, "farm"), _block(html, "prospects")
+    assert "Org DvM+ (player)" in farm and ">DvM+ (player)<" in prospects
+    assert "$DvM+" not in farm and "$DvM+" not in prospects

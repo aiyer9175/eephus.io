@@ -2347,3 +2347,32 @@ def test_unified_salary_index_lives_inside_the_priced_surplus_only(tmp_path):
             assert d == pytest.approx(want, rel=1e-12)
         assert proj_export._unified_salary_index(seasons[2]) == 1.0
     assert [c["usd"] for c in seasons] == [780_000.0, 4_000_000.0, 9_000_000.0]
+
+
+# --------------------------------------------------------------------------
+# The DvM+ difficulty arm (DVM-5): Ledger copy behind storage.DVM_DIFFICULTY_ARM
+# --------------------------------------------------------------------------
+
+def test_the_dvm_difficulty_copy_is_served_only_with_the_arm_on(d, monkeypatch):
+    import ledger_export as LE
+    import storage
+    assert storage.DVM_DIFFICULTY_ARM is None
+    assert "dvm_player_label" not in d["copy"] and "dvm_org_label" not in d["copy"]
+    assert d["copy"]["farm_leaves"]["fin_dollar_dvm"]["basis"] == LE.LEAF_VALUE["fin_dollar_dvm"][2]
+    assert LE._dvm_difficulty_arm() is None
+    assert LE._leaf_basis("fin_dollar_dvm") == LE.LEAF_VALUE["fin_dollar_dvm"][2]
+    monkeypatch.setattr(storage, "DVM_DIFFICULTY_ARM", "value")
+    assert LE._dvm_difficulty_arm() == "value"
+    assert LE._leaf_basis("fin_dollar_dvm") == LE.DVM_DIFFICULTY_LEAF_BASIS
+    assert LE._leaf_basis("fin_active_surplus") == LE.LEAF_VALUE["fin_active_surplus"][2]
+
+
+def test_the_dvm_difficulty_copy_is_lint_clean_and_names_the_player_index():
+    import ledger_export as LE
+    assert LE.DVM_DIFFICULTY_COPY["dvm_player_label"] == "DvM+ (player)"
+    assert LE.DVM_DIFFICULTY_COPY["dvm_org_label"].startswith("Org DvM+")
+    within = LE.DVM_DIFFICULTY_COPY["dvm_within_tier"]
+    assert "no clamp" in within and "not a dollar figure" in within and "origin" in within
+    for text in [LE.DVM_DIFFICULTY_LEAF_BASIS, *LE.DVM_DIFFICULTY_COPY.values()]:
+        assert chr(0x2014) not in text and chr(0x2013) not in text
+        assert "clamped" not in text

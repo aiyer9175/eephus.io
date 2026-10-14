@@ -480,3 +480,121 @@ class TestBuildOrgFvHistoryGraduations:
         mil_final = out["MIL"]["series"][-1]["total_fv"]
         assert atl_final == 0.0, f"ATL trade-in should not be credited as development, got {atl_final}"
         assert mil_final == 3.0, f"MIL +5 FV growth → +3 WAR-equivalent, got {mil_final}"
+
+
+# ---------------------------------------------------------------------------
+# The DvM+ difficulty arm (DVM-5): the family _build_org_dev_residuals writes, on a
+# hand-made fixture of scored steps (no table, no store, no grade read).
+# ---------------------------------------------------------------------------
+
+import pytest
+
+import storage as _st
+from storage import (
+    FARM_TRAJECTORY_WINDOWS,
+    FARM_PRINCIPAL_WINDOW,
+    DVM_DIFFICULTY_ARM,
+    DVM_DIFFICULTY_MIN_PUBLISH_N,
+    _build_org_dev_residuals,
+    _dvm_mix,
+)
+
+
+def _step(pk, tau, v, *, y=5.0, w=2.5, side="hit", year=2026, rung="45", origin="HS",
+          level="A/A+", age_rel=0.5, s_hat=5.0):
+    """One scored 12-month step as dvm_difficulty_serve.score hands it over."""
+    return {"pk": pk, "src": "fg", "V": year - 1, "step_end": year, "side": side, "omega": 1.0,
+            "tau": tau, "y": y, "w": w, "E": y - v * s_hat / 2.5, "EW": w - v, "s_hat": s_hat,
+            "v": v, "z": v / 2.5, "origin": origin, "rung": rung, "level": level, "age_rel": age_rel}
+
+
+_CLUBS = ["AAA", "BBB", "CCC"]
+_TABLE = {"k_org": {"DV": {"k_org": 5.0}, "D0": {"k_org": 5.0}}}
+
+
+def _fixture_rows():
+    return [_step("p1", {"AAA": 1.0}, 2.0),
+            _step("p2", {"AAA": 1.0}, 1.0, side="pit", origin="COL", rung="50"),
+            _step("p3", {"BBB": 1.0}, -1.0, origin="IFA", level="DSL/CPX", age_rel=-1.0),
+            _step("p4", {"CCC": 1.0}, 0.0),
+            _step("p5", {"AAA": 0.5, "CCC": 0.5}, 4.0)]
+
+
+class TestDvmDifficultyFamily:
+    def test_the_arm_ships_none(self):
+        assert DVM_DIFFICULTY_ARM is None
+
+    def _res(self, arm="value", **kw):
+        return _build_org_dev_residuals(_fixture_rows(), {}, table=_TABLE, arm=arm, as_of="2026-10-14",
+                                        clubs=_CLUBS, bucket_of=kw.pop("bucket_of", {}),
+                                        actives=kw.pop("actives", ["p1", "p2", "p3", "p4", "p5"]), **kw)
+
+    def test_every_window_key_of_the_trajectory_method_is_written(self):
+        res = self._res()
+        for c in _CLUBS:
+            o = res["by_org"][c]
+            for key in ("dvm_plus", "delta_above_mean", "hitter_dvm_plus", "pitcher_dvm_plus",
+                        "hitter_delta_above_mean", "pitcher_delta_above_mean", "dev_expectation"):
+                assert set(o[key]) == set(FARM_TRAJECTORY_WINDOWS), (c, key)
+            for b, cell in o["pos_bucket_fv_dvm_plus"].items():
+                assert set(cell) == set(FARM_TRAJECTORY_WINDOWS), (c, b)
+        assert res["window_step_years"][FARM_PRINCIPAL_WINDOW][-1] == 2026
+
+    def test_the_club_credit_is_tenure_weighted_and_the_league_mean_is_zero(self):
+        res = self._res()
+        de = res["by_org"]["AAA"]["dev_expectation"]["1y"]
+        # AAA holds p1 (2.0), p2 (1.0) and half of p5 (4.0): (2 + 1 + 2) / 2.5
+        assert de["credit"] == pytest.approx(2.0, abs=1e-4)
+        n_exact = 2.5 ** 2 / 2.25
+        assert de["n_eff"] == pytest.approx(n_exact, abs=0.05), "published to one decimal"
+        assert de["credit_shrunk"] == pytest.approx(2.0 * n_exact / (n_exact + 5.0), abs=1e-3)
+        assert de["pairs"] == 3 and de["publish"] is False and de["n_eff"] < DVM_DIFFICULTY_MIN_PUBLISH_N
+        assert de["actual"] - de["expected"] == pytest.approx(de["residual"], abs=2e-3)
+        assert de["residual"] == pytest.approx(2.0, abs=1e-3), "value arm: the gap is the credit, in expected WAR"
+        assert de["step_years"] == [2026]
+        assert sum(res["by_org"][c]["delta_above_mean"]["1y"] for c in _CLUBS) == pytest.approx(0.0, abs=1e-3)
+        plus = [res["by_org"][c]["dvm_plus"]["1y"] for c in _CLUBS]
+        assert all(isinstance(v, int) for v in plus) and plus[0] > plus[1]
+        assert res["by_org"]["AAA"]["hitter_dvm_plus"]["1y"] >= res["by_org"]["BBB"]["hitter_dvm_plus"]["1y"]
+        assert res["by_org"]["AAA"]["dev_expectation"]["1y"]["mix"]["origin"] == {"COL": 0.4, "HS": 0.6}
+
+    def test_the_difficulty_arm_reads_the_z_credit_and_prints_the_gap_in_grade_points(self):
+        res = self._res(arm="difficulty")
+        assert res["credit"] == "z"
+        de = res["by_org"]["AAA"]["dev_expectation"]["1y"]
+        assert de["credit"] == pytest.approx(2.0 / 2.5, abs=1e-4)
+        assert de["residual"] == pytest.approx(2.0 / 2.5 * 5.0, abs=1e-3), "z x s_hat, grade points"
+        assert de["actual"] == pytest.approx(5.0, abs=1e-3)
+        with pytest.raises(ValueError):
+            self._res(arm="both")
+
+    def test_a_bucket_cell_prints_only_where_the_club_has_a_step_in_it(self):
+        res = self._res(bucket_of={"p1": "C"})
+        assert res["by_org"]["AAA"]["pos_bucket_fv_dvm_plus"]["C"]["1y"] == 100
+        assert res["by_org"]["BBB"]["pos_bucket_fv_dvm_plus"]["C"]["1y"] is None
+        assert res["by_org"]["AAA"]["pos_bucket_fv_dvm_plus"]["SP"]["1y"] is None
+
+    def test_without_tool_rows_every_tool_group_prints_a_dash(self):
+        res = self._res()
+        for c in _CLUBS:
+            assert all(v is None for v in res["by_org"][c]["per_tool_dvm_plus"].values())
+            assert set(res["by_org"][c]["per_tool_dvm_plus"]) == set(_st.TOOL_GROUPS)
+
+    def test_the_player_index_is_shrunk_and_scaled_across_the_actives_only(self):
+        res = self._res(actives=["p1", "p3", "zzz"])
+        assert set(res["player_index"]) == {"p1", "p3"}
+        assert all(isinstance(v, int) for v in res["player_index"].values())
+        assert res["player_index"]["p1"] > 100 > res["player_index"]["p3"]
+        # one step each: value x 1 / (1 + 2); 100 + 10 x value / sd over the two actives
+        vals = {"p1": 2.0 / 3, "p3": -1.0 / 3}
+        mu = sum(vals.values()) / 2
+        sd = (sum((x - mu) ** 2 for x in vals.values()) / 2) ** 0.5
+        assert res["player_index"]["p1"] == _st._dvm_round_nearest(100 + 10 * vals["p1"] / sd)
+
+    def test_the_mix_shares_sum_to_one_and_age_is_weighted(self):
+        items = [(1.0, 0.0, {"origin": "HS", "rung": "45", "level": "A/A+", "age_rel": 1.0}),
+                 (3.0, 0.0, {"origin": "COL", "rung": "45", "level": "AA/AAA", "age_rel": -1.0})]
+        mix = _dvm_mix(items)
+        assert mix["origin"] == {"COL": 0.75, "HS": 0.25} and mix["rung"] == {"45": 1.0}
+        assert mix["mean_age_rel"] == pytest.approx(-0.5)
+        assert _dvm_mix([]) == {"origin": {}, "rung": {}, "level": {}, "mean_age_rel": None}
