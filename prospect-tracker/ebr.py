@@ -131,25 +131,6 @@ def runs_to_end(df):
     return (tot - cum + df["runs_scored_on_play"]).astype(float)
 
 
-def raw_cells(df) -> dict:
-    """{cell: {"n", "mean", "var"}} over the rows given (the recipe, no MIN_RE_N)."""
-    import numpy as np
-    ros = runs_to_end(df).to_numpy()
-    base = df["_base"].to_numpy() if "_base" in df.columns else base_code(df).to_numpy()
-    outs = df["outs_before"].astype(int).to_numpy()
-    out = {}
-    for b in range(8):
-        for o in (0, 1, 2):
-            sel = (base == b) & (outs == o)
-            n = int(sel.sum())
-            if n == 0:
-                continue
-            x = ros[sel]
-            out[f"{b}|{o}"] = {"n": n, "mean": float(x.mean()),
-                               "var": float(x.var(ddof=1)) if n > 1 else 0.0}
-    return out
-
-
 def fit_mask(pa):
     """The fit set F_s of a season's play rows (EBR_GATE.md 2.3)."""
     import numpy as np
