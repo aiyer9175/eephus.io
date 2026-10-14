@@ -236,14 +236,18 @@ def test_the_job_writes_every_kind_and_each_passes_every_rule(env):
         kind = sc.kind_of_name(name)
         assert res["bytes"] <= sc.FILE_KINDS[kind]["budget"], (name, res["bytes"])
     latest, index, season = files["latest.json"], files["index.json"], files["index-2026.json"]
-    assert set(latest) == {"schema", "generated_at", "job", "index_rev", "today", "next_game_date", "window", "live"}
+    assert set(latest) == {"schema", "generated_at", "job", "index_rev", "today", "next_game_date", "window", "live",
+                           "standings"}
     assert set(latest["job"]) == {"action", "state", "next_by", "last_ok_at", "down_after_s", "poll_live_s",
                                   "poll_idle_s", "errors_24h", "refusals_24h"}
     assert set(latest["window"]) == {f"2026-{d}" for d in ("09-29", "09-30", "10-01", "10-02", "10-03", "10-04",
                                                            "10-05", "10-06", "10-07")}
     assert set(next(iter(latest["window"].values()))) == {"rev", "n", "live", "final", "pre", "off", "clips_matched",
                                                           "clips_of", "stale_since"}
-    assert set(index) == {"schema", "generated_at", "seasons", "registry", "accuracy", "rules", "copyright"}
+    assert set(index) == {"schema", "generated_at", "seasons", "registry", "accuracy", "rules", "copyright",
+                          "standings_seasons"}
+    # STANDINGS_2: no standings file on disk here, so the block is null and the list empty
+    assert latest["standings"] is None and index["standings_seasons"] == []
     assert set(index["accuracy"]["mlb_wp"]) == {"feed_brier", "base_rate_brier", "n_plays", "seasons",
                                                 "pregame_values", "artifact_generated_at"}
     assert set(season) == {"schema", "season", "dates", "bracket"}

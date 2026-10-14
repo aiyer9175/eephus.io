@@ -20,8 +20,32 @@ else `.cache/scores/out/`. An output directory or store that resolves inside
 the app tree's `data/` (or the webroot) is refused with exit 2 (`bad_out`).
 The job writes nothing else: no tracked file, nothing under `data/`, no shared
 cache, not the webroot, not `prospects.db`, and it never opens the nightly's
-lock. `OUT/standings/` is reserved for STANDINGS_2 and this job writes nothing
-there.
+lock. `OUT/standings/` holds the standings files (STANDINGS_2), written only
+by the standings section below through `StandingsWriter`.
+
+THE STANDINGS (STANDINGS_2_JOB_AND_BACKFILL, STANDINGS_PLAN 4.1 to 4.5). One
+call, `/api/v1/standings?leagueId=103,104&season=Y&date=D&standingsTypes=
+regularSeason`, never without `date`, no hydrate, inside the same limiter: at
+most one per acting cycle and at least 300 s apart, due when (a) a
+regular-season game turned final since the last call, (b) a date's last
+regular-season final is 60 minutes old, (c) the week cycle finalizes
+yesterday; none in the postseason or the offseason. A response is kept only
+when its league W sum equals the decided regular-season finals through D in
+the season's game list (the race schedule plus this job's date files);
+otherwise the last snapshot stays and `stale_since` is set. Raw responses go to
+`.cache/scores/work/standings/`, the job's standings state to
+`.cache/scores/standings/state.json`, and the files to `OUT/standings/`
+(season files, races, by-date snapshots), each through the standings
+validator and standings_core's compact serializer. The standings OUT has its
+own flag: while `standings_core.STANDINGS_LIVE` is False it is
+`.cache/scores/preview/` whatever SCORES_LIVE says, and latest.json and
+index.json carry the `standings` and `standings_seasons` keys only when the
+standings files sit beside them (so the served scores files name no standings
+file until STANDINGS_7_FLIP). The races (`--backfill-race`, one schedule call
+a season, 2015 on under ST-Q3 (a)) and the by-date snapshots
+(`--backfill-standings`, one call a game date, never before HISTORY_FLOOR)
+are hand runs with --backfill's refusals; `--build-standings` writes the
+season files from disk with zero calls (2000 to 2025 from the tracked copy).
 
 THE NETWORK. One host, `statsapi.mlb.com`, through a job-local urllib session
 with no retries (never `feed_cache.SESSION`, whose Retry sleeps Retry-After
@@ -54,6 +78,9 @@ holds.
     python tools/scores_job.py --selfcheck        # has the scheduler reached the job here
     python tools/scores_job.py --date 2026-10-03  # rebuild one official date now
     python tools/scores_job.py --backfill 2026-03-25:2026-09-28
+    python tools/scores_job.py --backfill-race 2015:2025          # one schedule call a season
+    python tools/scores_job.py --backfill-standings 2026-03-25:2026-05-10   # one call a game date
+    python tools/scores_job.py --build-standings 2000:2025        # season files, zero calls
 """
 from __future__ import annotations
 
@@ -79,6 +106,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import scores_core as sc  # noqa: E402  (standard library only; no pandas, numpy or requests)
+import standings_core as st  # noqa: E402  (standard library and scores_core only, at runtime too)
 
 log = logging.getLogger("scores_job")
 
@@ -105,10 +133,38 @@ HOUSE_FEED_CACHE = ROOT / ".cache" / "game_feeds"
 #: The fWAR label epoch's step A snapshot and the gate whose part 9 records step Z.
 EPOCH_SNAPSHOT = ROOT.parent / "_pre_epoch_fwar_2026-10"
 EPOCH_GATE_DOC = ROOT / "docs" / "efv-2026-09-17" / "FWAR_LABEL_EPOCH_GATE.md"
-#: Subdirectories of OUT this job never writes (STANDINGS_2 owns standings/).
+#: Subdirectories of OUT the scores Writer never writes (the standings files go
+#: through StandingsWriter only).
 RESERVED_OUT_DIRS = ("standings",)
 #: The kill switch file for embedded video (plan 6.7, 17.9), read from OUT.
 EMBED_OFF_NAME = "EMBED_OFF"
+
+# --------------------------------------------------------------------------- #
+# Standings (STANDINGS_PLAN 4.1 to 4.3; owner answers ST-Q1 to ST-Q4)
+# --------------------------------------------------------------------------- #
+STANDINGS_PATH = "/api/v1/standings"
+STANDINGS_LEAGUES = "103,104"
+STANDINGS_TYPES = "regularSeason"
+#: at most one standings call per acting cycle, never sooner than this after the last
+STANDINGS_MIN_GAP_S = 300
+#: due reason (b): a date's last regular-season final plus 60 minutes
+STANDINGS_AFTER_LAST_S = 3600
+#: the live season's saved schedule is read again when older than this
+SEASON_SCHEDULE_REFRESH_S = 6 * 86400
+#: ST-Q3 (a): final tables 2000 to 2025 from the tracked copy with zero calls,
+#: races 2015 to 2025 from one schedule call each, no per-date past snapshots.
+ST_Q3 = "a"
+RACE_FIRST_SEASON = 2015
+#: the race schedule's fields (plan 4.1), codedGameState, gameNumber and doubleHeader kept
+RACE_FIELDS = ("dates,date,games,gamePk,officialDate,status,codedGameState,teams,away,home,team,id,score,"
+               "doubleHeader,gameNumber")
+#: the tracked, unpublished copy of the 2000 to 2025 final tables (STANDINGS_1); read only
+LABS_STANDINGS_DIR = DATA_DIR / "_labs" / "standings"
+#: STANDINGS_3's hook for <Y>-phist.json: a callable (season=, paths=,
+#: standings_state=, generated_at=) returning the file or None. None here.
+PHIST_BUILDER = None
+_TERMINAL = ("final", "postponed", "cancelled", "suspended")
+_DATE_JSON = re.compile(r"^\d{4}-\d{2}-\d{2}\.json$")
 
 # --------------------------------------------------------------------------- #
 # Cadence (plan 2.1), all compared on cron ticks
@@ -225,6 +281,16 @@ def out_dir() -> Path:
     return Path(env) if env else store_dir() / "out"
 
 
+def standings_out_dir() -> Path:
+    """The standings OUT follows standings_core.STANDINGS_LIVE: while it is
+    False the standings files go under the preview directory whatever
+    scores_core.SCORES_LIVE says, so nothing standings-related is served until
+    STANDINGS_7_FLIP; once it is True they sit beside the scores files."""
+    if not st.STANDINGS_LIVE:
+        return store_dir() / "preview"
+    return out_dir()
+
+
 def served_data_dir() -> Path:
     """The SERVED copy of data/ (the box's webroot when EEPHUS_WEBROOT is set),
     because the app tree can hold files a red nightly gate never published."""
@@ -235,11 +301,12 @@ def served_data_dir() -> Path:
 def resolve_paths() -> dict:
     """Every path this job may write, resolved. A test asserts that under
     pytest each one sits inside the session temp directory."""
-    st = store_dir()
+    store = store_dir()
     out = out_dir()
-    return {"store": st, "out": out, "slate": st / "slate.json", "state": st / "state.json",
-            "sig": st / "sig.json", "heartbeat": st / "heartbeat.json", "lock": st / "job.lock",
-            "work": st / "work", "runlog_dir": st}
+    return {"store": store, "out": out, "slate": store / "slate.json", "state": store / "state.json",
+            "sig": store / "sig.json", "heartbeat": store / "heartbeat.json", "lock": store / "job.lock",
+            "work": store / "work", "runlog_dir": store, "standings_out": standings_out_dir(),
+            "standings_state": store / "standings" / "state.json", "standings_work": store / "work" / "standings"}
 
 
 def _inside(child: Path, parent: Path) -> bool:
@@ -259,12 +326,13 @@ def bad_out(paths: dict) -> str | None:
     writes under the app tree's data/ (the nightly's checkout and step A's
     stability read watch it) or inside the webroot (the nightly's rsync
     --delete owns it)."""
-    for key in ("out", "store"):
-        if _inside(paths[key], DATA_DIR):
+    for key in ("out", "store", "standings_out"):
+        if key in paths and _inside(paths[key], DATA_DIR):
             return f"{key} {paths[key]} resolves inside the app tree's data/"
     web = os.environ.get("EEPHUS_WEBROOT")
-    if web and _inside(paths["out"], Path(web)):
-        return f"out {paths['out']} resolves inside the webroot {web}"
+    for key in ("out", "standings_out"):
+        if web and key in paths and _inside(paths[key], Path(web)):
+            return f"{key} {paths[key]} resolves inside the webroot {web}"
     return None
 
 
@@ -511,6 +579,16 @@ class Fetcher:
 
     def postseason_series(self, season: int):
         return self.get(BRACKET_PATH, {"sportId": 1, "season": int(season)})
+
+    # the two standings shapes (STANDINGS_2; each verified with one live GET, 2026-10-14)
+    def standings(self, season: int, as_of: str):
+        """Never without `date`: the as-of would be unknowable. No hydrate."""
+        return self.get(STANDINGS_PATH, {"leagueId": STANDINGS_LEAGUES, "season": int(season), "date": as_of,
+                                         "standingsTypes": STANDINGS_TYPES})
+
+    def season_schedule(self, season: int):
+        return self.get("/api/v1/schedule", {"sportId": 1, "season": int(season), "gameType": "R",
+                                             "fields": RACE_FIELDS})
 
 
 # --------------------------------------------------------------------------- #
@@ -995,15 +1073,18 @@ def next_by(tick: int, rows: list[dict], now: datetime, state: dict) -> str:
 
 
 def decide(now: datetime | None = None, slate: dict | None = None, state: dict | None = None, *,
-           tick: int | None = None, embed: bool | None = None) -> dict:
+           tick: int | None = None, embed: bool | None = None, standings_state: dict | None = None) -> dict:
     """Should this invocation act, and as which cycle? Returns the decision
-    and its reasoning, so --why and the real run cannot disagree."""
+    and its reasoning, so --why and the real run cannot disagree. The
+    standings decision rides in `standings`; its reasons (b), (c) and an owed
+    retry make an otherwise quiet tick act."""
     now = now or _utcnow()
     tick = tick if tick is not None else tick_of(now.timestamp())
     st = state or {}
     rows = (slate or {}).get("games") or []
     out = {"now": iso(now), "tick": tick, "tick_at": iso(tick), "acts": False, "action": "none", "cycle": None,
-           "reason": "", "due": [], "live_games": 0}
+           "reason": "", "due": [], "live_games": 0,
+           "standings": {"due": False, "reason": None, "date": None, "season": None, "why": "job-level backoff"}}
     bu = st.get("backoff_until")
     if bu and float(bu) > now.timestamp():
         out.update(action="backoff", reason=f"job-level backoff until {iso(float(bu))} (n={st.get('backoff_n')})")
@@ -1040,6 +1121,10 @@ def decide(now: datetime | None = None, slate: dict | None = None, state: dict |
     else:
         out.update(reason=f"no live game; the last cycle was {tick - int(last_any)} s of ticks ago "
                           f"(idle every {IDLE_INTERVAL_S} s)")
+    sd = standings_due(now, slate, standings_state, cycle=out["cycle"])
+    out["standings"] = sd
+    if not out["acts"] and sd["due"] and sd["reason"] in ("b", "c", "retry"):
+        out.update(acts=True, action="due", cycle="due", reason=f"standings due: {sd['why']}")
     out["next_by"] = next_by(tick, rows, now, st)
     return out
 
@@ -1485,6 +1570,9 @@ class Cycle:
                                    "caption_hosts": list(sc.CAPTION_HOSTS), "poster_host": sc.POSTER_HOST,
                                    "frame_host": sc.FRAME_HOST}},
                "copyright": self.state.get("copyright") or f"Copyright MLB Advanced Media, L.P. {sc.MLB_TERMS_URL}"}
+        if standings_served(self.paths):
+            obj["standings_seasons"] = [{k: v for k, v in e.items() if k != "_as_of"}
+                                        for e in standings_entries(self.paths["standings_out"])]
         return obj
 
     def write_index(self) -> dict:
@@ -1543,12 +1631,15 @@ def build_latest(cyc: Cycle, *, action: str, job_state: str, next_by_iso: str, i
     errors = _recent(st.get("errors") or [], now)
     refusals = _recent(st.get("refusals") or [], now)
     st["errors"], st["refusals"] = errors, refusals
-    return {"schema": sc.SCHEMA, "generated_at": cyc.gen,
-            "job": {"action": action, "state": job_state, "next_by": next_by_iso, "last_ok_at": st.get("last_ok_at"),
-                    "down_after_s": DOWN_AFTER_S, "poll_live_s": POLL_LIVE_S, "poll_idle_s": POLL_IDLE_S,
-                    "errors_24h": len(errors), "refusals_24h": len(refusals)},
-            "index_rev": index_rev, "today": today_date(rows, now, st), "next_game_date": next_game_date(rows, now, st),
-            "window": window, "live": live_list}
+    obj = {"schema": sc.SCHEMA, "generated_at": cyc.gen,
+           "job": {"action": action, "state": job_state, "next_by": next_by_iso, "last_ok_at": st.get("last_ok_at"),
+                   "down_after_s": DOWN_AFTER_S, "poll_live_s": POLL_LIVE_S, "poll_idle_s": POLL_IDLE_S,
+                   "errors_24h": len(errors), "refusals_24h": len(refusals)},
+           "index_rev": index_rev, "today": today_date(rows, now, st), "next_game_date": next_game_date(rows, now, st),
+           "window": window, "live": live_list}
+    if standings_served(cyc.paths):
+        obj["standings"] = standings_latest(standings_entries(cyc.paths["standings_out"]), load_sstate(cyc.paths))
+    return obj
 
 
 def _recent(stamps: list, now: datetime) -> list:
@@ -1947,6 +2038,12 @@ def act(decision: dict, paths: dict, state: dict, slate: dict | None, fetcher: F
     for d in sorted(x for x in by_date if x):
         cyc.date_file(d, sorted(by_date[d].values(), key=lambda g: (g.get("gameDate") or "", g["gamePk"])), all_games)
         dates_written.append(d)
+    # standings: snapshot, season file, race, phist, before the season index (plan 4.2)
+    sres = None if only_date else standings_step(cyc, slate, fetcher, now, cycle)
+    if sres is not None:
+        result["standings"] = {k: sres.get(k) for k in ("called", "accepted", "guard", "skipped", "error")
+                               if sres.get(k) is not None}
+        result["standings"]["why"] = sres["decision"]["why"]
     idx = cyc.write_index()
     for c in ("files_written", "files_refused", "over_budget"):
         counts[c] = cyc.counts[c]
@@ -2008,6 +2105,7 @@ def verify_revs(writer: Writer) -> list[str]:
     for s in index.get("seasons") or []:
         if s.get("rev") != writer.disk_rev(f"index-{s['season']}.json"):
             bad.append(f"index-{s['season']}")
+    bad += standings_rev_mismatch(writer.out, latest, index)
     return bad
 
 
@@ -2206,6 +2304,774 @@ def backfill(a: str, b: str, *, paths: dict, now_fn=_utcnow, adapter=None, lock:
 
 
 # --------------------------------------------------------------------------- #
+# Standings (STANDINGS_2_JOB_AND_BACKFILL; STANDINGS_PLAN 4.1 to 4.5 and 6).
+# The pure parts live in standings_core.py. This section calls StatsAPI's
+# standings endpoint inside the job's own limiter, guards each response against
+# the season's game list, and writes OUT/standings/ through the standings
+# validator and the compact serializer. While standings_core.STANDINGS_LIVE is
+# False the OUT here is the preview OUT like every other file of this job.
+# --------------------------------------------------------------------------- #
+def load_sstate(paths: dict) -> dict:
+    doc = read_json(paths["standings_state"])
+    return doc if isinstance(doc, dict) else {}
+
+
+def save_sstate(paths: dict, sst: dict) -> None:
+    write_json_plain(paths["standings_state"], sst)
+
+
+def raw_snapshot_path(paths: dict, season, d: str) -> Path:
+    return paths["standings_work"] / str(int(season)) / f"{d}.json"
+
+
+def raw_schedule_path(paths: dict, season) -> Path:
+    return paths["standings_work"] / f"{int(season)}-schedule.json"
+
+
+def standings_due(now: datetime, slate: dict | None, sst: dict | None, *, cycle: str | None = None) -> dict:
+    """The standings decision of plan 4.1, PURE: {due, reason, date, season,
+    why}. Reasons: (c) the week cycle's finalize of yesterday, (b) a date's
+    last regular-season final plus 60 minutes, `retry` a call the lag guard or
+    a failure left owed, (a) a regular-season final since the last standings
+    call. One call at most per cycle and never within 300 s of the previous
+    one; none in the postseason or the offseason (no regular-season game in
+    the slate window, an owed retry included); (d) is `--backfill-standings`,
+    never a cycle's."""
+    sst = sst or {}
+    out = {"due": False, "reason": None, "date": None, "season": None, "why": ""}
+    rows = [r for r in (slate or {}).get("games") or []
+            if r.get("type") == "R" and r.get("date") and r["date"] >= HISTORY_FLOOR]
+    retry = sst.get("retry_date")
+    if not rows:
+        out["why"] = ("no regular-season game in the slate window (postseason or offseason): the regular-season "
+                      "standings are frozen, so no call")
+        return out
+    t = now.timestamp()
+    last = float(sst.get("last_call_epoch") or 0)
+    calls = sst.get("calls") or {}
+    frozen = set(sst.get("frozen") or [])
+    by_date: dict = {}
+    for r in rows:
+        by_date.setdefault(r["date"], []).append(r)
+
+    def settled(d):
+        return all(r.get("state") in _TERMINAL for r in by_date.get(d) or [])
+
+    cand = None
+    yday = (utc_date(now) - timedelta(days=1)).isoformat()
+    if cycle == "week" and yday in by_date and yday not in frozen and settled(yday):
+        cand = ("c", yday, f"the week cycle's finalize of {yday}")
+    if cand is None:
+        ripe = []
+        for d, rs in by_date.items():
+            if d in frozen or not settled(d):
+                continue
+            fins = [parse_stamp(r.get("final_seen_at")) for r in rs if r.get("state") == "final"]
+            fins = [f.timestamp() for f in fins if f is not None]
+            if not fins:
+                continue
+            due_at = max(fins) + STANDINGS_AFTER_LAST_S
+            if t >= due_at and float(calls.get(d) or 0) < due_at:
+                ripe.append(d)
+        if ripe:
+            cand = ("b", max(ripe), f"the last regular-season final of {max(ripe)} plus 60 minutes")
+    if cand is None and retry and retry not in frozen:
+        cand = ("retry", retry, f"the call for {retry} is owed (lag guard or a failed read)")
+    if cand is None:
+        new = []
+        for r in rows:
+            f = parse_stamp(r.get("final_seen_at")) if r.get("state") == "final" else None
+            if f is not None and f.timestamp() > last and r["date"] not in frozen:
+                new.append(r["date"])
+        if new:
+            cand = ("a", max(new), f"a regular-season final of {max(new)} since the last standings call")
+    if cand is None:
+        out["why"] = "no regular-season final since the last standings call"
+        return out
+    if t - last < STANDINGS_MIN_GAP_S:
+        out["why"] = (f"{cand[2]}; waiting: the last standings call was {int(t - last)} s ago "
+                      f"(at least {STANDINGS_MIN_GAP_S} s apart)")
+        out["waiting"] = cand[0]
+        return out
+    out.update(due=True, reason=cand[0], date=cand[1], season=int(cand[1][:4]), why=cand[2])
+    return out
+
+
+def cards_as_games(doc, d: str) -> list[dict]:
+    """The regular-season cards of one date file as standings_core's game
+    list items (`gn` from the card's doubleheader number)."""
+    out = []
+    cards = (doc.get("games") or []) if isinstance(doc, dict) else []
+    for c in cards:
+        if c.get("type") != "R":
+            continue
+        a, h = c.get("away") or {}, c.get("home") or {}
+        out.append({"pk": c.get("pk"), "date": d, "official": d, "start": c.get("start"),
+                    "gn": sc._int((c.get("dh") or {}).get("n"), 1) or 1,
+                    "away": a.get("team_id"), "home": h.get("team_id"), "away_r": a.get("r"), "home_r": h.get("r"),
+                    "state": c.get("state")})
+    return out
+
+
+def season_games(paths: dict, season) -> list[dict] | None:
+    """The season's regular-season game list: the schedule saved by
+    --backfill-race (or by the live season's own read), extended by this job's
+    date files, a date file's card replacing the schedule's entry of the same
+    game and date. Ordered by date, game number, start time and pk, so a
+    doubleheader keeps its order. None when neither exists."""
+    y = int(season)
+    by: dict = {}
+    raw = read_json(raw_schedule_path(paths, y))
+    if isinstance(raw, dict):
+        for g in st.games_from_schedule(raw):
+            by[(g["pk"], str(g["date"]))] = g
+    out = paths["out"]
+    for p in sorted(out.glob(f"{y}-??-??.json")) if out.exists() else []:
+        for g in cards_as_games(read_json(p), p.stem):
+            by[(g["pk"], g["date"])] = g
+    if not by:
+        return None
+    return sorted(by.values(), key=lambda g: (str(g.get("date")), g.get("gn") or 1, str(g.get("start") or ""),
+                                              g.get("pk") or 0))
+
+
+def decided_through(games, d: str) -> int:
+    """Regular-season finals with a winner through official date `d`."""
+    return sum(1 for g in st.final_games(games or []) if str(g["date"]) <= d and g["away_r"] != g["home_r"])
+
+
+def league_wins(payload) -> int:
+    n = 0
+    for rec in (payload or {}).get("records") or []:
+        for tr in rec.get("teamRecords") or []:
+            n += sc._int(tr.get("wins"), 0)
+    return n
+
+
+def lag_guard(payload, games, d: str) -> tuple[bool, str]:
+    """T2 at the job's door: a response is accepted only when its league W sum
+    equals the decided regular-season finals through `d` in the job's date
+    files and the season's game list."""
+    w, n = league_wins(payload), decided_through(games, d)
+    if w == n:
+        return True, f"league W {w} equals the {n} decided finals through {d}"
+    return False, f"league W {w} differs from the {n} decided finals through {d} in the season's game list"
+
+
+def season_complete(games, as_of: str | None) -> bool:
+    """True when the game list leaves no club a regular-season game after
+    `as_of` (a postponement never made up counts 0)."""
+    if not games or not as_of:
+        return False
+    return all(st.games_left(games, tid, as_of) == 0 for tid in sc.CLUB_BY_ID)
+
+
+def load_snapshots(out: Path, season) -> dict:
+    """{date: snapshot file} of OUT/standings/<Y>/ on disk."""
+    d = Path(out) / "standings" / str(int(season))
+    snaps = {}
+    for p in sorted(d.glob("*.json")) if d.exists() else []:
+        if _DATE_JSON.match(p.name):
+            doc = read_json(p)
+            if isinstance(doc, dict) and doc.get("rows"):
+                snaps[p.stem] = doc
+    return snaps
+
+
+class StandingsWriter:
+    """Validated writes into OUT/standings/ only: the standings validator
+    (standings_core.validate_standings, with the job's own refusals such as
+    T13 against the race) runs before every replace, a refusal keeps the last
+    good copy, and the bytes come from standings_core.encode (compact, no
+    indent) through this job's write_bytes (temp file, 0644, os.replace)."""
+
+    def __init__(self, out: Path):
+        self.out = Path(out)
+        self.results: dict = {}
+
+    def path(self, rel: str) -> Path:
+        rel = rel.replace("\\", "/")
+        if rel.split("/")[0] != "standings":
+            raise ValueError(f"{rel}: the standings writer writes OUT/standings/ only")
+        return self.out / rel
+
+    def read(self, rel: str):
+        return read_json(self.path(rel))
+
+    def disk_rev(self, rel: str) -> str | None:
+        try:
+            return sc.rev_of(self.path(rel).read_bytes())
+        except OSError:
+            return None
+
+    def write(self, rel: str, kind: str, obj, *, games=None, race=None, source=None, extra_refusals=(),
+              volatile=("generated_at", "fetched_at")) -> dict:
+        prev = self.read(rel)
+        out = {"rel": rel, "kind": kind, "ok": True, "refused": [], "logged": [], "written": False,
+               "rev": self.disk_rev(rel)}
+        if isinstance(prev, dict) and same_content(obj, prev, keys=volatile) and not extra_refusals:
+            self.results[rel] = out
+            return out
+        disk_gen = prev.get("generated_at") if isinstance(prev, dict) else None
+        res = st.validate_standings(kind, obj, name=rel, games=games, race=race, source=source,
+                                    disk_generated_at=disk_gen)
+        refused = list(res.get("refused") or []) + list(extra_refusals)
+        out.update(ok=not refused, refused=refused, logged=list(res.get("logged") or []), bytes=res.get("bytes"))
+        if refused:
+            log.warning("scores_job: refused %s: %s", rel, "; ".join(f"{r}: {m}" for r, m in refused[:3]))
+            self.results[rel] = out
+            return out
+        data = st.encode(obj)
+        try:
+            write_bytes(self.path(rel), data)
+        except ReplaceBusy as e:
+            out.update(ok=False, refused=[("publish", str(e))], publish_failed=True)
+            self.results[rel] = out
+            return out
+        out.update(written=True, rev=sc.rev_of(data))
+        self.results[rel] = out
+        return out
+
+
+def season_source(paths: dict, sst: dict, season) -> dict | None:
+    """Where a season file comes from: 2000 to 2025 the tracked copy of the
+    final tables (zero calls); a later season its newest accepted standings
+    response. None when neither is on disk."""
+    y = int(season)
+    if y <= st.LABS_LAST:
+        doc = read_json(LABS_STANDINGS_DIR / f"statsapi_standings_{y}.json")
+        if not isinstance(doc, dict):
+            return None
+        return {"kind": "labs", "payload": doc, "as_of": None,
+                "fetched_at": (doc.get("_source") or {}).get("mtime")}
+    d = paths["standings_work"] / str(y)
+    raws = sorted(p for p in d.glob("*.json") if _DATE_JSON.match(p.name)) if d.exists() else []
+    if not raws:
+        return None
+    p = raws[-1]
+    doc = read_json(p)
+    if not isinstance(doc, dict):
+        return None
+    return {"kind": "snapshot", "payload": doc, "as_of": p.stem,
+            "fetched_at": (sst.get("fetched") or {}).get(p.stem)}
+
+
+def publish_season(paths: dict, sst: dict, season, now_fn, *, writer: StandingsWriter | None = None) -> dict:
+    """Write one season's files in the plan's order: the season file, the race
+    file, then the phist file (STANDINGS_3's hook). The race is rebuilt from
+    the game list with every by-date snapshot on disk (wc_gap takes each
+    date's leaders from MLB's divisionRank); a past season with no by-date
+    snapshot uses its final table for the last date only and carries no
+    events. Returns the per-file results and T13 over every snapshot."""
+    y = int(season)
+    w = writer or StandingsWriter(paths["standings_out"])
+    gen = iso(now_fn())
+    games = season_games(paths, y)
+    snaps = load_snapshots(paths["standings_out"], y)
+    src = season_source(paths, sst, y)
+    res: dict = {"season": y, "files": {}, "t13": None}
+    race = None
+    mism: list = []
+    if games:
+        raw = read_json(raw_schedule_path(paths, y))
+        cr = (raw or {}).get("copyright") if isinstance(raw, dict) else None
+        cr = cr or ((src or {}).get("payload") or {}).get("copyright")
+        race_snaps = dict(snaps)
+        fins = st.final_games(games)
+        if not snaps and src is not None and src["kind"] == "labs" and fins:
+            last = str(fins[-1]["date"])
+            race_snaps = {last: st.parse_standings(src["payload"], last, final=True)["rows"]}
+        race = st.build_race(games, y, race_snaps, copyright=cr, generated_at=gen)
+        if not snaps:
+            race["events"] = []
+        race.update(st.race_extras(games, y, last_next=y >= int(HISTORY_FLOOR[:4])))
+        mism = st.race_matches_snapshots(race, snaps) if snaps else []
+        res["t13"] = {"dates": len(snaps), "clubs": len({c for s in snaps.values() for c in
+                                                         (r.get("code") for r in s.get("rows") or [])}),
+                      "mismatches": [list(m) for m in mism]}
+    if src is not None:
+        as_of = src["as_of"] or (race["dates"][-1] if race and race["dates"] else None)
+        final = True if src["kind"] == "labs" else season_complete(games, as_of)
+        obj = st.build_season_file(src["payload"], as_of=as_of, final=final, generated_at=gen,
+                                   fetched_at=src["fetched_at"], games=games, race=race)
+        res["files"]["season"] = w.write(f"standings/{y}.json", st.KIND_SEASON, obj, games=games, race=race,
+                                         source=src["payload"])
+        if src["kind"] == "snapshot":
+            sst.setdefault("as_of", {})[str(y)] = as_of
+    if race is not None:
+        extra = [("T13", f"race differs from the snapshot of {d} for {c} in {f}") for d, c, f in mism[:20]]
+        res["files"]["race"] = w.write(f"standings/{y}-race.json", st.KIND_RACE, race, extra_refusals=extra)
+    if PHIST_BUILDER is not None:
+        ph = PHIST_BUILDER(season=y, paths=paths, standings_state=sst, generated_at=gen)
+        if ph is not None:
+            res["files"]["phist"] = w.write(f"standings/{y}-phist.json", st.KIND_PHIST, ph)
+    return res
+
+
+def accept_snapshot(paths: dict, sst: dict, season, d: str, payload, games, race_core, now_fn, *,
+                    writer: StandingsWriter, freeze: bool, fetched_at: str) -> dict:
+    """One standings response as of `d`: the lag guard first (a lagging
+    response is not kept; the last snapshot stays, `stale_since` is set and
+    the date is owed), then the raw response, then the by-date snapshot unless
+    that date is frozen, validated with T13 against the race at `d`."""
+    ok, why = lag_guard(payload, games, d)
+    if not ok:
+        sst["stale_since"] = sst.get("stale_since") or iso(now_fn())
+        sst["retry_date"] = d
+        sst.setdefault("lagged", {})[d] = why
+        log.warning("scores_job: standings %s kept the last snapshot: %s", d, why)
+        return {"ok": False, "lagged": True, "why": why, "snapshot": None}
+    write_json_plain(raw_snapshot_path(paths, season, d), payload)
+    sst.setdefault("fetched", {})[d] = fetched_at
+    (sst.get("lagged") or {}).pop(d, None)
+    if not sst.get("retry_date") or sst["retry_date"] <= d:
+        sst.pop("retry_date", None)
+        sst.pop("stale_since", None)
+    out = {"ok": True, "lagged": False, "why": why, "snapshot": None}
+    frozen = set(sst.get("frozen") or [])
+    if d in frozen:
+        return out
+    obj = st.build_snapshot_file(payload, as_of=d, final=season_complete(games, d), generated_at=iso(now_fn()),
+                                 fetched_at=fetched_at, games=games, race=race_core)
+    race = race_core
+    if race_core is not None and race_core.get("dates") and race_core["dates"][-1] == d:
+        race = st.build_race(games, season, {d: obj})
+    mism = st.race_matches_snapshots(race, {d: obj}) if race is not None else []
+    extra = [("T13", f"the snapshot of {x} differs from the race for {c} in {f}") for x, c, f in mism[:20]]
+    r = writer.write(f"standings/{int(season)}/{d}.json", st.KIND_SNAPSHOT, obj, games=games, race=race,
+                     source=payload, extra_refusals=extra)
+    out["snapshot"] = r
+    if r["ok"] and freeze:
+        frozen.add(d)
+        sst["frozen"] = sorted(frozen)
+    return out
+
+
+def standings_step(cyc, slate: dict, fetcher: Fetcher, now: datetime, cycle: str) -> dict:
+    """The standings part of one acting cycle, between the date files and the
+    season index (the write order of plan 4.2): decide on the fresh slate,
+    make at most one standings call (and, for the live season, the season's
+    schedule read when the saved copy is missing or six days old), guard it,
+    write the snapshot, the season file and the race."""
+    paths, state = cyc.paths, cyc.state
+    sst = load_sstate(paths)
+    sd = standings_due(now, slate, sst, cycle=cycle)
+    out: dict = {"decision": sd, "called": False}
+    if not sd["due"]:
+        return out
+    if float(state.get("backoff_until") or 0) > now.timestamp():
+        out["skipped"] = "job-level backoff"
+        return out
+    y, d = sd["season"], sd["date"]
+    rawp = raw_schedule_path(paths, y)
+    try:
+        age = now.timestamp() - rawp.stat().st_mtime
+    except OSError:
+        age = None
+    payload = None
+    try:
+        if (age is None or age > SEASON_SCHEDULE_REFRESH_S) and fetcher.limiter.can_start():
+            write_json_plain(rawp, fetcher.season_schedule(y))
+            out["schedule"] = True
+        if not fetcher.limiter.can_start():
+            out["skipped"] = "the request budget of this invocation is spent"
+            return out
+        sst["last_call_epoch"], sst["last_call_at"] = now.timestamp(), iso(now)
+        sst.setdefault("calls", {})[d] = now.timestamp()
+        out["called"] = True
+        payload = fetcher.standings(y, d)
+    except RateLimited as e:
+        mark_backoff(state, now, e.retry_after)
+        out["error"] = str(e)
+    except (FetchError, BudgetExhausted) as e:
+        out["error"] = str(e)
+    if payload is None:
+        if out["called"]:
+            sst["retry_date"] = d
+            sst["stale_since"] = sst.get("stale_since") or iso(now)
+            sst["last_error"] = f"{iso(now)} {out.get('error')}"[:200]
+        save_sstate(paths, sst)
+        return out
+    games = season_games(paths, y)
+    race_core = st.build_race(games, y) if games else None
+    w = StandingsWriter(paths["standings_out"])
+    acc = accept_snapshot(paths, sst, y, d, payload, games, race_core, lambda: now, writer=w,
+                          freeze=(sd["reason"] == "c"), fetched_at=iso(now))
+    out.update(accepted=acc["ok"], guard=acc["why"])
+    if acc["ok"]:
+        out["published"] = publish_season(paths, sst, y, lambda: now, writer=w)
+    save_sstate(paths, sst)
+    for r in w.results.values():
+        cyc.counts["files_written"] += 1 if r.get("written") else 0
+        cyc.counts["files_refused"] += 0 if r.get("ok") else 1
+    return out
+
+
+_META: dict = {}
+
+
+def standings_served(paths: dict) -> bool:
+    """Whether latest.json and index.json carry the standings keys: only when
+    the standings files sit in the same OUT as the scores files (both flags on,
+    or both off in the preview). With SCORES_LIVE on and STANDINGS_LIVE off the
+    served scores files carry no standings key at all and the standings files
+    stay in the preview directory."""
+    a, b = paths.get("standings_out"), paths.get("out")
+    if a is None or b is None:
+        return False
+    try:
+        return os.path.normcase(str(Path(a).resolve())) == os.path.normcase(str(Path(b).resolve()))
+    except OSError:
+        return False
+
+
+def standings_entries(out: Path) -> list[dict]:
+    """index.json's standings_seasons, read off the files on disk: {season,
+    rev, race_rev, phist_rev, phist_from, n_dates, by_date, final}, plus the
+    season file's as_of under `_as_of` for latest.json (stripped from the
+    index)."""
+    sdir = Path(out) / "standings"
+    if not sdir.exists():
+        return []
+    entries = []
+    for p in sorted(sdir.glob("*.json")):
+        m = re.match(r"^(\d{4})\.json$", p.name)
+        if not m:
+            continue
+        y = int(m.group(1))
+        data = p.read_bytes()
+        rev = sc.rev_of(data)
+        meta = _META.get((str(p), rev))
+        if meta is None:
+            doc = json.loads(data.decode("utf-8"))
+            meta = {"final": bool(doc.get("final")), "as_of": doc.get("as_of")}
+            _META[(str(p), rev)] = meta
+        race_p, ph_p = sdir / f"{y}-race.json", sdir / f"{y}-phist.json"
+        race_rev = sc.rev_of(race_p.read_bytes()) if race_p.exists() else None
+        phist_rev = phist_from = None
+        if ph_p.exists():
+            pdata = ph_p.read_bytes()
+            phist_rev = sc.rev_of(pdata)
+            ph = json.loads(pdata.decode("utf-8"))
+            ra = ((ph.get("regular") or {}).get("as_of")) or []
+            phist_from = ra[0] if ra else ph.get("switch_as_of")
+        ddir = sdir / str(y)
+        n_dates = len([q for q in ddir.glob("*.json") if _DATE_JSON.match(q.name)]) if ddir.exists() else 0
+        entries.append({"season": y, "rev": rev, "race_rev": race_rev, "phist_rev": phist_rev,
+                        "phist_from": phist_from, "n_dates": n_dates, "by_date": n_dates > 0,
+                        "final": meta["final"], "_as_of": meta["as_of"]})
+    return entries
+
+
+def standings_latest(entries: list[dict], sst: dict) -> dict | None:
+    """latest.json's standings block for the newest season on disk."""
+    if not entries:
+        return None
+    e = max(entries, key=lambda x: x["season"])
+    return {"season": e["season"], "as_of": e["_as_of"], "rev": e["rev"], "race_rev": e["race_rev"],
+            "phist_rev": e["phist_rev"], "stale_since": (sst or {}).get("stale_since")}
+
+
+def standings_rev_mismatch(out: Path, latest: dict, index: dict) -> list[str]:
+    """Rule 11 for the standings keys: every rev in latest.json's standings
+    block and index.json's standings_seasons hashes the bytes on disk, and the
+    two agree for the season latest.json names."""
+    def rb(name):
+        try:
+            return (Path(out) / name).read_bytes()
+        except OSError:
+            return None
+
+    seasons = index.get("standings_seasons") or []
+    bad = [f"standings_seasons: {m}" for _r, m in st.revs_match(seasons, rb)]
+    blk = latest.get("standings")
+    if blk:
+        bad += [f"latest.standings: {m}" for _r, m in st.revs_match([blk], rb)]
+        e = next((x for x in seasons if x.get("season") == blk.get("season")), None)
+        if e is None or any(e.get(k) != blk.get(k) for k in ("rev", "race_rev", "phist_rev")):
+            bad.append("latest.standings differs from index.json's entry")
+    return bad
+
+
+def race_refusal(ya: int, yb: int, now: datetime, slate: dict | None) -> str | None:
+    if yb < ya:
+        return f"the range {ya}:{yb} runs backwards"
+    if ya < RACE_FIRST_SEASON:
+        return (f"{ya} is before {RACE_FIRST_SEASON}: races before {RACE_FIRST_SEASON} need a new owner answer "
+                f"(ST-Q3 {ST_Q3})")
+    if yb > utc_date(now).year:
+        return f"{yb} is a future season"
+    lo, hi = BACKFILL_REFUSE_UTC_HOURS
+    if lo <= now.hour < hi:
+        return f"it is {now.hour:02d}:{now.minute:02d} UTC, inside the {lo:02d}:00 to {hi:02d}:00 UTC nightly window"
+    fetched = parse_stamp((slate or {}).get("fetched_at"))
+    fresh = fetched is not None and now.timestamp() - fetched.timestamp() <= BACKFILL_SLATE_TRUST_S
+    live = live_games((slate or {}).get("games") or [], now) if fresh else []
+    if live:
+        return f"{len(live)} game(s) live or within 20 minutes of first pitch; the live cycles come first"
+    return None
+
+
+def publish_indexes(paths: dict, now_fn, action: str) -> dict:
+    """The season index, index.json and latest.json after a standings hand
+    run (the backfill's idiom), then rule 11. While the standings are not
+    served beside the scores files (standings_served False) the scores files
+    are left alone: nothing in them names a standings file."""
+    if not standings_served(paths):
+        entries = standings_entries(paths["standings_out"])
+
+        def rb(name):
+            try:
+                return (Path(paths["standings_out"]) / name).read_bytes()
+            except OSError:
+                return None
+        mism = [f"standings_seasons: {m}" for _r, m in st.revs_match(entries, rb)]
+        return {"index_ok": True, "latest_ok": True, "rev_mismatch": mism, "indexes": "not written (dark)",
+                "standings_seasons": len(entries)}
+    state = load_state(paths)
+    served = served_blocks(state, current_season=utc_date(now_fn()).year)
+    cyc = Cycle(paths, state, served, now_fn, action=action)
+    rebuild_catalog(paths, state)
+    idx = cyc.write_index()
+    prev = cyc.writer.read("latest.json") or {}
+    pjob = prev.get("job") or {}
+    rows = (read_json(paths["slate"]) or {}).get("games") or []
+    nowb = now_fn()
+    latest = build_latest(cyc, action=action, job_state=pjob.get("state") or "idle",
+                          next_by_iso=pjob.get("next_by") or next_by(tick_of(nowb.timestamp()), rows, nowb, state),
+                          index_rev=idx.get("rev"), rows=rows, now=nowb)
+    lres = cyc.writer.write("latest.json", "latest", latest)
+    save_state(paths, state)
+    mism = verify_revs(cyc.writer) if lres["ok"] else ["latest.json refused"]
+    return {"index_ok": bool(idx.get("ok")), "latest_ok": bool(lres.get("ok")), "rev_mismatch": mism}
+
+
+def _release_every(lock, paths, sst_box: dict, limiter: Limiter, sleep, mark: dict) -> None:
+    """Release the job lock every BACKFILL_RELEASE_EVERY requests so the cron
+    cycles can run (the backfill's rule), saving the standings state first."""
+    if lock is None or limiter.n - mark["at"] < BACKFILL_RELEASE_EVERY:
+        return
+    save_sstate(paths, sst_box["s"])
+    lock.release()
+    sleep(1.0)
+    for _ in range(600):
+        if lock.acquire():
+            break
+        sleep(1.0)
+    else:
+        raise RuntimeError("could not reacquire the job lock")
+    sst_box["s"] = load_sstate(paths)
+    mark["at"] = limiter.n
+
+
+def backfill_race(ya: int, yb: int, *, paths: dict, now_fn=_utcnow, adapter=None, lock: JobLock | None = None,
+                  clock=time.monotonic, sleep=time.sleep) -> dict:
+    """--backfill-race A:B: one regular-season schedule call per season (the
+    fields of plan 4.1), saved under work/standings/ and reduced at once into
+    OUT/standings/<Y>-race.json (with the season file where its source is on
+    disk). No date file or game card is written for any season."""
+    now = now_fn()
+    why = race_refusal(ya, yb, now, read_json(paths["slate"]))
+    if why:
+        return {"action": "backfill_race_refused", "exit": 2, "reason": why}
+    limiter = Limiter(max_requests=10 ** 9, run_deadline_s=10 ** 9, last_start_s=10 ** 9, clock=clock, sleep=sleep)
+    fetcher = Fetcher(limiter, adapter)
+    box, mark = {"s": load_sstate(paths)}, {"at": 0}
+    done, t13 = [], {}
+    try:
+        for y in range(ya, yb + 1):
+            _release_every(lock, paths, box, limiter, sleep, mark)
+            sched = fetcher.season_schedule(y)
+            write_json_plain(raw_schedule_path(paths, y), sched)
+            pub = publish_season(paths, box["s"], y, now_fn)
+            t13[y] = pub["t13"]
+            bad = [f"{k}: {r['refused'][:2]}" for k, r in pub["files"].items() if not r.get("ok")]
+            if bad:
+                save_sstate(paths, box["s"])
+                return {"action": "refused", "exit": 2, "requests": limiter.n, "seasons": done,
+                        "reason": f"season {y}: {bad}"}
+            done.append(y)
+    except RateLimited as e:
+        st_ = load_state(paths)
+        mark_backoff(st_, now_fn(), e.retry_after)
+        save_state(paths, st_)
+        save_sstate(paths, box["s"])
+        return {"action": "backfill_backoff", "exit": 2, "requests": limiter.n, "seasons": done,
+                "reason": f"rate limited ({e}); resume after the last season done"}
+    except FetchError as e:
+        save_sstate(paths, box["s"])
+        return {"action": "fetch_failed", "exit": 2, "requests": limiter.n, "seasons": done,
+                "reason": f"the schedule call failed ({e})"}
+    save_sstate(paths, box["s"])
+    pub = publish_indexes(paths, now_fn, "backfill_race")
+    return {"action": "backfill_race", "exit": 0 if not pub["rev_mismatch"] else 2, "requests": limiter.n,
+            "seasons": done, "t13": t13, "rev_mismatch": pub["rev_mismatch"],
+            "reason": f"raced {ya}..{yb}: {len(done)} season(s), {limiter.n} request(s)"}
+
+
+def backfill_standings(a: str, b: str, *, paths: dict, now_fn=_utcnow, adapter=None, lock: JobLock | None = None,
+                       clock=time.monotonic, sleep=time.sleep, max_requests: int = MAX_REQUESTS_PER_RUN) -> dict:
+    """--backfill-standings A:B: one standings call per game date of the
+    season's game list (the race schedule must be on disk), at most
+    `max_requests` per invocation, with --backfill's refusals. Each accepted
+    response is a frozen by-date snapshot; a date already frozen is skipped,
+    so a rerun resumes, and a date whose response is already saved (it passed
+    the lag guard) is rebuilt from that copy with no call, unless its snapshot
+    was refused for differing from the race (T13), which is fetched again.
+    Then the season file and the race, rebuilt with every snapshot, and the
+    indexes."""
+    now = now_fn()
+    why = backfill_refusal(a, b, now, read_json(paths["slate"]))
+    if why:
+        return {"action": "backfill_standings_refused", "exit": 2, "reason": why}
+    if a[:4] != b[:4]:
+        return {"action": "backfill_standings_refused", "exit": 2, "reason": f"{a}:{b} spans two seasons"}
+    y = int(a[:4])
+    games = season_games(paths, y)
+    if not games:
+        return {"action": "backfill_standings_refused", "exit": 2,
+                "reason": f"no game list for {y}: run --backfill-race {y} first"}
+    dates = sorted({str(g["date"]) for g in st.final_games(games) if a <= str(g["date"]) <= b})
+    limiter = Limiter(max_requests=max_requests, run_deadline_s=10 ** 9, last_start_s=10 ** 9, clock=clock,
+                      sleep=sleep)
+    fetcher = Fetcher(limiter, adapter)
+    box, mark = {"s": load_sstate(paths)}, {"at": 0}
+    race_core = st.build_race(games, y)
+    w = StandingsWriter(paths["standings_out"])
+    counts = {"dates": len(dates), "called": 0, "reused": 0, "snapshots": 0, "skipped_frozen": 0, "lagged": [],
+              "refused": []}
+    resume = None
+    try:
+        for d in dates:
+            if d in set(box["s"].get("frozen") or []):
+                counts["skipped_frozen"] += 1
+                continue
+            saved = read_json(raw_snapshot_path(paths, y, d))
+            refetch = set(box["s"].get("refetch") or [])
+            if isinstance(saved, dict) and saved.get("records") and d not in refetch:
+                payload = saved
+                counts["reused"] += 1
+                fetched = (box["s"].get("fetched") or {}).get(d) or iso(now_fn())
+            else:
+                if not limiter.can_start():
+                    resume = d
+                    break
+                _release_every(lock, paths, box, limiter, sleep, mark)
+                payload = fetcher.standings(y, d)
+                counts["called"] += 1
+                fetched = iso(now_fn())
+            acc = accept_snapshot(paths, box["s"], y, d, payload, games, race_core, now_fn, writer=w, freeze=True,
+                                  fetched_at=fetched)
+            if not acc["ok"]:
+                counts["lagged"].append(d)
+            elif acc["snapshot"] is not None and not acc["snapshot"]["ok"]:
+                counts["refused"].append([d, acc["snapshot"]["refused"][:3]])
+                if any(r == "T13" for r, _m in acc["snapshot"]["refused"]):
+                    box["s"]["refetch"] = sorted(refetch | {d})
+            elif acc["snapshot"] is not None:
+                counts["snapshots"] += 1
+                if d in refetch:
+                    box["s"]["refetch"] = sorted(refetch - {d})
+    except RateLimited as e:
+        st_ = load_state(paths)
+        mark_backoff(st_, now_fn(), e.retry_after)
+        save_state(paths, st_)
+        save_sstate(paths, box["s"])
+        return {"action": "backfill_backoff", "exit": 2, "requests": limiter.n, "counts": counts,
+                "reason": f"rate limited ({e}); rerun the same range to resume"}
+    except FetchError as e:
+        save_sstate(paths, box["s"])
+        return {"action": "fetch_failed", "exit": 2, "requests": limiter.n, "counts": counts,
+                "reason": f"the standings call failed ({e}); rerun the same range to resume"}
+    pub = publish_season(paths, box["s"], y, now_fn, writer=w)
+    save_sstate(paths, box["s"])
+    idx = publish_indexes(paths, now_fn, "backfill_standings")
+    bad = [k for k, r in pub["files"].items() if not r.get("ok")]
+    ok = not (counts["lagged"] or counts["refused"] or bad or idx["rev_mismatch"])
+    return {"action": "backfill_standings", "exit": 0 if ok else 2, "requests": limiter.n, "counts": counts,
+            "t13": pub["t13"], "files_refused": bad, "rev_mismatch": idx["rev_mismatch"], "resume_from": resume,
+            "reason": (f"standings {a}..{b}: {counts['called']} call(s), {counts['snapshots']} snapshot(s), "
+                       f"{counts['reused']} rebuilt from a saved response, "
+                       f"{counts['skipped_frozen']} already frozen, {len(counts['lagged'])} lagged, "
+                       f"{len(counts['refused'])} refused" + (f"; resume from {resume}" if resume else ""))}
+
+
+def build_standings(ya: int, yb: int, *, paths: dict, now_fn=_utcnow) -> dict:
+    """--build-standings A:B: the season files (and races where a game list is
+    on disk) of seasons A to B from what is already on disk, with zero calls:
+    2000 to 2025 from the tracked copy, a later season from its newest
+    accepted response. Reports T13 over every by-date snapshot."""
+    if yb < ya:
+        return {"action": "build_standings_refused", "exit": 2, "reason": f"the range {ya}:{yb} runs backwards"}
+    sst = load_sstate(paths)
+    out, bad = {}, []
+    for y in range(ya, yb + 1):
+        pub = publish_season(paths, sst, y, now_fn)
+        out[y] = {"files": {k: {"ok": r.get("ok"), "written": r.get("written"), "rev": r.get("rev"),
+                                "refused": r.get("refused")[:3]} for k, r in pub["files"].items()},
+                  "t13": pub["t13"]}
+        if not pub["files"]:
+            bad.append(f"{y}: nothing on disk to build from")
+        bad += [f"{y} {k}: {r['refused'][:2]}" for k, r in pub["files"].items() if not r.get("ok")]
+    save_sstate(paths, sst)
+    idx = publish_indexes(paths, now_fn, "build_standings")
+    ok = not bad and not idx["rev_mismatch"]
+    return {"action": "build_standings", "exit": 0 if ok else 2, "requests": 0, "seasons": out,
+            "rev_mismatch": idx["rev_mismatch"],
+            "reason": f"built {ya}..{yb} with zero calls" + (f"; {bad[:4]}" if bad else "")}
+
+
+def _season_range(text: str) -> tuple[int, int] | None:
+    m = re.match(r"^(\d{4})(?::(\d{4}))?$", text or "")
+    if not m:
+        return None
+    return int(m.group(1)), int(m.group(2) or m.group(1))
+
+
+def _standings_command(args, emit) -> int:
+    """--backfill-race, --backfill-standings and --build-standings: bad_out,
+    the epoch hold and the job lock as --backfill has them."""
+    paths = resolve_paths()
+    why = bad_out(paths)
+    if why:
+        emit(f"FAIL: bad_out: {why}")
+        return 2
+    hold, hold_why = epoch_hold()
+    if hold:
+        emit(f"skip: epoch_hold: {hold_why}")
+        return 0
+    if args.backfill_standings and not re.match(r"^\d{4}-\d{2}-\d{2}:\d{4}-\d{2}-\d{2}$", args.backfill_standings):
+        emit("FAIL: --backfill-standings takes A:B as YYYY-MM-DD:YYYY-MM-DD")
+        return 2
+    rng = _season_range(args.backfill_race or args.build_standings or "") if not args.backfill_standings else None
+    if not args.backfill_standings and rng is None:
+        emit("FAIL: --backfill-race and --build-standings take A or A:B as YYYY or YYYY:YYYY")
+        return 2
+    lock = JobLock(paths["lock"])
+    if not lock.acquire():
+        emit("skip: overlap: another invocation holds the job lock")
+        return 0
+    try:
+        if args.backfill_standings:
+            a, b = args.backfill_standings.split(":")
+            res = backfill_standings(a, b, paths=paths, lock=lock)
+        elif args.backfill_race:
+            res = backfill_race(rng[0], rng[1], paths=paths, lock=lock)
+        else:
+            res = build_standings(rng[0], rng[1], paths=paths)
+    finally:
+        lock.release()
+    write_heartbeat(paths, res, _utcnow())
+    append_runlog(paths, res, _utcnow())
+    verdict = "FAIL" if res.get("exit") else "ok"
+    emit(f"{verdict}: {res.get('action')}: {res.get('reason')}")
+    for key in ("t13", "counts", "seasons", "rev_mismatch", "files_refused"):
+        if res.get(key):
+            emit(f"  {key}: {json.dumps(res[key], sort_keys=True, default=str)[:4000]}")
+    return int(res.get("exit") or 0)
+
+
+# --------------------------------------------------------------------------- #
 # The invocation
 # --------------------------------------------------------------------------- #
 def run(*, start: float | None = None, now_fn=_utcnow, adapter=None, jitter: bool = False,
@@ -2228,12 +3094,15 @@ def run(*, start: float | None = None, now_fn=_utcnow, adapter=None, jitter: boo
         return res
     if dry_run:
         state, slate = load_state(paths), read_json(paths["slate"])
-        d = decide(now_fn(), slate, state, tick=tick, embed=embed_effective(paths["out"]))
+        d = decide(now_fn(), slate, state, tick=tick, embed=embed_effective(paths["out"]),
+                   standings_state=load_sstate(paths))
         plan = []
         if d["acts"]:
             rows = (slate or {}).get("games") or []
             plan = ["schedule"] + [f"{t['why']}:{t['pk']}:{'+'.join(t['calls'])}" for t in
                                    plan_tasks_from_rows(rows, state, now_fn())]
+            if d["standings"]["due"]:
+                plan.append(f"standings:{d['standings']['reason']}:{d['standings']['date']}")
         return {"action": d["action"], "exit": 0, "reason": d["reason"], "plan": plan, "decision": d}
     lock = JobLock(paths["lock"])
     if not lock.acquire():
@@ -2249,7 +3118,8 @@ def run(*, start: float | None = None, now_fn=_utcnow, adapter=None, jitter: boo
         if only_date:
             d = {"acts": True, "action": "date", "cycle": "date", "tick": tick, "reason": f"--date {only_date}"}
         else:
-            d = decide(now, slate, state, tick=tick, embed=embed_effective(paths["out"]))
+            d = decide(now, slate, state, tick=tick, embed=embed_effective(paths["out"]),
+                       standings_state=load_sstate(paths))
         if not d["acts"]:
             res = {"action": d["action"], "exit": 0, "reason": d["reason"]}
         else:
@@ -2318,6 +3188,11 @@ def main(argv=None) -> int:
     ap.add_argument("--dry-run", action="store_true", help="what this tick would fetch; no call, no write")
     ap.add_argument("--date", help="rebuild one official date (YYYY-MM-DD) now")
     ap.add_argument("--backfill", help="A:B, two past official dates, never before HISTORY_FLOOR")
+    ap.add_argument("--backfill-race", help="A or A:B, seasons: one regular-season schedule call each "
+                                            f"(never before {RACE_FIRST_SEASON})")
+    ap.add_argument("--backfill-standings", help="A:B, past official dates of one season: one standings call a "
+                                                 "game date, never before HISTORY_FLOOR")
+    ap.add_argument("--build-standings", help="A or A:B, seasons: season files and races from disk, zero calls")
     ap.add_argument("--log-file", help="log to this file (3 x 5 MB rotating) instead of stdout")
     ap.add_argument("--no-jitter", action="store_true", help="skip the 0 to 20 s start jitter")
     ap.add_argument("-v", "--verbose", action="store_true")
@@ -2339,13 +3214,21 @@ def main(argv=None) -> int:
             print(f"epoch_hold: {hold_why}")
             return 0
         d = decide(_utcnow(), read_json(paths["slate"]), load_state(paths), tick=tick_of(start),
-                   embed=embed_effective(paths["out"]))
+                   embed=embed_effective(paths["out"]), standings_state=load_sstate(paths))
         print(f"{d['action']}: {d['reason']}")
-        print(f"  {'; '.join(f'{k}={v}' for k, v in d.items() if k != 'reason')}")
+        print(f"  {'; '.join(f'{k}={v}' for k, v in d.items() if k not in ('reason', 'standings'))}")
+        sd = d["standings"]
+        sst = load_sstate(paths)
+        print(f"standings: {'call ' + str(sd['reason']) + ' for ' + str(sd['date']) if sd['due'] else 'no call'}: "
+              f"{sd['why']}")
+        print(f"  last call {sst.get('last_call_at')}; stale_since {sst.get('stale_since')}; "
+              f"owed {sst.get('retry_date')}; frozen dates {len(sst.get('frozen') or [])}")
         print(f"  out={paths['out']} (SCORES_LIVE={sc.SCORES_LIVE}). --why reads this job's own slate and state only; "
               "it makes no call and writes nothing.")
         return 0
     try:
+        if args.backfill_race or args.backfill_standings or args.build_standings:
+            return _standings_command(args, emit)
         if args.backfill:
             if not re.match(r"^\d{4}-\d{2}-\d{2}:\d{4}-\d{2}-\d{2}$", args.backfill):
                 emit("FAIL: --backfill takes A:B as YYYY-MM-DD:YYYY-MM-DD")
