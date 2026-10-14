@@ -626,6 +626,14 @@ def test_the_amendment_rule():
     assert "after both looks, nothing above part 12 changes" in flat
 
 
+def test_amendment_11_1_scope_matches_the_sb_band():
+    flat = _flat(_section(_doc(), "## 11. Amendments", RESULTS_HEADING))
+    assert "### 11.1 2026-10-14: the SB-runs bug band compares like with like (clause (ii))" in flat
+    assert ("part 4's \"SB runs against wSB\" comparison and its bug band read eSB against wSB, at the "
+            "same 0.80 and the same PA cuts; ePK's sd and r(ePK, wSB) are reported beside it every build.") in flat
+    assert "(SB runs stays eSB + ePK), Leg E's E = (eSB + ePK + eXB) / PA" in flat
+    assert "Committed alone, before the outcome look" in flat
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (
