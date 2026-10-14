@@ -905,8 +905,8 @@ _OVERPERF_PICK_BUCKETS = [(1, 5), (6, 10), (11, 20), (21, 40),
 # at debut for a debuted player) with current_fv_basis "efv", so expected_fv_for_pick and
 # overperf_fv recompute on the eFV basis and the Overperformers list and the
 # high-school and college "vs Slot" figures move. Career WAR still comes from the board
-# payloads. It flips in its own commit (Q9_15).
-DRAFT_CURRENT_FV_EFV = False
+# payloads. Flipped on in its own commit (Q9_15, 2026-10-14, owner answer Q-E3).
+DRAFT_CURRENT_FV_EFV = True
 _EFV_CURRENT_KINDS = ("active", "debuted")
 
 
