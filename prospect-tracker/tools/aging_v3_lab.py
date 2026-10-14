@@ -143,6 +143,11 @@ FLOOR_LOOK_DAYS = (
     "2026-11-25", "2026-12-01", "2026-12-02", "2026-12-03", "2026-12-08", "2026-12-10",
     "2027-02-15",
 )
+# The owner's waiver of every registered look day and date (DECISIONS_FOR_OWNER.md
+# EW3-5, 2026-10-14). Carried only as the explicit switch --owner-waived-early-read,
+# never by default: the artifact then names the read an owner-waived early read.
+OWNER_WAIVER = ("EW3-5 (owner 2026-10-14): registered look days and dates waived; a look "
+                "before its day is recorded as an owner-waived early read")
 
 
 class EarlyLookError(RuntimeError):
@@ -1140,8 +1145,11 @@ def run_ps(U: Universe, cfg_accepted: dict, log=print, B: int = B_BOOT) -> dict:
 
 
 def run_look(U: Universe, mde_doc: dict, out_dir: Path, log=print, B: int = B_BOOT,
-             write_eval: Path | None = None, source: str = "real") -> dict:
-    """The whole look: the ladder on GATE, PS, the TIER-2 veto, CONFIRM."""
+             write_eval: Path | None = None, source: str = "real",
+             waiver: dict | None = None) -> dict:
+    """The whole look: the ladder on GATE, PS, the TIER-2 veto, CONFIRM.
+    ``waiver`` (from ``_stop_if_blocked`` under --owner-waived-early-read) is
+    recorded in the artifact as ``owner_waived_early_read``; None otherwise."""
     t0 = time.time()
     assert_protocol()
     if mde_doc.get("protocol_hash") != PROTOCOL_HASH:
@@ -1188,6 +1196,7 @@ def run_look(U: Universe, mde_doc: dict, out_dir: Path, log=print, B: int = B_BO
                        "census": f["census"]} for k, f in (("GATE", gate), ("TIER2", tier2), ("CONFIRM", confirm))},
         "ladder": ladder, "ps": ps, "tier2_veto": veto2, "confirm": vetoc,
         "final_composition": final, "final_cfg8": A.config_hash(composition_cfg(final, sel)),
+        "owner_waived_early_read": waiver,
         "wall_s": round(time.time() - t0, 1),
     }
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -1197,7 +1206,7 @@ def run_look(U: Universe, mde_doc: dict, out_dir: Path, log=print, B: int = B_BO
         write_eval.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     log(f"record row: | {doc['generated_at'][:10]} | ladder+PS | passed {ladder['passed']} final {final}; "
         f"PS {ps.get('verdict')} | {hashlib.sha256(json.dumps(doc, sort_keys=True).encode()).hexdigest()[:12]} | "
-        f"wall {doc['wall_s']}s |")
+        f"wall {doc['wall_s']}s{' | owner-waived early read' if waiver else ''} |")
     return doc
 
 
@@ -1496,15 +1505,27 @@ def _universe(args) -> tuple[Universe, str]:
     return Universe(corpus, sidecar), "real"
 
 
-def _stop_if_blocked(args) -> None:
+def _stop_if_blocked(args, today: _dt.date | None = None) -> dict | None:
+    """The calendar check (gate section 13). Without --owner-waived-early-read
+    a blocked day is a SystemExit naming the next free day. With the switch
+    (the owner's EW3-5 waiver, explicit, never the default) the blockers are
+    recorded and returned, with --rule-day as the writer computed it, so the
+    artifact names the read an owner-waived early read. The fixture path
+    checks nothing and returns None."""
     if args.fixture:
-        return
-    blockers = calendar_blockers()
-    if blockers:
-        raise SystemExit("BLOCKER: date " + next_free_day() + " (" + "; ".join(blockers) + ")")
+        return None
+    blockers = calendar_blockers(today)
+    waived = bool(getattr(args, "owner_waived", False))
+    if blockers and not waived:
+        raise SystemExit("BLOCKER: date " + next_free_day(today) + " (" + "; ".join(blockers) + ")")
+    if not waived:
+        return None
+    today = today or _dt.date.today()
+    return {"owner_waived": True, "waiver": OWNER_WAIVER, "today": today.isoformat(),
+            "rule_day": getattr(args, "rule_day", None), "blockers_waived": blockers}
 
 
-def main(argv=None) -> int:
+def _parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("command", choices=("dev", "mde", "look", "health", "hash"))
     ap.add_argument("--fixture", action="store_true", help="synthetic corpora with nulls; writes under --out only")
@@ -1513,14 +1534,26 @@ def main(argv=None) -> int:
     ap.add_argument("--B", type=int, default=B_BOOT)
     ap.add_argument("--i-am-the-look", action="store_true", dest="look",
                     help="look / health on the real corpus: the registered look, once (AG_7 / AG_13)")
-    args = ap.parse_args(argv)
+    ap.add_argument("--owner-waived-early-read", action="store_true", dest="owner_waived",
+                    help="the owner's EW3-5 waiver of the look day: the calendar blockers are recorded, "
+                         "not refused, and the artifact names the read an owner-waived early read")
+    ap.add_argument("--rule-day", default=None,
+                    help="the day the gate's section 13 rule gives, as the writer computed it (recorded)")
+    return ap
+
+
+def main(argv=None) -> int:
+    args = _parser().parse_args(argv)
     if args.command == "hash":
         print(protocol_hash())
         return 0
     assert_protocol()
     if args.out is not None:
         _tee(args.out)
-    _stop_if_blocked(args)
+    waiver = _stop_if_blocked(args)
+    if waiver:
+        print(f"OWNER-WAIVED EARLY READ: {waiver['waiver']}; today {waiver['today']}; rule day "
+              f"{waiver['rule_day']}; blockers waived: {waiver['blockers_waived'] or 'none'}")
     print(f"aging_v3_lab {args.command} {'FIXTURE' if args.fixture else 'real'} protocol {PROTOCOL_HASH[:12]} "
           f"version {A.AGING_V3_VERSION} {_dt.datetime.now().isoformat(timespec='seconds')}")
     U, source = _universe(args)
@@ -1565,7 +1598,7 @@ def main(argv=None) -> int:
             mde_doc = json.loads(MDE_PATH.read_text(encoding="utf-8"))
         if args.command == "look":
             run_look(U, mde_doc, args.out, B=args.B if not args.fixture else min(args.B, 200),
-                     write_eval=None if args.fixture else EVAL_PATH, source=source)
+                     write_eval=None if args.fixture else EVAL_PATH, source=source, waiver=waiver)
         else:
             look_doc = None
             if not args.fixture:
