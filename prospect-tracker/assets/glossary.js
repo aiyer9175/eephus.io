@@ -763,6 +763,71 @@
       },
     });
 
+    // MLB Projections component lines (PJ_8): every row reads the PJ-C look's
+    // block of the registry row's eval artifact. MAE is lower-is-better, so a
+    // head clears when the one-sided 95% upper bound of its paired delta sits
+    // below zero (the gate's own check), and trails when the delta is above.
+    const PJC_CMP = { naive: "naive three-season rate", implicit: "served engine's implicit value",
+                      prior_season: "prior-season total", w543: "5/4/3 weighted average" };
+    const pjc = (estimand, read) => ({
+      art: "/data/proj_components_eval.json",
+      estimand,
+      baseline: "named per row; every figure is the 2022 to 2025 holdout, year 1, survived rows",
+      read: j => { const rows = read(j); return rows && rows.length ? rows : null; },
+      note: j => {
+        const v = Object.assign({}, j.verdicts || {}, j.exposure_test || {});
+        const off = Object.keys(v).filter(k => v[k] && v[k].verdict && v[k].verdict !== "PASS")
+          .map(k => v[k].label + " (" + String(v[k].verdict).toLowerCase() + ")");
+        return off.length ? "Printed as not projected, their runs in the rest of the served projection: " + off.join("; ") + "." : "";
+      },
+    });
+    const pjcHeads = (j, heads) => {
+      const rows = [];
+      heads.forEach(h => {
+        const v = (j.verdicts || {})[h] || (j.exposure_test || {})[h];
+        if (!v || v.h1_mae == null) return;
+        Object.keys(v.checks || {}).filter(k => k.indexOf("h1_ub95_below_0_vs_") === 0).forEach(k => {
+          const c = v.checks[k], cmp = k.slice("h1_ub95_below_0_vs_".length);
+          const bv = c.comparator_mae != null ? c.comparator_mae : (v.h1_comparator_mae || {})[cmp];
+          if (bv == null || c.delta == null) return;
+          rows.push({
+            label: v.label + ", MAE (n=" + _rn(v.h1_n_survived, 0) + " rows)",
+            mv: _rn(v.h1_mae, 2), bname: PJC_CMP[cmp] || cmp, bv: _rn(bv, 2),
+            band: "delta " + _rns(c.delta, 2) + ", one-sided 95% bound " + _rns(c.ub95, 2),
+            verdict: c.ok === true ? "clears" : (Number(c.delta) > 0 ? "trails" : "inside"),
+            title: "head verdict " + v.verdict + " (gate 4.6)",
+          });
+        });
+      });
+      return rows;
+    };
+    const pjcDet = (j, heads, unit) => {
+      const s = ((j.holdout || {}).summary) || {};
+      return heads.map(([h, name]) => {
+        const r = (s[h] || {})["1"];
+        const b = r && (r.comparator_mae || {}).naive;
+        return (r && r.mae != null && b != null) ? {
+          label: name + ", " + unit + ", MAE (n=" + _rn(r.n_survived, 0) + " rows; a receipt, not a verdict)",
+          mv: _rn(r.mae, 2), bname: PJC_CMP.naive, bv: _rn(b, 2),
+        } : null;
+      }).filter(Boolean);
+    };
+    const pjcFip = j => {
+      const r = ((((j.holdout || {}).receipts) || {}).p3_fip_runs_leg_holdout || {})["1"];
+      return (r && r.mae != null && r.naive_mae != null) ? [{
+        label: "FIP runs leg, MAE (n=" + _rn(r.n_survived, 0) + " rows; a receipt, not a verdict)",
+        mv: _rn(r.mae, 2), bname: PJC_CMP.naive, bv: _rn(r.naive_mae, 2),
+      }] : [];
+    };
+    const pjcGap = j => {
+      const g = j.gap_tripwire || {}, p = g.pooled || {};
+      return (p.mean != null && g.threshold_abs_war != null) ? [{
+        label: "Mean of served WAR minus WAR from components (n=" + _rn(p.n, 0) + " rows)",
+        mv: _rns(p.mean, 3) + " WAR", bname: "tripwire at", bv: _rn(g.threshold_abs_war, 2) + " WAR either way",
+        band: g.blocks_flip === true ? "tripped: the lines are blocked" : "clear",
+      }] : [];
+    };
+
     _RCPT_SPECS = {
       // ---- WINS -----------------------------------------------------------
       hem_plus: {
@@ -1106,6 +1171,19 @@
         },
         note: () => "The loss has a mechanism: Swartz prices the counting stats arbitration panels reward, and this model excludes them because nothing in the pipeline projects them forward. The comparison stays on the card.",
       },
+      // ---- MLB Projections component lines (PJ_8), PJ-C gate --------------
+      projected_component_runs: pjc("Claim: each run part predicts its own FanGraphs run part on the 2022 to 2025 holdout better than a naive three-season rate and the value the served engine assumes; batting, league and replacement runs carry receipts, not verdicts.",
+        j => pjcHeads(j, ["bsr", "fld_pos"]).concat(pjcDet(j, [["batting", "Batting runs"], ["league", "League runs"], ["replacement", "Replacement runs"]], "runs per 600 PA"))),
+      projected_playing_time: pjc("Claim: the projected PA and IP beat the prior season's total and a 5/4/3 weighted average on the 2022 to 2025 holdout.",
+        j => pjcHeads(j, ["pa", "ip"])),
+      war_from_components: pjc("No WAR accuracy claim: the receipt records how far the parts sit from the served WAR on the holdout rows, the registered tripwire.",
+        j => pjcGap(j)),
+      projection_gap: pjc("No WAR accuracy claim: the mean of this line on the holdout rows at year 1, against the registered tripwire.",
+        j => pjcGap(j)),
+      fip_based_war: pjc("Claim: the FIP runs leg tracks its FanGraphs label better than a naive three-season rate; the gmLI (Leverage Index) head enters only on its own pass.",
+        j => pjcFip(j).concat(pjcHeads(j, ["gmli_relief"]))),
+      ra9_based_war: pjc("Claim: the shrunk RA9 adjustment predicts the RA9 gap better than a naive three-season rate and the zero the served engine assumes.",
+        j => pjcHeads(j, ["ra9_gap"])),
     };
     return _RCPT_SPECS;
   }

@@ -262,8 +262,19 @@
             tip: "projected playing time, the component lines' year-1 PA or IP (FanGraphs frame)" },
   };
   // The PA/IP cell exists only when the board says the component lines are
-  // live; a #cells=pa link on a dark board falls back to WAR.
+  // live AND some row carries a year-1 pa or ip: proj_export adds the scalar
+  // only where the PJ-C exposure test passed (PJ_8). A #cells=pa link on a
+  // board without one falls back to WAR.
   const compLive = () => !!(DATA && DATA.components_live);
+  let _ptFor = null, _ptOn = false;
+  const ptLive = () => {
+    if (!compLive()) return false;
+    if (_ptFor !== DATA) {
+      _ptFor = DATA;
+      _ptOn = (DATA.vets || []).some(m => m.pa != null || m.ip != null);
+    }
+    return _ptOn;
+  };
   function rateAt(m, t) {
     if (state.cells === "pa") return t === 0 ? (m.pa ?? m.ip ?? null) : null;
     const arr = state.cells === "wrc" ? m.wrc
@@ -834,7 +845,7 @@
     if (state.cmp.length === 2) { renderCompare(); return; }
     if (state.view === "teams") { renderTeams(); return; }
     if (state.view === "accountability") { renderAccountability(); return; }
-    if (state.cells === "pa" && !compLive()) state.cells = "war";
+    if (state.cells === "pa" && !ptLive()) state.cells = "war";
     const first = DATA.first_season;
     const teams = [...new Set((DATA.vets || []).map(m => m.team).filter(Boolean))].sort();
 
@@ -870,7 +881,7 @@
         ${teams.map(t => `<option value="${t}"${state.team === t ? " selected" : ""}>${t}</option>`).join("")}
       </select>
       <span class="filter-label proj-fgroup" title="Per-season cell metric; rate lines are veterans only">Cells</span>
-      ${[["WAR", "war"], ["wRC+", "wrc"], ["wOBA", "woba"], ["FIP", "fip"]].concat(compLive() ? [["PA/IP", "pa"]] : []).map(([l, k]) => chip(l, k, "cells")).join("")}
+      ${[["WAR", "war"], ["wRC+", "wrc"], ["wOBA", "woba"], ["FIP", "fip"]].concat(ptLive() ? [["PA/IP", "pa"]] : []).map(([l, k]) => chip(l, k, "cells")).join("")}
       <input id="proj-q" class="proj-search" type="search" placeholder="Search players…" value="${esc(state.q)}" aria-label="Search players">`;
     bar.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
       state.view = b.dataset.pv; syncToURL(); render();
@@ -1813,7 +1824,7 @@
     const list = sortRows(rows());
     const seasons = Array.from({ length: H }, (_, t) => first + t);
     const pros = prospectView();
-    if (state.cells === "pa" && !compLive()) state.cells = "war";
+    if (state.cells === "pa" && !ptLive()) state.cells = "war";
     const cellLbl = state.cells === "war" ? "WAR" : RATE_META[state.cells].label;
 
     // Header cell: a real <th scope=col> carrying aria-sort (valid on a
@@ -2643,12 +2654,13 @@
   // says which is which. Each runs or WAR cell carries its own 80% range (P10
   // to P90) in its title and aria-label where the block publishes one; no
   // range is ever built by adding component ranges, and the served WAR row
-  // keeps the WAR head's own warP10 / warP90. The glossary ids
-  // projected_component_runs, war_from_components and projection_gap land with
-  // the PJ_8 flip.
+  // keeps the WAR head's own warP10 / warP90. A head its own PJ-C component
+  // test did not pass is null in every block and named in notServed (PJ_8):
+  // it prints "not projected" and the foot note says so once for all players.
   const COMP_NP = "not projected";
   const COMP_NP_NAMES = { bsr: "baserunning runs", fld: "fielding runs", pos: "positional runs",
-                          gmli: "reliever gmLI", ra9_gap: "the RA9 adjustment", war_fip: "FIP-based WAR" };
+                          gmli: "reliever gmLI", ra9_gap: "the RA9 adjustment", war_fip: "FIP-based WAR",
+                          pa: "playing time (PA)", ip: "playing time (IP)" };
   const compInt = v => String(Math.round(v));
   const compPct = v => formatMetric(v * 100, "pct");
   const compRuns = v => signed(v, 1);
@@ -2699,7 +2711,7 @@
       const lo = H.p10 || {}, hi = H.p90 || {};
       const fp = { name: "80% range of fielding plus positional runs together" };
       rows.push(grp("Hitting"),
-        compRow("pa", "PA", "PA", H.pa, compInt, seasons, compRange(lo.pa, hi.pa, compInt, " PA", { floor0: true })),
+        compRow("pa", term("projected_playing_time", "PA"), "PA", H.pa, compInt, seasons, compRange(lo.pa, hi.pa, compInt, " PA", { floor0: true })),
         compRow("k", term("k_pct", "K%"), "K%", H.k, compPct, seasons),
         compRow("bb", term("bb_pct", "BB%"), "BB%", H.bb, compPct, seasons),
         compRow("iso", term("iso", "ISO"), "ISO", H.iso, rate3, seasons),
@@ -2720,24 +2732,29 @@
         lead: t => (P.ra9Gap && P.ra9Gap[t] != null ? `RA9 adjustment ${compRuns(P.ra9Gap[t])} runs; its ` : "RA9 adjustment "),
       });
       rows.push(grp("Pitching"),
-        compRow("ip", "IP", "IP", P.ip, compInt, seasons, compRange(lo.ip, hi.ip, compInt, " IP", { floor0: true })),
+        compRow("ip", term("projected_playing_time", "IP"), "IP", P.ip, compInt, seasons, compRange(lo.ip, hi.ip, compInt, " IP", { floor0: true })),
         compRow("k-pit", term("k_pct_pitcher", "K%"), "K%", P.k, compPct, seasons),
         compRow("bb-pit", term("bb_pct_pitcher", "BB%"), "BB%", P.bb, compPct, seasons),
         compRow("hr9", "HR/9", "HR/9", P.hr9, v => Number(v).toFixed(2), seasons),
         compRow("fip", term("fip", "FIP"), "FIP", P.fip, v => Number(v).toFixed(2), seasons),
-        compRow("war-fip", term("war_from_components", "FIP-based WAR"), "FIP-based WAR", P.warFip, fmtWar, seasons),
+        compRow("war-fip", term("fip_based_war", "FIP-based WAR"), "FIP-based WAR", P.warFip, fmtWar, seasons),
         // PJ-Q3 (owner answer 2026-10-01): both lines, FIP first.
-        compRow("war-ra9", term("war_from_components", "RA9-based WAR"), "RA9-based WAR", P.warRa9, fmtWar, seasons, ra9));
+        compRow("war-ra9", term("ra9_based_war", "RA9-based WAR"), "RA9-based WAR", P.warRa9, fmtWar, seasons, ra9));
     }
     rows.push(grp(H && P ? "WAR, both sides" : "WAR"),
       compRow("war-comp", term("war_from_components", "WAR from components"), "WAR from components", c.warComp, fmtWar, seasons),
       compRow("gap", term("projection_gap", "Rest of the served projection"), "Rest of the served projection", c.gap, v => signed(v, 1), seasons),
       compRow("war", term("war", "Served WAR"), "Served WAR", pr.war, fmtWar, seasons, compRange(pr.warP10, pr.warP90, fmtWar, " WAR")));
     const where = H && P ? "the Hitting and Pitching tabs" : H ? "the Hitting tab" : "the Pitching tab";
+    const npName = k => COMP_NP_NAMES[k] || String(k).replace(/_/g, " ");
+    const ns = [...((H && H.notServed) || []), ...((P && P.notServed) || [])];
     const np = [...((H && H.notProjected) || []), ...((P && P.notProjected) || [])]
-      .map(k => COMP_NP_NAMES[k] || String(k).replace(/_/g, " "));
-    const npNote = np.length
-      ? ` Not projected for him: ${esc([...new Set(np)].join(", "))}; those runs sit in the rest of the served projection.` : "";
+      .filter(k => !ns.includes(k)).map(npName);
+    const nsNames = [...new Set(ns.map(npName))];
+    const nsNote = nsNames.length
+      ? ` Not projected for any player: ${esc(nsNames.join(", "))}, each held back by its own component test; any runs they carry sit in the rest of the served projection.` : "";
+    const npNote = (np.length
+      ? ` Not projected for him: ${esc([...new Set(np)].join(", "))}; those runs sit in the rest of the served projection.` : "") + nsNote;
     const head = `<thead><tr><th scope="col">Component</th>${seasons.map(s => `<th scope="col">${s}</th>`).join("")}</tr></thead>`;
     return section("projection-components", "Projected components", "means per season · FanGraphs frame",
       `<div class="fa-sub mlbp-block-foot" data-proj-comp-frame>Components on FanGraphs' WAR frame; the season history on ${where} shows ${term("ewar", "eWAR")}.</div>`

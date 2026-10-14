@@ -10552,6 +10552,147 @@
    ],
    "shelf": "foundation",
    "origin": ""
+  },
+  {
+   "id": "projected_component_runs",
+   "term": "Projected component runs",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io (MLB Projections component lines, proj_export.py).",
+   "module": [
+    "projections"
+   ],
+   "aliases": [
+    "component runs",
+    "projected batting runs",
+    "projected baserunning runs",
+    "projected fielding runs",
+    "projected positional runs"
+   ],
+   "priority": 40,
+   "definition": "A veteran's projected runs by part on FanGraphs' WAR frame, per season: batting, baserunning, fielding, positional, league and replacement runs. Each is a mean, the average outcome, not the most likely one.",
+   "methodology": "Batting, league and replacement runs follow from the projection engine's PA and rate line with FanGraphs' formulas, park-neutral, with league constants held at the last completed season. Baserunning runs and fielding plus positional runs are their own heads: three-season rates shrunk toward zero by playing time, with an age term. A head is printed only after it passes its own component test on the 2022 to 2025 holdout against a naive three-season rate and the value the served engine assumes; one that does not pass reads not projected, and its runs sit in the rest of the served projection. The labels are FanGraphs' run parts from the frozen fWAR vintage; the season history on the same card stays eWAR. Each part's 80% range is built from that part's own past errors by horizon and playing-time tier. Ranges are never added up: no WAR range is built from component ranges, and the served WAR keeps its own 80% range. The parts add specificity to the projection; the served WAR itself is unchanged, and each part is judged only by its own component test (docs/PROJ_COMPONENTS_GATE.md).",
+   "seeAlso": [
+    "war_from_components",
+    "projection_gap",
+    "projected_playing_time",
+    "fielding_runs"
+   ]
+  },
+  {
+   "id": "war_from_components",
+   "term": "WAR from components",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io (MLB Projections component lines, proj_export.py).",
+   "module": [
+    "projections"
+   ],
+   "aliases": [
+    "component WAR",
+    "WAR from parts"
+   ],
+   "priority": 41,
+   "definition": "The WAR the projected parts add up to on FanGraphs' WAR frame: for a hitter, the run parts over runs per win; for a pitcher, FIP-based WAR. A sum of means, so itself a mean.",
+   "methodology": "Only parts that passed their own component test enter the sum; a part that reads not projected stays out, and its runs sit in the rest of the served projection. A two-way player's line adds both sides. It carries no range of its own, because a sum of 80% ranges is not an 80% range. Ranges are never added up: no WAR range is built from component ranges, and the served WAR keeps its own 80% range. It is never fed back into the WAR projection and never trained on. The parts add specificity to the projection; the served WAR itself is unchanged, and each part is judged only by its own component test (docs/PROJ_COMPONENTS_GATE.md).",
+   "seeAlso": [
+    "projected_component_runs",
+    "projection_gap",
+    "fip_based_war"
+   ]
+  },
+  {
+   "id": "projection_gap",
+   "term": "Rest of the served projection",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io (MLB Projections component lines, proj_export.py).",
+   "module": [
+    "projections"
+   ],
+   "aliases": [
+    "projection gap",
+    "gap line",
+    "rest of the projection"
+   ],
+   "priority": 42,
+   "definition": "The served WAR minus WAR from components, per season, on FanGraphs' WAR frame: what the served projection holds that the printed parts do not. The parts plus this line equal the served WAR before rounding.",
+   "methodology": "The served WAR is the projection engine's own mean head; the parts are priced separately, so the two need not agree. This line carries the difference, including the runs of any part that reads not projected (for example the reliever gmLI (Leverage Index) term while it is held back, when the pitcher is priced at a gmLI of 1.0). A registered tripwire blocks the component lines if the mean of this line on the holdout rows at year 1 passes 0.30 WAR either way; the receipt reads it from the eval artifact. It is a difference of two means and carries no range. Ranges are never added up: no WAR range is built from component ranges, and the served WAR keeps its own 80% range.",
+   "seeAlso": [
+    "war_from_components",
+    "projected_component_runs"
+   ]
+  },
+  {
+   "id": "projected_playing_time",
+   "term": "Projected playing time (PA, IP)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io (MLB Projections component lines, proj_export.py).",
+   "module": [
+    "projections"
+   ],
+   "aliases": [
+    "projected PA",
+    "projected IP",
+    "PA/IP"
+   ],
+   "priority": 43,
+   "definition": "Projected plate appearances for a hitter or innings for a pitcher, per season: the projection engine's playing-time walk, the exposure every run part on FanGraphs' WAR frame is priced at. A mean.",
+   "methodology": "Printed only once it passes its registered exposure test on the 2022 to 2025 holdout against the prior season's total and a 5/4/3 weighted average of the last three; until then the PA and IP lines read not projected and the board offers no PA/IP cell, while the run parts are still priced at it. Its 80% range is built from its own past errors by horizon and playing-time tier, with a floor of zero. Ranges are never added up: no WAR range is built from component ranges, and the served WAR keeps its own 80% range.",
+   "seeAlso": [
+    "projected_component_runs",
+    "war_from_components"
+   ]
+  },
+  {
+   "id": "fip_based_war",
+   "term": "FIP-based WAR (projected)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io (MLB Projections component lines, proj_export.py).",
+   "module": [
+    "projections"
+   ],
+   "aliases": [
+    "projected FIP-based WAR",
+    "FIP WAR"
+   ],
+   "priority": 44,
+   "definition": "FanGraphs' pitcher WAR on its own frame, built on FIP, from a pitcher's projected FIP and innings, per season. A mean, and the pitcher's WAR from components.",
+   "methodology": "Projected FIP becomes runs allowed per nine against the league, park-neutral, with FanGraphs' dynamic runs per win, a replacement level set by the starter and reliever mix, and the league's WAR per inning held at the last completed season. Reliever gmLI (game-entering Leverage Index) enters only once its own head passes its component test; until then the relief share is priced at a gmLI of 1.0 and the runs gmLI adds sit in the rest of the served projection. It carries no range of its own. Ranges are never added up: no WAR range is built from component ranges, and the served WAR keeps its own 80% range. The parts add specificity to the projection; the served WAR itself is unchanged, and each part is judged only by its own component test (docs/PROJ_COMPONENTS_GATE.md).",
+   "seeAlso": [
+    "ra9_based_war",
+    "war_from_components",
+    "fip"
+   ]
+  },
+  {
+   "id": "ra9_based_war",
+   "term": "RA9-based WAR (projected)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io (MLB Projections component lines, proj_export.py).",
+   "module": [
+    "projections"
+   ],
+   "aliases": [
+    "projected RA9-based WAR",
+    "RA9 WAR"
+   ],
+   "priority": 45,
+   "definition": "A labelled second view of a pitcher on FanGraphs' WAR frame: FIP-based WAR plus a heavily shrunk share of his history of runs allowed beyond his FIP. A mean.",
+   "methodology": "The adjustment is the pitcher's three-season RA9 gap per 100 innings, shrunk toward zero by innings, priced at his projected innings. It is printed only once its head passes its own component test on the 2022 to 2025 holdout; until then the line reads not projected. Its 80% range, where printed, is the adjustment's own range from its own past errors. Ranges are never added up: no WAR range is built from component ranges, and the served WAR keeps its own 80% range.",
+   "seeAlso": [
+    "fip_based_war",
+    "war_from_components"
+   ]
   }
  ]
 }

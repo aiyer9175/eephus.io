@@ -1,14 +1,16 @@
 """PJ_6_COMPONENT_EXPORT_DARK: the component lines ride the veteran build dark.
 
 Plan Part 9 section 9.2 'Component projections', LANE_A sections 2.2, 2.7 and
-2.8. Class 2: PROJ_COMPONENTS_LIVE defaults False, and while it is False the
-blocks go only to the preview under .cache and no served key moves. These
+2.8. Class 2: PROJ_COMPONENTS_LIVE was built False (PJ_6), and while it is
+False the blocks go only to the preview under .cache and no served key moves.
+PJ_8_COMPONENT_FLIP set it True: a head under the PJ-C gate serves only where
+the look recorded PASS, and every other head is null and named in notServed. These
 tests run the real _veteran_rows on a handful of real players three ways:
 
   A  the component context missing (the code path before this task: every
      row comes out exactly as it did, no block is built);
   B  the context present, flag False (the shipped default);
-  C  the context present, flag True (the PJ_8 flip, measured here only).
+  C  the context present, flag True (the PJ_8 flip, the served state).
 
 The curves and the component context are fitted once on the WHOLE corpus and
 handed to all three runs, so the slice changes nothing but the row count.
@@ -75,11 +77,13 @@ def runs():
         a = _rows(mp, corpus, fit, None, False)
         b = _rows(mp, corpus, fit, ctx, False)
         c = _rows(mp, corpus, fit, ctx, True)
+        # E: run C with every gated head served, the probe of the gmLI pricing
+        e = _rows(mp, corpus, fit, dict(ctx, served={h: True for h in ctx["served"]}), True)
         mp.setattr(PC, "project_components", _shifted_ranges(PC.project_components))
         d = _rows(mp, corpus, fit, ctx, True)
     finally:
         mp.undo()
-    return {"A": a, "B": b, "C": c, "D": d, "ctx": ctx}
+    return {"A": a, "B": b, "C": c, "D": d, "E": e, "ctx": ctx}
 
 
 def _dump(rows: list[dict]) -> str:
@@ -122,10 +126,13 @@ def test_flag_true_adds_only_the_year_one_exposure(runs):
             assert json.dumps(r.get(k), sort_keys=True) == json.dumps(v, sort_keys=True), (r["key"], k)
         assert set(r) - set(old) <= {"pa", "ip"}, (r["key"], set(r) - set(old))
         blk = blocks_c[r["mlbam"]]
+        # PA / IP reach the board only where the exposure test passed (PJ_8).
         if blk["hit"]:
-            assert r["pa"] == blk["hit"]["pa"][0]
+            assert r.get("pa") == blk["hit"]["pa"][0]
+            assert ("pa" in r) == (blk["hit"]["pa"][0] is not None)
         if blk["pit"]:
-            assert r["ip"] == blk["pit"]["ip"][0]
+            assert r.get("ip") == blk["pit"]["ip"][0]
+            assert ("ip" in r) == (blk["pit"]["ip"][0] is not None)
     # The generic loop above covers every key; the named ones must exist on
     # the slice (sur / surNpv / salPath need a contract, which the slice
     # passes none of, so no money key is asserted here).
@@ -157,7 +164,7 @@ def test_copied_rate_lines_are_the_rows_own_arrays(runs):
             assert blk["hit"]["woba"] == r.get("woba") and blk["hit"]["wrc"] == r.get("wrc")
         if blk["pit"]:
             assert blk["pit"]["fip"] == r.get("fip")
-            if blk["pit"]["gmli"] is not None:
+            if blk["pit"]["gmli"] is not None and runs["ctx"]["served"]["gmli_relief"]:
                 assert blk["pit"]["gmli"][0] is not None
 
 
@@ -197,7 +204,8 @@ def test_two_way_rows_carry_both_sides_and_sum_them(runs):
     for r in two:
         blk = blocks_c[r["mlbam"]]
         assert blk["twoWay"] and blk["hit"] and blk["pit"]
-        assert "pa" in r and "ip" in r
+        served = runs["ctx"]["served"]
+        assert ("pa" in r) == served["pa"] and ("ip" in r) == served["ip"]
         for t in range(pe.HORIZON):
             h, p = blk["hit"]["warComp"][t], blk["pit"]["warFip"][t]
             if h is not None and p is not None:
@@ -208,7 +216,7 @@ def test_payload_flag_is_only_set_when_live():
     import inspect
     src = inspect.getsource(pe._build_payload_body)
     assert '**({"components_live": True} if PROJ_COMPONENTS_LIVE else {})' in src
-    assert pe.PROJ_COMPONENTS_LIVE is False
+    assert pe.PROJ_COMPONENTS_LIVE is True, "flipped by PJ_8_COMPONENT_FLIP"
 
 
 def test_detail_reads_no_component_lines_while_dark(tmp_path, monkeypatch):
@@ -233,3 +241,103 @@ def test_the_comp_block_rides_the_card_shard_only(tmp_path, monkeypatch):
     c = json.loads((tmp_path / "mlb_player_detail" / "c_d.json").read_text(encoding="utf-8"))
     assert a["player"]["proj"] == {"war": [1.0], "comp": {"warComp": [0.9], "gap": [0.1]}}
     assert "comp" not in c["player"]["proj"]
+
+
+# ---- PJ_8_COMPONENT_FLIP: only heads the PJ-C look passed are served -------
+
+def _eval_doc(**verdicts):
+    blocks = {"verdicts": {}, "exposure_test": {}}
+    for head, v in verdicts.items():
+        blocks["exposure_test" if head in ("pa", "ip") else "verdicts"][head] = {"verdict": v}
+    return blocks
+
+
+def test_served_heads_read_pass_only_and_fail_closed(tmp_path):
+    p = tmp_path / "eval.json"
+    p.write_text(json.dumps(_eval_doc(bsr="PASS", fld_pos="PASS", gmli_relief="UNDERPOWERED",
+                                      ra9_gap="FAIL", pa="FAIL")), encoding="utf-8")
+    got = pe._served_heads(p)
+    assert got == {"bsr": True, "fld_pos": True, "gmli_relief": False, "ra9_gap": False,
+                   "pa": False, "ip": False}, "a head the artifact does not name is not served"
+    assert not any(pe._served_heads(tmp_path / "missing.json").values())
+
+
+def test_served_heads_match_the_committed_look():
+    doc = json.loads(pe.COMPONENTS_EVAL_PATH.read_text(encoding="utf-8"))
+    got = pe._served_heads()
+    for head, (blk, key) in pe._GATED_HEADS.items():
+        assert got[head] == (doc[blk][key]["verdict"] == "PASS"), head
+    assert doc["gap_tripwire"]["blocks_flip"] is False
+
+
+def _hit_line(**over):
+    ln = {"pa": 600.0, "k_pct": 0.2, "bb_pct": 0.1, "iso": 0.2, "babip": 0.3,
+          "bat": 20.0, "bsr": 3.0, "fld": 5.0, "pos": -2.5, "lg": 1.5, "rep": 19.0,
+          "war_comp": 4.6,
+          "ranges": {"pa": (400.0, 700.0), "batting": (5.0, 35.0), "bsr": (-1.0, 7.0),
+                     "fld_pos": (-4.0, 9.0), "league": (1.0, 2.0), "replacement": (15.0, 21.0)}}
+    ln.update(over)
+    return ln
+
+
+def test_a_hitter_head_not_served_is_null_and_its_runs_leave_component_war():
+    hb = {"lines": {1: _hit_line(), 2: _hit_line(k_pct=None)}, "tier": "full",
+          "not_projected": []}
+    m = {"woba": [0.35, 0.34], "wrc": [130, 128]}
+    full = pe._hit_block(hb, m)
+    assert "notServed" not in full and full["bsr"] == [3.0, 3.0] and full["warComp"] == [4.6, 4.6]
+    out = pe._hit_block(hb, m, {"bsr": False, "fld_pos": True, "pa": False}, 10.0)
+    assert out["bsr"] == [None, None] and out["pa"] == [None, None]
+    assert out["p10"]["bsr"] == [None, None] and out["p90"]["pa"] == [None, None]
+    assert out["fld"] == [5.0, 5.0] and out["p10"]["fldPos"] == [-4.0, -4.0]
+    assert out["warComp"] == [4.3, 4.3], "the 3.0 baserunning runs over 10 runs per win leave"
+    assert out["notServed"] == ["bsr", "pa"]
+    out2 = pe._hit_block(hb, m, {"bsr": True, "fld_pos": False, "pa": True}, 10.0)
+    assert out2["fld"] == [None, None] and out2["pos"] == [None, None]
+    assert out2["warComp"] == [4.35, 4.35] and out2["notServed"] == ["fld", "pos"]
+
+
+def test_served_blocks_null_every_head_the_look_did_not_pass(runs):
+    _, blocks_c = runs["C"]
+    served = runs["ctx"]["served"]
+    for blk in blocks_c.values():
+        h, p = blk["hit"], blk["pit"]
+        if h:
+            assert h["notServed"] == ([] if served["bsr"] else ["bsr"]) + (
+                [] if served["fld_pos"] else ["fld", "pos"]) + ([] if served["pa"] else ["pa"])
+            for key in h["notServed"]:
+                assert all(v is None for v in h[key]), key
+        if p:
+            if not served["gmli_relief"]:
+                assert "gmli" in p["notServed"] and all(v is None for v in p["gmliRelief"])
+                assert p["gmli"] is None or all(v is None for v in p["gmli"])
+            if not served["ra9_gap"]:
+                assert all(v is None for v in p["warRa9"]) and all(v is None for v in p["ra9Gap"])
+                assert all(v is None for v in p["p90"]["ra9Gap"])
+            if not served["ip"]:
+                assert all(v is None for v in p["ip"]) and all(v is None for v in p["p10"]["ip"])
+
+
+def test_an_unserved_gmli_prices_the_relief_share_at_one(runs):
+    """While P4 is not served, FIP-based WAR is the line at gmLI 1.0 (the
+    served engine's own value), so the runs gmLI adds ride in the gap line;
+    run E serves every head on the same inputs."""
+    if runs["ctx"]["served"]["gmli_relief"]:
+        pytest.skip("gmLI head served")
+    _, blocks_c = runs["C"]
+    _, blocks_e = runs["E"]
+    n = 0
+    for mid, bc in blocks_c.items():
+        pc, pe_ = bc["pit"], blocks_e[mid]["pit"]
+        if not pc:
+            continue
+        gm = (pe_.get("gmli") or [None])[0]
+        rel = (pe_.get("gmliRelief") or [None])[0]
+        if gm is None or not rel:
+            assert pc["warFip"] == pe_["warFip"], mid
+            continue
+        assert (pc["warFip"][0] < pe_["warFip"][0]) == (gm > 1.0), (mid, gm)
+        assert bc["gap"][0] is None or abs(
+            (bc["gap"][0] - blocks_e[mid]["gap"][0]) - (pe_["warFip"][0] - pc["warFip"][0])) <= 0.011
+        n += 1
+    assert n >= 1, "the slice holds a reliever with a relief share"
