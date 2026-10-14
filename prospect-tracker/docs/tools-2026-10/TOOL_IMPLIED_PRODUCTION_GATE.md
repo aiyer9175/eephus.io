@@ -504,3 +504,382 @@ no other frame substitutes.
 EMPTY AT REGISTRATION. The look P and look W entries are written here by TL_5 and TL_12, each pasted
 verbatim from its runner and dated, and nothing above this part is edited once anything is written
 below it, except by the amendments listed at the top.
+
+---
+
+## Part T. Re-derived tool-to-stat tables against the published estimates
+
+Part T status: REGISTERED
+
+Dated amendment of 2026-10-09, item 2 of the list at the top of this file. Task
+TL_19_TOOL_TABLE_REDERIVE_REGISTRATION, written at HEAD c3ac7156 (built on branch
+efv-conviction-2026-08-08). Plan: Part 9 section 9.4.8 'Re-derived tool tables and the /scouting/
+page (message 3)' (Part 9 bundle `PLAN.md`; round 4 dispositions intent 3 and leakage 6; round 5
+item 5). Docs only, committed alone, before any number on this frame exists: at this commit there is
+no `data/tool_tables_rederived_eval.json` and no `data/_labs/tool_table*`. Nothing above Part 8 is
+edited by it: Part T sits after Part 8, so no line above Part 8 moves.
+
+The owner's ask (2026-10-01, message 3, verbatim): "You can rederive tool->statistical production
+grades if needed, the FanGraphs translations are estimates and if we could make these more accurate
+(+provide a standalone "scouting" page that explains the 20-80 FV grading scale, with WAR
+projections for each FV tier and tool projections for each tool tier, this would be really useful
+for the public space)".
+
+**Nothing was scored to write this part.** No grade was paired with an outcome, no table was
+fitted, no cell or row was counted and no outcome number appears below. Every figure in it is a
+published value transcribed with its section id, a constant, a date, a seed, or a prediction
+labelled as one. The 2026-07-30 tool table results are cited by location, never restated.
+
+Who uses this part:
+- TL_4_TOOL_LAB_BUILD builds `tools/tool_accuracy_lab.py --look T` (with `--dry-run` and
+  `--mde-only`) to it, writes the frozen grade rows of T.3, and writes T.10 as one dated amendment
+  committed alone.
+- TL_21_TOOL_TABLE_REDERIVE_LOOK runs look T once (T.7) and writes T.12.
+- TL_20, TL_22 and TL_23 print the /scouting/ tool-tier column by T.6.
+
+### T.1 The incumbent
+
+One incumbent per primary cell, each a fixed function of the grade that reads no row. The values are
+the published tables exactly as transcribed in `docs/reference/FANGRAPHS_FV_FRAMEWORK.md` Part 2
+and, where the artifact carries the same column, in `data/tool_grade_tables.json`
+`audit_vs_published` (its `published` field per row, for the outlet named).
+
+Reading rules, common to every incumbent:
+1. g is the unrounded consensus grade of T.3, clipped to [20, 80].
+2. Between two published grades the incumbent is linear in g. Below the lowest published grade or
+   above the highest it is held flat at that row. No extrapolation (the candidate obeys the same
+   rule, T.2).
+3. A published band (lo to hi) is read at its midpoint. An open band is read at its stated bound.
+4. A published value below zero for a stat that cannot be negative is floored at zero before
+   interpolation, and the floor is disclosed beside the cell.
+5. A blank cell in the source is not a row; rule 2 interpolates across it.
+
+| cell | incumbent (section id) | published rows, grade: value (point read) |
+|---|---|---|
+| game_pwr to HR per 600 PA | 2.1, S3 (2014) 'Homers', home runs per full MLB season at maturity, read per 600 PA as `audit_vs_published.hr_per600_fullseason` (outlet `fangraphs_2014`) reads it | 30: 3-5 (4); 35: 5-8 (6.5); 40: 8-12 (10); 45: 12-15 (13.5); 50: 15-18 (16.5); 55: 19-22 (20.5); 60: 23-27 (25); 65: 27-30 (28.5); 70: 30-35 (32.5); 75: 35-40 (37.5); 80: 40+ (40) |
+| game_pwr to ISO | 2.2 '### Power tool', Mark Smith W2 (2013), ISO column | 20: -.013 (floored to .000); 30: .038; 40: .089; 50: .140; 60: .191; 70: .242; 80: .294 |
+| hit to AVG | 2.1, S3 (2014) 'Batting Avg', batting average at maturity (`avg_fullseason`, outlet `fangraphs_2014`) | 30: .220; 35: .230; 40: .240; 45: .250; 50: .260; 55: .270; 60: .280; 65: .290; 70: .300; 75: .310; 80: .320 |
+| hit to K% | none published; the grade-blind line | the season's MLB K% over qualified rows (below) |
+| speed to SB per 600 PA | 2.2 '### Speed tool', W2 SB/3 column, stolen bases per season, read per 600 PA as `sb_per_season` (outlet `smith_2013`) reads it | 20: -20 (floored to 0); 30: -10 (floored to 0); 40: blank (interpolated, 4.5); 50: 9; 60: 19; 70: 29; 80: 38 |
+| cmd to BB% (SP) | 2.2 '### Control', W2 SP BB% column, percent, lower is better (`bb_pct_sp`, outlet `smith_2013_sp`) | 20: 13.9; 30: 11.8; 40: 9.8; 50: 7.8; 60: 5.7; 70: 3.7; 80: 1.7 |
+| fb to fastball velocity (SP) | 2.1, S3 (2014) 'Fastball Velo', mph, not split by role, read for starters as `fb_velo_sp` (outlet `fangraphs_2014`) reads it | 30: 86; 35: 87; 40: 88; 45: 89; 50: 90-91 (90.5); 55: 92; 60: 93; 65: 94; 70: 95; 75: 96; 80: 97 |
+
+Notes, cell by cell:
+- **game_pwr to ISO** (round 4, intent 3; round 5, item 5). The incumbent is W2's ISO column, not a
+  grade-blind line: a grade-blind incumbent where a published table exists would let the page
+  replace a FanGraphs estimate on a win the gate did not earn. The column's one negative row (20,
+  -.013), which Smith calls "a glitch", is floored at .000 and disclosed; its other six rows are
+  positive. The HR/PA column's negatives (30 -0.4%, 20 -1.8%) belong to another column and are not
+  this cell's incumbent. The 50 row's z is blank in the source; its ISO (.140) is published and is
+  read. `data/tool_grade_tables.json` carries no ISO block, so this column is transcribed from the
+  framework document alone. TL_20 and TL_22 print it, labelled.
+- **game_pwr to HR per 600 PA.** The artifact writes the open 80 band as [40, 55], an upper bound
+  the source does not state; this registration reads the source's stated bound, 40 (default D1; the
+  artifact's midpoint would read 47.5).
+- **hit to K%.** No source in Part 2 publishes a grade-to-K% table (S3's hit column is batting
+  average only, the caveat McDaniel states in L10). The incumbent is the grade-blind line: for a
+  season Y, 100 times the sum of strikeOuts over the sum of plateAppearances across every row of
+  `.cache/fa_statsapi_hitting_Y.json` with at least 300 PA (every MLB hitter, not only graded
+  players), labelled "grade-blind league line". In the HOLDOUT, Y is 2026; in a T.10 fold, Y is the
+  held-out season. The pooled form is default D2 (an unweighted mean of qualified rows is the
+  alternative). The line knows the holdout season's league rate, which the candidate does not, so
+  it favours the incumbent.
+- **speed to SB per 600 PA.** S3's two speed columns are run times in seconds, for which this frame
+  holds no outcome series (TOOL_GRADE_TABLES '### 2.6'), so W2's stolen-base column is the only
+  FanGraphs-framework incumbent in an outcome unit. Its 20 and 30 rows are negative, which Smith
+  and the framework document both call impossible; they are floored at 0 (rule 4) before the
+  blank 40 row is interpolated (rule 5). Reading "per season" as "per 600 PA" follows the
+  artifact's own audit and is disclosed.
+- **cmd to BB% (SP).** The framework document's sign note applies: a higher grade reads a lower
+  walk rate, and the table is used as published, with no sign flip.
+- **fb to fastball velocity (SP).** S3 does not split by role (McDaniel: "I and many teams don't do
+  that"); the artifact's starter audit reads it for starters, and so does this cell.
+- **Beside, never deciding.** Two other FanGraphs-framework columns exist in a primary cell's unit:
+  W2's BA column (2.2 '### Hit tool': 20 .199, 30 .221, 40 .244, 50 .267, 60 .290, 70 .313, 80
+  .336) beside hit to AVG, and W2's SP Velo column (2.2 '### Fastball velocity, split by role': 20
+  84, 30 86, 40 88, 50 91, 60 93, 70 95, 80 97) beside fb to velocity (SP). Each is scored on the
+  same rows with the same statistic and printed "secondary: no verdict". Neither enters Holm, and
+  neither changes what T.6 prints.
+- Baseball America and MLB Pipeline bands in the artifact are not FanGraphs-framework tables and are
+  not read.
+
+### T.2 The candidate
+
+OUR table, one per cell, by the TIP_mat rule of Part 1.2 step 1 and PLAN 9.4.2, fit on the cell's
+FIT rows (T.3) only:
+1. Each FIT row is one player: his grade g for the cell's tool and his FIT value.
+2. Bin b = round(g / 5) * 5 (Python's `round`, as `tools/tool_grade_tables_lab.py` bins), clipped to
+   [20, 80]. Each bin carries n, the median of its FIT values (one value per player, unweighted)
+   and `grade_mean`, the mean unrounded grade in the bin.
+3. A bin with n under 15 is THIN and dropped.
+4. The non-thin bin medians are smoothed by weighted isotonic regression (PAVA, weight = bin n) in
+   the expected direction: non-decreasing in g for HR per 600, ISO, AVG, SB per 600 and velocity;
+   non-increasing for K% and BB%.
+5. The table reads g by linear interpolation between the smoothed values placed at each non-thin
+   bin's `grade_mean`, and is flat beyond the first and the last non-thin bin. No extrapolation.
+6. A cell with no non-thin bin has no candidate and is NOT COMPUTABLE. A cell with one non-thin bin
+   has a flat candidate, which is scored.
+
+No free parameter remains. The bin width, the thin floor, the smoothing direction and the
+interpolation are fixed above and in `docs/efv-2026-07-30/TOOL_GRADE_TABLES.md` '### 1.2' and
+'### 1.3' (written before that lane's first table was fitted). Part 1.2 step 1's choice between the
+age-26-and-over frame and the full-season frame does not arise: Part T fits the FIT frame of T.3
+and nothing else. No table in `data/tool_grade_tables.json` is read (Part 6).
+
+### T.3 Rows
+
+**Grade.** For each record of `data/debuts.json`, the grade point is the last entry of `points`
+whose `snapshot_date` is before the record's `debut_date` and whose `tools_consensus` is not empty
+(TOOL_GRADE_TABLES '### 1.1', the P-MLB rule, as `load_grade_pools` in
+`tools/tool_grade_tables_lab.py` applies it). A cell's grade is that point's `tools_consensus`
+value for the cell's tool; a point without the tool gives the player no row in that cell. A record
+whose `debut_date_is_placeholder` is true is dropped and counted, because the pre-debut rule cannot
+be checked against it. The side is the harness's `is_pitcher` rule on `position`: hitter cells take
+position players, pitcher cells take pitchers.
+
+**Identity.** Outcome-blind, mlbam ids only (Part 3.1): the row's id is
+`efv_identity.resolve_record(rec, V, index, side)` with V the calendar year of the grade point's
+`snapshot_date`. A row that does not resolve, or resolves to an id other than the record's
+`mlbam_id`, is dropped and counted in the artifact; the record's carried id is never used alone.
+
+**Always excluded, asserted before any score.**
+- R-LV: a grade point dated in 2020 or 2021 (its calendar year read as its list vintage, a superset
+  of the preseason-window definition). Part T excludes these rows although the R-LV record exists
+  (Part 0.3), as its specification reads.
+- R-VM: a debut in 2025 or later.
+
+**Frozen grade rows.** TL_4 writes the rows above, for the seven primary tools and the secondary
+tools of T.4, to `data/_labs/tool_tables_rederived/grade_rows_frozen.json`: the mlbam id, side,
+debut date, the grade point's snapshot date and its `tools_consensus` values for those tools, and
+nothing else (no FV field of any kind, no outcome). Its sha256 is recorded in T.10. T.10 and look T
+read grades from that file only.
+
+**Season lines.** A player's season line is his one row in that season's
+`.cache/fa_statsapi_hitting_Y.json` or `.cache/fa_statsapi_pitching_Y.json` (regular season, as
+those files carry it). A hitter season qualifies with at least 300 PA, the full-season floor this
+registration takes (default D3: TOOL_GRADE_TABLES '### 1.3' names 300 PA for its maturity frame
+while its harness's full-season frame used 350 PA, `method.floors.mlb_fullseason_pa`; 300 is also
+look P's hitter floor). A pitcher season qualifies as a starter season with at least 100 batters
+faced (the harness's `MLB_BF_FLOOR`) and gamesStarted over gamesPlayed at or above 0.50 (the
+harness's role rule, applied per season); a velocity season also needs the pitcher in that season's
+velocity file (TOOL_GRADE_TABLES '### 1.3', presence in the arsenal leaderboard).
+
+**FIT.** One row per player: his qualifying MLB seasons 2015 to 2025, with 2020 excluded, pooled
+by exposure: HR per 600 = 600 x sum HR / sum PA; ISO = (sum TB - sum H) / sum AB; AVG = sum H / sum
+AB; K% = 100 x sum SO / sum PA; SB per 600 = 600 x sum SB / sum PA; BB% = 100 x sum BB / sum BF;
+velocity = the BF-weighted mean of his season velocities. The velocity series is
+`.cache/velo_arsenal_Y.json`, written by `pal_export.load_velo(Y)` (the max of FF, SI and FC average
+speed); it begins in 2017, so the velocity cell's FIT seasons are 2017 to 2025 without 2020. No 2026
+line enters any FIT row or any candidate table, and the lab asserts it.
+
+**HOLDOUT.** One row per player: his qualifying 2026 MLB season only, read from the 2026 season
+files after the regular season ended, each file's sha256 and mtime recorded. TL_4 writes
+`.cache/velo_arsenal_2026.json` through `pal_export.load_velo(2026)` after the regular season ended
+and records its sha256 in T.10 without reading a value from it. This is a time-forward holdout.
+
+**Disclosure: the July 2026 tables.** `data/tool_grade_tables.json` (generated 2026-07-30) lists no
+seasons in its `pools` block (P_MLB n 1,765 from `data/debuts.json`; P_AAA n 3,419). Its harness
+reads the StatsAPI season files of 2000 to 2026 that exist (`load_mlb_season_hitting` and
+`load_mlb_season_pitching` at 'range(2000, 2027)'), MLB Statcast seasons 2016 to 2026
+(`MLB_YEARS`), velocity files 2017 to 2026 and minor league seasons 2023 to 2026, and it ran on
+2026-07-30, mid-season. So it may have read partial 2026 lines, descriptively, and its pools
+include players whose 2026 lines are HOLDOUT lines here. Its tables score no row here (Part 6). The
+candidate method has no parameter chosen on 2026: every rule in T.2 was fixed before that lane
+fitted a table or by Part 1.2 of this file, and T.2 adds none. The predictions in T.5 were written
+with that artifact's sections 2.1 and 2.2 in view.
+
+### T.4 Cells
+
+**Primary, fixed (seven).** Each is one Holm member when computable.
+
+| # | tool | stat | side and qualifying season | MAE weight |
+|---|---|---|---|---|
+| 1 | game_pwr | HR per 600 PA | hitters, 300 PA | PA |
+| 2 | game_pwr | ISO | hitters, 300 PA | PA |
+| 3 | hit | AVG | hitters, 300 PA | PA |
+| 4 | hit | K% | hitters, 300 PA | PA |
+| 5 | speed | SB per 600 PA | hitters, 300 PA | PA |
+| 6 | cmd | BB% (SP) | starter seasons | BF |
+| 7 | fb | fastball velocity (SP) | starter seasons in the velocity file | BF |
+
+A primary cell with fewer than 60 HOLDOUT rows is NOT COMPUTABLE: named, not a fail, and out of the
+Holm family.
+
+**Secondary, reported only** (no verdict, no Holm, never printed on /scouting/ as a measured
+value), on the same grade rows, FIT seasons and holdout season, with the same candidate rule:
+- raw_pwr to average exit velocity: `avg_hit_speed` of `.cache/savant_mlb/statcast_batter_Y.csv`,
+  weighted by `attempts` (seasons 2016 on); hitter seasons of 300 PA.
+- speed to sprint speed: `sprint_speed` of `.cache/savant_sprint/sprint_Y.csv`, weighted by
+  `competitive_runs`; a season counts when the file carries the player (Part W.3).
+- field to OAA per 1,000 innings: Part W.3's definition (positions 3 to 9, catchers excluded,
+  innings from `data/fielding_innings.json`), a season counting at 700 innings, weighted by
+  innings.
+- cmd to BB% and fb to velocity for relievers: pitcher seasons of 100 BF with gamesStarted over
+  gamesPlayed below 0.50, weighted by BF.
+
+Secondary incumbents: W2's RP BB% column (2.2 '### Control': 20 16.3, 30 13.9, 40 11.6, 50 9.2, 60
+6.8, 70 4.4, 80 2.0) and W2's RP Velo column (2.2 '### Fastball velocity, split by role': 20 84, 30
+86, 40 89, 50 92, 60 95, 70 97, 80 100), read by T.1's rules. Exit velocity, sprint speed and OAA
+have no published table in their unit, so each is read against its grade-blind season line (the
+exposure-weighted mean over every qualifying row of that season's file), labelled.
+
+### T.5 Statistic and pass rule
+
+Per primary cell, on the cell's HOLDOUT rows, identical for both tables:
+- MAE_w(table) = sum of w x |table(g) - y| over sum of w, with w the cell's MAE weight (T.4) and y
+  the row's 2026 value.
+- delta = MAE_w(candidate) - MAE_w(incumbent), in the stat's units; negative favours the candidate.
+- Interval: a paired bootstrap over players, B 2000, each cell drawing from its own fresh
+  `numpy.random.default_rng(20261028)`, n rows drawn with replacement from n, delta recomputed in
+  each draw. Both tables stay fixed; no table is refit inside a draw. UB95 is the 95th percentile of
+  the draws (one-sided upper bound). p = (1 + the number of draws with delta at or above 0) / (B +
+  1).
+- MDE95 per cell is copied from T.10 and never computed in the look session (round 4, leakage 6).
+
+**PASS for a cell**, all of:
+1. UB95 below 0;
+2. the point improvement, -delta, at least max(MDE95, 0.05 x MAE_w(incumbent));
+3. Holm across the computable primary cells (m = their count) at family alpha 0.05 on p.
+
+Otherwise FAIL; marginal is FAIL. A cell short of rows, of a non-thin FIT bin or of a T.10 MDE95 is
+NOT COMPUTABLE.
+
+**Printed beside each verdict, never deciding:** n; both MAEs; delta, UB95, p, the Holm step; the
+candidate table's non-thin bins with n, `grade_mean`, raw median, smoothed value and a 95%
+percentile bootstrap interval on the bin median over FIT players (B 2000, the same seed); the beside
+columns of T.1 and the secondary cells of T.4, each marked "secondary: no verdict"; the sensitivity
+of T.11 (b); the survivorship sentence of Part 0.6.
+
+**Predictions, written before any number.** Our curves are flatter than every published table
+(TOOL_GRADE_TABLES '### 2.1'), so the candidate is expected to win where the published ladder is
+steepest (power and hit at 60 and above, W2's ISO column included) and to beat the grade-blind line
+on K%; velocity is expected to favour our table ('### 2.2'). These come from results on pools that
+overlap both frames (T.3 disclosure) and carry no weight in the verdict. A null is a finding: the
+incumbent keeps every cell it is not beaten on.
+
+### T.6 What a verdict does
+
+- A PASSING cell may print on the /scouting/ tool-tier column (TL_23) as "measured on debuted
+  players", beside the FanGraphs estimate, with its n and interval.
+- A FAIL or NOT COMPUTABLE cell prints the FanGraphs estimate labelled "FanGraphs framework
+  estimate", or nothing where none exists (hit to K%).
+- Copy never says our table is more accurate for a cell that did not pass, and every printed
+  measured value carries the survivorship sentence of Part 0.6.
+- The verdict moves no served grade, no consensus weight, no eFV input and no TIP table used by look
+  P or look W (those fit their own declared rows).
+
+### T.7 The one look
+
+Look T runs ONCE, by TL_21_TOOL_TABLE_REDERIVE_LOOK, as `python tools/tool_accuracy_lab.py --look
+T`.
+
+**Date (orchestrator decision EPOCH-NOW, 2026-10-02).** THE FIRST DAY after TL_4_TOOL_LAB_BUILD
+lands (its build commit, its Part 4 amendment and the T.10 amendment all committed, T.10 on a
+calendar day before the look) on which the frame named in T.3 is complete and no other registered
+look is recorded that day. The frame is complete when the 2026 season files the HOLDOUT reads
+(`.cache/fa_statsapi_hitting_2026.json` and `.cache/fa_statsapi_pitching_2026.json`) were written
+after the 2026 regular season ended (the 2026 season is final) and T.10 records
+`.cache/velo_arsenal_2026.json` as written after that day or as absent. If
+`pal_export.load_velo(2026)` yields no rows, the velocity cell is NOT COMPUTABLE for that reason; it
+does not hold the look. The day is
+never a day another registered gate fixes for its own look (`docs/*GATE*.md` and
+`docs/**/*GATE*.md`, the U1c floor list), never a day a gate defines by rule from recorded inputs
+before its record is written, and never the day look P or look W runs (P.10, W.11). The plan's
+earlier date of 2026-10-28 is replaced by this condition; where TL_21's own checks name 2026-10-28,
+this condition is the registered date. A later day that meets the same conditions reads the same
+rows and needs no amendment; a run on a day that does not meet them is early and voids the look.
+The late-look clause (round 4, ruling R8), verbatim: "if today is after the registered date, first
+file a docs-only dated amendment to the gate naming the new date and the reason, commit it alone,
+and only then run; never early". Under this condition it applies only if a condition above is ever
+changed.
+
+**Order.** First, `--look T --dry-run` on fixtures carrying None values, which reads no real row
+and must complete. Then stdout and stderr are teed to the task's output directory before anything
+else runs. Before any score the runner asserts: the `--registration` sha names a commit carrying
+this part with its status line reading REGISTERED; the `--mde` sha names the T.10 amendment; no
+grade point dated 2020 or 2021; no debut in 2025 or later; no 2026 line in any FIT row; no grouping
+key naming an FV cell; and it records the sha256 of every input at start and at end. On any
+exception after scoring began: stop without rerunning, record the look as spent, and write
+OWNER_QUESTION.md with the traceback. No second run, seed, frame or estimator.
+
+**Spent.** A T.12 record or a spent marker in `data/tool_tables_rederived_eval.json` makes the
+runner refuse.
+
+### T.8 Bans
+
+- No change to any rule of this part after its commit. The only later edits are the T.10 amendment
+  and the T.12 record, each committed alone, and the late-look amendment of T.7 if it ever applies.
+- No row from R-LV (a grade point dated 2020 or 2021) or R-VM (a debut in 2025 or later).
+- No realized statistic by consensus-FV cell (`docs/PROSPECT_ANCHOR_GATE.md`). Tool-grade bins are
+  not FV cells. No stratum, key, label, filter or weight names an FV cell; a source scan test in
+  `test_tool_accuracy_lab.py` forbids an `fv` grouping key in the lab, and the frozen grade rows
+  carry no FV field.
+- No Statcast value and no other tool grade is an input to a candidate: each candidate is a function
+  of the one tool grade of its cell. Statcast enters only as an outcome unit of a secondary cell.
+- No table from `data/tool_grade_tables.json` scores a row; no WAR, WAR part or label is read.
+- No 2026 line in any FIT row, candidate table or T.10 fold.
+- No served file is written by the look; its eval artifact is a registry eval artifact.
+
+### T.9 Registry
+
+A row `tool_tables_rederived`, status 'registered, not read', eval artifact
+`data/tool_tables_rederived_eval.json` (an eval artifact that ships, never listed in
+`deploy/data_exclude.txt`), written by TL_21 through the idempotent registry script with a dated
+note listing each cell's verdict read from the artifact. This commit carries the document alone; the
+row lands with TL_21.
+
+The artifact carries: `generated_at`; the registration sha; the T.10 sha; the sha256 of every holdout
+and FIT input and of the frozen grade rows; per cell n, incumbent MAE, candidate MAE, delta, UB95, p,
+MDE95 (copied from T.10), the margin, the Holm step and the verdict (PASS, FAIL or NOT COMPUTABLE);
+the candidate bins of T.5; the beside, secondary and sensitivity reads marked as such; and the
+survivorship sentence.
+
+### T.10 MDE95 per primary cell
+
+PENDING: written by TL_4_TOOL_LAB_BUILD (`--look T --mde-only`) as one dated amendment committed
+alone, on a calendar day before the look.
+
+Method, fixed here. FIT rows only: MLB seasons 2015 to 2025 with 2020 excluded (velocity 2017 to
+2025); no HOLDOUT row and no 2026 line loaded, asserted. For each primary cell and each of its FIT
+seasons s, leave season s out:
+1. Refit the candidate by T.2 on FIT values pooled over each player's qualifying seasons other than
+   s (a player with no other qualifying season leaves that fit).
+2. Score the players with a qualifying season-s line (T.3 grade and exclusion rules) on that one
+   line: d_s = MAE_w(candidate refit without s) - MAE_w(incumbent), with the weights of T.4; for hit
+   to K% the incumbent is season s's grade-blind line.
+3. A fold with fewer than 60 rows leaves.
+
+MDE95 = 1.645 x the sample standard deviation (ddof 1) of d_s over the remaining folds, the house's
+one-sided convention. A cell with fewer than 5 remaining folds has no MDE95 and is NOT COMPUTABLE at
+the look. The amendment prints, per cell, MDE95, the folds used and each fold's row count, the
+sha256 of the frozen grade rows and of every FIT input, and the sha256 of
+`.cache/velo_arsenal_2026.json` (or its absence); the fold deltas themselves go only to
+`data/_labs/tool_tables_rederived/mde95_folds.json`.
+
+### T.11 Disclosures carried into the verdict
+
+- **(a) The July 2026 tables** (T.3): possible partial 2026 lines read descriptively, pools that
+  overlap both frames, predictions written with their results in view.
+- **(b) Not a player hold-out.** A HOLDOUT player's 2015 to 2025 seasons may sit in the FIT rows of
+  the table that scores his 2026 line. Sensitivity, reported only: each primary delta again with the
+  candidate refit on the FIT rows of players who hold no HOLDOUT row in that cell, printed
+  "sensitivity: no verdict".
+- **(c) Survivorship and maturity.** Only players who reached the majors and hold a qualifying 2026
+  season are scored (Part 0.6). The published tables describe hitters "at maturity"; the rows here
+  are MLB seasons at every age, the frame the candidate is fit in and the incumbent is not. A verdict
+  says "on debuted players' MLB seasons", never "at maturity".
+- **(d) Holdout overlap with the stat-line gate** (PLAN 9.4.6, round 4): look T reads realized
+  lines of the 2022 to 2024 debut cohorts before TL_17; TL_3 discloses this, and no Part T table is
+  an input or a baseline of `prospect_statline`.
+- **(e) Forking paths added by this part** (to Part 0.4): seven primary cells, two beside columns,
+  five secondary cells and one sensitivity read.
+- **(f) Defaults taken at registration:** D1, the open 80 HR band read at its stated bound 40; D2,
+  the grade-blind K% line pooled from counts; D3, the 300 PA hitter season floor; D4, the
+  incumbents chosen where two FanGraphs-framework columns share a unit (S3 for AVG and velocity,
+  W2's columns printed beside); D5, a grade point's calendar year read as its list vintage for the
+  R-LV exclusion; D6, Part T placed after Part 8, so nothing above Part 8 moves.
+
+### T.12 Results
+
+EMPTY AT REGISTRATION. Look T's record is written here by TL_21, pasted verbatim from the runner and
+dated.
