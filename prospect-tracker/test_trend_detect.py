@@ -570,13 +570,16 @@ def test_prior_season_mode():
 def test_families_and_bars():
     strict, looser = TD.BARS["strict"], TD.BARS["looser"]
     assert TD.BAR_POLICY == "strict"
-    assert set(strict) == {"sp_velo", "rp_velo", "rp_ivb", "rp_hb", "mix", "rp_entry_li",
-                           "bat_speed", "swing_length", "attack_angle"}
-    assert set(looser) == set(strict) | {"rp_spin", "rp_ext"}
-    assert strict["sp_velo"] == 4.5 and strict["mix"] == 6.0 and strict["rp_entry_li"] == 4.0
-    assert [strict[k] for k in ("bat_speed", "swing_length", "attack_angle")] == [4.25] * 3
+    # the bars are the calibration lab's (test_league_trends_eval.py pins them
+    # to the eval artifact); here only their shape
+    assert TD.BARS_PROVISIONAL is False
+    assert set(strict) <= set(looser) <= set(TD.FAMILIES)
+    assert {"sp_velo", "rp_velo", "rp_hb", "mix", "rp_entry_li", "bat_speed"} <= set(strict)
+    assert all(looser[k] <= strict[k] for k in strict)
     assert all(v in TD.BAR_GRID for p in TD.BARS.values() for v in p.values())
-    assert set(TD.FAMILIES) == set(looser)
+    assert set(TD.PLACEBO_SD) == set(looser) | set(strict)
+    assert all(0.5 < v < 2.0 for v in TD.PLACEBO_SD.values())
+    assert set(TD.FAMILIES) == set(looser) | {"sp_hb"}
     for k, f in TD.FAMILIES.items():
         assert f.key == k and f.roles and f.window and f.unit and f.label
         assert (f.pool == "all tracked") == (f.kind == "swing")
