@@ -7060,6 +7060,114 @@ flip rides on whichever pricer serves, de-meaned over the games that pricer was 
 about weather (5d-C, 5h) or the park (5i). **No number has been computed on this
 candidate.**
 
+### Fitted (2026-10-14): the 5k pre-2026 constants
+
+**Late, and what that costs.** This block was due before 2026-09-28 ("The block is committed
+before 2026-09-28") and is committed on 2026-10-14 with the harness, so the 5k harness is
+first ready on 2026-10-14, after 2026-09-28. Under "When 5k is read", the three 5k members
+still compute on the read day and are reported, and enter family RE at p = 1. m is 5: both
+amendment blocks (5d-C's and 5h-A's) were committed in d79067a5 on 2026-09-11, before
+2026-09-28 ("If an amendment block is missing" leaves m at 5).
+
+**Printouts that preceded this block** (5k: "Any amendment to 5k written after 2026-09-28
+names every printout that preceded it"; this block is not an amendment, and names them
+anyway): the 7h re-read result (2026-10-02), which printed eval-half observed, Poisson and
+mapped Over rates at 7.5 to 10.5 on four nested windows; the 7i closure (2026-10-02), which
+printed nothing; the 5c-B and 5c-C results (2026-10-08), which printed moneyline and total
+loss differences on 83 graded games. None of them was differenced or related to a trailing
+league mean, a month offset or either term below. Every constant below is fitted on 2018 to
+2025 and reads no 2026 game.
+
+**The run.** `python tools/betting_run_env_prefit.py --print`, deterministic, on 2026-10-14
+in the main tree. Input: `.cache/betting/regular_finals/<season>.json`, one
+`betting_model.fetch_finals` schedule request per season, fetched 2026-10-09 by
+`tools/intensity_fetch.py` (the same registered pull, reused rather than repeated). Output:
+`.cache/betting/run_env/prefit.json`, never `data/`.
+
+**One defect, fixed before this block was written.** The first prefit execution, the same
+day, counted a game as resumed when its kept listings carried two distinct OFFICIAL dates.
+A suspended game keeps its original official date on every listing, so that rule found 0
+resumed games in seven seasons and gave k_14 0.1367, k_30 0.2691 and A 0.00533. The rule
+now counts LISTINGS (a game_pk the schedule lists more than once is resumed, as 5k says),
+and the constants below are from the fixed run. Nothing 2026 was read by either execution.
+
+**The census check, on game_pk lists alone.** Every season equals its census entry and the
+play corpus's own game_pk list game for game; no difference, so no resolution was needed.
+
+| Season | Schedule rows returned | Kept (one per game_pk) | Census | Play corpus | Only in one list |
+|---|---|---|---|---|---|
+| 2018 | 2,433 | 2,431 | 2,431 | 2,431 | 0 |
+| 2019 | 2,433 | 2,429 | 2,429 | 2,429 | 0 |
+| 2021 | 2,437 | 2,429 | 2,429 | 2,429 | 0 |
+| 2022 | 2,431 | 2,430 | 2,430 | 2,430 | 0 |
+| 2023 | 2,437 | 2,430 | 2,430 | 2,430 | 0 |
+| 2024 | 2,432 | 2,429 | 2,429 | 2,429 | 0 |
+| 2025 | 2,434 | 2,430 | 2,430 | 2,430 | 0 |
+
+**The row rules** (`betting_model.run_env_qualifying`, the one definition the 2026 lab uses):
+
+| Season | Innings missing or below 9 | Resumed (listed twice) | Qualifying | mu_s (runs per team-game) |
+|---|---|---|---|---|
+| 2018 | 5 | 2 | 2,424 | 4.4488 |
+| 2019 | 9 | 4 | 2,416 | 4.8384 |
+| 2021 | 124 | 7 | 2,298 | 4.5820 |
+| 2022 | 10 | 1 | 2,419 | 4.2830 |
+| 2023 | 3 | 6 | 2,421 | 4.6210 |
+| 2024 | 4 | 3 | 2,422 | 4.3964 |
+| 2025 | 5 | 4 | 2,421 | 4.4500 |
+
+No duplicate game_pk and no row of another season reached the rules (the kept files are one
+row per game_pk). 2021's 124 are mostly its seven-inning doubleheaders.
+
+**5k-A.** Pooled, no intercept, weighted by team-games on D:
+
+| | k (pooled) | 2018 | 2019 | 2021 | 2022 | 2023 | 2024 | 2025 | 2023 to 2025 | dates | team-games |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| w = 14 | **0.13916052** | 0.1288 | -0.0269 | 0.0598 | 0.3730 | -0.2423 | 0.0801 | 0.4591 | 0.1580 | 1,222 | 32,302 |
+| w = 30 | **0.26923086** | 0.0356 | 0.4516 | 0.4685 | 0.1556 | -0.3027 | 0.3659 | 0.4017 | 0.2372 | 1,162 | 30,808 |
+
+Dates below the window floor (92 games for 14 days, 197 for 30), each season's opening
+days: 59 for w = 14 and 119 for w = 30 over the seven seasons. The per-season slopes and
+the 2023 to 2025 slope are descriptive, and no season is dropped after seeing them.
+
+Season-block bootstrap (1,000 resamples of the seven seasons with replacement,
+`numpy.random.default_rng(20260911)`, one stream, the same resample used for both windows):
+
+| | 2.5th | 50th | 97.5th | mean | share at or below 0 |
+|---|---|---|---|---|---|
+| k_14 | -0.0104 | 0.1364 | 0.2955 | 0.1367 | 0.041 |
+| k_30 | 0.0853 | 0.2702 | 0.3954 | 0.2645 | 0.001 |
+
+Both k are above 0, so neither A member is NULL BY CONSTRUCTION.
+
+**5k-B.** The six bins (March pooled into April, October into September), `d(s, m)` in runs
+per team-game:
+
+| Bin | 2018 | 2019 | 2021 | 2022 | 2023 | 2024 | 2025 | dbar(m) | V(m), ddof 1 | o(m) | games |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| April | 0.0225 | -0.2096 | -0.2585 | -0.2623 | -0.0220 | -0.0075 | -0.1013 | -0.11982 | 0.015068 | **-0.08564752** | 2,856 |
+| May | -0.1247 | -0.0230 | -0.1194 | 0.1383 | -0.0643 | -0.1458 | -0.1371 | -0.06799 | 0.010211 | **-0.05351755** | 2,861 |
+| June | -0.1172 | 0.1343 | 0.1561 | 0.2096 | -0.0877 | 0.0699 | 0.0031 | 0.05260 | 0.015548 | **0.03725977** | 2,771 |
+| July | 0.2514 | 0.1070 | 0.1323 | 0.0350 | 0.0205 | 0.1675 | 0.0527 | 0.10947 | 0.006789 | **0.09279013** | 2,570 |
+| August | 0.0038 | 0.1713 | -0.0031 | -0.0598 | 0.0753 | 0.1170 | 0.2381 | 0.07752 | 0.011155 | **0.05984351** | 2,884 |
+| September | -0.0143 | -0.1619 | 0.0815 | -0.1015 | 0.0759 | -0.1951 | -0.0490 | -0.05204 | 0.011770 | **-0.03967846** | 2,879 |
+
+A = **0.00539507** (above 0, so 5k-B is not NULL BY CONSTRUCTION).
+
+**Power, on 2018 to 2025 only, never a criterion.** sigma_T (the sd of a game's total about
+its season mean, 16,821 qualifying games) = **4.533754**. RMS_T of each member's term on the
+total (twice the per-side term, centred on each season's game-weighted mean of it):
+5k-A14 **0.048840** (16,151 games carrying a term), 5k-A30 **0.073836** (15,404), 5k-B
+**0.128970** (16,821). The ceiling t* = sqrt(n_eval) x RMS_T / (sigma_T x sqrt(2 pi)) is
+evaluated at each split's n_eval by the read.
+
+**The literal.** `betting_model.RUN_ENV_PRE2026` carries k_14, k_30, A, the six o(m), sigma_T
+and the three RMS_T above, rounded to 8 places (6 for the power figures), with digest
+**`5fdf7744e9135957`** (the first 16 hex of sha256 over the sorted JSON of the rest).
+`test_betting_run_env.py` pins the literal to this block and to a re-run of the prefit, and
+pins every choice in "Choices pinned". Re-fitting any constant after this commit
+disqualifies the member.
+
 ---
 
 ## 5l. Club policy rates from the dugout (`mg_pen_per_game_l30`, `mg_hook_pitches_l30`), schema after 5j's (pre-registered 2026-09-23)

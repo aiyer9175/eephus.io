@@ -2724,9 +2724,17 @@ def expected_runs(home_org: str, away_org: str, *, home_sp: dict | None = None,
                   away_sp: dict | None = None, teams: dict | None = None,
                   parks: dict | None = None, coeffs: dict | None = None,
                   home_adj: float | None = None,
-                  diff_shrink: float | None = None) -> dict | None:
+                  diff_shrink: float | None = None,
+                  env_runs: float = 0.0) -> dict | None:
     """Expected runs for both sides, plus the components that produced them.
     None when either club is missing from the leaderboards.
+
+    `env_runs` is the section 5k run-environment hook (DARK). It is added to
+    BOTH raw run rows before the midpoint, the differential shrink and the
+    [1.5, 9.5] clamp, so it moves the pair mean and never the half-difference.
+    The default 0.0 is skipped outright, so the served output is bit-identical,
+    and no served caller passes it (test_betting_run_env.py pins both); only the
+    5k lab (`run_environment_gate`) does.
 
     THE HOME-FIELD CORRECTION, because the raw fit gets it wrong for a
     structural reason worth naming. Fitting runs scored on a home dummy
@@ -2774,6 +2782,9 @@ def expected_runs(home_org: str, away_org: str, *, home_sp: dict | None = None,
 
     raw_home = _runs(h["z_off"], zp_away, True)
     raw_away = _runs(a["z_off"], zp_home, False)
+    if env_runs:
+        raw_home += float(env_runs)
+        raw_away += float(env_runs)
     mid, half = (raw_home + raw_away) / 2.0, (raw_home - raw_away) / 2.0
     lam_home = max(1.5, min(9.5, mid + diff_shrink * half))
     lam_away = max(1.5, min(9.5, mid - diff_shrink * half))
@@ -5706,6 +5717,828 @@ def total_calibration_gate(games=None, *, teams=None, parks=None, starters=None,
     return out
 
 
+# ---------------------------------------------------------------------------
+# section 5k: the run environment (DARK). Builders, the one term, the constants.
+# ---------------------------------------------------------------------------
+#: The two trailing windows (5k-A14, 5k-A30), in calendar days ending D-1.
+RUN_ENV_WINDOWS = (14, 30)
+#: Half the games 13.1 completed games per calendar date would give, rounded up.
+RUN_ENV_WINDOW_FLOORS = {14: 92, 30: 197}
+#: The pre-2026 seasons both arms are fitted on (2020 excluded; the corpus holds none).
+RUN_ENV_PREFIT_SEASONS = ("2018", "2019", "2021", "2022", "2023", "2024", "2025")
+#: The B-CORPUS census of the 2026-09-05 plan, as 5k quotes it, by season.
+RUN_ENV_CENSUS = {"2018": 2431, "2019": 2429, "2021": 2429, "2022": 2430,
+                  "2023": 2430, "2024": 2429, "2025": 2430}
+#: 5k-B's six calendar bins; March pools into April, October into September.
+RUN_ENV_MONTH_BINS = ("04", "05", "06", "07", "08", "09")
+RUN_ENV_BOOT_SEED = 20260911
+RUN_ENV_BOOT_N = 1000
+#: The twins: numpy.random.default_rng(seed) for seeds 0 to 199, one permutation each.
+RUN_ENV_TWIN_SEEDS = tuple(range(200))
+#: numpy.percentile(improvements, 95), default linear interpolation; beaten strictly.
+RUN_ENV_TWIN_PERCENTILE = 95
+#: Family RE: alpha 0.05 one-sided, Holm, ties ranked in this member order.
+RUN_ENV_FAMILY_ALPHA = 0.05
+RUN_ENV_MEMBERS = ("5d-C", "5h-A", "5k-A14", "5k-A30", "5k-B")
+RUN_ENV_EARLIEST_READ = "2026-10-07"
+RUN_ENV_LAST_READ = "2026-10-31"
+#: "A 5k harness first ready on or after 2026-09-28 ... its three members enter RE
+#: at p = 1." The date of the first 2026 printout after the 5k registration.
+RUN_ENV_READY_CUTOFF = "2026-09-28"
+#: The frozen pre-2026 constants (### Fitted block in docs/diamond-betting.md 5k),
+#: written by tools/betting_run_env_prefit.py and pinned to that block by a test.
+#: Never a served constant (plan X4).
+RUN_ENV_PRE2026: dict | None = {
+    "digest": "5fdf7744e9135957",
+    "k": {
+        "14": 0.13916052,
+        "30": 0.26923086
+    },
+    "month": {
+        "A": 0.00539507,
+        "offset": {
+            "04": -0.08564752,
+            "05": -0.05351755,
+            "06": 0.03725977,
+            "07": 0.09279013,
+            "08": 0.05984351,
+            "09": -0.03967846
+        }
+    },
+    "power": {
+        "RMS_T": {
+            "5k-A14": 0.04884,
+            "5k-A30": 0.073836,
+            "5k-B": 0.12897
+        },
+        "sigma_T": 4.533754
+    },
+    "seasons": [
+        "2018",
+        "2019",
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+    ]
+}
+
+
+class RunEnvStop(Exception):
+    """A 5k row rule that cannot be resolved (a game whose resume status is unknown,
+    an unexplained census difference). The build stops with the game named."""
+
+
+def run_env_month_bin(date: str) -> str:
+    """'YYYY-MM-DD' -> one of RUN_ENV_MONTH_BINS (March -> April, October ->
+    September)."""
+    m = str(date)[5:7]
+    if m <= "04":
+        return "04"
+    if m >= "09":
+        return "09"
+    return m
+
+
+def run_env_listing_counts(rows: list[dict]) -> dict:
+    """{game_pk: number of distinct schedule dates it is listed on} from schedule
+    rows (fetch_finals' shape). Reads game_pk and date only, never a runs field."""
+    dates: dict = {}
+    for r in rows or []:
+        try:
+            pk = int(r.get("game_pk"))
+        except (TypeError, ValueError):
+            continue
+        dates.setdefault(pk, set()).add(r.get("date"))
+    return {pk: len(v) for pk, v in dates.items()}
+
+
+def run_env_qualifying(rows: list[dict], season: str, *, listings: dict) -> tuple[list, dict]:
+    """(qualifying finals, drop counts) under 5k's row rules, in order: deduplicate
+    game_pk; drop a row of another season; drop a row with no `innings` or below 9;
+    drop every RESUMED game (listed on two schedule dates). `listings` is
+    {game_pk: number of schedule dates}; a row whose game_pk it does not hold has an
+    unresolved resume status and STOPS the build (RunEnvStop names it)."""
+    drops = {"duplicate_game_pk": 0, "season_not_requested": 0,
+             "innings_missing_or_below_9": 0, "resumed": 0}
+    seen, kept = set(), []
+    for r in rows or []:
+        pk = r.get("game_pk")
+        if pk in seen:
+            drops["duplicate_game_pk"] += 1
+            continue
+        seen.add(pk)
+        if str(r.get("season")) != str(season):
+            drops["season_not_requested"] += 1
+            continue
+        inn = r.get("innings")
+        if inn is None or int(inn) < 9:
+            drops["innings_missing_or_below_9"] += 1
+            continue
+        try:
+            n_dates = listings[int(pk)]
+        except (KeyError, TypeError, ValueError):
+            raise RunEnvStop(f"5k row rules: game_pk {pk} ({r.get('date')}) has no "
+                             f"schedule listing, so its resume status cannot be resolved")
+        if n_dates > 1:
+            drops["resumed"] += 1
+            continue
+        kept.append(r)
+    return kept, drops
+
+
+def run_env_daily(finals: list[dict]) -> dict:
+    """{date: [runs, games]} over qualifying finals (both clubs' runs)."""
+    out: dict = {}
+    for r in finals:
+        d = r.get("date")
+        cell = out.setdefault(d, [0, 0])
+        cell[0] += int(r["home_runs"]) + int(r["away_runs"])
+        cell[1] += 1
+    return out
+
+
+def run_env_window(daily: dict, date: str, w: int) -> dict:
+    """R_w(D): runs per team-game over qualifying finals dated in the w calendar
+    days ending D-1, with its count and covers_through. `value` is None below
+    RUN_ENV_WINDOW_FLOORS[w]."""
+    d0 = _dt.date.fromisoformat(str(date))
+    runs = games = 0
+    newest = None
+    for k in range(1, int(w) + 1):
+        dk = (d0 - _dt.timedelta(days=k)).isoformat()
+        cell = daily.get(dk)
+        if cell and cell[1]:
+            runs += cell[0]
+            games += cell[1]
+            newest = newest or dk
+    floor = RUN_ENV_WINDOW_FLOORS.get(int(w), 0)
+    val = runs / (2.0 * games) if games and games >= floor else None
+    return {"value": val, "n_games": games, "covers_through": newest,
+            "window_days": int(w), "floor": floor}
+
+
+def run_env_season_mean(daily: dict) -> float | None:
+    runs = sum(c[0] for c in daily.values())
+    games = sum(c[1] for c in daily.values())
+    return runs / (2.0 * games) if games else None
+
+
+def run_environment_term(member: str, game_date: str, *, daily: dict,
+                         center: float = 0.0, consts: dict | None = None) -> dict | None:
+    """DARK. The per-side 5k term for a game on `game_date`, in runs, the one
+    definition the live and vintage paths share. NOTHING SERVED CALLS THIS
+    (test_betting_run_env.py pins it).
+
+      5k-A14 / 5k-A30   k_w * (R_w(D) - center), center = Rbar_w of the split
+      5k-B              o(m(D)) - center,        center = obar of the split
+
+    `daily` is run_env_daily over qualifying finals of D's season. Returns None
+    when the member gives no term for D (an A window under its floor), or when the
+    member is NULL BY CONSTRUCTION (k_w <= 0, A = 0). The row carries 5a's record
+    shape: provenance, covers_through, window_days, n_games."""
+    c = consts if consts is not None else RUN_ENV_PRE2026
+    if not c:
+        return None
+    if member in ("5k-A14", "5k-A30"):
+        w = 14 if member == "5k-A14" else 30
+        k = float(c["k"][str(w)])
+        if k <= 0:
+            return None
+        win = run_env_window(daily, game_date, w)
+        if win["value"] is None:
+            return None
+        return {"member": member, "raw": win["value"],
+                "term": k * (win["value"] - float(center)),
+                "provenance": {"source": "archive-reconstruct"},
+                "covers_through": win["covers_through"], "window_days": w,
+                "n_games": win["n_games"]}
+    if member == "5k-B":
+        if float(c["month"]["A"]) <= 0:
+            return None
+        o = float(c["month"]["offset"][run_env_month_bin(game_date)])
+        return {"member": member, "raw": o, "term": o - float(center),
+                "provenance": {"source": "pre-2026-fit",
+                               "seasons": list(RUN_ENV_PREFIT_SEASONS),
+                               "digest": c.get("digest")},
+                "month_bin": run_env_month_bin(game_date)}
+    raise ValueError(f"run_environment_term: unknown member {member!r}")
+
+
+RUN_ENV_DIR = GAME_CACHE / "run_env"
+#: The one look's full record (data/_labs ships in neither deploy consumer).
+RUN_ENV_RECORD_PATH = DATA_DIR / "_labs" / "run_env" / "re_look_record.json"
+RUN_ENV_DOC_PATH = ROOT / "docs" / "diamond-betting.md"
+#: 5d-C as an RE member, decided at p = 1 and never read (recorded under 5d at the
+#: read). Its gate text fixes the estimand, criteria and the screen's order but not
+#: how the two climatology columns enter the run rows or how their coefficients are
+#: fitted, and the vintage store carries them only from the 2026-09-09 vintage, so
+#: the registered split's fit half (games before 2026-08-01) holds no value. N1 (the
+#: 2026-09-11 plan, 7.1 item 14) forbids reconstructing a schema-4 column.
+RUN_ENV_5DC_STATUS = {
+    "member": "5d-C", "read": False, "p": 1.0,
+    "reason": ("harness not buildable as registered: the 5d-C gate does not fix how "
+               "wx_temp_climo and wx_wind_out_climo enter the run rows or how their "
+               "coefficients are fitted, and the columns exist in the vintage store only "
+               "from the 2026-09-09 vintage, so the registered split's fit half (games "
+               "before 2026-08-01) carries no value; N1 forbids reconstructing a "
+               "schema-4 column. Decided at p = 1 under 5k's 'If 5d-C's harness is not "
+               "ready by 2026-10-31' clause, taken on the read day under the owner's "
+               "2026-10-14 waiver of registered dates (EW3-5)"),
+}
+RUN_ENV_5HA_STATUS = {
+    "member": "5h-A", "read": False, "p": 1.0,
+    "reason": ("the governing live arm reads in 2027 (400 open-air live games; the "
+               "2026 capture holds fewer); 'it stays 1 until that arm reads'"),
+}
+
+
+def run_env_listings_2026(*, fetch: bool = True, path: Path | None = None) -> dict:
+    """{game_pk: schedule listings} for the 2026 regular season, the 5k resume
+    lookup's schedule door. One StatsAPI schedule request (betting_model.fetch_finals,
+    the pre-2026 pull's own door), cached under .cache/betting/run_env/. Stores game_pk
+    listing counts and the fetch time only; no runs field is kept."""
+    p = Path(path or (RUN_ENV_DIR / "listings_2026.json"))
+    if p.exists():
+        doc = json.loads(p.read_text(encoding="utf-8"))
+        return {int(k): int(v) for k, v in doc["listings"].items()}
+    if not fetch:
+        raise RunEnvStop("5k: the 2026 schedule listing is not cached and fetch is off")
+    rows = fetch_finals("2026-02-01", "2026-11-30")
+    counts: dict = {}
+    for r in rows:
+        if str(r.get("season")) != "2026":
+            continue
+        pk = int(r["game_pk"])
+        counts[pk] = counts.get(pk, 0) + 1
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({
+        "fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "source": "betting_model.fetch_finals 2026-02-01..2026-11-30 gameType R",
+        "n_listings": sum(counts.values()), "n_game_pks": len(counts),
+        "listings": {str(k): v for k, v in sorted(counts.items())}}), encoding="utf-8")
+    return counts
+
+
+def run_env_coverage(*, games=None, listings=None) -> dict:
+    """COUNTS ONLY. The 2026 row rules, window counts and floors, and the pre-2026
+    reconciliation's summary. Never a 2026 R_w, S, d or term value (5k: a printed
+    series of trailing means already sits beside the later games)."""
+    games = games if games is not None else completed_games("2026", refresh=False)
+    listings = listings if listings is not None else run_env_listings_2026()
+    kept, drops = run_env_qualifying(games, "2026", listings=listings)
+    daily = run_env_daily(kept)
+    dates = sorted({g.get("date") for g in games if g.get("date")})
+    floors = {}
+    for w in RUN_ENV_WINDOWS:
+        n_ok = sum(1 for d in dates if run_env_window(daily, d, w)["value"] is not None)
+        floors[str(w)] = {"dates": len(dates), "dates_meeting_floor": n_ok,
+                          "dates_below_floor": len(dates) - n_ok,
+                          "floor": RUN_ENV_WINDOW_FLOORS[w]}
+    return {"n_rows": len(games), "n_qualifying": len(kept), "drops": drops,
+            "n_listed_more_than_once": sum(1 for v in listings.values() if v > 1),
+            "windows": floors}
+
+
+def _re_cluster_t(d: list[float], dates: list[str]) -> dict:
+    """Criterion 1's pinned t: CR1 date-clustered SE, p the upper tail of t_(G-1)."""
+    n = len(d)
+    if n < 2:
+        return {"n": n, "G": None, "dbar": None, "se": None, "t": None, "p": 1.0}
+    dbar = sum(d) / n
+    S: dict = {}
+    for x, g in zip(d, dates):
+        S[g] = S.get(g, 0.0) + (x - dbar)
+    G = len(S)
+    if G < 2:
+        return {"n": n, "G": G, "dbar": dbar, "se": None, "t": None, "p": 1.0}
+    se = math.sqrt(G / (G - 1) * sum(v * v for v in S.values())) / n
+    if not se:
+        return {"n": n, "G": G, "dbar": dbar, "se": 0.0, "t": None, "p": 1.0}
+    from scipy import stats as _st
+    t = dbar / se
+    return {"n": n, "G": G, "dbar": dbar, "se": se, "t": t,
+            "p": float(_st.t.sf(t, G - 1))}
+
+
+def _re_stats(xs: list[float]) -> dict:
+    if not xs:
+        return {"n": 0, "mean": None, "sd": None, "min": None, "max": None, "RMS_T": None}
+    n = len(xs)
+    mu = sum(xs) / n
+    sd = math.sqrt(sum((x - mu) ** 2 for x in xs) / (n - 1)) if n > 1 else 0.0
+    return {"n": n, "mean": mu, "sd": sd, "min": min(xs), "max": max(xs),
+            "RMS_T": math.sqrt(sum((2.0 * x) ** 2 for x in xs) / n)}
+
+
+def holm_family(p_by_member: dict, *, alpha: float = RUN_ENV_FAMILY_ALPHA,
+                order=RUN_ENV_MEMBERS) -> dict:
+    """Holm over family RE: {member: {rank, bar, rejected}} and the step it stopped
+    at. Ties are ranked in member order; the j-th smallest p is compared with
+    alpha / (m - j + 1), stopping at the first that fails."""
+    m = len(order)
+    ranked = sorted(order, key=lambda k: (float(p_by_member[k]), order.index(k)))
+    out, stopped_at = {}, None
+    for j, k in enumerate(ranked, start=1):
+        bar = alpha / (m - j + 1)
+        rej = stopped_at is None and float(p_by_member[k]) <= bar
+        if not rej and stopped_at is None:
+            stopped_at = j
+        out[k] = {"rank": j, "bar": bar, "p": float(p_by_member[k]), "rejected": rej}
+    return {"m": m, "alpha": alpha, "members": out, "stopped_at_step": stopped_at}
+
+
+def re_member_label(split_ps: list, bar: float, holm_rejected: bool,
+                    crit2_all: bool, twin_all: bool, screen_ok: bool) -> str:
+    """5k's labels. PASS needs Holm's rejection, criterion 2 and the twin at every
+    split and no screen disqualification."""
+    clears = [p is not None and p <= bar for p in split_ps]
+    if holm_rejected and all(clears) and crit2_all and twin_all and screen_ok:
+        return "PASS"
+    if not any(clears):
+        return "FAIL"
+    if not all(clears):
+        return "INDETERMINATE"
+    if not holm_rejected:
+        return "FAIL (Holm stopped)"
+    return "FAIL"
+
+
+def _re_split(fit_g, ev_g, teams, parks, starters, resolve, *, daily, finals26_daily,
+              consts, roof_by_org, run_alpha, platt, members) -> dict:
+    """One split: the incumbent refit on the fit half exactly as the 7f/7g/7h labs do,
+    then, per member, the contaminated screen FIRST, the member, its twin and the
+    reported-only diagnostics. Working series are not published."""
+    import numpy as np
+
+    coeffs = fit_coefficients(fit_g, teams=teams, parks=parks, starters=starters,
+                              resolve=resolve)
+    if not coeffs:
+        return {"status": "did not price"}
+    tie = _fit_tie_home(fit_g)
+    fit_home_rate = (sum(1 for g in fit_g if g["home_runs"] > g["away_runs"])
+                     / max(1, len(fit_g)))
+    shrink, _ = _solve_diff_shrink(fit_g, teams, parks, starters, coeffs, tie,
+                                   0.0, resolve, None)
+    adj = _solve_home_adj(fit_g, teams, parks, starters, coeffs, tie,
+                          fit_home_rate, shrink, resolve, None)
+    r = _alpha_to_r(run_alpha)
+
+    def er(g, env=0.0):
+        got = resolve(g)
+        if not got:
+            return None
+        gt, gs, gpk = got
+        return expected_runs(g["home_org"], g["away_org"],
+                             home_sp=gs.get(g.get("home_sp")),
+                             away_sp=gs.get(g.get("away_sp")),
+                             teams=gt, parks=gpk, coeffs=coeffs,
+                             home_adj=adj, diff_shrink=shrink, env_runs=env)
+
+    def p_home(e):
+        dist, _ = _score_joint(e["lam_home"], e["lam_away"], r)
+        p = split_tie_atom(dist, tie, None)["p_home"]
+        if platt:
+            p = apply_platt(p, platt[0], platt[1])
+        return p
+
+    fit_rows = [g for g in fit_g if er(g) is not None]
+    ev_rows = []
+    for g in ev_g:
+        e0 = er(g)
+        if e0 is None:
+            continue
+        ev_rows.append((g, e0))
+    out = {"n_fit": len(fit_rows), "n_eval": len(ev_rows),
+           "coefficients": {k: round(coeffs[k], 6) for k in _COEFF_KEYS},
+           "diff_shrink": shrink, "home_field_runs_adj": adj, "tie_home": tie,
+           "members": {}}
+
+    def ytot(g):
+        return int(g["home_runs"]) + int(g["away_runs"])
+
+    def c1_series(term_of):
+        """[(d_i, date, inc_total, chal_total, y, g, e_chal, e_inc)] over eval games
+        whose term_of(g) is not None."""
+        rows = []
+        for g, e0 in ev_rows:
+            t = term_of(g)
+            if t is None:
+                continue
+            e1 = er(g, t) if t else e0
+            inc_t = e0["lam_home"] + e0["lam_away"]
+            ch_t = e1["lam_home"] + e1["lam_away"]
+            y = ytot(g)
+            rows.append((abs(inc_t - y) - abs(ch_t - y), g["date"], inc_t, ch_t, y, g, e1,
+                         e0))
+        return rows
+
+    def c1(rows):
+        return _re_cluster_t([x[0] for x in rows], [x[1] for x in rows])
+
+    # --- member terms --------------------------------------------------------
+    def a_raw(w):
+        cache: dict = {}
+
+        def f(date):
+            if date not in cache:
+                cache[date] = run_env_window(daily, date, w)["value"]
+            return cache[date]
+        return f
+
+    mu26 = run_env_season_mean(finals26_daily)
+    s_of = {d: c[0] / (2.0 * c[1]) for d, c in finals26_daily.items() if c[1]}
+    d26 = {}
+    for mb in RUN_ENV_MONTH_BINS:
+        cells = [c for d, c in finals26_daily.items() if run_env_month_bin(d) == mb]
+        gm = sum(c[1] for c in cells)
+        d26[mb] = (sum(c[0] for c in cells) / (2.0 * gm) - mu26) if gm else None
+
+    def center(fn):
+        vals = [fn(g["date"]) for g in fit_rows]
+        vals = [v for v in vals if v is not None]
+        return (sum(vals) / len(vals) if vals else None), len(vals), \
+            len(fit_rows) - len(vals)
+
+    for mem in members:
+        rec: dict = {"member": mem}
+        if mem in ("5k-A14", "5k-A30"):
+            w = 14 if mem == "5k-A14" else 30
+            k = float(consts["k"][str(w)])
+            if k <= 0:
+                rec.update({"null_by_construction": True, "k": k})
+                out["members"][mem] = rec
+                continue
+            raw = a_raw(w)
+            cen, n_fit_term, n_fit_floor = center(raw)
+            scr_cen, _, _ = center(lambda d: s_of.get(d))
+            rec.update({"k": k, "Rbar": cen, "n_fit_with_term": n_fit_term,
+                        "n_fit_below_floor": n_fit_floor})
+            if cen is None:
+                rec["status"] = "no fit-half game carries a term, so Rbar is undefined"
+                out["members"][mem] = rec
+                continue
+
+            def term_of(g, mem=mem, cen=cen, _c={}):
+                d = g["date"]
+                if d not in _c:
+                    t = run_environment_term(mem, d, daily=daily, center=cen,
+                                             consts=consts)
+                    _c[d] = None if t is None else t["term"]
+                return _c[d]
+
+            def screen_of(g, raw=raw, k=k, scr_cen=scr_cen):
+                if raw(g["date"]) is None:
+                    return None
+                v = s_of.get(g["date"])
+                return None if v is None else k * (v - scr_cen)
+        else:
+            o = dict(consts["month"]["offset"])
+            if float(consts["month"]["A"]) <= 0:
+                rec.update({"null_by_construction": True, "A": consts["month"]["A"]})
+                out["members"][mem] = rec
+                continue
+            cen, _, _ = center(lambda d: o[run_env_month_bin(d)])
+            scr_cen, _, _ = center(lambda d: d26[run_env_month_bin(d)])
+            rec.update({"obar": cen})
+
+            def term_of(g, mem=mem, cen=cen):
+                t = run_environment_term(mem, g["date"], daily=daily, center=cen,
+                                         consts=consts)
+                return None if t is None else t["term"]
+
+            def screen_of(g, scr_cen=scr_cen):
+                v = d26[run_env_month_bin(g["date"])]
+                return None if v is None else v - scr_cen
+
+        # 1. the contaminated screen, first; it can only disqualify
+        srows = c1_series(screen_of)
+        sc = c1(srows)
+        rec["screen"] = {"contaminated": True, **sc,
+                         "improves": bool(sc["dbar"] is not None and sc["dbar"] > 0)}
+        # 2. the member
+        mrows = c1_series(term_of)
+        crit1 = c1(mrows)
+        rec["n_eval_with_term"] = len(mrows)
+        rec["n_eval_below_floor"] = len(ev_rows) - len(mrows)
+        rec["criterion_1"] = crit1
+        bi, bc = [], []
+        for _, _, _, _, _, g, e1, e0 in mrows:
+            yh = 1 if g["home_runs"] > g["away_runs"] else 0
+            bi.append((p_home(e0) - yh) ** 2)
+            bc.append((p_home(e1) - yh) ** 2)
+        b_delta = (sum(bi) - sum(bc)) / len(bi) if bi else None
+        rec["criterion_2"] = {"brier_incumbent": sum(bi) / len(bi) if bi else None,
+                              "brier_challenger": sum(bc) / len(bc) if bc else None,
+                              "delta_incumbent_minus_challenger": b_delta,
+                              "holds": bool(b_delta is not None and b_delta >= 0)}
+        # 3. the twin
+        twin = []
+        if mem in ("5k-A14", "5k-A30"):
+            tdates = sorted({x[1] for x in mrows})
+            tval = {x[1]: term_of(x[5]) for x in mrows}
+            for seed in RUN_ENV_TWIN_SEEDS:
+                perm = np.random.default_rng(seed).permutation(len(tdates))
+                mp = {tdates[i]: tval[tdates[int(perm[i])]] for i in range(len(tdates))}
+                rows_t = c1_series(lambda g, mp=mp: mp.get(g["date"]))
+                twin.append(sum(x[0] for x in rows_t) / len(rows_t) if rows_t
+                            else float("nan"))
+        else:
+            bins = list(RUN_ENV_MONTH_BINS)
+            for seed in RUN_ENV_TWIN_SEEDS:
+                perm = np.random.default_rng(seed).permutation(len(bins))
+                o2 = {bins[i]: o[bins[int(perm[i])]] for i in range(len(bins))}
+                c2, _, _ = center(lambda d, o2=o2: o2[run_env_month_bin(d)])
+                rows_t = c1_series(lambda g, o2=o2, c2=c2: o2[run_env_month_bin(g["date"])] - c2)
+                twin.append(sum(x[0] for x in rows_t) / len(rows_t) if rows_t
+                            else float("nan"))
+        bar = float(np.percentile(np.asarray(twin, dtype=float), RUN_ENV_TWIN_PERCENTILE))
+        rec["twin"] = {"n": len(twin), "bar_p95": bar, "member_mean": crit1["dbar"],
+                       "beaten": bool(crit1["dbar"] is not None and crit1["dbar"] > bar),
+                       "improvements": twin}
+        # 4. reported, never qualifying
+        sq = _re_cluster_t([(x[2] - x[4]) ** 2 - (x[3] - x[4]) ** 2 for x in mrows],
+                           [x[1] for x in mrows])
+        rec["squared_error"] = sq
+        rec["grid_log_loss"] = _paired_delta(
+            _total_level_losses([(x[2], x[4]) for x in mrows], 0.0),
+            _total_level_losses([(x[3], x[4]) for x in mrows], 0.0))
+        clamp_inc = clamp_ch = 0
+        for _, _, _, _, _, g, e1, e0 in mrows:
+            clamp_inc += sum(1 for v in (e0["lam_home"], e0["lam_away"]) if v in (1.5, 9.5))
+            clamp_ch += sum(1 for v in (e1["lam_home"], e1["lam_away"]) if v in (1.5, 9.5))
+        rec["clamp_hits"] = {"incumbent_sides": clamp_inc, "challenger_sides": clamp_ch}
+        rec["term_fit_half"] = _re_stats([t for t in (term_of(g) for g in fit_rows)
+                                          if t is not None])
+        rec["term_eval_half"] = _re_stats([term_of(x[5]) for x in mrows])
+        by_roof: dict = {}
+        for x in mrows:
+            rt = roof_by_org.get(x[5]["home_org"]) or "unknown"
+            by_roof.setdefault(rt, ([], []))
+            by_roof[rt][0].append(x[0])
+            by_roof[rt][1].append(x[1])
+        rec["criterion_1_by_roof"] = {k: _re_cluster_t(v[0], v[1]) for k, v in
+                                      sorted(by_roof.items())}
+        rec["_rows"] = mrows
+        out["members"][mem] = rec
+    return out
+
+
+def _re_market_diagnostic(rows) -> dict:
+    """DIAGNOSTIC, NEVER A CRITERION: on eval games with a cached open capture, the
+    positive-edge Over/Under split and model P(over) minus the realised rate, for the
+    incumbent and the member (Poisson total at the posted modal line, as 7f)."""
+    need = {x[5]["date"] for x in rows}
+    caps = _market_open_by_market(need)
+    acc = {"incumbent": [], "challenger": []}
+    ys, mkt = [], []
+    for _, _, inc_t, ch_t, y, g, _, _ in rows:
+        ev = (caps.get(g["date"]) or {}).get((g["home_org"], g["away_org"])) or {}
+        spec = ev.get("total")
+        if not spec or spec.get("line") is None:
+            continue
+        line = float(spec["line"])
+        if float(y) == line:
+            continue
+        ys.append(1 if y > line else 0)
+        mkt.append(float(spec["p_over"]))
+        for k, m in (("incumbent", inc_t), ("challenger", ch_t)):
+            acc[k].append(total_side_probabilities(_poisson_pmf(max(0.5, m), 40),
+                                                   line)["p_over"])
+    n = len(ys)
+    if not n:
+        return {"n": 0, "is_a_criterion": False}
+    hit = sum(ys) / n
+    return {"n": n, "is_a_criterion": False, "realised_over_rate": hit,
+            "model_over_minus_realised": {k: sum(v) / n - hit for k, v in acc.items()},
+            "positive_edge_over": {k: sum(1 for p, q in zip(v, mkt) if p > q)
+                                   for k, v in acc.items()},
+            "positive_edge_under": {k: sum(1 for p, q in zip(v, mkt) if p < q)
+                                    for k, v in acc.items()}}
+
+
+def _re_roof_by_org(games, *, per_org: int = 3) -> dict:
+    """{home_org: roofType} for 5k's report-only criterion 1 by roof type. The weather
+    module's venue table, read the same way (the newest `per_org` cached feeds per home
+    club, so one neutral-site game cannot hide a home park), without importing that
+    module: its dark-column test pins that this file never names it."""
+    seen: dict = {}
+    out: dict = {}
+    for g in sorted(games or [], key=lambda x: str(x.get("date") or ""), reverse=True):
+        ho = g.get("home_org")
+        if not ho or seen.get(ho, 0) >= per_org:
+            continue
+        try:
+            d = json.loads((FEED_CACHE / f"{int(g['game_pk'])}.json").read_text(
+                encoding="utf-8"))
+        except Exception:                                        # noqa: BLE001
+            continue
+        v = (d.get("gameData") or {}).get("venue") or {}
+        if v.get("id") is None:
+            continue
+        seen[ho] = seen.get(ho, 0) + 1
+        out.setdefault(ho, (v.get("fieldInfo") or {}).get("roofType"))
+    return out
+
+
+def run_env_guard(read_date: str, *, doc_path: Path | None = None,
+                  record_path: Path | None = None) -> str | None:
+    """None when the read may run; otherwise the refusal. 5k: refuses a run dated
+    before 2026-10-07, and a second run once a 5k result block exists (or the one
+    look's record, or the eval key, which it writes before anything is opened)."""
+    if str(read_date) < RUN_ENV_EARLIEST_READ:
+        return f"refused: {read_date} is before {RUN_ENV_EARLIEST_READ}"
+    rp = Path(record_path or RUN_ENV_RECORD_PATH)
+    if rp.exists():
+        return f"refused: the one look's record already exists ({rp.name})"
+    dp = Path(doc_path or RUN_ENV_DOC_PATH)
+    if dp.exists():
+        txt = dp.read_text(encoding="utf-8")
+        ma = re.search(r"(?m)^## 5k\. ", txt)
+        mb = re.search(r"(?m)^## 5l\. ", txt)
+        a = ma.start() if ma else -1
+        b = mb.start() if mb else -1
+        if a >= 0 and "### Result (run " in txt[a:b if b > a else None]:
+            return "refused: a 5k result block exists in docs/diamond-betting.md"
+    if record_path is None:
+        ev = _load_json(EVAL_PATH) or {}
+        if isinstance(ev, dict) and ev.get("run_environment"):
+            return "refused: data/betting_model_eval.json already holds run_environment"
+    return None
+
+
+def run_environment_gate(*, read_date: str | None = None, games=None, teams=None,
+                         parks=None, starters=None, listings=None, consts=None,
+                         harness_first_ready: str | None = None,
+                         record_path: Path | None = None, doc_path: Path | None = None,
+                         write_eval: bool = True, quantiles=None, log_fn=None) -> dict:
+    """THE ONE LOOK of family RE's 5k members (section 5k), with 5d-C and 5h-A
+    entered as they stand. Every member's result is computed and WRITTEN (the record,
+    then the eval key) before anything is printed. Refuses per run_env_guard."""
+    read_date = read_date or _dt.date.today().isoformat()
+    why = run_env_guard(read_date, record_path=record_path, doc_path=doc_path)
+    if why:
+        raise RunEnvStop(why)
+    consts = consts if consts is not None else RUN_ENV_PRE2026
+    if not consts:
+        raise RunEnvStop("RUN_ENV_PRE2026 is not set; the prefit block is missing")
+    qs = tuple(quantiles if quantiles is not None else DISPERSION_SPLIT_QUANTILES)
+    games = games if games is not None else completed_games("2026", refresh=False)
+    games = [g for g in games if str(g.get("season")) == "2026"]
+    listings = listings if listings is not None else run_env_listings_2026()
+    teams = teams if teams is not None else team_inputs()
+    parks = parks if parks is not None else park_index()
+    starters = starters if starters is not None else starter_inputs()
+    kept, drops = run_env_qualifying(games, "2026", listings=listings)
+    daily = run_env_daily(kept)
+    roof_by_org = _re_roof_by_org(games)
+    reset_vintage_cache()
+    resolve, _ = _vintage_resolver()
+    gradable = [g for g in games if resolve(g)]
+    dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    run_alpha = run_dispersion_alpha()
+    platt = served_platt()
+    rec = {"section": "5k", "read_date": read_date,
+           "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "model_version": MODEL_VERSION, "constants": consts,
+           "n_window": len(games), "n_gradable": len(gradable),
+           "last_date": max((g.get("date") for g in games), default=None),
+           "row_rules_2026": {"n_qualifying": len(kept), **drops},
+           "flags": {k: globals().get(k) for k in (
+               "SERVE_TOTAL_CALIBRATION", "SERVE_RIDGE_FIT", "SERVE_RUN_DISPERSION",
+               "SERVE_ATH_PARK", "SERVE_RUNLINE_TIE_SPLIT", "SERVE_TOTAL_LEVEL",
+               "SERVE_TOTAL_DISPERSION", "SERVE_PROB_CALIBRATION",
+               "VINTAGE_FIT_WINDOW_GROWS")},
+           "run_alpha": run_alpha, "platt": platt}
+    cuts = [("anchored", dates[_vintage_cut_index(gradable, dates)])]
+    cuts += [(q, dates[max(1, min(int(len(dates) * q), len(dates) - 1))]) for q in qs]
+    members = ("5k-A14", "5k-A30", "5k-B")
+    grid = []
+    for q, cut in cuts:
+        fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+        ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
+        row = {"split_q": q, "split_date": cut, "n_fit": len(fit_g), "n_eval": len(ev_g)}
+        if len(fit_g) < VINTAGE_MIN_FIT_GAMES or len(ev_g) < VINTAGE_MIN_EVAL_GAMES:
+            row.update({"status": "below the fit/eval floors"})
+            grid.append(row)
+            continue
+        sp = _re_split(fit_g, ev_g, teams, parks, starters, resolve, daily=daily,
+                       finals26_daily=daily, consts=consts, roof_by_org=roof_by_org,
+                       run_alpha=run_alpha, platt=platt, members=members)
+        for mem, m in (sp.get("members") or {}).items():
+            rows = m.pop("_rows", None)
+            if rows:
+                m["market_diagnostic"] = _re_market_diagnostic(rows)
+                rt = (consts.get("power") or {}).get("RMS_T", {}).get(mem)
+                sT = (consts.get("power") or {}).get("sigma_T")
+                m["t_star"] = (math.sqrt(len(rows)) * rt / (sT * math.sqrt(2 * math.pi))
+                               if rt and sT else None)
+        row.update({"status": sp.get("status", "ran"), **sp})
+        grid.append(row)
+        if log_fn:
+            log_fn(f"betting_model: run environment q={q} cut={cut} ran")
+    # --- the family -----------------------------------------------------------
+    ready = harness_first_ready or read_date
+    per_member = {}
+    for mem in members:
+        splits = [r["members"].get(mem) for r in grid if r.get("status") == "ran"]
+        null = any((s or {}).get("null_by_construction") for s in splits)
+        ran_all = (len(splits) == len(cuts) and not null
+                   and all(s and s.get("criterion_1") for s in splits))
+        ps = [((s or {}).get("criterion_1") or {}).get("p") for s in splits]
+        computed_p = (max(p if p is not None else 1.0 for p in ps)
+                      if ran_all and not null else 1.0)
+        screen_ok = ran_all and not null and all(s["screen"]["improves"] for s in splits)
+        entry = computed_p
+        reasons = []
+        if null:
+            reasons.append("NULL BY CONSTRUCTION")
+        if not ran_all:
+            reasons.append("not every split ran")
+        if not screen_ok and ran_all and not null:
+            reasons.append("disqualified by the contaminated screen")
+        if ready >= RUN_ENV_READY_CUTOFF:
+            reasons.append(f"harness first ready {ready}, on or after "
+                           f"{RUN_ENV_READY_CUTOFF}: enters RE at p = 1")
+        if reasons:
+            entry = 1.0
+        per_member[mem] = {
+            "split_p": ps, "computed_p": computed_p, "family_p": entry,
+            "entry_reasons": reasons, "screen_ok": screen_ok,
+            "criterion_2_all": ran_all and not null and all(
+                s["criterion_2"]["holds"] for s in splits),
+            "twin_all": ran_all and not null and all(s["twin"]["beaten"] for s in splits)}
+    p_on_record = {"5d-C": RUN_ENV_5DC_STATUS["p"], "5h-A": RUN_ENV_5HA_STATUS["p"],
+                   **{m: per_member[m]["family_p"] for m in members}}
+    holm = holm_family(p_on_record)
+    for mem in members:
+        h = holm["members"][mem]
+        pm = per_member[mem]
+        family_ps = [1.0] * len(pm["split_p"]) if pm["family_p"] >= 1.0 else pm["split_p"]
+        pm["label"] = re_member_label(family_ps or [1.0], h["bar"], h["rejected"],
+                                      pm["criterion_2_all"], pm["twin_all"],
+                                      pm["screen_ok"])
+        pm["computed_clears_bar_at"] = [p is not None and p <= h["bar"]
+                                        for p in pm["split_p"]]
+    per_member["5d-C"] = {**RUN_ENV_5DC_STATUS,
+                          "label": "FAIL (decided at p = 1, never read)"}
+    per_member["5h-A"] = {**RUN_ENV_5HA_STATUS,
+                          "label": "not decided today (p = 1 on record until the live "
+                                   "arm reads, expected 2027)"}
+    rec.update({"cuts": [[q, c] for q, c in cuts], "grid": grid, "holm": holm,
+                "members": per_member, "harness_first_ready": ready})
+    rp = Path(record_path or RUN_ENV_RECORD_PATH)
+    rp.parent.mkdir(parents=True, exist_ok=True)
+    rp.write_text(json.dumps(rec, indent=1, default=str), encoding="utf-8")
+    if write_eval and record_path is None:
+        ev = _load_json(EVAL_PATH) or {}
+        ev["run_environment"] = {
+            "read_date": read_date, "record": "data/_labs/run_env/re_look_record.json",
+            "m": holm["m"], "holm_stopped_at_step": holm["stopped_at_step"],
+            "members": {k: {"label": v.get("label"),
+                            "family_p": v.get("family_p", v.get("p")),
+                            "computed_p": v.get("computed_p")}
+                        for k, v in per_member.items()},
+            "served": False}
+        EVAL_PATH.write_text(json.dumps(ev, indent=1), encoding="utf-8")
+    return rec
+
+
+def run_env_report(rec: dict) -> list[str]:
+    """The printed summary of a record. Tolerates None everywhere (the crash
+    protocol dry-runs it on a fixture of None values)."""
+    def f(x, nd=4):
+        return "None" if x is None else (f"{x:.{nd}f}" if isinstance(x, float) else str(x))
+    lines = [f"run environment (5k) read {rec.get('read_date')}: n_window "
+             f"{rec.get('n_window')} n_gradable {rec.get('n_gradable')} "
+             f"last {rec.get('last_date')}"]
+    for row in rec.get("grid") or []:
+        lines.append(f"  split {row.get('split_q')} cut {row.get('split_date')} "
+                     f"fit {row.get('n_fit')} eval {row.get('n_eval')} "
+                     f"status {row.get('status')}")
+        for mem, m in (row.get("members") or {}).items():
+            if m is None:
+                continue
+            c1 = m.get("criterion_1") or {}
+            sc = m.get("screen") or {}
+            tw = m.get("twin") or {}
+            c2 = m.get("criterion_2") or {}
+            lines.append(
+                f"    {mem}: n {m.get('n_eval_with_term')} dbar {f(c1.get('dbar'), 5)} "
+                f"t {f(c1.get('t'), 3)} G {c1.get('G')} p {f(c1.get('p'), 4)} | brier d "
+                f"{f(c2.get('delta_incumbent_minus_challenger'), 6)} | twin bar "
+                f"{f(tw.get('bar_p95'), 5)} beaten {tw.get('beaten')} | screen dbar "
+                f"{f(sc.get('dbar'), 5)} t {f(sc.get('t'), 3)}")
+    holm = rec.get("holm") or {}
+    lines.append(f"  family RE: m {holm.get('m')} Holm stopped at step "
+                 f"{holm.get('stopped_at_step')}")
+    for mem, v in (rec.get("members") or {}).items():
+        lines.append(f"    {mem}: family p {f(v.get('family_p', v.get('p')), 4)} computed p "
+                     f"{f(v.get('computed_p'), 4)} label {v.get('label')}")
+    return lines
+
+
 def _calibration(ps: list[float], ys: list[int], bins: int = 10) -> list[dict]:
     out = []
     for i in range(bins):
@@ -6773,6 +7606,15 @@ def _run_backtest_blocks(specs: list[tuple], games: list[dict], teams: dict, par
     return done
 
 
+def _carry_run_environment(result: dict) -> None:
+    """The section 5k look writes `run_environment` into the eval artifact ONCE;
+    the nightly backtest rewrites the file, so it carries the key forward unchanged.
+    Absent key, absent carry: the file is otherwise byte-identical."""
+    prev = _load_json(EVAL_PATH)
+    if isinstance(prev, dict) and prev.get("run_environment") is not None:
+        result.setdefault("run_environment", prev["run_environment"])
+
+
 def backtest(*, season: str | None = None, split_date: str | None = None,
              write: bool = True, log_fn=None) -> dict:
     """Grade the model on completed games, in BOTH modes, offline.
@@ -6857,6 +7699,7 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                                 "claim_rule": BENCHMARK_CLAIM_RULE}
         result["min_edge_gate"] = min_edge_gate(result["vintage"])
         if write:
+            _carry_run_environment(result)
             EVAL_PATH.write_text(json.dumps(result, indent=1), encoding="utf-8")
         return result
 
@@ -6994,6 +7837,7 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                       "A pick threshold is set from the vintage mode or from nothing.")
     if write:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
+        _carry_run_environment(result)
         EVAL_PATH.write_text(json.dumps(result, indent=1), encoding="utf-8")
         if log_fn:
             log_fn(f"betting_model: wrote {EVAL_PATH.name} "
@@ -8084,9 +8928,24 @@ if __name__ == "__main__":                                       # pragma: no co
                     help="run the section 7h total survival-map gate; writes nothing")
     ap.add_argument("--total-dispersion", action="store_true",
                     help="run the section 7g total-scoped dispersion gate; writes nothing")
+    ap.add_argument("--run-environment", action="store_true",
+                    help="THE ONE LOOK of section 5k (family RE); refuses a second run")
+    ap.add_argument("--run-environment-coverage", action="store_true",
+                    help="section 5k builders, COUNTS ONLY (no 2026 value printed)")
+    ap.add_argument("--harness-ready", default=None,
+                    help="5k: the date the harness was first committed with passing tests")
     ap.add_argument("--game", nargs=2, metavar=("AWAY", "HOME"), help="price one matchup")
     ap.add_argument("--season", default=None)
     args = ap.parse_args()
+
+    if args.run_environment_coverage:
+        print(json.dumps(run_env_coverage(), indent=1))
+    if args.run_environment:
+        _re = run_environment_gate(harness_first_ready=args.harness_ready, log_fn=print)
+        print(f"betting_model: wrote {RUN_ENV_RECORD_PATH} and {EVAL_PATH.name} "
+              "-> run_environment")
+        for _line in run_env_report(_re):
+            print(_line)
 
     if args.total_calibration:
         tcg = total_calibration_gate(log_fn=print)
