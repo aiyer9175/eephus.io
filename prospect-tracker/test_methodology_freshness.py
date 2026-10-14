@@ -1007,6 +1007,11 @@ MODEL_GLOSSARY = {
     # postseason". Nothing served reads it and stage 1 licenses no price; the
     # chip's own row and glossary terms arrive with the chip (Q10_09).
     "game_intensity_effects": "internal",
+    # tool_tables_rederived (2026-10-14, TL_21_TOOL_TABLE_REDERIVE_LOOK) is the one
+    # look T read of docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md Part T:
+    # provisional, measured, nothing served reads it. A reader-facing term arrives
+    # with the /scouting/ page that prints a passing cell (TL_23).
+    "tool_tables_rederived": "internal",
 }
 
 
