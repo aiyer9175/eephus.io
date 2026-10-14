@@ -304,6 +304,54 @@ def test_calendar_floor_list_and_next_free_day():
     assert L.next_free_day(dt.date(2026, 11, 19)) != "2026-11-20"
 
 
+def test_the_owner_waiver_records_an_early_read_and_is_never_the_default():
+    """EW3-5 (owner 2026-10-14): a blocked day refuses without the switch, is
+    recorded (never refused) with it, the fixture path checks nothing, and the
+    switch takes no value."""
+    import argparse
+    import datetime as dt
+    blocked = dt.date(2026, 11, 20)
+    args = argparse.Namespace(fixture=False, owner_waived=False, rule_day=None)
+    with pytest.raises(SystemExit, match="BLOCKER: date"):
+        L._stop_if_blocked(args, today=blocked)
+    args.owner_waived, args.rule_day = True, "2026-10-15"
+    w = L._stop_if_blocked(args, today=blocked)
+    assert w["owner_waived"] is True and w["today"] == "2026-11-20" and w["rule_day"] == "2026-10-15"
+    assert w["blockers_waived"] and "EW3-5" in w["waiver"]
+    # a free day under the switch still records the waiver (the read may be
+    # early by the gate's own section 13 rule) with no blocker to name
+    free = L._stop_if_blocked(args, today=dt.date(2026, 11, 19))
+    assert free["owner_waived"] is True and free["blockers_waived"] == []
+    assert L._stop_if_blocked(argparse.Namespace(fixture=True, owner_waived=False), today=blocked) is None
+    ns = L._parser().parse_args(["look", "--i-am-the-look", "--owner-waived-early-read", "--rule-day", "2026-10-15"])
+    assert ns.owner_waived is True and ns.rule_day == "2026-10-15" and ns.look is True
+    assert L._parser().parse_args(["look"]).owner_waived is False
+
+
+def test_the_owner_waiver_records_an_early_read_and_is_never_the_default():
+    """EW3-5 (owner 2026-10-14): a blocked day refuses without the switch, is
+    recorded (never refused) with it, the fixture path checks nothing, and the
+    switch takes no value."""
+    import argparse
+    import datetime as dt
+    blocked = dt.date(2026, 11, 20)
+    args = argparse.Namespace(fixture=False, owner_waived=False, rule_day=None)
+    with pytest.raises(SystemExit, match="BLOCKER: date"):
+        L._stop_if_blocked(args, today=blocked)
+    args.owner_waived, args.rule_day = True, "2026-10-15"
+    w = L._stop_if_blocked(args, today=blocked)
+    assert w["owner_waived"] is True and w["today"] == "2026-11-20" and w["rule_day"] == "2026-10-15"
+    assert w["blockers_waived"] and "EW3-5" in w["waiver"]
+    # a free day under the switch still records the waiver (the read may be
+    # early by the gate's own section 13 rule) with no blocker to name
+    free = L._stop_if_blocked(args, today=dt.date(2026, 11, 19))
+    assert free["owner_waived"] is True and free["blockers_waived"] == []
+    assert L._stop_if_blocked(argparse.Namespace(fixture=True, owner_waived=False), today=blocked) is None
+    ns = L._parser().parse_args(["look", "--i-am-the-look", "--owner-waived-early-read", "--rule-day", "2026-10-15"])
+    assert ns.owner_waived is True and ns.rule_day == "2026-10-15" and ns.look is True
+    assert L._parser().parse_args(["look"]).owner_waived is False
+
+
 def test_copy_has_no_dash():
     src = (ROOT / "tools" / "aging_v3_lab.py").read_text(encoding="utf-8") + \
         Path(__file__).read_text(encoding="utf-8")
