@@ -443,4 +443,69 @@ GATE result (TM_4, verbatim); the FORWARD result (TM_9, verbatim). A late look
 first appends a dated amendment naming the new date and the reason, committed
 alone.
 
-(no entries)
+### 2026-10-14: the DEV freeze (TM_3_TEAM_CANDIDATES_DARK)
+
+DEV frozen 2026-10-14 at 1444d9f9, params sha256 8d20d629c79d4996b5c8db266f721eacb3de0be771eb90c749b69705dad7a929.
+The sha is the HEAD the run read (the branch base; `model/team_projection/params.json` records it
+as `head`); the freeze itself is committed by this task's commit on branch
+wt-TM_3_TEAM_CANDIDATES_DARK. The run: `PYTHONHASHSEED=0 python tools/team_projection_dev.py --write`
+(the hash seed is part of the record because `proj_current.simulate_playoffs` takes its tie-break
+draws while iterating a set of division names, so two processes with different string hash seeds
+consume the stream in a different order; measured 2026-10-14 as sigma_T 7.6765 against 7.6766 across
+two unpinned runs on the same schedules and seed; pre-existing, not changed here).
+
+**The retro run read (section 2.1).** `proj_backtest.team_frame(target, aging="v2")` for 2022 to
+2025 on the retro engine at 1444d9f9 (curves and WAR map refit per target on data through target - 1,
+actual-roster assignment by the primary-stint rule). Its served_recentered MAE by season is 9.026,
+9.586, 6.768, 7.118 wins, which reproduces the published DEV record (`data/team_outlook_eval.json`
+`retro_backtest`, generated 2026-10-09: 9.03, 9.59, 6.77, 7.12) to the printed digit. 120 club-seasons;
+no 2026 club quantity was read. The season schedules are StatsAPI /schedule, played games by gamePk
+(2,430, 2,430, 2,429, 2,430), cached write-once under `.cache/team_projection/schedules/`.
+
+**T1 constants.** s_res 9.9379 wins (the RMSE of the served_recentered residual over the 120
+club-seasons); s_sched 6.3131 wins (the mean sd of the schedule-only simulated win total at p_prior
+over each season's actual schedule, n_sims 20,000, seed 12345, home edge 0, bracket off: 6.3191,
+6.3034, 6.3065, 6.3235 by season); sigma_T = sqrt(9.9379^2 - 6.3131^2) = 7.6751 wins; k 40; clip
+[0.20, 0.80].
+
+**T2 constants.** The club budget is PA 6,096.7 and IP 1,436.4 per 162 games (the 2022 to 2025 league
+means of actual club exposure x 162 / games played: PA 6,068.4, 6,136.8, 6,084.1, 6,097.5; IP 1,435.8,
+1,436.2, 1,437.8, 1,435.8).
+
+**T3.** No constant of its own: the park factor column is Basic (5yr) from
+`.cache/fangraphs/park_factors_<target - 1>.json` (2021 to 2024 on DEV, every club named), the
+Pythagenpat exponent 0.287, BF per IP 4.3, and the PJ-C params sha256
+da2d5114fe2c05a1cceed883a625ddb63060e45c8fc848c385860694b02cf9b6 for the heads.
+
+**DEV tables (in-sample for T1, because sigma_T is fitted here; paired club bootstrap B 2000, seed
+20261014, candidate minus comparator, ub95 the 95th percentile of the resampled mean delta).**
+
+| candidate | statistic | 2022 | 2023 | 2024 | 2025 | pooled (120) |
+|---|---|---|---|---|---|---|
+| T1 incumbent (schedule only) | mean CRPS | 6.439 | 7.227 | 4.817 | 5.123 | 5.902 |
+| T1 candidate (sigma_T) | mean CRPS | 5.975 | 6.684 | 4.803 | 5.058 | 5.630 |
+| T1 | CRPS delta mean / ub95 | -0.464 / -0.206 | -0.543 / -0.248 | -0.014 / +0.230 | -0.066 / +0.185 | -0.272 / -0.136 |
+| T1 incumbent | 80% coverage | 0.467 | 0.400 | 0.667 | 0.667 | 0.550 (66 of 120; Wilson 0.461 to 0.636) |
+| T1 candidate (in-sample) | 80% coverage | 0.767 | 0.700 | 0.900 | 0.833 | 0.800 (96 of 120; Wilson 0.720 to 0.862) |
+| T2 served_recentered | wins MAE | 9.026 | 9.586 | 6.768 | 7.118 | 8.124 |
+| T2 budgeted (after the 2,430 pin) | wins MAE | 8.837 | 9.055 | 6.487 | 6.689 | 7.767 |
+| T2 | abs-error delta mean / ub95 | -0.190 / +0.032 | -0.531 / -0.221 | -0.280 / +0.119 | -0.430 / +0.015 | -0.358 / -0.172 |
+| T2 | clubs over the PA / IP budget | 2 / 16 | 6 / 21 | 7 / 22 | 10 / 19 | |
+| T3 | RS MAE (runs) | 51.9 | 70.8 | 52.3 | 49.3 | 56.1 |
+| T3 | RS vs carry-forward: comparator MAE / ub95 | 69.6 / -2.10 | 80.1 / +3.58 | 75.8 / -7.28 | 57.1 / +3.38 | pooled mean -14.57 / ub95 -6.99 |
+| T3 | RS vs league average: comparator MAE / ub95 | 65.0 / -2.18 | 74.8 / +4.91 | 65.6 / -0.43 | 53.1 / +6.19 | pooled mean -8.52 / ub95 -3.10 |
+| T3 | RA MAE (runs) | 63.4 | 48.2 | 51.3 | 55.0 | 54.5 |
+| T3 | RA vs carry-forward: comparator MAE / ub95 | 78.1 / +1.22 | 65.8 / -4.54 | 60.1 / +4.17 | 47.2 / +19.71 | pooled mean -8.34 / ub95 -1.58 |
+| T3 | RA vs league average: comparator MAE / ub95 | 80.2 / -2.77 | 69.2 / -5.34 | 67.1 / -2.42 | 66.7 / -0.95 | pooled mean -16.33 / ub95 -9.70 |
+| T3 | Pythag wins MAE (served wins MAE beside) | 8.30 (9.03) | 9.03 (9.59) | 7.42 (6.77) | 6.46 (7.12) | 7.80 (8.12) |
+| T3 | league identity, sum RS minus sum RA (runs; 1% tolerance, reported only) | -884 | -541 | -1,001 | -875 | outside tolerance every season |
+
+The T3 league identity fails every DEV season: the summed RS of the 30 assigned rosters sits 1% to
+4% under 30 x the league mean and RA 2% above it (the assigned universe's batting runs sum below
+average while its FIP runs sum above the league), the engine's level deficit on the runs side.
+Section 7 bans a team-level recalibration, so it is reported and not corrected; the GATE look scores
+it as built. Nothing here is a verdict: TM-A, TM-B and TM-C are read once at the GATE look (TM_4) on
+the 2026 season, which remains unread.
+
+Written by TM_3_TEAM_CANDIDATES_DARK. The tables, the per-club accounting and the residuals are in
+`model/team_projection/dev_receipt.json` (params_sha256 as above).

@@ -1,0 +1,4734 @@
+{
+ "dev_seasons": [
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "elapsed_s": 246.3,
+ "frozen_on": "2026-10-14",
+ "head": "1444d9f9",
+ "n_club_seasons": 120,
+ "params_sha256": "8d20d629c79d4996b5c8db266f721eacb3de0be771eb90c749b69705dad7a929",
+ "python_hash_seed": "0",
+ "residuals": [
+  {
+   "actual": 74,
+   "org": "ARI",
+   "resid": -0.506,
+   "season": 2022,
+   "served_recentered": 73.494
+  },
+  {
+   "actual": 60,
+   "org": "ATH",
+   "resid": 8.159,
+   "season": 2022,
+   "served_recentered": 68.159
+  },
+  {
+   "actual": 101,
+   "org": "ATL",
+   "resid": -10.752,
+   "season": 2022,
+   "served_recentered": 90.248
+  },
+  {
+   "actual": 83,
+   "org": "BAL",
+   "resid": -13.368,
+   "season": 2022,
+   "served_recentered": 69.632
+  },
+  {
+   "actual": 78,
+   "org": "BOS",
+   "resid": 6.243,
+   "season": 2022,
+   "served_recentered": 84.243
+  },
+  {
+   "actual": 74,
+   "org": "CHC",
+   "resid": 3.042,
+   "season": 2022,
+   "served_recentered": 77.042
+  },
+  {
+   "actual": 81,
+   "org": "CHW",
+   "resid": 5.699,
+   "season": 2022,
+   "served_recentered": 86.699
+  },
+  {
+   "actual": 62,
+   "org": "CIN",
+   "resid": 14.352,
+   "season": 2022,
+   "served_recentered": 76.352
+  },
+  {
+   "actual": 92,
+   "org": "CLE",
+   "resid": -13.786,
+   "season": 2022,
+   "served_recentered": 78.214
+  },
+  {
+   "actual": 68,
+   "org": "COL",
+   "resid": 6.047,
+   "season": 2022,
+   "served_recentered": 74.047
+  },
+  {
+   "actual": 66,
+   "org": "DET",
+   "resid": 8.92,
+   "season": 2022,
+   "served_recentered": 74.92
+  },
+  {
+   "actual": 106,
+   "org": "HOU",
+   "resid": -20.717,
+   "season": 2022,
+   "served_recentered": 85.283
+  },
+  {
+   "actual": 65,
+   "org": "KCR",
+   "resid": 12.512,
+   "season": 2022,
+   "served_recentered": 77.512
+  },
+  {
+   "actual": 73,
+   "org": "LAA",
+   "resid": 6.113,
+   "season": 2022,
+   "served_recentered": 79.113
+  },
+  {
+   "actual": 111,
+   "org": "LAD",
+   "resid": -13.861,
+   "season": 2022,
+   "served_recentered": 97.139
+  },
+  {
+   "actual": 69,
+   "org": "MIA",
+   "resid": 14.749,
+   "season": 2022,
+   "served_recentered": 83.749
+  },
+  {
+   "actual": 86,
+   "org": "MIL",
+   "resid": 2.296,
+   "season": 2022,
+   "served_recentered": 88.296
+  },
+  {
+   "actual": 78,
+   "org": "MIN",
+   "resid": 4.159,
+   "season": 2022,
+   "served_recentered": 82.159
+  },
+  {
+   "actual": 101,
+   "org": "NYM",
+   "resid": -13.643,
+   "season": 2022,
+   "served_recentered": 87.357
+  },
+  {
+   "actual": 99,
+   "org": "NYY",
+   "resid": -11.053,
+   "season": 2022,
+   "served_recentered": 87.947
+  },
+  {
+   "actual": 87,
+   "org": "PHI",
+   "resid": -4.121,
+   "season": 2022,
+   "served_recentered": 82.879
+  },
+  {
+   "actual": 62,
+   "org": "PIT",
+   "resid": 11.097,
+   "season": 2022,
+   "served_recentered": 73.097
+  },
+  {
+   "actual": 89,
+   "org": "SDP",
+   "resid": -8.528,
+   "season": 2022,
+   "served_recentered": 80.472
+  },
+  {
+   "actual": 90,
+   "org": "SEA",
+   "resid": -9.332,
+   "season": 2022,
+   "served_recentered": 80.668
+  },
+  {
+   "actual": 81,
+   "org": "SFG",
+   "resid": 1.211,
+   "season": 2022,
+   "served_recentered": 82.211
+  },
+  {
+   "actual": 93,
+   "org": "STL",
+   "resid": -11.592,
+   "season": 2022,
+   "served_recentered": 81.408
+  },
+  {
+   "actual": 86,
+   "org": "TBR",
+   "resid": -0.759,
+   "season": 2022,
+   "served_recentered": 85.241
+  },
+  {
+   "actual": 68,
+   "org": "TEX",
+   "resid": 11.078,
+   "season": 2022,
+   "served_recentered": 79.078
+  },
+  {
+   "actual": 92,
+   "org": "TOR",
+   "resid": -3.371,
+   "season": 2022,
+   "served_recentered": 88.629
+  },
+  {
+   "actual": 55,
+   "org": "WSN",
+   "resid": 19.713,
+   "season": 2022,
+   "served_recentered": 74.713
+  },
+  {
+   "actual": 84,
+   "org": "ARI",
+   "resid": -6.233,
+   "season": 2023,
+   "served_recentered": 77.767
+  },
+  {
+   "actual": 50,
+   "org": "ATH",
+   "resid": 15.543,
+   "season": 2023,
+   "served_recentered": 65.543
+  },
+  {
+   "actual": 104,
+   "org": "ATL",
+   "resid": -10.089,
+   "season": 2023,
+   "served_recentered": 93.911
+  },
+  {
+   "actual": 101,
+   "org": "BAL",
+   "resid": -22.444,
+   "season": 2023,
+   "served_recentered": 78.556
+  },
+  {
+   "actual": 78,
+   "org": "BOS",
+   "resid": 0.964,
+   "season": 2023,
+   "served_recentered": 78.964
+  },
+  {
+   "actual": 83,
+   "org": "CHC",
+   "resid": -2.317,
+   "season": 2023,
+   "served_recentered": 80.683
+  },
+  {
+   "actual": 61,
+   "org": "CHW",
+   "resid": 18.356,
+   "season": 2023,
+   "served_recentered": 79.356
+  },
+  {
+   "actual": 82,
+   "org": "CIN",
+   "resid": -15.048,
+   "season": 2023,
+   "served_recentered": 66.952
+  },
+  {
+   "actual": 76,
+   "org": "CLE",
+   "resid": 12.343,
+   "season": 2023,
+   "served_recentered": 88.343
+  },
+  {
+   "actual": 59,
+   "org": "COL",
+   "resid": 12.859,
+   "season": 2023,
+   "served_recentered": 71.859
+  },
+  {
+   "actual": 78,
+   "org": "DET",
+   "resid": -8.698,
+   "season": 2023,
+   "served_recentered": 69.302
+  },
+  {
+   "actual": 90,
+   "org": "HOU",
+   "resid": -1.182,
+   "season": 2023,
+   "served_recentered": 88.818
+  },
+  {
+   "actual": 56,
+   "org": "KCR",
+   "resid": 16.049,
+   "season": 2023,
+   "served_recentered": 72.049
+  },
+  {
+   "actual": 73,
+   "org": "LAA",
+   "resid": 11.833,
+   "season": 2023,
+   "served_recentered": 84.833
+  },
+  {
+   "actual": 100,
+   "org": "LAD",
+   "resid": -14.283,
+   "season": 2023,
+   "served_recentered": 85.717
+  },
+  {
+   "actual": 84,
+   "org": "MIA",
+   "resid": -5.944,
+   "season": 2023,
+   "served_recentered": 78.056
+  },
+  {
+   "actual": 92,
+   "org": "MIL",
+   "resid": -10.093,
+   "season": 2023,
+   "served_recentered": 81.907
+  },
+  {
+   "actual": 87,
+   "org": "MIN",
+   "resid": 1.521,
+   "season": 2023,
+   "served_recentered": 88.521
+  },
+  {
+   "actual": 75,
+   "org": "NYM",
+   "resid": 16.327,
+   "season": 2023,
+   "served_recentered": 91.327
+  },
+  {
+   "actual": 82,
+   "org": "NYY",
+   "resid": 7.503,
+   "season": 2023,
+   "served_recentered": 89.503
+  },
+  {
+   "actual": 90,
+   "org": "PHI",
+   "resid": -1.924,
+   "season": 2023,
+   "served_recentered": 88.076
+  },
+  {
+   "actual": 76,
+   "org": "PIT",
+   "resid": -5.152,
+   "season": 2023,
+   "served_recentered": 70.848
+  },
+  {
+   "actual": 82,
+   "org": "SDP",
+   "resid": 8.924,
+   "season": 2023,
+   "served_recentered": 90.924
+  },
+  {
+   "actual": 88,
+   "org": "SEA",
+   "resid": -2.83,
+   "season": 2023,
+   "served_recentered": 85.17
+  },
+  {
+   "actual": 79,
+   "org": "SFG",
+   "resid": 0.573,
+   "season": 2023,
+   "served_recentered": 79.573
+  },
+  {
+   "actual": 71,
+   "org": "STL",
+   "resid": 15.107,
+   "season": 2023,
+   "served_recentered": 86.107
+  },
+  {
+   "actual": 99,
+   "org": "TBR",
+   "resid": -19.544,
+   "season": 2023,
+   "served_recentered": 79.456
+  },
+  {
+   "actual": 90,
+   "org": "TEX",
+   "resid": -9.659,
+   "season": 2023,
+   "served_recentered": 80.341
+  },
+  {
+   "actual": 89,
+   "org": "TOR",
+   "resid": 5.892,
+   "season": 2023,
+   "served_recentered": 94.892
+  },
+  {
+   "actual": 71,
+   "org": "WSN",
+   "resid": -8.352,
+   "season": 2023,
+   "served_recentered": 62.648
+  },
+  {
+   "actual": 89,
+   "org": "ARI",
+   "resid": -2.477,
+   "season": 2024,
+   "served_recentered": 86.523
+  },
+  {
+   "actual": 69,
+   "org": "ATH",
+   "resid": 1.877,
+   "season": 2024,
+   "served_recentered": 70.877
+  },
+  {
+   "actual": 89,
+   "org": "ATL",
+   "resid": 12.054,
+   "season": 2024,
+   "served_recentered": 101.054
+  },
+  {
+   "actual": 91,
+   "org": "BAL",
+   "resid": -5.215,
+   "season": 2024,
+   "served_recentered": 85.785
+  },
+  {
+   "actual": 81,
+   "org": "BOS",
+   "resid": -7.29,
+   "season": 2024,
+   "served_recentered": 73.71
+  },
+  {
+   "actual": 83,
+   "org": "CHC",
+   "resid": -2.548,
+   "season": 2024,
+   "served_recentered": 80.452
+  },
+  {
+   "actual": 41,
+   "org": "CHW",
+   "resid": 23.643,
+   "season": 2024,
+   "served_recentered": 64.643
+  },
+  {
+   "actual": 77,
+   "org": "CIN",
+   "resid": 2.001,
+   "season": 2024,
+   "served_recentered": 79.001
+  },
+  {
+   "actual": 92,
+   "org": "CLE",
+   "resid": -7.176,
+   "season": 2024,
+   "served_recentered": 84.824
+  },
+  {
+   "actual": 61,
+   "org": "COL",
+   "resid": 6.642,
+   "season": 2024,
+   "served_recentered": 67.642
+  },
+  {
+   "actual": 86,
+   "org": "DET",
+   "resid": -9.619,
+   "season": 2024,
+   "served_recentered": 76.381
+  },
+  {
+   "actual": 88,
+   "org": "HOU",
+   "resid": 2.298,
+   "season": 2024,
+   "served_recentered": 90.298
+  },
+  {
+   "actual": 86,
+   "org": "KCR",
+   "resid": -10.538,
+   "season": 2024,
+   "served_recentered": 75.462
+  },
+  {
+   "actual": 63,
+   "org": "LAA",
+   "resid": 16.579,
+   "season": 2024,
+   "served_recentered": 79.579
+  },
+  {
+   "actual": 98,
+   "org": "LAD",
+   "resid": -3.067,
+   "season": 2024,
+   "served_recentered": 94.933
+  },
+  {
+   "actual": 62,
+   "org": "MIA",
+   "resid": 10.01,
+   "season": 2024,
+   "served_recentered": 72.01
+  },
+  {
+   "actual": 93,
+   "org": "MIL",
+   "resid": -15.828,
+   "season": 2024,
+   "served_recentered": 77.172
+  },
+  {
+   "actual": 82,
+   "org": "MIN",
+   "resid": -2.331,
+   "season": 2024,
+   "served_recentered": 79.669
+  },
+  {
+   "actual": 89,
+   "org": "NYM",
+   "resid": -6.051,
+   "season": 2024,
+   "served_recentered": 82.949
+  },
+  {
+   "actual": 94,
+   "org": "NYY",
+   "resid": -3.588,
+   "season": 2024,
+   "served_recentered": 90.412
+  },
+  {
+   "actual": 95,
+   "org": "PHI",
+   "resid": -8.514,
+   "season": 2024,
+   "served_recentered": 86.486
+  },
+  {
+   "actual": 76,
+   "org": "PIT",
+   "resid": -2.039,
+   "season": 2024,
+   "served_recentered": 73.961
+  },
+  {
+   "actual": 93,
+   "org": "SDP",
+   "resid": -11.485,
+   "season": 2024,
+   "served_recentered": 81.515
+  },
+  {
+   "actual": 85,
+   "org": "SEA",
+   "resid": 2.658,
+   "season": 2024,
+   "served_recentered": 87.658
+  },
+  {
+   "actual": 80,
+   "org": "SFG",
+   "resid": -0.435,
+   "season": 2024,
+   "served_recentered": 79.565
+  },
+  {
+   "actual": 83,
+   "org": "STL",
+   "resid": -1.158,
+   "season": 2024,
+   "served_recentered": 81.842
+  },
+  {
+   "actual": 80,
+   "org": "TBR",
+   "resid": 4.063,
+   "season": 2024,
+   "served_recentered": 84.063
+  },
+  {
+   "actual": 78,
+   "org": "TEX",
+   "resid": 9.046,
+   "season": 2024,
+   "served_recentered": 87.046
+  },
+  {
+   "actual": 74,
+   "org": "TOR",
+   "resid": 11.143,
+   "season": 2024,
+   "served_recentered": 85.143
+  },
+  {
+   "actual": 71,
+   "org": "WSN",
+   "resid": -1.656,
+   "season": 2024,
+   "served_recentered": 69.344
+  },
+  {
+   "actual": 80,
+   "org": "ARI",
+   "resid": 9.931,
+   "season": 2025,
+   "served_recentered": 89.931
+  },
+  {
+   "actual": 76,
+   "org": "ATH",
+   "resid": 0.903,
+   "season": 2025,
+   "served_recentered": 76.903
+  },
+  {
+   "actual": 76,
+   "org": "ATL",
+   "resid": 12.674,
+   "season": 2025,
+   "served_recentered": 88.674
+  },
+  {
+   "actual": 75,
+   "org": "BAL",
+   "resid": 12.416,
+   "season": 2025,
+   "served_recentered": 87.416
+  },
+  {
+   "actual": 89,
+   "org": "BOS",
+   "resid": -8.549,
+   "season": 2025,
+   "served_recentered": 80.451
+  },
+  {
+   "actual": 92,
+   "org": "CHC",
+   "resid": -6.854,
+   "season": 2025,
+   "served_recentered": 85.146
+  },
+  {
+   "actual": 60,
+   "org": "CHW",
+   "resid": 2.82,
+   "season": 2025,
+   "served_recentered": 62.82
+  },
+  {
+   "actual": 83,
+   "org": "CIN",
+   "resid": -3.795,
+   "season": 2025,
+   "served_recentered": 79.205
+  },
+  {
+   "actual": 88,
+   "org": "CLE",
+   "resid": -7.752,
+   "season": 2025,
+   "served_recentered": 80.248
+  },
+  {
+   "actual": 43,
+   "org": "COL",
+   "resid": 26.612,
+   "season": 2025,
+   "served_recentered": 69.612
+  },
+  {
+   "actual": 87,
+   "org": "DET",
+   "resid": -4.905,
+   "season": 2025,
+   "served_recentered": 82.095
+  },
+  {
+   "actual": 87,
+   "org": "HOU",
+   "resid": -0.238,
+   "season": 2025,
+   "served_recentered": 86.762
+  },
+  {
+   "actual": 82,
+   "org": "KCR",
+   "resid": -0.585,
+   "season": 2025,
+   "served_recentered": 81.415
+  },
+  {
+   "actual": 72,
+   "org": "LAA",
+   "resid": 5.343,
+   "season": 2025,
+   "served_recentered": 77.343
+  },
+  {
+   "actual": 93,
+   "org": "LAD",
+   "resid": -2.577,
+   "season": 2025,
+   "served_recentered": 90.423
+  },
+  {
+   "actual": 79,
+   "org": "MIA",
+   "resid": -13.223,
+   "season": 2025,
+   "served_recentered": 65.777
+  },
+  {
+   "actual": 97,
+   "org": "MIL",
+   "resid": -17.577,
+   "season": 2025,
+   "served_recentered": 79.423
+  },
+  {
+   "actual": 70,
+   "org": "MIN",
+   "resid": 13.24,
+   "season": 2025,
+   "served_recentered": 83.24
+  },
+  {
+   "actual": 83,
+   "org": "NYM",
+   "resid": 3.823,
+   "season": 2025,
+   "served_recentered": 86.823
+  },
+  {
+   "actual": 94,
+   "org": "NYY",
+   "resid": -7.052,
+   "season": 2025,
+   "served_recentered": 86.948
+  },
+  {
+   "actual": 96,
+   "org": "PHI",
+   "resid": -9.173,
+   "season": 2025,
+   "served_recentered": 86.827
+  },
+  {
+   "actual": 71,
+   "org": "PIT",
+   "resid": 4.742,
+   "season": 2025,
+   "served_recentered": 75.742
+  },
+  {
+   "actual": 90,
+   "org": "SDP",
+   "resid": -5.89,
+   "season": 2025,
+   "served_recentered": 84.11
+  },
+  {
+   "actual": 90,
+   "org": "SEA",
+   "resid": -3.774,
+   "season": 2025,
+   "served_recentered": 86.226
+  },
+  {
+   "actual": 81,
+   "org": "SFG",
+   "resid": 5.051,
+   "season": 2025,
+   "served_recentered": 86.051
+  },
+  {
+   "actual": 78,
+   "org": "STL",
+   "resid": 1.928,
+   "season": 2025,
+   "served_recentered": 79.928
+  },
+  {
+   "actual": 77,
+   "org": "TBR",
+   "resid": -2.714,
+   "season": 2025,
+   "served_recentered": 74.286
+  },
+  {
+   "actual": 81,
+   "org": "TEX",
+   "resid": -0.314,
+   "season": 2025,
+   "served_recentered": 80.686
+  },
+  {
+   "actual": 94,
+   "org": "TOR",
+   "resid": -11.8,
+   "season": 2025,
+   "served_recentered": 82.2
+  },
+  {
+   "actual": 66,
+   "org": "WSN",
+   "resid": 7.289,
+   "season": 2025,
+   "served_recentered": 73.289
+  }
+ ],
+ "schedules": {
+  "2022": {
+   "fetched_at": "2026-10-14T11:50:49+00:00",
+   "file": "schedule_2022.json",
+   "n_games": 2430,
+   "source": "cache"
+  },
+  "2023": {
+   "fetched_at": "2026-10-14T11:51:13+00:00",
+   "file": "schedule_2023.json",
+   "n_games": 2430,
+   "source": "cache"
+  },
+  "2024": {
+   "fetched_at": "2026-10-14T11:51:37+00:00",
+   "file": "schedule_2024.json",
+   "n_games": 2429,
+   "source": "cache"
+  },
+  "2025": {
+   "fetched_at": "2026-10-14T11:52:01+00:00",
+   "file": "schedule_2025.json",
+   "n_games": 2430,
+   "source": "cache"
+  }
+ },
+ "served_recentered_mae_by_season": {
+  "2022": 9.026,
+  "2023": 9.586,
+  "2024": 6.768,
+  "2025": 7.118
+ },
+ "t1": {
+  "s_res": 9.9379,
+  "s_sched": 6.3131,
+  "sched_sd_by_season": {
+   "2022": 6.3191,
+   "2023": 6.3034,
+   "2024": 6.3065,
+   "2025": 6.3235
+  },
+  "sigma_T": 7.6751,
+  "table": {
+   "per_season": {
+    "2022": {
+     "bootstrap": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -0.7393,
+      "mean": -0.4635,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 30,
+      "pass": true,
+      "seed": 20261014,
+      "ub95": -0.2056
+     },
+     "candidate": {
+      "coverage80": {
+       "k": 23,
+       "n": 30,
+       "rate": 0.7667,
+       "wilson95": {
+        "hi": 0.8821,
+        "lo": 0.5907
+       }
+      },
+      "crps_mean": 5.9753,
+      "in_sample": true,
+      "win_sd_mean": 10.0305
+     },
+     "incumbent": {
+      "coverage80": {
+       "k": 14,
+       "n": 30,
+       "rate": 0.4667,
+       "wilson95": {
+        "hi": 0.6386,
+        "lo": 0.3023
+       }
+      },
+      "crps_mean": 6.4388,
+      "sched_sd_mean": 6.3191
+     },
+     "missing": []
+    },
+    "2023": {
+     "bootstrap": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -0.8301,
+      "mean": -0.5434,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 30,
+      "pass": true,
+      "seed": 20261014,
+      "ub95": -0.2482
+     },
+     "candidate": {
+      "coverage80": {
+       "k": 21,
+       "n": 30,
+       "rate": 0.7,
+       "wilson95": {
+        "hi": 0.8334,
+        "lo": 0.5212
+       }
+      },
+      "crps_mean": 6.6839,
+      "in_sample": true,
+      "win_sd_mean": 9.906
+     },
+     "incumbent": {
+      "coverage80": {
+       "k": 12,
+       "n": 30,
+       "rate": 0.4,
+       "wilson95": {
+        "hi": 0.5768,
+        "lo": 0.2459
+       }
+      },
+      "crps_mean": 7.2273,
+      "sched_sd_mean": 6.3034
+     },
+     "missing": []
+    },
+    "2024": {
+     "bootstrap": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -0.2797,
+      "mean": -0.0142,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 30,
+      "pass": false,
+      "seed": 20261014,
+      "ub95": 0.2299
+     },
+     "candidate": {
+      "coverage80": {
+       "k": 27,
+       "n": 30,
+       "rate": 0.9,
+       "wilson95": {
+        "hi": 0.9654,
+        "lo": 0.7438
+       }
+      },
+      "crps_mean": 4.8032,
+      "in_sample": true,
+      "win_sd_mean": 9.9286
+     },
+     "incumbent": {
+      "coverage80": {
+       "k": 20,
+       "n": 30,
+       "rate": 0.6667,
+       "wilson95": {
+        "hi": 0.8077,
+        "lo": 0.4878
+       }
+      },
+      "crps_mean": 4.8174,
+      "sched_sd_mean": 6.3065
+     },
+     "missing": []
+    },
+    "2025": {
+     "bootstrap": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -0.3194,
+      "mean": -0.0656,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 30,
+      "pass": false,
+      "seed": 20261014,
+      "ub95": 0.1853
+     },
+     "candidate": {
+      "coverage80": {
+       "k": 25,
+       "n": 30,
+       "rate": 0.8333,
+       "wilson95": {
+        "hi": 0.9266,
+        "lo": 0.6644
+       }
+      },
+      "crps_mean": 5.0575,
+      "in_sample": true,
+      "win_sd_mean": 9.947
+     },
+     "incumbent": {
+      "coverage80": {
+       "k": 20,
+       "n": 30,
+       "rate": 0.6667,
+       "wilson95": {
+        "hi": 0.8077,
+        "lo": 0.4878
+       }
+      },
+      "crps_mean": 5.1231,
+      "sched_sd_mean": 6.3235
+     },
+     "missing": []
+    }
+   },
+   "pooled": {
+    "B": 2000,
+    "dropped": [],
+    "lo05": -0.4076,
+    "mean": -0.2717,
+    "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+    "n": 120,
+    "pass": true,
+    "seed": 20261014,
+    "ub95": -0.136
+   },
+   "pooled_coverage80": {
+    "candidate": {
+     "in_sample": true,
+     "k": 96,
+     "n": 120,
+     "rate": 0.8,
+     "wilson95": {
+      "hi": 0.8618,
+      "lo": 0.7196
+     }
+    },
+    "incumbent": {
+     "k": 66,
+     "n": 120,
+     "rate": 0.55,
+     "wilson95": {
+      "hi": 0.6361,
+      "lo": 0.4608
+     }
+    }
+   },
+   "pooled_crps_mean": {
+    "candidate": 5.63,
+    "incumbent": 5.9017
+   }
+  }
+ },
+ "t2": {
+  "budget": {
+   "ip": 1436.4,
+   "pa": 6096.7
+  },
+  "n_club_seasons": 120,
+  "table": {
+   "budget_by_season": {
+    "2022": {
+     "ip162": 1435.8,
+     "n_clubs": 30,
+     "pa162": 6068.4
+    },
+    "2023": {
+     "ip162": 1436.2,
+     "n_clubs": 30,
+     "pa162": 6136.8
+    },
+    "2024": {
+     "ip162": 1437.8,
+     "n_clubs": 30,
+     "pa162": 6084.1
+    },
+    "2025": {
+     "ip162": 1435.8,
+     "n_clubs": 30,
+     "pa162": 6097.5
+    }
+   },
+   "per_season": {
+    "2022": {
+     "accounting": {
+      "ARI": {
+       "ipScale": 0.9276,
+       "ipShort": 0.0,
+       "ipSum": 1548.5,
+       "paScale": 1.0,
+       "paShort": 1094.7,
+       "paSum": 5002.0,
+       "warBudget": 19.064,
+       "warUnscaled": 19.633
+      },
+      "ATH": {
+       "ipScale": 1.0,
+       "ipShort": 458.0,
+       "ipSum": 978.4,
+       "paScale": 1.0,
+       "paShort": 2013.7,
+       "paSum": 4083.0,
+       "warBudget": 14.298,
+       "warUnscaled": 14.298
+      },
+      "ATL": {
+       "ipScale": 1.0,
+       "ipShort": 205.6,
+       "ipSum": 1230.8,
+       "paScale": 1.0,
+       "paShort": 683.4,
+       "paSum": 5413.3,
+       "warBudget": 36.386,
+       "warUnscaled": 36.386
+      },
+      "BAL": {
+       "ipScale": 0.9638,
+       "ipShort": 0.0,
+       "ipSum": 1490.3,
+       "paScale": 1.0,
+       "paShort": 1140.3,
+       "paSum": 4956.4,
+       "warBudget": 15.531,
+       "warUnscaled": 15.77
+      },
+      "BOS": {
+       "ipScale": 1.0,
+       "ipShort": 40.8,
+       "ipSum": 1395.6,
+       "paScale": 1.0,
+       "paShort": 232.8,
+       "paSum": 5863.9,
+       "warBudget": 30.382,
+       "warUnscaled": 30.382
+      },
+      "CHC": {
+       "ipScale": 0.9367,
+       "ipShort": 0.0,
+       "ipSum": 1533.4,
+       "paScale": 1.0,
+       "paShort": 1395.0,
+       "paSum": 4701.7,
+       "warBudget": 22.532,
+       "warUnscaled": 23.181
+      },
+      "CHW": {
+       "ipScale": 1.0,
+       "ipShort": 62.1,
+       "ipSum": 1374.3,
+       "paScale": 1.0,
+       "paShort": 593.3,
+       "paSum": 5503.4,
+       "warBudget": 32.837,
+       "warUnscaled": 32.837
+      },
+      "CIN": {
+       "ipScale": 0.8585,
+       "ipShort": 0.0,
+       "ipSum": 1673.2,
+       "paScale": 1.0,
+       "paShort": 482.7,
+       "paSum": 5614.0,
+       "warBudget": 20.997,
+       "warUnscaled": 22.491
+      },
+      "CLE": {
+       "ipScale": 1.0,
+       "ipShort": 96.4,
+       "ipSum": 1340.0,
+       "paScale": 1.0,
+       "paShort": 2107.2,
+       "paSum": 3989.5,
+       "warBudget": 24.352,
+       "warUnscaled": 24.352
+      },
+      "COL": {
+       "ipScale": 1.0,
+       "ipShort": 102.7,
+       "ipSum": 1333.7,
+       "paScale": 1.0,
+       "paShort": 1086.4,
+       "paSum": 5010.3,
+       "warBudget": 20.186,
+       "warUnscaled": 20.186
+      },
+      "DET": {
+       "ipScale": 0.974,
+       "ipShort": 0.0,
+       "ipSum": 1474.8,
+       "paScale": 1.0,
+       "paShort": 391.9,
+       "paSum": 5704.8,
+       "warBudget": 20.833,
+       "warUnscaled": 21.059
+      },
+      "HOU": {
+       "ipScale": 1.0,
+       "ipShort": 172.4,
+       "ipSum": 1264.0,
+       "paScale": 1.0,
+       "paShort": 1333.2,
+       "paSum": 4763.5,
+       "warBudget": 31.422,
+       "warUnscaled": 31.422
+      },
+      "KCR": {
+       "ipScale": 0.8495,
+       "ipShort": 0.0,
+       "ipSum": 1690.8,
+       "paScale": 1.0,
+       "paShort": 1633.5,
+       "paSum": 4463.2,
+       "warBudget": 21.693,
+       "warUnscaled": 23.651
+      },
+      "LAA": {
+       "ipScale": 0.8633,
+       "ipShort": 0.0,
+       "ipSum": 1663.8,
+       "paScale": 0.9793,
+       "paShort": 0.0,
+       "paSum": 6225.3,
+       "warBudget": 23.174,
+       "warUnscaled": 25.252
+      },
+      "LAD": {
+       "ipScale": 0.8873,
+       "ipShort": 0.0,
+       "ipSum": 1618.9,
+       "paScale": 1.0,
+       "paShort": 576.4,
+       "paSum": 5520.3,
+       "warBudget": 41.228,
+       "warUnscaled": 43.278
+      },
+      "MIA": {
+       "ipScale": 0.8602,
+       "ipShort": 0.0,
+       "ipSum": 1669.8,
+       "paScale": 1.0,
+       "paShort": 549.2,
+       "paSum": 5547.5,
+       "warBudget": 27.613,
+       "warUnscaled": 29.887
+      },
+      "MIL": {
+       "ipScale": 0.9936,
+       "ipShort": 0.0,
+       "ipSum": 1445.6,
+       "paScale": 1.0,
+       "paShort": 120.8,
+       "paSum": 5975.9,
+       "warBudget": 34.316,
+       "warUnscaled": 34.434
+      },
+      "MIN": {
+       "ipScale": 1.0,
+       "ipShort": 149.1,
+       "ipSum": 1287.3,
+       "paScale": 1.0,
+       "paShort": 722.7,
+       "paSum": 5374.0,
+       "warBudget": 28.298,
+       "warUnscaled": 28.298
+      },
+      "NYM": {
+       "ipScale": 0.9879,
+       "ipShort": 0.0,
+       "ipSum": 1454.0,
+       "paScale": 1.0,
+       "paShort": 775.7,
+       "paSum": 5321.0,
+       "warBudget": 33.302,
+       "warUnscaled": 33.496
+      },
+      "NYY": {
+       "ipScale": 1.0,
+       "ipShort": 55.4,
+       "ipSum": 1381.0,
+       "paScale": 1.0,
+       "paShort": 342.0,
+       "paSum": 5754.7,
+       "warBudget": 34.086,
+       "warUnscaled": 34.086
+      },
+      "PHI": {
+       "ipScale": 1.0,
+       "ipShort": 213.0,
+       "ipSum": 1223.4,
+       "paScale": 1.0,
+       "paShort": 1399.7,
+       "paSum": 4697.0,
+       "warBudget": 29.018,
+       "warUnscaled": 29.018
+      },
+      "PIT": {
+       "ipScale": 0.8408,
+       "ipShort": 0.0,
+       "ipSum": 1708.4,
+       "paScale": 1.0,
+       "paShort": 1018.8,
+       "paSum": 5077.9,
+       "warBudget": 17.712,
+       "warUnscaled": 19.235
+      },
+      "SDP": {
+       "ipScale": 1.0,
+       "ipShort": 66.1,
+       "ipSum": 1370.3,
+       "paScale": 1.0,
+       "paShort": 1483.5,
+       "paSum": 4613.2,
+       "warBudget": 26.61,
+       "warUnscaled": 26.61
+      },
+      "SEA": {
+       "ipScale": 1.0,
+       "ipShort": 172.8,
+       "ipSum": 1263.6,
+       "paScale": 0.9452,
+       "paShort": 0.0,
+       "paSum": 6450.0,
+       "warBudget": 25.945,
+       "warUnscaled": 26.807
+      },
+      "SFG": {
+       "ipScale": 0.9555,
+       "ipShort": 0.0,
+       "ipSum": 1503.3,
+       "paScale": 1.0,
+       "paShort": 596.1,
+       "paSum": 5500.6,
+       "warBudget": 27.74,
+       "warUnscaled": 28.349
+      },
+      "STL": {
+       "ipScale": 1.0,
+       "ipShort": 266.1,
+       "ipSum": 1170.3,
+       "paScale": 1.0,
+       "paShort": 1041.3,
+       "paSum": 5055.4,
+       "warBudget": 27.546,
+       "warUnscaled": 27.546
+      },
+      "TBR": {
+       "ipScale": 0.8875,
+       "ipShort": 0.0,
+       "ipSum": 1618.4,
+       "paScale": 1.0,
+       "paShort": 655.8,
+       "paSum": 5440.9,
+       "warBudget": 29.738,
+       "warUnscaled": 31.379
+      },
+      "TEX": {
+       "ipScale": 0.8625,
+       "ipShort": 0.0,
+       "ipSum": 1665.3,
+       "paScale": 1.0,
+       "paShort": 874.4,
+       "paSum": 5222.3,
+       "warBudget": 23.741,
+       "warUnscaled": 25.216
+      },
+      "TOR": {
+       "ipScale": 1.0,
+       "ipShort": 20.0,
+       "ipSum": 1416.4,
+       "paScale": 1.0,
+       "paShort": 830.1,
+       "paSum": 5266.6,
+       "warBudget": 34.767,
+       "warUnscaled": 34.767
+      },
+      "WSN": {
+       "ipScale": 0.9947,
+       "ipShort": 0.0,
+       "ipSum": 1444.1,
+       "paScale": 1.0,
+       "paShort": 1107.9,
+       "paSum": 4988.8,
+       "warBudget": 20.816,
+       "warUnscaled": 20.851
+      }
+     },
+     "bootstrap": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -0.4203,
+      "mean": -0.1895,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 30,
+      "pass": false,
+      "seed": 20261014,
+      "ub95": 0.0319
+     },
+     "budgeted": {
+      "bias": 0.0,
+      "mae": 8.837,
+      "r": 0.784,
+      "recenter_shift": 6.761,
+      "sum_wins": 2430.0
+     },
+     "clubs_over_budget": {
+      "ip": 16,
+      "pa": 2
+     },
+     "served_recentered": {
+      "bias": 0.0,
+      "mae": 9.026,
+      "r": 0.757
+     }
+    },
+    "2023": {
+     "accounting": {
+      "ARI": {
+       "ipScale": 0.9713,
+       "ipShort": 0.0,
+       "ipSum": 1478.9,
+       "paScale": 1.0,
+       "paShort": 240.0,
+       "paSum": 5856.7,
+       "warBudget": 25.244,
+       "warUnscaled": 25.529
+      },
+      "ATH": {
+       "ipScale": 0.9571,
+       "ipShort": 0.0,
+       "ipSum": 1500.8,
+       "paScale": 1.0,
+       "paShort": 1596.2,
+       "paSum": 4500.5,
+       "warBudget": 13.074,
+       "warUnscaled": 13.305
+      },
+      "ATL": {
+       "ipScale": 0.9719,
+       "ipShort": 0.0,
+       "ipSum": 1477.9,
+       "paScale": 1.0,
+       "paShort": 499.3,
+       "paSum": 5597.4,
+       "warBudget": 41.16,
+       "warUnscaled": 41.672
+      },
+      "BAL": {
+       "ipScale": 0.9436,
+       "ipShort": 0.0,
+       "ipSum": 1522.3,
+       "paScale": 1.0,
+       "paShort": 323.0,
+       "paSum": 5773.7,
+       "warBudget": 25.821,
+       "warUnscaled": 26.319
+      },
+      "BOS": {
+       "ipScale": 0.9829,
+       "ipShort": 0.0,
+       "ipSum": 1461.4,
+       "paScale": 1.0,
+       "paShort": 693.8,
+       "paSum": 5402.9,
+       "warBudget": 26.529,
+       "warUnscaled": 26.726
+      },
+      "CHC": {
+       "ipScale": 0.9191,
+       "ipShort": 0.0,
+       "ipSum": 1562.9,
+       "paScale": 1.0,
+       "paShort": 533.0,
+       "paSum": 5563.7,
+       "warBudget": 27.526,
+       "warUnscaled": 28.446
+      },
+      "CHW": {
+       "ipScale": 0.8682,
+       "ipShort": 0.0,
+       "ipSum": 1654.4,
+       "paScale": 1.0,
+       "paShort": 396.9,
+       "paSum": 5699.8,
+       "warBudget": 25.33,
+       "warUnscaled": 27.118
+      },
+      "CIN": {
+       "ipScale": 1.0,
+       "ipShort": 234.8,
+       "ipSum": 1201.6,
+       "paScale": 1.0,
+       "paShort": 1774.4,
+       "paSum": 4322.3,
+       "warBudget": 14.714,
+       "warUnscaled": 14.714
+      },
+      "CLE": {
+       "ipScale": 0.9104,
+       "ipShort": 0.0,
+       "ipSum": 1577.8,
+       "paScale": 1.0,
+       "paShort": 368.6,
+       "paSum": 5728.1,
+       "warBudget": 34.616,
+       "warUnscaled": 36.105
+      },
+      "COL": {
+       "ipScale": 0.8562,
+       "ipShort": 0.0,
+       "ipSum": 1677.6,
+       "paScale": 0.9827,
+       "paShort": 0.0,
+       "paSum": 6204.0,
+       "warBudget": 18.043,
+       "warUnscaled": 19.621
+      },
+      "DET": {
+       "ipScale": 1.0,
+       "ipShort": 31.7,
+       "ipSum": 1404.7,
+       "paScale": 1.0,
+       "paShort": 1223.9,
+       "paSum": 4872.8,
+       "warBudget": 17.064,
+       "warUnscaled": 17.064
+      },
+      "HOU": {
+       "ipScale": 1.0,
+       "ipShort": 159.2,
+       "ipSum": 1277.2,
+       "paScale": 1.0,
+       "paShort": 1173.2,
+       "paSum": 4923.5,
+       "warBudget": 36.581,
+       "warUnscaled": 36.581
+      },
+      "KCR": {
+       "ipScale": 0.6665,
+       "ipShort": 0.0,
+       "ipSum": 2155.0,
+       "paScale": 1.0,
+       "paShort": 273.9,
+       "paSum": 5822.8,
+       "warBudget": 16.496,
+       "warUnscaled": 19.811
+      },
+      "LAA": {
+       "ipScale": 0.81,
+       "ipShort": 0.0,
+       "ipSum": 1773.4,
+       "paScale": 0.8747,
+       "paShort": 0.0,
+       "paSum": 6970.1,
+       "warBudget": 27.522,
+       "warUnscaled": 32.595
+      },
+      "LAD": {
+       "ipScale": 1.0,
+       "ipShort": 68.4,
+       "ipSum": 1368.0,
+       "paScale": 1.0,
+       "paShort": 1434.0,
+       "paSum": 4662.7,
+       "warBudget": 33.478,
+       "warUnscaled": 33.478
+      },
+      "MIA": {
+       "ipScale": 0.9039,
+       "ipShort": 0.0,
+       "ipSum": 1589.1,
+       "paScale": 1.0,
+       "paShort": 951.9,
+       "paSum": 5144.8,
+       "warBudget": 24.463,
+       "warUnscaled": 25.817
+      },
+      "MIL": {
+       "ipScale": 0.8504,
+       "ipShort": 0.0,
+       "ipSum": 1689.0,
+       "paScale": 1.0,
+       "paShort": 723.3,
+       "paSum": 5373.4,
+       "warBudget": 27.171,
+       "warUnscaled": 29.669
+      },
+      "MIN": {
+       "ipScale": 0.8647,
+       "ipShort": 0.0,
+       "ipSum": 1661.2,
+       "paScale": 0.9703,
+       "paShort": 0.0,
+       "paSum": 6283.0,
+       "warBudget": 33.489,
+       "warUnscaled": 36.283
+      },
+      "NYM": {
+       "ipScale": 0.8699,
+       "ipShort": 0.0,
+       "ipSum": 1651.2,
+       "paScale": 0.947,
+       "paShort": 0.0,
+       "paSum": 6438.0,
+       "warBudget": 35.813,
+       "warUnscaled": 39.089
+      },
+      "NYY": {
+       "ipScale": 1.0,
+       "ipShort": 62.2,
+       "ipSum": 1374.2,
+       "paScale": 1.0,
+       "paShort": 495.4,
+       "paSum": 5601.3,
+       "warBudget": 37.265,
+       "warUnscaled": 37.265
+      },
+      "PHI": {
+       "ipScale": 0.9195,
+       "ipShort": 0.0,
+       "ipSum": 1562.1,
+       "paScale": 1.0,
+       "paShort": 453.6,
+       "paSum": 5643.1,
+       "warBudget": 34.517,
+       "warUnscaled": 35.838
+      },
+      "PIT": {
+       "ipScale": 1.0,
+       "ipShort": 173.5,
+       "ipSum": 1262.9,
+       "paScale": 0.9871,
+       "paShort": 0.0,
+       "paSum": 6176.5,
+       "warBudget": 18.452,
+       "warUnscaled": 18.61
+      },
+      "SDP": {
+       "ipScale": 0.9853,
+       "ipShort": 0.0,
+       "ipSum": 1457.8,
+       "paScale": 0.9513,
+       "paShort": 0.0,
+       "paSum": 6408.7,
+       "warBudget": 37.228,
+       "warUnscaled": 38.686
+      },
+      "SEA": {
+       "ipScale": 0.951,
+       "ipShort": 0.0,
+       "ipSum": 1510.4,
+       "paScale": 1.0,
+       "paShort": 575.7,
+       "paSum": 5521.0,
+       "warBudget": 32.267,
+       "warUnscaled": 32.932
+      },
+      "SFG": {
+       "ipScale": 1.0,
+       "ipShort": 162.2,
+       "ipSum": 1274.2,
+       "paScale": 1.0,
+       "paShort": 1311.6,
+       "paSum": 4785.1,
+       "warBudget": 27.335,
+       "warUnscaled": 27.335
+      },
+      "STL": {
+       "ipScale": 0.8812,
+       "ipShort": 0.0,
+       "ipSum": 1630.1,
+       "paScale": 1.0,
+       "paShort": 199.2,
+       "paSum": 5897.5,
+       "warBudget": 32.484,
+       "warUnscaled": 33.869
+      },
+      "TBR": {
+       "ipScale": 0.8751,
+       "ipShort": 0.0,
+       "ipSum": 1641.4,
+       "paScale": 1.0,
+       "paShort": 956.0,
+       "paSum": 5140.7,
+       "warBudget": 25.54,
+       "warUnscaled": 27.218
+      },
+      "TEX": {
+       "ipScale": 1.0,
+       "ipShort": 20.9,
+       "ipSum": 1415.5,
+       "paScale": 1.0,
+       "paShort": 848.3,
+       "paSum": 5248.4,
+       "warBudget": 28.103,
+       "warUnscaled": 28.103
+      },
+      "TOR": {
+       "ipScale": 0.9209,
+       "ipShort": 0.0,
+       "ipSum": 1559.7,
+       "paScale": 1.0,
+       "paShort": 575.1,
+       "paSum": 5521.6,
+       "warBudget": 41.362,
+       "warUnscaled": 42.653
+      },
+      "WSN": {
+       "ipScale": 1.0,
+       "ipShort": 150.2,
+       "ipSum": 1286.2,
+       "paScale": 1.0,
+       "paShort": 1161.1,
+       "paSum": 4935.6,
+       "warBudget": 10.41,
+       "warUnscaled": 10.41
+      }
+     },
+     "bootstrap": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -0.8659,
+      "mean": -0.5314,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 30,
+      "pass": true,
+      "seed": 20261014,
+      "ub95": -0.2207
+     },
+     "budgeted": {
+      "bias": -0.0,
+      "mae": 9.055,
+      "r": 0.554,
+      "recenter_shift": 5.663,
+      "sum_wins": 2430.0
+     },
+     "clubs_over_budget": {
+      "ip": 21,
+      "pa": 6
+     },
+     "served_recentered": {
+      "bias": 0.0,
+      "mae": 9.586,
+      "r": 0.504
+     }
+    },
+    "2024": {
+     "accounting": {
+      "ARI": {
+       "ipScale": 0.7942,
+       "ipShort": 0.0,
+       "ipSum": 1808.6,
+       "paScale": 0.964,
+       "paShort": 0.0,
+       "paSum": 6324.5,
+       "warBudget": 29.557,
+       "warUnscaled": 33.637
+      },
+      "ATH": {
+       "ipScale": 1.0,
+       "ipShort": 68.0,
+       "ipSum": 1368.4,
+       "paScale": 1.0,
+       "paShort": 1055.1,
+       "paSum": 5041.6,
+       "warBudget": 17.992,
+       "warUnscaled": 17.992
+      },
+      "ATL": {
+       "ipScale": 0.8863,
+       "ipShort": 0.0,
+       "ipSum": 1620.6,
+       "paScale": 0.8907,
+       "paShort": 0.0,
+       "paSum": 6844.9,
+       "warBudget": 42.815,
+       "warUnscaled": 48.169
+      },
+      "BAL": {
+       "ipScale": 0.8764,
+       "ipShort": 0.0,
+       "ipSum": 1639.0,
+       "paScale": 1.0,
+       "paShort": 103.9,
+       "paSum": 5992.8,
+       "warBudget": 30.968,
+       "warUnscaled": 32.9
+      },
+      "BOS": {
+       "ipScale": 1.0,
+       "ipShort": 44.2,
+       "ipSum": 1392.2,
+       "paScale": 1.0,
+       "paShort": 533.3,
+       "paSum": 5563.4,
+       "warBudget": 20.825,
+       "warUnscaled": 20.825
+      },
+      "CHC": {
+       "ipScale": 0.8952,
+       "ipShort": 0.0,
+       "ipSum": 1604.6,
+       "paScale": 1.0,
+       "paShort": 664.9,
+       "paSum": 5431.8,
+       "warBudget": 26.391,
+       "warUnscaled": 27.567
+      },
+      "CHW": {
+       "ipScale": 1.0,
+       "ipShort": 115.6,
+       "ipSum": 1320.8,
+       "paScale": 0.9569,
+       "paShort": 0.0,
+       "paSum": 6371.5,
+       "warBudget": 11.446,
+       "warUnscaled": 11.757
+      },
+      "CIN": {
+       "ipScale": 0.8794,
+       "ipShort": 0.0,
+       "ipSum": 1633.3,
+       "paScale": 1.0,
+       "paShort": 316.8,
+       "paSum": 5779.9,
+       "warBudget": 24.445,
+       "warUnscaled": 26.116
+      },
+      "CLE": {
+       "ipScale": 0.8497,
+       "ipShort": 0.0,
+       "ipSum": 1690.5,
+       "paScale": 1.0,
+       "paShort": 1390.8,
+       "paSum": 4705.9,
+       "warBudget": 29.242,
+       "warUnscaled": 31.939
+      },
+      "COL": {
+       "ipScale": 0.9221,
+       "ipShort": 0.0,
+       "ipSum": 1557.7,
+       "paScale": 1.0,
+       "paShort": 1124.1,
+       "paSum": 4972.6,
+       "warBudget": 14.126,
+       "warUnscaled": 14.757
+      },
+      "DET": {
+       "ipScale": 1.0,
+       "ipShort": 13.5,
+       "ipSum": 1422.9,
+       "paScale": 1.0,
+       "paShort": 614.1,
+       "paSum": 5482.6,
+       "warBudget": 23.496,
+       "warUnscaled": 23.496
+      },
+      "HOU": {
+       "ipScale": 0.9693,
+       "ipShort": 0.0,
+       "ipSum": 1481.9,
+       "paScale": 1.0,
+       "paShort": 692.3,
+       "paSum": 5404.4,
+       "warBudget": 36.91,
+       "warUnscaled": 37.413
+      },
+      "KCR": {
+       "ipScale": 0.9966,
+       "ipShort": 0.0,
+       "ipSum": 1441.3,
+       "paScale": 1.0,
+       "paShort": 46.2,
+       "paSum": 6050.5,
+       "warBudget": 22.538,
+       "warUnscaled": 22.577
+      },
+      "LAA": {
+       "ipScale": 0.7349,
+       "ipShort": 0.0,
+       "ipSum": 1954.5,
+       "paScale": 1.0,
+       "paShort": 648.9,
+       "paSum": 5447.8,
+       "warBudget": 22.663,
+       "warUnscaled": 26.694
+      },
+      "LAD": {
+       "ipScale": 0.9275,
+       "ipShort": 0.0,
+       "ipSum": 1548.7,
+       "paScale": 1.0,
+       "paShort": 162.4,
+       "paSum": 5934.3,
+       "warBudget": 40.839,
+       "warUnscaled": 42.048
+      },
+      "MIA": {
+       "ipScale": 0.91,
+       "ipShort": 0.0,
+       "ipSum": 1578.4,
+       "paScale": 1.0,
+       "paShort": 756.6,
+       "paSum": 5340.1,
+       "warBudget": 18.095,
+       "warUnscaled": 19.125
+      },
+      "MIL": {
+       "ipScale": 1.0,
+       "ipShort": 158.8,
+       "ipSum": 1277.6,
+       "paScale": 1.0,
+       "paShort": 1043.7,
+       "paSum": 5053.0,
+       "warBudget": 24.287,
+       "warUnscaled": 24.287
+      },
+      "MIN": {
+       "ipScale": 0.9746,
+       "ipShort": 0.0,
+       "ipSum": 1473.8,
+       "paScale": 1.0,
+       "paShort": 840.2,
+       "paSum": 5256.5,
+       "warBudget": 26.453,
+       "warUnscaled": 26.784
+      },
+      "NYM": {
+       "ipScale": 0.9486,
+       "ipShort": 0.0,
+       "ipSum": 1514.3,
+       "paScale": 1.0,
+       "paShort": 358.9,
+       "paSum": 5737.8,
+       "warBudget": 29.403,
+       "warUnscaled": 30.064
+      },
+      "NYY": {
+       "ipScale": 0.9506,
+       "ipShort": 0.0,
+       "ipSum": 1511.1,
+       "paScale": 0.9861,
+       "paShort": 0.0,
+       "paSum": 6182.8,
+       "warBudget": 36.426,
+       "warUnscaled": 37.527
+      },
+      "PHI": {
+       "ipScale": 0.9687,
+       "ipShort": 0.0,
+       "ipSum": 1482.8,
+       "paScale": 0.9976,
+       "paShort": 0.0,
+       "paSum": 6111.6,
+       "warBudget": 33.02,
+       "warUnscaled": 33.601
+      },
+      "PIT": {
+       "ipScale": 0.8966,
+       "ipShort": 0.0,
+       "ipSum": 1602.0,
+       "paScale": 0.9674,
+       "paShort": 0.0,
+       "paSum": 6302.4,
+       "warBudget": 19.62,
+       "warUnscaled": 21.076
+      },
+      "SDP": {
+       "ipScale": 1.0,
+       "ipShort": 213.6,
+       "ipSum": 1222.8,
+       "paScale": 1.0,
+       "paShort": 518.4,
+       "paSum": 5578.3,
+       "warBudget": 28.631,
+       "warUnscaled": 28.631
+      },
+      "SEA": {
+       "ipScale": 0.9368,
+       "ipShort": 0.0,
+       "ipSum": 1533.3,
+       "paScale": 1.0,
+       "paShort": 539.0,
+       "paSum": 5557.7,
+       "warBudget": 33.707,
+       "warUnscaled": 34.773
+      },
+      "SFG": {
+       "ipScale": 1.0,
+       "ipShort": 241.9,
+       "ipSum": 1194.5,
+       "paScale": 0.9574,
+       "paShort": 0.0,
+       "paSum": 6368.2,
+       "warBudget": 26.141,
+       "warUnscaled": 26.68
+      },
+      "STL": {
+       "ipScale": 1.0,
+       "ipShort": 80.1,
+       "ipSum": 1356.3,
+       "paScale": 1.0,
+       "paShort": 893.6,
+       "paSum": 5203.1,
+       "warBudget": 28.958,
+       "warUnscaled": 28.958
+      },
+      "TBR": {
+       "ipScale": 0.942,
+       "ipShort": 0.0,
+       "ipSum": 1524.8,
+       "paScale": 1.0,
+       "paShort": 399.0,
+       "paSum": 5697.7,
+       "warBudget": 30.262,
+       "warUnscaled": 31.178
+      },
+      "TEX": {
+       "ipScale": 0.9093,
+       "ipShort": 0.0,
+       "ipSum": 1579.6,
+       "paScale": 1.0,
+       "paShort": 79.4,
+       "paSum": 6017.3,
+       "warBudget": 32.831,
+       "warUnscaled": 34.161
+      },
+      "TOR": {
+       "ipScale": 0.9201,
+       "ipShort": 0.0,
+       "ipSum": 1561.2,
+       "paScale": 1.0,
+       "paShort": 692.6,
+       "paSum": 5404.1,
+       "warBudget": 31.038,
+       "warUnscaled": 32.258
+      },
+      "WSN": {
+       "ipScale": 0.9526,
+       "ipShort": 0.0,
+       "ipSum": 1507.9,
+       "paScale": 1.0,
+       "paShort": 215.8,
+       "paSum": 5880.9,
+       "warBudget": 16.095,
+       "warUnscaled": 16.459
+      }
+     },
+     "bootstrap": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -0.666,
+      "mean": -0.2804,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 30,
+      "pass": false,
+      "seed": 20261014,
+      "ub95": 0.1193
+     },
+     "budgeted": {
+      "bias": 0.033,
+      "mae": 6.487,
+      "r": 0.754,
+      "recenter_shift": 6.326,
+      "sum_wins": 2430.0
+     },
+     "clubs_over_budget": {
+      "ip": 22,
+      "pa": 7
+     },
+     "served_recentered": {
+      "bias": 0.033,
+      "mae": 6.768,
+      "r": 0.711
+     }
+    },
+    "2025": {
+     "accounting": {
+      "ARI": {
+       "ipScale": 0.6987,
+       "ipShort": 0.0,
+       "ipSum": 2055.9,
+       "paScale": 0.9494,
+       "paShort": 0.0,
+       "paSum": 6421.8,
+       "warBudget": 31.94,
+       "warUnscaled": 38.127
+      },
+      "ATH": {
+       "ipScale": 0.9397,
+       "ipShort": 0.0,
+       "ipSum": 1528.6,
+       "paScale": 1.0,
+       "paShort": 720.1,
+       "paSum": 5376.6,
+       "warBudget": 24.422,
+       "warUnscaled": 25.098
+      },
+      "ATL": {
+       "ipScale": 0.8604,
+       "ipShort": 0.0,
+       "ipSum": 1669.4,
+       "paScale": 0.8824,
+       "paShort": 0.0,
+       "paSum": 6909.2,
+       "warBudget": 32.163,
+       "warUnscaled": 36.869
+      },
+      "BAL": {
+       "ipScale": 0.8217,
+       "ipShort": 0.0,
+       "ipSum": 1748.1,
+       "paScale": 0.8522,
+       "paShort": 0.0,
+       "paSum": 7153.7,
+       "warBudget": 29.925,
+       "warUnscaled": 35.611
+      },
+      "BOS": {
+       "ipScale": 1.0,
+       "ipShort": 11.6,
+       "ipSum": 1424.8,
+       "paScale": 1.0,
+       "paShort": 1089.9,
+       "paSum": 5006.8,
+       "warBudget": 28.647,
+       "warUnscaled": 28.647
+      },
+      "CHC": {
+       "ipScale": 0.8107,
+       "ipShort": 0.0,
+       "ipSum": 1771.7,
+       "paScale": 1.0,
+       "paShort": 807.5,
+       "paSum": 5289.2,
+       "warBudget": 30.71,
+       "warUnscaled": 33.341
+      },
+      "CHW": {
+       "ipScale": 1.0,
+       "ipShort": 66.1,
+       "ipSum": 1370.3,
+       "paScale": 1.0,
+       "paShort": 589.7,
+       "paSum": 5507.0,
+       "warBudget": 11.015,
+       "warUnscaled": 11.015
+      },
+      "CIN": {
+       "ipScale": 0.9756,
+       "ipShort": 0.0,
+       "ipSum": 1472.3,
+       "paScale": 1.0,
+       "paShort": 187.5,
+       "paSum": 5909.2,
+       "warBudget": 27.095,
+       "warUnscaled": 27.401
+      },
+      "CLE": {
+       "ipScale": 0.9078,
+       "ipShort": 0.0,
+       "ipSum": 1582.2,
+       "paScale": 1.0,
+       "paShort": 610.7,
+       "paSum": 5486.0,
+       "warBudget": 27.164,
+       "warUnscaled": 28.443
+      },
+      "COL": {
+       "ipScale": 1.0,
+       "ipShort": 14.7,
+       "ipSum": 1421.7,
+       "paScale": 0.9335,
+       "paShort": 0.0,
+       "paSum": 6531.2,
+       "warBudget": 16.975,
+       "warUnscaled": 17.807
+      },
+      "DET": {
+       "ipScale": 0.9952,
+       "ipShort": 0.0,
+       "ipSum": 1443.4,
+       "paScale": 0.9115,
+       "paShort": 0.0,
+       "paSum": 6689.0,
+       "warBudget": 28.844,
+       "warUnscaled": 30.29
+      },
+      "HOU": {
+       "ipScale": 0.9102,
+       "ipShort": 0.0,
+       "ipSum": 1578.1,
+       "paScale": 0.9757,
+       "paShort": 0.0,
+       "paSum": 6248.3,
+       "warBudget": 33.267,
+       "warUnscaled": 34.958
+      },
+      "KCR": {
+       "ipScale": 1.0,
+       "ipShort": 108.1,
+       "ipSum": 1328.3,
+       "paScale": 1.0,
+       "paShort": 263.5,
+       "paSum": 5833.2,
+       "warBudget": 29.61,
+       "warUnscaled": 29.61
+      },
+      "LAA": {
+       "ipScale": 0.7861,
+       "ipShort": 0.0,
+       "ipSum": 1827.3,
+       "paScale": 1.0,
+       "paShort": 204.9,
+       "paSum": 5891.8,
+       "warBudget": 23.21,
+       "warUnscaled": 25.538
+      },
+      "LAD": {
+       "ipScale": 0.8827,
+       "ipShort": 0.0,
+       "ipSum": 1627.2,
+       "paScale": 1.0,
+       "paShort": 1001.8,
+       "paSum": 5094.9,
+       "warBudget": 36.678,
+       "warUnscaled": 38.618
+      },
+      "MIA": {
+       "ipScale": 1.0,
+       "ipShort": 13.6,
+       "ipSum": 1422.8,
+       "paScale": 1.0,
+       "paShort": 2746.1,
+       "paSum": 3350.6,
+       "warBudget": 13.972,
+       "warUnscaled": 13.972
+      },
+      "MIL": {
+       "ipScale": 1.0,
+       "ipShort": 46.5,
+       "ipSum": 1389.9,
+       "paScale": 0.9983,
+       "paShort": 0.0,
+       "paSum": 6107.0,
+       "warBudget": 27.591,
+       "warUnscaled": 27.618
+      },
+      "MIN": {
+       "ipScale": 0.8398,
+       "ipShort": 0.0,
+       "ipSum": 1710.4,
+       "paScale": 1.0,
+       "paShort": 307.4,
+       "paSum": 5789.3,
+       "warBudget": 28.889,
+       "warUnscaled": 31.435
+      },
+      "NYM": {
+       "ipScale": 0.933,
+       "ipShort": 0.0,
+       "ipSum": 1539.5,
+       "paScale": 1.0,
+       "paShort": 206.9,
+       "paSum": 5889.8,
+       "warBudget": 34.232,
+       "warUnscaled": 35.018
+      },
+      "NYY": {
+       "ipScale": 0.9119,
+       "ipShort": 0.0,
+       "ipSum": 1575.1,
+       "paScale": 1.0,
+       "paShort": 1178.0,
+       "paSum": 4918.7,
+       "warBudget": 33.926,
+       "warUnscaled": 35.142
+      },
+      "PHI": {
+       "ipScale": 0.8896,
+       "ipShort": 0.0,
+       "ipSum": 1614.7,
+       "paScale": 1.0,
+       "paShort": 657.3,
+       "paSum": 5439.4,
+       "warBudget": 33.101,
+       "warUnscaled": 35.022
+      },
+      "PIT": {
+       "ipScale": 1.0,
+       "ipShort": 94.7,
+       "ipSum": 1341.7,
+       "paScale": 0.9665,
+       "paShort": 0.0,
+       "paSum": 6308.0,
+       "warBudget": 23.537,
+       "warUnscaled": 23.938
+      },
+      "SDP": {
+       "ipScale": 0.931,
+       "ipShort": 0.0,
+       "ipSum": 1542.8,
+       "paScale": 1.0,
+       "paShort": 519.0,
+       "paSum": 5577.7,
+       "warBudget": 31.109,
+       "warUnscaled": 32.305
+      },
+      "SEA": {
+       "ipScale": 0.8786,
+       "ipShort": 0.0,
+       "ipSum": 1634.8,
+       "paScale": 1.0,
+       "paShort": 405.4,
+       "paSum": 5691.3,
+       "warBudget": 32.445,
+       "warUnscaled": 34.421
+      },
+      "SFG": {
+       "ipScale": 0.8314,
+       "ipShort": 0.0,
+       "ipSum": 1727.6,
+       "paScale": 0.984,
+       "paShort": 0.0,
+       "paSum": 6195.8,
+       "warBudget": 31.442,
+       "warUnscaled": 34.247
+      },
+      "STL": {
+       "ipScale": 1.0,
+       "ipShort": 12.8,
+       "ipSum": 1423.6,
+       "paScale": 1.0,
+       "paShort": 597.7,
+       "paSum": 5499.0,
+       "warBudget": 28.123,
+       "warUnscaled": 28.123
+      },
+      "TBR": {
+       "ipScale": 1.0,
+       "ipShort": 222.5,
+       "ipSum": 1213.9,
+       "paScale": 1.0,
+       "paShort": 1164.5,
+       "paSum": 4932.2,
+       "warBudget": 22.481,
+       "warUnscaled": 22.481
+      },
+      "TEX": {
+       "ipScale": 1.0,
+       "ipShort": 187.3,
+       "ipSum": 1249.1,
+       "paScale": 0.9842,
+       "paShort": 0.0,
+       "paSum": 6194.6,
+       "warBudget": 28.573,
+       "warUnscaled": 28.881
+      },
+      "TOR": {
+       "ipScale": 0.9508,
+       "ipShort": 0.0,
+       "ipSum": 1510.8,
+       "paScale": 1.0,
+       "paShort": 27.8,
+       "paSum": 6068.9,
+       "warBudget": 29.851,
+       "warUnscaled": 30.395
+      },
+      "WSN": {
+       "ipScale": 1.0,
+       "ipShort": 198.7,
+       "ipSum": 1237.7,
+       "paScale": 1.0,
+       "paShort": 203.2,
+       "paSum": 5893.5,
+       "warBudget": 21.484,
+       "warUnscaled": 21.484
+      }
+     },
+     "bootstrap": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -0.9264,
+      "mean": -0.4295,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 30,
+      "pass": false,
+      "seed": 20261014,
+      "ub95": 0.0147
+     },
+     "budgeted": {
+      "bias": -0.0,
+      "mae": 6.689,
+      "r": 0.694,
+      "recenter_shift": 5.553,
+      "sum_wins": 2430.0
+     },
+     "clubs_over_budget": {
+      "ip": 19,
+      "pa": 10
+     },
+     "served_recentered": {
+      "bias": 0.0,
+      "mae": 7.118,
+      "r": 0.61
+     }
+    }
+   },
+   "pooled": {
+    "B": 2000,
+    "dropped": [],
+    "lo05": -0.5479,
+    "mean": -0.3577,
+    "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+    "n": 120,
+    "pass": true,
+    "seed": 20261014,
+    "ub95": -0.1717
+   },
+   "pooled_mae": {
+    "budgeted": 7.767,
+    "served_recentered": 8.124
+   }
+  }
+ },
+ "t3": {
+  "error": null,
+  "table": {
+   "per_season": {
+    "2022": {
+     "clubs": {
+      "ARI": {
+       "batBsrRuns": -41.3,
+       "fipRaaRuns": -54.2,
+       "fldRuns": 3.3,
+       "ipAllocated": 1436.3,
+       "nHit": 18,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 5002.0,
+       "pf": 1.0001,
+       "pythW": 71.5,
+       "ra": 785.0,
+       "rs": 692.8,
+       "runDiff": -92.2
+      },
+      "ATH": {
+       "batBsrRuns": -68.6,
+       "fipRaaRuns": -25.9,
+       "fldRuns": 4.2,
+       "ipAllocated": 978.5,
+       "nHit": 19,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 4083.0,
+       "pf": 0.9541,
+       "pythW": 71.6,
+       "ra": 721.0,
+       "rs": 634.9,
+       "runDiff": -86.1
+      },
+      "ATL": {
+       "batBsrRuns": 56.7,
+       "fipRaaRuns": 33.3,
+       "fldRuns": 3.0,
+       "ipAllocated": 1230.8,
+       "nHit": 16,
+       "nPit": 21,
+       "notProjected": {},
+       "paAllocated": 5413.3,
+       "pf": 1.0122,
+       "pythW": 90.6,
+       "ra": 706.2,
+       "rs": 800.3,
+       "runDiff": 94.1
+      },
+      "BAL": {
+       "batBsrRuns": -40.2,
+       "fipRaaRuns": -87.5,
+       "fldRuns": -6.0,
+       "ipAllocated": 1436.6,
+       "nHit": 17,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 4956.4,
+       "pf": 1.02,
+       "pythW": 67.5,
+       "ra": 844.0,
+       "rs": 707.7,
+       "runDiff": -136.3
+      },
+      "BOS": {
+       "batBsrRuns": 4.8,
+       "fipRaaRuns": 5.0,
+       "fldRuns": -8.5,
+       "ipAllocated": 1395.8,
+       "nHit": 19,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 5863.9,
+       "pf": 1.0605,
+       "pythW": 81.1,
+       "ra": 782.2,
+       "rs": 783.5,
+       "runDiff": 1.3
+      },
+      "CHC": {
+       "batBsrRuns": -39.5,
+       "fipRaaRuns": -37.0,
+       "fldRuns": -1.3,
+       "ipAllocated": 1436.5,
+       "nHit": 17,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 4701.7,
+       "pf": 0.988,
+       "pythW": 73.0,
+       "ra": 763.0,
+       "rs": 686.2,
+       "runDiff": -76.8
+      },
+      "CHW": {
+       "batBsrRuns": -5.5,
+       "fipRaaRuns": 11.8,
+       "fldRuns": -1.2,
+       "ipAllocated": 1374.3,
+       "nHit": 19,
+       "nPit": 19,
+       "notProjected": {},
+       "paAllocated": 5503.4,
+       "pf": 1.0095,
+       "pythW": 81.5,
+       "ra": 730.3,
+       "rs": 735.5,
+       "runDiff": 5.2
+      },
+      "CIN": {
+       "batBsrRuns": -38.3,
+       "fipRaaRuns": -38.8,
+       "fldRuns": -18.6,
+       "ipAllocated": 1436.3,
+       "nHit": 25,
+       "nPit": 32,
+       "notProjected": {},
+       "paAllocated": 5614.0,
+       "pf": 1.0498,
+       "pythW": 71.1,
+       "ra": 830.8,
+       "rs": 730.3,
+       "runDiff": -100.4
+      },
+      "CLE": {
+       "batBsrRuns": -26.9,
+       "fipRaaRuns": -1.1,
+       "fldRuns": 9.1,
+       "ipAllocated": 1340.1,
+       "nHit": 12,
+       "nPit": 17,
+       "notProjected": {},
+       "paAllocated": 3989.5,
+       "pf": 0.979,
+       "pythW": 79.0,
+       "ra": 710.8,
+       "rs": 692.2,
+       "runDiff": -18.6
+      },
+      "COL": {
+       "batBsrRuns": -24.2,
+       "fipRaaRuns": -43.6,
+       "fldRuns": -4.7,
+       "ipAllocated": 1333.7,
+       "nHit": 14,
+       "nPit": 19,
+       "notProjected": {},
+       "paAllocated": 5010.3,
+       "pf": 1.1498,
+       "pythW": 73.3,
+       "ra": 899.4,
+       "rs": 816.1,
+       "runDiff": -83.3
+      },
+      "DET": {
+       "batBsrRuns": -54.8,
+       "fipRaaRuns": -44.9,
+       "fldRuns": -2.9,
+       "ipAllocated": 1436.2,
+       "nHit": 16,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5704.8,
+       "pf": 1.0026,
+       "pythW": 70.3,
+       "ra": 783.8,
+       "rs": 680.9,
+       "runDiff": -102.8
+      },
+      "HOU": {
+       "batBsrRuns": 27.9,
+       "fipRaaRuns": 17.6,
+       "fldRuns": 8.8,
+       "ipAllocated": 1264.1,
+       "nHit": 14,
+       "nPit": 18,
+       "notProjected": {},
+       "paAllocated": 4763.5,
+       "pf": 0.9913,
+       "pythW": 86.6,
+       "ra": 701.4,
+       "rs": 755.3,
+       "runDiff": 53.9
+      },
+      "KCR": {
+       "batBsrRuns": -49.7,
+       "fipRaaRuns": -24.5,
+       "fldRuns": 3.1,
+       "ipAllocated": 1436.2,
+       "nHit": 14,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 4463.2,
+       "pf": 1.0408,
+       "pythW": 73.5,
+       "ra": 786.2,
+       "rs": 712.3,
+       "runDiff": -73.9
+      },
+      "LAA": {
+       "batBsrRuns": -59.7,
+       "fipRaaRuns": -11.7,
+       "fldRuns": -10.3,
+       "ipAllocated": 1436.5,
+       "nHit": 26,
+       "nPit": 32,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0186,
+       "pythW": 72.3,
+       "ra": 770.1,
+       "rs": 686.8,
+       "runDiff": -83.3
+      },
+      "LAD": {
+       "batBsrRuns": 74.1,
+       "fipRaaRuns": 28.7,
+       "fldRuns": -4.0,
+       "ipAllocated": 1436.4,
+       "nHit": 17,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 5520.3,
+       "pf": 0.9736,
+       "pythW": 90.9,
+       "ra": 690.6,
+       "rs": 786.8,
+       "runDiff": 96.2
+      },
+      "MIA": {
+       "batBsrRuns": -48.2,
+       "fipRaaRuns": 0.5,
+       "fldRuns": 1.5,
+       "ipAllocated": 1436.7,
+       "nHit": 19,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 5547.5,
+       "pf": 1.0024,
+       "pythW": 76.1,
+       "ra": 733.8,
+       "rs": 687.4,
+       "runDiff": -46.3
+      },
+      "MIL": {
+       "batBsrRuns": -30.7,
+       "fipRaaRuns": 48.4,
+       "fldRuns": -22.2,
+       "ipAllocated": 1436.4,
+       "nHit": 19,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 5975.9,
+       "pf": 1.0001,
+       "pythW": 80.5,
+       "ra": 707.9,
+       "rs": 703.4,
+       "runDiff": -4.4
+      },
+      "MIN": {
+       "batBsrRuns": -15.1,
+       "fipRaaRuns": -12.0,
+       "fldRuns": -4.1,
+       "ipAllocated": 1287.1,
+       "nHit": 17,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 5374.0,
+       "pf": 0.987,
+       "pythW": 77.8,
+       "ra": 740.3,
+       "rs": 709.5,
+       "runDiff": -30.8
+      },
+      "NYM": {
+       "batBsrRuns": -5.1,
+       "fipRaaRuns": 23.0,
+       "fldRuns": -0.4,
+       "ipAllocated": 1436.2,
+       "nHit": 20,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 5321.0,
+       "pf": 0.9515,
+       "pythW": 82.8,
+       "ra": 676.9,
+       "rs": 693.5,
+       "runDiff": 16.7
+      },
+      "NYY": {
+       "batBsrRuns": 1.8,
+       "fipRaaRuns": 16.1,
+       "fldRuns": 6.4,
+       "ipAllocated": 1381.1,
+       "nHit": 18,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5754.7,
+       "pf": 0.9794,
+       "pythW": 83.5,
+       "ra": 696.8,
+       "rs": 720.7,
+       "runDiff": 23.8
+      },
+      "PHI": {
+       "batBsrRuns": 36.7,
+       "fipRaaRuns": 26.8,
+       "fldRuns": -12.5,
+       "ipAllocated": 1223.5,
+       "nHit": 15,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 4697.0,
+       "pf": 1.0032,
+       "pythW": 86.3,
+       "ra": 721.9,
+       "rs": 773.2,
+       "runDiff": 51.3
+      },
+      "PIT": {
+       "batBsrRuns": -75.4,
+       "fipRaaRuns": -62.0,
+       "fldRuns": 2.2,
+       "ipAllocated": 1436.2,
+       "nHit": 21,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 5077.9,
+       "pf": 1.012,
+       "pythW": 66.9,
+       "ra": 803.3,
+       "rs": 666.5,
+       "runDiff": -136.7
+      },
+      "SDP": {
+       "batBsrRuns": -21.3,
+       "fipRaaRuns": 13.6,
+       "fldRuns": -5.0,
+       "ipAllocated": 1370.3,
+       "nHit": 14,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 4613.2,
+       "pf": 0.9448,
+       "pythW": 79.7,
+       "ra": 685.3,
+       "rs": 673.4,
+       "runDiff": -12.0
+      },
+      "SEA": {
+       "batBsrRuns": -42.9,
+       "fipRaaRuns": -11.9,
+       "fldRuns": -14.9,
+       "ipAllocated": 1263.6,
+       "nHit": 18,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9576,
+       "pythW": 73.8,
+       "ra": 728.6,
+       "rs": 661.7,
+       "runDiff": -66.8
+      },
+      "SFG": {
+       "batBsrRuns": -18.4,
+       "fipRaaRuns": 13.6,
+       "fldRuns": -0.5,
+       "ipAllocated": 1436.4,
+       "nHit": 23,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 5500.6,
+       "pf": 0.9597,
+       "pythW": 80.4,
+       "ra": 691.8,
+       "rs": 686.8,
+       "runDiff": -5.1
+      },
+      "STL": {
+       "batBsrRuns": -6.0,
+       "fipRaaRuns": -14.3,
+       "fldRuns": 20.5,
+       "ipAllocated": 1170.3,
+       "nHit": 14,
+       "nPit": 19,
+       "notProjected": {},
+       "paAllocated": 5055.4,
+       "pf": 0.9741,
+       "pythW": 81.0,
+       "ra": 708.9,
+       "rs": 709.2,
+       "runDiff": 0.3
+      },
+      "TBR": {
+       "batBsrRuns": -19.9,
+       "fipRaaRuns": 15.2,
+       "fldRuns": 6.3,
+       "ipAllocated": 1436.5,
+       "nHit": 19,
+       "nPit": 31,
+       "notProjected": {},
+       "paAllocated": 5440.9,
+       "pf": 0.9547,
+       "pythW": 81.2,
+       "ra": 680.2,
+       "rs": 681.7,
+       "runDiff": 1.6
+      },
+      "TEX": {
+       "batBsrRuns": -20.6,
+       "fipRaaRuns": -51.5,
+       "fldRuns": -2.9,
+       "ipAllocated": 1436.2,
+       "nHit": 18,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 5222.3,
+       "pf": 1.0024,
+       "pythW": 73.4,
+       "ra": 790.2,
+       "rs": 715.1,
+       "runDiff": -75.1
+      },
+      "TOR": {
+       "batBsrRuns": 56.4,
+       "fipRaaRuns": 10.5,
+       "fldRuns": -1.0,
+       "ipAllocated": 1416.3,
+       "nHit": 14,
+       "nPit": 21,
+       "notProjected": {},
+       "paAllocated": 5266.6,
+       "pf": 1.0392,
+       "pythW": 87.7,
+       "ra": 752.9,
+       "rs": 821.3,
+       "runDiff": 68.4
+      },
+      "WSN": {
+       "batBsrRuns": 7.7,
+       "fipRaaRuns": -63.4,
+       "fldRuns": -9.7,
+       "ipAllocated": 1436.4,
+       "nHit": 17,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 4988.8,
+       "pf": 1.0017,
+       "pythW": 74.5,
+       "ra": 808.5,
+       "rs": 743.0,
+       "runDiff": -65.5
+      }
+     },
+     "league_identity": {
+      "league_sum": 22019.9,
+      "n_clubs": 30,
+      "ra_minus_league": 412.2,
+      "ra_sum": 22432.1,
+      "rs_minus_league": -471.9,
+      "rs_minus_ra": -884.1,
+      "rs_sum": 21548.0,
+      "tol_runs": 220.2,
+      "tol_share": 0.01,
+      "within_tol": false
+     },
+     "meta": {
+      "age_curves": "aging_v3 component_curve('hit', 'bsr' | 'fld') fitted at 2021 (U5)",
+      "constants_season": 2021,
+      "frame": "FanGraphs frame",
+      "league_runs_per_team": 734.0,
+      "n_player_blocks": 1242,
+      "park_factor": {
+       "column": "Basic (5yr)",
+       "file": "park_factors_2021.json",
+       "n_rows": 30,
+       "neutral_fallback": [],
+       "requested_season": 2021,
+       "season_used": 2021
+      },
+      "pj_params": "model/proj_components/params.json",
+      "pj_params_sha256": "da2d5114fe2c05a1cceed883a625ddb63060e45c8fc848c385860694b02cf9b6"
+     },
+     "pythag_wins_mae": 8.3,
+     "ra": {
+      "mae": 63.37,
+      "n": 30,
+      "vs_carry_forward": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -30.777,
+        "mean": -14.73,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": false,
+        "seed": 20261014,
+        "ub95": 1.2203
+       },
+       "comparator_mae": 78.1
+      },
+      "vs_league_avg": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -29.7559,
+        "mean": -16.8633,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": true,
+        "seed": 20261014,
+        "ub95": -2.7737
+       },
+       "comparator_mae": 80.233
+      }
+     },
+     "rs": {
+      "mae": 51.933,
+      "n": 30,
+      "vs_carry_forward": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -33.7803,
+        "mean": -17.7,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": true,
+        "seed": 20261014,
+        "ub95": -2.0978
+       },
+       "comparator_mae": 69.633
+      },
+      "vs_league_avg": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -24.0779,
+        "mean": -13.0333,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": true,
+        "seed": 20261014,
+        "ub95": -2.1772
+       },
+       "comparator_mae": 64.967
+      }
+     },
+     "served_wins_mae": 9.026
+    },
+    "2023": {
+     "clubs": {
+      "ARI": {
+       "batBsrRuns": -20.0,
+       "fipRaaRuns": -41.7,
+       "fldRuns": 4.4,
+       "ipAllocated": 1436.5,
+       "nHit": 18,
+       "nPit": 21,
+       "notProjected": {},
+       "paAllocated": 5856.7,
+       "pf": 1.0104,
+       "pythW": 74.8,
+       "ra": 738.9,
+       "rs": 680.9,
+       "runDiff": -57.9
+      },
+      "ATH": {
+       "batBsrRuns": -45.0,
+       "fipRaaRuns": -73.2,
+       "fldRuns": 0.1,
+       "ipAllocated": 1436.1,
+       "nHit": 18,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 4500.5,
+       "pf": 0.9637,
+       "pythW": 68.6,
+       "ra": 739.2,
+       "rs": 625.4,
+       "runDiff": -113.8
+      },
+      "ATL": {
+       "batBsrRuns": 63.2,
+       "fipRaaRuns": 50.9,
+       "fldRuns": 4.6,
+       "ipAllocated": 1436.3,
+       "nHit": 18,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 5597.4,
+       "pf": 1.0059,
+       "pythW": 93.7,
+       "ra": 642.3,
+       "rs": 761.6,
+       "runDiff": 119.4
+      },
+      "BAL": {
+       "batBsrRuns": -9.7,
+       "fipRaaRuns": -50.1,
+       "fldRuns": 11.6,
+       "ipAllocated": 1436.5,
+       "nHit": 18,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5773.7,
+       "pf": 0.9817,
+       "pythW": 75.9,
+       "ra": 718.9,
+       "rs": 671.6,
+       "runDiff": -47.3
+      },
+      "BOS": {
+       "batBsrRuns": 9.6,
+       "fipRaaRuns": -7.6,
+       "fldRuns": -6.5,
+       "ipAllocated": 1436.4,
+       "nHit": 18,
+       "nPit": 29,
+       "notProjected": {},
+       "paAllocated": 5402.9,
+       "pf": 1.0592,
+       "pythW": 80.5,
+       "ra": 749.9,
+       "rs": 745.1,
+       "runDiff": -4.7
+      },
+      "CHC": {
+       "batBsrRuns": -18.3,
+       "fipRaaRuns": -35.0,
+       "fldRuns": 4.3,
+       "ipAllocated": 1436.5,
+       "nHit": 17,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 5563.7,
+       "pf": 0.9677,
+       "pythW": 75.8,
+       "ra": 701.2,
+       "rs": 653.8,
+       "runDiff": -47.4
+      },
+      "CHW": {
+       "batBsrRuns": -9.9,
+       "fipRaaRuns": -22.8,
+       "fldRuns": -15.7,
+       "ipAllocated": 1436.3,
+       "nHit": 21,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 5699.8,
+       "pf": 1.0075,
+       "pythW": 75.8,
+       "ra": 738.0,
+       "rs": 689.2,
+       "runDiff": -48.8
+      },
+      "CIN": {
+       "batBsrRuns": -45.2,
+       "fipRaaRuns": -23.7,
+       "fldRuns": -14.3,
+       "ipAllocated": 1201.6,
+       "nHit": 19,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 4322.3,
+       "pf": 1.0599,
+       "pythW": 71.8,
+       "ra": 775.8,
+       "rs": 687.6,
+       "runDiff": -88.2
+      },
+      "CLE": {
+       "batBsrRuns": 22.9,
+       "fipRaaRuns": 5.8,
+       "fldRuns": 4.1,
+       "ipAllocated": 1436.4,
+       "nHit": 17,
+       "nPit": 18,
+       "notProjected": {},
+       "paAllocated": 5728.1,
+       "pf": 0.9904,
+       "pythW": 84.5,
+       "ra": 677.5,
+       "rs": 709.9,
+       "runDiff": 32.5
+      },
+      "COL": {
+       "batBsrRuns": -43.4,
+       "fipRaaRuns": -56.3,
+       "fldRuns": -16.3,
+       "ipAllocated": 1436.1,
+       "nHit": 20,
+       "nPit": 28,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.1277,
+       "pythW": 68.3,
+       "ra": 864.4,
+       "rs": 733.6,
+       "runDiff": -130.9
+      },
+      "DET": {
+       "batBsrRuns": -61.9,
+       "fipRaaRuns": -47.0,
+       "fldRuns": -1.1,
+       "ipAllocated": 1404.7,
+       "nHit": 18,
+       "nPit": 21,
+       "notProjected": {},
+       "paAllocated": 4872.8,
+       "pf": 0.9909,
+       "pythW": 69.1,
+       "ra": 735.2,
+       "rs": 626.3,
+       "runDiff": -109.0
+      },
+      "HOU": {
+       "batBsrRuns": 66.5,
+       "fipRaaRuns": 20.9,
+       "fldRuns": 14.6,
+       "ipAllocated": 1277.1,
+       "nHit": 15,
+       "nPit": 18,
+       "notProjected": {},
+       "paAllocated": 4923.5,
+       "pf": 0.9874,
+       "pythW": 91.8,
+       "ra": 650.2,
+       "rs": 750.9,
+       "runDiff": 100.7
+      },
+      "KCR": {
+       "batBsrRuns": -31.8,
+       "fipRaaRuns": -69.5,
+       "fldRuns": -14.5,
+       "ipAllocated": 1436.3,
+       "nHit": 20,
+       "nPit": 31,
+       "notProjected": {},
+       "paAllocated": 5822.8,
+       "pf": 1.0462,
+       "pythW": 68.7,
+       "ra": 813.9,
+       "rs": 692.7,
+       "runDiff": -121.2
+      },
+      "LAA": {
+       "batBsrRuns": 2.6,
+       "fipRaaRuns": -17.2,
+       "fldRuns": -11.8,
+       "ipAllocated": 1436.3,
+       "nHit": 24,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0199,
+       "pythW": 78.2,
+       "ra": 737.3,
+       "rs": 710.4,
+       "runDiff": -26.9
+      },
+      "LAD": {
+       "batBsrRuns": 53.8,
+       "fipRaaRuns": 19.7,
+       "fldRuns": 6.6,
+       "ipAllocated": 1368.0,
+       "nHit": 14,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 4662.7,
+       "pf": 0.9764,
+       "pythW": 89.5,
+       "ra": 651.9,
+       "rs": 730.1,
+       "runDiff": 78.2
+      },
+      "MIA": {
+       "batBsrRuns": -22.5,
+       "fipRaaRuns": -18.2,
+       "fldRuns": -6.0,
+       "ipAllocated": 1436.4,
+       "nHit": 16,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5144.8,
+       "pf": 1.0205,
+       "pythW": 75.9,
+       "ra": 732.9,
+       "rs": 685.2,
+       "runDiff": -47.7
+      },
+      "MIL": {
+       "batBsrRuns": 3.5,
+       "fipRaaRuns": -1.9,
+       "fldRuns": -12.6,
+       "ipAllocated": 1436.5,
+       "nHit": 15,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 5373.4,
+       "pf": 0.9975,
+       "pythW": 79.8,
+       "ra": 706.7,
+       "rs": 695.7,
+       "runDiff": -11.0
+      },
+      "MIN": {
+       "batBsrRuns": -8.6,
+       "fipRaaRuns": -3.8,
+       "fldRuns": 8.4,
+       "ipAllocated": 1436.7,
+       "nHit": 20,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9959,
+       "pythW": 80.6,
+       "ra": 686.5,
+       "rs": 682.5,
+       "runDiff": -4.0
+      },
+      "NYM": {
+       "batBsrRuns": 13.5,
+       "fipRaaRuns": 8.2,
+       "fldRuns": 8.5,
+       "ipAllocated": 1436.1,
+       "nHit": 21,
+       "nPit": 30,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9578,
+       "pythW": 84.2,
+       "ra": 648.6,
+       "rs": 677.6,
+       "runDiff": 29.0
+      },
+      "NYY": {
+       "batBsrRuns": 25.0,
+       "fipRaaRuns": 32.5,
+       "fldRuns": 16.4,
+       "ipAllocated": 1374.3,
+       "nHit": 19,
+       "nPit": 21,
+       "notProjected": {},
+       "paAllocated": 5601.3,
+       "pf": 1.0026,
+       "pythW": 89.1,
+       "ra": 646.6,
+       "rs": 720.8,
+       "runDiff": 74.1
+      },
+      "PHI": {
+       "batBsrRuns": 24.7,
+       "fipRaaRuns": 23.2,
+       "fldRuns": -8.1,
+       "ipAllocated": 1436.1,
+       "nHit": 17,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 5643.1,
+       "pf": 0.9997,
+       "pythW": 85.3,
+       "ra": 678.7,
+       "rs": 718.4,
+       "runDiff": 39.7
+      },
+      "PIT": {
+       "batBsrRuns": -36.1,
+       "fipRaaRuns": -43.2,
+       "fldRuns": 2.4,
+       "ipAllocated": 1262.7,
+       "nHit": 22,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0202,
+       "pythW": 72.7,
+       "ra": 749.5,
+       "rs": 671.1,
+       "runDiff": -78.4
+      },
+      "SDP": {
+       "batBsrRuns": 44.0,
+       "fipRaaRuns": -4.2,
+       "fldRuns": -5.3,
+       "ipAllocated": 1436.3,
+       "nHit": 20,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9561,
+       "pythW": 84.6,
+       "ra": 672.5,
+       "rs": 705.6,
+       "runDiff": 33.0
+      },
+      "SEA": {
+       "batBsrRuns": 17.4,
+       "fipRaaRuns": -1.5,
+       "fldRuns": -6.2,
+       "ipAllocated": 1436.3,
+       "nHit": 17,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5521.0,
+       "pf": 0.9401,
+       "pythW": 82.0,
+       "ra": 659.7,
+       "rs": 668.8,
+       "runDiff": 9.1
+      },
+      "SFG": {
+       "batBsrRuns": -13.7,
+       "fipRaaRuns": 20.4,
+       "fldRuns": -10.6,
+       "ipAllocated": 1274.2,
+       "nHit": 18,
+       "nPit": 16,
+       "notProjected": {},
+       "paAllocated": 4785.1,
+       "pf": 0.9736,
+       "pythW": 80.6,
+       "ra": 666.1,
+       "rs": 662.3,
+       "runDiff": -3.8
+      },
+      "STL": {
+       "batBsrRuns": 35.4,
+       "fipRaaRuns": -28.9,
+       "fldRuns": 3.6,
+       "ipAllocated": 1436.4,
+       "nHit": 19,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 5897.5,
+       "pf": 0.9787,
+       "pythW": 82.0,
+       "ra": 704.0,
+       "rs": 713.8,
+       "runDiff": 9.8
+      },
+      "TBR": {
+       "batBsrRuns": -20.1,
+       "fipRaaRuns": -1.4,
+       "fldRuns": -3.9,
+       "ipAllocated": 1436.4,
+       "nHit": 16,
+       "nPit": 29,
+       "notProjected": {},
+       "paAllocated": 5140.7,
+       "pf": 0.9629,
+       "pythW": 78.3,
+       "ra": 673.3,
+       "rs": 648.8,
+       "runDiff": -24.4
+      },
+      "TEX": {
+       "batBsrRuns": -3.6,
+       "fipRaaRuns": -18.7,
+       "fldRuns": -2.5,
+       "ipAllocated": 1415.3,
+       "nHit": 16,
+       "nPit": 19,
+       "notProjected": {},
+       "paAllocated": 5248.4,
+       "pf": 1.0024,
+       "pythW": 78.3,
+       "ra": 716.8,
+       "rs": 691.9,
+       "runDiff": -24.8
+      },
+      "TOR": {
+       "batBsrRuns": 68.6,
+       "fipRaaRuns": 18.2,
+       "fldRuns": 16.6,
+       "ipAllocated": 1436.3,
+       "nHit": 14,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 5521.6,
+       "pf": 0.9893,
+       "pythW": 91.9,
+       "ra": 652.1,
+       "rs": 754.4,
+       "runDiff": 102.3
+      },
+      "WSN": {
+       "batBsrRuns": -63.0,
+       "fipRaaRuns": -94.3,
+       "fldRuns": -22.7,
+       "ipAllocated": 1286.0,
+       "nHit": 18,
+       "nPit": 18,
+       "notProjected": {},
+       "paAllocated": 4935.6,
+       "pf": 0.99,
+       "pythW": 62.4,
+       "ra": 802.8,
+       "rs": 624.6,
+       "runDiff": -178.2
+      }
+     },
+     "league_identity": {
+      "league_sum": 20817.6,
+      "n_clubs": 30,
+      "ra_minus_league": 513.8,
+      "ra_sum": 21331.4,
+      "rs_minus_league": -27.0,
+      "rs_minus_ra": -540.8,
+      "rs_sum": 20790.6,
+      "tol_runs": 208.2,
+      "tol_share": 0.01,
+      "within_tol": false
+     },
+     "meta": {
+      "age_curves": "aging_v3 component_curve('hit', 'bsr' | 'fld') fitted at 2022 (U5)",
+      "constants_season": 2022,
+      "frame": "FanGraphs frame",
+      "league_runs_per_team": 693.9,
+      "n_player_blocks": 1245,
+      "park_factor": {
+       "column": "Basic (5yr)",
+       "file": "park_factors_2022.json",
+       "n_rows": 30,
+       "neutral_fallback": [],
+       "requested_season": 2022,
+       "season_used": 2022
+      },
+      "pj_params": "model/proj_components/params.json",
+      "pj_params_sha256": "da2d5114fe2c05a1cceed883a625ddb63060e45c8fc848c385860694b02cf9b6"
+     },
+     "pythag_wins_mae": 9.032,
+     "ra": {
+      "mae": 48.173,
+      "n": 30,
+      "vs_carry_forward": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -31.7022,
+        "mean": -17.5933,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": true,
+        "seed": 20261014,
+        "ub95": -4.5397
+       },
+       "comparator_mae": 65.767
+      },
+      "vs_league_avg": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -37.3585,
+        "mean": -21.0133,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": true,
+        "seed": 20261014,
+        "ub95": -5.3428
+       },
+       "comparator_mae": 69.187
+      }
+     },
+     "rs": {
+      "mae": 70.793,
+      "n": 30,
+      "vs_carry_forward": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -22.2873,
+        "mean": -9.3067,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": false,
+        "seed": 20261014,
+        "ub95": 3.5837
+       },
+       "comparator_mae": 80.1
+      },
+      "vs_league_avg": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -13.6482,
+        "mean": -4.0467,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": false,
+        "seed": 20261014,
+        "ub95": 4.9138
+       },
+       "comparator_mae": 74.84
+      }
+     },
+     "served_wins_mae": 9.586
+    },
+    "2024": {
+     "clubs": {
+      "ARI": {
+       "batBsrRuns": -24.9,
+       "fipRaaRuns": -3.2,
+       "fldRuns": 0.1,
+       "ipAllocated": 1436.3,
+       "nHit": 16,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0064,
+       "pythW": 78.1,
+       "ra": 755.6,
+       "rs": 727.5,
+       "runDiff": -28.2
+      },
+      "ATH": {
+       "batBsrRuns": -68.2,
+       "fipRaaRuns": -29.6,
+       "fldRuns": -13.2,
+       "ipAllocated": 1368.3,
+       "nHit": 17,
+       "nPit": 21,
+       "notProjected": {},
+       "paAllocated": 5041.6,
+       "pf": 0.9637,
+       "pythW": 69.7,
+       "ra": 761.8,
+       "rs": 654.9,
+       "runDiff": -106.9
+      },
+      "ATL": {
+       "batBsrRuns": 56.9,
+       "fipRaaRuns": 47.7,
+       "fldRuns": 2.9,
+       "ipAllocated": 1436.5,
+       "nHit": 20,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0013,
+       "pythW": 92.0,
+       "ra": 697.9,
+       "rs": 805.7,
+       "runDiff": 107.8
+      },
+      "BAL": {
+       "batBsrRuns": -23.9,
+       "fipRaaRuns": 6.9,
+       "fldRuns": 1.4,
+       "ipAllocated": 1436.4,
+       "nHit": 18,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 5992.8,
+       "pf": 0.9817,
+       "pythW": 79.4,
+       "ra": 725.9,
+       "rs": 710.6,
+       "runDiff": -15.3
+      },
+      "BOS": {
+       "batBsrRuns": -31.2,
+       "fipRaaRuns": -16.3,
+       "fldRuns": -20.2,
+       "ipAllocated": 1392.1,
+       "nHit": 19,
+       "nPit": 21,
+       "notProjected": {},
+       "paAllocated": 5563.4,
+       "pf": 1.0424,
+       "pythW": 74.0,
+       "ra": 817.5,
+       "rs": 746.9,
+       "runDiff": -70.5
+      },
+      "CHC": {
+       "batBsrRuns": -21.9,
+       "fipRaaRuns": -19.5,
+       "fldRuns": 4.6,
+       "ipAllocated": 1436.4,
+       "nHit": 17,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 5431.8,
+       "pf": 0.9786,
+       "pythW": 77.2,
+       "ra": 746.3,
+       "rs": 710.3,
+       "runDiff": -36.0
+      },
+      "CHW": {
+       "batBsrRuns": -96.8,
+       "fipRaaRuns": -79.4,
+       "fldRuns": -11.5,
+       "ipAllocated": 1320.9,
+       "nHit": 22,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0031,
+       "pythW": 61.9,
+       "ra": 841.2,
+       "rs": 652.9,
+       "runDiff": -188.3
+      },
+      "CIN": {
+       "batBsrRuns": -25.4,
+       "fipRaaRuns": -11.5,
+       "fldRuns": -14.5,
+       "ipAllocated": 1436.4,
+       "nHit": 19,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 5779.9,
+       "pf": 1.0455,
+       "pythW": 75.7,
+       "ra": 808.9,
+       "rs": 755.2,
+       "runDiff": -53.8
+      },
+      "CLE": {
+       "batBsrRuns": -30.8,
+       "fipRaaRuns": 13.8,
+       "fldRuns": 19.5,
+       "ipAllocated": 1436.5,
+       "nHit": 13,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 4705.9,
+       "pf": 0.9887,
+       "pythW": 81.3,
+       "ra": 706.3,
+       "rs": 708.8,
+       "runDiff": 2.5
+      },
+      "COL": {
+       "batBsrRuns": -80.4,
+       "fipRaaRuns": -63.3,
+       "fldRuns": 9.2,
+       "ipAllocated": 1436.6,
+       "nHit": 16,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 4972.6,
+       "pf": 1.1335,
+       "pythW": 66.6,
+       "ra": 908.9,
+       "rs": 756.4,
+       "runDiff": -152.5
+      },
+      "DET": {
+       "batBsrRuns": -52.9,
+       "fipRaaRuns": -7.7,
+       "fldRuns": 1.8,
+       "ipAllocated": 1422.9,
+       "nHit": 17,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5482.6,
+       "pf": 1.0031,
+       "pythW": 74.8,
+       "ra": 756.0,
+       "rs": 696.9,
+       "runDiff": -59.0
+      },
+      "HOU": {
+       "batBsrRuns": 29.6,
+       "fipRaaRuns": 21.4,
+       "fldRuns": 6.4,
+       "ipAllocated": 1436.5,
+       "nHit": 17,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5404.4,
+       "pf": 0.9948,
+       "pythW": 86.9,
+       "ra": 716.1,
+       "rs": 773.3,
+       "runDiff": 57.2
+      },
+      "KCR": {
+       "batBsrRuns": -53.6,
+       "fipRaaRuns": -21.1,
+       "fldRuns": -7.5,
+       "ipAllocated": 1436.6,
+       "nHit": 17,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 6050.5,
+       "pf": 1.0306,
+       "pythW": 72.4,
+       "ra": 800.0,
+       "rs": 715.3,
+       "runDiff": -84.7
+      },
+      "LAA": {
+       "batBsrRuns": -46.0,
+       "fipRaaRuns": -23.3,
+       "fldRuns": -14.1,
+       "ipAllocated": 1436.1,
+       "nHit": 24,
+       "nPit": 32,
+       "notProjected": {},
+       "paAllocated": 5447.8,
+       "pf": 1.0123,
+       "pythW": 72.4,
+       "ra": 794.7,
+       "rs": 710.3,
+       "runDiff": -84.4
+      },
+      "LAD": {
+       "batBsrRuns": 68.4,
+       "fipRaaRuns": 24.7,
+       "fldRuns": 4.5,
+       "ipAllocated": 1436.4,
+       "nHit": 15,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 5934.3,
+       "pf": 0.9914,
+       "pythW": 90.8,
+       "ra": 712.4,
+       "rs": 809.1,
+       "runDiff": 96.7
+      },
+      "MIA": {
+       "batBsrRuns": -73.9,
+       "fipRaaRuns": -14.9,
+       "fldRuns": -7.9,
+       "ipAllocated": 1436.5,
+       "nHit": 21,
+       "nPit": 30,
+       "notProjected": {},
+       "paAllocated": 5340.1,
+       "pf": 1.01,
+       "pythW": 70.9,
+       "ra": 778.2,
+       "rs": 680.6,
+       "runDiff": -97.6
+      },
+      "MIL": {
+       "batBsrRuns": -41.9,
+       "fipRaaRuns": -3.9,
+       "fldRuns": 10.2,
+       "ipAllocated": 1277.5,
+       "nHit": 17,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5053.0,
+       "pf": 0.989,
+       "pythW": 77.3,
+       "ra": 733.2,
+       "rs": 698.1,
+       "runDiff": -35.2
+      },
+      "MIN": {
+       "batBsrRuns": -27.1,
+       "fipRaaRuns": 14.4,
+       "fldRuns": 1.1,
+       "ipAllocated": 1436.5,
+       "nHit": 16,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 5256.5,
+       "pf": 1.0081,
+       "pythW": 79.8,
+       "ra": 738.1,
+       "rs": 726.5,
+       "runDiff": -11.6
+      },
+      "NYM": {
+       "batBsrRuns": -39.6,
+       "fipRaaRuns": -13.2,
+       "fldRuns": 11.4,
+       "ipAllocated": 1436.3,
+       "nHit": 18,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 5737.8,
+       "pf": 0.9634,
+       "pythW": 76.7,
+       "ra": 722.1,
+       "rs": 682.2,
+       "runDiff": -39.9
+      },
+      "NYY": {
+       "batBsrRuns": 19.5,
+       "fipRaaRuns": 26.4,
+       "fldRuns": 5.6,
+       "ipAllocated": 1436.4,
+       "nHit": 17,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9893,
+       "pythW": 86.3,
+       "ra": 708.1,
+       "rs": 759.0,
+       "runDiff": 50.9
+      },
+      "PHI": {
+       "batBsrRuns": -7.7,
+       "fipRaaRuns": 24.9,
+       "fldRuns": -9.4,
+       "ipAllocated": 1436.3,
+       "nHit": 19,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0127,
+       "pythW": 81.8,
+       "ra": 741.5,
+       "rs": 749.5,
+       "runDiff": 8.0
+      },
+      "PIT": {
+       "batBsrRuns": -73.0,
+       "fipRaaRuns": -37.5,
+       "fldRuns": 0.8,
+       "ipAllocated": 1436.5,
+       "nHit": 20,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0154,
+       "pythW": 69.6,
+       "ra": 796.5,
+       "rs": 685.2,
+       "runDiff": -111.4
+      },
+      "SDP": {
+       "batBsrRuns": -11.6,
+       "fipRaaRuns": 11.2,
+       "fldRuns": 0.8,
+       "ipAllocated": 1222.8,
+       "nHit": 18,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 5578.3,
+       "pf": 0.959,
+       "pythW": 81.0,
+       "ra": 705.5,
+       "rs": 705.9,
+       "runDiff": 0.4
+      },
+      "SEA": {
+       "batBsrRuns": -19.6,
+       "fipRaaRuns": 31.8,
+       "fldRuns": -4.1,
+       "ipAllocated": 1436.3,
+       "nHit": 18,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 5557.7,
+       "pf": 0.9354,
+       "pythW": 81.8,
+       "ra": 673.5,
+       "rs": 681.1,
+       "runDiff": 7.6
+      },
+      "SFG": {
+       "batBsrRuns": -68.8,
+       "fipRaaRuns": 41.4,
+       "fldRuns": 1.4,
+       "ipAllocated": 1194.6,
+       "nHit": 24,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9725,
+       "pythW": 78.2,
+       "ra": 685.6,
+       "rs": 660.3,
+       "runDiff": -25.3
+      },
+      "STL": {
+       "batBsrRuns": 16.5,
+       "fipRaaRuns": 1.1,
+       "fldRuns": -7.6,
+       "ipAllocated": 1356.5,
+       "nHit": 16,
+       "nPit": 19,
+       "notProjected": {},
+       "paAllocated": 5203.1,
+       "pf": 0.975,
+       "pythW": 82.0,
+       "ra": 735.3,
+       "rs": 745.1,
+       "runDiff": 9.8
+      },
+      "TBR": {
+       "batBsrRuns": -20.1,
+       "fipRaaRuns": 29.4,
+       "fldRuns": -5.4,
+       "ipAllocated": 1436.2,
+       "nHit": 20,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 5697.7,
+       "pf": 0.9629,
+       "pythW": 81.4,
+       "ra": 696.9,
+       "rs": 700.6,
+       "runDiff": 3.7
+      },
+      "TEX": {
+       "batBsrRuns": -10.8,
+       "fipRaaRuns": -8.0,
+       "fldRuns": 4.2,
+       "ipAllocated": 1436.2,
+       "nHit": 17,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 6017.3,
+       "pf": 0.9865,
+       "pythW": 79.5,
+       "ra": 741.4,
+       "rs": 726.9,
+       "runDiff": -14.4
+      },
+      "TOR": {
+       "batBsrRuns": 0.4,
+       "fipRaaRuns": 15.5,
+       "fldRuns": 9.5,
+       "ipAllocated": 1436.3,
+       "nHit": 17,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 5404.1,
+       "pf": 0.9945,
+       "pythW": 83.6,
+       "ra": 718.7,
+       "rs": 744.0,
+       "runDiff": 25.3
+      },
+      "WSN": {
+       "batBsrRuns": -59.0,
+       "fipRaaRuns": -70.8,
+       "fldRuns": -26.6,
+       "ipAllocated": 1436.4,
+       "nHit": 18,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5880.9,
+       "pf": 0.9963,
+       "pythW": 65.4,
+       "ra": 842.1,
+       "rs": 686.2,
+       "runDiff": -155.9
+      }
+     },
+     "league_identity": {
+      "league_sum": 22431.2,
+      "n_clubs": 30,
+      "ra_minus_league": 135.0,
+      "ra_sum": 22566.2,
+      "rs_minus_league": -865.9,
+      "rs_minus_ra": -1000.9,
+      "rs_sum": 21565.3,
+      "tol_runs": 224.3,
+      "tol_share": 0.01,
+      "within_tol": false
+     },
+     "meta": {
+      "age_curves": "aging_v3 component_curve('hit', 'bsr' | 'fld') fitted at 2023 (U5)",
+      "constants_season": 2023,
+      "frame": "FanGraphs frame",
+      "league_runs_per_team": 747.7,
+      "n_player_blocks": 1261,
+      "park_factor": {
+       "column": "Basic (5yr)",
+       "file": "park_factors_2023.json",
+       "n_rows": 30,
+       "neutral_fallback": [],
+       "requested_season": 2023,
+       "season_used": 2023
+      },
+      "pj_params": "model/proj_components/params.json",
+      "pj_params_sha256": "da2d5114fe2c05a1cceed883a625ddb63060e45c8fc848c385860694b02cf9b6"
+     },
+     "pythag_wins_mae": 7.415,
+     "ra": {
+      "mae": 51.273,
+      "n": 30,
+      "vs_carry_forward": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -22.6767,
+        "mean": -8.8267,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": false,
+        "seed": 20261014,
+        "ub95": 4.1687
+       },
+       "comparator_mae": 60.1
+      },
+      "vs_league_avg": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -29.1552,
+        "mean": -15.8178,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": true,
+        "seed": 20261014,
+        "ub95": -2.4169
+       },
+       "comparator_mae": 67.091
+      }
+     },
+     "rs": {
+      "mae": 52.33,
+      "n": 30,
+      "vs_carry_forward": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -40.4812,
+        "mean": -23.5033,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": true,
+        "seed": 20261014,
+        "ub95": -7.2795
+       },
+       "comparator_mae": 75.833
+      },
+      "vs_league_avg": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -25.5243,
+        "mean": -13.2633,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": true,
+        "seed": 20261014,
+        "ub95": -0.428
+       },
+       "comparator_mae": 65.593
+      }
+     },
+     "served_wins_mae": 6.768
+    },
+    "2025": {
+     "clubs": {
+      "ARI": {
+       "batBsrRuns": 10.1,
+       "fipRaaRuns": -14.6,
+       "fldRuns": 2.3,
+       "ipAllocated": 1436.4,
+       "nHit": 22,
+       "nPit": 34,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0014,
+       "pythW": 80.8,
+       "ra": 724.9,
+       "rs": 722.9,
+       "runDiff": -2.1
+      },
+      "ATH": {
+       "batBsrRuns": -22.1,
+       "fipRaaRuns": -28.9,
+       "fldRuns": -16.9,
+       "ipAllocated": 1436.8,
+       "nHit": 17,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 5376.6,
+       "pf": 0.9637,
+       "pythW": 74.0,
+       "ra": 730.0,
+       "rs": 664.6,
+       "runDiff": -65.4
+      },
+      "ATL": {
+       "batBsrRuns": 23.0,
+       "fipRaaRuns": 15.6,
+       "fldRuns": -5.9,
+       "ipAllocated": 1436.3,
+       "nHit": 20,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9957,
+       "pythW": 84.4,
+       "ra": 699.0,
+       "rs": 731.6,
+       "runDiff": 32.6
+      },
+      "BAL": {
+       "batBsrRuns": -9.8,
+       "fipRaaRuns": -29.1,
+       "fldRuns": -0.2,
+       "ipAllocated": 1436.7,
+       "nHit": 25,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9817,
+       "pythW": 76.9,
+       "ra": 727.5,
+       "rs": 689.0,
+       "runDiff": -38.5
+      },
+      "BOS": {
+       "batBsrRuns": -7.7,
+       "fipRaaRuns": 3.8,
+       "fldRuns": -7.4,
+       "ipAllocated": 1424.8,
+       "nHit": 16,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 5006.8,
+       "pf": 1.031,
+       "pythW": 79.8,
+       "ra": 737.6,
+       "rs": 725.8,
+       "runDiff": -11.8
+      },
+      "CHC": {
+       "batBsrRuns": 2.6,
+       "fipRaaRuns": -27.0,
+       "fldRuns": 19.8,
+       "ipAllocated": 1436.4,
+       "nHit": 14,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 5289.2,
+       "pf": 0.9742,
+       "pythW": 80.5,
+       "ra": 700.3,
+       "rs": 695.9,
+       "runDiff": -4.5
+      },
+      "CHW": {
+       "batBsrRuns": -98.5,
+       "fipRaaRuns": -70.5,
+       "fldRuns": -15.5,
+       "ipAllocated": 1370.6,
+       "nHit": 22,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 5507.0,
+       "pf": 0.9997,
+       "pythW": 61.6,
+       "ra": 797.5,
+       "rs": 613.1,
+       "runDiff": -184.4
+      },
+      "CIN": {
+       "batBsrRuns": -14.1,
+       "fipRaaRuns": -19.6,
+       "fldRuns": -5.8,
+       "ipAllocated": 1436.2,
+       "nHit": 18,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5909.2,
+       "pf": 1.0184,
+       "pythW": 76.8,
+       "ra": 750.7,
+       "rs": 710.5,
+       "runDiff": -40.2
+      },
+      "CLE": {
+       "batBsrRuns": -19.1,
+       "fipRaaRuns": -8.9,
+       "fldRuns": 11.2,
+       "ipAllocated": 1436.5,
+       "nHit": 17,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 5486.0,
+       "pf": 0.9958,
+       "pythW": 79.2,
+       "ra": 706.4,
+       "rs": 689.7,
+       "runDiff": -16.7
+      },
+      "COL": {
+       "batBsrRuns": -86.3,
+       "fipRaaRuns": -74.3,
+       "fldRuns": 8.6,
+       "ipAllocated": 1421.6,
+       "nHit": 23,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.1254,
+       "pythW": 64.3,
+       "ra": 874.8,
+       "rs": 703.8,
+       "runDiff": -171.0
+      },
+      "DET": {
+       "batBsrRuns": -45.5,
+       "fipRaaRuns": 11.2,
+       "fldRuns": 5.6,
+       "ipAllocated": 1436.6,
+       "nHit": 22,
+       "nPit": 21,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0078,
+       "pythW": 77.8,
+       "ra": 700.4,
+       "rs": 671.5,
+       "runDiff": -28.9
+      },
+      "HOU": {
+       "batBsrRuns": 8.3,
+       "fipRaaRuns": -13.7,
+       "fldRuns": 2.0,
+       "ipAllocated": 1436.4,
+       "nHit": 19,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9915,
+       "pythW": 80.6,
+       "ra": 717.2,
+       "rs": 713.9,
+       "runDiff": -3.3
+      },
+      "KCR": {
+       "batBsrRuns": -2.2,
+       "fipRaaRuns": -5.5,
+       "fldRuns": 3.0,
+       "ipAllocated": 1328.5,
+       "nHit": 16,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 5833.2,
+       "pf": 1.0261,
+       "pythW": 80.5,
+       "ra": 732.8,
+       "rs": 728.1,
+       "runDiff": -4.8
+      },
+      "LAA": {
+       "batBsrRuns": -32.3,
+       "fipRaaRuns": -53.0,
+       "fldRuns": -15.2,
+       "ipAllocated": 1436.4,
+       "nHit": 21,
+       "nPit": 28,
+       "notProjected": {},
+       "paAllocated": 5891.8,
+       "pf": 0.9965,
+       "pythW": 70.6,
+       "ra": 777.2,
+       "rs": 677.1,
+       "runDiff": -100.1
+      },
+      "LAD": {
+       "batBsrRuns": 77.7,
+       "fipRaaRuns": 12.0,
+       "fldRuns": -6.7,
+       "ipAllocated": 1436.5,
+       "nHit": 15,
+       "nPit": 28,
+       "notProjected": {},
+       "paAllocated": 5094.9,
+       "pf": 0.9919,
+       "pythW": 89.5,
+       "ra": 700.8,
+       "rs": 783.0,
+       "runDiff": 82.2
+      },
+      "MIA": {
+       "batBsrRuns": -36.9,
+       "fipRaaRuns": -62.2,
+       "fldRuns": 1.3,
+       "ipAllocated": 1423.0,
+       "nHit": 15,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 3350.6,
+       "pf": 1.0087,
+       "pythW": 70.7,
+       "ra": 779.4,
+       "rs": 680.6,
+       "runDiff": -98.7
+      },
+      "MIL": {
+       "batBsrRuns": -9.2,
+       "fipRaaRuns": -17.1,
+       "fldRuns": 11.6,
+       "ipAllocated": 1390.1,
+       "nHit": 19,
+       "nPit": 22,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9813,
+       "pythW": 79.5,
+       "ra": 703.7,
+       "rs": 689.4,
+       "runDiff": -14.4
+      },
+      "MIN": {
+       "batBsrRuns": -24.9,
+       "fipRaaRuns": 3.7,
+       "fldRuns": -7.4,
+       "ipAllocated": 1436.5,
+       "nHit": 19,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 5789.3,
+       "pf": 1.0026,
+       "pythW": 77.9,
+       "ra": 717.3,
+       "rs": 688.6,
+       "runDiff": -28.6
+      },
+      "NYM": {
+       "batBsrRuns": 40.1,
+       "fipRaaRuns": -19.2,
+       "fldRuns": 5.1,
+       "ipAllocated": 1436.3,
+       "nHit": 17,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 5889.8,
+       "pf": 0.9755,
+       "pythW": 83.7,
+       "ra": 708.0,
+       "rs": 733.4,
+       "runDiff": 25.4
+      },
+      "NYY": {
+       "batBsrRuns": 53.9,
+       "fipRaaRuns": -11.0,
+       "fldRuns": 8.3,
+       "ipAllocated": 1436.5,
+       "nHit": 14,
+       "nPit": 24,
+       "notProjected": {},
+       "paAllocated": 4918.7,
+       "pf": 1.0015,
+       "pythW": 86.3,
+       "ra": 715.5,
+       "rs": 766.8,
+       "runDiff": 51.3
+      },
+      "PHI": {
+       "batBsrRuns": 26.9,
+       "fipRaaRuns": 11.6,
+       "fldRuns": -4.1,
+       "ipAllocated": 1436.5,
+       "nHit": 16,
+       "nPit": 23,
+       "notProjected": {},
+       "paAllocated": 5439.4,
+       "pf": 1.0308,
+       "pythW": 84.6,
+       "ra": 725.9,
+       "rs": 761.4,
+       "runDiff": 35.4
+      },
+      "PIT": {
+       "batBsrRuns": -50.8,
+       "fipRaaRuns": 3.1,
+       "fldRuns": -13.8,
+       "ipAllocated": 1341.7,
+       "nHit": 22,
+       "nPit": 21,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 1.0288,
+       "pythW": 74.3,
+       "ra": 743.3,
+       "rs": 680.0,
+       "runDiff": -63.3
+      },
+      "SDP": {
+       "batBsrRuns": -2.4,
+       "fipRaaRuns": 17.5,
+       "fldRuns": -14.3,
+       "ipAllocated": 1436.6,
+       "nHit": 19,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 5577.7,
+       "pf": 0.9537,
+       "pythW": 81.1,
+       "ra": 675.7,
+       "rs": 676.5,
+       "runDiff": 0.7
+      },
+      "SEA": {
+       "batBsrRuns": -12.0,
+       "fipRaaRuns": 18.0,
+       "fldRuns": -8.7,
+       "ipAllocated": 1436.3,
+       "nHit": 17,
+       "nPit": 26,
+       "notProjected": {},
+       "paAllocated": 5691.3,
+       "pf": 0.9344,
+       "pythW": 80.7,
+       "ra": 656.3,
+       "rs": 653.8,
+       "runDiff": -2.5
+      },
+      "SFG": {
+       "batBsrRuns": -7.8,
+       "fipRaaRuns": -1.4,
+       "fldRuns": 3.4,
+       "ipAllocated": 1436.2,
+       "nHit": 22,
+       "nPit": 27,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9692,
+       "pythW": 80.4,
+       "ra": 687.9,
+       "rs": 682.2,
+       "runDiff": -5.6
+      },
+      "STL": {
+       "batBsrRuns": -10.8,
+       "fipRaaRuns": -20.6,
+       "fldRuns": -4.9,
+       "ipAllocated": 1423.7,
+       "nHit": 17,
+       "nPit": 18,
+       "notProjected": {},
+       "paAllocated": 5499.0,
+       "pf": 0.9766,
+       "pythW": 77.2,
+       "ra": 719.9,
+       "rs": 684.5,
+       "runDiff": -35.4
+      },
+      "TBR": {
+       "batBsrRuns": -37.6,
+       "fipRaaRuns": 2.1,
+       "fldRuns": -4.0,
+       "ipAllocated": 1214.0,
+       "nHit": 18,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 4932.2,
+       "pf": 0.9629,
+       "pythW": 76.8,
+       "ra": 687.2,
+       "rs": 649.1,
+       "runDiff": -38.1
+      },
+      "TEX": {
+       "batBsrRuns": -7.2,
+       "fipRaaRuns": -22.3,
+       "fldRuns": 5.9,
+       "ipAllocated": 1249.1,
+       "nHit": 21,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 6096.7,
+       "pf": 0.9824,
+       "pythW": 78.5,
+       "ra": 715.4,
+       "rs": 692.1,
+       "runDiff": -23.2
+      },
+      "TOR": {
+       "batBsrRuns": -20.5,
+       "fipRaaRuns": -23.3,
+       "fldRuns": 17.6,
+       "ipAllocated": 1436.3,
+       "nHit": 19,
+       "nPit": 25,
+       "notProjected": {},
+       "paAllocated": 6068.9,
+       "pf": 0.9945,
+       "pythW": 78.2,
+       "ra": 713.5,
+       "rs": 687.4,
+       "runDiff": -26.2
+      },
+      "WSN": {
+       "batBsrRuns": -38.7,
+       "fipRaaRuns": -34.7,
+       "fldRuns": -20.2,
+       "ipAllocated": 1237.9,
+       "nHit": 18,
+       "nPit": 20,
+       "notProjected": {},
+       "paAllocated": 5893.5,
+       "pf": 1.015,
+       "pythW": 71.1,
+       "ra": 778.1,
+       "rs": 683.1,
+       "runDiff": -95.0
+      }
+     },
+     "league_identity": {
+      "league_sum": 21351.7,
+      "n_clubs": 30,
+      "ra_minus_league": 452.5,
+      "ra_sum": 21804.2,
+      "rs_minus_league": -422.3,
+      "rs_minus_ra": -874.8,
+      "rs_sum": 20929.4,
+      "tol_runs": 213.5,
+      "tol_share": 0.01,
+      "within_tol": false
+     },
+     "meta": {
+      "age_curves": "aging_v3 component_curve('hit', 'bsr' | 'fld') fitted at 2024 (U5)",
+      "constants_season": 2024,
+      "frame": "FanGraphs frame",
+      "league_runs_per_team": 711.7,
+      "n_player_blocks": 1281,
+      "park_factor": {
+       "column": "Basic (5yr)",
+       "file": "park_factors_2024.json",
+       "n_rows": 30,
+       "neutral_fallback": [],
+       "requested_season": 2024,
+       "season_used": 2024
+      },
+      "pj_params": "model/proj_components/params.json",
+      "pj_params_sha256": "da2d5114fe2c05a1cceed883a625ddb63060e45c8fc848c385860694b02cf9b6"
+     },
+     "pythag_wins_mae": 6.457,
+     "ra": {
+      "mae": 55.013,
+      "n": 30,
+      "vs_carry_forward": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -3.9122,
+        "mean": 7.78,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": false,
+        "seed": 20261014,
+        "ub95": 19.7107
+       },
+       "comparator_mae": 47.233
+      },
+      "vs_league_avg": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -23.4542,
+        "mean": -11.6444,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": true,
+        "seed": 20261014,
+        "ub95": -0.9487
+       },
+       "comparator_mae": 66.658
+      }
+     },
+     "rs": {
+      "mae": 49.347,
+      "n": 30,
+      "vs_carry_forward": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -19.3588,
+        "mean": -7.7533,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": false,
+        "seed": 20261014,
+        "ub95": 3.3805
+       },
+       "comparator_mae": 57.1
+      },
+      "vs_league_avg": {
+       "bootstrap": {
+        "B": 2000,
+        "dropped": [],
+        "lo05": -13.6578,
+        "mean": -3.72,
+        "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+        "n": 30,
+        "pass": false,
+        "seed": 20261014,
+        "ub95": 6.1864
+       },
+       "comparator_mae": 53.067
+      }
+     },
+     "served_wins_mae": 7.118
+    }
+   },
+   "pooled": {
+    "ra": {
+     "vs_carry_forward": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -15.4471,
+      "mean": -8.3425,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 120,
+      "pass": true,
+      "seed": 20261014,
+      "ub95": -1.5812
+     },
+     "vs_league_avg": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -23.234,
+      "mean": -16.3347,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 120,
+      "pass": true,
+      "seed": 20261014,
+      "ub95": -9.695
+     }
+    },
+    "rs": {
+     "vs_carry_forward": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -21.6641,
+      "mean": -14.5658,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 120,
+      "pass": true,
+      "seed": 20261014,
+      "ub95": -6.9865
+     },
+     "vs_league_avg": {
+      "B": 2000,
+      "dropped": [],
+      "lo05": -13.9075,
+      "mean": -8.5158,
+      "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0",
+      "n": 120,
+      "pass": true,
+      "seed": 20261014,
+      "ub95": -3.1037
+     }
+    }
+   },
+   "pooled_mae": {
+    "ra": 54.457,
+    "rs": 56.101
+   },
+   "pooled_pythag_wins_mae": 7.801
+  }
+ },
+ "task": "TM_3_TEAM_CANDIDATES_DARK"
+}

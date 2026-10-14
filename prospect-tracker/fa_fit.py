@@ -771,8 +771,17 @@ def _outlook_wins(class_year: int) -> dict[str, float]:
         if not org:
             continue
         for by in (t.get("byYear") or []):
-            if by.get("season") == class_year and by.get("wins") is not None:
-                out[org] = float(by["wins"])
+            if by.get("season") != class_year:
+                continue
+            # THE FA FIT FIELD (docs/TEAM_PROJECTIONS_GATE.md section 6.2, PLAN
+            # 9.7 round 5): the un-budgeted wins of the pre-free-agency frame.
+            # While the T2 club budget (proj_export.TEAM_PT_BUDGET_LIVE) is
+            # off, `wins` is that total; when it serves, the same total rides
+            # under `winsFaFit` and `wins` becomes the budgeted roll-up, so the
+            # baseline here never moves with that flag.
+            w = by.get("winsFaFit", by.get("wins"))
+            if w is not None:
+                out[org] = float(w)
                 break
     if len(out) != 30:
         log.warning("fa_fit: team_outlook covers %d clubs for %d (need 30) — "

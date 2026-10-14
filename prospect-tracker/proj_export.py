@@ -234,6 +234,22 @@ MIN_PA, MIN_IP = 100, 30
 ROS_TALENT_BASIS = "de_aged"
 ROS_TALENT_BASES = ("de_aged", "first_season")
 
+#: TEAM PROJECTION CANDIDATES (TM_3_TEAM_CANDIDATES_DARK; docs/
+#: TEAM_PROJECTIONS_GATE.md section 1; LANE_A 2.6). Each flag defaults False:
+#: the candidate is computed and written under .cache/team_projection/preview/
+#: only, and every served file is byte-identical apart from its timestamp. A
+#: pass at the gate's look makes a flag eligible; the flip is its own commit
+#: (section 5.1). The frozen constants are model/team_projection/params.json.
+TEAM_TALENT_RANGE_LIVE = False   # T1: sigma_T into simulate_playoffs (class 3, gate TM-A)
+TEAM_PT_BUDGET_LIVE = False      # T2: the club PA and IP budget on the served wins (class 3, TM-B)
+TEAM_RUNS_LIVE = False           # T3: RS, RA, run differential and Pythag wins (class 2, TM-C)
+#: The playing-time ledger the candidates read, filled by _veteran_rows and
+#: _depth_pool during one build: {(mlbam, side): {team, pt[], war[], last_ctrl,
+#: hist, age, role, src}}; never serialized.
+_PT_LEDGER: dict = {}
+_LEDGER_META: dict = {}
+_TEAM_PREVIEW: dict = {}
+
 # Per-600-PA / per-250-BF denominators: the units fa_market._decay_path carries
 # the WAR RATE in. Defined once so the inverse cannot drift from the forward.
 _PER_EXPOSURE = {"hit": 600.0, "pit": 250.0}
@@ -857,6 +873,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
     curves, war_map = fp.fitted_models(corpus, FIRST_SEASON - 1)
     frac = fp.season_fraction(league, FIRST_SEASON - 1)
     in_prog = (FIRST_SEASON - 1, frac)
+    _LEDGER_META["curves"] = curves
     r = float(vf._config()["discount_rate"])
     _unified = vf.dpw_path_active()
     if _unified:
@@ -1303,6 +1320,8 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             if _ambiguous and contracts.get(_nkey) is ct and _awards_plain_key(ct):
                 m["key"] = _nkey
         m = _clean(m)
+        # T2 and T3 (TM_3): the playing-time ledger the team candidates read.
+        _ledger_vet(m, sides, paths, ages, curves, league)
         out.append(m)
         _ck = _contested_by_mlbam.get(mlbam)
         if _ck:
@@ -2246,6 +2265,7 @@ def _depth_pool(corpus: dict, names: dict[int, str],
     for mlbam in (set(by_player["hit"]) | set(by_player["pit"])) - vet_mlbams:
         champ = [0.0] * HORIZON
         age_any = None
+        _dp_sides: list = []
         for side in ("hit", "pit"):
             seasons = by_player[side].get(mlbam) or {}
             hist = [seasons[t] for t in (FIRST_SEASON - 1, FIRST_SEASON - 2,
@@ -2262,6 +2282,7 @@ def _depth_pool(corpus: dict, names: dict[int, str],
             if cp is None:
                 continue
             arr = cp.get("war_by_year_champ") or cp.get("war_by_year") or []
+            _dp_sides.append((side, hist, age, cp, arr))
             for t in range(HORIZON):
                 if t < len(arr):
                     champ[t] += float(arr[t] or 0.0)
@@ -2282,6 +2303,8 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         for t in range(HORIZON):
             if FIRST_SEASON + t <= last_ctrl:
                 bucket[t] += champ[t]
+        if org:
+            _ledger_depth(mlbam, org, last_ctrl, _dp_sides, curves, league)
     acct = {"n_depth_players": n,
             "depth_war_y1": round(sum(v[0] for v in team_war.values()), 1),
             "depth_war_5y": round(sum(sum(v) for v in team_war.values()), 1),
@@ -2406,7 +2429,9 @@ def _org_farm_blocks() -> dict[str, dict]:
 def _team_outlook(vets: list[dict], prospects: list[dict],
                   depth_team_war: dict | None = None,
                   depth_acct: dict | None = None,
-                  intercepts: dict | None = None) -> list[dict]:
+                  intercepts: dict | None = None, *,
+                  pt_ledger: dict | None = None, budget: dict | None = None,
+                  live: bool | None = None) -> list[dict]:
     """Team WAR roll-up. The DISPLAY headline is the first projected season
     (47.7 replacement baseline + roster WAR -> projected wins; PRE-FREE-AGENCY
     frame, forward-gated against actual standings). On top of that, the
@@ -2420,7 +2445,17 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
     sparkline. Prospects contribute at their org from their ETA forward.
 
     REPLACEMENT_WINS comes from rate_stabilization (shared with the retro
-    backtest in proj_backtest.py)."""
+    backtest in proj_backtest.py).
+
+    T2 (TM_3, docs/TEAM_PROJECTIONS_GATE.md section 1.2): with a playing-time
+    ledger (`pt_ledger`, default the build's _PT_LEDGER) and a frozen budget
+    (`budget`, default the params file's), the club PA and IP budget roll-up is
+    computed beside this one (_team_budget). It reaches the rows only when
+    TEAM_PT_BUDGET_LIVE (`live`) is True: then byYear[].wins is the budgeted
+    total and the un-budgeted wins of this same pre-free-agency frame ride
+    under byYear[].winsFaFit, the one field fa_fit._outlook_wins reads (R4),
+    so data/fa_class.json is the same with the flag on and off. With the flag
+    False nothing here changes and the budget goes to the preview only."""
     # bWAR is calibrated so the league's players sum to ~1000 WAR every
     # season (verified 1000/1000/1000 for 2023-25 in war_daily). eWAR v2,
     # the served basis since 2026-09-03, keeps that identity by construction:
@@ -2444,6 +2479,7 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
             "raw":  [0.0] * HORIZON,  # CONTROLLED champion-mean roster WAR/season
             "full": [0.0] * HORIZON,  # everyone-stays WAR/season (control denominator)
             "coh":  [0.0] * HORIZON,  # cohort-intercept adjustment, per season
+            "pros": [0.0] * HORIZON,  # prospects' ETA-aligned WAR (inside raw; T2 adds it unscaled)
             "n":    [0] * HORIZON,
             "top": []})               # (year1_war, name, key) for the top-3 strip
 
@@ -2498,6 +2534,7 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
             idx = t - off
             if idx < len(war) and war[idx] is not None:
                 t_["raw"][t] += war[idx]
+                t_["pros"][t] += war[idx]
                 t_["full"][t] += war[idx]   # prospects are controlled all horizon
                 t_["n"][t] += 1
         if off <= 0 and war[0] is not None:
@@ -2518,6 +2555,28 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
             cal_sum += t_["raw"][t] + t_["coh"][t] + depth_t
         season_remainder[t] = (LEAGUE_WINS - cal_sum) / max(len(teams), 1)
 
+    # T2 (TM_3): the club PA and IP budget on the same clubs, computed when
+    # the ledger and the frozen budget exist, served only when
+    # TEAM_PT_BUDGET_LIVE is True (then the un-budgeted wins ride under
+    # byYear[].winsFaFit, the field fa_fit reads; R4).
+    if pt_ledger is None:
+        pt_ledger = _PT_LEDGER
+    if budget is None:
+        budget = (_team_params() or {}).get("budget")
+    budget_block = _team_budget(teams, pt_ledger, budget)
+    live_budget = TEAM_PT_BUDGET_LIVE if live is None else bool(live)
+    if budget_block:
+        _TEAM_PREVIEW["budget"] = {
+            "status": "served" if live_budget else "preview",
+            "budget": budget_block["budget"], "remainder": budget_block["remainder"],
+            "clubs": {tm: {**budget_block["clubs"][tm],
+                           "winsBudget": [round(w, 1) for w in budget_block["wins"][tm]]}
+                      for tm in budget_block["clubs"]}}
+        _TEAM_PREVIEW["budget_scales"] = budget_block["scales"]
+    else:
+        _TEAM_PREVIEW["budget"] = {"status": "not computed",
+                                   "reason": "no ledger" if not pt_ledger else "no frozen budget"}
+
     raw_wins_sum_y1 = 30 * REPLACEMENT_WINS + sum(t_["raw"][0] for t_ in teams.values())
     out = []
     for tm, t_ in teams.items():
@@ -2527,7 +2586,7 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
         for t in range(HORIZON):
             war_cal = t_["raw"][t] + t_["coh"][t] + depth_arr[t]
             wins = round(REPLACEMENT_WINS + war_cal + season_remainder[t], 1)
-            by_year.append({
+            entry = {
                 "season": FIRST_SEASON + t,
                 "war": round(t_["raw"][t], 1),
                 "wins": wins,
@@ -2535,7 +2594,18 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
                 "winsRaw": round(REPLACEMENT_WINS + t_["raw"][t], 1),
                 "depthWar": round(war_cal - t_["raw"][t] + season_remainder[t], 1),
                 "n": t_["n"][t],
-            })
+            }
+            if live_budget and budget_block:
+                # T2 served: the budgeted total is `wins`; the un-budgeted
+                # wins of this frame stay under winsFaFit for fa_fit (R4).
+                wb = round(budget_block["wins"][tm][t], 1)
+                entry.update({"wins": wb, "losses": round(162.0 - wb, 1),
+                              "depthWar": round(wb - REPLACEMENT_WINS - t_["raw"][t], 1),
+                              "winsFaFit": wins})
+            by_year.append(entry)
+        if budget_block and tm in (_TEAM_PREVIEW.get("budget") or {}).get("clubs", {}):
+            _TEAM_PREVIEW["budget"]["clubs"][tm]["winsUnbudgeted"] = [
+                b.get("winsFaFit", b["wins"]) for b in by_year]
         y1 = by_year[0]
         # Organizational CONTROL: WAR-weighted share of the core's projected
         # 2027-31 production the team controls (controlled / everyone-stays).
@@ -2572,10 +2642,253 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
             "top": [{"name": n, "key": k, "war": round(w, 1)}
                     for w, n, k in t_["top"][:3]],
             "farm": fb,
+            **({"ptBudget": budget_block["clubs"][tm]} if live_budget and budget_block else {}),
         })
     out.sort(key=lambda r: -r["wins"])
     _write_team_outlook_eval(out, raw_wins_sum_y1, season_remainder, depth_acct or {})
     return out
+
+
+# --------------------------------------------------------------------------
+# Team projection candidates (TM_3_TEAM_CANDIDATES_DARK; docs/
+# TEAM_PROJECTIONS_GATE.md section 1). Three flags, each False: the candidate
+# is computed and written under .cache/team_projection/preview/ only, and no
+# served key, number or file moves. A flip is its own commit after the gate's
+# look (section 5.1).
+# --------------------------------------------------------------------------
+
+def _team_params() -> dict | None:
+    """The frozen T1/T2 constants (model/team_projection/params.json), or None
+    before the DEV freeze: then no candidate is computed and the preview
+    says so."""
+    import team_projection as TP
+    try:
+        return TP.load_params()
+    except TP.TeamParamsError:
+        log.warning("team_projection params unreadable; candidates skipped", exc_info=True)
+        return None
+
+
+def _ledger_vet(m: dict, sides: dict, paths: dict, ages: dict, curves: dict,
+                league: dict) -> None:
+    """One Team Outlook veteran into the playing-time ledger: per side, the
+    champion mean WAR path and the engine's exposure walk (PA for hitters, BF
+    for pitchers; proj_components.exposure_walk, the decay role the champion
+    path itself walks on), his club and his last controlled season."""
+    import proj_components as PC
+    last_ctrl = _last_controlled_season(m)
+    for side, path in paths.items():
+        drole = fp.profile_role(sides[side], side, path.get("role"), league)
+        pt = PC.exposure_walk(path.get("pt_y1"), side, drole, ages.get(side), curves, HORIZON)
+        champ = [float(w or 0.0) for w in
+                 (path.get("war_by_year_champ") or path.get("war_by_year") or [])[:HORIZON]]
+        champ += [0.0] * (HORIZON - len(champ))
+        _PT_LEDGER[(m["mlbam"], side)] = {
+            "mlbam": m["mlbam"], "side": side, "src": "vet", "team": m.get("team"),
+            "last_ctrl": last_ctrl, "age": ages.get(side), "role": path.get("role"),
+            "pt": [round(float(x), 1) for x in pt], "war": champ, "hist": sides[side]}
+
+
+def _ledger_depth(mlbam: int, org: str, last_ctrl: int, sides: list, curves: dict,
+                  league: dict) -> None:
+    """One sub-floor depth player into the ledger, per side (see _ledger_vet)."""
+    import proj_components as PC
+    for side, hist, age, cp, arr in sides:
+        drole = fp.profile_role(hist, side, cp.get("role"), league)
+        pt = PC.exposure_walk(cp.get("pt_y1"), side, drole, age, curves, HORIZON)
+        champ = [float(w or 0.0) for w in list(arr)[:HORIZON]]
+        champ += [0.0] * (HORIZON - len(champ))
+        _PT_LEDGER[(mlbam, side)] = {
+            "mlbam": mlbam, "side": side, "src": "depth", "team": org,
+            "last_ctrl": last_ctrl, "age": age, "role": cp.get("role"),
+            "pt": [round(float(x), 1) for x in pt], "war": champ, "hist": hist}
+
+
+def _team_budget(teams: dict, pt_ledger: dict | None, budget: dict | None) -> dict | None:
+    """T2 (section 1.2) on the roll-up's clubs: per club and season, the
+    ledger's controlled hitters allocated against the PA budget and its
+    pitchers against the IP budget (team_projection.budgeted_club_war), the
+    prospects' ETA-aligned WAR and the cohort term added unscaled, then the
+    2,430 pin per season. None without a ledger or a frozen budget."""
+    import team_projection as TP
+    if not budget or not pt_ledger or not teams:
+        return None
+    bpa, bip = float(budget["pa"]), float(budget["ip"])
+    by_side: dict[str, dict[str, list]] = {tm: {"hit": [], "pit": []} for tm in teams}
+    for e in pt_ledger.values():
+        tm = e.get("team")
+        if tm in by_side and e.get("side") in ("hit", "pit"):
+            by_side[tm][e["side"]].append(e)
+    war_b = {tm: [0.0] * HORIZON for tm in teams}
+    acct: dict[str, dict] = {}
+    for tm, t_ in teams.items():
+        for t in range(HORIZON):
+            season = FIRST_SEASON + t
+            hit = [{"pt": e["pt"][t], "war": e["war"][t]} for e in by_side[tm]["hit"]
+                   if season <= e["last_ctrl"] and t < len(e["pt"])]
+            pit = [{"pt": e["pt"][t] / TP.BF_PER_IP, "war": e["war"][t]} for e in by_side[tm]["pit"]
+                   if season <= e["last_ctrl"] and t < len(e["pt"])]
+            b = TP.budgeted_club_war(hit, pit, bpa, bip)
+            war_b[tm][t] = b["war"] + t_["pros"][t] + t_["coh"][t]
+            if t == 0:
+                acct[tm] = {
+                    "nHit": b["hit"]["n"], "paSum": b["hit"]["pt_sum"],
+                    "paScale": round(b["hit"]["scale"], 4), "paShort": b["hit"]["shortfall"],
+                    "nPit": b["pit"]["n"], "ipSum": b["pit"]["pt_sum"],
+                    "ipScale": round(b["pit"]["scale"], 4), "ipShort": b["pit"]["shortfall"],
+                    "warBudget": b["war"], "warUnscaled": b["war_unscaled"],
+                    "warProspects": round(t_["pros"][0], 3)}
+    wins = {tm: [0.0] * HORIZON for tm in teams}
+    remainder = []
+    for t in range(HORIZON):
+        rec, shift = TP.recenter({tm: REPLACEMENT_WINS + war_b[tm][t] for tm in teams}, 2430.0)
+        for tm in teams:
+            wins[tm][t] = rec[tm]
+        remainder.append(round(shift, 3))
+    return {"wins": wins, "clubs": acct, "remainder": remainder,
+            "budget": {"pa": bpa, "ip": bip},
+            "scales": {tm: {"hit": acct[tm]["paScale"], "pit": acct[tm]["ipScale"]} for tm in teams}}
+
+
+def _talent_range_preview(cand: dict, inc: dict, sigma_t: float, gp_by: dict,
+                          n_pairs: int) -> dict:
+    """The T1 preview: the candidate's and the incumbent's odds and win band
+    side by side on the same seed and schedule."""
+    keys = ("playoffPct", "divisionPct", "wildcardPct", "projWinsMean",
+            "projWinsP10", "projWinsP90", "byePct", "pennantPct", "wsPct")
+    clubs = {}
+    for tm in sorted(cand):
+        c, i = cand[tm], inc.get(tm) or {}
+        row = {k: c.get(k) for k in keys}
+        row["incumbent"] = {k: i.get(k) for k in keys}
+        row["winTotalSd"] = (c.get("winTotal") or {}).get("sd")
+        row["incumbentWinTotalSd"] = (i.get("winTotal") or {}).get("sd")
+        row["gamesPlayed"] = gp_by.get(tm)
+        clubs[tm] = row
+    return {"status": "preview", "sigma_T": sigma_t, "n_remaining_pairs": n_pairs,
+            "note": "one Normal per club per simulation, sd sigma_T x k / (k + G) / 162, "
+                    "clipped to [0.20, 0.80]; the schedule and bracket draws are the "
+                    "incumbent's own numbers",
+            "clubs": clubs}
+
+
+def _team_runs(rows: list[dict], corpus: dict, *, pt_ledger: dict | None = None,
+               scales: dict | None = None, season: int | None = None) -> dict | None:
+    """T3 (section 1.3) for the first projected season: per club, RS, RA, run
+    differential and Pythagenpat wins from the component heads
+    (proj_components, FanGraphs frame) of the ledger's controlled players,
+    batting plus baserunning at T2's allocated PA, FIP runs above average at
+    T2's allocated IP, the club's fielding runs, the league level from the
+    last completed season's held constants and the club park factor
+    (team_projection.park_factors) at the team level. ``scales`` is T2's
+    per-club {hit, pit} factor (1.0 without it). None without a ledger."""
+    import proj_components as PC
+    import team_projection as TP
+    pt_ledger = _PT_LEDGER if pt_ledger is None else pt_ledger
+    if not pt_ledger or not rows:
+        return None
+    season = int(season or FIRST_SEASON)
+    last = season - 1
+    blob = PC.resolve_vintage(None)
+    consts = PC.season_constants(last, corpus, blob)
+    pc_params = PC.load_params() if PC.PARAMS_PATH.exists() else None
+    curves = _LEDGER_META.get("curves")
+    if curves is None:
+        curves, _wm = fp.fitted_models(corpus, last)
+    age_curves = None
+    age_note = "none (aging_v3 fit unavailable; the bsr and fld age walks are flat)"
+    try:
+        import aging_v3
+        import aging_v3_sidecar
+        sidecar = aging_v3_sidecar.load(corpus, build_if_missing=False)
+        age_curves = PC.component_age_curves(aging_v3.fitted(corpus, last, None, sidecar=sidecar))
+        age_note = "aging_v3 component_curve('hit', 'bsr' | 'fld') fitted at the last completed season (U5)"
+    except Exception:                                          # noqa: BLE001
+        log.warning("team runs: aging_v3 component curves unavailable", exc_info=True)
+    src = PC._Sources(blob)
+    pf, pf_meta = TP.park_factors(last)
+    lg_runs = TP.league_runs_per_team(consts)
+    league = corpus["league"]
+    clubs: dict[str, dict] = {}
+    n_blocks = 0
+    for r in rows:
+        tm = r.get("team")
+        if not tm:
+            continue
+        sc = (scales or {}).get(tm) or {}
+        tot = {"bat_bsr": 0.0, "fld": 0.0, "fip_raa": 0.0, "pa": 0.0, "ip": 0.0,
+               "n_hit": 0, "n_pit": 0, "not_projected": {}}
+        for e in pt_ledger.values():
+            if e.get("team") != tm or e.get("last_ctrl", 0) < season:
+                continue
+            side = e["side"]
+            try:
+                eng = PC.engine_projection(e["hist"], side, season, e.get("age"), curves, league, 1)
+                if eng is None:
+                    continue
+                feat = (PC._hit_lags if side == "hit" else PC._pit_lags)(src, e["mlbam"], season)
+                blk = (PC.hitter_heads(eng, feat, pc_params, consts, age_curves, 1) if side == "hit"
+                       else PC.pitcher_heads(eng, feat, pc_params, consts, 1))
+            except Exception:                                  # noqa: BLE001
+                log.debug("team runs: heads failed for %s %s", e["mlbam"], side, exc_info=True)
+                blk = None
+            cr = TP.component_runs(blk, side, float(sc.get(side, 1.0) or 1.0), 1)
+            n_blocks += 1 if blk else 0
+            tot["bat_bsr"] += cr["bat_bsr"]
+            tot["fld"] += cr["fld"]
+            tot["fip_raa"] += cr["fip_raa"]
+            tot["pa" if side == "hit" else "ip"] += cr["pt"]
+            tot["n_hit" if side == "hit" else "n_pit"] += 1
+            for k in cr["not_projected"]:
+                tot["not_projected"][k] = tot["not_projected"].get(k, 0) + 1
+        line = TP.club_runs(lg_runs, tot["bat_bsr"], tot["fip_raa"], tot["fld"], pf.get(tm, 1.0))
+        line.update({"batBsrRuns": round(tot["bat_bsr"], 1), "fldRuns": round(tot["fld"], 1),
+                     "fipRaaRuns": round(tot["fip_raa"], 1), "paAllocated": round(tot["pa"], 1),
+                     "ipAllocated": round(tot["ip"], 1), "nHit": tot["n_hit"], "nPit": tot["n_pit"],
+                     "notProjected": tot["not_projected"], "winsWar": r.get("wins")})
+        clubs[tm] = line
+    identity = TP.runs_identity(clubs, lg_runs)
+    return {"season": season, "clubs": clubs, "league": identity,
+            "meta": {"league_runs_per_team": round(lg_runs, 1), "constants_season": last,
+                     "park_factor": pf_meta, "age_curves": age_note,
+                     "pj_params": ("model/proj_components/params.json" if pc_params else "none"),
+                     "n_player_blocks": n_blocks, "frame": "FanGraphs frame",
+                     "scales": "T2 budget factors" if scales else "none (1.0)"}}
+
+
+def _attach_team_runs(rows: list[dict], runs: dict) -> None:
+    """TEAM_RUNS_LIVE only: the T3 keys onto the Team Outlook rows (class 2)."""
+    for r in rows:
+        line = (runs.get("clubs") or {}).get(r.get("team"))
+        if line:
+            r["runs"] = {k: line[k] for k in ("rs", "ra", "runDiff", "pythW", "pythL", "pf")}
+
+
+def _write_team_projection_preview(rows: list[dict], runs: dict | None) -> None:
+    """Every flag False: the three candidates' numbers under
+    .cache/team_projection/preview/ and nothing under data/. Best-effort."""
+    import team_projection as TP
+    try:
+        tp = _team_params()
+        payload = {
+            "task": "TM_3_TEAM_CANDIDATES_DARK",
+            "first_season": FIRST_SEASON,
+            "flags": {"TEAM_TALENT_RANGE_LIVE": TEAM_TALENT_RANGE_LIVE,
+                      "TEAM_PT_BUDGET_LIVE": TEAM_PT_BUDGET_LIVE,
+                      "TEAM_RUNS_LIVE": TEAM_RUNS_LIVE},
+            "params_sha256": TP.params_hash(tp) if tp else None,
+            "served_wins": {r["team"]: r.get("wins") for r in rows if r.get("team")},
+            "pt_budget": _TEAM_PREVIEW.get("budget") or {"status": "not computed"},
+            "talent_range": _TEAM_PREVIEW.get("talent_range") or {"status": "not computed"},
+            "runs": runs or {"status": "not computed"},
+            "ledger": {"n_entries": len(_PT_LEDGER),
+                       "n_vet": sum(1 for e in _PT_LEDGER.values() if e.get("src") == "vet"),
+                       "n_depth": sum(1 for e in _PT_LEDGER.values() if e.get("src") == "depth")},
+        }
+        p = TP.write_preview(payload)
+        log.info("team projection candidates preview: %s (flags off)", p)
+    except Exception:                                          # noqa: BLE001
+        log.warning("team projection preview not written (best-effort)", exc_info=True)
 
 
 def _forward_vintage_on_record(season: int) -> bool:
@@ -2991,7 +3304,23 @@ def _attach_current_season(rows: list[dict], standings: dict[str, dict],
     # by a draw, so Division, Bye and Playoffs land on 0 or 1.
     tiebreak = (_final_standings_order({tm: standings[tm] for tm in mc_teams})
                 if sched_source == "season_complete" else None)
-    odds = pc.simulate_playoffs(mc_teams, pairs, tiebreak=tiebreak)
+    # T1 (TM_3, section 1.1): the frozen sigma_T feeds the simulator only when
+    # TEAM_TALENT_RANGE_LIVE is True. Otherwise the incumbent call stands
+    # (talent sd 0.0 consumes exactly the draws it always did) and, with a
+    # frozen sigma_T, a second run on the same seed and schedule goes to the
+    # preview beside it.
+    tp = _team_params()
+    sigma_t = float((tp or {}).get("sigma_T") or 0.0)
+    gp_by = {tm: int((mc_teams[tm]["wins"] or 0) + (mc_teams[tm]["losses"] or 0)) for tm in mc_teams}
+    if TEAM_TALENT_RANGE_LIVE and sigma_t > 0.0:
+        odds = pc.simulate_playoffs(mc_teams, pairs, tiebreak=tiebreak,
+                                    talent_sd_wins=sigma_t, games_played=gp_by)
+    else:
+        odds = pc.simulate_playoffs(mc_teams, pairs, tiebreak=tiebreak)
+        if sigma_t > 0.0 and len(mc_teams) == 30:
+            cand = pc.simulate_playoffs(mc_teams, pairs, tiebreak=tiebreak,
+                                        talent_sd_wins=sigma_t, games_played=gp_by)
+            _TEAM_PREVIEW["talent_range"] = _talent_range_preview(cand, odds, sigma_t, gp_by, len(pairs))
     for r in rows:
         cur = r.get("current")
         if cur is None:
@@ -3536,6 +3865,9 @@ def build_payload() -> dict:
 def _build_payload_body() -> dict:
     corpus = fp.build_corpus()
     names = _display_names()
+    _PT_LEDGER.clear()
+    _LEDGER_META.clear()
+    _TEAM_PREVIEW.clear()
     from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key, _SPOTRAC_TEAM_SLUGS
     slug_to_org = {slug: code for code, slug in _SPOTRAC_TEAM_SLUGS.items()}
     contracts = {}
@@ -3561,6 +3893,17 @@ def _build_payload_body() -> dict:
                 season=FIRST_SEASON - 1)
     except Exception:                                          # noqa: BLE001
         log.warning("current-season overlay skipped (best-effort)", exc_info=True)
+    # T3 (TM_3): RS, RA, run differential and Pythag wins from the component
+    # heads at T2's allocation; on the rows only when TEAM_RUNS_LIVE is True,
+    # else in the preview beside the other two candidates. Best-effort.
+    runs = None
+    try:
+        runs = _team_runs(team_outlook, corpus, scales=_TEAM_PREVIEW.get("budget_scales"))
+    except Exception:                                          # noqa: BLE001
+        log.warning("team runs (T3) skipped (best-effort)", exc_info=True)
+    if runs and TEAM_RUNS_LIVE:
+        _attach_team_runs(team_outlook, runs)
+    _write_team_projection_preview(team_outlook, runs)
     # Audit-only payer field (M23-2): after every consumer above has read the
     # rows, so nothing in this build can price or roll up on it.
     _stamp_contract_club(vets)

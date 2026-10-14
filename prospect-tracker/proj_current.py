@@ -355,6 +355,30 @@ def _percentile(sorted_vals: list[int], q: float) -> int:
 # --------------------------------------------------------------------------
 
 POSTSEASON_SEED_OFFSET = 1_000_003
+#: T1 (docs/TEAM_PROJECTIONS_GATE.md section 1.1): the talent draw's own
+#: stream, so the regular-season and bracket draws are the same numbers in the
+#: incumbent and the candidate arm on one seed; k the in-season shrink's
+#: pseudo-games (proj_export.CURRENT_PRIOR_PSEUDO_GAMES, pinned by test) and
+#: the clip the talent prior's rails (proj_export._talent_prior_pct).
+TALENT_SEED_OFFSET = 2_000_003
+TALENT_PSEUDO_GAMES = 40
+TALENT_CLIP = (0.20, 0.80)
+
+
+class _LazyPh(dict):
+    """Home win probabilities for one simulation's drawn talent, computed on
+    first use: the bracket indexes a dozen pairs a simulation, not 870."""
+
+    def __init__(self, p: dict, home_edge: float):
+        super().__init__()
+        self._p = p
+        self._edge = home_edge
+
+    def __missing__(self, key):
+        a, b = key
+        v = min(max(log5(self._p[a], self._p[b]) + self._edge, 1e-3), 1.0 - 1e-3)
+        self[key] = v
+        return v
 """The bracket draws from its OWN stream. Sharing the regular-season generator
 would make every bracket result move when the schedule length changes, which
 makes a bracket change and a schedule change indistinguishable in a diff."""
@@ -581,7 +605,10 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
                       n_sims: int | None = None, home_edge: float | None = None,
                       seed: int | None = None,
                       bracket: bool = True,
-                      tiebreak: dict[str, tuple] | None = None) -> dict[str, dict]:
+                      tiebreak: dict[str, tuple] | None = None,
+                      talent_sd_wins: float = 0.0,
+                      games_played: dict[str, int] | int | None = None,
+                      samples: bool = False) -> dict[str, dict]:
     """Rest-of-season Monte Carlo -> per-team odds under the current MLB bracket
     (3 division winners + 3 wildcards per league).
 
@@ -611,6 +638,17 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
     season is over, built from the final standings' own ranks, so a settled
     field is seeded the way the league seeded it rather than by a draw. Left
     None, every draw below is exactly what it was.
+
+    `talent_sd_wins` (T1, docs/TEAM_PROJECTIONS_GATE.md section 1.1): with a
+    positive sigma_T each simulation first draws one Normal per club and plays
+    the season at talent p + draw, clipped to TALENT_CLIP, with
+    sd = sigma_T x k / (k + G) / 162, k = TALENT_PSEUDO_GAMES and G the club's
+    games played (`games_played`: a per-club dict, one int for every club, or
+    None for the club's booked wins + losses). The draws come from their own
+    stream (TALENT_SEED_OFFSET), so at 0.0, the default and the incumbent,
+    nothing below consumes a different random number than it did before the
+    parameter existed (pinned by test). `samples` adds each club's sorted
+    win-total samples as `winSamples` for the CRPS scorer; False adds nothing.
     """
     if not teams:
         return {}
@@ -631,6 +669,22 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
         divs_by_league.setdefault(league[o], set()).add(div[o])
     # only simulate games where both teams are known
     sim_pairs = [(h, a) for h, a in pairs if h in p and a in p]
+
+    # T1: the per-club talent sd as a win rate, 0.0 for the incumbent.
+    talent_sd: dict[str, float] = {}
+    trng = None
+    if talent_sd_wins and float(talent_sd_wins) > 0.0:
+        k = float(TALENT_PSEUDO_GAMES)
+        for o in orgs:
+            if isinstance(games_played, dict):
+                g = float(games_played.get(o) or 0.0)
+            elif games_played is None:
+                g = float(base_wins[o] + int(teams[o].get("losses") or 0))
+            else:
+                g = float(games_played)
+            talent_sd[o] = float(talent_sd_wins) * k / (k + max(0.0, g)) / 162.0
+        trng = random.Random((MC_SEED if seed is None else seed) + TALENT_SEED_OFFSET)
+    lo_clip, hi_clip = TALENT_CLIP
 
     lg_sizes = {lg: sum(1 for o in orgs if league[o] == lg) for lg in leagues}
     do_bracket = bool(
@@ -661,8 +715,15 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
 
     for _ in range(n_sims):
         wins = dict(base_wins)
+        if trng is not None:
+            # one Normal per club, before the games, on the talent stream
+            p_sim = {o: min(hi_clip, max(lo_clip, p[o] + trng.gauss(0.0, talent_sd[o])))
+                     for o in orgs}
+            ph_sim = _LazyPh(p_sim, home_edge) if do_bracket else ph_home
+        else:
+            p_sim, ph_sim = p, ph_home
         for home, away in sim_pairs:
-            ph = min(max(log5(p[home], p[away]) + home_edge, 1e-3), 1.0 - 1e-3)
+            ph = min(max(log5(p_sim[home], p_sim[away]) + home_edge, 1e-3), 1.0 - 1e-3)
             if rng.random() < ph:
                 wins[home] += 1
             else:
@@ -716,7 +777,7 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
                 if len(dw) == 3 and len(rest) >= 3:
                     seeds_by_lg[lg] = tuple(dw) + tuple(rest[:3])
         if do_bracket and len(seeds_by_lg) == 2:
-            res = _bracket_once(seeds_by_lg, wins, ph_home, post)
+            res = _bracket_once(seeds_by_lg, wins, ph_sim, post)
             for k in ("bye", "wc", "lds", "lcs", "pennant"):
                 for o in res[k]:
                     rounds[k][o] += 1
@@ -753,6 +814,8 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
             "projWinsP10": _percentile(s, 0.10),
             "projWinsP90": _percentile(s, 0.90),
         }
+        if samples:
+            row["winSamples"] = s
         if do_bracket:
             row.update({
                 "byePct": round(rounds["bye"][o] / n_sims, 3),
