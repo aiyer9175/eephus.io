@@ -1,8 +1,10 @@
-# Steal runner split gate (registered 2026-10-08, NOT READ)
+# Steal runner split gate (registered 2026-10-08, read once 2026-10-14: NULL)
 
-Status: **registered, not read.** Registry row `steal_runner_split` (verdict
-`unvalidated`, registration_status `registered, not read`, no eval artifact).
-One look: **2026-10-20**, on 2025 attempts.
+Status: **read once 2026-10-14 (an owner-waived early read), NULL; never served.** Results
+in section 11. The text from here to section 10 is the registration as committed on
+2026-10-08, unchanged: registry row `steal_runner_split` (then verdict `unvalidated`,
+registration_status `registered, not read`, no eval artifact). One look: **2026-10-20**,
+on 2025 attempts.
 
 This file was committed alone, before any code it describes exists and before
 any number it governs is computed. No runner-aware success model has been fit,
@@ -288,4 +290,54 @@ None relates a section 2 feature to an outcome.
 
 ## 11. Results
 
-Empty until the one look.
+**Read once, 2026-10-14: NULL.** An OWNER-WAIVED EARLY READ (EW3-5, owner 2026-10-14,
+'Fuck the registered look days and waiting, we don't have to wait for anything. Let's do
+everything today'), six days before the registered date 2026-10-20; see the dated
+note below. Pass condition 4 fails, so the split stays dark and is never served (section 5).
+
+* The run: `python -u tools/mgmt_steal_runner_split.py --look --owner-waived-early-read`, once,
+  at code commit 91a43a596b051f0cd1d767c4e7a6023d14164233 (lab blob 23d4994518dab17a839291c13ae1b20cdd6de1b4), Python 3.13.9,
+  numpy 2.3.5, scipy 1.16.3, pandas 2.3.3; stdout and
+  stderr teed to `look-steal-runner-split/look_stdout_stderr.log` before anything ran; exit 0.
+  The reporting path was dry-run on fixtures with nulls first (`--dry-run-fixtures`).
+* Context payload `data/management_steal_context.json`, sha256 980cfc83899b39dd0c5a3d178952ce9f4c24c70ced2ba3fd741540ad7452f961
+  (generated 2026-10-03T21:29:50+00:00); rows by season 2018 1606, 2019 1399, 2021 1354, 2022 1522, 2023 2081, 2024 2081, 2025 2122.
+* Frames: fit 2018 1,606, 2019 1,399, 2021 1,354, 2022 1,522, 2023 2,081 (7,962, sha256 6f45006947c1c059e66984c3f09d31b5a6a67fdac79a488fe1b4b2bbab6c70b9); tune 2024
+  2,081 (sha256 cb878be47e3baaa1e26a8e1a7c132cedf107fd98c94fcde37e608a0fc6163d35); score 2025 2,122
+  (sha256 d43c43ed689ee672bb1caa18fff2ea40ab79c61945d3a1e801f10f83f115ee57) in 1,350 games. The fit and the tuning
+  were frozen to `look-steal-runner-split/frozen_fit.json` before the 2025 frame was read.
+* Chosen lambda: candidate 0.0001, twin 0.0001. Tuning-frame mean log loss by lambda
+  (candidate / twin): 0.0001 0.52990449 / 0.53030328; 0.001 0.53002310 / 0.53059664; 0.01 0.53082714 / 0.53162962; 0.1 0.53291722 / 0.53329621; 1.0 0.53437135 / 0.53441340; incumbent 0.53463469.
+* Candidate coefficients: R1 +0.858033, R2 +0.344923, R3 +0.105154, C1 +2.032669, C2 +0.556049, P1 -0.041592, P2 -0.248839, S1 -0.113526, S2 +0.434293, S3 -0.051827, S4 +0.007880.
+* Twin coefficients: C1 +1.433668, C2 +0.645866, P1 -0.000953, P2 -0.208221, S1 -0.005076, S2 +0.459050, S3 -0.036274, S4 +0.085329.
+
+| statistic | point | one-sided 95% lower bound | two-sided 90% interval | resolves |
+|---|---|---|---|---|
+| dLL | +0.007898 | +0.002508 | [+0.002508, +0.012903] | yes |
+| dBrier | +0.002415 | +0.000275 | [+0.000275, +0.004358] | yes |
+| dLL_runner | +0.000099 | -0.003645 | [-0.003645, +0.003622] | no |
+
+Pass conditions: 1 (n 2,122 >= 1,000) met; 2 (dLL) met; 3 (dBrier) met; 4 (dLL_runner) FAILED.
+
+Mean log loss on 2025: incumbent 0.544464, candidate 0.536566,
+twin 0.536665; Brier: incumbent 0.179498, candidate 0.177082.
+The candidate beats the league rate, and the twin without the runner terms scores within
+0.0001 of it: once the battery and the state are in, the runner terms add no resolvable gain.
+
+Reported, not gating: 2025 calibration by decile of p (n, mean candidate p, mean incumbent q,
+success rate): 1: 213, 0.6172, 0.7577, 0.7230; 2: 212, 0.6845, 0.7653, 0.6509; 3: 212, 0.7139, 0.7653, 0.7453; 4: 212, 0.7353, 0.7647, 0.7170; 5: 212, 0.7523, 0.7655, 0.7264; 6: 213, 0.7676, 0.7650, 0.7700; 7: 212, 0.7818, 0.7658, 0.7783; 8: 212, 0.7961, 0.7654, 0.7783; 9: 212, 0.8114, 0.7656, 0.8443; 10: 212, 0.8426, 0.7635, 0.9104.
+2025 sums of the split by target base, wins (ER / ER_runner / ER_other): 2B n 1841: +1.6870 / +4.2617 / -2.5747; 3B n 279: +0.1654 / +0.7509 / -0.5855; HOME n 2: +0.0000 / +0.0000 / -0.0000; identity max abs error 6.94e-18. Never served.
+
+What the NULL does (section 5): the split stays dark and is never served; the stage 1 context
+columns stay exactly as served; ER is served whole; the registry row `steal_runner_split` moves
+to `deprecated` with `data/steal_runner_split_eval.json` and condition 4 named. No second read on
+2025. DV, every manager or club figure and the gate battery are unchanged; nothing prices a steal
+in the Diamond.
+
+## Note 2026-10-14: an owner-waived early read
+
+The one look was taken on 2026-10-14, before its registered date of 2026-10-20, under the
+owner's instruction of 2026-10-14 (EW3-5) that waives registered look dates. It is recorded as an
+OWNER-WAIVED EARLY READ. Nothing else about the read changed: the frame, the features, the
+grid, the statistic, the seed and the pass rule are the ones registered above, the fit and the
+tuning were frozen before 2025 was read, and the read ran once.

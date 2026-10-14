@@ -1,0 +1,371 @@
+{
+ "generated_at": "2026-10-14T15:52:05+00:00",
+ "produced_by": "tools/mgmt_steal_runner_split.py",
+ "model_id": "steal_runner_split",
+ "gate": "docs/management-2026-10/STEAL_RUNNER_SPLIT_GATE.md",
+ "read": {
+  "kind": "OWNER-WAIVED EARLY READ (EW3-5, owner 2026-10-14)",
+  "run_date": "2026-10-14",
+  "registered_date": "2026-10-20",
+  "code_commit": "91a43a596b051f0cd1d767c4e7a6023d14164233",
+  "lab_blob": "23d4994518dab17a839291c13ae1b20cdd6de1b4",
+  "context_payload": "data/management_steal_context.json",
+  "context_sha256": "980cfc83899b39dd0c5a3d178952ce9f4c24c70ced2ba3fd741540ad7452f961",
+  "versions": {
+   "python": "3.13.9",
+   "numpy": "2.3.5",
+   "scipy": "1.16.3",
+   "pandas": "2.3.3"
+  },
+  "context_generated_at": "2026-10-03T21:29:50+00:00",
+  "context_rows_by_season": {
+   "2018": 1606,
+   "2019": 1399,
+   "2021": 1354,
+   "2022": 1522,
+   "2023": 2081,
+   "2024": 2081,
+   "2025": 2122
+  },
+  "fit_rows_by_season": {
+   "2018": 1606,
+   "2019": 1399,
+   "2021": 1354,
+   "2022": 1522,
+   "2023": 2081
+  },
+  "tune_rows": 2081,
+  "score_rows": 2122,
+  "score_frame_sha256": "d43c43ed689ee672bb1caa18fff2ea40ab79c61945d3a1e801f10f83f115ee57"
+ },
+ "verdict": "NULL",
+ "conditions": {
+  "1_n_scored_at_least_1000": true,
+  "2_dLL_lower_bound_above_0": true,
+  "3_dBrier_lower_bound_above_0": true,
+  "4_dLL_runner_lower_bound_above_0": false
+ },
+ "failed_conditions": [
+  "4_dLL_runner_lower_bound_above_0"
+ ],
+ "served": false,
+ "dv_unchanged": true,
+ "frozen_fit": {
+  "features": [
+   "R1",
+   "R2",
+   "R3",
+   "C1",
+   "C2",
+   "P1",
+   "P2",
+   "S1",
+   "S2",
+   "S3",
+   "S4"
+  ],
+  "twin_features": [
+   "C1",
+   "C2",
+   "P1",
+   "P2",
+   "S1",
+   "S2",
+   "S3",
+   "S4"
+  ],
+  "lambda_grid": [
+   0.0001,
+   0.001,
+   0.01,
+   0.1,
+   1.0
+  ],
+  "candidate": {
+   "lambda": 0.0001,
+   "beta": {
+    "R1": 0.8580331621667474,
+    "R2": 0.3449232475907332,
+    "R3": 0.10515449735560241,
+    "C1": 2.032669461295046,
+    "C2": 0.5560490242764804,
+    "P1": -0.04159162965277706,
+    "P2": -0.24883861986004677,
+    "S1": -0.11352567441660848,
+    "S2": 0.4342928224424748,
+    "S3": -0.051826874235023766,
+    "S4": 0.007879643957564941
+   },
+   "converged": true,
+   "nit": 34,
+   "tune_log_loss_by_lambda": [
+    {
+     "lambda": 0.0001,
+     "tune_log_loss": 0.529904492124414,
+     "converged": true
+    },
+    {
+     "lambda": 0.001,
+     "tune_log_loss": 0.5300231030310971,
+     "converged": true
+    },
+    {
+     "lambda": 0.01,
+     "tune_log_loss": 0.5308271375636321,
+     "converged": true
+    },
+    {
+     "lambda": 0.1,
+     "tune_log_loss": 0.5329172176048854,
+     "converged": true
+    },
+    {
+     "lambda": 1.0,
+     "tune_log_loss": 0.534371350100699,
+     "converged": true
+    }
+   ]
+  },
+  "twin": {
+   "lambda": 0.0001,
+   "beta": {
+    "C1": 1.433667926355008,
+    "C2": 0.6458660422182063,
+    "P1": -0.0009528122244182946,
+    "P2": -0.20822113383148635,
+    "S1": -0.00507604836169197,
+    "S2": 0.4590496581138062,
+    "S3": -0.03627425348055169,
+    "S4": 0.08532890213370334
+   },
+   "converged": true,
+   "nit": 27,
+   "tune_log_loss_by_lambda": [
+    {
+     "lambda": 0.0001,
+     "tune_log_loss": 0.5303032806513981,
+     "converged": true
+    },
+    {
+     "lambda": 0.001,
+     "tune_log_loss": 0.5305966398300631,
+     "converged": true
+    },
+    {
+     "lambda": 0.01,
+     "tune_log_loss": 0.5316296217936117,
+     "converged": true
+    },
+    {
+     "lambda": 0.1,
+     "tune_log_loss": 0.5332962081829322,
+     "converged": true
+    },
+    {
+     "lambda": 1.0,
+     "tune_log_loss": 0.534413395865246,
+     "converged": true
+    }
+   ]
+  },
+  "incumbent_tune_log_loss": 0.5346346860544391,
+  "frames": {
+   "fit": {
+    "seasons": [
+     "2018",
+     "2019",
+     "2021",
+     "2022",
+     "2023"
+    ],
+    "rows": 7962,
+    "rows_by_season": {
+     "2018": 1606,
+     "2019": 1399,
+     "2021": 1354,
+     "2022": 1522,
+     "2023": 2081
+    },
+    "sha256": "6f45006947c1c059e66984c3f09d31b5a6a67fdac79a488fe1b4b2bbab6c70b9",
+    "coverage": {
+     "attempts": 7962,
+     "runner_listed": 7901,
+     "catcher_named": 7962,
+     "pop_on_file": 7951,
+     "pitch_hand_known": 7962,
+     "lefty_pitcher": 2014,
+     "one_out": 5091,
+     "another_runner_on": 1269,
+     "late_and_close": 1339
+    }
+   },
+   "tune": {
+    "seasons": [
+     "2024"
+    ],
+    "rows": 2081,
+    "sha256": "cb878be47e3baaa1e26a8e1a7c132cedf107fd98c94fcde37e608a0fc6163d35",
+    "coverage": {
+     "attempts": 2081,
+     "runner_listed": 2069,
+     "catcher_named": 2081,
+     "pop_on_file": 2078,
+     "pitch_hand_known": 2081,
+     "lefty_pitcher": 551,
+     "one_out": 1373,
+     "another_runner_on": 353,
+     "late_and_close": 359
+    }
+   }
+  },
+  "offset_probabilities_clipped": 8,
+  "frozen_at": "2026-10-14T15:52:05+00:00"
+ },
+ "score": {
+  "n_scored": 2122,
+  "means": {
+   "log_loss_incumbent": 0.5444636222395436,
+   "log_loss_candidate": 0.5365659754843684,
+   "log_loss_twin": 0.5366645002726091,
+   "brier_incumbent": 0.17949758568703622,
+   "brier_candidate": 0.1770822790157534
+  },
+  "bootstrap": {
+   "dLL": {
+    "point": 0.007897646755175283,
+    "lower_95_one_sided": 0.002507924697932445,
+    "interval_90": [
+     0.002507924697932445,
+     0.012902912814754173
+    ],
+    "resolves": true
+   },
+   "dBrier": {
+    "point": 0.002415306671282817,
+    "lower_95_one_sided": 0.0002749602632827062,
+    "interval_90": [
+     0.0002749602632827062,
+     0.004357515409754328
+    ],
+    "resolves": true
+   },
+   "dLL_runner": {
+    "point": 9.852478824077627e-05,
+    "lower_95_one_sided": -0.003645445989032819,
+    "interval_90": [
+     -0.003645445989032819,
+     0.0036220018937046816
+    ],
+    "resolves": false
+   }
+  },
+  "bootstrap_games": 1350,
+  "bootstrap_method": "numpy default_rng(seed).integers(0, G, size=(B, G)) over games sorted by game_pk; each draw's statistic is the attempt-weighted mean over the drawn games; percentiles by numpy's linear rule",
+  "calibration_by_decile_of_p": [
+   {
+    "decile": 1,
+    "n": 213,
+    "mean_candidate_p": 0.61718,
+    "mean_incumbent_q": 0.757674,
+    "success_rate": 0.723005
+   },
+   {
+    "decile": 2,
+    "n": 212,
+    "mean_candidate_p": 0.684521,
+    "mean_incumbent_q": 0.765296,
+    "success_rate": 0.650943
+   },
+   {
+    "decile": 3,
+    "n": 212,
+    "mean_candidate_p": 0.713862,
+    "mean_incumbent_q": 0.765296,
+    "success_rate": 0.745283
+   },
+   {
+    "decile": 4,
+    "n": 212,
+    "mean_candidate_p": 0.735288,
+    "mean_incumbent_q": 0.764658,
+    "success_rate": 0.716981
+   },
+   {
+    "decile": 5,
+    "n": 212,
+    "mean_candidate_p": 0.752302,
+    "mean_incumbent_q": 0.765509,
+    "success_rate": 0.726415
+   },
+   {
+    "decile": 6,
+    "n": 213,
+    "mean_candidate_p": 0.767597,
+    "mean_incumbent_q": 0.764992,
+    "success_rate": 0.769953
+   },
+   {
+    "decile": 7,
+    "n": 212,
+    "mean_candidate_p": 0.781756,
+    "mean_incumbent_q": 0.765828,
+    "success_rate": 0.778302
+   },
+   {
+    "decile": 8,
+    "n": 212,
+    "mean_candidate_p": 0.796134,
+    "mean_incumbent_q": 0.765403,
+    "success_rate": 0.778302
+   },
+   {
+    "decile": 9,
+    "n": 212,
+    "mean_candidate_p": 0.811372,
+    "mean_incumbent_q": 0.765615,
+    "success_rate": 0.84434
+   },
+   {
+    "decile": 10,
+    "n": 212,
+    "mean_candidate_p": 0.842561,
+    "mean_incumbent_q": 0.763489,
+    "success_rate": 0.910377
+   }
+  ],
+  "er_split_by_target": {
+   "2B": {
+    "n": 1841,
+    "sum_er_wins": 1.687,
+    "sum_er_runner_wins": 4.2617,
+    "sum_er_other_wins": -2.5747
+   },
+   "3B": {
+    "n": 279,
+    "sum_er_wins": 0.1654,
+    "sum_er_runner_wins": 0.7509,
+    "sum_er_other_wins": -0.5855
+   },
+   "HOME": {
+    "n": 2,
+    "sum_er_wins": 0.0,
+    "sum_er_runner_wins": 0.0,
+    "sum_er_other_wins": -0.0
+   }
+  },
+  "er_split_identity_max_abs_error": 6.938893903907228e-18,
+  "coverage": {
+   "attempts": 2122,
+   "runner_listed": 2105,
+   "catcher_named": 2122,
+   "pop_on_file": 2120,
+   "pitch_hand_known": 2122,
+   "lefty_pitcher": 538,
+   "one_out": 1352,
+   "another_runner_on": 336,
+   "late_and_close": 359
+  }
+ },
+ "statistic": "paired per-attempt gains on identical 2025 attempts, positive when the candidate is better: dLL = mean(LL(incumbent) - LL(candidate)), dBrier = mean(B(incumbent) - B(candidate)), dLL_runner = mean(LL(twin) - LL(candidate)); probabilities clipped to [1e-6, 1 - 1e-6]; game bootstrap B 2000, seed 20261020; a gain resolves when its one-sided 95% lower bound is above zero",
+ "what_it_is_not": "not served, not a decision value, not a runner or manager rating; it prices nothing in the Diamond"
+}
