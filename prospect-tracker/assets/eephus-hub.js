@@ -344,6 +344,8 @@
   //           aria    the accessible name (default: the labels and the span)
   //           table   false when the page already prints every charted number
   //                   in its own table; caption names the table's fold
+  //           refs    [{v, label}] reference rules (an index's 100, a zero),
+  //                   dashed, inside the y domain, labelled at the left edge
   // Past 30 points a series marks only its last point; every point keeps its
   // hit circle. No trend line, fit or forecast point is ever drawn.
   function lineChart(series, opts) {
@@ -368,7 +370,9 @@
       e.pts.forEach(function (p) { all.push(Number(p.v)); });
     });
     if (all.length < 2) return "";
-    var nt = niceTicks(Math.min.apply(null, all), Math.max.apply(null, all),
+    var refs = (o.refs || []).filter(function (r) { return r && _num(r.v); });
+    var dom = all.concat(refs.map(function (r) { return Number(r.v); }));
+    var nt = niceTicks(Math.min.apply(null, dom), Math.max.apply(null, dom),
       { target: o.ticks || 4, floor: o.floor });
     var lo = nt.lo, hi = nt.hi;
     var x = function (y) { return PL + xs.indexOf(String(y)) * (W - PL - PR) / Math.max(1, xs.length - 1); };
@@ -379,6 +383,13 @@
       return '<line x1="' + PL + '" y1="' + gy + '" x2="' + (W - PR) + '" y2="' + gy
         + '" stroke="var(--border-light)" stroke-width="1"/><text x="' + (PL - 6) + '" y="' + (yy(v) + 3).toFixed(1)
         + '" text-anchor="end" font-size="9" fill="var(--text-tertiary)">' + esc(tickFmt(v)) + "</text>";
+    }).join("");
+    grid += refs.map(function (r) {
+      var ry = yy(Number(r.v)).toFixed(1);
+      return '<line x1="' + PL + '" y1="' + ry + '" x2="' + (W - PR) + '" y2="' + ry
+        + '" stroke="var(--text-tertiary)" stroke-width="1" stroke-dasharray="4 3"/>'
+        + (r.label ? '<text x="' + (PL + 4) + '" y="' + (Number(ry) - 3).toFixed(1)
+          + '" font-size="9" fill="var(--text-tertiary)">' + esc(r.label) + "</text>" : "");
     }).join("");
     // End labels: two that would overlap are pushed apart, never recoloured.
     var ends = list.map(function (e) { return { e: e, y: yy(Number(e.pts[e.pts.length - 1].v)) + (e.s.dy || 0) }; });

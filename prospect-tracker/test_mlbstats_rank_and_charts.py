@@ -120,6 +120,62 @@ def test_opening_the_overall_caret_keeps_the_next_player_at_rank_2(browser, serv
         ctx.close()
 
 
+def _drawer_live() -> bool:
+    """The served shell names the drawer script (MLBSTATS_DRAWER_LIVE) and the
+    drawer's trend file is on disk."""
+    shell = (ROOT / "mlbstats" / "index.html").read_text(encoding="utf-8")
+    return "data-drawer-src=" in shell and (ROOT / "data" / "mlbstats_trends.json").exists()
+
+
+_DRAWER = r"""
+() => {
+  const tb = document.querySelector('#mlbstats-section-hitters .mlbstats-table tbody');
+  const dr = tb.querySelector('tr.mlbx-drawer');
+  if (!dr) return null;
+  let n = 0, before = null, after = null;
+  for (const tr of Array.from(tb.rows).filter(r => !r.hidden)) {
+    const m = /mlbx-rank\s+(-?\d+)/.exec(getComputedStyle(tr).counterIncrement || '');
+    n += m ? Number(m[1]) : 0;
+    if (tr === dr.previousElementSibling) before = n;
+    else if (before != null && tr !== dr && tr.querySelector('td.mlbstats-name')) { after = n; break; }
+  }
+  const hs = [];
+  dr.querySelectorAll('svg.eephus-chart text').forEach(t => { const h = t.getBoundingClientRect().height; if (h) hs.push(h); });
+  return {inc: getComputedStyle(dr).counterIncrement, before: before, after: after,
+          hl: dr.previousElementSibling.classList.contains('mlbx-hl'), drawers: document.querySelectorAll('tr.mlbx-drawer').length,
+          hash: location.hash, min_label: hs.length ? Math.min.apply(null, hs) : null,
+          overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth};
+}
+"""
+
+
+def test_the_drawer_row_takes_no_rank_in_site_css():
+    css = (ROOT / "assets" / "site.css").read_text(encoding="utf-8")
+    assert ".mlbx .mlbstats-table tbody tr.mlbx-drawer { counter-increment: none; }" in css
+
+
+@pytest.mark.parametrize("size", [(390, 844), (1280, 800)], ids=["390", "1280"])
+def test_a_deep_linked_drawer_opens_highlights_its_row_and_takes_no_rank(browser, server, size):
+    """#player= opens the board, pages to the row, highlights it and opens
+    ONE drawer under it; the drawer row is not a player, so the next player
+    keeps the next rank. Skipped, never failed, while the drawer is dark."""
+    if not _drawer_live():
+        pytest.skip("the player drawer is dark in this build")
+    ctx = _context(browser, *size)
+    try:
+        page = ctx.new_page()
+        page.goto(server + "mlbstats/#section=hitters&player=665742", wait_until="load", timeout=60_000)
+        page.wait_for_selector("#mlbstats-section-hitters tr.mlbx-drawer svg.eephus-chart", timeout=30_000)
+        m = page.evaluate(_DRAWER)
+    finally:
+        ctx.close()
+    assert m and m["inc"] == "none", m
+    assert m["after"] == m["before"] + 1, m
+    assert m["hl"] and m["drawers"] == 1 and "player=665742" in m["hash"], m
+    assert m["overflow"] <= 0, m
+    assert m["min_label"] is None or m["min_label"] >= MIN_LABEL_PX, m
+
+
 _LABELS = r"""
 () => Array.from(document.querySelectorAll('.mlbx svg.eephus-chart'))
   .filter(s => s.getBoundingClientRect().width > 0)
