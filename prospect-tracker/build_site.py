@@ -7546,20 +7546,22 @@ def build_franchise() -> str:
 
     A HUB, NOT A MODEL. One page per club re-serving what every module already
     publishes, on the scale each was computed on, with a labelled basis and a
-    deep link back to the module that owns it. It computes exactly two new
-    things, both descriptive: a branch score (100 + 10z of one served value
-    across the 30 clubs) for ROSTER, OUTLOOK and FARM, and the Franchise Index,
-    the weighted mean of those three re-standardised to 100 + 10z across the
-    30 before any rank or letter is taken from it. Thirty percent of the index
-    rests on a provisional projection (team_win_projections) and the root card
-    says so. Every figure is read off a served artifact by franchise_export.py
+    deep link back to the module that owns it. It computes one new thing,
+    descriptive: a branch score (100 + 10z of one served value across the 30
+    clubs) for ROSTER, OUTLOOK and FARM. The root score is F-SCORE, copied
+    from fscore.json (fscore_export.py); the Franchise Index it replaced is no
+    longer served. One F-SCORE leg, 2027 wins, is a provisional projection
+    (team_win_projections) and the root card says so. Every figure is read off a served artifact by franchise_export.py
     and rendered by assets/franchise.js from data/franchise_board.json; this
     shell types no number and no sentence beyond two glossary hooks, and the
     masthead line is filled from the payload.
 
-    NEVER HERE: pennants or titles, any club decision-quality grade, any
-    manager skill claim, revenue or valuation figures. Letters print in neutral
-    ink and only scores take the z ladder. The Hall of Fame tile went live
+    NEVER HERE: any club decision-quality grade, any manager skill claim,
+    revenue or valuation figures. Pennants, titles and postseason rounds are
+    served as results since the F-SCORE flip (FS_2F_FLIP, 2026-10-14; the
+    owner's F-SCORE ask of 2026-09-30 overrides the earlier pennant ban), read
+    from fscore.json's season facts. Letters print in neutral ink and only
+    scores take the z ladder. The Hall of Fame tile went live
     2026-09-25 on the owner's frozen attribution rule (hof_export's Franchises
     section, docs/HOF_FRANCHISE_ATTRIBUTION.md) and stays dark if that section
     is dark.

@@ -6097,15 +6097,28 @@
   },
   {
    "model_id": "franchise_index",
-   "summary": "Unvalidated, descriptive: 100 + 10z across 30 clubs by construction; 30% of the weight rests on the provisional win projection. No forward claim.",
-   "surface": "/franchise/ root card, canopy and 30-club board",
+   "summary": "Retired 2026 by owner answer FS-Q4, not by a failed test: F-SCORE (franchise_score) replaced it as the root score on /franchise/. The row stays as the record.",
+   "surface": "none since the F-SCORE flip; it was the /franchise/ root card, canopy and 30-club board",
    "predicts": "Nothing: a descriptive index, weighted roster 0.40, outlook 0.30 (team_win_projections, provisional), farm 0.30, as 100 + 10z",
    "champion": "franchise_export._score_100 applied to the weighted mean of the three branch scores (raw_weighted_mean ships beside the score; its sd is below 10 because the branches are not perfectly correlated, which is why it is re-standardised rather than passed through)",
    "baseline": "league mean = 100, +1 population sd = 110",
    "metric": "None standalone; the three inputs carry their own provisional rows and this index adds no measurement",
    "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "Registered 2026-09-23 with the Franchise module (D3), on the org_sur_plus precedent: a descriptive scale claim (mean 100, sd 10 across the 30 clubs by construction, pinned by test_franchise_export), never a prediction. Letters follow rank through storage._letter_grade and print in neutral ink; only the score takes the z ladder. Weights are declared in the payload and never redistributed at runtime."
+   "verdict": "deprecated",
+   "notes": "Registered 2026-09-23 with the Franchise module (D3), on the org_sur_plus precedent: a descriptive scale claim (mean 100, sd 10 across the 30 clubs by construction, pinned by test_franchise_export), never a prediction. Letters follow rank through storage._letter_grade and print in neutral ink; only the score takes the z ladder. Weights are declared in the payload and never redistributed at runtime. Retired 2026 by owner answer FS-Q4 (2026-10-01, FS_2C_INDEX_REPLACEMENT): F-SCORE (franchise_score) replaced it as the root score on /franchise/ and it is no longer served; its three branches count inside F-SCORE (ROSTER and OUTLOOK in STRENGTH, FARM in PIPELINE), so none was dropped. Deprecated here because it was retired by an owner answer, not because a test failed."
+  },
+  {
+   "model_id": "franchise_score",
+   "summary": "Provisional, descriptive: F-SCORE is 100 + 10z across 30 clubs by construction, four pillars over 2020 to 2026 plus today; it predicts nothing.",
+   "surface": "/franchise/ root card and letter, the F-SCORE section and the board's default sort and letter column; one F-SCORE column on the /mlbstats/ Teams tab, copied verbatim",
+   "predicts": "Nothing: a descriptive league-relative index of four pillar z-scores across the 30 clubs (RESULTS in wins with a published postseason ladder, STRENGTH, PIPELINE, OPERATIONS) over the seven completed seasons 2020-2026 with a three-season half-life, weighted RESULTS 0.50 / STRENGTH 0.25 / PIPELINE 0.20 / OPERATIONS 0.05 and re-standardised to 100 + 10z",
+   "champion": "fscore_export.compute: franchise_export._score_100 applied to the weighted mean of the four pillar z-scores (raw ships beside the score; its sd is below 1 because the pillars are not perfectly correlated, which is why it is re-standardised)",
+   "baseline": "descriptive: league mean = 100, +1 population sd = 110; no forward baseline because nothing is forecast",
+   "metric": "descriptive, measurement only: no eval artifact and no forward gate; the weights and the ladder are a published choice (owner answers FS-Q1 and FS-Q2, 2026-10-01), never fitted",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "Built dark by FS_2A_EXPORT_DARK and served since FS_2F_FLIP (2026-10-14, fscore_export.FSCORE_LIVE True; OPERATIONS live). Pillars: RESULTS = per club-season (W - L) / 2 + 8 per division title + 8 per postseason step reached (berth 8, division series or bye 16, LCS 24, World Series 32, title 40), centred on the season's league mean (the season values sum to zero), recency-weighted with a three-season half-life (2026 0.257 to 2020 0.064); STRENGTH = run differential per 162 games over the window (0.50, 2020 as played) plus the Franchise ROSTER score (0.30, the roster leg's WAR label read from the served provider stamp) and OUTLOOK score (0.20, team_win_projections, provisional), each computed in fscore_export from the same served values through franchise_export._score_100; PIPELINE = the Franchise FARM score of the PROSPX farm composite (0.60) and 7yDvM+ (0.40, dvm_plus_org unvalidated); OPERATIONS = wins above a 0.2944 replacement level per million dollars of Spotrac payroll above a 26-man minimum, read as a within-season rank normal score, through the cache-only reader fa_sources.read_cached_payroll_history; a season under 30 clubs puts OPERATIONS dark on the declared vector 0.53 / 0.26 / 0.21. In-game management is shown under DUGOUT and not scored: the one gated decision family, the running game, did not repeat between halves of a club's own season (per-agent decision value). Admission rule, written before any number: a decision family that passes its own frozen split-half gate enters OPERATIONS at 0.05 of the index, taken from RESULTS, as that family's season-controlled realized value; never a cross-family mWPA total, a decision-quality grade or a manager skill claim. No correlation, fit or trend between F-SCORE and wins is computed. Overlaps disclosed: the newest season enters as a record and as the roster that produced it; DvM+ also sits inside the farm composite. Replaces franchise_index as the root score on /franchise/ (owner answer FS-Q4 (b), 2026-10-01; FS_2C_INDEX_REPLACEMENT)."
   },
   {
    "model_id": "franchise_branch_score",
@@ -6117,7 +6130,7 @@
    "metric": "none standalone; a rank index over served values, each of which carries its own registry row",
    "eval_artifact": null,
    "verdict": "unvalidated",
-   "notes": "Registered 2026-09-23 with the Franchise module (D3). Descriptive by construction; the only claim is the scale (mean 100, sd 10 across the 30 clubs), pinned by test_franchise_export against the served org_summary score_100 leaves for formula parity. Nine further branches (SEASON, FIN, MARKET, FRONT OFFICE, DUGOUT, ARBITRATION, PARK, HISTORY, ODDS) are descriptive nameplates with no score, no letter and no weight."
+   "notes": "Registered 2026-09-23 with the Franchise module (D3). Descriptive by construction; the only claim is the scale (mean 100, sd 10 across the 30 clubs), pinned by test_franchise_export against the served org_summary score_100 leaves for formula parity. Nine further branches (SEASON, FIN, MARKET, FRONT OFFICE, DUGOUT, ARBITRATION, PARK, HISTORY, ODDS) are descriptive nameplates with no score, no letter and no weight. Since the F-SCORE flip (owner answer FS-Q4, 2026-10-01) the branches sit under F-SCORE, and each graded branch names the F-SCORE pillar it counts in (ROSTER and OUTLOOK in STRENGTH, FARM in PIPELINE) where it printed a Franchise Index weight."
   },
   {
    "model_id": "efv_v2_h0",

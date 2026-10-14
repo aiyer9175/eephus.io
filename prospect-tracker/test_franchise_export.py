@@ -64,6 +64,20 @@ def clubs(d):
     return {c["code"]: c for c in d["clubs"]}
 
 
+@pytest.fixture(scope="module")
+def d_index(d):
+    """The board in the Franchise Index shape: the served board while the flag
+    is off; since FS_2F_FLIP the served board is the F-SCORE root, so the Index
+    shape is rebuilt in-process with the flag off (nothing is written)."""
+    if d.get("root") != "fscore":
+        return d
+    import fscore_export
+    import franchise_export as fe
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(fscore_export, "FSCORE_LIVE", False)
+        return fe.build()
+
+
 def _load(name):
     p = ROOT / "data" / name
     if not p.exists():
@@ -262,8 +276,12 @@ def test_outlook_is_graded_provisional_with_the_chip_and_wins_parity(d, clubs):
         assert b["verdict"] == "provisional" and b["verdict_model"] == "team_win_projections"
         assert b["value"] == wins[code] == c["sections"]["outlook"]["wins"], code
         assert c["sections"]["outlook"]["provisional"] is True
-    assert "provisional" in d["copy"]["root_sentence"].lower()
-    assert "thirty percent" in d["copy"]["root_sentence"].lower()
+    if d.get("root") == "fscore":
+        # F-SCORE's root card carries the provisional leg in its honesty line
+        assert "2027 wins, is a provisional projection" in d["copy"]["fscore"]["fscore_honesty"]
+    else:
+        assert "provisional" in d["copy"]["root_sentence"].lower()
+        assert "thirty percent" in d["copy"]["root_sentence"].lower()
     assert d["copy"]["outlook_chip"] == "provisional"
 
 
@@ -365,9 +383,10 @@ def test_served_champions_are_one_rank_one_club_per_division_and_the_rows_disclo
 
 
 def test_the_division_fix_leaves_every_other_payload_key_unchanged(d, clubs):
+    root_formula = "root_formula" if d.get("root") == "fscore" else "index_formula"
     assert set(d["accountability"]) == {"registry_verdicts", "registry_checked_at", "n_clubs", "org_join",
                                         "bwar_census", "standings_flag_disagreements",
-                                        "score_formula", "index_formula"}
+                                        "score_formula", root_formula}
     for code, c in clubs.items():
         assert list(c["sections"]["season"]) == [
             "wins", "losses", "games", "pct", "run_diff", "rs", "ra", "division_rank", "clinched",
@@ -1083,7 +1102,8 @@ def _franchise_fixture(codes):
 def test_flag_off_the_build_never_reads_or_embeds_fscore(monkeypatch):
     import fscore_export
     import franchise_export as fe
-    assert fscore_export.FSCORE_LIVE is False and fe.fscore_live() is False
+    monkeypatch.setattr(fscore_export, "FSCORE_LIVE", False)
+    assert fe.fscore_live() is False
     assert fe.forbidden_keys() == fe.FORBIDDEN_KEYS
     assert {"pennants", "titles"} <= fe.FORBIDDEN_KEYS
 
@@ -1172,7 +1192,7 @@ def test_pennants_and_titles_pass_only_live_and_the_quality_bans_stay(d, monkeyp
     for k in ("decision_quality", "manager_skill", "revenue", "valuation", "hof_plaques"):
         assert k in live and k in fe.forbidden_keys(live=False), k
     doc = json.loads(json.dumps(d))
-    doc["clubs"][0]["fscore"] = {"counts": {"pennants": 1, "titles": 0}}
+    doc["clubs"][0].setdefault("fscore", {}).setdefault("counts", {}).update({"pennants": 1, "titles": 0})
     monkeypatch.setattr(fe, "fscore_live", lambda: True)
     fe._assert_document(doc)
     doc["clubs"][0]["fscore"]["decision_quality"] = 1
@@ -1213,7 +1233,10 @@ def test_the_replacement_rides_the_fscore_flag(monkeypatch):
     import fscore_export
     import franchise_export as fe
     assert fscore_export.FSCORE_REPLACES_INDEX is True, "owner answer FS-Q4 (b)"
-    assert fscore_export.FSCORE_LIVE is False and fe.index_replaced() is False
+    # FS_2F_FLIP (2026-10-14) turned the flag on, and the replacement with it
+    assert fscore_export.FSCORE_LIVE is True and fe.index_replaced() is True
+    monkeypatch.setattr(fscore_export, "FSCORE_LIVE", False)
+    assert fe.index_replaced() is False
     monkeypatch.setattr(fscore_export, "FSCORE_LIVE", True)
     assert fe.index_replaced() is True
     monkeypatch.setattr(fscore_export, "FSCORE_REPLACES_INDEX", False)
@@ -1237,8 +1260,9 @@ def test_the_served_root_shape_is_one_of_the_two(d, clubs):
             assert c["index"]["letter"] and all("fscore_leg" not in b for b in c["tree"]["branches"]), c["code"]
 
 
-def test_flag_on_fscore_replaces_the_index_on_fixtures(d, monkeypatch):
+def test_flag_on_fscore_replaces_the_index_on_fixtures(d_index, monkeypatch):
     import franchise_export as fe
+    d = d_index
     doc, fs = _root_doc(d)
     assert doc["root"] == "fscore" and doc["board_default_sort"] == ["fscore_score", "desc"]
     # the Index is off the payload: no key, no weight, no copy line names it
@@ -1289,11 +1313,11 @@ def test_flag_on_fscore_replaces_the_index_on_fixtures(d, monkeypatch):
         fe._assert_document(doc)
 
 
-def test_flag_on_a_mixed_root_is_refused(d, monkeypatch):
+def test_flag_on_a_mixed_root_is_refused(d_index, monkeypatch):
     import copy
     import franchise_export as fe
     monkeypatch.setattr(fe, "fscore_live", lambda: True)
-    doc, _fs = _root_doc(d)
+    doc, _fs = _root_doc(d_index)
     bad = copy.deepcopy(doc)
     bad["board"][0]["index_score"] = 100.0
     with pytest.raises(AssertionError, match="index_score"):
@@ -1339,6 +1363,7 @@ def test_the_shell_copy_switches_with_the_flag(monkeypatch):
     import fscore_export
     sys.path.insert(0, str(ROOT / "tools"))
     import gen_audit_docs as G
+    monkeypatch.setattr(fscore_export, "FSCORE_LIVE", False)
     off = B.build_franchise()
     assert 'data-gl="franchise_index"' in off and "Franchise Index is a descriptive rank" in off
     row_off = next(r for r in data_catalog.catalog_rows() if r["file"] == "franchise_board.json")
@@ -1396,9 +1421,38 @@ def _stage_flip_rows(tmp_path):
     return gp, rp
 
 
+def test_the_index_retirement_ran_in_the_flip_and_a_second_run_changes_nothing(tmp_path):
+    """FS_2F_FLIP (2026-10-14) ran the step on the served files: the Index is
+    retired with its receipts kept, F-SCORE's entry and row name what they
+    replace, and a second run changes nothing."""
+    R = _retirement()
+    import fscore_export
+    if not fscore_export.FSCORE_LIVE:
+        pytest.skip("the flag is off: the retirement has not run on the served files")
+    for name in ("glossary.json", "model_registry.json"):
+        (tmp_path / name).write_bytes((ROOT / "data" / name).read_bytes())
+    assert R.apply(tmp_path / "glossary.json", tmp_path / "model_registry.json") == []
+    g = {e["id"]: e for e in _load("glossary.json")["entries"]}
+    reg = _load("model_registry.json")
+    r = {m["model_id"]: m for m in reg["models"]}
+    assert g["franchise_index"]["definition"].startswith("Retired 2026 by owner answer FS-Q4")
+    assert g["franchise_index"]["seeAlso"][0] == "franchise_score"
+    for eid in ("franchise_score", "postseason_ladder"):
+        assert eid in g, eid
+    assert r["franchise_index"]["verdict"] == "deprecated"
+    assert "not because a test failed" in r["franchise_index"]["notes"]
+    assert r["franchise_score"]["verdict"] == "provisional"
+    assert r["franchise_score"]["provisional_kind"] == "measurement_only"
+    assert "franchise_index" in r["franchise_score"]["notes"] and "root card" in r["franchise_score"]["surface"]
+    import model_registry
+    assert not [p for p in model_registry.validate(reg) if "franchise" in p]
+
+
 def test_the_index_retirement_retires_the_rows_and_keeps_the_receipts(tmp_path):
     R = _retirement()
     gp, rp = _stage_flip_rows(tmp_path)
+    if R.apply(gp, rp, write=False) == []:
+        pytest.skip("the served files are already retired (FS_2F_FLIP); the test above covers them")
     g0 = {e["id"]: e for e in json.loads(gp.read_text(encoding="utf-8"))["entries"]}
     r0 = {m["model_id"]: m for m in json.loads(rp.read_text(encoding="utf-8"))["models"]}
     assert sorted(R.apply(gp, rp)) == ["glossary.json", "model_registry.json"]

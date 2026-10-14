@@ -113,8 +113,8 @@ PREVIEW_OUT = CACHE / "fscore" / "preview" / OUT_NAME
 SCHEMA = 1
 N_CLUBS = 30
 
-#: The flag (plan X9). False: the preview file only, nothing served moves.
-FSCORE_LIVE = False
+#: The flag (plan X9). True since FS_2F_FLIP (2026-10-14): data/fscore.json is served.
+FSCORE_LIVE = True
 
 #: FS-Q1 (owner, 2026-10-01): scheme A, results-heavy.
 SCHEME = "A"

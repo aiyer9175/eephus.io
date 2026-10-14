@@ -454,7 +454,9 @@ def test_fscore_join_copies_verbatim_or_says_it_is_pending(tmp_path):
 def test_fscore_join_is_dark_while_the_flag_is_off(tmp_path, monkeypatch):
     import fscore_export
     (tmp_path / "fscore.json").write_text(json.dumps(_fscore_blob()), encoding="utf-8")
-    assert fscore_export.FSCORE_LIVE is False
+    # FS_2F_FLIP (2026-10-14) turned the flag on; the dark path is pinned with it off
+    assert fscore_export.FSCORE_LIVE is True
+    monkeypatch.setattr(fscore_export, "FSCORE_LIVE", False)
     assert T.fscore_join(tmp_path) == (None, PENDING_NOTE)
     assert T.fscore_join(tmp_path, live=False) == (None, PENDING_NOTE)
     monkeypatch.setattr(fscore_export, "FSCORE_LIVE", True)

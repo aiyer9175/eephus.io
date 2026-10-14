@@ -141,8 +141,9 @@ def test_each_live_pillar_is_a_z_across_the_thirty(doc):
 
 
 def test_the_constants_are_the_owner_answers_and_equal_the_payload(doc):
-    # FS-Q1 results-heavy, FS-Q2 half-life 3, FS-Q3 shown not scored; recorded defaults
-    assert FX.FSCORE_LIVE is False
+    # FS-Q1 results-heavy, FS-Q2 half-life 3, FS-Q3 shown not scored; recorded defaults.
+    # FS_2F_FLIP (2026-10-14) turned the flag on: fscore.json is served.
+    assert FX.FSCORE_LIVE is True
     assert FX.SCHEME == "A"
     assert FX.PILLAR_WEIGHTS == {"results": 0.50, "strength": 0.25, "pipeline": 0.20, "operations": 0.05}
     assert FX.DARK_WEIGHTS == {"results": 0.53, "strength": 0.26, "pipeline": 0.21, "operations": 0.0}
@@ -454,15 +455,26 @@ def test_the_management_admission_rule_is_written_before_any_number():
 # writing: dark by default, refusal exits 2 and writes nothing
 # --------------------------------------------------------------------------
 
-def test_dark_by_default_the_preview_is_off_the_webroot(monkeypatch, tmp_path):
-    assert FX.out_path() == FX.PREVIEW_OUT
-    assert ".cache" in FX.PREVIEW_OUT.parts and "preview" in FX.PREVIEW_OUT.parts
-    monkeypatch.setattr(FX, "FSCORE_LIVE", True)
+def test_live_since_the_flip_and_the_preview_stays_off_the_webroot(monkeypatch, tmp_path):
     assert FX.out_path() == FX.LIVE_OUT == ROOT / "data" / "fscore.json"
+    assert ".cache" in FX.PREVIEW_OUT.parts and "preview" in FX.PREVIEW_OUT.parts
+    monkeypatch.setattr(FX, "FSCORE_LIVE", False)
+    assert FX.out_path() == FX.PREVIEW_OUT
+
+
+def test_main_live_writes_data_and_not_the_preview(monkeypatch, tmp_path, inp):
+    d = FX.compute(inp, SEASONS, today=TODAY)
+    monkeypatch.setattr(FX, "PREVIEW_OUT", tmp_path / "preview" / "fscore.json")
+    monkeypatch.setattr(FX, "LIVE_OUT", tmp_path / "data" / "fscore.json")
+    monkeypatch.setattr(FX, "build", lambda today=None: d)
+    assert FX.FSCORE_LIVE is True and FX.main([]) == 0
+    assert (tmp_path / "data" / "fscore.json").exists()
+    assert not (tmp_path / "preview" / "fscore.json").exists()
 
 
 def test_main_writes_the_preview_and_never_data(monkeypatch, tmp_path, inp):
     d = FX.compute(inp, SEASONS, today=TODAY)
+    monkeypatch.setattr(FX, "FSCORE_LIVE", False)
     monkeypatch.setattr(FX, "PREVIEW_OUT", tmp_path / "preview" / "fscore.json")
     monkeypatch.setattr(FX, "LIVE_OUT", tmp_path / "data" / "fscore.json")
     monkeypatch.setattr(FX, "build", lambda today=None: d)
