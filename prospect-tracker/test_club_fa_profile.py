@@ -220,7 +220,12 @@ def test_the_reader_and_the_build_never_open_a_socket(monkeypatch):
         pass
     monkeypatch.setattr(fa_sources, "_fetch", _no)
     h = fa_sources.read_cached_payroll_history([2016, 2026])
-    assert len(h["seasons"][2016]["tax"]) == 30 and h["missing_payroll"] == [2016]
+    # The 2016 payroll page is reported missing only while it is absent from
+    # the cache (the nightly fetched it on 2026-10-09); the reader still parses
+    # whatever lies on disk and opens no socket either way.
+    has_2016 = (CACHE / "spotrac_payroll_2016.html").exists()
+    assert len(h["seasons"][2016]["tax"]) == 30
+    assert h["missing_payroll"] == ([] if has_2016 else [2016])
     monkeypatch.setattr(L, "LEDGER_FA_SPEND_PROFILE", True)
     doc, shards = L.build_all()
     assert all("payroll" in s and s["payroll"]["history"] for s in shards.values())
