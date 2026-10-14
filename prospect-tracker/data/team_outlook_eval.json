@@ -352,5 +352,1508 @@
   "vector_serving": false,
   "vector_note": "the cohort-intercept vector does not serve; served_recentered scores the vector as it stood when proj_backtest last ran (2026-10-09), and the live roll-up is the plain recentered arm",
   "source": "retro_backtest.ship_decision.holdout_mae (proj_backtest.py; preserved across re-exports; flag is None when the block is absent)"
+ },
+ "team_projection_gate": {
+  "gate_2026": {
+   "tm_a": {
+    "statistic": "mean CRPS of the win-total distribution against actual wins, candidate (T1, sigma_T) minus incumbent (schedule only), paired over clubs",
+    "sigma_T": 7.6751,
+    "n_sims": 20000,
+    "sim_seed": 12345,
+    "home_edge": 0.0,
+    "bracket": false,
+    "games_played": 0,
+    "incumbent": {
+     "crps_mean": 5.9161,
+     "coverage80": {
+      "k": 18,
+      "n": 30,
+      "rate": 0.6,
+      "wilson95": {
+       "lo": 0.4232,
+       "hi": 0.7541
+      }
+     },
+     "win_sd_mean": 6.3084,
+     "n_clubs": 30
+    },
+    "candidate": {
+     "crps_mean": 5.6942,
+     "coverage80": {
+      "k": 24,
+      "n": 30,
+      "rate": 0.8,
+      "wilson95": {
+       "lo": 0.6269,
+       "hi": 0.905
+      }
+     },
+     "win_sd_mean": 9.929,
+     "n_clubs": 30
+    },
+    "delta_by_club": {
+     "ARI": 0.6772,
+     "ATH": -1.5952,
+     "ATL": -0.1731,
+     "BAL": 0.8543,
+     "BOS": 0.6928,
+     "CHC": 0.6753,
+     "CHW": -1.7576,
+     "CIN": -0.7978,
+     "CLE": 0.3167,
+     "COL": -0.0132,
+     "DET": -0.7183,
+     "HOU": 0.8395,
+     "KCR": -1.6016,
+     "LAA": -0.5858,
+     "LAD": 0.6721,
+     "MIA": -0.1607,
+     "MIL": -1.8493,
+     "MIN": 0.8468,
+     "NYM": -1.259,
+     "NYY": 0.737,
+     "PHI": 0.3816,
+     "PIT": 0.5951,
+     "SDP": -0.5753,
+     "SEA": -1.1901,
+     "SFG": -1.3959,
+     "STL": 0.1465,
+     "TBR": -2.054,
+     "TEX": 0.8251,
+     "TOR": 0.5376,
+     "WSN": 0.2721
+    },
+    "bootstrap": {
+     "n": 30,
+     "mean": -0.2219,
+     "lo05": -0.5144,
+     "ub95": 0.0677,
+     "pass": false,
+     "B": 2000,
+     "seed": 20261208,
+     "dropped": [],
+     "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0"
+    },
+    "missing": [],
+    "dev_coverage80": {
+     "incumbent": {
+      "k": 66,
+      "n": 120,
+      "rate": 0.55,
+      "wilson95": {
+       "hi": 0.6361,
+       "lo": 0.4608
+      }
+     },
+     "candidate_in_sample": {
+      "in_sample": true,
+      "k": 96,
+      "n": 120,
+      "rate": 0.8,
+      "wilson95": {
+       "hi": 0.8618,
+       "lo": 0.7196
+      }
+     },
+     "crps_mean": {
+      "candidate": 5.63,
+      "incumbent": 5.9017
+     },
+     "n_club_seasons": 120
+    },
+    "verdict": "FAIL"
+   },
+   "tm_b": {
+    "statistic": "team wins MAE, the T2 budgeted roll-up (after the 2,430 pin) minus served_recentered, paired over clubs",
+    "budget": {
+     "ip": 1436.4,
+     "pa": 6096.7
+    },
+    "budgeted": {
+     "mae": 7.437,
+     "bias": 0.033,
+     "r": 0.498,
+     "n": 30,
+     "recenter_shift": 5.802,
+     "sum_wins": 2430.0
+    },
+    "served_recentered": {
+     "mae": 7.804,
+     "bias": 0.033,
+     "r": 0.438,
+     "n": 30
+    },
+    "delta_by_club": {
+     "ARI": -0.243,
+     "ATH": -0.535,
+     "ATL": 2.0,
+     "BAL": 0.351,
+     "BOS": 0.542,
+     "CHC": 0.096,
+     "CHW": -1.334,
+     "CIN": -3.254,
+     "CLE": -1.335,
+     "COL": 0.623,
+     "DET": -2.104,
+     "HOU": 0.863,
+     "KCR": -2.584,
+     "LAA": 0.143,
+     "LAD": 1.171,
+     "MIA": -1.335,
+     "MIL": -1.334,
+     "MIN": 0.409,
+     "NYM": 1.032,
+     "NYY": -0.465,
+     "PHI": -1.334,
+     "PIT": -1.335,
+     "SDP": 0.71,
+     "SEA": 0.024,
+     "SFG": -0.908,
+     "STL": -1.334,
+     "TBR": -1.334,
+     "TEX": 0.478,
+     "TOR": 1.334,
+     "WSN": -0.038
+    },
+    "bootstrap": {
+     "n": 30,
+     "mean": -0.3677,
+     "lo05": -0.7472,
+     "ub95": 0.0014,
+     "pass": false,
+     "B": 2000,
+     "seed": 20261208,
+     "dropped": [],
+     "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0"
+    },
+    "clubs_over_budget": {
+     "pa": 8,
+     "ip": 21
+    },
+    "missing": [],
+    "verdict": "FAIL"
+   },
+   "tm_c": {
+    "statistic": "RS MAE and RA MAE against actual runs; comparators prior-season carry-forward and league average; pass per side is ub95 < 0 against both",
+    "rs": {
+     "mae": 42.603,
+     "n": 30,
+     "missing": [],
+     "vs_carry_forward": {
+      "comparator_mae": 61.9,
+      "n": 30,
+      "bootstrap": {
+       "n": 30,
+       "mean": -19.2967,
+       "lo05": -35.242,
+       "ub95": -3.4948,
+       "pass": true,
+       "B": 2000,
+       "seed": 20261208,
+       "dropped": [],
+       "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0"
+      }
+     },
+     "vs_league_avg": {
+      "comparator_mae": 39.233,
+      "n": 30,
+      "bootstrap": {
+       "n": 30,
+       "mean": 3.37,
+       "lo05": -6.19,
+       "ub95": 13.5934,
+       "pass": false,
+       "B": 2000,
+       "seed": 20261208,
+       "dropped": [],
+       "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0"
+      }
+     },
+     "league_avg_comparator": 720.47,
+     "verdict": "FAIL"
+    },
+    "ra": {
+     "mae": 47.667,
+     "n": 30,
+     "missing": [],
+     "vs_carry_forward": {
+      "comparator_mae": 66.367,
+      "n": 30,
+      "bootstrap": {
+       "n": 30,
+       "mean": -18.7,
+       "lo05": -31.0243,
+       "ub95": -6.006,
+       "pass": true,
+       "B": 2000,
+       "seed": 20261208,
+       "dropped": [],
+       "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0"
+      }
+     },
+     "vs_league_avg": {
+      "comparator_mae": 62.167,
+      "n": 30,
+      "bootstrap": {
+       "n": 30,
+       "mean": -14.5,
+       "lo05": -29.3024,
+       "ub95": -1.3725,
+       "pass": true,
+       "B": 2000,
+       "seed": 20261208,
+       "dropped": [],
+       "method": "paired percentile bootstrap over clubs with replacement; ub95 is the 95th percentile of the resampled mean deltas (candidate minus comparator); pass is ub95 < 0"
+      }
+     },
+     "league_avg_comparator": 720.47,
+     "verdict": "PASS"
+    },
+    "pythag_wins": {
+     "n": 30,
+     "mae": 7.539,
+     "missing": []
+    },
+    "served_wins_same_clubs": {
+     "n": 30,
+     "mae": 7.804
+    },
+    "comparators": {
+     "prior_clubs": 30,
+     "league_avg": {
+      "rs": 720.47,
+      "ra": 720.47
+     }
+    },
+    "league_identity": {
+     "n_clubs": 30,
+     "rs_sum": 21134.3,
+     "ra_sum": 21990.8,
+     "league_sum": 21614.5,
+     "rs_minus_ra": -856.5,
+     "rs_minus_league": -480.2,
+     "ra_minus_league": 376.3,
+     "tol_share": 0.01,
+     "tol_runs": 216.1,
+     "within_tol": false
+    },
+    "meta": {
+     "league_runs_per_team": 720.5,
+     "constants_season": 2025,
+     "park_factor": {
+      "requested_season": 2025,
+      "season_used": 2025,
+      "column": "Basic (5yr)",
+      "n_rows": 30,
+      "neutral_fallback": [],
+      "file": "park_factors_2025.json"
+     },
+     "age_curves": "aging_v3 component_curve('hit', 'bsr' | 'fld') fitted at 2025 (U5)",
+     "pj_params": "model/proj_components/params.json",
+     "pj_params_sha256": "da2d5114fe2c05a1cceed883a625ddb63060e45c8fc848c385860694b02cf9b6",
+     "n_player_blocks": 1276,
+     "frame": "FanGraphs frame"
+    },
+    "verdict": {
+     "rs": "FAIL",
+     "ra": "PASS"
+    }
+   },
+   "verdicts": {
+    "TM-A": "FAIL",
+    "TM-B": "FAIL",
+    "TM-C": {
+     "rs": "FAIL",
+     "ra": "PASS"
+    }
+   },
+   "flags_eligible": {
+    "TEAM_TALENT_RANGE_LIVE": false,
+    "TEAM_PT_BUDGET_LIVE": false,
+    "TEAM_RUNS_LIVE": false
+   },
+   "clubs": {
+    "ARI": {
+     "in_frame": true,
+     "n_players": 45,
+     "actual_wins": 86,
+     "actual_gp": 162,
+     "actual_rs": 739,
+     "actual_ra": 730,
+     "served_recentered": 82.681,
+     "budgeted": 82.924,
+     "p_prior": 0.5104,
+     "crps_incumbent": 2.1188,
+     "crps_candidate": 2.796,
+     "p10_p90_incumbent": [
+      75.0,
+      91.0
+     ],
+     "p10_p90_candidate": [
+      70.0,
+      95.0
+     ],
+     "pred_rs": 720.4,
+     "pred_ra": 729.6,
+     "pythag_wins": 80.04,
+     "park_factor": 1.0014,
+     "pa_scale": 1.0,
+     "ip_scale": 0.915604283528812
+    },
+    "ATH": {
+     "in_frame": true,
+     "n_players": 49,
+     "actual_wins": 64,
+     "actual_gp": 162,
+     "actual_rs": 699,
+     "actual_ra": 937,
+     "served_recentered": 79.607,
+     "budgeted": 79.072,
+     "p_prior": 0.4914,
+     "crps_incumbent": 12.056,
+     "crps_candidate": 10.4608,
+     "p10_p90_incumbent": [
+      71.0,
+      88.0
+     ],
+     "p10_p90_candidate": [
+      67.0,
+      92.0
+     ],
+     "pred_rs": 774.0,
+     "pred_ra": 834.4,
+     "pythag_wins": 75.13,
+     "park_factor": 1.0752,
+     "pa_scale": 0.9756437132935397,
+     "ip_scale": 0.8679678530424799
+    },
+    "ATL": {
+     "in_frame": true,
+     "n_players": 54,
+     "actual_wins": 94,
+     "actual_gp": 162,
+     "actual_rs": 742,
+     "actual_ra": 626,
+     "served_recentered": 86.178,
+     "budgeted": 84.178,
+     "p_prior": 0.532,
+     "crps_incumbent": 4.5867,
+     "crps_candidate": 4.4136,
+     "p10_p90_incumbent": [
+      78.0,
+      95.0
+     ],
+     "p10_p90_candidate": [
+      74.0,
+      99.0
+     ],
+     "pred_rs": 717.1,
+     "pred_ra": 729.8,
+     "pythag_wins": 79.67,
+     "park_factor": 0.9957,
+     "pa_scale": 0.9869202751922298,
+     "ip_scale": 0.7953488372093024
+    },
+    "BAL": {
+     "in_frame": true,
+     "n_players": 46,
+     "actual_wins": 79,
+     "actual_gp": 161,
+     "actual_rs": 718,
+     "actual_ra": 739,
+     "served_recentered": 80.27,
+     "budgeted": 80.621,
+     "p_prior": 0.4955,
+     "crps_incumbent": 1.4877,
+     "crps_candidate": 2.342,
+     "p10_p90_incumbent": [
+      71.0,
+      87.0
+     ],
+     "p10_p90_candidate": [
+      67.0,
+      92.0
+     ],
+     "pred_rs": 680.0,
+     "pred_ra": 727.3,
+     "pythag_wins": 75.94,
+     "park_factor": 0.9817,
+     "pa_scale": 0.9456206474027887,
+     "ip_scale": 0.9889837510327734
+    },
+    "BOS": {
+     "in_frame": true,
+     "n_players": 42,
+     "actual_wins": 87,
+     "actual_gp": 162,
+     "actual_rs": 689,
+     "actual_ra": 611,
+     "served_recentered": 89.371,
+     "budgeted": 89.913,
+     "p_prior": 0.5517,
+     "crps_incumbent": 1.8494,
+     "crps_candidate": 2.5422,
+     "p10_p90_incumbent": [
+      81.0,
+      97.0
+     ],
+     "p10_p90_candidate": [
+      77.0,
+      102.0
+     ],
+     "pred_rs": 709.7,
+     "pred_ra": 690.3,
+     "pythag_wins": 83.08,
+     "park_factor": 1.031,
+     "pa_scale": 1.0,
+     "ip_scale": 0.9582388258839227
+    },
+    "CHC": {
+     "in_frame": true,
+     "n_players": 47,
+     "actual_wins": 89,
+     "actual_gp": 162,
+     "actual_rs": 850,
+     "actual_ra": 703,
+     "served_recentered": 90.934,
+     "budgeted": 86.97,
+     "p_prior": 0.5613,
+     "crps_incumbent": 1.9244,
+     "crps_candidate": 2.5997,
+     "p10_p90_incumbent": [
+      84.0,
+      100.0
+     ],
+     "p10_p90_candidate": [
+      79.0,
+      104.0
+     ],
+     "pred_rs": 712.7,
+     "pred_ra": 703.1,
+     "pythag_wins": 82.02,
+     "park_factor": 0.9742,
+     "pa_scale": 1.0,
+     "ip_scale": 0.6999317805282137
+    },
+    "CHW": {
+     "in_frame": true,
+     "n_players": 35,
+     "actual_wins": 84,
+     "actual_gp": 162,
+     "actual_rs": 776,
+     "actual_ra": 720,
+     "served_recentered": 69.149,
+     "budgeted": 70.483,
+     "p_prior": 0.4268,
+     "crps_incumbent": 12.033,
+     "crps_candidate": 10.2754,
+     "p10_p90_incumbent": [
+      60.0,
+      76.0
+     ],
+     "p10_p90_candidate": [
+      56.0,
+      81.0
+     ],
+     "pred_rs": 674.3,
+     "pred_ra": 770.1,
+     "pythag_wins": 70.97,
+     "park_factor": 0.9997,
+     "pa_scale": 1.0,
+     "ip_scale": 1.0
+    },
+    "CIN": {
+     "in_frame": true,
+     "n_players": 47,
+     "actual_wins": 75,
+     "actual_gp": 162,
+     "actual_rs": 666,
+     "actual_ra": 826,
+     "served_recentered": 85.559,
+     "budgeted": 82.305,
+     "p_prior": 0.5281,
+     "crps_incumbent": 7.2366,
+     "crps_candidate": 6.4388,
+     "p10_p90_incumbent": [
+      77.0,
+      94.0
+     ],
+     "p10_p90_candidate": [
+      73.0,
+      99.0
+     ],
+     "pred_rs": 690.2,
+     "pred_ra": 733.6,
+     "pythag_wins": 76.4,
+     "park_factor": 1.0184,
+     "pa_scale": 0.9045548961424332,
+     "ip_scale": 0.82296321760055
+    },
+    "CLE": {
+     "in_frame": true,
+     "n_players": 35,
+     "actual_wins": 85,
+     "actual_gp": 162,
+     "actual_rs": 678,
+     "actual_ra": 667,
+     "served_recentered": 79.654,
+     "budgeted": 80.989,
+     "p_prior": 0.4917,
+     "crps_incumbent": 3.0413,
+     "crps_candidate": 3.358,
+     "p10_p90_incumbent": [
+      72.0,
+      88.0
+     ],
+     "p10_p90_candidate": [
+      67.0,
+      93.0
+     ],
+     "pred_rs": 660.5,
+     "pred_ra": 684.0,
+     "pythag_wins": 78.4,
+     "park_factor": 0.9958,
+     "pa_scale": 1.0,
+     "ip_scale": 1.0
+    },
+    "COL": {
+     "in_frame": true,
+     "n_players": 41,
+     "actual_wins": 58,
+     "actual_gp": 162,
+     "actual_rs": 752,
+     "actual_ra": 944,
+     "served_recentered": 65.813,
+     "budgeted": 66.436,
+     "p_prior": 0.4063,
+     "crps_incumbent": 4.0853,
+     "crps_candidate": 4.0721,
+     "p10_p90_incumbent": [
+      57.0,
+      73.0
+     ],
+     "p10_p90_candidate": [
+      52.0,
+      78.0
+     ],
+     "pred_rs": 736.2,
+     "pred_ra": 909.7,
+     "pythag_wins": 64.56,
+     "park_factor": 1.1254,
+     "pa_scale": 1.0,
+     "ip_scale": 0.8916754609224657
+    },
+    "DET": {
+     "in_frame": true,
+     "n_players": 46,
+     "actual_wins": 76,
+     "actual_gp": 162,
+     "actual_rs": 723,
+     "actual_ra": 652,
+     "served_recentered": 85.094,
+     "budgeted": 82.99,
+     "p_prior": 0.5253,
+     "crps_incumbent": 6.648,
+     "crps_candidate": 5.9297,
+     "p10_p90_incumbent": [
+      78.0,
+      94.0
+     ],
+     "p10_p90_candidate": [
+      73.0,
+      99.0
+     ],
+     "pred_rs": 707.8,
+     "pred_ra": 712.9,
+     "pythag_wins": 80.46,
+     "park_factor": 1.0078,
+     "pa_scale": 1.0,
+     "ip_scale": 0.8077831515015185
+    },
+    "HOU": {
+     "in_frame": true,
+     "n_players": 45,
+     "actual_wins": 81,
+     "actual_gp": 162,
+     "actual_rs": 734,
+     "actual_ra": 766,
+     "served_recentered": 81.157,
+     "budgeted": 82.02,
+     "p_prior": 0.501,
+     "crps_incumbent": 1.5205,
+     "crps_candidate": 2.36,
+     "p10_p90_incumbent": [
+      74.0,
+      90.0
+     ],
+     "p10_p90_candidate": [
+      69.0,
+      94.0
+     ],
+     "pred_rs": 675.0,
+     "pred_ra": 723.2,
+     "pythag_wins": 75.82,
+     "park_factor": 0.9915,
+     "pa_scale": 1.0,
+     "ip_scale": 0.9625410440260003
+    },
+    "KCR": {
+     "in_frame": true,
+     "n_players": 52,
+     "actual_wins": 69,
+     "actual_gp": 162,
+     "actual_rs": 690,
+     "actual_ra": 810,
+     "served_recentered": 83.92,
+     "budgeted": 81.336,
+     "p_prior": 0.518,
+     "crps_incumbent": 12.1925,
+     "crps_candidate": 10.5909,
+     "p10_p90_incumbent": [
+      77.0,
+      93.0
+     ],
+     "p10_p90_candidate": [
+      72.0,
+      98.0
+     ],
+     "pred_rs": 712.5,
+     "pred_ra": 747.2,
+     "pythag_wins": 77.38,
+     "park_factor": 1.0261,
+     "pa_scale": 0.9969421460574942,
+     "ip_scale": 0.7554036287141731
+    },
+    "LAA": {
+     "in_frame": true,
+     "n_players": 51,
+     "actual_wins": 62,
+     "actual_gp": 162,
+     "actual_rs": 655,
+     "actual_ra": 752,
+     "served_recentered": 72.358,
+     "budgeted": 72.501,
+     "p_prior": 0.4467,
+     "crps_incumbent": 6.4307,
+     "crps_candidate": 5.8449,
+     "p10_p90_incumbent": [
+      63.0,
+      80.0
+     ],
+     "p10_p90_candidate": [
+      59.0,
+      85.0
+     ],
+     "pred_rs": 658.5,
+     "pred_ra": 780.2,
+     "pythag_wins": 68.25,
+     "park_factor": 0.9965,
+     "pa_scale": 0.9146787889699043,
+     "ip_scale": 0.9762131303520457
+    },
+    "LAD": {
+     "in_frame": true,
+     "n_players": 46,
+     "actual_wins": 100,
+     "actual_gp": 162,
+     "actual_rs": 801,
+     "actual_ra": 600,
+     "served_recentered": 96.072,
+     "budgeted": 94.901,
+     "p_prior": 0.593,
+     "crps_incumbent": 1.9742,
+     "crps_candidate": 2.6463,
+     "p10_p90_incumbent": [
+      89.0,
+      105.0
+     ],
+     "p10_p90_candidate": [
+      84.0,
+      110.0
+     ],
+     "pred_rs": 778.9,
+     "pred_ra": 687.9,
+     "pythag_wins": 90.43,
+     "park_factor": 0.9919,
+     "pa_scale": 0.9904636579263736,
+     "ip_scale": 0.8779414461218753
+    },
+    "MIA": {
+     "in_frame": true,
+     "n_players": 38,
+     "actual_wins": 80,
+     "actual_gp": 162,
+     "actual_rs": 715,
+     "actual_ra": 712,
+     "served_recentered": 73.234,
+     "budgeted": 74.569,
+     "p_prior": 0.4521,
+     "crps_incumbent": 4.3663,
+     "crps_candidate": 4.2056,
+     "p10_p90_incumbent": [
+      65.0,
+      81.0
+     ],
+     "p10_p90_candidate": [
+      60.0,
+      86.0
+     ],
+     "pred_rs": 701.1,
+     "pred_ra": 778.8,
+     "pythag_wins": 72.99,
+     "park_factor": 1.0087,
+     "pa_scale": 1.0,
+     "ip_scale": 1.0
+    },
+    "MIL": {
+     "in_frame": true,
+     "n_players": 39,
+     "actual_wins": 103,
+     "actual_gp": 162,
+     "actual_rs": 832,
+     "actual_ra": 618,
+     "served_recentered": 82.219,
+     "budgeted": 83.553,
+     "p_prior": 0.5075,
+     "crps_incumbent": 17.3801,
+     "crps_candidate": 15.5308,
+     "p10_p90_incumbent": [
+      74.0,
+      90.0
+     ],
+     "p10_p90_candidate": [
+      69.0,
+      95.0
+     ],
+     "pred_rs": 697.1,
+     "pred_ra": 683.2,
+     "pythag_wins": 82.51,
+     "park_factor": 0.9813,
+     "pa_scale": 1.0,
+     "ip_scale": 1.0
+    },
+    "MIN": {
+     "in_frame": true,
+     "n_players": 37,
+     "actual_wins": 77,
+     "actual_gp": 162,
+     "actual_rs": 739,
+     "actual_ra": 797,
+     "served_recentered": 77.027,
+     "budgeted": 77.436,
+     "p_prior": 0.4755,
+     "crps_incumbent": 1.4686,
+     "crps_candidate": 2.3154,
+     "p10_p90_incumbent": [
+      69.0,
+      85.0
+     ],
+     "p10_p90_candidate": [
+      65.0,
+      90.0
+     ],
+     "pred_rs": 700.1,
+     "pred_ra": 748.3,
+     "pythag_wins": 75.95,
+     "park_factor": 1.0026,
+     "pa_scale": 1.0,
+     "ip_scale": 0.9301903898458749
+    },
+    "NYM": {
+     "in_frame": true,
+     "n_players": 48,
+     "actual_wins": 74,
+     "actual_gp": 162,
+     "actual_rs": 699,
+     "actual_ra": 731,
+     "served_recentered": 86.253,
+     "budgeted": 87.285,
+     "p_prior": 0.5324,
+     "crps_incumbent": 9.1196,
+     "crps_candidate": 7.8606,
+     "p10_p90_incumbent": [
+      79.0,
+      95.0
+     ],
+     "p10_p90_candidate": [
+      74.0,
+      99.0
+     ],
+     "pred_rs": 709.0,
+     "pred_ra": 703.3,
+     "pythag_wins": 81.61,
+     "park_factor": 0.9755,
+     "pa_scale": 0.9972519833156129,
+     "ip_scale": 0.980544747081712
+    },
+    "NYY": {
+     "in_frame": true,
+     "n_players": 38,
+     "actual_wins": 93,
+     "actual_gp": 161,
+     "actual_rs": 739,
+     "actual_ra": 601,
+     "served_recentered": 90.868,
+     "budgeted": 91.333,
+     "p_prior": 0.5609,
+     "crps_incumbent": 1.8021,
+     "crps_candidate": 2.5391,
+     "p10_p90_incumbent": [
+      83.0,
+      99.0
+     ],
+     "p10_p90_candidate": [
+      78.0,
+      103.0
+     ],
+     "pred_rs": 771.3,
+     "pred_ra": 720.1,
+     "pythag_wins": 86.25,
+     "park_factor": 1.0015,
+     "pa_scale": 1.0,
+     "ip_scale": 0.9398063334205706
+    },
+    "PHI": {
+     "in_frame": true,
+     "n_players": 35,
+     "actual_wins": 88,
+     "actual_gp": 162,
+     "actual_rs": 713,
+     "actual_ra": 698,
+     "served_recentered": 82.988,
+     "budgeted": 84.322,
+     "p_prior": 0.5123,
+     "crps_incumbent": 2.8554,
+     "crps_candidate": 3.237,
+     "p10_p90_incumbent": [
+      75.0,
+      91.0
+     ],
+     "p10_p90_candidate": [
+      70.0,
+      96.0
+     ],
+     "pred_rs": 758.3,
+     "pred_ra": 722.0,
+     "pythag_wins": 84.75,
+     "park_factor": 1.0308,
+     "pa_scale": 1.0,
+     "ip_scale": 1.0
+    },
+    "PIT": {
+     "in_frame": true,
+     "n_players": 36,
+     "actual_wins": 82,
+     "actual_gp": 162,
+     "actual_rs": 767,
+     "actual_ra": 739,
+     "served_recentered": 79.094,
+     "budgeted": 80.429,
+     "p_prior": 0.4882,
+     "crps_incumbent": 2.1907,
+     "crps_candidate": 2.7858,
+     "p10_p90_incumbent": [
+      70.0,
+      87.0
+     ],
+     "p10_p90_candidate": [
+      66.0,
+      91.0
+     ],
+     "pred_rs": 715.9,
+     "pred_ra": 688.4,
+     "pythag_wins": 83.95,
+     "park_factor": 1.0288,
+     "pa_scale": 1.0,
+     "ip_scale": 1.0
+    },
+    "SDP": {
+     "in_frame": true,
+     "n_players": 39,
+     "actual_wins": 91,
+     "actual_gp": 162,
+     "actual_rs": 722,
+     "actual_ra": 681,
+     "served_recentered": 82.046,
+     "budgeted": 81.336,
+     "p_prior": 0.5065,
+     "crps_incumbent": 5.9475,
+     "crps_candidate": 5.3722,
+     "p10_p90_incumbent": [
+      74.0,
+      90.0
+     ],
+     "p10_p90_candidate": [
+      69.0,
+      95.0
+     ],
+     "pred_rs": 676.6,
+     "pred_ra": 717.3,
+     "pythag_wins": 76.62,
+     "park_factor": 0.9537,
+     "pa_scale": 1.0,
+     "ip_scale": 0.8522605909576362
+    },
+    "SEA": {
+     "in_frame": true,
+     "n_players": 45,
+     "actual_wins": 76,
+     "actual_gp": 162,
+     "actual_rs": 664,
+     "actual_ra": 722,
+     "served_recentered": 87.551,
+     "budgeted": 87.575,
+     "p_prior": 0.5404,
+     "crps_incumbent": 8.8612,
+     "crps_candidate": 7.6711,
+     "p10_p90_incumbent": [
+      80.0,
+      96.0
+     ],
+     "p10_p90_candidate": [
+      75.0,
+      101.0
+     ],
+     "pred_rs": 679.5,
+     "pred_ra": 665.7,
+     "pythag_wins": 82.53,
+     "park_factor": 0.9344,
+     "pa_scale": 1.0,
+     "ip_scale": 0.9156626506024097
+    },
+    "SFG": {
+     "in_frame": true,
+     "n_players": 48,
+     "actual_wins": 65,
+     "actual_gp": 162,
+     "actual_rs": 669,
+     "actual_ra": 760,
+     "served_recentered": 80.069,
+     "budgeted": 79.161,
+     "p_prior": 0.4943,
+     "crps_incumbent": 11.3841,
+     "crps_candidate": 9.9882,
+     "p10_p90_incumbent": [
+      72.0,
+      88.0
+     ],
+     "p10_p90_candidate": [
+      67.0,
+      93.0
+     ],
+     "pred_rs": 680.2,
+     "pred_ra": 719.5,
+     "pythag_wins": 76.78,
+     "park_factor": 0.9692,
+     "pa_scale": 1.0,
+     "ip_scale": 0.8379418970948548
+    },
+    "STL": {
+     "in_frame": true,
+     "n_players": 34,
+     "actual_wins": 77,
+     "actual_gp": 162,
+     "actual_rs": 720,
+     "actual_ra": 749,
+     "served_recentered": 72.319,
+     "budgeted": 73.653,
+     "p_prior": 0.4464,
+     "crps_incumbent": 3.4262,
+     "crps_candidate": 3.5727,
+     "p10_p90_incumbent": [
+      63.0,
+      79.0
+     ],
+     "p10_p90_candidate": [
+      59.0,
+      84.0
+     ],
+     "pred_rs": 648.2,
+     "pred_ra": 719.6,
+     "pythag_wins": 73.22,
+     "park_factor": 0.9766,
+     "pa_scale": 1.0,
+     "ip_scale": 1.0
+    },
+    "TBR": {
+     "in_frame": true,
+     "n_players": 38,
+     "actual_wins": 98,
+     "actual_gp": 162,
+     "actual_rs": 736,
+     "actual_ra": 650,
+     "served_recentered": 72.901,
+     "budgeted": 74.235,
+     "p_prior": 0.45,
+     "crps_incumbent": 22.4563,
+     "crps_candidate": 20.4023,
+     "p10_p90_incumbent": [
+      64.0,
+      80.0
+     ],
+     "p10_p90_candidate": [
+      59.0,
+      85.0
+     ],
+     "pred_rs": 707.7,
+     "pred_ra": 734.2,
+     "pythag_wins": 78.21,
+     "park_factor": 1.009,
+     "pa_scale": 1.0,
+     "ip_scale": 1.0
+    },
+    "TEX": {
+     "in_frame": true,
+     "n_players": 42,
+     "actual_wins": 80,
+     "actual_gp": 162,
+     "actual_rs": 673,
+     "actual_ra": 719,
+     "served_recentered": 80.572,
+     "budgeted": 81.05,
+     "p_prior": 0.4974,
+     "crps_incumbent": 1.5148,
+     "crps_candidate": 2.3399,
+     "p10_p90_incumbent": [
+      73.0,
+      89.0
+     ],
+     "p10_p90_candidate": [
+      68.0,
+      93.0
+     ],
+     "pred_rs": 677.2,
+     "pred_ra": 722.0,
+     "pythag_wins": 76.19,
+     "park_factor": 0.9824,
+     "pa_scale": 1.0,
+     "ip_scale": 0.936192400443199
+    },
+    "TOR": {
+     "in_frame": true,
+     "n_players": 36,
+     "actual_wins": 79,
+     "actual_gp": 162,
+     "actual_rs": 648,
+     "actual_ra": 694,
+     "served_recentered": 83.01,
+     "budgeted": 84.344,
+     "p_prior": 0.5124,
+     "crps_incumbent": 2.2991,
+     "crps_candidate": 2.8367,
+     "p10_p90_incumbent": [
+      75.0,
+      91.0
+     ],
+     "p10_p90_candidate": [
+      70.0,
+      95.0
+     ],
+     "pred_rs": 705.3,
+     "pred_ra": 691.0,
+     "pythag_wins": 82.54,
+     "park_factor": 0.9945,
+     "pa_scale": 1.0,
+     "ip_scale": 1.0
+    },
+    "WSN": {
+     "in_frame": true,
+     "n_players": 42,
+     "actual_wins": 77,
+     "actual_gp": 162,
+     "actual_rs": 821,
+     "actual_ra": 815,
+     "served_recentered": 72.034,
+     "budgeted": 72.072,
+     "p_prior": 0.4447,
+     "crps_incumbent": 3.2251,
+     "crps_candidate": 3.4972,
+     "p10_p90_incumbent": [
+      64.0,
+      80.0
+     ],
+     "p10_p90_candidate": [
+      59.0,
+      85.0
+     ],
+     "pred_rs": 699.0,
+     "pred_ra": 814.1,
+     "pythag_wins": 69.36,
+     "park_factor": 1.015,
+     "pa_scale": 1.0,
+     "ip_scale": 0.8576034390112842
+    }
+   },
+   "accounting_t2": {
+    "ARI": {
+     "paSum": 5696.4,
+     "paScale": 1.0,
+     "paShort": 400.3,
+     "ipSum": 1568.8,
+     "ipScale": 0.9156,
+     "ipShort": 0.0,
+     "warBudget": 29.422,
+     "warUnscaled": 30.513
+    },
+    "ATH": {
+     "paSum": 6248.9,
+     "paScale": 0.9756,
+     "paShort": 0.0,
+     "ipSum": 1654.9,
+     "ipScale": 0.868,
+     "ipShort": 0.0,
+     "warBudget": 25.57,
+     "warUnscaled": 27.439
+    },
+    "ATL": {
+     "paSum": 6177.5,
+     "paScale": 0.9869,
+     "paShort": 0.0,
+     "ipSum": 1806.0,
+     "ipScale": 0.7953,
+     "ipShort": 0.0,
+     "warBudget": 30.676,
+     "warUnscaled": 34.011
+    },
+    "BAL": {
+     "paSum": 6447.3,
+     "paScale": 0.9456,
+     "paShort": 0.0,
+     "ipSum": 1452.4,
+     "ipScale": 0.989,
+     "ipShort": 0.0,
+     "warBudget": 27.119,
+     "warUnscaled": 28.103
+    },
+    "BOS": {
+     "paSum": 6041.9,
+     "paScale": 1.0,
+     "paShort": 54.8,
+     "ipSum": 1499.0,
+     "ipScale": 0.9582,
+     "ipShort": 0.0,
+     "warBudget": 36.411,
+     "warUnscaled": 37.204
+    },
+    "CHC": {
+     "paSum": 5669.8,
+     "paScale": 1.0,
+     "paShort": 426.9,
+     "ipSum": 2052.2,
+     "ipScale": 0.6999,
+     "ipShort": 0.0,
+     "warBudget": 33.468,
+     "warUnscaled": 38.766
+    },
+    "CHW": {
+     "paSum": 4215.8,
+     "paScale": 1.0,
+     "paShort": 1880.9,
+     "ipSum": 1374.7,
+     "ipScale": 1.0,
+     "ipShort": 61.7,
+     "warBudget": 16.981,
+     "warUnscaled": 16.981
+    },
+    "CIN": {
+     "paSum": 6740.0,
+     "paScale": 0.9046,
+     "paShort": 0.0,
+     "ipSum": 1745.4,
+     "ipScale": 0.823,
+     "ipShort": 0.0,
+     "warBudget": 28.803,
+     "warUnscaled": 33.392
+    },
+    "CLE": {
+     "paSum": 5405.6,
+     "paScale": 1.0,
+     "paShort": 691.1,
+     "ipSum": 1378.5,
+     "ipScale": 1.0,
+     "ipShort": 57.9,
+     "warBudget": 27.487,
+     "warUnscaled": 27.487
+    },
+    "COL": {
+     "paSum": 5219.4,
+     "paScale": 1.0,
+     "paShort": 877.3,
+     "ipSum": 1610.9,
+     "ipScale": 0.8917,
+     "ipShort": 0.0,
+     "warBudget": 12.934,
+     "warUnscaled": 13.645
+    },
+    "DET": {
+     "paSum": 5725.6,
+     "paScale": 1.0,
+     "paShort": 371.1,
+     "ipSum": 1778.2,
+     "ipScale": 0.8078,
+     "ipShort": 0.0,
+     "warBudget": 29.488,
+     "warUnscaled": 32.927
+    },
+    "HOU": {
+     "paSum": 5950.9,
+     "paScale": 1.0,
+     "paShort": 145.8,
+     "ipSum": 1492.3,
+     "ipScale": 0.9625,
+     "ipShort": 0.0,
+     "warBudget": 28.518,
+     "warUnscaled": 28.99
+    },
+    "KCR": {
+     "paSum": 6115.4,
+     "paScale": 0.9969,
+     "paShort": 0.0,
+     "ipSum": 1901.5,
+     "ipScale": 0.7554,
+     "ipShort": 0.0,
+     "warBudget": 27.834,
+     "warUnscaled": 31.753
+    },
+    "LAA": {
+     "paSum": 6665.4,
+     "paScale": 0.9147,
+     "paShort": 0.0,
+     "ipSum": 1471.4,
+     "ipScale": 0.9762,
+     "ipShort": 0.0,
+     "warBudget": 18.999,
+     "warUnscaled": 20.19
+    },
+    "LAD": {
+     "paSum": 6155.4,
+     "paScale": 0.9905,
+     "paShort": 0.0,
+     "ipSum": 1636.1,
+     "ipScale": 0.8779,
+     "ipShort": 0.0,
+     "warBudget": 41.399,
+     "warUnscaled": 43.904
+    },
+    "MIA": {
+     "paSum": 5238.7,
+     "paScale": 1.0,
+     "paShort": 858.0,
+     "ipSum": 1399.9,
+     "ipScale": 1.0,
+     "ipShort": 36.5,
+     "warBudget": 21.067,
+     "warUnscaled": 21.067
+    },
+    "MIL": {
+     "paSum": 5842.5,
+     "paScale": 1.0,
+     "paShort": 254.2,
+     "ipSum": 1302.5,
+     "ipScale": 1.0,
+     "ipShort": 133.9,
+     "warBudget": 30.051,
+     "warUnscaled": 30.051
+    },
+    "MIN": {
+     "paSum": 5018.5,
+     "paScale": 1.0,
+     "paShort": 1078.2,
+     "ipSum": 1544.2,
+     "ipScale": 0.9302,
+     "ipShort": 0.0,
+     "warBudget": 23.934,
+     "warUnscaled": 24.859
+    },
+    "NYM": {
+     "paSum": 6113.5,
+     "paScale": 0.9973,
+     "paShort": 0.0,
+     "ipSum": 1464.9,
+     "ipScale": 0.9805,
+     "ipShort": 0.0,
+     "warBudget": 33.783,
+     "warUnscaled": 34.085
+    },
+    "NYY": {
+     "paSum": 6090.4,
+     "paScale": 1.0,
+     "paShort": 6.3,
+     "ipSum": 1528.4,
+     "ipScale": 0.9398,
+     "ipShort": 0.0,
+     "warBudget": 37.831,
+     "warUnscaled": 38.701
+    },
+    "PHI": {
+     "paSum": 5154.1,
+     "paScale": 1.0,
+     "paShort": 942.6,
+     "ipSum": 1339.7,
+     "ipScale": 1.0,
+     "ipShort": 96.7,
+     "warBudget": 30.82,
+     "warUnscaled": 30.82
+    },
+    "PIT": {
+     "paSum": 5480.7,
+     "paScale": 1.0,
+     "paShort": 616.0,
+     "ipSum": 1157.9,
+     "ipScale": 1.0,
+     "ipShort": 278.5,
+     "warBudget": 26.927,
+     "warUnscaled": 26.927
+    },
+    "SDP": {
+     "paSum": 5965.8,
+     "paScale": 1.0,
+     "paShort": 130.9,
+     "ipSum": 1685.4,
+     "ipScale": 0.8523,
+     "ipShort": 0.0,
+     "warBudget": 27.834,
+     "warUnscaled": 29.879
+    },
+    "SEA": {
+     "paSum": 5857.1,
+     "paScale": 1.0,
+     "paShort": 239.6,
+     "ipSum": 1568.7,
+     "ipScale": 0.9157,
+     "ipShort": 0.0,
+     "warBudget": 34.073,
+     "warUnscaled": 35.384
+    },
+    "SFG": {
+     "paSum": 5787.7,
+     "paScale": 1.0,
+     "paShort": 309.0,
+     "ipSum": 1714.2,
+     "ipScale": 0.8379,
+     "ipShort": 0.0,
+     "warBudget": 25.659,
+     "warUnscaled": 27.902
+    },
+    "STL": {
+     "paSum": 5087.8,
+     "paScale": 1.0,
+     "paShort": 1008.9,
+     "ipSum": 1237.0,
+     "ipScale": 1.0,
+     "ipShort": 199.4,
+     "warBudget": 20.151,
+     "warUnscaled": 20.151
+    },
+    "TBR": {
+     "paSum": 4543.3,
+     "paScale": 1.0,
+     "paShort": 1553.4,
+     "ipSum": 1195.7,
+     "ipScale": 1.0,
+     "ipShort": 240.7,
+     "warBudget": 20.733,
+     "warUnscaled": 20.733
+    },
+    "TEX": {
+     "paSum": 6010.4,
+     "paScale": 1.0,
+     "paShort": 86.3,
+     "ipSum": 1534.3,
+     "ipScale": 0.9362,
+     "ipShort": 0.0,
+     "warBudget": 27.548,
+     "warUnscaled": 28.405
+    },
+    "TOR": {
+     "paSum": 5693.7,
+     "paScale": 1.0,
+     "paShort": 403.0,
+     "ipSum": 1356.0,
+     "ipScale": 1.0,
+     "ipShort": 80.4,
+     "warBudget": 30.842,
+     "warUnscaled": 30.842
+    },
+    "WSN": {
+     "paSum": 5046.3,
+     "paScale": 1.0,
+     "paShort": 1050.4,
+     "ipSum": 1674.9,
+     "ipScale": 0.8576,
+     "ipShort": 0.0,
+     "warBudget": 18.57,
+     "warUnscaled": 19.867
+    }
+   },
+   "bootstrap": {
+    "B": 2000,
+    "seed": 20261208
+   },
+   "task": "TM_4_TEAM_LOOK_2026",
+   "look_date": "2026-10-14",
+   "frame": "GATE",
+   "season": 2026,
+   "dry_run": false,
+   "head": "95102285",
+   "branch": "wt-TM_4_TEAM_LOOK_2026",
+   "python_hash_seed": "0",
+   "params_sha256": "8d20d629c79d4996b5c8db266f721eacb3de0be771eb90c749b69705dad7a929",
+   "params_path": "model/team_projection/params.json",
+   "params": {
+    "sigma_T": 7.6751,
+    "s_res": 9.9379,
+    "s_sched": 6.3131,
+    "k_pseudo_games": 40,
+    "talent_clip": [
+     0.2,
+     0.8
+    ],
+    "budget": {
+     "ip": 1436.4,
+     "pa": 6096.7
+    },
+    "sim": {
+     "bracket": false,
+     "home_edge": 0.0,
+     "n_sims": 20000,
+     "seed": 12345
+    },
+    "aging": "v2",
+    "frozen_on": "2026-10-14",
+    "head": "1444d9f9"
+   },
+   "early_read_note": "An OWNER-WAIVED EARLY READ (EW3-5, owner 2026-10-14): registered for 2026-12-08 and for the first day after the DEV freeze landed on which no other look is recorded; both waived, the frame itself complete (the 2026 regular season is final).",
+   "inputs": {
+    "n_clubs": 30,
+    "n_rows": 2201,
+    "n_assigned": 1276,
+    "unassigned_n": 925,
+    "unassigned_war": 50.8,
+    "roster_war_sum": 865.0,
+    "exposure_mean": {
+     "pa": 6128.3,
+     "ip": 1436.0,
+     "n_clubs": 30
+    },
+    "design": {
+     "engine": "fa_projection champion means; curves and WAR map refit on data through 2025 (proj_backtest retro design)",
+     "team_assignment": "primary actual season team by exposure stint (_primary_teams)",
+     "actual_player_war": "DEV seasons only; never the GATE season"
+    },
+    "aging": "v2",
+    "schedule_n_games": 2429,
+    "schedule_source": "statsapi",
+    "schedule_file": "schedule_2026.json",
+    "n_clubs_actual": 30,
+    "gp_set": [
+     161,
+     162
+    ],
+    "prior_season": 2025,
+    "standings_file": ".cache/statsapi_standings_2026.json"
+   },
+   "elapsed_s": 62.4
+  }
  }
 }
