@@ -5727,9 +5727,22 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@baa9676f
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
-                           "|label=fwar@2026-10-02-0341299c20ec"
+                           "|label=fwar@2026-10-02-57bf90f7143e"
                            "|injsides=pit|served=efv_v2@bcc9b0dd"
                            "|section=label_graded")
+# label fwar@2026-10-02-0341299c20ec -> fwar@2026-10-02-57bf90f7143e on 2026-10-15: the
+# plate-appearance amendment of the frozen vintage (EWAR_P0_VINTAGE_PA, owner answer EW3-19
+# "a new vintage id"; FWAR_LABEL_EPOCH_GATE.md part 9, the 2026-10-15 entry). Only the
+# hitting rows' plateAppearances column was filled (tools/amend_fwar_vintage_pa.py), so the
+# hashes and the id moved while every published value stayed: the tool proved every row
+# unchanged outside that column and war_source's maps (side_targets both sides,
+# season_totals) EQUAL before and after, and no label reader reads the PA column. The
+# training label is therefore value-identical, no grade or rank can move, and
+# BOARD_RANK_BASIS_EPOCH is deliberately NOT bumped (the feats and C-4 precedent below:
+# a bump would drop a day of genuine rank history to hide a re-rank that did not happen).
+# The one cost, paid knowingly: data/xfv_history.json carries the old string as its basis
+# stamp, so xfv_history_is_on_board_basis reads False and the eFV-delta movement override
+# is withheld until the next score_history run restamps it.
 # served efv_v2@f903b813 -> efv_v2@bcc9b0dd on 2026-10-04: the P5 re-derivation of
 # data/efv_v2_assembly.json on the frozen fWAR label (c40c0dd0; FWAR_LABEL_EPOCH_GATE.md part 9,
 # the 2026-10-04 entry). The term hashes the registered weights, which moved; restamped with

@@ -1323,6 +1323,90 @@ model-class screen EFV3_C03 read this assembly.
 
 ---
 
+### 2026-10-15: amendment, plate appearances restored to the frozen vintage (new vintage id)
+
+This entry amends item 1 of the LABEL FREEZE RECEIPT. It reports no accuracy measurement, and
+clause (l) binds every line: a new vintage id is a new build of the same label, not a gain.
+
+**Why.** MLB's sabermetrics feed carries no `plateAppearances` on any season, so the freeze of
+2026-10-02 (EPOCH_D9_FREEZE, `7e34799f`) stored that column null on all 29,462 hitting rows of
+2000 to 2026. Every per-PA read of the label refused on it: the eBR gate's precondition (2)
+(`tools/ebr_gate.py`, `vintage_missing_fields`), its Leg E, and eWAR v3's per-PA re-centring.
+
+**Decision.** Owner answer EW3-19 (2026-10-15, task EWAR_P0_VINTAGE_PA): a NEW VINTAGE ID, with
+the dependent label reads re-run under it, in place of a side file keyed to the old id.
+
+**What moved, and what did not.** No fresh fWAR fetch was made (part 3, E3). The column was
+filled from StatsAPI's official season hitting line
+(`https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&season={season}&sportId=1&limit=5000&playerPool=All`),
+joined by MLBAM id, by `python tools/amend_fwar_vintage_pa.py --write`, once, on 2026-10-15,
+committed at `c7dacaaa`. The 54 source bodies (one season line and one thirty-club total per
+season) were fetched that day into `.cache/ewar_p0_vintage_pa/` with a sha256 manifest. The tool
+refuses the write unless all of these hold, and all held:
+
+1. every pitching block is unchanged, key for key;
+2. every hitting block is unchanged outside the `plateAppearances` column, its
+   `content_sha256` and a new `pa_join` receipt, and every other value of every row is
+   unchanged, so every fWAR value is the frozen one;
+3. war_source's maps (`side_targets` on both sides, `season_totals`) are equal before and
+   after;
+4. no hitting row of 2011 to 2026 is left without PA (none of any season is: 29,462 of 29,462
+   rows joined, 16,873 of them in 2011 to 2026);
+5. per season, PA summed over the vintage's rows, over the season lines and over StatsAPI's
+   thirty team totals are equal (the table below);
+6. `fwar_vintage.verify` passes.
+
+A second copy of the season lines, `.cache/fa_statsapi_hitting_*.json`, gives the same PA on all
+29,462 player-seasons.
+
+| season | PA | season | PA | season | PA |
+|---|---|---|---|---|---|
+| 2000 | 190,261 | 2009 | 187,079 | 2018 | 185,139 |
+| 2001 | 186,976 | 2010 | 185,553 | 2019 | 186,517 |
+| 2002 | 186,615 | 2011 | 185,245 | 2020 | 66,506 |
+| 2003 | 187,449 | 2012 | 184,179 | 2021 | 181,818 |
+| 2004 | 188,539 | 2013 | 184,873 | 2022 | 182,052 |
+| 2005 | 186,292 | 2014 | 183,929 | 2023 | 184,104 |
+| 2006 | 188,071 | 2015 | 183,628 | 2024 | 182,449 |
+| 2007 | 188,623 | 2016 | 184,580 | 2025 | 182,926 |
+| 2008 | 187,631 | 2017 | 185,295 | 2026 | 183,849 |
+
+**The new receipt item 1.** `data/fwar_vintage.json`, `vintage_id` `2026-10-02-57bf90f7143e`
+(was `2026-10-02-0341299c20ec`), sha256
+`c4de5ca2e4a1492167f2a47666503112c916a67dcfd38389de39f910187550fa` (was
+`d070f049bad6a1e287b609812c35e3e664c09dc43451ab4323412be7c934a3e9`), seasons 2000 to 2026. The
+date part of the id is unchanged because it names the newest `fetched_at` of the frozen groups,
+and no group was refetched. The file's `amendments` key records the step with the previous id,
+and `fwar_vintage.war_lineage` returns `2026-10-02-57bf90f7143e`, `2026-10-02-0341299c20ec`. The
+fingerprint's `label=` term reads `label=fwar@2026-10-02-57bf90f7143e`;
+`storage.BOARD_RANK_BASIS_EPOCH` is not bumped, because the training label is value-identical
+and no grade or rank moves.
+
+**The builder.** `fwar_vintage.freeze_seasons` now makes one call to the same season line after
+each frozen hitting group and keeps its PA (`freeze_pa`, rule 4 applying to that call), so a
+future freeze does not store the column null again.
+
+**The dependent reads.** Re-run under the new id at this entry: the board fingerprint's `label=`
+term (restamped), and the E7 rebuild check (`tools/fwar_label_rebuild_check.py`, receipt written
+outside the repository so the step F receipt above stays as recorded): hitters 968 of 968,
+pitchers 1,116 of 1,116, share 1.0000. The reads recorded on the previous id stay as recorded,
+because they read the same fWAR values: the step Z entry and its E7 receipt, the 2026-10-04 entry
+above, the 2026 holdout read (`efv_2026_holdout.LABEL_VINTAGE_ID`), the PJ-C look of 2026-10-14,
+the Prospect Anchor look's stamps, and the 30 registry rows whose notes name the label they were
+fit on. The `fwar` registry row now names the new id. The stamps that every regeneration rewrites
+(the career-WAR `fwar_coverage` of the debut, inactive and timeseries payloads, the `basis` of
+`data/xfv_history.json` and `data/timeseries.json`, the projection components' vintage) move at
+the next regeneration, and the eFV-delta movement override is withheld until `score_history`
+restamps `data/xfv_history.json`. The eFV progress ledger was not appended here: its next
+`update()` writes its rows under the new id, but it also records `data/source_backtest.json` as
+regenerated 2026-10-14 (vintage-matched headline: eFV Spearman 0.403 to 0.3955, AUC 0.7446 to
+0.7408), which moves the served eFV claim and the Model Updates row, and that move is the
+nightly's with its claim regeneration, not this amendment's. The swar preview
+(`.cache/swar/preview/`) is rebuilt by `python tools/build_swar.py` before the eWAR v3 skill look, which
+refuses a preview stamped with another id.
+
+---
+
 Nothing in this document was measured against an fWAR-labelled fit. Every number above is
 either a label-only descriptive taken from the planning lanes of 2026-09-11, tagged with its
 lane, or a read of the repository on 2026-09-17, tagged with the file it was read from, with

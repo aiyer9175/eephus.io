@@ -79,8 +79,14 @@ def test_the_receipts_match_the_committed_files():
     assert hashlib.sha256(E7_RECEIPT.read_bytes()).hexdigest() == E7_SHA256
     rec = json.loads(E7_RECEIPT.read_text(encoding="utf-8"))
     assert rec["vintage_id"] == VINTAGE_ID
+    import fwar_vintage
     import storage
-    assert f"label=fwar@{VINTAGE_ID}" in storage.BOARD_BASIS_FINGERPRINT
+    # The 2026-10-15 plate-appearance amendment (EWAR_P0_VINTAGE_PA, owner answer EW3-19)
+    # gave the vintage a new id. The step Z id stays on its WAR-identical lineage, and the
+    # fingerprint names the lineage's head, the vintage on disk.
+    lineage = fwar_vintage.war_lineage(fwar_vintage.load())
+    assert VINTAGE_ID in lineage
+    assert f"label=fwar@{lineage[0]}" in storage.BOARD_BASIS_FINGERPRINT
     cov = _eval()["clause_c_coverage"]
     for side in ("hit", "pit"):
         for band in cov[side]["by_cohort_band"].values():
