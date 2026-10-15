@@ -189,3 +189,68 @@ The rule is v4's, kept as the owner fixed it (EW2-10 "fixed now"):
   consensus is above 0 (E_refit on the spent frames); every other reading is a tie.
 - The displayed PROSPX consensus FV never changes; no served number moves in this task
   unless the rule above passes.
+
+## 5. The step log (appended by the selection run, 2026-10-15)
+
+Run: `python -u efv5_group_drivers.py --select` from commit 5bfd913e (artifact
+`data/_labs/efv5/efv5_group_select.json`, generated 2026-10-15T12:48:00Z, 256.9 s; label
+`fwar@2026-10-02-0341299c20ec`; the V2 base reproduces the DS-16 block; v5 at base_config()
+reproduces V2 on all 3,692 scored rows bit for bit; the 28 columns built in the same run).
+Scope deltas are lv_dev / vm_dev, within Spearman on the side the step touches, against the
+current configuration.
+
+| round | available | qualified (scope delta lv / vm) | admitted |
+|---|---|---|---|
+| 1 | 28 | add hit skill g5_hit_A_all_all_woba (+0.00421 / 0); g5_hit_A_all_all_ops (+0.00412 / 0); g5_hit_A_all_all_slg (+0.00390 / 0) | add hit skill g5_hit_A_all_all_woba |
+| 2 | 27 | add hit skill g5_hit_A_all_all_slg (+0.00221 / 0); ops now +0.00178 / 0, under the bar | add hit skill g5_hit_A_all_all_slg |
+| 3 | 26 | none (best lv step g5_pit_A_young_all_k_pct +0.00044 / 0; ops now -0.00015) | stop |
+
+Round 1, the other steps: the Single-A hitter plate-discipline columns read below V2 on
+lv_dev (K% -0.00392, BB minus K -0.00187, young K% -0.00296, young BB minus K -0.00127)
+and 0 on vm_dev; the Single-A pitcher columns read 0 or near it on lv_dev (K% +0.00012,
+young K% +0.00044, K-BB% 0, young K-BB% 0, SP K% 0, SP K-BB% 0, SP batters per game 0)
+and K-BB% read -0.00648 on vm_dev, SP K-BB% -0.00179; the High-A pitch-call hitter
+columns (contact, whiff rate, two-strike contact, young and all) read 0 on lv_dev and
+-0.00273 to -0.00563 on vm_dev; the four age columns (timing head), the three
+complex-league columns and the two Single-A batting-average columns read 0 on both
+frames: the admission rule refused them in every fold. A 0 is V2 itself, not a
+measurement of the column. Every evaluated step is in the artifact.
+
+The selected configuration (`data/_labs/efv5/efv5_group_spec.json`): hitters, the
+Single-A wOBA and slugging columns (the in-group z of the statistic in the player's last
+completed Single-A season, centered within the read year) offered to the skill head;
+pitchers unchanged (V2). The admission rule took both in the lv 2017 and 2018 folds and
+wOBA alone in 2019 (beside obp_rel and the fold's own V2 drivers); it took neither in any
+vm_dev fold, where only 2 to 28 scored hitters per fold sit in the group, so v5 equals V2
+on every vm_dev row.
+
+The selected configuration's development read (E_cond, B 2000; a read on the frames it
+was chosen on, which adjudicates nothing):
+
+| frame | n | v5 within | V2 | consensus | Pipeline | FanGraphs | v5 minus V2 (CI95) | v5 minus consensus (CI95) | v5 minus Pipeline | v5 minus FanGraphs |
+|---|---|---|---|---|---|---|---|---|---|---|
+| lv_dev | 2,862 | 0.1709 | 0.1676 | 0.1792 | 0.2034 | 0.1714 | +0.0033 (-0.0007 to +0.0073) | -0.0083 (-0.0292 to +0.0120) | -0.0292 (-0.0591 to +0.0015) | +0.0089 (-0.0256 to +0.0429) |
+| vm_dev | 830 | 0.3713 | 0.3713 | 0.3814 | 0.3816 | 0.3363 | 0 (0 to 0) | -0.0101 (-0.0391 to +0.0160) | -0.0103 (-0.0490 to +0.0268) | +0.0350 (-0.0101 to +0.0781) |
+
+Per side, within, v5 minus V2 and v5 minus consensus: lv_dev hitters +0.0064 (-0.0012 to
++0.0147) and -0.0144 (-0.0503 to +0.0208), pitchers 0 (V2) and -0.0020; vm_dev hitters 0
+and -0.0202, pitchers 0 and 0. Per fold, v5 minus V2 on lv_dev hitters: 2017 +0.0107,
+2018 +0.0087, 2019 +0.0008 (one sign). Pooled after the map: lv_dev +0.0002 vs V2, -0.0125
+vs consensus; vm_dev 0 and -0.0100. Contributor AUC: lv_dev +0.0027 vs V2 (-0.0017 to
++0.0070), -0.0090 vs consensus; vm_dev 0 and -0.0042. Position-group cells on lv_dev, v5
+minus V2 within: C +0.0173 (n 168), IF +0.0026 (n 710), OF +0.0059 (n 572), pitchers 0;
+v5 minus consensus: C -0.0126, IF -0.0023, OF -0.0429, pitchers -0.0020. The group cell
+(lv_dev scored hitters in the Single-A group, n 418, 369 players): v5 minus V2 +0.0161
+(-0.0071 to +0.0406), v5 minus consensus -0.0109 (-0.0826 to +0.0583); on vm_dev the
+group holds 27 scored rows and is not scored. The MAE of the priced grade: lv_dev v5 minus
+V2 -0.0019 (a scale reading, not accuracy; not compared).
+
+Reading, development only: two Single-A hitter columns (wOBA and slugging, the
+performance end of the atlas's Single-A hitter candidates) cleared the bar on lv_dev,
+worth +0.0033 within over V2 pooled over sides (+0.0064 on hitters), both intervals
+spanning zero; vm_dev cannot see them
+(the group is nearly empty at the debut-year read). Every pitcher candidate of the atlas,
+the strongest raw signals included (Single-A K% and K-BB%), adds nothing the admission
+rule keeps on lv_dev (W3 on the frozen fWAR label): the atlas lifts were read on
+reaching MLB, and eFV's skill head scores WAR given consensus. v5 still trails consensus
+on both frames (-0.0083, -0.0101).

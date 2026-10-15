@@ -1,0 +1,138 @@
+{
+ "schema": 1,
+ "model_id": "efv_v5",
+ "selected_at": "2026-10-15T12:48:00Z",
+ "selection_artifact": "data/_labs/efv5/efv5_group_select.json",
+ "selection_doc": "docs/efv-v2/EFV_V5_BACKTEST.md",
+ "owner_decision": "EW3-1 to EW3-3 (2026-10-14)",
+ "config": {
+  "anchor": null,
+  "scale": {
+   "hit": {
+    "skill": 1.0,
+    "timing": 1.0
+   },
+   "pit": {
+    "skill": 1.0,
+    "timing": 1.0
+   }
+  },
+  "remove": {
+   "hit": {
+    "skill": [],
+    "timing": []
+   },
+   "pit": {
+    "skill": [],
+    "timing": []
+   }
+  },
+  "add": {
+   "hit": {
+    "skill": [
+     "g5_hit_A_all_all_woba",
+     "g5_hit_A_all_all_slg"
+    ],
+    "timing": []
+   },
+   "pit": {
+    "skill": [],
+    "timing": []
+   }
+  }
+ },
+ "description": "hit skill plus g5_hit_A_all_all_woba; hit skill plus g5_hit_A_all_all_slg",
+ "steps": [
+  {
+   "round": 1,
+   "step": "add:hit.skill.g5_hit_A_all_all_woba",
+   "column": "g5_hit_A_all_all_woba",
+   "lv_dev_scope_delta": 0.00421,
+   "vm_dev_scope_delta": 0.0
+  },
+  {
+   "round": 2,
+   "step": "add:hit.skill.g5_hit_A_all_all_slg",
+   "column": "g5_hit_A_all_all_slg",
+   "lv_dev_scope_delta": 0.00221,
+   "vm_dev_scope_delta": 0.0
+  }
+ ],
+ "is_v2": false,
+ "columns": {
+  "g5_hit_A_all_all_woba": {
+   "side": "hit",
+   "head": "skill",
+   "metric": "woba_hit",
+   "base": "woba",
+   "family": "box",
+   "level": "A",
+   "band": "all",
+   "group": "all",
+   "module": "efv5_group_drivers",
+   "arg": "g5_hit_A_all_all_woba",
+   "atlas": {
+    "label": "reach3",
+    "incr": 0.0201,
+    "ci95": [
+     0.0074,
+     0.0326
+    ],
+    "q": 0.05169,
+    "n": 1108,
+    "players": 951
+   }
+  },
+  "g5_hit_A_all_all_slg": {
+   "side": "hit",
+   "head": "skill",
+   "metric": "slg_hit",
+   "base": "slg",
+   "family": "box",
+   "level": "A",
+   "band": "all",
+   "group": "all",
+   "module": "efv5_group_drivers",
+   "arg": "g5_hit_A_all_all_slg",
+   "atlas": {
+    "label": "reach3",
+    "incr": 0.0166,
+    "ci95": [
+     0.0051,
+     0.0268
+    ],
+    "q": 0.07918,
+    "n": 1108,
+    "players": 951
+   }
+  }
+ },
+ "weights_base": {
+  "hit": {
+   "w_skill": 0.908861,
+   "w_time": 0.202573
+  },
+  "pit": {
+   "w_skill": 1.0,
+   "w_time": 0.020473
+  }
+ },
+ "assembly_sha256": "35fe32c7a5448e8186259a8e4551be6f148d2f8346aa2016a40fb72f6afd2823",
+ "label": {
+  "provider": "fwar",
+  "resolved_through": 2026,
+  "id": "fwar@2026-10-02-0341299c20ec"
+ },
+ "code": {
+  "commit": "5bfd913e",
+  "tool": "efv5_group_drivers.py",
+  "tool_sha256": "7aabae501fa02e144fd8f478efa61a4fdfef5d564bfbbbfdf6b2bb1101141f19",
+  "efv5_atlas_sha256": "40f1ef5d727fcfb5dc93c9bb0d4788037cebaed0e2ef34dd7172370c8f75119c",
+  "atlas_artifact_sha256": "3d2b2bfaa1add01e6664f2e0fe6c1258c74fca6581558790fafcfd46cc74877c",
+  "efv_v3_sha256": "5bdce46bb6b9bd03532905c59cbaed092cb666418624e3095cdfc44ce9fbddfb",
+  "efv_v3_backtest_sha256": "edbd8170af45c94e25e67967ac1df4c4b959f606d6a8a409ecc399669628e53a",
+  "efv_v2_model_sha256": "3134c039922c463893c0930377d8b85f113f9e1f915137a47cd8537bb35b4929",
+  "efv_v2_stat_sha256": "0a1db56abe2cac3528563b1538291b3dabc994b5694b814c52824d9ce73c07c3"
+ },
+ "flag": "efv5_group_drivers.EFV_V5_ON (False)"
+}
