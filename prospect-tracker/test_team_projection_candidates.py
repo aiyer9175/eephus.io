@@ -403,3 +403,106 @@ def test_the_frozen_constants_have_the_registered_form():
     assert 5500 < p["budget"]["pa"] < 6600 and 1350 < p["budget"]["ip"] < 1500
     assert p["sim"]["n_sims"] == pc.MC_SIMS and p["sim"]["seed"] == pc.MC_SEED
     assert p["runs"]["park_factor_column"] == TP.PF_COLUMN
+
+
+# --------------------------------------------------------------------------- #
+# TM_7_TEAM_DISPLAY_DARK: the T3 columns and the T7 drill-down, dark
+# --------------------------------------------------------------------------- #
+
+def test_the_display_flags_default_false():
+    assert pe.TEAM_DRILLDOWN_LIVE is False and pe.TEAM_RUNS_LIVE is False
+    assert pe.TEAM_DISPLAY_PREVIEW_PATH != ROOT / "data" / "team_outlook_display.json"
+
+
+def test_runs_keys_follow_each_side_of_tm_c():
+    """A side that did not pass TM-C stays off the rows; run differential and
+    Pythag wins need both sides (LANE_A 3.3)."""
+    assert pe._runs_keys({"rs": False, "ra": False}) == ()
+    assert pe._runs_keys({"rs": False, "ra": True}) == ("ra", "pf")
+    assert pe._runs_keys({"rs": True, "ra": False}) == ("rs", "pf")
+    assert pe._runs_keys({"rs": True, "ra": True}) == ("rs", "ra", "runDiff", "pythW", "pythL", "pf")
+
+
+def test_runs_sides_read_the_recorded_2026_look():
+    doc = json.loads((ROOT / "data" / "team_outlook_eval.json").read_text(encoding="utf-8"))
+    v = doc["team_projection_gate"]["gate_2026"]["tm_c"]["verdict"]
+    assert pe._team_runs_sides() == {s: v[s] == "PASS" for s in ("rs", "ra")}
+
+
+def _drill_fixture():
+    vets, prospects, depth, ledger = _league_fixture()
+    rows = pe._team_outlook(copy.deepcopy(vets), copy.deepcopy(prospects), depth, {}, {},
+                            pt_ledger={}, budget=None, live=False)
+    blocks = {}
+    for m in vets:
+        if m["pos"] == "SS":
+            blocks[m["mlbam"]] = {"hit": {"pa": [None] * H, "bat": [5.0] * H, "bsr": [0.5] * H,
+                                          "fld": [1.0] * H, "pos": [2.0] * H},
+                                  "warComp": [m["war"][0] + 0.25] + [None] * (H - 1),
+                                  "gap": [-0.25] + [None] * (H - 1)}
+    # one pitcher carries a component line, the rest carry none
+    p0 = next(m for m in vets if m["pos"] == "SP")
+    blocks[p0["mlbam"]] = {"pit": {"ip": [None] * H, "warFip": [1.5] * H},
+                           "warComp": [1.5] * H, "gap": [p0["war"][0] - 1.5] + [None] * (H - 1)}
+    return vets, prospects, rows, blocks, p0
+
+
+def test_the_drilldown_reconciles_to_roster_war_on_every_club(quiet_outlook):
+    vets, prospects, rows, blocks, p0 = _drill_fixture()
+    drill = pe._team_drilldown(rows, vets, prospects, blocks=blocks, rpw=10.0)
+    assert set(drill) == {r["team"] for r in rows}
+    for r in rows:
+        d = drill[r["team"]]
+        f = d["foot"]
+        assert d["season"] == FIRST and d["frame"] == pe.COMPONENTS_FRAME
+        assert f["rosterWar"] == r["war"]
+        # served WAR + (champion mean - served head) + arrived prospects = Roster WAR
+        assert abs(f["residual"]) <= 0.06, (r["team"], f)
+        assert f["nPlayers"] == len(d["players"]) == 2
+        hit = next(p for p in d["players"] if p["side"] == "hit")
+        assert (hit["bat"], hit["bsr"], hit["fld"], hit["posRuns"]) == (5.0, 0.5, 1.0, 2.0)
+        assert hit["pa"] is None and hit["pitRuns"] is None
+    club = drill[p0["team"]]
+    pit = next(p for p in club["players"] if p["side"] == "pit")
+    assert pit["pitRuns"] == 15.0 and pit["ip"] is None and pit["bat"] is None
+    assert club["foot"]["nNoComp"] == 0
+    other = next(drill[o] for o in drill if o != p0["team"])
+    assert other["foot"]["nNoComp"] == 1
+    # the arrived prospect counts on its club only at its ETA season
+    assert drill[sorted(TP.ORG_NICKNAMES)[0]]["foot"]["nProspects"] == 1
+    assert drill[sorted(TP.ORG_NICKNAMES)[5]]["foot"]["nProspects"] == 0
+
+
+def test_with_the_flags_off_no_row_moves_and_the_preview_carries_both_blocks(quiet_outlook):
+    vets, prospects, rows, blocks, _p0 = _drill_fixture()
+    drill = pe._team_drilldown(rows, vets, prospects, blocks=blocks, rpw=10.0)
+    runs = {"clubs": {r["team"]: {"rs": 700.0, "ra": 690.0, "runDiff": 10.0, "pythW": 82.0,
+                                  "pythL": 80.0, "pf": 1.0} for r in rows}}
+    before = json.dumps(rows, sort_keys=True)
+    pe._team_display_blocks(rows, runs, drill, {"rs": False, "ra": True})
+    assert json.dumps(rows, sort_keys=True) == before
+    assert not any("drill" in r or "runs" in r for r in rows)
+    prev = json.loads(Path(pe.TEAM_DISPLAY_PREVIEW_PATH).read_text(encoding="utf-8"))
+    assert Path(pe.TEAM_DISPLAY_PREVIEW_PATH).parts[-3:] == ("team_projection", "preview",
+                                                            "team_outlook_display.json")
+    assert prev["flags"] == {"TEAM_RUNS_LIVE": False, "TEAM_DRILLDOWN_LIVE": False}
+    assert prev["runs_keys"] == ["ra", "pf"]
+    for r in prev["team_outlook"]:
+        assert set(r["runs"]) == {"ra", "pf"} and r["drill"]["players"]
+
+
+def test_with_the_flags_on_the_rows_carry_only_the_passing_sides(quiet_outlook, monkeypatch):
+    vets, prospects, rows, blocks, _p0 = _drill_fixture()
+    drill = pe._team_drilldown(rows, vets, prospects, blocks=blocks, rpw=10.0)
+    runs = {"clubs": {r["team"]: {"rs": 700.0, "ra": 690.0, "runDiff": 10.0, "pythW": 82.0,
+                                  "pythL": 80.0, "pf": 1.0} for r in rows}}
+    monkeypatch.setattr(pe, "TEAM_RUNS_LIVE", True)
+    monkeypatch.setattr(pe, "TEAM_DRILLDOWN_LIVE", True)
+    pe._team_display_blocks(rows, runs, drill, {"rs": False, "ra": True})
+    for r in rows:
+        assert r["runs"] == {"ra": 690.0, "pf": 1.0} and r["drill"] is drill[r["team"]]
+    rows2 = copy.deepcopy(rows)
+    for r in rows2:
+        r.pop("runs")
+    pe._team_display_blocks(rows2, runs, None, {"rs": False, "ra": False})
+    assert not any("runs" in r for r in rows2)

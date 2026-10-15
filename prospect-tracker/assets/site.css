@@ -3113,6 +3113,39 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 }
 .proj-app .proj-cmp-note { margin-top: 8px; }
 
+/* Team Outlook T3 runs and the T7 drill-down (TM_7, both dark until their
+   flags). The runs columns leave a phone screen (the drill-down prints the
+   same line), and the drill-down panel pins to the visible box of the
+   sideways-scrolling table, so neither adds a sideways scroll. On a phone the
+   five run columns fold into one sub-line under the player name, and the
+   drill-down button drops under the club so the Team column keeps its width. */
+.proj-app .proj-drill-btn {
+  margin-left: 4px; min-width: 24px; min-height: 24px; padding: 0 4px;
+  border: 1px solid var(--border); background: var(--bg-secondary);
+  color: var(--text-secondary); font: inherit; cursor: pointer;
+}
+.proj-app .proj-drill-btn[aria-expanded="true"] { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+.proj-app .proj-drill-btn:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 1px; }
+.proj-app tr.proj-drill > td { padding: 8px 0 12px; background: var(--bg-secondary); }
+.proj-app .proj-drill-inner {
+  position: sticky; left: 0; box-sizing: border-box;
+  max-width: min(100%, calc(100vw - 32px)); padding: 0 8px;
+}
+.proj-app .proj-drill-inner .pd-head { margin-bottom: 2px; }
+.proj-app .proj-drill-table { width: 100%; margin: 6px 0 4px; }
+.proj-app .proj-drill-table thead th { position: static; }
+.proj-app .proj-drill-table td, .proj-app .proj-drill-table th { white-space: normal; }
+.proj-app .proj-drill-table .pd-runs-sub { display: none; }
+.proj-app .proj-drill-foot th { text-align: left; font-weight: 400; color: var(--text-secondary); padding-right: 12px; }
+.proj-app .proj-drill-foot tr.pd-sub td, .proj-app .proj-drill-foot tr.pd-total td { font-weight: 700; }
+.proj-app .proj-drill-foot tr.pd-total th, .proj-app .proj-drill-foot tr.pd-total td { border-top: 1px solid var(--border); color: var(--text-primary); }
+@media (max-width: 640px) {
+  .proj-app .proj-tm-run { display: none; }
+  .proj-app .proj-drill-btn { display: block; margin: 2px 0 0; }
+  .proj-app .proj-drill-table .pd-run { display: none; }
+  .proj-app .proj-drill-table .pd-runs-sub { display: block; }
+}
+
 /* Accountability tables (predictions vs realized). Same house treatment as
    every other .detail-table on the surface; only the emphasis is local. */
 .proj-app .proj-acct-table { margin: 6px 0 4px; }

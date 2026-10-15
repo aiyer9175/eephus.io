@@ -1129,3 +1129,108 @@ def test_pa_ip_chip_only_when_components_live():
     assert "PA/IP" in _head(live["proj-rows"])
     # playing time has no ruler family: no tier key on the board
     assert 'class="tier-key"' not in live["proj-rows"]
+
+
+# ---------------------------------------------------------------------------
+# Team Outlook: the T3 runs columns and the T7 drill-down (TM_7, dark). Each
+# block renders only when its payload keys exist; the exporter writes them
+# only under TEAM_RUNS_LIVE / TEAM_DRILLDOWN_LIVE, so the served page is
+# unchanged until a flip.
+# ---------------------------------------------------------------------------
+
+_TEAM_ROW = {"team": "NYY", "war": 40.1, "wins": 90.2, "losses": 71.8, "winsRaw": 88.0,
+             "depthWar": 1.0, "n": 20, "byYear": [], "farm": None,
+             "top": [{"key": "vet_guy", "name": "Vet Guy", "war": 3.0}]}
+
+_DRILL = {"season": 2026, "frame": "FanGraphs frame",
+          "players": [
+              {"key": "vet_guy", "name": "Vet Guy", "pos": "SS", "side": "hit", "pa": None, "ip": None,
+               "bat": 12.4, "bsr": 1.1, "fld": -2.0, "posRuns": 6.8, "pitRuns": None,
+               "warComp": 3.4, "gap": -0.4, "war": 3.0, "warChamp": 3.2},
+              {"key": "ace_arm", "name": "Ace Arm", "pos": "SP", "side": "pit", "pa": None, "ip": None,
+               "bat": None, "bsr": None, "fld": None, "posRuns": None, "pitRuns": 41.0,
+               "warComp": 4.1, "gap": -0.1, "war": 4.0, "warChamp": 3.9},
+              {"key": "two_way", "name": "Two Way", "pos": "DH/SP", "side": "two", "pa": None, "ip": None,
+               "bat": 30.0, "bsr": None, "fld": 0.0, "posRuns": -14.2, "pitRuns": 24.8,
+               "warComp": None, "gap": None, "war": 9.2, "warChamp": 9.0}],
+          "foot": {"nPlayers": 3, "warComp": 7.5, "gap": -0.5, "warNoComp": 9.2, "nNoComp": 1,
+                   "warServed": 16.2, "champMinusServed": -0.1, "prospects": 1.0, "nProspects": 1,
+                   "rosterWar": 17.1, "residual": 0.0}}
+
+
+def _teams_board(**extra):
+    b = json.loads(BOARD)
+    rows = [dict(_TEAM_ROW), dict(_TEAM_ROW, team="BOS", war=30.0, wins=80.0, losses=82.0)]
+    for k, v in extra.items():
+        if k == "frame":
+            b["team_outlook_frame"] = v
+            continue
+        for r in rows:
+            r[k] = json.loads(json.dumps(v))
+    b["team_outlook"] = rows
+    return json.dumps(b)
+
+
+def _team_head(html):
+    return html.split("<thead>", 1)[1].split("</thead>", 1)[0]
+
+
+def test_team_outlook_blocks_are_absent_without_their_keys():
+    for h in ("#view=teams", "#view=teams&club=NYY"):
+        html = _render_fixture(h, DETAIL, _teams_board())
+        assert "<strong>90-72</strong>" in html
+        for needle in ("proj-drill", "data-drill", "proj-tm-run", "proj-runs-frame", ">RA<",
+                       ">RS<", "Pythag W", "player by player"):
+            assert needle not in html, (h, needle)
+
+
+def test_team_runs_columns_print_only_the_sides_on_the_rows():
+    # TM-C passed RA only: the exporter carries ra and the park factor
+    html = _render_fixture("#view=teams", DETAIL, _teams_board(runs={"ra": 690.4, "pf": 1.0}))
+    head = _team_head(html)
+    assert 'data-team-sort="ra"' in head and ">RA<" in head
+    for k in ("rs", "runDiff", "pythW"):
+        assert f'data-team-sort="{k}"' not in head, k
+    assert html.count('<td class="proj-tm-run proj-cell-mono">690</td>') == 2
+    assert "RA: 2026, pre-free-agency frame; component runs on FanGraphs' frame." in html
+    # both sides: four columns, a signed differential, and the as-of-signings label
+    both = {"rs": 731.0, "ra": 690.4, "runDiff": 40.6, "pythW": 85.3, "pythL": 76.7, "pf": 1.0}
+    html2 = _render_fixture("#view=teams", DETAIL, _teams_board(runs=both, frame={"pool": []}))
+    head2 = _team_head(html2)
+    assert [k for k in ("rs", "ra", "runDiff", "pythW") if f'data-team-sort="{k}"' in head2] ==         ["rs", "ra", "runDiff", "pythW"]
+    assert ">+41</td>" in html2 and ">85</td>" in html2
+    assert "as-of-signings frame" in html2 and "pre-free-agency frame" not in html2
+
+
+def test_team_drilldown_opens_one_club_and_reconciles_to_roster_war():
+    board = _teams_board(drill=_DRILL)
+    closed = _render_fixture("#view=teams", DETAIL, board)
+    assert closed.count('class="proj-drill-btn"') == 2 and 'aria-expanded="false"' in closed
+    assert "proj-drill-inner" not in closed
+    html = _render_fixture("#view=teams&club=NYY", DETAIL, board)
+    assert html.count('data-drill-for="NYY"') == 1 and 'data-drill-for="BOS"' not in html
+    assert 'data-drill="NYY" aria-expanded="true"' in html
+    # the drill row spans exactly the header's columns
+    n_head = len(re.findall(r"<th[\s>]", _team_head(html)))
+    assert f'data-drill-for="NYY"><td colspan="{n_head}">' in html
+    drill = html.split('data-drill-for="NYY"', 1)[1]
+    for name in ("Vet Guy", "Ace Arm", "Two Way"):
+        assert name in drill, name
+    # component runs by side, served WAR in bold, the gap line; a missing
+    # component prints "not projected"
+    assert "+12.4" in drill and "41.0" in drill and "<strong>9.2</strong>" in drill
+    assert "not projected" in drill
+    # no exposure head served: the PA / IP column leaves and the note says why
+    assert "PA / IP" not in drill and "PA and IP are not projected" in drill
+    foot = drill.split("data-proj-drill-foot", 1)[1]
+    for label, v in (("Roster WAR", "17.1"), ("Arrived prospects, 1 at their ETA", "1.0"),
+                     ("Served WAR, 3 listed players", "16.2")):
+        assert re.search(re.escape(label) + r"</th><td>" + re.escape(v) + "<", foot), label
+    # the club's Franchise page is one click away
+    assert '<a href="/franchise/#team=NYY">franchise page</a>' in drill
+    # an exposure head that serves brings the column back
+    with_pt = json.loads(json.dumps(_DRILL))
+    with_pt["players"][0]["pa"] = 612.0
+    html_pt = _render_fixture("#view=teams&club=NYY", DETAIL, _teams_board(drill=with_pt))
+    assert "PA / IP" in html_pt and "612 PA" in html_pt
+    assert "PA and IP are not projected" not in html_pt

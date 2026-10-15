@@ -875,6 +875,11 @@ def build() -> dict:
             "trade_board": "/trademachine/#tab=tradeboard",
             "fantasy_dynasty": f"/fantasy/#m=dynasty&team={c}",
         }
+        # T7 (TM_7, owner answer TM-Q4 (a)): the club's player breakdown on Team
+        # Outlook, linked only once the projection rows carry it
+        # (proj_export.TEAM_DRILLDOWN_LIVE); absent, no key is added.
+        if out.get("drill") and out.get("team"):
+            links["team_drilldown"] = f"/projections/#view=teams&club={out['team']}"
 
         # -- ROSTER (graded) ---------------------------------------------------------
         roster = {

@@ -1136,3 +1136,24 @@ def test_fscore_root_without_the_flag_renders_the_index_page_unchanged():
     assert " weight &middot; #" in html and " of STRENGTH" not in html
     board, _ = _render("board", hub=HUB)
     assert 'data-frsort="index_score"' in board and "fr-bview" not in board
+
+
+def test_the_outlook_links_the_team_outlook_breakdown_only_when_the_payload_names_it():
+    """TM_7 (owner answer TM-Q4 (a)): the club's player breakdown lives on
+    /projections/ Team Outlook, and the OUTLOOK section links to it only once
+    franchise_export names the link (the projection rows carry the drill-down
+    under TEAM_DRILLDOWN_LIVE). Absent, the section is unchanged."""
+    d = _served()
+    lad = next(c for c in d["clubs"] if c["code"] == "LAD")
+    assert "team_drilldown" not in lad["links"], "the drill-down link serves before its flag"
+    html, _ = _render("club", team="LAD", payload=d)
+    sec = html.split('data-frsec="outlook"')[1].split("</section>")[0]
+    assert "Club breakdown" not in sec and "club=LAD" not in html
+    d2 = json.loads(json.dumps(d))
+    lad2 = next(c for c in d2["clubs"] if c["code"] == "LAD")
+    lad2["links"]["team_drilldown"] = "/projections/#view=teams&club=LAD"
+    html2, _ = _render("club", team="LAD", payload=d2)
+    sec2 = html2.split('data-frsec="outlook"')[1].split("</section>")[0]
+    opens = sec2.split('class="fr-open">', 1)[1]
+    assert '<a href="/projections/#view=teams&amp;club=LAD">Club breakdown</a>' in opens
+    assert opens.index("Team Outlook") < opens.index("Club breakdown") < opens.index("Roster board")

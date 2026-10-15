@@ -1079,6 +1079,11 @@ _SIDECAR_WRITE_TARGETS = (
     # TL_15: the tool accuracy lab's second output, the served display copy of
     # look W; export_display_w resolves SERVED_W at call time.
     ("tools.tool_accuracy_lab", "SERVED_W", "data/tool_source_accuracy.json"),
+    # TM_7: proj_export's Team Outlook display preview (the T3 runs and the T7
+    # drill-down while their flags are off); _write_team_display_preview
+    # resolves it at call time.
+    ("proj_export", "TEAM_DISPLAY_PREVIEW_PATH",
+     ".cache/team_projection/preview/team_outlook_display.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
