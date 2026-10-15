@@ -951,4 +951,123 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
 
 ## 12. Results
 
-(Empty. Filled only by the look runner after the status line reads REGISTERED.)
+### 12.1 S3, the transfer read: run 2026-10-15 (task SG_8), an OWNER-WAIVED EARLY READ
+
+- **The run.** One look, `python -u tools/efv_surrogate_look.py --look <task dir>`, teed
+  from its first line; gate sha c39b052a (this file at s11.2, REGISTERED); look record
+  `rvm_look_1`; marker `.cache/efv_surrogate/look_started.json` written 2026-10-15T20:05:11Z;
+  result written to `data/efv_surrogate_gate.json` key `transfer` at 2026-10-15T20:06:53Z;
+  input pins equal at start and end; no exception, so the crash protocol did not fire.
+  B 2000, seed 20260930. The look is spent (the artifact key and the marker).
+- **Early read.** efv2026 OQ1 placed this read after R-VM look 1 and not before 2026-12-01;
+  owner decision EW3-5 (2026-10-14) waived every registered date, so it ran on 2026-10-15
+  and is recorded as an OWNER-WAIVED EARLY READ (the receipt's `note`). The data it reads
+  (V 2011-2019 and V 2022 frames, seasons through 2025, R-VM look 1's record) all existed.
+- **Verbatim runner output:**
+
+```text
+gate docs/efv-v2/SURROGATE_2026_GATE.md REGISTERED at c39b052a45e06f59dd3b1d0cfb98f65fbac3e481; records ['rvm_look_1']; run day 2026-10-15 (no calendar day blocks, EW3-5)
+T5 asserted: no V 2020 or 2021 row is built; V 2011-2019 and V 2022 only
+T5 asserted: Q1's record (the ETA look) is present
+T5 asserted: efv_vintage_frame.py at the s11 blob 09430d3b211c67a480b51aff0dbfb27d8f4ca669, clean
+T5 asserted: the frozen 2026 copy and the event-id sets equal their sha256 pins
+T5 asserted: no FV-cell grouping in the runner
+T5 asserted: AP+ never imported
+T1 EXITS (rows with no L6, and id-unresolved rows out of the primary), per side and vintage:
+  hit V 2011: reserved_vm 0, censored_never 0, identity_conflict 0, other 0, absent_identity 2
+  hit V 2012: reserved_vm 0, censored_never 0, identity_conflict 0, other 0, absent_identity 3
+  hit V 2013: reserved_vm 0, censored_never 2, identity_conflict 0, other 0, absent_identity 8
+  hit V 2014: reserved_vm 1, censored_never 1, identity_conflict 0, other 0, absent_identity 9
+  hit V 2015: reserved_vm 1, censored_never 4, identity_conflict 0, other 0, absent_identity 12
+  hit V 2016: reserved_vm 0, censored_never 4, identity_conflict 0, other 0, absent_identity 20
+  pit V 2011: reserved_vm 0, censored_never 0, identity_conflict 0, other 0, absent_identity 3
+  pit V 2012: reserved_vm 0, censored_never 3, identity_conflict 0, other 0, absent_identity 3
+  pit V 2013: reserved_vm 0, censored_never 5, identity_conflict 0, other 0, absent_identity 8
+  pit V 2014: reserved_vm 0, censored_never 3, identity_conflict 0, other 0, absent_identity 5
+  pit V 2015: reserved_vm 0, censored_never 4, identity_conflict 0, other 0, absent_identity 13
+  pit V 2016: reserved_vm 1, censored_never 6, identity_conflict 0, other 0, absent_identity 12
+BOOTSTRAP SDs (every cell, before any point delta):
+  T1|hit|L6: sd_player +0.0297 sd_club +0.0308 n 1521
+  T1|hit|L6_resolved_only: sd_player NA sd_club NA n 1497
+  T1|hit|W3_secondary: sd_player +0.0231 sd_club +0.0254 n 2890
+  T1|pit|L6: sd_player +0.0279 sd_club +0.0306 n 1446
+  T1|pit|L6_resolved_only: sd_player NA sd_club NA n 1437
+  T1|pit|W3_secondary: sd_player +0.0215 sd_club +0.0189 n 2787
+  T2a|hit|partial: sd_player +0.0199 sd_club NA n 2648
+  T2a|hit|partial_V2015_2019: sd_player +0.0216 sd_club NA n 2137
+  T2a|pit|partial: sd_player +0.0222 sd_club NA n 2586
+  T2a|pit|partial_V2015_2019: sd_player +0.0241 sd_club NA n 2109
+  T4|hit|aug_minus_inc: sd_player +0.0521 sd_club +0.0625 n 1465
+  T4|hit|real_minus_twin: sd_player NA sd_club NA n 1465
+  T4|pit|aug_minus_inc: sd_player NA sd_club NA n 1397
+  T4|pit|real_minus_twin: sd_player NA sd_club NA n 1397
+POINTS (one-sided 95 percent bounds beside each):
+  T1|hit|L6: point +0.2332 lo95 +0.1833 hi95 +0.2809 lo95_club +0.1822 mde95 +0.0489
+  T1|hit|L6_resolved_only: point +0.2378 lo95 NA hi95 NA lo95_club NA mde95 NA
+  T1|hit|W3_secondary: point +0.1957 lo95 +0.1581 hi95 +0.2334 lo95_club +0.1530 mde95 +0.0379
+  T1|pit|L6: point +0.2355 lo95 +0.1886 hi95 +0.2809 lo95_club +0.1822 mde95 +0.0460
+  T1|pit|L6_resolved_only: point +0.2365 lo95 NA hi95 NA lo95_club NA mde95 NA
+  T1|pit|W3_secondary: point +0.1772 lo95 +0.1433 hi95 +0.2144 lo95_club +0.1462 mde95 +0.0353
+  T2a|hit|partial: point +0.2921 lo95 +0.2595 hi95 +0.3246 lo95_club NA mde95 +0.0327
+  T2a|hit|partial_V2015_2019: point +0.2627 lo95 +0.2274 hi95 +0.2975 lo95_club NA mde95 +0.0355
+  T2a|pit|partial: point +0.2594 lo95 +0.2232 hi95 +0.2965 lo95_club NA mde95 +0.0365
+  T2a|pit|partial_V2015_2019: point +0.2112 lo95 +0.1714 hi95 +0.2510 lo95_club NA mde95 +0.0396
+  T4|hit|aug_minus_inc: point -0.3424 lo95 -0.4249 hi95 -0.2574 lo95_club -0.4387 mde95 +0.0858
+  T4|hit|real_minus_twin: point NA lo95 NA hi95 NA lo95_club NA mde95 NA
+  T4|pit|aug_minus_inc: point NA lo95 NA hi95 NA lo95_club NA mde95 NA
+  T4|pit|real_minus_twin: point NA lo95 NA hi95 NA lo95_club NA mde95 NA
+DESCRIPTIVE (no verdict):
+  T2 hit: n 2648, n V 2015-2019 2137, bypass share +0.6596, g_S increment over E[R3 | rung_pre, age_pre] (partial rho) +0.3748
+  T2 pit: n 2586, n V 2015-2019 2109, bypass share +0.7046, g_S increment over E[R3 | rung_pre, age_pre] (partial rho) +0.3120
+  T2 failed driver cells (27): hit:age_rel_level:pooled, hit:age_rel_level:2015-2016, hit:age_rel_level:2017-2019, hit:level_rank:pooled, hit:level_rank:2015-2016, hit:level_rank:2017-2019, hit:milb_absent:2015-2016, hit:on_40man:2011-2013, hit:on_40man:2014-2016, hit:on_40man:2017-2019, hit:nov_add:pooled, hit:nov_add:2011-2013, hit:nov_add:2014-2016, hit:nov_add:2017-2019, pit:age_rel_level:2015-2016, pit:level_rank:pooled, pit:level_rank:2015-2016, pit:level_rank:2017-2019, pit:milb_absent:pooled, pit:milb_absent:2017-2019, pit:on_40man:pooled, pit:on_40man:2011-2013, pit:on_40man:2014-2016, pit:on_40man:2017-2019, pit:nov_add:pooled, pit:nov_add:2011-2013, pit:nov_add:2014-2016
+  T3: rho_old +0.3914 n 2555; rho_2022 +0.4506 n 1189; z_diff -0.0720 CI95 -0.1408 to -0.0031
+  T4 hit: HARM; real beats twin False
+  T4 pit: not shown harmful, unpowered; real beats twin False
+  T2 skill-head version (g_skill against W3): NOT COMPUTED; s3 registers no g_skill object (no inputs, fit or scale), so none is built at the read (kill rule 2).
+T1: FAIL
+T2: FAIL (27 driver cells)
+T3: STOP
+T4: HARM
+```
+
+### 12.2 What the read decides (s5, s6.1, s7; nothing ships)
+
+- **T1 FAIL on both sides.** rho(S_idx, L6 percentile), leave-one-vintage-out, reads
+  +0.233 (one-sided 95 percent lower bound +0.183) for hitters on 1,521 rows and +0.236
+  (+0.189) for pitchers on 1,446 rows, against the 0.50 floor; the club-clustered bounds
+  agree (+0.182, +0.182). The no-L6 exits were 2 reserved_vm and 11 censored_never hitter
+  rows and 1 and 21 pitcher rows, with 54 and 44 ABSENT_IDENTITY rows out of the primary;
+  the resolved-only rho beside it reads +0.238 and +0.237. By kill rule 7, level and
+  arrival surrogates are closed as value proxies for eFV permanently; they remain the ETA
+  program's outcomes. S4 never runs (it was already void under OQ2 = A).
+- **T2 FAIL.** (a) holds on every cell (partial rho lower bounds +0.227 and +0.171 on the
+  MiLB rows, +0.260 and +0.223 on all rows); (b) or (c) fails in 27 of 34 driver cells,
+  and every one of the five timing candidates fails at least one cell on each side, so all
+  five are barred from any head that reads g_S in 2027. Against the s0 prior, `level_rank`
+  FAILED (b) as well (hitters pooled: slope given u_c -0.0006 on g_S, +0.0464 on R3), and
+  `age_rel_level` failed as expected. Bypass share +0.660 and +0.705.
+- **T3 STOP.** rho(g_S, R3) +0.391 on V 2011-2019 (2,555 players) and +0.451 on V 2022
+  (1,189 players); Fisher-z difference -0.072, CI95 -0.141 to -0.003, not inside
+  (-0.10, +0.10). The auxiliary route closes; by kill rule 9 the lane may return only as a
+  new registration disclosing this read.
+- **T4.** Hitters HARM: augmented minus incumbent -0.342 (one-sided upper bound -0.257) on
+  1,465 rows. Pitchers: no draw produced a defined within statistic for either delta (the
+  cell prints NA), so the runner's "not shown harmful, unpowered" is a reading of an
+  undefined cell, not evidence; the real-minus-twin delta is undefined on both sides, so g_S
+  is not shown to beat its twin and is not admitted. The size of the hitter delta and the
+  undefined pitcher cell were not diagnosed: any refit to look would be a second read of
+  these frames (kill rule 2).
+- **Disclosed gap.** The T2 (a) cells carry the player bootstrap only; the runner passes no
+  club clusters there, so s4's club sensitivity is missing for (a). Every (a) lower bound
+  is above 0 by at least +0.17, so it decides nothing.
+- **What ships:** nothing (s7). The H_T1 and H_T2-4 routes are closed; the frozen V 2026
+  frame and its long-run reads of s6.3 (W3 at RT 2031, R3 at RT 2029) are untouched.
+
+### 12.3 Measured floors (dated amendment 2026-10-15, s4 and s9)
+
+The draft-time floors of s9 are replaced by the measured ones (mde95 = 1.645 x the player
+bootstrap SD): T1 0.049 hitters and 0.046 pitchers (s9 anticipated a half-width of 0.054);
+the W3 secondary 0.038 and 0.035; T2 (a) 0.033 and 0.037 on all rows, 0.036 and 0.040 on
+V 2015-2019; T3's SE in z 0.035 (s9: about 0.035); T4 0.086 for hitters (s9 cited the
+lv_dev E_cond floor 0.0155) and undefined for pitchers. The old-cohort analog floor for S4
+is not measured (s11.2: S4 is void under OQ2 = A).
