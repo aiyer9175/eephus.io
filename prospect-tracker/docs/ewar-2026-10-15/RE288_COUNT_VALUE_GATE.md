@@ -176,6 +176,29 @@ comes from them.
   tables RE24_s + lambda_s x the pooled departure gave 0 count reversals in every season, a
   per-cell 0-0 maximum of 0.0207 to 0.0228 and a weighted 0-0 difference of 0.0017 to 0.0019.
 
+### 10.3 Run 3 (the 11.2 default): every invariant passes; data/count_value.json written
+
+- Pool: K 1,202.6 (K_raw 1,202.6; W 0.452645, tau^2 0.00037639; all 288 cells used), frozen pool
+  sha256 560b9f3c895c4f538df9a0022a9d6cc738936ebe9ffc21b8da2ad8d8d941ec24, pinned in
+  `count_value.py` with FROZEN_K. 5,470,491 fit-set pitch observations over the eight seasons.
+- Invariant 1: per-cell 0-0 maximum 0.0207 (2022) to 0.0228 (2019), worst cell 6|0 in every
+  season; weighted 0.0017 to 0.0019.
+- Invariant 2: 0 count reversals in every season and in the pool. Base-out reversals at a fixed
+  count (reported): 0 in every season.
+- Invariant 3: per-event values sum to the play's RE24 change on 99.948 to 99.986 percent of
+  fit-set plays in run 3, passing. The misses were plays that end without ball four, strike three
+  or a terminal code (catcher's interference, a foul-coded pitch), whose last state the ledger
+  valued on RE288 instead of RE24. Repair to part 4's convention (the play's end closes its count):
+  on the rebuild every fit-set play telescopes exactly (max error 0.0), and every table, the pool
+  and every other receipt are unchanged byte for byte.
+- Receipts: R1 index 1.0 and R3 runs 1.0 in every season; R2 count 0.999946 (2019) to 1.0; the end
+  state 1.0; R4 the corpus plays table agrees with the record on every play of every season.
+- Pooled count values against 0-0 (runs, occupancy-weighted): 0-0 +0.000, 1-0 +0.035,
+  2-0 +0.097, 3-0 +0.206, 0-1 -0.042, 1-1 -0.015, 2-1 +0.035, 3-1 +0.139, 0-2 -0.098,
+  1-2 -0.077, 2-2 -0.037, 3-2 +0.054.
+- Called-pitch value (a ball minus a strike, occupancy-weighted): at 0-0 0.074 (2022) to 0.082
+  (2019); at 3-2 0.586 (2022) to 0.621 (2019).
+
 ## 11. Amendments
 
 ### 11.1 2026-10-15: the estimator after the first build refused (the estimand is unchanged)

@@ -5767,6 +5767,19 @@
    "artifact_age_days": 21
   },
   {
+   "model_id": "count_value",
+   "summary": "Measured, not a prediction: RE288 run expectancy by count, bases and outs, 2018 to 2026 (2020 absent); every invariant passed on the third build after two refusals.",
+   "surface": "None served: no page reads it. data/count_value.json is the run basis for later registered work (eABS challenge values, pitch economy, framing, swing decisions)",
+   "predicts": "Nothing: the mean runs scored from a pitch to the end of its half-inning, by balls, strikes, base occupancy and outs (288 cells per MLB season), a descriptive table",
+   "champion": "none. RE288_s = RE24_s (eBR's ebr_v1 table) + lambda_s x a pooled count departure, the departure measured against RE24 of the play's end state (gate parts 3, 11.1 and 11.2)",
+   "baseline": "eBR's RE24 at count 0-0: invariant 1 bounds the 0-0 row within 0.03 runs per base-out cell and 0.01 weighted",
+   "metric": "Refusing invariants and receipts, no forward statistic: 0-0 row against RE24; monotone in balls (up) and strikes (down) at fixed base-out; per-event values summing to each play's RE24 change; index, count and runs agreement with the runner record at 0.999 or better",
+   "eval_artifact": "data/count_value.json",
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "Registered 2026-10-15 in docs/ewar-2026-10-15/RE288_COUNT_VALUE_GATE.md (task EWAR_P1_RE288, the ewar-map plan P1, owner decisions EW3-16 to EW3-19), committed alone before any number. Build: count_value.py (pure core) and tools/build_count_value.py over the corpus pitches and events and the eBR runner record, seasons 2018, 2019 and 2021 to 2026, about 5.47 million fit-set pitch observations. Two builds refused first and are disclosed in the gate: run 1 (the direct estimator on runs to the end of the half-inning, K 500) reversed count steps in the pool and in every season and missed the 0-0 bound in six seasons; run 2 (the 11.1 departure against RE24 of the play's end state, per-season shrink, K 1202.6) left the pool monotone but reversed six count steps in five seasons (up to 0.0134 runs) and missed the 0-0 bound in 2022 and 2023. Run 3 applies the default of owner question RE288-Q1 (gate 11.2): the count departure is pooled over 2018 to 2026 (frozen pool sha256 560b9f3c895c, K 1202.6) and each season keeps its run environment through RE24_s and eBR's frozen lambda; every invariant passes in every season (0 count reversals; 0-0 per-cell max 0.0207 to 0.0228, weighted 0.0017 to 0.0019; per-event values sum to the RE24 change on every fit-set play; R1 index and R3 runs 1.0, R2 count 0.9999 or better). The other RE288-Q1 options are (b) an isotonic projection of per-season tables, (c) reporting instead of refusing, (d) leaving RE288 refused. Pooled count values against 0-0, read 2026-10-15: 3-0 +0.206, 0-2 -0.098 runs. No player, team or umpire value is computed; no year-to-year or forward statistic; nothing served moves."
+  },
+  {
    "model_id": "scores_mlb_wp",
    "summary": "MLB's live win probability, shown as MLB serves it and never refitted: Brier 0.157516 against 0.249754 for the base rate on 1,448,965 regular-season plays. Provisional.",
    "surface": "/scores/ live cards, the win probability chart, swings in Biggest plays and the play log, and per-player WPA and pLI in the box score",
