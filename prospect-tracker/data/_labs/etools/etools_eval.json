@@ -1,0 +1,9289 @@
+{
+ "item": "ETOOLS",
+ "tool": "etools.py",
+ "spent": true,
+ "spent_at": "2026-10-15T22:17:07Z",
+ "started": "2026-10-15T22:13:58Z",
+ "gate_doc": "docs/tools-2026-10/ETOOLS_GATE.md",
+ "gate_sha": "3f240da6",
+ "head": "7686d75c745165077dd26bbe3363e8900312db7d",
+ "survivorship": "L_MLB is accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity. L_UM (translated upper-minors outcomes, seasons Y to Y + 2 capped at 2024) covers debuts and non-debuts alike and is reported beside it.",
+ "constants": {
+  "dev_years": [
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2022,
+   2023,
+   2024
+  ],
+  "B": 2000,
+  "seed": 20261023,
+  "perm": 200,
+  "perm_seed": 20261024,
+  "q_admit": 0.1,
+  "r_cap": 0.6,
+  "max_sub": 3,
+  "pool_min": 100,
+  "last_um_season": 2024,
+  "max_debut_year": 2024
+ },
+ "universe": {
+  "mlb_line_before_board_year": 1128,
+  "identity_ambiguous": 232,
+  "identity_disagrees_with_record": 177,
+  "identity_no_candidate": 282,
+  "no_record": 158,
+  "duplicate_player": 4,
+  "rows": 8898
+ },
+ "coverage": {
+  "hit:age_rel_level": 4471,
+  "hit:arm_share": 4463,
+  "hit:babip_rw": 4470,
+  "hit:bb_fb": 2848,
+  "hit:bb_hard": 2848,
+  "hit:bb_pull": 2843,
+  "hit:bb_rw": 4471,
+  "hit:fg_avg_ev": 92,
+  "hit:fg_max_ev": 119,
+  "hit:fg_sits": 3,
+  "hit:fg_tops": 3,
+  "hit:iso_rw": 4471,
+  "hit:k_rw": 4471,
+  "hit:pbp_contact": 2586,
+  "hit:pbp_fstrike_taken": 2586,
+  "hit:pbp_swing": 2586,
+  "hit:pbp_swstr": 2586,
+  "hit:pbp_two_strike_contact": 2586,
+  "hit:ppa_par": 2073,
+  "hit:ppa_raw": 2073,
+  "hit:prem_share": 4463,
+  "hit:sb_rel": 4155,
+  "hit:tri_rel": 4155,
+  "hit:trk_barrel": 289,
+  "hit:trk_chase": 289,
+  "hit:trk_ev_max": 289,
+  "hit:trk_ev_p90": 289,
+  "hit:trk_hard_hit": 289,
+  "hit:trk_whiff": 312,
+  "hit:trk_zone_contact": 289,
+  "hit:woba_rw": 4471,
+  "pit:age_rel_level": 4123,
+  "pit:bb_rw": 4123,
+  "pit:fg_rpm_break": 1179,
+  "pit:fg_rpm_fb": 1252,
+  "pit:fg_sits": 1901,
+  "pit:fg_tops": 1900,
+  "pit:gb_rw": 4120,
+  "pit:hr9_rw": 4122,
+  "pit:k_rw": 4123,
+  "pit:kbb_rw": 4123,
+  "pit:pbf_par": 2050,
+  "pit:pbf_raw": 2050,
+  "pit:pbp_ball_rate": 2556,
+  "pit:pbp_cstr": 2556,
+  "pit:pbp_csw": 2556,
+  "pit:pbp_fstrike": 2556,
+  "pit:pbp_swstr": 2556,
+  "pit:pip_par": 2050,
+  "pit:pip_raw": 2050,
+  "pit:trk_chase": 315,
+  "pit:trk_extension": 315,
+  "pit:trk_fb_ivb": 315,
+  "pit:trk_fb_velo_mean": 315,
+  "pit:trk_fb_velo_p95": 315,
+  "pit:trk_whiff_br": 311,
+  "pit:trk_whiff_fb": 315,
+  "pit:trk_whiff_os": 279,
+  "pit:trk_zone": 315
+ },
+ "label_counts": {
+  "bat_ctrl:mlb": 713,
+  "bat_ctrl:um": 824,
+  "cb:mlb": 276,
+  "cb:um": 741,
+  "ch:mlb": 358,
+  "ch:um": 420,
+  "cmd:mlb": 1942,
+  "cmd:um": 2934,
+  "fb:mlb": 1942,
+  "fb:um": 2934,
+  "field:mlb": 1167,
+  "field:um": 0,
+  "game_pwr:mlb": 1402,
+  "game_pwr:um": 2728,
+  "hit:mlb": 1402,
+  "hit:um": 2728,
+  "pitch_sel:mlb": 713,
+  "pitch_sel:um": 824,
+  "raw_pwr:mlb": 1328,
+  "raw_pwr:um": 824,
+  "sl:mlb": 490,
+  "sl:um": 741,
+  "speed:mlb": 2039,
+  "speed:um": 2728,
+  "throw:mlb": 1225,
+  "throw:um": 0
+ },
+ "tests": {
+  "atlas_rows": 1152,
+  "pooled_tests": 189,
+  "pitch_rate_tests": 232
+ },
+ "etools": {
+  "hit": {
+   "tool": "hit",
+   "key": "eHIT",
+   "admitted": [
+    "k_rw",
+    "ppa_par",
+    "babip_rw"
+   ],
+   "labels": {
+    "mlb": {
+     "computable": true,
+     "n": 1385,
+     "players": 602,
+     "rows_with_a_subdriver": 1374,
+     "rho_consensus": 0.2979,
+     "rho_etool": 0.5999,
+     "d": 0.302,
+     "lb95": 0.259,
+     "ci95": [
+      0.2514,
+      0.3546
+     ],
+     "sd": 0.02693,
+     "p": 0.0,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 2704,
+     "players": 1334,
+     "rows_with_a_subdriver": 2691,
+     "rho_consensus": 0.4358,
+     "rho_etool": 0.7099,
+     "d": 0.2741,
+     "lb95": 0.2485,
+     "ci95": [
+      0.2429,
+      0.3061
+     ],
+     "sd": 0.01585,
+     "p": 0.0,
+     "draws": 2000
+    }
+   },
+   "fold_sigma": {
+    "2011": 8.5792,
+    "2012": 8.5738,
+    "2013": 8.4102,
+    "2014": 8.4232,
+    "2015": 9.0201,
+    "2016": 8.0723,
+    "2017": 8.4257,
+    "2018": 8.9177,
+    "2019": 9.1131,
+    "2022": 8.0153,
+    "2023": 8.542,
+    "2024": 8.7852
+   },
+   "verdict": "PASS",
+   "basis": "etool",
+   "final_fit": {
+    "lines": [
+     [
+      0.650744,
+      -0.006489,
+      true
+     ],
+     [
+      0.748696,
+      -0.015713,
+      true
+     ],
+     [
+      0.241144,
+      0.00018,
+      true
+     ]
+    ],
+    "c": [
+     -82.691589,
+     -0.885507,
+     -84.076508
+    ],
+    "sigma": 9.2226,
+    "n_fit": 4089,
+    "tips": {
+     "mlb": {
+      "grade": [
+       40.6376,
+       45.0287,
+       50.1298,
+       54.9522,
+       59.4573,
+       65.06,
+       69.3333
+      ],
+      "stat": [
+       -27.793696,
+       -26.002587,
+       -24.012474,
+       -22.355769,
+       -22.193211,
+       -21.517241,
+       -21.255438
+      ]
+     },
+     "um": {
+      "grade": [
+       30.1818,
+       34.97,
+       40.3955,
+       44.9891,
+       50.0394,
+       54.9286,
+       59.4139,
+       64.9423
+      ],
+      "stat": [
+       -0.337256,
+       -0.337256,
+       -0.337256,
+       -0.305179,
+       -0.270796,
+       -0.246084,
+       -0.246084,
+       -0.223701
+      ]
+     }
+    }
+   },
+   "qualifying": [
+    {
+     "candidate": "k_rw",
+     "label": "mlb",
+     "q": 0.0,
+     "d": 0.3208
+    },
+    {
+     "candidate": "pbp_contact",
+     "label": "mlb",
+     "q": 0.0,
+     "d": 0.2418,
+     "dropped": "|r| 0.773 with a chosen sub-driver"
+    },
+    {
+     "candidate": "pbp_two_strike_contact",
+     "label": "mlb",
+     "q": 0.0,
+     "d": 0.2243,
+     "dropped": "|r| 0.753 with a chosen sub-driver"
+    },
+    {
+     "candidate": "pbp_swstr",
+     "label": "mlb",
+     "q": 0.0,
+     "d": 0.1622,
+     "dropped": "|r| 0.661 with a chosen sub-driver"
+    },
+    {
+     "candidate": "ppa_par",
+     "label": "um",
+     "q": 0.0005,
+     "d": 0.0415
+    },
+    {
+     "candidate": "ppa_raw",
+     "label": "um",
+     "q": 0.001086,
+     "d": 0.0377,
+     "dropped": "|r| 0.993 with a chosen sub-driver"
+    },
+    {
+     "candidate": "babip_rw",
+     "label": "um",
+     "q": 0.016885,
+     "d": 0.0118
+    }
+   ]
+  },
+  "game_pwr": {
+   "tool": "game_pwr",
+   "key": "ePOW",
+   "admitted": [
+    "iso_rw",
+    "bb_fb"
+   ],
+   "labels": {
+    "mlb": {
+     "computable": true,
+     "n": 1385,
+     "players": 602,
+     "rows_with_a_subdriver": 1374,
+     "rho_consensus": 0.5394,
+     "rho_etool": 0.5732,
+     "d": 0.0337,
+     "lb95": 0.0185,
+     "ci95": [
+      0.017,
+      0.0521
+     ],
+     "sd": 0.00901,
+     "p": 9.1e-05,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 2705,
+     "players": 1334,
+     "rows_with_a_subdriver": 2692,
+     "rho_consensus": 0.5941,
+     "rho_etool": 0.6332,
+     "d": 0.0392,
+     "lb95": 0.0301,
+     "ci95": [
+      0.0287,
+      0.0496
+     ],
+     "sd": 0.00536,
+     "p": 0.0,
+     "draws": 2000
+    }
+   },
+   "fold_sigma": {
+    "2011": 11.0073,
+    "2012": 10.925,
+    "2013": 10.9261,
+    "2014": 11.1864,
+    "2015": 10.7507,
+    "2016": 11.5779,
+    "2017": 11.6031,
+    "2018": 11.5527,
+    "2019": 11.8969,
+    "2022": 11.5188,
+    "2023": 11.4551,
+    "2024": 11.5074
+   },
+   "verdict": "PASS",
+   "basis": "etool",
+   "final_fit": {
+    "lines": [
+     [
+      0.016857,
+      0.00139,
+      true
+     ],
+     [
+      -0.941603,
+      0.021466,
+      true
+     ]
+    ],
+    "c": [
+     85.347152,
+     2.975278
+    ],
+    "sigma": 11.7527,
+    "n_fit": 4090,
+    "tips": {
+     "mlb": {
+      "grade": [
+       20.0,
+       30.0917,
+       35.0,
+       40.2312,
+       45.0361,
+       49.9354,
+       55.0219,
+       59.5887,
+       64.82,
+       69.8542
+      ],
+      "stat": [
+       0.099436,
+       0.108387,
+       0.113437,
+       0.135338,
+       0.145843,
+       0.166667,
+       0.183807,
+       0.186299,
+       0.203638,
+       0.203638
+      ]
+     },
+     "um": {
+      "grade": [
+       20.0,
+       24.8,
+       30.0869,
+       35.1,
+       40.2722,
+       45.004,
+       49.9776,
+       54.9488,
+       59.5753,
+       64.76,
+       70.0
+      ],
+      "stat": [
+       0.065382,
+       0.065382,
+       0.086918,
+       0.089577,
+       0.104883,
+       0.117446,
+       0.128363,
+       0.143329,
+       0.153286,
+       0.164508,
+       0.196199
+      ]
+     }
+    }
+   },
+   "qualifying": [
+    {
+     "candidate": "iso_rw",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.0433
+    },
+    {
+     "candidate": "woba_rw",
+     "label": "um",
+     "q": 0.000105,
+     "d": 0.023,
+     "dropped": "|r| 0.841 with a chosen sub-driver"
+    },
+    {
+     "candidate": "bb_fb",
+     "label": "um",
+     "q": 0.04307,
+     "d": 0.0124
+    }
+   ]
+  },
+  "raw_pwr": {
+   "tool": "raw_pwr",
+   "key": "eRAW",
+   "admitted": [
+    "iso_rw"
+   ],
+   "labels": {
+    "mlb": {
+     "computable": true,
+     "n": 678,
+     "players": 375,
+     "rows_with_a_subdriver": 675,
+     "rho_consensus": 0.4992,
+     "rho_etool": 0.5039,
+     "d": 0.0047,
+     "lb95": -0.0117,
+     "ci95": [
+      -0.0147,
+      0.0251
+     ],
+     "sd": 0.01013,
+     "p": 0.322363,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 694,
+     "players": 440,
+     "rows_with_a_subdriver": 692,
+     "rho_consensus": 0.4611,
+     "rho_etool": 0.4988,
+     "d": 0.0376,
+     "lb95": 0.026,
+     "ci95": [
+      0.0237,
+      0.0527
+     ],
+     "sd": 0.00737,
+     "p": 0.0,
+     "draws": 2000
+    }
+   },
+   "fold_sigma": {
+    "2017": 12.8575,
+    "2018": 12.4406,
+    "2019": 12.4172,
+    "2022": 10.0821,
+    "2023": 10.6197,
+    "2024": 10.6773
+   },
+   "verdict": "NOT PASS",
+   "basis": "consensus",
+   "final_fit": {
+    "lines": [
+     [
+      0.029192,
+      0.001022,
+      true
+     ]
+    ],
+    "c": [
+     68.702307
+    ],
+    "sigma": 12.9978,
+    "n_fit": 1372,
+    "tips": {
+     "mlb": {
+      "grade": [
+       30.0,
+       40.0,
+       45.0,
+       50.0,
+       55.0,
+       60.0,
+       65.0,
+       70.0
+      ],
+      "stat": [
+       86.822116,
+       87.084321,
+       87.455276,
+       88.323381,
+       88.595714,
+       89.218584,
+       89.715476,
+       90.338081
+      ]
+     },
+     "um": {
+      "grade": [
+       30.0,
+       35.0,
+       40.0,
+       45.0,
+       50.0,
+       55.0,
+       60.0,
+       70.0
+      ],
+      "stat": [
+       85.009194,
+       85.146649,
+       86.15215,
+       86.843985,
+       87.2,
+       87.77768,
+       88.5,
+       90.321121
+      ]
+     }
+    }
+   },
+   "qualifying": [
+    {
+     "candidate": "iso_rw",
+     "label": "um",
+     "q": 0.001918,
+     "d": 0.0593
+    }
+   ]
+  },
+  "speed": {
+   "tool": "speed",
+   "key": "eSPD",
+   "admitted": [
+    "sb_rel"
+   ],
+   "labels": {
+    "mlb": {
+     "computable": true,
+     "n": 2015,
+     "players": 849,
+     "rows_with_a_subdriver": 1945,
+     "rho_consensus": 0.7512,
+     "rho_etool": 0.7576,
+     "d": 0.0065,
+     "lb95": -0.0013,
+     "ci95": [
+      -0.0026,
+      0.0152
+     ],
+     "sd": 0.00464,
+     "p": 0.082131,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 2705,
+     "players": 1334,
+     "rows_with_a_subdriver": 2591,
+     "rho_consensus": 0.7294,
+     "rho_etool": 0.7844,
+     "d": 0.055,
+     "lb95": 0.0482,
+     "ci95": [
+      0.0469,
+      0.0635
+     ],
+     "sd": 0.00426,
+     "p": 0.0,
+     "draws": 2000
+    }
+   },
+   "fold_sigma": {
+    "2011": 10.0417,
+    "2012": 9.8948,
+    "2013": 10.0334,
+    "2014": 10.0675,
+    "2015": 9.9276,
+    "2016": 9.9638,
+    "2017": 9.8342,
+    "2018": 9.7607,
+    "2019": 9.9085,
+    "2022": 10.106,
+    "2023": 10.0989,
+    "2024": 10.1575
+   },
+   "verdict": "NOT PASS",
+   "basis": "consensus",
+   "final_fit": {
+    "lines": [
+     [
+      -2.021493,
+      0.04513,
+      true
+     ]
+    ],
+    "c": [
+     5.954859
+    ],
+    "sigma": 10.0072,
+    "n_fit": 4720,
+    "tips": {
+     "mlb": {
+      "grade": [
+       20.0,
+       30.1782,
+       35.0904,
+       40.1657,
+       44.9732,
+       49.9909,
+       54.9257,
+       59.5934,
+       65.0804,
+       69.7253,
+       79.9107
+      ],
+      "stat": [
+       25.507081,
+       26.049497,
+       26.634831,
+       27.099725,
+       27.521018,
+       27.8,
+       28.252425,
+       28.654015,
+       28.990014,
+       28.990014,
+       30.052394
+      ]
+     },
+     "um": {
+      "grade": [
+       20.0,
+       25.375,
+       30.1382,
+       35.0652,
+       40.1853,
+       44.9873,
+       50.0499,
+       54.9637,
+       59.6198,
+       65.04,
+       69.7434,
+       74.9,
+       79.8214
+      ],
+      "stat": [
+       0.140407,
+       0.191704,
+       0.221103,
+       0.245857,
+       0.48775,
+       0.644226,
+       0.900906,
+       1.396401,
+       1.865138,
+       2.625301,
+       2.676433,
+       3.292358,
+       3.760227
+      ]
+     }
+    }
+   },
+   "qualifying": [
+    {
+     "candidate": "sb_rel",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.0772
+    }
+   ]
+  },
+  "field": {
+   "tool": "field",
+   "key": "eFLD",
+   "admitted": [],
+   "labels": {},
+   "verdict": "NO SUB-DRIVER",
+   "basis": "consensus",
+   "qualifying": []
+  },
+  "throw": {
+   "tool": "throw",
+   "key": "eARM",
+   "admitted": [],
+   "labels": {},
+   "verdict": "NO SUB-DRIVER",
+   "basis": "consensus",
+   "qualifying": []
+  },
+  "pitch_sel": {
+   "tool": "pitch_sel",
+   "key": "eSEL",
+   "admitted": [
+    "pbp_swing"
+   ],
+   "labels": {
+    "mlb": {
+     "computable": true,
+     "n": 234,
+     "players": 144,
+     "rows_with_a_subdriver": 219,
+     "rho_consensus": 0.4958,
+     "rho_etool": 0.5851,
+     "d": 0.0893,
+     "lb95": 0.0493,
+     "ci95": [
+      0.0388,
+      0.141
+     ],
+     "sd": 0.02556,
+     "p": 0.000239,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 649,
+     "players": 424,
+     "rows_with_a_subdriver": 514,
+     "rho_consensus": 0.5561,
+     "rho_etool": 0.6276,
+     "d": 0.0715,
+     "lb95": 0.0501,
+     "ci95": [
+      0.0467,
+      0.0982
+     ],
+     "sd": 0.01338,
+     "p": 0.0,
+     "draws": 2000
+    }
+   },
+   "fold_sigma": {
+    "2022": 9.1144,
+    "2023": 8.1828,
+    "2024": 9.7558
+   },
+   "verdict": "PASS",
+   "basis": "etool",
+   "final_fit": {
+    "lines": [
+     [
+      2.189427,
+      -0.047615,
+      true
+     ]
+    ],
+    "c": [
+     -8.35819
+    ],
+    "sigma": 10.399,
+    "n_fit": 883,
+    "tips": {
+     "mlb": {
+      "grade": [
+       30.0,
+       40.0,
+       45.0,
+       50.0,
+       55.0,
+       60.0
+      ],
+      "stat": [
+       -34.9,
+       -34.2,
+       -32.3,
+       -31.7,
+       -30.05,
+       -26.1
+      ]
+     },
+     "um": {
+      "grade": [
+       30.0,
+       35.0,
+       40.0,
+       45.0,
+       50.0,
+       55.0,
+       60.0,
+       70.0
+      ],
+      "stat": [
+       -0.350396,
+       -0.342,
+       -0.317833,
+       -0.282528,
+       -0.282528,
+       -0.268468,
+       -0.242361,
+       -0.212564
+      ]
+     }
+    }
+   },
+   "qualifying": [
+    {
+     "candidate": "pbp_swing",
+     "label": "um",
+     "q": 0.000876,
+     "d": 0.0896
+    },
+    {
+     "candidate": "bb_rw",
+     "label": "um",
+     "q": 0.041266,
+     "d": 0.0314,
+     "dropped": "|r| 0.769 with a chosen sub-driver"
+    },
+    {
+     "candidate": "ppa_raw",
+     "label": "um",
+     "q": 0.041266,
+     "d": 0.0278,
+     "dropped": "|r| 0.684 with a chosen sub-driver"
+    }
+   ]
+  },
+  "bat_ctrl": {
+   "tool": "bat_ctrl",
+   "key": "eBAT",
+   "admitted": [
+    "pbp_contact"
+   ],
+   "labels": {
+    "mlb": {
+     "computable": true,
+     "n": 237,
+     "players": 144,
+     "rows_with_a_subdriver": 221,
+     "rho_consensus": 0.3828,
+     "rho_etool": 0.4737,
+     "d": 0.0909,
+     "lb95": 0.0604,
+     "ci95": [
+      0.0532,
+      0.131
+     ],
+     "sd": 0.01925,
+     "p": 1e-06,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 663,
+     "players": 429,
+     "rows_with_a_subdriver": 518,
+     "rho_consensus": 0.4772,
+     "rho_etool": 0.5565,
+     "d": 0.0793,
+     "lb95": 0.0621,
+     "ci95": [
+      0.0589,
+      0.1013
+     ],
+     "sd": 0.01078,
+     "p": 0.0,
+     "draws": 2000
+    }
+   },
+   "fold_sigma": {
+    "2022": 9.0477,
+    "2023": 8.2296,
+    "2024": 10.0137
+   },
+   "verdict": "PASS",
+   "basis": "etool",
+   "final_fit": {
+    "lines": [
+     [
+      -2.148688,
+      0.04971,
+      true
+     ]
+    ],
+    "c": [
+     10.532149
+    ],
+    "sigma": 11.5058,
+    "n_fit": 900,
+    "tips": {
+     "mlb": {
+      "grade": [
+       40.0,
+       45.0,
+       50.0,
+       55.0,
+       60.0
+      ],
+      "stat": [
+       79.7,
+       84.2,
+       84.2,
+       84.9,
+       87.05
+      ]
+     },
+     "um": {
+      "grade": [
+       30.0,
+       40.0,
+       45.0,
+       50.0,
+       55.0,
+       60.0,
+       70.0
+      ],
+      "stat": [
+       0.7883,
+       0.805416,
+       0.813358,
+       0.827122,
+       0.83865,
+       0.860153,
+       0.8902
+      ]
+     }
+    }
+   },
+   "qualifying": [
+    {
+     "candidate": "pbp_contact",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.1748
+    },
+    {
+     "candidate": "k_rw",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.1354,
+     "dropped": "|r| 0.841 with a chosen sub-driver"
+    },
+    {
+     "candidate": "pbp_two_strike_contact",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.1243,
+     "dropped": "|r| 0.920 with a chosen sub-driver"
+    }
+   ]
+  },
+  "fb": {
+   "tool": "fb",
+   "key": "eFB",
+   "admitted": [
+    "k_rw",
+    "pbf_raw",
+    "pbp_swstr"
+   ],
+   "labels": {
+    "mlb": {
+     "computable": true,
+     "n": 1932,
+     "players": 896,
+     "rows_with_a_subdriver": 1873,
+     "rho_consensus": 0.2933,
+     "rho_etool": 0.3617,
+     "d": 0.0684,
+     "lb95": 0.0374,
+     "ci95": [
+      0.0315,
+      0.1049
+     ],
+     "sd": 0.01884,
+     "p": 0.000142,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 2919,
+     "players": 1513,
+     "rows_with_a_subdriver": 2836,
+     "rho_consensus": 0.2942,
+     "rho_etool": 0.4706,
+     "d": 0.1764,
+     "lb95": 0.1539,
+     "ci95": [
+      0.1494,
+      0.2025
+     ],
+     "sd": 0.01341,
+     "p": 0.0,
+     "draws": 2000
+    }
+   },
+   "fold_sigma": {
+    "2011": 13.7505,
+    "2012": 13.7701,
+    "2013": 14.1892,
+    "2014": 14.0963,
+    "2015": 14.9294,
+    "2016": 14.5004,
+    "2017": 14.5396,
+    "2018": 14.3489,
+    "2019": 13.8306,
+    "2022": 13.4035,
+    "2023": 13.286,
+    "2024": 13.0988
+   },
+   "verdict": "PASS",
+   "basis": "etool",
+   "final_fit": {
+    "lines": [
+     [
+      0.125897,
+      0.00032,
+      true
+     ],
+     [
+      -0.999321,
+      0.020162,
+      true
+     ],
+     [
+      -0.398735,
+      0.010192,
+      true
+     ]
+    ],
+    "c": [
+     130.556009,
+     3.506667,
+     2.613299
+    ],
+    "sigma": 13.9386,
+    "n_fit": 4851,
+    "tips": {
+     "mlb": {
+      "grade": [
+       45.0294,
+       50.4184,
+       54.9811,
+       59.824,
+       65.0,
+       69.7523,
+       74.8571,
+       79.881
+      ],
+      "stat": [
+       19.993864,
+       19.993864,
+       20.280702,
+       21.267454,
+       22.190746,
+       22.569465,
+       24.495062,
+       24.495062
+      ]
+     },
+     "um": {
+      "grade": [
+       30.0,
+       40.4808,
+       45.0109,
+       50.2766,
+       54.9827,
+       59.8267,
+       65.0248,
+       69.8014,
+       75.0833,
+       79.8256
+      ],
+      "stat": [
+       0.156268,
+       0.156268,
+       0.164836,
+       0.169073,
+       0.172385,
+       0.183083,
+       0.195674,
+       0.207008,
+       0.223983,
+       0.223983
+      ]
+     }
+    }
+   },
+   "qualifying": [
+    {
+     "candidate": "k_rw",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.2104
+    },
+    {
+     "candidate": "pbf_raw",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.1328
+    },
+    {
+     "candidate": "pbp_swstr",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.1057
+    },
+    {
+     "candidate": "pbp_csw",
+     "label": "um",
+     "q": 6e-06,
+     "d": 0.1022,
+     "dropped": "cap of 3"
+    },
+    {
+     "candidate": "pbf_par",
+     "label": "um",
+     "q": 3.6e-05,
+     "d": 0.0873,
+     "dropped": "cap of 3"
+    },
+    {
+     "candidate": "pip_raw",
+     "label": "um",
+     "q": 0.001444,
+     "d": 0.0609,
+     "dropped": "cap of 3"
+    }
+   ]
+  },
+  "cmd": {
+   "tool": "cmd",
+   "key": "eCMD",
+   "admitted": [
+    "bb_rw",
+    "pbp_fstrike",
+    "pbf_par"
+   ],
+   "labels": {
+    "mlb": {
+     "computable": true,
+     "n": 1931,
+     "players": 895,
+     "rows_with_a_subdriver": 1872,
+     "rho_consensus": 0.377,
+     "rho_etool": 0.4181,
+     "d": 0.0411,
+     "lb95": 0.0244,
+     "ci95": [
+      0.021,
+      0.0621
+     ],
+     "sd": 0.01042,
+     "p": 4e-05,
+     "draws": 2000
+    },
+    "um": {
+     "computable": true,
+     "n": 2917,
+     "players": 1511,
+     "rows_with_a_subdriver": 2834,
+     "rho_consensus": 0.5386,
+     "rho_etool": 0.6131,
+     "d": 0.0744,
+     "lb95": 0.062,
+     "ci95": [
+      0.06,
+      0.0891
+     ],
+     "sd": 0.00741,
+     "p": 0.0,
+     "draws": 2000
+    }
+   },
+   "fold_sigma": {
+    "2011": 8.1244,
+    "2012": 8.1213,
+    "2013": 8.1515,
+    "2014": 8.0217,
+    "2015": 8.2283,
+    "2016": 8.1612,
+    "2017": 8.3318,
+    "2018": 8.3088,
+    "2019": 8.1302,
+    "2022": 7.5377,
+    "2023": 7.2515,
+    "2024": 7.8045
+   },
+   "verdict": "PASS",
+   "basis": "etool",
+   "final_fit": {
+    "lines": [
+     [
+      0.382191,
+      -0.004552,
+      true
+     ],
+     [
+      -1.377861,
+      0.028849,
+      true
+     ],
+     [
+      1.155715,
+      -0.01982,
+      true
+     ]
+    ],
+    "c": [
+     -44.580705,
+     3.240957,
+     -1.072142
+    ],
+    "sigma": 8.1048,
+    "n_fit": 4848,
+    "tips": {
+     "mlb": {
+      "grade": [
+       35.125,
+       40.5774,
+       44.9771,
+       49.9956,
+       54.9889,
+       59.3613
+      ],
+      "stat": [
+       -11.923439,
+       -11.363636,
+       -10.27668,
+       -9.308457,
+       -8.372721,
+       -7.885714
+      ]
+     },
+     "um": {
+      "grade": [
+       30.0,
+       35.1,
+       40.4432,
+       45.0,
+       49.9991,
+       54.9917,
+       59.4388
+      ],
+      "stat": [
+       -0.182038,
+       -0.168873,
+       -0.143617,
+       -0.128895,
+       -0.111557,
+       -0.093442,
+       -0.089145
+      ]
+     }
+    }
+   },
+   "qualifying": [
+    {
+     "candidate": "bb_rw",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.0752
+    },
+    {
+     "candidate": "pbp_ball_rate",
+     "label": "um",
+     "q": 0.0,
+     "d": 0.0417,
+     "dropped": "|r| 0.670 with a chosen sub-driver"
+    },
+    {
+     "candidate": "pbp_fstrike",
+     "label": "um",
+     "q": 7.2e-05,
+     "d": 0.0332
+    },
+    {
+     "candidate": "pbf_par",
+     "label": "um",
+     "q": 0.008182,
+     "d": 0.0166
+    },
+    {
+     "candidate": "pbf_raw",
+     "label": "um",
+     "q": 0.022258,
+     "d": 0.0136,
+     "dropped": "cap of 3"
+    },
+    {
+     "candidate": "pip_par",
+     "label": "um",
+     "q": 0.055685,
+     "d": 0.0106,
+     "dropped": "cap of 3"
+    }
+   ]
+  },
+  "sl": {
+   "tool": "sl",
+   "key": "eSL",
+   "admitted": [],
+   "labels": {},
+   "verdict": "NO SUB-DRIVER",
+   "basis": "consensus",
+   "qualifying": []
+  },
+  "cb": {
+   "tool": "cb",
+   "key": "eCB",
+   "admitted": [],
+   "labels": {},
+   "verdict": "NO SUB-DRIVER",
+   "basis": "consensus",
+   "qualifying": []
+  },
+  "ch": {
+   "tool": "ch",
+   "key": "eCH",
+   "admitted": [],
+   "labels": {},
+   "verdict": "NO SUB-DRIVER",
+   "basis": "consensus",
+   "qualifying": []
+  }
+ },
+ "weighting": {
+  "hit": {
+   "tool": "hit",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 1385,
+      "rho_consensus": 0.2979,
+      "rho_arm": 0.2948,
+      "d": -0.0031,
+      "lb95": -0.0062,
+      "ci95": [
+       -0.0069,
+       0.0005
+      ],
+      "sd": 0.00189,
+      "p": 0.95195,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2704,
+      "rho_consensus": 0.4358,
+      "rho_arm": 0.4352,
+      "d": -0.0006,
+      "lb95": -0.0025,
+      "ci95": [
+       -0.0028,
+       0.0018
+      ],
+      "sd": 0.00118,
+      "p": 0.683417,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 1385,
+      "rho_consensus": 0.2979,
+      "rho_arm": 0.5523,
+      "d": 0.2544,
+      "lb95": 0.219,
+      "ci95": [
+       0.2123,
+       0.2982
+      ],
+      "sd": 0.02183,
+      "p": 0.0,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2704,
+      "rho_consensus": 0.4358,
+      "rho_arm": 0.6743,
+      "d": 0.2385,
+      "lb95": 0.2177,
+      "ci95": [
+       0.2128,
+       0.2647
+      ],
+      "sd": 0.01305,
+      "p": 0.0,
+      "draws": 2000
+     },
+     "verdict": "BEATS CONSENSUS"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "CF": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "COF": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "SS": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "C": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "IF": {
+       "fangraphs": 1.1409,
+       "mlb_pipeline": 0.8591
+      },
+      "1B/DH": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.8604,
+       "mlb_pipeline": 0.81,
+       "stat": 1.3296
+      },
+      "CF": {
+       "fangraphs": 0.8604,
+       "mlb_pipeline": 0.81,
+       "stat": 1.3296
+      },
+      "COF": {
+       "fangraphs": 0.8604,
+       "mlb_pipeline": 0.81,
+       "stat": 1.3296
+      },
+      "SS": {
+       "fangraphs": 0.8604,
+       "mlb_pipeline": 0.81,
+       "stat": 1.3296
+      },
+      "C": {
+       "fangraphs": 0.8604,
+       "mlb_pipeline": 0.81,
+       "stat": 1.3296
+      },
+      "IF": {
+       "fangraphs": 0.9626,
+       "mlb_pipeline": 0.7577,
+       "stat": 1.2797
+      },
+      "1B/DH": {
+       "fangraphs": 0.8604,
+       "mlb_pipeline": 0.81,
+       "stat": 1.3296
+      }
+     }
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "CF": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "COF": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "SS": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "C": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      },
+      "IF": {
+       "fangraphs": 1.1409,
+       "mlb_pipeline": 0.8591
+      },
+      "1B/DH": {
+       "fangraphs": 1.0308,
+       "mlb_pipeline": 0.9692
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.8602,
+       "mlb_pipeline": 0.8098,
+       "stat": 1.3299
+      },
+      "CF": {
+       "fangraphs": 0.8602,
+       "mlb_pipeline": 0.8098,
+       "stat": 1.3299
+      },
+      "COF": {
+       "fangraphs": 0.8602,
+       "mlb_pipeline": 0.8098,
+       "stat": 1.3299
+      },
+      "SS": {
+       "fangraphs": 0.8602,
+       "mlb_pipeline": 0.8098,
+       "stat": 1.3299
+      },
+      "C": {
+       "fangraphs": 0.8602,
+       "mlb_pipeline": 0.8098,
+       "stat": 1.3299
+      },
+      "IF": {
+       "fangraphs": 0.9626,
+       "mlb_pipeline": 0.7577,
+       "stat": 1.2797
+      },
+      "1B/DH": {
+       "fangraphs": 0.8602,
+       "mlb_pipeline": 0.8098,
+       "stat": 1.3299
+      }
+     }
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0336,
+       "mlb_pipeline": 0.9664
+      },
+      "CF": {
+       "fangraphs": 1.0336,
+       "mlb_pipeline": 0.9664
+      },
+      "COF": {
+       "fangraphs": 1.0336,
+       "mlb_pipeline": 0.9664
+      },
+      "SS": {
+       "fangraphs": 1.0336,
+       "mlb_pipeline": 0.9664
+      },
+      "C": {
+       "fangraphs": 1.0336,
+       "mlb_pipeline": 0.9664
+      },
+      "IF": {
+       "fangraphs": 1.1409,
+       "mlb_pipeline": 0.8591
+      },
+      "1B/DH": {
+       "fangraphs": 1.0336,
+       "mlb_pipeline": 0.9664
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.862,
+       "mlb_pipeline": 0.8071,
+       "stat": 1.3309
+      },
+      "CF": {
+       "fangraphs": 0.862,
+       "mlb_pipeline": 0.8071,
+       "stat": 1.3309
+      },
+      "COF": {
+       "fangraphs": 0.862,
+       "mlb_pipeline": 0.8071,
+       "stat": 1.3309
+      },
+      "SS": {
+       "fangraphs": 0.862,
+       "mlb_pipeline": 0.8071,
+       "stat": 1.3309
+      },
+      "C": {
+       "fangraphs": 0.862,
+       "mlb_pipeline": 0.8071,
+       "stat": 1.3309
+      },
+      "IF": {
+       "fangraphs": 0.9631,
+       "mlb_pipeline": 0.758,
+       "stat": 1.2789
+      },
+      "1B/DH": {
+       "fangraphs": 0.862,
+       "mlb_pipeline": 0.8071,
+       "stat": 1.3309
+      }
+     }
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0239,
+       "mlb_pipeline": 0.9761
+      },
+      "COF": {
+       "fangraphs": 1.0239,
+       "mlb_pipeline": 0.9761
+      },
+      "CF": {
+       "fangraphs": 1.0239,
+       "mlb_pipeline": 0.9761
+      },
+      "SS": {
+       "fangraphs": 1.0239,
+       "mlb_pipeline": 0.9761
+      },
+      "IF": {
+       "fangraphs": 1.1424,
+       "mlb_pipeline": 0.8576
+      },
+      "1B/DH": {
+       "fangraphs": 1.0239,
+       "mlb_pipeline": 0.9761
+      },
+      "C": {
+       "fangraphs": 1.0239,
+       "mlb_pipeline": 0.9761
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.8586,
+       "mlb_pipeline": 0.8188,
+       "stat": 1.3226
+      },
+      "COF": {
+       "fangraphs": 0.8586,
+       "mlb_pipeline": 0.8188,
+       "stat": 1.3226
+      },
+      "CF": {
+       "fangraphs": 0.8586,
+       "mlb_pipeline": 0.8188,
+       "stat": 1.3226
+      },
+      "SS": {
+       "fangraphs": 0.8586,
+       "mlb_pipeline": 0.8188,
+       "stat": 1.3226
+      },
+      "IF": {
+       "fangraphs": 0.9551,
+       "mlb_pipeline": 0.7523,
+       "stat": 1.2926
+      },
+      "1B/DH": {
+       "fangraphs": 0.8586,
+       "mlb_pipeline": 0.8188,
+       "stat": 1.3226
+      },
+      "C": {
+       "fangraphs": 0.8586,
+       "mlb_pipeline": 0.8188,
+       "stat": 1.3226
+      }
+     }
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.022,
+       "mlb_pipeline": 0.978
+      },
+      "COF": {
+       "fangraphs": 1.022,
+       "mlb_pipeline": 0.978
+      },
+      "SS": {
+       "fangraphs": 1.022,
+       "mlb_pipeline": 0.978
+      },
+      "IF": {
+       "fangraphs": 1.022,
+       "mlb_pipeline": 0.978
+      },
+      "1B/DH": {
+       "fangraphs": 1.022,
+       "mlb_pipeline": 0.978
+      },
+      "C": {
+       "fangraphs": 1.022,
+       "mlb_pipeline": 0.978
+      },
+      "CF": {
+       "fangraphs": 1.022,
+       "mlb_pipeline": 0.978
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.8467,
+       "mlb_pipeline": 0.8106,
+       "stat": 1.3427
+      },
+      "COF": {
+       "fangraphs": 0.8467,
+       "mlb_pipeline": 0.8106,
+       "stat": 1.3427
+      },
+      "SS": {
+       "fangraphs": 0.8467,
+       "mlb_pipeline": 0.8106,
+       "stat": 1.3427
+      },
+      "IF": {
+       "fangraphs": 0.8467,
+       "mlb_pipeline": 0.8106,
+       "stat": 1.3427
+      },
+      "1B/DH": {
+       "fangraphs": 0.8467,
+       "mlb_pipeline": 0.8106,
+       "stat": 1.3427
+      },
+      "C": {
+       "fangraphs": 0.8467,
+       "mlb_pipeline": 0.8106,
+       "stat": 1.3427
+      },
+      "CF": {
+       "fangraphs": 0.8467,
+       "mlb_pipeline": 0.8106,
+       "stat": 1.3427
+      }
+     }
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0106,
+       "mlb_pipeline": 0.9894
+      },
+      "COF": {
+       "fangraphs": 1.0106,
+       "mlb_pipeline": 0.9894
+      },
+      "SS": {
+       "fangraphs": 1.0106,
+       "mlb_pipeline": 0.9894
+      },
+      "IF": {
+       "fangraphs": 1.0106,
+       "mlb_pipeline": 0.9894
+      },
+      "1B/DH": {
+       "fangraphs": 1.0106,
+       "mlb_pipeline": 0.9894
+      },
+      "C": {
+       "fangraphs": 1.0106,
+       "mlb_pipeline": 0.9894
+      },
+      "CF": {
+       "fangraphs": 1.0106,
+       "mlb_pipeline": 0.9894
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.8524,
+       "mlb_pipeline": 0.8342,
+       "stat": 1.3133
+      },
+      "COF": {
+       "fangraphs": 0.8524,
+       "mlb_pipeline": 0.8342,
+       "stat": 1.3133
+      },
+      "SS": {
+       "fangraphs": 0.8524,
+       "mlb_pipeline": 0.8342,
+       "stat": 1.3133
+      },
+      "IF": {
+       "fangraphs": 0.8524,
+       "mlb_pipeline": 0.8342,
+       "stat": 1.3133
+      },
+      "1B/DH": {
+       "fangraphs": 0.8524,
+       "mlb_pipeline": 0.8342,
+       "stat": 1.3133
+      },
+      "C": {
+       "fangraphs": 0.8524,
+       "mlb_pipeline": 0.8342,
+       "stat": 1.3133
+      },
+      "CF": {
+       "fangraphs": 0.8524,
+       "mlb_pipeline": 0.8342,
+       "stat": 1.3133
+      }
+     }
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9702,
+       "mlb_pipeline": 1.0298
+      },
+      "IF": {
+       "fangraphs": 0.9702,
+       "mlb_pipeline": 1.0298
+      },
+      "CF": {
+       "fangraphs": 0.9702,
+       "mlb_pipeline": 1.0298
+      },
+      "C": {
+       "fangraphs": 0.9702,
+       "mlb_pipeline": 1.0298
+      },
+      "1B/DH": {
+       "fangraphs": 0.9702,
+       "mlb_pipeline": 1.0298
+      },
+      "SS": {
+       "fangraphs": 0.9702,
+       "mlb_pipeline": 1.0298
+      },
+      "COF": {
+       "fangraphs": 0.9702,
+       "mlb_pipeline": 1.0298
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.8023,
+       "mlb_pipeline": 0.8433,
+       "stat": 1.3544
+      },
+      "IF": {
+       "fangraphs": 0.8023,
+       "mlb_pipeline": 0.8433,
+       "stat": 1.3544
+      },
+      "CF": {
+       "fangraphs": 0.8023,
+       "mlb_pipeline": 0.8433,
+       "stat": 1.3544
+      },
+      "C": {
+       "fangraphs": 0.8023,
+       "mlb_pipeline": 0.8433,
+       "stat": 1.3544
+      },
+      "1B/DH": {
+       "fangraphs": 0.8023,
+       "mlb_pipeline": 0.8433,
+       "stat": 1.3544
+      },
+      "SS": {
+       "fangraphs": 0.8023,
+       "mlb_pipeline": 0.8433,
+       "stat": 1.3544
+      },
+      "COF": {
+       "fangraphs": 0.8023,
+       "mlb_pipeline": 0.8433,
+       "stat": 1.3544
+      }
+     }
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9992,
+       "mlb_pipeline": 1.0008
+      },
+      "CF": {
+       "fangraphs": 0.9992,
+       "mlb_pipeline": 1.0008
+      },
+      "COF": {
+       "fangraphs": 0.9992,
+       "mlb_pipeline": 1.0008
+      },
+      "SS": {
+       "fangraphs": 0.9992,
+       "mlb_pipeline": 1.0008
+      },
+      "C": {
+       "fangraphs": 0.9992,
+       "mlb_pipeline": 1.0008
+      },
+      "IF": {
+       "fangraphs": 0.9992,
+       "mlb_pipeline": 1.0008
+      },
+      "1B/DH": {
+       "fangraphs": 0.9992,
+       "mlb_pipeline": 1.0008
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.8669,
+       "mlb_pipeline": 0.8639,
+       "stat": 1.2692
+      },
+      "CF": {
+       "fangraphs": 0.8669,
+       "mlb_pipeline": 0.8639,
+       "stat": 1.2692
+      },
+      "COF": {
+       "fangraphs": 0.8669,
+       "mlb_pipeline": 0.8639,
+       "stat": 1.2692
+      },
+      "SS": {
+       "fangraphs": 0.8669,
+       "mlb_pipeline": 0.8639,
+       "stat": 1.2692
+      },
+      "C": {
+       "fangraphs": 0.8669,
+       "mlb_pipeline": 0.8639,
+       "stat": 1.2692
+      },
+      "IF": {
+       "fangraphs": 0.8669,
+       "mlb_pipeline": 0.8639,
+       "stat": 1.2692
+      },
+      "1B/DH": {
+       "fangraphs": 0.8669,
+       "mlb_pipeline": 0.8639,
+       "stat": 1.2692
+      }
+     }
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0124,
+       "mlb_pipeline": 0.9876
+      },
+      "CF": {
+       "fangraphs": 1.0124,
+       "mlb_pipeline": 0.9876
+      },
+      "COF": {
+       "fangraphs": 1.0124,
+       "mlb_pipeline": 0.9876
+      },
+      "SS": {
+       "fangraphs": 1.0124,
+       "mlb_pipeline": 0.9876
+      },
+      "C": {
+       "fangraphs": 1.0124,
+       "mlb_pipeline": 0.9876
+      },
+      "IF": {
+       "fangraphs": 1.0124,
+       "mlb_pipeline": 0.9876
+      },
+      "1B/DH": {
+       "fangraphs": 1.0124,
+       "mlb_pipeline": 0.9876
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.8539,
+       "mlb_pipeline": 0.8303,
+       "stat": 1.3158
+      },
+      "CF": {
+       "fangraphs": 0.8539,
+       "mlb_pipeline": 0.8303,
+       "stat": 1.3158
+      },
+      "COF": {
+       "fangraphs": 0.8539,
+       "mlb_pipeline": 0.8303,
+       "stat": 1.3158
+      },
+      "SS": {
+       "fangraphs": 0.8539,
+       "mlb_pipeline": 0.8303,
+       "stat": 1.3158
+      },
+      "C": {
+       "fangraphs": 0.8539,
+       "mlb_pipeline": 0.8303,
+       "stat": 1.3158
+      },
+      "IF": {
+       "fangraphs": 0.8539,
+       "mlb_pipeline": 0.8303,
+       "stat": 1.3158
+      },
+      "1B/DH": {
+       "fangraphs": 0.8539,
+       "mlb_pipeline": 0.8303,
+       "stat": 1.3158
+      }
+     }
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0394,
+       "mlb_pipeline": 0.9606
+      },
+      "CF": {
+       "fangraphs": 1.0394,
+       "mlb_pipeline": 0.9606
+      },
+      "COF": {
+       "fangraphs": 1.0394,
+       "mlb_pipeline": 0.9606
+      },
+      "SS": {
+       "fangraphs": 1.0394,
+       "mlb_pipeline": 0.9606
+      },
+      "C": {
+       "fangraphs": 1.0394,
+       "mlb_pipeline": 0.9606
+      },
+      "IF": {
+       "fangraphs": 1.0394,
+       "mlb_pipeline": 0.9606
+      },
+      "1B/DH": {
+       "fangraphs": 1.0394,
+       "mlb_pipeline": 0.9606
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.914,
+       "mlb_pipeline": 0.8495,
+       "stat": 1.2365
+      },
+      "CF": {
+       "fangraphs": 0.914,
+       "mlb_pipeline": 0.8495,
+       "stat": 1.2365
+      },
+      "COF": {
+       "fangraphs": 0.914,
+       "mlb_pipeline": 0.8495,
+       "stat": 1.2365
+      },
+      "SS": {
+       "fangraphs": 0.914,
+       "mlb_pipeline": 0.8495,
+       "stat": 1.2365
+      },
+      "C": {
+       "fangraphs": 0.914,
+       "mlb_pipeline": 0.8495,
+       "stat": 1.2365
+      },
+      "IF": {
+       "fangraphs": 0.914,
+       "mlb_pipeline": 0.8495,
+       "stat": 1.2365
+      },
+      "1B/DH": {
+       "fangraphs": 0.914,
+       "mlb_pipeline": 0.8495,
+       "stat": 1.2365
+      }
+     }
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0271,
+       "mlb_pipeline": 0.9729
+      },
+      "CF": {
+       "fangraphs": 1.0271,
+       "mlb_pipeline": 0.9729
+      },
+      "COF": {
+       "fangraphs": 1.0271,
+       "mlb_pipeline": 0.9729
+      },
+      "SS": {
+       "fangraphs": 1.0271,
+       "mlb_pipeline": 0.9729
+      },
+      "C": {
+       "fangraphs": 1.0271,
+       "mlb_pipeline": 0.9729
+      },
+      "IF": {
+       "fangraphs": 1.0271,
+       "mlb_pipeline": 0.9729
+      },
+      "1B/DH": {
+       "fangraphs": 1.0271,
+       "mlb_pipeline": 0.9729
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.897,
+       "mlb_pipeline": 0.853,
+       "stat": 1.25
+      },
+      "CF": {
+       "fangraphs": 0.897,
+       "mlb_pipeline": 0.853,
+       "stat": 1.25
+      },
+      "COF": {
+       "fangraphs": 0.897,
+       "mlb_pipeline": 0.853,
+       "stat": 1.25
+      },
+      "SS": {
+       "fangraphs": 0.897,
+       "mlb_pipeline": 0.853,
+       "stat": 1.25
+      },
+      "C": {
+       "fangraphs": 0.897,
+       "mlb_pipeline": 0.853,
+       "stat": 1.25
+      },
+      "IF": {
+       "fangraphs": 0.897,
+       "mlb_pipeline": 0.853,
+       "stat": 1.25
+      },
+      "1B/DH": {
+       "fangraphs": 0.897,
+       "mlb_pipeline": 0.853,
+       "stat": 1.25
+      }
+     }
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0405,
+       "mlb_pipeline": 0.9595
+      },
+      "CF": {
+       "fangraphs": 1.0405,
+       "mlb_pipeline": 0.9595
+      },
+      "COF": {
+       "fangraphs": 1.0405,
+       "mlb_pipeline": 0.9595
+      },
+      "SS": {
+       "fangraphs": 1.0405,
+       "mlb_pipeline": 0.9595
+      },
+      "C": {
+       "fangraphs": 1.0405,
+       "mlb_pipeline": 0.9595
+      },
+      "IF": {
+       "fangraphs": 1.0405,
+       "mlb_pipeline": 0.9595
+      },
+      "1B/DH": {
+       "fangraphs": 1.0405,
+       "mlb_pipeline": 0.9595
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.8808,
+       "mlb_pipeline": 0.8139,
+       "stat": 1.3053
+      },
+      "CF": {
+       "fangraphs": 0.8808,
+       "mlb_pipeline": 0.8139,
+       "stat": 1.3053
+      },
+      "COF": {
+       "fangraphs": 0.8808,
+       "mlb_pipeline": 0.8139,
+       "stat": 1.3053
+      },
+      "SS": {
+       "fangraphs": 0.8808,
+       "mlb_pipeline": 0.8139,
+       "stat": 1.3053
+      },
+      "C": {
+       "fangraphs": 0.8808,
+       "mlb_pipeline": 0.8139,
+       "stat": 1.3053
+      },
+      "IF": {
+       "fangraphs": 0.8808,
+       "mlb_pipeline": 0.8139,
+       "stat": 1.3053
+      },
+      "1B/DH": {
+       "fangraphs": 0.8808,
+       "mlb_pipeline": 0.8139,
+       "stat": 1.3053
+      }
+     }
+    }
+   }
+  },
+  "game_pwr": {
+   "tool": "game_pwr",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 1385,
+      "rho_consensus": 0.5394,
+      "rho_arm": 0.5417,
+      "d": 0.0022,
+      "lb95": -0.0003,
+      "ci95": [
+       -0.0009,
+       0.0053
+      ],
+      "sd": 0.00156,
+      "p": 0.077083,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2705,
+      "rho_consensus": 0.5941,
+      "rho_arm": 0.5962,
+      "d": 0.0022,
+      "lb95": 0.0006,
+      "ci95": [
+       0.0003,
+       0.0041
+      ],
+      "sd": 0.00096,
+      "p": 0.012352,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 1385,
+      "rho_consensus": 0.5394,
+      "rho_arm": 0.5716,
+      "d": 0.0321,
+      "lb95": 0.0173,
+      "ci95": [
+       0.0152,
+       0.0502
+      ],
+      "sd": 0.00889,
+      "p": 0.00015,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2705,
+      "rho_consensus": 0.5941,
+      "rho_arm": 0.6346,
+      "d": 0.0406,
+      "lb95": 0.0313,
+      "ci95": [
+       0.0297,
+       0.0508
+      ],
+      "sd": 0.00546,
+      "p": 0.0,
+      "draws": 2000
+     },
+     "verdict": "BEATS CONSENSUS"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "CF": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "COF": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "SS": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "C": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "IF": {
+       "fangraphs": 0.9232,
+       "mlb_pipeline": 1.0768
+      },
+      "1B/DH": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "CF": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "COF": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "SS": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "C": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "IF": {
+       "fangraphs": 0.9924,
+       "mlb_pipeline": 1.1701,
+       "stat": 0.8375
+      },
+      "1B/DH": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      }
+     }
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "CF": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "COF": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "SS": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "C": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      },
+      "IF": {
+       "fangraphs": 0.9232,
+       "mlb_pipeline": 1.0768
+      },
+      "1B/DH": {
+       "fangraphs": 0.9647,
+       "mlb_pipeline": 1.0353
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "CF": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "COF": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "SS": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "C": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      },
+      "IF": {
+       "fangraphs": 0.9931,
+       "mlb_pipeline": 1.1709,
+       "stat": 0.836
+      },
+      "1B/DH": {
+       "fangraphs": 1.0072,
+       "mlb_pipeline": 1.0824,
+       "stat": 0.9104
+      }
+     }
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9656,
+       "mlb_pipeline": 1.0344
+      },
+      "CF": {
+       "fangraphs": 0.9656,
+       "mlb_pipeline": 1.0344
+      },
+      "COF": {
+       "fangraphs": 0.9656,
+       "mlb_pipeline": 1.0344
+      },
+      "SS": {
+       "fangraphs": 0.9656,
+       "mlb_pipeline": 1.0344
+      },
+      "C": {
+       "fangraphs": 0.9656,
+       "mlb_pipeline": 1.0344
+      },
+      "IF": {
+       "fangraphs": 0.9232,
+       "mlb_pipeline": 1.0768
+      },
+      "1B/DH": {
+       "fangraphs": 0.9656,
+       "mlb_pipeline": 1.0344
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.008,
+       "mlb_pipeline": 1.0814,
+       "stat": 0.9106
+      },
+      "CF": {
+       "fangraphs": 1.008,
+       "mlb_pipeline": 1.0814,
+       "stat": 0.9106
+      },
+      "COF": {
+       "fangraphs": 1.008,
+       "mlb_pipeline": 1.0814,
+       "stat": 0.9106
+      },
+      "SS": {
+       "fangraphs": 1.008,
+       "mlb_pipeline": 1.0814,
+       "stat": 0.9106
+      },
+      "C": {
+       "fangraphs": 1.008,
+       "mlb_pipeline": 1.0814,
+       "stat": 0.9106
+      },
+      "IF": {
+       "fangraphs": 0.9919,
+       "mlb_pipeline": 1.1693,
+       "stat": 0.8389
+      },
+      "1B/DH": {
+       "fangraphs": 1.008,
+       "mlb_pipeline": 1.0814,
+       "stat": 0.9106
+      }
+     }
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9642,
+       "mlb_pipeline": 1.0358
+      },
+      "COF": {
+       "fangraphs": 0.9642,
+       "mlb_pipeline": 1.0358
+      },
+      "CF": {
+       "fangraphs": 0.9642,
+       "mlb_pipeline": 1.0358
+      },
+      "SS": {
+       "fangraphs": 0.9642,
+       "mlb_pipeline": 1.0358
+      },
+      "IF": {
+       "fangraphs": 0.9258,
+       "mlb_pipeline": 1.0742
+      },
+      "1B/DH": {
+       "fangraphs": 0.9642,
+       "mlb_pipeline": 1.0358
+      },
+      "C": {
+       "fangraphs": 0.9642,
+       "mlb_pipeline": 1.0358
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0102,
+       "mlb_pipeline": 1.087,
+       "stat": 0.9028
+      },
+      "COF": {
+       "fangraphs": 1.0102,
+       "mlb_pipeline": 1.087,
+       "stat": 0.9028
+      },
+      "CF": {
+       "fangraphs": 1.0102,
+       "mlb_pipeline": 1.087,
+       "stat": 0.9028
+      },
+      "SS": {
+       "fangraphs": 1.0102,
+       "mlb_pipeline": 1.087,
+       "stat": 0.9028
+      },
+      "IF": {
+       "fangraphs": 0.9841,
+       "mlb_pipeline": 1.1522,
+       "stat": 0.8637
+      },
+      "1B/DH": {
+       "fangraphs": 1.0102,
+       "mlb_pipeline": 1.087,
+       "stat": 0.9028
+      },
+      "C": {
+       "fangraphs": 1.0102,
+       "mlb_pipeline": 1.087,
+       "stat": 0.9028
+      }
+     }
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9667,
+       "mlb_pipeline": 1.0333
+      },
+      "COF": {
+       "fangraphs": 0.9667,
+       "mlb_pipeline": 1.0333
+      },
+      "SS": {
+       "fangraphs": 0.9667,
+       "mlb_pipeline": 1.0333
+      },
+      "IF": {
+       "fangraphs": 0.9667,
+       "mlb_pipeline": 1.0333
+      },
+      "1B/DH": {
+       "fangraphs": 0.9667,
+       "mlb_pipeline": 1.0333
+      },
+      "C": {
+       "fangraphs": 0.9667,
+       "mlb_pipeline": 1.0333
+      },
+      "CF": {
+       "fangraphs": 0.9667,
+       "mlb_pipeline": 1.0333
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0126,
+       "mlb_pipeline": 1.0844,
+       "stat": 0.903
+      },
+      "COF": {
+       "fangraphs": 1.0126,
+       "mlb_pipeline": 1.0844,
+       "stat": 0.903
+      },
+      "SS": {
+       "fangraphs": 1.0126,
+       "mlb_pipeline": 1.0844,
+       "stat": 0.903
+      },
+      "IF": {
+       "fangraphs": 1.0126,
+       "mlb_pipeline": 1.0844,
+       "stat": 0.903
+      },
+      "1B/DH": {
+       "fangraphs": 1.0126,
+       "mlb_pipeline": 1.0844,
+       "stat": 0.903
+      },
+      "C": {
+       "fangraphs": 1.0126,
+       "mlb_pipeline": 1.0844,
+       "stat": 0.903
+      },
+      "CF": {
+       "fangraphs": 1.0126,
+       "mlb_pipeline": 1.0844,
+       "stat": 0.903
+      }
+     }
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9712,
+       "mlb_pipeline": 1.0288
+      },
+      "COF": {
+       "fangraphs": 0.9712,
+       "mlb_pipeline": 1.0288
+      },
+      "SS": {
+       "fangraphs": 0.9712,
+       "mlb_pipeline": 1.0288
+      },
+      "IF": {
+       "fangraphs": 0.9712,
+       "mlb_pipeline": 1.0288
+      },
+      "1B/DH": {
+       "fangraphs": 0.9712,
+       "mlb_pipeline": 1.0288
+      },
+      "C": {
+       "fangraphs": 0.9712,
+       "mlb_pipeline": 1.0288
+      },
+      "CF": {
+       "fangraphs": 0.9712,
+       "mlb_pipeline": 1.0288
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0376,
+       "mlb_pipeline": 1.1016,
+       "stat": 0.8608
+      },
+      "COF": {
+       "fangraphs": 1.0376,
+       "mlb_pipeline": 1.1016,
+       "stat": 0.8608
+      },
+      "SS": {
+       "fangraphs": 1.0376,
+       "mlb_pipeline": 1.1016,
+       "stat": 0.8608
+      },
+      "IF": {
+       "fangraphs": 1.0376,
+       "mlb_pipeline": 1.1016,
+       "stat": 0.8608
+      },
+      "1B/DH": {
+       "fangraphs": 1.0376,
+       "mlb_pipeline": 1.1016,
+       "stat": 0.8608
+      },
+      "C": {
+       "fangraphs": 1.0376,
+       "mlb_pipeline": 1.1016,
+       "stat": 0.8608
+      },
+      "CF": {
+       "fangraphs": 1.0376,
+       "mlb_pipeline": 1.1016,
+       "stat": 0.8608
+      }
+     }
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9649,
+       "mlb_pipeline": 1.0351
+      },
+      "IF": {
+       "fangraphs": 0.9649,
+       "mlb_pipeline": 1.0351
+      },
+      "CF": {
+       "fangraphs": 0.9649,
+       "mlb_pipeline": 1.0351
+      },
+      "C": {
+       "fangraphs": 0.9649,
+       "mlb_pipeline": 1.0351
+      },
+      "1B/DH": {
+       "fangraphs": 0.9649,
+       "mlb_pipeline": 1.0351
+      },
+      "SS": {
+       "fangraphs": 0.9649,
+       "mlb_pipeline": 1.0351
+      },
+      "COF": {
+       "fangraphs": 0.9649,
+       "mlb_pipeline": 1.0351
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0316,
+       "mlb_pipeline": 1.109,
+       "stat": 0.8594
+      },
+      "IF": {
+       "fangraphs": 1.0316,
+       "mlb_pipeline": 1.109,
+       "stat": 0.8594
+      },
+      "CF": {
+       "fangraphs": 1.0316,
+       "mlb_pipeline": 1.109,
+       "stat": 0.8594
+      },
+      "C": {
+       "fangraphs": 1.0316,
+       "mlb_pipeline": 1.109,
+       "stat": 0.8594
+      },
+      "1B/DH": {
+       "fangraphs": 1.0316,
+       "mlb_pipeline": 1.109,
+       "stat": 0.8594
+      },
+      "SS": {
+       "fangraphs": 1.0316,
+       "mlb_pipeline": 1.109,
+       "stat": 0.8594
+      },
+      "COF": {
+       "fangraphs": 1.0316,
+       "mlb_pipeline": 1.109,
+       "stat": 0.8594
+      }
+     }
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "CF": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "COF": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "SS": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "C": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "IF": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "1B/DH": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9737,
+       "mlb_pipeline": 1.0817,
+       "stat": 0.9446
+      },
+      "CF": {
+       "fangraphs": 0.9737,
+       "mlb_pipeline": 1.0817,
+       "stat": 0.9446
+      },
+      "COF": {
+       "fangraphs": 0.9737,
+       "mlb_pipeline": 1.0817,
+       "stat": 0.9446
+      },
+      "SS": {
+       "fangraphs": 0.9737,
+       "mlb_pipeline": 1.0817,
+       "stat": 0.9446
+      },
+      "C": {
+       "fangraphs": 0.9737,
+       "mlb_pipeline": 1.0817,
+       "stat": 0.9446
+      },
+      "IF": {
+       "fangraphs": 0.9737,
+       "mlb_pipeline": 1.0817,
+       "stat": 0.9446
+      },
+      "1B/DH": {
+       "fangraphs": 0.9737,
+       "mlb_pipeline": 1.0817,
+       "stat": 0.9446
+      }
+     }
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "CF": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "COF": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "SS": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "C": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "IF": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      },
+      "1B/DH": {
+       "fangraphs": 0.948,
+       "mlb_pipeline": 1.052
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9764,
+       "mlb_pipeline": 1.0845,
+       "stat": 0.9391
+      },
+      "CF": {
+       "fangraphs": 0.9764,
+       "mlb_pipeline": 1.0845,
+       "stat": 0.9391
+      },
+      "COF": {
+       "fangraphs": 0.9764,
+       "mlb_pipeline": 1.0845,
+       "stat": 0.9391
+      },
+      "SS": {
+       "fangraphs": 0.9764,
+       "mlb_pipeline": 1.0845,
+       "stat": 0.9391
+      },
+      "C": {
+       "fangraphs": 0.9764,
+       "mlb_pipeline": 1.0845,
+       "stat": 0.9391
+      },
+      "IF": {
+       "fangraphs": 0.9764,
+       "mlb_pipeline": 1.0845,
+       "stat": 0.9391
+      },
+      "1B/DH": {
+       "fangraphs": 0.9764,
+       "mlb_pipeline": 1.0845,
+       "stat": 0.9391
+      }
+     }
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9835,
+       "mlb_pipeline": 1.0165
+      },
+      "CF": {
+       "fangraphs": 0.9835,
+       "mlb_pipeline": 1.0165
+      },
+      "COF": {
+       "fangraphs": 0.9835,
+       "mlb_pipeline": 1.0165
+      },
+      "SS": {
+       "fangraphs": 0.9835,
+       "mlb_pipeline": 1.0165
+      },
+      "C": {
+       "fangraphs": 0.9835,
+       "mlb_pipeline": 1.0165
+      },
+      "IF": {
+       "fangraphs": 0.9835,
+       "mlb_pipeline": 1.0165
+      },
+      "1B/DH": {
+       "fangraphs": 0.9835,
+       "mlb_pipeline": 1.0165
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9958,
+       "mlb_pipeline": 1.0301,
+       "stat": 0.9741
+      },
+      "CF": {
+       "fangraphs": 0.9958,
+       "mlb_pipeline": 1.0301,
+       "stat": 0.9741
+      },
+      "COF": {
+       "fangraphs": 0.9958,
+       "mlb_pipeline": 1.0301,
+       "stat": 0.9741
+      },
+      "SS": {
+       "fangraphs": 0.9958,
+       "mlb_pipeline": 1.0301,
+       "stat": 0.9741
+      },
+      "C": {
+       "fangraphs": 0.9958,
+       "mlb_pipeline": 1.0301,
+       "stat": 0.9741
+      },
+      "IF": {
+       "fangraphs": 0.9958,
+       "mlb_pipeline": 1.0301,
+       "stat": 0.9741
+      },
+      "1B/DH": {
+       "fangraphs": 0.9958,
+       "mlb_pipeline": 1.0301,
+       "stat": 0.9741
+      }
+     }
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      },
+      "CF": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      },
+      "COF": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      },
+      "SS": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      },
+      "C": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      },
+      "IF": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      },
+      "1B/DH": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.009,
+       "mlb_pipeline": 1.0649,
+       "stat": 0.9261
+      },
+      "CF": {
+       "fangraphs": 1.009,
+       "mlb_pipeline": 1.0649,
+       "stat": 0.9261
+      },
+      "COF": {
+       "fangraphs": 1.009,
+       "mlb_pipeline": 1.0649,
+       "stat": 0.9261
+      },
+      "SS": {
+       "fangraphs": 1.009,
+       "mlb_pipeline": 1.0649,
+       "stat": 0.9261
+      },
+      "C": {
+       "fangraphs": 1.009,
+       "mlb_pipeline": 1.0649,
+       "stat": 0.9261
+      },
+      "IF": {
+       "fangraphs": 1.009,
+       "mlb_pipeline": 1.0649,
+       "stat": 0.9261
+      },
+      "1B/DH": {
+       "fangraphs": 1.009,
+       "mlb_pipeline": 1.0649,
+       "stat": 0.9261
+      }
+     }
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9714,
+       "mlb_pipeline": 1.0286
+      },
+      "CF": {
+       "fangraphs": 0.9714,
+       "mlb_pipeline": 1.0286
+      },
+      "COF": {
+       "fangraphs": 0.9714,
+       "mlb_pipeline": 1.0286
+      },
+      "SS": {
+       "fangraphs": 0.9714,
+       "mlb_pipeline": 1.0286
+      },
+      "C": {
+       "fangraphs": 0.9714,
+       "mlb_pipeline": 1.0286
+      },
+      "IF": {
+       "fangraphs": 0.9714,
+       "mlb_pipeline": 1.0286
+      },
+      "1B/DH": {
+       "fangraphs": 0.9714,
+       "mlb_pipeline": 1.0286
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0153,
+       "mlb_pipeline": 1.0766,
+       "stat": 0.9082
+      },
+      "CF": {
+       "fangraphs": 1.0153,
+       "mlb_pipeline": 1.0766,
+       "stat": 0.9082
+      },
+      "COF": {
+       "fangraphs": 1.0153,
+       "mlb_pipeline": 1.0766,
+       "stat": 0.9082
+      },
+      "SS": {
+       "fangraphs": 1.0153,
+       "mlb_pipeline": 1.0766,
+       "stat": 0.9082
+      },
+      "C": {
+       "fangraphs": 1.0153,
+       "mlb_pipeline": 1.0766,
+       "stat": 0.9082
+      },
+      "IF": {
+       "fangraphs": 1.0153,
+       "mlb_pipeline": 1.0766,
+       "stat": 0.9082
+      },
+      "1B/DH": {
+       "fangraphs": 1.0153,
+       "mlb_pipeline": 1.0766,
+       "stat": 0.9082
+      }
+     }
+    }
+   }
+  },
+  "raw_pwr": {
+   "tool": "raw_pwr",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 678,
+      "rho_consensus": 0.4992,
+      "rho_arm": 0.4992,
+      "d": 0.0,
+      "lb95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p": 1.0,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 694,
+      "rho_consensus": 0.4611,
+      "rho_arm": 0.4611,
+      "d": 0.0,
+      "lb95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p": 1.0,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 678,
+      "rho_consensus": 0.4992,
+      "rho_arm": 0.5041,
+      "d": 0.0049,
+      "lb95": -0.018,
+      "ci95": [
+       -0.0222,
+       0.0332
+      ],
+      "sd": 0.01428,
+      "p": 0.366423,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 694,
+      "rho_consensus": 0.4611,
+      "rho_arm": 0.5126,
+      "d": 0.0514,
+      "lb95": 0.0346,
+      "ci95": [
+       0.0312,
+       0.0726
+      ],
+      "sd": 0.0105,
+      "p": 0.0,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    }
+   },
+   "weights_by_fold": {
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0,
+       "stat": 1.0
+      }
+     }
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0,
+       "stat": 1.0
+      }
+     }
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0,
+       "stat": 1.0
+      }
+     }
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0,
+       "stat": 1.0
+      }
+     }
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0,
+       "stat": 1.0
+      }
+     }
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0,
+       "stat": 1.0
+      }
+     }
+    }
+   }
+  },
+  "speed": {
+   "tool": "speed",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 2015,
+      "rho_consensus": 0.7512,
+      "rho_arm": 0.7525,
+      "d": 0.0013,
+      "lb95": -0.0006,
+      "ci95": [
+       -0.0009,
+       0.0037
+      ],
+      "sd": 0.00116,
+      "p": 0.127824,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2705,
+      "rho_consensus": 0.7294,
+      "rho_arm": 0.7291,
+      "d": -0.0003,
+      "lb95": -0.0019,
+      "ci95": [
+       -0.0022,
+       0.0016
+      ],
+      "sd": 0.00097,
+      "p": 0.628494,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 2015,
+      "rho_consensus": 0.7512,
+      "rho_arm": 0.7577,
+      "d": 0.0065,
+      "lb95": -0.0011,
+      "ci95": [
+       -0.0024,
+       0.0152
+      ],
+      "sd": 0.00456,
+      "p": 0.076109,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2705,
+      "rho_consensus": 0.7294,
+      "rho_arm": 0.7819,
+      "d": 0.0525,
+      "lb95": 0.0457,
+      "ci95": [
+       0.0442,
+       0.0607
+      ],
+      "sd": 0.0042,
+      "p": 0.0,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      },
+      "CF": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      },
+      "COF": {
+       "fangraphs": 1.004,
+       "mlb_pipeline": 0.996
+      },
+      "IF": {
+       "fangraphs": 0.9487,
+       "mlb_pipeline": 1.0513
+      },
+      "C": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      },
+      "SS": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      },
+      "1B/DH": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      },
+      "CF": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      },
+      "COF": {
+       "fangraphs": 1.0293,
+       "mlb_pipeline": 1.0201,
+       "stat": 0.9507
+      },
+      "IF": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0274,
+       "stat": 1.0488
+      },
+      "C": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      },
+      "SS": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      },
+      "1B/DH": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      }
+     }
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      },
+      "CF": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      },
+      "COF": {
+       "fangraphs": 1.004,
+       "mlb_pipeline": 0.996
+      },
+      "IF": {
+       "fangraphs": 0.9487,
+       "mlb_pipeline": 1.0513
+      },
+      "C": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      },
+      "SS": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      },
+      "1B/DH": {
+       "fangraphs": 0.9799,
+       "mlb_pipeline": 1.0201
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      },
+      "CF": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      },
+      "COF": {
+       "fangraphs": 1.0293,
+       "mlb_pipeline": 1.0201,
+       "stat": 0.9507
+      },
+      "IF": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0274,
+       "stat": 1.0488
+      },
+      "C": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      },
+      "SS": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      },
+      "1B/DH": {
+       "fangraphs": 1.0092,
+       "mlb_pipeline": 1.0509,
+       "stat": 0.9399
+      }
+     }
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9803,
+       "mlb_pipeline": 1.0197
+      },
+      "CF": {
+       "fangraphs": 0.9803,
+       "mlb_pipeline": 1.0197
+      },
+      "COF": {
+       "fangraphs": 1.0038,
+       "mlb_pipeline": 0.9962
+      },
+      "IF": {
+       "fangraphs": 0.9487,
+       "mlb_pipeline": 1.0513
+      },
+      "C": {
+       "fangraphs": 0.9803,
+       "mlb_pipeline": 1.0197
+      },
+      "SS": {
+       "fangraphs": 0.9803,
+       "mlb_pipeline": 1.0197
+      },
+      "1B/DH": {
+       "fangraphs": 0.9803,
+       "mlb_pipeline": 1.0197
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0098,
+       "mlb_pipeline": 1.0507,
+       "stat": 0.9396
+      },
+      "CF": {
+       "fangraphs": 1.0098,
+       "mlb_pipeline": 1.0507,
+       "stat": 0.9396
+      },
+      "COF": {
+       "fangraphs": 1.0293,
+       "mlb_pipeline": 1.0206,
+       "stat": 0.9501
+      },
+      "IF": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0274,
+       "stat": 1.0488
+      },
+      "C": {
+       "fangraphs": 1.0098,
+       "mlb_pipeline": 1.0507,
+       "stat": 0.9396
+      },
+      "SS": {
+       "fangraphs": 1.0098,
+       "mlb_pipeline": 1.0507,
+       "stat": 0.9396
+      },
+      "1B/DH": {
+       "fangraphs": 1.0098,
+       "mlb_pipeline": 1.0507,
+       "stat": 0.9396
+      }
+     }
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9751,
+       "mlb_pipeline": 1.0249
+      },
+      "COF": {
+       "fangraphs": 0.9751,
+       "mlb_pipeline": 1.0249
+      },
+      "IF": {
+       "fangraphs": 0.9491,
+       "mlb_pipeline": 1.0509
+      },
+      "C": {
+       "fangraphs": 0.9751,
+       "mlb_pipeline": 1.0249
+      },
+      "CF": {
+       "fangraphs": 0.9751,
+       "mlb_pipeline": 1.0249
+      },
+      "SS": {
+       "fangraphs": 0.9751,
+       "mlb_pipeline": 1.0249
+      },
+      "1B/DH": {
+       "fangraphs": 0.9751,
+       "mlb_pipeline": 1.0249
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0046,
+       "mlb_pipeline": 1.0566,
+       "stat": 0.9387
+      },
+      "COF": {
+       "fangraphs": 1.0046,
+       "mlb_pipeline": 1.0566,
+       "stat": 0.9387
+      },
+      "IF": {
+       "fangraphs": 0.9278,
+       "mlb_pipeline": 1.0313,
+       "stat": 1.0409
+      },
+      "C": {
+       "fangraphs": 1.0046,
+       "mlb_pipeline": 1.0566,
+       "stat": 0.9387
+      },
+      "CF": {
+       "fangraphs": 1.0046,
+       "mlb_pipeline": 1.0566,
+       "stat": 0.9387
+      },
+      "SS": {
+       "fangraphs": 1.0046,
+       "mlb_pipeline": 1.0566,
+       "stat": 0.9387
+      },
+      "1B/DH": {
+       "fangraphs": 1.0046,
+       "mlb_pipeline": 1.0566,
+       "stat": 0.9387
+      }
+     }
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9766,
+       "mlb_pipeline": 1.0234
+      },
+      "COF": {
+       "fangraphs": 0.9766,
+       "mlb_pipeline": 1.0234
+      },
+      "SS": {
+       "fangraphs": 0.9766,
+       "mlb_pipeline": 1.0234
+      },
+      "IF": {
+       "fangraphs": 0.956,
+       "mlb_pipeline": 1.044
+      },
+      "1B/DH": {
+       "fangraphs": 0.9766,
+       "mlb_pipeline": 1.0234
+      },
+      "C": {
+       "fangraphs": 0.9766,
+       "mlb_pipeline": 1.0234
+      },
+      "CF": {
+       "fangraphs": 0.9766,
+       "mlb_pipeline": 1.0234
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0035,
+       "mlb_pipeline": 1.0522,
+       "stat": 0.9443
+      },
+      "COF": {
+       "fangraphs": 1.0035,
+       "mlb_pipeline": 1.0522,
+       "stat": 0.9443
+      },
+      "SS": {
+       "fangraphs": 1.0035,
+       "mlb_pipeline": 1.0522,
+       "stat": 0.9443
+      },
+      "IF": {
+       "fangraphs": 0.9307,
+       "mlb_pipeline": 1.0199,
+       "stat": 1.0493
+      },
+      "1B/DH": {
+       "fangraphs": 1.0035,
+       "mlb_pipeline": 1.0522,
+       "stat": 0.9443
+      },
+      "C": {
+       "fangraphs": 1.0035,
+       "mlb_pipeline": 1.0522,
+       "stat": 0.9443
+      },
+      "CF": {
+       "fangraphs": 1.0035,
+       "mlb_pipeline": 1.0522,
+       "stat": 0.9443
+      }
+     }
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9719,
+       "mlb_pipeline": 1.0281
+      },
+      "COF": {
+       "fangraphs": 0.9719,
+       "mlb_pipeline": 1.0281
+      },
+      "SS": {
+       "fangraphs": 0.9719,
+       "mlb_pipeline": 1.0281
+      },
+      "IF": {
+       "fangraphs": 0.9492,
+       "mlb_pipeline": 1.0508
+      },
+      "1B/DH": {
+       "fangraphs": 0.9719,
+       "mlb_pipeline": 1.0281
+      },
+      "C": {
+       "fangraphs": 0.9719,
+       "mlb_pipeline": 1.0281
+      },
+      "CF": {
+       "fangraphs": 0.9719,
+       "mlb_pipeline": 1.0281
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9949,
+       "mlb_pipeline": 1.0536,
+       "stat": 0.9515
+      },
+      "COF": {
+       "fangraphs": 0.9949,
+       "mlb_pipeline": 1.0536,
+       "stat": 0.9515
+      },
+      "SS": {
+       "fangraphs": 0.9949,
+       "mlb_pipeline": 1.0536,
+       "stat": 0.9515
+      },
+      "IF": {
+       "fangraphs": 0.9292,
+       "mlb_pipeline": 1.034,
+       "stat": 1.0368
+      },
+      "1B/DH": {
+       "fangraphs": 0.9949,
+       "mlb_pipeline": 1.0536,
+       "stat": 0.9515
+      },
+      "C": {
+       "fangraphs": 0.9949,
+       "mlb_pipeline": 1.0536,
+       "stat": 0.9515
+      },
+      "CF": {
+       "fangraphs": 0.9949,
+       "mlb_pipeline": 1.0536,
+       "stat": 0.9515
+      }
+     }
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9709,
+       "mlb_pipeline": 1.0291
+      },
+      "IF": {
+       "fangraphs": 0.9709,
+       "mlb_pipeline": 1.0291
+      },
+      "CF": {
+       "fangraphs": 0.9709,
+       "mlb_pipeline": 1.0291
+      },
+      "COF": {
+       "fangraphs": 0.9709,
+       "mlb_pipeline": 1.0291
+      },
+      "C": {
+       "fangraphs": 0.9709,
+       "mlb_pipeline": 1.0291
+      },
+      "1B/DH": {
+       "fangraphs": 0.9709,
+       "mlb_pipeline": 1.0291
+      },
+      "SS": {
+       "fangraphs": 0.9709,
+       "mlb_pipeline": 1.0291
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9916,
+       "mlb_pipeline": 1.052,
+       "stat": 0.9563
+      },
+      "IF": {
+       "fangraphs": 0.9916,
+       "mlb_pipeline": 1.052,
+       "stat": 0.9563
+      },
+      "CF": {
+       "fangraphs": 0.9916,
+       "mlb_pipeline": 1.052,
+       "stat": 0.9563
+      },
+      "COF": {
+       "fangraphs": 0.9916,
+       "mlb_pipeline": 1.052,
+       "stat": 0.9563
+      },
+      "C": {
+       "fangraphs": 0.9916,
+       "mlb_pipeline": 1.052,
+       "stat": 0.9563
+      },
+      "1B/DH": {
+       "fangraphs": 0.9916,
+       "mlb_pipeline": 1.052,
+       "stat": 0.9563
+      },
+      "SS": {
+       "fangraphs": 0.9916,
+       "mlb_pipeline": 1.052,
+       "stat": 0.9563
+      }
+     }
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9788,
+       "mlb_pipeline": 1.0212
+      },
+      "CF": {
+       "fangraphs": 0.9788,
+       "mlb_pipeline": 1.0212
+      },
+      "COF": {
+       "fangraphs": 0.9788,
+       "mlb_pipeline": 1.0212
+      },
+      "SS": {
+       "fangraphs": 0.9788,
+       "mlb_pipeline": 1.0212
+      },
+      "C": {
+       "fangraphs": 0.9788,
+       "mlb_pipeline": 1.0212
+      },
+      "IF": {
+       "fangraphs": 0.9788,
+       "mlb_pipeline": 1.0212
+      },
+      "1B/DH": {
+       "fangraphs": 0.9788,
+       "mlb_pipeline": 1.0212
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9984,
+       "mlb_pipeline": 1.0409,
+       "stat": 0.9607
+      },
+      "CF": {
+       "fangraphs": 0.9984,
+       "mlb_pipeline": 1.0409,
+       "stat": 0.9607
+      },
+      "COF": {
+       "fangraphs": 0.9984,
+       "mlb_pipeline": 1.0409,
+       "stat": 0.9607
+      },
+      "SS": {
+       "fangraphs": 0.9984,
+       "mlb_pipeline": 1.0409,
+       "stat": 0.9607
+      },
+      "C": {
+       "fangraphs": 0.9984,
+       "mlb_pipeline": 1.0409,
+       "stat": 0.9607
+      },
+      "IF": {
+       "fangraphs": 0.9984,
+       "mlb_pipeline": 1.0409,
+       "stat": 0.9607
+      },
+      "1B/DH": {
+       "fangraphs": 0.9984,
+       "mlb_pipeline": 1.0409,
+       "stat": 0.9607
+      }
+     }
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9881,
+       "mlb_pipeline": 1.0119
+      },
+      "CF": {
+       "fangraphs": 0.9881,
+       "mlb_pipeline": 1.0119
+      },
+      "IF": {
+       "fangraphs": 0.9881,
+       "mlb_pipeline": 1.0119
+      },
+      "COF": {
+       "fangraphs": 0.9881,
+       "mlb_pipeline": 1.0119
+      },
+      "SS": {
+       "fangraphs": 0.9881,
+       "mlb_pipeline": 1.0119
+      },
+      "C": {
+       "fangraphs": 0.9881,
+       "mlb_pipeline": 1.0119
+      },
+      "1B/DH": {
+       "fangraphs": 0.9881,
+       "mlb_pipeline": 1.0119
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0171,
+       "mlb_pipeline": 1.04,
+       "stat": 0.943
+      },
+      "CF": {
+       "fangraphs": 1.0171,
+       "mlb_pipeline": 1.04,
+       "stat": 0.943
+      },
+      "IF": {
+       "fangraphs": 1.0171,
+       "mlb_pipeline": 1.04,
+       "stat": 0.943
+      },
+      "COF": {
+       "fangraphs": 1.0171,
+       "mlb_pipeline": 1.04,
+       "stat": 0.943
+      },
+      "SS": {
+       "fangraphs": 1.0171,
+       "mlb_pipeline": 1.04,
+       "stat": 0.943
+      },
+      "C": {
+       "fangraphs": 1.0171,
+       "mlb_pipeline": 1.04,
+       "stat": 0.943
+      },
+      "1B/DH": {
+       "fangraphs": 1.0171,
+       "mlb_pipeline": 1.04,
+       "stat": 0.943
+      }
+     }
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9867,
+       "mlb_pipeline": 1.0133
+      },
+      "CF": {
+       "fangraphs": 0.9867,
+       "mlb_pipeline": 1.0133
+      },
+      "COF": {
+       "fangraphs": 0.9867,
+       "mlb_pipeline": 1.0133
+      },
+      "IF": {
+       "fangraphs": 0.9867,
+       "mlb_pipeline": 1.0133
+      },
+      "C": {
+       "fangraphs": 0.9867,
+       "mlb_pipeline": 1.0133
+      },
+      "SS": {
+       "fangraphs": 0.9867,
+       "mlb_pipeline": 1.0133
+      },
+      "1B/DH": {
+       "fangraphs": 0.9867,
+       "mlb_pipeline": 1.0133
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0154,
+       "mlb_pipeline": 1.0418,
+       "stat": 0.9428
+      },
+      "CF": {
+       "fangraphs": 1.0154,
+       "mlb_pipeline": 1.0418,
+       "stat": 0.9428
+      },
+      "COF": {
+       "fangraphs": 1.0154,
+       "mlb_pipeline": 1.0418,
+       "stat": 0.9428
+      },
+      "IF": {
+       "fangraphs": 1.0154,
+       "mlb_pipeline": 1.0418,
+       "stat": 0.9428
+      },
+      "C": {
+       "fangraphs": 1.0154,
+       "mlb_pipeline": 1.0418,
+       "stat": 0.9428
+      },
+      "SS": {
+       "fangraphs": 1.0154,
+       "mlb_pipeline": 1.0418,
+       "stat": 0.9428
+      },
+      "1B/DH": {
+       "fangraphs": 1.0154,
+       "mlb_pipeline": 1.0418,
+       "stat": 0.9428
+      }
+     }
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9814,
+       "mlb_pipeline": 1.0186
+      },
+      "CF": {
+       "fangraphs": 0.9814,
+       "mlb_pipeline": 1.0186
+      },
+      "COF": {
+       "fangraphs": 0.9814,
+       "mlb_pipeline": 1.0186
+      },
+      "IF": {
+       "fangraphs": 0.9384,
+       "mlb_pipeline": 1.0616
+      },
+      "C": {
+       "fangraphs": 0.9814,
+       "mlb_pipeline": 1.0186
+      },
+      "SS": {
+       "fangraphs": 0.9814,
+       "mlb_pipeline": 1.0186
+      },
+      "1B/DH": {
+       "fangraphs": 0.9814,
+       "mlb_pipeline": 1.0186
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0058,
+       "mlb_pipeline": 1.0439,
+       "stat": 0.9504
+      },
+      "CF": {
+       "fangraphs": 1.0058,
+       "mlb_pipeline": 1.0439,
+       "stat": 0.9504
+      },
+      "COF": {
+       "fangraphs": 1.0058,
+       "mlb_pipeline": 1.0439,
+       "stat": 0.9504
+      },
+      "IF": {
+       "fangraphs": 0.8951,
+       "mlb_pipeline": 1.011,
+       "stat": 1.0939
+      },
+      "C": {
+       "fangraphs": 1.0058,
+       "mlb_pipeline": 1.0439,
+       "stat": 0.9504
+      },
+      "SS": {
+       "fangraphs": 1.0058,
+       "mlb_pipeline": 1.0439,
+       "stat": 0.9504
+      },
+      "1B/DH": {
+       "fangraphs": 1.0058,
+       "mlb_pipeline": 1.0439,
+       "stat": 0.9504
+      }
+     }
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9802,
+       "mlb_pipeline": 1.0198
+      },
+      "CF": {
+       "fangraphs": 0.9802,
+       "mlb_pipeline": 1.0198
+      },
+      "COF": {
+       "fangraphs": 0.9802,
+       "mlb_pipeline": 1.0198
+      },
+      "IF": {
+       "fangraphs": 0.9362,
+       "mlb_pipeline": 1.0638
+      },
+      "C": {
+       "fangraphs": 0.9802,
+       "mlb_pipeline": 1.0198
+      },
+      "SS": {
+       "fangraphs": 0.9802,
+       "mlb_pipeline": 1.0198
+      },
+      "1B/DH": {
+       "fangraphs": 0.9802,
+       "mlb_pipeline": 1.0198
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0103,
+       "mlb_pipeline": 1.0534,
+       "stat": 0.9363
+      },
+      "CF": {
+       "fangraphs": 1.0103,
+       "mlb_pipeline": 1.0534,
+       "stat": 0.9363
+      },
+      "COF": {
+       "fangraphs": 1.0103,
+       "mlb_pipeline": 1.0534,
+       "stat": 0.9363
+      },
+      "IF": {
+       "fangraphs": 0.9101,
+       "mlb_pipeline": 1.0347,
+       "stat": 1.0552
+      },
+      "C": {
+       "fangraphs": 1.0103,
+       "mlb_pipeline": 1.0534,
+       "stat": 0.9363
+      },
+      "SS": {
+       "fangraphs": 1.0103,
+       "mlb_pipeline": 1.0534,
+       "stat": 0.9363
+      },
+      "1B/DH": {
+       "fangraphs": 1.0103,
+       "mlb_pipeline": 1.0534,
+       "stat": 0.9363
+      }
+     }
+    }
+   }
+  },
+  "field": {
+   "tool": "field",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 1152,
+      "rho_consensus": 0.3351,
+      "rho_arm": 0.3384,
+      "d": 0.0033,
+      "lb95": -0.0007,
+      "ci95": [
+       -0.0015,
+       0.0084
+      ],
+      "sd": 0.00251,
+      "p": 0.09215,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 1152,
+      "rho_consensus": 0.3351,
+      "rho_arm": 0.3384,
+      "d": 0.0033,
+      "lb95": -0.0007,
+      "ci95": [
+       -0.0015,
+       0.0084
+      ],
+      "sd": 0.00251,
+      "p": 0.09215,
+      "draws": 2000
+     },
+     "verdict": "NULL",
+     "note": "no admitted sub-driver: AW2 equals AW1"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "CF": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "COF": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "SS": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "IF": {
+       "fangraphs": 0.8979,
+       "mlb_pipeline": 1.1021
+      },
+      "1B/DH": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "C": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      }
+     },
+     "aw2": null
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "CF": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "COF": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "SS": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "IF": {
+       "fangraphs": 0.8979,
+       "mlb_pipeline": 1.1021
+      },
+      "1B/DH": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      },
+      "C": {
+       "fangraphs": 0.9135,
+       "mlb_pipeline": 1.0865
+      }
+     },
+     "aw2": null
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9124,
+       "mlb_pipeline": 1.0876
+      },
+      "CF": {
+       "fangraphs": 0.9124,
+       "mlb_pipeline": 1.0876
+      },
+      "COF": {
+       "fangraphs": 0.9124,
+       "mlb_pipeline": 1.0876
+      },
+      "SS": {
+       "fangraphs": 0.9124,
+       "mlb_pipeline": 1.0876
+      },
+      "IF": {
+       "fangraphs": 0.8979,
+       "mlb_pipeline": 1.1021
+      },
+      "1B/DH": {
+       "fangraphs": 0.9124,
+       "mlb_pipeline": 1.0876
+      },
+      "C": {
+       "fangraphs": 0.9124,
+       "mlb_pipeline": 1.0876
+      }
+     },
+     "aw2": null
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9103,
+       "mlb_pipeline": 1.0897
+      },
+      "COF": {
+       "fangraphs": 0.9103,
+       "mlb_pipeline": 1.0897
+      },
+      "CF": {
+       "fangraphs": 0.9103,
+       "mlb_pipeline": 1.0897
+      },
+      "SS": {
+       "fangraphs": 0.9103,
+       "mlb_pipeline": 1.0897
+      },
+      "IF": {
+       "fangraphs": 0.9027,
+       "mlb_pipeline": 1.0973
+      },
+      "1B/DH": {
+       "fangraphs": 0.9103,
+       "mlb_pipeline": 1.0897
+      },
+      "C": {
+       "fangraphs": 0.9103,
+       "mlb_pipeline": 1.0897
+      }
+     },
+     "aw2": null
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9244,
+       "mlb_pipeline": 1.0756
+      },
+      "COF": {
+       "fangraphs": 0.9244,
+       "mlb_pipeline": 1.0756
+      },
+      "SS": {
+       "fangraphs": 0.9244,
+       "mlb_pipeline": 1.0756
+      },
+      "IF": {
+       "fangraphs": 0.9244,
+       "mlb_pipeline": 1.0756
+      },
+      "CF": {
+       "fangraphs": 0.9244,
+       "mlb_pipeline": 1.0756
+      },
+      "1B/DH": {
+       "fangraphs": 0.9244,
+       "mlb_pipeline": 1.0756
+      },
+      "C": {
+       "fangraphs": 0.9244,
+       "mlb_pipeline": 1.0756
+      }
+     },
+     "aw2": null
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9225,
+       "mlb_pipeline": 1.0775
+      },
+      "COF": {
+       "fangraphs": 0.9225,
+       "mlb_pipeline": 1.0775
+      },
+      "SS": {
+       "fangraphs": 0.9225,
+       "mlb_pipeline": 1.0775
+      },
+      "IF": {
+       "fangraphs": 0.9225,
+       "mlb_pipeline": 1.0775
+      },
+      "CF": {
+       "fangraphs": 0.9225,
+       "mlb_pipeline": 1.0775
+      },
+      "1B/DH": {
+       "fangraphs": 0.9225,
+       "mlb_pipeline": 1.0775
+      },
+      "C": {
+       "fangraphs": 0.9225,
+       "mlb_pipeline": 1.0775
+      }
+     },
+     "aw2": null
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9401,
+       "mlb_pipeline": 1.0599
+      },
+      "IF": {
+       "fangraphs": 0.9401,
+       "mlb_pipeline": 1.0599
+      },
+      "CF": {
+       "fangraphs": 0.9401,
+       "mlb_pipeline": 1.0599
+      },
+      "C": {
+       "fangraphs": 0.9401,
+       "mlb_pipeline": 1.0599
+      },
+      "SS": {
+       "fangraphs": 0.9401,
+       "mlb_pipeline": 1.0599
+      },
+      "1B/DH": {
+       "fangraphs": 0.9401,
+       "mlb_pipeline": 1.0599
+      },
+      "COF": {
+       "fangraphs": 0.9401,
+       "mlb_pipeline": 1.0599
+      }
+     },
+     "aw2": null
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9502,
+       "mlb_pipeline": 1.0498
+      },
+      "CF": {
+       "fangraphs": 0.9502,
+       "mlb_pipeline": 1.0498
+      },
+      "COF": {
+       "fangraphs": 0.9502,
+       "mlb_pipeline": 1.0498
+      },
+      "SS": {
+       "fangraphs": 0.9502,
+       "mlb_pipeline": 1.0498
+      },
+      "IF": {
+       "fangraphs": 0.9502,
+       "mlb_pipeline": 1.0498
+      },
+      "1B/DH": {
+       "fangraphs": 0.9502,
+       "mlb_pipeline": 1.0498
+      },
+      "C": {
+       "fangraphs": 0.9502,
+       "mlb_pipeline": 1.0498
+      }
+     },
+     "aw2": null
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      },
+      "CF": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      },
+      "COF": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      },
+      "SS": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      },
+      "IF": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      },
+      "1B/DH": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      },
+      "C": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      }
+     },
+     "aw2": null
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9,
+       "mlb_pipeline": 1.1
+      },
+      "CF": {
+       "fangraphs": 0.9,
+       "mlb_pipeline": 1.1
+      },
+      "COF": {
+       "fangraphs": 0.9,
+       "mlb_pipeline": 1.1
+      },
+      "SS": {
+       "fangraphs": 0.9,
+       "mlb_pipeline": 1.1
+      },
+      "IF": {
+       "fangraphs": 0.9,
+       "mlb_pipeline": 1.1
+      },
+      "1B/DH": {
+       "fangraphs": 0.9,
+       "mlb_pipeline": 1.1
+      },
+      "C": {
+       "fangraphs": 0.9,
+       "mlb_pipeline": 1.1
+      }
+     },
+     "aw2": null
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.8966,
+       "mlb_pipeline": 1.1034
+      },
+      "CF": {
+       "fangraphs": 0.8966,
+       "mlb_pipeline": 1.1034
+      },
+      "COF": {
+       "fangraphs": 0.8966,
+       "mlb_pipeline": 1.1034
+      },
+      "SS": {
+       "fangraphs": 0.8966,
+       "mlb_pipeline": 1.1034
+      },
+      "IF": {
+       "fangraphs": 0.8966,
+       "mlb_pipeline": 1.1034
+      },
+      "1B/DH": {
+       "fangraphs": 0.8966,
+       "mlb_pipeline": 1.1034
+      },
+      "C": {
+       "fangraphs": 0.8966,
+       "mlb_pipeline": 1.1034
+      }
+     },
+     "aw2": null
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.907,
+       "mlb_pipeline": 1.093
+      },
+      "CF": {
+       "fangraphs": 0.907,
+       "mlb_pipeline": 1.093
+      },
+      "COF": {
+       "fangraphs": 0.907,
+       "mlb_pipeline": 1.093
+      },
+      "SS": {
+       "fangraphs": 0.907,
+       "mlb_pipeline": 1.093
+      },
+      "IF": {
+       "fangraphs": 0.907,
+       "mlb_pipeline": 1.093
+      },
+      "1B/DH": {
+       "fangraphs": 0.907,
+       "mlb_pipeline": 1.093
+      },
+      "C": {
+       "fangraphs": 0.907,
+       "mlb_pipeline": 1.093
+      }
+     },
+     "aw2": null
+    }
+   }
+  },
+  "throw": {
+   "tool": "throw",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 1206,
+      "rho_consensus": 0.5684,
+      "rho_arm": 0.5688,
+      "d": 0.0004,
+      "lb95": -0.0028,
+      "ci95": [
+       -0.0035,
+       0.0042
+      ],
+      "sd": 0.00195,
+      "p": 0.41042,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 1206,
+      "rho_consensus": 0.5684,
+      "rho_arm": 0.5688,
+      "d": 0.0004,
+      "lb95": -0.0028,
+      "ci95": [
+       -0.0035,
+       0.0042
+      ],
+      "sd": 0.00195,
+      "p": 0.41042,
+      "draws": 2000
+     },
+     "verdict": "NULL",
+     "note": "no admitted sub-driver: AW2 equals AW1"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "CF": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "COF": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "SS": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "IF": {
+       "fangraphs": 0.9863,
+       "mlb_pipeline": 1.0137
+      },
+      "1B/DH": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "C": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      }
+     },
+     "aw2": null
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "CF": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "COF": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "SS": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "IF": {
+       "fangraphs": 0.9863,
+       "mlb_pipeline": 1.0137
+      },
+      "1B/DH": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      },
+      "C": {
+       "fangraphs": 0.9677,
+       "mlb_pipeline": 1.0323
+      }
+     },
+     "aw2": null
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9686,
+       "mlb_pipeline": 1.0314
+      },
+      "CF": {
+       "fangraphs": 0.9686,
+       "mlb_pipeline": 1.0314
+      },
+      "COF": {
+       "fangraphs": 0.9686,
+       "mlb_pipeline": 1.0314
+      },
+      "SS": {
+       "fangraphs": 0.9686,
+       "mlb_pipeline": 1.0314
+      },
+      "IF": {
+       "fangraphs": 0.9863,
+       "mlb_pipeline": 1.0137
+      },
+      "1B/DH": {
+       "fangraphs": 0.9686,
+       "mlb_pipeline": 1.0314
+      },
+      "C": {
+       "fangraphs": 0.9686,
+       "mlb_pipeline": 1.0314
+      }
+     },
+     "aw2": null
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9623,
+       "mlb_pipeline": 1.0377
+      },
+      "COF": {
+       "fangraphs": 0.9623,
+       "mlb_pipeline": 1.0377
+      },
+      "CF": {
+       "fangraphs": 0.9623,
+       "mlb_pipeline": 1.0377
+      },
+      "SS": {
+       "fangraphs": 0.9623,
+       "mlb_pipeline": 1.0377
+      },
+      "IF": {
+       "fangraphs": 0.9895,
+       "mlb_pipeline": 1.0105
+      },
+      "1B/DH": {
+       "fangraphs": 0.9623,
+       "mlb_pipeline": 1.0377
+      },
+      "C": {
+       "fangraphs": 0.9623,
+       "mlb_pipeline": 1.0377
+      }
+     },
+     "aw2": null
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9747,
+       "mlb_pipeline": 1.0253
+      },
+      "COF": {
+       "fangraphs": 0.9747,
+       "mlb_pipeline": 1.0253
+      },
+      "SS": {
+       "fangraphs": 0.9747,
+       "mlb_pipeline": 1.0253
+      },
+      "IF": {
+       "fangraphs": 0.9864,
+       "mlb_pipeline": 1.0136
+      },
+      "1B/DH": {
+       "fangraphs": 0.9747,
+       "mlb_pipeline": 1.0253
+      },
+      "CF": {
+       "fangraphs": 0.9747,
+       "mlb_pipeline": 1.0253
+      },
+      "C": {
+       "fangraphs": 0.9747,
+       "mlb_pipeline": 1.0253
+      }
+     },
+     "aw2": null
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9655,
+       "mlb_pipeline": 1.0345
+      },
+      "COF": {
+       "fangraphs": 0.9655,
+       "mlb_pipeline": 1.0345
+      },
+      "SS": {
+       "fangraphs": 0.9655,
+       "mlb_pipeline": 1.0345
+      },
+      "IF": {
+       "fangraphs": 0.9655,
+       "mlb_pipeline": 1.0345
+      },
+      "1B/DH": {
+       "fangraphs": 0.9655,
+       "mlb_pipeline": 1.0345
+      },
+      "CF": {
+       "fangraphs": 0.9655,
+       "mlb_pipeline": 1.0345
+      },
+      "C": {
+       "fangraphs": 0.9655,
+       "mlb_pipeline": 1.0345
+      }
+     },
+     "aw2": null
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9801,
+       "mlb_pipeline": 1.0199
+      },
+      "IF": {
+       "fangraphs": 0.9801,
+       "mlb_pipeline": 1.0199
+      },
+      "CF": {
+       "fangraphs": 0.9801,
+       "mlb_pipeline": 1.0199
+      },
+      "COF": {
+       "fangraphs": 0.9801,
+       "mlb_pipeline": 1.0199
+      },
+      "1B/DH": {
+       "fangraphs": 0.9801,
+       "mlb_pipeline": 1.0199
+      },
+      "C": {
+       "fangraphs": 0.9801,
+       "mlb_pipeline": 1.0199
+      },
+      "SS": {
+       "fangraphs": 0.9801,
+       "mlb_pipeline": 1.0199
+      }
+     },
+     "aw2": null
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9761,
+       "mlb_pipeline": 1.0239
+      },
+      "CF": {
+       "fangraphs": 0.9761,
+       "mlb_pipeline": 1.0239
+      },
+      "COF": {
+       "fangraphs": 0.9761,
+       "mlb_pipeline": 1.0239
+      },
+      "SS": {
+       "fangraphs": 0.9761,
+       "mlb_pipeline": 1.0239
+      },
+      "IF": {
+       "fangraphs": 0.9761,
+       "mlb_pipeline": 1.0239
+      },
+      "1B/DH": {
+       "fangraphs": 0.9761,
+       "mlb_pipeline": 1.0239
+      },
+      "C": {
+       "fangraphs": 0.9761,
+       "mlb_pipeline": 1.0239
+      }
+     },
+     "aw2": null
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9777,
+       "mlb_pipeline": 1.0223
+      },
+      "CF": {
+       "fangraphs": 0.9777,
+       "mlb_pipeline": 1.0223
+      },
+      "COF": {
+       "fangraphs": 0.9777,
+       "mlb_pipeline": 1.0223
+      },
+      "SS": {
+       "fangraphs": 0.9777,
+       "mlb_pipeline": 1.0223
+      },
+      "IF": {
+       "fangraphs": 0.9777,
+       "mlb_pipeline": 1.0223
+      },
+      "1B/DH": {
+       "fangraphs": 0.9777,
+       "mlb_pipeline": 1.0223
+      },
+      "C": {
+       "fangraphs": 0.9777,
+       "mlb_pipeline": 1.0223
+      }
+     },
+     "aw2": null
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9597,
+       "mlb_pipeline": 1.0403
+      },
+      "CF": {
+       "fangraphs": 0.9597,
+       "mlb_pipeline": 1.0403
+      },
+      "COF": {
+       "fangraphs": 0.9597,
+       "mlb_pipeline": 1.0403
+      },
+      "SS": {
+       "fangraphs": 0.9597,
+       "mlb_pipeline": 1.0403
+      },
+      "IF": {
+       "fangraphs": 0.9597,
+       "mlb_pipeline": 1.0403
+      },
+      "1B/DH": {
+       "fangraphs": 0.9597,
+       "mlb_pipeline": 1.0403
+      },
+      "C": {
+       "fangraphs": 0.9597,
+       "mlb_pipeline": 1.0403
+      }
+     },
+     "aw2": null
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9704,
+       "mlb_pipeline": 1.0296
+      },
+      "CF": {
+       "fangraphs": 0.9704,
+       "mlb_pipeline": 1.0296
+      },
+      "COF": {
+       "fangraphs": 0.9704,
+       "mlb_pipeline": 1.0296
+      },
+      "SS": {
+       "fangraphs": 0.9704,
+       "mlb_pipeline": 1.0296
+      },
+      "IF": {
+       "fangraphs": 0.9704,
+       "mlb_pipeline": 1.0296
+      },
+      "1B/DH": {
+       "fangraphs": 0.9704,
+       "mlb_pipeline": 1.0296
+      },
+      "C": {
+       "fangraphs": 0.9704,
+       "mlb_pipeline": 1.0296
+      }
+     },
+     "aw2": null
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9781,
+       "mlb_pipeline": 1.0219
+      },
+      "CF": {
+       "fangraphs": 0.9781,
+       "mlb_pipeline": 1.0219
+      },
+      "COF": {
+       "fangraphs": 0.9781,
+       "mlb_pipeline": 1.0219
+      },
+      "SS": {
+       "fangraphs": 0.9781,
+       "mlb_pipeline": 1.0219
+      },
+      "IF": {
+       "fangraphs": 1.0018,
+       "mlb_pipeline": 0.9982
+      },
+      "1B/DH": {
+       "fangraphs": 0.9781,
+       "mlb_pipeline": 1.0219
+      },
+      "C": {
+       "fangraphs": 0.9781,
+       "mlb_pipeline": 1.0219
+      }
+     },
+     "aw2": null
+    }
+   }
+  },
+  "pitch_sel": {
+   "tool": "pitch_sel",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 234,
+      "rho_consensus": 0.4958,
+      "rho_arm": 0.4958,
+      "d": 0.0,
+      "lb95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p": 1.0,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 649,
+      "rho_consensus": 0.5561,
+      "rho_arm": 0.5561,
+      "d": 0.0,
+      "lb95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p": 1.0,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 234,
+      "rho_consensus": 0.4958,
+      "rho_arm": 0.4992,
+      "d": 0.0035,
+      "lb95": -0.0038,
+      "ci95": [
+       -0.0053,
+       0.0121
+      ],
+      "sd": 0.00442,
+      "p": 0.216917,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 649,
+      "rho_consensus": 0.5561,
+      "rho_arm": 0.5672,
+      "d": 0.0111,
+      "lb95": 0.0063,
+      "ci95": [
+       0.0055,
+       0.0169
+      ],
+      "sd": 0.003,
+      "p": 0.000105,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    }
+   },
+   "weights_by_fold": {
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0,
+       "stat": 1.0
+      }
+     }
+    }
+   }
+  },
+  "bat_ctrl": {
+   "tool": "bat_ctrl",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 237,
+      "rho_consensus": 0.3828,
+      "rho_arm": 0.3828,
+      "d": 0.0,
+      "lb95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p": 1.0,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 663,
+      "rho_consensus": 0.4772,
+      "rho_arm": 0.4772,
+      "d": 0.0,
+      "lb95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p": 1.0,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 237,
+      "rho_consensus": 0.3828,
+      "rho_arm": 0.4044,
+      "d": 0.0216,
+      "lb95": 0.0115,
+      "ci95": [
+       0.0099,
+       0.0338
+      ],
+      "sd": 0.00612,
+      "p": 0.000212,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 663,
+      "rho_consensus": 0.4772,
+      "rho_arm": 0.4892,
+      "d": 0.012,
+      "lb95": 0.0066,
+      "ci95": [
+       0.0058,
+       0.0188
+      ],
+      "sd": 0.00335,
+      "p": 0.000172,
+      "draws": 2000
+     },
+     "verdict": "BEATS CONSENSUS"
+    }
+   },
+   "weights_by_fold": {
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0,
+       "stat": 1.0
+      }
+     }
+    }
+   }
+  },
+  "fb": {
+   "tool": "fb",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 1932,
+      "rho_consensus": 0.2933,
+      "rho_arm": 0.2947,
+      "d": 0.0014,
+      "lb95": -0.0014,
+      "ci95": [
+       -0.002,
+       0.0049
+      ],
+      "sd": 0.00171,
+      "p": 0.211461,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2919,
+      "rho_consensus": 0.2942,
+      "rho_arm": 0.2943,
+      "d": 0.0001,
+      "lb95": -0.002,
+      "ci95": [
+       -0.0024,
+       0.0025
+      ],
+      "sd": 0.00125,
+      "p": 0.459661,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 1932,
+      "rho_consensus": 0.2933,
+      "rho_arm": 0.3562,
+      "d": 0.0629,
+      "lb95": 0.0427,
+      "ci95": [
+       0.0389,
+       0.0863
+      ],
+      "sd": 0.0122,
+      "p": 0.0,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2919,
+      "rho_consensus": 0.2942,
+      "rho_arm": 0.4164,
+      "d": 0.1222,
+      "lb95": 0.1072,
+      "ci95": [
+       0.1037,
+       0.1396
+      ],
+      "sd": 0.00934,
+      "p": 0.0,
+      "draws": 2000
+     },
+     "verdict": "BEATS CONSENSUS"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0217,
+       "mlb_pipeline": 0.9783
+      },
+      "SP": {
+       "fangraphs": 1.0424,
+       "mlb_pipeline": 0.9576
+      },
+      "RP": {
+       "fangraphs": 1.0217,
+       "mlb_pipeline": 0.9783
+      },
+      "": {
+       "fangraphs": 1.0217,
+       "mlb_pipeline": 0.9783
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0056,
+       "mlb_pipeline": 0.9481,
+       "stat": 1.0463
+      },
+      "SP": {
+       "fangraphs": 1.0313,
+       "mlb_pipeline": 0.9476,
+       "stat": 1.0211
+      },
+      "RP": {
+       "fangraphs": 1.0056,
+       "mlb_pipeline": 0.9481,
+       "stat": 1.0463
+      }
+     }
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0186,
+       "mlb_pipeline": 0.9814
+      },
+      "SP": {
+       "fangraphs": 1.0384,
+       "mlb_pipeline": 0.9616
+      },
+      "RP": {
+       "fangraphs": 1.0186,
+       "mlb_pipeline": 0.9814
+      },
+      "": {
+       "fangraphs": 1.0186,
+       "mlb_pipeline": 0.9814
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0068,
+       "mlb_pipeline": 0.9551,
+       "stat": 1.0381
+      },
+      "SP": {
+       "fangraphs": 1.0329,
+       "mlb_pipeline": 0.9566,
+       "stat": 1.0105
+      },
+      "RP": {
+       "fangraphs": 1.0068,
+       "mlb_pipeline": 0.9551,
+       "stat": 1.0381
+      }
+     }
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0192,
+       "mlb_pipeline": 0.9808
+      },
+      "SP": {
+       "fangraphs": 1.0399,
+       "mlb_pipeline": 0.9601
+      },
+      "RP": {
+       "fangraphs": 1.0192,
+       "mlb_pipeline": 0.9808
+      },
+      "": {
+       "fangraphs": 1.0192,
+       "mlb_pipeline": 0.9808
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9988,
+       "mlb_pipeline": 0.9462,
+       "stat": 1.055
+      },
+      "SP": {
+       "fangraphs": 1.0233,
+       "mlb_pipeline": 0.9451,
+       "stat": 1.0316
+      },
+      "RP": {
+       "fangraphs": 0.9988,
+       "mlb_pipeline": 0.9462,
+       "stat": 1.055
+      }
+     }
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0142,
+       "mlb_pipeline": 0.9858
+      },
+      "SP": {
+       "fangraphs": 1.0336,
+       "mlb_pipeline": 0.9664
+      },
+      "RP": {
+       "fangraphs": 1.0142,
+       "mlb_pipeline": 0.9858
+      },
+      "": {
+       "fangraphs": 1.0142,
+       "mlb_pipeline": 0.9858
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9968,
+       "mlb_pipeline": 0.9538,
+       "stat": 1.0493
+      },
+      "SP": {
+       "fangraphs": 1.0229,
+       "mlb_pipeline": 0.9565,
+       "stat": 1.0206
+      },
+      "RP": {
+       "fangraphs": 0.9968,
+       "mlb_pipeline": 0.9538,
+       "stat": 1.0493
+      }
+     }
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0184,
+       "mlb_pipeline": 0.9816
+      },
+      "SP": {
+       "fangraphs": 1.0383,
+       "mlb_pipeline": 0.9617
+      },
+      "RP": {
+       "fangraphs": 1.0184,
+       "mlb_pipeline": 0.9816
+      },
+      "": {
+       "fangraphs": 1.0184,
+       "mlb_pipeline": 0.9816
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9942,
+       "mlb_pipeline": 0.9434,
+       "stat": 1.0624
+      },
+      "SP": {
+       "fangraphs": 1.024,
+       "mlb_pipeline": 0.9487,
+       "stat": 1.0273
+      },
+      "RP": {
+       "fangraphs": 0.9942,
+       "mlb_pipeline": 0.9434,
+       "stat": 1.0624
+      }
+     }
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0107,
+       "mlb_pipeline": 0.9893
+      },
+      "RP": {
+       "fangraphs": 1.0107,
+       "mlb_pipeline": 0.9893
+      },
+      "SP": {
+       "fangraphs": 1.0259,
+       "mlb_pipeline": 0.9741
+      },
+      "": {
+       "fangraphs": 1.0107,
+       "mlb_pipeline": 0.9893
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0059,
+       "mlb_pipeline": 0.968,
+       "stat": 1.0261
+      },
+      "RP": {
+       "fangraphs": 1.0059,
+       "mlb_pipeline": 0.968,
+       "stat": 1.0261
+      },
+      "SP": {
+       "fangraphs": 1.0314,
+       "mlb_pipeline": 0.9791,
+       "stat": 0.9895
+      }
+     }
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0287,
+       "mlb_pipeline": 0.9713
+      },
+      "SP": {
+       "fangraphs": 1.0483,
+       "mlb_pipeline": 0.9517
+      },
+      "": {
+       "fangraphs": 1.0287,
+       "mlb_pipeline": 0.9713
+      },
+      "RP": {
+       "fangraphs": 1.0287,
+       "mlb_pipeline": 0.9713
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0493,
+       "mlb_pipeline": 0.9784,
+       "stat": 0.9723
+      },
+      "SP": {
+       "fangraphs": 1.0929,
+       "mlb_pipeline": 0.9907,
+       "stat": 0.9163
+      },
+      "RP": {
+       "fangraphs": 1.0493,
+       "mlb_pipeline": 0.9784,
+       "stat": 0.9723
+      }
+     }
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0261,
+       "mlb_pipeline": 0.9739
+      },
+      "RP": {
+       "fangraphs": 1.0261,
+       "mlb_pipeline": 0.9739
+      },
+      "SP": {
+       "fangraphs": 1.0562,
+       "mlb_pipeline": 0.9438
+      },
+      "": {
+       "fangraphs": 1.0261,
+       "mlb_pipeline": 0.9739
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.007,
+       "mlb_pipeline": 0.9436,
+       "stat": 1.0494
+      },
+      "RP": {
+       "fangraphs": 1.007,
+       "mlb_pipeline": 0.9436,
+       "stat": 1.0494
+      },
+      "SP": {
+       "fangraphs": 1.0248,
+       "mlb_pipeline": 0.9172,
+       "stat": 1.0579
+      }
+     }
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0373,
+       "mlb_pipeline": 0.9627
+      },
+      "RP": {
+       "fangraphs": 1.0373,
+       "mlb_pipeline": 0.9627
+      },
+      "SP": {
+       "fangraphs": 1.0535,
+       "mlb_pipeline": 0.9465
+      },
+      "": {
+       "fangraphs": 1.0373,
+       "mlb_pipeline": 0.9627
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0403,
+       "mlb_pipeline": 0.9553,
+       "stat": 1.0044
+      },
+      "RP": {
+       "fangraphs": 1.0403,
+       "mlb_pipeline": 0.9553,
+       "stat": 1.0044
+      },
+      "SP": {
+       "fangraphs": 1.0463,
+       "mlb_pipeline": 0.9405,
+       "stat": 1.0132
+      }
+     }
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0296,
+       "mlb_pipeline": 0.9704
+      },
+      "SP": {
+       "fangraphs": 1.0602,
+       "mlb_pipeline": 0.9398
+      },
+      "RP": {
+       "fangraphs": 1.0296,
+       "mlb_pipeline": 0.9704
+      },
+      "": {
+       "fangraphs": 1.0296,
+       "mlb_pipeline": 0.9704
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9637,
+       "mlb_pipeline": 0.8891,
+       "stat": 1.1471
+      },
+      "SP": {
+       "fangraphs": 1.0084,
+       "mlb_pipeline": 0.8959,
+       "stat": 1.0958
+      },
+      "RP": {
+       "fangraphs": 0.9637,
+       "mlb_pipeline": 0.8891,
+       "stat": 1.1471
+      }
+     }
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      },
+      "SP": {
+       "fangraphs": 0.9858,
+       "mlb_pipeline": 1.0142
+      },
+      "RP": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      },
+      "": {
+       "fangraphs": 0.9736,
+       "mlb_pipeline": 1.0264
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9618,
+       "mlb_pipeline": 0.9973,
+       "stat": 1.0409
+      },
+      "SP": {
+       "fangraphs": 0.9876,
+       "mlb_pipeline": 1.0161,
+       "stat": 0.9962
+      },
+      "RP": {
+       "fangraphs": 0.9618,
+       "mlb_pipeline": 0.9973,
+       "stat": 1.0409
+      }
+     }
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0017,
+       "mlb_pipeline": 0.9983
+      },
+      "SP": {
+       "fangraphs": 1.0137,
+       "mlb_pipeline": 0.9863
+      },
+      "RP": {
+       "fangraphs": 1.0017,
+       "mlb_pipeline": 0.9983
+      },
+      "": {
+       "fangraphs": 1.0017,
+       "mlb_pipeline": 0.9983
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 1.0042,
+       "mlb_pipeline": 0.9916,
+       "stat": 1.0042
+      },
+      "SP": {
+       "fangraphs": 1.0275,
+       "mlb_pipeline": 0.9997,
+       "stat": 0.9728
+      },
+      "RP": {
+       "fangraphs": 1.0042,
+       "mlb_pipeline": 0.9916,
+       "stat": 1.0042
+      }
+     }
+    }
+   }
+  },
+  "cmd": {
+   "tool": "cmd",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 1931,
+      "rho_consensus": 0.377,
+      "rho_arm": 0.3775,
+      "d": 0.0005,
+      "lb95": -0.0018,
+      "ci95": [
+       -0.0022,
+       0.0032
+      ],
+      "sd": 0.00137,
+      "p": 0.355624,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2917,
+      "rho_consensus": 0.5386,
+      "rho_arm": 0.5415,
+      "d": 0.0029,
+      "lb95": 0.0012,
+      "ci95": [
+       0.0009,
+       0.0049
+      ],
+      "sd": 0.00102,
+      "p": 0.002524,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 1931,
+      "rho_consensus": 0.377,
+      "rho_arm": 0.4164,
+      "d": 0.0394,
+      "lb95": 0.0244,
+      "ci95": [
+       0.0219,
+       0.0575
+      ],
+      "sd": 0.00915,
+      "p": 9e-06,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 2917,
+      "rho_consensus": 0.5386,
+      "rho_arm": 0.6038,
+      "d": 0.0651,
+      "lb95": 0.0549,
+      "ci95": [
+       0.0523,
+       0.0779
+      ],
+      "sd": 0.00636,
+      "p": 0.0,
+      "draws": 2000
+     },
+     "verdict": "BEATS CONSENSUS"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9598,
+       "mlb_pipeline": 1.0402
+      },
+      "SP": {
+       "fangraphs": 0.9493,
+       "mlb_pipeline": 1.0507
+      },
+      "RP": {
+       "fangraphs": 0.9598,
+       "mlb_pipeline": 1.0402
+      },
+      "": {
+       "fangraphs": 0.9598,
+       "mlb_pipeline": 1.0402
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9267,
+       "mlb_pipeline": 1.0027,
+       "stat": 1.0706
+      },
+      "SP": {
+       "fangraphs": 0.9172,
+       "mlb_pipeline": 1.0143,
+       "stat": 1.0685
+      },
+      "RP": {
+       "fangraphs": 0.9267,
+       "mlb_pipeline": 1.0027,
+       "stat": 1.0706
+      }
+     }
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9644,
+       "mlb_pipeline": 1.0356
+      },
+      "SP": {
+       "fangraphs": 0.9544,
+       "mlb_pipeline": 1.0456
+      },
+      "RP": {
+       "fangraphs": 0.9644,
+       "mlb_pipeline": 1.0356
+      },
+      "": {
+       "fangraphs": 0.9644,
+       "mlb_pipeline": 1.0356
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9297,
+       "mlb_pipeline": 0.9969,
+       "stat": 1.0734
+      },
+      "SP": {
+       "fangraphs": 0.92,
+       "mlb_pipeline": 1.0072,
+       "stat": 1.0729
+      },
+      "RP": {
+       "fangraphs": 0.9297,
+       "mlb_pipeline": 0.9969,
+       "stat": 1.0734
+      }
+     }
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.963,
+       "mlb_pipeline": 1.037
+      },
+      "SP": {
+       "fangraphs": 0.9528,
+       "mlb_pipeline": 1.0472
+      },
+      "RP": {
+       "fangraphs": 0.963,
+       "mlb_pipeline": 1.037
+      },
+      "": {
+       "fangraphs": 0.963,
+       "mlb_pipeline": 1.037
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9281,
+       "mlb_pipeline": 0.9977,
+       "stat": 1.0742
+      },
+      "SP": {
+       "fangraphs": 0.9179,
+       "mlb_pipeline": 1.0081,
+       "stat": 1.074
+      },
+      "RP": {
+       "fangraphs": 0.9281,
+       "mlb_pipeline": 0.9977,
+       "stat": 1.0742
+      }
+     }
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9607,
+       "mlb_pipeline": 1.0393
+      },
+      "SP": {
+       "fangraphs": 0.9514,
+       "mlb_pipeline": 1.0486
+      },
+      "RP": {
+       "fangraphs": 0.9607,
+       "mlb_pipeline": 1.0393
+      },
+      "": {
+       "fangraphs": 0.9607,
+       "mlb_pipeline": 1.0393
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9271,
+       "mlb_pipeline": 1.0014,
+       "stat": 1.0714
+      },
+      "SP": {
+       "fangraphs": 0.9184,
+       "mlb_pipeline": 1.0113,
+       "stat": 1.0703
+      },
+      "RP": {
+       "fangraphs": 0.9271,
+       "mlb_pipeline": 1.0014,
+       "stat": 1.0714
+      }
+     }
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9686,
+       "mlb_pipeline": 1.0314
+      },
+      "SP": {
+       "fangraphs": 0.9588,
+       "mlb_pipeline": 1.0412
+      },
+      "RP": {
+       "fangraphs": 0.9686,
+       "mlb_pipeline": 1.0314
+      },
+      "": {
+       "fangraphs": 0.9686,
+       "mlb_pipeline": 1.0314
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9416,
+       "mlb_pipeline": 1.001,
+       "stat": 1.0575
+      },
+      "SP": {
+       "fangraphs": 0.9321,
+       "mlb_pipeline": 1.0117,
+       "stat": 1.0562
+      },
+      "RP": {
+       "fangraphs": 0.9416,
+       "mlb_pipeline": 1.001,
+       "stat": 1.0575
+      }
+     }
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9676,
+       "mlb_pipeline": 1.0324
+      },
+      "RP": {
+       "fangraphs": 0.9676,
+       "mlb_pipeline": 1.0324
+      },
+      "SP": {
+       "fangraphs": 0.9487,
+       "mlb_pipeline": 1.0513
+      },
+      "": {
+       "fangraphs": 0.9676,
+       "mlb_pipeline": 1.0324
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9282,
+       "mlb_pipeline": 0.9882,
+       "stat": 1.0836
+      },
+      "RP": {
+       "fangraphs": 0.9282,
+       "mlb_pipeline": 0.9882,
+       "stat": 1.0836
+      },
+      "SP": {
+       "fangraphs": 0.9094,
+       "mlb_pipeline": 1.0065,
+       "stat": 1.0841
+      }
+     }
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9741,
+       "mlb_pipeline": 1.0259
+      },
+      "SP": {
+       "fangraphs": 0.9656,
+       "mlb_pipeline": 1.0344
+      },
+      "": {
+       "fangraphs": 0.9741,
+       "mlb_pipeline": 1.0259
+      },
+      "RP": {
+       "fangraphs": 0.9741,
+       "mlb_pipeline": 1.0259
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9452,
+       "mlb_pipeline": 0.989,
+       "stat": 1.0658
+      },
+      "SP": {
+       "fangraphs": 0.9345,
+       "mlb_pipeline": 1.0001,
+       "stat": 1.0654
+      },
+      "RP": {
+       "fangraphs": 0.9452,
+       "mlb_pipeline": 0.989,
+       "stat": 1.0658
+      }
+     }
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9724,
+       "mlb_pipeline": 1.0276
+      },
+      "RP": {
+       "fangraphs": 0.9724,
+       "mlb_pipeline": 1.0276
+      },
+      "SP": {
+       "fangraphs": 0.9622,
+       "mlb_pipeline": 1.0378
+      },
+      "": {
+       "fangraphs": 0.9724,
+       "mlb_pipeline": 1.0276
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9395,
+       "mlb_pipeline": 0.9863,
+       "stat": 1.0742
+      },
+      "RP": {
+       "fangraphs": 0.9395,
+       "mlb_pipeline": 0.9863,
+       "stat": 1.0742
+      },
+      "SP": {
+       "fangraphs": 0.9181,
+       "mlb_pipeline": 0.9883,
+       "stat": 1.0936
+      }
+     }
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9853,
+       "mlb_pipeline": 1.0147
+      },
+      "RP": {
+       "fangraphs": 0.9853,
+       "mlb_pipeline": 1.0147
+      },
+      "SP": {
+       "fangraphs": 0.9821,
+       "mlb_pipeline": 1.0179
+      },
+      "": {
+       "fangraphs": 0.9853,
+       "mlb_pipeline": 1.0147
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9544,
+       "mlb_pipeline": 0.9783,
+       "stat": 1.0673
+      },
+      "RP": {
+       "fangraphs": 0.9544,
+       "mlb_pipeline": 0.9783,
+       "stat": 1.0673
+      },
+      "SP": {
+       "fangraphs": 0.9445,
+       "mlb_pipeline": 0.9782,
+       "stat": 1.0773
+      }
+     }
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9654,
+       "mlb_pipeline": 1.0346
+      },
+      "SP": {
+       "fangraphs": 0.9628,
+       "mlb_pipeline": 1.0372
+      },
+      "RP": {
+       "fangraphs": 0.9654,
+       "mlb_pipeline": 1.0346
+      },
+      "": {
+       "fangraphs": 0.9654,
+       "mlb_pipeline": 1.0346
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9635,
+       "mlb_pipeline": 1.0357,
+       "stat": 1.0008
+      },
+      "SP": {
+       "fangraphs": 0.9722,
+       "mlb_pipeline": 1.0477,
+       "stat": 0.9801
+      },
+      "RP": {
+       "fangraphs": 0.9635,
+       "mlb_pipeline": 1.0357,
+       "stat": 1.0008
+      }
+     }
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9738,
+       "mlb_pipeline": 1.0262
+      },
+      "SP": {
+       "fangraphs": 0.9577,
+       "mlb_pipeline": 1.0423
+      },
+      "RP": {
+       "fangraphs": 0.9738,
+       "mlb_pipeline": 1.0262
+      },
+      "": {
+       "fangraphs": 0.9738,
+       "mlb_pipeline": 1.0262
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9638,
+       "mlb_pipeline": 1.0211,
+       "stat": 1.0151
+      },
+      "SP": {
+       "fangraphs": 0.9547,
+       "mlb_pipeline": 1.0389,
+       "stat": 1.0064
+      },
+      "RP": {
+       "fangraphs": 0.9638,
+       "mlb_pipeline": 1.0211,
+       "stat": 1.0151
+      }
+     }
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9607,
+       "mlb_pipeline": 1.0393
+      },
+      "SP": {
+       "fangraphs": 0.9436,
+       "mlb_pipeline": 1.0564
+      },
+      "RP": {
+       "fangraphs": 0.9607,
+       "mlb_pipeline": 1.0393
+      },
+      "": {
+       "fangraphs": 0.9607,
+       "mlb_pipeline": 1.0393
+      }
+     },
+     "aw2": {
+      "_pooled": {
+       "fangraphs": 0.9229,
+       "mlb_pipeline": 1.0027,
+       "stat": 1.0743
+      },
+      "SP": {
+       "fangraphs": 0.9087,
+       "mlb_pipeline": 1.0161,
+       "stat": 1.0752
+      },
+      "RP": {
+       "fangraphs": 0.9229,
+       "mlb_pipeline": 1.0027,
+       "stat": 1.0743
+      }
+     }
+    }
+   }
+  },
+  "sl": {
+   "tool": "sl",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 421,
+      "rho_consensus": 0.1329,
+      "rho_arm": 0.1313,
+      "d": -0.0016,
+      "lb95": -0.0059,
+      "ci95": [
+       -0.0069,
+       0.0032
+      ],
+      "sd": 0.00255,
+      "p": 0.740987,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 642,
+      "rho_consensus": 0.231,
+      "rho_arm": 0.2283,
+      "d": -0.0027,
+      "lb95": -0.005,
+      "ci95": [
+       -0.0056,
+       -0.0001
+      ],
+      "sd": 0.00138,
+      "p": 0.974257,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 421,
+      "rho_consensus": 0.1329,
+      "rho_arm": 0.1313,
+      "d": -0.0016,
+      "lb95": -0.0059,
+      "ci95": [
+       -0.0069,
+       0.0032
+      ],
+      "sd": 0.00255,
+      "p": 0.740987,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 642,
+      "rho_consensus": 0.231,
+      "rho_arm": 0.2283,
+      "d": -0.0027,
+      "lb95": -0.005,
+      "ci95": [
+       -0.0056,
+       -0.0001
+      ],
+      "sd": 0.00138,
+      "p": 0.974257,
+      "draws": 2000
+     },
+     "verdict": "NULL",
+     "note": "no admitted sub-driver: AW2 equals AW1"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "RP": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "SP": {
+       "fangraphs": 1.1434,
+       "mlb_pipeline": 0.8566
+      },
+      "": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      }
+     },
+     "aw2": null
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "RP": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "SP": {
+       "fangraphs": 1.1434,
+       "mlb_pipeline": 0.8566
+      },
+      "": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      }
+     },
+     "aw2": null
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "RP": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "SP": {
+       "fangraphs": 1.1434,
+       "mlb_pipeline": 0.8566
+      },
+      "": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      }
+     },
+     "aw2": null
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "RP": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "SP": {
+       "fangraphs": 1.1434,
+       "mlb_pipeline": 0.8566
+      },
+      "": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      }
+     },
+     "aw2": null
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "RP": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      },
+      "SP": {
+       "fangraphs": 1.1434,
+       "mlb_pipeline": 0.8566
+      },
+      "": {
+       "fangraphs": 1.0676,
+       "mlb_pipeline": 0.9324
+      }
+     },
+     "aw2": null
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0784,
+       "mlb_pipeline": 0.9216
+      },
+      "RP": {
+       "fangraphs": 1.0784,
+       "mlb_pipeline": 0.9216
+      },
+      "SP": {
+       "fangraphs": 1.1638,
+       "mlb_pipeline": 0.8362
+      },
+      "": {
+       "fangraphs": 1.0784,
+       "mlb_pipeline": 0.9216
+      }
+     },
+     "aw2": null
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.1051,
+       "mlb_pipeline": 0.8949
+      },
+      "": {
+       "fangraphs": 1.1051,
+       "mlb_pipeline": 0.8949
+      },
+      "SP": {
+       "fangraphs": 1.2249,
+       "mlb_pipeline": 0.7751
+      },
+      "RP": {
+       "fangraphs": 1.1051,
+       "mlb_pipeline": 0.8949
+      }
+     },
+     "aw2": null
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.1104,
+       "mlb_pipeline": 0.8896
+      },
+      "SP": {
+       "fangraphs": 1.1832,
+       "mlb_pipeline": 0.8168
+      },
+      "RP": {
+       "fangraphs": 1.1104,
+       "mlb_pipeline": 0.8896
+      },
+      "": {
+       "fangraphs": 1.1104,
+       "mlb_pipeline": 0.8896
+      }
+     },
+     "aw2": null
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.1404,
+       "mlb_pipeline": 0.8596
+      },
+      "SP": {
+       "fangraphs": 1.2754,
+       "mlb_pipeline": 0.7246
+      },
+      "RP": {
+       "fangraphs": 1.1404,
+       "mlb_pipeline": 0.8596
+      },
+      "": {
+       "fangraphs": 1.1404,
+       "mlb_pipeline": 0.8596
+      }
+     },
+     "aw2": null
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "RP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "SP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "RP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "SP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0487,
+       "mlb_pipeline": 0.9513
+      },
+      "RP": {
+       "fangraphs": 1.0487,
+       "mlb_pipeline": 0.9513
+      },
+      "SP": {
+       "fangraphs": 1.0487,
+       "mlb_pipeline": 0.9513
+      },
+      "": {
+       "fangraphs": 1.0487,
+       "mlb_pipeline": 0.9513
+      }
+     },
+     "aw2": null
+    }
+   }
+  },
+  "cb": {
+   "tool": "cb",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 231,
+      "rho_consensus": 0.007,
+      "rho_arm": 0.0012,
+      "d": -0.0058,
+      "lb95": -0.0179,
+      "ci95": [
+       -0.021,
+       0.0046
+      ],
+      "sd": 0.00689,
+      "p": 0.801906,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 455,
+      "rho_consensus": 0.1091,
+      "rho_arm": 0.1091,
+      "d": 0.0,
+      "lb95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p": 1.0,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 231,
+      "rho_consensus": 0.007,
+      "rho_arm": 0.0012,
+      "d": -0.0058,
+      "lb95": -0.0179,
+      "ci95": [
+       -0.021,
+       0.0046
+      ],
+      "sd": 0.00689,
+      "p": 0.801906,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 455,
+      "rho_consensus": 0.1091,
+      "rho_arm": 0.1091,
+      "d": 0.0,
+      "lb95": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "sd": 0.0,
+      "p": 1.0,
+      "draws": 2000
+     },
+     "verdict": "NULL",
+     "note": "no admitted sub-driver: AW2 equals AW1"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "SP": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "RP": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      }
+     },
+     "aw2": null
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "SP": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "RP": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      }
+     },
+     "aw2": null
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "SP": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "RP": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      }
+     },
+     "aw2": null
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "SP": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "RP": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      },
+      "": {
+       "fangraphs": 0.8491,
+       "mlb_pipeline": 1.1509
+      }
+     },
+     "aw2": null
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9237,
+       "mlb_pipeline": 1.0763
+      },
+      "SP": {
+       "fangraphs": 0.9237,
+       "mlb_pipeline": 1.0763
+      },
+      "RP": {
+       "fangraphs": 0.9237,
+       "mlb_pipeline": 1.0763
+      },
+      "": {
+       "fangraphs": 0.9237,
+       "mlb_pipeline": 1.0763
+      }
+     },
+     "aw2": null
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.8973,
+       "mlb_pipeline": 1.1027
+      },
+      "SP": {
+       "fangraphs": 0.8973,
+       "mlb_pipeline": 1.1027
+      },
+      "RP": {
+       "fangraphs": 0.8973,
+       "mlb_pipeline": 1.1027
+      },
+      "": {
+       "fangraphs": 0.8973,
+       "mlb_pipeline": 1.1027
+      }
+     },
+     "aw2": null
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9334,
+       "mlb_pipeline": 1.0666
+      },
+      "SP": {
+       "fangraphs": 0.9334,
+       "mlb_pipeline": 1.0666
+      },
+      "RP": {
+       "fangraphs": 0.9334,
+       "mlb_pipeline": 1.0666
+      },
+      "": {
+       "fangraphs": 0.9334,
+       "mlb_pipeline": 1.0666
+      }
+     },
+     "aw2": null
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9734,
+       "mlb_pipeline": 1.0266
+      },
+      "SP": {
+       "fangraphs": 0.9734,
+       "mlb_pipeline": 1.0266
+      },
+      "RP": {
+       "fangraphs": 0.9734,
+       "mlb_pipeline": 1.0266
+      },
+      "": {
+       "fangraphs": 0.9734,
+       "mlb_pipeline": 1.0266
+      }
+     },
+     "aw2": null
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0968,
+       "mlb_pipeline": 0.9032
+      },
+      "SP": {
+       "fangraphs": 1.0968,
+       "mlb_pipeline": 0.9032
+      },
+      "": {
+       "fangraphs": 1.0968,
+       "mlb_pipeline": 0.9032
+      },
+      "RP": {
+       "fangraphs": 1.0968,
+       "mlb_pipeline": 0.9032
+      }
+     },
+     "aw2": null
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "SP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "RP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "SP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "SP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "RP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    }
+   }
+  },
+  "ch": {
+   "tool": "ch",
+   "weight_label": "mlb",
+   "arms": {
+    "AW1_outlets_by_group": {
+     "mlb": {
+      "computable": true,
+      "n": 344,
+      "rho_consensus": 0.2835,
+      "rho_arm": 0.2814,
+      "d": -0.002,
+      "lb95": -0.0091,
+      "ci95": [
+       -0.0106,
+       0.0067
+      ],
+      "sd": 0.00428,
+      "p": 0.682497,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 391,
+      "rho_consensus": 0.1947,
+      "rho_arm": 0.1928,
+      "d": -0.0019,
+      "lb95": -0.0065,
+      "ci95": [
+       -0.0077,
+       0.0032
+      ],
+      "sd": 0.0027,
+      "p": 0.758971,
+      "draws": 2000
+     },
+     "verdict": "NULL"
+    },
+    "AW2_outlets_plus_stat": {
+     "mlb": {
+      "computable": true,
+      "n": 344,
+      "rho_consensus": 0.2835,
+      "rho_arm": 0.2814,
+      "d": -0.002,
+      "lb95": -0.0091,
+      "ci95": [
+       -0.0106,
+       0.0067
+      ],
+      "sd": 0.00428,
+      "p": 0.682497,
+      "draws": 2000
+     },
+     "um": {
+      "computable": true,
+      "n": 391,
+      "rho_consensus": 0.1947,
+      "rho_arm": 0.1928,
+      "d": -0.0019,
+      "lb95": -0.0065,
+      "ci95": [
+       -0.0077,
+       0.0032
+      ],
+      "sd": 0.0027,
+      "p": 0.758971,
+      "draws": 2000
+     },
+     "verdict": "NULL",
+     "note": "no admitted sub-driver: AW2 equals AW1"
+    }
+   },
+   "weights_by_fold": {
+    "2011": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      },
+      "SP": {
+       "fangraphs": 0.9274,
+       "mlb_pipeline": 1.0726
+      },
+      "": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      },
+      "RP": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      }
+     },
+     "aw2": null
+    },
+    "2012": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      },
+      "SP": {
+       "fangraphs": 0.9274,
+       "mlb_pipeline": 1.0726
+      },
+      "": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      },
+      "RP": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      }
+     },
+     "aw2": null
+    },
+    "2013": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      },
+      "SP": {
+       "fangraphs": 0.9274,
+       "mlb_pipeline": 1.0726
+      },
+      "": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      },
+      "RP": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      }
+     },
+     "aw2": null
+    },
+    "2014": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      },
+      "SP": {
+       "fangraphs": 0.9274,
+       "mlb_pipeline": 1.0726
+      },
+      "": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      },
+      "RP": {
+       "fangraphs": 0.9441,
+       "mlb_pipeline": 1.0559
+      }
+     },
+     "aw2": null
+    },
+    "2015": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9513,
+       "mlb_pipeline": 1.0487
+      },
+      "SP": {
+       "fangraphs": 0.9336,
+       "mlb_pipeline": 1.0664
+      },
+      "": {
+       "fangraphs": 0.9513,
+       "mlb_pipeline": 1.0487
+      },
+      "RP": {
+       "fangraphs": 0.9513,
+       "mlb_pipeline": 1.0487
+      }
+     },
+     "aw2": null
+    },
+    "2016": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9536,
+       "mlb_pipeline": 1.0464
+      },
+      "SP": {
+       "fangraphs": 0.935,
+       "mlb_pipeline": 1.065
+      },
+      "": {
+       "fangraphs": 0.9536,
+       "mlb_pipeline": 1.0464
+      },
+      "RP": {
+       "fangraphs": 0.9536,
+       "mlb_pipeline": 1.0464
+      }
+     },
+     "aw2": null
+    },
+    "2017": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9775,
+       "mlb_pipeline": 1.0225
+      },
+      "": {
+       "fangraphs": 0.9775,
+       "mlb_pipeline": 1.0225
+      },
+      "SP": {
+       "fangraphs": 0.9564,
+       "mlb_pipeline": 1.0436
+      },
+      "RP": {
+       "fangraphs": 0.9775,
+       "mlb_pipeline": 1.0225
+      }
+     },
+     "aw2": null
+    },
+    "2018": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9567,
+       "mlb_pipeline": 1.0433
+      },
+      "SP": {
+       "fangraphs": 0.9459,
+       "mlb_pipeline": 1.0541
+      },
+      "RP": {
+       "fangraphs": 0.9567,
+       "mlb_pipeline": 1.0433
+      },
+      "": {
+       "fangraphs": 0.9567,
+       "mlb_pipeline": 1.0433
+      }
+     },
+     "aw2": null
+    },
+    "2019": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9521,
+       "mlb_pipeline": 1.0479
+      },
+      "SP": {
+       "fangraphs": 0.9521,
+       "mlb_pipeline": 1.0479
+      },
+      "RP": {
+       "fangraphs": 0.9521,
+       "mlb_pipeline": 1.0479
+      },
+      "": {
+       "fangraphs": 0.9521,
+       "mlb_pipeline": 1.0479
+      }
+     },
+     "aw2": null
+    },
+    "2022": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "SP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "RP": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      },
+      "": {
+       "fangraphs": 1.0,
+       "mlb_pipeline": 1.0
+      }
+     },
+     "aw2": null
+    },
+    "2023": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      },
+      "SP": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      },
+      "": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      },
+      "RP": {
+       "fangraphs": 0.9238,
+       "mlb_pipeline": 1.0762
+      }
+     },
+     "aw2": null
+    },
+    "2024": {
+     "aw1": {
+      "_pooled": {
+       "fangraphs": 0.9314,
+       "mlb_pipeline": 1.0686
+      },
+      "SP": {
+       "fangraphs": 0.9314,
+       "mlb_pipeline": 1.0686
+      },
+      "": {
+       "fangraphs": 0.9314,
+       "mlb_pipeline": 1.0686
+      },
+      "RP": {
+       "fangraphs": 0.9314,
+       "mlb_pipeline": 1.0686
+      }
+     },
+     "aw2": null
+    }
+   }
+  }
+ },
+ "pitch_rate": {
+  "atlas": {
+   "flagged": [],
+   "redundancy": {
+    "ppa_raw_hit": {
+     "bb_pct_rel_hit": {
+      "rho": 0.611,
+      "n": 17992
+     },
+     "k_pct_rel_hit": {
+      "rho": 0.3788,
+      "n": 17992
+     },
+     "coverage_rows": 17992
+    },
+    "ppa_par_hit": {
+     "bb_pct_rel_hit": {
+      "rho": 0.6372,
+      "n": 17689
+     },
+     "k_pct_rel_hit": {
+      "rho": 0.3865,
+      "n": 17689
+     },
+     "coverage_rows": 17689
+    },
+    "pbf_raw_pit": {
+     "bb_pct_rel_pit": {
+      "rho": 0.4825,
+      "n": 18467
+     },
+     "k_pct_rel_pit": {
+      "rho": 0.474,
+      "n": 18467
+     },
+     "coverage_rows": 18467
+    },
+    "pbf_par_pit": {
+     "bb_pct_rel_pit": {
+      "rho": 0.467,
+      "n": 18140
+     },
+     "k_pct_rel_pit": {
+      "rho": 0.4629,
+      "n": 18140
+     },
+     "coverage_rows": 18140
+    },
+    "pip_raw_pit": {
+     "bb_pct_rel_pit": {
+      "rho": 0.6581,
+      "n": 18467
+     },
+     "k_pct_rel_pit": {
+      "rho": 0.0632,
+      "n": 18467
+     },
+     "coverage_rows": 18467
+    },
+    "pip_par_pit": {
+     "bb_pct_rel_pit": {
+      "rho": 0.6496,
+      "n": 18140
+     },
+     "k_pct_rel_pit": {
+      "rho": 0.0436,
+      "n": 18140
+     },
+     "coverage_rows": 18140
+    }
+   },
+   "seconds": 29.6,
+   "fwar_vintage": "2026-10-02-0341299c20ec"
+  },
+  "grade_revisions": {
+   "hit:ppa_raw": {
+    "n": 584,
+    "rho": -0.077
+   },
+   "hit:ppa_par": {
+    "n": 584,
+    "rho": -0.0739
+   },
+   "pitch_sel:ppa_raw": {
+    "n": 269,
+    "rho": 0.1708
+   },
+   "pitch_sel:ppa_par": {
+    "n": 269,
+    "rho": 0.1639
+   },
+   "bat_ctrl:ppa_raw": {
+    "n": 272,
+    "rho": -0.0944
+   },
+   "bat_ctrl:ppa_par": {
+    "n": 272,
+    "rho": -0.0999
+   },
+   "cmd:pbf_raw": {
+    "n": 588,
+    "rho": -0.0942
+   },
+   "cmd:pbf_par": {
+    "n": 588,
+    "rho": -0.0754
+   },
+   "cmd:pip_raw": {
+    "n": 588,
+    "rho": -0.0658
+   },
+   "cmd:pip_par": {
+    "n": 588,
+    "rho": -0.0409
+   }
+  },
+  "subdriver_rows": [
+   {
+    "tool": "hit",
+    "candidate": "ppa_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 673,
+    "players": 464,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3665,
+    "rho_candidate_alone": -0.336,
+    "rho_augmented": 0.4557,
+    "corr_with_consensus": -0.185,
+    "d": 0.0892,
+    "lb95": 0.0429,
+    "ci95": [
+     0.035,
+     0.1448
+    ],
+    "sd": 0.02833,
+    "p": 0.000822,
+    "draws": 2000,
+    "perm_floor95": 0.0057,
+    "perm_draws": 200,
+    "q": 0.001233
+   },
+   {
+    "tool": "hit",
+    "candidate": "ppa_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 673,
+    "players": 464,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3665,
+    "rho_candidate_alone": -0.346,
+    "rho_augmented": 0.4657,
+    "corr_with_consensus": -0.1861,
+    "d": 0.0993,
+    "lb95": 0.0513,
+    "ci95": [
+     0.0429,
+     0.1586
+    ],
+    "sd": 0.02906,
+    "p": 0.000318,
+    "draws": 2000,
+    "perm_floor95": 0.0061,
+    "perm_draws": 200,
+    "q": 0.000572
+   },
+   {
+    "tool": "hit",
+    "candidate": "ppa_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1482,
+    "players": 1025,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5394,
+    "rho_candidate_alone": -0.3024,
+    "rho_augmented": 0.5771,
+    "corr_with_consensus": -0.1755,
+    "d": 0.0377,
+    "lb95": 0.0182,
+    "ci95": [
+     0.0147,
+     0.06
+    ],
+    "sd": 0.01183,
+    "p": 0.000724,
+    "draws": 2000,
+    "perm_floor95": 0.0016,
+    "perm_draws": 200,
+    "q": 0.001086
+   },
+   {
+    "tool": "hit",
+    "candidate": "ppa_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1482,
+    "players": 1025,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5394,
+    "rho_candidate_alone": -0.3078,
+    "rho_augmented": 0.5809,
+    "corr_with_consensus": -0.1708,
+    "d": 0.0415,
+    "lb95": 0.0217,
+    "ci95": [
+     0.0178,
+     0.0642
+    ],
+    "sd": 0.01201,
+    "p": 0.000278,
+    "draws": 2000,
+    "perm_floor95": 0.0018,
+    "perm_draws": 200,
+    "q": 0.0005
+   },
+   {
+    "tool": "pitch_sel",
+    "candidate": "ppa_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 219,
+    "players": 140,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5022,
+    "rho_candidate_alone": 0.4352,
+    "rho_augmented": 0.5107,
+    "corr_with_consensus": 0.5804,
+    "d": 0.0085,
+    "lb95": -0.021,
+    "ci95": [
+     -0.0266,
+     0.0422
+    ],
+    "sd": 0.01786,
+    "p": 0.316218,
+    "draws": 2000,
+    "perm_floor95": 0.008,
+    "perm_draws": 200,
+    "q": 0.632436
+   },
+   {
+    "tool": "pitch_sel",
+    "candidate": "ppa_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 219,
+    "players": 140,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5022,
+    "rho_candidate_alone": 0.4223,
+    "rho_augmented": 0.4564,
+    "corr_with_consensus": 0.5721,
+    "d": -0.0457,
+    "lb95": -0.0691,
+    "ci95": [
+     -0.0739,
+     -0.019
+    ],
+    "sd": 0.01408,
+    "p": 0.999421,
+    "draws": 2000,
+    "perm_floor95": 0.008,
+    "perm_draws": 200,
+    "q": 0.999421
+   },
+   {
+    "tool": "pitch_sel",
+    "candidate": "ppa_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 514,
+    "players": 336,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5998,
+    "rho_candidate_alone": 0.5071,
+    "rho_augmented": 0.6276,
+    "corr_with_consensus": 0.5459,
+    "d": 0.0278,
+    "lb95": 0.0035,
+    "ci95": [
+     -0.0018,
+     0.058
+    ],
+    "sd": 0.01529,
+    "p": 0.034388,
+    "draws": 2000,
+    "perm_floor95": 0.0003,
+    "perm_draws": 200,
+    "q": 0.041266
+   },
+   {
+    "tool": "pitch_sel",
+    "candidate": "ppa_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 514,
+    "players": 336,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5998,
+    "rho_candidate_alone": 0.5044,
+    "rho_augmented": 0.6281,
+    "corr_with_consensus": 0.5457,
+    "d": 0.0283,
+    "lb95": 0.0039,
+    "ci95": [
+     -0.0011,
+     0.0581
+    ],
+    "sd": 0.01529,
+    "p": 0.032027,
+    "draws": 2000,
+    "perm_floor95": 0.0003,
+    "perm_draws": 200,
+    "q": 0.041266
+   },
+   {
+    "tool": "bat_ctrl",
+    "candidate": "ppa_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 221,
+    "players": 140,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3693,
+    "rho_candidate_alone": -0.1872,
+    "rho_augmented": 0.3231,
+    "corr_with_consensus": -0.2233,
+    "d": -0.0462,
+    "lb95": -0.1211,
+    "ci95": [
+     -0.1373,
+     0.0367
+    ],
+    "sd": 0.04405,
+    "p": 0.852654,
+    "draws": 2000,
+    "perm_floor95": 0.0044,
+    "perm_draws": 200,
+    "q": 0.858619
+   },
+   {
+    "tool": "bat_ctrl",
+    "candidate": "ppa_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 221,
+    "players": 140,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3693,
+    "rho_candidate_alone": -0.1862,
+    "rho_augmented": 0.3216,
+    "corr_with_consensus": -0.2299,
+    "d": -0.0477,
+    "lb95": -0.1233,
+    "ci95": [
+     -0.1408,
+     0.0363
+    ],
+    "sd": 0.04441,
+    "p": 0.858619,
+    "draws": 2000,
+    "perm_floor95": 0.0069,
+    "perm_draws": 200,
+    "q": 0.858619
+   },
+   {
+    "tool": "bat_ctrl",
+    "candidate": "ppa_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 518,
+    "players": 338,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5147,
+    "rho_candidate_alone": -0.2414,
+    "rho_augmented": 0.5254,
+    "corr_with_consensus": -0.2379,
+    "d": 0.0106,
+    "lb95": -0.0098,
+    "ci95": [
+     -0.0133,
+     0.0332
+    ],
+    "sd": 0.01176,
+    "p": 0.182945,
+    "draws": 2000,
+    "perm_floor95": 0.0041,
+    "perm_draws": 200,
+    "q": 0.182945
+   },
+   {
+    "tool": "bat_ctrl",
+    "candidate": "ppa_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 518,
+    "players": 338,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5147,
+    "rho_candidate_alone": -0.2459,
+    "rho_augmented": 0.5262,
+    "corr_with_consensus": -0.2398,
+    "d": 0.0114,
+    "lb95": -0.0092,
+    "ci95": [
+     -0.0129,
+     0.0339
+    ],
+    "sd": 0.01193,
+    "p": 0.168707,
+    "draws": 2000,
+    "perm_floor95": 0.0038,
+    "perm_draws": 200,
+    "q": 0.182945
+   },
+   {
+    "tool": "fb",
+    "candidate": "pbf_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 906,
+    "players": 627,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3439,
+    "rho_candidate_alone": 0.3365,
+    "rho_augmented": 0.4081,
+    "corr_with_consensus": 0.2934,
+    "d": 0.0642,
+    "lb95": 0.0186,
+    "ci95": [
+     0.0103,
+     0.1177
+    ],
+    "sd": 0.02811,
+    "p": 0.011215,
+    "draws": 2000,
+    "perm_floor95": 0.0027,
+    "perm_draws": 200,
+    "q": 0.087372
+   },
+   {
+    "tool": "fb",
+    "candidate": "pbf_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 906,
+    "players": 627,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3439,
+    "rho_candidate_alone": 0.2898,
+    "rho_augmented": 0.3825,
+    "corr_with_consensus": 0.2501,
+    "d": 0.0385,
+    "lb95": -0.0017,
+    "ci95": [
+     -0.0091,
+     0.0874
+    ],
+    "sd": 0.02492,
+    "p": 0.060982,
+    "draws": 2000,
+    "perm_floor95": 0.0029,
+    "perm_draws": 200,
+    "q": 0.146357
+   },
+   {
+    "tool": "fb",
+    "candidate": "pip_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 906,
+    "players": 627,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3439,
+    "rho_candidate_alone": 0.2904,
+    "rho_augmented": 0.381,
+    "corr_with_consensus": 0.3012,
+    "d": 0.0371,
+    "lb95": 0.0006,
+    "ci95": [
+     -0.0065,
+     0.0797
+    ],
+    "sd": 0.02151,
+    "p": 0.042419,
+    "draws": 2000,
+    "perm_floor95": 0.0023,
+    "perm_draws": 200,
+    "q": 0.127257
+   },
+   {
+    "tool": "fb",
+    "candidate": "pip_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 906,
+    "players": 627,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3439,
+    "rho_candidate_alone": 0.2396,
+    "rho_augmented": 0.3585,
+    "corr_with_consensus": 0.2513,
+    "d": 0.0146,
+    "lb95": -0.015,
+    "ci95": [
+     -0.0203,
+     0.0492
+    ],
+    "sd": 0.01768,
+    "p": 0.204847,
+    "draws": 2000,
+    "perm_floor95": 0.0024,
+    "perm_draws": 200,
+    "q": 0.351166
+   },
+   {
+    "tool": "fb",
+    "candidate": "pbf_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1561,
+    "players": 1095,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3053,
+    "rho_candidate_alone": 0.3939,
+    "rho_augmented": 0.4382,
+    "corr_with_consensus": 0.2955,
+    "d": 0.1328,
+    "lb95": 0.0935,
+    "ci95": [
+     0.0858,
+     0.1794
+    ],
+    "sd": 0.02372,
+    "p": 0.0,
+    "draws": 2000,
+    "perm_floor95": 0.0022,
+    "perm_draws": 200,
+    "q": 0.0
+   },
+   {
+    "tool": "fb",
+    "candidate": "pbf_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1561,
+    "players": 1095,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3053,
+    "rho_candidate_alone": 0.323,
+    "rho_augmented": 0.3926,
+    "corr_with_consensus": 0.2523,
+    "d": 0.0873,
+    "lb95": 0.0532,
+    "ci95": [
+     0.0465,
+     0.1284
+    ],
+    "sd": 0.02091,
+    "p": 1.5e-05,
+    "draws": 2000,
+    "perm_floor95": 0.0023,
+    "perm_draws": 200,
+    "q": 3.6e-05
+   },
+   {
+    "tool": "fb",
+    "candidate": "pip_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1561,
+    "players": 1095,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3053,
+    "rho_candidate_alone": 0.3074,
+    "rho_augmented": 0.3662,
+    "corr_with_consensus": 0.3253,
+    "d": 0.0609,
+    "lb95": 0.029,
+    "ci95": [
+     0.0227,
+     0.0966
+    ],
+    "sd": 0.01912,
+    "p": 0.000722,
+    "draws": 2000,
+    "perm_floor95": 0.0027,
+    "perm_draws": 200,
+    "q": 0.001444
+   },
+   {
+    "tool": "fb",
+    "candidate": "pip_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1561,
+    "players": 1095,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3053,
+    "rho_candidate_alone": 0.2279,
+    "rho_augmented": 0.3284,
+    "corr_with_consensus": 0.2732,
+    "d": 0.0231,
+    "lb95": -0.0022,
+    "ci95": [
+     -0.0066,
+     0.0513
+    ],
+    "sd": 0.01504,
+    "p": 0.062271,
+    "draws": 2000,
+    "perm_floor95": 0.0025,
+    "perm_draws": 200,
+    "q": 0.083028
+   },
+   {
+    "tool": "cmd",
+    "candidate": "pbf_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 905,
+    "players": 626,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3747,
+    "rho_candidate_alone": -0.2571,
+    "rho_augmented": 0.3775,
+    "corr_with_consensus": -0.34,
+    "d": 0.0029,
+    "lb95": -0.0212,
+    "ci95": [
+     -0.0258,
+     0.0303
+    ],
+    "sd": 0.01455,
+    "p": 0.422103,
+    "draws": 2000,
+    "perm_floor95": 0.0041,
+    "perm_draws": 200,
+    "q": 0.51945
+   },
+   {
+    "tool": "cmd",
+    "candidate": "pbf_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 905,
+    "players": 626,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3747,
+    "rho_candidate_alone": -0.2461,
+    "rho_augmented": 0.3831,
+    "corr_with_consensus": -0.2862,
+    "d": 0.0085,
+    "lb95": -0.0174,
+    "ci95": [
+     -0.0223,
+     0.0373
+    ],
+    "sd": 0.01548,
+    "p": 0.292362,
+    "draws": 2000,
+    "perm_floor95": 0.0042,
+    "perm_draws": 200,
+    "q": 0.51945
+   },
+   {
+    "tool": "cmd",
+    "candidate": "pip_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 905,
+    "players": 626,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3747,
+    "rho_candidate_alone": -0.2944,
+    "rho_augmented": 0.3762,
+    "corr_with_consensus": -0.5324,
+    "d": 0.0016,
+    "lb95": -0.022,
+    "ci95": [
+     -0.0267,
+     0.0278
+    ],
+    "sd": 0.0138,
+    "p": 0.454519,
+    "draws": 2000,
+    "perm_floor95": 0.0038,
+    "perm_draws": 200,
+    "q": 0.51945
+   },
+   {
+    "tool": "cmd",
+    "candidate": "pip_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 905,
+    "players": 626,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.3747,
+    "rho_candidate_alone": -0.2779,
+    "rho_augmented": 0.3801,
+    "corr_with_consensus": -0.4861,
+    "d": 0.0054,
+    "lb95": -0.0179,
+    "ci95": [
+     -0.0216,
+     0.0311
+    ],
+    "sd": 0.01366,
+    "p": 0.345404,
+    "draws": 2000,
+    "perm_floor95": 0.0038,
+    "perm_draws": 200,
+    "q": 0.51945
+   },
+   {
+    "tool": "cmd",
+    "candidate": "pbf_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1559,
+    "players": 1093,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5543,
+    "rho_candidate_alone": -0.3274,
+    "rho_augmented": 0.5679,
+    "corr_with_consensus": -0.3491,
+    "d": 0.0136,
+    "lb95": 0.0037,
+    "ci95": [
+     0.002,
+     0.026
+    ],
+    "sd": 0.00618,
+    "p": 0.013911,
+    "draws": 2000,
+    "perm_floor95": -0.0004,
+    "perm_draws": 200,
+    "q": 0.022258
+   },
+   {
+    "tool": "cmd",
+    "candidate": "pbf_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1559,
+    "players": 1093,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5543,
+    "rho_candidate_alone": -0.3022,
+    "rho_augmented": 0.5709,
+    "corr_with_consensus": -0.2776,
+    "d": 0.0166,
+    "lb95": 0.0065,
+    "ci95": [
+     0.0045,
+     0.0289
+    ],
+    "sd": 0.00627,
+    "p": 0.004091,
+    "draws": 2000,
+    "perm_floor95": -0.0005,
+    "perm_draws": 200,
+    "q": 0.008182
+   },
+   {
+    "tool": "cmd",
+    "candidate": "pip_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1559,
+    "players": 1093,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5543,
+    "rho_candidate_alone": -0.4119,
+    "rho_augmented": 0.5634,
+    "corr_with_consensus": -0.5345,
+    "d": 0.009,
+    "lb95": -0.0014,
+    "ci95": [
+     -0.0036,
+     0.0214
+    ],
+    "sd": 0.00638,
+    "p": 0.078288,
+    "draws": 2000,
+    "perm_floor95": -0.0001,
+    "perm_draws": 200,
+    "q": 0.089472
+   },
+   {
+    "tool": "cmd",
+    "candidate": "pip_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 1559,
+    "players": 1093,
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.5543,
+    "rho_candidate_alone": -0.3783,
+    "rho_augmented": 0.5649,
+    "corr_with_consensus": -0.4638,
+    "d": 0.0106,
+    "lb95": 0.0008,
+    "ci95": [
+     -0.0013,
+     0.0222
+    ],
+    "sd": 0.00612,
+    "p": 0.041764,
+    "draws": 2000,
+    "perm_floor95": 0.0002,
+    "perm_draws": 200,
+    "q": 0.055685
+   },
+   {
+    "tool": "sl",
+    "candidate": "pbf_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 333,
+    "players": 212,
+    "years": [
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.1651,
+    "rho_candidate_alone": 0.079,
+    "rho_augmented": 0.1175,
+    "corr_with_consensus": -0.0156,
+    "d": -0.0475,
+    "lb95": -0.0975,
+    "ci95": [
+     -0.1065,
+     0.0182
+    ],
+    "sd": 0.03153,
+    "p": 0.934237,
+    "draws": 2000,
+    "perm_floor95": 0.0237,
+    "perm_draws": 200,
+    "q": 0.998189
+   },
+   {
+    "tool": "sl",
+    "candidate": "pbf_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 333,
+    "players": 212,
+    "years": [
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.1651,
+    "rho_candidate_alone": 0.0331,
+    "rho_augmented": 0.0836,
+    "corr_with_consensus": -0.037,
+    "d": -0.0815,
+    "lb95": -0.1292,
+    "ci95": [
+     -0.1378,
+     -0.0219
+    ],
+    "sd": 0.02972,
+    "p": 0.996944,
+    "draws": 2000,
+    "perm_floor95": 0.0265,
+    "perm_draws": 200,
+    "q": 0.998189
+   },
+   {
+    "tool": "sl",
+    "candidate": "pip_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 333,
+    "players": 212,
+    "years": [
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.1651,
+    "rho_candidate_alone": 0.1308,
+    "rho_augmented": 0.1473,
+    "corr_with_consensus": 0.0143,
+    "d": -0.0178,
+    "lb95": -0.0585,
+    "ci95": [
+     -0.0675,
+     0.0346
+    ],
+    "sd": 0.02595,
+    "p": 0.752996,
+    "draws": 2000,
+    "perm_floor95": 0.0216,
+    "perm_draws": 200,
+    "q": 0.998189
+   },
+   {
+    "tool": "sl",
+    "candidate": "pip_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 333,
+    "players": 212,
+    "years": [
+     2016,
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.1651,
+    "rho_candidate_alone": 0.0791,
+    "rho_augmented": 0.0921,
+    "corr_with_consensus": -0.0018,
+    "d": -0.073,
+    "lb95": -0.1116,
+    "ci95": [
+     -0.1196,
+     -0.023
+    ],
+    "sd": 0.02508,
+    "p": 0.998189,
+    "draws": 2000,
+    "perm_floor95": 0.0275,
+    "perm_draws": 200,
+    "q": 0.998189
+   },
+   {
+    "tool": "sl",
+    "candidate": "pbf_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 496,
+    "players": 331,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.2634,
+    "rho_candidate_alone": 0.1345,
+    "rho_augmented": 0.2676,
+    "corr_with_consensus": 0.0283,
+    "d": 0.0042,
+    "lb95": -0.0541,
+    "ci95": [
+     -0.0641,
+     0.074
+    ],
+    "sd": 0.03549,
+    "p": 0.452462,
+    "draws": 2000,
+    "perm_floor95": 0.0041,
+    "perm_draws": 200,
+    "q": 0.722926
+   },
+   {
+    "tool": "sl",
+    "candidate": "pbf_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 496,
+    "players": 331,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.2634,
+    "rho_candidate_alone": 0.0865,
+    "rho_augmented": 0.2638,
+    "corr_with_consensus": -0.0183,
+    "d": 0.0004,
+    "lb95": -0.0444,
+    "ci95": [
+     -0.0534,
+     0.0559
+    ],
+    "sd": 0.02787,
+    "p": 0.493881,
+    "draws": 2000,
+    "perm_floor95": 0.0034,
+    "perm_draws": 200,
+    "q": 0.722926
+   },
+   {
+    "tool": "sl",
+    "candidate": "pip_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 496,
+    "players": 331,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.2634,
+    "rho_candidate_alone": 0.1685,
+    "rho_augmented": 0.2841,
+    "corr_with_consensus": 0.0615,
+    "d": 0.0207,
+    "lb95": -0.0404,
+    "ci95": [
+     -0.0506,
+     0.0954
+    ],
+    "sd": 0.03695,
+    "p": 0.287242,
+    "draws": 2000,
+    "perm_floor95": 0.005,
+    "perm_draws": 200,
+    "q": 0.722926
+   },
+   {
+    "tool": "sl",
+    "candidate": "pip_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 496,
+    "players": 331,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.2634,
+    "rho_candidate_alone": 0.1205,
+    "rho_augmented": 0.2872,
+    "corr_with_consensus": 0.0186,
+    "d": 0.0238,
+    "lb95": -0.025,
+    "ci95": [
+     -0.0345,
+     0.0842
+    ],
+    "sd": 0.02953,
+    "p": 0.209728,
+    "draws": 2000,
+    "perm_floor95": 0.0028,
+    "perm_draws": 200,
+    "q": 0.722926
+   },
+   {
+    "tool": "cb",
+    "candidate": "pbf_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 180,
+    "players": 109,
+    "years": [
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.0158,
+    "rho_candidate_alone": 0.1745,
+    "rho_augmented": -0.1621,
+    "corr_with_consensus": 0.1763,
+    "d": -0.1779,
+    "lb95": -0.3247,
+    "ci95": [
+     -0.3607,
+     0.0079
+    ],
+    "sd": 0.0944,
+    "p": 0.970256,
+    "draws": 2000,
+    "perm_floor95": 0.0574,
+    "perm_draws": 200,
+    "q": 0.970256
+   },
+   {
+    "tool": "cb",
+    "candidate": "pbf_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 180,
+    "players": 109,
+    "years": [
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.0158,
+    "rho_candidate_alone": 0.1608,
+    "rho_augmented": -0.1481,
+    "corr_with_consensus": 0.1529,
+    "d": -0.1638,
+    "lb95": -0.3103,
+    "ci95": [
+     -0.3445,
+     0.0244
+    ],
+    "sd": 0.09472,
+    "p": 0.958166,
+    "draws": 2000,
+    "perm_floor95": 0.0573,
+    "perm_draws": 200,
+    "q": 0.970256
+   },
+   {
+    "tool": "cb",
+    "candidate": "pip_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 180,
+    "players": 109,
+    "years": [
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.0158,
+    "rho_candidate_alone": 0.1211,
+    "rho_augmented": -0.0139,
+    "corr_with_consensus": 0.1775,
+    "d": -0.0296,
+    "lb95": -0.1949,
+    "ci95": [
+     -0.2293,
+     0.1806
+    ],
+    "sd": 0.10499,
+    "p": 0.611164,
+    "draws": 2000,
+    "perm_floor95": 0.0507,
+    "perm_draws": 200,
+    "q": 0.916746
+   },
+   {
+    "tool": "cb",
+    "candidate": "pip_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 180,
+    "players": 109,
+    "years": [
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.0158,
+    "rho_candidate_alone": 0.1239,
+    "rho_augmented": 0.0016,
+    "corr_with_consensus": 0.1804,
+    "d": -0.0141,
+    "lb95": -0.1505,
+    "ci95": [
+     -0.1713,
+     0.1603
+    ],
+    "sd": 0.08613,
+    "p": 0.565087,
+    "draws": 2000,
+    "perm_floor95": 0.0647,
+    "perm_draws": 200,
+    "q": 0.916746
+   },
+   {
+    "tool": "cb",
+    "candidate": "pbf_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 352,
+    "players": 235,
+    "years": [
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.0847,
+    "rho_candidate_alone": 0.1798,
+    "rho_augmented": 0.2012,
+    "corr_with_consensus": 0.134,
+    "d": 0.1165,
+    "lb95": 0.0349,
+    "ci95": [
+     0.0199,
+     0.2104
+    ],
+    "sd": 0.04791,
+    "p": 0.007517,
+    "draws": 2000,
+    "perm_floor95": 0.0376,
+    "perm_draws": 200,
+    "q": 0.01754
+   },
+   {
+    "tool": "cb",
+    "candidate": "pbf_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 352,
+    "players": 235,
+    "years": [
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.0847,
+    "rho_candidate_alone": 0.1443,
+    "rho_augmented": 0.1647,
+    "corr_with_consensus": 0.1115,
+    "d": 0.0799,
+    "lb95": 0.0169,
+    "ci95": [
+     0.0046,
+     0.1503
+    ],
+    "sd": 0.03714,
+    "p": 0.015699,
+    "draws": 2000,
+    "perm_floor95": 0.0273,
+    "perm_draws": 200,
+    "q": 0.027473
+   },
+   {
+    "tool": "cb",
+    "candidate": "pip_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 352,
+    "players": 235,
+    "years": [
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.0847,
+    "rho_candidate_alone": 0.1954,
+    "rho_augmented": 0.2099,
+    "corr_with_consensus": 0.2143,
+    "d": 0.1252,
+    "lb95": 0.0459,
+    "ci95": [
+     0.0316,
+     0.2203
+    ],
+    "sd": 0.04765,
+    "p": 0.00431,
+    "draws": 2000,
+    "perm_floor95": 0.0391,
+    "perm_draws": 200,
+    "q": 0.015085
+   },
+   {
+    "tool": "cb",
+    "candidate": "pip_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 352,
+    "players": 235,
+    "years": [
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.0847,
+    "rho_candidate_alone": 0.165,
+    "rho_augmented": 0.1803,
+    "corr_with_consensus": 0.1882,
+    "d": 0.0956,
+    "lb95": 0.0412,
+    "ci95": [
+     0.032,
+     0.1634
+    ],
+    "sd": 0.03418,
+    "p": 0.00258,
+    "draws": 2000,
+    "perm_floor95": 0.038,
+    "perm_draws": 200,
+    "q": 0.015085
+   },
+   {
+    "tool": "ch",
+    "candidate": "pbf_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 255,
+    "players": 158,
+    "years": [
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.2823,
+    "rho_candidate_alone": 0.2415,
+    "rho_augmented": 0.1016,
+    "corr_with_consensus": 0.0133,
+    "d": -0.1806,
+    "lb95": -0.2847,
+    "ci95": [
+     -0.2988,
+     -0.0524
+    ],
+    "sd": 0.06481,
+    "p": 0.997343,
+    "draws": 2000,
+    "perm_floor95": -0.0092,
+    "perm_draws": 200,
+    "q": 0.999868
+   },
+   {
+    "tool": "ch",
+    "candidate": "pbf_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 255,
+    "players": 158,
+    "years": [
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.2823,
+    "rho_candidate_alone": 0.2215,
+    "rho_augmented": 0.0281,
+    "corr_with_consensus": 0.0272,
+    "d": -0.2542,
+    "lb95": -0.3707,
+    "ci95": [
+     -0.3901,
+     -0.1146
+    ],
+    "sd": 0.07181,
+    "p": 0.999799,
+    "draws": 2000,
+    "perm_floor95": -0.0154,
+    "perm_draws": 200,
+    "q": 0.999868
+   },
+   {
+    "tool": "ch",
+    "candidate": "pip_raw",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 255,
+    "players": 158,
+    "years": [
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.2823,
+    "rho_candidate_alone": 0.1836,
+    "rho_augmented": 0.1009,
+    "corr_with_consensus": -0.1154,
+    "d": -0.1814,
+    "lb95": -0.2812,
+    "ci95": [
+     -0.296,
+     -0.0658
+    ],
+    "sd": 0.06123,
+    "p": 0.998473,
+    "draws": 2000,
+    "perm_floor95": -0.0083,
+    "perm_draws": 200,
+    "q": 0.999868
+   },
+   {
+    "tool": "ch",
+    "candidate": "pip_par",
+    "label": "mlb",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 255,
+    "players": 158,
+    "years": [
+     2017,
+     2018,
+     2019,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.2823,
+    "rho_candidate_alone": 0.1552,
+    "rho_augmented": 0.044,
+    "corr_with_consensus": -0.0952,
+    "d": -0.2383,
+    "lb95": -0.3479,
+    "ci95": [
+     -0.364,
+     -0.1093
+    ],
+    "sd": 0.0653,
+    "p": 0.999868,
+    "draws": 2000,
+    "perm_floor95": -0.0102,
+    "perm_draws": 200,
+    "q": 0.999868
+   },
+   {
+    "tool": "ch",
+    "candidate": "pbf_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 314,
+    "players": 203,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.1682,
+    "rho_candidate_alone": 0.1466,
+    "rho_augmented": 0.2165,
+    "corr_with_consensus": 0.0717,
+    "d": 0.0483,
+    "lb95": -0.0199,
+    "ci95": [
+     -0.0339,
+     0.1315
+    ],
+    "sd": 0.0429,
+    "p": 0.129888,
+    "draws": 2000,
+    "perm_floor95": 0.0142,
+    "perm_draws": 200,
+    "q": 0.336566
+   },
+   {
+    "tool": "ch",
+    "candidate": "pbf_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 314,
+    "players": 203,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.1682,
+    "rho_candidate_alone": 0.137,
+    "rho_augmented": 0.2173,
+    "corr_with_consensus": 0.0524,
+    "d": 0.0492,
+    "lb95": -0.0184,
+    "ci95": [
+     -0.0303,
+     0.1325
+    ],
+    "sd": 0.04238,
+    "p": 0.123069,
+    "draws": 2000,
+    "perm_floor95": 0.0153,
+    "perm_draws": 200,
+    "q": 0.336566
+   },
+   {
+    "tool": "ch",
+    "candidate": "pip_raw",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 314,
+    "players": 203,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.1682,
+    "rho_candidate_alone": 0.07,
+    "rho_augmented": 0.1823,
+    "corr_with_consensus": -0.0646,
+    "d": 0.0141,
+    "lb95": -0.0454,
+    "ci95": [
+     -0.0574,
+     0.0902
+    ],
+    "sd": 0.03692,
+    "p": 0.351229,
+    "draws": 2000,
+    "perm_floor95": 0.021,
+    "perm_draws": 200,
+    "q": 0.440821
+   },
+   {
+    "tool": "ch",
+    "candidate": "pip_par",
+    "label": "um",
+    "cell": "pooled",
+    "cell_value": "all",
+    "computable": true,
+    "n": 314,
+    "players": 203,
+    "years": [
+     2022,
+     2023,
+     2024
+    ],
+    "rho_consensus": 0.1682,
+    "rho_candidate_alone": 0.0676,
+    "rho_augmented": 0.1808,
+    "corr_with_consensus": -0.0766,
+    "d": 0.0127,
+    "lb95": -0.0468,
+    "ci95": [
+     -0.0585,
+     0.0899
+    ],
+    "sd": 0.03739,
+    "p": 0.367351,
+    "draws": 2000,
+    "perm_floor95": 0.0154,
+    "perm_draws": 200,
+    "q": 0.440821
+   }
+  ]
+ },
+ "inputs_sha256_start": {
+  "prospects.db": "90c27f74adf0e7fadfe33aedcf205f4c3d5c486c2e45ace322e4e482aa030620",
+  "debuts.json": "ad3c5da4d5ae4a9638e547e80e6812a7d415bfaef68737710e192f5d0af872b2",
+  "inactive.json": "a3f6ab122570f21618fef183198f487f355f5e43f20861ef0b7ba295c2a46422",
+  "timeseries.json": "fbb36e3936107a7f60566c0e764c3035bb3207a259c4b2e576c0e7f1b1b01230",
+  "fielding_innings.json": "d572e2c1dd02f8f26ea5b835a0b55e092bd68251fb8c3be058f4991d36ac5e31",
+  "custom_batter_2026.csv": "80be1909a2304df4e6d526d3ced4fb74556a40098d64e0157151b6c62a56d3b1",
+  "fwar_vintage.json": "7d388e8510df1033252720713afd5b570a7f8a3b96058647d2da509d4ac27917"
+ },
+ "inputs_sha256_end": {
+  "prospects.db": "90c27f74adf0e7fadfe33aedcf205f4c3d5c486c2e45ace322e4e482aa030620",
+  "debuts.json": "ad3c5da4d5ae4a9638e547e80e6812a7d415bfaef68737710e192f5d0af872b2",
+  "inactive.json": "a3f6ab122570f21618fef183198f487f355f5e43f20861ef0b7ba295c2a46422",
+  "timeseries.json": "fbb36e3936107a7f60566c0e764c3035bb3207a259c4b2e576c0e7f1b1b01230",
+  "fielding_innings.json": "d572e2c1dd02f8f26ea5b835a0b55e092bd68251fb8c3be058f4991d36ac5e31",
+  "custom_batter_2026.csv": "80be1909a2304df4e6d526d3ced4fb74556a40098d64e0157151b6c62a56d3b1",
+  "fwar_vintage.json": "7d388e8510df1033252720713afd5b570a7f8a3b96058647d2da509d4ac27917"
+ },
+ "seconds": 223.2,
+ "flag_etools_on": false
+}
