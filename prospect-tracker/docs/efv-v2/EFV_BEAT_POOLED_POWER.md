@@ -182,3 +182,75 @@ lb95) and prints it beside the pooled development verdict, for corroboration onl
   ships in neither deploy consumer), `test_efv_beat_pooled_power.py`,
   `docs/efv-v2/EFV_BEAT_POOLED_POWER_RESULTS.md` (plain language for the owner), and sections
   12 and 13 appended below.
+
+## 12. The numbers (appended by the run, 2026-10-15)
+
+Every number is copied from `data/_labs/efv5/efv_beat_pooled_power.json` (development stage
+and spent stage, code at the registration commit 4eee1808). Parity guards held: the
+recomputed v5 COMBINED minus consensus and minus V2 within deltas equal the fit artifact's on
+lv_dev and vm_dev and the spent artifact's on R-LV and R-VM (tolerance 1e-4, row counts
+2,862, 830, 2,349 and 147 equal), and the DS-16 v1 join covered every development row with V2,
+consensus and outcome identical.
+
+### 12.1 The pool
+
+596 of the 830 vm_dev players also have lv_dev rows; under the registered rule their vm_dev
+rows are dropped, leaving 3,096 rows (2,862 lv_dev, 234 vm_dev) of 1,987 players. The groups
+of at least 20 rows are the six lv_dev groups (hitters and pitchers, 2017 to 2019) and four
+vm_dev groups (hitters and pitchers, 2022 and 2023); the vm_dev cohorts 2017 to 2021 keep
+fewer than 20 rows a side once their lv_dev players leave, so 3,062 rows enter the statistic.
+Clubs: 31 clusters, 1,328 rows on `UNK` (no board point at or before the read window carries
+an org).
+
+### 12.2 Power first, then the point (development, pooled pool keep_lv)
+
+The pooled read can detect, one-sided at 95 percent, an edge of 0.0231 (player-clustered) or
+0.0266 (club-clustered). It cannot resolve an edge of +0.005 to +0.01.
+
+| comparison | scope | rows | mde95 player / club | delta | lb95 player / club | CI95 player |
+|---|---|---|---|---|---|---|
+| v5 COMBINED minus consensus | pooled | 3,062 | 0.0231 / 0.0266 | -0.0103 | -0.0335 / -0.0310 | -0.0374 to +0.0161 |
+| v5 COMBINED minus consensus | hitters | 1,559 | 0.0408 / 0.0431 | -0.0328 | -0.0740 / -0.0697 | -0.0813 to +0.0144 |
+| v5 COMBINED minus consensus | pitchers | 1,503 | 0.0212 / 0.0289 | +0.0131 | -0.0088 / -0.0092 | -0.0122 to +0.0383 |
+| V2 minus consensus | pooled | 3,062 | 0.0174 / 0.0171 | -0.0120 | -0.0290 / -0.0279 | -0.0326 to +0.0087 |
+| V2 minus consensus | hitters | 1,559 | 0.0302 / 0.0330 | -0.0217 | -0.0519 / -0.0550 | -0.0573 to +0.0143 |
+| V2 minus consensus | pitchers | 1,503 | 0.0163 / 0.0199 | -0.0018 | -0.0180 / -0.0193 | -0.0214 to +0.0183 |
+| v1 minus consensus | pooled | 3,062 | 0.0183 / 0.0158 | +0.0008 | -0.0178 / -0.0147 | -0.0212 to +0.0223 |
+| v1 minus consensus | hitters | 1,559 | 0.0241 / 0.0213 | -0.0020 | -0.0261 / -0.0239 | -0.0307 to +0.0272 |
+| v1 minus consensus | pitchers | 1,503 | 0.0278 / 0.0247 | +0.0037 | -0.0238 / -0.0196 | -0.0290 to +0.0366 |
+| v5 COMBINED minus V2 | pooled | 3,062 | 0.0149 / 0.0209 | +0.0017 | -0.0133 / -0.0132 | -0.0163 to +0.0187 |
+| v5 COMBINED minus V2 | hitters | 1,559 | 0.0266 / 0.0320 | -0.0111 | -0.0382 / -0.0362 | -0.0431 to +0.0201 |
+| v5 COMBINED minus V2 | pitchers | 1,503 | 0.0130 / 0.0159 | +0.0149 | +0.0014 / +0.0036 | -0.0008 to +0.0304 |
+
+Within Spearman, pooled: v5 COMBINED 0.1908, V2 0.1892, v1 0.2019, consensus 0.2011.
+
+Sensitivities (not in the rule), v5 COMBINED minus consensus pooled: keep the vm_dev row
+instead (2,518 rows) -0.0325, lb95 -0.0633 / -0.0641, mde95 0.0309; no de-duplication (3,676
+rows) -0.0128, lb95 -0.0339 / -0.0325, mde95 0.0210. Each frame alone after the rule
+(player-clustered): lv_dev -0.0107 (lb95 -0.0358, mde95 0.0249), vm_dev remainder (200 rows in
+kept groups) -0.0044 (lb95 -0.0526).
+
+### 12.3 The spent frames (SPENT, read once here, corroboration only)
+
+R-LV and R-VM pooled under the same rule (32 players in both; 2,464 rows, all in kept groups):
+v5 COMBINED minus consensus +0.0001 (mde95 0.0240 / 0.0242; lb95 -0.0235 / -0.0238; CI95
+-0.0283 to +0.0290); hitters +0.0103 (lb95 -0.0266), pitchers -0.0104 (lb95 -0.0408). V2 minus
+consensus +0.0046 (lb95 -0.0127). v5 COMBINED minus V2 -0.0045 (lb95 -0.0212; pitchers -0.0079).
+Each frame: R-LV -0.0016 (lb95 -0.0249), R-VM (115 rows) +0.0346 (lb95 -0.0439).
+
+### 12.4 The 2026 holdout (quoted from `data/efv_2026_holdout.json`, corroboration only)
+
+v5 COMBINED minus consensus on 2026 WAR, 1,208 players: +0.0121, lb95 -0.0073 (player) and
+-0.0067 (club); its verdict "ties".
+
+## 13. The verdict
+
+**FAIL: ties.** The pooled v5 COMBINED minus consensus reads -0.0103 with one-sided 95 percent
+lower bounds -0.0335 (player) and -0.0310 (club), both below 0, and the upper bound +0.0161 is
+above 0, so the word is "ties". Pooling did not buy the power the task hoped for: 596 of the
+830 vm_dev players are already lv_dev players, so the pool adds 234 rows to lv_dev and the
+mde95 falls only from 0.0249 (lv_dev alone) to 0.0231. Nothing served moves, no flip question
+arises, and the copy keeps "ties consensus". The results document may print: "Pooled over every
+development frame (3,062 rows), eFV v5 COMBINED minus PROSPX consensus reads -0.010 (one-sided
+95 percent lower bound -0.034); the pooled read could detect an edge of 0.023 or larger, and it
+does not find one."
