@@ -9,8 +9,13 @@ moved: `ETOOLS_ON` is False and the preview went to `.cache/etools/preview.json`
 
 **Survivorship, stated beside every number.** L_MLB is accuracy AMONG DEBUTS: only players who
 reached the majors have an MLB outcome. L_UM (translated Double-A and Triple-A outcomes over
-seasons Y to Y + 2, capped at 2024) covers debuts and non-debuts alike. Every verdict below
-needed both.
+seasons Y to Y + 2, capped at 2024) does not need a debut, but it does need 300 Double-A or
+Triple-A PA (150 BF), which is itself a promotion outcome. **L_UM is accuracy AMONG PROMOTED
+players:** of the 2,157 hitter frame rows with no debut by 2024, 822 (38%) carry it, and 70% of
+the L_UM pool debuted; non-debuts who stalled below Double-A are on neither label (review
+finding R1, amendment 1; the per-tool split and a non-debut-only read are in the review section
+below). Every verdict below needed both labels. (An earlier version of this paragraph said L_UM
+"covers debuts and non-debuts alike"; that overstated it.)
 
 Frame: development board years 2011 to 2019 and 2022 to 2024 only, 8,898 (board year, player)
 rows after identity (outcome-blind) and the pre-debut rule. Statistic: within-board-year
@@ -29,8 +34,12 @@ with the test year's players removed from training; player-clustered bootstrap B
 3. **Accuracy weighting the outlets by position group adds nothing** (13 of 13 tools NULL,
    every difference within 0.0033). That repeats look W. The gain comes from adding the stat
    reading as an input, not from reweighting FanGraphs against MLB Pipeline.
-4. **P/PA, P/IP, P/BF and PAR:** useful as tool sub-drivers (P/PA for eHIT, P/BF for eFB and
-   eCMD), **not** as direct eFV drivers: 232 atlas tests over consensus FV, none flagged.
+4. **P/PA, P/IP, P/BF and PAR (restated after the review, amendment 1 A2):** alone, over the
+   consensus grade, P/PA helps the hit grade and P/BF the fastball grade, but **once translated
+   K% is in, P/PA adds nothing to eHIT** (d -0.0004 on MLB, -0.0003 on the minors label).
+   Given the other sub-drivers, P/BF adds about +0.004 to +0.007 to eFB and P/BF PAR about
+   +0.002 to eCMD. They are **not** direct eFV drivers: 232 atlas tests over consensus FV, none
+   flagged (confirmed by the re-run, R4).
 5. **No sub-driver for field, throw, slider, curveball or changeup**, and raw power and speed
    improve only on the minors label, so those seven keep the consensus grade.
 
@@ -94,23 +103,27 @@ anchor):
 
 | tool | rate | L_MLB d (LB) | L_UM d (LB) | status |
 |---|---|---|---|---|
-| hit | P/PA PAR | +0.099 (+0.051) | +0.042 (+0.022) | admitted to eHIT |
+| hit | P/PA PAR | +0.099 (+0.051) | +0.042 (+0.022) | admitted to eHIT; adds NOTHING given k_rw and babip_rw (A2) |
 | hit | P/PA raw | +0.089 (+0.043) | +0.038 (+0.018) | qualifies; dropped as a duplicate of PAR (r 0.99) |
 | pitch selection | P/PA raw / PAR | +0.009 / -0.046 | +0.028 / +0.028 (q 0.041) | not admitted (MLB d not positive for PAR; r 0.68 with swing rate) |
 | bat control | P/PA | -0.046 to -0.048 | +0.011 | no |
-| fastball | P/BF raw | +0.064 (+0.019) | +0.133 (+0.094) | admitted to eFB |
+| fastball | P/BF raw | +0.064 (+0.019) | +0.133 (+0.094) | admitted to eFB; given the others +0.004 (LB -0.001) MLB, +0.007 (LB +0.002) minors (A2) |
 | fastball | P/BF PAR, P/IP raw | +0.039, +0.037 | +0.087, +0.061 | qualify; over the cap of 3 |
-| command | P/BF PAR | +0.009 (-0.017) | +0.017 (+0.007) | admitted to eCMD |
+| command | P/BF PAR | +0.009 (-0.017) | +0.017 (+0.007) | admitted to eCMD; given the others +0.002 (LB +0.0004) MLB, +0.002 (LB +0.0005) minors (A2) |
 | slider, curveball, changeup | all four | -0.25 to +0.05 | -0.004 to +0.125 | no |
 
-More pitches per batter faced reads as more strikeouts to come (swing-and-miss stuff runs deep
-counts), which is why P/BF helps the fastball grade. More pitches per plate appearance as a
-hitter reads as fewer strikeouts and more patience, which helps the hit grade.
+The gains in this table are over the consensus grade ALONE: gate 4.4 admits on that plus a
+pairwise |r| cap and never asked what a candidate adds alongside the others. The review's
+margin read (A2, below) is the right answer to EW3-15: P/PA's gain for the hit grade is the
+strikeout information it shares with translated K%; P/BF carries a small residual for the
+fastball and command grades.
 
 **As direct eFV drivers** (gate Part P.3: the first atlas's rows, incremental over consensus FV
 on reach3 and reach5 clean frames, w3 and l6): 232 tests, **none flagged** (smallest q 0.106).
-The largest increments (P/IP PAR at Triple-A on reach3, +0.054, CI95 +0.004 to +0.103) did not
-survive BH. This agrees with the DS-06 refusals of `ppa_rel` and `pbf_rel` (2026-10-14).
+The largest increments (P/PA PAR at Single-A on w3, +0.073, CI95 +0.012 to +0.137, q 0.51; on
+the pitcher side P/IP PAR at Triple-A on reach3, +0.054, CI95 +0.004 to +0.103, q 0.24) did not
+survive BH. This agrees with the DS-06 refusals of `ppa_rel` and `pbf_rel` (2026-10-14). This
+read was re-run once because of a code defect (R4, below); the re-run is identical.
 
 **Redundancy:** P/PA correlates 0.61 to 0.64 with walk rate and 0.38 with strikeout rate; P/IP
 0.65 with walk rate and near 0 with strikeouts; P/BF 0.47 with each. Pitch rates are mostly
@@ -126,9 +139,16 @@ Pre-declared as ONE arm of the EFV_X3 registration (gate 7): the six passing eTo
 (eHIT, ePOW, eSEL, eBAT, eFB, eCMD, unrounded) replace the raw `tool_*` features in
 `efv_dataset.py`, the `W2S_COLUMNS` and the `TOOL_CELLS` in `efv5_combined.py` for those tools;
 the other seven tools enter as consensus. The X1 features that now feed an eTool (k_rw, bb_rw,
-iso_rw, babip_rw) leave X3's own feature list so the same stat line is not counted twice. P/PA
-and P/BF enter only through eHIT, eFB and eCMD, not as separate eFV drivers. Served eFV does not
-move; the owner decides any flip.
+iso_rw, babip_rw) leave X3's own feature list so the same stat line is not counted twice. No
+pitch rate enters as a separate eFV driver. **Restated after the review (A2):** P/PA PAR in eHIT
+and the pitch-level swinging-strike rate in eFB carry NO ADDED EFFECT given the other
+sub-drivers; X3's own registration decides whether its arm carries them (recommended: drop
+them; the reduced eTools beat consensus by as much, eHIT without P/PA +0.302 / +0.274, eFB
+without swinging strikes +0.065 / +0.176). So P/PA adds no information to X3, and P/BF adds at
+most about 0.007 through eFB and eCMD. **Promotion caveat (A1):** every passing eTool still beats
+consensus on the non-debut part of L_UM, but L_UM itself is promotion-selected; a
+promotion-free label is the open follow-up before any flip. Served eFV does not move; the owner
+decides any flip.
 
 ## The dark preview
 
@@ -148,3 +168,84 @@ distribution. Run a drift check and a mean re-centring before a flip.
 - 23 (tool, candidate) pairs were NOT COMPUTABLE on at least one label (tracked Statcast
   components 2021+, FanGraphs exit-velocity extras): under 100 players.
 - Pitch selection and bat control MLB labels read the 2026 season only (gate 2.1).
+
+## Review reads (amendment 1, registered 8f369ae2, run once)
+
+The review of the look found three defects (R1 to R3), and writing the tests found a fourth
+(R4). Amendment `docs/tools-2026-10/ETOOLS_AMENDMENT_1.md` was committed alone before any of
+these numbers; code at 7cf54071; artifact `data/_labs/etools/etools_review_reads.json`. The
+runner first reproduced the look's d_E for all 8 evaluated tools on both labels (all within
+0.00005), and every input sha256 matched the look's and was unchanged at the end. None of this
+changes a verdict.
+
+### A1. L_UM is promotion-selected (R1)
+
+Frame rows by L_UM present and debut by 2024, and d_E (eTool minus consensus, on L_UM) over
+the non-debut and debut parts:
+
+| tool | L_UM, debut | L_UM, no debut | no L_UM, no debut | no L_UM, debut | non-debuts with L_UM | d_E non-debut (LB), n | d_E debut (LB), n |
+|---|---|---|---|---|---|---|---|
+| hit | 1,882 | 822 | 1,335 | 399 | 38% | +0.197 (+0.156), 822 | +0.323 (+0.288), 1,882 |
+| game_pwr | 1,882 | 823 | 1,335 | 399 | 38% | +0.023 (+0.006), 823 | +0.043 (+0.032), 1,882 |
+| pitch_sel | 367 | 282 | 601 | 40 | 32% | +0.059 (+0.027), 282 | +0.078 (+0.046), 367 |
+| bat_ctrl | 370 | 293 | 621 | 40 | 32% | +0.067 (+0.040), 293 | +0.089 (+0.066), 370 |
+| fb | 2,007 | 912 | 1,030 | 353 | 47% | +0.162 (+0.120), 912 | +0.176 (+0.149), 2,007 |
+| cmd | 2,005 | 912 | 1,031 | 353 | 47% | +0.057 (+0.037), 912 | +0.082 (+0.067), 2,005 |
+| raw_pwr (not passed) | 381 | 313 | 929 | 697 | 25% | +0.020 (-0.001), 313 | +0.018 (+0.004), 381 |
+| speed (not passed) | 1,882 | 823 | 1,335 | 399 | 38% | +0.050 (+0.037), 823 | +0.053 (+0.045), 1,882 |
+
+- **No passing eTool is PROMOTION-DEPENDENT** (A1.3): all six beat consensus among promoted
+  non-debuts, lower bounds above 0. The gains are smaller there than among debuts (eHIT +0.20
+  against +0.32; ePOW +0.02 against +0.04).
+- **Still unmeasured:** 24% (fastball, command) to 47% (pitch selection, bat control) of each
+  frame has no debut and no L_UM, so it is on neither label; for those players there is no
+  evidence either way. A promotion-free label (K% at the next MiLB level, or reaching
+  Double-A) needs its own registration (A1.4) and is the open item before any flip.
+
+### A2. What each sub-driver adds given the others (R2)
+
+The eTool with the sub-driver against the eTool without it (d, LB), both labels. The reviewer
+saw the three pitch-rate rows before the amendment (it says so), so those three are
+reproductions, not blind reads:
+
+| tool | sub-driver | L_MLB given the others | L_UM given the others | label |
+|---|---|---|---|---|
+| eHIT | translated K% | +0.254 (+0.215) | +0.239 (+0.216) | adds |
+| eHIT | P/PA PAR | -0.0004 (-0.003) | -0.0003 (-0.0015) | **NO ADDED EFFECT** |
+| eHIT | translated BABIP | +0.023 (+0.009) | +0.023 (+0.017) | adds |
+| ePOW | translated ISO | +0.015 (+0.005) | +0.028 (+0.022) | adds |
+| ePOW | fly-ball rate | +0.008 (+0.003) | +0.002 (-0.002) | adds (MLB) |
+| eFB | translated K% | +0.013 (-0.007) | +0.086 (+0.072) | adds (minors) |
+| eFB | P/BF | +0.004 (-0.001) | +0.007 (+0.002) | adds (minors), small |
+| eFB | swinging-strike rate | +0.004 (-0.001) | +0.001 (-0.003) | **NO ADDED EFFECT** |
+| eCMD | translated BB% | +0.028 (+0.014) | +0.051 (+0.041) | adds |
+| eCMD | first-pitch strike rate | +0.002 (-0.004) | +0.005 (+0.002) | adds (minors), small |
+| eCMD | P/BF PAR | +0.002 (+0.0004) | +0.002 (+0.0005) | adds, small |
+
+So eHIT is in effect translated K% plus translated BABIP. On the MLB label eFB's gain is not
+attributable to any single sub-driver (they overlap). The reduced eTools beat consensus as well
+as the full ones (eHIT without P/PA +0.302 / +0.274). Any future forward-selection rule gains a
+"given the chosen sub-drivers" step (A2.3), by its own registration.
+
+### A3. Part P.3 re-run because of a code defect (R4)
+
+`pitch_rate_lines` read a pitcher's BF exposure off the majority-role line even when the rate
+came from the season line (the season-line fallback basis): 381 pitcher lines, all Complex
+League 2024. Fixed and pinned in `test_pitch_rate_lines_read_exposure_off_the_rated_line`. The
+tool reads (gate 3 to 6, P.2) read seasons through 2023 and no candidate value moved (0 of 4,348
+pitcher rows), so they were not re-run. Part P.3 reads lines through 2025 and was **re-run once
+as a registered read re-run because of a code defect**: 232 tests, 0 flagged, smallest q 0.106,
+and every one of the 232 rows identical to the original (the changed 2024 and 2025 lines enter
+no scored row). The original P.3 rows stay in `etools_atlas.json`.
+
+### R3. Tests
+
+`test_etools.py` now pins: gate 4.4 admission clause by clause (q, lower bound, permuted floor,
+other-label sign, |r| cap, cap of 3, other label absent); the eTool fit recovering a planted c
+through each label's TIP inverse, with both labels stacked and the train mask honoured; exact
+`etool_apply` values and the 20 to 80 clamp; `build_preview` writing the preview and never the
+served path while `ETOOLS_ON` is False (and the served path only when it is True); the
+pitch-rate construction (majority-role exposure, fallback-basis exposure, PAR = rate over the
+role anchor, pitchers' own hitting lines skipped); the ZMetric as-of value exactly unchanged by
+a board-year line and shrunk by E / (E + k); the bootstrap spread; and the amendment's runner
+guards, promotion counts, non-debut split and margin read. 28 passed.
