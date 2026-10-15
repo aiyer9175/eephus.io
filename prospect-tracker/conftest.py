@@ -1076,6 +1076,9 @@ _SIDECAR_WRITE_TARGETS = (
     ("tools.scouting_export", "PREVIEW_PATH",
      ".cache/scouting/preview/scouting_reference.json"),
     ("tools.scouting_export", "OUT_PATH", "data/scouting_reference.json"),
+    # TL_15: the tool accuracy lab's second output, the served display copy of
+    # look W; export_display_w resolves SERVED_W at call time.
+    ("tools.tool_accuracy_lab", "SERVED_W", "data/tool_source_accuracy.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

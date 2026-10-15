@@ -777,6 +777,41 @@ def test_component_line_entries_render_their_receipt(server, browser, slug):
     assert "proj_components_eval.json" in text
 
 
+# TL_15_TOOL_DISPLAY_FLIP (round 4, R4r): the two terms the Source Accuracy
+# Tools tab prints carry receipts read from the registry rows' eval artifact,
+# data/tool_accuracy_eval.json (look W).
+_TOOL_RECEIPTS = {
+    "tool_implied_production": ("Hit against MLB K%", "credited to nothing"),
+    "tool_above_grade": ("Speed against sprint speed", "on grade"),
+}
+
+
+@pytest.mark.parametrize("slug", sorted(_TOOL_RECEIPTS))
+def test_tool_tab_entries_render_their_receipt(server, browser, slug):
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    rows = {m["model_id"]: m for m in reg["models"]}
+    for mid in ("tool_implied_production", "tool_source_accuracy"):
+        assert rows[mid]["eval_artifact"] == "data/tool_accuracy_eval.json"
+    page_errors: list[str] = []
+    page = _browser_page(browser, page_errors)
+    try:
+        page.goto(server + f"glossary/index.html#g={slug}", wait_until="load", timeout=15_000)
+        page.wait_for_selector(f'#gl-entry .gl-entry-card[data-slug="{slug}"]', timeout=10_000)
+        page.wait_for_function(
+            "s => { const el = document.querySelector('#gl-entry .gl-receipt-slot[data-receipt=\"' + s + '\"]');"
+            " return !!el && el.textContent.includes('Receipt'); }", arg=slug, timeout=10_000)
+        text = page.evaluate(
+            "s => document.querySelector('#gl-entry .gl-receipt-slot[data-receipt=\"' + s + '\"]').textContent",
+            slug)
+    finally:
+        page.close()
+    assert not page_errors, "JS errors:\n  " + "\n  ".join(page_errors)
+    for want in _TOOL_RECEIPTS[slug]:
+        assert want in text, text[:600]
+    assert "tool_accuracy_eval.json" in text
+    assert "among players who reached the majors" in text
+
+
 def test_quick_search_palette_finds_terms(server, browser):
     page_errors: list[str] = []
     page = _browser_page(browser, page_errors)
