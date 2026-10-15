@@ -611,19 +611,21 @@ def _btblend_step(hitters: list[dict], hem_raw: dict, season: int, log=print) ->
 # n 953, gap v1 lo95 +0.0019, v2 lo95 +0.0024), and the artifact's recorded
 # production diff is this: w = (1 - b) * woba_proj + b * est_woba(season) when the
 # current-season Savant est_woba is present at PA >= 100, else w unchanged;
-# pwoba_pctile recomputes over the blended pool. A served number moves (plan
-# Part 8 class 3), so it ships behind EEPHUS_PWOBA_XWOBA_BLEND, DEFAULT OFF, and
-# only the owner flips it (owner question NOV15-PWOBA-FLIP). Off, this path reads
-# nothing and the column is byte-identical to before.
+# pwoba_pctile recomputes over the blended pool. The owner answered
+# NOV15-PWOBA-FLIP = (a), flip on (2026-10-14), so the blend is the served
+# default: EEPHUS_PWOBA_XWOBA_BLEND now defaults ON and stays only as an off
+# switch (0, off, false or no). Off, this path reads nothing and the column is
+# the unblended engine woba_proj.
 PWOBA_XWOBA_BLEND_ENV = "EEPHUS_PWOBA_XWOBA_BLEND"
 PWOBA_XWOBA_BLEND_B = 0.2          # the frozen arm; never re-tuned here
 PWOBA_XWOBA_MIN_PA = 100.0         # the lab's SAVANT_MIN_PA
 
 
 def pwoba_xwoba_blend_on() -> bool:
-    """True only when the owner has flipped EEPHUS_PWOBA_XWOBA_BLEND."""
+    """True by default (owner NOV15-PWOBA-FLIP = (a), 2026-10-14); only an
+    explicit off value of EEPHUS_PWOBA_XWOBA_BLEND turns the blend off."""
     env = (os.environ.get(PWOBA_XWOBA_BLEND_ENV) or "").strip().lower()
-    return env in ("1", "on", "true", "yes")
+    return env not in ("0", "off", "false", "no")
 
 
 def blend_pwoba_xwoba(w: float, est_woba, b: float = PWOBA_XWOBA_BLEND_B) -> float:
@@ -692,8 +694,8 @@ def _join_pwoba(hitters: list[dict], season: int) -> int:
     for r in corpus["hit"]:
         if r.get("mlbam") and r["season"] >= target - 3:
             by_player.setdefault(int(r["mlbam"]), {})[r["season"]] = r
-    # The flagged xwOBA blend (see PWOBA_XWOBA_BLEND_ENV above): off by default,
-    # and off it reads nothing.
+    # The xwOBA blend (see PWOBA_XWOBA_BLEND_ENV above): on by default; the
+    # off switch reads nothing.
     xw_blend = _pwoba_xwoba_map(season) if pwoba_xwoba_blend_on() else {}
     n_blended = 0
     stamped: list[dict] = []

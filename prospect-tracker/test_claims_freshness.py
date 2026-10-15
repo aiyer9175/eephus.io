@@ -439,6 +439,17 @@ GLOSSARY_CLAIMS = (
      "data/phem_marcel_lite_eval.json", ("hitters", "gate_rhos_v1", "fa_projection"), "abs", 0.00005),
     ("pwoba", "gate rho incumbent", r"against (0\.\d+) for the best trailing-average incumbent",
      "data/phem_marcel_lite_eval.json", ("hitters", "gate_rhos_v1", "incumbent_3yr_flat"), "abs", 0.00005),
+    # The served xwOBA blend (owner flip NOV15-PWOBA-FLIP, 2026-10-14): its re-gate numbers.
+    ("pwoba", "blend gate pairs", r"and (\d+) held-out pairs it reads",
+     "data/pwoba_blend_regate_eval.json", ("registered_regate", "n"), "abs", 0.5),
+    ("pwoba", "blend gate rho", r"it reads a Spearman rho of (0\.\d+) against",
+     "data/pwoba_blend_regate_eval.json", ("registered_regate", "rhos_v1", "output_blend"), "abs", 0.00005),
+    ("pwoba", "blend gate rho engine", r"against (0\.\d+) for the engine projection alone",
+     "data/pwoba_blend_regate_eval.json", ("registered_regate", "rhos_v1", "fa_projection"), "abs", 0.00005),
+    ("pwoba", "blend gate lo95 v1", r"floor \+(0\.\d+) above zero",
+     "data/pwoba_blend_regate_eval.json", ("registered_regate", "gap_ci_blend_minus_incumbent_v1", "lo95"), "abs", 0.00005),
+    ("pwoba", "blend gate lo95 v2", r"\+(0\.\d+) under the player-clustered bootstrap",
+     "data/pwoba_blend_regate_eval.json", ("registered_regate", "gap_ci_blend_minus_incumbent_v2", "lo95"), "abs", 0.00005),
 )
 
 # ---------------------------------------------------------------------------
