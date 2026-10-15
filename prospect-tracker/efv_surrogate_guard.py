@@ -76,8 +76,13 @@ DATA_DIR = ROOT / "data"
 
 #: The registration this guard opens on (relative to this directory). Never GATE_DOC.
 SURROGATE_GATE_DOC = "docs/efv-v2/SURROGATE_2026_GATE.md"
-#: The only file that may claim a look record (EV-13's look runner writes it).
+#: The only file that may claim a look record (EV-13's look runner writes it), for
+#: looks 2 and 3 and the OQ6 release.
 GATE_RECORD_NAME = "efv_v2_gate.json"
+#: R-VM look 1 is held by the EW2-6 same-day backtest record of 2026-10-08 (the 2025
+#: cohort read once, EFV_V2_GATE.md s11), not by GATE_RECORD_NAME (amended 2026-10-15).
+LOOK_1_RECORD_NAME = "_labs/efv_v3/efv_v3_confirm.json"
+LOOK_1_RECORD_ITEM = "EFV3_W3_SELECT_CONFIRM"
 #: The ETA FanGraphs-blend look (precondition Q1): no 2026 outcome before its record.
 ETA_EVAL_NAME = "eta_eval.json"
 ETA_LOOK_BLOCK = "fg_blend_gate_2026_09_25"
@@ -109,10 +114,12 @@ COHORT_RELEASE = {2025: LOOK_1, 2026: LOOK_2, 2027: LOOK_3,
 DEBUT_WINDOW_SEASONS = {"transfer": 3, "lv2026_surrogate": 0, "lv2026_long_run": 3}
 RESERVED_VM_STATUS = "reserved_vm_event_only"
 
-#: Registered look days on which no surrogate lab, look or frame fetch runs (Q7):
-#: the PROJ_PATH_SHAPE ARM A look, the PROJ B0-GATE and FanGraphs team lists, the
-#: PROJ ARM B look and the PROSPECT_ANCHOR look.
-LOOK_DAYS = frozenset({"2026-10-23", "2026-11-06", "2026-11-13", "2026-11-20"})
+#: Registered look days on which no surrogate lab, look or frame fetch runs (Q7).
+#: EMPTY since 2026-10-15: the owner waived every registered look day on 2026-10-14
+#: (decision EW3-5, "we don't have to wait for anything"); the four days it held
+#: (2026-10-23, 2026-11-06, 2026-11-13, 2026-11-20) no longer block. The session
+#: marker check below still refuses while another gate's look is running.
+LOOK_DAYS: frozenset[str] = frozenset()
 #: The reserved read's scheduled day in PROGRAM.md, the floor when STATUS.md names none.
 RESERVED_READ_DEFAULT = "2026-12-01"
 #: A look runner writes this file into its own .cache subdirectory when scoring
@@ -210,11 +217,29 @@ def _recorded_entries(doc) -> list[dict]:
     return out
 
 
+def look_1_recorded() -> bool:
+    """True when the EW2-6 confirm record holds R-VM look 1: the reserved one-read
+    record of LOOK_1_RECORD_ITEM, stamped, whose guards read the 2025 cohort."""
+    doc = _read_json(DATA_DIR / LOOK_1_RECORD_NAME)
+    if not isinstance(doc, dict):
+        return False
+    guards = (doc.get("gate") or {}).get("guards") if isinstance(doc.get("gate"), dict) else None
+    cohorts = (guards or {}).get("r_vm_cohort_read") if isinstance(guards, dict) else None
+    at = doc.get("generated_at")
+    return (doc.get("item") == LOOK_1_RECORD_ITEM and doc.get("role") == "reserved"
+            and doc.get("one_read") is True and isinstance(at, str) and bool(at.strip())
+            and isinstance(cohorts, list) and 2025 in cohorts)
+
+
 def look_records() -> frozenset[str]:
-    """The recorded look and release ids, read only from data/efv_v2_gate.json.
-    Empty while the file is absent."""
+    """The recorded look and release ids: look 1 from the EW2-6 confirm record
+    (LOOK_1_RECORD_NAME), everything else only from data/efv_v2_gate.json. Empty
+    while both are absent."""
     doc = _read_json(DATA_DIR / GATE_RECORD_NAME)
-    return frozenset(e["id"] for e in _recorded_entries(doc))
+    ids = {e["id"] for e in _recorded_entries(doc)}
+    if look_1_recorded():
+        ids.add(LOOK_1)
+    return frozenset(ids)
 
 
 def _checked_records(claimed) -> frozenset[str]:
@@ -223,8 +248,9 @@ def _checked_records(claimed) -> frozenset[str]:
     extra = sorted(claimed - look_records())
     if extra:
         raise ReservedFrameError(
-            f"look records {extra} are not in data/{GATE_RECORD_NAME}; only that file "
-            "may claim a record (SURROGATE_2026_GATE.md s2.3).")
+            f"look records {extra} are not in data/{GATE_RECORD_NAME} or, for look 1, "
+            f"data/{LOOK_1_RECORD_NAME}; only those files may claim a record "
+            "(SURROGATE_2026_GATE.md s2.3).")
     return claimed
 
 
@@ -406,8 +432,8 @@ def blocked_day_reason(today=None) -> str | None:
     day = today.isoformat() if isinstance(today, _dt.date) else str(today)[:10]
     if day in LOOK_DAYS:
         return f"{day} is a registered look day"
-    if day in reserved_read_days():
-        return f"{day} is the eFV reserved-read day"
+    # The reserved-read day no longer blocks: EW2-6 (2026-10-08) replaced the read
+    # with the same-day backtest and EW3-5 (2026-10-14) waived the registered days.
     markers = look_session_markers()
     if markers:
         return "another gate's look session is open: " + ", ".join(markers)
