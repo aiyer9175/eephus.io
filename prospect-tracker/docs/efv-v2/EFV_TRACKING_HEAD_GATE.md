@@ -315,3 +315,19 @@ can see what the tracking metrics did and did not add over consensus and over V2
   and arm angle (-, imputed where absent); rate head exit velocity against (-) and aStuff+ (+).
   Hitters: the reach head took lambda infinity (no tracking metric enters) and the rate head at
   lambda 300 carries the 90th-percentile exit velocity (-), a sign the owner should read as noise.
+- 2026-10-15: CANDIDATE ADDENDUM (EFV5_ATLAS_TOOLS_STATCAST, owner EW3-7; an owner-waived
+  early read under EW3-5). The atlas's method was rerun on each tracked Statcast component on
+  its own (`efv5_atlas_tools.py`, `data/efv5_atlas_tools.json`): fastball mean and top-end
+  velocity, ride, arm-side run, spin, vertical approach angle, release height, extension, arm
+  angle, and whiff, called-strike and chase-induced rates by pitch class for pitchers; exit
+  velocity (mean, 90th percentile, max), hard-hit, barrel, sweet-spot, launch-angle sd, chase,
+  zone contact and whiff for hitters (bat speed is served on no tracked pitch). 653 tests; NO
+  clean cell exists (the only clean windows, reach3 and w3 at S 2021, hold the 2021 Florida
+  State League alone: 55 listed hitters and 36 listed pitchers, under the 150-player minimum),
+  and none of the 152 spent cells with an incremental score passes the rule (the best q, 0.052, belongs
+  to cells where adding the component LOWERS the out-of-fold score). So the addendum adds NO tracking candidate: section 4
+  and D-3 stand as registered, and this note enters no existing read (section 10). Descriptive
+  only, spent: the components that order reach-by-2026 best on the full Florida State League
+  pitcher population are fastball chase induced (oriented AUC 0.704), fastball velocity mean
+  and 95th percentile (0.687, 0.682), extension (0.615) and a flatter fastball approach angle
+  (0.602), against consensus FV's 0.722 on the listed rows.
