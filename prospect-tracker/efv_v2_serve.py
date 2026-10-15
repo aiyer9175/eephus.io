@@ -152,8 +152,9 @@ def production_models(*, refresh: bool = False) -> dict[str, dict]:
     import efv_vintage_frame as F
     weights = H.load_weights()
     if V5C.EFV_V5_COMBINED_ON:
-        # DARK (efv5_combined.EFV_V5_COMBINED_ON is False): eFV v5 COMBINED, every atlas
-        # driver in one joint fit; the ship rule of docs/efv-v2/EFV_V5_COMBINED.md flips it.
+        # SERVED since 2026-10-15 by OWNER OVERRIDE (decision EW3-10): eFV v5 COMBINED,
+        # every atlas driver in one joint fit. It FAILED the EW3-9 ship rule of
+        # docs/efv-v2/EFV_V5_COMBINED.md (a statistical tie with V2); the owner flipped it.
         _MODELS = V5C.production_models(weights=weights)
         return _MODELS
     if V5.EFV_V5_ON:

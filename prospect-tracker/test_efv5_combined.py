@@ -61,8 +61,9 @@ def _attach_noise(rows, side, seed=5, *, strong: str | None = None, strong_sign:
 # 1. the flag and the hook
 # ---------------------------------------------------------------------------
 
-def test_the_flag_is_off_and_the_hook_is_first():
-    assert X.EFV_V5_COMBINED_ON is False
+def test_the_flag_is_on_by_owner_override_and_the_hook_is_first():
+    # EW3-10 (owner 2026-10-15): served by override although the EW3-9 rule failed
+    assert X.EFV_V5_COMBINED_ON is True
     src = (ROOT / "efv_v2_serve.py").read_text(encoding="utf-8")
     assert "if V5C.EFV_V5_COMBINED_ON:" in src
     assert src.index("if V5C.EFV_V5_COMBINED_ON:") < src.index("if V5.EFV_V5_ON:")

@@ -69,8 +69,11 @@ LEDGER_PATH = ROOT / ".cache" / "efv5_combined" / "progress_ledger.jsonl"
 TOOL = "efv5_combined.py"
 ITEM = "EFV5_COMBINE_WEIGHT_SHIP"
 
-#: THE SWITCH. False: nothing served reads a combined fit. Flips through the ship rule only.
-EFV_V5_COMBINED_ON = False
+#: THE SWITCH. True since 2026-10-15 by OWNER OVERRIDE (decision EW3-10, "Make eFV v5, its even
+#: with the ship rule so flip it"): the EW3-9 ship rule failed (pooled within Spearman -0.0028 vs
+#: served V2 over 6,188 rows; R-VM -0.0288), every interval spans zero; the owner flipped it
+#: anyway. False restores served V2.
+EFV_V5_COMBINED_ON = True
 MODEL_ID = "efv_v5_combined"
 DOC = "docs/efv-v2/EFV_V5_COMBINED.md"
 RESULTS_DOC = "docs/efv-v2/EFV_V5_COMBINED_RESULTS.md"
