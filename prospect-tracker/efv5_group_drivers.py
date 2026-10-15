@@ -359,14 +359,20 @@ class Lines:
     """One side's qualified MiLB lines with every atlas statistic the menu names, their
     level-season z norms, age bands and pitcher roles, and the MLB seasons of each
     person. Built from the atlas's own readers (efv5_atlas), so a statistic means what
-    it meant in the atlas cell."""
+    it meant in the atlas cell.
 
-    def __init__(self, side: str, metrics, *, log=print):
+    `seasons` (default: the atlas's SEASONS, the training build) names the seasons whose
+    lines are read. Every norm, age line, age band and role is fitted inside one (season,
+    level), so a season's values do not depend on which other seasons are loaded; the live
+    board (efv5_combined.live_columns) reads its one season this way, including a season
+    newer than the atlas's last."""
+
+    def __init__(self, side: str, metrics, *, seasons=None, log=print):
         import efv5_atlas as A
         t0 = time.time()
         self.side = side
         self.metrics = sorted(set(metrics))
-        lines = A.box_lines(side)
+        lines = A.box_lines(side) if seasons is None else A.box_lines(side, tuple(seasons))
         rate_fn = A.hit_rates if side == "hit" else A.pit_rates
         stat_keys = list(A._HIT_BOX if side == "hit" else A._PIT_BOX)
         exp_key = "pa" if side == "hit" else "bf"

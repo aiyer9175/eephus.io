@@ -43,7 +43,7 @@ import math
 import sys
 import time
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -1368,6 +1368,871 @@ def production_models(*, weights: dict | None = None, log=print) -> dict[str, di
     EFV_V5_COMBINED_ON is True; dark otherwise)."""
     w = H.load_weights() if weights is None else weights
     return {side: production_fit(side, weights=w, log=log) for side in F.SIDES}
+
+
+# ---------------------------------------------------------------------------
+# the live board: every candidate column read as of today (the served path)
+# ---------------------------------------------------------------------------
+#
+# THE DEFECT THIS CLOSES (2026-10-15). The production fit trains on the candidate columns
+# production_columns builds, but the live rows efv_v2_serve.score_live scored carried V2's
+# keys only: every candidate read None, took its head's training mean (z = 0) and moved
+# nothing, so the served board was not the fitted v5 and no candidate chip could print.
+#
+# THE READ RULE (live_read). The group and centering year is the list year
+# (efv_dataset.CURRENT_SEASON, efv_v2_serve.live_year). The read year is the list year + 1
+# and the cutoff is today: the MiLB read efv_dataset.build_live_matrix already gives V2's
+# own live keys ("LIVE scoring includes the CURRENT season"), so a live row stands to its
+# candidate reads as a training row does (both at the row's read year and cutoff). The read
+# season S is the last MiLB season ended by the cutoff (efv5_group_drivers.read_season):
+# the list year's season once 1 October has passed, the season before until then, never a
+# partial season. The literal alternative (read year = the list year, S one season older)
+# is the one-line switch LIVE_READ_YEAR_OFFSET = 0. A scouting, NRI or rater read is as of
+# min(the live row's consensus as-of date, today), as a training row reads at its matrix
+# as-of date. Nothing dated after today is loaded: the scouting and NRI indexes are capped
+# at today + 1 day (exclusive), the IL stints are cut at the read and at the transaction
+# feed's last day, the population fit uses label windows closed before today's season.
+#
+# EACH FAMILY THROUGH ITS OWN PRIMITIVE. The production builders read the person and date
+# from the training matrix by player_key and skip a 2025 or later decision year, so on a
+# live row they return nothing, silently. These call the per-person primitives the
+# builders call, with the same constants, z norms and centering:
+#   group (28)   Lines.member at S, centered over the in-group rows of the group year
+#   tool (4)     tool_member + tool_value + _tool_finish, z inside (cell, S)
+#   il (13)      efv_w2_il_backfill.asof on a stint index parsed from the cached feed
+#   nri (4)      efv_w2_nri.nri_values on an index through the list year
+#   pbp (8)      efv_w2_pbp.profile, kept only with every column (B4._pbp's rule)
+#   pbp_bb (2)   efv_w2_pbp_bb.profile from the last readable season down
+#   popmle (2)   efv_w2_popmle.Translator at the read year, the live board left out
+#   raters (2)   efv_w2_raters.resid_column inside (side, group year, live)
+#   report (9)   None on every row: the production construction (production_columns hands
+#                the report builder an empty list-vintage frame, so every training value
+#                was None and the fitted slopes are exactly 0.0)
+#   w2s (5)      efv_w2_scout.values_for on a snapshot index capped at today
+# A family whose source does not yet cover the read gives None (the head's training-mean
+# imputation, z = 0), never a stale or partial number; the receipt names it and why.
+
+LIVE_KIND = "live"
+#: The live read year is the list year plus this (1: efv_dataset.build_live_matrix's MiLB
+#: read; 0 would read one season older than V2's own live keys).
+LIVE_READ_YEAR_OFFSET = 1
+_LIVE_MEMO: dict = {}
+_LIVE_RECEIPTS: dict = {}
+_LIVE_CACHE: dict = {}
+
+#: Plain-English chip labels for every candidate key (efv_v2_serve.driver_chips reads them
+#: after its own V2 labels). A timing-head key says it is about arrival, as V2's do.
+CHIP_LABELS_V5: dict[str, str] = {
+    # hitters, skill: the group drivers (z inside the level-season, centered in the year)
+    "scr_g5_hit_A_all_all_k_pct": "Single-A strikeout rate",
+    "scr_g5_hit_A_all_all_bb_minus_k": "Single-A walk rate minus strikeout rate",
+    "scr_g5_hit_A_young_all_k_pct": "Single-A strikeout rate (young for level)",
+    "scr_g5_hit_A_young_all_bb_minus_k": "Single-A walk rate minus strikeout rate (young for level)",
+    "scr_g5_hit_A_all_all_avg": "Single-A batting average",
+    "scr_g5_hit_A_all_all_ops": "Single-A OPS",
+    "scr_g5_hit_A_all_all_woba": "Single-A wOBA",
+    "scr_g5_hit_A_all_all_slg": "Single-A slugging",
+    "scr_g5_hit_A_young_all_avg": "Single-A batting average (young for level)",
+    "scr_g5_hit_CPX_all_all_avg": "Complex league batting average",
+    "scr_g5_hit_CPX_all_all_ops": "Complex league OPS",
+    "scr_g5_hit_CPX_all_all_woba": "Complex league wOBA",
+    "scr_g5_hit_Ap_all_all_pbp_contact": "High-A contact rate on swings",
+    "scr_g5_hit_Ap_all_all_pbp_swstr": "High-A swinging-strike rate",
+    "scr_g5_hit_Ap_young_all_pbp_contact": "High-A contact rate on swings (young for level)",
+    "scr_g5_hit_Ap_young_all_pbp_swstr": "High-A swinging-strike rate (young for level)",
+    "scr_g5_hit_Ap_young_all_pbp_two_strike_contact": "High-A two-strike contact (young for level)",
+    # hitters, skill: pitch events, batted balls, translation, lists, scouting grades
+    "scr_w2p_swstr_h": "Swinging-strike rate vs level",
+    "scr_w2p_contact_h": "Contact rate on swings vs level",
+    "scr_w2p_swing_h": "Swing rate vs level",
+    "scr_w2p_two_strike_contact_h": "Two-strike contact vs level",
+    "scr_w2b_pull_h": "Pull rate on balls in play",
+    "scr_w4p_pop_hit": "Minor league line translated to future WAR",
+    "scr_w2r_panel_hit": "Outside prospect lists vs consensus",
+    "scr_w2s_pwr_present_hit": "Present game power grade",
+    "scr_w2s_game_pwr_hit": "Future game power grade",
+    "scr_w2s_posval_hit": "Defensive value of listed position",
+    # hitters, timing (arrival)
+    "scr_g5_hit_A_all_all_age": "Age in Single-A (arrival)",
+    "scr_g5_hit_A_young_all_age": "Age vs Single-A peers, young for level (arrival)",
+    "scr_w2i_stints_time_hit": "Injured list stints, last four years (arrival)",
+    "scr_w2i_days_time_hit": "Days on the injured list, last four years (arrival)",
+    "scr_w2i_sixty_time_hit": "60-day injured list stints (arrival)",
+    "scr_w2i_open_time_hit": "Injured list stint still open (arrival)",
+    "scr_w2i_recur_time_hit": "Two or more injured list stints (arrival)",
+    "scr_w2n_nri_pre_hit": "Big league spring training invite (arrival)",
+    "scr_w2n_nri_count_pre_hit": "Big league spring training invites, count (arrival)",
+    "scr_rpt_conviction_hit": "Scouting report conviction (arrival)",
+    "scr_rpt_hedge_count_hit": "Hedging in the scouting report (arrival)",
+    "scr_rpt_risk_hit": "Risk stressed in the scouting report (arrival)",
+    "scr_rpt_approach_concern_hit": "Approach concerns in the scouting report (arrival)",
+    "scr_rpt_writer_minus_stated_hit": "Report tone vs stated grade (arrival)",
+    "scr_rpt_arrival_hit": "Scouting report timeline (arrival)",
+    # pitchers, skill: the group drivers and the tool cells
+    "scr_g5_pit_A_all_all_k_pct": "Single-A strikeout rate",
+    "scr_g5_pit_A_all_all_k_minus_bb": "Single-A strikeout rate minus walk rate",
+    "scr_g5_pit_A_young_all_k_pct": "Single-A strikeout rate (young for level)",
+    "scr_g5_pit_A_young_all_k_minus_bb": "Single-A strikeout rate minus walk rate (young for level)",
+    "scr_g5_pit_A_all_SP_k_pct": "Single-A strikeout rate (starters)",
+    "scr_g5_pit_A_all_SP_k_minus_bb": "Single-A strikeout rate minus walk rate (starters)",
+    "scr_g5_pit_A_all_SP_bf_per_g": "Single-A batters faced per game for age (starters)",
+    "scr_t5_pit_Ap_all_SP_sl_gap": "Slider projection gap (High-A starters)",
+    "scr_t5_pit_Ap_young_all_sl_gap": "Slider projection gap (young High-A pitchers)",
+    "scr_t5_pit_Ap_all_all_sl_gap": "Slider projection gap (High-A pitchers)",
+    "scr_t5_pit_AAA_all_all_fb_fut": "Fastball future grade (Triple-A pitchers)",
+    # pitchers, skill: injuries, pitch events, batted balls, translation, lists, reports, grades
+    "scr_w2i_stints_skill_pit": "Injured list stints, last four years",
+    "scr_w2i_days_skill_pit": "Days on the injured list, last four years",
+    "scr_w2i_sixty_skill_pit": "60-day injured list stints",
+    "scr_w2i_open_skill_pit": "Injured list stint still open",
+    "scr_w2i_recur_skill_pit": "Two or more injured list stints",
+    "scr_w2p_cstr_p": "Called-strike rate vs level",
+    "scr_w2p_csw_p": "Called plus swinging strike rate vs level",
+    "scr_w2p_k_resid_p": "Strikeouts beyond whiff rate",
+    "scr_w2p_fstrike_p": "First-pitch strike rate vs level",
+    "scr_w2b_pu_p": "Popup rate allowed",
+    "scr_w4p_pop_pit": "Minor league line translated to future WAR",
+    "scr_w2r_panel_pit": "Outside prospect lists vs consensus",
+    "scr_rpt_conviction_pit": "Scouting report conviction",
+    "scr_rpt_writer_minus_stated_pit": "Report tone vs stated grade",
+    "scr_w2s_brk_pit": "Best breaking ball future grade",
+    "scr_w2s_cmd_pit": "Command future grade",
+    # pitchers, timing (arrival)
+    "scr_g5_pit_A_all_all_age": "Age in Single-A (arrival)",
+    "scr_g5_pit_A_all_SP_age": "Age vs Single-A peers, starters (arrival)",
+    "scr_w2i_stints_time_pit": "Injured list stints, last four years (arrival)",
+    "scr_w2i_days_time_pit": "Days on the injured list, last four years (arrival)",
+    "scr_w2i_recur_time_pit": "Two or more injured list stints (arrival)",
+    "scr_w2n_nri_pre_pit": "Big league spring training invite (arrival)",
+    "scr_w2n_nri_count_pre_pit": "Big league spring training invites, count (arrival)",
+    "scr_rpt_arrival_pit": "Scouting report timeline (arrival)",
+}
+
+
+def chip_label(key: str) -> str:
+    """The chip label of a candidate key (the key itself when none is registered)."""
+    return CHIP_LABELS_V5.get(key, key)
+
+
+def _day(v) -> str | None:
+    s = str(v or "")[:10]
+    try:
+        date.fromisoformat(s)
+    except ValueError:
+        return None
+    return s
+
+
+def _next_day(d: str) -> str:
+    return (date.fromisoformat(d) + timedelta(days=1)).isoformat()
+
+
+def _season_ended(season: int, today: str) -> bool:
+    """A MiLB season S has ended by `today` (the 1 October rule of read_season)."""
+    y, m = int(today[:4]), int(today[5:7])
+    return int(season) < y or (int(season) == y and m >= 10)
+
+
+def live_read(today: str | None = None) -> dict:
+    """The live board's read: {"today", "group_year", "read_year", "cutoff", "season"}."""
+    import efv_dataset as D
+    t = _day(today or date.today().isoformat())
+    if t is None:
+        raise ValueError(f"not a date: {today!r}")
+    Y = int(D.CURRENT_SEASON)
+    RY = Y + int(LIVE_READ_YEAR_OFFSET)
+    S = G.read_season(RY, t)
+    if not _season_ended(S, t):
+        raise AssertionError(f"read season {S} had not ended by {t}")
+    return {"today": t, "group_year": Y, "read_year": RY, "cutoff": t, "season": S}
+
+
+def _item(slot, pk: str, mlbam, group: int, read_year: int, cutoff: str, asof: str | None,
+          fv) -> dict:
+    return {"slot": slot, "pk": pk, "mlbam": mlbam, "group": int(group),
+            "read_year": int(read_year), "cutoff": cutoff, "asof": asof,
+            "season": G.read_season(int(read_year), cutoff),
+            "fv": None if fv is None else float(fv)}
+
+
+def _cached(key, build):
+    if key not in _LIVE_CACHE:
+        _LIVE_CACHE[key] = build()
+    return _LIVE_CACHE[key]
+
+
+def _asof_lines(side: str, seasons) -> "G.Lines":
+    """Lines over just the seasons read (season-local, so equal to the training build's
+    values there; never stored in efv5_group_drivers._LINES)."""
+    ss = tuple(sorted({int(s) for s in seasons}))
+    metrics = [s["metric"] for s in G.menu_columns().values() if s["side"] == side]
+    return _cached(("lines", side, ss),
+                   lambda: G.Lines(side, metrics, seasons=ss, log=lambda *_a, **_k: None))
+
+
+def _scout_index(today: str):
+    """Board snapshots dated on or before today (the cap is exclusive)."""
+    SC = _scout()
+    return _cached(("scout", today), lambda: SC.SnapshotIndex.from_db(cap=_next_day(today)))
+
+
+def _tx_feed(today: str) -> tuple[dict, str]:
+    """(league transactions through today's year, the feed's last day on or before today)."""
+    import efv_drivers as DRV
+    tx = DRV.load_league_transactions(int(today[:4]))
+    last = max((d for evs in tx.values() for d, _c, _s in evs if d <= today), default=None)
+    return tx, last
+
+
+def _stint_index(today: str) -> tuple[dict, str | None, dict]:
+    """(the IL stint index parsed from the cached transaction feed exactly as
+    efv_w2_il_backfill.build_table parses it, the day after the feed's last day, receipt).
+    Nothing is written."""
+    import efv_w2_il_backfill as IL
+
+    def build():
+        _tx, last = _tx_feed(today)
+        doc = IL.build_table(out=None, last_year=int(today[:4]))
+        idx = IL.index_from_rows(doc["rows"])
+        end = _next_day(last) if last else None
+        return idx, end, {"n_stints": doc["n_stints"], "feed_last_day": last,
+                          "feed_last_month": (doc.get("source") or {}).get("last_month")}
+    return _cached(("stints", today), build)
+
+
+def _nri_index(today: str, season_cap: int):
+    """(an NRI index through season_cap with entries known before today + 1 day, the
+    seasons whose roster lists are cached)."""
+    import efv_w2_nri as NRI
+
+    def build():
+        rosters: dict = {}
+        have = set()
+        for season in range(min(NRI.SEASONS), int(season_cap) + 1):
+            files = sorted(NRI.CACHE_DIR.glob(f"nri_{season}_*.json"))
+            if files:
+                have.add(season)
+            for p in files:
+                club = int(p.stem.split("_")[2])
+                for e in json.loads(p.read_text(encoding="utf-8")).get("roster") or []:
+                    pid = (e.get("person") or {}).get("id")
+                    if pid:
+                        rosters.setdefault(season, {}).setdefault(int(pid), []).append(club)
+        tx, _last = _tx_feed(today)
+        idx = NRI.NriIndex.build(season_cap=int(season_cap), date_cap=_next_day(today),
+                                 rosters=rosters, tx=tx)
+        return idx, have
+    return _cached(("nri", today, int(season_cap)), build)
+
+
+def _exclusion_ids(items: list[dict], exclude_ids) -> frozenset:
+    """The population fit leaves out every player of the frame it scores (vm_exclusions'
+    rule): the live board's ids, both sides, plus every id read here."""
+    if exclude_ids is not None:
+        return frozenset(int(i) for i in exclude_ids)
+    import efv_dataset as D
+
+    def board():
+        ids = set()
+        for s in F.SIDES:
+            p = D.live_matrix_path(s)
+            if p.exists():
+                ids |= {int(r["mlbam_id"]) for r in json.loads(p.read_text(encoding="utf-8"))
+                        if r.get("mlbam_id")}
+        return frozenset(ids)
+    ids = set(_cached(("board_ids",), board))
+    ids |= {int(it["mlbam"]) for it in items if it.get("mlbam")}
+    return frozenset(ids)
+
+
+def _last_season_ended(day: str) -> int:
+    """The last season (MiLB or MLB) that had ended by `day` (the 1 October rule)."""
+    y, m = int(day[:4]), int(day[5:7])
+    return y if m >= 10 else y - 1
+
+
+def pop_fit_year(read_year: int, cutoff: str) -> int:
+    """The population fit year of an as-of read at (read_year, cutoff): the read year,
+    lowered until every label window the fit learns from (efv_w2_popmle.train_seasons:
+    s + 1 .. s + HORIZON) had closed by the cutoff. A training row reads at its decision
+    year with a cutoff inside that year, so its windows closed by 1 January; a history
+    snapshot read at min(year, list year) + 1 would otherwise learn from the fWAR season
+    still being played on its own date (verifier defect 2026-10-15). The live board
+    (read year 2027, cutoff after 1 October 2026) keeps its read year."""
+    return min(int(read_year), _last_season_ended(cutoff) + 1)
+
+
+def _pop_value(tr, side: str, mlbam, read_year: int, cutoff: str) -> tuple:
+    """efv_w2_popmle.Translator.value with the population model at pop_fit_year (the MiLB
+    read itself stays at (read_year, cutoff)). Raises when a label window the fit learns
+    from had not closed by the cutoff."""
+    import efv_dataset as D
+    import efv_w2_popmle as PM
+    from efv_w2_milb import last_readable_season
+    fy = pop_fit_year(read_year, cutoff)
+    seasons = PM.train_seasons(fy)
+    if seasons and max(seasons) + PM.HORIZON > _last_season_ended(cutoff):
+        raise F.ReservedFrameError(
+            f"population fit {fy}: a label window had not closed by {cutoff}")
+    if fy == int(read_year):
+        return tr.value(side, LIVE_KIND, mlbam, int(read_year), cutoff, D.MILB_FLOOR_DEFAULT)
+    tr.guard(LIVE_KIND, fy)
+    if not mlbam:
+        return None, None
+    mid = int(mlbam)
+    top = last_readable_season(int(read_year), cutoff)
+    low = max(int(D.MILB_FLOOR_DEFAULT), top - PM.MAX_BACK + 1)
+    for s in range(top, low - 1, -1):
+        f = PM.player_seasons(s, side).get(mid)
+        if f is None or f["exp"] < PM.LINE_MIN[side]:
+            continue
+        m = tr.model(LIVE_KIND, fy, side)
+        if m is None:
+            return None, s
+        return float(m.predict(np.asarray([PM.vector(f, side)]))[0]), s
+    return None, None
+
+
+def _translator(today: str, ids: frozenset, read_years):
+    """efv_w2_popmle.Translator for the live kind: a fit year's population fit uses only
+    label windows that closed before today's season (no look-ahead), and its own frame's
+    players are left out; each item's fit year is lowered to its own cutoff
+    (pop_fit_year). The vm guard (no read year from the R-VM cohort on) guards the
+    backtest frames; the live board is not one of them."""
+    import efv_w2_popmle as PM
+
+    class _LiveTranslator(PM.Translator):
+        def guard(self, kind: str, read_year: int) -> None:
+            if kind != LIVE_KIND:
+                raise ValueError(kind)
+            seasons = PM.train_seasons(int(read_year))
+            if seasons and max(seasons) + PM.HORIZON > int(today[:4]) - 1:
+                raise F.ReservedFrameError(
+                    f"read year {read_year}: a label window had not closed before {today}")
+            if int(read_year) > int(today[:4]) + 1:
+                raise F.ReservedFrameError(f"read year {read_year} is after {today}")
+
+    key = ("popmle", today, hash(ids))
+    tr = _LIVE_CACHE.get(key)
+    if tr is None:
+        tr = _LiveTranslator({})
+        tr.ids = ids
+        _LIVE_CACHE[key] = tr
+    for ry in read_years:
+        tr.excluded.setdefault((LIVE_KIND, int(ry)), ids)
+    return tr
+
+
+def _pooled_asof(items: list[dict], finish) -> dict:
+    """{name: {slot: value}} for a family whose value depends on a POOL of rows (a group
+    column's centering mean, a tool cell's z norm, a rater percentile), with every item's
+    pool made only of the items of its own read season whose cutoff is on or before its
+    own: finish(pool) -> {name: {slot: value}} runs once per (read season, cutoff) and each
+    item keeps the value of its own cutoff's run.
+
+    The live board (one read season, one cutoff: today) is one pool, exactly the call it
+    always was. FV-history snapshots (history_columns) carry many cutoffs: without this a
+    snapshot's centering mean, z norm and percentile were taken over snapshots dated after
+    it, including the October points that read the newer season (verifier defect
+    2026-10-15). Splitting by read season also keeps one season's lines per centering
+    group, as one decision year of the training frame reads one season."""
+    by_s: dict = {}
+    for it in items:
+        by_s.setdefault(it["season"], []).append(it)
+    out: dict = {}
+    for _s, its in sorted(by_s.items()):
+        days = sorted({it["cutoff"] for it in its})
+        for d in days:
+            pool = its if len(days) == 1 else [it for it in its if it["cutoff"] <= d]
+            mine = {it["slot"] for it in its if it["cutoff"] == d}
+            for n, mp in finish(pool).items():
+                dst = out.setdefault(n, {})
+                for slot, v in mp.items():
+                    if slot in mine:
+                        dst[slot] = v
+    return out
+
+
+# -- one function per family: (side, items, names, today) -> ({name: {slot: v}}, note) ----
+
+def _fam_group(side, items, ns, today, **_):
+    menu = G.menu_columns()
+    seasons = {it["season"] for it in items}
+    ln = _asof_lines(side, seasons)
+    reads = {(it["group"], it["slot"]): {n: ln.member(it["mlbam"], it["season"], menu[n])
+                                         for n in ns} for it in items}
+    cnt: dict = {n: {} for n in ns}
+    for (y, _sid), r in reads.items():
+        for n in ns:
+            if r[n][0]:
+                cnt[n][y] = cnt[n].get(y, 0) + 1
+
+    def finish(pool):
+        keys = [(it["group"], it["slot"]) for it in pool]
+        vals, _c = G.centered({k: reads[k] for k in keys}, ns)
+        return {n: {k[1]: vals[n].get(k, 0.0) for k in keys} for n in ns}
+
+    vals = _pooled_asof(items, finish)
+    out = {n: {it["slot"]: vals[n].get(it["slot"], 0.0) for it in items} for n in ns}
+    with_z = {n: sum(1 for r in reads.values() if r[n][0] and r[n][1] is not None) for n in ns}
+    in_group = {n: sum(cnt[n].values()) for n in ns}
+    dark = [n for n in ns if in_group[n] and not with_z[n]]
+    note = {"status": "partial" if dark else "lit", "seasons": sorted(seasons),
+            "in_group": in_group, "with_z": with_z}
+    if dark:
+        note["dark_columns"] = dark
+        note["reason"] = ("in-group rows carry no value at the read season: a pitch-call "
+                          "metric needs a discipline aggregate for the season "
+                          "(.cache/efv4_pbp_discipline); value 0.0 (the in-group mean)")
+    return out, note
+
+
+def _fam_tool(side, items, ns, today, **_):
+    seasons = {it["season"] for it in items}
+    ln = _asof_lines(side, seasons)
+    idx = _scout_index(today)
+    reads, sk = {}, {}
+    for it in items:
+        k = (it["group"], it["slot"])
+        sk[k] = it["season"]
+        row = {}
+        for n in ns:
+            spec = TOOL_CELLS[n]
+            ing = tool_member(ln, it["mlbam"], it["season"], spec)
+            v = tool_value(idx, it["pk"], it["asof"], None, spec["metric"], side) if ing else None
+            row[n] = (ing, v)
+        reads[k] = row
+
+    def finish(pool):
+        keys = [(it["group"], it["slot"]) for it in pool]
+        vals, _c = _tool_finish({k: reads[k] for k in keys}, sk, ns)
+        return {n: {k[1]: vals[n].get(k, 0.0) for k in keys} for n in ns}
+
+    vals = _pooled_asof(items, finish)
+    out = {n: {it["slot"]: vals[n].get(it["slot"], 0.0) for it in items} for n in ns}
+    pools: dict = {}
+    for k, r in reads.items():
+        for n in ns:
+            ing, v = r[n]
+            if ing:
+                p = pools.setdefault(n, {}).setdefault(str(sk[k]), {"in_group": 0, "with_grade": 0})
+                p["in_group"] += 1
+                p["with_grade"] += int(v is not None)
+    thin = sorted({n for n, by in pools.items() for c in by.values()
+                   if 0 < c["with_grade"] < G.NORM_MIN_LINES})
+    note = {"status": "partial" if thin else "lit", "pools": pools,
+            "norm_min_lines": G.NORM_MIN_LINES}
+    if thin:
+        note["thin_columns"] = thin
+        note["reason"] = (f"a (cell, season) pool under {G.NORM_MIN_LINES} graded rows has "
+                          "no z norm; its rows read 0.0 (the in-group mean)")
+    return out, note
+
+
+def _fam_il(side, items, ns, today, **_):
+    import efv_w2_il_backfill as IL
+    cands = candidates()
+    idx, end, rc = _stint_index(today)
+    out = {n: {} for n in ns}
+    for it in items:
+        cut = IL.vm_cutoff({"cutoff": it["cutoff"]}, it["read_year"])
+        if end is not None:
+            cut = min(cut, end)
+        p = IL.asof(it["mlbam"], cut, idx)
+        for n in ns:
+            st = cands[n]["arg"]
+            out[n][it["slot"]] = IL.transformed(st, p.get(st))
+    return out, dict(rc, status="lit", read_cut_capped_at=end)
+
+
+def _fam_nri(side, items, ns, today, **_):
+    import efv_w2_nri as NRI
+    cands = candidates()
+    cap = max(it["group"] for it in items) if items else int(today[:4])
+    idx, have = _nri_index(today, cap)
+    out = {n: {} for n in ns}
+    dark_rows = 0
+    missing = set()
+    for it in items:
+        d = it["asof"]
+        need = min(int(d[:4]), cap) if d else None
+        if need is None or need not in have:
+            vals = {s: None for s in NRI.STATS}
+            dark_rows += 1
+            if need is not None:
+                missing.add(need)
+        else:
+            vals = NRI.nri_values(it["mlbam"], d, idx)
+        for n in ns:
+            out[n][it["slot"]] = vals.get(cands[n]["arg"])
+    note = {"status": "dark" if dark_rows == len(items) else ("partial" if dark_rows else "lit"),
+            "roster_seasons_cached": [min(have), max(have)] if have else None,
+            "rows_without_roster_season": dark_rows}
+    if missing:
+        note["reason"] = (f"no non-roster invitee list cached for spring {sorted(missing)} "
+                          "(.cache/efv4_nri; efv_w2_nri.fetch(seasons=...)): an undercount "
+                          "is never served, so those rows read None")
+    return out, note
+
+
+def _fam_pbp(side, items, ns, today, **_):
+    import efv_w2_pbp as P
+    cands = candidates()
+    out = {n: {} for n in ns}
+    kept = 0
+    wanted = set()
+    for it in items:
+        p = P.profile(it["mlbam"], it["read_year"], it["cutoff"], side)
+        keep = P.has_all(p, side)
+        kept += int(keep)
+        wanted |= set(P.read_seasons(it["read_year"], it["cutoff"]))
+        for n in ns:
+            out[n][it["slot"]] = p.get(cands[n]["arg"]) if keep else None
+    note = {"status": "dark" if not kept else "lit", "rows_with_all_columns": kept,
+            "agg_seasons_last": max(P.AGG_SEASONS), "seasons_wanted": sorted(wanted)}
+    if not kept:
+        note["reason"] = (f"no complete pitch-event pool for the seasons read "
+                          f"{sorted(wanted)}: efv_w2_pbp.AGG_SEASONS ends "
+                          f"{max(P.AGG_SEASONS)} and no aggregate exists past it")
+    return out, note
+
+
+def _fam_pbp_bb(side, items, ns, today, **_):
+    import efv_dataset as D
+    import efv_w2_pbp_bb as PB
+    cands = candidates()
+    out = {n: {} for n in ns}
+    read: dict = {}
+    for it in items:
+        top = PB.last_readable_season(it["read_year"], it["cutoff"])
+        p = PB.profile(it["mlbam"], it["read_year"], it["cutoff"], side, D.MILB_FLOOR_DEFAULT,
+                       season_cap=top)
+        key = ",".join(str(s) for s in p.get("_seasons") or []) or "none"
+        read[key] = read.get(key, 0) + 1
+        for n in ns:
+            out[n][it["slot"]] = p.get(cands[n]["arg"])
+    pools = sorted({s for (_sp, s) in PB.pools()})
+    return out, {"status": "lit", "pool_seasons_last": pools[-1] if pools else None,
+                 "seasons_read": dict(sorted(read.items(), key=lambda kv: -kv[1])[:6])}
+
+
+def _fam_popmle(side, items, ns, today, exclude_ids=None, **_):
+    ids = _exclusion_ids(items, exclude_ids)
+    fys = sorted({pop_fit_year(it["read_year"], it["cutoff"]) for it in items})
+    tr = _translator(today, ids, fys)
+    vals = {}
+    for it in items:
+        v, _s = _pop_value(tr, side, it["mlbam"], it["read_year"], it["cutoff"])
+        vals[it["slot"]] = v
+    out = {n: dict(vals) for n in ns}
+    rec = {k: v for k, v in tr.receipts.items() if k.endswith(f"|{side}")}
+    return out, {"status": "lit", "fits": rec, "excluded_ids": len(ids), "fit_years": fys,
+                 "owner_note": ("the live fit learns from population seasons whose six-season "
+                                "fWAR windows closed before today's season (through 2025 "
+                                "fWAR), labels the backtest's vm guard kept away from "
+                                "development reads; nothing after today is read")}
+
+
+class _MemoPanel:
+    """A rater panel whose value(pk, asof) is computed once per pair (the pooled reads
+    call it once per pool)."""
+
+    def __init__(self, panel):
+        self.panel = panel
+        self.lists = panel.lists
+        self._memo: dict = {}
+
+    def value(self, pk, asof):
+        k = (pk, asof)
+        if k not in self._memo:
+            self._memo[k] = self.panel.value(pk, asof)
+        return self._memo[k]
+
+
+def _fam_raters(side, items, ns, today, **_):
+    import efv_rater_panel as RP
+    import efv_w2_raters as RW
+    panel = _cached(("raters",), lambda: RW.Panel.from_doc(RP.load_panel(RW.PANEL_PATH)))
+    memo = _MemoPanel(panel)
+
+    def finish(pool):
+        g, _info = RW.resid_column([(it["slot"], it["pk"], it["asof"], it["fv"],
+                                     (side, it["group"], LIVE_KIND)) for it in pool], memo)
+        return {"_": g}
+
+    got = _pooled_asof(items, finish).get("_", {})
+    got = {it["slot"]: got.get(it["slot"]) for it in items}
+    n_val = sum(1 for v in got.values() if v is not None)
+    years = sorted({y for (_r, y) in panel.lists})
+    note = {"status": "lit" if n_val else "dark", "with_value": n_val,
+            "list_years": [years[0], years[-1]] if years else None}
+    if not n_val:
+        note["reason"] = ("the rater panel carries no list of the read's own year "
+                          f"(list years {note['list_years']}); every row reads None, as every "
+                          "training row read after the panel's last year did")
+    return {n: dict(got) for n in ns}, note
+
+
+def _fam_report(side, items, ns, today, **_):
+    # The production construction: production_columns hands the report builder an empty
+    # list-vintage frame (frames_lv), so store.lv returns nothing and every training value
+    # is None; the fitted slopes are 0.0. Reading real report values here would be a
+    # different construction from the fit and would still multiply a zero slope.
+    return ({n: {it["slot"]: None for it in items} for n in ns},
+            {"status": "dark", "reason": ("None by construction: every production training "
+                                          "value was None (empty list-vintage frame in "
+                                          "production_columns) and the fitted slopes are 0.0")})
+
+
+def _fam_w2s(side, items, ns, today, **_):
+    SC = _scout()
+    idx = _scout_index(today)
+    slots = [(it["slot"], it["pk"], it["asof"]) for it in items]
+    out = {}
+    for n in ns:
+        got = SC.values_for(slots, V3.W2_COLUMNS[n]["arg"], idx)
+        out[n] = {k: (None if v is None else float(v)) for k, v in got.items()}
+    return out, {"status": "lit", "snapshot_cap": _next_day(today)}
+
+
+_FAMILIES = {"group": _fam_group, "tool": _fam_tool, "il": _fam_il, "nri": _fam_nri,
+             "pbp": _fam_pbp, "pbp_bb": _fam_pbp_bb, "popmle": _fam_popmle,
+             "raters": _fam_raters, "report": _fam_report, "w2s": _fam_w2s}
+
+
+def _family_of(name: str) -> str:
+    c = candidates()[name]
+    return c["family"] if c["source"] == "v4" else c["source"]
+
+
+def asof_columns(side: str, items: list[dict], *, today: str, names=None, exclude_ids=None,
+                 log=print) -> tuple[dict, dict]:
+    """({name: {slot: value | None}}, receipt) for every candidate column of the side on
+    as-of read items (see _item). Raises when any read reaches past `today`."""
+    t = _day(today)
+    names = side_candidates(side) if names is None else list(names)
+    for it in items:
+        if it["cutoff"] > t or (it["asof"] is not None and it["asof"] > t):
+            raise F.ReservedFrameError(f"{it['pk']}: a read after {t}")
+        if not _season_ended(it["season"], t):
+            raise F.ReservedFrameError(f"{it['pk']}: season {it['season']} had not ended by {t}")
+    by_fam: dict = {}
+    for n in names:
+        by_fam.setdefault(_family_of(n), []).append(n)
+    cols, fams = {}, {}
+    for fam, ns in by_fam.items():
+        t0 = time.time()
+        got, note = _FAMILIES[fam](side, items, ns, t, exclude_ids=exclude_ids)
+        cols.update(got)
+        fams[fam] = dict(note, columns=len(ns), seconds=round(time.time() - t0, 1))
+        log(f"  live {side} {fam}: {len(ns)} columns, {note.get('status')} "
+            f"({fams[fam]['seconds']} s)")
+    missing = [n for n in names if n not in cols]
+    if missing:
+        raise RuntimeError(f"{side}: candidate columns not built live: {missing}")
+    cov = {n: {"rows": len(cols[n]),
+               "with_value": sum(1 for v in cols[n].values() if v is not None),
+               "nonzero": sum(1 for v in cols[n].values() if v not in (None, 0.0))}
+           for n in names}
+    return cols, {"today": t, "rows": len(items), "families": fams, "coverage": cov}
+
+
+def live_columns(side: str, rows: list[dict], *, today: str | None = None,
+                 raw_by_key: dict | None = None, exclude_ids=None, receipt: dict | None = None,
+                 clip: bool = True, log=print) -> dict:
+    """{name: {(list year, player_key, 'live'): value | None}} for every candidate column of
+    the side on live board rows (efv_v2_serve.live_rows), read as of today with the
+    construction, units and standardization basis of production_columns (the read rule
+    above). raw_by_key maps player_key to its live matrix row (its consensus as-of date).
+    Pass every gradeable row of the side in one call: a group column is centered over the
+    call's in-group rows, as a training column is over its decision year's. With `clip`
+    (the served default) every value is then held to the production training support
+    (support_clip); clip=False gives the raw construction. Memoized per (side, today,
+    rows, clip); `receipt`, when a dict, receives the coverage receipt."""
+    rd = live_read(today)
+    t = rd["today"]
+    key = (side, t, tuple(sorted(r["player_key"] for r in rows)), bool(clip))
+    hit = _LIVE_MEMO.get(key)
+    if hit is None:
+        items = []
+        for r in rows:
+            if int(r["decision_year"]) != rd["group_year"]:
+                raise ValueError(f"{r['player_key']}: decision year {r['decision_year']} is "
+                                 f"not the live list year {rd['group_year']}")
+            raw = (raw_by_key or {}).get(r["player_key"]) or {}
+            a = _day(raw.get("asof_date")) or t
+            items.append(_item((rd["group_year"], r["player_key"], LIVE_KIND), r["player_key"],
+                               r.get("mlbam_id") or raw.get("mlbam_id"), rd["group_year"],
+                               rd["read_year"], t, min(a, t), r.get("fv")))
+        cols, rec = asof_columns(side, items, today=t, exclude_ids=exclude_ids, log=log)
+        if clip:
+            cols = support_clip(side, cols, rec, log=log)
+        rec["read"] = rd
+        hit = (cols, rec)
+        _LIVE_MEMO[key] = hit
+        _LIVE_RECEIPTS[side] = rec
+    if receipt is not None:
+        receipt.update(hit[1])
+    return hit[0]
+
+
+def live_receipt(side: str) -> dict | None:
+    """The coverage receipt of the side's last live_columns build (None before one)."""
+    return _LIVE_RECEIPTS.get(side)
+
+
+def history_columns(side: str, points: list[tuple], *, today: str | None = None,
+                    exclude_ids=None, clip: bool = True, log=print) -> tuple[dict, dict]:
+    """({name: {(player_key, snapshot date): value | None}}, receipt) for FV-history
+    snapshots [(player_key, mlbam_id, snapshot date, consensus fv)], each read as of its own
+    date: read year min(snapshot year, list year) + 1 and cutoff the snapshot date (the
+    efv_score history MiLB read), the population fit at pop_fit_year, and every pooled
+    value (centering mean, tool z norm, rater percentile) taken over the snapshots of the
+    same read season dated on or before it (_pooled_asof). Snapshots dated after today are
+    skipped. With `clip` the values are held to the training support (support_clip)."""
+    rd = live_read(today)
+    Y = rd["group_year"]
+    items = []
+    for pk, mid, d, fv in points:
+        d = _day(d)
+        if d is None or d > rd["today"]:
+            continue
+        yr = int(d[:4])
+        items.append(_item((pk, d), pk, mid, yr, min(yr, Y) + int(LIVE_READ_YEAR_OFFSET), d, d, fv))
+    cols, rec = asof_columns(side, items, today=rd["today"], exclude_ids=exclude_ids, log=log)
+    if clip:
+        cols = support_clip(side, cols, rec, log=log)
+    return cols, rec
+
+
+# ---------------------------------------------------------------------------
+# the training support: a served candidate value never leaves what the fit saw
+# ---------------------------------------------------------------------------
+#
+# THE DEFECT THIS CLOSES (verifier, 2026-10-15). The live construction equals the training
+# construction, but the populations it runs on differ, and a linear head extrapolates:
+#   - a tool cell's z exists only for a (cell, season) pool of NORM_MIN_LINES graded rows.
+#     Training pools split by read season almost never reached it (High-A slider gap:
+#     one 2019 pool of 33, 98% of training values 0.0), while the live 2026 pool has 127,
+#     so the live column is nonzero on 13% of rows and reached 36 training SDs (one
+#     pitcher moved 93 percentile points);
+#   - the injured list counts drift by era (the post-2021 minor league IL): 60-day stints
+#     were 0 or 1 on every training hitter and reach 5 live.
+# The served guard, per candidate key, against the production training rows' own values:
+#   1. CLIP every value into the training [min, max]: a served value is never one the fit
+#      did not see, so its head z never passes the training max |z|.
+#   2. WITHHOLD (None: the head's training mean, z = 0) a column whose nonzero training
+#      values come from fewer than SUPPORT_MIN_SEASONS read seasons (MiLB seasons read,
+#      efv5_group_drivers.read_season at the row's decision year and matrix cutoff): its
+#      slope rests on a single pool, and a board that lights it is a regime the backtest
+#      never scored. Only the High-A slider gap cells fall under it on 2026-10-15 (33
+#      nonzero training rows, every one read in the 2019 pool, and 0 and 0); a column lit
+#      across many seasons with a small share (60-day IL stints, 67 hitter rows over 8
+#      seasons) is clipped and its drift reported.
+#   3. REPORT drift: a key whose served nonzero share passes DRIFT_RATIO times its training
+#      share (and by DRIFT_MIN_GAP) is named in the receipt and its family's status says
+#      "drift" (the IL family on both sides on 2026-10-15).
+# Nothing here touches a training number: the support is read off production_train.
+
+#: A column whose nonzero production training values come from fewer read seasons than
+#: this (one pool) is withheld when served.
+SUPPORT_MIN_SEASONS = 2
+#: Drift report thresholds (served nonzero share against the training share).
+DRIFT_RATIO = 2.0
+DRIFT_MIN_GAP = 0.05
+_SUPPORT: dict = {}
+
+
+def training_support(side: str, *, log=print) -> dict:
+    """{candidate key: {"n", "nonzero", "nonzero_share", "nonzero_seasons", "min", "max"}}
+    over the production training rows' non-None values of the side (memoized per
+    process); nonzero_seasons counts the read seasons (the MiLB season a row read at its
+    decision year and matrix cutoff) with a nonzero value; min and max are None for a key
+    with no training value."""
+    if side in _SUPPORT:
+        return _SUPPORT[side]
+    train = production_train(side, log=log)
+    raw = _raw_by_side()[side]
+    season = {id(r): G.read_season(int(r["decision_year"]),
+                                   (raw.get(r["player_key"]) or {}).get("cutoff"))
+              for r in train}
+    cands = candidates()
+    out = {}
+    for n in side_candidates(side):
+        k = cands[n]["key"]
+        have = [r for r in train if r["v2"].get(k) is not None]
+        vals = np.asarray([r["v2"][k] for r in have], dtype=np.float64)
+        nz = int(np.count_nonzero(vals))
+        ss = {season[id(r)] for r in have if float(r["v2"][k]) != 0.0}
+        out[k] = {"n": int(vals.size), "nonzero": nz,
+                  "nonzero_share": round(nz / vals.size, 4) if vals.size else 0.0,
+                  "nonzero_seasons": len(ss),
+                  "min": float(vals.min()) if vals.size else None,
+                  "max": float(vals.max()) if vals.size else None}
+    _SUPPORT[side] = out
+    return out
+
+
+def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=print) -> dict:
+    """cols ({name: {slot: value | None}}) held to the production training support (the
+    block above): clipped into the training [min, max], withheld (None) where the training
+    column's nonzero values span fewer than SUPPORT_MIN_SEASONS read seasons, drift named. `receipt`, when a
+    dict, takes {"support": {key: ...}} and each drifting family's status."""
+    sup = training_support(side, log=log)
+    cands = candidates()
+    out, rep = {}, {}
+    drift_fams: dict = {}
+    for n, mp in cols.items():
+        k = cands[n]["key"]
+        s = sup.get(k) or {"n": 0, "nonzero": 0, "nonzero_share": 0.0, "nonzero_seasons": 0,
+                           "min": None, "max": None}
+        vals = [v for v in mp.values() if v is not None]
+        nz = sum(1 for v in vals if v != 0.0)
+        share = round(nz / len(vals), 4) if vals else 0.0
+        r = {"train_nonzero_rows": s["nonzero"], "train_nonzero_share": s["nonzero_share"],
+             "train_nonzero_seasons": s["nonzero_seasons"], "served_nonzero_share": share,
+             "clipped_low": 0, "clipped_high": 0, "withheld": False}
+        if vals and s["nonzero_seasons"] < SUPPORT_MIN_SEASONS and (nz or s["min"] is None):
+            out[n] = {slot: None for slot in mp}
+            r["withheld"] = True
+            r["reason"] = (f"{s['nonzero']} nonzero training rows from "
+                           f"{s['nonzero_seasons']} read seasons (under "
+                           f"{SUPPORT_MIN_SEASONS}): the slope never saw this column lit "
+                           "on a board")
+        else:
+            lo, hi = s["min"], s["max"]
+            got = {}
+            for slot, v in mp.items():
+                if v is not None and lo is not None:
+                    if v < lo:
+                        v = lo
+                        r["clipped_low"] += 1
+                    elif v > hi:
+                        v = hi
+                        r["clipped_high"] += 1
+                got[slot] = v
+            out[n] = got
+            if (vals and share > DRIFT_RATIO * s["nonzero_share"]
+                    and share - s["nonzero_share"] > DRIFT_MIN_GAP):
+                r["drift"] = True
+                drift_fams.setdefault(_family_of(n), []).append(k)
+        rep[k] = r
+    if receipt is not None:
+        receipt["support"] = rep
+        fams = receipt.get("families") or {}
+        for fam, ks in drift_fams.items():
+            note = fams.get(fam)
+            if note is None:
+                continue
+            note["drift"] = sorted(ks)
+            if note.get("status") == "lit":
+                note["status"] = "drift"
+                note["reason"] = ("served nonzero share above "
+                                  f"{DRIFT_RATIO:g}x the training share for {sorted(ks)}; "
+                                  "values clipped to the training range")
+        receipt["withheld"] = sorted(k for k, r in rep.items() if r["withheld"])
+        receipt["clipped"] = sum(r["clipped_low"] + r["clipped_high"] for r in rep.values())
+    return out
 
 
 # ---------------------------------------------------------------------------
