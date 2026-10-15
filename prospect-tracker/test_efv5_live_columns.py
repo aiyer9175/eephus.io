@@ -49,7 +49,7 @@ DATA = ROOT / "data"
 TODAY = "2026-10-15"
 #: Families the live board can build from the sources on disk (their primitives exist and
 #: their sources cover the read); the rest are dark or partial by a named reason.
-FEASIBLE = ("group", "tool", "il", "pbp_bb", "popmle", "w2s")
+FEASIBLE = ("group", "tool", "il", "pbp", "pbp_bb", "popmle", "w2s")
 BANNED_V1_PIT = {"Peak K rate", "Walk rate vs level", "K-backed run prevention", "Fastball",
                  "Age", "Age for level", "Contact (K%) vs level", "ERA vs level",
                  "Peak walk rate", "Command", "Slider", "Changeup", "Curveball"}

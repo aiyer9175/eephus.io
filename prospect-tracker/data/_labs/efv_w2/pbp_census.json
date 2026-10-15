@@ -20,7 +20,7 @@
   },
   "fetch_seasons": [
    2007,
-   2025
+   2026
   ],
   "no_season": [
    2020
@@ -803,6 +803,46 @@
     "fetch": true
    },
    {
+    "sportId": 11,
+    "level": "AAA",
+    "season": 2026,
+    "scheduled_final": 2223,
+    "sample_gamePks": [
+     816372,
+     815678,
+     815373,
+     816331,
+     815494,
+     815407
+    ],
+    "games_read": 6,
+    "games_full": 6,
+    "full_game_share": 1.0,
+    "pa": 487,
+    "pitches": 1798,
+    "pitches_per_pa": 3.692,
+    "call_share": {
+     "*B": 0.015,
+     "B": 0.3415,
+     "C": 0.1691,
+     "D": 0.0439,
+     "E": 0.0284,
+     "F": 0.1752,
+     "H": 0.0056,
+     "L": 0.0017,
+     "M": 0.0006,
+     "S": 0.094,
+     "T": 0.0106,
+     "W": 0.0056,
+     "X": 0.109
+    },
+    "in_play": 326,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 1.0,
+    "class": "full",
+    "fetch": true
+   },
+   {
     "sportId": 12,
     "level": "AA",
     "season": 2006,
@@ -1561,6 +1601,46 @@
     "fetch": true
    },
    {
+    "sportId": 12,
+    "level": "AA",
+    "season": 2026,
+    "scheduled_final": 2048,
+    "sample_gamePks": [
+     818554,
+     818545,
+     818743,
+     818256,
+     818034,
+     817672
+    ],
+    "games_read": 6,
+    "games_full": 6,
+    "full_game_share": 1.0,
+    "pa": 424,
+    "pitches": 1605,
+    "pitches_per_pa": 3.785,
+    "call_share": {
+     "*B": 0.0156,
+     "B": 0.352,
+     "C": 0.1489,
+     "D": 0.0336,
+     "E": 0.0287,
+     "F": 0.1757,
+     "H": 0.0031,
+     "L": 0.005,
+     "M": 0.0006,
+     "S": 0.1072,
+     "T": 0.0143,
+     "W": 0.0025,
+     "X": 0.1128
+    },
+    "in_play": 281,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 1.0,
+    "class": "full",
+    "fetch": true
+   },
+   {
     "sportId": 13,
     "level": "A+",
     "season": 2006,
@@ -2300,6 +2380,45 @@
     "fetch": true
    },
    {
+    "sportId": 13,
+    "level": "A+",
+    "season": 2026,
+    "scheduled_final": 1952,
+    "sample_gamePks": [
+     820170,
+     819294,
+     819143,
+     819999,
+     819851,
+     819317
+    ],
+    "games_read": 6,
+    "games_full": 6,
+    "full_game_share": 1.0,
+    "pa": 480,
+    "pitches": 1917,
+    "pitches_per_pa": 3.994,
+    "call_share": {
+     "*B": 0.0156,
+     "B": 0.3657,
+     "C": 0.1701,
+     "D": 0.0365,
+     "E": 0.0287,
+     "F": 0.1607,
+     "H": 0.0042,
+     "L": 0.0016,
+     "S": 0.1184,
+     "T": 0.0073,
+     "W": 0.0021,
+     "X": 0.0892
+    },
+    "in_play": 296,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 1.0,
+    "class": "full",
+    "fetch": true
+   },
+   {
     "sportId": 14,
     "level": "A",
     "season": 2006,
@@ -3033,6 +3152,45 @@
     "fetch": true
    },
    {
+    "sportId": 14,
+    "level": "A",
+    "season": 2026,
+    "scheduled_final": 1954,
+    "sample_gamePks": [
+     827494,
+     827009,
+     821199,
+     821321,
+     820710,
+     826768
+    ],
+    "games_read": 6,
+    "games_full": 6,
+    "full_game_share": 1.0,
+    "pa": 461,
+    "pitches": 1800,
+    "pitches_per_pa": 3.905,
+    "call_share": {
+     "*B": 0.0194,
+     "B": 0.3833,
+     "C": 0.1539,
+     "D": 0.0328,
+     "E": 0.0256,
+     "F": 0.1639,
+     "H": 0.0056,
+     "L": 0.0044,
+     "S": 0.1133,
+     "T": 0.0078,
+     "W": 0.0044,
+     "X": 0.0856
+    },
+    "in_play": 259,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 1.0,
+    "class": "full",
+    "fetch": true
+   },
+   {
     "sportId": 15,
     "level": "A-",
     "season": 2006,
@@ -3641,6 +3799,25 @@
     "sportId": 15,
     "level": "A-",
     "season": 2025,
+    "scheduled_final": 0,
+    "sample_gamePks": [],
+    "games_read": 0,
+    "games_full": 0,
+    "full_game_share": null,
+    "pa": 0,
+    "pitches": 0,
+    "pitches_per_pa": null,
+    "call_share": {},
+    "in_play": 0,
+    "hitdata_trajectory_share": null,
+    "coordinates_share": null,
+    "class": "no_games",
+    "fetch": false
+   },
+   {
+    "sportId": 15,
+    "level": "A-",
+    "season": 2026,
     "scheduled_final": 0,
     "sample_gamePks": [],
     "games_read": 0,
@@ -4337,6 +4514,41 @@
     "coordinates_share": 1.0,
     "class": "full",
     "fetch": true
+   },
+   {
+    "sportId": 16,
+    "level": "ROK",
+    "season": 2026,
+    "scheduled_final": 2268,
+    "sample_gamePks": [
+     844311,
+     848470,
+     849039,
+     844719,
+     849240,
+     849057
+    ],
+    "games_read": 6,
+    "games_full": 5,
+    "full_game_share": 0.8333,
+    "pa": 392,
+    "pitches": 1348,
+    "pitches_per_pa": 3.439,
+    "call_share": {
+     "B": 0.3991,
+     "C": 0.1387,
+     "D": 0.0393,
+     "E": 0.0252,
+     "F": 0.1491,
+     "H": 0.0111,
+     "S": 0.1172,
+     "X": 0.1202
+    },
+    "in_play": 249,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 1.0,
+    "class": "mixed",
+    "fetch": true
    }
   ],
   "fetch_cells": [
@@ -4413,6 +4625,10 @@
     2025
    ],
    [
+    11,
+    2026
+   ],
+   [
     12,
     2008
    ],
@@ -4481,6 +4697,10 @@
     2025
    ],
    [
+    12,
+    2026
+   ],
+   [
     13,
     2013
    ],
@@ -4529,6 +4749,10 @@
     2025
    ],
    [
+    13,
+    2026
+   ],
+   [
     14,
     2015
    ],
@@ -4569,6 +4793,10 @@
     2025
    ],
    [
+    14,
+    2026
+   ],
+   [
     15,
     2015
    ],
@@ -4595,6 +4823,10 @@
    [
     16,
     2025
+   ],
+   [
+    16,
+    2026
    ]
   ],
   "result_only_cells": [
@@ -4754,10 +4986,13 @@
     16,
     2023
    ]
-  ]
+  ],
+  "seasons_probed_later": {
+   "2026": "2026-10-15"
+  }
  },
  "cache": {
-  "as_of": "2026-10-09",
+  "as_of": "2026-10-15",
   "cells": [
    {
     "sportId": 11,
@@ -5687,6 +5922,54 @@
      "117": [
       1484,
       1484
+     ]
+    }
+   },
+   {
+    "sportId": 11,
+    "level": "AAA",
+    "season": 2026,
+    "fetch_planned": true,
+    "scheduled_final": 2223,
+    "games_cached": 2223,
+    "complete": true,
+    "games_read": 2223,
+    "games_full": 2223,
+    "full_game_share": 1.0,
+    "pa": 172432,
+    "pitches": 669998,
+    "pitches_per_pa": 3.886,
+    "call_share": {
+     "*B": 0.0191,
+     "B": 0.3587,
+     "C": 0.1578,
+     "D": 0.038,
+     "E": 0.0251,
+     "F": 0.1713,
+     "H": 0.0033,
+     "I": 0.0,
+     "L": 0.0025,
+     "M": 0.0004,
+     "O": 0.0,
+     "P": 0.0,
+     "S": 0.1048,
+     "T": 0.011,
+     "W": 0.004,
+     "X": 0.104,
+     "Y": 0.0
+    },
+    "in_play": 111939,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 0.9998,
+    "games_result_only": 0,
+    "by_league_games_full": {
+     "112": [
+      745,
+      745
+     ],
+     "117": [
+      1478,
+      1478
      ]
     }
    },
@@ -6681,6 +6964,57 @@
     }
    },
    {
+    "sportId": 12,
+    "level": "AA",
+    "season": 2026,
+    "fetch_planned": true,
+    "scheduled_final": 2048,
+    "games_cached": 2048,
+    "complete": true,
+    "games_read": 2048,
+    "games_full": 2048,
+    "full_game_share": 1.0,
+    "pa": 156971,
+    "pitches": 607508,
+    "pitches_per_pa": 3.87,
+    "call_share": {
+     "*B": 0.0169,
+     "B": 0.3581,
+     "C": 0.1546,
+     "D": 0.0368,
+     "E": 0.0247,
+     "F": 0.169,
+     "H": 0.0038,
+     "L": 0.0024,
+     "M": 0.0004,
+     "O": 0.0,
+     "P": 0.0,
+     "R": 0.0,
+     "S": 0.119,
+     "T": 0.0087,
+     "W": 0.0046,
+     "X": 0.101
+    },
+    "in_play": 98726,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 0.9997,
+    "games_result_only": 0,
+    "by_league_games_full": {
+     "109": [
+      686,
+      686
+     ],
+     "111": [
+      545,
+      545
+     ],
+     "113": [
+      817,
+      817
+     ]
+    }
+   },
+   {
     "sportId": 13,
     "level": "A+",
     "season": 2006,
@@ -7615,6 +7949,57 @@
     }
    },
    {
+    "sportId": 13,
+    "level": "A+",
+    "season": 2026,
+    "fetch_planned": true,
+    "scheduled_final": 1952,
+    "games_cached": 1952,
+    "complete": true,
+    "games_read": 1952,
+    "games_full": 1951,
+    "full_game_share": 0.9995,
+    "pa": 152166,
+    "pitches": 589790,
+    "pitches_per_pa": 3.876,
+    "call_share": {
+     "*B": 0.0158,
+     "B": 0.3681,
+     "C": 0.1544,
+     "D": 0.0359,
+     "E": 0.0252,
+     "F": 0.1639,
+     "H": 0.0045,
+     "L": 0.0022,
+     "M": 0.0004,
+     "O": 0.0,
+     "P": 0.0,
+     "S": 0.1196,
+     "T": 0.0076,
+     "W": 0.0044,
+     "X": 0.0979,
+     "Y": 0.0
+    },
+    "in_play": 93794,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 0.9996,
+    "games_result_only": 1,
+    "by_league_games_full": {
+     "116": [
+      782,
+      781
+     ],
+     "118": [
+      775,
+      775
+     ],
+     "126": [
+      395,
+      395
+     ]
+    }
+   },
+   {
     "sportId": 14,
     "level": "A",
     "season": 2006,
@@ -8482,6 +8867,57 @@
      "123": [
       642,
       641
+     ]
+    }
+   },
+   {
+    "sportId": 14,
+    "level": "A",
+    "season": 2026,
+    "fetch_planned": true,
+    "scheduled_final": 1954,
+    "games_cached": 1954,
+    "complete": true,
+    "games_read": 1954,
+    "games_full": 1953,
+    "full_game_share": 0.9995,
+    "pa": 152569,
+    "pitches": 589088,
+    "pitches_per_pa": 3.861,
+    "call_share": {
+     "*B": 0.0151,
+     "B": 0.3708,
+     "C": 0.1571,
+     "D": 0.0366,
+     "E": 0.025,
+     "F": 0.1611,
+     "H": 0.0047,
+     "L": 0.0023,
+     "M": 0.0005,
+     "O": 0.0,
+     "P": 0.0,
+     "R": 0.0,
+     "S": 0.1183,
+     "T": 0.008,
+     "W": 0.0043,
+     "X": 0.0961
+    },
+    "in_play": 92893,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 0.9995,
+    "games_result_only": 1,
+    "by_league_games_full": {
+     "110": [
+      527,
+      527
+     ],
+     "122": [
+      782,
+      782
+     ],
+     "123": [
+      645,
+      644
      ]
     }
    },
@@ -9934,13 +10370,65 @@
       1393
      ]
     }
+   },
+   {
+    "sportId": 16,
+    "level": "ROK",
+    "season": 2026,
+    "fetch_planned": true,
+    "scheduled_final": 2268,
+    "games_cached": 2268,
+    "complete": true,
+    "games_read": 2268,
+    "games_full": 1814,
+    "full_game_share": 0.7998,
+    "pa": 165027,
+    "pitches": 571927,
+    "pitches_per_pa": 3.466,
+    "call_share": {
+     "*B": 0.0084,
+     "B": 0.4072,
+     "C": 0.1434,
+     "D": 0.0393,
+     "E": 0.0306,
+     "F": 0.1263,
+     "H": 0.008,
+     "I": 0.0002,
+     "L": 0.0003,
+     "M": 0.0001,
+     "O": 0.0,
+     "P": 0.0,
+     "S": 0.1328,
+     "T": 0.0008,
+     "W": 0.0007,
+     "X": 0.1018,
+     "Y": 0.0
+    },
+    "in_play": 98228,
+    "hitdata_trajectory_share": 1.0,
+    "coordinates_share": 0.9997,
+    "games_result_only": 454,
+    "by_league_games_full": {
+     "121": [
+      447,
+      400
+     ],
+     "124": [
+      421,
+      371
+     ],
+     "130": [
+      1400,
+      1043
+     ]
+    }
    }
   ],
-  "games_cached": 126786,
-  "pitches": 34443705,
-  "cells_complete": 64,
-  "planned_cells_complete": 64,
-  "planned_cells": 64,
+  "games_cached": 137231,
+  "pitches": 37472016,
+  "cells_complete": 69,
+  "planned_cells_complete": 69,
+  "planned_cells": 69,
   "planned_cells_incomplete": []
  }
 }

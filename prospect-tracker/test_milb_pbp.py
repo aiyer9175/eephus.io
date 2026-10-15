@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import inspect
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import pytest
 
@@ -107,6 +107,37 @@ def test_fetch_window():
     ok, why = F.fetch_window_open(datetime(2026, 10, 23, 15, 0, tzinfo=timezone.utc))
     assert not ok and "fetch date" in why
     assert F.MAX_WORKERS <= 4
+
+
+def test_the_2026_season_fetch_dates_keep_the_blackout():
+    # EFV_FIX_A_PBP_2026 (owner EW3-21, dates waived by EW3-5): two more fetch dates for
+    # the 2026 pools; the 06:00 to 11:00 UTC blackout still closes the window.
+    assert {date(2026, 10, 15), date(2026, 10, 16)} <= F.FETCH_DATES
+    ok, why = F.fetch_window_open(datetime(2026, 10, 15, 8, 0, tzinfo=timezone.utc))
+    assert not ok and "blackout" in why
+    assert max(C.FETCH_SEASONS) == 2026 and max(C.PROBE_SEASONS) == 2026
+
+
+def test_a_season_probe_merges_into_the_probe_block(tmp_path, monkeypatch):
+    out = tmp_path / "census.json"
+    old = [{"sportId": 11, "season": 2025, "class": "full", "fetch": True},
+           {"sportId": 12, "season": 2025, "class": "result_only", "fetch": False}]
+    out.write_text(json.dumps({"probe": {"as_of": "2026-10-08", "cells": old}}),
+                   encoding="utf-8")
+    monkeypatch.setattr(C, "OUT_PATH", out)
+    monkeypatch.setattr(F, "fetch_window_open", lambda now=None: (True, "open"))
+    new = [{"sportId": 11, "season": 2026, "class": "full", "fetch": True},
+           {"sportId": 15, "season": 2026, "class": "no_games", "fetch": False}]
+    monkeypatch.setattr(C, "probe", lambda log=print, seasons=None: (
+        new if seasons == [2026] else pytest.fail("the season probe read other seasons")))
+    assert C.main(["--probe", "--season", "2026"]) == 0
+    doc = json.loads(out.read_text(encoding="utf-8"))["probe"]
+    assert doc["as_of"] == "2026-10-08" and doc["seasons_probed_later"] == {
+        "2026": date.today().isoformat()}
+    assert [(c["sportId"], c["season"]) for c in doc["cells"]] == [
+        (11, 2025), (11, 2026), (12, 2025), (15, 2026)]
+    assert doc["fetch_cells"] == [[11, 2025], [11, 2026]]
+    assert doc["result_only_cells"] == [[12, 2025]]
 
 
 def test_census_classes_and_fetch_rule():

@@ -9,7 +9,7 @@
 TWO PARTS, one artifact.
 
   probe   Written FIRST, before the full fetch. For every StatsAPI MiLB sport id
-          (11 AAA, 12 AA, 13 A+, 14 A, 15 A-, 16 ROK) and every season 2006 to 2025
+          (11 AAA, 12 AA, 13 A+, 14 A, 15 A-, 16 ROK) and every season 2006 to 2026
           but 2020 (no MiLB season), PROBE_N final regular-season games spread evenly
           over the season are read through milb_pbp_fetch (so they land in the same
           cache the fetch fills). Per cell: pitches per PA, call-code shares, the
@@ -32,6 +32,8 @@ league population; nothing is grouped by any player attribute.
 
 Usage:
     python milb_pbp_census.py --probe      # network (fetch window), then writes
+    python milb_pbp_census.py --probe --season 2026   # probe one season's cells and
+                                                      # merge them into the probe block
     python milb_pbp_census.py --cache      # cache only, any day
 """
 
@@ -47,11 +49,12 @@ from datetime import date
 import milb_pbp_fetch as F
 
 OUT_PATH = F.CENSUS_PATH
-PROBE_SEASONS: tuple[int, ...] = tuple(y for y in range(2006, 2026) if y not in F.NO_SEASON)
+PROBE_SEASONS: tuple[int, ...] = tuple(y for y in range(2006, 2027) if y not in F.NO_SEASON)
 #: seasons the fetch may take: AAA and AA from 2007 (2006 is not asked for), the
-#: lower levels wherever the probe finds pitch events, through 2025 (the last season
-#: any frame's as-of rule can read: a 2026 debut reads 2025).
-FETCH_SEASONS: tuple[int, ...] = tuple(y for y in range(2007, 2026) if y not in F.NO_SEASON)
+#: lower levels wherever the probe finds pitch events, through 2026: 2025 is the last
+#: season any frame's as-of rule can read (a 2026 debut reads 2025) and 2026 is the
+#: season the live board reads (EFV_FIX_A_PBP_2026, owner EW3-21).
+FETCH_SEASONS: tuple[int, ...] = tuple(y for y in range(2007, 2027) if y not in F.NO_SEASON)
 PROBE_N = 6
 FETCH_MIN_FULL_SHARE = 1 / 3
 FULL_GAME_PPA = 3.0
@@ -120,10 +123,10 @@ def _sample(games: list[dict], n: int) -> list[dict]:
     return [games[int(step * (k + 0.5))] for k in range(n)]
 
 
-def probe(log=print) -> list[dict]:
+def probe(log=print, seasons=None) -> list[dict]:
     cells = []
     for sp in F.LEVEL_ORDER:
-        for y in PROBE_SEASONS:
+        for y in (PROBE_SEASONS if seasons is None else seasons):
             games = F.schedule(sp, y)
             sample = _sample(games, PROBE_N)
             with ThreadPoolExecutor(max_workers=F.MAX_WORKERS) as ex:
@@ -214,6 +217,9 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="MiLB pitch-event coverage census")
     ap.add_argument("--probe", action="store_true")
     ap.add_argument("--cache", action="store_true")
+    ap.add_argument("--season", type=int, action="append", default=None,
+                    help="probe only this season (repeatable); its cells replace the same "
+                         "cells of the existing probe block and every other cell is kept")
     a = ap.parse_args(argv)
     if not (a.probe or a.cache):
         ap.error("pass --probe and/or --cache")
@@ -224,11 +230,23 @@ def main(argv=None) -> int:
         if not ok:
             print(f"fetch window closed: {why}")
             return 2
-        cells = probe()
-        doc["probe"] = {"as_of": date.today().isoformat(), "cells": cells,
+        cells = probe(seasons=a.season)
+        prev = doc.get("probe") or {}
+        if a.season:
+            new = {(c["sportId"], c["season"]) for c in cells}
+            cells = sorted([c for c in prev.get("cells", [])
+                            if (c["sportId"], c["season"]) not in new] + cells,
+                           key=lambda c: (F.LEVEL_ORDER.index(c["sportId"]), c["season"]))
+        doc["probe"] = {"as_of": (prev.get("as_of") if a.season and prev.get("as_of")
+                                  else date.today().isoformat()), "cells": cells,
                         "fetch_cells": [[c["sportId"], c["season"]] for c in cells if c["fetch"]],
                         "result_only_cells": [[c["sportId"], c["season"]] for c in cells
                                               if c["class"] == "result_only"]}
+        if a.season:
+            ext = dict(prev.get("seasons_probed_later") or {})
+            for y in a.season:
+                ext[str(y)] = date.today().isoformat()
+            doc["probe"]["seasons_probed_later"] = ext
     if a.cache:
         planned = {(int(s), int(y)) for s, y in (doc.get("probe") or {}).get("fetch_cells", [])}
         cells = cache_census(planned or None)

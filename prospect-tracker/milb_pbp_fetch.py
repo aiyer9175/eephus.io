@@ -69,14 +69,17 @@ API = "https://statsapi.mlb.com/api/v1"
 USER_AGENT = ("BaseballR-prospect-tracker eFV-v4 MiLB pitch-event research fetch "
               "(one-off, 4 connections max, resumable cache)")
 
-#: StatsAPI sport ids and the level each names in the 2006 to 2025 seasons.
+#: StatsAPI sport ids and the level each names in the 2006 to 2026 seasons.
 SPORTS: dict[int, str] = {11: "AAA", 12: "AA", 13: "A+", 14: "A", 15: "A-", 16: "ROK"}
 #: Fetch order: level by level, top of the ladder first.
 LEVEL_ORDER: tuple[int, ...] = (11, 12, 13, 14, 15, 16)
 NO_SEASON = frozenset({2020})
 
 MAX_WORKERS = 4
-FETCH_DATES = frozenset({date(2026, 10, 8), date(2026, 10, 9), date(2026, 10, 10)})
+#: EW2-11's three dates, plus 2026-10-15 and 2026-10-16 for the 2026 season pools
+#: (EFV_FIX_A_PBP_2026, owner EW3-21; dates waived by EW3-5). The blackout stays.
+FETCH_DATES = frozenset({date(2026, 10, 8), date(2026, 10, 9), date(2026, 10, 10),
+                         date(2026, 10, 15), date(2026, 10, 16)})
 BLACKOUT_UTC_HOURS = range(6, 11)
 _REQUEST_SLEEP = 0.05
 

@@ -148,6 +148,35 @@ def test_read_seasons_are_the_last_two_played_before_the_read():
     assert M.read_seasons(2019, "2018-07-01") == [2017, 2016]
 
 
+def test_the_live_read_seasons_are_aggregated():
+    # EFV_FIX_A_PBP_2026 (audit D6): the live board reads list year 2026 at read year
+    # 2027 as of an October cutoff, so it asks for 2026 and 2025; both are pools now.
+    live = M.read_seasons(2027, "2026-10-15")
+    assert live == [2026, 2025] and set(live) <= set(M.AGG_SEASONS)
+    assert max(M.AGG_SEASONS) == 2026 and 2020 not in M.AGG_SEASONS
+
+
+def test_complete_pools_take_the_new_seasons_only_when_complete():
+    cells = [{"sportId": 11, "season": 2026, "fetch_planned": True, "complete": True},
+             {"sportId": 12, "season": 2026, "fetch_planned": True, "complete": False},
+             {"sportId": 16, "season": 2025, "fetch_planned": True, "complete": True},
+             {"sportId": 16, "season": 2023, "fetch_planned": False, "complete": False},
+             {"sportId": 11, "season": 2027, "fetch_planned": True, "complete": True}]
+    assert M.complete_pools({"cache": {"cells": cells}}) == [(11, 2026), (16, 2025)]
+
+
+def test_the_census_holds_every_live_pool_complete():
+    if not M.CENSUS_PATH.exists():
+        pytest.skip("pbp_census.json not built on this tree")
+    doc = json.loads(M.CENSUS_PATH.read_text(encoding="utf-8"))
+    planned = {(int(s), int(y)) for s, y in doc["probe"]["fetch_cells"] if int(y) >= 2025}
+    cells = {(int(c["sportId"]), int(c["season"])): c for c in doc["cache"]["cells"]}
+    assert {(11, 2026), (12, 2026), (13, 2026), (14, 2026)} <= planned
+    for k in sorted(planned):
+        c = cells[k]
+        assert c["complete"] and c["games_cached"] >= c["scheduled_final"] > 0, k
+
+
 def test_profile_reads_only_its_seasons_and_shrinks(monkeypatch):
     seen = []
     line = {"pa": 50}
