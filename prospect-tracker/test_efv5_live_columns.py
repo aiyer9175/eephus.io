@@ -612,3 +612,77 @@ def test_the_production_fit_still_reproduces_the_served_weights():
             pytest.skip("eFV v5 COMBINED is not the served model")
         got = json.loads(json.dumps(X.weights_table(m)))
         assert got == doc["weights"][side], side
+
+
+# ---------------------------------------------------------------------------
+# 7. the served disclosures (EFV_FIX_A A3, owner decision EW3-21)
+# ---------------------------------------------------------------------------
+
+def _fake_models():
+    def head(keys):
+        return {"keys": list(keys)}
+    return {"hit": {"w_skill": 0.9, "w_time": 0.2,
+                    "skill": head(["tool_hit", "scr_w2p_swstr_h", "scr_w2r_panel_hit",
+                                   "scr_g5_hit_Ap_all_all_pbp_swstr",
+                                   "scr_g5_hit_A_all_all_k_pct"]),
+                    "timing": head(["level_rank", "scr_rpt_conviction_hit"])}}
+
+
+def test_disclosures_follow_the_live_receipt():
+    rec = {"families": {
+        "pbp": {"status": "dark", "reason": "no aggregate"},
+        "raters": {"status": "dark", "reason": "no list"},
+        "report": {"status": "dark", "reason": "by construction"},
+        "group": {"status": "partial", "reason": "no discipline aggregate",
+                  "dark_columns": ["g5_hit_Ap_all_all_pbp_swstr"]},
+        "popmle": {"status": "lit"}},
+        "support": {"scr_w2r_panel_hit": {"withheld": True, "reason": "few seasons"}}}
+    d = X.served_disclosures(_fake_models(), {"hit": rec}, today=TODAY)
+    sk = d["served_keys"]["hit"]
+    assert sk["n"] == 7 and "level_rank" in sk["timing"]
+    rows = {r["family"]: r for r in d["dark"]["hit"]}
+    assert rows["pbp"]["keys"] == ["scr_w2p_swstr_h"]
+    assert rows["raters"]["keys"] == ["scr_w2r_panel_hit"]
+    assert rows["report"]["keys"] == ["scr_rpt_conviction_hit"]
+    assert rows["group"]["keys"] == ["scr_g5_hit_Ap_all_all_pbp_swstr"]
+    assert rows["support"]["keys"] == ["scr_w2r_panel_hit"]
+    assert "popmle" not in rows
+    rd = X.live_read(TODAY)
+    sr = d["season_read"]
+    assert sr["read_season"] == rd["season"] and sr["kind"] == "in-season update"
+    assert sr["live_read_year_offset"] == X.LIVE_READ_YEAR_OFFSET
+    assert sr["text"] == X.season_read_sentence(rd["season"])
+    assert d["head_weights"]["weights"]["hit"] == {"w_skill": 0.9, "w_time": 0.2}
+    assert d["head_weights"]["pending"] == "EFV_FIX_B_REFIT"
+
+
+def test_disclosure_copy_is_plain():
+    for text in (X.HEAD_WEIGHTS_NOTE, X.season_read_sentence(2026)):
+        assert chr(0x2014) not in text and chr(0x2013) not in text
+    assert X.season_read_sentence(2026) == ("The grade reads the latest full minor league "
+                                            "season (2026), which is newer than some "
+                                            "consensus lists.")
+
+
+def test_the_served_artifact_carries_the_disclosures():
+    p = DATA / "xfv.json"
+    if not p.exists():
+        pytest.skip("data/xfv.json not built on this machine")
+    sm = json.loads(p.read_text(encoding="utf-8"))["meta"].get("served_model") or {}
+    rec = sm.get("receipt") or {}
+    if not rec.get("hit") or not X.EFV_V5_COMBINED_ON:
+        pytest.skip("eFV v5 COMBINED is not the served model")
+    d = sm.get("disclosures")
+    assert d, "meta.served_model.disclosures missing (efv_export._served_model_meta)"
+    for side in ("hit", "pit"):
+        served = set(rec[side]["skill"]["keys"]) | set(rec[side]["timing"]["keys"])
+        got = d["served_keys"][side]
+        assert set(got["skill"]) | set(got["timing"]) == served and got["n"] == len(served)
+        for row in d["dark"][side]:
+            assert row["keys"] and set(row["keys"]) <= served, row
+            assert row["reason"], row
+        assert d["head_weights"]["weights"][side] == {"w_skill": rec[side]["w_skill"],
+                                                      "w_time": rec[side]["w_time"]}
+    sr = d["season_read"]
+    assert sr["text"] == X.season_read_sentence(sr["read_season"])
+    assert sr["read_year"] == sr["list_year"] + X.LIVE_READ_YEAR_OFFSET

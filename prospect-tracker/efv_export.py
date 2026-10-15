@@ -496,14 +496,20 @@ def _served_model_meta() -> dict:
     import efv_v2_serve as _v2s
     if not _v2s.enabled():
         return {"model_id": "efv_v1", "grade_basis": "outcome_pooled"}
-    return {"model_id": _v2s.SERVED_MODEL_ID, "grade_basis": _v2s.GRADE_BASIS,
-            "registry": "data/model_registry.json#efv_v2",
-            "claim": _v2s.served_claim(),
-            "receipt": _v2s.model_receipt(),
-            "who": ("every active prospect with a real consensus grade; rows whose "
-                    "consensus is the last-resort constant are served by the "
-                    "production-only provisional model (grade_basis "
-                    "provisional_capped)")}
+    out = {"model_id": _v2s.SERVED_MODEL_ID, "grade_basis": _v2s.GRADE_BASIS,
+           "registry": "data/model_registry.json#efv_v2",
+           "claim": _v2s.served_claim(),
+           "receipt": _v2s.model_receipt(),
+           "who": ("every active prospect with a real consensus grade; rows whose "
+                   "consensus is the last-resort constant are served by the "
+                   "production-only provisional model (grade_basis "
+                   "provisional_capped)")}
+    # EFV_FIX_A A3 (owner decision EW3-21): the served key set, the dark families, the live
+    # read season and the head weights' standing, derived from the fit and the live read.
+    disc = _v2s.served_disclosures()
+    if disc is not None:
+        out["disclosures"] = disc
+    return out
 
 
 _GRADE_SCALE_V2 = (

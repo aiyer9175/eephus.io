@@ -897,6 +897,10 @@ def _season_rates(row, norms, side: str, shrink: bool = True):
 # gated on its own.
 LEVEL_BLEND_RATES = False
 LEVEL_BLEND_ANCHOR_MOST_EXPOSED = False
+# The ANCHOR arm's cameo bound (amendment 2026-10-15, owner decision EW3-21): a selected
+# stint under this multiple of the selection floor (hitters 50 PA, pitchers 60 BF) is a
+# cameo and re-keys onto the most-exposed level; at or above it the highest level stands.
+LEVEL_ANCHOR_CAMEO_MULT = 2.0
 # A level must clear this to join the blend at all, so a 3-PA cameo cannot drag a real
 # season's rates. Deliberately far below the selection floor: the whole point is that
 # a sub-floor level still carries information, it just should not dominate.
@@ -1095,12 +1099,16 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
             # played most, not merely the highest rung he cleared the floor at. Gated
             # separately from the RATES arm because this is what moves board ORDER:
             # level_rank and age_rel_level are not exposure-shrunk, so a 51-PA A+ stint
-            # currently sets them as if the player were established there.
+            # currently sets them as if the player were established there. Since the
+            # 2026-10-15 amendment (EW3-21, B3 gate) only a CAMEO re-keys: a selected
+            # stint under LEVEL_ANCHOR_CAMEO_MULT times the floor (50 to 99 PA, 60 to
+            # 119 BF); a stint at or above it keeps the highest-level read.
             def _lv_exp2(lv):
                 lr = mh.level_row(rows, lv, group)
                 return (_f(lr.get("bf")) if side == "pit" else _f(lr.get("pa"))) or 0.0
-            level = max(present, key=_lv_exp2)
-            row = mh.level_row(rows, level, group)
+            if _lv_exp2(level) < LEVEL_ANCHOR_CAMEO_MULT * minpa:
+                level = max(present, key=_lv_exp2)
+                row = mh.level_row(rows, level, group)
         norms = _resolved_norms(season, level, group)
         # S-XLINE (docs/efv-2026-07-23/GATES.md): AAA 2023+ rows may get a Statcast
         # expected-stat blend before the level-relative conversion; uncovered rows

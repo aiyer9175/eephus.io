@@ -223,6 +223,31 @@ def model_receipt(models: dict[str, dict] | None = None) -> dict:
     return out
 
 
+def served_disclosures(models: dict[str, dict] | None = None, *,
+                       today: str | None = None) -> dict | None:
+    """EFV_FIX_A A3 (owner decision EW3-21): what the v5 board discloses beside its receipt
+    (efv5_combined.served_disclosures), read off each side's live candidate read. In the
+    nightly regen the live scoring pass has already built that read in this process; a
+    standalone export builds it here the way score_live does. None while v5 does not serve."""
+    models = production_models() if models is None else models
+    if not models or not all(v5c_serves(m) for m in models.values()):
+        return None
+    import efv5_combined as V5C
+    import efv_dataset as D
+    today = today or date.today().isoformat()
+    receipts = {}
+    for side in models:
+        rec = V5C.live_receipt(side)
+        if rec is None:
+            live = json.loads(D.live_matrix_path(side).read_text(encoding="utf-8"))
+            rec = {}
+            V5C.live_columns(side, live_rows(side, live, today=today), today=today,
+                             raw_by_key={r["player_key"]: r for r in live if r.get("player_key")},
+                             receipt=rec, log=lambda *_a, **_k: None)
+        receipts[side] = rec
+    return V5C.served_disclosures(models, receipts, today=today)
+
+
 def fingerprint_term() -> str:
     """The board fingerprint's `served=` term: which eFV serves, and for V2 the hash of
     the registered weights and the serving constants, so a re-registration or a change
