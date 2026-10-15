@@ -2122,19 +2122,21 @@ def history_columns(side: str, points: list[tuple], *, today: str | None = None,
 #   1. CLIP every value into the training [min, max]: a served value is never one the fit
 #      did not see, so its head z never passes the training max |z|.
 #   2. WITHHOLD (None: the head's training mean, z = 0) a column whose nonzero training
-#      values come from fewer than SUPPORT_MIN_YEARS decision years: its slope rests on one
-#      or two pools, and a board that lights it is a regime the backtest never scored.
-#      Only the High-A slider gap cells fall under it on 2026-10-15 (33 nonzero training
-#      rows, all of the 2019 pool, and 0 and 0); a column lit across many years with a
-#      small share (60-day IL stints, 67 hitter rows) is clipped and its drift reported.
+#      values come from fewer than SUPPORT_MIN_SEASONS read seasons (MiLB seasons read,
+#      efv5_group_drivers.read_season at the row's decision year and matrix cutoff): its
+#      slope rests on a single pool, and a board that lights it is a regime the backtest
+#      never scored. Only the High-A slider gap cells fall under it on 2026-10-15 (33
+#      nonzero training rows, every one read in the 2019 pool, and 0 and 0); a column lit
+#      across many seasons with a small share (60-day IL stints, 67 hitter rows over 8
+#      seasons) is clipped and its drift reported.
 #   3. REPORT drift: a key whose served nonzero share passes DRIFT_RATIO times its training
 #      share (and by DRIFT_MIN_GAP) is named in the receipt and its family's status says
 #      "drift" (the IL family on both sides on 2026-10-15).
 # Nothing here touches a training number: the support is read off production_train.
 
-#: A column whose nonzero production training values come from fewer decision years than
-#: this is withheld when served.
-SUPPORT_MIN_YEARS = 3
+#: A column whose nonzero production training values come from fewer read seasons than
+#: this (one pool) is withheld when served.
+SUPPORT_MIN_SEASONS = 2
 #: Drift report thresholds (served nonzero share against the training share).
 DRIFT_RATIO = 2.0
 DRIFT_MIN_GAP = 0.05
@@ -2142,13 +2144,18 @@ _SUPPORT: dict = {}
 
 
 def training_support(side: str, *, log=print) -> dict:
-    """{candidate key: {"n", "nonzero", "nonzero_share", "nonzero_years", "min", "max"}}
+    """{candidate key: {"n", "nonzero", "nonzero_share", "nonzero_seasons", "min", "max"}}
     over the production training rows' non-None values of the side (memoized per
-    process); nonzero_years counts the decision years with a nonzero value; min and max
-    are None for a key with no training value."""
+    process); nonzero_seasons counts the read seasons (the MiLB season a row read at its
+    decision year and matrix cutoff) with a nonzero value; min and max are None for a key
+    with no training value."""
     if side in _SUPPORT:
         return _SUPPORT[side]
     train = production_train(side, log=log)
+    raw = _raw_by_side()[side]
+    season = {id(r): G.read_season(int(r["decision_year"]),
+                                   (raw.get(r["player_key"]) or {}).get("cutoff"))
+              for r in train}
     cands = candidates()
     out = {}
     for n in side_candidates(side):
@@ -2156,10 +2163,10 @@ def training_support(side: str, *, log=print) -> dict:
         have = [r for r in train if r["v2"].get(k) is not None]
         vals = np.asarray([r["v2"][k] for r in have], dtype=np.float64)
         nz = int(np.count_nonzero(vals))
-        yrs = {int(r["decision_year"]) for r in have if float(r["v2"][k]) != 0.0}
+        ss = {season[id(r)] for r in have if float(r["v2"][k]) != 0.0}
         out[k] = {"n": int(vals.size), "nonzero": nz,
                   "nonzero_share": round(nz / vals.size, 4) if vals.size else 0.0,
-                  "nonzero_years": len(yrs),
+                  "nonzero_seasons": len(ss),
                   "min": float(vals.min()) if vals.size else None,
                   "max": float(vals.max()) if vals.size else None}
     _SUPPORT[side] = out
@@ -2169,7 +2176,7 @@ def training_support(side: str, *, log=print) -> dict:
 def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=print) -> dict:
     """cols ({name: {slot: value | None}}) held to the production training support (the
     block above): clipped into the training [min, max], withheld (None) where the training
-    column's nonzero values span fewer than SUPPORT_MIN_YEARS decision years, drift named. `receipt`, when a
+    column's nonzero values span fewer than SUPPORT_MIN_SEASONS read seasons, drift named. `receipt`, when a
     dict, takes {"support": {key: ...}} and each drifting family's status."""
     sup = training_support(side, log=log)
     cands = candidates()
@@ -2177,20 +2184,21 @@ def support_clip(side: str, cols: dict, receipt: dict | None = None, *, log=prin
     drift_fams: dict = {}
     for n, mp in cols.items():
         k = cands[n]["key"]
-        s = sup.get(k) or {"n": 0, "nonzero": 0, "nonzero_share": 0.0, "nonzero_years": 0,
+        s = sup.get(k) or {"n": 0, "nonzero": 0, "nonzero_share": 0.0, "nonzero_seasons": 0,
                            "min": None, "max": None}
         vals = [v for v in mp.values() if v is not None]
         nz = sum(1 for v in vals if v != 0.0)
         share = round(nz / len(vals), 4) if vals else 0.0
         r = {"train_nonzero_rows": s["nonzero"], "train_nonzero_share": s["nonzero_share"],
-             "train_nonzero_years": s["nonzero_years"], "served_nonzero_share": share,
+             "train_nonzero_seasons": s["nonzero_seasons"], "served_nonzero_share": share,
              "clipped_low": 0, "clipped_high": 0, "withheld": False}
-        if vals and s["nonzero_years"] < SUPPORT_MIN_YEARS and (nz or s["min"] is None):
+        if vals and s["nonzero_seasons"] < SUPPORT_MIN_SEASONS and (nz or s["min"] is None):
             out[n] = {slot: None for slot in mp}
             r["withheld"] = True
-            r["reason"] = (f"{s['nonzero']} nonzero training rows from {s['nonzero_years']} "
-                           f"decision years (under {SUPPORT_MIN_YEARS}): the slope never "
-                           "saw this column lit on a board")
+            r["reason"] = (f"{s['nonzero']} nonzero training rows from "
+                           f"{s['nonzero_seasons']} read seasons (under "
+                           f"{SUPPORT_MIN_SEASONS}): the slope never saw this column lit "
+                           "on a board")
         else:
             lo, hi = s["min"], s["max"]
             got = {}

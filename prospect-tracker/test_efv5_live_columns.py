@@ -236,9 +236,9 @@ def test_the_support_receipt_names_every_clip_withhold_and_drift(side):
         s, r = sup[k], rep[k]
         vals = [v for v in raw[n].values() if v is not None]
         nz = sum(1 for v in vals if v != 0.0)
-        # withheld exactly when the training column was lit in too few decision years to
-        # have seen this column lit on a board
-        want = (bool(vals) and s["nonzero_years"] < X.SUPPORT_MIN_YEARS
+        # withheld exactly when the training column was lit in a single pool (read
+        # season), so it never saw this column lit on a board
+        want = (bool(vals) and s["nonzero_seasons"] < X.SUPPORT_MIN_SEASONS
                 and (nz > 0 or s["min"] is None))
         assert r["withheld"] is want, (k, s, nz)
         if want:
@@ -266,9 +266,11 @@ def test_the_support_receipt_names_every_clip_withhold_and_drift(side):
 def test_the_high_a_slider_gap_is_withheld_and_il_counts_stay_in_support():
     """The two measured cases. The High-A slider gap cells had 33, 0 and 0 nonzero training
     rows (one 2019 pool) and light 8 to 14% of the live board: withheld. A 60-day IL count
-    was 0 or 1 on every training hitter (67 rows over many years) and reaches 5 live:
+    was 0 or 1 on every training hitter (67 rows over 8 seasons) and reaches 5 live:
     clipped to 1 and kept, and the IL family's drift is named."""
     _l, _r, pcols, prec = _cols("pit")
+    psup = X.training_support("pit", log=lambda *_a, **_k: None)
+    assert psup["scr_t5_pit_Ap_all_all_sl_gap"]["nonzero_seasons"] == 1
     for n in ("t5_pit_Ap_all_all_sl_gap", "t5_pit_Ap_all_SP_sl_gap", "t5_pit_Ap_young_all_sl_gap"):
         assert n in pcols
         assert all(v is None for v in pcols[n].values()), n
@@ -277,7 +279,7 @@ def test_the_high_a_slider_gap_is_withheld_and_il_counts_stay_in_support():
     sup = X.training_support("hit", log=lambda *_a, **_k: None)
     k = "scr_w2i_sixty_time_hit"
     n = next(n for n in hcols if X.candidates()[n]["key"] == k)
-    assert sup[k]["nonzero_years"] >= X.SUPPORT_MIN_YEARS and k not in hrec["withheld"]
+    assert sup[k]["nonzero_seasons"] >= X.SUPPORT_MIN_SEASONS and k not in hrec["withheld"]
     assert max(v for v in hcols[n].values() if v is not None) <= sup[k]["max"]
     assert hrec["support"][k]["clipped_high"] > 0
     assert hrec["families"]["il"]["status"] == "drift" and k in hrec["families"]["il"]["drift"]
@@ -289,9 +291,9 @@ def test_support_clip_on_a_synthetic_support(monkeypatch):
     a, b = names[0], names[1]
     ka, kb = cands[a]["key"], cands[b]["key"]
     monkeypatch.setitem(X._SUPPORT, "pit", {
-        ka: {"n": 500, "nonzero": 400, "nonzero_share": 0.8, "nonzero_years": 12,
+        ka: {"n": 500, "nonzero": 400, "nonzero_share": 0.8, "nonzero_seasons": 12,
              "min": -1.0, "max": 2.0},
-        kb: {"n": 500, "nonzero": 10, "nonzero_share": 0.02, "nonzero_years": 1,
+        kb: {"n": 500, "nonzero": 10, "nonzero_share": 0.02, "nonzero_seasons": 1,
              "min": -0.5, "max": 0.5}})
     cols = {a: {1: -3.0, 2: 0.5, 3: 9.0, 4: None}, b: {1: 0.0, 2: 3.0, 3: None, 4: 0.0}}
     rec = {"families": {}}
