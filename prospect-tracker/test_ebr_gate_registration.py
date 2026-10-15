@@ -634,6 +634,47 @@ def test_amendment_11_1_scope_matches_the_sb_band():
     assert "(SB runs stays eSB + ePK), Leg E's E = (eSB + ePK + eXB) / PA" in flat
     assert "Committed alone, before the outcome look" in flat
 
+
+def test_amendment_11_2_the_skill_look_target_is_next_season_realized_runs():
+    flat = _flat(_section(_doc(), "## 11. Amendments", RESULTS_HEADING))
+    assert ("### 11.2 2026-10-15: the skill look's target becomes next-season realized runs (clause (i), "
+            "owner decision EW3-23)") in flat
+    assert ("\"Yes, do your recommendation, with next-season realized runs becoming the target rule.\"") in flat
+    assert "| EW3-23 | What the skill look scores candidate parts 3 to 6 against |" in flat
+    assert "it is recorded as an owner override of that sentence for these items alone" in flat
+    assert "Parts 2 to 6 (the outcome look, candidate parts 1 and 2 and BEM+) are not touched." in flat
+    # The primary target and its base, per component.
+    assert "#### 11.2.1 The primary target, per component (deciding)" in flat
+    for row in ("| Batting | 4 (both arms) |", "| Pitching | 5 |", "| Fielding | 6 |",
+                "| Baserunning | none in this registration |", "| Position | 3 |"):
+        assert row in flat, row
+    assert "B0 is the actual arm of the part's own delta function in season Y" in flat
+    assert "a part must add forward signal beyond the player's own realized component" in flat
+    assert "RA*_j = R_j - BQS_j + E_BQ_j + (IRS_j - E_IR_j)" in flat
+    assert "RA9*_j = 9 * (RA*_j / PF_j + BF_j * F_t / BF_t) / IP_j" in flat
+    assert "one k per component (batting, pitching, fielding), k = hm (1 - r) / r" in flat
+    # The independent fielding source and the position part's dMAE rule.
+    assert "is scored on Baseball-Reference's `runs_field` per player-season" in flat
+    assert "the rule that the target never comes from the part's own source is new here" in flat
+    assert "candidate part 3 keeps the ladder's own out-of-sample rule in place of the Spearman cells" in flat
+    assert "with FanGraphs' published positional adjustment, the base S4 departs from" in flat
+    # The team guard.
+    assert "#### 11.2.4 The team guard (non-inferiority, deciding)" in flat
+    assert "Two bootstraps, B = 2,000 each, seed 20261024: player-clustered" in flat
+    assert ("**NON-INFERIOR** when dT - 1.645 sd is above -0.02 under both bootstraps, for every outcome the "
+            "part carries.") in flat
+    assert "No power figure was computed for this amendment" in flat
+    assert "never an r against runs or wins" in flat
+    # Secondary, admission, later parts, eWAR realized, disclosure and timing.
+    assert "#### 11.2.5 The secondary estimand (reported beside, deciding nothing)" in flat
+    assert "No admission, guard or copy sentence reads them." in flat
+    assert "and its team guard is NON-INFERIOR" in flat
+    assert "None uses a published WAR total as its deciding target." in flat
+    assert "#### 11.2.8 eWAR realized has no forward target" in flat
+    assert "the skill look is therefore even less blind than part 10 states" in flat
+    assert "The skill look (part 7.3) does not run until `tools/swar_lab.py` implements this amendment" in flat
+    assert "Committed alone, docs and its pin test only, before the skill look (part 12.2 is empty at this commit)." in flat
+
 # 10. No result ----------------------------------------------------------------
 
 RESULT_PATTERNS = (
