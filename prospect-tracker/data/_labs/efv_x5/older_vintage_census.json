@@ -1,0 +1,5124 @@
+{
+ "generated_at": "2026-10-15T20:54:14Z",
+ "produced_by": "tools/efv_x5_older_vintages.py",
+ "registration": "docs/efv-v2/EFV_X5_OLDER_VINTAGES.md",
+ "commit": "d9413f3af6403ab1883c96006cd8e9c5a3be8189",
+ "module_sha256": "819322abb4692321fc4575faab1707939f380499287927484219514c850a3bf8",
+ "role": "development",
+ "adjudicates": "nothing; counts only, no score",
+ "served": false,
+ "sources": {
+  "ba_top100_hist": {
+   "publisher": "Baseball America",
+   "list": "preseason Top 100 Prospects",
+   "access": "Internet Archive Wayback Machine copies of baseballamerica.com pages (all-time Top 100 index, capture 2017-07-06; the dated year pages for each list's dateline); Python fetch, 1.5 s between requests",
+   "terms": "Baseball America content is copyrighted (baseballamerica.com terms of use: personal, non-commercial use). The pages were free to read without a login when captured. The Internet Archive serves its copies for research. Only list facts are stored; raw captures stay in the gitignored cache. Not a licence to republish.",
+   "grade_field": "rank only (no FV, no letter grade)",
+   "lists": 9,
+   "eligible_lists": 9,
+   "rows": 900,
+   "eligible_rows": 900,
+   "depth_max": 100,
+   "routed_rows_read": 899,
+   "resolved_rows_read": 853,
+   "years": [
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2015
+   ],
+   "eligible_years": [
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2015
+   ],
+   "passes": true,
+   "match_rate_pooled": 0.9488
+  },
+  "ba_org10_hist": {
+   "publisher": "Baseball America",
+   "list": "organization Top 10 Prospects (offseason, one team per page)",
+   "access": "Internet Archive Wayback Machine copies of baseballamerica.com organization-top-10-prospects pages, 2007 to 2013 folders",
+   "terms": "as ba_top100_hist",
+   "grade_field": "rank within organization only",
+   "lists": 207,
+   "eligible_lists": 78,
+   "rows": 2066,
+   "eligible_rows": 779,
+   "depth_max": 10,
+   "routed_rows_read": 819,
+   "resolved_rows_read": 752,
+   "years": [
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013
+   ],
+   "eligible_years": [
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013
+   ],
+   "passes": true,
+   "match_rate_pooled": 0.9182
+  },
+  "bp_top100_hist": {
+   "publisher": "Baseball Prospectus (Kevin Goldstein)",
+   "list": "preseason Top 100 (2007 to 2009) and Top 101 (2010, 2011)",
+   "access": "baseballprospectus.com/news/article/<id>/ (articles marked 'This is a free article'); robots.txt allows the path, Crawl-delay 2",
+   "terms": "Baseball Prospectus terms and conditions: personal, non-commercial use. Free articles, no login. Only list facts are stored.",
+   "grade_field": "rank only",
+   "lists": 5,
+   "eligible_lists": 5,
+   "rows": 502,
+   "eligible_rows": 502,
+   "depth_max": 101,
+   "routed_rows_read": 502,
+   "resolved_rows_read": 461,
+   "years": [
+    2007,
+    2008,
+    2009,
+    2010,
+    2011
+   ],
+   "eligible_years": [
+    2007,
+    2008,
+    2009,
+    2010,
+    2011
+   ],
+   "passes": true,
+   "match_rate_pooled": 0.9183
+  },
+  "sickels_hist": {
+   "publisher": "John Sickels, Minor League Ball (SB Nation)",
+   "list": "organization Top 20 Prospects with letter grades",
+   "access": "Internet Archive Wayback Machine copies of minorleagueball.com posts (the live site refuses scripted connections); posts by John Sickels only, community FanPosts and the hypothetical 'shadow' lists excluded",
+   "terms": "Vox Media terms of use: personal, non-commercial use. Public posts, no login. Only list facts and the printed letter grade are stored.",
+   "grade_field": "rank within organization and a letter grade (A to C-), printed as 'extremely preliminary' by the author",
+   "lists": 25,
+   "eligible_lists": 23,
+   "rows": 505,
+   "eligible_rows": 465,
+   "depth_max": 24,
+   "routed_rows_read": 505,
+   "resolved_rows_read": 451,
+   "years": [
+    2009,
+    2010,
+    2011
+   ],
+   "eligible_years": [
+    2009,
+    2010,
+    2011
+   ],
+   "passes": true,
+   "match_rate_pooled": 0.8931
+  },
+  "mlbcom_top50_hist": {
+   "publisher": "MLB.com (Jonathan Mayo)",
+   "list": "Top 50 Prospects",
+   "access": "Wayback copies of mlb.mlb.com/mlb/minorleagues/prospects/y2009/ and the open data-graph.mlb.com GraphQL host (slugs sel-pr-2009-top100 and sel-pr-2010-top100 return 50 rows each; 2005 to 2008 return none)",
+   "terms": "MLB Advanced Media terms of use; public pages.",
+   "grade_field": "rank only",
+   "lists": 0,
+   "rows": 0,
+   "eligible_lists": 0,
+   "passes": false,
+   "match_rate_pooled": null,
+   "not_ingested": "2009 list announced on mlb.mlb.com/mlb/minorleagues/prospects/y2009/ with 'Prospects 1 to 10 coming December 5th' (capture 2008-12-05): published in December 2008, outside the 2009 window. 2010 list (50 rows on the GraphQL host) has no publisher-dated page reachable without a block (mlb.com returned 406) and no archive capture; a third-party report dates it 2010-01-28, which the registration does not admit. 2004 to 2008 lists sit on an all-time page first captured 2008-12-05, outside every window."
+  },
+  "fg_hulet_hist": {
+   "publisher": "FanGraphs (Marc Hulet)",
+   "list": "organization top 10 lists",
+   "access": "WebFetch only (FanGraphs HTML blocks Python)",
+   "terms": "FanGraphs terms of use; free articles.",
+   "grade_field": "rank within organization",
+   "lists": 0,
+   "rows": 0,
+   "eligible_lists": 0,
+   "passes": false,
+   "match_rate_pooled": null,
+   "not_ingested": "not probed inside the time box: WebFetch-only access, and the organization lists were published October to February, so most fall before their window"
+  }
+ },
+ "lists": [
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2006,
+   "published_on": "2006-02-22",
+   "date_basis": "page_dateline",
+   "capture_ts": "20170706052616",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/top-100-prospects/all-time.php",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.98,
+   "id_how": {
+    "name_unique": 93,
+    "name_side": 5,
+    "no_candidate": 2
+   },
+   "alltime_names_on_dated_pages": [
+    96,
+    100
+   ],
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-28",
+   "date_basis": "page_dateline",
+   "capture_ts": "20170706052616",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/top-100-prospects/all-time.php",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.98,
+   "id_how": {
+    "no_candidate": 2,
+    "name_unique": 94,
+    "name_side": 4
+   },
+   "alltime_names_on_dated_pages": [
+    95,
+    100
+   ],
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2008,
+   "published_on": "2008-02-25",
+   "date_basis": "page_dateline",
+   "capture_ts": "20170706052616",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/top-100-prospects/all-time.php",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.97,
+   "id_how": {
+    "name_unique": 95,
+    "name_side": 1,
+    "no_candidate": 1,
+    "name_recency": 1,
+    "ambiguous": 2
+   },
+   "alltime_names_on_dated_pages": [
+    99,
+    100
+   ],
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2009,
+   "published_on": "2009-02-24",
+   "date_basis": "page_dateline",
+   "capture_ts": "20170706052616",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/top-100-prospects/all-time.php",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.93,
+   "id_how": {
+    "name_unique": 92,
+    "name_side": 1,
+    "ambiguous": 3,
+    "no_candidate": 4
+   },
+   "alltime_names_on_dated_pages": [
+    95,
+    100
+   ],
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2010,
+   "published_on": "2010-02-23",
+   "date_basis": "page_dateline",
+   "capture_ts": "20170706052616",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/top-100-prospects/all-time.php",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.92,
+   "id_how": {
+    "name_unique": 90,
+    "ambiguous": 2,
+    "no_candidate": 6,
+    "name_recency": 1,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": [
+    97,
+    100
+   ],
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2011,
+   "published_on": "2011-02-23",
+   "date_basis": "page_dateline",
+   "capture_ts": "20170706052616",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/top-100-prospects/all-time.php",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.94,
+   "id_how": {
+    "name_unique": 93,
+    "ambiguous": 2,
+    "no_candidate": 4,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": [
+    99,
+    100
+   ],
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2012,
+   "published_on": "2012-02-21",
+   "date_basis": "page_dateline",
+   "capture_ts": "20170706052616",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/top-100-prospects/all-time.php",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.94,
+   "id_how": {
+    "name_unique": 92,
+    "no_candidate": 4,
+    "ambiguous": 2,
+    "name_side": 1,
+    "name_recency": 1
+   },
+   "alltime_names_on_dated_pages": [
+    98,
+    100
+   ],
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2013,
+   "published_on": "2013-02-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20170706052616",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/top-100-prospects/all-time.php",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.96,
+   "id_how": {
+    "name_unique": 93,
+    "name_side": 2,
+    "no_candidate": 3,
+    "ambiguous": 1,
+    "name_recency": 1
+   },
+   "alltime_names_on_dated_pages": [
+    99,
+    100
+   ],
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2015,
+   "published_on": "2015-03-17",
+   "date_basis": "capture_upper_bound",
+   "capture_ts": "20150317084807",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/top-100-prospects/all-time.php",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9192,
+   "id_how": {
+    "name_unique": 89,
+    "no_side": 1,
+    "no_candidate": 5,
+    "ambiguous": 3,
+    "name_recency": 1,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2008-02-01",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080204112511",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/265565.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-02-01 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2008-02-03",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080205204957",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/265568.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-02-03 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-28",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080513021529",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265526.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 9,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080513021536",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265531.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_side": 2,
+    "name_unique": 6,
+    "ambiguous": 2
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-02-01",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080513021541",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265565.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-02-03",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080513021549",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265568.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "no_candidate": 1,
+    "name_unique": 9
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005849",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265139.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-05 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-07",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005854",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265146.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-07 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005900",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265152.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-09 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-13",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005906",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265168.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-13 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005912",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265171.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-14 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 9
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005917",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265209.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-19 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-21",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005922",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265231.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-21 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-26",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005927",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265240.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-26 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-26",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005932",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265244.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-26 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-27",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005937",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265250.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-27 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-11-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005942",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265257.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-11-30 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-12-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514005953",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265307.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-12-06 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-12-11",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010003",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265327.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-12-11 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2007-12-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010008",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265340.html",
+   "eligible": false,
+   "reasons": [
+    "published 2007-12-14 outside the 2008 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-01",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010014",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265361.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-04",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010019",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265385.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-07",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010024",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265405.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010029",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265414.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 9,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-11",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010034",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265416.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-13",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010039",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265458.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 8,
+    "name_side": 1,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-16",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010044",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265464.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 9,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-18",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010049",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265467.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 8,
+    "ambiguous": 1,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-23",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010054",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265472.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 8,
+    "no_candidate": 2
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-24",
+   "date_basis": "page_dateline",
+   "capture_ts": "20080514010059",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2008/265484.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-10",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081017223027",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262814.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-10 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081108040311",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267135.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-05 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-07",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081110070035",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267146.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-07 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-10",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081113091436",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267148.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-10 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-12-02",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081205081357",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267257.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-12-02 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-12-03",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081205172252",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267276.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-12-03 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-27",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081206150013",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262899.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-27 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-01-31",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081206150018",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263244.html",
+   "eligible": false,
+   "reasons": [
+    "match rate 0.7 below 0.8"
+   ],
+   "match_rate": 0.7,
+   "id_how": {
+    "name_unique": 7,
+    "no_candidate": 3
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-12-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081208042543",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267278.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-12-05 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-20",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081208130215",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267221.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-20 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-17",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081210015006",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267205.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-17 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-12-08",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081210211058",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267282.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-12-08 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-20",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081211164453",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262878.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-20 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081212185704",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267166.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-14 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-12-15",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081216034944",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267345.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-12-15 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-12-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20081221034455",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267356.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-12-19 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-12",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090109060759",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2009/267162.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-12 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 9
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090117084412",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267431.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 7,
+    "ambiguous": 2,
+    "name_recency": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-08",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090121094126",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267407.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 8,
+    "no_candidate": 2
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-24",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090121110105",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267224.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-24 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-12-17",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090121110116",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267349.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-12-17 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090122050111",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267436.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 9
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 9
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-25",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090122064712",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267227.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-25 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-21",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090124012148",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267437.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090125023653",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267393.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "no_candidate": 1,
+    "name_unique": 9
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2008-11-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090126054341",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267213.html",
+   "eligible": false,
+   "reasons": [
+    "published 2008-11-19 outside the 2009 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090126081931",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267400.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-23",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090126082651",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267416.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 8,
+    "no_candidate": 1,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-26",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090130070104",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267482.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-28",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090131042512",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267467.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-28",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090201033014",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267493.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 9,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090202061054",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267509.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 8,
+    "no_candidate": 1,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090205131554",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2009/267514.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-22",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090527023128",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263377.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 7,
+    "name_side": 2,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090725161953",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262799.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-06 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-02",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090802091802",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263202.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 9,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090807175204",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263251.html",
+   "eligible": false,
+   "reasons": [
+    "match rate 0.7 below 0.8"
+   ],
+   "match_rate": 0.7,
+   "id_how": {
+    "name_unique": 6,
+    "no_candidate": 2,
+    "name_side": 1,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-12-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090915172003",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262970.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-12-06 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-12-04",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091017080632",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262953.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-12-04 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-02",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091105020109",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269097.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-02 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091108162833",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269121.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-05 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-29",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091110011445",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262906.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-29 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091111200030",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269125.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-09 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-11",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091114064454",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269132.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-11 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-12",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091116103621",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269138.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-12 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-16",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091119131949",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269148.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-16 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-18",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091121023436",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269167.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-18 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091123065036",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269173.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-19 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-23",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091126014756",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269178.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-23 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-24",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091127052114",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269191.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-24 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-25",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091128095614",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269196.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-25 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091202192900",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269200.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-30 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-01-08",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091203152117",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263075.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-11-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091204133918",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269203.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-11-30 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-12-03",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091207005827",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269205.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-12-03 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-08",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091207042035",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262804.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-08 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-20",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091207042434",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263364.html",
+   "eligible": false,
+   "reasons": [
+    "match rate 0.7 below 0.8"
+   ],
+   "match_rate": 0.7,
+   "id_how": {
+    "name_unique": 7,
+    "no_candidate": 2,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-21",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091208173044",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263366.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-12-04",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091212085028",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269238.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-12-04 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-12-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091213011705",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269226.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-12-09 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 9
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-01-12",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091213123629",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263086.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091213143214",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263261.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 8,
+    "ambiguous": 1,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-22",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091214181336",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262889.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-22 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-01-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091215195322",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263055.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-12-15",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091216211250",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269273.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-12-15 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-12-16",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091218005122",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269277.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-12-16 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-12-17",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091221062624",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269300.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-12-17 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-12-21",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091224125809",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269307.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-12-21 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2009-12-23",
+   "date_basis": "page_dateline",
+   "capture_ts": "20091226015639",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269311.html",
+   "eligible": false,
+   "reasons": [
+    "published 2009-12-23 outside the 2010 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-04",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100107050807",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269333.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 8,
+    "no_candidate": 1,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100109181510",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269337.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-08",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100110205318",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269347.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-11",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100115184850",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269367.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-12",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100116105121",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269381.html",
+   "eligible": false,
+   "reasons": [
+    "match rate 0.7 below 0.8"
+   ],
+   "match_rate": 0.7,
+   "id_how": {
+    "name_unique": 7,
+    "no_candidate": 2,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-18",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100121140210",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269388.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100124072609",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269399.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "ambiguous": 1,
+    "name_unique": 9
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-22",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100125143721",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269393.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 8,
+    "no_candidate": 1,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-25",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100128203810",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2010/269402.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-07",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100212125148",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263295.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 8,
+    "name_side": 1,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-01-02",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100223012542",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263052.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100512235136",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262912.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-30 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-01",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101104205612",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610869.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-01 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-03",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101106043857",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610882.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-03 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101108081021",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610895.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-05 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-08",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101111091627",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610903.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-08 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-10",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101113050614",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610907.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-10 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101119023753",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610923.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-14 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-17",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101120215011",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610943.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-17 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-13",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101120234210",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263345.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 8,
+    "name_side": 2
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-18",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101122163223",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610951.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-18 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-22",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101125033219",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610957.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-22 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-23",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101127005236",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610960.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-23 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-11-29",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101202015004",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610983.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-11-29 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-12-01",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101204104154",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2610999.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-12-01 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-12-03",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101206141915",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611012.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-12-03 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-12-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101209140711",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611021.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-12-06 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-12-13",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101216110623",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611043.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-12-13 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-12-15",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101218152025",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611049.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-12-15 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-12-17",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101220080102",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611054.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-12-17 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-15",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101223111653",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/263352.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "no_candidate": 1,
+    "name_unique": 9
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-12-20",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101223114506",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611081.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-12-20 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2010-12-22",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101225235344",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611097.html",
+   "eligible": false,
+   "reasons": [
+    "published 2010-12-22 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-13",
+   "date_basis": "page_dateline",
+   "capture_ts": "20101229031701",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2007/262822.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-13 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-04",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110107081202",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611106.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 8,
+    "name_side": 1,
+    "name_recency": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110108191814",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611110.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 9,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-07",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110110153300",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611119.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110113123326",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611130.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-12",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110114122742",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611137.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110117021016",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611155.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-17",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110120170147",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611157.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110122061901",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611160.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 8,
+    "ambiguous": 2
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-21",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110124174800",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611179.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "no_candidate": 1,
+    "name_unique": 9
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-26",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110129111616",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2611169.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-12-11",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110218013636",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262987.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-12-11 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-01-28",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110606174243",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2007/263234.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-11-15",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110606174420",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2007/262834.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-11-15 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2007-01-10",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110607014443",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2007/263074.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2007,
+   "published_on": "2006-12-08",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111016131932",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2007/262986.html",
+   "eligible": false,
+   "reasons": [
+    "published 2006-12-08 outside the 2007 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-10-31",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111102143800",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612549.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-10-31 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-02",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111103105346",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612559.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-02 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-04",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111106135020",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612564.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-04 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-07",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111110091020",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612565.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-07 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111112002117",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612574.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-09 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111116235543",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612580.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-14 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-16",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111118005419",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612581.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-16 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-18",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111120001401",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612610.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-18 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-17",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111120004126",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612582.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-17 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-21",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111123120250",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612613.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-21 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-22",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111126025904",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612631.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-22 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111202231019",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612657.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-30 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-12-02",
+   "date_basis": "page_dateline",
+   "capture_ts": "20111203215339",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612665.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-12-02 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2011,
+   "published_on": "2011-12-12",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120107175740",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2011/2612699.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-12-12 outside the 2011 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-12-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120107175745",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612728.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-12-19 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-12-21",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120107175814",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612742.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-12-21 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-12-13",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120107202741",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612707.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-12-13 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2011-11-28",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120108055200",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612646.html",
+   "eligible": false,
+   "reasons": [
+    "published 2011-11-28 outside the 2012 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-04",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120108055216",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612767.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "ambiguous": 1,
+    "name_unique": 9
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120109224200",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612769.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120112035955",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612770.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-11",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120113204634",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612801.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-13",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120116104502",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612805.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-18",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120121012000",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612809.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-20",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120123045727",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612823.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120123125032",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612808.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-23",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120125213156",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612842.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "no_candidate": 1,
+    "name_unique": 9
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-25",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120128094516",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612847.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2012,
+   "published_on": "2012-01-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20120202084212",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2012/2612845.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-10-29",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121101011459",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614258.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-10-29 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-10-31",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121103015210",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614265.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-10-31 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121108132121",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614277.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-05 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-07",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121110055842",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614294.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-07 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121111091459",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614298.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-09 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-12",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121113211332",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2013/2614305.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-12 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121118081126",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614318.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-14 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-16",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121119020346",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614333.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-16 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121127223956",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614339.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-19 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-20",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121127224039",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614343.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-20 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-26",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121129025601",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614362.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-26 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-28",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121130214930",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614387.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-28 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-11-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121203050336",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614395.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-11-30 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-12-03",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121205012251",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614406.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-12-03 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-12-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121207225952",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614430.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-12-05 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-12-10",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121212082019",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2013/2614449.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-12-10 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-12-12",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121214182815",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614456.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-12-12 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-12-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121217051001",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614461.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-12-14 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-12-17",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121220040004",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614445.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-12-17 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2012-12-19",
+   "date_basis": "page_dateline",
+   "capture_ts": "20121222001808",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614474.html",
+   "eligible": false,
+   "reasons": [
+    "published 2012-12-19 outside the 2013 window"
+   ],
+   "match_rate": null,
+   "id_how": {},
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-07",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130111083023",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614527.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 7,
+    "name_side": 1,
+    "no_candidate": 2
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130111215827",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614529.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130115092559",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2013/2614544.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-15",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130117093241",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2013/2614547.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-16",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130118052441",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614551.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 9,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-22",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130123060553",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2013/2614567.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 9,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-21",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130123214105",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614558.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 9,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-24",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130125122450",
+   "url": "http://www.baseballamerica.com/today/prospects/rankings/organization-top-10-prospects/2013/2614580.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "no_candidate": 1,
+    "name_unique": 9
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-28",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130131011625",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614588.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "ba_org10_hist",
+   "list_year": 2013,
+   "published_on": "2013-01-30",
+   "date_basis": "page_dateline",
+   "capture_ts": "20130204072203",
+   "url": "http://www.baseballamerica.com:80/today/prospects/rankings/organization-top-10-prospects/2013/2614593.html",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 10
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 10
+  },
+  {
+   "source": "bp_top100_hist",
+   "list_year": 2007,
+   "published_on": "2007-02-21",
+   "date_basis": "page_dateline",
+   "capture_ts": null,
+   "url": "https://www.baseballprospectus.com/news/article/5892/",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.91,
+   "id_how": {
+    "name_unique": 87,
+    "no_candidate": 9,
+    "name_side": 4
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "bp_top100_hist",
+   "list_year": 2008,
+   "published_on": "2008-01-31",
+   "date_basis": "page_dateline",
+   "capture_ts": null,
+   "url": "https://www.baseballprospectus.com/news/article/7092/",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.95,
+   "id_how": {
+    "name_unique": 93,
+    "name_side": 1,
+    "no_candidate": 3,
+    "ambiguous": 2,
+    "name_recency": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "bp_top100_hist",
+   "list_year": 2009,
+   "published_on": "2009-02-13",
+   "date_basis": "page_dateline",
+   "capture_ts": null,
+   "url": "https://www.baseballprospectus.com/news/article/8506/",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.93,
+   "id_how": {
+    "name_unique": 92,
+    "no_candidate": 3,
+    "name_side": 1,
+    "ambiguous": 4
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 100
+  },
+  {
+   "source": "bp_top100_hist",
+   "list_year": 2010,
+   "published_on": "2010-03-03",
+   "date_basis": "page_dateline",
+   "capture_ts": null,
+   "url": "https://www.baseballprospectus.com/news/article/10142/",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8812,
+   "id_how": {
+    "name_unique": 87,
+    "ambiguous": 2,
+    "no_candidate": 10,
+    "name_recency": 1,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 101
+  },
+  {
+   "source": "bp_top100_hist",
+   "list_year": 2011,
+   "published_on": "2011-02-28",
+   "date_basis": "page_dateline",
+   "capture_ts": null,
+   "url": "https://www.baseballprospectus.com/news/article/13078/",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9208,
+   "id_how": {
+    "name_unique": 92,
+    "ambiguous": 3,
+    "no_candidate": 5,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": null,
+   "rows": 101
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-01",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090120011343",
+   "url": "http://www.minorleagueball.com:80/2009/1/1/706911/pittsburgh-pirates-top-20",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.85,
+   "id_how": {
+    "name_unique": 17,
+    "no_candidate": 3
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Pittsburgh Pirates Top 20 Prospects for 2009 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-02",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090115210955",
+   "url": "http://www.minorleagueball.com:80/2009/1/2/707625/seattle-mariners-top-20-pr",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.85,
+   "id_how": {
+    "name_unique": 17,
+    "no_candidate": 2,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Seattle Mariners Top 20 Prospects for 2009 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090116012811",
+   "url": "http://www.minorleagueball.com:80/2009/1/5/709221/st-louis-cardinals-top-20",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.875,
+   "id_how": {
+    "name_unique": 20,
+    "ambiguous": 2,
+    "name_recency": 1,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "St. Louis Cardinals Top 20+ Prospects for 2009 - Minor League Ball",
+   "rows": 24
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-07",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090216085551",
+   "url": "http://www.minorleagueball.com:80/2009/1/7/711104/san-diego-padres-top-20-pr",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.95,
+   "id_how": {
+    "name_unique": 19,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "San Diego Padres Top 20 Prospects for 2009 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-08",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090116012816",
+   "url": "http://www.minorleagueball.com:80/2009/1/8/713581/detroit-tigers-top-20-pros",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 16,
+    "name_side": 2,
+    "ambiguous": 1,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Detroit Tigers Top 20 Prospects for 2009 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2009,
+   "published_on": "2009-01-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20090319170706",
+   "url": "http://www.minorleagueball.com:80/2009/1/9/715104/florida-marlins-top-20-pro",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.95,
+   "id_how": {
+    "name_unique": 19,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Florida Marlins Top 20 Prospects for 2009 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-01",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100104071050",
+   "url": "http://www.minorleagueball.com:80/2010/1/1/1229943/arizona-diamondbacks-top-20",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 20
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Arizona Diamondbacks Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-11",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100113182839",
+   "url": "http://www.minorleagueball.com:80/2010/1/11/1246234/seattle-mariners-top-20-prospects",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 17,
+    "ambiguous": 1,
+    "name_side": 1,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Seattle Mariners Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-12",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100114091609",
+   "url": "http://www.minorleagueball.com:80/2010/1/12/1248715/houston-astros-top-20-prospects",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.95,
+   "id_how": {
+    "name_unique": 19,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Houston Astros Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100117143347",
+   "url": "http://www.minorleagueball.com:80/2010/1/14/1250604/tampa-bay-rays-top-20-prospects",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.85,
+   "id_how": {
+    "name_unique": 17,
+    "no_candidate": 3
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Tampa Bay Rays Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-14",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100117165011",
+   "url": "http://www.minorleagueball.com:80/2010/1/14/1252316/cincinnati-reds-top-20-prospects",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "no_candidate": 1,
+    "name_unique": 18,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Cincinnati Reds Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-16",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100117170534",
+   "url": "http://www.minorleagueball.com:80/2010/1/16/1253995/colorado-rockies-top-20-prospects",
+   "eligible": false,
+   "reasons": [
+    "match rate 0.75 below 0.8"
+   ],
+   "match_rate": 0.75,
+   "id_how": {
+    "name_unique": 14,
+    "no_candidate": 4,
+    "name_recency": 1,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Colorado Rockies Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-03",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100106075302",
+   "url": "http://www.minorleagueball.com:80/2010/1/3/1231796/detroit-tigers-top-20-prospects",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.85,
+   "id_how": {
+    "name_unique": 17,
+    "no_candidate": 2,
+    "ambiguous": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Detroit Tigers Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-04",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100106102635",
+   "url": "http://www.minorleagueball.com:80/2010/1/4/1233988/milwaukee-brewers-top-20-prospects",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 1.0,
+   "id_how": {
+    "name_unique": 21
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Milwaukee Brewers Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 21
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100108153853",
+   "url": "http://www.minorleagueball.com:80/2010/1/6/1237750/texas-rangers-top-20-prospects",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 18,
+    "ambiguous": 1,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Texas Rangers Top 20 Prospects List for 2010 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-08",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100109121245",
+   "url": "http://www.minorleagueball.com:80/2010/1/8/1240420/new-york-mets-top-20-prospects-for",
+   "eligible": false,
+   "reasons": [
+    "match rate 0.75 below 0.8"
+   ],
+   "match_rate": 0.75,
+   "id_how": {
+    "name_unique": 14,
+    "no_candidate": 5,
+    "name_recency": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "New York Mets Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100112094808",
+   "url": "http://www.minorleagueball.com:80/2010/1/9/1242185/cleveland-indians-top-20-prospects",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.913,
+   "id_how": {
+    "name_unique": 21,
+    "no_candidate": 2
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Cleveland Indians Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 23
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2010,
+   "published_on": "2010-01-09",
+   "date_basis": "page_dateline",
+   "capture_ts": "20100113193233",
+   "url": "http://www.minorleagueball.com:80/2010/1/9/1243420/florida-marlins-top-20-prospects",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9474,
+   "id_how": {
+    "name_unique": 18,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Florida Marlins Top 20 Prospects for 2010 - Minor League Ball",
+   "rows": 19
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-01",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110102193044",
+   "url": "http://www.minorleagueball.com:80/2011/1/1/1907483/los-angeles-angels-top-20-prospects-for-2011",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8,
+   "id_how": {
+    "name_unique": 15,
+    "no_candidate": 4,
+    "name_recency": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Los Angeles Angels Top 20 Prospects for 2011 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-02",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110104080639",
+   "url": "http://www.minorleagueball.com:80/2011/1/2/1908325/philadelphia-phillies-top-20-prospects-for-2011",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.95,
+   "id_how": {
+    "name_unique": 18,
+    "no_candidate": 1,
+    "name_side": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Philadelphia Phillies Top 20 Prospects for 2011 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-03",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110106165909",
+   "url": "http://www.minorleagueball.com:80/2011/1/3/1910902/pittsburgh-pirates-top-20-prospects-for-2011",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.8421,
+   "id_how": {
+    "name_unique": 16,
+    "no_candidate": 3
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Pittsburgh Pirates Top 20 Prospects for 2011. - Minor League Ball",
+   "rows": 19
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-04",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110107125630",
+   "url": "http://www.minorleagueball.com:80/2011/1/4/1913127/seattle-mariners-top-20-prospects-for-2011",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.85,
+   "id_how": {
+    "name_unique": 16,
+    "ambiguous": 1,
+    "name_side": 1,
+    "no_candidate": 2
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Seattle Mariners Top 20 Prospects for 2011 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110108034240",
+   "url": "http://www.minorleagueball.com:80/2011/1/5/1915573/florida-marlins-top-20-prospects-for-2011",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9474,
+   "id_how": {
+    "name_unique": 18,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Florida Marlins Top 20 Prospects for 2011 - Minor League Ball",
+   "rows": 19
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-05",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110108100453",
+   "url": "http://www.minorleagueball.com:80/2011/1/5/1917521/chicago-white-sox-top-20-prospects-for-2011",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.9,
+   "id_how": {
+    "name_unique": 18,
+    "no_candidate": 2
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Chicago White Sox Top 20 Prospects for 2011 - Minor League Ball",
+   "rows": 20
+  },
+  {
+   "source": "sickels_hist",
+   "list_year": 2011,
+   "published_on": "2011-01-06",
+   "date_basis": "page_dateline",
+   "capture_ts": "20110109204331",
+   "url": "http://www.minorleagueball.com:80/2011/1/6/1919882/milwaukee-brewers-top-20-prospects-for-2011",
+   "eligible": true,
+   "reasons": [],
+   "match_rate": 0.95,
+   "id_how": {
+    "name_unique": 19,
+    "no_candidate": 1
+   },
+   "alltime_names_on_dated_pages": null,
+   "title": "Milwaukee Brewers Top 20 Prospects for 2011 - Minor League Ball",
+   "rows": 20
+  }
+ ],
+ "ba_top100_notes": [
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2014,
+   "rows": 100,
+   "ingested": false,
+   "reason": "no page dateline in the archive and no capture inside the preseason window holds the list"
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2016,
+   "rows": 100,
+   "ingested": false,
+   "reason": "no page dateline in the archive and no capture inside the preseason window holds the list"
+  },
+  {
+   "source": "ba_top100_hist",
+   "list_year": 2017,
+   "rows": 98,
+   "ingested": false,
+   "reason": "no page dateline in the archive and no capture inside the preseason window holds the list"
+  }
+ ],
+ "sickels_skipped": [
+  {
+   "url": "/2009/1/16/725596/my-royals-top-20",
+   "author": null,
+   "title": "my royals top 20 - Minor League Ball"
+  },
+  {
+   "url": "/2009/1/30/742075/predicing-the-ba-top-20",
+   "author": null,
+   "title": "Predicing the BA top 20 - Minor League Ball"
+  },
+  {
+   "url": "/2009/4/3/821358/ranking-top-20-minor-leaguers-in",
+   "author": null,
+   "title": "Ranking Top 20 Minor Leaguers in shallow AL-only league - Minor League Ball"
+  },
+  {
+   "url": "/2010/1/21/1263788/top-20-shadow-twins-prospects",
+   "author": "John Sickels",
+   "title": "Top 20 Shadow Twins Prospects - Minor League Ball"
+  },
+  {
+   "url": "/2010/2/25/1326305/top-2029-prospects-for-2010",
+   "author": null,
+   "title": "Top 2029 prospects for 2010 - Minor League Ball"
+  },
+  {
+   "url": "/2011/1/21/1948563/shadow-twins-top-20-prospects-for-2011",
+   "author": "John Sickels",
+   "title": "Shadow Twins Top 20 Prospects for 2011 - Minor League Ball"
+  },
+  {
+   "url": "/2011/2/18/2002045/who-are-the-top-2012-draft-prospects-to-watch-for-this-year",
+   "author": null,
+   "title": "Who are the Top 2012 Draft Prospects to Watch for this year? - Minor League Ball"
+  },
+  {
+   "url": "/2011/2/21/2004568/fantasy-prospects-2011-top-20-fantasy-hitting-prospects-for-2011",
+   "author": null,
+   "title": "Fantasy Prospects 2011: Top 20 Fantasy Hitting Prospects for 2011 - Minor League Ball"
+  },
+  {
+   "url": "/2011/2/22/2007915/bp-rays-top-20",
+   "author": null,
+   "title": "BP Ray's Top 20 - Minor League Ball"
+  }
+ ],
+ "frame": [
+  {
+   "side": "hit",
+   "vintage": 2006,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 42,
+   "already_in_frame": 0,
+   "gained": 42,
+   "gained_by_source_set": {
+    "ba_top100_hist": 42
+   },
+   "gained_id_how": {
+    "name_unique": 40,
+    "name_side": 2
+   }
+  },
+  {
+   "side": "pit",
+   "vintage": 2006,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 29,
+   "already_in_frame": 0,
+   "gained": 29,
+   "gained_by_source_set": {
+    "ba_top100_hist": 29
+   },
+   "gained_id_how": {
+    "name_unique": 29
+   }
+  },
+  {
+   "side": "hit",
+   "vintage": 2007,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 73,
+   "already_in_frame": 0,
+   "gained": 73,
+   "gained_by_source_set": {
+    "ba_top100_hist+bp_top100_hist": 20,
+    "ba_top100_hist": 3,
+    "ba_org10_hist": 32,
+    "bp_top100_hist": 3,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 12,
+    "ba_org10_hist+ba_top100_hist": 2,
+    "ba_org10_hist+bp_top100_hist": 1
+   },
+   "gained_id_how": {
+    "name_unique": 71,
+    "name_side": 2
+   }
+  },
+  {
+   "side": "pit",
+   "vintage": 2007,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 77,
+   "already_in_frame": 0,
+   "gained": 77,
+   "gained_by_source_set": {
+    "ba_top100_hist+bp_top100_hist": 20,
+    "ba_org10_hist": 31,
+    "ba_org10_hist+ba_top100_hist": 6,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 9,
+    "bp_top100_hist": 2,
+    "ba_top100_hist": 6,
+    "ba_org10_hist+bp_top100_hist": 3
+   },
+   "gained_id_how": {
+    "name_unique": 76,
+    "name_side": 1
+   }
+  },
+  {
+   "side": "hit",
+   "vintage": 2008,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 78,
+   "already_in_frame": 0,
+   "gained": 78,
+   "gained_by_source_set": {
+    "ba_top100_hist+bp_top100_hist": 16,
+    "ba_org10_hist": 34,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 16,
+    "bp_top100_hist": 4,
+    "ba_top100_hist": 3,
+    "ba_org10_hist+bp_top100_hist": 3,
+    "ba_org10_hist+ba_top100_hist": 2
+   },
+   "gained_id_how": {
+    "name_unique": 73,
+    "name_side": 4,
+    "name_recency": 1
+   }
+  },
+  {
+   "side": "pit",
+   "vintage": 2008,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 72,
+   "already_in_frame": 0,
+   "gained": 72,
+   "gained_by_source_set": {
+    "ba_org10_hist+ba_top100_hist": 4,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 14,
+    "ba_top100_hist": 4,
+    "ba_org10_hist": 32,
+    "ba_top100_hist+bp_top100_hist": 10,
+    "ba_org10_hist+bp_top100_hist": 5,
+    "bp_top100_hist": 3
+   },
+   "gained_id_how": {
+    "name_unique": 69,
+    "name_side": 3
+   }
+  },
+  {
+   "side": "hit",
+   "vintage": 2009,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 123,
+   "already_in_frame": 0,
+   "gained": 123,
+   "gained_by_source_set": {
+    "ba_org10_hist+sickels_hist": 10,
+    "sickels_hist": 30,
+    "ba_org10_hist": 24,
+    "ba_top100_hist+bp_top100_hist": 24,
+    "ba_org10_hist+bp_top100_hist": 5,
+    "bp_top100_hist": 4,
+    "ba_org10_hist+ba_top100_hist+sickels_hist": 1,
+    "ba_top100_hist": 4,
+    "ba_org10_hist+ba_top100_hist": 2,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 7,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist+sickels_hist": 5,
+    "ba_top100_hist+bp_top100_hist+sickels_hist": 5,
+    "ba_org10_hist+bp_top100_hist+sickels_hist": 1,
+    "ba_top100_hist+sickels_hist": 1
+   },
+   "gained_id_how": {
+    "name_unique": 121,
+    "name_side": 1,
+    "name_recency": 1
+   }
+  },
+  {
+   "side": "pit",
+   "vintage": 2009,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 86,
+   "already_in_frame": 0,
+   "gained": 86,
+   "gained_by_source_set": {
+    "ba_org10_hist+sickels_hist": 5,
+    "sickels_hist": 31,
+    "ba_top100_hist+bp_top100_hist": 14,
+    "ba_top100_hist": 4,
+    "ba_org10_hist": 16,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 6,
+    "bp_top100_hist": 2,
+    "ba_org10_hist+bp_top100_hist": 3,
+    "ba_top100_hist+sickels_hist": 1,
+    "ba_org10_hist+bp_top100_hist+sickels_hist": 1,
+    "ba_top100_hist+bp_top100_hist+sickels_hist": 1,
+    "ba_org10_hist+ba_top100_hist": 2
+   },
+   "gained_id_how": {
+    "name_unique": 83,
+    "name_side": 3
+   }
+  },
+  {
+   "side": "hit",
+   "vintage": 2010,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 123,
+   "already_in_frame": 0,
+   "gained": 123,
+   "gained_by_source_set": {
+    "sickels_hist": 50,
+    "ba_org10_hist": 12,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 6,
+    "ba_top100_hist+bp_top100_hist+sickels_hist": 6,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist+sickels_hist": 5,
+    "bp_top100_hist": 5,
+    "ba_top100_hist+bp_top100_hist": 19,
+    "ba_org10_hist+sickels_hist": 9,
+    "ba_top100_hist+sickels_hist": 1,
+    "ba_org10_hist+ba_top100_hist": 1,
+    "ba_top100_hist": 6,
+    "ba_org10_hist+bp_top100_hist+sickels_hist": 1,
+    "bp_top100_hist+sickels_hist": 1,
+    "ba_org10_hist+bp_top100_hist": 1
+   },
+   "gained_id_how": {
+    "name_unique": 120,
+    "name_recency": 1,
+    "name_side": 2
+   }
+  },
+  {
+   "side": "pit",
+   "vintage": 2010,
+   "current_rows_resolved": 0,
+   "augmented_new_source_rows": 116,
+   "already_in_frame": 0,
+   "gained": 116,
+   "gained_by_source_set": {
+    "ba_org10_hist+sickels_hist": 7,
+    "sickels_hist": 61,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist+sickels_hist": 7,
+    "ba_top100_hist+bp_top100_hist": 14,
+    "ba_org10_hist": 9,
+    "ba_top100_hist+bp_top100_hist+sickels_hist": 4,
+    "ba_org10_hist+bp_top100_hist": 4,
+    "ba_top100_hist": 5,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 2,
+    "ba_top100_hist+sickels_hist": 2,
+    "bp_top100_hist": 1
+   },
+   "gained_id_how": {
+    "name_unique": 116
+   }
+  },
+  {
+   "side": "hit",
+   "vintage": 2011,
+   "current_rows_resolved": 67,
+   "augmented_new_source_rows": 118,
+   "already_in_frame": 42,
+   "gained": 76,
+   "gained_by_source_set": {
+    "ba_org10_hist": 15,
+    "sickels_hist": 35,
+    "ba_org10_hist+sickels_hist": 4,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 3,
+    "ba_org10_hist+bp_top100_hist": 2,
+    "bp_top100_hist+sickels_hist": 1,
+    "ba_top100_hist+bp_top100_hist": 10,
+    "ba_top100_hist+bp_top100_hist+sickels_hist": 4,
+    "bp_top100_hist": 1,
+    "ba_org10_hist+ba_top100_hist": 1
+   },
+   "gained_id_how": {
+    "name_unique": 74,
+    "name_recency": 1,
+    "name_side": 1
+   }
+  },
+  {
+   "side": "pit",
+   "vintage": 2011,
+   "current_rows_resolved": 55,
+   "augmented_new_source_rows": 113,
+   "already_in_frame": 44,
+   "gained": 69,
+   "gained_by_source_set": {
+    "sickels_hist": 32,
+    "ba_org10_hist": 14,
+    "ba_org10_hist+sickels_hist": 5,
+    "ba_top100_hist": 2,
+    "ba_top100_hist+bp_top100_hist": 7,
+    "ba_top100_hist+bp_top100_hist+sickels_hist": 1,
+    "bp_top100_hist": 1,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist": 4,
+    "ba_org10_hist+ba_top100_hist": 1,
+    "ba_top100_hist+sickels_hist": 1,
+    "ba_org10_hist+ba_top100_hist+bp_top100_hist+sickels_hist": 1
+   },
+   "gained_id_how": {
+    "name_unique": 67,
+    "name_recency": 1,
+    "name_side": 1
+   }
+  },
+  {
+   "side": "hit",
+   "vintage": 2012,
+   "current_rows_resolved": 186,
+   "augmented_new_source_rows": 78,
+   "already_in_frame": 59,
+   "gained": 19,
+   "gained_by_source_set": {
+    "ba_org10_hist": 10,
+    "ba_org10_hist+ba_top100_hist": 4,
+    "ba_top100_hist": 5
+   },
+   "gained_id_how": {
+    "name_unique": 19
+   }
+  },
+  {
+   "side": "pit",
+   "vintage": 2012,
+   "current_rows_resolved": 167,
+   "augmented_new_source_rows": 55,
+   "already_in_frame": 50,
+   "gained": 5,
+   "gained_by_source_set": {
+    "ba_org10_hist": 4,
+    "ba_top100_hist": 1
+   },
+   "gained_id_how": {
+    "name_unique": 5
+   }
+  },
+  {
+   "side": "hit",
+   "vintage": 2013,
+   "current_rows_resolved": 260,
+   "augmented_new_source_rows": 66,
+   "already_in_frame": 63,
+   "gained": 3,
+   "gained_by_source_set": {
+    "ba_org10_hist": 3
+   },
+   "gained_id_how": {
+    "name_unique": 3
+   }
+  },
+  {
+   "side": "pit",
+   "vintage": 2013,
+   "current_rows_resolved": 237,
+   "augmented_new_source_rows": 62,
+   "already_in_frame": 60,
+   "gained": 2,
+   "gained_by_source_set": {
+    "ba_top100_hist": 2
+   },
+   "gained_id_how": {
+    "name_recency": 1,
+    "name_side": 1
+   }
+  },
+  {
+   "side": "hit",
+   "vintage": 2014,
+   "current_rows_resolved": 251,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "pit",
+   "vintage": 2014,
+   "current_rows_resolved": 240,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "hit",
+   "vintage": 2015,
+   "current_rows_resolved": 384,
+   "augmented_new_source_rows": 38,
+   "already_in_frame": 38,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "pit",
+   "vintage": 2015,
+   "current_rows_resolved": 375,
+   "augmented_new_source_rows": 36,
+   "already_in_frame": 34,
+   "gained": 2,
+   "gained_by_source_set": {
+    "ba_top100_hist": 2
+   },
+   "gained_id_how": {
+    "name_side": 1,
+    "name_recency": 1
+   }
+  },
+  {
+   "side": "hit",
+   "vintage": 2016,
+   "current_rows_resolved": 384,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "pit",
+   "vintage": 2016,
+   "current_rows_resolved": 393,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "hit",
+   "vintage": 2017,
+   "current_rows_resolved": 442,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "pit",
+   "vintage": 2017,
+   "current_rows_resolved": 452,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "hit",
+   "vintage": 2018,
+   "current_rows_resolved": 420,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "pit",
+   "vintage": 2018,
+   "current_rows_resolved": 424,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "hit",
+   "vintage": 2019,
+   "current_rows_resolved": 504,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  },
+  {
+   "side": "pit",
+   "vintage": 2019,
+   "current_rows_resolved": 465,
+   "augmented_new_source_rows": 0,
+   "already_in_frame": 0,
+   "gained": 0,
+   "gained_by_source_set": {},
+   "gained_id_how": {}
+  }
+ ],
+ "floors": {
+  "reference": {
+   "z95": 1.645,
+   "sd_ref": 0.01093,
+   "n_ref": 2862,
+   "n_clusters_ref": 1753,
+   "path": "data/efv_label_pool_census.json",
+   "key": "floor_curve.references[lv_econd_within]",
+   "source_key": "ds16.frames.lv_dev.deltas.v2_vs_prospx_consensus.spearman.sd",
+   "source_path": "data/efv_v2_dev_eval.json",
+   "census_generated_at": "2026-10-08T17:42:59Z"
+  },
+  "formula": "mde95(n) = z95 * sd_ref * sqrt(n_ref / n)",
+  "n_current_resolved_2011_2019": 5706,
+  "retention": 0.5016,
+  "gained_rows": 995,
+  "gained_distinct_new_persons": 612,
+  "primary": {
+   "n_before": 2862,
+   "n_after": 3361.1,
+   "mde95_before": 0.01798,
+   "mde95_after": 0.01659,
+   "change": -0.00139
+  },
+  "upper_bound": {
+   "n_after": 3857,
+   "mde95_after": 0.01549,
+   "change": -0.00249
+  },
+  "cluster_read": {
+   "clusters_before": 1753,
+   "clusters_after": 2060.0,
+   "mde95_before": 0.01798,
+   "mde95_after": 0.01659,
+   "change": -0.00139
+  },
+  "caveat": "scaling by n ignores that a pre-2011 row's comparator would be the archived source's own rank (no PROSPX consensus exists before 2011) and that era shifts the label; the measured floor of an augmented frame is owed by the task that scores it"
+ },
+ "seconds": 40.9,
+ "strata": [
+  "source",
+  "list_year",
+  "vintage",
+  "side",
+  "id_how"
+ ]
+}

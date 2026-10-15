@@ -145,3 +145,58 @@ Seed: none. Every number here is a deterministic count; nothing is resampled.
   question (OWNER_QUESTION.md in the result).
 - Anchor gate (`docs/PROSPECT_ANCHOR_GATE.md`): no count, mean or residual is cut by
   consensus-FV level; the only strata are source, list year, vintage, side and identity route.
+
+## 9. Results (appended 2026-10-15 after the run; sections 1 to 8 unchanged)
+
+Run: `python tools/efv_x5_older_vintages.py --fetch --write` then a cache-only
+`--write` (generated 2026-10-15T20:54:14Z on top of the registration commit d9413f3a,
+40.9 s from the cache). Artifacts: `data/_labs/efv_x5/older_vintage_points.json` (1,974
+records, 2,646 dated points) and `data/_labs/efv_x5/older_vintage_census.json`. No
+outcome, label, eFV, consensus or source score was read or computed.
+
+Sources (pooled match rate is resolved over side-routed rows of the lists read in their
+window):
+
+| source | coverage found | depth | grade field | lists ingested | rows ingested | match rate |
+|---|---|---|---|---|---|---|
+| `ba_top100_hist` | 1990 to 2017 on the all-time index; 2006 to 2013 dated by the year pages, 2015 by an in-window capture | 100 | rank | 9 (2006 to 2013, 2015) | 900 | 0.9488 |
+| `ba_org10_hist` | 207 organization lists, 2007 to 2013 folders | 10 | rank | 78 dated January to April | 779 | 0.9182 |
+| `bp_top100_hist` | 2007 to 2011 free articles | 100 to 101 | rank | 5 | 502 | 0.9183 |
+| `sickels_hist` | 25 Sickels organization posts dated January to April, 2009 to 2011 | 20 to 24 | rank and letter grade | 23 | 465 | 0.8931 |
+| `mlbcom_top50_hist` | 2004 to 2010 | 50 | rank | 0 (2009 published December 2008; 2010 has no reachable publisher date) | 0 | not read |
+| `fg_hulet_hist` | not probed in the time box | 10 | rank | 0 | 0 | not read |
+
+Not ingested: 125 lists dated outside their window (almost all BA organization lists
+published October to December of V - 1), 6 lists under the 0.80 match rate (4 BA
+organization lists, 2 Sickels lists), BA Top 100 2014, 2016 and 2017 (no page dateline
+in the archive and no in-window capture holds the list). The all-time BA index agrees with
+the dated year pages on 95 to 99 of 100 names a year.
+
+Gains (registration s6), resolved (side, V, person) rows the development frame does not
+hold today:
+
+| vintages | hitters | pitchers | total |
+|---|---|---|---|
+| 2006 to 2010 (new vintages) | 439 | 380 | 819 |
+| 2011 to 2019 (rows new at an existing vintage) | 98 | 78 | 176 |
+| all | 537 | 458 | 995 |
+
+By vintage: 2006 71, 2007 150, 2008 150, 2009 209, 2010 239, 2011 145 (the current 2011
+frame holds 122 resolved rows), 2012 24, 2013 5, 2015 2, 2014 and 2016 to 2019 0. Distinct
+new persons (in no current frame row): 612. Identity routes of the gained rows:
+name_unique 966, name_side 22, name_recency 7.
+
+Floor (registration s7; N_cur 5,706 resolved rows in the current frame 2011 to 2019,
+retention r = 2,862 / 5,706 = 0.5016):
+
+| read | n before | n after | mde95 before | mde95 after | change |
+|---|---|---|---|---|---|
+| primary (retention-adjusted rows) | 2,862 | 3,361.1 | 0.01798 | 0.01659 | -0.00139 |
+| upper bound (every gained row scores) | 2,862 | 3,857 | 0.01798 | 0.01549 | -0.00249 |
+| cluster read (persons) | 1,753 | 2,060.0 | 0.01798 | 0.01659 | -0.00139 |
+
+Verdict under s8: PASS (four sources pass, G = 995 > 0). Nothing served moves; adopting
+the rows is an owner question (`docs/efv-v2/EFV_X5_OLDER_VINTAGES_RESULTS.md`).
+Disclosure: seven Baseball Prospectus requests (the free 'Top 400' index article, robots.txt
+and the five list articles) went out 1.5 s apart, under robots.txt's Crawl-delay of 2; the
+committed tool waits 2.5 s.
