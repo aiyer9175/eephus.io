@@ -334,6 +334,8 @@ def tool_vm_columns(side: str, data: list[dict], raw_by_key: dict, names, index,
         if y >= F.R_VM_FIRST_DEBUT_YEAR and not allow_reserved:
             continue
         pk = d["player_key"]
+        if y >= F.R_VM_FIRST_DEBUT_YEAR and pk not in test_keys:
+            continue          # a reserved-year row outside the fold's pinned test rows
         raw = raw_by_key.get(pk) or {}
         S = G.read_season(y, raw.get("cutoff"))
         key = (y, pk)
