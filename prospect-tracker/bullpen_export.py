@@ -1167,9 +1167,9 @@ WAR_RATE_MIN_COVERAGE = 0.50
 @functools.lru_cache(maxsize=1)
 def _side_war_by_season() -> dict:
     """{mlbam: {season: {"bat": WAR, "pit": WAR}}} with the two sides kept on
-    SEPARATE keys, via war_source.side_war_by_season on the facade DEFAULT
-    provider (eWAR v2 from the 2026-09 epoch: the pitching side is FIP re-priced
-    within role, the batting side equals bWAR until the SDR defense drop; the
+    SEPARATE keys, via war_source.side_war_by_season on the DISPLAYED
+    provider, ewar_v2 (the pitching side is FIP re-priced within role, the
+    batting side equals bWAR until the SDR defense drop; the
     explicit 'bwar' provider is the input frame, delegating to
     mlb_player_export._war_daily).
 
@@ -1614,8 +1614,8 @@ def served_war_basis() -> dict:
     """The WAR series the 1-year WAR-rate columns serve, as the two fields a
     frozen 3-year artifact must carry to be served beside them.
 
-      war_provider       war_source's facade default, the provider
-                         _side_war_by_season reads.
+      war_provider       the displayed provider, ewar_v2, the one
+                         _side_war_by_season reads (not the facade default).
       ewar_generated_at  the eWAR artifact's own generated_at: the BUILD of the
                          frozen series. A hand rebuild (the WAR_BASIS_RUNBOOK
                          cascade) moves it and can re-price completed seasons;

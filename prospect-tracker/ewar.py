@@ -13,11 +13,11 @@ WHY THIS EXISTS
     around fetch_career_war_bulk), so this module BUILDS the better WAR out of
     inputs already on disk instead of importing one.
 
-    SERVED SINCE THE 2026-09-03 EPOCH: war_source.DEFAULT_PROVIDER is ewar_v2, so
-    the career_war funnel, MLB player cards, the WAR-rate boards, PAL, the arb
-    spine and the FA corpus labels read this series (eFV labels, anchors, surplus
-    and projections follow at the label epoch, docs/efv-2026-09-03/). That is an
-    OWNER BASIS DECISION, not an accuracy claim: the gate record below is
+    SERVED AS THE DISPLAYED WAR: war_source.DISPLAY_PROVIDER is ewar_v2, so the
+    player pages, MLB cards, WAR-rate boards, PAL and every other display door
+    read this series. It was also the DEFAULT (label) provider from 2026-09-03
+    until the fWAR label epoch of 2026-10-03 made DEFAULT_PROVIDER 'fwar'. That is
+    an OWNER BASIS DECISION, not an accuracy claim: the gate record below is
     unchanged and R3a/R3b remain the accuracy statement.
 
     THE OWNER'S HYPOTHESIS WAS "a better WAR label makes eFV more accurate."
@@ -811,10 +811,10 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
 
     The machinery stays because the DECISION is re-testable, not permanent: the
     reason Statcast fielding loses here is that Savant's read is range-only
-    while rfield also carries arm, framing, blocking and the double-play pivot,
-    so it is a better metric for a NARROWER quantity. If an arm-value and
-    catcher-framing run model ever lands, re-run this grid before assuming the
-    answer is still 0.
+    while rfield also carries arm, the double-play pivot and the catcher's
+    rSB + rCERA (no framing or blocking piece, 2026-09-11 erratum), so it is a
+    better metric for a NARROWER quantity. If an arm-value and catcher-framing
+    run model ever lands, re-run this grid before assuming the answer is still 0.
     """
     import numpy as np                  # noqa: PLC0415
     import pandas as pd                 # noqa: PLC0415
@@ -874,10 +874,10 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
         share = rec["share"]
         # v1 REPLACED rfield with the Statcast read wherever Statcast covered the
         # innings. v2 BLENDS the two over the covered fraction instead, because
-        # they do not measure the same quantity: Savant FRP is range, while
-        # B-Ref rfield also carries arm, catcher framing and blocking, scoops and
-        # the double-play pivot. A replacement therefore trades a better metric
-        # for a NARROWER one and drops real value, which is what the v1
+        # they do not measure the same quantity: Savant FRP is range, while B-Ref
+        # rfield also carries arm, the catcher's rSB + rCERA (no framing or blocking
+        # piece, 2026-09-11 erratum), scoops and the DP pivot. A replacement trades
+        # a better metric for a NARROWER one and drops real value, which is what the v1
         # attribution arms measured - the fielding swap alone lost BOTH gates
         # (same-season r 0.8777 and next-season 0.2255, against a bWAR baseline
         # of 0.8803 / 0.2481) while the pitching swap paid for itself.
@@ -1089,15 +1089,15 @@ def export_payload(model: dict) -> dict:
         "model": MODEL,
         "generated_at": meta["generated_at"],
         "seasons": meta["seasons"],
-        "consumers": "SERVED: war_source DEFAULT_PROVIDER ewar_v2 since the "
-                     "2026-09-03 epoch (owner basis decision; gates unchanged). "
-                     "The two consumer gates measured 2026-08-04 (R3a eFV label "
-                     "swap, R3b fa_backtest Gate 1) remain the accuracy record.",
+        "consumers": "DISPLAYED WAR: war_source DISPLAY_PROVIDER ewar_v2 (EPOCH-Q4). "
+                     "The label is DEFAULT_PROVIDER fwar since 2026-10-03; ewar_v2 was "
+                     "the default 2026-09-03 to then. The 2026-08-04 consumer gates (R3a "
+                     "eFV label swap, R3b fa_backtest Gate 1) remain the accuracy record.",
         "field_key": {
             "ew": "eWAR (wins)", "bw": "Baseball-Reference bWAR (wins)",
             "ewb": "eWAR batting side", "bwb": "bWAR batting side",
             "ewp": "eWAR pitching side", "bwp": "bWAR pitching side",
-            "fe": "eWAR fielding runs (Statcast FRP where covered, else rfield)",
+            "fe": f"eWAR fielding runs: rfield blended with Statcast at w={meta.get('fielding_blend_w')}",
             "fb": "B-Ref rfield", "fs": "fielding source (oaa|mixed|bref)",
             "fc": "share of defensive innings with a Statcast read",
             "pe": "eWAR pitching runs above average (FIP basis)",

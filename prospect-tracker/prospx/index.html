@@ -21613,11 +21613,11 @@ function _boardAsOf(dateStr) {
     }
     if (!best) continue;
     const cw = p.career_war || {};
-    // Hindsight outcomes (only meaningful for since-debuted players). All three
-    // share the same WAR flavor the rest of the site uses - career_war is eWAR
-    // (source:"ewar_v2" from the 2026-09 epoch, "bbref" before it), WAG's observed_war is that same career WAR, and WAR/yr
-    // is the canonical full-season-normalized rate (gradWarPerYr) - so WAR,
-    // WAR/yr, and WAG never mix WAR sources.
+    // Hindsight outcomes (only meaningful for since-debuted players). career_war is the
+    // displayed eWAR (source:"ewar_v2") and WAR/yr is its full-season-normalized rate
+    // (gradWarPerYr). WAG is NOT on that series: its observed_war is the label WAR
+    // (career_war_label, fWAR since the 2026-10 epoch), the basis wagWarBasis names
+    // on the card.
     const wpyObj = (typeof gradWarPerYr === "function" && p.debut_date) ? gradWarPerYr(p) : null;
     const wagObj = (p.debuted_value || {}).wag;
     rows.push({
@@ -23736,6 +23736,16 @@ function wagExposureNote(g) {
   if (w.exposure_measured === false) return "MLB PA/IP not on file, gated on seasons";
   if (w.exposure_load == null) return "";
   return `${Math.round(Number(w.exposure_load)).toLocaleString("en-US")} ${w.exposure_unit || "PA"}`;
+}
+// The WAR series WAG is measured on: its observed leg is the LABEL row
+// (career_war_label), not the eWAR the card shows beside it, so the card names
+// it. Read off the row, so the eWAR label epoch moves this line with the data.
+function wagWarBasis(g) {
+  const src = String(((g && g.career_war_label) || {}).source || "");
+  if (src === "fwar") return "FanGraphs WAR";
+  if (src.startsWith("ewar")) return "eWAR";
+  if (src === "bbref" || src === "bwar") return "Baseball-Reference WAR";
+  return "";
 }
 
 // v32.0 - $/WAR market anchor. Now routed through dollarsPerWar() (the
@@ -35120,7 +35130,7 @@ function efvTooltip(x) {
   if (!x || x.xfv_grade == null) return "";
   const locked = x.kind === "debuted";
   const parts = [locked
-    ? `eFV ${efvGradeDisplay(x)} final, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR)` : ""}`
+    ? `eFV ${efvGradeDisplay(x)} final, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career eWAR)` : ""}`
     : efvIsV2(x) ? `eFV ${efvGradeDisplay(x)} (V2)`
     : `eFV ${efvGradeDisplay(x)} (provisional)`];
   // RPR03: a placeholder consensus is not a source grade, so it is never printed as one.
@@ -35244,7 +35254,7 @@ function efvBadgeHTML(p, opts) {
   // Locked: once a prospect debuts, its eFV is frozen at the final pre-debut grade (the grade
   // it carried into the majors) -- our last word on it as a prospect.
   const lock = (x && x.kind === "debuted")
-    ? `<span title="Final eFV, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR)` : ""}" style="color:var(--text-tertiary);line-height:0;">${pxIcoHTML("lock", 12)}</span>` : "";
+    ? `<span title="Final eFV, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career eWAR)` : ""}" style="color:var(--text-tertiary);line-height:0;">${pxIcoHTML("lock", 12)}</span>` : "";
   // eFV ONLY (the default): clean single grade, no consensus subscript or delta. The board's
   // "Rank by" toggle is how a user switches the whole list to consensus FV instead. consNum is
   // unused here by design; full eFV-vs-consensus comparison lives on the player detail page.
@@ -50557,7 +50567,7 @@ function renderPlayerDetail(key) {
     "WAG",
     `<span style="color:${wagColor};">${wagDeltaTile > 0 ? "+" : ""}${wagDeltaTile.toFixed(2)} WAR/yr</span>`,
     _wagUnified()
-      ? `vs eFV grade at debut · ${((p.career_war || {}).war_seasons_count) ?? "?"} MLB season${((p.career_war || {}).war_seasons_count) === 1 ? "" : "s"}${wagExposureNote(p) ? ` · ${escapeHtml(wagExposureNote(p))}` : ""}${careerWarSparkline}`
+      ? `vs eFV grade at debut${wagWarBasis(p) ? ` · measured on ${wagWarBasis(p)}` : ""} · ${((p.career_war || {}).war_seasons_count) ?? "?"} MLB season${((p.career_war || {}).war_seasons_count) === 1 ? "" : "s"}${wagExposureNote(p) ? ` · ${escapeHtml(wagExposureNote(p))}` : ""}${careerWarSparkline}`
       : p.fv_close != null
       ? `vs ${fvCeil(p.fv_close)} FV proj · ${wagRateTile.war_seasons_count} MLB season${wagRateTile.war_seasons_count === 1 ? "" : "s"} (PT-weighted)${careerWarSparkline}`
       : `${careerWarSparkline}`,

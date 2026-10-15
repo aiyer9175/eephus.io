@@ -7,8 +7,9 @@
 
 LABEL ONLY. This module reads outcomes and nothing else: it takes no grade, fits
 nothing, scores nothing and summarises nothing by grade. A caller joins its output to
-efv_vintage_frame rows. The WAR series is war_source.DEFAULT_PROVIDER (eWAR v2 today;
-the fWAR epoch moves it, and these labels move with it on the next build).
+efv_vintage_frame rows. The WAR series is war_source.DEFAULT_PROVIDER (published fWAR
+since the 2026-10-03 label epoch; a later label epoch moves it, and these labels move
+with it on the next build).
 
 For a player first read at list vintage V, with effective debut year dy:
 

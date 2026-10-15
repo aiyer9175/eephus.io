@@ -266,7 +266,7 @@ def _entry(s, side, kind):
         e["xline_note"] = s["xline_note"]                # live covered players; never a ranked factor)
     if s.get("xfv_provisional"):                          # prior-anchored (no pro track record)
         e["xfv_provisional"] = True
-    if s.get("realized_war") is not None:                # backgraded graduate's actual career WAR
+    if s.get("realized_war") is not None:                # backgraded graduate's career eWAR (displayed series)
         e["realized_war"] = s["realized_war"]
     return e
 
