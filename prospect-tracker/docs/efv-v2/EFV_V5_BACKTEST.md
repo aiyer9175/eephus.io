@@ -254,3 +254,74 @@ the strongest raw signals included (Single-A K% and K-BB%), adds nothing the adm
 rule keeps on lv_dev (W3 on the frozen fWAR label): the atlas lifts were read on
 reaching MLB, and eFV's skill head scores WAR given consensus. v5 still trails consensus
 on both frames (-0.0083, -0.0101).
+
+## 6. The spent-frame read (appended by the spent run, 2026-10-15)
+
+Run: `python -u efv5_group_drivers.py --spent --gate-sha e7931ce4e13110eebb53555bff455ff13ca7c502`
+from commit 50fb0e3b (artifact `data/_labs/efv5/efv5_group_spent.json`, generated
+2026-10-15T13:09:11Z, 1,165.2 s; label `fwar@2026-10-02-0341299c20ec`; the committed
+configuration of `data/_labs/efv5/efv5_group_spec.json`, sha256 e0258e248ace...; v5 at
+base_config() reproduces V2 on all 2,496 scored reserved rows; E_cond B 2000, E_refit B 200 of
+200 usable draws). Every block is labelled "spent frame, read after the 10-08 confirmation";
+no ledger row was written. The owner's EW3-5 waiver is recorded in `EFV_V2_GATE.md`.
+
+Frames as built, the v3 confirmation's rows exactly: R-LV n 2,349 (hit 1,195 / pit 1,154;
+1,473 players), R-VM the 2025 cohort under the vm2 rule, n 147 (hit 72 / pit 75). COLUMN
+COVERAGE: the two Single-A hitter columns are in group on 302 of 1,195 R-LV hitter test rows
+(164 players: a list vintage 2021 row reads season 2019, so a player listed in 2020 and 2021
+reads the same Single-A line twice) and on 2 of 82 R-VM hitter test rows (the 2025 debut
+cohort was rarely in Single-A in 2024). The folds: v5 admitted both columns in the R-LV hit
+2020 fold (beside contact and is_college) and slugging alone in hit 2021 (beside obp_rel,
+contact and is_college); in the R-VM hit fold it admitted neither (tool_hit alone), so v5
+equals V2 on every R-VM row; pitchers are V2 everywhere.
+
+### 6.1 R-LV, list vintages 2020 and 2021 (n 2,349), spent
+
+Within (side, vintage) Spearman: v5 0.1481, V2 0.1511, consensus 0.1494, Pipeline 0.1988 (own
+rows 1,727), FanGraphs 0.1469 (2,242). Pooled after the map 0.1423 / 0.1431 / 0.1384;
+contributor AUC 0.7413 / 0.7431 / 0.7279.
+
+| comparison, within | delta | E_cond CI95 | E_refit CI95 (mde95) | hitters | pitchers |
+|---|---|---|---|---|---|
+| v5 minus V2 | -0.0030 | -0.0090 to +0.0032 | -0.0099 to +0.0001 (0.0051) | -0.0058 (E_refit -0.0195 to +0.0002) | 0 (V2) |
+| v5 minus consensus | -0.0013 | -0.0239 to +0.0207 | -0.0246 to +0.0162 (0.0176) | -0.0001 (E_refit -0.0366 to +0.0342) | -0.0026 (E_refit -0.0327 to +0.0057) |
+| v5 minus Pipeline | -0.0418 | -0.0785 to -0.0040 | -0.0728 to -0.0032 | -0.0591 | -0.0216 |
+| v5 minus FanGraphs | +0.0079 | -0.0222 to +0.0388 | -0.0237 to +0.0339 | -0.0099 | +0.0262 |
+| V2 minus consensus | +0.0016 | -0.0201 to +0.0226 | | | |
+
+Pooled, v5 minus V2 -0.0008 (E_refit -0.0093 to +0.0002), v5 minus consensus +0.0039 (-0.0193
+to +0.0206). AUC, v5 minus V2 -0.0019 (E_refit -0.0069 to +0.0019), v5 minus consensus
++0.0134 (E_refit -0.0162 to +0.0230). Per fold, v5 minus V2: hit 2020 -0.0048, hit 2021
+-0.0068, pitchers 0. Position-group cells, v5 minus V2 within: C +0.0152 (n 117), IF -0.0098
+(n 575), OF -0.0109 (n 481), pitchers 0; v5 minus consensus: C +0.0744, IF -0.0068, OF
+-0.0050, pitchers -0.0026. The group cell (R-LV hitters in the Single-A group, n 302, 164
+players): v5 minus V2 -0.0152 (E_cond -0.0546 to +0.0265), v5 minus consensus -0.0777
+(-0.1779 to +0.0167).
+
+### 6.2 R-VM, the 2025 debut cohort (n 147), spent
+
+Within: v5 0.3739, V2 0.3739 (identical on every row), consensus 0.3333, Pipeline 0.3142,
+FanGraphs 0.3568. v5 minus V2 0 (E_refit 0 to 0); v5 minus consensus +0.0406 (E_cond -0.0259
+to +0.1101; E_refit -0.0830 to +0.1251, mde95 0.0926), which is V2's own unresolved reserved
+number. R-VM is not a read of the v5 columns: 2 of 82 hitter test rows sit in the group and no
+fold admitted a column.
+
+### 6.3 The reading (ship rule, EW2-10)
+
+- Ship rule: eFV v5 ships only if its within Spearman beats served eFV (V2) on lv_dev, vm_dev,
+  R-LV and R-VM. The four point estimates, pooled over sides: +0.0033, 0.0000, -0.0030,
+  0.0000. It beats V2 on lv_dev only. eFV v5 is NOT shippable; `EFV_V5_ON` stays False; the
+  served fit, export, grade, registry claim, glossary method text and Source Comparison
+  headline do not move. The Source Comparison view carries the two development rows (model
+  `efv_v5`) as hollow markers.
+- Against consensus: a tie on R-LV (-0.0013, E_refit -0.0246 to +0.0162) and V2's unresolved
+  +0.0406 on R-VM. No CI95 lower bound against consensus is above 0: the copy cannot say eFV
+  v5 beats consensus.
+- What carried and what did not: the Single-A hitter wOBA and slugging lift on lv_dev
+  (+0.0064 on hitters, one sign over three folds) reversed on R-LV (-0.0058 on hitters,
+  negative in both folds; the in-group cell -0.0152). The atlas's other 26 long-label
+  candidates, including every Single-A pitcher strikeout signal, never cleared the
+  development bar on the WAR label.
+- The atlas's reach lifts did not become WAR-order lifts. Its candidate cells were all read on
+  reaching MLB (reach3, reach5), against consensus inside one level; eFV orders players within
+  (side, list year) on WAR given consensus across every level at once.

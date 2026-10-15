@@ -1033,3 +1033,20 @@ the atlas takes them as an OWNER-WAIVED EARLY READ: every such cell is flagged
 cells, and nothing is selected or tuned on them. No R-LV list vintage (2020, 2021) was built:
 `efv5_atlas.CONSENSUS_VINTAGES` leaves them out and `test_efv5_atlas.py` pins it. No cell is
 cut by consensus-FV level.
+
+## Note 2026-10-15: the eFV v5 group drivers read the spent R-LV and R-VM frames once (EW3-5, EW2-10)
+
+EFV5_GROUP_DRIVERS (`efv5_group_drivers.py`, `docs/efv-v2/EFV_V5_BACKTEST.md`) selected a
+configuration on lv_dev and vm_dev only (two Single-A hitter group columns, wOBA and
+slugging, at the skill head; commit 50fb0e3b) and then read it once on R-LV (list vintages
+2020 and 2021) and R-VM (the 2025 debut cohort), opened through this registration's committed
+sha `e7931ce4e13110eebb53555bff455ff13ca7c502` exactly as the v4 spent read was. These frames
+were spent by the 10-08 confirmation (s11); this is not a look: every block is labelled
+"spent frame, read after the 10-08 confirmation", nothing was chosen or tuned on it, and no
+progress-ledger row was written. The owner waived registered dates and look days (EW3-5,
+2026-10-14), so the read is recorded as an OWNER-WAIVED read of spent frames. Result
+(`data/_labs/efv5/efv5_group_spent.json`): v5 minus V2 within -0.0030 on R-LV (E_refit CI95
+-0.0099 to +0.0001) and 0 on R-VM (identical rows); the ship rule EW2-10 fails and
+`EFV_V5_ON` stays False. No cell is cut by consensus-FV level. The forking-path count of s6
+gains the selection's 81 evaluated steps (28, 27 and 26 over three rounds) and this one spent
+read.

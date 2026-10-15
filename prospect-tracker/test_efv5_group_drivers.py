@@ -186,6 +186,18 @@ def test_the_committed_spec_validates_when_present():
     assert set(spec["columns"]) == set(G.added(cfg))
 
 
+def test_the_spent_read_matches_the_flag_when_present():
+    if not G.SPENT_PATH.exists():
+        pytest.skip("the spent read has not run")
+    import json
+    doc = json.loads(G.SPENT_PATH.read_text(encoding="utf-8"))
+    assert doc["role"] == "spent" and doc["ledger_rows"] is False and doc["one_read"] is True
+    assert doc["label_note"] == G.SPENT_LABEL
+    assert all(f["label"] == G.SPENT_LABEL for f in doc["frames"].values())
+    assert doc["ship_rule"]["ships"] is G.EFV_V5_ON
+    assert set(doc["ship_rule"]["frames"]) == {"lv_dev", "vm_dev", "lv_res", "vm_pros"}
+
+
 # ---------------------------------------------------------------------------
 # 4. the column
 # ---------------------------------------------------------------------------
