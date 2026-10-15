@@ -5385,6 +5385,13 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
    every tier below keeps its own threshold; the row details carry it there. */
 .fa-app .fa-board-table .fc-il   { width: 44px; }
 @container faboard (max-width: 1065px) { .fa-app .fa-board-table .fc-il { display: none; } }
+/* Likely destination (Q9_19): drawn only while FA_DESTINATION_SERVE is on, and
+   it folds at 742 + 64 + the 280 Player floor. With the IL column drawn too
+   (742 + 44 + 64 + 280), the IL column yields its slot to it between the two
+   thresholds. The row details carry both. */
+.fa-app .fa-board-table .fc-dest { width: 64px; white-space: nowrap; }
+@container faboard (max-width: 1085px) { .fa-app .fa-board-table .fc-dest { display: none; } }
+@container faboard (min-width: 1086px) and (max-width: 1129px) { .fa-app .fa-board-wrap.fa-has-il .fa-board-table .fc-il { display: none; } }
 /* Board tools. The sort picker is ALWAYS visible, at every width: downside WAR,
    star odds and prior AAV have no column at any tier, so a picker behind a
    container gate would leave them reachable only by hand-typing #sort=. It gets

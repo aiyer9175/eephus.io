@@ -564,11 +564,21 @@ def class_vectors(members: list[dict], fit_record: dict, ctx: dict, *,
     every member's (from, pos). A member without projGuar or projAav gets no
     vector (counted by the caller). ``state`` (club_state) is needed only when
     the arm carries a Club Ledger term."""
+    keys, _comps, X, names = _class_design(members, fit_record, ctx, state)
+    P = predict_proba(X, fit_record["coefs"], names)
+    return {k: [float(p) for p in P[i]] for i, k in enumerate(keys)}
+
+
+def _class_design(members: list[dict], fit_record: dict, ctx: dict,
+                  state: dict | None) -> tuple[list, list, np.ndarray, tuple]:
+    """The priced members' keys, Fit components and standardized design array
+    under one fitted arm: the one path class_vectors and the served drivers
+    both read, so a driver can never describe a vector it did not build."""
     names = tuple(fit_record["features"])
     if any(f in L_FEATS for f in names) and state is None:
         raise ValueError("this arm reads Club Ledger terms: pass club_state(Y)")
     outgoing = outgoing_groups((m.get("from"), m.get("pos")) for m in members)
-    keys, feats = [], []
+    keys, feats, comps_all = [], [], []
     for m in members:
         if not m.get("projGuar") or not m.get("projAav"):
             continue
@@ -583,6 +593,151 @@ def class_vectors(members: list[dict], fit_record: dict, ctx: dict, *,
                  "incumbent": [float(comps[o]["incumbent"]) for o in ORGS]}
         keys.append(m["key"])
         feats.append(f)
+        comps_all.append(comps)
     X = apply_standardization(stack(feats, names), names, fit_record.get("standardization") or {})
-    P = predict_proba(X, fit_record["coefs"], names)
-    return {k: [float(p) for p in P[i]] for i, k in enumerate(keys)}
+    return keys, comps_all, X, names
+
+
+# --------------------------------------------------------------------------
+# the served payload (gate section 16, behind FA_DESTINATION_SERVE)
+# --------------------------------------------------------------------------
+# One letter per driver keeps 232 members x 5 clubs x 3 drivers small on the
+# wire. "b" is the banded will-spend term the Fit ships (behavior_cond).
+DRIVER_CODES = {"need": "n", "window": "w", "afford": "a", "park": "k",
+                "behavior": "b", "incumbent": "i", "fa_share_3": "s",
+                "payroll_level": "l", "tax_multiplier": "t", "qo_cost": "q"}
+DRIVER_LABELS = {"n": "need at his position", "w": "contention window",
+                 "a": "payroll room", "k": "park", "b": "will-spend history",
+                 "i": "his own club", "s": "free-agent spend share",
+                 "l": "payroll level", "t": "tax multiplier",
+                 "q": "qualifying-offer pick cost"}
+SERVED_TOP = 8
+SERVED_DRIVER_CLUBS = 5
+SERVED_DRIVERS = 3
+#: Members off the market: a signed player has his club and an exercised
+#: option keeps him where he is. Neither gets a served vector; both still feed
+#: the need proxy, exactly as the forward-read freeze read them.
+OFF_MARKET = ("signed", "option_exercised")
+
+
+def serving_record(art: dict) -> tuple[str, dict]:
+    """The arm the ship rule named and its frozen serving fit, after checking
+    that the fit's coefficients hash to the artifact's coef_hash by the lab's
+    own recipe (tools/fa_destination_lab.serving_fit)."""
+    arm = (art.get("verdict") or {}).get("serve")
+    if not arm:
+        raise ValueError("the destination look named no arm to serve")
+    rec = art["reported"]["serving_fit"][arm]
+    got = coef_hash({"arm": arm, "winter": "serving", "names": list(rec["features"]),
+                     "coefs": rec["coefs"], "standardization": rec["standardization"]})
+    if not (got == rec["coef_hash"] == art["coef_hash"]):
+        raise ValueError(f"serving fit hash {got} does not match the artifact's {art['coef_hash']}")
+    return arm, rec
+
+
+def driver_contributions(comps: dict, x_row: np.ndarray, fit_record: dict) -> dict:
+    """{driver: [30 logit contributions]} for one member: each fitted
+    coefficient times its feature, with F split into its five weighted terms.
+    Softmax ignores a shift common to all 30 clubs, so each is centred on its
+    mean over the clubs: the lift that term gives one club over the average
+    club. They sum, with the centred whole, to the member's utilities."""
+    names = tuple(fit_record["features"])
+    coefs = fit_record["coefs"]
+    out: dict[str, np.ndarray] = {}
+    for i, f in enumerate(names):
+        if f == "fit_analog":
+            tau = float(coefs[f])
+            for t, field in (("need", "need"), ("window", "window"), ("afford", "afford"),
+                             ("park", "park"), ("behavior", "behavior_cond")):
+                out[t] = np.asarray([tau * REGISTERED_WEIGHTS[t] * float(comps[o][field])
+                                     for o in ORGS])
+        else:
+            out[f] = float(coefs[f]) * np.asarray(x_row[:, i], dtype=float)
+    return {k: v - v.mean() for k, v in out.items()}
+
+
+def top_drivers(contrib: dict, j: int) -> str:
+    """Club j's three largest positive lifts, largest first, as driver codes."""
+    ranked = sorted(((float(v[j]), k) for k, v in contrib.items()), key=lambda t: (-t[0], t[1]))
+    return "".join(DRIVER_CODES[k] for val, k in ranked[:SERVED_DRIVERS] if val > 0)
+
+
+def gate3_receipts(g3: dict) -> dict:
+    """The Gate 3 table (census M04-14), read from data/fa_gate3_eval.json:
+    its registered arms and, beside them, the banded twin the Fit ships."""
+    tcg = g3.get("teamfit_conditional_gate") or {}
+    rows = dict(g3.get("results") or {})
+    if tcg.get("chain_candidate"):
+        rows["banded_twin"] = tcg["chain_candidate"]
+    return {"generated_at": g3.get("generated_at"), "rows": rows,
+            "verdicts": g3.get("verdicts") or {}, "mde95": tcg.get("mde95"),
+            "banded_measured_at": tcg.get("measured_at")}
+
+
+def destination_receipts(art: dict) -> dict:
+    """The destination gate's receipts, read from data/fa_destination_eval.json."""
+    pf = art.get("primary_frame") or {}
+    floors = art.get("floors") or {}
+    h2h = (((art.get("industry") or {}).get("retro") or {}).get("head_to_head") or {})
+    arm = (art.get("verdict") or {}).get("serve")
+    return {
+        "generated_at": art.get("generated_at"), "gate_doc": art.get("gate_doc"),
+        "n_scored": pf.get("n_scored"), "scored_winters": pf.get("scored_winters"),
+        "metrics": {k: {m: round(float(v[m]), 4) for m in ("top1", "top3", "top5", "mrr", "log_loss")
+                        if v.get(m) is not None}
+                    for k, v in (art.get("metrics") or {}).items()
+                    if not k.startswith("registered_")},
+        "floors": {"mrr_mde95": floors.get("mrr_mde95"),
+                   "log_loss_floor": (round(float(floors["log_loss_floor"]), 4)
+                                      if floors.get("log_loss_floor") is not None else None)},
+        "clauses": {a: {c: v for c, v in blk.items() if re.fullmatch(r"C[1-5]", c)}
+                    for a, blk in (art.get("clauses") or {}).items()},
+        "verdict": art.get("verdict") or {},
+        "loss_ledger": art.get("loss_ledger") or [],
+        "industry_retro": h2h.get(arm) if arm else None,
+    }
+
+
+def served_payload(members: list[dict], class_year: int, art: dict, gate3: dict,
+                   ctx: dict, *, generated_at: str, state: dict | None = None) -> dict:
+    """data/fa_destinations.json (gate section 16): every on-market priced
+    member of the class, from the artifact's frozen serving fit through the
+    design class_vectors builds (the builder the lab and the freeze import).
+
+    P(signs) is conditional on a major-league deal this winter. It never reads
+    P(enter): a pending-option member's vector holds 'if he reaches the
+    market'. Counts only, no club dollar figure."""
+    arm, rec = serving_record(art)
+    keys, comps_all, X, names = _class_design(members, rec, ctx, state)
+    P = predict_proba(X, rec["coefs"], names)
+    status = {m["key"]: m.get("status") for m in members}
+    out_members: dict[str, dict] = {}
+    expected = np.zeros(N_CLUBS)
+    for i, k in enumerate(keys):
+        if status.get(k) in OFF_MARKET:
+            continue
+        p = P[i]
+        order = sorted(range(N_CLUBS), key=lambda j: (-p[j], ORGS[j]))[:SERVED_TOP]
+        contrib = driver_contributions(comps_all[i], X[i], rec)
+        out_members[k] = {
+            "top": [[ORGS[j], round(float(p[j]), 4)] for j in order],
+            "rest_p": round(float(1.0 - sum(p[j] for j in order)), 4),
+            "drivers": [top_drivers(contrib, j) for j in order[:SERVED_DRIVER_CLUBS]],
+        }
+        expected += p
+    realized = (art.get("reported") or {}).get("expected_mlb_deals_by_club") or {}
+    winters = sorted(realized, key=int)
+    clubs = {}
+    for j, o in enumerate(ORGS):
+        r = [realized[w][o]["realized"] for w in winters if o in realized[w]]
+        clubs[o] = {"expected_mlb_deals": round(float(expected[j]), 2),
+                    "realized_mean": round(sum(r) / len(r), 2) if r else None}
+    return {
+        "model_id": MODEL_ID, "generated_at": generated_at, "class_year": int(class_year),
+        "arm": arm, "coef_hash": rec["coef_hash"],
+        "members": out_members,
+        "clubs": clubs,
+        "realized_winters": [int(w) for w in winters],
+        "driver_labels": DRIVER_LABELS,
+        "model": {"gate3": gate3_receipts(gate3), "destination": destination_receipts(art)},
+    }

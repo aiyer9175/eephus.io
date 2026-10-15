@@ -662,6 +662,10 @@ _SIDECAR_GLOBS = (
     # plus the preview page build_site writes beside it.
     ".cache/scouting/preview/**/*",
     "data/scouting_reference.json",
+    # Q9_19: fa_export's destination payload (the preview under .cache while
+    # FA_DESTINATION_SERVE is off, data/ once the owner flips it).
+    ".cache/fa_destination/preview/**/*",
+    "data/fa_destinations.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -1084,6 +1088,11 @@ _SIDECAR_WRITE_TARGETS = (
     # resolves it at call time.
     ("proj_export", "TEAM_DISPLAY_PREVIEW_PATH",
      ".cache/team_projection/preview/team_outlook_display.json"),
+    # Q9_19: fa_export's second output, the destination payload; written by
+    # _write_destinations, which resolves both at call time.
+    ("fa_export", "DEST_PREVIEW_PATH",
+     ".cache/fa_destination/preview/fa_destinations.json"),
+    ("fa_export", "DEST_LIVE_PATH", "data/fa_destinations.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
