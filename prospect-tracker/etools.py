@@ -1059,8 +1059,8 @@ IPW_L2 = 1.0
 LIVE_FROM = "2026-01-01"
 #: plain mechanical labels for the sub-drivers (the card and the Library)
 SUBDRIVER_LABELS = {
-    "k_rw": "strikeout rate, translated", "bb_rw": "walk rate, translated",
-    "iso_rw": "ISO, translated", "babip_rw": "BABIP, translated", "kbb_rw": "K-BB rate, translated",
+    "k_rw": "translated strikeout rate", "bb_rw": "translated walk rate",
+    "iso_rw": "translated ISO", "babip_rw": "translated BABIP", "kbb_rw": "translated K-BB rate",
     "ppa_par": "pitches per PA vs level", "ppa_raw": "pitches per PA",
     "pbf_raw": "pitches per batter faced", "pbf_par": "pitches per batter vs level",
     "pbp_swing": "swing rate", "pbp_contact": "contact rate", "pbp_swstr": "swinging-strike rate",
@@ -2638,6 +2638,16 @@ TOOL_NAMES = {"hit": "Hit", "game_pwr": "Game power", "raw_pwr": "Raw power", "s
               "fb": "Fastball", "cmd": "Command", "sl": "Slider", "cb": "Curveball", "ch": "Changeup"}
 
 
+#: the MLB outcome each tool is scored against, in plain words (the Library)
+TOOL_OUTCOME = {"hit": "strikeout rate (lower is better)", "game_pwr": "ISO",
+                "raw_pwr": "average exit velocity", "speed": "sprint speed",
+                "field": "outs above average per 1,000 innings", "throw": "arm strength",
+                "pitch_sel": "chase rate, 2026 (lower is better)", "bat_ctrl": "zone contact rate, 2026",
+                "fb": "pitcher strikeout rate", "cmd": "pitcher walk rate (lower is better)",
+                "sl": "whiff rate on sliders and sweepers", "cb": "whiff rate on curveballs",
+                "ch": "whiff rate on changeups and splitters"}
+
+
 def _lbl_rec(rec: dict | None, *keys) -> dict | None:
     if not rec or not rec.get("computable", True):
         return None
@@ -2664,7 +2674,8 @@ def build_library(*, log=print) -> Path:
     for tool, spec in TOOLS.items():
         e = look["etools"].get(tool) or {}
         row = {"tool": tool, "key": spec["key"], "name": TOOL_NAMES[tool], "side": spec["side"],
-               "label_mlb": spec["mlb"], "label_um": spec["um"], "verdict": e.get("verdict"),
+               "label_mlb": spec["mlb"], "label_um": spec["um"], "outcome": TOOL_OUTCOME[tool],
+               "verdict": e.get("verdict"),
                "admitted": [{"key": j, "label": SUBDRIVER_LABELS.get(j, j),
                              "no_added_effect": j in (a2.get(tool) or [])} for j in e.get("admitted") or []],
                "labels": {lb: _lbl_rec((e.get("labels") or {}).get(lb), *keep) for lb in LABELS}}
@@ -2711,7 +2722,7 @@ def build_library(*, log=print) -> Path:
            "gate": {"doc": GATE_DOC, "sha": look.get("gate_sha"), "look_at": look.get("spent_at")},
            "amendments": [{"doc": REVIEW_DOC, "sha": rev.get("amendment_sha"), "read_at": rev.get("spent_at")},
                           {"doc": FLIP_DOC, "sha": flip.get("amendment_sha"), "read_at": flip.get("spent_at")}],
-           "survivorship": SURVIVORSHIP, "frame_rows": (look.get("universe") or {}).get("rows"),
+           "frame_rows": (look.get("universe") or {}).get("rows"),
            "tests": look.get("tests"), "tools": tools, "weighting": weighting,
            "pitch_rate": {"efv_tests": p3.get("tests") or (look.get("tests") or {}).get("pitch_rate_tests"),
                           "efv_flagged": (len(p3.get("flagged") or []) if p3

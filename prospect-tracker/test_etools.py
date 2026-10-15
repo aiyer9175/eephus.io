@@ -610,7 +610,7 @@ def test_preview_serves_the_registered_construction_with_its_drivers(monkeypatch
     assert t1["etool_recentred"] == pytest.approx(52.5 - 4.0) and t2["etool_recentred"] == pytest.approx(54.0)
     want1 = t1["etool_recentred"] if serve == "recentred" else t1["etool_uncentred"]
     assert t1["etool"] == pytest.approx(want1) and t1["construction"] == serve
-    assert t1["drivers"][0]["key"] == "k_rw" and t1["drivers"][0]["label"] == "strikeout rate, translated"
+    assert t1["drivers"][0]["key"] == "k_rw" and t1["drivers"][0]["label"] == "translated strikeout rate"
     assert t1["drivers"][0]["points"] == pytest.approx(want1 - 52.5)
     assert doc["tools"]["hit"]["drifted"] is True and doc["tools"]["hit"]["promotion"] == "PROMOTION-CLEAR"
 
@@ -639,3 +639,29 @@ def test_library_summary_copies_the_lab_artifacts(monkeypatch, tmp_path):
     assert [a["no_added_effect"] for a in hit["admitted"]] == [False, True]
     assert doc["pitch_rate"] == {"efv_tests": 232, "efv_flagged": 0, "efv_min_q": 0.106}
     assert doc["flag_etools_on"] is False
+
+
+def test_card_flag_mirrors_etools_on_and_fetches_only_when_on():
+    import re
+    html = (Path(E.__file__).resolve().parent / "prospx" / "index.html").read_text(encoding="utf-8")
+    m = re.search(r"const ETOOLS_CARD_ON = (true|false);", html)
+    assert m, "the card's eTools flag is missing"
+    assert (m.group(1) == "true") is E.ETOOLS_ON
+    body = html[html.index("function ensureETools()"):]
+    body = body[:body.index("\n}\n") + 3]
+    assert body.index("if (!_ETOOLS_UI") < body.index('fetch("/data/etools.json"'), "the fetch is gated"
+    # the six passing tools map onto the card's grade keys
+    assert 'const _ETOOL_KEY = { hit: "eHIT", pwr: "ePOW", pitch_sel: "eSEL", bat_ctrl: "eBAT", fb: "eFB", cmd: "eCMD" };' in html
+
+
+def test_library_summary_is_dated_and_lists_every_tool():
+    import json
+    p = E.LIBRARY_PATH
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    assert doc.get("generated_at")
+    assert [t["tool"] for t in doc["tools"]] == list(E.TOOLS)
+    assert doc["flag_etools_on"] is E.ETOOLS_ON
+    passed = [t["key"] for t in doc["tools"] if t["verdict"] == "PASS"]
+    assert passed == ["eHIT", "ePOW", "eSEL", "eBAT", "eFB", "eCMD"]
+    gl = (Path(E.__file__).resolve().parent / "assets" / "glossary.js").read_text(encoding="utf-8")
+    assert 'fetch("/data/etools_eval.json"' in gl and "function renderETools()" in gl

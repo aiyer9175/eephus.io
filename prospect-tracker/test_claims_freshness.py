@@ -235,6 +235,13 @@ CLAIM_SURFACES = (
 # tol_mode "abs": |claim - actual| <= tol.
 # tol_mode "rel": |claim - actual| <= tol * |actual| (copy rounds).
 GLOSSARY_CLAIMS = (
+    # The eHIT entry quotes the eTools look (docs/tools-2026-10/ETOOLS_GATE.md,
+    # 2026-10-15) through the Library summary data/etools_eval.json (tools[0] is
+    # hit): the consensus hit grade and eHIT against MLB strikeout rate.
+    ("ehit", "MLB rho consensus", r"rank correlation of (0\.\d+) and eHIT",
+     "data/etools_eval.json", ("tools", 0, "labels", "mlb", "rho_consensus"), "abs", 0.0005),
+    ("ehit", "MLB rho eHIT", r"and eHIT at (0\.\d+)",
+     "data/etools_eval.json", ("tools", 0, "labels", "mlb", "rho_etool"), "abs", 0.0005),
     # The positional ladder entry quotes the one read of docs/ewar/LADDER_V2_GATE.md
     # (EWAR_LADDER_REDERIVE, 2026-10-15): the pooled held-out error gap to the
     # Baseball-Reference inversion. Quoted to three decimals.
