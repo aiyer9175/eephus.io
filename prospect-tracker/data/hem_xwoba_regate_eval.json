@@ -1,0 +1,1053 @@
+{
+ "generated_at": "2026-10-15",
+ "experiment": "RE-BASELINE of RE-GATE 1 (arms A1, A2) on the extended pair set, plus arm A3",
+ "gate_document": "docs/HEM_XWOBA_REGATE_GATE.md",
+ "prior_gate_document": "docs/HEM_RIV_REGATE_GATE.md",
+ "pre_registered": "2026-10-15, frozen and committed alone before any number in this artifact was computed",
+ "models": [
+  "xhem_plus",
+  "fwdhem_plus",
+  "hem_plus"
+ ],
+ "seasons": [
+  2016,
+  2017,
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "seed": 20261015,
+ "boot": 2000,
+ "owner_waived_early_read": {
+  "registered_date": "2026-11-16 or later (docs/HEM_RIV_REGATE_GATE.md R1-12)",
+  "run_date": "2026-10-15",
+  "authority": "owner 2026-10-14 (EW3-5): registered look days and dates are waived; EW3-6: the 2026 season is treated as complete as of 2026-10-01 through the logged PLUS_LAB_SEASON_COMPLETE_ASOF override; this read is an OWNER-WAIVED EARLY READ, never the registered date's read",
+  "season_complete_override": {
+   "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+   "seasons": {
+    "2026": "2026-10-01"
+   },
+   "default_month_day": [
+    11,
+    15
+   ],
+   "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+  }
+ },
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "actual wOBA in Y+1 (raw, pooled across seasons)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "actual wOBA in Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "season_complete_override": {
+   "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+   "seasons": {
+    "2026": "2026-10-01"
+   },
+   "default_month_day": [
+    11,
+    15
+   ],
+   "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+  },
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "savant_files": {
+  "2016": {
+   "file": "expected_batter_2016.csv",
+   "exists": true,
+   "sha256": "9f0cc11f247a968073fc761a00a58f3d89be6824be8cc8407be9ff242ae0ed16",
+   "bytes": 119525,
+   "rows_loaded": 962,
+   "max_pa": 744.0,
+   "n_600_plus_pa": 88,
+   "mtime": "2026-07-05T15:31:48"
+  },
+  "2017": {
+   "file": "expected_batter_2017.csv",
+   "exists": true,
+   "sha256": "eec55473fc2db5d72997a09d58717da3a8c8024515409e69d0d7631a37ec9920",
+   "bytes": 119624,
+   "rows_loaded": 952,
+   "max_pa": 725.0,
+   "n_600_plus_pa": 77,
+   "mtime": "2026-07-05T15:31:48"
+  },
+  "2018": {
+   "file": "expected_batter_2018.csv",
+   "exists": true,
+   "sha256": "6cf2c023f8c9bdef7c3a5b359ef0364429ac6bee4e1e83d294b2d28c048d5361",
+   "bytes": 121207,
+   "rows_loaded": 982,
+   "max_pa": 745.0,
+   "n_600_plus_pa": 72,
+   "mtime": "2026-07-05T15:31:48"
+  },
+  "2019": {
+   "file": "expected_batter_2019.csv",
+   "exists": true,
+   "sha256": "9beea6d5192ae16fa4d710d8e7ac6ce767e9f9eb721fdabb9656ef96fd1ecbfd",
+   "bytes": 121728,
+   "rows_loaded": 985,
+   "max_pa": 747.0,
+   "n_600_plus_pa": 70,
+   "mtime": "2026-07-05T15:31:48"
+  },
+  "2021": {
+   "file": "expected_batter_2021.csv",
+   "exists": true,
+   "sha256": "cd412383dc259dc97dcce08b6edf6408f98c78a5b29e6a8239043f06125ac846",
+   "bytes": 125769,
+   "rows_loaded": 1043,
+   "max_pa": 724.0,
+   "n_600_plus_pa": 59,
+   "mtime": "2026-07-05T15:31:49"
+  },
+  "2022": {
+   "file": "expected_batter_2022.csv",
+   "exists": true,
+   "sha256": "d0e7b2e15265cdc0508460869d3c8b04d389fab57a28c85f6910dc212783de6a",
+   "bytes": 94363,
+   "rows_loaded": 693,
+   "max_pa": 724.0,
+   "n_600_plus_pa": 59,
+   "mtime": "2026-07-05T15:31:49"
+  },
+  "2023": {
+   "file": "expected_batter_2023.csv",
+   "exists": true,
+   "sha256": "c9748b6a4fc12f826dbdf8f8de43ab160fdcd3e666a47f5e94be518e4ea98835",
+   "bytes": 89936,
+   "rows_loaded": 656,
+   "max_pa": 753.0,
+   "n_600_plus_pa": 74,
+   "mtime": "2026-07-05T15:31:49"
+  },
+  "2024": {
+   "file": "expected_batter_2024.csv",
+   "exists": true,
+   "sha256": "49f1b57dc2ab1840eb5a467c0f812bb50631f7a905f970da0c94abe087bd0438",
+   "bytes": 89487,
+   "rows_loaded": 651,
+   "max_pa": 735.0,
+   "n_600_plus_pa": 78,
+   "mtime": "2026-06-11T15:38:52"
+  },
+  "2025": {
+   "file": "expected_batter_2025.csv",
+   "exists": true,
+   "sha256": "0f929c6474db90b9967b94f915f6efee2849464f016ca691275d22afdd7576e3",
+   "bytes": 91890,
+   "rows_loaded": 673,
+   "max_pa": 732.0,
+   "n_600_plus_pa": 68,
+   "mtime": "2026-06-11T15:38:52"
+  },
+  "2026": {
+   "file": "expected_batter_2026.csv",
+   "exists": true,
+   "sha256": "7a0e80d00353ad9567aea1cde4ce3e3862897b5b66f3df92909796e59bf7cc43",
+   "bytes": 90573,
+   "rows_loaded": 661,
+   "max_pa": 726.0,
+   "n_600_plus_pa": 86,
+   "mtime": "2026-10-14T11:09:09"
+  }
+ },
+ "coverage": {
+  "note": "Coverage is reported separately and is NEVER used to explain a gap. The gate speaks only about the PA >= 200 subset while the board stamps every tracked hitter at PA >= 100, and that sentence travels with the verdict.",
+  "pair_set_n_by_predictor_season": {
+   "2016": 261,
+   "2017": 277,
+   "2018": 262,
+   "2021": 267,
+   "2022": 261,
+   "2023": 278,
+   "2024": 265,
+   "2025": 263
+  },
+  "new_block_predictor_season": 2025,
+  "new_block_n": 263,
+  "new_block_floor": 200,
+  "served_normalizer_pool_by_season": {
+   "2016": {
+    "xhem_pool_pa_ge_100": 438,
+    "fwdhem_pool_pa_ge_100_with_hem_core": 438,
+    "hem_core_pool": 964
+   },
+   "2017": {
+    "xhem_pool_pa_ge_100": 435,
+    "fwdhem_pool_pa_ge_100_with_hem_core": 435,
+    "hem_core_pool": 954
+   },
+   "2018": {
+    "xhem_pool_pa_ge_100": 448,
+    "fwdhem_pool_pa_ge_100_with_hem_core": 448,
+    "hem_core_pool": 984
+   },
+   "2021": {
+    "xhem_pool_pa_ge_100": 463,
+    "fwdhem_pool_pa_ge_100_with_hem_core": 463,
+    "hem_core_pool": 1043
+   },
+   "2022": {
+    "xhem_pool_pa_ge_100": 469,
+    "fwdhem_pool_pa_ge_100_with_hem_core": 469,
+    "hem_core_pool": 693
+   },
+   "2023": {
+    "xhem_pool_pa_ge_100": 461,
+    "fwdhem_pool_pa_ge_100_with_hem_core": 461,
+    "hem_core_pool": 656
+   },
+   "2024": {
+    "xhem_pool_pa_ge_100": 455,
+    "fwdhem_pool_pa_ge_100_with_hem_core": 455,
+    "hem_core_pool": 651
+   },
+   "2025": {
+    "xhem_pool_pa_ge_100": 461,
+    "fwdhem_pool_pa_ge_100_with_hem_core": 461,
+    "hem_core_pool": 673
+   }
+  },
+  "board_stamped_never_eligible_by_season": {
+   "2016": 177,
+   "2017": 158,
+   "2018": 186,
+   "2021": 196,
+   "2022": 208,
+   "2023": 183,
+   "2024": 190,
+   "2025": 198
+  },
+  "n_pairs_dropped_partial_outcome_season": 0
+ },
+ "n_forward_pairs": {
+  "A1": 2134,
+  "A2": 2134,
+  "A3": 2134
+ },
+ "n_pairs_dropped_no_hem_core": 0,
+ "frozen_subset_reproduction": {
+  "note": "the rows whose predictor season is 2024 or earlier, in the same construction and row order as data/xhem_served_regate_eval.json, re-drawn under SEED_R1; zero verdict weight; a mismatch STOPS the run",
+  "seed": 20260918,
+  "n_old_rows": {
+   "A1": 1871,
+   "A2": 1871
+  },
+  "prior_n": {
+   "A1": 1871,
+   "A2": 1871
+  },
+  "A1_xhem_plus": {
+   "recomputed": {
+    "v1": {
+     "rho_primary": 0.4619,
+     "rho_baseline": 0.4108,
+     "gap_ci": {
+      "mean": 0.0508,
+      "lo95": 0.0241,
+      "hi95": 0.0767
+     },
+     "gap_sd_bootstrap": 0.0134,
+     "mde95_in_run": 0.0221,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": true,
+     "hi95_lt_0": false
+    },
+    "v2": {
+     "rho_primary": 0.4711,
+     "rho_baseline": 0.4125,
+     "gap_ci": {
+      "mean": 0.0582,
+      "lo95": 0.0317,
+      "hi95": 0.0868
+     },
+     "gap_sd_bootstrap": 0.014,
+     "mde95_in_run": 0.023,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": true,
+     "hi95_lt_0": false
+    }
+   },
+   "prior": {
+    "v1": {
+     "rho_primary": 0.4619,
+     "rho_baseline": 0.4108,
+     "gap_ci": {
+      "mean": 0.0508,
+      "lo95": 0.0241,
+      "hi95": 0.0767
+     },
+     "gap_sd_bootstrap": 0.0134,
+     "mde95_in_run": 0.0221,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": true,
+     "hi95_lt_0": false
+    },
+    "v2": {
+     "rho_primary": 0.4711,
+     "rho_baseline": 0.4125,
+     "gap_ci": {
+      "mean": 0.0582,
+      "lo95": 0.0317,
+      "hi95": 0.0868
+     },
+     "gap_sd_bootstrap": 0.014,
+     "mde95_in_run": 0.023,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": true,
+     "hi95_lt_0": false
+    }
+   },
+   "match_to_4dp": {
+    "v1": {
+     "rho_primary": true,
+     "rho_baseline": true,
+     "gap_ci": true
+    },
+    "v2": {
+     "rho_primary": true,
+     "rho_baseline": true,
+     "gap_ci": true
+    }
+   },
+   "n_matches_prior": true,
+   "reproduces": true
+  },
+  "A2_fwdhem_plus": {
+   "recomputed": {
+    "v1": {
+     "rho_primary": 0.4613,
+     "rho_baseline": 0.4543,
+     "gap_ci": {
+      "mean": 0.0071,
+      "lo95": -0.0012,
+      "hi95": 0.0158
+     },
+     "gap_sd_bootstrap": 0.0044,
+     "mde95_in_run": 0.0072,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": false,
+     "hi95_lt_0": false
+    },
+    "v2": {
+     "rho_primary": 0.4701,
+     "rho_baseline": 0.4683,
+     "gap_ci": {
+      "mean": 0.0016,
+      "lo95": -0.0076,
+      "hi95": 0.0107
+     },
+     "gap_sd_bootstrap": 0.0046,
+     "mde95_in_run": 0.0076,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": false,
+     "hi95_lt_0": false
+    }
+   },
+   "prior": {
+    "v1": {
+     "rho_primary": 0.4613,
+     "rho_baseline": 0.4543,
+     "gap_ci": {
+      "mean": 0.0071,
+      "lo95": -0.0012,
+      "hi95": 0.0158
+     },
+     "gap_sd_bootstrap": 0.0044,
+     "mde95_in_run": 0.0072,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": false,
+     "hi95_lt_0": false
+    },
+    "v2": {
+     "rho_primary": 0.4701,
+     "rho_baseline": 0.4683,
+     "gap_ci": {
+      "mean": 0.0016,
+      "lo95": -0.0076,
+      "hi95": 0.0107
+     },
+     "gap_sd_bootstrap": 0.0046,
+     "mde95_in_run": 0.0076,
+     "n_boot_draws": 2000,
+     "lo95_gt_0": false,
+     "hi95_lt_0": false
+    }
+   },
+   "match_to_4dp": {
+    "v1": {
+     "rho_primary": true,
+     "rho_baseline": true,
+     "gap_ci": true
+    },
+    "v2": {
+     "rho_primary": true,
+     "rho_baseline": true,
+     "gap_ci": true
+    }
+   },
+   "n_matches_prior": true,
+   "reproduces": true
+  },
+  "reproduces_all": true
+ },
+ "arms": {
+  "A1_xhem_plus": {
+   "row": "xhem_plus",
+   "estimand": "rho(xHEM+_served(Y), wOBA(Y+1)) - rho(actual wOBA(Y), wOBA(Y+1))",
+   "baseline": "raw actual wOBA(Y), the X-H3 baseline, unchanged",
+   "pre_registered_expectation": "EXPECTED TO SURVIVE (gate section 8, item 1)",
+   "ladder": {
+    "D0": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4535,
+      "rho_baseline": 0.4076,
+      "gap_ci": {
+       "mean": 0.046,
+       "lo95": 0.0219,
+       "hi95": 0.0703
+      },
+      "gap_sd_bootstrap": 0.0124,
+      "mde95_in_run": 0.0204,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.466,
+      "rho_baseline": 0.4089,
+      "gap_ci": {
+       "mean": 0.0575,
+       "lo95": 0.0323,
+       "hi95": 0.0824
+      },
+      "gap_sd_bootstrap": 0.0127,
+      "mde95_in_run": 0.0209,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 194,
+     "n_tied_rows": 1940
+    },
+    "D1": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4638,
+      "rho_baseline": 0.4076,
+      "gap_ci": {
+       "mean": 0.0562,
+       "lo95": 0.0318,
+       "hi95": 0.0807
+      },
+      "gap_sd_bootstrap": 0.0127,
+      "mde95_in_run": 0.0208,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.4681,
+      "rho_baseline": 0.4089,
+      "gap_ci": {
+       "mean": 0.0596,
+       "lo95": 0.0338,
+       "hi95": 0.0857
+      },
+      "gap_sd_bootstrap": 0.0129,
+      "mde95_in_run": 0.0212,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 939,
+     "n_tied_rows": 1195
+    },
+    "D2": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4598,
+      "rho_baseline": 0.4076,
+      "gap_ci": {
+       "mean": 0.0523,
+       "lo95": 0.0273,
+       "hi95": 0.0772
+      },
+      "gap_sd_bootstrap": 0.0128,
+      "mde95_in_run": 0.021,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.4682,
+      "rho_baseline": 0.4089,
+      "gap_ci": {
+       "mean": 0.0597,
+       "lo95": 0.0341,
+       "hi95": 0.0854
+      },
+      "gap_sd_bootstrap": 0.013,
+      "mde95_in_run": 0.0214,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 939,
+     "n_tied_rows": 1195
+    },
+    "D3": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4598,
+      "rho_baseline": 0.4076,
+      "gap_ci": {
+       "mean": 0.0523,
+       "lo95": 0.0273,
+       "hi95": 0.0772
+      },
+      "gap_sd_bootstrap": 0.0128,
+      "mde95_in_run": 0.021,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.4682,
+      "rho_baseline": 0.4089,
+      "gap_ci": {
+       "mean": 0.0597,
+       "lo95": 0.0341,
+       "hi95": 0.0854
+      },
+      "gap_sd_bootstrap": 0.013,
+      "mde95_in_run": 0.0214,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 939,
+     "n_tied_rows": 1195
+    },
+    "D4": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4603,
+      "rho_baseline": 0.4076,
+      "gap_ci": {
+       "mean": 0.0527,
+       "lo95": 0.0278,
+       "hi95": 0.0777
+      },
+      "gap_sd_bootstrap": 0.0128,
+      "mde95_in_run": 0.021,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.4688,
+      "rho_baseline": 0.4089,
+      "gap_ci": {
+       "mean": 0.0603,
+       "lo95": 0.0346,
+       "hi95": 0.086
+      },
+      "gap_sd_bootstrap": 0.013,
+      "mde95_in_run": 0.0214,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 143,
+     "n_tied_rows": 1991
+    }
+   },
+   "verdict_rung": "D4",
+   "passes_v1_after_holm": true,
+   "passes_v2_after_holm": true,
+   "table_row": "both",
+   "verdict": "validated",
+   "verdict_reason": "The SERVED construction clears its baseline under BOTH conventions after Holm (k=3)."
+  },
+  "A2_fwdhem_plus": {
+   "row": "fwdhem_plus",
+   "estimand": "rho(fwdHEM+_served(Y), wOBA(Y+1)) - rho(Savant xwOBA(Y), wOBA(Y+1))",
+   "baseline": "raw Savant xwOBA(Y) alone, the X-H5 baseline, unchanged",
+   "pre_registered_expectation": "EXPECTED TO STAY PROVISIONAL (gate section 8, item 2)",
+   "ladder": {
+    "D0": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4628,
+      "rho_baseline": 0.4535,
+      "gap_ci": {
+       "mean": 0.0092,
+       "lo95": 0.0016,
+       "hi95": 0.0164
+      },
+      "gap_sd_bootstrap": 0.0038,
+      "mde95_in_run": 0.0063,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": true,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.4666,
+      "rho_baseline": 0.466,
+      "gap_ci": {
+       "mean": 0.0004,
+       "lo95": -0.0073,
+       "hi95": 0.0085
+      },
+      "gap_sd_bootstrap": 0.0041,
+      "mde95_in_run": 0.0067,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 2134,
+     "n_tied_rows": 0
+    },
+    "D1": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4572,
+      "rho_baseline": 0.4535,
+      "gap_ci": {
+       "mean": 0.0037,
+       "lo95": -0.0047,
+       "hi95": 0.0118
+      },
+      "gap_sd_bootstrap": 0.0042,
+      "mde95_in_run": 0.0069,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.4655,
+      "rho_baseline": 0.466,
+      "gap_ci": {
+       "mean": -0.0007,
+       "lo95": -0.0092,
+       "hi95": 0.0083
+      },
+      "gap_sd_bootstrap": 0.0045,
+      "mde95_in_run": 0.0074,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 2134,
+     "n_tied_rows": 0
+    },
+    "D2": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.458,
+      "rho_baseline": 0.4535,
+      "gap_ci": {
+       "mean": 0.0044,
+       "lo95": -0.0037,
+       "hi95": 0.0124
+      },
+      "gap_sd_bootstrap": 0.0041,
+      "mde95_in_run": 0.0067,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.4661,
+      "rho_baseline": 0.466,
+      "gap_ci": {
+       "mean": -0.0001,
+       "lo95": -0.0084,
+       "hi95": 0.0087
+      },
+      "gap_sd_bootstrap": 0.0044,
+      "mde95_in_run": 0.0072,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 2134,
+     "n_tied_rows": 0
+    },
+    "D3": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.458,
+      "rho_baseline": 0.4535,
+      "gap_ci": {
+       "mean": 0.0044,
+       "lo95": -0.0037,
+       "hi95": 0.0124
+      },
+      "gap_sd_bootstrap": 0.0041,
+      "mde95_in_run": 0.0067,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.4661,
+      "rho_baseline": 0.466,
+      "gap_ci": {
+       "mean": -0.0001,
+       "lo95": -0.0084,
+       "hi95": 0.0087
+      },
+      "gap_sd_bootstrap": 0.0044,
+      "mde95_in_run": 0.0072,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 2134,
+     "n_tied_rows": 0
+    },
+    "D4": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4585,
+      "rho_baseline": 0.4535,
+      "gap_ci": {
+       "mean": 0.005,
+       "lo95": -0.0033,
+       "hi95": 0.013
+      },
+      "gap_sd_bootstrap": 0.0041,
+      "mde95_in_run": 0.0068,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": false
+     },
+     "v2": {
+      "rho_primary": 0.4665,
+      "rho_baseline": 0.466,
+      "gap_ci": {
+       "mean": 0.0004,
+       "lo95": -0.0078,
+       "hi95": 0.0093
+      },
+      "gap_sd_bootstrap": 0.0044,
+      "mde95_in_run": 0.0072,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": false
+     },
+     "n_distinct_values": 100,
+     "n_tied_rows": 2034
+    }
+   },
+   "verdict_rung": "D4",
+   "passes_v1_after_holm": false,
+   "passes_v2_after_holm": false,
+   "table_row": "straddle",
+   "verdict": "provisional",
+   "verdict_reason": "DEMOTED: not separable from its baseline on the SERVED construction at this n under either convention."
+  },
+  "A3_hem_plus": {
+   "row": "hem_plus",
+   "estimand": "rho(HEM+_served(Y), wOBA(Y+1)) - rho(Savant xwOBA(Y), wOBA(Y+1))",
+   "baseline": "raw Savant xwOBA(Y) alone, the same rows as A2",
+   "pre_registered_expectation": "EXPECTED TO BE REFUTED (gate section 8, item 3)",
+   "ladder": {
+    "D3": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4095,
+      "rho_baseline": 0.4535,
+      "gap_ci": {
+       "mean": -0.044,
+       "lo95": -0.0665,
+       "hi95": -0.0218
+      },
+      "gap_sd_bootstrap": 0.0114,
+      "mde95_in_run": 0.0188,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": true
+     },
+     "v2": {
+      "rho_primary": 0.4149,
+      "rho_baseline": 0.466,
+      "gap_ci": {
+       "mean": -0.0516,
+       "lo95": -0.0745,
+       "hi95": -0.0287
+      },
+      "gap_sd_bootstrap": 0.0119,
+      "mde95_in_run": 0.0195,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": true
+     },
+     "n_distinct_values": 2134,
+     "n_tied_rows": 0
+    },
+    "D4": {
+     "seed": 20261015,
+     "v1": {
+      "rho_primary": 0.4095,
+      "rho_baseline": 0.4535,
+      "gap_ci": {
+       "mean": -0.044,
+       "lo95": -0.0664,
+       "hi95": -0.022
+      },
+      "gap_sd_bootstrap": 0.0114,
+      "mde95_in_run": 0.0187,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": true
+     },
+     "v2": {
+      "rho_primary": 0.4149,
+      "rho_baseline": 0.466,
+      "gap_ci": {
+       "mean": -0.0517,
+       "lo95": -0.0743,
+       "hi95": -0.0289
+      },
+      "gap_sd_bootstrap": 0.0119,
+      "mde95_in_run": 0.0195,
+      "n_boot_draws": 2000,
+      "lo95_gt_0": false,
+      "hi95_lt_0": true
+     },
+     "n_distinct_values": 109,
+     "n_tied_rows": 2025
+    }
+   },
+   "verdict_rung": "D4",
+   "passes_v1_after_holm": false,
+   "passes_v2_after_holm": false,
+   "table_row": "refuted",
+   "verdict": "deprecated",
+   "verdict_reason": "REFUTED: the D4 gap hi95 is below zero under at least one convention, so the claim is contradicted, not merely unestablished.",
+   "served_construction": "hem_plus.score_pool's path on the season's StatsAPI hitting statlines (hitter_export.load_season_hitting -> build_hitters): every bat with a wOBA denominator above zero enters; the anchor is Pool.mean_woba over bats at POOL_MIN_PA; hem_plus_raw = 100 + HEM_SPREAD_GAIN * (100 * shrunk wOBA / anchor - 100); the served integer is int(round(hem_plus_raw)). Re-scored per predictor season on the complete statlines (tools/xhem_plus_lab.load_hem_core) and read on the pair-set rows."
+  }
+ },
+ "sensitivity_A1s_served_xhem_vs_served_hem": {
+  "note": "labelled SENSITIVITY, zero verdict weight: the served xHEM+ integer against the served HEM+ integer on the HEM-core subset (gate section 3)",
+  "v1": {
+   "rho_primary": 0.4603,
+   "rho_baseline": 0.4095,
+   "gap_ci": {
+    "mean": 0.0507,
+    "lo95": 0.0283,
+    "hi95": 0.0737
+   },
+   "gap_sd_bootstrap": 0.0114,
+   "mde95_in_run": 0.0187,
+   "n_boot_draws": 2000,
+   "lo95_gt_0": true,
+   "hi95_lt_0": false
+  },
+  "v2": {
+   "rho_primary": 0.4688,
+   "rho_baseline": 0.4149,
+   "gap_ci": {
+    "mean": 0.0544,
+    "lo95": 0.0317,
+    "hi95": 0.0771
+   },
+   "gap_sd_bootstrap": 0.0118,
+   "mde95_in_run": 0.0194,
+   "n_boot_draws": 2000,
+   "lo95_gt_0": true,
+   "hi95_lt_0": false
+  },
+  "n_distinct_values": 143,
+  "n_tied_rows": 1991
+ },
+ "sensitivity_A3s_served_hem_vs_actual_woba": {
+  "note": "labelled SENSITIVITY, zero verdict weight: the served HEM+ integer against raw actual wOBA(Y), the parent comparison the hem_plus gate names, on the HEM-core subset (gate section 3)",
+  "v1": {
+   "rho_primary": 0.4095,
+   "rho_baseline": 0.4076,
+   "gap_ci": {
+    "mean": 0.002,
+    "lo95": -0.0131,
+    "hi95": 0.0176
+   },
+   "gap_sd_bootstrap": 0.0077,
+   "mde95_in_run": 0.0126,
+   "n_boot_draws": 2000,
+   "lo95_gt_0": false,
+   "hi95_lt_0": false
+  },
+  "v2": {
+   "rho_primary": 0.4149,
+   "rho_baseline": 0.4089,
+   "gap_ci": {
+    "mean": 0.0058,
+    "lo95": -0.0091,
+    "hi95": 0.0207
+   },
+   "gap_sd_bootstrap": 0.0077,
+   "mde95_in_run": 0.0127,
+   "n_boot_draws": 2000,
+   "lo95_gt_0": false,
+   "hi95_lt_0": false
+  },
+  "n_distinct_values": 109,
+  "n_tied_rows": 2025
+ },
+ "multiplicity": {
+  "family": "the three primary arms A1, A2 and A3, Holm k = 3, applied SEPARATELY within each convention (gate section 7)",
+  "total_primary_tests_in_the_gate_document": 3,
+  "outside_the_family_by_declaration": [
+   "D0",
+   "D1",
+   "D2",
+   "D3",
+   "frozen_subset_reproduction",
+   "A1s",
+   "A3s",
+   "every coverage figure"
+  ],
+  "v1": {
+   "k": 3,
+   "alpha": 0.05,
+   "procedure": "Holm step-down, one-sided on |delta|/sd",
+   "bonferroni_z_one_sided": 2.128,
+   "reduction_check": {
+    "z_at_0.05": 1.6449,
+    "z_at_0.0125": 2.2414,
+    "matches_Z95_ONE": true,
+    "matches_Z_BONF4_ONE": true
+   },
+   "note": "uniformly more powerful than Bonferroni and valid under arbitrary dependence. Step 1 uses alpha/k, so a family where nothing clears Bonferroni also clears nothing here.",
+   "cells": [
+    {
+     "key": "A1_xhem_plus",
+     "delta": 0.05273,
+     "sd": 0.01278,
+     "abs_t": 4.125,
+     "p_one_sided": 2e-05,
+     "holm_step": 1,
+     "holm_alpha": 0.016667,
+     "holm_z_one_sided": 2.128,
+     "mde95_holm_k3": 0.0272,
+     "clears_own_holm_step": true,
+     "reject_holm": true
+    },
+    {
+     "key": "A2_fwdhem_plus",
+     "delta": 0.00498,
+     "sd": 0.00411,
+     "abs_t": 1.213,
+     "p_one_sided": 0.11248,
+     "holm_step": 3,
+     "holm_alpha": 0.05,
+     "holm_z_one_sided": 1.6449,
+     "mde95_holm_k3": 0.0068,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "A3_hem_plus",
+     "delta": -0.04399,
+     "sd": 0.0114,
+     "abs_t": 3.86,
+     "p_one_sided": 6e-05,
+     "holm_step": 2,
+     "holm_alpha": 0.025,
+     "holm_z_one_sided": 1.96,
+     "mde95_holm_k3": 0.0223,
+     "clears_own_holm_step": true,
+     "reject_holm": true
+    }
+   ]
+  },
+  "v2": {
+   "k": 3,
+   "alpha": 0.05,
+   "procedure": "Holm step-down, one-sided on |delta|/sd",
+   "bonferroni_z_one_sided": 2.128,
+   "reduction_check": {
+    "z_at_0.05": 1.6449,
+    "z_at_0.0125": 2.2414,
+    "matches_Z95_ONE": true,
+    "matches_Z_BONF4_ONE": true
+   },
+   "note": "uniformly more powerful than Bonferroni and valid under arbitrary dependence. Step 1 uses alpha/k, so a family where nothing clears Bonferroni also clears nothing here.",
+   "cells": [
+    {
+     "key": "A1_xhem_plus",
+     "delta": 0.06026,
+     "sd": 0.01299,
+     "abs_t": 4.641,
+     "p_one_sided": 0.0,
+     "holm_step": 1,
+     "holm_alpha": 0.016667,
+     "holm_z_one_sided": 2.128,
+     "mde95_holm_k3": 0.0276,
+     "clears_own_holm_step": true,
+     "reject_holm": true
+    },
+    {
+     "key": "A2_fwdhem_plus",
+     "delta": 0.00036,
+     "sd": 0.00438,
+     "abs_t": 0.083,
+     "p_one_sided": 0.4669,
+     "holm_step": 3,
+     "holm_alpha": 0.05,
+     "holm_z_one_sided": 1.6449,
+     "mde95_holm_k3": 0.0072,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "A3_hem_plus",
+     "delta": -0.05171,
+     "sd": 0.01185,
+     "abs_t": 4.362,
+     "p_one_sided": 1e-05,
+     "holm_step": 2,
+     "holm_alpha": 0.025,
+     "holm_z_one_sided": 1.96,
+     "mde95_holm_k3": 0.0232,
+     "clears_own_holm_step": true,
+     "reject_holm": true
+    }
+   ]
+  }
+ },
+ "standing_consequence": "The headline number on a served column is the SERVED construction number; the eval-normalized figure may appear only as a labelled reproduction (docs/HEM_RIV_REGATE_GATE.md R1-6, inherited).",
+ "runtime_seconds": 215.4,
+ "verdict": {
+  "status": "RAN",
+  "xhem_plus": "validated",
+  "fwdhem_plus": "provisional",
+  "hem_plus": "deprecated",
+  "summary": "RE-BASELINE on the extended pair set (D4, integers as served), 2134 / 2134 pairs (2025 block 263); owner-waived early read. A1 served xHEM+ vs actual wOBA: rho 0.4603 vs 0.4076, v1 gap {'mean': 0.0527, 'lo95': 0.0278, 'hi95': 0.0777}, v2 gap {'mean': 0.0603, 'lo95': 0.0346, 'hi95': 0.086}; both -> validated. A2 served fwdHEM+ vs xwOBA alone: rho 0.4585 vs 0.4535, v1 gap {'mean': 0.005, 'lo95': -0.0033, 'hi95': 0.013}, v2 gap {'mean': 0.0004, 'lo95': -0.0078, 'hi95': 0.0093}; straddle -> provisional. A3 served HEM+ vs xwOBA alone: rho 0.4095 vs 0.4535, v1 gap {'mean': -0.044, 'lo95': -0.0664, 'hi95': -0.022}, v2 gap {'mean': -0.0517, 'lo95': -0.0743, 'hi95': -0.0289}; refuted -> deprecated."
+ }
+}

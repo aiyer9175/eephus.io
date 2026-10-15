@@ -480,3 +480,18 @@ left to the lane that owns it.
    in run, under either convention.
 6. The RIV+ matched pair set cannot be identified and published, which falsifies the eval
    rather than the index.
+
+---
+
+## 2026-10-15: R1-12's next re-baseline ran as an OWNER-WAIVED EARLY READ (appended by HEM_XWOBA_REGATE_PREREG)
+
+R1-12 registered the next re-baseline, including the `hem_plus` against xwOBA re-gate, for
+2026-11-16 or later. The owner waived registered dates on 2026-10-14 (EW3-5) and supplied the
+logged season-complete override (EW3-6, 2026 complete as of 2026-10-01). The re-baseline was
+pre-registered in its own document, `docs/HEM_XWOBA_REGATE_GATE.md` (committed alone, 2026-10-15),
+and run once the same day: 2,134 pairs (the 1,871 here plus 263 of the 2025 to 2026 block; the
+1,871-row cells of `data/xhem_served_regate_eval.json` reproduce to four decimals). Verdicts at D4
+after Holm k = 3: `xhem_plus` validated (stays), `fwdhem_plus` provisional (stays, straddle under
+both), `hem_plus` REFUTED against Savant xwOBA (deprecated; the loss R1-10 carried as a prior is
+now a gate result). Artifact `data/hem_xwoba_regate_eval.json`; results in that document's
+section 12. Nothing in sections 0 to 11 above was edited.
