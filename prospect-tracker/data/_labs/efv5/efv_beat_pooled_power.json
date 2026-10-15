@@ -1,0 +1,2273 @@
+{
+ "schema": 1,
+ "item": "EFV_BEAT_POOLED_POWER",
+ "produced_by": "tools/efv_beat_pooled_power.py",
+ "registration": "docs/efv-v2/EFV_BEAT_POOLED_POWER.md",
+ "generated_at": "2026-10-15T20:37:53Z",
+ "code": {
+  "commit": "4eee1808",
+  "registration_commit": "4eee1808",
+  "tool": "tools/efv_beat_pooled_power.py"
+ },
+ "owner_decision": "EW3-11 (2026-10-15), path 2: pooled power",
+ "role": "development (the v5 COMBINED penalty was chosen on these frames out of fold)",
+ "label": {
+  "provider": "fwar"
+ },
+ "statistic": "within (frame, side, year) Spearman, size-weighted over groups of at least 20 rows; rater minus PROSPX consensus",
+ "estimand": "v5c_vs_consensus|both on the keep_lv pool of lv_dev and vm_dev",
+ "bootstrap": {
+  "B": 4000,
+  "seed": 20261016,
+  "estimator": "E_cond, paired",
+  "clusterings": [
+   "player",
+   "club"
+  ],
+  "intervals": "percentile; lb95/ub95 one-sided 95 percent, ci95 two-sided; mde95 = 1.645 x sd"
+ },
+ "pass_rule": "v5 COMBINED minus PROSPX consensus pooled over sides: one-sided 95 percent lower bound above 0 under both clusterings",
+ "power_first": {
+  "mde95_player": 0.0231,
+  "mde95_club": 0.0266
+ },
+ "verdict": {
+  "pass": false,
+  "verdict": "FAIL",
+  "word": "ties",
+  "delta": -0.01029,
+  "lb95_player": -0.0335,
+  "lb95_club": -0.031,
+  "mde95_player": 0.0231,
+  "mde95_club": 0.0266,
+  "ci95_player": [
+   -0.0374,
+   0.0161
+  ],
+  "ci95_club": [
+   -0.0355,
+   0.0279
+  ]
+ },
+ "dedup": {
+  "rule": "keep_lv",
+  "players_in_both": 596,
+  "rows_before": 3692,
+  "rows_after": 3096,
+  "vm_rows_dropped": 596
+ },
+ "parity": {
+  "lv_dev": {
+   "v5c_vs_prospx_consensus": {
+    "artifact": -0.0107,
+    "recomputed": -0.0107,
+    "ok": true
+   },
+   "v5c_vs_efv_v2": {
+    "artifact": 0.00093,
+    "recomputed": 0.00093,
+    "ok": true
+   },
+   "n": {
+    "artifact": 2862,
+    "recomputed": 2862
+   }
+  },
+  "vm_dev": {
+   "v5c_vs_prospx_consensus": {
+    "artifact": -0.02026,
+    "recomputed": -0.02026,
+    "ok": true
+   },
+   "v5c_vs_efv_v2": {
+    "artifact": -0.0102,
+    "recomputed": -0.0102,
+    "ok": true
+   },
+   "n": {
+    "artifact": 830,
+    "recomputed": 830
+   }
+  }
+ },
+ "v1_join": {
+  "lv_dev": {
+   "rows": 2862,
+   "joined": 2862,
+   "v2_differs": 0,
+   "cons_differs": 0,
+   "outcome_differs": 0,
+   "missing": 0
+  },
+  "vm_dev": {
+   "rows": 830,
+   "joined": 830,
+   "v2_differs": 0,
+   "cons_differs": 0,
+   "outcome_differs": 0,
+   "missing": 0
+  }
+ },
+ "pooled": {
+  "n": 3096,
+  "n_players": 1987,
+  "n_by_side": {
+   "hit": 1563,
+   "pit": 1533
+  },
+  "n_by_frame": {
+   "lv_dev": 2862,
+   "vm_dev": 234
+  },
+  "groups_kept": [
+   "lv_dev:hit|2017",
+   "lv_dev:hit|2018",
+   "lv_dev:hit|2019",
+   "lv_dev:pit|2017",
+   "lv_dev:pit|2018",
+   "lv_dev:pit|2019",
+   "vm_dev:hit|2022",
+   "vm_dev:hit|2023",
+   "vm_dev:pit|2022",
+   "vm_dev:pit|2023"
+  ],
+  "rows_by_group": {
+   "lv_dev:hit|2017": 472,
+   "lv_dev:hit|2018": 450,
+   "lv_dev:hit|2019": 543,
+   "lv_dev:pit|2017": 469,
+   "lv_dev:pit|2018": 439,
+   "lv_dev:pit|2019": 489,
+   "vm_dev:hit|2022": 38,
+   "vm_dev:hit|2023": 56,
+   "vm_dev:pit|2022": 43,
+   "vm_dev:pit|2023": 63
+  },
+  "rho_by_group": {
+   "lv_dev:hit|2017": {
+    "efv_v1": 0.1395,
+    "efv_v2": 0.1164,
+    "efv_v5_combined": 0.093,
+    "prospx_consensus": 0.1379
+   },
+   "lv_dev:hit|2018": {
+    "efv_v1": 0.2268,
+    "efv_v2": 0.2,
+    "efv_v5_combined": 0.2068,
+    "prospx_consensus": 0.2373
+   },
+   "lv_dev:hit|2019": {
+    "efv_v1": 0.2062,
+    "efv_v2": 0.2025,
+    "efv_v5_combined": 0.1861,
+    "prospx_consensus": 0.2092
+   },
+   "lv_dev:pit|2017": {
+    "efv_v1": 0.1473,
+    "efv_v2": 0.1314,
+    "efv_v5_combined": 0.1454,
+    "prospx_consensus": 0.1359
+   },
+   "lv_dev:pit|2018": {
+    "efv_v1": 0.1428,
+    "efv_v2": 0.1663,
+    "efv_v5_combined": 0.169,
+    "prospx_consensus": 0.1677
+   },
+   "lv_dev:pit|2019": {
+    "efv_v1": 0.2045,
+    "efv_v2": 0.1843,
+    "efv_v5_combined": 0.2084,
+    "prospx_consensus": 0.1843
+   },
+   "vm_dev:hit|2022": {
+    "efv_v1": 0.6991,
+    "efv_v2": 0.7158,
+    "efv_v5_combined": 0.7061,
+    "prospx_consensus": 0.6865
+   },
+   "vm_dev:hit|2023": {
+    "efv_v1": 0.3847,
+    "efv_v2": 0.2695,
+    "efv_v5_combined": 0.2698,
+    "prospx_consensus": 0.3488
+   },
+   "vm_dev:pit|2022": {
+    "efv_v1": 0.4945,
+    "efv_v2": 0.5156,
+    "efv_v5_combined": 0.5639,
+    "prospx_consensus": 0.5156
+   },
+   "vm_dev:pit|2023": {
+    "efv_v1": 0.5906,
+    "efv_v2": 0.5562,
+    "efv_v5_combined": 0.5677,
+    "prospx_consensus": 0.5562
+   }
+  },
+  "legs": {
+   "v5c_vs_consensus|both": {
+    "comparison": "v5c_vs_consensus",
+    "a": "efv_v5_combined",
+    "b": "prospx_consensus",
+    "scope": "both",
+    "n": 3062,
+    "w_a": 0.19082,
+    "w_b": 0.20111,
+    "delta": -0.01029,
+    "player": {
+     "mde95": 0.0231,
+     "sd": 0.01407,
+     "lb95": -0.0335,
+     "ub95": 0.012,
+     "ci95": [
+      -0.0374,
+      0.0161
+     ],
+     "p_gt_0": 0.2333,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0266,
+     "sd": 0.01619,
+     "lb95": -0.031,
+     "ub95": 0.0227,
+     "ci95": [
+      -0.0355,
+      0.0279
+     ],
+     "p_gt_0": 0.3257,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v5c_vs_consensus|hit": {
+    "comparison": "v5c_vs_consensus",
+    "a": "efv_v5_combined",
+    "b": "prospx_consensus",
+    "scope": "hit",
+    "n": 1559,
+    "w_a": 0.17957,
+    "w_b": 0.21236,
+    "delta": -0.03279,
+    "player": {
+     "mde95": 0.0408,
+     "sd": 0.02481,
+     "lb95": -0.074,
+     "ub95": 0.0068,
+     "ci95": [
+      -0.0813,
+      0.0144
+     ],
+     "p_gt_0": 0.0927,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0431,
+     "sd": 0.02617,
+     "lb95": -0.0697,
+     "ub95": 0.0158,
+     "ci95": [
+      -0.0782,
+      0.0248
+     ],
+     "p_gt_0": 0.1385,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v5c_vs_consensus|pit": {
+    "comparison": "v5c_vs_consensus",
+    "a": "efv_v5_combined",
+    "b": "prospx_consensus",
+    "scope": "pit",
+    "n": 1503,
+    "w_a": 0.20249,
+    "w_b": 0.18944,
+    "delta": 0.01305,
+    "player": {
+     "mde95": 0.0212,
+     "sd": 0.0129,
+     "lb95": -0.0088,
+     "ub95": 0.0343,
+     "ci95": [
+      -0.0122,
+      0.0383
+     ],
+     "p_gt_0": 0.845,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0289,
+     "sd": 0.01757,
+     "lb95": -0.0092,
+     "ub95": 0.0488,
+     "ci95": [
+      -0.0137,
+      0.056
+     ],
+     "p_gt_0": 0.8452,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v2_vs_consensus|both": {
+    "comparison": "v2_vs_consensus",
+    "a": "efv_v2",
+    "b": "prospx_consensus",
+    "scope": "both",
+    "n": 3062,
+    "w_a": 0.18915,
+    "w_b": 0.20111,
+    "delta": -0.01196,
+    "player": {
+     "mde95": 0.0174,
+     "sd": 0.01056,
+     "lb95": -0.029,
+     "ub95": 0.0056,
+     "ci95": [
+      -0.0326,
+      0.0087
+     ],
+     "p_gt_0": 0.1308,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0171,
+     "sd": 0.01037,
+     "lb95": -0.0279,
+     "ub95": 0.0063,
+     "ci95": [
+      -0.0319,
+      0.0096
+     ],
+     "p_gt_0": 0.1345,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v2_vs_consensus|hit": {
+    "comparison": "v2_vs_consensus",
+    "a": "efv_v2",
+    "b": "prospx_consensus",
+    "scope": "hit",
+    "n": 1559,
+    "w_a": 0.19063,
+    "w_b": 0.21236,
+    "delta": -0.02173,
+    "player": {
+     "mde95": 0.0302,
+     "sd": 0.01835,
+     "lb95": -0.0519,
+     "ub95": 0.009,
+     "ci95": [
+      -0.0573,
+      0.0143
+     ],
+     "p_gt_0": 0.1205,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.033,
+     "sd": 0.02006,
+     "lb95": -0.055,
+     "ub95": 0.0111,
+     "ci95": [
+      -0.0618,
+      0.0171
+     ],
+     "p_gt_0": 0.1328,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v2_vs_consensus|pit": {
+    "comparison": "v2_vs_consensus",
+    "a": "efv_v2",
+    "b": "prospx_consensus",
+    "scope": "pit",
+    "n": 1503,
+    "w_a": 0.18761,
+    "w_b": 0.18944,
+    "delta": -0.00182,
+    "player": {
+     "mde95": 0.0163,
+     "sd": 0.00993,
+     "lb95": -0.018,
+     "ub95": 0.0146,
+     "ci95": [
+      -0.0214,
+      0.0183
+     ],
+     "p_gt_0": 0.437,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0199,
+     "sd": 0.0121,
+     "lb95": -0.0193,
+     "ub95": 0.021,
+     "ci95": [
+      -0.0234,
+      0.0252
+     ],
+     "p_gt_0": 0.474,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v1_vs_consensus|both": {
+    "comparison": "v1_vs_consensus",
+    "a": "efv_v1",
+    "b": "prospx_consensus",
+    "scope": "both",
+    "n": 3062,
+    "w_a": 0.20191,
+    "w_b": 0.20111,
+    "delta": 0.0008,
+    "player": {
+     "mde95": 0.0183,
+     "sd": 0.01114,
+     "lb95": -0.0178,
+     "ub95": 0.019,
+     "ci95": [
+      -0.0212,
+      0.0223
+     ],
+     "p_gt_0": 0.5282,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0158,
+     "sd": 0.00959,
+     "lb95": -0.0147,
+     "ub95": 0.0166,
+     "ci95": [
+      -0.0181,
+      0.0193
+     ],
+     "p_gt_0": 0.5447,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v1_vs_consensus|hit": {
+    "comparison": "v1_vs_consensus",
+    "a": "efv_v1",
+    "b": "prospx_consensus",
+    "scope": "hit",
+    "n": 1559,
+    "w_a": 0.21038,
+    "w_b": 0.21236,
+    "delta": -0.00198,
+    "player": {
+     "mde95": 0.0241,
+     "sd": 0.01467,
+     "lb95": -0.0261,
+     "ub95": 0.0223,
+     "ci95": [
+      -0.0307,
+      0.0272
+     ],
+     "p_gt_0": 0.4385,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0213,
+     "sd": 0.01292,
+     "lb95": -0.0239,
+     "ub95": 0.0187,
+     "ci95": [
+      -0.0288,
+      0.0223
+     ],
+     "p_gt_0": 0.4255,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v1_vs_consensus|pit": {
+    "comparison": "v1_vs_consensus",
+    "a": "efv_v1",
+    "b": "prospx_consensus",
+    "scope": "pit",
+    "n": 1503,
+    "w_a": 0.19312,
+    "w_b": 0.18944,
+    "delta": 0.00369,
+    "player": {
+     "mde95": 0.0278,
+     "sd": 0.0169,
+     "lb95": -0.0238,
+     "ub95": 0.0311,
+     "ci95": [
+      -0.029,
+      0.0366
+     ],
+     "p_gt_0": 0.5825,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0247,
+     "sd": 0.015,
+     "lb95": -0.0196,
+     "ub95": 0.0299,
+     "ci95": [
+      -0.0255,
+      0.0342
+     ],
+     "p_gt_0": 0.6082,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v5c_vs_v2|both": {
+    "comparison": "v5c_vs_v2",
+    "a": "efv_v5_combined",
+    "b": "efv_v2",
+    "scope": "both",
+    "n": 3062,
+    "w_a": 0.19082,
+    "w_b": 0.18915,
+    "delta": 0.00167,
+    "player": {
+     "mde95": 0.0149,
+     "sd": 0.00908,
+     "lb95": -0.0133,
+     "ub95": 0.016,
+     "ci95": [
+      -0.0163,
+      0.0187
+     ],
+     "p_gt_0": 0.5793,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0209,
+     "sd": 0.01268,
+     "lb95": -0.0132,
+     "ub95": 0.0285,
+     "ci95": [
+      -0.0162,
+      0.034
+     ],
+     "p_gt_0": 0.6275,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v5c_vs_v2|hit": {
+    "comparison": "v5c_vs_v2",
+    "a": "efv_v5_combined",
+    "b": "efv_v2",
+    "scope": "hit",
+    "n": 1559,
+    "w_a": 0.17957,
+    "w_b": 0.19063,
+    "delta": -0.01106,
+    "player": {
+     "mde95": 0.0266,
+     "sd": 0.01617,
+     "lb95": -0.0382,
+     "ub95": 0.0143,
+     "ci95": [
+      -0.0431,
+      0.0201
+     ],
+     "p_gt_0": 0.251,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.032,
+     "sd": 0.01947,
+     "lb95": -0.0362,
+     "ub95": 0.0281,
+     "ci95": [
+      -0.0409,
+      0.0373
+     ],
+     "p_gt_0": 0.3327,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   },
+   "v5c_vs_v2|pit": {
+    "comparison": "v5c_vs_v2",
+    "a": "efv_v5_combined",
+    "b": "efv_v2",
+    "scope": "pit",
+    "n": 1503,
+    "w_a": 0.20249,
+    "w_b": 0.18761,
+    "delta": 0.01487,
+    "player": {
+     "mde95": 0.013,
+     "sd": 0.00791,
+     "lb95": 0.0014,
+     "ub95": 0.0279,
+     "ci95": [
+      -0.0008,
+      0.0304
+     ],
+     "p_gt_0": 0.968,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 1987
+    },
+    "club": {
+     "mde95": 0.0159,
+     "sd": 0.00968,
+     "lb95": 0.0036,
+     "ub95": 0.0353,
+     "ci95": [
+      0.0017,
+      0.0392
+     ],
+     "p_gt_0": 0.9872,
+     "B_used": 4000,
+     "status": "derived",
+     "B": 4000,
+     "seed": 20261016,
+     "n_clusters": 31
+    }
+   }
+  },
+  "clubs": {
+   "n_clubs": 31,
+   "rows_unknown": 1328
+  }
+ },
+ "sensitivities": {
+  "keep_vm": {
+   "n": 2534,
+   "n_players": 1987,
+   "n_by_side": {
+    "hit": 1273,
+    "pit": 1261
+   },
+   "n_by_frame": {
+    "lv_dev": 1704,
+    "vm_dev": 830
+   },
+   "groups_kept": [
+    "lv_dev:hit|2017",
+    "lv_dev:hit|2018",
+    "lv_dev:hit|2019",
+    "lv_dev:pit|2017",
+    "lv_dev:pit|2018",
+    "lv_dev:pit|2019",
+    "vm_dev:hit|2017",
+    "vm_dev:hit|2018",
+    "vm_dev:hit|2019",
+    "vm_dev:hit|2020",
+    "vm_dev:hit|2021",
+    "vm_dev:hit|2022",
+    "vm_dev:hit|2023",
+    "vm_dev:pit|2018",
+    "vm_dev:pit|2019",
+    "vm_dev:pit|2020",
+    "vm_dev:pit|2021",
+    "vm_dev:pit|2022",
+    "vm_dev:pit|2023"
+   ],
+   "rows_by_group": {
+    "lv_dev:hit|2017": 301,
+    "lv_dev:hit|2018": 257,
+    "lv_dev:hit|2019": 309,
+    "lv_dev:pit|2017": 331,
+    "lv_dev:pit|2018": 247,
+    "lv_dev:pit|2019": 259,
+    "vm_dev:hit|2017": 30,
+    "vm_dev:hit|2018": 36,
+    "vm_dev:hit|2019": 59,
+    "vm_dev:hit|2020": 54,
+    "vm_dev:hit|2021": 51,
+    "vm_dev:hit|2022": 100,
+    "vm_dev:hit|2023": 76,
+    "vm_dev:pit|2018": 38,
+    "vm_dev:pit|2019": 63,
+    "vm_dev:pit|2020": 77,
+    "vm_dev:pit|2021": 75,
+    "vm_dev:pit|2022": 65,
+    "vm_dev:pit|2023": 90
+   },
+   "rho_by_group": {
+    "lv_dev:hit|2017": {
+     "efv_v5_combined": -0.0593,
+     "prospx_consensus": -0.0125
+    },
+    "lv_dev:hit|2018": {
+     "efv_v5_combined": -0.0559,
+     "prospx_consensus": 0.0906
+    },
+    "lv_dev:hit|2019": {
+     "efv_v5_combined": -0.0224,
+     "prospx_consensus": 0.0492
+    },
+    "lv_dev:pit|2017": {
+     "efv_v5_combined": 0.0616,
+     "prospx_consensus": 0.0788
+    },
+    "lv_dev:pit|2018": {
+     "efv_v5_combined": 0.0444,
+     "prospx_consensus": 0.0224
+    },
+    "lv_dev:pit|2019": {
+     "efv_v5_combined": 0.0857,
+     "prospx_consensus": 0.0516
+    },
+    "vm_dev:hit|2017": {
+     "efv_v5_combined": 0.0576,
+     "prospx_consensus": 0.2825
+    },
+    "vm_dev:hit|2018": {
+     "efv_v5_combined": 0.4116,
+     "prospx_consensus": 0.5464
+    },
+    "vm_dev:hit|2019": {
+     "efv_v5_combined": 0.286,
+     "prospx_consensus": 0.2653
+    },
+    "vm_dev:hit|2020": {
+     "efv_v5_combined": 0.3204,
+     "prospx_consensus": 0.2736
+    },
+    "vm_dev:hit|2021": {
+     "efv_v5_combined": 0.2562,
+     "prospx_consensus": 0.3235
+    },
+    "vm_dev:hit|2022": {
+     "efv_v5_combined": 0.5447,
+     "prospx_consensus": 0.6236
+    },
+    "vm_dev:hit|2023": {
+     "efv_v5_combined": 0.2861,
+     "prospx_consensus": 0.304
+    },
+    "vm_dev:pit|2018": {
+     "efv_v5_combined": 0.283,
+     "prospx_consensus": 0.2809
+    },
+    "vm_dev:pit|2019": {
+     "efv_v5_combined": 0.3194,
+     "prospx_consensus": 0.2858
+    },
+    "vm_dev:pit|2020": {
+     "efv_v5_combined": 0.3432,
+     "prospx_consensus": 0.2809
+    },
+    "vm_dev:pit|2021": {
+     "efv_v5_combined": 0.1315,
+     "prospx_consensus": 0.2159
+    },
+    "vm_dev:pit|2022": {
+     "efv_v5_combined": 0.6103,
+     "prospx_consensus": 0.5913
+    },
+    "vm_dev:pit|2023": {
+     "efv_v5_combined": 0.5236,
+     "prospx_consensus": 0.4998
+    }
+   },
+   "legs": {
+    "v5c_vs_consensus|both": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2518,
+     "w_a": 0.12247,
+     "w_b": 0.15493,
+     "delta": -0.03247,
+     "player": {
+      "mde95": 0.0309,
+      "sd": 0.0188,
+      "lb95": -0.0633,
+      "ub95": -0.0017,
+      "ci95": [
+       -0.0691,
+       0.0045
+      ],
+      "p_gt_0": 0.0413,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1987
+     },
+     "club": {
+      "mde95": 0.0325,
+      "sd": 0.01974,
+      "lb95": -0.0641,
+      "ub95": 0.0008,
+      "ci95": [
+       -0.0705,
+       0.0061
+      ],
+      "p_gt_0": 0.055,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v5c_vs_consensus|hit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1273,
+     "w_a": 0.07923,
+     "w_b": 0.15338,
+     "delta": -0.07415,
+     "player": {
+      "mde95": 0.0577,
+      "sd": 0.03507,
+      "lb95": -0.1316,
+      "ub95": -0.0156,
+      "ci95": [
+       -0.1418,
+       -0.003
+      ],
+      "p_gt_0": 0.0195,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1987
+     },
+     "club": {
+      "mde95": 0.0647,
+      "sd": 0.03934,
+      "lb95": -0.141,
+      "ub95": -0.0123,
+      "ci95": [
+       -0.1565,
+       -0.0026
+      ],
+      "p_gt_0": 0.0205,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v5c_vs_consensus|pit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1245,
+     "w_a": 0.16667,
+     "w_b": 0.15653,
+     "delta": 0.01015,
+     "player": {
+      "mde95": 0.0203,
+      "sd": 0.01237,
+      "lb95": -0.0109,
+      "ub95": 0.0298,
+      "ci95": [
+       -0.0157,
+       0.0341
+      ],
+      "p_gt_0": 0.7927,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1987
+     },
+     "club": {
+      "mde95": 0.025,
+      "sd": 0.01519,
+      "lb95": -0.0106,
+      "ub95": 0.0395,
+      "ci95": [
+       -0.0144,
+       0.0447
+      ],
+      "p_gt_0": 0.8067,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    }
+   },
+   "clubs": {
+    "n_clubs": 31,
+    "rows_unknown": 1328
+   }
+  },
+  "none": {
+   "n": 3692,
+   "n_players": 1987,
+   "n_by_side": {
+    "hit": 1871,
+    "pit": 1821
+   },
+   "n_by_frame": {
+    "lv_dev": 2862,
+    "vm_dev": 830
+   },
+   "groups_kept": [
+    "lv_dev:hit|2017",
+    "lv_dev:hit|2018",
+    "lv_dev:hit|2019",
+    "lv_dev:pit|2017",
+    "lv_dev:pit|2018",
+    "lv_dev:pit|2019",
+    "vm_dev:hit|2017",
+    "vm_dev:hit|2018",
+    "vm_dev:hit|2019",
+    "vm_dev:hit|2020",
+    "vm_dev:hit|2021",
+    "vm_dev:hit|2022",
+    "vm_dev:hit|2023",
+    "vm_dev:pit|2018",
+    "vm_dev:pit|2019",
+    "vm_dev:pit|2020",
+    "vm_dev:pit|2021",
+    "vm_dev:pit|2022",
+    "vm_dev:pit|2023"
+   ],
+   "rows_by_group": {
+    "lv_dev:hit|2017": 472,
+    "lv_dev:hit|2018": 450,
+    "lv_dev:hit|2019": 543,
+    "lv_dev:pit|2017": 469,
+    "lv_dev:pit|2018": 439,
+    "lv_dev:pit|2019": 489,
+    "vm_dev:hit|2017": 30,
+    "vm_dev:hit|2018": 36,
+    "vm_dev:hit|2019": 59,
+    "vm_dev:hit|2020": 54,
+    "vm_dev:hit|2021": 51,
+    "vm_dev:hit|2022": 100,
+    "vm_dev:hit|2023": 76,
+    "vm_dev:pit|2018": 38,
+    "vm_dev:pit|2019": 63,
+    "vm_dev:pit|2020": 77,
+    "vm_dev:pit|2021": 75,
+    "vm_dev:pit|2022": 65,
+    "vm_dev:pit|2023": 90
+   },
+   "rho_by_group": {
+    "lv_dev:hit|2017": {
+     "efv_v5_combined": 0.093,
+     "prospx_consensus": 0.1379
+    },
+    "lv_dev:hit|2018": {
+     "efv_v5_combined": 0.2068,
+     "prospx_consensus": 0.2373
+    },
+    "lv_dev:hit|2019": {
+     "efv_v5_combined": 0.1861,
+     "prospx_consensus": 0.2092
+    },
+    "lv_dev:pit|2017": {
+     "efv_v5_combined": 0.1454,
+     "prospx_consensus": 0.1359
+    },
+    "lv_dev:pit|2018": {
+     "efv_v5_combined": 0.169,
+     "prospx_consensus": 0.1677
+    },
+    "lv_dev:pit|2019": {
+     "efv_v5_combined": 0.2084,
+     "prospx_consensus": 0.1843
+    },
+    "vm_dev:hit|2017": {
+     "efv_v5_combined": 0.0576,
+     "prospx_consensus": 0.2825
+    },
+    "vm_dev:hit|2018": {
+     "efv_v5_combined": 0.4116,
+     "prospx_consensus": 0.5464
+    },
+    "vm_dev:hit|2019": {
+     "efv_v5_combined": 0.286,
+     "prospx_consensus": 0.2653
+    },
+    "vm_dev:hit|2020": {
+     "efv_v5_combined": 0.3204,
+     "prospx_consensus": 0.2736
+    },
+    "vm_dev:hit|2021": {
+     "efv_v5_combined": 0.2562,
+     "prospx_consensus": 0.3235
+    },
+    "vm_dev:hit|2022": {
+     "efv_v5_combined": 0.5447,
+     "prospx_consensus": 0.6236
+    },
+    "vm_dev:hit|2023": {
+     "efv_v5_combined": 0.2861,
+     "prospx_consensus": 0.304
+    },
+    "vm_dev:pit|2018": {
+     "efv_v5_combined": 0.283,
+     "prospx_consensus": 0.2809
+    },
+    "vm_dev:pit|2019": {
+     "efv_v5_combined": 0.3194,
+     "prospx_consensus": 0.2858
+    },
+    "vm_dev:pit|2020": {
+     "efv_v5_combined": 0.3432,
+     "prospx_consensus": 0.2809
+    },
+    "vm_dev:pit|2021": {
+     "efv_v5_combined": 0.1315,
+     "prospx_consensus": 0.2159
+    },
+    "vm_dev:pit|2022": {
+     "efv_v5_combined": 0.6103,
+     "prospx_consensus": 0.5913
+    },
+    "vm_dev:pit|2023": {
+     "efv_v5_combined": 0.5236,
+     "prospx_consensus": 0.4998
+    }
+   },
+   "legs": {
+    "v5c_vs_consensus|both": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 3676,
+     "w_a": 0.21118,
+     "w_b": 0.224,
+     "delta": -0.01282,
+     "player": {
+      "mde95": 0.021,
+      "sd": 0.01277,
+      "lb95": -0.0339,
+      "ub95": 0.0076,
+      "ci95": [
+       -0.0377,
+       0.0111
+      ],
+      "p_gt_0": 0.1583,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1987
+     },
+     "club": {
+      "mde95": 0.0238,
+      "sd": 0.01448,
+      "lb95": -0.0325,
+      "ub95": 0.0153,
+      "ci95": [
+       -0.0372,
+       0.0201
+      ],
+      "p_gt_0": 0.2347,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v5c_vs_consensus|hit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1871,
+     "w_a": 0.20204,
+     "w_b": 0.23837,
+     "delta": -0.03633,
+     "player": {
+      "mde95": 0.0374,
+      "sd": 0.02274,
+      "lb95": -0.074,
+      "ub95": 0.0003,
+      "ci95": [
+       -0.0808,
+       0.0062
+      ],
+      "p_gt_0": 0.053,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1987
+     },
+     "club": {
+      "mde95": 0.0411,
+      "sd": 0.02498,
+      "lb95": -0.0733,
+      "ub95": 0.0086,
+      "ci95": [
+       -0.081,
+       0.0175
+      ],
+      "p_gt_0": 0.095,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v5c_vs_consensus|pit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1805,
+     "w_a": 0.22065,
+     "w_b": 0.2091,
+     "delta": 0.01156,
+     "player": {
+      "mde95": 0.0187,
+      "sd": 0.01139,
+      "lb95": -0.0075,
+      "ub95": 0.0298,
+      "ci95": [
+       -0.0114,
+       0.0341
+      ],
+      "p_gt_0": 0.8442,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1987
+     },
+     "club": {
+      "mde95": 0.0237,
+      "sd": 0.01442,
+      "lb95": -0.0086,
+      "ub95": 0.0388,
+      "ci95": [
+       -0.0134,
+       0.0439
+      ],
+      "p_gt_0": 0.841,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    }
+   },
+   "clubs": {
+    "n_clubs": 31,
+    "rows_unknown": 1328
+   }
+  }
+ },
+ "per_frame": {
+  "lv_dev": {
+   "n": 2862,
+   "n_players": 1753,
+   "n_by_side": {
+    "hit": 1465,
+    "pit": 1397
+   },
+   "n_by_frame": {
+    "lv_dev": 2862
+   },
+   "groups_kept": [
+    "lv_dev:hit|2017",
+    "lv_dev:hit|2018",
+    "lv_dev:hit|2019",
+    "lv_dev:pit|2017",
+    "lv_dev:pit|2018",
+    "lv_dev:pit|2019"
+   ],
+   "rows_by_group": {
+    "lv_dev:hit|2017": 472,
+    "lv_dev:hit|2018": 450,
+    "lv_dev:hit|2019": 543,
+    "lv_dev:pit|2017": 469,
+    "lv_dev:pit|2018": 439,
+    "lv_dev:pit|2019": 489
+   },
+   "rho_by_group": {
+    "lv_dev:hit|2017": {
+     "efv_v5_combined": 0.093,
+     "prospx_consensus": 0.1379
+    },
+    "lv_dev:hit|2018": {
+     "efv_v5_combined": 0.2068,
+     "prospx_consensus": 0.2373
+    },
+    "lv_dev:hit|2019": {
+     "efv_v5_combined": 0.1861,
+     "prospx_consensus": 0.2092
+    },
+    "lv_dev:pit|2017": {
+     "efv_v5_combined": 0.1454,
+     "prospx_consensus": 0.1359
+    },
+    "lv_dev:pit|2018": {
+     "efv_v5_combined": 0.169,
+     "prospx_consensus": 0.1677
+    },
+    "lv_dev:pit|2019": {
+     "efv_v5_combined": 0.2084,
+     "prospx_consensus": 0.1843
+    }
+   },
+   "legs": {
+    "v5c_vs_consensus|both": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2862,
+     "w_a": 0.16853,
+     "w_b": 0.17923,
+     "delta": -0.0107,
+     "player": {
+      "mde95": 0.0249,
+      "sd": 0.01517,
+      "lb95": -0.0358,
+      "ub95": 0.0145,
+      "ci95": [
+       -0.0403,
+       0.0183
+      ],
+      "p_gt_0": 0.2372,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1753
+     }
+    },
+    "v5c_vs_consensus|hit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1465,
+     "w_a": 0.16247,
+     "w_b": 0.19485,
+     "delta": -0.03238,
+     "player": {
+      "mde95": 0.0441,
+      "sd": 0.02679,
+      "lb95": -0.0763,
+      "ub95": 0.0115,
+      "ci95": [
+       -0.0848,
+       0.0202
+      ],
+      "p_gt_0": 0.11,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1753
+     }
+    },
+    "v5c_vs_consensus|pit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1397,
+     "w_a": 0.17489,
+     "w_b": 0.16286,
+     "delta": 0.01204,
+     "player": {
+      "mde95": 0.0219,
+      "sd": 0.01332,
+      "lb95": -0.0094,
+      "ub95": 0.0346,
+      "ci95": [
+       -0.0137,
+       0.0386
+      ],
+      "p_gt_0": 0.8135,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1753
+     }
+    }
+   }
+  },
+  "vm_dev": {
+   "n": 234,
+   "n_players": 234,
+   "n_by_side": {
+    "hit": 98,
+    "pit": 136
+   },
+   "n_by_frame": {
+    "vm_dev": 234
+   },
+   "groups_kept": [
+    "vm_dev:hit|2022",
+    "vm_dev:hit|2023",
+    "vm_dev:pit|2022",
+    "vm_dev:pit|2023"
+   ],
+   "rows_by_group": {
+    "vm_dev:hit|2022": 38,
+    "vm_dev:hit|2023": 56,
+    "vm_dev:pit|2022": 43,
+    "vm_dev:pit|2023": 63
+   },
+   "rho_by_group": {
+    "vm_dev:hit|2022": {
+     "efv_v5_combined": 0.7061,
+     "prospx_consensus": 0.6865
+    },
+    "vm_dev:hit|2023": {
+     "efv_v5_combined": 0.2698,
+     "prospx_consensus": 0.3488
+    },
+    "vm_dev:pit|2022": {
+     "efv_v5_combined": 0.5639,
+     "prospx_consensus": 0.5156
+    },
+    "vm_dev:pit|2023": {
+     "efv_v5_combined": 0.5677,
+     "prospx_consensus": 0.5562
+    }
+   },
+   "legs": {
+    "v5c_vs_consensus|both": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 200,
+     "w_a": 0.50975,
+     "w_b": 0.51416,
+     "delta": -0.00442,
+     "player": {
+      "mde95": 0.0491,
+      "sd": 0.02986,
+      "lb95": -0.0526,
+      "ub95": 0.0437,
+      "ci95": [
+       -0.0619,
+       0.0547
+      ],
+      "p_gt_0": 0.4405,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 234
+     }
+    },
+    "v5c_vs_consensus|hit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 94,
+     "w_a": 0.44614,
+     "w_b": 0.48531,
+     "delta": -0.03917,
+     "player": {
+      "mde95": 0.0926,
+      "sd": 0.05627,
+      "lb95": -0.1298,
+      "ub95": 0.0548,
+      "ci95": [
+       -0.1469,
+       0.0769
+      ],
+      "p_gt_0": 0.2347,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 234
+     }
+    },
+    "v5c_vs_consensus|pit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 106,
+     "w_a": 0.56615,
+     "w_b": 0.53975,
+     "delta": 0.02641,
+     "player": {
+      "mde95": 0.042,
+      "sd": 0.02553,
+      "lb95": -0.0147,
+      "ub95": 0.0694,
+      "ci95": [
+       -0.0221,
+       0.0796
+      ],
+      "p_gt_0": 0.8492,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 234
+     }
+    }
+   }
+  }
+ },
+ "timing_edge": "not pooled: no EFV_BEAT_TIMING_EDGE registration exists at HEAD (registration section 2.2)",
+ "holdout_2026": {
+  "artifact": "data/efv_2026_holdout.json",
+  "leg": "war2026|spearman|pooled|efv_v5_combined-consensus",
+  "role": "corroboration only (EW3-13; the 2026 frame is spent)",
+  "verdict": "ties",
+  "pass": false,
+  "delta": 0.01211,
+  "n": 1208,
+  "lb95_player": -0.0073,
+  "lb95_club": -0.0067,
+  "ci95_player": [
+   -0.0108,
+   0.0348
+  ],
+  "generated_at": "2026-10-15T19:42:40Z"
+ },
+ "spent": {
+  "label": "SPENT (read before by v3, v4, v5 and v5 COMBINED; corroboration only)",
+  "frames": [
+   "lv_res",
+   "vm_pros"
+  ],
+  "gate_sha": "e7931ce4e13110eebb53555bff455ff13ca7c502",
+  "generated_at": "2026-10-15T20:53:08Z",
+  "code": {
+   "commit": "4eee1808",
+   "registration_commit": "4eee1808",
+   "tool": "tools/efv_beat_pooled_power.py"
+  },
+  "parity": {
+   "lv_res": {
+    "v5c_vs_prospx_consensus": {
+     "artifact": -0.00155,
+     "recomputed": -0.00155,
+     "ok": true
+    },
+    "v5c_vs_efv_v2": {
+     "artifact": -0.00318,
+     "recomputed": -0.00318,
+     "ok": true
+    },
+    "n": {
+     "artifact": 2349,
+     "recomputed": 2349
+    }
+   },
+   "vm_pros": {
+    "v5c_vs_prospx_consensus": {
+     "artifact": 0.01181,
+     "recomputed": 0.01181,
+     "ok": true
+    },
+    "v5c_vs_efv_v2": {
+     "artifact": -0.0288,
+     "recomputed": -0.0288,
+     "ok": true
+    },
+    "n": {
+     "artifact": 147,
+     "recomputed": 147
+    }
+   }
+  },
+  "dedup": {
+   "rule": "keep_lv",
+   "players_in_both": 32,
+   "rows_before": 2496,
+   "rows_after": 2464
+  },
+  "pooled": {
+   "n": 2464,
+   "n_players": 1588,
+   "n_by_side": {
+    "hit": 1249,
+    "pit": 1215
+   },
+   "n_by_frame": {
+    "lv_res": 2349,
+    "vm_pros": 115
+   },
+   "groups_kept": [
+    "lv_res:hit|2020",
+    "lv_res:hit|2021",
+    "lv_res:pit|2020",
+    "lv_res:pit|2021",
+    "vm_pros:hit|2025",
+    "vm_pros:pit|2025"
+   ],
+   "rows_by_group": {
+    "lv_res:hit|2020": 596,
+    "lv_res:hit|2021": 599,
+    "lv_res:pit|2020": 572,
+    "lv_res:pit|2021": 582,
+    "vm_pros:hit|2025": 54,
+    "vm_pros:pit|2025": 61
+   },
+   "rho_by_group": {
+    "lv_res:hit|2020": {
+     "efv_v2": 0.1496,
+     "efv_v5_combined": 0.1599,
+     "prospx_consensus": 0.1435
+    },
+    "lv_res:hit|2021": {
+     "efv_v2": 0.1684,
+     "efv_v5_combined": 0.162,
+     "prospx_consensus": 0.163
+    },
+    "lv_res:pit|2020": {
+     "efv_v2": 0.1164,
+     "efv_v5_combined": 0.1334,
+     "prospx_consensus": 0.1164
+    },
+    "lv_res:pit|2021": {
+     "efv_v2": 0.1688,
+     "efv_v5_combined": 0.1353,
+     "prospx_consensus": 0.174
+    },
+    "vm_pros:hit|2025": {
+     "efv_v2": 0.3222,
+     "efv_v5_combined": 0.2535,
+     "prospx_consensus": 0.1835
+    },
+    "vm_pros:pit|2025": {
+     "efv_v2": 0.4002,
+     "efv_v5_combined": 0.4036,
+     "prospx_consensus": 0.4002
+    }
+   },
+   "legs": {
+    "v5c_vs_consensus|both": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2464,
+     "w_a": 0.15654,
+     "w_b": 0.1564,
+     "delta": 0.00014,
+     "player": {
+      "mde95": 0.024,
+      "sd": 0.01457,
+      "lb95": -0.0235,
+      "ub95": 0.0238,
+      "ci95": [
+       -0.0283,
+       0.029
+      ],
+      "p_gt_0": 0.4908,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1588
+     },
+     "club": {
+      "mde95": 0.0242,
+      "sd": 0.01474,
+      "lb95": -0.0238,
+      "ub95": 0.0237,
+      "ci95": [
+       -0.0292,
+       0.03
+      ],
+      "p_gt_0": 0.5018,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v5c_vs_consensus|hit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1249,
+     "w_a": 0.16494,
+     "w_b": 0.1546,
+     "delta": 0.01034,
+     "player": {
+      "mde95": 0.0372,
+      "sd": 0.02261,
+      "lb95": -0.0266,
+      "ub95": 0.047,
+      "ci95": [
+       -0.0333,
+       0.0555
+      ],
+      "p_gt_0": 0.6697,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1588
+     },
+     "club": {
+      "mde95": 0.0357,
+      "sd": 0.02171,
+      "lb95": -0.029,
+      "ub95": 0.0423,
+      "ci95": [
+       -0.0379,
+       0.0503
+      ],
+      "p_gt_0": 0.6697,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v5c_vs_consensus|pit": {
+     "comparison": "v5c_vs_consensus",
+     "a": "efv_v5_combined",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1215,
+     "w_a": 0.1479,
+     "w_b": 0.15825,
+     "delta": -0.01036,
+     "player": {
+      "mde95": 0.0307,
+      "sd": 0.01868,
+      "lb95": -0.0408,
+      "ub95": 0.0195,
+      "ci95": [
+       -0.0467,
+       0.0256
+      ],
+      "p_gt_0": 0.29,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1588
+     },
+     "club": {
+      "mde95": 0.0322,
+      "sd": 0.01955,
+      "lb95": -0.0387,
+      "ub95": 0.0253,
+      "ci95": [
+       -0.0445,
+       0.0326
+      ],
+      "p_gt_0": 0.3285,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v2_vs_consensus|both": {
+     "comparison": "v2_vs_consensus",
+     "a": "efv_v2",
+     "b": "prospx_consensus",
+     "scope": "both",
+     "n": 2464,
+     "w_a": 0.16099,
+     "w_b": 0.1564,
+     "delta": 0.00459,
+     "player": {
+      "mde95": 0.0177,
+      "sd": 0.01074,
+      "lb95": -0.0127,
+      "ub95": 0.0225,
+      "ci95": [
+       -0.0159,
+       0.0261
+      ],
+      "p_gt_0": 0.6645,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1588
+     },
+     "club": {
+      "mde95": 0.0168,
+      "sd": 0.01023,
+      "lb95": -0.016,
+      "ub95": 0.0177,
+      "ci95": [
+       -0.0202,
+       0.0204
+      ],
+      "p_gt_0": 0.645,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v2_vs_consensus|hit": {
+     "comparison": "v2_vs_consensus",
+     "a": "efv_v2",
+     "b": "prospx_consensus",
+     "scope": "hit",
+     "n": 1249,
+     "w_a": 0.16606,
+     "w_b": 0.1546,
+     "delta": 0.01146,
+     "player": {
+      "mde95": 0.0344,
+      "sd": 0.02094,
+      "lb95": -0.022,
+      "ub95": 0.0465,
+      "ci95": [
+       -0.0288,
+       0.0538
+      ],
+      "p_gt_0": 0.7097,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1588
+     },
+     "club": {
+      "mde95": 0.0342,
+      "sd": 0.02077,
+      "lb95": -0.0301,
+      "ub95": 0.0378,
+      "ci95": [
+       -0.0387,
+       0.0442
+      ],
+      "p_gt_0": 0.6903,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v2_vs_consensus|pit": {
+     "comparison": "v2_vs_consensus",
+     "a": "efv_v2",
+     "b": "prospx_consensus",
+     "scope": "pit",
+     "n": 1215,
+     "w_a": 0.15577,
+     "w_b": 0.15825,
+     "delta": -0.00248,
+     "player": {
+      "mde95": 0.0056,
+      "sd": 0.00342,
+      "lb95": -0.0082,
+      "ub95": 0.0031,
+      "ci95": [
+       -0.0092,
+       0.0042
+      ],
+      "p_gt_0": 0.228,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1588
+     },
+     "club": {
+      "mde95": 0.0054,
+      "sd": 0.00329,
+      "lb95": -0.008,
+      "ub95": 0.0028,
+      "ci95": [
+       -0.0091,
+       0.004
+      ],
+      "p_gt_0": 0.222,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v5c_vs_v2|both": {
+     "comparison": "v5c_vs_v2",
+     "a": "efv_v5_combined",
+     "b": "efv_v2",
+     "scope": "both",
+     "n": 2464,
+     "w_a": 0.15654,
+     "w_b": 0.16099,
+     "delta": -0.00445,
+     "player": {
+      "mde95": 0.0168,
+      "sd": 0.0102,
+      "lb95": -0.0212,
+      "ub95": 0.0123,
+      "ci95": [
+       -0.0242,
+       0.0155
+      ],
+      "p_gt_0": 0.3242,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1588
+     },
+     "club": {
+      "mde95": 0.0205,
+      "sd": 0.01247,
+      "lb95": -0.0213,
+      "ub95": 0.02,
+      "ci95": [
+       -0.0246,
+       0.025
+      ],
+      "p_gt_0": 0.3927,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v5c_vs_v2|hit": {
+     "comparison": "v5c_vs_v2",
+     "a": "efv_v5_combined",
+     "b": "efv_v2",
+     "scope": "hit",
+     "n": 1249,
+     "w_a": 0.16494,
+     "w_b": 0.16606,
+     "delta": -0.00112,
+     "player": {
+      "mde95": 0.0164,
+      "sd": 0.00995,
+      "lb95": -0.0178,
+      "ub95": 0.0155,
+      "ci95": [
+       -0.0207,
+       0.0187
+      ],
+      "p_gt_0": 0.4507,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1588
+     },
+     "club": {
+      "mde95": 0.0199,
+      "sd": 0.01209,
+      "lb95": -0.0162,
+      "ub95": 0.0231,
+      "ci95": [
+       -0.0196,
+       0.03
+      ],
+      "p_gt_0": 0.4905,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    },
+    "v5c_vs_v2|pit": {
+     "comparison": "v5c_vs_v2",
+     "a": "efv_v5_combined",
+     "b": "efv_v2",
+     "scope": "pit",
+     "n": 1215,
+     "w_a": 0.1479,
+     "w_b": 0.15577,
+     "delta": -0.00788,
+     "player": {
+      "mde95": 0.0296,
+      "sd": 0.01802,
+      "lb95": -0.0372,
+      "ub95": 0.0212,
+      "ci95": [
+       -0.0433,
+       0.0269
+      ],
+      "p_gt_0": 0.3325,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 1588
+     },
+     "club": {
+      "mde95": 0.0301,
+      "sd": 0.01831,
+      "lb95": -0.0342,
+      "ub95": 0.0259,
+      "ci95": [
+       -0.0394,
+       0.0332
+      ],
+      "p_gt_0": 0.3688,
+      "B_used": 4000,
+      "status": "derived",
+      "B": 4000,
+      "seed": 20261016,
+      "n_clusters": 31
+     }
+    }
+   },
+   "clubs": {
+    "n_clubs": 31,
+    "rows_unknown": 964
+   }
+  },
+  "per_frame": {
+   "lv_res": {
+    "n": 2349,
+    "n_players": 1473,
+    "n_by_side": {
+     "hit": 1195,
+     "pit": 1154
+    },
+    "n_by_frame": {
+     "lv_res": 2349
+    },
+    "groups_kept": [
+     "lv_res:hit|2020",
+     "lv_res:hit|2021",
+     "lv_res:pit|2020",
+     "lv_res:pit|2021"
+    ],
+    "rows_by_group": {
+     "lv_res:hit|2020": 596,
+     "lv_res:hit|2021": 599,
+     "lv_res:pit|2020": 572,
+     "lv_res:pit|2021": 582
+    },
+    "rho_by_group": {
+     "lv_res:hit|2020": {
+      "efv_v5_combined": 0.1599,
+      "prospx_consensus": 0.1435
+     },
+     "lv_res:hit|2021": {
+      "efv_v5_combined": 0.162,
+      "prospx_consensus": 0.163
+     },
+     "lv_res:pit|2020": {
+      "efv_v5_combined": 0.1334,
+      "prospx_consensus": 0.1164
+     },
+     "lv_res:pit|2021": {
+      "efv_v5_combined": 0.1353,
+      "prospx_consensus": 0.174
+     }
+    },
+    "legs": {
+     "v5c_vs_consensus|both": {
+      "comparison": "v5c_vs_consensus",
+      "a": "efv_v5_combined",
+      "b": "prospx_consensus",
+      "scope": "both",
+      "n": 2349,
+      "w_a": 0.14789,
+      "w_b": 0.14945,
+      "delta": -0.00155,
+      "player": {
+       "mde95": 0.0241,
+       "sd": 0.01467,
+       "lb95": -0.0249,
+       "ub95": 0.0227,
+       "ci95": [
+        -0.0297,
+        0.0273
+       ],
+       "p_gt_0": 0.4582,
+       "B_used": 4000,
+       "status": "derived",
+       "B": 4000,
+       "seed": 20261016,
+       "n_clusters": 1473
+      }
+     },
+     "v5c_vs_consensus|hit": {
+      "comparison": "v5c_vs_consensus",
+      "a": "efv_v5_combined",
+      "b": "prospx_consensus",
+      "scope": "hit",
+      "n": 1195,
+      "w_a": 0.16094,
+      "w_b": 0.15329,
+      "delta": 0.00765,
+      "player": {
+       "mde95": 0.0373,
+       "sd": 0.02267,
+       "lb95": -0.0294,
+       "ub95": 0.0442,
+       "ci95": [
+        -0.0366,
+        0.051
+       ],
+       "p_gt_0": 0.6235,
+       "B_used": 4000,
+       "status": "derived",
+       "B": 4000,
+       "seed": 20261016,
+       "n_clusters": 1473
+      }
+     },
+     "v5c_vs_consensus|pit": {
+      "comparison": "v5c_vs_consensus",
+      "a": "efv_v5_combined",
+      "b": "prospx_consensus",
+      "scope": "pit",
+      "n": 1154,
+      "w_a": 0.13438,
+      "w_b": 0.14546,
+      "delta": -0.01108,
+      "player": {
+       "mde95": 0.0313,
+       "sd": 0.01901,
+       "lb95": -0.0422,
+       "ub95": 0.0202,
+       "ci95": [
+        -0.0473,
+        0.0267
+       ],
+       "p_gt_0": 0.2893,
+       "B_used": 4000,
+       "status": "derived",
+       "B": 4000,
+       "seed": 20261016,
+       "n_clusters": 1473
+      }
+     }
+    }
+   },
+   "vm_pros": {
+    "n": 115,
+    "n_players": 115,
+    "n_by_side": {
+     "hit": 54,
+     "pit": 61
+    },
+    "n_by_frame": {
+     "vm_pros": 115
+    },
+    "groups_kept": [
+     "vm_pros:hit|2025",
+     "vm_pros:pit|2025"
+    ],
+    "rows_by_group": {
+     "vm_pros:hit|2025": 54,
+     "vm_pros:pit|2025": 61
+    },
+    "rho_by_group": {
+     "vm_pros:hit|2025": {
+      "efv_v5_combined": 0.2535,
+      "prospx_consensus": 0.1835
+     },
+     "vm_pros:pit|2025": {
+      "efv_v5_combined": 0.4036,
+      "prospx_consensus": 0.4002
+     }
+    },
+    "legs": {
+     "v5c_vs_consensus|both": {
+      "comparison": "v5c_vs_consensus",
+      "a": "efv_v5_combined",
+      "b": "prospx_consensus",
+      "scope": "both",
+      "n": 115,
+      "w_a": 0.33311,
+      "w_b": 0.29847,
+      "delta": 0.03463,
+      "player": {
+       "mde95": 0.0795,
+       "sd": 0.04834,
+       "lb95": -0.0439,
+       "ub95": 0.1152,
+       "ci95": [
+        -0.0609,
+        0.1312
+       ],
+       "p_gt_0": 0.752,
+       "B_used": 4000,
+       "status": "derived",
+       "B": 4000,
+       "seed": 20261016,
+       "n_clusters": 115
+      }
+     },
+     "v5c_vs_consensus|hit": {
+      "comparison": "v5c_vs_consensus",
+      "a": "efv_v5_combined",
+      "b": "prospx_consensus",
+      "scope": "hit",
+      "n": 54,
+      "w_a": 0.25349,
+      "w_b": 0.18355,
+      "delta": 0.06994,
+      "player": {
+       "mde95": 0.1527,
+       "sd": 0.09282,
+       "lb95": -0.0828,
+       "ub95": 0.2256,
+       "ci95": [
+        -0.1099,
+        0.2564
+       ],
+       "p_gt_0": 0.7672,
+       "B_used": 4000,
+       "status": "derived",
+       "B": 4000,
+       "seed": 20261016,
+       "n_clusters": 115
+      }
+     },
+     "v5c_vs_consensus|pit": {
+      "comparison": "v5c_vs_consensus",
+      "a": "efv_v5_combined",
+      "b": "prospx_consensus",
+      "scope": "pit",
+      "n": 61,
+      "w_a": 0.40359,
+      "w_b": 0.40021,
+      "delta": 0.00338,
+      "player": {
+       "mde95": 0.0656,
+       "sd": 0.03987,
+       "lb95": -0.0619,
+       "ub95": 0.0693,
+       "ci95": [
+        -0.0754,
+        0.0832
+       ],
+       "p_gt_0": 0.5182,
+       "B_used": 4000,
+       "status": "derived",
+       "B": 4000,
+       "seed": 20261016,
+       "n_clusters": 115
+      }
+     }
+    }
+   }
+  },
+  "reading": {
+   "pass": false,
+   "verdict": "FAIL",
+   "word": "ties",
+   "delta": 0.00014,
+   "lb95_player": -0.0235,
+   "lb95_club": -0.0238,
+   "mde95_player": 0.024,
+   "mde95_club": 0.0242,
+   "ci95_player": [
+    -0.0283,
+    0.029
+   ],
+   "ci95_club": [
+    -0.0292,
+    0.03
+   ]
+  },
+  "v1": "not built on the spent frames by this pipeline (registration section 7)",
+  "elapsed_s": 894.7
+ },
+ "elapsed_s": 512.5
+}
