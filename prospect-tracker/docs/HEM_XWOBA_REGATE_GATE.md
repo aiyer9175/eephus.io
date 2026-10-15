@@ -336,8 +336,101 @@ Nothing in this document edits a served page.
 
 ## 12. Results
 
-(Empty at registration. Filled by the one run, in the result commit, with: the run date
-and the waiver; n per predictor season and the drops; the frozen-subset reproduction
-receipt; A1, A2 and A3 at D4 under both conventions with their in-run MDE95; the Holm
-k = 3 table per convention; A1s and A3s; the verdict and the registry consequence applied
-per row; the display debts opened; and which of section 8's expectations were wrong.)
+### 2026-10-15: the one run, an OWNER-WAIVED EARLY READ
+
+Run once on 2026-10-15 by `python tools/hem_xwoba_regate_lab.py --season-complete-asof
+2026:2026-10-01` (runtime 215 s), after the dry run of the whole reporting path on
+None-bearing fixtures (both the refusal receipt and the full path), stdout and stderr teed
+before anything else ran. The registered date was 2026-11-16 or later (R1-12); the owner
+waived it (EW3-5, 2026-10-14) and supplied the season-complete override (EW3-6), which the
+conventions module logged to stderr and wrote into the artifact
+(`harness.season_complete_override`: 2026 complete as of 2026-10-01; the Nov 15 default
+unchanged). Artifact: `data/hem_xwoba_regate_eval.json`, seed 20261015, 2,000 replicates.
+This is the registered date's read in no sense; it is the owner's early read, recorded as
+such here, in the artifact (`owner_waived_early_read`) and in the three registry rows.
+
+**Pair set.** 2,134 pairs: 2016 261, 2017 277, 2018 262, 2021 267, 2022 261, 2023 278,
+2024 265 (the 1,871 of 2026 09, unchanged) and **2025: 263** (inside the 250 to 290
+expected; above the 200 floor, so not refused). 0 dropped as partial-outcome, 0 dropped
+for a missing HEM core, so A1, A2 and A3 all read the same 2,134 rows. The 2025 served
+pools: 461 at Savant PA >= 100 (xHEM+ and fwdHEM+), 673 bats in the HEM core pool. The
+2026 Savant file read was `expected_batter_2026.csv`, sha256 7a0e80d0..., 661 rows loaded,
+max PA 726, 86 hitters at 600+ PA (captured 2026-10-14 11:09, a complete regular season);
+the 2016 to 2025 files are the July 2026 captures the 2026-09-18 run read.
+
+**Frozen-subset reproduction (stop rule): PASSED.** On the 1,871 rows with predictor season
+2024 or earlier, A1 and A2 at D4 under `SEED_R1` reproduce every cell of
+`data/xhem_served_regate_eval.json` to four decimals under both conventions (A1 v1 gap
+mean +0.0508 lo95 +0.0241 hi95 +0.0767; A2 v1 gap mean +0.0071 lo95 -0.0012 hi95 +0.0158;
+rhos 0.4619 / 0.4108 and 0.4613 / 0.4543). The extended run is the same arithmetic on
+263 more rows.
+
+**The three arms at D4 (the served integer column), both conventions:**
+
+| arm | candidate rho | baseline rho | v1 gap mean, lo95, hi95 (MDE95) | v2 gap mean, lo95, hi95 (MDE95) | table row |
+|---|---|---|---|---|---|
+| A1 served xHEM+ vs actual wOBA | 0.4603 (v2 0.4688) | 0.4076 (v2 0.4089) | +0.0527, +0.0278, +0.0777 (0.0210) | +0.0603, +0.0346, +0.0860 (0.0214) | both |
+| A2 served fwdHEM+ vs xwOBA alone | 0.4585 (v2 0.4665) | 0.4535 (v2 0.4660) | +0.0050, -0.0033, +0.0130 (0.0068) | +0.0004, -0.0078, +0.0093 (0.0072) | straddle |
+| A3 served HEM+ vs xwOBA alone | 0.4095 (v2 0.4149) | 0.4535 (v2 0.4660) | -0.0440, -0.0664, -0.0220 (0.0187) | -0.0517, -0.0743, -0.0289 (0.0195) | refuted |
+
+Rounding to the served integer (D3 to D4) moved no verdict: A1 D3 0.4598 to D4 0.4603, A2
+D3 0.4580 to D4 0.4585, A3 D3 0.4095 to D4 0.4095 (ties at D4: 1,991 / 2,034 / 2,025 of
+2,134 rows). A2's ladder at the extended n repeats the 2026 09 localisation: the eval
+construction D0 clears v1 (gap lo95 +0.0016) and loses it at D1 when the legs are z-scored
+over the served pool (lo95 -0.0047); v2 straddles at every rung.
+
+**Holm, k = 3, within each convention** (one-sided p from the bootstrap gap distribution):
+v1: A1 t 4.125 p 0.00002 step 1 (alpha 0.0167) reject; A3 t 3.860 p 0.00006 step 2
+(alpha 0.025) reject, in the LOSING direction; A2 t 1.213 p 0.112 step 3 (alpha 0.05) not
+rejected. v2: A1 t 4.641 reject; A3 t 4.362 reject (losing direction); A2 t 0.083 p 0.467
+not rejected. A1 passes both conventions after Holm; A2 passes neither; A3's rejection is
+of a negative gap, so it establishes the loss, not a pass.
+
+**Sensitivities, zero verdict weight.** A1s: served xHEM+ against served HEM+ on the same
+rows, 0.4603 vs 0.4095, v1 gap lo95 +0.0283, v2 lo95 +0.0317. A3s: served HEM+ against raw
+actual wOBA(Y), 0.4095 vs 0.4076, v1 gap mean +0.0020 lo95 -0.0131 hi95 +0.0176, v2 mean
++0.0058 lo95 -0.0091: HEM+ still TIES its parent on this frame, as its own gate found.
+
+**Verdicts and the registry consequence applied (section 6), one commit with the artifact:**
+
+- `xhem_plus`: **validated**, stays (both conventions, after Holm). Row re-pointed at the
+  re-baseline artifact; card headline 0.460 vs 0.408, n 2,134.
+- `fwdhem_plus`: **provisional**, stays (straddle under both; the extended n did not
+  separate it from xwOBA alone either). Not promoted, not refuted (hi95 +0.0130 and
+  +0.0093 stay above zero). Card 0.459 vs 0.454, not resolvable.
+- `hem_plus`: **deprecated** (REFUTED: hi95 < 0 under both conventions). Loss-ledger note
+  in the row: the served HEM+ column is forecast better by the Savant xwOBA beside it by
+  0.044 to 0.052 of Spearman rho on 2,134 pairs; HEM+ keeps tying its raw-wOBA parent
+  (A3s) and its AVG win stays as history. The column continues to ship; display debt
+  recorded below. Card: 0.409 vs 0.454 (xwOBA), 0.409 vs 0.408 (raw wOBA, sensitivity),
+  neither resolvable.
+
+**Section 8 expectations:** 1 right (A1 survives), 2 right (A2 stays provisional, by the
+straddle row), 3 right (A3 refuted; hi95 cleared zero under neither convention), 4 right
+(A3s a tie, +0.0020), 5 right (263 pairs, pool 461). Nothing was wrong, which this document
+records as a fact and not as a merit.
+
+**Display debts opened (section 9), owned by the display lane:** item 1 is now live
+(`hem_plus` deprecated; the HEM+ column, the "HEM+: skill" note, the Lineup Charts axis
+label, Team Offense+ and the glossary HEM+ entry still call it the skill read); item 3 is
+live (the glossary's xHEM+ entry quotes 1,871 pairs and 0.46 vs 0.41; the re-baseline reads
+2,134 and 0.460 vs 0.408); item 2 is not live (fwdhem_plus did not move; the 2026-09-18
+copy stays true); item 4 stands. The eWAR v3 skill look (SWAR-Q3 (c)) may now read this
+result.
+
+**Disagreement with section 6, recorded rather than edited away.** Section 6 said the
+`hem_plus` row would take the re-baseline artifact as `eval_artifact` and derive its card
+from A3 and A3s. That collides with an owner answer the registration did not know: M27-1
+(2026-09-25) fixes the HEM+ card as AVG, raw wOBA and OPS, each read from
+`data/hem_plus_eval.json` (pinned by `test_model_report_cards.py`). The owner's answer wins:
+the `hem_plus` card and `eval_artifact` STAY as M27-1 set them; the verdict, the summary,
+the baseline and metric lines and the notes carry the re-gate, with
+`data/hem_xwoba_regate_eval.json` cited by path (the companion rule). `xhem_plus` and
+`fwdhem_plus` moved exactly as section 6 said. The glossary receipt reader for HEM+ is
+therefore still correct about what it shows (section 9 item 4).
+
+**Owner question raised by this result (reported, not decided here):** what the HEM+
+column does on `/mlbstats/` now that its forward claim is refuted beside xHEM+ (keep as a
+labelled results-based index with copy that says xwOBA forecasts better; move it behind
+xHEM+ and drop the word skill; or pull it). The registry verdict stands as registered
+whichever the owner chooses.

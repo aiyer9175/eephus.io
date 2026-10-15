@@ -251,15 +251,32 @@ def test_the_shipped_riv_eval_points_at_its_successor_without_editing_numbers():
 # ---------------------------------------------------------------------------
 
 def test_registry_verdicts_match_what_the_gates_found():
-    assert _row("xhem_plus")["verdict"] == "validated"
-    assert _row("fwdhem_plus")["verdict"] == "provisional"
+    """What the 2026-09-18 gates found is pinned in their own artifacts. The
+    xhem_plus and fwdhem_plus REGISTRY verdicts moved on to the re-baseline of
+    2026-10-15 (docs/HEM_XWOBA_REGATE_GATE.md, test_hem_xwoba_regate.py), which
+    inherits R1-6 and keeps this read as the prior; riv_plus stays where
+    re-gate 2 left it."""
+    r1 = _json(R1_PATH)["verdict"]
+    assert r1["xhem_plus"] == "validated"
+    assert r1["fwdhem_plus"] == "provisional"
     assert _row("riv_plus")["verdict"] == "deprecated"
 
 
+# The re-baseline artifact (2026-10-15) supersedes the 2026-09-18 read as the
+# rows' eval_artifact once it exists; until then the rows point at R1_PATH.
+REBASELINE = ROOT / "data" / "hem_xwoba_regate_eval.json"
+_HEM_ROW_ARTIFACT = ("data/hem_xwoba_regate_eval.json" if REBASELINE.exists()
+                     else "data/xhem_served_regate_eval.json")
+
+
 def test_registry_rows_point_at_the_regate_artifacts():
-    assert _row("xhem_plus")["eval_artifact"] == "data/xhem_served_regate_eval.json"
-    assert _row("fwdhem_plus")["eval_artifact"] == "data/xhem_served_regate_eval.json"
+    assert _row("xhem_plus")["eval_artifact"] == _HEM_ROW_ARTIFACT
+    assert _row("fwdhem_plus")["eval_artifact"] == _HEM_ROW_ARTIFACT
     assert _row("riv_plus")["eval_artifact"] == "data/riv_market_regate_eval.json"
+    for model_id in ("xhem_plus", "fwdhem_plus"):
+        if REBASELINE.exists():
+            assert "data/xhem_served_regate_eval.json" in _row(model_id)["notes"], (
+                "the 2026-09-18 read stays cited by path as the prior")
 
 
 @pytest.mark.parametrize("model_id", ["xhem_plus", "fwdhem_plus"])
@@ -269,7 +286,8 @@ def test_the_headline_on_a_served_column_is_the_served_number(model_id: str):
     the eval-normalized figure may only appear as a labelled reproduction."""
     row = _row(model_id)
     arm = "A1_xhem_plus" if model_id == "xhem_plus" else "A2_fwdhem_plus"
-    d4 = _json(R1_PATH)["arms"][arm]["ladder"]["D4"]["v1"]
+    # the row's OWN artifact: R1_PATH until the re-baseline lands, then that
+    d4 = _json(ROOT / row["eval_artifact"])["arms"][arm]["ladder"]["D4"]["v1"]
     head = row["card"]["headline"][0]
     assert head["champion"] == round(d4["rho_primary"], 3)
     assert head["baseline"] == round(d4["rho_baseline"], 3)

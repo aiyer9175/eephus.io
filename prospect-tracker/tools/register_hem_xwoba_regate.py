@@ -162,7 +162,7 @@ def _block(model_id: str, art: dict) -> str:
     s += ("Coverage: the gate speaks only about the PA >= 200 subset while the board stamps every tracked "
           "hitter at PA >= 100 (served pools per season "
           f"{json.dumps({y: v['xhem_pool_pa_ge_100'] for y, v in cov['served_normalizer_pool_by_season'].items()})}). "
-          f"Producer tools/hem_xwoba_regate_lab.py (seed {art['seed']}, {art['boot']} reps); mover "
+          f"Artifact {ART_REL}; producer tools/hem_xwoba_regate_lab.py (seed {art['seed']}, {art['boot']} reps); mover "
           "tools/register_hem_xwoba_regate.py. Next re-baseline not before 2027-11-16, in its own document.")
     return s
 
@@ -196,26 +196,33 @@ def apply(doc: dict, art: dict, force: bool = False) -> list[str]:
         verdict, _claim = _consequence(model_id, arm)
         row["summary"] = _summary(model_id, art)
         row["verdict"] = verdict
-        row["eval_artifact"] = ART_REL
-        row["card"] = _card(model_id, art)
         if model_id == "hem_plus":
-            row["champion"] = ("hem_plus_v1 AS SERVED: per-component empirical-Bayes-shrunk wOBA anchored on "
-                               "the hitter pool's shrunk mean, hem_plus_raw = 100 + 2.28 * (100 * shrunk wOBA / "
-                               "anchor - 100), served as int(round(hem_plus_raw)) (hem_plus.score_pool via "
-                               "hitter_export); volume and baserunning held out of the skill number")
-            row["metric"] = ("Spearman of the served column vs next-year wOBA against Savant xwOBA alone; "
-                             "bootstrap lo95 > 0 under both conventions, Holm k = 3 (" + GATE + ")")
-            row["baseline"] = ("Savant xwOBA alone (the registered re-gate baseline, 2026-10-15"
-                               + (", beaten" if verdict == "validated" else "")
-                               + "); the original gate's AVG and raw wOBA stand as history in the notes")
+            # The HEM+ card layout is an OWNER ANSWER (M27-1, 2026-09-25: AVG, raw
+            # wOBA and OPS, each read from data/hem_plus_eval.json; pinned by
+            # test_model_report_cards.py), which the registration of 2026-10-15 did
+            # not know. The card and the eval_artifact therefore STAY; the verdict,
+            # the summary, the baseline and metric lines and the notes carry the
+            # re-gate, with the artifact cited by path. Recorded in the gate
+            # document's section 12 as a disagreement, not edited away.
+            row["metric"] = ((row.get("metric") or "").rstrip(".") + "; re-gated 2026-10-15 on the SERVED "
+                             "integer column against Savant xwOBA alone, bootstrap lo95 > 0 under both "
+                             "conventions, Holm k = 3 (" + GATE + ", " + ART_REL + ")")
+            row["baseline"] = ("AVG (naive rate baseline) and raw wOBA (its parent), the original gate; "
+                               "Savant xwOBA alone, the 2026-10-15 re-gate baseline ("
+                               + ("beaten" if verdict == "validated" else
+                                  "not beaten" if verdict == "provisional" else "lost to")
+                               + ")")
         else:
+            row["eval_artifact"] = ART_REL
+            row["card"] = _card(model_id, art)
             row["metric"] = ("Spearman of the served column vs next-year wOBA against "
                              + ("actual wOBA" if model_id == "xhem_plus" else "xwOBA alone")
                              + "; bootstrap lo95 > 0 under both conventions, Holm k = 3 (" + GATE + ")")
         row["notes"] = _block(model_id, art) + " PRIOR NOTES (retained, through 2026-10-14): " + (row.get("notes") or "")
         row["last_checked"] = art["owner_waived_early_read"]["run_date"]
-        row["stale"] = False
-        row["artifact_age_days"] = 0
+        if model_id != "hem_plus":          # its artifact is new today; hem_plus keeps its own
+            row["stale"] = False
+            row["artifact_age_days"] = 0
         moved.append(model_id)
     return moved
 

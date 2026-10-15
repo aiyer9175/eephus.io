@@ -104,6 +104,9 @@ def test_the_mover_types_no_number_and_is_idempotent(monkeypatch):
     art = lab.score(lab.fixtures(), boot=25, new_block_floor=0)
     art["verdict"]["status"] = "RAN"
     doc = _json(ROOT / "data" / "model_registry.json")
+    for r in doc["models"]:
+        if r["model_id"] in mover.ARM_OF:
+            r["notes"] = "prior notes of the row"      # a registry that has not seen this run
     before = copy.deepcopy(doc)
     moved = mover.apply(doc, art)
     assert sorted(moved) == ["fwdhem_plus", "hem_plus", "xhem_plus"]
@@ -112,12 +115,18 @@ def test_the_mover_types_no_number_and_is_idempotent(monkeypatch):
         r = by_id[mid]
         arm = art["arms"][mover.ARM_OF[mid]]
         d4 = arm["ladder"]["D4"]["v1"]
-        assert r["eval_artifact"] == mover.ART_REL
         assert r["verdict"] == mover._consequence(mid, arm)[0]
-        assert r["card"]["headline"][0]["champion"] == round(d4["rho_primary"], 3)
-        assert r["card"]["headline"][0]["baseline"] == round(d4["rho_baseline"], 3)
-        assert r["card"]["n"] == art["n_forward_pairs"][mover.ARM_OF[mid][:2]]
-        assert mover.PRIOR_ART[mid] in r["notes"], "the prior artifact stays cited by path"
+        if mid == "hem_plus":
+            # owner answer M27-1 keeps the HEM+ card and artifact (AVG, raw wOBA, OPS)
+            assert r["eval_artifact"] == mover.PRIOR_ART["hem_plus"]
+            assert r["card"] == before["models"][[m["model_id"] for m in before["models"]].index(mid)]["card"]
+            assert mover.ART_REL in r["notes"] and mover.ART_REL in r["metric"]
+        else:
+            assert r["eval_artifact"] == mover.ART_REL
+            assert r["card"]["headline"][0]["champion"] == round(d4["rho_primary"], 3)
+            assert r["card"]["headline"][0]["baseline"] == round(d4["rho_baseline"], 3)
+            assert r["card"]["n"] == art["n_forward_pairs"][mover.ARM_OF[mid][:2]]
+            assert mover.PRIOR_ART[mid] in r["notes"], "the prior artifact stays cited by path"
         assert "OWNER-WAIVED EARLY READ" in r["notes"]
         assert len(r["summary"].split()) <= 30
         assert chr(8212) not in r["notes"] and chr(8212) not in r["summary"]
@@ -214,15 +223,23 @@ def test_registry_rows_carry_the_re_baseline(model_id):
     d = _json(ART)
     row = _row(model_id)
     arm = d["arms"][mover.ARM_OF[model_id]]
-    assert row["eval_artifact"] == "data/hem_xwoba_regate_eval.json"
     assert row["verdict"] == mover._consequence(model_id, arm)[0]
     assert row["verdict"] == d["verdict"][model_id]
+    assert "OWNER-WAIVED EARLY READ" in row["notes"]
     d4 = arm["ladder"]["D4"]["v1"]
+    if model_id == "hem_plus":
+        # the card and artifact stay the owner's (M27-1); the re-gate rides on the
+        # verdict, the summary, the baseline and metric lines and the notes
+        assert row["eval_artifact"] == "data/hem_plus_eval.json"
+        assert "data/hem_xwoba_regate_eval.json" in row["notes"]
+        assert str(d4["rho_primary"]) in row["summary"] and str(d4["rho_baseline"]) in row["summary"]
+        assert "xwOBA" in row["baseline"] and "k = 3" in row["metric"]
+        return
+    assert row["eval_artifact"] == "data/hem_xwoba_regate_eval.json"
     head = row["card"]["headline"][0]
     assert head["champion"] == round(d4["rho_primary"], 3)
     assert head["baseline"] == round(d4["rho_baseline"], 3)
     assert "served" in head["label"].lower()
-    assert "OWNER-WAIVED EARLY READ" in row["notes"]
     assert mover.PRIOR_ART[model_id] in row["notes"]
 
 
