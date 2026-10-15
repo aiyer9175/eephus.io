@@ -2094,6 +2094,72 @@ def live_receipt(side: str) -> dict | None:
     return _LIVE_RECEIPTS.get(side)
 
 
+#: EFV_FIX_A A3 (owner decision EW3-21, docs/efv-v2/EFV_FIX_A.md): how the head weights stand.
+HEAD_WEIGHTS_NOTE = ("w_skill and w_time are eFV V2's DS-08 constants (the registration "
+                     "artifact's weights), applied unchanged to the v5 joint heads by owner "
+                     "decision EW2-9 and never re-estimated for them; the registered re-fit "
+                     "EFV_FIX_B_REFIT re-derives them, and they hold until it reads")
+
+
+def season_read_sentence(season: int) -> str:
+    """The owner's season-read disclosure (EW3-21), one plain sentence."""
+    return (f"The grade reads the latest full minor league season ({int(season)}), which is "
+            "newer than some consensus lists.")
+
+
+def served_disclosures(models: dict, receipts: dict, *, today: str | None = None) -> dict:
+    """meta.served_model.disclosures for the v5 board: the served key set per side, the
+    families (and single columns) that read no value on the live board with their reasons,
+    taken from each side's live_columns receipt, the live read, and the head weights'
+    standing. Metadata only: it moves no grade."""
+    rd = live_read(today)
+    cands = candidates()
+    by_key = {c["key"]: (n, c) for n, c in cands.items()}
+    out: dict = {"served_keys": {}, "dark": {}}
+    for side, m in models.items():
+        heads = {h: list((m.get(h) or {}).get("keys") or []) for h in ("skill", "timing")}
+        served = sorted(set(heads["skill"]) | set(heads["timing"]))
+        out["served_keys"][side] = {"skill": heads["skill"], "timing": heads["timing"],
+                                    "n": len(served)}
+        rec = receipts.get(side) or {}
+        fam_keys: dict = {}
+        for k in served:
+            if k in by_key:
+                fam_keys.setdefault(_family_of(by_key[k][0]), []).append(k)
+        rows = []
+        for fam, note in sorted((rec.get("families") or {}).items()):
+            keys = fam_keys.get(fam) or []
+            if note.get("status") == "dark":
+                dk = keys
+            else:
+                cols = set(note.get("dark_columns") or [])
+                dk = [k for k in keys if by_key[k][0] in cols]
+            if dk:
+                rows.append({"family": fam, "status": note.get("status"), "keys": dk,
+                             "reason": note.get("reason")})
+        withheld = sorted(k for k, s in (rec.get("support") or {}).items()
+                          if s.get("withheld") and k in served)
+        if withheld:
+            rows.append({"family": "support", "status": "withheld", "keys": withheld,
+                         "reason": "the training column was lit in too few read seasons"})
+        out["dark"][side] = rows
+    out["dark_basis"] = ("the live read's own receipt (efv5_combined.live_columns), as of "
+                         + rd["today"])
+    out["season_read"] = {"read_season": rd["season"], "list_year": rd["group_year"],
+                          "read_year": rd["read_year"],
+                          "live_read_year_offset": int(LIVE_READ_YEAR_OFFSET),
+                          "kind": "in-season update",
+                          "note": ("training pairs each consensus point with the season "
+                                   "before it; the live board reads the latest ended MiLB "
+                                   "season, a timing no training row or scored frame covers"),
+                          "text": season_read_sentence(rd["season"])}
+    out["head_weights"] = {"weights": {s: {"w_skill": m["w_skill"], "w_time": m["w_time"]}
+                                       for s, m in models.items()},
+                           "source": "data/efv_v2_assembly.json",
+                           "pending": "EFV_FIX_B_REFIT", "note": HEAD_WEIGHTS_NOTE}
+    return out
+
+
 def history_columns(side: str, points: list[tuple], *, today: str | None = None,
                     exclude_ids=None, clip: bool = True, log=print) -> tuple[dict, dict]:
     """({name: {(player_key, snapshot date): value | None}}, receipt) for FV-history

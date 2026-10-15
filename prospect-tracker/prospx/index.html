@@ -33053,6 +33053,14 @@ function efvServedClaim() {
   const c = _EFV_SERVED && _EFV_SERVED.claim;
   return (c && c.word) ? c : null;
 }
+// The season-read disclosure (owner decision EW3-21): one plain sentence the exporter
+// derives from the live read (meta.served_model.disclosures.season_read.text); "" when the
+// served model carries none.
+function efvSeasonReadText() {
+  const d = _EFV_SERVED && _EFV_SERVED.disclosures;
+  const s = d && d.season_read;
+  return (s && typeof s.text === "string") ? s.text : "";
+}
 function efvClaimShort() {
   const c = efvServedClaim();
   if (!c) return "";
@@ -35534,6 +35542,10 @@ function efvDetailCard(p) {
   const claimHTML = _claim
     ? `<div class="efv-claim-line" style="margin:-2px 0 8px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="${escapeHtml(_claim.text + " Source: " + _claim.source + ".")}"><a href="/glossary/#view=source-comparison" style="color:var(--text-secondary);text-decoration:none;border-bottom:1px dotted var(--border);">${escapeHtml(efvClaimShort())}</a> · ${escapeHtml(_claim.frame_label ? _claim.frame_label.toLowerCase() + " frame" : "")}${_claim.n != null ? `, n ${Number(_claim.n).toLocaleString()}` : ""}</div>`
     : "";
+  const _seasonRead = _v2 ? efvSeasonReadText() : "";
+  const seasonHTML = _seasonRead
+    ? `<div class="efv-season-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;">${escapeHtml(_seasonRead)}</div>`
+    : "";
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
         <div title="${_v2 ? "The drivers that moved this prospect's place in the consensus order inside his side, biggest first. The number is percentile points of the side's board. Notes marked 'not in the grade' state a condition (injury, age, reliever role, Statcast) and move nothing." : "Signals that moved eFV off the consensus prior, biggest first. The number is that signal's contribution size on the model's own scale, and the bar is the same number on a log scale so the large ones stay apart. They rank against each other; they do not sum to the eFV-minus-consensus gap. Game power is intentionally not a driver (scouts over-price it vs realized WAR)."}" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} &rarr; eFV ${xg} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">(gap ${efvDeltaText(d)})</span>` : ""}</div>
@@ -35589,6 +35601,7 @@ function efvDetailCard(p) {
         <span class="fv-badge ${fvClass(String(efvGradeDisplay(x)))} size-sm"${(x.xfv_ungraded || _inSec) ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(_inSec && _pg ? `${_pg.Word} ${_pg.val}: ${_pg.prodMap ? "today's map value" : "the served grade"}, ranked nowhere. The board rank counts graded players only.` : efvTooltip(x))}">${efvGradeDisplay(x)}</span>
       </div>
       ${claimHTML}
+      ${seasonHTML}
       ${placeHTML}
       ${headHTML}
       ${_inSec ? "" : provReceiptHTML(p)}

@@ -553,7 +553,219 @@
 }
 }
 },
-"who": "every active prospect with a real consensus grade; rows whose consensus is the last-resort constant are served by the production-only provisional model (grade_basis provisional_capped)"
+"who": "every active prospect with a real consensus grade; rows whose consensus is the last-resort constant are served by the production-only provisional model (grade_basis provisional_capped)",
+"disclosures": {
+"served_keys": {
+"hit": {
+"skill": [
+"tool_hit",
+"scr_g5_hit_A_all_all_k_pct",
+"scr_g5_hit_A_all_all_bb_minus_k",
+"scr_g5_hit_A_young_all_k_pct",
+"scr_g5_hit_A_young_all_bb_minus_k",
+"scr_g5_hit_A_all_all_avg",
+"scr_g5_hit_A_all_all_ops",
+"scr_g5_hit_A_all_all_woba",
+"scr_g5_hit_A_all_all_slg",
+"scr_g5_hit_CPX_all_all_avg",
+"scr_g5_hit_Ap_young_all_pbp_contact",
+"scr_g5_hit_Ap_young_all_pbp_swstr",
+"scr_g5_hit_Ap_young_all_pbp_two_strike_contact",
+"scr_g5_hit_A_young_all_avg",
+"scr_g5_hit_Ap_all_all_pbp_swstr",
+"scr_g5_hit_Ap_all_all_pbp_contact",
+"scr_g5_hit_CPX_all_all_ops",
+"scr_g5_hit_CPX_all_all_woba",
+"scr_w2p_swstr_h",
+"scr_w2p_contact_h",
+"scr_w2p_swing_h",
+"scr_w2p_two_strike_contact_h",
+"scr_w2b_pull_h",
+"scr_w4p_pop_hit",
+"scr_w2r_panel_hit",
+"scr_w2s_pwr_present_hit",
+"scr_w2s_game_pwr_hit",
+"scr_w2s_posval_hit"
+],
+"timing": [
+"level_rank",
+"scr_g5_hit_A_all_all_age",
+"scr_g5_hit_A_young_all_age",
+"scr_w2i_stints_time_hit",
+"scr_w2i_days_time_hit",
+"scr_w2i_sixty_time_hit",
+"scr_w2i_open_time_hit",
+"scr_w2i_recur_time_hit",
+"scr_w2n_nri_pre_hit",
+"scr_w2n_nri_count_pre_hit",
+"scr_rpt_conviction_hit",
+"scr_rpt_hedge_count_hit",
+"scr_rpt_risk_hit",
+"scr_rpt_approach_concern_hit",
+"scr_rpt_writer_minus_stated_hit",
+"scr_rpt_arrival_hit"
+],
+"n": 44
+},
+"pit": {
+"skill": [
+"scr_g5_pit_A_all_all_k_minus_bb",
+"scr_g5_pit_A_all_all_k_pct",
+"scr_g5_pit_A_young_all_k_pct",
+"scr_g5_pit_A_young_all_k_minus_bb",
+"scr_g5_pit_A_all_SP_k_pct",
+"scr_g5_pit_A_all_SP_k_minus_bb",
+"scr_g5_pit_A_all_SP_bf_per_g",
+"scr_t5_pit_Ap_all_SP_sl_gap",
+"scr_t5_pit_Ap_young_all_sl_gap",
+"scr_t5_pit_Ap_all_all_sl_gap",
+"scr_t5_pit_AAA_all_all_fb_fut",
+"scr_w2i_stints_skill_pit",
+"scr_w2i_days_skill_pit",
+"scr_w2i_sixty_skill_pit",
+"scr_w2i_open_skill_pit",
+"scr_w2i_recur_skill_pit",
+"scr_w2p_cstr_p",
+"scr_w2p_csw_p",
+"scr_w2p_k_resid_p",
+"scr_w2p_fstrike_p",
+"scr_w2b_pu_p",
+"scr_w4p_pop_pit",
+"scr_w2r_panel_pit",
+"scr_rpt_conviction_pit",
+"scr_rpt_writer_minus_stated_pit",
+"scr_w2s_brk_pit",
+"scr_w2s_cmd_pit"
+],
+"timing": [
+"level_rank",
+"scr_g5_pit_A_all_all_age",
+"scr_g5_pit_A_all_SP_age",
+"scr_w2i_stints_time_pit",
+"scr_w2i_days_time_pit",
+"scr_w2i_recur_time_pit",
+"scr_w2n_nri_pre_pit",
+"scr_w2n_nri_count_pre_pit",
+"scr_rpt_arrival_pit"
+],
+"n": 36
+}
+},
+"dark": {
+"hit": [
+{
+"family": "group",
+"status": "partial",
+"keys": [
+"scr_g5_hit_Ap_all_all_pbp_contact",
+"scr_g5_hit_Ap_all_all_pbp_swstr",
+"scr_g5_hit_Ap_young_all_pbp_contact",
+"scr_g5_hit_Ap_young_all_pbp_swstr",
+"scr_g5_hit_Ap_young_all_pbp_two_strike_contact"
+],
+"reason": "in-group rows carry no value at the read season: a pitch-call metric needs a discipline aggregate for the season (.cache/efv4_pbp_discipline); value 0.0 (the in-group mean)"
+},
+{
+"family": "pbp",
+"status": "dark",
+"keys": [
+"scr_w2p_contact_h",
+"scr_w2p_swing_h",
+"scr_w2p_swstr_h",
+"scr_w2p_two_strike_contact_h"
+],
+"reason": "no complete pitch-event pool for the seasons read [2025, 2026]: efv_w2_pbp.AGG_SEASONS ends 2024 and no aggregate exists past it"
+},
+{
+"family": "raters",
+"status": "dark",
+"keys": [
+"scr_w2r_panel_hit"
+],
+"reason": "the rater panel carries no list of the read's own year (list years [2011, 2019]); every row reads None, as every training row read after the panel's last year did"
+},
+{
+"family": "report",
+"status": "dark",
+"keys": [
+"scr_rpt_approach_concern_hit",
+"scr_rpt_arrival_hit",
+"scr_rpt_conviction_hit",
+"scr_rpt_hedge_count_hit",
+"scr_rpt_risk_hit",
+"scr_rpt_writer_minus_stated_hit"
+],
+"reason": "None by construction: every production training value was None (empty list-vintage frame in production_columns) and the fitted slopes are 0.0"
+}
+],
+"pit": [
+{
+"family": "pbp",
+"status": "dark",
+"keys": [
+"scr_w2p_cstr_p",
+"scr_w2p_csw_p",
+"scr_w2p_fstrike_p",
+"scr_w2p_k_resid_p"
+],
+"reason": "no complete pitch-event pool for the seasons read [2025, 2026]: efv_w2_pbp.AGG_SEASONS ends 2024 and no aggregate exists past it"
+},
+{
+"family": "raters",
+"status": "dark",
+"keys": [
+"scr_w2r_panel_pit"
+],
+"reason": "the rater panel carries no list of the read's own year (list years [2011, 2019]); every row reads None, as every training row read after the panel's last year did"
+},
+{
+"family": "report",
+"status": "dark",
+"keys": [
+"scr_rpt_arrival_pit",
+"scr_rpt_conviction_pit",
+"scr_rpt_writer_minus_stated_pit"
+],
+"reason": "None by construction: every production training value was None (empty list-vintage frame in production_columns) and the fitted slopes are 0.0"
+},
+{
+"family": "support",
+"status": "withheld",
+"keys": [
+"scr_t5_pit_Ap_all_SP_sl_gap",
+"scr_t5_pit_Ap_all_all_sl_gap",
+"scr_t5_pit_Ap_young_all_sl_gap"
+],
+"reason": "the training column was lit in too few read seasons"
+}
+]
+},
+"dark_basis": "the live read's own receipt (efv5_combined.live_columns), as of 2026-10-15",
+"season_read": {
+"read_season": 2026,
+"list_year": 2026,
+"read_year": 2027,
+"live_read_year_offset": 1,
+"kind": "in-season update",
+"note": "training pairs each consensus point with the season before it; the live board reads the latest ended MiLB season, a timing no training row or scored frame covers",
+"text": "The grade reads the latest full minor league season (2026), which is newer than some consensus lists."
+},
+"head_weights": {
+"weights": {
+"hit": {
+"w_skill": 0.908861,
+"w_time": 0.202573
+},
+"pit": {
+"w_skill": 1.0,
+"w_time": 0.020473
+}
+},
+"source": "data/efv_v2_assembly.json",
+"pending": "EFV_FIX_B_REFIT",
+"note": "w_skill and w_time are eFV V2's DS-08 constants (the registration artifact's weights), applied unchanged to the v5 joint heads by owner decision EW2-9 and never re-estimated for them; the registered re-fit EFV_FIX_B_REFIT re-derives them, and they hold until it reads"
+}
+}
 },
 "eval": {
 "hitter": "data/xfv_eval.json",
