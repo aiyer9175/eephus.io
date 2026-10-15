@@ -1085,3 +1085,23 @@ Result (`data/_labs/efv5/efv5_combined_spent.json`): v5c minus V2 within -0.0032
 `EFV_V5_COMBINED_ON` stays False. A first build of the read aborted inside a column
 builder before any statistic was computed (section 11 of the document). No cell is cut by consensus-FV level.
 The forking-path count of s6 gains this one joint fit and this one spent read.
+
+## Amendment 2026-10-15: the 2026-season holdout reads the R-VM cohorts before look 2 (EW3-13, EW3-5)
+
+Owner decision EW3-13 (2026-10-15, verbatim: "The 2026 season is resolved (we're only scoring
+the regular season where WAR is accumulated), please use it to improve eFV further"; asked how:
+TEST ONCE, THEN TRAIN) under the waiver of registered dates EW3-5 (2026-10-14). This
+amendment is dated and committed BEFORE any 2026-season number is read. It WAIVES, for the
+reads registered in `docs/efv-v2/EFV_2026_HOLDOUT.md` only, the rule of s2.2 that R-VM look 2
+(the 2025 and 2026 debut cohorts) waits for the 2027 season: that document scores the current
+raters once on the 2026 regular season (F-2026-LIST, the preseason 2026 lists; F-2026-DEBUT,
+the 2025 debut class's 2026 season and the 2026 debut class's first season), every rater
+frozen at the 2026 opening day (2026-03-25). The cohorts are opened through
+`efv_vintage_frame.guard_vm_request` on this registration's committed sha
+`e7931ce4e13110eebb53555bff455ff13ca7c502`, as the v3, v4 and v5 spent reads opened R-VM;
+`source_backtest.CANDIDATE_YEARS` and `efv_model.SCORED_YEARS` are not widened and
+`reserved_vm_pins()` stays empty. This is an OWNER-WAIVED EARLY READ of the R-VM cohorts on a
+one-season label; it is not R-VM look 2 and spends none of look 2's alpha (the O'Brien-Fleming
+schedule of s2.2 is untouched for the career-WAR looks). No R-LV list vintage (2020, 2021) is
+built and nothing is cut by consensus-FV level. After the read a dated note below marks the
+2026-season frames SPENT.
