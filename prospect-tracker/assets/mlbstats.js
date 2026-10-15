@@ -4298,7 +4298,7 @@
       get: function (r) { return r.btblend_plus; },
       cell: function (r) { return r.btblend_plus == null ? "" : hemCell(r.btblend_plus); } },
     { key: "pwoba", label: "pWOBA", term: "pwoba", num: true, desc: true,
-      title: "Next-season wOBA from the FA-engine Marcel projection; read like wOBA (about .310 average). Tracked hitters with a recent MLB sample.",
+      title: "Next-season wOBA: the FA-engine Marcel projection blended one part in five with current-season xwOBA; read like wOBA (about .310 average). Tracked hitters with a recent MLB sample.",
       get: function (r) { return r.pwoba; },
       cell: function (r) {
         if (r.pwoba == null) return "";

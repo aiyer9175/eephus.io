@@ -666,7 +666,9 @@ MODEL_GLOSSARY = {
     # the owner), the IFA bonus pedigree curve (7-tier LOCO gate FAIL; its one
     # robust structure later shipped as ifa_step_prior under a NEW gate),
     # and the provisional-penalty / ungraded-cap calibration diagnostic.
-    "pwoba_blend_regate": "internal",
+    # 2026-10-14 owner flip NOV15-PWOBA-FLIP = (a): the re-gated blend is the
+    # served pWOBA, documented by the pwoba entry.
+    "pwoba_blend_regate": ["pwoba"],
     "bat_tracking_hitters": "internal",
     # 2026-10-14: the served construction of the bat-tracking blend (arm B)
     # passed its one re-read (docs/BAT_TRACKING_SERVED_GATE.md) and ships as

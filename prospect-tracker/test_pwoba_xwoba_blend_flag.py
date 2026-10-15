@@ -4,8 +4,9 @@
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
 """The pWOBA xwOBA blend flag (EEPHUS_PWOBA_XWOBA_BLEND): the 2026-10-14
-re-gate PASS's production diff, built behind a flag that defaults OFF and
-that only the owner flips. Off, nothing is read and the column is unchanged."""
+re-gate PASS's production diff. The owner flipped it on (NOV15-PWOBA-FLIP =
+(a), 2026-10-14), so it defaults ON and the variable is an off switch. Off,
+nothing is read and the column is the unblended engine projection."""
 from __future__ import annotations
 
 import pytest
@@ -14,18 +15,18 @@ import hitter_export as he
 
 
 @pytest.fixture(autouse=True)
-def _flag_off(monkeypatch):
+def _flag_unset(monkeypatch):
     monkeypatch.delenv(he.PWOBA_XWOBA_BLEND_ENV, raising=False)
 
 
-def test_the_flag_defaults_off_and_only_an_explicit_value_turns_it_on(monkeypatch):
-    assert he.pwoba_xwoba_blend_on() is False
-    for v in ("0", "off", "", "no"):
-        monkeypatch.setenv(he.PWOBA_XWOBA_BLEND_ENV, v)
-        assert he.pwoba_xwoba_blend_on() is False, v
-    for v in ("1", "on", "true", "YES"):
+def test_the_flag_defaults_on_and_only_an_explicit_off_value_turns_it_off(monkeypatch):
+    assert he.pwoba_xwoba_blend_on() is True
+    for v in ("1", "on", "", "true", "YES"):
         monkeypatch.setenv(he.PWOBA_XWOBA_BLEND_ENV, v)
         assert he.pwoba_xwoba_blend_on() is True, v
+    for v in ("0", "off", "false", "No"):
+        monkeypatch.setenv(he.PWOBA_XWOBA_BLEND_ENV, v)
+        assert he.pwoba_xwoba_blend_on() is False, v
 
 
 def test_the_blend_is_the_frozen_arm_and_a_missing_leg_leaves_w_alone():
@@ -52,6 +53,7 @@ def test_off_the_map_is_never_read(monkeypatch):
         raise AssertionError("the Savant leaderboard must not be read while the flag is off")
 
     monkeypatch.setattr(mpe, "_savant", _boom)
+    monkeypatch.setenv(he.PWOBA_XWOBA_BLEND_ENV, "0")
     assert he.pwoba_xwoba_blend_on() is False
     # the exporter's guard: the map is built only when the flag is on
     xw = he._pwoba_xwoba_map(2026) if he.pwoba_xwoba_blend_on() else {}
