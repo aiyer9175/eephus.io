@@ -424,28 +424,60 @@ def test_withhold_refuses_r_lv_rows_and_unknown_purposes(env):
 # 5. blocked days
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("day", sorted(G.LOOK_DAYS))
-def test_blocked_on_the_registered_look_days(env, day):
-    with pytest.raises(G.BlockedDayError, match="look day"):
-        G.blocked_day(day)
+def test_no_registered_look_day_blocks_after_ew3_5(env):
+    # EW3-5 (owner, 2026-10-14) waived every registered look day.
+    assert G.LOOK_DAYS == frozenset()
+    for day in ("2026-10-23", "2026-11-06", "2026-11-13", "2026-11-20"):
+        assert G.blocked_day_reason(day) is None
 
 
-def test_blocked_on_the_reserved_read_day(env, tmp_path):
+def test_the_reserved_read_day_no_longer_blocks(env, tmp_path):
     _, data = env
-    # no record file and no STATUS.md: the PROGRAM.md date stands
+    # the day is still read (for the record), but EW2-6 and EW3-5 unblock it
     assert G.reserved_read_days() == {G.RESERVED_READ_DEFAULT}
-    with pytest.raises(G.BlockedDayError, match="reserved-read"):
-        G.blocked_day(G.RESERVED_READ_DEFAULT)
-    (tmp_path / "docs" / "efv-v2").mkdir(parents=True)
-    (tmp_path / G.STATUS_DOC).write_text(
-        "Decision EW2-6 (2026-10-08) replaced the 2026-12-01 reserved read with a "
-        "same-day backtest.\n", encoding="utf-8")
-    assert G.reserved_read_days() == {"2026-10-08", "2026-12-01"}
+    G.blocked_day(G.RESERVED_READ_DEFAULT)
     _records(data, (G.LOOK_1,), reserved_read_date="2026-12-03")
     assert G.reserved_read_days() == {"2026-12-03", "2026-12-01"}
-    with pytest.raises(G.BlockedDayError):
-        G.blocked_day("2026-12-03")
-    G.blocked_day("2026-12-04")
+    G.blocked_day("2026-12-03")
+
+
+def _confirm(data: Path, **over) -> None:
+    doc = {"item": G.LOOK_1_RECORD_ITEM, "role": "reserved", "one_read": True,
+           "generated_at": "2026-10-08T21:38:56Z",
+           "gate": {"guards": {"r_vm_cohort_read": [2025]}}}
+    doc.update(over)
+    path = data / G.LOOK_1_RECORD_NAME
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(doc), encoding="utf-8")
+
+
+def test_look_1_is_held_by_the_ew2_6_confirm_record(env):
+    shas, data = env
+    assert G.look_records() == frozenset()
+    _confirm(data)
+    assert G.look_records() == frozenset({G.LOOK_1})
+    G.guard_surrogate_read(2022, gate_sha=shas["one"], look_records=(G.LOOK_1,),
+                           purpose="transfer")
+    # the confirm record never claims looks 2, 3 or the OQ6 release
+    with pytest.raises(G.ReservedFrameError, match="not in data"):
+        G.guard_surrogate_read(2026, gate_sha=shas["one_b"], look_records=(G.LOOK_2,),
+                               purpose="lv2026_surrogate")
+
+
+@pytest.mark.parametrize("over", [{"item": "OTHER"}, {"role": "development"},
+                                  {"one_read": False}, {"generated_at": ""},
+                                  {"gate": {"guards": {"r_vm_cohort_read": [2024]}}}])
+def test_a_malformed_confirm_record_holds_no_look(env, over):
+    _, data = env
+    _confirm(data, **over)
+    assert G.look_records() == frozenset()
+
+
+def test_the_real_confirm_record_holds_look_1(monkeypatch):
+    if not (ROOT / "data" / G.LOOK_1_RECORD_NAME).exists():
+        pytest.skip("confirm record absent")
+    monkeypatch.setattr(G, "DATA_DIR", ROOT / "data")
+    assert G.look_1_recorded()
 
 
 def test_the_real_status_doc_names_the_reserved_read(monkeypatch, tmp_path):
