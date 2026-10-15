@@ -90,9 +90,12 @@ groups, counts or averages anything by consensus-FV level (docs/PROSPECT_ANCHOR_
 the only summaries are counts by side and year and the (level, season) population
 norms. No column builder reads a label, a realized value or a debut. List vintages 2020
 and 2021 and the 2025 cohort raise through efv_vintage_frame unless the committed gate
-sha is handed in (spent_read only). The aggregate stops at season 2024 (the last season
-any read here can see). Selects and adjudicates nothing beyond the development family's
-own verdicts (EW2-10: choice uses the development frames only).
+sha is handed in (spent_read only). The aggregate runs through season 2026: 2024 is the
+last season a development or reserved read here sees, and 2025 and 2026 are the seasons
+the live board reads (efv5_combined._fam_pbp at read year 2027; EFV_FIX_A_PBP_2026, owner
+EW3-21, docs/efv-v2/EFV_PBP_2026_AGGREGATE.md), the same pools and construction. Selects
+and adjudicates nothing beyond the development family's own verdicts (EW2-10: choice uses
+the development frames only).
 
 Run:  python efv_w2_pbp.py --aggregate          (fill .cache/efv4_pbp_discipline)
       python efv_w2_pbp.py --norms              (print the pool receipt)
@@ -138,9 +141,11 @@ NOTE_PRIMARY = (NOTE + "; lv_dev read on the has-full-pbp rows only, the V2 asse
 
 #: StatsAPI sport id -> level (milb_pbp_fetch.SPORTS).
 SPORT_LEVEL: dict[int, str] = {11: "AAA", 12: "AA", 13: "A+", 14: "A", 15: "A-", 16: "ROK"}
-#: Seasons the aggregate holds: the first AAA season fetched through the last season a
-#: read here can see (the 2025 debut cohort reads 2024). 2020 had no MiLB season.
-AGG_SEASONS: tuple[int, ...] = tuple(y for y in range(2007, 2025) if y != 2020)
+#: Seasons the aggregate holds: the first AAA season fetched through 2026, the season the
+#: live board reads (read year 2027 reads 2026 and 2025; EFV_FIX_A_PBP_2026). Development
+#: and reserved reads stop at 2024 by their own guards (the 2025 debut cohort reads 2024).
+#: 2020 had no MiLB season.
+AGG_SEASONS: tuple[int, ...] = tuple(y for y in range(2007, 2027) if y != 2020)
 NO_SEASON = frozenset({2020})
 AGG_VERSION = 1
 FULL_GAME_PPA = 3.0
