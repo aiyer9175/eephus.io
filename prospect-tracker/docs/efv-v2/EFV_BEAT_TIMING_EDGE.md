@@ -217,3 +217,101 @@ vintage-matched frame of the progress chart).
 - Code: `tools/efv_timing_edge.py`, tests `test_efv_timing_edge.py`; artifact
   `data/_labs/efv5/efv_timing_edge.json`; cache `.cache/efv_timing_edge/` (to-date minor
   league lines, fetched outside the 06:00 to 11:00 UTC nightly window).
+
+## 13. The read (appended by the run, 2026-10-15; development frames)
+
+Run: `python -u tools/efv_timing_edge.py --run` from commit ee675cdc (artifact
+`data/_labs/efv5/efv_timing_edge.json`, generated 2026-10-15T20:57:11Z, 1,205 s; label
+`fwar@2026-10-02-0341299c20ec` as the development read scores it; B 2000, seed 20261015).
+Before any statistic the builder reproduced the development read's own preseason features
+on all 3,692 scored rows (lv_dev 2,862, vm_dev 830), so the read-date rows differ from the
+development rows only by what section 5 moves. The 432 to-date files (seasons 2017 to 2019
+and 2021 to 2023) were fetched at 20:20 to 20:40 UTC; each 09-30 file equals its season
+file line for line. Every no-look-ahead assertion of section 6 held (the run refuses
+otherwise). The spent frames were not opened.
+
+### 13.1 The primary statistic (eFV v5 COMBINED as of d minus consensus as published at d)
+
+Within (side, year, read date) Spearman, pooled over read dates by row count.
+
+| frame | read-date rows (players) | groups of 20+ (rows in them) | eFV v5c | consensus as published | delta | CI95 (player) | one-sided 95% lower bound (player) | CI95 (club, 30 clusters) | lower bound (club) |
+|---|---|---|---|---|---|---|---|---|---|
+| lv_dev | 16,180 (1,734) | 36 (16,180) | 0.1440 | 0.1560 | -0.0120 | -0.0409 to +0.0169 | -0.0366 | -0.0431 to +0.0198 | -0.0379 |
+| vm_dev | 2,114 (659) | 42 (1,754) | 0.3364 | 0.3418 | -0.0054 | -0.0473 to +0.0344 | -0.0402 | -0.0538 to +0.0404 | -0.0463 |
+
+### 13.2 The V2 leg and the controls (same read-date rows, player-clustered)
+
+| comparison | lv_dev delta (CI95; lower bound) | vm_dev delta (CI95; lower bound) |
+|---|---|---|
+| V2 as of d minus consensus as published | -0.0071 (-0.0267 to +0.0138; -0.0240) | -0.0117 (-0.0463 to +0.0238; -0.0403) |
+| control: v5c at the preseason read minus consensus at the preseason point (the old tie) | -0.0158 (-0.0453 to +0.0145; -0.0412) | -0.0078 (-0.0510 to +0.0312; -0.0420) |
+| control: V2 at the preseason read minus consensus at the preseason point | -0.0139 (-0.0352 to +0.0079; -0.0317) | -0.0126 (-0.0483 to +0.0224; -0.0422) |
+| consensus as published minus consensus at the preseason point | +0.0030 (-0.0021 to +0.0080; -0.0011) | +0.0012 (-0.0008 to +0.0036; -0.0005) |
+| v5c as of d minus v5c at the preseason read | +0.0068 (-0.0015 to +0.0150; -0.0003) | +0.0036 (-0.0079 to +0.0157; -0.0062) |
+
+The controls apply the development fold models to the preseason inputs of the same
+read-date rows, with the anchor percentile taken inside the read-date group (so at a read
+date they differ from the development read only by the rows that had reached the majors).
+
+### 13.3 Cuts (descriptive; the verdict reads 13.1 only)
+
+- By side, lv_dev: hitters -0.0379 (-0.0884 to +0.0155; lower bound -0.0817; n 8,277),
+  pitchers +0.0152 (-0.0081 to +0.0384; lower bound -0.0046; n 7,903). vm_dev: hitters
+  -0.0439 (-0.1193 to +0.0324; -0.1080; n 1,023), pitchers +0.0290 (-0.0054 to +0.0594;
+  -0.0002; n 1,091).
+- By read month, lv_dev (n): April -0.0063 (-0.0346 to +0.0222; 2,801), May -0.0089
+  (-0.0403 to +0.0226; 2,758), June -0.0126 (-0.0411 to +0.0171; 2,710), July -0.0114
+  (-0.0406 to +0.0184; 2,684), August -0.0144 (-0.0471 to +0.0160; 2,635), September -0.0188
+  (-0.0489 to +0.0129; 2,592). vm_dev: April -0.0125 (-0.0493 to +0.0257; 659), May -0.0064
+  (-0.0530 to +0.0382; 539), June +0.0067 (-0.0526 to +0.0575; 424), July +0.0207 (-0.0439 to
+  +0.0786; 325), August -0.2408 (one group of 23 rows; -0.5693 to +0.0517; 158), September
+  not scored (9 rows, no group of 20).
+- By year, lv_dev: 2017 -0.0154 (-0.0548 to +0.0253), 2018 -0.0116 (-0.0588 to +0.0386),
+  2019 -0.0090 (-0.0495 to +0.0298). vm_dev: 2017 -0.2163 (two groups, 51 rows), 2018 -0.0226
+  (-0.1058 to +0.0566), 2019 +0.0739 (-0.0209 to +0.1698), 2020 +0.0693 (-0.0278 to +0.1600),
+  2021 -0.0792 (-0.1685 to +0.0057), 2022 -0.0943 (-0.2123 to +0.0154), 2023 +0.0091 (-0.0644
+  to +0.0762).
+- Arrival (R3, lv_dev): within 0.3536 against 0.3504, +0.0031 (-0.0253 to +0.0322; lower
+  bound -0.0200).
+
+### 13.4 Receipts
+
+- Rows unpromoted at the read date, of the scored rows: lv_dev 2,801, 2,758, 2,710, 2,684,
+  2,635, 2,592 of 2,862 (April to September); vm_dev 659, 539, 424, 325, 158, 9 of 830. Rows
+  debuting in their read season with no usable debut day (dropped at every read date of
+  it): lv_dev 5, vm_dev 0.
+- Rows whose published consensus at d differs from the preseason point: lv_dev 0, 0, 0,
+  203, 428, 421 (April to September; the FanGraphs midseason lists of July 2019 and August
+  2018; none in 2017); vm_dev 0, 0, 0, 14, 19, 2.
+- Rows whose minor league block read a line of the read season: lv_dev 2,012 of 2,801 in
+  April rising to 2,274 of 2,592 in September; vm_dev 416 of 659 in April (2020 rows read
+  no 2020 line).
+- The 2026 holdout record (corroboration only, nothing recomputed): with every rater frozen
+  at the 2026 opening day, served eFV minus consensus on 2026 WAR read +0.0121 (n 1,208;
+  CI95 -0.0108 to +0.0348; one-sided lower bound -0.0073), verdict ties. It is a same-date
+  read, so it carries no timing datum.
+
+### 13.5 What the read says, in plain words
+
+Re-reading the season helps eFV a little: on the list years its order of later WAR improves
+by +0.0068 over its own preseason order. But consensus improves too when its midseason
+lists come out (+0.0030), so the net timing gain over consensus is about +0.0038 on lv_dev
+(from -0.0158 at the same date to -0.0120 at the read date) and +0.0024 on vm_dev (from
+-0.0078 to -0.0054). That is too small to close the gap the same-date reads already
+showed. The gap is the hitter side, as in the eFV v5 COMBINED development read; pitchers
+lead consensus on both frames with lower bounds just under zero (-0.0046 and -0.0002), a
+cut the registration reads as descriptive only.
+
+## 14. The verdict (the rule of section 8)
+
+| frame | one-sided 95% lower bound (player-clustered) | above 0 |
+|---|---|---|
+| lv_dev | -0.0366 | no |
+| vm_dev | -0.0402 | no |
+
+**NOT PASS.** eFV v5 COMBINED read during the season does not beat consensus as it was
+published at the time; the point estimates are below zero on both development frames and
+both intervals span zero. Per sections 9 and 10: the spent frames are not opened, nothing
+served moves, no owner flip question is raised, the copy keeps 'ties consensus', and the
+site says nothing about a timing edge. The exact copy the site may print from this read:
+none (no new sentence; every existing eFV claim stays as it is).
