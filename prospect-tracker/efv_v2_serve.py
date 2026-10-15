@@ -147,8 +147,14 @@ def production_models(*, refresh: bool = False) -> dict[str, dict]:
     import efv_v2_model as H
     import efv_v3 as V3
     import efv_v4 as V4
+    import efv5_group_drivers as V5
     import efv_vintage_frame as F
     weights = H.load_weights()
+    if V5.EFV_V5_ON:
+        # DARK (efv5_group_drivers.EFV_V5_ON is False): eFV v5 group drivers at the
+        # committed configuration; the ship rule of docs/efv-v2/EFV_V5_BACKTEST.md flips it.
+        _MODELS = V5.production_models(weights=weights)
+        return _MODELS
     if V4.EFV_V4_ON:
         # DARK (efv_v4.EFV_V4_ON is False): eFV v4 at its committed configuration on the
         # same rows; the ship rule of docs/efv-v2/EFV_V4_BACKTEST.md flips the flag.

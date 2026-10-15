@@ -298,6 +298,35 @@ def wave2_candidates() -> tuple[dict, ...]:
     return tuple(a for m in WAVE2_ARM_MODULES for a in __import__(m).ARMS)
 
 
+#: WAVE 5 (EFV5_GROUP_DRIVERS, owner EW3-1 to EW3-3, 2026-10-14): the eFV v5 metric
+#: atlas's long-label candidates (box and pbp families, clean frames, q at or below
+#: 0.10) built as group drivers, the metric times a group indicator (level, age band,
+#: pitcher role), each offered to one head of V2. The module derives its menu from
+#: data/efv5_metric_atlas.json (these names, in its menu order), selects on lv_dev and
+#: vm_dev by docs/efv-v2/EFV_V5_BACKTEST.md and reads the spent reserved frames once.
+#: `--wave5 <module>` runs its coverage check (no statistic).
+WAVE5_MODULES: dict[str, tuple[str, ...]] = {
+    "efv5_group_drivers": (
+        "g5_hit_A_all_all_k_pct", "g5_pit_A_all_all_k_minus_bb", "g5_hit_A_all_all_age",
+        "g5_hit_A_all_all_bb_minus_k", "g5_pit_A_all_all_k_pct", "g5_hit_A_young_all_k_pct",
+        "g5_pit_A_all_all_age", "g5_hit_A_young_all_bb_minus_k", "g5_pit_A_young_all_k_pct",
+        "g5_pit_A_young_all_k_minus_bb", "g5_hit_A_all_all_avg", "g5_hit_A_young_all_age",
+        "g5_hit_A_all_all_ops", "g5_hit_A_all_all_woba", "g5_pit_A_all_SP_k_pct",
+        "g5_hit_A_all_all_slg", "g5_hit_CPX_all_all_avg", "g5_hit_Ap_young_all_pbp_contact",
+        "g5_hit_Ap_young_all_pbp_swstr", "g5_hit_Ap_young_all_pbp_two_strike_contact",
+        "g5_hit_A_young_all_avg", "g5_pit_A_all_SP_k_minus_bb", "g5_pit_A_all_SP_bf_per_g",
+        "g5_pit_A_all_SP_age", "g5_hit_Ap_all_all_pbp_swstr", "g5_hit_Ap_all_all_pbp_contact",
+        "g5_hit_CPX_all_all_ops", "g5_hit_CPX_all_all_woba"),
+}
+
+
+def wave5_columns(module: str = "efv5_group_drivers") -> dict[str, dict]:
+    """The registered wave-5 module's menu ({name: spec}, the module's own order)."""
+    if module not in WAVE5_MODULES:
+        raise KeyError(f"{module} is not a registered wave-5 module")
+    return __import__(module).menu_columns()
+
+
 class ColumnUnavailable(RuntimeError):
     """A candidate's column cannot be built on this tree (its builder has not landed)."""
 
@@ -1634,10 +1663,15 @@ def main(argv=None) -> int:
                     help="how the noise columns reach the refit (module docstring)")
     ap.add_argument("--wave2-dev", default="", choices=("",) + tuple(WAVE2_DEV),
                     help="run a registered wave 2 module's development read (WAVE2_DEV)")
+    ap.add_argument("--wave5", default="", choices=("",) + tuple(WAVE5_MODULES),
+                    help="run a registered wave 5 module's coverage check (WAVE5_MODULES)")
     a = ap.parse_args(argv)
     if a.wave2_dev:
         import importlib
         return int(importlib.import_module(a.wave2_dev).main([]) or 0)
+    if a.wave5:
+        import importlib
+        return int(importlib.import_module(a.wave5).main(["--check"]) or 0)
     out = Path(a.out)
     under = _is_under_data(out)
     exploratory = bool(a.exploratory) or not under
