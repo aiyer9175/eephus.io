@@ -186,3 +186,21 @@ measured and is NOT to be re-opened as part of this.
 If it is a null, it gets a loss-ledger row and a registry entry like every other null in
 this program, and the Arias cliff is then a known, accepted, documented behaviour rather
 than a bug we failed to fix.
+
+---
+
+## Amendment 2026-10-15 (owner decision EW3-21, task EFV_FIX_A_CODE item A5)
+
+Registered before any number. The eFV driver audit found that a 50 to 99 PA stint sets
+`level_rank` at face value (317 live hitters took their level from under 100 PA in 2026).
+The ANCHOR arm (`efv_dataset.LEVEL_BLEND_ANCHOR_MOST_EXPOSED`) is narrowed to that case: with
+the arm on, the level features re-key onto the season's most-exposed level only when the
+selected level's own exposure is under twice the selection floor (hitters under 100 PA,
+pitchers under 120 BF) and another level carried more. A stint at or above twice the floor
+keeps the highest-level read, which the verdict above names as signal (the promotion is
+the organisation's own judgement). The RATES arm is untouched.
+
+The flag stays False. It flips only on this gate's section 5 read (primary pooled Spearman
+must not regress on either side, MDE95 0.017 hit / 0.016 pit, with the four controls), run on
+the development frames by EFV_FIX_B_REFIT with its re-fit, never alone. The task measures
+only the outcome-blind count of live rows whose level would move (docs/efv-v2/EFV_FIX_A.md).
