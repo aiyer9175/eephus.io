@@ -40,6 +40,8 @@ Run:  python etools.py --check                     (rows and coverage; no statis
       python etools.py --run --gate-sha SHA        (the one look)
       python etools.py --preview                   (the dark preview from the spent look)
       python etools.py --review-reads --amend-sha SHA   (amendment 1, run once)
+      python etools.py --flip-prep --amend-sha SHA      (amendment 2, run once)
+      python etools.py --library                   (data/etools_eval.json for the Library)
 """
 from __future__ import annotations
 
@@ -91,6 +93,9 @@ MAX_DEBUT_YEAR = 2024                                                       # 2.
 LAST_MLB_SEASON = 2026
 LAST_UM_SEASON = 2024                                                       # 2.2
 UM_LEVELS = ("AA", "AAA")
+#: amendment 2 F2.1: L_ANY reads translated lines at every Minor League level
+ANY_LEVELS = ("DSL", "CPX", "A-", "A", "A+", "AA", "AAA")
+ANY_TOOLS = ("hit", "game_pwr", "fb", "cmd", "speed")
 TRACK_LEVELS = ("AAA", "A")
 SEED = 20261023                                                             # 4.2
 PERM_SEED = 20261024                                                        # 4.3
@@ -329,10 +334,31 @@ def _ranks(x: np.ndarray) -> np.ndarray:
     return rankdata(x)
 
 
+def weighted_midranks(x, Wg) -> np.ndarray:
+    """Ranks of x on each weighted sample (amendment 2, F3.2): row b of Wg holds the
+    draw counts (or weights) of the n values; a value's rank is the drawn weight of the
+    values below it plus half its own value's drawn weight (ties share the mid-rank).
+    For integer counts this is the ordinary mid-rank of the replicated sample minus a
+    constant 1/2, which no Pearson correlation sees. Returns a (B, n) array."""
+    x = np.asarray(x, float)
+    Wg = np.atleast_2d(np.asarray(Wg, float))
+    _u, inv = np.unique(x, return_inverse=True)
+    inv = inv.reshape(-1)
+    order = np.argsort(inv, kind="stable")
+    starts = np.flatnonzero(np.r_[True, np.diff(inv[order]) != 0])
+    G = np.add.reduceat(Wg[:, order], starts, axis=1)          # drawn weight per distinct value
+    below = np.cumsum(G, axis=1) - G
+    mid = below + G / 2.0
+    return mid[:, inv]
+
+
 def within_rho(pred, y, year, W=None, min_rows: int = THIN):
     """n-weighted mean of within-board-year Spearman over years with min_rows or more
-    rows; with W (B x n draw counts) the ranks stay fixed and each year's weighted
-    Pearson of the ranks is combined by its drawn size (efv5_atlas.within_rho)."""
+    rows. With W (B x n draw counts, or counts times row weights) each board year is
+    RE-RANKED on every draw (weighted mid-ranks, amendment 2 F3.2), so a draw's value is
+    the Spearman of the resampled set, combined across years by its drawn size. The
+    look and amendment 1 kept the full-sample ranks fixed on the draws; the point
+    estimate (W None) is the same in both."""
     pred, y, year = np.asarray(pred, float), np.asarray(y, float), np.asarray(year)
     yrs, cnt = np.unique(year, return_counts=True)
     keep = yrs[cnt >= min_rows]
@@ -346,19 +372,20 @@ def within_rho(pred, y, year, W=None, min_rows: int = THIN):
             tot += float(np.corrcoef(rp, ry)[0, 1]) * m.sum()
             n += m.sum()
         return tot / n if n else None
+    W = np.atleast_2d(np.asarray(W, float))
     Bn = W.shape[0]
     tot, n = np.zeros(Bn), np.zeros(Bn)
     for s in keep:
         m = year == s
-        rp, ry = _ranks(pred[m]), _ranks(y[m])
         Wg = W[:, m]
+        rp, ry = weighted_midranks(pred[m], Wg), weighted_midranks(y[m], Wg)
         sw = Wg.sum(axis=1)
         ok = sw > 0
         d = np.where(ok, sw, 1.0)
-        mx, my = (Wg @ rp) / d, (Wg @ ry) / d
-        sxx = (Wg @ (rp * rp)) / d - mx * mx
-        syy = (Wg @ (ry * ry)) / d - my * my
-        sxy = (Wg @ (rp * ry)) / d - mx * my
+        mx, my = (Wg * rp).sum(axis=1) / d, (Wg * ry).sum(axis=1) / d
+        sxx = (Wg * rp * rp).sum(axis=1) / d - mx * mx
+        syy = (Wg * ry * ry).sum(axis=1) / d - my * my
+        sxy = (Wg * rp * ry).sum(axis=1) / d - mx * my
         den = np.sqrt(np.clip(sxx, 0, None) * np.clip(syy, 0, None))
         good = ok & (den > 1e-12)
         r = np.where(good, sxy / np.where(den > 0, den, 1.0), 0.0)
@@ -377,14 +404,17 @@ def cluster_weights(pid, Bn: int, seed: int) -> np.ndarray:
     return counts[:, inv].astype(np.float64)
 
 
-def paired_draws(a, b, y, year, pid, *, Bn: int = B, seed: int = SEED) -> np.ndarray:
-    """Bootstrap draws of rho_w(a) - rho_w(b), players resampled, in chunks."""
+def paired_draws(a, b, y, year, pid, *, Bn: int = B, seed: int = SEED, rw=None) -> np.ndarray:
+    """Bootstrap draws of rho_w(a) - rho_w(b), players resampled, in chunks; with rw
+    (row weights, amendment 2 F2.3) each row's draw count is multiplied by its weight."""
     out = []
     k = 0
     left = int(Bn)
     while left > 0:
         nb = min(B_CHUNK, left)
         W = cluster_weights(pid, nb, seed + k)
+        if rw is not None:
+            W = W * np.asarray(rw, float)[None, :]
         out.append(within_rho(a, y, year, W) - within_rho(b, y, year, W))
         left -= nb
         k += 1
@@ -809,17 +839,42 @@ def group_weights(gr_rows: dict[str, list[dict]], sources) -> dict:
 
 
 def weighted_grade(vals: dict, w: dict) -> float | None:
+    """The weighted mean of the outlets a row carries. Every outlet averaged needs an
+    explicit weight (amendment 2 F3.1): the look read w.get(s, 1.0), so Baseball
+    America entered AW1 at an unmeasured 1.0. A missing weight now raises."""
     num = den = 0.0
     for s, v in vals.items():
         if v is None or not np.isfinite(v):
             continue
-        ws = float(w.get(s, 1.0))
+        if s not in w or w[s] is None:
+            raise KeyError(f"no weight for outlet {s!r}")
+        ws = float(w[s])
         num += ws * v
         den += ws
     return num / den if den else None
 
 
-def weighting_arm(fr: ToolFrame, admitted: list[str], *, Bn: int = B) -> dict:
+#: Baseball America's weight (amendment 2 F3.1): "derive" (of record) or "exclude" (AW1-B).
+BA = "baseballamerica"
+
+
+def ba_group_weights(fr: ToolFrame, tr, yp) -> dict:
+    """F3.1: BA's weight by position group, the estimator over the three outlets on the
+    training rows carrying all three, gate 6.1 pooled fallback; {group: w, "_pooled": w}."""
+    gr = defaultdict(list)
+    for i in np.flatnonzero(tr):
+        if all(np.isfinite(fr.src[s][i]) for s in SOURCES):
+            gr[fr.group[i]].append({"pid": int(fr.pid[i]), "y": float(yp[i]),
+                                    "grades": {s: float(fr.src[s][i]) for s in SOURCES}})
+    if not gr:
+        return {"_pooled": 1.0}
+    w3 = group_weights(gr, SOURCES)
+    return {g: float(w[BA]) for g, w in w3.items()}
+
+
+def weighting_arm(fr: ToolFrame, admitted: list[str], *, Bn: int = B, ba_mode: str = "derive") -> dict:
+    if ba_mode not in ("derive", "exclude"):
+        raise ValueError(ba_mode)
     lb_p = "mlb" if computable(fr.year[np.isfinite(fr.y["mlb"])], fr.pid[np.isfinite(fr.y["mlb"])]) else "um"
     yp = fr.y[lb_p]
     aw1 = np.full(fr.n, np.nan)
@@ -835,6 +890,10 @@ def weighting_arm(fr: ToolFrame, admitted: list[str], *, Bn: int = B) -> dict:
                 gr_rows[fr.group[i]].append({"pid": int(fr.pid[i]), "y": float(yp[i]),
                                              "grades": {s: float(fr.src[s][i]) for s in WEIGHT_SOURCES}})
         w1 = group_weights(gr_rows, WEIGHT_SOURCES)
+        wba = ba_group_weights(fr, tr, yp) if ba_mode == "derive" else None
+        for g in list(w1):
+            if wba is not None:
+                w1[g] = dict(w1[g], **{BA: wba.get(g, wba["_pooled"])})
         stat = np.full(fr.n, np.nan)
         w2 = None
         if Z is not None:
@@ -855,21 +914,28 @@ def weighting_arm(fr: ToolFrame, admitted: list[str], *, Bn: int = B) -> dict:
                         g["stat"] = float(stat[i])
                         gr2[fr.group[i]].append({"pid": int(fr.pid[i]), "y": float(yp[i]), "grades": g})
                 w2 = group_weights(gr2, WEIGHT_SOURCES + ("stat",))
+                for g in list(w2):
+                    if wba is not None:
+                        w2[g] = dict(w2[g], **{BA: wba.get(g, wba["_pooled"])})
         weights_by_fold[int(Y)] = {"aw1": {g: {k: _r(v) for k, v in w.items() if not k.startswith("_")}
                                            for g, w in w1.items()},
                                    "aw2": None if w2 is None else
                                    {g: {k: _r(v) for k, v in w.items() if not k.startswith("_")}
                                     for g, w in w2.items()}}
+        outlets = SOURCES if ba_mode == "derive" else WEIGHT_SOURCES
         for i in np.flatnonzero(te):
-            vals = {s: (float(fr.src[s][i]) if np.isfinite(fr.src[s][i]) else None) for s in SOURCES}
+            vals = {s: (float(fr.src[s][i]) if np.isfinite(fr.src[s][i]) else None) for s in outlets}
             wg = w1.get(fr.group[i], w1["_pooled"])
             aw1[i] = weighted_grade(vals, wg)
+            if aw1[i] is None or not np.isfinite(aw1[i]):
+                aw1[i] = fr.gc[i]                    # AW1-B: a row carrying neither outlet
             if w2 is not None and np.isfinite(stat[i]):
                 vals2 = dict(vals, stat=float(stat[i]))
                 aw2[i] = weighted_grade(vals2, w2.get(fr.group[i], w2["_pooled"]))
             else:
                 aw2[i] = aw1[i]
-    out = {"tool": fr.tool, "weight_label": lb_p, "arms": {}, "weights_by_fold": weights_by_fold}
+    out = {"tool": fr.tool, "weight_label": lb_p, "ba_mode": ba_mode, "arms": {},
+           "weights_by_fold": weights_by_fold}
     for arm, pred in (("AW1_outlets_by_group", aw1), ("AW2_outlets_plus_stat", aw2)):
         out["arms"][arm] = {}
         oks = []
@@ -977,6 +1043,243 @@ def review_spent() -> str | None:
         if d.get("spent"):
             return f"{REVIEW_PATH} carries a spent marker ({d.get('spent_at')})"
     return None
+
+
+# ---------------------------------------------------------------------------
+# amendment 2 (docs/tools-2026-10/ETOOLS_AMENDMENT_2.md): the flip prep
+# ---------------------------------------------------------------------------
+FLIP_DOC = "docs/tools-2026-10/ETOOLS_AMENDMENT_2.md"
+FLIP_PATH = LAB_DIR / "etools_flip_prep_reads.json"
+LIBRARY_PATH = DATA / "etools_eval.json"
+#: the six eTools that passed at the look (gate 5.2)
+PASS_TOOLS = ("hit", "game_pwr", "pitch_sel", "bat_ctrl", "fb", "cmd")
+RC_TOL = -0.01                                                              # F1.7 (b)
+IPW_PMIN = 0.05                                                             # F2.3
+IPW_L2 = 1.0
+LIVE_FROM = "2026-01-01"
+#: plain mechanical labels for the sub-drivers (the card and the Library)
+SUBDRIVER_LABELS = {
+    "k_rw": "translated strikeout rate", "bb_rw": "translated walk rate",
+    "iso_rw": "translated ISO", "babip_rw": "translated BABIP", "kbb_rw": "translated K-BB rate",
+    "ppa_par": "pitches per PA vs level", "ppa_raw": "pitches per PA",
+    "pbf_raw": "pitches per batter faced", "pbf_par": "pitches per batter vs level",
+    "pbp_swing": "swing rate", "pbp_contact": "contact rate", "pbp_swstr": "swinging-strike rate",
+    "pbp_fstrike": "first-pitch strike rate", "bb_fb": "fly-ball rate",
+    "sb_rel": "stolen bases per PA vs level", "age_rel_level": "age vs level",
+}
+
+
+def flip_spent() -> str | None:
+    if FLIP_PATH.exists():
+        try:
+            d = json.loads(FLIP_PATH.read_text(encoding="utf-8"))
+        except ValueError:
+            return f"{FLIP_PATH} is unparseable"
+        if d.get("spent"):
+            return f"{FLIP_PATH} carries a spent marker ({d.get('spent_at')})"
+    return None
+
+
+def _present_mean(U, Z, mask=None) -> np.ndarray:
+    """Per column j, the mean of U[:, j] over the rows (in mask) carrying candidate j;
+    0 where no row carries it."""
+    pres = np.isfinite(Z)
+    if mask is not None:
+        pres = pres & np.asarray(mask, bool)[:, None]
+    cnt = pres.sum(axis=0)
+    tot = np.where(pres, U, 0.0).sum(axis=0)
+    return np.where(cnt > 0, tot / np.maximum(cnt, 1), 0.0)
+
+
+def etool_centred(gc, Z, lines, c, delta) -> tuple[np.ndarray, np.ndarray]:
+    """F1.5: (eTool_rc, contributions) with each present residual shifted by delta_j;
+    contributions c_j (u_j - delta_j), 0 where the row does not carry j."""
+    U = etool_residuals(gc, Z, lines)
+    pres = np.isfinite(Z)
+    Uc = np.where(pres, U - np.asarray(delta, float)[None, :], 0.0)
+    contrib = Uc * np.asarray(c, float)[None, :]
+    return np.clip(gc + contrib.sum(axis=1), 20.0, 80.0), contrib
+
+
+def etool_oof_detail(fr: ToolFrame, admitted: list[str]) -> dict:
+    """The look's out-of-fold eTool (identical to etool_oof) plus, per test board year,
+    F1.3's reference statistics and F1.5's re-centred eTool (the cohort = the test year)."""
+    Z = np.column_stack([fr.cands[c] for c in admitted])
+    pred = np.full(fr.n, np.nan)
+    pred_rc = np.full(fr.n, np.nan)
+    per_year = {}
+    for Y in np.unique(fr.year):
+        tr = fold_train_mask(fr.year, fr.pid, Y)
+        fit = etool_fit(fr.gc, Z, fr.y, tr)
+        if fit is None:
+            continue
+        te = fr.year == Y
+        pred[te] = etool_apply(fr.gc[te], Z[te], fit)
+        U = etool_residuals(fr.gc, Z, fit["lines"])
+        mu_tr = _present_mean(U, Z, tr)
+        mu_te = _present_mean(U, Z, te)
+        delta = mu_te - mu_tr
+        rc, _contrib = etool_centred(fr.gc[te], Z[te], fit["lines"], fit["c"], delta)
+        pred_rc[te] = rc
+        per_year[int(Y)] = {"n": int(te.sum()), "shift": _r(float(np.mean(pred[te] - fr.gc[te])), 5),
+                            "m": {j: _r(float(mu_te[k]), 5) for k, j in enumerate(admitted)},
+                            "delta": {j: _r(float(delta[k]), 5) for k, j in enumerate(admitted)}}
+    return {"pred": pred, "pred_rc": pred_rc, "per_year": per_year}
+
+
+def drift_flags(live: dict, per_year: dict, admitted: list[str]) -> dict:
+    """F1.4: DRIFTED when the live statistic lies outside the development years' range."""
+    sy = np.array([v["shift"] for v in per_year.values() if v.get("shift") is not None], float)
+    out = {"shift": live["shift"], "dev_min": _r(float(sy.min()), 5), "dev_max": _r(float(sy.max()), 5),
+           "dev_mean": _r(float(sy.mean()), 5), "dev_sd": _r(float(sy.std(ddof=1)), 5) if sy.size > 1 else None}
+    sd = float(sy.std(ddof=1)) if sy.size > 1 else 0.0
+    out["z"] = _r((live["shift"] - float(sy.mean())) / sd, 3) if sd > 0 else None
+    out["drifted"] = bool(live["shift"] < sy.min() or live["shift"] > sy.max())
+    subs = {}
+    for j in admitted:
+        mj = np.array([v["m"][j] for v in per_year.values() if v["m"].get(j) is not None], float)
+        lv = live["m"].get(j)
+        subs[j] = {"live_mean_residual": lv, "dev_min": _r(float(mj.min()), 5), "dev_max": _r(float(mj.max()), 5),
+                   "drifted": bool(lv is not None and (lv < mj.min() or lv > mj.max())),
+                   "share_of_shift": live["share"].get(j), "live_coverage": live["coverage"].get(j)}
+    out["subdrivers"] = subs
+    return out
+
+
+def live_rows(*, log=print) -> list[dict]:
+    """The preview's universe (gate 7): each source's latest 2026 snapshot, candidates
+    read through season 2026."""
+    board = load_board(live_from=LIVE_FROM)
+    rows, _counts = build_universe(board, (LAST_MLB_SEASON + 1,), log=log, live=True)
+    attach_candidates(rows, last_season=LAST_MLB_SEASON, log=log)
+    return rows
+
+
+def live_tool_arrays(rows: list[dict], tool: str, admitted: list[str]) -> tuple[list[dict], np.ndarray, np.ndarray]:
+    """(the rows carrying a consensus grade for the tool, G_c, Z) on the live cohort."""
+    spec = TOOLS[tool]
+    keep, gcs = [], []
+    for r in rows:
+        if r["side"] != spec["side"]:
+            continue
+        vals = [v.get(tool) for v in r["per_source"].values() if v.get(tool) is not None]
+        if not vals:
+            continue
+        keep.append(r)
+        gcs.append(round_half(sum(vals) / len(vals)))
+    Z = np.array([[np.nan if r["cands"].get(c) is None else r["cands"][c] for c in admitted] for r in keep],
+                 dtype=float).reshape(len(keep), len(admitted))
+    return keep, np.array(gcs, float), Z
+
+
+def live_stats(gc, Z, ff: dict, train_mu, admitted: list[str]) -> dict:
+    """F1.2 on the live cohort with the look's final fit; delta_j for F1.5."""
+    lines = [(a, b, ok) for a, b, ok in ff["lines"]]
+    U = etool_residuals(gc, Z, lines)
+    e = etool_apply(gc, Z, {"lines": lines, "c": ff["c"]})
+    m = _present_mean(U, Z)
+    delta = m - np.asarray(train_mu, float)
+    c = np.asarray(ff["c"], float)
+    n = max(1, gc.size)
+    return {"n": int(gc.size), "shift": _r(float(np.mean(e - gc)), 5) if gc.size else None,
+            "m": {j: _r(float(m[k]), 5) for k, j in enumerate(admitted)},
+            "delta": {j: _r(float(delta[k]), 5) for k, j in enumerate(admitted)},
+            "coverage": {j: int(np.isfinite(Z[:, k]).sum()) for k, j in enumerate(admitted)},
+            "share": {j: _r(float(c[k] * np.where(np.isfinite(Z[:, k]), U[:, k], 0.0).sum() / n), 5)
+                      for k, j in enumerate(admitted)}}
+
+
+def fit_logit(X, t, l2: float = IPW_L2, iters: int = 60) -> np.ndarray:
+    """Logistic regression by Newton iterations, L2 penalty on every column but the first."""
+    X, t = np.asarray(X, float), np.asarray(t, float)
+    beta = np.zeros(X.shape[1])
+    pen = np.full(X.shape[1], float(l2))
+    pen[0] = 0.0
+    for _ in range(iters):
+        p = 1.0 / (1.0 + np.exp(-np.clip(X @ beta, -30, 30)))
+        g = X.T @ (t - p) - pen * beta
+        H = (X * (p * (1 - p))[:, None]).T @ X + np.diag(pen)
+        step = np.linalg.solve(H, g)
+        beta = beta + step
+        if np.max(np.abs(step)) < 1e-8:
+            break
+    return beta
+
+
+def ipw_design(fr: ToolFrame, admitted: list[str], lines, age) -> np.ndarray:
+    """F2.3 covariates: [1, G_c, age (mean-filled) and its indicator, level cells, board
+    years, each sub-driver residual (0-filled) and its indicator]."""
+    age = np.asarray(age, float)
+    a_ok = np.isfinite(age)
+    a_fill = np.where(a_ok, age, float(np.nanmean(age)) if a_ok.any() else 0.0)
+    cols = [np.ones(fr.n), fr.gc, a_fill, (~a_ok).astype(float)]
+    for lv in ("low", "A+", "AA", "AAA"):
+        cols.append((fr.level == lv).astype(float))
+    yrs = sorted(set(fr.year.tolist()))
+    for Y in yrs[1:]:
+        cols.append((fr.year == Y).astype(float))
+    if admitted:
+        Z = np.column_stack([fr.cands[c] for c in admitted])
+        U = etool_residuals(fr.gc, Z, lines)
+        for k in range(Z.shape[1]):
+            cols.append(np.where(np.isfinite(Z[:, k]), U[:, k], 0.0))
+            cols.append((~np.isfinite(Z[:, k])).astype(float))
+    return np.column_stack(cols)
+
+
+def ipw_weights(fr: ToolFrame, admitted: list[str], lines, age) -> tuple[np.ndarray, dict]:
+    X = ipw_design(fr, admitted, lines, age)
+    t = np.isfinite(fr.y["um"]).astype(float)
+    beta = fit_logit(X, t)
+    p = 1.0 / (1.0 + np.exp(-np.clip(X @ beta, -30, 30)))
+    w = 1.0 / np.maximum(p, IPW_PMIN)
+    info = {"rows": fr.n, "with_um": int(t.sum()), "p_mean": _r(float(p.mean())),
+            "p_min": _r(float(p.min())), "clipped": int((p < IPW_PMIN).sum()),
+            "w_max_on_um_rows": _r(float(w[t > 0].max())) if t.sum() else None}
+    return w, info
+
+
+def weighted_d(a, b, y, year, pid, rw, *, Bn: int = B, seed: int = SEED) -> dict:
+    """F2.3: rho_w(a) - rho_w(b) on the rows with a, b, y finite, each row weighted by rw
+    (the point estimate uses rw alone; draws use the cluster counts times rw)."""
+    a, b, y, rw = (np.asarray(v, float) for v in (a, b, y, rw))
+    m = np.isfinite(a) & np.isfinite(b) & np.isfinite(y)
+    if not computable(year[m], pid[m]):
+        return {"computable": False, "n": int(m.sum())}
+    W0 = rw[m][None, :]
+    ra, rb = within_rho(a[m], y[m], year[m], W0)[0], within_rho(b[m], y[m], year[m], W0)[0]
+    rec = {"computable": True, "n": int(m.sum()), "players": int(np.unique(pid[m]).size),
+           "rho_a": _r(ra), "rho_b": _r(rb)}
+    if Bn:
+        rec.update(summarize_draws(ra - rb, paired_draws(a[m], b[m], y[m], year[m], pid[m], Bn=Bn, seed=seed,
+                                                         rw=rw[m])))
+    else:
+        rec["d"] = _r(ra - rb)
+    return rec
+
+
+def _lb_pos(rec: dict | None) -> bool:
+    return bool(rec and rec.get("computable") and rec.get("lb95") is not None and rec["lb95"] > 0)
+
+
+def serve_recentred(rc_vs_gc: dict, rc_vs_unc: dict) -> bool:
+    """F1.7: both labels, (a) rc beats consensus, (b) rc against uncentred LB above RC_TOL."""
+    for lb in LABELS:
+        a, b = rc_vs_gc.get(lb), rc_vs_unc.get(lb)
+        if not _lb_pos(a):
+            return False
+        if not (b and b.get("computable") and b.get("lb95") is not None and b["lb95"] > RC_TOL):
+            return False
+    return True
+
+
+def promotion_label(f2: dict) -> dict:
+    """F2.4: PROMOTION-CLEAR when every computable F2 read has its lower bound above 0."""
+    reads = {k: v for k, v in f2.items() if isinstance(v, dict) and v.get("computable")}
+    failing = [k for k, v in reads.items() if not _lb_pos(v)]
+    return {"label": "PROMOTION-CLEAR" if (reads and not failing) else "PROMOTION-UNRESOLVED",
+            "reads": sorted(reads), "failing": failing,
+            "not_computable": sorted(k for k, v in f2.items() if isinstance(v, dict) and not v.get("computable"))}
 
 
 # ---------------------------------------------------------------------------
@@ -1452,9 +1755,11 @@ def mlb_label(tool: str, pid: int, Y: int, data: dict) -> float | None:
     raise KeyError(tool)
 
 
-def um_tables() -> dict:
+def um_tables(levels: tuple = UM_LEVELS, *, tracked: bool = True) -> dict:
     """Everything the upper-minors labels read: X1 translated AA/AAA lines, the raw SB
-    lines and the tracked tables (seasons capped at LAST_UM_SEASON)."""
+    lines and the tracked tables (seasons capped at LAST_UM_SEASON). With levels =
+    ANY_LEVELS and tracked False: the L_ANY tables (amendment 2, F2.1), the same
+    construction over lines at every Minor League level."""
     import efv5_atlas as A
     import efv_x1_translate as X1
     out = {"x1": {"hit": defaultdict(list), "pit": defaultdict(list)}, "sb": defaultdict(list),
@@ -1467,7 +1772,7 @@ def um_tables() -> dict:
             parks = {st: X1.park_factors(s, side, st) for st in stats}
             env = {st: X1.env_scale(s, 2018, side, st) for st in stats}
             for ln in X1.season_lines(s, side):
-                if ln["level"] not in UM_LEVELS:
+                if ln["level"] not in levels:
                     continue
                 rec = {"season": s, "exp": ln["exp"]}
                 for st in stats:
@@ -1481,16 +1786,16 @@ def um_tables() -> dict:
     lines = milb_lines("hit")
     ls = defaultdict(lambda: [0.0, 0.0])
     for (pid, s, lv), c in lines.items():
-        if lv in UM_LEVELS and c.get("pa"):
+        if lv in levels and c.get("pa"):
             ls[(s, lv)][0] += c.get("sb", 0.0)
             ls[(s, lv)][1] += c["pa"]
     for (pid, s, lv), c in lines.items():
-        if lv in UM_LEVELS and c.get("pa") and s <= LAST_UM_SEASON:
+        if lv in levels and c.get("pa") and s <= LAST_UM_SEASON:
             a = ls[(s, lv)]
             mean = a[0] / a[1] if a[1] else None
             if mean:
                 out["sb"][pid].append((s, c.get("sb", 0.0), c["pa"] * mean, c["pa"]))
-    for side in ("hit", "pit"):
+    for side in (("hit", "pit") if tracked else ()):
         tpath = A.TRACK_DIR / ("hitter_season_level.csv.gz" if side == "hit" else "pitcher_season_level.csv.gz")
         if not tpath.exists():
             continue
@@ -1860,11 +2165,60 @@ def grade_revisions(rows: list[dict]) -> dict:
 # ---------------------------------------------------------------------------
 # the dark preview (gate 7)
 # ---------------------------------------------------------------------------
-def build_preview(eval_doc: dict, *, log=print) -> Path:
-    board = load_board(live_from="2026-01-01")
-    rows, _counts = build_universe(board, (LAST_MLB_SEASON + 1,), log=log, live=True)
-    attach_candidates(rows, last_season=LAST_MLB_SEASON, log=log)
+def build_preview(eval_doc: dict, *, flip_doc: dict | None = None, log=print) -> Path:
+    """The dark preview (gate 7; amendment 2 F4). Every tool row carries the consensus
+    grade; a PASS tool also carries its eTool, the 80% band and each sub-driver's
+    contribution in grade points. With the flip-prep reads (flip_doc), the F1.7
+    construction is served as `etool` (re-centred on this cohort, or uncentred) with
+    both values kept, plus the drift and promotion labels. ETOOLS_ON False writes the
+    preview under .cache; True writes data/etools.json."""
+    rows = live_rows(log=log)
     verdicts = eval_doc.get("etools") or {}
+    f1 = (flip_doc or {}).get("F1_drift_recentring") or {}
+    f2 = (flip_doc or {}).get("F2_promotion") or {}
+    per_tool: dict = {}
+    tool_meta: dict = {}
+    for tool, v in verdicts.items():
+        ff = v.get("final_fit")
+        if v.get("verdict") != "PASS" or not ff or tool not in TOOLS:
+            continue
+        adm = list(v["admitted"])
+        keep, gc, Z = live_tool_arrays(rows, tool, adm)
+        lines = [(a, b, ok) for a, b, ok in ff["lines"]]
+        unc = etool_apply(gc, Z, {"lines": lines, "c": ff["c"]})
+        U = etool_residuals(gc, Z, lines)
+        contrib_unc = np.where(np.isfinite(Z), U, 0.0) * np.asarray(ff["c"], float)[None, :]
+        rc = contrib_rc = None
+        construction = "look"
+        if tool in f1:
+            mu_tr = np.array([f1[tool]["train_mean_residual"][j] for j in adm], float)
+            delta = _present_mean(U, Z) - mu_tr
+            rc, contrib_rc = etool_centred(gc, Z, lines, ff["c"], delta)
+            construction = f1[tool].get("serve") or "uncentred"
+        sig = ff.get("sigma") or 0.0
+        tool_meta[tool] = {"construction": construction, "admitted": adm,
+                           "drifted": ((f1.get(tool) or {}).get("drift") or {}).get("drifted"),
+                           "promotion": ((f2.get(tool) or {}).get("promotion") or {}).get("label"),
+                           "live_shift_uncentred": _r(float(np.mean(unc - gc)), 3) if gc.size else None,
+                           "live_shift_served": None}
+        served_vals = []
+        for i, r in enumerate(keep):
+            use_rc = construction == "recentred" and rc is not None
+            e = float(rc[i] if use_rc else unc[i])
+            contrib = (contrib_rc if use_rc else contrib_unc)[i]
+            served_vals.append(e - gc[i])
+            drivers = [{"key": j, "label": SUBDRIVER_LABELS.get(j, j),
+                        "value": _r(Z[i, k], 3), "points": _r(float(contrib[k]), 2)}
+                       for k, j in enumerate(adm) if np.isfinite(Z[i, k])]
+            rec = {"etool": _r(e, 2), "etool_display": display_grade(e),
+                   "band80": [_r(max(20.0, e - BAND_Z * sig), 2), _r(min(80.0, e + BAND_Z * sig), 2)],
+                   "etool_uncentred": _r(float(unc[i]), 2), "construction": construction,
+                   "drivers": drivers, "basis": "etool"}
+            if rc is not None:
+                rec["etool_recentred"] = _r(float(rc[i]), 2)
+            per_tool.setdefault(r["player_key"], {})[tool] = rec
+        if served_vals:
+            tool_meta[tool]["live_shift_served"] = _r(float(np.mean(served_vals)), 3)
     out_players = {}
     for r in rows:
         tools_out = {}
@@ -1874,19 +2228,11 @@ def build_preview(eval_doc: dict, *, log=print) -> Path:
             vals = [v.get(tool) for v in r["per_source"].values() if v.get(tool) is not None]
             if not vals:
                 continue
-            gc = round_half(sum(vals) / len(vals))
+            gc1 = round_half(sum(vals) / len(vals))
             v = verdicts.get(tool) or {}
-            rec = {"consensus": gc, "consensus_display": display_grade(gc), "basis": "consensus",
+            rec = {"consensus": gc1, "consensus_display": display_grade(gc1), "basis": "consensus",
                    "verdict": v.get("verdict")}
-            ff = v.get("final_fit")
-            if v.get("verdict") == "PASS" and ff:
-                Z = np.array([[np.nan if r["cands"].get(c) is None else r["cands"][c] for c in v["admitted"]]])
-                fit = {"lines": [(a, b, ok) for a, b, ok in ff["lines"]], "c": ff["c"]}
-                e = float(etool_apply(np.array([gc]), Z, fit)[0])
-                sig = ff.get("sigma") or 0.0
-                rec.update({"etool": _r(e, 2), "etool_display": display_grade(e),
-                            "band80": [_r(max(20.0, e - BAND_Z * sig), 2), _r(min(80.0, e + BAND_Z * sig), 2)],
-                            "basis": "etool"})
+            rec.update((per_tool.get(r["player_key"]) or {}).get(tool) or {})
             tools_out[spec["key"]] = rec
         if tools_out:
             out_players[r["player_key"]] = {"name": r.get("name"), "mlbam": r["pid"], "side": r["side"],
@@ -1894,6 +2240,10 @@ def build_preview(eval_doc: dict, *, log=print) -> Path:
     doc = {"generated_at": _now(), "item": ITEM, "flag_etools_on": ETOOLS_ON,
            "note": "dark preview: nothing served reads this file unless the owner flips ETOOLS_ON",
            "verdicts": {t: (verdicts.get(t) or {}).get("verdict") for t in TOOLS},
+           "keys": {t: TOOLS[t]["key"] for t in TOOLS},
+           "labels": {t: {"mlb": TOOLS[t]["mlb"], "um": TOOLS[t]["um"]} for t in TOOLS},
+           "tools": tool_meta, "flip_prep_sha": (flip_doc or {}).get("amendment_sha"),
+           "band": "80% band: eTool +/- 1.2816 x the fit's residual sd",
            "players": out_players}
     path = SERVED_PATH if ETOOLS_ON else PREVIEW_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -2107,6 +2457,286 @@ def review_reads(amend_sha: str, *, log=print) -> dict:
     return doc
 
 
+def any_label_arrays(rows: list[dict], frames: dict) -> dict[str, np.ndarray]:
+    """F2.1: the L_ANY label per frame row (ANY_TOOLS), aligned with each frame's keys."""
+    T = um_tables(ANY_LEVELS, tracked=False)
+    out = {}
+    by_key = {(r["year"], r["pid"]): r for r in rows}
+    for tool in ANY_TOOLS:
+        fr = frames[tool]
+        vals = []
+        for (Y, pid) in fr.keys:
+            if Y in RESERVED_BOARD_YEARS:
+                raise GuardError("reserved board year in the L_ANY frame")
+            r = by_key[(Y, pid)]
+            v = um_label(tool, pid, Y, r["side"], T)
+            vals.append(np.nan if v is None else v)
+        out[tool] = np.array(vals, float)
+    return out
+
+
+def flip_prep(amend_sha: str, *, log=print) -> dict:
+    """Amendment 2, run once: F3.3 (reproduce, then the re-ranked intervals and the
+    fixed weighting arm), F1 (drift and re-centring), F2 (L_ANY and IPW). The look's and
+    the review's artifacts are read, never rewritten."""
+    why = flip_spent()
+    if why:
+        raise GuardError(f"the flip-prep reads are spent: {why}")
+    if not gate_sha_ok(amend_sha, FLIP_DOC):
+        raise GuardError(f"{amend_sha} does not name a commit carrying {FLIP_DOC} as REGISTERED")
+    look = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
+    if not look.get("spent") or "etools" not in look:
+        raise GuardError("no spent look to build on")
+    guard_years(DEV_YEARS)
+    guard_no_fv(["group", "level", "age_band", "board_year", "level_cell"])
+    shas_start = input_shas()
+    t0 = time.time()
+    board = load_board(DEV_YEARS)
+    rows, counts = build_universe(board, DEV_YEARS, log=log)
+    attach_candidates(rows, last_season=max(DEV_YEARS) - 1, log=log)
+    attach_labels(rows, log=log)
+    if counts != look.get("universe"):
+        raise GuardError(f"universe {counts} differs from the look's {look.get('universe')}")
+    frames = tool_frames(rows)
+    age_of = {(r["year"], r["pid"]): r["cands"].get("age_rel_level") for r in rows}
+    started = _now()
+    log(f"  inputs built in {time.time() - t0:.0f} s; the reads begin")
+    def _reads():
+        # --- F3.3: reproduce every look d_E, then the re-ranked intervals --------------
+        repro, rerank, preds = {}, {}, {}
+        for tool in REVIEW_TOOLS:
+            fr = frames[tool]
+            adm = list(look["etools"][tool]["admitted"])
+            det = etool_oof_detail(fr, adm)
+            pred_ref, _ = etool_oof(fr, adm)
+            if not np.allclose(np.nan_to_num(det["pred"], nan=-1), np.nan_to_num(pred_ref, nan=-1)):
+                raise GuardError(f"{tool}: the detailed out-of-fold eTool differs from etool_oof")
+            preds[tool] = det
+            rerank[tool] = {}
+            for lb in LABELS:
+                want = (look["etools"][tool]["labels"].get(lb) or {}).get("d")
+                got = paired_d(det["pred"], fr.gc, fr.y[lb], fr.year, fr.pid, Bn=0).get("d")
+                repro[f"{tool}:{lb}"] = {"look": want, "now": got}
+                if want is not None and (got is None or abs(got - want) > 5e-5):
+                    raise GuardError(f"{tool} {lb}: d_E {got} does not reproduce the look's {want}")
+                if want is None:
+                    continue
+                rec = paired_d(det["pred"], fr.gc, fr.y[lb], fr.year, fr.pid, Bn=B)
+                look_lb = (look["etools"][tool]["labels"].get(lb) or {}).get("lb95")
+                rec["look_lb95_fixed_ranks"] = look_lb
+                rerank[tool][lb] = rec
+            if look["etools"][tool]["verdict"] == "PASS":
+                rerank[tool]["fragile_under_reranking"] = [lb for lb in LABELS if not _lb_pos(rerank[tool].get(lb))]
+            log(f"  F3 {tool:9s} re-ranked LB " + ", ".join(f"{lb} {(rerank[tool].get(lb) or {}).get('lb95')}"
+                                                           for lb in LABELS))
+        # --- F3.3: the weighting arm with the BA weight fix ---------------------------
+        weighting = {}
+        for tool, fr in frames.items():
+            adm = list(look["etools"][tool]["admitted"])
+            weighting[tool] = {"record": weighting_arm(fr, adm, ba_mode="derive"),
+                               "sensitivity_ba_excluded": weighting_arm(fr, adm, ba_mode="exclude")}
+            log(f"  F3 {tool:9s} AW1 {weighting[tool]['record']['arms']['AW1_outlets_by_group']['verdict']}, "
+                f"AW1-B {weighting[tool]['sensitivity_ba_excluded']['arms']['AW1_outlets_by_group']['verdict']}, "
+                f"AW2 {weighting[tool]['record']['arms']['AW2_outlets_plus_stat']['verdict']}")
+        # --- F1: drift and re-centring ---------------------------------------------------
+        log("  F1: the live cohort")
+        lrows = live_rows(log=log)
+        f1 = {}
+        for tool in PASS_TOOLS:
+            fr = frames[tool]
+            adm = list(look["etools"][tool]["admitted"])
+            ff = look["etools"][tool]["final_fit"]
+            lines = [(a, b, ok) for a, b, ok in ff["lines"]]
+            Zd = np.column_stack([fr.cands[c] for c in adm])
+            train_mu = _present_mean(etool_residuals(fr.gc, Zd, lines), Zd)
+            _keep, gcl, Zl = live_tool_arrays(lrows, tool, adm)
+            live = live_stats(gcl, Zl, ff, train_mu, adm)
+            det = preds[tool]
+            rc_gc, rc_unc = {}, {}
+            for lb in LABELS:
+                rc_gc[lb] = paired_d(det["pred_rc"], fr.gc, fr.y[lb], fr.year, fr.pid, Bn=B)
+                rc_unc[lb] = paired_d(det["pred_rc"], det["pred"], fr.y[lb], fr.year, fr.pid, Bn=B)
+            f1[tool] = {"admitted": adm, "train_mean_residual": {j: _r(float(train_mu[k]), 6) for k, j in enumerate(adm)},
+                        "dev_per_year": det["per_year"], "live": live,
+                        "drift": drift_flags(live, det["per_year"], adm),
+                        "recentred_vs_consensus": rc_gc, "recentred_vs_uncentred": rc_unc,
+                        "serve": "recentred" if serve_recentred(rc_gc, rc_unc) else "uncentred"}
+            log(f"  F1 {tool:9s} live shift {live['shift']} drifted {f1[tool]['drift']['drifted']} "
+                f"serve {f1[tool]['serve']}")
+        # --- F2: L_ANY and the selection model ---------------------------------------
+        log("  F2: L_ANY and IPW")
+        yany = any_label_arrays(rows, frames)
+        f2 = {}
+        for tool in PASS_TOOLS + ("speed",):
+            fr = frames[tool]
+            adm = list(look["etools"][tool]["admitted"])
+            pred = preds[tool]["pred"]
+            rec: dict = {"admitted": adm}
+            unmeasured = ~fr.debut & ~np.isfinite(fr.y["um"])
+            if tool in ANY_TOOLS:
+                ya = yany[tool]
+                has = np.isfinite(ya)
+                rec["counts"] = {"rows": fr.n, "with_l_any": int(has.sum()), "unmeasured_rows": int(unmeasured.sum()),
+                                 "unmeasured_with_l_any": int((unmeasured & has).sum()),
+                                 "share_of_unmeasured_covered": _r((unmeasured & has).sum() / unmeasured.sum())
+                                 if unmeasured.sum() else None}
+                rec["l_any_pooled"] = paired_d(pred, fr.gc, ya, fr.year, fr.pid, Bn=B)
+                rec["l_any_unmeasured"] = paired_d(pred, fr.gc, np.where(unmeasured, ya, np.nan), fr.year, fr.pid, Bn=B)
+            else:
+                rec["l_any_pooled"] = {"computable": False, "why": "not covered (F2.1): no chase or zone-contact "
+                                                                   "measurement outside the tracked parks"}
+            if tool in PASS_TOOLS:
+                ff = look["etools"][tool]["final_fit"]
+                age = np.array([np.nan if age_of.get(k) is None else age_of[k] for k in fr.keys], float)
+                w, info = ipw_weights(fr, adm, [(a, b, ok) for a, b, ok in ff["lines"]], age)
+                rec["ipw_model"] = info
+                rec["ipw_um"] = weighted_d(pred, fr.gc, fr.y["um"], fr.year, fr.pid, w, Bn=B)
+                rec["promotion"] = promotion_label({k: rec[k] for k in ("l_any_pooled", "l_any_unmeasured", "ipw_um")
+                                                    if k in rec})
+            f2[tool] = rec
+            log(f"  F2 {tool:9s} L_ANY d {rec['l_any_pooled'].get('d')} lb {rec['l_any_pooled'].get('lb95')}; "
+                f"IPW d {(rec.get('ipw_um') or {}).get('d')} lb {(rec.get('ipw_um') or {}).get('lb95')}; "
+                f"{(rec.get('promotion') or {}).get('label')}")
+        return repro, rerank, weighting, f1, f2
+
+    try:
+        repro, rerank, weighting, f1, f2 = _reads()
+    except Exception as exc:                                     # noqa: BLE001
+        LAB_DIR.mkdir(parents=True, exist_ok=True)
+        FLIP_PATH.write_text(json.dumps({"item": ITEM, "spent": True, "spent_at": _now(), "amendment_sha": amend_sha,
+                                         "error": f"{type(exc).__name__}: {exc}",
+                                         "traceback": traceback.format_exc(), "started": started}, indent=1),
+                             encoding="utf-8", newline="\n")
+        raise
+    doc = {"item": ITEM, "tool": TOOL, "spent": True, "spent_at": _now(), "started": started,
+           "amendment_doc": FLIP_DOC, "amendment_sha": amend_sha, "look_gate_sha": look.get("gate_sha"),
+           "head": (_git("rev-parse", "HEAD") or "").strip(), "survivorship": SURVIVORSHIP,
+           "constants": {"B": B, "seed": SEED, "rc_tol": RC_TOL, "ipw_pmin": IPW_PMIN, "ipw_l2": IPW_L2,
+                         "any_levels": ANY_LEVELS, "last_um_season": LAST_UM_SEASON, "live_from": LIVE_FROM},
+           "universe": counts, "reproduction": repro,
+           "F1_drift_recentring": f1, "F2_promotion": f2,
+           "F3_reranked_etool_intervals": rerank, "F3_weighting": weighting,
+           "summary": {"serve": {t: f1[t]["serve"] for t in f1},
+                       "drifted": {t: f1[t]["drift"]["drifted"] for t in f1},
+                       "promotion": {t: (f2[t].get("promotion") or {}).get("label") for t in PASS_TOOLS},
+                       "fragile_under_reranking": {t: rerank[t].get("fragile_under_reranking") for t in PASS_TOOLS},
+                       "weighting_record": {t: {a: weighting[t]["record"]["arms"][a]["verdict"]
+                                                for a in ("AW1_outlets_by_group", "AW2_outlets_plus_stat")}
+                                            for t in weighting},
+                       "weighting_ba_excluded": {t: weighting[t]["sensitivity_ba_excluded"]["arms"]
+                                                 ["AW1_outlets_by_group"]["verdict"] for t in weighting}},
+           "inputs_sha256_start": shas_start, "inputs_sha256_end": input_shas(),
+           "seconds": round(time.time() - t0, 1), "flag_etools_on": ETOOLS_ON}
+    LAB_DIR.mkdir(parents=True, exist_ok=True)
+    FLIP_PATH.write_text(json.dumps(doc, indent=1), encoding="utf-8", newline="\n")
+    log(f"  wrote {FLIP_PATH} ({time.time() - t0:.0f} s)")
+    return doc
+
+
+TOOL_NAMES = {"hit": "Hit", "game_pwr": "Game power", "raw_pwr": "Raw power", "speed": "Speed",
+              "field": "Field", "throw": "Throw", "pitch_sel": "Pitch selection", "bat_ctrl": "Bat control",
+              "fb": "Fastball", "cmd": "Command", "sl": "Slider", "cb": "Curveball", "ch": "Changeup"}
+
+
+#: the MLB outcome each tool is scored against, in plain words (the Library)
+TOOL_OUTCOME = {"hit": "strikeout rate (lower is better)", "game_pwr": "ISO",
+                "raw_pwr": "average exit velocity", "speed": "sprint speed",
+                "field": "outs above average per 1,000 innings", "throw": "arm strength",
+                "pitch_sel": "chase rate, 2026 (lower is better)", "bat_ctrl": "zone contact rate, 2026",
+                "fb": "pitcher strikeout rate", "cmd": "pitcher walk rate (lower is better)",
+                "sl": "whiff rate on sliders and sweepers", "cb": "whiff rate on curveballs",
+                "ch": "whiff rate on changeups and splitters"}
+
+
+def _lbl_rec(rec: dict | None, *keys) -> dict | None:
+    if not rec or not rec.get("computable", True):
+        return None
+    return {k: rec.get(k) for k in keys if k in rec}
+
+
+def build_library(*, log=print) -> Path:
+    """data/etools_eval.json, the Library's eTools view and the registry rows' eval
+    artifact: a summary of the look, the review reads and the flip-prep reads, copied
+    from the lab artifacts (no number is computed here)."""
+    look = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
+    rev = json.loads(REVIEW_PATH.read_text(encoding="utf-8")) if REVIEW_PATH.exists() else {}
+    flip = json.loads(FLIP_PATH.read_text(encoding="utf-8")) if FLIP_PATH.exists() else {}
+    if not look.get("spent") or "etools" not in look:
+        raise GuardError("no spent look to summarize")
+    f1 = flip.get("F1_drift_recentring") or {}
+    f2 = flip.get("F2_promotion") or {}
+    rr = flip.get("F3_reranked_etool_intervals") or {}
+    fw = flip.get("F3_weighting") or {}
+    a1 = rev.get("A1_promotion") or {}
+    a2 = rev.get("A2_no_added_effect") or {}
+    keep = ("rho_consensus", "rho_etool", "d", "lb95", "ci95", "n", "players")
+    tools = []
+    for tool, spec in TOOLS.items():
+        e = look["etools"].get(tool) or {}
+        row = {"tool": tool, "key": spec["key"], "name": TOOL_NAMES[tool], "side": spec["side"],
+               "label_mlb": spec["mlb"], "label_um": spec["um"], "outcome": TOOL_OUTCOME[tool],
+               "verdict": e.get("verdict"),
+               "admitted": [{"key": j, "label": SUBDRIVER_LABELS.get(j, j),
+                             "no_added_effect": j in (a2.get(tool) or [])} for j in e.get("admitted") or []],
+               "labels": {lb: _lbl_rec((e.get("labels") or {}).get(lb), *keep) for lb in LABELS}}
+        if tool in rr:
+            row["reranked_lb95"] = {lb: (rr[tool].get(lb) or {}).get("lb95") for lb in LABELS}
+            row["fragile_under_reranking"] = rr[tool].get("fragile_under_reranking")
+        if tool in a1:
+            nd = a1[tool].get("non_debut") or {}
+            row["non_debut_um"] = {"d": nd.get("d"), "lb95": nd.get("lb95"), "n": nd.get("n")}
+            row["promotion_counts"] = a1[tool].get("counts")
+        if tool in f2:
+            g = f2[tool]
+            row["promotion_reads"] = {k: _lbl_rec(g.get(k), "d", "lb95", "n")
+                                      for k in ("l_any_pooled", "l_any_unmeasured", "ipw_um")}
+            row["promotion_label"] = (g.get("promotion") or {}).get("label")
+            row["l_any_counts"] = g.get("counts")
+        if tool in f1:
+            d = f1[tool]
+            dr = d.get("drift") or {}
+            row["drift"] = {"live_shift": dr.get("shift"), "dev_min": dr.get("dev_min"), "dev_max": dr.get("dev_max"),
+                            "z": dr.get("z"), "drifted": dr.get("drifted"),
+                            "subdrivers": {j: {"drifted": v.get("drifted"), "share_of_shift": v.get("share_of_shift")}
+                                           for j, v in (dr.get("subdrivers") or {}).items()}}
+            row["recentred"] = {lb: {"vs_consensus": _lbl_rec((d.get("recentred_vs_consensus") or {}).get(lb),
+                                                               "d", "lb95"),
+                                     "vs_uncentred": _lbl_rec((d.get("recentred_vs_uncentred") or {}).get(lb),
+                                                              "d", "lb95")} for lb in LABELS}
+            row["serve"] = d.get("serve")
+        tools.append(row)
+    weighting = {}
+    for tool in TOOLS:
+        lw = ((look.get("weighting") or {}).get(tool) or {}).get("arms") or {}
+        nw = ((fw.get(tool) or {}).get("record") or {}).get("arms") or {}
+        bw = ((fw.get(tool) or {}).get("sensitivity_ba_excluded") or {}).get("arms") or {}
+        weighting[tool] = {}
+        for name, arms in (("look", lw), ("record", nw), ("ba_excluded", bw)):
+            weighting[tool][name] = {a: {"verdict": (arms.get(a) or {}).get("verdict"),
+                                         **{lb: _lbl_rec((arms.get(a) or {}).get(lb), "d", "lb95")
+                                            for lb in LABELS}}
+                                     for a in ("AW1_outlets_by_group", "AW2_outlets_plus_stat") if a in arms}
+    pr = look.get("pitch_rate") or {}
+    p3 = rev.get("A3_part_p3_rerun") or {}
+    doc = {"item": ITEM, "generated_at": _now(), "flag_etools_on": ETOOLS_ON,
+           "gate": {"doc": GATE_DOC, "sha": look.get("gate_sha"), "look_at": look.get("spent_at")},
+           "amendments": [{"doc": REVIEW_DOC, "sha": rev.get("amendment_sha"), "read_at": rev.get("spent_at")},
+                          {"doc": FLIP_DOC, "sha": flip.get("amendment_sha"), "read_at": flip.get("spent_at")}],
+           "frame_rows": (look.get("universe") or {}).get("rows"),
+           "tests": look.get("tests"), "tools": tools, "weighting": weighting,
+           "pitch_rate": {"efv_tests": p3.get("tests") or (look.get("tests") or {}).get("pitch_rate_tests"),
+                          "efv_flagged": (len(p3.get("flagged") or []) if p3
+                                          else len((pr.get("atlas") or {}).get("flagged") or [])),
+                          "efv_min_q": p3.get("min_q")},
+           "no_added_effect": a2,
+           "flip_prep": flip.get("summary"),
+           "eval_artifacts": [EVAL_PATH.relative_to(ROOT).as_posix(), REVIEW_PATH.relative_to(ROOT).as_posix(),
+                              FLIP_PATH.relative_to(ROOT).as_posix()]}
+    LIBRARY_PATH.write_text(json.dumps(doc, indent=1), encoding="utf-8", newline="\n")
+    log(f"  library summary -> {LIBRARY_PATH}")
+    return LIBRARY_PATH
+
+
 def dry_run(log=print) -> dict:
     frames = fixture_frames()
     res = evaluate(frames, Bn=100, perm=5, cells=False, log=lambda *_a: None)
@@ -2123,8 +2753,16 @@ def main(argv=None) -> int:
     ap.add_argument("--preview", action="store_true")
     ap.add_argument("--review-reads", action="store_true")
     ap.add_argument("--amend-sha")
+    ap.add_argument("--flip-prep", action="store_true")
+    ap.add_argument("--library", action="store_true")
     ap.add_argument("--out")
     a = ap.parse_args(argv)
+    if a.flip_prep:
+        flip_prep(a.amend_sha)
+        return 0
+    if a.library:
+        build_library()
+        return 0
     if a.review_reads:
         review_reads(a.amend_sha)
         return 0
@@ -2145,7 +2783,10 @@ def main(argv=None) -> int:
         if not EVAL_PATH.exists():
             print("no spent look to build from")
             return 1
-        build_preview(json.loads(EVAL_PATH.read_text(encoding="utf-8")))
+        flip = json.loads(FLIP_PATH.read_text(encoding="utf-8")) if FLIP_PATH.exists() else None
+        if flip is not None and not flip.get("F1_drift_recentring"):
+            flip = None
+        build_preview(json.loads(EVAL_PATH.read_text(encoding="utf-8")), flip_doc=flip)
         return 0
     ap.print_help()
     return 0

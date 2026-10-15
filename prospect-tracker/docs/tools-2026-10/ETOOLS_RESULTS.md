@@ -249,3 +249,89 @@ pitch-rate construction (majority-role exposure, fallback-basis exposure, PAR = 
 role anchor, pitchers' own hitting lines skipped); the ZMetric as-of value exactly unchanged by
 a board-year line and shrunk by E / (E + k); the bootstrap spread; and the amendment's runner
 guards, promotion counts, non-debut split and margin read. 28 passed.
+
+## Flip prep reads (amendment 2, registered 9121d710, run once)
+
+`docs/tools-2026-10/ETOOLS_AMENDMENT_2.md` was committed alone before any of these numbers;
+code at b988fdd7; `python etools.py --flip-prep --amend-sha 9121d710` ran once on 2026-10-15
+(93 s); artifact `data/_labs/etools/etools_flip_prep_reads.json`. Every look d_E reproduced (all
+16 within 5e-5) before any interval, and every input sha256 matched at start and end. No
+verdict changes; `ETOOLS_ON` stays False.
+
+### F3. The two fixes
+
+- **Bootstrap re-ranking.** Each draw now re-ranks within the board year on the resampled set
+  (weighted mid-ranks), so a draw is the Spearman of the resample; the look kept the full-sample
+  ranks fixed. Point estimates do not change. Every lower bound moved by at most 0.0044, and all
+  six passes hold on both labels: eHIT +0.256 / +0.247 (look +0.259 / +0.249), ePOW +0.017 /
+  +0.030, eSEL +0.045 / +0.048, eBAT +0.059 / +0.062, eFB +0.036 / +0.153, eCMD +0.024 / +0.061
+  (MLB / minors). **No eTool is FRAGILE UNDER RE-RANKING.** Raw power and speed still fail on
+  the MLB label (-0.013, -0.002).
+- **Baseball America's weight.** AW1 averaged BA's grade at an implicit 1.0. BA now carries an
+  explicit weight from the same estimator over the three outlets (BA grades exist on board years
+  2023 and 2024 only); the derived weights sit between 0.92 and 1.05, so the arm barely moves:
+  **AW1 is still NULL on all 13 tools** (largest d +0.0033; every point d within 0.0002 of
+  the look's), and AW1 with BA excluded is NULL on all 13 too. AW2 (outlets plus the stat reading)
+  still BEATS CONSENSUS on hit, game power, bat control, fastball and command.
+
+### F1. Drift and re-centring
+
+Live cohort: the 2026 boards, 1,632 players with a tool grade (829 hitters with a hit grade, 803 pitchers with a
+fastball grade). Shift = mean (eTool - consensus) on the cohort; the development reference is
+the 12 out-of-fold board years.
+
+| eTool | live shift | development years' range | z | drifted | what drives it |
+|---|---|---|---|---|---|
+| eHIT | +1.33 | -3.01 to +3.01 | +0.52 | no | translated K% +2.32 of it; translated BABIP residual drifted (its share -1.02) |
+| ePOW | +0.13 | -0.71 to +0.92 | +0.29 | no | |
+| eSEL | -0.30 | -0.48 to +0.30 | -0.45 | no | |
+| eBAT | +0.13 | -0.66 to +1.29 | -0.25 | no | |
+| eFB | **+2.92** | -2.02 to +1.49 | **+2.76** | **yes** | translated K% residual drifted, +2.65 of the +2.92 |
+| eCMD | +0.49 | -0.93 to +0.78 | +1.15 | no | |
+
+So one eTool is off its development distribution: **eFB**, because the 2026 cohort's translated
+strikeout rates sit above what their fastball grades predict, by more than in any development
+year. eHIT's +1.3 is inside the range the development years themselves span.
+
+Re-centring (each sub-driver's residual shifted to the training mean within the scoring cohort)
+costs almost nothing out of fold: against the uncentred eTool, d is between -0.0017 and +0.0013
+and every lower bound is above -0.0046 (tolerance -0.01), and the re-centred eTool keeps its
+pass on both labels for all six (eHIT +0.302 / +0.274, eFB +0.067 / +0.176). **By the F1.7 rule
+the re-centred eTool is the served construction for all six.** In the preview the mean shift
+falls to between -0.02 and +0.04 grade points for every tool (eFB +2.92 to -0.02, eHIT +1.33 to
++0.01).
+
+### F2. A promotion-independent read
+
+**L_ANY** (the X1-translated line at any Minor League level, seasons Y to Y + 2 capped at 2024,
+300 PA or 150 BF) exists for 80% of the hitter rows that were on neither label (1,074 of 1,335)
+and 74% of the pitcher rows (764 of 1,030).
+
+| eTool | L_ANY, all rows (d, LB, n) | L_ANY, rows on neither earlier label (d, LB, n) | IPW on L_UM (d, LB, n) | label |
+|---|---|---|---|---|
+| eHIT | +0.314, +0.291, 4,035 | +0.271, +0.228, 1,074 | +0.256, +0.225, 2,704 | PROMOTION-CLEAR |
+| ePOW | +0.109, +0.101, 4,036 | +0.059, +0.046, 1,074 | +0.041, +0.029, 2,705 | PROMOTION-CLEAR |
+| eSEL | not covered (no chase measurement outside tracked parks) | | +0.061, +0.040, 649 | PROMOTION-CLEAR (IPW only) |
+| eBAT | not covered | | +0.075, +0.054, 663 | PROMOTION-CLEAR (IPW only) |
+| eFB | +0.265, +0.245, 3,899 | +0.145, +0.107, 764 | +0.165, +0.142, 2,919 | PROMOTION-CLEAR |
+| eCMD | +0.134, +0.123, 3,897 | +0.099, +0.069, 764 | +0.077, +0.061, 2,917 | PROMOTION-CLEAR |
+| eSPD (not a pass) | +0.057, +0.050, 4,037 | +0.056, +0.043, 1,075 | | |
+
+**Every passing eTool is PROMOTION-CLEAR.** The gain holds on the players who were on neither
+label before (the ones who stalled below Double-A and never debuted), and when the promoted rows
+are re-weighted to stand for the whole frame. Caveats beside the numbers: L_ANY still needs 300 PA
+in affiliated ball over three seasons (a released player is off it); the IPW read assumes
+selection on the model's covariates only (grade, age, level, board year, sub-drivers); eSEL and
+eBAT rest on the IPW read alone.
+
+### What changes for a flip
+
+Nothing is served. The dark preview now carries, per player and passing tool, the re-centred
+eTool (`etool`), the uncentred one, the 80% band and each sub-driver's contribution in grade
+points. The PROSPX card shows them beside the consensus grade only when the card flag is on
+(default off, pinned to `ETOOLS_ON`). The Library's eTools view reads `data/etools_eval.json`.
+The flip question is in `docs/tools-2026-10/OWNER_QUESTION.md`.
+
+Data note: since the look's preview, the 2026 pitch-event family was lit (baf8b3be), so the
+preview's eSEL and eBAT spreads grew (sd 5.1 and 5.4 grade points against 2.6 to 3.2 before);
+the construction did not change.

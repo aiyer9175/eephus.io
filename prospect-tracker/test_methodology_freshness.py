@@ -1034,6 +1034,14 @@ MODEL_GLOSSARY = {
     # page's transcription and served value tables; Future Value tiers and the
     # 20-80 scale document it.
     "scouting_reference": ["scouting_reference", "twenty_eighty"],
+    # eTools (ETOOLS_FLIP_PREP, 2026-10-15): the six passing eTools, dark until the
+    # owner flips ETOOLS_ON; each is documented by the eTools entry and its own.
+    "etool_ehit": ["etools", "ehit"],
+    "etool_epow": ["etools", "epow"],
+    "etool_esel": ["etools", "esel"],
+    "etool_ebat": ["etools", "ebat"],
+    "etool_efb": ["etools", "efb"],
+    "etool_ecmd": ["etools", "ecmd"],
 }
 
 

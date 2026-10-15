@@ -3479,6 +3479,23 @@
       color: var(--text-tertiary);
       white-space: nowrap;
     }
+    /* eTools beside the consensus grades (dark until ETOOLS_ON; ETOOLS_FLIP_PREP) */
+    .tool-etool { display: inline-block; margin-left: 4px; padding: 0 4px; border-radius: 3px;
+      border: 1px dashed var(--border-light); font-family: var(--font-mono); font-size: 10px;
+      font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
+    .etools-block { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-light); }
+    .etools-head { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
+      color: var(--text-tertiary); margin-bottom: 4px; }
+    .etools-sub { font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; }
+    .etool-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 4px 0;
+      font-size: 12px; border-bottom: 1px dotted var(--border-light); min-width: 0; }
+    .etool-name { font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); min-width: 0; }
+    .etool-what { font-family: var(--font-sans); font-weight: 400; color: var(--text-tertiary); font-size: 11px; }
+    .etool-vals { display: inline-flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+    .etool-band, .etool-cons { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+    .etool-drivers { display: inline-flex; flex-wrap: wrap; gap: 3px 8px; font-size: 11px; color: var(--text-secondary); min-width: 0; }
+    .etool-driver b { font-family: var(--font-mono); color: var(--text-primary); }
+    .etool-flag { font-size: 10px; color: var(--text-gold); }
     .tool-grade-strip {
       display: flex;
       /* Default: WRAP so the FULL tool set stays visible on spacious cards. A
@@ -34382,6 +34399,96 @@ function defHomeChip(p) {
       </div>
     </div>`;
 }
+// ===== eTools beside the consensus tool grades (ETOOLS_FLIP_PREP, DARK) =====
+// docs/tools-2026-10/ETOOLS_AMENDMENT_2.md F4. An eTool is the consensus tool
+// grade moved by the prospect's own minor-league stats (its sub-drivers), for the
+// six tools whose eTool beat the consensus grade on both labels (eHIT, ePOW,
+// eSEL, eBAT, eFB, eCMD). DARK: ETOOLS_CARD_ON mirrors etools.ETOOLS_ON (a test
+// pins the two together) and the builder writes the served payload only when the
+// owner flips it, so nothing is fetched or shown by default. #etools=1 (or
+// ?etools=1) previews the display against a local payload; latched at boot like
+// #phys, because syncToURL() drops hash keys it does not own.
+const ETOOLS_CARD_ON = false;
+const _ETOOLS_UI = (() => {
+  const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("etools");
+  if (h != null) return h !== "0";
+  const q = new URLSearchParams(location.search || "").get("etools");
+  if (q != null) return q !== "0";
+  return ETOOLS_CARD_ON;
+})();
+let _ETOOLS = null, _ETOOLS_LOADING = false;
+function ensureETools() {
+  if (!_ETOOLS_UI || _ETOOLS !== null || _ETOOLS_LOADING) return;
+  _ETOOLS_LOADING = true;
+  fetch("/data/etools.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      const byMlbam = {};
+      const players = (j && j.players) || {};
+      for (const k in players) if (players[k] && players[k].mlbam != null) byMlbam[String(players[k].mlbam)] = players[k];
+      _ETOOLS = { players, byMlbam, tools: (j && j.tools) || {} };
+      scheduleRender();
+    })
+    .catch(() => { _ETOOLS = { players: {}, byMlbam: {}, tools: {} }; });
+}
+// Card tool key (the consolidated PWR row reads game power's eTool) to eTool key.
+const _ETOOL_KEY = { hit: "eHIT", pwr: "ePOW", pitch_sel: "eSEL", bat_ctrl: "eBAT", fb: "eFB", cmd: "eCMD" };
+const _ETOOL_TOOL = { eHIT: "hit", ePOW: "game_pwr", eSEL: "pitch_sel", eBAT: "bat_ctrl", eFB: "fb", eCMD: "cmd" };
+const _ETOOL_WHAT = { eHIT: "hit (strikeout avoidance)", ePOW: "game power", eSEL: "pitch selection",
+  eBAT: "bat control", eFB: "fastball", eCMD: "command" };
+function _eToolsFor(p) {
+  if (!_ETOOLS_UI || !p) return null;
+  ensureETools();
+  if (!_ETOOLS) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  return _ETOOLS.players[p.player_key] || (mid != null ? _ETOOLS.byMlbam[String(mid)] : null) || null;
+}
+function _eToolRec(p, cardKey) {
+  const e = _eToolsFor(p);
+  const k = _ETOOL_KEY[cardKey];
+  const r = e && k ? (e.tools || {})[k] : null;
+  return (r && r.basis === "etool" && r.etool != null) ? Object.assign({ key: k }, r) : null;
+}
+function _eToolPts(v) {
+  const n = Number(v);
+  return (n > 0 ? "+" : n < 0 ? "-" : "") + Math.abs(n).toFixed(1);
+}
+function _eToolBand(r) {
+  return (r.band80 && r.band80.length === 2) ? `${fvCeil(r.band80[0])} to ${fvCeil(r.band80[1])}` : "";
+}
+// The small chip beside a consensus grade cell: "eHIT 60".
+function eToolChipHTML(p, cardKey) {
+  const r = _eToolRec(p, cardKey);
+  if (!r) return "";
+  const moved = (r.drivers || []).map(d => `${d.label} ${_eToolPts(d.points)}`).join(", ");
+  const tip = `${r.key}: consensus ${fvCeil(r.consensus)} moved to ${Number(r.etool).toFixed(1)} by the prospect's own stats`
+    + `${moved ? ` (${moved})` : ""}; 80% band ${_eToolBand(r)}. Shown rounded up to the next 5.`;
+  return `<span class="tool-etool" title="${escapeHtml(tip)}">${escapeHtml(r.key)} ${r.etool_display}</span>`;
+}
+// The block under the grade grid: each eTool with its band and the sub-drivers
+// that moved it, in grade points.
+function eToolsBlockHTML(p, keys) {
+  const recs = keys.map(k => _eToolRec(p, k)).filter(Boolean);
+  if (!recs.length) return "";
+  const rows = recs.map(r => {
+    const drivers = (r.drivers || []).map(d =>
+      `<span class="etool-driver">${escapeHtml(d.label)} <b>${escapeHtml(_eToolPts(d.points))}</b></span>`).join("");
+    const meta = (_ETOOLS && _ETOOLS.tools && _ETOOLS.tools[_ETOOL_TOOL[r.key]]) || {};
+    const centred = r.construction === "recentred" ? " · centred on the 2026 board" : "";
+    return `<div class="etool-row">
+      <span class="etool-name"><span class="g-term" data-term="${escapeHtml(r.key.toLowerCase())}">${escapeHtml(r.key)}</span> <span class="etool-what">${escapeHtml(_ETOOL_WHAT[r.key] || "")}</span></span>
+      <span class="etool-vals"><span class="fv-badge ${fvClass(String(r.etool_display))} size-sm">${r.etool_display}</span>
+        <span class="etool-band" title="80% band">${escapeHtml(_eToolBand(r))}</span>
+        <span class="etool-cons">consensus ${fvCeil(r.consensus)}${escapeHtml(centred)}</span></span>
+      <span class="etool-drivers">${drivers || '<span class="etool-driver">no sub-driver on file: consensus</span>'}</span>
+      ${meta.promotion === "PROMOTION-UNRESOLVED" ? '<span class="etool-flag">Promotion check unresolved</span>' : ""}
+    </div>`;
+  }).join("");
+  return `<div class="etools-block">
+    <div class="etools-head">eTools <span class="etools-sub">the consensus grade moved by the prospect's own minor-league stats, with an 80% band · <a href="/glossary/#view=etools">how they were tested</a></span></div>
+    ${rows}
+  </div>`;
+}
 // ===== eFV vs consensus: the track record (C1) + reliability diagram (C2) ==
 // A collapsed panel at the top of the Debuted tab (the retrospective
 // eFV-vs-consensus view). Every number comes straight from a committed eval
@@ -51524,7 +51631,7 @@ function renderPlayerDetail(key) {
         : escapeHtml(label);
       return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
         <span class="tools-grade-name">${labelHtml}${dualMark}${spreadTag}</span>
-        ${badgeFor(v)}${deltaChip(key)}
+        ${badgeFor(v)}${deltaChip(key)}${eToolChipHTML(p, key)}
       </div>`;
     };
     let compositeBar = "";
@@ -51755,10 +51862,12 @@ function renderPlayerDetail(key) {
     const primaryTitle = otherPayload
       ? `Tools (${isPitcher ? "pitching" : "hitting"}) <span class="detail-title-sub">20-80 scouting grades · consensus across sources</span>`
       : `Tools <span class="detail-title-sub">20-80 scouting grades · consensus across sources</span>`;
+    const eToolsBlock = eToolsBlockHTML(p, isPitcher ? ["fb", "cmd"] : ["hit", "pwr", "pitch_sel", "bat_ctrl"]);
     return `<div class="detail-title">${primaryTitle}</div>
       <div class="tools-card">
         ${compositeBar}
         ${groupBlocks}
+        ${eToolsBlock}
         ${footer}
       </div>${twoWayExtraCard}`;
   })();

@@ -402,3 +402,266 @@ def test_margin_read_flags_a_noise_subdriver():
     assert b["no_added_effect"] is True
     for lb in ("mlb", "um"):
         assert k["labels"][lb]["given_others"]["lb95"] > 0
+
+
+# ---------------------------------------------------------------------------
+# amendment 2 (docs/tools-2026-10/ETOOLS_AMENDMENT_2.md): flip prep
+# ---------------------------------------------------------------------------
+def test_weighted_midranks_are_the_replicated_samples_ranks():
+    from scipy.stats import rankdata
+    x = np.array([3.0, 1.0, 3.0, 2.0, 5.0, 1.0])
+    W = np.array([[2, 0, 1, 3, 1, 1], [1, 1, 1, 1, 1, 1]], float)
+    R = E.weighted_midranks(x, W)
+    for b in range(W.shape[0]):
+        rep = np.repeat(x, W[b].astype(int))
+        want = {v: r for v, r in zip(rep, rankdata(rep))}
+        for i in range(x.size):
+            if W[b, i] > 0:
+                assert R[b, i] + 0.5 == pytest.approx(want[x[i]])
+
+
+def test_within_rho_draw_is_the_spearman_of_the_resampled_set():
+    from scipy.stats import spearmanr
+    rng = np.random.default_rng(3)
+    n = 120
+    year = np.repeat([2011, 2012], n // 2)
+    x = np.round(rng.normal(size=n), 1)           # ties, as a 0.5-step grade carries
+    y = x + rng.normal(size=n)
+    W = E.cluster_weights(np.arange(n), 4, 17)
+    got = E.within_rho(x, y, year, W)
+    for b in range(4):
+        tot = cnt = 0.0
+        for s in (2011, 2012):
+            m = year == s
+            k = W[b, m].astype(int)
+            r = spearmanr(np.repeat(x[m], k), np.repeat(y[m], k)).correlation
+            tot += r * k.sum()
+            cnt += k.sum()
+        assert got[b] == pytest.approx(tot / cnt, abs=1e-9)
+    # the point estimate is unchanged by the re-ranking
+    assert E.within_rho(x, y, year, np.ones((1, n)))[0] == pytest.approx(E.within_rho(x, y, year))
+
+
+def test_weighted_grade_needs_an_explicit_weight_for_every_outlet():
+    with pytest.raises(KeyError):
+        E.weighted_grade({"fangraphs": 50.0, "baseballamerica": 60.0}, {"fangraphs": 1.2})
+    v = E.weighted_grade({"fangraphs": 50.0, "baseballamerica": 60.0, "mlb_pipeline": None},
+                         {"fangraphs": 1.5, "baseballamerica": 0.5})
+    assert v == pytest.approx((1.5 * 50 + 0.5 * 60) / 2.0)
+
+
+def _ba_frame(n=600, seed=21):
+    rng = np.random.default_rng(seed)
+    rows = []
+    for i in range(n):
+        true = rng.normal(50, 8)
+        Y = int(E.DEV_YEARS[i % len(E.DEV_YEARS)])
+        fg, pl = round(true + rng.normal(0, 5)), round(true + rng.normal(0, 5))
+        ba = round(true + rng.normal(0, 2)) if Y >= 2023 else None
+        src = {"fangraphs": fg, "mlb_pipeline": pl, "baseballamerica": ba}
+        if i % 50 == 0 and ba is not None:
+            src = {"fangraphs": None, "mlb_pipeline": None, "baseballamerica": ba}
+        vals = [v for v in src.values() if v is not None]
+        rows.append({"year": Y, "pid": i, "gc": E.round_half(sum(vals) / len(vals)), "src": src,
+                     "cands": {"prem_share": None},
+                     "y": {"mlb": true + rng.normal(0, 4), "um": true + rng.normal(0, 4)},
+                     "group": ["SS", "CF", "COF"][i % 3]})
+    return E.ToolFrame("field", rows)
+
+
+def test_weighting_arm_derives_the_ba_weight_or_excludes_ba():
+    fr = _ba_frame()
+    rec = E.weighting_arm(fr, [], Bn=60, ba_mode="derive")
+    assert rec["ba_mode"] == "derive"
+    for wf in rec["weights_by_fold"].values():
+        for w in wf["aw1"].values():
+            assert E.BA in w                       # explicit, never implicit
+    exc = E.weighting_arm(fr, [], Bn=60, ba_mode="exclude")
+    for wf in exc["weights_by_fold"].values():
+        for w in wf["aw1"].values():
+            assert E.BA not in w
+    with pytest.raises(ValueError):
+        E.weighting_arm(fr, [], Bn=10, ba_mode="implicit")
+
+
+def test_ba_weight_rises_when_ba_tracks_the_label_better():
+    fr = _ba_frame(n=1500)
+    w = E.ba_group_weights(fr, np.ones(fr.n, dtype=bool), fr.y["mlb"])
+    assert w["_pooled"] > 1.0
+
+
+def _shifted_hit(shift=0.0, n=900, seed=8):
+    fr = E.fixture_frames(n_players=n, seed=seed)["hit"]
+    last = fr.year == fr.year.max()
+    k = fr.cands["k_rw"]
+    fr.cands["k_rw"] = np.where(last & np.isfinite(k), k + shift, k)
+    return fr
+
+
+def test_oof_detail_reproduces_etool_oof_and_recentres_a_planted_cohort_shift():
+    fr = _shifted_hit(shift=1.5)
+    det = E.etool_oof_detail(fr, ["k_rw"])
+    ref, _ = E.etool_oof(fr, ["k_rw"])
+    assert np.allclose(np.nan_to_num(det["pred"], nan=-9), np.nan_to_num(ref, nan=-9))
+    ylast = int(fr.year.max())
+    shifted = det["per_year"][ylast]
+    others = {Y: v for Y, v in det["per_year"].items() if Y != ylast}
+    assert shifted["shift"] > max(v["shift"] for v in others.values()) + 0.5     # the planted drift shows
+    m = fr.year == ylast
+    assert abs(float(np.mean(det["pred_rc"][m] - fr.gc[m]))) < 0.5 * abs(shifted["shift"])
+    flags = E.drift_flags({"shift": shifted["shift"], "m": {"k_rw": shifted["m"]["k_rw"]},
+                           "share": {"k_rw": 0.0}, "coverage": {"k_rw": 1}}, others, ["k_rw"])
+    assert flags["drifted"] is True and flags["subdrivers"]["k_rw"]["drifted"] is True
+
+
+def test_etool_centred_contributions_sum_to_the_move():
+    gc = np.array([50.0, 55.0, 45.0])
+    Z = np.array([[1.0, np.nan], [0.0, 2.0], [np.nan, np.nan]])
+    lines = [(0.0, 0.0, True), (0.5, 0.0, True)]
+    e, contrib = E.etool_centred(gc, Z, lines, [2.0, 1.0], [0.25, 0.5])
+    assert contrib[0].tolist() == pytest.approx([2.0 * 0.75, 0.0])
+    assert contrib[1].tolist() == pytest.approx([2.0 * -0.25, 1.0 * (1.5 - 0.5)])
+    assert contrib[2].tolist() == [0.0, 0.0]
+    assert np.allclose(e, gc + contrib.sum(axis=1))
+    e0, _c = E.etool_centred(gc, Z, lines, [2.0, 1.0], [0.0, 0.0])      # zero delta: uncentred
+    assert np.allclose(e0, E.etool_apply(gc, Z, {"lines": lines, "c": [2.0, 1.0]}))
+
+
+def _rec(lb95, d=0.05):
+    return {"computable": True, "d": d, "lb95": lb95}
+
+
+def test_serving_rule_and_promotion_label():
+    ok = {"mlb": _rec(0.02), "um": _rec(0.03)}
+    near = {"mlb": _rec(-0.005), "um": _rec(-0.002)}
+    assert E.serve_recentred(ok, near) is True
+    assert E.serve_recentred(ok, {"mlb": _rec(-0.02), "um": _rec(0.0)}) is False      # costs too much
+    assert E.serve_recentred({"mlb": _rec(-0.01), "um": _rec(0.03)}, near) is False   # loses the pass
+    lab = E.promotion_label({"l_any_pooled": _rec(0.02), "l_any_unmeasured": _rec(0.01), "ipw_um": _rec(0.03)})
+    assert lab["label"] == "PROMOTION-CLEAR"
+    lab = E.promotion_label({"l_any_pooled": _rec(0.02), "l_any_unmeasured": _rec(-0.01),
+                             "ipw_um": {"computable": False}})
+    assert lab["label"] == "PROMOTION-UNRESOLVED" and lab["failing"] == ["l_any_unmeasured"]
+    assert lab["not_computable"] == ["ipw_um"]
+
+
+def test_fit_logit_recovers_a_planted_model_and_ipw_clips():
+    rng = np.random.default_rng(2)
+    n = 6000
+    x = rng.normal(size=n)
+    p = 1 / (1 + np.exp(-(-0.5 + 1.2 * x)))
+    t = (rng.random(n) < p).astype(float)
+    beta = E.fit_logit(np.column_stack([np.ones(n), x]), t)
+    assert beta[0] == pytest.approx(-0.5, abs=0.1) and beta[1] == pytest.approx(1.2, abs=0.1)
+    fr = E.fixture_frames(n_players=600)["hit"]
+    w, info = E.ipw_weights(fr, ["k_rw"], [(0.0, 0.0, True)], np.full(fr.n, np.nan))
+    assert w.min() >= 1.0 and w.max() <= 1.0 / E.IPW_PMIN + 1e-9
+    assert info["with_um"] == int(np.isfinite(fr.y["um"]).sum())
+
+
+def test_weighted_d_with_unit_weights_is_paired_d():
+    fr = E.fixture_frames(n_players=500)["hit"]
+    pred, _ = E.etool_oof(fr, ["k_rw"])
+    a = E.paired_d(pred, fr.gc, fr.y["um"], fr.year, fr.pid, Bn=100)
+    b = E.weighted_d(pred, fr.gc, fr.y["um"], fr.year, fr.pid, np.ones(fr.n), Bn=100)
+    assert b["d"] == pytest.approx(a["d"], abs=1e-9) and b["lb95"] == pytest.approx(a["lb95"], abs=1e-9)
+
+
+def test_any_levels_reach_below_double_a():
+    import inspect
+    assert set(E.UM_LEVELS) < set(E.ANY_LEVELS) and {"DSL", "CPX", "A", "A+"} <= set(E.ANY_LEVELS)
+    assert set(E.ANY_TOOLS) == {"hit", "game_pwr", "fb", "cmd", "speed"}
+    assert inspect.signature(E.um_tables).parameters["levels"].default == E.UM_LEVELS
+
+
+def test_flip_prep_refuses_without_a_registered_amendment(monkeypatch, tmp_path):
+    monkeypatch.setattr(E, "FLIP_PATH", tmp_path / "f.json")
+    with pytest.raises(E.GuardError):
+        E.flip_prep("not-a-sha", log=lambda *_a: None)
+    (tmp_path / "f.json").write_text('{"spent": true, "spent_at": "x"}', encoding="utf-8")
+    with pytest.raises(E.GuardError, match="spent"):
+        E.flip_prep("0000000", log=lambda *_a: None)
+
+
+def _flip_doc(serve):
+    return {"amendment_sha": "abc1234",
+            "F1_drift_recentring": {"hit": {"serve": serve, "train_mean_residual": {"k_rw": 0.0},
+                                            "drift": {"drifted": True}}},
+            "F2_promotion": {"hit": {"promotion": {"label": "PROMOTION-CLEAR"}}}}
+
+
+def _two_rows():
+    rows = _preview_rows()
+    rows.append({"year": 0, "pid": 2, "player_key": "pk2", "name": "B", "side": "hit", "position": "CF",
+                 "per_source": {"fangraphs": {"hit": 50.0}}, "cands": {"k_rw": 3.0}})
+    return rows
+
+
+@pytest.mark.parametrize("serve", ["recentred", "uncentred"])
+def test_preview_serves_the_registered_construction_with_its_drivers(monkeypatch, tmp_path, serve):
+    import json
+    prev, _served = _stub_preview_inputs(monkeypatch, tmp_path, None)
+    monkeypatch.setattr(E, "build_universe", lambda *_a, **_k: (_two_rows(), {}))
+    E.build_preview(_preview_eval(), flip_doc=_flip_doc(serve), log=lambda *_a: None)
+    doc = json.loads(prev.read_text(encoding="utf-8"))
+    t1, t2 = doc["players"]["pk1"]["tools"]["eHIT"], doc["players"]["pk2"]["tools"]["eHIT"]
+    # cohort mean residual 2.0 against a training mean of 0: delta 2.0; c 4
+    assert t1["etool_uncentred"] == pytest.approx(52.5 + 4.0) and t2["etool_uncentred"] == pytest.approx(62.0)
+    assert t1["etool_recentred"] == pytest.approx(52.5 - 4.0) and t2["etool_recentred"] == pytest.approx(54.0)
+    want1 = t1["etool_recentred"] if serve == "recentred" else t1["etool_uncentred"]
+    assert t1["etool"] == pytest.approx(want1) and t1["construction"] == serve
+    assert t1["drivers"][0]["key"] == "k_rw" and t1["drivers"][0]["label"] == "translated strikeout rate"
+    assert t1["drivers"][0]["points"] == pytest.approx(want1 - 52.5)
+    assert doc["tools"]["hit"]["drifted"] is True and doc["tools"]["hit"]["promotion"] == "PROMOTION-CLEAR"
+
+
+def test_library_summary_copies_the_lab_artifacts(monkeypatch, tmp_path):
+    import json
+    look = {"spent": True, "gate_sha": "g", "universe": {"rows": 10}, "tests": {"pitch_rate_tests": 232},
+            "etools": {"hit": {"verdict": "PASS", "admitted": ["k_rw", "ppa_par"],
+                               "labels": {"mlb": {"computable": True, "d": 0.3, "lb95": 0.25, "n": 9},
+                                          "um": {"computable": True, "d": 0.27, "lb95": 0.2, "n": 9}}}},
+            "weighting": {"hit": {"arms": {"AW1_outlets_by_group": {"verdict": "NULL"}}}}}
+    rev = {"amendment_sha": "r", "A2_no_added_effect": {"hit": ["ppa_par"]},
+           "A3_part_p3_rerun": {"tests": 232, "flagged": [], "min_q": 0.106}}
+    paths = {n: tmp_path / f"{n}.json" for n in ("eval", "rev", "flip", "lib")}
+    paths["eval"].write_text(json.dumps(look), encoding="utf-8")
+    paths["rev"].write_text(json.dumps(rev), encoding="utf-8")
+    monkeypatch.setattr(E, "EVAL_PATH", paths["eval"])
+    monkeypatch.setattr(E, "REVIEW_PATH", paths["rev"])
+    monkeypatch.setattr(E, "FLIP_PATH", paths["flip"])
+    monkeypatch.setattr(E, "LIBRARY_PATH", paths["lib"])
+    monkeypatch.setattr(E, "ROOT", tmp_path)
+    E.build_library(log=lambda *_a: None)
+    doc = json.loads(paths["lib"].read_text(encoding="utf-8"))
+    hit = [t for t in doc["tools"] if t["tool"] == "hit"][0]
+    assert hit["labels"]["mlb"]["d"] == 0.3 and hit["verdict"] == "PASS"
+    assert [a["no_added_effect"] for a in hit["admitted"]] == [False, True]
+    assert doc["pitch_rate"] == {"efv_tests": 232, "efv_flagged": 0, "efv_min_q": 0.106}
+    assert doc["flag_etools_on"] is False
+
+
+def test_card_flag_mirrors_etools_on_and_fetches_only_when_on():
+    import re
+    html = (Path(E.__file__).resolve().parent / "prospx" / "index.html").read_text(encoding="utf-8")
+    m = re.search(r"const ETOOLS_CARD_ON = (true|false);", html)
+    assert m, "the card's eTools flag is missing"
+    assert (m.group(1) == "true") is E.ETOOLS_ON
+    body = html[html.index("function ensureETools()"):]
+    body = body[:body.index("\n}\n") + 3]
+    assert body.index("if (!_ETOOLS_UI") < body.index('fetch("/data/etools.json"'), "the fetch is gated"
+    # the six passing tools map onto the card's grade keys
+    assert 'const _ETOOL_KEY = { hit: "eHIT", pwr: "ePOW", pitch_sel: "eSEL", bat_ctrl: "eBAT", fb: "eFB", cmd: "eCMD" };' in html
+
+
+def test_library_summary_is_dated_and_lists_every_tool():
+    import json
+    p = E.LIBRARY_PATH
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    assert doc.get("generated_at")
+    assert [t["tool"] for t in doc["tools"]] == list(E.TOOLS)
+    assert doc["flag_etools_on"] is E.ETOOLS_ON
+    passed = [t["key"] for t in doc["tools"] if t["verdict"] == "PASS"]
+    assert passed == ["eHIT", "ePOW", "eSEL", "eBAT", "eFB", "eCMD"]
+    gl = (Path(E.__file__).resolve().parent / "assets" / "glossary.js").read_text(encoding="utf-8")
+    assert 'fetch("/data/etools_eval.json"' in gl and "function renderETools()" in gl

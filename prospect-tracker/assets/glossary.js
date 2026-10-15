@@ -16,7 +16,8 @@
 // Positional Ladder: the position-switcher ladder and its held-out test) ·
 // Evidence (Source Comparison: the empirical source-vs-source backtest;
 // Source Accuracy: the who-grades-which-cohort measurement; Calibration: the
-// live calibration monitor and what an eFV grade is worth; What Predicts the
+// live calibration monitor and what an eFV grade is worth; eTools: tool grades
+// sharpened by stats, with the flip checks; What Predicts the
 // Majors: the eFV v5 metric atlas; links to the /models/ ledger and /models/updates/) · Sources
 // (Source Updates: the dates each outlet published a list; Page Index: every
 // standalone page; a link to /sources/). The authoritative list is VIEWS
@@ -58,6 +59,9 @@
   // TDZ reason _SACC gives.
   let _PLAD = null;            // the ladder read's record (or {__error:true})
   let _PLAD_LOADING = false;   // in-flight guard against a double fetch
+  // eTools view state (ETOOLS_FLIP_PREP). Module scope for the TDZ reason _SACC gives.
+  let _ETL = null;             // the eTools summary (or {__error:true})
+  let _ETL_LOADING = false;    // in-flight guard against a double fetch
   const _WPM_SEL = { side: "pit", level: "A", band: "all", group: "all", label: "reach_h",
                      frame: "all", family: "all", sort: "raw" };
   const _WPM_FAMILY_TAG = { box: "Box", pbp: "Pitch by pitch", bb: "Batted ball", tracking: "Tracking" };
@@ -105,6 +109,7 @@
     { id: "source-accuracy", shelf: "evidence", label: "Source Accuracy", body: "source-accuracy-body", render: renderSourceAccuracy, aliases: [] },
     { id: "calibration", shelf: "evidence", label: "Calibration", body: "calibration-body", render: renderCalibration, aliases: [] },
     { id: "metric-atlas", shelf: "evidence", label: "What Predicts the Majors", body: "metric-atlas-body", render: renderMetricAtlas, aliases: [] },
+    { id: "etools", shelf: "evidence", label: "eTools", body: "etools-body", render: renderETools, aliases: [] },
     { id: "models-ledger", shelf: "evidence", label: "Models", href: "/models/", aliases: [] },
     { id: "model-updates", shelf: "evidence", label: "Model Updates", href: "/models/updates/", aliases: [] },
     { id: "source-updates", shelf: "sources", label: "Source Updates", body: "source-updates-body", render: renderSourceUpdates, aliases: [] },
@@ -6556,6 +6561,133 @@ function renderPositionalLadder() {
         <li>It is not in eWAR. eWAR's positional term takes it up only under its own gate.</li>
         <li>The Defense board's Pos (ours) still uses the Baseball-Reference inversion.</li>
         <li>A flat ladder among fielders says the same players field about as well, in runs, wherever they play. It says nothing about which players clubs choose to put at shortstop.</li>
+      </ol>
+    </section>
+  </div>`;
+}
+
+// ---- Evidence > eTools (ETOOLS_FLIP_PREP, owner asks EW3-15 and eTools) ----
+// Each tool grade moved by the prospect's own minor-league stats, tested against
+// the tool's outcome stat, with the flip checks (drift, a promotion-independent
+// label, the bootstrap and weighting fixes). Read from the summary the eTools
+// builder copies out of the lab artifacts; the view formats and does no
+// arithmetic beyond counting rows it lists.
+function _etlLoad() {
+  if (_ETL || _ETL_LOADING) return;
+  _ETL_LOADING = true;
+  const rerender = () => { if (_S.view === "etools") renderETools(); };
+  fetch("/data/etools_eval.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _ETL = (j && Array.isArray(j.tools)) ? j : { __error: true }; _ETL_LOADING = false; rerender(); })
+    .catch(() => { _ETL = { __error: true }; _ETL_LOADING = false; rerender(); });
+}
+
+function _etlNum(v, dp) {
+  if (v == null || !isFinite(Number(v))) return "-";
+  const n = Number(v);
+  return (n > 0 ? "+" : "") + n.toFixed(dp == null ? 3 : dp);
+}
+
+function _etlRho(v) {
+  return (v == null || !isFinite(Number(v))) ? "-" : Number(v).toFixed(3);
+}
+
+function _etlDl(rec) {
+  return rec ? `${_etlNum(rec.d)} <span class="gl-plad-ci">(LB ${_etlNum(rec.lb95)})</span>` : "-";
+}
+
+function renderETools() {
+  const el = document.getElementById("etools-body");
+  if (!el) return;
+  _etlLoad();
+  const St = window.EephusState;
+  const d = _ETL;
+  if (!d || d.__error) {
+    const msg = d ? "The eTools record could not be loaded." : "Loading the eTools record...";
+    el.innerHTML = St ? St.html(d ? "failed" : "loading", msg, "gl-etl-state")
+      : `<div class="state-message gl-etl-state" role="status">${msg}</div>`;
+    return;
+  }
+  const tools = d.tools || [];
+  const pass = tools.filter(t => t.verdict === "PASS");
+  const fp = d.flip_prep || null;
+  const look = String((d.gate || {}).look_at || "").slice(0, 10);
+  const fpAt = String(((d.amendments || [])[1] || {}).read_at || "").slice(0, 10);
+  const head = (labels) => `<thead><tr>${labels.map((c, i) => `<th scope="col"${i === 1 ? ' class="warc-e"' : ""}>${escapeHtml(c)}</th>`).join("")}</tr></thead>`;
+  const lab = (t, lb) => {
+    const r = (t.labels || {})[lb];
+    return r ? `${_etlRho(r.rho_consensus)} to <b>${_etlRho(r.rho_etool)}</b><br><span class="gl-plad-ci">${_etlNum(r.d)}, LB ${_etlNum(r.lb95)}, n ${Number(r.n || 0).toLocaleString()}</span>` : "-";
+  };
+  const subs = t => (t.admitted || []).map(a => escapeHtml(a.label) + (a.no_added_effect ? " <span class=\"gl-plad-ci\">(adds nothing given the others)</span>" : "")).join("<br>") || "none admitted";
+  const verdictWord = t => t.verdict === "PASS" ? "<b>Beats consensus</b>"
+    : !(t.admitted || []).length ? "No sub-driver" : (t.label_um == null ? "No minors label" : "Not on both labels");
+  const toolRows = tools.map(t => `<tr><th scope="row">${escapeHtml(t.name)}</th>`
+    + `<td class="warc-e">${t.verdict === "PASS" ? `<span class="g-term" data-gl="${escapeHtml(String(t.key).toLowerCase())}">${escapeHtml(t.key)}</span>` : escapeHtml(t.key)}</td>`
+    + `<td>${escapeHtml(t.outcome || t.label_mlb || "")}</td><td>${subs(t)}</td>`
+    + `<td>${lab(t, "mlb")}</td><td>${lab(t, "um")}</td><td>${verdictWord(t)}</td></tr>`).join("");
+  const fpRows = pass.filter(t => t.drift || t.promotion_reads).map(t => {
+    const dr = t.drift || {}, pr = t.promotion_reads || {}, rr = t.reranked_lb95 || {};
+    return `<tr><th scope="row">${escapeHtml(t.key)}</th>`
+      + `<td class="warc-e">${_etlNum(dr.live_shift, 2)}<br><span class="gl-plad-ci">years ${_etlNum(dr.dev_min, 2)} to ${_etlNum(dr.dev_max, 2)}${dr.drifted ? "; outside" : ""}</span></td>`
+      + `<td>${t.serve === "recentred" ? "Centred" : "As fit"}</td>`
+      + `<td>${_etlDl(pr.l_any_unmeasured)}</td><td>${_etlDl(pr.ipw_um)}</td>`
+      + `<td>${escapeHtml(t.promotion_label === "PROMOTION-CLEAR" ? "Clear" : (t.promotion_label ? "Unresolved" : "-"))}</td>`
+      + `<td>${_etlNum(rr.mlb)} / ${_etlNum(rr.um)}</td></tr>`;
+  }).join("");
+  const w = d.weighting || {};
+  const wRows = tools.map(t => {
+    const x = w[t.tool] || {};
+    const cell = (arm, name) => {
+      const a = ((x[arm] || {})[name]) || null;
+      return a ? `${a.verdict === "BEATS CONSENSUS" ? "<b>Beats</b>" : "Null"} <span class="gl-plad-ci">${_etlNum((a.mlb || {}).d)} / ${_etlNum((a.um || {}).d)}</span>` : "-";
+    };
+    return `<tr><th scope="row">${escapeHtml(t.name)}</th><td class="warc-e">${cell("record", "AW1_outlets_by_group")}</td>`
+      + `<td>${cell("ba_excluded", "AW1_outlets_by_group")}</td><td>${cell("record", "AW2_outlets_plus_stat")}</td></tr>`;
+  }).join("");
+  const aw1Null = tools.filter(t => (((w[t.tool] || {}).record || {}).AW1_outlets_by_group || {}).verdict === "NULL").length;
+  const drifted = pass.filter(t => (t.drift || {}).drifted).map(t => t.key);
+  const clear = pass.filter(t => t.promotion_label === "PROMOTION-CLEAR").length;
+  const pr = d.pitch_rate || {};
+  const verdict = `<b>${pass.length} of ${tools.length} eTools beat the consensus tool grade on both labels: ${pass.map(t => escapeHtml(t.key)).join(", ")}.</b> `
+    + `An eTool starts at the consensus grade and moves it by what the prospect's own minor-league stats say beyond it. `
+    + (fp ? `The flip checks: ${clear} of ${pass.length} hold on players who never reached Double-A or the majors; ${drifted.length ? `${drifted.map(escapeHtml).join(", ")} ${drifted.length === 1 ? "sits" : "sit"} off the development years on the 2026 boards and ${drifted.length === 1 ? "is" : "are"} centred` : "none sits off the development years on the 2026 boards"}. ` : "")
+    + `Not on player cards yet: the owner decides.`;
+  el.innerHTML = `<div class="source-comp-wrap warc-wrap gl-etl">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Measured · read once ${escapeHtml(look)}${fpAt ? ` · flip checks ${escapeHtml(fpAt)}` : ""}</div>
+    <h2 class="meth-h">eTools: tool grades sharpened by stats</h2>
+    <p class="meth-note">Each scouting tool grade has an outcome stat it is meant to predict: the hit tool, MLB strikeout rate; game power, ISO; the fastball, a pitcher's strikeout rate; command, his walk rate. For each tool we tested which minor-league stats, dated before the list, add to the consensus grade at predicting that stat, and built one eTool from the ones that did.</p>
+    <div class="wpm-explain" role="note">${verdict}</div>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="Each tool, its sub-drivers and its test">
+      <table class="warc-table"><caption>Within-list rank correlation with the outcome, consensus grade to eTool. MLB: the first three MLB seasons after the list, among players who debuted. Minors: the translated Double-A and Triple-A line over the next three seasons. LB is the one-sided 95% lower bound of the gain.</caption>
+        ${head(["Tool", "eTool", "Outcome stat (MLB)", "Sub-drivers", "MLB", "Minors", "Verdict"])}
+        <tbody>${toolRows}</tbody></table>
+    </div>
+    ${fpRows ? `<h3 class="meth-h3">Before showing them: the flip checks</h3>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="The flip checks">
+      <table class="warc-table"><caption>Shift: the 2026 boards' mean eTool minus consensus, beside the range of the twelve development years. Never reached: players with no debut and no Double-A line, scored on their translated line at any level. Re-weighted: the minors label with promoted players re-weighted to stand for everyone. Re-ranked: the lower bounds with each bootstrap draw re-ranked (MLB / minors).</caption>
+        ${head(["eTool", "Shift on the 2026 boards", "Served as", "Never reached Double-A (d, LB)", "Re-weighted minors (d, LB)", "Promotion check", "Re-ranked LB"])}
+        <tbody>${fpRows}</tbody></table>
+    </div>` : ""}
+    <h3 class="meth-h3">Weighting the outlets</h3>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="Accuracy weighting">
+      <table class="warc-table"><caption>Gain over the equal consensus (MLB / minors). Outlets: FanGraphs, MLB Pipeline and Baseball America weighted by their measured accuracy in each position group. Plus stats: the same with the stat reading as a third voice.</caption>
+        ${head(["Tool", "Outlets weighted", "Without Baseball America", "Outlets plus stats"])}
+        <tbody>${wRows}</tbody></table>
+    </div>
+    <section class="warc-notes" aria-labelledby="etl-how-h">
+      <h3 class="meth-h3" id="etl-how-h">How it is measured</h3>
+      <ol>
+        <li>Lists: the FanGraphs, MLB Pipeline and Baseball America tool grades published before May of each list year, 2011 to 2019 and 2022 to 2024 (${Number(d.frame_rows || 0).toLocaleString()} prospect-list rows). The consensus tool grade is their plain average. The 2020 and 2021 lists and every 2025 or later debut are held back and never read.</li>
+        <li>Candidates: minor-league stats from seasons before the list year only, translated across levels and leagues and shrunk toward the average by sample size, plus pitch-level rates and pitches per plate appearance.</li>
+        <li>The test: each list year is held out in turn, with its players removed from the rest; a stat is kept only if it adds to the consensus grade with a lower bound above zero, beats a shuffled copy of itself, and does not repeat a stat already kept (at most three per tool). The eTool passes only when it beats the consensus grade on both outcomes.</li>
+        <li>The flip checks were registered after the test and run once: the drift of the 2026 boards against the development years, a centring that removes it, the gain on players who never reached Double-A, and two fixes to the arithmetic (each bootstrap draw re-ranked; Baseball America's weight measured instead of assumed).</li>
+        <li>Pitches per plate appearance and per batter: ${pr.efv_tests != null ? `${Number(pr.efv_tests).toLocaleString()} tests as direct eFV inputs, ${pr.efv_flagged || 0} flagged` : "tested as direct eFV inputs"}; as tool inputs they mostly repeat walk and strikeout rate.</li>
+      </ol>
+      <h3 class="meth-h3">What it does not claim</h3>
+      <ol>
+        <li>eHIT measures strikeout avoidance, the framework's hit outcome, not batting average.</li>
+        <li>The MLB outcome exists only for players who debuted, and pitch selection and bat control read one MLB season (2026).</li>
+        <li>No eTool is on a player card or in eFV yet. eFV's own registration decides whether they replace the raw tool grades there.</li>
       </ol>
     </section>
   </div>`;

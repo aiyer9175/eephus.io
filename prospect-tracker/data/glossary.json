@@ -1138,6 +1138,165 @@
    "shelf": "foundation"
   },
   {
+   "id": "etools",
+   "term": "eTools",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "eTool",
+    "stat-adjusted tool grades",
+    "eHIT",
+    "ePOW",
+    "eSEL",
+    "eBAT",
+    "eFB",
+    "eCMD"
+   ],
+   "priority": 40,
+   "definition": "A scouting tool grade moved by the prospect's own minor-league stats: the consensus grade, plus what the stats that predict the tool's outcome say beyond it. Built for the tools where it beat the consensus grade on both outcomes: eHIT, ePOW, eSEL, eBAT, eFB, eCMD.",
+   "methodology": "Each tool grade has an outcome stat it predicts in the FanGraphs framework: the hit tool, MLB strikeout rate; game power, ISO; pitch selection, chase rate; bat control, zone contact; the fastball, a pitcher's strikeout rate; command, his walk rate. For each tool, minor-league stats dated before the list (translated across levels and leagues and shrunk toward the average by sample size) were tested for what they add to the consensus grade at predicting that stat, with each list year held out in turn and its players removed from the fit. Up to three that added with a lower bound above zero became the tool's sub-drivers. The eTool is the consensus grade plus each sub-driver's surprise (its value minus what the grade already implies), weighted on the grade scale. It passed only when it beat the consensus grade on both MLB players (among debuts) and the translated Double-A and Triple-A line.\n\nBefore any card shows one, four checks ran once: the 2026 boards against the development years (eFB sat outside them, so every eTool is centred on the board it scores), the gain on players who never reached Double-A or the majors, and two arithmetic fixes. Raw power, speed, field, arm and the secondary pitches keep the consensus grade. Shown rounded up to the next 5, with an 80% band. Not on player cards until the owner flips them; not in eFV.",
+   "formula": "eTool = consensus + sum over sub-drivers j of c_j x (z_j - a_j - b_j x consensus - delta_j); band = eTool +/- 1.2816 x the fit's residual sd",
+   "seeAlso": [
+    "hit_tool",
+    "game_power",
+    "pitch_sel",
+    "bat_ctrl",
+    "fastball_grade",
+    "command_grade"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io, measured on FanGraphs, MLB Pipeline and Baseball America tool grades."
+  },
+  {
+   "id": "ehit",
+   "term": "eHIT",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Hit eTool"
+   ],
+   "priority": 38,
+   "definition": "The hit tool grade sharpened by the prospect's own minor-league stats (translated strikeout rate, pitches per PA vs level and translated BABIP). Shown beside the consensus Hit grade with an 80% band.",
+   "methodology": "The consensus hit grade moved by translated strikeout rate, pitches per PA vs level and translated BABIP. Against MLB strikeout rate (lower is better), the framework's hit outcome, the consensus grade ranked prospects at a rank correlation of 0.298 and eHIT at 0.600, among players who debuted; on the translated upper-minors line, 0.436 and 0.710. It measures strikeout avoidance, not batting average. The Library's eTools view has the test and the checks.",
+   "seeAlso": [
+    "etools",
+    "hit_tool"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "epow",
+   "term": "ePOW",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Game power eTool"
+   ],
+   "priority": 38,
+   "definition": "The game power tool grade sharpened by the prospect's own minor-league stats (translated ISO and fly-ball rate). Shown beside the consensus Power grade with an 80% band.",
+   "methodology": "The consensus game power grade moved by translated ISO and fly-ball rate. Against MLB ISO, the framework's game-power outcome, the consensus grade ranked prospects at a rank correlation of 0.539 and ePOW at 0.573, among players who debuted; on the translated upper-minors line, 0.594 and 0.633. The Library's eTools view has the test and the checks.",
+   "seeAlso": [
+    "etools",
+    "game_power"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "esel",
+   "term": "eSEL",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Pitch selection eTool"
+   ],
+   "priority": 38,
+   "definition": "The pitch selection tool grade sharpened by the prospect's own minor-league stats (swing rate). Shown beside the consensus Pitch Sel grade with an 80% band.",
+   "methodology": "The consensus pitch selection grade moved by swing rate. Against MLB chase rate (lower is better), 2026 season, the consensus grade ranked prospects at a rank correlation of 0.496 and eSEL at 0.585, among players who debuted; on the translated upper-minors line, 0.556 and 0.628. The Library's eTools view has the test and the checks.",
+   "seeAlso": [
+    "etools",
+    "pitch_sel"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "ebat",
+   "term": "eBAT",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Bat control eTool"
+   ],
+   "priority": 38,
+   "definition": "The bat control tool grade sharpened by the prospect's own minor-league stats (contact rate). Shown beside the consensus Bat Ctrl grade with an 80% band.",
+   "methodology": "The consensus bat control grade moved by contact rate. Against MLB zone-contact rate, 2026 season, the consensus grade ranked prospects at a rank correlation of 0.383 and eBAT at 0.474, among players who debuted; on the translated upper-minors line, 0.477 and 0.556. The Library's eTools view has the test and the checks.",
+   "seeAlso": [
+    "etools",
+    "bat_ctrl"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "efb",
+   "term": "eFB",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Fastball eTool"
+   ],
+   "priority": 38,
+   "definition": "The fastball tool grade sharpened by the prospect's own minor-league stats (translated strikeout rate, pitches per batter faced and swinging-strike rate). Shown beside the consensus Fastball grade with an 80% band.",
+   "methodology": "The consensus fastball grade moved by translated strikeout rate, pitches per batter faced and swinging-strike rate. Against MLB pitcher strikeout rate, the consensus grade ranked prospects at a rank correlation of 0.293 and eFB at 0.362, among players who debuted; on the translated upper-minors line, 0.294 and 0.471. The Library's eTools view has the test and the checks.",
+   "seeAlso": [
+    "etools",
+    "fastball_grade"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "ecmd",
+   "term": "eCMD",
+   "category": "custom-index",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Command eTool"
+   ],
+   "priority": 38,
+   "definition": "The command tool grade sharpened by the prospect's own minor-league stats (translated walk rate, first-pitch strike rate and pitches per batter vs level). Shown beside the consensus Command grade with an 80% band.",
+   "methodology": "The consensus command grade moved by translated walk rate, first-pitch strike rate and pitches per batter vs level. Against MLB pitcher walk rate (lower is better), the consensus grade ranked prospects at a rank correlation of 0.377 and eCMD at 0.418, among players who debuted; on the translated upper-minors line, 0.539 and 0.613. The Library's eTools view has the test and the checks.",
+   "seeAlso": [
+    "etools",
+    "command_grade"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
    "id": "game_power",
    "term": "Game Power",
    "category": "scouting",

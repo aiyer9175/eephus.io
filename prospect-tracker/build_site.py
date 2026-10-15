@@ -9052,6 +9052,9 @@ GLOSSARY_VIEWS = (
     {"id": "source-accuracy", "shelf": "evidence", "label": "Source Accuracy", "body": "source-accuracy-body"},
     {"id": "calibration", "shelf": "evidence", "label": "Calibration", "body": "calibration-body"},
     {"id": "metric-atlas", "shelf": "evidence", "label": "What Predicts the Majors", "body": "metric-atlas-body"},
+    # eTools (ETOOLS_FLIP_PREP): each tool grade moved by the prospect's own stats,
+    # its test on both outcomes and the flip checks, read from the eTools summary.
+    {"id": "etools", "shelf": "evidence", "label": "eTools", "body": "etools-body"},
     # The old in-page registry view (view value "models") forwards to /models/
     # (LIBRARY_7, glossary.js FORWARDS); the strip lists the ledger here.
     {"id": "models-ledger", "shelf": "evidence", "label": "Models", "href": "/models/"},
@@ -10701,6 +10704,7 @@ PAGE_INDEX_VIEWS = (
     ("/glossary/#view=source-comparison", None, "eFV against each prospect source on the same graduates"),
     ("/glossary/#view=source-accuracy", None, "which source grades which cohort better"),
     ("/glossary/#view=metric-atlas", None, "which minor-league statistics predict reaching the majors, and what each adds to consensus FV"),
+    ("/glossary/#view=etools", None, "each scouting tool grade moved by the prospect's own minor-league stats, tested against the tool's outcome stat, with the checks before any card shows it"),
     ("/glossary/#view=source-updates", None, "the dates each prospect outlet published a list or changed a live list, newest first, grouped by outlet"),
 )
 
