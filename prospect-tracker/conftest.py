@@ -657,6 +657,10 @@ _SIDECAR_GLOBS = (
     # .cache while dark, the card source under data/ once live).
     ".cache/proj_components/preview/**/*",
     "data/mlb_proj_components.json",
+    # Q9_19: fa_export's destination payload (the preview under .cache while
+    # FA_DESTINATION_SERVE is off, data/ once the owner flips it).
+    ".cache/fa_destination/preview/**/*",
+    "data/fa_destinations.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -1066,6 +1070,11 @@ _SIDECAR_WRITE_TARGETS = (
      ".cache/proj_components/preview/components.json"),
     ("proj_export", "COMPONENTS_LIVE_PATH", "data/mlb_proj_components.json"),
     ("mlb_player_export", "COMPONENTS_PATH", "data/mlb_proj_components.json"),
+    # Q9_19: fa_export's second output, the destination payload; written by
+    # _write_destinations, which resolves both at call time.
+    ("fa_export", "DEST_PREVIEW_PATH",
+     ".cache/fa_destination/preview/fa_destinations.json"),
+    ("fa_export", "DEST_LIVE_PATH", "data/fa_destinations.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

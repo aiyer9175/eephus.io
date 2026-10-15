@@ -46,6 +46,12 @@ log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
 CLASS_YEAR = 2027
+#: The FA destination payload (fa_destination, gate section 16). While
+#: fa_destination.FA_DESTINATION_SERVE is False it goes only to the preview
+#: path under .cache; the live path appears first in the flip commit. Both are
+#: resolved at call time, so the test harness can redirect them.
+DEST_PREVIEW_PATH = Path(__file__).parent / ".cache" / "fa_destination" / "preview" / "fa_destinations.json"
+DEST_LIVE_PATH = DATA_DIR / "fa_destinations.json"
 
 
 def _clean(d: dict) -> dict:
@@ -1650,6 +1656,37 @@ def _dpw_pricing_block(cls_payload: dict) -> dict | None:
     }
 
 
+def build_fa_destinations_payload(cls_payload: dict) -> dict:
+    """The destination vectors for the current class (gate section 16), from
+    the frozen serving fit in data/fa_destination_eval.json and the Gate 3
+    table in data/fa_gate3_eval.json, through fa_destination's own builder.
+    Reads fa_class's members as built this run; writes nothing."""
+    import fa_destination as fd
+    art = json.loads((DATA_DIR / "fa_destination_eval.json").read_text(encoding="utf-8"))
+    gate3 = json.loads((DATA_DIR / "fa_gate3_eval.json").read_text(encoding="utf-8"))
+    class_year = int(cls_payload.get("class_year") or CLASS_YEAR)
+    ctx = fd.winter_context(class_year)
+    return fd.served_payload(cls_payload.get("members") or [], class_year, art, gate3, ctx,
+                             generated_at=date.today().isoformat())
+
+
+def _write_destinations(cls_payload: dict) -> tuple[str, int] | None:
+    """Build and write the destination payload: to DEST_LIVE_PATH only while
+    FA_DESTINATION_SERVE is on, otherwise to DEST_PREVIEW_PATH. A failure is
+    logged and never stops the FA export (the board does not depend on it)."""
+    import fa_destination as fd
+    try:
+        payload = build_fa_destinations_payload(cls_payload)
+    except Exception:                                       # noqa: BLE001
+        log.exception("fa destinations: not built this run")
+        return None
+    path = Path(DEST_LIVE_PATH if fd.FA_DESTINATION_SERVE else DEST_PREVIEW_PATH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    raw = json.dumps(payload, separators=(",", ":"))
+    path.write_text(raw, encoding="utf-8")
+    return path.name, len(raw)
+
+
 def export_all() -> dict[str, int]:
     sizes = {}
     cls_payload = build_fa_class_payload()
@@ -1673,6 +1710,10 @@ def export_all() -> dict[str, int]:
         raw = json.dumps(payload, separators=(",", ":"))
         (DATA_DIR / name).write_text(raw, encoding="utf-8")
         sizes[name] = len(raw)
+    if "fa_class.json" not in kept:
+        dest = _write_destinations(cls_payload)
+        if dest:
+            sizes[dest[0]] = dest[1]
     log.info("fa exports: %s", {k: f"{v/1024:.0f}KB" for k, v in sizes.items()})
     if kept:
         log.error("fa exports HELD (previous version kept): %s", kept)

@@ -5816,7 +5816,7 @@ def build_fa() -> str:
         '<div id="fa-banner"></div>'
         '<div class="filter-bar"><span class="filter-label">View</span>'
         '<span id="fa-view-chips"></span></div>'
-        f'<div id="fa-rows" class="fa-hold"{_csv_optin("fa-class")}{_mlb_events_attr()}></div>'
+        f'<div id="fa-rows" class="fa-hold"{_csv_optin("fa-class")}{_mlb_events_attr()}{_fa_dest_attr()}></div>'
         # QMLP04: the empty board can paint before fa.js runs, so a tall view
         # holds one viewport from the first frame; the card and the tracker are
         # short and drop the hold before that frame.
@@ -5961,6 +5961,18 @@ def _mlb_events_attr() -> str:
     except Exception:  # noqa: BLE001
         return ""
     return ' data-mlb-events="live"' if getattr(mlb_events, "MLB_EVENTS_LIVE", False) else ""
+
+
+def _fa_dest_attr() -> str:
+    """The /fa/ destination switch (Q9_19): ' data-fa-dest="live"' on #fa-rows
+    while fa_destination.FA_DESTINATION_SERVE is True, and nothing otherwise,
+    so with the flag off the shell is byte-identical and assets/fa.js makes no
+    request for the destination payload. fa_destination holds the one flag."""
+    try:
+        import fa_destination
+    except Exception:  # noqa: BLE001
+        return ""
+    return ' data-fa-dest="live"' if getattr(fa_destination, "FA_DESTINATION_SERVE", False) else ""
 
 
 def _tm_partner_attr() -> str:

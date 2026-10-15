@@ -26,6 +26,7 @@ import json
 import re
 from pathlib import Path
 
+import fa_destination
 import fscore_export
 import pitch_rates
 
@@ -56,6 +57,11 @@ DARK_PITCH_SLUGS = {"p_ip", "p_bf", "p_pa", "par"}
 # flip commit. While the flag is off they may be missing; once it is on, they
 # must resolve like every other slug.
 DARK_FSCORE_SLUGS = {"franchise_score", "postseason_ladder"}
+
+# The /fa/ destination column, card block, Fits column and Model receipts
+# (Q9_19) render only while fa_destination.FA_DESTINATION_SERVE is True, and
+# the entry lands in that flip commit. While the flag is off it may be missing.
+DARK_FA_DEST_SLUGS = {"fa_destination"}
 
 
 def _sources():
@@ -97,6 +103,8 @@ def test_every_referenced_glossary_slug_resolves():
     dark = set() if pitch_rates.SERVE_PITCH_RATES else set(DARK_PITCH_SLUGS)
     if not fscore_export.FSCORE_LIVE:
         dark |= DARK_FSCORE_SLUGS
+    if not fa_destination.FA_DESTINATION_SERVE:
+        dark |= DARK_FA_DEST_SLUGS
     missing = {s: sorted(v) for s, v in refs.items() if s.lower() not in keys and s not in dark}
     assert not missing, f"glossary slugs with no entry: {missing}"
 

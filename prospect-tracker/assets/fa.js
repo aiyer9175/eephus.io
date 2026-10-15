@@ -386,6 +386,8 @@
     try {
       const want = [load(clsName), load("fa_meta")];
       if (needArchive) want.push(load("fa_archive"));
+      // The board paints without the destination payload if it fails to load.
+      if (destLive() && !state.classYear) want.push(load("fa_destinations").catch(() => null));
       await Promise.all(want);
     } catch (e) {
       if (state.classYear) {
@@ -810,6 +812,7 @@
   // IL days, last three seasons (wiring W01, Q9_22c): a key only while the MLB
   // events feed is live, so with the flag off the board is unchanged.
   if (ilLive()) FA_SORT_KEYS.push("ilDays");
+  if (destLive()) FA_SORT_KEYS.push("destP");
   const FA_PICK_KEYS = FA_SORT_KEYS.filter(k => k !== "rank");
   // First click ascending: A-Z, youngest, and the status ladder from locked.
   const FA_ASC_FIRST = ["name", "age", "status"];
@@ -821,6 +824,7 @@
   function faSortVal(m, k) {
     if (k === "rank") return m.projGuar ?? null;
     if (k === "ilDays") { const x = ilOf(m); return x ? x.total : null; }
+    if (k === "destP") { const d = destOf(m); return d && d.top && d.top.length ? d.top[0][1] : null; }
     if (k === "name") return String(m.name || "");
     if (k === "status" || k === "verdict") return String(m[k] || "") || null;
     return m[k] ?? null;
@@ -849,7 +853,54 @@
     warY1: "WAR y1", warTotal: "Deal WAR", warCvar10: "Downside WAR",
     pAnyStar: "Star odds", age: "Age", prevAav: "Prior AAV",
     ilDays: "IL days, last 3 seasons",
+    destP: "Likely destination P(signs)",
   };
+
+  // ---- Where he signs (fa_destination, Q9_19) -------------------------------
+  // Drawn only while the page shell says the destination model is served
+  // (data-fa-dest="live" on #fa-rows, written from
+  // fa_destination.FA_DESTINATION_SERVE), and only for the current class: the
+  // model priced the current class alone. P(signs) is the chance a club signs
+  // him GIVEN he signs a major-league deal this winter. P(enter) is never
+  // folded in: a pending-option member's numbers hold if he reaches the market.
+  function destLive() {
+    const r = document.getElementById("fa-rows");
+    return !!(r && r.dataset.faDest === "live");
+  }
+  function destOn() {
+    return destLive() && !state.classYear && !!(D.fa_destinations && D.fa_destinations.members);
+  }
+  function destOf(m) { return destOn() ? (D.fa_destinations.members[m.key] || null) : null; }
+  function destPct(p) {
+    if (p == null) return EM_DASH;
+    return p < 0.005 ? "under 1%" : `${Math.round(p * 100)}%`;
+  }
+  // A club outside the member's served top 8 has a P no larger than the
+  // eighth, so it prints as "at most" that value instead of a made-up number.
+  function destPFor(d, org) {
+    if (!d || !d.top || !d.top.length) return null;
+    const hit = d.top.find(t => t[0] === org);
+    return hit ? { p: hit[1], exact: true } : { p: d.top[d.top.length - 1][1], exact: false };
+  }
+  function destPForText(d, org) {
+    const x = destPFor(d, org);
+    if (!x) return EM_DASH;
+    return x.exact ? destPct(x.p) : `at most ${destPct(x.p)}`;
+  }
+  function destIf(m) { return m.status === "pending_option" ? "if he reaches the market" : ""; }
+  function destDriverText(code) {
+    const L = (D.fa_destinations && D.fa_destinations.driver_labels) || {};
+    const parts = String(code || "").split("").map(c => L[c] || c);
+    return parts.length ? parts.join(", ") : "none above the average club";
+  }
+  function destCell(m) {
+    const d = destOf(m);
+    if (!d || !d.top || !d.top.length) return EM_DASH;
+    const [org, p] = d.top[0];
+    const cond = destIf(m);
+    const tip = `Most likely club: ${org}, P(signs) ${destPct(p)}, given he signs a major-league deal this winter${cond ? ", " + cond : ""}`;
+    return `<span class="fa-dest" title="${esc(tip)}">${esc(org)} ${destPct(p)}</span>`;
+  }
 
   // ---- IL days, last three seasons (wiring W01, Q9_22c) ----------------------
   // Read only while the page shell says the MLB events feed is live
@@ -1063,6 +1114,12 @@
       parts.push(g("Comps", m.comps.slice(0, 3).map(c =>
         `${esc(c.name)} ${c.yr}${c.to ? " " + esc(c.to) : ""} ${c.years ?? "?"}y ${money(c.guar)}`).join(" &middot; ")));
     }
+    const dest = destOf(m);
+    if (dest && dest.top && dest.top.length) {
+      const cond = destIf(m);
+      parts.push(g("Likely destination", dest.top.slice(0, 3).map(t => `${esc(t[0])} ${destPct(t[1])}`).join(" &middot; ")
+        + (cond ? ` (${cond})` : ""), "fa_destination"));
+    }
     if ((m.fits || []).length) {
       parts.push(g("Top fits", m.fits.slice(0, 3).map(f =>
         `<a class="fa-player-link" href="#${faHash()}view=fits&team=${encodeURIComponent(f.org)}">${esc(f.org)}</a> ${(f.fit ?? 0).toFixed(2)}`).join(" &middot; "), "team_fit"));
@@ -1078,7 +1135,7 @@
     // table and crushes the Player column.
     const pad = c => `<td class="${c} fa-dt-pad" aria-hidden="true"></td>`;
     const tail = ["fc-sur", "fc-dp", "fc-rat", "fc-w1", "fc-wt", "fc-age"]
-      .concat(ilOn() ? ["fc-il"] : [], ["fc-st"]);
+      .concat(ilOn() ? ["fc-il"] : [], destOn() ? ["fc-dest"] : [], ["fc-st"]);
     return `<tr class="fa-detail" id="fad-${esc(m.key)}" data-export-skip>${pad("fc-rank")}`
       + `<td colspan="5" class="fa-dt-cell"><div class="fa-dt">${parts.join("")}</div></td>`
       + tail.map(pad).join("") + `</tr>`;
@@ -1119,6 +1176,7 @@
       + `<td class="fc-wt">${m.warTotal != null ? formatMetric(m.warTotal, "war") : EM_DASH}</td>`
       + `<td class="fc-age">${m.age != null ? Math.floor(m.age) : EM_DASH}</td>`
       + (ilOn() ? `<td class="fc-il">${ilCell(m)}</td>` : "")
+      + (destOn() ? `<td class="fc-dest">${destCell(m)}</td>` : "")
       + `<td class="fc-st"><span class="fa-st ${st.cls}" title="${esc(st.tip)}">${st.short}</span></td>`
       + `</tr>`;
   }
@@ -1162,6 +1220,9 @@
       + (ilOn() ? th("ilDays", `IL<span class="fa-th-unit">3y</span>`, "fc-il",
         `IL days, last three seasons: in-season days on the injured list, ${IL.seasons[0]} to ${IL.seasons[IL.seasons.length - 1]}, summed`,
         "IL days 3y") : "")
+      + (destOn() ? th("destP", "Likely", "fc-dest",
+        "Likely destination: the club with the highest P(signs), given he signs a major-league deal this winter",
+        "Likely destination") : "")
       + th("status", "Status", "fc-st", "Market status: UFA, a pending option with its price, or the signed deal", "Status")
       + `</tr></thead>`;
     const body = members.map((m, i) => faRowHtml(m, i) + (FA_OPEN.has(m.key) ? faDetailRow(m, cls) : "")).join("");
@@ -1215,7 +1276,7 @@
     </div>`;
     const _vm = faValueMap(members);
     const valMap = _vm ? `<details class="fa-valmap"><summary>Value map &middot; rational value vs predicted price (current filters)</summary><div class="fa-valmap-wrap" data-export-chart data-export-title="FA value map - rational value vs predicted price">${_vm}</div></details>` : "";
-    const table = `<div class="fa-board-wrap"><table class="fa-board-table" data-export data-export-title="MLB Free Agency class board">${head}<tbody>${body}</tbody></table>`
+    const table = `<div class="fa-board-wrap${ilOn() && destOn() ? " fa-has-il" : ""}"><table class="fa-board-table" data-export data-export-title="MLB Free Agency class board">${head}<tbody>${body}</tbody></table>`
       + (body ? "" : pxState("empty", "No free agents match these filters.")) + `</div>`;
 
     rows.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main fa-board-tmain">`
@@ -1717,6 +1778,22 @@
     return ` The market model ${g2.pass ? "passed" : "is failing"} <span data-gl="fa_gates">Gate 2</span> on it (guarantee MAE $${Number(g.mae_model).toFixed(2)}M against $${Number(g.mae_base).toFixed(2)}M for its baseline, n ${String(Math.round(Number(g.n))).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${when}).`;
   }
 
+  // The card's "Where he signs" block: the top five clubs with P(signs) and
+  // the three largest lifts each club gets over the average club.
+  function destCardBlock(m) {
+    const d = destOf(m);
+    if (!d || !d.top || !d.top.length) return "";
+    const top5 = d.top.slice(0, 5);
+    const rest = 1 - top5.reduce((a, t) => a + t[1], 0);
+    const cond = destIf(m);
+    const rowsH = top5.map((t, i) => `<tr><td>${clubTag(t[0])}</td><td><strong>${destPct(t[1])}</strong></td>`
+      + `<td>${esc(destDriverText((d.drivers || [])[i]))}</td></tr>`).join("");
+    return `<h3><span data-gl="fa_destination">Where he signs</span></h3>
+      <p class="fa-note">P(signs) is the chance each club signs him, given he signs a major-league deal this winter${cond ? `, <strong>${cond}</strong>` : ""}. Drivers are the terms that lift that club most over the average club.</p>
+      <table class="detail-table fa-dest-table"><thead><tr><th>Club</th><th>P(signs)</th><th>Largest drivers</th></tr></thead>
+      <tbody>${rowsH}<tr class="fa-dim"><td>The other ${30 - top5.length} clubs</td><td>${destPct(Math.max(0, rest))}</td><td></td></tr></tbody></table>`;
+  }
+
   function renderPlayer(rows, cls, key) {
     const m = cls.members.find(x => x.key === key);
     if (!m) {
@@ -1809,7 +1886,8 @@
     const compsPanel = `${arcBlock}
       ${comps ? `<h3>Nearest real comps</h3><table class="detail-table">
         <thead><tr><th>Player</th><th>Winter</th><th>To</th><th>Deal</th></tr></thead><tbody>${comps}</tbody></table>` : ""}
-      ${fits ? `<h3>Top team fits</h3><div class="fa-fitchips">${fits}</div>` : ""}`;
+      ${fits ? `<h3>Top team fits</h3><div class="fa-fitchips">${fits}</div>` : ""}
+      ${destCardBlock(m)}`;
     const nonEmpty = h => !!(h && h.replace(/\s+/g, "").length);
     const panels = [
       { id: "market", label: "Market", html: marketPanel },
@@ -2020,9 +2098,11 @@
     const blockedCell = bb => bb && bb.length
       ? bb.map(b => `<span class="fa-block fa-block-${b.t}" title="${b.t === "mlb" ? "MLB incumbent at the slot" : "PROSPX prospect (FV ≥ 50, near ETA)"}">${esc(b.n)}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")
       : EM_DASH;
+    const dOn = destOn();
     const body = list.map(({ m, f }) => `<tr>
         <td><strong>${playerLink(m)}</strong> <span class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"}</span></td>
         <td><strong>${f.fit.toFixed(2)}</strong></td>
+        ${dOn ? `<td class="fa-dest-p" title="${esc(destIf(m) ? "P(signs), " + destIf(m) : "P(signs), given he signs a major-league deal this winter")}">${destPForText(destOf(m), state.team)}</td>` : ""}
         <td>${cbar(f.need, "need")}</td><td>${cbar(f.window, "window")}</td><td>${cbar(f.afford, "afford")}</td><td>${cbar(f.park, "park")}</td><td>${cbar(f.behavior, "behavior")}</td>
         <td>${blockedCell(f.blockedBy)}</td>
         <td>${m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : EM_DASH}</td>
@@ -2030,9 +2110,10 @@
       </tr>`).join("");
     const fitsGfx = (window.EEPHUS_GFX && list.length)
       ? ` &middot; ${window.EEPHUS_GFX.chipHTML("fa-fits-gfx")}` : "";
-    const fitsMain = `<table class="detail-table fa-fits-table">
-      <thead><tr><th>Player</th><th><span data-gl="fit_components">Fit</span></th><th title="WAR gap over the incumbent at the position">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV (habitual taxpayers keep a floor)">Afford</th><th title="Park factor fit (smallest weight)">Park</th><th title="Biggest deal ever vs this price, last-3-winter outlay, $100M-deal count">Behavior</th><th title="PX = near-ETA PROSPX prospect, MLB = contracted incumbent">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
-      <tbody>${body || `<tr><td colspan="10">No scored fits for ${state.team} in this class.</td></tr>`}</tbody></table>`;
+    const fitsMain = (dOn ? `<div class="fa-note fa-dest-head">Fit asks whether he helps them; P(signs) asks whether they sign him.</div>` : "")
+      + `<table class="detail-table fa-fits-table">
+      <thead><tr><th>Player</th><th><span data-gl="fit_components">Fit</span></th>${dOn ? `<th title="The chance this club signs him, given he signs a major-league deal this winter"><span data-gl="fa_destination">P(signs)</span></th>` : ""}<th title="WAR gap over the incumbent at the position">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV (habitual taxpayers keep a floor)">Afford</th><th title="Park factor fit (smallest weight)">Park</th><th title="Biggest deal ever vs this price, last-3-winter outlay, $100M-deal count">Behavior</th><th title="PX = near-ETA PROSPX prospect, MLB = contracted incumbent">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="${dOn ? 11 : 10}">No scored fits for ${state.team} in this class.</td></tr>`}</tbody></table>`;
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Team</span>${chips}</div>
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${clubTag(state.team)} fits</span>
       <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w ${t.baseSrc === "mlb_projections" ? "(projected)" : "(contracted core)"} &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}${fitsGfx}</span></div>
@@ -2224,11 +2305,63 @@
       <table class="detail-table"><thead><tr><th>Winter</th><th>Player</th><th>To</th><th>Actual</th><th>Model</th><th>Err</th></tr></thead>
       <tbody>${missRows}</tbody></table>
       <div class="fa-note" style="margin-top:8px;">${(g2.notes || []).map(esc).join(" &middot; ")}</div>` : ""}`;
+    if (destOn() && D.fa_destinations.model) rows.insertAdjacentHTML("beforeend", destModelHTML(D.fa_destinations));
     rows.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => {
       modelMissTab = b.dataset.mtab;
       renderModel(rows, meta);
       if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
     });
+  }
+
+  // Gate 3 and the destination gate, read from their artifacts by fa_export
+  // (the payload's model block); every number below is a field of it.
+  function destModelHTML(P) {
+    const g3 = P.model.gate3 || {}, dm = P.model.destination || {};
+    const f4 = v => v == null ? EM_DASH : Number(v).toFixed(4);
+    const n0 = v => v == null ? EM_DASH : String(Math.round(Number(v))).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const G3_LBL = { random: "Random order", payroll_only: "Payroll room only",
+      behavior_only: "Will-spend history only", live_analog: "The Fit's reduced twin",
+      banded_twin: "The Fit's reduced twin, banded will-spend (as served)",
+      fitted_transfer: "Refitted Fit weights", fitted_full: "Refitted, with re-signing" };
+    const g3Rows = Object.entries(g3.rows || {}).map(([k, r]) =>
+      `<tr><td>${esc(G3_LBL[k] || k)}</td><td>${n0(r.n)}</td><td>${f4(r.top1)}</td><td>${f4(r.top3)}</td><td>${f4(r.top5)}</td><td>${f4(r.mrr)}</td></tr>`).join("");
+    const DM_LBL = { P: "Fit twin, re-signing and the Club Ledger spending terms (P)",
+      N: "Fit twin and re-signing (N)", L_perm: "P with the Ledger terms shuffled across clubs (control)",
+      incumbency_only: "Re-signing only", random: "Random order", payroll_space: "Payroll room only",
+      payroll_level: "Payroll level only", behavior_only: "Will-spend history only",
+      live_analog: "The Fit's reduced twin" };
+    const served = (dm.verdict || {}).serve;
+    const dmRows = Object.entries(dm.metrics || {}).map(([k, r]) =>
+      `<tr${k === served ? ' class="fa-dest-served"' : ""}><td>${esc(DM_LBL[k] || k)}${k === served ? " <strong>served</strong>" : ""}</td><td>${f4(r.top1)}</td><td>${f4(r.top3)}</td><td>${f4(r.top5)}</td><td>${f4(r.mrr)}</td><td>${f4(r.log_loss)}</td></tr>`).join("");
+    const CL_LBL = { C1: "beats payroll room and payroll level", C2: "beats the Fit's twin",
+      C3: "the Club Ledger terms add accuracy", C4: "calibrated", C5: "stable across winters" };
+    const clauseRow = (arm, blk) => `<tr><td>${esc(arm === "N_in_P_place" ? "N" : arm)}</td>`
+      + ["C1", "C2", "C3", "C4", "C5"].map(c => `<td>${blk[c] == null ? EM_DASH : blk[c] ? "&#10003; pass" : "&#10007; fail"}</td>`).join("") + `</tr>`;
+    const clauses = Object.entries(dm.clauses || {}).map(([a, b]) => clauseRow(a, b)).join("");
+    const ind = dm.industry_retro;
+    const yrs = dm.scored_winters || [];
+    const span = yrs.length ? `${yrs[0]}-${yrs[yrs.length - 1]}` : "";
+    const rw = P.realized_winters || [];
+    const rspan = rw.length ? `${rw[0]}-${rw[rw.length - 1]}` : "";
+    const clubRows = Object.entries(P.clubs || {}).sort((a, b) => b[1].expected_mlb_deals - a[1].expected_mlb_deals || (a[0] < b[0] ? -1 : 1))
+      .map(([o, c]) => `<tr><td>${clubTag(o)}</td><td>${c.expected_mlb_deals.toFixed(1)}</td><td>${c.realized_mean == null ? EM_DASH : c.realized_mean.toFixed(1)}</td></tr>`).join("");
+    return `
+      <h3><span data-gl="team_fit">Gate 3</span>: where a free agent signs</h3>
+      <div class="fa-note">Each ranker orders the 30 clubs for every free agent who signed a major-league deal, forward-chained over the winters before; the score is where the club he signed with landed. Top-k is the share signed with a club ranked in the first k; MRR is the mean of one over that rank (random order ${f4(((g3.rows || {}).random || {}).mrr)}). Measured ${esc(String(g3.generated_at || "?"))}${g3.banded_measured_at ? `, the banded row ${esc(String(g3.banded_measured_at))}` : ""}; a gap smaller than ${f4(g3.mde95)} in MRR is inside the noise.</div>
+      <table class="detail-table"><thead><tr><th>Ranker</th><th>n</th><th>Top-1</th><th>Top-3</th><th>Top-5</th><th>MRR</th></tr></thead>
+      <tbody>${g3Rows}</tbody></table>
+      <h3><span data-gl="fa_destination">Where he signs</span>: the destination model (serves ${esc(served || "nothing")})</h3>
+      <div class="fa-note">P(signs) for each of the 30 clubs, given he signs a major-league deal; forward-chained on the board's own predicted prices, scored winters ${esc(span)}, n ${n0(dm.n_scored)}, measured ${esc(String(dm.generated_at || "?"))}. Log loss for a uniform guess is ${f4(((dm.metrics || {}).random || {}).log_loss)} (lower is better). The MRR noise floor is ${f4((dm.floors || {}).mrr_mde95)}; the log-loss floor is ${f4((dm.floors || {}).log_loss_floor)}.</div>
+      <table class="detail-table"><thead><tr><th>Model</th><th>Top-1</th><th>Top-3</th><th>Top-5</th><th>MRR</th><th>Log loss</th></tr></thead>
+      <tbody>${dmRows}</tbody></table>
+      <table class="detail-table"><thead><tr><th>Arm</th>${["C1", "C2", "C3", "C4", "C5"].map(c => `<th title="${esc(CL_LBL[c])}">${c}</th>`).join("")}</tr></thead>
+      <tbody>${clauses}</tbody></table>
+      <div class="fa-note">${["C1", "C2", "C3", "C4", "C5"].map(c => `${c}: ${esc(CL_LBL[c])}`).join(" &middot; ")}. ${(dm.loss_ledger || []).map(t => `Recorded null: ${esc(t)}.`).join(" ")}</div>
+      ${ind ? `<div class="fa-note">Against MLB Trade Rumors' predicted team on the same ${n0(ind.n)} players, class years ${esc(span)}: the model's top club was right ${destPct(ind.model_hit_rate)} of the time and MLB Trade Rumors' pick ${destPct(ind.mlbtr_hit_rate)} (paired difference ${f4(ind.paired_diff)}, 95% interval ${f4((ind.paired_diff_ci95 || [])[0])} to ${f4((ind.paired_diff_ci95 || [])[1])}). Their lists are written in November with information the model's winter-start inputs do not carry.</div>` : ""}
+      <h3>Expected major-league deals by club</h3>
+      <div class="fa-note">This class: the sum of each club's P(signs) over the ${n0(Object.keys(P.members || {}).length)} members still on the market, as if every one signs a major-league deal (pending options counted as if they reach the market). Realized: the club's mean count per winter, ${esc(rspan)}, of the major-league free-agent signings the model was scored on.</div>
+      <table class="detail-table fa-dest-clubs"><thead><tr><th>Club</th><th>Expected, this class</th><th>Realized mean per winter</th></tr></thead>
+      <tbody>${clubRows}</tbody></table>`;
   }
 
   // The module glossary moved into the unified /glossary/ data layer
