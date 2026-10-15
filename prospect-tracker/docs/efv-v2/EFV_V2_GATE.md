@@ -1050,3 +1050,19 @@ progress-ledger row was written. The owner waived registered dates and look days
 `EFV_V5_ON` stays False. No cell is cut by consensus-FV level. The forking-path count of s6
 gains the selection's 81 evaluated steps (28, 27 and 26 over three rounds) and this one spent
 read.
+
+## Note 2026-10-15: the eFV v5 atlas tool-grade and Statcast recheck reads spent R-VM debut cohorts (EW3-7, EW3-5)
+
+EFV5_ATLAS_TOOLS_STATCAST (`efv5_atlas_tools.py`, artifacts `data/efv5_atlas_tools.json` and
+`data/_labs/efv5/efv5_atlas_tools_cells.json`, development only, nothing served) reruns the
+metric atlas's method on two new families: scouting tool grades as of each list (FanGraphs and
+MLB Pipeline boards inside the V window, never a board of another list vintage) and the
+individual tracked Statcast components (Triple-A 2022 to 2025, Florida State League 2021 to
+2025). Like the first atlas it reads the horizon-censored labels and reach3 at S 2022 and 2023,
+whose windows reach the R-VM debut cohorts this registration reserved and the 10-08
+confirmation (s11) spent. Under the owner's EW3-1 and EW3-7 and the waiver of registered dates
+(EW3-5) these are an OWNER-WAIVED EARLY READ: every such cell is flagged `reserved_overlap` and
+labelled spent, the candidates list keeps them apart, and nothing is selected on them. No R-LV
+list vintage (2020, 2021) was built and no tool grade from a 2020 or 2021 board was read
+(`efv5_atlas.CONSENSUS_VINTAGES` and the V-window read, pinned in `test_efv5_atlas_tools.py`).
+No cell is cut by consensus-FV level.
