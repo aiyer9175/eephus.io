@@ -1018,3 +1018,18 @@ The s9 results section stays empty: the reserved numbers live in
 (frames lv_res and vm_pros, model efv_v3, trigger look) in `data/efv_progress.json`. The
 forking-path denominator of s6 gains the selection's evaluated steps (every one recorded in
 `data/_labs/efv_v3/efv_v3_select.json`) and the two reserved reads.
+
+## Note 2026-10-14: the eFV v5 metric atlas reads spent R-VM debut cohorts (EW3-1, EW3-5)
+
+EFV5_METRIC_ATLAS (`efv5_atlas.py`, artifact `data/efv5_metric_atlas.json`, development
+only, nothing served) scores every MiLB metric raw and INCREMENTAL over PROSPX consensus FV
+on (player, season S) rows. Its horizon-censored labels (reached MLB by 2026; fWAR per MLB
+season through 2026) and its reach3 label at S 2022 and 2023 read first MLB seasons of 2025
+and 2026, which are the R-VM debut cohorts this registration reserved and the 10-08
+confirmation (s11) spent. The owner authorised these short-horizon, consensus-scored reads
+for the tracking era (decision EW3-1, 2026-10-14) and waived the registered dates (EW3-5), so
+the atlas takes them as an OWNER-WAIVED EARLY READ: every such cell is flagged
+`reserved_overlap` and labelled spent, the candidates list keeps those cells apart from clean
+cells, and nothing is selected or tuned on them. No R-LV list vintage (2020, 2021) was built:
+`efv5_atlas.CONSENSUS_VINTAGES` leaves them out and `test_efv5_atlas.py` pins it. No cell is
+cut by consensus-FV level.
