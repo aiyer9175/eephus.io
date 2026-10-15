@@ -245,7 +245,8 @@ SCHEDULE_HYDRATE = "team,linescore,probablePitcher,decisions,seriesStatus,lineup
 WP_FIELDS = ("homeTeamWinProbability,homeTeamWinProbabilityAdded,leverageIndex,about,atBatIndex,inning,"
              "halfInning,isComplete,endTime,result,description,event,eventType,awayScore,homeScore,matchup,"
              "batter,pitcher,id,fullName,count,outs,playEvents,playId,isPitch,"
-             "runners,movement,start,end,details,runner,rbi,isOut,postOnFirst,postOnSecond,postOnThird")
+             "runners,movement,start,end,details,runner,rbi,isOut,postOnFirst,postOnSecond,postOnThird,"
+             "pitchNumber,reviewDetails,isOverturned,reviewType,challengeTeamId,additionalReviews,player")
 PEOPLE_HYDRATE = "stats(group=[pitching],type=[season])"
 #: The October bracket (SCORES_4b, plan 1.6): one call per idle cycle from the
 #: first postseason date to the last, inside the limiter; series state and

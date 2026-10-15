@@ -653,7 +653,9 @@
     var o = groups.map(function (gr) {
       var rows = gr.rows.map(function (p) {
         var rev = (p.reviews || []).map(function (r) {
-          return (r.by ? r.by + " " : "") + (r.kind ? lower(r.kind) + " " : "") + "review, call " + (r.overturned ? "overturned" : "stands");
+          var what = r.kind === "MJ" ? "ABS challenge" : r.kind === "MZ" ? "check-swing challenge" : "replay review";
+          return (r.by ? r.by + " " : "") + what + (r.player && (r.kind === "MJ" || r.kind === "MZ") ? " by " + r.player : "") +
+            (r.pitch ? " on pitch " + r.pitch : "") + ", call " + (r.overturned ? "overturned" : "stands");
         }).join(". ");
         return '<li class="sc-pa" id="sc-pa-' + p.ab + '" tabindex="-1"' + (p.ab === focusAb ? ' data-focus="1"' : "") + "><p>" + esc(p.text) + "</p>" +
           '<p class="sc-dim">' + esc(outsText(p.outs) + ", " + basesText(p.bases) + ". " + (c.away.code || c.away.short) + " " + p.away + ", " +
