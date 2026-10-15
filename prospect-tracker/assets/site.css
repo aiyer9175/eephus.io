@@ -3840,6 +3840,73 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   line-height: 1.5; vertical-align: top; }
 .gl-app .sacc-kv td:first-child { width: 150px; white-space: nowrap; }
 .gl-app .sacc-kv code { font-family: var(--font-retro-mono); font-size: 11px; overflow-wrap: anywhere; }
+/* What Predicts the Majors (EFV5_ATLAS_PAGE): the eFV v5 metric atlas. One row
+   per statistic: name, the raw bar (coin-flip rule at 50), the lift over
+   consensus FV with its interval, the chip. Tokens only, so both themes read. */
+.gl-app .wpm-explain { border-left: 3px solid var(--accent-gold); background: var(--bg-secondary);
+  padding: 8px 12px; margin: 10px 0 12px; font-size: 12.5px; line-height: 1.5;
+  color: var(--text-secondary); max-width: 860px; }
+.gl-app .wpm-explain b { color: var(--text-primary); }
+.gl-app .wpm-controls { display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 6px 0 4px; }
+.gl-app .wpm-pick { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gl-app .wpm-pick .eephus-select { max-width: 100%; min-height: 32px; }
+.gl-app .wpm-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 10px 0 2px;
+  font-size: 12px; color: var(--text-secondary); }
+.gl-app .wpm-meta b { color: var(--text-primary); }
+.gl-app .wpm-spent { border-left: 3px solid var(--text-tertiary); background: var(--bg-tertiary);
+  padding: 6px 10px; margin: 6px 0; font-size: 12px; color: var(--text-secondary); max-width: 860px; }
+.gl-app .wpm-hidden { border: 1px dashed var(--border); padding: 10px 12px; margin: 10px 0;
+  font-size: 12.5px; color: var(--text-secondary); max-width: 860px; }
+.gl-app .wpm-head, .gl-app .wpm-row { display: grid; align-items: center; column-gap: 12px;
+  grid-template-columns: minmax(150px, 1.1fr) minmax(180px, 1.6fr) minmax(190px, 1.4fr) 132px; }
+.gl-app .wpm-head { font-size: 9.5px; color: var(--text-tertiary); text-transform: uppercase;
+  letter-spacing: .04em; padding: 8px 0 4px; border-bottom: 1px solid var(--border); }
+.gl-app .wpm-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.gl-app .wpm-row { padding: 6px 0; border-bottom: 1px dotted var(--border-light); font-size: 12.5px; }
+.gl-app .wpm-name { color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }
+.gl-app .wpm-dir { color: var(--text-tertiary); }
+.gl-app .wpm-fam { display: block; font-size: 10px; color: var(--text-tertiary); }
+.gl-app .wpm-raw, .gl-app .wpm-inc { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gl-app .wpm-track { position: relative; flex: 1 1 auto; height: 12px; background: var(--bg-tertiary); min-width: 60px; }
+.gl-app .wpm-bar { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-navy); opacity: .85; }
+.gl-app .wpm-whisk { position: absolute; top: 5px; height: 2px; background: var(--text-primary); }
+.gl-app .wpm-flip { position: absolute; top: -3px; bottom: -3px; width: 0;
+  border-left: 1px dashed var(--accent-gold); }
+.gl-app .wpm-val { flex: 0 0 42px; text-align: right; font-family: var(--font-retro-mono);
+  font-size: 12px; color: var(--text-primary); }
+.gl-app .wpm-ci { position: relative; flex: 0 0 64px; height: 12px; }
+.gl-app .wpm-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 0;
+  border-left: 1px solid var(--border); }
+.gl-app .wpm-ci-line { position: absolute; top: 5px; height: 2px; }
+.gl-app .wpm-ci-dot { position: absolute; top: 2px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; }
+.gl-app .wpm-ci-line.wpm-inc-up, .gl-app .wpm-ci-dot.wpm-inc-up { background: var(--up); }
+.gl-app .wpm-ci-line.wpm-inc-down, .gl-app .wpm-ci-dot.wpm-inc-down { background: var(--down); }
+.gl-app .wpm-ci-line.wpm-inc-flat, .gl-app .wpm-ci-dot.wpm-inc-flat { background: var(--text-tertiary); }
+.gl-app .wpm-inc-text { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-secondary); min-width: 0; }
+.gl-app .wpm-inc-text.wpm-inc-up { color: var(--up); font-weight: 700; }
+.gl-app .wpm-inc-ci { font-weight: 400; color: var(--text-tertiary); font-size: 11px; }
+.gl-app .wpm-clears { display: inline-block; font-family: var(--font-retro); font-size: 9.5px; font-weight: 700;
+  border: 1px solid var(--up); color: var(--up); padding: 0 4px; margin-left: 2px; }
+.gl-app .wpm-none { font-size: 11px; font-style: italic; color: var(--text-tertiary); }
+.gl-app .wpm-chip { display: inline-block; font-family: var(--font-retro); font-size: 10px; line-height: 1.3;
+  padding: 2px 6px; border: 1px solid var(--border); color: var(--text-tertiary); white-space: nowrap; cursor: help; }
+.gl-app .wpm-chip-live { border-color: var(--up); color: var(--up); font-weight: 700; }
+.gl-app .wpm-chip-admitted { border-color: var(--accent-gold); color: var(--text-gold); font-weight: 700; }
+.gl-app .wpm-chip-tested { border-style: solid; color: var(--text-secondary); }
+.gl-app .wpm-chip-untested { border-style: dashed; }
+.gl-app .wpm-how { margin: 12px 0 4px; max-width: 860px; }
+.gl-app .wpm-how summary { cursor: pointer; font-size: 12px; color: var(--text-secondary); min-height: 32px; }
+@media (max-width: 760px) {
+  .gl-app .wpm-head { display: none; }
+  .gl-app .wpm-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px;
+    grid-template-areas: "name use" "raw raw" "inc inc"; }
+  .gl-app .wpm-name { grid-area: name; }
+  .gl-app .wpm-use { grid-area: use; }
+  .gl-app .wpm-raw { grid-area: raw; }
+  .gl-app .wpm-inc { grid-area: inc; flex-wrap: wrap; }
+  .gl-app .wpm-pick { flex: 1 1 calc(50% - 6px); }
+  .gl-app .wpm-pick .eephus-select { width: 100%; }
+}
 /* The precision block's UNIDENTIFIED branch. This is the live state today:
    two sources cannot identify a measurement-error model, so the page renders
    the reason and the restore condition and NO table, NO sigma, NO alpha. */

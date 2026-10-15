@@ -15,8 +15,8 @@
 // PDF export) ·
 // Evidence (Source Comparison: the empirical source-vs-source backtest;
 // Source Accuracy: the who-grades-which-cohort measurement; Calibration: the
-// live calibration monitor and what an eFV grade is worth; links to the
-// /models/ ledger and /models/updates/) · Sources
+// live calibration monitor and what an eFV grade is worth; What Predicts the
+// Majors: the eFV v5 metric atlas; links to the /models/ ledger and /models/updates/) · Sources
 // (Source Updates: the dates each outlet published a list; Page Index: every
 // standalone page; a link to /sources/). The authoritative list is VIEWS
 // below, mirrored by build_site.GLOSSARY_VIEWS.
@@ -47,6 +47,15 @@
   // same TDZ reason as _SACC: the renderer is hoisted and boot can run first.
   let _SU = null;              // cached source updates payload (or {__error:true})
   let _SU_LOADING = false;     // in-flight guard against a double fetch
+  // What Predicts the Majors view state (EFV5_ATLAS_PAGE). Module scope for
+  // the TDZ reason _SACC gives: boot can render the view before the renderer's
+  // own lines run. The default cell is the owner's chart: Single-A pitchers,
+  // reached MLB by 2026.
+  let _WPM = null;             // the atlas view payload (or {__error:true})
+  let _WPM_LOADING = false;    // in-flight guard against a double fetch
+  const _WPM_SEL = { side: "pit", level: "A", band: "all", group: "all", label: "reach_h",
+                     frame: "all", family: "all", sort: "raw" };
+  const _WPM_FAMILY_TAG = { box: "Box", pbp: "Pitch by pitch", bb: "Batted ball", tracking: "Tracking" };
   // Receipt-block + industry-comparison artifact cache (2026-08-19). One map
   // keyed by fetch path, shared by the Terms-view receipt blocks and the
   // Methodology "Our tables vs the industry's" section, so an artifact two
@@ -86,6 +95,7 @@
     { id: "source-comparison", shelf: "evidence", label: "Source Comparison", body: "source-comparison-body", render: renderSourceComparison, aliases: [] },
     { id: "source-accuracy", shelf: "evidence", label: "Source Accuracy", body: "source-accuracy-body", render: renderSourceAccuracy, aliases: [] },
     { id: "calibration", shelf: "evidence", label: "Calibration", body: "calibration-body", render: renderCalibration, aliases: [] },
+    { id: "metric-atlas", shelf: "evidence", label: "What Predicts the Majors", body: "metric-atlas-body", render: renderMetricAtlas, aliases: [] },
     { id: "models-ledger", shelf: "evidence", label: "Models", href: "/models/", aliases: [] },
     { id: "model-updates", shelf: "evidence", label: "Model Updates", href: "/models/updates/", aliases: [] },
     { id: "source-updates", shelf: "sources", label: "Source Updates", body: "source-updates-body", render: renderSourceUpdates, aliases: [] },
@@ -6151,6 +6161,196 @@ function renderSourceAccuracy() {
   if (rb) rb.onclick = () => { _SACC = null; _SACC_LOADING = false; renderSourceAccuracy(); };
   const tb = document.getElementById("gl-sacct-retry");
   if (tb) tb.onclick = () => { _SACC_TOOLS = null; _SACC_TOOLS_LOADING = false; renderSourceAccuracy(); };
+}
+
+// ---- Evidence > What Predicts the Majors (EFV5_ATLAS_PAGE, owner EW3-3) ----
+// The eFV v5 metric atlas, read from its display projection (efv5_atlas_view.py
+// writes it from the atlas artifact and the atlas's cells file; nothing is
+// fitted here). One bar per statistic: the raw "who reaches the majors" score
+// on the cell's full MiLB population, oriented so it reads at or above the
+// no-relation line, 50 marked as a coin flip. Beside it, the score that can
+// admit an eFV driver: the out-of-fold lift over PROSPX consensus FV with its
+// CI95, and a chip read from the driver and head tasks' own artifacts. A group
+// under the atlas's declared minimum has no cell and the view says so.
+function _wpmLoad() {
+  if (_WPM || _WPM_LOADING) return;
+  _WPM_LOADING = true;
+  const rerender = () => { if (_S.view === "metric-atlas") renderMetricAtlas(); };
+  fetch("/data/efv5_metric_atlas_view.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _WPM = (j && j.cells) ? j : { __error: true }; _WPM_LOADING = false; rerender(); })
+    .catch(() => { _WPM = { __error: true }; _WPM_LOADING = false; rerender(); });
+}
+
+function _wpmChip(d, side, metric, level, band, group) {
+  let best = null;
+  const rank = { live: 3, admitted: 2, tested: 1 };
+  for (const c of d.chips || []) {
+    if (c.side !== side || c.metric !== metric || c.level !== level) continue;
+    if (c.band !== "*" && c.band !== band) continue;
+    if (c.group !== "*" && c.group !== group) continue;
+    if (!best || (rank[c.state] || 0) > (rank[best.state] || 0)) best = c;
+  }
+  const state = best ? best.state : "untested";
+  const label = (d.chip_states || {})[state] || state;
+  const why = best ? `${best.source}: ${best.why}` : "never offered to the eFV group-driver selection or the tracking-era head";
+  return `<span class="wpm-chip wpm-chip-${escapeHtml(state)}" title="${escapeHtml(why)}">${escapeHtml(label)}</span>`;
+}
+
+function _wpmControls(d) {
+  const S = _WPM_SEL;
+  const lbl = d.labels[S.label] || {};
+  const opt = (v, name, cur) => `<option value="${escapeHtml(v)}"${v === cur ? " selected" : ""}>${escapeHtml(name)}</option>`;
+  const sel = (k, title, opts) => `<label class="wpm-pick"><span class="gl-microlabel">${title}</span>`
+    + `<select class="eephus-select" data-wpm="${k}" aria-label="${title}">${opts}</select></label>`;
+  const groups = (d.groups[S.side] || ["all"]).map(g => opt(g, g === "all" ? (S.side === "pit" ? "All roles" : "All positions")
+    : _wpmCap((d.group_names || {})[g] || g), S.group)).join("");
+  const frames = (S.label === "reach3" || S.label === "reach5")
+    ? sel("frame", "Seasons", opt("clean", "Clean (before the 2025 cohort)", S.frame) + opt("all", "All resolved (spent overlap)", S.frame)) : "";
+  const fams = ["all", "box", "pbp", "bb", "tracking"].map(f => opt(f, f === "all" ? "All families" : (d.families[f] || f), S.family)).join("");
+  return `<div class="wpm-controls">
+    ${sel("side", "Side", opt("pit", "Pitchers", S.side) + opt("hit", "Hitters", S.side))}
+    ${sel("level", "Level", d.levels.map(lv => opt(lv, `${lv} · ${(d.level_names || {})[lv] || lv}`, S.level)).join(""))}
+    ${sel("band", "Age for level", d.bands.map(b => opt(b, (d.band_names || {})[b] || b, S.band)).join(""))}
+    ${sel("group", S.side === "pit" ? "Role" : "Position", groups)}
+    ${sel("label", "Outcome", d.label_order.map(k => opt(k, d.labels[k].name, S.label)).join(""))}
+    ${frames}
+    ${sel("family", "Stat family", fams)}
+    ${sel("sort", "Sort by", opt("raw", "Raw score", S.sort) + opt("incr", "Lift over consensus FV", S.sort))}
+  </div>
+  <p class="meth-note wpm-label-note">${escapeHtml(_wpmCap(lbl.what || ""))}; ${lbl.horizon === "long" ? "the long label" : (lbl.horizon === "censored" ? "a recent season has had fewer years to reach" : "a short-horizon label")}.</p>`;
+}
+
+function _wpmCap(s) { s = String(s || ""); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+function _wpmRows(d, cell) {
+  const S = _WPM_SEL, K = d.scale || 10000;
+  const binary = (d.labels[S.label] || {}).kind === "binary";
+  const col = {}; d.columns.forEach((c, i) => { col[c] = i; });
+  let rows = cell.rows.filter(r => S.family === "all" || d.metrics[r[col.m]].family === S.family);
+  if (S.sort === "incr") {
+    rows = rows.slice().sort((a, b) => (b[col.incr] == null ? -1e9 : b[col.incr]) - (a[col.incr] == null ? -1e9 : a[col.incr]));
+  }
+  // Raw axis: 0 to 100 for an AUC (the coin flip at 50); 0 to the cell's
+  // largest bound for a Spearman, whose no-relation line is the axis start.
+  let rmax = binary ? K : 0;
+  if (!binary) for (const r of cell.rows) rmax = Math.max(rmax, r[col.raw_hi] || 0, r[col.raw] || 0);
+  rmax = binary ? K : Math.max(rmax, 0.1 * K);
+  let imax = 0.01 * K;
+  for (const r of rows) {
+    if (r[col.incr] == null) continue;
+    imax = Math.max(imax, Math.abs(r[col.incr_lo] || 0), Math.abs(r[col.incr_hi] || 0));
+  }
+  const pctOf = v => Math.max(0, Math.min(100, (v / rmax) * 100));
+  const ipos = v => 50 + Math.max(-50, Math.min(50, (v / imax) * 50));
+  const fRaw = v => (v == null ? "-" : (binary ? (v / K * 100).toFixed(1) : (v / K).toFixed(3)));
+  const fInc = v => (v == null ? "-" : (binary ? ((v >= 0 ? "+" : "") + (v / K * 100).toFixed(1)) : ((v >= 0 ? "+" : "") + (v / K).toFixed(3))));
+  const fBound = v => (v == null ? "-" : (binary ? (v / K * 100).toFixed(1) : (v / K).toFixed(3)));
+  const [, level, band, group] = [S.side, S.level, S.band, S.group];
+  const items = rows.map(r => {
+    const m = d.metrics[r[col.m]];
+    const dir = r[col.dir] === -1 ? " (low)" : "";
+    const raw = r[col.raw], lo = r[col.raw_lo], hi = r[col.raw_hi];
+    const rawBar = raw == null ? `<span class="wpm-none">too few players</span>`
+      : `<span class="wpm-track" aria-hidden="true">
+          <span class="wpm-bar" style="width:${pctOf(raw).toFixed(1)}%"></span>
+          ${lo != null && hi != null ? `<span class="wpm-whisk" style="left:${pctOf(lo).toFixed(1)}%;width:${Math.max(0.5, pctOf(hi) - pctOf(lo)).toFixed(1)}%"></span>` : ""}
+          ${binary ? `<span class="wpm-flip" style="left:50%"></span>` : ""}
+        </span><span class="wpm-val">${fRaw(raw)}</span>`;
+    const inc = r[col.incr], ilo = r[col.incr_lo], ihi = r[col.incr_hi], q = r[col.q];
+    let incHTML;
+    if (inc == null) {
+      incHTML = `<span class="wpm-none">too few graded players</span>`;
+    } else {
+      const cls = (ilo != null && ilo > 0) ? "wpm-inc-up" : ((ihi != null && ihi < 0) ? "wpm-inc-down" : "wpm-inc-flat");
+      const clears = inc > 0 && ilo != null && ilo > 0 && q != null && q <= 0.1 * K;
+      incHTML = `<span class="wpm-ci" aria-hidden="true"><span class="wpm-zero"></span>`
+        + (ilo != null && ihi != null ? `<span class="wpm-ci-line ${cls}" style="left:${ipos(ilo).toFixed(1)}%;width:${Math.max(0.5, ipos(ihi) - ipos(ilo)).toFixed(1)}%"></span>` : "")
+        + `<span class="wpm-ci-dot ${cls}" style="left:${ipos(inc).toFixed(1)}%"></span></span>`
+        + `<span class="wpm-inc-text ${cls}">${fInc(inc)} <span class="wpm-inc-ci">(${fBound(ilo)} to ${fBound(ihi)})</span>`
+        + `${clears ? ` <span class="wpm-clears" title="lift above 0, CI95 above 0 and BH q at or below 0.10: the atlas's candidate rule">clears the screen</span>` : ""}</span>`;
+    }
+    const aria = `${m.name}${dir}: raw ${fRaw(raw)}${inc == null ? "" : `, lift over consensus ${fInc(inc)}, CI95 ${fBound(ilo)} to ${fBound(ihi)}`}`;
+    return `<li class="wpm-row" aria-label="${escapeHtml(aria)}">
+      <span class="wpm-name" title="${escapeHtml(m.what)}">${escapeHtml(m.name)}<span class="wpm-dir">${dir}</span>
+        <span class="wpm-fam">${escapeHtml(_WPM_FAMILY_TAG[m.family] || m.family)} · n ${r[col.players] != null ? r[col.players].toLocaleString() : "-"}</span></span>
+      <span class="wpm-raw">${rawBar}</span>
+      <span class="wpm-inc">${incHTML}</span>
+      <span class="wpm-use">${_wpmChip(d, S.side, m.id, level, band, group)}</span>
+    </li>`;
+  }).join("");
+  return { items, n: rows.length, binary };
+}
+
+function _wpmSyncSel(d) {
+  const S = _WPM_SEL;
+  if (!(d.groups[S.side] || []).includes(S.group)) S.group = "all";
+  if (!d.levels.includes(S.level)) S.level = d.levels.includes("A") ? "A" : d.levels[0];
+  if (!d.labels[S.label]) S.label = d.label_order[0];
+  if (S.label !== "reach3" && S.label !== "reach5") S.frame = "all";
+  else if (S.frame !== "clean" && S.frame !== "all") S.frame = "clean";
+}
+
+function renderMetricAtlas() {
+  const el = document.getElementById("metric-atlas-body");
+  if (!el) return;
+  _wpmLoad();
+  const St = window.EephusState;
+  const d = _WPM;
+  if (!d || d.__error) {
+    const msg = d ? "The metric atlas could not be loaded." : "Loading the metric atlas...";
+    el.innerHTML = St ? St.html(d ? "failed" : "loading", msg, "gl-wpm-state")
+      : `<div class="state-message gl-wpm-state" role="status">${msg}</div>`;
+    return;
+  }
+  _wpmSyncSel(d);
+  const S = _WPM_SEL;
+  const key = [S.side, S.level, S.band, S.group, S.label, S.frame].join("|");
+  const cell = d.cells[key];
+  const K = d.scale || 10000;
+  const minP = d.declared.min_players, minPos = d.declared.min_pos;
+  const lbl = d.labels[S.label] || {};
+  let body;
+  if (!cell) {
+    body = `<div class="wpm-hidden" role="status">This group is hidden: it has fewer than ${minP} players, or fewer than ${minPos} ${lbl.kind === "binary" ? "who reached the majors" : "with a non-zero outcome"}, at this level and age band, the minimum the atlas set before any read. Widen the age band or the role or position group.</div>`;
+  } else {
+    const R = _wpmRows(d, cell);
+    const sideMetrics = d.metrics.filter(m => m.side === S.side && (S.family === "all" || m.family === S.family)).length;
+    const hidden = Math.max(0, sideMetrics - R.n);
+    const cons = cell.cons == null ? "" : (R.binary
+      ? `PROSPX consensus FV alone scores <b>${(cell.cons / K * 100).toFixed(1)}</b> on the ${cell.graded_players.toLocaleString()} graded players of this group.`
+      : `PROSPX consensus FV alone scores <b>${(cell.cons / K).toFixed(3)}</b> on the ${cell.graded_players.toLocaleString()} graded players of this group.`);
+    const spent = cell.spent ? `<p class="wpm-spent"><b>Spent frame.</b> Some of these seasons have outcome windows that reach the 2025 debut cohort, which was used once for the 2026-10-08 confirmation read. They are shown for reading only; no driver is chosen from them.</p>` : "";
+    const pop = cell.pop === "listed" ? " Position groups exist only for graded players (the listing gives the position), so both scores here read the graded rows." : "";
+    body = `<div class="wpm-meta">
+        <span><b>${cell.players.toLocaleString()}</b> players</span>
+        <span><b>${cell.pos.toLocaleString()}</b> ${R.binary ? "reached" : "with a non-zero outcome"}</span>
+        ${cell.seasons ? `<span>seasons ${cell.seasons[0]} to ${cell.seasons[1]}</span>` : ""}
+      </div>
+      <p class="meth-note">${cons}${pop}</p>
+      ${spent}
+      <div class="wpm-head" aria-hidden="true"><span>Statistic</span><span>${R.binary ? "Raw score (50 is a coin flip)" : "Raw score (Spearman, 0 is no relation)"}</span><span>Lift over consensus FV (CI95)</span><span>In eFV</span></div>
+      ${R.n ? `<ol class="wpm-list">${R.items}</ol>` : `<div class="wpm-hidden" role="status">No statistic in this family clears the minimum here.</div>`}
+      ${hidden ? `<p class="meth-note wpm-hidden-note">${hidden} ${hidden === 1 ? "statistic is" : "statistics are"} not shown for this group: under the minimum of ${minP} players and ${minPos} ${R.binary ? "who reached" : "with a non-zero outcome"}, or not measured at this level and these seasons.</p>` : ""}`;
+  }
+  el.innerHTML = `<div class="source-comp-wrap wpm-wrap">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Development read · no served grade moves</div>
+    <h2 class="meth-h">What predicts the majors</h2>
+    <p class="meth-note wpm-lede">Each bar scores one minor-league statistic the way a "who reaches the majors" chart does: how often it ranks a player who reached MLB above one who did not, where 50 is a coin flip. Beside it is the number that decides whether eFV can use the statistic: what it adds to PROSPX consensus FV, scored out of fold on the graded players of the same group.</p>
+    <div class="wpm-explain" role="note"><b>A high raw score does not mean a stat beats the scouts.</b> Scouts see strikeouts, velocity and age too, so consensus FV already prices most of what a raw score measures. A statistic helps eFV only when its lift over consensus FV is above zero with an interval that stays above zero, and a stat with a high raw score can add less than one with a lower score.</div>
+    ${_wpmControls(d)}
+    ${body}
+    <details class="wpm-how"><summary>How these numbers are made</summary>
+      <p class="meth-note">One row per player, season and level: every minor-league season line with at least 100 plate appearances or batters faced, for a player with no major-league line yet. Age for level is the tercile of age within the level and season. The raw score is the AUC of the statistic alone against the outcome on the whole population of the group (for a WAR outcome, the within-season Spearman), turned so it reads above the no-relation line; "(low)" marks a statistic where lower is better. The lift: ${escapeHtml(d.declared.incremental || "")}. Its CI95 is a player-clustered bootstrap (${d.declared.bootstrap_b} draws), and q is a Benjamini-Hochberg correction within each family and outcome. Screen rule: ${escapeHtml(d.declared.candidate_rule || "")}. Consensus FV is a covariate only; nothing here is grouped by FV level. ${d.source.tests.toLocaleString()} tests in all, atlas of ${escapeHtml(String(d.source.generated_at || "").slice(0, 10))}.</p>
+      <p class="meth-note">The chip reads the eFV v5 group-driver selection and the tracking-era head. <b>Admitted, not live</b>: chosen by one of them while its switch is off or it failed its ship rule. <b>Tested, not admitted</b>: offered and not chosen. <b>Not yet tested</b>: offered to neither. Hover a chip for the reason.</p>
+    </details>
+  </div>`;
+  el.querySelectorAll("[data-wpm]").forEach(s => s.onchange = () => {
+    _WPM_SEL[s.dataset.wpm] = s.value;
+    // a new outcome opens on its clean frame where it has one
+    if (s.dataset.wpm === "label") _WPM_SEL.frame = "clean";
+    renderMetricAtlas();
+  });
 }
 
 // ---- Library view ----------------------------------------------------------
