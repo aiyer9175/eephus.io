@@ -1025,7 +1025,7 @@ MODULE_STAGE = {
     "management": ("β", "Beta. Realized value only; the gate returned a bounded null for the steal and no family is ranked by skill"),
     "hof": ("β", "Beta. Award selections follow a published rule, not a forecast of the vote; every unpublished section names its blocker"),
     # Scores / Standings (SCORES_3, behind scores_core.SCORES_LIVE).
-    "scores": ("β", "Beta. Scores, win probability and video come from MLB; Stars of the Game is a published rule"),
+    "scores": ("β", "Beta. Scores, standings, win probability and video come from MLB; Stars of the Game is a published rule; odds are the site's simulators, implied, no market"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
     # slot [0]; the rows above carry the sigil, which STAGE_CHIP_TEXT turns
     # into the chip text. Every row renders through _stage_chip(). Nothing is
@@ -7514,8 +7514,8 @@ def build_standings() -> str:
     """The /standings/ shell (STANDINGS_4), a pure reader of /data/scores/standings/.
 
     BEHIND THE FLAG. main() writes standings/index.html only while
-    standings_core.STANDINGS_LIVE is True (STANDINGS_7_FLIP); while it is
-    False write_standings_page() renders this shell into
+    standings_core.STANDINGS_LIVE is True (from STANDINGS_7_FLIP, 2026-10-15);
+    while it is False write_standings_page() renders this shell into
     .cache/scores/preview/site/standings/index.html and nothing public changes.
 
     Shell on the build_franchise pattern: the shared Scores / Standings head
@@ -7530,15 +7530,23 @@ def build_standings() -> str:
     rewrites its files between builds). STANDINGS_5: only while
     standings_core.STANDINGS_CHARTS is True the mount root names the lazy
     chart chunk (data-charts-src), which turns on the Charts view and the
-    Race disclosures; while it is False the page shows neither."""
+    Race disclosures; while it is False the page shows neither.
+    STANDINGS_7: the mount root carries data-glmap, one JSON object with
+    standings_core.HEADER_GLOSSARY (h, header abbreviation to glossary id) and
+    CHART_GLOSSARY (c, chart to glossary ids); standings.js puts each id on its
+    header's <abbr> and the chart chunk on its caption, both as data-gl."""
     import standings_core
     charts = (f' data-charts-src="/assets/standings-charts.js?v={_STANDINGS_CHARTS_VER}"'
               if standings_core.STANDINGS_CHARTS else "")
+    glmap = (json.dumps({"h": standings_core.HEADER_GLOSSARY, "c": standings_core.CHART_GLOSSARY},
+                        separators=(",", ":"))
+             .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&#x27;"))
     body = (
         '<div class="fa-app mlbstats-app st-app">'
         + _scores_module_head("standings")
         + f'<div id="standings-app-root"{_csv_optin("standings")}'
-        f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"{charts}></div>'
+        f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"{charts}'
+        f" data-glmap='{glmap}'></div>"
         '</div>'
         f'<link rel="stylesheet" href="/assets/sports-page.css?v={_SPORTS_PAGE_CSS_VER}">'
         f'<link rel="stylesheet" href="/assets/standings.css?v={_STANDINGS_CSS_VER}">'
@@ -7556,7 +7564,8 @@ def write_standings_page(preview_root=None) -> str:
     render tests build their temporary site this way). With no preview_root:
     STANDINGS_LIVE True writes the published standings/index.html, False only
     the preview copy under SCORES_PREVIEW_SITE (plan 4.4: nothing under the
-    published tree while the flag is off)."""
+    published tree while the flag is off). main() names the published route by
+    literal, as for /scores/, because tools/gen_audit_docs.py reads it."""
     import standings_core
     rel = "standings/index.html"
     if preview_root is None and standings_core.STANDINGS_LIVE:
@@ -9667,14 +9676,15 @@ SOURCE_ROWS = [
      "terms": "https://x.com/en/tos", "terms_label": "Terms (X)",
      "use": ("Prospect rankings (consensus input) and movers wire.")},
     {"name": "MLB Stats API / Baseball Savant", "url": "https://baseballsavant.mlb.com/",
-     "take": "Game logs, transactions, rosters, Statcast, headshots; live scores and video; award results",
+     "take": "Game logs, transactions, rosters, Statcast, headshots; live scores, standings and video; award results",
      "cadence": "Daily; live during games",
      "terms": "http://gdx.mlb.com/components/copyright.txt", "terms_label": "Copyright notice",
      "use": ("Game logs, transactions, rosters, the sabermetrics feed (league wOBA constants; the "
              "fielding and framing runs behind DEM+), Statcast tracking data (pitch, batted-ball "
              "and zone metrics), and player headshots via MLB static media; on the Scores / "
              "Standings page, live scores, win probability, box scores and highlight video "
-             "played in MLB's own embedded player. The Awards / HoF page reads the writers' MVP, "
+             "played in MLB's own embedded player, and the standings, records, splits and "
+             "expected records its Standings page prints. The Awards / HoF page reads the writers' MVP, "
              "Cy Young, Rookie and Manager of the Year results from MLB's awards endpoint.")},
     {"name": "Baseball-Reference", "url": "https://www.baseball-reference.com/",
      "take": "war_daily (bWAR), historical player pages",
@@ -11502,9 +11512,13 @@ def main() -> None:
         _write("scores/index.html", build_scores())
     else:
         write_scores_page()
-    # /standings/ ships behind standings_core.STANDINGS_LIVE (STANDINGS_4): the
-    # preview copy only, until STANDINGS_7_FLIP turns it on.
-    write_standings_page()
+    # /standings/ ships behind standings_core.STANDINGS_LIVE: the published page
+    # from the flip (STANDINGS_7_FLIP), the preview copy only while it is False.
+    import standings_core
+    if standings_core.STANDINGS_LIVE:
+        _write("standings/index.html", build_standings())
+    else:
+        write_standings_page()
     _write("models/index.html", build_models())
     _write("models/updates/index.html", build_model_updates())
     _write("glossary/index.html", build_glossary())

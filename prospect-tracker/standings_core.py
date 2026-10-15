@@ -17,8 +17,9 @@ stamp and every path is passed in by the caller (the scores job, STANDINGS_2).
 
 The eleven items of plan 4.6:
 
-  1. `STANDINGS_LIVE` and `STANDINGS_CHARTS` (both False; LIVE may be True only
-     when `scores_core.SCORES_LIVE` is, CHARTS only when LIVE is);
+  1. `STANDINGS_LIVE` and `STANDINGS_CHARTS` (both True since STANDINGS_7_FLIP;
+     LIVE may be True only when `scores_core.SCORES_LIVE` is, CHARTS only when
+     LIVE is);
   2. `parse_standings(payload, as_of)`: StatsAPI /api/v1/standings
      `records[].teamRecords[]` into rows keyed by MLBAM id through the club
      literal, with the renamed keys (no `record*` key ever leaves here);
@@ -61,13 +62,44 @@ import scores_core as sc
 # 1. Flags
 # --------------------------------------------------------------------------- #
 #: Class 2 module flag (Part 8 8.A). True only when scores_core.SCORES_LIVE is
-#: True; only STANDINGS_7_FLIP turns it on. While False the job writes standings
-#: files only under its preview OUT and nothing standings-related is served.
-STANDINGS_LIVE = False
-#: The Charts view and the Race disclosures. True only when STANDINGS_LIVE is.
-STANDINGS_CHARTS = False
+#: True; STANDINGS_7_FLIP turned it on (2026-10-15). While False the job writes
+#: standings files only under its preview OUT and nothing standings-related is served.
+STANDINGS_LIVE = True
+#: The Charts view and the Race disclosures. True only when STANDINGS_LIVE is;
+#: turned on in the same flip, since STANDINGS_5 landed without flipping it.
+STANDINGS_CHARTS = True
 
 SCHEMA = 1
+
+#: Each column header's glossary id (STANDINGS_PLAN 5.3, 5.4 and 5.12): the plan's
+#: headers plus the Playoffs seeds table's W-L and HOW. LAST and NEXT print in the
+#: detail row (no column was built for them), so they link the page's own entry.
+#: build_site.build_standings serves the map on the mount root (data-glmap) and
+#: assets/standings.js puts each id on its header's <abbr>; one source of truth.
+HEADER_GLOSSARY = {
+    "W": "season_record", "L": "season_record", "W-L": "season_record", "PCT": "win_pct",
+    "GB": "games_back", "WCGB": "wild_card_games_back", "L10": "last_ten", "STRK": "streak",
+    "RD": "run_differential", "HOME": "home_away_record", "AWAY": "home_away_record",
+    "DIV": "division_record", "LG": "league_record", "INTR": "interleague_record",
+    "1-RUN": "one_run_record", "XTRA": "extra_inning_record", ">.500": "record_vs_winning",
+    "vs L": "vs_hand_record", "vs R": "vs_hand_record", "RS": "runs_scored", "RA": "runs_allowed",
+    "RD/G": "rd_per_game", "xW-L": "xwl", "W - xW": "w_minus_xw", "LAST": "standings_page",
+    "NEXT": "standings_page", "LEFT": "games_left", "MAGIC": "magic_number",
+    "ELIM": "elimination_number", "PROJ": "projected_record", "DIV%": "season_sim_odds",
+    "POST%": "season_sim_odds", "PEN%": "season_sim_odds", "WS%": "season_sim_odds",
+    "SOS": "remaining_sos", "SEED": "postseason_seed", "HOW": "postseason_seed",
+}
+#: Each chart's glossary ids (STANDINGS_PLAN 5.5 C1 to C5 and 5.12): the first id links
+#: the chart's title, the rest print in its caption under their header abbreviation
+#: (each one also maps a HEADER_GLOSSARY header). Served beside the header map on the mount root
+#: (data-glmap) and read by assets/standings-charts.js.
+CHART_GLOSSARY = {
+    "c1": ["division_race_chart"],
+    "c2": ["wild_card_race_chart"],
+    "c3": ["odds_over_time_chart"],
+    "c4": ["runs_scored", "runs_allowed", "run_differential"],
+    "c5": ["expected_record_chart", "xwl", "w_minus_xw"],
+}
 
 # --------------------------------------------------------------------------- #
 # Literals
@@ -1802,5 +1834,5 @@ __all__ = [
     "race_matches_snapshots", "t7_misses", "streak_code", "last_and_next", "race_extras", "build_season_file", "build_snapshot_file", "build_race_file",
     "build_phist_file", "encode", "write_file", "check_rows", "validate_standings", "revs_match",
     "trim_payload", "write_labs_copy", "MissingCache", "KIND_SEASON", "KIND_RACE", "KIND_PHIST",
-    "KIND_SNAPSHOT", "round2",
+    "KIND_SNAPSHOT", "round2", "HEADER_GLOSSARY", "CHART_GLOSSARY",
 ]

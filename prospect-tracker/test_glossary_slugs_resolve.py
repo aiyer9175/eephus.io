@@ -173,3 +173,64 @@ def test_the_awards_entries_land_with_the_page():
     assert by_id["rookie_proxy"]["definition"].startswith("The site's test for rookie status")
     js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
     assert 'hof: "AWARDS / HOF"' in js, "the module badge reads the renamed module"
+
+
+# STANDINGS_PLAN 5.3 and 5.4 (every column header) and 5.5 (charts C1 to C5)
+STANDINGS_HEADERS = ("W", "L", "PCT", "GB", "WCGB", "L10", "STRK", "RD", "HOME", "AWAY", "DIV", "LG",
+                     "INTR", "1-RUN", "XTRA", ">.500", "vs L", "vs R", "RS", "RA", "RD/G", "xW-L",
+                     "W - xW", "LAST", "NEXT", "LEFT", "MAGIC", "ELIM", "PROJ", "DIV%", "POST%",
+                     "PEN%", "WS%", "SOS", "SEED")
+STANDINGS_NEW = ("standings_page", "games_back", "wild_card_games_back", "magic_number",
+                 "elimination_number", "clinch_marks", "streak", "last_ten", "run_differential",
+                 "rd_per_game", "one_run_record", "extra_inning_record", "record_vs_winning",
+                 "remaining_sos", "season_sim_odds", "projected_record", "win_pct", "runs_scored",
+                 "runs_allowed", "home_away_record", "division_record", "league_record",
+                 "interleague_record", "vs_hand_record", "games_left", "postseason_seed",
+                 "division_race_chart", "wild_card_race_chart", "odds_over_time_chart",
+                 "expected_record_chart")
+
+
+def test_every_standings_header_and_chart_resolves_to_a_glossary_id():
+    """STANDINGS_7_FLIP (2026-10-15; STANDINGS_PLAN 5.12): every column header of 5.3 and
+    5.4 and every chart C1 to C5 links an entry, through the maps the page serves."""
+    import standings_core
+    _, ids = _resolver()
+    hm, cm = standings_core.HEADER_GLOSSARY, standings_core.CHART_GLOSSARY
+    assert set(STANDINGS_HEADERS) <= set(hm)
+    assert {h: hm[h] for h in hm if hm[h] not in ids} == {}
+    assert sorted(cm) == ["c1", "c2", "c3", "c4", "c5"]
+    assert {c: v for c, v in cm.items() if not v or any(i not in ids for i in v)} == {}
+    # the caption prints every id after the first under a header abbreviation
+    assert all(i in hm.values() for v in cm.values() for i in v[1:])
+    assert cm["c4"] == ["runs_scored", "runs_allowed", "run_differential"]
+    assert cm["c5"] == ["expected_record_chart", "xwl", "w_minus_xw"]
+    js = (ROOT / "assets" / "standings.js").read_text(encoding="utf-8")
+    assert 'getAttribute("data-glmap")' in js and "glAttr(c.a)" in js
+    ch = (ROOT / "assets" / "standings-charts.js").read_text(encoding="utf-8")
+    assert "data-gl=" in ch and "GL.c[k.slice(0, 2)]" in ch
+
+
+def test_the_standings_entries_land_with_the_page():
+    """STANDINGS_7_FLIP: the 26 table entries and the 4 chart entries, module scores, the
+    plan's replaced texts, seeAlso resolving and wired as 5.12 says; xwl and w_minus_xw
+    were created by League Trends (Q8_15) and are linked, not duplicated."""
+    import standings_core
+    assert standings_core.STANDINGS_LIVE and standings_core.STANDINGS_CHARTS
+    g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    by_id = {e["id"]: e for e in g["entries"]}
+    assert len(g["entries"]) == len(by_id), "an id appears twice"
+    for slug in STANDINGS_NEW:
+        e = by_id[slug]
+        assert e["module"] == ["scores"], slug
+        for other in e.get("seeAlso") or []:
+            assert other in by_id, (slug, other)
+    for slug in ("xwl", "w_minus_xw"):
+        assert "scores" not in by_id[slug]["module"], slug
+    assert "the site serves the runner-up's elimination number" in by_id["magic_number"]["definition"]
+    assert "not by their record" in by_id["remaining_sos"]["definition"]
+    assert "winning percentage" not in by_id["remaining_sos"]["definition"]
+    assert "rounded half up" in by_id["projected_record"]["definition"]
+    assert "a division E alone is not e" in by_id["clinch_marks"]["definition"]
+    assert "elimination_number" in by_id["magic_number"]["seeAlso"]
+    assert "magic_number" in by_id["elimination_number"]["seeAlso"]
+    assert {"run_differential", "xwl"} <= set(by_id["rd_per_game"]["seeAlso"])

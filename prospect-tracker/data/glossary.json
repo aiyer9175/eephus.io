@@ -10912,6 +10912,630 @@
     "fip_based_war",
     "war_from_components"
    ]
+  },
+  {
+   "id": "standings_page",
+   "term": "Standings",
+   "category": "site-feature",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "MLB standings",
+    "Standings page"
+   ],
+   "priority": 70,
+   "definition": "MLB's standings by division, wild card, league and the majors, with each club's record, splits and run totals from MLB's feed, and the site's simulator chances in a labelled group.",
+   "seeAlso": [
+    "games_back",
+    "clinch_marks",
+    "season_sim_odds"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "games_back",
+   "term": "Games back (GB)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "GB",
+    "games behind"
+   ],
+   "priority": 70,
+   "definition": "How far a club trails the leader: the leader's wins minus the club's wins, plus the club's losses minus the leader's losses, divided by two.",
+   "seeAlso": [
+    "wild_card_games_back",
+    "standings_page"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "wild_card_games_back",
+   "term": "Wild card games back (WCGB)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "WCGB",
+    "wild card games behind"
+   ],
+   "priority": 70,
+   "definition": "Games back of the club holding the last wild card spot; a plus sign means the club holds a spot by that many games.",
+   "seeAlso": [
+    "games_back",
+    "postseason_seed"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "magic_number",
+   "term": "Magic number",
+   "category": "mlb-rules",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "MAGIC"
+   ],
+   "priority": 70,
+   "definition": "The combination of a leader's wins and a chaser's losses that clinches. MLB's figure from its standings feed; where the feed prints none for a leader that has not clinched, the site serves the runner-up's elimination number, which is the same count.",
+   "seeAlso": [
+    "elimination_number",
+    "clinch_marks"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "elimination_number",
+   "term": "Elimination number",
+   "category": "mlb-rules",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "ELIM"
+   ],
+   "priority": 70,
+   "definition": "The combination of a club's losses and the leader's wins that ends its chances; E means it already has.",
+   "seeAlso": [
+    "magic_number",
+    "clinch_marks"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "clinch_marks",
+   "term": "Clinch and elimination marks",
+   "category": "mlb-rules",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "clinch marks",
+    "clinch letters"
+   ],
+   "priority": 70,
+   "definition": "MLB's letters: x a playoff spot, y the division, z the league's best record, w a wild card spot. e is set on this site when a club carries no letter and either MLB's wild card elimination number reads E or the season is over; a division E alone is not e.",
+   "seeAlso": [
+    "magic_number",
+    "elimination_number",
+    "postseason_seed"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "streak",
+   "term": "Streak (STRK)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "STRK",
+    "win streak",
+    "losing streak"
+   ],
+   "priority": 70,
+   "definition": "Consecutive wins or losses to date, from MLB's feed: W4 is four wins in a row.",
+   "seeAlso": [
+    "last_ten"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "last_ten",
+   "term": "Last 10 (L10)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "L10",
+    "last ten",
+    "last 10 games"
+   ],
+   "priority": 70,
+   "definition": "The club's record over its last ten games.",
+   "seeAlso": [
+    "streak"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "run_differential",
+   "term": "Run differential (RD)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "RD",
+    "run diff"
+   ],
+   "priority": 70,
+   "definition": "Runs scored minus runs allowed.",
+   "seeAlso": [
+    "rd_per_game",
+    "runs_scored",
+    "runs_allowed"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "rd_per_game",
+   "term": "Run differential per game (RD/G)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "RD/G"
+   ],
+   "priority": 70,
+   "definition": "Run differential divided by games played, so clubs with different game counts compare on one scale. Coloured by the site's ruler from 20 games.",
+   "seeAlso": [
+    "run_differential",
+    "xwl"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "one_run_record",
+   "term": "One-run record (1-RUN)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "1-RUN",
+    "one-run games"
+   ],
+   "priority": 70,
+   "definition": "Record in games decided by one run.",
+   "seeAlso": [
+    "extra_inning_record"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "extra_inning_record",
+   "term": "Extra-inning record (XTRA)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "XTRA",
+    "extra innings record"
+   ],
+   "priority": 70,
+   "definition": "Record in games that went past nine innings.",
+   "seeAlso": [
+    "one_run_record"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "record_vs_winning",
+   "term": "Record against clubs over .500",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    ">.500",
+    "record against winning clubs"
+   ],
+   "priority": 70,
+   "definition": "Record in games against clubs with a winning record, as MLB's feed counts them.",
+   "seeAlso": [
+    "win_pct"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "remaining_sos",
+   "term": "Strength of remaining schedule (SOS)",
+   "category": "methodology",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "SOS",
+    "strength of schedule",
+    "SOS rank"
+   ],
+   "priority": 70,
+   "definition": "The average talent rating of the opponents a club has left to play, each rated as a win rate from the season simulator's roster ratings (the site's projected win total over 162 games), not by their record. Rank 1 is the hardest schedule left. Shown only while the club has games left in the regular season.",
+   "seeAlso": [
+    "season_sim_odds",
+    "games_left"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io: the site's season simulator, and in October its bracket simulator."
+  },
+  {
+   "id": "season_sim_odds",
+   "term": "Simulator chances",
+   "category": "methodology",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "DIV%",
+    "POST%",
+    "PEN%",
+    "WS%",
+    "standings odds"
+   ],
+   "priority": 70,
+   "definition": "Each club's chance to win its division, reach the postseason, win the pennant and win the World Series, from the site's season simulator (and in October its bracket simulator). Implied, with no market; its status is printed beside it.",
+   "seeAlso": [
+    "projected_record",
+    "postseason_bracket_sim",
+    "odds_over_time_chart"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io: the site's season simulator, and in October its bracket simulator."
+  },
+  {
+   "id": "projected_record",
+   "term": "Projected final record (PROJ)",
+   "category": "methodology",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "PROJ",
+    "projected final record"
+   ],
+   "priority": 70,
+   "definition": "The season simulator's projected final record: its projected wins rounded half up, and the games left over as losses, with games played banked. Blank when the projection on file was built on a different W-L than this row; the tooltip names both.",
+   "seeAlso": [
+    "season_sim_odds",
+    "games_left"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io: the site's season simulator, and in October its bracket simulator."
+  },
+  {
+   "id": "win_pct",
+   "term": "Winning percentage (PCT)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "PCT",
+    "winning percentage",
+    "win percentage"
+   ],
+   "priority": 70,
+   "definition": "Wins divided by wins plus losses, to three decimals; ties are not counted.",
+   "seeAlso": [
+    "season_record",
+    "pythag_pct"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "runs_scored",
+   "term": "Runs scored (RS)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "RS"
+   ],
+   "priority": 70,
+   "definition": "Runs the club has scored this season, from MLB's feed. The runs chart plots them per game.",
+   "seeAlso": [
+    "runs_allowed",
+    "run_differential"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "runs_allowed",
+   "term": "Runs allowed (RA)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "RA"
+   ],
+   "priority": 70,
+   "definition": "Runs the club has allowed this season, from MLB's feed. The runs chart plots them per game.",
+   "seeAlso": [
+    "runs_scored",
+    "run_differential"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "home_away_record",
+   "term": "Home and road record (HOME, AWAY)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "HOME",
+    "AWAY",
+    "home record",
+    "road record"
+   ],
+   "priority": 70,
+   "definition": "Record in games at the club's home park and in games on the road.",
+   "seeAlso": [
+    "season_record"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "division_record",
+   "term": "Division record (DIV)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "DIV",
+    "record against the division"
+   ],
+   "priority": 70,
+   "definition": "Record against the other clubs of the club's own division.",
+   "seeAlso": [
+    "league_record"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "league_record",
+   "term": "League record (LG)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "LG",
+    "record against the league"
+   ],
+   "priority": 70,
+   "definition": "Record against every club in the club's own league, its division included.",
+   "seeAlso": [
+    "division_record",
+    "interleague_record"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "interleague_record",
+   "term": "Interleague record (INTR)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "INTR"
+   ],
+   "priority": 70,
+   "definition": "Record against clubs of the other league.",
+   "seeAlso": [
+    "league_record"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "vs_hand_record",
+   "term": "Record against left- and right-handed starters (vs L, vs R)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "vs L",
+    "vs R",
+    "record against left-handed starters",
+    "record against right-handed starters"
+   ],
+   "priority": 70,
+   "definition": "Record in games started by a left-handed or a right-handed opposing pitcher, as MLB's feed counts them.",
+   "seeAlso": [
+    "season_record"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "games_left",
+   "term": "Games left (LEFT)",
+   "category": "standard-stat",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "LEFT",
+    "games remaining"
+   ],
+   "priority": 70,
+   "definition": "Regular-season games still on MLB's schedule for the club. A postponed game counts once it is rescheduled; it reads 0 once the regular season is over.",
+   "seeAlso": [
+    "magic_number",
+    "projected_record"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "postseason_seed",
+   "term": "Postseason seed (SEED)",
+   "category": "mlb-rules",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "SEED",
+    "playoff seed"
+   ],
+   "priority": 70,
+   "definition": "The club's postseason seed in its league, in MLB's order: division winners first, then the wild cards (in 2020, division winners, then division runners-up, then the wild cards). During the season it is the seed the club would hold if the season ended on the stamped date; blank for a club outside the field.",
+   "seeAlso": [
+    "clinch_marks",
+    "wild_card_games_back"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "division_race_chart",
+   "term": "Division race chart",
+   "category": "site-feature",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "division race"
+   ],
+   "priority": 70,
+   "definition": "Each club's wins minus losses after every date of the season, one panel per division.",
+   "seeAlso": [
+    "games_back",
+    "season_record"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "wild_card_race_chart",
+   "term": "Wild card race chart",
+   "category": "site-feature",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "wild card race"
+   ],
+   "priority": 70,
+   "definition": "Each club's games ahead of or behind the club holding the last wild card spot on every date; division leaders of that date are left out.",
+   "seeAlso": [
+    "wild_card_games_back"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
+  },
+  {
+   "id": "odds_over_time_chart",
+   "term": "Odds over time chart",
+   "category": "site-feature",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "odds over time"
+   ],
+   "priority": 70,
+   "definition": "The site's simulator chances on every day they were recorded, held flat between records. Implied, with no market.",
+   "seeAlso": [
+    "season_sim_odds"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io: the site's season simulator, and in October its bracket simulator."
+  },
+  {
+   "id": "expected_record_chart",
+   "term": "Record against expected record chart",
+   "category": "site-feature",
+   "section": "Players & Stats",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "record against expected record"
+   ],
+   "priority": 70,
+   "definition": "Each club's wins beside the wins its runs scored and allowed imply.",
+   "seeAlso": [
+    "xwl",
+    "w_minus_xw"
+   ],
+   "shelf": "foundation",
+   "origin": "MLB, the StatsAPI standings feed; defined here for reference."
   }
  ]
 }

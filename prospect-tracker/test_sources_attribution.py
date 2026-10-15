@@ -134,3 +134,18 @@ def test_the_awards_results_are_credited():
     html = build_site.build_sources()
     assert ("The Awards / HoF page reads the writers' MVP, Cy Young, Rookie and Manager of the "
             "Year results from MLB's awards endpoint.").replace("'", "&#x27;") in html
+
+
+def test_the_standings_files_hosts_are_credited():
+    """STANDINGS_7_FLIP (2026-10-15; STANDINGS_PLAN 5.11): standings_core.py names no host
+    (a pure module) and the job's standings call goes to statsapi.mlb.com, which the MLB
+    Stats API row credits; that row names the standings the Standings page prints."""
+    core, job = ROOT / "standings_core.py", ROOT / "tools" / "scores_job.py"
+    assert core.exists() and job.exists()
+    assert [h for h in _HOST_RE.findall(core.read_text(encoding="utf-8")) if _registered(h) not in _OWN] == []
+    assert "/api/v1/standings" in job.read_text(encoding="utf-8")
+    assert {_registered(h) for h in _hosts(job) if _registered(h) not in _OWN} == {"mlb.com"}
+    assert "mlb.com" in _sources_domains()
+    html = build_site.build_sources()
+    assert "live scores, standings and video" in html
+    assert "the standings, records, splits and expected records its Standings page prints" in html

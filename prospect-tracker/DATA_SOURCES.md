@@ -44,6 +44,7 @@ happen inside the called module, so this file alone cannot split them).
 | 9e-pre0. Refresh team leaderboards (bullpen_leaderboards.json, | bullpen_leaderboards.json, hitter_leaderboards.json, starter_leaderboards.json |
 | 9e-pre. Leaderboard vintage snapshot (validation clock) | - |
 | 9e-pre0b. Refresh Defense Leaderboards (defense_leaderboards.json) | defense_leaderboards.json |
+| 9e-pre0b2. Baserunning section (baserunning preview) | - |
 | 9e-pre0c. Refresh eWAR Leaderboard (war_leaderboards.json) | war_leaderboards.json |
 | 9e-pre0d. Live-season window panel (mlbstats_window_*.json) | bullpen_leaderboards.json, defense_leaderboards.json, hitter_leaderboards.json, mlbstats_window_l3.json, mlbstats_window_l5.json, mlbstats_windows.json, starter_leaderboards.json |
 | 9e-pre0e. In-Game Management nightly (management_board.json) | management_baseline.json, management_board.json, management_bunt.json, management_decisions.json, management_running.json |
@@ -130,7 +131,8 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_history.json, hitter_leaderboards.json, leverage_leaderboards.json |
 | 6b4h. Leverage Leaderboards (leverage_leaderboards.json) | leverage_history.json, leverage_leaderboards.json |
 | 6b4i-lab. defense lab (dem_plus + dem_plus_multiyear evals) | dem_plus_eval.json |
-| 6b4i. Defense Leaderboards (defense_leaderboards.json) | defense_history.json, defense_leaderboards.json, war_leaderboards.json |
+| 6b4i. Defense Leaderboards (defense_leaderboards.json) | defense_history.json, defense_leaderboards.json |
+| 6b4m. Baserunning section (baserunning preview + history) | war_leaderboards.json |
 | 6b4j. eWAR Leaderboard (war_leaderboards.json) | war_leaderboards.json |
 | 6b4k. Multi-year windows (mlbstats_window_*.json) | bullpen_leaderboards.json, defense_leaderboards.json, hitter_leaderboards.json, mlbstats_window_l3.json, mlbstats_windows.json, starter_leaderboards.json |
 | 6b4l. League, Team Stats and drawer payloads (league_teams preview) | mlb_league_series.json, mlbstats_player_index.json, mlbstats_trends.json |

@@ -18,7 +18,10 @@
    load and on becoming visible, then the season file; never the race or the
    odds history files (charts only), never a poll. The Playoffs view mounts
    the SCORES_4b bracket chunk unchanged with the season index's bracket.
-   STANDINGS_6: Season and As of; ODDS only on the newest latest file. */
+   STANDINGS_6: Season and As of; ODDS only on the newest latest file.
+   STANDINGS_7: the mount root's data-glmap names each header's glossary id
+   (standings_core.HEADER_GLOSSARY) and each chart's (CHART_GLOSSARY); every
+   header's abbr carries its id as data-gl and the chart chunk gets the map. */
 (function () {
   "use strict";
 
@@ -257,6 +260,11 @@
   // ---- the app
   function boot(root) {
     var CH = root.getAttribute("data-charts-src"), VW = CH ? VIEWS.concat([["charts", "Charts"]]) : VIEWS;
+    var GLM = { h: {}, c: {} };
+    try { GLM = JSON.parse(root.getAttribute("data-glmap") || "") || GLM; } catch (e) { /* headers keep their titles */ }
+    // tabindex -1: the sort button stays the one tab stop
+    function glAttr(a) { var id = (GLM.h || {})[a]; return id ? ' tabindex="-1" data-gl="' + esc(id) + '"' : ""; }
+    function glWire(el) { if (window.EEPHUS_GL && window.EEPHUS_GL.wire) window.EEPHUS_GL.wire(el || root); }
     var app = { route: parse(location.hash), L: null, IX: null, S: null, serverAt: null, clientAt: null,
       open: null, focus: null, bk: null, bkDoc: null, meta: {}, races: {}, seq: 0, miss: null };
     var St = window.EephusState;
@@ -422,7 +430,7 @@
       var hh = '<th scope="col" class="st-club-h">Club</th>' + cs.map(function (c) {
         var on = col === c, as = on ? (sort.dir === "asc" ? "ascending" : "descending") : "none";
         return '<th scope="col" aria-sort="' + as + '" class="' + (c.g === "odds" ? "st-odds" : "") + (on ? " st-sorted" : "") + '">' +
-          '<button type="button" class="st-sort" data-k="' + c.k + '"><abbr title="' + esc(c.t) + '">' + esc(c.a) + "</abbr>" +
+          '<button type="button" class="st-sort" data-k="' + c.k + '"><abbr title="' + esc(c.t) + '"' + glAttr(c.a) + ">" + esc(c.a) + "</abbr>" +
           sr(", " + c.t) + '<span class="st-sort-ind" aria-hidden="true">' + (on ? (sort.dir === "asc" ? "▲" : "▼") : "") + "</span></button></th>";
       }).join("");
       var body = rows.map(function (r) {
@@ -621,6 +629,7 @@
         '<p class="st-sr" role="status" aria-live="polite" id="st-announce"></p></div>';
       if (v === "playoffs" && !app.route.date) mountBracket();
       mountCharts(root.querySelectorAll(".st-charts, .st-race[open] .st-cm"));
+      glWire(root);
       shadows();
       var f = app.focus;
       app.focus = null;
@@ -676,6 +685,7 @@
       app.ch.then(function (C) {
         Array.prototype.forEach.call(els, function (el) {
           if (root.contains(el)) C.mount(el, { S: app.S, entry: app.entry, get: get, mine: mine(), route: app.route,
+            gl: GLM, wire: function () { glWire(el); },
             div: el.parentNode.getAttribute("data-div"), setRoute: function (k, val) {
               app.route[k] = val;
               try { history.replaceState(null, "", hashOf(app.route)); } catch (e) { /* the chart still redraws */ }
@@ -714,6 +724,7 @@
       }
       if (t.classList.contains("st-sort")) {
         var k = t.getAttribute("data-k"), col = app.meta[k];
+        ev.stopPropagation();   // the redraw detaches the term under the tap
         if (!col) return;
         var i = Array.prototype.indexOf.call(root.querySelectorAll('.st-sort[data-k="' + k + '"]'), t);
         var dir = r.sort && r.sort.k === k ? (r.sort.dir === "asc" ? "desc" : "asc") : col.d;

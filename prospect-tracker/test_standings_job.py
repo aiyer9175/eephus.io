@@ -673,8 +673,10 @@ def test_the_contract_keys_with_nothing_on_disk(env):
 # --------------------------------------------------------------------------- #
 # Where the standings land: the preview while STANDINGS_LIVE is off
 # --------------------------------------------------------------------------- #
-def test_the_flags_default_off_and_the_standings_out_is_the_preview(env):
-    assert st.STANDINGS_LIVE is False and st.STANDINGS_CHARTS is False
+def test_with_the_flags_off_the_standings_out_is_the_preview(env, monkeypatch):
+    # the flags are on since STANDINGS_7_FLIP; the dark path still holds when they are off
+    monkeypatch.setattr(st, "STANDINGS_LIVE", False)
+    monkeypatch.setattr(st, "STANDINGS_CHARTS", False)
     assert job.standings_out_dir() == env["store"] / "preview"
     assert env["paths"]["standings_out"] == env["store"] / "preview" == env["paths"]["out"]
     assert job.standings_served(env["paths"])
@@ -682,6 +684,8 @@ def test_the_flags_default_off_and_the_standings_out_is_the_preview(env):
 
 def test_scores_live_with_standings_dark_keeps_every_standings_file_in_the_preview(env, monkeypatch):
     monkeypatch.setattr(sc, "SCORES_LIVE", True)
+    monkeypatch.setattr(st, "STANDINGS_LIVE", False)
+    monkeypatch.setattr(st, "STANDINGS_CHARTS", False)
     p = job.resolve_paths()
     assert p["out"] == env["tmp"] / "out_env" and p["standings_out"] == env["store"] / "preview"
     assert not job.standings_served(p)
