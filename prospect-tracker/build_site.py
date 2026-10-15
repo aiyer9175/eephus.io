@@ -9009,6 +9009,10 @@ GLOSSARY_VIEWS = (
     {"id": "guide", "shelf": "reference", "label": "How to Read", "body": "guide-body"},
     {"id": "formulas", "shelf": "reference", "label": "Formulas", "body": "formulas-body"},
     {"id": "methodology", "shelf": "methods", "label": "Methodology", "body": "methodology-body"},
+    # WAR Framework Comparison (LIB_WAR_COMPARISON, owner EW3-22): the fWAR,
+    # bWAR and eWAR method table. UPKEEP: when an eWAR part is admitted or
+    # rejected, its eWAR cell in assets/glossary.js _warcData() is updated.
+    {"id": "war-comparison", "shelf": "methods", "label": "WAR Framework Comparison", "body": "war-comparison-body"},
     {"id": "source-comparison", "shelf": "evidence", "label": "Source Comparison", "body": "source-comparison-body"},
     {"id": "source-accuracy", "shelf": "evidence", "label": "Source Accuracy", "body": "source-accuracy-body"},
     {"id": "calibration", "shelf": "evidence", "label": "Calibration", "body": "calibration-body"},
@@ -10657,6 +10661,7 @@ PAGE_INDEX_VIEWS = (
     ("/glossary/#view=guide", None, "how to read a player card, the FV history chart and a farm-system page"),
     ("/glossary/#view=formulas", None, "every term that carries a formula, each linking its definition"),
     ("/glossary/#view=methodology", None, "how eFV, consensus FV, the Arkmetrics and the value framework are built"),
+    ("/glossary/#view=war-comparison", None, "fWAR, bWAR and eWAR side by side, component by component, with the eWAR candidate parts marked"),
     ("/glossary/#view=source-comparison", None, "eFV against each prospect source on the same graduates"),
     ("/glossary/#view=source-accuracy", None, "which source grades which cohort better"),
     ("/glossary/#view=metric-atlas", None, "which minor-league statistics predict reaching the majors, and what each adds to consensus FV"),

@@ -3840,6 +3840,32 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   line-height: 1.5; vertical-align: top; }
 .gl-app .sacc-kv td:first-child { width: 150px; white-space: nowrap; }
 .gl-app .sacc-kv code { font-family: var(--font-retro-mono); font-size: 11px; overflow-wrap: anywhere; }
+/* WAR Framework Comparison (LIB_WAR_COMPARISON): the fWAR, bWAR and eWAR
+   method table. The table scrolls inside its own frame at phone width, so the
+   page never does; the eWAR column carries a gold rule. Tokens only, so both
+   themes read. */
+.gl-app .warc-frame { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;
+  border: 1px solid var(--border); background: var(--bg-secondary); margin: 10px 0 6px; }
+.gl-app .warc-table { border-collapse: collapse; width: 100%; min-width: 760px;
+  font-family: var(--font-retro); font-size: 12.5px; line-height: 1.5; }
+.gl-app .warc-table caption { text-align: left; padding: 8px 12px; font-family: var(--font-retro-mono);
+  font-size: 11px; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+.gl-app .warc-table th, .gl-app .warc-table td { text-align: left; vertical-align: top; padding: 8px 12px;
+  border-bottom: 1px solid var(--border-light); color: var(--text-secondary); }
+.gl-app .warc-table thead th { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary);
+  background: var(--bg-tertiary); border-bottom: 1px solid var(--border); }
+.gl-app .warc-table tbody th { font-family: var(--font-retro-mono); font-size: 11.5px; font-weight: 700;
+  width: 16%; color: var(--text-primary); }
+.gl-app .warc-table .warc-e { border-left: 2px solid var(--accent-gold); color: var(--text-primary); }
+.gl-app .warc-table thead th.warc-e { color: var(--text-gold); }
+.gl-app .warc-table tbody tr:last-child > * { border-bottom: 0; }
+.gl-app .warc-tag { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .04em;
+  color: var(--text-gold); border: 1px solid var(--accent-gold); padding: 0 4px; white-space: nowrap; }
+.gl-app .warc-link { margin: 4px 0 12px; }
+.gl-app .warc-notes { max-width: 72ch; font-size: 12.5px; color: var(--text-secondary); }
+.gl-app .warc-notes ol { margin: 4px 0 0; padding-left: 1.4em; }
+.gl-app .warc-notes li { margin: 3px 0; }
 /* What Predicts the Majors (EFV5_ATLAS_PAGE): the eFV v5 metric atlas. One row
    per statistic: name, the raw bar (coin-flip rule at 50), the lift over
    consensus FV with its interval, the chip. Tokens only, so both themes read. */

@@ -91,7 +91,7 @@ def test_the_shelves_hold_the_planned_leaves():
         by.setdefault(v["shelf"], []).append(v["id"])
     assert by == {
         "reference": ["terms", "guide", "formulas"],
-        "methods": ["methodology"],
+        "methods": ["methodology", "war-comparison"],
         "evidence": ["source-comparison", "source-accuracy", "calibration", "metric-atlas",
                      "models-ledger", "model-updates"],
         "sources": ["source-updates", "data-sources", "index"],
