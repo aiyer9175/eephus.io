@@ -2990,9 +2990,12 @@ def _export_franchise_board(log) -> bool:
         # QCLP10 (2026-10-03): the board plus its thirty club files
         # (data/franchise_clubs/CODE.json), split by the exporter's own writer.
         _fr.write(_frd)
-        _fr_top = min(_frd["clubs"], key=lambda d: d["index"]["rank"])
-        log.info("franchise: %d clubs; #1 %s index %s",
-                 len(_frd["clubs"]), _fr_top["code"], _fr_top["index"]["score"])
+        # The root score is F-SCORE once the board carries root "fscore" (297c9bf7
+        # drops each club's "index" then); the Franchise Index otherwise.
+        _fr_root = "fscore" if _frd.get("root") == "fscore" else "index"
+        _fr_top = min(_frd["clubs"], key=lambda d: d[_fr_root]["rank"])
+        log.info("franchise: %d clubs; #1 %s %s %s", len(_frd["clubs"]),
+                 _fr_top["code"], _fr_root, _fr_top[_fr_root]["score"])
         _record_ingest("franchise_export", True, len(_frd["clubs"]),
                        "franchise board", "mlb", log)
         # W08 (owner answer W-OQ4 (a)): the Trade Machine partner screen's slim
