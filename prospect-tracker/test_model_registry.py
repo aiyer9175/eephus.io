@@ -710,3 +710,22 @@ def test_the_awards_row_lands_with_the_page():
     rw = ev["rookie_winners"]
     assert rw["n_pass"] == rw["n_winners"]
     assert f"all {rw['n_winners']} Rookie of the Year winners" in row["summary"]
+
+
+def test_the_standings_surfaces_land_with_the_page():
+    """STANDINGS_7_FLIP (2026-10-15; STANDINGS_PLAN 5.4 and 7): two surface amendments
+    and no new row; each names the /standings/ ODDS group only while the page is served."""
+    import standings_core
+    assert standings_core.STANDINGS_LIVE is True, "a /standings/ surface names a page that is not served"
+    by = _by_id()
+    assert not any(k.startswith("standings") for k in by), "the flip adds no registry row"
+    assert by["playoff_odds_sim"]["surface"].endswith(
+        "; /standings/ ODDS group (division, postseason, pennant and World Series chances, projected "
+        "final record and remaining schedule) for the current season, copied from data/futures.json "
+        "(the remaining schedule from data/mlb_projections.json; the printed projected wins rounded half "
+        "up and the projected losses derived from them and the games left)")
+    assert by["postseason_bracket_sim"]["surface"].endswith(
+        "; the Pennant and World Series columns of the /standings/ ODDS group during the postseason "
+        "only, outside the bracket, labelled implied, no market")
+    for mid in ("playoff_odds_sim", "postseason_bracket_sim"):
+        assert by[mid]["surface"].count("/standings/") == 1, mid

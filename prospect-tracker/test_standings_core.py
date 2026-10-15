@@ -202,8 +202,9 @@ def synth_standings(games, through, season=2026):
 # --------------------------------------------------------------------------- #
 # 1. Flags; the import fence at runtime; the dash gate
 # --------------------------------------------------------------------------- #
-def test_flags_default_off_and_coupled():
-    assert st.STANDINGS_LIVE is False and st.STANDINGS_CHARTS is False
+def test_flags_on_since_the_flip_and_coupled():
+    # STANDINGS_7_FLIP turned both on (2026-10-15); before it both were False
+    assert st.STANDINGS_LIVE is True and st.STANDINGS_CHARTS is True
     # STANDINGS_LIVE may be True only when SCORES_LIVE is; CHARTS only when LIVE is
     assert (not st.STANDINGS_LIVE) or sc.SCORES_LIVE
     assert (not st.STANDINGS_CHARTS) or st.STANDINGS_LIVE

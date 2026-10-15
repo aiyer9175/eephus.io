@@ -426,3 +426,21 @@ def test_the_trade_partner_screen_files_ship_in_both_deploy_consumers():
     assert "data/trade_partner_screen_chain.json" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
     js = (ROOT / "assets" / "trademachine.js").read_text(encoding="utf-8")
     assert 'fetch(DATA_BASE + "trade_partner_slice.json"' in js
+
+
+def test_the_standings_page_ships_and_its_data_does_not():
+    """STANDINGS_7_FLIP (2026-10-15; STANDINGS_PLAN 4.4): standings/ is in the manifest
+    with the flag on, and no deploy consumer names a /data/scores rule: the job writes
+    /data/scores/standings/ on the box behind the same nginx location as the scores files."""
+    import standings_core
+    assert standings_core.STANDINGS_LIVE is True
+    paths = _manifest_paths()
+    assert "standings" in paths
+    assert not any(p.startswith(("data/scores", "data/standings")) for p in paths)
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert "data/scores" not in nightly
+    wf_path = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf_path.exists():
+        assert "data/scores" not in wf_path.read_text(encoding="utf-8")
+    excl = (ROOT / "deploy" / "data_exclude.txt").read_text(encoding="utf-8")
+    assert not any(ln.strip().startswith(("standings", "data/scores")) for ln in excl.splitlines())

@@ -203,6 +203,7 @@ _ROUTE_NOTES = {
     "management/index.html": "In-Game Management: every stolen-base attempt since 2018 priced against win probability with a league-average runner. NO per-club plus metric, because the gate battery returned a BOUNDED null (split-half 0.069 inside a permutation band, detection floor 0.0005 wins per attempt). Ships the league result, the club STYLE board, and the run-expectancy and half-inning-start reference tables.",
     "franchise/index.html": "Franchises: the org-level grade tree per club (Franchise Index = weighted mean of ROSTER / OUTLOOK / FARM branch scores, re-standardised across 30 clubs, descriptive) with twelve sections that re-serve every module's numbers for the club on their own scales; no HoF tile, no pennants, no decision-quality grade.",
     "scores/index.html": "Scores / Standings: MLB games by date, a pure reader of the files tools/scores_job.py writes to /data/scores/ (MLB's live win probability shown as MLB serves it, Biggest plays with MLB's video, box scores, and Stars of the Game by the published stars_v1 rule); in the nav after Franchises and in the sitemap since SCORES_5b.",
+    "standings/index.html": "Scores / Standings, the Standings page: MLB standings by division, wild card, league and the majors, a pure reader of /data/scores/standings/ written by tools/scores_job.py (MLB's records, splits, run differential and expected record, the races over the season, and the site's season and bracket simulator chances in a labelled ODDS group, implied, no market); reached from the Scores / Standings link strip; off the sitemap until STANDINGS_8.",
     "models/index.html": "Model Accountability hub: data/model_registry.json rendered server-side, with freshness and the ledger's own gaps counted; assets/accountability.js only filters what is already in the DOM",
     "models/updates/index.html": "Model Updates: data/model_updates.json rendered server-side, one row per model with its edge over its benchmark and the dated timetable of every update; assets/model_updates.js only filters rows and opens drawers",
     "glossary/index.html": "Library: unified glossary + methodology / model accountability",
@@ -381,6 +382,7 @@ _UNNAVED_PAGE_NAMES = {
     "/sources/": "Sources and data",
     "/report/": "Report a bug",
     "/hof/": "Hall of Fame (Awards / HoF; reached from the module strip)",
+    "/standings/": "MLB Standings (Scores / Standings; reached from the module strip)",
     "/404.html": "Not-found page; forwards /teams/, /dfs/, /dynasty/, /redraft/",
 }
 

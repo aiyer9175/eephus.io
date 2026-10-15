@@ -2333,7 +2333,7 @@
   {
    "model_id": "postseason_bracket_sim",
    "summary": "Unvalidated: a bracket simulator serving implied postseason odds from 2026-10-01; its evidence is regular-season only, and one look after the World Series scores it.",
-   "surface": "/betting/ Futures Pennant and World Series columns and postseason table, Franchises Pennant tile; postseason only, implied, no market (data/bracket_sim.json)",
+   "surface": "/betting/ Futures Pennant and World Series columns and postseason table, Franchises Pennant tile; postseason only, implied, no market (data/bracket_sim.json); the Pennant and World Series columns of the /standings/ ODDS group during the postseason only, outside the bracket, labelled implied, no market",
    "predicts": "per postseason club, P(win each remaining round), P(pennant) and P(World Series), from the bracket state",
    "champion": "bracket_v1: exact series recursion over the posted bracket; per game the served betting_game_prob p_home where the board prices the game, else the literature Elo (1500, K 4, 24 points home) over the 2026 regular-season finals, frozen at the first run; formats and home field per docs/betting-2026-10/BRACKET_SIM_GATE.md",
    "baseline": "the coin bracket: the same state, every unplayed game at 0.5",
@@ -6062,7 +6062,7 @@
   {
    "model_id": "playoff_odds_sim",
    "summary": "Measured, not adopted: a 20,000-season Monte Carlo on the roster-talent prior with Wilson intervals, but no market and no backtest, so no forward record.",
-   "surface": "/projections/ Team Outlook and the /betting/ Futures tab",
+   "surface": "/projections/ Team Outlook and the /betting/ Futures tab; /standings/ ODDS group (division, postseason, pennant and World Series chances, projected final record and remaining schedule) for the current season, copied from data/futures.json (the remaining schedule from data/mlb_projections.json; the printed projected wins rounded half up and the projected losses derived from them and the games left)",
    "predicts": "division, playoff, bye, pennant and World Series probability per club, plus the full win-total distribution.",
    "champion": "Monte Carlo over the actual remaining regular-season schedule with every club at its pure roster-talent prior (the model's 2027 team win total over 162, clamped to .200 to .800), 20,000 simulations, with the current MLB postseason bracket played from final standings. The in-season record and Pythagorean blend set only the displayed current wins, not the simulator's talent, and no postseason result enters it.",
    "baseline": "None published: no captured futures market and no backtest, so no measured forward record",

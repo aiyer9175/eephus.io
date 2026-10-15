@@ -27,7 +27,12 @@
   const btns = (cls, list, cur) => list.map(q => `<button type="button" class="${cls}" data-v="${q[0]}" aria-pressed="${q[0] === cur}">${esc(q[1])}</button>`).join("");
   const tbl = (hd, rows) => `<div class="table-scroll-x"><table class="stc-tbl"><thead><tr>${hd.map(h => `<th scope="col">${esc(h)}</th>`).join("")}</tr></thead><tbody>` +
     rows.map(r => "<tr>" + r.map((c, i) => i ? `<td>${esc(c)}</td>` : `<th scope="row">${esc(c)}</th>`).join("") + "</tr>").join("") + "</tbody></table></div>";
-  const fig = (k, title, read, src, x) => `<figure class="stc-fig" data-k="${k}" tabindex="0"><figcaption><b>${esc(title)}</b> <span>${esc(read)}</span> <span class="stc-src">${esc(src)}</span></figcaption>${x || ""}` +
+  // glossary ids (data-glmap): the first links the title, the rest print by abbreviation
+  let GL = { h: {}, c: {} };
+  const gt = (id, s) => id ? `<span data-gl="${esc(id)}">${s}</span>` : s;
+  const terms = k => { const ids = (GL.c[k.slice(0, 2)] || []).slice(1);
+    return ids.length ? ` <span class="stc-terms">Terms: ${ids.map(id => gt(id, esc(Object.keys(GL.h).find(a => GL.h[a] === id)))).join(", ")}.</span>` : ""; };
+  const fig = (k, title, read, src, x) => `<figure class="stc-fig" data-k="${k}" tabindex="0"><figcaption><b>${gt((GL.c[k.slice(0, 2)] || [])[0], esc(title))}</b> <span>${esc(read)}</span>${terms(k)} <span class="stc-src">${esc(src)}</span></figcaption>${x || ""}` +
     '<div class="stc-chips" role="group" aria-label="Highlight clubs"></div><div class="stc-plot"></div><p class="stc-read" aria-live="polite"></p><details class="stc-num"><summary>Numbers</summary></details></figure>';
 
   // the highlight rule: the followed clubs, else the view's first two; a tap
@@ -226,13 +231,15 @@
     const S = ctx.S, e = ctx.entry || {}, Y = S.season, none = box("unmeasured", `Game-by-game results for ${Y} are not on file.`);
     const nodds = box("unmeasured", "The odds group has no record for this season.");
     const sec = (c, t, b) => `<section class="stc-sec" data-c="${c}"><h3 class="sp-boxhead">${t}</h3>${b}</section>`;
+    const gw = ctx.wire || (() => 0);
+    GL = ctx.gl || GL;
     if (!el._w) { el._w = 1; wire(el, ctx, () => mount(el, ctx)); }
     if (!el.firstChild) el.innerHTML = box("loading", "Loading the race.");
     return (e.race_rev ? get(ctx, `standings/${Y}-race.json?v=${encodeURIComponent(e.race_rev)}`) : Promise.resolve(null)).then(R => {
       const ok = R && R.dates.length, narrow = innerWidth < 768;
       let M = 1;
       if (ok) for (const c in R.clubs) R.clubs[c].forEach(t => { M = Math.max(M, Math.abs(t[0] - t[1])); });
-      if (ctx.div) { el.innerHTML = ok ? c1(ctx, R, ctx.div, M) : none; return drawAll(el); }
+      if (ctx.div) { el.innerHTML = ok ? c1(ctx, R, ctx.div, M) : none; drawAll(el); return gw(); }
       const dv = ctx.route.div || (S.rows.find(r => ctx.mine.includes(r.code)) || {}).div || "ALE";
       el.innerHTML = sec("race", "Division race", ok ? (narrow ? `<div class="stc-row" role="group" aria-label="Division">${btns("stc-dv", Object.entries(DV), dv)}</div>` : "") +
         '<div class="stc-grid3">' + Object.keys(DV).filter(d => !narrow || d === dv).map(d => c1(ctx, R, d, M)).join("") + "</div>" : none) +
@@ -240,11 +247,12 @@
         sec("odds", "Odds over time", '<div class="stc-odds">' + (e.phist_rev ? box("loading", "Loading the odds record.") : nodds) + "</div>") +
         '<div class="stc-grid2">' + sec("runs", "Runs", c4(ctx)) + sec("xwl", "Expected record", c5(ctx)) + "</div>";
       drawAll(el);
+      gw();
       const foc = ctx.route.chart && el.querySelector(`[data-c="${ctx.route.chart}"]`);
       if (foc && !el._f) { el._f = 1; foc.scrollIntoView(); }
       if (e.phist_rev) return get(ctx, `standings/${Y}-phist.json?v=${encodeURIComponent(e.phist_rev)}`).then(P => {
         const o = el.querySelector(".stc-odds");
-        if (o) { o.innerHTML = P.regular.as_of.length + P.post.as_of.length ? c3(ctx, P) : nodds; drawAll(o); }
+        if (o) { o.innerHTML = P.regular.as_of.length + P.post.as_of.length ? c3(ctx, P) : nodds; drawAll(o); gw(); }
       });
     }).catch(() => { el.innerHTML = box("failed", "The race could not load."); });
   }

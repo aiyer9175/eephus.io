@@ -68,6 +68,12 @@
 # 2026-10-15: scouting/ is the /scouting/ page (TL_23_SCOUTING_PAGE_FLIP). Its
 # payload data/scouting_reference.json sits at data/ depth one, which both
 # consumers already ship; data/reference/ (the transcription) ships in neither.
+#
+# 2026-10-15: standings/ is the Standings page of Scores / Standings
+# (STANDINGS_7_FLIP). Only the page ships from here, as for scores/: its
+# files are written by tools/scores_job.py into the scores store's
+# standings/ folder on the box, served by the same nginx location, so no
+# data rule is added to either consumer.
 index.html
 404.html
 robots.txt
@@ -103,6 +109,7 @@ report
 scores
 scouting
 sources
+standings
 team
 trademachine
 vendor

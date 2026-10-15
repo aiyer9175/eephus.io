@@ -248,13 +248,13 @@ def rows_of(doc):
 # --------------------------------------------------------------------------- #
 # The flag, the shell, the budgets
 # --------------------------------------------------------------------------- #
-def test_the_flags_default_off_and_couple():
-    assert st.STANDINGS_LIVE is False and st.STANDINGS_CHARTS is False
+def test_the_flags_are_on_since_the_flip_and_couple():
+    assert st.STANDINGS_LIVE is True and st.STANDINGS_CHARTS is True
     assert (not st.STANDINGS_LIVE) or sc.SCORES_LIVE
     assert (not st.STANDINGS_CHARTS) or st.STANDINGS_LIVE
 
 
-def test_standings_live_false_writes_no_published_page_and_ships_no_line(tmp_path, monkeypatch):
+def test_standings_live_false_writes_no_published_page_and_the_flip_ships_one_line(tmp_path, monkeypatch):
     monkeypatch.setattr(st, "STANDINGS_LIVE", False)
     calls = []
     monkeypatch.setattr(build_site, "_write", lambda rel, html: calls.append(rel))
@@ -263,12 +263,14 @@ def test_standings_live_false_writes_no_published_page_and_ships_no_line(tmp_pat
     monkeypatch.setattr(build_site, "SCORES_PREVIEW_SITE", tmp_path / "preview")
     out = Path(build_site.write_standings_page())
     assert calls == [] and out == tmp_path / "preview" / "standings" / "index.html"
+    # since STANDINGS_7_FLIP main() writes the published route under the flag and
+    # publish_paths ships it; with the flag off it falls back to the preview copy
     import inspect
     main_src = inspect.getsource(build_site.main)
-    assert "write_standings_page()" in main_src and '_write("standings/index.html"' not in main_src
+    assert "if standings_core.STANDINGS_LIVE:" in main_src
+    assert '_write("standings/index.html", build_standings())' in main_src and "write_standings_page()" in main_src
     lines = [ln.strip() for ln in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8").splitlines()]
-    assert not any("standings" in ln for ln in lines if ln and not ln.startswith("#"))
-    assert not (ROOT / "standings" / "index.html").exists()
+    assert [ln for ln in lines if ln and not ln.startswith("#") and "standings" in ln] == ["standings"]
     # the flag on writes the published route; a preview_root never does
     monkeypatch.setattr(st, "STANDINGS_LIVE", True)
     assert build_site.write_standings_page() == str(build_site.ROOT / "standings" / "index.html")
@@ -276,6 +278,7 @@ def test_standings_live_false_writes_no_published_page_and_ships_no_line(tmp_pat
 
 
 def test_the_shell_and_the_shared_head(monkeypatch):
+    monkeypatch.setattr(st, "STANDINGS_LIVE", False)
     html = build_site.build_standings()
     assert "<title>MLB Standings - eephus.io</title>" in html
     assert build_site.STANDINGS_DESC.replace("'", "&#x27;") in html or build_site.STANDINGS_DESC in html
@@ -872,9 +875,12 @@ _STROKES = """k => Object.fromEntries([...document.querySelectorAll('.stc-fig[da
 _VREFS = """k => [...document.querySelectorAll('.stc-fig[data-k="' + k + '"] [data-vref]')].map(l => l.dataset.vref)"""
 
 
-def test_charts_are_off_by_default(oct_site, pw):
+def test_with_the_charts_flag_off_no_chart_loads(tmp_path, monkeypatch, oct_doc, pw):
+    # STANDINGS_CHARTS is on since STANDINGS_7_FLIP; the dark path still holds when it is off
+    monkeypatch.setattr(st, "STANDINGS_CHARTS", False)
     assert "data-charts-src" not in build_site.build_standings()
-    with serve_site(oct_site) as base, standings_page(base, pw, width=1280, hash_="#view=division") as page:
+    site = make_site(tmp_path / "st_nocharts", payloads(oct_doc))
+    with serve_site(site) as base, standings_page(base, pw, width=1280, hash_="#view=division") as page:
         assert page.locator('[data-view="charts"]').count() == 0 and page.locator(".st-race").count() == 0
         assert not any("standings-charts.js" in u for u in page._requests)
 
