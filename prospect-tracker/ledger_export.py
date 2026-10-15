@@ -2832,7 +2832,8 @@ def build_all() -> tuple:
             "prospect of this club, else null"),
         "arbitration.ladders": (
             "[name, mlbam, sv, svy, class, flags, years_left, ladder [[season, proj_usd, lo_usd, hi_usd, "
-            "token]], war [eWAR per rung, aligned], tot_usd, in_vets, has_salpath]; lo/hi are a "
+            "token]], war [projected WAR per rung on the fWAR label basis, aligned], tot_usd, "
+            "in_vets, has_salpath]; lo/hi are a "
             "fixed-spread band (0.22 + 0.08 per rung) and not P10/P90; sv is a string and prints as is; "
             "svy is the season the string is as of; no filing figure, hearing flag or comp exists on "
             "any row"),

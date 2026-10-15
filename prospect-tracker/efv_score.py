@@ -3522,6 +3522,9 @@ def run_backgrade(persist: bool = True) -> dict:
         if inj < 1.0:
             entry["injury_factor"] = inj
         if kind == "debuted":
+            # UNIT: rec["career_war"] is the served block, the DISPLAYED series
+            # (eWAR v2, storage._served_career_war), so realized_war is career eWAR,
+            # not the fWAR label that realized_war_6yr and xfv_war_6yr are on.
             cw = (rec.get("career_war") or {}).get("career_war")
             if cw is not None:
                 entry["realized_war"] = round(float(cw), 1)

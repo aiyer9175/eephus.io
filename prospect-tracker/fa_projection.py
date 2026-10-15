@@ -97,8 +97,8 @@ def _ip_to_float(raw) -> float:
 def _side_war_age_maps(provider: str | None = None) -> tuple[dict, dict]:
     """{(side, mlbam, season): war} KEYED BY WAR_DAILY SIDE ('bat' | 'pit'),
     and {(mlbam, season): age}, from the war_daily stint frames read through
-    the war_source facade on ``provider`` (None = the facade DEFAULT, eWAR v2
-    since 2026-09-03).
+    the war_source facade on ``provider`` (None = the facade DEFAULT, published
+    fWAR since the 2026-10-03 label epoch).
 
     THE SIDE KEY IS THE REPAIR (2026-09-18, the label lane). _war_age_maps
     below returns these same rows SUMMED ACROSS SIDES, and build_corpus used

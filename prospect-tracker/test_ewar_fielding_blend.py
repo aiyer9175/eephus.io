@@ -10,8 +10,9 @@ covered the innings. The v1 attribution arms then measured that the fielding
 swap alone lost BOTH gates (same-season team-wins r 0.8777 and next-season
 0.2255, against a bWAR baseline of 0.8803 / 0.2481), while the pitching swap
 paid for itself. The mechanical reason is that the two do not measure the same
-quantity: Savant FRP is range, and B-Ref rfield also carries arm, catcher
-framing and blocking, first-base scoops and the double-play pivot. A
+quantity: Savant FRP is range, and B-Ref rfield also carries arm, the
+catcher's rSB + rCERA (no framing or blocking piece, 2026-09-11 erratum),
+first-base scoops and the double-play pivot. A
 replacement therefore swaps a better metric in for a NARROWER one and drops
 real value.
 

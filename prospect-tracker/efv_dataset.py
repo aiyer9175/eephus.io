@@ -7,8 +7,8 @@
 
 This is the training SUBSTRATE for the eFV flagship model. It assembles one row per
 resolved/censored prospect with features built strictly as-of a pre-outcome decision
-point, attaches a first-6-MLB-season WAR label (war_source.DEFAULT_PROVIDER, eWAR v2 since
-the 2026-09-04 epoch) with censoring handling, and reproduces
+point, attaches a first-6-MLB-season WAR label (war_source.DEFAULT_PROVIDER, published
+fWAR since the 2026-10-03 label epoch) with censoring handling, and reproduces
 the consensus-FV-only baseline that the model must match or beat. NO MODEL IS FIT HERE.
 
 Design (per docs/xfv-phase1-plan.md, owner sign-off 2026-06-21):
@@ -30,7 +30,8 @@ Design (per docs/xfv-phase1-plan.md, owner sign-off 2026-06-21):
              pick/bonus and pre-decision IL history. NO Statcast (no historical depth;
              Tier-2 overlay is a later pass).
   TARGET     first-6-MLB-season summed WAR on the label series (career_war seasons
-             debut..debut+5; war_source.DEFAULT_PROVIDER, eWAR v2 since 2026-09-04).
+             debut..debut+5; war_source.DEFAULT_PROVIDER, published fWAR since the
+             2026-10-03 label epoch).
              ARM A1 (SERVICE_ALIGNED_WINDOW, default False, audit F03): with the flag
              on, a debut after the mid-April service cut takes debut+1..debut+6 with the
              debut season added as a stub. Off = this line, unchanged.

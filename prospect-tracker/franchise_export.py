@@ -1202,9 +1202,9 @@ def build() -> dict:
              "basis": outlook_doc["basis"], "verdict": verdict_of.get("team_win_projections"), "verdict_model": "team_win_projections", "provisional": True,
              "leaves": [
                  leaf("wins_2027", f"Wins {CLASS_YEAR}", out.get("wins"), "num1", None, "team_outlook.wins, provisional", None, links["team_outlook"]),
-                 leaf("war_2027", f"Roster WAR {CLASS_YEAR}", out.get("war"), "war", None, "team_outlook.war", "ewar", links["roster_board"]),
+                 leaf("war_2027", f"Roster WAR {CLASS_YEAR}", out.get("war"), "war", None, "team_outlook.war", "war", links["roster_board"]),
                  leaf("locked_pct", "Core under control", out.get("lockedPct"), "pct", None, "team_outlook.lockedPct: share of 2027-31 core WAR under club control", "locked_pct", links["roster_board"]),
-                 leaf("ctrl_war_5y", "Controlled WAR, 5y", out.get("ctrlWar5y"), "war", None, "team_outlook.ctrlWar5y", "ewar", links["roster_board"]),
+                 leaf("ctrl_war_5y", "Controlled WAR, 5y", out.get("ctrlWar5y"), "war", None, "team_outlook.ctrlWar5y", "war", links["roster_board"]),
              ] + [leaf(f"wins_{y[0]}", f"Wins {y[0]}", y[1], "num1", None, "team_outlook.byYear", None, links["team_outlook"])
                   for y in by_year if y[0] and y[0] != CLASS_YEAR]},
             {"key": "farm", "kind": "graded", "label": "FARM", "title": BRANCH_TITLE["farm"],

@@ -179,7 +179,7 @@ def round_half_up(x, ndigits: int = 1) -> float:
 WAR_PROVIDER: str = "bwar"
 """FROZEN. The only provider string this module will ever pass to war_source.
 
-eWAR (war_source.DEFAULT_PROVIDER == 'ewar_v2') covers 2011-2026 only. A Hall
+eWAR (war_source.DISPLAY_PROVIDER, 'ewar_v2') covers 2011-2026 only. A Hall
 of Fame career frame that read it would splice two WAR definitions inside a
 single career and would carry no WAR at all for anybody who retired before
 2011, which is most of the Hall. Do not add a provider parameter to anything
