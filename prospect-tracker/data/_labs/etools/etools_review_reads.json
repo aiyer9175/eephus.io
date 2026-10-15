@@ -1,0 +1,7869 @@
+{
+ "item": "ETOOLS",
+ "tool": "etools.py",
+ "spent": true,
+ "spent_at": "2026-10-15T22:45:19Z",
+ "started": "2026-10-15T22:43:54Z",
+ "amendment_doc": "docs/tools-2026-10/ETOOLS_AMENDMENT_1.md",
+ "amendment_sha": "8f369ae2",
+ "look_gate_sha": "3f240da6",
+ "head": "7cf5407163261a6210c4600e4fbcca8ffd3b562a",
+ "survivorship": "L_MLB is accuracy AMONG DEBUTS: only players who reached the majors have a realized MLB quantity. L_UM (translated upper-minors outcomes, seasons Y to Y + 2 capped at 2024) does not require a debut, but it does require reaching Double-A or Triple-A for 300 PA (150 BF), itself a promotion outcome: among hitter rows with no debut by 2024 only about 37% carry it, and non-debuts who stalled below Double-A are on neither label. L_UM is accuracy AMONG PROMOTED players (amendment 1, A1).",
+ "universe": {
+  "mlb_line_before_board_year": 1128,
+  "identity_ambiguous": 232,
+  "identity_disagrees_with_record": 177,
+  "identity_no_candidate": 282,
+  "no_record": 158,
+  "duplicate_player": 4,
+  "rows": 8898
+ },
+ "reproduction": {
+  "hit:mlb": {
+   "look": 0.302,
+   "now": 0.302
+  },
+  "hit:um": {
+   "look": 0.2741,
+   "now": 0.2741
+  },
+  "game_pwr:mlb": {
+   "look": 0.0337,
+   "now": 0.0337
+  },
+  "game_pwr:um": {
+   "look": 0.0392,
+   "now": 0.0392
+  },
+  "raw_pwr:mlb": {
+   "look": 0.0047,
+   "now": 0.0047
+  },
+  "raw_pwr:um": {
+   "look": 0.0376,
+   "now": 0.0376
+  },
+  "speed:mlb": {
+   "look": 0.0065,
+   "now": 0.0065
+  },
+  "speed:um": {
+   "look": 0.055,
+   "now": 0.055
+  },
+  "pitch_sel:mlb": {
+   "look": 0.0893,
+   "now": 0.0893
+  },
+  "pitch_sel:um": {
+   "look": 0.0715,
+   "now": 0.0715
+  },
+  "bat_ctrl:mlb": {
+   "look": 0.0909,
+   "now": 0.0909
+  },
+  "bat_ctrl:um": {
+   "look": 0.0793,
+   "now": 0.0793
+  },
+  "fb:mlb": {
+   "look": 0.0684,
+   "now": 0.0684
+  },
+  "fb:um": {
+   "look": 0.1764,
+   "now": 0.1764
+  },
+  "cmd:mlb": {
+   "look": 0.0411,
+   "now": 0.0411
+  },
+  "cmd:um": {
+   "look": 0.0744,
+   "now": 0.0744
+  }
+ },
+ "A1_promotion": {
+  "hit": {
+   "counts": {
+    "rows": 4438,
+    "um_and_debut": 1882,
+    "um_no_debut": 822,
+    "no_um_no_debut": 1335,
+    "no_um_debut": 399,
+    "share_of_non_debuts_with_um": 0.3811,
+    "share_of_um_that_debuted": 0.696
+   },
+   "tool": "hit",
+   "admitted": [
+    "k_rw",
+    "ppa_par",
+    "babip_rw"
+   ],
+   "pooled": {
+    "computable": true,
+    "n": 2704,
+    "players": 1334,
+    "rho_a": 0.7099,
+    "rho_b": 0.4358,
+    "d": 0.2741,
+    "lb95": 0.2485,
+    "ci95": [
+     0.2429,
+     0.3061
+    ],
+    "sd": 0.01585,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "non_debut": {
+    "computable": true,
+    "n": 822,
+    "players": 461,
+    "rho_a": 0.7247,
+    "rho_b": 0.5273,
+    "d": 0.1974,
+    "lb95": 0.1563,
+    "ci95": [
+     0.1495,
+     0.2471
+    ],
+    "sd": 0.02478,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "debut": {
+    "computable": true,
+    "n": 1882,
+    "players": 873,
+    "rho_a": 0.6874,
+    "rho_b": 0.3647,
+    "d": 0.3227,
+    "lb95": 0.2881,
+    "ci95": [
+     0.2832,
+     0.3639
+    ],
+    "sd": 0.02085,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "promotion_dependent": false
+  },
+  "game_pwr": {
+   "counts": {
+    "rows": 4439,
+    "um_and_debut": 1882,
+    "um_no_debut": 823,
+    "no_um_no_debut": 1335,
+    "no_um_debut": 399,
+    "share_of_non_debuts_with_um": 0.3814,
+    "share_of_um_that_debuted": 0.6957
+   },
+   "tool": "game_pwr",
+   "admitted": [
+    "iso_rw",
+    "bb_fb"
+   ],
+   "pooled": {
+    "computable": true,
+    "n": 2705,
+    "players": 1334,
+    "rho_a": 0.6332,
+    "rho_b": 0.5941,
+    "d": 0.0392,
+    "lb95": 0.0301,
+    "ci95": [
+     0.0287,
+     0.0496
+    ],
+    "sd": 0.00536,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "non_debut": {
+    "computable": true,
+    "n": 823,
+    "players": 461,
+    "rho_a": 0.6203,
+    "rho_b": 0.5976,
+    "d": 0.0227,
+    "lb95": 0.0061,
+    "ci95": [
+     0.0034,
+     0.0415
+    ],
+    "sd": 0.0099,
+    "p": 0.011092,
+    "draws": 2000
+   },
+   "debut": {
+    "computable": true,
+    "n": 1882,
+    "players": 873,
+    "rho_a": 0.6507,
+    "rho_b": 0.6079,
+    "d": 0.0427,
+    "lb95": 0.0321,
+    "ci95": [
+     0.0302,
+     0.0555
+    ],
+    "sd": 0.00656,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "promotion_dependent": false
+  },
+  "raw_pwr": {
+   "counts": {
+    "rows": 2320,
+    "um_and_debut": 381,
+    "um_no_debut": 313,
+    "no_um_no_debut": 929,
+    "no_um_debut": 697,
+    "share_of_non_debuts_with_um": 0.252,
+    "share_of_um_that_debuted": 0.549
+   },
+   "tool": "raw_pwr",
+   "admitted": [
+    "iso_rw"
+   ],
+   "pooled": {
+    "computable": true,
+    "n": 694,
+    "players": 440,
+    "rho_a": 0.4988,
+    "rho_b": 0.4611,
+    "d": 0.0376,
+    "lb95": 0.026,
+    "ci95": [
+     0.0237,
+     0.0527
+    ],
+    "sd": 0.00737,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "non_debut": {
+    "computable": true,
+    "n": 313,
+    "players": 209,
+    "rho_a": 0.4393,
+    "rho_b": 0.4193,
+    "d": 0.02,
+    "lb95": -0.001,
+    "ci95": [
+     -0.0055,
+     0.0449
+    ],
+    "sd": 0.01274,
+    "p": 0.058172,
+    "draws": 2000
+   },
+   "debut": {
+    "computable": true,
+    "n": 381,
+    "players": 231,
+    "rho_a": 0.5413,
+    "rho_b": 0.5229,
+    "d": 0.0184,
+    "lb95": 0.0041,
+    "ci95": [
+     0.0012,
+     0.0355
+    ],
+    "sd": 0.00873,
+    "p": 0.01743,
+    "draws": 2000
+   },
+   "promotion_dependent": true
+  },
+  "speed": {
+   "counts": {
+    "rows": 4439,
+    "um_and_debut": 1882,
+    "um_no_debut": 823,
+    "no_um_no_debut": 1335,
+    "no_um_debut": 399,
+    "share_of_non_debuts_with_um": 0.3814,
+    "share_of_um_that_debuted": 0.6957
+   },
+   "tool": "speed",
+   "admitted": [
+    "sb_rel"
+   ],
+   "pooled": {
+    "computable": true,
+    "n": 2705,
+    "players": 1334,
+    "rho_a": 0.7844,
+    "rho_b": 0.7294,
+    "d": 0.055,
+    "lb95": 0.0482,
+    "ci95": [
+     0.0469,
+     0.0635
+    ],
+    "sd": 0.00426,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "non_debut": {
+    "computable": true,
+    "n": 823,
+    "players": 461,
+    "rho_a": 0.7146,
+    "rho_b": 0.6642,
+    "d": 0.0504,
+    "lb95": 0.0372,
+    "ci95": [
+     0.0352,
+     0.0659
+    ],
+    "sd": 0.00791,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "debut": {
+    "computable": true,
+    "n": 1882,
+    "players": 873,
+    "rho_a": 0.8049,
+    "rho_b": 0.7517,
+    "d": 0.0533,
+    "lb95": 0.0447,
+    "ci95": [
+     0.0428,
+     0.064
+    ],
+    "sd": 0.00539,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "promotion_dependent": false
+  },
+  "pitch_sel": {
+   "counts": {
+    "rows": 1290,
+    "um_and_debut": 367,
+    "um_no_debut": 282,
+    "no_um_no_debut": 601,
+    "no_um_debut": 40,
+    "share_of_non_debuts_with_um": 0.3194,
+    "share_of_um_that_debuted": 0.5655
+   },
+   "tool": "pitch_sel",
+   "admitted": [
+    "pbp_swing"
+   ],
+   "pooled": {
+    "computable": true,
+    "n": 649,
+    "players": 424,
+    "rho_a": 0.6276,
+    "rho_b": 0.5561,
+    "d": 0.0715,
+    "lb95": 0.0501,
+    "ci95": [
+     0.0467,
+     0.0982
+    ],
+    "sd": 0.01338,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "non_debut": {
+    "computable": true,
+    "n": 282,
+    "players": 194,
+    "rho_a": 0.5786,
+    "rho_b": 0.5195,
+    "d": 0.0591,
+    "lb95": 0.0273,
+    "ci95": [
+     0.0225,
+     0.1025
+    ],
+    "sd": 0.02013,
+    "p": 0.001664,
+    "draws": 2000
+   },
+   "debut": {
+    "computable": true,
+    "n": 367,
+    "players": 230,
+    "rho_a": 0.6698,
+    "rho_b": 0.5923,
+    "d": 0.0776,
+    "lb95": 0.046,
+    "ci95": [
+     0.0402,
+     0.1145
+    ],
+    "sd": 0.01915,
+    "p": 2.6e-05,
+    "draws": 2000
+   },
+   "promotion_dependent": false
+  },
+  "bat_ctrl": {
+   "counts": {
+    "rows": 1324,
+    "um_and_debut": 370,
+    "um_no_debut": 293,
+    "no_um_no_debut": 621,
+    "no_um_debut": 40,
+    "share_of_non_debuts_with_um": 0.3206,
+    "share_of_um_that_debuted": 0.5581
+   },
+   "tool": "bat_ctrl",
+   "admitted": [
+    "pbp_contact"
+   ],
+   "pooled": {
+    "computable": true,
+    "n": 663,
+    "players": 429,
+    "rho_a": 0.5565,
+    "rho_b": 0.4772,
+    "d": 0.0793,
+    "lb95": 0.0621,
+    "ci95": [
+     0.0589,
+     0.1013
+    ],
+    "sd": 0.01078,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "non_debut": {
+    "computable": true,
+    "n": 293,
+    "players": 199,
+    "rho_a": 0.4923,
+    "rho_b": 0.4258,
+    "d": 0.0665,
+    "lb95": 0.0402,
+    "ci95": [
+     0.0354,
+     0.1005
+    ],
+    "sd": 0.01634,
+    "p": 2.3e-05,
+    "draws": 2000
+   },
+   "debut": {
+    "computable": true,
+    "n": 370,
+    "players": 230,
+    "rho_a": 0.6114,
+    "rho_b": 0.5228,
+    "d": 0.0886,
+    "lb95": 0.066,
+    "ci95": [
+     0.0613,
+     0.1191
+    ],
+    "sd": 0.01447,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "promotion_dependent": false
+  },
+  "fb": {
+   "counts": {
+    "rows": 4302,
+    "um_and_debut": 2007,
+    "um_no_debut": 912,
+    "no_um_no_debut": 1030,
+    "no_um_debut": 353,
+    "share_of_non_debuts_with_um": 0.4696,
+    "share_of_um_that_debuted": 0.6876
+   },
+   "tool": "fb",
+   "admitted": [
+    "k_rw",
+    "pbf_raw",
+    "pbp_swstr"
+   ],
+   "pooled": {
+    "computable": true,
+    "n": 2919,
+    "players": 1513,
+    "rho_a": 0.4706,
+    "rho_b": 0.2942,
+    "d": 0.1764,
+    "lb95": 0.1539,
+    "ci95": [
+     0.1494,
+     0.2025
+    ],
+    "sd": 0.01341,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "non_debut": {
+    "computable": true,
+    "n": 912,
+    "players": 524,
+    "rho_a": 0.4594,
+    "rho_b": 0.2971,
+    "d": 0.1623,
+    "lb95": 0.1196,
+    "ci95": [
+     0.1113,
+     0.2128
+    ],
+    "sd": 0.02553,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "debut": {
+    "computable": true,
+    "n": 2007,
+    "players": 989,
+    "rho_a": 0.4512,
+    "rho_b": 0.2756,
+    "d": 0.1756,
+    "lb95": 0.1487,
+    "ci95": [
+     0.1436,
+     0.2094
+    ],
+    "sd": 0.01657,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "promotion_dependent": false
+  },
+  "cmd": {
+   "counts": {
+    "rows": 4301,
+    "um_and_debut": 2005,
+    "um_no_debut": 912,
+    "no_um_no_debut": 1031,
+    "no_um_debut": 353,
+    "share_of_non_debuts_with_um": 0.4694,
+    "share_of_um_that_debuted": 0.6874
+   },
+   "tool": "cmd",
+   "admitted": [
+    "bb_rw",
+    "pbp_fstrike",
+    "pbf_par"
+   ],
+   "pooled": {
+    "computable": true,
+    "n": 2917,
+    "players": 1511,
+    "rho_a": 0.6131,
+    "rho_b": 0.5386,
+    "d": 0.0744,
+    "lb95": 0.062,
+    "ci95": [
+     0.06,
+     0.0891
+    ],
+    "sd": 0.00741,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "non_debut": {
+    "computable": true,
+    "n": 912,
+    "players": 524,
+    "rho_a": 0.5901,
+    "rho_b": 0.5334,
+    "d": 0.0567,
+    "lb95": 0.0372,
+    "ci95": [
+     0.0337,
+     0.0785
+    ],
+    "sd": 0.01135,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "debut": {
+    "computable": true,
+    "n": 2005,
+    "players": 987,
+    "rho_a": 0.6146,
+    "rho_b": 0.5331,
+    "d": 0.0815,
+    "lb95": 0.0668,
+    "ci95": [
+     0.064,
+     0.0993
+    ],
+    "sd": 0.00911,
+    "p": 0.0,
+    "draws": 2000
+   },
+   "promotion_dependent": false
+  }
+ },
+ "A1_promotion_dependent": [],
+ "A2_margins": {
+  "hit": {
+   "tool": "hit",
+   "admitted": [
+    "k_rw",
+    "ppa_par",
+    "babip_rw"
+   ],
+   "subdrivers": {
+    "k_rw": {
+     "without": [
+      "ppa_par",
+      "babip_rw"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.5999,
+        "rho_b": 0.3457,
+        "d": 0.2542,
+        "lb95": 0.2146,
+        "ci95": [
+         0.2063,
+         0.3045
+        ],
+        "sd": 0.02467,
+        "p": 0.0,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.3457,
+        "rho_b": 0.2979,
+        "d": 0.0478,
+        "lb95": 0.0306,
+        "ci95": [
+         0.027,
+         0.0678
+        ],
+        "sd": 0.01037,
+        "p": 2e-06,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2704,
+        "players": 1334,
+        "rho_a": 0.7099,
+        "rho_b": 0.4708,
+        "d": 0.239,
+        "lb95": 0.2156,
+        "ci95": [
+         0.2105,
+         0.2679
+        ],
+        "sd": 0.01441,
+        "p": 0.0,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2704,
+        "players": 1334,
+        "rho_a": 0.4708,
+        "rho_b": 0.4358,
+        "d": 0.0351,
+        "lb95": 0.0241,
+        "ci95": [
+         0.0219,
+         0.048
+        ],
+        "sd": 0.00666,
+        "p": 0.0,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": false
+    },
+    "ppa_par": {
+     "without": [
+      "k_rw",
+      "babip_rw"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.5999,
+        "rho_b": 0.6004,
+        "d": -0.0004,
+        "lb95": -0.0029,
+        "ci95": [
+         -0.0033,
+         0.0023
+        ],
+        "sd": 0.00141,
+        "p": 0.615492,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.6004,
+        "rho_b": 0.2979,
+        "d": 0.3024,
+        "lb95": 0.2592,
+        "ci95": [
+         0.253,
+         0.3559
+        ],
+        "sd": 0.02708,
+        "p": 0.0,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2704,
+        "players": 1334,
+        "rho_a": 0.7099,
+        "rho_b": 0.7102,
+        "d": -0.0003,
+        "lb95": -0.0015,
+        "ci95": [
+         -0.0017,
+         0.0011
+        ],
+        "sd": 0.00072,
+        "p": 0.661259,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2704,
+        "players": 1334,
+        "rho_a": 0.7102,
+        "rho_b": 0.4358,
+        "d": 0.2744,
+        "lb95": 0.2485,
+        "ci95": [
+         0.2432,
+         0.3067
+        ],
+        "sd": 0.01591,
+        "p": 0.0,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": true
+    },
+    "babip_rw": {
+     "without": [
+      "k_rw",
+      "ppa_par"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.5999,
+        "rho_b": 0.5771,
+        "d": 0.0228,
+        "lb95": 0.0089,
+        "ci95": [
+         0.0061,
+         0.0395
+        ],
+        "sd": 0.00849,
+        "p": 0.00358,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.5771,
+        "rho_b": 0.2979,
+        "d": 0.2792,
+        "lb95": 0.24,
+        "ci95": [
+         0.2335,
+         0.3286
+        ],
+        "sd": 0.02365,
+        "p": 0.0,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2704,
+        "players": 1334,
+        "rho_a": 0.7099,
+        "rho_b": 0.6867,
+        "d": 0.0231,
+        "lb95": 0.0166,
+        "ci95": [
+         0.0154,
+         0.0312
+        ],
+        "sd": 0.00408,
+        "p": 0.0,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2704,
+        "players": 1334,
+        "rho_a": 0.6867,
+        "rho_b": 0.4358,
+        "d": 0.2509,
+        "lb95": 0.2268,
+        "ci95": [
+         0.2224,
+         0.2812
+        ],
+        "sd": 0.01476,
+        "p": 0.0,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": false
+    }
+   }
+  },
+  "game_pwr": {
+   "tool": "game_pwr",
+   "admitted": [
+    "iso_rw",
+    "bb_fb"
+   ],
+   "subdrivers": {
+    "iso_rw": {
+     "without": [
+      "bb_fb"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.5732,
+        "rho_b": 0.5581,
+        "d": 0.015,
+        "lb95": 0.0048,
+        "ci95": [
+         0.0027,
+         0.0278
+        ],
+        "sd": 0.00638,
+        "p": 0.009226,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.5581,
+        "rho_b": 0.5394,
+        "d": 0.0187,
+        "lb95": 0.0078,
+        "ci95": [
+         0.0058,
+         0.0312
+        ],
+        "sd": 0.00648,
+        "p": 0.001974,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2705,
+        "players": 1334,
+        "rho_a": 0.6332,
+        "rho_b": 0.605,
+        "d": 0.0282,
+        "lb95": 0.0215,
+        "ci95": [
+         0.0202,
+         0.0366
+        ],
+        "sd": 0.00417,
+        "p": 0.0,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2705,
+        "players": 1334,
+        "rho_a": 0.605,
+        "rho_b": 0.5941,
+        "d": 0.011,
+        "lb95": 0.0041,
+        "ci95": [
+         0.0027,
+         0.0192
+        ],
+        "sd": 0.00423,
+        "p": 0.004791,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": false
+    },
+    "bb_fb": {
+     "without": [
+      "iso_rw"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.5732,
+        "rho_b": 0.565,
+        "d": 0.0082,
+        "lb95": 0.0025,
+        "ci95": [
+         0.0015,
+         0.015
+        ],
+        "sd": 0.00343,
+        "p": 0.008423,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1385,
+        "players": 602,
+        "rho_a": 0.565,
+        "rho_b": 0.5394,
+        "d": 0.0255,
+        "lb95": 0.0131,
+        "ci95": [
+         0.0105,
+         0.0415
+        ],
+        "sd": 0.00796,
+        "p": 0.00068,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2705,
+        "players": 1334,
+        "rho_a": 0.6332,
+        "rho_b": 0.6308,
+        "d": 0.0024,
+        "lb95": -0.0015,
+        "ci95": [
+         -0.0022,
+         0.0071
+        ],
+        "sd": 0.0024,
+        "p": 0.161679,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2705,
+        "players": 1334,
+        "rho_a": 0.6308,
+        "rho_b": 0.5941,
+        "d": 0.0368,
+        "lb95": 0.0289,
+        "ci95": [
+         0.0272,
+         0.0458
+        ],
+        "sd": 0.00476,
+        "p": 0.0,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": false
+    }
+   }
+  },
+  "fb": {
+   "tool": "fb",
+   "admitted": [
+    "k_rw",
+    "pbf_raw",
+    "pbp_swstr"
+   ],
+   "subdrivers": {
+    "k_rw": {
+     "without": [
+      "pbf_raw",
+      "pbp_swstr"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1932,
+        "players": 896,
+        "rho_a": 0.3617,
+        "rho_b": 0.3489,
+        "d": 0.0127,
+        "lb95": -0.0072,
+        "ci95": [
+         -0.011,
+         0.0363
+        ],
+        "sd": 0.01206,
+        "p": 0.14537,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1932,
+        "players": 896,
+        "rho_a": 0.3489,
+        "rho_b": 0.2933,
+        "d": 0.0556,
+        "lb95": 0.0336,
+        "ci95": [
+         0.0301,
+         0.0827
+        ],
+        "sd": 0.01346,
+        "p": 1.8e-05,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2919,
+        "players": 1513,
+        "rho_a": 0.4706,
+        "rho_b": 0.3847,
+        "d": 0.0859,
+        "lb95": 0.072,
+        "ci95": [
+         0.0697,
+         0.1015
+        ],
+        "sd": 0.00832,
+        "p": 0.0,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2919,
+        "players": 1513,
+        "rho_a": 0.3847,
+        "rho_b": 0.2942,
+        "d": 0.0905,
+        "lb95": 0.0726,
+        "ci95": [
+         0.0679,
+         0.1119
+        ],
+        "sd": 0.01116,
+        "p": 0.0,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": false
+    },
+    "pbf_raw": {
+     "without": [
+      "k_rw",
+      "pbp_swstr"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1932,
+        "players": 896,
+        "rho_a": 0.3617,
+        "rho_b": 0.3576,
+        "d": 0.0041,
+        "lb95": -0.0011,
+        "ci95": [
+         -0.0022,
+         0.01
+        ],
+        "sd": 0.00316,
+        "p": 0.099431,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1932,
+        "players": 896,
+        "rho_a": 0.3576,
+        "rho_b": 0.2933,
+        "d": 0.0643,
+        "lb95": 0.0336,
+        "ci95": [
+         0.0275,
+         0.0999
+        ],
+        "sd": 0.01861,
+        "p": 0.000273,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2919,
+        "players": 1513,
+        "rho_a": 0.4706,
+        "rho_b": 0.4641,
+        "d": 0.0065,
+        "lb95": 0.002,
+        "ci95": [
+         0.0013,
+         0.0115
+        ],
+        "sd": 0.00264,
+        "p": 0.007057,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2919,
+        "players": 1513,
+        "rho_a": 0.4641,
+        "rho_b": 0.2942,
+        "d": 0.1699,
+        "lb95": 0.1485,
+        "ci95": [
+         0.1444,
+         0.1954
+        ],
+        "sd": 0.013,
+        "p": 0.0,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": false
+    },
+    "pbp_swstr": {
+     "without": [
+      "k_rw",
+      "pbf_raw"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1932,
+        "players": 896,
+        "rho_a": 0.3617,
+        "rho_b": 0.3578,
+        "d": 0.0038,
+        "lb95": -0.001,
+        "ci95": [
+         -0.0019,
+         0.0099
+        ],
+        "sd": 0.00295,
+        "p": 0.09797,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1932,
+        "players": 896,
+        "rho_a": 0.3578,
+        "rho_b": 0.2933,
+        "d": 0.0646,
+        "lb95": 0.0331,
+        "ci95": [
+         0.026,
+         0.1014
+        ],
+        "sd": 0.01918,
+        "p": 0.000381,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2919,
+        "players": 1513,
+        "rho_a": 0.4706,
+        "rho_b": 0.4698,
+        "d": 0.0008,
+        "lb95": -0.0027,
+        "ci95": [
+         -0.0035,
+         0.0052
+        ],
+        "sd": 0.00217,
+        "p": 0.359207,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2919,
+        "players": 1513,
+        "rho_a": 0.4698,
+        "rho_b": 0.2942,
+        "d": 0.1756,
+        "lb95": 0.1529,
+        "ci95": [
+         0.1486,
+         0.2012
+        ],
+        "sd": 0.01336,
+        "p": 0.0,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": true
+    }
+   }
+  },
+  "cmd": {
+   "tool": "cmd",
+   "admitted": [
+    "bb_rw",
+    "pbp_fstrike",
+    "pbf_par"
+   ],
+   "subdrivers": {
+    "bb_rw": {
+     "without": [
+      "pbp_fstrike",
+      "pbf_par"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1931,
+        "players": 895,
+        "rho_a": 0.4181,
+        "rho_b": 0.3906,
+        "d": 0.0275,
+        "lb95": 0.0137,
+        "ci95": [
+         0.0112,
+         0.044
+        ],
+        "sd": 0.00853,
+        "p": 0.00063,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1931,
+        "players": 895,
+        "rho_a": 0.3906,
+        "rho_b": 0.377,
+        "d": 0.0136,
+        "lb95": 0.0025,
+        "ci95": [
+         -0.0002,
+         0.0277
+        ],
+        "sd": 0.00697,
+        "p": 0.025536,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2917,
+        "players": 1511,
+        "rho_a": 0.6131,
+        "rho_b": 0.5616,
+        "d": 0.0514,
+        "lb95": 0.0413,
+        "ci95": [
+         0.0393,
+         0.0637
+        ],
+        "sd": 0.00619,
+        "p": 0.0,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2917,
+        "players": 1511,
+        "rho_a": 0.5616,
+        "rho_b": 0.5386,
+        "d": 0.023,
+        "lb95": 0.015,
+        "ci95": [
+         0.0133,
+         0.0323
+        ],
+        "sd": 0.00487,
+        "p": 1e-06,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": false
+    },
+    "pbp_fstrike": {
+     "without": [
+      "bb_rw",
+      "pbf_par"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1931,
+        "players": 895,
+        "rho_a": 0.4181,
+        "rho_b": 0.4165,
+        "d": 0.0016,
+        "lb95": -0.0039,
+        "ci95": [
+         -0.0051,
+         0.0084
+        ],
+        "sd": 0.00344,
+        "p": 0.319044,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1931,
+        "players": 895,
+        "rho_a": 0.4165,
+        "rho_b": 0.377,
+        "d": 0.0395,
+        "lb95": 0.0233,
+        "ci95": [
+         0.0199,
+         0.0597
+        ],
+        "sd": 0.01012,
+        "p": 4.8e-05,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2917,
+        "players": 1511,
+        "rho_a": 0.6131,
+        "rho_b": 0.6077,
+        "d": 0.0054,
+        "lb95": 0.0017,
+        "ci95": [
+         0.001,
+         0.01
+        ],
+        "sd": 0.00235,
+        "p": 0.010926,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2917,
+        "players": 1511,
+        "rho_a": 0.6077,
+        "rho_b": 0.5386,
+        "d": 0.069,
+        "lb95": 0.0571,
+        "ci95": [
+         0.0551,
+         0.0836
+        ],
+        "sd": 0.0074,
+        "p": 0.0,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": false
+    },
+    "pbf_par": {
+     "without": [
+      "bb_rw",
+      "pbp_fstrike"
+     ],
+     "labels": {
+      "mlb": {
+       "given_others": {
+        "computable": true,
+        "n": 1931,
+        "players": 895,
+        "rho_a": 0.4181,
+        "rho_b": 0.4157,
+        "d": 0.0024,
+        "lb95": 0.0004,
+        "ci95": [
+         0.0,
+         0.005
+        ],
+        "sd": 0.00126,
+        "p": 0.025729,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 1931,
+        "players": 895,
+        "rho_a": 0.4157,
+        "rho_b": 0.377,
+        "d": 0.0386,
+        "lb95": 0.0223,
+        "ci95": [
+         0.0188,
+         0.0594
+        ],
+        "sd": 0.01034,
+        "p": 9.3e-05,
+        "draws": 2000
+       }
+      },
+      "um": {
+       "given_others": {
+        "computable": true,
+        "n": 2917,
+        "players": 1511,
+        "rho_a": 0.6131,
+        "rho_b": 0.611,
+        "d": 0.002,
+        "lb95": 0.0005,
+        "ci95": [
+         0.0003,
+         0.0038
+        ],
+        "sd": 0.00089,
+        "p": 0.010443,
+        "draws": 2000
+       },
+       "reduced_vs_consensus": {
+        "computable": true,
+        "n": 2917,
+        "players": 1511,
+        "rho_a": 0.611,
+        "rho_b": 0.5386,
+        "d": 0.0724,
+        "lb95": 0.0605,
+        "ci95": [
+         0.0578,
+         0.0869
+        ],
+        "sd": 0.00728,
+        "p": 0.0,
+        "draws": 2000
+       }
+      }
+     },
+     "no_added_effect": false
+    }
+   }
+  }
+ },
+ "A2_no_added_effect": {
+  "hit": [
+   "ppa_par"
+  ],
+  "game_pwr": [],
+  "fb": [
+   "pbp_swstr"
+  ],
+  "cmd": []
+ },
+ "A3_part_p3_rerun": {
+  "disclosure": "a registered read (gate Part P.3) re-run once because of a code defect (R4, pitch-rate exposure on the fallback basis)",
+  "tests": 232,
+  "flagged": [],
+  "min_q": 0.10572,
+  "original_tests": 232,
+  "original_flagged": 0,
+  "redundancy": {
+   "ppa_raw_hit": {
+    "bb_pct_rel_hit": {
+     "rho": 0.611,
+     "n": 17992
+    },
+    "k_pct_rel_hit": {
+     "rho": 0.3788,
+     "n": 17992
+    },
+    "coverage_rows": 17992
+   },
+   "ppa_par_hit": {
+    "bb_pct_rel_hit": {
+     "rho": 0.6372,
+     "n": 17689
+    },
+    "k_pct_rel_hit": {
+     "rho": 0.3865,
+     "n": 17689
+    },
+    "coverage_rows": 17689
+   },
+   "pbf_raw_pit": {
+    "bb_pct_rel_pit": {
+     "rho": 0.4821,
+     "n": 18546
+    },
+    "k_pct_rel_pit": {
+     "rho": 0.4728,
+     "n": 18546
+    },
+    "coverage_rows": 18546
+   },
+   "pbf_par_pit": {
+    "bb_pct_rel_pit": {
+     "rho": 0.4668,
+     "n": 18219
+    },
+    "k_pct_rel_pit": {
+     "rho": 0.4616,
+     "n": 18219
+    },
+    "coverage_rows": 18219
+   },
+   "pip_raw_pit": {
+    "bb_pct_rel_pit": {
+     "rho": 0.6579,
+     "n": 18546
+    },
+    "k_pct_rel_pit": {
+     "rho": 0.0619,
+     "n": 18546
+    },
+    "coverage_rows": 18546
+   },
+   "pip_par_pit": {
+    "bb_pct_rel_pit": {
+     "rho": 0.6497,
+     "n": 18219
+    },
+    "k_pct_rel_pit": {
+     "rho": 0.0426,
+     "n": 18219
+    },
+    "coverage_rows": 18219
+   }
+  },
+  "seconds": 61.4,
+  "fwar_vintage": "2026-10-02-0341299c20ec",
+  "rows": [
+   {
+    "n": 454,
+    "players": 432,
+    "pos": 139,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5067,
+    "model_c": 0.7235,
+    "model_cm": 0.7228,
+    "incr": -0.0007,
+    "ci95": [
+     -0.0043,
+     0.0028
+    ],
+    "sd": 0.0018,
+    "p": 0.7176394029335702,
+    "side": "hit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 454,
+    "players": 432,
+    "pos": 139,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.4984,
+    "model_c": 0.7235,
+    "model_cm": 0.7217,
+    "incr": -0.0017,
+    "ci95": [
+     -0.0054,
+     0.0017
+    ],
+    "sd": 0.0018,
+    "p": 0.331721577237049,
+    "side": "hit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.663443
+   },
+   {
+    "n": 283,
+    "players": 263,
+    "pos": 159,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5205,
+    "model_c": 0.6887,
+    "model_cm": 0.6772,
+    "incr": -0.0114,
+    "ci95": [
+     -0.0242,
+     0.002
+    ],
+    "sd": 0.00688,
+    "p": 0.09642970871033985,
+    "side": "hit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.422266
+   },
+   {
+    "n": 283,
+    "players": 263,
+    "pos": 159,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5207,
+    "model_c": 0.6887,
+    "model_cm": 0.6785,
+    "incr": -0.0102,
+    "ci95": [
+     -0.0227,
+     0.0027
+    ],
+    "sd": 0.00657,
+    "p": 0.12165727667509518,
+    "side": "hit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.422266
+   },
+   {
+    "n": 454,
+    "players": 432,
+    "pos": 139,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.1411,
+    "model_c": 0.1421,
+    "model_cm": 0.2092,
+    "incr": 0.0671,
+    "ci95": [
+     0.0072,
+     0.129
+    ],
+    "sd": 0.03074,
+    "p": 0.02914190029111796,
+    "side": "hit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.509606
+   },
+   {
+    "n": 454,
+    "players": 432,
+    "pos": 139,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.1409,
+    "model_c": 0.1421,
+    "model_cm": 0.215,
+    "incr": 0.0729,
+    "ci95": [
+     0.0123,
+     0.1366
+    ],
+    "sd": 0.03148,
+    "p": 0.020597503617999502,
+    "side": "hit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.509606
+   },
+   {
+    "n": 283,
+    "players": 263,
+    "pos": 81,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.0992,
+    "model_c": 0.1663,
+    "model_cm": 0.1842,
+    "incr": 0.0179,
+    "ci95": [
+     -0.0321,
+     0.0694
+    ],
+    "sd": 0.02566,
+    "p": 0.4864238943629262,
+    "side": "hit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 283,
+    "players": 263,
+    "pos": 81,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.1005,
+    "model_c": 0.1663,
+    "model_cm": 0.1883,
+    "incr": 0.022,
+    "ci95": [
+     -0.0273,
+     0.0749
+    ],
+    "sd": 0.0259,
+    "p": 0.39487778071449675,
+    "side": "hit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 384,
+    "players": 364,
+    "pos": 118,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5106,
+    "model_c": 0.7521,
+    "model_cm": 0.7475,
+    "incr": -0.0047,
+    "ci95": [
+     -0.0094,
+     0.0001
+    ],
+    "sd": 0.0024,
+    "p": 0.05261004986374984,
+    "side": "hit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.283285
+   },
+   {
+    "n": 384,
+    "players": 364,
+    "pos": 118,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5052,
+    "model_c": 0.7521,
+    "model_cm": 0.7482,
+    "incr": -0.0039,
+    "ci95": [
+     -0.0097,
+     0.0016
+    ],
+    "sd": 0.00286,
+    "p": 0.17063287580363107,
+    "side": "hit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.499284
+   },
+   {
+    "n": 252,
+    "players": 233,
+    "pos": 140,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.519,
+    "model_c": 0.7168,
+    "model_cm": 0.7091,
+    "incr": -0.0077,
+    "ci95": [
+     -0.0198,
+     0.0041
+    ],
+    "sd": 0.00599,
+    "p": 0.19580013253435236,
+    "side": "hit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.436515
+   },
+   {
+    "n": 252,
+    "players": 233,
+    "pos": 140,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5212,
+    "model_c": 0.7168,
+    "model_cm": 0.7114,
+    "incr": -0.0055,
+    "ci95": [
+     -0.0161,
+     0.005
+    ],
+    "sd": 0.00535,
+    "p": 0.3081003859666156,
+    "side": "hit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.508066
+   },
+   {
+    "n": 384,
+    "players": 364,
+    "pos": 118,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.1507,
+    "model_c": 0.1567,
+    "model_cm": 0.2064,
+    "incr": 0.0496,
+    "ci95": [
+     -0.0122,
+     0.1105
+    ],
+    "sd": 0.03185,
+    "p": 0.11931627749276341,
+    "side": "hit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.599683
+   },
+   {
+    "n": 384,
+    "players": 364,
+    "pos": 118,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.1518,
+    "model_c": 0.1567,
+    "model_cm": 0.2146,
+    "incr": 0.0579,
+    "ci95": [
+     -0.0068,
+     0.122
+    ],
+    "sd": 0.03288,
+    "p": 0.07835906437585693,
+    "side": "hit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.572663
+   },
+   {
+    "n": 252,
+    "players": 233,
+    "pos": 72,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.1018,
+    "model_c": 0.2009,
+    "model_cm": 0.2143,
+    "incr": 0.0134,
+    "ci95": [
+     -0.0311,
+     0.0601
+    ],
+    "sd": 0.02351,
+    "p": 0.5685765541693986,
+    "side": "hit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 252,
+    "players": 233,
+    "pos": 72,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.1064,
+    "model_c": 0.2009,
+    "model_cm": 0.2167,
+    "incr": 0.0158,
+    "ci95": [
+     -0.0287,
+     0.0615
+    ],
+    "sd": 0.02373,
+    "p": 0.5059550606195176,
+    "side": "hit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 280,
+    "players": 279,
+    "pos": 155,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4802,
+    "model_c": 0.7501,
+    "model_cm": 0.7498,
+    "incr": -0.0003,
+    "ci95": [
+     -0.0092,
+     0.0083
+    ],
+    "sd": 0.00441,
+    "p": 0.9486757492135982,
+    "side": "hit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 280,
+    "players": 279,
+    "pos": 155,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4738,
+    "model_c": 0.7501,
+    "model_cm": 0.7499,
+    "incr": -0.0002,
+    "ci95": [
+     -0.0108,
+     0.0098
+    ],
+    "sd": 0.00522,
+    "p": 0.9645107285332988,
+    "side": "hit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 280,
+    "players": 279,
+    "pos": 155,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.0522,
+    "model_c": 0.2327,
+    "model_cm": 0.214,
+    "incr": -0.0188,
+    "ci95": [
+     -0.0487,
+     0.0107
+    ],
+    "sd": 0.01519,
+    "p": 0.21631038611274755,
+    "side": "hit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 280,
+    "players": 279,
+    "pos": 155,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.0418,
+    "model_c": 0.2327,
+    "model_cm": 0.2083,
+    "incr": -0.0245,
+    "ci95": [
+     -0.0594,
+     0.0098
+    ],
+    "sd": 0.01786,
+    "p": 0.17058358814084285,
+    "side": "hit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.665276
+   },
+   {
+    "n": 218,
+    "players": 218,
+    "pos": 119,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4501,
+    "model_c": 0.7698,
+    "model_cm": 0.7804,
+    "incr": 0.0106,
+    "ci95": [
+     -0.0078,
+     0.0305
+    ],
+    "sd": 0.00981,
+    "p": 0.2794389720576873,
+    "side": "hit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.611273
+   },
+   {
+    "n": 218,
+    "players": 218,
+    "pos": 119,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4468,
+    "model_c": 0.7698,
+    "model_cm": 0.7802,
+    "incr": 0.0104,
+    "ci95": [
+     -0.0106,
+     0.0335
+    ],
+    "sd": 0.01122,
+    "p": 0.35209704996943536,
+    "side": "hit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.684633
+   },
+   {
+    "n": 218,
+    "players": 218,
+    "pos": 119,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.0822,
+    "model_c": 0.2207,
+    "model_cm": 0.2135,
+    "incr": -0.0071,
+    "ci95": [
+     -0.0468,
+     0.0324
+    ],
+    "sd": 0.02018,
+    "p": 0.7235738604090531,
+    "side": "hit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.88137
+   },
+   {
+    "n": 218,
+    "players": 218,
+    "pos": 119,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.0721,
+    "model_c": 0.2207,
+    "model_cm": 0.2143,
+    "incr": -0.0063,
+    "ci95": [
+     -0.0541,
+     0.0415
+    ],
+    "sd": 0.0249,
+    "p": 0.7994243358997146,
+    "side": "hit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.916987
+   },
+   {
+    "n": 624,
+    "players": 536,
+    "pos": 491,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5081,
+    "model_c": 0.7654,
+    "model_cm": 0.7616,
+    "incr": -0.0037,
+    "ci95": [
+     -0.009,
+     0.001
+    ],
+    "sd": 0.00259,
+    "p": 0.1491228834092544,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.497076
+   },
+   {
+    "n": 624,
+    "players": 536,
+    "pos": 491,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5214,
+    "model_c": 0.7654,
+    "model_cm": 0.7619,
+    "incr": -0.0035,
+    "ci95": [
+     -0.0089,
+     0.0017
+    ],
+    "sd": 0.00273,
+    "p": 0.20092970111743758,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.520929
+   },
+   {
+    "n": 488,
+    "players": 401,
+    "pos": 415,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.477,
+    "model_c": 0.7859,
+    "model_cm": 0.7905,
+    "incr": 0.0046,
+    "ci95": [
+     -0.0099,
+     0.0189
+    ],
+    "sd": 0.00734,
+    "p": 0.5333837688876868,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.650415
+   },
+   {
+    "n": 488,
+    "players": 401,
+    "pos": 415,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.4749,
+    "model_c": 0.7859,
+    "model_cm": 0.7876,
+    "incr": 0.0017,
+    "ci95": [
+     -0.011,
+     0.0137
+    ],
+    "sd": 0.00636,
+    "p": 0.7932460753968866,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.81591
+   },
+   {
+    "n": 624,
+    "players": 536,
+    "pos": 491,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": -0.0248,
+    "model_c": 0.2661,
+    "model_cm": 0.2594,
+    "incr": -0.0066,
+    "ci95": [
+     -0.0226,
+     0.0092
+    ],
+    "sd": 0.00816,
+    "p": 0.41798205626228757,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.776442
+   },
+   {
+    "n": 624,
+    "players": 536,
+    "pos": 491,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": -0.0266,
+    "model_c": 0.2661,
+    "model_cm": 0.2583,
+    "incr": -0.0078,
+    "ci95": [
+     -0.0241,
+     0.0083
+    ],
+    "sd": 0.00835,
+    "p": 0.3514871909473276,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 488,
+    "players": 401,
+    "pos": 392,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0371,
+    "model_c": 0.2584,
+    "model_cm": 0.2628,
+    "incr": 0.0044,
+    "ci95": [
+     -0.0131,
+     0.0221
+    ],
+    "sd": 0.00909,
+    "p": 0.6281331922411082,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 488,
+    "players": 401,
+    "pos": 392,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0329,
+    "model_c": 0.2584,
+    "model_cm": 0.2632,
+    "incr": 0.0047,
+    "ci95": [
+     -0.0124,
+     0.022
+    ],
+    "sd": 0.00894,
+    "p": 0.5965284481923079,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 184,
+    "players": 154,
+    "pos": 131,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5315,
+    "model_c": 0.7292,
+    "model_cm": 0.7295,
+    "incr": 0.0004,
+    "ci95": [
+     -0.0245,
+     0.0233
+    ],
+    "sd": 0.01227,
+    "p": 0.9765886740765353,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "COF",
+    "metric": "ppa_raw_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 184,
+    "players": 154,
+    "pos": 131,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5653,
+    "model_c": 0.7292,
+    "model_cm": 0.7312,
+    "incr": 0.0021,
+    "ci95": [
+     -0.0234,
+     0.027
+    ],
+    "sd": 0.01303,
+    "p": 0.8726613595602617,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "COF",
+    "metric": "ppa_par_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 184,
+    "players": 154,
+    "pos": 131,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": -0.0294,
+    "model_c": 0.1603,
+    "model_cm": 0.1718,
+    "incr": 0.0115,
+    "ci95": [
+     -0.0325,
+     0.0534
+    ],
+    "sd": 0.02259,
+    "p": 0.6121711493630979,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "COF",
+    "metric": "ppa_raw_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.842287
+   },
+   {
+    "n": 184,
+    "players": 154,
+    "pos": 131,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": -0.0157,
+    "model_c": 0.1603,
+    "model_cm": 0.1521,
+    "incr": -0.0082,
+    "ci95": [
+     -0.0477,
+     0.0278
+    ],
+    "sd": 0.01908,
+    "p": 0.6674971012843676,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "COF",
+    "metric": "ppa_par_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.88137
+   },
+   {
+    "n": 510,
+    "players": 447,
+    "pos": 409,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.4763,
+    "model_c": 0.7821,
+    "model_cm": 0.7802,
+    "incr": -0.0019,
+    "ci95": [
+     -0.0117,
+     0.0077
+    ],
+    "sd": 0.00491,
+    "p": 0.696910651771081,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.979275
+   },
+   {
+    "n": 510,
+    "players": 447,
+    "pos": 409,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.4885,
+    "model_c": 0.7821,
+    "model_cm": 0.7798,
+    "incr": -0.0023,
+    "ci95": [
+     -0.0114,
+     0.0063
+    ],
+    "sd": 0.00456,
+    "p": 0.6140300883876904,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 411,
+    "players": 348,
+    "pos": 354,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.4369,
+    "model_c": 0.7787,
+    "model_cm": 0.8085,
+    "incr": 0.0297,
+    "ci95": [
+     0.0028,
+     0.0584
+    ],
+    "sd": 0.01431,
+    "p": 0.03771466728956385,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.38771
+   },
+   {
+    "n": 411,
+    "players": 348,
+    "pos": 354,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.4349,
+    "model_c": 0.7787,
+    "model_cm": 0.8059,
+    "incr": 0.0272,
+    "ci95": [
+     0.0014,
+     0.0538
+    ],
+    "sd": 0.01341,
+    "p": 0.04246618913419642,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.38771
+   },
+   {
+    "n": 510,
+    "players": 447,
+    "pos": 409,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": -0.0062,
+    "model_c": 0.2757,
+    "model_cm": 0.2712,
+    "incr": -0.0045,
+    "ci95": [
+     -0.0187,
+     0.0099
+    ],
+    "sd": 0.00722,
+    "p": 0.5345838797351061,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.804891
+   },
+   {
+    "n": 510,
+    "players": 447,
+    "pos": 409,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": -0.0067,
+    "model_c": 0.2757,
+    "model_cm": 0.2731,
+    "incr": -0.0026,
+    "ci95": [
+     -0.0173,
+     0.0123
+    ],
+    "sd": 0.00755,
+    "p": 0.7297917437338617,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.88137
+   },
+   {
+    "n": 411,
+    "players": 348,
+    "pos": 334,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0612,
+    "model_c": 0.2694,
+    "model_cm": 0.2795,
+    "incr": 0.01,
+    "ci95": [
+     -0.0112,
+     0.0336
+    ],
+    "sd": 0.01144,
+    "p": 0.3805927832416387,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 411,
+    "players": 348,
+    "pos": 334,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0569,
+    "model_c": 0.2694,
+    "model_cm": 0.2786,
+    "incr": 0.0092,
+    "ci95": [
+     -0.013,
+     0.0338
+    ],
+    "sd": 0.0117,
+    "p": 0.4332123849256144,
+    "side": "hit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 219,
+    "players": 210,
+    "pos": 196,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.0226,
+    "model_c": 0.2979,
+    "model_cm": 0.3216,
+    "incr": 0.0237,
+    "ci95": [
+     -0.0095,
+     0.0576
+    ],
+    "sd": 0.01725,
+    "p": 0.17031499503503644,
+    "side": "hit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.665276
+   },
+   {
+    "n": 214,
+    "players": 207,
+    "pos": 191,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": -0.0188,
+    "model_c": 0.2982,
+    "model_cm": 0.3179,
+    "incr": 0.0197,
+    "ci95": [
+     -0.0209,
+     0.0576
+    ],
+    "sd": 0.02029,
+    "p": 0.3317029405468028,
+    "side": "hit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 178,
+    "players": 169,
+    "pos": 157,
+    "seasons": [
+     2011,
+     2018
+    ],
+    "raw": -0.0113,
+    "model_c": 0.2447,
+    "model_cm": 0.2791,
+    "incr": 0.0344,
+    "ci95": [
+     -0.018,
+     0.089
+    ],
+    "sd": 0.02726,
+    "p": 0.20722324172344675,
+    "side": "hit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 173,
+    "players": 166,
+    "pos": 152,
+    "seasons": [
+     2012,
+     2018
+    ],
+    "raw": 0.0053,
+    "model_c": 0.2518,
+    "model_cm": 0.2761,
+    "incr": 0.0243,
+    "ci95": [
+     -0.0208,
+     0.0742
+    ],
+    "sd": 0.02466,
+    "p": 0.3237373649945927,
+    "side": "hit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 212,
+    "players": 203,
+    "pos": 189,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.0241,
+    "model_c": 0.2972,
+    "model_cm": 0.3275,
+    "incr": 0.0303,
+    "ci95": [
+     -0.0069,
+     0.0721
+    ],
+    "sd": 0.01966,
+    "p": 0.12301183377521574,
+    "side": "hit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.599683
+   },
+   {
+    "n": 207,
+    "players": 200,
+    "pos": 184,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": -0.0165,
+    "model_c": 0.2996,
+    "model_cm": 0.3172,
+    "incr": 0.0177,
+    "ci95": [
+     -0.0228,
+     0.0579
+    ],
+    "sd": 0.02041,
+    "p": 0.3861098512533554,
+    "side": "hit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.77222
+   },
+   {
+    "n": 176,
+    "players": 167,
+    "pos": 155,
+    "seasons": [
+     2011,
+     2018
+    ],
+    "raw": -0.0009,
+    "model_c": 0.247,
+    "model_cm": 0.2681,
+    "incr": 0.0211,
+    "ci95": [
+     -0.029,
+     0.0691
+    ],
+    "sd": 0.02525,
+    "p": 0.4037455816353379,
+    "side": "hit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_raw_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 171,
+    "players": 164,
+    "pos": 150,
+    "seasons": [
+     2012,
+     2018
+    ],
+    "raw": 0.0161,
+    "model_c": 0.266,
+    "model_cm": 0.2721,
+    "incr": 0.0061,
+    "ci95": [
+     -0.0356,
+     0.0528
+    ],
+    "sd": 0.02272,
+    "p": 0.7871311752142973,
+    "side": "hit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "ppa_par_hit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 334,
+    "players": 307,
+    "pos": 141,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5369,
+    "model_c": 0.6252,
+    "model_cm": 0.6299,
+    "incr": 0.0047,
+    "ci95": [
+     -0.0154,
+     0.0242
+    ],
+    "sd": 0.01009,
+    "p": 0.6410953113534097,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 334,
+    "players": 307,
+    "pos": 141,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5521,
+    "model_c": 0.6252,
+    "model_cm": 0.6279,
+    "incr": 0.0027,
+    "ci95": [
+     -0.0133,
+     0.0188
+    ],
+    "sd": 0.00827,
+    "p": 0.7456577891982028,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 334,
+    "players": 307,
+    "pos": 141,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.4821,
+    "model_c": 0.6252,
+    "model_cm": 0.612,
+    "incr": -0.0132,
+    "ci95": [
+     -0.0267,
+     -0.0006
+    ],
+    "sd": 0.00676,
+    "p": 0.050996114148381455,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.283285
+   },
+   {
+    "n": 334,
+    "players": 307,
+    "pos": 141,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.4855,
+    "model_c": 0.6252,
+    "model_cm": 0.6122,
+    "incr": -0.013,
+    "ci95": [
+     -0.0292,
+     0.0027
+    ],
+    "sd": 0.0082,
+    "p": 0.1136679056539891,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.418776
+   },
+   {
+    "n": 229,
+    "players": 203,
+    "pos": 142,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.6035,
+    "model_c": 0.6017,
+    "model_cm": 0.6353,
+    "incr": 0.0336,
+    "ci95": [
+     -0.0036,
+     0.0709
+    ],
+    "sd": 0.01913,
+    "p": 0.07944962324041249,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.422266
+   },
+   {
+    "n": 229,
+    "players": 203,
+    "pos": 142,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5991,
+    "model_c": 0.6017,
+    "model_cm": 0.6236,
+    "incr": 0.0219,
+    "ci95": [
+     -0.0118,
+     0.0572
+    ],
+    "sd": 0.01782,
+    "p": 0.21917781791980961,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.438356
+   },
+   {
+    "n": 229,
+    "players": 203,
+    "pos": 142,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5611,
+    "model_c": 0.6017,
+    "model_cm": 0.5932,
+    "incr": -0.0085,
+    "ci95": [
+     -0.0261,
+     0.0071
+    ],
+    "sd": 0.00847,
+    "p": 0.3133420126004891,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.508066
+   },
+   {
+    "n": 229,
+    "players": 203,
+    "pos": 142,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5474,
+    "model_c": 0.6017,
+    "model_cm": 0.5874,
+    "incr": -0.0143,
+    "ci95": [
+     -0.0298,
+     -0.001
+    ],
+    "sd": 0.00741,
+    "p": 0.05384856909608304,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.38771
+   },
+   {
+    "n": 334,
+    "players": 307,
+    "pos": 141,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0545,
+    "model_c": 0.0218,
+    "model_cm": -0.0037,
+    "incr": -0.0255,
+    "ci95": [
+     -0.075,
+     0.0234
+    ],
+    "sd": 0.0248,
+    "p": 0.3029046536534581,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 334,
+    "players": 307,
+    "pos": 141,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0666,
+    "model_c": 0.0218,
+    "model_cm": -0.0015,
+    "incr": -0.0234,
+    "ci95": [
+     -0.0721,
+     0.0244
+    ],
+    "sd": 0.02485,
+    "p": 0.3466130775082077,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 334,
+    "players": 307,
+    "pos": 141,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0132,
+    "model_c": 0.0218,
+    "model_cm": 0.0082,
+    "incr": -0.0136,
+    "ci95": [
+     -0.0356,
+     0.0085
+    ],
+    "sd": 0.01139,
+    "p": 0.2311682793150791,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 334,
+    "players": 307,
+    "pos": 141,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0046,
+    "model_c": 0.0218,
+    "model_cm": 0.014,
+    "incr": -0.0079,
+    "ci95": [
+     -0.032,
+     0.017
+    ],
+    "sd": 0.01272,
+    "p": 0.5365937302172252,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.804891
+   },
+   {
+    "n": 229,
+    "players": 203,
+    "pos": 104,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.0085,
+    "model_c": 0.0405,
+    "model_cm": 0.0281,
+    "incr": -0.0123,
+    "ci95": [
+     -0.0677,
+     0.0416
+    ],
+    "sd": 0.02772,
+    "p": 0.6560478759775368,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 229,
+    "players": 203,
+    "pos": 104,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.0033,
+    "model_c": 0.0405,
+    "model_cm": 0.045,
+    "incr": 0.0045,
+    "ci95": [
+     -0.0624,
+     0.0727
+    ],
+    "sd": 0.03512,
+    "p": 0.8981122604130816,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 229,
+    "players": 203,
+    "pos": 104,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.021,
+    "model_c": 0.0405,
+    "model_cm": 0.0248,
+    "incr": -0.0157,
+    "ci95": [
+     -0.0633,
+     0.0283
+    ],
+    "sd": 0.02406,
+    "p": 0.513103418790041,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 229,
+    "players": 203,
+    "pos": 104,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.0257,
+    "model_c": 0.0405,
+    "model_cm": 0.0288,
+    "incr": -0.0117,
+    "ci95": [
+     -0.0477,
+     0.0234
+    ],
+    "sd": 0.01853,
+    "p": 0.527915915865595,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 265,
+    "players": 239,
+    "pos": 108,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5422,
+    "model_c": 0.6508,
+    "model_cm": 0.65,
+    "incr": -0.0008,
+    "ci95": [
+     -0.0182,
+     0.016
+    ],
+    "sd": 0.00883,
+    "p": 0.9308083193646994,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 265,
+    "players": 239,
+    "pos": 108,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5649,
+    "model_c": 0.6508,
+    "model_cm": 0.6502,
+    "incr": -0.0006,
+    "ci95": [
+     -0.0194,
+     0.0181
+    ],
+    "sd": 0.00951,
+    "p": 0.9505509632362443,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 265,
+    "players": 239,
+    "pos": 108,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.4816,
+    "model_c": 0.6508,
+    "model_cm": 0.6379,
+    "incr": -0.0129,
+    "ci95": [
+     -0.0275,
+     0.0021
+    ],
+    "sd": 0.00756,
+    "p": 0.08901141714911187,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.346156
+   },
+   {
+    "n": 265,
+    "players": 239,
+    "pos": 108,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.4898,
+    "model_c": 0.6508,
+    "model_cm": 0.6349,
+    "incr": -0.0159,
+    "ci95": [
+     -0.0301,
+     -0.0011
+    ],
+    "sd": 0.00744,
+    "p": 0.03233340806419305,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.237686
+   },
+   {
+    "n": 190,
+    "players": 165,
+    "pos": 117,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.6103,
+    "model_c": 0.6253,
+    "model_cm": 0.6551,
+    "incr": 0.0298,
+    "ci95": [
+     -0.007,
+     0.0681
+    ],
+    "sd": 0.01963,
+    "p": 0.12902585943905565,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.422266
+   },
+   {
+    "n": 190,
+    "players": 165,
+    "pos": 117,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.6089,
+    "model_c": 0.6253,
+    "model_cm": 0.6458,
+    "incr": 0.0205,
+    "ci95": [
+     -0.0158,
+     0.0576
+    ],
+    "sd": 0.01844,
+    "p": 0.2651446182244559,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.47726
+   },
+   {
+    "n": 190,
+    "players": 165,
+    "pos": 117,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5656,
+    "model_c": 0.6253,
+    "model_cm": 0.6187,
+    "incr": -0.0066,
+    "ci95": [
+     -0.0216,
+     0.0071
+    ],
+    "sd": 0.00735,
+    "p": 0.3681093575340222,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.530077
+   },
+   {
+    "n": 190,
+    "players": 165,
+    "pos": 117,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5501,
+    "model_c": 0.6253,
+    "model_cm": 0.6153,
+    "incr": -0.01,
+    "ci95": [
+     -0.0249,
+     0.0047
+    ],
+    "sd": 0.00752,
+    "p": 0.1831269993256428,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.436515
+   },
+   {
+    "n": 265,
+    "players": 239,
+    "pos": 108,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0699,
+    "model_c": 0.0287,
+    "model_cm": -0.0455,
+    "incr": -0.0742,
+    "ci95": [
+     -0.1445,
+     -0.0092
+    ],
+    "sd": 0.0352,
+    "p": 0.03514430057518547,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.509606
+   },
+   {
+    "n": 265,
+    "players": 239,
+    "pos": 108,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.093,
+    "model_c": 0.0287,
+    "model_cm": -0.0286,
+    "incr": -0.0572,
+    "ci95": [
+     -0.1263,
+     0.0066
+    ],
+    "sd": 0.03438,
+    "p": 0.09603236731522147,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.572663
+   },
+   {
+    "n": 265,
+    "players": 239,
+    "pos": 108,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0025,
+    "model_c": 0.0287,
+    "model_cm": -0.0225,
+    "incr": -0.0511,
+    "ci95": [
+     -0.089,
+     -0.0106
+    ],
+    "sd": 0.01981,
+    "p": 0.009825810148845537,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.383207
+   },
+   {
+    "n": 265,
+    "players": 239,
+    "pos": 108,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0101,
+    "model_c": 0.0287,
+    "model_cm": -0.0031,
+    "incr": -0.0317,
+    "ci95": [
+     -0.0677,
+     0.0048
+    ],
+    "sd": 0.01877,
+    "p": 0.09107663068767624,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.572663
+   },
+   {
+    "n": 190,
+    "players": 165,
+    "pos": 83,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.0229,
+    "model_c": 0.049,
+    "model_cm": 0.0648,
+    "incr": 0.0157,
+    "ci95": [
+     -0.0781,
+     0.1056
+    ],
+    "sd": 0.04735,
+    "p": 0.7396931331556098,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 190,
+    "players": 165,
+    "pos": 83,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.0062,
+    "model_c": 0.049,
+    "model_cm": 0.0513,
+    "incr": 0.0023,
+    "ci95": [
+     -0.0805,
+     0.0832
+    ],
+    "sd": 0.04152,
+    "p": 0.9566298702537588,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 190,
+    "players": 165,
+    "pos": 83,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.054,
+    "model_c": 0.049,
+    "model_cm": 0.012,
+    "incr": -0.037,
+    "ci95": [
+     -0.1027,
+     0.0264
+    ],
+    "sd": 0.03335,
+    "p": 0.26675525209501094,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 190,
+    "players": 165,
+    "pos": 83,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.0469,
+    "model_c": 0.049,
+    "model_cm": 0.0064,
+    "incr": -0.0426,
+    "ci95": [
+     -0.0929,
+     0.0065
+    ],
+    "sd": 0.02482,
+    "p": 0.08592844970296776,
+    "side": "pit",
+    "level": "A",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 238,
+    "players": 220,
+    "pos": 93,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5534,
+    "model_c": 0.6567,
+    "model_cm": 0.6614,
+    "incr": 0.0047,
+    "ci95": [
+     -0.0257,
+     0.0352
+    ],
+    "sd": 0.01533,
+    "p": 0.7587129981399345,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 238,
+    "players": 220,
+    "pos": 93,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5788,
+    "model_c": 0.6567,
+    "model_cm": 0.6589,
+    "incr": 0.0022,
+    "ci95": [
+     -0.0279,
+     0.0324
+    ],
+    "sd": 0.01531,
+    "p": 0.8863786055253142,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 238,
+    "players": 220,
+    "pos": 93,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.4967,
+    "model_c": 0.6567,
+    "model_cm": 0.6397,
+    "incr": -0.017,
+    "ci95": [
+     -0.032,
+     -0.0031
+    ],
+    "sd": 0.00725,
+    "p": 0.018903128041620754,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.234755
+   },
+   {
+    "n": 238,
+    "players": 220,
+    "pos": 93,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5009,
+    "model_c": 0.6567,
+    "model_cm": 0.6406,
+    "incr": -0.0161,
+    "ci95": [
+     -0.0306,
+     -0.0029
+    ],
+    "sd": 0.00694,
+    "p": 0.020121847185106567,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.234755
+   },
+   {
+    "n": 173,
+    "players": 155,
+    "pos": 109,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5962,
+    "model_c": 0.6119,
+    "model_cm": 0.6401,
+    "incr": 0.0282,
+    "ci95": [
+     -0.0134,
+     0.0722
+    ],
+    "sd": 0.02228,
+    "p": 0.20613202251145557,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.436515
+   },
+   {
+    "n": 173,
+    "players": 155,
+    "pos": 109,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5952,
+    "model_c": 0.6119,
+    "model_cm": 0.6247,
+    "incr": 0.0128,
+    "ci95": [
+     -0.0252,
+     0.0518
+    ],
+    "sd": 0.01959,
+    "p": 0.5125252105605971,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.650415
+   },
+   {
+    "n": 173,
+    "players": 155,
+    "pos": 109,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5654,
+    "model_c": 0.6119,
+    "model_cm": 0.5992,
+    "incr": -0.0127,
+    "ci95": [
+     -0.0327,
+     0.0054
+    ],
+    "sd": 0.00981,
+    "p": 0.19593973818129906,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.436515
+   },
+   {
+    "n": 173,
+    "players": 155,
+    "pos": 109,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": 0.5523,
+    "model_c": 0.6119,
+    "model_cm": 0.5922,
+    "incr": -0.0197,
+    "ci95": [
+     -0.0397,
+     -0.0021
+    ],
+    "sd": 0.0096,
+    "p": 0.04005605471021512,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.38771
+   },
+   {
+    "n": 238,
+    "players": 220,
+    "pos": 93,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0858,
+    "model_c": -0.0743,
+    "model_cm": -0.0455,
+    "incr": 0.0288,
+    "ci95": [
+     -0.048,
+     0.1034
+    ],
+    "sd": 0.03968,
+    "p": 0.4678557944271482,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.776442
+   },
+   {
+    "n": 238,
+    "players": 220,
+    "pos": 93,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.1037,
+    "model_c": -0.0743,
+    "model_cm": -0.0836,
+    "incr": -0.0093,
+    "ci95": [
+     -0.0884,
+     0.0699
+    ],
+    "sd": 0.04003,
+    "p": 0.8167312589816806,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.923261
+   },
+   {
+    "n": 238,
+    "players": 220,
+    "pos": 93,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0595,
+    "model_c": -0.0743,
+    "model_cm": -0.0561,
+    "incr": 0.0182,
+    "ci95": [
+     -0.0314,
+     0.0664
+    ],
+    "sd": 0.02448,
+    "p": 0.4579669827278414,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.776442
+   },
+   {
+    "n": 238,
+    "players": 220,
+    "pos": 93,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0515,
+    "model_c": -0.0743,
+    "model_cm": -0.0683,
+    "incr": 0.006,
+    "ci95": [
+     -0.0562,
+     0.0669
+    ],
+    "sd": 0.03098,
+    "p": 0.8454323969785318,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.936078
+   },
+   {
+    "n": 173,
+    "players": 155,
+    "pos": 73,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.0145,
+    "model_c": 0.0091,
+    "model_cm": 0.0127,
+    "incr": 0.0035,
+    "ci95": [
+     -0.0627,
+     0.0712
+    ],
+    "sd": 0.03428,
+    "p": 0.9176848005824481,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 173,
+    "players": 155,
+    "pos": 73,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.0038,
+    "model_c": 0.0091,
+    "model_cm": 0.0181,
+    "incr": 0.009,
+    "ci95": [
+     -0.0725,
+     0.0956
+    ],
+    "sd": 0.043,
+    "p": 0.8339776887433836,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 173,
+    "players": 155,
+    "pos": 73,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.0027,
+    "model_c": 0.0091,
+    "model_cm": -0.0055,
+    "incr": -0.0147,
+    "ci95": [
+     -0.0548,
+     0.0245
+    ],
+    "sd": 0.02028,
+    "p": 0.4700514078414617,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 173,
+    "players": 155,
+    "pos": 73,
+    "seasons": [
+     2017,
+     2018
+    ],
+    "raw": -0.0222,
+    "model_c": 0.0091,
+    "model_cm": 0.0057,
+    "incr": -0.0034,
+    "ci95": [
+     -0.0565,
+     0.0544
+    ],
+    "sd": 0.02772,
+    "p": 0.902457760438923,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 199,
+    "players": 182,
+    "pos": 76,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.551,
+    "model_c": 0.6554,
+    "model_cm": 0.6486,
+    "incr": -0.0068,
+    "ci95": [
+     -0.0292,
+     0.0176
+    ],
+    "sd": 0.01176,
+    "p": 0.5604484528153846,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 199,
+    "players": 182,
+    "pos": 76,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.578,
+    "model_c": 0.6554,
+    "model_cm": 0.6518,
+    "incr": -0.0036,
+    "ci95": [
+     -0.0318,
+     0.0276
+    ],
+    "sd": 0.01499,
+    "p": 0.808285943577401,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 199,
+    "players": 182,
+    "pos": 76,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5066,
+    "model_c": 0.6554,
+    "model_cm": 0.6349,
+    "incr": -0.0205,
+    "ci95": [
+     -0.0404,
+     -0.0027
+    ],
+    "sd": 0.0096,
+    "p": 0.0323955940282219,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.237686
+   },
+   {
+    "n": 199,
+    "players": 182,
+    "pos": 76,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.5097,
+    "model_c": 0.6554,
+    "model_cm": 0.6353,
+    "incr": -0.0201,
+    "ci95": [
+     -0.0393,
+     -0.0019
+    ],
+    "sd": 0.00966,
+    "p": 0.03735066146528587,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.237686
+   },
+   {
+    "n": 199,
+    "players": 182,
+    "pos": 76,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0892,
+    "model_c": -0.0621,
+    "model_cm": -0.0906,
+    "incr": -0.0285,
+    "ci95": [
+     -0.0975,
+     0.0403
+    ],
+    "sd": 0.03532,
+    "p": 0.41989521989267997,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.776442
+   },
+   {
+    "n": 199,
+    "players": 182,
+    "pos": 76,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.1127,
+    "model_c": -0.0621,
+    "model_cm": -0.0963,
+    "incr": -0.0342,
+    "ci95": [
+     -0.1219,
+     0.0484
+    ],
+    "sd": 0.04319,
+    "p": 0.42856695385948074,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.776442
+   },
+   {
+    "n": 199,
+    "players": 182,
+    "pos": 76,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0517,
+    "model_c": -0.0621,
+    "model_cm": -0.0662,
+    "incr": -0.0041,
+    "ci95": [
+     -0.0477,
+     0.0392
+    ],
+    "sd": 0.02234,
+    "p": 0.854302941290386,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.936078
+   },
+   {
+    "n": 199,
+    "players": 182,
+    "pos": 76,
+    "seasons": [
+     2017,
+     2021
+    ],
+    "raw": 0.0582,
+    "model_c": -0.0621,
+    "model_cm": -0.0716,
+    "incr": -0.0094,
+    "ci95": [
+     -0.0764,
+     0.0548
+    ],
+    "sd": 0.03343,
+    "p": 0.777587396439579,
+    "side": "pit",
+    "level": "A",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.905251
+   },
+   {
+    "n": 249,
+    "players": 249,
+    "pos": 154,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4296,
+    "model_c": 0.7383,
+    "model_cm": 0.7468,
+    "incr": 0.0085,
+    "ci95": [
+     -0.0062,
+     0.024
+    ],
+    "sd": 0.00763,
+    "p": 0.26279824561902254,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.611273
+   },
+   {
+    "n": 249,
+    "players": 249,
+    "pos": 154,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.5093,
+    "model_c": 0.7383,
+    "model_cm": 0.7449,
+    "incr": 0.0066,
+    "ci95": [
+     -0.0064,
+     0.0195
+    ],
+    "sd": 0.00653,
+    "p": 0.3099407407843946,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.638393
+   },
+   {
+    "n": 249,
+    "players": 249,
+    "pos": 154,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.3619,
+    "model_c": 0.7383,
+    "model_cm": 0.7632,
+    "incr": 0.0249,
+    "ci95": [
+     0.003,
+     0.0491
+    ],
+    "sd": 0.01186,
+    "p": 0.03591927891009883,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.237686
+   },
+   {
+    "n": 249,
+    "players": 249,
+    "pos": 154,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4377,
+    "model_c": 0.7383,
+    "model_cm": 0.7584,
+    "incr": 0.0202,
+    "ci95": [
+     -0.0014,
+     0.0429
+    ],
+    "sd": 0.01115,
+    "p": 0.07053887731320407,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.310749
+   },
+   {
+    "n": 249,
+    "players": 249,
+    "pos": 154,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.0565,
+    "model_c": 0.2156,
+    "model_cm": 0.2016,
+    "incr": -0.014,
+    "ci95": [
+     -0.0422,
+     0.0122
+    ],
+    "sd": 0.01386,
+    "p": 0.3126376011386385,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 249,
+    "players": 249,
+    "pos": 154,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.057,
+    "model_c": 0.2156,
+    "model_cm": 0.1941,
+    "incr": -0.0215,
+    "ci95": [
+     -0.0516,
+     0.005
+    ],
+    "sd": 0.01458,
+    "p": 0.14018986905201292,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.643224
+   },
+   {
+    "n": 249,
+    "players": 249,
+    "pos": 154,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": -0.0764,
+    "model_c": 0.2156,
+    "model_cm": 0.2159,
+    "incr": 0.0003,
+    "ci95": [
+     -0.0215,
+     0.0219
+    ],
+    "sd": 0.01074,
+    "p": 0.9779850953497067,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.990671
+   },
+   {
+    "n": 249,
+    "players": 249,
+    "pos": 154,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": -0.0477,
+    "model_c": 0.2156,
+    "model_cm": 0.2143,
+    "incr": -0.0013,
+    "ci95": [
+     -0.0253,
+     0.0235
+    ],
+    "sd": 0.01245,
+    "p": 0.915566266780437,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.961206
+   },
+   {
+    "n": 203,
+    "players": 203,
+    "pos": 134,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4845,
+    "model_c": 0.7363,
+    "model_cm": 0.7333,
+    "incr": -0.003,
+    "ci95": [
+     -0.0134,
+     0.0071
+    ],
+    "sd": 0.00509,
+    "p": 0.5589957431964732,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 203,
+    "players": 203,
+    "pos": 134,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.536,
+    "model_c": 0.7363,
+    "model_cm": 0.7357,
+    "incr": -0.0006,
+    "ci95": [
+     -0.0114,
+     0.0107
+    ],
+    "sd": 0.00551,
+    "p": 0.9140285409966513,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 203,
+    "players": 203,
+    "pos": 134,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4021,
+    "model_c": 0.7363,
+    "model_cm": 0.753,
+    "incr": 0.0167,
+    "ci95": [
+     -0.0058,
+     0.0423
+    ],
+    "sd": 0.01235,
+    "p": 0.17604583653011519,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.499284
+   },
+   {
+    "n": 203,
+    "players": 203,
+    "pos": 134,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4526,
+    "model_c": 0.7363,
+    "model_cm": 0.7509,
+    "incr": 0.0147,
+    "ci95": [
+     -0.0088,
+     0.0396
+    ],
+    "sd": 0.01242,
+    "p": 0.23801987956030146,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.574531
+   },
+   {
+    "n": 203,
+    "players": 203,
+    "pos": 134,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.0623,
+    "model_c": 0.2565,
+    "model_cm": 0.2421,
+    "incr": -0.0144,
+    "ci95": [
+     -0.0434,
+     0.0115
+    ],
+    "sd": 0.01382,
+    "p": 0.29725474130345075,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 203,
+    "players": 203,
+    "pos": 134,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.0425,
+    "model_c": 0.2565,
+    "model_cm": 0.2414,
+    "incr": -0.0151,
+    "ci95": [
+     -0.0455,
+     0.0131
+    ],
+    "sd": 0.01479,
+    "p": 0.3077821665631184,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 203,
+    "players": 203,
+    "pos": 134,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": -0.0841,
+    "model_c": 0.2565,
+    "model_cm": 0.269,
+    "incr": 0.0125,
+    "ci95": [
+     -0.0117,
+     0.0382
+    ],
+    "sd": 0.01271,
+    "p": 0.3257876236660653,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 203,
+    "players": 203,
+    "pos": 134,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": -0.0665,
+    "model_c": 0.2565,
+    "model_cm": 0.2606,
+    "incr": 0.0041,
+    "ci95": [
+     -0.0192,
+     0.0302
+    ],
+    "sd": 0.0127,
+    "p": 0.7457742973048591,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.88137
+   },
+   {
+    "n": 220,
+    "players": 220,
+    "pos": 139,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4295,
+    "model_c": 0.7574,
+    "model_cm": 0.7616,
+    "incr": 0.0042,
+    "ci95": [
+     -0.0095,
+     0.0169
+    ],
+    "sd": 0.0067,
+    "p": 0.5332513487587536,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 220,
+    "players": 220,
+    "pos": 139,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.5064,
+    "model_c": 0.7574,
+    "model_cm": 0.7638,
+    "incr": 0.0064,
+    "ci95": [
+     -0.0062,
+     0.0185
+    ],
+    "sd": 0.0063,
+    "p": 0.3100767664322319,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.638393
+   },
+   {
+    "n": 220,
+    "players": 220,
+    "pos": 139,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.3482,
+    "model_c": 0.7574,
+    "model_cm": 0.7807,
+    "incr": 0.0233,
+    "ci95": [
+     -0.0009,
+     0.0485
+    ],
+    "sd": 0.01289,
+    "p": 0.0710282875158823,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.310749
+   },
+   {
+    "n": 220,
+    "players": 220,
+    "pos": 139,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4186,
+    "model_c": 0.7574,
+    "model_cm": 0.7805,
+    "incr": 0.0231,
+    "ci95": [
+     -0.0009,
+     0.0475
+    ],
+    "sd": 0.01256,
+    "p": 0.06597613902053379,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.310749
+   },
+   {
+    "n": 220,
+    "players": 220,
+    "pos": 139,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.0474,
+    "model_c": 0.213,
+    "model_cm": 0.1969,
+    "incr": -0.0161,
+    "ci95": [
+     -0.0512,
+     0.0151
+    ],
+    "sd": 0.01677,
+    "p": 0.3371236985370425,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 220,
+    "players": 220,
+    "pos": 139,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.044,
+    "model_c": 0.213,
+    "model_cm": 0.1941,
+    "incr": -0.0189,
+    "ci95": [
+     -0.0527,
+     0.0129
+    ],
+    "sd": 0.01691,
+    "p": 0.2644772164918947,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 220,
+    "players": 220,
+    "pos": 139,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": -0.1018,
+    "model_c": 0.213,
+    "model_cm": 0.2234,
+    "incr": 0.0104,
+    "ci95": [
+     -0.0188,
+     0.0399
+    ],
+    "sd": 0.01472,
+    "p": 0.4795262978830508,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.77923
+   },
+   {
+    "n": 220,
+    "players": 220,
+    "pos": 139,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": -0.0714,
+    "model_c": 0.213,
+    "model_cm": 0.2193,
+    "incr": 0.0063,
+    "ci95": [
+     -0.0244,
+     0.0396
+    ],
+    "sd": 0.01626,
+    "p": 0.6966062056578064,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.88137
+   },
+   {
+    "n": 187,
+    "players": 187,
+    "pos": 125,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4752,
+    "model_c": 0.7483,
+    "model_cm": 0.7462,
+    "incr": -0.0021,
+    "ci95": [
+     -0.0118,
+     0.0085
+    ],
+    "sd": 0.00521,
+    "p": 0.6919130160316693,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.979275
+   },
+   {
+    "n": 187,
+    "players": 187,
+    "pos": 125,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.5267,
+    "model_c": 0.7483,
+    "model_cm": 0.7481,
+    "incr": -0.0001,
+    "ci95": [
+     -0.011,
+     0.0114
+    ],
+    "sd": 0.00571,
+    "p": 0.9819712635621394,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 187,
+    "players": 187,
+    "pos": 125,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.3837,
+    "model_c": 0.7483,
+    "model_cm": 0.767,
+    "incr": 0.0187,
+    "ci95": [
+     -0.0087,
+     0.0468
+    ],
+    "sd": 0.01409,
+    "p": 0.18422131210122927,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.499284
+   },
+   {
+    "n": 187,
+    "players": 187,
+    "pos": 125,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.4308,
+    "model_c": 0.7483,
+    "model_cm": 0.7676,
+    "incr": 0.0194,
+    "ci95": [
+     -0.0075,
+     0.0476
+    ],
+    "sd": 0.01423,
+    "p": 0.17378459107811262,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.499284
+   },
+   {
+    "n": 187,
+    "players": 187,
+    "pos": 125,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.0599,
+    "model_c": 0.2464,
+    "model_cm": 0.231,
+    "incr": -0.0154,
+    "ci95": [
+     -0.0443,
+     0.0115
+    ],
+    "sd": 0.01392,
+    "p": 0.2684728735643269,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 187,
+    "players": 187,
+    "pos": 125,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": 0.042,
+    "model_c": 0.2464,
+    "model_cm": 0.23,
+    "incr": -0.0164,
+    "ci95": [
+     -0.0494,
+     0.0142
+    ],
+    "sd": 0.01589,
+    "p": 0.3030439358214152,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 187,
+    "players": 187,
+    "pos": 125,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": -0.0934,
+    "model_c": 0.2464,
+    "model_cm": 0.264,
+    "incr": 0.0176,
+    "ci95": [
+     -0.0102,
+     0.0461
+    ],
+    "sd": 0.01471,
+    "p": 0.23148941943084456,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 187,
+    "players": 187,
+    "pos": 125,
+    "seasons": [
+     2018,
+     2021
+    ],
+    "raw": -0.0771,
+    "model_c": 0.2464,
+    "model_cm": 0.2583,
+    "incr": 0.0119,
+    "ci95": [
+     -0.0174,
+     0.0439
+    ],
+    "sd": 0.01576,
+    "p": 0.45063874085426336,
+    "side": "pit",
+    "level": "A+",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.776442
+   },
+   {
+    "n": 611,
+    "players": 537,
+    "pos": 467,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.4981,
+    "model_c": 0.6544,
+    "model_cm": 0.6551,
+    "incr": 0.0007,
+    "ci95": [
+     -0.007,
+     0.0087
+    ],
+    "sd": 0.00406,
+    "p": 0.8604456756756718,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 611,
+    "players": 537,
+    "pos": 467,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5442,
+    "model_c": 0.6544,
+    "model_cm": 0.6599,
+    "incr": 0.0055,
+    "ci95": [
+     -0.0068,
+     0.0177
+    ],
+    "sd": 0.00611,
+    "p": 0.36785706649695715,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.695946
+   },
+   {
+    "n": 611,
+    "players": 537,
+    "pos": 467,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.4301,
+    "model_c": 0.6544,
+    "model_cm": 0.6559,
+    "incr": 0.0015,
+    "ci95": [
+     -0.0195,
+     0.022
+    ],
+    "sd": 0.01059,
+    "p": 0.8888839763897103,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 611,
+    "players": 537,
+    "pos": 467,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.4638,
+    "model_c": 0.6544,
+    "model_cm": 0.6514,
+    "incr": -0.003,
+    "ci95": [
+     -0.0185,
+     0.0118
+    ],
+    "sd": 0.00782,
+    "p": 0.6994817871398,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.979275
+   },
+   {
+    "n": 489,
+    "players": 415,
+    "pos": 404,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5083,
+    "model_c": 0.6076,
+    "model_cm": 0.6092,
+    "incr": 0.0016,
+    "ci95": [
+     -0.0062,
+     0.0097
+    ],
+    "sd": 0.00395,
+    "p": 0.6932726784821925,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.786838
+   },
+   {
+    "n": 489,
+    "players": 415,
+    "pos": 404,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5468,
+    "model_c": 0.6076,
+    "model_cm": 0.6166,
+    "incr": 0.009,
+    "ci95": [
+     -0.0093,
+     0.0269
+    ],
+    "sd": 0.00912,
+    "p": 0.32459754649652783,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.508066
+   },
+   {
+    "n": 489,
+    "players": 415,
+    "pos": 404,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.4323,
+    "model_c": 0.6076,
+    "model_cm": 0.6086,
+    "incr": 0.001,
+    "ci95": [
+     -0.0348,
+     0.0361
+    ],
+    "sd": 0.01846,
+    "p": 0.9584830065648791,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.958483
+   },
+   {
+    "n": 489,
+    "players": 415,
+    "pos": 404,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.4568,
+    "model_c": 0.6076,
+    "model_cm": 0.5955,
+    "incr": -0.0122,
+    "ci95": [
+     -0.0384,
+     0.0115
+    ],
+    "sd": 0.01292,
+    "p": 0.34670036008316707,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.520051
+   },
+   {
+    "n": 611,
+    "players": 537,
+    "pos": 466,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": -0.0113,
+    "model_c": 0.193,
+    "model_cm": 0.1818,
+    "incr": -0.0111,
+    "ci95": [
+     -0.0238,
+     0.0009
+    ],
+    "sd": 0.00637,
+    "p": 0.08025824879007493,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.572663
+   },
+   {
+    "n": 611,
+    "players": 537,
+    "pos": 466,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0388,
+    "model_c": 0.193,
+    "model_cm": 0.1845,
+    "incr": -0.0085,
+    "ci95": [
+     -0.0218,
+     0.0054
+    ],
+    "sd": 0.00703,
+    "p": 0.22822148746689663,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 611,
+    "players": 537,
+    "pos": 466,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": -0.0316,
+    "model_c": 0.193,
+    "model_cm": 0.181,
+    "incr": -0.012,
+    "ci95": [
+     -0.0263,
+     0.0026
+    ],
+    "sd": 0.0072,
+    "p": 0.09509678138658284,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.572663
+   },
+   {
+    "n": 611,
+    "players": 537,
+    "pos": 466,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0058,
+    "model_c": 0.193,
+    "model_cm": 0.1825,
+    "incr": -0.0105,
+    "ci95": [
+     -0.0247,
+     0.0036
+    ],
+    "sd": 0.00741,
+    "p": 0.1559537554459931,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.665276
+   },
+   {
+    "n": 489,
+    "players": 415,
+    "pos": 383,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.035,
+    "model_c": 0.2296,
+    "model_cm": 0.2185,
+    "incr": -0.0112,
+    "ci95": [
+     -0.0377,
+     0.0127
+    ],
+    "sd": 0.01276,
+    "p": 0.38210405420753557,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 489,
+    "players": 415,
+    "pos": 383,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0923,
+    "model_c": 0.2296,
+    "model_cm": 0.2355,
+    "incr": 0.0059,
+    "ci95": [
+     -0.021,
+     0.0328
+    ],
+    "sd": 0.01372,
+    "p": 0.6676033822499063,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 489,
+    "players": 415,
+    "pos": 383,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": -0.0138,
+    "model_c": 0.2296,
+    "model_cm": 0.2119,
+    "incr": -0.0177,
+    "ci95": [
+     -0.0338,
+     -0.0027
+    ],
+    "sd": 0.00804,
+    "p": 0.02754060470591102,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 489,
+    "players": 415,
+    "pos": 383,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0344,
+    "model_c": 0.2296,
+    "model_cm": 0.2261,
+    "incr": -0.0035,
+    "ci95": [
+     -0.0228,
+     0.0163
+    ],
+    "sd": 0.01005,
+    "p": 0.7272411315250333,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 465,
+    "players": 403,
+    "pos": 375,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5661,
+    "model_c": 0.6361,
+    "model_cm": 0.6412,
+    "incr": 0.0051,
+    "ci95": [
+     -0.0119,
+     0.0215
+    ],
+    "sd": 0.00844,
+    "p": 0.5447924343165225,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 465,
+    "players": 403,
+    "pos": 375,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5748,
+    "model_c": 0.6361,
+    "model_cm": 0.6413,
+    "incr": 0.0051,
+    "ci95": [
+     -0.0145,
+     0.0241
+    ],
+    "sd": 0.00981,
+    "p": 0.6002572174473244,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 465,
+    "players": 403,
+    "pos": 375,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.508,
+    "model_c": 0.6361,
+    "model_cm": 0.6137,
+    "incr": -0.0224,
+    "ci95": [
+     -0.0373,
+     -0.0094
+    ],
+    "sd": 0.00715,
+    "p": 0.0016947735647256934,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.10572
+   },
+   {
+    "n": 465,
+    "players": 403,
+    "pos": 375,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5082,
+    "model_c": 0.6361,
+    "model_cm": 0.6197,
+    "incr": -0.0164,
+    "ci95": [
+     -0.0278,
+     -0.0063
+    ],
+    "sd": 0.00554,
+    "p": 0.003020566633038513,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.10572
+   },
+   {
+    "n": 375,
+    "players": 313,
+    "pos": 321,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5679,
+    "model_c": 0.5623,
+    "model_cm": 0.5691,
+    "incr": 0.0068,
+    "ci95": [
+     -0.0144,
+     0.0257
+    ],
+    "sd": 0.01039,
+    "p": 0.5141338883028506,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.650415
+   },
+   {
+    "n": 375,
+    "players": 313,
+    "pos": 321,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5749,
+    "model_c": 0.5623,
+    "model_cm": 0.5677,
+    "incr": 0.0054,
+    "ci95": [
+     -0.0234,
+     0.0306
+    ],
+    "sd": 0.01397,
+    "p": 0.6994116731749875,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.786838
+   },
+   {
+    "n": 375,
+    "players": 313,
+    "pos": 321,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5209,
+    "model_c": 0.5623,
+    "model_cm": 0.5402,
+    "incr": -0.0221,
+    "ci95": [
+     -0.045,
+     -0.0016
+    ],
+    "sd": 0.01095,
+    "p": 0.04333463457690345,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.38771
+   },
+   {
+    "n": 375,
+    "players": 313,
+    "pos": 321,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5216,
+    "model_c": 0.5623,
+    "model_cm": 0.5502,
+    "incr": -0.0121,
+    "ci95": [
+     -0.0292,
+     0.0029
+    ],
+    "sd": 0.00821,
+    "p": 0.14098951436128893,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.422969
+   },
+   {
+    "n": 465,
+    "players": 403,
+    "pos": 375,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0495,
+    "model_c": 0.172,
+    "model_cm": 0.1594,
+    "incr": -0.0126,
+    "ci95": [
+     -0.0244,
+     -0.0002
+    ],
+    "sd": 0.00612,
+    "p": 0.03920046500305796,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.509606
+   },
+   {
+    "n": 465,
+    "players": 403,
+    "pos": 375,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0587,
+    "model_c": 0.172,
+    "model_cm": 0.1598,
+    "incr": -0.0122,
+    "ci95": [
+     -0.0264,
+     0.0027
+    ],
+    "sd": 0.00748,
+    "p": 0.10278558188156284,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.572663
+   },
+   {
+    "n": 465,
+    "players": 403,
+    "pos": 375,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0031,
+    "model_c": 0.172,
+    "model_cm": 0.1514,
+    "incr": -0.0206,
+    "ci95": [
+     -0.0354,
+     -0.0054
+    ],
+    "sd": 0.00778,
+    "p": 0.008249559488967328,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.383207
+   },
+   {
+    "n": 465,
+    "players": 403,
+    "pos": 375,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0117,
+    "model_c": 0.172,
+    "model_cm": 0.1555,
+    "incr": -0.0164,
+    "ci95": [
+     -0.0332,
+     0.0017
+    ],
+    "sd": 0.00879,
+    "p": 0.06130090999459359,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.572663
+   },
+   {
+    "n": 375,
+    "players": 313,
+    "pos": 305,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.1164,
+    "model_c": 0.2276,
+    "model_cm": 0.2453,
+    "incr": 0.0177,
+    "ci95": [
+     -0.0032,
+     0.0397
+    ],
+    "sd": 0.01106,
+    "p": 0.10967247870966901,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 375,
+    "players": 313,
+    "pos": 305,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.1239,
+    "model_c": 0.2276,
+    "model_cm": 0.2469,
+    "incr": 0.0193,
+    "ci95": [
+     -0.0065,
+     0.0452
+    ],
+    "sd": 0.01323,
+    "p": 0.1449042708361028,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 375,
+    "players": 313,
+    "pos": 305,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0524,
+    "model_c": 0.2276,
+    "model_cm": 0.2269,
+    "incr": -0.0006,
+    "ci95": [
+     -0.0193,
+     0.0223
+    ],
+    "sd": 0.01034,
+    "p": 0.9498821409936331,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 375,
+    "players": 313,
+    "pos": 305,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0611,
+    "model_c": 0.2276,
+    "model_cm": 0.236,
+    "incr": 0.0084,
+    "ci95": [
+     -0.0132,
+     0.0321
+    ],
+    "sd": 0.01179,
+    "p": 0.47501016569366916,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 511,
+    "players": 454,
+    "pos": 395,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5061,
+    "model_c": 0.6704,
+    "model_cm": 0.6708,
+    "incr": 0.0004,
+    "ci95": [
+     -0.0057,
+     0.0065
+    ],
+    "sd": 0.00314,
+    "p": 0.9059422400190076,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 511,
+    "players": 454,
+    "pos": 395,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5388,
+    "model_c": 0.6704,
+    "model_cm": 0.6703,
+    "incr": -0.0001,
+    "ci95": [
+     -0.0089,
+     0.0085
+    ],
+    "sd": 0.00442,
+    "p": 0.9763652816599198,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 511,
+    "players": 454,
+    "pos": 395,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.4373,
+    "model_c": 0.6704,
+    "model_cm": 0.6688,
+    "incr": -0.0016,
+    "ci95": [
+     -0.0206,
+     0.0179
+    ],
+    "sd": 0.00988,
+    "p": 0.87102346714428,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 511,
+    "players": 454,
+    "pos": 395,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.4629,
+    "model_c": 0.6704,
+    "model_cm": 0.6662,
+    "incr": -0.0042,
+    "ci95": [
+     -0.0196,
+     0.0114
+    ],
+    "sd": 0.00796,
+    "p": 0.5947922144100837,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 416,
+    "players": 359,
+    "pos": 346,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5125,
+    "model_c": 0.6397,
+    "model_cm": 0.635,
+    "incr": -0.0047,
+    "ci95": [
+     -0.0133,
+     0.0032
+    ],
+    "sd": 0.00417,
+    "p": 0.25900671651286045,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.47726
+   },
+   {
+    "n": 416,
+    "players": 359,
+    "pos": 346,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5433,
+    "model_c": 0.6397,
+    "model_cm": 0.6363,
+    "incr": -0.0034,
+    "ci95": [
+     -0.0149,
+     0.0067
+    ],
+    "sd": 0.00562,
+    "p": 0.5420127033183344,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.650415
+   },
+   {
+    "n": 416,
+    "players": 359,
+    "pos": 346,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.4405,
+    "model_c": 0.6397,
+    "model_cm": 0.6264,
+    "incr": -0.0133,
+    "ci95": [
+     -0.0482,
+     0.0202
+    ],
+    "sd": 0.01722,
+    "p": 0.4407918329398026,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.610327
+   },
+   {
+    "n": 416,
+    "players": 359,
+    "pos": 346,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.4593,
+    "model_c": 0.6397,
+    "model_cm": 0.6225,
+    "incr": -0.0173,
+    "ci95": [
+     -0.0429,
+     0.0082
+    ],
+    "sd": 0.01303,
+    "p": 0.1853312081441676,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.436515
+   },
+   {
+    "n": 511,
+    "players": 454,
+    "pos": 394,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0302,
+    "model_c": 0.2259,
+    "model_cm": 0.2135,
+    "incr": -0.0124,
+    "ci95": [
+     -0.034,
+     0.0082
+    ],
+    "sd": 0.01065,
+    "p": 0.246147463721327,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.721474
+   },
+   {
+    "n": 511,
+    "players": 454,
+    "pos": 394,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0757,
+    "model_c": 0.2259,
+    "model_cm": 0.2169,
+    "incr": -0.009,
+    "ci95": [
+     -0.0302,
+     0.0123
+    ],
+    "sd": 0.01092,
+    "p": 0.41169876838050135,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.776442
+   },
+   {
+    "n": 511,
+    "players": 454,
+    "pos": 394,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0007,
+    "model_c": 0.2259,
+    "model_cm": 0.2241,
+    "incr": -0.0017,
+    "ci95": [
+     -0.0221,
+     0.0192
+    ],
+    "sd": 0.0103,
+    "p": 0.8666001104077898,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.936078
+   },
+   {
+    "n": 511,
+    "players": 454,
+    "pos": 394,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0383,
+    "model_c": 0.2259,
+    "model_cm": 0.226,
+    "incr": 0.0001,
+    "ci95": [
+     -0.0224,
+     0.0236
+    ],
+    "sd": 0.01166,
+    "p": 0.9906712587790634,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.990671
+   },
+   {
+    "n": 416,
+    "players": 359,
+    "pos": 326,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0605,
+    "model_c": 0.2747,
+    "model_cm": 0.2563,
+    "incr": -0.0184,
+    "ci95": [
+     -0.0459,
+     0.0063
+    ],
+    "sd": 0.01322,
+    "p": 0.16376101029059198,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 416,
+    "players": 359,
+    "pos": 326,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.1154,
+    "model_c": 0.2747,
+    "model_cm": 0.276,
+    "incr": 0.0013,
+    "ci95": [
+     -0.0281,
+     0.0274
+    ],
+    "sd": 0.01455,
+    "p": 0.9286436729712024,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 416,
+    "players": 359,
+    "pos": 326,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0281,
+    "model_c": 0.2747,
+    "model_cm": 0.2889,
+    "incr": 0.0141,
+    "ci95": [
+     -0.0137,
+     0.0388
+    ],
+    "sd": 0.01329,
+    "p": 0.28771475664381185,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 416,
+    "players": 359,
+    "pos": 326,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0738,
+    "model_c": 0.2747,
+    "model_cm": 0.2922,
+    "incr": 0.0175,
+    "ci95": [
+     -0.0135,
+     0.0449
+    ],
+    "sd": 0.0152,
+    "p": 0.24941922237297587,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 423,
+    "players": 373,
+    "pos": 341,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5658,
+    "model_c": 0.6576,
+    "model_cm": 0.657,
+    "incr": -0.0006,
+    "ci95": [
+     -0.0141,
+     0.0128
+    ],
+    "sd": 0.00685,
+    "p": 0.9272026737751069,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 423,
+    "players": 373,
+    "pos": 341,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5675,
+    "model_c": 0.6576,
+    "model_cm": 0.6554,
+    "incr": -0.0022,
+    "ci95": [
+     -0.0171,
+     0.0121
+    ],
+    "sd": 0.00721,
+    "p": 0.7565529077305841,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.981971
+   },
+   {
+    "n": 423,
+    "players": 373,
+    "pos": 341,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5024,
+    "model_c": 0.6576,
+    "model_cm": 0.6395,
+    "incr": -0.018,
+    "ci95": [
+     -0.0321,
+     -0.0049
+    ],
+    "sd": 0.00687,
+    "p": 0.008633117440864257,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.201439
+   },
+   {
+    "n": 423,
+    "players": 373,
+    "pos": 341,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.5001,
+    "model_c": 0.6576,
+    "model_cm": 0.6446,
+    "incr": -0.013,
+    "ci95": [
+     -0.0235,
+     -0.003
+    ],
+    "sd": 0.00519,
+    "p": 0.012016264493202033,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.210285
+   },
+   {
+    "n": 344,
+    "players": 294,
+    "pos": 294,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5732,
+    "model_c": 0.5832,
+    "model_cm": 0.5863,
+    "incr": 0.0031,
+    "ci95": [
+     -0.0176,
+     0.0226
+    ],
+    "sd": 0.01041,
+    "p": 0.7637191138257236,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.808644
+   },
+   {
+    "n": 344,
+    "players": 294,
+    "pos": 294,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5748,
+    "model_c": 0.5832,
+    "model_cm": 0.5791,
+    "incr": -0.0041,
+    "ci95": [
+     -0.0289,
+     0.0169
+    ],
+    "sd": 0.01187,
+    "p": 0.7309506591587376,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.797401
+   },
+   {
+    "n": 344,
+    "players": 294,
+    "pos": 294,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.516,
+    "model_c": 0.5832,
+    "model_cm": 0.5659,
+    "incr": -0.0173,
+    "ci95": [
+     -0.0373,
+     0.0031
+    ],
+    "sd": 0.01035,
+    "p": 0.09373178142436633,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.422266
+   },
+   {
+    "n": 344,
+    "players": 294,
+    "pos": 294,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.5167,
+    "model_c": 0.5832,
+    "model_cm": 0.5697,
+    "incr": -0.0135,
+    "ci95": [
+     -0.0291,
+     0.0037
+    ],
+    "sd": 0.00853,
+    "p": 0.11432213528883794,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "reach5",
+    "frame": "clean",
+    "q": 0.422266
+   },
+   {
+    "n": 423,
+    "players": 373,
+    "pos": 341,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0813,
+    "model_c": 0.194,
+    "model_cm": 0.1894,
+    "incr": -0.0046,
+    "ci95": [
+     -0.0225,
+     0.0133
+    ],
+    "sd": 0.00917,
+    "p": 0.6155172354977925,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.842287
+   },
+   {
+    "n": 423,
+    "players": 373,
+    "pos": 341,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0875,
+    "model_c": 0.194,
+    "model_cm": 0.1882,
+    "incr": -0.0058,
+    "ci95": [
+     -0.0271,
+     0.0149
+    ],
+    "sd": 0.01057,
+    "p": 0.5836068907716423,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.831404
+   },
+   {
+    "n": 423,
+    "players": 373,
+    "pos": 341,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0215,
+    "model_c": 0.194,
+    "model_cm": 0.1767,
+    "incr": -0.0174,
+    "ci95": [
+     -0.036,
+     0.0003
+    ],
+    "sd": 0.00905,
+    "p": 0.055187336832005496,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.572663
+   },
+   {
+    "n": 423,
+    "players": 373,
+    "pos": 341,
+    "seasons": [
+     2014,
+     2021
+    ],
+    "raw": 0.0306,
+    "model_c": 0.194,
+    "model_cm": 0.1802,
+    "incr": -0.0138,
+    "ci95": [
+     -0.0339,
+     0.0064
+    ],
+    "sd": 0.01045,
+    "p": 0.18658101699076646,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.693015
+   },
+   {
+    "n": 344,
+    "players": 294,
+    "pos": 279,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.1286,
+    "model_c": 0.2543,
+    "model_cm": 0.2575,
+    "incr": 0.0033,
+    "ci95": [
+     -0.0179,
+     0.0241
+    ],
+    "sd": 0.01067,
+    "p": 0.759157899384554,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 344,
+    "players": 294,
+    "pos": 279,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.133,
+    "model_c": 0.2543,
+    "model_cm": 0.257,
+    "incr": 0.0027,
+    "ci95": [
+     -0.0231,
+     0.0279
+    ],
+    "sd": 0.01293,
+    "p": 0.8318477425493958,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 344,
+    "players": 294,
+    "pos": 279,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0647,
+    "model_c": 0.2543,
+    "model_cm": 0.2446,
+    "incr": -0.0096,
+    "ci95": [
+     -0.0319,
+     0.0137
+    ],
+    "sd": 0.01184,
+    "p": 0.4167300473827602,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 344,
+    "players": 294,
+    "pos": 279,
+    "seasons": [
+     2014,
+     2018
+    ],
+    "raw": 0.0722,
+    "model_c": 0.2543,
+    "model_cm": 0.2542,
+    "incr": -0.0001,
+    "ci95": [
+     -0.0263,
+     0.0287
+    ],
+    "sd": 0.01403,
+    "p": 0.9969585146653501,
+    "side": "pit",
+    "level": "AA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.996959
+   },
+   {
+    "n": 232,
+    "players": 207,
+    "pos": 187,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": 0.4622,
+    "model_c": 0.5678,
+    "model_cm": 0.555,
+    "incr": -0.0128,
+    "ci95": [
+     -0.0356,
+     0.0101
+    ],
+    "sd": 0.0117,
+    "p": 0.27266662764896865,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.611273
+   },
+   {
+    "n": 218,
+    "players": 198,
+    "pos": 176,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": 0.4886,
+    "model_c": 0.5537,
+    "model_cm": 0.5473,
+    "incr": -0.0064,
+    "ci95": [
+     -0.0325,
+     0.0183
+    ],
+    "sd": 0.0129,
+    "p": 0.622093375055726,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 232,
+    "players": 207,
+    "pos": 187,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": 0.374,
+    "model_c": 0.5678,
+    "model_cm": 0.6093,
+    "incr": 0.0415,
+    "ci95": [
+     -0.0083,
+     0.0979
+    ],
+    "sd": 0.02751,
+    "p": 0.13166174447482604,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.460816
+   },
+   {
+    "n": 218,
+    "players": 198,
+    "pos": 176,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": 0.4015,
+    "model_c": 0.5537,
+    "model_cm": 0.6074,
+    "incr": 0.0537,
+    "ci95": [
+     0.0041,
+     0.1028
+    ],
+    "sd": 0.02538,
+    "p": 0.034335995414771725,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.237686
+   },
+   {
+    "n": 232,
+    "players": 207,
+    "pos": 187,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.0718,
+    "model_c": 0.0996,
+    "model_cm": 0.1242,
+    "incr": 0.0247,
+    "ci95": [
+     -0.066,
+     0.1132
+    ],
+    "sd": 0.04529,
+    "p": 0.586246501392284,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.831404
+   },
+   {
+    "n": 218,
+    "players": 198,
+    "pos": 176,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": -0.0152,
+    "model_c": 0.0802,
+    "model_cm": 0.1079,
+    "incr": 0.0276,
+    "ci95": [
+     -0.0472,
+     0.1088
+    ],
+    "sd": 0.04007,
+    "p": 0.4903318287999756,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.780528
+   },
+   {
+    "n": 232,
+    "players": 207,
+    "pos": 187,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.0576,
+    "model_c": 0.0996,
+    "model_cm": 0.115,
+    "incr": 0.0154,
+    "ci95": [
+     -0.0722,
+     0.1049
+    ],
+    "sd": 0.04512,
+    "p": 0.7325877831267475,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.88137
+   },
+   {
+    "n": 218,
+    "players": 198,
+    "pos": 176,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": -0.0292,
+    "model_c": 0.0802,
+    "model_cm": 0.0553,
+    "incr": -0.0249,
+    "ci95": [
+     -0.1021,
+     0.0563
+    ],
+    "sd": 0.03974,
+    "p": 0.5303366404249834,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.804891
+   },
+   {
+    "n": 188,
+    "players": 163,
+    "pos": 156,
+    "seasons": [
+     2011,
+     2018
+    ],
+    "raw": 0.0442,
+    "model_c": 0.1369,
+    "model_cm": 0.1334,
+    "incr": -0.0035,
+    "ci95": [
+     -0.0964,
+     0.0879
+    ],
+    "sd": 0.04752,
+    "p": 0.9409381846149627,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 174,
+    "players": 154,
+    "pos": 145,
+    "seasons": [
+     2012,
+     2018
+    ],
+    "raw": 0.1019,
+    "model_c": 0.14,
+    "model_cm": 0.1269,
+    "incr": -0.0131,
+    "ci95": [
+     -0.0862,
+     0.0586
+    ],
+    "sd": 0.03724,
+    "p": 0.7257828576095644,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 188,
+    "players": 163,
+    "pos": 156,
+    "seasons": [
+     2011,
+     2018
+    ],
+    "raw": -0.0425,
+    "model_c": 0.1369,
+    "model_cm": 0.1893,
+    "incr": 0.0524,
+    "ci95": [
+     -0.0545,
+     0.1615
+    ],
+    "sd": 0.05524,
+    "p": 0.3427333377679731,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 174,
+    "players": 154,
+    "pos": 145,
+    "seasons": [
+     2012,
+     2018
+    ],
+    "raw": -0.015,
+    "model_c": 0.14,
+    "model_cm": 0.1458,
+    "incr": 0.0058,
+    "ci95": [
+     -0.0823,
+     0.0956
+    ],
+    "sd": 0.04559,
+    "p": 0.8986299836322713,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 170,
+    "players": 152,
+    "pos": 141,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.0372,
+    "model_c": 0.12,
+    "model_cm": 0.1254,
+    "incr": 0.0055,
+    "ci95": [
+     -0.1242,
+     0.146
+    ],
+    "sd": 0.06874,
+    "p": 0.9365599506694589,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.961206
+   },
+   {
+    "n": 170,
+    "players": 152,
+    "pos": 141,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.015,
+    "model_c": 0.12,
+    "model_cm": 0.1401,
+    "incr": 0.0202,
+    "ci95": [
+     -0.0928,
+     0.1488
+    ],
+    "sd": 0.06109,
+    "p": 0.7411290171654854,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "all",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.88137
+   },
+   {
+    "n": 224,
+    "players": 200,
+    "pos": 180,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": 0.46,
+    "model_c": 0.5855,
+    "model_cm": 0.5703,
+    "incr": -0.0152,
+    "ci95": [
+     -0.038,
+     0.0069
+    ],
+    "sd": 0.01149,
+    "p": 0.18544852323840266,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.499284
+   },
+   {
+    "n": 210,
+    "players": 191,
+    "pos": 169,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": 0.4867,
+    "model_c": 0.5716,
+    "model_cm": 0.566,
+    "incr": -0.0056,
+    "ci95": [
+     -0.0289,
+     0.0159
+    ],
+    "sd": 0.01168,
+    "p": 0.6342770585744006,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.954823
+   },
+   {
+    "n": 224,
+    "players": 200,
+    "pos": 180,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": 0.3812,
+    "model_c": 0.5855,
+    "model_cm": 0.6152,
+    "incr": 0.0296,
+    "ci95": [
+     -0.0189,
+     0.0801
+    ],
+    "sd": 0.02496,
+    "p": 0.23552697299099412,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.574531
+   },
+   {
+    "n": 210,
+    "players": 191,
+    "pos": 169,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": 0.4093,
+    "model_c": 0.5716,
+    "model_cm": 0.6122,
+    "incr": 0.0406,
+    "ci95": [
+     -0.0055,
+     0.0841
+    ],
+    "sd": 0.02301,
+    "p": 0.0774637314848845,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "reach3",
+    "frame": "clean",
+    "q": 0.318968
+   },
+   {
+    "n": 224,
+    "players": 200,
+    "pos": 180,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.0797,
+    "model_c": 0.116,
+    "model_cm": 0.1319,
+    "incr": 0.0159,
+    "ci95": [
+     -0.0684,
+     0.0996
+    ],
+    "sd": 0.04319,
+    "p": 0.713225978535057,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.88137
+   },
+   {
+    "n": 210,
+    "players": 191,
+    "pos": 169,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": -0.0172,
+    "model_c": 0.0993,
+    "model_cm": 0.1221,
+    "incr": 0.0228,
+    "ci95": [
+     -0.0553,
+     0.1047
+    ],
+    "sd": 0.04031,
+    "p": 0.5713047828563611,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.831404
+   },
+   {
+    "n": 224,
+    "players": 200,
+    "pos": 180,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.0579,
+    "model_c": 0.116,
+    "model_cm": 0.1229,
+    "incr": 0.0069,
+    "ci95": [
+     -0.0751,
+     0.098
+    ],
+    "sd": 0.04429,
+    "p": 0.8760734225269995,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.936078
+   },
+   {
+    "n": 210,
+    "players": 191,
+    "pos": 169,
+    "seasons": [
+     2012,
+     2021
+    ],
+    "raw": -0.0262,
+    "model_c": 0.0993,
+    "model_cm": 0.0691,
+    "incr": -0.0302,
+    "ci95": [
+     -0.1065,
+     0.0438
+    ],
+    "sd": 0.03894,
+    "p": 0.4384907932092681,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.776442
+   },
+   {
+    "n": 184,
+    "players": 160,
+    "pos": 152,
+    "seasons": [
+     2011,
+     2018
+    ],
+    "raw": 0.0267,
+    "model_c": 0.1437,
+    "model_cm": 0.1582,
+    "incr": 0.0145,
+    "ci95": [
+     -0.0717,
+     0.1009
+    ],
+    "sd": 0.04555,
+    "p": 0.7498787818792436,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 170,
+    "players": 151,
+    "pos": 141,
+    "seasons": [
+     2012,
+     2018
+    ],
+    "raw": 0.0896,
+    "model_c": 0.1543,
+    "model_cm": 0.1389,
+    "incr": -0.0154,
+    "ci95": [
+     -0.0929,
+     0.052
+    ],
+    "sd": 0.03779,
+    "p": 0.6838740872482294,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pbf_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 184,
+    "players": 160,
+    "pos": 152,
+    "seasons": [
+     2011,
+     2018
+    ],
+    "raw": -0.0554,
+    "model_c": 0.1437,
+    "model_cm": 0.1917,
+    "incr": 0.048,
+    "ci95": [
+     -0.0492,
+     0.1491
+    ],
+    "sd": 0.05167,
+    "p": 0.35277541378370625,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_raw_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 170,
+    "players": 151,
+    "pos": 141,
+    "seasons": [
+     2012,
+     2018
+    ],
+    "raw": -0.0205,
+    "model_c": 0.1543,
+    "model_cm": 0.148,
+    "incr": -0.0063,
+    "ci95": [
+     -0.0949,
+     0.0794
+    ],
+    "sd": 0.04383,
+    "p": 0.8862591176689942,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "all",
+    "metric": "pip_par_pit",
+    "label": "l6",
+    "frame": "all",
+    "q": 0.976984
+   },
+   {
+    "n": 170,
+    "players": 152,
+    "pos": 141,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.0372,
+    "model_c": 0.12,
+    "model_cm": 0.1254,
+    "incr": 0.0055,
+    "ci95": [
+     -0.1242,
+     0.146
+    ],
+    "sd": 0.06874,
+    "p": 0.9365599506694589,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pbf_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.961206
+   },
+   {
+    "n": 170,
+    "players": 152,
+    "pos": 141,
+    "seasons": [
+     2011,
+     2021
+    ],
+    "raw": -0.015,
+    "model_c": 0.12,
+    "model_cm": 0.1401,
+    "incr": 0.0202,
+    "ci95": [
+     -0.0928,
+     0.1488
+    ],
+    "sd": 0.06109,
+    "p": 0.7411290171654854,
+    "side": "pit",
+    "level": "AAA",
+    "age_band": "young",
+    "group": "SP",
+    "metric": "pip_raw_pit",
+    "label": "w3",
+    "frame": "all",
+    "q": 0.88137
+   }
+  ]
+ },
+ "inputs_sha256_start": {
+  "prospects.db": "90c27f74adf0e7fadfe33aedcf205f4c3d5c486c2e45ace322e4e482aa030620",
+  "debuts.json": "ad3c5da4d5ae4a9638e547e80e6812a7d415bfaef68737710e192f5d0af872b2",
+  "inactive.json": "a3f6ab122570f21618fef183198f487f355f5e43f20861ef0b7ba295c2a46422",
+  "timeseries.json": "fbb36e3936107a7f60566c0e764c3035bb3207a259c4b2e576c0e7f1b1b01230",
+  "fielding_innings.json": "d572e2c1dd02f8f26ea5b835a0b55e092bd68251fb8c3be058f4991d36ac5e31",
+  "custom_batter_2026.csv": "80be1909a2304df4e6d526d3ced4fb74556a40098d64e0157151b6c62a56d3b1",
+  "fwar_vintage.json": "7d388e8510df1033252720713afd5b570a7f8a3b96058647d2da509d4ac27917"
+ },
+ "inputs_sha256_end": {
+  "prospects.db": "90c27f74adf0e7fadfe33aedcf205f4c3d5c486c2e45ace322e4e482aa030620",
+  "debuts.json": "ad3c5da4d5ae4a9638e547e80e6812a7d415bfaef68737710e192f5d0af872b2",
+  "inactive.json": "a3f6ab122570f21618fef183198f487f355f5e43f20861ef0b7ba295c2a46422",
+  "timeseries.json": "fbb36e3936107a7f60566c0e764c3035bb3207a259c4b2e576c0e7f1b1b01230",
+  "fielding_innings.json": "d572e2c1dd02f8f26ea5b835a0b55e092bd68251fb8c3be058f4991d36ac5e31",
+  "custom_batter_2026.csv": "80be1909a2304df4e6d526d3ced4fb74556a40098d64e0157151b6c62a56d3b1",
+  "fwar_vintage.json": "7d388e8510df1033252720713afd5b570a7f8a3b96058647d2da509d4ac27917"
+ },
+ "seconds": 152.7,
+ "flag_etools_on": false
+}
