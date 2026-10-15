@@ -302,6 +302,14 @@ FRAMES = {
                               "note": ("development frame; consensus on these rows is "
                                        "MLB Pipeline alone; never pooled with vm2 or "
                                        "vm3; not a claim")},
+    # EFV_2026_HOLDOUT_READ (owner EW3-13, docs/efv-v2/EFV_2026_HOLDOUT.md): the one read
+    # of the preseason 2026 lists on 2026 regular-season fWAR, every rater frozen at the
+    # 2026 opening day. Its own role: table only, never charted (CHART_FRAMES), no
+    # basis_key, and efv_v2_serve.served_claim never reads it. Spent by its one read.
+    "holdout_2026": {"role": "holdout_2026", "tilted": False,
+                     "label": "2026 holdout: preseason 2026 lists, 2026 WAR",
+                     "note": ("read once (owner EW3-13); every rater frozen at the 2026 "
+                              "opening day; spent; not charted and not the served claim")},
 }
 
 #: Registered role changes, applied to every stored row of the frame on each

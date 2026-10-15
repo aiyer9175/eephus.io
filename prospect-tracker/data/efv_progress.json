@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-15T13:58:22Z",
+ "generated_at": "2026-10-15T19:42:40Z",
  "headline_frame": "vm2",
  "frames": {
   "vm": {
@@ -98,6 +98,12 @@
    "tilted": false,
    "label": "Pipeline-only panel, debut cohorts 2011 to 2016",
    "note": "development frame; consensus on these rows is MLB Pipeline alone; never pooled with vm2 or vm3; not a claim"
+  },
+  "holdout_2026": {
+   "role": "holdout_2026",
+   "tilted": false,
+   "label": "2026 holdout: preseason 2026 lists, 2026 WAR",
+   "note": "read once (owner EW3-13); every rater frozen at the 2026 opening day; spent; not charted and not the served claim"
   }
  },
  "chart": {
@@ -53898,6 +53904,122 @@
     }
    },
    "content_hash": "120eeb0abb09de50ed9c24fc7248a92fa7261d2499089ed4c3f21b884f6f0ea4"
+  },
+  {
+   "run_id": "2026-10-15T19:42:40Z|holdout_2026|2e337d67",
+   "date": "2026-10-15",
+   "trigger": "look",
+   "model_id": "efv_v5_combined",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "c5285660",
+    "label": "fwar@2026-10-02-0341299c20ec",
+    "resolved_through": 2025,
+    "provider": "fwar"
+   },
+   "frame": "holdout_2026",
+   "frame_version": "f2026_list",
+   "role": "holdout_2026",
+   "tilted": false,
+   "window": [
+    2026,
+    2026
+   ],
+   "n": 1208,
+   "n_by_side": {
+    "hit": 590,
+    "pit": 618
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.1313,
+     "auc": null,
+     "n": 1208
+    },
+    "efv_v2_base": {
+     "spearman": 0.122,
+     "auc": null,
+     "n": 1208
+    },
+    "efv_v1": {
+     "spearman": 0.1219,
+     "auc": null,
+     "n": 1208
+    },
+    "prospx_consensus": {
+     "spearman": 0.1192,
+     "auc": null,
+     "n": 1208
+    },
+    "mlb_pipeline": {
+     "spearman": 0.1557,
+     "auc": null,
+     "n": 585
+    },
+    "fangraphs": {
+     "spearman": 0.1479,
+     "auc": null,
+     "n": 1108
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.01211,
+      "ci95": [
+       -0.0108,
+       0.0348
+      ],
+      "mde95": 0.0192,
+      "mde95_estimator": "percentile bootstrap, player-clustered",
+      "ci95_estimator": "percentile bootstrap, paired, player-clustered, B 4000, seed 20261021",
+      "lb95_player": -0.0073,
+      "lb95_club": -0.0067,
+      "ci95_club": [
+       -0.0102,
+       0.0345
+      ],
+      "resolvable": null,
+      "reading": "2026 holdout, read once; verdict word ties",
+      "key": "frames.list.legs.war2026|spearman|pooled|efv_v5_combined-consensus"
+     }
+    },
+    "vs_efv_v2_base": {
+     "spearman": {
+      "delta": 0.00926,
+      "ci95": [
+       -0.0039,
+       0.0229
+      ],
+      "mde95": 0.0112,
+      "mde95_estimator": "percentile bootstrap, player-clustered",
+      "ci95_estimator": "percentile bootstrap, paired, player-clustered, B 4000, seed 20261021",
+      "lb95_player": -0.0018,
+      "lb95_club": -0.0007,
+      "ci95_club": [
+       -0.0025,
+       0.0213
+      ],
+      "resolvable": null,
+      "reading": "2026 holdout, read once; verdict word ties",
+      "key": "frames.list.legs.war2026|spearman|pooled|efv_v5_combined-efv_v2"
+     }
+    }
+   },
+   "resolvable": null,
+   "verdict": "ties",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/efv_2026_holdout.json",
+     "generated_at": "2026-10-15T19:42:40Z",
+     "sha256": "660c4165729aa36748be18dfd24c4852652799169737ae9c9464914ffedaf110"
+    }
+   ],
+   "note": "Read once on 2026-10-15 (owner EW3-13): preseason 2026 lists frozen at the 2026-03-25 opening day, scored on 2026 regular-season fWAR; eFV refit on labels through 2025. One-sided 95 percent lower bound of eFV minus consensus: -0.0073 player-clustered, -0.0067 club-clustered. Arrival read (R2026 AUC, tilted, not value): eFV minus consensus 0.04882. Spent: no later model is claimed on this frame.",
+   "last_verified_at": "2026-10-15T19:42:40Z",
+   "statistic": "within-side Spearman on WAR2026, size-weighted",
+   "content_hash": "2e337d67ff512b01bd469f87ae67170baf40dddadd4c0fc3c3e1cdb75735b583"
   }
  ],
  "backfill": {

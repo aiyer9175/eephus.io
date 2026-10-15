@@ -476,10 +476,13 @@ _PRE_SG5_FRAMES = {"vm", "vm2", "vm_dev", "lv_dev", "vm_oos_dev", "lv_res", "vm_
 #: EFV3_A5: the vm3 frame and the Pipeline-only panel, development frames registered
 #: after SG_5 (test_headtohead_frame.py pins their rows).
 _EFV3_A5_FRAMES = {"vm3", "vm_pipeline_2011_2016"}
+#: EFV_2026_HOLDOUT_READ: the one 2026-season holdout read (its own role, table only).
+_HOLDOUT_FRAMES = {"holdout_2026"}
 
 
 def test_lv2026_frames_are_registered_as_specified():
-    assert set(P.FRAMES) == _PRE_SG5_FRAMES | set(LV2026) | _EFV3_A5_FRAMES
+    assert set(P.FRAMES) == (_PRE_SG5_FRAMES | set(LV2026) | _EFV3_A5_FRAMES
+                             | _HOLDOUT_FRAMES)
     for fid, meta in LV2026.items():
         assert P.FRAMES[fid] == meta, fid
         assert "basis_key" not in P.FRAMES[fid]
@@ -494,6 +497,16 @@ def test_lv2026_frames_are_never_charted():
     m = re.search(r"const _PROG_CHART_FRAMES = \[([^\]]*)\]", js)
     assert m, "_PROG_CHART_FRAMES not found"
     assert not set(re.findall(r'"([^"]+)"', m.group(1))) & set(LV2026)
+
+
+def test_the_2026_holdout_frame_is_never_charted_nor_the_claim():
+    meta = P.FRAMES["holdout_2026"]
+    assert meta["role"] == "holdout_2026" and meta["tilted"] is False
+    assert "basis_key" not in meta and "holdout_2026" not in P.CHART_FRAMES
+    assert "holdout_2026" not in P.BASIS_TO_FRAME.values()
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
+    m = re.search(r"const _PROG_CHART_FRAMES = \[([^\]]*)\]", js)
+    assert m and "holdout_2026" not in m.group(1)
 
 
 def test_lv2026_frames_can_never_become_the_headline(arts):
@@ -529,7 +542,7 @@ def test_lv2026_registration_changes_no_existing_row():
     assert not [r for r in rows if r["frame"] in LV2026]
     assert P.restamp_roles(rows) == rows
     for r in rows:
-        assert r["frame"] in _PRE_SG5_FRAMES | _EFV3_A5_FRAMES
+        assert r["frame"] in _PRE_SG5_FRAMES | _EFV3_A5_FRAMES | _HOLDOUT_FRAMES
         assert r.get("content_hash") == P.content_hash(r)
     for fid, meta in (doc.get("frames") or {}).items():
         if fid in LV2026:
