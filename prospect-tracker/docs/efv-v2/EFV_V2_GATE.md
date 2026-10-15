@@ -301,6 +301,8 @@ or later carries status `reserved_vm` (`efv_labels.labels_for`). Policy, registe
 3. Every read states how many kept `reserved_vm` rows it scored (32 on the EV-09 H0
    lv_dev read, per DRIVER_SYSTEM_V2.md B9b).
 
+**Amendment to B9b, dated 2026-10-15 (made while this file reads REGISTERED; owner answer efv2026 OQ6 = A, 2026-10-01, `_audit_2026-09-09/DECISIONS_FOR_OWNER.md`; committed by the owner's explicit permission of 2026-10-15).** The record of R-VM look 3 (RT 2028, the registered final boundary) releases, for the label reads of registered long-run frames only, the in-window debut cohorts no R-VM look owns (the 2028 and 2029 cohorts inside the long-run reads of `docs/efv-v2/SURROGATE_2026_GATE.md` s6.3), and releases nothing to any served path.
+
 ---
 
 ## 6. Forking paths (the denominator every number here is read against)
