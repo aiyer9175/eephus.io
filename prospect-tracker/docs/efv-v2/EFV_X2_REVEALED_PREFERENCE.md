@@ -158,3 +158,21 @@ projections retrain, no `backtest.run_backtest`. Fetches only into
 
 Empty at registration. The results are written to
 `docs/efv-v2/EFV_X2_REVEALED_PREFERENCE_RESULTS.md` after the read.
+
+## 8. Amendment A1 (2026-10-15, before any number of this task)
+
+Two source facts found by the source check (`python efv_x2_revealed.py --check`, receipts
+only, no frame, label or statistic read), each fixed here before the read:
+
+1. The 2023 Rule 5 draft is absent from the league feed (one claim on the draft day). A
+   December day is taken as the Rule 5 draft day only when it holds at least 20 CLW, R5
+   and R5M transactions; a year without one uses 8 December as its draft day for
+   eligibility and protection, and its selections are read from R5 and R5M codes only.
+   Every other year from 2009 to 2025 is detected (2021: the minor league phase; the
+   major league phase was cancelled).
+2. The non-roster invitee endpoint returns an empty list for the 2026 season (all 30
+   clubs, probed 2026-10-15; the files sit in `.cache/efv_x2_revealed/nri` as the
+   receipt). The 2026 list is therefore the people with a spring-training invitation in
+   the league feed inside `efv_w2_nri`'s dating range for 2026. No development read
+   reaches 2026 (the development books stop at season 2024 and at 2025-01-01), so this
+   changes no number in this task; it extends the column for later tasks.
