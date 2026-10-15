@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-14T17:29:33+00:00",
+ "generated_at": "2026-10-14T22:07:47+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
  "n_arms": 400,
  "by_lane": {
@@ -5775,9 +5775,63 @@
     -0.0437,
     0.0361
    ]
+  },
+  {
+   "lane": "tool-feature sidecar probes (TL_9)",
+   "artifact": "_labs/efv_tool_features.json",
+   "probe": "TL9:coverage.frame:hit",
+   "verdict": "COUNTED",
+   "generated_at": "2026-10-14T22:07:43+00:00",
+   "reason": "frame rows 3033, outcome-blind id 2883, R-VM rows dropped 20, V 2011 to 2019; counts only",
+   "role": "development"
+  },
+  {
+   "lane": "tool-feature sidecar probes (TL_9)",
+   "artifact": "_labs/efv_tool_features.json",
+   "probe": "TL9:coverage.frame:pit",
+   "verdict": "COUNTED",
+   "generated_at": "2026-10-14T22:07:43+00:00",
+   "reason": "frame rows 2894, outcome-blind id 2793, R-VM rows dropped 15, V 2011 to 2019; counts only",
+   "role": "development"
+  },
+  {
+   "lane": "tool-feature sidecar probes (TL_9)",
+   "artifact": "_labs/efv_tool_features.json",
+   "probe": "TL9:coverage.per_source_grades:hit",
+   "verdict": "COUNTED",
+   "generated_at": "2026-10-14T22:07:43+00:00",
+   "reason": "rows with a consensus from each source's earliest in-window snapshot: hit 2584, game_pwr 2585, raw_pwr 1037; counts only",
+   "role": "development"
+  },
+  {
+   "lane": "tool-feature sidecar probes (TL_9)",
+   "artifact": "_labs/efv_tool_features.json",
+   "probe": "TL9:coverage.pwr_comp:hit",
+   "verdict": "COUNTED",
+   "generated_at": "2026-10-14T22:07:43+00:00",
+   "reason": "rows with both as-of game and raw consensus inputs 1037; not a candidate: look P served C0",
+   "role": "development"
+  },
+  {
+   "lane": "tool-feature sidecar probes (TL_9)",
+   "artifact": "_labs/efv_tool_features.json",
+   "probe": "TL9:coverage.tip_iso_resid:hit",
+   "verdict": "COUNTED",
+   "generated_at": "2026-10-14T22:07:43+00:00",
+   "reason": "rows with a residual 843 (TIP table computable at V 2018, 2019); PA-shrunk pre-V MiLB ISO minus tip_level at the block level, every input season at most V - 1; counts only",
+   "role": "development"
+  },
+  {
+   "lane": "tool-feature sidecar probes (TL_9)",
+   "artifact": "_labs/efv_tool_features.json",
+   "probe": "TL9:coverage.tool_hit_w_inputs:hit",
+   "verdict": "COUNTED",
+   "generated_at": "2026-10-14T22:07:43+00:00",
+   "reason": "rows with one source hit grade 1667, with two or more 917; per-source hit grades only, the weight is computed per fold outside the V frame and never stored",
+   "role": "development"
   }
  ],
- "n_probes": 61,
+ "n_probes": 67,
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
  "sources_pending": [],
