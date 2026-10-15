@@ -35511,6 +35511,12 @@ function efvDetailCard(p) {
   // gain on every driver and still fall: others gained more. Say where he sits in each.
   const _vv = _v2 ? (x.efv_v2 || {}) : {};
   const _sideWord = x.side === "P" ? "pitchers" : "hitters";
+  // The eFV tracking-era head (dark until its registration's ship rule flips it): a row
+  // it re-ordered carries the head's note, printed wherever the grade is.
+  const _th = _vv.tracking_head;
+  const headHTML = (_th && _th.note)
+    ? `<div class="efv-head-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="This grade blends eFV V2 with the tracking-era head at weight ${escapeHtml(String(_th.blend_w))}: pitch and batted-ball tracking from his ${escapeHtml(String(_th.season))} ${escapeHtml(String(_th.level))} season, scored on a short-horizon label (reached MLB within 3 seasons; fWAR per MLB season over those seasons), not the six-season label the rest of eFV is scored on. Shift ${Number(_th.shift_pct) >= 0 ? "+" : ""}${Number(_th.shift_pct).toFixed(1)} percentile points.">${escapeHtml(_th.note)}</div>`
+    : "";
   const placeHTML = (_v2 && _vv.order_rank != null && _vv.consensus_rank != null)
     ? `<div class="efv-place-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="eFV grade = consensus FV at his place in eFV's order among ${_sideWord}. Drivers move him vs the average prospect; others can gain more.">#${Number(_vv.order_rank).toLocaleString()} of ${Number(_vv.group_n || 0).toLocaleString()} ${_sideWord} by eFV · #${Number(_vv.consensus_rank).toLocaleString()} by consensus FV</div>`
     : "";
@@ -35573,6 +35579,7 @@ function efvDetailCard(p) {
       </div>
       ${claimHTML}
       ${placeHTML}
+      ${headHTML}
       ${_inSec ? "" : provReceiptHTML(p)}
       ${x.krp_plus != null ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">
         ${krpPlusPillHTML(p)}<span>K-backed run prevention: a below-level ERA the strikeouts support.</span>

@@ -200,6 +200,13 @@ def model_receipt(models: dict[str, dict] | None = None) -> dict:
                      "n_train": m["n_train"], "train_years": m.get("train_years"),
                      "frame": m.get("frame"),
                      "war_map_6yr": m.get("war_map_6yr")}
+    try:
+        import efv5_tracking_head as T
+        if T.EFV_TRACKING_HEAD_ON:
+            # recorded only when the head serves, so the dark receipt is unchanged
+            out["tracking_head"] = T.serve_receipt()
+    except ImportError:
+        pass
     return out
 
 
@@ -212,11 +219,16 @@ def fingerprint_term() -> str:
     try:
         import efv_v2_model as H
         w = H.load_weights()
-        spec = json.dumps({"w": w, "chip_floor": CHIP_FLOOR_PCT, "tie": TIE_EPS,
-                           "basis": GRADE_BASIS, "skill": {s: list(H.skill_candidates(s))
-                                                           for s in ("hit", "pit")},
-                           "w_max": H.W_MAX, "rule_last": H.RULE_LAST_YEAR,
-                           "abstain": "anchor_constant_only"}, sort_keys=True)
+        spec = {"w": w, "chip_floor": CHIP_FLOOR_PCT, "tie": TIE_EPS,
+                "basis": GRADE_BASIS, "skill": {s: list(H.skill_candidates(s))
+                                                for s in ("hit", "pit")},
+                "w_max": H.W_MAX, "rule_last": H.RULE_LAST_YEAR,
+                "abstain": "anchor_constant_only"}
+        import efv5_tracking_head as T
+        if T.EFV_TRACKING_HEAD_ON:
+            # the head's flip changes who V2 reorders, so it trips the pinned fingerprint
+            spec["tracking_head"] = {"blend_w": T.BLEND_W, "ships": sorted(T.shipped_sides())}
+        spec = json.dumps(spec, sort_keys=True)
         return f"{SERVED_MODEL_ID}@{hashlib.sha256(spec.encode()).hexdigest()[:8]}"
     except Exception:                                             # noqa: BLE001
         return "unavailable"
@@ -256,8 +268,23 @@ def live_rows(side: str, live: list[dict], *, today: str | None = None) -> list[
         out.append({"player_key": r["player_key"], "decision_year": V,
                     "fv": float(r["consensus_fv_raw"]), "feats": feats, "extra": extra,
                     "v2": H.v2_row(feats, extra), "frame": "live",
-                    "has_milb": bool(r.get("milb"))})
+                    "has_milb": bool(r.get("milb")),
+                    "mlbam_id": r.get("mlbam_id")})
     return out
+
+
+def _tracking_head(side: str, rows: list[dict], preds: list[dict], model: dict) -> list[list[dict]]:
+    """Per-row chips of the eFV tracking-era head (efv5_tracking_head, registration
+    docs/efv-v2/EFV_TRACKING_HEAD_GATE.md s8). DARK while
+    efv5_tracking_head.EFV_TRACKING_HEAD_ON is False: nothing is read or changed and
+    every row gets no chip. On, apply_to_live re-orders the tracked prospects of a
+    shipping side in place (grades re-drawn through the output map) and each moved row
+    carries the head's note under efv_v2.tracking_head."""
+    import efv5_tracking_head as T
+    if not T.EFV_TRACKING_HEAD_ON:
+        return [[] for _ in rows]
+    T.apply_to_live(side, rows, preds, model)
+    return [T.head_chip(p, CHIP_FLOOR_PCT) for p in preds]
 
 
 def _chip_parts(model: dict, rows: list[dict]) -> list[dict[str, float]]:
@@ -298,6 +325,7 @@ def score_live(side: str, live: list[dict], *, models: dict | None = None,
     rows = live_rows(side, live, today=today)
     preds = H.predict_v2(model, rows)
     parts = _chip_parts(model, rows)
+    head_chips = _tracking_head(side, rows, preds, model)
     grades = np.array([p["efv_grade"] for p in preds], dtype=np.float64)
     war6 = H.war_at(model.get("war_map_6yr"), grades) if preds else np.array([])
     # the row's place in its side's order by V2 and by consensus (1 = best; a consensus
@@ -314,7 +342,7 @@ def score_live(side: str, live: list[dict], *, models: dict | None = None,
                                     group_n=n,
                                     has_block=bool(r["v2"]["has_block"]),
                                     has_milb=r["has_milb"],
-                                    chips=driver_chips(parts[i]))
+                                    chips=driver_chips(parts[i]) + head_chips[i])
     return out
 
 
