@@ -18,7 +18,8 @@ guard beside the R-LV guard.
 4. withhold_reserved_vm refuses (never drops) without the owning record and returns
    every row, event-only, with it.
 5. blocked_day refuses on the registered look days, the reserved-read day and while
-   another gate's look marker is present.
+   another gate's look marker marks a session open that day (a marker started on an
+   earlier day is a finished session, amended 2026-10-15).
 6. The surrogate modules never call guard_score_request, import no outcome module and
    read no debut or major league column on the identity path (the DS-03 pattern).
 
@@ -499,6 +500,22 @@ def test_blocked_while_another_gate_s_look_marker_exists(env, tmp_path):
     (other / G.LOOK_MARKER).write_text("{}", encoding="utf-8")
     with pytest.raises(G.BlockedDayError, match="dvm_difficulty"):
         G.blocked_day("2026-10-10")
+
+
+def test_a_marker_from_an_earlier_day_is_a_finished_session(env, tmp_path):
+    other = tmp_path / ".cache" / "dvm_difficulty"
+    other.mkdir(parents=True)
+    marker = other / G.LOOK_MARKER
+    marker.write_text('{"started": "2026-10-14T16:30:15", "frame": "FULL"}',
+                      encoding="utf-8")
+    assert G.marker_start_day(marker) == "2026-10-14"
+    G.blocked_day("2026-10-15")
+    with pytest.raises(G.BlockedDayError, match="dvm_difficulty"):
+        G.blocked_day("2026-10-14")
+    marker.write_text('{"started": "not a time"}', encoding="utf-8")
+    assert G.marker_start_day(marker) is None
+    with pytest.raises(G.BlockedDayError, match="dvm_difficulty"):
+        G.blocked_day("2026-10-15")
 
 
 # ---------------------------------------------------------------------------

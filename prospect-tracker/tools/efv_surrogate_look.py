@@ -35,6 +35,20 @@ The read it carries is S3, the transfer read (s6.1, clauses T1 to T4 and the T6
 descriptives; T5 is asserted before scoring), purpose `transfer`, V 2011-2019 and V 2022
 only. S4 (lv_2026) is void under the recorded OQ2 = A and is not implemented here.
 Nothing here groups anything by consensus-FV level (docs/PROSPECT_ANCHOR_GATE.md).
+
+AMENDED 2026-10-15 (task SG_8, before the look; no outcome had been read): the review
+against the REGISTERED text found the runner reading s5 differently in seven places, each
+now as the gate states it. T1 takes L6 as `l6_censored_target` (the v1 convention, s2.1)
+on every row that carries one, where it had kept status "ok" rows only (which dropped
+every resolved never-reached row, L6 0) and read the uncensored partial sum; the no-L6
+exits print per side and vintage; the W3 secondary runs. T2 reads u_c as the
+within-(side, V) consensus percentile (it read the raw grade), reads (a) for the MiLB
+drivers on V 2015-2019 rows only, drops V 2011-2012 rows (no forward g_S) before T3's
+one-row-per-player pick, and prints (d) and the g_S increment. T4 is one within
+statistic per side over V 2017-2019 (it was one cell per vintage), and its incumbent
+trains on the rows resolved at RT V-1 (it had been handed the true R3 of V-3..V-1). T5's
+static clauses are asserted before any outcome (t5_assert_static) and its row clauses on
+the built rows (t5_assert_outcomes).
 """
 from __future__ import annotations
 
@@ -86,7 +100,16 @@ T2_MILB_DRIVERS = ("age_rel_level", "level_rank", "milb_absent")
 T2_OTHER_DRIVERS = ("on_40man", "nov_add")
 T2_SPLITS = {"milb": ((2015, 2016), (2017, 2018, 2019)),
              "other": ((2011, 2012, 2013), (2014, 2015, 2016), (2017, 2018, 2019))}
+#: (a), (b) and (c) of every MiLB driver read V 2015-2019 rows only (s5 T2).
+T2_MILB_YEARS = tuple(sorted({y for s in T2_SPLITS["milb"] for y in s}))
 MIN_GROUP_ROWS = 20
+#: s2.1: the three label groups that carry no L6 and leave T1, the residual "other",
+#: and the id-unresolved (ABSENT_IDENTITY) rows that stay out of the S_idx primary.
+T1_EXIT_KEYS = ("reserved_vm", "censored_never", "identity_conflict", "other",
+                "absent_identity")
+#: The in-sample penalty of the descriptive E[R3 | rung_pre, age_pre] logistic (the
+#: smallest of the registered grid; two standardized columns, so it barely shrinks).
+INCREMENT_ALPHA = 1.0
 
 #: The files a look pins (relative to DATA_DIR) and the modules whose git blobs it pins.
 PINNED_FILES = ("efv_surrogate_pins_2026.json", "efv_surrogate_frame_2026.json",
@@ -162,11 +185,56 @@ def point_lines(cells: dict) -> list[str]:
     return out
 
 
+def exit_lines(block: dict) -> list[str]:
+    """T1's no-L6 exits and the ABSENT_IDENTITY rows out of the primary, per side and
+    vintage (counts only, printed before any statistic; s2.1)."""
+    out = ["T1 EXITS (rows with no L6, and id-unresolved rows out of the primary), per "
+           "side and vintage:"]
+    ex = block.get("t1_exits") or {}
+    for side in sorted(ex):
+        for V in sorted(ex[side] or {}, key=str):
+            c = ex[side][V] or {}
+            out.append(f"  {side} V {V}: " + ", ".join(
+                f"{k} {'NA' if c.get(k) is None else c.get(k)}" for k in T1_EXIT_KEYS))
+    return out
+
+
+def descriptive_lines(block: dict) -> list[str]:
+    """The descriptive prints of s5 (T2 (d) and the g_S increment, T3's two rhos and the
+    n of each statistic, T4 per side); printed after the points, no verdict."""
+    out = ["DESCRIPTIVE (no verdict):"]
+    for side in SIDES:
+        t2 = (block.get("t2") or {}).get(side) or {}
+        if t2:
+            out.append(f"  T2 {side}: n {t2.get('n', 'NA')}, n V 2015-2019 "
+                       f"{t2.get('n_milb', 'NA')}, bypass share "
+                       f"{fnum(t2.get('bypass_share'))}, g_S increment over "
+                       f"E[R3 | rung_pre, age_pre] (partial rho) "
+                       f"{fnum(t2.get('increment_partial'))}")
+    fails = block.get("t2_failures") or []
+    out.append(f"  T2 failed driver cells ({len(fails)}): "
+               + (", ".join(fails) if fails else "none"))
+    t3 = block.get("t3") or {}
+    out.append(f"  T3: rho_old {fnum(t3.get('rho_old'))} n {t3.get('n_old', 'NA')}; "
+               f"rho_2022 {fnum(t3.get('rho_2022'))} n {t3.get('n_2022', 'NA')}; "
+               f"z_diff {fnum(t3.get('z_diff'))} CI95 {fnum(t3.get('lo95'))} to "
+               f"{fnum(t3.get('hi95'))}")
+    for k, v in sorted((block.get("t4") or {}).items()):
+        v = v or {}
+        out.append(f"  T4 {k}: {v.get('reading', 'NA')}; real beats twin "
+                   f"{v.get('beats_twin', 'NA')}")
+    out.append("  T2 skill-head version (g_skill against W3): NOT COMPUTED; s3 registers "
+               "no g_skill object (no inputs, fit or scale), so none is built at the read "
+               "(kill rule 2).")
+    return out
+
+
 def report_lines(block: dict) -> list[str]:
-    """The whole printed report of a scored block: SDs first, then points, then each
-    clause's verdict."""
+    """The whole printed report of a scored block: the exit counts, then the SDs, then
+    the points, then the descriptives, then each clause's verdict."""
     cells = block.get("cells") or {}
-    lines = sd_lines(cells) + point_lines(cells)
+    lines = exit_lines(block) + sd_lines(cells) + point_lines(cells)
+    lines += descriptive_lines(block)
     for clause in ("T1", "T2", "T3", "T4"):
         v = (block.get("verdicts") or {}).get(clause)
         lines.append(f"{clause}: {v if v is not None else 'NA'}")
@@ -275,6 +343,10 @@ def cell(stat, n: int, players, clubs=None, *, B: int = BOOT_B,
          seed: int = BOOT_SEED) -> dict:
     """One cell: point, player-clustered SD and one-sided bounds, the club-clustered
     SD and lower bound (the binding sensitivity) and mde95 = 1.645 x SD."""
+    if int(n) == 0:
+        return {"n": 0, "point": None, "sd_player": None, "lo95": None, "hi95": None,
+                "mde95": None, "draws": 0,
+                **({"sd_club": None, "lo95_club": None} if clubs is not None else {})}
     full = np.arange(n)
     point = stat(full)
     dp = cluster_bootstrap(stat, n, players, B=B, seed=seed)
@@ -367,11 +439,14 @@ def _arr(rows, key):
 def score_transfer(data: dict, *, B: int = BOOT_B) -> dict:
     """The S3 block from assembled inputs:
     data["t1"][side]: rows with s_idx_oos, l6_pct, resolved (bool), player, club, vintage;
-    data["t2"][side]: rows with g_s, r3, u_c, vintage and the drivers;
+    data["t1_exits"][side]: {V: counts by T1_EXIT_KEYS} (printed, not scored);
+    data["t1_w3"][side]: rows with s_idx, w3_pct, player, club (the W3 secondary);
+    data["t2"][side]: rows with g_s, r3, u_c (the within-(side, V) consensus
+    percentile), e_pre (E[R3 | rung_pre, age_pre], descriptive), vintage and the drivers;
     data["t3"]: {"old": rows with g_s, r3; "v2022": rows with g_s, r3} (one row per player);
     data["t4"][side]: {V: {"aug": rows, "inc": rows, "twin": rows}} each with score, r3,
-    player, club.
-    Returns {"cells", "t2", "t3", "verdicts"}."""
+    player, club; scored as one within-(side, vintage) cell per side.
+    Returns {"cells", "t1_exits", "t2", "t2_failures", "t3", "t4", "verdicts"}."""
     cells: dict = {}
     t1_lo: dict = {}
     for side in SIDES:
@@ -388,6 +463,14 @@ def score_transfer(data: dict, *, B: int = BOOT_B) -> dict:
         res = [i for i, r in enumerate(rows) if r.get("resolved")]
         cells[f"T1|{side}|L6_resolved_only"] = {
             "n": len(res), "point": spearman(x[res], y[res]) if res else None}
+        # the W3 secondary on lv_dev_all (descriptive; S_idx out of sample on V 2011-2016,
+        # the full six-vintage fit on V 2017-2019)
+        w_rows = ((data.get("t1_w3") or {}).get(side)) or []
+        if w_rows:
+            xs, ys = _arr(w_rows, "s_idx"), _arr(w_rows, "w3_pct")
+            cells[f"T1|{side}|W3_secondary"] = cell(
+                lambda i, xs=xs, ys=ys: spearman(xs[i], ys[i]), len(w_rows),
+                [r.get("player") for r in w_rows], [r.get("club") for r in w_rows], B=B)
     t2_out: dict = {}
     t2_fail = []
     for side in SIDES:
@@ -400,6 +483,12 @@ def score_transfer(data: dict, *, B: int = BOOT_B) -> dict:
         c = cell(lambda i: partial_spearman(g_all[i], r_all[i], u_all[i]),
                  len(rows), pl, B=B)
         cells[f"T2a|{side}|partial"] = c
+        # (a) for the MiLB drivers is read on V 2015-2019 rows only (s5 T2)
+        mi = np.flatnonzero(np.isin(V_all, T2_MILB_YEARS))
+        g_m, r_m, u_m = g_all[mi], r_all[mi], u_all[mi]
+        c_m = cell(lambda i: partial_spearman(g_m[i], r_m[i], u_m[i]),
+                   len(mi), [pl[i] for i in mi], B=B)
+        cells[f"T2a|{side}|partial_V2015_2019"] = c_m
         rho_ug, rho_gy, rho_uy = (spearman(u_all, g_all), spearman(g_all, r_all),
                                   spearman(u_all, r_all))
         bypass = (1.0 - rho_ug * rho_gy / rho_uy
@@ -407,7 +496,9 @@ def score_transfer(data: dict, *, B: int = BOOT_B) -> dict:
         drivers = {}
         for drv in T2_MILB_DRIVERS + T2_OTHER_DRIVERS:
             d_all = _arr(rows, drv)
-            sched = T2_SPLITS["milb" if drv in T2_MILB_DRIVERS else "other"]
+            milb = drv in T2_MILB_DRIVERS
+            sched = T2_SPLITS["milb" if milb else "other"]
+            lo_a = (c_m if milb else c).get("lo95")
             pooled_years = sorted({y for s in sched for y in s})
             res = {}
             for name, years in [("pooled", pooled_years)] + [
@@ -416,13 +507,17 @@ def score_transfer(data: dict, *, B: int = BOOT_B) -> dict:
                 sg = slope_given(g_all[m], u_all[m], d_all[m])
                 sr = slope_given(r_all[m], u_all[m], d_all[m])
                 ratio = (sg / sr) if (sg is not None and sr not in (None, 0.0)) else None
-                ok = t2_driver_verdict(c.get("lo95"), None if sg is None else sg > 0,
+                ok = t2_driver_verdict(lo_a, None if sg is None else sg > 0,
                                        None if sr is None else sr > 0, ratio)
-                res[name] = {"slope_g": sg, "slope_r3": sr, "ratio": ratio, "holds": ok}
+                res[name] = {"slope_g": sg, "slope_r3": sr, "ratio": ratio,
+                             "partial_lo95": lo_a, "holds": ok}
                 if not ok:
                     t2_fail.append(f"{side}:{drv}:{name}")
             drivers[drv] = res
-        t2_out[side] = {"bypass_share": bypass, "drivers": drivers}
+        inc = (partial_spearman(g_all, r_all, _arr(rows, "e_pre"))
+               if any(r.get("e_pre") is not None for r in rows) else None)
+        t2_out[side] = {"bypass_share": bypass, "increment_partial": inc,
+                        "n": len(rows), "n_milb": int(len(mi)), "drivers": drivers}
     t3 = data.get("t3") or {}
     old, new = t3.get("old") or [], t3.get("v2022") or []
     r_old = spearman(_arr(old, "g_s"), _arr(old, "r3")) if old else None
@@ -432,37 +527,48 @@ def score_transfer(data: dict, *, B: int = BOOT_B) -> dict:
               "z_diff": d, "lo95": lo, "hi95": hi}
     t4_out: dict = {}
     for side in SIDES:
+        # s5 T4: the within statistic (size-weighted within-(side, vintage) Spearman over
+        # the evaluation vintages), E_cond: scores fixed, players resampled; one cell per
+        # side, with the parent club as the binding sensitivity.
+        aug, inc, twin, grp = [], [], [], []
         for V, arms in sorted(((data.get("t4") or {}).get(side) or {}).items()):
-            aug, inc, twin = arms.get("aug") or [], arms.get("inc") or [], arms.get("twin") or []
-            if not aug or len(aug) != len(inc):
+            a_r, i_r, t_r = arms.get("aug") or [], arms.get("inc") or [], arms.get("twin") or []
+            if not a_r or len(a_r) != len(i_r):
                 continue
-            a, b, y = _arr(aug, "score"), _arr(inc, "score"), _arr(aug, "r3")
-            pl, cl = [r.get("player") for r in aug], [r.get("club") for r in aug]
+            aug += a_r
+            inc += i_r
+            twin += t_r if len(t_r) == len(a_r) else [{"score": None}] * len(a_r)
+            grp += [int(V)] * len(a_r)
+        if not aug:
+            continue
+        a, b, y = _arr(aug, "score"), _arr(inc, "score"), _arr(aug, "r3")
+        t = _arr(twin, "score")
+        g = np.asarray(grp)
+        pl, cl = [r.get("player") for r in aug], [r.get("club") for r in aug]
 
-            def delta(i, a=a, b=b, y=y):
-                ra, rb = spearman(a[i], y[i]), spearman(b[i], y[i])
-                return None if ra is None or rb is None else ra - rb
-            c = cell(delta, len(aug), pl, cl, B=B)
-            cells[f"T4|{side}|{V}|aug_minus_inc"] = c
-            tw = None
-            if twin and len(twin) == len(aug):
-                t = _arr(twin, "score")
-
-                def dtwin(i, a=a, t=t, y=y):
-                    ra, rt = spearman(a[i], y[i]), spearman(t[i], y[i])
-                    return None if ra is None or rt is None else ra - rt
-                tw = cell(dtwin, len(aug), pl, cl, B=B)
-                cells[f"T4|{side}|{V}|real_minus_twin"] = tw
-            t4_out[f"{side}|{V}"] = t4_verdict(c.get("point"), c.get("hi95"),
-                                                (tw or {}).get("lo95"))
+        def delta(i, a=a, b=b, y=y, g=g):
+            ra, rb = within_spearman(a[i], y[i], g[i]), within_spearman(b[i], y[i], g[i])
+            return None if ra is None or rb is None else ra - rb
+        c = cell(delta, len(aug), pl, cl, B=B)
+        cells[f"T4|{side}|aug_minus_inc"] = c
+        tw = None
+        if np.isfinite(t).any():
+            def dtwin(i, a=a, t=t, y=y, g=g):
+                ra, rt = within_spearman(a[i], y[i], g[i]), within_spearman(t[i], y[i], g[i])
+                return None if ra is None or rt is None else ra - rt
+            tw = cell(dtwin, len(aug), pl, cl, B=B)
+            cells[f"T4|{side}|real_minus_twin"] = tw
+        t4_out[side] = dict(t4_verdict(c.get("point"), c.get("hi95"),
+                                       (tw or {}).get("lo95")),
+                            n=len(aug), vintages=sorted(set(grp)))
     verdicts = {"T1": t1_verdict(t1_lo),
                 "T2": ("PASS" if t2_out and not t2_fail else
                        f"FAIL ({len(t2_fail)} driver cells)" if t2_out else "NA"),
                 "T3": t3_verdict(lo, hi),
                 "T4": ("HARM" if any(v["harm"] for v in t4_out.values()) else
                        "not shown harmful, unpowered") if t4_out else "NA"}
-    return {"cells": cells, "t2": t2_out, "t2_failures": t2_fail, "t3": t3_out,
-            "t4": t4_out, "verdicts": verdicts}
+    return {"cells": cells, "t1_exits": data.get("t1_exits") or {}, "t2": t2_out,
+            "t2_failures": t2_fail, "t3": t3_out, "t4": t4_out, "verdicts": verdicts}
 
 
 # ---------------------------------------------------------------------------
@@ -601,7 +707,8 @@ def assemble_outcomes(ctx: dict, drv: dict) -> dict:
     sha, recs = ctx["gate_sha"], ctx["look_records"]
     uni, frames = drv["universe"], drv["frames"]
     war = L.war_seasons_table()
-    data: dict = {"t1": {}, "t2": {}, "t3": {"old": [], "v2022": []}, "t4": {}}
+    data: dict = {"t1": {}, "t1_exits": {}, "t1_w3": {}, "t2": {},
+                  "t3": {"old": [], "v2022": []}, "t4": {}}
     seen_old: set = set()
     seen_new: set = set()
     for side in SIDES:
@@ -611,32 +718,68 @@ def assemble_outcomes(ctx: dict, drv: dict) -> dict:
                                         purpose=PURPOSE, universe=uni)
             labs[V] = {lb["player_key"]: lb for lb in
                        L.labels_for_frame(rows, universe=uni, war=war, gate_sha=sha)}
+        t5_assert_outcomes(side, built, labs)
         fit_rows = [r for V in FIT_VINTAGES for r in built[V]]
         maps = S.fit_maps(fit_rows, side, gate_sha=sha, look_records=recs)
         comp = {V: S.apply_maps(built[V], maps, gate_sha=sha, look_records=recs,
                                 purpose=PURPOSE) for V in built}
-        cons = {(r["player_key"], r["decision_year"]): r["fv"] for r in drv["v2rows"][side]}
-        v2 = {(r["player_key"], r["decision_year"]): r for r in drv["v2rows"][side]}
-        # T1: S_idx out of sample against the L6 percentile within (side, V)
+        v2side = drv["v2rows"][side]
+        # u_c: the within-(side, V) percentile of the V read's consensus (the V2 anchor)
+        u_pct = M.within_pct([r["fv"] for r in v2side],
+                             [int(r["decision_year"]) for r in v2side])
+        cons = {(r["player_key"], r["decision_year"]): float(p)
+                for r, p in zip(v2side, u_pct)}
+        v2 = {(r["player_key"], r["decision_year"]): r for r in v2side}
+        # T1: S_idx out of sample against the L6 percentile within (side, V). L6 is the
+        # efv_labels l6_censored_target (equal to l6 when resolved; the v1 tail
+        # projection, weighted by l6_weight, when censored, s2.1); the rows with no L6
+        # (reserved_vm, censored_never, identity_conflict) leave, counted.
         t1_rows = []
+        exits: dict = {}
         for V in FIT_VINTAGES:
             keys = [r["player_key"] for r in comp[V]]
-            l6 = [labs[V][k].get("l6") if labs[V][k].get("status") == "ok" else None
-                  for k in keys]
+            l6 = [labs[V][k].get("l6_censored_target") for k in keys]
             pct = _within_pct(l6, [V] * len(keys))
-            for r, p, k in zip(comp[V], pct, keys):
+            ex = {k: 0 for k in T1_EXIT_KEYS}
+            for r, p, k, val in zip(comp[V], pct, keys, l6):
                 lab = labs[V][k]
+                if val is None:
+                    ex[_exit_reason(lab)] += 1
+                elif not r.get("id_resolved"):
+                    ex["absent_identity"] += 1
                 r["target"], r["weight"] = p, lab.get("l6_weight") or 1.0
                 r["_resolved"] = lab.get("l6_censored") is False
+            exits[V] = ex
+        data["t1_exits"][side] = exits
         fit_in = [r for V in FIT_VINTAGES for r in comp[V]]
         model = S.fit_s_idx(fit_in, side, gate_sha=sha, look_records=recs)
         by_key = {(r["player_key"], int(r["vintage"])): r for r in fit_in}
+        s_oos = {}
         for (pk, V), pred in zip(model["keys"], model["oos"]):
             r = by_key[(pk, V)]
+            s_oos[(pk, V)] = pred
             t1_rows.append({"s_idx_oos": pred, "l6_pct": r["target"],
                             "resolved": r["_resolved"], "player": pk,
                             "club": r.get("org") or S.ORG_UNKNOWN, "vintage": V})
         data["t1"][side] = t1_rows
+        # T1's W3 secondary on lv_dev_all: S_idx (out of sample on V 2011-2016, the full
+        # fit on V 2017-2019) against the W3 percentile within (side, V); descriptive
+        w3_rows = []
+        for V in G_S_VINTAGES:
+            if V in FIT_VINTAGES:
+                sc = [s_oos.get((r["player_key"], V)) for r in comp[V]]
+            else:
+                sc = S.s_idx_scores(model["full"], comp[V], gate_sha=sha,
+                                    look_records=recs, purpose=PURPOSE)
+            w3 = [labs[V][r["player_key"]].get("w3") for r in comp[V]]
+            ok = [i for i, (s, w) in enumerate(zip(sc, w3))
+                  if s is not None and w is not None and comp[V][i].get("id_resolved")]
+            pct = _within_pct([w3[i] for i in ok], [V] * len(ok))
+            for i, p in zip(ok, pct):
+                r = comp[V][i]
+                w3_rows.append({"s_idx": sc[i], "w3_pct": p, "player": r["player_key"],
+                                "club": r.get("org") or S.ORG_UNKNOWN, "vintage": V})
+        data["t1_w3"][side] = w3_rows
         # T2: g_S forward-chained against R3, with u_c and the drivers
         gs_in = []
         for V in G_S_VINTAGES:
@@ -648,13 +791,16 @@ def assemble_outcomes(ctx: dict, drv: dict) -> dict:
         t2_rows = []
         for r in gs_in:
             k = (r["player_key"], int(r["vintage"]))
-            if r.get("reached") is None or k not in cons or gs_by.get(k) is None:
+            g = gs_by.get(k)
+            if r.get("reached") is None or k not in cons or g is None or not math.isfinite(g):
                 continue
-            row = {"g_s": gs_by[k], "r3": r["reached"], "u_c": cons[k],
-                   "vintage": k[1], "player": k[0]}
+            row = {"g_s": g, "r3": r["reached"], "u_c": cons[k],
+                   "vintage": k[1], "player": k[0],
+                   "rung_pre": r.get("rung_pre"), "age_pre": r.get("age_pre")}
             for d in T2_MILB_DRIVERS + T2_OTHER_DRIVERS:
                 row[d] = (v2[k].get("v2") or {}).get(d)
             t2_rows.append(row)
+        _attach_e_pre(t2_rows, S)
         data["t2"][side] = t2_rows
         # T3: g_S on V 2011-2019 (forward) against V 2022 (the full fit), one row per player
         for row in t2_rows:
@@ -676,6 +822,113 @@ def assemble_outcomes(ctx: dict, drv: dict) -> dict:
         # T4: the S-only regime emulated against the incumbent timing head
         data["t4"][side] = _t4_arms(side, ctx, frames[side], labs, comp, cons, war, M, S)
     return data
+
+
+def _exit_reason(lab: dict) -> str:
+    """Why a label row carries no L6 (s2.1's three groups, else "other")."""
+    st = lab.get("status")
+    if st == "reserved_vm":
+        return "reserved_vm"
+    if st == "identity_conflict":
+        return "identity_conflict"
+    if lab.get("reached") == "censored_never":
+        return "censored_never"
+    return "other"
+
+
+def _attach_e_pre(rows: list[dict], S) -> None:
+    """e_pre = E[R3 | rung_pre, age_pre], an in-sample penalized logistic on the T2 rows
+    (descriptive only: the base g_S's increment is read against it, s3)."""
+    use = [i for i, r in enumerate(rows)
+           if r.get("rung_pre") is not None and r.get("age_pre") is not None]
+    for r in rows:
+        r["e_pre"] = None
+    if len(use) < 10:
+        return
+    X = np.asarray([[float(rows[i]["rung_pre"]), float(rows[i]["age_pre"])] for i in use])
+    y = np.asarray([float(rows[i]["r3"]) for i in use])
+    if y.min() == y.max():
+        return
+    fit = S._logit_fit(X, y, INCREMENT_ALPHA)
+    for i, p in zip(use, S._logit_predict(fit, X)):
+        rows[i]["e_pre"] = float(p)
+
+
+class T5Error(RuntimeError):
+    """A T5 hygiene assertion failed (s5 T5): the read STOPs."""
+
+
+#: s11: efv_vintage_frame.py by git blob id (never a working-tree sha256).
+VINTAGE_FRAME_BLOB = "09430d3b211c67a480b51aff0dbfb27d8f4ca669"
+#: Module names an S3 read may never load (AP+, s3: "AP+ is never read").
+BANNED_MODULE_TOKENS = ("ap_plus", "applus", "advancement_pace")
+
+
+def t5_assert_static(ctx: dict) -> list[str]:
+    """T5, the clauses checkable before any outcome (raises T5Error; returns the lines
+    it asserted). The rest of T5 is test-enforced in the builder and the guard
+    (test_efv_surrogate.py, test_efv_surrogate_guard.py) and asserted on the built rows
+    by t5_assert_outcomes."""
+    import efv_surrogate as S  # noqa: PLC0415
+    import efv_vintage_frame as F  # noqa: PLC0415
+    done = []
+    reads = set(G_S_VINTAGES) | {T3_VINTAGE}
+    if reads & set(F.RESERVED_LV):
+        raise T5Error(f"the read takes R-LV vintages {sorted(reads & set(F.RESERVED_LV))}")
+    if any(v >= 2023 for v in reads):
+        raise T5Error("the transfer read takes V 2011-2019 and V 2022 only")
+    done.append("no V 2020 or 2021 row is built; V 2011-2019 and V 2022 only")
+    if not G.eta_look_recorded():
+        raise T5Error("no read before Q1's record (the ETA look)")
+    done.append("Q1's record (the ETA look) is present")
+    blob = _git("rev-parse", "HEAD:./efv_vintage_frame.py")
+    clean = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", "efv_vintage_frame.py"],
+                           cwd=ROOT).returncode == 0
+    if blob != VINTAGE_FRAME_BLOB or not clean:
+        raise T5Error(f"efv_vintage_frame.py is blob {blob} (clean {clean}), not the s11 "
+                      f"pin {VINTAGE_FRAME_BLOB}")
+    done.append(f"efv_vintage_frame.py at the s11 blob {VINTAGE_FRAME_BLOB}, clean")
+    pins = S._pins()
+    for block in ("frozen_2026", "mlb_event_ids_2026"):
+        for name in sorted(pins.get(block) or {}):
+            try:
+                S._check_2026(name, block)
+            except S.StoreError as exc:
+                raise T5Error(str(exc)) from exc
+    done.append("the frozen 2026 copy and the event-id sets equal their sha256 pins")
+    src = Path(__file__).read_text(encoding="utf-8").lower()
+    for tok in ("fv" + "_bucket", "fv" + "_cell", "by" + "_fv"):
+        if tok in src:
+            raise T5Error(f"the runner names an FV-cell grouping ({tok})")
+    done.append("no FV-cell grouping in the runner")
+    loaded = [m for m in sys.modules if any(t in m.lower() for t in BANNED_MODULE_TOKENS)]
+    if loaded:
+        raise T5Error(f"AP+ modules are loaded: {loaded}")
+    done.append("AP+ never imported")
+    return done
+
+
+def t5_assert_outcomes(side: str, built: dict, labs: dict) -> None:
+    """T5 on the built rows (after the marker; a failure is a crash, the look spent):
+    no L6 for a 2025-or-later debutant, ABSENT sub-codes present and valid, no MLB stat
+    read on a released row, no AP+ module loaded."""
+    import efv_surrogate as S  # noqa: PLC0415
+    for V, lab in labs.items():
+        for k, lb in lab.items():
+            dy = lb.get("debut_year")
+            if dy is not None and int(dy) >= 2025 and (
+                    lb.get("l6") is not None or lb.get("l6_censored_target") is not None):
+                raise T5Error(f"an L6 exists for 2025-or-later debutant {k} at V {V}")
+    for V, rows in built.items():
+        for r in rows:
+            if r.get("s5_status") not in S.STATUSES:
+                raise T5Error(f"row {r.get('player_key')} at V {V} has status "
+                              f"{r.get('s5_status')!r}")
+            if r.get("vm_mlb_stat_read"):
+                raise T5Error(f"row {r.get('player_key')} at V {V} read an MLB stat")
+    loaded = [m for m in sys.modules if any(t in m.lower() for t in BANNED_MODULE_TOKENS)]
+    if loaded:
+        raise T5Error(f"AP+ modules are loaded: {loaded}")
 
 
 def _t4_arms(side, ctx, frames, labs, comp, cons, war, M, S) -> dict:
@@ -713,10 +966,11 @@ def _t4_arms(side, ctx, frames, labs, comp, cons, war, M, S) -> dict:
                         rows.append(dict(r, reached=imp[r["player_key"]], weight=1.0,
                                          target=0.0))
             return rows
+        # At RT V-1 the vintages V-3..V-1 carry no resolved R3, so the incumbent trains
+        # on the resolved rows alone (V-4 and earlier); their true R3 at today's RT is
+        # never handed to either head (amended 2026-10-15, before the look).
         masked = [r for r in base if r["decision_year"] < V - 3]
-        inc_head = M.fit_timing_head([r for r in base if r["decision_year"] < V - 3]
-                                     + [r for r in base if V - 3 <= r["decision_year"] < V
-                                        and r.get("reached") is not None], side)
+        inc_head = M.fit_timing_head(masked, side)
         aug_head = M.fit_timing_head(masked + imputed(False), side)
         twin_head = M.fit_timing_head(masked + imputed(True), side)
         ev = [r for r in M.lv_v2_rows(side, V, frames[V], gate_sha=sha)
@@ -760,7 +1014,8 @@ def _owner_question(task_dir: Path, title: str, body: str) -> None:
 def run_look(task_dir: Path, *, today: str | None = None, data_dir: Path = DATA_DIR,
              B: int = BOOT_B, check_busy: bool = True,
              _assemble_drivers=assemble_drivers,
-             _assemble_outcomes=assemble_outcomes) -> int:
+             _assemble_outcomes=assemble_outcomes,
+             _t5_assert=None) -> int:
     """THE ONE S3 LOOK. Tees first; refuses by preflight(); checks T2's driver variance
     before any outcome (a STOP spends nothing); pins at start and end; marks the look
     spent when scoring begins; on an exception after that, writes OWNER_QUESTION.md and
@@ -772,7 +1027,8 @@ def run_look(task_dir: Path, *, today: str | None = None, data_dir: Path = DATA_
     sys.stderr = _Tee(err, task_dir / "look_stderr.txt")
     try:
         return _look(task_dir, today=today, data_dir=data_dir, B=B, check_busy=check_busy,
-                     assemble_d=_assemble_drivers, assemble_o=_assemble_outcomes)
+                     assemble_d=_assemble_drivers, assemble_o=_assemble_outcomes,
+                     t5_assert=_t5_assert or t5_assert_static)
     finally:
         for t in (sys.stdout, sys.stderr):
             if isinstance(t, _Tee):
@@ -780,7 +1036,8 @@ def run_look(task_dir: Path, *, today: str | None = None, data_dir: Path = DATA_
         sys.stdout, sys.stderr = out, err
 
 
-def _look(task_dir, *, today, data_dir, B, check_busy, assemble_d, assemble_o) -> int:
+def _look(task_dir, *, today, data_dir, B, check_busy, assemble_d, assemble_o,
+          t5_assert) -> int:
     try:
         ctx = preflight(data_dir=data_dir, today=today, check_busy=check_busy)
     except LookRefused as exc:
@@ -789,6 +1046,14 @@ def _look(task_dir, *, today, data_dir, B, check_busy, assemble_d, assemble_o) -
     print(f"gate {G.SURROGATE_GATE_DOC} REGISTERED at {ctx['gate_sha']}; "
           f"records {ctx['look_records']}; run day {ctx['today']} (no calendar day "
           "blocks, EW3-5)")
+    try:
+        for line in t5_assert(ctx):
+            print(f"T5 asserted: {line}")
+    except T5Error as exc:
+        _owner_question(task_dir, "Surrogate S3 look stopped before scoring: T5",
+                        f"T5 failed before any outcome was read: {exc}. No look is spent.")
+        print(f"STOPPED (T5, no look spent): {exc}")
+        return 4
     pins_start = input_pins(data_dir)
     drv = assemble_d(ctx)
     bad = driver_variance_check(drv["v2rows"])
@@ -862,10 +1127,24 @@ def fixture_data(n: int = 240, seed: int = 7, *, nulls: bool = True) -> dict:
             lin = 0.8 * u + 0.4 * d["level_rank"]
             r3 = float(rng.random() < 1 / (1 + math.exp(-lin)))
             rows.append(dict(d, g_s=1 / (1 + math.exp(-lin)), r3=r3, u_c=u,
-                             vintage=2011 + i % 9, player=f"{side}{i}"))
+                             e_pre=float(rng.random()), vintage=2011 + i % 9,
+                             player=f"{side}{i}"))
         if nulls:
             rows[2]["g_s"], rows[3]["u_c"] = None, float("nan")
+            rows[4]["e_pre"] = None
         return rows
+
+    def w3(side):
+        rows = [{"s_idx": float(x), "w3_pct": float(x + rng.normal()),
+                 "player": f"{side}{i}", "club": f"c{i % 30}"}
+                for i, x in enumerate(rng.normal(size=n))]
+        if nulls:
+            rows[0]["s_idx"], rows[1]["w3_pct"] = float("nan"), None
+        return rows
+
+    def exits(side):
+        return {V: {k: (None if (nulls and V == 2011 and k == "other") else i % 4)
+                    for i, k in enumerate(T1_EXIT_KEYS)} for V in FIT_VINTAGES}
 
     def t4(side):
         out = {}
@@ -881,7 +1160,8 @@ def fixture_data(n: int = 240, seed: int = 7, *, nulls: bool = True) -> dict:
     new = [{"g_s": float(x), "r3": float(x + rng.normal() > 0)} for x in rng.normal(size=n // 2)]
     if nulls:
         old[0]["g_s"] = None
-    return {"t1": {s: t1(s) for s in SIDES}, "t2": {s: t2(s) for s in SIDES},
+    return {"t1": {s: t1(s) for s in SIDES}, "t1_exits": {s: exits(s) for s in SIDES},
+            "t1_w3": {s: w3(s) for s in SIDES}, "t2": {s: t2(s) for s in SIDES},
             "t3": {"old": old, "v2022": new}, "t4": {s: t4(s) for s in SIDES}}
 
 

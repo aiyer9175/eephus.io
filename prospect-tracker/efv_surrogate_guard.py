@@ -408,8 +408,32 @@ def reserved_read_days() -> frozenset[str]:
     return frozenset(days or {RESERVED_READ_DEFAULT})
 
 
-def look_session_markers() -> list[str]:
-    """Look markers another gate's runner left under .cache (one level deep)."""
+def marker_start_day(path: Path) -> str | None:
+    """The local calendar day on which a look marker records its look started (its
+    `started` ISO time, read in local time), or None when it records no readable start."""
+    try:
+        doc = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    s = doc.get("started") if isinstance(doc, dict) else None
+    if not isinstance(s, str) or not s.strip():
+        return None
+    try:
+        t = _dt.datetime.fromisoformat(s.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if t.tzinfo is not None:
+        t = t.astimezone()
+    return t.date().isoformat()
+
+
+def look_session_markers(today: str | None = None) -> list[str]:
+    """Look markers another gate's runner left under .cache (one level deep) that mark a
+    look session open on `today` (an ISO date). A marker whose recorded start falls on an
+    EARLIER day belongs to a finished session (the DvM+ runner keeps its marker for good as
+    its spent-look record), so it does not block; a marker with no readable start, or
+    any marker when `today` is None, still does (amended 2026-10-15, task SG_8: Q7 refuses
+    a session that runs another gate's look, never a calendar day)."""
     cache = ROOT / ".cache"
     found = []
     try:
@@ -419,7 +443,11 @@ def look_session_markers() -> list[str]:
     for d in sorted(entries):
         if d.name == OWN_CACHE_DIR:
             continue
-        if (d / LOOK_MARKER).exists():
+        marker = d / LOOK_MARKER
+        if marker.exists():
+            started = marker_start_day(marker)
+            if today is not None and started is not None and started < str(today)[:10]:
+                continue
             found.append(f".cache/{d.name}/{LOOK_MARKER}")
     return found
 
@@ -434,7 +462,7 @@ def blocked_day_reason(today=None) -> str | None:
         return f"{day} is a registered look day"
     # The reserved-read day no longer blocks: EW2-6 (2026-10-08) replaced the read
     # with the same-day backtest and EW3-5 (2026-10-14) waived the registered days.
-    markers = look_session_markers()
+    markers = look_session_markers(day)
     if markers:
         return "another gate's look session is open: " + ", ".join(markers)
     return None

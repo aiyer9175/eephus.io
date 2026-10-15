@@ -26,6 +26,7 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(G, "ROOT", tmp_path)
     monkeypatch.setattr(K, "DATA_DIR", data)
     monkeypatch.setattr(K, "CACHE_DIR", tmp_path / ".cache" / G.OWN_CACHE_DIR)
+    monkeypatch.setattr(K, "t5_assert_static", lambda ctx: ["fixture"])
     return data
 
 
@@ -300,3 +301,80 @@ def test_no_fv_cell_grouping_and_no_banned_call():
     for banned in ("fv_bucket", "fv_cell", "by_fv", "guard_score_request(",
                    "source_backtest", "run_backtest", "—"):
         assert banned not in src
+
+
+# ---------------------------------------------------------------------------
+# the 2026-10-15 amendments (SG_8, before the look)
+# ---------------------------------------------------------------------------
+
+def test_a_t5_failure_stops_before_any_outcome(env, monkeypatch, tmp_path):
+    _registered(monkeypatch)
+    _look1(env)
+
+    def bad(ctx):
+        raise K.T5Error("fixture T5")
+    called = []
+    rc = K.run_look(tmp_path / "task", data_dir=env, B=5, check_busy=False,
+                    _assemble_drivers=_drv_ok,
+                    _assemble_outcomes=lambda c, d: called.append(1), _t5_assert=bad)
+    assert rc == 4 and not called
+    assert not (K.CACHE_DIR / G.LOOK_MARKER).exists()
+    assert "T5" in (tmp_path / "task" / "OWNER_QUESTION.md").read_text(encoding="utf-8")
+
+
+def test_t1_exits_print_before_the_sds_and_tolerate_none(tmp_path):
+    K.run_dry(tmp_path, B=10)
+    text = (tmp_path / "dry_run.txt").read_text(encoding="utf-8")
+    assert text.index("T1 EXITS") < text.index("BOOTSTRAP SDs") < text.index("POINTS")
+    assert text.index("POINTS") < text.index("DESCRIPTIVE")
+    assert "other NA" in text and "g_skill" in text and "bypass share" in text
+
+
+def test_t2_milb_drivers_read_the_2015_2019_partial():
+    block = K.score_transfer(K.fixture_data(n=180), B=10)
+    for side in K.SIDES:
+        lo_all = block["cells"][f"T2a|{side}|partial"]["lo95"]
+        lo_milb = block["cells"][f"T2a|{side}|partial_V2015_2019"]["lo95"]
+        drv = block["t2"][side]["drivers"]
+        for d in K.T2_MILB_DRIVERS:
+            assert all(c["partial_lo95"] == lo_milb for c in drv[d].values())
+            assert set(drv[d]) == {"pooled", "2015-2016", "2017-2019"}
+        for d in K.T2_OTHER_DRIVERS:
+            assert all(c["partial_lo95"] == lo_all for c in drv[d].values())
+        assert block["t2"][side]["n_milb"] < block["t2"][side]["n"]
+    assert K.T2_MILB_YEARS == (2015, 2016, 2017, 2018, 2019)
+
+
+def test_t4_is_one_within_cell_per_side():
+    block = K.score_transfer(K.fixture_data(n=120), B=10)
+    t4 = [k for k in block["cells"] if k.startswith("T4|")]
+    assert sorted(t4) == sorted(f"T4|{s}|{a}" for s in K.SIDES
+                                for a in ("aug_minus_inc", "real_minus_twin"))
+    assert set(block["t4"]) == set(K.SIDES)
+    assert block["t4"]["hit"]["vintages"] == list(K.T4_EVAL_VINTAGES)
+
+
+def test_exit_reasons():
+    assert K._exit_reason({"status": "reserved_vm"}) == "reserved_vm"
+    assert K._exit_reason({"status": "identity_conflict"}) == "identity_conflict"
+    assert K._exit_reason({"status": "not_reached", "reached": "censored_never"}) ==         "censored_never"
+    assert K._exit_reason({"status": "ok", "reached": "reached"}) == "other"
+
+
+def test_t5_outcomes_refuses_an_l6_for_a_2025_debutant():
+    built = {2016: [{"player_key": "a", "s5_status": "ACTIVE"}]}
+    K.t5_assert_outcomes("hit", built, {2016: {"a": {"debut_year": 2025, "l6": None}}})
+    with pytest.raises(K.T5Error, match="2025"):
+        K.t5_assert_outcomes("hit", built, {2016: {"a": {"debut_year": 2025, "l6": 1.0}}})
+    with pytest.raises(K.T5Error, match="status"):
+        K.t5_assert_outcomes("hit", {2016: [{"player_key": "a", "s5_status": "X"}]}, {})
+
+
+def test_t5_static_holds_on_this_tree():
+    import subprocess
+    r = subprocess.run(["git", "-C", str(K.ROOT), "rev-parse", "HEAD"],
+                       capture_output=True, text=True)
+    if r.returncode != 0 or not G.eta_look_recorded():
+        pytest.skip("no git tree or no ETA record here")
+    done = K.t5_assert_static({})
+    assert any("s11 blob" in ln for ln in done) and any("AP+" in ln for ln in done)
