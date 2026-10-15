@@ -188,4 +188,52 @@ different objects, and both numbers are printed.
 
 ## 10. Results
 
-(empty until the re-read runs)
+**Read once, 2026-10-14, an OWNER-WAIVED EARLY READ** (EW3-5; the 2026 outcome half rests
+on the EW3-6 season-complete override `PLUS_LAB_SEASON_COMPLETE_ASOF 2026:2026-10-01`, logged
+in the artifact). Artifact `data/bat_tracking_served_eval.json` (generated 2026-10-14,
+runtime 43.4 s); this section is transcribed from it and was not re-run.
+Seed 20261014, 2000 reps, k = 1.
+
+**Verdict: PASS.** The served construction clears the served xHEM+ Blend at D4 under BOTH conventions. The flag flips.
+
+- Pair set: n 528 (published prior 528, no deviation); drops: partial outcome kept
+  0, HEM missing 0, BT missing 0.
+- Integrity: served composite minus eval composite max abs 2.2e-15;
+  HEM core served minus eval max abs 0.0; D4 matches the production
+  module (`bat_tracking_blend.served_values`): True.
+- D0 reproduction (seed 20260723): n 528, rho 0.4598 vs 0.4465, v1 lo95
+  +0.0015, v2 lo95 +0.0025; reproduces `data/bat_tracking_eval.json` arm B: True.
+
+| rung | rho BT Blend (v1) | rho xHEM+ Blend (v1) | gap v1 | gap v2 | MDE95 v1 / v2 |
+|---|---|---|---|---|---|
+| D0 (seed 20260723) | 0.4598 | 0.4465 | mean +0.0133, lo95 +0.0015, hi95 +0.0256 | mean +0.0135, lo95 +0.0025, hi95 +0.0254 | 0.0101 / 0.0095 |
+| D0 | 0.4598 | 0.4465 | mean +0.0134, lo95 +0.0017, hi95 +0.0253 | mean +0.0134, lo95 +0.0017, hi95 +0.0249 | 0.0098 / 0.0096 |
+| D1 | 0.4601 | 0.4457 | mean +0.0145, lo95 +0.0031, hi95 +0.0258 | mean +0.0145, lo95 +0.0030, hi95 +0.0254 | 0.0095 / 0.0093 |
+| D2 | 0.4598 | 0.4454 | mean +0.0146, lo95 +0.0029, hi95 +0.0264 | mean +0.0146, lo95 +0.0032, hi95 +0.0257 | 0.0097 / 0.0094 |
+| D3 | 0.4598 | 0.4454 | mean +0.0146, lo95 +0.0029, hi95 +0.0264 | mean +0.0146, lo95 +0.0032, hi95 +0.0257 | 0.0097 / 0.0094 |
+| D4 | 0.4595 | 0.4464 | mean +0.0132, lo95 +0.0019, hi95 +0.0242 | mean +0.0131, lo95 +0.0018, hi95 +0.0243 | 0.0095 / 0.0094 |
+
+The headline is D4: rho 0.4595 against the served xHEM+ Blend 0.4464,
+gap lo95 +0.0019 (v1) and +0.0018 (v2), both above zero. The served
+normalizer cost the candidate almost nothing on this pair set (D0 v1 gap mean
++0.0134, D4 +0.0132).
+
+Disclosures, zero verdict weight (section 7):
+
+- D4 against raw Savant xwOBA(Y) alone: v1 mean +0.0121, lo95 -0.0044, hi95 +0.0277; v2 mean +0.0117, lo95 -0.0027, hi95 +0.0269.
+  **The BT Blend does NOT separate from xwOBA alone**; any claim text on the column says so.
+- D4 against the served xHEM+ integer: v1 mean +0.0115, lo95 -0.0048, hi95 +0.0269; v2 mean +0.0109, lo95 -0.0033, hi95 +0.0260.
+- Per fold at D4: 2024 to 2025 n 265, rho 0.4611 vs 0.4523;
+  2025 to 2026 n 263, rho 0.4547 vs 0.4401.
+- S2 (PA >= 200 normalizer pool, n 365 in 2024 and 348 in 2025): v1 mean +0.0122, lo95 +0.0003, hi95 +0.0244;
+  v2 mean +0.0125, lo95 +0.0005, hi95 +0.0247.
+- Coverage: J(Y) 455 (2024) and 461 (2025); the xHEM+ Blend served pool
+  455 and 461; xHEM+ Blend rows the bat-tracking floor leaves blank
+  0 and 0; pair-set n 265 and 263.
+  The gate speaks only about the PA >= 200 subset while the board stamps PA >= 100.
+
+Consequence (section 6, fixed in advance): the flag flips in its own ONE commit with the
+regenerated board, the page column, the glossary entry and the new registry row
+`btblend_plus` (provisional). `bat_tracking_hitters` keeps its EVAL-construction verdict
+(provisional) and carries this re-read in its notes. No second read of this pair set; the
+next read needs the 2026 to 2027 fold (complete after 2027-11-15) and its own document.
