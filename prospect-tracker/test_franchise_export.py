@@ -1517,3 +1517,19 @@ def test_the_dev_leaf_names_difficulty_adjustment_only_when_org_summary_carries_
     on = fe.dev_leaf_basis({"dev_expectation": {"arm": "value", "windows": {}}}, grades, cranks)
     assert on.startswith("PROSPX letter B+, rank 7; DvM+ difficulty-adjusted")
     assert EM not in on and EN not in on
+
+
+def test_season_leaves_open_the_club_row_on_standings(d_index):
+    """STANDINGS_8 (STANDINGS_PLAN 8 C13): the SEASON leaves for wins, run
+    differential and division rank point at /standings/#team=CODE (they read
+    /betting/#section=teams before); pythag stays on Team Outlook and the
+    links block keeps betting_teams for the Open-in strip."""
+    import build_site
+    for c in d_index["clubs"]:
+        code = c["code"]
+        assert build_site._club_code(code) == code
+        leaves = {lf["key"]: lf for lf in _branch(c, "season")["leaves"]}
+        for k in ("wins", "run_diff", "division_rank"):
+            assert leaves[k]["link"] == f"/standings/#team={code}", (code, k)
+        assert leaves["pythag_pct"]["link"] == "/projections/#view=teams"
+        assert c["links"]["betting_teams"] == "/betting/#section=teams"

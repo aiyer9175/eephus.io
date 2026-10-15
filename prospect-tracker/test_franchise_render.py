@@ -1157,3 +1157,23 @@ def test_the_outlook_links_the_team_outlook_breakdown_only_when_the_payload_name
     opens = sec2.split('class="fr-open">', 1)[1]
     assert '<a href="/projections/#view=teams&amp;club=LAD">Club breakdown</a>' in opens
     assert opens.index("Team Outlook") < opens.index("Club breakdown") < opens.index("Roster board")
+
+
+def test_season_tiles_open_the_links_their_leaves_carry():
+    """STANDINGS_8: Record, Run differential and Division rank each open the
+    link of their SEASON leaf (franchise_export writes /standings/#team=CODE);
+    the payload is the served board with those three leaves set as the
+    exporter now writes them, so this pins the client, not the nightly."""
+    import copy
+    d = copy.deepcopy(_served())
+    tbr = next(c for c in d["clubs"] if c["code"] == "TBR")
+    season = next(b for b in tbr["tree"]["branches"] if b["key"] == "season")
+    for lf in season["leaves"]:
+        if lf["key"] in ("wins", "run_diff", "division_rank"):
+            lf["link"] = "/standings/#team=TBR"
+    html, _ = _render("club", team="TBR", payload=d)
+    sec = html.split('data-frsec="season"')[1].split("</section>")[0]
+    tiles = sec.split('class="fr-tiles">')[1].split('<p class="fr-note">')[0]
+    opens = re.findall(r'class="fr-tile-open" href="([^"]+)"', tiles)
+    assert opens == ["/standings/#team=TBR"] * 3 + ["/projections/#view=teams"], opens
+    assert "/betting/#section=teams" not in tiles

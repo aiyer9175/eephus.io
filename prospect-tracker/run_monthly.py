@@ -755,6 +755,59 @@ def _scores_iso(dt) -> str:
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") if dt else "never"
 
 
+def _scores_day(s):
+    try:
+        return datetime.strptime(str(s)[:10], "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return None
+
+
+def _scores_standings_scope(hb, store: Path, env, slate) -> tuple[bool, str]:
+    """The `standings` scope of the scores_job row (STANDINGS_8, STANDINGS_PLAN
+    4.5): read-only from the heartbeat's OUT and the served latest.json
+    standings block. Red when, during the regular season (the slate lists a
+    gameType R game), the block's as_of is more than one day behind the latest
+    R final's officialDate, or when T2 (league W equals L, and a final
+    season's total in its band) fails on the served season file. Returns
+    (ok, text); it writes nothing."""
+    import standings_core as stc
+    if not getattr(stc, "STANDINGS_LIVE", False):
+        return True, "not served (standings_core.STANDINGS_LIVE False)"
+    out = (hb or {}).get("out") if isinstance(hb, dict) else None
+    out = Path(out or env.get("EEPHUS_SCORES_OUT") or (store / "out"))
+    games = (slate.get("games") or []) if isinstance(slate, dict) else None
+    reg = [g for g in games or [] if isinstance(g, dict) and g.get("type") == "R"]
+    finals = sorted(d for d in (_scores_day(g.get("date")) for g in reg if g.get("state") == "final") if d)
+    ref = finals[-1] if finals else None
+    latest = _scores_read_json(out / "latest.json")
+    blk = latest.get("standings") if isinstance(latest, dict) else None
+    if not isinstance(blk, dict):
+        if ref is not None:
+            return False, (f"{out / 'latest.json'} carries no standings block while the slate lists "
+                           f"regular-season finals through {ref.isoformat()}")
+        return True, "latest.json carries no standings block; no regular-season final in the slate, age not judged"
+    season, as_of = blk.get("season"), _scores_day(blk.get("as_of"))
+    problems = []
+    if ref is not None and (as_of is None or (ref - as_of).days > 1):
+        lag = "an unreadable as_of" if as_of is None else f"{(ref - as_of).days} day(s) behind"
+        problems.append(f"as_of {blk.get('as_of')} is {lag} the latest regular-season final ({ref.isoformat()})")
+    name = f"standings/{season}.json"
+    doc = _scores_read_json(out / name)
+    if not isinstance(doc, dict):
+        problems.append(f"T2 cannot be read: {name} is missing or unreadable")
+    else:
+        try:
+            t2 = [m for code, m in stc.check_rows(doc) if code == "T2"]
+        except Exception as e:                            # noqa: BLE001
+            t2 = [f"the check crashed: {e}"]
+        problems += [f"T2 fails on {name}: {m}" for m in t2]
+    if problems:
+        return False, "; ".join(problems)
+    when = (f"latest regular-season final {ref.isoformat()}" if ref is not None
+            else "no regular-season final in the slate, age not judged")
+    return True, f"{season} as of {blk.get('as_of')}, {when}, T2 holds on {name}"
+
+
 def _scores_job_health(*, store: Path | None = None, env=None, now: datetime | None = None,
                        record=None, log: logging.Logger | None = None):
     """File the `scores_job` ingest row from the job's heartbeat, the last 24
@@ -853,6 +906,12 @@ def _scores_job_health(*, store: Path | None = None, env=None, now: datetime | N
                    f"{n_games} game(s); {n_runs} run(s), {n_ff} fetch_failed, "
                    f"{n_game_ff} per-game fetch failure(s), {short_refused} file(s) refused "
                    f"under {SCORES_HEALTH_REFUSAL_H:.0f} h; last ran {_scores_iso(last_run)}")
+        # STANDINGS_8: the standings scope rides the same row.
+        s_ok, s_txt = _scores_standings_scope(hb, store, env, slate)
+        if not s_ok and not msg.startswith("!!!"):
+            msg = f"{head} standings scope is red: {s_txt}; {msg}"
+        else:
+            msg = f"{msg}; standings: {s_txt}"
         ok = not msg.startswith("!!!")
     except Exception as e:                                # noqa: BLE001
         ok, n_written = False, 0

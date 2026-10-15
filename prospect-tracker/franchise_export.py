@@ -1175,6 +1175,10 @@ def build() -> dict:
             return {"key": key, "label": label, "value": value, "kind": kind, "ladder": ladder,
                     "basis": basis, "gl": gl, "link": link}
 
+        # STANDINGS_8: the SEASON leaves for wins, run differential and division
+        # rank open the club's row on /standings/ (its #team= takes the board's
+        # own canonical code, the one every other #team= link here carries).
+        standings_href = f"/standings/#team={c}"
         branches = [
             {"key": "roster", "kind": "graded", "label": "ROSTER", "title": BRANCH_TITLE["roster"],
              "weight": WEIGHTS["roster"], "score": s_roster[c], "rank": r_roster[c],
@@ -1220,9 +1224,9 @@ def build() -> dict:
              "headline": (f"{season['wins']}-{season['losses']}" if season["wins"] is not None else None),
              "basis": season["basis"], "verdict": None, "verdict_model": None,
              "leaves": [
-                 leaf("wins", f"Wins {SEASON_NOW}", season["wins"], "count", None, f"standings {SEASON_NOW}, {season['games']} games", "season_record", links["betting_teams"]),
-                 leaf("run_diff", "Run differential", season["run_diff"], "signed", None, "standings runDifferential", None, links["betting_teams"]),
-                 leaf("division_rank", "Division rank", season["division_rank"], "count", None, "standings divisionRank", None, links["betting_teams"]),
+                 leaf("wins", f"Wins {SEASON_NOW}", season["wins"], "count", None, f"standings {SEASON_NOW}, {season['games']} games", "season_record", standings_href),
+                 leaf("run_diff", "Run differential", season["run_diff"], "signed", None, "standings runDifferential", None, standings_href),
+                 leaf("division_rank", "Division rank", season["division_rank"], "count", None, "standings divisionRank", None, standings_href),
                  leaf("pythag_pct", "Pythag pct", season["pythag_pct"], "pct3", None, "Team Outlook current overlay, blended", "pythag_pct", links["team_outlook"]),
              ]},
             {"key": "fin", "kind": "descriptive", "label": "FIN", "title": BRANCH_TITLE["fin"],

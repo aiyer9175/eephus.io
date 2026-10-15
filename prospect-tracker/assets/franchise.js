@@ -672,9 +672,11 @@
   }
   function secSeason(d) {
     var s = d.sections.season, b = branchOf(d, "season");
-    var t = tile(gl("Record " + esc(DATA.season_now), "season_record"), esc(isNum(s.wins) ? s.wins + "-" + s.losses : ""), esc(nInt(s.games)) + " games", "", d.links.betting_teams) +
-      tile("Run differential", '<span class="' + signCls(s.run_diff) + '">' + esc(signed(s.run_diff, 0)) + "</span>", esc(nInt(s.rs)) + " scored, " + esc(nInt(s.ra)) + " allowed") +
-      tile("Division rank", esc(nInt(s.division_rank)), esc(d.division || "") + (s.division_champ ? " &middot; division champion" : s.clinched ? " &middot; clinched" : "")) +
+    // STANDINGS_8: each tile opens the link its leaf carries (the club's row on /standings/).
+    function lk(key) { var lf = b ? leafBy(b, key) : null; return lf ? lf.link : null; }
+    var t = tile(gl("Record " + esc(DATA.season_now), "season_record"), esc(isNum(s.wins) ? s.wins + "-" + s.losses : ""), esc(nInt(s.games)) + " games", "", lk("wins")) +
+      tile("Run differential", '<span class="' + signCls(s.run_diff) + '">' + esc(signed(s.run_diff, 0)) + "</span>", esc(nInt(s.rs)) + " scored, " + esc(nInt(s.ra)) + " allowed", "", lk("run_diff")) +
+      tile("Division rank", esc(nInt(s.division_rank)), esc(d.division || "") + (s.division_champ ? " &middot; division champion" : s.clinched ? " &middot; clinched" : ""), "", lk("division_rank")) +
       tile(gl("Pythag pct", "pythag_pct"), esc(pct3(s.pythag_pct)), "actual " + esc(pct3(s.actual_pct)) + " &middot; " + esc(copy("pythag_label")), "", d.links.team_outlook);
     return '<div class="fr-tiles">' + t + "</div>" + '<p class="fr-note">' + esc(copy("season_note")) + "</p>" +
       (isNum(s.gb) ? '<p class="fr-count">games back ' + esc(n1(s.gb)) + " &middot; remaining " + esc(nInt(s.rem_games)) + "</p>" : "");

@@ -284,3 +284,132 @@ def test_the_sitemap_lists_scores_hourly_once():
     rows = re.findall(r"<url><loc>https://eephus\.io/scores/</loc><lastmod>[^<]+</lastmod>"
                       r"<changefreq>([a-z]+)</changefreq><priority>([0-9.]+)</priority></url>", xml)
     assert rows == [("hourly", "0.8")]
+
+
+# --------------------------------------------------------------------------- #
+# STANDINGS_8: the standings scope on the same row (STANDINGS_PLAN 4.5)
+# --------------------------------------------------------------------------- #
+P1 = ROOT / "test_fixtures" / "standings" / "p1_2026-09-20.json"
+
+
+def _season_file(*, t2_break=False):
+    import standings_core as stc
+    doc = stc.build_season_file(json.loads(P1.read_text(encoding="utf-8")), as_of="2026-09-20",
+                                final=False, generated_at="2026-09-20T12:00:00Z")
+    if t2_break:
+        doc["rows"][0]["w"] += 1
+    return doc
+
+
+def _standings_store(tmp_path, *, finals=(), others=(), block=True, as_of="2026-09-20", t2_break=False,
+                     heartbeat=True):
+    """A fixture store whose heartbeat names tmp_path/out, with a served
+    latest.json standings block and season file there, and a slate of typed
+    games (start far outside the 24 h window, so the base row reads idle)."""
+    st = _store(tmp_path, heartbeat_age_min=2.0 if heartbeat else None, runs=_runs(3), slate=False)
+    games = [{"pk": 800000 + i, "date": d, "type": "R", "state": "final", "start": d + "T23:00:00Z"}
+             for i, d in enumerate(finals)]
+    games += [{"pk": 810000 + i, "date": d, "type": t, "state": s, "start": d + "T23:00:00Z"}
+              for i, (d, t, s) in enumerate(others)]
+    (st / "slate.json").write_text(json.dumps({"fetched_at": _iso(NOW), "span": ["2026-09-01", "2026-10-14"],
+                                               "games": games}), encoding="utf-8")
+    out = tmp_path / "out"
+    (out / "standings").mkdir(parents=True, exist_ok=True)
+    latest = {"schema": 1, "today": "2026-10-07"}
+    if block:
+        latest["standings"] = {"season": 2026, "as_of": as_of, "rev": "x", "race_rev": None,
+                               "phist_rev": None, "stale_since": None}
+    (out / "latest.json").write_text(json.dumps(latest), encoding="utf-8")
+    (out / "standings" / "2026.json").write_text(json.dumps(_season_file(t2_break=t2_break)), encoding="utf-8")
+    return st
+
+
+def test_standings_scope_in_season_and_fresh_is_green(tmp_path):
+    st = _standings_store(tmp_path, finals=["2026-09-19", "2026-09-20"])
+    (ok, _n, msg), calls = _run(st)
+    assert ok is True and len(calls) == 1 and calls[0][0][0] == "scores_job"
+    assert msg.endswith("; standings: 2026 as of 2026-09-20, latest regular-season final 2026-09-20, "
+                        "T2 holds on standings/2026.json")
+
+
+def test_standings_scope_allows_one_day_and_reddens_at_two(tmp_path):
+    (ok, _n, msg), _ = _run(_standings_store(tmp_path / "a", finals=["2026-09-21"]))
+    assert ok is True and "latest regular-season final 2026-09-21" in msg
+    (ok, _n, msg), calls = _run(_standings_store(tmp_path / "b", finals=["2026-09-20", "2026-09-22"]))
+    assert ok is False and calls[0][0][:2] == ("scores_job", False)
+    assert msg.startswith("!!! SCORES RED: the Scores / Standings job (tools/scores_job.py) standings scope "
+                          "is red: as_of 2026-09-20 is 2 day(s) behind the latest regular-season final (2026-09-22)")
+
+
+def test_standings_scope_judges_only_regular_season_finals(tmp_path):
+    # the postseason and the offseason: no R final in the slate, so an old as_of is not stale
+    st = _standings_store(tmp_path / "a", others=[("2026-10-05", "D", "final"), ("2026-10-08", "L", "scheduled")])
+    (ok, _n, msg), _ = _run(st)
+    assert ok is True and "no regular-season final in the slate, age not judged" in msg
+    # an R game scheduled but none final yet (Opening Day morning) is not judged either
+    st = _standings_store(tmp_path / "b", others=[("2026-09-25", "R", "scheduled")])
+    (ok, _n, msg), _ = _run(st)
+    assert ok is True and "age not judged" in msg
+
+
+def test_standings_scope_t2_failure_is_red_in_any_season(tmp_path):
+    for sub, kw in (("a", {"finals": ["2026-09-20"]}), ("b", {"others": [("2026-10-05", "D", "final")]})):
+        (ok, _n, msg), _ = _run(_standings_store(tmp_path / sub, t2_break=True, **kw))
+        assert ok is False
+        assert "standings scope is red: T2 fails on standings/2026.json: league W 2340 != L 2339" in msg
+
+
+def test_standings_scope_missing_block_reddens_only_in_season(tmp_path):
+    (ok, _n, msg), _ = _run(_standings_store(tmp_path / "a", block=False, finals=["2026-09-20"]))
+    assert ok is False
+    assert "carries no standings block while the slate lists regular-season finals through 2026-09-20" in msg
+    (ok, _n, msg), _ = _run(_standings_store(tmp_path / "b", block=False))
+    assert ok is True and msg.endswith("; standings: latest.json carries no standings block; no regular-season "
+                                       "final in the slate, age not judged")
+
+
+def test_standings_scope_appends_to_a_row_already_red(tmp_path):
+    st = _standings_store(tmp_path, finals=["2026-09-25"])
+    hb = json.loads((st / "heartbeat.json").read_text(encoding="utf-8"))
+    hb["last_run_utc"] = _iso(NOW - timedelta(hours=3))
+    (st / "heartbeat.json").write_text(json.dumps(hb), encoding="utf-8")
+    slate = json.loads((st / "slate.json").read_text(encoding="utf-8"))
+    slate["games"].append({"pk": 1, "date": "2026-10-07", "type": "L", "state": "final",
+                           "start": _iso(NOW - timedelta(hours=4))})
+    (st / "slate.json").write_text(json.dumps(slate), encoding="utf-8")
+    (ok, _n, msg), _ = _run(st)
+    assert ok is False
+    assert msg.startswith("!!! SCORES RED: the Scores / Standings job (tools/scores_job.py) stopped at")
+    assert msg.count("!!!") == 1 and "; standings: as_of 2026-09-20 is 5 day(s) behind" in msg
+
+
+def test_standings_scope_never_files_without_the_host_marker(tmp_path):
+    st = _standings_store(tmp_path, finals=["2026-09-22"], t2_break=True, heartbeat=False)
+    out, calls = _run(st, env={})
+    assert out is None and calls == []
+
+
+def test_standings_scope_reads_the_flag_and_writes_nothing(tmp_path, monkeypatch):
+    st = _standings_store(tmp_path, finals=["2026-09-25"], t2_break=True)
+    before = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in tmp_path.rglob("*") if p.is_file()}
+    (ok, _n, _msg), _ = _run(st)
+    assert ok is False
+    import standings_core as stc
+    monkeypatch.setattr(stc, "STANDINGS_LIVE", False)
+    (ok, _n, msg), _ = _run(st)
+    assert ok is True and msg.endswith("; standings: not served (standings_core.STANDINGS_LIVE False)")
+    after = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in tmp_path.rglob("*") if p.is_file()}
+    assert before == after
+
+
+def test_the_sitemap_lists_standings_daily_once_while_it_serves(monkeypatch):
+    import standings_core as stc
+    xml = build_site.build_sitemap([])
+    rows = re.findall(r"<url><loc>https://eephus\.io/standings/</loc><lastmod>[^<]+</lastmod>"
+                      r"<changefreq>([a-z]+)</changefreq><priority>([0-9.]+)</priority></url>", xml)
+    assert rows == ([("daily", "0.8")] if stc.STANDINGS_LIVE else [])
+    if stc.STANDINGS_LIVE:
+        pages = [p for p, _f, _p in build_site.sitemap_pages()]
+        assert pages.index("/standings/") == pages.index("/scores/") + 1
+    monkeypatch.setattr(stc, "STANDINGS_LIVE", False)
+    assert "/standings/" not in build_site.build_sitemap([])
