@@ -586,8 +586,12 @@ def test_fetcher_writes_only_the_history_directory_with_receipts_and_pacing(tmp_
     complete = json.dumps(_complete_plays()).encode("utf-8")
     partial = json.dumps(_complete_plays()[:-1]).encode("utf-8")
     hist.mkdir()
-    (hist / "5.json").write_bytes(complete)                      # already on disk, complete
+    (hist / "5.json").write_bytes(complete)                      # already on disk, complete, receipted
     (hist / "6.json").write_bytes(partial)                       # on disk, partial: fetched again
+    (hist / "receipts.jsonl").write_text(json.dumps(
+        {"game_pk": 5, "season": 2011, "date": "2011-04-03", "status": "ok", "bytes": len(complete),
+         "sha256": hashlib.sha256(complete).hexdigest(), "fetched_at": "x", "elapsed_ms": 1}) + "\n",
+        encoding="utf-8")
     calls, sleeps = [], []
     answers = {1: _FakeResp(200, complete), 2: _FakeResp(404), 3: _FakeResp(200, partial),
                4: _FakeResp(200, complete), 6: _FakeResp(200, complete),
@@ -605,8 +609,9 @@ def test_fetcher_writes_only_the_history_directory_with_receipts_and_pacing(tmp_
                                                             "summary.json"]
     assert (hist / "6.json").read_bytes() == complete
     lines = [json.loads(x) for x in (hist / "receipts.jsonl").read_text(encoding="utf-8").splitlines()]
-    assert [(r["game_pk"], r["status"]) for r in lines] == [(1, "ok"), (2, "no_play"), (3, "partial"),
-                                                            (4, "ok"), (6, "ok"), (7, "error")]
+    assert [(r["game_pk"], r["status"]) for r in lines][1:] == [(1, "ok"), (2, "no_play"), (3, "partial"),
+                                                                (4, "ok"), (6, "ok"), (7, "error")]
+    assert summ["ok_receipts_before"] == 1 and not list(hist.glob("receipts.jsonl.damaged-*"))
     ok = [r for r in lines if r["status"] == "ok"]
     assert all(r["bytes"] == len(complete) and r["sha256"] == hashlib.sha256(complete).hexdigest()
                and r["fetched_at"] and r["season"] == 2011 and r["date"] for r in ok)
@@ -625,7 +630,55 @@ def test_fetcher_writes_only_the_history_directory_with_receipts_and_pacing(tmp_
     blk2 = summ2["seasons"]["2011"]
     assert blk2["present_before"] == 4 and blk2["fetched"] == 2 and blk2["no_play"] == 1
     assert blk2["present_after"] == 6 and blk2["complete"] is True
-    assert len((hist / "receipts.jsonl").read_text(encoding="utf-8").splitlines()) == 9
+    assert len((hist / "receipts.jsonl").read_text(encoding="utf-8").splitlines()) == 10
+
+
+def test_fetcher_heals_damaged_receipts_and_refetches_unreceipted_or_altered_payloads(tmp_path):
+    """The 2026-10-14 blue screens: receipts lost for payloads on disk, a receipts
+    file with NUL runs and a cut line, a payload zero-filled under an ok receipt."""
+    hist = tmp_path / "win_prob_hist"
+    hist.mkdir()
+    complete = json.dumps(_complete_plays()).encode("utf-8")
+    other = json.dumps(_complete_plays(2)).encode("utf-8")
+    sha = hashlib.sha256(complete).hexdigest()
+
+    def receipt(pk, **kw):
+        r = {"game_pk": pk, "season": 2011, "date": "2011-04-01", "status": "ok", "bytes": len(complete),
+             "sha256": sha, "fetched_at": "x", "elapsed_ms": 1}
+        r.update(kw)
+        return json.dumps(r, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    (hist / "1.json").write_bytes(complete)                      # complete, receipted: skipped
+    (hist / "2.json").write_bytes(complete)                      # complete, NO receipt: fetched again
+    (hist / "3.json").write_bytes(b"\0" * len(complete))         # zero-filled under an ok receipt
+    (hist / "4.json").write_bytes(other)                         # complete, bytes differ from the receipt
+    (hist / "receipts.jsonl").write_bytes(
+        receipt(1) + b"\n" + receipt(3) + b"\n" + receipt(4) + b"\n" + b"\0" * 40 + b"\n"
+        + receipt(9)[:30] + b"\n" + receipt(8, status="no_play", sha256=None, bytes=0) + b"\n")
+    calls = []
+    answers = {pk: _FakeResp(200, complete) for pk in (2, 3, 4)}
+    answers[8] = _FakeResp(404)
+    pacer = fwh.Pacer(1.0, clock=lambda: 0.0, sleep=lambda s: None)
+    sched = {2011: [[pk, "2011-04-01"] for pk in (1, 2, 3, 4, 8)]}
+    summ = fwh.run([2011], out_dir=hist, session=_fake_session(answers, calls), pacer=pacer,
+                   user_agent="ua", schedules=sched)
+    assert [c[0] for c in calls] == [2, 3, 4, 8]
+    assert summ["ok_receipts_before"] == 3
+    parked = list(hist.glob("receipts.jsonl.damaged-*"))
+    assert len(parked) == 1 and b"\0" in parked[0].read_bytes()
+    lines = (hist / "receipts.jsonl").read_bytes().split(b"\n")
+    assert b"\0" not in (hist / "receipts.jsonl").read_bytes()
+    recs = [json.loads(x) for x in lines if x.strip()]
+    assert [(r["game_pk"], r["status"]) for r in recs] == [(1, "ok"), (3, "ok"), (4, "ok"), (8, "no_play"),
+                                                           (2, "ok"), (3, "ok"), (4, "ok"), (8, "no_play")]
+    assert all((hist / f"{pk}.json").read_bytes() == complete for pk in (1, 2, 3, 4))
+    blk = summ["seasons"]["2011"]
+    assert blk["present_before"] == 1 and blk["fetched"] == 3 and blk["no_play"] == 1 and blk["complete"]
+    # a clean file is left alone: the third run heals nothing and fetches nothing but the 404
+    calls2 = []
+    fwh.run([2011], out_dir=hist, session=_fake_session({8: _FakeResp(404)}, calls2), pacer=pacer,
+            user_agent="ua", schedules=sched)
+    assert [c[0] for c in calls2] == [8] and len(list(hist.glob("receipts.jsonl.damaged-*"))) == 1
+    assert fwh.heal_receipts(tmp_path / "nowhere") == {}
 
 
 def test_fetcher_limit_caps_the_requests_of_one_run(tmp_path):

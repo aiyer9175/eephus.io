@@ -20,8 +20,14 @@ second at most), the house User-Agent (pipeline_vintage.USER_AGENT), one payload
 at a time, no workers.
 
 RESUMABLE AND FAIL-SOFT. A payload already on disk whose play list ends the game
-(``mlb_leverage.plays_end_the_game``) is skipped; a partial or unreadable one is
-fetched again. A game the endpoint answers 404 for (a game the schedule lists
+(``mlb_leverage.plays_end_the_game``), that an ok receipt names and whose bytes
+hash to that receipt's sha256 is skipped; a partial, unreadable, unreceipted or
+altered one is fetched again. A receipts file an unclean shutdown damaged (NUL
+runs, a cut line) is healed before anything is fetched: the lines that parse are
+kept, the damaged file is parked beside it as ``receipts.jsonl.damaged-<stamp>``
+(the 2026-10-14 blue screens zero-filled files mid-write; receipts were lost for
+payloads on disk, and payloads were zero-filled under ok receipts). A game the
+endpoint answers 404 for (a game the schedule lists
 as final but that was never played: cancelled, or postponed and never made up)
 is recorded as ``no_play`` and the run continues; any other failure is recorded
 as ``error`` and the next run retries it. Nothing aborts the run but a refused
@@ -90,15 +96,52 @@ def _now_iso() -> str:
     return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat()
 
 
-def payload_complete(path: Path) -> bool:
-    """True when the payload on disk parses and its play list ends the game."""
+def payload_complete(path: Path, sha256: str | None = None) -> bool:
+    """True when the payload on disk parses, its play list ends the game and,
+    when a receipt's sha256 is given, its bytes hash to it."""
     import mlb_leverage
     try:
-        data = json.loads(Path(path).read_bytes())
+        body = Path(path).read_bytes()
+        data = json.loads(body)
     except (OSError, ValueError):
+        return False
+    if sha256 is not None and hashlib.sha256(body).hexdigest() != sha256:
         return False
     plays = data if isinstance(data, list) else ((data or {}).get("winProbability") or [])
     return bool(plays) and mlb_leverage.plays_end_the_game(plays)
+
+
+def heal_receipts(out_dir: Path) -> dict:
+    """{game_pk: sha256} of the ok receipts in out_dir/receipts.jsonl, the last
+    line per game winning. A file an unclean shutdown damaged (NUL bytes, a line
+    that does not parse) is parked as receipts.jsonl.damaged-<stamp> and
+    rewritten with the lines that parse, so every later reader sees clean
+    lines. Idempotent: a clean file is read and left alone."""
+    receipts = Path(out_dir) / "receipts.jsonl"
+    if not receipts.exists():
+        return {}
+    raw = receipts.read_bytes()
+    kept, ok, damaged = [], {}, 0
+    for line in raw.split(b"\n"):
+        if not line.strip(b" \r\0"):
+            damaged += int(b"\0" in line)
+            continue
+        try:
+            r = json.loads(line)
+        except ValueError:
+            damaged += 1
+            continue
+        kept.append(line.rstrip(b"\r"))
+        if r.get("status") == "ok":
+            ok[int(r["game_pk"])] = r.get("sha256")
+    if damaged:
+        stamp = _dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        parked = receipts.with_name(f"receipts.jsonl.damaged-{stamp}")
+        receipts.replace(parked)
+        receipts.write_bytes(b"\n".join(kept) + (b"\n" if kept else b""))
+        _log.warning("receipts healed: %d damaged line(s) dropped, %d kept, original parked as %s",
+                     damaged, len(kept), parked.name)
+    return ok
 
 
 def season_schedule(season: int, out_dir: Path) -> list:
@@ -179,8 +222,10 @@ def run(seasons=HIST_SEASONS, *, out_dir: Path = HIST_DIR, session=None, pacer: 
     pacer = pacer or Pacer()
     ua = user_agent or house_user_agent()
     receipts = out_dir / "receipts.jsonl"
+    ok_receipts = heal_receipts(out_dir)
     summary: dict = {"started_at": _now_iso(), "out_dir": str(out_dir), "user_agent": ua,
-                     "min_interval_s": pacer.interval, "seasons": {}}
+                     "min_interval_s": pacer.interval, "ok_receipts_before": len(ok_receipts),
+                     "seasons": {}}
     n_requests = 0
     for season in seasons:
         season = int(season)
@@ -193,7 +238,7 @@ def run(seasons=HIST_SEASONS, *, out_dir: Path = HIST_DIR, session=None, pacer: 
         for pk, date in games:
             pk = int(pk)
             path = out_dir / f"{pk}.json"
-            if path.exists() and payload_complete(path):
+            if pk in ok_receipts and path.exists() and payload_complete(path, ok_receipts[pk]):
                 blk["present_before"] += 1
                 continue
             if limit is not None and n_requests >= limit:
@@ -204,6 +249,8 @@ def run(seasons=HIST_SEASONS, *, out_dir: Path = HIST_DIR, session=None, pacer: 
             with open(receipts, "a", encoding="utf-8") as fh:
                 fh.write(json.dumps(rec, sort_keys=True, separators=(",", ":")) + "\n")
             st = rec["status"]
+            if st == "ok":
+                ok_receipts[pk] = rec["sha256"]
             blk["fetched" if st == "ok" else st] += 1
             blk["bytes"] += int(rec.get("bytes") or 0)
             if st != "ok":
