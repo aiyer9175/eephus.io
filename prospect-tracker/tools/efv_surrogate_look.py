@@ -681,10 +681,18 @@ def _within_pct(vals: list[float | None], groups: list) -> list[float | None]:
 def assemble_drivers(ctx: dict) -> dict:
     """STEP 1, no outcome: the frames and their V2 rows (drivers and consensus) for
     every vintage the read takes."""
+    import efv_drivers as DRV  # noqa: PLC0415
     import efv_vintage_frame as F  # noqa: PLC0415
     import efv_v2_model as M  # noqa: PLC0415
     uni = F.load_universe()
     sha = ctx["gate_sha"]
+    # The V2 sidecars, attached as every V2 frame builder does (tools/efv_v2_assemble.py,
+    # tools/efv_surrogate_freeze_2026.py): protection status on the outcome-blind id as
+    # of the window start (T2's on_40man and nov_add), BMI and the Pipeline revision.
+    # Without them lv_v2_rows reads every protection driver as None (amended 2026-10-15,
+    # found by the driver-only variance check, no outcome read).
+    tx = DRV.load_league_transactions(max(G_S_VINTAGES + (T3_VINTAGE,)) - 1)
+    panel = DRV.load_bio_panel()
     frames: dict = {}
     v2rows: dict = {}
     for side in SIDES:
@@ -693,6 +701,9 @@ def assemble_drivers(ctx: dict) -> dict:
             G.guard_surrogate_read(V, gate_sha=sha, look_records=ctx["look_records"],
                                    purpose=PURPOSE)
             rows = F.build_frame(side, V, gate_sha=sha, universe=uni)
+            DRV.protection_for_frame(rows, index=tx)
+            DRV.bmi_for_rows(rows, panel=panel)
+            DRV.pl_revision_for_rows(rows)
             frames[side][V] = rows
             v2rows[side].extend(M.lv_v2_rows(side, V, rows, gate_sha=sha))
     return {"universe": uni, "frames": frames, "v2rows": v2rows}
