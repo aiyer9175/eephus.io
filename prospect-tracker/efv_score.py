@@ -2174,6 +2174,10 @@ def score_history(persist: bool = True) -> dict:
                 _s, json.loads(live_matrix_path(_s).read_text(encoding="utf-8")))
 
     out = {}
+    # eFV v5 COMBINED: a V2 member's series is graded after the loop, once every side's
+    # snapshots are known, so HistoryGrader.prime builds each snapshot's candidate columns
+    # in one pass (a no-op on any other served model; the order of `out` is kept).
+    pending = []
     for rec in players:
         pk = rec.get("player_key")
         if not pk:
@@ -2263,10 +2267,21 @@ def score_history(persist: bool = True) -> dict:
                 continue
             series.append({"d": pt["snapshot_date"], "x": round(grade, 1), "c": round(cons_fv, 1)})
         if v2_member and v2_pts:
-            series = [{"d": q["d"], "x": round(g, 1), "c": q["c"]}
-                      for q, g in zip(v2_pts, g2.grades(v2_pts))]
+            pending.append((pk, g2, rec.get("mlbam_id"), v2_pts))
+            out[pk] = None                    # its place in the order; filled below
+            continue
         if len(series) >= 2:
             out[pk] = series
+    for g2 in v2g.values():
+        g2.prime({pk: {"mlbam_id": mid, "points": pts}
+                  for pk, g, mid, pts in pending if g is g2})
+    for pk, g2, _mid, v2_pts in pending:
+        series = [{"d": q["d"], "x": round(g, 1), "c": q["c"]}
+                  for q, g in zip(v2_pts, g2.grades(v2_pts, player_key=pk))]
+        if len(series) >= 2:
+            out[pk] = series
+        else:
+            del out[pk]
 
     if persist:
         # BASIS STAMP. storage.xfv_history_is_on_board_basis reads it and withholds the
@@ -2390,6 +2405,24 @@ def _v2_overlay_chips(r, side: str, model_war) -> list:
         return []
 
 
+def _v5_explainer_cut(chips: list) -> tuple[list, dict | None]:
+    """eFV v5 COMBINED reads up to 44 drivers a side, so its card takes the explainer's
+    top-_EXPLAINER_TOP cut (the v1 card's rule, 2026-08-07): the largest model chips, every
+    note that moves nothing (on_grade False), and factors_more with the count and summed
+    magnitude of the model chips cut (None when nothing was cut). V2 lists every chip, as
+    before."""
+    import efv5_combined as _v5c
+    if not _v5c.EFV_V5_COMBINED_ON:
+        return chips, None
+    model = sorted((c for c in chips if c.get("on_grade") is not False),
+                   key=lambda c: -float(c.get("mag") or 0.0))
+    notes = [c for c in chips if c.get("on_grade") is False]
+    hidden = model[_EXPLAINER_TOP:]
+    more = ({"n": len(hidden), "mag": round(sum(float(c["mag"]) for c in hidden), 2)}
+            if hidden else None)
+    return model[:_EXPLAINER_TOP] + notes, more
+
+
 def _v2_entry(r, side: str, p: dict, v1e: dict | None) -> dict:
     """The served row for a consensus-graded prospect, from V2's order index alone."""
     import efv_v2_serve as _v2s
@@ -2404,7 +2437,8 @@ def _v2_entry(r, side: str, p: dict, v1e: dict | None) -> dict:
         round(grade, 1), round(cons_fv, 1), anchor_constant_only=False,
         grade_from_outcome_map=False)
     p_bust = round(probs[0], 3) if probs else None
-    chips = list(p.get("chips") or []) + _v2_overlay_chips(r, side, p.get("efv_war_6yr"))
+    chips, more = _v5_explainer_cut(list(p.get("chips") or []))
+    chips = chips + _v2_overlay_chips(r, side, p.get("efv_war_6yr"))
     e = {
         "player_key": r["player_key"], "kind": "active", "position": pos,
         "consensus_fv": round(cons_fv, 1),
@@ -2432,7 +2466,7 @@ def _v2_entry(r, side: str, p: dict, v1e: dict | None) -> dict:
                    "order_rank": p.get("order_rank"), "consensus_rank": p.get("consensus_rank"),
                    "group_n": p.get("group_n")},
         "factors": chips,
-        "factors_more": None,
+        "factors_more": more,
         # the pricing grade IS the served grade (one order index)
         "xfv_grade_display": round(grade, 1),
         "xfv_minus_consensus_display": round(grade - cons_fv, 1),

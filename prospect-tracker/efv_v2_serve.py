@@ -318,24 +318,68 @@ def _chip_parts(model: dict, rows: list[dict]) -> list[dict[str, float]]:
     return out
 
 
+def chip_label(k: str) -> str:
+    """V2's own label; else (an eFV v5 COMBINED candidate key) efv5_combined's; else the key."""
+    lab = CHIP_LABELS.get(k)
+    if lab is not None:
+        return lab
+    if k.startswith("scr_"):
+        import efv5_combined as V5C
+        return V5C.chip_label(k)
+    return k
+
+
 def driver_chips(parts: dict[str, float]) -> list[dict]:
     """The chips for one row: every driver moving its order index by at least
     CHIP_FLOOR_PCT percentile points, largest first."""
-    chips = [{"label": CHIP_LABELS.get(k, k), "driver": k,
+    chips = [{"label": chip_label(k), "driver": k,
               "dir": "up" if v > 0 else "down", "mag": round(abs(v), 2),
               "unit": "percentile points"}
              for k, v in parts.items() if abs(v) >= CHIP_FLOOR_PCT]
     return sorted(chips, key=lambda c: -c["mag"])
 
 
+def v5c_serves(model: dict) -> bool:
+    """Is this model eFV v5 COMBINED with its flag on (the live candidate columns apply)?"""
+    import efv5_combined as V5C
+    return bool(V5C.EFV_V5_COMBINED_ON) and model.get("model_id") == V5C.MODEL_ID
+
+
+def _with_live_candidates(side: str, rows: list[dict], live: list[dict], model: dict,
+                          today: str) -> list[dict]:
+    """eFV v5 COMBINED: every candidate column of the side read on the live rows as of
+    today (efv5_combined.live_columns) and attached to their v2 view, so the joint heads'
+    candidate slopes act and their chips print. Any other model: the rows unchanged."""
+    if not v5c_serves(model):
+        return rows
+    import efv5_combined as V5C
+    rec: dict = {}
+    cols = V5C.live_columns(side, rows, today=today,
+                            raw_by_key={r["player_key"]: r for r in live if r.get("player_key")},
+                            receipt=rec, log=lambda *_a, **_k: None)
+    dark = {f: n.get("status") for f, n in (rec.get("families") or {}).items()
+            if n.get("status") != "lit"}
+    if dark:
+        log.info("eFV v5 live columns %s: families not fully lit %s", side, dark)
+    return V5C.attach(rows, side, cols, V5C.LIVE_KIND)
+
+
 def score_live(side: str, live: list[dict], *, models: dict | None = None,
-               today: str | None = None) -> dict[str, dict]:
+               today: str | None = None, cand_out: dict | None = None) -> dict[str, dict]:
     """{player_key: V2 prediction} for one side's live board: u_c, e_skill, e_time,
-    order_idx, grade, the six-season WAR at the grade and the driver chips."""
+    order_idx, grade, the six-season WAR at the grade and the driver chips. Under eFV v5
+    COMBINED the rows first take every candidate column as of today; `cand_out`, when a
+    dict, receives {player_key: {candidate key: value}} as scored."""
     import efv_v2_model as H
     models = production_models() if models is None else models
     model = models[side]
+    today = today or date.today().isoformat()
     rows = live_rows(side, live, today=today)
+    rows = _with_live_candidates(side, rows, live, model, today)
+    if cand_out is not None:
+        for r in rows:
+            cand_out[r["player_key"]] = {k: v for k, v in r["v2"].items()
+                                         if k.startswith(H.V2_SCREEN_PREFIX)}
     preds = H.predict_v2(model, rows)
     parts = _chip_parts(model, rows)
     head_chips = _tracking_head(side, rows, preds, model)
@@ -367,14 +411,35 @@ class HistoryGrader:
     order-index-to-grade line (linear between today's rows, flat past either end). A
     player's latest snapshot therefore lands on his served grade, and the series moves
     only when his consensus or his drivers moved. It is today's model scoring old
-    snapshots, as the v1 series always was, not the grade that would have shown then."""
+    snapshots, as the v1 series always was, not the grade that would have shown then.
 
-    def __init__(self, side: str, live: list[dict], *, models: dict | None = None):
+    eFV v5 COMBINED (its heads also read the candidate columns): a snapshot dated on or
+    after the player's live consensus as-of date takes the live board's candidate values
+    exactly (so the latest point still lands on the served grade), and every earlier
+    snapshot takes the candidate columns read as of its own date
+    (efv5_combined.history_columns: read year min(snapshot year, list year) + 1, cutoff the
+    snapshot date, centered within the snapshot year), built for all the side's snapshots
+    at once by prime(). A snapshot prime() never saw reads no candidate (z = 0)."""
+
+    def __init__(self, side: str, live: list[dict], *, models: dict | None = None,
+                 today: str | None = None):
         import efv_v2_model as H
         self.side = side
         self.model = (production_models() if models is None else models)[side]
+        self.today = today or date.today().isoformat()
+        self._v5 = v5c_serves(self.model)
+        self._cand_live: dict = {}
+        self._cand_hist: dict = {}
         preds = score_live(side, live, models={side: self.model} if models is None
-                           else models)
+                           else models, today=self.today,
+                           cand_out=self._cand_live if self._v5 else None)
+        self._live_asof = {}
+        if self._v5:
+            for r in live:
+                pk = r.get("player_key")
+                if pk in preds:
+                    a = str(r.get("asof_date") or "")[:10] or self.today
+                    self._live_asof[pk] = min(a, self.today)
         self.keys = set(preds)
         cons = {r["player_key"]: float(r["consensus_fv_raw"]) for r in live
                 if r.get("player_key") in preds}
@@ -397,12 +462,50 @@ class HistoryGrader:
         rank = lo + (eq + 1) / 2.0 if eq else lo + 0.5
         return float(rank / n) if n else 0.5
 
-    def grades(self, rows: list[dict]) -> list[float]:
-        """rows: [{"fv", "feats", "extra"}] for one player's snapshots."""
+    def prime(self, points: dict[str, dict]) -> dict | None:
+        """eFV v5 COMBINED: build the candidate columns of every snapshot the series will
+        grade, in one pass per side. points: {player_key: {"mlbam_id", "points": [{"d",
+        "fv"}, ...]}}. A no-op (None) on any other model."""
+        if not self._v5:
+            return None
+        import efv5_combined as V5C
+        todo = []
+        for pk, blk in points.items():
+            edge = self._live_asof.get(pk)
+            for q in blk.get("points") or []:
+                d = str(q.get("d") or "")[:10]
+                if edge is not None and d >= edge:
+                    continue
+                todo.append((pk, blk.get("mlbam_id"), d, q.get("fv")))
+        if not todo:
+            return {}
+        cols, rec = V5C.history_columns(self.side, todo, today=self.today,
+                                        log=lambda *_a, **_k: None)
+        cands = V5C.candidates()
+        for n, mp in cols.items():
+            key = cands[n]["key"]
+            for slot, v in mp.items():
+                self._cand_hist.setdefault(slot, {})[key] = None if v is None else float(v)
+        return rec
+
+    def _candidates_at(self, player_key: str | None, d) -> dict:
+        if not self._v5 or player_key is None:
+            return {}
+        d = str(d or "")[:10]
+        edge = self._live_asof.get(player_key)
+        if edge is not None and d >= edge:
+            return dict(self._cand_live.get(player_key) or {})
+        return dict(self._cand_hist.get((player_key, d)) or {})
+
+    def grades(self, rows: list[dict], player_key: str | None = None) -> list[float]:
+        """rows: [{"fv", "feats", "extra"}, plus "d" (snapshot date) under eFV v5
+        COMBINED] for one player's snapshots."""
         if not rows or self.xs.size == 0:
             return []
         H = self._H
-        v2rows = [{"v2": H.v2_row(r["feats"], r.get("extra"))} for r in rows]
+        v2rows = [{"v2": dict(H.v2_row(r["feats"], r.get("extra")),
+                              **self._candidates_at(player_key, r.get("d")))}
+                  for r in rows]
         m = self.model
         es = H.e_skill(m["skill"], v2rows) if m["w_skill"] > 0 else np.zeros(len(rows))
         et = H.e_time(m["timing"], v2rows) if m["w_time"] > 0 else np.zeros(len(rows))
