@@ -74,6 +74,11 @@ SOURCES: tuple[tuple[str, str, str], ...] = (
     # (MiLB pitch counts) plus the owner's 2026-09-30 ask; pbf_rel goes beyond DS-Q2
     # on that authority alone.
     ("_labs/efv_pitch_rate_admission.json", "arms", "pitch-rate admission (PM19, DS-06)"),
+    # TL_16 (owner asks of 2026-10-01, message 2; TL-Q1 (a)): the DS-06 admission rule on
+    # the tool-family columns (tip_iso_resid, tool_hit_w) inside the lv folds 2017 to 2021
+    # and the vm folds 2020 to 2024, per-fold, per-vintage signs; role development, a
+    # reading that adjudicates nothing. pwr_comp is not run (look P served C0).
+    ("_labs/efv_tool_admission.json", "arms", "tool-family admission (TL_16, DS-06)"),
 )
 
 #: Sources registered before their producer's registered run. Absent, they are listed
