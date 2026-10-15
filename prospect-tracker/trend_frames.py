@@ -515,11 +515,17 @@ def pitch_game_frame(season: int, *, physics_dir: Optional[Path] = None,
                      war_daily: Optional[Path] = None, corpus_dir: Optional[Path] = None,
                      win_prob_dir: Optional[Path] = None, games_memo_dir: Optional[Path] = None,
                      memo_dir: Optional[Path] = None, receipts: Optional[dict] = None,
-                     refresh: bool = False, log: Callable = _nolog) -> TrendFrame:
+                     refresh: bool = False, with_swings: bool = True,
+                     log: Callable = _nolog) -> TrendFrame:
     """One season's trend frame (module docstring). Raises FileNotFoundError
     when the sidecar holds no table for the season, SwingSeasonsMissing when a
     needed swing season is missing, and ValueError when club identity falls
-    below the resolved-share floor. Writes only its memo."""
+    below the resolved-share floor. Writes only its memo.
+
+    ``with_swings=False`` builds the frame with no swing rows and no swing
+    season needed: the exporter's fallback when a swing season is missing
+    (plan 3.4: the swing families are left off, the pitcher families stay).
+    Pass it its own ``memo_dir`` so the full frame's memo is kept."""
     import mlbstats_games as G                    # P8.2's public game lines, read only
 
     season = int(season)
@@ -531,7 +537,7 @@ def pitch_game_frame(season: int, *, physics_dir: Optional[Path] = None,
         raise FileNotFoundError(
             f"the pitch sidecar holds no {season} table under {pdir}; run "
             "tools/build_pitch_physics.py first")
-    need = needed_swing_seasons(season)
+    need = needed_swing_seasons(season) if with_swings else []
     files = {s: swing_files(s, source=swing_source, swing_dir=sdir) for s in need}
     cdir = Path(corpus_dir or G.CORPUS_DIR)
     war_p = Path(war_daily or WAR_BAT)
@@ -542,6 +548,8 @@ def pitch_game_frame(season: int, *, physics_dir: Optional[Path] = None,
         "war_daily": _stat(war_p),
         "corpus": _stat(cdir / "plays" / str(season) / f"plays-{season}.parquet"),
     }
+    if not with_swings:
+        sig["with_swings"] = False
     key = hashlib.sha256(json.dumps(sig, sort_keys=True).encode("ascii")).hexdigest()[:20]
     mp = _memo_paths(mdir, season)
 
@@ -595,7 +603,7 @@ def pitch_game_frame(season: int, *, physics_dir: Optional[Path] = None,
         "games": int(len(tabs["games"])),
         "clubs": cm.meta,
         "game_lines": {k: lines.meta.get(k) for k in ("source", "games", "covers_through")},
-        "swing": {"source": swing_source, "seasons": need,
+        "swing": {"source": swing_source if with_swings else None, "seasons": need,
                   "counts": {str(s): c for s, c in counts.items()},
                   "as_of": counts.get(season, {}).get("max_game_date"),
                   "in_frame": int(len(tabs["swings"])),
