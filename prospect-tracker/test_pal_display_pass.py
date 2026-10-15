@@ -166,8 +166,17 @@ def _render_ladder(pf: dict) -> str:
     return ctx.eval("__html['pal-app-root'] || ''")
 
 
+def _v1_view(pf: dict) -> dict:
+    """The v1 renderer's payload: since 2026-10-15 the served ladder block is v2
+    (the switcher ladder) and v1, with its window note, rides as ladderV1."""
+    pf = json.loads(json.dumps(pf))
+    if (pf.get("ladder") or {}).get("basis") == "v2" and pf.get("ladderV1"):
+        pf["ladder"] = dict(pf["ladderV1"], basis="v1")
+    return pf
+
+
 def test_the_window_note_reads_and_cites_the_recency_eval():
-    pf = _load("positional_fit_ui.json")
+    pf = _v1_view(_load("positional_fit_ui.json"))
     ev = _load("positional_ladder_recency_eval.json")
     W = pf["ladder"].get("windowEval")
     assert W, "the ladder block lost windowEval"
@@ -184,8 +193,7 @@ def test_the_window_note_reads_and_cites_the_recency_eval():
 
 
 def test_without_the_eval_the_window_note_prints_no_figure():
-    pf = _load("positional_fit_ui.json")
-    pf = json.loads(json.dumps(pf))
+    pf = _v1_view(_load("positional_fit_ui.json"))
     pf["ladder"].pop("windowEval", None)
     html = _render_ladder(pf)
     assert "chosen on held-out error, at the cost of wider intervals" in html

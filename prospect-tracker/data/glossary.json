@@ -7877,13 +7877,63 @@
    ],
    "priority": 64,
    "definition": "The runs a player is credited for the difficulty of the position he plays: a shortstop gains, a first baseman loses. Two versions show on the Defense board and the MLB player page: Pos (ours), the value inside Def, is the site's positional ladder; Pos (FG) is FanGraphs' published value, for comparison.",
-   "methodology": "Value, not skill, so it sits beside DEM+ as context and never moves either version. Pos (ours) is Position Fit's fitted ladder, in runs per 650 plate appearances and inverted from Baseball-Reference's positional runs, pro-rated by the innings a player spent at each fielding position at the innings-per-650-PA conversion that artifact states. Designated-hitter time has no fielding innings, so it is left out; FanGraphs' value includes it, which is why a part-time DH reads far lower in Pos (FG). Pos (FG) sits in no sum. Added to fielding runs and framing, Pos (ours) makes Def (see Def runs).",
+   "methodology": "Value, not skill, so it sits beside DEM+ as context and never moves either version. Pos (ours) is the site's v1 ladder, in runs per 650 plate appearances and inverted from Baseball-Reference's positional runs (Position Fit itself values positions with the position-switcher ladder since 2026-10-15; see Positional ladder), pro-rated by the innings a player spent at each fielding position at the innings-per-650-PA conversion that artifact states. Designated-hitter time has no fielding innings, so it is left out; FanGraphs' value includes it, which is why a part-time DH reads far lower in Pos (FG). Pos (FG) sits in no sum. Added to fielding runs and framing, Pos (ours) makes Def (see Def runs).",
    "seeAlso": [
     "dem_plus",
     "def_runs"
    ],
    "shelf": "industry",
-   "origin": "Industry concept. Pos (ours) is the site's Position Fit ladder, computed here; Pos (FG) is FanGraphs' positional adjustment as published by MLB, which we display."
+   "origin": "Industry concept. Pos (ours) is the site's v1 ladder, computed here; Pos (FG) is FanGraphs' positional adjustment as published by MLB, which we display."
+  },
+  {
+   "id": "positional_ladder",
+   "term": "Positional ladder",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "switcher ladder",
+    "position-switcher ladder",
+    "ladder v2"
+   ],
+   "priority": 40,
+   "definition": "The runs a position is worth against the average defensive position, per 650 plate appearances, measured on players who changed position: the fielding runs the same player gains or loses when he moves. Position Fit in the Alchemy Lab values positions with it.",
+   "methodology": "Three fielding sources, each fit on its own: Baseball-Reference fielding runs, FanGraphs fielding runs (framing excluded) and Statcast fielding runs prevented, with innings by position from MLB StatsAPI, seasons 2016 to 2026. For a player with 300 or more fielded innings in two straight seasons, his fielding runs per 650 PA of innings are fit on last season's rate, his age and the change in where he played; players who stayed put set the persistence and aging terms, players who moved set the gaps between positions. Statcast also adds same-season pairs (150 or more innings at two positions). The three ladders are averaged position by position, each weighted by its precision. Catcher keeps the Baseball-Reference rung, because too few catchers change position to measure one; DH is first base plus the first-base fielding of the players who DH.\n\nIt replaced the ladder recovered by inverting Baseball-Reference's positional runs after one registered read on 2026-10-15, its rules fixed before any number: predicting the fielding plus positional runs of players who changed position in held-out seasons, its error was 0.886 runs per 650 PA lower (95% CI 0.717 to 1.059), on each of the three sources. Among fielders it is much flatter than Baseball-Reference's: shortstop sits 3.7 runs above first base, not 17.8. It is not in eWAR, and the Defense board's Pos (ours) still uses the Baseball-Reference inversion. The Library's Positional Ladder view has the full table.",
+   "formula": "per source: r_t = a + b x (age - 27) + k x r_(t-1) + sum over positions of (share_t - share_(t-1)) x D_p, plus Statcast r_b - r_a = D_b - D_a; ladder_p = -D_p; sources pooled by inverse variance; DH = ladder(1B) + mean 1B rate of DH-type seasons; zero = the exposure-weighted average defensive position",
+   "example": "A shortstop moved to first base gives up 3.7 runs per 650 PA of positional value on this ladder, about the fielding runs the same players gained on that move.",
+   "seeAlso": [
+    "positional_adjustment",
+    "position_fit",
+    "pal_conversion"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io, measured on position switchers from Baseball-Reference, FanGraphs and Statcast fielding runs."
+  },
+  {
+   "id": "position_fit",
+   "term": "Position fit",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "positional conversion",
+    "misplaced hitters"
+   ],
+   "priority": 36,
+   "definition": "Which hitters are worth more runs at a different position, per 650 plate appearances: the bat plus the fielding at that position plus the positional ladder. The bat is the same everywhere, so fielding and the ladder decide. A valuation of where a hitter fits, not a forecast of where his club puts him.",
+   "methodology": "The glove is read from Statcast fielding runs prevented over up to three seasons, shrunk per position by how reliable a season is there, and carried to a new position through the difficulty Statcast measures on players who play two positions in a season; that part predicts the size of a move. In the value, the ladder and the difficulty share one run scale (since 2026-10-15): an average glove is worth the same at every fielding position, so a move between two fielding positions is priced by the player's glove alone, and only a move to DH carries a league-wide part. Before, the two came from different run scales and an average glove gained or lost up to 13.6 runs on a move (left field -7.51 against third base +6.06). A hitter is flagged when the gain clears 3 runs per 650 PA and one standard error. The demotion backtest, how well the read ranks the hitters clubs moved down the next season, is a check inside the model's artifact, not a registered gate; the page prints its result.",
+   "formula": "value at a fielding position p = bat + mean of the seven Statcast-position rungs + s(p) x glove z x innings per 650 PA / 1,000; value at DH = bat + ladder(DH); gain = value(best) - value(now); flag: gain >= 3 runs per 650 PA and >= 1 standard error",
+   "seeAlso": [
+    "positional_ladder",
+    "rng_plus",
+    "pal_conversion"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "def_runs",

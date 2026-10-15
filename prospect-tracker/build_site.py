@@ -6511,6 +6511,33 @@ _PAL_REVERSED_LABEL = {
 }
 
 
+def _posfit_demotion_separates(val: dict) -> bool:
+    """True when Position Fit's in-artifact demotion backtest separates from both
+    of its own controls: the model-minus-control interval sits above zero, the
+    AUC clears the label-permutation band, and the model beats raw single-season
+    OAA on its interval. Read by the /pal/ masthead and mirrored in pal.js
+    pfMethod, so the claim follows data/positional_fit.json."""
+    try:
+        auc = float(val["auc"]["model"])
+        mm = val["model_minus"]
+        return (float(mm["control"]["ci95"][0]) > 0
+                and abs(auc - 0.5) > float(val["perm_null95_auc_minus_half"])
+                and float(mm["raw_oaa"]["ci95"][0]) > 0)
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def _pal_posfit_clause() -> str:
+    """The masthead's Position Fit clause (EWAR_LADDER_REDERIVE). It was typed
+    "not for which players clubs move", which the one-run-scale rebuild made
+    false: the demotion backtest now separates. Derived from the artifact."""
+    val = (_cached_data_json("positional_fit.json") or {}).get("validation") or {}
+    if _posfit_demotion_separates(val):
+        return ("position fit is validated for the size of a move, and its backtest ranks "
+                "the hitters clubs moved down above raw OAA.")
+    return "position fit is validated for the size of a move, not for which players clubs move."
+
+
 def _pal_gate_clause(gate: dict, key: str) -> str:
     """One masthead clause per direction, derived from the gate block that
     pal_export carries out of data/pal_eval.json. Mirrors pal.js verdictPhrase:
@@ -6555,7 +6582,7 @@ def build_pal() -> str:
         f'<span class="section-sub">Role and position {_gl("pal_conversion", "conversions")}. '
         f'{_gl("sp_rp_fit", "SP to RP")} {_pal_gate_clause(gate, "SP->RP")}; '
         f'{_gl("rp_sp_fit", "RP to SP")} {_pal_gate_clause(gate, "RP->SP")}; '
-        'position fit is validated for the size of a move, not for which players clubs move.</span></div>'
+        f'{_pal_posfit_clause()}</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-palsection="rp2sp" role="tab" aria-selected="true" aria-controls="pal-section">RP&rarr;SP Candidates</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="sp2rp" role="tab" aria-selected="false" aria-controls="pal-section">SP&rarr;RP Candidates</button>'
@@ -6591,11 +6618,15 @@ def build_pal() -> str:
     # Reverse-Platoon Radar and Prospect Watch all shipped after the copy was
     # written and were invisible to a search snippet. Length 211 chars and 24
     # words after the 2026-10-08 copy pass (share cards 25 words or fewer; 270
-    # chars before it); this page has seven surfaces to name.
+    # chars before it); this page has seven surfaces to name. 2026-10-15
+    # (EWAR_LADDER_REDERIVE): Position Fit's ladder is no longer
+    # Baseball-Reference's but the one measured on position switchers
+    # (docs/ewar/LADDER_V2_GATE.md), so the closing clause names that basis;
+    # 25 words.
     return page("Alchemy Lab - eephus.io", "pal", body,
                 "MLB role and position conversions: RP-to-SP, SP-to-RP, position fit, pitch-add, "
                 "reverse-platoon and prospect boards, the conversion backtest. Statcast arsenals and "
-                "velocity; Baseball-Reference positional ladder.",
+                "velocity; a switcher-measured positional ladder.",
                 url=f"{SITE_ORIGIN}/pal/", image=module_share_image("pal"))
 
 def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
@@ -9013,6 +9044,10 @@ GLOSSARY_VIEWS = (
     # bWAR and eWAR method table. UPKEEP: when an eWAR part is admitted or
     # rejected, its eWAR cell in assets/glossary.js _warcData() is updated.
     {"id": "war-comparison", "shelf": "methods", "label": "WAR Framework Comparison", "body": "war-comparison-body"},
+    # Positional Ladder (EWAR_LADDER_REDERIVE, owner EW3-25): the position-switcher
+    # ladder, its comparison with Baseball-Reference and FanGraphs, and its held-out
+    # test, read from the ladder read's record.
+    {"id": "positional-ladder", "shelf": "methods", "label": "Positional Ladder", "body": "positional-ladder-body", "aliases": ("ladder",)},
     {"id": "source-comparison", "shelf": "evidence", "label": "Source Comparison", "body": "source-comparison-body"},
     {"id": "source-accuracy", "shelf": "evidence", "label": "Source Accuracy", "body": "source-accuracy-body"},
     {"id": "calibration", "shelf": "evidence", "label": "Calibration", "body": "calibration-body"},
@@ -10662,6 +10697,7 @@ PAGE_INDEX_VIEWS = (
     ("/glossary/#view=formulas", None, "every term that carries a formula, each linking its definition"),
     ("/glossary/#view=methodology", None, "how eFV, consensus FV, the Arkmetrics and the value framework are built"),
     ("/glossary/#view=war-comparison", None, "fWAR, bWAR and eWAR side by side, component by component, with the eWAR candidate parts marked"),
+    ("/glossary/#view=positional-ladder", None, "the positional ladder measured on players who changed position, beside Baseball-Reference's and FanGraphs', with its held-out test"),
     ("/glossary/#view=source-comparison", None, "eFV against each prospect source on the same graduates"),
     ("/glossary/#view=source-accuracy", None, "which source grades which cohort better"),
     ("/glossary/#view=metric-atlas", None, "which minor-league statistics predict reaching the majors, and what each adds to consensus FV"),
@@ -11025,39 +11061,26 @@ def build_positional_fit_payload() -> dict | None:
     # Absent on artifacts generated before 2026-07-31, in which case this falls
     # back to `values` and the renderer says so instead of claiming a convention
     # the numbers do not have.
-    _ident = ladder.get("identification") or {}
-    _vals_fc = _ident.get("values_fielder_centred") or None
-    return {
-        "generated_at": src.get("generated_at"),
-        "model": src.get("model"),
-        "season": src.get("target_season"),
-        "valueIdentity": src.get("value_identity"),
-        "nPlayers": src.get("n_players"),
-        "nQualified": src.get("n_qualified"),
-        "nFlagged": src.get("n_flagged"),
-        "nFlaggedDemotion": src.get("n_flagged_demotion"),
-        "flagRule": src.get("flag_rule"),
-        "outOfScope": src.get("out_of_scope"),
-        "sources": src.get("sources"),
-        "caveats": src.get("caveats"),
-        "rngMeta": _rng_meta or None,
-        "ladder": {
+    def _ladder_block(ladder: dict, window_eval: bool) -> dict:
+        _ident = ladder.get("identification") or {}
+        _vals_fc = _ident.get("values_fielder_centred") or None
+        return {
             "units": ladder.get("units"),
             "method": ladder.get("method"),
             # The model's own column (exposure-weighted zero). Kept because the
             # CIs, the folklore diffs and every consumer are on this basis.
             "values": ladder.get("values"),
-            # The column the table PRINTS. See the block above _ident.
+            # The column the table PRINTS. See the block above _ladder_block.
             "valuesDisplay": _vals_fc or ladder.get("values"),
             "valuesDisplayBasis": "fielder_centred" if _vals_fc else "exposure_weighted",
             "ci95": ladder.get("ci95"),
-            "folklore": ladder.get("folklore_ladder"),
+            "folklore": ladder.get("folklore_ladder") or v1.get("folklore_ladder"),
             # The basis the folklore column is quoted on, which is NOT ours.
             # Forwarded so the page can show the like-for-like difference beside
             # the raw one instead of silently subtracting per-162-game numbers
             # from per-650-PA ones. Absent from artifacts generated before
             # 2026-08-12; the consumer falls back to the raw column alone.
-            "folkloreBasis": ladder.get("folklore_basis"),
+            "folkloreBasis": ladder.get("folklore_basis") or v1.get("folklore_basis"),
             "r2": ladder.get("r2"),
             "residSd": ladder.get("resid_sd"),
             "nPlayerSeasons": ladder.get("n_player_seasons"),
@@ -11073,11 +11096,71 @@ def build_positional_fit_payload() -> dict | None:
             # Absent from artifacts generated before 2026-07-31; the consumer
             # renders the explanation only when it is present.
             "identification": ladder.get("identification"),
-            # The held-out comparison behind the short window (QREC13). The page
+            # The held-out comparison behind v1's short window (QREC13). The page
             # typed it ("beat the 2012-onward pool by 0.10 runs ...") and could
             # not follow a re-run; it now reads and cites the eval artifact.
-            "windowEval": _ladder_window_eval(),
-        },
+            "windowEval": _ladder_window_eval() if window_eval else None,
+        }
+
+    # ---- which ladder the page prints (EWAR_LADDER_REDERIVE, 2026-10-15) -----
+    # Position Fit values with fit.ladder_posfit: the position-switcher ladder v2
+    # when docs/ewar/LADDER_V2_GATE.md passed it (data/positional_ladder_v2.json),
+    # else v1. fit.ladder stays v1, the Baseball-Reference inversion, and rides
+    # along as ladderV1 for the comparison column and the fallback renderer.
+    v1 = ladder
+    posfit = fit.get("ladder_posfit") or {}
+    if posfit.get("basis") == "v2":
+        ladder_out = _ladder_block(posfit, window_eval=False)
+        ev = _cached_data_json("positional_ladder_v2_eval.json") or {}
+        tests = ev.get("tests") or {}
+        prim = tests.get("v1_minus_b_pooled") or {}
+        acr = tests.get("v1_minus_b_across") or {}
+        folds = (ev.get("scores") or {}).get("by_fold") or {}
+        ladder_out.update({
+            "basis": "v2",
+            "source": posfit.get("source"),
+            "gate": posfit.get("gate"),
+            "cBranch": posfit.get("c_branch"),
+            "dhMu": posfit.get("dh_mu"),
+            "verdict": {
+                "artifact": "data/positional_ladder_v2_eval.json",
+                "readAt": str(ev.get("read_at") or "")[:10] or None,
+                "dmae": prim.get("dmae"), "ci95": prim.get("ci95"),
+                "nRows": prim.get("n_rows"), "nPlayers": prim.get("n_players"),
+                "dmaeAcross": acr.get("dmae"), "ci95Across": acr.get("ci95"),
+                "sourcesBetter": sum(1 for d in (tests.get("v1_minus_b_by_source") or {}).values()
+                                     if d and d.get("ci95") and d["ci95"][0] > 0),
+                "nSources": len(tests.get("v1_minus_b_by_source") or {}),
+                "foldsBetter": sum(1 for f in folds.values()
+                                   if f and f.get("b") and f.get("v1")
+                                   and f["b"]["mae"] < f["v1"]["mae"]),
+                "nFolds": len(folds),
+            },
+        })
+        ladder_v1 = _ladder_block(v1, window_eval=True)
+    else:
+        ladder_out = _ladder_block(v1, window_eval=True)
+        ladder_out["basis"] = "v1"
+        ladder_v1 = None
+    return {
+        "generated_at": src.get("generated_at"),
+        "model": src.get("model"),
+        "season": src.get("target_season"),
+        "valueIdentity": src.get("value_identity"),
+        "nPlayers": src.get("n_players"),
+        "nQualified": src.get("n_qualified"),
+        "nFlagged": src.get("n_flagged"),
+        "nFlaggedDemotion": src.get("n_flagged_demotion"),
+        "flagRule": src.get("flag_rule"),
+        "outOfScope": src.get("out_of_scope"),
+        "sources": src.get("sources"),
+        "caveats": src.get("caveats"),
+        "rngMeta": _rng_meta or None,
+        "ladder": ladder_out,
+        "ladderV1": ladder_v1,
+        # Gate part 8: the one-run-scale composition, so the page can say a move
+        # between fielding positions is the glove alone.
+        "oneScale": fit.get("one_scale"),
         "accuracy": {
             "nConversions": conv.get("n_conversions"),
             "minInningsEachSide": conv.get("min_innings_each_side"),
@@ -11105,6 +11188,7 @@ def build_positional_fit_payload() -> dict | None:
             "destinationTop1": val.get("destination_top1"),
             "promotionSide": val.get("promotion_side"),
             "labelDefinition": val.get("label_definition"),
+            "separates": _posfit_demotion_separates(val),
         },
         "rows": rows,
     }

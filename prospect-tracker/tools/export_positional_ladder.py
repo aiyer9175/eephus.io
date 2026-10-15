@@ -35,6 +35,14 @@ THE THREE SUMS, because a receiver will otherwise "fix" one of them:
   * equal-weight over the eight fielders on the model column = +11.83, which is
     forced arithmetically once the weighted sum is pinned.
 
+V2, THE POSITION-SWITCHER LADDER (EWAR_LADDER_REDERIVE, 2026-10-15). The
+bundle also carries positional_ladder_v2.json and .csv, sliced read-only from
+data/positional_ladder_v2.json (ladder_v2.py) and its read's record
+data/positional_ladder_v2_eval.json, and the README is generated here from both
+payloads, so its tables cannot drift from the files beside it. v2 is what
+Position Fit values positions with; v1 stays the Baseball-Reference inversion
+that DEM+ and eWAR's S4 candidate read.
+
 Usage:
     python tools/export_positional_ladder.py            # write the bundle
     python tools/export_positional_ladder.py --check    # verify, write nothing
@@ -51,6 +59,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 ARTIFACT = ROOT / "data" / "positional_fit.json"
+V2_ARTIFACT = ROOT / "data" / "positional_ladder_v2.json"
+V2_EVAL = ROOT / "data" / "positional_ladder_v2_eval.json"
+RECENCY_EVAL = ROOT / "data" / "positional_ladder_recency_eval.json"
 OUT_DIR = ROOT.parent / "positional-adjustments"
 
 #: Bumped by hand when the SHAPE changes, not when the numbers move. A refit is
@@ -175,6 +186,286 @@ def write(payload: dict, out_dir: Path = OUT_DIR) -> list[Path]:
     return written
 
 
+def build_v2(artifact: Path = V2_ARTIFACT, eval_path: Path = V2_EVAL) -> dict:
+    """The v2 slice: the served vector, both bases, its CI, the read's verdict and
+    the comparison columns. Read-only; refuses when either file is missing."""
+    for f in (artifact, eval_path):
+        if not f.exists():
+            raise SystemExit(f"FATAL: {f} not found. Run tools/ladder_v2_lab.py --read "
+                             "(once) and python ladder_v2.py first.")
+    doc = json.loads(artifact.read_text(encoding="utf-8"))
+    ev = json.loads(eval_path.read_text(encoding="utf-8"))
+    vals = doc.get("values") or {}
+    ident = doc.get("identification") or {}
+    t = ev.get("tests") or {}
+
+    def _test(k):
+        d = t.get(k) or {}
+        return None if not d else {"dmae": d.get("dmae"), "ci95": d.get("ci95"),
+                                   "n_rows": d.get("n_rows"), "n_players": d.get("n_players")}
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "exported_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "source_artifact": "prospect-tracker/data/positional_ladder_v2.json",
+        "source_eval": "prospect-tracker/data/positional_ladder_v2_eval.json",
+        "read_at": ev.get("read_at"),
+        "model_id": "positional_ladder_v2",
+        "gate": doc.get("gate"),
+        "status": doc.get("status"),
+        "what_this_is": (
+            "The positional adjustment measured on players who changed position: the "
+            "fielding runs the same player gains or loses when he moves, fit separately "
+            "on Baseball-Reference runs_field, FanGraphs fld and Statcast fielding runs "
+            "prevented, then pooled by inverse variance. Catcher keeps the v1 rung "
+            "(too few catchers change position); DH is first base plus the first-base "
+            "fielding of the players who DH."),
+        "units": doc.get("units"),
+        "method": doc.get("method"),
+        "bases": {
+            "primary": "values",
+            "values": {"basis": "exposure_weighted_zero",
+                       "values": {p: vals.get(p) for p in POS_ORDER if vals.get(p) is not None}},
+            "values_fielder_centred": {
+                "basis": "fielder_centred_zero",
+                "values": {p: (ident.get("values_fielder_centred") or {}).get(p)
+                           for p in POS_ORDER
+                           if (ident.get("values_fielder_centred") or {}).get(p) is not None}},
+            "note": ("the two differ by one constant, so every gap between two positions "
+                     "is identical in both"),
+        },
+        "identification": ident,
+        "ci95": doc.get("ci95"),
+        "ci_draws": doc.get("ci_draws"),
+        "seasons": doc.get("seasons"),
+        "c_branch": doc.get("c_branch"),
+        "dh_mu": doc.get("dh_mu"),
+        "source_fits": doc.get("source_fits"),
+        "era_splits": doc.get("era_splits"),
+        "verdict": ev.get("verdict"),
+        "held_out_test": {
+            "v1_minus_v2_pooled": _test("v1_minus_b_pooled"),
+            "v1_minus_v2_next_season_form": _test("v1_minus_b_across"),
+            "v1_minus_v2_by_source": {s: _test_d(d) for s, d in
+                                      (t.get("v1_minus_b_by_source") or {}).items()},
+            "v2_minus_per_season_shrunk": _test("b_minus_d_b_pooled"),
+            "read_this": ("dMAE = MAE(first) - MAE(second) in runs per 650 PA on players who "
+                          "changed position, each season 2016-2026 held out in turn; positive "
+                          "favours the second"),
+        },
+        "comparison": ev.get("comparison"),
+    }
+
+
+def _test_d(d):
+    return None if not d else {"dmae": d.get("dmae"), "ci95": d.get("ci95"),
+                               "n_rows": d.get("n_rows"), "n_players": d.get("n_players")}
+
+
+def write_v2(payload: dict, out_dir: Path = OUT_DIR) -> list[Path]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+    p_json = out_dir / "positional_ladder_v2.json"
+    p_json.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8")
+    written.append(p_json)
+    p_csv = out_dir / "positional_ladder_v2.csv"
+    prim = payload["bases"]["values"]["values"]
+    fc = payload["bases"]["values_fielder_centred"]["values"]
+    ci = payload.get("ci95") or {}
+    cols = ((payload.get("comparison") or {}).get("columns") or {})
+    v1 = cols.get("v1_served") or {}
+    fg = cols.get("fg_table_rescaled") or {}
+    with p_csv.open("w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["position", "runs_per_650pa_exposure_weighted",
+                    "runs_per_650pa_fielder_centred", "ci95_low", "ci95_high",
+                    "v1_bref_inversion_exposure_weighted", "fangraphs_table_rescaled"])
+        for p in POS_ORDER:
+            if prim.get(p) is None:
+                continue
+            lo, hi = (ci.get(p) or [None, None])[:2]
+            w.writerow([p, prim.get(p), fc.get(p), lo, hi, v1.get(p), fg.get(p)])
+    written.append(p_csv)
+    return written
+
+
+def _f(v, dp=2, sign=True):
+    if v is None:
+        return "-"
+    return f"{float(v):+.{dp}f}" if sign else f"{float(v):.{dp}f}"
+
+
+def render_readme(v1: dict, v2: dict, recency: dict | None = None) -> str:
+    """README.md for the bundle, generated from the two payloads (and the v1 window
+    gate's record), so every number in it is the files'."""
+    p1 = v1["bases"]["values"]["values"]
+    f1 = v1["bases"]["values_fielder_centred"]["values"]
+    i1 = v1.get("identification") or {}
+    fit1 = v1.get("fit") or {}
+    shift1 = round(p1["C"] - f1["C"], 2)
+    p2 = v2["bases"]["values"]["values"]
+    f2 = v2["bases"]["values_fielder_centred"]["values"]
+    ci2 = v2.get("ci95") or {}
+    i2 = v2.get("identification") or {}
+    ht = v2.get("held_out_test") or {}
+    pool = ht.get("v1_minus_v2_pooled") or {}
+    nxt = ht.get("v1_minus_v2_next_season_form") or {}
+    by_src = ht.get("v1_minus_v2_by_source") or {}
+    src_name = {"BREF": "Baseball-Reference", "FG": "FanGraphs", "SAVANT": "Statcast"}
+    served = (v2.get("verdict") or {}).get("step1_b_replaces_v1") is True
+    nC = max([(f or {}).get("n_c_change") or 0 for f in (v2.get("source_fits") or {}).values()] or [0])
+    rec = ((recency or {}).get("results") or {}).get("challenger_w") or {}
+    per = (recency or {}).get("per_season") or {}
+    L = []
+    a = L.append
+    a("# Defensive positional adjustments")
+    a("")
+    a("Fitted positional adjustments from eephus.io, published for Will's eWAR and SDR")
+    a("work. Generated by:")
+    a("")
+    a("    python prospect-tracker/tools/export_positional_ladder.py")
+    a("")
+    a("Files:")
+    a("")
+    a("| file | what it is |")
+    a("| --- | --- |")
+    a("| `positional_ladder_v2.json` | v2, the position-switcher ladder: both bases, CIs, the held-out test, era and source splits, the comparison with v1 and FanGraphs |")
+    a("| `positional_ladder_v2.csv` | v2's two bases plus CI, beside v1 and the FanGraphs table, one row per position |")
+    a("| `positional_ladder_v1.json` | v1, the Baseball-Reference inversion: both bases, CIs, era splits, window sensitivity, the identification block, the folklore comparison |")
+    a("| `positional_ladder_v1.csv` | v1's two ladders plus CI, one row per position |")
+    a("")
+    a("Both are in runs per 650 PA of exposure, relative to the league-average")
+    a("defensive position (an exposure-weighted zero over all nine rungs).")
+    a("")
+    a("## v2: the position-switcher ladder")
+    a("")
+    if served:
+        a("Position Fit (the Alchemy Lab) values positions with v2 since " + str(v2.get("read_at") or "")[:10] + ".")
+    else:
+        a("A candidate: it did not replace v1 under its gate.")
+    a("")
+    a("| Pos | Exposure-weighted | Fielder-centred | 95% CI |")
+    a("| --- | ---: | ---: | --- |")
+    for p in POS_ORDER:
+        c = ci2.get(p) or [None, None]
+        a(f"| {p} | {_f(p2.get(p))} | {_f(f2.get(p))} | {_f(c[0])} to {_f(c[1])} |")
+    a("")
+    a("**What it measures.** How many fielding runs the same players gain or lose")
+    a("when they change position, on three fielding sources fit one at a time")
+    a("(Baseball-Reference runs_field, FanGraphs fld, Statcast fielding runs")
+    a("prevented) and pooled by inverse variance, seasons "
+      + f"{(v2.get('seasons') or ['?', '?'])[0]}-{(v2.get('seasons') or ['?', '?'])[1]}. For a player with 300 or more")
+    a("fielded innings in two straight seasons, his fielding runs per 650 PA of")
+    a("innings are fit on last season's rate, his age and the change in where he")
+    a("played; Statcast adds same-season pairs. A rung reads as the positional value")
+    a("that makes the same player worth the same wherever he fields.")
+    a("")
+    a("**Why it replaced v1 on Position Fit.** One registered read")
+    a("(`prospect-tracker/docs/ewar/LADDER_V2_GATE.md`): each season 2016-2026 held")
+    a("out in turn, predicting the fielding plus positional runs of players who")
+    a(f"changed position, v2's error was {_f(pool.get('dmae'), 3, False)} runs per 650 PA lower than v1's")
+    a(f"refit on the same seasons (95% CI {_f((pool.get('ci95') or [None])[0], 3, False)} to "
+      f"{_f((pool.get('ci95') or [None, None])[1], 3, False)}; {pool.get('n_rows') or 0:,} rows, "
+      f"{pool.get('n_players') or 0:,} players). Next-season rows")
+    a(f"alone: {_f(nxt.get('dmae'), 3, False)} ({_f((nxt.get('ci95') or [None])[0], 3, False)} to "
+      f"{_f((nxt.get('ci95') or [None, None])[1], 3, False)}). By source: "
+      + ", ".join(f"{src_name.get(k, k)} {_f((d or {}).get('dmae'), 3, False)}" for k, d in by_src.items()) + ".")
+    a("")
+    a("**Catcher and DH.** "
+      + (f"Too few catchers change position to measure their rung ({nC} rows), so C keeps"
+         if v2.get("c_branch") == "carried_from_v1" else "C is measured on the catchers who changed position;"))
+    a(("v1's offset to the average fielder. " if v2.get("c_branch") == "carried_from_v1" else "")
+      + f"DH is first base plus the first-base fielding of the")
+    a(f"players who DH ({_f(v2.get('dh_mu'))} runs per 650 PA).")
+    a("")
+    a("**Read it with.** Among fielders v2 is much flatter than v1: the same players")
+    a("field about as well, in runs, wherever they play. It is not in eWAR; eWAR's")
+    a("positional term takes it up only under its own gate. The two bases differ by")
+    a(f"one constant ({_f(round(p2['C'] - f2['C'], 2))} runs); only the exposure-weighted sum is zero")
+    a(f"(equal-weight over nine rungs {_f(i2.get('sum_equal_weight_9'))}, over the eight fielders "
+      f"{_f(i2.get('sum_equal_weight_fielders'))}).")
+    a("")
+    a("## v1: the Baseball-Reference inversion")
+    a("")
+    a("| Pos | Exposure-weighted | Fielder-centred |")
+    a("| --- | ---: | ---: |")
+    for p in POS_ORDER:
+        a(f"| {p} | {_f(p1.get(p))} | {_f(f1.get(p))} |")
+    a("")
+    a("**Use the exposure-weighted column** unless you have a specific reason not to.")
+    a("It is the basis that matches the Baseball-Reference frame eWAR rides, and it is")
+    a("what DEM+'s Pos (ours) runs on.")
+    a("")
+    a(f"The two columns differ by a single constant ({abs(shift1):.2f} runs), so every GAP between")
+    a("two positions is identical in both. Only the zero point moves.")
+    a("")
+    a("### Three sums, and only one of them is zero")
+    a("")
+    a("This is the part that generates bug reports, so it is worth reading once.")
+    a("")
+    a("- **Exposure-weighted over all nine rungs = 0.** Imposed by the fit. This is the")
+    a("  only sum that is a constraint.")
+    a(f"- **Equal-weight over nine rungs = {_f(i1.get('sum_equal_weight_9'), 2)}.** Not a defect. DH is about "
+      f"{100 * float((i1.get('exposure_share') or {}).get('DH') or 0):.0f}% of")
+    a("  league exposure, not one ninth, so equal-weighting over-counts its large")
+    a("  negative rung.")
+    a("- **Equal-weight over the eight fielders, on the exposure-weighted column =")
+    a(f"  {_f(i1.get('sum_equal_weight_fielders'), 2)}.** Also not a defect: once the weighted sum is pinned at zero, this")
+    a("  value is forced arithmetically.")
+    a("")
+    a("On the fielder-centred column the eight fielders do sum to zero, with DH outside")
+    a("the sum. That is the folklore convention and it is why that column exists.")
+    a("")
+    a("### What v1 is, and what it is not")
+    a("")
+    a("The ladder is a least-squares **inversion** of Baseball-Reference's own")
+    a("`runs_position` per 650 PA on per-row innings shares, no intercept, recentred so")
+    a(f"the exposure-weighted sum is zero. Fit: {(fit1.get('seasons') or ['?', '?'])[0]}-"
+      f"{(fit1.get('seasons') or ['?', '?'])[1]}, n={fit1.get('n_player_seasons') or 0:,}")
+    a(f"player-seasons, min {fit1.get('min_pa')} PA, R-squared {_f(fit1.get('r2'), 3, False)}.")
+    a("")
+    a("So a rung reads as **what Baseball-Reference prices that position at**, not as")
+    a("an independent measure of how hard the position is to play. v2 is that")
+    a("independent measure.")
+    a("")
+    if rec.get("dmae_mean") is not None:
+        ci = rec.get("ci95") or [None, None]
+        better = sum(1 for v in per.values() if (v.get("dmae_w") or 0) > 0)
+        a("The rolling six-season window is a measured choice, not an assumption: it beat")
+        a(f"the 2012-onward pool by {_f(rec['dmae_mean'], 2, False)} runs per 650 PA of held-out error (bootstrap")
+        a(f"interval {_f(ci[0], 3, False)} to {_f(ci[1], 3, False)}, better in {better} of {len(per)} held-out seasons) under a")
+        a("pre-registered forward-chained gate.")
+        a("")
+    a("Era drift is real and larger than the sampling intervals, which is why the")
+    a("window rolls. `era_splits` in the JSON carries the per-era rungs.")
+    a("")
+    a("### The folklore comparison, and its trap")
+    a("")
+    a("`folklore_comparison` in the v1 JSON holds the FanGraphs/Tango table everyone")
+    a("quotes (C +12.5, SS +7.5, 2B/3B/CF +2.5, LF/RF -7.5, 1B -12.5, DH -17.5).")
+    a("")
+    a("**Do not subtract it from ours directly.** That table is quoted per full")
+    a("defensive season (162 games, 1,458 innings); ours is per 650 PA of exposure,")
+    a("about 1,278 innings. The JSON carries both the raw table and a rescaled one,")
+    a("and neither is presented as the answer: the convention is ambiguous across")
+    a("sources, and the folklore table is the FanGraphs ladder while v1 inverts")
+    a("Baseball-Reference.")
+    a("")
+    a("## Reliability constants")
+    a("")
+    a("`signal_k_inn` in the v1 JSON carries the per-position innings constants")
+    a("`ewar.py` already consumes for shrinkage. SDR needs an equivalent.")
+    a("")
+    a("## Provenance")
+    a("")
+    a("v1 is sliced read-only from `prospect-tracker/data/positional_fit.json`")
+    a("(`fit.ladder`); v2 from `prospect-tracker/data/positional_ladder_v2.json` and")
+    a("the record of its one read, `prospect-tracker/data/positional_ladder_v2_eval.json`.")
+    a("The exporter refits nothing. `source_generated_at` and `read_at` in the JSON")
+    a("are the artifacts' own stamps.")
+    a("")
+    return "\n".join(L)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--check", action="store_true",
@@ -196,11 +487,26 @@ def main() -> int:
                          f"ladder and must not ship as one export")
     print(f"ladder ok: 9 rungs, bases differ by a single constant "
           f"{shifts.pop():+.4f}")
+    v2 = build_v2()
+    p2 = v2["bases"]["values"]["values"]
+    f2 = v2["bases"]["values_fielder_centred"]["values"]
+    if len(p2) != 9:
+        raise SystemExit(f"FATAL: v2 carries {sorted(p2)}, not nine rungs")
+    s2 = {round(p2[p] - f2[p], 2) for p in p2 if f2.get(p) is not None}
+    if len(s2) != 1:
+        raise SystemExit(f"FATAL: v2's two bases differ by more than one constant ({sorted(s2)})")
+    print(f"v2 ok: 9 rungs, bases differ by a single constant {s2.pop():+.2f}")
+    recency = (json.loads(RECENCY_EVAL.read_text(encoding="utf-8"))
+               if RECENCY_EVAL.exists() else None)
+    readme = render_readme(payload, v2, recency)
     if args.check:
         print("--check: nothing written")
         return 0
-    for p in write(payload, args.out):
+    for p in write(payload, args.out) + write_v2(v2, args.out):
         print(f"wrote {p}")
+    rp = args.out / "README.md"
+    rp.write_text(readme, encoding="utf-8")
+    print(f"wrote {rp}")
     return 0
 
 

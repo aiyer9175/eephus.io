@@ -1,8 +1,8 @@
 {
  "schema_version": "1.0.0",
- "exported_at": "2026-08-12T17:51:12+00:00",
+ "exported_at": "2026-10-15T22:56:46+00:00",
  "source_artifact": "prospect-tracker/data/positional_fit.json",
- "source_generated_at": "2026-08-12",
+ "source_generated_at": "2026-10-15",
  "model_id": "positional_ladder",
  "what_this_is": "Defensive positional adjustments re-estimated from Baseball-Reference's own construction rather than taken from the folklore table. Least squares of BRef runs_position per 650 PA on per-row innings shares, no intercept, recentred so the exposure-weighted sum over all nine positions is zero.",
  "important": "This is an INVERSION, not an independent measure of defensive difficulty. A rung reads as what Baseball-Reference PRICES that position at. For work that rides the bWAR frame (eWAR) that is the feature; for a from-scratch defensive model it is a constraint.",

@@ -171,6 +171,11 @@ TARGETS: list[str] = [
     # page itself.
     "tools/scouting_export.py",
     "scouting/index.html",
+    # The positional ladder v2 (EWAR_LADDER_REDERIVE, 2026-10-15): the record the
+    # Library's Positional Ladder view fetches is written by ladder_v2.write_eval
+    # from the read in tools/ladder_v2_lab.py.
+    "ladder_v2.py",
+    "tools/ladder_v2_lab.py",
 ]
 
 EM = "—"

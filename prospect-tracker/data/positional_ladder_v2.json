@@ -1,0 +1,306 @@
+{
+ "model": "positional_ladder_v2",
+ "gate": "docs/ewar/LADDER_V2_GATE.md",
+ "status": "served on Position Fit",
+ "units": "runs per 650 PA (per 1,277.7 fielded innings), exposure-weighted sum zero",
+ "method": "same-player position-switcher network: per fielding source (Baseball-Reference runs_field, FanGraphs fld, Savant FRP) a weighted least squares of next-season fielding runs on the change in innings shares with a glove persistence and an age term, plus Savant same-season pairs; sources pooled by inverse variance; DH = 1B + the 1B rate of DH-type seasons; C by the gate's part 3 rule",
+ "values": {
+  "C": 10.19,
+  "1B": -3.37,
+  "2B": -2.12,
+  "3B": -2.11,
+  "SS": 0.33,
+  "LF": 0.62,
+  "CF": 1.42,
+  "RF": 0.32,
+  "DH": -6.48
+ },
+ "values_basis": "b",
+ "ci95": {
+  "C": [
+   10.0,
+   10.4
+  ],
+  "1B": [
+   -4.53,
+   -2.23
+  ],
+  "2B": [
+   -3.04,
+   -1.17
+  ],
+  "3B": [
+   -3.34,
+   -0.88
+  ],
+  "SS": [
+   -1.04,
+   1.6
+  ],
+  "LF": [
+   -0.31,
+   1.58
+  ],
+  "CF": [
+   0.05,
+   2.63
+  ],
+  "RF": [
+   -0.74,
+   1.4
+  ],
+  "DH": [
+   -8.69,
+   -4.58
+  ]
+ },
+ "ci_draws": 400,
+ "ci_seed": 11,
+ "exposure_share": {
+  "C": 0.1125,
+  "1B": 0.1174,
+  "2B": 0.1125,
+  "3B": 0.1159,
+  "SS": 0.1079,
+  "LF": 0.1156,
+  "CF": 0.1125,
+  "RF": 0.1173,
+  "DH": 0.0883
+ },
+ "seasons": [
+  2016,
+  2026
+ ],
+ "c_branch": "carried_from_v1",
+ "c_network": -0.8915,
+ "c_network_se": 2.459,
+ "dh_mu": -3.1103,
+ "dh_mu_se": 0.5543,
+ "source_fits": {
+  "BREF": {
+   "k": 0.4224,
+   "alpha": 0.0612,
+   "beta_age": -0.1664,
+   "n_across": 2980,
+   "n_within": 0,
+   "n_switch": 1017,
+   "n_c_change": 13
+  },
+  "FG": {
+   "k": 0.4695,
+   "alpha": 0.128,
+   "beta_age": -0.1921,
+   "n_across": 2980,
+   "n_within": 0,
+   "n_switch": 1017,
+   "n_c_change": 13
+  },
+  "SAVANT": {
+   "k": 0.5018,
+   "alpha": 0.0313,
+   "beta_age": -0.175,
+   "n_across": 2294,
+   "n_within": 1192,
+   "n_switch": 915,
+   "n_c_change": 0
+  }
+ },
+ "per_season_shrink": {
+  "factor": {
+   "C": 0.0,
+   "1B": 0.298,
+   "2B": 0.481,
+   "3B": 0.619,
+   "SS": 0.666,
+   "LF": 0.555,
+   "CF": 0.607,
+   "RF": 0.397,
+   "DH": 0.778
+  },
+  "tau2": {
+   "C": null,
+   "1B": 0.989,
+   "2B": 1.032,
+   "3B": 2.584,
+   "SS": 2.935,
+   "LF": 1.348,
+   "CF": 2.153,
+   "RF": 0.918,
+   "DH": 14.833
+  },
+  "neighbour": 2025
+ },
+ "era_splits": {
+  "2016-2020": {
+   "b": {
+    "C": 10.26,
+    "1B": -4.11,
+    "2B": -1.6,
+    "3B": -3.06,
+    "SS": -0.49,
+    "LF": 1.39,
+    "CF": 2.86,
+    "RF": 0.43,
+    "DH": -7.0
+   },
+   "legs": {
+    "BREF": {
+     "C": 4.5555,
+     "1B": -3.8319,
+     "2B": -1.7179,
+     "3B": -3.0996,
+     "SS": -3.4847,
+     "LF": 0.9142,
+     "CF": 8.4674,
+     "RF": 2.7289
+    },
+    "FG": {
+     "C": -6.3886,
+     "1B": -3.9234,
+     "2B": -2.4335,
+     "3B": -2.7259,
+     "SS": -0.5439,
+     "LF": 2.1389,
+     "CF": 5.0717,
+     "RF": 2.4823
+    },
+    "SAVANT": {
+     "1B": -3.209,
+     "2B": -0.3001,
+     "3B": -2.1928,
+     "SS": 1.3666,
+     "LF": 2.2028,
+     "CF": 1.9738,
+     "RF": 0.3452
+    }
+   },
+   "c_branch": "carried_from_v1"
+  },
+  "2021-2026": {
+   "b": {
+    "C": 10.13,
+    "1B": -2.83,
+    "2B": -2.36,
+    "3B": -1.35,
+    "SS": 0.88,
+    "LF": -0.03,
+    "CF": 0.27,
+    "RF": 0.17,
+    "DH": -5.97
+   },
+   "legs": {
+    "BREF": {
+     "C": -0.9988,
+     "1B": -3.7002,
+     "2B": -2.7098,
+     "3B": 0.6907,
+     "SS": 0.3688,
+     "LF": 0.3126,
+     "CF": 4.1195,
+     "RF": 1.0215
+    },
+    "FG": {
+     "C": 0.0528,
+     "1B": -0.4753,
+     "2B": -1.2997,
+     "3B": 0.3061,
+     "SS": 1.53,
+     "LF": -1.4758,
+     "CF": 1.1352,
+     "RF": 0.378
+    },
+    "SAVANT": {
+     "1B": -2.2321,
+     "2B": -1.4755,
+     "3B": -1.0123,
+     "SS": 1.9267,
+     "LF": 1.3845,
+     "CF": 0.47,
+     "RF": 1.0618
+    }
+   },
+   "c_branch": "carried_from_v1"
+  }
+ },
+ "pre_statcast_legs": {
+  "BREF": {
+   "2011-2015": {
+    "C": -5.76,
+    "1B": -3.06,
+    "2B": -0.25,
+    "3B": -3.05,
+    "SS": -1.71,
+    "LF": 1.76,
+    "CF": 6.09,
+    "RF": 0.3
+   },
+   "2016-2026": {
+    "C": 1.12,
+    "1B": -3.75,
+    "2B": -2.31,
+    "3B": -1.14,
+    "SS": -1.29,
+    "LF": 0.68,
+    "CF": 6.2,
+    "RF": 1.67
+   }
+  },
+  "FG": {
+   "2011-2015": {
+    "C": -1.46,
+    "1B": -2.46,
+    "2B": 0.22,
+    "3B": -1.84,
+    "SS": -0.95,
+    "LF": 1.0,
+    "CF": 2.93,
+    "RF": 1.15
+   },
+   "2016-2026": {
+    "C": -2.18,
+    "1B": -2.12,
+    "2B": -1.91,
+    "3B": -1.22,
+    "SS": 0.53,
+    "LF": 0.32,
+    "CF": 3.08,
+    "RF": 1.4
+   }
+  }
+ },
+ "verdict": {
+  "step1_b_replaces_v1": true,
+  "step2_d_replaces_b": false,
+  "served_on_position_fit": "v2",
+  "v2_vector": "b (pooled 2016-2026)",
+  "rule": "b replaces v1 iff pooled dMAE(v1 - b) CI95 lower bound > 0 and the EW3-23 form dMAE(v1 - b) CI95 upper bound >= 0; then d replaces b iff dMAE(b - d) CI95 lower bound > 0"
+ },
+ "identification": {
+  "convention": "exposure-weighted sum-to-zero",
+  "sum_exposure_weighted": 0.0001,
+  "sum_equal_weight_9": -1.2,
+  "sum_equal_weight_fielders": 5.28,
+  "exposure_share": {
+   "C": 0.1125,
+   "1B": 0.1174,
+   "2B": 0.1125,
+   "3B": 0.1159,
+   "SS": 0.1079,
+   "LF": 0.1156,
+   "CF": 0.1125,
+   "RF": 0.1173,
+   "DH": 0.0883
+  },
+  "values_fielder_centred": {
+   "C": 9.53,
+   "1B": -4.03,
+   "2B": -2.78,
+   "3B": -2.77,
+   "SS": -0.33,
+   "LF": -0.04,
+   "CF": 0.76,
+   "RF": -0.34,
+   "DH": -7.14
+  }
+ }
+}

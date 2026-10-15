@@ -22,6 +22,17 @@ THE ANSWER SHAPE
 
         rate(i, p) = D(p) + s(p) * z(i)          [FRP per 1000 defensive innings]
 
+    ONE RUN SCALE (docs/ewar/LADDER_V2_GATE.md part 8, POSFIT_ONE_SCALE). D(p) above
+    is Statcast's, and it reads the glove z and predicts the rate at a new position
+    (the conversion-accuracy claim). In the VALUE, the difficulty term is the served
+    ladder's own, D_L(p) = (mean7(LADDER) - LADDER(p)) per 650 PA, because the ladder
+    exists to make a move value-neutral for an average glove and the two used to
+    price the same difficulty on different run scales (an average glove read -7.51
+    runs at LF and +6.06 at 3B on the 2026-08-12 artifact). So at a fielding
+    position V = BAT + mean7(LADDER) + s(p) * z * innings/1000, and at DH
+    V = BAT + LADDER(DH): the glove decides among fielding spots, the ladder decides
+    the DH comparison and what counts as up or down the spectrum.
+
     z(i) is a latent glove in standard units, D(p) is how much easier it is to
     accumulate fielding runs at p (Savant centres OAA WITHIN position, so D is only
     identified from players who played two positions in the same season), and s(p)
@@ -32,12 +43,13 @@ THE ANSWER SHAPE
     positional-adjustment loss.
 
 THREE THINGS THIS MODEL DOES THAT THE NAIVE VERSION DOES NOT
-    1. The positional ladder is RE-ESTIMATED from Baseball-Reference's own
-       construction rather than taken from the folklore table, on a rolling
-       six-season window that a forward-chained gate chose over the retired
-       2012-onward pool (see LADDER_WINDOW_SEASONS). The folklore ladder is wrong
-       by about 4.1 runs at 1B and treats 2B/3B/CF as one rung when the current
-       window says 5.12 / 3.62 / 4.14.
+    1. The positional ladder Position Fit values with is the position-switcher
+       ladder v2 (ladder_v2.py, data/positional_ladder_v2.json): measured from what
+       the same players gain or lose in fielding runs when they change position,
+       on Baseball-Reference, FanGraphs and Savant fielding runs, and adopted
+       because it beat the Baseball-Reference inversion out of sample
+       (docs/ewar/LADDER_V2_GATE.md part 9). fit_ladder below is v1, that
+       inversion, still published as fit.ladder for DEM+ and the ladder export.
     2. Single-season OAA is shrunk toward league average with a per-position
        reliability constant measured from year-over-year persistence. First base is
        the least reliable read in baseball (k = 2539 innings), shortstop the most
@@ -164,6 +176,28 @@ FLAG_MIN_GAIN = 3.0            # ...and this many runs per 650 PA
 HEADLINE_MIN_PA = 250          # headline lists are regulars only
 HEADLINE_MIN_INN = 400.0
 
+# ---- which ladder Position Fit values with, and how (docs/ewar/LADDER_V2_GATE.md)
+#: "v2": the position-switcher ladder, the gate's verdict (part 9: pooled held-out
+#: dMAE +0.886 runs per 650 PA against the v1 refit, CI95 +0.717 to +1.059, every
+#: source and every fold). "v1" puts back the Baseball-Reference inversion. Either
+#: way the artifact's fit.ladder stays v1, because DEM+ and the ladder export read it.
+POSFIT_LADDER = "v2"
+LADDER_V2_PATH = DATA_DIR / "positional_ladder_v2.json"
+#: Gate part 8: the difficulty term inside a hitter's VALUE is the served ladder's
+#: own, so an average glove is worth the same at every fielding position. False
+#: restores the 2026-08-12 composition (Statcast D plus the ladder).
+POSFIT_ONE_SCALE = True
+#: The two blocks other models read are not refit by a Position Fit rebuild:
+#: fit.ladder (v1: DEM+'s positional runs, prospect_def_value, the ladder export)
+#: and fit.signal (the k_inn constants ewar.py shrinks fielding with, so the
+#: nightly eWAR re-price reads them) are carried verbatim from the artifact being
+#: replaced, and the refit's difference is recorded in fit.carried. Refitting
+#: them now would move eWAR and DEM+ from a task that touches neither, and v1's
+#: Baseball-Reference def history (data/mlb_def_history.json) is a June 2026
+#: vintage while the innings are full-season (R2 0.9737 to 0.9672). Set False
+#: when those consumers are refreshed on purpose.
+V1_CARRY = True
+
 
 # ============================================================== data loading
 def _load(name: str) -> dict:
@@ -289,6 +323,60 @@ def _recentre(beta, exposure):
     See the note above `ident` in fit_ladder for what a true innings weighting
     would change (-0.0401 runs) and why the level is not worth re-weighting."""
     return beta - float(exposure @ beta)
+
+
+def posfit_ladder(v1: dict) -> dict:
+    """The ladder Position Fit values positions with (POSFIT_LADDER).
+
+    v2 is read from data/positional_ladder_v2.json, the switcher ladder's own
+    artifact (ladder_v2.py); this module never refits it. inn_per_pa rides along
+    from v1 because every per-650-PA conversion here uses it (v2's unit is 650 PA
+    x 1.9657 innings, the same number)."""
+    if POSFIT_LADDER != "v2":
+        return dict(v1, basis="v1")
+    try:
+        doc = json.loads(LADDER_V2_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"positional_fit: POSFIT_LADDER is v2 but {LADDER_V2_PATH.name} "
+                         f"is unreadable ({exc}); run python ladder_v2.py") from exc
+    vals = doc.get("values") or {}
+    if set(vals) != set(LADDER_POSITIONS):
+        raise SystemExit(f"positional_fit: {LADDER_V2_PATH.name} carries {sorted(vals)}, "
+                         f"not the nine rungs")
+    return {
+        "basis": "v2",
+        "model": doc.get("model"),
+        "source": "data/positional_ladder_v2.json",
+        "gate": doc.get("gate"),
+        "units": doc.get("units"),
+        "method": doc.get("method"),
+        "values": {p: float(vals[p]) for p in LADDER_POSITIONS},
+        "ci95": doc.get("ci95") or {},
+        "seasons": doc.get("seasons"),
+        "identification": doc.get("identification"),
+        "c_branch": doc.get("c_branch"),
+        "dh_mu": doc.get("dh_mu"),
+        "inn_per_pa": v1["inn_per_pa"],
+    }
+
+
+def league_term(lad_values: dict) -> float:
+    """mean7(LADDER): the equal-weight mean of the seven Statcast rungs, the same
+    normalisation _solve_D puts on D. Under POSFIT_ONE_SCALE an average glove is
+    worth exactly this at every fielding position (gate part 8)."""
+    return sum(float(lad_values[p]) for p in OAA_POSITIONS) / len(OAA_POSITIONS)
+
+
+def field_runs(p: str, z: float, D: dict, sig: dict, lad_values: dict,
+               inn650: float) -> float:
+    """Fielding runs per 650 PA at fielding position p for glove z, relative to the
+    average player at p. One scale: the difficulty is the ladder's own,
+    (mean7 - LADDER(p)); the glove part s(p) * z is Statcast's. Without
+    POSFIT_ONE_SCALE this is the 2026-08-12 composition, (D(p) + s(p) z) x k."""
+    if POSFIT_ONE_SCALE:
+        return (league_term(lad_values) - float(lad_values[p])
+                + sig[p]["signal_sd"] * z * inn650 / 1000.0)
+    return (D[p] + sig[p]["signal_sd"] * z) * inn650 / 1000.0
 
 
 def fit_ladder(feeds: Feeds, first=None, last=None,
@@ -836,13 +924,17 @@ def estimate_players(feeds: Feeds, ladder, diff, sig, feas, target_season,
     hit, league = feeds.corpus()
     inn650 = ladder["inn_per_pa"] * 650.0
 
+    lad = ladder["values"]
+
     def baseline_gain(a, b):
-        """What an AVERAGE glove (z = 0) gains moving a -> b. The league-wide part."""
+        """What an AVERAGE glove (z = 0) gains moving a -> b. The league-wide part:
+        zero between two fielding positions under POSFIT_ONE_SCALE, and
+        LADDER(DH) - mean7 on a move to DH."""
         if a is None or b is None or a == b:
             return 0.0
-        fa = 0.0 if a == "DH" else D[a] * inn650 / 1000.0
-        fb = 0.0 if b == "DH" else D[b] * inn650 / 1000.0
-        return (fb + ladder["values"][b]) - (fa + ladder["values"][a])
+        fa = 0.0 if a == "DH" else field_runs(a, 0.0, D, sig, lad, inn650)
+        fb = 0.0 if b == "DH" else field_runs(b, 0.0, D, sig, lad, inn650)
+        return (fb + lad[b]) - (fa + lad[a])
 
     # who is in the universe: fielded or batted in the target season
     universe = set()
@@ -908,7 +1000,7 @@ def estimate_players(feeds: Feeds, ladder, diff, sig, feas, target_season,
                 continue
             if p not in OAA_POSITIONS:
                 continue
-            field = (D[p] + sig[p]["signal_sd"] * z) * inn650 / 1000.0
+            field = field_runs(p, z, D, sig, lad, inn650)
             vals[p] = {"field": round(field, 2), "ladder": ladder["values"][p],
                        "def_total": round(field + ladder["values"][p], 2),
                        "feasible": True}
@@ -919,16 +1011,27 @@ def estimate_players(feeds: Feeds, ladder, diff, sig, feas, target_season,
 
         def _se(a, b):
             """SE of the gain from a to b: glove uncertainty transported through the
-            s(p) difference, plus the bootstrap SE of both D rungs and both ladder
-            rungs. It does NOT include idiosyncratic conversion risk (see caveats)."""
+            s(p) difference, plus the uncertainty of the league-wide part. Under
+            POSFIT_ONE_SCALE the league-wide part between two fielding positions is
+            exactly zero, so only a move to or from DH carries ladder uncertainty
+            (the DH rung and the seven-rung mean). It does NOT include idiosyncratic
+            conversion risk (see caveats)."""
             sb = sig[b]["signal_sd"] if b != "DH" else 0.0
             sa = sig[a]["signal_sd"] if a != "DH" else 0.0
+            glove = (abs(sb - sa) * z_se * inn650 / 1000.0) ** 2
+            if POSFIT_ONE_SCALE:
+                lg = 0.0
+                if (a == "DH") != (b == "DH"):
+                    sd = {p: (ladder["ci95"][p][1] - ladder["ci95"][p][0]) / 3.92
+                          for p in LADDER_POSITIONS if ladder["ci95"].get(p)}
+                    mean_var = sum(sd.get(p, 0.0) ** 2 for p in OAA_POSITIONS) / 49.0
+                    lg = sd.get("DH", 0.0) ** 2 + mean_var
+                return math.sqrt(glove + lg)
             db = D_sd[b] if b != "DH" else 0.0
             da = D_sd[a] if a != "DH" else 0.0
             lb = (ladder["ci95"][b][1] - ladder["ci95"][b][0]) / 3.92
             la = (ladder["ci95"][a][1] - ladder["ci95"][a][0]) / 3.92
-            return math.sqrt((abs(sb - sa) * z_se * inn650 / 1000.0) ** 2
-                             + ((da ** 2 + db ** 2) * (inn650 / 1000.0) ** 2)
+            return math.sqrt(glove + ((da ** 2 + db ** 2) * (inn650 / 1000.0) ** 2)
                              + la ** 2 + lb ** 2)
 
         gain_se = _se(cur_key, best) if (cur_key and best != cur_key) else None
@@ -1225,7 +1328,7 @@ def backtest(feeds: Feeds, ladder, sig, feas, first=2017, last=None,
             if p == "DH":
                 vals["DH"] = lad["DH"]
             elif p in OAA_POSITIONS:
-                vals[p] = (Dt[p] + sig[p]["signal_sd"] * z) * inn650 / 1000.0 + lad[p]
+                vals[p] = field_runs(p, z, Dt, sig, lad, inn650) + lad[p]
         here = vals.get(cur)
         if here is None:
             here = max(vals.values())
@@ -1388,6 +1491,21 @@ def fit_all(feeds: Feeds, target_season=None, verbose=True):
     if verbose:
         print("fitting positional ladder ...")
     ladder = fit_ladder(feeds)
+    prev_fit: dict = {}
+    if V1_CARRY and OUT.exists():
+        try:
+            prev_fit = json.loads(OUT.read_text(encoding="utf-8")).get("fit") or {}
+        except (OSError, ValueError):
+            prev_fit = {}
+    carried = {"on": V1_CARRY, "ladder": False, "signal": False,
+               "ladder_refit_minus_carried": None, "signal_k_inn_refit_minus_carried": None}
+    prev = prev_fit.get("ladder")
+    if prev and prev.get("values") and prev.get("seasons") == ladder["seasons"]:
+        carried["ladder"] = True
+        carried["ladder_refit_minus_carried"] = {
+            p: round(ladder["values"][p] - prev["values"][p], 2) for p in LADDER_POSITIONS}
+        ladder = prev
+    posfit = posfit_ladder(ladder)
     obs_all = feeds.rates()
     obs = {k: {p: v for p, v in d.items() if v["inn"] >= MIN_PAIR_INN}
            for k, d in obs_all.items()}
@@ -1395,13 +1513,21 @@ def fit_all(feeds: Feeds, target_season=None, verbose=True):
     if verbose:
         print("fitting reliability / signal ...")
     sig = fit_signal(obs)
+    prev_sig = prev_fit.get("signal") or {}
+    if V1_CARRY and set(prev_sig) == set(sig) and all(
+            (prev_sig[p] or {}).get("k_inn") and (prev_sig[p] or {}).get("signal_sd")
+            for p in prev_sig):
+        carried["signal"] = True
+        carried["signal_k_inn_refit_minus_carried"] = {
+            p: round(float(sig[p]["k_inn"]) - float(prev_sig[p]["k_inn"]), 1) for p in sig}
+        sig = prev_sig
     if verbose:
         print("fitting position difficulty ...")
     diff = fit_difficulty(obs, sig)
     D = diff["values"]
     if verbose:
         print("measuring which moves the league actually makes ...")
-    feas = fit_feasibility(feeds, ladder)
+    feas = fit_feasibility(feeds, posfit)
     if verbose:
         print("running the interaction falsification test ...")
     inter = interaction_check(obs, D, sig)
@@ -1445,26 +1571,35 @@ def fit_all(feeds: Feeds, target_season=None, verbose=True):
     # moves by the mean per-year change (which is negative: gloves decline).
     age_slope = aging.get("mean_delta_z_per_year", 0.0) if aging.get("applied") else 0.0
 
-    # conversion matrix in served units
-    inn650 = ladder["inn_per_pa"] * 650.0
+    # conversion matrix in served units. d_field is the VALUE's difficulty gap
+    # (the ladder's own under POSFIT_ONE_SCALE); d_field_statcast is the Statcast
+    # gap that predicts the rate at the new position.
+    inn650 = posfit["inn_per_pa"] * 650.0
+    lv = posfit["values"]
     matrix = {}
     for a in OAA_POSITIONS:
         matrix[a] = {}
+        fa = field_runs(a, 0.0, D, sig, lv, inn650)
         for b in OAA_POSITIONS:
+            fb = field_runs(b, 0.0, D, sig, lv, inn650)
             matrix[a][b] = {
-                "d_field_per_1000inn": round(D[b] - D[a], 2),
+                "d_field_per_1000inn": round((fb - fa) * 1000.0 / inn650, 2),
+                "d_field_statcast_per_1000inn": round(D[b] - D[a], 2),
                 "glove_scale": round(sig[b]["signal_sd"] / sig[a]["signal_sd"], 3),
-                "d_ladder_per_650pa": round(ladder["values"][b] - ladder["values"][a], 2),
-                "net_for_average_glove_per_650pa": round(
-                    (D[b] - D[a]) * inn650 / 1000.0
-                    + ladder["values"][b] - ladder["values"][a], 2)}
+                "d_ladder_per_650pa": round(lv[b] - lv[a], 2),
+                "net_for_average_glove_per_650pa": round(fb + lv[b] - fa - lv[a], 2)}
         matrix[a]["DH"] = {
-            "d_field_per_1000inn": None, "glove_scale": 0.0,
-            "d_ladder_per_650pa": round(ladder["values"]["DH"] - ladder["values"][a], 2),
-            "net_for_average_glove_per_650pa": round(
-                -(D[a] + 0.0) * inn650 / 1000.0
-                + ladder["values"]["DH"] - ladder["values"][a], 2)}
-    return {"ladder": ladder, "signal": sig, "difficulty": diff,
+            "d_field_per_1000inn": None, "d_field_statcast_per_1000inn": None,
+            "glove_scale": 0.0,
+            "d_ladder_per_650pa": round(lv["DH"] - lv[a], 2),
+            "net_for_average_glove_per_650pa": round(lv["DH"] - fa - lv[a], 2)}
+    return {"ladder": ladder, "ladder_posfit": posfit,
+            "carried": carried,
+            "one_scale": {"on": POSFIT_ONE_SCALE,
+                          "league_term_per_650pa": round(league_term(lv), 3),
+                          "rule": ("value at a fielding position = mean7(ladder) + "
+                                   "s(p) x glove z x innings/1000; at DH = ladder(DH)")},
+            "signal": sig, "difficulty": diff,
             "feasibility": feas, "conversion_matrix": matrix,
             "interaction_check": inter,
             "aging": aging, "age_slope": age_slope,
@@ -1476,10 +1611,10 @@ def build(target_season=None, with_backtest=True) -> dict:
     f = fit_all(feeds)
     ts = target_season or f["target_season"]
     print("estimating players ...")
-    rows = estimate_players(feeds, f["ladder"], f["difficulty"], f["signal"],
+    rows = estimate_players(feeds, f["ladder_posfit"], f["difficulty"], f["signal"],
                             f["feasibility"], ts, age_slope=f["age_slope"])
     print("backtesting against real position changes ...")
-    val = (backtest(feeds, f["ladder"], f["signal"], f["feasibility"])
+    val = (backtest(feeds, f["ladder_posfit"], f["signal"], f["feasibility"])
            if with_backtest else {})
     conv = conversion_accuracy(feeds, f["signal"]) if with_backtest else {}
 
@@ -1510,24 +1645,38 @@ def build(target_season=None, with_backtest=True) -> dict:
                  "demotion_gain_league_part", "promotion_pos", "promotion_gain", "glove_z",
                  "glove_z_se", "glove_runs_per_650_at_current", "bat_runs_per_650")}
     return {
-        "model": "positional_fit_v1",
+        "model": ("positional_fit_v2" if (POSFIT_LADDER == "v2" or POSFIT_ONE_SCALE)
+                  else "positional_fit_v1"),
         "generated_at": _dt.date.today().isoformat(),
         "target_season": ts,
         "value_identity": "value per 650 PA = bat + fielding(position) + positional adjustment",
-        "sources": ["data/savant_oaa.json", "data/fielding_innings.json",
-                    "data/mlb_def_history.json", ".cache/fa_corpus.pkl"],
+        "sources": (["data/savant_oaa.json", "data/fielding_innings.json",
+                     "data/mlb_def_history.json", ".cache/fa_corpus.pkl"]
+                    + (["data/positional_ladder_v2.json"] if POSFIT_LADDER == "v2" else [])),
         "out_of_scope": ["C (no Savant OAA)", "P"],
         "caveats": [
             "The difficulty matrix D is identified ONLY on players who played two "
             "positions in the same season. That population is selected, and the "
             "correction applied here (subtracting the s(p)*glove part before "
             "refitting) is a model-based correction, not a randomisation.",
-            "The single largest league-wide claim the model makes is that a corner "
-            "outfielder gains runs by moving to first base. Roughly 2 runs per 650 "
-            "PA of every corner-outfield demotion is this constant, and the "
-            "out-of-sample check on across-season movers into 1B is consistent in "
-            "sign but far too thin to confirm it. Read the player-specific part of "
-            "the gain, not the total, when the total is close to the threshold.",
+            ("An average glove is worth the same at every fielding position: the "
+             "ladder's own difficulty prices the move (one run scale), so a gain "
+             "between two fielding positions is the player's glove alone, and only a "
+             "move to DH carries a league-wide part." if POSFIT_ONE_SCALE else
+             "The single largest league-wide claim the model makes is that a corner "
+             "outfielder gains runs by moving to first base. Roughly 2 runs per 650 "
+             "PA of every corner-outfield demotion is this constant, and the "
+             "out-of-sample check on across-season movers into 1B is consistent in "
+             "sign but far too thin to confirm it. Read the player-specific part of "
+             "the gain, not the total, when the total is close to the threshold."),
+            ("The positional ladder is the position-switcher ladder: what the same "
+             "players gain or lose in fielding runs when they change position, on "
+             "three fielding sources. Catcher carries the Baseball-Reference rung "
+             "(too few catchers change position to measure it), and DH is first base "
+             "plus the first-base fielding of the players who DH."
+             if POSFIT_LADDER == "v2" else
+             "The positional ladder is Baseball-Reference's, recovered by inverting "
+             "its positional runs."),
             "Catcher has no Savant OAA in any season and is never scored.",
             "Year-over-year persistence is a LOWER bound on within-season "
             "reliability, so the glove is over-shrunk and the model under-flags.",
@@ -1560,7 +1709,8 @@ def _report(payload):
     f = payload["fit"]
     L = f["ladder"]
     print("\n" + "=" * 74)
-    print("POSITIONAL ADJUSTMENT (runs per 650 PA), recovered from BRef")
+    print("POSITIONAL ADJUSTMENT v1 (runs per 650 PA), recovered from BRef "
+          "(fit.ladder; Position Fit values with fit.ladder_posfit)")
     print("=" * 74)
     print(f"n={L['n_player_seasons']}  seasons {L['seasons'][0]}-{L['seasons'][1]}  "
           f"R2={L['r2']}  resid sd={L['resid_sd']}  innings/PA={L['inn_per_pa']}")

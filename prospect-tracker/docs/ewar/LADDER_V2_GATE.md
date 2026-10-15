@@ -196,7 +196,78 @@ fold, and the squared-error version of every dMAE.
 
 ## 9. Results
 
-(Recorded after the one read.)
+### 2026-10-15, the one read
+
+`python tools/ladder_v2_lab.py --read`, run once after the amendments (commit cdd3c3fd), stdout
+and stderr teed to the task's output directory (read.log). The dry run on fixtures finished clean
+first. Exit 0, 5.1 s. Record: `data/positional_ladder_v2_eval.json` (its production date was
+added afterwards by `--restamp`, which copies the read's own date and changes nothing else).
+
+Rows: BREF 4,448 across-season (1,450 switchers), FG 4,149 (1,364), SAVANT 2,294 (915) plus
+1,192 same-season pairs; DH-type seasons 116 / 113 / 80. Scored: 4,141 held-out rows, 611 players.
+
+**Verdict (part 5, fixed sequence).**
+
+| test | dMAE, runs per 650 PA | CI95 |
+| --- | ---: | --- |
+| 1. v1 refit minus b, pooled (primary) | +0.886 | +0.717 to +1.059 |
+| 1. v1 refit minus b, next-season rows (EW3-23 form) | +0.754 | +0.587 to +0.928 |
+| 2. b minus d (per-season shrunk b), pooled | -0.026 | -0.055 to +0.003 |
+| v1 as served minus b | +0.918 | +0.746 to +1.091 |
+| v1 refit minus b, Savant same-season pairs | +1.683 | +1.256 to +2.110 |
+| v1 refit minus b, BREF / FG / SAVANT rows | +0.433 / +0.709 / +1.343 | lower bounds +0.209 / +0.504 / +1.119 |
+| v1 refit minus c (offense gap) | +0.336 | +0.208 to +0.462 |
+| v1 refit minus the FanGraphs inversion | +0.105 | +0.071 to +0.140 |
+| v1 refit minus the FanGraphs table | +0.179 | +0.141 to +0.218 |
+
+Step 1 PASSES: (b) replaces v1. Step 2 FAILS: the per-season shrunk version does not beat the
+pooled one, so the served v2 is (b) fit on 2016-2026. Lower MAE than v1 in 11 of 11 held-out
+seasons. Pooled weighted MAE: b 6.524, d 6.550, c 7.074, FanGraphs table 7.231, FanGraphs
+inversion 7.304, v1 refit 7.410, v1 served 7.442.
+
+**The ladder** (runs per 650 PA, exposure-weighted zero; CI95 from 400 player-cluster refits of
+the whole pipeline, seed 11), beside the references on the same zero:
+
+| Pos | v2 | CI95 | v1 served | v1 refit 2016-2026 | FG inversion | FG table | offense gap |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| C | +10.19 | +10.00 to +10.40 | +10.88 | +10.97 | +13.19 | +12.44 | +5.14 |
+| SS | +0.33 | -1.04 to +1.60 | +9.38 | +9.20 | +8.69 | +8.06 | +5.89 |
+| 2B | -2.12 | -3.04 to -1.17 | +5.12 | +5.00 | +3.87 | +3.67 | +4.53 |
+| 3B | -2.11 | -3.34 to -0.88 | +3.62 | +3.60 | +3.66 | +3.67 | -2.56 |
+| CF | +1.42 | +0.05 to +2.63 | +4.14 | +3.97 | +3.87 | +3.67 | +4.61 |
+| LF | +0.62 | -0.31 to +1.58 | -6.39 | -6.42 | -5.28 | -5.09 | -0.61 |
+| RF | +0.32 | -0.74 to +1.40 | -6.52 | -6.33 | -5.42 | -5.09 | -4.86 |
+| 1B | -3.37 | -4.53 to -2.23 | -8.40 | -8.36 | -9.84 | -9.47 | -5.26 |
+| DH | -6.48 | -8.69 to -4.58 | -13.70 | -13.46 | -14.88 | -13.85 | -7.77 |
+
+- C branch: carried from v1 (network C -0.89, SE 2.46 against the 1.5 bar; 13 C-switcher rows
+  against the 30 bar). DH: 1B + mu_DH, mu_DH -3.11 (SE 0.55).
+- Source legs (on the v2 zero): BREF SS -2.01 / CF +5.48 / 1B -4.47; FG SS -0.19 / CF +2.36 /
+  1B -2.84; SAVANT SS +0.98 / CF +0.37 / 1B -3.31. Persistence k 0.42 / 0.47 / 0.50.
+- Era split of b: 2016-2020 SS -0.49, 2B -1.60, CF +2.86, 1B -4.11; 2021-2026 SS +0.88, 2B -2.36,
+  CF +0.27, 1B -2.83. The pre-Statcast legs (2011-2015, UZR and DRS) are flat as well (BREF SS
+  -1.71, CF +6.09, 1B -3.06; FG SS -0.95, CF +2.93, 1B -2.46), so the flatness is not a
+  Statcast convention.
+
+**Reading.** Measured on the same players, the fielding positions sit within about five runs
+of each other; the published ladders (Baseball-Reference, FanGraphs) spread them over 18. The
+published spread is pricing, not what switchers do in any of the three fielding systems.
+
+**Part 8, Position Fit.** Position Fit reads v2 and composes on one run scale. Attribution on the
+current data (in memory, ladder by composition):
+
+| | demotion AUC | raw OAA AUC | model minus raw OAA, CI95 | flagged misplaced |
+| --- | ---: | ---: | --- | ---: |
+| v1, composed (the 2026-08-12 method) | 0.477 | 0.614 | -0.138 (-0.178 to -0.096) | 81 |
+| v1, one scale | 0.663 | 0.614 | +0.049 (+0.022 to +0.076) | 3 |
+| v2, composed | 0.624 | 0.631 | -0.008 (-0.046 to +0.027) | 18 |
+| v2, one scale (served) | 0.669 | 0.631 | +0.037 (+0.016 to +0.059) | 3 |
+
+On v1's own labels the scale fix alone turns the demotion backtest from a null into a
+separation: the old composition's league-wide constant (an average glove read -7.51 runs at LF
+and +6.06 at 3B) swamped the glove. The conversion-accuracy claim is untouched by the fix
+(Statcast D still predicts the rate at a new position). The flag count falls because a move
+between two fielding positions is now the glove alone (mean absolute gain 0.55 runs per 650 PA).
 
 ## 10. Amendments
 
