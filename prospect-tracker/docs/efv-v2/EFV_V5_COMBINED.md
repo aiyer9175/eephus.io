@@ -335,3 +335,235 @@ fell short. Every frame and interval is reported either way.
   development fit and read), `data/_labs/efv5/efv5_combined_spent.json` (the one held-out
   read), `data/efv5_combined_weights.json` (the production fit's weights and standard errors).
 
+## 10. The fit and the development read (appended by the fit run, 2026-10-15)
+
+Run: `python -u efv5_combined.py --fit` from commit d7240219 (artifact `data/_labs/efv5/efv5_combined_fit.json`, generated 2026-10-15T13:58:22Z, 239.3 s; label `fwar@2026-10-02-0341299c20ec`; the V2 base reproduces the DS-16 block; v3 at base_config reproduces V2 on all 3692 scored rows; every candidate column built on both frames, coverage in the artifact's `column_receipts`). E_cond B 2000, seed 20260906. The development read adjudicates nothing (lambda was chosen on these frames out of fold); two development rows (model `efv_v5_combined`) landed in `data/efv_progress.json`.
+
+### 10.1 Within (side, vintage) Spearman, pooled over sides
+
+| frame | n | v5c | V2 | consensus | Pipeline | FanGraphs | v5c minus V2 (E_cond CI95) | v5c minus consensus (CI95) | v5c minus Pipeline | v5c minus FanGraphs |
+|---|---|---|---|---|---|---|---|---|---|---|
+| lv_dev | 2,862 | 0.1685 | 0.1676 | 0.1792 | 0.2034 | 0.1714 | +0.0009 (-0.0179 to +0.0193) | -0.0107 (-0.0411 to +0.0183) | -0.0318 | +0.0115 |
+| vm_dev | 830 | 0.3611 | 0.3713 | 0.3814 | 0.3816 | 0.3363 | -0.0102 (-0.0306 to +0.0095) | -0.0203 (-0.0528 to +0.0127) | -0.0205 | +0.0248 |
+
+Per side (within, v5c, V2, consensus; v5c minus V2; v5c minus consensus):
+
+- lv_dev hit n 1465: v5c 0.1625, V2 0.1740, consensus 0.1948; vs V2 -0.0115 (-0.0470 to +0.0224); vs consensus -0.0324 (-0.0865 to +0.0182)
+- lv_dev pit n 1397: v5c 0.1749, V2 0.1609, consensus 0.1629; vs V2 +0.0140 (-0.0023 to +0.0299); vs consensus +0.0120 (-0.0157 to +0.0370)
+- vm_dev hit n 406: v5c 0.3448, V2 0.3752, consensus 0.3954; vs V2 -0.0304 (-0.0602 to -0.0000); vs consensus -0.0506 (-0.1107 to +0.0116)
+- vm_dev pit n 424: v5c 0.3773, V2 0.3674, consensus 0.3674; vs V2 +0.0099 (-0.0163 to +0.0344); vs consensus +0.0099 (-0.0163 to +0.0344)
+
+Per fold, v5c minus V2 within: lv_dev hit|2017 -0.0234 (n 472), hit|2018 +0.0068 (n 450), hit|2019 -0.0164 (n 543), pit|2017 +0.0140 (n 469), pit|2018 +0.0027 (n 439), pit|2019 +0.0241 (n 489); vm_dev hit|2017 -0.2248 (n 30), hit|2018 -0.0607 (n 36), hit|2019 -0.0033 (n 59), hit|2020 -0.0081 (n 54), hit|2021 -0.0528 (n 51), hit|2022 +0.0015 (n 100), hit|2023 -0.0032 (n 76), pit|2017 n/a (n 16), pit|2018 +0.0021 (n 38), pit|2019 +0.0336 (n 63), pit|2020 +0.0623 (n 77), pit|2021 -0.0844 (n 75), pit|2022 +0.0191 (n 65), pit|2023 +0.0238 (n 90).
+
+Pooled Spearman after the map, contributor AUC and the MAE of the priced grade, v5c minus V2 / minus consensus:
+
+- lv_dev: pooled +0.0056 (-0.0140 to +0.0251) / -0.0072; AUC +0.0055 (-0.0112 to +0.0212) / -0.0061; MAE -0.0170 / +0.0112 (a scale reading, not accuracy).
+- vm_dev: pooled +0.0070 (-0.0075 to +0.0218) / -0.0030; AUC +0.0069 (-0.0021 to +0.0158) / +0.0027; MAE -0.0272 / +0.0456 (a scale reading, not accuracy).
+
+Position-group cells, v5c minus V2 within (E_cond CI95) and v5c minus consensus:
+
+- lv_dev: hit:C n 168 -0.0211 (-0.1494 to +0.1008) / -0.0510; hit:IF n 710 +0.0158 (-0.0296 to +0.0609) / +0.0110; hit:OF n 572 -0.0347 (-0.0943 to +0.0249) / -0.0835; pit:pit n 1397 +0.0140 (-0.0023 to +0.0299) / +0.0120.
+- vm_dev: hit:C n 41 not scored; hit:IF n 207 -0.0068 (-0.0277 to +0.0125) / -0.0028; hit:OF n 144 -0.0137 (-0.0536 to +0.0247) / -0.0462; pit:pit n 424 +0.0099 (-0.0163 to +0.0344) / +0.0099.
+
+Group cells (the scored rows inside a group or tool column's own group; level, age band and role only):
+
+- lv_dev: g5_hit_A_all_all_k_pct n 418 -0.0380 (-0.1011 to +0.0266); g5_pit_A_all_all_k_minus_bb n 374 -0.0034 (-0.0329 to +0.0263); g5_hit_A_young_all_k_pct n 360 -0.0251 (-0.0885 to +0.0407); g5_pit_A_young_all_k_pct n 290 +0.0024 (-0.0354 to +0.0372); g5_pit_A_all_SP_k_pct n 310 -0.0008 (-0.0326 to +0.0303); g5_hit_CPX_all_all_avg n 266 +0.0086 (-0.0333 to +0.0522); g5_hit_Ap_young_all_pbp_contact n 267 -0.0312 (-0.1123 to +0.0459); g5_hit_Ap_all_all_pbp_swstr n 320 -0.0295 (-0.1016 to +0.0426); t5_pit_Ap_all_SP_sl_gap n 39 -0.0238 (no interval); t5_pit_Ap_young_all_sl_gap n 41 +0.0053 (no interval); t5_pit_Ap_all_all_sl_gap n 48 +0.0158 (no interval); t5_pit_AAA_all_all_fb_fut n 65 -0.0065 (-0.0695 to +0.0424).
+- vm_dev: g5_hit_Ap_young_all_pbp_contact n 110 -0.0149 (-0.0565 to +0.0174); g5_hit_Ap_all_all_pbp_swstr n 130 -0.0123 (-0.0436 to +0.0152); t5_pit_AAA_all_all_fb_fut n 61 -0.0066 (-0.1599 to +0.1595).
+
+### 10.2 The penalties the folds chose
+
+| fold | alpha skill / timing (V2's) | lambda skill / timing | V2 skill keys | non-zero slopes, V2 and candidate, skill / timing |
+|---|---|---|---|---|
+| lv_dev hit|2017 | 30.0 / 30.0 | 300.0 / 100.0 | obp_rel, contact, tool_speed | 21 / 17 |
+| lv_dev hit|2018 | 100.0 / 30.0 | 300.0 / 300.0 | obp_rel, is_college | 19 / 16 |
+| lv_dev hit|2019 | 100.0 / 30.0 | 300.0 / 300.0 | obp_rel, contact, is_college | 20 / 17 |
+| lv_dev pit|2017 | 30.0 / 30.0 | 300.0 / 10.0 | k_rel | 22 / 12 |
+| lv_dev pit|2018 | 300.0 / 100.0 | 1000.0 / inf | k_rel | 20 / 1 |
+| lv_dev pit|2019 | 300.0 / 100.0 | 1000.0 / inf | k_rel | 22 / 1 |
+| vm_dev hit|2017 | None / inf | 100.0 / 10.0 | none | 16 / 13 |
+| vm_dev hit|2018 | 10.0 / 1.0 | 1000.0 / 10.0 | tool_hit | 21 / 16 |
+| vm_dev hit|2019 | 10.0 / 1.0 | inf / 300.0 | tool_hit, tool_speed | 2 / 14 |
+| vm_dev hit|2020 | 30.0 / 1.0 | 1000.0 / 300.0 | tool_hit, tool_speed, is_college | 23 / 14 |
+| vm_dev hit|2021 | 30.0 / 1.0 | 1000.0 / 300.0 | tool_hit | 21 / 14 |
+| vm_dev hit|2022 | 30.0 / 1.0 | inf / 300.0 | tool_hit | 1 / 14 |
+| vm_dev hit|2023 | 30.0 / 1.0 | inf / 1000.0 | tool_hit | 1 / 14 |
+| vm_dev pit|2017 | None / inf | 1000.0 / 1.0 | none | 20 / 6 |
+| vm_dev pit|2018 | None / inf | 1000.0 / 1.0 | none | 23 / 6 |
+| vm_dev pit|2019 | None / 10.0 | 1000.0 / 100.0 | none | 22 / 8 |
+| vm_dev pit|2020 | None / 10.0 | 1000.0 / 300.0 | none | 24 / 7 |
+| vm_dev pit|2021 | None / 1.0 | 1000.0 / 300.0 | none | 24 / 7 |
+| vm_dev pit|2022 | None / 100.0 | 1000.0 / 1000.0 | none | 23 / 7 |
+| vm_dev pit|2023 | None / 30.0 | 1000.0 / 1000.0 | none | 24 / 7 |
+
+### 10.3 Every driver's final weight and standard error (the production fit)
+
+The production fit is the vm fit on every matrix row with a decision year before 2025 (the fit the
+served path would use). beta is the slope on the standardised column; the weight is w_head x beta /
+b_uc, in consensus-percentile equivalents (how much of one consensus percentile a one-sd move of
+the driver is worth in the order index); SE by the ridge sandwich (document s2). A slope of zero
+is listed as such; 'at bound' marks a sign-constrained slope the data wanted the other way.
+
+#### hit: n 1,889 training rows, decision years 2011 to 2024, w_skill 0.908861, w_time 0.202573
+
+skill head: alpha 100.0, lambda 1000.0, consensus slope b_uc 0.190149, usable True; 19 non-zero slopes, 9 zero.
+
+| driver | source | sign | beta | SE | weight (pct equiv) | SE | note |
+|---|---|---|---|---|---|---|---|
+| `tool_hit` | v2 | V2 | +0.0339 | 0.0084 | +0.1619 | 0.0403 |  |
+| `w4p_pop_hit` | v4 | free | +0.0218 | 0.0040 | +0.1040 | 0.0192 |  |
+| `w2s_game_pwr_hit` | w2s | free | +0.0093 | 0.0039 | +0.0446 | 0.0184 |  |
+| `w2r_panel_hit` | v4 | free | +0.0083 | 0.0041 | +0.0397 | 0.0197 |  |
+| `w2b_pull_h` | v4 | free | -0.0042 | 0.0041 | -0.0202 | 0.0196 |  |
+| `w2p_swing_h` | v4 | free | -0.0040 | 0.0038 | -0.0190 | 0.0181 |  |
+| `w2s_posval_hit` | w2s | free | +0.0034 | 0.0041 | +0.0165 | 0.0194 |  |
+| `g5_hit_A_all_all_slg` | group | + | +0.0028 | 0.0027 | +0.0133 | 0.0127 |  |
+| `w2p_contact_h` | v4 | free | +0.0023 | 0.0025 | +0.0112 | 0.0121 |  |
+| `g5_hit_A_all_all_ops` | group | + | +0.0023 | 0.0019 | +0.0110 | 0.0090 |  |
+| `g5_hit_A_all_all_woba` | group | + | +0.0021 | 0.0021 | +0.0102 | 0.0099 |  |
+| `w2p_two_strike_contact_h` | v4 | free | +0.0019 | 0.0030 | +0.0090 | 0.0145 |  |
+| `g5_hit_Ap_all_all_pbp_contact` | group | + | +0.0019 | 0.0025 | +0.0089 | 0.0118 |  |
+| `w2p_swstr_h` | v4 | free | -0.0014 | 0.0024 | -0.0065 | 0.0114 |  |
+| `g5_hit_Ap_all_all_pbp_swstr` | group | - | -0.0013 | 0.0026 | -0.0064 | 0.0123 |  |
+| `g5_hit_A_young_all_avg` | group | + | +0.0010 | 0.0032 | +0.0049 | 0.0153 |  |
+| `g5_hit_Ap_young_all_pbp_contact` | group | + | +0.0009 | 0.0022 | +0.0044 | 0.0105 |  |
+| `w2s_pwr_present_hit` | w2s | free | +0.0008 | 0.0040 | +0.0040 | 0.0190 |  |
+| `g5_hit_A_all_all_avg` | group | + | +0.0003 | 0.0028 | +0.0013 | 0.0134 |  |
+| `g5_hit_A_all_all_k_pct` | group | - | +0.0000 | 0.0029 | +0.0000 | 0.0138 | zero, at bound |
+| `g5_hit_A_all_all_bb_minus_k` | group | + | +0.0000 | 0.0028 | +0.0000 | 0.0132 | zero, at bound |
+| `g5_hit_A_young_all_k_pct` | group | - | +0.0000 | 0.0028 | +0.0000 | 0.0136 | zero, at bound |
+| `g5_hit_A_young_all_bb_minus_k` | group | + | +0.0000 | 0.0028 | +0.0000 | 0.0135 | zero, at bound |
+| `g5_hit_CPX_all_all_avg` | group | + | +0.0000 | 0.0033 | +0.0000 | 0.0157 | zero, at bound |
+| `g5_hit_Ap_young_all_pbp_swstr` | group | - | +0.0000 | 0.0025 | +0.0000 | 0.0119 | zero, at bound |
+| `g5_hit_Ap_young_all_pbp_two_strike_contact` | group | + | +0.0000 | 0.0030 | +0.0000 | 0.0145 | zero, at bound |
+| `g5_hit_CPX_all_all_ops` | group | + | +0.0000 | 0.0025 | +0.0000 | 0.0118 | zero, at bound |
+| `g5_hit_CPX_all_all_woba` | group | + | +0.0000 | 0.0024 | +0.0000 | 0.0116 | zero, at bound |
+
+Drivers whose weight is zero: `g5_hit_A_all_all_k_pct`, `g5_hit_A_all_all_bb_minus_k`, `g5_hit_A_young_all_k_pct`, `g5_hit_A_young_all_bb_minus_k`, `g5_hit_CPX_all_all_avg`, `g5_hit_Ap_young_all_pbp_swstr`, `g5_hit_Ap_young_all_pbp_two_strike_contact`, `g5_hit_CPX_all_all_ops`, `g5_hit_CPX_all_all_woba`.
+
+timing head: alpha 1.0, lambda 300.0, consensus slope b_uc 3.356596, usable True; 8 non-zero slopes, 8 zero.
+
+| driver | source | sign | beta | SE | weight (pct equiv) | SE | note |
+|---|---|---|---|---|---|---|---|
+| `level_rank` | v2 | V2 | +2.3917 | 0.1341 | +0.1443 | 0.0081 |  |
+| `w2i_days_time_hit` | v4 | free | +0.1002 | 0.0227 | +0.0060 | 0.0014 |  |
+| `w2i_open_time_hit` | v4 | free | +0.0991 | 0.0278 | +0.0060 | 0.0017 |  |
+| `w2i_sixty_time_hit` | v4 | free | -0.0822 | 0.0273 | -0.0050 | 0.0016 |  |
+| `w2n_nri_pre_hit` | v4 | free | +0.0432 | 0.0232 | +0.0026 | 0.0014 |  |
+| `w2n_nri_count_pre_hit` | v4 | free | +0.0310 | 0.0233 | +0.0019 | 0.0014 |  |
+| `w2i_stints_time_hit` | v4 | free | +0.0230 | 0.0196 | +0.0014 | 0.0012 |  |
+| `w2i_recur_time_hit` | v4 | free | +0.0177 | 0.0231 | +0.0011 | 0.0014 |  |
+| `g5_hit_A_all_all_age` | group | - | +0.0000 | 0.0249 | +0.0000 | 0.0015 | zero, at bound |
+| `g5_hit_A_young_all_age` | group | - | +0.0000 | 0.0233 | +0.0000 | 0.0014 | zero, at bound |
+| `rpt_conviction_hit` | v4 | free | +0.0000 | 0.0000 | +0.0000 | 0.0000 | zero |
+| `rpt_hedge_count_hit` | v4 | free | +0.0000 | 0.0000 | +0.0000 | 0.0000 | zero |
+| `rpt_risk_hit` | v4 | free | +0.0000 | 0.0000 | +0.0000 | 0.0000 | zero |
+| `rpt_approach_concern_hit` | v4 | free | +0.0000 | 0.0000 | +0.0000 | 0.0000 | zero |
+| `rpt_writer_minus_stated_hit` | v4 | free | +0.0000 | 0.0000 | +0.0000 | 0.0000 | zero |
+| `rpt_arrival_hit` | v4 | free | +0.0000 | 0.0000 | +0.0000 | 0.0000 | zero |
+
+Drivers whose weight is zero: `g5_hit_A_all_all_age`, `g5_hit_A_young_all_age`, `rpt_conviction_hit`, `rpt_hedge_count_hit`, `rpt_risk_hit`, `rpt_approach_concern_hit`, `rpt_writer_minus_stated_hit`, `rpt_arrival_hit`.
+
+#### pit: n 1,981 training rows, decision years 2011 to 2024, w_skill 1.0, w_time 0.020473
+
+skill head: alpha None, lambda 1000.0, consensus slope b_uc 0.267721, usable True; 24 non-zero slopes, 3 zero.
+
+| driver | source | sign | beta | SE | weight (pct equiv) | SE | note |
+|---|---|---|---|---|---|---|---|
+| `w4p_pop_pit` | v4 | free | +0.0217 | 0.0043 | +0.0809 | 0.0159 |  |
+| `w2s_cmd_pit` | w2s | free | +0.0105 | 0.0041 | +0.0393 | 0.0155 |  |
+| `w2p_csw_p` | v4 | free | +0.0101 | 0.0041 | +0.0377 | 0.0154 |  |
+| `w2b_pu_p` | v4 | free | -0.0101 | 0.0044 | -0.0376 | 0.0163 |  |
+| `w2p_k_resid_p` | v4 | free | +0.0088 | 0.0040 | +0.0327 | 0.0148 |  |
+| `w2s_brk_pit` | w2s | free | +0.0073 | 0.0044 | +0.0272 | 0.0163 |  |
+| `t5_pit_Ap_all_all_sl_gap` | tool | - | -0.0069 | 0.0044 | -0.0258 | 0.0165 |  |
+| `w2i_days_skill_pit` | v4 | free | -0.0068 | 0.0036 | -0.0255 | 0.0134 |  |
+| `g5_pit_A_all_SP_k_pct` | group | + | +0.0062 | 0.0031 | +0.0231 | 0.0117 |  |
+| `g5_pit_A_all_SP_k_minus_bb` | group | + | +0.0040 | 0.0031 | +0.0148 | 0.0114 |  |
+| `w2i_recur_skill_pit` | v4 | free | +0.0034 | 0.0036 | +0.0125 | 0.0136 |  |
+| `w2i_sixty_skill_pit` | v4 | free | -0.0034 | 0.0043 | -0.0125 | 0.0161 |  |
+| `w2r_panel_pit` | v4 | free | -0.0033 | 0.0044 | -0.0125 | 0.0165 |  |
+| `w2p_cstr_p` | v4 | free | +0.0033 | 0.0039 | +0.0123 | 0.0147 |  |
+| `t5_pit_AAA_all_all_fb_fut` | tool | free | +0.0033 | 0.0044 | +0.0122 | 0.0164 |  |
+| `w2i_stints_skill_pit` | v4 | free | +0.0032 | 0.0032 | +0.0120 | 0.0120 |  |
+| `g5_pit_A_all_all_k_pct` | group | + | +0.0026 | 0.0033 | +0.0099 | 0.0125 |  |
+| `w2p_fstrike_p` | v4 | free | -0.0012 | 0.0042 | -0.0044 | 0.0157 |  |
+| `g5_pit_A_all_SP_bf_per_g` | group | free | +0.0006 | 0.0044 | +0.0024 | 0.0163 |  |
+| `w2i_open_skill_pit` | v4 | free | -0.0003 | 0.0044 | -0.0011 | 0.0163 |  |
+| `g5_pit_A_young_all_k_pct` | group | + | +0.0001 | 0.0034 | +0.0004 | 0.0127 |  |
+| `g5_pit_A_all_all_k_minus_bb` | group | + | +0.0000 | 0.0031 | +0.0000 | 0.0115 | zero, at bound |
+| `g5_pit_A_young_all_k_minus_bb` | group | + | +0.0000 | 0.0035 | +0.0000 | 0.0129 | zero, at bound |
+| `t5_pit_Ap_all_SP_sl_gap` | tool | - | -0.0000 | 0.0000 | -0.0000 | 0.0000 |  |
+| `t5_pit_Ap_young_all_sl_gap` | tool | - | +0.0000 | 0.0000 | +0.0000 | 0.0000 | zero, at bound |
+| `rpt_conviction_pit` | v4 | free | +0.0000 | 0.0000 | +0.0000 | 0.0000 |  |
+| `rpt_writer_minus_stated_pit` | v4 | free | +0.0000 | 0.0000 | +0.0000 | 0.0000 |  |
+
+Drivers whose weight is zero: `g5_pit_A_all_all_k_minus_bb`, `g5_pit_A_young_all_k_minus_bb`, `t5_pit_Ap_young_all_sl_gap`.
+
+timing head: alpha 10.0, lambda 100.0, consensus slope b_uc 2.937118, usable True; 6 non-zero slopes, 3 zero.
+
+| driver | source | sign | beta | SE | weight (pct equiv) | SE | note |
+|---|---|---|---|---|---|---|---|
+| `level_rank` | v2 | V2 | +0.7991 | 0.0636 | +0.0056 | 0.0004 |  |
+| `w2n_nri_count_pre_pit` | v4 | free | -0.1619 | 0.0394 | -0.0011 | 0.0003 |  |
+| `w2i_recur_time_pit` | v4 | free | +0.0537 | 0.0434 | +0.0004 | 0.0003 |  |
+| `w2i_stints_time_pit` | v4 | free | +0.0424 | 0.0405 | +0.0003 | 0.0003 |  |
+| `w2i_days_time_pit` | v4 | free | +0.0299 | 0.0437 | +0.0002 | 0.0003 |  |
+| `w2n_nri_pre_pit` | v4 | free | +0.0172 | 0.0394 | +0.0001 | 0.0003 |  |
+| `g5_pit_A_all_all_age` | group | - | +0.0000 | 0.0417 | +0.0000 | 0.0003 | zero, at bound |
+| `g5_pit_A_all_SP_age` | group | - | +0.0000 | 0.0411 | +0.0000 | 0.0003 | zero, at bound |
+| `rpt_arrival_pit` | v4 | free | +0.0000 | 0.0000 | +0.0000 | 0.0000 | zero |
+
+Drivers whose weight is zero: `g5_pit_A_all_all_age`, `g5_pit_A_all_SP_age`, `rpt_arrival_pit`.
+
+## 11. The held-out read (appended by the spent run, 2026-10-15; spent frames)
+
+Run: `python -u efv5_combined.py --spent --gate-sha e7931ce4e13110eebb53555bff455ff13ca7c502` from commit d293a927 (artifact `data/_labs/efv5/efv5_combined_spent.json`, generated 2026-10-15T15:13:27Z, 4351.8 s; label `fwar@2026-10-02-0341299c20ec`; v3 at base_config reproduces V2 on all 2496 scored reserved rows; E_cond B 2000, E_refit B 200). Every block is labelled 'spent frame, read after the 10-08 confirmation'; no ledger row was written. A first build of this read aborted inside the tool-cell builder before any statistic (a reserved-year matrix row outside the fold read the development board index and raised); the builder was corrected to skip rows outside the fold and the read ran once.
+
+| frame | n | v5c | V2 | consensus | Pipeline | FanGraphs | v5c minus V2 (E_cond; E_refit) | v5c minus consensus (E_cond; E_refit) | v5c minus Pipeline (E_refit) | v5c minus FanGraphs (E_refit) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| R-LV | 2,349 | 0.1479 | 0.1511 | 0.1494 | 0.1988 | 0.1469 | -0.0032 (-0.0237 to +0.0175; -0.0369 to +0.0171) | -0.0015 (-0.0313 to +0.0264; -0.0438 to +0.0218) | -0.0353 (-0.0840 to +0.0018) | +0.0066 (-0.0370 to +0.0354) |
+| R-VM | 147 | 0.3451 | 0.3739 | 0.3333 | 0.3142 | 0.3568 | -0.0288 (-0.0733 to +0.0165; -0.0744 to +0.0756) | +0.0118 (-0.0570 to +0.0810; -0.0847 to +0.0912) | +0.0309 (-0.0980 to +0.1351) | -0.0118 (-0.1240 to +0.0748) |
+
+Per side:
+
+- R-LV hit n 1195: v5c 0.1609, V2 0.1590, consensus 0.1533; vs V2 +0.0019 (-0.0185 to +0.0214); vs consensus +0.0076 (-0.0357 to +0.0547); E_refit vs V2 -0.0364 to +0.0204, vs consensus -0.0475 to +0.0398
+- R-LV pit n 1154: v5c 0.1344, V2 0.1429, consensus 0.1455; vs V2 -0.0085 (-0.0442 to +0.0267); vs consensus -0.0111 (-0.0475 to +0.0257); E_refit vs V2 -0.0550 to +0.0367, vs consensus -0.0604 to +0.0323
+- R-VM hit n 72: v5c 0.2888, V2 0.3374, consensus 0.2545; vs V2 -0.0486 (-0.1169 to +0.0168); vs consensus +0.0343 (-0.0953 to +0.1650); E_refit vs V2 -0.1082 to +0.1348, vs consensus -0.1444 to +0.2039
+- R-VM pit n 75: v5c 0.3992, V2 0.4090, consensus 0.4090; vs V2 -0.0098 (-0.0781 to +0.0555); vs consensus -0.0098 (-0.0781 to +0.0555); E_refit vs V2 -0.0921 to +0.0580, vs consensus -0.0919 to +0.0580
+
+Per fold, v5c minus V2 within: R-LV hit|2020 +0.0103 (n 596), hit|2021 -0.0064 (n 599), pit|2020 +0.0170 (n 572), pit|2021 -0.0335 (n 582); R-VM hit|2025 -0.0486 (n 72), pit|2025 -0.0098 (n 75).
+
+Pooled Spearman, contributor AUC and MAE, v5c minus V2 / minus consensus (E_refit CI95 on the V2 leg):
+
+- R-LV: pooled -0.0006 (-0.0375 to +0.0170) / +0.0040; AUC +0.0007 (-0.0189 to +0.0270) / +0.0159; MAE -0.0115 / +0.0056.
+- R-VM: pooled -0.0303 (-0.0797 to +0.0826) / +0.0138; AUC +0.0029 (-0.0322 to +0.0981) / +0.0561; MAE +0.0523 / -0.0072.
+
+Position-group cells, v5c minus V2 within (E_cond CI95) / v5c minus consensus:
+
+- R-LV: hit:C n 117 -0.0185 (-0.0817 to +0.0380) / +0.0407; hit:IF n 575 -0.0122 (-0.0416 to +0.0159) / -0.0092; hit:OF n 481 +0.0233 (-0.0081 to +0.0539) / +0.0292; pit:pit n 1154 -0.0085 (-0.0442 to +0.0267) / -0.0111.
+- R-VM: hit:C n 11 not scored; hit:IF n 35 -0.0268 (no interval) / +0.1350; hit:OF n 26 -0.0486 (no interval) / +0.1287; pit:pit n 75 -0.0098 (-0.0781 to +0.0555) / -0.0098.
+
+Group cells:
+
+- R-LV: g5_hit_A_all_all_k_pct n 302 +0.0299 (-0.0146 to +0.0731); g5_pit_A_all_all_k_minus_bb n 285 -0.0268 (-0.1120 to +0.0586); g5_hit_A_young_all_k_pct n 274 +0.0213 (-0.0216 to +0.0638); g5_pit_A_young_all_k_pct n 195 -0.0416 (-0.1441 to +0.0627); g5_pit_A_all_SP_k_pct n 225 -0.0409 (-0.1487 to +0.0576); g5_hit_CPX_all_all_avg n 149 -0.0051 (-0.0410 to +0.0319); g5_hit_Ap_young_all_pbp_contact n 187 +0.0425 (-0.0277 to +0.1128); g5_hit_Ap_all_all_pbp_swstr n 206 +0.0421 (-0.0251 to +0.1069); t5_pit_Ap_all_SP_sl_gap n 75 +0.0213 (-0.2646 to +0.2859); t5_pit_Ap_young_all_sl_gap n 68 -0.0466 (-0.3071 to +0.2009); t5_pit_Ap_all_all_sl_gap n 97 -0.0158 (-0.2306 to +0.1835); t5_pit_AAA_all_all_fb_fut n 51 +0.1813 (no interval).
+- R-VM: t5_pit_AAA_all_all_fb_fut n 30 +0.0314 (no interval).
+
+The tracking-era head on R-VM: hit|2025: does not ship (untouched); pit|2025: ships, 49 of 95 test rows tracked in season 2024, 47 re-ordered.
+Without the blend (the combined order alone): vs V2 -0.0190 (-0.0662 to +0.0293), vs consensus +0.0216; pitchers vs V2 +0.0095.
+
+Fold penalties on the spent frames: R-LV hit|2020 lambda 300.0 / 300.0, non-zero 20 / 17; R-LV hit|2021 lambda 1000.0 / 300.0, non-zero 23 / 16; R-LV pit|2020 lambda 1000.0 / inf, non-zero 26 / 2; R-LV pit|2021 lambda 300.0 / inf, non-zero 21 / 0; R-VM hit|2025 lambda 1000.0 / 1000.0, non-zero 19 / 14; R-VM pit|2025 lambda 1000.0 / 1000.0, non-zero 22 / 7.
+
+## 12. The verdict (EW3-9, the rule of section 7)
+
+| frame | n | v5c minus V2 within |
+|---|---|---|
+| lv_dev | 2,862 | +0.0009 |
+| vm_dev | 830 | -0.0102 |
+| R-LV | 2,349 | -0.0032 |
+| R-VM | 147 | -0.0288 |
+
+Pooled over the four frames by row count (6,188 rows): -0.0028. Rule 1 (above 0): NOT met. Rule 2 (no held-out frame trails V2 by more than 0.005): NOT met. **eFV v5 COMBINED does NOT ship; `EFV_V5_COMBINED_ON` stays False.**
+
+- Against consensus on R-LV: -0.0015 (E_refit CI95 [-0.0438, 0.0218]); a tie: the CI95 lower bound is not above 0, so the copy may not say beats consensus.
+- Against consensus on R-VM: +0.0118 (E_refit CI95 [-0.0847, 0.0912]); a tie: the CI95 lower bound is not above 0, so the copy may not say beats consensus.
+
