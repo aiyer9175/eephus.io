@@ -286,7 +286,7 @@ def production_models(*, weights: dict | None = None) -> dict[str, dict]:
     out = {}
     for side in F.SIDES:
         train = [r for r in H.matrix_training_rows(side)
-                 if int(r["decision_year"]) < F.R_VM_FIRST_DEBUT_YEAR]
+                 if int(r["decision_year"]) < F.train_end_year()]
         m = fit_v4(train, side, frame="vm", weights=w, cfg=cfg)
         m["war_map_6yr"] = H.fit_war_map(train)
         m["train_years"] = sorted({int(r["decision_year"]) for r in train})

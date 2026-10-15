@@ -322,9 +322,11 @@ def tool_vm_columns(side: str, data: list[dict], raw_by_key: dict, names, index,
                     gate_sha: str | None = None, log=print) -> tuple[dict, dict]:
     """({name: {(decision year, player_key): value}}, counts) on vintage-matched rows read
     at the matrix cutoff (a training row, its matrix as-of date) or at the pinned preseason
-    read (`asof_by_key`; the 2025 test rows through `test_index`, the look index)."""
+    read (`asof_by_key`; the 2025 test rows through `test_index`, the look index). With
+    EFV_TRAIN_THROUGH_2026 on the bound is efv_vintage_frame.train_end_year()."""
+    end = F.train_end_year()
     late = {int(d["decision_year"]) for d in data
-            if int(d["decision_year"]) >= F.R_VM_FIRST_DEBUT_YEAR}
+            if int(d["decision_year"]) >= end}
     allow_reserved = False
     if gate_sha:
         F.guard_vm_request(late, gate_sha=gate_sha, purpose="v5 combined tool column")
@@ -334,10 +336,10 @@ def tool_vm_columns(side: str, data: list[dict], raw_by_key: dict, names, index,
     test_keys = set(test_keys or ())
     for d in data:
         y = int(d["decision_year"])
-        if y >= F.R_VM_FIRST_DEBUT_YEAR and not allow_reserved:
+        if y >= end and not allow_reserved:
             continue
         pk = d["player_key"]
-        if y >= F.R_VM_FIRST_DEBUT_YEAR and pk not in test_keys:
+        if y >= end and pk not in test_keys:
             continue          # a reserved-year row outside the fold's pinned test rows
         raw = raw_by_key.get(pk) or {}
         S = G.read_season(y, raw.get("cutoff"))
@@ -1293,9 +1295,20 @@ def weights_table(m: dict) -> dict:
 def production_train(side: str, *, log=print) -> list[dict]:
     """The production fit's training rows: every v1 matrix row with a decision year before
     the R-VM cohort, with every candidate column attached at its matrix cutoff (the
-    builders of build_dev on a one-fold frame shaped like vm_dev)."""
+    builders of build_dev on a one-fold frame shaped like vm_dev).
+
+    With efv_vintage_frame.EFV_TRAIN_THROUGH_2026 on this REFUSES
+    (docs/efv-v2/EFV_2026_TRAINING.md): the group and tool columns read the 2025 and 2026
+    rows, but the v4 and scouting families cap every read at the R-VM cohort, so a fit
+    through 2026 would train on columns that are silently missing on the new rows. A model
+    registered with the flag (EFV_X3 or a successor) wires its own builders."""
+    if F.EFV_TRAIN_THROUGH_2026:
+        raise NotImplementedError(
+            "eFV v5 COMBINED has no candidate-column builder for decision years "
+            f"{F.R_VM_FIRST_DEBUT_YEAR} to {F.TRAIN_THROUGH_SEASON} (the v4 and scouting "
+            f"families cap their reads at the R-VM cohort); see {F.TRAINING_DOC}")
     data = [r for r in H.matrix_training_rows(side)
-            if int(r["decision_year"]) < F.R_VM_FIRST_DEBUT_YEAR]
+            if int(r["decision_year"]) < F.train_end_year()]
     cols = production_columns(side, data, log=log)
     return attach(data, side, cols, "train")
 

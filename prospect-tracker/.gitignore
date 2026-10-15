@@ -267,3 +267,6 @@ data/futures.json
 
 # Local Scores feed: a junction to .cache/scores/out (the box serves /opt/eephus/scores here via nginx)
 /data/scores
+
+# EFV_2026_FOLD_TRAINING: the training-only fold matrices (efv_2026_fold.py --build; inputs, rebuilt on demand)
+data/_labs/efv2026/train_matrix_*.json
