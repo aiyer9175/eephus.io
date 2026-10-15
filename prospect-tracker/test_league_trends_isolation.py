@@ -138,6 +138,11 @@ def test_no_banned_string():
         src = p.read_text(encoding="utf-8")
         for s in BANNED_STRINGS:
             assert s not in src, (p.name, s)
+    rm = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i = rm.index("def _league_trends_nightly(")
+    helper = rm[i:rm.index(chr(10) + "def ", i + 10)]
+    for s in BANNED_STRINGS:
+        assert s not in helper, s
 
 
 def test_no_trend_module_writes_the_swing_cache_or_edits_mlbstats_games():

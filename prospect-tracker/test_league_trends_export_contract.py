@@ -487,3 +487,156 @@ def test_an_oversize_payload_refuses(frame, tmp_path, monkeypatch):
     monkeypatch.setattr(X, "BUDGET_RAW", 100)
     res = X.export(out=out, **_kw(frame))
     assert res["refused"] and "budget" in res["refused"] and out.read_bytes() == b"last good"
+
+
+# --------------------------------------------------------------------------- #
+# the monthly live check never changes a bar
+# --------------------------------------------------------------------------- #
+def test_the_live_check_refresh_rewrites_live_check_only(tmp_path, monkeypatch):
+    from tools import league_trends_calibrate as L
+    art = _art()
+    art["policy"] = {"live_season": 2026, "held_out": {"phi": 3.0, "verdicts": {}}}
+    art["families"]["rp_velo"]["held_out"] = {POL: {"verdict": "kept"}}
+    src = tmp_path / "eval.json"
+    src.write_text(json.dumps(art, indent=1, sort_keys=True), encoding="utf-8")
+    keys = sorted(art["families"])
+    monkeypatch.setattr(L, "measure_season", lambda s, k, **kw: {
+        "tables": {x: None for x in k}, "dates": ["2026-09-27"], "covers_through": "2026-09-27"})
+    monkeypatch.setattr(L, "_load_tables", lambda d, plan: {s: {x: None for x in v}
+                                                            for s, v in plan.items()})
+    monkeypatch.setattr(L, "fits_and_counts", lambda k, tb, dates, scored: {
+        "seasons": {scored[0]: {"key": k}}})
+
+    def held(c, tail, phi, bar, R_=20):
+        v = "left off" if c["key"] == "rp_velo" else "kept"
+        return {"bar": float(bar), "dates": 1, "tests": 100, "flags": 1, "flags_per_day": 1.0,
+                "false_per_day": tail * 100, "placebo_sum": 9, "lam": 1.0, "bound": 5.0,
+                "verdict": v}
+    monkeypatch.setattr(L, "held_out", held)
+    blk = L.live_check_refresh(path=src, lab_dir=tmp_path, log=lambda *a, **k: None)
+    new = json.loads(src.read_text(encoding="utf-8"))
+    assert {k: v for k, v in new.items() if k != "live_check"} == \
+        {k: v for k, v in art.items() if k != "live_check"}
+    assert new["bars"] == art["bars"] and new["generated_at"] == art["generated_at"]
+    assert blk["families"]["rp_velo"] == "left off" and set(blk["families"]) == set(keys)
+    assert new["live_check"]["families"] == blk["families"]
+
+
+# --------------------------------------------------------------------------- #
+# the pipeline wiring, pinned by TITLE (ruling T9), never by letter
+# --------------------------------------------------------------------------- #
+DAILY_TITLE = re.compile(r'_step\("(9e-pre0[a-z0-9]+)\. League Trends \(league_trends preview\)"')
+MONTHLY_TITLE = re.compile(r'_step\("(6b4[a-z0-9]+)\. League Trends live check \(league_trends preview\)"')
+
+
+def _src() -> str:
+    return (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+
+
+def test_the_daily_step_by_title():
+    src = _src()
+    labels = DAILY_TITLE.findall(src)
+    assert len(labels) == 1, labels
+    label = labels[0]
+    assert len(re.findall(r'_step\("' + re.escape(label) + r"\.", src)) == 1, \
+        "the label is free: no other step carries it"
+    start = src.index("def run_daily(")
+    daily = src[start:src.index(NL + "def ", start + 10)]
+    m = DAILY_TITLE.search(daily)
+    i_new = m.start()
+    for before in ('_step("9e-pre. Leaderboard vintage snapshot',
+                   '_step("9e-pre0b2. Baserunning section',
+                   '_step("9e-pre0c. Refresh eWAR Leaderboard'):
+        assert daily.index(before) < i_new, before
+    # P8.2's frames step, found by the title Q8_11 gave it
+    frames = re.search(r'_step\("9e-pre0[a-z0-9]+\. League, Team Stats and drawer payloads', daily)
+    assert frames and frames.start() < i_new
+    assert i_new < daily.index('_step("9e-pre-wx.')
+    body = daily[i_new:daily.index("# --- 9e-pre-wx.", i_new)]
+    assert "if chained:" in body and f"SKIP {label}" in body
+    assert "_league_trends_nightly(log, " in body
+
+
+def test_the_monthly_step_by_title():
+    src = _src()
+    labels = MONTHLY_TITLE.findall(src)
+    assert len(labels) == 1, labels
+    label = labels[0]
+    assert len(re.findall(r'_step\("' + re.escape(label) + r"\.", src)) == 1
+    mon = src[src.index(NL + "def main("):]
+    i_new = MONTHLY_TITLE.search(mon).start()
+    for before in ('_step("6b4k.', '_step("6b4m. Baserunning section'):
+        assert mon.index(before) < i_new, before
+    assert re.search(r'_step\("6b4[a-z0-9]+\. League, Team Stats', mon).start() < i_new
+    assert i_new < mon.index('_step("6b5.')
+    body = mon[i_new:mon.index('_step("6b5.')]
+    assert "live_check_refresh(" in body and "_league_trends_nightly(log, " in body
+
+
+def test_the_helper_runs_its_three_parts_in_order_and_files_its_rows():
+    src = _src()
+    i = src.index("def _league_trends_nightly(")
+    helper = src[i:src.index(NL + "def ", i + 10)]
+    order = [helper.index(s) for s in ("build_pitch_physics", "savant_days",
+                                       "league_trends_export")]
+    assert order == sorted(order)
+    assert '_record_ingest("league_trends_export"' in helper
+    assert '_hb.record("league_trends_export"' in helper
+    assert 'SWING_SOURCE == "savant_days"' in helper, "the day file only under TR-Q3 (a)"
+    assert "log.exception(" in helper
+    for banned in ("pbp_corpus", "betting_model_context", "leaderboard_vintages"):
+        assert banned not in helper, banned
+    i = src.index("SCHEDULED_EXPORTS = (")
+    assert '"league_trends_export"' in src[i:src.index(NL + ")", i)]
+
+
+def test_one_failed_part_does_not_stop_the_next(monkeypatch):
+    import logging
+
+    import job_heartbeat
+    import run_monthly
+    import savant_days
+    from tools import build_pitch_physics
+    calls, rows, beats = [], [], []
+
+    def boom(**_k):
+        calls.append("physics")
+        raise RuntimeError("a dead sidecar")
+
+    def days(seasons, **_k):
+        calls.append("savant_days")
+        return {"results": [], "stopped": None, "manifest": {}}
+
+    def export(**_k):
+        calls.append("export")
+        return {"refused": None, "as_of": "2026-09-27", "players": 3, "events": 1,
+                "false_per_day": 0.3, "swing_missing": ["2025"], "left_off": ["bat_speed"]}
+    monkeypatch.setattr(build_pitch_physics, "build", boom)
+    monkeypatch.setattr(savant_days, "run", days)
+    monkeypatch.setattr(X, "export", export)
+    monkeypatch.setattr(job_heartbeat, "record", lambda job, **k: beats.append((job, k["ok"])))
+    monkeypatch.setattr(run_monthly, "_record_ingest",
+                        lambda src, ok, n=0, msg="", *a, **k: rows.append((src, ok, n, msg)))
+    out = run_monthly._league_trends_nightly(logging.getLogger("test"), "t")
+    assert calls == ["physics", "savant_days", "export"]
+    assert ("league_trends_physics", False) in beats
+    assert rows and rows[0][0] == "league_trends_export" and rows[0][1] is False
+    assert "swing seasons missing 2025" in rows[0][3]
+    assert out["export"]["players"] == 3
+
+
+def test_nothing_here_is_on_the_epoch_frozen_rebuild_list():
+    gate = (ROOT / "docs" / "efv-2026-09-17" / "FWAR_LABEL_EPOCH_GATE.md").read_text(encoding="utf-8")
+    sec = gate[gate.index("## 7. The rebuild"):]
+    end = sec.find(NL + "## 8")
+    sec = sec if end < 0 else sec[:end]
+    for name in ("league_trends", "trend_frames", "trend_detect", "pbp_physics"):
+        assert name not in sec, name
+
+
+def test_the_catalog_rows_are_pinned_here():
+    import data_catalog as dc
+    rows = {a["file"]: a for a in dc.ARTIFACTS}
+    for f in ("league_trends.json", "league_trends_eval.json"):
+        assert rows[f]["pinned_by"] == "test_league_trends_export_contract.py"
+        assert rows[f]["stability"] == dc.EXPERIMENTAL
