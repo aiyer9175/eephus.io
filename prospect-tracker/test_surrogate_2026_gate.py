@@ -13,13 +13,15 @@ docs/efv-v2/SURROGATE_2026_GATE.md, a DRAFT at its first commit and REGISTERED b
    all six, DECISIONS_FOR_OWNER.md 2026-10-01), which gate_header_records reads.
 3. The REGISTERED commit carries this file alone, is the sha the look runner finds, and
    its header answers OQ2 = A, so the lv2026_surrogate purpose stays closed.
-4. No item marked PENDING is left below the header, and section 12 (results) is empty.
+4. No item marked PENDING is left below the header, and section 12 (results) is empty
+   until the S3 look writes data/efv_surrogate_gate.json, then carries its output (SG_8).
 5. No em-dash, and no FV-cell stratum (the test_efv_v2_gate.py pattern).
 
 Nothing here reads a frame row, an outcome, a score or a label.
 """
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -140,13 +142,34 @@ def test_no_pending_item_below_the_header():
     assert "PENDING" not in body, [ln for ln in body.splitlines() if "PENDING" in ln]
 
 
-def test_section_12_is_empty():
+EMPTY_12 = "(Empty. Filled only by the look runner after the status line reads REGISTERED.)"
+
+
+def _transfer_read() -> dict | None:
+    p = ROOT / "data" / "efv_surrogate_gate.json"
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    blk = doc.get("transfer") if isinstance(doc, dict) else None
+    return blk if isinstance(blk, dict) and blk else None
+
+
+def test_section_12_is_empty_until_the_look_and_then_carries_it():
+    """Section 12 stays empty until the S3 look writes its key; from then it carries the
+    runner's verbatim output (every clause verdict line, the gate sha) (SG_8)."""
     t = _text()
     head = "## 12. Results"
     assert t.count(head) == 1
     body = t.split(head, 1)[1].strip()
-    assert body == ("(Empty. Filled only by the look runner after the status line reads "
-                    "REGISTERED.)"), body[:200]
+    read = _transfer_read()
+    if read is None:
+        assert body == EMPTY_12, body[:200]
+        return
+    assert EMPTY_12 not in body and "OWNER-WAIVED EARLY READ" in body
+    for clause, verdict in read["verdicts"].items():
+        assert f"\n{clause}: {verdict}\n" in body.replace("\r\n", "\n"), clause
+    assert read["receipt"]["gate_sha"] in body
 
 
 def test_no_dash_characters():
