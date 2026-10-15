@@ -212,3 +212,95 @@ need a registered ship rule this task does not have.
 GATE COMPLIANCE (`docs/PROSPECT_ANCHOR_GATE.md`): the only strata are side, season, year,
 league, level, team and integer age. Nothing groups, counts or averages anything by
 consensus-FV level.
+
+## 10. The build (appended 2026-10-15, after the registration commit ab1665e9)
+
+Artifact: `data/_labs/efv_x1/efv_x1_translate.json` (`factors`), off the webroot.
+
+- **Data.** 588 cache files, 304,077 rows (21 seasons x 7 sports x 2 groups x players and
+  teams). MEX lines dropped: 288 to 411 a season per side, 2005 to 2019; none from 2021 (the
+  league left sport 11).
+- **Implementation details the registration did not fix.** The team feed carries no league,
+  so a team's league is read off its single-team player lines, and the park factor is keyed
+  by team id (a team id sits in one league in a season). For HR/9 the park leg reads home
+  runs per batter on both sides (the team batting line has no outs). Neither touches an
+  outcome.
+- **Identification.** Every affiliated league is identified by same-season links in every
+  season (14 to 17 of 15 to 19 league keys) except the DSL and VSL, which have 0 to 2
+  linking players a season and are never identified; with no earlier identified season,
+  they take the CPX difficulty of the same season (the registered fallback), times their
+  own pooled rate. This is the weakest link of the ladder and is disclosed as such.
+- **Park.** The year-over-year r of the single-season two-sided team factor is 0.33 (BB%) to
+  0.54 (HR/9); GB% falls from 0.45 (T 2016) to 0.13 (T 2022) as the post-2021 ground and
+  air out coding enters. So a team's three-year factor is regressed about half way to 1.
+- **Stabilization points (k, in the stat's own denominator), T 2016 / 2018 / 2022.**
+  Hitters: K% 41.8 / 40.6 / 38.7 PA, BB% 99.6 / 101.9 / 100.9 PA, ISO 120.8 / 124.2 / 138.7
+  AB, BABIP 340.7 / 347.5 / 363.7 balls in play, OBP 208.9 / 226.7 / 217.9, wOBA 223.8 /
+  241.5 / 242.6. Pitchers: K% 66.4 / 67.1 / 70.8 BF, BB% 65.5 / 65.2 / 58.9 BF, HR/9
+  17.2 / 13.5 / 13.8 nine-inning units, GB% 39.4 / 40.3 / 16.2 batted outs. Every k is
+  defined (tau squared positive) at every T read. They run below the published MLB points
+  because the prior window mixes levels and ages, so true talent spreads wider than in MLB.
+- **Recovery (held-out players, five folds, seasons 2005 to 2026 without 2020).** The mean
+  absolute relative error of the pooled translated rate against the pooled actual rate at
+  the higher level, translated versus untranslated:
+
+  | pair | hitters K% | BB% | ISO | BABIP | OBP | wOBA | pitchers K% | BB% | HR/9 | GB% |
+  |---|---|---|---|---|---|---|---|---|---|---|
+  | AAA to MLB | 0.062 / 0.145 | 0.059 / 0.252 | 0.063 / 0.253 | 0.035 / 0.122 | 0.037 / 0.170 | 0.040 / 0.175 | 0.024 / 0.259 | 0.029 / 0.111 | 0.096 / 0.300 | 0.011 / 0.085 |
+  | AA to AAA | 0.017 / 0.046 | 0.040 / 0.131 | 0.052 / 0.111 | 0.026 / 0.032 | 0.024 / 0.054 | 0.026 / 0.055 | 0.059 / 0.192 | 0.024 / 0.163 | 0.076 / 0.312 | 0.016 / 0.033 |
+  | A+ to AA | 0.020 / 0.066 | 0.039 / 0.123 | 0.051 / 0.176 | 0.028 / 0.090 | 0.025 / 0.102 | 0.028 / 0.109 | 0.074 / 0.207 | 0.034 / 0.171 | 0.113 / 0.300 | 0.026 / 0.076 |
+
+  The translation is closer in 14 to 21 of the 21 seasons for every stat and pair. HR/9 is
+  the noisiest (about 10 percent).
+
+## 11. The development read (appended 2026-10-15; descriptive, adjudicates nothing)
+
+Artifact: `data/_labs/efv_x1/efv_x1_translate.json` (`reads`). Rows: lv_dev 1,465 hitter
+rows (888 players) and 1,397 pitcher rows (865 players); vm_dev 406 hitters and 424
+pitchers. Coverage of the window features 0.93 (lv_dev) and 0.99 (vm_dev); the
+year-over-year features 0.68 to 0.76 (lv_dev) and 0.92 to 0.97 (vm_dev). Consensus's own
+within Spearman: lv_dev 0.195 hitters, 0.163 pitchers; vm_dev 0.395 and 0.367.
+
+Delta = within Spearman of the leave-one-year-out score minus consensus's (CI95, E_cond
+B 2000 seed 20261018); twin = the permuted twin's delta.
+
+| side | feature | lv_dev delta | CI95 | twin | vm_dev delta | CI95 | twin |
+|---|---|---|---|---|---|---|---|
+| hit | k_rw | -0.0001 | -0.0124, +0.0118 | +0.0012 | +0.0032 | -0.0163, +0.0220 | -0.0007 |
+| hit | bb_rw | -0.0039 | -0.0126, +0.0051 | -0.0066 | -0.0036 | -0.0282, +0.0199 | -0.0041 |
+| hit | iso_rw | -0.0053 | -0.0150, +0.0044 | -0.0151 | -0.0086 | -0.0264, +0.0069 | +0.0020 |
+| hit | babip_rw | -0.0047 | -0.0157, +0.0065 | -0.0114 | -0.0109 | -0.0271, +0.0041 | -0.0014 |
+| hit | obp_rw | -0.0027 | -0.0127, +0.0069 | -0.0110 | -0.0018 | -0.0264, +0.0206 | -0.0109 |
+| hit | woba_rw | -0.0039 | -0.0144, +0.0064 | -0.0017 | -0.0066 | -0.0269, +0.0116 | +0.0037 |
+| hit | k_yoy | -0.0147 | -0.0259, -0.0047 | -0.0114 | +0.0029 | -0.0246, +0.0247 | -0.0119 |
+| hit | bb_yoy | -0.0116 | -0.0226, -0.0009 | -0.0062 | -0.0104 | -0.0386, +0.0138 | -0.0186 |
+| hit | iso_yoy | -0.0113 | -0.0224, -0.0009 | -0.0035 | -0.0055 | -0.0360, +0.0222 | -0.0022 |
+| hit | babip_yoy | -0.0288 | -0.0428, -0.0158 | -0.0077 | -0.0005 | -0.0281, +0.0224 | -0.0168 |
+| hit | obp_yoy | -0.0139 | -0.0287, -0.0003 | -0.0007 | -0.0018 | -0.0283, +0.0211 | -0.0173 |
+| hit | woba_yoy | -0.0159 | -0.0306, -0.0024 | -0.0065 | -0.0007 | -0.0297, +0.0253 | -0.0119 |
+| hit | age_rel_level | -0.0103 | -0.0234, +0.0028 | -0.0092 | -0.0046 | -0.0201, +0.0091 | -0.0105 |
+| pit | k_rw | -0.0086 | -0.0206, +0.0031 | +0.0056 | -0.0041 | -0.0313, +0.0229 | -0.0075 |
+| pit | bb_rw | +0.0008 | -0.0120, +0.0142 | -0.0402 | +0.0061 | -0.0154, +0.0283 | +0.0132 |
+| pit | hr9_rw | -0.0086 | -0.0217, +0.0038 | -0.0052 | +0.0009 | -0.0291, +0.0324 | -0.0139 |
+| pit | gb_rw | +0.0008 | -0.0173, +0.0184 | -0.0117 | +0.0008 | -0.0288, +0.0321 | +0.0028 |
+| pit | kbb_rw | -0.0040 | -0.0161, +0.0082 | -0.0040 | +0.0049 | -0.0205, +0.0309 | -0.0096 |
+| pit | k_yoy | -0.0025 | -0.0187, +0.0131 | +0.0026 | -0.0248 | -0.0521, +0.0023 | -0.0070 |
+| pit | bb_yoy | -0.0036 | -0.0185, +0.0110 | -0.0250 | -0.0090 | -0.0379, +0.0176 | -0.0012 |
+| pit | hr9_yoy | -0.0003 | -0.0189, +0.0176 | -0.0008 | -0.0056 | -0.0348, +0.0204 | -0.0339 |
+| pit | gb_yoy | -0.0103 | -0.0256, +0.0050 | -0.0014 | -0.0116 | -0.0401, +0.0154 | -0.0153 |
+| pit | age_rel_level | -0.0026 | -0.0135, +0.0086 | -0.0064 | +0.0010 | -0.0236, +0.0241 | -0.0156 |
+
+**Rule (s8): no feature is FLAGGED.** Two (pitcher bb_rw and gb_rw) are above zero on both
+frames, but neither has a CI95 lower bound above zero on either, and bb_rw sits below its
+twin on vm_dev. Six hitter year-over-year features read below zero on lv_dev with the CI95
+upper bound below zero: one noisy change column, combined one at a time with consensus,
+costs ranking on the list frame. The features' own within correlation with the label runs
+the expected way (hitter wOBA_rw +0.078 / +0.134, ISO_rw +0.070 / +0.098, K%_rw -0.046 /
+-0.096; pitcher K%_rw +0.034 / +0.141, HR/9_rw -0.000 / -0.148), but consensus already
+carries it: the translated rates correlate with consensus inside the group (wOBA_rw
++0.251 / +0.191, ISO_rw +0.265 / +0.148, pitcher K%_rw +0.158 / +0.235).
+
+Reading: the translated, reliability-weighted rates are better measurements of the same
+performance (section 10), but one at a time they add nothing to consensus that this read
+can see. They pass to EFV_X3 as inputs, unflagged; X3 registers its own selection. Nothing
+served moved, no ledger row was written, and R-LV and R-VM were not opened.
