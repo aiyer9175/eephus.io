@@ -705,6 +705,47 @@ def situations(payload, *, season=None, game_type="R", scheduled_innings=9) -> l
 # --------------------------------------------------------------------------- #
 # Per-play rows (the Plays tab) and 4. bp_v1
 # --------------------------------------------------------------------------- #
+#: Review types that challenge a single pitch's call: MJ is the ABS zone
+#: challenge, MZ the minor-league check-swing challenge. A play-level review of
+#: one of these types belongs to the plate appearance's last pitch.
+PITCH_REVIEW_TYPES = ("MJ", "MZ")
+
+
+def _review_entry(rd: dict, pitch, names: dict | None) -> dict:
+    who = rd.get("player")
+    return {"by": club_code(rd.get("challengeTeamId")),
+            "overturned": bool(rd.get("isOverturned")),
+            "kind": normalize_text(rd.get("reviewType")),
+            "pitch": pitch,
+            "player": (_name_of(who, names) or None) if isinstance(who, dict) else None}
+
+
+def play_reviews(p: dict, names: dict | None = None) -> list[dict]:
+    """Every review on a plate appearance, in event order: the pitch-level
+    reviews (`playEvents[j].reviewDetails`, where an ABS challenge of a
+    non-final pitch sits) and then the play-level review with its
+    `additionalReviews`. Each keeps its own `kind` (an ABS challenge, MJ, is
+    never merged with a replay challenge such as MF); `pitch` is the pitch
+    number a pitch review belongs to, else None."""
+    out = []
+    last_pitch = None
+    for e in p.get("playEvents") or []:
+        if not isinstance(e, dict):
+            continue
+        if e.get("isPitch"):
+            last_pitch = e.get("pitchNumber")
+        rd = e.get("reviewDetails")
+        if isinstance(rd, dict):
+            for r in [rd] + [a for a in (rd.get("additionalReviews") or []) if isinstance(a, dict)]:
+                out.append(_review_entry(r, e.get("pitchNumber") if e.get("isPitch") else None, names))
+    rd = p.get("reviewDetails")
+    if isinstance(rd, dict):
+        for r in [rd] + [a for a in (rd.get("additionalReviews") or []) if isinstance(a, dict)]:
+            pitch = last_pitch if r.get("reviewType") in PITCH_REVIEW_TYPES else None
+            out.append(_review_entry(r, pitch, names))
+    return out
+
+
 def play_rows(payload, codes: dict, *, season=None, game_type="R", scheduled_innings=9,
               names: dict | None = None) -> list[dict]:
     """Every completed plate appearance as a plays-tab row (plan 8.3):
@@ -731,12 +772,7 @@ def play_rows(payload, codes: dict, *, season=None, game_type="R", scheduled_inn
             li = round(float(li), 2) if li is not None else None
         except (TypeError, ValueError):
             li = None
-        reviews = []
-        rd = p.get("reviewDetails")
-        if isinstance(rd, dict):
-            reviews.append({"by": club_code(rd.get("challengeTeamId")),
-                            "overturned": bool(rd.get("isOverturned")),
-                            "kind": normalize_text(rd.get("reviewType"))})
+        reviews = play_reviews(p, names)
         lead = (s["home_before"] - s["away_before"]) if bottom else (s["away_before"] - s["home_before"])
         rows.append({
             "ab": s["ab"], "inning": s["inning"], "half": s["half"],
