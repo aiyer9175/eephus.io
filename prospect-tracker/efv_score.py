@@ -2278,6 +2278,11 @@ def score_history(persist: bool = True) -> dict:
     for pk, g2, _mid, v2_pts in pending:
         series = [{"d": q["d"], "x": round(g, 1), "c": q["c"]}
                   for q, g in zip(v2_pts, g2.grades(v2_pts, player_key=pk))]
+        # eFV v5 COMBINED: every snapshot reads its candidates as of its own date, so the
+        # served grade (today's read) is its own point dated today (None on V2)
+        tail = g2.served_point(pk, series)
+        if tail is not None:
+            series.append(tail)
         if len(series) >= 2:
             out[pk] = series
         else:

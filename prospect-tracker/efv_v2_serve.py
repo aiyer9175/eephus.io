@@ -413,13 +413,16 @@ class HistoryGrader:
     only when his consensus or his drivers moved. It is today's model scoring old
     snapshots, as the v1 series always was, not the grade that would have shown then.
 
-    eFV v5 COMBINED (its heads also read the candidate columns): a snapshot dated on or
-    after the player's live consensus as-of date takes the live board's candidate values
-    exactly (so the latest point still lands on the served grade), and every earlier
-    snapshot takes the candidate columns read as of its own date
+    eFV v5 COMBINED (its heads also read the candidate columns): every snapshot dated
+    before the live read date (today) takes the candidate columns read as of its own date
     (efv5_combined.history_columns: read year min(snapshot year, list year) + 1, cutoff the
-    snapshot date, centered within the snapshot year), built for all the side's snapshots
-    at once by prime(). A snapshot prime() never saw reads no candidate (z = 0)."""
+    snapshot date, every pool made of snapshots dated on or before it), built for all the
+    side's snapshots at once by prime(). Only a snapshot dated on the live read date itself
+    takes the live board's candidate values. A snapshot prime() never saw reads no
+    candidate (z = 0). The served grade reads today, so it is dated today: served_point()
+    gives the point the series appends when its last snapshot is older (verifier defect
+    2026-10-15: the live values used to land on the player's consensus as-of snapshot, as
+    early as 2024, carrying 2026 season lines onto a 2024 date)."""
 
     def __init__(self, side: str, live: list[dict], *, models: dict | None = None,
                  today: str | None = None):
@@ -433,16 +436,11 @@ class HistoryGrader:
         preds = score_live(side, live, models={side: self.model} if models is None
                            else models, today=self.today,
                            cand_out=self._cand_live if self._v5 else None)
-        self._live_asof = {}
-        if self._v5:
-            for r in live:
-                pk = r.get("player_key")
-                if pk in preds:
-                    a = str(r.get("asof_date") or "")[:10] or self.today
-                    self._live_asof[pk] = min(a, self.today)
         self.keys = set(preds)
         cons = {r["player_key"]: float(r["consensus_fv_raw"]) for r in live
                 if r.get("player_key") in preds}
+        self._served = ({pk: (float(p["efv_grade"]), cons[pk]) for pk, p in preds.items()}
+                        if self._v5 else {})
         self.ref = np.sort(np.array(list(cons.values()), dtype=np.float64))
         pairs = sorted((p["order_idx"], p["efv_grade"]) for p in preds.values())
         xs, ys = [], []
@@ -471,11 +469,10 @@ class HistoryGrader:
         import efv5_combined as V5C
         todo = []
         for pk, blk in points.items():
-            edge = self._live_asof.get(pk)
             for q in blk.get("points") or []:
                 d = str(q.get("d") or "")[:10]
-                if edge is not None and d >= edge:
-                    continue
+                if d >= self.today:
+                    continue                  # the live read date: the live values
                 todo.append((pk, blk.get("mlbam_id"), d, q.get("fv")))
         if not todo:
             return {}
@@ -492,10 +489,26 @@ class HistoryGrader:
         if not self._v5 or player_key is None:
             return {}
         d = str(d or "")[:10]
-        edge = self._live_asof.get(player_key)
-        if edge is not None and d >= edge:
+        if d >= self.today:
             return dict(self._cand_live.get(player_key) or {})
         return dict(self._cand_hist.get((player_key, d)) or {})
+
+    def served_point(self, player_key: str, series: list[dict]) -> dict | None:
+        """eFV v5 COMBINED: the served grade as a point dated the live read date ({"d",
+        "x", "c"}, rounded as the series is), for a series whose last snapshot is older and
+        does not already show it; None otherwise and on any other model. The served grade
+        reads today's candidate columns, so it is dated today, never on an older
+        snapshot."""
+        if not self._v5 or not series or player_key not in self._served:
+            return None
+        last = series[-1]
+        if str(last.get("d") or "")[:10] >= self.today:
+            return None
+        g, c = self._served[player_key]
+        pt = {"d": self.today, "x": round(g, 1), "c": round(c, 1)}
+        if pt["x"] == last.get("x") and pt["c"] == last.get("c"):
+            return None
+        return pt
 
     def grades(self, rows: list[dict], player_key: str | None = None) -> list[float]:
         """rows: [{"fv", "feats", "extra"}, plus "d" (snapshot date) under eFV v5
