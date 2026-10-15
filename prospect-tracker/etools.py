@@ -39,6 +39,7 @@ Run:  python etools.py --check                     (rows and coverage; no statis
       python etools.py --dry-run                   (the reporting path on fixtures)
       python etools.py --run --gate-sha SHA        (the one look)
       python etools.py --preview                   (the dark preview from the spent look)
+      python etools.py --review-reads --amend-sha SHA   (amendment 1, run once)
 """
 from __future__ import annotations
 
@@ -117,8 +118,15 @@ POS_GROUP = {"C": "C", "SS": "SS", "CF": "CF", "2B": "IF", "3B": "IF", "IF": "IF
              "LF": "COF", "RF": "COF", "OF": "COF", "1B": "1B/DH", "DH": "1B/DH"}
 SURVIVORSHIP = ("L_MLB is accuracy AMONG DEBUTS: only players who reached the majors have "
                 "a realized MLB quantity. L_UM (translated upper-minors outcomes, seasons Y to "
-                "Y + 2 capped at 2024) covers debuts and non-debuts alike and is reported "
-                "beside it.")
+                "Y + 2 capped at 2024) does not require a debut, but it does require reaching "
+                "Double-A or Triple-A for 300 PA (150 BF), itself a promotion outcome: among "
+                "hitter rows with no debut by 2024 only about 37% carry it, and non-debuts who "
+                "stalled below Double-A are on neither label. L_UM is accuracy AMONG PROMOTED "
+                "players (amendment 1, A1).")
+REVIEW_DOC = "docs/tools-2026-10/ETOOLS_AMENDMENT_1.md"
+REVIEW_PATH = LAB_DIR / "etools_review_reads.json"
+#: tools whose eTool was evaluated at the look and that carry an L_UM (amendment A1.2)
+REVIEW_TOOLS = ("hit", "game_pwr", "raw_pwr", "speed", "pitch_sel", "bat_ctrl", "fb", "cmd")
 
 LABELS = ("mlb", "um")
 
@@ -288,12 +296,12 @@ def guard_no_fv(keys) -> None:
         raise GuardError(f"grouping keys {bad} name a future-value grade cell")
 
 
-def gate_sha_ok(sha: str | None) -> bool:
+def gate_sha_ok(sha: str | None, doc: str = GATE_DOC) -> bool:
     if not isinstance(sha, str) or not re.match(r"^[0-9a-f]{7,40}$", sha):
         return False
     if _git("cat-file", "-e", f"{sha}^{{commit}}") is None:
         return False
-    text = _git("show", f"{sha}:./{GATE_DOC}")
+    text = _git("show", f"{sha}:./{doc}")
     if text is None:
         return False
     status = [ln.strip() for ln in text.splitlines() if ln.strip().startswith("Registration status:")]
@@ -519,6 +527,9 @@ class ToolFrame:
                       for c in names}
         self.y = {lb: np.array([np.nan if r["y"].get(lb) is None else r["y"][lb] for r in rows])
                   for lb in LABELS}
+        #: debut by MAX_DEBUT_YEAR (first MLB season 2024 or earlier): amendment A1 only
+        self.debut = np.array([r.get("mlb_first") is not None and int(r["mlb_first"]) <= MAX_DEBUT_YEAR
+                               for r in rows], dtype=bool)
 
 
 # ---------------------------------------------------------------------------
@@ -885,6 +896,90 @@ def weighting_arm(fr: ToolFrame, admitted: list[str], *, Bn: int = B) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# amendment 1 (docs/tools-2026-10/ETOOLS_AMENDMENT_1.md): the review reads
+# ---------------------------------------------------------------------------
+def paired_d(a, b, y, year, pid, *, Bn: int = B, seed: int = SEED) -> dict:
+    """rho_w(a) - rho_w(b) over the rows where a, b and y are all finite, with the gate
+    4.2 interval; NOT COMPUTABLE under the gate 2.3 rule."""
+    a, b, y = np.asarray(a, float), np.asarray(b, float), np.asarray(y, float)
+    m = np.isfinite(a) & np.isfinite(b) & np.isfinite(y)
+    if not computable(year[m], pid[m]):
+        return {"computable": False, "n": int(m.sum()), "players": int(np.unique(pid[m]).size)}
+    r_a, r_b = within_rho(a[m], y[m], year[m]), within_rho(b[m], y[m], year[m])
+    if r_a is None or r_b is None:
+        return {"computable": False, "n": int(m.sum()), "players": int(np.unique(pid[m]).size)}
+    rec = {"computable": True, "n": int(m.sum()), "players": int(np.unique(pid[m]).size),
+           "rho_a": _r(r_a), "rho_b": _r(r_b)}
+    if Bn:
+        rec.update(summarize_draws(r_a - r_b, paired_draws(a[m], b[m], y[m], year[m], pid[m], Bn=Bn,
+                                                           seed=seed)))
+    else:
+        rec["d"] = _r(r_a - r_b)
+    return rec
+
+
+def promotion_counts(fr: ToolFrame) -> dict:
+    """A1.1: the frame rows split by L_UM present or absent and debut by 2024 or not."""
+    um, deb = np.isfinite(fr.y["um"]), fr.debut
+    nd = int((~deb).sum())
+    return {"rows": fr.n, "um_and_debut": int((um & deb).sum()), "um_no_debut": int((um & ~deb).sum()),
+            "no_um_no_debut": int((~um & ~deb).sum()), "no_um_debut": int((~um & deb).sum()),
+            "share_of_non_debuts_with_um": _r((um & ~deb).sum() / nd) if nd else None,
+            "share_of_um_that_debuted": _r((um & deb).sum() / um.sum()) if um.sum() else None}
+
+
+def nondebut_read(fr: ToolFrame, admitted: list[str], *, Bn: int = B, pred=None) -> dict:
+    """A1.2: d_E on L_UM pooled (the look's figure, reproduced), over the rows with no
+    debut by 2024, and over the rows with one. A1.3 labels a non-debut lower bound at or
+    below 0 (or a pool that is not computable) PROMOTION-DEPENDENT."""
+    if pred is None:
+        pred, _sig = etool_oof(fr, admitted)
+    y = fr.y["um"]
+    out = {"tool": fr.tool, "admitted": list(admitted)}
+    for name, mask in (("pooled", np.ones(fr.n, dtype=bool)), ("non_debut", ~fr.debut), ("debut", fr.debut)):
+        yy = np.where(mask, y, np.nan)
+        out[name] = paired_d(pred, fr.gc, yy, fr.year, fr.pid, Bn=Bn)
+    nd = out["non_debut"]
+    out["promotion_dependent"] = not (nd.get("computable") and nd.get("lb95") is not None and nd["lb95"] > 0)
+    return out
+
+
+def margin_read(fr: ToolFrame, admitted: list[str], *, Bn: int = B) -> dict:
+    """A2.1: for each admitted sub-driver j, the eTool on S against the eTool on S without
+    j (what j adds given the others), and the reduced eTool against consensus, on both
+    labels. A2.2 labels j NO ADDED EFFECT when its lower bound is not above 0 on both."""
+    full, _ = etool_oof(fr, admitted)
+    out = {"tool": fr.tool, "admitted": list(admitted), "subdrivers": {}}
+    for j in admitted:
+        rest = [c for c in admitted if c != j]
+        red, _ = etool_oof(fr, rest)
+        rec = {"without": rest, "labels": {}}
+        adds = []
+        for lb in LABELS:
+            if TOOLS[fr.tool].get(lb) is None:
+                continue
+            y = fr.y[lb]
+            g = paired_d(full, red, y, fr.year, fr.pid, Bn=Bn)
+            rc = paired_d(red, fr.gc, y, fr.year, fr.pid, Bn=Bn)
+            rec["labels"][lb] = {"given_others": g, "reduced_vs_consensus": rc}
+            adds.append(bool(g.get("computable") and g.get("lb95") is not None and g["lb95"] > 0))
+        rec["no_added_effect"] = not any(adds)
+        out["subdrivers"][j] = rec
+    return out
+
+
+def review_spent() -> str | None:
+    if REVIEW_PATH.exists():
+        try:
+            d = json.loads(REVIEW_PATH.read_text(encoding="utf-8"))
+        except ValueError:
+            return f"{REVIEW_PATH} is unparseable"
+        if d.get("spent"):
+            return f"{REVIEW_PATH} carries a spent marker ({d.get('spent_at')})"
+    return None
+
+
+# ---------------------------------------------------------------------------
 # data: board grades (gate 1.2, 0.4)
 # ---------------------------------------------------------------------------
 def _parse_grade(v):
@@ -1188,7 +1283,13 @@ def build_zmetrics(side: str, *, last_season: int = 2025, log=print) -> dict[str
 
 def pitch_rate_lines(side: str, *, last_season: int = 2025) -> dict[str, dict]:
     """Part P.1 per (pid, season, level): raw rates and the rate over its anchor, usable
-    level-seasons only (pitch_rates' tracking guard)."""
+    level-seasons only (pitch_rates' tracking guard).
+
+    A pitcher's exposure (batters faced) is read off the SAME line his rate was computed
+    on (pitch_rates.player_lines): the majority-role line on the role-split basis, the
+    season line on the season-line fallback. Before the 2026-10-15 review fix the role
+    line's BF was used on the fallback basis too, where the rate is the season line's
+    (381 of 47,983 pitcher lines, 79 of them crossing the 100 BF floor)."""
     import pitch_rates as PR
     out = {"ppa_raw": {}, "ppa_par": {}} if side == "hit" else {
         "pbf_raw": {}, "pbf_par": {}, "pip_raw": {}, "pip_par": {}}
@@ -1215,7 +1316,10 @@ def pitch_rate_lines(side: str, *, last_season: int = 2025) -> dict[str, dict]:
                     if not p:
                         continue
                     role = p.get("role")
-                    rl = p.get("sp" if role == "SP" else "rp") or p.get("season_line") or {}
+                    if p.get("basis") == PR.BASIS_ROLE:
+                        rl = p.get("sp" if role == "SP" else "rp") or {}
+                    else:
+                        rl = p.get("season_line") or {}
                     bf = float(rl.get("bf") or 0)
                     blk = lr["sp" if role == "SP" else "rp"]
                     for rate, key in (("pbf", "p_bf"), ("pip", "p_ip")):
@@ -1599,6 +1703,7 @@ def tool_frames(rows: list[dict]) -> dict[str, ToolFrame]:
             out.append({"year": r["year"], "pid": r["pid"], "gc": round_half(sum(vals) / len(vals)),
                         "src": src, "cands": {c: r["cands"].get(c) for c in spec["cands"]},
                         "y": dict(r.get("labels", {}).get(tool) or {}), "group": r.get("group"),
+                        "mlb_first": r.get("mlb_first"),
                         "level_cell": r.get("level_cell"), "band": r.get("band")})
         frames[tool] = ToolFrame(tool, out)
     return frames
@@ -1931,6 +2036,77 @@ def run(gate_sha: str, *, log=print) -> dict:
     return eval_doc
 
 
+def review_reads(amend_sha: str, *, log=print) -> dict:
+    """Amendment 1, run once: A1 (promotion counts and the non-debut read), A2 (margins)
+    and A3 (the Part P.3 re-run with the R4 exposure fix). The look's artifacts are read,
+    never rewritten."""
+    why = review_spent()
+    if why:
+        raise GuardError(f"the review reads are spent: {why}")
+    if not gate_sha_ok(amend_sha, REVIEW_DOC):
+        raise GuardError(f"{amend_sha} does not name a commit carrying {REVIEW_DOC} as REGISTERED")
+    look = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
+    if not look.get("spent") or "etools" not in look:
+        raise GuardError("no spent look to review")
+    guard_years(DEV_YEARS)
+    shas_start = input_shas()
+    t0 = time.time()
+    board = load_board(DEV_YEARS)
+    rows, counts = build_universe(board, DEV_YEARS, log=log)
+    attach_candidates(rows, last_season=max(DEV_YEARS) - 1, log=log)
+    attach_labels(rows, log=log)
+    if counts != look.get("universe"):
+        raise GuardError(f"universe {counts} differs from the look's {look.get('universe')}")
+    frames = tool_frames(rows)
+    started = _now()
+    a1, a2, repro = {}, {}, {}
+    for tool in REVIEW_TOOLS:
+        fr = frames[tool]
+        adm = list(look["etools"][tool]["admitted"])
+        pred, _ = etool_oof(fr, adm)
+        for lb in LABELS:                                   # reproduce the look first
+            want = (look["etools"][tool]["labels"].get(lb) or {}).get("d")
+            got = paired_d(pred, fr.gc, fr.y[lb], fr.year, fr.pid, Bn=0).get("d")
+            repro[f"{tool}:{lb}"] = {"look": want, "now": got}
+            if want is not None and (got is None or abs(got - want) > 5e-5):
+                raise GuardError(f"{tool} {lb}: d_E {got} does not reproduce the look's {want}")
+        a1[tool] = {"counts": promotion_counts(fr), **nondebut_read(fr, adm, pred=pred)}
+        log(f"  A1 {tool:9s} non-debut d {a1[tool]['non_debut'].get('d')} lb {a1[tool]['non_debut'].get('lb95')}")
+        if len(adm) >= 2:
+            a2[tool] = margin_read(fr, adm)
+            log(f"  A2 {tool:9s} " + ", ".join(f"{j} {'NO ADDED EFFECT' if v['no_added_effect'] else 'adds'}"
+                                              for j, v in a2[tool]["subdrivers"].items()))
+    log("  A3: Part P.3 re-run (R4 exposure fix)")
+    pr = pr_atlas(log=log)
+    pr_rows = pr.pop("rows")
+    qs = [r["q"] for r in pr_rows if r.get("q") is not None]
+    orig = (look.get("pitch_rate") or {}).get("atlas") or {}
+    doc = {"item": ITEM, "tool": TOOL, "spent": True, "spent_at": _now(), "started": started,
+           "amendment_doc": REVIEW_DOC, "amendment_sha": amend_sha, "look_gate_sha": look.get("gate_sha"),
+           "head": (_git("rev-parse", "HEAD") or "").strip(), "survivorship": SURVIVORSHIP,
+           "universe": counts, "reproduction": repro,
+           "A1_promotion": a1,
+           "A1_promotion_dependent": [t for t in REVIEW_TOOLS
+                                      if look["etools"][t]["verdict"] == "PASS" and a1[t]["promotion_dependent"]],
+           "A2_margins": a2,
+           "A2_no_added_effect": {t: [j for j, v in d["subdrivers"].items() if v["no_added_effect"]]
+                                  for t, d in a2.items()},
+           "A3_part_p3_rerun": {"disclosure": "a registered read (gate Part P.3) re-run once because of a "
+                                              "code defect (R4, pitch-rate exposure on the fallback basis)",
+                                "tests": len(pr_rows), "flagged": pr["flagged"],
+                                "min_q": _r(min(qs), 6) if qs else None,
+                                "original_tests": None, "original_flagged": len(orig.get("flagged") or []),
+                                "redundancy": pr["redundancy"], "seconds": pr["seconds"],
+                                "fwar_vintage": pr.get("fwar_vintage"), "rows": pr_rows},
+           "inputs_sha256_start": shas_start, "inputs_sha256_end": input_shas(),
+           "seconds": round(time.time() - t0, 1), "flag_etools_on": ETOOLS_ON}
+    doc["A3_part_p3_rerun"]["original_tests"] = (look.get("tests") or {}).get("pitch_rate_tests")
+    LAB_DIR.mkdir(parents=True, exist_ok=True)
+    REVIEW_PATH.write_text(json.dumps(doc, indent=1), encoding="utf-8", newline="\n")
+    log(f"  wrote {REVIEW_PATH} ({time.time() - t0:.0f} s)")
+    return doc
+
+
 def dry_run(log=print) -> dict:
     frames = fixture_frames()
     res = evaluate(frames, Bn=100, perm=5, cells=False, log=lambda *_a: None)
@@ -1945,8 +2121,13 @@ def main(argv=None) -> int:
     ap.add_argument("--run", action="store_true")
     ap.add_argument("--gate-sha")
     ap.add_argument("--preview", action="store_true")
+    ap.add_argument("--review-reads", action="store_true")
+    ap.add_argument("--amend-sha")
     ap.add_argument("--out")
     a = ap.parse_args(argv)
+    if a.review_reads:
+        review_reads(a.amend_sha)
+        return 0
     if a.dry_run:
         print(json.dumps(dry_run(), indent=1))
         return 0
