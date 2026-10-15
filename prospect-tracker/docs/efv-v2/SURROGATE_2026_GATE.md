@@ -908,6 +908,45 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
   else in this draft changes, and the freeze file records both count sets with the
   amendment's name.
 
+### 11.2 Amendment, dated 2026-10-15 (task SG_8, before the S3 look; no outcome read): the runner read against this text
+
+- **What moved and why.** SG_8 reviewed `tools/efv_surrogate_look.py` (blob da07ae81 at
+  this file's REGISTERED commit) against s2 to s5 before its one look and found it reading
+  the registered rules differently in eight places; 0e7295e4 and 1a00471c make each read
+  as written here, and no clause, frame, statistic, threshold or decision rule changes.
+  (1) T1 kept label rows of status "ok" only, which dropped every resolved never-reached
+  row (L6 0.0) from lv_L6, and read the uncensored partial sum; it now reads
+  `l6_censored_target` with `l6_weight` on every row that carries one (s2.1) and prints the
+  no-L6 exits (reserved_vm, censored_never, identity_conflict, other) and the
+  ABSENT_IDENTITY rows per side and vintage; (2) the W3 secondary of T1 runs; (3) T2's
+  u_c is the within-(side, V) consensus percentile, not the raw grade; (4) T2 (a) for the
+  MiLB drivers, `V2_ABSENCE_KEY` included, is read on V 2015-2019 rows only; (5) rows
+  with no forward g_S (V 2011 and 2012, D10) leave T2 and T3 before T3 picks one row per
+  player; (6) T4 is one within statistic per side over V 2017-2019 (E_cond), not one cell
+  per vintage, and its incumbent trains on the rows resolved at RT V-1 only (it had been
+  handed the true R3 of V-3 to V-1); (7) T5's static clauses are asserted before any
+  outcome and its row clauses on the built rows; (8) the driver step attaches the V2
+  sidecars (`efv_drivers.protection_for_frame`, `bmi_for_rows`, `pl_revision_for_rows`)
+  as every V2 frame builder does, without which the driver-only variance check (Q7, s5
+  T2) found `on_40man` and `nov_add` absent in all 12 protection splits; with them every
+  driver varies in every scored split, so no driver goes to a variance amendment.
+- **The session rule (Q7).** `efv_surrogate_guard.look_session_markers` counts another
+  gate's look marker as an open session only when its recorded start falls on the run
+  day. The DvM+ runner keeps its marker for good as its spent-look record (started
+  2026-10-14T22:30Z, look recorded at f292a03a), so the guard had refused every later
+  day, a calendar refusal Q7 does not register. A marker with no readable start still
+  refuses.
+- **Printed as not computed.** The skill-head version of T2 (g_skill against W3): s3
+  registers no g_skill object (inputs, fit or scale), and building one at the read would
+  be an unregistered estimator (kill rule 2).
+- **The old-cohort analog floor for S4 (s4, s6.1).** Not measured at S3: S4 is void under
+  the recorded OQ2 = A (the header; `guard_surrogate_read` refuses `lv2026_surrogate`), so
+  the floor has no reader; a later amendment that reopens S4 must measure it first.
+- **Pins.** Source blobs after these commits: `tools/efv_surrogate_look.py`
+  5a076f1a46a3be5d20fadaedb9e926278a198c6d, `efv_surrogate_guard.py`
+  f05c43d69ee03665397defe8e7b8d02c1fffdc13; every other pin of s11 is unchanged. The
+  look itself pins its inputs at start and end (Q7).
+
 ---
 
 ## 12. Results
