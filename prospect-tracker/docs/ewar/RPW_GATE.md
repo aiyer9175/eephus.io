@@ -211,4 +211,45 @@ guard never change. After the first build nothing above part 12 changes.
 
 ## 12. Results
 
-EMPTY AT REGISTRATION.
+### 12.1 Build 1, 2026-10-15: PRIMARY PASS, GUARD PENDING (candidate (c))
+
+Run once by `python tools/build_rpw_fit.py` on the commit after the registration (5d6f592b); the
+log is kept in the lane's output directory. No refusal fired: 30 clubs and balanced runs and wins in
+all eleven seasons; Baseball-Reference stint runs allowed reconcile with the standings on all 300
+primary club-seasons; arm L equals candidate (a) to 2.8e-14 wins; no candidate was VOID and no
+Baseball-Reference club fell back to a season value. war_daily pit sha256 3279bfbdc5bc, bat
+e9571c428cb4 (both cached 2026-10-15 19:33 UTC). 2026 read the 2025 park-factor file.
+
+Held-out (leave one season out) errors over the 300 team-seasons, in wins:
+
+| Candidate | MAE | RMSE | dMAE vs (a) | sd | lo95 | hi95 | bootstrap p | Disposition |
+|---|---|---|---|---|---|---|---|---|
+| (a) closed form, incumbent | 3.2976 | 4.2528 | | | | | | incumbent |
+| (b) Pythagenpat, z fitted | 3.2113 | 4.1775 | +0.0863 | 0.0562 | -0.0014 | +0.1810 | 0.0540 | no pass |
+| (c) slope of wins on RD | 3.1968 | 4.1578 | +0.1008 | 0.0551 | +0.0135 | +0.1910 | 0.0300 | PRIMARY PASS |
+| (d) run environment | 3.2767 | 4.2387 | +0.0209 | 0.0634 | -0.0782 | +0.1267 | 0.3615 | no pass |
+| (e) Baseball-Reference recovered | 3.3354 | 4.3055 | -0.0379 | 0.0226 | -0.0749 | -0.0007 | 0.9535 | no pass (worse) |
+| (r0) G / 2, reference | 10.3867 | 12.9134 | | | | | | reference |
+| (r1) Pythagenpat 0.287, reference | 3.2980 | 4.2764 | | | | | | reference |
+
+- **Verdict: PRIMARY PASS, GUARD PENDING, candidate (c).** Only (c) has lo95 above 0. Its fit on all
+  ten primary seasons is beta 0.094108 wins per run, RPW 10.6261 for every season (held-out fits
+  10.5293 to 10.7133). Against the incumbent's 9.52 to 10.30 it sets 0.33 to 1.10 more runs per
+  win. It replaces `league_totals(s)["rpw"]` in eWAR v3 part 9.2 only if the team guard
+  of `EBR_GATE.md` 11.2.4 reads NON-INFERIOR (EWAR_V3_ASSEMBLE or the skill look); until then the
+  incumbent stands and nothing served moves.
+- **Holm, reported and deciding nothing:** the four bootstrap p values (c 0.030, b 0.054, d 0.3615,
+  e 0.9535) reject nothing at 0.05 (c's Holm threshold is 0.0125). Under a multiplicity correction
+  no candidate would pass.
+- **Fitted parameters, all ten seasons:** (b) z 0.251 (held-out 0.2445 to 0.2545; league-environment
+  RPW 9.99 to 10.94); (d) b0 0.094554, b1 -0.001725, b2 -0.002491, b3 -0.003428 (league-environment
+  RPW 10.49 to 10.71). Per-season slopes of wins on RD alone (reported): RPW 9.97 (2024) to 11.69
+  (2025).
+- **2020 sensitivity (deciding nothing),** MAE per 162 games: (a) 4.66, (b) 4.40, (c) 4.62, (d) 4.54,
+  (e) 4.65, (r1) 4.42.
+- **Part 5, the pitcher leg:** arm L (league constant) MAE 3.2976, arm D (FanGraphs' per-pitcher form
+  on runs allowed) 3.3564 over 9,496 pitching stints; dMAE L - D -0.0588, sd 0.0552, lo95 -0.1486,
+  hi95 +0.0318. The per-pitcher form does not separate from the league constant (its point estimate
+  is worse; its RMSE is worse with dRMSE hi95 -0.0049).
+- **Against the registered expectations (part 8):** the first was wrong for (c), which passed; (e) did
+  worse than (a), as expected; part 5 did not separate, as expected.

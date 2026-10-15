@@ -101,4 +101,4 @@ def test_refusals_and_output():
 
 def test_no_dashes():
     raw = DOC.read_text(encoding="utf-8")
-    assert "—" not in raw and "–" not in raw
+    assert chr(0x2014) not in raw and chr(0x2013) not in raw
