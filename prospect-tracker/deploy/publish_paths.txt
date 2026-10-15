@@ -64,6 +64,10 @@
 # and data/trade_partner_screen_chain.json (gitignored, re-rendered nightly
 # from .cache/trade_partner_screen/record/). Both sit at data/ depth one,
 # which both consumers already ship; no exclusion names them.
+#
+# 2026-10-15: scouting/ is the /scouting/ page (TL_23_SCOUTING_PAGE_FLIP). Its
+# payload data/scouting_reference.json sits at data/ depth one, which both
+# consumers already ship; data/reference/ (the transcription) ships in neither.
 index.html
 404.html
 robots.txt
@@ -97,6 +101,7 @@ projections
 prospx
 report
 scores
+scouting
 sources
 team
 trademachine

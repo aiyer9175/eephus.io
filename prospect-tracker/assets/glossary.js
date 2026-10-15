@@ -297,6 +297,15 @@
     return s ? `<span class="gl-shelf gl-shelf--${e.shelf}" title="${s[2]}">${s[1]}</span>` : "";
   }
 
+  // Entries whose full read is a page of its own: /scouting/ is linked from the
+  // Library (TL_23_SCOUTING_PAGE_FLIP, owner answer TL-Q8). slug: [href, label].
+  const _GL_PAGE_LINKS = {
+    twenty_eighty: ["/scouting/#scale", "Scouting: the 20-80 scale"],
+    fv: ["/scouting/#fv-tiers", "Scouting: WAR by FV tier"],
+    scouting_reference: ["/scouting/#fv-tiers", "Scouting: WAR by FV tier"],
+    tool_implied_production: ["/scouting/#tools", "Scouting: stat lines by tool grade"],
+  };
+
   // The full read of one entry: method, formula, example, origin, visual,
   // receipt slot and See also. Shared by the right pane and an opened row.
   function _entryParts(slug, e) {
@@ -316,6 +325,8 @@
     if (_receiptSpecs()[slug]) {
       more.push(`<div class="gl-receipt-slot" data-receipt="${escapeHtml(slug)}"></div>`);
     }
+    const page = _GL_PAGE_LINKS[slug];
+    if (page) more.push(`<div class="gl-relrow gl-pagerow"><span class="gl-microlabel">Full page</span><a class="gl-rel" href="${escapeHtml(page[0])}">${escapeHtml(page[1])}</a></div>`);
     const rel = (e.related || []).filter(r => GL[r]).map(r =>
       `<a class="gl-rel" href="#g=${escapeHtml(r)}">${escapeHtml(GL[r].name)}</a>`).join("");
     if (rel) more.push(`<div class="gl-relrow"><span class="gl-microlabel">See also</span>${rel}</div>`);
@@ -6091,6 +6102,7 @@ function _saccTools() {
   const tag = d.tag && typeof d.tag === "object" ? Object.entries(d.tag) : [];
   return `
     <p class="meth-window">Each debuted player's production in his first three MLB seasons after a board year, set against what his tool grade implied (tool-implied production), source by source. Tool above grade (TAG) is that gap in the stat's own units. Ordering is how well a source's grades put players in order; bias is whether its grades ran hot or cold on average; error is the typical miss. Only ordering can earn a source a weight.</p>
+    <p class="meth-note sacc-scouting-link">The 20-80 scale, WAR by FV tier and the stat line each tool tier implies: <a href="/scouting/">Scouting</a>. Definitions: <a href="#g=tool_implied_production">Tool-implied production</a>, <a href="#g=twenty_eighty">20-80 scale</a>.</p>
     <div class="meth-findings">${tiles}</div>
     <p class="meth-note sacc-headline">${escapeHtml(status)} ${_SACCT_SURV}</p>
     ${_sacctVerdictTable(prim, lookVoid)}

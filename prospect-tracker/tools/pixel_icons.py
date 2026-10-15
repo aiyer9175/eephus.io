@@ -360,6 +360,21 @@ ICONS = [
         "...##..##...",
         "...##..##...",
         "..########.."]),
+    # Scouting (TL_23_SCOUTING_PAGE_FLIP; owner answer TL-Q8, the nav leaf right
+    # after the Library): a scout's stopwatch. The crown and stem on top, the
+    # round case in 2 px stems, and the one hand in the accent group.
+    ("scouting", "Scouting", "nav", [
+        "....####....",
+        ".....##.....",
+        "...######...",
+        ".##......##.",
+        "##...++...##",
+        "##...++...##",
+        "##...++++.##",
+        "##........##",
+        "##........##",
+        ".##......##.",
+        "...######..."]),
     ("team", "Masthead", "nav", [
         "############",
         "############",

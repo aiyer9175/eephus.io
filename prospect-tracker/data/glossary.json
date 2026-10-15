@@ -1,5 +1,5 @@
 {
- "version": "2026-10-14",
+ "version": "2026-10-15",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -680,12 +680,13 @@
    ],
    "priority": 11,
    "definition": "The MLB stat a tool grade points to under the FanGraphs framework: hit to K% (and AVG), game power to ISO, raw power to exit velocity, speed to sprint speed and SB, field to OAA, arm to arm strength, fastball to K%, command to BB%. It is read off a table of the typical realized stat at each tool grade.",
-   "methodology": "Each table is fit per tool and stat on debuted players: the median realized stat in tool-grade bins of 5 points (a bin under 15 players is thin and dropped), smoothed so the stat moves the way the grade says it should, interpolated between bins and held flat past the last bin, with no extrapolation. The version the Source Accuracy Tools tab reads is fit on each player's first three MLB seasons after his board year, and a table never scores a player or a board year it was fit on (leave one board year out). It is a measurement, not a projection: no grade, chip, price or eFV input is built from it, and the tool grades shown on PROSPX are unchanged. Tool grades display rounded up (the tool-implied production gate, Part 1.2).",
+   "methodology": "Each table is fit per tool and stat on debuted players: the median realized stat in tool-grade bins of 5 points (a bin under 15 players is thin and dropped), smoothed so the stat moves the way the grade says it should, interpolated between bins and held flat past the last bin, with no extrapolation. The version the Source Accuracy Tools tab reads is fit on each player's first three MLB seasons after his board year, and a table never scores a player or a board year it was fit on (leave one board year out). It is a measurement, not a projection: no grade, chip, price or eFV input is built from it, and the tool grades shown on PROSPX are unchanged. Tool grades display rounded up (the tool-implied production gate, Part 1.2). A second set of tables, re-derived on debuted players' MLB seasons 2015 to 2025 (2020 excluded) and tested once against the published FanGraphs estimates on the 2026 season, decides only what the Scouting page prints: a tool tier shows our measured value, with its n, only where that test passed, and the FanGraphs estimate everywhere.",
    "formula": "TIP(tool, stat, grade) = smoothed median of the realized stat in the bin round(grade / 5) x 5, read at the grade",
    "seeAlso": [
     "tool_above_grade",
     "tool",
-    "wag"
+    "wag",
+    "scouting_reference"
    ]
   },
   {
@@ -1080,13 +1081,40 @@
    ],
    "priority": 20,
    "definition": "The standard scouting ladder. 20 = far below MLB, 50 = MLB average, 80 = elite.",
-   "methodology": "Scouting grades have used this scale since the 1950s. 50 is an MLB-average regular or role player, 60 a first-division regular or All-Star, 70 a perennial All-Star, 80 a Hall of Fame ceiling. Used for individual tools (Hit, Power, Speed, Field, Throw, Fastball) and for Future Value.",
+   "methodology": "Scouting grades have used this scale since the 1950s. 50 is an MLB-average regular or role player, 60 a first-division regular or All-Star, 70 a perennial All-Star, 80 a Hall of Fame ceiling. Used for individual tools (Hit, Power, Speed, Field, Throw, Fastball) and for Future Value. The Scouting page prints the scale as FanGraphs, Baseball America and MLB Pipeline publish it, each grade's distance from average in standard deviations, WAR by FV tier and the stat line each tool grade implies, every number cited.",
    "example": "A 70-grade fastball means top ~5% of MLB starters. A 70-grade hit tool means batting-title contender.",
    "seeAlso": [
     "fv",
-    "tool"
+    "tool",
+    "scouting_reference"
    ],
    "shelf": "foundation"
+  },
+  {
+   "id": "scouting_reference",
+   "term": "Future Value tiers",
+   "category": "scouting",
+   "section": "Prospects",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Future Value tiers",
+    "FV tiers",
+    "WAR by FV tier",
+    "Scouting page"
+   ],
+   "priority": 6,
+   "definition": "What each FV grade means in WAR, in two quantities that are never mixed: 'If he arrives', the WAR of a player who reaches his projected role, and 'Expected, bust-inclusive', the average over every prospect at the grade with busts at zero. The Scouting page prints both by tier.",
+   "methodology": "The 'If he arrives' column prints our prime-season table (FV 35 and up) beside the published FanGraphs tables (McDaniel 2014; the 2018 and 2022 primers). The 'Expected, bust-inclusive' column prints our valuation table as served, WAR per season over a player's first six seasons, with its provenance, beside the Clemens 2026 table, and the chance of each outcome band at the grade. Reading one quantity as the other overprices a 50 FV about two times and a 40 or 45 FV about three times. Nothing on the page is computed from player outcomes by FV tier. The expected table is under the Prospect Anchor calibration test, which read it once on 2026-10-14 and could not decide it; that is not a confirmation.",
+   "seeAlso": [
+    "fv",
+    "twenty_eighty",
+    "tool_implied_production",
+    "consensus_fv"
+   ],
+   "shelf": "foundation",
+   "origin": "Published tables: FanGraphs (McDaniel 2014; Longenhagen and McDaniel 2018; Longenhagen 2022; Clemens 2025 and 2026). The two-column layout and the served tables are eephus.io's."
   },
   {
    "id": "hit_tool",

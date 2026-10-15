@@ -1022,9 +1022,14 @@ MODEL_GLOSSARY = {
     "game_intensity_effects": "internal",
     # tool_tables_rederived (2026-10-14, TL_21_TOOL_TABLE_REDERIVE_LOOK) is the one
     # look T read of docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md Part T:
-    # provisional, measured, nothing served reads it. A reader-facing term arrives
-    # with the /scouting/ page that prints a passing cell (TL_23).
-    "tool_tables_rederived": "internal",
+    # provisional, measured. Since TL_23_SCOUTING_PAGE_FLIP (2026-10-15) the
+    # /scouting/ tool tiers print a passing cell, and tool-implied production
+    # says how.
+    "tool_tables_rederived": ["tool_implied_production"],
+    # scouting_reference (2026-10-15, TL_23_SCOUTING_PAGE_FLIP): the /scouting/
+    # page's transcription and served value tables; Future Value tiers and the
+    # 20-80 scale document it.
+    "scouting_reference": ["scouting_reference", "twenty_eighty"],
 }
 
 

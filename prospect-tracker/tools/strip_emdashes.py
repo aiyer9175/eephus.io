@@ -166,6 +166,11 @@ TARGETS: list[str] = [
     "eta.py",
     "tools/arb_gate_a.py",
     "collegesavant/pitcher_index.html",
+    # /scouting/ (2026-10-15, TL_23_SCOUTING_PAGE_FLIP): the exporter whose role,
+    # band and note strings land in the served page payload verbatim, and the
+    # page itself.
+    "tools/scouting_export.py",
+    "scouting/index.html",
 ]
 
 EM = "—"

@@ -4,6 +4,7 @@
  "transcribed_from": "docs/reference/FANGRAPHS_FV_FRAMEWORK.md",
  "transcribed_from_commit": "07abfc82",
  "transcribed_by": "TL_22_SCOUTING_PAGE_BUILD_DARK",
+ "generated_at": "2026-10-14",
  "conventions": {
   "blank": "A cell the framework marks (no term) or (blank) is blank in the source and is the empty string here.",
   "n/a": "n/a stands for a dash placeholder in the source, as the framework records it.",
