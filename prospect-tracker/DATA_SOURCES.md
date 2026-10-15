@@ -51,6 +51,7 @@ happen inside the called module, so this file alone cannot split them).
 | 9e-pre0f. Steal context (management_steal_context.json) | management_steal_context.json, tx_YYYY_MM.json |
 | 9e-pre0g. MLB transaction events (mlb_events preview) | - |
 | 9e-pre0h. League, Team Stats and drawer payloads (league_teams preview) | mlb_league_series.json, mlbstats_player_index.json, mlbstats_trends.json |
+| 9e-pre0i. League Trends (league_trends preview) | - |
 | 9e-pre-wx. Forecast weather capture (dark, armed) | betting_model_eval.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
 | 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, job_heartbeat.json, slate.json |
@@ -136,6 +137,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4j. eWAR Leaderboard (war_leaderboards.json) | war_leaderboards.json |
 | 6b4k. Multi-year windows (mlbstats_window_*.json) | bullpen_leaderboards.json, defense_leaderboards.json, hitter_leaderboards.json, mlbstats_window_l3.json, mlbstats_windows.json, starter_leaderboards.json |
 | 6b4l. League, Team Stats and drawer payloads (league_teams preview) | mlb_league_series.json, mlbstats_player_index.json, mlbstats_trends.json |
+| 6b4n. League Trends live check (league_trends preview) | - |
 | 6b5. Alchemy Lab (pal.json) | arbitration.json, pal.json |
 | 6b7. Arbitration Predictor (arbitration.json) | arbitration.json, management_baseline.json, management_decisions.json |
 | 6b7e. In-Game Management decision ledger | management_baseline.json, management_board.json |
