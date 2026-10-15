@@ -18,7 +18,9 @@ pre-declare for the next registration.
 
 WHAT IT WRITES. data/_labs/efv_tool_features.json (data/_labs ships in neither deploy
 consumer), keyed (side, list vintage V, player_key) on the efv_vintage_frame rows of the
-development vintages 2011 to 2019 (lv_dev). It is never a column in a pinned matrix: the
+development vintages 2011 to 2019 (lv_dev), and, once the R-LV record exists and the
+committed gate sha is passed, of list vintages 2020 and 2021 as well (TL_16, 2026-10-15:
+the reserved read of 2026-10-08 spent them, so they are development rows now). It is never a column in a pinned matrix: the
 matrices are not read or written, so their sha256 pins do not move. Column definitions
 are in efv_tool_features.py. A frame row with no entry has no input at all; a consumer
 imputes at the has-block TRAIN mean (efv_tool_features.impute_at_train_mean) and emits no
@@ -33,14 +35,17 @@ tools/efv_arm_ledger.py (counts only; reads_outcome False):
     TL9:coverage.tip_iso_resid:hit        rows with the residual; TIP table rows per V
     TL9:coverage.tool_hit_w_inputs:hit    rows with one, and two or more, source hit grades
 
-NEVER READ: list vintages 2020 and 2021 (R-LV) while docs/efv-v2/EFV_V2_GATE.md
-'## 9. Results' holds no R-LV entry; every row whose effective debut year is 2025 or later
+NEVER READ: list vintages 2020 and 2021 (R-LV) before the R-LV record exists (an entry
+under docs/efv-v2/EFV_V2_GATE.md '## 9. Results', or docs/efv-v2/EFV_V3_BACKTEST.md
+'### 5.1 R-LV', decision D-k3 / TL2-Q1: the one reserved read of 2026-10-08, commit
+1c73c420) and without the committed gate sha (--gate-sha); with both, TL_16 extends the
+sidecar to V 2020 and 2021 as development vintages; every row whose effective debut year is 2025 or later
 (R-VM; dropped before any count, the number dropped reported); any season at or after V,
 or 2026 or later (asserted, and the seasons used recorded per V); a WAR, W3, label or
 outcome module; .cache/milb_platoon; the stored career rows. Identity is the frame's
 outcome-blind efv_identity id. Nothing is grouped by consensus-FV level.
 
-Run:  python tools/efv_tool_sidecar.py [--dry-run]
+Run:  python tools/efv_tool_sidecar.py [--dry-run] [--rebuild] [--gate-sha SHA]
 """
 from __future__ import annotations
 
@@ -61,9 +66,14 @@ import milb_history as mh  # noqa: E402
 import tool_implied as TI  # noqa: E402
 
 OUT = ROOT / "data" / "_labs" / "efv_tool_features.json"
+#: Where the R-LV record lives when the gate's s9 stays empty (EFV_V2_GATE.md s11):
+#: the reserved read's own section (decision D-k3, the TL2-Q1 reading).
+RLV_BACKTEST_DOC = "docs/efv-v2/EFV_V3_BACKTEST.md"
 LOOK_P = ROOT / "data" / "power_composite_eval.json"
 SCHEMA = "efv_tool_features/1"
 TASK = "TL_9_EFV_TOOL_SIDECAR"
+#: The task that extended the sidecar to list vintages 2020 and 2021 (spec precondition 2).
+EXTENDED_BY = "TL_16_EFV_TOOL_DEV_ADMISSION"
 #: Compact row fields (rows block, hitter side).
 ROW_FIELDS = ("per_source", "consensus", "tip_iso_resid", "iso_shrunk", "tip",
               "milb_level", "milb_season", "milb_pa")
@@ -80,39 +90,54 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
-def rlv_record_exists(gate_text: str | None = None) -> bool:
-    """True when docs/efv-v2/EFV_V2_GATE.md '## 9. Results' holds an entry naming R-LV
-    (anything in the section but its placeholder line)."""
+def rlv_record_exists(gate_text: str | None = None,
+                      backtest_text: str | None = None) -> bool:
+    """True when the R-LV record exists: docs/efv-v2/EFV_V2_GATE.md '## 9. Results' holds
+    an entry naming R-LV (anything in the section but its placeholder line), or
+    docs/efv-v2/EFV_V3_BACKTEST.md carries its '### 5.1 R-LV' section, where the gate's
+    s11 says the reserved numbers live (decision D-k3, the TL2-Q1 reading; the read of
+    2026-10-08, commit 1c73c420). A text passed in is read instead of the file; a
+    gate text passed alone is read alone."""
     if gate_text is None:
         p = ROOT / F.GATE_DOC
         gate_text = p.read_text(encoding="utf-8") if p.exists() else ""
+        if backtest_text is None:
+            b = ROOT / RLV_BACKTEST_DOC
+            backtest_text = b.read_text(encoding="utf-8") if b.exists() else ""
     m = re.search(r"^## 9\. Results\s*$(.*?)^## ", gate_text, re.S | re.M)
-    if not m:
-        return False
-    body = [ln for ln in m.group(1).splitlines()
-            if ln.strip() and ln.strip() != "---" and not ln.strip().startswith("(Empty.")]
-    return any("R-LV" in ln for ln in body)
+    if m:
+        body = [ln for ln in m.group(1).splitlines()
+                if ln.strip() and ln.strip() != "---"
+                and not ln.strip().startswith("(Empty.")]
+        if any("R-LV" in ln for ln in body):
+            return True
+    return bool(re.search(r"^### 5\.1 R-LV", backtest_text or "", re.M))
 
 
-def _guards(vintages) -> dict:
+def _guards(vintages, rlv_record: bool | None = None,
+            gate_sha: str | None = None) -> dict:
     pins = F.reserved_vm_pins()
     if pins:
         raise F.ReservedFrameError("; ".join(pins))
-    rlv = rlv_record_exists()
+    rlv = rlv_record_exists() if rlv_record is None else bool(rlv_record)
     for V in vintages:
         TF.assert_vintage_allowed(V, rlv_record=rlv)
+        F.guard_score_request(V, gate_sha=gate_sha, purpose="tool sidecar")
     return {"reserved_lv": sorted(F.RESERVED_LV),
             "r_vm_first_debut_year": F.R_VM_FIRST_DEBUT_YEAR,
-            "rlv_record_in_gate_s9": rlv,
+            "rlv_record": rlv,
+            "rlv_record_where": (None if not rlv else
+                                 "EFV_V2_GATE.md s9 or EFV_V3_BACKTEST.md s5.1 (D-k3)"),
+            "gate_sha": gate_sha if set(vintages) & set(F.RESERVED_LV) else None,
             "vintages_read": [int(v) for v in vintages], "reserved_vm_pins": pins,
             "first_forbidden_season": TF.FIRST_FORBIDDEN_SEASON}
 
 
-def load_tool_snapshots() -> dict:
+def load_tool_snapshots(vintages=F.DEV_VINTAGES) -> dict:
     """{player_key: [(source, snapshot_date, tools dict)]} for every snapshot carrying a
-    hit, game_pwr or raw_pwr grade in a January to April window of a development year."""
+    hit, game_pwr or raw_pwr grade in a January to April window of a vintage read."""
     import storage
-    lo, hi = min(F.DEV_VINTAGES), max(F.DEV_VINTAGES)
+    lo, hi = min(vintages), max(vintages)
     out: dict = {}
     with storage.connect() as con:
         for r in con.execute(
@@ -161,13 +186,16 @@ def milb_line(pid, season: int, level: str):
 
 def build(frames: dict | None = None, snaps: dict | None = None, *, mlb=None,
           league=None, milb=None, look_p: dict | None = None,
-          vintages=F.DEV_VINTAGES) -> dict:
+          vintages=F.DEV_VINTAGES, gate_sha: str | None = None,
+          rlv_record: bool | None = None) -> dict:
     """The sidecar document. `frames` ({side: {V: rows}}), `snaps`, `mlb(pid, season)`,
     `league(season)`, `milb(pid, season, level)` and `look_p` (the look P result block)
-    are for tests; None reads the real inputs."""
+    are for tests; None reads the real inputs. A reserved list vintage (2020, 2021) is
+    read only when the R-LV record exists (`rlv_record`, None reads the documents) and
+    `gate_sha` names the committed registration."""
     vintages = tuple(int(v) for v in vintages)
-    guards = _guards(vintages)
-    snaps = load_tool_snapshots() if snaps is None else snaps
+    guards = _guards(vintages, rlv_record, gate_sha)
+    snaps = load_tool_snapshots(vintages) if snaps is None else snaps
     mlb = mlb or mlb_line
     league = league or league_lines
     milb = milb or milb_line
@@ -183,15 +211,15 @@ def build(frames: dict | None = None, snaps: dict | None = None, *, mlb=None,
     dropped = {s: 0 for s in F.SIDES}
     feats: dict = {s: {} for s in F.SIDES}
     for V in vintages:
-        F.guard_score_request(V, purpose="tool sidecar")
+        F.guard_score_request(V, gate_sha=gate_sha, purpose="tool sidecar")
         for side in F.SIDES:
             if frames is not None:
                 rows = list((frames.get(side) or {}).get(V) or [])
             else:
                 if universe is None:
                     universe = F.load_universe()
-                rows = F.build_frame(side, V, universe=universe, sidecars=False,
-                                     milb=(side == "hit"))
+                rows = F.build_frame(side, V, gate_sha=gate_sha, universe=universe,
+                                     sidecars=False, milb=(side == "hit"))
             keep = [r for r in rows if not TF.is_rvm(r)]
             dropped[side] += len(rows) - len(keep)
             for r in keep:
@@ -356,7 +384,9 @@ def build(frames: dict | None = None, snaps: dict | None = None, *, mlb=None,
                               "the sidecar now; TL_16 runs the DS-06 admission diagnostic on "
                               "development folds and pre-declares for the next registration"),
         "role": "development sidecar; adjudicates nothing; no served number",
-        "frame": "lv_dev",
+        "frame": ("lv_dev" if not set(vintages) & set(F.RESERVED_LV)
+                  else "lv_dev plus the spent R-LV list vintages 2020 and 2021"),
+        "extended_by": (EXTENDED_BY if set(vintages) & set(F.RESERVED_LV) else None),
         "guards": guards,
         "pwr_comp": pwr_status,
         "definition": {
@@ -396,7 +426,11 @@ def build(frames: dict | None = None, snaps: dict | None = None, *, mlb=None,
             f"level norm cameo floor: {TF.NORM_MIN_PA} PA standing in for 10 games",
             "shrink toward the as-of level_norms avg_iso with the house k of 50 PA",
             "pitcher side: frame and grade coverage only (no hitter tool grades apply)",
-        ],
+        ] + ([
+            "R-LV record read as decision D-k3 (TL2-Q1): EFV_V3_BACKTEST.md s5.1 at "
+            "1c73c420 counts, EFV_V2_GATE.md s9 staying empty by its s11; list vintages "
+            "2020 and 2021 opened on the committed gate sha (TL_16)",
+        ] if set(vintages) & set(F.RESERVED_LV) else []),
         "inputs": inputs,
         "tip_tables": tables,
         "rvm_rows_dropped": dropped,
@@ -419,7 +453,16 @@ def main(argv=None) -> int:
     if OUT.exists() and "--dry-run" not in argv and "--rebuild" not in argv:
         print(f"{OUT.relative_to(ROOT).as_posix()} exists; pass --rebuild to rewrite it")
         return 1
-    doc = build()
+    gate_sha = None
+    if "--gate-sha" in argv:
+        gate_sha = argv[argv.index("--gate-sha") + 1]
+    vintages = tuple(F.DEV_VINTAGES)
+    if gate_sha is not None:
+        if not rlv_record_exists():
+            print("no R-LV record: list vintages 2020 and 2021 stay closed")
+            return 1
+        vintages = vintages + tuple(sorted(F.RESERVED_LV))
+    doc = build(vintages=vintages, gate_sha=gate_sha)
     for k, blk in doc["coverage"].items():
         print(f"  {k:9s} rows {blk['rows']:5d}  id {blk['id_resolved']:5d}  "
               f"cons {blk['consensus']}  pwr_comp {blk['pwr_comp_inputs']:4d}  "

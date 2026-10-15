@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-10-14T22:07:47+00:00",
+ "generated_at": "2026-10-15T12:23:37+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
- "n_arms": 400,
+ "n_arms": 402,
  "by_lane": {
   "Z1 driver re-test (fWAR label)": 312,
   "free _vec keys (D-1)": 26,
@@ -12,13 +12,14 @@
   "pre-registered pairs": 5,
   "handedness sidecar": 2,
   "pitch-rate admission (PM19, DS-06)": 2,
+  "tool-family admission (TL_16, DS-06)": 2,
   "stolen-base rate": 1,
   "wRC+ add arm": 1
  },
  "by_verdict": {
   "NULL": 318,
   "NO_STORED_VERDICT": 48,
-  "REFUSED": 26,
+  "REFUSED": 28,
   "ADMITTED": 8
  },
  "n_without_stored_verdict": 48,
@@ -5043,6 +5044,197 @@
    "admitted": false,
    "head": "skill",
    "reason": "2017: fewer than 2 vintages give a t; 2019: sign flipped between training vintages"
+  },
+  {
+   "lane": "tool-family admission (TL_16, DS-06)",
+   "artifact": "_labs/efv_tool_admission.json",
+   "arm": "TL:hit.skill.tip_iso_resid",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-10-15T12:23:36+00:00",
+   "per_vintage_signs": {
+    "lv:2017": {},
+    "lv:2018": {},
+    "lv:2019": {
+     "2018": 1
+    },
+    "lv:2020": {
+     "2018": 1,
+     "2019": 1
+    },
+    "lv:2021": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1
+    },
+    "vm:2020": {
+     "2019": -1
+    },
+    "vm:2021": {
+     "2019": -1,
+     "2020": -1
+    },
+    "vm:2022": {
+     "2019": -1,
+     "2020": -1,
+     "2021": 1
+    },
+    "vm:2023": {
+     "2019": -1,
+     "2020": -1,
+     "2021": 1,
+     "2022": -1
+    },
+    "vm:2024": {
+     "2019": -1,
+     "2020": -1,
+     "2021": 1,
+     "2022": -1,
+     "2023": -1
+    }
+   },
+   "mean_abs_t": {
+    "lv:2017": null,
+    "lv:2018": null,
+    "lv:2019": 0.3323,
+    "lv:2020": 0.3619,
+    "lv:2021": 0.3548,
+    "vm:2020": 0.7387,
+    "vm:2021": 0.7575,
+    "vm:2022": 0.5993,
+    "vm:2023": 0.585,
+    "vm:2024": 0.5991
+   },
+   "n_valid_vintages": {
+    "lv:2017": 0,
+    "lv:2018": 0,
+    "lv:2019": 1,
+    "lv:2020": 2,
+    "lv:2021": 3,
+    "vm:2020": 1,
+    "vm:2021": 2,
+    "vm:2022": 3,
+    "vm:2023": 4,
+    "vm:2024": 5
+   },
+   "admitted": false,
+   "head": "skill",
+   "reason": "lv:2017: fewer than 2 vintages give a t; lv:2018: fewer than 2 vintages give a t; lv:2019: fewer than 2 vintages give a t; lv:2020: mean |t| 0.362 below 1.0; lv:2021: mean |t| 0.355 below 1.0; vm:2020: fewer than 2 vintages give a t; vm:2021: mean |t| 0.758 below 1.0; vm:2022: sign flipped between training vintages; vm:2023: sign flipped between training vintages; vm:2024: sign flipped between training vintages",
+   "role": "development"
+  },
+  {
+   "lane": "tool-family admission (TL_16, DS-06)",
+   "artifact": "_labs/efv_tool_admission.json",
+   "arm": "TL:hit.skill.tool_hit_w",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-10-15T12:23:36+00:00",
+   "per_vintage_signs": {
+    "lv:2017": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1
+    },
+    "lv:2018": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1
+    },
+    "lv:2019": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": 1
+    },
+    "lv:2020": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": 1,
+     "2019": 1
+    },
+    "lv:2021": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": 1,
+     "2019": 1,
+     "2020": 1
+    },
+    "vm:2020": {
+     "2018": 1,
+     "2019": 1
+    },
+    "vm:2021": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1
+    },
+    "vm:2022": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1,
+     "2021": 1
+    },
+    "vm:2023": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1,
+     "2021": 1,
+     "2022": 1
+    },
+    "vm:2024": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1,
+     "2021": 1,
+     "2022": 1,
+     "2023": -1
+    }
+   },
+   "mean_abs_t": {
+    "lv:2017": 3.4575,
+    "lv:2018": 2.29,
+    "lv:2019": 2.4118,
+    "lv:2020": 2.4245,
+    "lv:2021": 2.3135,
+    "vm:2020": 1.5943,
+    "vm:2021": 1.8265,
+    "vm:2022": 1.5943,
+    "vm:2023": 1.4675,
+    "vm:2024": 1.2414
+   },
+   "n_valid_vintages": {
+    "lv:2017": 4,
+    "lv:2018": 5,
+    "lv:2019": 6,
+    "lv:2020": 7,
+    "lv:2021": 8,
+    "vm:2020": 2,
+    "vm:2021": 3,
+    "vm:2022": 4,
+    "vm:2023": 5,
+    "vm:2024": 6
+   },
+   "admitted": false,
+   "head": "skill",
+   "reason": "vm:2024: sign flipped between training vintages",
+   "role": "development"
   }
  ],
  "probes": [
@@ -5781,8 +5973,8 @@
    "artifact": "_labs/efv_tool_features.json",
    "probe": "TL9:coverage.frame:hit",
    "verdict": "COUNTED",
-   "generated_at": "2026-10-14T22:07:43+00:00",
-   "reason": "frame rows 3033, outcome-blind id 2883, R-VM rows dropped 20, V 2011 to 2019; counts only",
+   "generated_at": "2026-10-15T12:13:14+00:00",
+   "reason": "frame rows 4155, outcome-blind id 3884, R-VM rows dropped 93, V 2011 to 2021; counts only",
    "role": "development"
   },
   {
@@ -5790,8 +5982,8 @@
    "artifact": "_labs/efv_tool_features.json",
    "probe": "TL9:coverage.frame:pit",
    "verdict": "COUNTED",
-   "generated_at": "2026-10-14T22:07:43+00:00",
-   "reason": "frame rows 2894, outcome-blind id 2793, R-VM rows dropped 15, V 2011 to 2019; counts only",
+   "generated_at": "2026-10-15T12:13:14+00:00",
+   "reason": "frame rows 3980, outcome-blind id 3828, R-VM rows dropped 84, V 2011 to 2021; counts only",
    "role": "development"
   },
   {
@@ -5799,8 +5991,8 @@
    "artifact": "_labs/efv_tool_features.json",
    "probe": "TL9:coverage.per_source_grades:hit",
    "verdict": "COUNTED",
-   "generated_at": "2026-10-14T22:07:43+00:00",
-   "reason": "rows with a consensus from each source's earliest in-window snapshot: hit 2584, game_pwr 2585, raw_pwr 1037; counts only",
+   "generated_at": "2026-10-15T12:13:14+00:00",
+   "reason": "rows with a consensus from each source's earliest in-window snapshot: hit 3680, game_pwr 3681, raw_pwr 2049; counts only",
    "role": "development"
   },
   {
@@ -5808,8 +6000,8 @@
    "artifact": "_labs/efv_tool_features.json",
    "probe": "TL9:coverage.pwr_comp:hit",
    "verdict": "COUNTED",
-   "generated_at": "2026-10-14T22:07:43+00:00",
-   "reason": "rows with both as-of game and raw consensus inputs 1037; not a candidate: look P served C0",
+   "generated_at": "2026-10-15T12:13:14+00:00",
+   "reason": "rows with both as-of game and raw consensus inputs 2048; not a candidate: look P served C0",
    "role": "development"
   },
   {
@@ -5817,8 +6009,8 @@
    "artifact": "_labs/efv_tool_features.json",
    "probe": "TL9:coverage.tip_iso_resid:hit",
    "verdict": "COUNTED",
-   "generated_at": "2026-10-14T22:07:43+00:00",
-   "reason": "rows with a residual 843 (TIP table computable at V 2018, 2019); PA-shrunk pre-V MiLB ISO minus tip_level at the block level, every input season at most V - 1; counts only",
+   "generated_at": "2026-10-15T12:13:14+00:00",
+   "reason": "rows with a residual 1753 (TIP table computable at V 2018, 2019, 2020, 2021); PA-shrunk pre-V MiLB ISO minus tip_level at the block level, every input season at most V - 1; counts only",
    "role": "development"
   },
   {
@@ -5826,8 +6018,8 @@
    "artifact": "_labs/efv_tool_features.json",
    "probe": "TL9:coverage.tool_hit_w_inputs:hit",
    "verdict": "COUNTED",
-   "generated_at": "2026-10-14T22:07:43+00:00",
-   "reason": "rows with one source hit grade 1667, with two or more 917; per-source hit grades only, the weight is computed per fold outside the V frame and never stored",
+   "generated_at": "2026-10-15T12:13:14+00:00",
+   "reason": "rows with one source hit grade 2075, with two or more 1605; per-source hit grades only, the weight is computed per fold outside the V frame and never stored",
    "role": "development"
   }
  ],
@@ -5835,12 +6027,12 @@
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
  "sources_pending": [],
- "expected_spurious_passes_at_nominal_5pct": 20.0,
+ "expected_spurious_passes_at_nominal_5pct": 20.1,
  "n_scoreable_against_a_floor": 357,
  "n_cleared_own_floor": 0,
  "cleared_own_floor": [],
  "cleared_is_the_weakest_bar": "`cleared_own_floor` compares the point delta to the lane's recorded rho floor and nothing else. It is not a verdict: a verdict needs the Holm correction across that lane's family, and for anything gated after 2026-09-06 the co-primary contributor-AUC leg as well. It is published because the count of arms that reached even this bar is the honest way to describe the program's yield.",
- "reading": "400 arms have been adjudicated across 11 lanes, 357 of them scoreable against a recorded floor, and 0 reached that floor on the point estimate. At a nominal 5% per arm, pure noise alone would be expected to produce about 20.0 passes across 400 arms. Fewer arms cleared than noise alone would produce, which says the per-lane floors are, if anything, conservative, and that the program's run of nulls is a real result rather than a reporting artifact. Every lane's own Holm correction is correct and controls the error rate WITHIN that lane; nothing has ever controlled it across lanes, because until now nothing counted them. Read any survivor against this denominator.",
+ "reading": "402 arms have been adjudicated across 12 lanes, 357 of them scoreable against a recorded floor, and 0 reached that floor on the point estimate. At a nominal 5% per arm, pure noise alone would be expected to produce about 20.1 passes across 402 arms. Fewer arms cleared than noise alone would produce, which says the per-lane floors are, if anything, conservative, and that the program's run of nulls is a real result rather than a reporting artifact. Every lane's own Holm correction is correct and controls the error rate WITHIN that lane; nothing has ever controlled it across lanes, because until now nothing counted them. Read any survivor against this denominator.",
  "this_is_not_a_correction": "no program-wide Holm is applied and none should be. The arms were gated on different frames, pools and label definitions, so a retrospective joint family would imply a structure that never existed. The count makes the denominator visible; the reserved 2025 fold is what actually buys confirmation.",
  "reserved_fold": {
   "cohort": "2025 base year",

@@ -5,8 +5,9 @@
 
 """TL_9_EFV_TOOL_SIDECAR pins (Part 9 PLAN section 9.4.5; LANE_C.md section 2.7).
 
-1. Guards: list vintages 2020 and 2021 raise while EFV_V2_GATE.md '## 9. Results' holds
-   no R-LV entry; vintages reaching the R-VM cohorts raise; R-VM rows are dropped before
+1. Guards: list vintages 2020 and 2021 raise without the R-LV record (an EFV_V2_GATE.md
+   '## 9. Results' entry, or EFV_V3_BACKTEST.md '### 5.1 R-LV', decision D-k3) and
+   without the committed gate sha; with both, TL_16 extended the sidecar to them; vintages reaching the R-VM cohorts raise; R-VM rows are dropped before
    any count; every input season is at most V - 1 and before 2026.
 2. No outcome column read: the modules import no WAR, label or outcome module, a frame
    row's own fields at or after V never move its features, and the TIP fit asks for no
@@ -14,7 +15,8 @@
 3. The columns: earliest in-window grade per source, the consensus rule, pwr_comp is
    'not a candidate' unless look P served C2 with a below 1, the residual is shrunk ISO
    minus tip_level, and missing values carry no flag (imputed at the TRAIN mean).
-4. The committed sidecar: development vintages only, keys match efv_vintage_frame rows,
+4. The committed sidecar: development vintages 2011 to 2019 plus the spent R-LV
+   vintages 2020 and 2021 (TL_16), keys match efv_vintage_frame rows,
    and the arm ledger counts its probes with role development.
 """
 from __future__ import annotations
@@ -120,7 +122,14 @@ def test_reserved_vintage_raises_without_rlv_record(V):
         TF.assert_vintage_allowed(V)
     import efv_tool_sidecar as T
     with pytest.raises(TF.SidecarGuardError):
-        T.build(frames={"hit": {}, "pit": {}}, snaps={}, vintages=(V,))
+        T.build(frames={"hit": {}, "pit": {}}, snaps={}, vintages=(V,), rlv_record=False)
+
+
+@pytest.mark.parametrize("V", sorted(F.RESERVED_LV))
+def test_reserved_vintage_needs_the_gate_sha_even_with_the_record(V):
+    import efv_tool_sidecar as T
+    with pytest.raises(F.ReservedFrameError):
+        T.build(frames={"hit": {}, "pit": {}}, snaps={}, vintages=(V,), rlv_record=True)
 
 
 def test_rvm_vintage_raises_even_with_record():
@@ -128,14 +137,18 @@ def test_rvm_vintage_raises_even_with_record():
         TF.assert_vintage_allowed(F.R_VM_FIRST_DEBUT_YEAR, rlv_record=True)
 
 
-def test_rlv_record_reads_section_9_only():
+def test_rlv_record_reads_section_9_or_the_backtest_section():
     import efv_tool_sidecar as T
     empty = "## 9. Results\n\n(Empty. Filled only by the look runner.)\n\n---\n\n## 10. X\nR-LV\n"
     filled = "## 9. Results\n\n### R-LV look (2026-12-01)\nrows\n\n## 10. X\n"
+    back = "## 5. Results\n\n### 5.1 R-LV, list vintages 2020 and 2021 (n 2,349)\n"
     assert T.rlv_record_exists(empty) is False
+    assert T.rlv_record_exists(empty, "") is False
     assert T.rlv_record_exists(filled) is True
-    # the committed gate holds no R-LV entry today, so no 2020 or 2021 row may exist
-    assert T.rlv_record_exists() is False
+    assert T.rlv_record_exists(empty, back) is True
+    # decision D-k3: the gate's s9 stays empty by its s11 and the record is the backtest's
+    # s5.1 (the reserved read of 2026-10-08, commit 1c73c420)
+    assert T.rlv_record_exists() is True
 
 
 def test_seasons_at_or_after_v_raise():
@@ -288,11 +301,15 @@ def doc():
     return json.loads(SIDECAR.read_text(encoding="utf-8"))
 
 
-def test_committed_sidecar_reads_development_vintages_only(doc):
+def test_committed_sidecar_reads_development_and_spent_rlv_vintages_only(doc):
+    allowed = list(F.DEV_VINTAGES) + sorted(F.RESERVED_LV)
     vs = {int(v) for side in doc["rows"].values() for v in side}
-    assert vs <= set(F.DEV_VINTAGES)
-    assert not vs & set(F.RESERVED_LV)
-    assert doc["guards"]["vintages_read"] == list(F.DEV_VINTAGES)
+    assert vs <= set(allowed)
+    assert all(v < F.R_VM_FIRST_DEBUT_YEAR for v in vs)
+    assert doc["guards"]["vintages_read"] == allowed
+    assert doc["guards"]["rlv_record"] is True
+    assert F.gate_sha_committed(doc["guards"]["gate_sha"])
+    assert doc["extended_by"] == "TL_16_EFV_TOOL_DEV_ADMISSION"
     assert doc["pwr_comp"]["candidate"] is False
     for t in doc["tip_tables"].values():
         assert t["career_seasons"] and max(t["career_seasons"]) < 2026

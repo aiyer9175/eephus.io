@@ -1,0 +1,2373 @@
+{
+ "schema": "efv_tool_admission/1",
+ "generated_at": "2026-10-15T12:23:36+00:00",
+ "produced_by": "tools/efv_tool_admission.py",
+ "task": "TL_16_EFV_TOOL_DEV_ADMISSION",
+ "code_commit": "fa8da6eb",
+ "owner_ask": "2026-10-01, message 2's last sentence: 'After doing so, if this proves to improve tool grade accuracy, can we then check if tool grades can be used as eFV drivers / how they should be weighted?'",
+ "why_this_may_run": "The eFV feature frontier is closed (plan Part 2; the 2026-08-14 closure, 39 arms, zero survivors) and game power failed as an eFV driver four times (the Phase 1 partial, D-1 tool_game_pwr -0.0047, the C3 power pairs, iso_rel 0 of 11 folds; data/xfv_arm_ledger.json); nothing here re-runs a spent arm. The columns are NEW (a power composite chosen on realized ISO by a registered look, a tool-implied ISO residual, the inputs of an accuracy-weighted hit consensus) and exist on the owner's 2026-10-01 asks. The served eFV grade does not change.",
+ "registration_path": "TL-Q1 answer (a) 'Next registration' (DECISIONS_FOR_OWNER.md): the DS-06 rule on development folds only; nothing is adjudicated; an arm admitted in every lv and vm fold is pre-declared for the next registration (V3 at the 2027 label epoch, or the next registration docs/efv-v2/PROGRAM.md names) before its first read.",
+ "role": "development diagnostic; adjudicates nothing; no served number",
+ "adjudicates": "nothing",
+ "owner_precondition": {
+  "hit": "look W (docs/tools-2026-10/TOOL_IMPLIED_PRODUCTION_GATE.md Part 8, 2026-10-14): hit NULL and the look VOID under W.7; not a PASS, so the owner's 'if this proves to improve tool grade accuracy' is NOT met for hit",
+  "composite": "look P (same file, Part 8, 2026-10-14): served C0; no PASS for C1 or C2, so the precondition is NOT met for the composite",
+  "tip_iso_resid": "no accuracy look applies: a production-beyond-grade residual, not a tool weight"
+ },
+ "folds": {
+  "lv": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021
+  ],
+  "vm": [
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ]
+ },
+ "head": "skill",
+ "target": "u_y",
+ "guards": {
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "rlv_record": true,
+  "rlv_record_where": "docs/efv-v2/EFV_V3_BACKTEST.md s5.1 at 1c73c420 (decision D-k3, the TL2-Q1 reading); EFV_V2_GATE.md s9 stays empty by its s11",
+  "gate_sha": "e7931ce4e13110eebb53555bff455ff13ca7c502",
+  "r_vm_first_debut_year": 2025,
+  "reserved_vm_pins": [],
+  "lv_folds": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021
+  ],
+  "vm_folds": [
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "rule_last_year": 2016,
+  "gate_registered": true,
+  "closed_arms_rerun": false,
+  "order_index_fitted": false,
+  "delta_read": false,
+  "anchor_gate_grouping": false
+ },
+ "label": {
+  "provider": "fwar",
+  "label_id": "fwar@2026-10-02-0341299c20ec",
+  "lv_target": "W3 percentile within (side, list vintage), ties averaged",
+  "vm_target": "the v1 matrix target (target_censored) percentile within decision year, matrices as built on the frozen label"
+ },
+ "rule": {
+  "statement": "a driver enters only if its coefficient's sign held in every training vintage that gives a t (at least 60 rows, at least 2 such vintages) and its mean |t| is at least 1.0 (docs/efv-v2/EFV_V2_GATE.md s4.2, DS-06)",
+  "min_rows": 60,
+  "min_vintages": 2,
+  "min_mean_abs_t": 1.0,
+  "function": "efv_v2_model.admission_for_key(target=u_y, has_block_only=True)",
+  "lv_training": "efv_v2_model.lv_training_rows at list vintages below V, every V-frame player excluded (gate s4.5)",
+  "vm_training": "efv_v2_model.matrix_training_rows at decision years below the fold year (tools/efv_v2_assemble.vm_folds)",
+  "vm_join": "the sidecar row of the latest list vintage V with V-05-01 on or before the matrix row's asof_date",
+  "tool_hit_w": "sum(w_s g_s) / sum(w_s) over the row's per-source hit grades, w from BA2's derive_weights per fold",
+  "tool_hit_replacement": "tool_hit_w replaces tool_hit for its own arm; the rule reads one column at a time, so the replacement moves nothing it reads"
+ },
+ "inputs": {
+  "sidecar": "data/_labs/efv_tool_features.json",
+  "sidecar_sha256": "371570862f114b99c0f59bb6202e9e869408187ea593d50dcf583b7c812f48ef",
+  "sidecar_generated_at": "2026-10-15T12:13:14+00:00",
+  "hitter_matrix_sha256": "5e6e0d937955c4364f353d60e44f63ea2e2036bb2449726922942a60f8f62e2d",
+  "efv_v2_model.py": "0b785f4c614a74d0b3811a02a4ec13a541ff4235a53e0d72a3cc69eab034a28f",
+  "efv_tool_features.py": "e07cb24829e2929a784b2e3d3d29b4a00d88b91e97b1c62f019d557df6bea644",
+  "ba_tool_grade_lab.py": "e0e8fd0da1005417c63f91aad9c5082cf48c7cf22446f5fa79ca47e264675823",
+  "power_composite_eval.json": "4f416976db8bd953cd1d2a85fc4a70116669cff5ba9ef6774a1779e74acea058"
+ },
+ "counts": {
+  "lv_training_rows": 4248,
+  "lv_has_block": 3840,
+  "lv_reserved_vm_kept_w3_zero": 86,
+  "lv_frame_rows": {
+   "2011": 69,
+   "2012": 189,
+   "2013": 268,
+   "2014": 260,
+   "2015": 397,
+   "2016": 405,
+   "2017": 472,
+   "2018": 450,
+   "2019": 543,
+   "2020": 596,
+   "2021": 599
+  },
+  "vm_matrix_rows": 1889,
+  "vm_rows_joined_to_sidecar": 1219,
+  "vm_join_vintages": {
+   "2011": 5,
+   "2012": 65,
+   "2014": 67,
+   "2015": 88,
+   "2016": 117,
+   "2017": 86,
+   "2018": 137,
+   "2019": 97,
+   "2020": 140,
+   "2021": 417
+  }
+ },
+ "arms": {
+  "TL:hit.skill.tip_iso_resid": {
+   "tag": "TL:hit.skill.tip_iso_resid",
+   "side": "hit",
+   "head": "skill",
+   "driver": "tip_iso_resid",
+   "column_key": "scr_tl_tip_iso_resid",
+   "target": "u_y",
+   "rows": "has_block",
+   "item": "DS-06",
+   "role": "development",
+   "frame": "lv folds 2017 to 2021 (list vintages 2020 and 2021 as spent R-LV development rows) and vm folds 2020 to 2024, each on its own training vintages",
+   "verdict": "REFUSED",
+   "verdict_scope": "the DS-06 rule inside every fold; ADMITTED only when all ten folds admit; a development reading that adjudicates nothing",
+   "admitted": false,
+   "admitted_folds": [],
+   "n_admitted_folds": 0,
+   "n_folds": 10,
+   "fold_signs_agree": true,
+   "reason": "lv:2017: fewer than 2 vintages give a t; lv:2018: fewer than 2 vintages give a t; lv:2019: fewer than 2 vintages give a t; lv:2020: mean |t| 0.362 below 1.0; lv:2021: mean |t| 0.355 below 1.0; vm:2020: fewer than 2 vintages give a t; vm:2021: mean |t| 0.758 below 1.0; vm:2022: sign flipped between training vintages; vm:2023: sign flipped between training vintages; vm:2024: sign flipped between training vintages",
+   "per_vintage_signs": {
+    "lv:2017": {},
+    "lv:2018": {},
+    "lv:2019": {
+     "2018": 1
+    },
+    "lv:2020": {
+     "2018": 1,
+     "2019": 1
+    },
+    "lv:2021": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1
+    },
+    "vm:2020": {
+     "2019": -1
+    },
+    "vm:2021": {
+     "2019": -1,
+     "2020": -1
+    },
+    "vm:2022": {
+     "2019": -1,
+     "2020": -1,
+     "2021": 1
+    },
+    "vm:2023": {
+     "2019": -1,
+     "2020": -1,
+     "2021": 1,
+     "2022": -1
+    },
+    "vm:2024": {
+     "2019": -1,
+     "2020": -1,
+     "2021": 1,
+     "2022": -1,
+     "2023": -1
+    }
+   },
+   "mean_abs_t": {
+    "lv:2017": null,
+    "lv:2018": null,
+    "lv:2019": 0.3323,
+    "lv:2020": 0.3619,
+    "lv:2021": 0.3548,
+    "vm:2020": 0.7387,
+    "vm:2021": 0.7575,
+    "vm:2022": 0.5993,
+    "vm:2023": 0.585,
+    "vm:2024": 0.5991
+   },
+   "n_valid_vintages": {
+    "lv:2017": 0,
+    "lv:2018": 0,
+    "lv:2019": 1,
+    "lv:2020": 2,
+    "lv:2021": 3,
+    "vm:2020": 1,
+    "vm:2021": 2,
+    "vm:2022": 3,
+    "vm:2023": 4,
+    "vm:2024": 5
+   },
+   "by_fold": {
+    "lv:2017": {
+     "admitted": false,
+     "reason": "fewer than 2 vintages give a t",
+     "per_vintage_signs": {},
+     "t_by_vintage": {},
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "n_valid_vintages": 0,
+     "mean_abs_t": null,
+     "sign": 0,
+     "n_train": 1038,
+     "n_train_has_block": 1005,
+     "n_train_observed": 0,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 178,
+       "has_block": 166,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 241,
+       "has_block": 236,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 182,
+       "has_block": 180,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 229,
+       "has_block": 222,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 139,
+       "has_block": 136,
+       "observed": 0
+      }
+     }
+    },
+    "lv:2018": {
+     "admitted": false,
+     "reason": "fewer than 2 vintages give a t",
+     "per_vintage_signs": {},
+     "t_by_vintage": {},
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "n_valid_vintages": 0,
+     "mean_abs_t": null,
+     "sign": 0,
+     "n_train": 1474,
+     "n_train_has_block": 1412,
+     "n_train_observed": 0,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 68,
+       "has_block": 64,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 181,
+       "has_block": 169,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 255,
+       "has_block": 246,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 224,
+       "has_block": 217,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 304,
+       "has_block": 292,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 251,
+       "has_block": 242,
+       "observed": 0
+      },
+      "2017": {
+       "rows": 191,
+       "has_block": 182,
+       "observed": 0
+      }
+     }
+    },
+    "lv:2019": {
+     "admitted": false,
+     "reason": "fewer than 2 vintages give a t",
+     "per_vintage_signs": {
+      "2018": 1
+     },
+     "t_by_vintage": {
+      "2018": 0.3323
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "n_valid_vintages": 1,
+     "mean_abs_t": 0.3323,
+     "sign": 1,
+     "n_train": 1922,
+     "n_train_has_block": 1842,
+     "n_train_observed": 155,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 188,
+       "has_block": 174,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 265,
+       "has_block": 256,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 251,
+       "has_block": 242,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 368,
+       "has_block": 355,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 323,
+       "has_block": 311,
+       "observed": 0
+      },
+      "2017": {
+       "rows": 295,
+       "has_block": 283,
+       "observed": 0
+      },
+      "2018": {
+       "rows": 163,
+       "has_block": 156,
+       "observed": 155
+      }
+     }
+    },
+    "lv:2020": {
+     "admitted": false,
+     "reason": "mean |t| 0.362 below 1.0",
+     "per_vintage_signs": {
+      "2018": 1,
+      "2019": 1
+     },
+     "t_by_vintage": {
+      "2018": 0.2311,
+      "2019": 0.4927
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "n_valid_vintages": 2,
+     "mean_abs_t": 0.3619,
+     "sign": 1,
+     "n_train": 2372,
+     "n_train_has_block": 2270,
+     "n_train_observed": 406,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 188,
+       "has_block": 174,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 267,
+       "has_block": 258,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 257,
+       "has_block": 247,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 385,
+       "has_block": 371,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 366,
+       "has_block": 352,
+       "observed": 0
+      },
+      "2017": {
+       "rows": 376,
+       "has_block": 361,
+       "observed": 0
+      },
+      "2018": {
+       "rows": 270,
+       "has_block": 256,
+       "observed": 253
+      },
+      "2019": {
+       "rows": 194,
+       "has_block": 186,
+       "observed": 153
+      }
+     }
+    },
+    "lv:2021": {
+     "admitted": false,
+     "reason": "mean |t| 0.355 below 1.0",
+     "per_vintage_signs": {
+      "2018": 1,
+      "2019": 1,
+      "2020": 1
+     },
+     "t_by_vintage": {
+      "2018": 0.2125,
+      "2019": 0.4356,
+      "2020": 0.4164
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "n_valid_vintages": 3,
+     "mean_abs_t": 0.3548,
+     "sign": 1,
+     "n_train": 2761,
+     "n_train_has_block": 2639,
+     "n_train_observed": 696,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 189,
+       "has_block": 175,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 268,
+       "has_block": 259,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 258,
+       "has_block": 248,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 391,
+       "has_block": 377,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 386,
+       "has_block": 370,
+       "observed": 0
+      },
+      "2017": {
+       "rows": 426,
+       "has_block": 407,
+       "observed": 0
+      },
+      "2018": {
+       "rows": 350,
+       "has_block": 332,
+       "observed": 329
+      },
+      "2019": {
+       "rows": 295,
+       "has_block": 284,
+       "observed": 247
+      },
+      "2020": {
+       "rows": 129,
+       "has_block": 122,
+       "observed": 120
+      }
+     }
+    },
+    "vm:2020": {
+     "admitted": false,
+     "reason": "fewer than 2 vintages give a t",
+     "per_vintage_signs": {
+      "2019": -1
+     },
+     "t_by_vintage": {
+      "2019": -0.7387
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "n_valid_vintages": 1,
+     "mean_abs_t": 0.7387,
+     "sign": -1,
+     "n_train": 864,
+     "n_train_has_block": 414,
+     "n_train_observed": 89,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "by_vintage": {
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 79
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 10
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     }
+    },
+    "vm:2021": {
+     "admitted": false,
+     "reason": "mean |t| 0.758 below 1.0",
+     "per_vintage_signs": {
+      "2019": -1,
+      "2020": -1
+     },
+     "t_by_vintage": {
+      "2019": -0.7396,
+      "2020": -0.7755
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "n_valid_vintages": 2,
+     "mean_abs_t": 0.7575,
+     "sign": -1,
+     "n_train": 1032,
+     "n_train_has_block": 530,
+     "n_train_observed": 175,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "by_vintage": {
+      "2020": {
+       "rows": 168,
+       "has_block": 116,
+       "observed": 86
+      },
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 79
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 10
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     }
+    },
+    "vm:2022": {
+     "admitted": false,
+     "reason": "sign flipped between training vintages",
+     "per_vintage_signs": {
+      "2019": -1,
+      "2020": -1,
+      "2021": 1
+     },
+     "t_by_vintage": {
+      "2019": -0.7512,
+      "2020": -0.7673,
+      "2021": 0.2795
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "n_valid_vintages": 3,
+     "mean_abs_t": 0.5993,
+     "sign": 0,
+     "n_train": 1159,
+     "n_train_has_block": 635,
+     "n_train_observed": 266,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ],
+     "by_vintage": {
+      "2021": {
+       "rows": 127,
+       "has_block": 105,
+       "observed": 91
+      },
+      "2020": {
+       "rows": 168,
+       "has_block": 116,
+       "observed": 86
+      },
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 79
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 10
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     }
+    },
+    "vm:2023": {
+     "admitted": false,
+     "reason": "sign flipped between training vintages",
+     "per_vintage_signs": {
+      "2019": -1,
+      "2020": -1,
+      "2021": 1,
+      "2022": -1
+     },
+     "t_by_vintage": {
+      "2019": -0.7615,
+      "2020": -0.7599,
+      "2021": 0.2625,
+      "2022": -0.5561
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "n_valid_vintages": 4,
+     "mean_abs_t": 0.585,
+     "sign": 0,
+     "n_train": 1410,
+     "n_train_has_block": 837,
+     "n_train_observed": 430,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+     ],
+     "by_vintage": {
+      "2022": {
+       "rows": 251,
+       "has_block": 202,
+       "observed": 164
+      },
+      "2021": {
+       "rows": 127,
+       "has_block": 105,
+       "observed": 91
+      },
+      "2020": {
+       "rows": 168,
+       "has_block": 116,
+       "observed": 86
+      },
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 79
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 10
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     }
+    },
+    "vm:2024": {
+     "admitted": false,
+     "reason": "sign flipped between training vintages",
+     "per_vintage_signs": {
+      "2019": -1,
+      "2020": -1,
+      "2021": 1,
+      "2022": -1,
+      "2023": -1
+     },
+     "t_by_vintage": {
+      "2019": -0.7813,
+      "2020": -0.745,
+      "2021": 0.2289,
+      "2022": -0.557,
+      "2023": -0.6832
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "n_valid_vintages": 5,
+     "mean_abs_t": 0.5991,
+     "sign": 0,
+     "n_train": 1655,
+     "n_train_has_block": 1039,
+     "n_train_observed": 520,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "by_vintage": {
+      "2023": {
+       "rows": 245,
+       "has_block": 202,
+       "observed": 90
+      },
+      "2022": {
+       "rows": 251,
+       "has_block": 202,
+       "observed": 164
+      },
+      "2021": {
+       "rows": 127,
+       "has_block": 105,
+       "observed": 91
+      },
+      "2020": {
+       "rows": 168,
+       "has_block": 116,
+       "observed": 86
+      },
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 79
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 10
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 0
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 0
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 0
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     }
+    }
+   },
+   "hit_weights_by_fold": null,
+   "delta": null,
+   "floor_rho": null,
+   "reads": "the target percentile and the consensus percentile on training rows only; no order index, no delta, no served number"
+  },
+  "TL:hit.skill.tool_hit_w": {
+   "tag": "TL:hit.skill.tool_hit_w",
+   "side": "hit",
+   "head": "skill",
+   "driver": "tool_hit_w",
+   "column_key": "scr_tl_tool_hit_w",
+   "target": "u_y",
+   "rows": "has_block",
+   "item": "DS-06",
+   "role": "development",
+   "frame": "lv folds 2017 to 2021 (list vintages 2020 and 2021 as spent R-LV development rows) and vm folds 2020 to 2024, each on its own training vintages",
+   "verdict": "REFUSED",
+   "verdict_scope": "the DS-06 rule inside every fold; ADMITTED only when all ten folds admit; a development reading that adjudicates nothing",
+   "admitted": false,
+   "admitted_folds": [
+    "lv:2017",
+    "lv:2018",
+    "lv:2019",
+    "lv:2020",
+    "lv:2021",
+    "vm:2020",
+    "vm:2021",
+    "vm:2022",
+    "vm:2023"
+   ],
+   "n_admitted_folds": 9,
+   "n_folds": 10,
+   "fold_signs_agree": true,
+   "reason": "vm:2024: sign flipped between training vintages",
+   "per_vintage_signs": {
+    "lv:2017": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1
+    },
+    "lv:2018": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1
+    },
+    "lv:2019": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": 1
+    },
+    "lv:2020": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": 1,
+     "2019": 1
+    },
+    "lv:2021": {
+     "2012": 1,
+     "2014": 1,
+     "2015": 1,
+     "2016": 1,
+     "2017": 1,
+     "2018": 1,
+     "2019": 1,
+     "2020": 1
+    },
+    "vm:2020": {
+     "2018": 1,
+     "2019": 1
+    },
+    "vm:2021": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1
+    },
+    "vm:2022": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1,
+     "2021": 1
+    },
+    "vm:2023": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1,
+     "2021": 1,
+     "2022": 1
+    },
+    "vm:2024": {
+     "2018": 1,
+     "2019": 1,
+     "2020": 1,
+     "2021": 1,
+     "2022": 1,
+     "2023": -1
+    }
+   },
+   "mean_abs_t": {
+    "lv:2017": 3.4575,
+    "lv:2018": 2.29,
+    "lv:2019": 2.4118,
+    "lv:2020": 2.4245,
+    "lv:2021": 2.3135,
+    "vm:2020": 1.5943,
+    "vm:2021": 1.8265,
+    "vm:2022": 1.5943,
+    "vm:2023": 1.4675,
+    "vm:2024": 1.2414
+   },
+   "n_valid_vintages": {
+    "lv:2017": 4,
+    "lv:2018": 5,
+    "lv:2019": 6,
+    "lv:2020": 7,
+    "lv:2021": 8,
+    "vm:2020": 2,
+    "vm:2021": 3,
+    "vm:2022": 4,
+    "vm:2023": 5,
+    "vm:2024": 6
+   },
+   "by_fold": {
+    "lv:2017": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2012": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1
+     },
+     "t_by_vintage": {
+      "2012": 2.3319,
+      "2014": 3.2329,
+      "2015": 3.9895,
+      "2016": 4.2757
+     },
+     "vintages_without_t": [
+      2011,
+      2013
+     ],
+     "n_valid_vintages": 4,
+     "mean_abs_t": 3.4575,
+     "sign": 1,
+     "n_train": 1038,
+     "n_train_has_block": 1005,
+     "n_train_observed": 664,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 33
+      },
+      "2012": {
+       "rows": 178,
+       "has_block": 166,
+       "observed": 97
+      },
+      "2013": {
+       "rows": 241,
+       "has_block": 236,
+       "observed": 1
+      },
+      "2014": {
+       "rows": 182,
+       "has_block": 180,
+       "observed": 176
+      },
+      "2015": {
+       "rows": 229,
+       "has_block": 222,
+       "observed": 221
+      },
+      "2016": {
+       "rows": 139,
+       "has_block": 136,
+       "observed": 136
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 687,
+      "rho": 1.0
+     }
+    },
+    "lv:2018": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2012": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": 1
+     },
+     "t_by_vintage": {
+      "2012": 1.9767,
+      "2014": 3.0026,
+      "2015": 2.6865,
+      "2016": 3.1016,
+      "2017": 0.6827
+     },
+     "vintages_without_t": [
+      2011,
+      2013
+     ],
+     "n_valid_vintages": 5,
+     "mean_abs_t": 2.29,
+     "sign": 1,
+     "n_train": 1474,
+     "n_train_has_block": 1412,
+     "n_train_observed": 1063,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 68,
+       "has_block": 64,
+       "observed": 32
+      },
+      "2012": {
+       "rows": 181,
+       "has_block": 169,
+       "observed": 101
+      },
+      "2013": {
+       "rows": 255,
+       "has_block": 246,
+       "observed": 2
+      },
+      "2014": {
+       "rows": 224,
+       "has_block": 217,
+       "observed": 213
+      },
+      "2015": {
+       "rows": 304,
+       "has_block": 292,
+       "observed": 291
+      },
+      "2016": {
+       "rows": 251,
+       "has_block": 242,
+       "observed": 242
+      },
+      "2017": {
+       "rows": 191,
+       "has_block": 182,
+       "observed": 182
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 1111,
+      "rho": 0.9995
+     }
+    },
+    "lv:2019": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2012": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1
+     },
+     "t_by_vintage": {
+      "2012": 1.982,
+      "2014": 2.519,
+      "2015": 2.6014,
+      "2016": 3.7131,
+      "2017": 1.2855,
+      "2018": 2.3697
+     },
+     "vintages_without_t": [
+      2011,
+      2013
+     ],
+     "n_valid_vintages": 6,
+     "mean_abs_t": 2.4118,
+     "sign": 1,
+     "n_train": 1922,
+     "n_train_has_block": 1842,
+     "n_train_observed": 1480,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 33
+      },
+      "2012": {
+       "rows": 188,
+       "has_block": 174,
+       "observed": 106
+      },
+      "2013": {
+       "rows": 265,
+       "has_block": 256,
+       "observed": 2
+      },
+      "2014": {
+       "rows": 251,
+       "has_block": 242,
+       "observed": 238
+      },
+      "2015": {
+       "rows": 368,
+       "has_block": 355,
+       "observed": 353
+      },
+      "2016": {
+       "rows": 323,
+       "has_block": 311,
+       "observed": 311
+      },
+      "2017": {
+       "rows": 295,
+       "has_block": 283,
+       "observed": 282
+      },
+      "2018": {
+       "rows": 163,
+       "has_block": 156,
+       "observed": 155
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 1546,
+      "rho": 0.9967
+     }
+    },
+    "lv:2020": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2012": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1,
+      "2019": 1
+     },
+     "t_by_vintage": {
+      "2012": 1.9786,
+      "2014": 2.4622,
+      "2015": 2.5676,
+      "2016": 3.9612,
+      "2017": 1.1304,
+      "2018": 2.9224,
+      "2019": 1.9489
+     },
+     "vintages_without_t": [
+      2011,
+      2013
+     ],
+     "n_valid_vintages": 7,
+     "mean_abs_t": 2.4245,
+     "sign": 1,
+     "n_train": 2372,
+     "n_train_has_block": 2270,
+     "n_train_observed": 1870,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 33
+      },
+      "2012": {
+       "rows": 188,
+       "has_block": 174,
+       "observed": 106
+      },
+      "2013": {
+       "rows": 267,
+       "has_block": 258,
+       "observed": 2
+      },
+      "2014": {
+       "rows": 257,
+       "has_block": 247,
+       "observed": 243
+      },
+      "2015": {
+       "rows": 385,
+       "has_block": 371,
+       "observed": 369
+      },
+      "2016": {
+       "rows": 366,
+       "has_block": 352,
+       "observed": 351
+      },
+      "2017": {
+       "rows": 376,
+       "has_block": 361,
+       "observed": 360
+      },
+      "2018": {
+       "rows": 270,
+       "has_block": 256,
+       "observed": 253
+      },
+      "2019": {
+       "rows": 194,
+       "has_block": 186,
+       "observed": 153
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 1956,
+      "rho": 0.9928
+     }
+    },
+    "lv:2021": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2012": 1,
+      "2014": 1,
+      "2015": 1,
+      "2016": 1,
+      "2017": 1,
+      "2018": 1,
+      "2019": 1,
+      "2020": 1
+     },
+     "t_by_vintage": {
+      "2012": 1.9706,
+      "2014": 2.4701,
+      "2015": 2.5526,
+      "2016": 3.9409,
+      "2017": 0.6929,
+      "2018": 2.8865,
+      "2019": 2.2818,
+      "2020": 1.7127
+     },
+     "vintages_without_t": [
+      2011,
+      2013
+     ],
+     "n_valid_vintages": 8,
+     "mean_abs_t": 2.3135,
+     "sign": 1,
+     "n_train": 2761,
+     "n_train_has_block": 2639,
+     "n_train_observed": 2231,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "by_vintage": {
+      "2011": {
+       "rows": 69,
+       "has_block": 65,
+       "observed": 33
+      },
+      "2012": {
+       "rows": 189,
+       "has_block": 175,
+       "observed": 106
+      },
+      "2013": {
+       "rows": 268,
+       "has_block": 259,
+       "observed": 2
+      },
+      "2014": {
+       "rows": 258,
+       "has_block": 248,
+       "observed": 244
+      },
+      "2015": {
+       "rows": 391,
+       "has_block": 377,
+       "observed": 375
+      },
+      "2016": {
+       "rows": 386,
+       "has_block": 370,
+       "observed": 369
+      },
+      "2017": {
+       "rows": 426,
+       "has_block": 407,
+       "observed": 406
+      },
+      "2018": {
+       "rows": 350,
+       "has_block": 332,
+       "observed": 329
+      },
+      "2019": {
+       "rows": 295,
+       "has_block": 284,
+       "observed": 247
+      },
+      "2020": {
+       "rows": 129,
+       "has_block": 122,
+       "observed": 120
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 2337,
+      "rho": 0.9889
+     }
+    },
+    "vm:2020": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2018": 1,
+      "2019": 1
+     },
+     "t_by_vintage": {
+      "2018": 0.8577,
+      "2019": 2.331
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "n_valid_vintages": 2,
+     "mean_abs_t": 1.5943,
+     "sign": 1,
+     "n_train": 864,
+     "n_train_has_block": 414,
+     "n_train_observed": 305,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "by_vintage": {
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 107
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 67
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 52
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 37
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 42
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 516,
+      "rho": 0.785
+     }
+    },
+    "vm:2021": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2018": 1,
+      "2019": 1,
+      "2020": 1
+     },
+     "t_by_vintage": {
+      "2018": 0.9018,
+      "2019": 2.3244,
+      "2020": 2.2534
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "n_valid_vintages": 3,
+     "mean_abs_t": 1.8265,
+     "sign": 1,
+     "n_train": 1032,
+     "n_train_has_block": 530,
+     "n_train_observed": 397,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "by_vintage": {
+      "2020": {
+       "rows": 168,
+       "has_block": 116,
+       "observed": 92
+      },
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 107
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 67
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 52
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 37
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 42
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 639,
+      "rho": 0.8108
+     }
+    },
+    "vm:2022": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2018": 1,
+      "2019": 1,
+      "2020": 1,
+      "2021": 1
+     },
+     "t_by_vintage": {
+      "2018": 0.905,
+      "2019": 2.3185,
+      "2020": 2.2602,
+      "2021": 0.8934
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "n_valid_vintages": 4,
+     "mean_abs_t": 1.5943,
+     "sign": 1,
+     "n_train": 1159,
+     "n_train_has_block": 635,
+     "n_train_observed": 494,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ],
+     "by_vintage": {
+      "2021": {
+       "rows": 127,
+       "has_block": 105,
+       "observed": 97
+      },
+      "2020": {
+       "rows": 168,
+       "has_block": 116,
+       "observed": 92
+      },
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 107
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 67
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 52
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 37
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 42
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 753,
+      "rho": 0.8396
+     }
+    },
+    "vm:2023": {
+     "admitted": true,
+     "reason": "sign held in every training vintage and mean |t| cleared",
+     "per_vintage_signs": {
+      "2018": 1,
+      "2019": 1,
+      "2020": 1,
+      "2021": 1,
+      "2022": 1
+     },
+     "t_by_vintage": {
+      "2018": 0.9126,
+      "2019": 2.2747,
+      "2020": 2.2765,
+      "2021": 0.91,
+      "2022": 0.9635
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "n_valid_vintages": 5,
+     "mean_abs_t": 1.4675,
+     "sign": 1,
+     "n_train": 1410,
+     "n_train_has_block": 837,
+     "n_train_observed": 675,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+     ],
+     "by_vintage": {
+      "2022": {
+       "rows": 251,
+       "has_block": 202,
+       "observed": 181
+      },
+      "2021": {
+       "rows": 127,
+       "has_block": 105,
+       "observed": 97
+      },
+      "2020": {
+       "rows": 168,
+       "has_block": 116,
+       "observed": 92
+      },
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 107
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 67
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 52
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 37
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 42
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 975,
+      "rho": 0.8483
+     }
+    },
+    "vm:2024": {
+     "admitted": false,
+     "reason": "sign flipped between training vintages",
+     "per_vintage_signs": {
+      "2018": 1,
+      "2019": 1,
+      "2020": 1,
+      "2021": 1,
+      "2022": 1,
+      "2023": -1
+     },
+     "t_by_vintage": {
+      "2018": 0.9254,
+      "2019": 2.2683,
+      "2020": 2.3037,
+      "2021": 0.9173,
+      "2022": 0.9791,
+      "2023": -0.0548
+     },
+     "vintages_without_t": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+     ],
+     "n_valid_vintages": 6,
+     "mean_abs_t": 1.2414,
+     "sign": 0,
+     "n_train": 1655,
+     "n_train_has_block": 1039,
+     "n_train_observed": 809,
+     "training_vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "by_vintage": {
+      "2023": {
+       "rows": 245,
+       "has_block": 202,
+       "observed": 134
+      },
+      "2022": {
+       "rows": 251,
+       "has_block": 202,
+       "observed": 181
+      },
+      "2021": {
+       "rows": 127,
+       "has_block": 105,
+       "observed": 97
+      },
+      "2020": {
+       "rows": 168,
+       "has_block": 116,
+       "observed": 92
+      },
+      "2019": {
+       "rows": 199,
+       "has_block": 124,
+       "observed": 107
+      },
+      "2018": {
+       "rows": 180,
+       "has_block": 92,
+       "observed": 67
+      },
+      "2017": {
+       "rows": 118,
+       "has_block": 77,
+       "observed": 52
+      },
+      "2016": {
+       "rows": 99,
+       "has_block": 59,
+       "observed": 37
+      },
+      "2015": {
+       "rows": 79,
+       "has_block": 62,
+       "observed": 42
+      },
+      "2014": {
+       "rows": 98,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2013": {
+       "rows": 56,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2012": {
+       "rows": 25,
+       "has_block": 0,
+       "observed": 0
+      },
+      "2011": {
+       "rows": 10,
+       "has_block": 0,
+       "observed": 0
+      }
+     },
+     "spearman_vs_tool_hit": {
+      "n": 1126,
+      "rho": 0.8252
+     }
+    }
+   },
+   "hit_weights_by_fold": {
+    "lv:2017": {
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "n_rows": 0,
+     "source_rho": {},
+     "board_years": [],
+     "max_board_year": 2014,
+     "flat": true,
+     "excluded_players": 472
+    },
+    "lv:2018": {
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "n_rows": 0,
+     "source_rho": {},
+     "board_years": [],
+     "max_board_year": 2015,
+     "flat": true,
+     "excluded_players": 450
+    },
+    "lv:2019": {
+     "weights": {
+      "fangraphs": 1.0,
+      "mlb_pipeline": 1.0
+     },
+     "n_rows": 0,
+     "source_rho": {},
+     "board_years": [],
+     "max_board_year": 2016,
+     "flat": true,
+     "excluded_players": 543
+    },
+    "lv:2020": {
+     "weights": {
+      "fangraphs": 0.9488,
+      "mlb_pipeline": 1.0512
+     },
+     "n_rows": 115,
+     "source_rho": {
+      "fangraphs": 0.2772,
+      "mlb_pipeline": 0.3513
+     },
+     "board_years": [
+      2017
+     ],
+     "max_board_year": 2017,
+     "flat": false,
+     "excluded_players": 596
+    },
+    "lv:2021": {
+     "weights": {
+      "fangraphs": 0.8849,
+      "mlb_pipeline": 1.1151
+     },
+     "n_rows": 305,
+     "source_rho": {
+      "fangraphs": 0.2656,
+      "mlb_pipeline": 0.3757
+     },
+     "board_years": [
+      2017,
+      2018
+     ],
+     "max_board_year": 2018,
+     "flat": false,
+     "excluded_players": 599
+    },
+    "vm:2020": {
+     "weights": {
+      "fangraphs": 0.9508,
+      "mlb_pipeline": 1.0492
+     },
+     "n_rows": 135,
+     "source_rho": {
+      "fangraphs": 0.2664,
+      "mlb_pipeline": 0.3283
+     },
+     "board_years": [
+      2017
+     ],
+     "max_board_year": 2017,
+     "flat": false,
+     "excluded_players": 168
+    },
+    "vm:2021": {
+     "weights": {
+      "fangraphs": 0.8807,
+      "mlb_pipeline": 1.1193
+     },
+     "n_rows": 324,
+     "source_rho": {
+      "fangraphs": 0.2322,
+      "mlb_pipeline": 0.3304
+     },
+     "board_years": [
+      2017,
+      2018
+     ],
+     "max_board_year": 2018,
+     "flat": false,
+     "excluded_players": 127
+    },
+    "vm:2022": {
+     "weights": {
+      "fangraphs": 0.876,
+      "mlb_pipeline": 1.124
+     },
+     "n_rows": 537,
+     "source_rho": {
+      "fangraphs": 0.2858,
+      "mlb_pipeline": 0.3936
+     },
+     "board_years": [
+      2017,
+      2018,
+      2019
+     ],
+     "max_board_year": 2019,
+     "flat": false,
+     "excluded_players": 251
+    },
+    "vm:2023": {
+     "weights": {
+      "fangraphs": 0.8664,
+      "mlb_pipeline": 1.1336
+     },
+     "n_rows": 822,
+     "source_rho": {
+      "fangraphs": 0.2601,
+      "mlb_pipeline": 0.3577
+     },
+     "board_years": [
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "max_board_year": 2020,
+     "flat": false,
+     "excluded_players": 245
+    },
+    "vm:2024": {
+     "weights": {
+      "fangraphs": 0.8464,
+      "mlb_pipeline": 1.1536
+     },
+     "n_rows": 1061,
+     "source_rho": {
+      "fangraphs": 0.254,
+      "mlb_pipeline": 0.362
+     },
+     "board_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ],
+     "max_board_year": 2021,
+     "flat": false,
+     "excluded_players": 234
+    }
+   },
+   "delta": null,
+   "floor_rho": null,
+   "reads": "the target percentile and the consensus percentile on training rows only; no order index, no delta, no served number"
+  }
+ },
+ "n_arms": 2,
+ "not_run": {
+  "TL:hit.skill.pwr_comp": {
+   "verdict": "NOT RUN",
+   "reason": "not a candidate: look P served C0",
+   "rule": "a candidate only if look P served C2 with a below 1 (round 4, leakage 3)"
+  }
+ },
+ "admitted_every_fold": [],
+ "pre_declaration": "no arm admitted in every fold: docs/efv-v2/NEXT_REGISTRATION_TOOL_CANDIDATES.md records an empty candidate list",
+ "never": [
+  "debut cohorts 2025+ (R-VM)",
+  "any grouping by consensus-FV level",
+  "any order index or delta",
+  "any served eFV change",
+  "a re-run of a spent arm (pwr_comp under C0 or C1)"
+ ],
+ "elapsed_s": 53.2
+}
