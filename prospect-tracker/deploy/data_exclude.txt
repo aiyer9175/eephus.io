@@ -101,3 +101,7 @@ mlb_proj_components.json
 # (docs/dvm-difficulty-2026-09-30/DVM_DIFFICULTY_GATE.md section 15), a model
 # internal no page reads before the flip.
 dvm_difficulty.json
+# efv_surrogate_frame_2026.json: the frozen V 2026 rater frame (SG_4B,
+# tools/efv_surrogate_freeze_2026.py), the surrogate gate's Q5 input, read only by
+# that gate's registered runner; no page fetches it.
+efv_surrogate_frame_2026.json

@@ -765,6 +765,36 @@ Nothing else is read after S4 (the round-2 "V 2023 joins T3" is dropped, s2.1).
   35fe32c7a5448e8186259a8e4551be6f148d2f8346aa2016a40fb72f6afd2823 (the P5 weights). The
   fold object reads neither re-taken file.
 
+### 11.1 Amendment, dated 2026-10-14 (SG4B-Q2 = A; made while this file reads DRAFT): s2.2 and s8.13 re-baselined to the step A head's identity counts
+
+- **What moved and why.** The person-id counts this draft prints for lv_2026 (s2.2, the
+  s8.9 table and s9: 453 / 454 of 590 / 617 rows) were taken at 64bf1bb3, before two
+  registered pre-step-A changes to the outcome-blind resolver landed: d24a87d1 (2026-10-02
+  21:31, the 2019 to 2025 draft classes fetched into `.cache/draft_history`, which
+  `efv_identity.build_index` reads; with 64bf1bb3's code alone they move the counts to
+  480 / 529) and 6fd30aee (2026-10-02, the resolver's side and recency tiebreaks:
+  name_side 16 / 18, name_recency 26 / 23). SG_4B's rule (4) re-take on the identical
+  590 / 617 rows (the same player-key sets, sha256-equal at 64bf1bb3 and 8a1c5b7f) with the
+  step A head's code 8a1c5b7f resolves 522 / 570 person ids (+69 / +116). The identity split
+  1987b1b2 touched 0 / 1 of those rows (michael_massey__sa3037259, id 695602), so the branch
+  s8.13 pre-registered (a mismatch of at most 10 that the split's own keys explain) did not
+  apply and the first run stopped at 'BLOCKER: SG_4B recount' (2026-10-14 13:47; nothing
+  written; the count probes were membership counts only, no label read).
+- **The owner's answer (SG4B-Q2 = A, 2026-10-14, DECISIONS_FOR_OWNER.md).** The 522 / 570
+  are the step A head's own state and bind. From this amendment: s2.2 reads 522 and 570 rows
+  with an outcome-blind person id (68 / 47 rows, 11.5 / 7.6 percent, take ABSENT_IDENTITY
+  and are excluded from the S_idx primary as before); the s8.9 identity row for lv_2026
+  reads 522 / 570; s8.13's re-take is against 522 / 570 (`tools/efv_surrogate_freeze_2026.py`,
+  `S22_COUNTS`, with the draft's 453 / 454 kept beside it as `S22_COUNTS_AT_DRAFT`); and every
+  row is frozen with the step A head resolver, no row excluded (the one split-touched row is
+  frozen like any other). The s9 draft-time floor for the S4 id-resolved primary is restated
+  for about 1,092 rows (522 / 570 per side) by the same sqrt(n) rule from the measured
+  lv_dev floor: 0.020 to 0.025 pooled and 0.036 / 0.035 per side (s9's printed
+  0.022 to 0.028 and 0.039 stay as the record of what was anticipated at about 907; all of
+  them are replaced by measured floors after S3, s4). The row counts 590 / 617 hold; nothing
+  else in this draft changes, and the freeze file records both count sets with the
+  amendment's name.
+
 ---
 
 ## 12. Results
