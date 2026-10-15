@@ -93,3 +93,55 @@ def test_degenerate_inputs_do_not_raise():
     assert ed._blend_level_rates([], "hit") == {}
     only = ed._blend_level_rates([(0.0, {"ops_rel": 0.1})], "hit")
     assert only.get("ops_rel") == 0.1      # zero total exposure falls back, no divide
+
+
+# ---------------------------------------------------------------------------
+# the ANCHOR arm's cameo bound (amendment 2026-10-15, owner decision EW3-21)
+# ---------------------------------------------------------------------------
+
+def _season_store(monkeypatch, lines):
+    """One synthetic 2024 season for player 1 (offline: the norms and the line adjusters
+    are stubbed; nothing fetches)."""
+    rows = [dict({"mlbam": 1, "season": 2024, "age": 21, "so": 20, "bb": 10, "obp": ".330",
+                  "slg": ".420", "avg": ".260", "ops": ".750"}, **ln) for ln in lines]
+    monkeypatch.setattr(ed.mh, "player_index",
+                        lambda season, group, fetch=True: ({1: rows} if season == 2024 else {}))
+    monkeypatch.setattr(ed, "_resolved_norms", lambda season, level, group: {
+        "k_pct": 0.22, "bb_pct": 0.09, "iso": 0.150, "obp": 0.330, "ops": 0.720,
+        "era": 4.5, "sb600": 20.0})
+    monkeypatch.setattr(ed, "_xline", None)
+    monkeypatch.setattr(ed, "_parkline", None)
+
+
+def _level(monkeypatch, lines, side="hit", arm=False):
+    _season_store(monkeypatch, lines)
+    monkeypatch.setattr(ed, "LEVEL_BLEND_ANCHOR_MOST_EXPOSED", arm)
+    f = ed._milb_features(1, 2025, "2003-01-01", side)
+    return f["milb_level"], f["level_rank"]
+
+
+def test_the_cameo_bound_is_twice_the_selection_floor():
+    assert ed.LEVEL_ANCHOR_CAMEO_MULT == 2.0
+
+
+def test_a_cameo_stint_re_keys_only_with_the_arm_on(monkeypatch):
+    lines = [{"level": "AAA", "pa": 61}, {"level": "AA", "pa": 400}]
+    assert _level(monkeypatch, lines) == ("AAA", 5.0), "the served path is unchanged"
+    assert _level(monkeypatch, lines, arm=True) == ("AA", 4.0)
+    edge = [{"level": "AAA", "pa": 99}, {"level": "AA", "pa": 400}]
+    assert _level(monkeypatch, edge, arm=True)[0] == "AA"
+
+
+def test_a_stint_at_twice_the_floor_keeps_the_highest_level(monkeypatch):
+    lines = [{"level": "AAA", "pa": 100}, {"level": "AA", "pa": 400}]
+    assert _level(monkeypatch, lines, arm=True) == ("AAA", 5.0)
+    pit = [{"level": "AAA", "bf": 120, "ip": "28.0", "era": "4.00"},
+           {"level": "AA", "bf": 400, "ip": "95.0", "era": "3.50"}]
+    assert _level(monkeypatch, pit, side="pit", arm=True)[0] == "AAA"
+    pit[0]["bf"] = 119
+    assert _level(monkeypatch, pit, side="pit", arm=True)[0] == "AA"
+
+
+def test_a_cameo_that_is_also_the_most_exposed_level_stays(monkeypatch):
+    lines = [{"level": "AAA", "pa": 80}, {"level": "AA", "pa": 30}]
+    assert _level(monkeypatch, lines, arm=True) == ("AAA", 5.0)
