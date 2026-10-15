@@ -1543,9 +1543,11 @@ def test_efv_formula_states_the_v2_order_rule_and_the_served_drivers():
     assert meta["served_model"]["grade_basis"] == "efv_v2"
     assert "consensus FV value" in formula and "order_idx" in formula
     receipt = meta["served_model"]["receipt"]
+    # eFV v5 COMBINED (EW3-10, 2026-10-15) keys carry digits and capitals
+    # (scr_g5_hit_A_all_all_k_pct), and the pitcher list ends at a semicolon.
     m = re.search(r"admitted drivers on the served fit \(data/xfv\.json "
-                  r"meta\.served_model\.receipt\): hitters ([a-z_, ]+); pitchers ([a-z_ ]+?) ",
-                  formula)
+                  r"meta\.served_model\.receipt\): hitters ([A-Za-z0-9_, ]+); "
+                  r"pitchers ([A-Za-z0-9_, ]+?);", formula)
     assert m, "the eFV formula no longer lists the receipt's admitted drivers"
 
     def _listed(txt):

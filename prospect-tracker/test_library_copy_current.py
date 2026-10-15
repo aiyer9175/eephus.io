@@ -195,7 +195,9 @@ def test_xfv_retired_steps_are_model_updates_notes():
     for gone in ("LEVEL CALIBRATION, RETIRED", "stopped being displayed on 2026-07-25",
                  "The retired coefficients stay in the code", "Board overlays (live board only"):
         assert gone not in xfv, gone
-    assert xfv.startswith("EFV V2, SERVED FROM 2026-09-25")
+    # eFV v5 COMBINED serves from 2026-10-15 (owner override EW3-10); V2 follows it
+    assert xfv.startswith("EFV V5 COMBINED, SERVED FROM 2026-10-15")
+    assert "\n\nEFV V2, SERVED 2026-09-25 TO 2026-10-15" in xfv
     assert "\n\nEFV V1, graduates and busts" in xfv
     doc = json.loads((ROOT / "data" / "model_updates_typed.json").read_text(encoding="utf-8"))
     reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
