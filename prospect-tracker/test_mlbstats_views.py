@@ -1021,7 +1021,7 @@ FROZEN_KEYS = {
     "WAR_TEAM_COLS": ["team", "war", "war_earned", "war_bat", "war_sp", "war_rp", "war_sw", "n_players"],
     # The Baserunning board (EBR_2_BUILD_DARK): bsort= and btsort= name these.
     "BR_COLS": ["name", "pos", "ebr", "ebr_sb", "ebr_xb", "ebr_dp", "bsr", "wsb", "bsr_rest", "brv", "brv_xb",
-                "brv_sb", "sb", "cs", "sb_pct", "pk", "att_rate", "sb3", "xbt_pct", "x13", "x2h", "x1h", "tag_pct",
+                "brv_sb", "sav_steal_runs", "sb", "cs", "sb_pct", "pk", "att_rate", "sb3", "xbt_pct", "x13", "x2h", "x1h", "tag_pct",
                 "oob", "gidp_pct", "sprint", "sprint_pct", "bolts", "hp1", "runs_comp", "lead_p", "lead_s", "war",
                 "bem_plus"],
     "BR_TEAM_COLS": ["team", "team_ebr", "team_ebr_sb", "team_ebr_xb", "team_ebr_dp", "team_sb", "team_sb_pct",

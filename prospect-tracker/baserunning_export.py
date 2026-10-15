@@ -71,6 +71,10 @@ GATE_DOC = ROOT / "docs" / "ebr-2026-09-30" / "EBR_GATE.md"
 
 #: The section's flag (plan Part 8 8.A, class 2). False until EBR_2F_FLIP.
 MLBSTATS_BASERUNNING_LIVE = False
+#: The MLB player card's skills.br block (integration.md 3.1), read by
+#: mlb_player_export._skill_index off the served board. False until
+#: EBR_2F_FLIP, which flips both flags in one commit (test_ebr_flags.py).
+CARD_BASERUNNING_LIVE = False
 
 OUT_NAME = "baserunning_leaderboards.json"
 HISTORY_NAME = "baserunning_history.json"

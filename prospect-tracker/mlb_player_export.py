@@ -826,6 +826,32 @@ def _skill_index() -> dict[int, dict]:
                "posRuns": r.get("pos_runs"), "posRunsFg": r.get("pos_runs_fg"),
                "defRuns": r.get("def_runs")}
         out.setdefault(mid, {})["def"] = {k: v for k, v in blk.items() if v is not None}
+
+    # Baserunning block (runners), from the Baserunning board (task
+    # EBR_2_BUILD_DARK; integration.md 3.1), its own key beside def. eBR and its
+    # three parts are the board's own runs (OURS, descriptive, zero-sum per
+    # season); bsrFg and brvSavant are the published comparison rows, carried
+    # verbatim. Only the columns the card renders ride along. Read only while
+    # baserunning_export.CARD_BASERUNNING_LIVE is on: before the flip the board
+    # file is not under data/ and the card is the card it was.
+    import baserunning_export as _bre
+    if _bre.CARD_BASERUNNING_LIVE:
+        rd = _load(_bre.OUT_NAME) or {}
+        r_season = rd.get("season")
+        for r in rd.get("runners") or []:
+            try:
+                mid = int(r.get("mlbam"))
+            except (TypeError, ValueError):
+                continue
+            if r.get("ebr") is None:
+                continue
+            blk = {"season": r_season, "qualified": bool(r.get("qualified")),
+                   "ebr": r.get("ebr"), "ebrSb": r.get("ebr_sb"), "ebrXb": r.get("ebr_xb"),
+                   "ebrDp": r.get("ebr_dp"), "sb": r.get("sb"), "cs": r.get("cs"), "pk": r.get("pk"),
+                   "sbPct": r.get("sb_pct"), "attRate": r.get("att_rate"), "xbtPct": r.get("xbt_pct"),
+                   "gidpPct": r.get("gidp_pct"), "sprint": r.get("sprint"), "sprintPct": r.get("sprint_pct"),
+                   "bsrFg": r.get("bsr"), "brvSavant": r.get("brv")}
+            out.setdefault(mid, {})["br"] = {k: v for k, v in blk.items() if v is not None}
     if unreadable:
         _record_skill_index_outage(unreadable, len(out))
     return out
@@ -850,6 +876,8 @@ def _card_skills(sk: dict | None, is_pit: bool, two_way: bool) -> dict:
         block["pitch"] = sk["pitch"]
     if sk.get("def") and hit_side:
         block["def"] = sk["def"]
+    if sk.get("br") and hit_side:
+        block["br"] = sk["br"]
     lev = sk.get("lev") or {}
     if hit_side and lev.get("bat"):
         block["lev"] = lev["bat"]
@@ -1080,6 +1108,8 @@ def build_payload() -> dict:
                                 if (p.get("skills") or {}).get("lev")),
                      "def": sum(1 for p in players.values()
                                 if (p.get("skills") or {}).get("def")),
+                     "br": sum(1 for p in players.values()
+                               if (p.get("skills") or {}).get("br")),
                      "scout": sum(1 for p in players.values() if p.get("scout")),
                      "hof": sum(1 for p in players.values() if p.get("hof")),
                      "origin_efv": sum(1 for p in players.values()
@@ -1094,6 +1124,7 @@ def build_payload() -> dict:
             "skills: HEM+ (hitters), REM+/RIV+/SEM+ (pitchers) from the MLB Stats leaderboards, joined by MLBAM",
             "skills.lev: WPA, WPA/LI, pLI, Clutch (batters) or WPA, WPA/LI, WPA/start (starters) from leverage_leaderboards.json, the side the card renders; two-way cards carry the pitching side as levPit",
             "skills.def: DEM+ (100 + 10z), FanGraphs' published fielding and framing runs, the Defense board's own positional ladder (posRuns, the term in defRuns) and FanGraphs' published positional beside it (posRunsFg), from defense_leaderboards.json, fielders only",
+            "skills.br: eBR and its SB, XB and DP runs (the Baserunning board's own, descriptive, this season on its run expectancy), the official SB and CS, the record's pickoffs and rates, Savant sprint speed, and the published BsR (FanGraphs) and BRV (Savant) as comparison rows, from baserunning_leaderboards.json, hitter-side and two-way cards only; present only while baserunning_export.CARD_BASERUNNING_LIVE is on",
             "scout: latest published report blurb (capped) + consensus tool grades, ex-PROSPX players only",
             "origin.fvSpark: consensus-FV arc [[date, fv], ...] for ex-PROSPX players",
             "origin.efvDebut: xfv.json xfv_grade_at_debut, the eFV the player carried into the majors (the card prints it to the nearest point); origin.devOrg: the club he debuted with (build_site._debut_org); origin.aaaHit: his final tracked-park Statcast hitter line from statcast_aaa_hitters.json (hitters and two-way only; thru or asOf dates a partial season); one player's own numbers, never grouped by grade",

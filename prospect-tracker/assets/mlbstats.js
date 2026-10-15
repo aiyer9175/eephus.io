@@ -6055,6 +6055,8 @@
       title: "From Baseball Savant: run value of extra bases taken and not taken. Display only." },
     { key: "brv_sb", label: "BRV SB", term: "savant_brv", fmt: fSigned, num: true,
       title: "From Baseball Savant: run value of steal attempts. Display only." },
+    { key: "sav_steal_runs", label: "Steal runs (Savant)", term: "savant_brv", fmt: fSigned, num: true,
+      title: "From Baseball Savant: runs from stolen-base attempts on its basestealing board, a separate model from BRV SB. Display only." },
     { key: "sb", label: "SB", fmt: fInt, num: true, title: "Stolen bases (official)." },
     { key: "cs", label: "CS", fmt: fInt, num: true, asc: true,
       title: "Caught stealing (official), including picked off while attempting." },
