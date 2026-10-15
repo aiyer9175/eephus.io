@@ -6279,6 +6279,34 @@
    "origin": "Arkmetric, original to eephus.io. Expected-stat inputs from Baseball Savant (Statcast)."
   },
   {
+   "id": "btblend_plus",
+   "term": "BT Blend (Bat-Tracking Offense Blend)",
+   "category": "custom-index",
+   "section": "Players & Stats",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "BT Blend",
+    "btblend",
+    "bat-tracking blend",
+    "bat tracking blend"
+   ],
+   "priority": 23,
+   "definition": "A read on a hitter's NEXT-year offense that adds Statcast bat tracking to the xHEM+ Blend recipe: Savant xwOBA, the HEM+ skill core and a bat-tracking contact-quality composite (bat speed, squared-up rate, blast rate), on the HEM+ scale (100 = the average hitter in its pool). Coloured on the value ruler at 130 / 120 / 112 / 100 / 88.",
+   "methodology": "Within the season, each of the three bat-tracking components is standardized over Savant's full bat-tracking leaderboard (hitters with 100+ competitive swings) and the three are averaged into the composite. Over the joined pool (100+ Savant PA, a HEM+ core, and a bat-tracking row at the swing floor), xwOBA, the unrounded HEM+ core and the composite are standardized and combined 59.5 / 25.5 / 15, re-standardized on the blend's own spread and mapped onto the HEM+ display scale by the pool's HEM+ location and spread, a rank-preserving transform. Provisional. A pre-registered re-read scored the column exactly as the board serves it (the integers, built on the served pools) over two forward season-pairs, 2024 to 2025 and 2025 to 2026, and found it orders next-year wOBA ahead of the served xHEM+ Blend under both bootstrap conventions. On the same pairs it is not separable from xwOBA alone. The re-read covers hitters with 200+ PA in both seasons while the board shows hitters from 100 PA, and two seasons is a small sample. The receipt below prints the figures from data/bat_tracking_served_eval.json. A hitter below the swing floor, or without a bat-tracking row, shows a blank cell.",
+   "formula": "BT composite = mean of z(bat speed), z(squared-up rate), z(blast rate), each over the season's bat-tracking leaderboard at 100+ competitive swings\nblend z = 0.595 x z(Savant xwOBA) + 0.255 x z(unrounded HEM+ core) + 0.15 x z(BT composite), each over the joined pool, then re-standardized on the blend's own spread\nBT Blend = the blend mapped back onto the HEM+ ratio display scale by the pool's HEM+ location and spread (rank-preserving)",
+   "example": "Two hitters with the same xwOBA and HEM+ core split on bat tracking: the one with the faster, more often squared-up swing reads a few points higher on the HEM+ scale.",
+   "seeAlso": [
+    "fwdhem_plus",
+    "xhem_plus",
+    "hem_plus",
+    "xwoba"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io. Expected-stat and bat-tracking inputs from Baseball Savant (Statcast)."
+  },
+  {
    "id": "pwoba",
    "term": "pWOBA (Projected wOBA)",
    "category": "custom-index",

@@ -1105,6 +1105,10 @@ _SIDECAR_WRITE_DIRS = (
     ("dfs_export", "ARCHIVE_DIR", ".cache/dfs_history"),
     ("provisional_history", "CACHE_DIR", ".cache/provisional_history"),
     ("bracket_sim", "FETCH_CACHE_DIR", ".cache/bracket"),
+    # NOV15_BT_ARMB_SERVED_DARK: hitter_export's BT Blend writes its served
+    # bat-tracking cache and its dark preview; both resolved at call time.
+    ("bat_tracking_blend", "SERVED_CACHE_DIR", ".cache/bat_tracking/served"),
+    ("bat_tracking_blend", "PREVIEW_DIR", ".cache/bat_tracking/preview"),
 )
 
 #: Modules that turn one of these paths into a STRING for readers of a

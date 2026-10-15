@@ -938,6 +938,34 @@
           return rows.length ? rows : null;
         },
       },
+      // The BT Blend's one served-construction re-read (rung D4, integers as
+      // served) against the served xHEM+ Blend, plus the xwOBA-alone
+      // disclosure the gate says any claim must carry.
+      btblend_plus: {
+        art: "/data/bat_tracking_served_eval.json",
+        estimand: "Claim: the BT Blend, as served, predicts next-season wOBA better than the served xHEM+ Blend.",
+        baseline: "the served xHEM+ Blend, same forward pairs",
+        read: j => {
+          const d4 = ((j.ladder || {}).D4) || {};
+          const xw = ((j.disclosures || {}).d4_vs_raw_xwoba_alone) || {};
+          const n = j.n_pairs;
+          const cell = (v, label, bname) => {
+            const g = (v && v.gap_ci) || {};
+            if (!v || v.rho_primary == null || v.rho_baseline == null || g.lo95 == null) return null;
+            return {
+              label: label + (n != null ? " (n=" + _rn(n, 0) + " forward pairs)" : ""),
+              mv: _rn(v.rho_primary), mname: "BT Blend", bname: bname, bv: _rn(v.rho_baseline),
+              band: "gap " + _rns(g.mean) + ", 95% CI " + _rns(g.lo95) + " to " + _rns(g.hi95),
+              verdict: _rcptCI(g.lo95, g.hi95),
+            };
+          };
+          const rows = [cell(d4.v1, "Spearman rho, next-season wOBA", "xHEM+ Blend"),
+                        cell(d4.v2, "Same read, clustered bootstrap", "xHEM+ Blend"),
+                        cell(xw.v1, "Disclosure: against xwOBA alone", "xwOBA")].filter(Boolean);
+          return rows.length ? rows : null;
+        },
+        note: () => "Two forward season-pairs, hitters with 200+ PA in both seasons; the board shows hitters from 100 PA.",
+      },
       pwoba: {
         art: "/data/phem_marcel_lite_eval.json",
         estimand: "Claim: the served projected wOBA orders hitters' next-season wOBA better than the best flat multiyear read.",

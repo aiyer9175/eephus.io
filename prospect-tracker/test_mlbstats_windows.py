@@ -278,7 +278,7 @@ def test_skill_fip_never_appears_on_a_window():
 # --------------------------------------------------------------------------- #
 _LADDER = ("tier", "band", "ruler", "_adj", "_3yr", "gmli_3yr", "wrc_plus",
            "swstr_pct", "rate_1000_shrunk", "woba", "xhem_plus", "xsem_plus",
-           "xrem_plus", "fwdhem_plus", "pwoba", "luck")
+           "xrem_plus", "fwdhem_plus", "btblend_plus", "pwoba", "luck")
 
 
 def _served_windows():

@@ -317,7 +317,7 @@ def test_an_unknown_view_id_falls_back_to_standard():
     ("#section=hitters&hcols=batting", smoke._render_hitters, "hit",
      ["name", "pa", "hr", "sb", "avg", "obp", "slg", "ops", "iso", "woba_raw", "bb_pct", "k_pct", "hem_plus"]),
     ("#section=hitters&hcols=skill", smoke._render_hitters, "hit",
-     ["name", "hem_plus", "hem_plus_3yr", "xhem_plus", "fwdhem_plus", "luck_gap", "pwoba", "woba_raw",
+     ["name", "hem_plus", "hem_plus_3yr", "xhem_plus", "fwdhem_plus", "btblend_plus", "luck_gap", "pwoba", "woba_raw",
       "bb_pct", "k_pct", "babip"]),
     ("#section=defense&dcols=runs", smoke._render_defense, "def",
      ["name", "pos", "fld_total", "fld_runs", "frm_runs", "pos_runs", "pos_runs_fg", "def_runs",
@@ -369,7 +369,7 @@ SAVANT_COLS = {
 @pytest.mark.parametrize("hash_,fn,n,board", [
     ("#section=bullpen&rcols=all", _render_bullpen, 30, "rel"),
     ("#section=starters&scols=all", smoke._render_starters, 25, "sp"),
-    ("#section=hitters&hcols=all", smoke._render_hitters, 30, "hit"),
+    ("#section=hitters&hcols=all", smoke._render_hitters, 31, "hit"),
     ("#section=defense&dcols=all", smoke._render_defense, 26, "def"),
 ])
 def test_the_all_view_shows_every_column_and_wraps_only_spaced_headers(hash_, fn, n, board):
@@ -909,7 +909,7 @@ FROZEN_KEYS = {
                      "fip", "era", "hr9", "p_ip", "par", "p_bf", "pit_per_gs", "sp_ip_per_gs"],
     "STARTER_TEAM_COLS": ["team", "rotation_plus", "team_war", "front_sem", "n_above_avg", "starter_ip",
                           "total_gs", "rot_p_ip", "rot_par", "rot_pit_per_gs"],
-    "HITTER_COLS": ["name", "hem_plus", "wrc_plus", "hem_plus_3yr", "xhem_plus", "fwdhem_plus", "pwoba",
+    "HITTER_COLS": ["name", "hem_plus", "wrc_plus", "hem_plus_3yr", "xhem_plus", "fwdhem_plus", "btblend_plus", "pwoba",
                     "luck_gap", "war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr", "war", "pa", "hr", "sb",
                     "avg", "obp", "slg", "ops", "iso", "woba_raw", "woba", "bb_pct", "k_pct", "babip",
                     "p_pa", "par", "pit"],
@@ -1868,7 +1868,7 @@ def test_the_pitches_view_shows_its_columns_and_its_phone_subset(board):
     assert _visible(_pitch_render(board, DEFAULT_RENDERS[board][1])) == STANDARD[board]
 
 
-@pytest.mark.parametrize("board,n", [("rel", 34), ("sp", 30), ("hit", 33)])
+@pytest.mark.parametrize("board,n", [("rel", 34), ("sp", 30), ("hit", 34)])
 def test_all_keeps_every_column_with_the_pitch_rates(board, n):
     html = _pitch_render(board, _PITCH_HASH[board].replace("pitches", "all"))
     assert len(_heads(html)) == n and len(_visible(html)) == n, len(_heads(html))

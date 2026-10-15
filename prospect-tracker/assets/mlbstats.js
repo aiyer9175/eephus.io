@@ -952,7 +952,7 @@
         keys: ["hem_plus", "wrc_plus", "|", "war", "war_pa_plus", "|", "pa", "hr", "sb", "|",
                "avg", "obp", "slg"] },
       { id: "skill", label: "Skill", phone: ["hem_plus", "xhem_plus", "fwdhem_plus", "pwoba"],
-        keys: ["hem_plus", "hem_plus_3yr", "xhem_plus", "fwdhem_plus", "luck_gap", "pwoba", "|",
+        keys: ["hem_plus", "hem_plus_3yr", "xhem_plus", "fwdhem_plus", "btblend_plus", "luck_gap", "pwoba", "|",
                "woba_raw", "|", "bb_pct", "k_pct", "babip"] },
       { id: "value", label: "Value", phone: ["war", "war_pa_plus", "hem_plus", "pa"],
         keys: ["war", "war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr", "|", "hem_plus", "wrc_plus",
@@ -4290,6 +4290,13 @@
       title: "70% xwOBA + 30% HEM+ core, HEM+ scale. Provisional: as served, not separable from xwOBA alone on next-year offense at this sample (2026-09-18 re-gate). Tracked hitters only.",
       get: function (r) { return r.fwdhem_plus; },
       cell: function (r) { return r.fwdhem_plus == null ? "" : hemCell(r.fwdhem_plus); } },
+    // BT Blend (hitter_export.BTBLEND_SERVE, docs/BAT_TRACKING_SERVED_GATE.md):
+    // the xHEM+ Blend recipe plus a bat-tracking composite, flipped on after its
+    // one served-construction re-read passed. Blank below the swing floor.
+    { key: "btblend_plus", label: "BT Blend", term: "btblend_plus", num: true, desc: true, isRem: true,
+      title: "59.5% xwOBA + 25.5% HEM+ core + 15% bat-tracking composite (bat speed, squared-up rate, blast rate), HEM+ scale. Provisional: as served, ahead of the xHEM+ Blend on next-year wOBA but not separable from xwOBA alone (2026-10-14 re-read, two seasons). Hitters with 100+ competitive swings only.",
+      get: function (r) { return r.btblend_plus; },
+      cell: function (r) { return r.btblend_plus == null ? "" : hemCell(r.btblend_plus); } },
     { key: "pwoba", label: "pWOBA", term: "pwoba", num: true, desc: true,
       title: "Next-season wOBA from the FA-engine Marcel projection; read like wOBA (about .310 average). Tracked hitters with a recent MLB sample.",
       get: function (r) { return r.pwoba; },
@@ -4397,7 +4404,7 @@
   // list and coveredCols holds each back until a season carries it. Published
   // wRC+ still drops outright: the league feed serves it for every history
   // season, but hitter_export joins it on the live board only.
-  var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, luck_gap: 1, pwoba: 1,
+  var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, btblend_plus: 1, luck_gap: 1, pwoba: 1,
     war_pa_plus: 1, war_pa_plus_adj: 1, war_pa_plus_3yr: 1, wrc_plus: 1,
     chase_pct: 1, whiff_pct: 1, z_contact_pct: 1, sweet_spot_pct: 1, pull_pct: 1 };
   var HITTER_HISTORY_COLS = historyTitle(

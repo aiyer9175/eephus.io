@@ -668,6 +668,10 @@ MODEL_GLOSSARY = {
     # and the provisional-penalty / ungraded-cap calibration diagnostic.
     "pwoba_blend_regate": "internal",
     "bat_tracking_hitters": "internal",
+    # 2026-10-14: the served construction of the bat-tracking blend (arm B)
+    # passed its one re-read (docs/BAT_TRACKING_SERVED_GATE.md) and ships as
+    # the BT Blend column with its own glossary entry.
+    "btblend_plus": ["btblend_plus"],
     "fantasy_startscore": "internal",
     "ifa_pedigree": "internal",
     # P1 V2 (2026-07-23): V1 FAILED same-day (committed loss in the same GATES

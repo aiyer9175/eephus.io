@@ -1,0 +1,450 @@
+{
+ "generated_at": "2026-10-14",
+ "experiment": "BT Blend served-construction re-read (arm B of the bat-tracking lane)",
+ "gate_document": "docs/BAT_TRACKING_SERVED_GATE.md",
+ "pre_registered": "2026-10-14, committed alone before any number here",
+ "owner_waived_early_read": "run on 2026-10-14 under the owner's 2026-10-14 waiver of look days (EW3-5); the 2026 outcome half rests on the season-complete override (EW3-6), logged below",
+ "season_complete_override": {
+  "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+  "seasons": {
+   "2026": "2026-10-01"
+  },
+  "default_month_day": [
+   11,
+   15
+  ],
+  "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+ },
+ "seed": 20261014,
+ "boot": 2000,
+ "primary_tests": 1,
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "Savant wOBA in Y+1 (raw, pooled across folds)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "Savant wOBA in Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "season_complete_override": {
+   "env": "PLUS_LAB_SEASON_COMPLETE_ASOF",
+   "seasons": {
+    "2026": "2026-10-01"
+   },
+   "default_month_day": [
+    11,
+    15
+   ],
+   "authority": "owner 2026-10-14 (EW3-5, EW3-6): registered look days are waived; the 2026 regular season ended in late September and the labs read regular-season outcomes; reads taken under this override are OWNER-WAIVED EARLY READS"
+  },
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "candidate": "bat_tracking_blend.served_values: 0.595 z(est_woba) + 0.255 z(hem_plus_raw) + 0.15 z(BT composite), legs z over J(Y) (Savant PA >= 100, HEM core, BT row at >= 100 competitive swings), re-standardized, mapped onto the HEM+ ruler, rounded",
+ "baseline": "served xHEM+ Blend (hitter_export._join_fwdhem_plus) over its own served pool, reconstructed by tools/xhem_served_regate_lab, rounded",
+ "n_pairs": 528,
+ "drops": {
+  "partial_outcome_kept": 0,
+  "hem_missing": 0,
+  "bt_missing": 0
+ },
+ "integrity": {
+  "composite_served_minus_eval_max_abs": 2.220446049250313e-15,
+  "hem_core_served_minus_eval_max_abs": 0.0,
+  "d4_matches_production_module": true
+ },
+ "d0_reproduction_check": {
+  "seed": 20260723,
+  "n": 528,
+  "rho_candidate": 0.4598,
+  "rho_incumbent": 0.4465,
+  "v1_gap": {
+   "mean": 0.0133,
+   "lo95": 0.0015,
+   "hi95": 0.0256
+  },
+  "v2_gap": {
+   "mean": 0.0135,
+   "lo95": 0.0025,
+   "hi95": 0.0254
+  },
+  "published": {
+   "n": 528,
+   "rho_candidate": 0.4598,
+   "rho_incumbent": 0.4465,
+   "v1_lo95": 0.0015,
+   "v2_lo95": 0.0025
+  },
+  "artifact": "data/bat_tracking_eval.json arm_b_descriptive_blend",
+  "reproduces_published": true
+ },
+ "ladder": {
+  "D0": {
+   "seed": 20261014,
+   "v1": {
+    "rho_primary": 0.4598,
+    "rho_baseline": 0.4465,
+    "gap_ci": {
+     "mean": 0.0134,
+     "lo95": 0.0017,
+     "hi95": 0.0253
+    },
+    "gap_sd_bootstrap": 0.006,
+    "mde95_in_run": 0.0098,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "v2": {
+    "rho_primary": 0.4599,
+    "rho_baseline": 0.4465,
+    "gap_ci": {
+     "mean": 0.0134,
+     "lo95": 0.0017,
+     "hi95": 0.0249
+    },
+    "gap_sd_bootstrap": 0.0059,
+    "mde95_in_run": 0.0096,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "n_distinct_candidate": 528,
+   "n_distinct_baseline": 528
+  },
+  "D0_original_seed": {
+   "seed": 20260723,
+   "v1": {
+    "rho_primary": 0.4598,
+    "rho_baseline": 0.4465,
+    "gap_ci": {
+     "mean": 0.0133,
+     "lo95": 0.0015,
+     "hi95": 0.0256
+    },
+    "gap_sd_bootstrap": 0.0061,
+    "mde95_in_run": 0.0101,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "v2": {
+    "rho_primary": 0.4599,
+    "rho_baseline": 0.4465,
+    "gap_ci": {
+     "mean": 0.0135,
+     "lo95": 0.0025,
+     "hi95": 0.0254
+    },
+    "gap_sd_bootstrap": 0.0058,
+    "mde95_in_run": 0.0095,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "n_distinct_candidate": 528,
+   "n_distinct_baseline": 528,
+   "identical_to_harness": true
+  },
+  "D1": {
+   "seed": 20261014,
+   "v1": {
+    "rho_primary": 0.4601,
+    "rho_baseline": 0.4457,
+    "gap_ci": {
+     "mean": 0.0145,
+     "lo95": 0.0031,
+     "hi95": 0.0258
+    },
+    "gap_sd_bootstrap": 0.0058,
+    "mde95_in_run": 0.0095,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "v2": {
+    "rho_primary": 0.4598,
+    "rho_baseline": 0.4453,
+    "gap_ci": {
+     "mean": 0.0145,
+     "lo95": 0.003,
+     "hi95": 0.0254
+    },
+    "gap_sd_bootstrap": 0.0056,
+    "mde95_in_run": 0.0093,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "n_distinct_candidate": 528,
+   "n_distinct_baseline": 528
+  },
+  "D2": {
+   "seed": 20261014,
+   "v1": {
+    "rho_primary": 0.4598,
+    "rho_baseline": 0.4454,
+    "gap_ci": {
+     "mean": 0.0146,
+     "lo95": 0.0029,
+     "hi95": 0.0264
+    },
+    "gap_sd_bootstrap": 0.0059,
+    "mde95_in_run": 0.0097,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "v2": {
+    "rho_primary": 0.4597,
+    "rho_baseline": 0.4452,
+    "gap_ci": {
+     "mean": 0.0146,
+     "lo95": 0.0032,
+     "hi95": 0.0257
+    },
+    "gap_sd_bootstrap": 0.0057,
+    "mde95_in_run": 0.0094,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "n_distinct_candidate": 528,
+   "n_distinct_baseline": 528
+  },
+  "D3": {
+   "seed": 20261014,
+   "v1": {
+    "rho_primary": 0.4598,
+    "rho_baseline": 0.4454,
+    "gap_ci": {
+     "mean": 0.0146,
+     "lo95": 0.0029,
+     "hi95": 0.0264
+    },
+    "gap_sd_bootstrap": 0.0059,
+    "mde95_in_run": 0.0097,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "v2": {
+    "rho_primary": 0.4597,
+    "rho_baseline": 0.4452,
+    "gap_ci": {
+     "mean": 0.0146,
+     "lo95": 0.0032,
+     "hi95": 0.0257
+    },
+    "gap_sd_bootstrap": 0.0057,
+    "mde95_in_run": 0.0094,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "n_distinct_candidate": 528,
+   "n_distinct_baseline": 528
+  },
+  "D4": {
+   "seed": 20261014,
+   "v1": {
+    "rho_primary": 0.4595,
+    "rho_baseline": 0.4464,
+    "gap_ci": {
+     "mean": 0.0132,
+     "lo95": 0.0019,
+     "hi95": 0.0242
+    },
+    "gap_sd_bootstrap": 0.0058,
+    "mde95_in_run": 0.0095,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "v2": {
+    "rho_primary": 0.4593,
+    "rho_baseline": 0.4462,
+    "gap_ci": {
+     "mean": 0.0131,
+     "lo95": 0.0018,
+     "hi95": 0.0243
+    },
+    "gap_sd_bootstrap": 0.0057,
+    "mde95_in_run": 0.0094,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "n_distinct_candidate": 77,
+   "n_distinct_baseline": 76
+  }
+ },
+ "decision": {
+  "verdict": "PASS",
+  "flip": true,
+  "reason": "the served construction clears the served xHEM+ Blend at D4 under BOTH conventions. The flag flips."
+ },
+ "disclosures": {
+  "note": "zero verdict weight (gate section 7)",
+  "d4_vs_raw_xwoba_alone": {
+   "v1": {
+    "rho_primary": 0.4595,
+    "rho_baseline": 0.4478,
+    "gap_ci": {
+     "mean": 0.0121,
+     "lo95": -0.0044,
+     "hi95": 0.0277
+    },
+    "gap_sd_bootstrap": 0.0082,
+    "mde95_in_run": 0.0135,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false,
+    "hi95_lt_0": false
+   },
+   "v2": {
+    "rho_primary": 0.4593,
+    "rho_baseline": 0.4476,
+    "gap_ci": {
+     "mean": 0.0117,
+     "lo95": -0.0027,
+     "hi95": 0.0269
+    },
+    "gap_sd_bootstrap": 0.0076,
+    "mde95_in_run": 0.0125,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false,
+    "hi95_lt_0": false
+   }
+  },
+  "d4_vs_served_xhem_plus_integer": {
+   "v1": {
+    "rho_primary": 0.4595,
+    "rho_baseline": 0.4484,
+    "gap_ci": {
+     "mean": 0.0115,
+     "lo95": -0.0048,
+     "hi95": 0.0269
+    },
+    "gap_sd_bootstrap": 0.0082,
+    "mde95_in_run": 0.0135,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false,
+    "hi95_lt_0": false
+   },
+   "v2": {
+    "rho_primary": 0.4593,
+    "rho_baseline": 0.4484,
+    "gap_ci": {
+     "mean": 0.0109,
+     "lo95": -0.0033,
+     "hi95": 0.026
+    },
+    "gap_sd_bootstrap": 0.0076,
+    "mde95_in_run": 0.0126,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": false,
+    "hi95_lt_0": false
+   }
+  },
+  "per_fold_d4": {
+   "2024->2025": {
+    "n": 265,
+    "rho_bt_blend_served": 0.4611,
+    "rho_xhem_blend_served": 0.4523
+   },
+   "2025->2026": {
+    "n": 263,
+    "rho_bt_blend_served": 0.4547,
+    "rho_xhem_blend_served": 0.4401
+   }
+  },
+  "S2_pa200_normalizer_pool_vs_served_xhem_blend": {
+   "v1": {
+    "rho_primary": 0.4585,
+    "rho_baseline": 0.4464,
+    "gap_ci": {
+     "mean": 0.0122,
+     "lo95": 0.0003,
+     "hi95": 0.0244
+    },
+    "gap_sd_bootstrap": 0.0061,
+    "mde95_in_run": 0.01,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "v2": {
+    "rho_primary": 0.4588,
+    "rho_baseline": 0.4462,
+    "gap_ci": {
+     "mean": 0.0125,
+     "lo95": 0.0005,
+     "hi95": 0.0247
+    },
+    "gap_sd_bootstrap": 0.006,
+    "mde95_in_run": 0.0099,
+    "n_boot_draws": 2000,
+    "lo95_gt_0": true,
+    "hi95_lt_0": false
+   },
+   "pool_n": {
+    "2024": 365,
+    "2025": 348
+   }
+  }
+ },
+ "coverage": {
+  "note": "Coverage is never used to explain a gap. The gate speaks only about the PA >= 200 subset while the board would stamp PA >= 100, and that sentence travels with the verdict.",
+  "by_season": {
+   "2024": {
+    "J_pool_btblend": 455,
+    "fwdhem_served_pool": 455,
+    "fwdhem_rows_left_blank_by_bt_floor": 0,
+    "bt_leaderboard_rows_at_floor": 502,
+    "pair_set_n": 265
+   },
+   "2025": {
+    "J_pool_btblend": 461,
+    "fwdhem_served_pool": 461,
+    "fwdhem_rows_left_blank_by_bt_floor": 0,
+    "bt_leaderboard_rows_at_floor": 513,
+    "pair_set_n": 263
+   }
+  }
+ },
+ "served_normalizers": {
+  "2024": {
+   "mu_x": 0.309046,
+   "sd_x": 0.036636,
+   "mu_h": 96.644113,
+   "sd_h": 17.238818,
+   "mu_c": 0.051337,
+   "sd_c": 0.611257,
+   "n_pool": 455,
+   "sd_b": 0.925051
+  },
+  "2025": {
+   "mu_x": 0.308009,
+   "sd_x": 0.037928,
+   "mu_h": 96.152105,
+   "sd_h": 17.313258,
+   "mu_c": 0.040177,
+   "sd_c": 0.608746,
+   "n_pool": 461,
+   "sd_b": 0.917067
+  }
+ },
+ "approximation_disclosed_in_advance": "the served normalizer is built at pipeline time from whatever rows exist then; this re-read builds it on complete season pools",
+ "runtime_seconds": 43.4,
+ "summary": "BT Blend served-construction re-read (D4, integers as served) on 528 pairs: rho 0.4595 vs served xHEM+ Blend 0.4464, v1 gap {'mean': 0.0132, 'lo95': 0.0019, 'hi95': 0.0242} (MDE95 0.0095), v2 gap {'mean': 0.0131, 'lo95': 0.0018, 'hi95': 0.0243} (MDE95 0.0094); eval-construction D0 reproduction v1 gap {'mean': 0.0133, 'lo95': 0.0015, 'hi95': 0.0256}. Verdict PASS: the served construction clears the served xHEM+ Blend at D4 under BOTH conventions. The flag flips."
+}

@@ -525,6 +525,86 @@ def _join_fwdhem_plus(hitters: list[dict], hem_raw: dict, season: int) -> int:
     return n
 
 
+# BT Blend (btblend_plus): the served construction of the bat-tracking blend
+# (bat_tracking_blend.py), registered in docs/BAT_TRACKING_SERVED_GATE.md. A NEW
+# served column (plan Part 8 class 2), so it shipped DARK until the gate's one
+# served-construction re-read passed its registered rule (2026-10-14, an
+# owner-waived early read: D4 gap lo95 +0.0019 v1 and +0.0018 v2 against the
+# served xHEM+ Blend, data/bat_tracking_served_eval.json). The flip is one
+# commit carrying the flag, the regenerated board, the page column, the
+# glossary entry and the registry row btblend_plus. Off, the join reads nothing
+# and fetches nothing, so the board is byte-identical to the flag-less
+# exporter. The local preview (EEPHUS_BTBLEND_PREVIEW=1, flag off) computes the
+# column into bat_tracking_blend.PREVIEW_DIR only and never stamps a board row.
+BTBLEND_SERVE = True
+BTBLEND_PREVIEW_ENV = "EEPHUS_BTBLEND_PREVIEW"
+
+
+def btblend_preview_on() -> bool:
+    env = (os.environ.get(BTBLEND_PREVIEW_ENV) or "").strip().lower()
+    return env in ("1", "on", "true", "yes")
+
+
+def _btblend_values(hem_raw: dict, season: int) -> tuple[dict, Optional[dict]]:
+    """({mlbam: btblend_plus}, normalizer) for the season. Best-effort: any
+    failure or a missing leaderboard returns ({}, None) and the column is blank."""
+    try:
+        import bat_tracking_blend as bbt
+        import mlb_player_export as mpe
+        xw = bbt.savant_xwoba_map(mpe._savant("expected", int(season), "batter"))
+        comp = bbt.composite_map(bbt.fetch_leaderboard(int(season)))
+        return bbt.served_values(xw, hem_raw, comp)
+    except Exception as e:   # noqa: BLE001 - a display join must not take a board down
+        _log.warning("btblend: unavailable (%s)", e)
+        return {}, None
+
+
+def _join_btblend_plus(hitters: list[dict], hem_raw: dict, season: int) -> int:
+    """Stamp btblend_plus ('BT Blend') onto the board rows in J(Y)."""
+    import bat_tracking_blend as bbt
+    values, _p = _btblend_values(hem_raw, season)
+    return bbt.stamp(hitters, values)
+
+
+def _btblend_preview(hitters: list[dict], hem_raw: dict, season: int,
+                     out_dir: Optional[Path] = None) -> Optional[Path]:
+    """Write the would-be column to the preview directory ONLY (no board row is
+    touched). Returns the path written, or None."""
+    import bat_tracking_blend as bbt
+    values, p = _btblend_values(hem_raw, season)
+    if not values:
+        return None
+    rows = [{"mlbam": int(h["mlbam"]), "name": h.get("name"),
+             "btblend_plus": values[int(h["mlbam"])],
+             "fwdhem_plus": h.get("fwdhem_plus")}
+            for h in hitters
+            if h.get("mlbam") is not None and int(h["mlbam"]) in values]
+    out_dir = Path(out_dir or bbt.PREVIEW_DIR)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"btblend_preview_{int(season)}.json"
+    path.write_text(json.dumps({
+        "season": int(season), "generated_at": date.today().isoformat(),
+        "flag": "hitter_export.BTBLEND_SERVE", "flag_on": bool(BTBLEND_SERVE),
+        "gate": "docs/BAT_TRACKING_SERVED_GATE.md",
+        "n_pool": (p or {}).get("n_pool"), "n_board_rows": len(rows),
+        "rows": rows}, indent=1) + "\n", encoding="utf-8")
+    return path
+
+
+def _btblend_step(hitters: list[dict], hem_raw: dict, season: int, log=print) -> int:
+    """The exporter's one call site. Flag off and no preview: returns 0 having
+    read nothing."""
+    if BTBLEND_SERVE:
+        n = _join_btblend_plus(hitters, hem_raw, season)
+        if n:
+            log(f"  hitters: BT Blend (btblend_plus) joined for {n} hitters")
+        return n
+    if btblend_preview_on():
+        path = _btblend_preview(hitters, hem_raw, season)
+        log(f"  hitters: BT Blend preview (dark, no board row stamped): {path}")
+    return 0
+
+
 # The pWOBA xwOBA blend (registry row pwoba_blend_regate, artifact
 # data/pwoba_blend_regate_eval.json). The frozen arm b=0.2 PASSED its registered
 # re-gate on 2026-10-14 (an owner-waived early read of the 2026-11-15 re-gate:
@@ -1300,6 +1380,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     n_fh = _join_fwdhem_plus(scored["hitters"], _hem_raw, season)
     if n_fh:
         log(f"  hitters: fwdHEM+ (xHEM+ Blend forward column) joined for {n_fh} hitters")
+    _btblend_step(scored["hitters"], _hem_raw, season, log=log)
     n_pw = _join_pwoba(scored["hitters"], season)
     sv_meta = _join_savant_custom(scored["hitters"], season)
     if sv_meta.get("available"):

@@ -1631,6 +1631,7 @@ def columns_spec() -> dict:
                 "xwoba": "The same anchoring and the same coverage gap.",
                 "luck_gap": "A difference of two season-pool numbers.",
                 "fwdhem_plus": "A forecast of next season.",
+                "btblend_plus": "A forecast of next season.",
                 "pwoba": "A forecast of next season.",
                 "hem_plus_3yr": _CURRENT_3YR_REASON,
                 "war_pa_plus_3yr": _FROZEN_3YR_REASON,
