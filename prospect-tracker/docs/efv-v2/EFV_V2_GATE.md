@@ -1066,3 +1066,20 @@ labelled spent, the candidates list keeps them apart, and nothing is selected on
 list vintage (2020, 2021) was built and no tool grade from a 2020 or 2021 board was read
 (`efv5_atlas.CONSENSUS_VINTAGES` and the V-window read, pinned in `test_efv5_atlas_tools.py`).
 No cell is cut by consensus-FV level.
+
+## Note 2026-10-15: eFV v5 COMBINED reads the spent R-LV and R-VM frames once (EW3-5, EW3-8, EW3-9)
+
+EFV5_COMBINE_WEIGHT_SHIP (`efv5_combined.py`, `docs/efv-v2/EFV_V5_COMBINED.md`) fixed its method before
+any fit (commit fa60063c), fit one jointly weighted model of every atlas driver on lv_dev and vm_dev with
+the penalty chosen inside each fold's own training years, and then read it ONCE on R-LV (list vintages
+2020 and 2021) and R-VM (the 2025 debut cohort), opened through this registration's committed sha
+`e7931ce4e13110eebb53555bff455ff13ca7c502` exactly as the v4 and v5 spent reads were. These frames were spent by the 10-08
+confirmation (s11); this is not a look: every block is labelled 'spent frame, read after the 10-08
+confirmation', nothing was chosen or tuned on it, and no progress-ledger row was written. The owner waived
+registered dates and look days (EW3-5), so the read is recorded as an OWNER-WAIVED read of spent frames.
+Result (`data/_labs/efv5/efv5_combined_spent.json`): v5c minus V2 within -0.0032 on R-LV
+(E_refit CI95 -0.0369 to +0.0171) and -0.0288 on R-VM (E_refit
+-0.0744 to +0.0756); the ship rule EW3-9 fails and
+`EFV_V5_COMBINED_ON` stays False. A first build of the read aborted inside a column
+builder before any statistic was computed (section 11 of the document). No cell is cut by consensus-FV level.
+The forking-path count of s6 gains this one joint fit and this one spent read.

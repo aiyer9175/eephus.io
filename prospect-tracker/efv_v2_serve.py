@@ -147,9 +147,15 @@ def production_models(*, refresh: bool = False) -> dict[str, dict]:
     import efv_v2_model as H
     import efv_v3 as V3
     import efv_v4 as V4
+    import efv5_combined as V5C
     import efv5_group_drivers as V5
     import efv_vintage_frame as F
     weights = H.load_weights()
+    if V5C.EFV_V5_COMBINED_ON:
+        # DARK (efv5_combined.EFV_V5_COMBINED_ON is False): eFV v5 COMBINED, every atlas
+        # driver in one joint fit; the ship rule of docs/efv-v2/EFV_V5_COMBINED.md flips it.
+        _MODELS = V5C.production_models(weights=weights)
+        return _MODELS
     if V5.EFV_V5_ON:
         # DARK (efv5_group_drivers.EFV_V5_ON is False): eFV v5 group drivers at the
         # committed configuration; the ship rule of docs/efv-v2/EFV_V5_BACKTEST.md flips it.
