@@ -527,14 +527,16 @@ def _join_fwdhem_plus(hitters: list[dict], hem_raw: dict, season: int) -> int:
 
 # BT Blend (btblend_plus): the served construction of the bat-tracking blend
 # (bat_tracking_blend.py), registered in docs/BAT_TRACKING_SERVED_GATE.md. A NEW
-# served column (plan Part 8 class 2), so it ships DARK: BTBLEND_SERVE stays
-# False until the gate's one served-construction re-read passes its registered
-# rule, and the flip is one commit carrying the flag, the regenerated board, the
-# page column, the glossary entry and the registry row. Off, the join reads
-# nothing and fetches nothing, so the board is byte-identical to before. The
-# local preview (EEPHUS_BTBLEND_PREVIEW=1) computes the column into
-# bat_tracking_blend.PREVIEW_DIR only and never stamps a board row.
-BTBLEND_SERVE = False
+# served column (plan Part 8 class 2), so it shipped DARK until the gate's one
+# served-construction re-read passed its registered rule (2026-10-14, an
+# owner-waived early read: D4 gap lo95 +0.0019 v1 and +0.0018 v2 against the
+# served xHEM+ Blend, data/bat_tracking_served_eval.json). The flip is one
+# commit carrying the flag, the regenerated board, the page column, the
+# glossary entry and the registry row btblend_plus. Off, the join reads nothing
+# and fetches nothing, so the board is byte-identical to the flag-less
+# exporter. The local preview (EEPHUS_BTBLEND_PREVIEW=1, flag off) computes the
+# column into bat_tracking_blend.PREVIEW_DIR only and never stamps a board row.
+BTBLEND_SERVE = True
 BTBLEND_PREVIEW_ENV = "EEPHUS_BTBLEND_PREVIEW"
 
 

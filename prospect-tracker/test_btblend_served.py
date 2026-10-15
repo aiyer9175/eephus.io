@@ -70,9 +70,24 @@ def test_constants_are_the_registered_ones():
     assert bbt.LIVE_TTL_S == mpe._SAVANT_LIVE_TTL_S
 
 
-def test_the_flag_is_off_until_the_reread_flips_it():
-    assert he.BTBLEND_SERVE is False
+def test_the_flag_follows_the_one_reread():
+    """The flag is on only because the one served-construction re-read passed
+    its registered rule (gap lo95 > 0 under BOTH conventions at D4); the flip
+    commit carries the registry row, the glossary entry and the page column."""
+    art = json.loads((ROOT / "data" / "bat_tracking_served_eval.json").read_text(encoding="utf-8"))
+    d4 = art["ladder"]["D4"]
+    passed = d4["v1"]["gap_ci"]["lo95"] > 0 and d4["v2"]["gap_ci"]["lo95"] > 0
+    assert passed and art["decision"]["verdict"] == "PASS"
+    assert he.BTBLEND_SERVE is passed
     assert he.BTBLEND_PREVIEW_ENV == "EEPHUS_BTBLEND_PREVIEW"
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    row = next(m for m in reg["models"] if m["model_id"] == "btblend_plus")
+    assert row["verdict"] == "provisional"
+    assert row["eval_artifact"] == "data/bat_tracking_served_eval.json"
+    gl = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    assert any(e["id"] == "btblend_plus" for e in gl["entries"])
+    js = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
+    assert 'key: "btblend_plus", label: "BT Blend"' in js
 
 
 # --------------------------------------------------------------------------- #

@@ -777,6 +777,30 @@ def test_component_line_entries_render_their_receipt(server, browser, slug):
     assert "proj_components_eval.json" in text
 
 
+def test_btblend_entry_renders_its_served_reread_receipt(server, browser):
+    """The BT Blend entry types no measured figure; its receipt reads the one
+    served-construction re-read (rung D4) and carries the xwOBA-alone
+    disclosure the gate requires."""
+    art = json.loads((ROOT / "data" / "bat_tracking_served_eval.json").read_text(encoding="utf-8"))
+    d4 = art["ladder"]["D4"]["v1"]
+    page_errors: list[str] = []
+    page = _browser_page(browser, page_errors)
+    try:
+        page.goto(server + "glossary/index.html#g=btblend_plus", wait_until="load", timeout=15_000)
+        page.wait_for_selector('#gl-entry .gl-entry-card[data-slug="btblend_plus"]', timeout=10_000)
+        page.wait_for_function(
+            "() => { const el = document.querySelector('#gl-entry .gl-receipt-slot[data-receipt=\"btblend_plus\"]');"
+            " return !!el && el.textContent.includes('Receipt'); }", timeout=10_000)
+        text = page.evaluate(
+            "() => document.querySelector('#gl-entry .gl-receipt-slot[data-receipt=\"btblend_plus\"]').textContent")
+    finally:
+        page.close()
+    assert not page_errors, "JS errors:\n  " + "\n  ".join(page_errors)
+    assert "bat_tracking_served_eval.json" in text
+    assert f"{d4['rho_primary']:.3f}" in text and f"{d4['rho_baseline']:.3f}" in text, text[:400]
+    assert "against xwOBA alone" in text
+
+
 def test_quick_search_palette_finds_terms(server, browser):
     page_errors: list[str] = []
     page = _browser_page(browser, page_errors)
