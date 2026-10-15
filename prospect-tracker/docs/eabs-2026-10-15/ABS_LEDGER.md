@@ -60,3 +60,30 @@ Minor-league frames: the same comparison (over both kinds, since those feeds cou
 ## 7. The Scores reader (scores_core.play_rows)
 
 The plays tab lists a plate appearance's reviews. It read only the play-level `reviewDetails`, so a challenge on a non-terminal pitch, and a second review in `additionalReviews`, never appeared; and the job's winProbability `fields` filter (tools/scores_job.py `WP_FIELDS`) does not request `reviewDetails`, so a game the job fetched itself shows none at all. The repair reads pitch-level reviews and `additionalReviews`, keeps each review's own type (an ABS challenge `MJ` is never merged with a replay challenge such as `MF`), adds the pitch number, and adds the review fields to `WP_FIELDS`. Measured before the repair on the served files: 46 game files, 36 reviews of type `MJ` listed against 209 ABS challenges in the same games' `info.abs`, and none at all in the 12 postseason games the job fetched itself.
+
+## 8. Results (2026-10-15, tools/build_abs_ledger.py)
+
+Built after sections 1 to 7 were committed. Outputs: data/_labs/abs_ledger/mlb_2026.json, aaa.json, single_a.json and coverage.json (never shipped).
+
+MLB 2026 regular season (2,429 cached final feeds):
+
+- 10,558 zone challenge rows in 2,402 games (27 games had none). The invariant holds in all 2,429 feeds, per club, exactly: the ledger is not refused.
+- Source: 7,896 on a pitch event, 2,661 on the play, 1 in additionalReviews.
+- Role: catcher 5,611 (3,287 overturned), batter 4,766 (2,328), pitcher 180 (71), unresolved 1. The walk's pitcher equals matchup.pitcher on all 183,869 plate appearances checked; no role disagrees with the challenging club's side; no row is flagged.
+- li_pa joined on 10,470 rows (the other 88 are leadoff plate appearances, null by section 2).
+
+AAA probe (section 5), 40 full feeds per season: 2022 had challenges in 3 of 40 games, 2023 in 17, 2024 in 30, 2025 in 39. Every season held challenge rows, so every final regular-season AAA game of 2022 to 2025 was fetched with the fields filter (2,237, 2,224, 2,232 and 2,232 games, none missing; the filtered and full payloads gave identical rows on all 160 probe games).
+
+AAA coverage by season (feeds with challenges, rows, invariant):
+
+- 2022: 88 games, 522 zone rows, 88 of 88 feeds match.
+- 2023: 973 games, 6,119 zone rows, 973 of 973.
+- 2024: 1,677 games, 8,708 zone rows, 1,677 of 1,677.
+- 2025: 2,194 games, 9,551 zone rows, 2,194 of 2,194.
+- 2026 (already cached): 2,205 games, 10,118 zone and 152 check-swing rows, 2,205 of 2,205 over both kinds.
+
+What the AAA frame can and cannot carry: the 2022 to 2025 feeds name no challenger (reviewDetails has no player), so role is unresolved there (4 seasons, 24,900 rows; 46 rows in 2024 and 2025 do name one). The challenging club's side is always present, so a batting-side challenge is the batter's (by the rule that only the batter challenges for the offense) and a fielding-side challenge is the pitcher's or the catcher's, not separable. In 2026, where the challenger is named, catchers made 97 percent of fielding-side challenges in MLB (5,611 of 5,791 resolved) and 94 percent in AAA (5,390 of 5,720). That is the stability frame's limit for eABS: batter decision skill is attributable across 2022 to 2026 AAA; catcher skill only through the fielding club and its catcher of record, which EWAR_T4_EABS must register if it uses it.
+
+Single-A (sport id 14, cached feeds): 2023 291 games, 290 match; 2024 305, all match; 2025 574, 396 match over both kinds and 573 over zone rows only (the 2025 feeds leave check-swing challenges out of absChallenges); 2026 575, 511 match (the 64 others carry challenge rows but hasChallenges false and zero counts in absChallenges). The zone-only comparison was added after the registration and is reported beside the registered one, not in its place.
+
+Process note: two fetch runs overlapped for about 25 minutes (2023 and 2022 at once), so for that span two requests were in flight instead of one. Every file was written atomically; all 8,925 fetched feeds read back.
