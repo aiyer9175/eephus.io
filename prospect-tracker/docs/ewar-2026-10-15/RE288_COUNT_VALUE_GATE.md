@@ -155,4 +155,52 @@ RE288_s(c) = [ n_s(c) raw_s(c) + K lambda_s pool(c) ] / [ n_s(c) + K ]   (n 0 gi
 
 ## 11. Amendments
 
-(None.)
+### 11.1 2026-10-15: the estimator after the first build refused (the estimand is unchanged)
+
+What was computed first. The build of parts 1 to 6 ran once (commit 737f3858's rules, the direct
+estimator of part 3 on runs to the end of the half-inning) and REFUSED; nothing was written to
+`data/`. Its log is kept in the lane's output directory and its pool document at
+`.cache/count_value/refused/count_value_v1_pool_direct_refused_2026-10-15.json` (sha256
+9ae6eee41103...). The numbers it showed, all disclosed here:
+
+- K 500.0 (K_raw 487.7, clipped; W 1.607346, tau^2 0.00329576, all 288 cells used); season
+  lambdas 0.9599 to 1.0558.
+- Invariant 2 refused: the pool reversed 6 count steps, all in base-out cells 4|0, 4|1 and 7|0;
+  each season reversed 9 to 14 steps, concentrated in the rare cells (runner on third, first and
+  third, second and third, bases loaded).
+- Invariant 1 refused in six seasons on the per-cell bound (max 0.0306 to 0.0628, at cells 4|0,
+  5|0, 6|0 and 7|0); the weighted bound passed in every season (0.0011 to 0.0021).
+- R1, R2, R3 and invariant 3 raised no refusal in any season.
+
+Diagnosis. Runs to the end of the half-inning carry the variance of every later plate appearance
+(W 1.61 runs squared within a cell). A rare base-out cell split twelve ways by count holds a few
+hundred pitches a season, too few to order counts one step apart, and the low K that this noise
+gives under the method of moments (500, against eBR's 1,654 on RE24) leaves the rare cells of the
+0-0 row less shrunk than RE24's. The walk receipts did not fail; the estimator was too noisy.
+
+The change (one change, registered before the second computation):
+
+```
+y_i        = (runs of the play from pitch i on) + RE24_s(the play's end state) - RE24_s(b_i, o_i)
+             RE24_s(., 3) = 0; the end state is the record's (end_on_*, end_outs)
+D_s(c)     = mean y over the season's fit-set observations in cell c, with n_s(c), var_s(c)
+D_pool(c)  = the same over P
+K'         = the method of moments of part 3 on D, with eBR's frozen season lambdas
+             (the ebr_v1 pool document) as the run-level scale; clipped to [500, 5000]
+D^_s(c)    = [ n_s(c) D_s(c) + K' lambda_s D_pool(c) ] / [ n_s(c) + K' ]
+RE288_s(c) = RE24_s(b, o) + D^_s(c)
+```
+
+- Why the estimand does not move. RE24_s(state) is by definition the mean runs from a plate
+  appearance that starts in that state to the end of the half-inning, so replacing the runs scored
+  after the play by RE24_s of the play's end state leaves the expectation of runs to the end of the
+  half-inning unchanged and removes the variance of the later plate appearances (a control
+  variate; the usual construction of count run values).
+- Unchanged: the walk, the observations, the fit set, P, the clip, the ledger, invariants 1 to 3 and
+  their tolerances, and the receipts. Invariant 1 now checks that the season's own plays agree with
+  its RE24 table at 0-0. The 12-cell marginal's re_mean stays the raw mean of runs to the end of the
+  half-inning; rv_vs_00 and the called-pitch value read the amended table.
+- The version stays count_value_v1: the refused computation was never pinned in code nor written
+  to `data/`. The pool is written to `.cache/count_value/frozen/` only by a build that passes.
+- This amended build runs once. If it refuses, nothing is written and the question goes to the
+  owner.
