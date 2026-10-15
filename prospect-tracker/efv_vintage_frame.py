@@ -219,6 +219,106 @@ def reserved_vm_pins() -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# the training window (EFV_2026_FOLD_TRAINING, docs/efv-v2/EFV_2026_TRAINING.md)
+# ---------------------------------------------------------------------------
+
+#: THE TRAINING SWITCH (owner EW3-13, 2026-10-15; registration
+#: docs/efv-v2/EFV_2026_TRAINING.md). False: every fit stops before R_VM_FIRST_DEBUT_YEAR,
+#: exactly as before. True: a FIT (production or development selection) may read decision
+#: years and debut cohorts through TRAIN_THROUGH_SEASON, from the training-only fold
+#: matrices (fold_matrix_path), once label_window_closed holds for that season. It never
+#: opens a look, a score on a reserved frame, CANDIDATE_YEARS or SCORED_YEARS. Stays False
+#: until EFV_X3 or a successor model is registered with it.
+EFV_TRAIN_THROUGH_2026: bool = False
+#: The last season the flag lets a fit read (the 2026 holdout frame is SPENT; a model fitted
+#: with the flag on is claimed only on the 2027 season).
+TRAIN_THROUGH_SEASON: int = 2026
+TRAINING_DOC = "docs/efv-v2/EFV_2026_TRAINING.md"
+#: (season, resolved_through, vintage mtime) -> (closed, reason), memoized per process.
+_CLOSED_MEMO: dict[tuple, tuple[bool, str]] = {}
+
+
+def label_window_closed(season: int, *, resolved_through: int | None = None,
+                        vintage: dict | None = None) -> tuple[bool, str]:
+    """(closed, reason) for season `season` of the label: closed only when the season is at
+    or before efv_dataset.RESOLVED_THROUGH and the frozen fWAR vintage holds it with both
+    groups frozen, each fetched after the season was complete
+    (fwar_vintage.season_complete on the fetch date). The registration, section 3."""
+    import fwar_vintage as FV
+    from datetime import date as _date
+    s = int(season)
+    rt = int(D.RESOLVED_THROUGH if resolved_through is None else resolved_through)
+    if s > rt:
+        return False, f"season {s} is after the label's RESOLVED_THROUGH {rt}"
+    if vintage is None:
+        try:
+            blob = FV.load()
+        except (OSError, ValueError) as e:
+            return False, f"the fWAR vintage is unreadable ({type(e).__name__})"
+    else:
+        blob = vintage
+    blk = (blob.get("seasons") or {}).get(str(s)) or {}
+    for g in ("hitting", "pitching"):
+        gb = blk.get(g) or {}
+        if gb.get("status") != "frozen":
+            return False, f"season {s} {g} is not frozen in the fWAR vintage"
+        try:
+            fetched = _date.fromisoformat(str(gb.get("fetched_at") or "")[:10])
+        except ValueError:
+            return False, f"season {s} {g} carries no fetch date"
+        ok, why = FV.season_complete(s, fetched)
+        if not ok:
+            return False, f"season {s} {g} was fetched before it was complete: {why}"
+    return True, f"season {s} closed (RESOLVED_THROUGH {rt}, fWAR vintage frozen after its end)"
+
+
+def _closed_memoized(season: int) -> tuple[bool, str]:
+    import fwar_vintage as FV
+    try:
+        mt = FV.VINTAGE_PATH.stat().st_mtime_ns
+    except OSError:
+        mt = None
+    key = (int(season), int(D.RESOLVED_THROUGH), mt, id(FV._CACHE))
+    if key not in _CLOSED_MEMO:
+        _CLOSED_MEMO[key] = label_window_closed(season)
+    return _CLOSED_MEMO[key]
+
+
+def train_end_year(*, flag: bool | None = None) -> int:
+    """The first decision year (debut cohort) a FIT may not read: R_VM_FIRST_DEBUT_YEAR with
+    EFV_TRAIN_THROUGH_2026 off, TRAIN_THROUGH_SEASON + 1 with it on. With the flag on and the
+    label window of TRAIN_THROUGH_SEASON not closed, raises ReservedFrameError (no fit reads
+    an open label). Never a scoring or claim bound."""
+    on = EFV_TRAIN_THROUGH_2026 if flag is None else bool(flag)
+    if not on:
+        return int(R_VM_FIRST_DEBUT_YEAR)
+    ok, why = _closed_memoized(TRAIN_THROUGH_SEASON)
+    if not ok:
+        raise ReservedFrameError(
+            f"EFV_TRAIN_THROUGH_2026 is on but the label window of {TRAIN_THROUGH_SEASON} is "
+            f"not closed: {why}. See {TRAINING_DOC} s3.")
+    return int(TRAIN_THROUGH_SEASON) + 1
+
+
+def fold_matrix_path(side: str) -> Path:
+    """The training-only fold matrix of the side (efv_2026_fold.py --build writes it)."""
+    return DATA_DIR / "_labs" / "efv2026" / f"train_matrix_{side}_through{TRAIN_THROUGH_SEASON}.json"
+
+
+def training_matrix_path(side: str) -> Path:
+    """The fold matrix a fit reads with EFV_TRAIN_THROUGH_2026 on, after the closed-window
+    check; raises when the window is open or the fold matrix was never built. Callers read
+    efv_dataset.matrix_path with the flag off."""
+    train_end_year(flag=True)
+    p = fold_matrix_path(side)
+    if not p.exists():
+        raise ReservedFrameError(
+            f"EFV_TRAIN_THROUGH_2026 is on but {p.name} does not exist; build it with "
+            f"python efv_2026_fold.py --build ({TRAINING_DOC} s1).")
+    return p
+
+
+# ---------------------------------------------------------------------------
 # universe
 # ---------------------------------------------------------------------------
 

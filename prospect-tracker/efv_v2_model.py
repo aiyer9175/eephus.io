@@ -134,6 +134,10 @@ def training_rows(side: str) -> list[dict]:
 
 
 def _matrix_path(side: str) -> Path:
+    if F.EFV_TRAIN_THROUGH_2026:
+        # docs/efv-v2/EFV_2026_TRAINING.md: the training-only fold matrix, after the
+        # closed-window check (raises on an open label window or a missing build)
+        return F.training_matrix_path(side)
     from efv_dataset import matrix_path
     return matrix_path(side)
 
@@ -431,9 +435,15 @@ def served_views(scores: dict[str, float], consensus: dict[str, float]) -> dict:
 
 def _check_years(years, *, gate_sha: str | None = None) -> list[int]:
     """The years as ints; a reserved R-VM year raises unless `gate_sha` names the
-    committed registration (the one path that opens a reserved frame)."""
+    committed registration (the one path that opens a reserved frame). With
+    efv_vintage_frame.EFV_TRAIN_THROUGH_2026 on the bound is train_end_year(): fits and
+    development selection read through TRAIN_THROUGH_SEASON (EFV_2026_TRAINING.md)."""
     ys = [int(y) for y in years]
-    bad = [y for y in ys if y >= F.R_VM_FIRST_DEBUT_YEAR]
+    bad = [y for y in ys if y >= F.train_end_year()]
+    if bad and F.EFV_TRAIN_THROUGH_2026 and not F.gate_sha_committed(gate_sha):
+        raise F.ReservedFrameError(
+            f"years {bad} are after the training window (through "
+            f"{F.TRAIN_THROUGH_SEASON}); see {F.TRAINING_DOC}")
     if bad and not F.gate_sha_committed(gate_sha):
         raise F.ReservedFrameError(
             f"years {bad} reach the reserved R-VM cohorts (first "

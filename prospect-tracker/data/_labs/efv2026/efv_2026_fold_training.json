@@ -1,0 +1,373 @@
+{
+ "generated_at": "2026-10-15T20:04:44Z",
+ "produced_by": "efv_2026_fold.py --report",
+ "registration": "docs/efv-v2/EFV_2026_TRAINING.md",
+ "role": "development",
+ "adjudicates": "nothing; counts and arithmetic on a published sd, no rater scored",
+ "flag": {
+  "name": "efv_vintage_frame.EFV_TRAIN_THROUGH_2026",
+  "served_value": false,
+  "train_through_season": 2026,
+  "train_end_year_off": 2025,
+  "train_end_year_on": 2027
+ },
+ "label_window": {
+  "season": 2026,
+  "closed": true,
+  "reason": "season 2026 closed (RESOLVED_THROUGH 2026, fWAR vintage frozen after its end)",
+  "resolved_through": 2026
+ },
+ "guards": {
+  "r_vm_first_debut_year": 2025,
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "reserved_vm_pins": [],
+  "anchor_gate": "nothing grouped by consensus-FV level (docs/PROSPECT_ANCHOR_GATE.md)"
+ },
+ "mde_basis": {
+  "path": "data/xfv_mde_floor.json",
+  "sha256": "084ac36b397927e4fee35aee2d0cdc79b201ddbfd470cd559736a744aa22edd3",
+  "generated_at": "2026-10-03T16:19:47Z",
+  "weighting": "weighted",
+  "rule": "mde95_after = mde95_before x sqrt(W_before / W_after) (PROGRAM.md s2.5, LABEL_HORIZON_2026.md s3); row-count version sqrt(n_before / n_after)",
+  "note": "arithmetic on a published sd, not a measured floor; the opened rows serve development selection only and are never a claim frame"
+ },
+ "sides": {
+  "hit": {
+   "pool_flag_off": {
+    "end": 2025,
+    "n": 1889,
+    "by_year": {
+     "2011": {
+      "debuted": 10
+     },
+     "2012": {
+      "debuted": 25
+     },
+     "2013": {
+      "debuted": 55,
+      "bust": 1
+     },
+     "2014": {
+      "debuted": 50,
+      "bust": 48
+     },
+     "2015": {
+      "debuted": 63,
+      "bust": 16
+     },
+     "2016": {
+      "debuted": 43,
+      "bust": 56
+     },
+     "2017": {
+      "debuted": 52,
+      "bust": 66
+     },
+     "2018": {
+      "debuted": 51,
+      "bust": 129
+     },
+     "2019": {
+      "debuted": 75,
+      "bust": 124
+     },
+     "2020": {
+      "debuted": 60,
+      "bust": 108
+     },
+     "2021": {
+      "debuted": 75,
+      "bust": 52
+     },
+     "2022": {
+      "debuted": 128,
+      "bust": 123
+     },
+     "2023": {
+      "debuted": 94,
+      "bust": 151
+     },
+     "2024": {
+      "debuted": 91,
+      "bust": 143
+     }
+    }
+   },
+   "pool_flag_on": {
+    "end": 2027,
+    "n": 2079,
+    "by_year": {
+     "2011": {
+      "debuted": 10
+     },
+     "2012": {
+      "debuted": 25
+     },
+     "2013": {
+      "debuted": 55,
+      "bust": 1
+     },
+     "2014": {
+      "debuted": 50,
+      "bust": 48
+     },
+     "2015": {
+      "debuted": 63,
+      "bust": 16
+     },
+     "2016": {
+      "debuted": 43,
+      "bust": 56
+     },
+     "2017": {
+      "debuted": 52,
+      "bust": 66
+     },
+     "2018": {
+      "debuted": 51,
+      "bust": 129
+     },
+     "2019": {
+      "debuted": 75,
+      "bust": 124
+     },
+     "2020": {
+      "debuted": 60,
+      "bust": 108
+     },
+     "2021": {
+      "debuted": 75,
+      "bust": 52
+     },
+     "2022": {
+      "debuted": 128,
+      "bust": 123
+     },
+     "2023": {
+      "debuted": 94,
+      "bust": 151
+     },
+     "2024": {
+      "debuted": 91,
+      "bust": 143
+     },
+     "2025": {
+      "debuted": 96
+     },
+     "2026": {
+      "debuted": 94
+     }
+    }
+   },
+   "rows_gained": 190,
+   "rows_gained_by_year": {
+    "2025": 96,
+    "2026": 94
+   },
+   "rows_lost": 0,
+   "max_decision_year_on": 2026,
+   "dev_read_before": {
+    "years": [
+     2014,
+     2024
+    ],
+    "n": 782,
+    "w": 684.167
+   },
+   "dev_read_after": {
+    "years": [
+     2014,
+     2026
+    ],
+    "n": 972,
+    "w": 731.833
+   },
+   "mde": {
+    "mde95": {
+     "before": 0.0383,
+     "after_mass": 0.037,
+     "after_rows": 0.0344
+    },
+    "mde95_onesided": {
+     "before": 0.0321,
+     "after_mass": 0.031,
+     "after_rows": 0.0288
+    },
+    "ratio_mass": 1.0697,
+    "ratio_rows": 1.243
+   }
+  },
+  "pit": {
+   "pool_flag_off": {
+    "end": 2025,
+    "n": 1981,
+    "by_year": {
+     "2011": {
+      "debuted": 8
+     },
+     "2012": {
+      "debuted": 30
+     },
+     "2013": {
+      "debuted": 53,
+      "bust": 3
+     },
+     "2014": {
+      "debuted": 53,
+      "bust": 36
+     },
+     "2015": {
+      "debuted": 72,
+      "bust": 23
+     },
+     "2016": {
+      "debuted": 51,
+      "bust": 69
+     },
+     "2017": {
+      "debuted": 32,
+      "bust": 57
+     },
+     "2018": {
+      "debuted": 57,
+      "bust": 157
+     },
+     "2019": {
+      "debuted": 78,
+      "bust": 118
+     },
+     "2020": {
+      "debuted": 109,
+      "bust": 98
+     },
+     "2021": {
+      "debuted": 108,
+      "bust": 46
+     },
+     "2022": {
+      "debuted": 100,
+      "bust": 119
+     },
+     "2023": {
+      "debuted": 128,
+      "bust": 119
+     },
+     "2024": {
+      "debuted": 119,
+      "bust": 138
+     }
+    }
+   },
+   "pool_flag_on": {
+    "end": 2027,
+    "n": 2218,
+    "by_year": {
+     "2011": {
+      "debuted": 8
+     },
+     "2012": {
+      "debuted": 30
+     },
+     "2013": {
+      "debuted": 53,
+      "bust": 3
+     },
+     "2014": {
+      "debuted": 53,
+      "bust": 36
+     },
+     "2015": {
+      "debuted": 72,
+      "bust": 23
+     },
+     "2016": {
+      "debuted": 51,
+      "bust": 69
+     },
+     "2017": {
+      "debuted": 32,
+      "bust": 57
+     },
+     "2018": {
+      "debuted": 57,
+      "bust": 157
+     },
+     "2019": {
+      "debuted": 78,
+      "bust": 118
+     },
+     "2020": {
+      "debuted": 109,
+      "bust": 98
+     },
+     "2021": {
+      "debuted": 108,
+      "bust": 46
+     },
+     "2022": {
+      "debuted": 100,
+      "bust": 119
+     },
+     "2023": {
+      "debuted": 128,
+      "bust": 119
+     },
+     "2024": {
+      "debuted": 119,
+      "bust": 138
+     },
+     "2025": {
+      "debuted": 118
+     },
+     "2026": {
+      "debuted": 119
+     }
+    }
+   },
+   "rows_gained": 237,
+   "rows_gained_by_year": {
+    "2025": 118,
+    "2026": 119
+   },
+   "rows_lost": 0,
+   "max_decision_year_on": 2026,
+   "dev_read_before": {
+    "years": [
+     2014,
+     2024
+    ],
+    "n": 907,
+    "w": 788.5
+   },
+   "dev_read_after": {
+    "years": [
+     2014,
+     2026
+    ],
+    "n": 1144,
+    "w": 847.667
+   },
+   "mde": {
+    "mde95": {
+     "before": 0.0335,
+     "after_mass": 0.0323,
+     "after_rows": 0.0298
+    },
+    "mde95_onesided": {
+     "before": 0.0281,
+     "after_mass": 0.0271,
+     "after_rows": 0.025
+    },
+    "ratio_mass": 1.075,
+    "ratio_rows": 1.2613
+   }
+  }
+ },
+ "code": {
+  "commit": "0224a46f7aff0fa14ba4b141ee8a948892928271",
+  "tool_sha256": "4b95dbba3a3764e825d519c5964cda8e781898675287a38cd4bcffe0dffc9ab8"
+ }
+}

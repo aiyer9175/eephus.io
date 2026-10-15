@@ -114,3 +114,35 @@ Today the rule holds for 2026: `RESOLVED_THROUGH = 2026` and the vintage
   reads a row.
 - The served claim and the served-score year range do not move with the flag.
 - The source names no consensus-FV cell.
+
+## 7. Implementation and receipt (appended 2026-10-15, after the code)
+
+Code: `efv_vintage_frame.py` (the flag, `TRAIN_THROUGH_SEASON`, `label_window_closed`,
+`train_end_year`, `fold_matrix_path`, `training_matrix_path`), `efv_v2_model.py`
+(`_matrix_path` reads the fold matrix with the flag on; `_check_years` reads
+`train_end_year`), the production training filters of `efv_v2_serve.py`, `efv_v3.py`,
+`efv_v4.py`, `efv5_group_drivers.py` and `efv5_combined.py`, the vintage-matched column
+builders `efv5_group_drivers.vm_columns` and `efv5_combined.tool_vm_columns`, the tool
+`efv_2026_fold.py` and the tests `test_efv_2026_fold.py`.
+
+One departure from s1, disclosed: `efv5_combined.production_train` REFUSES with the flag on
+(NotImplementedError) instead of fitting. Its group and tool columns read the 2025 and 2026
+rows, but the v4 and scouting families (population translation, scouting index, IL, NRI,
+play-by-play, rater panel, report reads) cap every read at the R-VM cohort, so a v5 COMBINED
+fit through 2026 would train on columns silently missing on the new rows. A model registered
+with the flag (EFV_X3 or a successor) wires its own builders, or a later task extends these.
+The V2 production fit (`efv_v2_model.fit_v2` on the pool) runs with the flag on.
+
+Receipt (`data/_labs/efv2026/efv_2026_fold_training.json`, `python efv_2026_fold.py --build
+--report`): the fold matrices add 94 hitter and 119 pitcher rows, every one a 2026 debut, and
+every shared row is identical to the served matrix. The production training pool grows from
+1,889 to 2,079 hitter rows (+96 at decision year 2025, +94 at 2026) and from 1,981 to 2,218
+pitcher rows (+118, +119); no row is lost and the largest decision year read is 2026. The
+development read's scored mass (debuted rows, decision years 2014 on) grows from 782 rows and
+pair-weight mass 684.167 to 972 and 731.833 (hitters) and from 907 and 788.5 to 1,144 and
+847.667 (pitchers). On the published weighted floor that moves the one-sided mde95 from
+0.0321 to 0.0310 (mass rule; 0.0288 by rows) for hitters and from 0.0281 to 0.0271 (0.0250 by
+rows) for pitchers; the two-sided mde95 from 0.0383 to 0.0370 (0.0344) and from 0.0335 to
+0.0323 (0.0298). Arithmetic on a published sd, development selection only. With the flag off
+the served production models are byte-identical to the incumbent's (sha256 of the serialized
+fits c62ec1a7 before and after the change).

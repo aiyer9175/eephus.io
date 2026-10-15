@@ -333,7 +333,7 @@ def production_models(*, weights: dict | None = None) -> dict[str, dict]:
     out = {}
     for side in F.SIDES:
         train = [r for r in H.matrix_training_rows(side)
-                 if int(r["decision_year"]) < F.R_VM_FIRST_DEBUT_YEAR]
+                 if int(r["decision_year"]) < F.train_end_year()]
         m = fit_v5(train, side, frame="vm", weights=w, cfg=cfg)
         m["war_map_6yr"] = H.fit_war_map(train)
         m["train_years"] = sorted({int(r["decision_year"]) for r in train})
@@ -504,9 +504,11 @@ def vm_columns(side: str, data: list[dict], raw_by_key: dict, names, *,
     """({name: {(decision year, player_key): value}}, in-group counts) on the
     vintage-matched matrix rows, read on the matrix id at the decision year as of the
     matrix cutoff. A 2025 or later decision year is skipped unless the committed gate
-    sha opens the cohort (the spent read; efv_vintage_frame.guard_vm_request)."""
+    sha opens the cohort (the spent read; efv_vintage_frame.guard_vm_request). With
+    EFV_TRAIN_THROUGH_2026 on the bound is efv_vintage_frame.train_end_year()."""
+    end = F.train_end_year()
     late = {int(d["decision_year"]) for d in data
-            if int(d["decision_year"]) >= F.R_VM_FIRST_DEBUT_YEAR}
+            if int(d["decision_year"]) >= end}
     allow_reserved = False
     if gate_sha:
         F.guard_vm_request(late, gate_sha=gate_sha, purpose="v5 group column")
@@ -516,7 +518,7 @@ def vm_columns(side: str, data: list[dict], raw_by_key: dict, names, *,
     reads = {}
     for d in data:
         y = int(d["decision_year"])
-        if y >= F.R_VM_FIRST_DEBUT_YEAR and not allow_reserved:
+        if y >= end and not allow_reserved:
             continue
         raw = raw_by_key.get(d["player_key"]) or {}
         S = read_season(y, raw.get("cutoff"))
