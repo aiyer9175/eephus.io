@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-04",
+ "generated_at": "2026-10-15",
  "scope": "PITCHERS; debut 2011-2025 + never-MLB bust pool",
  "target": "first-6-season summed WAR (fwar); resolved<= 2026",
  "no_model": true,

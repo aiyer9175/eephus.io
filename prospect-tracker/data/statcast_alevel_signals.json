@@ -1,5 +1,5 @@
 {
-"generated_at": "2026-10-04",
+"generated_at": "2026-10-15",
 "season": 2026,
 "source": "stored zone_metrics (hitter whiff) + statcast_metrics (pitcher FB velo) payloads + cached milb_history K legs; offline, zero fetches",
 "frozen_coefficients": {

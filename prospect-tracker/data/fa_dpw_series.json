@@ -1277,91 +1277,99 @@
   "realized": {
    "2015": {
     "n": 84,
-    "paid": 1652990000,
-    "war": 151.1,
-    "dpw": 10939708,
+    "paid": 1583354761,
+    "war": 153.0,
+    "dpw": 10348723,
     "complete_share": 1.0,
     "elapsed": 1.0
    },
    "2016": {
     "n": 118,
-    "paid": 2157190000,
-    "war": 162.1,
-    "dpw": 13307772,
+    "paid": 2112545985,
+    "war": 147.8,
+    "dpw": 14293274,
     "complete_share": 1.0,
     "elapsed": 1.0
    },
    "2017": {
     "n": 94,
     "paid": 1414135000,
-    "war": 77.6,
-    "dpw": 18223389,
+    "war": 85.2,
+    "dpw": 16597828,
     "complete_share": 1.0,
     "elapsed": 1.0
    },
    "2018": {
     "n": 90,
     "paid": 1358130000,
-    "war": 119.8,
-    "dpw": 11336644,
+    "war": 111.1,
+    "dpw": 12224392,
     "complete_share": 1.0,
     "elapsed": 1.0
    },
    "2019": {
     "n": 103,
-    "paid": 1550718834,
-    "war": 167.0,
-    "dpw": 9285741,
+    "paid": 1606103450,
+    "war": 164.2,
+    "dpw": 9781385,
     "complete_share": 0.981,
-    "elapsed": 0.993
+    "elapsed": 0.994
    },
    "2020": {
     "n": 120,
-    "paid": 1875224000,
-    "war": 113.1,
-    "dpw": 16580229,
-    "complete_share": 0.975,
-    "elapsed": 0.995
+    "paid": 1918781380,
+    "war": 111.1,
+    "dpw": 17270759,
+    "complete_share": 0.992,
+    "elapsed": 0.998
    },
    "2021": {
     "n": 135,
-    "paid": 1366005500,
-    "war": 168.6,
-    "dpw": 8102049,
-    "complete_share": 0.985,
-    "elapsed": 0.998
+    "paid": 1406005500,
+    "war": 168.2,
+    "dpw": 8359129,
+    "complete_share": 1.0,
+    "elapsed": 1.0
    },
    "2022": {
     "n": 135,
-    "paid": 2612643666,
-    "war": 228.8,
-    "dpw": 11418897,
-    "complete_share": 0.926,
-    "elapsed": 0.976
+    "paid": 2811361077,
+    "war": 252.5,
+    "dpw": 11134103,
+    "complete_share": 0.956,
+    "elapsed": 0.988
    },
    "2023": {
     "n": 128,
-    "paid": 2396550625,
-    "war": 211.0,
-    "dpw": 11358059,
-    "complete_share": 0.883,
-    "elapsed": 0.945
+    "paid": 2735746946,
+    "war": 213.6,
+    "dpw": 12807804,
+    "complete_share": 0.906,
+    "elapsed": 0.965
    },
    "2024": {
     "n": 129,
-    "paid": 1462446190,
-    "war": 127.8,
-    "dpw": 11443240,
-    "complete_share": 0.884,
-    "elapsed": 0.949
+    "paid": 1632253829,
+    "war": 153.3,
+    "dpw": 10647448,
+    "complete_share": 0.953,
+    "elapsed": 0.981
    },
    "2025": {
     "n": 144,
-    "paid": 1153646710,
-    "war": 84.2,
-    "dpw": 13701267,
-    "complete_share": 0.757,
-    "elapsed": 0.848
+    "paid": 1784495788,
+    "war": 125.4,
+    "dpw": 14230428,
+    "complete_share": 0.868,
+    "elapsed": 0.938
+   },
+   "2026": {
+    "n": 133,
+    "paid": 1190041666,
+    "war": 61.2,
+    "dpw": 19445125,
+    "complete_share": 0.744,
+    "elapsed": 0.844
    }
   },
   "thresholds": {
