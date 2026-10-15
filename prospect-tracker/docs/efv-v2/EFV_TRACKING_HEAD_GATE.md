@@ -291,3 +291,27 @@ can see what the tracking metrics did and did not add over consensus and over V2
 
 - 2026-10-15: written and committed alone, before the producer existed. The read follows
   the same day under EW3-5 (owner-waived; the only registered date is this one).
+- 2026-10-15: THE READ (owner-waived early read, EW3-5; `python efv5_tracking_head.py --run`, B 2000,
+  70.7 s, artifact `data/efv5_tracking_head.json` generated 2026-10-15T12:49:45Z, registration
+  sha256 a3918d6565e9, HEAD at the run e1589ce3). Frame: hitters
+  154 training rows (45 reached) and 124 held out (73 reached);
+  pitchers 160 (74) and 122 (91); every row joined a served V2 score.
+  Selection (training only): hitters lambda_R inf, lambda_W 300.0; pitchers lambda_R 30.0,
+  lambda_W 10.0. Held-out cohort 2023 (spent, R-VM overlap):
+  hitters: head AUC 0.6465 / rho 0.3258; consensus 0.5939 / 0.3318; V2 0.6052 / 0.3657; head minus consensus AUC +0.0526 (CI95 +0.0011 to +0.1083), rho -0.0060 (CI95 -0.0745 to +0.0663); head minus V2 AUC +0.0413 (CI95 -0.0181 to +0.1046), rho -0.0399 (CI95 -0.1333 to +0.0551).
+  pitchers: head AUC 0.6324 / rho 0.2389; consensus 0.5635 / 0.1918; V2 0.5803 / 0.1772; head minus consensus AUC +0.0689 (CI95 -0.0183 to +0.1517), rho +0.0471 (CI95 -0.0758 to +0.1681); head minus V2 AUC +0.0521 (CI95 -0.0259 to +0.1280), rho +0.0617 (CI95 -0.0587 to +0.1796).
+  VERDICT by the section 8 rule: hitters DO NOT SHIP (rate3 Spearman trails both comparators);
+  pitchers SHIP (all four strict inequalities hold as point estimates). Recorded, not edited away:
+  every one of the pitcher side's four CI95s includes zero, and the held-out group reports
+  (section 7, reporting only) split: by level the head trails consensus on AUC at both A
+  (0.677 vs 0.752, n 41) and AAA (0.446 vs 0.479, n 81; 72 of 81 reached),
+  so part of the pooled AUC lead is the level indicator placing AAA above A; by role the head
+  leads at both RP (0.634 vs 0.510; rho 0.307 vs 0.113, n 49) and SP (0.660 vs 0.624, n 73).
+  The rule was fixed before the read and is applied as written; the flip stays with the
+  integrator and the owner (report, INTEGRATION NOTES and OWNER-Q). The served path is built
+  dark (`efv5_tracking_head.apply_to_live`, called by `efv_v2_serve.score_live`; the blend of
+  section 8.1 D-1; the chip and the card note), and `EFV_TRACKING_HEAD_ON` is False in this tree.
+  Which metrics carry weight (section 5, pitchers): reach head aStuff+ (+), exit velocity against (-)
+  and arm angle (-, imputed where absent); rate head exit velocity against (-) and aStuff+ (+).
+  Hitters: the reach head took lambda infinity (no tracking metric enters) and the rate head at
+  lambda 300 carries the 90th-percentile exit velocity (-), a sign the owner should read as noise.

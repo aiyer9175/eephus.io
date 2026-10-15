@@ -1,0 +1,1351 @@
+{
+ "schema": 1,
+ "generated_at": "2026-10-15T12:49:45Z",
+ "tool": "efv5_tracking_head.py",
+ "item": "EFV5_TRACKING_HEAD",
+ "note": "eFV tracking-era head, development read (EW3-1): short-horizon label, nothing served moves, no number by consensus-FV level, consensus FV a covariate and a comparator only",
+ "role": "development",
+ "served": false,
+ "flag": {
+  "EFV_TRACKING_HEAD_ON": false
+ },
+ "spent_note": "spent: the label window reaches a 2025 or later debut cohort (R-VM, spent since the 10-08 confirmation); an owner-authorised short-horizon read (EW3-1)",
+ "registration": {
+  "doc": "docs/efv-v2/EFV_TRACKING_HEAD_GATE.md",
+  "sha256": "a3918d6565e9ecf2868af49ec2b499285ec1781bdf76bb3c03a73e00166eaaa4",
+  "git_head_at_run": "e1589ce308c8ea8faa2bced6795c9b2083552aea",
+  "early_read": "owner-waived early read (EW3-5): the read runs on the registration's own day"
+ },
+ "declared": {
+  "n_seasons": 3,
+  "horizon": 2026,
+  "train_cohorts": [
+   2021,
+   2022
+  ],
+  "holdout_cohort": 2023,
+  "consensus_vintages": [
+   2022,
+   2023,
+   2024
+  ],
+  "reserved_lv_never_built": [
+   2020,
+   2021
+  ],
+  "levels": [
+   "A",
+   "AAA"
+  ],
+  "core_metrics": {
+   "pit": [
+    "astuff_plus",
+    "fb_velo_p95",
+    "fb_ivb",
+    "xwoba_against",
+    "ev_against"
+   ],
+   "hit": [
+    "ev_p90",
+    "hard_hit",
+    "barrel",
+    "chase",
+    "zone_contact"
+   ]
+  },
+  "imputed_metrics": {
+   "pit": [
+    "arm_angle"
+   ],
+   "hit": []
+  },
+  "qualification": "the fetch's: pitchers 100+ pitches, hitters 50+ PA at the level and season",
+  "lambdas": [
+   1.0,
+   3.0,
+   10.0,
+   30.0,
+   100.0,
+   300.0,
+   "inf"
+  ],
+  "folds": 5,
+  "seed": 20261015,
+  "min_rows": 50,
+  "min_pos": 10,
+  "min_neg": 10,
+  "group_min_rows": 20,
+  "group_min_pos": 5,
+  "weight_share": 0.15,
+  "blend_w": 0.5,
+  "rp_gs_share": 0.5,
+  "ship_rule": "per side: order_head > consensus AND > served V2 on AUC(reach3) AND Spearman(rate3), held-out point estimates",
+  "statistic": "AUC ties at one half; Spearman within cohort (one cohort held out); row-resampled bootstrap, scores fixed (E_cond)"
+ },
+ "bootstrap_b": 2000,
+ "surface_note": "tracking-era head, short-horizon label (reached MLB within 3 seasons; fWAR per MLB season over those seasons)",
+ "inputs": {
+  "fwar_vintage_id": "2026-10-02-0341299c20ec",
+  "mlb_players": 6422,
+  "tracking_tables": {
+   "hit": "349915c4880f2e07ec045cf8def7ffd907a2c4b4e6a71e060aba870f2ef2de8d",
+   "pit": "2f582e5f880c1b3fd1a7157a2ff567b452ad5b0a89459fcb0f0526dda282956a"
+  }
+ },
+ "frame": {
+  "hit": [
+   {
+    "season": 2021,
+    "level": "A",
+    "role": "train",
+    "rows": 69,
+    "reach3_pos": 20,
+    "spent": false
+   },
+   {
+    "season": 2022,
+    "level": "A",
+    "role": "train",
+    "rows": 63,
+    "reach3_pos": 7,
+    "spent": true
+   },
+   {
+    "season": 2022,
+    "level": "AAA",
+    "role": "train",
+    "rows": 22,
+    "reach3_pos": 18,
+    "spent": true
+   },
+   {
+    "season": 2023,
+    "level": "A",
+    "role": "holdout",
+    "rows": 60,
+    "reach3_pos": 17,
+    "spent": true
+   },
+   {
+    "season": 2023,
+    "level": "AAA",
+    "role": "holdout",
+    "rows": 64,
+    "reach3_pos": 56,
+    "spent": true
+   }
+  ],
+  "pit": [
+   {
+    "season": 2021,
+    "level": "A",
+    "role": "train",
+    "rows": 56,
+    "reach3_pos": 20,
+    "spent": false
+   },
+   {
+    "season": 2022,
+    "level": "A",
+    "role": "train",
+    "rows": 61,
+    "reach3_pos": 19,
+    "spent": true
+   },
+   {
+    "season": 2022,
+    "level": "AAA",
+    "role": "train",
+    "rows": 43,
+    "reach3_pos": 35,
+    "spent": true
+   },
+   {
+    "season": 2023,
+    "level": "A",
+    "role": "holdout",
+    "rows": 41,
+    "reach3_pos": 19,
+    "spent": true
+   },
+   {
+    "season": 2023,
+    "level": "AAA",
+    "role": "holdout",
+    "rows": 81,
+    "reach3_pos": 72,
+    "spent": true
+   }
+  ]
+ },
+ "selection": {
+  "hit": {
+   "lambda_R": "inf",
+   "lambda_W": 300.0,
+   "curve_R": [
+    {
+     "lambda": 1.0,
+     "auc": 0.8177
+    },
+    {
+     "lambda": 3.0,
+     "auc": 0.8216
+    },
+    {
+     "lambda": 10.0,
+     "auc": 0.8296
+    },
+    {
+     "lambda": 30.0,
+     "auc": 0.8345
+    },
+    {
+     "lambda": 100.0,
+     "auc": 0.8385
+    },
+    {
+     "lambda": 300.0,
+     "auc": 0.8404
+    },
+    {
+     "lambda": "inf",
+     "auc": 0.8408
+    }
+   ],
+   "curve_W": [
+    {
+     "lambda": 1.0,
+     "rho": 0.1771
+    },
+    {
+     "lambda": 3.0,
+     "rho": 0.173
+    },
+    {
+     "lambda": 10.0,
+     "rho": 0.1893
+    },
+    {
+     "lambda": 30.0,
+     "rho": 0.1997
+    },
+    {
+     "lambda": 100.0,
+     "rho": 0.2516
+    },
+    {
+     "lambda": 300.0,
+     "rho": 0.2673
+    },
+    {
+     "lambda": "inf",
+     "rho": 0.232
+    }
+   ],
+   "folds": 5,
+   "seed": 20261015,
+   "rule": "ties to the larger penalty"
+  },
+  "pit": {
+   "lambda_R": 30.0,
+   "lambda_W": 10.0,
+   "curve_R": [
+    {
+     "lambda": 1.0,
+     "auc": 0.7662
+    },
+    {
+     "lambda": 3.0,
+     "auc": 0.7663
+    },
+    {
+     "lambda": 10.0,
+     "auc": 0.7712
+    },
+    {
+     "lambda": 30.0,
+     "auc": 0.7736
+    },
+    {
+     "lambda": 100.0,
+     "auc": 0.7665
+    },
+    {
+     "lambda": 300.0,
+     "auc": 0.7564
+    },
+    {
+     "lambda": "inf",
+     "auc": 0.746
+    }
+   ],
+   "curve_W": [
+    {
+     "lambda": 1.0,
+     "rho": 0.2976
+    },
+    {
+     "lambda": 3.0,
+     "rho": 0.3075
+    },
+    {
+     "lambda": 10.0,
+     "rho": 0.3132
+    },
+    {
+     "lambda": 30.0,
+     "rho": 0.308
+    },
+    {
+     "lambda": 100.0,
+     "rho": 0.3019
+    },
+    {
+     "lambda": 300.0,
+     "rho": 0.2999
+    },
+    {
+     "lambda": "inf",
+     "rho": 0.2949
+    }
+   ],
+   "folds": 5,
+   "seed": 20261015,
+   "rule": "ties to the larger penalty"
+  }
+ },
+ "fit": {
+  "hit": {
+   "moments": {
+    "fv": [
+     40.286494,
+     5.09574
+    ],
+    "ev_p90": [
+     102.076883,
+     3.038107
+    ],
+    "hard_hit": [
+     0.334179,
+     0.09706
+    ],
+    "barrel": [
+     0.051469,
+     0.039621
+    ],
+    "chase": [
+     0.280436,
+     0.078775
+    ],
+    "zone_contact": [
+     0.806234,
+     0.06801
+    ]
+   },
+   "columns": [
+    "intercept",
+    "aaa",
+    "consensus_fv",
+    "ev_p90",
+    "hard_hit",
+    "barrel",
+    "chase",
+    "zone_contact"
+   ],
+   "w_reach": [
+    -1.626788,
+    3.40891,
+    1.264431,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "w_rate": [
+    0.377054,
+    -0.052149,
+    0.394044,
+    -0.025752,
+    -0.003392,
+    -0.01379,
+    -0.005461,
+    0.001664
+   ],
+   "n_train": 154,
+   "n_reached_train": 45
+  },
+  "pit": {
+   "moments": {
+    "fv": [
+     39.213062,
+     5.184097
+    ],
+    "astuff_plus": [
+     102.395,
+     9.406765
+    ],
+    "fb_velo_p95": [
+     95.428938,
+     2.237609
+    ],
+    "fb_ivb": [
+     14.868625,
+     3.760965
+    ],
+    "xwoba_against": [
+     0.277175,
+     0.054164
+    ],
+    "ev_against": [
+     85.685,
+     3.155139
+    ],
+    "arm_angle": [
+     37.180597,
+     11.335978
+    ]
+   },
+   "columns": [
+    "intercept",
+    "aaa",
+    "consensus_fv",
+    "astuff_plus",
+    "fb_velo_p95",
+    "fb_ivb",
+    "xwoba_against",
+    "ev_against",
+    "arm_angle"
+   ],
+   "w_reach": [
+    -0.76887,
+    2.468768,
+    0.506156,
+    0.180237,
+    0.039052,
+    -0.026679,
+    -0.06979,
+    -0.118509,
+    -0.1576
+   ],
+   "w_rate": [
+    0.130681,
+    0.234529,
+    0.273906,
+    0.049528,
+    -0.0154,
+    0.043919,
+    -0.004181,
+    -0.119682,
+    -0.021765
+   ],
+   "n_train": 160,
+   "n_reached_train": 74
+  }
+ },
+ "weights": {
+  "hit": [
+   {
+    "head": "reach",
+    "metric": "ev_p90",
+    "name": "exit velocity, 90th pct",
+    "coef_std": 0.0,
+    "share": 0.0,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "reach",
+    "metric": "hard_hit",
+    "name": "hard-hit rate",
+    "coef_std": 0.0,
+    "share": 0.0,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "reach",
+    "metric": "barrel",
+    "name": "barrel rate",
+    "coef_std": 0.0,
+    "share": 0.0,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "reach",
+    "metric": "chase",
+    "name": "chase rate",
+    "coef_std": 0.0,
+    "share": 0.0,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "reach",
+    "metric": "zone_contact",
+    "name": "zone contact rate",
+    "coef_std": 0.0,
+    "share": 0.0,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "rate",
+    "metric": "ev_p90",
+    "name": "exit velocity, 90th pct",
+    "coef_std": -0.02575,
+    "share": 0.5144,
+    "sign_stable": true,
+    "carries_weight": true
+   },
+   {
+    "head": "rate",
+    "metric": "hard_hit",
+    "name": "hard-hit rate",
+    "coef_std": -0.00339,
+    "share": 0.0678,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "rate",
+    "metric": "barrel",
+    "name": "barrel rate",
+    "coef_std": -0.01379,
+    "share": 0.2755,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "rate",
+    "metric": "chase",
+    "name": "chase rate",
+    "coef_std": -0.00546,
+    "share": 0.1091,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "rate",
+    "metric": "zone_contact",
+    "name": "zone contact rate",
+    "coef_std": 0.00166,
+    "share": 0.0332,
+    "sign_stable": false,
+    "carries_weight": false
+   }
+  ],
+  "pit": [
+   {
+    "head": "reach",
+    "metric": "astuff_plus",
+    "name": "aStuff+",
+    "coef_std": 0.18024,
+    "share": 0.3045,
+    "sign_stable": true,
+    "carries_weight": true
+   },
+   {
+    "head": "reach",
+    "metric": "fb_velo_p95",
+    "name": "top-end fastball velocity (95th pct)",
+    "coef_std": 0.03905,
+    "share": 0.066,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "reach",
+    "metric": "fb_ivb",
+    "name": "fastball ride (induced vertical break)",
+    "coef_std": -0.02668,
+    "share": 0.0451,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "reach",
+    "metric": "xwoba_against",
+    "name": "xwOBA against",
+    "coef_std": -0.06979,
+    "share": 0.1179,
+    "sign_stable": true,
+    "carries_weight": false
+   },
+   {
+    "head": "reach",
+    "metric": "ev_against",
+    "name": "exit velocity against",
+    "coef_std": -0.11851,
+    "share": 0.2002,
+    "sign_stable": true,
+    "carries_weight": true
+   },
+   {
+    "head": "reach",
+    "metric": "arm_angle",
+    "name": "arm angle",
+    "coef_std": -0.1576,
+    "share": 0.2663,
+    "sign_stable": true,
+    "carries_weight": true
+   },
+   {
+    "head": "rate",
+    "metric": "astuff_plus",
+    "name": "aStuff+",
+    "coef_std": 0.04953,
+    "share": 0.1946,
+    "sign_stable": true,
+    "carries_weight": true
+   },
+   {
+    "head": "rate",
+    "metric": "fb_velo_p95",
+    "name": "top-end fastball velocity (95th pct)",
+    "coef_std": -0.0154,
+    "share": 0.0605,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "rate",
+    "metric": "fb_ivb",
+    "name": "fastball ride (induced vertical break)",
+    "coef_std": 0.04392,
+    "share": 0.1726,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "rate",
+    "metric": "xwoba_against",
+    "name": "xwOBA against",
+    "coef_std": -0.00418,
+    "share": 0.0164,
+    "sign_stable": false,
+    "carries_weight": false
+   },
+   {
+    "head": "rate",
+    "metric": "ev_against",
+    "name": "exit velocity against",
+    "coef_std": -0.11968,
+    "share": 0.4703,
+    "sign_stable": true,
+    "carries_weight": true
+   },
+   {
+    "head": "rate",
+    "metric": "arm_angle",
+    "name": "arm angle",
+    "coef_std": -0.02177,
+    "share": 0.0855,
+    "sign_stable": true,
+    "carries_weight": false
+   }
+  ]
+ },
+ "status": "complete",
+ "v2": {
+  "weights": {
+   "hit": {
+    "w_skill": 0.908861,
+    "w_time": 0.202573
+   },
+   "pit": {
+    "w_skill": 1.0,
+    "w_time": 0.020473
+   }
+  },
+  "per_vintage": [
+   {
+    "side": "hit",
+    "vintage": 2022,
+    "frame_rows": 655,
+    "n_train": 2806,
+    "n_scored": 655,
+    "train_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019
+    ],
+    "consensus_only": false,
+    "skill_keys": [
+     "contact",
+     "is_college"
+    ],
+    "timing_keys": [
+     "milb_absent",
+     "nov_add"
+    ],
+    "w_skill": 0.908861,
+    "w_time": 0.202573
+   },
+   {
+    "side": "hit",
+    "vintage": 2023,
+    "frame_rows": 632,
+    "n_train": 2970,
+    "n_scored": 632,
+    "train_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019
+    ],
+    "consensus_only": false,
+    "skill_keys": [
+     "contact",
+     "is_college"
+    ],
+    "timing_keys": [
+     "milb_absent",
+     "nov_add"
+    ],
+    "w_skill": 0.908861,
+    "w_time": 0.202573
+   },
+   {
+    "side": "hit",
+    "vintage": 2024,
+    "frame_rows": 646,
+    "n_train": 3012,
+    "n_scored": 646,
+    "train_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019
+    ],
+    "consensus_only": false,
+    "skill_keys": [
+     "contact",
+     "is_college"
+    ],
+    "timing_keys": [
+     "milb_absent",
+     "nov_add"
+    ],
+    "w_skill": 0.908861,
+    "w_time": 0.202573
+   },
+   {
+    "side": "pit",
+    "vintage": 2022,
+    "frame_rows": 613,
+    "n_train": 2750,
+    "n_scored": 613,
+    "train_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019
+    ],
+    "consensus_only": false,
+    "skill_keys": [
+     "k_rel"
+    ],
+    "timing_keys": [],
+    "w_skill": 1.0,
+    "w_time": 0.0
+   },
+   {
+    "side": "pit",
+    "vintage": 2023,
+    "frame_rows": 642,
+    "n_train": 2828,
+    "n_scored": 642,
+    "train_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019
+    ],
+    "consensus_only": false,
+    "skill_keys": [
+     "k_rel"
+    ],
+    "timing_keys": [],
+    "w_skill": 1.0,
+    "w_time": 0.0
+   },
+   {
+    "side": "pit",
+    "vintage": 2024,
+    "frame_rows": 612,
+    "n_train": 2880,
+    "n_scored": 612,
+    "train_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019
+    ],
+    "consensus_only": false,
+    "skill_keys": [
+     "k_rel"
+    ],
+    "timing_keys": [],
+    "w_skill": 1.0,
+    "w_time": 0.0
+   }
+  ],
+  "seconds": 63.8,
+  "join": {
+   "hit": {
+    "train": 154,
+    "holdout": 124,
+    "train_missing_v2": 0,
+    "holdout_missing_v2": 0
+   },
+   "pit": {
+    "train": 160,
+    "holdout": 122,
+    "train_missing_v2": 0,
+    "holdout_missing_v2": 0
+   }
+  }
+ },
+ "development": {
+  "hit": {
+   "n": 154,
+   "reach3_pos": 45,
+   "seasons": [
+    2021,
+    2022
+   ],
+   "spent": true,
+   "scores": {
+    "head": {
+     "auc_reach3": 0.8006,
+     "rho_rate3": 0.2642
+    },
+    "consensus": {
+     "auc_reach3": 0.7363,
+     "rho_rate3": 0.2826
+    },
+    "v2": {
+     "auc_reach3": 0.7727,
+     "rho_rate3": 0.2802
+    }
+   },
+   "deltas": {
+    "head_minus_consensus": {
+     "auc_reach3": {
+      "point": 0.0643,
+      "ci95": [
+       0.0114,
+       0.1202
+      ],
+      "sd": 0.02672,
+      "draws": 2000
+     },
+     "rho_rate3": {
+      "point": -0.0184,
+      "ci95": [
+       -0.1015,
+       0.0659
+      ],
+      "sd": 0.04216,
+      "draws": 2000
+     }
+    },
+    "head_minus_v2": {
+     "auc_reach3": {
+      "point": 0.0279,
+      "ci95": [
+       -0.0262,
+       0.0851
+      ],
+      "sd": 0.02803,
+      "draws": 2000
+     },
+     "rho_rate3": {
+      "point": -0.016,
+      "ci95": [
+       -0.0951,
+       0.0628
+      ],
+      "sd": 0.0408,
+      "draws": 2000
+     }
+    }
+   },
+   "note": "out of fold on the training cohorts at the selected penalties; the selection frame; adjudicates nothing"
+  },
+  "pit": {
+   "n": 160,
+   "reach3_pos": 74,
+   "seasons": [
+    2021,
+    2022
+   ],
+   "spent": true,
+   "scores": {
+    "head": {
+     "auc_reach3": 0.7283,
+     "rho_rate3": 0.2541
+    },
+    "consensus": {
+     "auc_reach3": 0.6026,
+     "rho_rate3": 0.2264
+    },
+    "v2": {
+     "auc_reach3": 0.615,
+     "rho_rate3": 0.2367
+    }
+   },
+   "deltas": {
+    "head_minus_consensus": {
+     "auc_reach3": {
+      "point": 0.1257,
+      "ci95": [
+       0.0488,
+       0.2052
+      ],
+      "sd": 0.03966,
+      "draws": 2000
+     },
+     "rho_rate3": {
+      "point": 0.0277,
+      "ci95": [
+       -0.0891,
+       0.1434
+      ],
+      "sd": 0.05842,
+      "draws": 2000
+     }
+    },
+    "head_minus_v2": {
+     "auc_reach3": {
+      "point": 0.1133,
+      "ci95": [
+       0.0409,
+       0.1862
+      ],
+      "sd": 0.03709,
+      "draws": 2000
+     },
+     "rho_rate3": {
+      "point": 0.0174,
+      "ci95": [
+       -0.0902,
+       0.1254
+      ],
+      "sd": 0.05523,
+      "draws": 2000
+     }
+    }
+   },
+   "note": "out of fold on the training cohorts at the selected penalties; the selection frame; adjudicates nothing"
+  }
+ },
+ "holdout": {
+  "hit": {
+   "n": 124,
+   "reach3_pos": 73,
+   "seasons": [
+    2023
+   ],
+   "spent": true,
+   "scores": {
+    "head": {
+     "auc_reach3": 0.6465,
+     "rho_rate3": 0.3258
+    },
+    "consensus": {
+     "auc_reach3": 0.5939,
+     "rho_rate3": 0.3318
+    },
+    "v2": {
+     "auc_reach3": 0.6052,
+     "rho_rate3": 0.3657
+    }
+   },
+   "deltas": {
+    "head_minus_consensus": {
+     "auc_reach3": {
+      "point": 0.0526,
+      "ci95": [
+       0.0011,
+       0.1083
+      ],
+      "sd": 0.02742,
+      "draws": 2000
+     },
+     "rho_rate3": {
+      "point": -0.006,
+      "ci95": [
+       -0.0745,
+       0.0663
+      ],
+      "sd": 0.03632,
+      "draws": 2000
+     }
+    },
+    "head_minus_v2": {
+     "auc_reach3": {
+      "point": 0.0413,
+      "ci95": [
+       -0.0181,
+       0.1046
+      ],
+      "sd": 0.03098,
+      "draws": 2000
+     },
+     "rho_rate3": {
+      "point": -0.0399,
+      "ci95": [
+       -0.1333,
+       0.0551
+      ],
+      "sd": 0.04748,
+      "draws": 2000
+     }
+    }
+   },
+   "components": {
+    "p_reach_auc": 0.8704,
+    "e_rate_rho": 0.3581
+   },
+   "readable": true,
+   "unreadable_reason": null,
+   "note": "the one registered held-out read (cohort 2023), labelled spent for its R-VM overlap"
+  },
+  "pit": {
+   "n": 122,
+   "reach3_pos": 91,
+   "seasons": [
+    2023
+   ],
+   "spent": true,
+   "scores": {
+    "head": {
+     "auc_reach3": 0.6324,
+     "rho_rate3": 0.2389
+    },
+    "consensus": {
+     "auc_reach3": 0.5635,
+     "rho_rate3": 0.1918
+    },
+    "v2": {
+     "auc_reach3": 0.5803,
+     "rho_rate3": 0.1772
+    }
+   },
+   "deltas": {
+    "head_minus_consensus": {
+     "auc_reach3": {
+      "point": 0.0689,
+      "ci95": [
+       -0.0183,
+       0.1517
+      ],
+      "sd": 0.04395,
+      "draws": 2000
+     },
+     "rho_rate3": {
+      "point": 0.0471,
+      "ci95": [
+       -0.0758,
+       0.1681
+      ],
+      "sd": 0.06141,
+      "draws": 2000
+     }
+    },
+    "head_minus_v2": {
+     "auc_reach3": {
+      "point": 0.0521,
+      "ci95": [
+       -0.0259,
+       0.128
+      ],
+      "sd": 0.03994,
+      "draws": 2000
+     },
+     "rho_rate3": {
+      "point": 0.0617,
+      "ci95": [
+       -0.0587,
+       0.1796
+      ],
+      "sd": 0.06117,
+      "draws": 2000
+     }
+    }
+   },
+   "components": {
+    "p_reach_auc": 0.7671,
+    "e_rate_rho": 0.2093
+   },
+   "readable": true,
+   "unreadable_reason": null,
+   "note": "the one registered held-out read (cohort 2023), labelled spent for its R-VM overlap"
+  }
+ },
+ "groups": {
+  "hit": [
+   {
+    "kind": "group",
+    "group": "COF",
+    "label": "corner outfielders (LF, RF, OF)",
+    "n": 41,
+    "reach3_pos": 23,
+    "scores": {
+     "head": {
+      "auc_reach3": 0.6159,
+      "rho_rate3": 0.3581
+     },
+     "consensus": {
+      "auc_reach3": 0.57,
+      "rho_rate3": 0.409
+     },
+     "v2": {
+      "auc_reach3": 0.5435,
+      "rho_rate3": 0.4339
+     }
+    }
+   },
+   {
+    "kind": "group",
+    "group": "IF",
+    "label": "other infielders (2B, 3B, IF)",
+    "n": 30,
+    "reach3_pos": 21,
+    "scores": {
+     "head": {
+      "auc_reach3": 0.7831,
+      "rho_rate3": 0.4233
+     },
+     "consensus": {
+      "auc_reach3": 0.6905,
+      "rho_rate3": 0.4796
+     },
+     "v2": {
+      "auc_reach3": 0.7778,
+      "rho_rate3": 0.5256
+     }
+    }
+   },
+   {
+    "kind": "group",
+    "group": "SS",
+    "label": "shortstops",
+    "n": 25,
+    "reach3_pos": 12,
+    "scores": {
+     "head": {
+      "auc_reach3": 0.6218,
+      "rho_rate3": 0.4529
+     },
+     "consensus": {
+      "auc_reach3": 0.5577,
+      "rho_rate3": 0.4061
+     },
+     "v2": {
+      "auc_reach3": 0.5256,
+      "rho_rate3": 0.3459
+     }
+    }
+   },
+   {
+    "kind": "level",
+    "group": "A",
+    "label": "A",
+    "n": 60,
+    "reach3_pos": 17,
+    "scores": {
+     "head": {
+      "auc_reach3": 0.6881,
+      "rho_rate3": 0.3805
+     },
+     "consensus": {
+      "auc_reach3": 0.7066,
+      "rho_rate3": 0.38
+     },
+     "v2": {
+      "auc_reach3": 0.7018,
+      "rho_rate3": 0.3351
+     }
+    }
+   },
+   {
+    "kind": "level",
+    "group": "AAA",
+    "label": "AAA",
+    "n": 64,
+    "reach3_pos": 56,
+    "scores": {
+     "head": {
+      "auc_reach3": 0.6719,
+      "rho_rate3": 0.3629
+     },
+     "consensus": {
+      "auc_reach3": 0.7165,
+      "rho_rate3": 0.3222
+     },
+     "v2": {
+      "auc_reach3": 0.7009,
+      "rho_rate3": 0.3651
+     }
+    }
+   }
+  ],
+  "pit": [
+   {
+    "kind": "group",
+    "group": "RP",
+    "label": "relievers",
+    "n": 49,
+    "reach3_pos": 38,
+    "scores": {
+     "head": {
+      "auc_reach3": 0.634,
+      "rho_rate3": 0.3066
+     },
+     "consensus": {
+      "auc_reach3": 0.5096,
+      "rho_rate3": 0.1129
+     },
+     "v2": {
+      "auc_reach3": 0.5335,
+      "rho_rate3": 0.0941
+     }
+    }
+   },
+   {
+    "kind": "group",
+    "group": "SP",
+    "label": "starters",
+    "n": 73,
+    "reach3_pos": 53,
+    "scores": {
+     "head": {
+      "auc_reach3": 0.6604,
+      "rho_rate3": 0.1841
+     },
+     "consensus": {
+      "auc_reach3": 0.6236,
+      "rho_rate3": 0.204
+     },
+     "v2": {
+      "auc_reach3": 0.6434,
+      "rho_rate3": 0.1957
+     }
+    }
+   },
+   {
+    "kind": "level",
+    "group": "A",
+    "label": "A",
+    "n": 41,
+    "reach3_pos": 19,
+    "scores": {
+     "head": {
+      "auc_reach3": 0.677,
+      "rho_rate3": 0.1319
+     },
+     "consensus": {
+      "auc_reach3": 0.7524,
+      "rho_rate3": 0.136
+     },
+     "v2": {
+      "auc_reach3": 0.7584,
+      "rho_rate3": 0.0583
+     }
+    }
+   },
+   {
+    "kind": "level",
+    "group": "AAA",
+    "label": "AAA",
+    "n": 81,
+    "reach3_pos": 72,
+    "scores": {
+     "head": {
+      "auc_reach3": 0.446,
+      "rho_rate3": 0.2386
+     },
+     "consensus": {
+      "auc_reach3": 0.4792,
+      "rho_rate3": 0.2683
+     },
+     "v2": {
+      "auc_reach3": 0.4691,
+      "rho_rate3": 0.2496
+     }
+    }
+   }
+  ]
+ },
+ "verdict": {
+  "hit": {
+   "ships": false,
+   "checks": {
+    "auc_reach3_vs_consensus": true,
+    "rho_rate3_vs_consensus": false,
+    "auc_reach3_vs_v2": true,
+    "rho_rate3_vs_v2": false
+   },
+   "reason": "fails at least one of the four strict inequalities",
+   "blend_if_ships": {
+    "w_head": 0.5,
+    "w_v2": 0.5,
+    "rule": "within-(side, list year) percentiles, through efv_v2_model.output_map",
+    "surface_note": "tracking-era head, short-horizon label (reached MLB within 3 seasons; fWAR per MLB season over those seasons)"
+   }
+  },
+  "pit": {
+   "ships": true,
+   "checks": {
+    "auc_reach3_vs_consensus": true,
+    "rho_rate3_vs_consensus": true,
+    "auc_reach3_vs_v2": true,
+    "rho_rate3_vs_v2": true
+   },
+   "reason": "beats consensus and served V2 on both statistics as point estimates",
+   "blend_if_ships": {
+    "w_head": 0.5,
+    "w_v2": 0.5,
+    "rule": "within-(side, list year) percentiles, through efv_v2_model.output_map",
+    "surface_note": "tracking-era head, short-horizon label (reached MLB within 3 seasons; fWAR per MLB season over those seasons)"
+   }
+  }
+ },
+ "ships_any_side": true,
+ "seconds": 70.7
+}

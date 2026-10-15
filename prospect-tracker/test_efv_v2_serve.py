@@ -125,6 +125,9 @@ def test_pitcher_driver_chips_only_for_admitted_pitcher_drivers():
         admitted |= set(pit["skill"]["keys"])
     if pit["w_time"] > 0 and pit.get("timing"):
         admitted |= set(pit["timing"]["keys"])
+    if (rec.get("tracking_head") or {}).get("on"):
+        import efv5_tracking_head as T
+        admitted.add(T.CHIP_DRIVER)           # the shipped tracking-era head's one chip
     for k, e in _v2_rows(doc).items():
         if e["side"] != "P":
             continue

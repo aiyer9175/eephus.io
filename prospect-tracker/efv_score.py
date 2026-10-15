@@ -2437,6 +2437,10 @@ def _v2_entry(r, side: str, p: dict, v1e: dict | None) -> dict:
         "xfv_grade_display": round(grade, 1),
         "xfv_minus_consensus_display": round(grade - cons_fv, 1),
     }
+    if p.get("tracking_head"):
+        # the eFV tracking-era head (efv5_tracking_head, dark unless its switch is on):
+        # the card prints its note beside every grade it moved
+        e["efv_v2"]["tracking_head"] = p["tracking_head"]
     if not p.get("has_milb"):
         e["xfv_provisional"] = True
     if v1e is not None:
