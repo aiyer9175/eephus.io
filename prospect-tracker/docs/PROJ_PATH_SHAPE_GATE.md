@@ -1756,6 +1756,10 @@ the 5c amendment form and it is the only way this document changes.
 | 2026-10-14 | - | produced | `data/proj_shape_blast.json` `bb56bd29...23365`, wall 0.5 s | GATE 0.1 (24.2), OWNER-WAIVED EARLY READ (owner EW3-5): 877 rows, IDENTITY reprice exact on 877; Spearman MAXSMOOTH 0.976489, RAMP 0.994451, the reordering criterion is not demoted. Nothing fitted |
 | 2026-10-14 | - | restated | - | 23.4 groups A to D on the `fwar` corpus (24.3): two-sided 671, frame counts identical, served `war` RS2 0.4687 / UAF 0.1678, A-SHAPE stays binding; measurements only, no candidate scored |
 | 2026-10-15 | - | produced | `data/proj_shape_mde.json` `1c8b035e...b484`, wall 4,281.7 s | POWER (24.4), OWNER-WAIVED EARLY READ (owner EW3-5): DEV and simulation only, every label above 2011 blanked; vif_measured 1.5916, vif_applied 1.8; MDE95 pooled MAE 0.00464 (lambda 0) to 0.00751 (lambda 0.80), lambda 0.80 UNDERPOWERED_NO_MARGIN; all three ARM B detection checks fail (UNDERPOWERED). Candidates scored on DEV only; no verdict-bearing frame read |
+| 2026-10-15 | - | produced | `data/proj_shape_gate.json` (preflight block), stage wall 9.9 s | S2 PRE-FLIGHT + B0-COMPARE (24.5), OWNER-WAIVED EARLY READ: incumbent only; lambda rule Form 2 (S trails the champion at DEV h4 by 0.0034), S2 Form 1 (S beats the champion at every GATE horizon); B0-COMPARE star -0.0108 and role:C -0.0459 not resolvable, pooled bias -0.0793. Nothing adjudicated |
+| 2026-10-15 | A | **NULL_NO_ADMISSIBLE_LAMBDA** | `data/proj_shape_gate.json` `e36455cc...b69d`, stage wall 55.0 s | ARM A LOOK (24.6), OWNER-WAIVED EARLY READ (registered 2026-10-23): under Form 2 every grid lambda, A0 included, exceeds S + M at DEV h4 (+0.0027 at lambda 0 to +0.0226 at 0.80); A-F9; GATE, Tier-2 and CONFIRM never opened for a candidate; CONFIRM NOT_AVAILABLE by its own rule (corpus last 2026). SERVE_SHAPE_REFIT stays False; no VOID |
+| 2026-10-15 | - | produced | `data/proj_shape_gate.json` (arm_b.b0_gate block), stage wall 15.2 s | B0-GATE (24.7), OWNER-WAIVED EARLY READ (registered 2026-11-06): on S as served, GATE 26,939 rows / 3,109 players; star -0.1880 and role:C -0.1164 not resolvable, age:<=24:pit -0.2681 resolvable, pooled -0.0938; 45 of 65 cells resolve, 44 negative. PRE leg of 5.5b, nothing adjudicated |
+| 2026-10-15 | B | **B-AGE NULL, B-C DEAD_ON_ARRIVAL, B-STAR NULL** | `data/proj_shape_gate.json` `e36455cc...b69d` | ARM B LOOK (24.8), OWNER-WAIVED EARLY READ (registered 2026-11-13): B-AGE fitted on DEV, on GATE delta -0.0952 (5.5b sign fails; B3 and B4 fail too); B-C B-F1; B-STAR B-F7; Holm family k = 3 with every lever under the 5.5a substitution, nothing rejected. SERVE_BIAS_LEVERS stays empty; no VOID; CONFIRM unspent |
 
 ---
 
@@ -2999,3 +3003,308 @@ direction, and the VIF of 1.8 widens every floor further in the same direction (
 
 The artifact carries the basis sentence of 23.2 (d) and records that MDE95 is
 one-sided with the VIF applied after transport.
+
+### 24.5 The S2 feasibility pre-flight (4.4a) and B0-COMPARE (5.1). OWNER-WAIVED EARLY READ
+
+Produced by `python tools/proj_shape_gate.py preflight --work <run>` on 2026-10-15,
+registered 2026-10-09 and moved after the power artifact by A-2; it ran after 24.4
+and before the ARM A look (24.6), in the registered order. Stage wall 9.9 s on
+bundles fitted beforehand: the 105 bundles at bases 2012 to 2026 for S and the six
+joint arms took 799.9 s to fit at three processes (S at base 2026, the serving-depth
+bundle, 66.4 s; a joint arm there 24.4 s), which with the 56 bundles of 24.4 makes
+161 point-in-time bundles, every one fitted on labels at or below B - 1 and none read
+by any look before its stage. Both items score the INCUMBENT S (proj_lgbm_v1 heads
+retrained point in time per base with full quantiles, the L1 exclusion and the mean
+and star blends refit point in time per 4.2) and burn nothing. Recorded in
+`data/proj_shape_gate.json` under `preflight` before the ARM A look, with the
+incumbent's numbers beside the selection.
+
+| frame | n cells / players | MAE S by h | MAE champion by h | S minus champion | S beats champion | form selected |
+|---|---|---|---|---|---|---|
+| DEV (label seasons 2008 to 2011) | 17,814 / 2,431 | 0.5269 / 0.5221 / 0.4890 / 0.4686 | 0.5505 / 0.5431 / 0.5014 / 0.4652 | -0.0235 / -0.0210 / -0.0125 / **+0.0034** | h1, h2, h3 yes; **h4 no** | **Form 2** for the lambda rule (4.4) |
+| GATE (2012 to 2014) | 26,939 / 3,109 | 0.5046 / 0.5103 / 0.4558 / 0.4175 / 0.3580 | 0.5303 / 0.5183 / 0.4779 / 0.4248 / 0.3688 | -0.0257 / -0.0080 / -0.0221 / -0.0073 / -0.0108 | all five yes | **Form 1** for S2 (4.8) |
+
+So the lambda rule reads Form 2 (the incumbent itself trails the champion at DEV h4,
+exactly the case 4.4a was registered for) and S2 would read Form 1. Both selections
+were written before any candidate number existed.
+
+**B0-COMPARE**, on the published map's own seven bases (2014 to 2019 and 2021):
+65,774 rows, 3,557 players, every label season at or below 2025. These are Tier-2
+label seasons and this cut is a measurement of the incumbent; it burns nothing and
+carries no adjudication (5.1). The three levers' cells, the champion-engine bWAR prior
+beside the serving composition on `fwar`, under the published map's own convention
+(300-draw cluster bootstrap over players, seed 20260724, `resolvable = |bias| >
+1.96 sd`, at least 20 players):
+
+| cell | prior (champion, bWAR, 2026-07-25) | B0-COMPARE (S, fwar) | resolvable |
+|---|---|---|---|
+| `star` | -0.3961 [-0.6211, -0.1489], n 2,085 | **-0.0108** [-0.2325, +0.2073], sd 0.1056, n 1,752, 183 players | no |
+| `role:C` | +0.2453 [+0.1862, +0.3085], n 4,585 | **-0.0459** [-0.1201, +0.0231], sd 0.0360, n 4,160, 252 players | no |
+| `age:<=24:hit` | -0.1982 [-0.3898, -0.0155], n 858 | **-0.2385** [-0.4007, -0.0857], sd 0.0842, n 834, 329 players | yes |
+| `age:34+:hit` | +0.1273 [+0.0960, +0.1575], n 9,934 | **+0.0038** [-0.0229, +0.0263], sd 0.0127, n 9,418, 951 players | no |
+| `age:<=24:pit` | +0.2217 [+0.0887, +0.3538], n 755 | **-0.1516** [-0.2663, -0.0369], sd 0.0606, n 749, 354 players | yes, the opposite sign |
+| `age:34+:pit` | -0.0287 [-0.0607, -0.0024], n 11,337 | **-0.0298** [-0.0564, -0.0087], sd 0.0128, n 10,992, 1,223 players | yes |
+
+Reading, a measurement and not a verdict: the star and catcher cells the champion map
+published do not reproduce on the serving composition (both inside 1.96 sd of zero),
+the hitter 34-and-over cell is gone, the pitcher under-24 cell has changed sign, and
+the served engine reads LOW almost everywhere: pooled bias -0.0793 on 65,774 rows, 54
+of 65 cells resolvable and 53 of those negative (`absent`, +0.0579, is the one
+positive cell; `survived` reads -0.2787 and `pt:mid:pit` -0.2453). The priors were
+measured on the champion decay path (section 0) and on bWAR (L3), and section 0's row
+"the three bias cells describe the served engine: PLAN WAS WRONG" is what this table
+measures. The B0-GATE cells (24.7) are the ones 5.5 reads.
+
+**S's per-base blend lambda vectors (4.7 leak 10)** are published in the artifact
+(`S_lambdas`, bases 2008 to 2025). At base 2025 the mean blend reads {h1 1.0, h2 1.0,
+h3 0.8, h4 0.7, h5 0.6} and the star blend {h1 0.8, h2 0 (denied, fitted 0.8), h3 0,
+h4 0, h5 0}; at base 2008 the mean blend reads {1.0, 0.1, 0, 0, 0}, so the lift the
+shipped composition carries grows with training depth, which 4.6's second disclosure
+anticipated.
+
+### 24.6 The ARM A look (section 13; 4.4, 4.8). OWNER-WAIVED EARLY READ. Verdict: NULL_NO_ADMISSIBLE_LAMBDA
+
+Produced by `python tools/proj_shape_gate.py arm-a --work <run> --procs 5` on
+2026-10-15, stage wall 55.0 s, registered 2026-10-23, run after the pre-flight (24.5)
+in the registered order. One look, now spent. The power artifact (24.4) was on disk
+before any criterion was read, as section 3 requires.
+
+**The DEV frontier (4.4), under Form 2 as the pre-flight selected it.** A grid point
+is admissible when `MAE(cand,h) - MAE(champ,h) <= MAE(S,h) - MAE(champ,h) + 0.0065`
+at every DEV horizon h1 to h4, that is when the candidate sits within M of S at every
+horizon. With S at 0.5269 / 0.5221 / 0.4890 / 0.4686 and the champion at 0.5505 /
+0.5431 / 0.5014 / 0.4652 (24.5), the bound a candidate must meet is 0.5334 / 0.5286 /
+0.4955 / 0.4751. Every grid point, with the descriptives 4.4 requires published beside
+it (the serving-depth RS2 and UAF are the battery's serving replica run through that
+arm's base-2026 bundle and its point-in-time blends, default D9; S's own row is the
+same replica through the battery's S bundle, not the live bundle, so it is the
+like-for-like reference and not 24.3's served recount):
+
+| lambda | pooled MAE | MAE h1 / h2 / h3 / h4 | h4 excess over the bound | pooled bias | P10-P90 coverage | admissible | RS2 mean at serving depth (pool) | UAF |
+|---|---|---|---|---|---|---|---|---|
+| 0.00 (A0) | 0.5123 | 0.5281 / 0.5150 / 0.4938 / 0.4778 | +0.0027 | -0.1206 | 0.7757 | **no** | 0.2172 (278) | 0.0000 |
+| 0.05 | 0.5109 | 0.5260 / 0.5133 / 0.4919 / 0.4807 | +0.0056 | -0.1256 | 0.7774 | **no** | 0.1550 (280) | 0.0027 |
+| 0.10 | 0.5107 | 0.5259 / 0.5133 / 0.4918 / 0.4787 | +0.0036 | -0.1321 | 0.7797 | **no** | 0.1563 (274) | 0.0100 |
+| 0.20 | 0.5124 | 0.5261 / 0.5154 / 0.4955 / 0.4814 | +0.0063 | -0.1315 | 0.7703 | **no** | 0.1600 (270) | 0.0000 |
+| 0.40 | 0.5156 | 0.5282 / 0.5207 / 0.4972 / 0.4856 | +0.0105 | -0.1299 | 0.7645 | **no** | 0.1599 (274) | 0.0046 |
+| 0.80 | 0.5217 | 0.5306 / 0.5287 / 0.5053 / 0.4977 | +0.0226 | -0.1269 | 0.7588 | **no** | 0.2659 (279) | 0.0125 |
+| S, the reference | | 0.5269 / 0.5221 / 0.4890 / 0.4686 | | | | | 0.4367 (300) | 0.1483 |
+
+Every grid point meets the bound at h1, h2 and h3 (lambda 0.20 meets the h3 bound
+with equality) and **every grid point misses it at h4**, by 0.0027 at lambda 0 and by
+more at each larger lambda. **No grid point is admissible, so by 4.4 the arm reads
+NULL_NO_ADMISSIBLE_LAMBDA (A-F9) and is abandoned. The grid is not extended after the
+fact (section 15), no lambda is re-chosen, and the arm may return only as a new
+registration on a later label year (4.11, 12.2).**
+
+**What the frontier measured, as descriptives.** None of this can pass an arm (4.5)
+and none of it is cited for one; it is published because 4.4 requires the whole
+frontier beside the chosen point, and here the chosen point is none.
+
+- **The miss is at the horizon the joint shape gave up capacity on.** 4.2 removed
+  `LGBM_PARAMS_LONG_H` (the h4 and h5 capacity step: 600 trees, 63 leaves, 30 minimum
+  child samples) deliberately and named its cost, and the frontier prices that cost:
+  +0.0092 to +0.0291 of h4 MAE against S, with the identity arm A0 (lambda 0, no
+  penalty at all) already at +0.0092. The penalty itself is nearly free at h1 to h3 up
+  to lambda 0.20 (lambda 0.05 and 0.10 beat A0 on pooled MAE), so the admissibility
+  failure is the estimator shape, not the smoothing. 4.2 pre-committed the response:
+  the arm is NOT rescued by re-introducing per-horizon capacity under another name.
+- **A0 is not S.** The reproduction check (4.3, S8) reads h1 MAE +0.00113 against S,
+  inside the 0.0050 tolerance, and pooled bias -0.0271, outside the 0.0100 tolerance:
+  `a0_reproduction_dev.within = false`. The objective change alone (a custom pinball
+  with a constant pseudo-Hessian and no leaf-value renewal, one head across horizons)
+  moves the pooled bias 0.027 WAR further below zero. Had any lambda been admissible,
+  S1 would have had to clear against BOTH S and A0.
+- **The shape did what the owner asked, and that is the construction 4.5 warns
+  about.** At serving depth every joint arm's recount sits at RS2 mean 0.155 to 0.266
+  and UAF 0.000 to 0.0125 against the like-for-like S at 0.4367 and 0.1483, so every
+  grid point but lambda 0.80 (RS2 0.2659) would have cleared A-SHAPE's frozen bars
+  (0.2617 and 0.1192) had the arm reached them, **including A0 at lambda 0**. The
+  wobble leaves when the five horizons are one model, before any penalty is applied,
+  which is section 0's third row measured: the owner's symptom is a property of fifty
+  independently fitted heads with a capacity step at h4, and the penalty is not what
+  removes it. RS2 falls here by construction and is not evidence of anything.
+
+**GATE never opened.** Because 4.4 returned no admissible lambda, the stage returned
+before the GATE, Tier-2 and CONFIRM blocks: no candidate number was computed on any
+label season at or above 2012, no S1 to S8 bound exists, no per-base lambda vector was
+fitted on GATE for a candidate, Tripwire 2 was not reached and the full-depth transport
+check (4.6c) did not run. `data/proj_shape_gate.json` `arm_a` carries the frontier,
+the A0 check, `lambda_rule_form`, `lambda_selected = null`, `failed = ["A-F9"]`, the
+verdict and the unconditional sentences; `criteria_verbatim`, `criteria` and
+`per_base_lambdas` are absent because no criterion was read, and the two pins in
+`test_proj_shape_gate.py` that read them skip on this verdict rather than pass.
+
+**CONFIRM (4.6b): NOT_AVAILABLE, unspent.** The registered check `corpus["last"] >=
+2027` fails: the pinned corpus reads `last` 2026, and under the harness's
+complete-seasons convention label season 2026 is not complete until a 2027 row
+exists, so the battery's frame carries no 2026 label at all. Published census, as
+4.6b asks: `season_fraction(2026)` reads 1.0 and the corpus holds 659 hitter and 868
+pitcher rows for 2026 (667 and 873 for 2025), so the 2026 season itself is complete
+in the frozen `fwar` vintage; it is the registered check, not the data, that keeps
+CONFIRM closed. NOT_AVAILABLE is not a pass and is not a failure, and no clause of
+this gate is amended by that observation; whether the frozen 2026 vintage opens
+CONFIRM on a corpus whose `last` is 2026 belongs to the new registration section 13
+names for 2027-02-15, and is recorded as an owner question in the lane's report.
+
+**Consequences (12.2, section 10).** `SERVE_SHAPE_REFIT` stays `False`,
+`MODEL_VERSION` stays `proj_lgbm_v1`, the shipped bundle keeps serving with the wobble
+24.3 recounted (RS2 mean 0.4687, UAF 0.1678 on 301 rows), no served number moves, and
+the result is published as a NULL, in that word: **NULL_NO_ADMISSIBLE_LAMBDA.** Section
+11 registers no sentence for A-F9, so none is invented; the two unconditional sentences
+that ride with every roughness number and every verdict are the artifact's:
+
+> An absent season is scored as 0.0 WAR, so the expected path of a population whose
+> survival probability decays is genuinely not smooth in age. Part of the roughness
+> removed here is attrition signal, and the accuracy column is what prices that. RS2
+> falls by construction under a second-difference penalty and no verdict here turns on
+> it in the passing direction.
+
+> The verdict-bearing frame is label seasons 2012-2014, and the served population is
+> 2027. Transport across that gap is disclosed, not demonstrated.
+
+Under section 10, with ARM A abandoned, B-AGE and B-C may still run on `proj_lgbm_v1`
+if their B0-GATE cells resolve, and B-STAR does not run (B-F7).
+
+### 24.7 B0-GATE (5.1), re-run on the engine ARM A's verdict leaves serving. OWNER-WAIVED EARLY READ
+
+Produced by `python tools/proj_shape_gate.py arm-b --work <run>` on 2026-10-15
+(stage wall 15.2 s, shared with 24.8), registered 2026-11-06, run after the ARM A
+verdict was in `data/proj_shape_gate.json` (24.6), in the registered order (5.2).
+The engine is **S, `proj_lgbm_v1` as served** (the heads retrained point in time per
+base with full quantiles, the L1 exclusion and the blends refit point in time), because
+ARM A was abandoned; default D12 records that a flip is the owner's call even on a
+PASS (8.2), so this battery's B0-GATE would have read the incumbent in either case.
+This is the PRE leg of 5.5b and a measurement of the incumbent, not a candidate read.
+
+The GATE frame: 15 base-horizon cells, 26,939 rows, 3,109 players, label seasons 2012
+to 2014. Under the published map's own convention (300-draw cluster bootstrap over
+players, seed 20260724, `resolvable = |bias| > 1.96 sd`, at least 20 players):
+
+| cell | B0-GATE (S, fwar) | sd | n rows / players | resolvable | 5.1's expectation: near 40 percent of the published n |
+|---|---|---|---|---|---|
+| `star` | **-0.1880** [-0.4281, +0.0889] | 0.1329 | 990 / 225 | no | 47 percent of 2,085 |
+| `role:C` | **-0.1164** [-0.2450, -0.0054] | 0.0637 | 2,024 / 238 | **no** (0.1164 against 1.96 x 0.0637 = 0.1249) | 44 percent of 4,585 |
+| `age:<=24:hit` | +0.0305 [-0.2716, +0.3163] | 0.1501 | 334 / 144 | no | 39 percent of 858 |
+| `age:34+:hit` | +0.0060 [-0.0420, +0.0570] | 0.0268 | 4,556 / 605 | no | 46 percent of 9,934 |
+| `age:<=24:pit` | **-0.2681** [-0.4826, -0.0854] | 0.1050 | 354 / 156 | **yes** | 47 percent of 755 |
+| `age:34+:pit` | -0.0396 [-0.0889, +0.0108] | 0.0249 | 4,475 / 604 | no | 39 percent of 11,337 |
+
+The 5.1 expectation held: every lever cell landed at 39 to 47 percent of its published
+n. On the GATE frame 45 of 65 cells resolve, 44 of them negative (`absent`, +0.0544,
+is the one positive), the pooled cell `all` reads **-0.0938** [-0.1186, -0.0668] on
+26,939 rows (predicted mean 0.321 against actual 0.415), `survived` reads -0.2942,
+`role:SP` -0.1811, `pt:mid:pit` -0.2317 and `ageh:25-27:h5` -0.7229. The served
+composition under-projects on this frame across nearly every slice, which is the same
+shape B0-COMPARE read on the Tier-2 seasons (24.5) and the opposite sign of the
+champion map's star cell.
+
+Consequences for 5.5 and 5.6, each in the registered words:
+
+- **B-C: DEAD ON ARRIVAL (B-F1).** Its cell is not resolvable on the serving engine
+  on the GATE frame under the map's own `|bias| > 1.96 sd` convention. The lever is
+  not fitted, it enters the family under 5.5a, and the frame is not widened to rescue
+  it. ARM A did not ship, so the words "the refit absorbed it" do not apply: the cell
+  simply does not reproduce on the engine that serves, as the B0-COMPARE value of
+  -0.0459 already said. Its percentile interval excludes zero while its sd test does
+  not; the registered convention is the sd test (L6, 5.1), and it is applied as
+  written.
+- **B-AGE: at least one of its four cells resolves (`age:<=24:pit`, -0.2681), so the
+  lever is fitted** (24.8). The four cells read 0.0319 of n-weighted mean |bias| on
+  the GATE frame before any correction (D7), small because the two large cells
+  (34-and-over, 9,031 of the 9,719 rows) sit near zero.
+- **B-STAR: not run (B-F7).** ARM A was abandoned, so the only admissible form of
+  this lever is one of the three banned mean-head arms. Its cell is published (-0.1880,
+  not resolvable) and the registry's sentence is republished in 24.8.
+
+### 24.8 The ARM B look (section 13; 5.4, 5.5, 5.6). OWNER-WAIVED EARLY READ. Verdicts: B-AGE NULL, B-C DEAD_ON_ARRIVAL, B-STAR NULL
+
+Produced in the same stage as 24.7 on 2026-10-15, registered 2026-11-13, run after
+ARM A's verdict and B0-GATE existed, in the registered order. One look, now spent.
+Every lever is adjudicated against the B0-GATE cells of the serving engine (24.7),
+fitted on the DEV frame out of fold (every DEV label precedes every GATE label), with
+the floors of 24.4.
+
+**The family, as 5.5a requires: `holm_family` called with exactly three cells in the
+fixed order B-AGE, B-C, B-STAR, k = 3, alpha 0.05, floors under `mde95_holm_k3`.**
+Every lever entered under the 5.5a substitution (delta 0.0 with its registered floor
+as sd, `p_one_sided` 0.5), for the reasons below, so no Holm step rejected:
+
+| lever | status | verdict | reason, in the registered clause | Holm step / alpha / z | `mde95_holm_k3` |
+|---|---|---|---|---|---|
+| B-AGE | fitted | **NULL** | 5.5b: delta <= 0 (the correction moved the cell bias AWAY from zero), NULL whatever its abs_t; B-F8 would also have applied (its detection check failed, 24.4) | 1 / 0.0167 / 2.128 | 0.0652 |
+| B-C | not fitted | **DEAD_ON_ARRIVAL** | B-F1: its B0-GATE cell is not resolvable on the serving engine (24.7); B-F8 would also have applied | 2 / 0.025 / 1.960 | 0.1973 |
+| B-STAR | not run | **NULL** | B-F7: ARM A was not shipped, so the only admissible form is one of the three banned mean-head arms; B-F8 would also have applied | 3 / 0.05 / 1.645 | 0.3465 |
+
+**B-AGE, the one lever that was fitted.** The registered primary form, a side-keyed
+linear slope in age-at-target applied to the central path, fitted on the DEV cells by
+least squares of the S residual on age-at-target per side: hitters +0.01527 WAR per
+year about a centre of 31.38, pitchers +0.01884 per year about 30.92 (the served path
+reads increasingly HIGH with age-at-target on DEV, so the correction lowers older
+targets and raises younger ones). Applied out of fold on the GATE frame:
+
+| statistic (5.5b, 5.5c) | value |
+|---|---|
+| B1: delta = \|bias_pre\| - \|bias_post\| on the unit's four cells (D7) | pre 0.0318, post 0.1271, **delta -0.0952**; sd with the VIF 0.0295; sign NOT positive |
+| B2: the permuted twin, 200 draws, seed 20260918 | real reduction -0.0952 (at or below the 0.01 floor, so B2 reads NULL by its own rule); permuted reduction median -0.0007 |
+| B3: MAE budget | pooled MAE rises **+0.0337** (budget +0.0100) and slice MAE rises **+0.0701** (may not rise): fails |
+| B4: other resolvable cells deepened by more than 0.0500 | `ageh:34+:h5` +0.1180, `h5:pit` +0.0567, `h5` +0.0517: fails |
+
+The slope the DEV frame fits does not transport to the GATE frame: the GATE age cells
+that are large (34 and over, both sides) sit within 0.04 of zero before the correction
+and the correction pushes them away from it, while the one resolvable cell
+(`age:<=24:pit`, -0.2681) is a level the slope cannot reach without moving every other
+age. 5.5b's sign precondition fires first, and the lever is a NULL under every other
+leg as well. Published sentence (section 11):
+
+> The age-by-side slope is a NULL on the serving engine under a Holm family of three.
+> The cell `proj_calibration_map` published on the champion decay path does not
+> reproduce as a fixable bias on the engine that actually serves.
+
+**B-C.** Not fitted (24.7). No twin was run: 5.4a evaluates a twin only after its
+primary has passed every clause, and there was no primary.
+
+**B-STAR.** Not run. The registry's sentence, republished as B-F7 requires:
+
+> The mean-head lever is exhausted; three arms (`mean_head_rejected`,
+> `star_mean_head`, `star_slice_mean_head`) have already failed, and without the heads
+> refit no admissible form of this lever remains. Not run.
+
+**Consequences (12.2, section 10, last row).** No lever's name enters
+`SERVE_BIAS_LEVERS`, which stays the empty frozenset; `MODEL_VERSION` stays
+`proj_lgbm_v1`; `proj_calibration_map` keeps its `provisional / measurement_only`
+verdict (12.1); the `arm_b` block of `data/proj_shape_gate.json` carries every number
+above with its B0-GATE cells, and `holm.arm_b` carries the three-cell family with k =
+3. ARM A abandoned and all three levers abandoned is section 10's last row: nothing
+flips, the shipped engine keeps serving with the wobble, and the lane closes with the
+wobble published with its recount (24.3: RS2 mean 0.4687, UAF 0.1678 on 301 rows) in
+this document, in the artifact, and in the registry notes of `fa_war_paths_decay` and
+`proj_calibration_map`.
+
+### 24.9 What this battery did not do, and the record
+
+- **No served number moved.** `SERVE_SHAPE_REFIT = False`, `SERVE_BIAS_LEVERS =
+  frozenset()`, `MODEL_VERSION = proj_lgbm_v1`; neither flag exists in `proj_ml` yet,
+  because a flag arrives with its flip commit and no flip was earned. `data/mlb_projections.json`,
+  `data/proj_mean_blend.json`, `data/proj_star_blend.json`, `model/proj_lgbm/` and
+  every downstream artifact are untouched; the only files written are the three gate
+  artifacts, the producers, the test and this document.
+- **No threshold, frame, criterion, seed or hyperparameter moved.** Every number in
+  section 15 stands as registered; the grid was not extended; k stayed 3; the VIF
+  applied was the registered 1.8 because the measured 1.5916 was smaller.
+- **No GATE, CONFIRM or Tier-2 cell was read for a candidate.** The power lab blanked
+  every label above 2011; the ARM A stage returned at the lambda rule; the ARM B
+  stage read GATE for the incumbent (B0-GATE, the PRE leg) and for one fitted lever's
+  out-of-fold adjudication, which is the registered use of that frame.
+- **Looks spent:** ARM A (NULL_NO_ADMISSIBLE_LAMBDA) and ARM B (B-AGE NULL, B-C
+  DEAD_ON_ARRIVAL, B-STAR NULL). **Unspent:** CONFIRM (NOT_AVAILABLE by its own rule).
+  No VOID was declared on either arm. The earliest re-read of either arm is
+  2027-02-15 as a NEW registration that discloses this battery (section 13).
+- **Open to the owner, recorded in the lane's report and decided nowhere here:**
+  whether the frozen 2026 fWAR vintage opens CONFIRM on a corpus whose `last` is
+  2026; whether the served `notes` of `/projections/` should disclose the wobble with
+  its recount (section 10's last row names the served `notes`, and `proj_export.py`
+  is the export lane's file, 20.2); and whether the h4 capacity finding (24.6) is
+  worth a new registration of a joint shape that keeps `LGBM_PARAMS_LONG_H`'s
+  capacity, which 4.2 forbids inside this battery and does not forbid as a new one.
+- The rows are appended to section 19.
