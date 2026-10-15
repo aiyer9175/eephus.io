@@ -151,7 +151,30 @@ RE288_s(c) = [ n_s(c) raw_s(c) + K lambda_s pool(c) ] / [ n_s(c) + K ]   (n 0 gi
 
 ## 10. Results
 
-(Empty at registration. The build commit appends the receipts and the headline cells here.)
+### 10.1 Run 1 (part 3's direct estimator): REFUSED
+
+Disclosed in 11.1. Nothing was written to `data/`.
+
+### 10.2 Run 2 (the 11.1 estimator, run once): REFUSED
+
+Nothing was written to `data/`. The log and a deterministic diagnostic re-execution of the same
+computation, which wrote nothing, are kept in the lane's output directory; every number below
+comes from them.
+
+- K 1,202.6 (K_raw 1,202.6, inside the clip; W 0.452645, tau^2 0.00037639). The within-cell
+  variance fell from 1.607 (run 1) to 0.453.
+- The pool is monotone in the count (0 reversals).
+- R1, R2, R3 and invariant 3 raised no refusal in any season.
+- Invariant 2 refused: six count reversals in five seasons, every one in a cell with a runner on
+  third or the bases loaded: 2021 0-2 to 1-2 at 4|1 (-0.0047 runs) and at 5|2 (-0.0013); 2022 0-2 to
+  1-2 at 4|1 (-0.0027); 2023 0-2 to 1-2 at 4|1 (-0.0099); 2024 1-0 to 2-0 at 6|2 (-0.0027); 2026
+  0-2 to 1-2 at 5|2 (-0.0134).
+- Invariant 1 refused on the per-cell bound in 2022 (0.0325 at 6|1) and 2023 (0.0467 at 7|0); the
+  per-cell maximum in the other seasons was 0.0237 to 0.0287 and the weighted bound passed in
+  every season (0.0025 to 0.0040).
+- The diagnostic re-execution also previewed option (a) of 11.2 before it was adopted: season
+  tables RE24_s + lambda_s x the pooled departure gave 0 count reversals in every season, a
+  per-cell 0-0 maximum of 0.0207 to 0.0228 and a weighted 0-0 difference of 0.0017 to 0.0019.
 
 ## 11. Amendments
 
@@ -204,3 +227,35 @@ RE288_s(c) = RE24_s(b, o) + D^_s(c)
   to `data/`. The pool is written to `.cache/count_value/frozen/` only by a build that passes.
 - This amended build runs once. If it refuses, nothing is written and the question goes to the
   owner.
+
+### 11.2 2026-10-15: the season table uses the pooled count departure (owner question RE288-Q1, default applied)
+
+11.1 said a refusal of its one run sends the question to the owner. The task rules of this lane
+say to apply the recommended default and record the question rather than stop, so the default
+below is applied and RE288-Q1 is recorded for the owner, who may choose another option; a
+different answer is a new amendment and a rebuild. The default's invariants were previewed before
+it was adopted (10.2).
+
+```
+RE288_s(c) = RE24_s(b, o) + lambda_s D_pool(c)
+```
+
+- The count departure is pooled over P (frozen with count_value_v1, the 11.1 departure and K
+  computed and recorded as before); each season keeps its own run environment through RE24_s and
+  eBR's frozen lambda_s. This is the K-to-infinity end of the ebr_v1 shrink.
+- Each season's raw departure (n and mean per cell) is published beside its table, so an era
+  difference in count values stays visible; it is not in the table.
+- Unchanged: the walk, the observations, the fit set, P, the ledger, invariants 1 to 3 and their
+  tolerances, and the receipts. They are checked on these tables; a refusal writes nothing.
+
+RE288-Q1 (the options; the default first):
+
+- (a) DEFAULT, applied: season tables are RE24_s plus lambda_s times the pooled departure. Monotone
+  wherever the pool is; loses season-specific count effects (for example a pitch-clock or ABS-era
+  shift), which stay visible only in the published raw departures.
+- (b) Keep the 11.1 per-season shrink and replace the monotone refusal with a weighted isotonic
+  projection in the count at each base-out cell, with the per-cell 0-0 bound widened to 0.05:
+  keeps season detail and adds a projection step.
+- (c) Keep the 11.1 per-season shrink and report reversals and 0-0 misses instead of refusing:
+  the table then carries reversals up to 0.0134 runs that every per-pitch value inherits.
+- (d) Leave RE288 refused: later work (eABS, pitch economy, framing) waits or uses RE24 only.
