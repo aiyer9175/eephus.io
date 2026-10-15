@@ -384,6 +384,10 @@ MODEL_GLOSSARY = {
     # Measurement only, no served surface; the betting client reads none of it.
     "betting_market_blend": "internal",
     "positional_ladder": ["pal_conversion", "def_home_chip"],
+    # Positional ladder v2 (EWAR_LADDER_REDERIVE, 2026-10-15): the position-switcher
+    # ladder Position Fit values with, documented by its own entry and by the
+    # Position fit entry that composes it.
+    "positional_ladder_v2": ["positional_ladder", "position_fit"],
     # eFV board side scale (W-SIDESCALE) = the per-side affine that puts a hitter
     # grade and a pitcher grade of the same number on the same realized-outcome
     # scale. It changes the DISPLAYED eFV, so the eFV entry documents it.

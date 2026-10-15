@@ -1,0 +1,429 @@
+{
+ "schema_version": "1.0.0",
+ "exported_at": "2026-10-15T22:56:46+00:00",
+ "source_artifact": "prospect-tracker/data/positional_ladder_v2.json",
+ "source_eval": "prospect-tracker/data/positional_ladder_v2_eval.json",
+ "read_at": "2026-10-15T18:27:23",
+ "model_id": "positional_ladder_v2",
+ "gate": "docs/ewar/LADDER_V2_GATE.md",
+ "status": "served on Position Fit",
+ "what_this_is": "The positional adjustment measured on players who changed position: the fielding runs the same player gains or loses when he moves, fit separately on Baseball-Reference runs_field, FanGraphs fld and Statcast fielding runs prevented, then pooled by inverse variance. Catcher keeps the v1 rung (too few catchers change position); DH is first base plus the first-base fielding of the players who DH.",
+ "units": "runs per 650 PA (per 1,277.7 fielded innings), exposure-weighted sum zero",
+ "method": "same-player position-switcher network: per fielding source (Baseball-Reference runs_field, FanGraphs fld, Savant FRP) a weighted least squares of next-season fielding runs on the change in innings shares with a glove persistence and an age term, plus Savant same-season pairs; sources pooled by inverse variance; DH = 1B + the 1B rate of DH-type seasons; C by the gate's part 3 rule",
+ "bases": {
+  "primary": "values",
+  "values": {
+   "basis": "exposure_weighted_zero",
+   "values": {
+    "C": 10.19,
+    "SS": 0.33,
+    "2B": -2.12,
+    "3B": -2.11,
+    "CF": 1.42,
+    "LF": 0.62,
+    "RF": 0.32,
+    "1B": -3.37,
+    "DH": -6.48
+   }
+  },
+  "values_fielder_centred": {
+   "basis": "fielder_centred_zero",
+   "values": {
+    "C": 9.53,
+    "SS": -0.33,
+    "2B": -2.78,
+    "3B": -2.77,
+    "CF": 0.76,
+    "LF": -0.04,
+    "RF": -0.34,
+    "1B": -4.03,
+    "DH": -7.14
+   }
+  },
+  "note": "the two differ by one constant, so every gap between two positions is identical in both"
+ },
+ "identification": {
+  "convention": "exposure-weighted sum-to-zero",
+  "sum_exposure_weighted": 0.0001,
+  "sum_equal_weight_9": -1.2,
+  "sum_equal_weight_fielders": 5.28,
+  "exposure_share": {
+   "C": 0.1125,
+   "1B": 0.1174,
+   "2B": 0.1125,
+   "3B": 0.1159,
+   "SS": 0.1079,
+   "LF": 0.1156,
+   "CF": 0.1125,
+   "RF": 0.1173,
+   "DH": 0.0883
+  },
+  "values_fielder_centred": {
+   "C": 9.53,
+   "1B": -4.03,
+   "2B": -2.78,
+   "3B": -2.77,
+   "SS": -0.33,
+   "LF": -0.04,
+   "CF": 0.76,
+   "RF": -0.34,
+   "DH": -7.14
+  }
+ },
+ "ci95": {
+  "C": [
+   10.0,
+   10.4
+  ],
+  "1B": [
+   -4.53,
+   -2.23
+  ],
+  "2B": [
+   -3.04,
+   -1.17
+  ],
+  "3B": [
+   -3.34,
+   -0.88
+  ],
+  "SS": [
+   -1.04,
+   1.6
+  ],
+  "LF": [
+   -0.31,
+   1.58
+  ],
+  "CF": [
+   0.05,
+   2.63
+  ],
+  "RF": [
+   -0.74,
+   1.4
+  ],
+  "DH": [
+   -8.69,
+   -4.58
+  ]
+ },
+ "ci_draws": 400,
+ "seasons": [
+  2016,
+  2026
+ ],
+ "c_branch": "carried_from_v1",
+ "dh_mu": -3.1103,
+ "source_fits": {
+  "BREF": {
+   "k": 0.4224,
+   "alpha": 0.0612,
+   "beta_age": -0.1664,
+   "n_across": 2980,
+   "n_within": 0,
+   "n_switch": 1017,
+   "n_c_change": 13
+  },
+  "FG": {
+   "k": 0.4695,
+   "alpha": 0.128,
+   "beta_age": -0.1921,
+   "n_across": 2980,
+   "n_within": 0,
+   "n_switch": 1017,
+   "n_c_change": 13
+  },
+  "SAVANT": {
+   "k": 0.5018,
+   "alpha": 0.0313,
+   "beta_age": -0.175,
+   "n_across": 2294,
+   "n_within": 1192,
+   "n_switch": 915,
+   "n_c_change": 0
+  }
+ },
+ "era_splits": {
+  "2016-2020": {
+   "b": {
+    "C": 10.26,
+    "1B": -4.11,
+    "2B": -1.6,
+    "3B": -3.06,
+    "SS": -0.49,
+    "LF": 1.39,
+    "CF": 2.86,
+    "RF": 0.43,
+    "DH": -7.0
+   },
+   "legs": {
+    "BREF": {
+     "C": 4.5555,
+     "1B": -3.8319,
+     "2B": -1.7179,
+     "3B": -3.0996,
+     "SS": -3.4847,
+     "LF": 0.9142,
+     "CF": 8.4674,
+     "RF": 2.7289
+    },
+    "FG": {
+     "C": -6.3886,
+     "1B": -3.9234,
+     "2B": -2.4335,
+     "3B": -2.7259,
+     "SS": -0.5439,
+     "LF": 2.1389,
+     "CF": 5.0717,
+     "RF": 2.4823
+    },
+    "SAVANT": {
+     "1B": -3.209,
+     "2B": -0.3001,
+     "3B": -2.1928,
+     "SS": 1.3666,
+     "LF": 2.2028,
+     "CF": 1.9738,
+     "RF": 0.3452
+    }
+   },
+   "c_branch": "carried_from_v1"
+  },
+  "2021-2026": {
+   "b": {
+    "C": 10.13,
+    "1B": -2.83,
+    "2B": -2.36,
+    "3B": -1.35,
+    "SS": 0.88,
+    "LF": -0.03,
+    "CF": 0.27,
+    "RF": 0.17,
+    "DH": -5.97
+   },
+   "legs": {
+    "BREF": {
+     "C": -0.9988,
+     "1B": -3.7002,
+     "2B": -2.7098,
+     "3B": 0.6907,
+     "SS": 0.3688,
+     "LF": 0.3126,
+     "CF": 4.1195,
+     "RF": 1.0215
+    },
+    "FG": {
+     "C": 0.0528,
+     "1B": -0.4753,
+     "2B": -1.2997,
+     "3B": 0.3061,
+     "SS": 1.53,
+     "LF": -1.4758,
+     "CF": 1.1352,
+     "RF": 0.378
+    },
+    "SAVANT": {
+     "1B": -2.2321,
+     "2B": -1.4755,
+     "3B": -1.0123,
+     "SS": 1.9267,
+     "LF": 1.3845,
+     "CF": 0.47,
+     "RF": 1.0618
+    }
+   },
+   "c_branch": "carried_from_v1"
+  }
+ },
+ "verdict": {
+  "step1_b_replaces_v1": true,
+  "step2_d_replaces_b": false,
+  "served_on_position_fit": "v2",
+  "v2_vector": "b (pooled 2016-2026)",
+  "rule": "b replaces v1 iff pooled dMAE(v1 - b) CI95 lower bound > 0 and the EW3-23 form dMAE(v1 - b) CI95 upper bound >= 0; then d replaces b iff dMAE(b - d) CI95 lower bound > 0"
+ },
+ "held_out_test": {
+  "v1_minus_v2_pooled": {
+   "dmae": 0.8861212185625933,
+   "ci95": [
+    0.7169875804420278,
+    1.0587026970750282
+   ],
+   "n_rows": 4141,
+   "n_players": 611
+  },
+  "v1_minus_v2_next_season_form": {
+   "dmae": 0.7535490166819007,
+   "ci95": [
+    0.5874750682568826,
+    0.9282203109776134
+   ],
+   "n_rows": 2949,
+   "n_players": 495
+  },
+  "v1_minus_v2_by_source": {
+   "BREF": {
+    "dmae": 0.4333954831492856,
+    "ci95": [
+     0.209268939531227,
+     0.659403366435893
+    ],
+    "n_rows": 1017,
+    "n_players": 495
+   },
+   "FG": {
+    "dmae": 0.7089045597541693,
+    "ci95": [
+     0.5040338260676015,
+     0.9255167565322879
+    ],
+    "n_rows": 1017,
+    "n_players": 495
+   },
+   "SAVANT": {
+    "dmae": 1.3431060838103623,
+    "ci95": [
+     1.11939421441479,
+     1.563699684690431
+    ],
+    "n_rows": 2107,
+    "n_players": 577
+   }
+  },
+  "v2_minus_per_season_shrunk": {
+   "dmae": -0.026103387999496054,
+   "ci95": [
+    -0.05523048036609127,
+    0.0025152678529253517
+   ],
+   "n_rows": 4141,
+   "n_players": 611
+  },
+  "read_this": "dMAE = MAE(first) - MAE(second) in runs per 650 PA on players who changed position, each season 2016-2026 held out in turn; positive favours the second"
+ },
+ "comparison": {
+  "positions": [
+   "C",
+   "1B",
+   "2B",
+   "3B",
+   "SS",
+   "LF",
+   "CF",
+   "RF",
+   "DH"
+  ],
+  "columns": {
+   "v2_b_2016_2026": {
+    "C": 10.19,
+    "1B": -3.37,
+    "2B": -2.12,
+    "3B": -2.11,
+    "SS": 0.33,
+    "LF": 0.62,
+    "CF": 1.42,
+    "RF": 0.32,
+    "DH": -6.48
+   },
+   "v2_d_2026": {
+    "C": 10.19,
+    "1B": -2.75,
+    "2B": -3.36,
+    "3B": -0.32,
+    "SS": -0.46,
+    "LF": 1.05,
+    "CF": 0.32,
+    "RF": 0.59,
+    "DH": -7.72
+   },
+   "v1_served": {
+    "C": 10.88,
+    "1B": -8.4,
+    "2B": 5.12,
+    "3B": 3.62,
+    "SS": 9.38,
+    "LF": -6.39,
+    "CF": 4.14,
+    "RF": -6.52,
+    "DH": -13.7
+   },
+   "v1_refit_2016_2026": {
+    "C": 10.97,
+    "1B": -8.36,
+    "2B": 5.0,
+    "3B": 3.6,
+    "SS": 9.2,
+    "LF": -6.42,
+    "CF": 3.97,
+    "RF": -6.33,
+    "DH": -13.46
+   },
+   "fg_inversion_2016_2026": {
+    "C": 13.19,
+    "1B": -9.84,
+    "2B": 3.87,
+    "3B": 3.66,
+    "SS": 8.69,
+    "LF": -5.28,
+    "CF": 3.87,
+    "RF": -5.42,
+    "DH": -14.88
+   },
+   "fg_table_rescaled": {
+    "C": 12.44,
+    "1B": -9.47,
+    "2B": 3.67,
+    "3B": 3.67,
+    "SS": 8.06,
+    "LF": -5.09,
+    "CF": 3.67,
+    "RF": -5.09,
+    "DH": -13.85
+   },
+   "offense_equalizing_2016_2026": {
+    "C": 5.14,
+    "1B": -5.26,
+    "2B": 4.53,
+    "3B": -2.56,
+    "SS": 5.89,
+    "LF": -0.61,
+    "CF": 4.61,
+    "RF": -4.86,
+    "DH": -7.77
+   }
+  },
+  "source_legs_on_v2_zero": {
+   "BREF": {
+    "C": 0.4,
+    "1B": -4.47,
+    "2B": -3.03,
+    "3B": -1.86,
+    "SS": -2.01,
+    "LF": -0.04,
+    "CF": 5.48,
+    "RF": 0.95
+   },
+   "FG": {
+    "C": -2.9,
+    "1B": -2.84,
+    "2B": -2.63,
+    "3B": -1.93,
+    "SS": -0.19,
+    "LF": -0.39,
+    "CF": 2.36,
+    "RF": 0.68
+   },
+   "SAVANT": {
+    "1B": -3.31,
+    "2B": -1.83,
+    "3B": -2.21,
+    "SS": 0.98,
+    "LF": 1.01,
+    "CF": 0.37,
+    "RF": 0.11
+   }
+  },
+  "note": "every column recentred on one exposure vector (gate part 4), so gaps and levels compare directly; the source legs are shifted to the v2 seven-position mean and carry the positions each source rates"
+ }
+}

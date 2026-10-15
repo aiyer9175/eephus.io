@@ -248,7 +248,8 @@ def test_feasibility_never_offers_an_uphill_move(payload):
     spots. Offering a random left fielder shortstop is the failure mode this
     guard exists to prevent."""
     F = payload["fit"]["feasibility"]
-    lad = payload["fit"]["ladder"]["values"]
+    # the ladder Position Fit values with (v2 since 2026-10-15), not fit.ladder
+    lad = (payload["fit"].get("ladder_posfit") or payload["fit"]["ladder"])["values"]
     for a, allowed in F["allowed"].items():
         for b in allowed:
             if b in (a, "DH"):
@@ -260,7 +261,7 @@ def test_feasibility_never_offers_an_uphill_move(payload):
 
 
 def test_every_player_row_is_internally_consistent(payload):
-    lad = payload["fit"]["ladder"]["values"]
+    lad = (payload["fit"].get("ladder_posfit") or payload["fit"]["ladder"])["values"]
     for r in payload["players"]:
         for p, v in r["by_position"].items():
             assert v["ladder"] == pytest.approx(lad[p])
@@ -335,14 +336,28 @@ def test_conversion_model_beats_carry_over_and_the_zero_information_control(payl
     assert C["n_time_splits"] >= 4
 
 
-def test_demotion_discrimination_is_recorded_as_the_null_it_is(payload):
-    """This lane did NOT beat raw OAA at predicting who gets demoted. The test
-    pins that honest result so a future change cannot quietly claim otherwise
-    without updating it."""
+def test_demotion_discrimination_verdict_is_derived_and_pinned(payload):
+    """Until 2026-10-15 this lane did NOT beat raw OAA at ranking who gets moved
+    down (AUC 0.4737 against raw OAA 0.6141), and this test pinned that null.
+    The one-run-scale rebuild (docs/ewar/LADDER_V2_GATE.md part 8) took the
+    league-wide constant out of every move between fielding positions, and the
+    same backtest now separates: on v1's own labels the scale fix alone reads
+    AUC 0.6611 against raw OAA 0.6141. The page and the /pal/ masthead derive
+    their verdict word from these intervals (build_site._posfit_demotion_separates),
+    so this pins the artifact and the derivation together; flipping either
+    without the other fails here."""
+    import build_site as B
     V = payload["validation"]
-    assert V["auc"]["raw_oaa"] > V["auc"]["model"]
-    assert abs(V["auc"]["model"] - 0.5) <= V["perm_null95_auc_minus_half"]
+    mm = V["model_minus"]
+    assert V["auc"]["model"] > V["auc"]["raw_oaa"]
+    assert mm["raw_oaa"]["ci95"][0] > 0
+    assert mm["control"]["ci95"][0] > 0
+    assert abs(V["auc"]["model"] - 0.5) > V["perm_null95_auc_minus_half"]
     assert V["n_time_splits"] >= 4
+    assert B._posfit_demotion_separates(V) is True
+    flipped = json.loads(json.dumps(V))
+    flipped["model_minus"]["raw_oaa"]["ci95"] = [-0.02, 0.01]
+    assert B._posfit_demotion_separates(flipped) is False
 
 
 def test_interaction_check_records_its_verdict(payload):
@@ -371,7 +386,7 @@ def test_arozarena_case_is_stable(payload):
     row = next((r for r in payload["players"] if r["mlbam"] == 668227), None)
     if row is None:
         pytest.skip("Arozarena not in the target-season universe")
-    lad = payload["fit"]["ladder"]["values"]
+    lad = (payload["fit"].get("ladder_posfit") or payload["fit"]["ladder"])["values"]
     assert row["glove_z"] < 0
     assert row["current_pos"] in ("LF", "RF")
     assert row["best_pos"] is not None

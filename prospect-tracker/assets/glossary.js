@@ -12,7 +12,8 @@
 // anatomy guide; Formulas: every formula by shelf) · Methods
 // (Methodology: seven chapters with a chapter rail, the industry-comparison
 // chapter at #industry-comparison, the interactive teaching widgets and the
-// PDF export; WAR Framework Comparison: fWAR, bWAR and eWAR side by side) ·
+// PDF export; WAR Framework Comparison: fWAR, bWAR and eWAR side by side;
+// Positional Ladder: the position-switcher ladder and its held-out test) ·
 // Evidence (Source Comparison: the empirical source-vs-source backtest;
 // Source Accuracy: the who-grades-which-cohort measurement; Calibration: the
 // live calibration monitor and what an eFV grade is worth; What Predicts the
@@ -53,6 +54,10 @@
   // reached MLB by 2026.
   let _WPM = null;             // the atlas view payload (or {__error:true})
   let _WPM_LOADING = false;    // in-flight guard against a double fetch
+  // Positional Ladder view state (EWAR_LADDER_REDERIVE). Module scope for the
+  // TDZ reason _SACC gives.
+  let _PLAD = null;            // the ladder read's record (or {__error:true})
+  let _PLAD_LOADING = false;   // in-flight guard against a double fetch
   const _WPM_SEL = { side: "pit", level: "A", band: "all", group: "all", label: "reach_h",
                      frame: "all", family: "all", sort: "raw" };
   const _WPM_FAMILY_TAG = { box: "Box", pbp: "Pitch by pitch", bb: "Batted ball", tracking: "Tracking" };
@@ -94,6 +99,8 @@
     { id: "methodology", shelf: "methods", label: "Methodology", body: "methodology-body", render: renderMethodology, aliases: [] },
     // UPKEEP (LIB_WAR_COMPARISON): when an eWAR part is admitted or rejected, update this view's eWAR column.
     { id: "war-comparison", shelf: "methods", label: "WAR Framework Comparison", body: "war-comparison-body", render: renderWarComparison, aliases: [] },
+    // UPKEEP (EWAR_LADDER_REDERIVE): the "Standalone version" line gets its URL when the standalone page is published.
+    { id: "positional-ladder", shelf: "methods", label: "Positional Ladder", body: "positional-ladder-body", render: renderPositionalLadder, aliases: ["ladder"] },
     { id: "source-comparison", shelf: "evidence", label: "Source Comparison", body: "source-comparison-body", render: renderSourceComparison, aliases: [] },
     { id: "source-accuracy", shelf: "evidence", label: "Source Accuracy", body: "source-accuracy-body", render: renderSourceAccuracy, aliases: [] },
     { id: "calibration", shelf: "evidence", label: "Calibration", body: "calibration-body", render: renderCalibration, aliases: [] },
@@ -6424,6 +6431,132 @@ function renderWarComparison() {
     <section class="warc-notes" aria-labelledby="warc-notes-h">
       <h3 class="meth-h3" id="warc-notes-h">Notes</h3>
       <ol>${d.notes.map(n => `<li>${escapeHtml(n)}</li>`).join("")}</ol>
+    </section>
+  </div>`;
+}
+
+// ---- Methods > Positional Ladder (EWAR_LADDER_REDERIVE, owner EW3-25) ------
+// The position-switcher ladder (v2) beside the Baseball-Reference inversion
+// (v1) and FanGraphs, read from the record of the one registered read
+// (docs/ewar/LADDER_V2_GATE.md). Every number is the record's own; the view
+// formats and does no arithmetic. UPKEEP: the "Standalone version" line has no
+// link until the standalone page is published; its URL then goes in _pladUrl().
+function _pladUrl() { return ""; }
+
+function _pladLoad() {
+  if (_PLAD || _PLAD_LOADING) return;
+  _PLAD_LOADING = true;
+  const rerender = () => { if (_S.view === "positional-ladder") renderPositionalLadder(); };
+  fetch("/data/positional_ladder_v2_eval.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _PLAD = (j && j.comparison && j.verdict) ? j : { __error: true }; _PLAD_LOADING = false; rerender(); })
+    .catch(() => { _PLAD = { __error: true }; _PLAD_LOADING = false; rerender(); });
+}
+
+function _pladNum(v, dp) {
+  if (v == null || !isFinite(Number(v))) return "-";
+  const n = Number(v);
+  return (n > 0 ? "+" : "") + n.toFixed(dp == null ? 2 : dp);
+}
+
+function _pladCi(c, dp) {
+  return (c && c.length === 2) ? `${_pladNum(c[0], dp)} to ${_pladNum(c[1], dp)}` : "-";
+}
+
+function renderPositionalLadder() {
+  const el = document.getElementById("positional-ladder-body");
+  if (!el) return;
+  _pladLoad();
+  const St = window.EephusState;
+  const d = _PLAD;
+  if (!d || d.__error) {
+    const msg = d ? "The positional ladder record could not be loaded." : "Loading the positional ladder...";
+    el.innerHTML = St ? St.html(d ? "failed" : "loading", msg, "gl-plad-state")
+      : `<div class="state-message gl-plad-state" role="status">${msg}</div>`;
+    return;
+  }
+  const v = d.verdict || {}, t = d.tests || {}, la = d.ladder_artifact || {};
+  const cols = (d.comparison || {}).columns || {}, legs = (d.comparison || {}).source_legs_on_v2_zero || {};
+  const pos = (d.comparison || {}).positions || [];
+  const served = v.step1_b_replaces_v1 === true;
+  const vals = la.values || {}, ci = la.ci95 || {};
+  const p1 = t.v1_minus_b_pooled || {}, pa = t.v1_minus_b_across || {}, pd = t.b_minus_d_b_pooled || {};
+  const bySrc = t.v1_minus_b_by_source || {};
+  const nSrc = Object.keys(bySrc).length;
+  const srcBetter = Object.values(bySrc).filter(x => x && x.ci95 && x.ci95[0] > 0).length;
+  const folds = (d.scores || {}).by_fold || {};
+  const nFold = Object.keys(folds).length;
+  const foldBetter = Object.values(folds).filter(f => f && f.b && f.v1 && f.b.mae < f.v1.mae).length;
+  const read = String(d.read_at || "").slice(0, 10);
+  const fits = la.source_fits || {};
+  const nC = Math.max(0, ...Object.values(fits).map(f => (f && f.n_c_change) || 0));
+  const head = (labels) => `<thead><tr>${labels.map((c, i) => `<th scope="col"${i === 1 ? ' class="warc-e"' : ""}>${escapeHtml(c)}</th>`).join("")}</tr></thead>`;
+  const ladderRows = pos.map(p => `<tr><th scope="row">${escapeHtml(p)}</th>`
+    + `<td class="warc-e"><b>${_pladNum(vals[p])}</b></td><td>${_pladCi(ci[p])}</td>`
+    + `<td>${_pladNum((cols.v1_served || {})[p])}</td><td>${_pladNum((cols.fg_inversion_2016_2026 || {})[p])}</td>`
+    + `<td>${_pladNum((cols.fg_table_rescaled || {})[p])}</td><td>${_pladNum((cols.offense_equalizing_2016_2026 || {})[p])}</td></tr>`).join("");
+  const era = la.era_splits || {};
+  const legRows = pos.map(p => `<tr><th scope="row">${escapeHtml(p)}</th>`
+    + `<td class="warc-e">${_pladNum(vals[p])}</td>`
+    + `<td>${_pladNum((legs.BREF || {})[p])}</td><td>${_pladNum((legs.FG || {})[p])}</td><td>${_pladNum((legs.SAVANT || {})[p])}</td>`
+    + `<td>${_pladNum(((era["2016-2020"] || {}).b || {})[p])}</td><td>${_pladNum(((era["2021-2026"] || {}).b || {})[p])}</td></tr>`).join("");
+  const sc = ((d.scores || {}).pooled) || {};
+  const testRow = (label, key, test, vsLabel) => `<tr><th scope="row">${escapeHtml(label)}</th>`
+    + `<td class="warc-e">${sc[key] ? Number(sc[key].mae).toFixed(3) : "-"}</td>`
+    + `<td>${test ? `${_pladNum(test.dmae, 3)} <span class="gl-plad-ci">(${_pladCi(test.ci95, 3)})</span>` : "-"}</td>`
+    + `<td>${escapeHtml(vsLabel || "")}</td></tr>`;
+  const tests = [
+    testRow("Switcher ladder (served)", "b", t.v1_minus_b_pooled, "Baseball-Reference inversion"),
+    testRow("Switcher ladder, shrunk by season", "d_b", pd.dmae == null ? null : { dmae: pd.dmae, ci95: pd.ci95 }, "switcher ladder"),
+    testRow("Offense gap", "c", t.v1_minus_c_pooled, "Baseball-Reference inversion"),
+    testRow("FanGraphs, inverted", "fg_inv", t.v1_minus_fg_inv_pooled, "Baseball-Reference inversion"),
+    testRow("FanGraphs table", "fg_table", t.v1_minus_fg_table_pooled, "Baseball-Reference inversion"),
+    testRow("Baseball-Reference inversion, refit", "v1", null, ""),
+  ].join("");
+  const verdict = served
+    ? `<b>Serves Position Fit in the Alchemy Lab since ${escapeHtml(read)}.</b> Predicting the fielding plus positional runs of players who changed position, in seasons held out of the fit, its error was <b>${_pladNum(p1.dmae)}</b> runs per 650 PA lower than the Baseball-Reference inversion's (95% CI ${_pladCi(p1.ci95)}; ${Number(p1.n_rows || 0).toLocaleString()} position changes by ${Number(p1.n_players || 0).toLocaleString()} players). Lower on ${srcBetter} of ${nSrc} fielding sources and in ${foldBetter} of ${nFold} held-out seasons. On next-season runs alone: ${_pladNum(pa.dmae)} (${_pladCi(pa.ci95)}).`
+    : `<b>Did not replace the Baseball-Reference inversion.</b> Its held-out error against the inversion's: ${_pladNum(p1.dmae)} runs per 650 PA (95% CI ${_pladCi(p1.ci95)}).`;
+  const url = _pladUrl();
+  el.innerHTML = `<div class="source-comp-wrap warc-wrap gl-plad">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Method and measurement · read once ${escapeHtml(read)}</div>
+    <h2 class="meth-h">The positional ladder</h2>
+    <p class="meth-note">A positional adjustment says how many runs a position is worth against the average defensive position, per 650 plate appearances. This ladder measures it on players who changed position: if the same players gain three fielding runs moving from shortstop to first base, the two positions sit three runs apart.</p>
+    <div class="wpm-explain" role="note">${verdict}</div>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="The ladder beside Baseball-Reference and FanGraphs">
+      <table class="warc-table"><caption>Runs per 650 PA. Every column sits on one zero, the exposure-weighted average defensive position, so gaps and levels compare directly.</caption>
+        ${head(["Position", "Switcher ladder", "95% CI", "Baseball-Reference", "FanGraphs, inverted", "FanGraphs table", "Offense gap"])}
+        <tbody>${ladderRows}</tbody></table>
+    </div>
+    <p class="meth-note">Baseball-Reference: its positional runs inverted on innings shares (the ladder this one replaced). FanGraphs, inverted: the same inversion on FanGraphs' positional runs. FanGraphs table: the published table per 162 games, rescaled to 650 PA. Offense gap: the batting runs the league accepts at each position among regulars, the classic basis, shown for reference.</p>
+    <h3 class="meth-h3">By fielding source and era</h3>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="The ladder by fielding source and era">
+      <table class="warc-table"><caption>Each source fit on its own, then shifted to the switcher ladder's zero. Statcast does not rate catchers.</caption>
+        ${head(["Position", "Switcher ladder", "Baseball-Reference fielding", "FanGraphs fielding", "Statcast", "2016 to 2020", "2021 to 2026"])}
+        <tbody>${legRows}</tbody></table>
+    </div>
+    <h3 class="meth-h3">The held-out test</h3>
+    <div class="warc-frame" role="region" tabindex="0" aria-label="The held-out test">
+      <table class="warc-table"><caption>Weighted mean absolute error on players who changed position, each season 2016 to 2026 held out in turn. Lower error than the comparison is positive.</caption>
+        ${head(["Ladder", "Error", "Lower than comparison by (95% CI)", "Comparison"])}
+        <tbody>${tests}</tbody></table>
+    </div>
+    <p class="meth-note warc-link">${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Standalone version</a>` : "Standalone version"}</p>
+    <section class="warc-notes" aria-labelledby="plad-how-h">
+      <h3 class="meth-h3" id="plad-how-h">How it is measured</h3>
+      <ol>
+        <li>Data: each player-season's fielding runs from Baseball-Reference (runs_field), FanGraphs (fielding runs, framing excluded) and Statcast (fielding runs prevented), and his innings at each position from MLB StatsAPI.</li>
+        <li>Same player, next season: for a player with 300 or more fielded innings in two straight seasons, his fielding runs per 650 PA of innings are fit on last season's rate, his age and the change in where he played. Players who stayed put set the persistence and aging terms; players who moved set the gaps between positions. Statcast also adds same-season pairs, a player with 150 or more innings at two positions in one season.</li>
+        <li>Each source gives one ladder. The three are averaged position by position, each weighted by its precision, and every rung's interval comes from ${escapeHtml(String(la.ci_draws || ""))} player-level bootstrap refits.</li>
+        <li>Catcher and DH: ${la.c_branch === "carried_from_v1" ? `too few catchers change position to measure their rung (${nC} rows), so catcher keeps the Baseball-Reference rung against the average fielder` : "catcher is measured on the catchers who changed position"}. DH is first base plus the first-base fielding of the players who DH (${_pladNum(la.dh_mu)} runs per 650 PA).</li>
+        <li>The test: each season is held out in turn; every ladder is fit on the other seasons and scored on the held-out season's players who moved a quarter or more of their innings. The error is the gap between a player's fielding plus positional runs and what the ladder predicts from his previous season. The bar was set before the read: lower error than the Baseball-Reference inversion with a 95% interval above zero, from ${escapeHtml(String((d.seeds || {}).draws || ""))} player-level bootstrap draws.</li>
+        <li>The registration was amended once, before the read: on simulated data built like the real sources, the first registered equation flattened any ladder toward zero, so it was replaced by the form that recovers a planted ladder. Both were committed before the read.</li>
+      </ol>
+      <h3 class="meth-h3">What it does not claim</h3>
+      <ol>
+        <li>It is not in eWAR. eWAR's positional term takes it up only under its own gate.</li>
+        <li>The Defense board's Pos (ours) still uses the Baseball-Reference inversion.</li>
+        <li>A flat ladder among fielders says the same players field about as well, in runs, wherever they play. It says nothing about which players clubs choose to put at shortstop.</li>
+      </ol>
     </section>
   </div>`;
 }
